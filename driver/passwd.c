@@ -1,5 +1,5 @@
 /* passwd.c --- verifying typed passwords with the OS.
- * xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,6 +23,7 @@
 #endif
 
 extern char *blurb(void);
+extern void check_for_leaks (const char *where);
 
 
 /* blargh */
@@ -132,8 +133,12 @@ passwd_valid_p (const char *typed_passwd, Bool verbose_p)
   int i, j;
   for (i = 0; i < countof(methods); i++)
     {
-      if (methods[i].initted_p &&
-          methods[i].valid_p (typed_passwd, verbose_p))
+      int ok_p = (methods[i].initted_p &&
+                  methods[i].valid_p (typed_passwd, verbose_p));
+
+      check_for_leaks (methods[i].name);
+
+      if (ok_p)
         {
           /* If we successfully authenticated by method N, but attempting
              to authenticate by method N-1 failed, mention that (since if

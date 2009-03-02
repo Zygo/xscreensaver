@@ -52,7 +52,7 @@
 					"*showFPS:			False   \n" \
                     "*rotate:           True    \n" \
                     "*roll:             True    \n" \
-                    "*bounce:           True    \n" \
+                    "*wander:           True    \n" \
 					"*wireframe:		False	\n"	\
 					"*light:			True	\n"	\
 					"*texture:			True	\n" \
@@ -83,9 +83,9 @@
 
 #define DEF_ROTATE  "True"
 #define DEF_ROLL    "True"
-#define DEF_BOUNCE  "True"
+#define DEF_WANDER  "True"
 #define DEF_TEXTURE "True"
-#define DEF_STARS "True"
+#define DEF_STARS   "True"
 #define DEF_LIGHT   "True"
 #define DEF_IMAGE   "BUILTIN"
 
@@ -94,7 +94,7 @@
 
 static int do_rotate;
 static int do_roll;
-static int do_bounce;
+static int do_wander;
 static int do_texture;
 static int do_stars;
 static int do_light;
@@ -104,8 +104,8 @@ static XrmOptionDescRec opts[] = {
   {"+rotate",  ".glplanet.rotate",  XrmoptionNoArg, (caddr_t) "false" },
   {"-roll",    ".glplanet.roll",    XrmoptionNoArg, (caddr_t) "true" },
   {"+roll",    ".glplanet.roll",    XrmoptionNoArg, (caddr_t) "false" },
-  {"-bounce",  ".glplanet.bounce",  XrmoptionNoArg, (caddr_t) "true" },
-  {"+bounce",  ".glplanet.bounce",  XrmoptionNoArg, (caddr_t) "false" },
+  {"-wander",  ".glplanet.wander",  XrmoptionNoArg, (caddr_t) "true" },
+  {"+wander",  ".glplanet.wander",  XrmoptionNoArg, (caddr_t) "false" },
   {"-texture", ".glplanet.texture", XrmoptionNoArg, (caddr_t) "true" },
   {"+texture", ".glplanet.texture", XrmoptionNoArg, (caddr_t) "false" },
   {"-stars",   ".glplanet.stars",   XrmoptionNoArg, (caddr_t) "true" },
@@ -118,7 +118,7 @@ static XrmOptionDescRec opts[] = {
 static argtype vars[] = {
   {(caddr_t *) &do_rotate,   "rotate",  "Rotate",  DEF_ROTATE,  t_Bool},
   {(caddr_t *) &do_roll,     "roll",    "Roll",    DEF_ROLL,    t_Bool},
-  {(caddr_t *) &do_bounce,   "bounce",  "Bounce",  DEF_BOUNCE,  t_Bool},
+  {(caddr_t *) &do_wander,   "wander",  "Wander",  DEF_WANDER,  t_Bool},
   {(caddr_t *) &do_texture,  "texture", "Texture", DEF_TEXTURE, t_Bool},
   {(caddr_t *) &do_stars,  "stars", "Stars", DEF_STARS, t_Bool},
   {(caddr_t *) &do_light,    "light",   "Light",   DEF_LIGHT,   t_Bool},
@@ -135,7 +135,7 @@ ModStruct   planet_description =
  "Animates texture mapped sphere (planet)", 0, NULL};
 #endif
 
-#include "../images/earth.xbm"
+#include "../images/earth.xpm"
 #include "xpm-ximage.h"
 
 
@@ -173,6 +173,8 @@ typedef struct {
   GLfloat dx, dy, dz;
   GLfloat box_width, box_height, box_depth;
 
+  GLfloat sunpos[4];
+
 } planetstruct;
 
 
@@ -182,49 +184,32 @@ static planetstruct *planets = NULL;
 static inline void
 normalize(GLfloat v[3])
 {
-	GLfloat     d = (GLfloat) sqrt((double) (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]));
-
-	if (d != 0) {
-		v[0] /= d;
-		v[1] /= d;
-		v[2] /= d;
-	} else {
-		v[0] = v[1] = v[2] = 0;
+  GLfloat d = (GLfloat) sqrt((double) (v[0] * v[0] +
+                                       v[1] * v[1] +
+                                       v[2] * v[2]));
+  if (d != 0)
+    {
+      v[0] /= d;
+      v[1] /= d;
+      v[2] /= d;
+	}
+  else
+    {
+      v[0] = v[1] = v[2] = 0;
 	}
 }
 
 
 /* Set up and enable texturing on our object */
 static void
-setup_xbm_texture (char *bits, int width, int height,
-				   XColor *fgc, XColor *bgc)
+setup_xpm_texture (ModeInfo *mi, char **xpm_data)
 {
-  unsigned int fg = (((fgc->red  >> 8) << 16) |
-					 ((fgc->green >> 8) << 8) |
-					 ((fgc->blue >> 8)));
-  unsigned int bg = (((bgc->red  >> 8) << 16) |
-					 ((bgc->green >> 8) << 8) |
-					 ((bgc->blue >> 8)));
-
-  unsigned char *data = (unsigned char *)
-	malloc ((width * height * 24) / 8);
-  unsigned char *out = data;
-  int x, y;
-
-  for (y = 0; y < height; y++)
-	for (x = 0; x < width; x++)
-	  {
-		unsigned char byte = bits [(y * (width / 8) + (x / 8))];
-		unsigned char bit = (byte & (1 << (x % 8))) >> (x % 8);
-		unsigned int word = (bit ? bg : fg);
-		*out++ = (word & 0xFF0000) >> 16;
-		*out++ = (word & 0x00FF00) >> 8;
-		*out++ = (word & 0x0000FF);
-	  }
-
+  XImage *image = xpm_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                  MI_COLORMAP (mi), xpm_data);
   clear_gl_error();
-  glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0,
-			   GL_RGB, GL_UNSIGNED_BYTE, data);
+  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
+               image->width, image->height, 0,
+               GL_RGBA, GL_UNSIGNED_BYTE, image->data);
   check_gl_error("texture");
 
   /* setup parameters for texturing */
@@ -267,92 +252,47 @@ setup_file_texture (ModeInfo *mi, char *filename)
 static void
 setup_texture(ModeInfo * mi)
 {
-  planetstruct *gp = &planets[MI_SCREEN(mi)];
+/*  planetstruct *gp = &planets[MI_SCREEN(mi)];*/
+
+  glEnable(GL_TEXTURE_2D);
+
   if (!which_image ||
 	  !*which_image ||
 	  !strcmp(which_image, "BUILTIN"))
-	setup_xbm_texture (earth_bits, earth_width, earth_height,
-					   &gp->fg, &gp->bg);
+	setup_xpm_texture (mi, earth_xpm);
   else
 	setup_file_texture (mi, which_image);
+
+  check_gl_error("texture initialization");
 }
 
 
-/* Set up and enable lighting */
-static void
-setup_light(void)
-{
-  /* set a number of parameters which make the scene look much nicer */
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glShadeModel(GL_SMOOTH);
-}
-
-
-/* Set up and enable face culling so we don't see the inside of the sphere */
-static void
-setup_face(void)
-{
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK); 
-}
-
-
-#if 0
-/* Function for determining points on the surface of the sphere */
-static void inline ParametricSphere(float theta, float rho, GLfloat *vector)
-{
-  vector[0] = -sin(theta) * sin(rho);
-  vector[1] = cos(theta) * sin(rho);
-  vector[2] = cos(rho);
-
-#if DO_HELIX
-  vector[0] = -(1- cos(theta)) * cos(rho); 
-  vector[1] = -(1- cos(theta)) * sin(rho); 
-  vector[2] = -(sin(theta) + rho); 
-#endif /* DO_HELIX */
-
-	return;
-}
-#endif
-
-
-/* lame way to generate some random stars */
-void generate_stars(int width, int height)
+void
+init_stars (ModeInfo *mi)
 {
   int i, j;
-  int max_size = 3;
+  GLfloat max_size = 3;
   GLfloat inc = 0.5;
   int steps = max_size / inc;
+  int width  = MI_WIDTH(mi);
+  int height = MI_HEIGHT(mi);
 
   planetstruct *gp = &planets[MI_SCREEN(mi)];
+  Bool wire = MI_IS_WIREFRAME(mi);
   
+  if (!wire)
+    glEnable (GL_POINT_SMOOTH);
+
   gp->starlist = glGenLists(1);
   glNewList(gp->starlist, GL_COMPILE);
 
-  /* this hackery makes the viewport map one-to-one with Vertex arguments */
-  glMatrixMode(GL_PROJECTION);
-  glPushMatrix();
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluOrtho2D(0, width, 0, height);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  /* disable depth testing for the stars, so they don't obscure the planet */
-  glDisable(GL_DEPTH_TEST);
-  glEnable(GL_BLEND);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  
-  glColor3f(1,1,1);
-
-  glEnable(GL_POINT_SMOOTH);
+  glScalef (1.0/width, 1.0/height, 1);
 
   for (j = 1; j <= steps; j++)
     {
       glPointSize(inc * j);
       glBegin(GL_POINTS);
-      for(i = 0 ; i < NUM_STARS / steps; i++)
+      for (i = 0 ; i < NUM_STARS / steps; i++)
         {
           glColor3f (0.6 + frand(0.3),
                      0.6 + frand(0.3),
@@ -362,88 +302,117 @@ void generate_stars(int width, int height)
         }
       glEnd();
     }
-
-  /* return to original PROJECT and MODELVIEW */
-  glMatrixMode(GL_PROJECTION);
-  glPopMatrix();
-  glMatrixMode(GL_MODELVIEW);
-
-
   glEndList();
 
+  check_gl_error("stars initialization");
 }
+
+
+void
+draw_stars (ModeInfo * mi)
+{
+  int width  = MI_WIDTH(mi);
+  int height = MI_HEIGHT(mi);
+
+  planetstruct *gp = &planets[MI_SCREEN(mi)];
+  
+  /* Sadly, this causes a stall of the graphics pipeline (as would the
+     equivalent calls to glGet*.)  But there's no way around this, short
+     of having each caller set up the specific display matrix we need
+     here, which would kind of defeat the purpose of centralizing this
+     code in one file.
+   */
+  glPushAttrib(GL_TRANSFORM_BIT |  /* for matrix contents */
+               GL_ENABLE_BIT |     /* for various glDisable calls */
+               GL_CURRENT_BIT |    /* for glColor3f() */
+               GL_LIST_BIT);       /* for glListBase() */
+  {
+    check_gl_error ("glPushAttrib");
+
+    /* disable lighting and texturing when drawing stars!
+       (glPopAttrib() restores these.)
+     */
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_DEPTH_TEST);
+
+    /* glPopAttrib() does not restore matrix changes, so we must
+       push/pop the matrix stacks to be non-intrusive there.
+     */
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    {
+      check_gl_error ("glPushMatrix");
+      glLoadIdentity();
+
+      /* Each matrix mode has its own stack, so we need to push/pop
+         them separately. */
+      glMatrixMode(GL_MODELVIEW);
+      glPushMatrix();
+      {
+        check_gl_error ("glPushMatrix");
+        glLoadIdentity();
+
+        gluOrtho2D (0, width, 0, height);
+        check_gl_error ("gluOrtho2D");
+
+        /* Draw the stars */
+        glScalef (width, height, 1);
+        glCallList(gp->starlist);
+        check_gl_error ("drawing stars");
+      }
+      glPopMatrix();
+    }
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+
+  }
+  /* clean up after our state changes */
+  glPopAttrib();
+  check_gl_error ("glPopAttrib");
+}
+
+
 
 /* Set up lighting */
 static void
 init_sun (ModeInfo * mi)
 {
-  GLfloat light[4];
-  light[0] = frand(2.0) - 1.0;
-  light[1] = frand(2.0) - 1.0;
-  light[2] = 1.0;
-  light[3] = 0;
-
-  glLightfv(GL_LIGHT0, GL_POSITION, light);
-}
-
-
-/* Initialization function for screen saver */
-static void
-pinit(ModeInfo * mi)
-{
-  Bool wire = MI_IS_WIREFRAME(mi);
   planetstruct *gp = &planets[MI_SCREEN(mi)];
 
-  if (wire) {
-	glEnable(GL_LINE_SMOOTH);
-	do_texture = False;
-  }
+  GLfloat lamb[4] = { 0.0, 0.0, 0.0, 1.0 };
+  GLfloat ldif[4] = { 1.0, 1.0, 1.0, 1.0 };
+  GLfloat spec[4] = { 1.0, 1.0, 1.0, 1.0 };
 
-  /* turn on various options we like */
-  if (do_texture)
-	setup_texture(mi);
-  if (do_light)
-	setup_light();
+  GLfloat mamb[4] = { 0.5, 0.5, 0.5, 1.0 };
+  GLfloat mdif[4] = { 1.0, 1.0, 1.0, 1.0 };
+  GLfloat mpec[4] = { 1.0, 1.0, 1.0, 1.0 };
+  GLfloat shiny = .4;
 
-  setup_face();
+  gp->sunpos[0] =  1.00 - frand(2.00);
+  gp->sunpos[1] =  0.25 - frand(0.50);
+  gp->sunpos[2] = -1.00;
+  gp->sunpos[3] =  0.00;
 
-  if (do_stars) {
-	glEnable(GL_POINT_SMOOTH);
-	generate_stars(MI_WIDTH(mi), MI_HEIGHT(mi));
-  }
+  glEnable(GL_LIGHTING);
+  glEnable(GL_LIGHT0);
 
-  gp->platelist=glGenLists(1);
-  glNewList(gp->platelist, GL_COMPILE);
-  glPushMatrix ();
-  glScalef (RADIUS, RADIUS, RADIUS);
-  unit_sphere (STACKS, SLICES, wire);
-  glPopMatrix ();
-  glEndList();
+  glLightfv (GL_LIGHT0, GL_POSITION, gp->sunpos);
+  glLightfv (GL_LIGHT0, GL_AMBIENT,  lamb);
+  glLightfv (GL_LIGHT0, GL_DIFFUSE,  ldif);
+  glLightfv (GL_LIGHT0, GL_SPECULAR, spec);
 
-  init_sun (mi);
-}
+  glMaterialfv (GL_FRONT, GL_AMBIENT,  mamb);
+  glMaterialfv (GL_FRONT, GL_DIFFUSE,  mdif);
+  glMaterialfv (GL_FRONT, GL_SPECULAR, mpec);
+  glMaterialf  (GL_FRONT, GL_SHININESS, shiny);
 
-static void
-draw_sphere(ModeInfo * mi)
-{
-  planetstruct *gp = &planets[MI_SCREEN(mi)];
 
-  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glShadeModel(GL_SMOOTH);
 
-  /* turn on the various attributes for making the sphere look nice */
-  if (do_texture)
-	glEnable(GL_TEXTURE_2D);
-
-  if (do_light)
-	{
-	  glEnable(GL_LIGHTING);
-	  glEnable(GL_LIGHT0);
-	  glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-	  glEnable(GL_COLOR_MATERIAL);
-	}
-
-  glCallList(gp->platelist);
-
+  check_gl_error("lighting");
 }
 
 
@@ -495,7 +464,7 @@ rotate_and_move (ModeInfo * mi)
 	  while (gp->tz > 360) gp->tz -= 360;
 	}
 
-  if (do_bounce)
+  if (do_wander)
 	{
       static int frame = 0;
 #     define SINOID(SCALE,SIZE) \
@@ -508,9 +477,8 @@ rotate_and_move (ModeInfo * mi)
 }
 
 
-/* Standard reshape function */
 void
-reshape_planet(ModeInfo *mi, int width, int height)
+reshape_planet (ModeInfo *mi, int width, int height)
 {
   GLfloat h = (GLfloat) height / (GLfloat) width;
 
@@ -520,17 +488,18 @@ reshape_planet(ModeInfo *mi, int width, int height)
   glFrustum(-1.0, 1.0, -h, h, 5.0, 100.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glTranslatef(0.0, 0.0, -DIST);
+
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 
 void
-init_planet(ModeInfo * mi)
+init_planet (ModeInfo * mi)
 {
-  int         screen = MI_SCREEN(mi);
-
   planetstruct *gp;
+  int screen = MI_SCREEN(mi);
+  Bool wire = MI_IS_WIREFRAME(mi);
 
   if (planets == NULL) {
 	if ((planets = (planetstruct *) calloc(MI_NUM_SCREENS(mi),
@@ -540,6 +509,10 @@ init_planet(ModeInfo * mi)
   gp = &planets[screen];
 
   pick_velocity (mi);
+
+  if ((gp->glx_context = init_GL(mi)) != NULL) {
+	reshape_planet(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+  }
 
   {
 	char *f = get_string_resource("imageForeground", "Foreground");
@@ -570,18 +543,38 @@ init_planet(ModeInfo * mi)
 	free (b);
   }
 
+  if (wire)
+    {
+      do_texture = False;
+      do_light = False;
+      glEnable (GL_LINE_SMOOTH);
+    }
 
-  gp->window = MI_WINDOW(mi);
-  if ((gp->glx_context = init_GL(mi)) != NULL) {
-	reshape_planet(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-	pinit(mi);
-  } else {
-	MI_CLEARWINDOW(mi);
-  }
+  if (do_texture)
+    setup_texture (mi);
+
+  if (do_light)
+	init_sun (mi);
+
+  if (do_stars)
+    init_stars (mi);
+
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK); 
+
+  gp->platelist = glGenLists(1);
+  glNewList (gp->platelist, GL_COMPILE);
+  glColor3f (1,1,1);
+  glPushMatrix ();
+  glScalef (RADIUS, RADIUS, RADIUS);
+  unit_sphere (STACKS, SLICES, wire);
+  glPopMatrix ();
+  glEndList();
 }
 
 void
-draw_planet(ModeInfo * mi)
+draw_planet (ModeInfo * mi)
 {
   planetstruct *gp = &planets[MI_SCREEN(mi)];
   Display    *display = MI_DISPLAY(mi);
@@ -593,35 +586,23 @@ draw_planet(ModeInfo * mi)
   glDrawBuffer(GL_BACK);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glXMakeCurrent(display, window, *(gp->glx_context));
+  glXMakeCurrent (display, window, *(gp->glx_context));
 
+  if (do_stars)
+    draw_stars (mi);
 
-  if (do_stars) {
-	/* protect our modelview matrix and attributes */
-	glPushMatrix();
-    glCallList(gp->starlist);
-	glPopMatrix();
-  }
-
-  /* protect our modelview matrix and attributes */
   glPushMatrix();
-  glPushAttrib(GL_ALL_ATTRIB_BITS);
-  {
-	/* this pair of rotations seem to be necessary to orient the earth correctly */
-	glRotatef(90,0,0,1);
-	glRotatef(90,0,1,0);
+  glRotatef (90,1,0,0);
+  glTranslatef (gp->xpos, gp->ypos, gp->zpos);
 
-	glTranslatef(gp->xpos, gp->ypos, gp->zpos);
-	glRotatef(gp->tx, 1, 0, 0);
-	glRotatef(gp->ty, 0, 1, 0);
-	glRotatef(gp->tz, 0, 0, 1);
-	/* draw the sphere */
-	draw_sphere(mi);
-  }
+  glRotatef (gp->tx, 1, 0, 0);
+  glRotatef (gp->ty, 0, 1, 0);
+  glRotatef (gp->tz, 0, 0, 1);
+
+  glLightfv (GL_LIGHT0, GL_POSITION, gp->sunpos);
+
+  glCallList (gp->platelist);
   glPopMatrix();
-  glPopAttrib();
-
-
 
   if (mi->fps_p) do_fps (mi);
   glFinish();
@@ -630,11 +611,12 @@ draw_planet(ModeInfo * mi)
   rotate_and_move (mi);
 }
 
+
 void
-release_planet(ModeInfo * mi)
+release_planet (ModeInfo * mi)
 {
   if (planets != NULL) {
-	int         screen;
+	int screen;
 
 	for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
 	  planetstruct *gp = &planets[screen];

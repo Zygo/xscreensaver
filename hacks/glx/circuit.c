@@ -1708,7 +1708,7 @@ TexNum * fonttexturealloc (const char *str, float *fg, float *bg)
 {
   static char *strings[50]; /* max of 40 textures */
   static int w[50], h[50];
-  int i;
+  int i, status;
   static int init;
   XImage *ximage;
   char *c;
@@ -1737,8 +1737,20 @@ TexNum * fonttexturealloc (const char *str, float *fg, float *bg)
   for (i = 1 ; strings[i] != NULL ; i++); /* set i to the next unused value */
   glBindTexture(GL_TEXTURE_2D, i);
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-  gluBuild2DMipmaps(GL_TEXTURE_2D, 4, ximage->width, ximage->height, GL_RGBA,
-                    GL_UNSIGNED_BYTE, ximage->data);
+
+  clear_gl_error();
+  status = gluBuild2DMipmaps(GL_TEXTURE_2D, 4, ximage->width, ximage->height,
+                             GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
+  if (status)
+    {
+      const char *s = gluErrorString (status);
+      fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
+               progname, ximage->width, ximage->height,
+               (s ? s : "(unknown)"));
+      exit (1);
+    }
+  check_gl_error("mipmapping");
+
   t = malloc(sizeof(TexNum));
   t->w = ximage->width;
   t->h = ximage->height;

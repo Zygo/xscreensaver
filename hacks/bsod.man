@@ -67,15 +67,17 @@ Notable X resources supported include the following, which control which
 hacks are displayed and which aren't.
 .BR doWindows ,
 .BR doNT ,
+.BR doWin2K ,
 .BR doAmiga ,
 .BR doMac ,
 .BR doMacsBug ,
 .BR doSCO ,
 .BR doAtari ,
-.BR doBlitDamage ,
+.BR doBSD ,
 .BR doSparcLinux ,
+.BR doBlitDamage ,
 and
-.BR doSSolaris .
+.BR doSolaris .
 Each of these is a Boolean resource, they all default to true, except for
 doSparcLinux and doAtari, which are turned off by default, because they're
 really not all that interesting looking unless you're a fan of those systems.

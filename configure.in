@@ -1,6 +1,7 @@
 # configure.in --- xscreensaver, Copyright (c) 1997-2000 Jamie Zawinski.
 #
 
+AC_PREREQ(2.13)
 AC_INIT(driver/subprocs.c)
 AC_CONFIG_HEADER(config.h)
 
@@ -746,6 +747,7 @@ AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE
 AC_PROG_CPP
 AC_C_CONST
 AC_C_INLINE
+AC_EXEEXT
 AC_DEMAND_BC
 
 # stuff for Makefiles
@@ -771,7 +773,7 @@ AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
 AC_HEADER_DIRENT
 AC_GETTIMEOFDAY_ARGS
-AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv)
+AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv sbrk)
 
 AC_CHECK_FUNCS(sigaction syslog realpath setrlimit)
 AC_CHECK_ICMP
@@ -871,8 +873,7 @@ AC_ARG_WITH(hackdir,[
 Installation options:
 
   --with-hackdir=DIR      Where to install the hundreds of demo executables.
-                          Default: \`PREFIX/lib/xscreensaver/'
-],
+                          Default: \`PREFIX/lib/xscreensaver/'],
   [with_hackdir="$withval"; with_hackdir_req="$withval"],[with_hackdir=yes])
 
 if test x"$with_hackdir" = xyes; then
@@ -1836,21 +1837,21 @@ jurassic_gtk=no
 if test "$with_gtk" = yes; then
   have_gtk=no
   
-  # if the user specified --with-gtk=/foo/ then look in /foo/bin/
-  # for glib-config and gtk-config.
+  # if the user specified --with-gtk=/foo/ or --with-gnome=/foo/ then
+  # look in /foo/bin/ for glib-config, gtk-config, and gnome-config.
   #
   gtk_path="$PATH"
 
   if test ! -z "$gtk_dir"; then
     # canonicalize slashes.
-    gtk_dir=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
-    gtk_path="$gtk_dir:$gtk_path"
+    foo=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
+    gtk_path="$foo:$gtk_path"
   fi
 
-  if test ! -z "gnome_dir"; then
+  if test ! -z "$gnome_dir"; then
     # canonicalize slashes.
-    gnome_dir=`echo "${gnome_dir}/bin" | sed 's@//*@/@g'`
-    gtk_path="$gnome_dir:$gtk_path"
+    foo=`echo "${gnome_dir}/bin" | sed 's@//*@/@g'`
+    gtk_path="$foo:$gtk_path"
   fi
 
   AC_PATH_PROGS(glib_config,  glib12-config glib-config,,  $gtk_path)
@@ -1860,7 +1861,7 @@ if test "$with_gtk" = yes; then
     AC_PATH_PROGS(gnome_config, gnome-config,, $gtk_path)
   fi
 
-  if test -n "$glib_config" -a  -n "gtk_config" ; then
+  if test -n "$glib_config" -a  -n "$gtk_config" ; then
     have_gtk=yes
     if test "$with_gnome" = yes -a -n "$gnome_config" ; then
       have_gnome=yes
@@ -1901,7 +1902,7 @@ if test "$with_gtk" = yes; then
   # Check for Gnome Capplet support.
   #
   if test "$have_gnome" = yes -a "$have_gtk" = yes; then
-    gnome_config_libs="gtk capplet gnomeui xml gdk_pixbuf"
+    gnome_config_libs="gtk capplet gnomeui gdk_pixbuf"
     AC_MSG_CHECKING(for Gnome capplet includes)
     AC_CACHE_VAL(ac_cv_gnome_config_cflags,
       [if ( $gnome_config --cflags $gnome_config_libs 2>&1 >/dev/null | \
@@ -1978,7 +1979,7 @@ fi
 
 ###############################################################################
 #
-#       Check for -lxml (if we have Gtk)
+#       Check for -lxml
 #
 ###############################################################################
 
@@ -1990,6 +1991,17 @@ AC_ARG_WITH(xml,
                           the Gtk interface.],
 [with_xml="$withval"; with_xml_req="$withval"],[with_xml=yes])
 
+# if --with-xml=/directory/ was specified, remember that directory so that
+# we can also look for the `xml-config' program in that directory.
+case "$with_xml" in
+  /*)
+    xml_dir="$with_xml"
+    ;;
+  *)
+    xml_dir=""
+    ;;
+esac
+
 HANDLE_X_PATH_ARG(with_xml, --with-xml, XML)
 
 if test "$with_xml" != yes -a "$with_xml" != no ; then
@@ -1997,21 +2009,43 @@ if test "$with_xml" != yes -a "$with_xml" != no ; then
   exit 1
 fi
 
-if test "$have_gtk" != yes; then
-  # don't bother if no GTK
-  with_xml=no
-fi
-
 if test "$with_xml" = yes; then
   have_xml=no
 
-  # the XML stuff is likely to be in GTK paths.
-  ac_save_X_CFLAGS="$X_CFLAGS"
-  ac_save_X_LIBS="$X_LIBS"
-  X_CFLAGS="$X_CFLAGS $ac_gtk_config_cflags"
-  X_LIBS="$X_LIBS $ac_gtk_config_libs"
+  # if the user specified --with-gtk=/foo/ or --with-gnome=/foo/ then
+  # look in /foo/bin/ for for xml-config.
+  #
+  xml_path="$PATH"
 
+  if test ! -z "$gtk_dir"; then
+    # canonicalize slashes.
+    foo=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
+    xml_path="$foo:$xml_path"
+  fi
+
+  if test ! -z "$gnome_dir"; then
+    # canonicalize slashes.
+    foo=`echo "${gnome_dir}/bin" | sed 's@//*@/@g'`
+    xml_path="$foo:$xml_path"
+  fi
+
+  AC_PATH_PROGS(xml_config, xml2-config xml-config,, $xml_path)
+
+  # If we found the xml-config program, run it to get flags.
+  #
+  if test -n "$xml_config" ; then
+    AC_CACHE_CHECK([for XML includes], ac_cv_xml_config_cflags,
+                   [ac_cv_xml_config_cflags=`$xml_config --cflags`])
+    AC_CACHE_CHECK([for XML libs], ac_cv_xml_config_libs,
+                   [ac_cv_xml_config_libs=`$xml_config --libs`])
+    ac_xml_config_cflags=$ac_cv_xml_config_cflags
+    ac_xml_config_libs=$ac_cv_xml_config_libs
+  fi
+
+  ac_save_xml_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $ac_xml_config_cflags"
   AC_CHECK_X_HEADER(xmlIO.h, [have_xml=yes])
+  CPPFLAGS="$ac_save_xml_CPPFLAGS"
 
   if test "$have_xml" = yes; then
     # we have the header, now check for the library
@@ -2021,11 +2055,16 @@ if test "$with_xml" = yes; then
                    [have_xml=yes
                     xml_halfassed=no
                     XML_LIBS="-lxml"
-                    AC_DEFINE(HAVE_XML)])
+                    AC_DEFINE(HAVE_XML)],
+                   [true],
+                   $ac_xml_config_libs)
   fi
 
-  X_CFLAGS="$ac_save_X_CFLAGS"
-  X_LIBS="$ac_save_X_LIBS"
+  if test "$have_xml" = yes; then
+    INCLUDES="$INCLUDES $ac_xml_config_cflags"
+    GTK_LIBS="$GTK_LIBS $ac_xml_config_libs"
+    AC_DEFINE(HAVE_XML)
+  fi
 
 fi
 
@@ -2462,33 +2501,94 @@ AC_ARG_WITH(pixbuf,
   [with_gdk_pixbuf="$withval"; with_gdk_pixbuf_req="$withval"],
   [with_gdk_pixbuf=yes])
 
+# if --with-pixbuf=/directory/ was specified, remember that directory so that
+# we can also look for the `gdk-pixbuf-config' program in that directory.
+case "$with_gdk_pixbuf" in
+  /*)
+    gdk_pixbuf_dir="$with_gdk_pixbuf"
+    ;;
+  *)
+    gdk_pixbuf_dir=""
+    ;;
+esac
+
 HANDLE_X_PATH_ARG(with_gdk_pixbuf, --with-pixbuf, GDK_PIXBUF)
 
+if test "$with_gdk_pixbuf" != yes -a "$with_gdk_pixbuf" != no ; then
+  echo "error: must be yes or no: --with-pixbuf=$with_gdk_pixbuf"
+  exit 1
+fi
+
 if test "$with_gdk_pixbuf" = yes; then
+  have_gdk_pixbuf=no
 
-  if test "$have_gtk" = yes; then
+  # if the user specified --with-gtk=/foo/ or --with-gnome=/foo/ then
+  # look in /foo/bin/ for for gdk-pixbuf-config.
+  #
+  gdk_pixbuf_path="$PATH"
 
-    ac_save_gdk_CPPFLAGS="$CPPFLAGS"
-    CPPFLAGS="$CPPFLAGS $ac_gtk_config_cflags"
+  if test ! -z "$gtk_dir"; then
+    # canonicalize slashes.
+    foo=`echo "${gtk_dir}/bin" | sed 's@//*@/@g'`
+    gdk_pixbuf_path="$foo:$gdk_pixbuf_path"
+  fi
 
+  if test ! -z "$gnome_dir"; then
+    # canonicalize slashes.
+    foo=`echo "${gnome_dir}/bin" | sed 's@//*@/@g'`
+    gdk_pixbuf_path="$foo:$gdk_pixbuf_path"
+  fi
+
+  AC_PATH_PROGS(gdk_pixbuf_config, gdk-pixbuf-config,, $gdk_pixbuf_path)
+
+  # If we found the gdk-pixbuf-config program, run it to get flags.
+  #
+  if test -n "$gdk_pixbuf_config" ; then
+    AC_CACHE_CHECK([for gdk-pixbuf includes], ac_cv_gdk_pixbuf_config_cflags,
+               [ac_cv_gdk_pixbuf_config_cflags=`$gdk_pixbuf_config --cflags`])
+    AC_CACHE_CHECK([for gdk-pixbuf libs], ac_cv_gdk_pixbuf_config_libs,
+               [ac_cv_gdk_pixbuf_config_libs=`$gdk_pixbuf_config --libs`])
+    ac_gdk_pixbuf_config_cflags=$ac_cv_gdk_pixbuf_config_cflags
+    ac_gdk_pixbuf_config_libs=$ac_cv_gdk_pixbuf_config_libs
+  fi
+
+  ac_save_gdk_pixbuf_CPPFLAGS="$CPPFLAGS"
+  CPPFLAGS="$CPPFLAGS $ac_gdk_pixbuf_config_cflags"
+
+  # check for header 1...
+  AC_CHECK_X_HEADER(gdk-pixbuf/gdk-pixbuf.h, [have_gdk_pixbuf=yes])
+
+  # if that worked, check for header 2...
+  if test "$have_gdk_pixbuf" = yes; then
     have_gdk_pixbuf=no
-    AC_CHECK_X_HEADER(gdk-pixbuf/gdk-pixbuf.h, [have_gdk_pixbuf=yes])
-    if test "$have_gdk_pixbuf" = yes; then
-      have_gdk_pixbuf=no
-      AC_CHECK_X_HEADER(gdk-pixbuf/gdk-pixbuf-xlib.h, [have_gdk_pixbuf=yes])
-    fi
+    AC_CHECK_X_HEADER(gdk-pixbuf/gdk-pixbuf-xlib.h, [have_gdk_pixbuf=yes])
+  fi
 
-    CPPFLAGS="$ac_save_gdk_CPPFLAGS"
+  CPPFLAGS="$ac_save_gdk_pixbuf_CPPFLAGS"
 
+  if test "$have_gdk_pixbuf" = yes; then
+    # we have the headers, now check for the libraries
+    have_gdk_pixbuf=no
+    gdk_pixbuf_halfassed=yes
+    # library 1...
+    AC_CHECK_X_LIB(gdk_pixbuf, gdk_pixbuf_new_from_file,
+                   [have_gdk_pixbuf=yes], [true],
+                   $ac_gdk_pixbuf_config_libs)
+    # library 2...
     if test "$have_gdk_pixbuf" = yes; then
-      AC_DEFINE(HAVE_GDK_PIXBUF)
-      XPM_LIBS="-lgdk_pixbuf -lgdk_pixbuf_xlib"
+      AC_CHECK_X_LIB(gdk_pixbuf_xlib, gdk_pixbuf_xlib_init,
+                     [have_gdk_pixbuf=yes
+                      gdk_pixbuf_halfassed=no],
+                     [true],
+                     $ac_gdk_pixbuf_config_libs)
     fi
   fi
 
-elif test "$with_gdk_pixbuf" != no; then
-  echo "error: must be yes or no: --with-pixbuf=$with_gdk_pixbuf"
-  exit 1
+  if test "$have_gdk_pixbuf" = yes; then
+    INCLUDES="$INCLUDES $ac_gdk_pixbuf_config_cflags"
+    XPM_LIBS="$ac_gdk_pixbuf_config_libs -lgdk_pixbuf -lgdk_pixbuf_xlib"
+    AC_DEFINE(HAVE_GDK_PIXBUF)
+  fi
 fi
 
 
@@ -2870,6 +2970,7 @@ fi
 
 # Now that we know whether we have Gnome, we can decide where the XML
 # config files get installed.
+#
 if test -z "$HACK_CONF_DIR" ; then
   if test -n "$GNOME_DATADIR" ; then
     HACK_CONF_DIR='${GNOME_DATADIR}/control-center/screensavers'
@@ -2877,6 +2978,21 @@ if test -z "$HACK_CONF_DIR" ; then
     HACK_CONF_DIR='${prefix}/lib/xscreensaver/config'
   fi
 fi
+
+
+
+# After computing $HACK_CONF_DIR, make sure $GTK_ICONDIR has a value
+# so that we know where to install the Gtk pixmaps.
+#
+if test -n "$GNOME_DATADIR" ; then
+  GTK_ICONDIR='$(GNOME_DATADIR)/pixmaps'
+elif test "$have_gtk" = yes; then
+  # should this be "$(prefix)/share/pixmaps"? But /usr/X11R6/share/ is wrong...
+  GTK_ICONDIR='/usr/share/pixmaps'
+else
+  GTK_ICONDIR=''
+fi
+
 
 # canonicalize slashes.
 HACK_CONF_DIR=`echo "${HACK_CONF_DIR}" | sed 's@/$@@;s@//*@/@g'`
@@ -2932,6 +3048,7 @@ AC_SUBST(GNOMEHELP_Y)
 AC_SUBST(GNOMEHELP_N)
 AC_SUBST(HACKDIR)
 AC_SUBST(GNOME_DATADIR)
+AC_SUBST(GTK_ICONDIR)
 AC_SUBST(HACK_CONF_DIR)
 
 APPDEFAULTS=$ac_x_app_defaults
@@ -3136,11 +3253,11 @@ if test "$have_motif" = yes -a "$have_gtk" = no ; then
 fi
 
 
-if test "$with_xpm_req" = yes ; then
+if test "$with_xpm_req" = yes -a "$have_xpm" = no; then
   warnL 'Use of XPM was requested, but it was not found.'
 fi
 
-if test "$with_gdk_pixbuf_req" = yes ; then
+if test "$with_gdk_pixbuf_req" = yes  -a "$have_gdk_pixbuf" = no; then
   warnL 'Use of GDK-Pixbuf was requested, but it was not found.'
 fi
 
@@ -3160,6 +3277,14 @@ if test "$have_xpm" = no -a "$have_gdk_pixbuf" = no; then
     warnL 'The GDK-Pixbuf library is not being used.'
   else
     warnL 'The GDK-Pixbuf library was not found.'
+  fi
+
+  if test "$gdk_pixbuf_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'libraries; so either GDK-Pixbuf is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
   fi
 
   echo ''
@@ -3392,12 +3517,11 @@ if test "$do_dir_warning" = yes; then
   echo "      will be installed in ${bindir}/."
   echo ""
   echo "      The various graphics demos (140+ different executables) will"
-  echo "      also be installed in ${HACKDIR}/."
+  echo "      be installed in ${HACKDIR}/."
   echo ""
-  echo "      If you would prefer the demos to be installed elsewhere"
-  echo "      (for example, in a dedicated directory) you should re-run"
-  echo "      configure with the --with-hackdir=DIR option.  For more"
-  echo "      information, run $0 --help."
+  echo "      If you would prefer the demos to be installed elsewhere,"
+  echo "      you should re-run configure with the --with-hackdir=DIR"
+  echo "      option.  For more information, run \`./configure --help'."
   warning=yes
 fi
 

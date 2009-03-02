@@ -454,10 +454,20 @@ void Create_Texture(char *filename, int do_mipmap, int do_texture_quality)
   }
 
   if (do_mipmap) {
-    gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, 
-		      format, GL_UNSIGNED_BYTE, image);
-  }
-  else {
+    int status;
+    clear_gl_error();
+    status = gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, 
+                               format, GL_UNSIGNED_BYTE, image);
+    if (status)
+      {
+        const char *s = gluErrorString (status);
+        fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
+                 progname, width, height,
+                 (s ? s : "(unknown)"));
+        exit (1);
+      }
+    check_gl_error("mipmapping");
+  } else {
     clear_gl_error();
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
 		 format, GL_UNSIGNED_BYTE, image);

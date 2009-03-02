@@ -27,6 +27,7 @@
 #include "images/amiga.xpm"
 #include "images/atari.xbm"
 #include "images/mac.xbm"
+#include "images/macbomb.xbm"
 
 
 static int
@@ -194,7 +195,7 @@ bsod_sleep(Display *dpy, int seconds)
 
 
 static Bool
-windows (Display *dpy, Window window, int delay, Bool w95p)
+windows (Display *dpy, Window window, int delay, int which)
 {
   XGCValues gcv;
   XWindowAttributes xgwa;
@@ -261,18 +262,34 @@ windows (Display *dpy, Window window, int delay, Bool w95p)
    "contact your system administrator or technical support group."
      );
 
-  if (!get_boolean_resource((w95p? "doWindows" : "doNT"), "DoWindows"))
+  const char *w2ka =
+    ("*** STOP: 0x000000D1 (0xE1D38000,0x0000001C,0x00000000,0xF09D42DA)\n"
+     "DRIVER_IRQL_NOT_LESS_OR_EQUAL \n"
+     "\n"
+    "*** Address F09D42DA base at F09D4000, DateStamp 39f459ff - CRASHDD.SYS\n"
+     "\n"
+     "Beginning dump of physical memory\n");
+  const char *w2kb =
+    ("Physical memory dump complete. Contact your system administrator or\n"
+     "technical support group.\n");
+
+  if (which < 0 || which > 2) abort();
+
+  if (!get_boolean_resource((which == 0 ? "doWindows" :
+                             which == 1 ? "doNT" :
+                                          "doWin2K"),
+                            "DoWindows"))
     return False;
 
   XGetWindowAttributes (dpy, window, &xgwa);
 
   fontname = get_string_resource ((xgwa.height > 600
-				   ? (w95p
-				      ? "windows95.font2"
-				      : "windowsNT.font2")
-				   : (w95p
-				      ? "windows95.font"
-				      : "windowsNT.font")),
+				   ? (which == 0 ? "windows95.font2" :
+                                      which == 1 ? "windowsNT.font2" :
+                                                   "windows2K.font2")
+				   : (which == 0 ? "windows95.font" :
+				      which == 1 ? "windowsNT.font" :
+                                                   "windows2K.font")),
 				  "Windows.Font");
   if (!fontname || !*fontname) fontname = (char *)def_font;
   font = XLoadQueryFont (dpy, fontname);
@@ -282,14 +299,14 @@ windows (Display *dpy, Window window, int delay, Bool w95p)
     free (fontname);
 
   gcv.font = font->fid;
-  gcv.foreground = get_pixel_resource((w95p
-				       ? "windows95.foreground"
-				       : "windowsNT.foreground"),
+  gcv.foreground = get_pixel_resource((which == 0 ? "windows95.foreground" :
+				       which == 1 ? "windowsNT.foreground" :
+                                                    "windows2K.foreground"),
 				      "Windows.Foreground",
 				      dpy, xgwa.colormap);
-  gcv.background = get_pixel_resource((w95p
-				       ? "windows95.background"
-				       : "windowsNT.background"),
+  gcv.background = get_pixel_resource((which == 0 ? "windows95.background" :
+				       which == 1 ? "windowsNT.background" :
+                                                    "windows2K.background"),
 				      "Windows.Background",
 				      dpy, xgwa.colormap);
   XSetWindowBackground(dpy, window, gcv.background);
@@ -297,11 +314,22 @@ windows (Display *dpy, Window window, int delay, Bool w95p)
 
   gc = XCreateGC(dpy, window, GCFont|GCForeground|GCBackground, &gcv);
 
-  if (w95p)
+  if (which == 0)
     draw_string(dpy, window, gc, &gcv, font,
 		0, 0, xgwa.width, xgwa.height, w95, 0);
-  else
+  else if (which == 1)
     draw_string(dpy, window, gc, &gcv, font, 0, 0, 10, 10, wnt, 750);
+  else
+    {
+      int line_height = font->ascent + font->descent + 1;
+      int x = 20;
+      int y = (xgwa.height / 4);
+
+      draw_string(dpy, window, gc, &gcv, font, x, y, 10, 10, w2ka, 750);
+      y += line_height * 6;
+      bsod_sleep(dpy, 4);
+      draw_string(dpy, window, gc, &gcv, font, x, y, 10, 10, w2kb, 750);
+    }
 
   XFreeGC(dpy, gc);
   XSync(dpy, False);
@@ -1142,6 +1170,59 @@ macsbug (Display *dpy, Window window, int delay)
   return True;
 }
 
+static Bool
+mac1 (Display *dpy, Window window, int delay)
+{
+  XGCValues gcv;
+  XWindowAttributes xgwa;
+  GC gc;
+  Pixmap pixmap = 0;
+  int pix_w = macbomb_width;
+  int pix_h = macbomb_height;
+
+  if (!get_boolean_resource("doMac1", "DoMac1"))
+    return False;
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+
+  gcv.foreground = get_pixel_resource("mac1.foreground", "Mac.Foreground",
+				      dpy, xgwa.colormap);
+  gcv.background = get_pixel_resource("mac1.background", "Mac.Background",
+				      dpy, xgwa.colormap);
+  XSetWindowBackground(dpy, window, gcv.background);
+  XClearWindow(dpy, window);
+
+  gc = XCreateGC(dpy, window, GCForeground|GCBackground, &gcv);
+
+  pixmap = XCreatePixmapFromBitmapData(dpy, window, (char *) macbomb_bits,
+				       macbomb_width, macbomb_height,
+				       gcv.foreground,
+				       gcv.background,
+				       xgwa.depth);
+
+  {
+    int x = (xgwa.width - pix_w) / 2;
+    int y = (xgwa.height - pix_h) / 2;
+    if (y < 0) y = 0;
+    XFillRectangle (dpy, window, gc, 0, 0, xgwa.width, xgwa.height);
+    XSync(dpy, False);
+    if (bsod_sleep(dpy, 1))
+      goto DONE;
+    XCopyArea(dpy, pixmap, window, gc, 0, 0, pix_w, pix_h, x, y);
+  }
+
+ DONE:
+  XFreeGC(dpy, gc);
+  XFreePixmap(dpy, pixmap);
+  XSync(dpy, False);
+  bsod_sleep(dpy, delay);
+  XClearWindow(dpy, window);
+  return True;
+}
+
+
+
+
 
 /* blit damage
  *
@@ -1211,11 +1292,13 @@ blitdamage (Display *dpy, Window window, int delay)
 	      chunk_w, chunk_h,
 	      x, y);
 
-    bsod_sleep(dpy, 0);
+    if (bsod_sleep(dpy, 0))
+      goto DONE;
   }
 
   bsod_sleep(dpy, delay);
 
+ DONE:
   XFreeGC(dpy, gc0);
 
   return True;
@@ -1452,29 +1535,35 @@ sparc_solaris (Display* dpy, Window window, int delay)
   ts = make_solaris_console (dpy, window);
 
   solaris_puts (ts, msg1, 0);
-  bsod_sleep (dpy, 3);
+  if (bsod_sleep (dpy, 3))
+    goto DONE;
 
   solaris_puts (ts, msg2, 0);
-  bsod_sleep (dpy, 2);
+  if (bsod_sleep (dpy, 2))
+    goto DONE;
 
   for (i = 1; i <= 100; ++i)
     {
       sprintf(buf, "\b\b\b\b\b\b\b\b\b\b\b%3d%% done", i);
       solaris_puts(ts, buf, 0);
-      usleep(100000);
+      if (bsod_sleep (dpy, -1))
+        goto DONE;
     }
 
   solaris_puts (ts, msg3, 0);
-  bsod_sleep (dpy, 2);
+  if (bsod_sleep (dpy, 2))
+    goto DONE;
 
   solaris_puts (ts, msg4, 0);
-  bsod_sleep(dpy, 3);
+  if (bsod_sleep(dpy, 3))
+    goto DONE;
 
   XFillRectangle (ts->dpy, ts->window, ts->gc, 0, 0,
                   ts->width, ts->height);
 
   bsod_sleep (dpy, 3);
 
+ DONE:
   free_solaris_console (ts);
 
   return True;
@@ -1488,11 +1577,13 @@ char *defaults [] = {
 
   "*doWindows:		   True",
   "*doNT:		   True",
+  "*doWin2K:		   True",
   "*doAmiga:		   True",
   "*doMac:		   True",
-  "*doAtari:		   False",	/* boring */
   "*doMacsBug:		   True",
+  "*doMac1:		   True",
   "*doSCO:		   True",
+  "*doAtari:		   False",	/* boring */
   "*doBSD:		   False",	/* boring */
   "*doSparcLinux:	   False",	/* boring */
   "*doBlitDamage:          True",
@@ -1523,6 +1614,9 @@ char *defaults [] = {
   ".MacsBug.background:	   White",
   ".MacsBug.borderColor:   #AAAAAA",
 
+  ".mac1.foreground:	   Black",
+  ".mac1.background:	   White",
+
   ".SCO.font:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".SCO.font2:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".SCO.foreground:	   White",
@@ -1552,6 +1646,8 @@ XrmOptionDescRec options [] = {
   { "-no-windows",	".doWindows",		XrmoptionNoArg,  "False" },
   { "-nt",		".doNT",		XrmoptionNoArg,  "True"  },
   { "-no-nt",		".doNT",		XrmoptionNoArg,  "False" },
+  { "-2k",		".doWin2K",		XrmoptionNoArg,  "True"  },
+  { "-no-2k",		".doWin2K",		XrmoptionNoArg,  "False" },
   { "-amiga",		".doAmiga",		XrmoptionNoArg,  "True"  },
   { "-no-amiga",	".doAmiga",		XrmoptionNoArg,  "False" },
   { "-mac",		".doMac",		XrmoptionNoArg,  "True"  },
@@ -1594,20 +1690,22 @@ screenhack (Display *dpy, Window window)
   while (1)
     {
       Bool did;
-      do {  i = (random() & 0xFF) % 11; } while (i == j);
+      do {  i = (random() & 0xFF) % 13; } while (i == j);
       switch (i)
 	{
-	case 0: did = windows(dpy, window, delay, True); break;
-	case 1: did = windows(dpy, window, delay, False); break;
-	case 2: did = amiga(dpy, window, delay); break;
-	case 3: did = mac(dpy, window, delay); break;
-	case 4: did = macsbug(dpy, window, delay); break;
-	case 5: did = sco(dpy, window, delay); break;
-	case 6: did = sparc_linux(dpy, window, delay); break;
- 	case 7: did = bsd(dpy, window, delay); break;
-	case 8: did = atari(dpy, window, delay); break;
-	case 9: did = blitdamage(dpy, window, delay); break;
-	case 10: did = sparc_solaris(dpy, window, delay); break;
+	case 0: did = windows(dpy, window, delay, 0); break;
+	case 1: did = windows(dpy, window, delay, 1); break;
+	case 2: did = windows(dpy, window, delay, 2); break;
+	case 3: did = amiga(dpy, window, delay); break;
+	case 4: did = mac(dpy, window, delay); break;
+	case 5: did = macsbug(dpy, window, delay); break;
+	case 6: did = mac1(dpy, window, delay); break;
+	case 7: did = sco(dpy, window, delay); break;
+	case 8: did = sparc_linux(dpy, window, delay); break;
+ 	case 9: did = bsd(dpy, window, delay); break;
+	case 10: did = atari(dpy, window, delay); break;
+	case 11: did = blitdamage(dpy, window, delay); break;
+	case 12: did = sparc_solaris(dpy, window, delay); break;
 	default: abort(); break;
 	}
       loop++;

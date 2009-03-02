@@ -119,11 +119,15 @@ find_screensaver_window (Display *dpy, char **version)
 
       if (status == Success && type != None)
 	{
+          Window ret = kids[i];
 	  if (version)
 	    *version = v;
-	  return kids[i];
+          XFree (kids);
+	  return ret;
 	}
     }
+
+  if (kids) XFree (kids);
   return 0;
 }
 
@@ -132,6 +136,7 @@ static int
 send_xscreensaver_command (Display *dpy, Atom command, long arg,
 			   Window *window_ret, char **error_ret)
 {
+  int status = -1;
   char *v = 0;
   Window window = find_screensaver_window (dpy, &v);
   XWindowAttributes xgwa;
@@ -148,15 +153,20 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
       if (error_ret)
         {
           *error_ret = strdup (err);
-          return -1;
+          status = -1;
+          goto DONE;
         }
 
       if (command == XA_EXIT)
-        /* Don't print an error if xscreensaver is already dead. */
-        return 1;
+        {
+          /* Don't print an error if xscreensaver is already dead. */
+          status = 1;
+          goto DONE;
+        }
 
       fprintf (stderr, "%s: %s\n", progname, err);
-      return -1;
+      status = -1;
+      goto DONE;
     }
 
   /* Select for property change events, so that we can read the response. */
@@ -176,7 +186,9 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
             *error_ret = strdup (err);
           else
             fprintf (stderr, "%s: %s\n", progname, err);
-	  return -1;
+
+          status = -1;
+          goto DONE;
 	}
 
       XGetClassHint(dpy, window, &hint);
@@ -188,7 +200,10 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
             *error_ret = strdup (err);
           else
             fprintf (stderr, "%s: %s\n", progname, err);
-	  return -1;
+
+          if (v) free (v);
+          status = -1;
+          goto DONE;
 	}
 
       fprintf (stdout, "%s %s", hint.res_class, v);
@@ -225,7 +240,8 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
                   fprintf (stdout, "\n");
                   fflush (stdout);
                   fprintf (stderr, "bad status format on root window.\n");
-                  return -1;
+                  status = -1;
+                  goto DONE;
                 }
                   
               blanked = (Atom) data[0];
@@ -286,12 +302,14 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
 	      fprintf (stdout, "\n");
 	      fflush (stdout);
 	      fprintf (stderr, "no saver status on root window.\n");
-	      return -1;
+              status = -1;
+              goto DONE;
 	    }
 	}
 
       /* No need to read a response for these commands. */
-      return 1;
+      status = 1;
+      goto DONE;
     }
   else
     {
@@ -326,11 +344,17 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
             *error_ret = strdup (err);
           else
             fprintf (stderr, "%s: %s\n", progname, err);
-	  return -1;
+          status = -1;
+          goto DONE;
 	}
     }
+
+  status = 0;
+
+ DONE:
+  if (v) free (v);
   XSync (dpy, 0);
-  return 0;
+  return status;
 }
 
 

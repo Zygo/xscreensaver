@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998, 2001
+/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998, 2001, 2002
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -496,6 +496,18 @@ main (int argc, char **argv)
       cmap = xgwa.colormap;
       visual = xgwa.visual;
       visual_warning (screen, window, visual, cmap, True);
+
+      /* Select KeyPress events on the external window.
+       */
+      xgwa.your_event_mask |= KeyPressMask;
+      XSelectInput (dpy, window, xgwa.your_event_mask);
+
+      /* Select ButtonPress events on the external window, if no other
+         app has already selected it (only one app can select ButtonPress
+         at a time: BadAccess results.)
+       */
+      if (! (xgwa.all_event_masks & ButtonPressMask))
+        XSelectInput (dpy, window, xgwa.your_event_mask | ButtonPressMask);
     }
   else if (root_p)
     {

@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "24-Feb-2002 (4.01)" "X Version 11"
+.TH XScreenSaver 1 "18-Mar-2002 (4.02)" "X Version 11"
 .SH NAME
 xscreensaver - extensible screen saver framework, plus locking
 .SH SYNOPSIS
@@ -845,17 +845,26 @@ lock command.
 I understand that KDE has invented their own wrapper around xscreensaver,
 that is inferior to 
 .BR xscreensaver-demo (1)
-in any number of ways.  I've never actually seen it.  Presumably, there is
-some way to turn off KDE's screensaver framework, and make it so that the
-usual
+in any number of ways.  I've never actually seen it, but I'm told that
+this is the way you disable it:
+.RS 4
+.TP 3
+\fB1: Switch off KDE's screen saver.\fP
+Open the ``\fIControl Center\fP'' and
+select the ``\fILook and Feel / Screensaver\fP'' page.
+Turn off the ``\fIEnable Screensaver\fP'' checkbox.
+.TP 3
+\fB2: Add xscreensaver to your startup programs.\fP
+Create a file in your \fI~/.kde2/Autostart/\fP directory
+called \fIlaunch-xscreensaver\fP.  Make that file be executable,
+and contain a single line: \fI``xscreensaver\fP''.
+.RE
+.PP
+Now use xscreensaver normally, controlling it via the usual
 .BR xscreensaver-demo (1)
 and
 .BR xscreensaver-command (1)
-mechanisms are used, in a similar way to how one can reconfigure CDE and
-VUE environments, above.
-
-But I don't know how.  If you do, please let me know, and I'll document
-it here.
+mechanisms.
 .SH ADDING TO MENUS
 The
 .BR xscreensaver-command (1)

@@ -1,4 +1,4 @@
-/* Bumps, Copyright (c) 1999 Shane Smit <blackend@inconnect.com>
+/* Bumps, Copyright (c) 2002 Shane Smit <CodeWeaver@DigitalLoom.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -8,7 +8,7 @@
  * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  *
- * Module: "Bumps.cpp"
+ * Module: "bumps.c"
  * Tab Size: 4
  *
  * Description:
@@ -21,6 +21,7 @@
  * Modification History:
  *  [10/01/99] - Shane Smit: Creation
  *  [10/08/99] - Shane Smit: Port to C. (Ick)
+ *  [03/08/02] - Shane Smit: New movement code.
  */
 
 
@@ -53,7 +54,7 @@ void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iDiameter, uint16_ nColorC
 				pSpotLight->aLightMap[ ( ( iHeight + (pSpotLight->nDiameter/2) ) * pSpotLight->nDiameter ) + iWidth + (pSpotLight->nDiameter/2) ] = (uint8_)nDelta;
 		}
 
-	/* The actual lightmap... 1/2 of the entire lightmap. */
+	/* The actual lightmap... Use 1/4 to save time within the loop. */
 	pSpotLight->nRadius = pSpotLight->nDiameter / 4;
 
 	for( iHeight=-pSpotLight->nRadius; iHeight<pSpotLight->nRadius; iHeight++ )
@@ -64,59 +65,48 @@ void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iDiameter, uint16_ nColorC
 				pSpotLight->aLightMap[ ( ( iHeight + (pSpotLight->nDiameter/2) ) * pSpotLight->nDiameter ) + iWidth + (pSpotLight->nDiameter/2) ] = (uint8_)nDelta;
 		}
 		
-	CreateTables( pSpotLight );
-
 	pSpotLight->nRadius = pSpotLight->nDiameter / 2;	/* Now set the radius back to what it should be. */
-	pSpotLight->nAngleX = RANDOM() % pSpotLight->nDegreeCount;
-	pSpotLight->nAngleY = RANDOM() % pSpotLight->nDegreeCount;
-	pSpotLight->nVelocityX = ( RANDOM() % 3 ) + 1;
-	pSpotLight->nVelocityY = ( RANDOM() % 3 ) + 1;
+	pSpotLight->nAccelX = 0;
+	pSpotLight->nAccelY = 0;
+	pSpotLight->nVelocityX = ( RANDOM() % 2 ) ? pSpotLight->nVelocityMax : -pSpotLight->nVelocityMax;
+	pSpotLight->nVelocityY = ( RANDOM() % 2 ) ? pSpotLight->nVelocityMax : -pSpotLight->nVelocityMax;
 }
 
 
-void CreateTables( SSpotLight *pSpotLight )
+void CalcLightPos( SBumps *pBumps )
 {
-	double nUnit;
-	uint16_ iDegree;
-	
-	pSpotLight->nDegreeCount = get_integer_resource( "degrees", "Integer" );
-	if( pSpotLight->nDegreeCount < 180 ) pSpotLight->nDegreeCount = 180;	/* Less than 180 will show trails in higher resolutions. */
-#ifdef VERBOSE
-	printf( "%s: Using a %d degree circle.\n", progclass, pSpotLight->nDegreeCount );
-#endif
+	SSpotLight *pSpotLight = &pBumps->SpotLight;
+	float nGravity;
 
-	pSpotLight->aSinTable = calloc( pSpotLight->nDegreeCount, sizeof(double) );
+	/* X */
+	if( pSpotLight->nXPos < pSpotLight->nDiameter * 1 )									nGravity = 1.0f;
+	else if( pSpotLight->nXPos > pBumps->iWinWidth - ( pSpotLight->nDiameter * 1 ) )	nGravity = -1.0f;
+	else																				nGravity = ( ( RANDOM() % 201 ) / 100.0f ) - 1.0f;
+		
+	pSpotLight->nAccelX += nGravity * ( pSpotLight->nAccelMax / 10.0f );
+	if( pSpotLight->nAccelX < -pSpotLight->nAccelMax )		pSpotLight->nAccelX = -pSpotLight->nAccelMax;
+	else if( pSpotLight->nAccelX > pSpotLight->nAccelMax )	pSpotLight->nAccelX = pSpotLight->nAccelMax;
 
-	/* This funtion builds the Sine Lookup Tables. */
-	nUnit = (double)( PI * 2.0F ) / (double)( pSpotLight->nDegreeCount );
+	pSpotLight->nVelocityX += pSpotLight->nAccelX;
+	if( pSpotLight->nVelocityX < -pSpotLight->nVelocityMax )		pSpotLight->nVelocityX = -pSpotLight->nVelocityMax;
+	else if( pSpotLight->nVelocityX > pSpotLight->nVelocityMax )	pSpotLight->nVelocityX = pSpotLight->nVelocityMax;
 
-	for( iDegree=0; iDegree<pSpotLight->nDegreeCount; iDegree++)
-		pSpotLight->aSinTable[ iDegree ] = sin( nUnit * (double)iDegree );
-}
+	pSpotLight->nXPos += pSpotLight->nVelocityX;
 
+	/* Y */
+	if( pSpotLight->nYPos < pSpotLight->nDiameter * 1 )									nGravity = 1.0f;
+	else if( pSpotLight->nYPos > pBumps->iWinHeight - ( pSpotLight->nDiameter * 1 ) )	nGravity = -1.0f;
+	else																				nGravity = ( ( RANDOM() % 201 ) / 100.0f ) - 1.0f;
+		
+	pSpotLight->nAccelY += nGravity * ( pSpotLight->nAccelMax / 10.0f );
+	if( pSpotLight->nAccelY < -pSpotLight->nAccelMax )		pSpotLight->nAccelY = -pSpotLight->nAccelMax;
+	else if( pSpotLight->nAccelY > pSpotLight->nAccelMax )	pSpotLight->nAccelY = pSpotLight->nAccelMax;
 
-void CalcLightPos( SSpotLight *pSpotLight, uint16_ *pXPos, uint16_ *pYPos )
-{
-	pSpotLight->nVelocityX += ( RANDOM() % 2 ) ? 0.05F : -0.05F;
-	if( pSpotLight->nVelocityX < 1 )		pSpotLight->nVelocityX = 1;
-	else if( pSpotLight->nVelocityX > 3 )	pSpotLight->nVelocityX = 3;
+	pSpotLight->nVelocityY += pSpotLight->nAccelY;
+	if( pSpotLight->nVelocityY < -pSpotLight->nVelocityMax )		pSpotLight->nVelocityY = -pSpotLight->nVelocityMax;
+	else if( pSpotLight->nVelocityY > pSpotLight->nVelocityMax )	pSpotLight->nVelocityY = pSpotLight->nVelocityMax;
 
-	pSpotLight->nVelocityX += ( RANDOM() % 2 ) ? 0.05F : -0.05F;
-	if( pSpotLight->nVelocityY < 1 )		pSpotLight->nVelocityX = 1;
-	else if( pSpotLight->nVelocityY > 3 )	pSpotLight->nVelocityX = 3;
-	
-    pSpotLight->nAngleX += pSpotLight->nVelocityX;
-    if( pSpotLight->nAngleX >= pSpotLight->nDegreeCount )	pSpotLight->nAngleX -= pSpotLight->nDegreeCount;
-
-    pSpotLight->nAngleY += pSpotLight->nVelocityY;
-    if( pSpotLight->nAngleY >= pSpotLight->nDegreeCount )	pSpotLight->nAngleY -= pSpotLight->nDegreeCount;
-
-    *pXPos = (uint16_)( ( pSpotLight->iWinXCenter - pSpotLight->nRadius ) * pSpotLight->aSinTable[ (uint16_)pSpotLight->nAngleX ] ) + pSpotLight->iWinXCenter;
-    *pYPos = (uint16_)( ( pSpotLight->iWinYCenter - pSpotLight->nRadius ) * pSpotLight->aSinTable[ (uint16_)pSpotLight->nAngleY ] ) + pSpotLight->iWinYCenter;
-
-	/* Offset to upper left hand corner. */
-	*pXPos -= pSpotLight->nRadius;
-	*pYPos -= pSpotLight->nRadius;
+	pSpotLight->nYPos += pSpotLight->nVelocityY;
 }
 
 
@@ -131,8 +121,10 @@ void CreateBumps( SBumps *pBumps, Display *pNewDisplay, Window NewWin )
 	XGetWindowAttributes( pNewDisplay, NewWin, &XWinAttribs );
 	pBumps->iWinWidth = XWinAttribs.width;
 	pBumps->iWinHeight = XWinAttribs.height;
-	pBumps->SpotLight.iWinXCenter = XWinAttribs.width / 2;
-	pBumps->SpotLight.iWinYCenter = XWinAttribs.height / 2;
+	pBumps->SpotLight.nXPos = XWinAttribs.width / 2.0f;
+	pBumps->SpotLight.nYPos = XWinAttribs.height / 2.0f;
+	pBumps->SpotLight.nVelocityMax = ( ( XWinAttribs.width < XWinAttribs.height ) ? XWinAttribs.width : XWinAttribs.height ) / 128.0f;
+	pBumps->SpotLight.nAccelMax = pBumps->SpotLight.nVelocityMax / 10.0f;
 	pBumps->pDisplay = pNewDisplay;
 	pBumps->Win = NewWin;
 
@@ -179,6 +171,14 @@ void SetPalette( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 	Color.red = RANDOM() % 0xFFFF; 
 	Color.green = RANDOM() % 0xFFFF;
 	Color.blue = RANDOM() % 0xFFFF;
+	
+	/* Make one color full intesity to avoid dark spotlights.	*/
+	switch( RANDOM() % 3 )
+	{
+		case 0:	Color.red	= 0xFFFF;	break;
+		case 1: Color.green	= 0xFFFF;	break;
+		case 2: Color.blue	= 0xFFFF;	break;
+	}
 
 	if( strcasecmp( sColor, "random" ) && !XParseColor( pBumps->pDisplay, pXWinAttribs->colormap, sColor, &Color ) )
 		fprintf( stderr, "%s: color %s not found in database. Choosing random...\n", progname, sColor );
@@ -310,7 +310,11 @@ void Execute( SBumps *pBumps )
 	uint8_ *pLOffset;
 	int16_ nX, nY;
 	uint16_ nColor;
-	CalcLightPos( &pBumps->SpotLight, &nLightXPos, &nLightYPos );
+	CalcLightPos( pBumps );
+	
+	/* Offset to upper left hand corner. */
+	nLightXPos = pBumps->SpotLight.nXPos - pBumps->SpotLight.nRadius;
+	nLightYPos = pBumps->SpotLight.nYPos - pBumps->SpotLight.nRadius;
 
 	for( iHeight=nLightYPos, iLightHeight=0; iLightHeight<pBumps->SpotLight.nDiameter; iHeight++, iLightHeight++ )
 	{
@@ -392,9 +396,5 @@ void screenhack( Display *pDisplay, Window Win )
 }
 
  
-/*
- * End of Module: "Bumps.cpp"
- */
-
 /* vim: ts=4
  */

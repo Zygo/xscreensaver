@@ -32,7 +32,6 @@ extern void check_gl_error (const char *type);
 static int fps_text_x = 10;
 static int fps_text_y = 10;
 static int fps_ascent, fps_descent;
-static int fps_sample_frames = 10;
 static GLuint font_dlist;
 static Bool fps_clear_p = False;
 
@@ -72,13 +71,12 @@ fps_init (ModeInfo *mi)
 static void
 fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
 {
-  /* save the current state */
-  /* note: could be expensive! */
-
   if (y < 0)
     y = mi->xgwa.height + y;
 
+# ifdef DEBUG
   clear_gl_error ();
+# endif
 
   /* Sadly, this causes a stall of the graphics pipeline (as would the
      equivalent calls to glGet*.)  But there's no way around this, short
@@ -133,7 +131,7 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
         if (fps_clear_p)
           {
             glColor3f (0, 0, 0);
-            glRecti (x, y - fps_descent,
+            glRecti (x / 2, y - fps_descent,
                      mi->xgwa.width - x,
                      y + fps_ascent + fps_descent);
           }
@@ -165,23 +163,26 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
 void
 do_fps (ModeInfo *mi)
 {
-  /* every N frames, get the time and use it to get the frames per second */
-  static int frame_counter = -1;
-  static double oldtime = 0; /* time in usecs, as a double */
-  static double newtime = 0;
-
+  static Bool initted_p = False;
+  static int last_ifps = 0;
+  static int frame_count = 0;
+  static struct timeval prev = { 0, };
+  static struct timeval now  = { 0, };
   static char msg [1024] = { 0, };
 
-  if (frame_counter == -1)
+  if (!initted_p)
     {
+      initted_p = True;
       fps_init (mi);
-      frame_counter = fps_sample_frames;
+      strcpy (msg, "FPS: (accumulating...)");
     }
 
-  if (frame_counter++ == fps_sample_frames)
+  /* Every N frames (where N is approximately one second's worth of frames)
+     check the wall clock.  We do this because checking the wall clock is
+     a slow operation.
+   */
+  if (frame_count++ >= last_ifps)
     {
-      double fps;
-      struct timeval now;
 # ifdef GETTIMEOFDAY_TWO_ARGS
       struct timezone tzp;
       gettimeofday(&now, &tzp);
@@ -189,34 +190,38 @@ do_fps (ModeInfo *mi)
       gettimeofday(&now);
 # endif
 
-      oldtime = newtime;
-      newtime = now.tv_sec + ((double) now.tv_usec * 0.000001);
-
-      fps = fps_sample_frames / (newtime - oldtime);
-
-      if (fps < 0.0001)
-        {
-          strcpy(msg, "FPS: (accumulating...)");
-        }
-      else
-        {
-          sprintf(msg, "FPS: %.02f", fps);
-
-          if (mi->pause != 0)
-            {
-              char buf[40];
-              sprintf(buf, "%f", mi->pause / 1000000.0); /* FTSO C */
-              while(*buf && buf[strlen(buf)-1] == '0')
-                buf[strlen(buf)-1] = 0;
-              if (buf[strlen(buf)-1] == '.')
-                buf[strlen(buf)-1] = 0;
-              sprintf(msg + strlen(msg), " (including %s sec/frame delay)",
-                      buf);
-            }
-        }
-
-      frame_counter = 0;
+      if (prev.tv_sec == 0)
+        prev = now;
     }
 
+  /* If we've probed the wall-clock time, regenerate the string.
+   */
+  if (now.tv_sec != prev.tv_sec)
+    {
+      double uprev = prev.tv_sec + ((double) prev.tv_usec * 0.000001);
+      double unow  =  now.tv_sec + ((double)  now.tv_usec * 0.000001);
+      double fps   = frame_count / (unow - uprev);
+
+      prev = now;
+      frame_count = 0;
+      last_ifps = fps;
+
+      sprintf (msg, "FPS: %.02f", fps);
+
+      if (mi->pause != 0)
+        {
+          char buf[40];
+          sprintf(buf, "%f", mi->pause / 1000000.0); /* FTSO C */
+          while(*buf && buf[strlen(buf)-1] == '0')
+            buf[strlen(buf)-1] = 0;
+          if (buf[strlen(buf)-1] == '.')
+            buf[strlen(buf)-1] = 0;
+          sprintf(msg + strlen(msg), " (including %s sec/frame delay)",
+                  buf);
+        }
+    }
+
+  /* Print the string every frame (or else nothing will show up.)
+   */
   fps_print_string (mi, fps_text_x, fps_text_y, msg);
 }

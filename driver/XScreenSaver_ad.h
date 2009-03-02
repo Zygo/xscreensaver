@@ -182,7 +182,8 @@
 				  -ncolors 230				    \\n\
 - 	                	juggle -root				    \\n\
  	                	polyominoes -root			    \\n\
- 	                	thornbird -root				    \\n\
+- 	                	thornbird -root				    \\n\
+ 	                	fluidballs -root			    \\n\
   color: 			bubbles -root				    \\n\
   default-n:			webcollage -root			    \\n\
   default-n:  \"WebCollage (whacked)\"					      \
@@ -227,6 +228,7 @@
 	   GL:			boxed -root				    \\n\
 	   GL:			glforestfire -root			    \\n\
 	   GL:			sballs -root				    \\n\
+	   GL:			cubenetic -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -427,4 +429,5 @@
 "*hacks.xfishtank.name:      XFishTank",
 "*hacks.electricsheep.name:  ElectricSheep",
 "*hacks.sphereEversion.name: SphereEversion",
+"*hacks.fluidballs.name:     FluidBalls",
 "*hacks.documentation.isInstalled: True",

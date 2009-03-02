@@ -1200,8 +1200,14 @@ reshape_molecule (ModeInfo *mi, int width, int height)
 static void
 gl_init (ModeInfo *mi)
 {
-  static GLfloat pos[4] = {5.0, 5.0, 10.0, 1.0};
+  static GLfloat pos[4] = {1.0, 0.4, 0.9, 0.0};
+  static GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};
+  static GLfloat dif[4] = {0.8, 0.8, 0.8, 1.0};
+  static GLfloat spc[4] = {1.0, 1.0, 1.0, 1.0};
   glLightfv(GL_LIGHT0, GL_POSITION, pos);
+  glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
+  glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
+  glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
 
   orig_do_labels = do_labels;
   orig_do_bonds = do_bonds;

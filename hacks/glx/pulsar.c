@@ -436,7 +436,6 @@ void Create_Texture(char *filename)
 {
   int height, width;
   GLubyte *image;
-  GLint a;
   int format;
 
   if ( !strncmp(filename, "BUILTIN", 7))
@@ -476,7 +475,21 @@ void Create_Texture(char *filename)
 
   /* mipmaps make the image look much nicer */
   if (do_mipmap)
-	a=gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, format, GL_UNSIGNED_BYTE, image);
+    {
+      int status;
+      clear_gl_error();
+      status = gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, format,
+                                 GL_UNSIGNED_BYTE, image);
+      if (status)
+        {
+          const char *s = gluErrorString (status);
+          fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
+                   progname, width, height,
+                   (s ? s : "(unknown)"));
+          exit (1);
+        }
+      check_gl_error("mipmapping");
+    }
   else
     {
       clear_gl_error();

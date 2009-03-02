@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001, 2002 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -295,6 +295,12 @@ get_image (Screen *screen, Window window, Bool verbose_p)
 
         if (putenv (ndpy))
           abort ();
+
+        /* don't free (ndpy) -- some implementations of putenv (BSD
+           4.4, glibc 2.0) copy the argument, but some (libc4,5, glibc
+           2.1.2) do not.  So we must leak it (and/or the previous
+           setting).  Yay.
+         */
       }
 # endif /* HAVE_PUTENV */
 

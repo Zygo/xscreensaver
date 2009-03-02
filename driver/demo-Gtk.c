@@ -1874,8 +1874,18 @@ populate_prefs_page (state *s)
   saver_preferences *p = &s->prefs;
   char str[100];
 
+  /* The file supports timeouts of less than a minute, but the GUI does
+     not, so throttle the values to be at least one minute (since "0" is
+     a bad rounding choice...)
+   */
+# define THROTTLE(NAME) if (p->NAME != 0 && p->NAME < 60000) p->NAME = 60000
+  THROTTLE (timeout);
+  THROTTLE (cycle);
+  THROTTLE (passwd_timeout);
+# undef THROTTLE
+
 # define FMT_MINUTES(NAME,N) \
-    sprintf (str, "%d", ((N) + 59) / (60 * 1000)); \
+    sprintf (str, "%d", (((N / 1000) + 59) / 60)); \
     gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, (NAME))), str)
 
 # define FMT_SECONDS(NAME,N) \
@@ -2011,6 +2021,10 @@ populate_popup_window (state *s)
                      : -1);
   screenhack *hack = (hack_number >= 0 ? p->screenhacks[hack_number] : 0);
   char *doc_string = 0;
+
+  /* #### not in Gtk 1.2
+  gtk_label_set_selectable (doc);
+   */
 
 # ifdef HAVE_XML
   if (s->cdata)
@@ -2796,7 +2810,7 @@ launch_preview_subproc (state *s)
 {
   saver_preferences *p = &s->prefs;
   Window id;
-  char *new_cmd;
+  char *new_cmd = 0;
   pid_t forked;
   const char *cmd = s->desired_preview_cmd;
 
@@ -2808,7 +2822,7 @@ launch_preview_subproc (state *s)
   if (s->preview_suppressed_p)
     {
       kill_preview_subproc (s);
-      return;
+      goto DONE;
     }
 
   new_cmd = malloc (strlen (cmd) + 40);
@@ -2831,7 +2845,7 @@ launch_preview_subproc (state *s)
     {
       s->running_preview_error_p = True;
       clear_preview_window (s);
-      return;
+      goto DONE;
     }
 
   switch ((int) (forked = fork ()))
@@ -2842,7 +2856,8 @@ launch_preview_subproc (state *s)
         sprintf (buf, "%s: couldn't fork", blurb());
         perror (buf);
         s->running_preview_error_p = True;
-        return;
+        goto DONE;
+        break;
       }
     case 0:
       {
@@ -2876,6 +2891,10 @@ launch_preview_subproc (state *s)
     }
 
   schedule_preview_check (s);
+
+ DONE:
+  if (new_cmd) free (new_cmd);
+  new_cmd = 0;
 }
 
 
@@ -2902,6 +2921,11 @@ hack_environment (state *s)
   if (s->debug_p)
     fprintf (stderr, "%s: %s\n", blurb(), ndpy);
 
+  /* don't free(ndpy) -- some implementations of putenv (BSD 4.4, glibc
+     2.0) copy the argument, but some (libc4,5, glibc 2.1.2) do not.
+     So we must leak it (and/or the previous setting).  Yay.
+   */
+
   if (def_path && *def_path)
     {
       const char *opath = getenv("PATH");
@@ -2913,6 +2937,7 @@ hack_environment (state *s)
 
       if (putenv (npath))
 	abort ();
+      /* do not free(npath) -- see above */
 
       if (s->debug_p)
         fprintf (stderr, "%s: added \"%s\" to $PATH\n", blurb(), def_path);
@@ -3139,7 +3164,7 @@ static void
 the_network_is_not_the_computer (state *s)
 {
   Display *dpy = GDK_DISPLAY();
-  char *rversion, *ruser, *rhost;
+  char *rversion = 0, *ruser = 0, *rhost = 0;
   char *luser, *lhost;
   char *msg = 0;
   struct passwd *p = getpwuid (getuid ());
@@ -3250,6 +3275,9 @@ the_network_is_not_the_computer (state *s)
   if (*msg)
     warning_dialog (s->toplevel_widget, msg, True, 1);
 
+  if (rversion) free (rversion);
+  if (ruser) free (ruser);
+  if (rhost) free (rhost);
   free (msg);
 }
 
@@ -3424,7 +3452,10 @@ main (int argc, char **argv)
   }
 
 #ifdef DEFAULT_ICONDIR  /* from -D on compile line */
-  add_pixmap_directory (DEFAULT_ICONDIR);
+  {
+    const char *dir = DEFAULT_ICONDIR;
+    if (*dir) add_pixmap_directory (dir);
+  }
 #endif
 
   /* This is gross, but Gtk understands --display and not -display...

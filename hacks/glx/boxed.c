@@ -1071,8 +1071,19 @@ pinit(ModeInfo * mi)
    
    
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-   gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 256, 256,
-		     GL_RGB, GL_UNSIGNED_BYTE, gp->tex1);
+
+   clear_gl_error();
+   i = gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 256, 256,
+                         GL_RGB, GL_UNSIGNED_BYTE, gp->tex1);
+   if (i)
+     {
+       const char *s = gluErrorString (i);
+       fprintf (stderr, "%s: error mipmapping texture: %s\n",
+                progname, (s ? s : "(unknown)"));
+       exit (1);
+     }
+   check_gl_error("mipmapping");
+
    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
