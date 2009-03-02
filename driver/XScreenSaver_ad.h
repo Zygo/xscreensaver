@@ -1,10 +1,14 @@
 "#error Do not run app-defaults files through xrdb!",
 "#error That does not do what you might expect.",
 "#error Put this file in /usr/lib/X11/app-defaults/XScreenSaver instead.",
-"*timeout:		10",
-"*cycle:			10",
-"*lockTimeout:		0",
-"*passwdTimeout:		30",
+"*timeout:		0:10:00",
+"*cycle:			0:10:00",
+"*lockTimeout:		0:00:00",
+"*passwdTimeout:		0:00:30",
+"*dpmsEnabled:		False",
+"*dpmsStandby:		2:00:00",
+"*dpmsSuspend:		2:00:00",
+"*dpmsOff:		4:00:00",
 "*nice:			10",
 "*lock:			False",
 "*lockVTs:		True",
@@ -12,10 +16,10 @@
 "*timestamp:		False",
 "*fade:			True",
 "*unfade:		False",
-"*fadeSeconds:		3",
+"*fadeSeconds:		0:00:03",
 "*fadeTicks:		20",
 "*splash:		True",
-"*splashDuration:	5",
+"*splashDuration:	0:00:05",
 "*visualID:		default",
 "*captureStderr: 	True",
 "*overlayTextForeground:	#FFFF00",
@@ -161,6 +165,7 @@
 	       \"Zoom (Lenses)\"	zoom -root -lenses			    \\n\
 				rotzoomer -root				    \\n\
 -	   \"RotZoomer (mobile)\" rotzoomer -root -move			    \\n\
+-	   \"RotZoomer (sweep)\"  rotzoomer -root -sweep			    \\n\
 				whirlwindwarp -root			    \\n\
   color: 			bubbles -root				    \\n\
   default-n:			webcollage -root			    \\n\
@@ -212,9 +217,9 @@
 -				goban -root                                 \\n\
 -				electricsheep                               \\n\
 -				cosmos -root                                \\n",
-"XScreenSaver.pointerPollTime:		5",
-"XScreenSaver.initialDelay:		0",
-"XScreenSaver.windowCreationTimeout:	30",
+"XScreenSaver.pointerPollTime:		0:00:05",
+"XScreenSaver.initialDelay:		0:00:00",
+"XScreenSaver.windowCreationTimeout:	0:00:30",
 "XScreenSaver.bourneShell:		/bin/sh",
 "*Dialog.headingFont:		*-times-bold-r-*-*-*-180-*-*-*-iso8859-1",
 "*Dialog.bodyFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",

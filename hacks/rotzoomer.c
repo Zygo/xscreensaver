@@ -10,6 +10,19 @@
  * implied warranty.
  */
 
+/*
+ * Options:
+ *
+ * -shm		enable MIT shared memory extension
+ * -no-shm	disable MIT shared memory extension
+ * -n <num>	number of zoomboxes
+ * -move	enable mobile zoomboxes
+ * -sweep	enable sweep mode
+ * -anim	enable snapshot mode
+ * -no-anim	enable snapshot mode
+ * -delay	delay in milliseconds
+ */
+
 #include <math.h>
 #include "screenhack.h"
 #include <X11/Xutil.h>
@@ -30,6 +43,7 @@ struct zoom_area {
 	int x, y;		/* left-upper corner position */
 	int ww, hh;		/* valid area to place left-upper corner */
 	int n;			/* number of iteractions */
+	int count;		/* current iteraction */
 };
 
 static Window window;
@@ -42,8 +56,10 @@ static Colormap colormap;
 static int width, height;
 static struct zoom_area **zoom_box;
 static int num_zoom = 2;
-static int move = 1;
-static int delay = 0;
+static int move = 0;
+static int sweep = 0;
+static int delay = 10;
+static int anim = 1;
 
 
 static void rotzoom (struct zoom_area *za)
@@ -83,35 +99,98 @@ static void rotzoom (struct zoom_area *za)
 
 	za->ox = ox;			/* Save state for next iteration */
 	za->oy = oy;
+
+	za->count++;
 }
 
 
 static void reset_zoom (struct zoom_area *za)
 {
-	za->w = 50 + random() % 300;
-	za->h = 50 + random() % 300;
+	if (sweep) {
+		int speed = random () % 100 + 100;
+		switch (random () % 4) {
+		case 0:
+			za->w = width;
+			za->h = 10;
+			za->x = 0;
+			za->y = 0;
+			za->dx = 0;
+			za->dy = speed;
+			za->n = (height - 10) * 256 / speed;
+			break;
+		case 1:
+			za->w = 10;
+			za->h = height;
+			za->x = width - 10;
+			za->y = 0;
+			za->dx = -speed;
+			za->dy = 0;
+			za->n = (width - 10) * 256 / speed;
+			break;
+		case 2:
+			za->w = width;
+			za->h = 10;
+			za->x = 0;
+			za->y = height - 10;
+			za->dx = 0;
+			za->dy = -speed;
+			za->n = (height - 10) * 256 / speed;
+			break;
+		case 3:
+			za->w = 10;
+			za->h = height;
+			za->x = 0;
+			za->y = 0;
+			za->dx = speed;
+			za->dy = 0;
+			za->n = (width - 10) * 256 / speed;
+			break;
+		}
+		za->ww = width - za->w;
+		za->hh = height - za->h;
 
-	if (za->w > width / 3)
-		za->w = width / 3;
+		/* We want smaller angle increments in sweep mode (looks better) */
 
-	if (za->h > height / 3)
-		za->h = height / 3;
+		za->a1 = 0;
+		za->a2 = 0;
+		za->inc1 = ((2 * (random() & 1)) - 1) * (1 + random () % 7);
+		za->inc2 = ((2 * (random() & 1)) - 1) * (1 + random () % 7);
+	} else {
+		za->w = 50 + random() % 300;
+		za->h = 50 + random() % 300;
 
-	za->ww = width - za->w;
-	za->hh = height - za->h;
+		if (za->w > width / 3)
+			za->w = width / 3;
+		if (za->h > height / 3)
+			za->h = height / 3;
 
-	za->x = (random() % za->ww);
-	za->y = (random() % za->hh);
+		za->ww = width - za->w;
+		za->hh = height - za->h;
+
+		za->x = (random() % za->ww);
+		za->y = (random() % za->hh);
+
+		za->dx = ((2 * (random() & 1)) - 1) * (100 + random() % 300);
+		za->dy = ((2 * (random() & 1)) - 1) * (100 + random() % 300);
+
+		if (anim) {
+			za->n = 50 + random() % 1000;
+			za->a1 = 0;
+			za->a2 = 0;
+		} else {
+			za->n = 5 + random() % 10;
+			za->a1 = random ();
+			za->a2 = random ();
+		}
+
+		za->inc1 = ((2 * (random() & 1)) - 1) * (random () % 30);
+		za->inc2 = ((2 * (random() & 1)) - 1) * (random () % 30);
+	}
+
 	za->xx = za->x * 256;
 	za->yy = za->y * 256;
 
-	za->a1 = 0;
-	za->a2 = 0;
-	za->dx = ((2 * (random() & 1)) - 1) * (100 + random() % 300);
-	za->dy = ((2 * (random() & 1)) - 1) * (100 + random() % 300);
-	za->inc1 = ((2 * (random() & 1)) - 1) * (random () % 30);
-	za->inc2 = ((2 * (random() & 1)) - 1) * (random () % 30);
-	za->n = 50 + random() % 1000;
+	za->count = 0;
 }
 
 
@@ -173,11 +252,15 @@ static void hack_main (void)
 	int i;
 
 	for (i = 0; i < num_zoom; i++) {
-		if (move)
+		if (move || sweep)
 			update_position (zoom_box[i]);
 
-		if (zoom_box[i]->n) {
-			rotzoom (zoom_box[i]);
+		if (zoom_box[i]->n > 0) {
+			if (anim || zoom_box[i]->count == 0) {
+				rotzoom (zoom_box[i]);
+			} else {
+				sleep (1);
+			}
 			zoom_box[i]->n--;
 		} else {
 			reset_zoom (zoom_box[i]);
@@ -269,29 +352,32 @@ static void setup_X (Display * disp, Window win)
 }
 
 
-
 char *progclass = "Rotzoomer";
 
 char *defaults[] = {
 #ifdef HAVE_XSHM_EXTENSION
 	"*useSHM: True",
 #endif
-	"*delay: 10000",
 	"*move: False",
+	"*sweep: False",
+	"*anim: True",
 	"*numboxes: 2",
+	"*delay: 10",
 	0
 };
 
 
 XrmOptionDescRec options[] = {
 #ifdef HAVE_XSHM_EXTENSION
-	{ "-shm",	".useSHM",	XrmoptionNoArg, "True" },
+	{ "-shm",	".useSHM",	XrmoptionNoArg, "True"  },
 	{ "-no-shm",	".useSHM",	XrmoptionNoArg, "False" },
 #endif
-	{ "-move",	".move",	XrmoptionNoArg, "True"},
-	{ "-no-move",	".move",	XrmoptionNoArg, "False"},
-	{ "-delay",	".delay",	XrmoptionSepArg, 0},
-	{ "-n",		".numboxes",	XrmoptionSepArg, 0},
+	{ "-move",	".move",	XrmoptionNoArg, "True"  },
+	{ "-sweep",	".sweep",	XrmoptionNoArg, "True"  },
+	{ "-anim",	".anim",	XrmoptionNoArg, "True"  },
+	{ "-no-anim",	".anim",	XrmoptionNoArg, "False" },
+	{ "-delay",	".delay",	XrmoptionSepArg, 0      },
+	{ "-n",		".numboxes",	XrmoptionSepArg, 0      },
 	{ 0, 0, 0, 0 }
 };
 
@@ -301,9 +387,19 @@ void screenhack(Display *disp, Window win)
 #ifdef HAVE_XSHM_EXTENSION
 	use_shm = get_boolean_resource ("useSHM", "Boolean");
 #endif
-	num_zoom = get_integer_resource("numboxes", "Integer");
-	move = get_boolean_resource("move", "Boolean");
-	delay = get_integer_resource("delay", "Integer");
+	num_zoom = get_integer_resource ("numboxes", "Integer");
+	move = get_boolean_resource ("move", "Boolean");
+	delay = get_integer_resource ("delay", "Integer");
+	sweep = get_boolean_resource ("sweep", "Boolean");
+	anim = get_boolean_resource ("anim", "Boolean");
+
+	/* In sweep or static mode, we want only one box */
+	if (sweep || !anim)
+		num_zoom = 1;
+
+	/* Can't have static sweep mode */
+	if (!anim)
+		sweep = 0;
 
 	setup_X (disp, win);
 
@@ -312,6 +408,6 @@ void screenhack(Display *disp, Window win)
 	/* Main drawing loop */
 	while (42) {
 		hack_main ();
-		usleep (delay);
+		usleep (delay * 1000);
 	}
 }

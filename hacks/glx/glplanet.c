@@ -1,12 +1,6 @@
 /* -*- Mode: C; tab-width: 4 -*- */
-/* glplanet --- 3D rotating planet, e.g., Earth. */
-
-#if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)plate.c	4.07 97/11/24 xlockmore";
-
-#endif
-
-/*-
+/* glplanet --- 3D rotating planet, e.g., Earth.
+ *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
  * provided that the above copyright notice appear in all copies and that
@@ -20,6 +14,8 @@ static const char sccsid[] = "@(#)plate.c	4.07 97/11/24 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
+ * 21-Mar-01: jwz@jwz.org   Broke sphere routine out into its own file.
+ *
  * 9-Oct-98:  dek@cgl.ucsf.edu  Added stars.
  *
  * 8-Oct-98:  jwz@jwz.org   Made the 512x512x1 xearth image be built in.
@@ -79,6 +75,8 @@ static const char sccsid[] = "@(#)plate.c	4.07 97/11/24 xlockmore";
 #endif /* !STANDALONE */
 
 #ifdef USE_GL /* whole file */
+
+#include "sphere.h"
 
 #ifdef HAVE_XPM
 # include <X11/xpm.h>
@@ -378,6 +376,7 @@ setup_face(void)
 }
 
 
+#if 0
 /* Function for determining points on the surface of the sphere */
 static void inline ParametricSphere(float theta, float rho, GLfloat *vector)
 {
@@ -393,6 +392,7 @@ static void inline ParametricSphere(float theta, float rho, GLfloat *vector)
 
 	return;
 }
+#endif
 
 
 /* lame way to generate some random stars */
@@ -452,14 +452,6 @@ pinit(ModeInfo * mi)
 {
   Bool wire = MI_IS_WIREFRAME(mi);
   planetstruct *gp = &planets[MI_SCREEN(mi)];
-  int i, j;
-  int stacks=STACKS, slices=SLICES;
-  float radius=RADIUS;
-
-  float drho, dtheta;
-  float rho, theta;
-  GLfloat vector[3];
-  GLfloat ds, dt, t, s;;
 
   if (wire) {
 	glEnable(GL_LINE_SMOOTH);
@@ -479,71 +471,13 @@ pinit(ModeInfo * mi)
 	generate_stars(MI_WIDTH(mi), MI_HEIGHT(mi));
   }
 
-
-  /*-
-   * Generate a sphere with quadrilaterals.
-   * Quad vertices are determined using a parametric sphere function.
-   * For fun, you could generate practically any parameteric surface and
-   * map an image onto it. 
-   */
-
-  drho = M_PI / stacks;
-  dtheta = 2.0 * M_PI / slices;
-  ds = 1.0 / slices;
-  dt = 1.0 / stacks;
-  
-
   gp->platelist=glGenLists(1);
   glNewList(gp->platelist, GL_COMPILE);
-
-  glColor3f(1,1,1);
-  glBegin( wire ? GL_LINE_LOOP : GL_QUADS );
-
-  t = 0.0;
-  for(i=0; i<stacks; i++) {
-	rho = i * drho;
-	s = 0.0;
-	for(j=0; j<slices; j++) {
-	  theta = j * dtheta;
-
-
-	  glTexCoord2f(s,t);
-	  ParametricSphere(theta, rho, vector);
-	  normalize(vector);
-	  glNormal3fv(vector);
-	  ParametricSphere(theta, rho, vector);
-	  glVertex3f( vector[0]*radius, vector[1]*radius, vector[2]*radius );
-
-	  glTexCoord2f(s,t+dt);
-	  ParametricSphere(theta, rho+drho, vector);
-	  normalize(vector);
-	  glNormal3fv(vector);
-	  ParametricSphere(theta, rho+drho, vector);
-	  glVertex3f( vector[0]*radius, vector[1]*radius, vector[2]*radius );
-
-	  glTexCoord2f(s+ds,t+dt);
-	  ParametricSphere(theta + dtheta, rho+drho, vector);
-	  normalize(vector);
-	  glNormal3fv(vector);
-	  ParametricSphere(theta + dtheta, rho+drho, vector);
-	  glVertex3f( vector[0]*radius, vector[1]*radius, vector[2]*radius );
-
-	  glTexCoord2f(s+ds, t);
-	  ParametricSphere(theta + dtheta, rho, vector);
-	  normalize(vector);
-	  glNormal3fv(vector);
-	  ParametricSphere(theta + dtheta, rho, vector);
-	  glVertex3f( vector[0]*radius, vector[1]*radius, vector[2]*radius );
-
-	  s = s + ds;
-
-	}
-	t = t + dt;
-  }
-  glEnd();
+  glPushMatrix ();
+  glScalef (RADIUS, RADIUS, RADIUS);
+  unit_sphere (STACKS, SLICES, wire);
+  glPopMatrix ();
   glEndList();
-
-
  }
 
 static void

@@ -1,4 +1,4 @@
-#!/usr/freeware/bin/perl5 -w
+#!/usr/bin/perl -w
 #
 # webcollage, Copyright (c) 1999, 2000 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
@@ -28,7 +28,7 @@ use Fcntl ':flock'; # import LOCK_* constants
 use POSIX qw(strftime);
 
 
-my $version = q{ $Revision: 1.62 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.63 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";

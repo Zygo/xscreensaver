@@ -32,11 +32,10 @@ extern XtAppContext app;
 			"*wander:     " DEF_WANDER "\n" \
 
 
+#define SPIKE_FACES   12  /* how densely to render spikes */
+#define SMOOTH_SPIKES True
 #define SPHERE_SLICES 32  /* how densely to render spheres */
 #define SPHERE_STACKS 16
-
-
-#define SPIKE_FACES  12   /* how densely to render spikes */
 
 
 #undef countof
@@ -44,6 +43,8 @@ extern XtAppContext app;
 
 #include "xlockmore.h"
 #include "colors.h"
+#include "sphere.h"
+#include "tube.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -101,112 +102,6 @@ static argtype vars[] = {
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
-
-
-
-static void
-unit_spike (Bool wire)
-{
-  int i;
-  int faces = SPIKE_FACES;
-  GLfloat step = M_PI * 2 / faces;
-  GLfloat th;
-
-  glFrontFace(GL_CW);
-  glBegin(wire ? GL_LINE_STRIP : GL_TRIANGLE_FAN);
-
-  glNormal3f(0, 1, 0);
-  glVertex3f(0, 1, 0);
-  for (i = 0, th = 0; i <= faces; i++)
-    {
-      GLfloat x = cos (th);
-      GLfloat y = sin (th);
-      glNormal3f(x, 0, y);
-      glVertex3f(x, 0, y);
-      if (wire) glVertex3f(0, 1, 0);
-      th += step;
-    }
-  glEnd();
-}
-
-
-/* lifted from glplanet */
-/* Function for determining points on the surface of the sphere */
-static void
-parametric_sphere (float theta, float rho, GLfloat *vector)
-{
-  vector[0] = -sin(theta) * sin(rho);
-  vector[1] = cos(theta) * sin(rho);
-  vector[2] = cos(rho);
-}
-
-/* lifted from glplanet */
-static void
-unit_sphere (Bool wire)
-{
-  int stacks = SPHERE_STACKS;
-  int slices = SPHERE_SLICES;
-
-  int i, j;
-  float drho, dtheta;
-  float rho, theta;
-  GLfloat vector[3];
-  GLfloat ds, dt, t, s;
-
-  if (!wire)
-    glShadeModel(GL_SMOOTH);
-
-  /* Generate a sphere with quadrilaterals.
-   * Quad vertices are determined using a parametric sphere function.
-   * For fun, you could generate practically any parameteric surface and
-   * map an image onto it. 
-   */
-  drho = M_PI / stacks;
-  dtheta = 2.0 * M_PI / slices;
-  ds = 1.0 / slices;
-  dt = 1.0 / stacks;
-
-  glFrontFace(GL_CCW);
-  glBegin( wire ? GL_LINE_LOOP : GL_QUADS );
-
-  t = 0.0;
-  for (i=0; i < stacks; i++) {
-    rho = i * drho;
-    s = 0.0;
-    for (j=0; j < slices; j++) {
-      theta = j * dtheta;
-
-      glTexCoord2f (s,t);
-      parametric_sphere (theta, rho, vector);
-      glNormal3fv (vector);
-      parametric_sphere (theta, rho, vector);
-      glVertex3f (vector[0], vector[1], vector[2]);
-
-      glTexCoord2f (s,t+dt);
-      parametric_sphere (theta, rho+drho, vector);
-      glNormal3fv (vector);
-      parametric_sphere (theta, rho+drho, vector);
-      glVertex3f (vector[0], vector[1], vector[2]);
-
-      glTexCoord2f (s+ds,t+dt);
-      parametric_sphere (theta + dtheta, rho+drho, vector);
-      glNormal3fv (vector);
-      parametric_sphere (theta + dtheta, rho+drho, vector);
-      glVertex3f (vector[0], vector[1], vector[2]);
-
-      glTexCoord2f (s+ds, t);
-      parametric_sphere (theta + dtheta, rho, vector);
-      glNormal3fv (vector);
-      parametric_sphere (theta + dtheta, rho, vector);
-      glVertex3f (vector[0], vector[1], vector[2]);
-
-      s = s + ds;
-    }
-    t = t + dt;
-  }
-  glEnd();
-}
-
 
 
 /* Window management, etc
@@ -442,11 +337,13 @@ init_ball (ModeInfo *mi)
   bp->spike_list = glGenLists (1);
 
   glNewList (bp->ball_list, GL_COMPILE);
-  unit_sphere (wire);
+  unit_sphere (SPHERE_STACKS, SPHERE_SLICES, wire);
   glEndList ();
 
   glNewList (bp->spike_list, GL_COMPILE);
-  unit_spike (wire);
+  cone (0, 0, 0,
+        0, 1, 0,
+        1, 0, SPIKE_FACES, SMOOTH_SPIKES, wire);
   glEndList ();
 
   randomize_spikes (mi);

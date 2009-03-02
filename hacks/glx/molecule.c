@@ -64,16 +64,16 @@
 
 #include "xlockmore.h"
 #include "colors.h"
+#include "sphere.h"
+#include "tube.h"
 
 #ifdef USE_GL /* whole file */
 
 #include <ctype.h>
 #include <GL/glu.h>
 
-
 #define SPHERE_SLICES 16  /* how densely to render spheres */
 #define SPHERE_STACKS 10
-
 
 #define SMOOTH_TUBE       /* whether to have smooth or faceted tubes */
 
@@ -191,6 +191,8 @@ static XrmOptionDescRec opts[] = {
   { "+wander", ".wander", XrmoptionNoArg, "False" },
   { "-labels", ".labels", XrmoptionNoArg, "True" },
   { "+labels", ".labels", XrmoptionNoArg, "False" },
+  { "-titles", ".titles", XrmoptionNoArg, "True" },
+  { "+titles", ".titles", XrmoptionNoArg, "False" },
   { "-atoms",  ".atoms",  XrmoptionNoArg, "True" },
   { "+atoms",  ".atoms",  XrmoptionNoArg, "False" },
   { "-bonds",  ".bonds",  XrmoptionNoArg, "True" },
@@ -219,192 +221,15 @@ ModeSpecOpt molecule_opts = {countof(opts), opts, countof(vars), vars, NULL};
 /* shapes */
 
 static void
-unit_tube (Bool wire)
-{
-  int i;
-  int faces = (scale_down ? TUBE_FACES_2 : TUBE_FACES);
-  GLfloat step = M_PI * 2 / faces;
-  GLfloat th;
-  int z = 0;
-
-  /* side walls
-   */
-  glFrontFace(GL_CCW);
-
-# ifdef SMOOTH_TUBE
-  glBegin(wire ? GL_LINES : GL_QUAD_STRIP);
-# else
-  glBegin(wire ? GL_LINES : GL_QUADS);
-# endif
-
-  for (i = 0, th = 0; i <= faces; i++)
-    {
-      GLfloat x = cos (th);
-      GLfloat y = sin (th);
-      glNormal3f(x, 0, y);
-      glVertex3f(x, 0.0, y);
-      glVertex3f(x, 1.0, y);
-      th += step;
-
-# ifndef SMOOTH_TUBE
-      x = cos (th);
-      y = sin (th);
-      glVertex3f(x, 1.0, y);
-      glVertex3f(x, 0.0, y);
-# endif
-    }
-  glEnd();
-
-  /* End caps
-   */
-  for (z = 0; z <= 1; z++)
-    {
-      glFrontFace(z == 0 ? GL_CCW : GL_CW);
-      glNormal3f(0, (z == 0 ? -1 : 1), 0);
-      glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
-      if (! wire) glVertex3f(0, z, 0);
-      for (i = 0, th = 0; i <= faces; i++)
-        {
-          GLfloat x = cos (th);
-          GLfloat y = sin (th);
-          glVertex3f(x, z, y);
-          th += step;
-        }
-      glEnd();
-    }
-}
-
-
-static void
-tube (GLfloat x1, GLfloat y1, GLfloat z1,
-      GLfloat x2, GLfloat y2, GLfloat z2,
-      GLfloat diameter, GLfloat cap_size,
-      Bool wire)
-{
-  GLfloat length, angle, a, b, c;
-
-  if (diameter <= 0) abort();
-
-  a = (x2 - x1);
-  b = (y2 - y1);
-  c = (z2 - z1);
-
-  length = sqrt (a*a + b*b + c*c);
-  angle = acos (a / length);
-
-  glPushMatrix();
-  glTranslatef(x1, y1, z1);
-  glScalef (length, length, length);
-
-  if (c == 0 && b == 0)
-    glRotatef (angle / (M_PI / 180), 0, 1, 0);
-  else
-    glRotatef (angle / (M_PI / 180), 0, -c, b);
-
-  glRotatef (-90, 0, 0, 1);
-  glScalef (diameter/length, 1, diameter/length);
-
-  /* extend the endpoints of the tube by the cap size in both directions */
-  if (cap_size != 0)
-    {
-      GLfloat c = cap_size/length;
-      glTranslatef (0, -c, 0);
-      glScalef (1, 1+c+c, 1);
-    }
-
-  unit_tube (wire);
-  glPopMatrix();
-}
-
-
-/* lifted from glplanet */
-/* Function for determining points on the surface of the sphere */
-static void
-parametric_sphere (float theta, float rho, GLfloat *vector)
-{
-  vector[0] = -sin(theta) * sin(rho);
-  vector[1] = cos(theta) * sin(rho);
-  vector[2] = cos(rho);
-}
-
-/* lifted from glplanet */
-static void
-unit_sphere (Bool wire)
+sphere (GLfloat x, GLfloat y, GLfloat z, GLfloat diameter, Bool wire)
 {
   int stacks = (scale_down ? SPHERE_STACKS_2 : SPHERE_STACKS);
   int slices = (scale_down ? SPHERE_SLICES_2 : SPHERE_SLICES);
 
-  int i, j;
-  float drho, dtheta;
-  float rho, theta;
-  GLfloat vector[3];
-  GLfloat ds, dt, t, s;
-
-  if (!do_bonds && !scale_down)  /* if balls are bigger, be smoother... */
-    slices *= 2, stacks *= 2;
-
-  if (!wire)
-    glShadeModel(GL_SMOOTH);
-
-  /* Generate a sphere with quadrilaterals.
-   * Quad vertices are determined using a parametric sphere function.
-   * For fun, you could generate practically any parameteric surface and
-   * map an image onto it. 
-   */
-  drho = M_PI / stacks;
-  dtheta = 2.0 * M_PI / slices;
-  ds = 1.0 / slices;
-  dt = 1.0 / stacks;
-
-  glFrontFace(GL_CCW);
-  glBegin( wire ? GL_LINE_LOOP : GL_QUADS );
-
-  t = 0.0;
-  for (i=0; i < stacks; i++) {
-    rho = i * drho;
-    s = 0.0;
-    for (j=0; j < slices; j++) {
-      theta = j * dtheta;
-
-      glTexCoord2f (s,t);
-      parametric_sphere (theta, rho, vector);
-      glNormal3fv (vector);
-      parametric_sphere (theta, rho, vector);
-      glVertex3f (vector[0], vector[1], vector[2]);
-
-      glTexCoord2f (s,t+dt);
-      parametric_sphere (theta, rho+drho, vector);
-      glNormal3fv (vector);
-      parametric_sphere (theta, rho+drho, vector);
-      glVertex3f (vector[0], vector[1], vector[2]);
-
-      glTexCoord2f (s+ds,t+dt);
-      parametric_sphere (theta + dtheta, rho+drho, vector);
-      glNormal3fv (vector);
-      parametric_sphere (theta + dtheta, rho+drho, vector);
-      glVertex3f (vector[0], vector[1], vector[2]);
-
-      glTexCoord2f (s+ds, t);
-      parametric_sphere (theta + dtheta, rho, vector);
-      glNormal3fv (vector);
-      parametric_sphere (theta + dtheta, rho, vector);
-      glVertex3f (vector[0], vector[1], vector[2]);
-
-      s = s + ds;
-    }
-    t = t + dt;
-  }
-  glEnd();
-}
-
-
-static void
-sphere (GLfloat x, GLfloat y, GLfloat z, GLfloat diameter, Bool wire)
-{
   glPushMatrix ();
   glTranslatef (x, y, z);
   glScalef (diameter, diameter, diameter);
-  unit_sphere (wire);
+  unit_sphere (stacks, slices, wire);
   glPopMatrix ();
 }
 
@@ -816,13 +641,21 @@ build_molecule (ModeInfo *mi)
           }
         else
           {
+            int faces = (scale_down ? TUBE_FACES_2 : TUBE_FACES);
+# ifdef SMOOTH_TUBE
+            int smooth = True;
+# else
+            int smooth = False;
+# endif
             GLfloat thickness = 0.07 * b->strength;
             GLfloat cap_size = 0.03;
             if (thickness > 0.3)
               thickness = 0.3;
+
             tube (from->x, from->y, from->z,
                   to->x,   to->y,   to->z,
-                  thickness, cap_size, wire);
+                  thickness, cap_size,
+                  faces, smooth, wire);
           }
       }
 

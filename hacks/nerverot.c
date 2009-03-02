@@ -1,6 +1,6 @@
-/* nerverot, nervous rotation of random thingies, v1.2
+/* nerverot, nervous rotation of random thingies, v1.3
  * by Dan Bornstein, danfuzz@milk.com
- * Copyright (c) 2000 Dan Bornstein.
+ * Copyright (c) 2000-2001 Dan Bornstein. All rights reserved.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -38,6 +38,9 @@ static int requestedBlotCount;
 
 /* delay (usec) between iterations */
 int delay;
+
+/* max iterations per model */
+int maxIters;
 
 /* variability of xoff/yoff per iteration (0..1) */
 static FLOAT nervousness;
@@ -366,10 +369,14 @@ static void setupBlotsCylinder (void)
 static void setupBlotsSquiggle (void)
 {
     FLOAT x, y, z, xv, yv, zv, len;
+    int minCoor, maxCoor;
     int n;
 
     blotCount = requestedBlotCount;
     blots = calloc (sizeof (Blot), blotCount);
+
+    maxCoor = (int) (RAND_FLOAT_01 * 5) + 1;
+    minCoor = -maxCoor;
 
     x = RAND_FLOAT_PM1;
     y = RAND_FLOAT_PM1;
@@ -402,9 +409,9 @@ static void setupBlotsSquiggle (void)
 	    newy = y + yv * 0.1;
 	    newz = z + zv * 0.1;
 
-	    if (   (newx >= -1) && (newx <= 1)
-		&& (newy >= -1) && (newy <= 1)
-		&& (newz >= -1) && (newz <= 1))
+	    if (   (newx >= minCoor) && (newx <= maxCoor)
+		&& (newy >= minCoor) && (newy <= maxCoor)
+		&& (newz >= minCoor) && (newz <= maxCoor))
 	    {
 		break;
 	    }
@@ -444,6 +451,66 @@ static void setupBlotsCubeCorners (void)
     }
 
     scaleBlotsToRadius1 ();
+}
+
+
+
+/* set up the initial array of blots to be randomly distributed
+ * on the surface of a tetrahedron */
+static void setupBlotsTetrahedron (void)
+{
+    /* table of corners of the tetrahedron */
+    static FLOAT cor[4][3] = { {  0.0,   1.0,  0.0 },
+			       { -0.75, -0.5, -0.433013 },
+			       {  0.0,  -0.5,  0.866025 },
+			       {  0.75, -0.5, -0.433013 } };
+
+    int n, c;
+
+    /* derive blotsPerSurface from blotCount, but then do the reverse
+     * since roundoff may have changed blotCount */
+    int blotsPerSurface = requestedBlotCount / 4;
+
+    blotCount = blotsPerSurface * 4;
+    blots = calloc (sizeof (Blot), blotCount);
+
+    for (n = 0; n < blotCount; n += 4)
+    {
+	/* pick a random point on a unit right triangle */
+	FLOAT rawx = RAND_FLOAT_01;
+	FLOAT rawy = RAND_FLOAT_01;
+
+	if ((rawx + rawy) > 1)
+	{
+	    /* swap coords into place */
+	    FLOAT t = 1.0 - rawx;
+	    rawx = 1.0 - rawy;
+	    rawy = t;
+	}
+
+	/* translate the point to be on each of the surfaces */
+	for (c = 0; c < 4; c++)
+	{
+	    FLOAT x, y, z;
+	    
+	    int c1 = (c + 1) % 4;
+	    int c2 = (c + 2) % 4;
+	    
+	    x = (cor[c1][0] - cor[c][0]) * rawx + 
+		(cor[c2][0] - cor[c][0]) * rawy + 
+		cor[c][0];
+
+	    y = (cor[c1][1] - cor[c][1]) * rawx + 
+		(cor[c2][1] - cor[c][1]) * rawy + 
+		cor[c][1];
+
+	    z = (cor[c1][2] - cor[c][2]) * rawx + 
+		(cor[c2][2] - cor[c][2]) * rawy + 
+		cor[c][2];
+
+	    initBlot (&blots[n + c], x, y, z);
+	}
+    }
 }
 
 
@@ -558,7 +625,7 @@ static void freeBlots (void)
 /* set up the initial arrays of blots */
 static void setupBlots (void)
 {
-    int which = RAND_FLOAT_01 * 7;
+    int which = RAND_FLOAT_01 * 8;
 
     freeBlots ();
 
@@ -580,7 +647,10 @@ static void setupBlots (void)
 	    setupBlotsCubeCorners ();
 	    break;
 	case 5:
+	    setupBlotsTetrahedron ();
+	    break;
 	case 6:
+	case 7:
 	    setupBlotsDuo ();
 	    break;
     }
@@ -699,7 +769,7 @@ static void setup (void)
     lightY = lightYTarget = RAND_FLOAT_PM1;
     lightZ = lightZTarget = RAND_FLOAT_PM1;
 
-    itersTillNext = RAND_FLOAT_01 * 1234;
+    itersTillNext = RAND_FLOAT_01 * maxIters;
 }
 
 
@@ -801,7 +871,7 @@ static void updateWithFeeling (void)
     itersTillNext--;
     if (itersTillNext < 0)
     {
-	itersTillNext = RAND_FLOAT_01 * 1234;
+	itersTillNext = RAND_FLOAT_01 * maxIters;
 	setupBlots ();
 	setupSegs ();
 	renderSegs ();
@@ -983,6 +1053,7 @@ char *defaults [] = {
     "*count:		250",
     "*colors:		4",
     "*delay:		10000",
+    "*maxIters:		1200",
     "*doubleBuffer:	false",
     "*eventChance:      0.2",
     "*iterAmt:          0.01",
@@ -1000,6 +1071,7 @@ XrmOptionDescRec options [] = {
   { "-count",            ".count",          XrmoptionSepArg, 0 },
   { "-colors",           ".colors",         XrmoptionSepArg, 0 },
   { "-delay",            ".delay",          XrmoptionSepArg, 0 },
+  { "-max-iters",        ".maxIters",       XrmoptionSepArg, 0 },
   { "-db",               ".doubleBuffer",   XrmoptionNoArg,  "true" },
   { "-no-db",            ".doubleBuffer",   XrmoptionNoArg,  "false" },
   { "-event-chance",     ".eventChance",    XrmoptionSepArg, 0 },
@@ -1023,6 +1095,13 @@ static void initParams (void)
     if (delay < 0)
     {
 	fprintf (stderr, "error: delay must be at least 0\n");
+	problems = 1;
+    }
+    
+    maxIters = get_integer_resource ("maxIters", "Integer");
+    if (maxIters < 0)
+    {
+	fprintf (stderr, "error: maxIters must be at least 0\n");
 	problems = 1;
     }
     

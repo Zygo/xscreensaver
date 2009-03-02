@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "19-Mar-2001 (3.30)" "X Version 11"
+.TH XScreenSaver 1 "29-Mar-2001 (3.31)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -166,6 +166,23 @@ should be left on the screen before giving up (default 30 seconds.)  This
 should not be too large: the X server is grabbed for the duration that the
 password dialog box is up (for security purposes) and leaving the server 
 grabbed for too long can cause problems.
+.TP 8
+.B dpmsEnabled\fP (class \fBBoolean\fP)
+Whether power management is enabled.
+.TP 8
+.B dpmsStandby\fP (class \fBTime\fP)
+If power management is enabled, how long until the monitor goes solid black.
+.TP 8
+.B dpmsSuspend\fP (class \fBTime\fP)
+If power management is enabled, how long until the monitor goes into
+power-saving mode.
+.TP 8
+.B dpmsOff\fP (class \fBTime\fP)
+If power management is enabled, how long until the monitor powers down
+completely.  Note that these settings will have no effect unless both
+the X server and the display hardware support power management; not 
+all do.  See the \fIPower Management\fP section, below, for more 
+information.
 .TP 8
 .B visualID\fP (class \fBVisualID\fP)
 Specify which X visual to use by default.  (Note carefully that this resource
@@ -599,18 +616,31 @@ notice this (after a few minutes), and will not waste CPU by drawing
 graphics demos on a black screen.  An attempt will also be made to
 explicitly power the monitor back up as soon as user activity is detected.
 
-If your X server supports power management, then
+As of version 3.28, the \fI~/.xscreensaver\fP file controls the
+configuration of your display's power management settings: if you have
+used
 .BR xset (1)
-will accept a \fBdpms\fP option.  So, if you wanted \fIxscreensaver\fP
-to activate after 5 minutes, but you wanted your monitor to power down
-after one hour (3600 seconds) you would do this:
-.EX
-xset dpms 3600
-.EE
-See the man page for the
-.BR xset (1)
-program for details.  (Note that power management requires both software
-support in the X server, and hardware support in the monitor itself.)
+to change your power management settings, then xscreensaver will
+override those changes with the values specified 
+in \fI~/.xscreensaver\fP (or with its built-in defaults, if there
+is no \fI~/.xscreensaver\fP file yet.)
+
+To change your power management settings, run
+.BR xscreensaver\-demo (1)
+and change the various timeouts through the user interface.
+Alternately, you can edit the \fI~/.xscreensaver\fP file directly.
+
+If the power management section is grayed out in the
+.BR xscreensaver\-demo (1)
+window,  then that means that your X server does not support
+the XDPMS extension, and so control over the monitor's power state
+is not available.
+
+If you're using a laptop, don't be surprised if changing the DPMS
+settings has no effect: many laptops have monitor power-saving behavior
+built in at a very low level that is invisible to Unix and X.  On such
+systems, you can typically only adjust the power-saving delays by
+changing settings in the BIOS in some hardware-specific way.
 .SH USING XDM(1)
 You can run \fIxscreensaver\fP from your 
 .BR xdm (1)

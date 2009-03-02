@@ -1,4 +1,4 @@
-.TH XScreenSaver 1 "11-Aug-2000" "X Version 11"
+.TH XScreenSaver 1 "20-Mar-2001" "X Version 11"
 .SH NAME
 nerverot - induces edginess in the viewer
 .SH SYNOPSIS
@@ -7,7 +7,7 @@ nerverot - induces edginess in the viewer
 .SH DESCRIPTION
 The goal of \fInerverot\fP is to be interesting and compelling to
 watch, yet induce a state of nervous edginess in the viewer. This manpage
-describes v1.2 of the program.
+describes v1.3 of the program.
 .SH OPTIONS
 .I nerverot
 accepts the following options:
@@ -45,6 +45,12 @@ resource \fIcolors\fP.
 .B \-delay \fImicroseconds\fP
 The interframe delay, in microseconds. Defaults to 10000, resource
 \fIdelay\fP.
+.TP 8
+.B \-max-iters \fIinteger\fP
+The maximum number of iterations (frames) before a new model is
+generated. The actual number of iterations per model is a random number
+between 1 and this value. Defaults to 1200, resource
+\fImaxIters\fP.
 .TP 8
 .B \-count \fIinteger\fP
 How many "blots" to draw at a time. This number may be rounded down to
@@ -104,17 +110,19 @@ There are resource equivalents for each option, noted above.
 .SH BUGS
 .I nerverot
 should have more models.
+.TP 8
+XDBE should be detected and used, if available.
 .SH SEE ALSO
 .BR xscreensaver (1)
 .SH COPYRIGHT
-Copyright \(co 2000 by Dan Bornstein.
+Copyright \(co 2000-2001 by Dan Bornstein. All rights reserved.
 
 Permission to use, copy, modify, distribute, and sell this software and its
 documentation for any purpose is hereby granted without fee, provided that
 the above copyright notice appear in all copies and that both that
 copyright notice and this permission notice appear in supporting
-documentation.  No representations are made about the suitability of this
-software for any purpose.  It is provided "as is" without express or 
+documentation. No representations are made about the suitability of this
+software for any purpose. It is provided "as is" without express or 
 implied warranty.
 .SH AUTHOR
-Dan Bornstein <danfuzz@milk.com>, 05-Jul-2000.
+Dan Bornstein <danfuzz@milk.com>.
