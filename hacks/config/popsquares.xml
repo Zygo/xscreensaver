@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="popsquares" _label="popsquares">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="30000" default="25000"
+          convert="invert"/>
+
+  <number id="subdivision" type="spinbutton" arg="-subdivision %"
+          _label="Subdivision"
+          low="1" high="64" default="5"/>
+
+  <number id="border" type="spinbutton" arg="-border %"
+          _label="Border"
+          low="0" high="5" default="1"/>
+
+  <number id="ncolors" type="spinbutton" arg="-ncolors %"
+            _label="Number of Colors" low="1" high="512" default="128"/>
+
+  <string id="string" _label="Start color" arg="-fg %"/>
+  <string id="string" _label="End color" arg="-bg %"/>
+
+  <boolean id="twitch" _label="Twitch" arg-set="-twitch"/>
+
+  <_description>
+This draws a pop-art-ish looking grid of pulsing colors.  By Levi Burton.
+  </_description>
+</screensaver>

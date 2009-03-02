@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="braid" _label="Braid">
+
+  <command arg="-root"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Max Rings" low="3" high="15" default="15"/>
+
+  <number id="size" type="spinbutton" arg="-size %"
+           _label="Line Thickness" low="-20" high="20" default="-7"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Duration" _low-label="Short" _high-label="Long"
+          low="0" high="500" default="100"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="1000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="64"/>
+
+  <_description>
+Draws random color-cycling inter-braided concentric circles.  Written
+by John Neil.
+  </_description>
+</screensaver>

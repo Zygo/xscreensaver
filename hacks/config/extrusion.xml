@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="extrusion" _label="Extrusion">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <select id="mode">
+    <option id="random"  _label="Random Object"/>
+    <option id="helix2" _label="Helix 2" arg-set="-name helix2"/>
+    <option id="helix3" _label="Helix 3" arg-set="-name helix3"/>
+    <option id="helix4" _label="Helix 4" arg-set="-name helix4"/>
+    <option id="joinoffset" _label="Join Offset" arg-set="-name joinoffset"/>
+    <option id="screw" _label="Screw" arg-set="-name screw"/>
+    <option id="taper" _label="Taper" arg-set="-name taper"/>
+    <option id="twist" _label="Twistoid" arg-set="-name twistoid"/>
+  </select>
+
+  <select id="render">
+    <option id="flat"  _label="Use Flat Coloring" arg-set="-no-light"/>
+    <option id="light" _label="Use Lighting"/>
+  </select>
+
+  <select id="render">
+    <option id="wire"  _label="Wireframe" arg-set="-wire"/>
+    <option id="solid" _label="Solid"/>
+  </select>
+
+  <!-- #### -texture -->
+  <!-- #### -texture_quality -->
+  <!-- #### -mipmap -->
+
+  <file id="bitmap" _label="Texture Image" arg="-bitmap %"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Draws various rotating extruded shapes that twist around, lengthen,
+and turn inside out.  Created by David Konerding from the samples
+that come with the GL Extrusion library by Linas Vepstas.
+  </_description>
+</screensaver>
