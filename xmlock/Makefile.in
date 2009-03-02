@@ -1,0 +1,191 @@
+# $Id : Makefile.in 4.04 1997/07/10 $
+#
+# xlockmore Makefile.in for autoconf (UNIX/VMS X11 support)
+############################################################
+
+# @SET_MAKE@
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@/
+BITMAPDIR = @BITMAPDIR@/
+
+N=
+O = .o
+#O = .obj
+C = .c
+# C = .cc
+S = $(N) $(N)
+#S = ,
+
+
+# please define
+# C as the C source code extension
+# O as the object extension
+# S as the separator for object code
+
+####################################################################
+# List of object files
+XMLOCKOBJS = option$(O)$(S)xmlock$(O)
+
+# List of source files
+XMLOCKSRCS = $(VPATH)option$(C) $(VPATH)xmlock$(C)
+
+# default target
+all : @XMLOCK@
+
+# this tells GNU make not to export variables into the environment
+# But other makes do not understand its significance, so it must
+# not be the first target in the file. So it is here, before
+# any variables are created, but after the default target
+.NOEXPORT :
+
+SHELL = /bin/sh
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+mandir = @mandir@/man1
+xapploaddir = @APPDEFAULTS@
+
+CONFIGDIR = $(srcdir)/config/
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTPGMFLAGS = @INSTPGMFLAGS@
+
+#CC = cc -g
+#CC = cc -Ac -g
+#CC = cc -Xc -g
+#CC = acc -g
+#CC = CC -g
+#CC = gcc -g -Wall -ansi -pedantic
+#CC = gcc -g -Wall -W -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align -Wwrite-strings -Waggregate-return -Wmissing-prototypes -Wstrict-prototypes
+#CC = g++ -g -Wall
+CC = @CC@
+
+LINT = lint
+#LINT = alint
+
+#DEPEND = makedepend
+DEPEND = @DEPEND@
+DEPEND_FLAGS = @DEPEND_FLAGS@
+DEPEND_DEFINES = @DEPEND_DEFINES@
+ 
+LN_S = @LN_S@
+RM = rm -f
+RM_S = $(RM)
+ECHO = echo
+
+#BLN_S = set file/enter=[]
+#RM = delete/noconfirm/nolog
+#RM_S = set file/remove/nolog
+#ECHO = write sys$output
+
+DEFS = @DEFS@ $(DEFINES)
+XMLOCKINC = @XMLOCKINC@ -I.. -I$(top_srcdir)
+CFLAGS = @CFLAGS@
+#CFLAGS = -O
+#CFLAGS = -g
+XMLOCKLDFLAGS = @XMLOCKLDFLAGS@
+XLIBS = @XLIBS@
+XMLOCKLIBS = @XMLOCKLIBS@
+#If you have purify, and want to use it, uncomment this definition or
+# run the make as `make PURIFY=purify'
+# or run configure with the --with-purify argument.
+PURIFY = @PURIFY@
+
+xmlock : $(XMLOCKOBJS)
+	$(PURIFY) $(CC) -o $@ $(XMLOCKOBJS) $(XMLOCKLDFLAGS) $(XMLOCKLIBS)
+	@ $(ECHO) "$@ BUILD COMPLETE"
+	@ $(ECHO) ""
+
+.SUFFIXES : $(C) $(O)
+
+$(C)$(O) :
+	$(CC) -c $(CPPFLAGS) $(DEFS) $(XMLOCKINC) $(CFLAGS) $<
+
+install : @INSTALL_XMLOCK@
+
+install_xmlock : install-program install-man install-ad
+	@ $(ECHO) "$@ COMPLETE"
+	@ $(ECHO) ""
+
+install-program : xmlock
+	$(top_srcdir)/mkinstalldirs $(bindir)
+	$(INSTALL_PROGRAM) xmlock $(bindir)
+
+install-man :
+
+install-ad :
+	$(top_srcdir)/mkinstalldirs $(xapploaddir)
+	$(INSTALL_DATA) $(top_srcdir)/xmlock/XmLock.ad $(xapploaddir)/XmLock
+
+uninstall : @UNINSTALL_XMLOCK@
+
+uninstall_xmlock : uninstall-program uninstall-man uninstall-ad
+
+uninstall-program :
+	$(RM) $(bindir)/xmlock
+
+uninstall-man :
+
+uninstall-ad :
+	$(RM) $(xapploaddir)/XmLock
+
+lint :
+	$(LINT) -ax -DLINT $(DEFS) $(XMLOCKINC) $(XMLOCKSRCS)
+
+xrdb :
+	xrdb $(top_srcdir)/xmlock/XmLock.ad
+
+man :
+
+html :
+
+hlp :
+
+clean :
+	$(RM) *.o core *~ *% *.bak *.orig *.rej make.log MakeOut xmlock
+
+distclean : clean
+	$(RM) Makefile
+
+clean.all : distclean
+
+# Adds all current dependencies to Makefile
+depend :
+	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'              \
+	$(DEPEND_FLAGS) --                                                  \
+	$(XMLOCKINC) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) --                 \
+	$(XMLOCKSRCS)
+
+# Adds some dependencies to Makefile.in -- not totally accurate, but pretty
+# close.  This excludes dependencies on files in /usr/include, etc.  It tries
+# to include only dependencies on files which are themselves a part of this
+# package. -w 0
+distdepend :
+	@echo updating dependencies in `pwd`/Makefile.in... ;               \
+	$(DEPEND) -w 0 -f -                                                 \
+	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
+	$(XMLOCKINC) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) --                 \
+	$(XMLOCKSRCS) |                                                     \
+	(                                                                   \
+	  awk '/^#.*Id : Makefile.in/,/^# DO .*distdepend/' < Makefile.in ; \
+	  sed -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'                        \
+	      -e 's@\.\./bitmaps@$$(BITMAPDIR)@g' ;                         \
+	  echo ''                                                           \
+	) > /tmp/distdepend.$$$$ &&                                         \
+	mv Makefile.in Makefile.in.bak &&                                   \
+	mv /tmp/distdepend.$$$$ Makefile.in
+
+##############################################################################
+#
+# DO NOT DELETE: updated by make distdepend
+
+xmlock.o: ../config.h
+xmlock.o: $(BITMAPDIR)/m-xlock.xbm
+xmlock.o: modes.h
+

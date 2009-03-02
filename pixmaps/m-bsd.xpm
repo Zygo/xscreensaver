@@ -1,0 +1,62 @@
+/* XPM */
+/*
+ * BSD daemon
+ * The original BSD daemon is Copyright (c) 1988 Marshall Kirk McKusick.
+ * All Rights Reserved.  Reproduced with permission.
+ */
+/*****************************************************************************/
+/**       This pixmap is kindly offered by Ion Cionca - 1992 -              **/
+/**       Swiss Federal Institute of Technology                             **/
+/**       Central Computing Service                                         **/
+/*****************************************************************************/
+static char * image_name [] = {
+/**/
+"64 38 9 1",
+/**/
+" 	s mask	c black",
+".	c gray70",
+"X	c gray85",
+"o	c gray50",
+"-      c gray10",
+"O	c red",
+"+	c darkolivegreen",
+"@	c white",
+"#	c black",
+"                                                                ",
+"                     OO                                         ",
+"                      OO  ...........................           ",
+"          O           OOO.XXXXXXXXXXXXXXXXXXXXXXXXXXX.          ",
+"         OO     OOOOOO OOXXXXXXXXXXXXXXXXXXXXXXXXXXXXXoo        ",
+"         OO    OOOOOOOO OXX+++++++++++++++++++++++XXXXoo        ",
+"        OOO  OOOOOOOO OO.XX++++++++++++++++++++++++XXXooo       ",
+"        OOOO OOOO OO O O.XX++@@+@++@+@@@@++@+++++++XXXooo       ",
+"         OOOOOOO O OO  O.XX++++++++++++++++++++++++XXXoooo      ",
+"          OOOOOOO  OO  OOXX++@@@@+@@+@@@+++++++++++XXXoooo      ",
+"            OOOOO  OOOOOOXX++++++++++++++++++++++++XXXooooo     ",
+"             OOOOOOOO OOOOX++@@@@@@@@@@+@@@@@++++++XXXooooo     ",
+"             OOOOOOO  OOOOX++++++++++++++++++++++++XXXooooo     ",
+"             OOOOOOOOOO OOX+-@@@+@@@@+@@++@@@++++++XXXooooo     ",
+"             OOOOO OOO OOXX--+--+++++++++++++++++++XXXooooo     ",
+"              OOOOO   OOOXX----++++++++++++++++++++XXXooooo     ",
+"               OOOOOOOO .XX---++-++++++++++++++++++XXXooooo     ",
+"                 OOOOOO .XX------+@+@@@+@++++++++++XXXooooo     ",
+"                O O OO  OO-++++++++++++++++++++++++XXXooooo     ",
+"                OOOOOO OOOO++@+@@@@++++++++++++++++XXXooooo     ",
+"                OOOOO O-OOOX++++++++++++++++++++++XXXXoooo      ",
+"                OOO  O- OOXXXXXXXXXXXXXXXXXXXXXXXXXXXXooo       ",
+"                OOOOO-O  .XXXXXXXXXXXXXXXXXXXXXXXXXXXooo        ",
+"                OOOO-OO     ooooooooooooooooooooooooo...oo      ",
+"                OOOOOO O     ..........................ooo      ",
+"                OO    OO    oooooooooooooooooooooooooooooo      ",
+"              OOOO OOOOO  oXXXXXXXXXXXXXXXXXXXXXXXXXXXoooo.. .. ",
+"            OOOOO OOOOO   oXXXXXXXXXXXXXXXXXX#######XXoooo  .  .",
+"        OOOOOOOOOOOOOOO oooooooooooooooooooooooooooXXXooo     . ",
+"     OOOOOO    OOOOO OOOOXXXXXXXXXXXXXXXXXXXXXXXXXooooo      .  ",
+"    OOO        OOOOO OOOOOOXXXXXXXXXXXXXXXXXXXXXXoo      oooooo ",
+"    OO         OOOOOO OOOOOOO@@@@@@@@@@@@@@@XXXXXoo   ooooo...o ",
+"    O OO       OOOOOOO OOOOOXXXXXXXXXXXXXXXXXXXXoo   ooXXXoo..o ",
+"     OOOO       OOOOOOO OOO@@@@@@@@@@@@@@@@XXXXoo    oXXXXX..o  ",
+"                  OOOXXXXXXXXXXXXXXXXXXXXXXXXXoo     o.....oo   ",
+"                   oooooooooooooooooooooooooooo      ooooooo    ",
+"                                                                ",
+"                                                                "};

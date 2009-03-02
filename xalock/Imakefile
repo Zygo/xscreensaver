@@ -1,0 +1,37 @@
+#ifndef XCOMM
+#define XCOMM /**/#
+#endif
+XCOMM @(#)Sub Imakefile	xlockmore
+XCOMM
+
+#include "../iconfig.h"
+
+top_srcdir = ..
+UTILSDIR = .
+
+XCOMM  List of object files
+XALOCKOBJS = multireq$(O)$(S)xalock$(O)
+
+XCOMM  List of source files
+XALOCKSRCS = multireq$(C) xalock$(C)
+
+
+#ifdef XawLibrary
+AllTarget(xalock)
+NormalProgramTarget(xalock, $(XALOCKOBJS), $(DEPXLIB), $(ALIBS), NullParameter)
+#else
+clean::
+	$(RM) xalock
+#endif
+
+DependTarget()
+LintTarget()
+
+#ifdef XawLibrary
+InstallProgram(xalock$(E),$(BINDIR))
+#endif
+
+distclean::	clean
+	$(RM) Makefile config.status config.cache config.log config.h
+
+clean.all:: distclean

@@ -1,0 +1,18 @@
+Author: Charles Vidal <vidalc@club-internet.fr> / Remi Cohen-Scali <r.cohenscali@pobox.com>
+Status: under construction
+
+This uses GNU's GTK.
+
+It also use the gtk fontsel widget if available as a library. If not a default
+dialog is created (just a poor list and text field). Some packages for this
+library can be found at:
+	http://perso.wanadoo.fr/remi.cohenscali/pub/fontsel-0.4.tar.gz
+	http://perso.wanadoo.fr/remi.cohenscali/pub/fontsel-0.4-1.src.rpm
+	http://perso.wanadoo.fr/remi.cohenscali/pub/fontsel-0.4-1.i386.rpm
+
+Dowload it and enjoy it ! It is free !  Please send any question about fontsel
+library generation to me (R.CohenScali@pobox.com) but any code related question
+have to be routed directly to the fontsel author, Damon Chaplin <DAChaplin@msn.com>.
+
+		Thank You !
+						R. Cohen-Scali
