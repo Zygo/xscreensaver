@@ -233,7 +233,7 @@ static void
 reset_timers (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
-  if (p->use_mit_saver_extension || p->use_sgi_saver_extension)
+  if (si->using_mit_saver_extension || si->using_sgi_saver_extension)
     return;
 
 #ifdef DEBUG_TIMERS
@@ -269,9 +269,9 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
   saver_preferences *p = &si->prefs;
   Bool active_p = False;
 
-  if (p->use_xidle_extension ||
-      p->use_mit_saver_extension ||
-      p->use_sgi_saver_extension)
+  if (si->using_xidle_extension ||
+      si->using_mit_saver_extension ||
+      si->using_sgi_saver_extension)
     /* If an extension is in use, we should not be polling the mouse. */
     abort ();
 
@@ -343,7 +343,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 
   if (until_idle_p)
     {
-      if (!p->use_mit_saver_extension && !p->use_sgi_saver_extension)
+      if (!si->using_mit_saver_extension && !si->using_sgi_saver_extension)
 	{
 	  /* Wake up periodically to ask the server if we are idle. */
 	  si->timer_id = XtAppAddTimeOut (si->app, p->timeout, idle_timer,
@@ -356,9 +356,9 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 #endif /* DEBUG_TIMERS */
 	}
 
-      if (!p->use_xidle_extension &&
-	  !p->use_mit_saver_extension &&
-	  !p->use_sgi_saver_extension)
+      if (!si->using_xidle_extension &&
+	  !si->using_mit_saver_extension &&
+	  !si->using_sgi_saver_extension)
 	/* start polling the mouse position */
 	check_pointer_timer ((XtPointer) si, 0);
     }
@@ -373,7 +373,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	  {
 	    Time idle;
 #ifdef HAVE_XIDLE_EXTENSION
-	    if (p->use_xidle_extension)
+	    if (si->using_xidle_extension)
 	      {
 		if (! XGetIdleTime (si->dpy, &idle))
 		  {
@@ -384,7 +384,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	    else
 #endif /* HAVE_XIDLE_EXTENSION */
 #ifdef HAVE_MIT_SAVER_EXTENSION
-	      if (p->use_mit_saver_extension)
+	      if (si->using_mit_saver_extension)
 		{
 		  /* We don't need to do anything in this case - the synthetic
 		     event isn't necessary, as we get sent specific events
@@ -394,7 +394,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	    else
 #endif /* HAVE_MIT_SAVER_EXTENSION */
 #ifdef HAVE_SGI_SAVER_EXTENSION
-	      if (p->use_sgi_saver_extension)
+	      if (si->using_sgi_saver_extension)
 		{
 		  /* We don't need to do anything in this case - the synthetic
 		     event isn't necessary, as we get sent specific events
@@ -409,8 +409,8 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	    
 	    if (idle >= p->timeout)
 	      goto DONE;
-	    else if (!p->use_mit_saver_extension &&
-		     !p->use_sgi_saver_extension)
+	    else if (!si->using_mit_saver_extension &&
+		     !si->using_sgi_saver_extension)
 	      {
 		si->timer_id = XtAppAddTimeOut (si->app, p->timeout - idle,
 						idle_timer, (XtPointer) si);
@@ -429,9 +429,9 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	break;
 
       case CreateNotify:
-	if (!p->use_xidle_extension &&
-	    !p->use_mit_saver_extension &&
-	    !p->use_sgi_saver_extension)
+	if (!si->using_xidle_extension &&
+	    !si->using_mit_saver_extension &&
+	    !si->using_sgi_saver_extension)
 	  {
 	    start_notice_events_timer (si, event.xcreatewindow.window);
 #ifdef DEBUG_TIMERS

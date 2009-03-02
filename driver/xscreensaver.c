@@ -150,6 +150,7 @@
 #include "yarandom.h"
 #include "resources.h"
 #include "visual.h"
+#include "usleep.h"
 
 saver_info *global_si_kludge = 0;	/* I hate C so much... */
 
@@ -360,7 +361,8 @@ privileged_initialization (saver_info *si, int *argc, char **argv)
   si->nolock_reason = "not compiled with locking support";
 #else /* !NO_LOCKING */
   si->locking_disabled_p = False;
-  if (! lock_init (*argc, argv)) /* before hack_uid() for proper permissions */
+  /* before hack_uid() for proper permissions */
+  if (! lock_init (*argc, argv, si->prefs.verbose_p))
     {
       si->locking_disabled_p = True;
       si->nolock_reason = "error getting password";
@@ -633,6 +635,10 @@ initialize_server_extensions (saver_info *si)
   Bool server_has_sgi_saver_extension_p = False;
   Bool server_has_mit_saver_extension_p = False;
 
+  si->using_xidle_extension = p->use_xidle_extension;
+  si->using_sgi_saver_extension = p->use_sgi_saver_extension;
+  si->using_mit_saver_extension = p->use_mit_saver_extension;
+
 #ifdef HAVE_XIDLE_EXTENSION
   server_has_xidle_extension_p = query_xidle_extension (si);
 #endif
@@ -644,20 +650,20 @@ initialize_server_extensions (saver_info *si)
 #endif
 
   if (!server_has_xidle_extension_p)
-    p->use_xidle_extension = False;
+    si->using_xidle_extension = False;
   else if (p->verbose_p)
     {
-      if (p->use_xidle_extension)
+      if (si->using_xidle_extension)
 	fprintf (stderr, "%s: using XIDLE extension.\n", blurb());
       else
 	fprintf (stderr, "%s: not using server's XIDLE extension.\n", blurb());
     }
 
   if (!server_has_sgi_saver_extension_p)
-    p->use_sgi_saver_extension = False;
+    si->using_sgi_saver_extension = False;
   else if (p->verbose_p)
     {
-      if (p->use_sgi_saver_extension)
+      if (si->using_sgi_saver_extension)
 	fprintf (stderr, "%s: using SGI SCREEN_SAVER extension.\n", blurb());
       else
 	fprintf (stderr,
@@ -666,10 +672,10 @@ initialize_server_extensions (saver_info *si)
     }
 
   if (!server_has_mit_saver_extension_p)
-    p->use_mit_saver_extension = False;
+    si->using_mit_saver_extension = False;
   else if (p->verbose_p)
     {
-      if (p->use_mit_saver_extension)
+      if (si->using_mit_saver_extension)
 	fprintf (stderr, "%s: using lame MIT-SCREEN-SAVER extension.\n",
 		 blurb());
       else
@@ -692,9 +698,9 @@ select_events (saver_info *si)
   saver_preferences *p = &si->prefs;
   int i;
 
-  if (p->use_xidle_extension ||
-      p->use_mit_saver_extension ||
-      p->use_sgi_saver_extension)
+  if (si->using_xidle_extension ||
+      si->using_mit_saver_extension ||
+      si->using_sgi_saver_extension)
     return;
 
   if (p->initial_delay)
@@ -947,7 +953,6 @@ clientmessage_response (saver_info *si, Window w, Bool error,
 Bool
 handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 {
-  saver_preferences *p = &si->prefs;
   Atom type = 0;
   Window window = event->xclient.window;
 
@@ -980,7 +985,7 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 				 "activating.");
 	  si->selection_mode = 0;
 	  si->demoing_p = False;
-	  if (p->use_mit_saver_extension || p->use_sgi_saver_extension)
+	  if (si->using_mit_saver_extension || si->using_sgi_saver_extension)
 	    {
 	      XForceScreenSaver (si->dpy, ScreenSaverActive);
 	      return False;
@@ -1001,7 +1006,7 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 	  clientmessage_response(si, window, False,
 				 "DEACTIVATE ClientMessage received.",
 				 "deactivating.");
-	  if (p->use_mit_saver_extension || p->use_sgi_saver_extension)
+	  if (si->using_mit_saver_extension || si->using_sgi_saver_extension)
 	    {
 	      XForceScreenSaver (si->dpy, ScreenSaverReset);
 	      return False;
@@ -1204,7 +1209,8 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 
 	  if (until_idle_p)
 	    {
-	      if (p->use_mit_saver_extension || p->use_sgi_saver_extension)
+	      if (si->using_mit_saver_extension ||
+                  si->using_sgi_saver_extension)
 		{
 		  XForceScreenSaver (si->dpy, ScreenSaverActive);
 		  return False;

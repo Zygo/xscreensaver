@@ -16,71 +16,13 @@
 
 #ifndef NO_LOCKING  /* whole file */
 
+#include <stdio.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
 
-#ifdef HAVE_CRYPT_H
-# include <crypt.h>
-#endif
-
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#ifndef VMS
-# include <pwd.h>
-# include <grp.h>
-#else /* VMS */
-# include "vms-pwd.h"
-#endif /* VMS */
-
-
-#ifdef __bsdi__
-# include <sys/param.h>
-# if _BSDI_VERSION >= 199608
-#  define BSD_AUTH
-# endif
-#endif /* __bsdi__ */
-
-
-#if defined(HAVE_SHADOW_PASSWD)	      /* passwds live in /etc/shadow */
-
-#   include <shadow.h>
-#   define PWTYPE   struct spwd *
-#   define PWPSLOT  sp_pwdp
-#   define GETPW    getspnam
-
-#elif defined(HAVE_ENHANCED_PASSWD)      /* passwds live in /tcb/files/auth/ */
-				      /* M.Matsumoto <matsu@yao.sharp.co.jp> */
-#   include <sys/security.h>
-#   include <prot.h>
-
-#   define PWTYPE   struct pr_passwd *
-#   define PWPSLOT  ufld.fd_encrypt
-#   define GETPW    getprpwnam
-
-#elif defined(HAVE_ADJUNCT_PASSWD)
-
-#   include <sys/label.h>
-#   include <sys/audit.h>
-#   include <pwdadj.h>
-
-#   define PWTYPE   struct passwd_adjunct *
-#   define PWPSLOT  pwa_passwd
-#   define GETPW    getpwanam
-
-#elif defined(HAVE_HPUX_PASSWD)
-
-#   include <hpsecurity.h>
-#   include <prot.h>
-
-#   define PWTYPE   struct s_passwd *
-#   define PWPSLOT  pw_passwd
-#   define GETPW    getspwnam
-#   define crypt    bigcrypt
-
-#endif
+extern char *blurb(void);
 
 
 /* blargh */
@@ -91,154 +33,94 @@
 #define True  1
 #define False 0
 
+#undef countof
+#define countof(x) (sizeof((x))/sizeof(*(x)))
 
-extern const char *blurb(void);
+struct auth_methods {
+  const char *name;
+  Bool (*init) (int argc, char **argv, Bool verbose_p);
+  Bool (*valid_p) (const char *typed_passwd, Bool verbose_p);
+  Bool initted_p;
+};
 
-static char *encrypted_root_passwd = 0;
-static char *encrypted_user_passwd = 0;
 
-#ifdef VMS
-# define ROOT "SYSTEM"
-#else
-# define ROOT "root"
+#ifdef HAVE_KERBEROS
+extern Bool kerberos_lock_init (int argc, char **argv, Bool verbose_p);
+extern Bool kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 #endif
-
-
-
-#ifndef VMS
-
-static char *
-user_name (void)
-{
-  /* I think that just checking $USER here is not the best idea. */
-
-  const char *u = 0;
-
-  /* It has been reported that getlogin() returns the wrong user id on some
-     very old SGI systems...  And I've seen it return the string "rlogin"
-     sometimes!  Screw it, using getpwuid() should be enough...
-   */
-/* u = (char *) getlogin ();
- */
-
-  /* getlogin() fails if not attached to a terminal; in that case, use
-     getpwuid().  (Note that in this case, we're not doing shadow stuff, since
-     all we're interested in is the name, not the password.  So that should
-     still work.  Right?) */
-  if (!u || !*u)
-    {
-      struct passwd *p = getpwuid (getuid ());
-      u = (p ? p->pw_name : 0);
-    }
-
-  return (u ? strdup(u) : 0);
-}
-
-#else  /* VMS */
-
-static char *
-user_name (void)
-{
-  char *u = getenv("USER");
-  return (u ? strdup(u) : 0);
-}
-
-#endif /* VMS */
-
-
-static Bool
-passwd_known_p (const char *pw)
-{
-  return (pw &&
-	  pw[0] != '*' &&	/* This would be sensible...         */
-	  strlen(pw) > 4);	/* ...but this is what Solaris does. */
-}
-
-
-static char *
-get_encrypted_passwd(const char *user)
-{
-  if (user && *user)
-    {
-#ifdef PWTYPE
-      {					/* First check the shadow passwords. */
-	PWTYPE p = GETPW((char *) user);
-	if (p && passwd_known_p (p->PWPSLOT))
-	  return strdup(p->PWPSLOT);
-      }
+#ifdef HAVE_PAM
+extern Bool pam_lock_init (int argc, char **argv, Bool verbose_p);
+extern Bool pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 #endif
-      {					/* Check non-shadow passwords too. */
-	struct passwd *p = getpwnam(user);
-	if (p && passwd_known_p (p->pw_passwd))
-	  return strdup(p->pw_passwd);
-      }
-    }
-
-  fprintf (stderr, "%s: couldn't get password of \"%s\"\n",
-	   blurb(), (user ? user : "(null)"));
-
-  return 0;
-}
+extern Bool pwent_lock_init (int argc, char **argv, Bool verbose_p);
+extern Bool pwent_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 
 
-
-/* This has to be called before we've changed our effective user ID,
-   because it might need privileges to get at the encrypted passwords.
-   Returns false if we weren't able to get any passwords, and therefore,
-   locking isn't possible.  (It will also have written to stderr.)
+/* The authorization methods to try, in order.
+   Note that the last one (the pwent version) is actually two auth methods,
+   since that code tries shadow passwords, and then non-shadow passwords.
+   (It's all in the same file since the APIs are randomly nearly-identical.)
  */
+struct auth_methods methods[] = {
+# ifdef HAVE_KERBEROS
+  { "Kerberos",	kerberos_lock_init,	kerberos_passwd_valid_p, False },
+# endif
+# ifdef HAVE_PAM
+  { "PAM",	pam_lock_init,		pam_passwd_valid_p,	 False },
+# endif
+  { "normal",	pwent_lock_init,	pwent_passwd_valid_p,	 False }
+};
 
-#ifndef VMS
 
 Bool
-lock_init (int argc, char **argv)
+lock_init (int argc, char **argv, Bool verbose_p)
 {
-  char *u;
-
-#ifdef HAVE_ENHANCED_PASSWD
-  set_auth_parameters(argc, argv);
-  check_auth_parameters();
-#endif /* HAVE_DEC_ENHANCED */
-
-  u = user_name();
-  encrypted_user_passwd = get_encrypted_passwd(u);
-  encrypted_root_passwd = get_encrypted_passwd(ROOT);
-  if (u) free (u);
-
-  if (encrypted_user_passwd)
-    return True;
-  else
-    return False;
+  int i;
+  Bool any_ok = False;
+  for (i = 0; i < countof(methods); i++)
+    {
+      methods[i].initted_p = methods[i].init (argc, argv, verbose_p);
+      if (methods[i].initted_p)
+        any_ok = True;
+      else if (verbose_p)
+        fprintf (stderr, "%s: initialization of %s passwords failed.\n",
+                 blurb(), methods[i].name);
+    }
+  return any_ok;
 }
 
 
-/* This can be called at any time, and says whether the typed password
-   belongs to either the logged in user (real uid, not effective); or
-   to root.
- */
-Bool
-passwd_valid_p (const char *typed_passwd)
+Bool 
+passwd_valid_p (const char *typed_passwd, Bool verbose_p)
 {
-  char *s = 0;  /* note that on some systems, crypt() may return null */
+  int i, j;
+  for (i = 0; i < countof(methods); i++)
+    {
+      if (methods[i].initted_p &&
+          methods[i].valid_p (typed_passwd, verbose_p))
+        {
+          /* If we successfully authenticated by method N, but attempting
+             to authenticate by method N-1 failed, mention that (since if
+             an earlier authentication method fails and a later one succeeds,
+             something screwy is probably going on.)
+           */
+          if (verbose_p)
+            {
+              for (j = 0; j < i; j++)
+                if (methods[j].initted_p)
+                  fprintf (stderr,
+                           "%s: authentication via %s passwords failed.\n",
+                           blurb(), methods[j].name);
+              fprintf (stderr,
+                       "%s: but authentication via %s passwords succeeded.\n",
+                       blurb(), methods[i].name);
+            }
 
-  if (encrypted_user_passwd &&
-      (s = (char *) crypt (typed_passwd, encrypted_user_passwd)) &&
-      !strcmp (s, encrypted_user_passwd))
-    return True;
+          return True;		/* Successfully authenticated! */
+        }
+    }
 
-  /* do not allow root to have a null password. */
-  else if (typed_passwd[0] &&
-	   encrypted_root_passwd &&
-	   (s = (char *) crypt (typed_passwd, encrypted_root_passwd)) &&
-	   !strcmp (s, encrypted_root_passwd))
-    return True;
-
-  else
-    return False;
+  return False;			/* Authentication failure. */
 }
-
-#else  /* VMS */
-Bool lock_init (int argc, char **argv) { return True; }
-#endif /* VMS */
 
 #endif /* NO_LOCKING -- whole file */

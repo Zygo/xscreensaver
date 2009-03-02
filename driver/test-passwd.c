@@ -14,7 +14,7 @@
    itself.
  */
 
-#define WHICH 2
+#define WHICH 0
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -31,6 +31,7 @@
 #include "xscreensaver.h"
 #include "resources.h"
 #include "version.h"
+#include "visual.h"
 
 char *progname = 0;
 char *progclass = 0;
@@ -103,7 +104,8 @@ main (int argc, char **argv)
   set_auth_parameters(argc, argv);
 # endif /* SCO */
 
-  if (! lock_init (argc, argv))	/* before hack_uid() for proper permissions */
+  /* before hack_uid() for proper permissions */
+  if (! lock_init (argc, argv, True))
     {
       si->locking_disabled_p = True;
       si->nolock_reason = "error getting password";
@@ -126,6 +128,9 @@ main (int argc, char **argv)
       DefaultVisualOfScreen(si->default_screen->screen);
   si->default_screen->screensaver_window =
     RootWindowOfScreen(si->default_screen->screen);
+  si->default_screen->current_depth =
+    visual_depth(si->default_screen->screen,
+                 si->default_screen->current_visual);
 
   db = p->db;
   XtGetApplicationNameAndClass (si->dpy, &progname, &progclass);
@@ -158,9 +163,6 @@ main (int argc, char **argv)
 	XSync (si->dpy, False);
 	sleep (1);
       }
-#else
-      make_screenhack_dialog (si);
-      XtAppMainLoop(si->app);
 #endif
     }
 }

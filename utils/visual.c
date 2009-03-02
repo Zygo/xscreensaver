@@ -369,6 +369,7 @@ has_writable_cells (Screen *screen, Visual *visual)
       return False;
     default:
       abort();
+      return False;
     }
 }
 
@@ -411,6 +412,7 @@ screen_number (Screen *screen)
     if (ScreenOfDisplay (dpy, i) == screen)
       return i;
   abort ();
+  return 0;
 }
 
 int

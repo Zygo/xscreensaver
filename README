@@ -77,6 +77,19 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.02:   * Made locking work when passwd aging is enabled.
+                      * Added support for PAM (Pluggable Authentication
+                        Modules.)  It is still turned off by default, though,
+                        since it doesn't seem to work on Solaris 2.6, and has
+                        been behaving erratically on Red Hat 5.1.
+                      * Made each possible authentication method be tried in
+                        turn until one succeeds; this means that Kerberos is
+                        being used, we will first check Kerberos, and if that
+                        fails, will then consult the local password file.
+                        Likewise with PAM.
+                      * Save and restore the bits under the passwd dialog,
+                        to avoid leaving a black rectangle behind when 
+                        unlocking is cancelled.
 Changes since 3.01:   * Not everyone has sys/select.h, sigh...
 Changes since 3.00:   * Some fixes to `reflect'.
 		      * Configure tweaks.

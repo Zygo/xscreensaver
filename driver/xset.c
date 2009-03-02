@@ -129,7 +129,7 @@ init_sgi_saver_extension (saver_info *si)
        "%s: SGI SCREEN_SAVER extension exists, but can't be initialized;\n\
 		perhaps some other screensaver program is already running?\n",
 		   blurb());
-	  p->use_sgi_saver_extension = False;
+	  si->using_sgi_saver_extension = False;
 	  return;
 	}
     }
@@ -196,13 +196,13 @@ disable_builtin_screensaver (saver_info *si, Bool unblank_screen_p)
      on some systems that don't support XDPMS?  Who know... */
   desired_allow_exp = AllowExposures;
 
-  if (p->use_mit_saver_extension || p->use_sgi_saver_extension)
+  if (si->using_mit_saver_extension || si->using_sgi_saver_extension)
     {
       desired_server_timeout = (p->timeout / 1000);
 
       /* The SGI extension won't give us events unless blanking is on.
 	 I think (unsure right now) that the MIT extension is the opposite. */
-      if (p->use_sgi_saver_extension)
+      if (si->using_sgi_saver_extension)
 	desired_prefer_blank = PreferBlanking;
       else
 	desired_prefer_blank = DontPreferBlanking;
@@ -249,10 +249,10 @@ disable_builtin_screensaver (saver_info *si, Bool unblank_screen_p)
       {
 	extension_initted = True;
 # ifdef HAVE_MIT_SAVER_EXTENSION
-	if (p->use_mit_saver_extension) init_mit_saver_extension(si);
+	if (si->using_mit_saver_extension) init_mit_saver_extension(si);
 # endif
 # ifdef HAVE_SGI_SAVER_EXTENSION
-	if (p->use_sgi_saver_extension) init_sgi_saver_extension(si);
+	if (si->using_sgi_saver_extension) init_sgi_saver_extension(si);
 # endif
       }
   }

@@ -1,6 +1,6 @@
 /* kpasswd.c --- verify kerberos passwords.
  * written by Nat Lanza (magus@cs.cmu.edu) for
- * xscreensaver, Copyright (c) 1993-1997 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-1997, 1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -74,7 +74,7 @@ static char *tk_file;
    We don't use the arguments we're given, though.
  */
 Bool
-lock_init (int argc, char **argv)
+kerberos_lock_init (int argc, char **argv, Bool verbose_p)
 {
     int k_errno;
     
@@ -136,7 +136,7 @@ key_to_key(char *user, char *instance, char *realm, char *passwd, C_Block key)
    some sites. So, we do a quick, painful hack with a tmpfile.
  */
 Bool
-passwd_valid_p (const char *typed_passwd)
+kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
 {
     C_Block mitkey;
     Bool success;

@@ -132,7 +132,10 @@ BadWindow_ehandler (Display *dpy, XErrorEvent *error)
   if (error->error_code == BadWindow || error->error_code == BadDrawable)
     return 0;
   else if (!old_ehandler)
-    abort();
+    {
+      abort();
+      return 0;
+    }
   else
     return (*old_ehandler) (dpy, error);
 }

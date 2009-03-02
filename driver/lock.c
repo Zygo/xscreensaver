@@ -39,7 +39,7 @@ extern char *getenv(const char *name);
 extern int validate_user(char *name, char *password);
 
 static Bool
-vms_passwd_valid_p(char *pw)
+vms_passwd_valid_p(char *pw, Bool verbose_p)
 {
   return (validate_user (getenv("USER"), typed_passwd) == 1);
 }
@@ -62,8 +62,10 @@ struct passwd_dialog_data {
   int i_beam;
 
   float ratio;
+  Position x, y;
   Dimension width;
   Dimension height;
+  Dimension border_width;
 
   char *heading_label;
   char *body_label;
@@ -97,6 +99,8 @@ struct passwd_dialog_data {
 
   Dimension thermo_field_x, thermo_field_y;
   Dimension thermo_field_height;
+
+  Pixmap save_under;
 };
 
 
@@ -104,7 +108,6 @@ void
 make_passwd_window (saver_info *si)
 {
   struct passwd *p = getpwuid (getuid ());
-  int x, y, bw;
   XSetWindowAttributes attrs;
   unsigned long attrmask = 0;
   Screen *screen = si->default_screen->screen;
@@ -298,22 +301,48 @@ make_passwd_window (saver_info *si)
     Dimension w = WidthOfScreen(screen);
     Dimension h = HeightOfScreen(screen);
     if (si->prefs.debug_p) w /= 2;
-    x = ((w + pw->width) / 2) - pw->width;
-    y = ((h + pw->height) / 2) - pw->height;
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
+    pw->x = ((w + pw->width) / 2) - pw->width;
+    pw->y = ((h + pw->height) / 2) - pw->height;
+    if (pw->x < 0) pw->x = 0;
+    if (pw->y < 0) pw->y = 0;
   }
 
-  bw = get_integer_resource ("passwd.borderWidth", "Dialog.BorderWidth");
+  pw->border_width = get_integer_resource ("passwd.borderWidth",
+                                           "Dialog.BorderWidth");
 
   si->passwd_dialog =
     XCreateWindow (si->dpy,
 		   RootWindowOfScreen(screen),
-		   x, y, pw->width, pw->height, bw,
+		   pw->x, pw->y, pw->width, pw->height, pw->border_width,
 		   DefaultDepthOfScreen (screen), InputOutput,
 		   DefaultVisualOfScreen(screen),
 		   attrmask, &attrs);
   XSetWindowBackground (si->dpy, si->passwd_dialog, pw->background);
+
+
+  /* Before mapping the window, save the bits that are underneath the
+     rectangle the window will occlude.  When we lower the window, we
+     restore these bits.  This works, because the running screenhack
+     has already been sent SIGSTOP, so we know nothing else is drawing
+     right now! */
+  {
+    XGCValues gcv;
+    GC gc;
+    pw->save_under = XCreatePixmap (si->dpy,
+                                    si->default_screen->screensaver_window,
+                                    pw->width + (pw->border_width*2) + 1,
+                                    pw->height + (pw->border_width*2) + 1,
+                                    si->default_screen->current_depth);
+    gcv.function = GXcopy;
+    gc = XCreateGC (si->dpy, pw->save_under, GCFunction, &gcv);
+    XCopyArea (si->dpy, si->default_screen->screensaver_window,
+               pw->save_under, gc,
+               pw->x - pw->border_width, pw->y - pw->border_width,
+               pw->width + (pw->border_width*2) + 1,
+               pw->height + (pw->border_width*2) + 1,
+               0, 0);
+    XFreeGC (si->dpy, gc);
+  }
 
   XMapRaised (si->dpy, si->passwd_dialog);
   XSync (si->dpy, False);
@@ -603,6 +632,24 @@ destroy_passwd_window (saver_info *si)
       si->passwd_dialog = 0;
     }
   
+  if (pw->save_under)
+    {
+      XGCValues gcv;
+      GC gc;
+      gcv.function = GXcopy;
+      gc = XCreateGC (si->dpy, si->default_screen->screensaver_window,
+                      GCFunction, &gcv);
+      XCopyArea (si->dpy, pw->save_under,
+                 si->default_screen->screensaver_window, gc,
+                 0, 0,
+                 pw->width + (pw->border_width*2) + 1,
+                 pw->height + (pw->border_width*2) + 1,
+                 pw->x - pw->border_width, pw->y - pw->border_width);
+      XFreePixmap (si->dpy, pw->save_under);
+      pw->save_under = 0;
+      XFreeGC (si->dpy, gc);
+    }
+
   if (pw->heading_label) free (pw->heading_label);
   if (pw->body_label)    free (pw->body_label);
   if (pw->user_label)    free (pw->user_label);
@@ -672,6 +719,7 @@ passwd_animate_timer (XtPointer closure, XtIntervalId *id)
 static void
 handle_passwd_key (saver_info *si, XKeyEvent *event)
 {
+  saver_preferences *p = &si->prefs;
   passwd_dialog_data *pw = si->pw_data;
   int pw_size = sizeof (pw->typed_passwd) - 1;
   char *typed_passwd = pw->typed_passwd;
@@ -700,12 +748,18 @@ handle_passwd_key (saver_info *si, XKeyEvent *event)
     case '\012': case '\015':				/* Enter */
       if (pw->state != pw_read)
 	;  /* already done? */
-      else if (passwd_valid_p (typed_passwd))
-	pw->state = pw_ok;
       else if (typed_passwd[0] == 0)
 	pw->state = pw_null;
       else
-	pw->state = pw_fail;
+        {
+          update_passwd_window (si, "Checking...", pw->ratio);
+          XSync (si->dpy, False);
+          if (passwd_valid_p (typed_passwd, p->verbose_p))
+            pw->state = pw_ok;
+          else
+            pw->state = pw_fail;
+          update_passwd_window (si, "", pw->ratio);
+        }
       break;
 
     default:
@@ -806,6 +860,9 @@ passwd_event_loop (saver_info *si)
     }
 #endif /* HAVE_SYSLOG */
 
+  if (si->pw_data->state == pw_fail)
+    XBell (si->dpy, False);
+
   if (si->pw_data->state == pw_ok && si->unlock_failures != 0)
     {
       if (si->unlock_failures == 1)
@@ -825,7 +882,6 @@ passwd_event_loop (saver_info *si)
     {
       si->pw_data->i_beam = 0;
       update_passwd_window (si, msg, 0.0);
-      XBell (si->dpy, False);
       XSync (si->dpy, False);
       sleep (1);
 

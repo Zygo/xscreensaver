@@ -74,6 +74,7 @@
 #include "resources.h"		/* for parse_time() */
 #include "visual.h"		/* for has_writable_cells() */
 #include "remote.h"		/* for xscreensaver_command() */
+#include "usleep.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -1266,17 +1267,17 @@ main (int argc, char **argv)
   memcpy (short_version, screensaver_id + 17, 4);
   short_version [4] = 0;
 
+  p->db = db;
+  p->fading_possible_p = True;
+  load_init_file (p);
+  *p2 = *p;
+
 
   /* Now that Xt has been initialized, we can set our `progname' variable
      to something that makes more sense (like our "real" argv[0].)
    */
   progname = real_progname;
 
-
-  p->db = db;
-  p->fading_possible_p = True;
-  load_init_file (p);
-  *p2 = *p;
 
 #ifdef HAVE_ATHENA
   global_prefs_kludge = p;	/* I hate C so much... */

@@ -857,7 +857,7 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
   printed_visual_info = True;
 
 #ifdef HAVE_MIT_SAVER_EXTENSION
-  if (p->use_mit_saver_extension)
+  if (si->using_mit_saver_extension)
     {
       XScreenSaverInfo *info;
       Window root = RootWindowOfScreen (ssi->screen);

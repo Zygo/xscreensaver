@@ -173,6 +173,17 @@
  */
 #undef HAVE_KERBEROS
 
+/*  Define this if you want to use PAM (Pluggable Authentication Modules)
+ *  to lock/unlock the screen, instead of standard /etc/passwd authentication.
+ */
+#undef HAVE_PAM
+
+/*  If PAM is being used, this is the name of the PAM service that xscreensaver
+ *  will authenticate as.  It would be sensible to set this to "xscreensaver".
+ *  However, since some systems already have a PAM service named "xlock" 
+ *  defined, we might as well use that.
+ */
+#define PAM_SERVICE_NAME "xlock"
 
 /*  Define this if your system uses `shadow' passwords, that is, the passwords
  *  live in /etc/shadow instead of /etc/passwd, and one reads them with

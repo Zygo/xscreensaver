@@ -3,8 +3,7 @@
 
 AC_INIT(driver/subprocs.c)
 
-echo -n "current directory: "
-pwd
+echo "current directory: `pwd`"
 echo "command line was: $0 $@"
 
 AC_CONFIG_HEADER(config.h)
@@ -1125,7 +1124,7 @@ if test "$with_gl" = yes; then
 #line __oline__ "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
-#configure: MESA_MAJOR_VERSION MESA_MINOR_VERSION
+configure: MESA_MAJOR_VERSION MESA_MINOR_VERSION
 EOF
 
 	 ac_save_CPPFLAGS="$CPPFLAGS"
@@ -1134,8 +1133,12 @@ EOF
 	 fi
 	 CPPFLAGS="$CPPFLAGS $X_CFLAGS"
 
+	  # M4 sucks!!
+	 changequote(X,Y)
 	 mglv=`(eval "$ac_cpp conftest.$ac_ext") 2>&AC_FD_CC | sed -n \
-	      's/^#configure:.*\([0-9][0-9]*\).*\([0-9][0-9]*\).*$/\1.\2/p'`
+	      's/^configure:.*\([0-9][0-9]*\).*\([0-9][0-9]*\).*$/\1.\2/p'`
+	 changequote([,])
+
          rm -f conftest.$ac_ext
 
 	 CPPFLAGS="$ac_save_CPPFLAGS"
@@ -1378,6 +1381,8 @@ have_kerberos=no
 with_kerberos_req=unspecified
 have_shadow=no
 with_shadow_req=unspecified
+have_pam=no
+with_pam_req=unspecified
 need_setuid=no
 
 AC_ARG_ENABLE(locking,[
@@ -1471,13 +1476,40 @@ if test "$enable_locking" = yes; then
     echo "error: must be yes or no: --with-kerberos=$with_kerberos"
     exit 1
   fi
+  
+  # Check for PAM.
+  AC_ARG_WITH(pam,
+[  --with-pam              Include support for PAM (Pluggable Authentication
+                          Modules) if possible (this is the default.)
+  --without-pam           Do not compile in support for PAM.],
+  [with_pam="$withval"; with_pam_req="$withval"],[with_pam=no])
+#### Leave PAM off by default for now, since it's buggy on Solaris
+#### (and probably Linux, but it's so hard to tell...)
+
+  HANDLE_X_PATH_ARG(with_pam, --with-pam, PAM)
+
+  if test "$with_pam" = yes; then
+    AC_CACHE_CHECK([for PAM], ac_cv_pam,
+		   [AC_TRY_X_COMPILE([#include <security/pam_appl.h>],,
+				     [ac_cv_pam=yes],
+				     [ac_cv_pam=no])])
+    if test "$ac_cv_pam" = yes ; then
+	  have_pam=yes
+	  AC_DEFINE(HAVE_PAM)
+	  PASSWD_LIBS="${PASSWD_LIBS} -lpam -ldl"
+    fi
+  elif test "$with_pam" != no; then
+  	echo "error: must be yes or no: --with-pam=$with_pam"
+	exit 1
+  fi
 
   # Next, check for the nine billion variants of shadow passwords...
 
-  passwd_cruft_done=no
+  pwent_cruft_done=no
   AC_ARG_WITH(shadow,
 [  --with-shadow           Include support for shadow password authentication,
-                          if possible (this is the default, if no Kerberos.)
+                          if possible (this is the default, if no Kerberos or
+                          PAM.)
   --without-shadow        Do not compile in support for shadow passwords.
 ],
   [with_shadow="$withval"; with_shadow_req="$withval"],[with_shadow=yes])
@@ -1485,7 +1517,7 @@ if test "$enable_locking" = yes; then
   HANDLE_X_PATH_ARG(with_shadow, --with-shadow, shadow password)
 
   if test "$with_shadow" = no; then
-    passwd_cruft_done=yes
+    pwent_cruft_done=yes
   elif test "$with_shadow" != yes; then
     echo "error: must be yes or no: --with-shadow=$with_shadow"
     exit 1
@@ -1494,7 +1526,7 @@ if test "$enable_locking" = yes; then
 
   # Sun's "adjunct" passwords.
   #
-  if test "$passwd_cruft_done" = no ; then
+  if test "$pwent_cruft_done" = no ; then
     AC_CACHE_CHECK([for Sun-style shadow passwords], ac_cv_sun_adjunct,
 		   [AC_TRY_X_COMPILE([#include <stdlib.h>
 				      #include <unistd.h>
@@ -1509,14 +1541,14 @@ if test "$enable_locking" = yes; then
     if test "$ac_cv_sun_adjunct" = yes; then
       have_shadow=yes
       need_setuid=yes
-      passwd_cruft_done=yes
+      pwent_cruft_done=yes
       AC_DEFINE(HAVE_ADJUNCT_PASSWD)
     fi
   fi
 
   # DEC and SCO so-called "enhanced" security.
   #
-  if test "$passwd_cruft_done" = no ; then
+  if test "$pwent_cruft_done" = no ; then
     AC_CACHE_CHECK([for DEC-style shadow passwords], ac_cv_enhanced_passwd,
 		   [AC_TRY_X_COMPILE([#include <stdlib.h>
 				      #include <unistd.h>
@@ -1535,7 +1567,7 @@ if test "$enable_locking" = yes; then
     if test $ac_cv_enhanced_passwd = yes; then
       have_shadow=yes
       need_setuid=yes
-      passwd_cruft_done=yes
+      pwent_cruft_done=yes
       AC_DEFINE(HAVE_ENHANCED_PASSWD)
 
       # On SCO, getprpwnam() is in -lprot (which uses nap() from -lx)
@@ -1551,7 +1583,7 @@ if test "$enable_locking" = yes; then
 
   # HP's entry in the "Not Invented Here" Sweepstakes.
   #
-  if test "$passwd_cruft_done" = no ; then
+  if test "$pwent_cruft_done" = no ; then
     AC_CACHE_CHECK([for HP-style shadow passwords], ac_cv_hpux_passwd,
 		   [AC_TRY_X_COMPILE([#include <stdlib.h>
 				      #include <unistd.h>
@@ -1566,7 +1598,7 @@ if test "$enable_locking" = yes; then
     if test "$ac_cv_hpux_passwd" = yes; then
       have_shadow=yes
       need_setuid=yes
-      passwd_cruft_done=yes
+      pwent_cruft_done=yes
       AC_DEFINE(HAVE_HPUX_PASSWD)
 
       # on HPUX, bigcrypt is in -lsec
@@ -1576,7 +1608,7 @@ if test "$enable_locking" = yes; then
 
   # Traditional (ha!) shadow passwords.
   #
-  if test "$passwd_cruft_done" = no ; then
+  if test "$pwent_cruft_done" = no ; then
     AC_CACHE_CHECK([for generic shadow passwords], ac_cv_shadow,
 		   [AC_TRY_X_COMPILE([#include <stdlib.h>
 				      #include <unistd.h>
@@ -1590,7 +1622,7 @@ if test "$enable_locking" = yes; then
     if test "$ac_cv_shadow" = yes; then
       have_shadow=yes
       need_setuid=yes
-      passwd_cruft_done=yes
+      pwent_cruft_done=yes
       AC_DEFINE(HAVE_SHADOW_PASSWD)
 
       # On some systems (UnixWare 2.1), getspnam() is in -lgen instead of -lc.
@@ -1608,7 +1640,7 @@ if test "$enable_locking" = yes; then
   # program is setuid.  So, guess that we've got this lossage to contend with
   # if /etc/master.passwd exists, and default to a setuid installation.
   #
-  if test "$passwd_cruft_done" = no ; then
+  if test "$pwent_cruft_done" = no ; then
     AC_CACHE_CHECK([for FreeBSD-style shadow passwords], ac_cv_master_passwd,
 		   [if test -f /etc/master.passwd ; then
 		      ac_cv_master_passwd=yes
@@ -1617,7 +1649,7 @@ if test "$enable_locking" = yes; then
 		    fi])
     if test "$ac_cv_master_passwd" = yes; then
       need_setuid=yes
-      passwd_cruft_done=yes
+      pwent_cruft_done=yes
     fi
   fi
 
@@ -1626,7 +1658,7 @@ if test "$enable_locking" = yes; then
   AC_CHECK_LIB(c, crypt, [have_crypt=yes])
   if test "$have_crypt" = no ; then
     AC_CHECK_LIB(crypt, crypt,
-		 [have_crypt=yes; PASSWD_LIBS="$PASSWD_LIBS -lcrypt"])
+                 [have_crypt=yes; PASSWD_LIBS="$PASSWD_LIBS -lcrypt"])
   fi
 
 
@@ -1643,7 +1675,6 @@ if test "$enable_locking" = yes; then
   fi
 
 fi
-
 
 
 if test \! -z "$includedir" ; then 
@@ -1677,12 +1708,17 @@ else
 fi
 
 if test "$have_kerberos" = yes; then
-  PASSWD_SRCS='$(KERBEROS_SRCS)'
-  PASSWD_OBJS='$(KERBEROS_OBJS)'
-else
-  PASSWD_SRCS='$(PWENT_SRCS)'
-  PASSWD_OBJS='$(PWENT_OBJS)'
+  PASSWD_SRCS="$PASSWD_SRCS \$(KERBEROS_SRCS)"
+  PASSWD_OBJS="$PASSWD_OBJS \$(KERBEROS_OBJS)"
 fi
+if test "$have_pam" = yes; then
+  PASSWD_SRCS="$PASSWD_SRCS \$(PAM_SRCS)"
+  PASSWD_OBJS="$PASSWD_OBJS \$(PAM_OBJS)"
+  INSTALL_PAM="install-pam"
+fi
+  PASSWD_SRCS="$PASSWD_SRCS \$(PWENT_SRCS)"
+  PASSWD_OBJS="$PASSWD_OBJS \$(PWENT_OBJS)"
+
 
 if test "$enable_locking" = yes; then
   LOCK_SRCS='$(LOCK_SRCS_1) $(PASSWD_SRCS)'
@@ -1719,6 +1755,7 @@ AC_SUBST(PASSWD_LIBS)
 AC_SUBST(INSTALL_SETUID)
 AC_SUBST(INSTALL_DIRS)
 AC_SUBST(NEED_SETUID)
+AC_SUBST(INSTALL_PAM)
 AC_SUBST(SGI_VIDEO_OBJS)
 AC_SUBST(SGI_VIDEO_LIBS)
 
@@ -1918,6 +1955,10 @@ fi
 
 if test "$with_kerberos_req" = yes -a "$have_kerberos" = no ; then
   warn 'Use of Kerberos was requested, but it was not found.'
+fi
+
+if test "$with_pam_req" = yes -a "$have_pam" = no ; then
+  warn 'Use of PAM was requested, but it was not found.'
 fi
 
 if test "$with_shadow_req" = yes -a "$have_shadow" = no ; then

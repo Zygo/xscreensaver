@@ -800,6 +800,9 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 	 Unless this hack was specified explicitly, in which case,
 	 use it regardless.
        */
+      if (force)
+        select_visual_of_hack (ssi, hack);
+        
       if (!force &&
 	  (!hack_enabled_p (hack) ||
 	   !select_visual_of_hack (ssi, hack)))

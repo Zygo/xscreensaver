@@ -67,14 +67,17 @@ MOTIF_OBJS	= dialogs-Xm.o
 ATHENA_SRCS	= dialogs-Xaw.c
 ATHENA_OBJS	= dialogs-Xaw.o
 
-PWENT_SRCS	= passwd.c
-PWENT_OBJS	= passwd.o
+PWENT_SRCS	= passwd-pwent.c
+PWENT_OBJS	= passwd-pwent.o
 
-KERBEROS_SRCS	= kpasswd.c
-KERBEROS_OBJS	= kpasswd.o
+KERBEROS_SRCS	= passwd-kerberos.c
+KERBEROS_OBJS	= passwd-kerberos.o
 
-LOCK_SRCS_1	= lock.c
-LOCK_OBJS_1	= lock.o
+PAM_SRCS	= passwd-pam.c
+PAM_OBJS	= passwd-pam.o
+
+LOCK_SRCS_1	= lock.c passwd.c
+LOCK_OBJS_1	= lock.o passwd.o
 
 TEST_SRCS	= test-passwd.c test-uid.c test-xdpms.c
 
@@ -89,19 +92,19 @@ PASSWD_LIBS	= @PASSWD_LIBS@
 LOCK_SRCS	= @LOCK_SRCS@
 LOCK_OBJS	= @LOCK_OBJS@
 
-SAVER_UTIL_SRCS	= $(UTILS_SRC)/fade.c $(UTILS_SRC)/overlay.c \
-		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
-		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/xroger.c \
-		  $(UTILS_SRC)/spline.c $(UTILS_SRC)/yarandom.c
-SAVER_UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
-		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
-		  $(UTILS_BIN)/visual.o $(UTILS_BIN)/xroger.o \
-		  $(UTILS_BIN)/spline.o $(UTILS_BIN)/yarandom.o
-
 DEMO_UTIL_SRCS	= $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
 		  $(UTILS_SRC)/visual.c
 DEMO_UTIL_OBJS	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/visual.o
+
+SAVER_UTIL_SRCS	= $(UTILS_SRC)/fade.c $(UTILS_SRC)/overlay.c \
+		  $(UTILS_SRC)/xroger.c $(UTILS_SRC)/spline.c \
+		  $(UTILS_SRC)/yarandom.c \
+		  $(DEMO_UTIL_SRCS)
+SAVER_UTIL_OBJS	= $(UTILS_BIN)/fade.o $(UTILS_BIN)/overlay.o \
+		  $(UTILS_BIN)/xroger.o $(UTILS_BIN)/spline.o \
+		  $(UTILS_BIN)/yarandom.o \
+		  $(DEMO_UTIL_OBJS)
 
 SAVER_SRCS_1	= xscreensaver.c windows.c timers.c subprocs.c \
 		  xset.c splash.c setuid.c stderr.c
@@ -139,20 +142,21 @@ EXES		= xscreensaver xscreensaver-command xscreensaver-demo
 HDRS		= XScreenSaver_ad.h xscreensaver.h prefs.h remote.h
 MEN		= xscreensaver.man xscreensaver-demo.man \
 		  xscreensaver-command.man
-EXTRAS		= README Makefile.in XScreenSaver.ad.in dialogs.xd .gdbinit
+EXTRAS		= README Makefile.in XScreenSaver.ad.in xscreensaver.pam \
+		  .gdbinit
 VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 		  vms-getpwnam.c vms-pwd.h vms-hpwd.c vms-validate.c \
 		  vms_axp.opt vms_axp_12.opt vms_decc.opt vms_decc_12.opt
 
 TARFILES	= $(EXTRAS) $(VMSFILES) $(SAVER_SRCS_1) \
 		  $(MOTIF_SRCS) $(ATHENA_SRCS) $(PWENT_SRCS) $(KERBEROS_SRCS) \
-		  $(LOCK_SRCS_1) $(DEMO_SRCS_1) $(CMD_SRCS) $(HDRS) \
-		  $(TEST_SRCS) $(MEN)
+		  $(PAM_SRCS) $(LOCK_SRCS_1) $(DEMO_SRCS_1) $(CMD_SRCS) \
+		  $(HDRS) $(TEST_SRCS) $(MEN)
 
 
 all: $(EXES)
 
-install:   install-program   install-ad   install-man
+install:   install-program   install-ad   install-man   @INSTALL_PAM@
 uninstall: uninstall-program uninstall-ad uninstall-man
 
 install-strip:
@@ -215,6 +219,42 @@ uninstall-man:
 	  echo rm -f $(man1dir)/$$instname ;				\
 	  rm -f $(man1dir)/$$instname ;					\
 	done
+
+install-pam:
+	@src="$(srcdir)/xscreensaver.pam" ;				\
+	dest=`sed -n 's/.*PAM_SERVICE_NAME[ 	]*"\([^"]*\)".*$$/\1/p'	\
+	   < ../config.h` ;						\
+	dir=/etc/pam.d ;						\
+	conf=/etc/pam.conf ;						\
+									\
+	if [ -d $$dir ] ; then						\
+	  echo $(INSTALL_DATA) $$src $$dir/$$dest ;			\
+	  $(INSTALL_DATA) $$src $$dir/$$dest ;				\
+	  if [ ! -f $$dir/$$dest ]; then				\
+	    e=echo ;							\
+ $$e ""									     ;\
+ $$e "  Warning: xscreensaver has been compiled with support for Pluggable"  ;\
+ $$e "           Authentication Modules (PAM).  However, we were unable to"  ;\
+ $$e "           install the file $$dir/$$dest.  PAM is unlikely to work"    ;\
+ $$e "           without this file (and old-style password authentication"   ;\
+ $$e "           will be used instead, which may or may not work.)"	     ;\
+ $$e ""									     ;\
+	  fi ;								\
+	elif [ -f $$conf ]; then					\
+	  if ( grep $$dest $$conf >/dev/null ); then			\
+	   true ;							\
+	  else								\
+	    e=echo ;							\
+ $$e ""									     ;\
+ $$e "  Warning: xscreensaver has been compiled with support for Pluggable"  ;\
+ $$e "           Authentication Modules (PAM).  To complete the installation";\
+ $$e "           of PAM support, you must add this to the file $$conf:"	     ;\
+ $$e ""									     ;\
+	    cat $$src | grep -v '#%' | sed "s/^/	$$dest	/" ;	\
+	    echo "";							\
+	  fi ;								\
+	fi
+
 
 clean:
 	-rm -f *.o a.out core $(EXES) XScreenSaver_ad.h
@@ -314,7 +354,7 @@ $(UTILS_BIN)/xroger.o:		$(UTILS_SRC)/xroger.c
 $(UTILS_BIN)/spline.o:		$(UTILS_SRC)/spline.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 
-$(UTIL_OBJS):
+$(SAVER_UTIL_OBJS):
 	cd $(UTILS_BIN) ; \
 	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 
@@ -345,9 +385,9 @@ xscreensaver-demo: $(DEMO_OBJS)
 
 
 
-TEST_PASSWD_OBJS = test-passwd.o $(LOCK_OBJS_1) $(PWENT_OBJS) $(TOOLKIT_OBJS) \
-	 subprocs.o setuid.o demo.o splash.o prefs.o \
-	$(UTIL_OBJS)
+TEST_PASSWD_OBJS = test-passwd.o $(LOCK_OBJS_1) $(PASSWD_OBJS) \
+	 subprocs.o setuid.o splash.o prefs.o \
+	$(SAVER_UTIL_OBJS)
 test-passwd.o: XScreenSaver_ad.h
 
 test-passwd: $(TEST_PASSWD_OBJS) XScreenSaver_ad.h
@@ -393,6 +433,7 @@ xscreensaver.o: $(UTILS_SRC)/version.h
 xscreensaver.o: $(UTILS_SRC)/yarandom.h
 xscreensaver.o: $(UTILS_SRC)/resources.h
 xscreensaver.o: $(UTILS_SRC)/visual.h
+xscreensaver.o: $(UTILS_SRC)/usleep.h
 xscreensaver.o: XScreenSaver_ad.h
 windows.o: ../config.h
 windows.o: $(srcdir)/xscreensaver.h
@@ -425,17 +466,19 @@ dialogs-Xm.o: ../config.h
 dialogs-Xm.o: $(UTILS_SRC)/visual.h
 dialogs-Xaw.o: ../config.h
 dialogs-Xaw.o: $(UTILS_SRC)/visual.h
-passwd.o: ../config.h
+passwd-pwent.o: ../config.h
 lock.o: ../config.h
 lock.o: $(srcdir)/xscreensaver.h
 lock.o: $(srcdir)/prefs.h
 lock.o: $(UTILS_SRC)/resources.h
+passwd.o: ../config.h
 demo.o: ../config.h
 demo.o: $(UTILS_SRC)/version.h
 demo.o: $(srcdir)/prefs.h
 demo.o: $(UTILS_SRC)/resources.h
 demo.o: $(UTILS_SRC)/visual.h
 demo.o: $(srcdir)/remote.h
+demo.o: $(UTILS_SRC)/usleep.h
 demo.o: XScreenSaver_ad.h
 prefs.o: ../config.h
 prefs.o: $(srcdir)/prefs.h
@@ -450,6 +493,7 @@ test-passwd.o: $(srcdir)/xscreensaver.h
 test-passwd.o: $(srcdir)/prefs.h
 test-passwd.o: $(UTILS_SRC)/resources.h
 test-passwd.o: $(UTILS_SRC)/version.h
+test-passwd.o: $(UTILS_SRC)/visual.h
 test-passwd.o: XScreenSaver_ad.h
 test-uid.o: ../config.h
 test-xdpms.o: ../config.h

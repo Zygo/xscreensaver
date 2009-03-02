@@ -62,6 +62,10 @@ struct saver_info {
      server extension info
      ======================================================================= */
 
+  Bool using_xidle_extension;	   /* which extension is being used.         */
+  Bool using_mit_saver_extension;  /* Note that `p->use_*' is the *request*, */
+  Bool using_sgi_saver_extension;  /* and `si->using_*' is the *reality*.    */
+
 # ifdef HAVE_MIT_SAVER_EXTENSION
   int mit_saver_ext_event_number;
   int mit_saver_ext_error_number;
@@ -271,8 +275,8 @@ extern void ungrab_keyboard_and_mouse (saver_info *si);
 
 #ifndef NO_LOCKING
 extern Bool unlock_p (saver_info *si);
-extern Bool lock_init (int argc, char **argv);
-extern Bool passwd_valid_p (const char *typed_passwd);
+extern Bool lock_init (int argc, char **argv, Bool verbose_p);
+extern Bool passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 
 extern void make_passwd_window (saver_info *si);
 extern void draw_passwd_window (saver_info *si);

@@ -122,8 +122,10 @@ xpm_to_ximage (Display *dpy, Visual *visual, Colormap cmap, char **xpm_data)
   }
 
   /* I sure hope these only free the contents, and not the args. */
+#if 0  /* Apparently not?  Gotta love those well-documented APIs! */
   XpmFreeXpmImage (&xpm_image);
   XpmFreeXpmInfo (&xpm_info);
+#endif
 
   return ximage;
 }
