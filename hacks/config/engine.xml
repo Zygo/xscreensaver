@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="engine" _label="Engine">
+
+  <command arg="-root"/>
+
+  <!-- #### -rotate-speed [1] -->
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <select id="engine">
+   <option id="random" _label="Random Engine"/>
+   <option id="1" _label="BMW M3 (4 cylinders)" arg-set="-engine 'BMW M3'"/>
+   <option id="2" _label="VW Beetle (4 cylinders, flat)" arg-set="-engine 'VW Beetle'"/>
+   <option id="3" _label="Audi Quattro (5 cylinders)" arg-set="-engine 'Audi Quattro'"/>
+   <option id="4" _label="BMW M5 (6 cylinders)" arg-set="-engine 'BMW M5'"/>
+   <option id="5" _label="Subaru XT (6 cylinders, V)" arg-set="-engine 'Subaru XT'"/>
+   <option id="6" _label="Porsche 911 (6 cylinders, flat)" arg-set="-engine 'Porsche 911'"/>
+   <option id="7" _label="Corvette Z06 (8 cylinders, V)" arg-set="-engine 'Corvette Z06'"/>
+   <option id="8" _label="Dodge Viper (10 cylinders, V)" arg-set="-engine 'Dodge Viper'"/>
+   <option id="9" _label="Jaguar XKE (12 cylinders, V)" arg-set="-engine 'Jaguar XKE'"/>
+  </select>
+
+  <boolean id="titles" _label="Show Engine Name" arg-set="-titles"/>
+  <hgroup>
+    <boolean id="wander" _label="Wander" arg-unset="-no-move"/>
+    <boolean id="spin" _label="Spin" arg-unset="-no-spin"/>
+  </hgroup>
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Draws a simple model of an engine that floats around the screen.
+Written by Ben Buxton and Ed Beroset.
+  </_description>
+</screensaver>
