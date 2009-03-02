@@ -13,7 +13,6 @@ xscreensaver\-text - prints some text to stdout, for use by screen savers.
 The \fIxscreensaver\-text\fP script prints out some text for use by
 various screensavers, according to the options set in the ~/.xscreensaver
 file.  This may dump the contents of a file, run a program, or load a URL.
-.EE
 .SH OPTIONS
 .I xscreensaver\-text
 accepts the following options:

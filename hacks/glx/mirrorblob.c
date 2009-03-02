@@ -17,9 +17,10 @@
  * 19-Oct-2003:  jon.dowdall@bigpond.com  Added texturing
  * 21-Oct-2003:                           Renamed to mirrorblob
  * 10-Feb-2004:  jon.dowdall@bigpond.com  Added motion blur
+ * 28-Jan-2006:  jon.dowdall@bigpond.com  Big clean up and bug fixes
  *
  * The mirrorblob screensaver draws a pulsing blob on the screen.  Options
- * include adding a background (via load_texture_async), texturing the blob,
+ * include adding a background (via screen_to_texture), texturing the blob,
  * making the blob semi-transparent and varying the resolution of the blob
  * tessellation.
  *
@@ -40,7 +41,9 @@
     "*useSHM:              True      \n"
 
 # define refresh_mirrorblob 0
+/*
 # define mirrorblob_handle_event 0
+*/
 # include "xlockmore.h"    /* from the xmirrorblob distribution */
 #else /* !STANDALONE */
 # include "xlock.h"        /* from the xlockmore distribution */
@@ -52,21 +55,22 @@
 #define DEF_DELAY            "10000"
 #define DEF_FPS              "False"
 #define DEF_WIRE             "False"
-#define DEF_BLEND            "False"
+#define DEF_BLEND            "1.0"
 #define DEF_FOG              "False"
 #define DEF_ANTIALIAS        "False"
-#define DEF_WALLS            "True"
+#define DEF_WALLS            "False"
 #define DEF_COLOUR           "False"
+#define DEF_ASYNC            "True"
 #define DEF_TEXTURE          "True"
 #define DEF_OFFSET_TEXTURE   "False"
 #define DEF_PAINT_BACKGROUND "True"
-#define DEF_X_RES            "60"
-#define DEF_Y_RES            "32"
-#define DEF_FIELD_POINTS     "5"
-#define DEF_MOTION_BLUR      "0"
+#define DEF_RESOLUTION       "30"
+#define DEF_BUMPS            "10"
+#define DEF_MOTION_BLUR      "0.0"
 #define DEF_INCREMENTAL      "0"
-#define DEF_HOLD_TIME        "30"
-#define DEF_FADE_TIME        "5"
+#define DEF_HOLD_TIME        "30.0"
+#define DEF_FADE_TIME        "5.0"
+#define DEF_ZOOM             "1.0"
 
 #ifdef HAVE_XMU
 # ifndef VMS
@@ -76,6 +80,7 @@
 # endif /* VMS */
 #endif
 
+#include "gltrackball.h"
 #include "grab-ximage.h"
 
 #undef countof
@@ -83,29 +88,31 @@
 
 #define PI  3.1415926535897
 
-/* */
-static int do_wire;
-static int do_blend;
-static int do_fog;
-static int do_antialias;
-static int do_walls;
-static int do_texture;
-static int do_paint_background;
-static int do_colour;
-static int offset_texture;
-static int x_resolution;
-static int y_resolution;
-static int field_points;
-static int motion_blur;
-static int incremental;
-static int fade_time;
-static int hold_time;
+/* Options from command line */
+static GLfloat blend;
+static Bool wireframe;
+static Bool do_fog;
+static Bool do_antialias;
+static Bool do_walls;
+static Bool do_texture;
+static Bool do_paint_background;
+static Bool do_colour;
+static Bool offset_texture;
+static int resolution;
+static int bumps;
+static float motion_blur;
+static float fade_time;
+static float hold_time;
+static float zoom;
+
+/* Internal parameters based on supplied options */
+static Bool culling;
+static Bool load_textures;
 
 static XrmOptionDescRec opts[] = {
-    {"-wireframe",        ".blob.wire",             XrmoptionNoArg, "true" },
-    {"+wireframe",        ".blob.wire",             XrmoptionNoArg, "false" },
-    {"-blend",            ".blob.blend",            XrmoptionNoArg, "true" },
-    {"+blend",            ".blob.blend",            XrmoptionNoArg, "false" },
+    {"-wire",             ".blob.wire",             XrmoptionNoArg, "true" },
+    {"+wire",             ".blob.wire",             XrmoptionNoArg, "false" },
+    {"-blend",            ".blob.blend",            XrmoptionSepArg, 0 },
     {"-fog",              ".blob.fog",              XrmoptionNoArg, "true" },
     {"+fog",              ".blob.fog",              XrmoptionNoArg, "false" },
     {"-antialias",        ".blob.antialias",        XrmoptionNoArg, "true" },
@@ -116,22 +123,21 @@ static XrmOptionDescRec opts[] = {
     {"+texture",          ".blob.texture",          XrmoptionNoArg, "false" },
     {"-colour",           ".blob.colour",           XrmoptionNoArg, "true" },
     {"+colour",           ".blob.colour",           XrmoptionNoArg, "false" },
-    {"-offset_texture",   ".blob.offset_texture",   XrmoptionNoArg, "true" },
-    {"+offset_texture",   ".blob.offset_texture",   XrmoptionNoArg, "false" },
-    {"-paint_background", ".blob.paint_background", XrmoptionNoArg, "true" },
-    {"+paint_background", ".blob.paint_background", XrmoptionNoArg, "false" },
-    {"-x_res",            ".blob.x_res",            XrmoptionSepArg, NULL },
-    {"-y_res",            ".blob.y_res",            XrmoptionSepArg, NULL },
-    {"-field_points",     ".blob.field_points",     XrmoptionSepArg, NULL },
-    {"-motion_blur",      ".blob.motion_blur",      XrmoptionSepArg, NULL },
-    {"-incremental",      ".blob.incremental",      XrmoptionSepArg, NULL },
-    {"-fade_time",        ".blob.fade_time",        XrmoptionSepArg, NULL },
-    {"-hold_time",        ".blob.hold_time",        XrmoptionSepArg, NULL },
+    {"-offset-texture",   ".blob.offset_texture",   XrmoptionNoArg, "true" },
+    {"+offset-texture",   ".blob.offset_texture",   XrmoptionNoArg, "false" },
+    {"-paint-background", ".blob.paint_background", XrmoptionNoArg, "true" },
+    {"+paint-background", ".blob.paint_background", XrmoptionNoArg, "false" },
+    {"-resolution",       ".blob.resolution",       XrmoptionSepArg, NULL },
+    {"-bumps",            ".blob.bumps",            XrmoptionSepArg, NULL },
+    {"-motion-blur",      ".blob.motion_blur",      XrmoptionSepArg, 0 },
+    {"-fade-time",        ".blob.fade_time",        XrmoptionSepArg, 0 },
+    {"-hold-time",        ".blob.hold_time",        XrmoptionSepArg, 0 },
+    {"-zoom",             ".blob.zoom",             XrmoptionSepArg, 0 },
 };
 
 static argtype vars[] = {
-    {&do_wire,      "wire",         "Wire",      DEF_WIRE,      t_Bool},
-    {&do_blend,     "blend",        "Blend",     DEF_BLEND,     t_Bool},
+    {&wireframe,    "wire",         "Wire",      DEF_WIRE,      t_Bool},
+    {&blend,        "blend",        "Blend",     DEF_BLEND,     t_Float},
     {&do_fog,       "fog",          "Fog",       DEF_FOG,       t_Bool},
     {&do_antialias, "antialias",    "Antialias", DEF_ANTIALIAS, t_Bool},
     {&do_walls,     "walls",        "Walls",     DEF_WALLS,     t_Bool},
@@ -139,13 +145,12 @@ static argtype vars[] = {
     {&do_colour,    "colour",       "Colour",    DEF_COLOUR,   t_Bool},
     {&offset_texture, "offset_texture","Offset_Texture", DEF_OFFSET_TEXTURE, t_Bool},
     {&do_paint_background,"paint_background","Paint_Background", DEF_PAINT_BACKGROUND, t_Bool},
-    {&x_resolution, "x_res",        "X_Res",        DEF_X_RES,        t_Int},
-    {&y_resolution, "y_res",        "Y_Res",        DEF_Y_RES,        t_Int},
-    {&field_points, "field_points", "Field_Points", DEF_FIELD_POINTS, t_Int},
-    {&motion_blur,  "motion_blur",  "Motion_Blur",  DEF_MOTION_BLUR,  t_Int},
-    {&incremental,  "incremental",  "Incremental",  DEF_INCREMENTAL,  t_Int},
-    {&fade_time,    "fade_time",    "Fade_Time",    DEF_FADE_TIME,    t_Int},
-    {&hold_time,    "hold_time",    "Hold_Time",    DEF_HOLD_TIME,    t_Int},
+    {&resolution,   "resolution",   "Resolution",   DEF_RESOLUTION,   t_Int},
+    {&bumps,        "bumps",        "Bump",         DEF_BUMPS, t_Int},
+    {&motion_blur,  "motion_blur",  "Motion_Blur",  DEF_MOTION_BLUR,  t_Float},
+    {&fade_time,    "fade_time",    "Fade_Time",    DEF_FADE_TIME,    t_Float},
+    {&hold_time,    "hold_time",    "Hold_Time",    DEF_HOLD_TIME,    t_Float},
+    {&zoom,         "zoom",         "Zoom",         DEF_ZOOM,         t_Float},
 };
 
 
@@ -160,11 +165,9 @@ static OptionStruct desc[] =
     {"-/+ colour", "whether to colour the blob"},
     {"-/+ offset_texture", "whether to offset texture co-ordinates"},
     {"-/+ paint_background", "whether to display a background texture (slower)"},
-    {"-x_res", "Blob resolution in x direction"},
-    {"-y_res", "Blob resolution in y direction"},
-    {"-field_points", "Number of field points used to disturb blob"},
+    {"-resolution", "Resolution of blob tesselation"},
+    {"-bumps", "Number of bumps used to disturb blob"},
     {"-motion_blur", "Fade blob images (higher number = faster fade)"},
-    {"-incremental", "Field summation method"},
     {"-fade_time", "Number of frames to transistion to next image"},
     {"-hold_time", "Number of frames before next image"},
 };
@@ -174,12 +177,11 @@ ENTRYPOINT ModeSpecOpt mirrorblob_opts = {countof(opts), opts, countof(vars), va
 #ifdef USE_MODULES
 ModStruct   mirrorblob_description =
 {"mirrorblob", "init_mirrorblob", "draw_mirrorblob", "release_mirrorblob",
- "draw_mirrorblob", "init_mirrorblob", NULL, &mirrorblob_opts,
+ "draw_mirrorblob", "init_mirrorblob", "handle_event", &mirrorblob_opts,
  1000, 1, 2, 1, 4, 1.0, "",
  "OpenGL mirrorblob", 0, NULL};
 #endif
 
-#define NUM_TEXTURES 2
 
 /*****************************************************************************
  * Types used in blob code
@@ -197,34 +199,74 @@ typedef struct
 
 typedef struct
 {
+    GLdouble w;
+    GLdouble x;
+    GLdouble y;
+    GLdouble z;
+} Quaternion;
+
+typedef struct
+{
     GLubyte red, green, blue, alpha;
 } Colour;
 
-/* Data used for sphere tessellation */
 typedef struct
 {
-    double cosyd, sinyd;
+    Vector3D initial_position;
+    Vector3D position;
+    Vector3D normal;
+} Node_Data;
 
-    /* Number of x points at each row of the blob */
-    int num_x_points;
-} Row_Data;
-
-/* Structure to hold sphere distortion data */
 typedef struct
 {
-    double cx, cy, cpower;
-    double mx, my, mpower;
-    double ax, ay, apower;
-    double vx, vy, vpower;
+    int node1, node2, node3;
+    Vector3D normal;
+    double length1, length2, length3;
+} Face_Data;
+
+/* Structure to hold data about bumps used to distortion sphere */
+typedef struct
+{
+    double cx, cy, cpower, csize;
+    double ax, ay, power, size;
+    double mx, my, mpower, msize;
+    double vx, vy, vpower, vsize;
     Vector3D pos;
-} Field_Data;
+} Bump_Data;
+
+/* Vertices of a tetrahedron */
+#define sqrt_3 0.5773502692
+/*#undef sqrt_3
+#define sqrt_3 1.0*/
+#define PPP {  sqrt_3,  sqrt_3,  sqrt_3 }       /* +X, +Y, +Z */
+#define MMP { -sqrt_3, -sqrt_3,  sqrt_3 }       /* -X, -Y, +Z */
+#define MPM { -sqrt_3,  sqrt_3, -sqrt_3 }       /* -X, +Y, -Z */
+#define PMM {  sqrt_3, -sqrt_3, -sqrt_3 }       /* +X, -Y, -Z */
+
+/* Structure describing a tetrahedron */
+Vector3D tetrahedron[4][3] = {
+    {PPP, MMP, MPM},
+    {PMM, MPM, MMP},
+    {PPP, MPM, PMM},
+    {PPP, PMM, MMP}
+};
+
+/*****************************************************************************
+ * Static blob data
+ *****************************************************************************/
+
+const Vector3D zero_vector = { 0.0, 0.0, 0.0 };
+
+/* Use 2 textures to allow a gradual fade between images */
+#define NUM_TEXTURES 2
+#define BUMP_ARRAY_SIZE 1024
 
 typedef enum
 {
-  HOLDING=0,
+  HOLDING,
+  LOADING,
   TRANSITIONING
 } Frame_State;
-
 
 /* structure for holding the mirrorblob data */
 typedef struct {
@@ -232,9 +274,6 @@ typedef struct {
   GLXContext *glx_context;
   Window window;
   XColor fg, bg;
-  double freak, v_freak;
-
-  Row_Data *row_data;
 
   /* Parameters controlling the position of the blob as a whole */
   Vector3D blob_center;
@@ -242,18 +281,22 @@ typedef struct {
   Vector3D blob_velocity;
   Vector3D blob_force;
 
-  /* Count of the total number of points */
-  int num_points;
+  /* Count of the total number of nodes and faces used to tesselate the blob */
+  int num_nodes;
+  int num_faces;
 
+  Node_Data *nodes;
+  Face_Data *faces;
+  
   Vector3D *dots;
   Vector3D *normals;
   Colour   *colours;
   Vector2D *tex_coords;
 
-  /* Pointer to the field function results */
-  double *field, *wall_field;
+  /* Pointer to the bump function results */
+  double *bump_shape, *wall_shape;
 
-  Field_Data *field_data;
+  Bump_Data *bump_data;
 
   /* Use 2 textures to allow a gradual fade between images */
   int current_texture;
@@ -270,6 +313,9 @@ typedef struct {
   Bool mipmap_p;
   Bool waiting_for_image_p;
   Bool first_image_p;
+
+  trackball_state *trackball;
+  int button_down;
 
 } mirrorblobstruct;
 
@@ -308,6 +354,182 @@ reset_projection(int width, int height)
     gluPerspective (60.0, 1.0, 1.0, 1024.0 );
     glMatrixMode (GL_MODELVIEW);
     glLoadIdentity ();
+}
+
+/******************************************************************************
+ *
+ * Calculate the dot product of two vectors u and v
+ * Dot product u.v = |u||v|cos(theta)
+ * Where theta = angle between u and v
+ */
+static inline double
+dot (const Vector3D u, const Vector3D v)
+{
+    return (u.x * v.x) + (u.y * v.y) + (u.z * v.z);
+}
+
+/******************************************************************************
+ *
+ * Calculate the cross product of two vectors.
+ * Gives a vector perpendicular to u and v with magnitude |u||v|sin(theta)
+ * Where theta = angle between u and v
+ */
+static inline Vector3D
+cross (const Vector3D u, const Vector3D v)
+{
+    Vector3D result;
+
+    result.x = (u.y * v.z - u.z * v.y);
+    result.y = (u.z * v.x - u.x * v.z);
+    result.z = (u.x * v.y - u.y * v.x);
+
+    return result;
+}
+
+/******************************************************************************
+ *
+ * Add vector v to vector u
+ */
+static inline void
+add (Vector3D *u, const Vector3D v)
+{
+    u->x = u->x + v.x;
+    u->y = u->y + v.y;
+    u->z = u->z + v.z;
+}
+
+/******************************************************************************
+ *
+ * Subtract vector v from vector u
+ */
+static inline Vector3D
+subtract (const Vector3D u, const Vector3D v)
+{
+    Vector3D result;
+
+    result.x = u.x - v.x;
+    result.y = u.y - v.y;
+    result.z = u.z - v.z;
+
+    return result;
+}
+
+/******************************************************************************
+ *
+ * multiply vector v by scalar s
+ */
+static inline Vector3D
+scale (const Vector3D v, const double s)
+{
+    Vector3D result;
+    
+    result.x = v.x * s;
+    result.y = v.y * s;
+    result.z = v.z * s;
+    return result;
+}
+
+/******************************************************************************
+ *
+ * normalise vector v
+ */
+static inline Vector3D
+normalise (const Vector3D v)
+{
+    Vector3D result;
+    double magnitude;
+
+    magnitude = sqrt (dot(v, v));
+
+    if (magnitude > 1e-300)
+    {
+        result = scale (v, 1.0 / magnitude);
+    }
+    else
+    {
+        printf("zero\n");
+        result = zero_vector;
+    }
+    return result;
+}
+
+/******************************************************************************
+ *
+ * Calculate the transform matrix for the given quaternion
+ */
+static void
+quaternion_transform (Quaternion q, GLdouble * transform)
+{
+    GLdouble x, y, z, w;
+    x = q.x;
+    y = q.y;
+    z = q.z;
+    w = q.w;
+
+    transform[0] = (w * w) + (x * x) - (y * y) - (z * z);
+    transform[1] = (2.0 * x * y) + (2.0 * w * z);
+    transform[2] = (2.0 * x * z) - (2.0 * w * y);
+    transform[3] = 0.0;
+
+    transform[4] = (2.0 * x * y) - (2.0 * w * z);
+    transform[5] = (w * w) - (x * x) + (y * y) - (z * z);
+    transform[6] = (2.0 * y * z) + (2.0 * w * x);
+    transform[7] = 0.0;
+
+    transform[8] = (2.0 * x * z) + (2.0 * w * y);
+    transform[9] = (2.0 * y * z) - (2.0 * w * x);
+    transform[10] = (w * w) - (x * x) - (y * y) + (z * z);
+    transform[11] = 0.0;
+
+    transform[12] = 0.0;
+    transform[13] = 0.0;
+    transform[14] = 0.0;
+    transform[15] = (w * w) + (x * x) + (y * y) + (z * z);
+}
+
+/******************************************************************************
+ *
+ * Apply a matrix transform to the given vector
+ */
+static inline Vector3D
+vector_transform (Vector3D u, GLdouble * t)
+{
+    Vector3D result;
+
+    result.x = (u.x * t[0] + u.y * t[4] + u.z * t[8] + 1.0 * t[12]);
+    result.y = (u.x * t[1] + u.y * t[5] + u.z * t[9] + 1.0 * t[13]);
+    result.z = (u.x * t[2] + u.y * t[6] + u.z * t[10] + 1.0 * t[14]);
+
+    return result;
+}
+
+/******************************************************************************
+ *
+ * Return a node that is on an arc between node1 and node2, where distance
+ * is the proportion of the distance from node1 to the total arc.
+ */
+static Vector3D
+partial (Vector3D node1, Vector3D node2, double distance)
+{
+    Vector3D result;
+    Vector3D rotation_axis;
+    GLdouble transformation[16];
+    double angle;
+    Quaternion rotation;
+
+    rotation_axis = normalise (cross (node1, node2));
+    angle = acos (dot (node1, node2)) * distance;
+
+    rotation.x = rotation_axis.x * sin (angle / 2.0);
+    rotation.y = rotation_axis.y * sin (angle / 2.0);
+    rotation.z = rotation_axis.z * sin (angle / 2.0);
+    rotation.w = cos (angle / 2.0);
+
+    quaternion_transform (rotation, transformation);
+
+    result = vector_transform (node1, transformation);
+
+    return result;
 }
 
 /****************************************************************************
@@ -367,76 +589,98 @@ grab_texture(ModeInfo *mi, int texture_index)
 
 /******************************************************************************
  *
- * Initialise the data used to calculate the blob shape.
+ * Generate internal parameters based on supplied options the parameters to
+ * ensure they are consistant.
+ */
+static void
+set_parameters(void)
+{
+    /* In wire frame mode do not draw a texture */
+    if (wireframe)
+    {
+        do_texture = False;
+        blend = 1.0;
+    }
+    
+    /* Need to load textures if either the blob or the backgound has an image */
+    if (do_texture || do_paint_background)
+    {
+        load_textures = True;
+    }
+    else
+    {
+        load_textures = False;
+    }
+    
+    /* If theres no texture don't calculate co-ordinates. */
+    if (!do_texture)
+    {
+        offset_texture = False;
+    }
+    
+    culling = True;
+}
+
+/******************************************************************************
+ *
+ * Initialise the openGL state data.
  */
 static void
 initialize_gl(ModeInfo *mi, GLsizei width, GLsizei height)
 {
     mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
-
-    GLfloat fogColor[4] = { 0.1, 0.1, 0.1, 0.1 };
+    
     /* Lighting values */
+    GLfloat ambientLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+
     GLfloat lightPos0[] = {500.0f, 100.0f, 200.0f, 1.0f };
-    GLfloat whiteLight0[] = { 0.1f, 0.1f, 0.1f, 1.0f };
-    GLfloat sourceLight0[] = { 1.0f, 1.0f, 1.0f, 1.0f };
-    GLfloat specularLight0[] = { 0.7f, 0.6f, 0.3f, 1.0f };
+    GLfloat whiteLight0[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    GLfloat sourceLight0[] = { 0.6f, 0.6f, 0.6f, 1.0f };
+    GLfloat specularLight0[] = { 0.8f, 0.8f, 0.9f, 1.0f };
 
     GLfloat lightPos1[] = {0.0f, -500.0f, 500.0f, 1.0f };
-    GLfloat whiteLight1[] = { 0.1f, 0.1f, 0.1f, 1.0f };
-    GLfloat sourceLight1[] = { 1.0f, 0.3f, 0.3f, 1.0f };
-    GLfloat specularLight1[] = { 0.7f, 0.6f, 0.3f, 1.0f };
+    GLfloat whiteLight1[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+    GLfloat sourceLight1[] = { 0.6f, 0.6f, 0.6f, 1.0f };
+    GLfloat specularLight1[] = { 0.7f, 0.7f, 0.7f, 1.0f };
 
     GLfloat specref[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-    /* Setup our viewport. */
-    glViewport (0, 0, width, height ); 
+    GLfloat fogColor[4] = { 0.4, 0.4, 0.5, 0.1 };
 
-    glEnable(GL_DEPTH_TEST);
+    /* Set the internal parameters based on the configuration settings */
+    set_parameters();
+
+    /* Set the viewport to the width and heigh of the window */
+    glViewport (0, 0, width, height ); 
 
     if (do_antialias)
     {
-        do_blend = 1;
+        blend = 1.0;
         glEnable(GL_LINE_SMOOTH);
+        glEnable(GL_POLYGON_SMOOTH);
     }
 
     /* The blend function is used for trasitioning between two images even when
      * blend is not selected.
      */
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-    if (do_wire)
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-    }
-    else
-    {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-
+ 
     if (do_fog)
     {
         glEnable(GL_FOG);
-        glFogi(GL_FOG_MODE, GL_LINEAR);
         glFogfv(GL_FOG_COLOR, fogColor);
-        glFogf(GL_FOG_DENSITY, 0.35);
-        glFogf(GL_FOG_START, 2.0);
-        glFogf(GL_FOG_END, 10.0);
+        glFogf(GL_FOG_DENSITY, 0.50);
+        glFogf(GL_FOG_START, 15.0);
+        glFogf(GL_FOG_END, 30.0);
     }
 
-    /* Our shading model--Gouraud (smooth). */
+    /* Set the shading model to smooth (Gouraud shading). */
     glShadeModel (GL_SMOOTH);
-
-    /* Culling. */
-    glCullFace (GL_BACK);
-    glEnable (GL_CULL_FACE);
-    glEnable (GL_DEPTH_TEST);
-    glFrontFace (GL_CCW);
 
     /* Set the clear color. */
     glClearColor( 0, 0, 0, 0 );
 
-    glViewport( 0, 0, width, height );
-
+    glLightModelfv (GL_LIGHT_MODEL_AMBIENT, ambientLight);
     glLightfv (GL_LIGHT0, GL_AMBIENT, whiteLight0);
     glLightfv (GL_LIGHT0, GL_DIFFUSE, sourceLight0);
     glLightfv (GL_LIGHT0, GL_SPECULAR, specularLight0);
@@ -457,21 +701,28 @@ initialize_gl(ModeInfo *mi, GLsizei width, GLsizei height)
 
     /* Set all materials to have specular reflectivity */
     glMaterialfv (GL_FRONT, GL_SPECULAR, specref);
-    glMateriali (GL_FRONT, GL_SHININESS, 64);
+    glMateriali (GL_FRONT, GL_SHININESS, 32);
 
+    /* Let GL implementation scale normal vectors. */
     glEnable (GL_NORMALIZE);
 
     /* Enable Arrays */
-    if (do_texture)
+    if (load_textures)
     {
         glLightModeli (GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-
         glEnable (GL_TEXTURE_2D);
+
         gp->current_texture = 0;
         glGenTextures (NUM_TEXTURES, gp->textures);
         grab_texture (mi, gp->current_texture);
 
-        glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+        if (do_texture)
+        {
+            glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+        }
+        glMatrixMode (GL_TEXTURE);
+        glRotated (180.0, 1.0, 0.0, 0.0);
+        glMatrixMode (GL_MODELVIEW);
     }
 
     if (do_colour)
@@ -487,41 +738,58 @@ initialize_gl(ModeInfo *mi, GLsizei width, GLsizei height)
 
 /******************************************************************************
  *
- * Calculate the normal vector for a plane given three points in the plane.
+ * Initialise the openGL state data.
  */
 static void
-calculate_normal (Vector3D point1,
-                  Vector3D point2,
-                  Vector3D point3,
-                  Vector3D *normal)
+set_blob_gl_state(GLdouble alpha)
 {
-    Vector3D vector1, vector2;
-    double magnitude;
-
-    vector1.x = point2.x - point1.x;
-    vector1.y = point2.y - point1.y;
-    vector1.z = point2.z - point1.z;
-
-    vector2.x = point3.x - point2.x;
-    vector2.y = point3.y - point2.y;
-    vector2.z = point3.z - point2.z;
-
-    (*normal).x = vector1.y * vector2.z - vector1.z * vector2.y;
-    (*normal).y = vector1.z * vector2.x - vector1.x * vector2.z;
-    (*normal).z = vector1.x * vector2.y - vector1.y * vector2.x;
-
-    /* Adjust the normal to unit magnitude */
-    magnitude = sqrt ((*normal).x * (*normal).x
-                      + (*normal).y * (*normal).y
-                      + (*normal).z * (*normal).z);
-
-    /* Watch out for divide by zero/underflow */
-    if (magnitude > 1e-300)
+    if (do_antialias)
     {
-        (*normal).x /= magnitude;
-        (*normal).y /= magnitude;
-        (*normal).z /= magnitude;
+        glEnable(GL_LINE_SMOOTH);
+        glEnable(GL_POLYGON_SMOOTH);
     }
+
+    if (wireframe)
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+    }
+    else
+    {
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
+
+    /* The blend function is used for trasitioning between two images even when
+     * blend is not selected.
+     */
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+ 
+    /* Culling. */
+    if (culling)
+    {
+        glCullFace (GL_BACK);
+        glEnable (GL_CULL_FACE);
+        glFrontFace (GL_CCW);
+    }
+    else
+    {
+        glDisable (GL_CULL_FACE);
+    }
+    
+    if (blend < 1.0)
+    {
+        glEnable (GL_BLEND);
+        glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        /* Set the default blob colour to off-white. */
+        glColor4d (0.9, 0.9, 1.0, alpha);
+    }
+    else
+    {
+        glDisable(GL_BLEND);
+        glColor4d (0.9, 0.9, 1.0, 1.0);
+    }
+    
+    glEnable(GL_DEPTH_TEST);
+    glEnable(GL_LIGHTING);
 }
 
 /******************************************************************************
@@ -533,52 +801,65 @@ calculate_normal (Vector3D point1,
  */
 static int
 initialise_blob(mirrorblobstruct *gp,
-                int width, int height,
-                int field_array_size)
+                int width,
+                int height,
+                int bump_array_size)
 {
-    /* Loop variables */
-    int x, y, i;
-    double xd;
+     /* Loop variables */    
+    int i, u, v, node, side, face, base, base2 = 0;
+    int nodes_on_edge = resolution;
+    Vector3D node1, node2, result;
 
-    gp->colour_cycle = 0;
+    if (nodes_on_edge < 2)
+        return -1;
 
-    gp->row_data = (Row_Data *) malloc (y_resolution * sizeof (Row_Data));
-    if (!gp->row_data)
+    gp->num_nodes = 2 * nodes_on_edge * nodes_on_edge - 4 * nodes_on_edge + 4;
+    gp->num_faces = 4 * (nodes_on_edge - 1) * (nodes_on_edge - 1);
+ 
+    gp->nodes = (Node_Data *) malloc (gp->num_nodes * sizeof (Node_Data));
+    if (!gp->nodes)
     {
-        fprintf(stderr, "Couldn't allocate row data buffer\n");
+        fprintf (stderr, "Couldn't allocate gp->nodes buffer\n");
         return -1;
     }
 
-    gp->field_data = (Field_Data *) malloc (field_points * sizeof (Field_Data));
-    if (!gp->field_data)
+    gp->faces = (Face_Data *) malloc (gp->num_faces * sizeof (Face_Data));
+    if (!gp->faces)
     {
-        fprintf(stderr, "Couldn't allocate field data buffer\n");
+        fprintf (stderr, "Couldn't allocate faces data buffer\n");
         return -1;
     }
 
-    gp->field = (double *)malloc(field_array_size * sizeof(double));
-    if (!gp->field)
+    gp->bump_data = (Bump_Data *) malloc (bumps * sizeof (Bump_Data));
+    if (!gp->bump_data)
     {
-        fprintf(stderr, "Couldn't allocate field buffer\n");
+        fprintf(stderr, "Couldn't allocate bump data buffer\n");
         return -1;
     }
 
-    gp->wall_field = (double *)malloc(field_array_size * sizeof(double));
-    if (!gp->wall_field)
+    gp->bump_shape = (double *)malloc(bump_array_size * sizeof(double));
+    if (!gp->bump_shape)
     {
-        fprintf(stderr, "Couldn't allocate wall field buffer\n");
+        fprintf(stderr, "Couldn't allocate bump buffer\n");
         return -1;
     }
 
-    gp->dots = (Vector3D *)malloc(x_resolution * y_resolution * sizeof(Vector3D));
+    gp->wall_shape = (double *)malloc(bump_array_size * sizeof(double));
+    if (!gp->wall_shape)
+    {
+        fprintf(stderr, "Couldn't allocate wall bump buffer\n");
+        return -1;
+    }
+
+    gp->dots = (Vector3D *)malloc(gp->num_nodes * sizeof(Vector3D));
     if (!gp->dots)
     {
-        fprintf(stderr, "Couldn't allocate points buffer\n");
+        fprintf(stderr, "Couldn't allocate nodes buffer\n");
         return -1;
     }
     glVertexPointer (3, GL_DOUBLE, 0, (GLvoid *) gp->dots);
 
-    gp->normals = (Vector3D *)malloc(x_resolution * y_resolution * sizeof(Vector3D));
+    gp->normals = (Vector3D *)malloc(gp->num_nodes * sizeof(Vector3D));
     if (!gp->normals)
     {
         fprintf(stderr, "Couldn't allocate normals buffer\n");
@@ -588,7 +869,7 @@ initialise_blob(mirrorblobstruct *gp,
 
     if (do_colour)
     {
-        gp->colours = (Colour *)malloc(x_resolution * y_resolution * sizeof(Colour));
+        gp->colours = (Colour *)malloc(gp->num_nodes * sizeof(Colour));
         if (!gp->colours)
         {
             fprintf(stderr, "Couldn't allocate colours buffer\n");
@@ -599,89 +880,262 @@ initialise_blob(mirrorblobstruct *gp,
 
     if (do_texture)
     {
-        gp->tex_coords = (Vector2D *)malloc(x_resolution * y_resolution
-                                        * sizeof(Vector2D));
+        gp->tex_coords = (Vector2D *)malloc(gp->num_nodes * sizeof(Vector2D));
         if (!gp->tex_coords)
         {
-            fprintf(stderr, "Couldn't allocate tex_coords buffer\n");
+            fprintf(stderr, "Couldn't allocate gp->tex_coords buffer\n");
             return -1;
         }
         glTexCoordPointer (2, GL_DOUBLE, 0, (GLvoid *) gp->tex_coords);
     }
 
-    gp->num_points = 0;
-    /* Generate constant row data and count of total number of points */
-    for (y = 0; y < y_resolution; y++)
+    /* Initialise bump data */
+    for (i = 0; i < bumps; i++)
     {
-        gp->row_data[y].cosyd = cos(PI * (double)(y * (y_resolution + 1))
-                                / (double)(y_resolution * y_resolution));
-        gp->row_data[y].sinyd = sin(PI * (double)(y * (y_resolution + 1))
-                                / (double)(y_resolution * y_resolution));
-        gp->row_data[y].num_x_points = (int)(x_resolution * gp->row_data[y].sinyd + 1.0);
-        gp->num_points += gp->row_data[y].num_x_points;
+        gp->bump_data[i].ax = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
+        gp->bump_data[i].ay = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
+        gp->bump_data[i].power = (5.0 / pow(bumps, 0.75)) * (((double)random() / (double)RAND_MAX) - 0.5);
+        gp->bump_data[i].size = 0.1 + 0.5 * (((double)random() / (double)RAND_MAX));
+
+        gp->bump_data[i].pos.x = 1.5 * sin(PI * gp->bump_data[i].ay)
+            * cos(PI *  gp->bump_data[i].ax);
+        gp->bump_data[i].pos.y = 1.5 * cos(PI * gp->bump_data[i].ay);
+        gp->bump_data[i].pos.z = 1.5 * sin(PI * gp->bump_data[i].ay)
+            * sin(PI *  gp->bump_data[i].ax);
+
+        gp->bump_data[i].cx = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
+        gp->bump_data[i].cy = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
+        gp->bump_data[i].cpower = (5.0 / pow(bumps, 0.75)) * (((double)random() / (double)RAND_MAX) - 0.5);
+        gp->bump_data[i].csize = 0.35; /*0.1 + 0.25 * (((double)random() / (double)RAND_MAX));*/
+
+        gp->bump_data[i].vx = 0.0;
+        gp->bump_data[i].vy = 0.0;
+        gp->bump_data[i].vpower = 0.0;
+        gp->bump_data[i].vsize = 0.0;
+
+        gp->bump_data[i].mx = 0.003 * ((double)random() / (double)RAND_MAX);
+        gp->bump_data[i].my = 0.003 * ((double)random() / (double)RAND_MAX);
+        gp->bump_data[i].mpower = 0.003 * ((double)random() / (double)RAND_MAX);
+        gp->bump_data[i].msize = 0.003 * ((double)random() / (double)RAND_MAX);
     }
 
-    /* Initialise field data */
-    for (i = 0; i < field_points; i++)
+    /* Initialise lookup table of bump strength */
+    for (i = 0; i < bump_array_size; i++)
     {
-        gp->field_data[i].ax = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
-        gp->field_data[i].ay = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
-        gp->field_data[i].apower = (((double)random() / (double)RAND_MAX) - 0.5);
+        double xd, xd2;
+        xd = i / (double)bump_array_size;
 
-        gp->field_data[i].pos.x = 1.5 * sin(PI * gp->field_data[i].ay)
-            * cos(PI *  gp->field_data[i].ax);
-        gp->field_data[i].pos.y = 1.5 * cos(PI * gp->field_data[i].ay);
-        gp->field_data[i].pos.z = 1.5 * sin(PI * gp->field_data[i].ay)
-            * sin(PI *  gp->field_data[i].ax);
+        xd2 = 48.0 * xd * xd;
+        gp->bump_shape[i] = 0.1 / (xd2 + 0.1);
 
-        gp->field_data[i].cx = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
-        gp->field_data[i].cy = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
-        gp->field_data[i].cpower = (((double)random() / (double)RAND_MAX) - 0.5);
-
-        gp->field_data[i].vx = 0.0;
-        gp->field_data[i].vy = 0.0;
-        gp->field_data[i].vpower = 0.0;
-
-        gp->field_data[i].mx = 0.003 * ((double)random() / (double)RAND_MAX);
-        gp->field_data[i].my = 0.003 * ((double)random() / (double)RAND_MAX);
-        gp->field_data[i].mpower = 0.003 * ((double)random() / (double)RAND_MAX);
+        xd2 = 40.0 * xd * xd * xd * xd;
+        gp->wall_shape[i] = 0.4 / (xd2 + 0.1);
     }
 
-    /* Initialise lookup table of field strength */
-    for (i = 0; i < field_array_size; i++)
+    node = 0;
+    face = 0;
+    for (side = 0; side < 4; side++)
     {
-        xd = 2.0 * (((double)i / (double)field_array_size));
-
-        xd = 3.0 * xd * xd * xd * xd;
-        gp->field[i] = 0.4 / (field_points * (xd + 0.1));
-
-        xd = 10.0 * (((double)i / (double)field_array_size));
-        gp->wall_field[i] = 0.4 / (xd * xd * xd * xd + 1.0);
-    }
-
-    for (y = 0; y < y_resolution; y++)
-    {
-        for (x = 0; x < gp->row_data[y].num_x_points; x++)
+        base = node;
+        if (side == 2) 
         {
-            i = x + y * x_resolution;
-            xd = 2.0 * (((double)x / (double)gp->row_data[y].num_x_points) - 0.5);
+            base2 = node;
+        }
+        /*
+         * The start and end of the for loops below are modified based on the 
+         * side of the tetrahedron that is being calculated to avoid duplication
+         * of the gp->nodes that are on the edges of the tetrahedron. 
+         */
+        for (u = (side > 1); u < (nodes_on_edge - (side > 0)); u++)
+        {
+            node1 = partial (normalise (tetrahedron[side][0]),
+                              normalise (tetrahedron[side][1]),
+                              u / (double) (nodes_on_edge - 1));
+            node2 = partial (normalise (tetrahedron[side][0]),
+                              normalise (tetrahedron[side][2]),
+                              u / (double) (nodes_on_edge - 1));
 
-            gp->dots[i].x = gp->row_data[y].sinyd * cos(PI * xd);
-            gp->dots[i].y = gp->row_data[y].cosyd;
-            gp->dots[i].z = gp->row_data[y].sinyd * sin(PI * xd);
-            gp->normals[i].x = gp->row_data[y].sinyd * cos(PI * xd);
-            gp->normals[i].y = gp->row_data[y].cosyd;
-            gp->normals[i].z = gp->row_data[y].sinyd * sin(PI * xd);
-            if (do_texture)
+            for (v = (side > 1); v <= (u - (side > 2)); v++)
             {
-                gp->tex_coords[i].x = 2.0 - 2.0 * x / (float) gp->row_data[y].num_x_points;
-                gp->tex_coords[i].y = 1.0 - y / (float) y_resolution;
+                if (u > 0)
+                    result = partial (node1, node2, v / (double) u);
+                else
+                    result = node1;
+
+                gp->nodes[node].position = normalise (result);
+                gp->nodes[node].initial_position = gp->nodes[node].position;
+                gp->nodes[node].normal = zero_vector;
+                node++;
+            }
+        }
+ 
+        /*
+         * Determine which nodes make up each face.  The complexity is caused 
+         * by having to determine the correct nodes for the edges of the
+         * tetrahedron since the common nodes on the edges are only calculated
+         * once (see above).
+         */
+        for (u = 0; u < (nodes_on_edge - 1); u++)
+        {
+            for (v = 0; v <= u; v++)
+            {
+                {
+                    if (side < 2)
+                    {
+                        gp->faces[face].node1 = base + ((u * (u + 1)) / 2) + v;
+                        gp->faces[face].node2 =
+                            base + ((u + 1) * (u + 2)) / 2 + v + 1;
+                        gp->faces[face].node3 =
+                            base + ((u + 1) * (u + 2)) / 2 + v;
+
+                        if ((side == 1) && (u == (nodes_on_edge - 2)))
+                        {
+                            gp->faces[face].node3 =
+                                ((u + 1) * (u + 2)) / 2 +
+                                nodes_on_edge - v - 1;
+                            gp->faces[face].node2 =
+                                ((u + 1) * (u + 2)) / 2 +
+                                nodes_on_edge - v - 2;
+                        }
+                    }
+                    else if (side < 3)
+                    {
+                        gp->faces[face].node1 =
+                            base + (((u - 1) * u) / 2) + v - 1;
+                        gp->faces[face].node2 = base + ((u) * (u + 1)) / 2 + v;
+                        gp->faces[face].node3 =
+                            base + ((u) * (u + 1)) / 2 + v - 1;
+
+                        if (u == (nodes_on_edge - 2))
+                        {
+                            int n = nodes_on_edge - v - 1;
+                            gp->faces[face].node2 =
+                                ((nodes_on_edge *
+                                  (nodes_on_edge + 1)) / 2) +
+                                ((n - 1) * (n + 0)) / 2;
+                            gp->faces[face].node3 =
+                                ((nodes_on_edge *
+                                  (nodes_on_edge + 1)) / 2) +
+                                ((n + 0) * (n + 1)) / 2;
+                        }
+                        if (v == 0)
+                        {
+                            gp->faces[face].node1 = (((u + 1) * (u + 2)) / 2) - 1;
+                            gp->faces[face].node3 = (((u + 2) * (u + 3)) / 2) - 1;
+                        }
+                    }
+                    else
+                    {
+                        gp->faces[face].node1 =
+                            base + (((u - 2) * (u - 1)) / 2) + v - 1;
+                        gp->faces[face].node2 = base + ((u - 1) * u) / 2 + v;
+                        gp->faces[face].node3 = base + ((u - 1) * u) / 2 + v - 1;
+
+                        if (v == 0)
+                        {
+                            gp->faces[face].node1 =
+                                base2 + ((u * (u + 1)) / 2) - 1;
+                            gp->faces[face].node3 =
+                                base2 + ((u + 1) * (u + 2)) / 2 - 1;
+                        }
+                        if (u == (nodes_on_edge - 2))
+                        {
+                            gp->faces[face].node3 =
+                                ((nodes_on_edge *
+                                  (nodes_on_edge + 1)) / 2) +
+                                ((v + 1) * (v + 2)) / 2 - 1;
+                            gp->faces[face].node2 =
+                                ((nodes_on_edge *
+                                  (nodes_on_edge + 1)) / 2) +
+                                ((v + 2) * (v + 3)) / 2 - 1;
+                        }
+                        if (v == u)
+                        {
+                            gp->faces[face].node1 = (u * (u + 1)) / 2;
+                            gp->faces[face].node2 = ((u + 1) * (u + 2)) / 2;
+                        }
+                    }
+                    face++;
+                }
+
+                if (v < u)
+                {
+                    if (side < 2)
+                    {
+                        gp->faces[face].node1 = base + ((u * (u + 1)) / 2) + v;
+                        gp->faces[face].node2 =
+                            base + ((u * (u + 1)) / 2) + v + 1;
+                        gp->faces[face].node3 =
+                            base + (((u + 1) * (u + 2)) / 2) + v + 1;
+
+                        if ((side == 1) && (u == (nodes_on_edge - 2)))
+                        {
+                            gp->faces[face].node3 =
+                                ((u + 1) * (u + 2)) / 2 +
+                                nodes_on_edge - v - 2;
+                        }
+                    }
+                    else if (side < 3)
+                    {
+                        gp->faces[face].node1 =
+                            base + ((u * (u - 1)) / 2) + v - 1;
+                        gp->faces[face].node2 = base + ((u * (u - 1)) / 2) + v;
+                        gp->faces[face].node3 = base + ((u * (u + 1)) / 2) + v;
+
+                        if (u == (nodes_on_edge - 2))
+                        {
+                            int n = nodes_on_edge - v - 1;
+                            gp->faces[face].node3 =
+                                ((nodes_on_edge *
+                                  (nodes_on_edge + 1)) / 2) +
+                                ((n + 0) * (n - 1)) / 2;
+                        }
+                        if (v == 0)
+                        {
+                            gp->faces[face].node1 = (((u + 1) * (u + 2)) / 2) - 1;
+                        }
+                    }
+                    else
+                    {
+                        gp->faces[face].node1 =
+                            base + (((u - 2) * (u - 1)) / 2) + v - 1;
+                        gp->faces[face].node2 =
+                            base + (((u - 2) * (u - 1)) / 2) + v;
+                        gp->faces[face].node3 = base + (((u - 1) * u) / 2) + v;
+
+                        if (v == 0)
+                        {
+                            gp->faces[face].node1 = base2 + (u * (u + 1)) / 2 - 1;
+                        }
+                        if (u == (nodes_on_edge - 2))
+                        {
+                            gp->faces[face].node3 =
+                                ((nodes_on_edge * (nodes_on_edge + 1)) / 2) +
+                                ((v + 2) * (v + 3)) / 2 - 1;
+                        }
+                        if (v == (u - 1))
+                        {
+                            gp->faces[face].node2 = (u * (u + 1)) / 2;
+                        }
+                    }
+                    face++;
+                }
             }
         }
     }
+
     return 0;
 }
 
+/******************************************************************************
+ *
+ * Return the magnitude of the given vector
+ */
+static inline double
+length (Vector3D u)
+{
+    return sqrt (u.x * u.x + u.y * u.y + u.z * u.z);
+}
 
 /******************************************************************************
  *
@@ -689,398 +1143,234 @@ initialise_blob(mirrorblobstruct *gp,
  */
 static void
 calc_blob(mirrorblobstruct *gp,
-          int width, int height,
-          int field_array_size,
+          int width,
+          int height,
+          int bump_array_size,
           float limit,
           double fade)
 {
     /* Loop variables */
-    int x, y, i, index, index1, index2, index3;
-    /* position of a point */
-    double xd, yd, zd, offset_x, offset_y, offset_z;
-    double strength, radius;
-    double xdist, ydist, zdist;
+    int i, index, face;
+    /* position of a node */
+    Vector3D node;
+    Vector3D offset;
+    Vector3D bump_vector;
     int dist;
 
-    /* Color components */
-
-    gp->colour_cycle++;
-
-    /* Update position and strength of points used to distort the blob */
-    for (i = 0; i < field_points; i++)
+    /* Update position and strength of bumps used to distort the blob */
+    for (i = 0; i < bumps; i++)
     {
-        gp->field_data[i].vx += gp->field_data[i].mx*(gp->field_data[i].cx - gp->field_data[i].ax);
-        gp->field_data[i].vy += gp->field_data[i].my*(gp->field_data[i].cy - gp->field_data[i].ay);
-        gp->field_data[i].vpower += gp->field_data[i].mpower
-            * (gp->field_data[i].cpower - gp->field_data[i].apower);
+        gp->bump_data[i].vx += gp->bump_data[i].mx*(gp->bump_data[i].cx - gp->bump_data[i].ax);
+        gp->bump_data[i].vy += gp->bump_data[i].my*(gp->bump_data[i].cy - gp->bump_data[i].ay);
+        gp->bump_data[i].vpower += gp->bump_data[i].mpower
+            * (gp->bump_data[i].cpower - gp->bump_data[i].power);
+        gp->bump_data[i].vsize += gp->bump_data[i].msize
+            * (gp->bump_data[i].csize - gp->bump_data[i].size);
 
-        gp->field_data[i].ax += 0.1 * gp->field_data[i].vx;
-        gp->field_data[i].ay += 0.1 * gp->field_data[i].vy;
-        gp->field_data[i].apower += 0.1 * gp->field_data[i].vpower;
+        gp->bump_data[i].ax += 0.1 * gp->bump_data[i].vx;
+        gp->bump_data[i].ay += 0.1 * gp->bump_data[i].vy;
+        gp->bump_data[i].power += 0.1 * gp->bump_data[i].vpower;
+        gp->bump_data[i].size += 0.1 * gp->bump_data[i].vsize;
 
-        gp->field_data[i].pos.x = 1.0 * sin(PI * gp->field_data[i].ay)
-            * cos(PI * gp->field_data[i].ax);
-        gp->field_data[i].pos.y = 1.0 * cos(PI * gp->field_data[i].ay);
-        gp->field_data[i].pos.z = 1.0 * sin(PI * gp->field_data[i].ay)
-            * sin(PI * gp->field_data[i].ax);
+        gp->bump_data[i].pos.x = 1.0 * sin(PI * gp->bump_data[i].ay)
+            * cos(PI * gp->bump_data[i].ax);
+        gp->bump_data[i].pos.y = 1.0 * cos(PI * gp->bump_data[i].ay);
+        gp->bump_data[i].pos.z = 1.0 * sin(PI * gp->bump_data[i].ay)
+            * sin(PI * gp->bump_data[i].ax);
     }
 
-    gp->blob_force.x = 0.0;
-    gp->blob_force.y = 0.0;
-    gp->blob_force.z = 0.0;
-    for (y = 0; y < y_resolution; y++)
+    /* Update calculate new position for each vertex based on an offset from
+     * the initial position
+     */
+    gp->blob_force = zero_vector;
+    for (index = 0; index < gp->num_nodes; ++index)
     {
-        for (x = 0; x < gp->row_data[y].num_x_points; x++)
+        node = gp->nodes[index].initial_position;
+        gp->nodes[index].normal = zero_vector;
+
+        offset = zero_vector;
+        for ( i = 0; i < bumps; i++)
         {
-            index = x + y * x_resolution;
-            xd = 2.0 * PI * (((double)x / (double)gp->row_data[y].num_x_points) - 0.5);
+            bump_vector = subtract(gp->bump_data[i].pos, node);
 
-            radius = 1.0 + 0.0 * sin (xd * 10);
+            dist = bump_array_size * dot(bump_vector, bump_vector) * gp->bump_data[i].size;
 
-            zd = radius * gp->row_data[y].sinyd * sin(xd);
-            xd = radius * gp->row_data[y].sinyd * cos(xd);
-            yd = radius * gp->row_data[y].cosyd;
-
-            gp->normals[index].x = xd;
-            gp->normals[index].y = yd;
-            gp->normals[index].z = zd;
-
-            offset_x = 0.0;
-            offset_y = 0.0;
-            offset_z = 0.0;
-            strength = 0.0;
-            for ( i = 0; i < field_points; i++)
+            if (dist < bump_array_size)
             {
-                xdist = gp->field_data[i].pos.x - xd;
-                ydist = gp->field_data[i].pos.y - yd;
-                zdist = gp->field_data[i].pos.z - zd;
-                dist = field_array_size * (xdist * xdist + ydist * ydist
-                                           + zdist * zdist) * 0.1;
-
-                strength += PI * gp->field_data[i].apower;
-
-                if (dist < field_array_size)
-                {
-                    offset_x += xd * gp->field_data[i].apower * gp->field[dist];
-                    offset_y += yd * gp->field_data[i].apower * gp->field[dist];
-                    offset_z += zd * gp->field_data[i].apower * gp->field[dist];
-
-                    gp->blob_force.x += 1.0 * xd * gp->field_data[i].apower * gp->field[dist];
-                    gp->blob_force.y += 1.0 * yd * gp->field_data[i].apower * gp->field[dist];
-                    gp->blob_force.z += 1.0 * zd * gp->field_data[i].apower * gp->field[dist];
-
-                    strength *= 2.0 * gp->field[dist];
-                }
-
-                if (incremental)
-                {
-                    xd += offset_x * gp->freak * gp->freak;
-                    yd += offset_y * gp->freak * gp->freak;
-                    zd += offset_z * gp->freak * gp->freak;
-                }
-                if (incremental == 1)
-                {
-                    offset_x = 0.0;
-                    offset_y = 0.0;
-                    offset_z = 0.0;
-                }
+                add(&offset, scale(node, gp->bump_data[i].power * gp->bump_shape[dist]));
+                add(&gp->blob_force, scale(node, gp->bump_data[i].power * gp->bump_shape[dist]));
             }
+        }
 
-            if (incremental < 3)
+        add(&node, offset);
+        node = scale(node, zoom);
+        add(&node, gp->blob_center);
+
+        if (do_walls)
+        {
+            if (node.z < -limit) node.z = -limit;
+            if (node.z > limit) node.z = limit;
+
+            dist = bump_array_size * (node.z + limit) * (node.z + limit) * 0.5;
+            if (dist < bump_array_size)
             {
-                xd += offset_x;
-                yd += offset_y;
-                zd += offset_z;
+                node.x += (node.x - gp->blob_center.x) * gp->wall_shape[dist];
+                node.y += (node.y - gp->blob_center.y) * gp->wall_shape[dist];
+                gp->blob_force.z += (node.z + limit);
             }
-            xd += gp->blob_center.x;
-            yd += gp->blob_center.y;
-            zd += gp->blob_center.z;
+            else
+            {
+                dist = bump_array_size * (node.z - limit) * (node.z - limit) * 0.5;
+                if (dist < bump_array_size)
+                {
+                    node.x += (node.x - gp->blob_center.x) * gp->wall_shape[dist];
+                    node.y += (node.y - gp->blob_center.y) * gp->wall_shape[dist];
+                    gp->blob_force.z -= (node.z - limit);
+                }
 
+                if (node.y < -limit) node.y = -limit;
+                if (node.y > limit) node.y = limit;
+
+                dist = bump_array_size * (node.y + limit) * (node.y + limit) * 0.5;
+                if (dist < bump_array_size)
+                {
+                    node.x += (node.x - gp->blob_center.x) * gp->wall_shape[dist];
+                    node.z += (node.z - gp->blob_center.z) * gp->wall_shape[dist];
+                    gp->blob_force.y += (node.y + limit);
+                }
+                else
+                {
+                    dist = bump_array_size * (node.y - limit) * (node.y - limit) * 0.5;
+                    if (dist < bump_array_size)
+                    {
+                        node.x += (node.x - gp->blob_center.x) * gp->wall_shape[dist];
+                        node.z += (node.z - gp->blob_center.z) * gp->wall_shape[dist];
+                        gp->blob_force.y -= (node.y - limit);
+                    }
+                }
+
+                if (node.x < -limit) node.x = -limit;
+                if (node.x > limit) node.x = limit;
+
+                dist = bump_array_size * (node.x + limit) * (node.x + limit) * 0.5;
+                if (dist < bump_array_size)
+                {
+                    node.y += (node.y - gp->blob_center.y) * gp->wall_shape[dist];
+                    node.z += (node.z - gp->blob_center.z) * gp->wall_shape[dist];
+                    gp->blob_force.x += (node.x + limit);
+                }
+                else
+                {
+                    dist = bump_array_size * (node.x - limit) * (node.x - limit) * 0.5;
+                    if (dist < bump_array_size)
+                    {
+                        node.y += (node.y - gp->blob_center.y) * gp->wall_shape[dist];
+                        node.z += (node.z - gp->blob_center.z) * gp->wall_shape[dist];
+                        gp->blob_force.x -= (node.x - limit);
+                    }
+                }
+
+                if (node.y < -limit) node.y = -limit;
+                if (node.y > limit) node.y = limit;
+            }
+        }
+        gp->dots[index] = node;
+    }
+
+    /* Determine the normal for each face */
+    for (face = 0; face < gp->num_faces; face++)
+    {
+        /* Use nodeers to indexed nodes to help readability */
+        Node_Data *node1 = &gp->nodes[gp->faces[face].node1];
+        Node_Data *node2 = &gp->nodes[gp->faces[face].node2];
+        Node_Data *node3 = &gp->nodes[gp->faces[face].node3];
+
+        gp->faces[face].normal = cross(subtract(node2->position, node1->position),
+                                       subtract(node3->position, node1->position));
+            
+        /* Add the normal for the face onto the normal for the verticies of
+           the face */
+        add(&node1->normal, gp->faces[face].normal);
+        add(&node2->normal, gp->faces[face].normal);
+        add(&node3->normal, gp->faces[face].normal);
+    }
+
+    /* Use the normal to set the colour and texture */
+    if (do_colour || do_texture)
+    {
+        for (index = 0; index < gp->num_nodes; ++index)
+        {
+            gp->normals[index] = normalise(gp->nodes[index].normal);
+   
             if (do_colour)
             {
-                gp->colours[index].red = 128 + (int)(sin(strength + gp->colour_cycle * 0.01 + 2.0 * PI * x / gp->row_data[y].num_x_points) * 127.0);
-                gp->colours[index].green = 128 + (int)(cos(strength + gp->colour_cycle * 0.025) * 127.0);
-                gp->colours[index].blue = 128 + (int)(sin(strength + gp->colour_cycle * 0.03 + 2.0 * PI * y / y_resolution) * 127.0);
+                gp->colours[index].red = (int)(255.0 * fabs(gp->normals[index].x));
+                gp->colours[index].green = (int)(255.0 * fabs(gp->normals[index].y));
+                gp->colours[index].blue = (int)(255.0 * fabs(gp->normals[index].z));
                 gp->colours[index].alpha = (int)(255.0 * fade);
             }
-
-            /* Add walls */
-            if (do_walls)
+            if (do_texture)
             {
-                if (zd < -limit) zd = -limit;
-                if (zd > limit) zd = limit;
-
-                dist = field_array_size * (zd + limit) * (zd + limit) * 0.5;
-                if (dist < field_array_size)
+                if (offset_texture)
                 {
-                    xd += (xd - gp->blob_center.x) * gp->wall_field[dist];
-                    yd += (yd - gp->blob_center.y) * gp->wall_field[dist];
-                    gp->blob_force.z += (zd + limit);
+                    gp->tex_coords[index].x = gp->dots[index].x * 0.125 + 0.5
+                        * (1.0 + 0.25 * asin(gp->normals[index].x) / (0.5 * PI));
+                    gp->tex_coords[index].y = -gp->dots[index].y * 0.125 - 0.5
+                        * (1.0 + 0.25 * asin(gp->normals[index].y) / (0.5 * PI));
                 }
                 else
                 {
-                    dist = field_array_size * (zd - limit) * (zd - limit) * 0.5;
-                    if (dist < field_array_size)
-                    {
-                        xd += (xd - gp->blob_center.x) * gp->wall_field[dist];
-                        yd += (yd - gp->blob_center.y) * gp->wall_field[dist];
-                        gp->blob_force.z -= (zd - limit);
-                    }
-
-                    if (yd < -limit) yd = -limit;
-                    if (yd > limit) yd = limit;
-
-                    dist = field_array_size * (yd + limit) * (yd + limit) * 0.5;
-                    if (dist < field_array_size)
-                    {
-                        xd += (xd - gp->blob_center.x) * gp->wall_field[dist];
-                        zd += (zd - gp->blob_center.z) * gp->wall_field[dist];
-                        gp->blob_force.y += (yd + limit);
-                    }
-                    else
-                    {
-                        dist = field_array_size * (yd - limit) * (yd - limit) * 0.5;
-                        if (dist < field_array_size)
-                        {
-                            xd += (xd - gp->blob_center.x) * gp->wall_field[dist];
-                            zd += (zd - gp->blob_center.z) * gp->wall_field[dist];
-                            gp->blob_force.y -= (yd - limit);
-                        }
-                    }
-
-                    if (xd < -limit) xd = -limit;
-                    if (xd > limit) xd = limit;
-
-                    dist = field_array_size * (xd + limit) * (xd + limit) * 0.5;
-                    if (dist < field_array_size)
-                    {
-                        yd += (yd - gp->blob_center.y) * gp->wall_field[dist];
-                        zd += (zd - gp->blob_center.z) * gp->wall_field[dist];
-                        gp->blob_force.x += (xd + limit);
-                    }
-                    else
-                    {
-                        dist = field_array_size * (xd - limit) * (xd - limit) * 0.5;
-                        if (dist < field_array_size)
-                        {
-                            yd += (yd - gp->blob_center.y) * gp->wall_field[dist];
-                            zd += (zd - gp->blob_center.z) * gp->wall_field[dist];
-                            gp->blob_force.x -= (xd - limit);
-                        }
-                    }
-
-                    if (yd < -limit) yd = -limit;
-                    if (yd > limit) yd = limit;
+                    gp->tex_coords[index].x = 0.5
+                        * (1.0 + asin(gp->normals[index].x) / (0.5 * PI));
+                    gp->tex_coords[index].y = -0.5
+                        * (1.0 + asin(gp->normals[index].y) / (0.5 * PI));
                 }
-            }
-
-            gp->dots[index].x = xd;
-            gp->dots[index].y = yd;
-            gp->dots[index].z = zd;
-        }
-    }
-
-    /* Calculate the normals for each vertex and the texture mapping if required.
-     * Although the code actually calculates the normal for one of the triangles
-     * attached to a vertex rather than the vertex itself the results are not too
-     * bad for with a reasonable number of verticies.
-     */
-
-    /* The first point is treated as a special case since the loop expects to use
-     * points in the previous row to form the triangle.
-     */
-    index1 = 0;
-    index2 = y * x_resolution;
-    index3 = 1 + y * x_resolution;
-    calculate_normal (gp->dots[index1], gp->dots[index2], gp->dots[index3], &gp->normals[index1]);
-    if (do_texture)
-    {
-        if (offset_texture)
-        {
-            gp->tex_coords[index1].x = gp->dots[index1].x * 0.125 + 0.5
-                * (1.0 + 0.25 * asin(gp->normals[index1].x) / (0.5 * PI));
-            gp->tex_coords[index1].y = gp->dots[index1].y * 0.125 + 0.5
-                * (1.0 + 0.25 * asin(gp->normals[index1].y) / (0.5 * PI));
-        }
-        else
-        {
-            gp->tex_coords[index1].x = 0.5 * (1.0 + (asin(gp->normals[index1].x)
-                                                 / (0.5 * PI)));
-            gp->tex_coords[index1].y = 0.5 * (1.0 + (asin(gp->normals[index1].y)
-                                                 / (0.5 * PI)));
-        }
-        gp->tex_coords[index1].x *= gp->tex_width[gp->current_texture];
-        gp->tex_coords[index1].y *= gp->tex_height[gp->current_texture];
-    }
-
-    for (y = 1; y < y_resolution - 1; y++)
-    {
-        if (gp->row_data[y - 1].num_x_points)
-        {
-            for (x = 0; x < gp->row_data[y].num_x_points; x++)
-            {
-                if (x == gp->row_data[y].num_x_points - 1)
-                {
-                    index1 = y * x_resolution;
-                }
-                else
-                {
-                    index1 = x + 1 + y * x_resolution;
-                }
-                index2 = x + y * x_resolution;
-                index3 = ((x + 0.5) * gp->row_data[y - 1].num_x_points
-                          / gp->row_data[y].num_x_points) + (y - 1) * x_resolution;
-                calculate_normal (gp->dots[index1], gp->dots[index2], gp->dots[index3],
-                                  &gp->normals[index1]);
-                if (do_texture)
-                {
-                    if (offset_texture)
-                    {
-                        gp->tex_coords[index1].x = gp->dots[index1].x * 0.125 + 0.5
-                            * (1.0 + 0.25 * asin(gp->normals[index1].x) / (0.5 * PI));
-                        gp->tex_coords[index1].y = gp->dots[index1].y * 0.125 + 0.5
-                            * (1.0 + 0.25 * asin(gp->normals[index1].y) / (0.5 * PI));
-                    }
-                    else
-                    {
-                        gp->tex_coords[index1].x = 0.5 * (1.0 + (asin(gp->normals[index1].x)
-                                                             / (0.5 * PI)));
-                        gp->tex_coords[index1].y = 0.5 * (1.0 + (asin(gp->normals[index1].y)
-                                                             / (0.5 * PI)));
-                    }
-                    gp->tex_coords[index1].x *= gp->tex_width[gp->current_texture];
-                    gp->tex_coords[index1].y *= gp->tex_height[gp->current_texture];
-                }
+                /* Adjust the texture co-ordinates to from range 0..1 to
+                 * 0..width or 0..height as appropriate
+                 */
+                gp->tex_coords[index].x *= gp->tex_width[gp->current_texture];
+                gp->tex_coords[index].y *= gp->tex_height[gp->current_texture];
             }
         }
     }
-    index1 = (y_resolution - 1) * x_resolution;
-    index2 = (y_resolution - 2) * x_resolution;
-    index3 = 1 + (y_resolution - 2) * x_resolution;
-    calculate_normal (gp->dots[index1], gp->dots[index2], gp->dots[index3], &gp->normals[index1]);
-    if (do_texture)
-    {
-        if (offset_texture)
-        {
-            gp->tex_coords[index1].x = gp->dots[index1].x * 0.125 + 0.5
-                * (1.0 + 0.25 * asin(gp->normals[index1].x) / (0.5 * PI));
-            gp->tex_coords[index1].y = gp->dots[index1].y * 0.125 + 0.5
-                * (1.0 + 0.25 * asin(gp->normals[index1].y) / (0.5 * PI));
-        }
-        else
-        {
-            gp->tex_coords[index1].x = 0.5 * (1.0 + (asin(gp->normals[index1].x)
-                                                 / (0.5 * PI)));
-            gp->tex_coords[index1].y = 0.5 * (1.0 + (asin(gp->normals[index1].y)
-                                                 / (0.5 * PI)));
-        }
-        gp->tex_coords[index1].x *= gp->tex_width[gp->current_texture];
-        gp->tex_coords[index1].y *= gp->tex_height[gp->current_texture];
-    }
-
-
-    gp->freak += gp->v_freak;
-    gp->v_freak += -gp->freak / 2000000.0;
-
+    
     /* Update the center of the whole blob */
-    gp->blob_velocity.x += (gp->blob_anchor.x - gp->blob_center.x) / 80.0
-        + 0.01 * gp->blob_force.x / gp->num_points;
-    gp->blob_velocity.y += (gp->blob_anchor.y - gp->blob_center.y) / 80.0
-        + 0.01 * gp->blob_force.y / gp->num_points;
-    gp->blob_velocity.z += (gp->blob_anchor.z - gp->blob_center.z) / 80.0
-        + 0.01 * gp->blob_force.z / gp->num_points;
+    add(&gp->blob_velocity, scale (subtract (gp->blob_anchor, gp->blob_center), 1.0 / 80.0));
+    add(&gp->blob_velocity, scale (gp->blob_force, 0.01 / gp->num_nodes));
 
-    gp->blob_center.x += gp->blob_velocity.x * 0.5;
-    gp->blob_center.y += gp->blob_velocity.y * 0.5;
-    gp->blob_center.z += gp->blob_velocity.z * 0.5;
+    add(&gp->blob_center, scale(gp->blob_velocity, 0.5));
 
-    gp->blob_velocity.x *= 0.99;
-    gp->blob_velocity.y *= 0.99;
-    gp->blob_velocity.z *= 0.99;
+    gp->blob_velocity = scale(gp->blob_velocity, 0.999);
 }
 
 /******************************************************************************
  *
  * Draw the blob shape.
  *
- * The horrendous indexing to calculate the verticies that form a particular
- * traiangle is the result of the conversion of my first non-openGL version of
- * blob to this openGL version.  This may be tidied up when I finally playing
- * with the more interesting bits of the code.
  */
 static void
 draw_blob (mirrorblobstruct *gp)
 {
-    int x, y, x2, x3;
-    int index1, index2, index3;
-    int lower, upper;
+    int face;
 
     glMatrixMode (GL_MODELVIEW);
     glLoadIdentity ();
 
     /* Move down the z-axis. */
-    glTranslatef (0.0, 0.0, -5.0 );
+    glTranslatef (0.0, 0.0, -4.0);
 
-    for (y = 1; y < y_resolution; y++)
+    gltrackball_rotate (gp->trackball);
+
+    /* glColor4ub (255, 0, 0, 128); */
+    glBegin (GL_TRIANGLES);
+    for (face = 0; face < gp->num_faces; face++)
     {
-        if (gp->row_data[y - 1].num_x_points)
-        {
-            for (x = 0; x < gp->row_data[y].num_x_points; x++)
-            {
-                glBegin (GL_TRIANGLES);
-                if (x == gp->row_data[y].num_x_points - 1)
-                {
-                    index1 = y * x_resolution;
-                }
-                else
-                {
-                    index1 = x + 1 + y * x_resolution;
-                }
-                index2 = x + y * x_resolution;
-                index3 = ((x + 0.5) * gp->row_data[y - 1].num_x_points
-                          / gp->row_data[y].num_x_points) + (y - 1) * x_resolution;
-                glArrayElement(index1);
-                glArrayElement(index2);
-                glArrayElement(index3);
-                glEnd();
-
-                lower = ((x - 0.5) * gp->row_data[y - 1].num_x_points
-                         / (float)gp->row_data[y].num_x_points);
-                upper = ((x + 0.5) * gp->row_data[y - 1].num_x_points
-                         / (float)gp->row_data[y].num_x_points);
-
-                if (upper > lower)
-                {
-                    glBegin (GL_TRIANGLE_FAN);
-                    index1 = x + y * x_resolution;
-
-                    for (x2 = lower; x2 <= upper; x2++)
-                    {
-                        x3 = x2;
-                        while (x3 < 0) x3 += gp->row_data[y - 1].num_x_points;
-                        while (x3 >= gp->row_data[y - 1].num_x_points)
-                            x3 -= gp->row_data[y - 1].num_x_points;
-                        index2 = x3 + (y - 1) * x_resolution;
-
-                        if (x2 < upper)
-                        {
-                            x3 = x2 + 1;
-                            while (x3 < 0) x3 += gp->row_data[y - 1].num_x_points;
-                            while (x3 >= gp->row_data[y - 1].num_x_points)
-                                x3 -= gp->row_data[y - 1].num_x_points;
-                            index3 = x3 + (y - 1) * x_resolution;
-                            if (x2 == lower)
-                            {
-                                glArrayElement(index1);
-                            }
-                        }
-                        glArrayElement(index2);
-                    }
-                    glEnd ();
-                }
-            }
-        }
+        glArrayElement (gp->faces[face].node1);
+        glArrayElement (gp->faces[face].node2);
+        glArrayElement (gp->faces[face].node3);
     }
+    glEnd ();
+    glLoadIdentity ();
 }
 
 /******************************************************************************
@@ -1091,10 +1381,11 @@ static void
 draw_background (ModeInfo *mi)
 {
     mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
-
+    
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
     glEnable (GL_TEXTURE_2D);
     glDisable(GL_LIGHTING);
+    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
     /* Reset the projection matrix to make it easier to get the size of the quad
      * correct
@@ -1110,10 +1401,10 @@ draw_background (ModeInfo *mi)
     glTexCoord2f (0.0, 0.0);
     glVertex2i (0, 0);
     
-    glTexCoord2f (0.0, -gp->tex_height[gp->current_texture]);
+    glTexCoord2f (0.0, gp->tex_height[gp->current_texture]);
     glVertex2i (0, MI_HEIGHT(mi));
 
-    glTexCoord2f (gp->tex_width[gp->current_texture], -gp->tex_height[gp->current_texture]);
+    glTexCoord2f (gp->tex_width[gp->current_texture], gp->tex_height[gp->current_texture]);
     glVertex2i (MI_WIDTH(mi), MI_HEIGHT(mi));
 
     glTexCoord2f (gp->tex_width[gp->current_texture], 0.0);
@@ -1133,7 +1424,7 @@ static GLvoid
 draw_scene(ModeInfo * mi)
 {
     mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
-
+    
     double fade = 0.0;
     double current_time;
     check_gl_error ("draw_scene");
@@ -1144,31 +1435,37 @@ draw_scene(ModeInfo * mi)
     switch (gp->state)
     {
     case TRANSITIONING:
-        fade = (current_time - gp->state_start_time) / fade_time;
+        fade = 1.0 - (current_time - gp->state_start_time) / fade_time;
         break;
 
+    case LOADING: /* FALL-THROUGH */
     case HOLDING:
-        fade = 0.0;
+        fade = 1.0;
         break;
     }
-
 
     /* Set the correct texture, when transitioning this ensures that the first draw
      * is the original texture (which has the new texture drawn over it with decreasing
      * transparency)
      */
-    if (do_texture)
+    if (load_textures)
     {
-      glBindTexture (GL_TEXTURE_2D, gp->textures[gp->current_texture]);
+        glBindTexture (GL_TEXTURE_2D, gp->textures[gp->current_texture]);
     }
 
-    if (do_paint_background && !do_wire)
+    glDisable (GL_DEPTH_TEST);
+    if (do_paint_background)
     {
-        glClear(GL_DEPTH_BUFFER_BIT);
-        if (motion_blur)
+        glEnable (GL_TEXTURE_2D);
+        if (motion_blur > 0.0)
         {
+            glClear(GL_DEPTH_BUFFER_BIT);
             glEnable (GL_BLEND);
-            glColor4ub (255, 255, 255, motion_blur);
+            glColor4d (1.0, 1.0, 1.0, motion_blur);
+        }
+        else
+        {
+            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         }
         draw_background (mi);
 
@@ -1177,33 +1474,30 @@ draw_scene(ModeInfo * mi)
          */
         if (gp->state == TRANSITIONING)
         {
-            glDisable (GL_DEPTH_TEST);
             glEnable (GL_BLEND);
             /* Select the texture to transition to */
             glBindTexture (GL_TEXTURE_2D, gp->textures[1 - gp->current_texture]);
-            glColor4d (1.0, 1.0, 1.0, fade);
+            glColor4d (1.0, 1.0, 1.0, 1.0 - fade);
 
             draw_background (mi);
 
             /* Select the original texture to draw the blob */
             glBindTexture (GL_TEXTURE_2D, gp->textures[gp->current_texture]);
-            glEnable (GL_DEPTH_TEST);
         }
         /* Clear the depth buffer bit so the backgound is behind the blob */
         glClear(GL_DEPTH_BUFFER_BIT);
     }
-    else if (motion_blur)
+    else if (motion_blur > 0.0)
     {
-        glDisable (GL_DEPTH_TEST);
         glEnable (GL_BLEND);
-        glColor4ub (0, 0, 0, motion_blur);
+        glColor4d (0.0, 0.0, 0.0, motion_blur);
         glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glTranslatef (0.0, 0.0, -4.0);
         glRectd (-10.0, -10.0, 10.0, 10.0);
-        if (do_wire)
+        if (wireframe)
         {
             glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
-        glEnable (GL_DEPTH_TEST);
         glClear (GL_DEPTH_BUFFER_BIT);
     }
     else
@@ -1211,57 +1505,92 @@ draw_scene(ModeInfo * mi)
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    if (do_blend)
+    if (!do_texture)
     {
-        fade = fade * 0.5;
+        fade = 1.0;
+        glDisable (GL_TEXTURE_2D);
     }
 
-    calc_blob(gp, MI_WIDTH(mi), MI_HEIGHT(mi), 1024, 2.5, fade);
+    calc_blob(gp, MI_WIDTH(mi), MI_HEIGHT(mi), BUMP_ARRAY_SIZE, 2.5, fade * blend);
 
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glEnable(GL_LIGHT1);
+    set_blob_gl_state(fade * blend);
 
-    if (do_blend)
+    if (blend < 1.0)
     {
-        glEnable (GL_BLEND);
-        if (do_colour)
-        {
-            glBlendFunc (GL_ONE_MINUS_SRC_ALPHA, GL_SRC_ALPHA);
-        }
-        else
-        {
-            glColor4d (1.0, 1.0, 1.0, 0.5 - fade);
-        }
+        /* Disable the three colour chanels so that only the depth buffer is updated */
+        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+        draw_blob(gp);
+        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+        glDepthFunc(GL_LEQUAL);
     }
-    else
-    {
-        glDisable (GL_BLEND);
-        glColor4d (1.0, 1.0, 1.0, 1.0);
-    }
+    glDepthFunc(GL_LEQUAL);
     draw_blob(gp);
 
-    if (do_blend && do_colour)
-    {
-        glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-
-    /* While transitioning draw a second blob twice with a modified alpha channel.
-     * The trasitioning state machine is very crude, it simply counts frames
-     * rather than elapsed time but it works.
+    /* While transitioning between images draw a second blob with a modified
+     * alpha value.
      */
-    if (do_texture && (hold_time > 0))
+    if (load_textures && (hold_time > 0))
     {
         switch (gp->state)
         {
-        case TRANSITIONING:
-            glClear(GL_DEPTH_BUFFER_BIT);
-            glEnable (GL_BLEND);
-            /* Select the texture to transition to */
-            glBindTexture (GL_TEXTURE_2D, gp->textures[1 - gp->current_texture]);
-            glColor4d (1.0, 1.0, 1.0, fade);
-            draw_blob (gp);
+        case HOLDING:
+            if ((current_time - gp->state_start_time) > hold_time)
+            {
+                grab_texture(mi, 1 - gp->current_texture);
+                gp->state = LOADING;
+            }
+            break;
 
+        case LOADING:
+            /* Once the image has loaded move to the TRANSITIONING STATE */
+            if (!gp->waiting_for_image_p)
+            {
+                gp->state = TRANSITIONING;
+                /* Get the time again rather than using the current time so
+                 * that the time taken by the grab_texture function is not part
+                 * of the fade time
+                 */
+                gp->state_start_time = double_time();
+            }
+            break;        
+
+        case TRANSITIONING:
+
+            /* If the blob is textured draw over existing blob to fade between
+             * images
+             */
+            if (do_texture)
+            {
+                /* Select the texture to transition to */
+                glBindTexture (GL_TEXTURE_2D, gp->textures[1 - gp->current_texture]);
+                glEnable (GL_BLEND);
+                
+                /* If colour is enabled update the alpha data in the buffer and
+                 * use that in the blending since the alpha of the incomming
+                 * verticies will not be correct
+                 */
+                if (do_colour)
+                {
+                    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+                    glClearColor(0.0, 0.0, 0.0, (1.0 - fade) * blend);
+                    glClear(GL_COLOR_BUFFER_BIT);
+                    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);                    
+                    glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
+                }
+                else
+                {
+                    glColor4d(0.9, 0.9, 1.0, (1.0 - fade) * blend);
+                }
+
+                draw_blob (gp);
+
+                if (do_colour)
+                {
+                    /* Restore the 'standard' blend functions. */
+                    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                }
+            }
+            
             if ((current_time - gp->state_start_time) > fade_time)
             {
                 gp->state = HOLDING;
@@ -1270,18 +1599,6 @@ draw_scene(ModeInfo * mi)
             }
             break;
 
-        case HOLDING:
-            if ((current_time - gp->state_start_time) > hold_time)
-            {
-                grab_texture (mi, 1 - gp->current_texture);
-                gp->state = TRANSITIONING;
-                /* Get the time again rather than using the current time so
-                 * that the time taken by the grab_texture function is not part
-                 * of the fade time
-                 */
-                gp->state_start_time = double_time();
-            }
-            break;
         }
     }
 }
@@ -1322,6 +1639,51 @@ reshape_mirrorblob(ModeInfo *mi, int width, int height)
     reset_projection(width, height);
 }
 
+/****************************************************************************
+ *
+ * Handle Mouse events
+ */
+ENTRYPOINT Bool
+mirrorblob_handle_event (ModeInfo * mi, XEvent * event)
+{
+    mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN (mi)];
+
+    if (event->xany.type == ButtonPress &&
+        event->xbutton.button == Button1)
+    {
+        gp->button_down = 1;
+        gltrackball_start (gp->trackball, event->xbutton.x,
+                           event->xbutton.y, MI_WIDTH (mi), MI_HEIGHT (mi));
+        return True;
+    }
+    else if (event->xany.type == ButtonRelease &&
+             event->xbutton.button == Button1)
+    {
+        gp->button_down = 0;
+        return True;
+    }
+    else if (event->xany.type == ButtonPress &&
+             event->xbutton.button == Button4)
+    {
+        zoom *= 1.1;
+        return True;
+    }
+    else if (event->xany.type == ButtonPress &&
+             event->xbutton.button == Button5)
+    {
+
+        zoom *= 0.9;
+        return True;
+    }
+    else if (event->xany.type == MotionNotify && gp->button_down)
+    {
+        gltrackball_track (gp->trackball, event->xmotion.x,
+                           event->xmotion.y, MI_WIDTH (mi), MI_HEIGHT (mi));
+        return True;
+    }
+    return False;
+}
+
 /******************************************************************************
  *
  * XMirrorblob initialise entry
@@ -1353,12 +1715,11 @@ init_mirrorblob(ModeInfo * mi)
     {
         MI_CLEARWINDOW(mi);
     }
-
-    initialise_blob(gp, MI_WIDTH(mi), MI_HEIGHT(mi), 1024);
+    gp->trackball = gltrackball_init ();
+    
+    initialise_blob(gp, MI_WIDTH(mi), MI_HEIGHT(mi), BUMP_ARRAY_SIZE);
     gp->state_start_time = double_time();
 
-    gp->freak = 0.0;
-    gp->v_freak = 0.0007;
     gp->first_image_p = True;
 }
 
@@ -1373,13 +1734,14 @@ release_mirrorblob(ModeInfo * mi)
     int i;
     for (i = 0; i < MI_NUM_SCREENS(mi); i++) {
       mirrorblobstruct *gp = &Mirrorblob[i];
-      if (gp->row_data) free(gp->row_data);
-      if (gp->field_data) free(gp->field_data);
+      if (gp->nodes) free(gp->nodes);
+      if (gp->faces) free(gp->faces);
+      if (gp->bump_data) free(gp->bump_data);
       if (gp->colours) free(gp->colours);
       if (gp->tex_coords) free(gp->tex_coords);
       if (gp->dots) free(gp->dots);
-      if (gp->wall_field) free(gp->wall_field);
-      if (gp->field) free(gp->field);
+      if (gp->wall_shape) free(gp->wall_shape);
+      if (gp->bump_shape) free(gp->bump_shape);
     }
 
     free(Mirrorblob);

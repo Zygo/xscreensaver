@@ -1312,6 +1312,11 @@ ENTRYPOINT void init_glhanoi(ModeInfo * mi)
     if (glhanoi->numberOfDisks <= 1)
       glhanoi->numberOfDisks = 3 + (int) BELLRAND(9);
 
+    /* magicnumber is a bitfield, so we can't have more than 31 discs
+       on a system with 4-byte ints. */
+    if (glhanoi->numberOfDisks >= 8 * sizeof(int))
+      glhanoi->numberOfDisks = (8 * sizeof(int)) - 1;
+
 	glhanoi->maxDiskIdx = glhanoi->numberOfDisks - 1;
 	glhanoi->wire = MI_IS_WIREFRAME(mi);
 	glhanoi->light = light;

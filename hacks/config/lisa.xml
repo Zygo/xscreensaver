@@ -11,16 +11,16 @@
 
   <number id="cycles" type="slider" arg="-cycles %"
            _label="Steps" _low-label="Few" _high-label="Many"
-          low="1" high="1000" default="256"/>
+          low="1" high="1000" default="768"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="50000" default="25000"
+          low="0" high="50000" default="17000"
           convert="invert"/>
 
   <number id="ncolors" type="slider" arg="-ncolors %"
             _label="Number of Colors" _low-label="Two" _high-label="Many"
-            low="1" high="255" default="200"/>
+            low="1" high="255" default="64"/>
 
   <number id="size" type="spinbutton" arg="-size %"
            _label="Size" low="-10" high="10" default="-1"/>

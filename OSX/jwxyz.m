@@ -2230,7 +2230,7 @@ jwxyz_font_info (Font f, int *size_ret, int *face_ret)
   // WTF?  aglUseFont gets a BadValue if size is small!!
   if (size < 9) size = 9;
 
-  //NSLog (@"font %s %.1f => %d %d %d\n", f->ps_name, f->size, id, flags, size);
+  //NSLog (@"font %s %.1f => %d %d %d", f->ps_name, f->size, id, flags, size);
   Assert (id >= 0, "no ATS font family");
 
   *size_ret = size;

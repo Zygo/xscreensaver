@@ -23,7 +23,7 @@
   double range = high - low;
   double off   = value - low;
   double trans = low + (range - off);
-  // NSLog (@" ... %.1f -> %.1f    [%.1f - %.1f]\n", value, trans, low, high);
+  // NSLog (@" ... %.1f -> %.1f    [%.1f - %.1f]", value, trans, low, high);
   return trans;
 }
 

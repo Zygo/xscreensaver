@@ -1,4 +1,4 @@
-/* carousel, Copyright (c) 2005-2006 Jamie Zawinski <jwz@jwz.org>
+/* carousel, Copyright (c) 2005-2007 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and rotates them around.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -50,6 +50,14 @@
 #  include <X11/Intrinsic.h>     /* for XrmDatabase in -debug mode */
 # endif
 
+/* Should be in <GL/glext.h> */
+# ifndef  GL_TEXTURE_MAX_ANISOTROPY_EXT
+#  define GL_TEXTURE_MAX_ANISOTROPY_EXT     0x84FE
+# endif
+# ifndef  GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+#  define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+# endif
+
 typedef struct {
   double x, y, w, h;
 } rect;
@@ -80,6 +88,7 @@ typedef struct {
 
 typedef struct {
   GLXContext *glx_context;
+  GLfloat anisotropic;
   rotator *rot;
   trackball_state *trackball;
   Bool button_down_p;
@@ -258,6 +267,10 @@ image_loaded_cb (const char *filename, XRectangle *geom,
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                    mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
+
+  if (ss->anisotropic >= 1.0)
+    glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+                     ss->anisotropic);
 
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
@@ -577,6 +590,12 @@ init_carousel (ModeInfo *mi)
 
     ss->trackball = gltrackball_init ();
   }
+
+  if (strstr ((char *) glGetString(GL_EXTENSIONS),
+              "GL_EXT_texture_filter_anisotropic"))
+    glGetFloatv (GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &ss->anisotropic);
+  else
+    ss->anisotropic = 0.0;
 
   glDisable (GL_LIGHTING);
   glEnable (GL_DEPTH_TEST);

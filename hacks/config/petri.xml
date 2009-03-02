@@ -33,7 +33,7 @@
           _label="Fertility" _low-label="Low" _high-label="High"
           low="0.0" high="0.25" default="0.0015"/>
 
-  <number id="anychan" type="slider" arg="-minorchan %"
+  <number id="minorchan" type="slider" arg="-minorchan %"
           _label="Offspring" _low-label="Few" _high-label="Many"
           low="0.0" high="1.0" default="0.5"/>
 

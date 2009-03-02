@@ -65,6 +65,9 @@ Disable the scaling component of the functions.
 .TP 8
 .B \-no-translate
 Disable the varying translation component of the functions.
+.TP 8
+.B \-no-multi
+Turn off multi-coloured mode, only one colour is used to colour the whole set.
 .SH ENVIRONMENT
 .PP
 .TP 8

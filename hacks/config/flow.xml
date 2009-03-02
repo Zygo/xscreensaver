@@ -20,7 +20,7 @@
             _label="Number of Colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="200"/>
 
-  <number id="ncolors" type="slider" arg="-size %"
+  <number id="size" type="slider" arg="-size %"
             _label="Length of trails" _low-label="Short" _high-label="Long"
             low="-20" high="-2" default="-10" convert="invert"/>
 

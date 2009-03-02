@@ -1909,7 +1909,7 @@ if test "$enable_locking" = yes -a "$with_pam" = yes; then
                   [ac_pam_fail_delay=yes],
                   [ac_pam_fail_delay=no])
       ac_cv_pam_fail_delay=$ac_pam_fail_delay,
-      LD_FLAGS=$ac_save_LDFLAGS])
+      LDFLAGS=$ac_save_LDFLAGS])
 
       if test "$ac_pam_fail_delay" = yes ; then
         AC_MSG_RESULT(yes)

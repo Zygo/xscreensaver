@@ -104,7 +104,7 @@ ModStruct   circuit_description =
 
 #endif
 
-#define MAX_COMPONENTS 30
+#define MAX_COMPONENTS 31
 #define MOVE_MULT 0.02
 
 static float f_rand(void)
@@ -2154,6 +2154,9 @@ Circuit *ci;
  ci->grid_col[2] = 0.05;
  ci->grid_col2[1] = 0.125;
  ci->grid_col2[2] = 0.05;
+
+ if (maxparts >= MAX_COMPONENTS)
+   maxparts = MAX_COMPONENTS-1;
 
  if ((ci->glx_context = init_GL(mi)) != NULL) {
       reshape_circuit(mi, MI_WIDTH(mi), MI_HEIGHT(mi));

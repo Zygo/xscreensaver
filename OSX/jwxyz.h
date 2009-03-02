@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2007 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -231,6 +231,7 @@ typedef void *				XtPointer;
 #define RootWindowOfScreen(s) RootWindow(DisplayOfScreen(s),0)
 #define DisplayWidth XDisplayWidth
 #define DisplayHeight XDisplayHeight
+#define XMaxRequestSize(dpy) (65535)
 
 extern Display *jwxyz_make_display (void *nsview);
 extern void jwxyz_free_display (Display *);

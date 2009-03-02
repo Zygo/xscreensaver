@@ -5,7 +5,7 @@
 	<command arg="-root"/>
 	
 	<number id="count" type="spinbutton" arg="-count %"
-	  _label="Number of Disks" default="0" low="0" high="200"/>
+	  _label="Number of Disks" default="0" low="0" high="31"/>
 	
 	<boolean id="fog" _label="Enable fog" arg-set="-fog"/>
 

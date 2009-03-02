@@ -10,7 +10,7 @@
           convert="invert"/>
 
   <number id="count" type="spinbutton" arg="-parts %"
-          _label="Parts" low="1" high="50" default="10"/>
+          _label="Parts" low="1" high="30" default="10"/>
 
   <boolean id="spin"   _label="Spin" arg-unset="-no-spin"/>
 

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997, 1998, 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2007 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -436,7 +436,7 @@ starfish_init (Display *dpy, Window window)
   st->delay2 = get_integer_resource (st->dpy, "delay2", "Delay") * 1000000;
 /*  st->duration = get_seconds_resource (st->dpy, "duration", "Seconds");*/
   st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
-  st->direction = (random() % 1) ? 1 : -1;
+  st->direction = (random() & 1) ? 1 : -1;
 
   s = get_string_resource (st->dpy, "mode", "Mode");
   if (s && !strcasecmp (s, "blob"))

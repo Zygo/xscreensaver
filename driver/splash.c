@@ -87,10 +87,7 @@ draw_shaded_rectangle (Display *dpy, Window window,
 int
 string_width (XFontStruct *font, char *s)
 {
-  int direction, ascent, descent;
-  XCharStruct overall;
-  XTextExtents (font, s, strlen(s), &direction, &ascent, &descent, &overall);
-  return overall.width;
+  return XTextWidth(font, s, strlen(s));
 }
 
 

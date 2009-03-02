@@ -10,7 +10,7 @@
     <option id="fit"    _label="Bolted Fittings"/>
   </select>
 
-  <number id="size" type="slider" arg="-cycles %"
+  <number id="cycles" type="slider" arg="-cycles %"
           _label="Number of Pipes" _low-label="One" _high-label="A Hundred"
           low="1" high="100" default="10"/>
 

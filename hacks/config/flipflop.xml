@@ -15,9 +15,8 @@
           convert="invert"/>
 
   <number id="spin" type="slider" arg="-spin %"
-          _label="Speed" _low-label="Stopped" _high-label="Whirlwind"
-          low="0" high="1.0" default="0.1"
-          convert="invert"/>
+          _label="Spin" _low-label="Stopped" _high-label="Whirlwind"
+          low="0" high="3.0" default="0.1"/>
 
   <select id="mode">
     <option id="tiles"  _label="Tiles"/>

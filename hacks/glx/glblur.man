@@ -2,7 +2,7 @@
 .SH NAME
 glblur - 3D radial blur texture fields
 .SH SYNOPSIS
-.B menger
+.B glblur
 [\-display \fIhost:display.screen\fP]
 [\-visual \fIvisual\fP]
 [\-window]

@@ -4,7 +4,7 @@
  *
  * version 1.0 - June 6, 2002
  *
- * Copyright (C) 2002 Blair Tennessy (tennessb@unbc.ca)
+ * Copyright (C) 2002-2007 Blair Tennessy (tennessb@unbc.ca)
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -373,7 +373,7 @@ static void drawTakePiece(ModeInfo *mi, Chesscreen *cs, int shadow)
 
   glColor4f(shadow ? MaterialShadow[0] : cs->colors[cs->tpiece/7][0], 
 	    shadow ? MaterialShadow[1] : cs->colors[cs->tpiece/7][1], 
-	    shadow ? MaterialShadow[0] : cs->colors[cs->tpiece/7][2],
+	    shadow ? MaterialShadow[2] : cs->colors[cs->tpiece/7][2],
             (100-1.6*cs->steps)/100.0);
 
   glTranslatef(cs->to[1], 0.0, cs->to[0]);
@@ -459,10 +459,75 @@ static void draw_shadow_pieces(ModeInfo *mi, Chesscreen *cs, int wire)
     glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   }
 
+  /* use the stencil */
+  glDisable(GL_LIGHTING);
+  glDisable(GL_COLOR_MATERIAL);
+  glDisable(GL_DEPTH_TEST);
+  glDisable(GL_TEXTURE_2D);
+  glDisable(GL_BLEND);
+
+  glClear(GL_STENCIL_BUFFER_BIT);
+  glColorMask(0,0,0,0);
+  glEnable(GL_STENCIL_TEST);
+
+  glStencilFunc(GL_ALWAYS, 1, 0xFFFFFFFFL);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_INCR);
+  
+
+  glPushMatrix();
+  glTranslatef(0.0, 0.001, 0.0);
+
+  /* draw the pieces */
   drawPiecesShadow(mi, cs);
   if(cs->moving) drawMovingPiece(mi, cs, shadows);
   if(cs->take) drawTakePiece(mi, cs, shadows);
+
+  glPopMatrix();
+
+
+  /* turn on drawing into colour buffer */
+  glColorMask(1,1,1,1);
+
+  /* programming with effect */
+  glDisable(GL_LIGHTING);
+  glDisable(GL_COLOR_MATERIAL);
   glDisable(GL_TEXTURE_2D);
+
+  /* now draw the union of the shadows */
+
+  /* 
+     <todo>
+     want to keep alpha values (alpha is involved in transition
+     effects of the active pieces).
+     </todo>
+  */
+  glStencilFunc(GL_NOTEQUAL, 0, 0xFFFFFFFFL);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+
+  glEnable(GL_BLEND);
+
+  glColor4fv(MaterialShadow);
+
+  /* draw the board generously to fill the shadows */
+  glBegin(GL_QUADS);
+
+  glVertex3f(-1.0, 0.0, -1.0);
+  glVertex3f(-1.0, 0.0, BOARDSIZE + 1.0);
+  glVertex3f(1.0 + BOARDSIZE, 0.0, BOARDSIZE + 1.0);
+  glVertex3f(1.0 + BOARDSIZE, 0.0, -1.0);
+
+  glEnd();
+
+  glDisable(GL_STENCIL_TEST);
+
+  /* "pop" attributes */
+  glEnable(GL_TEXTURE_2D);
+  glEnable(GL_COLOR_MATERIAL);
+  glEnable(GL_LIGHTING);
+  glEnable(GL_CULL_FACE);
+
+
+
 }
 
 enum {X, Y, Z, W};
@@ -559,16 +624,21 @@ static void display(ModeInfo *mi, Chesscreen *cs)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  /** setup perspectif */
+  /** setup perspectiv */
   glTranslatef(0.0, 0.0, -1.5*BOARDSIZE);
   glRotatef(30.0, 1.0, 0.0, 0.0);
   gltrackball_rotate (cs->trackball);
   glRotatef(cs->theta*100, 0.0, 1.0, 0.0);
   glTranslatef(-0.5*BOARDSIZE, 0.0, -0.5*BOARDSIZE);
 
-  cs->position[0] = 4.0 + 1.0*-sin(cs->theta*100*M_PI/180.0);
-  cs->position[2] = 4.0 + 1.0* cos(cs->theta*100*M_PI/180.0);
-  cs->position[1] = 5.0;
+/*   cs->position[0] = 4.0 + 1.0*-sin(cs->theta*100*M_PI/180.0); */
+/*   cs->position[2] = 4.0 + 1.0* cos(cs->theta*100*M_PI/180.0); */
+/*   cs->position[1] = 5.0; */
+
+  /* this is the lone light that the shadow matrix is generated from */
+  cs->position[0] = 1.0;
+  cs->position[2] = 1.0;
+  cs->position[1] = 16.0;
 
   cs->position2[0] = 4.0 + 8.0*-sin(cs->theta*100*M_PI/180.0);
   cs->position2[2] = 4.0 + 8.0* cos(cs->theta*100*M_PI/180.0);
@@ -676,10 +746,16 @@ ENTRYPOINT void init_chess(ModeInfo *mi)
   cs->count = 99;
   cs->mod = 1.4;
 
+/*   cs->position[0] = 0.0; */
+/*   cs->position[1] = 5.0; */
+/*   cs->position[2] = 5.0; */
+/*   cs->position[3] = 1.0; */
+
   cs->position[0] = 0.0;
-  cs->position[1] = 5.0;
-  cs->position[2] = 5.0;
+  cs->position[1] = 24.0;
+  cs->position[2] = 2.0;
   cs->position[3] = 1.0;
+
 
   cs->position2[0] = 5.0;
   cs->position2[1] = 5.0;

@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2006 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2007 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -151,6 +151,13 @@ static void hack_subproc_environment (Window preview_window_id, Bool debug_p);
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
+
+/* You might think that to read an array of 32-bit quantities out of a
+   server-side property, you would pass an array of 32-bit data quantities
+   into XGetWindowProperty().  You would be wrong.  You have to use an array
+   of longs, even if long is 64 bits (using 32 of each 64.)
+ */
+typedef long PROP32;
 
 char *progname = 0;
 char *progclass = "XScreenSaver";
@@ -2338,7 +2345,7 @@ server_current_hack (void)
       && nitems >= 3
       && dataP)
     {
-      CARD32 *data = (CARD32 *) dataP;
+      PROP32 *data = (PROP32 *) dataP;
       hack_number = (int) data[2] - 1;
     }
 

@@ -43,7 +43,7 @@
 
   <hgroup>
     <boolean id="smooth" _label="Anti-aliased Lines" arg-unset="-no-smooth"/>
-    <boolean id="fade"   _label="Thick Lines"        arg-unset="-no-thick"/>
+    <boolean id="thick"  _label="Thick Lines"        arg-unset="-no-thick"/>
     <boolean id="fade"   _label="Fade Out"           arg-unset="-no-fade"/>
   </hgroup>
 

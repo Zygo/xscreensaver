@@ -360,12 +360,20 @@ static int block_sigchld_handler = 0;
 block_sigchld (void)
 {
 #ifdef HAVE_SIGACTION
+  struct sigaction sa;
   sigset_t child_set;
+
+  memset (&sa, 0, sizeof (sa));
+  sa.sa_handler = SIG_IGN;
+  sigaction (SIGPIPE, &sa, NULL);
+
   sigemptyset (&child_set);
   sigaddset (&child_set, SIGCHLD);
-  sigaddset (&child_set, SIGPIPE);
   sigprocmask (SIG_BLOCK, &child_set, 0);
-#endif /* HAVE_SIGACTION */
+
+#else  /* !HAVE_SIGACTION */
+  signal (SIGPIPE, SIG_IGN);
+#endif /* !HAVE_SIGACTION */
 
   block_sigchld_handler++;
 
@@ -380,12 +388,20 @@ void
 unblock_sigchld (void)
 {
 #ifdef HAVE_SIGACTION
+  struct sigaction sa;
   sigset_t child_set;
+
+  memset(&sa, 0, sizeof (sa));
+  sa.sa_handler = SIG_DFL;
+  sigaction(SIGPIPE, &sa, NULL);
+
   sigemptyset(&child_set);
   sigaddset(&child_set, SIGCHLD);
-  sigaddset(&child_set, SIGPIPE);
   sigprocmask(SIG_UNBLOCK, &child_set, 0);
-#endif /* HAVE_SIGACTION */
+
+#else /* !HAVE_SIGACTION */
+  signal(SIGPIPE, SIG_DFL);
+#endif /* !HAVE_SIGACTION */
 
   block_sigchld_handler--;
 }

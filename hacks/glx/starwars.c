@@ -1,5 +1,5 @@
 /*
- * starwars, Copyright (c) 1998-2006 Jamie Zawinski <jwz@jwz.org> and
+ * starwars, Copyright (c) 1998-2007 Jamie Zawinski <jwz@jwz.org> and
  * Claudio Matsuoka <claudio@helllabs.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -59,6 +59,14 @@
 #include "xlockmore.h"
 
 #ifdef USE_GL /* whole file */
+
+/* Should be in <GL/glext.h> */
+# ifndef  GL_TEXTURE_MAX_ANISOTROPY_EXT
+#  define GL_TEXTURE_MAX_ANISOTROPY_EXT     0x84FE
+# endif
+# ifndef  GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT
+#  define GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT 0x84FF
+# endif
 
 
 #define DEF_PROGRAM    "xscreensaver-text --cols 0"  /* don't wrap */
@@ -804,16 +812,21 @@ init_sws (ModeInfo *mi)
 
       check_gl_error ("loading font");
 
-# ifdef GL_TEXTURE_MAX_ANISOTROPY_EXT
       /* "Anistropic filtering helps for quadrilateral-angled textures.
          A sharper image is accomplished by interpolating and filtering
          multiple samples from one or more mipmaps to better approximate
          very distorted textures.  This is the next level of filtering
          after trilinear filtering." */
-      if (smooth_p)
-        glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 16);
-      clear_gl_error();
-# endif
+      if (smooth_p && 
+          strstr ((char *) glGetString(GL_EXTENSIONS),
+                  "GL_EXT_texture_filter_anisotropic"))
+      {
+        GLfloat anisotropic = 0.0;
+        glGetFloatv (GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &anisotropic);
+        if (anisotropic >= 1.0)
+          glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, 
+                           anisotropic);
+      }
     }
   else
     {

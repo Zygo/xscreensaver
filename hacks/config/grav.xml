@@ -13,7 +13,7 @@
           convert="invert"/>
 
   <boolean id="decay" _label="Orbital Decay" arg-unset="-no-decay"/>
-  <boolean id="decay" _label="Object Trails" arg-unset="-no-trail"/>
+  <boolean id="trail" _label="Object Trails" arg-unset="-no-trail"/>
 
   <number id="ncolors" type="slider" arg="-ncolors %"
             _label="Number of Colors" _low-label="Two" _high-label="Many"

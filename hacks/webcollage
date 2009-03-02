@@ -60,7 +60,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.130 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.133 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2005" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
@@ -283,6 +283,7 @@ my $min_gif_area = (120 * 120);
 
 my $no_output_p = 0;
 my $urls_only_p = 0;
+my $cocoa_p = 0;
 my $imagemap_base = undef;
 
 my @pids_to_kill = ();  # forked pids we should kill when we exit, if any.
@@ -2368,6 +2369,7 @@ sub gif_size($) {
   return () unless ($type =~ /GIF8[7,9]a/);
   $s = substr ($body, 6, 10);
   my ($a,$b,$c,$d) = unpack ("C"x4, $s);
+  return () unless defined ($d);
   return (($b<<8|$a), ($d<<8|$c));
 }
 
@@ -2671,8 +2673,42 @@ sub image_to_pnm($$$) {
   }
 }
 
+
+# Same as the "ppmmake" command: creates a solid-colored PPM.
+# Does not understand the rgb.txt color names except "black" and "white".
+#
+sub ppmmake($$$$) {
+  my ($outfile, $bgcolor, $w, $h) = @_;
+
+  my ($r, $g, $b);
+  if ($bgcolor =~ m/^\#?([\dA-F][\dA-F])([\dA-F][\dA-F])([\dA-F][\dA-F])$/i ||
+      $bgcolor =~ m/^\#?([\dA-F])([\dA-F])([\dA-F])$/i) {
+    ($r, $g, $b) = (hex($1), hex($2), hex($3));
+  } elsif ($bgcolor =~ m/^black$/i) {
+    ($r, $g, $b) = (0, 0, 0);
+  } elsif ($bgcolor =~ m/^white$/i) {
+    ($r, $g, $b) = (0xFF, 0xFF, 0xFF);
+  } else {
+    error ("unparsable color name: $bgcolor");
+  }
+
+  my $pixel = pack('CCC', $r, $g, $b);
+  my $bits = "P6\n$w $h\n255\n" . ($pixel x ($w * $h));
+
+  local *OUT;
+  open (OUT, ">$outfile") || error ("$outfile: $!");
+  print OUT $bits;
+  close OUT;
+}
+
+
 sub pick_root_displayer() {
   my @names = ();
+
+  if ($cocoa_p) {
+    # see "xscreensaver/hacks/webcollage-cocoa.m"
+    return "echo COCOA LOAD ";
+  }
 
   foreach my $cmd (@root_displayers) {
     $_ = $cmd;
@@ -2707,9 +2743,14 @@ sub x_or_pbm_output($) {
     LOG (($verbose_pbm || $verbose_load), "no $_ program");
   }
 
+  if ($cocoa_p && !defined ($webcollage_helper)) {
+    error ("webcollage-helper not found in Cocoa-mode!");
+  }
+
+
   # make sure the various programs we execute exist, right up front.
   #
-  my @progs = ("ppmmake");  # always need this one
+  my @progs = ();
 
   if (!defined($webcollage_helper)) {
     # Only need these others if we don't have the helper.
@@ -2785,9 +2826,8 @@ sub x_or_pbm_output($) {
 
   # Create the sold-colored base image.
   #
-  $_ = "ppmmake '$bgcolor' $img_width $img_height";
-  LOG ($verbose_pbm, "creating base image: $_");
-  nontrapping_system "$_ > $image_ppm";
+  LOG ($verbose_pbm, "creating base image: ${img_width}x${img_height}");
+  $_ = ppmmake ($image_ppm, $bgcolor, $img_width, $img_height);
 
   # Paste the default background image in the middle of it.
   #
@@ -3329,6 +3369,8 @@ sub main() {
     } elsif ($_ eq "-urls-only") {
       $urls_only_p = 1;
       $no_output_p = 1;
+    } elsif ($_ eq "-cocoa") {
+      $cocoa_p = 1;
     } elsif ($_ eq "-imagemap") {
       $imagemap_base = shift @ARGV;
       $no_output_p = 1;
@@ -3416,12 +3458,12 @@ sub main() {
     $http_proxy = $1;
   }
 
-  if (!$root_p && !$no_output_p) {
+  if (!$root_p && !$no_output_p && !$cocoa_p) {
     print STDERR $copyright;
     error "the -root argument is mandatory (for now.)";
   }
 
-  if (!$no_output_p && !$ENV{DISPLAY}) {
+  if (!$no_output_p && !$cocoa_p && !$ENV{DISPLAY}) {
     error "\$DISPLAY is not set.";
   }
 

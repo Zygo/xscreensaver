@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2005 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2007 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -32,6 +32,7 @@
 #include "resources.h"
 #include "version.h"
 #include "visual.h"
+#include "auth.h"
 
 char *progname = 0;
 char *progclass = 0;
@@ -58,8 +59,6 @@ void saver_exit (saver_info *si, int status, const char *core) { exit(status);}
 int move_mouse_grab (saver_info *si, Window to, Cursor c, int ts) { return 0; }
 int mouse_screen (saver_info *si) { return 0; }
 void check_for_leaks (const char *where) { }
-void exec_command (const char *shell, const char *command, int nice) { }
-int on_path_p (const char *program) { return 0; }
 void shutdown_stderr (saver_info *si) { }
 
 const char *blurb(void) { return progname; }
@@ -80,7 +79,6 @@ get_screen_viewport (saver_screen_info *ssi,
   if (*w_ret > *h_ret * 2) *w_ret /= 2;  /* xinerama kludge */
 }
 
-
 void
 idle_timer (XtPointer closure, XtIntervalId *id)
 {
@@ -90,6 +88,51 @@ idle_timer (XtPointer closure, XtIntervalId *id)
   fake_event.xany.display = si->dpy;
   fake_event.xany.window  = 0;
   XPutBackEvent (si->dpy, &fake_event);
+}
+
+
+static int
+text_auth_conv (
+  int num_msg,
+  const struct auth_message *auth_msgs,
+  struct auth_response **resp,
+  saver_info *si)
+{
+  char *input;
+  char buf[255];
+  struct auth_response *responses;
+  int i;
+
+  responses = calloc(num_msg, sizeof(struct auth_response));
+  if (!responses)
+    return -1;
+
+  /* The unlock state won't actually be used until this function returns and
+   * the auth module processes the response, but set it anyway for consistency
+   */
+  si->unlock_state = ul_read;
+
+  for (i = 0; i < num_msg; ++i)
+    {
+      printf ("\n%s: %s", progname, auth_msgs[i].msg);
+      if (   auth_msgs[i].type == AUTH_MSGTYPE_PROMPT_NOECHO
+          || auth_msgs[i].type == AUTH_MSGTYPE_PROMPT_ECHO)
+        {
+          input = fgets (buf, sizeof(buf)-1, stdin);
+          if (!input || !*input)
+            exit (0);
+          if (input[strlen(input)-1] == '\n')
+            input[strlen(input)-1] = 0;
+
+          responses[i].response = strdup(input);
+        }
+    }
+
+  *resp = responses;
+
+  si->unlock_state = ul_finished;
+
+  return 0;
 }
 
 
@@ -113,6 +156,7 @@ main (int argc, char **argv)
   saver_info sip;
   saver_info *si = &sip;
   saver_preferences *p = &si->prefs;
+  struct passwd *pw;
 
   memset(&sip, 0, sizeof(sip));
   memset(&ssip, 0, sizeof(ssip));
@@ -186,6 +230,11 @@ main (int argc, char **argv)
         visual_depth(si->default_screen->screen,
                      si->default_screen->current_visual);
 
+      /* I could call get_screen_viewport(), but it is not worthwhile.
+       * These are used by the save_under pixmap. */
+      ssip.width = WidthOfScreen(ssip.screen);
+      ssip.height = HeightOfScreen(ssip.screen);
+
       db = p->db;
       XtGetApplicationNameAndClass (si->dpy, &progname, &progclass);
 
@@ -194,15 +243,22 @@ main (int argc, char **argv)
 
   p->verbose_p = True;
 
+  pw = getpwuid (getuid ());
+  si->user = strdup (pw->pw_name);
+
   while (1)
     {
 #ifndef NO_LOCKING
       if (which == PASS)
         {
-          if (unlock_p (si))
-            fprintf (stderr, "%s: password correct\n", progname);
+	  si->unlock_cb = gui_auth_conv;
+
+	  xss_authenticate(si, True);
+
+          if (si->unlock_state == ul_success)
+            fprintf (stderr, "%s: authentication succeeded\n", progname);
           else
-            fprintf (stderr, "%s: password INCORRECT!\n", progname);
+            fprintf (stderr, "%s: authentication FAILED!\n", progname);
 
           XSync(si->dpy, False);
           sleep (3);
@@ -225,27 +281,23 @@ main (int argc, char **argv)
           XSync (si->dpy, False);
           sleep (1);
         }
+#ifndef NO_LOCKING
       else if (which == TTY)
         {
-          char *pass;
-          char buf[255];
-          struct passwd *p = getpwuid (getuid ());
-          printf ("\n%s: %s's password: ", progname, p->pw_name);
+          si->unlock_cb = text_auth_conv;
 
-          pass = fgets (buf, sizeof(buf)-1, stdin);
-          if (!pass || !*pass)
-            exit (0);
-          if (pass[strlen(pass)-1] == '\n')
-            pass[strlen(pass)-1] = 0;
+          printf ("%s: Authenticating user %s\n", progname, si->user);
+          xss_authenticate(si, True);
 
-#ifndef NO_LOCKING
-          if (passwd_valid_p (pass, True))
+          if (si->unlock_state == ul_success)
             printf ("%s: Ok!\n", progname);
           else
             printf ("%s: Wrong!\n", progname);
-#endif
         }
+#endif
       else
         abort();
     }
+
+  free(si->user);
 }
