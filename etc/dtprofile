@@ -1,0 +1,264 @@
+#############################################################################
+###
+###   .dtprofile
+###
+###   user personal environment variables
+###
+###   Common Desktop Environment (CDE)
+###
+###   (c) Copyright 1993, 1994 Hewlett-Packard Company
+###   (c) Copyright 1993, 1994 International Business Machines Corp.
+###   (c) Copyright 1993, 1994, 1995 Sun Microsystems, Inc.
+###   (c) Copyright 1993, 1994 Novell, Inc.
+###
+###
+###   $Revision: 1.7 $
+###
+#############################################################################
+
+
+#############################################################################
+###
+###   Your $HOME/.dtprofile is read each time you login to the Common Desktop
+###   Environment (CDE) and is the place to set or override desktop
+###   environment variables for your session. Environment variables set in
+###   $HOME/.dtprofile are made available to all applications on the desktop.
+###   The desktop will accept either sh or ksh syntax for the commands in
+###   $HOME/.dtprofile.
+###
+#############################################################################
+
+
+#############################################################################
+###
+###   Random stdout and stderr output from apps started by Session Mgr or
+###   by actions via front panel or workspace menu can be directed into
+###   the user's $HOME/.dt/sessionlogs directory.  By default this output
+###   is not recorded.  Instead it is sent off to /dev/null (Unix's "nothing"
+###   device).
+###
+###   If this random application output is wanted (usually only wanted for
+###   debugging purposes), commenting out following "dtstart_sessionlogfile"
+###   lines will send output to your $HOME/.dt/sessionlogs directory.
+###
+###   Alternatively, can change "/dev/null" to "/dev/console" to see this
+###   debugging output on your console device.  Can start a console via the
+###   Workspace programs menu or via Application Mgr's Desktop Tools
+###   "Terminal Console" icon.
+###
+#############################################################################
+
+export dtstart_sessionlogfile="/dev/null"
+
+
+#############################################################################
+###
+###   By default, the desktop does not read your standard $HOME/.profile
+###   or $HOME/.login files. This can be changed by uncommenting the
+###   DTSOURCEPROFILE variable assignment at the end of this file. The
+###   desktop reads .profile if your $SHELL is "sh" or "ksh", or .login
+###   if your $SHELL is "csh".
+###
+###   The desktop reads the .dtprofile and .profile/.login without an
+###   associated terminal emulator such as xterm or dtterm. This means
+###   there is no available command line for interaction with the user.
+###   This being the case, these scripts must avoid using commands that
+###   depend on having an associated terminal emulator or that interact
+###   with the user. Any messages printed in these scripts will not be
+###   seen when you log in and any prompts such as by the 'read' command
+###   will return an empty string to the script. Commands that set a
+###   terminal state, such as "tset" or "stty" should be avoided.
+###
+###   With minor editing, it is possible to adapt your .profile or .login
+###   for use both with and without the desktop.  Group the statements not
+###   appropriate for your desktop session into one section and enclose them
+###   with an "if" statement that checks for the setting of the "DT"
+###   environment variable. When the desktop reads your .profile or .login
+###   file, it will set "DT" to a non-empty value for which your .profile or
+###   .login can test.
+###
+###   example for sh/ksh
+###
+###     if [ ! "$DT" ]; then
+###       #
+###       # commands and environment variables not appropriate for desktop
+###       #
+###       stty ...
+###	   tset ...
+###	   DISPLAY=mydisplay:0
+###	   ...
+###     fi
+###
+###     #
+###     # environment variables common to both desktop and non-desktop
+###     #
+###     PATH=$HOME/bin:$PATH
+###     MYVAR=value
+###     export MYVAR
+###     ...
+###
+###   example for csh
+###
+###     if ( ! ${?DT} ) then
+###       #
+###       # commands and environment variables not appropriate for desktop
+###       #
+###       stty ...
+###       tset ...
+###       setenv DISPLAY mydisplay:0
+###       ...
+###     endif
+###
+###     #
+###     # environment variables common to both desktop and non-desktop
+###     #
+###     setenv PATH $HOME/bin:$PATH
+###     setenv MYVAR value
+###     ...
+###
+###   Errors in .dtprofile or .profile (.login) may prevent a successful
+###   login. If after you login, your session startup terminates and you
+###   are presented with the login screen, this might be the cause. If this
+###   happens, select the Options->Sessions->Failsafe Session item on the
+###   login screen, login and correct the error. The $HOME/.dt/startlog and
+###   $HOME/.dt/errorlog files may be helpful in identifying errors.
+###
+##############################################################################
+
+#
+#  If $HOME/.profile (.login) has been edited as described above, uncomment
+#  the following line.
+#
+DTSOURCEPROFILE=true
+
+#
+# Screen savers.
+#
+#DTSCREENSAVERLIST="\
+#StartDtscreenSwarm \
+#StartDtscreenQix \
+#StartDtscreenFlame \
+#StartDtscreenHop \
+#StartDtscreenImage \
+#StartDtscreenLife \
+#StartDtscreenRotor \
+#StartDtscreenPyro \
+#StartDtscreenWorm \
+#StartDtscreenBlank"
+
+#export DTSCREENSAVERLIST="\
+#$DTSCREENSAVERLIST \
+
+#DTSCREEN="/usr/dt/bin/dtscreen"
+DTSCREEN="/usr/local/bin/xlock -dtsaver"
+export DTSCREEN
+
+DTSCREENSAVERLIST="\
+StartDtscreenAnt \
+StartDtscreenAtlantis \
+StartDtscreenBall \
+StartDtscreenBat \
+StartDtscreenBlot \
+StartDtscreenBouboule \
+StartDtscreenBounce \
+StartDtscreenBraid \
+StartDtscreenBubble \
+StartDtscreenBubble3d \
+StartDtscreenBug \
+StartDtscreenCage \
+StartDtscreenCartoon \
+StartDtscreenClock \
+StartDtscreenCoral \
+StartDtscreenCrystal \
+StartDtscreenDaisy \
+StartDtscreenDclock \
+StartDtscreenDecay \
+StartDtscreenDeco \
+StartDtscreenDemon \
+StartDtscreenDilemma \
+StartDtscreenDiscrete \
+StartDtscreenDrift \
+StartDtscreenEyes \
+StartDtscreenFadeplot \
+StartDtscreenFlag \
+StartDtscreenFlame \
+StartDtscreenFlow \
+StartDtscreenForest \
+StartDtscreenGalaxy \
+StartDtscreenGears \
+StartDtscreenGeometry \
+StartDtscreenGoop \
+StartDtscreenGrav \
+StartDtscreenHelix \
+StartDtscreenHop \
+StartDtscreenHyper \
+StartDtscreenIco \
+StartDtscreenIfs \
+StartDtscreenImage \
+StartDtscreenInvert \
+StartDtscreenJuggle \
+StartDtscreenJulia \
+StartDtscreenKaleid \
+StartDtscreenKumppa \
+StartDtscreenLament \
+StartDtscreenLaser \
+StartDtscreenLife \
+StartDtscreenLife1d \
+StartDtscreenLife3d \
+StartDtscreenLightning \
+StartDtscreenLisa \
+StartDtscreenLissie \
+StartDtscreenLoop \
+StartDtscreenLyapunov \
+StartDtscreenMandelbrot \
+StartDtscreenMarquee \
+StartDtscreenMatrix \
+StartDtscreenMaze \
+StartDtscreenMoebius \
+StartDtscreenMorph3d \
+StartDtscreenMountain \
+StartDtscreenMunch \
+StartDtscreenNose \
+StartDtscreenQix \
+StartDtscreenPacman \
+StartDtscreenPenrose \
+StartDtscreenPetal \
+StartDtscreenPipes \
+StartDtscreenPuzzle \
+StartDtscreenPyro \
+StartDtscreenRoll \
+StartDtscreenRotor \
+StartDtscreenRubik \
+StartDtscreenShape \
+StartDtscreenSierpinski \
+StartDtscreenSlip \
+StartDtscreenSolitare \
+StartDtscreenSphere \
+StartDtscreenSpiral \
+StartDtscreenSpline \
+StartDtscreenSproingies \
+StartDtscreenStairs \
+StartDtscreenStar \
+StartDtscreenStarfish \
+StartDtscreenStrange \
+StartDtscreenSuperquadrics \
+StartDtscreenSwarm \
+StartDtscreenSwirl \
+StartDtscreenT3d \
+StartDtscreenTetris \
+StartDtscreenThornbird \
+StartDtscreenTik_Tak \
+StartDtscreenTriangle \
+StartDtscreenTube \
+StartDtscreenTurtle \
+StartDtscreenVines \
+StartDtscreenVoters \
+StartDtscreenWator \
+StartDtscreenWire \
+StartDtscreenWorld \
+StartDtscreenWorm \
+StartDtscreenXjack \
+StartDtscreenBlank \
+StartDtscreenBomb \
+StartDtscreenRandom"
+export DTSCREENSAVERLIST

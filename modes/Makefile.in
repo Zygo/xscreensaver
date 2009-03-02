@@ -1,0 +1,1211 @@
+# $Id : Makefile.in 4.16 2000/01/17 $
+#
+# xlockmore Makefile.in for autoconf (UNIX/VMS X11 support)
+############################################################
+
+# @SET_MAKE@
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@/
+BITMAPDIR = @BITMAPDIR@/
+PIXMAPDIR = @PIXMAPDIR@/
+UTILDIR = $(top_srcdir)/xlock/
+GLDIR = $(top_srcdir)/modes/glx/
+UTILOBJDIR = ../xlock/
+GLOBJDIR = glx/
+
+N =
+O = .o
+#O = .obj
+C = .c
+CX = .cc
+S = $(N) $(N)
+#S = ,
+
+DM = $(VPATH)
+DOM =
+DU = $(UTILDIR)
+DOU = $(UTILOBJDIR)
+DG = $(GLDIR)
+DOG = $(GLOBJDIR)
+OM = $(O)$(S)$(DOM)
+OU = $(O)$(S)$(DOU)
+OG = $(O)$(S)$(DOG)
+CM = $(C) $(DM)
+CU = $(C) $(DU)
+CG = $(C) $(DG)
+CXM = $(CX) $(DM)
+CXG = $(CX) $(DG)
+
+# please define
+# C as the C source code extension
+# CX as the C++ source code extension
+# O as the object extension
+# S as the separator for object code
+
+# List of object files
+XLOCKUTILOBJS = $(DOU)xlock$(OU)passwd$(OU)resource$(OU)parsecmd$(O)$(S)\
+$(DOU)util$(OU)logout$(OU)mode$(OU)ras$(OU)xbm$(O)$(S)\
+$(DOU)vis$(OU)color$(OU)random$(OU)iostuff$(OU)automata$(O)$(S)\
+$(DOU)spline$(OU)sound$(OU)erase$(O)$(S)\
+$(DOU)vtlock$(OU)vtlock_proc$(O)
+
+# This debugging is new and is untested on many systems.
+@CHECK@CHECKDEF = -DDEBUG
+@CHECK@CHECKLDFLAG = -g
+@CHECK@XLOCKCHECKOBJS = $(DOU)memcheck$(O)
+
+XLOCKMODEOBJS = $(DOM)ant$(OM)ball$(OM)bat$(OM)blot$(OM)\
+bouboule$(OM)bounce$(OM)braid$(OM)bubble$(OM)bug$(OM)\
+clock$(OM)coral$(OM)crystal$(OM)\
+daisy$(OM)dclock$(OM)decay$(OM)deco$(OM)demon$(OM)\
+dilemma$(OM)discrete$(OM)drift$(OM)\
+eyes$(OM)fadeplot$(OM)flag$(OM)flame$(OM)flow$(OM)forest$(OM)\
+galaxy$(OM)goop$(OM)grav$(OM)\
+helix$(OM)hop$(OM)hyper$(OM)\
+ico$(OM)ifs$(OM)image$(OM)juggle$(OM)julia$(OM)kaleid$(OM)kumppa$(OM)\
+laser$(OM)life$(OM)life1d$(OM)life3d$(OM)\
+lightning$(OM)lisa$(OM)lissie$(OM)loop$(OM)lyapunov$(OM)\
+mandelbrot$(OM)marquee$(OM)matrix$(OM)maze$(OM)\
+mountain$(OM)munch$(OM)nose$(OM)\
+pacman$(OM)penrose$(OM)petal$(OM)puzzle$(OM)pyro$(OM)\
+qix$(OM)roll$(OM)rotor$(OM)\
+shape$(OM)sierpinski$(OM)slip$(OM)\
+sphere$(OM)spiral$(OM)spline$(OM)\
+star$(OM)starfish$(OM)strange$(OM)swarm$(OM)swirl$(OM)\
+t3d$(OM)tetris$(OM)thornbird$(OM)tik_tak$(OM)\
+triangle$(OM)tube$(OM)turtle$(OM)\
+vines$(OM)voters$(OM)\
+wator$(OM)wire$(OM)world$(OM)worm$(OM)xjack$(O)
+@UNSTABLE@XLOCKUNSTABLEOBJS = $(DOM)space$(O)
+#@UNSTABLE@CONSTRUCTIONOBJS = $(DOM)billiards$(O)
+@CCC@XLOCKCPPOBJS = $(DOM)solitare$(O)$(S)$(CONSTRUCTIONOBJS)
+@XPM@XLOCKXPMOBJS = $(DOM)cartoon$(O)
+@XPM@@GL@XLOCKXPMGLOBJS = $(DOG)lament$(O)
+@NOMODULES@@CCC@@GL@XLOCKCPPGLOBJS = $(DOG)invert$(OG)i_figureeight$(O)$(S)\
+@NOMODULES@@CCC@@GL@$(DOG)i_linkage$(OG)i_sphere$(OG)i_spline$(O)$(S)\
+@NOMODULES@@CCC@@GL@$(DOG)i_threejet$(OG)i_threejetvec$(O)$(S)\
+@NOMODULES@@CCC@@GL@$(DOG)i_twojet$(OG)i_twojetvec$(O)
+@UNSTABLE@@CCC@@GL@@GLTT@XLOCKUNSTABLETEXTGLOBJS = $(DOG)text3d$(O)
+@GL@XLOCKNORMGLOBJS = $(DOG)cage$(OG)gears$(O)$(S)\
+@GL@$(DOG)moebius$(OG)morph3d$(O)$(S)\
+@GL@$(DOG)rubik$(OG)stairs$(OG)superquadrics$(O)
+@NOMODULES@@GL@XLOCKMULTGLOBJS = $(DOG)buildlwo$(OG)pipes$(OG)pipeobjs$(O)$(S)\
+@NOMODULES@@GL@$(DOG)sproingies$(OG)sproingiewrap$(OG)s1_b$(O)$(S)\
+@NOMODULES@@GL@$(DOG)s1_1$(OG)s1_2$(OG)s1_3$(OG)s1_4$(OG)s1_5$(OG)s1_6$(O)$(S)\
+@NOMODULES@@GL@$(DOG)atlantis$(OG)dolphin$(OG)shark$(OG)swim$(OG)whale$(O)$(S)\
+@NOMODULES@@GL@$(DOG)bubble3d$(OG)b_draw$(OG)b_sphere$(OG)b_lockglue$(O)
+@UNSTABLE@@GL@XLOCKUNSTABLEGLOBJS =
+XLOCKGLOBJS = $(XLOCKNORMGLOBJS)$(S)$(XLOCKMULTGLOBJS)$(S)\
+$(XLOCKXPMGLOBJS)$(S)$(XLOCKCPPGLOBJS)$(S)$(XLOCKUNSTABLETEXTGLOBJS)
+@BOMB@XLOCKBOMBOBJS = $(DOM)bomb$(O)
+XLOCKUTILMODEOBJS = $(XLOCKBOMBOBJS)$(S)$(DOM)blank$(OM)random$(O)
+XLOCKALLMODEOBJS = $(XLOCKMODEOBJS)$(S)$(XLOCKUNSTABLEOBJS)$(S)\
+$(XLOCKCPPOBJS)$(S)$(XLOCKXPMOBJS)$(S)$(XLOCKGLOBJS)$(S)$(XLOCKUTILMODEOBJS)
+XLOCKALLUTILOBJS = $(XLOCKUTILOBJS)$(S)$(XLOCKCHECKOBJS)
+@NOMODULES@XLOCKOBJS = $(XLOCKALLUTILOBJS)$(S)$(XLOCKALLMODEOBJS)
+@MODULES@XLOCKOBJS = $(XLOCKALLUTILOBJS)
+
+@MODULES@MODULES = $(XLOCKALLMODEOBJS:.o=.xlk)
+
+# List of source files
+BITMAPS = decay.xbm eyes.xbm eyes2.xbm flag.xbm ghost.xbm image.xbm \
+life.xbm life2.xbm life1d.xbm maze.xbm puzzle.xbm
+PIXMAPS = decay.xpm flag.xpm image.xpm maze.xpm puzzle.xpm
+# life.xpm
+XLOCKUTILHDRS = xlock.h mode.h vroot.h ras.h version.h config.h
+XLOCKCHECKSRCS = $(DU)memcheck$(C)
+XLOCKUTILSRCS = $(DU)xlock$(CU)passwd$(CU)resource$(CU)parsecmd$(C) \
+$(DU)util$(CU)logout$(CU)mode$(CU)ras$(CU)xbm$(C) \
+$(DU)vis$(CU)color$(CU)random$(CU)iostuff$(CU)automata$(C) \
+$(DU)spline$(CU)sound$(CU)erase$(C) \
+$(DU)vtlock$(CU)vtlock_proc$(C) $(XLOCKCHECKSRCS)
+
+XLOCKMODESRCS = $(DM)ant$(CM)ball$(CM)bat$(CM)blot$(C) \
+$(DM)bouboule$(CM)bounce$(CM)braid$(CM)bubble$(CM)bug$(C) \
+$(DM)clock$(CM)coral$(CM)crystal$(C) \
+$(DM)daisy$(CM)dclock$(CM)decay$(CM)deco$(CM)demon$(C) \
+$(DM)dilemma$(CM)discrete$(CM)drift$(CM)eyes$(C) \
+$(DM)fadeplot$(CM)flag$(CM)flame$(CM)flow$(CM)forest$(C) \
+$(DM)galaxy$(CM)goop$(CM)grav$(C) \
+$(DM)helix$(CM)hop$(CM)hyper$(C) \
+$(DM)ico$(CM)ifs$(CM)image$(CM)juggle$(CM)julia$(CM)kaleid$(CM)kumppa$(C) \
+$(DM)laser$(CM)life$(CM)life1d$(CM)life3d$(C) \
+$(DM)lightning$(CM)lisa$(CM)lissie$(CM)loop$(CM)lyapunov$(C) \
+$(DM)mandelbrot$(CM)marquee$(CM)matrix$(CM)maze$(C) \
+$(DM)mountain$(CM)munch$(CM)nose$(C) \
+$(DM)pacman$(CM)penrose$(CM)petal$(CM)puzzle$(CM)pyro$(C) \
+$(DM)qix$(CM)roll$(CM)rotor$(C) \
+$(DM)shape$(CM)sierpinski$(CM)slip$(C) \
+$(DM)sphere$(CM)spiral$(CM)spline$(C) \
+$(DM)star$(CM)starfish$(CM)strange$(CM)swarm$(CM)swirl$(C) \
+$(DM)t3d$(CM)tetris$(CM)thornbird$(C) \
+$(DM)tik_tak$(CM)triangle$(CM)tube$(CM)turtle$(C) \
+$(DM)vines$(CM)voters$(C) \
+$(DM)wator$(CM)wire$(CM)world$(CM)worm$(CM)xjack$(C)
+@UNSTABLE@XLOCKUNSTABLESRCS = $(DM)space$(C)
+#CONSTRUCTIONSRCS = $(DM)billiards$(CX)
+@CCC@XLOCKCPPSRCS = $(DM)solitare$(CX) $(CONTRUCTIONSRCS)
+@XPM@XLOCKXPMSRCS = $(DM)cartoon$(C)
+@GL@XLOCKGLSRCS = $(DG)cage$(CG)gears$(C) \
+@GL@$(DG)lament$(CG)moebius$(CG)morph3d$(C) \
+@GL@$(DG)rubik$(CG)stairs$(CG)superquadrics$(C) \
+@GL@$(DG)buildlwo$(CG)pipes$(CG)pipeobjs$(C) \
+@GL@$(DG)sproingies$(CG)sproingiewrap$(CG)s1_b$(C) \
+@GL@$(DG)s1_1$(CG)s1_2$(CG)s1_3$(CG)s1_4$(CG)s1_5$(CG)s1_6$(C) \
+@GL@$(DG)atlantis$(CG)dolphin$(CG)shark$(CG)swim$(CG)whale$(C) \
+@GL@$(DG)bubble3d$(CG)b_draw$(CG)b_sphere$(CG)b_lockglue$(C) \
+@GL@$(DG)invert$(CG)i_figureeight$(CXG)i_linkage$(CX) \
+@GL@$(DG)i_sphere$(CXG)i_spline$(CX) \
+@GL@$(DG)i_threejet$(CXG)i_threejetvec$(CX) \
+@GL@$(DG)i_twojet$(CXG)i_twojetvec$(CXG)text3d$(CX)
+@BOMB@XLOCKBOMBSRCS = $(DM)bomb$(C)
+XLOCKUTILMODESRCS = $(XLOCKBOMBSRCS) $(DM)blank$(CM)random$(C)
+XLOCKSRCS = $(XLOCKUTILSRCS) $(XLOCKXPMSRCS) \
+$(XLOCKCPPSRCS) $(XLOCKUNSTABLESRCS) \
+$(XLOCKMODESRCS) $(XLOCKUTILMODESRCS)
+
+# default target
+all : $(MODULES) $(XLOCKOBJS) $(UTILOBJDIR)xlock
+
+# this tells GNU make not to export variables into the environment
+# But other makes do not understand its significance, so it must
+# not be the first target in the file. So it is here, before
+# any variables are created, but after the default target
+.NOEXPORT :
+
+SHELL = /bin/sh
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+mandir = @mandir@/man1
+xapploaddir = @APPDEFAULTS@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTPGMFLAGS = @INSTPGMFLAGS@
+
+
+#CC = cc -g
+#CC = cc -Ac -g
+#CC = cc -Xc -g
+#CC = acc -g
+#CC = CC -g
+#CC = gcc -g -Wall -ansi -pedantic
+#CC = gcc -g -Wall -W -Wshadow -Wpointer-arith -Wbad-function-cast -Wcast-align -Wwrite-strings -Waggregate-return -Wmissing-prototypes -Wstrict-prototypes
+#CC = g++ -g -Wall
+CC = @CC@
+#CXX = g++ -fpermissive
+CXX = @CXX@
+
+LINT = lint
+#LINT = alint
+
+#DEPEND = makedepend
+DEPEND = @DEPEND@
+DEPEND_FLAGS = @DEPEND_FLAGS@
+DEPEND_DEFINES = @DEPEND_DEFINES@
+
+#BITMAPTYPE = x11
+#PIXMAPTYPE = x11
+BITMAPTYPE = @BITMAPTYPE@
+PIXMAPTYPE = @PIXMAPTYPE@
+
+# Here is your chance to override the default icon:
+TINYBITMAP = $(BITMAPTYPE)
+TINYBITMAP = t-x11
+SMALLBITMAP = s-$(BITMAPTYPE)
+MEDIUMBITMAP = m-$(BITMAPTYPE)
+LARGEBITMAP = l-$(BITMAPTYPE)
+SMALLPIXMAP = m-$(PIXMAPTYPE)
+MEDIUMPIXMAP = m-$(PIXMAPTYPE)
+LARGEPIXMAP = l-$(PIXMAPTYPE)
+
+#DECAYBITMAP = $(LARGEBITMAP)
+DECAYBITMAP = l-xlock
+#DECAYBITMAP = l-linux
+#EYESBITMAP = $(MEDIUMBITMAP)
+EYESBITMAP = m-grelb
+FLAGBITMAP = $(MEDIUMBITMAP)
+IMAGEBITMAP = $(MEDIUMBITMAP)
+#IMAGEBITMAP = l-bob #Slackware icon
+#IMAGEBITMAP = m-xlock #XLock icon
+#LIFEBITMAP = $(SMALLBITMAP)
+LIFEBITMAP = s-grelb
+LIFE1DBITMAP = $(TINYBITMAP)
+MAZEBITMAP = $(LARGEBITMAP)
+#MAZEBITMAP = m-xlock
+#PACMANBITMAP = $(MEDIUMBITMAP)
+PACMANBITMAP = m-ghost
+#PUZZLEBITMAP = $(LARGEBITMAP)
+PUZZLEBITMAP = l-xlock
+#PUZZLEBITMAP = l-linux
+#DECAYPIXMAP = $(LARGEPIXMAP)
+DECAYPIXMAP = l-xlock
+#DECAYPIXMAP = l-linux
+#FLAGPIXMAP = m-xlock
+FLAGPIXMAP = $(MEDIUMPIXMAP)
+#FLAGPIXMAP = m-xlock
+IMAGEPIXMAP = $(MEDIUMPIXMAP)
+#IMAGEPIXMAP = m-xlock
+LIFEPIXMAP = s-grelb
+MAZEPIXMAP = $(MEDIUMPIXMAP)
+#MAZEPIXMAP = m-xlock
+#PUZZLEPIXMAP = $(LARGEPIXMAP)
+PUZZLEPIXMAP = l-xlock
+#PUZZLEPIXMAP = l-linux
+
+LN_S = @LN_S@
+RM = rm -f
+RM_S = $(RM)
+ECHO = echo
+
+#BLN_S = set file/enter=[]
+#RM = delete/noconfirm/nolog
+#RM_S = set file/remove/nolog
+#ECHO = write sys$output
+
+@MODULES@MODULEFLAGS = -rdynamic
+@MODULES@MODULELIB = -ldl
+DEF_MODULEPATH = $(prefix)/lib/xlock_modules
+@MODULES@MODULEDEF = -DDEF_MODULEPATH=\"$(DEF_MODULEPATH)\"
+DEFINES = -DDEF_FILESEARCHPATH=\"$(xapploaddir)/%N%C%S:$(xapploaddir)/%N%S\" $(MODULEDEF) $(CHECKDEF)
+DEFS = @DEFS@ $(DEFINES)
+XLOCKINC = -I. -I.. -I$(UTILDIR) -I../.. @XLOCKINC@
+CFLAGS = @CFLAGS@
+CXXFLAGS = @CXXFLAGS@
+#CFLAGS = -O
+#CFLAGS = -g
+XLOCKLDFLAGS = @XLOCKLDFLAGS@ $(CHECKLDFLAG)
+XLIBS = @XLIBS@
+XLOCKLIBS = $(MODULELIB) @XLOCKLIBS@
+
+####
+#### These might have become not necessary as configure do the job
+#### It check for pthread, svga & glide in MesaGL lib and add each of them
+#### if they was linked against.
+####
+#MesaGL threads
+#XLOCKLIBS = @XLOCKLIBS@ -lpthread
+#MesaGL vga
+#XLOCKLIBS = @XLOCKLIBS@ -lvga
+#3Dfx Glide VooDoo graphics device driver for MesaGL >= 2.3?  _NOT_ tested.
+#XLOCKLIBS = @XLOCKLIBS@ -lglide -ltexus
+####
+####
+
+#SAFEWORD
+#XLOCKLIBS = @XLOCKLIBS@ -lidpb
+#If you have purify, and want to use it, uncomment this definition or
+# run the make as `make PURIFY=purify'
+# or run configure with the --with-purify argument.
+PURIFY = @PURIFY@
+
+$(MODULES) : %.xlk:%.o
+	$(RM) $@
+	$(CXX) $(CFLAGS) -shared -o $@ $<
+
+xlock : $(UTILOBJDIR)xlock
+
+$(UTILOBJDIR)xlock : $(XLOCKOBJS)
+	$(PURIFY) $(CXX) $(CFLAGS) -o $@ $(XLOCKOBJS) $(XLOCKLDFLAGS) $(XLOCKLIBS) $(MODULEFLAGS)
+	@ $(ECHO) "$@ BUILD COMPLETE"
+	@ $(ECHO) ""
+
+decay.xbm : $(BITMAPDIR)$(DECAYBITMAP).xbm
+	$(RM) decay.xbm ; $(LN_S) $(BITMAPDIR)$(DECAYBITMAP).xbm decay.xbm
+
+eyes.xbm : $(BITMAPDIR)$(EYESBITMAP).xbm
+	$(RM) eyes.xbm ; $(LN_S) $(BITMAPDIR)$(EYESBITMAP).xbm eyes.xbm
+
+eyes2.xbm : $(BITMAPDIR)m-grelb-2.xbm
+	$(RM) eyes2.xbm ; $(LN_S) $(BITMAPDIR)m-grelb-2.xbm eyes2.xbm
+
+flag.xbm : $(BITMAPDIR)$(FLAGBITMAP).xbm
+	$(RM) flag.xbm ; $(LN_S) $(BITMAPDIR)$(FLAGBITMAP).xbm flag.xbm
+
+image.xbm : $(BITMAPDIR)$(IMAGEBITMAP).xbm
+	$(RM) image.xbm ; $(LN_S) $(BITMAPDIR)$(IMAGEBITMAP).xbm image.xbm
+
+ghost.xbm : $(BITMAPDIR)$(PACMANBITMAP).xbm
+	$(RM) ghost.xbm ; $(LN_S) $(BITMAPDIR)$(PACMANBITMAP).xbm ghost.xbm
+
+life.xbm : $(BITMAPDIR)$(LIFEBITMAP).xbm
+	$(RM) life.xbm ; $(LN_S) $(BITMAPDIR)$(LIFEBITMAP).xbm life.xbm
+
+life2.xbm : $(BITMAPDIR)s-grelb-2.xbm
+	$(RM) life2.xbm ; $(LN_S) $(BITMAPDIR)s-grelb-2.xbm life2.xbm
+
+life1d.xbm : $(BITMAPDIR)$(LIFE1DBITMAP).xbm
+	$(RM) life1d.xbm ; $(LN_S) $(BITMAPDIR)$(LIFE1DBITMAP).xbm life1d.xbm
+
+maze.xbm : $(BITMAPDIR)$(MAZEBITMAP).xbm
+	$(RM) maze.xbm ; $(LN_S) $(BITMAPDIR)$(MAZEBITMAP).xbm maze.xbm
+
+puzzle.xbm : $(BITMAPDIR)$(PUZZLEBITMAP).xbm
+	$(RM) puzzle.xbm ; $(LN_S) $(BITMAPDIR)$(PUZZLEBITMAP).xbm puzzle.xbm
+
+decay.xpm : $(PIXMAPDIR)$(DECAYPIXMAP).xpm
+	$(RM) decay.xpm ; $(LN_S) $(PIXMAPDIR)$(DECAYPIXMAP).xpm decay.xpm
+
+flag.xpm : $(PIXMAPDIR)$(FLAGPIXMAP).xpm
+	$(RM) flag.xpm ; $(LN_S) $(PIXMAPDIR)$(FLAGPIXMAP).xpm flag.xpm
+
+image.xpm : $(PIXMAPDIR)$(IMAGEPIXMAP).xpm
+	$(RM) image.xpm ; $(LN_S) $(PIXMAPDIR)$(IMAGEPIXMAP).xpm image.xpm
+
+life.xpm : $(PIXMAPDIR)$(LIFEPIXMAP).xpm
+	$(RM) life.xpm ; $(LN_S) $(PIXMAPDIR)$(LIFEPIXMAP).xpm life.xpm
+
+maze.xpm : $(PIXMAPDIR)$(MAZEPIXMAP).xpm
+	$(RM) maze.xpm ; $(LN_S) $(PIXMAPDIR)$(MAZEPIXMAP).xpm maze.xpm
+
+puzzle.xpm : $(PIXMAPDIR)$(PUZZLEPIXMAP).xpm
+	$(RM) puzzle.xpm ; $(LN_S) $(PIXMAPDIR)$(PUZZLEPIXMAP).xpm puzzle.xpm
+
+$(UTILOBJDIR)xlock.o : $(UTILDIR)xlock.c
+$(UTILOBJDIR)passwd.o : $(UTILDIR)passwd.c
+$(UTILOBJDIR)resource.o : $(UTILDIR)resource.c
+$(UTILOBJDIR)parsecmd.o : $(UTILDIR)parsecmd.c
+$(UTILOBJDIR)util.o : $(UTILDIR)util.c
+$(UTILOBJDIR)logout.o : $(UTILDIR)logout.c
+$(UTILOBJDIR)mode.o : $(UTILDIR)mode.c
+$(UTILOBJDIR)ras.o : $(UTILDIR)ras.c
+$(UTILOBJDIR)xbm.o : $(UTILDIR)xbm.c
+$(UTILOBJDIR)vis.o : $(UTILDIR)vis.c
+$(UTILOBJDIR)color.o : $(UTILDIR)color.c
+$(UTILOBJDIR)random.o : $(UTILDIR)random.c
+$(UTILOBJDIR)iostuff.o : $(UTILDIR)iostuff.c
+$(UTILOBJDIR)automata.o : $(UTILDIR)automata.c
+$(UTILOBJDIR)spline.o : $(UTILDIR)spline.c
+$(UTILOBJDIR)sound.o : $(UTILDIR)sound.c
+$(UTILOBJDIR)erase.o : $(UTILDIR)erase.c
+$(UTILOBJDIR)vtlock.o : $(UTILDIR)vtlock.c
+$(UTILOBJDIR)vtlock_proc.o : $(UTILDIR)vtlock_proc.c
+$(UTILOBJDIR)memcheck.o : $(UTILDIR)memcheck.c
+
+#$(XLOCKUTILOBJS) :
+# 	cd $(UTILOBJDIR) ; \
+#$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+$(GLOBJDIR)cage.o : $(GLDIR)cage.c
+$(GLOBJDIR)gears.o : $(GLDIR)gears.c
+$(GLOBJDIR)lament.o : $(GLDIR)lament.c
+$(GLOBJDIR)moebius.o : $(GLDIR)moebius.c
+$(GLOBJDIR)morph3d.o : $(GLDIR)morph3d.c
+$(GLOBJDIR)rubik.o : $(GLDIR)rubik.c
+$(GLOBJDIR)stairs.o : $(GLDIR)stairs.c
+$(GLOBJDIR)superquadrics.o : $(GLDIR)superquadrics.c
+$(GLOBJDIR)buildlwo.o : $(GLDIR)buildlwo.c
+$(GLOBJDIR)pipes.o : $(GLDIR)pipes.c
+$(GLOBJDIR)pipeobjs.o : $(GLDIR)pipeobjs.c
+$(GLOBJDIR)sproingies.o : $(GLDIR)sproingies.c
+$(GLOBJDIR)sproingiewrap.o : $(GLDIR)sproingiewrap.c
+$(GLOBJDIR)s1_b.o : $(GLDIR)s1_b.c
+$(GLOBJDIR)s1_1.o : $(GLDIR)s1_1.c
+$(GLOBJDIR)s1_2.o : $(GLDIR)s1_2.c
+$(GLOBJDIR)s1_3.o : $(GLDIR)s1_3.c
+$(GLOBJDIR)s1_4.o : $(GLDIR)s1_4.c
+$(GLOBJDIR)s1_5.o : $(GLDIR)s1_5.c
+$(GLOBJDIR)s1_6.o : $(GLDIR)s1_6.c
+$(GLOBJDIR)atlantis.o : $(GLDIR)atlantis.c
+$(GLOBJDIR)swim.o : $(GLDIR)swim.c
+$(GLOBJDIR)dolphin.o : $(GLDIR)dolphin.c
+$(GLOBJDIR)shark.o : $(GLDIR)shark.c
+$(GLOBJDIR)whale.o : $(GLDIR)whale.c
+$(GLOBJDIR)bubble3d.o : $(GLDIR)bubble3d.c
+$(GLOBJDIR)b_draw.o : $(GLDIR)b_draw.c
+$(GLOBJDIR)b_lockglue.o : $(GLDIR)b_lockglue.c
+$(GLOBJDIR)b_sphere.o : $(GLDIR)b_sphere.c
+$(GLOBJDIR)invert.o : $(GLDIR)invert.c
+$(GLOBJDIR)i_figureeight.o : $(GLDIR)i_figureeight.cc
+$(GLOBJDIR)i_linkage.o : $(GLDIR)i_linkage.cc
+$(GLOBJDIR)i_sphere.o : $(GLDIR)i_sphere.cc
+$(GLOBJDIR)i_spline.o : $(GLDIR)i_spline.cc
+$(GLOBJDIR)i_threejet.o : $(GLDIR)i_threejet.cc
+$(GLOBJDIR)i_threejetvec.o : $(GLDIR)i_threejetvec.cc
+$(GLOBJDIR)i_twojet.o : $(GLDIR)i_twojet.cc
+$(GLOBJDIR)i_twojetvec.o : $(GLDIR)i_twojetvec.cc
+$(GLOBJDIR)text3d.o : $(GLDIR)text3d.cc
+
+#$(XLOCKGLOBJS) :
+#	cd $(GLOBJDIR) ; \
+#$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+.SUFFIXES : $(C) $(CX) $(O)
+
+$(C)$(O) :
+	$(CC) -c -o $@ $(CPPFLAGS) $(DEFS) $(XLOCKINC) $(CFLAGS) $<
+
+$(CX)$(O) :
+	$(CXX) -c -o $@ $(CPPFLAGS) $(DEFS) $(XLOCKINC) $(CXXFLAGS) $<
+
+install : install-program install-man install-ad
+	@ $(ECHO) "$@ COMPLETE"
+	@ $(ECHO) ""
+
+install-program : xlock
+	$(top_srcdir)/mkinstalldirs $(bindir)
+	$(INSTALL_PROGRAM) $(INSTPGMFLAGS) $(UTILOBJDIR)xlock $(bindir)
+	@MODULES@mkdir -p $(DEF_MODULEPATH)
+	@MODULES@cp *.xlk $(DEF_MODULEPATH)
+	@MODULES@cp glx/*.xlk $(DEF_MODULEPATH)
+
+install-man :
+	$(top_srcdir)/mkinstalldirs $(mandir)
+	$(INSTALL_DATA) $(UTILDIR)xlock.man $(mandir)/xlock.1
+
+install-ad :
+	$(top_srcdir)/mkinstalldirs $(xapploaddir)
+	$(INSTALL_DATA) $(UTILDIR)XLock.ad $(xapploaddir)/XLock
+
+uninstall : uninstall-program uninstall-man uninstall-ad
+
+uninstall-program :
+	$(RM) $(bindir)/xlock
+
+uninstall-man :
+	$(RM) $(mandir)/xlock.1
+
+uninstall-ad :
+	$(RM) $(xapploaddir)/XLock
+
+install.program : install-program
+
+install.man : install-man
+
+install.ad : install-ad
+
+install.modules : install-modules
+
+uninstall.program : uninstall-program
+
+uninstall.man : uninstall-man
+
+uninstall.ad : uninstall-ad
+
+lint :
+	$(LINT) -ax -DLINT $(DEFS) $(XLOCKINC) $(XLOCKSRCS) -L$(XLIBS) -lX11 -lm
+
+xrdb :
+
+man :
+
+html :
+
+hlp :
+
+clean :
+	$(RM) *.o *.xlk core *~ *% *.bak *.orig *.rej make.log MakeOut *.patch
+
+distclean : clean
+	$(RM) Makefile $(BITMAPS) $(PIXMAPS)
+
+clean.all : distclean
+
+# Adds all current dependencies to Makefile
+depend : $(BITMAPS) $(PIXMAPS)
+	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'              \
+	$(DEPEND_FLAGS) --                                                  \
+	$(XLOCKINC) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) --                  \
+	$(XLOCKSRCS)
+
+# Adds some dependencies to Makefile.in -- not totally accurate, but pretty
+# close.  This excludes dependencies on files in /usr/include, etc.  It tries
+# to include only dependencies on files which are themselves a part of this
+# package.
+distdepend :
+	@echo updating dependencies in `pwd`/Makefile.in... ;               \
+	$(DEPEND) -w 0 -f -                                                 \
+	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
+	$(XLOCKINC) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) --                  \
+	$(XLOCKSRCS) |                                                      \
+	(                                                                   \
+	  awk '/^#.*Id : Makefile.in/,/^# DO .*distdepend/' < Makefile.in ; \
+	  sed -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'                        \
+	      -e 's@^\.\./xlock@$$(UTILOBJDIR)@'                            \
+	      -e 's@^\.\./modes/glx@$$(GLOBJDIR)@'                          \
+	      -e 's@\.\./bitmaps@$$(BITMAPDIR)@g'                           \
+	      -e 's@\.\./pixmaps@$$(PIXMAPDIR)@g'                           \
+	      -e 's@\.\./xlock@$$(UTILDIR)@g'                               \
+	      -e 's@\.\./modes/glx@$$(GLDIR)@g' ;                           \
+	  echo ''                                                           \
+	) > /tmp/distdepend.$$$$ &&                                         \
+	mv Makefile.in Makefile.in.bak &&                                   \
+	mv /tmp/distdepend.$$$$ Makefile.in
+
+#	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'                            \
+#	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g' ;                     \
+
+##############################################################################
+#
+# DO NOT DELETE: updated by make distdepend
+
+$(UTILOBJDIR)/xlock.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/xlock.o: ../config.h
+$(UTILOBJDIR)/xlock.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/xlock.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/xlock.o: $(UTILDIR)/color.h
+$(UTILOBJDIR)/xlock.o: $(UTILDIR)/util.h
+$(UTILOBJDIR)/xlock.o: $(UTILDIR)/iostuff.h
+$(UTILOBJDIR)/xlock.o: $(UTILDIR)/passwd.h
+$(UTILOBJDIR)/xlock.o: $(BITMAPDIR)/mailempty.xbm
+$(UTILOBJDIR)/xlock.o: $(BITMAPDIR)/mailfull.xbm
+$(UTILOBJDIR)/xlock.o: $(UTILDIR)/vroot.h
+$(UTILOBJDIR)/passwd.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/passwd.o: ../config.h
+$(UTILOBJDIR)/passwd.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/passwd.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/passwd.o: $(UTILDIR)/iostuff.h
+$(UTILOBJDIR)/passwd.o: $(UTILDIR)/passwd.h
+$(UTILOBJDIR)/resource.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/resource.o: ../config.h
+$(UTILOBJDIR)/resource.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/resource.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/resource.o: $(UTILDIR)/vis.h
+$(UTILOBJDIR)/resource.o: $(UTILDIR)/iostuff.h
+$(UTILOBJDIR)/resource.o: $(UTILDIR)/version.h
+$(UTILOBJDIR)/util.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/util.o: ../config.h
+$(UTILOBJDIR)/util.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/util.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/util.o: $(UTILDIR)/util.h
+$(UTILOBJDIR)/logout.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/logout.o: ../config.h
+$(UTILOBJDIR)/logout.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/logout.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/logout.o: $(UTILDIR)/iostuff.h
+$(UTILOBJDIR)/mode.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/mode.o: ../config.h
+$(UTILOBJDIR)/mode.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/mode.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/ras.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/ras.o: ../config.h
+$(UTILOBJDIR)/ras.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/ras.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/ras.o: $(UTILDIR)/iostuff.h
+$(UTILOBJDIR)/ras.o: $(UTILDIR)/ras.h
+$(UTILOBJDIR)/xbm.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/xbm.o: ../config.h
+$(UTILOBJDIR)/xbm.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/xbm.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/vis.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/vis.o: ../config.h
+$(UTILOBJDIR)/vis.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/vis.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/vis.o: $(UTILDIR)/vis.h
+$(UTILOBJDIR)/color.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/color.o: ../config.h
+$(UTILOBJDIR)/color.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/color.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/color.o: $(UTILDIR)/color.h
+$(UTILOBJDIR)/color.o: $(UTILDIR)/vis.h
+$(UTILOBJDIR)/iostuff.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/iostuff.o: ../config.h
+$(UTILOBJDIR)/iostuff.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/iostuff.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/iostuff.o: $(UTILDIR)/vis.h
+$(UTILOBJDIR)/iostuff.o: $(UTILDIR)/color.h
+$(UTILOBJDIR)/iostuff.o: $(UTILDIR)/iostuff.h
+$(UTILOBJDIR)/iostuff.o: $(UTILDIR)/ras.h
+$(UTILOBJDIR)/automata.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/automata.o: ../config.h
+$(UTILOBJDIR)/automata.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/automata.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/automata.o: $(UTILDIR)/automata.h
+$(UTILOBJDIR)/spline.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/spline.o: ../config.h
+$(UTILOBJDIR)/spline.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/spline.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/spline.o: $(UTILDIR)/spline.h
+$(UTILOBJDIR)/sound.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/sound.o: ../config.h
+$(UTILOBJDIR)/sound.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/sound.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/erase.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/erase.o: ../config.h
+$(UTILOBJDIR)/erase.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/erase.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/erase.o: $(UTILDIR)/erase_init.h
+$(UTILOBJDIR)/erase.o: $(UTILDIR)/erase.h
+$(UTILOBJDIR)/erase.o: $(UTILDIR)/erase_debug.h
+$(UTILOBJDIR)/vtlock.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/vtlock.o: ../config.h
+$(UTILOBJDIR)/vtlock.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/vtlock.o: $(UTILDIR)/random.h
+$(UTILOBJDIR)/vtlock_proc.o: $(UTILDIR)/xlock.h
+$(UTILOBJDIR)/vtlock_proc.o: ../config.h
+$(UTILOBJDIR)/vtlock_proc.o: $(UTILDIR)/mode.h
+$(UTILOBJDIR)/vtlock_proc.o: $(UTILDIR)/random.h
+cartoon.o: $(UTILDIR)/xlock.h
+cartoon.o: ../config.h
+cartoon.o: $(UTILDIR)/mode.h
+cartoon.o: $(UTILDIR)/random.h
+cartoon.o: $(UTILDIR)/vis.h
+cartoon.o: $(UTILDIR)/color.h
+cartoon.o: $(UTILDIR)/iostuff.h
+cartoon.o: $(PIXMAPDIR)/calvin2.xpm
+cartoon.o: $(PIXMAPDIR)/gravity.xpm
+cartoon.o: $(PIXMAPDIR)/calvin4.xpm
+cartoon.o: $(PIXMAPDIR)/calvinf.xpm
+cartoon.o: $(PIXMAPDIR)/hobbes.xpm
+cartoon.o: $(PIXMAPDIR)/calvin.xpm
+cartoon.o: $(PIXMAPDIR)/marino2.xpm
+cartoon.o: $(PIXMAPDIR)/calvin3.xpm
+cartoon.o: $(PIXMAPDIR)/garfield.xpm
+solitare.o: $(UTILDIR)/xlock.h
+solitare.o: ../config.h
+solitare.o: $(UTILDIR)/mode.h
+solitare.o: $(UTILDIR)/random.h
+space.o: $(UTILDIR)/xlock.h
+space.o: ../config.h
+space.o: $(UTILDIR)/mode.h
+space.o: $(UTILDIR)/random.h
+ant.o: $(UTILDIR)/xlock.h
+ant.o: ../config.h
+ant.o: $(UTILDIR)/mode.h
+ant.o: $(UTILDIR)/random.h
+ant.o: $(UTILDIR)/automata.h
+ball.o: $(UTILDIR)/xlock.h
+ball.o: ../config.h
+ball.o: $(UTILDIR)/mode.h
+ball.o: $(UTILDIR)/random.h
+bat.o: $(UTILDIR)/xlock.h
+bat.o: ../config.h
+bat.o: $(UTILDIR)/mode.h
+bat.o: $(UTILDIR)/random.h
+bat.o: $(UTILDIR)/vis.h
+bat.o: $(UTILDIR)/color.h
+bat.o: $(UTILDIR)/iostuff.h
+bat.o: $(PIXMAPDIR)/bat-0.xpm
+bat.o: $(PIXMAPDIR)/bat-1.xpm
+bat.o: $(PIXMAPDIR)/bat-2.xpm
+bat.o: $(PIXMAPDIR)/bat-3.xpm
+bat.o: $(PIXMAPDIR)/bat-4.xpm
+bat.o: $(BITMAPDIR)/bat-0.xbm
+bat.o: $(BITMAPDIR)/bat-1.xbm
+bat.o: $(BITMAPDIR)/bat-2.xbm
+bat.o: $(BITMAPDIR)/bat-3.xbm
+bat.o: $(BITMAPDIR)/bat-4.xbm
+blot.o: $(UTILDIR)/xlock.h
+blot.o: ../config.h
+blot.o: $(UTILDIR)/mode.h
+blot.o: $(UTILDIR)/random.h
+bouboule.o: $(UTILDIR)/xlock.h
+bouboule.o: ../config.h
+bouboule.o: $(UTILDIR)/mode.h
+bouboule.o: $(UTILDIR)/random.h
+bounce.o: $(UTILDIR)/xlock.h
+bounce.o: ../config.h
+bounce.o: $(UTILDIR)/mode.h
+bounce.o: $(UTILDIR)/random.h
+bounce.o: $(BITMAPDIR)/bounce-0.xbm
+bounce.o: $(BITMAPDIR)/bounce-1.xbm
+bounce.o: $(BITMAPDIR)/bounce-2.xbm
+bounce.o: $(BITMAPDIR)/bounce-3.xbm
+bounce.o: $(BITMAPDIR)/bounce-mask.xbm
+braid.o: $(UTILDIR)/xlock.h
+braid.o: ../config.h
+braid.o: $(UTILDIR)/mode.h
+braid.o: $(UTILDIR)/random.h
+bubble.o: $(UTILDIR)/xlock.h
+bubble.o: ../config.h
+bubble.o: $(UTILDIR)/mode.h
+bubble.o: $(UTILDIR)/random.h
+bug.o: $(UTILDIR)/xlock.h
+bug.o: ../config.h
+bug.o: $(UTILDIR)/mode.h
+bug.o: $(UTILDIR)/random.h
+bug.o: $(UTILDIR)/automata.h
+clock.o: $(UTILDIR)/xlock.h
+clock.o: ../config.h
+clock.o: $(UTILDIR)/mode.h
+clock.o: $(UTILDIR)/random.h
+coral.o: $(UTILDIR)/xlock.h
+coral.o: ../config.h
+coral.o: $(UTILDIR)/mode.h
+coral.o: $(UTILDIR)/random.h
+crystal.o: $(UTILDIR)/xlock.h
+crystal.o: ../config.h
+crystal.o: $(UTILDIR)/mode.h
+crystal.o: $(UTILDIR)/random.h
+crystal.o: $(UTILDIR)/color.h
+daisy.o: $(UTILDIR)/xlock.h
+daisy.o: ../config.h
+daisy.o: $(UTILDIR)/mode.h
+daisy.o: $(UTILDIR)/random.h
+dclock.o: $(UTILDIR)/xlock.h
+dclock.o: ../config.h
+dclock.o: $(UTILDIR)/mode.h
+dclock.o: $(UTILDIR)/random.h
+dclock.o: $(UTILDIR)/util.h
+dclock.o: $(UTILDIR)/iostuff.h
+decay.o: $(UTILDIR)/xlock.h
+decay.o: ../config.h
+decay.o: $(UTILDIR)/mode.h
+decay.o: $(UTILDIR)/random.h
+decay.o: $(UTILDIR)/iostuff.h
+decay.o: $(UTILDIR)/color.h
+decay.o: decay.xbm
+decay.o: decay.xpm
+deco.o: $(UTILDIR)/xlock.h
+deco.o: ../config.h
+deco.o: $(UTILDIR)/mode.h
+deco.o: $(UTILDIR)/random.h
+demon.o: $(UTILDIR)/xlock.h
+demon.o: ../config.h
+demon.o: $(UTILDIR)/mode.h
+demon.o: $(UTILDIR)/random.h
+demon.o: $(UTILDIR)/automata.h
+dilemma.o: $(UTILDIR)/xlock.h
+dilemma.o: ../config.h
+dilemma.o: $(UTILDIR)/mode.h
+dilemma.o: $(UTILDIR)/random.h
+dilemma.o: $(UTILDIR)/automata.h
+dilemma.o: $(BITMAPDIR)/cooperat.xbm
+dilemma.o: $(BITMAPDIR)/defect.xbm
+discrete.o: $(UTILDIR)/xlock.h
+discrete.o: ../config.h
+discrete.o: $(UTILDIR)/mode.h
+discrete.o: $(UTILDIR)/random.h
+drift.o: $(UTILDIR)/xlock.h
+drift.o: ../config.h
+drift.o: $(UTILDIR)/mode.h
+drift.o: $(UTILDIR)/random.h
+eyes.o: $(UTILDIR)/xlock.h
+eyes.o: ../config.h
+eyes.o: $(UTILDIR)/mode.h
+eyes.o: $(UTILDIR)/random.h
+eyes.o: $(UTILDIR)/iostuff.h
+eyes.o: eyes.xbm
+eyes.o: eyes2.xbm
+fadeplot.o: $(UTILDIR)/xlock.h
+fadeplot.o: ../config.h
+fadeplot.o: $(UTILDIR)/mode.h
+fadeplot.o: $(UTILDIR)/random.h
+flag.o: $(UTILDIR)/xlock.h
+flag.o: ../config.h
+flag.o: $(UTILDIR)/mode.h
+flag.o: $(UTILDIR)/random.h
+flag.o: $(UTILDIR)/color.h
+flag.o: $(UTILDIR)/iostuff.h
+flag.o: flag.xbm
+flag.o: flag.xpm
+flame.o: $(UTILDIR)/xlock.h
+flame.o: ../config.h
+flame.o: $(UTILDIR)/mode.h
+flame.o: $(UTILDIR)/random.h
+flow.o: $(UTILDIR)/xlock.h
+flow.o: ../config.h
+flow.o: $(UTILDIR)/mode.h
+flow.o: $(UTILDIR)/random.h
+forest.o: $(UTILDIR)/xlock.h
+forest.o: ../config.h
+forest.o: $(UTILDIR)/mode.h
+forest.o: $(UTILDIR)/random.h
+galaxy.o: $(UTILDIR)/xlock.h
+galaxy.o: ../config.h
+galaxy.o: $(UTILDIR)/mode.h
+galaxy.o: $(UTILDIR)/random.h
+goop.o: $(UTILDIR)/xlock.h
+goop.o: ../config.h
+goop.o: $(UTILDIR)/mode.h
+goop.o: $(UTILDIR)/random.h
+goop.o: $(UTILDIR)/spline.h
+grav.o: $(UTILDIR)/xlock.h
+grav.o: ../config.h
+grav.o: $(UTILDIR)/mode.h
+grav.o: $(UTILDIR)/random.h
+helix.o: $(UTILDIR)/xlock.h
+helix.o: ../config.h
+helix.o: $(UTILDIR)/mode.h
+helix.o: $(UTILDIR)/random.h
+hop.o: $(UTILDIR)/xlock.h
+hop.o: ../config.h
+hop.o: $(UTILDIR)/mode.h
+hop.o: $(UTILDIR)/random.h
+hyper.o: $(UTILDIR)/xlock.h
+hyper.o: ../config.h
+hyper.o: $(UTILDIR)/mode.h
+hyper.o: $(UTILDIR)/random.h
+ico.o: $(UTILDIR)/xlock.h
+ico.o: ../config.h
+ico.o: $(UTILDIR)/mode.h
+ico.o: $(UTILDIR)/random.h
+ifs.o: $(UTILDIR)/xlock.h
+ifs.o: ../config.h
+ifs.o: $(UTILDIR)/mode.h
+ifs.o: $(UTILDIR)/random.h
+image.o: $(UTILDIR)/xlock.h
+image.o: ../config.h
+image.o: $(UTILDIR)/mode.h
+image.o: $(UTILDIR)/random.h
+image.o: $(UTILDIR)/color.h
+image.o: $(UTILDIR)/iostuff.h
+image.o: image.xbm
+image.o: image.xpm
+juggle.o: $(UTILDIR)/xlock.h
+juggle.o: ../config.h
+juggle.o: $(UTILDIR)/mode.h
+juggle.o: $(UTILDIR)/random.h
+julia.o: $(UTILDIR)/xlock.h
+julia.o: ../config.h
+julia.o: $(UTILDIR)/mode.h
+julia.o: $(UTILDIR)/random.h
+kaleid.o: $(UTILDIR)/xlock.h
+kaleid.o: ../config.h
+kaleid.o: $(UTILDIR)/mode.h
+kaleid.o: $(UTILDIR)/random.h
+kumppa.o: $(UTILDIR)/xlock.h
+kumppa.o: ../config.h
+kumppa.o: $(UTILDIR)/mode.h
+kumppa.o: $(UTILDIR)/random.h
+laser.o: $(UTILDIR)/xlock.h
+laser.o: ../config.h
+laser.o: $(UTILDIR)/mode.h
+laser.o: $(UTILDIR)/random.h
+life.o: $(UTILDIR)/xlock.h
+life.o: ../config.h
+life.o: $(UTILDIR)/mode.h
+life.o: $(UTILDIR)/random.h
+life.o: $(UTILDIR)/color.h
+life.o: $(UTILDIR)/iostuff.h
+life.o: $(UTILDIR)/automata.h
+life.o: life.xbm
+life.o: life2.xbm
+life1d.o: $(UTILDIR)/xlock.h
+life1d.o: ../config.h
+life1d.o: $(UTILDIR)/mode.h
+life1d.o: $(UTILDIR)/random.h
+life1d.o: $(UTILDIR)/color.h
+life1d.o: $(UTILDIR)/automata.h
+life1d.o: $(UTILDIR)/iostuff.h
+life1d.o: life1d.xbm
+life3d.o: $(UTILDIR)/xlock.h
+life3d.o: ../config.h
+life3d.o: $(UTILDIR)/mode.h
+life3d.o: $(UTILDIR)/random.h
+life3d.o: $(UTILDIR)/iostuff.h
+lightning.o: $(UTILDIR)/xlock.h
+lightning.o: ../config.h
+lightning.o: $(UTILDIR)/mode.h
+lightning.o: $(UTILDIR)/random.h
+lisa.o: $(UTILDIR)/xlock.h
+lisa.o: ../config.h
+lisa.o: $(UTILDIR)/mode.h
+lisa.o: $(UTILDIR)/random.h
+lissie.o: $(UTILDIR)/xlock.h
+lissie.o: ../config.h
+lissie.o: $(UTILDIR)/mode.h
+lissie.o: $(UTILDIR)/random.h
+loop.o: $(UTILDIR)/xlock.h
+loop.o: ../config.h
+loop.o: $(UTILDIR)/mode.h
+loop.o: $(UTILDIR)/random.h
+loop.o: $(UTILDIR)/automata.h
+lyapunov.o: $(UTILDIR)/xlock.h
+lyapunov.o: ../config.h
+lyapunov.o: $(UTILDIR)/mode.h
+lyapunov.o: $(UTILDIR)/random.h
+lyapunov.o: $(UTILDIR)/vis.h
+lyapunov.o: $(UTILDIR)/color.h
+mandelbrot.o: $(UTILDIR)/xlock.h
+mandelbrot.o: ../config.h
+mandelbrot.o: $(UTILDIR)/mode.h
+mandelbrot.o: $(UTILDIR)/random.h
+mandelbrot.o: $(UTILDIR)/vis.h
+mandelbrot.o: $(UTILDIR)/color.h
+marquee.o: $(UTILDIR)/xlock.h
+marquee.o: ../config.h
+marquee.o: $(UTILDIR)/mode.h
+marquee.o: $(UTILDIR)/random.h
+marquee.o: $(UTILDIR)/iostuff.h
+matrix.o: $(UTILDIR)/xlock.h
+matrix.o: ../config.h
+matrix.o: $(UTILDIR)/mode.h
+matrix.o: $(UTILDIR)/random.h
+maze.o: $(UTILDIR)/xlock.h
+maze.o: ../config.h
+maze.o: $(UTILDIR)/mode.h
+maze.o: $(UTILDIR)/random.h
+maze.o: $(UTILDIR)/color.h
+maze.o: $(UTILDIR)/iostuff.h
+maze.o: $(BITMAPDIR)/gray1.xbm
+maze.o: maze.xbm
+maze.o: maze.xpm
+mountain.o: $(UTILDIR)/xlock.h
+mountain.o: ../config.h
+mountain.o: $(UTILDIR)/mode.h
+mountain.o: $(UTILDIR)/random.h
+munch.o: $(UTILDIR)/xlock.h
+munch.o: ../config.h
+munch.o: $(UTILDIR)/mode.h
+munch.o: $(UTILDIR)/random.h
+nose.o: $(UTILDIR)/xlock.h
+nose.o: ../config.h
+nose.o: $(UTILDIR)/mode.h
+nose.o: $(UTILDIR)/random.h
+nose.o: $(UTILDIR)/iostuff.h
+nose.o: $(BITMAPDIR)/nose-hat.xbm
+nose.o: $(BITMAPDIR)/nose-hatd.xbm
+nose.o: $(BITMAPDIR)/nose-facef.xbm
+nose.o: $(BITMAPDIR)/nose-faced.xbm
+nose.o: $(BITMAPDIR)/nose-facel.xbm
+nose.o: $(BITMAPDIR)/nose-facer.xbm
+nose.o: $(BITMAPDIR)/nose-shoef.xbm
+nose.o: $(BITMAPDIR)/nose-shoel.xbm
+nose.o: $(BITMAPDIR)/nose-shoer.xbm
+nose.o: $(BITMAPDIR)/nose-stepl.xbm
+nose.o: $(BITMAPDIR)/nose-stepr.xbm
+pacman.o: $(UTILDIR)/xlock.h
+pacman.o: ../config.h
+pacman.o: $(UTILDIR)/mode.h
+pacman.o: $(UTILDIR)/random.h
+pacman.o: $(UTILDIR)/iostuff.h
+pacman.o: ghost.xbm
+penrose.o: $(UTILDIR)/xlock.h
+penrose.o: ../config.h
+penrose.o: $(UTILDIR)/mode.h
+penrose.o: $(UTILDIR)/random.h
+petal.o: $(UTILDIR)/xlock.h
+petal.o: ../config.h
+petal.o: $(UTILDIR)/mode.h
+petal.o: $(UTILDIR)/random.h
+puzzle.o: $(UTILDIR)/xlock.h
+puzzle.o: ../config.h
+puzzle.o: $(UTILDIR)/mode.h
+puzzle.o: $(UTILDIR)/random.h
+puzzle.o: $(UTILDIR)/color.h
+puzzle.o: $(UTILDIR)/iostuff.h
+puzzle.o: puzzle.xbm
+puzzle.o: puzzle.xpm
+pyro.o: $(UTILDIR)/xlock.h
+pyro.o: ../config.h
+pyro.o: $(UTILDIR)/mode.h
+pyro.o: $(UTILDIR)/random.h
+qix.o: $(UTILDIR)/xlock.h
+qix.o: ../config.h
+qix.o: $(UTILDIR)/mode.h
+qix.o: $(UTILDIR)/random.h
+roll.o: $(UTILDIR)/xlock.h
+roll.o: ../config.h
+roll.o: $(UTILDIR)/mode.h
+roll.o: $(UTILDIR)/random.h
+rotor.o: $(UTILDIR)/xlock.h
+rotor.o: ../config.h
+rotor.o: $(UTILDIR)/mode.h
+rotor.o: $(UTILDIR)/random.h
+shape.o: $(UTILDIR)/xlock.h
+shape.o: ../config.h
+shape.o: $(UTILDIR)/mode.h
+shape.o: $(UTILDIR)/random.h
+shape.o: $(BITMAPDIR)/gray1.xbm
+shape.o: $(BITMAPDIR)/gray3.xbm
+shape.o: $(BITMAPDIR)/stipple.xbm
+shape.o: $(BITMAPDIR)/cross_weave.xbm
+shape.o: $(BITMAPDIR)/dimple1.xbm
+shape.o: $(BITMAPDIR)/dimple3.xbm
+shape.o: $(BITMAPDIR)/flipped_gray.xbm
+shape.o: $(BITMAPDIR)/hlines2.xbm
+shape.o: $(BITMAPDIR)/light_gray.xbm
+shape.o: $(BITMAPDIR)/root_weave.xbm
+shape.o: $(BITMAPDIR)/vlines2.xbm
+shape.o: $(BITMAPDIR)/vlines3.xbm
+sierpinski.o: $(UTILDIR)/xlock.h
+sierpinski.o: ../config.h
+sierpinski.o: $(UTILDIR)/mode.h
+sierpinski.o: $(UTILDIR)/random.h
+slip.o: $(UTILDIR)/xlock.h
+slip.o: ../config.h
+slip.o: $(UTILDIR)/mode.h
+slip.o: $(UTILDIR)/random.h
+sphere.o: $(UTILDIR)/xlock.h
+sphere.o: ../config.h
+sphere.o: $(UTILDIR)/mode.h
+sphere.o: $(UTILDIR)/random.h
+spiral.o: $(UTILDIR)/xlock.h
+spiral.o: ../config.h
+spiral.o: $(UTILDIR)/mode.h
+spiral.o: $(UTILDIR)/random.h
+spline.o: $(UTILDIR)/xlock.h
+spline.o: ../config.h
+spline.o: $(UTILDIR)/mode.h
+spline.o: $(UTILDIR)/random.h
+star.o: $(UTILDIR)/xlock.h
+star.o: ../config.h
+star.o: $(UTILDIR)/mode.h
+star.o: $(UTILDIR)/random.h
+star.o: $(BITMAPDIR)/enterprise-2.xbm
+star.o: $(BITMAPDIR)/enterprise-3.xbm
+star.o: $(BITMAPDIR)/enterprise-5.xbm
+star.o: $(BITMAPDIR)/enterprise-6.xbm
+starfish.o: $(UTILDIR)/xlock.h
+starfish.o: ../config.h
+starfish.o: $(UTILDIR)/mode.h
+starfish.o: $(UTILDIR)/random.h
+starfish.o: $(UTILDIR)/color.h
+starfish.o: $(UTILDIR)/spline.h
+strange.o: $(UTILDIR)/xlock.h
+strange.o: ../config.h
+strange.o: $(UTILDIR)/mode.h
+strange.o: $(UTILDIR)/random.h
+swarm.o: $(UTILDIR)/xlock.h
+swarm.o: ../config.h
+swarm.o: $(UTILDIR)/mode.h
+swarm.o: $(UTILDIR)/random.h
+swirl.o: $(UTILDIR)/xlock.h
+swirl.o: ../config.h
+swirl.o: $(UTILDIR)/mode.h
+swirl.o: $(UTILDIR)/random.h
+swirl.o: $(UTILDIR)/vis.h
+swirl.o: $(UTILDIR)/color.h
+t3d.o: $(UTILDIR)/xlock.h
+t3d.o: ../config.h
+t3d.o: $(UTILDIR)/mode.h
+t3d.o: $(UTILDIR)/random.h
+t3d.o: $(UTILDIR)/color.h
+tetris.o: $(UTILDIR)/xlock.h
+tetris.o: ../config.h
+tetris.o: $(UTILDIR)/mode.h
+tetris.o: $(UTILDIR)/random.h
+tetris.o: $(UTILDIR)/color.h
+tetris.o: $(BITMAPDIR)/rot00.xbm
+tetris.o: $(BITMAPDIR)/rot01.xbm
+tetris.o: $(BITMAPDIR)/rot02.xbm
+tetris.o: $(BITMAPDIR)/rot03.xbm
+tetris.o: $(BITMAPDIR)/rot04.xbm
+tetris.o: $(BITMAPDIR)/rot05.xbm
+tetris.o: $(BITMAPDIR)/rot06.xbm
+tetris.o: $(BITMAPDIR)/rot07.xbm
+tetris.o: $(BITMAPDIR)/rot08.xbm
+tetris.o: $(BITMAPDIR)/rot09.xbm
+tetris.o: $(BITMAPDIR)/rot10.xbm
+tetris.o: $(BITMAPDIR)/rot11.xbm
+tetris.o: $(BITMAPDIR)/rot12.xbm
+tetris.o: $(BITMAPDIR)/rot13.xbm
+tetris.o: $(BITMAPDIR)/rot14.xbm
+tetris.o: $(BITMAPDIR)/rot15.xbm
+thornbird.o: $(UTILDIR)/xlock.h
+thornbird.o: ../config.h
+thornbird.o: $(UTILDIR)/mode.h
+thornbird.o: $(UTILDIR)/random.h
+tik_tak.o: $(UTILDIR)/xlock.h
+tik_tak.o: ../config.h
+tik_tak.o: $(UTILDIR)/mode.h
+tik_tak.o: $(UTILDIR)/random.h
+tik_tak.o: $(UTILDIR)/color.h
+triangle.o: $(UTILDIR)/xlock.h
+triangle.o: ../config.h
+triangle.o: $(UTILDIR)/mode.h
+triangle.o: $(UTILDIR)/random.h
+tube.o: $(UTILDIR)/xlock.h
+tube.o: ../config.h
+tube.o: $(UTILDIR)/mode.h
+tube.o: $(UTILDIR)/random.h
+tube.o: $(UTILDIR)/vis.h
+tube.o: $(UTILDIR)/color.h
+turtle.o: $(UTILDIR)/xlock.h
+turtle.o: ../config.h
+turtle.o: $(UTILDIR)/mode.h
+turtle.o: $(UTILDIR)/random.h
+vines.o: $(UTILDIR)/xlock.h
+vines.o: ../config.h
+vines.o: $(UTILDIR)/mode.h
+vines.o: $(UTILDIR)/random.h
+voters.o: $(UTILDIR)/xlock.h
+voters.o: ../config.h
+voters.o: $(UTILDIR)/mode.h
+voters.o: $(UTILDIR)/random.h
+voters.o: $(UTILDIR)/automata.h
+voters.o: $(BITMAPDIR)/sickle.xbm
+voters.o: $(BITMAPDIR)/donkey.xbm
+voters.o: $(BITMAPDIR)/elephant.xbm
+wator.o: $(UTILDIR)/xlock.h
+wator.o: ../config.h
+wator.o: $(UTILDIR)/mode.h
+wator.o: $(UTILDIR)/random.h
+wator.o: $(UTILDIR)/automata.h
+wator.o: $(BITMAPDIR)/fish-0.xbm
+wator.o: $(BITMAPDIR)/fish-1.xbm
+wator.o: $(BITMAPDIR)/fish-2.xbm
+wator.o: $(BITMAPDIR)/fish-3.xbm
+wator.o: $(BITMAPDIR)/fish-4.xbm
+wator.o: $(BITMAPDIR)/fish-5.xbm
+wator.o: $(BITMAPDIR)/fish-6.xbm
+wator.o: $(BITMAPDIR)/fish-7.xbm
+wator.o: $(BITMAPDIR)/shark-0.xbm
+wator.o: $(BITMAPDIR)/shark-1.xbm
+wator.o: $(BITMAPDIR)/shark-2.xbm
+wator.o: $(BITMAPDIR)/shark-3.xbm
+wator.o: $(BITMAPDIR)/shark-4.xbm
+wator.o: $(BITMAPDIR)/shark-5.xbm
+wator.o: $(BITMAPDIR)/shark-6.xbm
+wator.o: $(BITMAPDIR)/shark-7.xbm
+wire.o: $(UTILDIR)/xlock.h
+wire.o: ../config.h
+wire.o: $(UTILDIR)/mode.h
+wire.o: $(UTILDIR)/random.h
+wire.o: $(UTILDIR)/automata.h
+world.o: $(UTILDIR)/xlock.h
+world.o: ../config.h
+world.o: $(UTILDIR)/mode.h
+world.o: $(UTILDIR)/random.h
+world.o: $(BITMAPDIR)/terra-00.xbm
+world.o: $(BITMAPDIR)/terra-01.xbm
+world.o: $(BITMAPDIR)/terra-02.xbm
+world.o: $(BITMAPDIR)/terra-03.xbm
+world.o: $(BITMAPDIR)/terra-04.xbm
+world.o: $(BITMAPDIR)/terra-05.xbm
+world.o: $(BITMAPDIR)/terra-06.xbm
+world.o: $(BITMAPDIR)/terra-07.xbm
+world.o: $(BITMAPDIR)/terra-08.xbm
+world.o: $(BITMAPDIR)/terra-09.xbm
+world.o: $(BITMAPDIR)/terra-10.xbm
+world.o: $(BITMAPDIR)/terra-11.xbm
+world.o: $(BITMAPDIR)/terra-12.xbm
+world.o: $(BITMAPDIR)/terra-13.xbm
+world.o: $(BITMAPDIR)/terra-14.xbm
+world.o: $(BITMAPDIR)/terra-15.xbm
+world.o: $(BITMAPDIR)/terra-16.xbm
+world.o: $(BITMAPDIR)/terra-17.xbm
+world.o: $(BITMAPDIR)/terra-18.xbm
+world.o: $(BITMAPDIR)/terra-19.xbm
+world.o: $(BITMAPDIR)/terra-20.xbm
+world.o: $(BITMAPDIR)/terra-21.xbm
+world.o: $(BITMAPDIR)/terra-22.xbm
+world.o: $(BITMAPDIR)/terra-23.xbm
+world.o: $(BITMAPDIR)/terra-24.xbm
+world.o: $(BITMAPDIR)/terra-25.xbm
+world.o: $(BITMAPDIR)/terra-26.xbm
+world.o: $(BITMAPDIR)/terra-27.xbm
+world.o: $(BITMAPDIR)/terra-28.xbm
+world.o: $(BITMAPDIR)/terra-29.xbm
+worm.o: $(UTILDIR)/xlock.h
+worm.o: ../config.h
+worm.o: $(UTILDIR)/mode.h
+worm.o: $(UTILDIR)/random.h
+xjack.o: $(UTILDIR)/xlock.h
+xjack.o: ../config.h
+xjack.o: $(UTILDIR)/mode.h
+xjack.o: $(UTILDIR)/random.h
+xjack.o: $(UTILDIR)/iostuff.h
+bomb.o: $(UTILDIR)/xlock.h
+bomb.o: ../config.h
+bomb.o: $(UTILDIR)/mode.h
+bomb.o: $(UTILDIR)/random.h
+bomb.o: $(UTILDIR)/iostuff.h
+blank.o: $(UTILDIR)/xlock.h
+blank.o: ../config.h
+blank.o: $(UTILDIR)/mode.h
+blank.o: $(UTILDIR)/random.h
+random.o: $(UTILDIR)/xlock.h
+random.o: ../config.h
+random.o: $(UTILDIR)/mode.h
+random.o: $(UTILDIR)/random.h
+random.o: $(UTILDIR)/color.h
+random.o: $(UTILDIR)/util.h
+

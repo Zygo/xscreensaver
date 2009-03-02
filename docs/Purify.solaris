@@ -1,0 +1,617 @@
+Content-Type: text/plain; charset=us-ascii; name="xlock.plog.sun4os5"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline; filename="xlock.plog.sun4os5"
+
+****  Purify instrumented xlock/xlock (pid 24202 at Thu Feb 26 08:05:25 1998)
+  * Purify 4.0.1 Solaris 2, Copyright (C) 1992-1996 Pure Atria Corp. All rights reserved.
+  * For contact information type: "purify -help"
+  * For TTY output, use the option "-windows=no"
+  * Command-line: xlock/xlock -sequential -duration 15
+  * Options settings: -chain-length=25 -windows=yes -purify \
+    -purify-home=/vol/pure/purify-4.0.1-solaris2
+  * Purify checking enabled.
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	GetDatabase    [Xrm.c]
+	XrmGetFileDatabase [Xrm.c]
+	parsefilepath  [resource.c:1092]
+	getResources   [resource.c:1390]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0x3c109c in the heap.
+  * Address 0x3c109c is 4 bytes into a malloc'd block at 0x3c1098 of 16 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [Xrm.c]
+	XrmGetFileDatabase [Xrm.c]
+	parsefilepath  [resource.c:1092]
+	getResources   [resource.c:1390]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	GetDatabase    [Xrm.c]
+	XrmGetFileDatabase [Xrm.c]
+	parsefilepath  [resource.c:1092]
+	getResources   [resource.c:1390]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0x3c109c in the heap.
+  * Address 0x3c109c is 4 bytes into a malloc'd block at 0x3c1098 of 16 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [Xrm.c]
+	XrmGetFileDatabase [Xrm.c]
+	parsefilepath  [resource.c:1092]
+	getResources   [resource.c:1390]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_libc_write    [libc.so.1]
+	_XFlushInt     [XlibInt.c]
+	_XReply        [XlibInt.c]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+  * Reading 68 bytes from 0x3e0aa8 in the heap (1 byte at 0x3e0aa9 uninit).
+  * Address 0x3e0aa8 is at the beginning of a malloc'd block of 2048 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	GetDatabase    [Xrm.c]
+	XrmGetStringDatabase [Xrm.c]
+	getResources   [resource.c:1463]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0x3e4c04 in the heap.
+  * Address 0x3e4c04 is 4 bytes into a malloc'd block at 0x3e4c00 of 16 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [Xrm.c]
+	XrmGetStringDatabase [Xrm.c]
+	getResources   [resource.c:1463]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	GetDatabase    [Xrm.c]
+	XrmGetStringDatabase [Xrm.c]
+	getResources   [resource.c:1463]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0x3e4c04 in the heap.
+  * Address 0x3e4c04 is 4 bytes into a malloc'd block at 0x3e4c00 of 16 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [Xrm.c]
+	XrmGetStringDatabase [Xrm.c]
+	getResources   [resource.c:1463]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	XrmCombineDatabase [Xrm.c]
+	getResources   [resource.c:1466]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0x3e4c04 in the heap.
+  * Address 0x3e4c04 is 4 bytes into a malloc'd block at 0x3e4c00 of 16 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [Xrm.c]
+	XrmGetStringDatabase [Xrm.c]
+	getResources   [resource.c:1463]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	XrmCombineDatabase [Xrm.c]
+	getResources   [resource.c:1525]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0x3c4064 in the heap.
+  * Address 0x3c4064 is 4 bytes into a malloc'd block at 0x3c4060 of 16 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [Xrm.c]
+	XrmQPutStringResource [Xrm.c]
+	XrmParseCommand [ParseCmd.c]
+	getResources   [resource.c:1521]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	XrmDestroyDatabase [Xrm.c]
+	getResources   [resource.c:1598]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0x3c109c in the heap.
+  * Address 0x3c109c is 4 bytes into a malloc'd block at 0x3c1098 of 16 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [Xrm.c]
+	XrmGetFileDatabase [Xrm.c]
+	parsefilepath  [resource.c:1092]
+	getResources   [resource.c:1390]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_libc_write    [libc.so.1]
+	_XFlushInt     [XlibInt.c]
+	_XReply        [XlibInt.c]
+	_XQueryFont    [XFont.c]
+	XLoadQueryFont [XFont.c]
+	main           [xlock.c:2140]
+	_start         [crt1.o]
+  * Reading 92 bytes from 0x3e0aa8 in the heap (1 byte at 0x3e0afb uninit).
+  * Address 0x3e0aa8 is at the beginning of a malloc'd block of 2048 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_libc_write    [libc.so.1]
+	_XFlushInt     [XlibInt.c]
+	_XReply        [XlibInt.c]
+	XGrabKeyboard  [XGrKeybd.c]
+	GrabKeyboardAndMouse [xlock.c:518]
+	main           [xlock.c:2501]
+	_start         [crt1.o]
+  * Reading 428 bytes from 0x3e0aa8 in the heap (1 byte at 0x3e0b21 uninit).
+  * Address 0x3e0aa8 is at the beginning of a malloc'd block of 2048 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_libc_write    [libc.so.1]
+	_XFlushInt     [XlibInt.c]
+	_XReply        [XlibInt.c]
+	XParseColor    [XParseCol.c]
+	allocPixel     [color.c:116]
+	fixColormap    [color.c:182]
+	init_random    [random.c:496]
+	call_init_hook [mode.c:813]
+	justDisplay    [xlock.c:1681]
+	lockDisplay    [xlock.c:1875]
+	main           [xlock.c:2522]
+	_start         [crt1.o]
+  * Reading 428 bytes from 0x3e0aa8 in the heap (2 bytes at 0x3e0c52 uninit).
+  * Address 0x3e0aa8 is at the beginning of a malloc'd block of 2048 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read (6059 times):
+  * This is occurring while in:
+	_libc_write    [libc.so.1]
+	_XFlushInt     [XlibInt.c]
+	_XReply        [XlibInt.c]
+	XSync          [XSync.c]
+	runMainLoop    [xlock.c:1111]
+	justDisplay    [xlock.c:1698]
+	lockDisplay    [xlock.c:1875]
+	main           [xlock.c:2522]
+	_start         [crt1.o]
+  * Reading 476 bytes from 0x3e0aa8 in the heap (1 byte at 0x3e0c5d uninit).
+  * Address 0x3e0aa8 is at the beginning of a malloc'd block of 2048 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_libc_write    [libc.so.1]
+	_XFlushInt     [XlibInt.c]
+	XFlush         [XFlush.c]
+	getPassword    [xlock.c:1508]
+	lockDisplay    [xlock.c:1878]
+	main           [xlock.c:2522]
+	_start         [crt1.o]
+  * Reading 816 bytes from 0x3e0aa8 in the heap (1 byte at 0x3e0c81 uninit).
+  * Address 0x3e0aa8 is at the beginning of a malloc'd block of 2048 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_libc_write    [libc.so.1]
+	_XFlushInt     [XlibInt.c]
+	XFlush         [XFlush.c]
+	draw_ball      [ball.c:471]
+	call_callback_hook [mode.c:842]
+	draw_random    [random.c:536]
+	call_callback_hook [mode.c:842]
+	runMainLoop    [xlock.c:1107]
+	justDisplay    [xlock.c:1698]
+	lockDisplay    [xlock.c:1875]
+	main           [xlock.c:2522]
+	_start         [crt1.o]
+  * Reading 1008 bytes from 0x3e0aa8 in the heap (1 byte at 0x3e0df9 uninit).
+  * Address 0x3e0aa8 is at the beginning of a malloc'd block of 2048 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read (1008 times):
+  * This is occurring while in:
+	_libc_write    [libc.so.1]
+	_XFlushInt     [XlibInt.c]
+	PutImageRequest [XPutImage.c]
+	PutSubImage    [XPutImage.c]
+	XPutImage      [XPutImage.c]
+	draw_point     [swirl.c:1128]
+	draw_swirl     [swirl.c:1361]
+	call_callback_hook [mode.c:842]
+	draw_random    [random.c:536]
+	call_callback_hook [mode.c:842]
+	runMainLoop    [xlock.c:1107]
+	justDisplay    [xlock.c:1698]
+	lockDisplay    [xlock.c:1875]
+	main           [xlock.c:2522]
+	_start         [crt1.o]
+  * Reading 2040 bytes from 0x3e0aa8 in the heap (1 byte at 0x3e0b0f uninit).
+  * Address 0x3e0aa8 is at the beginning of a malloc'd block of 2048 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read (412 times):
+  * This is occurring while in:
+	_libc_write    [libc.so.1]
+	_XFlushInt     [XlibInt.c]
+	XDrawPoint     [XDrPoint.c]
+	draw_mandelbrot [mandelbrot.c:420]
+	call_callback_hook [mode.c:842]
+	draw_random    [random.c:536]
+	call_callback_hook [mode.c:842]
+	runMainLoop    [xlock.c:1107]
+	justDisplay    [xlock.c:1698]
+	lockDisplay    [xlock.c:1875]
+	main           [xlock.c:2522]
+	_start         [crt1.o]
+  * Reading 2048 bytes from 0x3e0aa8 in the heap (1 byte at 0x3e0acb uninit).
+  * Address 0x3e0aa8 is at the beginning of a malloc'd block of 2048 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read (4 times):
+  * This is occurring while in:
+	_libc_write    [libc.so.1]
+	_XFlushInt     [XlibInt.c]
+	_XReply        [XlibInt.c]
+	XParseColor    [XParseCol.c]
+	allocPixel     [color.c:116]
+	fixColormap    [color.c:182]
+	draw_random    [random.c:528]
+	call_callback_hook [mode.c:842]
+	runMainLoop    [xlock.c:1107]
+	justDisplay    [xlock.c:1698]
+	lockDisplay    [xlock.c:1875]
+	main           [xlock.c:2522]
+	_start         [crt1.o]
+  * Reading 412 bytes from 0x3e0aa8 in the heap (1 byte at 0x3e0c3b uninit).
+  * Address 0x3e0aa8 is at the beginning of a malloc'd block of 2048 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_libc_write    [libc.so.1]
+	_XFlushInt     [XlibInt.c]
+	_XFlushGCCache [XCrGC.c]
+	XDrawPoint     [XDrPoint.c]
+	draw_mandelbrot [mandelbrot.c:419]
+	call_callback_hook [mode.c:842]
+	draw_random    [random.c:536]
+	call_callback_hook [mode.c:842]
+	runMainLoop    [xlock.c:1107]
+	justDisplay    [xlock.c:1698]
+	lockDisplay    [xlock.c:1875]
+	main           [xlock.c:2522]
+	_start         [crt1.o]
+  * Reading 2044 bytes from 0x3e0aa8 in the heap (1 byte at 0x3e0abb uninit).
+  * Address 0x3e0aa8 is at the beginning of a malloc'd block of 2048 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+UMR: Uninitialized memory read (7 times):
+  * This is occurring while in:
+	_libc_write    [libc.so.1]
+	_XFlushInt     [XlibInt.c]
+	XDrawPoint     [XDrPoint.c]
+	draw_mandelbrot [mandelbrot.c:419]
+	call_callback_hook [mode.c:842]
+	draw_random    [random.c:536]
+	call_callback_hook [mode.c:842]
+	runMainLoop    [xlock.c:1107]
+	justDisplay    [xlock.c:1698]
+	lockDisplay    [xlock.c:1875]
+	main           [xlock.c:2522]
+	_start         [crt1.o]
+  * Reading 2036 bytes from 0x3e0aa8 in the heap (1 byte at 0x3e0abb uninit).
+  * Address 0x3e0aa8 is at the beginning of a malloc'd block of 2048 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	XOpenDisplay   [XOpenDis.c]
+	open_display   [resource.c:1211]
+	getResources   [resource.c:1457]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+Current file descriptors in use: 9
+FIU: file descriptor 0: <stdin>
+FIU: file descriptor 1: <stdout>
+FIU: file descriptor 2: <stderr>
+FIU: file descriptor 4: "/etc/.name_service_door", O_RDONLY
+   * File info: ?r--r--r--  1 root     root             0 Nov 10 10:53
+   * This file descriptor was allocated from:
+	_libc_open     [libc.so.1]
+	_nsc_trydoorcall [libc.so.1]
+	getpwuid_r     [libc.so.1]
+	fullLock       [logout.c:467]
+	getResources   [resource.c:1615]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+FIU: file descriptor 5: "/usr/local/xlock.staff", O_RDONLY
+   * File info: -rw-r--r--  1 root     other           18 Feb 26 08:04
+   * File position: 18
+   * This file descriptor was allocated from:
+	_libc_open     [libc.so.1]
+	_endopen       [fopen.c]
+	fopen          [libc.so.1]
+	my_fopen       [utils.c:182]
+	fullLock       [logout.c:476]
+	getResources   [resource.c:1615]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+FIU: file descriptor 6: "/dev/udp", O_RDWR
+   * File info: c---------  0 root     root             0 Feb 26 08:05
+   * File position: 0
+   * This file descriptor was allocated from:
+	_libc_open     [libc.so.1]
+	t_open         [t_open.c]
+	clnt_tli_create [clnt_generic.c]
+	load_dom_binding [yp_bind.c]
+	check_binding  [yp_bind.c]
+	__yp_dobind    [yp_bind.c]
+	yp_match       [yp_match.c]
+	_nss_nis_ypmatch [nss_nis.so.1]
+	_nss_nis_lookup [nss_nis.so.1]
+	getbyname      [getspent.c]
+	nss_search     [libc.so.1]
+	getspnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:378]
+	getUserName    [passwd.c:502]
+	initPasswd     [passwd.c:1796]
+	main           [xlock.c:2101]
+	_start         [crt1.o]
+FIU: file descriptor 7: "/usr/openwin/lib/X11/Xcms.txt", O_RDONLY
+   * File info: -rw-rw-r--  1 root     bin           2528 Mar 21  1996
+   * File position: 2528
+   * This file descriptor was allocated from:
+	_libc_open     [libc.so.1]
+	_endopen       [fopen.c]
+	fopen          [libc.so.1]
+	LoadColornameDB [XcmsColNm.c]
+	_XcmsLookupColorName [XcmsColNm.c]
+	_XcmsResolveColorString [XcmsColNm.c]
+	XParseColor    [XParseCol.c]
+	allocPixel     [color.c:116]
+	fixColormap    [color.c:182]
+	main           [xlock.c:2402]
+	_start         [crt1.o]
+FIU: file descriptor 26: <reserved for Purify internal use>
+FIU: file descriptor 27: <reserved for Purify internal use>
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+Purify: Searching for all memory leaks...
+
+Memory leaked: 3618 bytes (0.0225%); potentially leaked: 0 bytes (0%)
+
+MLK: 1024 bytes leaked at 0x3e85c8
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_nss_files_XY_all [nss_files.so.1]
+	nss_search     [libc.so.1]
+	getspnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:378]
+	getUserName    [passwd.c:502]
+	initPasswd     [passwd.c:1796]
+	main           [xlock.c:2101]
+	_start         [crt1.o]
+
+MLK: 1024 bytes leaked at 0x3ed3f0
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_nss_files_XY_all [nss_files.so.1]
+	nss_search     [libc.so.1]
+	getspnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:378]
+	getCryptedUserPasswd [passwd.c:724]
+	initPasswd     [passwd.c:1809]
+	main           [xlock.c:2101]
+	_start         [crt1.o]
+
+MLK: 1024 bytes leaked at 0x404148
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_nss_files_XY_all [nss_files.so.1]
+	nss_search     [libc.so.1]
+	getspnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:874]
+	initPasswd     [passwd.c:1812]
+	main           [xlock.c:2101]
+	_start         [crt1.o]
+
+MLK: 528 bytes leaked in 6 blocks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	calloc         [rtlib.o]
+	XCreateImage   [XImUtil.c]
+	init_flag      [flag.c:419]
+	call_init_hook [mode.c:813]
+	draw_random    [random.c:534]
+	call_callback_hook [mode.c:842]
+	runMainLoop    [xlock.c:1107]
+	justDisplay    [xlock.c:1698]
+	lockDisplay    [xlock.c:1875]
+	main           [xlock.c:2522]
+	_start         [crt1.o]
+  * Block of 88 bytes (6 times); last block at 0x3ee5c0
+
+MLK: 16 bytes leaked at 0x3f3d60
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_get_iobuf     [des_crypt.c]
+	des_crypt      [libcrypt_i.a]
+	checkPasswd    [passwd.c:1103]
+	getPassword    [xlock.c:1580]
+	lockDisplay    [xlock.c:1878]
+	main           [xlock.c:2522]
+	_start         [crt1.o]
+
+MLK: 1 byte leaked at 0x3bd890
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	GetResource    [resource.c:982]
+	getResources   [resource.c:1431]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+MLK: 1 byte leaked at 0x400208
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	GetResource    [resource.c:982]
+	getResources   [resource.c:1577]
+	main           [xlock.c:2086]
+	_start         [crt1.o]
+
+Purify Heap Analysis (combining suppressed and unsuppressed blocks)
+                         Blocks      Bytes
+              Leaked         12       3618
+  Potentially Leaked          2      16400
+              In-Use        313   16025182
+  ----------------------------------------
+     Total Allocated        327   16045200
+
+****  Purify instrumented xlock/xlock (pid 24202)  ****
+  * Program exited with status code 0.
+  * 19 access errors, 7504 total occurrences.
+  * 3618 bytes leaked.
+  * 0 bytes potentially leaked.
+  * Basic memory usage (including Purify overhead):
+     3258076 code
+      520628 data/bss
+    25788416 heap (peak use)
+        4192 stack
+  * Shared library memory usage (including Purify overhead):
+       75078 libsocket.so.1_pure_p3_c0_401_551 (shared code)
+        4096 libsocket.so.1_pure_p3_c0_401_551 (private data)
+      617030 libnsl.so.1_pure_p3_c0_401_551 (shared code)
+       65176 libnsl.so.1_pure_p3_c0_401_551 (private data)
+        7628 libposix4.so.1_pure_p3_c0_401_551 (shared code)
+         432 libposix4.so.1_pure_p3_c0_401_551 (private data)
+      654898 libX11.so.4_pure_p3_c0_401_551 (shared code)
+       14112 libX11.so.4_pure_p3_c0_401_551 (private data)
+       97156 libXext.so.0_pure_p3_c0_401_551 (shared code)
+        2140 libXext.so.0_pure_p3_c0_401_551 (private data)
+      135721 libm.so.1_pure_p3_c0_401_551 (shared code)
+        5872 libm.so.1_pure_p3_c0_401_551 (private data)
+      802689 libc.so.1_pure_p3_c0_401_551 (shared code)
+       34804 libc.so.1_pure_p3_c0_401_551 (private data)
+        1200 libdl.so.1_pure_p3_c0_401_551 (shared code)
+           0 libdl.so.1_pure_p3_c0_401_551 (private data)
+        2729 libinternal_stubs.so.1 (shared code)
+         208 libinternal_stubs.so.1 (private data)
+       15141 libintl.so.1_pure_p3_c0_401_551 (shared code)
+        1304 libintl.so.1_pure_p3_c0_401_551 (private data)
+       16092 libmp.so.1_pure_p3_c0_401_551 (shared code)
+         828 libmp.so.1_pure_p3_c0_401_551 (private data)
+       37917 libw.so.1_pure_p3_c0_401_551 (shared code)
+        1628 libw.so.1_pure_p3_c0_401_551 (private data)
