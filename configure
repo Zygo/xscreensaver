@@ -308,7 +308,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS pkg_config glib_config gtk_config gnome_config have_gnome_help xml_config gdk_pixbuf_config fortune_tmp INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOMEHELP_Y GNOMEHELP_N HACKDIR GNOME_DATADIR GLADE_DATADIR PO_DATADIR GNOME_PANELDIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS pkg_config glib_config gtk_config gnome_config have_gnome_help xml_config gdk_pixbuf_config fortune_tmp INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOMEHELP_Y GNOMEHELP_N HACKDIR GNOME_DATADIR GLADE_DATADIR PO_DATADIR GNOME_PANELDIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -889,6 +889,8 @@ Screen blanking and idle-detection options:
   --with-pam              Include support for PAM (Pluggable Auth Modules.)
   --with-kerberos         Include support for Kerberos authentication.
   --with-shadow           Include support for shadow password authentication.
+  --with-passwd-helper    Include support for an external password
+                          verification helper program.
 
 User interface options:
 
@@ -4453,7 +4455,6 @@ _ACEOF
 
 fi
 done
-
 
 
 
@@ -8585,6 +8586,7 @@ fi
    sed -e "/^#/d" -e "/^\$/d" -e "s,.*,	$posrcprefix& \\\\," -e "\$s/\(.*\) \\\\/\1/" \
 	< $srcdir/po/POTFILES.in > po/POTFILES
 
+MKINSTALLDIRS="$INSTALL_DIRS"
 
 
 ###############################################################################
@@ -10175,9 +10177,9 @@ fi
   # note: $X_LIBS includes $x_libraries
   LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
 
-  echo "$as_me:$LINENO: checking for XineramaQueryExtension in -lXext" >&5
-echo $ECHO_N "checking for XineramaQueryExtension in -lXext... $ECHO_C" >&6
-if test "${ac_cv_lib_Xext_XineramaQueryExtension+set}" = set; then
+  echo "$as_me:$LINENO: checking for XineramaQueryScreens in -lXext" >&5
+echo $ECHO_N "checking for XineramaQueryScreens in -lXext... $ECHO_C" >&6
+if test "${ac_cv_lib_Xext_XineramaQueryScreens+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -10196,11 +10198,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char XineramaQueryExtension ();
+char XineramaQueryScreens ();
 int
 main ()
 {
-XineramaQueryExtension ();
+XineramaQueryScreens ();
   ;
   return 0;
 }
@@ -10217,19 +10219,19 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_Xext_XineramaQueryExtension=yes
+  ac_cv_lib_Xext_XineramaQueryScreens=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_Xext_XineramaQueryExtension=no
+ac_cv_lib_Xext_XineramaQueryScreens=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_Xext_XineramaQueryExtension" >&5
-echo "${ECHO_T}$ac_cv_lib_Xext_XineramaQueryExtension" >&6
-if test $ac_cv_lib_Xext_XineramaQueryExtension = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_Xext_XineramaQueryScreens" >&5
+echo "${ECHO_T}$ac_cv_lib_Xext_XineramaQueryScreens" >&6
+if test $ac_cv_lib_Xext_XineramaQueryScreens = yes; then
   have_xinerama=yes
 else
   true
@@ -10259,9 +10261,9 @@ fi
   # note: $X_LIBS includes $x_libraries
   LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
 
-  echo "$as_me:$LINENO: checking for XineramaQueryExtension in -lXinerama" >&5
-echo $ECHO_N "checking for XineramaQueryExtension in -lXinerama... $ECHO_C" >&6
-if test "${ac_cv_lib_Xinerama_XineramaQueryExtension+set}" = set; then
+  echo "$as_me:$LINENO: checking for XineramaQueryScreens in -lXinerama" >&5
+echo $ECHO_N "checking for XineramaQueryScreens in -lXinerama... $ECHO_C" >&6
+if test "${ac_cv_lib_Xinerama_XineramaQueryScreens+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
@@ -10280,11 +10282,11 @@ extern "C"
 #endif
 /* We use char because int might match the return type of a gcc2
    builtin and then its argument prototype would still apply.  */
-char XineramaQueryExtension ();
+char XineramaQueryScreens ();
 int
 main ()
 {
-XineramaQueryExtension ();
+XineramaQueryScreens ();
   ;
   return 0;
 }
@@ -10301,19 +10303,19 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_Xinerama_XineramaQueryExtension=yes
+  ac_cv_lib_Xinerama_XineramaQueryScreens=yes
 else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-ac_cv_lib_Xinerama_XineramaQueryExtension=no
+ac_cv_lib_Xinerama_XineramaQueryScreens=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_Xinerama_XineramaQueryExtension" >&5
-echo "${ECHO_T}$ac_cv_lib_Xinerama_XineramaQueryExtension" >&6
-if test $ac_cv_lib_Xinerama_XineramaQueryExtension = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_Xinerama_XineramaQueryScreens" >&5
+echo "${ECHO_T}$ac_cv_lib_Xinerama_XineramaQueryScreens" >&6
+if test $ac_cv_lib_Xinerama_XineramaQueryScreens = yes; then
   have_xinerama=yes; SAVER_LIBS="$SAVER_LIBS -lXinerama"
 else
   true
@@ -11341,6 +11343,127 @@ if test $ac_cv_lib_dl_dlopen = yes; then
   PASSWD_LIBS="${PASSWD_LIBS} -ldl"
 fi
 
+
+    # On Linux, sigtimedwait() is in libc; on Solaris, it's in librt.
+    have_timedwait=no
+    echo "$as_me:$LINENO: checking for sigtimedwait in -lc" >&5
+echo $ECHO_N "checking for sigtimedwait in -lc... $ECHO_C" >&6
+if test "${ac_cv_lib_c_sigtimedwait+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lc  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char sigtimedwait ();
+int
+main ()
+{
+sigtimedwait ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_c_sigtimedwait=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_c_sigtimedwait=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_c_sigtimedwait" >&5
+echo "${ECHO_T}$ac_cv_lib_c_sigtimedwait" >&6
+if test $ac_cv_lib_c_sigtimedwait = yes; then
+  have_timedwait=yes
+fi
+
+    if test "$have_timedwait" = no ; then
+      echo "$as_me:$LINENO: checking for sigtimedwait in -lrt" >&5
+echo $ECHO_N "checking for sigtimedwait in -lrt... $ECHO_C" >&6
+if test "${ac_cv_lib_rt_sigtimedwait+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lrt  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char sigtimedwait ();
+int
+main ()
+{
+sigtimedwait ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_rt_sigtimedwait=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_rt_sigtimedwait=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_rt_sigtimedwait" >&5
+echo "${ECHO_T}$ac_cv_lib_rt_sigtimedwait" >&6
+if test $ac_cv_lib_rt_sigtimedwait = yes; then
+  PASSWD_LIBS="${PASSWD_LIBS} -lrt"
+fi
+
+    fi
 
     echo "$as_me:$LINENO: checking how to call pam_strerror" >&5
 echo $ECHO_N "checking how to call pam_strerror... $ECHO_C" >&6
@@ -12829,6 +12952,51 @@ elif test "$have_shadow" = yes ; then
 _ACEOF
 
 fi
+
+
+###############################################################################
+#
+#       Check for external password helper
+#	On SuSE, instead of having xscreensaver be a setuid program, they
+#	fork an external program that takes the password on stdin, and
+#	returns true if that password is a valid one.  Then only that
+#	smaller program needs to be setuid.
+#
+#       (Note that this external program is not a GUI: the GUI is still
+#	all in xscreensaver itself; the external program just does auth.)
+#
+###############################################################################
+
+have_passwd_helper=no
+with_passwd_helper_req=unspecified
+
+
+# Check whether --with-passwd-helper or --without-passwd-helper was given.
+if test "${with_passwd_helper+set}" = set; then
+  withval="$with_passwd_helper"
+  with_passwd_helper="$withval"; with_passwd_helper_req="$withval"
+else
+  with_passwd_helper=no
+fi;
+# no HANDLE_X_PATH_ARG for this one
+
+if test "$enable_locking" = no ; then
+  with_passwd_helper_req=no
+  with_passwd_helper=no
+fi
+
+case "$with_passwd_helper" in
+  ""|no) : ;;
+  /*)
+    cat >>confdefs.h <<_ACEOF
+#define PASSWD_HELPER_PROGRAM "$with_passwd_helper"
+_ACEOF
+
+    have_passwd_helper=yes;;
+  *)
+    echo "error: --with-passwd-helper needs full pathname of helper (not '$with_passwd_helper')." >&2
+    exit 1
+esac
 
 
 ###############################################################################
@@ -15392,7 +15560,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 15401 "configure"
+#line 15569 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -17420,6 +17588,245 @@ fi
 
 ###############################################################################
 #
+#       Check for pty support for 'phosphor'
+#
+###############################################################################
+
+PTY_LIBS=
+have_ptys=no
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  if test "${ac_cv_header_pty_h+set}" = set; then
+  echo "$as_me:$LINENO: checking for pty.h" >&5
+echo $ECHO_N "checking for pty.h... $ECHO_C" >&6
+if test "${ac_cv_header_pty_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_pty_h" >&5
+echo "${ECHO_T}$ac_cv_header_pty_h" >&6
+else
+  # Is the header compilable?
+echo "$as_me:$LINENO: checking pty.h usability" >&5
+echo $ECHO_N "checking pty.h usability... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+$ac_includes_default
+#include <pty.h>
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_header_compiler=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_header_compiler=no
+fi
+rm -f conftest.$ac_objext conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_compiler" >&5
+echo "${ECHO_T}$ac_header_compiler" >&6
+
+# Is the header present?
+echo "$as_me:$LINENO: checking pty.h presence" >&5
+echo $ECHO_N "checking pty.h presence... $ECHO_C" >&6
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <pty.h>
+_ACEOF
+if { (eval echo "$as_me:$LINENO: \"$ac_cpp conftest.$ac_ext\"") >&5
+  (eval $ac_cpp conftest.$ac_ext) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } >/dev/null; then
+  if test -s conftest.err; then
+    ac_cpp_err=$ac_c_preproc_warn_flag
+  else
+    ac_cpp_err=
+  fi
+else
+  ac_cpp_err=yes
+fi
+if test -z "$ac_cpp_err"; then
+  ac_header_preproc=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+  ac_header_preproc=no
+fi
+rm -f conftest.err conftest.$ac_ext
+echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
+echo "${ECHO_T}$ac_header_preproc" >&6
+
+# So?  What about this header?
+case $ac_header_compiler:$ac_header_preproc in
+  yes:no )
+    { echo "$as_me:$LINENO: WARNING: pty.h: accepted by the compiler, rejected by the preprocessor!" >&5
+echo "$as_me: WARNING: pty.h: accepted by the compiler, rejected by the preprocessor!" >&2;}
+    { echo "$as_me:$LINENO: WARNING: pty.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: pty.h: proceeding with the preprocessor's result" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------ ##
+## Report this to bug-autoconf@gnu.org. ##
+## ------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+  no:yes )
+    { echo "$as_me:$LINENO: WARNING: pty.h: present but cannot be compiled" >&5
+echo "$as_me: WARNING: pty.h: present but cannot be compiled" >&2;}
+    { echo "$as_me:$LINENO: WARNING: pty.h: check for missing prerequisite headers?" >&5
+echo "$as_me: WARNING: pty.h: check for missing prerequisite headers?" >&2;}
+    { echo "$as_me:$LINENO: WARNING: pty.h: proceeding with the preprocessor's result" >&5
+echo "$as_me: WARNING: pty.h: proceeding with the preprocessor's result" >&2;}
+    (
+      cat <<\_ASBOX
+## ------------------------------------ ##
+## Report this to bug-autoconf@gnu.org. ##
+## ------------------------------------ ##
+_ASBOX
+    ) |
+      sed "s/^/$as_me: WARNING:     /" >&2
+    ;;
+esac
+echo "$as_me:$LINENO: checking for pty.h" >&5
+echo $ECHO_N "checking for pty.h... $ECHO_C" >&6
+if test "${ac_cv_header_pty_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_cv_header_pty_h=$ac_header_preproc
+fi
+echo "$as_me:$LINENO: result: $ac_cv_header_pty_h" >&5
+echo "${ECHO_T}$ac_cv_header_pty_h" >&6
+
+fi
+if test $ac_cv_header_pty_h = yes; then
+  have_ptys=yes
+fi
+
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+if test "$have_ptys" = yes; then
+  # we have the header, now check for the library
+  have_ptys=no
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  echo "$as_me:$LINENO: checking for forkpty in -lutil" >&5
+echo $ECHO_N "checking for forkpty in -lutil... $ECHO_C" >&6
+if test "${ac_cv_lib_util_forkpty+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lutil  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char forkpty ();
+int
+main ()
+{
+forkpty ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_util_forkpty=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_util_forkpty=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_util_forkpty" >&5
+echo "${ECHO_T}$ac_cv_lib_util_forkpty" >&6
+if test $ac_cv_lib_util_forkpty = yes; then
+  have_ptys=yes
+                  PTY_LIBS="-lutil"
+                  cat >>confdefs.h <<\_ACEOF
+#define HAVE_FORKPTY 1
+_ACEOF
+
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+fi
+
+
+###############################################################################
+#
 #       Check for the XSHM server extension.
 #
 ###############################################################################
@@ -18530,6 +18937,10 @@ if test "$have_pam" = yes; then
   PASSWD_OBJS="$PASSWD_OBJS \$(PAM_OBJS)"
   INSTALL_PAM="install-pam"
 fi
+if test "$have_passwd_helper" = yes; then
+  PASSWD_SRCS="$PASSWD_SRCS \$(PWHELPER_SRCS)"
+  PASSWD_OBJS="$PASSWD_OBJS \$(PWHELPER_OBJS)"
+fi
   PASSWD_SRCS="$PASSWD_SRCS \$(PWENT_SRCS)"
   PASSWD_OBJS="$PASSWD_OBJS \$(PWENT_OBJS)"
 
@@ -18696,6 +19107,7 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 #       Perform substitutions and write Makefiles.
 #
 ###############################################################################
+
 
 
 
@@ -19475,6 +19887,7 @@ s,@XML_LIBS@,$XML_LIBS,;t t
 s,@JPEG_LIBS@,$JPEG_LIBS,;t t
 s,@HACK_LIBS@,$HACK_LIBS,;t t
 s,@XPM_LIBS@,$XPM_LIBS,;t t
+s,@PTY_LIBS@,$PTY_LIBS,;t t
 s,@GL_LIBS@,$GL_LIBS,;t t
 s,@GLE_LIBS@,$GLE_LIBS,;t t
 s,@XDPMS_LIBS@,$XDPMS_LIBS,;t t

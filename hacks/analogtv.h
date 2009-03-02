@@ -163,6 +163,8 @@ typedef struct analogtv_s {
   int screen_xo,screen_yo; /* centers image in window */
 
   void (*event_handler)(Display *dpy, XEvent *event);
+  int (*key_handler)(Display *dpy, XEvent *event,void *key_data);
+  void *key_data;
 
   int flutter_horiz_desync;
   int flutter_tint;

@@ -122,8 +122,8 @@ static XrmOptionDescRec opts[] =
 };
 static argtype vars[] =
 {
-  {(caddr_t *) & solidmoebius, (char *) "solidmoebius", (char *) "Solidmoebius", (char *) DEF_SOLIDMOEBIUS, t_Bool},
-  {(caddr_t *) & noants, (char *) "noants", (char *) "Noants", (char *) DEF_NOANTS, t_Bool}
+  {&solidmoebius, "solidmoebius", "Solidmoebius", DEF_SOLIDMOEBIUS, t_Bool},
+  {&noants, "noants", "Noants", DEF_NOANTS, t_Bool}
 
 };
 static OptionStruct desc[] =

@@ -146,16 +146,13 @@ static XrmOptionDescRec opts[] =
 };
 static argtype vars[] =
 {
-  {(caddr_t *) &pattern, (char *) "pattern",
+  {&pattern, "pattern", 
    (char *) "Pattern", (char *) DEF_PATTERN, t_String},
-  {(caddr_t *) &trail, (char *) "trail",
-   (char *) "Trail", (char *) DEF_TRAIL, t_Int},
+  {&trail, "trail", "Trail", DEF_TRAIL, t_Int},
 #ifdef UNI
-  {(caddr_t *) &uni, (char *) "uni",
-   (char *) "Uni", (char *) DEF_UNI, t_Bool},
+  {&uni, "uni", "Uni", DEF_UNI, t_Bool},
 #endif
-  {(caddr_t *) &solid, (char *) "solid",
-   (char *) "Solid", (char *) DEF_SOLID, t_Bool}
+  {&solid, "solid", "Solid", DEF_SOLID, t_Bool}
 };
 static OptionStruct desc[] =
 {

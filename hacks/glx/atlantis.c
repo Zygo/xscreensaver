@@ -147,9 +147,9 @@ static XrmOptionDescRec opts[] =
 
 static argtype vars[] =
 {
- {(caddr_t *) & whalespeed, "whalespeed", "WhaleSpeed", DEF_WHALESPEED, t_Int},
- {(caddr_t *) &do_texture,  "texture",    "Texture",    DEF_TEXTURE,   t_Bool},
- {(caddr_t *) &do_gradient, "gradient",   "Gradient",   DEF_GRADIENT,  t_Bool},
+ {&whalespeed, "whalespeed", "WhaleSpeed", DEF_WHALESPEED, t_Int},
+ {&do_texture,  "texture",    "Texture",    DEF_TEXTURE,   t_Bool},
+ {&do_gradient, "gradient",   "Gradient",   DEF_GRADIENT,  t_Bool},
 };
 
 static OptionStruct desc[] =
@@ -345,16 +345,9 @@ reshape_atlantis(ModeInfo * mi, int width, int height)
 }
 
 
-/* jwz -- this doesn't really work very well.
-
-   All I want to do is give the tank a gradient-filled background, instead
-   of just solid blue.  The following was my guess as to how to do this,
-   but it kills my frame rate.  I guess there's a more efficient way to do
-   this, but I don't see it...
-
-   I mean, all I want to do is dump some non-projected bytes into the color
-   buffer, then zero out the depth buffer.  That *can't* be expensive, can
-   it?
+/* Fill the background with a gradient -- thanks to 
+   Phil Carrig <pod@internode.on.net> for figuring out
+   how to do this more efficiently!
  */
 static void
 clear_tank (atlantisstruct * ap)
@@ -363,83 +356,44 @@ clear_tank (atlantisstruct * ap)
 
   if (do_gradient && !ap->wire)
     {
-      static GLuint gradient_list = 0;
-      static GLuint gradient_tex = 0;
+      GLfloat top[3] = { 0.00, 0.40, 0.70 };
+      GLfloat bot[3] = { 0.00, 0.05, 0.18 };
 
-      if (gradient_list == 0)
+      glMatrixMode(GL_PROJECTION);
+      glPushMatrix();
+      {
+        glLoadIdentity();
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
         {
-          unsigned char *pixels = 0;
-          int start = 64;
-          int end = start + 128;
-          int size = 4 * (end - start);
-          int i;
-
-          pixels = (unsigned char *) malloc (size);
-          i = 0;
-          while (i < size)
-            {
-              pixels[i] = 0; i++;
-              pixels[i] = (start + (i>>2)) * 0.56; i++;
-              pixels[i] = (start + (i>>2)); i++;
-              pixels[i] = 255; i++;
-            }
-
-          clear_gl_error();
-
-          glGenTextures(1, &gradient_tex);
-          glBindTexture(GL_TEXTURE_1D, gradient_tex);
-
-          glTexImage1D(GL_TEXTURE_1D, 0, 4,
-                       (end - start), 0,
-                       GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-          check_gl_error ("gradient texture");
-          glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-          glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-
-
-          gradient_list = glGenLists(1);
-          glNewList(gradient_list, GL_COMPILE);
-
-          glDepthMask (False);
-          glDisable(GL_DEPTH_TEST);
-          glDisable(GL_LIGHTING);
-          glDisable(GL_TEXTURE_2D);
-          glEnable(GL_TEXTURE_1D);
-          glBindTexture(GL_TEXTURE_1D, gradient_tex);
-          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL); 
-          glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-
-          glMatrixMode(GL_PROJECTION);
-          glPushMatrix();
           glLoadIdentity();
-          glRotatef(90, 0, 0, 1);
-          glTranslatef(-1, -1, 0);
-          glScalef(2, 2, 1);
 
-          glBegin(GL_QUADS);
-          glTexCoord1i(1); glVertex3i(1, 0, 0);
-          glTexCoord1i(0); glVertex3i(0, 0, 0);
-          glTexCoord1i(0); glVertex3i(0, 1, 0);
-          glTexCoord1i(1); glVertex3i(1, 1, 0);
-          glEnd();
+          /* save GL_COLOR_MATERIAL, GL_COLOR_MATERIAL_FACE, etc.
+             This stalls the pipeline, so it would be better to do this
+             with explicit enable/disable calls, but I can't figure
+             out how to undo the glEnable() and glColor() calls below!
+             Simply calling glDisable(GL_COLOR_MATERIAL) is insufficient!
+           */
+          glPushAttrib (GL_LIGHTING_BIT);
+          {
+            glEnable (GL_COLOR_MATERIAL);
 
-          glPopMatrix();
-
-          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); 
-          glDisable(GL_TEXTURE_1D);
-
-          glDepthMask (True);
-          glEnable(GL_DEPTH_TEST);
-          glEnable(GL_CULL_FACE);
-          glEnable(GL_LIGHTING);
-          if (do_texture)
-            glEnable(GL_TEXTURE_2D);
-
-          glEndList();
-          check_gl_error ("gradient list");
+            glShadeModel(GL_SMOOTH);
+            glBegin(GL_QUADS);
+            glColor3f (bot[0], bot[1], bot[2]); glVertex3f (-1, -1, 1);
+            glColor3f (bot[0], bot[1], bot[2]); glVertex3f ( 1, -1, 1);
+            glColor3f (top[0], top[1], top[2]); glVertex3f ( 1,  1, 1);
+            glColor3f (top[0], top[1], top[2]); glVertex3f (-1,  1, 1);
+            glEnd();
+          }
+          glPopAttrib();
         }
+        glPopMatrix();
+      }
+      glMatrixMode(GL_PROJECTION);
+      glPopMatrix();
 
-      glCallList(gradient_list);
+      glMatrixMode(GL_MODELVIEW);
     }
 }
 

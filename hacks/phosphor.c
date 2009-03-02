@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999, 2000 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999, 2000, 2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,13 +9,26 @@
  * implied warranty.
  *
  * Phosphor -- simulate a glass tty with long-sustain phosphor.
+ * Written by Jamie Zawinski <jwz@jwz.org>
+ * Pty and vt100 emulation by Fredrik Tolf <fredrik@dolda2000.com>
  */
 
 #include "screenhack.h"
+
 #include <stdio.h>
+#include <signal.h>
+#include <sys/wait.h>
+
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/Intrinsic.h>
+
+#define XK_MISCELLANY
+#include <X11/keysymdef.h>
+
+#ifdef HAVE_FORKPTY
+# include <pty.h>
+#endif /* HAVE_FORKPTY */
 
 extern XtAppContext app;
 
@@ -31,6 +44,8 @@ extern XtAppContext app;
 #define STATE_MAX FADE
 
 #define CURSOR_INDEX 128
+
+#define NPAR 16
 
 typedef struct {
   unsigned char name;
@@ -55,8 +70,14 @@ typedef struct {
   XFontStruct *font;
   int grid_width, grid_height;
   int char_width, char_height;
+  int saved_x, saved_y;
   int scale;
   int ticks;
+  int mode;
+  pid_t pid;
+  int escstate;
+  int csiparam[NPAR];
+  int curparam;
   p_char **chars;
   p_cell *cells;
   XGCValues gcv;
@@ -76,6 +97,9 @@ typedef struct {
   XtInputId pipe_id;
   Bool input_available_p;
   Time subproc_relaunch_delay;
+  XComposeStatus compose;
+  Bool meta_sends_esc_p;
+  Bool swap_bs_del_p;
 
 } p_state;
 
@@ -129,6 +153,10 @@ init_phosphor (Display *dpy, Window window)
   state->window = window;
 
   XGetWindowAttributes (dpy, window, &state->xgwa);
+  XSelectInput (dpy, window, state->xgwa.your_event_mask | ExposureMask);
+
+  state->meta_sends_esc_p = get_boolean_resource ("metaSendsESC", "Boolean");
+  state->swap_bs_del_p    = get_boolean_resource ("swapBSDEL",    "Boolean");
 
   state->font = XLoadQueryFont (dpy, fontname);
 
@@ -146,6 +174,25 @@ init_phosphor (Display *dpy, Window window)
   font = state->font;
   state->scale = get_integer_resource ("scale", "Integer");
   state->ticks = STATE_MAX + get_integer_resource ("ticks", "Integer");
+  state->escstate = 0;
+
+  {
+    char *s = get_string_resource ("mode", "Integer");
+    state->mode = 0;
+    if (!s || !*s || !strcasecmp (s, "pipe"))
+      state->mode = 0;
+    else if (!strcasecmp (s, "pty"))
+      state->mode = 1;
+    else
+      fprintf (stderr, "%s: mode must be either `pipe' or `pty', not `%s'\n",
+               progname, s);
+
+#ifndef HAVE_FORKPTY
+    fprintf (stderr, "%s: no pty support on this system; using -pipe mode.\n",
+             progname);
+    state->mode = 0;
+#endif /* HAVE_FORKPTY */
+  }
 
 #if 0
   for (i = 0; i < font->n_properties; i++)
@@ -247,6 +294,48 @@ init_phosphor (Display *dpy, Window window)
   launch_text_generator (state);
 
   return state;
+}
+
+
+/* Re-query the window size and update the internal character grid if changed.
+ */
+static void
+resize_grid (p_state *state)
+{
+  int ow = state->grid_width;
+  int oh = state->grid_height;
+  p_cell *ocells = state->cells;
+  int x, y;
+
+  XGetWindowAttributes (state->dpy, state->window, &state->xgwa);
+
+  state->grid_width = state->xgwa.width   /(state->char_width  * state->scale);
+  state->grid_height = state->xgwa.height /(state->char_height * state->scale);
+
+  if (ow == state->grid_width &&
+      oh == state->grid_height)
+    return;
+
+  state->cells = (p_cell *) calloc (sizeof(p_cell),
+                                    state->grid_width * state->grid_height);
+
+  for (y = 0; y < state->grid_height; y++)
+    {
+      for (x = 0; x < state->grid_width; x++)
+        {
+          p_cell *ncell = &state->cells [state->grid_width * y + x];
+          if (x < ow && y < oh)
+            *ncell = ocells [ow * y + x];
+          ncell->changed = True;
+        }
+    }
+
+  if (state->cursor_x >= state->grid_width)
+    state->cursor_x = state->grid_width-1;
+  if (state->cursor_y >= state->grid_height)
+    state->cursor_y = state->grid_height-1;
+
+  free (ocells);
 }
 
 
@@ -567,9 +656,11 @@ static void
 print_char (p_state *state, int c)
 {
   static char last_c = 0;
+  static int bk;
 
   p_cell *cell = &state->cells[state->grid_width * state->cursor_y
-                              + state->cursor_x];
+			       + state->cursor_x];
+  int i, start, end;
 
   /* Start the cursor fading (in case we don't end up overwriting it.) */
   if (cell->state == FLARE || cell->state == NORMAL)
@@ -577,46 +668,386 @@ print_char (p_state *state, int c)
       cell->state = FADE;
       cell->changed = True;
     }
-
-  if (c == '\t') c = ' ';   /* blah. */
-
-  if (c == '\r' || c == '\n')
+  
+  if (state->pid)  /* Only interpret VT100 sequences if running in pty-mode.
+                      It would be nice if we could just interpret them all
+                      the time, but that would require subprocesses to send
+                      CRLF line endings instead of bare LF, so that's no good.
+                    */
     {
-      if (c == '\n' && last_c == '\r')
-        ;   /* CRLF -- do nothing */
-      else
-        {
-          state->cursor_x = 0;
-          if (state->cursor_y == state->grid_height - 1)
-            scroll (state);
-          else
-            state->cursor_y++;
-        }
-    }
-  else if (c == '\014')
-    {
-      clear (state);
+      switch (state->escstate)
+	{
+	case 0:
+	  switch (c)
+	    {
+	    case 7: /* BEL */
+	      /* Dummy case - we don't want the screensaver to beep */
+              /* #### But maybe this should flash the screen? */
+	      break;
+	    case 8: /* BS */
+	      if (state->cursor_x > 0)
+		state->cursor_x--;
+	      break;
+	    case 9: /* HT */
+	      if (state->cursor_x < state->grid_width - 8)
+		{
+		  state->cursor_x = (state->cursor_x & ~7) + 8;
+		}
+	      else
+		{
+		  state->cursor_x = 0;
+		  if (state->cursor_y < state->grid_height - 1)
+		    state->cursor_y++;
+		  else
+		    scroll (state);
+		}
+	      break;
+	    case 10: /* LF */
+	    case 11: /* VT */
+	    case 12: /* FF */
+	      if(last_c == 13)
+		{
+		  cell->state = NORMAL;
+		  cell->p_char = state->chars[bk];
+		  cell->changed = True;
+		}
+	      if (state->cursor_y < state->grid_height - 1)
+		state->cursor_y++;
+	      else
+		scroll (state);
+	      break;
+	    case 13: /* CR */
+	      state->cursor_x = 0;
+	      cell = &state->cells[state->grid_width * state->cursor_y];
+	      if((cell->p_char == NULL) || (cell->p_char->name == CURSOR_INDEX))
+		bk = ' ';
+	      else
+		bk = cell->p_char->name;
+	      break;
+	    case 14: /* SO */
+	    case 15: /* SI */
+	      /* Dummy case - I don't want to load several fonts for
+		 the maybe two programs world-wide that use that */
+	      break;
+	    case 24: /* CAN */
+	    case 26: /* SUB */
+	      /* Dummy case - these interrupt escape sequences, so
+		 they don't do anything in this state */
+	      break;
+	    case 27: /* ESC */
+	      state->escstate = 1;
+	      break;
+	    case 127: /* DEL */
+	      /* Dummy case - this is supposed to be ignored */
+	      break;
+	    case 155: /* CSI */
+	      state->escstate = 2;
+	      for(i = 0; i < NPAR; i++)
+		state->csiparam[i] = 0;
+	      state->curparam = 0;
+	      break;
+	    default:
+	      cell->state = FLARE;
+	      cell->p_char = state->chars[c];
+	      cell->changed = True;
+	      state->cursor_x++;
+
+	      if (c != ' ' && cell->p_char->blank_p)
+		cell->p_char = state->chars[CURSOR_INDEX];
+
+	      if (state->cursor_x >= state->grid_width - 1)
+		{
+		  state->cursor_x = 0;
+		  if (state->cursor_y >= state->grid_height - 1)
+		    scroll (state);
+		  else
+		    state->cursor_y++;
+		}
+	      break;
+	    }
+	  break;
+	case 1:
+	  switch (c)
+	    {
+	    case 24: /* CAN */
+	    case 26: /* SUB */
+	      state->escstate = 0;
+	      break;
+	    case 'c': /* Reset */
+	      clear (state);
+	      state->escstate = 0;
+	      break;
+	    case 'D': /* Linefeed */
+	      if (state->cursor_y < state->grid_height - 1)
+		state->cursor_y++;
+	      else
+		scroll (state);
+	      state->escstate = 0;
+	      break;
+	    case 'E': /* Newline */
+	      state->cursor_x = 0;
+	      state->escstate = 0;
+	      break;
+	    case 'M': /* Reverse newline */
+	      if (state->cursor_y > 0)
+		state->cursor_y--;
+	      state->escstate = 0;
+	      break;
+	    case '7': /* Save state */
+	      state->saved_x = state->cursor_x;
+	      state->saved_y = state->cursor_y;
+	      state->escstate = 0;
+	      break;
+	    case '8': /* Restore state */
+	      state->cursor_x = state->saved_x;
+	      state->cursor_y = state->saved_y;
+	      state->escstate = 0;
+	      break;
+	    case '[': /* CSI */
+	      state->escstate = 2;
+	      for(i = 0; i < NPAR; i++)
+		state->csiparam[i] = 0;
+	      state->curparam = 0;
+	      break;
+	    case '%': /* Select charset */
+	      /* No, I don't support UTF-8, since the phosphor font
+		 isn't even Unicode anyway. We must still catch the
+		 last byte, though. */
+	    case '(':
+	    case ')':
+	      /* I don't support different fonts either - see above
+		 for SO and SI */
+	      state->escstate = 3;
+	      break;
+	    default:
+	      /* Escape sequences not supported:
+	       * 
+	       * H - Set tab stop
+	       * Z - Terminal identification
+	       * > - Keypad change
+	       * = - Other keypad change
+	       * ] - OS command
+	       */
+	      state->escstate = 0;
+	      break;
+	    }
+	  break;
+	case 2:
+	  switch (c)
+	    {
+	    case 24: /* CAN */
+	    case 26: /* SUB */
+	      state->escstate = 0;
+	      break;
+            case '0': case '1': case '2': case '3': case '4':
+            case '5': case '6': case '7': case '8': case '9':
+	      if (state->curparam < NPAR)
+		state->csiparam[state->curparam] = (state->csiparam[state->curparam] * 10) + (c - '0');
+	      break;
+	    case ';':
+	      state->csiparam[++state->curparam] = 0;
+	      break;
+	    case '[':
+	      state->escstate = 3;
+	      break;
+	    case '@':
+	      for (i = 0; i < state->csiparam[0]; i++)
+		{
+		  if(++state->cursor_x > state->grid_width)
+		    {
+		      state->cursor_x = 0;
+		      if (state->cursor_y < state->grid_height - 1)
+			state->cursor_y++;
+		      else
+			scroll (state);
+		    }
+		  cell = &state->cells[state->grid_width * state->cursor_y + state->cursor_x];
+		  if (cell->state == FLARE || cell->state == NORMAL)
+		    {
+		      cell->state = FADE;
+		      cell->changed = True;
+		    }
+		}
+	      state->escstate = 0;
+	      break;
+	    case 'F':
+	      state->cursor_x = 0;
+	    case 'A':
+	      if (state->csiparam[0] == 0)
+		state->csiparam[0] = 1;
+	      if ((state->cursor_y -= state->csiparam[0]) < 0)
+		state->cursor_y = 0;
+	      state->escstate = 0;
+	      break;
+	    case 'E':
+	      state->cursor_x = 0;
+	    case 'e':
+	    case 'B':
+	      if (state->csiparam[0] == 0)
+		state->csiparam[0] = 1;
+	      if ((state->cursor_y += state->csiparam[0]) >= state->grid_height - 1)
+		state->cursor_y = state->grid_height - 1;
+	      state->escstate = 0;
+	      break;
+	    case 'a':
+	    case 'C':
+	      if (state->csiparam[0] == 0)
+		state->csiparam[0] = 1;
+	      if ((state->cursor_x += state->csiparam[0]) >= state->grid_width - 1)
+		state->cursor_x = state->grid_width - 1;
+	      state->escstate = 0;
+	      break;
+	    case 'D':
+	      if (state->csiparam[0] == 0)
+		state->csiparam[0] = 1;
+	      if ((state->cursor_x -= state->csiparam[0]) < 0)
+		state->cursor_x = 0;
+	      state->escstate = 0;
+	      break;
+	    case 'd':
+	      if ((state->cursor_y = (state->csiparam[0] - 1)) >= state->grid_height - 1)
+		state->cursor_y = state->grid_height - 1;
+	      state->escstate = 0;
+	      break;
+	    case '`':
+	    case 'G':
+	      if ((state->cursor_x = (state->csiparam[0] - 1)) >= state->grid_width - 1)
+		state->cursor_x = state->grid_width - 1;
+	      state->escstate = 0;
+	      break;
+	    case 'f':
+	    case 'H':
+	      if ((state->cursor_y = (state->csiparam[0] - 1)) >= state->grid_height - 1)
+		state->cursor_y = state->grid_height - 1;
+	      if ((state->cursor_x = (state->csiparam[1] - 1)) >= state->grid_width - 1)
+		state->cursor_x = state->grid_width - 1;
+	      if(state->cursor_y < 0)
+		state->cursor_y = 0;
+	      if(state->cursor_x < 0)
+		state->cursor_x = 0;
+	      state->escstate = 0;
+	      break;
+	    case 'J':
+	      start = 0;
+	      end = state->grid_height * state->grid_width;
+	      if (state->csiparam[0] == 0)
+		start = state->grid_width * state->cursor_y + state->cursor_x;
+	      if (state->csiparam[0] == 1)
+		end = state->grid_width * state->cursor_y + state->cursor_x;
+	      for (i = start; i < end; i++)
+		{
+		  cell = &state->cells[i];
+		  if (cell->state == FLARE || cell->state == NORMAL)
+		    {
+		      cell->state = FADE;
+		      cell->changed = True;
+		    }
+		}
+	      set_cursor (state, True);
+	      state->escstate = 0;
+	      break;
+	    case 'K':
+	      start = 0;
+	      end = state->grid_width;
+	      if (state->csiparam[0] == 0)
+		start = state->cursor_x;
+	      if (state->csiparam[1] == 1)
+		end = state->cursor_x;
+	      for (i = start; i < end; i++)
+		{
+		  if (cell->state == FLARE || cell->state == NORMAL)
+		    {
+		      cell->state = FADE;
+		      cell->changed = True;
+		    }
+		  cell++;
+		}
+	      state->escstate = 0;
+	      break;
+	    case 's': /* Save position */
+	      state->saved_x = state->cursor_x;
+	      state->saved_y = state->cursor_y;
+	      state->escstate = 0;
+	      break;
+	    case 'u': /* Restore position */
+	      state->cursor_x = state->saved_x;
+	      state->cursor_y = state->saved_y;
+	      state->escstate = 0;
+	      break;
+	    case '?': /* DEC Private modes */
+	      if ((state->curparam != 0) || (state->csiparam[0] != 0))
+		state->escstate = 0;
+	      break;
+	    default:
+	      /* Known unsupported CSIs:
+	       *
+	       * L - Insert blank lines
+	       * M - Delete lines (I don't know what this means...)
+	       * P - Delete characters
+	       * X - Erase characters (difference with P being...?)
+	       * c - Terminal identification
+	       * g - Clear tab stop(s)
+	       * h - Set mode (Mainly due to its complexity and lack of good
+                     docs)
+	       * l - Clear mode
+	       * m - Set mode (Phosphor is, per defenition, green on black)
+	       * n - Status report
+	       * q - Set keyboard LEDs
+	       * r - Set scrolling region (too exhausting - noone uses this,
+                     right?)
+	       */
+	      state->escstate = 0;
+	      break;
+	    }
+	  break;
+	case 3:
+	  state->escstate = 0;
+	  break;
+	}
+      set_cursor (state, True);
     }
   else
     {
-      cell->state = FLARE;
-      cell->p_char = state->chars[c];
-      cell->changed = True;
-      state->cursor_x++;
+      if (c == '\t') c = ' ';   /* blah. */
 
-      if (c != ' ' && cell->p_char->blank_p)
-        cell->p_char = state->chars[CURSOR_INDEX];
+      if (c == '\r' || c == '\n')  /* handle CR, LF, or CRLF as "new line". */
+	{
+	  if (c == '\n' && last_c == '\r')
+	    ;   /* CRLF -- do nothing */
+	  else
+	    {
+	      state->cursor_x = 0;
+	      if (state->cursor_y == state->grid_height - 1)
+		scroll (state);
+	      else
+		state->cursor_y++;
+	    }
+	}
+      else if (c == '\014')
+	{
+	  clear (state);
+	}
+      else
+	{
+	  cell->state = FLARE;
+	  cell->p_char = state->chars[c];
+	  cell->changed = True;
+	  state->cursor_x++;
 
-      if (state->cursor_x >= state->grid_width - 1)
-        {
-          state->cursor_x = 0;
-          if (state->cursor_y >= state->grid_height - 1)
-            scroll (state);
-          else
-            state->cursor_y++;
-        }
+	  if (c != ' ' && cell->p_char->blank_p)
+	    cell->p_char = state->chars[CURSOR_INDEX];
+
+	  if (state->cursor_x >= state->grid_width - 1)
+	    {
+	      state->cursor_x = 0;
+	      if (state->cursor_y >= state->grid_height - 1)
+		scroll (state);
+	      else
+		state->cursor_y++;
+	    }
+	}
+      set_cursor (state, True);
     }
-  set_cursor (state, True);
 
   last_c = c;
 }
@@ -703,23 +1134,72 @@ subproc_cb (XtPointer closure, int *source, XtInputId *id)
 static void
 launch_text_generator (p_state *state)
 {
+  char buf[255];
   char *oprogram = get_string_resource ("program", "Program");
-  char *program = (char *) malloc (strlen (oprogram) + 10);
 
-  strcpy (program, "( ");
-  strcat (program, oprogram);
-  strcat (program, " ) 2>&1");
-
-  if ((state->pipe = popen (program, "r")))
+#ifdef HAVE_FORKPTY
+  if(state->mode == 1)
     {
-      state->pipe_id =
-        XtAppAddInput (app, fileno (state->pipe),
-                       (XtPointer) (XtInputReadMask | XtInputExceptMask),
-                       subproc_cb, (XtPointer) state);
+      int fd;
+      struct winsize ws;
+      
+      ws.ws_row = state->grid_height - 1;
+      ws.ws_col = state->grid_width  - 2;
+      ws.ws_xpixel = state->xgwa.width;
+      ws.ws_ypixel = state->xgwa.height;
+      
+      state->pipe = NULL;
+      if((state->pid = forkpty(&fd, NULL, NULL, &ws)) < 0)
+	{
+          /* Unable to fork */
+          sprintf (buf, "%.100s: forkpty", progname);
+	  perror(buf);
+	}
+      else if(!state->pid)
+	{
+          /* This is the child fork. */
+	  if (putenv("TERM=vt100"))
+            abort();
+	  execl("/bin/sh", "/bin/sh", "-c", oprogram, NULL);
+          sprintf (buf, "%.100s: %.100s", progname, oprogram);
+	  perror(buf);
+	  exit(1);
+	}
+      else
+	{
+          /* This is the parent fork. */
+	  state->pipe = fdopen(fd, "r+");
+	  state->pipe_id =
+	    XtAppAddInput (app, fileno (state->pipe),
+			   (XtPointer) (XtInputReadMask | XtInputExceptMask),
+			   subproc_cb, (XtPointer) state);
+	}
     }
   else
+#endif /* HAVE_FORKPTY */
     {
-      perror (program);
+      char *program = (char *) malloc (strlen (oprogram) + 10);
+      
+      strcpy (program, "( ");
+      strcat (program, oprogram);
+      strcat (program, " ) 2>&1");
+
+      /* don't mess up controlling terminal if someone dumbly does
+         "-pipe -program tcsh". */
+      fclose (stdin);
+
+      if ((state->pipe = popen (program, "r")))
+	{
+	  state->pipe_id =
+	    XtAppAddInput (app, fileno (state->pipe),
+			   (XtPointer) (XtInputReadMask | XtInputExceptMask),
+			   subproc_cb, (XtPointer) state);
+	}
+      else
+	{
+          sprintf (buf, "%.100s: %.100s", progname, program);
+	  perror (buf);
+	}
     }
 }
 
@@ -747,7 +1227,15 @@ drain_input (p_state *state)
         {
           XtRemoveInput (state->pipe_id);
           state->pipe_id = 0;
-          pclose (state->pipe);
+	  if (state->pid)
+	    {
+	      waitpid(state->pid, NULL, 0);
+	      fclose (state->pipe);
+	    }
+	  else
+	    {
+	      pclose (state->pipe);
+	    }
           state->pipe = 0;
 
           if (state->cursor_x != 0)	/* break line if unbroken */
@@ -762,6 +1250,120 @@ drain_input (p_state *state)
         
       state->input_available_p = False;
     }
+}
+
+
+/* The interpretation of the ModN modifiers is dependent on what keys
+   are bound to them: Mod1 does not necessarily mean "meta".  It only
+   means "meta" if Meta_L or Meta_R are bound to it.  If Meta_L is on
+   Mod5, then Mod5 is the one that means Meta.  Oh, and Meta and Alt
+   aren't necessarily the same thing.  Icepicks in my forehead!
+ */
+static unsigned int
+do_icccm_meta_key_stupidity (Display *dpy)
+{
+  unsigned int modbits = 0;
+  int i, j, k;
+  XModifierKeymap *modmap = XGetModifierMapping (dpy);
+  for (i = 3; i < 8; i++)
+    for (j = 0; j < modmap->max_keypermod; j++)
+      {
+        int code = modmap->modifiermap[i * modmap->max_keypermod + j];
+        KeySym *syms;
+        int nsyms = 0;
+        if (code == 0) continue;
+        syms = XGetKeyboardMapping (dpy, code, 1, &nsyms);
+        for (k = 0; k < nsyms; k++)
+          if (syms[k] == XK_Meta_L || syms[k] == XK_Meta_R ||
+              syms[k] == XK_Alt_L  || syms[k] == XK_Alt_R)
+            modbits |= (1 << i);
+        XFree (syms);
+      }
+  XFreeModifiermap (modmap);
+  return modbits;
+}
+
+/* Returns a mask of the bit or bits of a KeyPress event that mean "meta". 
+ */
+static unsigned int
+meta_modifier (Display *dpy)
+{
+  static Bool done_once = False;
+  static unsigned int mask = 0;
+  if (!done_once)
+    {
+      /* Really, we are supposed to recompute this if a KeymapNotify
+         event comes in, but fuck it. */
+      done_once = True;
+      mask = do_icccm_meta_key_stupidity (dpy);
+    }
+  return mask;
+}
+
+
+static void
+handle_events (p_state *state)
+{
+  XSync (state->dpy, False);
+  while (XPending (state->dpy))
+    {
+      XEvent event;
+      XNextEvent (state->dpy, &event);
+
+      if (event.xany.type == ConfigureNotify)
+        {
+          resize_grid (state);
+
+# if defined(HAVE_FORKPTY) && defined(TIOCSWINSZ)
+          if (state->pid)
+            {
+              /* Tell the sub-process that the screen size has changed. */
+              struct winsize ws;
+              ws.ws_row = state->grid_height - 1;
+              ws.ws_col = state->grid_width  - 2;
+              ws.ws_xpixel = state->xgwa.width;
+              ws.ws_ypixel = state->xgwa.height;
+              ioctl (fileno (state->pipe), TIOCSWINSZ, &ws);
+              kill (state->pid, SIGWINCH);
+            }
+# endif /* HAVE_FORKPTY && TIOCSWINSZ */
+        }
+      else if (event.xany.type == Expose)
+        {
+          update_display (state, False);
+        }
+      else if (event.xany.type == KeyPress)
+        {
+          KeySym keysym;
+          unsigned char c = 0;
+          XLookupString (&event.xkey, (char *) &c, 1, &keysym,
+                         &state->compose);
+          if (c != 0 && state->pipe)
+            {
+              if (!state->swap_bs_del_p) ;
+              else if (c == 127) c = 8;
+              else if (c == 8)   c = 127;
+
+              /* If meta was held down, send ESC, or turn on the high bit. */
+              if (event.xkey.state & meta_modifier (state->dpy))
+                {
+                  if (state->meta_sends_esc_p)
+                    fputc ('\033', state->pipe);
+                  else
+                    c |= 0x80;
+                }
+
+              fputc (c, state->pipe);
+              fflush (state->pipe);
+              event.xany.type = 0;  /* don't interpret this event defaultly. */
+            }
+        }
+
+      screenhack_handle_event (state->dpy, &event);
+    }
+
+  if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
+    XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
 }
 
 
@@ -780,6 +1382,13 @@ char *defaults [] = {
   "*cursor:		   333",
   "*program:		 " FORTUNE_PROGRAM,
   "*relaunch:		   5",
+  "*metaSendsESC:	   True",
+  "*swapBSDEL:		   True",
+#ifdef HAVE_FORKPTY
+  "*mode:                  pty",
+#else  /* !HAVE_FORKPTY */
+  "*mode:                  pipe",
+#endif /* !HAVE_FORKPTY */
   0
 };
 
@@ -789,6 +1398,12 @@ XrmOptionDescRec options [] = {
   { "-ticks",		".ticks",		XrmoptionSepArg, 0 },
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-program",		".program",		XrmoptionSepArg, 0 },
+  { "-pty",		".mode",		XrmoptionNoArg, "pty"   },
+  { "-pipe",		".mode",		XrmoptionNoArg, "pipe"  },
+  { "-meta",		".metaSendsESC",	XrmoptionNoArg, "False" },
+  { "-esc",		".metaSendsESC",	XrmoptionNoArg, "True"  },
+  { "-bs",		".swapBSDEL",		XrmoptionNoArg, "False" },
+  { "-del",		".swapBSDEL",		XrmoptionNoArg, "True"  },
   { 0, 0, 0, 0 }
 };
 
@@ -805,11 +1420,7 @@ screenhack (Display *dpy, Window window)
     {
       run_phosphor (state);
       XSync (dpy, False);
-      screenhack_handle_events (dpy);
-
-      if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
-        XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
-
+      handle_events (state);
       if (delay) usleep (delay);
     }
 }

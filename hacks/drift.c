@@ -68,8 +68,8 @@ static XrmOptionDescRec opts[] =
 };
 static argtype vars[] =
 {
-	{(caddr_t *) & grow, (char *) "grow", (char *) "Grow", (char *) DEF_GROW, t_Bool},
-	{(caddr_t *) & liss, (char *) "liss", (char *) "Liss", (char *) DEF_LISS, t_Bool}
+	{&grow, "grow", "Grow", DEF_GROW, t_Bool},
+	{&liss, "liss", "Liss", DEF_LISS, t_Bool}
 };
 static OptionStruct desc[] =
 {

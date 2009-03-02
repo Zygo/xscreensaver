@@ -65,8 +65,8 @@ static XrmOptionDescRec opts[] =
 };
 static argtype vars[] =
 {
-  {(caddr_t *) &identical, (char *) "identical", (char *) "Identical", (char *) DEF_IDENTICAL, t_Bool},
-  {(caddr_t *) & plain, (char *) "plain", (char *) "Plain", (char *) DEF_PLAIN, t_Bool}
+  {&identical, "identical", "Identical", DEF_IDENTICAL, t_Bool},
+  {&plain, "plain", "Plain", DEF_PLAIN, t_Bool}
 };
 static OptionStruct desc[] =
 {

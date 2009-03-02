@@ -1,4 +1,8 @@
-command arg="--root 1"/>
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="electricsheep" _label="ElectricSheep">
+
+  <command arg="--root 1"/>
 
   <hgroup>
     <string id="nick" _label="Nickname" arg="--nick %"/>

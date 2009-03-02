@@ -1,4 +1,4 @@
-/* molecule, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+/* molecule, Copyright (c) 2001, 2004 Jamie Zawinski <jwz@jwz.org>
  * Draws molecules, based on coordinates from PDB (Protein Data Base) files.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -18,6 +18,10 @@
    http://www.sci.ouc.bc.ca/chem/molecule/molecule.html
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <unistd.h>
+#include <dirent.h>
 #include <X11/Intrinsic.h>
 
 #define PROGCLASS	"Molecule"
@@ -115,6 +119,7 @@ typedef struct {
 static atom_data all_atom_data[] = {
   { "H",    1.17,  0,  "White",           "Grey70",        { 0, }},
   { "C",    1.75,  0,  "Grey60",          "White",         { 0, }},
+  { "CA",   1.80,  0,  "Blue",            "LightBlue",     { 0, }},
   { "N",    1.55,  0,  "LightSteelBlue3", "SlateBlue1",    { 0, }},
   { "O",    1.40,  0,  "Red",             "LightPink",     { 0, }},
   { "P",    1.28,  0,  "MediumPurple",    "PaleVioletRed", { 0, }},
@@ -204,15 +209,15 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &molecule_str, "molecule",   "Molecule", DEF_MOLECULE,t_String},
-  {(caddr_t *) &timeout,   "timeout","Seconds",DEF_TIMEOUT,t_Int},
-  {(caddr_t *) &do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
-  {(caddr_t *) &do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
-  {(caddr_t *) &do_labels, "labels", "Labels", DEF_LABELS, t_Bool},
-  {(caddr_t *) &do_titles, "titles", "Titles", DEF_TITLES, t_Bool},
-  {(caddr_t *) &do_atoms,  "atoms",  "Atoms",  DEF_ATOMS,  t_Bool},
-  {(caddr_t *) &do_bonds,  "bonds",  "Bonds",  DEF_BONDS,  t_Bool},
-  {(caddr_t *) &do_bbox,   "bbox",   "BBox",   DEF_BBOX,   t_Bool},
+  {&molecule_str, "molecule",   "Molecule", DEF_MOLECULE,t_String},
+  {&timeout,   "timeout","Seconds",DEF_TIMEOUT,t_Int},
+  {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
+  {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
+  {&do_labels, "labels", "Labels", DEF_LABELS, t_Bool},
+  {&do_titles, "titles", "Titles", DEF_TITLES, t_Bool},
+  {&do_atoms,  "atoms",  "Atoms",  DEF_ATOMS,  t_Bool},
+  {&do_bonds,  "bonds",  "Bonds",  DEF_BONDS,  t_Bool},
+  {&do_bbox,   "bbox",   "BBox",   DEF_BBOX,   t_Bool},
 };
 
 ModeSpecOpt molecule_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -305,7 +310,7 @@ get_atom_data (const char *atom_name)
   for (i = 0; i < countof(all_atom_data); i++)
     {
       d = &all_atom_data[i];
-      if (!strcmp (n, all_atom_data[i].name))
+      if (!strcasecmp (n, all_atom_data[i].name))
         break;
     }
 
@@ -844,6 +849,12 @@ parse_pdb_data (molecule *m, const char *data, const char *filename, int line)
           ss = name + strlen(name)-1;
           while (isspace(*ss) && ss > name)
             *ss-- = 0;
+	  ss = name + 1;
+	  while(*ss)
+          {
+	    *ss = tolower(*ss);
+            ss++;
+          }
           sscanf (s + 32, " %f %f %f ", &x, &y, &z);
 /*
           fprintf (stderr, "%s: %s: %d: atom: %d \"%s\" %9.4f %9.4f %9.4f\n",
@@ -1072,41 +1083,134 @@ load_molecules (ModeInfo *mi)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
+  Bool verbose_p = False;
+  int i;
 
   if (!molecule_str || !*molecule_str ||
       !strcmp(molecule_str, "(default)"))	/* do the builtins */
     {
-      int i;
       mc->nmolecules = countof(builtin_pdb_data);
       mc->molecules = (molecule *) calloc (sizeof (molecule), mc->nmolecules);
       for (i = 0; i < mc->nmolecules; i++)
         {
           char name[100];
           sprintf (name, "<builtin-%d>", i);
+          if (verbose_p) fprintf (stderr, "%s: reading %s\n", progname, name);
           parse_pdb_data (&mc->molecules[i], builtin_pdb_data[i], name, 1);
-          generate_molecule_formula (&mc->molecules[i]);
-          insert_vertical_whitespace ((char *) mc->molecules[i].label);
         }
     }
   else						/* Load a file */
     {
-      int i = 0;
-      mc->nmolecules = 1;
+      /* The -molecule option can point to a .pdb file, or to
+         a directory of them.
+      */
+      struct stat st;
+      int nfiles = 0;
+      int list_size = 0;
+      char **files = 0;
+
+      if (!stat (molecule_str, &st) &&
+          S_ISDIR (st.st_mode))
+        {
+          char buf [255];
+          DIR *pdb_dir;
+          struct dirent *dentry;
+
+          pdb_dir = opendir (molecule_str);
+          if (! pdb_dir)
+            {
+              sprintf (buf, "%.100s: %.100s", progname, molecule_str);
+              perror (buf);
+              exit (1);
+            }
+
+          if (verbose_p)
+            fprintf (stderr, "%s: directory %s\n", progname, molecule_str);
+
+          nfiles = 0;
+          list_size = 100;
+          files = (char **) calloc (sizeof(*files), list_size);
+
+          while ((dentry = readdir (pdb_dir)))
+            {
+              int L = strlen (dentry->d_name);
+              if (L > 4 && !strcasecmp (dentry->d_name + L - 4, ".pdb"))
+                {
+                  char *fn;
+                  if (nfiles >= list_size-1)
+                    {
+                      list_size = (list_size + 10) * 1.2;
+                      files = (char **)
+                        realloc (files, list_size * sizeof(*files));
+                      if (!files)
+                        {
+                        OOM:
+                          fprintf (stderr, "%s: out of memory (%d files)\n",
+                                   progname, nfiles);
+                          exit (1);
+                        }
+                    }
+
+                  fn = (char *) malloc (strlen (molecule_str) + L + 10);
+                  if (!fn) goto OOM;
+                  strcpy (fn, molecule_str);
+                  if (fn[strlen(fn)-1] != '/') strcat (fn, "/");
+                  strcat (fn, dentry->d_name);
+                  files[nfiles++] = fn;
+                  if (verbose_p)
+                    fprintf (stderr, "%s: file %s\n", progname, fn);
+                }
+            }
+          closedir (pdb_dir);
+
+          if (nfiles == 0)
+            {
+              fprintf (stderr, "%s: no .pdb files in directory %s\n",
+                       progname, molecule_str);
+              exit (1);
+            }
+        }
+      else
+        {
+          files = (char **) malloc (sizeof (*files));
+          nfiles = 1;
+          files[0] = strdup (molecule_str);
+          if (verbose_p)
+            fprintf (stderr, "%s: file %s\n", progname, molecule_str);
+        }
+
+      mc->nmolecules = nfiles;
       mc->molecules = (molecule *) calloc (sizeof (molecule), mc->nmolecules);
-      parse_pdb_file (&mc->molecules[i], molecule_str);
+      for (i = 0; i < mc->nmolecules; i++)
+        {
+          if (verbose_p)
+            fprintf (stderr, "%s: reading %s\n", progname, files[i]);
+          parse_pdb_file (&mc->molecules[i], files[i]);
+
+          if ((wire || !do_atoms) &&
+              !do_labels &&
+              mc->molecules[i].nbonds == 0)
+            {
+              /* If we're not drawing atoms (e.g., wireframe mode), and
+                 there is no bond info, then make sure labels are turned on,
+                 or we'll be looking at a black screen... */
+              fprintf (stderr, "%s: %s: no bonds: turning -label on.\n",
+                       progname, files[i]);
+              do_labels = 1;
+            }
+
+          free (files[i]);
+          files[i] = 0;
+        }
+
+      free (files);
+      files = 0;
+    }
+
+  for (i = 0; i < mc->nmolecules; i++)
+    {
       generate_molecule_formula (&mc->molecules[i]);
       insert_vertical_whitespace ((char *) mc->molecules[i].label);
-
-      if ((wire || !do_atoms) &&
-          !do_labels &&
-          mc->molecules[i].nbonds == 0)
-        {
-          /* If we're not drawing atoms (e.g., wireframe mode), and
-             there is no bond info, then make sure labels are turned on,
-             or we'll be looking at a black screen... */
-          fprintf (stderr, "%s: no bonds: turning -label on.\n", progname);
-          do_labels = 1;
-        }
     }
 }
 

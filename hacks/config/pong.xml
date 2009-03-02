@@ -13,8 +13,8 @@
           low="0.01" high="0.075" default="0.0375"/>
 
   <_description>
-Displays a game of pong. It doesn't keep score
-because they are not suppose to miss.
-Written by Jeremy English.
+The pong program simulates an ancient Pong home video game, as well as
+various artifacts from displaying it on a color TV set.
+Written by Jeremy English and Trevor Blackwell.
   </_description>
 </screensaver>

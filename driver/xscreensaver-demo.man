@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "25-Oct-2003 (4.14)" "X Version 11"
+.TH XScreenSaver 1 "26-Feb-2004 (4.15)" "X Version 11"
 .SH NAME
 xscreensaver-demo - interactively control the background xscreensaver daemon
 .SH SYNOPSIS
@@ -235,11 +235,10 @@ power down after this much idle time.  This duration should be greater
 than or equal to \fISuspend\fP.
 .TP 4
 .B Install Colormap
-Whether to install a private colormap while the screensaver is active, so
-that the graphics hacks can get as many colors as possible.  (This only
-applies when the screen's default visual is being used, since non-default
-visuals get their own colormaps automatically.)  This can also be overridden
-on a per-demo basis.
+On 8-bit screens, whether to install a private colormap while the
+screensaver is active, so that the graphics hacks can get as many
+colors as possible.  This does nothing if you are running in 16-bit
+or better.
 .TP 4
 .B Fade To Black When Blanking
 If selected, then when the screensaver activates, the current contents
@@ -284,7 +283,7 @@ available, and another should only be run in monochrome.  See the
 discussion of the \fIprograms\fP parameter in the \fIConfiguration\fP
 section of the
 .BR xscreensaver (1)
-manual.
+manual.  (OpenGL programs should always have their visual set to "GL".)
 .SH COMMAND-LINE OPTIONS
 .I xscreensaver\-demo
 accepts the following command line options.
@@ -297,10 +296,6 @@ is managing that same display.
 .B \-prefs
 Start up with the \fBAdvanced\fP tab selected by default
 instead of the \fBDisplay Modes\fP tab.
-.TP 8
-.B \-crapplet
-For use by the Gnome Control Center code: this causes this program to
-be embedded inside the Control Center window.
 .TP 8
 .B \-debug
 Causes lots of diagnostics to be printed on stderr.
@@ -338,7 +333,7 @@ http://www.jwz.org/xscreensaver/
 .BR xscreensaver\-command (1),
 .BR xscreensaver\-getimage (1)
 .SH COPYRIGHT
-Copyright \(co 1992, 1993, 1997, 1998, 1999, 2000, 2001, 2002
+Copyright \(co 1992, 1993, 1997, 1998, 1999, 2000, 2001, 2002, 2003, 2004
 by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell
 this software and its documentation for any purpose is hereby granted without
 fee, provided that the above copyright notice appear in all copies and that

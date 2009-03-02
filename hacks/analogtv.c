@@ -51,6 +51,7 @@
   Trevor Blackwell <tlb@tlb.org>
 */
 
+#include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Intrinsic.h>
 #include <assert.h>
@@ -273,30 +274,77 @@ analogtv_configure(analogtv *it)
 {
   int oldwidth=it->usewidth;
   int oldheight=it->useheight;
-  int wlim,hlim,ohlim;
+  int wlim,hlim,height_diff;
 
-  hlim=it->xgwa.height;
-  if (hlim<ANALOGTV_VISLINES) hlim = ANALOGTV_VISLINES;
+  /* If the window is very small, don't let the image we draw get lower
+     than the actual TV resolution (266x200.)
 
+     If the aspect ratio of the window is within 20% of a 4:3 ratio,
+     then scale the image to exactly fill the window.
+
+     Otherwise, center the image either horizontally or vertically,
+     padding on the left+right, or top+bottom, but not both.
+
+     If it's very close (2.5%) to a multiple of VISLINES, make it exact
+     For example, it maps 1024 => 1000.
+   */
+  float percent = 0.20;
+  float min_ratio = 4.0 / 3.0 * (1 - percent);
+  float max_ratio = 4.0 / 3.0 * (1 + percent);
+  float ratio;
+  float height_snap=0.025;
+
+  hlim = it->xgwa.height;
   wlim = it->xgwa.width;
-  if (wlim<300) wlim = 300;
+  ratio = wlim / (float) hlim;
 
-  /* require 3:4 aspect ratio */
-  if (wlim > hlim*4/3) wlim=hlim*4/3;
-  if (hlim > wlim*3/4) hlim=wlim*3/4;
+  if (wlim < 266 || hlim < 200)
+    {
+      wlim = 266;
+      hlim = 200;
+# ifdef DEBUG
+      fprintf (stderr,
+               "size: minimal: %dx%d in %dx%d (%.3f < %.3f < %.3f)\n",
+               wlim, hlim, it->xgwa.width, it->xgwa.height,
+               min_ratio, ratio, max_ratio);
+# endif
+    }
+  else if (ratio > min_ratio && ratio < max_ratio)
+    {
+# ifdef DEBUG
+      fprintf (stderr,
+               "size: close enough: %dx%d (%.3f < %.3f < %.3f)\n",
+               wlim, hlim, min_ratio, ratio, max_ratio);
+# endif
+    }
+  else if (ratio > max_ratio)
+    {
+      wlim = hlim*max_ratio;
+# ifdef DEBUG
+      fprintf (stderr,
+               "size: center H: %dx%d in %dx%d (%.3f < %.3f < %.3f)\n",
+               wlim, hlim, it->xgwa.width, it->xgwa.height,
+               min_ratio, ratio, max_ratio);
+# endif
+    }
+  else /* ratio < min_ratio */
+    {
+      hlim = wlim/min_ratio;
+# ifdef DEBUG
+      fprintf (stderr,
+               "size: center V: %dx%d in %dx%d (%.3f < %.3f < %.3f)\n",
+               wlim, hlim, it->xgwa.width, it->xgwa.height,
+               min_ratio, ratio, max_ratio);
+# endif
+    }
 
-  /* height must be a multiple of VISLINES */
-  ohlim=hlim;
-  hlim = (hlim/ANALOGTV_VISLINES)*ANALOGTV_VISLINES;
 
-  /* Scale width proportionally */
-  wlim=wlim*hlim/ohlim;
+  height_diff = ((hlim + ANALOGTV_VISLINES/2) % ANALOGTV_VISLINES) - ANALOGTV_VISLINES/2;
+  if (height_diff != 0 && fabs(height_diff) < hlim * height_snap)
+    {
+      hlim -= height_diff;
+    }
 
-  {
-    FILE *fp=fopen("/tmp/analogtv.size","w");
-    fprintf(fp,"wlim=%d hlim=%d\n", wlim, hlim);
-    fclose(fp);
-  }
 
   /* Most times this doesn't change */
   if (wlim != oldwidth || hlim != oldheight) {
@@ -766,7 +814,7 @@ analogtv_setup_frame(analogtv *it)
     it->hashnoise_rpm -= 100 + 0.01*it->hashnoise_rpm;
     if (it->hashnoise_rpm<0.0) it->hashnoise_rpm=0.0;
   }
-  if (it->hashnoise_rpm >= 0.0) {
+  if (it->hashnoise_rpm > 0.0) {
     int hni;
     int hnc=it->hashnoise_counter; /* in 24.8 format */
 
@@ -786,7 +834,8 @@ analogtv_setup_frame(analogtv *it)
     hnc -= (ANALOGTV_V * ANALOGTV_H)<<8;
   }
 
-  it->agclevel = 1.0/it->rx_signal_level;
+  if (it->rx_signal_level != 0.0)
+    it->agclevel = 1.0/it->rx_signal_level;
 
 
 #ifdef DEBUG2
@@ -949,6 +998,52 @@ analogtv_level(analogtv *it, int y, int ytop, int ybot)
   return level;
 }
 
+/*
+
+  The point of this stuff is to ensure that when useheight is not a
+  multiple of VISLINES so that TV scan lines map to different numbers
+  of vertical screen pixels, the total brightness of each scan line
+  remains the same.
+  MAX_LINEHEIGHT corresponds to 2400 vertical pixels, beyond which
+  it interpolates extra black lines.
+ */
+enum {MAX_LINEHEIGHT=12};
+static struct {
+  int index;
+  double value;
+} leveltable[MAX_LINEHEIGHT+1][MAX_LINEHEIGHT+1];
+
+static void
+analogtv_setup_levels(analogtv *it, double avgheight)
+{
+  int i,height;
+  static double levelfac[3]={-7.5, 5.5, 24.5};
+
+  for (height=0; height<avgheight+2.0 && height<=MAX_LINEHEIGHT; height++) {
+
+    for (i=0; i<height; i++) {
+      leveltable[height][i].index = 2;
+    }
+    
+    if (avgheight>=3) {
+      leveltable[height][0].index=0;
+    }
+    if (avgheight>=5) {
+      leveltable[height][height-1].index=0;
+    }
+    if (avgheight>=7) {
+      leveltable[height][1].index=1;
+      leveltable[height][height-2].index=1;
+    }
+
+    for (i=0; i<height; i++) {
+      leveltable[height][i].value = 
+        (40.0 + levelfac[leveltable[height][i].index]*puramp(it, 3.0, 6.0, 1.0)) / 256.0;
+    }
+
+  }
+}
+
 static void
 analogtv_blast_imagerow(analogtv *it,
                         float *rgbf, float *rgbf_end,
@@ -961,7 +1056,8 @@ analogtv_blast_imagerow(analogtv *it,
   for (i=0; i<3; i++) level_copyfrom[i]=NULL;
 
   for (y=ytop; y<ybot; y++) {
-    int level=analogtv_level(it, y, ytop, ybot);
+    int level=leveltable[ybot-ytop][y-ytop].index;
+    double levelmult=leveltable[ybot-ytop][y-ytop].value;
     char *rowdata;
 
     rowdata=it->image->data + y*it->image->bytes_per_line;
@@ -978,7 +1074,6 @@ analogtv_blast_imagerow(analogtv *it,
       memcpy(rowdata, level_copyfrom[level], it->image->bytes_per_line);
     }
     else {
-      double levelmult=analogtv_levelmult(it, level);
       level_copyfrom[level] = rowdata;
 
       if (0) {
@@ -1115,6 +1210,8 @@ analogtv_draw(analogtv *it)
   puheight = puramp(it, 2.0, 1.0, 1.3) * it->height_control *
     (1.125 - 0.125*puramp(it, 2.0, 2.0, 1.1));
 
+  analogtv_setup_levels(it, puheight * (double)it->useheight/(double)ANALOGTV_VISLINES);
+
   overall_top=it->useheight;
   overall_bot=0;
 
@@ -1136,6 +1233,8 @@ analogtv_draw(analogtv *it)
     if (ybot<0 || ytop>it->useheight) continue;
     if (ytop<0) ytop=0;
     if (ybot>it->useheight) ybot=it->useheight;
+
+    if (ybot > ytop+MAX_LINEHEIGHT) ybot=ytop+MAX_LINEHEIGHT;
 
     if (ytop < overall_top) overall_top=ytop;
     if (ybot > overall_bot) overall_bot=ybot;
@@ -1493,6 +1592,8 @@ analogtv_load_ximage(analogtv *it, analogtv_input *input, XImage *pic_im)
   XColor col1[ANALOGTV_PIC_LEN];
   XColor col2[ANALOGTV_PIC_LEN];
   int multiq[ANALOGTV_PIC_LEN+4];
+  int y_overscan=5; /* overscan this much top and bottom */
+  int y_scanlength=ANALOGTV_VISLINES+2*y_overscan;
 
   img_w=pic_im->width;
   img_h=pic_im->height;
@@ -1503,9 +1604,9 @@ analogtv_load_ximage(analogtv *it, analogtv_input *input, XImage *pic_im)
     multiq[i]=(int)(-cos(3.1415926/180.0*(phase-303)) * 4096.0 * ampl);
   }
 
-  for (y=0; y<ANALOGTV_VISLINES; y++) {
-    int picy1=(y*img_h)/ANALOGTV_VISLINES;
-    int picy2=(y*img_h+ANALOGTV_VISLINES/2)/ANALOGTV_VISLINES;
+  for (y=0; y<y_scanlength; y++) {
+    int picy1=(y*img_h)/y_scanlength;
+    int picy2=(y*img_h + y_scanlength/2)/y_scanlength;
 
     for (x=0; x<ANALOGTV_PIC_LEN; x++) {
       int picx=(x*img_w)/ANALOGTV_PIC_LEN;
@@ -1573,7 +1674,7 @@ analogtv_load_ximage(analogtv *it, analogtv_input *input, XImage *pic_im)
       composite = ((composite*100)>>14) + ANALOGTV_BLACK_LEVEL;
       if (composite>125) composite=125;
       if (composite<0) composite=0;
-      input->signal[y+ANALOGTV_TOP][x+ANALOGTV_PIC_START] = composite;
+      input->signal[y-y_overscan+ANALOGTV_TOP][x+ANALOGTV_PIC_START] = composite;
     }
   }
 
@@ -2104,9 +2205,15 @@ analogtv_handle_events (analogtv *it)
           {
             KeySym keysym;
             char c = 0;
-            XLookupString (&event.xkey, &c, 1, &keysym, 0);
-            if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
-              return 1;
+
+            if (it->key_handler) {
+              if (it->key_handler (it->dpy, &event, it->key_data))
+                return 1;
+            } else {
+              XLookupString (&event.xkey, &c, 1, &keysym, 0);
+              if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+                return 1;
+            }
           }
           break;
 

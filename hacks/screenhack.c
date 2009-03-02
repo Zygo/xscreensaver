@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998, 2001, 2002, 2003
+/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998, 2001, 2002, 2003, 2004
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -534,9 +534,9 @@ main (int argc, char **argv)
       screen = xgwa.screen;
       visual_warning (screen, window, visual, cmap, True);
 
-      /* Select KeyPress events on the external window.
+      /* Select KeyPress and resize events on the external window.
        */
-      xgwa.your_event_mask |= KeyPressMask;
+      xgwa.your_event_mask |= KeyPressMask | StructureNotifyMask;
       XSelectInput (dpy, window, xgwa.your_event_mask);
 
       /* Select ButtonPress and ButtonRelease events on the external window,

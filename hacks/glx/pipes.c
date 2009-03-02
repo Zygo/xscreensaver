@@ -100,11 +100,11 @@ static XrmOptionDescRec opts[] =
 };
 static argtype vars[] =
 {
-	{(caddr_t *) & factory, "factory", "Factory", DEF_FACTORY, t_Int},
-	{(caddr_t *) & fisheye, "fisheye", "Fisheye", DEF_FISHEYE, t_Bool},
-	{(caddr_t *) & tightturns, "tightturns", "Tightturns", DEF_TIGHTTURNS, t_Bool},
-	{(caddr_t *) & rotatepipes, "rotatepipes", "Rotatepipes", DEF_ROTATEPIPES, t_Bool},
-	{(caddr_t *) & dbuf_p, "doubleBuffer", "DoubleBuffer", DEF_DBUF, t_Bool}
+	{&factory, "factory", "Factory", DEF_FACTORY, t_Int},
+	{&fisheye, "fisheye", "Fisheye", DEF_FISHEYE, t_Bool},
+	{&tightturns, "tightturns", "Tightturns", DEF_TIGHTTURNS, t_Bool},
+	{&rotatepipes, "rotatepipes", "Rotatepipes", DEF_ROTATEPIPES, t_Bool},
+	{&dbuf_p, "doubleBuffer", "DoubleBuffer", DEF_DBUF, t_Bool}
 };
 static OptionStruct desc[] =
 {

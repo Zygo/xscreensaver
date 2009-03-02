@@ -1,5 +1,5 @@
 /*
- * screenflip - takes snapshots of the screen and flips it around
+ * flipscreen3d - takes snapshots of the screen and flips it around
  *
  * version 1.0 - Oct 24, 2001
  *
@@ -18,7 +18,7 @@
 
 
 #ifdef STANDALONE
-# define PROGCLASS                                      "Screenflip"
+# define PROGCLASS                                      "FlipScreen3D"
 # define HACK_INIT                                      init_screenflip
 # define HACK_DRAW                                      draw_screenflip
 # define HACK_RESHAPE                           reshape_screenflip
@@ -69,7 +69,7 @@ static XrmOptionDescRec opts[] = {
 
 
 static argtype vars[] = {
-  {(caddr_t *) &rotate, "rotate", "Rotate", "True", t_Bool},
+  {&rotate, "rotate", "Rotate", "True", t_Bool},
 };
 
 

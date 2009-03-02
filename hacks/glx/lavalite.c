@@ -298,22 +298,22 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &do_style,  "style",  "Style",  DEF_STYLE,  t_String},
-  {(caddr_t *) &do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
-  {(caddr_t *) &do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
-  {(caddr_t *) &speed,     "speed",  "Speed",  DEF_SPEED,  t_Float},
-  {(caddr_t *) &resolution, "resolution", "Resolution", DEF_RESOLUTION, t_Int},
-  {(caddr_t *) &do_smooth,  "smooth", "Smooth", DEF_SMOOTH, t_Bool},
-  {(caddr_t *) &do_impatient, "impatient", "Impatient", DEF_IMPATIENT, t_Bool},
+  {&do_style,     "style",      "Style",      DEF_STYLE,      t_String},
+  {&do_spin,      "spin",       "Spin",       DEF_SPIN,       t_String},
+  {&do_wander,    "wander",     "Wander",     DEF_WANDER,     t_Bool},
+  {&speed,        "speed",      "Speed",      DEF_SPEED,      t_Float},
+  {&resolution,   "resolution", "Resolution", DEF_RESOLUTION, t_Int},
+  {&do_smooth,    "smooth",     "Smooth",     DEF_SMOOTH,     t_Bool},
+  {&do_impatient, "impatient",  "Impatient",  DEF_IMPATIENT,  t_Bool},
 
-  {(caddr_t *) &lava_color_str, "lavaColor", "LavaColor", DEF_LCOLOR,t_String},
-  {(caddr_t *) &fluid_color_str,"fluidColor","FluidColor",DEF_FCOLOR,t_String},
-  {(caddr_t *) &base_color_str, "baseColor", "BaseColor", DEF_BCOLOR,t_String},
-  {(caddr_t *) &table_color_str,"tableColor","TableColor",DEF_TCOLOR,t_String},
+  {&lava_color_str,  "lavaColor",    "LavaColor",  DEF_LCOLOR, t_String},
+  {&fluid_color_str, "fluidColor",   "FluidColor", DEF_FCOLOR, t_String},
+  {&base_color_str,  "baseColor",    "BaseColor",  DEF_BCOLOR, t_String},
+  {&table_color_str, "tableColor",   "TableColor", DEF_TCOLOR, t_String},
 
-  {(caddr_t *) &fluid_tex, "fluidTexture", "FluidTexture", DEF_FTEX, t_String},
-  {(caddr_t *) &base_tex,  "baseTexture",  "BaseTexture",  DEF_BTEX, t_String},
-  {(caddr_t *) &table_tex, "tableTexture", "BaseTexture",  DEF_TTEX, t_String},
+  {&fluid_tex,       "fluidTexture", "FluidTexture", DEF_FTEX, t_String},
+  {&base_tex,        "baseTexture",  "BaseTexture",  DEF_BTEX, t_String},
+  {&table_tex,       "tableTexture", "BaseTexture",  DEF_TTEX, t_String},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};

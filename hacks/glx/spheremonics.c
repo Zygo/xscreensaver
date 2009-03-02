@@ -165,14 +165,14 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
-  {(caddr_t *) &do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
-  {(caddr_t *) &res,       "resolution", "Resolution", DEF_RESOLUTION, t_Int},
-  {(caddr_t *) &duration,  "duration",   "Duration",   DEF_DURATION,   t_Int},
-  {(caddr_t *) &do_bbox,   "bbox",   "BBox",   DEF_BBOX,   t_Bool},
-  {(caddr_t *) &do_grid,   "grid",   "Grid",   DEF_GRID,   t_Bool},
-  {(caddr_t *) &smooth_p,  "smooth", "Smooth", DEF_SMOOTH, t_Bool},
-  {(caddr_t *) &static_parms, "parameters", "Parameters", DEF_PARMS, t_String},
+  {&do_spin,      "spin",       "Spin",       DEF_SPIN,       t_String},
+  {&do_wander,    "wander",     "Wander",     DEF_WANDER,     t_Bool},
+  {&res,          "resolution", "Resolution", DEF_RESOLUTION, t_Int},
+  {&duration,     "duration",   "Duration",   DEF_DURATION,   t_Int},
+  {&do_bbox,      "bbox",       "BBox",       DEF_BBOX,       t_Bool},
+  {&do_grid,      "grid",       "Grid",       DEF_GRID,       t_Bool},
+  {&smooth_p,     "smooth",     "Smooth",     DEF_SMOOTH,     t_Bool},
+  {&static_parms, "parameters", "Parameters", DEF_PARMS,      t_String},
 };
 
 ModeSpecOpt ccs_opts = {countof(opts), opts, countof(vars), vars, NULL};

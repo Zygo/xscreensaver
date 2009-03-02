@@ -66,12 +66,14 @@ $ lmorph	:== $'mydir'lmorph
 $ loop		:== $'mydir'loop
 $ maze		:== $'mydir'maze
 $ metaballs	:== $'mydir'metaballs
+$ mismunch	:== $'mydir'mismunch
 $ moire2	:== $'mydir'moire2
 $ moire		:== $'mydir'moire
 $ mountain	:== $'mydir'mountain
 $ munch		:== $'mydir'munch
 $ nerverot	:== $'mydir'nerverot
 $ noseguy	:== $'mydir'noseguy
+$ pacman	:== $'mydir'pacman
 $ pedal		:== $'mydir'pedal
 $ penetrate	:== $'mydir'penetrate
 $ penrose	:== $'mydir'penrose
@@ -113,6 +115,7 @@ $ wander	:== $'mydir'wander
 $ webcollage-helper	:== $'mydir'webcollage-helper
 $ whirlwindwarp	:== $'mydir'whirlwindwarp
 $ whirlygig	:== $'mydir'whirlygig
+$ wormhole	:== $'mydir'wormhole
 $ worm		:== $'mydir'worm
 $ xanalogtv	:== $'mydir'xanalogtv
 $ xflame	:== $'mydir'xflame

@@ -1,5 +1,5 @@
 /* demo-Gtk-conf.c --- implements the dynamic configuration dialogs.
- * xscreensaver, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001, 2003, 2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1642,7 +1642,7 @@ restore_defaults (const char *progname, GList *parms)
  */
 
 static char *
-get_description (GList *parms)
+get_description (GList *parms, gboolean verbose_p)
 {
   parameter *doc = 0;
   for (; parms; parms = parms->next)
@@ -1661,6 +1661,7 @@ get_description (GList *parms)
     {
       char *d = strdup ((char *) doc->string);
       char *s;
+      char *p;
       for (s = d; *s; s++)
         if (s[0] == '\n')
           {
@@ -1687,7 +1688,27 @@ get_description (GList *parms)
           d[--L] = 0;
       }
 
-      return _(d);
+      /* strip off duplicated whitespaces */
+      for (s = d; *s; s++)
+	  if (s[0] == ' ')
+	  {
+	    p = s+1;
+	    while (*s == ' ')
+	      s++;
+            if (*p && (s != p))
+              memmove (p, s, strlen(s)+1);
+	  }
+
+#if 0
+      if (verbose_p)
+        {
+          fprintf (stderr, "%s: text read   is \"%s\"\n", blurb(),doc->string);
+          fprintf (stderr, "%s: description is \"%s\"\n", blurb(), d);
+          fprintf (stderr, "%s: translation is \"%s\"\n", blurb(), _(d));
+        }
+#endif /* 0 */
+
+      return (d);
     }
 }
 
@@ -1771,7 +1792,7 @@ load_configurator_1 (const char *program, const char *arguments,
 
       data->widget = table;
       data->parameters = parms;
-      data->description = get_description (parms);
+      data->description = get_description (parms, verbose_p);
     }
   else
     {

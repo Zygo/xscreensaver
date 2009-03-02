@@ -86,5 +86,8 @@ point in space, correctly shaded for the current position of the Sun.
 Written by Kirk Johnson.  This is not included with the XScreenSaver
 package, but if you don't have it already, you can find it at
 &lt;http://www.cs.colorado.edu/~tuna/xearth/&gt;.
+
+There is also a similar (but more recent) program called xplanet
+to be found at &lt;http://xplanet.sourceforge.net/&gt;.
   </_description>
 </screensaver>

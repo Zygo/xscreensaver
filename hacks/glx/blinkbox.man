@@ -2,12 +2,16 @@
 .SH NAME
 blinkbox 
 .SH SYNOPSIS
-.B boundingbox
+.B blinkbox
 [\-display \fIhost:display.screen\fP]
 [\-visual \fIvisual\fP]
 [\-window]
 [\-root]
 [\-delay \fInumber\fP]
+[\-wireframe]
+[\-boxsize \fInumber\fP]
+[\-dissolve]
+[\-fade]
 .SH DESCRIPTION
 Shows a ball contained inside of a bounding box. Colored blocks blink in
 when the ball hits the edges.
@@ -25,6 +29,18 @@ Draw on the root window.
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds.).
+.TP 8
+.B \-wireframe | \-no-wireframe
+Render in wireframe instead of solid.
+.TP 8
+.B \-boxsize 
+Sets the size of the colored boxes. Should be between 1 and 4. Default: 1 
+.TP 8
+.B \-dissolve | \-no-dissolve
+Boxes shrink instead of just vanishing.
+.TP 8
+.B \-fade | \-no-fade
+Boxes fade to transparency instead of just vanishing.
 .SH ENVIRONMENT
 .PP
 .TP 8

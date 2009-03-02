@@ -26,6 +26,14 @@
 #include "vroot.h"
 #include <X11/Xatom.h>
 
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>		/* for waitpid() and associated macros */
+#endif
+
+
 extern char *progname;
 
 
@@ -176,6 +184,56 @@ hack_subproc_environment (Display *dpy)
 }
 
 
+/* Spawn a program, and wait for it to finish.
+   If we just use system() for this, then sometimes the subprocess
+   doesn't die when *this* process is sent a TERM signal.  Perhaps
+   this is due to the intermediate /bin/sh that system() uses to
+   parse arguments?  I'm not sure.  But using fork() and execvp()
+   here seems to close the race.
+ */
+
+static void
+exec_simple_command (const char *command)
+{
+  char *av[1024];
+  int ac = 0;
+  char *token = strtok (strdup(command), " \t");
+  while (token)
+    {
+      av[ac++] = token;
+      token = strtok(0, " \t");
+    }
+  av[ac] = 0;
+
+  execvp (av[0], av);	/* shouldn't return. */
+}
+
+static void
+fork_exec_wait (const char *command)
+{
+  char buf [255];
+  pid_t forked;
+  int status;
+
+  switch ((int) (forked = fork ()))
+    {
+    case -1:
+      sprintf (buf, "%s: couldn't fork", progname);
+      perror (buf);
+      return;
+
+    case 0:
+      exec_simple_command (command);
+      exit (1);  /* exits child fork */
+      break;
+
+    default:
+      waitpid (forked, &status, 0);
+      break;
+    }
+}
+
+
 /* Loads an image into the Drawable.
    When grabbing desktop images, the Window will be unmapped first.
  */
@@ -216,7 +274,7 @@ load_random_image (Screen *screen, Window window, Drawable drawable,
 
   XSync (dpy, True);
   hack_subproc_environment (dpy);
-  system (cmd);
+  fork_exec_wait (cmd);
   free (cmd);
   XSync (dpy, True);
 

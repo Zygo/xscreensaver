@@ -154,17 +154,17 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-    {(caddr_t*)&random_parms, "random", "Random", "False", t_Bool},
-    {(caddr_t*)&do_tetrahedron, "tetra", "Tetra", "False", t_Bool},
-    {(caddr_t*)&spooky, "spooky", "Spooky", "0", t_Int},
-    {(caddr_t*)&color, "color", "Color", DEF_COLOR, t_String},
-    {(caddr_t*)&shininess, "shininess", "Shininess", DEF_SHININESS, t_Int},
-    {(caddr_t*)&complexity, "complexity", "Complexity", DEF_COMPLEXITY, t_Int},
-    {(caddr_t*)&speed, "speed", "Speed", DEF_SPEED, t_Int},
-    {(caddr_t*)&spherism, "spherism", "Spherism", DEF_SPHERISM, t_Int},
-    {(caddr_t*)&hold, "hold", "Hold", DEF_HOLD, t_Int},
-    {(caddr_t*)&distance, "distance", "Distance", DEF_DISTANCE, t_Int},
-    {(caddr_t*)&damping, "damping", "Damping", DEF_DAMPING, t_Int}
+    {&random_parms, "random", "Random", "False", t_Bool},
+    {&do_tetrahedron, "tetra", "Tetra", "False", t_Bool},
+    {&spooky, "spooky", "Spooky", "0", t_Int},
+    {&color, "color", "Color", DEF_COLOR, t_String},
+    {&shininess, "shininess", "Shininess", DEF_SHININESS, t_Int},
+    {&complexity, "complexity", "Complexity", DEF_COMPLEXITY, t_Int},
+    {&speed, "speed", "Speed", DEF_SPEED, t_Int},
+    {&spherism, "spherism", "Spherism", DEF_SPHERISM, t_Int},
+    {&hold, "hold", "Hold", DEF_HOLD, t_Int},
+    {&distance, "distance", "Distance", DEF_DISTANCE, t_Int},
+    {&damping, "damping", "Damping", DEF_DAMPING, t_Int}
 };
 
 #undef countof

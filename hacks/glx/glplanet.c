@@ -122,14 +122,14 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &do_rotate,   "rotate",  "Rotate",  DEF_ROTATE,  t_Bool},
-  {(caddr_t *) &do_roll,     "roll",    "Roll",    DEF_ROLL,    t_Bool},
-  {(caddr_t *) &do_wander,   "wander",  "Wander",  DEF_WANDER,  t_Bool},
-  {(caddr_t *) &do_texture,  "texture", "Texture", DEF_TEXTURE, t_Bool},
-  {(caddr_t *) &do_stars,  "stars", "Stars", DEF_STARS, t_Bool},
-  {(caddr_t *) &do_light,    "light",   "Light",   DEF_LIGHT,   t_Bool},
-  {(caddr_t *) &which_image, "image",   "Image",   DEF_IMAGE,   t_String},
-  {(caddr_t *) &resolution,  "resolution","Resolution", DEF_RESOLUTION, t_Int},
+  {&do_rotate,   "rotate",  "Rotate",  DEF_ROTATE,  t_Bool},
+  {&do_roll,     "roll",    "Roll",    DEF_ROLL,    t_Bool},
+  {&do_wander,   "wander",  "Wander",  DEF_WANDER,  t_Bool},
+  {&do_texture,  "texture", "Texture", DEF_TEXTURE, t_Bool},
+  {&do_stars,    "stars",   "Stars",   DEF_STARS,   t_Bool},
+  {&do_light,    "light",   "Light",   DEF_LIGHT,   t_Bool},
+  {&which_image, "image",   "Image",   DEF_IMAGE,   t_String},
+  {&resolution,  "resolution","Resolution", DEF_RESOLUTION, t_Int},
 };
 
 ModeSpecOpt planet_opts = {countof(opts), opts, countof(vars), vars, NULL};

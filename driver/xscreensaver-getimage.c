@@ -136,6 +136,15 @@ ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
   return 0;
 }
 
+static int
+ignore_badmatch_ehandler (Display *dpy, XErrorEvent *error)
+{
+  if (error->error_code == BadMatch)
+    return ignore_all_errors_ehandler (dpy, error);
+  else
+    return x_ehandler (dpy, error);
+}
+
 
 /* Returns True if the given Drawable is a Window; False if it's a Pixmap.
  */
@@ -885,7 +894,7 @@ read_jpeg_ximage (Screen *screen, Visual *visual, Drawable drawable,
           int x;
           for (x = 0; x < ximage->width; x++)
             {
-              int j = x * cinfo.num_components;
+              int j = x * cinfo.output_components;
               unsigned char r = scanbuf[i][j];
               unsigned char g = scanbuf[i][j+1];
               unsigned char b = scanbuf[i][j+2];
@@ -897,10 +906,12 @@ read_jpeg_ximage (Screen *screen, Visual *visual, Drawable drawable,
                 pixel = ((r >> 5) | ((g >> 5) << 3) | ((b >> 6) << 6));
               else if (depth == 12)
                 pixel = ((r >> 4) | ((g >> 4) << 4) | ((b >> 4) << 8));
-              else if (depth == 16 || depth == 15)
+              else if (depth == 15)
                 /* Gah! I don't understand why these are in the other
                    order. */
                 pixel = (((r >> 3) << 10) | ((g >> 3) << 5) | ((b >> 3)));
+              else if (depth == 16)
+                pixel = (((r >> 3) << 11) | ((g >> 2) << 5) | ((b >> 3)));
               else
                 abort();
 
@@ -1347,12 +1358,38 @@ display_desktop (Screen *screen, Window window, Drawable drawable,
     }
   else  /* size mismatch -- must scale client-side images to fit drawable */
     {
-      XImage *ximage = XGetImage (dpy, window, 0, 0, xgwa.width, xgwa.height,
-                                  ~0L, ZPixmap);
       GC gc;
+      XImage *ximage = 0;
+      XErrorHandler old_handler;
+
+      XSync (dpy, False);
+      old_handler = XSetErrorHandler (ignore_badmatch_ehandler);
+      error_handler_hit_p = False;
+
+      /* This can return BadMatch if the window is not fully on screen.
+         Trap that error and return color bars in that case.
+         (Note that this only happens with XGetImage, not with XCopyArea:
+         yet another totally gratuitous inconsistency in X, thanks.)
+       */
+      ximage = XGetImage (dpy, window, 0, 0, xgwa.width, xgwa.height,
+                          ~0L, ZPixmap);
+
+      XSync (dpy, False);
+      XSetErrorHandler (old_handler);
+      XSync (dpy, False);
+
+      if (error_handler_hit_p)
+        {
+          ximage = 0;
+          if (verbose_p)
+            fprintf (stderr, "%s: BadMatch reading window 0x%x contents!\n",
+                     progname, (unsigned int) window);
+        }
+
       if (!ximage ||
           !scale_ximage (xgwa.screen, xgwa.visual, ximage, w2, h2))
         return False;
+
       gc = XCreateGC (dpy, drawable, 0, &gcv);
       clear_drawable (screen, drawable);
       XPutImage (dpy, drawable, gc, ximage, 

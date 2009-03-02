@@ -58,9 +58,9 @@ static XrmOptionDescRec opts[] = {
 int rotate, reflections, smooth;
 
 static argtype vars[] = {
-  {(caddr_t *) &rotate, "rotate", "Rotate", "True", t_Bool},
-  {(caddr_t *) &reflections, "reflections", "Reflections", "True", t_Bool},
-  {(caddr_t *) &smooth, "smooth", "Smooth", "True", t_Bool},
+  {&rotate,      "rotate",      "Rotate",      "True", t_Bool},
+  {&reflections, "reflections", "Reflections", "True", t_Bool},
+  {&smooth,      "smooth",      "Smooth",      "True", t_Bool},
 };
 
 ModeSpecOpt chess_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -107,7 +107,7 @@ GLfloat colors[2][3] =
 GLfloat whites[WHITES][3] = 
   {
     {1.0, 0.5, 0.0},
-    {0.8, 0.45, 1.0},
+    {0.9, 0.6, 0.9},
     {0.43, 0.54, 0.76},
     {0.8, 0.8, 0.8},
     {0.15, 0.77, 0.54},
@@ -167,6 +167,8 @@ GLfloat position[] = { 0.0, 5.0, 5.0, 1.0 };
 GLfloat position2[] = { 5.0, 5.0, 5.0, 1.0 };
 GLfloat diffuse2[] = {1.0, 1.0, 1.0, 1.0};
 GLfloat ambient2[] = {0.6, 0.6, 0.6, 1.0};
+GLfloat shininess[] = {60.0};
+GLfloat specular[] = {0.4, 0.4, 0.4, 1.0};
 
 /* configure lighting */
 void setup_lights(void) {
@@ -176,6 +178,9 @@ void setup_lights(void) {
   glEnable(GL_LIGHT0);
 
 /*   glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient2); */
+
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
 
   glLightfv(GL_LIGHT1, GL_SPECULAR, diffuse2);
   glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse2);
@@ -223,8 +228,25 @@ void drawMovingPiece(void) {
       mpiece = mpiece == PAWN ? QUEEN : BQUEEN;
   }
   else if(mpiece % PIECES == KNIGHT) {
+    GLfloat shine[1];
+    GLfloat spec[4];
+    GLfloat mult;
     glTranslatef(steps < 50 ? from[1] : to[1], 0.0, 
 		 steps < 50 ? from[0] : to[0]);
+
+    mult = steps < 10 
+      ? (1.0 - steps / 10.0) 
+      : 100 - steps < 10 
+      ? specular[0] * (1.0 - (100 - steps) / 10.0) 
+      : 0.0;
+
+    shine[0] = 0.0;/*mult*shininess[0];*/
+    spec[0] = mult*specular[0];
+    spec[1] = mult*specular[1];
+    spec[2] = mult*specular[2];
+    spec[3] = 1.0;
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shine);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
 
     glColor4f(colors[mpiece/7][0], colors[mpiece/7][1], colors[mpiece/7][2],
 	      fabs(49-steps)/49.0);
@@ -237,6 +259,10 @@ void drawMovingPiece(void) {
     glEnable(GL_BLEND);
   
   glCallList(piece);
+
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+
   glPopMatrix();
 
   if(!wire)

@@ -85,10 +85,10 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &do_spin,   "spin",   "Spin",   DEF_SPIN,   t_Bool},
-  {(caddr_t *) &do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
-  {(caddr_t *) &speed,     "speed",  "Speed",  DEF_SPEED,  t_Int},
-  {(caddr_t *) &max_depth, "maxDepth", "MaxDepth", DEF_MAXDEPTH, t_Int},
+  {&do_spin,   "spin",     "Spin",     DEF_SPIN,     t_Bool},
+  {&do_wander, "wander",   "Wander",   DEF_WANDER,   t_Bool},
+  {&speed,     "speed",    "Speed",    DEF_SPEED,    t_Int},
+  {&max_depth, "maxDepth", "MaxDepth", DEF_MAXDEPTH, t_Int},
 };
 
 

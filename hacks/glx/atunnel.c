@@ -98,9 +98,9 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &do_light,   (char *)"light",  (char *)"Light",   DEF_LIGHT,   t_Bool},
-  {(caddr_t *) &do_wire,    (char *)"wire",   (char *)"Wire",    DEF_WIRE,    t_Bool},
-  {(caddr_t *) &do_texture, (char *)"texture",(char *)"Texture", DEF_TEXTURE, t_Bool},
+  {&do_light,   "light",   "Light",   DEF_LIGHT,   t_Bool},
+  {&do_wire,    "wire",    "Wire",    DEF_WIRE,    t_Bool},
+  {&do_texture, "texture", "Texture", DEF_TEXTURE, t_Bool},
 };
 
 static OptionStruct desc[] =

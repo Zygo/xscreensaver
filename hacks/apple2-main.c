@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2003 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -10,17 +10,28 @@
  *
  * Apple ][ CRT simulator, by Trevor Blackwell <tlb@tlb.org>
  * with additional work by Jamie Zawinski <jwz@jwz.org>
+ * Pty and vt100 emulation by Fredrik Tolf <fredrik@dolda2000.com>
  */
 
 #include <math.h>
+#include <ctype.h>
 #include "screenhack.h"
 #include "apple2.h"
 #include <X11/Xutil.h>
 #include <X11/Intrinsic.h>
-#include <ctype.h>
+
+#define XK_MISCELLANY
+#include <X11/keysymdef.h>
+
+#ifdef HAVE_FORKPTY
+# include <pty.h>
+#endif /* HAVE_FORKPTY */
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
+
+#define SCREEN_COLS 40
+#define SCREEN_ROWS 24
 
 #define DEBUG
 
@@ -552,18 +563,36 @@ load_image (Display *dpy, Window window, char **image_filename_r)
 char *progclass = "Apple2";
 
 char *defaults [] = {
+  ".background:		   black",
+  ".foreground:		   white",
   "*mode:		   random",
   "*duration:		   20",
+  "*metaSendsESC:	   True",
+  "*swapBSDEL:		   True",
+  "*fast:		   False",
+# ifdef HAVE_FORKPTY
+  "*usePty:                True",
+#else
+  "*usePty:                False",
+# endif /* !HAVE_FORKPTY */
+
   ANALOGTV_DEFAULTS
   0
 };
 
 XrmOptionDescRec options [] = {
-  { "-slideshow",	".mode",		XrmoptionNoArg, "slideshow" },
-  { "-basic",	        ".mode",		XrmoptionNoArg, "basic" },
-  { "-text",     	".mode",		XrmoptionNoArg, "text" },
+  { "-slideshow",	".mode",		XrmoptionNoArg,  "slideshow" },
+  { "-basic",	        ".mode",		XrmoptionNoArg,  "basic" },
+  { "-text",     	".mode",		XrmoptionNoArg,  "text" },
   { "-program",		".program",		XrmoptionSepArg, 0 },
   { "-duration",	".duration",		XrmoptionSepArg, 0 },
+  { "-pty",		".usePty",		XrmoptionNoArg,  "True"  },
+  { "-pipe",		".usePty",		XrmoptionNoArg,  "False" },
+  { "-meta",		".metaSendsESC",	XrmoptionNoArg,  "False" },
+  { "-esc",		".metaSendsESC",	XrmoptionNoArg,  "True"  },
+  { "-bs",		".swapBSDEL",		XrmoptionNoArg,  "False" },
+  { "-del",		".swapBSDEL",		XrmoptionNoArg,  "True"  },
+  { "-fast",		".fast",		XrmoptionNoArg,  "True"  },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };
@@ -719,15 +748,37 @@ void slideshow_controller(apple2_sim_t *sim, int *stepno,
   }
 }
 
+#define NPAR 16
+
 struct terminal_controller_data {
   FILE *pipe;
   int pipe_id;
+  pid_t pid;
   int input_available_p;
   XtIntervalId timeout_id;
   char curword[256];
   unsigned char lastc;
   int fake_nl;
   double last_emit_time;
+  XComposeStatus compose;
+
+  int escstate;
+  int csiparam[NPAR];
+  int curparam;
+  int cursor_x, cursor_y;
+  int saved_x,  saved_y;
+  union {
+    struct {
+      unsigned int bold : 1;
+      unsigned int blink : 1;
+      unsigned int rev : 1;
+    } bf;
+    int w;
+  } termattrib;
+  Bool meta_sends_esc_p;
+  Bool swap_bs_del_p;
+  Bool fast_p;
+
 };
 
 static void
@@ -741,6 +792,7 @@ subproc_cb (XtPointer closure, int *source, XtInputId *id)
 static void
 launch_text_generator (struct terminal_controller_data *mine)
 {
+  char buf[255];
   char *oprogram = get_string_resource ("program", "Program");
   char *program;
 
@@ -754,6 +806,48 @@ launch_text_generator (struct terminal_controller_data *mine)
   strcat (program, " ) 2>&1");
 
   if (mine->pipe) abort();
+
+# ifdef HAVE_FORKPTY
+  if (get_boolean_resource ("usePty", "Boolean"))
+    {
+      int fd;
+      struct winsize ws;
+
+      ws.ws_col = SCREEN_COLS;
+      ws.ws_row = SCREEN_ROWS;
+      ws.ws_xpixel = ws.ws_col * 6;
+      ws.ws_ypixel = ws.ws_row * 8;
+      
+      mine->pipe = NULL;
+      if((mine->pid = forkpty(&fd, NULL, NULL, &ws)) < 0)
+	{
+          /* Unable to fork */
+          sprintf (buf, "%.100s: forkpty", progname);
+	  perror(buf);
+	}
+      else if(!mine->pid)
+	{
+          /* This is the child fork. */
+	  if (putenv("TERM=vt100"))
+            abort();
+	  execl("/bin/sh", "/bin/sh", "-c", oprogram, NULL);
+          sprintf (buf, "%.100s: %.100s", progname, oprogram);
+	  perror(buf);
+	  exit(1);
+	}
+      else
+	{
+          /* This is the parent fork. */
+	  mine->pipe = fdopen(fd, "r+");
+	  mine->pipe_id =
+	    XtAppAddInput (app, fileno (mine->pipe),
+			   (XtPointer) (XtInputReadMask | XtInputExceptMask),
+			   subproc_cb, (XtPointer) mine);
+	}
+    }
+  else
+# endif /* HAVE_FORKPTY */
+
   if ((mine->pipe = popen (program, "r")))
     {
       if (mine->pipe_id) abort();
@@ -764,7 +858,8 @@ launch_text_generator (struct terminal_controller_data *mine)
     }
   else
     {
-      perror (program);
+      sprintf (buf, "%.100s: %.100s", progname, program);
+      perror(buf);
     }
 }
 
@@ -830,6 +925,480 @@ terminal_read(struct terminal_controller_data *mine, unsigned char *buf, int n)
 }
 
 
+/* The interpretation of the ModN modifiers is dependent on what keys
+   are bound to them: Mod1 does not necessarily mean "meta".  It only
+   means "meta" if Meta_L or Meta_R are bound to it.  If Meta_L is on
+   Mod5, then Mod5 is the one that means Meta.  Oh, and Meta and Alt
+   aren't necessarily the same thing.  Icepicks in my forehead!
+ */
+static unsigned int
+do_icccm_meta_key_stupidity (Display *dpy)
+{
+  unsigned int modbits = 0;
+  int i, j, k;
+  XModifierKeymap *modmap = XGetModifierMapping (dpy);
+  for (i = 3; i < 8; i++)
+    for (j = 0; j < modmap->max_keypermod; j++)
+      {
+        int code = modmap->modifiermap[i * modmap->max_keypermod + j];
+        KeySym *syms;
+        int nsyms = 0;
+        if (code == 0) continue;
+        syms = XGetKeyboardMapping (dpy, code, 1, &nsyms);
+        for (k = 0; k < nsyms; k++)
+          if (syms[k] == XK_Meta_L || syms[k] == XK_Meta_R ||
+              syms[k] == XK_Alt_L  || syms[k] == XK_Alt_R)
+            modbits |= (1 << i);
+        XFree (syms);
+      }
+  XFreeModifiermap (modmap);
+  return modbits;
+}
+
+/* Returns a mask of the bit or bits of a KeyPress event that mean "meta". 
+ */
+static unsigned int
+meta_modifier (Display *dpy)
+{
+  static Bool done_once = False;
+  static unsigned int mask = 0;
+  if (!done_once)
+    {
+      /* Really, we are supposed to recompute this if a KeymapNotify
+         event comes in, but fuck it. */
+      done_once = True;
+      mask = do_icccm_meta_key_stupidity (dpy);
+    }
+  return mask;
+}
+
+
+static int
+terminal_keypress_handler (Display *dpy, XEvent *event, void *data)
+{
+  struct terminal_controller_data *mine =
+    (struct terminal_controller_data *) data;
+  KeySym keysym;
+  unsigned char c = 0;
+  XLookupString (&event->xkey, (char *) &c, 1, &keysym, &mine->compose);
+  if (c == 0 || !mine->pipe)
+    return 0;
+
+  if (!mine->swap_bs_del_p) ;
+  else if (c == 127) c = 8;
+  else if (c == 8)   c = 127;
+
+  /* If meta was held down, send ESC, or turn on the high bit. */
+  if (event->xkey.state & meta_modifier (dpy))
+    {
+      if (mine->meta_sends_esc_p)
+        fputc ('\033', mine->pipe);
+      else
+        c |= 0x80;
+    }
+
+  fputc (c, mine->pipe);
+  fflush (mine->pipe);
+
+  event->xany.type = 0;  /* do not process this event further */
+
+  return 0;
+}
+
+
+static void
+a2_ascii_printc (apple2_state_t *st, unsigned char c,
+                 Bool bold_p, Bool blink_p, Bool rev_p,
+                 Bool scroll_p)
+{
+  if (c >= 'a' && c <= 'z')            /* upcase lower-case chars */
+    {
+      c &= 0xDF;
+    }
+  else if ((c >= 'A'+128) ||                    /* upcase and blink */
+           (c < ' ' && c != 014 &&              /* high-bit & ctl chrs */
+            c != '\r' && c != '\n' && c!='\t'))
+    {
+      c = (c & 0x1F) | 0x80;
+    }
+  else if (c >= 'A' && c <= 'Z')            /* invert upper-case chars */
+    {
+      c |= 0x80;
+    }
+
+  if (bold_p)  c |= 0xc0;
+  if (blink_p) c = (c & ~0x40) | 0x80;
+  if (rev_p)   c |= 0xc0;
+
+  if (scroll_p)
+    a2_printc(st, c);
+  else
+    a2_printc_noscroll(st, c);
+}
+
+
+static void
+a2_vt100_printc (apple2_sim_t *sim, struct terminal_controller_data *state,
+                 unsigned char c)
+{
+  apple2_state_t *st=sim->st;
+  int cols = SCREEN_COLS;
+  int rows = SCREEN_ROWS;
+
+  int i;
+  int start, end;
+
+  switch (state->escstate)
+    {
+    case 0:
+      switch (c)
+        {
+        case 7: /* BEL */
+          /* Dummy case - we don't want the screensaver to beep */
+          /* #### But maybe this should flash the screen? */
+          break;
+        case 8: /* BS */
+          if (state->cursor_x > 0)
+            state->cursor_x--;
+          break;
+        case 9: /* HT */
+          if (state->cursor_x < cols - 8)
+            {
+              state->cursor_x = (state->cursor_x & ~7) + 8;
+            }
+          else
+            {
+              state->cursor_x = 0;
+              if (state->cursor_y < rows - 1)
+                state->cursor_y++;
+              else
+                a2_scroll (st);
+            }
+          break;
+        case 10: /* LF */
+        case 11: /* VT */
+        case 12: /* FF */
+          if (state->cursor_y < rows - 1)
+            state->cursor_y++;
+          else
+            a2_scroll (st);
+          break;
+        case 13: /* CR */
+          state->cursor_x = 0;
+          break;
+        case 14: /* SO */
+        case 15: /* SI */
+          /* Dummy case - there is one and only one font. */
+          break;
+        case 24: /* CAN */
+        case 26: /* SUB */
+          /* Dummy case - these interrupt escape sequences, so
+             they don't do anything in this state */
+          break;
+        case 27: /* ESC */
+          state->escstate = 1;
+          break;
+        case 127: /* DEL */
+          /* Dummy case - this is supposed to be ignored */
+          break;
+        case 155: /* CSI */
+          state->escstate = 2;
+          for(i = 0; i < NPAR; i++)
+            state->csiparam[i] = 0;
+          state->curparam = 0;
+          break;
+        default:
+          /* If the cursor is in column 39 and we print a character, then
+             that character shows up in column 39, and the cursor is no longer
+             visible on the screen (it's in "column 40".)  If another character
+             is printed, then that character shows up in column 0, and the
+             cursor moves to column 1.
+
+             This is empirically what xterm and gnome-terminal do, so that must
+             be the right thing.  (In xterm, the cursor vanishes, whereas; in
+             gnome-terminal, the cursor overprints the character in col 39.)
+           */
+          if (state->cursor_x >= cols)
+            {
+              state->cursor_x = 0;
+              if (state->cursor_y >= rows - 1)
+                a2_scroll (st);
+              else
+                state->cursor_y++;
+            }
+
+          a2_goto(st, state->cursor_y, state->cursor_x);  /* clips range */
+          a2_ascii_printc (st, c,
+                           state->termattrib.bf.bold,
+                           state->termattrib.bf.blink,
+                           state->termattrib.bf.rev,
+                           False);
+          state->cursor_x++;
+
+          break;
+        }
+      break;
+    case 1:
+      switch (c)
+        {
+        case 24: /* CAN */
+        case 26: /* SUB */
+          state->escstate = 0;
+          break;
+        case 'c': /* Reset */
+          a2_cls(st);
+          state->escstate = 0;
+          break;
+        case 'D': /* Linefeed */
+          if (state->cursor_y < rows - 1)
+            state->cursor_y++;
+          else
+            a2_scroll (st);
+          state->escstate = 0;
+          break;
+        case 'E': /* Newline */
+          state->cursor_x = 0;
+          state->escstate = 0;
+          break;
+        case 'M': /* Reverse newline */
+          if (state->cursor_y > 0)
+            state->cursor_y--;
+          state->escstate = 0;
+          break;
+        case '7': /* Save state */
+          state->saved_x = state->cursor_x;
+          state->saved_y = state->cursor_y;
+          state->escstate = 0;
+          break;
+        case '8': /* Restore state */
+          state->cursor_x = state->saved_x;
+          state->cursor_y = state->saved_y;
+          state->escstate = 0;
+          break;
+        case '[': /* CSI */
+          state->escstate = 2;
+          for(i = 0; i < NPAR; i++)
+            state->csiparam[i] = 0;
+          state->curparam = 0;
+          break;
+        case '%': /* Select charset */
+          /* No, I don't support UTF-8, since the apple2 font
+             isn't even Unicode anyway. We must still catch the
+             last byte, though. */
+        case '(':
+        case ')':
+          /* I don't support different fonts either - see above
+             for SO and SI */
+          state->escstate = 3;
+          break;
+        default:
+          /* Escape sequences not supported:
+           * 
+           * H - Set tab stop
+           * Z - Terminal identification
+           * > - Keypad change
+           * = - Other keypad change
+           * ] - OS command
+           */
+          state->escstate = 0;
+          break;
+        }
+      break;
+    case 2:
+      switch (c)
+        {
+        case 24: /* CAN */
+        case 26: /* SUB */
+          state->escstate = 0;
+          break;
+        case '0': case '1': case '2': case '3': case '4':
+        case '5': case '6': case '7': case '8': case '9':
+          if (state->curparam < NPAR)
+            state->csiparam[state->curparam] =
+              (state->csiparam[state->curparam] * 10) + (c - '0');
+          break;
+        case ';':
+          state->csiparam[++state->curparam] = 0;
+          break;
+        case '[':
+          state->escstate = 3;
+          break;
+        case '@':
+          for (i = 0; i < state->csiparam[0]; i++)
+            {
+              if(++state->cursor_x > cols)
+                {
+                  state->cursor_x = 0;
+                  if (state->cursor_y < rows - 1)
+                    state->cursor_y++;
+                  else
+                    a2_scroll (st);
+                }
+            }
+          state->escstate = 0;
+          break;
+        case 'F':
+          state->cursor_x = 0;
+        case 'A':
+          if (state->csiparam[0] == 0)
+            state->csiparam[0] = 1;
+          if ((state->cursor_y -= state->csiparam[0]) < 0)
+            state->cursor_y = 0;
+          state->escstate = 0;
+          break;
+        case 'E':
+          state->cursor_x = 0;
+        case 'e':
+        case 'B':
+          if (state->csiparam[0] == 0)
+            state->csiparam[0] = 1;
+          if ((state->cursor_y += state->csiparam[0]) >= rows)
+            state->cursor_y = rows - 1;
+          state->escstate = 0;
+          break;
+        case 'a':
+        case 'C':
+          if (state->csiparam[0] == 0)
+            state->csiparam[0] = 1;
+          if ((state->cursor_x += state->csiparam[0]) >= cols)
+            state->cursor_x = cols - 1;
+          state->escstate = 0;
+          break;
+        case 'D':
+          if (state->csiparam[0] == 0)
+            state->csiparam[0] = 1;
+          if ((state->cursor_x -= state->csiparam[0]) < 0)
+            state->cursor_x = 0;
+          state->escstate = 0;
+          break;
+        case 'd':
+          if ((state->cursor_y = (state->csiparam[0] - 1)) >= rows)
+            state->cursor_y = rows - 1;
+          state->escstate = 0;
+          break;
+        case '`':
+        case 'G':
+          if ((state->cursor_x = (state->csiparam[0] - 1)) >= cols)
+            state->cursor_x = cols - 1;
+          state->escstate = 0;
+          break;
+        case 'f':
+        case 'H':
+          if ((state->cursor_y = (state->csiparam[0] - 1)) >= rows)
+            state->cursor_y = rows - 1;
+          if ((state->cursor_x = (state->csiparam[1] - 1)) >= cols)
+            state->cursor_x = cols - 1;
+          if(state->cursor_y < 0)
+            state->cursor_y = 0;
+          if(state->cursor_x < 0)
+            state->cursor_x = 0;
+          state->escstate = 0;
+          break;
+        case 'J':
+          start = 0;
+          end = rows * cols;
+          if (state->csiparam[0] == 0)
+            start = cols * state->cursor_y + state->cursor_x;
+          if (state->csiparam[0] == 1)
+            end = cols * state->cursor_y + state->cursor_x;
+
+          a2_goto(st, state->cursor_y, state->cursor_x);
+          for (i = start; i < end; i++)
+            {
+              a2_ascii_printc(st, ' ', False, False, False, False);
+            }
+          state->escstate = 0;
+          break;
+        case 'K':
+          start = 0;
+          end = cols;
+          if (state->csiparam[0] == 0)
+            start = state->cursor_x;
+          if (state->csiparam[1] == 1)
+            end = state->cursor_x;
+
+          a2_goto(st, state->cursor_y, state->cursor_x);
+          for (i = start; i < end; i++)
+            {
+              a2_ascii_printc(st, ' ', False, False, False, False);
+            }
+          state->escstate = 0;
+          break;
+        case 'm': /* Set attributes */
+          for (i = 0; i <= state->curparam; i++)
+            {
+              switch(state->csiparam[i])
+                {
+                case 0:
+                  state->termattrib.w = 0;
+                  break;
+                case 1:
+                  state->termattrib.bf.bold = 1;
+                  break;
+                case 5:
+                  state->termattrib.bf.blink = 1;
+                  break;
+                case 7:
+                  state->termattrib.bf.rev = 1;
+                  break;
+                case 21:
+                case 22:
+                  state->termattrib.bf.bold = 0;
+                  break;
+                case 25:
+                  state->termattrib.bf.blink = 0;
+                  break;
+                case 27:
+                  state->termattrib.bf.rev = 0;
+                  break;
+                }
+            }
+          state->escstate = 0;
+          break;
+        case 's': /* Save position */
+          state->saved_x = state->cursor_x;
+          state->saved_y = state->cursor_y;
+          state->escstate = 0;
+          break;
+        case 'u': /* Restore position */
+          state->cursor_x = state->saved_x;
+          state->cursor_y = state->saved_y;
+          state->escstate = 0;
+          break;
+        case '?': /* DEC Private modes */
+          if ((state->curparam != 0) || (state->csiparam[0] != 0))
+            state->escstate = 0;
+          break;
+        default:
+          /* Known unsupported CSIs:
+           *
+           * L - Insert blank lines
+           * M - Delete lines (I don't know what this means...)
+           * P - Delete characters
+           * X - Erase characters (difference with P being...?)
+           * c - Terminal identification
+           * g - Clear tab stop(s)
+           * h - Set mode (Mainly due to its complexity and lack of good
+           docs)
+           * l - Clear mode
+           * m - Set mode (Phosphor is, per defenition, green on black)
+           * n - Status report
+           * q - Set keyboard LEDs
+           * r - Set scrolling region (too exhausting - noone uses this,
+           right?)
+          */
+          state->escstate = 0;
+          break;
+        }
+      break;
+    case 3:
+      state->escstate = 0;
+      break;
+    }
+  a2_goto(st, state->cursor_y, state->cursor_x);
+}
+
+
 /*
   It's fun to put things like "gdb" as the command. For one, it's
   amusing how the standard mumble (version, no warranty, it's
@@ -848,6 +1417,13 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
     sim->controller_data=calloc(sizeof(struct terminal_controller_data),1);
   mine=(struct terminal_controller_data *) sim->controller_data;
 
+  mine->meta_sends_esc_p = get_boolean_resource ("metaSendsESC", "Boolean");
+  mine->swap_bs_del_p    = get_boolean_resource ("swapBSDEL",    "Boolean");
+  mine->fast_p           = get_boolean_resource ("fast",         "Boolean");
+
+  sim->dec->key_handler = terminal_keypress_handler;
+  sim->dec->key_data = mine;
+
   switch(*stepno) {
 
   case 0:
@@ -858,17 +1434,19 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
     a2_goto(st,0,16);
     a2_prints(st, "APPLE ][");
     a2_goto(st,2,0);
+    mine->cursor_y = 2;
 
     if (! mine->pipe)
       launch_text_generator(mine);
 
-    *next_actiontime += 4.0;
+    if (! mine->fast_p)
+      *next_actiontime += 4.0;
     *stepno = 10;
     break;
 
   case 10:
     {
-      unsigned char buf[5];
+      unsigned char buf[1024];
       int nr,nwant;
       double elapsed;
 
@@ -879,28 +1457,17 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
       if (nwant<1) nwant=1;
       if (nwant>4) nwant=4;
 
+      if (mine->fast_p)
+        nwant = sizeof(buf)-1;
+
       nr=terminal_read(mine, buf, nwant);
       for (i=0; i<nr; i++) {
         c=buf[i];
-        if (c < 0)
-          ;
-        else if (c >= 'a' && c <= 'z')            /* upcase lower-case chars */
-          {
-            a2_printc(st, c&0xDF);
-          }
-        else if ((c >= 'A'+128) ||                    /* upcase and blink */
-                 (c < ' ' && c != 014 &&              /* high-bit & ctl chrs */
-                  c != '\r' && c != '\n' && c!='\t'))
-          {
-            a2_printc(st, (c & 0x1F) | 0x80);
-          }
-        else if (c >= 'A' && c <= 'Z')            /* invert upper-case chars */
-          {
-            a2_printc(st, c | 0x80);
-          }
-        else {
-          a2_printc(st, c);
-        }
+
+        if (mine->pid)
+          a2_vt100_printc (sim, mine, c);
+        else
+          a2_ascii_printc (st, c, False, False, False, True);
       }
     }
     break;

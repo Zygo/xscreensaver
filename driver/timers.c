@@ -1076,7 +1076,20 @@ proc_interrupts_activity_p (saver_info *si)
 
   while (fgets (new_line, sizeof(new_line)-1, f1))
     {
-      if (!checked_kbd && strstr (new_line, "keyboard"))
+      if (strchr (new_line, ','))
+        {
+          /* Ignore any line that has a comma on it: this is because
+             a setup like this:
+
+                 12:     930935          XT-PIC  usb-uhci, PS/2 Mouse
+
+             is really bad news.  It *looks* like we can note mouse
+             activity from that line, but really, that interrupt gets
+             fired any time any USB device has activity!  So we have
+             to ignore any shared IRQs.
+           */
+        }
+      else if (!checked_kbd && strstr (new_line, "keyboard"))
         {
           kbd_changed = (*last_kbd_line && !!strcmp (new_line, last_kbd_line));
           strcpy (last_kbd_line, new_line);

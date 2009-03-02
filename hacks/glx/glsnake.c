@@ -36,7 +36,6 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
-#include <libgen.h>
 
 /* angles */
 #define ZERO	  0.0
@@ -175,17 +174,17 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-    {(caddr_t *) &explode, "explode", "Explode", DEF_EXPLODE, t_Float},
-    {(caddr_t *) &angvel, "angvel", "Angular Velocity", DEF_ANGVEL, t_Float},
-    {(caddr_t *) &accel, "accel", "Acceleration", DEF_ACCEL, t_Float},
-    {(caddr_t *) &statictime, "statictime", "Static Time", DEF_STATICTIME, t_Int},
-    {(caddr_t *) &yangvel, "yangvel", "Angular Velocity about Y axis", DEF_YANGVEL, t_Float},
-    {(caddr_t *) &zangvel, "zangvel", "Angular Velocity about X axis", DEF_ZANGVEL, t_Float},
-    {(caddr_t *) &interactive, "interactive", "Interactive", DEF_INTERACTIVE, t_Bool},
-    {(caddr_t *) &altcolour, "altcolour", "Alternate Colour Scheme", DEF_ALTCOLOUR, t_Bool},
-    {(caddr_t *) &titles, "titles", "Titles", DEF_TITLES, t_Bool},
-    {(caddr_t *) &zoom, "zoom", "Zoom", DEF_ZOOM, t_Float},
-    {(caddr_t *) &wireframe, "wireframe", "Wireframe", DEF_WIREFRAME, t_Bool},
+    {&explode, "explode", "Explode", DEF_EXPLODE, t_Float},
+    {&angvel, "angvel", "Angular Velocity", DEF_ANGVEL, t_Float},
+    {&accel, "accel", "Acceleration", DEF_ACCEL, t_Float},
+    {&statictime, "statictime", "Static Time", DEF_STATICTIME, t_Int},
+    {&yangvel, "yangvel", "Angular Velocity about Y axis", DEF_YANGVEL, t_Float},
+    {&zangvel, "zangvel", "Angular Velocity about X axis", DEF_ZANGVEL, t_Float},
+    {&interactive, "interactive", "Interactive", DEF_INTERACTIVE, t_Bool},
+    {&altcolour, "altcolour", "Alternate Colour Scheme", DEF_ALTCOLOUR, t_Bool},
+    {&titles, "titles", "Titles", DEF_TITLES, t_Bool},
+    {&zoom, "zoom", "Zoom", DEF_ZOOM, t_Float},
+    {&wireframe, "wireframe", "Wireframe", DEF_WIREFRAME, t_Bool},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -1849,6 +1848,11 @@ float morph_percent(void) {
 	/* ang_diff / rot approaches 0, we want the complement */
 	retval = 1.0 - (ang_diff_max / rot_max);
 	/* protect against naan */
+
+/* Apparently some systems (Solaris) don't have isinf() */
+#undef isinf
+#define isinf(x) (((x) > 999999999999.9) || ((x) < -999999999999.9))
+
 	if (isnan(retval) || isinf(retval)) retval = 1.0;
     }
     /*printf("morph_pct = %f\n", retval);*/

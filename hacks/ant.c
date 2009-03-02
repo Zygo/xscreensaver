@@ -102,11 +102,11 @@ static XrmOptionDescRec opts[] =
 };
 static argtype vars[] =
 {
-	{(caddr_t *) & neighbors, (char *) "neighbors", (char *) "Neighbors", (char *) DEF_NEIGHBORS, t_Int},
-	{(caddr_t *) & truchet, (char *) "truchet", (char *) "Truchet", (char *) DEF_TRUCHET, t_Bool},
-	{(caddr_t *) & eyes, (char *) "eyes", (char *) "Eyes", (char *) DEF_EYES, t_Bool},
-   {(caddr_t *) & sharpturn, (char *) "sharpturn", (char *) "SharpTurn", (char *) DEF_SHARPTURN, t_Bool},
-	{(caddr_t *) & neighbors, "neighbors", "Neighbors", DEF_NEIGHBORS, t_Int}
+	{&neighbors, "neighbors", "Neighbors", DEF_NEIGHBORS, t_Int},
+	{&truchet,   "truchet",   "Truchet",   DEF_TRUCHET,   t_Bool},
+	{&eyes,      "eyes",      "Eyes",      DEF_EYES,      t_Bool},
+       {&sharpturn, "sharpturn", "SharpTurn", DEF_SHARPTURN, t_Bool},
+	{&neighbors, "neighbors", "Neighbors", DEF_NEIGHBORS, t_Int}
 };
 static OptionStruct desc[] =
 {

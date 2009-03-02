@@ -88,10 +88,10 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &which_engine, "engine", "Engine", DEF_ENGINE, t_String},
-  {(caddr_t *) &move,         "move",   "Move",   DEF_WANDER, t_Bool},
-  {(caddr_t *) &spin,         "spin",   "Spin",   DEF_SPIN,   t_Bool},
-  {(caddr_t *) &do_titles,    "titles", "Titles", DEF_TITLES, t_Bool},
+  {&which_engine, "engine", "Engine", DEF_ENGINE, t_String},
+  {&move,         "move",   "Move",   DEF_WANDER, t_Bool},
+  {&spin,         "spin",   "Spin",   DEF_SPIN,   t_Bool},
+  {&do_titles,    "titles", "Titles", DEF_TITLES, t_Bool},
 };
 
 ModeSpecOpt engine_opts = {countof(opts), opts, countof(vars), vars, NULL};

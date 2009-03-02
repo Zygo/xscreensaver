@@ -1174,7 +1174,7 @@ block in which it's invoked, since it declares variables: */
 	  {
 	    XEvent xe;
 	    while (XCheckWindowEvent
-		   (mydpy, mywindow, StructureNotifyMask | ExposureMask, &xe))
+		   (mydpy, mywindow, ExposureMask, &xe))
 	      switch (xe.type)
 		{
 		case ConfigureNotify:
@@ -1330,8 +1330,7 @@ main (int argc, char **argv)
   XStoreName (mydpy, mywindow, "vermiculate");
   XMapWindow (mydpy, mywindow);
   commonXinit ();
-  XSelectInput (mydpy, mywindow,
-		KeyPressMask | ExposureMask | StructureNotifyMask);
+  XSelectInput (mydpy, mywindow, KeyPressMask | ExposureMask);
 
 #undef ya_rand_init
   ya_rand_init (0);

@@ -98,9 +98,9 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &text_fmt,  "text",   "Text",   DEF_TEXT,   t_String},
-  {(caddr_t *) &do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
-  {(caddr_t *) &do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
+  {&text_fmt,  "text",   "Text",   DEF_TEXT,   t_String},
+  {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
+  {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};

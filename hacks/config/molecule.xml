@@ -44,7 +44,7 @@
     <option id="solid" _label="Solid"/>
   </select>
 
-  <file id="molecule" _label="PDB File" arg="-molecule %"/>
+  <file id="molecule" _label="PDB File or Directory" arg="-molecule %"/>
 
   <_description>
 Draws several different representations of molecules.  Some common

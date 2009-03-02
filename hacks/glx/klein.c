@@ -99,10 +99,10 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &rand,   "rand",   "Random",   DEF_RANDOM,   t_Bool},
-  {(caddr_t *) &do_spin,   "spin",   "Spin",   DEF_SPIN,   t_Bool},
-  {(caddr_t *) &do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
-  {(caddr_t *) &speed,     "speed",  "Speed",  DEF_SPEED,  t_Int},
+  {&rand,      "rand",   "Random", DEF_RANDOM, t_Bool},
+  {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_Bool},
+  {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
+  {&speed,     "speed",  "Speed",  DEF_SPEED,  t_Int},
 };
 
 

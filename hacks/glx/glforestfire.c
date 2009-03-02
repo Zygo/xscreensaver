@@ -196,12 +196,12 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-    {(caddr_t *) & do_texture, (char *) "texture", (char *) "Texture", (char *) DEF_TEXTURE, t_Bool},
-    {(caddr_t *) & do_fog, (char *) "fog", (char *) "Fog", (char *) DEF_FOG, t_Bool},
-    {(caddr_t *) & do_shadows, (char *) "shadows", (char *) "Shadows", (char *) DEF_SHADOWS, t_Bool},
-    {(caddr_t *) & do_trackmouse, (char *) "trackmouse", (char *) "TrackMouse", (char *) DEF_TRACKMOUSE, t_Bool},
-    {(caddr_t *) & do_wander, (char *) "wander", (char *) "Wander", (char *) DEF_WANDER, t_Bool},
-    {(caddr_t *) & num_trees, (char *) "trees", (char *) "Trees", (char *) DEF_TREES, t_Int},
+    {&do_texture,    "texture",    "Texture",    DEF_TEXTURE,    t_Bool},
+    {&do_fog,        "fog",        "Fog",        DEF_FOG,        t_Bool},
+    {&do_shadows,    "shadows",    "Shadows",    DEF_SHADOWS,    t_Bool},
+    {&do_trackmouse, "trackmouse", "TrackMouse", DEF_TRACKMOUSE, t_Bool},
+    {&do_wander,     "wander",     "Wander",     DEF_WANDER,     t_Bool},
+    {&num_trees,     "trees",      "Trees",      DEF_TREES,      t_Int},
 };
 
 static OptionStruct desc[] = {

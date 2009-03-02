@@ -8,7 +8,7 @@
   <_description>
 
 XAnalogTV shows a detailed simulation of an old TV set showing various
-test patters, with various picture artifacts like snow, bloom,
+test patterns, with various picture artifacts like snow, bloom,
 distortion, ghosting, and hash noise. It also simulates the TV warming
 up. It will cycle through 12 channels, some with images you give it,
 and some with color bars or nothing but static.

@@ -30,7 +30,7 @@ extern XtAppContext app;
 #define DEF_TEXTURE     "True"
 #define DEF_FOG         "True"
 
-#define DEFAULTS        "*delay:	10000           \n" \
+#define DEFAULTS        "*delay:	40000           \n" \
                         "*holdtime:   " DEF_HOLDTIME   "\n" \
                         "*changetime: " DEF_CHANGETIME "\n" \
 			"*wireframe:    False           \n" \
@@ -105,11 +105,11 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-    {(caddr_t *) &holdtime, "holdtime",  "Hold Time",  DEF_HOLDTIME,  t_Int},
-    {(caddr_t *) &changetime, "changetime",  "Change Time",  DEF_CHANGETIME, \
+    {&holdtime, "holdtime",  "Hold Time",  DEF_HOLDTIME,  t_Int},
+    {&changetime, "changetime",  "Change Time",  DEF_CHANGETIME, \
      t_Int},
-    {(caddr_t *) &do_texture, "texture",    "Texture", DEF_TEXTURE,   t_Bool},
-    {(caddr_t *) &do_fog,     "fog",        "Fog",     DEF_FOG,       t_Bool},
+    {&do_texture, "texture",    "Texture", DEF_TEXTURE,   t_Bool},
+    {&do_fog,     "fog",        "Fog",     DEF_FOG,       t_Bool},
 };
 
 static OptionStruct desc[] = {
@@ -123,7 +123,7 @@ ModeSpecOpt blocktube_opts = {countof(opts), opts, countof(vars), vars, desc};
 ModStruct blocktube_description =
     {"blocktube", "init_blocktube", "draw_blocktube", "release_blocktube",
      "draw_blocktube", "init_blocktube", (char *)NULL, &blocktube_opts,
-     10000, 30, 1, 1, 64, 1.0, "",
+     40000, 30, 1, 1, 64, 1.0, "",
      "A shifting tunnel of reflective blocks", 0, NULL};
 #endif /* USE_MODULES */
 
@@ -154,12 +154,17 @@ static Bool LoadGLTextures(ModeInfo *mi)
 
 static void newTargetColor(void)
 {
-    targetR = random() % 256;
-    targetG = random() % 256;
-    targetB = random() % 256;
-    deltaR = (targetR - currentR) / changetime;
-    deltaG = (targetG - currentG) / changetime;
-    deltaB = (targetB - currentB) / changetime;
+    int luminance = 0;
+
+    while (luminance <= 150) {
+        targetR = random() % 256;
+        targetG = random() % 256;
+        targetB = random() % 256;
+        deltaR = (targetR - currentR) / changetime;
+        deltaG = (targetG - currentG) / changetime;
+        deltaB = (targetB - currentB) / changetime;
+        luminance = 0.3 * targetR + 0.59 * targetG + 0.11 * targetB;
+    }
 }
 
 static void randomize_entity (entity *ent)

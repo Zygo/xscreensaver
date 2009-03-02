@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 
 /* I'm not sure if this is exactly the right test...
    Might __APPLE__ be defined if this is apple hardware, but not
@@ -192,6 +193,7 @@ kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
     C_Block mitkey;
     Bool success;
     char *newtkfile;
+    int fh = -1;
 
     /* temporarily switch to a new ticketfile.
        I'm not using tmpnam() because it isn't entirely portable.
@@ -199,7 +201,19 @@ kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
     newtkfile = malloc(80 * sizeof(char));
     memset(newtkfile, 0, sizeof(newtkfile));
 
-    sprintf(newtkfile, "/tmp/xscrn-%i", getpid());
+    sprintf(newtkfile, "/tmp/xscrn-%i.XXXXXX", getpid());
+
+    if( (fh = mkstemp(newtktfile)) < 0)
+    {
+        free(newtktfile);
+        return(False);
+    }
+    if( fchmod(fh, 0600) < 0)
+    {
+        free(newtktfile);
+        return(False);
+    }
+
 
     krb_set_tkt_string(newtkfile);
 
@@ -222,6 +236,7 @@ kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
     krb_set_tkt_string(tk_file);
     free(newtkfile);
     memset(mitkey, 0, sizeof(mitkey));
+    close(fh); /* #### tom: should the file be removed? */
     
 
     /* Did we verify successfully? */

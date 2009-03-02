@@ -113,6 +113,7 @@
 				starfish -root				    \\n\
 	     \"Starfish (blob)\" 	starfish -root -blob			    \\n\
 				munch -root				    \\n\
+				mismunch -root				    \\n\
 				fadeplot -root				    \\n\
 				coral -root -delay 0			    \\n\
 				mountain -root				    \\n\
@@ -199,6 +200,8 @@
 				apple2 -root				    \\n\
                                 bubbles -root				    \\n\
 				pong -root				    \\n\
+				wormhole -root				    \\n\
+				pacman -root				    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
 				webcollage -root -filter		      \
@@ -241,8 +244,8 @@
 	   GL:			flipscreen3d -root			    \\n\
 	   GL:			glsnake -root				    \\n\
 	   GL:			boxed -root				    \\n\
-	   GL:			glforestfire -root			    \\n\
--	   GL:			glforestfire -root -rain		    \\n\
+	   GL:	\"GLForestFire\"		glforestfire -root		    \\n\
+-	   GL:	\"GLForestFire (rain)\"	glforestfire -root -rain	    \\n\
 	   GL:			sballs -root				    \\n\
 	   GL:			cubenetic -root				    \\n\
 	   GL:			spheremonics -root			    \\n\
@@ -270,13 +273,14 @@
 	   GL:	    \"MirrorBlob (color only)\"				      \
                                 mirrorblob -root -colour -no-texture	    \\n\
 	   GL:			blinkbox -root				    \\n\
+	   GL:			noof -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
 				  -night 3 -wait 0 -timewarp 400.0 -pos	      \
 				  sunrel/38/-30				    \\n\
--				xplanetbg -xscreensaver -moonside             \
-                                  -markerfile earth -wait 1 -timewarp 400   \\n\
+-				xplanet -vroot -wait 1 -timewarp 90000        \
+                                  -label -origin moon			    \\n\
 -				xmountains -b -M -Z 0 -r 1		    \\n\
 -	\"XMountains (top)\"	xmountains -b -M -Z 0 -r 1 -m		    \\n\
 -                               xaos -root -autopilot -nogui -delay 10000     \
@@ -320,7 +324,7 @@
 "*passwd.passwdFont:		*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1",
 "*passwd.thermometer.width:	8",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright © 1991-2003 by",
+"*splash.body.label:		Copyright © 1991-2004 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",
@@ -466,6 +470,7 @@
 "*hacks.sballs.name:         SBalls",
 "*hacks.xdaliclock.name:     XDaliClock",
 "*hacks.xplanetbg.name:      XPlanet",
+"*hacks.xplanet.name:        XPlanet",
 "*hacks.xaos.name:           XaoS",
 "*hacks.xfishtank.name:      XFishTank",
 "*hacks.electricsheep.name:  ElectricSheep",

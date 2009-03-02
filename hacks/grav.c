@@ -60,8 +60,8 @@ static XrmOptionDescRec opts[] =
 };
 static argtype vars[] =
 {
-	{(caddr_t *) & decay, (char *) "decay", (char *) "Decay", (char *) DEF_DECAY, t_Bool},
-	{(caddr_t *) & trail, (char *) "trail", (char *) "Trail", (char *) DEF_TRAIL, t_Bool}
+	{&decay, "decay", "Decay", DEF_DECAY, t_Bool},
+	{&trail, "trail", "Trail", DEF_TRAIL, t_Bool}
 };
 static OptionStruct desc[] =
 {

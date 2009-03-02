@@ -17,7 +17,7 @@
   <select id="mode">
     <option id="random"   _label="Random Mode"/>
     <option id="seuss"    _label="Seuss Mode" arg-set="-mode seuss"/>
-    <option id="gradient" _label="Seuss Mode" arg-set="-mode gradient"/>
+    <option id="ramp"     _label="Ramp Mode"  arg-set="-mode ramp"/>
   </select>
 
   <number id="ncolors" type="slider" arg="-colors %"

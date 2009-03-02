@@ -75,9 +75,9 @@ static XrmOptionDescRec opts[] =
 };
 static argtype vars[] =
 {
-  {(caddr_t *) &tail_len, (char *) "eulertail",
+  {&tail_len, "eulertail",
    (char *) "EulerTail", (char *) DEF_EULERTAIL, t_Int},
-  {(caddr_t *) &power, (char *) "eulerpower",
+  {&power, "eulerpower",
    (char *) "EulerPower", (char *) "1", t_Float},
 };
 static OptionStruct desc[] =

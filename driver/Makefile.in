@@ -111,6 +111,9 @@ KERBEROS_OBJS	= passwd-kerberos.o
 PAM_SRCS	= passwd-pam.c
 PAM_OBJS	= passwd-pam.o
 
+PWHELPER_SRCS	= passwd-helper.c
+PWHELPER_OBJS	= passwd-helper.o
+
 LOCK_SRCS_1	= lock.c passwd.c
 LOCK_OBJS_1	= lock.o passwd.o
 NOLOCK_SRCS_1	= lock.c
@@ -240,7 +243,7 @@ VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 		  vms_axp.opt vms_axp_12.opt vms_decc.opt vms_decc_12.opt
 
 TARFILES	= $(EXTRAS) $(VMSFILES) $(SAVER_SRCS_1) \
-		  $(MOTIF_SRCS) $(GTK_SRCS) $(PWENT_SRCS) \
+		  $(MOTIF_SRCS) $(GTK_SRCS) $(PWENT_SRCS) $(PWHELPER_SRCS) \
 		  $(KERBEROS_SRCS) $(PAM_SRCS) $(LOCK_SRCS_1) $(DEMO_SRCS_1) \
 		  $(CMD_SRCS) $(GETIMG_SRCS_1) $(PDF2JPEG_SRCS) $(HDRS) \
 		  $(SCRIPTS_1) $(SCRIPTS_OSX) $(MEN_1) $(MEN_OSX) \

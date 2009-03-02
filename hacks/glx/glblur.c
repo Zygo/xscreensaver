@@ -115,9 +115,9 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
-  {(caddr_t *) &do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
-  {(caddr_t *) &blursize,  "blurSize","BlurSize", DEF_BLURSIZE,  t_Int},
+  {&do_spin,   "spin",   "Spin",   DEF_SPIN,   t_String},
+  {&do_wander, "wander", "Wander", DEF_WANDER, t_Bool},
+  {&blursize,  "blurSize","BlurSize", DEF_BLURSIZE,  t_Int},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};

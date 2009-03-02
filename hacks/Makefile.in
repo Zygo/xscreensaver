@@ -54,6 +54,7 @@ HACK_LIBS	= $(HACK_PRE)            @HACK_LIBS@ $(HACK_POST)
 XPM_LIBS	= $(HACK_PRE) @XPM_LIBS@ @HACK_LIBS@ $(HACK_POST)
 JPEG_LIBS	= @JPEG_LIBS@
 XLOCK_LIBS	= $(HACK_LIBS)
+PTY_LIBS	= @PTY_LIBS@
 
 UTILS_SRC	= $(srcdir)/../utils
 UTILS_BIN	= ../utils
@@ -99,7 +100,8 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  euler2d.c juggle.c polyominoes.c thornbird.c fluidballs.c \
 		  anemone.c halftone.c metaballs.c eruption.c popsquares.c \
 		  barcode.c piecewise.c cloudlife.c fontglide.c apple2.c \
-		  apple2-main.c analogtv.c xanalogtv.c pong.c
+		  apple2-main.c analogtv.c xanalogtv.c pong.c wormhole.c \
+		  mismunch.c pacman.c
 SCRIPTS		= vidwhacker webcollage ljlatest
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -125,7 +127,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  euler2d.o juggle.o polyominoes.o thornbird.o fluidballs.o \
 		  anemone.o halftone.o metaballs.o eruption.o popsquares.o \
 		  barcode.o piecewise.o cloudlife.o fontglide.o apple2.o \
-		  apple2-main.o analogtv.o xanalogtv.o pong.o
+		  apple2-main.o analogtv.o xanalogtv.o pong.o wormhole.o \
+		  mismunch.o pacman.p
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -143,7 +146,8 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  whirlygig speedmine vermiculate twang apollonian euler2d \
 		  juggle polyominoes thornbird  fluidballs anemone halftone \
 		  metaballs eruption popsquares barcode piecewise cloudlife \
-		  fontglide apple2 xanalogtv pong \
+		  fontglide apple2 xanalogtv pong  wormhole mismunch \
+		  pacman \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -159,7 +163,8 @@ XSHM_OBJS	= $(UTILS_BIN)/xshm.o
 XDBE_OBJS	= $(UTILS_BIN)/xdbe.o
 
 HDRS		= bubbles.h screenhack.h xlockmore.h xlockmoreI.h automata.h \
-		  bumps.h xpm-pixmap.h apple2.h analogtv.h
+		  bumps.h xpm-pixmap.h apple2.h analogtv.h \
+		  pacman.h pacman_ai.h pacman_level.h
 MEN		= anemone.man ant.man apollonian.man attraction.man \
 	          blaster.man blitspin.man bouboule.man braid.man bsod.man \
 	          bubbles.man bumps.man ccurve.man compass.man coral.man \
@@ -186,9 +191,11 @@ MEN		= anemone.man ant.man apollonian.man attraction.man \
 	          xrayswarm.man xspirograph.man xsublim.man xteevee.man \
 	          zoom.man halftone.man eruption.man metaballs.man \
 		  barcode.man piecewise.man cloudlife.man ljlatest.man \
-		  fontglide.man apple2.man xanalogtv.man pong.man
+		  fontglide.man apple2.man xanalogtv.man pong.man \
+		  wormhole.man mismunch.man pacman.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
+		  euler2d.tex \
 		  config/README \
 		  config/$(STAR).xml \
 		  images/$(STAR).xbm \
@@ -635,7 +642,7 @@ bsod:	 	bsod.o		$(HACK_OBJS) $(GRAB) $(APPLE2) $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(APPLE2) $(XPM) $(XPM_LIBS)
 
 apple2:	 	apple2.o apple2-main.o	$(HACK_OBJS) $(ATV) $(GRAB)
-	$(CC_HACK) -o $@ $@.o	apple2-main.o $(HACK_OBJS) $(ATV) $(GRAB) $(XPM_LIBS)
+	$(CC_HACK) -o $@ $@.o	apple2-main.o $(HACK_OBJS) $(ATV) $(GRAB) $(XPM_LIBS) $(PTY_LIBS)
 
 xanalogtv: 	xanalogtv.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM) $(XPM_LIBS) $(HACK_LIBS)
@@ -677,7 +684,7 @@ critical:	critical.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
 
 phosphor:	phosphor.o	$(HACK_OBJS) $(COL)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS) $(PTY_LIBS)
 
 xmatrix:	xmatrix.o	$(HACK_OBJS) $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM) $(XPM_LIBS)
@@ -769,6 +776,11 @@ fontglide:	fontglide.o	$(HACK_OBJS) $(DBE)
 pong: 	pong.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM) $(XPM_LIBS) $(HACK_LIBS)
 
+wormhole: 	wormhole.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+mismunch:	mismunch.o	$(HACK_OBJS) $(COL) $(SPL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -885,6 +897,9 @@ polyominoes:	polyominoes.o	$(XLOCK_OBJS) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
 
 thornbird:	thornbird.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+pacman:		pacman.o	$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
 
@@ -1183,6 +1198,8 @@ maze.o: ../config.h
 maze.o: $(srcdir)/screenhack.h
 metaballs.o: ../config.h
 metaballs.o: $(srcdir)/screenhack.h
+mismunch.o: ../config.h
+mismunch.o: $(srcdir)/screenhack.h
 moire2.o: ../config.h
 moire2.o: $(srcdir)/screenhack.h
 moire.o: ../config.h
@@ -1206,6 +1223,13 @@ noseguy.o: $(srcdir)/images/noseguy/nose-r1.xpm
 noseguy.o: $(srcdir)/images/noseguy/nose-r2.xpm
 noseguy.o: $(srcdir)/screenhack.h
 noseguy.o: $(srcdir)/xpm-pixmap.h
+pacman.o: ../config.h
+pacman.o: $(srcdir)/pacman_ai.h
+pacman.o: $(srcdir)/pacman.h
+pacman.o: $(srcdir)/pacman_level.h
+pacman.o: $(srcdir)/screenhack.h
+pacman.o: $(srcdir)/xlockmore.h
+pacman.o: $(srcdir)/xlockmoreI.h
 pedal.o: ../config.h
 pedal.o: $(srcdir)/screenhack.h
 penetrate.o: ../config.h
@@ -1314,6 +1338,8 @@ whirlwindwarp.o: ../config.h
 whirlwindwarp.o: $(srcdir)/screenhack.h
 whirlygig.o: ../config.h
 whirlygig.o: $(srcdir)/screenhack.h
+wormhole.o: ../config.h
+wormhole.o: $(srcdir)/screenhack.h
 worm.o: ../config.h
 worm.o: $(srcdir)/screenhack.h
 worm.o: $(srcdir)/xlockmore.h

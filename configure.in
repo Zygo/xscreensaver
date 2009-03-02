@@ -830,7 +830,6 @@ AC_HEADER_SYS_WAIT
 AC_HEADER_DIRENT
 AC_GETTIMEOFDAY_ARGS
 AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv sbrk)
-
 AC_CHECK_FUNCS(sigaction syslog realpath setrlimit)
 AC_CHECK_ICMP
 AC_CHECK_ICMPHDR
@@ -877,6 +876,7 @@ AC_SUBST(GETTEXT_PACKAGE)
 
 ALL_LINGUAS="ca da de es et fi fr hu it ja ko nl no pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
 AM_GLIB_GNU_GETTEXT
+MKINSTALLDIRS="$INSTALL_DIRS"
 
 
 ###############################################################################
@@ -1259,12 +1259,12 @@ if test "$with_xinerama" = yes; then
 
     # first look in -lXext
     have_xinerama=no
-    AC_CHECK_X_LIB(Xext, XineramaQueryExtension, [have_xinerama=yes], [true],
+    AC_CHECK_X_LIB(Xext, XineramaQueryScreens, [have_xinerama=yes], [true],
                   -lXext -lX11)
 
     # if that failed, look in -lXinerama (this is where it is in XFree86 4.1.)
     if test "$have_xinerama" = no; then
-      AC_CHECK_X_LIB(Xinerama, XineramaQueryExtension,
+      AC_CHECK_X_LIB(Xinerama, XineramaQueryScreens,
                      [have_xinerama=yes; SAVER_LIBS="$SAVER_LIBS -lXinerama"],
                      [true], -lXext -lX11)
     fi
@@ -1563,6 +1563,13 @@ if test "$enable_locking" = yes -a "$with_pam" = yes; then
     # libpam typically requires dlopen and dlsym.  On FreeBSD,
     # those are in libc.  On Linux and Solaris, they're in libdl.
     AC_CHECK_LIB(dl, dlopen, [PASSWD_LIBS="${PASSWD_LIBS} -ldl"])
+
+    # On Linux, sigtimedwait() is in libc; on Solaris, it's in librt.
+    have_timedwait=no
+    AC_CHECK_LIB(c, sigtimedwait, [have_timedwait=yes])
+    if test "$have_timedwait" = no ; then
+      AC_CHECK_LIB(rt, sigtimedwait, [PASSWD_LIBS="${PASSWD_LIBS} -lrt"])
+    fi
 
     AC_MSG_CHECKING(how to call pam_strerror)
     AC_CACHE_VAL(ac_cv_pam_strerror_args,
@@ -1887,6 +1894,44 @@ elif test "$have_shadow_hpux" = yes ; then
 elif test "$have_shadow" = yes ; then
   AC_DEFINE(HAVE_SHADOW_PASSWD)
 fi
+
+
+###############################################################################
+#
+#       Check for external password helper
+#	On SuSE, instead of having xscreensaver be a setuid program, they
+#	fork an external program that takes the password on stdin, and
+#	returns true if that password is a valid one.  Then only that
+#	smaller program needs to be setuid.
+#
+#       (Note that this external program is not a GUI: the GUI is still
+#	all in xscreensaver itself; the external program just does auth.)
+#
+###############################################################################
+
+have_passwd_helper=no
+with_passwd_helper_req=unspecified
+
+AC_ARG_WITH(passwd-helper,
+[  --with-passwd-helper    Include support for an external password
+                          verification helper program.],
+  [with_passwd_helper="$withval"; with_passwd_helper_req="$withval"],[with_passwd_helper=no])
+# no HANDLE_X_PATH_ARG for this one
+
+if test "$enable_locking" = no ; then
+  with_passwd_helper_req=no
+  with_passwd_helper=no
+fi
+
+case "$with_passwd_helper" in
+  ""|no) : ;;
+  /*)
+    AC_DEFINE_UNQUOTED(PASSWD_HELPER_PROGRAM, "$with_passwd_helper")
+    have_passwd_helper=yes;;
+  *)
+    echo "error: --with-passwd-helper needs full pathname of helper (not '$with_passwd_helper')." >&2
+    exit 1
+esac
 
 
 ###############################################################################
@@ -3141,6 +3186,25 @@ fi
 
 ###############################################################################
 #
+#       Check for pty support for 'phosphor'
+#
+###############################################################################
+
+PTY_LIBS=
+have_ptys=no
+AC_CHECK_X_HEADER(pty.h, [have_ptys=yes])
+if test "$have_ptys" = yes; then
+  # we have the header, now check for the library
+  have_ptys=no
+  AC_CHECK_X_LIB(util, forkpty,
+                 [have_ptys=yes
+                  PTY_LIBS="-lutil"
+                  AC_DEFINE(HAVE_FORKPTY)])
+fi
+
+
+###############################################################################
+#
 #       Check for the XSHM server extension.
 #
 ###############################################################################
@@ -3417,6 +3481,10 @@ if test "$have_pam" = yes; then
   PASSWD_OBJS="$PASSWD_OBJS \$(PAM_OBJS)"
   INSTALL_PAM="install-pam"
 fi
+if test "$have_passwd_helper" = yes; then
+  PASSWD_SRCS="$PASSWD_SRCS \$(PWHELPER_SRCS)"
+  PASSWD_OBJS="$PASSWD_OBJS \$(PWHELPER_OBJS)"
+fi
   PASSWD_SRCS="$PASSWD_SRCS \$(PWENT_SRCS)"
   PASSWD_OBJS="$PASSWD_OBJS \$(PWENT_OBJS)"
 
@@ -3593,6 +3661,7 @@ AC_SUBST(XML_LIBS)
 AC_SUBST(JPEG_LIBS)
 AC_SUBST(HACK_LIBS)
 AC_SUBST(XPM_LIBS)
+AC_SUBST(PTY_LIBS)
 AC_SUBST(GL_LIBS)
 AC_SUBST(GLE_LIBS)
 AC_SUBST(XDPMS_LIBS)
