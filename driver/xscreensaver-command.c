@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-1994 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver-command, Copyright (c) 1991-1995 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -82,7 +82,7 @@ find_screensaver_window (dpy, progname)
 	  && type != None)
 	return kids[i];
     }
-  fprintf (stderr, "%s: no screensaver is running on display %s", progname,
+  fprintf (stderr, "%s: no screensaver is running on display %s\n", progname,
 	   DisplayString (dpy));
   exit (1);
 }
@@ -91,11 +91,7 @@ find_screensaver_window (dpy, progname)
 #define USAGE() \
  { fprintf (stderr, usage, argv[0], screensaver_version); exit (1); }
 
-#ifndef VMS
 void
-#else
-int
-#endif
 main (argc, argv)
      int argc;
      char **argv;

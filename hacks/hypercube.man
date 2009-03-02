@@ -3,7 +3,7 @@
 hypercube - 2d projection of a 4d object
 .SH SYNOPSIS
 .B hypercube
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-color[0-7] \fIcolor\fP] [\-xy \fIfloat\fP] [\-xz \fIfloat\fP] [\-yz \fIfloat\fP] [\-xw \fIfloat\fP] [\-yw \fIfloat\fP] [\-zw \fIfloat\fP] [\-observer-z \fIint\fP] [\-window] [\-root] [\-mono] [\-delay \fIusecs\fP]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-color[0-7] \fIcolor\fP] [\-xy \fIfloat\fP] [\-xz \fIfloat\fP] [\-yz \fIfloat\fP] [\-xw \fIfloat\fP] [\-yw \fIfloat\fP] [\-zw \fIfloat\fP] [\-observer-z \fIint\fP] [\-delay \fIusecs\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP]
 .SH DESCRIPTION
 The \fIhypercube\fP program displays a wireframe projection of a hypercube
 which is rotating at user-specified rates around any or all of its four axes.
@@ -20,44 +20,51 @@ Draw on the root window.
 .B \-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-delay microseconds
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
 Default 100000, or about 1/10th second.
 .TP 8
-.B \-observer-z int
+.B \-observer-z \fIint\fP
 How far away the observer is from the center of the cube (the cube is one
 unit per side.)  Default 5.
 .TP 8
-.B \-color0 color
+.B \-color0 \fIcolor\fP
 .TP 8
-.B \-color1 color
+.B \-color1 \fIcolor\fP
 .TP 8
-.B \-color2 color
+.B \-color2 \fIcolor\fP
 .TP 8
-.B \-color3 color
+.B \-color3 \fIcolor\fP
 .TP 8
-.B \-color4 color
+.B \-color4 \fIcolor\fP
 .TP 8
-.B \-color5 color
+.B \-color5 \fIcolor\fP
 .TP 8
-.B \-color6 color
+.B \-color6 \fIcolor\fP
 .TP 8
-.B \-color7 color
+.B \-color7 \fIcolor\fP
 The colors used to draw the line segments bordering the eight faces of
 the cube.  Some of the faces have only two of their border-lines drawn in
 the specified color, and some have all four.
 .TP 8
-.B \-xw float
+.B \-xw \fIfloat\fP
 .TP 8
-.B \-xy float
+.B \-xy \fIfloat\fP
 .TP 8
-.B \-xz float
+.B \-xz \fIfloat\fP
 .TP 8
-.B \-yw float
+.B \-yw \fIfloat\fP
 .TP 8
-.B \-yz float
+.B \-yz \fIfloat\fP
 .TP 8
-.B \-zw float
+.B \-zw \fIfloat\fP
 The amount that the cube should be rotated around the specified axis at
 each frame of the animation, expressed in radians.  These should be small
 floating-point values (less than 0.05 works best.)  Default: xy=0.01,

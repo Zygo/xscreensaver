@@ -3,7 +3,7 @@
 decayscreen - make a screen meltdown.
 .SH SYNOPSIS
 .B decayscreen
-[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-mono] [\-delay \fIusecs\fP]
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIusecs\fP]
 .SH DESCRIPTION
 The \fIdecayscreen\fP program creates a melting effect by randomly
 shifting rectangles around the screen.
@@ -20,7 +20,14 @@ Draw on the root window.
 .B \-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-delay microseconds
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fImicroseconds\fP
 Slow it down.
 .SH ENVIRONMENT
 .PP

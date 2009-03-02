@@ -35,10 +35,6 @@
 # define P(x)()
 #endif
 
-#ifdef VMS
-typedef unsigned int u_int;
-#endif
-
 typedef struct _spline
 {
   /* input */

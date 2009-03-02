@@ -60,18 +60,8 @@
 #endif
 
 #include <sys/time.h>		/* sys/resource.h needs this for timeval */
-#ifndef VMS
 #include <sys/resource.h>	/* for setpriority() and PRIO_PROCESS */
 #include <sys/wait.h>		/* for waitpid() and associated macros */
-#else
-#include "resource.h"
-#include "wait.h"
-#include <processes.h>
-#define pid_t int
-#define waitpid  wait
-#define fork vfork
-#define random rand
-#endif
 #include <signal.h>		/* for the signal names */
 
 extern char **environ;		/* why isn't this in some header file? */
@@ -158,26 +148,21 @@ exec_screenhack (command)
      what I've seen in Emacs, dealing with process groups isn't especially
      portable.)
    */
-#ifndef VMS
   tmp = command;
   command = (char *) malloc (strlen (tmp) + 6);
   memcpy (command, "exec ", 5);
   memcpy (command + 5, tmp, strlen (tmp) + 1);
-#endif
 
   /* Invoke the shell as "/bin/sh -c 'exec prog -arg -arg ...'" */
-
-#ifndef VMS
   av [ac++] = shell;
   av [ac++] = "-c";
-#endif
   av [ac++] = command;
   av [ac++] = 0;
   
   if (verbose_p)
     printf ("%s: spawning \"%s\" in pid %d.\n", progname, command, getpid ());
 
-#if defined(SYSV) || defined(SVR4) || defined(__hpux) || defined(VMS)
+#if defined(SYSV) || defined(SVR4) || defined(__hpux)
   {
     int old_nice = nice (0);
     int n = nice_inferior - old_nice;
@@ -208,11 +193,7 @@ exec_screenhack (command)
   /* Now overlay the current process with /bin/sh running the command.
      If this returns, it's an error.
    */
-#ifndef VMS
   execve (av [0], av, environ);
-#else
-  system(command);
-#endif
 
   sprintf (buf, "%s: %sexecve() failed", progname, (verbose_p ? "## " : ""));
   perror (buf);
@@ -239,9 +220,6 @@ await_child_death (killed)
   killing = 1;
   if (! pid)
     return;
-#ifdef VMS
-    return;
-#else
 
   do
     {
@@ -307,7 +285,6 @@ await_child_death (killed)
   killing = 0;
   if (suspended_p != True)
     pid = 0;
-#endif /* VMS */
 }
 
 static char *
@@ -457,7 +434,6 @@ suspend_screenhack (suspend_p)
   suspending = suspend_p;
   if (! pid)
     ;
-#ifndef VMS
   else if (kill (pid, (suspend_p ? SIGSTOP : SIGCONT)) < 0)
     {
       char buf [255];
@@ -470,7 +446,6 @@ suspend_screenhack (suspend_p)
   else if (verbose_p)
     printf ("%s: %s pid %d.\n", progname,
 	    (suspend_p ? "suspending" : "resuming"), pid);
-#endif
 }
 
 
@@ -542,10 +517,8 @@ hack_environment ()
   i = strlen (buf);
   s = (char *) malloc (i+1);
   strncpy (s, buf, i+1);
-#ifndef VMS
   if (putenv (s))
     abort ();
-#endif
 }
 
 

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1994 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,10 +13,13 @@
 
 /*   ========================================================================
  *   First we wait until the keyboard and mouse become idle for the specified
- *   amount of time.  We do this by periodically checking with the XIdle
- *   server extension.
+ *   amount of time.  We do this in one of three different ways: periodically
+ *   checking with the XIdle server extension; selecting key and mouse events
+ *   on (nearly) all windows; or by waiting for the MIT-SCREEN-SAVER extension
+ *   to send us a "you are idle" event.
  *
- *   Then, we map a full screen black window.  
+ *   Then, we map a full screen black window (or, in the case of the 
+ *   MIT-SCREEN-SAVER extension, use the one it gave us.)
  *
  *   We place a __SWM_VROOT property on this window, so that newly-started
  *   clients will think that this window is a "virtual root" window.
@@ -61,15 +64,15 @@
  *   and a few other things.  The included "xscreensaver_command" program
  *   sends these messsages.
  *
- *   If we don't have the XIdle extension, then we do the XAutoLock trick:
- *   notice every window that gets created, and wait 30 seconds or so until
- *   its creating process has settled down, and then select KeyPress events on
- *   those windows which already select for KeyPress events.  It's important
- *   that we not select KeyPress on windows which don't select them, because
- *   that would interfere with event propagation.  This will break if any
- *   program changes its event mask to contain KeyRelease or PointerMotion
- *   more than 30 seconds after creating the window, but that's probably
- *   pretty rare.
+ *   If we don't have the XIdle or MIT-SCREENSAVER extensions, then we do the
+ *   XAutoLock trick: notice every window that gets created, and wait 30
+ *   seconds or so until its creating process has settled down, and then
+ *   select KeyPress events on those windows which already select for
+ *   KeyPress events.  It's important that we not select KeyPress on windows
+ *   which don't select them, because that would interfere with event
+ *   propagation.  This will break if any program changes its event mask to
+ *   contain KeyRelease or PointerMotion more than 30 seconds after creating
+ *   the window, but that's probably pretty rare.
  *   
  *   The reason that we can't select KeyPresses on windows that don't have
  *   them already is that, when dispatching a KeyPress event, X finds the
@@ -90,15 +93,15 @@
  *   "client changing event mask" problem that the KeyPress events hack does.
  *   I think polling is more reliable.
  *
- *   None of this crap happens if we're using the XIdle extension, so install
- *   it if the description above sounds just too flaky to live.  It is, but
- *   those are your choices.
+ *   None of this crap happens if we're using one of the extensions, so install
+ *   one of them if the description above sounds just too flaky to live.  It
+ *   is, but those are your choices.
  *
- *   A third idle-detection option could be implement (but is not): when running
- *   on the console display ($DISPLAY is `localhost`:0) and we're on a machine
- *   where /dev/tty and /dev/mouse have reasonable last-modification times, we
- *   could just stat those.  But the incremental benefit of implementing this
- *   is really small, so forget I said anything.
+ *   A third idle-detection option could be implement (but is not): when
+ *   running on the console display ($DISPLAY is `localhost`:0) and we're on a
+ *   machine where /dev/tty and /dev/mouse have reasonable last-modification
+ *   times, we could just stat those.  But the incremental benefit of
+ *   implementing this is really small, so forget I said anything.
  *
  *   Debugging hints:
  *     - Have a second terminal handy.
@@ -113,8 +116,7 @@
  *       of the keypress events it's selecting for.  This can make your X
  *       server wedge with "no more input buffers."
  *       
- *   ========================================================================
- */
+ *   ======================================================================== */
 
 #if __STDC__
 #include <stdlib.h>
@@ -126,14 +128,19 @@
 #include <X11/Xatom.h>
 #include <X11/Intrinsic.h>
 #include <X11/Xos.h>
+#include <X11/Xmu/Error.h>
 
-#ifdef HAVE_XIDLE
+#ifdef HAVE_XIDLE_EXTENSION
 #include <X11/extensions/xidle.h>
-#endif
+#endif /* HAVE_XIDLE_EXTENSION */
+
+#ifdef HAVE_SAVER_EXTENSION
+#include <X11/extensions/scrnsaver.h>
+#endif /* HAVE_SAVER_EXTENSION */
 
 #include "xscreensaver.h"
 
-#if defined(SVR4) || defined(SYSV) || defined(VMS)
+#if defined(SVR4) || defined(SYSV)
 # define srandom(i) srand((unsigned int)(i))
 #else
 # ifndef __linux
@@ -150,7 +157,7 @@ extern unsigned int get_seconds_resource P((char *, char *));
 extern Visual *get_visual_resource P((Display *, char *, char *));
 extern int get_visual_depth P((Display *, Visual *));
 
-extern void notice_events_timer P((XtPointer closure, void *timer));
+extern void notice_events_timer P((XtPointer closure, XtIntervalId *timer));
 extern void cycle_timer P((void *junk1, XtPointer junk2));
 extern void activate_lock_timer P((void *junk1, XtPointer junk2));
 extern void sleep_until_idle P((Bool until_idle_p));
@@ -165,6 +172,7 @@ extern void ungrab_keyboard_and_mouse P((void));
 
 extern void save_argv P((int argc, char **argv));
 
+extern void initialize_stderr P((void));
 
 char *screensaver_version;
 char *progname;
@@ -191,7 +199,8 @@ extern Time pointer_timeout;
 extern Time notice_events_timeout;
 extern XtIntervalId lock_id, cycle_id;
 
-Bool use_xidle;
+Bool use_xidle_extension;
+Bool use_saver_extension;
 Bool verbose_p;
 Bool lock_p, locked_p;
 
@@ -210,6 +219,11 @@ extern char *nolock_reason;
 extern Bool demo_mode_p;
 extern Bool dbox_up_p;
 extern int next_mode_p;
+
+#ifdef HAVE_SAVER_EXTENSION
+int saver_ext_event_number = 0;
+int saver_ext_error_number = 0;
+#endif /* HAVE_SAVER_EXTENSION */
 
 static time_t initial_delay;
 
@@ -236,25 +250,25 @@ extern void demo_mode P((void));
 #endif
 
 static XrmOptionDescRec options [] = {
-  { "-timeout",		".timeout",	XrmoptionSepArg, 0 },
-  { "-idelay",		".initialDelay",XrmoptionSepArg, 0 },
-  { "-cycle",		".cycle",	XrmoptionSepArg, 0 },
-  { "-visual",		".visualID",	XrmoptionSepArg, 0 },
-  { "-lock-timeout",	".lockTimeout",	XrmoptionSepArg, 0 },
-  { "-verbose",		".verbose",	XrmoptionNoArg, "on" },
-  { "-silent",		".verbose",	XrmoptionNoArg, "off" },
-  { "-xidle",		".xidle",	XrmoptionNoArg, "on" },
-  { "-no-xidle",	".xidle",	XrmoptionNoArg, "off" },
-  { "-lock",		".lock",	XrmoptionNoArg, "on" },
-  { "-no-lock",		".lock",	XrmoptionNoArg, "off" }
+  { "-timeout",		   ".timeout",		XrmoptionSepArg, 0 },
+  { "-cycle",		   ".cycle",		XrmoptionSepArg, 0 },
+  { "-idelay",		   ".initialDelay",	XrmoptionSepArg, 0 },
+  { "-visual",		   ".visualID",		XrmoptionSepArg, 0 },
+  { "-lock-timeout",	   ".lockTimeout",	XrmoptionSepArg, 0 },
+  { "-install",		   ".installColormap",	XrmoptionNoArg, "on" },
+  { "-no-install",	   ".installColormap",	XrmoptionNoArg, "off" },
+  { "-verbose",		   ".verbose",		XrmoptionNoArg, "on" },
+  { "-silent",		   ".verbose",		XrmoptionNoArg, "off" },
+  { "-xidle-extension",	   ".xidleExtension",	XrmoptionNoArg, "on" },
+  { "-no-xidle-extension", ".xidleExtension",	XrmoptionNoArg, "off" },
+  { "-ss-extension",	   ".saverExtension",	XrmoptionNoArg, "on" },
+  { "-no-ss-extension",	   ".saverExtension",	XrmoptionNoArg, "off" },
+  { "-lock",		   ".lock",		XrmoptionNoArg, "on" },
+  { "-no-lock",		   ".lock",		XrmoptionNoArg, "off" }
 };
 
 static char *defaults[] = {
-#ifndef VMS
 #include "XScreenSaver.ad.h"
-#else
-#include "XScreenSaver_ad.h"
-#endif
  0
 };
 
@@ -262,21 +276,26 @@ static void
 do_help P((void))
 {
   printf ("\
-xscreensaver %s, copyright (c) 1991-1994 by Jamie Zawinski <jwz@mcom.com>.\n\
+xscreensaver %s, copyright (c) 1991-1995 by Jamie Zawinski <jwz@mcom.com>.\n\
 The standard Xt command-line options are accepted; other options include:\n\
 \n\
-    -timeout <minutes>		when the screensaver should activate\n\
-    -cycle <minutes>		how long to let each hack run\n\
-    -idelay <seconds>		how long to sleep before startup\n\
-    -demo			enter interactive demo mode on startup\n\
-    -verbose			be loud\n\
-    -silent			don't\n\
-    -xidle			use the XIdle server extension\n\
-    -no-xidle			don't\n\
-    -lock			require a password before deactivating\n\
-    -no-lock			don't\n\
-    -lock-timeout <minutes>	grace period before locking; default 0\n\
-    -help			this message\n\
+    -timeout <minutes>         When the screensaver should activate.\n\
+    -cycle <minutes>           How long to let each hack run.\n\
+    -idelay <seconds>          How long to sleep before startup.\n\
+    -visual <id-or-class>      Which X visual to run on.\n\
+    -demo                      Enter interactive demo mode on startup.\n\
+    -install                   Install a private colormap.\n\
+    -no-install                Don't.\n\
+    -verbose                   Be loud.\n\
+    -silent                    Don't.\n\
+    -xidle-extension           Use the R5 XIdle server extension.\n\
+    -no-xidle-extension        Don't.\n\
+    -saver-extension           Use the R6 MIT-SCREEN-SAVER server extension.\n\
+    -no-saver-extension        Don't.\n\
+    -lock                      Require a password before deactivating.\n\
+    -no-lock                   Don't.\n\
+    -lock-timeout <minutes>    Grace period before locking; default 0.\n\
+    -help                      This message.\n\
 \n\
 Use the `xscreensaver-command' program to control a running screensaver.\n\
 \n\
@@ -286,14 +305,15 @@ more details.\n\n",
 	  screensaver_version);
 
 #ifdef NO_LOCKING
-  printf("Support for locking was not enabled at compile-time.\n");
+  printf ("Support for locking was not enabled at compile-time.\n");
 #endif
 #ifdef NO_DEMO_MODE
-  printf("Support for demo mode was not enabled at compile-time.\n");
+  printf ("Support for demo mode was not enabled at compile-time.\n");
 #endif
-#ifndef HAVE_XIDLE
-  printf("Support for the XIdle extension was not enabled at compile-time.\n");
-#endif
+#if !defined(HAVE_XIDLE_EXTENSION) && !defined(HAVE_SAVER_EXTENSION)
+  printf ("Support for the XIDLE and MIT-SCREEN-SAVER server extensions\
+ was not\n\enabled at compile-time.\n");
+#endif /* !HAVE_XIDLE_EXTENSION && !HAVE_SAVER_EXTENSION */
 
   fflush (stdout);
   exit (1);
@@ -447,15 +467,27 @@ get_resources P((void))
     }
 #endif /* ! NO_LOCKING */
 
-  /* don't set use_xidle unless it is explicitly specified */
-  if (get_string_resource ("xidle", "Boolean"))
-    use_xidle = get_boolean_resource ("xidle", "Boolean");
+  /* don't set use_xidle_extension unless it is explicitly specified */
+  if (get_string_resource ("xidleExtension", "Boolean"))
+    use_xidle_extension = get_boolean_resource ("xidleExtension", "Boolean");
   else
-#ifdef HAVE_XIDLE	/* pick a default */
-    use_xidle = True;
-#else
-    use_xidle = False;
-#endif
+#ifdef HAVE_XIDLE_EXTENSION	/* pick a default */
+    use_xidle_extension = True;
+#else  /* !HAVE_XIDLE_EXTENSION */
+    use_xidle_extension = False;
+#endif /* !HAVE_XIDLE_EXTENSION */
+
+  /* don't set use_saver_extension unless it is explicitly specified */
+  if (get_string_resource ("saverExtension", "Boolean"))
+    use_xidle_extension = get_boolean_resource ("saverExtension", "Boolean");
+  else
+#ifdef HAVE_SAVER_EXTENSION	/* pick a default */
+    use_saver_extension = True;
+#else  /* !HAVE_SAVER_EXTENSION */
+    use_saver_extension = False;
+#endif /* !HAVE_SAVER_EXTENSION */
+
+
   get_screenhacks ();
 }
 
@@ -486,11 +518,7 @@ extern Bool lock_init P((void));
 static void initialize P((int argc, char **argv));
 static void main_loop P((void));
 
-#ifndef VMS
 void
-#else
-int
-#endif
 main (argc, argv)
      int argc;
      char **argv;
@@ -499,6 +527,19 @@ main (argc, argv)
   main_loop ();
 }
 
+
+static int
+saver_ehandler (dpy, error)
+     Display *dpy;
+     XErrorEvent *error;
+{
+  fprintf (real_stderr, "\nX error in %s:\n", progname);
+  if (XmuPrintDefaultErrorMessage (dpy, error, real_stderr))
+    exit (-1);
+  else
+    fprintf (real_stderr, " (nonfatal.)\n");
+  return 0;
+}
 
 static void
 #if __STDC__
@@ -543,6 +584,63 @@ initialize_connection (argc, argv)
   XA_DEMO = XInternAtom (dpy, "DEMO", False);
   XA_LOCK = XInternAtom (dpy, "LOCK", False);
 }
+
+#ifdef HAVE_SAVER_EXTENSION
+
+static int
+ignore_all_errors_ehandler (dpy, error)
+     Display *dpy;
+     XErrorEvent *error;
+{
+  return 0;
+}
+
+static void
+init_saver_extension ()
+{
+  XID kill_id;
+  Atom kill_type;
+  Window root = RootWindowOfScreen (screen);
+  XScreenSaverInfo *info;
+  Pixmap blank_pix = XCreatePixmap (dpy, root, 1, 1, 1);
+
+  /* Kill off the old MIT-SCREEN-SAVER client if there is one.
+     This tends to generate X errors, though (possibly due to a bug
+     in the server extension itself?) so just ignore errors here. */
+  if (XScreenSaverGetRegistered (dpy, XScreenNumberOfScreen (screen),
+				 &kill_id, &kill_type)
+      && kill_id != blank_pix)
+    {
+      int (*old_handler) ();
+      old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+      XKillClient (dpy, kill_id);
+      XSync (dpy, False);
+      XSetErrorHandler (old_handler);
+    }
+
+  XScreenSaverSelectInput (dpy, root, ScreenSaverNotifyMask);
+
+  XScreenSaverRegister (dpy, XScreenNumberOfScreen (screen),
+			(XID) blank_pix, XA_PIXMAP);
+  info = XScreenSaverAllocInfo ();
+
+#if 0
+  /* #### I think this is noticing that the saver is on, and replacing it
+     without turning it off first. */
+  saver = info->window;
+  if (info->state == ScreenSaverOn)
+    {
+      if (info->kind != ScreenSaverExternal) 
+	{
+	  XResetScreenSaver (display);
+	  XActivateScreenSaver (display);
+	}
+      StartSaver ();
+    }
+#endif
+}
+#endif /* HAVE_SAVER_EXTENSION */
+
 
 extern void init_sigchld P((void));
 
@@ -593,7 +691,7 @@ initialize (argc, argv)
 
   if (verbose_p)
     printf ("\
-%s %s, copyright (c) 1991-1994 by Jamie Zawinski <jwz@mcom.com>.\n\
+%s %s, copyright (c) 1991-1995 by Jamie Zawinski <jwz@mcom.com>.\n\
  pid = %d.\n", progname, screensaver_version, getpid ());
   ensure_no_screensaver_running ();
 
@@ -606,42 +704,82 @@ initialize (argc, argv)
   lock_id = 0;
   locked_p = False;
 
-  if (use_xidle)
+  if (use_saver_extension)
     {
-#ifdef HAVE_XIDLE
+#ifdef HAVE_SAVER_EXTENSION
+      if (! XScreenSaverQueryExtension (dpy,
+					&saver_ext_event_number,
+					&saver_ext_error_number))
+	{
+	  fprintf (stderr,
+	 "%s: %sdisplay %s does not support the MIT-SCREEN-SAVER extension.\n",
+		   progname, (verbose_p ? "## " : ""), DisplayString (dpy));
+	  use_saver_extension = False;
+	}
+      else if (use_xidle_extension)
+	{
+	  fprintf (stderr,
+	 "%s: %sMIT-SCREEN-SAVER extension used instead of XIDLE extension.\n",
+		   progname, (verbose_p ? "## " : ""));
+	  use_xidle_extension = False;
+	}
+#else  /* !HAVE_SAVER_EXTENSION */
+      fprintf (stderr,
+       "%s: %snot compiled with support for the MIT-SCREEN-SAVER extension.\n",
+	       progname, (verbose_p ? "## " : ""));
+      use_saver_extension = False;
+#endif /* !HAVE_SAVER_EXTENSION */
+    }
+
+  if (use_xidle_extension)
+    {
+#ifdef HAVE_XIDLE_EXTENSION
       int first_event, first_error;
       if (! XidleQueryExtension (dpy, &first_event, &first_error))
 	{
 	  fprintf (stderr,
-		   "%s: display %s does not support the XIdle extension.\n",
-		   progname, DisplayString (dpy));
-	  use_xidle = 0;
+		   "%s: %sdisplay %s does not support the XIdle extension.\n",
+		   progname, (verbose_p ? "## " : ""), DisplayString (dpy));
+	  use_xidle_extension = False;
 	}
-#else
-      fprintf (stderr, "%s: not compiled with support for XIdle.\n",
-	       progname);
-      use_xidle = 0;
-#endif
+#else  /* !HAVE_XIDLE_EXTENSION */
+      fprintf (stderr, "%s: %snot compiled with support for XIdle.\n",
+	       progname, (verbose_p ? "## " : ""));
+      use_xidle_extension = False;
+#endif /* !HAVE_XIDLE_EXTENSION */
     }
 
   init_sigchld ();
 
   disable_builtin_screensaver ();
 
+#ifdef HAVE_SAVER_EXTENSION
+  if (use_saver_extension)
+    init_saver_extension ();
+#endif /* HAVE_SAVER_EXTENSION */
+
+  if (verbose_p && use_saver_extension)
+    fprintf (stderr, "%s: using MIT-SCREEN-SAVER server extension.\n",
+	     progname);
+  if (verbose_p && use_xidle_extension)
+    fprintf (stderr, "%s: using XIdle server extension.\n",
+	     progname);
+
+  initialize_stderr ();
+  XSetErrorHandler (saver_ehandler);
+
   if (initial_demo_mode_p)
     /* If the user wants demo mode, don't wait around before doing it. */
     initial_delay = 0;
 
-#ifdef HAVE_XIDLE
-  if (! use_xidle)
-#endif
+  if (!use_xidle_extension && !use_saver_extension)
     {
       if (initial_delay)
 	{
 	  if (verbose_p)
 	    {
 	      printf ("%s: waiting for %d second%s...", progname,
-		      initial_delay, (initial_delay == 1 ? "" : "s"));
+		      (int) initial_delay, (initial_delay == 1 ? "" : "s"));
 	      fflush (stdout);
 	    }
 	  sleep (initial_delay);
@@ -940,7 +1078,7 @@ handle_clientmessage (event, until_idle_p)
 	fprintf (stderr,
 		 "%s: %sunrecognised screensaver ClientMessage 0x%x received\n",
 		 progname, (verbose_p ? "## " : ""),
-		 event->xclient.data.l[0]);
+		 (unsigned int) event->xclient.data.l[0]);
       if (str) XFree (str);
     }
   return False;

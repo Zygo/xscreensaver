@@ -21,5 +21,5 @@
 #handle 15 pass nostop
 #handle 19 pass nostop
 b exit
-set args -verbose -idelay 0 -lock
+set args -verbose -idelay 0
 #b purify_stop_here

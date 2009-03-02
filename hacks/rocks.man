@@ -3,7 +3,7 @@
 rocks - animation of flying through an asteroid field
 .SH SYNOPSIS
 .B rocks
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-count \fIinteger\fP] [\-delay \fIusecs\fP] [\-speed \fIinteger\fP] [\-norotate]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-count \fIinteger\fP] [\-delay \fIusecs\fP] [\-speed \fIinteger\fP] [\-norotate]
 .SH DESCRIPTION
 The \fIrocks\fP program draws an animation of an asteroid field moving past
 the observer (or vice versa).  Sometimes the observer picks up spin on Z axis.
@@ -17,16 +17,23 @@ Draw on a newly-created window.  This is the default.
 .B \-root
 Draw on the root window.
 .TP 8
-.B \-count integer
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-count \fIinteger\fP
 Maximum number of rocks to draw on the screen at once.  Default 100.
 .TP 8
-.B \-speed integer
+.B \-speed \fIinteger\fP
 A measure of the speed with which the observer and the rocks pass each other,
 from 1 to 100.  Default 100, meaning ``very fast.''  If you're on a slow 
 display connection (the animation looks jerky) then try making this number 
 smaller, and/or decreasing the number of rocks.
 .TP 8
-.B \-delay microseconds
+.B \-delay \fImicroseconds\fP
 Number of microseconds to delay between each frame.  Default 50000, meaning
 about 1/20th second.  Compare and contrast with \fI\-speed\fP, above.
 .TP 8

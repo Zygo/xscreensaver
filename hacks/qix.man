@@ -3,7 +3,7 @@
 qix - bounce colored lines around a window
 .SH SYNOPSIS
 .B qix
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-segments \fIint\fP] [\-spread \fIpixels\fP] [\-size \fIpixels\fP] [\-count \fIint\fP] [\-color-shift \fIdegrees\fP] [\-delay \fIusecs\fP] [\-random] [\-linear] [\-solid] [\-hollow] [\-xor] [\-no\-xor] [\-transparent] [\-non\-transparent] [\-additive] [\-subtractive]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-segments \fIint\fP] [\-spread \fIpixels\fP] [\-size \fIpixels\fP] [\-count \fIint\fP] [\-color-shift \fIdegrees\fP] [\-delay \fIusecs\fP] [\-random] [\-linear] [\-solid] [\-hollow] [\-xor] [\-no\-xor] [\-transparent] [\-non\-transparent] [\-additive] [\-subtractive]
 .SH DESCRIPTION
 The \fIqix\fP program bounces a series of line segments around its window.
 This is truly the swiss army chainsaw of qix programs.  If you know of one
@@ -21,26 +21,33 @@ Draw on the root window.
 .B \-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-segments integer
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-segments \fIinteger\fP
 How many line segments should be drawn.  Default 50.
 .TP 8
-.B \-spread integer
+.B \-spread \fIinteger\fP
 How far apart the endpoints of one segment should be from the next.
 Default 8.
 .TP 8
-.B \-size integer
+.B \-size \fIinteger\fP
 The maximum distance one endpoint of a segment is allowed to be from
 the opposite end of that segment.  Default 0, meaning unlimited.
 .TP 8
-.B \-count integer
+.B \-count \fIinteger\fP
 How many qixes to draw.  Default 1.
 .TP 8
-.B \-color\-shift degrees
+.B \-color\-shift \fIdegrees\fP
 If on a color display, the color of the line segments will cycle through
 the spectrum.  This specifies how far the hue of each segment should be
 from the next, in degrees on the HSV wheel.  Default 3.
 .TP 8
-.B \-delay microseconds
+.B \-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
 Default 25000, or about 0.025 seconds.
 .TP 8

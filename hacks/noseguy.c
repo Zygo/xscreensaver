@@ -54,7 +54,6 @@ static int state;	/* indicates states: walking or getting passwd */
 
 static void (*next_fn) ();
 
-#ifndef VMS
 #include "noses/nose.0.left"
 #include "noses/nose.1.left"
 #include "noses/nose.0.right"
@@ -63,16 +62,6 @@ static void (*next_fn) ();
 #include "noses/nose.right.front"
 #include "noses/nose.front"
 #include "noses/nose.down"
-#else
-#include "noses/nose.0_left"
-#include "noses/nose.1_left"
-#include "noses/nose.0_right"
-#include "noses/nose.1_right"
-#include "noses/nose.left_front"
-#include "noses/nose.right_front"
-#include "noses/nose.front"
-#include "noses/nose.down"
-#endif
 
 static void
 init_images ()
@@ -556,7 +545,7 @@ char *progclass = "Noseguy";
 char *defaults [] = {
   "Noseguy.background:	black",		/* to placate SGI */
   "Noseguy.foreground:	white",
-  "*mode:		string",
+  "*mode:		program",
   "*program:		fortune -s",
   "noseguy.font:	-*-new century schoolbook-*-r-*-*-*-180-*-*-*-*-*-*",
   0

@@ -1,4 +1,4 @@
-/*    xscreensaver, Copyright (c) 1993 Jamie Zawinski <jwz@mcom.com>
+/*    xscreensaver, Copyright (c) 1993-1995 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,6 +19,7 @@
 #include <shadow.h>
 #endif
 
+#include <pwd.h>
 #include <stdio.h>
 
 #include <X11/Intrinsic.h>
@@ -27,20 +28,13 @@
 # define _NO_PROTO
 #endif
 
-#include "xscreensaver.h"
-
-#ifndef NO_LOCKING
-
-#ifndef VMS
-#include <pwd.h>
-#else
-#include "pwd.h"
-extern char *getenv();
-#endif
-
 #include <Xm/Xm.h>
 #include <Xm/List.h>
 #include <Xm/TextF.h>
+
+#include "xscreensaver.h"
+
+#ifndef NO_LOCKING
 
 Time passwd_timeout;
 
@@ -58,14 +52,14 @@ extern Widget passwd_text;
 extern Widget passwd_done;
 extern Widget passwd_cancel;
 
-extern create_passwd_dialog ();
+extern create_passwd_dialog P((Widget));
+extern void ungrab_keyboard_and_mouse P((void));
 
 static enum { pw_read, pw_ok, pw_fail, pw_cancel, pw_time } passwd_state;
 static char typed_passwd [1024];
 
 static char root_passwd [255];
 static char user_passwd [255];
-static char * user_vms;
 
 #ifdef HAVE_SHADOW
 # define PWTYPE struct spwd *
@@ -82,7 +76,6 @@ lock_init ()
 {
   Bool ok = True;
   char *u;
-#ifndef VMS
   PWTYPE p = GETPW ("root");
   if (p && p->PWSLOT && p->PWSLOT[0] != '*')
     strcpy (root_passwd, p->PWSLOT);
@@ -110,7 +103,6 @@ lock_init ()
 #endif
     }
 
-
   if (p && p->PWSLOT &&
       /* p->PWSLOT[0] != '*' */		/* sensible */
       (strlen (p->PWSLOT) > 4)		/* solaris */
@@ -123,10 +115,6 @@ lock_init ()
       ok = False;
     }
   return ok;
-#else
-  return ok;
-#endif /* VMS */
-
 }
 
 
@@ -148,9 +136,7 @@ passwd_done_cb (button, client_data, call_data)
      Widget button;
      XtPointer client_data, call_data;
 {
-
   if (passwd_state != pw_read) return; /* already done */
-#ifndef VMS
   if (!strcmp ((char *) crypt (typed_passwd, user_passwd), user_passwd))
     passwd_state = pw_ok;
   /* do not allow root to have empty passwd */
@@ -159,13 +145,6 @@ passwd_done_cb (button, client_data, call_data)
     passwd_state = pw_ok;
   else
     passwd_state = pw_fail;
-#else
-   user_vms = getenv("USER");
-   if (validate_user(user_vms,typed_passwd) == 1 ) 
-       passwd_state = pw_ok;
-  else 
-       passwd_state = pw_fail;
-#endif
 }
 
 #ifdef VERIFY_CALLBACK_WORKS
@@ -403,11 +382,7 @@ make_passwd_dialog (parent)
   /* Another random thing necessary in 1.2.1 but not 1.1.5... */
   XtVaSetValues (roger_label, XmNborderWidth, 2, 0);
 
-#ifndef VMS
   pw = getpwuid (getuid ());
-#else
-  pw->pw_name = getenv("USER");
-#endif
   format_into_label (passwd_label3, (pw->pw_name ? pw->pw_name : "???"));
   format_into_label (passwd_label1, screensaver_version);
 }

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1993 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -10,32 +10,26 @@
  */
 
 #include <stdio.h>
-
-#ifdef VMS
-typedef char * caddr_t;
-#endif
-
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xatom.h>
 #include <X11/Xos.h>
-#ifndef VMS
 #include <X11/Xmu/SysUtil.h>
-#else
-#include "sys$common:[decw$include.xmu]SysUtil.h"
-#endif
 
 #include <signal.h>		/* for the signal names */
 
 #include "xscreensaver.h"
 
+#ifdef HAVE_SAVER_EXTENSION
+#include <X11/extensions/scrnsaver.h>
+extern Bool use_saver_extension;
+#endif /* HAVE_SAVER_EXTENSION */
+
 #if __STDC__
-#ifndef __DECC
 extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
-#else
-extern int kill (int, int);
-#endif
 #endif /* __STDC__ */
+
+extern Time timeout;
 
 extern Bool lock_p, demo_mode_p;
 
@@ -44,6 +38,7 @@ Atom XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
 
 #if __STDC__
 extern void describe_visual (FILE *, Display *, Visual *);
+extern void reset_stderr (void);
 #endif
 
 Window screensaver_window = 0;
@@ -55,6 +50,10 @@ int fade_seconds, fade_ticks;
 
 static unsigned long black_pixel;
 static Window real_vroot, real_vroot_value;
+
+#ifdef HAVE_SAVER_EXTENSION
+Window server_saver_window = 0;
+#endif /* HAVE_SAVER_EXTENSION */
 
 #define ALL_POINTER_EVENTS \
 	(ButtonPressMask | ButtonReleaseMask | EnterWindowMask | \
@@ -160,12 +159,34 @@ ensure_no_screensaver_running ()
 void
 disable_builtin_screensaver ()
 {
-  int timeout, interval, prefer_blank, allow_exp;
+  int server_timeout, server_interval, prefer_blank, allow_exp;
+  /* Turn off the server builtin saver if it is now running. */
   XForceScreenSaver (dpy, ScreenSaverReset);
-  XGetScreenSaver (dpy, &timeout, &interval, &prefer_blank, &allow_exp);
-  if (timeout != 0)
+  XGetScreenSaver (dpy, &server_timeout, &server_interval,
+		   &prefer_blank, &allow_exp);
+
+#ifdef HAVE_SAVER_EXTENSION
+  if (use_saver_extension)
     {
-      XSetScreenSaver (dpy, 0, interval, prefer_blank, allow_exp);
+      /* Override the values specified with "xset" with our own parameters. */
+      prefer_blank = False;
+      allow_exp = True;
+      server_interval = 0;
+      server_timeout = (timeout / 1000);
+      if (verbose_p)
+	fprintf (stderr,
+		 "%s: configuring server for saver timeout of %d seconds.\n",
+		 progname, server_timeout);
+      XSetScreenSaver (dpy, server_timeout, server_interval,
+		       prefer_blank, allow_exp);
+    }
+  else
+#endif /* HAVE_SAVER_EXTENSION */
+  if (server_timeout != 0)
+    {
+      server_timeout = 0;
+      XSetScreenSaver (dpy, server_timeout, server_interval,
+		       prefer_blank, allow_exp);
       printf ("%s%sisabling server builtin screensaver.\n\
 	You can re-enable it with \"xset s on\".\n",
 	      (verbose_p ? "" : progname), (verbose_p ? "\n\tD" : ": d"));
@@ -250,15 +271,15 @@ kill_xsetroot_data P((void))
 	  nitems == 1 && bytesafter == 0)
 	{
 	  if (verbose_p)
-	    printf ("%s: destroying xsetroot data (0x%X).\n",
+	    printf ("%s: destroying xsetroot data (0x%lX).\n",
 		    progname, *dataP);
 	  XKillClient (dpy, *dataP);
 	}
       else
 	fprintf (stderr, "%s: %sdeleted unrecognised _XSETROOT_ID property: \n\
-	%d, %d; type: %d, format: %d, nitems: %d, bytesafter %d\n",
+	%lu, %lu; type: %lu, format: %d, nitems: %lu, bytesafter %ld\n",
 		 progname, (verbose_p ? "## " : ""),
-		 dataP, (dataP ? *dataP : 0), type,
+		 (unsigned long) dataP, (dataP ? *dataP : 0), type,
 		 format, nitems, bytesafter);
     }
 }
@@ -323,8 +344,8 @@ static Bool
 restore_real_vroot_1 P((void))
 {
   if (verbose_p && real_vroot)
-    printf ("%s: restoring __SWM_VROOT property on the real vroot (0x%x).\n",
-	    progname, real_vroot);
+    printf ("%s: restoring __SWM_VROOT property on the real vroot (0x%lx).\n",
+	    progname, (unsigned long) real_vroot);
   remove_vroot_property (screensaver_window);
   if (real_vroot)
     {
@@ -411,9 +432,7 @@ handle_signals (on_p)
   catch_signal (SIGILL,  "SIGILL",  on_p);
   catch_signal (SIGTRAP, "SIGTRAP", on_p);
   catch_signal (SIGIOT,  "SIGIOT",  on_p);
-#ifndef VMS
   catch_signal (SIGABRT, "SIGABRT", on_p);
-#endif
 #ifdef SIGEMT
   catch_signal (SIGEMT,  "SIGEMT",  on_p);
 #endif
@@ -438,6 +457,21 @@ handle_signals (on_p)
 
 /* Managing the actual screensaver window */
 
+Bool
+window_exists_p (dpy, window)
+     Display *dpy;
+     Window window;
+{
+  int (*old_handler) ();
+  XWindowAttributes xgwa;
+  xgwa.screen = 0;
+  old_handler = XSetErrorHandler (BadWindow_ehandler);
+  XGetWindowAttributes (dpy, window, &xgwa);
+  XSync (dpy, False);
+  XSetErrorHandler (old_handler);
+  return (xgwa.screen != 0);
+}
+
 void
 initialize_screensaver_window P((void))
 {
@@ -454,13 +488,14 @@ initialize_screensaver_window P((void))
   int height = HeightOfScreen (screen);
   char id [2048];
 
+  reset_stderr ();
+
   black.red = black.green = black.blue = 0;
 
   if (cmap == DefaultColormapOfScreen (screen))
     cmap = 0;
 
-  if ((install_cmap_p && !demo_mode_p) ||
-      (visual != DefaultVisualOfScreen (screen)))
+  if (install_cmap_p || visual != DefaultVisualOfScreen (screen))
     {
       if (! cmap)
 	{
@@ -506,7 +541,74 @@ initialize_screensaver_window P((void))
   attrs.backing_pixel = black_pixel;
   attrs.border_pixel = black_pixel;
 
-/*  if (demo_mode_p || lock_p) width = width / 2;   #### */
+#if 0
+  if (demo_mode_p || lock_p) width = width / 2;  /* #### */
+#endif
+
+  if (screensaver_window || !verbose_p)
+    ;
+  else if (visual == DefaultVisualOfScreen (screen))
+    {
+      fprintf (stderr, "%s: using default visual ", progname);
+      describe_visual (stderr, dpy, visual);
+    }
+  else
+    {
+      fprintf (stderr, "%s: using visual:   ", progname);
+      describe_visual (stderr, dpy, visual);
+      fprintf (stderr, "%s: default visual: ", progname);
+      describe_visual (stderr, dpy, DefaultVisualOfScreen (screen));
+    }
+
+#ifdef HAVE_SAVER_EXTENSION
+  if (use_saver_extension)
+    {
+      XScreenSaverInfo *info;
+      Window root = RootWindowOfScreen (screen);
+
+      /* This call sets the server screensaver timeouts to what we think
+	 they should be (based on the resources and args xscreensaver was
+	 started with.)  It's important that we do this to sync back up
+	 with the server - if we have turned on prematurely, as by an
+	 ACTIVATE ClientMessage, then the server may decide to activate
+	 the screensaver while it's already active.  That's ok for us,
+	 since we would know to ignore that ScreenSaverActivate event,
+	 but a side effect of this would be that the server would map its
+	 saver window (which we then hide again right away) meaning that
+	 the bits currently on the screen get blown away.  Ugly. */
+#if 0
+      /* #### Ok, that doesn't work - when we tell the server that the
+	 screensaver is "off" it sends us a Deactivate event, which is
+	 sensible... but causes the saver to never come on.  Hmm. */
+      disable_builtin_screensaver ();
+#endif /* 0 */
+
+#if 0
+      /* #### The MIT-SCREEN-SAVER extension gives us access to the
+	 window that the server itself uses for saving the screen.
+	 However, using this window in any way, in particular, calling
+	 XScreenSaverSetAttributes() as below, tends to make the X server
+	 crash.  So fuck it, let's try and get along without using it...
+
+	 It's also inconvenient to use this window because it doesn't
+	 always exist (though the ID is constant.)  So to use this
+	 window, we'd have to reimplement the ACTIVATE ClientMessage to
+	 tell the *server* to tell *us* to turn on, to cause the window
+	 to get created at the right time.  Gag.  */
+      XScreenSaverSetAttributes (dpy, root,
+				 0, 0, width, height, 0,
+				 visual_depth, InputOutput, visual,
+				 attrmask, &attrs);
+      XSync (dpy, False);
+#endif /* 0 */
+
+      info = XScreenSaverAllocInfo ();
+      XScreenSaverQueryInfo (dpy, root, info);
+      server_saver_window = info->window;
+      if (! server_saver_window) abort ();
+      XFree (info);
+    }
+#endif /* HAVE_SAVER_EXTENSION */
 
   if (screensaver_window)
     {
@@ -523,57 +625,54 @@ initialize_screensaver_window P((void))
     }
   else
     {
-      if (! verbose_p)
-	;
-      else if (visual == DefaultVisualOfScreen (screen))
-	{
-	  fprintf (stderr, "%s: using default visual ", progname);
-	  describe_visual (stderr, dpy, visual);
-	}
-      else
-	{
-	  fprintf (stderr, "%s: using visual:   ", progname);
-	  describe_visual (stderr, dpy, visual);
-	  fprintf (stderr, "%s: default visual: ", progname);
-	  describe_visual (stderr, dpy, DefaultVisualOfScreen (screen));
-	}
-
       screensaver_window =
 	XCreateWindow (dpy, RootWindowOfScreen (screen), 0, 0, width, height,
 		       0, visual_depth, InputOutput, visual, attrmask,
 		       &attrs);
     }
 
-  class_hints.res_name = progname;
-  class_hints.res_class = progclass;
-  XSetClassHint (dpy, screensaver_window, &class_hints);
-  XStoreName (dpy, screensaver_window, "screensaver");
-  XChangeProperty (dpy, screensaver_window, XA_SCREENSAVER_VERSION,
-		   XA_STRING, 8, PropModeReplace,
-		   (unsigned char *) screensaver_version,
-		   strlen (screensaver_version));
-
-  sprintf (id, "%d on host ", getpid ());
-  if (! XmuGetHostname (id + strlen (id), sizeof (id) - strlen (id) - 1))
-    strcat (id, "???");
-  XChangeProperty (dpy, screensaver_window, XA_SCREENSAVER_ID, XA_STRING, 8,
-		   PropModeReplace, (unsigned char *) id, strlen (id));
-
-  if (!cursor)
+#ifdef HAVE_SAVER_EXTENSION
+  if (!use_saver_extension ||
+      window_exists_p (dpy, screensaver_window))
+    /* When using the MIT-SCREEN-SAVER extension, the window pointed to
+       by screensaver_window only exists while the saver is active.
+       So we must be careful to only try and manipulate it while it
+       exists...
+     */
+#endif /* HAVE_SAVER_EXTENSION */
     {
-      Pixmap bit;
-      bit = XCreatePixmapFromBitmapData (dpy, screensaver_window, "\000", 1, 1,
-					 BlackPixelOfScreen (screen),
-					 BlackPixelOfScreen (screen), 1);
-      cursor = XCreatePixmapCursor (dpy, bit, bit, &black, &black, 0, 0);
-      XFreePixmap (dpy, bit);
-    }
+      class_hints.res_name = progname;
+      class_hints.res_class = progclass;
+      XSetClassHint (dpy, screensaver_window, &class_hints);
+      XStoreName (dpy, screensaver_window, "screensaver");
+      XChangeProperty (dpy, screensaver_window, XA_SCREENSAVER_VERSION,
+		       XA_STRING, 8, PropModeReplace,
+		       (unsigned char *) screensaver_version,
+		       strlen (screensaver_version));
 
-  XSetWindowBackground (dpy, screensaver_window, black_pixel);
-  if (! demo_mode_p)
-    XDefineCursor (dpy, screensaver_window, cursor);
-  else
-    XUndefineCursor (dpy, screensaver_window);
+      sprintf (id, "%d on host ", getpid ());
+      if (! XmuGetHostname (id + strlen (id), sizeof (id) - strlen (id) - 1))
+	strcat (id, "???");
+      XChangeProperty (dpy, screensaver_window, XA_SCREENSAVER_ID, XA_STRING,
+		       8, PropModeReplace, (unsigned char *) id, strlen (id));
+
+      if (!cursor)
+	{
+	  Pixmap bit;
+	  bit = XCreatePixmapFromBitmapData (dpy, screensaver_window, "\000",
+					     1, 1,
+					     BlackPixelOfScreen (screen),
+					     BlackPixelOfScreen (screen), 1);
+	  cursor = XCreatePixmapCursor (dpy, bit, bit, &black, &black, 0, 0);
+	  XFreePixmap (dpy, bit);
+	}
+
+      XSetWindowBackground (dpy, screensaver_window, black_pixel);
+      if (! demo_mode_p)
+	XDefineCursor (dpy, screensaver_window, cursor);
+      else
+	XUndefineCursor (dpy, screensaver_window);
+    }
 }
 
 
@@ -598,6 +697,12 @@ raise_window (inhibit_fade, between_hacks_p)
       fade_colormap (dpy, current_map, cmap2, fade_seconds, fade_ticks, True);
       XClearWindow (dpy, screensaver_window);
       XMapRaised (dpy, screensaver_window);
+
+#ifdef HAVE_SAVER_EXTENSION
+      if (server_saver_window && window_exists_p (dpy, server_saver_window))
+	XUnmapWindow (dpy, server_saver_window);
+#endif /* HAVE_SAVER_EXTENSION */
+
       /* Once the saver window is up, restore the colormap.
 	 (The "black" pixels of the two colormaps are compatible.) */
       XInstallColormap (dpy, cmap);
@@ -609,9 +714,13 @@ raise_window (inhibit_fade, between_hacks_p)
     {
       XClearWindow (dpy, screensaver_window);
       XMapRaised (dpy, screensaver_window);
+#ifdef HAVE_SAVER_EXTENSION
+      if (server_saver_window && window_exists_p (dpy, server_saver_window))
+	XUnmapWindow (dpy, server_saver_window);
+#endif /* HAVE_SAVER_EXTENSION */
     }
 
-  if (install_cmap_p && !demo_mode_p)
+  if (install_cmap_p)
     XInstallColormap (dpy, cmap);
 }
 
@@ -649,7 +758,7 @@ unblank_screen ()
     }
   else
     {
-      if (install_cmap_p && !demo_mode_p)
+      if (install_cmap_p)
 	{
 	  XClearWindow (dpy, screensaver_window); /* avoid technicolor */
 	  XInstallColormap (dpy, DefaultColormapOfScreen (screen));

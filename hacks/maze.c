@@ -52,11 +52,7 @@ static int solve_delay, pre_solve_delay, post_solve_delay;
 #include  <stdio.h>
 #include  <X11/Xlib.h>
 #include  <X11/Xutil.h>
-#ifndef VMS
 #include  <X11/bitmaps/gray1>
-#else
-#include "sys$common:[decw$include.bitmaps]gray1.xbm"
-#endif
 
 #define MAX_MAZE_SIZE_X	500
 #define MAX_MAZE_SIZE_Y	500
@@ -93,11 +89,7 @@ static int logo_x, logo_y;
 # define logo_width  128
 # define logo_height 128
 #else
-#ifndef VMS
 # include  <X11/bitmaps/xlogo64>
-#else
-# include "sys$common:[decw$include.bitmaps]xlogo64.xbm"
-#endif
 # define logo_width xlogo64_width
 # define logo_height xlogo64_height
 # define logo_bits xlogo64_bits

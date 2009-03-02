@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1992, 1995 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -35,12 +35,9 @@
 #include <X11/Intrinsic.h>
 #include <X11/IntrinsicP.h>
 #include <X11/CoreP.h>
-#ifndef VMS
+#include <X11/Shell.h>
+#include <X11/StringDefs.h>
 #include <X11/Xmu/Error.h>
-#else
-#include "sys$common:[decw$include.xmu]Error.h"
-#endif
-
 #include "screenhack.h"
 
 char *progname;
@@ -58,14 +55,16 @@ static XrmOptionDescRec default_options [] = {
   { "-root",	".root",		XrmoptionNoArg, "True" },
   { "-window",	".root",		XrmoptionNoArg, "False" },
   { "-mono",	".mono",		XrmoptionNoArg, "True" },
-  { "-install",	".installColormap",	XrmoptionNoArg, "True" }
+  { "-install",	".installColormap",	XrmoptionNoArg, "True" },
+  { "-visual",	".visualID",		XrmoptionSepArg, 0 }
 };
 
 static char *default_defaults[] = {
   "*root:		false",
-  "*geometry:		500x500",
+  "*geometry:		500x500", /* this should be .geometry, but nooooo... */
   "*mono:		false",
   "*installColormap:	false",
+  "*visualID:		default",
   0
 };
 
@@ -123,11 +122,7 @@ MapNotify_event_p (dpy, event, window)
 }
 
 
-#ifndef VMS
 void
-#else
-int
-#endif
 main (argc, argv)
      int argc;
      char **argv;
@@ -136,6 +131,7 @@ main (argc, argv)
   Widget toplevel;
   Display *dpy;
   Window window;
+  Visual *visual;
   Colormap cmap;
   Bool root_p;
   XEvent event;
@@ -186,12 +182,38 @@ main (argc, argv)
       XtDestroyWidget (toplevel);
       XGetWindowAttributes (dpy, window, &xgwa);
       cmap = xgwa.colormap;
+      visual = xgwa.visual;
     }
   else
     {
+      visual = get_visual_resource (dpy, "visualID", "VisualID");
+
+      XtVaSetValues (toplevel, XtNmappedWhenManaged, False, 0);
       XtRealizeWidget (toplevel);
       window = XtWindow (toplevel);
-      if (get_boolean_resource ("installColormap", "InstallColormap"))
+
+      if (visual != DefaultVisualOfScreen (XtScreen (toplevel)))
+	{
+	  Arg av [20];
+	  int ac;
+	  unsigned int bg, bd;
+	  Widget new;
+	  cmap = XCreateColormap (dpy, window, visual, AllocNone);
+	  bg = get_pixel_resource ("background", "Background", dpy, cmap);
+	  bd = get_pixel_resource ("borderColor", "Foreground", dpy, cmap);
+	  ac = 0;
+	  XtSetArg (av[ac], XtNvisual, visual); ac++;
+	  XtSetArg (av[ac], XtNcolormap, cmap); ac++;
+	  XtSetArg (av[ac], XtNdepth, get_visual_depth (dpy, visual)); ac++;
+	  XtSetArg (av[ac], XtNbackground, (Pixel) bg); ac++;
+	  XtSetArg (av[ac], XtNborderColor, (Pixel) bd); ac++;
+	  new = XtAppCreateShell (progname, progclass,
+				  topLevelShellWidgetClass, dpy,
+				  av, ac);
+	  XtDestroyWidget (toplevel);
+	  toplevel = new;
+	}
+      else if (get_boolean_resource ("installColormap", "InstallColormap"))
 	{
 	  cmap = XCreateColormap (dpy, window,
 				  DefaultVisualOfScreen (XtScreen (toplevel)),
@@ -199,8 +221,14 @@ main (argc, argv)
 	  XSetWindowColormap (dpy, window, cmap);
 	}
       else
-	cmap = DefaultColormap (dpy, DefaultScreen (dpy));
+	{
+	  cmap = DefaultColormap (dpy, DefaultScreen (dpy));
+	}
+
+      XtPopup (toplevel, XtGrabNone);
+      window = XtWindow (toplevel);
     }
+
   if (!get_boolean_resource ("dontClearWindow", "Boolean")) /* kludge-o-rama */
     {
       XSetWindowBackground (dpy, window,

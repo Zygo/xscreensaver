@@ -34,11 +34,7 @@
 # endif
 #endif
 
-#ifndef VMS
 #include <X11/Xmu/Drawing.h>
-#else
-#include "sys$common:[decw$include.xmu]Drawing.h"
-#endif
 
 #include "default.xbm"
 

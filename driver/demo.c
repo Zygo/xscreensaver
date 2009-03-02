@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1993-1995 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,6 +22,11 @@
 
 #include "xscreensaver.h"
 #include <stdio.h>
+
+#ifdef HAVE_SAVER_EXTENSION
+extern int saver_ext_event_number;
+extern Window server_saver_window;
+#endif /* HAVE_SAVER_EXTENSION */
 
 extern Time timeout, cycle, lock_timeout;
 #ifndef NO_LOCKING
@@ -106,6 +111,35 @@ select_cb (button, client_data, call_data)
 }
 
 static void
+ensure_selected_item_visible (list)
+     Widget list;
+{
+  int *pos_list = 0;
+  int pos_count = 0;
+  if (XmListGetSelectedPos (list, &pos_list, &pos_count) && pos_count > 0)
+    {
+      int top = -2;
+      int visible = 0;
+      XtVaGetValues (list,
+		     XmNtopItemPosition, &top,
+		     XmNvisibleItemCount, &visible,
+		     0);
+      if (pos_list[0] >= top + visible)
+	{
+	  int pos = pos_list[0] - visible + 1;
+	  if (pos < 0) pos = 0;
+	  XmListSetPos (list, pos);
+	}
+      else if (pos_list[0] < top)
+	{
+	  XmListSetPos (list, pos_list[0]);
+	}
+    }
+  if (pos_list)
+    XtFree ((char *) pos_list);
+}
+
+static void
 next_cb (button, client_data, call_data)
      Widget button;
      XtPointer client_data, call_data;
@@ -125,6 +159,7 @@ next_cb (button, client_data, call_data)
 	XmListSelectPos (demo_list, 1, True);
       XtFree ((char *) pos_list);
     }
+  ensure_selected_item_visible (demo_list);
   text_cb (text_line, 0, 0);
 }
 
@@ -142,6 +177,7 @@ prev_cb (button, client_data, call_data)
       XmListSelectPos (demo_list, pos_list [0] - 1, True);
       XtFree ((char *) pos_list);
     }
+  ensure_selected_item_visible (demo_list);
   text_cb (text_line, 0, 0);
 }
 
@@ -524,13 +560,14 @@ Bool demo_mode_p = False;
 
 extern XtAppContext app;
 extern Widget toplevel_shell;
-extern Bool use_xidle;
+extern Bool use_xidle_extension;
+extern Bool use_saver_extension;
 extern Time notice_events_timeout;
 
 extern char **screenhacks;
 extern char *demo_hack;
 
-extern void notice_events_timer P((XtPointer closure, void *timer));
+extern void notice_events_timer P((XtPointer closure, XtIntervalId *timer));
 extern Bool handle_clientmessage P((/*XEvent *, Bool*/));
 
 void
@@ -554,11 +591,18 @@ demo_mode ()
 	  break;
 
 	case CreateNotify:
-#ifdef HAVE_XIDLE
-	  if (! use_xidle)
-#endif
-	    XtAppAddTimeOut (app, notice_events_timeout, notice_events_timer,
-			     (XtPointer) event.xcreatewindow.window);
+	  if (!use_xidle_extension && !use_saver_extension)
+	    {
+	      XtAppAddTimeOut (app, notice_events_timeout, notice_events_timer,
+			       (XtPointer) event.xcreatewindow.window);
+#ifdef DEBUG_TIMERS
+	      if (verbose_p)
+		printf ("%s: starting notice_events_timer for 0x%X (%lu)\n",
+			progname,
+			(unsigned int) event.xcreatewindow.window,
+			notice_events_timeout);
+#endif /* DEBUG_TIMERS */
+	    }
 	  break;
 
 	case ButtonPress:
@@ -568,6 +612,18 @@ demo_mode ()
 	  /* fall through */
 
 	default:
+#ifdef HAVE_SAVER_EXTENSION
+	  if (event.type == saver_ext_event_number)
+	    {
+	      /* Get the "real" server window out of the way as soon
+		 as possible. */
+	      if (server_saver_window &&
+		  window_exists_p (dpy, server_saver_window))
+		XUnmapWindow (dpy, server_saver_window);
+	    }
+	  else
+#endif /* HAVE_SAVER_EXTENSION */
+
 	  XtDispatchEvent (&event);
 	  break;
 	}

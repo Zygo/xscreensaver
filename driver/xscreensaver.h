@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1993, 1995 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,14 +9,12 @@
  * implied warranty.
  */
 
-#ifdef VMS
-#include "config.h"
-#endif /* VMS */
-
 #if __STDC__
 # include <stdlib.h>
 # include <unistd.h>
 #endif
+
+#include <stdio.h>
 
 #if __STDC__
 # define P(x)x
@@ -44,6 +42,9 @@ extern int visual_depth;
 
 extern Bool verbose_p;
 
+extern FILE *real_stderr;
+extern FILE *real_stdout;
+
 extern void initialize_screensaver_window P((void));
 extern void raise_window P((Bool inhibit_fade, Bool between_hacks_p));
 extern void blank_screen P((void));
@@ -60,3 +61,6 @@ extern void fade_colormap P((Display*, Colormap, Colormap, int, int, Bool));
 extern void blacken_colormap P((Display *, Colormap));
 
 extern int BadWindow_ehandler P((Display *dpy, XErrorEvent *error));
+
+extern char *timestring P((void));
+extern Bool window_exists_p P((Display *dpy, Window window));

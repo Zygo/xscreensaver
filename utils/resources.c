@@ -157,7 +157,6 @@ parse_time (string, seconds_default_p, silent_p)
 {
   unsigned int h, m, s;
   char c;
-#ifdef __DECC
   if (3 == sscanf (string,   " %u : %2u : %2u %c", &h, &m, &s, &c))
     ;
   else if (2 == sscanf (string, " : %2u : %2u %c", &m, &s, &c) ||
@@ -167,17 +166,6 @@ parse_time (string, seconds_default_p, silent_p)
     h = m = 0;
   else if (1 == sscanf (string,          " %u %c",
 			(seconds_default_p ? &s : &m), &c))
-#else
-  if (3 == sscanf (string,   " %d : %2d : %2d %c", &h, &m, &s, &c))
-    ;
-  else if (2 == sscanf (string, " : %2d : %2d %c", &m, &s, &c) ||
-	   2 == sscanf (string,    " %d : %2d %c", &m, &s, &c))
-    h = 0;
-  else if (1 == sscanf (string,       " : %2d %c", &s, &c))
-    h = m = 0;
-  else if (1 == sscanf (string,          " %d %c",
-			(seconds_default_p ? &s : &m), &c))
-#endif
     {
       h = 0;
       if (seconds_default_p) m = 0;

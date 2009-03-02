@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1993 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,19 +9,23 @@
  * implied warranty.
  */
 
+/* #define DEBUG_TIMERS */
+
 #include <stdio.h>
 #include <X11/Xlib.h>
 #include <X11/Intrinsic.h>
 #include <X11/Xos.h>
-#ifndef VMS
 #include <X11/Xmu/Error.h>
-#else
-#include "sys$common:[decw$include.xmu]Error.h"
-#endif
 
-#ifdef HAVE_XIDLE
+#ifdef HAVE_XIDLE_EXTENSION
 #include <X11/extensions/xidle.h>
-#endif
+#endif /* HAVE_XIDLE_EXTENSION */
+
+#ifdef HAVE_SAVER_EXTENSION
+#include <X11/extensions/scrnsaver.h>
+extern int saver_ext_event_number;
+extern Window server_saver_window;
+#endif /* HAVE_SAVER_EXTENSION */
 
 #include "xscreensaver.h"
 
@@ -38,14 +42,15 @@ Time timeout;
 Time pointer_timeout;
 Time notice_events_timeout;
 
-extern Bool use_xidle;
+extern Bool use_xidle_extension;
+extern Bool use_saver_extension;
 extern Bool dbox_up_p;
 extern Bool locked_p;
 extern Window screensaver_window;
 
 extern Bool handle_clientmessage P((XEvent *, Bool));
 
-static time_t last_activity_time; /* for non-XIdle mode */
+static time_t last_activity_time; /* for when we have no server extensions */
 static XtIntervalId timer_id = 0;
 static XtIntervalId check_pointer_timer_id = 0;
 XtIntervalId cycle_id = 0;
@@ -111,7 +116,8 @@ notice_events (window, top_p)
   if (top_p && verbose_p && (events & KeyPressMask))
     {
       /* Only mention one window per tree (hack hack). */
-      printf ("%s: selected KeyPress on 0x%X\n", progname, window);
+      printf ("%s: selected KeyPress on 0x%lX\n", progname,
+	      (unsigned long) window);
       top_p = False;
     }
 
@@ -144,7 +150,7 @@ BadWindow_ehandler (dpy, error)
 void
 notice_events_timer (closure, timer)
      XtPointer closure;
-     void *timer;
+     XtIntervalId *timer;
 {
   Window window = (Window) closure;
   int (*old_handler) ();
@@ -178,6 +184,12 @@ cycle_timer (junk1, junk2)
       spawn_screenhack (False);
     }
   cycle_id = XtAppAddTimeOut (app, how_long, cycle_timer, 0);
+
+#ifdef DEBUG_TIMERS
+  if (verbose_p)
+    printf ("%s: starting cycle_timer (%ld, %ld)\n",
+	    progname, how_long, cycle_id);
+#endif
 }
 
 
@@ -197,20 +209,29 @@ activate_lock_timer (junk1, junk2)
 static void
 reset_timers P((void))
 {
+  if (use_saver_extension)
+    return;
+
 #ifdef DEBUG_TIMERS
   if (verbose_p)
-    printf ("%s: restarting idle_timer (%d, %d)\n",
+    printf ("%s: restarting idle_timer (%ld, %ld)\n",
 	    progname, timeout, timer_id);
 #endif
   XtRemoveTimeOut (timer_id);
   timer_id = XtAppAddTimeOut (app, timeout, idle_timer, 0);
   if (cycle_id) abort ();
 
+#ifdef DEBUG_TIMERS
+  if (verbose_p)
+    printf ("%s: starting idle_timer (%ld, %ld)\n",
+	    progname, timeout, timer_id);
+#endif
+
   last_activity_time = time ((time_t *) 0);
 }
 
-/* When we aren't using XIdle, this timer is used to periodically wake up
-   and poll the mouse position, which is possibly more reliable than
+/* When we aren't using a server extension, this timer is used to periodically
+   wake up and poll the mouse position, which is possibly more reliable than
    selecting motion events on every window.
  */
 static void
@@ -226,10 +247,9 @@ check_pointer_timer (closure, this_timer)
   int root_x, root_y, x, y;
   unsigned int mask;
   XtIntervalId *timerP = (XtIntervalId *) closure;
-#ifdef HAVE_XIDLE
-  if (use_xidle)
+
+  if (use_xidle_extension || use_saver_extension)
     abort ();
-#endif
 
   *timerP = XtAppAddTimeOut (app, pointer_timeout, check_pointer_timer,
 			     closure);
@@ -265,10 +285,18 @@ sleep_until_idle (until_idle_p)
 
   if (until_idle_p)
     {
-      timer_id = XtAppAddTimeOut (app, timeout, idle_timer, 0);
-#ifdef HAVE_XIDLE
-      if (! use_xidle)
+      if (!use_saver_extension)
+	{
+	  /* Wake up periodically to ask the server if we are idle. */
+	  timer_id = XtAppAddTimeOut (app, timeout, idle_timer, 0);
+#ifdef DEBUG_TIMERS
+	  if (verbose_p)
+	    printf ("%s: starting idle_timer (%ld, %ld)\n",
+		    progname, timeout, timer_id);
 #endif
+	}
+
+      if (!use_xidle_extension && !use_saver_extension)
 	/* start polling the mouse position */
 	check_pointer_timer (&check_pointer_timer_id, 0);
     }
@@ -282,8 +310,8 @@ sleep_until_idle (until_idle_p)
 	if (until_idle_p)
 	  {
 	    Time idle;
-#ifdef HAVE_XIDLE
-	    if (use_xidle)
+#ifdef HAVE_XIDLE_EXTENSION
+	    if (use_xidle_extension)
 	      {
 		if (! XGetIdleTime (dpy, &idle))
 		  {
@@ -293,14 +321,33 @@ sleep_until_idle (until_idle_p)
 		  }
 	      }
 	    else
-#endif /* HAVE_XIDLE */
-	      idle = 1000 * (last_activity_time - time ((time_t *) 0));
+#endif /* HAVE_XIDLE_EXTENSION */
+#ifdef HAVE_SAVER_EXTENSION
+	      if (use_saver_extension)
+		{
+		  /* We don't need to do anything in this case - the synthetic
+		     event isn't necessary, as we get sent specific events
+		     to wake us up. */
+		  idle = 0;
+		}
+	    else
+#endif /* HAVE_SAVER_EXTENSION */
+	      {
+		idle = 1000 * (last_activity_time - time ((time_t *) 0));
+	      }
 	    
 	    if (idle >= timeout)
 	      goto DONE;
-	    else
-	      timer_id = XtAppAddTimeOut (app, timeout - idle,
-					  idle_timer, 0);
+	    else if (!use_saver_extension)
+	      {
+		timer_id = XtAppAddTimeOut (app, timeout - idle,
+					    idle_timer, 0);
+#ifdef DEBUG_TIMERS
+		if (verbose_p)
+		  printf ("%s: starting idle_timer (%ld, %ld)\n",
+			  progname, timeout - idle, timer_id);
+#endif /* DEBUG_TIMERS */
+	      }
 	  }
 	break;
 
@@ -310,11 +357,18 @@ sleep_until_idle (until_idle_p)
 	break;
 
       case CreateNotify:
-#ifdef HAVE_XIDLE
-	if (! use_xidle)
-#endif
-	  XtAppAddTimeOut (app, notice_events_timeout, notice_events_timer,
-			   (XtPointer) event.xcreatewindow.window);
+	if (!use_xidle_extension && !use_saver_extension)
+	  {
+	    XtAppAddTimeOut (app, notice_events_timeout, notice_events_timer,
+			     (XtPointer) event.xcreatewindow.window);
+#ifdef DEBUG_TIMERS
+	    if (verbose_p)
+	      printf ("%s: starting notice_events_timer for 0x%X (%lu)\n",
+		      progname,
+		      (unsigned int) event.xcreatewindow.window,
+		      notice_events_timeout);
+#endif /* DEBUG_TIMERS */
+	  }
 	break;
 
       case KeyPress:
@@ -330,7 +384,7 @@ sleep_until_idle (until_idle_p)
 	      printf ("%s: MotionNotify at %s\n", progname, timestring ());
 	    else if (event.xany.type == KeyPress)
 	      printf ("%s: KeyPress seen on 0x%X at %s\n", progname,
-		      event.xkey.window, timestring ());
+		      (unsigned int) event.xkey.window, timestring ());
 	  }
 #endif
 
@@ -342,7 +396,59 @@ sleep_until_idle (until_idle_p)
 	break;
 
       default:
-	XtDispatchEvent (&event);
+
+#ifdef HAVE_SAVER_EXTENSION
+	if (event.type == saver_ext_event_number)
+	  {
+	    XScreenSaverNotifyEvent *sevent =
+	      (XScreenSaverNotifyEvent *) &event;
+	    if (sevent->state == ScreenSaverOn)
+	      {
+# ifdef DEBUG_TIMERS
+		if (verbose_p)
+		  printf ("%s: ScreenSaverOn event received at %s\n",
+			  progname, timestring ());
+# endif /* DEBUG_TIMERS */
+
+		/* Get the "real" server window out of the way as soon
+		   as possible. */
+		if (server_saver_window &&
+		    window_exists_p (dpy, server_saver_window))
+		  XUnmapWindow (dpy, server_saver_window);
+
+		if (sevent->kind != ScreenSaverExternal)
+		  {
+# ifdef DEBUG_TIMERS
+		    fprintf (stderr,
+			 "%s: ScreenSaverOn event wasn't of type External!\n",
+			     progname);
+# endif /* DEBUG_TIMERS */
+		  }
+
+		if (until_idle_p)
+		  goto DONE;
+	      }
+	    else if (sevent->state == ScreenSaverOff)
+	      {
+# ifdef DEBUG_TIMERS
+		if (verbose_p)
+		  printf ("%s: ScreenSaverOff event received at %s\n",
+			  progname, timestring ());
+# endif /* DEBUG_TIMERS */
+		if (!until_idle_p)
+		  goto DONE;
+	      }
+# ifdef DEBUG_TIMERS
+	    else if (verbose_p)
+	      printf ("%s: unknown ScreenSaver event received at %s\n",
+		      progname, timestring ());
+# endif /* DEBUG_TIMERS */
+	  }
+	else
+
+#endif /* HAVE_SAVER_EXTENSION */
+
+	  XtDispatchEvent (&event);
       }
     }
  DONE:

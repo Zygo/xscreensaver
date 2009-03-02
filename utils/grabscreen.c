@@ -21,10 +21,6 @@
 #include <unistd.h>
 #endif
 
-#ifdef __DECC
-typedef char * caddr_t;
-#endif
-
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>

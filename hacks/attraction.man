@@ -3,7 +3,7 @@
 attraction - interactions of opposing forces
 .SH SYNOPSIS
 .B attraction
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-points \fIint\fP] [\-threshold \fIint\fP] [\-mode balls | lines | polygons | splines | filled-splines | tails ] [\-color-mode cycle | random] [\-size \fIint\fP] [\-segments \fIint\fP] [\-delay \fIusecs\fP] [\-color-shift \fIdegrees\fP] [\-radius \fIint\fP] [\-vx \fIint\fP] [\-vy \fIint\fP] [\-glow] [\-noglow] [\-orbit]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-points \fIint\fP] [\-threshold \fIint\fP] [\-mode balls | lines | polygons | splines | filled-splines | tails ] [\-color-mode cycle | random] [\-size \fIint\fP] [\-segments \fIint\fP] [\-delay \fIusecs\fP] [\-color-shift \fIdegrees\fP] [\-radius \fIint\fP] [\-vx \fIint\fP] [\-vy \fIint\fP] [\-glow] [\-noglow] [\-orbit]
 .SH DESCRIPTION
 The \fIattraction\fP program has several visually different modes of 
 operation, all of which are based on the interactions of a set of control
@@ -22,6 +22,13 @@ Draw on the root window.
 .TP 8
 .B \-mono 
 If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-points integer
 How many control points should be used, or 0 to select the number randomly.

@@ -3,7 +3,7 @@
 noseguy - a little guy with a big nose wanders around being witty
 .SH SYNOPSIS
 .B noseguy
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-text-foreground \fIcolor\fP] [\-text-background \fIcolor\fP] [\-font \fIfont\fP] [\-window] [\-root] [\-mode \fImode\fP] [\-program \fIprogram\fP] [\-filename \file\fP] [\-text \fItext\fP]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-text-foreground \fIcolor\fP] [\-text-background \fIcolor\fP] [\-font \fIfont\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-mode \fImode\fP] [\-program \fIprogram\fP] [\-filename \file\fP] [\-text \fItext\fP]
 .SH DESCRIPTION
 A little man with a big nose and a hat runs around spewing out messages to
 the screen.  This code (and its bitmaps) were extracted from the \fIxnlock\fP
@@ -18,10 +18,17 @@ Draw on a newly-created window.  This is the default.
 .B \-root
 Draw on the root window.
 .TP 8
-.B \-font font
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-font \fIfont\fP
 The font used for the messages.
 .TP 8
-.B \-mode program | file | string
+.B \-mode [ program | file | string ]
 In \fIprogram\fP mode, the messages are gotten by running a program.
 The program used is controlled by the \fI\-program\fP option, and 
 the \fI.program\fP resource.
@@ -34,16 +41,16 @@ In \fIstring\fP mode, the message is whatever was specified on the
 command line as the \fI\-text\fP option, or in the resource database
 as the \fI.text\fP resource.
 .TP 8
-.B \-program " program"
+.B \-program \fIprogram\fP
 If \fImode\fP is \fIprogram\fP (the default), then this program will be
 run periodically, and its output will be the text of the messages.  The
 default program is \fI"fortune -s"\fP, but \fIyow\fP is also a good choice.
 .TP 8
-.B \-filename file
+.B \-filename \fIfile\fP
 If \fImode\fP is \fIfile\fP, then the contents of this file will be used
 for all messages.
 .TP 8
-.B \-text string
+.B \-text \fIstring\fP
 If \fImode\fP is \fIstring\fP, then this text will be used for all messages.
 .SH ENVIRONMENT
 .PP

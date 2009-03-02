@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993 Jamie Zawinski <jwz@mcom.com>
+/* xscreensaver, Copyright (c) 1992-1995 Jamie Zawinski <jwz@mcom.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -9,8 +9,7 @@
  * implied warranty.
  */
 
-#if 0
- * Found in Don Hopkin`s .plan file:
+/* Found in Don Hopkins' .plan file:
  *
  *   The color situation is a total flying circus.  The X approach to
  *   device independence is to treat everything like a MicroVax framebuffer
@@ -33,10 +32,10 @@
  *   WHAT IS YOUR COLORMAP?
  *         cmap = DefaultColormap(display, DefaultScreen(display));
  *   AND WHAT IS YOUR FAVORITE COLOR?
- *         favorite_color = 0; /* Black. */
- *         /* Whoops! No, I mean: */
+ *         favorite_color = 0; / * Black. * /
+ *         / * Whoops! No, I mean: * /
  *         favorite_color = BlackPixel(display, DefaultScreen(display));
- *         /* AAAYYYYEEEEE!! (client dumps core & falls into the chasm) */
+ *         / * AAAYYYYEEEEE!! (client dumps core & falls into the chasm) * /
  *
  *   WHAT IS YOUR DISPLAY?
  *         display = XOpenDisplay("unix:0");
@@ -46,11 +45,10 @@
  *                              8, PseudoColor, &vinfo) != 0)
  *            visual = vinfo.visual;
  *   AND WHAT IS THE NET SPEED VELOCITY OF AN XConfigureWindow REQUEST?
- *         /* Is that a SubStructureRedirectMask or a ResizeRedirectMask? */
- *   WHAT??! HOW AM I SUPPOSED TO KNOW THAT?
+ *         / * Is that a SubStructureRedirectMask or a ResizeRedirectMask? * /
+ *   WHAT?! HOW AM I SUPPOSED TO KNOW THAT?
  *   AAAAUUUGGGHHH!!!! (server dumps core & falls into the chasm)
- *
-#endif /* 0 */
+ */
 
 #ifndef _SCREENHACK_H_
 #define _SCREENHACK_H_
@@ -64,7 +62,6 @@
 #include <X11/Xos.h>
 #include "vroot.h"
 
-
 extern Bool mono_p;
 extern char *progname;
 extern char *progclass;
@@ -73,8 +70,8 @@ extern XrmOptionDescRec options [];
 extern int options_size;
 extern char *defaults [];
 
-#if xxx__STDC__
-# if defined(SVR4) || defined(SYSV)
+#if __STDC__
+# if (defined(SVR4) || defined(SYSV)) && !defined(__sgi)
 #  ifndef random
     extern int rand (void);
 #   define random() rand()
@@ -88,16 +85,10 @@ extern char *defaults [];
     extern long random (void);
 #  endif
 #  ifndef srandom
-    extern void srandom (int);
+    extern int srandom (unsigned int);
 #  endif
 # endif /* !totally-losing-SYSV */
 #endif /* __STDC__ */
-
-
-#ifdef VMS
-#define random rand
-#define srandom srand
-#endif
 
 #if __STDC__
 # define P(x)x
@@ -139,7 +130,7 @@ static double _frand_tmp_;
 #define frand(f)							\
  (_frand_tmp_ = (((double) random()) / 					\
 		 (((double) ((unsigned int)~0)) / ((double) (f+f)))),	\
-  _frand_tmp_ < 0 ? -_frand_tmp_ : _frand_tmp_)
+  _frand_tmp_ < 0 ? (-_frand_tmp_) : _frand_tmp_)
 
 #undef P
 #endif /* _SCREENHACK_H_ */

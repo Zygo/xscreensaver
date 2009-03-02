@@ -10,11 +10,7 @@
  */
 
 #include "screenhack.h"
-#include <math.h>
-#ifdef VMS
-#define M_PI 3.14159265358979323846
-#endif
-#if __STDC__
+#ifdef __STDC__
 #include <math.h>	/* for M_PI */
 #endif
 
