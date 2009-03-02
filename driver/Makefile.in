@@ -83,6 +83,8 @@ PAM_OBJS	= passwd-pam.o
 
 LOCK_SRCS_1	= lock.c passwd.c
 LOCK_OBJS_1	= lock.o passwd.o
+NOLOCK_SRCS_1	= lock.c
+NOLOCK_OBJS_1	= lock.o
 
 TEST_SRCS	= test-passwd.c test-uid.c test-xdpms.c test-grab.c test-apm.c
 

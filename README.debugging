@@ -81,7 +81,7 @@ RUN-TIME PROBLEMS:
         *  Is the problem in the driver (`xscreensaver'), the GUI
            (`xscreensaver-demo'), or in the graphics hacks?
 
-        *  If the problem is in the GUI, was the it built using
+        *  If the problem is in the GUI, was it built using
            Motif, Lesstif, or Athena?  Which version?
 
         *  If the problem is in one (or more) of the hacks, which ones?
@@ -118,8 +118,18 @@ RUN-TIME PROBLEMS:
               where
 
            If the bottom few lines of the output don't include the functions
-	   `main_loop()' and `main()', then something's wrong: are you sure
-           the core file came from that program?
+           `main_loop()' and `main()', then something went wrong, and the
+           core file is bogus.  If the lines it prints out contain only
+           question marks, then the core file is bogus.  Are you sure the
+           core file came from that program?  Did you compile with -g, as
+           explained above?  If you don't compile with -g, the core file
+           won't have any information in it.
+
+           Never ever ever mail me (or anyone) a core file.  They are huge,
+           and are only meaningful on the machine that generated them, with
+           the exact executable that generated them, neither of which anyone
+           but you has access to.  Don't mail me a core file unless you're
+           also planning on mailing me your computer.
 
         *  If it gets an X error, where did it come from?  Run
            xscreensaver with the `-sync' command-line option.  When `-sync'

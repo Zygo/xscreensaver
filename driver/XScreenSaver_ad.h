@@ -161,7 +161,8 @@
 	   GL:	glplanet -root					  	\\n\
 	   GL:	pulsar -root					  	\\n\
   -	   GL:  pulsar -root -texture -mipmap -texture_quality  	  \
-		       -light -fog					\\n",
+		       -light -fog					\\n\
+	   GL:  extrusion -root 					\\n",
 " ",
 "XScreenSaver.pointerPollTime:		5",
 "XScreenSaver.initialDelay:		0",

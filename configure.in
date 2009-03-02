@@ -180,8 +180,7 @@ perl_version_cmd='print $]'
 changequote([,])
 
 AC_DEFUN(AC_PROG_PERL,
- [PERL=''
-  AC_PATH_PROGS(PERL, [perl5 perl],,)
+ [AC_PATH_PROGS(PERL, [perl5 perl],,)
   if test -z "$PERL" ; then
     PERL_VERSION=0
   else
@@ -1781,7 +1780,7 @@ fi
 
 ###############################################################################
 #
-#       Check for -lGL or -lMesa.
+#       Check for -lGL or -lMesaGL.
 #
 ###############################################################################
 
@@ -1958,6 +1957,58 @@ elif test "$with_gl" != no; then
   echo "error: must be yes or no: --with-gl=$with_gl"
   exit 1
 fi
+
+
+###############################################################################
+#
+#       Check for -lgle.
+#
+###############################################################################
+
+have_gle=no
+with_gle_req=unspecified
+AC_ARG_WITH(gle,
+[  --with-gle              Build those demos which depend on GLE
+                          (the OpenGL "extrusion" library.)],
+  [with_gle="$withval"; with_gle_req="$withval"],[with_gle=yes])
+
+HANDLE_X_PATH_ARG(with_gle, --with-gle, GLE)
+
+GLE_LIBS=""
+
+if test "$with_gle" = yes; then
+
+  AC_CHECK_X_HEADER(GL/gutil.h, have_gle=yes, have_gle=no)
+  if test "$have_gle" = yes ; then
+    AC_CHECK_X_HEADER(GL/tube.h, have_gle=yes, have_gle=no)
+  fi
+
+#          /usr/local/lib/GL/libgle.a
+#          /usr/local/lib/GL/libmatrix.a
+
+  if test "$have_gle" = yes ; then
+    have_gle=no
+    AC_CHECK_X_LIB(gle, gleCreateGC, 
+                   [have_gle=yes; GLE_LIBS="-lgle"],
+                   [], $GL_LIBS -lX11 -lXext -lm)
+  fi
+  if test "$have_gle" = yes ; then
+    have_gle=no
+    AC_CHECK_X_LIB(matrix, uview_direction_d, 
+                   [have_gle=yes; GLE_LIBS="$GLE_LIBS -lmatrix"],
+                   [], $GL_LIBS -lX11 -lXext -lm)
+  fi
+
+  if test "$have_gle" = yes ; then
+    AC_DEFINE(HAVE_GLE)
+  fi
+
+elif test "$with_gle" != no; then
+  echo "error: must be yes or no: --with-gle=$with_gle"
+  exit 1
+
+fi
+
 
 
 ###############################################################################
@@ -2354,8 +2405,8 @@ if test "$enable_locking" = yes; then
   LOCK_SRCS='$(LOCK_SRCS_1) $(PASSWD_SRCS)'
   LOCK_OBJS='$(LOCK_OBJS_1) $(PASSWD_OBJS)'
 else
-  LOCK_SRCS=''
-  LOCK_OBJS=''
+  LOCK_SRCS='$(NOLOCK_SRCS_1)'
+  LOCK_OBJS='$(NOLOCK_SRCS_1)'
 fi
 
 if test "$need_setuid" = yes; then
@@ -2373,6 +2424,14 @@ if test "$have_gl" = yes; then
   GL_KLUDGE="${tab}  "
 else
   GL_KLUDGE="  -${tab}  "
+fi
+
+if test "$have_gle" = yes; then
+  GLE_EXES='$(GLE_EXES)'
+  GLE_MEN='$(GLE_MEN)'
+  GLE_KLUDGE="${tab}  "
+else
+  GLE_KLUDGE="  -${tab}  "
 fi
 
 
@@ -2394,6 +2453,7 @@ AC_SUBST(ATHENA3D_LIBS)
 AC_SUBST(HACK_LIBS)
 AC_SUBST(XPM_LIBS)
 AC_SUBST(GL_LIBS)
+AC_SUBST(GLE_LIBS)
 AC_SUBST(PASSWD_LIBS)
 AC_SUBST(INSTALL_SETUID)
 AC_SUBST(INSTALL_DIRS)
@@ -2414,6 +2474,9 @@ AC_SUBST(LOCK_OBJS)
 AC_SUBST(GL_EXES)
 AC_SUBST(GL_MEN)
 AC_SUBST(GL_KLUDGE)
+AC_SUBST(GLE_EXES)
+AC_SUBST(GLE_MEN)
+AC_SUBST(GLE_KLUDGE)
 AC_SUBST(HACKDIR)
 
 APPDEFAULTS=$ac_x_app_defaults
@@ -2654,6 +2717,26 @@ if test "$have_gl" = no ; then
   warn2 'info, see <http://www.opengl.org/>.'
 
 fi
+
+
+if test "$have_gl" = yes -a "$have_gle" = no ; then
+  if test "$with_gle_req" = yes ; then
+    warnL 'Use of GLE was requested, but it was not found.'
+  elif test "$with_gle_req" = no ; then
+    noteL 'The GLE (GL Extrusion) library is not being used.'
+  else
+    noteL 'The GLE (GL Extrusion) library was not found.'
+  fi
+
+  echo ''
+  warn2 'Some of the OpenGL (3D) demos will not be built or installed.'
+  warn2 'You might want to consider installing GLE and re-running'
+  warn2 'configure.  (Remember to delete the config.cache file first.)'
+  warn2 'You can find the GLE library at <http://www.linas.org/gle/>.'
+  warn2 'For general OpenGL info, see <http://www.opengl.org/>.'
+
+fi
+
 
 if test "$with_readdisplay_req" = yes -a "$have_readdisplay" = no ; then
   warn 'Use of XReadDisplay was requested, but it was not found.'

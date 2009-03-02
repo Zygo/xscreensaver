@@ -24,16 +24,23 @@
 #ifdef HAVE_XPM
 # include <X11/xpm.h>
 # include "images/matrix.xpm"
+# include "images/matrix2.xpm"
 #endif
 
 #include "images/matrix.xbm"
+#include "images/matrix2.xbm"
 
-#define CHAR_HEIGHT 31
+#define CHAR_ROWS 27
+#define CHAR_COLS 3
+#define FADE_COL  0
+#define PLAIN_COL 1
+#define GLOW_COL  2
 
 typedef struct {
-  int glyph;
-  Bool changed;
-  int glow;
+  unsigned int glyph   : 8;
+           int glow    : 8;
+  unsigned int changed : 1;
+  unsigned int spinner : 1;
 } m_cell;
 
 typedef struct {
@@ -51,6 +58,7 @@ typedef struct {
   int char_width, char_height;
   m_cell *cells;
   m_feeder *feeders;
+  Bool small_p;
   Bool insert_top_p, insert_bottom_p;
   int density;
 
@@ -89,7 +97,10 @@ load_images (m_state *state)
       xpmattrs.colormap = state->xgwa.colormap;
 # endif
 
-      result = XpmCreatePixmapFromData (state->dpy, state->window, matrix,
+      result = XpmCreatePixmapFromData (state->dpy, state->window,
+                                        (state->small_p
+                                         ? matrix2_xpm
+                                         : matrix_xpm),
                                         &state->images, 0 /* mask */,
                                         &xpmattrs);
       if (!state->images || (result != XpmSuccess && result != XpmColorError))
@@ -97,15 +108,15 @@ load_images (m_state *state)
 
       state->image_width = xpmattrs.width;
       state->image_height = xpmattrs.height;
-      state->nglyphs = state->image_height / CHAR_HEIGHT;
+      state->nglyphs = CHAR_ROWS;
     }
   else
 #endif /* !HAVE_XPM */
     {
       unsigned long fg, bg;
-      state->image_width = matrix_width;
-      state->image_height = matrix_height;
-      state->nglyphs = state->image_height / CHAR_HEIGHT;
+      state->image_width =  (state->small_p ? matrix2_width  : matrix_width);
+      state->image_height = (state->small_p ? matrix2_height : matrix_height);
+      state->nglyphs = CHAR_ROWS;
 
       fg = get_pixel_resource("foreground", "Foreground",
                               state->dpy, state->xgwa.colormap);
@@ -113,9 +124,35 @@ load_images (m_state *state)
                               state->dpy, state->xgwa.colormap);
       state->images =
         XCreatePixmapFromBitmapData (state->dpy, state->window,
-                                     (char *) matrix_bits,
+                                     (state->small_p
+                                      ? (char *) matrix2_bits
+                                      : (char *) matrix_bits),
                                      state->image_width, state->image_height,
                                      bg, fg, state->xgwa.depth);
+    }
+}
+
+
+static void
+init_spinners (m_state *state)
+{
+  int i = get_integer_resource ("spinners", "Integer");
+  int x, y;
+  m_cell *cell;
+
+  for (y = 0; y < state->grid_height; y++)
+    for (x = 0; x < state->grid_width; x++)
+      {
+        cell = &state->cells[state->grid_width * y + x];
+        cell->spinner = 0;
+      }
+
+  while (--i > 0)
+    {
+      x = random() % state->grid_width;
+      y = random() % state->grid_height;
+      cell = &state->cells[state->grid_width * y + x];
+      cell->spinner = 1;
     }
 }
 
@@ -130,6 +167,8 @@ init_matrix (Display *dpy, Window window)
   state->window = window;
 
   XGetWindowAttributes (dpy, window, &state->xgwa);
+
+  state->small_p = get_boolean_resource ("small", "Boolean");
   load_images (state);
 
   gcv.foreground = get_pixel_resource("foreground", "Foreground",
@@ -142,8 +181,8 @@ init_matrix (Display *dpy, Window window)
   state->erase_gc = XCreateGC (state->dpy, state->window,
                                GCForeground|GCBackground, &gcv);
 
-  state->char_width = state->image_width / 2;
-  state->char_height = CHAR_HEIGHT;
+  state->char_width =  state->image_width  / CHAR_COLS;
+  state->char_height = state->image_height / CHAR_ROWS;
 
   state->grid_width  = state->xgwa.width  / state->char_width;
   state->grid_height = state->xgwa.height / state->char_height;
@@ -185,6 +224,8 @@ init_matrix (Display *dpy, Window window)
   if (insert)
     free (insert);
 
+  init_spinners (state);
+
   return state;
 }
 
@@ -208,14 +249,15 @@ insert_glyph (m_state *state, int glyph, int x, int y)
         {
           from = &state->cells[state->grid_width * (y-1) + x];
           to   = &state->cells[state->grid_width * y     + x];
-          *to = *from;
-          to->changed = True;
+          to->glyph   = from->glyph;
+          to->glow    = from->glow;
+          to->changed = 1;
         }
       to = &state->cells[x];
     }
 
   to->glyph = glyph;
-  to->changed = True;
+  to->changed = 1;
 
   if (!to->glyph)
     ;
@@ -301,7 +343,7 @@ hack_matrix (m_state *state)
           if (cell->glyph && cell->glow == 0)
             {
               cell->glow = random() % 10;
-              cell->changed = True;
+              cell->changed = 1;
             }
         }
     }
@@ -334,6 +376,9 @@ hack_matrix (m_state *state)
       else
         f->y = -1;
     }
+
+  if (! (random() % 500))
+    init_spinners (state);
 }
 
 
@@ -365,18 +410,35 @@ draw_matrix (m_state *state)
                           state->char_height);
         else
           XCopyArea (state->dpy, state->images, state->window, state->draw_gc,
-                     (cell->glow ? state->char_width : 0),
+                     ((cell->glow > 0 || cell->spinner)
+                      ? (state->char_width * GLOW_COL)
+                      : (cell->glow == 0
+                         ? (state->char_width * PLAIN_COL)
+                         : (state->char_width * FADE_COL))),
                      (cell->glyph - 1) * state->char_height,
                      state->char_width, state->char_height,
                      x * state->char_width,
                      y * state->char_height);
 
-        cell->changed = False;
+        cell->changed = 0;
 
         if (cell->glow > 0)
           {
             cell->glow--;
-            cell->changed = True;
+            cell->changed = 1;
+          }
+        else if (cell->glow < 0)
+          {
+            cell->glow++;
+            if (cell->glow == 0)
+              cell->glyph = 0;
+            cell->changed = 1;
+          }
+
+        if (cell->spinner)
+          {
+            cell->glyph = random() % CHAR_ROWS;
+            cell->changed = 1;
           }
       }
 
@@ -407,13 +469,17 @@ char *progclass = "XMatrix";
 char *defaults [] = {
   ".background:		   black",
   ".foreground:		   green",
+  "*small:		   False",
   "*delay:		   10000",
   "*insert:		   both",
+  "*spinners:		   5",
   "*density:		   75",
   0
 };
 
 XrmOptionDescRec options [] = {
+  { "-small",		".small",		XrmoptionNoArg, "True" },
+  { "-large",		".small",		XrmoptionNoArg, "False" },
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-top",		".insert",		XrmoptionNoArg, "top" },
   { "-bottom",		".insert",		XrmoptionNoArg, "bottom" },

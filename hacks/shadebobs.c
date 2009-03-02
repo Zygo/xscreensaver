@@ -77,7 +77,7 @@ static float nExtentDelta;
 
 typedef struct
 {
-  char *anDeltaMap;
+  signed char *anDeltaMap;
   double nVelocityX, nVelocityY;
   double nAngleX, nAngleY;
   float nExtentX, nExtentY;
@@ -97,7 +97,7 @@ static void ResetShadeBob( SShadeBob *pShadeBob )
 static void InitShadeBob( SShadeBob *pShadeBob, Bool bDark )
 {
   double nDelta;
-  char iWidth, iHeight;
+  int iWidth, iHeight;
 
   if( ( pShadeBob->anDeltaMap = calloc( nBobDiameter * nBobDiameter, sizeof(char) ) ) == NULL )
   {

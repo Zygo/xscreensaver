@@ -144,7 +144,8 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  xroger.man goop.man starfish.man munch.man rd-bomb.man \
 		  xjack.man xlyap.man jigsaw.man epicycle.man bsod.man \
 		  sonar.man t3d.man squiral.man spotlight.man critical.man \
-		  vidwhacker.man webcollage.man xsublim.man
+		  vidwhacker.man webcollage.man xsublim.man distort.man \
+		  phosphor.man xmatrix.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  images/$(STAR).xbm \
@@ -1674,7 +1675,9 @@ xmatrix.o: $(UTILS_SRC)/colors.h
 xmatrix.o: $(UTILS_SRC)/grabscreen.h
 xmatrix.o: $(UTILS_SRC)/visual.h
 xmatrix.o: $(srcdir)/images/matrix.xpm
+xmatrix.o: $(srcdir)/images/matrix2.xpm
 xmatrix.o: $(srcdir)/images/matrix.xbm
+xmatrix.o: $(srcdir)/images/matrix2.xbm
 petri.o: $(srcdir)/screenhack.h
 petri.o: ../config.h
 petri.o: $(UTILS_SRC)/yarandom.h
@@ -1694,6 +1697,7 @@ shadebobs.o: $(UTILS_SRC)/hsv.h
 shadebobs.o: $(UTILS_SRC)/colors.h
 shadebobs.o: $(UTILS_SRC)/grabscreen.h
 shadebobs.o: $(UTILS_SRC)/visual.h
+xsublim.o: $(UTILS_SRC)/yarandom.h
 xsublim.o: $(UTILS_SRC)/usleep.h
 xsublim.o: $(UTILS_SRC)/resources.h
 ccurve.o: $(srcdir)/screenhack.h

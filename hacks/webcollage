@@ -27,7 +27,7 @@ require POSIX;
 use Fcntl ':flock'; # import LOCK_* constants
 
 
-my $version = q{ $Revision: 1.36 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.40 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -36,15 +36,15 @@ my $argv0 = $0;
 my $progname = $argv0; $progname =~ s@.*/@@g;
 
 my $random_redirector = "http://random.yahoo.com/bin/ryl";
-my $image_randomizer_1 = "http://image.altavista.com/cgi-bin/avncgi" .
-                         "?do=3" .
-                         "&verb=n" .
-                         "&oshape=n" .
-                         "&oorder=" .
-                         "&ophoto=1&oart=1&ocolor=1&obw=1" .
+my $image_randomizer_1 = "http://www.altavista.com/query" .
+                         "?mmdo=3" .
+                         "&nbq=12" .
                          "&stype=simage" .
-                         "&oprem=0" .
-                         "&query=";
+                         "&oart=1" .
+                         "&obw=1" .
+                         "&oshape=0" .
+                         "&what=web" .
+                         "&q=";
 my $image_randomizer_2 = "http://www.hotbot.com/?clickSrc=search" .
                          "&submit=SEARCH&SM=SC&LG=any" .
                          "&AM0=MC&AT0=words&AW0=" .
@@ -56,9 +56,13 @@ my $image_randomizer_2 = "http://www.hotbot.com/?clickSrc=search" .
                          "&MT=";
 my $image_randomizer_3 = "http://www.altavista.com/cgi-bin/query?pg=q" .
                          "&text=yes&kl=XX&stype=stext&q=";
-my $photo_randomizer   = "http://albums.photopoint.com/j/View?u=1&a=1&p=";
-my $photo_randomizer_lo = 10000001;
-my $photo_randomizer_hi = 12400000;
+
+# I guess Photopoint got wise to me, because now they are doing error
+# checking on the user ("u=") and album ("a=") parameters.  Oh well.
+#
+#my $photo_randomizer   = "http://albums.photopoint.com/j/View?u=1&a=1&p=";
+#my $photo_randomizer_lo = 10000001;
+#my $photo_randomizer_hi = 12400000;
 
 my $image_ppm   = ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp") . "/webcollage." . $$;
 my $image_tmp1  = $image_ppm . "-1";
@@ -626,9 +630,11 @@ sub pick_from_image_randomizer {
     my $href_count = 0;
 
     $_ = $body;
-    s/[\r\n\t ]+/ /g;
 
-    s/Result Pages:.*$//;               # trim off page footer
+    s/Result [Pp]ages:.*$//s;            # trim off page footer
+    s/^.*?IMAGE RESULTS//s;              # trim off page header
+
+    s/[\r\n\t ]+/ /g;
 
     s/(<A )/\n$1/gi;
     foreach (split(/\n/)) {
@@ -647,6 +653,14 @@ sub pick_from_image_randomizer {
         next unless ($u =~ m@^http://@i);  # skip non-http and relative urls.
 
         next if ($u =~ m@[/.]altavista\.com@i);  # skip altavista builtins
+        next if ($u =~ m@[/.]av\.com@i);
+        next if ($u =~ m@[/.]virage\.com@i);
+        next if ($u =~ m@[/.]photoloft\.com@i);
+        next if ($u =~ m@[/.]shopping\.com@i);
+        next if ($u =~ m@[/.]thetrip\.com@i);
+        next if ($u =~ m@[/.]cmgi\.com@i);
+        next if ($u =~ m@[/.]intelihealth\.com@i);
+        next if ($u =~ m@[/.]wildweb\.com@i);
         next if ($u =~ m@[/.]digital\.com@i);
         next if ($u =~ m@[/.]doubleclick\.net@i);
 
@@ -710,13 +724,13 @@ sub pick_from_image_randomizer {
 # to an image.  Returns two URLs, both of which are the URL of the image.
 # Returns () if nothing found this time.
 #
-sub pick_from_photo_randomizer {
-    my ( $timeout ) = @_;
-    my $n = ($photo_randomizer_lo +
-             int(rand() * ($photo_randomizer_hi - $photo_randomizer_lo)));
-    my $url = $photo_randomizer . $n;
-    return ( $url, $url, "photopoint" );
-}
+#sub pick_from_photo_randomizer {
+#    my ( $timeout ) = @_;
+#    my $n = ($photo_randomizer_lo +
+#             int(rand() * ($photo_randomizer_hi - $photo_randomizer_lo)));
+#    my $url = $photo_randomizer . $n;
+#    return ( $url, $url, "photopoint" );
+#}
 
 
 # Picks a random image on a random page, and returns two URLs:
@@ -751,10 +765,10 @@ sub pick_image {
         $total = ++$total_1;
         $count = ++$count_1 if $img;
 
-    } elsif ($r < 70) {
-        ($base, $img, $source) = pick_from_photo_randomizer ($timeout);
-        $total = ++$total_4;
-        $count = ++$count_4 if $img;
+#    } elsif ($r < 70) {
+#        ($base, $img, $source) = pick_from_photo_randomizer ($timeout);
+#        $total = ++$total_4;
+#        $count = ++$count_4 if $img;
 
 #    } elsif ($r < 80) {
 #        # HotBot sucks: 98% of the time, it says "no pages match your
@@ -1070,6 +1084,9 @@ sub x_output {
         which ($_) || die "$progname: $_ not found on \$PATH.\n";
         $_ = `$_`;
         ($img_width, $img_height) = m/dimensions: *(\d+)x(\d+) /;
+        if (!defined($img_height)) {
+            die "$progname: xdpyinfo failed.\n";
+        }
     }
 
     my $bgcolor = "#000000";

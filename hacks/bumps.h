@@ -34,7 +34,7 @@
 #define PI		3.141592654
 #define RANDOM() ((int) (random() & 0X7FFFFFFFL))
 
-typedef char			int8_;
+typedef signed char		int8_;
 typedef unsigned char	uint8_;
 typedef short			int16_;
 typedef unsigned short	uint16_;
@@ -43,7 +43,7 @@ typedef unsigned long	uint32_;
 typedef unsigned char	BOOL;
 
 
-// Globals:
+/* Globals: */
 char *progclass = "Bumps";
 
 char *defaults [] = {

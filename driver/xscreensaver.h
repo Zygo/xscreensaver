@@ -115,6 +115,12 @@ struct saver_info {
   int unlock_failures;		/* Counts failed login attempts while the
 				   screen is locked. */
 
+  char *unlock_typeahead;	/* If the screen is locked, and the user types
+                                   a character, we assume that it is the first
+                                   character of the password.  It's stored here
+                                   for the password dialog to use to populate
+                                   itself. */
+
 
   /* =======================================================================
      demoing

@@ -288,6 +288,13 @@ grab_screen_image_1 (Screen *screen, Window window)
 #endif /* DEBUG */
 	  copy_default_colormap_contents (screen, xgwa.colormap, xgwa.visual);
 	  raise_window(dpy, window, saver_p);
+
+          /* Generally it's bad news to call XInstallColormap() explicitly,
+             but this file does a lot of sleazy stuff already...  This is to
+             make sure that the window's colormap is installed, even in the
+             case where the window is OverrideRedirect. */
+          if (xgwa.colormap) XInstallColormap (dpy, xgwa.colormap);
+          XSync (dpy, False);
 	}
     }
   else  /* root_p */

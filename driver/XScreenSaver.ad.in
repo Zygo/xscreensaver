@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 3.18
-!                                13-Oct-99
+!                              version 3.19
+!                                30-Oct-99
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -245,7 +245,8 @@
 @GL_KLUDGE@ GL:	glplanet -root					  	\n\
 @GL_KLUDGE@ GL:	pulsar -root					  	\n\
   -	   GL:  pulsar -root -texture -mipmap -texture_quality  	  \
-		       -light -fog					\n
+		       -light -fog					\n\
+@GLE_KLUDGE@ GL:  extrusion -root 					\n
  
 
 ! Some other programs that you might want to track down (these work as

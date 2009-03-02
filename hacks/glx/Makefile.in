@@ -42,8 +42,10 @@ X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 #
 HACK_PRE	= $(LIBS) $(X_LIBS)
 HACK_POST	= $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS) -lm
-HACK_LIBS	= $(HACK_PRE)            @GL_LIBS@ @HACK_LIBS@ $(HACK_POST)
-XPM_LIBS	= $(HACK_PRE) @XPM_LIBS@ @GL_LIBS@ @HACK_LIBS@ $(HACK_POST)
+HACK_POST2	= @GL_LIBS@ @HACK_LIBS@ $(HACK_POST)
+HACK_LIBS	= $(HACK_PRE)                       $(HACK_POST2)
+XPM_LIBS	= $(HACK_PRE)            @XPM_LIBS@ $(HACK_POST2)
+GLE_LIBS	= $(HACK_PRE) @GLE_LIBS@ @XPM_LIBS@ $(HACK_POST2)
 
 HACK_SRC	= $(srcdir)/..
 HACK_BIN	= ..
@@ -66,18 +68,25 @@ SRCS		= atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
 		  morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c s1_3.c \
 		  s1_4.c s1_5.c s1_6.c s1_b.c shark.c sproingies.c \
 		  sproingiewrap.c stairs.c superquadrics.c swim.c whale.c \
-		  xlock-gl.c xpm-ximage.c glplanet.c pulsar.c
+		  xlock-gl.c xpm-ximage.c glplanet.c pulsar.c \
+		  extrusion.c extrusion-helix2.c extrusion-helix3.c \
+		  extrusion-helix4.c extrusion-joinoffset.c extrusion-screw.c \
+		  extrusion-taper.c extrusion-twistoid.c
 
 OBJS		= atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
 		  buildlwo.o cage.o dolphin.o gears.o lament.o moebius.o \
 		  morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o s1_3.o \
 		  s1_4.o s1_5.o s1_6.o s1_b.o shark.o sproingies.o \
 		  sproingiewrap.o stairs.o superquadrics.o swim.o whale.o \
-		  xlock-gl.o xpm-ximage.o glplanet.o pulsar.o
+		  xlock-gl.o xpm-ximage.o glplanet.o pulsar.o \
+		  extrusion.o extrusion-helix2.o extrusion-helix3.o \
+		  extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
+		  extrusion-taper.o extrusion-twistoid.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar
-EXES		= @GL_EXES@
+GLE_EXES	= extrusion
+EXES		= @GL_EXES@ @GLE_EXES@
 
 HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
@@ -257,6 +266,12 @@ glplanet:	glplanet.o	$(HACK_OBJS) xpm-ximage.o
 
 pulsar:		pulsar.o		$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(HACK_LIBS)
+
+EXTRUSION_OBJS=extrusion.o extrusion-helix2.o extrusion-helix3.o    \
+	extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
+	extrusion-taper.o extrusion-twistoid.o
+extrusion:	$(EXTRUSION_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $(EXTRUSION_OBJS) $(HACK_OBJS) $(GLE_LIBS)
 
 
 ##############################################################################
@@ -526,4 +541,16 @@ pulsar.o: $(UTILS_SRC)/colors.h
 pulsar.o: $(UTILS_SRC)/grabscreen.h
 pulsar.o: $(UTILS_SRC)/visual.h
 pulsar.o: $(UTILS_SRC)/xshm.h
+extrusion.o: $(HACK_SRC)/xlockmore.h
+extrusion.o: ../../config.h
+extrusion.o: $(HACK_SRC)/xlockmoreI.h
+extrusion.o: $(HACK_SRC)/screenhack.h
+extrusion.o: $(UTILS_SRC)/yarandom.h
+extrusion.o: $(UTILS_SRC)/usleep.h
+extrusion.o: $(UTILS_SRC)/resources.h
+extrusion.o: $(UTILS_SRC)/hsv.h
+extrusion.o: $(UTILS_SRC)/colors.h
+extrusion.o: $(UTILS_SRC)/grabscreen.h
+extrusion.o: $(UTILS_SRC)/visual.h
+extrusion.o: $(UTILS_SRC)/xshm.h
 

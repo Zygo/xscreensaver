@@ -37,7 +37,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.12 $
+ * $Revision: 1.13 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -1486,7 +1486,8 @@ DrawBogie(sonar_info *si, int draw, char *name, int degrees,
 
     /* Compute the coordinates of the object */
 
-    distance = (log((double) distance) / 10.0) * si->radius;
+    if (distance != 0)
+      distance = (log((double) distance) / 10.0) * si->radius;
     x = ox + ((double) distance * cos(4.0 * ((double) degrees)/57.29578));
     y = oy - ((double) distance * sin(4.0 * ((double) degrees)/57.29578));
 

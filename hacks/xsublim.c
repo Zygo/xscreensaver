@@ -88,6 +88,7 @@
 #include <X11/SGIScheme.h>
 #endif
 
+#include "yarandom.h"
 #include "usleep.h"
 #include "resources.h"
 

@@ -1164,6 +1164,30 @@ passwd_event_loop (saver_info *si)
 }
 
 
+static void
+handle_typeahead (saver_info *si)
+{
+  passwd_dialog_data *pw = si->pw_data;
+  int i;
+  if (!si->unlock_typeahead)
+    return;
+
+  i = strlen (si->unlock_typeahead);
+  if (i >= sizeof(pw->typed_passwd) - 1)
+    i = sizeof(pw->typed_passwd) - 1;
+
+  memcpy (pw->typed_passwd, si->unlock_typeahead, i);
+  pw->typed_passwd [i] = 0;
+
+  memset (si->unlock_typeahead, '*', strlen(si->unlock_typeahead));
+  si->unlock_typeahead[i] = 0;
+  update_passwd_window (si, si->unlock_typeahead, pw->ratio);
+
+  free (si->unlock_typeahead);
+  si->unlock_typeahead = 0;
+}
+
+
 Bool
 unlock_p (saver_info *si)
 {
@@ -1183,6 +1207,7 @@ unlock_p (saver_info *si)
   make_passwd_window (si);
   if (cmap) XInstallColormap (si->dpy, cmap);
 
+  handle_typeahead (si);
   passwd_event_loop (si);
 
   status = (si->pw_data->state == pw_ok);

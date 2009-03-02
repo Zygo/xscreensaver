@@ -117,6 +117,7 @@ init_hack (Display *dpy, Window window)
   /* create buffer to reduce flicker */
   buffer = XCreatePixmap(dpy, window, sizex, sizey, xgwa.depth);
   buffer_gc = XCreateGC(dpy, buffer, gcflags, &gcv);
+  XFillRectangle(dpy, buffer, buffer_gc, 0, 0, sizex, sizey);
 
   /* blank out screen */
   XFillRectangle(dpy, window, window_gc, 0, 0, sizex, sizey);

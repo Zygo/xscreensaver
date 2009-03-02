@@ -59,7 +59,7 @@
  *   This program accepts ClientMessages of type SCREENSAVER; these messages
  *   may contain the atom ACTIVATE or DEACTIVATE, meaning to turn the 
  *   screensaver on or off now, regardless of the idleness of the user,
- *   and a few other things.  The included "xscreensaver_command" program
+ *   and a few other things.  The included "xscreensaver-command" program
  *   sends these messsages.
  *
  *   If we don't have the XIdle, MIT-SCREEN-SAVER, or SGI SCREEN_SAVER
@@ -70,8 +70,9 @@
  *   KeyPress on windows which don't select them, because that would
  *   interfere with event propagation.  This will break if any program
  *   changes its event mask to contain KeyRelease or PointerMotion more than
- *   30 seconds after creating the window, but that's probably pretty rare.
- *   
+ *   30 seconds after creating the window, but such programs do not seem to
+ *   occur in nature (I've never seen it happen in all these years.)
+ *
  *   The reason that we can't select KeyPresses on windows that don't have
  *   them already is that, when dispatching a KeyPress event, X finds the
  *   lowest (leafmost) window in the hierarchy on which *any* client selects
@@ -110,13 +111,13 @@
  *       to keep your emacs window alive even when xscreensaver has grabbed.
  *     - Go read the code related to `debug_p'.
  *     - You probably can't set breakpoints in functions that are called on
- *       the other side of a call to fork() -- if your clients are dying 
- *       with signal 5, Trace/BPT Trap, you're losing in this way.
+ *       the other side of a call to fork() -- if your subprocesses are
+ *       dying with signal 5, Trace/BPT Trap, you're losing in this way.
  *     - If you aren't using a server extension, don't leave this stopped
  *       under the debugger for very long, or the X input buffer will get
  *       huge because of the keypress events it's selecting for.  This can
  *       make your X server wedge with "no more input buffers."
- *       
+ *
  * ======================================================================== */
 
 #ifdef HAVE_CONFIG_H
@@ -318,6 +319,7 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
    "    arguments `-sync -verbose', and reproduce this bug.  That will cause\n"
    "    xscreensaver to dump a `core' file to the current directory.  Please\n"
    "    include the stack trace from that core file in your bug report.\n"
+   "    Do NOT mail the core file itself!  That won't work.\n"
    "\n"
    "    http://www.jwz.org/xscreensaver/bugs.html explains how to create the\n"
    "    most useful bug reports, and how to examine core files.\n"

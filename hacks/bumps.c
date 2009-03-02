@@ -76,7 +76,7 @@ void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iWinWidth, uint16_ nColorC
 
 void CreateTables( SSpotLight *pSpotLight )
 {
-	long double nUnit;
+	double nUnit;
 	uint16_ iDegree;
 	
 	pSpotLight->nDegreeCount = get_integer_resource( "degrees", "Integer" );
@@ -88,10 +88,10 @@ void CreateTables( SSpotLight *pSpotLight )
 	pSpotLight->aSinTable = calloc( pSpotLight->nDegreeCount, sizeof(double) );
 
 	/* This funtion builds the Sine Lookup Tables. */
-	nUnit = (long double)( PI * 2.0F ) / (long double)( pSpotLight->nDegreeCount );
+	nUnit = (double)( PI * 2.0F ) / (double)( pSpotLight->nDegreeCount );
 
 	for( iDegree=0; iDegree<pSpotLight->nDegreeCount; iDegree++)
-		pSpotLight->aSinTable[ iDegree ] = sin( nUnit * (long double)iDegree );
+		pSpotLight->aSinTable[ iDegree ] = sin( nUnit * (double)iDegree );
 }
 
 
@@ -228,11 +228,12 @@ void SetPalette( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 void InitBumpMap( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 {
 	XImage *pScreenImage;
-	XColor aColors[ pBumps->iWinWidth ];
+	XColor *aColors;
 	uint8_ nSoften;
 	uint16_ iWidth, iHeight;
 	BOOL bInvert = (BOOL)get_boolean_resource( "invert", "Boolean" );
 	
+	aColors = (XColor*)calloc( pBumps->iWinWidth, sizeof(XColor) );
 	grab_screen_image( pXWinAttribs->screen, pBumps->Win );
 	pScreenImage = XGetImage( pBumps->pDisplay, pBumps->Win, 0, 0, pBumps->iWinWidth, pBumps->iWinHeight, ~0L, ZPixmap );
 
@@ -266,6 +267,7 @@ void InitBumpMap( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 #endif
 	while( nSoften-- )
 		SoftenBumpMap( pBumps );
+	free( aColors );
 }
 
 

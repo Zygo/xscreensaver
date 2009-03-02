@@ -27,7 +27,7 @@
 #define COUNT (1 << NSTEPS)
 #define CELL(c, r) cell[((unsigned int)(c)) + ((unsigned int) (r)) * xmax]
 
-static enum mode_t { MODE_H, MODE_S, MODE_V, MODE_RANDOM } mode;
+static enum imsmap_mode { MODE_H, MODE_S, MODE_V, MODE_RANDOM } mode;
 
 static GC gc, gc2;
 static XWindowAttributes xgwa;
@@ -55,7 +55,7 @@ init_map (Display *dpy, Window window)
   int fg_h, bg_h;
   double fg_s, fg_v, bg_s, bg_v;
 
-  enum mode_t this_mode;
+  enum imsmap_mode this_mode;
   static Bool rv_p;
     
   XGCValues gcv;

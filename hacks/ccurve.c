@@ -201,7 +201,7 @@ self_similar_normalized (Display*  display,
 	double    x = 0.0;
 	double    y = 0.0;
 
-	replacement = (Position*)(alloca (segment_count * sizeof (Segment)));
+	replacement = (Position*)(malloc (segment_count * sizeof (Segment)));
 	copy_points (segment_count, points, replacement);
 	assert (fabs ((replacement [segment_count - 1].x) - 1.0) < EPSILON);
 	assert (fabs (replacement [segment_count - 1].y) < EPSILON);
@@ -222,6 +222,7 @@ self_similar_normalized (Display*  display,
 	    x = next_x;
 	    y = next_y;
 	}
+        free((void*)replacement);
     }
 }
 
@@ -246,7 +247,7 @@ self_similar (Display* display,
 {
     Position* points = (Position*)NULL;
 
-    points = (Position*)(alloca (segment_count * sizeof (Position)));
+    points = (Position*)(malloc (segment_count * sizeof (Position)));
     normalized_plot (segment_count, segments, points);
     assert (fabs ((points [segment_count - 1].x) - 1.0) < EPSILON);
     assert (fabs (points [segment_count - 1].y) < EPSILON);
@@ -256,6 +257,7 @@ self_similar (Display* display,
 			     maximum_x, maximum_y,
 			     minimum_x, minimum_y,
 			     segment_count, points);
+    free((void*)points);
 }
 
 static
@@ -723,7 +725,7 @@ screenhack (Display* display,
 	segment_count
 	    = lengths [random () % (sizeof (lengths) / sizeof (int))];
 	segments
-	    = (Segment*)(alloca ((segment_count) * sizeof (Segment)));
+	    = (Segment*)(malloc ((segment_count) * sizeof (Segment)));
 	select_pattern (segment_count, segments);
 	iterations = floor (log (maximum_lines)
 				/ log (((double)(segment_count))));
@@ -784,6 +786,7 @@ screenhack (Display* display,
 	    if (delay) sleep (delay);
 	    screenhack_handle_events (display);
 	}
+        free((void*)segments);
 	if (pause) sleep (pause);
 	erase_full_window (display, window);
     }
