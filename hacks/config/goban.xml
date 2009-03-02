@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="goban" _label="Goban">
+
+  <command arg="-root"/>
+
+  <!-- #### write me -->
+
+  <_description>
+
+Replays historical games of go (aka wei-chi and baduk) on the screen.
+By Scott Draves.  You can find it at &lt;http://www.draves.org/goban/&gt;.
+  </_description>
+</screensaver>

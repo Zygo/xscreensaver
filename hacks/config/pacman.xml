@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="pacman" _label="Pacman">
+
+  <command arg="-root"/>
+
+  <number id="size" type="spinbutton" arg="-size %"
+           _label="Player Size" low="0" high="200" default="0"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="10000"
+          convert="invert"/>
+
+  <_description>
+Simulates a game of Pac-Man on a randomly-created level.
+Written by Edwin de Jong.
+  </_description>
+</screensaver>
