@@ -41,9 +41,9 @@ extern float rot_z;
 /* =========================================================== */
 
 #define NUM_TOID1_PTS 5
-double toid1_points[NUM_TOID1_PTS][3];
-float toid1_colors [NUM_TOID1_PTS][3];
-double toid1_twists [NUM_TOID1_PTS];
+static double toid1_points[NUM_TOID1_PTS][3];
+static float toid1_colors [NUM_TOID1_PTS][3];
+static double toid1_twists [NUM_TOID1_PTS];
 
 #define TSCALE (6.0)
 
@@ -66,7 +66,7 @@ double toid1_twists [NUM_TOID1_PTS];
    i++;						\
 }
 
-void init_toid1_line (void)
+static void init_toid1_line (void)
 {
    int i;
 
@@ -112,10 +112,10 @@ void init_toid1_line (void)
 
 #define NUM_TWIS_PTS (20)
 
-double twistation [NUM_TWIS_PTS][2];
-double twist_normal [NUM_TWIS_PTS][2];
+static double twistation [NUM_TWIS_PTS][2];
+static double twist_normal [NUM_TWIS_PTS][2];
 
-void init_tripples (void)
+static void init_tripples (void)
 {
    int i;
    double angle;

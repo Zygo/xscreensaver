@@ -441,10 +441,14 @@ init_penrose(ModeInfo * mi)
 	}
 	tp = &tilings[MI_SCREEN(mi)];
 
+#if 0 /* if you do this, then the -ammann and -no-ammann options don't work.
+         -- jwz */
 	if (MI_IS_FULLRANDOM(mi))
 		tp->ammann = (Bool) (LRAND() & 1);
 	else
+#endif /* 0 */
 		tp->ammann = ammann;
+
 	tp->done = False;
 	tp->busyLoop = 0;
 	tp->failures = 0;

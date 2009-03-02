@@ -154,7 +154,7 @@ void cylinder (GLfloat x, GLfloat y, GLfloat z, float length, float outer, float
 int a; /* current angle around cylinder */
 int b = 0; /* previous */
 int angle, norm, step, sangle;
-float z1, y1, z2, y2, ex;
+float z1, y1, z2, y2, ex=0;
 float y3, z3;
 float Z1, Y1, Z2, Y2, xl, Y3, Z3;
 GLfloat y2c[720], z2c[720];

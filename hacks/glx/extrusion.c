@@ -79,6 +79,7 @@
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
+#include "xpm-ximage.h"
 
 #define checkImageWidth 64
 #define checkImageHeight 64
@@ -154,7 +155,7 @@ static OptionStruct desc[] =
   {"-/+ light", "whether to do enable lighting (slower)"},
   {"-/+ wire", "whether to do use wireframe instead of filled (faster)"},
   {"-/+ texture", "whether to apply a texture (slower)"},
-  {"-image <filename>", "texture image to load (PPM or PPM4)"},
+  {"-image <filename>", "texture image to load"},
   {"-/+ texture_quality", "whether to use texture smoothing (slower)"},
   {"-/+ mipmap", "whether to use texture mipmap (slower)"},
 };
@@ -205,9 +206,6 @@ static float dd_lastx=0, dd_lasty=0;
 static float max_dlastx=0, max_dlasty=0;
 float lastx=0, lasty=0;
 
-static int errCode;
-static GLubyte * errString;
-
 struct functions {
   void (*InitStuff)(void);
   void (*DrawStuff)(void);
@@ -218,7 +216,7 @@ struct functions {
    like we're looking at them from the back or something
 */
 
-struct functions funcs_ptr[] = {
+static struct functions funcs_ptr[] = {
   {InitStuff_helix2, DrawStuff_helix2, "helix2"},
   {InitStuff_helix3, DrawStuff_helix3, "helix3"},
   {InitStuff_helix4, DrawStuff_helix4, "helix4"},
@@ -234,21 +232,8 @@ static int num_screensavers = countof(funcs_ptr);
 /* BEGINNING OF FUNCTIONS */
 
 
-/* check for errors, bail if any.  useful for debugging */
-int checkError(int line, char *file)
-{
-  if((errCode = glGetError()) != GL_NO_ERROR) {
-    errString = (GLubyte *)gluErrorString(errCode);
-    fprintf(stderr, "%s: OpenGL error: %s detected at line %d in file %s\n",
-            progname, errString, line, file);
-    exit(1);
-  }
-  return 0;
-}
-
-
-/* generate a checkered image for texturing */
-GLubyte *Generate_Image(int *width, int *height, int *format)
+GLubyte *
+Generate_Image(int *width, int *height, int *format)
 {
   GLubyte *result;
   int i, j, c;
@@ -256,7 +241,7 @@ GLubyte *Generate_Image(int *width, int *height, int *format)
 
   *width = checkImageWidth;
   *height = checkImageHeight;
-  result = (GLubyte *)malloc(4 * *width * *height);
+  result = (GLubyte *)malloc(4 * (*width) * (*height));
 
   counter = 0;
   for (i = 0; i < checkImageWidth; i++) {
@@ -272,153 +257,11 @@ GLubyte *Generate_Image(int *width, int *height, int *format)
   *format = GL_RGBA;
   return result;
 }
-/* Load a modified version of PPM format with an extra byte for alpha */
-GLubyte *LoadPPM4(const char *filename, int *width, int *height, int *format)
-{
-  char buff[1024];
-  GLubyte *data;
-  int sizeX, sizeY;
-  FILE *fp;
-  int maxval;
 
-  fp = fopen(filename, "rb");
-  if (!fp)
-    {
-      fprintf(stderr, "%s: unable to open file '%s'\n", progname, filename);
-      return  Generate_Image(width, height, format);
-    }
 
-  if (!fgets(buff, sizeof(buff), fp))
-    {
-      perror("Unable to read header filename\n");
-      return  Generate_Image(width, height, format);
-    }
-
-  if (buff[0] != '6' || buff[1] != 'P')
-    {
-      fprintf(stderr, "%s: Invalid image format (must be `6P')\n", progname);
-      return  Generate_Image(width, height, format);
-    }
-
-  do
-    {
-      fgets(buff, sizeof(buff), fp);
-    }
-  while (buff[0] == '#');
-    
-  if (sscanf(buff, "%d %d", &sizeX, &sizeY) != 2)
-    {
-      fprintf(stderr, "%s: error loading image `%s'\n", progname, filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  if (fscanf(fp, "%d", &maxval) != 1)
-    {
-      fprintf(stderr, "%s: error loading image `%s'\n", progname, filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  while (fgetc(fp) != '\n')
-    ;
-
-  data = (GLubyte *)malloc(4 * sizeX * sizeY);
-  if (data == NULL)
-    {
-      fprintf(stderr, "%s: unable to allocate memory\n", progname);
-	  exit(1);
-    }
-
-  if (fread(data, 4 * sizeX, sizeY, fp) != sizeY)
-    {
-      fprintf(stderr, "%s: error loading image `%s'\n", progname, filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  fclose(fp);
-
-  *width = sizeX;
-  *height = sizeY;
-  *format = GL_RGBA;
-  return data;
-}
-
-/* Load a plain PPM image */
-GLubyte *LoadPPM(const char *filename, int *width, int *height, int *format)
-{
-  char buff[1024];
-  GLubyte *data;
-  GLint sizeX, sizeY;
-  FILE *fp;
-  int maxval;
-
-  fp = fopen(filename, "rb");
-  if (!fp)
-    {
-      fprintf(stderr, "%s: unable to open file '%s'\n", progname, filename);
-      return  Generate_Image(width, height, format);
-      exit(1);
-    }
-  if (!fgets(buff, sizeof(buff), fp))
-    {
-      perror(filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  if (buff[0] != 'P' || buff[1] != '6')
-    {
-      fprintf(stderr, "%s: invalid image format (must be `P6')\n", progname);
-      return  Generate_Image(width, height, format);
-    }
-
-  do
-    {
-      fgets(buff, sizeof(buff), fp);
-    }
-  while (buff[0] == '#');
-    
-  if (sscanf(buff, "%d %d", &sizeX, &sizeY) != 2)
-    {
-      fprintf(stderr, "%s: error loading image `%s'\n", progname, filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  if (fscanf(fp, "%d", &maxval) != 1)
-    {
-      fprintf(stderr, "%s: error loading image `%s'\n", progname, filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  while (fgetc(fp) != '\n')
-    ;
-
-  data = (GLubyte *)malloc(3 * sizeX * sizeY);
-  if (data == NULL)
-    {
-      fprintf(stderr, "%s: unable to allocate memory\n", progname);
-	  exit(1);
-    }
-
-  if (fread(data, 3 * sizeX, sizeY, fp) != sizeY)
-    {
-      fprintf(stderr, "%s: error loading image `%s'\n", progname, filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  fclose(fp);
-
-  *width = sizeX;
-  *height = sizeY;
-  *format = GL_RGB;
-  return data;
-}
-
-/* create a texture to be applied to the surface
-   this function loads a file using a loader depending on
-   that extension of the file. there is very little error
-   checking.  
-*/
-
-void Create_Texture(char *filename, int do_mipmap, int do_texture_quality)
+/* Create a texture in OpenGL.  First an image is loaded 
+   and stored in a raster buffer, then it's  */
+void Create_Texture(ModeInfo *mi, const char *filename)
 {
   int height, width;
   GLubyte *image;
@@ -426,54 +269,60 @@ void Create_Texture(char *filename, int do_mipmap, int do_texture_quality)
 
   if ( !strncmp(filename, "BUILTIN", 7))
     image = Generate_Image(&width, &height, &format);
-  else if ( !strncmp((filename+strlen(filename)-3), "ppm", 3))
-    image = LoadPPM(filename, &width, &height, &format);
-  else if ( !strncmp((filename+strlen(filename)-4), "ppm4", 4))
-    image = LoadPPM4(filename, &width, &height, &format);
-  else {
-    fprintf(stderr, "%s: unknown file format extension: '%s'\n",
-            progname, filename);
-	exit(1);
-  }
+  else
+    {
+      XImage *ximage = xpm_file_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                           MI_COLORMAP (mi), filename);
+      image  = ximage->data;
+      width  = ximage->width;
+      height = ximage->height;
+      format = GL_RGBA;
+    }
 
   /* GL_MODULATE or GL_DECAL depending on what you want */
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  /* perhaps we can edge a bit more speed at the expense of quality */
+  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
-  /* default is to do it quick and dirty */
-  /* if you have mipmaps turned on, but not texture quality, nothing will happen! */
   if (do_texture_quality) {
-    /* with texture_quality, the min and mag filters look *much* nice but are *much* slower */
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-  } else {
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	/* with texture_quality, the min and mag filters look *much* nice but are *much* slower */
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+  }
+  else {
+	/* default is to do it quick and dirty */
+	/* if you have mipmaps turned on, but not texture quality, nothing will happen! */
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   }
 
-  if (do_mipmap) {
-    int status;
-    clear_gl_error();
-    status = gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, 
-                               format, GL_UNSIGNED_BYTE, image);
-    if (status)
-      {
-        const char *s = gluErrorString (status);
-        fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
-                 progname, width, height,
-                 (s ? s : "(unknown)"));
-        exit (1);
-      }
-    check_gl_error("mipmapping");
-  } else {
-    clear_gl_error();
-    glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
-		 format, GL_UNSIGNED_BYTE, image);
-    check_gl_error("texture");
-  }
-  free(image);
+  /* mipmaps make the image look much nicer */
+  if (do_mipmap)
+    {
+      int status;
+      clear_gl_error();
+      status = gluBuild2DMipmaps(GL_TEXTURE_2D, 3, width, height, format,
+                                 GL_UNSIGNED_BYTE, image);
+      if (status)
+        {
+          const char *s = gluErrorString (status);
+          fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
+                   progname, width, height,
+                   (s ? s : "(unknown)"));
+          exit (1);
+        }
+      check_gl_error("mipmapping");
+    }
+  else
+    {
+      clear_gl_error();
+      glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
+                   format, GL_UNSIGNED_BYTE, image);
+      check_gl_error("texture");
+    }
 }
 
 
@@ -678,7 +527,7 @@ void draw_screensaver(ModeInfo * mi)
 
 
 /* set up lighting conditions */
-void SetupLight(void)
+static void SetupLight(void)
 {
   glLightfv (GL_LIGHT0, GL_POSITION, lightOnePosition);
   glLightfv (GL_LIGHT0, GL_DIFFUSE, lightOneColor);
@@ -695,7 +544,7 @@ void SetupLight(void)
 }
 
 /* reset the projection matrix */
-void resetProjection(void) {
+static void resetProjection(void) {
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glFrustum (-9, 9, -9, 9, 50, 150.0);
@@ -715,7 +564,7 @@ reshape_screensaver(ModeInfo *mi, int width, int height)
 
 
 /* decide which screensaver example to run */
-void chooseScreensaverExample(void) {
+static void chooseScreensaverExample(void) {
   int i;
   /* call the extrusion init routine */
 
@@ -743,7 +592,7 @@ void chooseScreensaverExample(void) {
 }
 
 /* main OpenGL initialization routine */
-void
+static void
 initializeGL(ModeInfo *mi, GLsizei width, GLsizei height) 
 {
   int style;
@@ -765,7 +614,7 @@ initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
   	glPolygonMode(GL_BACK,GL_LINE);
   }
   if (do_texture) {
-	Create_Texture(which_image, do_mipmap, do_texture_quality);
+	Create_Texture(mi, which_image);
 	glEnable(GL_TEXTURE_2D);
 
 	/* configure the pipeline */

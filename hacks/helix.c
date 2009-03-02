@@ -19,6 +19,9 @@
  * 1992:      jwz created.
  */
 
+/* 25 April 2002: Matthew Strait <straitm@mathcs.carleton.edu> added
+-subdelay option so the drawing process can be watched */
+
 #include <math.h>
 #include "screenhack.h"
 #include "erase.h"
@@ -29,6 +32,7 @@ static double coss [360];
 static GC draw_gc;
 static unsigned int default_fg_pixel;
 static int sleep_time;
+static int subdelay;
 
 static void
 init_helix (Display *dpy, Window window)
@@ -99,9 +103,12 @@ helix (Display *dpy, Window window,
       XDrawLine (dpy, window, draw_gc, x1, y1, x2, y2);
       x2 = xmid + (((double) radius2) * sins [pmod ((angle * factor3), 360)]);
       y2 = ymid + (((double) radius1) * coss [pmod ((angle * factor4), 360)]);
-
       XDrawLine (dpy, window, draw_gc, x1, y1, x2, y2);
       angle += d_angle;
+
+      /* if we sleep every time, it's too slow */
+      if(subdelay && i%16 == 0) usleep(subdelay);
+
       XFlush (dpy);
     }
 }
@@ -139,6 +146,12 @@ trig (Display *dpy, Window window,
       if (tmp == 0)	/* Do not want it getting stuck... */
 	tmp = 1;	/* Would not need if floating point */
       d_angle += dir * tmp;
+
+      /* this draws faster, so we sleep somewhat more often */
+      if(subdelay && d_angle%4 == 0) usleep(subdelay);
+      
+      /* without this, the subdelay effect is lost */
+      XFlush (dpy);
     }
 }
 
@@ -287,11 +300,13 @@ char *progclass = "Helix";
 char *defaults [] = {
   ".background: black",
   "*delay:      5",
+  "*subdelay:	0",
   0
 };
 
 XrmOptionDescRec options [] = {   
   { "-delay",           ".delay",               XrmoptionSepArg, 0 },
+  { "-subdelay",        ".subdelay",            XrmoptionSepArg, 0 },
   { 0 },
 };
 int options_size = (sizeof (options) / sizeof (options[0]));
@@ -300,6 +315,7 @@ void
 screenhack (Display *dpy, Window window)
 {
   sleep_time = get_integer_resource("delay", "Integer");
+  subdelay = get_integer_resource("subdelay", "Integer");
   init_helix (dpy, window);
   while (1)
     random_helix_or_trig (dpy, window);

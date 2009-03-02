@@ -35,7 +35,7 @@ use POSIX ':fcntl_h';  # more portable?
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.8 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.10 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -47,7 +47,7 @@ my $verbose = 0;
 #
 my @programs = (
   "chbg       -once -xscreensaver -max_grow 4 -max_size 100",
-  "xv         -root -quit -viewonly -maxpect -noresetroot -quick24 -rmode 5" .
+  "xv         -root -quit -viewonly -maxpect +noresetroot -quick24 -rmode 5" .
   "           -rfg black -rbg black",
   "xli        -quiet -fullscreen -onroot -center -border black",
   "xloadimage -quiet -fullscreen -onroot -center -border black",

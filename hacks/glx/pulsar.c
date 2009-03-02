@@ -90,6 +90,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "xpm-ximage.h"
+
 /* Functions for loading and storing textures */
 
 #define checkImageWidth 64
@@ -181,7 +183,7 @@ static OptionStruct desc[] =
 	{"-/+ texture_quality", "whether to do enable linear/mipmap filtering (much much slower)"},
 	{"-/+ mipmap", "whether to do enable mipmaps (much slower)"},
 	{"-/+ depth", "whether to do enable depth buffer checking (slower)"},
-	{"-image <filename>", "texture image to load (PPM, PPM4, TIFF(?), XPM(?))"},
+	{"-image <filename>", "texture image to load"},
 };
 
 ModeSpecOpt screensaver_opts = {countof(opts), opts, countof(vars), vars, desc};
@@ -223,7 +225,8 @@ static int frame = 0;
 
 struct quad *quads;
 
-GLubyte *Generate_Image(int *width, int *height, int *format)
+GLubyte *
+Generate_Image(int *width, int *height, int *format)
 {
   GLubyte *result;
   int i, j, c;
@@ -231,7 +234,7 @@ GLubyte *Generate_Image(int *width, int *height, int *format)
 
   *width = checkImageWidth;
   *height = checkImageHeight;
-  result = (GLubyte *)malloc(4 * *width * *height);
+  result = (GLubyte *)malloc(4 * (*width) * (*height));
 
   counter = 0;
   for (i = 0; i < checkImageWidth; i++) {
@@ -249,190 +252,9 @@ GLubyte *Generate_Image(int *width, int *height, int *format)
 }
 
 
-
-#ifdef TIFF
-#include <tiffio>
-/* Load a TIFF texture: requires libtiff */
-uint32 *LoadTIFF(char *filename, int *width, int *height, int *format)
-{
-  TIFF *tif;
-  char emsg[1024];
-  uint32 *raster;
-  TIFFRGBAImage img;
-  tsize_t npixels;
-
-  tif = TIFFOpen(filename, "r");
-  if (tif == NULL) {
-    fprintf(stderr, "Problem showing %s\n", filename);
-    return Generate_Image(&width, &height, &format);
-  }
-  if (TIFFRGBAImageBegin(&img, tif, 0, emsg)) {
-    npixels = (tsize_t) (img.width * img.height);
-    raster = (uint32 *) _TIFFmalloc(npixels * (tsize_t) sizeof(uint32));
-    if (raster != NULL) {
-      if (TIFFRGBAImageGet(&img, raster, img.width, img.height) == 0) {
-        TIFFError(filename, emsg);
-	return Generate_Image(&width, &height, &format);
-      }
-    }
-    TIFFRGBAImageEnd(&img);
-  } else {
-    TIFFError(filename, emsg);
-    return Generate_Image(&width, &height, &format);
-  }
-
-  *width = img.width;
-  *height = img.height;
-  *format = GL_RGBA;
-
-  TIFFClose(tif);
-  return raster;
-}
-#endif
-
-/* Load a modified version of PPM format with an extra byte for alpha */
-GLubyte *LoadPPM4(const char *filename, int *width, int *height, int *format)
-{
-  char buff[1024];
-  GLubyte *data;
-  int sizeX, sizeY;
-  FILE *fp;
-  int maxval;
-
-  fp = fopen(filename, "rb");
-  if (!fp)
-    {
-      fprintf(stderr, "Unable to open file '%s'\n", filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  if (!fgets(buff, sizeof(buff), fp))
-    {
-      perror("Unable to read header filename\n");
-      return  Generate_Image(width, height, format);
-    }
-
-  if (buff[0] != '6' || buff[1] != 'P')
-    {
-      fprintf(stderr, "Invalid image format (must be `6P')\n");
-      return  Generate_Image(width, height, format);
-    }
-
-  do
-    {
-      fgets(buff, sizeof(buff), fp);
-    }
-  while (buff[0] == '#');
-    
-  if (sscanf(buff, "%d %d", &sizeX, &sizeY) != 2)
-    {
-      fprintf(stderr, "Error loading image `%s'\n", filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  if (fscanf(fp, "%d", &maxval) != 1)
-    {
-      fprintf(stderr, "Error loading image `%s'\n", filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  while (fgetc(fp) != '\n')
-    ;
-
-  data = (GLubyte *)malloc(4 * sizeX * sizeY);
-  if (data == NULL)
-    {
-      fprintf(stderr, "Unable to allocate memory\n");
-	  exit(1);
-    }
-
-  if (fread(data, 4 * sizeX, sizeY, fp) != sizeY)
-    {
-      fprintf(stderr, "Error loading image `%s'\n", filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  fclose(fp);
-
-  *width = sizeX;
-  *height = sizeY;
-  *format = GL_RGBA;
-  return data;
-}
-
-/* Load a plain PPM image */
-GLubyte *LoadPPM(const char *filename, int *width, int *height, int *format)
-{
-  char buff[1024];
-  GLubyte *data;
-  GLint sizeX, sizeY;
-  FILE *fp;
-  int maxval;
-
-  fp = fopen(filename, "rb");
-  if (!fp)
-    {
-      fprintf(stderr, "Unable to open file '%s'\n", filename);
-      return  Generate_Image(width, height, format);
-      exit(1);
-    }
-  if (!fgets(buff, sizeof(buff), fp))
-    {
-      perror(filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  if (buff[0] != 'P' || buff[1] != '6')
-    {
-      fprintf(stderr, "Invalid image format (must be `P6')\n");
-      return  Generate_Image(width, height, format);
-    }
-
-  do
-    {
-      fgets(buff, sizeof(buff), fp);
-    }
-  while (buff[0] == '#');
-    
-  if (sscanf(buff, "%d %d", &sizeX, &sizeY) != 2)
-    {
-      fprintf(stderr, "Error loading image `%s'\n", filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  if (fscanf(fp, "%d", &maxval) != 1)
-    {
-      fprintf(stderr, "Error loading image `%s'\n", filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  while (fgetc(fp) != '\n')
-    ;
-
-  data = (GLubyte *)malloc(3 * sizeX * sizeY);
-  if (data == NULL)
-    {
-      fprintf(stderr, "Unable to allocate memory\n");
-	  exit(1);
-    }
-
-  if (fread(data, 3 * sizeX, sizeY, fp) != sizeY)
-    {
-      fprintf(stderr, "Error loading image `%s'\n", filename);
-      return  Generate_Image(width, height, format);
-    }
-
-  fclose(fp);
-
-  *width = sizeX;
-  *height = sizeY;
-  *format = GL_RGB;
-  return data;
-}
-
 /* Create a texture in OpenGL.  First an image is loaded 
    and stored in a raster buffer, then it's  */
-void Create_Texture(char *filename)
+void Create_Texture(ModeInfo *mi, const char *filename)
 {
   int height, width;
   GLubyte *image;
@@ -440,18 +262,15 @@ void Create_Texture(char *filename)
 
   if ( !strncmp(filename, "BUILTIN", 7))
     image = Generate_Image(&width, &height, &format);
-  else if ( !strncmp((filename+strlen(filename)-3), "ppm", 3))
-    image = LoadPPM(filename, &width, &height, &format);
-  else if ( !strncmp((filename+strlen(filename)-4), "ppm4", 4))
-    image = LoadPPM4(filename, &width, &height, &format);
-#ifdef TIFF
-  else if ( !strncmp((filename+strlen(filename)-4), "tiff", 4))
-    image = (GLubyte *)LoadTIFF(filename, &width, &height, &format);
-#endif
-  else {
-    fprintf(stderr, "Unknown file format extension: '%s'\n", filename);
-    image = Generate_Image(&width, &height, &format);
-  }
+  else
+    {
+      XImage *ximage = xpm_file_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
+                                           MI_COLORMAP (mi), filename);
+      image  = ximage->data;
+      width  = ximage->width;
+      height = ximage->height;
+      format = GL_RGBA;
+    }
 
   /* GL_MODULATE or GL_DECAL depending on what you want */
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -478,7 +297,7 @@ void Create_Texture(char *filename)
     {
       int status;
       clear_gl_error();
-      status = gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, format,
+      status = gluBuild2DMipmaps(GL_TEXTURE_2D, 3, width, height, format,
                                  GL_UNSIGNED_BYTE, image);
       if (status)
         {
@@ -497,8 +316,6 @@ void Create_Texture(char *filename)
                    format, GL_UNSIGNED_BYTE, image);
       check_gl_error("texture");
     }
-
-  free(image);
 }
 
 void resetProjection(void) {
@@ -548,7 +365,7 @@ void GenerateQuad(void)
     }
 }
 
-void initializeGL(GLsizei width, GLsizei height) 
+void initializeGL(ModeInfo *mi, GLsizei width, GLsizei height) 
 {
   GLfloat fogColor[4] = { 0.1, 0.1, 0.1, 0.1 };
 
@@ -592,7 +409,7 @@ void initializeGL(GLsizei width, GLsizei height)
 	
 
   if (do_texture)
-	  Create_Texture(which_image); 
+	  Create_Texture(mi, which_image); 
 
   GenerateQuad();
 }
@@ -696,7 +513,7 @@ init_screensaver(ModeInfo * mi)
   gp->window = MI_WINDOW(mi);
   if ((gp->glx_context = init_GL(mi)) != NULL) {
 	reshape_screensaver(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-	initializeGL(MI_WIDTH(mi), MI_HEIGHT(mi));
+	initializeGL(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   } else {
 	MI_CLEARWINDOW(mi);
   }

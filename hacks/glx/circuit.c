@@ -142,7 +142,7 @@ int win_w, win_h;
 /* width and height of viewport */
 
 #define XMAX 30
-#define YMAX 30
+static int YMAX = 30;
 
 #define MAX_COMPONENTS 30
 
@@ -708,23 +708,24 @@ void DrawCapacitor(Capacitor *c)
      glVertex3f(3*c->length, 0.82*c->width, 0.1);
      glVertex3f(0, 0.82*c->width, 0.1);
     glEnd();
+    col[0] = 0.0;
+    col[1] = 0.2;
+    col[2] = 0.9;
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(1.0, 1.0);
+    createCylinder(3.0*c->length, 0.8*c->width, 1, 0);
+    glDisable(GL_POLYGON_OFFSET_FILL);
     col[0] = 0.7;
     col[1] = 0.7;
     col[2] = 0.7;
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
     circle(0.6*c->width, 30, 0);
-    col[0] = 0.0;
-    col[1] = 0.2;
-    col[2] = 0.9;
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
-    ring(0.6*c->width, 0.8*c->width, 30);
-    glTranslatef(0.01, 0.0, 0);
-    createCylinder(3.0*c->length, 0.8*c->width, 1, 0);
     col[0] = 0;
     col[1] = 0;
     col[2] = 0;
     glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
-    glTranslatef(3.01*c->length, 0.0, 0);
+    glTranslatef(3.0*c->length, 0.0, 0);
     circle(0.6*c->width, 30, 0);
     glTranslatef(0, 0.4*c->width, 0);
     wire(3*c->length);
@@ -911,6 +912,8 @@ void DrawIC(IC *c)
       break;
   }
   w = w/2; h = h/2;
+    glEnable(GL_POLYGON_OFFSET_FILL);
+    glPolygonOffset(1.0, 1.0);
     glBegin(GL_QUADS);
       glNormal3f(0, 0, 1);
       glVertex3f(w, h, 0.1);
@@ -943,10 +946,10 @@ void DrawIC(IC *c)
       glVertex3f(w, h, 0.1);
       glVertex3f(-w, h, 0.1);
     glEnd();
+    glDisable(GL_POLYGON_OFFSET_FILL);
     glBindTexture(GL_TEXTURE_2D, c->tnum);
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
-    glDepthMask(GL_FALSE);
     if (c->pins == 8)
       size = 0.4;
     else
@@ -957,17 +960,16 @@ void DrawIC(IC *c)
     glBegin(GL_QUADS); /* text markings */
      glNormal3f(0, 0, 1);
      glTexCoord2f(0, 1);
-     glVertex3f(th, mult, 0.11);
+     glVertex3f(th, mult, 0.1);
      glTexCoord2f(1, 1);
-     glVertex3f(th, -mult, 0.11);
+     glVertex3f(th, -mult, 0.1);
      glTexCoord2f(1, 0);
-     glVertex3f(-th, -mult, 0.11);
+     glVertex3f(-th, -mult, 0.1);
      glTexCoord2f(0, 0);
-     glVertex3f(-th, mult, 0.11);
+     glVertex3f(-th, mult, 0.1);
     glEnd();
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
-    glDepthMask(GL_TRUE);
     d = (h*2-0.1) / c->pins;
     d*=2;
     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, lcol);
@@ -980,7 +982,7 @@ void DrawIC(IC *c)
       ICLeg(-w, -h + z*d + d/2, 0, 1);
     }
     glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col2);
-    glTranslatef(-w+0.3, h-0.3, 0.11);
+    glTranslatef(-w+0.3, h-0.3, 0.1);
     glRotatef(90, 0, 1, 0);
     circle(0.1, 7, 0);
     glPopMatrix();
@@ -1374,6 +1376,7 @@ IC *NewIC(void)
   float texfg[] = {0.7, 0.7, 0.7, 1.0};
   float texbg[] = {0.1, 0.1, 0.1, 0};
   const char *val;
+  char *str;
   int types[countof(ictypes)], i, n = 0;
 
   c = malloc(sizeof(IC));
@@ -1402,7 +1405,10 @@ IC *NewIC(void)
 
   if (n > countof(types)) abort();
   val = ictypes[types[random() % n]].val;
-  tn = fonttexturealloc(val, texfg, texbg);
+  str = malloc(strlen(val) + 1 + 4 + 1); /* add space for production date */
+  sprintf(str, "%s\n%02d%02d", val, (int)RAND_RANGE(80, 100), (int)RAND_RANGE(1,53));
+  tn = fonttexturealloc(str, texfg, texbg);
+  free(str);
   if (tn == NULL) {
     fprintf(stderr, "Error allocating font texture for '%s'\n", val);
   } else {
@@ -1737,6 +1743,8 @@ TexNum * fonttexturealloc (const char *str, float *fg, float *bg)
   for (i = 1 ; strings[i] != NULL ; i++); /* set i to the next unused value */
   glBindTexture(GL_TEXTURE_2D, i);
   glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   clear_gl_error();
   status = gluBuild2DMipmaps(GL_TEXTURE_2D, 4, ximage->width, ximage->height,
@@ -1804,12 +1812,14 @@ void reorder(Component *c[])
 
 void reshape_circuit(ModeInfo *mi, int width, int height)
 {
+ GLfloat h = (GLfloat) height / (GLfloat) width;
  glViewport(0,0,(GLint)width, (GLint) height);
  glMatrixMode(GL_PROJECTION);
  glLoadIdentity();
- glFrustum(-1.0,1.0,-1.0,1.0,1.5,35.0);
+ glFrustum(-1.0,1.0,-h,h,1.5,35.0);
  glMatrixMode(GL_MODELVIEW);
  win_h = height; win_w = width;
+ YMAX = XMAX * h;
 }
 
 

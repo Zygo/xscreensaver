@@ -590,10 +590,12 @@ ensure_bounding_box_visible (ModeInfo *mi)
 
 static void
 print_title_string (ModeInfo *mi, const char *string,
-                    GLfloat x, GLfloat y, GLfloat line_height)
+                    GLfloat x, GLfloat y, XFontStruct *font)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
-  
+  GLfloat line_height = font->ascent + font->descent;
+  GLfloat sub_shift = (line_height * 0.3);
+
   y -= line_height;
 
   glPushAttrib (GL_TRANSFORM_BIT |  /* for matrix contents */
@@ -610,6 +612,8 @@ print_title_string (ModeInfo *mi, const char *string,
       glPushMatrix();
       {
         int i;
+        int x2 = x;
+        Bool sub_p = False;
         glLoadIdentity();
 
         gluOrtho2D (0, mi->xgwa.width, 0, mi->xgwa.height);
@@ -621,9 +625,27 @@ print_title_string (ModeInfo *mi, const char *string,
           {
             char c = string[i];
             if (c == '\n')
-              glRasterPos2f (x, (y -= line_height));
+              {
+                glRasterPos2f (x, (y -= line_height));
+                x2 = x;
+              }
+            else if (c == '(' && (isdigit (string[i+1])))
+              {
+                sub_p = True;
+                glRasterPos2f (x2, (y -= sub_shift));
+              }
+            else if (c == ')' && sub_p)
+              {
+                sub_p = False;
+                glRasterPos2f (x2, (y += sub_shift));
+              }
             else
-              glCallList (mc->font2_dlist + (int)(c));
+              {
+                glCallList (mc->font2_dlist + (int)(c));
+                x2 += (font->per_char
+                       ? font->per_char[c - font->min_char_or_byte2].width
+                       : font->min_bounds.width);
+              }
           }
       }
       glPopMatrix();
@@ -778,7 +800,7 @@ build_molecule (ModeInfo *mi)
   if (do_titles && m->label && *m->label)
     print_title_string (mi, m->label,
                         10, mi->xgwa.height - 10,
-                        mc->xfont2->ascent + mc->xfont2->descent);
+                        mc->xfont2);
 }
 
 
@@ -1040,7 +1062,7 @@ typedef struct { char *atom; int count; } atom_and_count;
 /* When listing the components of a molecule, the convention is to put the
    carbon atoms first, the hydrogen atoms second, and the other atom types
    sorted alphabetically after that (although for some molecules, the usual
-   order is different, like for NH(3), but we don't special-case those.)
+   order is different: we special-case a few of those.)
  */
 static int
 cmp_atoms (const void *aa, const void *bb)
@@ -1055,6 +1077,8 @@ cmp_atoms (const void *aa, const void *bb)
   if (!strcmp(b->atom, "H")) return  1;
   return strcmp (a->atom, b->atom);
 }
+
+static void special_case_formula (char *f);
 
 static void
 generate_molecule_formula (molecule *m)
@@ -1099,6 +1123,8 @@ generate_molecule_formula (molecule *m)
       i++;
     }
 
+  special_case_formula (buf);
+
   if (!m->label) m->label = strdup("");
   s = (char *) malloc (strlen (m->label) + strlen (buf) + 2);
   strcpy (s, m->label);
@@ -1108,6 +1134,21 @@ generate_molecule_formula (molecule *m)
   free (buf);
   m->label = s;
 }
+
+/* thanks to Rene Uittenbogaard <ruittenb@wish.nl> */
+static void
+special_case_formula (char *f)
+{
+  if      (!strcmp(f, "H(2)Be"))   strcpy(f, "BeH(2)");
+  else if (!strcmp(f, "H(3)B"))    strcpy(f, "BH(3)");
+  else if (!strcmp(f, "H(3)N"))    strcpy(f, "NH(3)");
+  else if (!strcmp(f, "CHN"))      strcpy(f, "HCN");
+  else if (!strcmp(f, "CKN"))      strcpy(f, "KCN");
+  else if (!strcmp(f, "H(4)N(2)")) strcpy(f, "N(2)H(4)");
+  else if (!strcmp(f, "Cl(3)P"))   strcpy(f, "PCl(3)");
+  else if (!strcmp(f, "Cl(5)P"))   strcpy(f, "PCl(5)");
+}
+
 
 static void
 insert_vertical_whitespace (char *string)
@@ -1294,7 +1335,7 @@ startup_blurb (ModeInfo *mi)
   print_title_string (mi, s,
                       mi->xgwa.width - (string_width (mc->xfont2, s) + 40),
                       10 + mc->xfont2->ascent + mc->xfont2->descent,
-                      mc->xfont2->ascent + mc->xfont2->descent);
+                      mc->xfont2);
   glFinish();
   glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi));
 }

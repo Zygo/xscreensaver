@@ -146,7 +146,7 @@ init_slide (Display *dpy, Window window)
   if (delay < 0) delay = 0;
   if (delay2 < 0) delay2 = 0;
   if (pix_inc < 1) pix_inc = 1;
-  if (grid_size < 10) grid_size = 10;
+  if (grid_size < 1) grid_size = 1;
 
   gcv.foreground = fg;
   gcv.function = GXcopy;

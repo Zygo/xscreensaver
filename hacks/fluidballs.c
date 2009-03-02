@@ -5,12 +5,19 @@
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation.  No representations are made about the suitability of this
- * software for any purpose.  It is provided "as is" without express or 
+ * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  *
  * Ported to X11 and xscreensaver by jwz, 27-Feb-2002.
  *
  * http://astronomy.swin.edu.au/~pbourke/modelling/fluid/
+ */
+
+/* cjb notes
+ *
+ * Future ideas:
+ * Specifying a distribution in the ball sizes (with a gamma curve, possibly).
+ * Brownian motion, for that extra touch of realism.
  */
 
 #include <math.h>
@@ -44,9 +51,11 @@ typedef struct {
   float *opx, *opy;	/* previous ball positions */
   float *r;		/* ball radiuses */
 
+  float *m;		/* ball mass, precalculated */
   float e;		/* coefficient of friction, I think? */
   float max_radius;	/* largest radius of any ball */
 
+  Bool random_sizes_p;  /* Whether balls should be various sizes up to max. */
   Bool shake_p;		/* Whether to mess with gravity when things settle. */
   float shake_threshold;
   int time_since_shake;
@@ -226,6 +235,8 @@ init_balls (Display *dpy, Window window)
   state->max_radius = get_float_resource ("size", "Size") / 2;
   if (state->max_radius < 1.0) state->max_radius = 1.0;
 
+  state->random_sizes_p = get_boolean_resource ("random", "Random");
+
   state->accx = get_float_resource ("wind", "Wind");
   if (state->accx < -1.0 || state->accx > 1.0) state->accx = 0;
 
@@ -261,6 +272,7 @@ init_balls (Display *dpy, Window window)
       state->font_baseline = font->descent;
     }
 
+  state->m   = (float *) malloc (sizeof (*state->m)   * (state->count + 1));
   state->r   = (float *) malloc (sizeof (*state->r)   * (state->count + 1));
   state->vx  = (float *) malloc (sizeof (*state->vx)  * (state->count + 1));
   state->vy  = (float *) malloc (sizeof (*state->vy)  * (state->count + 1));
@@ -273,13 +285,16 @@ init_balls (Display *dpy, Window window)
     {
       state->px[i] = frand(extx) + state->xmin;
       state->py[i] = frand(exty) + state->ymin;
-      state->vx[i] = frand(0.2);
-      state->vy[i] = frand(0.2);
+      state->vx[i] = frand(0.2) - 0.1;
+      state->vy[i] = frand(0.2) - 0.1;
 
-      state->r[i] = state->max_radius;
+      state->r[i] = (state->random_sizes_p
+                     ? ((0.2 + frand(0.8)) * state->max_radius)
+                     : state->max_radius);
+      /*state->r[i] = pow(frand(1.0), state->sizegamma) * state->max_radius;*/
 
-      /* not quite: */
-      /* state->r[i] = 4 + (random() % (int) (state->max_radius - 4)); */
+      /* state->m[i] = pow(state->r[i],2) * M_PI; */
+      state->m[i] = pow(state->r[i],3) * M_PI * 1.3333;
     }
 
   return state;
@@ -402,7 +417,7 @@ repaint_balls (b_state *state)
       y2b = (state->py[a] + state->r[a] - state->ymin);
 
 /*      if (x1a != x1b || y1a != y1b)   -- leaves turds if we optimize this */
-        {          
+        {
           gc = state->erase_gc;
           XFillArc (state->dpy, state->window, gc,
                     x1a, y1a, x2a-x1a, y2a-y1a,
@@ -452,8 +467,9 @@ static void
 update_balls (b_state *state)
 {
   int a, b;
-  float d, nx, ny, m, vxa, vya, vxb, vyb, dd, cdx, cdy, cosam;
-  float dee2 = state->max_radius * state->max_radius * 4;
+  float d, vxa, vya, vxb, vyb, dd, cdx, cdy;
+  float ma, mb, vela, velb, vela1, velb1;
+  float dee2;
 
   check_window_moved (state);
 
@@ -485,54 +501,57 @@ update_balls (b_state *state)
                  (state->px[a] - state->px[b]) +
                  (state->py[a] - state->py[b]) *
                  (state->py[a] - state->py[b]));
+	    dee2 = (state->r[a] + state->r[b]) *
+	           (state->r[a] + state->r[b]);
             if (d < dee2)
               {
                 state->collision_count++;
                 d = sqrt(d);
-                vxa = state->vx[a];
-                vya = state->vy[a];
-                vxb = state->vx[b];
-                vyb = state->vy[b];
-                nx = state->px[b] - state->px[a];
-                ny = state->py[b] - state->py[a];
-                if (d < -0.0001 || d > 0.0001)
-                  {
-                    cdx = nx/d;
-                    cdy = ny/d;
-                    dd = state->r[a] + state->r[b] - d;
-                    state->px[a] -= dd*cdx;  /* just move them apart */
-                    state->py[a] -= dd*cdy;  /* no physical rationale, sorry */
-                    state->px[b] += dd*cdx;
-                    state->py[b] += dd*cdy;
-                    m = sqrt (state->vx[a] * state->vx[a] +
-                              state->vy[a] * state->vy[a]);
-                    if (m < -0.0001 || m > 0.0001)  /* A's velocity > 0 ? */
-                      {
-                        cosam = ((cdx * state->vx[a] + cdy * state->vy[a]) *
-                                 state->e);
-                        vxa -= cdx * cosam;
-                        vya -= cdy * cosam; /* conserve momentum */
-                        vxb += cdx * cosam;
-                        vyb += cdy * cosam;
-                      }
-                    m = sqrt (state->vx[b] *
-                              state->vx[b] +
-                              state->vy[b] *
-                              state->vy[b]);
-                    if (m < -0.0001 || m > 0.0001)
-                      {
-                        cosam = ((cdx * state->vx[b] + cdy * state->vy[b]) *
-                                 state->e);
-                        vxa += cdx * cosam;
-                        vya += cdy * cosam;
-                        vxb -= cdx * cosam;
-                        vyb -= cdy * cosam;
-                      }
+		dd = state->r[a] + state->r[b] - d;
+		/* A pair of balls that have already collided in this
+		 * current frame (and therefore touching each other)
+		 * should not have another collision calculated, hence
+		 * the fallthru if "dd ~= 0.0".
+		 */
+		if ((dd < -0.01) || (dd > 0.01))
+		  {
+                    cdx = (state->px[b] - state->px[a]) / d;
+                    cdy = (state->py[b] - state->py[a]) / d;
+
+		    /* Move each ball apart from the other by half the
+		     * 'collision' distance.
+		     */
+                    state->px[a] -= 0.5 * dd * cdx;
+                    state->py[a] -= 0.5 * dd * cdy;
+                    state->px[b] += 0.5 * dd * cdx;
+                    state->py[b] += 0.5 * dd * cdy;
+
+		    ma = state->m[a];
+		    mb = state->m[b];
+		    vxa = state->vx[a];
+		    vya = state->vy[a];
+		    vxb = state->vx[b];
+		    vyb = state->vy[b];
+
+		    vela = sqrt((vxa * vxa) + (vya * vya));
+		    velb = sqrt((vxb * vxb) + (vyb * vyb));
+
+		    vela1 = vela * ((ma - mb) / (ma + mb)) +
+		            velb * ((2 * mb) / (ma + mb));
+		    velb1 = vela * ((2 * ma) / (ma + mb)) +
+		            velb * ((mb - ma) / (ma + mb));
+
+		    vela1 *= state->e; /* "air resistance" */
+		    velb1 *= state->e;
+#if 0
+		    vela1 += (frand (50) - 25) / ma; /* brownian motion */
+		    velb1 += (frand (50) - 25) / mb;
+#endif
+		    state->vx[a] = -cdx * vela1;
+		    state->vy[a] = -cdy * vela1;
+		    state->vx[b] = cdx * velb1;
+		    state->vy[b] = cdy * velb1;
                   }
-                state->vx[a] = vxa;
-                state->vy[a] = vya;
-                state->vx[b] = vxb;
-                state->vy[b] = vyb;
               }
           }
 
@@ -633,9 +652,10 @@ char *defaults [] = {
   "*delay:		10000",
   "*count:		300",
   "*size:		25",
+  "*random:		True",
   "*gravity:		0.01",
   "*wind:		0.00",
-  "*friction:		0.97",
+  "*friction:		0.8",
   "*timeScale:		1.0",
   "*doFPS:		False",
   "*shake:		True",
@@ -655,6 +675,8 @@ XrmOptionDescRec options [] = {
   { "-no-fps",		".doFPS",	XrmoptionNoArg, "False" },
   { "-shake",		".shake",	XrmoptionNoArg, "True" },
   { "-no-shake",	".shake",	XrmoptionNoArg, "False" },
+  { "-random",		".random",	XrmoptionNoArg, "True" },
+  { "-nonrandom",	".random",	XrmoptionNoArg, "False" },
   { 0, 0, 0, 0 }
 };
 

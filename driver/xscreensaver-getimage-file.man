@@ -1,4 +1,4 @@
-.TH XScreenSaver 1 "18-Mar-2002 (4.02)" "X Version 11"
+.TH XScreenSaver 1 "11-May-2002 (4.03)" "X Version 11"
 .SH NAME
 xscreensaver-getimage-file - put a randomly-selected image on the root window
 .SH SYNOPSIS

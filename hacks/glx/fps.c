@@ -71,8 +71,14 @@ fps_init (ModeInfo *mi)
 static void
 fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
 {
+  const char *L2 = strchr (string, '\n');
+
   if (y < 0)
-    y = mi->xgwa.height + y;
+    {
+      y = mi->xgwa.height + y;
+      if (L2)
+        y -= (fps_ascent + fps_descent);
+    }
 
 # ifdef DEBUG
   clear_gl_error ();
@@ -130,17 +136,29 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
         /* clear the background */
         if (fps_clear_p)
           {
+            int lines = L2 ? 2 : 1;
             glColor3f (0, 0, 0);
             glRecti (x / 2, y - fps_descent,
                      mi->xgwa.width - x,
-                     y + fps_ascent + fps_descent);
+                     y + lines * (fps_ascent + fps_descent));
           }
 
         /* draw the text */
         glColor3f (1, 1, 1);
         glRasterPos2f (x, y);
         glListBase (font_dlist);
-        glCallLists (strlen(string), GL_UNSIGNED_BYTE, string);
+
+        if (L2)
+          {
+            L2++;
+            glCallLists (strlen(L2), GL_UNSIGNED_BYTE, L2);
+            glRasterPos2f (x, y + (fps_ascent + fps_descent));
+            glCallLists (L2 - string, GL_UNSIGNED_BYTE, string);
+          }
+        else
+          {
+            glCallLists (strlen(string), GL_UNSIGNED_BYTE, string);
+          }
 
 # ifdef DEBUG
         check_gl_error ("fps_print_string");
@@ -218,6 +236,26 @@ do_fps (ModeInfo *mi)
             buf[strlen(buf)-1] = 0;
           sprintf(msg + strlen(msg), " (including %s sec/frame delay)",
                   buf);
+        }
+
+      if (mi->polygon_count > 0)
+        {
+          unsigned long p = mi->polygon_count;
+          const char *s = "";
+# if 0
+          if      (p >= (1024 * 1024)) p >>= 20, s = "M";
+          else if (p >= 2048)          p >>= 10, s = "K";
+# endif
+
+          strcat (msg, "\nPolys: ");
+          if (p >= 1000000)
+            sprintf (msg + strlen(msg), "%d,%03d,%03d%s",
+                     (p / 1000000), ((p / 1000) % 1000), (p % 1000), s);
+          else if (p >= 1000)
+            sprintf (msg + strlen(msg), "%d,%03d%s",
+                     (p / 1000), (p % 1000), s);
+          else
+            sprintf (msg + strlen(msg), "%d%s", p, s);
         }
     }
 

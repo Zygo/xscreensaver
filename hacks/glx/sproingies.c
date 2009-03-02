@@ -93,12 +93,13 @@ build_TopsSides(int wireframe)
 
 	/* Surface: Sides */
 	glNewList(dl_num + 1, GL_COMPILE);
-	mat_color[0] = 0.156863;
-	mat_color[1] = 0.156863;
-	mat_color[2] = 0.392157;
 	if (wireframe)
 		glColor3fv(mat_color);
 	else {
+      /* jwz: in wireframe mode, color tops and sides the same. */
+      mat_color[0] = 0.156863;
+      mat_color[1] = 0.156863;
+      mat_color[2] = 0.392157;
 		glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, mat_color);
 	}
 	glEndList();

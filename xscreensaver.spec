@@ -1,5 +1,5 @@
 %define	name		xscreensaver
-%define	version		4.02
+%define	version		4.03
 %define	release		1
 %define	serial		1
 %define	x11_prefix	/usr/X11R6
@@ -7,8 +7,7 @@
 %define	kde_prefix	/usr
 
 %define gnome_datadir	%{gnome_prefix}/share
-%define gnome_ccdir_1	%{gnome_datadir}/control-center/Desktop
-%define gnome_ccdir_2	%{gnome_datadir}/control-center/capplets
+%define gnome_ccdir	%{gnome_datadir}/control-center/Desktop
 %define gnome_paneldir	%{gnome_datadir}/gnome/apps/Settings/Desktop
 %define gnome_icondir	%{gnome_datadir}/pixmaps
 
@@ -78,22 +77,25 @@ RPMOPTS=""
 %{?USE_GL:RPMOPTS="$RPMOPTS --with-gl"}
 %{!?USE_GL:RPMOPTS="$RPMOPTS --without-gl"}
 
+archdir=`./config.guess`
+mkdir $archdir
+cd $archdir
 CFLAGS="$RPM_OPT_FLAGS" \
- ./configure --prefix=%{x11_prefix} \
-             --with-setuid-hacks \
-             $RPMOPTS
-
+ ../configure --prefix=%{x11_prefix} \
+              --with-setuid-hacks \
+              $RPMOPTS
 make
 
 %install
+
+archdir=`./config.guess`
 
 # Most xscreensaver executables go in the X bin directory (/usr/X11R6/bin/)
 # but some of them (e.g., the control panel capplet) go in the GNOME bin
 # directory instead (/usr/bin/).
 #
 mkdir -p $RPM_BUILD_ROOT%{gnome_prefix}/bin
-mkdir -p $RPM_BUILD_ROOT%{gnome_ccdir_1}
-mkdir -p $RPM_BUILD_ROOT%{gnome_ccdir_2}
+mkdir -p $RPM_BUILD_ROOT%{gnome_ccdir}
 mkdir -p $RPM_BUILD_ROOT%{gnome_paneldir}
 
 # Likewise for KDE: the .kss file goes in the KDE bin directory (/usr/bin/).
@@ -106,6 +108,7 @@ mkdir -p $RPM_BUILD_ROOT$KDEDIR/bin
 #
 mkdir -p $RPM_BUILD_ROOT/etc/pam.d
 
+cd $archdir
 make  install_prefix=$RPM_BUILD_ROOT \
       AD_DIR=%{x11_prefix}/lib/X11/app-defaults \
       GNOME_BINDIR=%{gnome_prefix}/bin \
@@ -177,10 +180,11 @@ if [ -d $RPM_BUILD_ROOT-gl ]; then rm -r $RPM_BUILD_ROOT-gl ; fi
 %config(missingok)  %{kde_prefix}/bin/*.kss
 
 %config(missingok)  %{gnome_prefix}/bin/*-capplet
-%config(missingok)  %{gnome_ccdir_1}/*.desktop
-%config(missingok)  %{gnome_ccdir_2}/*.desktop
+%config(missingok)  %{gnome_ccdir}/*.desktop
 %config(missingok)  %{gnome_paneldir}/*.desktop
 %config(missingok)  %{gnome_icondir}/*
+
+%config(missingok)  %{gnome_prefix}/share/locale/
 
 # Files for the "xscreensaver-gl" package:
 #

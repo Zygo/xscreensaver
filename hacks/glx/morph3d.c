@@ -2,7 +2,7 @@
 /* morph3d --- Shows 3D morphing objects */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)morph3d.c	4.07 97/11/24 xlockmore";
+static const char sccsid[] = "@(#)morph3d.c	5.01 2001/03/01 xlockmore";
 
 #endif
 
@@ -21,12 +21,12 @@ static const char sccsid[] = "@(#)morph3d.c	4.07 97/11/24 xlockmore";
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
  *
- * The original code for this mode was written by Marcelo Fernandes Vianna 
+ * The original code for this mode was written by Marcelo Fernandes Vianna
  * (me...) and was inspired on a WindowsNT(R)'s screen saver (Flower Box).
- * It was written from scratch and it was not based on any other source code. 
- * 
- * Porting it to xlock (the final objective of this code since the moment I 
- * decided to create it) was possible by comparing the original Mesa's gear 
+ * It was written from scratch and it was not based on any other source code.
+ *
+ * Porting it to xlock (the final objective of this code since the moment I
+ * decided to create it) was possible by comparing the original Mesa's gear
  * demo with it's ported version to xlock, so thanks for Danny Sung (look at
  * gear.c) for his indirect help.
  *
@@ -37,37 +37,36 @@ static const char sccsid[] = "@(#)morph3d.c	4.07 97/11/24 xlockmore";
  * mode, please refer to the Mesa package (ftp iris.ssec.wisc.edu on /pub/Mesa)
  *
  * Since I'm not a native English speaker, my apologies for any grammatical
- * mistake.
+ * mistakes.
  *
  * My e-mail address is
- * m-vianna@usa.net
+ * mfvianna@centroin.com.br
  *
  * Marcelo F. Vianna (Feb-13-1997)
  *
  * Revision History:
- * 27-Jul-97: Speed ups by Marcelo F. Vianna.
- * 08-May-97: Speed ups by Marcelo F. Vianna.
+ * 05-Apr-2002: Removed all gllist uses (fix some bug with nvidia driver)
+ * 01-Mar-2001: Added FPS stuff E.Lassauge <lassauge@mail.dotcom.fr>
+ * 27-Jul-1997: Speed ups by Marcelo F. Vianna.
+ * 08-May-1997: Speed ups by Marcelo F. Vianna.
  *
  */
 
-/*-
- * PURIFY 3.0a on SunOS4 reports an unitialized memory read on each of
- * the glCallList() functions below when using MesaGL 2.1.  This has
- * been fixed in MesaGL 2.2 and later releases.
- */
-
+#ifdef VMS
 /*-
  * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
  * otherwise caddr_t is not defined correctly
  */
 
 #include <X11/Intrinsic.h>
+#endif
 
 #ifdef STANDALONE
+# define MODE_moebius
 # define PROGCLASS		"Morph3d"
 # define HACK_INIT		init_morph3d
 # define HACK_DRAW		draw_morph3d
-# define HACK_RESHAPE	reshape_morph3d
+# define HACK_RESHAPE	reshape
 # define morph3d_opts	xlockmore_opts
 # define DEFAULTS		"*delay:		40000	\n"		\
 						"*showFPS:      False   \n"		\
@@ -77,15 +76,15 @@ static const char sccsid[] = "@(#)morph3d.c	4.07 97/11/24 xlockmore";
 # include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-#ifdef USE_GL
+#ifdef MODE_moebius
 
 ModeSpecOpt morph3d_opts =
-{0, NULL, 0, NULL, NULL};
+{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
 
 #ifdef USE_MODULES
 ModStruct   morph3d_description =
 {"morph3d", "init_morph3d", "draw_morph3d", "release_morph3d",
- "draw_morph3d", "change_morph3d", NULL, &morph3d_opts,
+ "draw_morph3d", "change_morph3d", (char *) NULL, &morph3d_opts,
  1000, 0, 1, 1, 4, 1.0, "",
  "Shows GL morphing polyhedra", 0, NULL};
 
@@ -173,11 +172,11 @@ static float MaterialWhite[] =
 static float MaterialGray[] =
 {0.5, 0.5, 0.5, 1.0};
 
-static morph3dstruct *morph3d = NULL;
+static morph3dstruct *morph3d = (morph3dstruct *) NULL;
 
 #define TRIANGLE(Edge, Amp, Divisions, Z, VS)                                                                    \
 {                                                                                                                \
-  GLfloat   Xf,Yf,Xa,Yb,Xf2,Yf2,Yf_2,Yb2,Yb_2;                                                                   \
+  GLfloat   Xf,Yf,Xa,Yb=0.0,Xf2=0.0,Yf2=0.0,Yf_2=0.0,Yb2,Yb_2;                                                   \
   GLfloat   Factor=0.0,Factor1,Factor2;                                                                          \
   GLfloat   VertX,VertY,VertZ,NeiAX,NeiAY,NeiAZ,NeiBX,NeiBY,NeiBZ;                                               \
   GLfloat   Ax,Ay;                                                                                               \
@@ -343,212 +342,177 @@ static morph3dstruct *morph3d = NULL;
 static void
 draw_tetra(ModeInfo * mi)
 {
-	GLuint      list;
-
 	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[0]);
 
-	list = glGenLists(1);
-	glNewList(list, GL_COMPILE_AND_EXECUTE);
 	TRIANGLE(2, mp->seno, mp->edgedivisions, 0.5 / SQRT6, mp->VisibleSpikes);
-	glEndList();
 
 	glPushMatrix();
 	glRotatef(180, 0, 0, 1);
 	glRotatef(-tetraangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[1]);
-	glCallList(list);
+	TRIANGLE(2, mp->seno, mp->edgedivisions, 0.5 / SQRT6, mp->VisibleSpikes);
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + tetraangle, 0.5, SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[2]);
-	glCallList(list);
+	TRIANGLE(2, mp->seno, mp->edgedivisions, 0.5 / SQRT6, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + tetraangle, 0.5, -SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[3]);
-	glCallList(list);
-
-	glDeleteLists(list, 1);
+	TRIANGLE(2, mp->seno, mp->edgedivisions, 0.5 / SQRT6, mp->VisibleSpikes);
 }
 
 static void
 draw_cube(ModeInfo * mi)
 {
-	GLuint      list;
-
 	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
-
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[0]);
 
-	list = glGenLists(1);
-	glNewList(list, GL_COMPILE_AND_EXECUTE);
 	SQUARE(2, mp->seno, mp->edgedivisions, 0.5, mp->VisibleSpikes)
-		glEndList();
 
 	glRotatef(cubeangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[1]);
-	glCallList(list);
+	SQUARE(2, mp->seno, mp->edgedivisions, 0.5, mp->VisibleSpikes)
 	glRotatef(cubeangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[2]);
-	glCallList(list);
+	SQUARE(2, mp->seno, mp->edgedivisions, 0.5, mp->VisibleSpikes)
 	glRotatef(cubeangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[3]);
-	glCallList(list);
+	SQUARE(2, mp->seno, mp->edgedivisions, 0.5, mp->VisibleSpikes)
 	glRotatef(cubeangle, 0, 1, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[4]);
-	glCallList(list);
+	SQUARE(2, mp->seno, mp->edgedivisions, 0.5, mp->VisibleSpikes)
 	glRotatef(2 * cubeangle, 0, 1, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[5]);
-	glCallList(list);
-
-	glDeleteLists(list, 1);
+	SQUARE(2, mp->seno, mp->edgedivisions, 0.5, mp->VisibleSpikes)
 }
 
 static void
 draw_octa(ModeInfo * mi)
 {
-	GLuint      list;
-
 	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[0]);
-
-	list = glGenLists(1);
-	glNewList(list, GL_COMPILE_AND_EXECUTE);
 	TRIANGLE(2, mp->seno, mp->edgedivisions, 1 / SQRT6, mp->VisibleSpikes);
-	glEndList();
 
 	glPushMatrix();
 	glRotatef(180, 0, 0, 1);
 	glRotatef(-180 + octaangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[1]);
-	glCallList(list);
+	TRIANGLE(2, mp->seno, mp->edgedivisions, 1 / SQRT6, mp->VisibleSpikes);
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-octaangle, 0.5, SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[2]);
-	glCallList(list);
+	TRIANGLE(2, mp->seno, mp->edgedivisions, 1 / SQRT6, mp->VisibleSpikes);
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-octaangle, 0.5, -SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[3]);
-	glCallList(list);
+	TRIANGLE(2, mp->seno, mp->edgedivisions, 1 / SQRT6, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[4]);
-	glCallList(list);
+	TRIANGLE(2, mp->seno, mp->edgedivisions, 1 / SQRT6, mp->VisibleSpikes);
 	glPushMatrix();
 	glRotatef(180, 0, 0, 1);
 	glRotatef(-180 + octaangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[5]);
-	glCallList(list);
+	TRIANGLE(2, mp->seno, mp->edgedivisions, 1 / SQRT6, mp->VisibleSpikes);
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-octaangle, 0.5, SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[6]);
-	glCallList(list);
+	TRIANGLE(2, mp->seno, mp->edgedivisions, 1 / SQRT6, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-octaangle, 0.5, -SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[7]);
-	glCallList(list);
-
-	glDeleteLists(list, 1);
+	TRIANGLE(2, mp->seno, mp->edgedivisions, 1 / SQRT6, mp->VisibleSpikes);
 }
 
 static void
 draw_dodeca(ModeInfo * mi)
 {
-	GLuint      list;
-
 	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
 
 #define TAU ((SQRT5+1)/2)
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[0]);
 
-	list = glGenLists(1);
-	glNewList(list, GL_COMPILE_AND_EXECUTE);
 	PENTAGON(1, mp->seno, mp->edgedivisions, sqr(TAU) * sqrt((TAU + 2) / 5) / 2, mp->VisibleSpikes);
-	glEndList();
 
 	glPushMatrix();
 	glRotatef(180, 0, 0, 1);
 	glPushMatrix();
 	glRotatef(-dodecaangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[1]);
-	glCallList(list);
+	PENTAGON(1, mp->seno, mp->edgedivisions, sqr(TAU) * sqrt((TAU + 2) / 5) / 2, mp->VisibleSpikes);
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(-dodecaangle, cos72, sin72, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[2]);
-	glCallList(list);
+	PENTAGON(1, mp->seno, mp->edgedivisions, sqr(TAU) * sqrt((TAU + 2) / 5) / 2, mp->VisibleSpikes);
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(-dodecaangle, cos72, -sin72, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[3]);
-	glCallList(list);
+	PENTAGON(1, mp->seno, mp->edgedivisions, sqr(TAU) * sqrt((TAU + 2) / 5) / 2, mp->VisibleSpikes);
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(dodecaangle, cos36, -sin36, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[4]);
-	glCallList(list);
+	PENTAGON(1, mp->seno, mp->edgedivisions, sqr(TAU) * sqrt((TAU + 2) / 5) / 2, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(dodecaangle, cos36, sin36, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[5]);
-	glCallList(list);
+	PENTAGON(1, mp->seno, mp->edgedivisions, sqr(TAU) * sqrt((TAU + 2) / 5) / 2, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[6]);
-	glCallList(list);
+	PENTAGON(1, mp->seno, mp->edgedivisions, sqr(TAU) * sqrt((TAU + 2) / 5) / 2, mp->VisibleSpikes);
 	glRotatef(180, 0, 0, 1);
 	glPushMatrix();
 	glRotatef(-dodecaangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[7]);
-	glCallList(list);
+	PENTAGON(1, mp->seno, mp->edgedivisions, sqr(TAU) * sqrt((TAU + 2) / 5) / 2, mp->VisibleSpikes);
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(-dodecaangle, cos72, sin72, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[8]);
-	glCallList(list);
+	PENTAGON(1, mp->seno, mp->edgedivisions, sqr(TAU) * sqrt((TAU + 2) / 5) / 2, mp->VisibleSpikes);
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(-dodecaangle, cos72, -sin72, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[9]);
-	glCallList(list);
+	PENTAGON(1, mp->seno, mp->edgedivisions, sqr(TAU) * sqrt((TAU + 2) / 5) / 2, mp->VisibleSpikes);
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(dodecaangle, cos36, -sin36, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[10]);
-	glCallList(list);
+	PENTAGON(1, mp->seno, mp->edgedivisions, sqr(TAU) * sqrt((TAU + 2) / 5) / 2, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(dodecaangle, cos36, sin36, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[11]);
-	glCallList(list);
-
-	glDeleteLists(list, 1);
+	PENTAGON(1, mp->seno, mp->edgedivisions, sqr(TAU) * sqrt((TAU + 2) / 5) / 2, mp->VisibleSpikes);
 }
 
 static void
 draw_icosa(ModeInfo * mi)
 {
-	GLuint      list;
-
 	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[0]);
 
-	list = glGenLists(1);
-	glNewList(list, GL_COMPILE_AND_EXECUTE);
 	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
-	glEndList();
 
 	glPushMatrix();
 
@@ -556,104 +520,102 @@ draw_icosa(ModeInfo * mi)
 	glRotatef(180, 0, 0, 1);
 	glRotatef(-icoangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[1]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPushMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + icoangle, 0.5, SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[2]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + icoangle, 0.5, -SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[3]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + icoangle, 0.5, SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[4]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPushMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + icoangle, 0.5, SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[5]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 0, 0, 1);
 	glRotatef(-icoangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[6]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + icoangle, 0.5, -SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[7]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPushMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + icoangle, 0.5, -SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[8]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 0, 0, 1);
 	glRotatef(-icoangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[9]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[10]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPushMatrix();
 	glRotatef(180, 0, 0, 1);
 	glRotatef(-icoangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[11]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPushMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + icoangle, 0.5, SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[12]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + icoangle, 0.5, -SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[13]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPopMatrix();
 	glPushMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + icoangle, 0.5, SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[14]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPushMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + icoangle, 0.5, SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[15]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 0, 0, 1);
 	glRotatef(-icoangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[16]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + icoangle, 0.5, -SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[17]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPushMatrix();
 	glRotatef(180, 0, 1, 0);
 	glRotatef(-180 + icoangle, 0.5, -SQRT3 / 2, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[18]);
-	glCallList(list);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 	glPopMatrix();
 	glRotatef(180, 0, 0, 1);
 	glRotatef(-icoangle, 1, 0, 0);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->MaterialColor[19]);
-	glCallList(list);
-
-	glDeleteLists(list, 1);
+	TRIANGLE(1.5, mp->seno, mp->edgedivisions, (3 * SQRT3 + SQRT15) / 12, mp->VisibleSpikes);
 }
 
 void
-reshape_morph3d(ModeInfo * mi, int width, int height)
+reshape(ModeInfo * mi, int width, int height)
 {
 	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
 
@@ -779,7 +741,6 @@ pinit(ModeInfo * mi)
 void
 init_morph3d(ModeInfo * mi)
 {
-	int         screen = MI_SCREEN(mi);
 	morph3dstruct *mp;
 
 	if (morph3d == NULL) {
@@ -787,13 +748,14 @@ init_morph3d(ModeInfo * mi)
 					    sizeof (morph3dstruct))) == NULL)
 			return;
 	}
-	mp = &morph3d[screen];
+	mp = &morph3d[MI_SCREEN(mi)];
 	mp->step = NRAND(90);
 	mp->VisibleSpikes = 1;
 
 	if ((mp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape_morph3d(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+		glDrawBuffer(GL_BACK);
 		mp->object = MI_COUNT(mi);
 		if (mp->object <= 0 || mp->object > 5)
 			mp->object = NRAND(5) + 1;
@@ -806,15 +768,19 @@ init_morph3d(ModeInfo * mi)
 void
 draw_morph3d(ModeInfo * mi)
 {
-	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
-
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
+	morph3dstruct *mp;
+
+	if (morph3d == NULL)
+		return;
+	mp = &morph3d[MI_SCREEN(mi)];
+
+	MI_IS_DRAWN(mi) = True;
 
 	if (!mp->glx_context)
 		return;
 
-	glDrawBuffer(GL_BACK);
 	glXMakeCurrent(display, window, *(mp->glx_context));
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -858,10 +824,7 @@ draw_morph3d(ModeInfo * mi)
 
 	glPopMatrix();
 
-    if (mi->fps_p) do_fps (mi);
-
-	glFlush();
-
+	if (MI_IS_FPS(mi)) do_fps (mi);
 	glXSwapBuffers(display, window);
 
 	mp->step += 0.05;
@@ -884,7 +847,7 @@ release_morph3d(ModeInfo * mi)
 {
 	if (morph3d != NULL) {
 		(void) free((void *) morph3d);
-		morph3d = NULL;
+		morph3d = (morph3dstruct *) NULL;
 	}
 	FreeAllGL(mi);
 }

@@ -70,6 +70,7 @@ hacks are displayed and which aren't.
 .BR doWin2K ,
 .BR doAmiga ,
 .BR doMac ,
+.BR doMac1 ,
 .BR doMacsBug ,
 .BR doSCO ,
 .BR doAtari ,

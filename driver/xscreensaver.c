@@ -289,6 +289,7 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
 {
   saver_info *si = global_si_kludge;	/* I hate C so much... */
   int i;
+  Bool fatal_p;
 
   if (!real_stderr) real_stderr = stderr;
 
@@ -309,9 +310,19 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
 	   "#######################################"
 	   "#######################################\n\n");
 
-  if (XmuPrintDefaultErrorMessage (dpy, error, real_stderr))
+  fatal_p = XmuPrintDefaultErrorMessage (dpy, error, real_stderr);
+
+  fatal_p = True;  /* The only time I've ever seen a supposedly nonfatal error,
+                      it has been BadImplementation / Xlib sequence lost, which
+                      are in truth pretty damned fatal.
+                    */
+
+  fprintf (real_stderr, "\n");
+
+  if (! fatal_p)
+    fprintf (real_stderr, "%s: nonfatal error.\n\n", blurb());
+  else
     {
-      fprintf (real_stderr, "\n");
       if (si->prefs.xsync_p)
 	{
 	  saver_exit (si, -1, "because of synchronous X Error");
@@ -342,8 +353,7 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
 	  saver_exit (si, -1, 0);
 	}
     }
-  else
-    fprintf (real_stderr, " (nonfatal.)\n");
+
   return 0;
 }
 

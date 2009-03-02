@@ -176,16 +176,16 @@ typedef struct {
    ballman        bman;
    triman         *tman;
    GLXContext     *glx_context;
-   GLint          listobjects;
-   GLint          gllists[3];
+   GLuint         listobjects;
+   GLuint         gllists[3];
    Window         window;
    BOOL           stop;
    char           *tex1;
 } boxedstruct;
 
-#define GLL_PATTERN 1
-#define GLL_BALL    2
-#define GLL_BOX     3
+#define GLL_PATTERN 0
+#define GLL_BALL    1
+#define GLL_BOX     2
 
 /*
 **----------------------------------------------------------------------------
@@ -526,7 +526,8 @@ void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, int ind_
 
 void updatetris(triman *t) {
    int b;
-
+   GLfloat xd,zd;
+   
    for (b=0;b<t->num_tri;b++) {
       /* apply gravity */
       t->tris[b].dir.y -= 0.1f;
@@ -541,7 +542,7 @@ void updatetris(triman *t) {
 	     (t->tris[b].loc.z < 100.0f)) {  /* in veld  */
 	    t->tris[b].dir.y = -(t->tris[b].dir.y);
 	    t->tris[b].loc.y = -t->tris[b].loc.y;
-	    scalevector(&t->tris[b].dir,&t->tris[b].dir,0.75f); /* dampening */
+	    scalevector(&t->tris[b].dir,&t->tris[b].dir,0.80f); /* dampening */
 	 }
 	 else {
 	    t->tris[b].far = TRUE;
@@ -549,33 +550,44 @@ void updatetris(triman *t) {
 	 }
       }
       
-      /* this should be replaced with code that determines 
-       * the correct wall the tri bounces in to. this code sucks.
-       */
-       if ((t->tris[b].loc.x > -21.0f) &
+      if ((t->tris[b].loc.x > -21.0f) &
 	  (t->tris[b].loc.x < 21.0f) &
 	  (t->tris[b].loc.z > -21.0f) &
 	  (t->tris[b].loc.z < 21.0f)) { /* in box? */
+
+	 xd = zd = 999.0f; /* big */
 	 if ((t->tris[b].loc.x > -21.0f) &
 	     (t->tris[b].loc.x < 0)) {
-	    t->tris[b].loc.x = -21.0f;
-	    t->tris[b].dir.x = -t->tris[b].dir.x;
+	    xd = t->tris[b].loc.x + 21.0f;
 	 }
 	 if ((t->tris[b].loc.x < 21.0f) &
 	     (t->tris[b].loc.x > 0)) {
-	    t->tris[b].loc.x = 21.0f;
-	    t->tris[b].dir.x = -t->tris[b].dir.x;
+	    xd = 21.0f - t->tris[b].loc.x;
 	 }
 	 if ((t->tris[b].loc.z > -21.0f) &
 	     (t->tris[b].loc.z < 0)) {
-	    t->tris[b].loc.z = -21.0f;
-	    t->tris[b].dir.z = -t->tris[b].dir.z;
+	    zd = t->tris[b].loc.z + 21.0f;
 	 }
 	 if ((t->tris[b].loc.z < 21.0f) &
 	     (t->tris[b].loc.z > 0)) {
-	    t->tris[b].loc.z = 21.0f;
-	    t->tris[b].dir.z = -t->tris[b].dir.z;
+	    zd = 21.0f - t->tris[b].loc.z;
 	 }
+	 if (xd < zd) {
+	    /* bounce x */
+	    if (t->tris[b].dir.x < 0) 
+	      t->tris[b].loc.x += (21.0f - t->tris[b].loc.x);
+	    else
+	      t->tris[b].loc.x += (-21.0f - t->tris[b].loc.x);
+	    t->tris[b].dir.x = -t->tris[b].dir.x;
+	 } else { 
+	    /* bounce z */
+	    if (t->tris[b].dir.z < 0)
+	      t->tris[b].loc.z += (21.0f - t->tris[b].loc.z);
+	    else
+	      t->tris[b].loc.z += (-21.0f - t->tris[b].loc.z);
+	    t->tris[b].dir.z = -t->tris[b].dir.z;
+	 }	 
+	       
       }
    } /* end for b */
 } 
@@ -740,7 +752,7 @@ static void drawball(boxedstruct *gp, ball *b)
    glMaterialfv(GL_FRONT, GL_EMISSION,col);
 
    if (!gp->gllists[GLL_BALL]) {
-      glNewList(gp->listobjects + GLL_BALL,GL_COMPILE_AND_EXECUTE);
+      glNewList(gp->listobjects + GLL_BALL,GL_COMPILE);
       cnt = SPHERE_INDICES/3;
       for (i=0; i<cnt; i++) {
 	 pos = i * 3;
@@ -804,8 +816,8 @@ static void drawtriman(triman *t)
 static void drawpattern(boxedstruct *boxed)
 {
    if (!boxed->gllists[GLL_PATTERN]) {
-      glNewList(boxed->listobjects + GLL_PATTERN,GL_COMPILE_AND_EXECUTE);
-      
+      glNewList(boxed->listobjects + GLL_PATTERN, GL_COMPILE);
+     
       glBegin(GL_LINE_STRIP);
       glVertex3f(-25.0f, 0.0f, 35.0f);
       glVertex3f(-15.0f, 0.0f, 35.0f);
@@ -845,11 +857,13 @@ static void drawpattern(boxedstruct *boxed)
       glVertex3f(-15.0f, 0.0f, 5.0f);
       glVertex3f(-5.0f, 0.0f, 15.0f);
       glEnd();
+
       glEndList();
       boxed->gllists[GLL_PATTERN] = 1;
    } else {
       glCallList(boxed->listobjects + GLL_PATTERN);
    }	
+
 }
       
       
@@ -975,11 +989,12 @@ static void draw(ModeInfo * mi)
 	 gp->bman.balls[i].justcreated = FALSE;
 	 freetris(&gp->tman[i]);
       }
-      if ((gp->bman.balls[i].bounced) & (gp->tman[i].vertices == NULL)) {
-	 createtrisfromball(&gp->tman[i],gp->spherev,gp->spherei,SPHERE_INDICES,&gp->bman.balls[i]);
-      }
-      if (gp->bman.balls[i].bounced) {
-	 updatetris(&gp->tman[i]);
+      if (gp->bman.balls[i].bounced) { 
+	 if (gp->tman[i].vertices == NULL) {
+	    createtrisfromball(&gp->tman[i],gp->spherev,gp->spherei,SPHERE_INDICES,&gp->bman.balls[i]);
+	 } else {
+	    updatetris(&gp->tman[i]);
+	 }
 	 glDisable(GL_CULL_FACE);
 	 drawtriman(&gp->tman[i]);
 	 glEnable(GL_CULL_FACE);
@@ -1148,6 +1163,8 @@ draw_boxed(ModeInfo * mi)
 void
 release_boxed(ModeInfo * mi)
 {
+   int i;
+   
    if (boxed != NULL) {
       int screen;
       
@@ -1158,23 +1175,16 @@ release_boxed(ModeInfo * mi)
 	    /* Display lists MUST be freed while their glXContext is current. */
 	    glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
 	    
-	    /*if (glIsList(gp->gear1))
-	      glDeleteLists(gp->gear1, 1);
-	    if (glIsList(gp->gear2))
-	      glDeleteLists(gp->gear2, 1);
-	    if (glIsList(gp->gear3))
-	      glDeleteLists(gp->gear3, 1);
-	    if (glIsList(gp->gear_inner))
-	      glDeleteLists(gp->gear_inner, 1);
-	    if (glIsList(gp->gear_outer))
-	      glDeleteLists(gp->gear_outer, 1);
-	     */
+	    if (glIsList(gp->listobjects))
+	      glDeleteLists(gp->listobjects, 3);
 	    
-	    /* TODO 
-	     * free all trimans
-	     * free all balls
-	     * free all sphere indices & vertices
-	     */
+	    for (i=0;i<gp->bman.num_balls;i++) {
+	       if (gp->bman.balls[i].bounced) freetris(&gp->tman[i]);
+	    }
+	    free (gp->bman.balls);
+	    free (gp->tman);
+	    free (gp->tex1);
+		 
 	    
 	 }
       }

@@ -31,6 +31,9 @@ are currently 6 modes defined (0\-5).
 .B \-delay \fIseconds\fP
 This sets the number of seconds that the helix will be on the screen.
 .TP 8
+.B \-subdelay \fImicroseconds\fP
+This sets the amount of time to pause periodically while drawing.
+.TP 8
 .B \-install
 Install a private colormap for the window.
 .TP 8

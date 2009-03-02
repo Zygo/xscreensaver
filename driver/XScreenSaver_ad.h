@@ -185,8 +185,8 @@
 - 	                	thornbird -root				    \\n\
  	                	fluidballs -root			    \\n\
   color: 			bubbles -root				    \\n\
-  default-n:			webcollage -root			    \\n\
-  default-n:  \"WebCollage (whacked)\"					      \
+- default-n:			webcollage -root			    \\n\
+- default-n:  \"WebCollage (whacked)\"					      \
 				webcollage -root -filter		      \
 				  'vidwhacker -stdin -stdout'		    \\n\
 - default-n:			vidwhacker -root			    \\n\
@@ -229,6 +229,7 @@
 	   GL:			glforestfire -root			    \\n\
 	   GL:			sballs -root				    \\n\
 	   GL:			cubenetic -root				    \\n\
+	   GL:			spheremonics -root			    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \

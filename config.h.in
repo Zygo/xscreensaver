@@ -157,6 +157,11 @@
  */
 #undef HAVE_XML
 
+/* Define this if you have the XML library headers in their old,
+ * non-namespaced location (you lack the gnome-xml/libxml symlink)
+ */
+#undef HAVE_OLD_XML_HEADERS
+
 /*  Define this if you have the XPM library installed.  Some of the demos can
  *  make use of this if it is available.
  */
@@ -393,3 +398,16 @@
 /* Define this if you do pings with a `struct icmphdr' and a `un.echo.id' slot.
  */
 #undef HAVE_ICMPHDR
+
+/* This is the name of the gettext package to use.
+ */
+#undef GETTEXT_PACKAGE
+
+/* This is the same as GETTEXT_PACKAGE, but for the glade generated
+ * code.
+ */
+#undef PACKAGE
+
+/* Define this if you want to build with NLS support
+ */
+#undef ENABLE_NLS

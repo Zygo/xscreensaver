@@ -692,6 +692,8 @@ draw_sponge (ModeInfo *mi)
                     MI_IS_WIREFRAME(mi),
                     (sp->current_depth < 0
                      ? -sp->current_depth : sp->current_depth));
+
+      mi->polygon_count = sp->squares_fp;  /* for FPS display */
     }
 
   glScalef (2.0, 2.0, 2.0);
