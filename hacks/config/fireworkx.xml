@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="fireworkx" _label="Fireworkx">
+
+  <command arg="-root"/>
+
+  <number id="Delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="1000"
+          convert="invert"/>
+
+  <number id="maxlife" type="slider" arg="-maxlife %"
+          _label="Activity" _low-label="Dense" _high-label="Sparse"
+          low="250" high="5000" default="2000"/>
+
+  <boolean id="flash" _label="Light Flash" arg-unset="-noflash"/>
+  <boolean id="glow"  _label="Self Glowing Smoke!" arg-unset="-noglow"/>
+  <boolean id="shoot" _label="Shoot The Shells up" arg-set="-shoot"/>
+
+  <_description>
+Pyrotechnics simulation eye-candy, MMX optimized. 
+Turn off Light for speed. Clicks on the preview window Explodes..!
+
+Written by Rony B Chandran. 
+http://www.ronybc.8k.com
+  </_description>
+</screensaver>

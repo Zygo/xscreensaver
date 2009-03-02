@@ -1,0 +1,130 @@
+.TH XScreenSaver 1 "19-Nov-99" "X Version 11"
+.SH NAME
+xteevee - Simulate various TV problems
+.SH SYNOPSIS
+.B xteevee
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
+[\-visual \fIvisual\fP] 
+[\-cycle] [\-no-cycle]
+[\-static] [\-no-static] [\-roll] [\-no-roll] [\-bars] [\-no-bars] 
+.SH DESCRIPTION
+.I xteevee
+simulates various television problems, fondly re-creating the days when
+computers were fun and I spent my time with an Atari 400 hooked up to a
+black-and-white TV I found in someone's trash.
+.PP
+When run,
+.I xteevee
+picks a mode to display from the available options.  If modes are explicitly
+set on the command-line, they override the implicit options and will be
+chosen among exclusively.  If modes are explicitly excluded from the
+command-line, the they are simply removed from contention.
+
+The image that it manipulates will be grabbed from the portion of
+the screen underlying the window, or from the system's video input,
+or from a random file on disk, as indicated by
+the \fIgrabDesktopImages\fP, \fIgrabVideoFrames\fP,
+and \fIchooseRandomImages\fP options in the \fI~/.xscreensaver\fP
+file; see
+.BR xscreensaver-demo (1)
+for more details.
+.PP
+See also
+.BR xanalogtv (MANSUFFIX)
+for a more sophisticated (but more graphics-intensive) implementation
+of this concept.
+.SH OPTIONS
+.I xteevee
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-cycle
+Cycle through all the available modes.  This is the default.
+.TP 8
+.B \-no-cycle
+Don't cycle modes.
+.TP 8
+.B \-static
+Explicitly select the "static" mode.
+.TP 8
+.B \-no-static
+Explicitly forbid the "static" mode.
+.TP 8
+.B \-roll
+Explicitly select the "vertical roll" mode.
+.TP 8
+.B \-no-roll
+Explicitly forbid the "vertical roll" mode.
+.TP 8
+.B \-bars
+Explicitly select the "color bars" mode.
+.TP 8
+.B \-no-bars
+Explicitly forbid the "color bars" mode.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH X RESOURCES
+Notable X resources supported include the following:
+.PP
+.BR static,
+.BR roll
+and
+.BR bars
+are booleans, defining which modes are to be implicitly available if
+.I xteevee
+is run without command-line mode selections.
+.BR cycle
+is a boolean, defining if
+.I xteevee
+should cycle through each available mode or pick one and stick with it.
+.BR delayMode
+and
+.BR delayBetween
+are integers, defining how long each mode should be displayed and how
+long the time between them should be if
+.BR cycle
+is on.
+.BR staticSignal
+is an integer, defining the strength of the signal during the "static"
+mode, as a percentage.
+.SH BUGS
+.I xteevee
+should simulate more TV problems.
+.SH SEE ALSO
+.BR X (1),
+.BR xanalogtv (MANSUFFIX),
+.BR apple2 (MANSUFFIX),
+.BR bsod (MANSUFFIX),
+.BR xscreensaver (1),
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-getimage (1)
+.SH COPYRIGHT
+Copyright \(co 1999 by Greg Knauss.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.  If you've gotten this far, then you're obviously
+looking for something to do.  Go here: http://www.teevee.org.
+.SH AUTHOR
+Greg Knauss <greg@eod.com>, 19-Nov-1999.

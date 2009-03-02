@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="tangram" _label="Tangram">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Fast" _high-label="Slow"
+          low="0" high="50000" default="10000"/>
+
+  <number id="viewing_time" type="spinbutton" arg="-viewing_time %"
+          _label="Viewing Time" low="0" high="30" default="5" />
+
+  <number id="x_camera_rotate" type="slider" arg="-x_camera_rotate %"
+          _label="X Camera Rotate" _low-label="Slow" _high-label="Fast"
+          low="0" high="1" default="0.2" />
+
+  <number id="y_camera_rotate" type="slider" arg="-y_camera_rotate %"
+          _label="Y Camera Rotate" _low-label="Slow" _high-label="Fast"
+          low="0" high="1" default="0.5" />
+
+  <number id="z_camera_rotate" type="slider" arg="-z_camera_rotate %"
+          _label="Z Camera Rotate" _low-label="Slow" _high-label="Fast"
+          low="0" high="1" default="0" />
+
+  <hgroup>
+   <boolean id="wire"      _label="Wireframe"  arg-set="-wireframe"/>
+   <boolean id="rotate"    _label="Don't Rotate"     arg-set="-no-rotate"/>
+  </hgroup>
+
+  <_description>
+Lets you watch the computer solve Tangram puzzles
+Written by Jeremy English.
+  </_description>
+</screensaver>

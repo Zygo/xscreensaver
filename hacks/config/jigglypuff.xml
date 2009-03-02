@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="jigglypuff" _label="JigglyPuff">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="20000"
+          convert="invert"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <number id="complexity" type="slider" arg="-complexity %"
+          _label="Complexity" _low-label="Low" _high-label="High"
+	  low="1" high="3" default="2"/>
+
+  <boolean id="random" _label="Random" arg-set="-random"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Rotation speed" _low-label="Slow" _high-label="Fast"
+	  low="50" high="1000" default="500"/>
+
+  <number id="spherism" type="slider" arg="-spherism %"
+           _label="Sphere strength" _low-label="none" _high-label="strong"
+	   low="0" high="1000" default="75"/>
+
+  <number id="hold" type="slider" arg="-hold %"
+           _label="Vertex-vertex force" _low-label="none" _high-label="strong"
+	   low="0" high="1000" default="700"/>
+
+  <number id="distance" type="slider" arg="-distance %"
+           _label="Vertex-vertex behavior" _low-label="expand"
+           _high-label="collapse" low="0" high="1000" default="300"/>
+
+  <number id="damping" type="slider" arg="-damping %"
+           _label="Inertial damping" _low-label="Low" _high-label="High"
+           low="10" high="1000" default="500" convert="invert"/>
+
+  <number id="spooky" type="slider" arg="-spooky %"
+           _label="Spookiness" _low-label="None" _high-label="Spoooooky"
+	   low="0" high="12" default="0"/>
+
+  <boolean id="wireframe" _label="Wireframe" arg-set="-wireframe"/>
+
+  <select id="color">
+   <option id="cycle"     _label="Cycle" />
+   <option id="flowerbox" _label="Flower box" arg-set="-color flowerbox"/>
+   <option id="clownbarf" _label="Clown barf" arg-set="-color clownbarf"/>
+   <option id="chrome" _label="Chrome" arg-set="-color chrome"/>
+  </select>
+
+  <select id="start">
+   <option id="sphere" _label="Sphere" />
+   <option id="tetrahedron" _label="Tetrahedron" arg-set="-tetra"/>
+  </select>
+
+  <_description>
+This little gem does bad things with quasi-spherical objects.
+
+The gist of it is that you have what is, structurally, a tetrahedron
+with tesselated faces. the vertices on these faces have forces on
+them in the form of one proportional to their distance from the surface
+of a sphere, and one which is proportional to how far they differ from
+some ideal distance from their neighbors. They also have inertia.
+The forces and distance are parameters and there are also a couple
+of visual parameters.
+
+The resulting effect can range from a shape that does nothing, to
+a frenetic polygon storm. Somewhere in between there it usually manifests
+as a blob that jiggles in a kind of disturbing manner. woo.
+
+It doesn't matter, however. You should just pick 'random'. It overrides all
+the other options, except for fps, delay and complexity.
+
+By Keith Macleod
+  </_description>
+
+</screensaver>
+
+
+
+
+
+
+
+

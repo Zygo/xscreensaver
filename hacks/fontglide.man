@@ -1,0 +1,120 @@
+.TH XScreenSaver 1 "30-Oct-99" "X Version 11"
+.SH NAME
+fontglide - characters float onto the screen to form words
+.SH SYNOPSIS
+.B fontglide
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
+[\-visual \fIvisual\fP] 
+[\-delay \fIusecs\fP] 
+[\-scroll\fP] 
+[\-page\fP] 
+[\-random\fP] 
+[\-speed \fIfloat\fP] 
+[\-linger \fIfloat\fP] 
+[\-program \fIsh-command\fP]
+[\-font \fIfont-name\fP]
+[\-bw \fIint\fP]
+[\-trails]
+[\-db]
+[\-debug]
+.SH DESCRIPTION
+The \fIfontglide\fP program reads text from a subprocess and puts it on
+the screen using large characters that glide in from the edges,
+assemble, then disperse.  Alternately, it can simply scroll whole 
+sentences from right to left.
+.SH OPTIONS
+.I fontglide
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fIusecs\fP
+The delay between steps of the animation, in microseconds: default 10000.
+.TP 8
+.B \-page
+With this option, a page full of text will glide in, and disperse.
+.TP 8
+.B \-scroll
+With this option, sentences will scroll by from right to left.
+.TP 8
+.B \-random
+The default is to pick randomly between \fI\-page\fP and  \fI\-scroll\fP.
+.TP 8
+.B \-speed \fIfloat\fP
+How fast to animate; 2 means twice as fast, 0.5 means half as fast.
+Default 1.0.
+.TP 8
+.B \-linger \fIfloat\fP
+How long to leave the assembled text on the screen in \fI\-page\fP mode;
+2 means twice as long, 0.5 means half as long.  Default 1.0.  (The more
+words there are on the screen, the longer it lingers.)
+.TP 8
+.B \-program \fIsh-command\fP
+The command to run to generate the text to display.  This option may be
+any string acceptable to /bin/sh.  The program will be run at the end of
+a pipe, and any words that it prints to \fIstdout\fP will end up on
+the window.  (Whitespace and line breaks are ignored.)  If the program 
+exits, it will be launched again after we have processed all the text
+it produced.  Default:
+.BR xscreensaver-text (1).
+.TP 8
+.B \-font\fP \fIstring\fP
+The base font pattern to use when loading fonts.  The default is to search
+for any Latin1 scalable proportional fonts on the system.  Once a base font
+is selected, it will be loaded in a random size.
+.TP 8
+.B \-bw \fIint\fP
+How thick an outline to draw around the characters.  Default 2 pixels.
+.TP 8
+.B \-trails\fP
+Leave "vapor trails" behind the moving text.  Default off.
+.TP 8
+.B \-no-db\fP
+Turn off double-buffering.  It may be faster, but will flicker.
+.TP 8
+.B \-debug\fP
+Draw some boxes showing character metrics, and print the name of the
+current font to stderr.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR xscreensaver (1),
+.BR xscreensaver-text (1),
+.BR fortune (1),
+.BR phosphor (MANSUFFIX),
+.BR apple2 (MANSUFFIX),
+.BR starwars (MANSUFFIX),
+.BR ljlatest (MANSUFFIX),
+.BR dadadodo (1),
+.BR webcollage (MANSUFFIX),
+.BR driftnet (1)
+.BR EtherPEG ,
+.BR EtherPeek
+.SH COPYRIGHT
+Copyright \(co 2003 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 15-Sep-2003.

@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="hypercube" _label="Hypercube">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <number id="z" type="slider" arg="-observer-z %"
+          _label="Zoom" _low-label="Near" _high-label="Far"
+          low="1.125" high="10.0" default="3.0"/>
+
+  <hgroup>
+    <vgroup>
+      <number id="xw" type="slider" arg="-xw %"
+              _label="XW Rotation" _low-label="Low" _high-label="High"
+              low="0" high="20" default="0"/>
+      <number id="xy" type="slider" arg="-xy %"
+              _label="XY Rotation" _low-label="Low" _high-label="High"
+              low="0" high="20" default="3"/>
+      <number id="xz" type="slider" arg="-xz %"
+              _label="XZ Rotation" _low-label="Low" _high-label="High"
+              low="0" high="20" default="5"/>
+    </vgroup>
+    <vgroup>
+      <number id="yw" type="slider" arg="-yw %"
+              _label="YW Rotation" _low-label="Low" _high-label="High"
+              low="0" high="20" default="10"/>
+      <number id="yz" type="slider" arg="-yz %"
+              _label="YZ Rotation" _low-label="Low" _high-label="High"
+              low="0" high="20" default="0"/>
+      <number id="zw" type="slider" arg="-zw %"
+              _label="ZW Rotation" _low-label="Low" _high-label="High"
+              low="0" high="20" default="0"/>
+    </vgroup>
+  </hgroup>
+
+  <!-- #### -color0 [magenta] -->
+  <!-- #### -color1 [yellow] -->
+  <!-- #### -color2 [#FF9300] -->
+  <!-- #### -color3 [#FF0093] -->
+  <!-- #### -color4 [green] -->
+  <!-- #### -color5 [#8080FF] -->
+  <!-- #### -color6 [#00D0FF] -->
+  <!-- #### -color7 [#00FFD0] -->
+
+  <_description>
+This displays 2D projections of the sequence of 3D objects which are
+the projections of the 4D analog to the cube: as a square is composed
+of four lines, each touching two others; and a cube is composed of
+six squares, each touching four others; a hypercube is composed of
+eight cubes, each touching six others.  To make it easier to
+visualize the rotation, it uses a different color for the edges of
+each face.  Don't think about it too long, or your brain will melt.
+Written by Joe Keane, Fritz Mueller, and Jamie Zawinski.
+
+See also the "polytopes" hack for a more general version of this
+using OpenGL.
+  </_description>
+</screensaver>

@@ -1,0 +1,222 @@
+.TH XLYAP 6X
+.SH NAME
+xlyap \- display an array of Lyapunov exponents graphically
+.SH SYNOPSIS
+.in +8n
+.ti -8n
+\fIxlyap\fR
+[-BLps][-W width][-H height][-o filename][-a 
+\fIn\fR ]
+[-b 
+\fIn\fR ]
+[-w 
+\fIn\fR ]
+[-h 
+\fIn\fR ]
+[-i xstart]
+[-M 
+\fIn\fR ]
+[-R 
+\fIp\fR ]
+[-S 
+\fIn\fR ]
+[-D 
+\fIn\fR ]
+[-F string][-f string][-r 
+\fIn\fR ]
+[-O 
+\fIn\fR ]
+[-C 
+\fIn\fR ]
+[-c 
+\fIn\fR ]
+[-m 
+\fIn\fR ]
+[-x xpos]
+[-y ypos]
+.in -8n
+.SH DESCRIPTION
+\fIxlyap\fR
+generates and graphically displays an array of Lyapunov exponents for a 
+variety of iterated periodically forced non-linear maps of the unit interval.
+.SH OPTIONS
+.TP 8
+-random
+A good choice for use with xscreensaver: picks random parameters from 
+a built-in list.
+.TP 8
+-C \fIn\fP
+Specifies the minimum color index to be used for negative exponents
+.TP
+-D \fIn\fP
+Specifies the "dwell" or number of iterations over which to average in order
+to calculate the Lyapunov exponent. Default is 50.
+.TP
+-H \fIn\fP
+Specifies the height of the window. Default is 256.
+.TP
+-L 
+Indicates use log(x) + log(y) rather than log(xy).
+.TP
+-M \fIr\fP
+Specifies the real value to compare exponent values to for indexing into
+a color wheel. The default value is 1.0.
+.TP
+-O \fIn\fP
+Specifies the minimum color index to be used for positive exponents
+.TP
+-R \fIp\fP
+Specifies pseudo-random forcing with probability \fIp\fP of using parameter
+value 'a'.
+.TP
+-S \fIn\fP
+Specifies the "settle" or number of iterations prior to the beginning of
+the calculation of the Lyapunov exponent. Default is 50.
+.TP
+-a \fIr\fP
+Specifies the real value to use as the minimum parameter value of the 
+horizontal axis. Default is 2.0 for the logistic map.
+.TP
+-b \fIn\fP
+Specifies the real value to use as the minimum parameter value of the 
+vertical axis. Default is 2.0 for the logistic map.
+.TP
+-c \fIn\fP
+Selects one of six different color wheels to use. The default color
+wheel is a rainbow palette.
+.TP
+-F \fI10101010\fP
+Specifies the "Function" forcing function to use. The example above would 
+alternate between iterating the circle and logistic maps. An argument of
+"-F 2323" would alternate between left and right logistic maps. The default
+is to only use the single specified map (see the description of -m).
+.TP
+-f \fIabbabaab\fP
+Specifies the forcing function to use. The default is to alternate between
+the "a" parameter and the "b" parameter.
+.TP
+-h \fIr\fP
+Specifies the real value to be used as the range over which the vertical
+parameter values vary. The default is 1.0.
+.TP
+-i \fIr\fP
+Specifies the real value of the initial condition to use. Default is 0.65.
+.TP
+-m \fIn\fP
+Selects between available non-linear maps of the unit interval. A value of
+0 specifies the logistic map. A value of 1, the circle map. A value of 2,
+the left-logistic. A value of 3, the right-logistic. A value of 4, the
+double-logistic. The default is 0, the logistic map.
+.TP
+-o \fIfilename\fP
+Specifies the output filename to be used. If the -o option is given, this
+file will automatically be written out at the completion of the drawing.
+If it is not specified, a default filename of lyap.out is used and only
+written if the 'f' or 'F' keys are pressed during a run. The format of the
+output file is PPM for color and PGM for monochrome. The parameters used to
+calculate the picture are included as comments at the beginning of the output
+file.
+.TP
+-p
+Switches color indices for negative and positive exponents. Generally,
+causes negative exponents to be displayed in more detail while darkening
+and narrowing the color range for positive exponents. This can be toggled
+during runtime by pressing the 'p' key.
+.TP
+-r \fIn\fP
+Specifies the maximum rgb value to be used. Default is 65000.
+.TP
+-s \fIn\fP
+Specifies the length of the color wheel spin.
+.TP
+-v 
+Prints out the various values to be used and exits.
+.TP
+-w \fIr\fP
+Specifies the real value to be used as the range over which the horizontal
+parameter values vary. The default is 1.0.
+.sp 2
+.SH NOTES
+.sp
+During display, pressing any mouse button allows you to select the area to
+be investigated with the mouse. The upper left hand corner of the desired
+area is the location of the cursor when the button is pressed. The lower
+right hand corner is specified by the cursor when the button is released.
+.sp 2
+Use of the keys 
+\fIbBeEfFkKjJmnrRsSwWxXqQ\fP
+indicates:
+.sp
+.ti 10
+(<) Halve dwell value.
+.ti 10
+(>) Double dwell value.
+.ti 10
+([) Halve settle value.
+.ti 10
+(]) Double settle value.
+.ti 10
+(B or b) Toggle button display on/off
+.ti 10
+(E or e) Recalculate the indices into the color wheel using a different method
+.ti 10
+(F or f) Save current screen to ouput file (not yet implemented)
+.ti 10
+(H or h or ?) Display brief help message
+.ti 10
+(i) Decrement the interval between stripes for the striped color map.
+.ti 10
+(I) Increment the interval between stripes for the striped color map.
+.ti 10
+(K) Decrease value exponents are compared against by 0.05.
+.ti 10
+(J) Increase value exponents are compared against by 0.05.
+.ti 10
+(M) Decrease value exponents are compared against by 0.005.
+.ti 10
+(N) Increase value exponents are compared against by 0.005.
+.ti 10
+(m) Increment the map index, changing the map to be iterated.
+.ti 10
+(P or p) Toggle positive/negative exponent display.
+.ti 10
+(r) Redraw the window using previously calculated exponents.
+.ti 10
+(R) Redraw the window using the newly set dwell and/or settle values.
+.ti 10
+(S) Spin the color wheel
+.ti 10
+(s) Halve the length of the spin and spin the color wheel
+.ti 10
+(u) Go up to the window just prior to the most recent zoom.
+.ti 10
+(U) Go all the way up to the original window.
+.ti 10
+(V or v) Display values of various parameters currently in use
+.ti 10
+(W or w) Use next color map.
+.ti 10
+(X or x) Clear window
+.ti 10
+(Q or q) quit
+.sp 2
+.SH AUTHOR
+.nf
+        Ronald Joe Record
+     The Santa Cruz Operation 
+          P.O. Box 1900
+       Santa Cruz, CA 95061
+            rr@sco.com
+.fi
+.sp 2
+.SH ACKNOWLEDGEMENTS
+.PP
+The algorithm was taken from the September 1991 Scientific American article
+by A. K. Dewdney who gives credit to Mario Markus of the Max Planck Institute
+for its creation. Additional information and ideas were gleaned from the
+discussion on alt.fractals involving Stephen Hall, Ed Kubaitis, Dave Platt
+and Baback Moghaddam. Assistance with colormaps and spinning color wheels
+and X was gleaned from Hiram Clawson. Rubber banding code was adapted from
+an existing Mandelbrot program written by Stacey Campbell.
+
+Viciously hacked for xscreensaver by Jamie Zawinski, 20-Nov-97.
