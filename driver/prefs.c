@@ -192,6 +192,39 @@ init_file_tmp_name (void)
     return 0;
 }
 
+static int
+get_byte_resource (char *name, char *class)
+{
+  char *s = get_string_resource (name, class);
+  char *s2 = s;
+  int n = 0;
+  if (!s) return 0;
+
+  while (isspace(*s2)) s2++;
+  while (*s2 >= '0' && *s2 <= '9')
+    {
+      n = (n * 10) + (*s2 - '0');
+      s2++;
+    }
+  while (isspace(*s2)) s2++;
+  if      (*s2 == 'k' || *s2 == 'K') n <<= 10;
+  else if (*s2 == 'm' || *s2 == 'M') n <<= 20;
+  else if (*s2 == 'g' || *s2 == 'G') n <<= 30;
+  else if (*s2)
+    {
+    LOSE:
+      fprintf (stderr, "%s: %s must be a number of bytes, not \"%s\".\n",
+               progname, name, s);
+      return 0;
+    }
+  s2++;
+  if (*s2 == 'b' || *s2 == 'B') s2++;
+  while (isspace(*s2)) s2++;
+  if (*s2) goto LOSE;
+
+  return n;
+}
+
 
 static const char * const prefs[] = {
   "timeout",
@@ -211,6 +244,7 @@ static const char * const prefs[] = {
   "helpURL",
   "loadURL",
   "nice",
+  "memoryLimit",
   "fade",
   "unfade",
   "fadeSeconds",
@@ -687,7 +721,7 @@ write_init_file (saver_preferences *p, const char *version_string,
     {
       char buf[255];
       const char *pr = prefs[j];
-      enum pref_type { pref_str, pref_int, pref_bool, pref_time
+      enum pref_type { pref_str, pref_int, pref_bool, pref_byte, pref_time
       } type = pref_str;
       const char *s = 0;
       int i = 0;
@@ -724,6 +758,7 @@ write_init_file (saver_preferences *p, const char *version_string,
       CHECK("helpURL")		type = pref_str,  s = p->help_url;
       CHECK("loadURL")		type = pref_str,  s = p->load_url_command;
       CHECK("nice")		type = pref_int,  i = p->nice_inferior;
+      CHECK("memoryLimit")	type = pref_byte, i = p->inferior_memory_limit;
       CHECK("fade")		type = pref_bool, b = p->fade_p;
       CHECK("unfade")		type = pref_bool, b = p->unfade_p;
       CHECK("fadeSeconds")	type = pref_time, t = p->fade_seconds;
@@ -784,6 +819,19 @@ write_init_file (saver_preferences *p, const char *version_string,
 	    sprintf (buf, "%u:%02u:%02u", hour, min, sec);
 	    s = buf;
 	  }
+	  break;
+	case pref_byte:
+	  {
+            if      (i >= (1<<30) && i == ((i >> 30) << 30))
+              sprintf(buf, "%dG", i >> 30);
+            else if (i >= (1<<20) && i == ((i >> 20) << 20))
+              sprintf(buf, "%dM", i >> 20);
+            else if (i >= (1<<10) && i == ((i >> 10) << 10))
+              sprintf(buf, "%dK", i >> 10);
+            else
+              sprintf(buf, "%d", i);
+            s = buf;
+          }
 	  break;
 	default:
 	  abort();
@@ -924,6 +972,7 @@ load_init_file (saver_preferences *p)
   p->fade_ticks	    = get_integer_resource ("fadeTicks", "Integer");
   p->install_cmap_p = get_boolean_resource ("installColormap", "Boolean");
   p->nice_inferior  = get_integer_resource ("nice", "Nice");
+  p->inferior_memory_limit = get_byte_resource ("memoryLimit", "MemoryLimit");
   p->splash_p       = get_boolean_resource ("splash", "Boolean");
   p->capture_stderr_p = get_boolean_resource ("captureStderr", "Boolean");
 
@@ -1091,7 +1140,7 @@ merge_system_screenhacks (saver_preferences *p,
               made_space = 10;
               p->screenhacks = (screenhack **)
                 realloc (p->screenhacks,
-                         (p->screenhacks_count + made_space) 
+                         (p->screenhacks_count + made_space + 1)
                          * sizeof(screenhack));
               if (!p->screenhacks) abort();
             }
@@ -1102,6 +1151,7 @@ merge_system_screenhacks (saver_preferences *p,
           nh->command   = oh->command ? strdup(oh->command) : 0;
 
           p->screenhacks[p->screenhacks_count++] = nh;
+          p->screenhacks[p->screenhacks_count] = 0;
           made_space--;
 
 #if 0
@@ -1329,7 +1379,7 @@ format_hack (screenhack *hack, Bool wrap_p)
 static void
 get_screenhacks (saver_preferences *p)
 {
-  int i = 0;
+  int i, j;
   int start = 0;
   int end = 0;
   int size;
@@ -1362,15 +1412,14 @@ get_screenhacks (saver_preferences *p)
 
 
   /* Count up the number of newlines (which will be equal to or larger than
-     the number of hacks.)
+     one less than the number of hacks.)
    */
-  i = 0;
-  for (i = 0; d[i]; i++)
+  for (i = j = 0; d[i]; i++)
     if (d[i] == '\n')
-      i++;
-  i++;
+      j++;
+  j++;
 
-  p->screenhacks = (screenhack **) calloc (sizeof (screenhack *), i+1);
+  p->screenhacks = (screenhack **) calloc (j + 1, sizeof (screenhack *));
 
   /* Iterate over the lines in `d' (the string with newlines)
      and make new strings to stuff into the `screenhacks' array.

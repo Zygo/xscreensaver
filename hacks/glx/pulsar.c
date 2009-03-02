@@ -613,7 +613,7 @@ void drawQuads(void) {
 
 GLvoid drawScene(ModeInfo * mi) 
 {
-  check_gl_error ("drawScene");
+/*  check_gl_error ("drawScene"); */
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   /* we have to do this here because the FPS meter turns these 3 features off!! */
@@ -647,7 +647,7 @@ GLvoid drawScene(ModeInfo * mi)
   /* increment frame-counter */
   frame++;
 
-  check_gl_error ("drawScene");
+/*  check_gl_error ("drawScene"); */
 }
 
 

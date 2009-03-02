@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -12,15 +12,36 @@
 /* If the server's root window contains a SERVER_OVERLAY_VISUALS property,
    then that identifies the visuals which correspond to the video hardware's
    overlay planes.  Windows created in these kinds of visuals have the
-   property that one particular pixel value is transparent.
+   property that one or more particular pixel values is transparent.
+
+   Vendor support:
+
+    SGI:  - Supported on all systems since IRIX 4.0.
+          - Their version of the Motif toolkit renders menus into the overlay
+            visual, so that they don't cause exposure events on occluded
+            windows.
+          - 2 bit overlay plane with Indigo Entry graphics (e.g., Indy).
+          - 8 bit overlay on O2 with Indigo 24 graphics or better (e.g., O2).
+
+    HP:   - Supported on workstations with CRX24 and CRX48Z graphics hardware.
+          - 8 bit or 24 bit overlay plane.
+          - The default visual is the overlay visual, with a transparent pixel.
+            That way, all Xlib programs draw into the overlay plane, and no
+            Xlib program causes exposures on occluded OpenGL windows.
+
+    IBM:  - Supported on some graphics hardware (which?)
+
+    DEC:  - Supported on some graphics hardware (which?)
+
+    SUN:  - Some systems apparently implement it VERRRRRRY SLOWLY, so drawing
+            into the overlay plane is a performance killer (about as bad as
+            using the SHAPE extension.)
+
 
    On my Indy, there are two transparent visuals, one of which is at layer 1,
    and one of which is at layer 2.  This is apparently the ordering in which
    they are overlayed (1 being topmost.)  The other difference between them
    is that the topmost one only has 2 planes, while the next one has 8.
-
-   Rumor has it that SGI, HP, DEC, and IBM all use the same mechanism.
-   Does Sun?
 
    This code selects the topmost one, regardless of depth.  Maybe that's not
    the right thing.  Well, in XScreenSaver, we only need to allocate two
@@ -31,7 +52,6 @@
 
      http://www.hp.com/xwindow/sharedInfo/Whitepapers/Visuals/server_overlay_visuals.html
     http://www.xig.com/Pages/Ed-Overlays.html
-
  */
 
 
@@ -46,8 +66,11 @@
 struct overlay_data
 {
   CARD32 visual_id;
-  CARD32 transparency;	/* 0: none; 1: pixel; 2: mask (?) */
-  CARD32 value;		/* the transparent pixel */
+  CARD32 transparency;	/* 0: none; 1: pixel; 2: mask
+                           ("mask" means "any pixel with these bits set
+                           is a transparent pixel")
+                         */
+  CARD32 value;		/* the transparent pixel or mask */
   CARD32 layer;		/* -1: underlay; 0: normal; 1: popup; 2: overlay */
 };
 
@@ -101,8 +124,9 @@ get_overlay_visual (Screen *screen, unsigned long *transparent_pixel_ret)
   if (data)
     for (i = 0; i < n_visuals; i++)
 
-      /* Only accept ones that have a transparent pixel. */
-      if (data[i].transparency == 1)
+      /* Only accept ones that have a transparent pixel or mask. */
+      if (data[i].transparency == 1 ||
+          data[i].transparency == 2)
 	{
 	  XVisualInfo vi_in, *vi_out;
 	  int out_count;

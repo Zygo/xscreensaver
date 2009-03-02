@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998
+/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998, 2001
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -17,42 +17,70 @@
 
    John sez:
 
-   The simulation started out as a purely accurate gravitational simulation,
-   but, with constant simulation step size, I quickly realized the field being
-   simulated while grossly gravitational was, in fact, non-conservative.  It
-   also had the rather annoying behavior of dealing very badly with colliding
-   orbs.  Therefore, I implemented a negative-gravity region (with two
-   thresholds; as I read your code, you only implemented one) to prevent orbs
-   from every coming too close together, and added a viscosity factor if the
-   speed of any orb got too fast.  This provides a nice stable system with
-   interesting behavior.
+       The simulation started out as a purely accurate gravitational
+       simulation, but, with constant simulation step size, I quickly
+       realized the field being simulated while grossly gravitational
+       was, in fact, non-conservative.  It also had the rather annoying
+       behavior of dealing very badly with colliding orbs.  Therefore,
+       I implemented a negative-gravity region (with two thresholds; as
+       I read your code, you only implemented one) to prevent orbs from
+       every coming too close together, and added a viscosity factor if
+       the speed of any orb got too fast.  This provides a nice stable
+       system with interesting behavior.
 
-   I had experimented with a number of fields including the van der Waals
-   force (very interesting orbiting behavior) and 1/r^3 gravity (not as
-   interesting as 1/r^2).  An even normal viscosity (rather than the
-   thresholded version to bleed excess energy) is also not interesting.
-   The 1/r^2, -1/r^2, -10/r^2 thresholds proved not only robust but also
-   interesting -- the orbs never collided and the threshold viscosity fixed
-   the non-conservational problem.
+       I had experimented with a number of fields including the van der
+       Waals force (very interesting orbiting behavior) and 1/r^3
+       gravity (not as interesting as 1/r^2).  An even normal viscosity
+       (rather than the thresholded version to bleed excess energy) is
+       also not interesting.  The 1/r^2, -1/r^2, -10/r^2 thresholds
+       proved not only robust but also interesting -- the orbs never
+       collided and the threshold viscosity fixed the
+       non-conservational problem.
 
    Philip sez:
-   > An even normal viscosity (rather than the thresholded version to
-   > bleed excess energy) is also not interesting.
+       > An even normal viscosity (rather than the thresholded version to
+       > bleed excess energy) is also not interesting.
 
-   unless you make about 200 points.... set the viscosity to about .8
-   and drag the mouse through it.   it makes a nice wave which travels
-   through the field.
+       unless you make about 200 points.... set the viscosity to about .8
+       and drag the mouse through it.   it makes a nice wave which travels
+       through the field.
 
    And (always the troublemaker) Joe Keane <jgk@jgk.org> sez:
 
-   Despite what John sez, the field being simulated is always conservative.
-   The real problem is that it uses a simple hack, computing acceleration
-   *based only on the starting position*, instead of a real differential
-   equation solver.  Thus you'll always have energy coming out of nowhere,
-   although it's most blatant when balls get close together.  If it were
-   done right, you wouldn't need viscosity or artificial limits on how
-   close the balls can get.
- */
+       Despite what John sez, the field being simulated is always
+       conservative.  The real problem is that it uses a simple hack,
+       computing acceleration *based only on the starting position*,
+       instead of a real differential equation solver.  Thus you'll
+       always have energy coming out of nowhere, although it's most
+       blatant when balls get close together.  If it were done right,
+       you wouldn't need viscosity or artificial limits on how close
+       the balls can get.
+
+   Matt <straitm@carleton.edu> sez:
+
+       Added a switch to remove the walls.
+
+       Added a switch to make the threshold viscosity optional.  If
+       nomaxspeed is specified, then balls going really fast do not
+       recieve special treatment.
+
+       I've made tail mode prettier by eliminating the first erase line
+       that drew from the upper left corner to the starting position of
+       each point.
+
+       Made the balls in modes other than "balls" bounce exactly at the
+       walls.  (Because the graphics for different modes are drawn
+       differently with respect to the "actual" position of the point,
+       they used to be able to run somewhat past the walls, or bounce
+       before hitting them.)
+
+       Added an option to output each ball's speed in the form of a bar
+       graph drawn on the same window as the balls.  If only x or y is
+       selected, they will be represented on the appropriate axis down
+       the center of the window.  If both are selected, they will both
+       be displayed along the diagonal such that the x and y bars for
+       each point start at the same place.  If speed is selected, the
+       speed will be displayed down the left side.  */
 
 #include <stdio.h>
 #include <math.h>
@@ -70,6 +98,9 @@ struct ball {
 };
 
 static struct ball *balls;
+static double *x_vels;
+static double *y_vels;
+static double *speeds;
 static int npoints;
 static int threshold;
 static int delay;
@@ -77,12 +108,16 @@ static int global_size;
 static int segments;
 static Bool glow_p;
 static Bool orbit_p;
+static Bool walls_p;
+static Bool maxspeed_p;
+static Bool cbounce_p;
 static XPoint *point_stack;
 static int point_stack_size, point_stack_fp;
 static XColor *colors;
 static int ncolors;
 static int fg_index;
 static int color_shift;
+Bool no_erase_yet; /* for tail mode fix */
 
 /*flip mods for mouse interaction*/
 static Bool mouse_p;
@@ -94,10 +129,15 @@ static enum object_mode {
   tail_mode
 } mode;
 
+static enum graph_mode {
+  graph_none, graph_x, graph_y, graph_both, graph_speed
+} graph_mode;
+
 static GC draw_gc, erase_gc;
 
+/* The normal (and max) width for a graph bar */
+#define BAR_SIZE 11
 #define MAX_SIZE 16
-
 #define min(a,b) ((a)<(b)?(a):(b))
 #define max(a,b) ((a)>(b)?(a):(b))
 
@@ -110,32 +150,51 @@ init_balls (Display *dpy, Window window)
   int xlim, ylim, midx, midy, r, vx, vy;
   double th;
   Colormap cmap;
-  char *mode_str;
+  char *mode_str, *graph_mode_str;
+
   XGetWindowAttributes (dpy, window, &xgwa);
   xlim = xgwa.width;
   ylim = xgwa.height;
   cmap = xgwa.colormap;
   midx = xlim/2;
   midy = ylim/2;
+  walls_p = get_boolean_resource ("walls", "Boolean");
+
+  /* if there aren't walls, don't set a limit on the radius */
   r = get_integer_resource ("radius", "Integer");
-  if (r <= 0 || r > min (xlim/2, ylim/2))
+  if (r <= 0 || (r > min (xlim/2, ylim/2) && walls_p) )
     r = min (xlim/2, ylim/2) - 50;
+
   vx = get_integer_resource ("vx", "Integer");
   vy = get_integer_resource ("vy", "Integer");
+
   npoints = get_integer_resource ("points", "Integer");
   if (npoints < 1)
     npoints = 3 + (random () % 5);
   balls = (struct ball *) malloc (npoints * sizeof (struct ball));
+
+  no_erase_yet = 1; /* for tail mode fix */
+
   segments = get_integer_resource ("segments", "Integer");
   if (segments < 0) segments = 1;
+
   threshold = get_integer_resource ("threshold", "Integer");
   if (threshold < 0) threshold = 0;
+
   delay = get_integer_resource ("delay", "Integer");
-    if (delay < 0) delay = 0;
+  if (delay < 0) delay = 0;
+
   global_size = get_integer_resource ("size", "Integer");
   if (global_size < 0) global_size = 0;
+
   glow_p = get_boolean_resource ("glow", "Boolean");
+
   orbit_p = get_boolean_resource ("orbit", "Boolean");
+
+  maxspeed_p = get_boolean_resource ("maxspeed", "Boolean");
+
+  cbounce_p = get_boolean_resource ("cbounce", "Boolean");
+
   color_shift = get_integer_resource ("colorShift", "Integer");
   if (color_shift <= 0) color_shift = 5;
 
@@ -148,18 +207,43 @@ init_balls (Display *dpy, Window window)
 
   mode_str = get_string_resource ("mode", "Mode");
   if (! mode_str) mode = ball_mode;
-  else if (!strcmp (mode_str, "balls")) mode = ball_mode;
-  else if (!strcmp (mode_str, "lines")) mode = line_mode;
-  else if (!strcmp (mode_str, "polygons")) mode = polygon_mode;
-  else if (!strcmp (mode_str, "tails")) mode = tail_mode;
-  else if (!strcmp (mode_str, "splines")) mode = spline_mode;
-  else if (!strcmp (mode_str, "filled-splines")) mode = spline_filled_mode;
+  else if (!strcmp (mode_str, "balls")) 	mode = ball_mode;
+  else if (!strcmp (mode_str, "lines")) 	mode = line_mode;
+  else if (!strcmp (mode_str, "polygons")) 	mode = polygon_mode;
+  else if (!strcmp (mode_str, "tails")) 	mode = tail_mode;
+  else if (!strcmp (mode_str, "splines")) 	mode = spline_mode;
+  else if (!strcmp (mode_str, "filled-splines"))mode = spline_filled_mode;
   else {
     fprintf (stderr,
 	     "%s: mode must be balls, lines, tails, polygons, splines, or\n\
 	filled-splines, not \"%s\"\n",
 	     progname, mode_str);
     exit (1);
+  }
+
+  graph_mode_str = get_string_resource ("graphmode", "Mode");
+  if (! graph_mode_str) graph_mode = graph_none;
+  else if (!strcmp (graph_mode_str, "x")) 	graph_mode = graph_x;
+  else if (!strcmp (graph_mode_str, "y")) 	graph_mode = graph_y;
+  else if (!strcmp (graph_mode_str, "both")) 	graph_mode = graph_both;
+  else if (!strcmp (graph_mode_str, "speed")) 	graph_mode = graph_speed;
+  else if (!strcmp (graph_mode_str, "none")) 	graph_mode = graph_none;
+  else {
+    fprintf (stderr,
+	 "%s: graphmode must be speed, x, y, both, or none, not \"%s\"\n",
+	 progname, graph_mode_str);
+    exit (1);
+  }
+
+  /* only allocate memory if it is needed */
+  if(graph_mode != graph_none)
+  {
+    if(graph_mode == graph_x || graph_mode == graph_both)
+      x_vels = (double *) malloc (npoints * sizeof (double));
+    if(graph_mode == graph_y || graph_mode == graph_both)
+      y_vels = (double *) malloc (npoints * sizeof (double));
+    if(graph_mode == graph_speed)
+      speeds = (double *) malloc (npoints * sizeof (double));
   }
 
   if (mode != ball_mode && mode != tail_mode) glow_p = False;
@@ -270,6 +354,20 @@ init_balls (Display *dpy, Window window)
 	balls [i].pixel_index = random() % ncolors;
     }
 
+  /*  This lets modes where the points don't really have any size use the whole
+      window.  Otherwise, since the points still have a positive size
+      assigned to them, they will be bounced somewhat early.  Mass and size are
+      seperate, so this shouldn't cause problems.  It's a bit kludgy, tho.
+  */
+  if(mode == line_mode || mode == spline_mode || 
+     mode == spline_filled_mode || mode == polygon_mode)
+    {
+	for(i = 1; i < npoints; i++)
+	  {
+		balls[i].size = 0;
+          }
+     }
+    
   if (orbit_p)
     {
       double a = 0;
@@ -306,6 +404,7 @@ init_balls (Display *dpy, Window window)
     }
 
   if (mono_p) glow_p = False;
+
   XClearWindow (dpy, window);
 }
 
@@ -362,17 +461,195 @@ compute_force (int i, double *dx_ret, double *dy_ret)
     }
 }
 
+
+/* Draws meters along the diagonal for the x velocity */
+static void 
+draw_meter_x(Display *dpy, Window window, GC draw_gc,
+             struct ball *balls, int i, int alone) 
+{
+  XWindowAttributes xgwa;
+  int x1,x2,y,w1,w2,h;
+  XGetWindowAttributes (dpy, window, &xgwa);
+
+  /* set the width of the bars to use */
+  if(xgwa.height < BAR_SIZE*npoints)
+    {
+      y = i*(xgwa.height/npoints);
+      h = (xgwa.height/npoints) - 2;
+    }
+  else
+    {
+      y = BAR_SIZE*i;
+      h = BAR_SIZE - 2;
+    }
+  
+  if(alone)
+    {
+      x1 = xgwa.width/2;
+      x2 = x1;
+    }
+  else
+    {
+      x1 = i*(h+2);
+      if(x1 < i) 
+        x1 = i;
+      x2 = x1;
+    }
+
+  if(y<1) y=i;  
+  if(h<1) h=1;
+
+  w1 = (int)(20*x_vels[i]);
+  w2 = (int)(20*balls[i].vx);
+  x_vels[i] = balls[i].vx; 
+
+  if (w1<0) {
+    w1=-w1;
+    x1=x1-w1;
+  }
+  if (w2<0) {
+    w2=-w2;
+    x2=x2-w2;
+  }
+  XDrawRectangle(dpy,window,erase_gc,x1+(h+2)/2,y,w1,h);
+  XDrawRectangle(dpy,window,draw_gc,x2+(h+2)/2,y,w2,h);
+}
+
+/* Draws meters along the diagonal for the y velocity.
+   Is there some way to make draw_meter_x and draw_meter_y 
+   one function instead of two without making them completely unreadable?
+*/
+static void 
+draw_meter_y (Display *dpy, Window window, GC draw_gc,
+              struct ball *balls, int i, int alone) 
+{
+  XWindowAttributes xgwa;
+  int y1,y2,x,h1,h2,w;
+  XGetWindowAttributes (dpy, window, &xgwa);
+
+  if(xgwa.height < BAR_SIZE*npoints){  /*needs to be height still */
+    x = i*(xgwa.height/npoints);
+    w = (xgwa.height/npoints) - 2;
+  }
+  else{
+    x = BAR_SIZE*i;
+    w = BAR_SIZE - 2;
+  }
+
+  if(alone)
+    {
+      y1 = xgwa.height/2;
+      y2 = y1;
+    }
+  else
+    {
+      y1 = i*(w+2);
+      if(y1 < i)
+        y1 = i;
+      y2 = y1;
+    }
+
+  if(x < 1) x = i;  
+  if(w < 1) w = 1;
+
+  h1 = (int)(20*y_vels[i]);
+  h2 = (int)(20*balls[i].vy);
+  y_vels[i] = balls[i].vy; 
+
+  if (h1<0) {
+    h1=-h1;
+    y1=y1-h1;
+  }
+  if (h2<0) {
+    h2=-h2;
+    y2=y2-h2;
+  }
+  XDrawRectangle(dpy,window,erase_gc,x,y1+(w+2)/2,w,h1);
+  XDrawRectangle(dpy,window,draw_gc,x,y2+(w+2)/2,w,h2);
+}
+
+
+/* Draws meters of the total speed of the balls */
 static void
-run_balls (Display *dpy, Window window)
+draw_meter_speed (Display *dpy, Window window, GC draw_gc, 
+                  struct ball *balls, int i) 
+{
+  XWindowAttributes xgwa;
+  int y,x1,x2,h,w1,w2;
+  XGetWindowAttributes (dpy, window, &xgwa);
+
+  if(xgwa.height < BAR_SIZE*npoints)
+    {
+      y = i*(xgwa.height/npoints);
+      h = (xgwa.height/npoints) - 2;
+    }
+  else{
+    y = BAR_SIZE*i;
+    h = BAR_SIZE - 2;
+  }
+
+  x1 = 0;
+  x2 = x1;
+
+  if(y < 1) y = i;  
+  if(h < 1) h = 1;
+
+  w1 = (int)(5*speeds[i]);
+  w2 = (int)(5*(balls[i].vy*balls[i].vy+balls[i].vx*balls[i].vx));
+  speeds[i] =    balls[i].vy*balls[i].vy+balls[i].vx*balls[i].vx;
+
+  XDrawRectangle(dpy,window,erase_gc,x1,y,w1,h);
+  XDrawRectangle(dpy,window,draw_gc, x2,y,w2,h);
+}
+
+static void
+run_balls (Display *dpy, Window window, int total_ticks)
 {
   int last_point_stack_fp = point_stack_fp;
   static int tick = 500, xlim, ylim;
   static Colormap cmap;
-  int i;
-
-  /*flip mods for mouse interaction*/
-  Window  root1, child1;
+  
+  Window root1, child1;  /*flip mods for mouse interaction*/
   unsigned int mask;
+
+  int i, radius = global_size/2;
+  if(global_size == 0)
+    radius = (MAX_SIZE / 3);
+
+  if(graph_mode != graph_none)
+    {
+      if(graph_mode == graph_both)
+	{
+          for(i = 0; i < npoints; i++)
+            {
+              draw_meter_x(dpy,window,draw_gc, balls, i, 0);
+              draw_meter_y(dpy,window,draw_gc, balls, i, 0);
+            }
+	}
+      else if(graph_mode == graph_x)
+	{
+          for(i = 0; i < npoints; i++)
+            {
+              draw_meter_x(dpy,window,draw_gc, balls, i, 1);
+            }
+	}
+      else if(graph_mode == graph_y)
+	{
+          for(i = 0; i < npoints; i++)
+            {
+              draw_meter_y(dpy,window,draw_gc, balls, i, 1);
+            }
+	}
+      else if(graph_mode == graph_speed)
+	{
+          for(i = 0; i < npoints; i++)
+            {
+              draw_meter_speed(dpy,window,draw_gc, balls, i);
+            }
+	}
+
+    }
+
   if (mouse_p)
     {
       XQueryPointer(dpy, window, &root1, &child1,
@@ -403,9 +680,13 @@ run_balls (Display *dpy, Window window)
       balls[i].vx += balls[i].dx;
       balls[i].vy += balls[i].dy;
 
-      /* don't let them get too fast: impose a terminal velocity
-         (actually, make the medium have friction) */
-      if (balls[i].vx > 10)
+      /* "don't let them get too fast: impose a terminal velocity
+         (actually, make the medium have friction)"
+	 Well, what this first step really does is give the medium a 
+	 viscosity of .9 for balls going over the speed limit.  Anyway, 
+	 this is now optional
+      */
+      if (balls[i].vx > 10 && maxspeed_p)
 	{
 	  balls[i].vx *= 0.9;
 	  balls[i].dx = 0;
@@ -415,7 +696,7 @@ run_balls (Display *dpy, Window window)
 	  balls[i].vx *= viscosity;
 	}
 
-      if (balls[i].vy > 10)
+      if (balls[i].vy > 10 && maxspeed_p)
 	{
 	  balls[i].vy *= 0.9;
 	  balls[i].dy = 0;
@@ -428,32 +709,70 @@ run_balls (Display *dpy, Window window)
       balls[i].x += balls[i].vx;
       balls[i].y += balls[i].vy;
 
-      /* bounce off the walls */
-      if (balls[i].x >= (xlim - balls[i].size))
-	{
-	  balls[i].x = (xlim - balls[i].size - 1);
-	  if (balls[i].vx > 0)
-	    balls[i].vx = -balls[i].vx;
-	}
-      if (balls[i].y >= (ylim - balls[i].size))
-	{
-	  balls[i].y = (ylim - balls[i].size - 1);
-	  if (balls[i].vy > 0)
-	    balls[i].vy = -balls[i].vy;
-	}
-      if (balls[i].x <= 0)
-	{
-	  balls[i].x = 0;
-	  if (balls[i].vx < 0)
-	    balls[i].vx = -balls[i].vx;
-	}
-      if (balls[i].y <= 0)
-	{
-	  balls[i].y = 0;
-	  if (balls[i].vy < 0)
-	    balls[i].vy = -balls[i].vy;
-	}
 
+      /* bounce off the walls if desired
+	 note: a ball is actually its upper left corner */
+      if(walls_p)
+ 	{
+	  if(cbounce_p)  /* with correct bouncing */
+	    {
+              /* so long as it's out of range, keep bouncing */
+	
+              while( (balls[i].x >= (xlim - balls[i].size)) ||
+                     (balls[i].y >= (ylim - balls[i].size)) ||
+                     (balls[i].x <= 0) ||
+                     (balls[i].y <= 0) )
+                {
+                  if (balls[i].x >= (xlim - balls[i].size))
+                    {
+                      balls[i].x = (2*(xlim - balls[i].size) - balls[i].x);
+                      balls[i].vx = -balls[i].vx;
+                    }
+                  if (balls[i].y >= (ylim - balls[i].size))
+                    {
+                      balls[i].y = (2*(ylim - balls[i].size) - balls[i].y);
+                      balls[i].vy = -balls[i].vy;
+                    }
+                  if (balls[i].x <= 0)
+                    {
+                      balls[i].x = -balls[i].x;
+		      balls[i].vx = -balls[i].vx;
+                    }
+                  if (balls[i].y <= 0)
+                    {
+                      balls[i].y = -balls[i].y;
+		      balls[i].vy = -balls[i].vy;
+                    }
+                }
+            }
+          else  /* with old bouncing */
+            {
+              if (balls[i].x >= (xlim - balls[i].size))
+                {
+                  balls[i].x = (xlim - balls[i].size - 1);
+                  if (balls[i].vx > 0) /* why is this check here? */
+                    balls[i].vx = -balls[i].vx;
+                }
+              if (balls[i].y >= (ylim - balls[i].size))
+                {
+                  balls[i].y = (ylim - balls[i].size - 1);
+                  if (balls[i].vy > 0)
+                    balls[i].vy = -balls[i].vy;
+                }
+              if (balls[i].x <= 0)
+                {
+                  balls[i].x = 0;
+                  if (balls[i].vx < 0)
+                    balls[i].vx = -balls[i].vx;
+                }
+              if (balls[i].y <= 0)
+                {
+                  balls[i].y = 0;
+                  if (balls[i].vy < 0)
+                    balls[i].vy = -balls[i].vy;
+                }
+            }
+        }
       new_x = balls[i].x;
       new_y = balls[i].y;
 
@@ -545,12 +864,26 @@ run_balls (Display *dpy, Window window)
 	  {
 	    int index = point_stack_fp + i;
 	    int next_index = (index + (npoints + 1)) % point_stack_size;
-	    XDrawLine (dpy, window, erase_gc,
-		       point_stack [index].x,
-		       point_stack [index].y,
-		       point_stack [next_index].x,
-		       point_stack [next_index].y);
-
+            if(no_erase_yet == 1)
+	      {
+		if(total_ticks >= segments)
+                  {
+                    no_erase_yet = 0;
+                    XDrawLine (dpy, window, erase_gc,
+			       point_stack [index].x + radius,
+			       point_stack [index].y + radius,
+			       point_stack [next_index].x + radius,
+			       point_stack [next_index].y + radius);
+                  }
+	      }
+	    else
+	      {
+	    	XDrawLine (dpy, window, erase_gc,
+                           point_stack [index].x + radius,
+                           point_stack [index].y + radius,
+                           point_stack [next_index].x + radius,
+                           point_stack [next_index].y + radius);
+	      }
 	    index = last_point_stack_fp + i;
 	    next_index = (index - (npoints + 1)) % point_stack_size;
 	    if (next_index < 0) next_index += point_stack_size;
@@ -558,10 +891,10 @@ run_balls (Display *dpy, Window window)
 		point_stack [next_index].y == 0)
 	      continue;
 	    XDrawLine (dpy, window, draw_gc,
-		       point_stack [index].x,
-		       point_stack [index].y,
-		       point_stack [next_index].x,
-		       point_stack [next_index].y);
+		       point_stack [index].x + radius,
+		       point_stack [index].y + radius,
+		       point_stack [next_index].x + radius,
+		       point_stack [next_index].y + radius);
 	  }
       }
       break;
@@ -615,6 +948,7 @@ char *defaults [] = {
   ".background:	black",
   ".foreground:	white",
   "*mode:	balls",
+  "*graphmode:  none",
   "*points:	0",
   "*size:	0",
   "*colors:	200",
@@ -622,6 +956,9 @@ char *defaults [] = {
   "*delay:	10000",
   "*glow:	false",
   "*mouseSize:	10",
+  "*walls:	true",
+  "*maxspeed:	true",
+  "*cbounce:	true",
   "*mouse:	false",
   "*viscosity:	1",
   "*orbit:	false",
@@ -633,6 +970,7 @@ char *defaults [] = {
 
 XrmOptionDescRec options [] = {
   { "-mode",		".mode",	XrmoptionSepArg, 0 },
+  { "-graphmode",	".graphmode",   XrmoptionSepArg, 0 },
   { "-colors",		".colors",	XrmoptionSepArg, 0 },
   { "-points",		".points",	XrmoptionSepArg, 0 },
   { "-color-shift",	".colorShift",	XrmoptionSepArg, 0 },
@@ -645,23 +983,34 @@ XrmOptionDescRec options [] = {
   { "-vy",		".vy",		XrmoptionSepArg, 0 },
   { "-vmult",		".vMult",	XrmoptionSepArg, 0 },
   { "-mouse-size",	".mouseSize",	XrmoptionSepArg, 0 },
+  { "-viscosity",	".viscosity",	XrmoptionSepArg, 0 },
   { "-mouse",		".mouse",	XrmoptionNoArg, "true" },
   { "-nomouse",		".mouse",	XrmoptionNoArg, "false" },
-  { "-viscosity",	".viscosity",	XrmoptionSepArg, 0 },
   { "-glow",		".glow",	XrmoptionNoArg, "true" },
   { "-noglow",		".glow",	XrmoptionNoArg, "false" },
   { "-orbit",		".orbit",	XrmoptionNoArg, "true" },
+  { "-nowalls",		".walls", 	XrmoptionNoArg, "false" },
+  { "-walls",		".walls",	XrmoptionNoArg, "true" },
+  { "-nomaxspeed",	".maxspeed",	XrmoptionNoArg, "false" },
+  { "-maxspeed",	".maxspeed",	XrmoptionNoArg, "true" },
+  { "-correct-bounce",	".cbounce",	XrmoptionNoArg, "false" },
+  { "-fast-bounce",	".cbounce",	XrmoptionNoArg, "true" },
   { 0, 0, 0, 0 }
 };
 
 void
 screenhack (Display *dpy, Window window)
 {
+  /* for tail mode fix */
+  int total_ticks = 0;
+
   init_balls (dpy, window);
   while (1)
     {
-      run_balls (dpy, window);
+      total_ticks++;
+      run_balls (dpy, window, total_ticks);
       screenhack_handle_events (dpy);
-      if (delay) usleep (delay);
+      if (delay)
+        usleep (delay);
     }
 }

@@ -765,7 +765,7 @@ AC_HEADER_DIRENT
 AC_GETTIMEOFDAY_ARGS
 AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv)
 
-AC_CHECK_FUNCS(sigaction syslog realpath)
+AC_CHECK_FUNCS(sigaction syslog realpath setrlimit)
 AC_CHECK_ICMP
 AC_CHECK_ICMPHDR
 AC_CHECK_HEADERS(crypt.h sys/select.h)
@@ -1850,6 +1850,15 @@ if test "$with_gtk" = yes; then
 fi
 
 
+# Check for the Gnome Help Browser.
+#
+if test "$have_gnome" = yes; then
+  AC_CHECK_PROG(have_gnome_help, gnome-help-browser, yes, no)
+else
+  have_gnome_help=no
+fi
+
+
 ###############################################################################
 #
 #       Checking whether Motif is really Lesstif.
@@ -2635,6 +2644,7 @@ fi
 tab='	'
 if test "$have_gl" = yes; then
   GL_EXES='$(GL_EXES)'
+  GL_UTIL_EXES='$(GL_UTIL_EXES)'
   GL_MEN='$(GL_MEN)'
   GL_KLUDGE="${tab}  "
 else
@@ -2647,6 +2657,17 @@ if test "$have_gle" = yes; then
   GLE_KLUDGE="${tab}   "
 else
   GLE_KLUDGE="-${tab}   "
+fi
+
+
+# Another substitution in the XScreenSaver.ad.in file:
+#
+if test "$have_gnome_help" = yes; then
+  GNOMEHELP_Y=''
+  GNOMEHELP_N='!    '
+else
+  GNOMEHELP_Y='!    '
+  GNOMEHELP_N=''
 fi
 
 
@@ -2686,11 +2707,14 @@ AC_SUBST(SAVER_GL_LIBS)
 AC_SUBST(LOCK_SRCS)
 AC_SUBST(LOCK_OBJS)
 AC_SUBST(GL_EXES)
+AC_SUBST(GL_UTIL_EXES)
 AC_SUBST(GL_MEN)
 AC_SUBST(GL_KLUDGE)
 AC_SUBST(GLE_EXES)
 AC_SUBST(GLE_MEN)
 AC_SUBST(GLE_KLUDGE)
+AC_SUBST(GNOMEHELP_Y)
+AC_SUBST(GNOMEHELP_N)
 AC_SUBST(HACKDIR)
 AC_SUBST(GNOME_DATADIR)
 
@@ -2877,17 +2901,22 @@ fi
 
 
 if test "$have_gl" = yes -a "$ac_have_mesa_gl" = yes ; then
-  preferred_mesagl=3.0
+  preferred_mesagl=3.4
+  mgv="$ac_mesagl_version_string"
+  pgl="$preferred_mesagl"
 
   if test "$ac_mesagl_version" = unknown; then
     warnL "Unable to determine the MesaGL version number!"
     warn2 "Make sure you are using version $preferred_mesagl or newer."
 
   elif test \! "$ac_mesagl_version" -gt 2006; then
-    warnL "MesaGL version $ac_mesagl_version_string is being used."
-    warn2 "MesaGL versions 2.6 and earlier have a security bug."
-    warn2 "It is strongly recommended that you upgrade to at"
-    warn2 "least version $preferred_mesagl."
+    warnL "MesaGL version $mgv is being used.  MesaGL 2.6 and earlier"
+    warn2 "have a security bug.  It is strongly recommended that you"
+    warn2 "upgrade to at least version $preferred_mesagl."
+
+  elif test \! "$ac_mesagl_version" -gt 3003; then
+    warnL "MesaGL version $mgv is being used.  That version has some"
+    warn2 "bugs; it is recommended that you upgrade to $pgl or newer."
   fi
 fi
 

@@ -245,10 +245,16 @@ install-program: $(EXES)
 	fi ;								      \
 	echo $$inst xscreensaver $(install_prefix)$(bindir)/xscreensaver ;    \
 	$$inst xscreensaver $(install_prefix)$(bindir)/xscreensaver
+	@echo $(INSTALL_PROGRAM) xscreensaver-command \
+	  $(install_prefix)$(bindir)/xscreensaver-command ; \
 	$(INSTALL_PROGRAM) xscreensaver-command \
 	  $(install_prefix)$(bindir)/xscreensaver-command
+	@echo $(INSTALL_PROGRAM) xscreensaver-demo \
+	  $(install_prefix)$(bindir)/xscreensaver-demo ; \
 	$(INSTALL_PROGRAM) xscreensaver-demo \
 	  $(install_prefix)$(bindir)/xscreensaver-demo
+	@echo $(INSTALL_PROGRAM) xscreensaver-getimage \
+	  $(install_prefix)$(bindir)/xscreensaver-getimage ; \
 	$(INSTALL_PROGRAM) xscreensaver-getimage \
 	  $(install_prefix)$(bindir)/xscreensaver-getimage
 

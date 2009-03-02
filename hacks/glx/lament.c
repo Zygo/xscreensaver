@@ -140,8 +140,16 @@ typedef enum {
 
 } lament_type;
 
-static GLfloat exterior_color[] = { 0.70, 0.60, 0.00, 1.00 };
-static GLfloat interior_color[] = { 0.25, 0.25, 0.20, 1.00 };
+static GLfloat exterior_color[] = { 0.33, 0.22, 0.03, 1.00,  /* ambient    */
+                                    0.78, 0.57, 0.11, 1.00,  /* specular   */
+                                    0.99, 0.91, 0.81, 1.00,  /* diffuse    */
+                                   27.80                     /* shininess  */
+                                  };
+static GLfloat interior_color[] = { 0.20, 0.20, 0.15, 1.00,  /* ambient    */
+                                    0.40, 0.40, 0.32, 1.00,  /* specular   */
+                                    0.99, 0.99, 0.81, 1.00,  /* diffuse    */
+                                   50.80                     /* shininess  */
+                                  };
 
 
 typedef struct {
@@ -277,6 +285,15 @@ do_normal(GLfloat x1, GLfloat y1, GLfloat z1,
  */
 
 static void
+set_colors (GLfloat *color)
+{
+  glMaterialfv(GL_FRONT, GL_AMBIENT, color+0);
+  glMaterialfv(GL_FRONT, GL_DIFFUSE, color+4);
+  glMaterialfv(GL_FRONT, GL_SPECULAR, color+8);
+  glMaterialfv(GL_FRONT, GL_SHININESS, color+12);
+}
+
+static void
 face3(GLint texture, GLfloat *color, Bool wire,
       GLfloat s1, GLfloat t1, GLfloat x1, GLfloat y1, GLfloat z1,
       GLfloat s2, GLfloat t2, GLfloat x2, GLfloat y2, GLfloat z2,
@@ -285,7 +302,8 @@ face3(GLint texture, GLfloat *color, Bool wire,
 #ifdef HAVE_GLBINDTEXTURE
   glBindTexture(GL_TEXTURE_2D, texture);
 #endif /* HAVE_GLBINDTEXTURE */
-  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+  set_colors(color);
+
   do_normal(x1, y1, z1,  x2, y2, z2,  x3, y3, z3);
   glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLES);
   glTexCoord2f(s1, t1); glVertex3f(x1, y1, z1);
@@ -304,7 +322,7 @@ face4(GLint texture, GLfloat *color, Bool wire,
 #ifdef HAVE_GLBINDTEXTURE
   glBindTexture(GL_TEXTURE_2D, texture);
 #endif /* HAVE_GLBINDTEXTURE */
-  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+  set_colors(color);
   do_normal(x1, y1, z1,  x2, y2, z2,  x3, y3, z3);
   glBegin(wire ? GL_LINE_LOOP : GL_QUADS);
   glTexCoord2f(s1, t1); glVertex3f(x1, y1, z1);
@@ -325,7 +343,7 @@ face5(GLint texture, GLfloat *color, Bool wire,
 #ifdef HAVE_GLBINDTEXTURE
   glBindTexture(GL_TEXTURE_2D, texture);
 #endif /* HAVE_GLBINDTEXTURE */
-  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+  set_colors(color);
   do_normal(x1, y1, z1,  x2, y2, z2,  x3, y3, z3);
   glBegin(wire ? GL_LINE_LOOP : GL_POLYGON);
   glTexCoord2f(s1, t1); glVertex3f(x1, y1, z1);
@@ -542,7 +560,7 @@ star(ModeInfo *mi, Bool top, Bool wire)
 #ifdef HAVE_GLBINDTEXTURE
   glBindTexture(GL_TEXTURE_2D, lc->texids[top ? FACE_U : FACE_D]);
 #endif /* HAVE_GLBINDTEXTURE */
-  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, exterior_color);
+  set_colors(exterior_color);
 
   i = 1;
   do_normal(points[i+0][0], points[i+0][1], 0,
@@ -564,7 +582,7 @@ star(ModeInfo *mi, Bool top, Bool wire)
 #ifdef HAVE_GLBINDTEXTURE
   glBindTexture(GL_TEXTURE_2D, 0);
 #endif /* HAVE_GLBINDTEXTURE */
-  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, interior_color);
+  set_colors(interior_color);
 
   i = countof(points) - 9;
   do_normal(points[i+0][0], points[i+0][1], 0,
@@ -1010,7 +1028,7 @@ taser(ModeInfo *mi, Bool wire)
 #ifdef HAVE_GLBINDTEXTURE
       glBindTexture(GL_TEXTURE_2D, lc->texids[FACE_E]);
 #endif /* HAVE_GLBINDTEXTURE */
-      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, exterior_color);
+      set_colors(exterior_color);
 
       do_normal(0, body_face_points[(i*5)+0][0], body_face_points[(i*5)+0][1],
 		0, body_face_points[(i*5)+1][0], body_face_points[(i*5)+1][1],
@@ -1135,7 +1153,7 @@ taser(ModeInfo *mi, Bool wire)
 #ifdef HAVE_GLBINDTEXTURE
       glBindTexture(GL_TEXTURE_2D, lc->texids[FACE_E]);
 #endif /* HAVE_GLBINDTEXTURE */
-      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, exterior_color);
+      set_colors(exterior_color);
 
       do_normal(
          0, lifter_face_points[(i*5)+0][0], lifter_face_points[(i*5)+0][1],
@@ -1273,7 +1291,7 @@ taser(ModeInfo *mi, Bool wire)
 #ifdef HAVE_GLBINDTEXTURE
       glBindTexture(GL_TEXTURE_2D, lc->texids[FACE_E]);
 #endif /* HAVE_GLBINDTEXTURE */
-      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, exterior_color);
+      set_colors(exterior_color);
 
       do_normal(
 	   0, slider_face_points[(i*5)+0][0], slider_face_points[(i*5)+0][1],
@@ -1302,7 +1320,7 @@ taser(ModeInfo *mi, Bool wire)
 #ifdef HAVE_GLBINDTEXTURE
       glBindTexture(GL_TEXTURE_2D, 0);
 #endif /* HAVE_GLBINDTEXTURE */
-      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, interior_color);
+      set_colors(interior_color);
 
       do_normal(
 	   0, slider_face_points[(i*5)+2][0], slider_face_points[(i*5)+2][1],
@@ -1927,31 +1945,26 @@ gl_init(ModeInfo *mi)
 
   if (!wire)
     {
-      static GLfloat pos0[]  = { -4.0, 2.0, 5.0, 1.0 };
-      static GLfloat pos1[]  = { 12.0, 5.0, 1.0, 1.0 };
-      static GLfloat local[] = { 0.0 };
-      static GLfloat ambient[] = { 0.3, 0.3, 0.3, 1.0 };
-      static GLfloat spec[] = { 1.0, 1.0, 1.0, 1.0 };
-      static GLfloat shine[] = { 100.0 };
+      static GLfloat pos0[]  = { -4.0,  2.0, 5.0, 1.0 };
+      static GLfloat pos1[]  = {  6.0, -1.0, 3.0, 1.0 };
+
+      static GLfloat amb0[]  = { 0.7, 0.7, 0.7, 1.0 };
+/*    static GLfloat amb1[]  = { 0.7, 0.0, 0.0, 1.0 }; */
+      static GLfloat dif0[]  = { 1.0, 1.0, 1.0, 1.0 };
+      static GLfloat dif1[]  = { 0.3, 0.1, 0.1, 1.0 };
 
       glLightfv(GL_LIGHT0, GL_POSITION, pos0);
       glLightfv(GL_LIGHT1, GL_POSITION, pos1);
 
-      glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
-      glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
-
-      glLightfv(GL_LIGHT0, GL_SPECULAR, spec);
-      glLightfv(GL_LIGHT1, GL_SPECULAR, spec);
-
-      glLightModelfv(GL_LIGHT_MODEL_LOCAL_VIEWER, local);
-      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, exterior_color);
-      glMaterialfv(GL_FRONT, GL_SPECULAR, spec);
-      glMaterialfv(GL_FRONT, GL_SHININESS, shine);
+      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb0);
+/*    glLightfv(GL_LIGHT1, GL_AMBIENT,  amb1); */
+      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif0);
+      glLightfv(GL_LIGHT1, GL_DIFFUSE,  dif1);
+      set_colors(exterior_color);
 
       glEnable(GL_LIGHTING);
       glEnable(GL_LIGHT0);
-      glEnable(GL_LIGHT1);
-      glDisable(GL_LIGHT1);
+/*    glEnable(GL_LIGHT1); */
 
       glEnable(GL_DEPTH_TEST);
       glEnable(GL_TEXTURE_2D);
@@ -1975,7 +1988,7 @@ gl_init(ModeInfo *mi)
 	{
 	  int height = lc->texture->width;	/* assume square */
 	  glBindTexture(GL_TEXTURE_2D, lc->texids[i]);
-	  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, exterior_color);
+	  set_colors(exterior_color);
 
           clear_gl_error();
 	  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
@@ -2040,14 +2053,13 @@ lament_signal_kludge (int sig)
            "\n"
            "%s: dying with signal %d (%s).\n"
            "\n"
-           "\tThis is almost certainly a bug in the MesaGL library,\n"
+           "\tThis is almost certainly a bug in the Mesa GL library,\n"
            "\tespecially if the stack trace in the core file mentions\n"
            "\t`lambda_textured_triangle' or `render_quad'.\n"
            "\n"
-           "\tI encourage you to report this to the Mesa maintainers\n"
-           "\tat <http://www.mesa3d.org/>.  I reported this bug more\n"
-           "\tthan a year ago, and it is trivially reproducible.\n"
-           "\tI do not know a workaround.\n"
+           "\tFirst make sure that you have the latest version of Mesa.\n"
+           "\tIf that doesn't fix it, then I encourage you to report this\n"
+           "\tbug to the Mesa maintainers at <http://www.mesa3d.org/>.\n"
            "\n",
            progname,
            sig,

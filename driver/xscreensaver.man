@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "15-Apr-2001 (3.32)" "X Version 11"
+.TH XScreenSaver 1 "03-Jun-2001 (3.33)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -283,6 +283,21 @@ system, and don't increase the load unnecessarily.  The default is 10.
 .BR nice (1)
 for details.)
 .TP 8
+.B memoryLimit\fP (class \fBMemoryLimit\fP)
+The sub-processes created by \fIxscreensaver\fP will not be allowed to
+allocate more than this much memory (more accurately, this is the maximum
+size their address space may become.)  If any sub-process tries to allocate
+more than this,
+.BR malloc (3)
+will fail, and the process will likely exit (or safely crash) rather than
+going forth and hogging memory.  
+
+The assumption here is that if one of the screenhacks is trying to use
+a lot of memory, then something has gone wrong, and it's better to kill
+that program than to overload the machine.
+
+Default: 50M.
+.TP 8
 .B fade\fP (class \fBBoolean\fP)
 If this is true, then when the screensaver activates, the current contents
 of the screen will fade to black instead of simply winking out.  This only
@@ -328,8 +343,21 @@ When the screensaver starts up, one of these is selected at random, and
 run.  After the \fIcycle\fP period expires, it is killed, and another
 is selected and run.
 
-If the value of this resource is empty, then no programs will be run; the
-screen will simply be made black.
+If a line begins with a dash (-) then that particular program is
+disabled: it won't be selected at random (though you can still select
+it explicitly using the
+.BR xscreensaver\-demo (1)
+program.)
+
+If all programs are disabled, then the screen will just be made blank.
+
+To disable a program, it's better to mark it as disabled with a dash
+than to remove it from the list.  This is because the system-wide
+(app-defaults) and per-user (.xscreensaver) settings are merged
+together, and if a user just \fIdeletes\fP an entry from their programs
+list, but that entry still exists in the system-wide list, then it will
+come back.  However, if the user \fIdisables\fP it, then their setting
+takes precedence.
 
 If the display has multiple screens, then a different program will be run
 for each screen.  (All screens are blanked and unblanked simultaniously.)

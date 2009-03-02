@@ -366,6 +366,8 @@ extern void maybe_reload_init_file (saver_info *);
    subprocs
    ======================================================================= */
 
+extern void block_sigchld (void);
+extern void unblock_sigchld (void);
 extern void hack_environment (saver_info *si);
 extern void hack_subproc_environment (saver_screen_info *ssi);
 extern void init_sigchld (void);

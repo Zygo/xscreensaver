@@ -36,7 +36,7 @@ Specifies the size of the grid in squares. default 19
 Specifies the wireframe detail of the squares. default 4
 .TP 8
 .B \-draw \fInum\fP\fP
-Specifies the draw method. 0 = wireframe (default), 1 = solid, 2 = light, 3 = checker texture mapped, 4 = PNM image is read from stdin and mapped to the surface
+Specifies the draw method. 0 = wireframe, 1 = solid, 2 = light (default), 3 = checker texture mapped, 4 = PNM image is read from stdin and mapped to the surface
 .TP 8
 .B \-flat \fInum\fP\fP
 0 for smooth shading 1 for flat. default 0

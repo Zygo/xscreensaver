@@ -78,6 +78,7 @@ $ sierpinski	:== $'mydir'sierpinski
 $ slidescreen	:== $'mydir'slidescreen
 $ slip		:== $'mydir'slip
 $ sonar		:== $'mydir'sonar
+$ speedmine	:== $'mydir'speedmine
 $ sphere	:== $'mydir'sphere
 $ spiral	:== $'mydir'spiral
 $ spotlight	:== $'mydir'spotlight
@@ -91,6 +92,7 @@ $ truchet	:== $'mydir'truchet
 $ vines		:== $'mydir'vines
 $ wander	:== $'mydir'wander
 $ whirlwindwarp	:== $'mydir'whirlwindwarp
+$ whirlygig	:== $'mydir'whirlygig
 $ worm		:== $'mydir'worm
 $ xflame	:== $'mydir'xflame
 $ xjack		:== $'mydir'xjack

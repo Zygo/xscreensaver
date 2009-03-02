@@ -341,6 +341,9 @@
 /* Define if you have the sigaction function.  */
 #undef HAVE_SIGACTION
 
+/* Define this if you have the setrlimit function. */
+#undef HAVE_SETRLIMIT
+
 /* Define if you have the <unistd.h> header file.  */
 #undef HAVE_UNISTD_H
 

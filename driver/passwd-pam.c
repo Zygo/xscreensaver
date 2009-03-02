@@ -1,7 +1,7 @@
 /* passwd-pam.c --- verifying typed passwords with PAM
  * (Pluggable Authentication Modules.)
  * written by Bill Nottingham <notting@redhat.com> (and jwz) for
- * xscreensaver, Copyright (c) 1993-1998, 2000 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -55,6 +55,8 @@ extern char *blurb(void);
 
 #include <sys/stat.h>
 
+extern void block_sigchld (void);
+extern void unblock_sigchld (void);
 
 /* blargh */
 #undef  Bool
@@ -211,9 +213,31 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
   }
 
   /* Try to authenticate as the current user.
+     We must turn off our SIGCHLD handler for the duration of the call to
+     pam_authenticate(), because in some cases, the underlying PAM code
+     will do this:
+
+        1: fork a setuid subprocess to do some dirty work;
+        2: read a response from that subprocess;
+        3: waitpid(pid, ...) on that subprocess.
+
+    If we (the ignorant parent process) have a SIGCHLD handler, then there's
+    a race condition between steps 2 and 3: if the subprocess exits before
+    waitpid() was called, then our SIGCHLD handler fires, and gets notified
+    of the subprocess death; then PAM's call to waitpid() fails, because the
+    process has already been reaped.
+
+    I consider this a bug in PAM, since the caller should be able to have
+    whatever signal handlers it wants -- the PAM documentation doesn't say
+    "oh by the way, if you use PAM, you can't use SIGCHLD."
    */
+
   PAM_NO_DELAY(pamh);
+
+  block_sigchld();
   status = pam_authenticate (pamh, 0);
+  unblock_sigchld();
+
   if (verbose_p)
     fprintf (stderr, "%s:   pam_authenticate (...) ==> %d (%s)\n",
              blurb(), status, PAM_STRERROR(pamh, status));

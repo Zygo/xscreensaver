@@ -68,6 +68,8 @@ Atom XA_SCREENSAVER_STATUS;
 
 extern saver_info *global_si_kludge;	/* I hate C so much... */
 
+static void maybe_transfer_grabs (saver_screen_info *ssi,
+                                  Window old_w, Window new_w);
 
 #define ALL_POINTER_EVENTS \
 	(ButtonPressMask | ButtonReleaseMask | EnterWindowMask | \
@@ -957,6 +959,80 @@ get_screen_viewport (saver_screen_info *ssi,
 }
 
 
+static Bool error_handler_hit_p = False;
+
+static int
+ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
+{
+  error_handler_hit_p = True;
+  return 0;
+}
+
+
+/* Returns True if successful, False if an X error occurred.
+   We need this because other programs might have done things to
+   our window that will cause XChangeWindowAttributes() to fail:
+   if that happens, we give up, destroy the window, and re-create
+   it.
+ */
+static Bool
+safe_XChangeWindowAttributes (Display *dpy, Window window,
+                              unsigned long mask,
+                              XSetWindowAttributes *attrs)
+{
+  XErrorHandler old_handler;
+  XSync (dpy, False);
+  error_handler_hit_p = False;
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+
+  XChangeWindowAttributes (dpy, window, mask, attrs);
+
+  XSync (dpy, False);
+  XSetErrorHandler (old_handler);
+  XSync (dpy, False);
+
+  return (!error_handler_hit_p);
+}
+
+
+/* This might not be necessary, but just in case. */
+static Bool
+safe_XConfigureWindow (Display *dpy, Window window,
+                       unsigned long mask, XWindowChanges *changes)
+{
+  XErrorHandler old_handler;
+  XSync (dpy, False);
+  error_handler_hit_p = False;
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+
+  XConfigureWindow (dpy, window, mask, changes);
+
+  XSync (dpy, False);
+  XSetErrorHandler (old_handler);
+  XSync (dpy, False);
+
+  return (!error_handler_hit_p);
+}
+
+/* This might not be necessary, but just in case. */
+static Bool
+safe_XDestroyWindow (Display *dpy, Window window)
+{
+  XErrorHandler old_handler;
+  XSync (dpy, False);
+  error_handler_hit_p = False;
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+
+  XDestroyWindow (dpy, window);
+
+  XSync (dpy, False);
+  XSetErrorHandler (old_handler);
+  XSync (dpy, False);
+
+  return (!error_handler_hit_p);
+}
+
+
 static void
 initialize_screensaver_window_1 (saver_screen_info *ssi)
 {
@@ -974,6 +1050,7 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
   unsigned long attrmask;
   int x, y, width, height;
   static Bool printed_visual_info = False;  /* only print the message once. */
+  Window horked_window = 0;
 
   get_screen_viewport (ssi, &x, &y, &width, &height,
                        (p->verbose_p && !si->screen_blanked_p));
@@ -1113,12 +1190,17 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
       changes.height = height;
       changes.border_width = 0;
 
-      XConfigureWindow (si->dpy, ssi->screensaver_window,
-			changesmask, &changes);
-      XChangeWindowAttributes (si->dpy, ssi->screensaver_window,
-			       attrmask, &attrs);
+      if (! (safe_XConfigureWindow (si->dpy, ssi->screensaver_window,
+                                  changesmask, &changes) &&
+             safe_XChangeWindowAttributes (si->dpy, ssi->screensaver_window,
+                                           attrmask, &attrs)))
+        {
+          horked_window = ssi->screensaver_window;
+          ssi->screensaver_window = 0;
+        }
     }
-  else
+
+  if (!ssi->screensaver_window)
     {
       ssi->screensaver_window =
 	XCreateWindow (si->dpy, RootWindowOfScreen (ssi->screen),
@@ -1127,6 +1209,17 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
 		       ssi->current_visual, attrmask, &attrs);
 
       reset_stderr (ssi);
+
+      if (horked_window)
+        {
+          fprintf (stderr,
+            "%s: someone horked our saver window (0x%lx)!  Recreating it...\n",
+                   blurb(), (unsigned long) horked_window);
+          maybe_transfer_grabs (ssi, horked_window, ssi->screensaver_window);
+          safe_XDestroyWindow (si->dpy, horked_window);
+          horked_window = 0;
+        }
+
       if (p->verbose_p)
 	fprintf (stderr, "%s: saver window is 0x%lx.\n",
 		 blurb(), (unsigned long) ssi->screensaver_window);
@@ -1450,6 +1543,47 @@ unblank_screen (saver_info *si)
 }
 
 
+/* Transfer any grabs from the old window to the new.
+   Actually I think none of this is necessary, since we always
+   hold our grabs on the root window, but I wrote this before
+   re-discovering that...
+ */
+static void
+maybe_transfer_grabs (saver_screen_info *ssi,
+                      Window old_w, Window new_w)
+{
+  saver_info *si = ssi->global;
+
+  /* If the old window held our mouse grab, transfer the grab to the new
+     window.  (Grab the server while so doing, to avoid a race condition.)
+   */
+  if (old_w == si->mouse_grab_window)
+    {
+      XGrabServer (si->dpy);		/* ############ DANGER! */
+      ungrab_mouse (si);
+      grab_mouse (si, ssi->screensaver_window,
+                  (si->demoing_p
+                   ? 0
+                   : ssi->cursor));
+      XUngrabServer (si->dpy);
+      XSync (si->dpy, False);		/* ###### (danger over) */
+    }
+
+  /* If the old window held our keyboard grab, transfer the grab to the new
+     window.  (Grab the server while so doing, to avoid a race condition.)
+   */
+  if (old_w == si->keyboard_grab_window)
+    {
+      XGrabServer (si->dpy);		/* ############ DANGER! */
+      ungrab_kbd(si);
+      grab_kbd(si, ssi->screensaver_window);
+      XUngrabServer (si->dpy);
+      XSync (si->dpy, False);		/* ###### (danger over) */
+    }
+}
+
+
+
 Bool
 select_visual (saver_screen_info *ssi, const char *visual_name)
 {
@@ -1538,45 +1672,10 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
       store_vroot_property (si->dpy,
 			    ssi->screensaver_window, ssi->screensaver_window);
 
+      /* Transfer any grabs from the old window to the new. */
+      maybe_transfer_grabs (ssi, old_w, ssi->screensaver_window);
 
-      /* Transfer the grabs from the old window to the new.
-	 Actually I think none of this is necessary, since we always
-	 hold our grabs on the root window, but I wrote this before
-	 re-discovering that...
-       */
-
-
-      /* If we're destroying the window that holds our mouse grab,
-	 transfer the grab to the new window.  (Grab the server while
-	 so doing, to avoid a race condition.)
-       */
-      if (old_w == si->mouse_grab_window)
-	{
-	  XGrabServer (si->dpy);		/* ############ DANGER! */
-	  ungrab_mouse (si);
-	  grab_mouse (si, ssi->screensaver_window,
-		      (si->demoing_p
-		       ? 0
-		       : ssi->cursor));
-	  XUngrabServer (si->dpy);
-	  XSync (si->dpy, False);		/* ###### (danger over) */
-	}
-
-      /* If we're destroying the window that holds our keyboard grab,
-	 transfer the grab to the new window.  (Grab the server while
-	 so doing, to avoid a race condition.)
-       */
-      if (old_w == si->keyboard_grab_window)
-	{
-	  XGrabServer (si->dpy);		/* ############ DANGER! */
-	  ungrab_kbd(si);
-	  grab_kbd(si, ssi->screensaver_window);
-	  XUngrabServer (si->dpy);
-	  XSync (si->dpy, False);		/* ###### (danger over) */
-	}
-
-      /* Now we can destroy this window without horking our grabs. */
-
+      /* Now we can destroy the old window without horking our grabs. */
       XDestroyWindow (si->dpy, old_w);
 
       if (p->verbose_p)

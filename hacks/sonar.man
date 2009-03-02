@@ -160,7 +160,11 @@ See option \-teamACount, above.  Default value is 4.
 See option \-teamBCount, above.  Default value is 4.
 .SH NOTES
 In order to use the ping sensor, this program must be installed as 
-setuid root, so that it can create an ICMP socket.
+setuid root, so that it can create an ICMP socket.  Root privileges
+are disavowed shortly after startup (just after connecting to the
+X server and reading the resource database) so this is \fIbelieved\fP
+to be a safe thing to do, but it is usually recommended that you 
+have as few setuid programs around as possible, on general principles.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

@@ -1,6 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991, 1992, 1993, 1995, 1997, 1998, 1999, 2000
- *  Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -31,8 +30,10 @@
 # include <sys/wait.h>		/* for waitpid() and associated macros */
 #endif
 
-#if defined(HAVE_SETPRIORITY) && defined(PRIO_PROCESS)
+#if (defined(HAVE_SETPRIORITY) && defined(PRIO_PROCESS)) || \
+     defined(HAVE_SETRLIMIT)
 # include <sys/resource.h>	/* for setpriority() and PRIO_PROCESS */
+				/* and also setrlimit() and RLIMIT_AS */
 #endif
 
 #ifdef VMS
@@ -104,6 +105,64 @@ nice_subproc (int nice_level)
 
 #endif
 }
+
+
+/* RLIMIT_AS (called RLIMIT_VMEM on some systems) controls the maximum size
+   of a process's address space, i.e., the maximal brk(2) and mmap(2) values.
+   Setting this lets you put a cap on how much memory a process can allocate.
+ */
+#if defined(RLIMIT_VMEM) && !defined(RLIMIT_AS)
+# define RLIMIT_AS RLIMIT_VMEM
+#endif
+
+static void
+limit_subproc_memory (int address_space_limit, Bool verbose_p)
+{
+#if defined(HAVE_SETRLIMIT) && defined(RLIMIT_AS)
+  struct rlimit r;
+
+  if (address_space_limit < 10 * 1024)  /* let's not be crazy */
+    return;
+
+  if (getrlimit (RLIMIT_AS, &r) != 0)
+    {
+      char buf [512];
+      sprintf (buf, "%s: getrlimit(RLIMIT_AS) failed", blurb());
+      perror (buf);
+      return;
+    }
+
+  r.rlim_cur = address_space_limit;
+
+  if (setrlimit (RLIMIT_AS, &r) != 0)
+    {
+      char buf [512];
+      sprintf (buf, "%s: setrlimit(RLIMIT_AS, {%d, %d}) failed",
+               blurb(), r.rlim_cur, r.rlim_max);
+      perror (buf);
+      return;
+    }
+
+  if (verbose_p)
+    {
+      int i = address_space_limit;
+      char buf[100];
+      if      (i >= (1<<30) && i == ((i >> 30) << 30))
+        sprintf(buf, "%dG", i >> 30);
+      else if (i >= (1<<20) && i == ((i >> 20) << 20))
+        sprintf(buf, "%dM", i >> 20);
+      else if (i >= (1<<10) && i == ((i >> 10) << 10))
+        sprintf(buf, "%dK", i >> 10);
+      else
+        sprintf(buf, "%d bytes", i);
+
+      fprintf (stderr, "%s: limited pid %lu address space to %s.\n",
+               blurb(), (unsigned long) getpid (), buf);
+    }
+
+#endif /* HAVE_SETRLIMIT && RLIMIT_AS */
+}
+
 
 
 #ifndef VMS
@@ -475,7 +534,7 @@ static void describe_dead_child (saver_info *, pid_t, int wait_status);
 static int block_sigchld_handler = 0;
 
 
-static void
+void
 block_sigchld (void)
 {
 #ifdef HAVE_SIGACTION
@@ -488,7 +547,7 @@ block_sigchld (void)
   block_sigchld_handler++;
 }
 
-static void
+void
 unblock_sigchld (void)
 {
 #ifdef HAVE_SIGACTION
@@ -878,6 +937,7 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 	case 0:
 	  close (ConnectionNumber (si->dpy));	/* close display fd */
 	  nice_subproc (p->nice_inferior);	/* change process priority */
+	  limit_subproc_memory (p->inferior_memory_limit, p->verbose_p);
 	  hack_subproc_environment (ssi);	/* set $DISPLAY */
 	  exec_screenhack (si, hack->command);	/* this does not return */
 	  abort();

@@ -2399,7 +2399,7 @@ main (int argc, char **argv)
 
 # else  /* !HAVE_CRAPPLET */
         fprintf (stderr, "%s: not compiled with --crapplet support\n",
-                 real_progname[i]);
+                 real_progname);
         USAGE ();
         exit (1);
 # endif /* !HAVE_CRAPPLET */

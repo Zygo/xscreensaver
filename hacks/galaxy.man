@@ -3,7 +3,7 @@
 galaxy - draws spinning galaxies
 .SH SYNOPSIS
 .B galaxy
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP] [\-size \fIinteger\fP] [\-trail] [\-no\-trail]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-cycles \fIinteger\fP] [\-count \fIinteger\fP] [\-size \fIinteger\fP] [\-tracks] [\-no\-tracks]
 
 .SH DESCRIPTION
 The \fIgalaxy\fP program draws spinning galaxies.
@@ -41,9 +41,9 @@ the color wheel.
 .B \-size \fIinteger\fP
 
 .TP 8
-.B \-trail
+.B \-tracks
 .TP 8
-.B \-no\-trail
+.B \-no\-tracks
 
 .SH ENVIRONMENT
 .PP

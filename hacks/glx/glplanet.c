@@ -398,15 +398,13 @@ static void inline ParametricSphere(float theta, float rho, GLfloat *vector)
 /* lame way to generate some random stars */
 void generate_stars(int width, int height)
 {
-  int i;
-/*  GLfloat size_range[2], size;*/
-  GLfloat x, y;
+  int i, j;
+  int max_size = 3;
+  GLfloat inc = 0.5;
+  int steps = max_size / inc;
 
   planetstruct *gp = &planets[MI_SCREEN(mi)];
   
-/*    glGetFloatv(GL_POINT_SIZE_RANGE, size_range); */
-  
-/*    printf("size range: %f\t%f\n", size_range[0], size_range[1]); */
   gp->starlist = glGenLists(1);
   glNewList(gp->starlist, GL_COMPILE);
 
@@ -421,20 +419,27 @@ void generate_stars(int width, int height)
 
   /* disable depth testing for the stars, so they don't obscure the planet */
   glDisable(GL_DEPTH_TEST);
-  glEnable(GL_POINT_SMOOTH);
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   
-  glBegin(GL_POINTS);
-  for(i = 0 ; i < NUM_STARS ; i++)
-	{
-/*   	  size = ((random()%size_range[0])) * size_range[1]/2.; */
-/*    glPointSize(size); */
-	  x = random() % width;
-	  y = random() % height;
-	  glVertex2f(x,y);
-	}
-  glEnd();
+  glColor3f(1,1,1);
+
+  glEnable(GL_POINT_SMOOTH);
+
+  for (j = 1; j <= steps; j++)
+    {
+      glPointSize(inc * j);
+      glBegin(GL_POINTS);
+      for(i = 0 ; i < NUM_STARS / steps; i++)
+        {
+          glColor3f (0.6 + frand(0.3),
+                     0.6 + frand(0.3),
+                     0.6 + frand(0.3));
+          glVertex2f ((GLfloat) (random() % width),
+                      (GLfloat) (random() % height));
+        }
+      glEnd();
+    }
 
   /* return to original PROJECT and MODELVIEW */
   glMatrixMode(GL_PROJECTION);
@@ -445,6 +450,20 @@ void generate_stars(int width, int height)
   glEndList();
 
 }
+
+/* Set up lighting */
+static void
+init_sun (ModeInfo * mi)
+{
+  GLfloat light[4];
+  light[0] = -1;
+  light[1] = (int) (((random() % 3) & 0xFF) - 1);
+  light[2] = (int) (((random() % 3) & 0xFF) - 1);
+  light[3] = 0;
+
+  glLightfv(GL_LIGHT0, GL_POSITION, light);
+}
+
 
 /* Initialization function for screen saver */
 static void
@@ -478,7 +497,9 @@ pinit(ModeInfo * mi)
   unit_sphere (STACKS, SLICES, wire);
   glPopMatrix ();
   glEndList();
- }
+
+  init_sun (mi);
+}
 
 static void
 draw_sphere(ModeInfo * mi)
@@ -569,13 +590,7 @@ rotate_and_move (ModeInfo * mi)
 void
 reshape_planet(ModeInfo *mi, int width, int height)
 {
-  GLfloat light[4];
   GLfloat h = (GLfloat) height / (GLfloat) width;
-
-  light[0] = -1;
-  light[1] = (int) (((random() % 3) & 0xFF) - 1);
-  light[2] = (int) (((random() % 3) & 0xFF) - 1);
-  light[3] = 0;
 
   glViewport(0, 0, (GLint) width, (GLint) height);
   glMatrixMode(GL_PROJECTION);
@@ -583,10 +598,8 @@ reshape_planet(ModeInfo *mi, int width, int height)
   glFrustum(-1.0, 1.0, -h, h, 5.0, 100.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glTranslatef(0.0, 0.0, -DIST);
-  glLightfv(GL_LIGHT0, GL_POSITION, light);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+  glTranslatef(0.0, 0.0, -DIST);
 }
 
 
@@ -664,15 +677,8 @@ draw_planet(ModeInfo * mi)
   if (do_stars) {
 	/* protect our modelview matrix and attributes */
 	glPushMatrix();
-	glPushAttrib(GL_ALL_ATTRIB_BITS);
-	{
-	  glColor3f(1,1,1);
-	  /* draw the star field. */
-	  glCallList(gp->starlist);
-
-	}
+    glCallList(gp->starlist);
 	glPopMatrix();
-	glPopAttrib();
   }
 
   /* protect our modelview matrix and attributes */

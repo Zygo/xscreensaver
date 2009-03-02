@@ -801,7 +801,7 @@ char *defaults [] = {
   "*arrow1Foreground:	#FFF66A",
   "*arrow2Foreground:	#F7D64A",
   "*pointerForeground:	#FF0000",
-  "*delay:		10000",
+  "*delay:		20000",
   "*doubleBuffer:	True",
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
   "*useDBE:		True",
