@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999, 2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -222,6 +222,7 @@ char *defaults [] = {
   "*doubleBuffer:	True",
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
   "*useDBE:		True",
+  "*useDBEClear:	True",
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
   0
 };
@@ -246,6 +247,7 @@ screenhack (Display *dpy, Window window)
   int delay = get_integer_resource ("delay", "Integer");
   int ncolors = get_integer_resource ("ncolors", "Integer");
   Bool dbuf = get_boolean_resource ("doubleBuffer", "Boolean");
+  Bool dbeclear_p = get_boolean_resource ("useDBEClear", "Boolean");
   XColor *colors = 0;
   XGCValues gcv;
   GC erase_gc = 0;
@@ -300,7 +302,11 @@ screenhack (Display *dpy, Window window)
   if (dbuf)
     {
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-      b = backb = xdbe_get_backbuffer (dpy, window, XdbeUndefined);
+      if (dbeclear_p)
+        b = xdbe_get_backbuffer (dpy, window, XdbeBackground);
+      else
+        b = xdbe_get_backbuffer (dpy, window, XdbeUndefined);
+      backb = b;
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
       if (!b)
@@ -329,7 +335,8 @@ screenhack (Display *dpy, Window window)
 
   while (1)
     {
-      XFillRectangle (dpy, b, erase_gc, 0, 0, xgwa.width, xgwa.height);
+      if (!backb || !dbeclear_p)
+        XFillRectangle (dpy, b, erase_gc, 0, 0, xgwa.width, xgwa.height);
 
       for (i = 0; i < count; i++)
         if (throb (dpy, b, throbbers[i]) < 0)
@@ -341,7 +348,7 @@ screenhack (Display *dpy, Window window)
         {
           XdbeSwapInfo info[1];
           info[0].swap_window = window;
-          info[0].swap_action = XdbeUndefined;
+          info[0].swap_action = (dbeclear_p ? XdbeBackground : XdbeUndefined);
           XdbeSwapBuffers (dpy, info, 1);
         }
       else

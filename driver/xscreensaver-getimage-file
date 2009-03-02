@@ -32,7 +32,7 @@ use Fcntl;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.5 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.6 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -43,11 +43,11 @@ my $verbose = 0;
 # If you add other programs to this list, please let me know!
 #
 my @programs = (
+  "chbg       -once -xscreensaver -max_grow 4 -max_size 100",
   "xv         -root -quit -viewonly -maxpect -noresetroot -quick24 -rmode 5" .
   "           -rfg black -rbg black",
   "xli        -quiet -fullscreen -onroot -center -border black",
   "xloadimage -quiet -fullscreen -onroot -center -border black",
-  "chbg       -once -xscreensaver -max_grow 4",
 
 # this lame program wasn't built with vroot.h:
 # "xsri       -scale -keep-aspect -center-horizontal -center-vertical",

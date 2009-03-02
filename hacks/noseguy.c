@@ -620,7 +620,7 @@ char *defaults [] = {
 #else
   "*mode:		string",
 #endif
-  "*program:		" ZIPPY_PROGRAM,
+  "*program:		" FORTUNE_PROGRAM,
   "noseguy.font:	-*-new century schoolbook-*-r-*-*-*-180-*-*-*-*-*-*",
   0
 };

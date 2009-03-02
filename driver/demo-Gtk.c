@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -34,6 +34,14 @@
 
 #include <stdio.h>
 #include <sys/stat.h>
+
+
+#include <signal.h>
+#include <errno.h>
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>		/* for waitpid() and associated macros */
+#endif
+
 
 #include <X11/Xproto.h>		/* for CARD32 */
 #include <X11/Xatom.h>		/* for XA_INTEGER */
@@ -75,6 +83,8 @@
 #include "logo-180.xpm"
 
 #include "demo-Gtk-widgets.h"
+#include "demo-Gtk-support.h"
+#include "demo-Gtk-conf.h"
 
 #include <stdio.h>
 #include <string.h>
@@ -88,19 +98,49 @@ char *progname = 0;
 char *progclass = "XScreenSaver";
 XrmDatabase db;
 
-static Bool crapplet_p = False;
-static Bool initializing_p;
-static GtkWidget *toplevel_widget;
+/* The order of the items in the mode menu. */
+static int mode_menu_order[] = {
+  DONT_BLANK, BLANK_ONLY, ONE_HACK, RANDOM_HACKS };
+
 
 typedef struct {
-  saver_preferences *a, *b;
-} prefs_pair;
 
-static void *global_prefs_pair;  /* I hate C so much... */
+  char *short_version;		/* version number of this xscreensaver build */
 
-char *blurb (void) { return progname; }
+  GtkWidget *toplevel_widget;	/* the main window */
+  GtkWidget *base_widget;	/* root of our hierarchy (for name lookups) */
+  GtkWidget *popup_widget;	/* the "Settings" dialog */
+  conf_data *cdata;		/* private data for per-hack configuration */
 
-static char *short_version = 0;
+  Bool debug_p;			/* whether to print diagnostics */
+  Bool initializing_p;		/* flag for breaking recursion loops */
+  Bool saving_p;		/* flag for breaking recursion loops */
+
+  char *desired_preview_cmd;	/* subprocess we intend to run */
+  char *running_preview_cmd;	/* subprocess we are currently running */
+  pid_t running_preview_pid;	/* pid of forked subproc (might be dead) */
+  Bool running_preview_error_p;	/* whether the pid died abnormally */
+
+  Bool preview_suppressed_p;	/* flag meaning "don't launch subproc" */
+  int subproc_timer_id;		/* timer to delay subproc launch */
+  int subproc_check_timer_id;	/* timer to check whether it started up */
+  int subproc_check_countdown;  /* how many more checks left */
+  int preview_nice_level;
+
+  int *list_elt_to_hack_number;	/* table for sorting the hack list */
+  int *hack_number_to_list_elt;	/* the inverse table */
+
+  int _selected_list_element;	/* don't use this: call
+                                   selected_list_element() instead */
+
+  saver_preferences prefs;
+
+} state;
+
+
+/* Total fucking evilness due to the fact that it's rocket science to get
+   a closure object of our own down into the various widget callbacks. */
+static state *global_state_kludge;
 
 Atom XA_VROOT;
 Atom XA_SCREENSAVER, XA_SCREENSAVER_RESPONSE, XA_SCREENSAVER_VERSION;
@@ -108,21 +148,59 @@ Atom XA_SCREENSAVER_ID, XA_SCREENSAVER_STATUS, XA_SELECT, XA_DEMO;
 Atom XA_ACTIVATE, XA_BLANK, XA_LOCK, XA_RESTART, XA_EXIT;
 
 
-static void populate_demo_window (GtkWidget *toplevel,
-                                  int which, prefs_pair *pair);
-static void populate_prefs_page (GtkWidget *top, prefs_pair *pair);
-static int apply_changes_and_save (GtkWidget *widget);
-static int maybe_reload_init_file (GtkWidget *widget, prefs_pair *pair);
-static void await_xscreensaver (GtkWidget *widget);
+static void populate_demo_window (state *, int list_elt);
+static void populate_prefs_page (state *);
+static void populate_popup_window (state *);
+
+static Bool flush_dialog_changes_and_save (state *);
+static Bool flush_popup_changes_and_save (state *);
+
+static int maybe_reload_init_file (state *);
+static void await_xscreensaver (state *);
+
+static void schedule_preview (state *, const char *cmd);
+static void kill_preview_subproc (state *);
+static void schedule_preview_check (state *);
+
 
 
 /* Some random utility functions
  */
 
-static GtkWidget *
-name_to_widget (GtkWidget *widget, const char *name)
+const char *
+blurb (void)
 {
-  return (GtkWidget *) gtk_object_get_data (GTK_OBJECT(toplevel_widget), name);
+  time_t now = time ((time_t *) 0);
+  char *ct = (char *) ctime (&now);
+  static char buf[255];
+  int n = strlen(progname);
+  if (n > 100) n = 99;
+  strncpy(buf, progname, n);
+  buf[n++] = ':';
+  buf[n++] = ' ';
+  strncpy(buf+n, ct+11, 8);
+  strcpy(buf+n+9, ": ");
+  return buf;
+}
+
+
+static GtkWidget *
+name_to_widget (state *s, const char *name)
+{
+  GtkWidget *w;
+  if (!s) abort();
+  if (!name) abort();
+  if (!*name) abort();
+
+  w = (GtkWidget *) gtk_object_get_data (GTK_OBJECT (s->base_widget),
+                                         name);
+  if (w) return w;
+  w = (GtkWidget *) gtk_object_get_data (GTK_OBJECT (s->popup_widget),
+                                         name);
+  if (w) return w;
+
+  fprintf (stderr, "%s: no widget \"%s\"\n", blurb(), name);
+  abort();
 }
 
 
@@ -139,7 +217,7 @@ ensure_selected_item_visible (GtkWidget *widget)
   GList *kids;
   int nkids = 0;
   GtkWidget *selected = 0;
-  int which = -1;
+  int list_elt = -1;
   GtkAdjustment *adj;
   gint parent_h, child_y, child_h, children_h, ignore;
   double ratio_t, ratio_b;
@@ -170,7 +248,7 @@ ensure_selected_item_visible (GtkWidget *widget)
   if (!selected)
     return;
 
-  which = gtk_list_child_position (list_widget, GTK_WIDGET (selected));
+  list_elt = gtk_list_child_position (list_widget, GTK_WIDGET (selected));
 
   for (kids = gtk_container_children (GTK_CONTAINER (list_widget));
        kids; kids = kids->next)
@@ -249,11 +327,14 @@ warning_dialog (GtkWidget *parent, const char *message,
   GtkWidget *cancel = 0;
   int i = 0;
 
-  while (parent->parent)
+  while (parent && !parent->window)
     parent = parent->parent;
 
   if (!GTK_WIDGET (parent)->window) /* too early to pop up transient dialogs */
-    return;
+    {
+      fprintf (stderr, "%s: too early for dialog?\n", progname);
+      return;
+    }
 
   head = msg;
   while (head)
@@ -348,12 +429,12 @@ warning_dialog (GtkWidget *parent, const char *message,
 
 
 static void
-run_cmd (GtkWidget *widget, Atom command, int arg)
+run_cmd (state *s, Atom command, int arg)
 {
   char *err = 0;
   int status;
 
-  apply_changes_and_save (widget);
+  flush_dialog_changes_and_save (s);
   status = xscreensaver_command (GDK_DISPLAY(), command, arg, False, &err);
   if (status < 0)
     {
@@ -362,23 +443,28 @@ run_cmd (GtkWidget *widget, Atom command, int arg)
         sprintf (buf, "Error:\n\n%s", err);
       else
         strcpy (buf, "Unknown error!");
-      warning_dialog (widget, buf, False, 100);
+      warning_dialog (s->toplevel_widget, buf, False, 100);
     }
   if (err) free (err);
 }
 
 
 static void
-run_hack (GtkWidget *widget, int which, Bool report_errors_p)
+run_hack (state *s, int list_elt, Bool report_errors_p)
 {
-  if (which < 0) return;
-  apply_changes_and_save (widget);
+  int hack_number;
+  if (list_elt < 0) return;
+  hack_number = s->list_elt_to_hack_number[list_elt];
+
+  flush_dialog_changes_and_save (s);
+  schedule_preview (s, 0);
   if (report_errors_p)
-    run_cmd (widget, XA_DEMO, which + 1);
+    run_cmd (s, XA_DEMO, hack_number + 1);
   else
     {
       char *s = 0;
-      xscreensaver_command (GDK_DISPLAY(), XA_DEMO, which + 1, False, &s);
+      xscreensaver_command (GDK_DISPLAY(), XA_DEMO, hack_number + 1,
+                            False, &s);
       if (s) free (s);
     }
 }
@@ -391,45 +477,18 @@ run_hack (GtkWidget *widget, int which, Bool report_errors_p)
 void
 exit_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
-  apply_changes_and_save (GTK_WIDGET (menuitem));
+  state *s = global_state_kludge;  /* I hate C so much... */
+  flush_dialog_changes_and_save (s);
+  kill_preview_subproc (s);
   gtk_main_quit ();
 }
 
 static void
-wm_close_cb (GtkWidget *widget, GdkEvent *event, gpointer data)
+wm_toplevel_close_cb (GtkWidget *widget, GdkEvent *event, gpointer data)
 {
-  apply_changes_and_save (widget);
+  state *s = (state *) data;
+  flush_dialog_changes_and_save (s);
   gtk_main_quit ();
-}
-
-
-void
-cut_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
-{
-  /* #### */
-  warning_dialog (GTK_WIDGET (menuitem),
-                  "Error:\n\n"
-                  "cut unimplemented\n", False, 1);
-}
-
-
-void
-copy_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
-{
-  /* #### */
-  warning_dialog (GTK_WIDGET (menuitem),
-                  "Error:\n\n"
-                  "copy unimplemented\n", False, 1);
-}
-
-
-void
-paste_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
-{
-  /* #### */
-  warning_dialog (GTK_WIDGET (menuitem),
-                  "Error:\n\n"
-                  "paste unimplemented\n", False, 1);
 }
 
 
@@ -446,7 +505,7 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
   *s = 0;
   s += 2;
 
-  sprintf(copy, "Copyright \251 1991-2001 %s", s);
+  sprintf(copy, "Copyright \251 1991-2002 %s", s);
 
   sprintf (msg, "%s\n\n%s", copy, desc);
 
@@ -546,15 +605,13 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 void
 doc_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
-  /* prefs_pair *pair = (prefs_pair *) client_data; */
-  prefs_pair *pair = global_prefs_pair;  /* I hate C so much... */
-
-  saver_preferences *p =  pair->a;
+  state *s = global_state_kludge;  /* I hate C so much... */
+  saver_preferences *p = &s->prefs;
   char *help_command;
 
   if (!p->help_url || !*p->help_url)
     {
-      warning_dialog (GTK_WIDGET (menuitem),
+      warning_dialog (s->toplevel_widget,
                       "Error:\n\n"
                       "No Help URL has been specified.\n", False, 100);
       return;
@@ -574,41 +631,41 @@ doc_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 void
 activate_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
-  run_cmd (GTK_WIDGET (menuitem), XA_ACTIVATE, 0);
+  state *s = global_state_kludge;  /* I hate C so much... */
+  run_cmd (s, XA_ACTIVATE, 0);
 }
 
 
 void
 lock_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
-  run_cmd (GTK_WIDGET (menuitem), XA_LOCK, 0);
+  state *s = global_state_kludge;  /* I hate C so much... */
+  run_cmd (s, XA_LOCK, 0);
 }
 
 
 void
 kill_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
-  run_cmd (GTK_WIDGET (menuitem), XA_EXIT, 0);
+  state *s = global_state_kludge;  /* I hate C so much... */
+  run_cmd (s, XA_EXIT, 0);
 }
 
 
 void
 restart_menu_cb (GtkWidget *widget, gpointer user_data)
 {
-#if 0
-  run_cmd (GTK_WIDGET (widget), XA_RESTART, 0);
-#else
-  apply_changes_and_save (GTK_WIDGET (widget));
+  state *s = global_state_kludge;  /* I hate C so much... */
+  flush_dialog_changes_and_save (s);
   xscreensaver_command (GDK_DISPLAY(), XA_EXIT, 0, False, NULL);
   sleep (1);
   system ("xscreensaver -nosplash &");
-#endif
 
-  await_xscreensaver (GTK_WIDGET (widget));
+  await_xscreensaver (s);
 }
 
 static void
-await_xscreensaver (GtkWidget *widget)
+await_xscreensaver (state *s)
 {
   int countdown = 5;
 
@@ -622,7 +679,8 @@ await_xscreensaver (GtkWidget *widget)
       server_xscreensaver_version (dpy, &rversion, 0, 0);
 
       /* If it's not there yet, wait a second... */
-      sleep (1);
+      if (!rversion)
+        sleep (1);
     }
 
 /*  if (dialog) gtk_widget_destroy (dialog);*/
@@ -664,48 +722,46 @@ await_xscreensaver (GtkWidget *widget)
       else
         strcat (buf, "Please check your $PATH and permissions.");
 
-      warning_dialog (widget, buf, False, 1);
+      warning_dialog (s->toplevel_widget, buf, False, 1);
     }
 }
 
 
-static int _selected_hack_number = -1;
-
 static int
-selected_hack_number (GtkWidget *toplevel)
+selected_list_element (state *s)
 {
-#if 0
-  GtkViewport *vp = GTK_VIEWPORT (name_to_widget (toplevel, "viewport"));
-  GtkList *list_widget = GTK_LIST (GTK_BIN(vp)->child);
-  GList *slist = list_widget->selection;
-  GtkWidget *selected = (slist ? GTK_WIDGET (slist->data) : 0);
-  int which = (selected
-               ? gtk_list_child_position (list_widget, GTK_WIDGET (selected))
-               : -1);
-  return which;
-#else
-  return _selected_hack_number;
-#endif
+  return s->_selected_list_element;
 }
 
 
 static int
-demo_write_init_file (GtkWidget *widget, saver_preferences *p)
+demo_write_init_file (state *s, saver_preferences *p)
 {
-  if (!write_init_file (p, short_version, False))
-    return 0;
+
+#if 0
+  /* #### try to figure out why shit keeps getting reordered... */
+  if (strcmp (s->prefs.screenhacks[0]->name, "DNA Lounge Slideshow"))
+    abort();
+#endif
+
+  if (!write_init_file (p, s->short_version, False))
+    {
+      if (s->debug_p)
+        fprintf (stderr, "%s: wrote %s\n", blurb(), init_file_name());
+      return 0;
+    }
   else
     {
       const char *f = init_file_name();
       if (!f || !*f)
-        warning_dialog (widget,
+        warning_dialog (s->toplevel_widget,
                         "Error:\n\nCouldn't determine init file name!\n",
                         False, 100);
       else
         {
           char *b = (char *) malloc (strlen(f) + 1024);
           sprintf (b, "Error:\n\nCouldn't write %s\n", f);
-          warning_dialog (widget, b, False, 100);
+          warning_dialog (s->toplevel_widget, b, False, 100);
           free (b);
         }
       return -1;
@@ -713,132 +769,40 @@ demo_write_init_file (GtkWidget *widget, saver_preferences *p)
 }
 
 
-static int
-apply_changes_and_save_1 (GtkWidget *widget)
-{
-  /* prefs_pair *pair = (prefs_pair *) client_data; */
-  prefs_pair *pair = global_prefs_pair;  /* I hate C so much... */
-  saver_preferences *p =  pair->a;
-  GtkList *list_widget =
-    GTK_LIST (name_to_widget (widget, "list"));
-  int which = selected_hack_number (widget);
-
-  GtkEntry *cmd = GTK_ENTRY (name_to_widget (widget, "cmd_text"));
-  GtkToggleButton *enabled =
-    GTK_TOGGLE_BUTTON (name_to_widget (widget, "enabled"));
-  GtkCombo *vis = GTK_COMBO (name_to_widget (widget, "visual_combo"));
-
-  Bool enabled_p = gtk_toggle_button_get_active (enabled);
-  const char *visual = gtk_entry_get_text (GTK_ENTRY (GTK_COMBO (vis)->entry));
-  const char *command = gtk_entry_get_text (cmd);
-  
-  char c;
-  unsigned long id;
-
-  if (which < 0) return -1;
-
-  if (maybe_reload_init_file (widget, pair) != 0)
-    return 1;
-
-  /* Sanity-check and canonicalize whatever the user typed into the combo box.
-   */
-  if      (!strcasecmp (visual, ""))                   visual = "";
-  else if (!strcasecmp (visual, "any"))                visual = "";
-  else if (!strcasecmp (visual, "default"))            visual = "Default";
-  else if (!strcasecmp (visual, "default-n"))          visual = "Default-N";
-  else if (!strcasecmp (visual, "default-i"))          visual = "Default-I";
-  else if (!strcasecmp (visual, "best"))               visual = "Best";
-  else if (!strcasecmp (visual, "mono"))               visual = "Mono";
-  else if (!strcasecmp (visual, "monochrome"))         visual = "Mono";
-  else if (!strcasecmp (visual, "gray"))               visual = "Gray";
-  else if (!strcasecmp (visual, "grey"))               visual = "Gray";
-  else if (!strcasecmp (visual, "color"))              visual = "Color";
-  else if (!strcasecmp (visual, "gl"))                 visual = "GL";
-  else if (!strcasecmp (visual, "staticgray"))         visual = "StaticGray";
-  else if (!strcasecmp (visual, "staticcolor"))        visual = "StaticColor";
-  else if (!strcasecmp (visual, "truecolor"))          visual = "TrueColor";
-  else if (!strcasecmp (visual, "grayscale"))          visual = "GrayScale";
-  else if (!strcasecmp (visual, "greyscale"))          visual = "GrayScale";
-  else if (!strcasecmp (visual, "pseudocolor"))        visual = "PseudoColor";
-  else if (!strcasecmp (visual, "directcolor"))        visual = "DirectColor";
-  else if (1 == sscanf (visual, " %ld %c", &id, &c))   ;
-  else if (1 == sscanf (visual, " 0x%lx %c", &id, &c)) ;
-  else
-    {
-      gdk_beep ();				  /* unparsable */
-      visual = "";
-      gtk_entry_set_text (GTK_ENTRY (GTK_COMBO (vis)->entry), "Any");
-    }
-
-  ensure_selected_item_visible (GTK_WIDGET (list_widget));
-
-  if (!p->screenhacks[which]->visual)
-    p->screenhacks[which]->visual = strdup ("");
-  if (!p->screenhacks[which]->command)
-    p->screenhacks[which]->command = strdup ("");
-
-  if (p->screenhacks[which]->enabled_p != enabled_p ||
-      !!strcasecmp (p->screenhacks[which]->visual, visual) ||
-      !!strcasecmp (p->screenhacks[which]->command, command))
-    {
-      /* Something was changed -- store results into the struct,
-         and write the file.
-       */
-      free (p->screenhacks[which]->visual);
-      free (p->screenhacks[which]->command);
-      p->screenhacks[which]->visual = strdup (visual);
-      p->screenhacks[which]->command = strdup (command);
-      p->screenhacks[which]->enabled_p = enabled_p;
-
-      return demo_write_init_file (widget, p);
-    }
-
-  /* No changes made */
-  return 0;
-}
-
-void prefs_ok_cb (GtkButton *button, gpointer user_data);
-
-static int
-apply_changes_and_save (GtkWidget *widget)
-{
-  prefs_ok_cb ((GtkButton *) widget, 0);
-  return apply_changes_and_save_1 (widget);
-}
-
-
 void
 run_this_cb (GtkButton *button, gpointer user_data)
 {
-  int which = selected_hack_number (GTK_WIDGET (button));
-  if (which < 0) return;
-  if (0 == apply_changes_and_save (GTK_WIDGET (button)))
-    run_hack (GTK_WIDGET (button), which, True);
+  state *s = global_state_kludge;  /* I hate C so much... */
+  int list_elt = selected_list_element (s);
+  if (list_elt < 0) return;
+  if (!flush_dialog_changes_and_save (s))
+    run_hack (s, list_elt, True);
 }
 
 
 void
 manual_cb (GtkButton *button, gpointer user_data)
 {
-  /* prefs_pair *pair = (prefs_pair *) client_data; */
-  prefs_pair *pair = global_prefs_pair;  /* I hate C so much... */
-  saver_preferences *p =  pair->a;
-  GtkList *list_widget =
-    GTK_LIST (name_to_widget (GTK_WIDGET (button), "list"));
-  int which = selected_hack_number (GTK_WIDGET (button));
-  char *name, *name2, *cmd, *s;
-  if (which < 0) return;
-  apply_changes_and_save (GTK_WIDGET (button));
+  state *s = global_state_kludge;  /* I hate C so much... */
+  saver_preferences *p = &s->prefs;
+  GtkList *list_widget = GTK_LIST (name_to_widget (s, "list"));
+  int list_elt = selected_list_element (s);
+  int hack_number;
+  char *name, *name2, *cmd, *str;
+  if (list_elt < 0) return;
+  hack_number = s->list_elt_to_hack_number[list_elt];
+
+  flush_dialog_changes_and_save (s);
   ensure_selected_item_visible (GTK_WIDGET (list_widget));
 
-  name = strdup (p->screenhacks[which]->command);
+  name = strdup (p->screenhacks[hack_number]->command);
   name2 = name;
   while (isspace (*name2)) name2++;
-  s = name2;
-  while (*s && !isspace (*s)) s++;
-  *s = 0;
-  s = strrchr (name2, '/');
-  if (s) name = s+1;
+  str = name2;
+  while (*str && !isspace (*str)) str++;
+  *str = 0;
+  str = strrchr (name2, '/');
+  if (str) name = str+1;
 
   cmd = get_string_resource ("manualCommand", "ManualCommand");
   if (cmd)
@@ -863,57 +827,140 @@ manual_cb (GtkButton *button, gpointer user_data)
 }
 
 
+static void
+force_list_select_item (state *s, GtkList *list, int list_elt, Bool scroll_p)
+{
+  GtkWidget *parent = name_to_widget (s, "scroller");
+  Bool was = GTK_WIDGET_IS_SENSITIVE (parent);
+
+  if (!was) gtk_widget_set_sensitive (parent, True);
+  gtk_list_select_item (GTK_LIST (list), list_elt);
+  if (scroll_p) ensure_selected_item_visible (GTK_WIDGET (list));
+  if (!was) gtk_widget_set_sensitive (parent, False);
+}
+
+
 void
 run_next_cb (GtkButton *button, gpointer user_data)
 {
-  /* prefs_pair *pair = (prefs_pair *) client_data; */
-  prefs_pair *pair = global_prefs_pair;  /* I hate C so much... */
-  saver_preferences *p =  pair->a;
+  state *s = global_state_kludge;  /* I hate C so much... */
+  saver_preferences *p = &s->prefs;
+  Bool ops = s->preview_suppressed_p;
 
   GtkList *list_widget =
-    GTK_LIST (name_to_widget (GTK_WIDGET (button), "list"));
-  int which = selected_hack_number (GTK_WIDGET (button));
+    GTK_LIST (name_to_widget (s, "list"));
+  int list_elt = selected_list_element (s);
 
-  if (which < 0)
-    which = 0;
+  if (list_elt < 0)
+    list_elt = 0;
   else
-    which++;
+    list_elt++;
 
-  if (which >= p->screenhacks_count)
-    which = 0;
+  if (list_elt >= p->screenhacks_count)
+    list_elt = 0;
 
-  apply_changes_and_save (GTK_WIDGET (button));
-  gtk_list_select_item (GTK_LIST (list_widget), which);
-  ensure_selected_item_visible (GTK_WIDGET (list_widget));
-  populate_demo_window (GTK_WIDGET (button), which, pair);
-  run_hack (GTK_WIDGET (button), which, False);
+  s->preview_suppressed_p = True;
+
+  flush_dialog_changes_and_save (s);
+  force_list_select_item (s, GTK_LIST (list_widget), list_elt, True);
+  populate_demo_window (s, list_elt);
+  run_hack (s, list_elt, False);
+
+  s->preview_suppressed_p = ops;
 }
 
 
 void
 run_prev_cb (GtkButton *button, gpointer user_data)
 {
-  /* prefs_pair *pair = (prefs_pair *) client_data; */
-  prefs_pair *pair = global_prefs_pair;  /* I hate C so much... */
-  saver_preferences *p =  pair->a;
+  state *s = global_state_kludge;  /* I hate C so much... */
+  saver_preferences *p = &s->prefs;
+  Bool ops = s->preview_suppressed_p;
 
   GtkList *list_widget =
-    GTK_LIST (name_to_widget (GTK_WIDGET (button), "list"));
-  int which = selected_hack_number (GTK_WIDGET (button));
+    GTK_LIST (name_to_widget (s, "list"));
+  int list_elt = selected_list_element (s);
 
-  if (which < 0)
-    which = p->screenhacks_count - 1;
+  if (list_elt < 0)
+    list_elt = p->screenhacks_count - 1;
   else
-    which--;
+    list_elt--;
 
-  if (which < 0)
-    which = p->screenhacks_count - 1;
+  if (list_elt < 0)
+    list_elt = p->screenhacks_count - 1;
 
-  apply_changes_and_save (GTK_WIDGET (button));
-  gtk_list_select_item (GTK_LIST (list_widget), which);
-  ensure_selected_item_visible (GTK_WIDGET (list_widget));
-  populate_demo_window (GTK_WIDGET (button), which, pair);
-  run_hack (GTK_WIDGET (button), which, False);
+  s->preview_suppressed_p = True;
+
+  flush_dialog_changes_and_save (s);
+  force_list_select_item (s, GTK_LIST (list_widget), list_elt, True);
+  populate_demo_window (s, list_elt);
+  run_hack (s, list_elt, False);
+
+  s->preview_suppressed_p = ops;
+}
+
+
+/* Writes the given settings into prefs.
+   Returns true if there was a change, False otherwise.
+   command and/or visual may be 0, or enabled_p may be -1, meaning "no change".
+ */
+static Bool
+flush_changes (state *s,
+               int list_elt,
+               int enabled_p,
+               const char *command,
+               const char *visual)
+{
+  saver_preferences *p = &s->prefs;
+  Bool changed = False;
+  screenhack *hack;
+  int hack_number;
+  if (list_elt < 0 || list_elt >= p->screenhacks_count)
+    abort();
+
+  hack_number = s->list_elt_to_hack_number[list_elt];
+  hack = p->screenhacks[hack_number];
+
+  if (enabled_p != -1 &&
+      enabled_p != hack->enabled_p)
+    {
+      hack->enabled_p = enabled_p;
+      changed = True;
+      if (s->debug_p)
+        fprintf (stderr, "%s: \"%s\": enabled => %d\n",
+                 blurb(), hack->name, enabled_p);
+    }
+
+  if (command)
+    {
+      if (!hack->command || !!strcmp (command, hack->command))
+        {
+          if (hack->command) free (hack->command);
+          hack->command = strdup (command);
+          changed = True;
+          if (s->debug_p)
+            fprintf (stderr, "%s: \"%s\": command => \"%s\"\n",
+                     blurb(), hack->name, command);
+        }
+    }
+
+  if (visual)
+    {
+      const char *ov = hack->visual;
+      if (!ov || !*ov) ov = "any";
+      if (!*visual) visual = "any";
+      if (!!strcasecmp (visual, ov))
+        {
+          if (hack->visual) free (hack->visual);
+          hack->visual = strdup (visual);
+          changed = True;
+          if (s->debug_p)
+            fprintf (stderr, "%s: \"%s\": visual => \"%s\"\n",
+                     blurb(), hack->name, visual);
+        }
+    }
+
+  return changed;
 }
 
 
@@ -921,12 +968,22 @@ run_prev_cb (GtkButton *button, gpointer user_data)
    this parses the text, and does error checking.
  */
 static void 
-hack_time_text (GtkWidget *widget, const char *line, Time *store, Bool sec_p)
+hack_time_text (state *s, const char *line, Time *store, Bool sec_p)
 {
   if (*line)
     {
       int value;
-      value = parse_time ((char *) line, sec_p, True);
+      if (!sec_p || strchr (line, ':'))
+        value = parse_time ((char *) line, sec_p, True);
+      else
+        {
+          char c;
+          if (sscanf (line, "%u%c", &value, &c) != 1)
+            value = -1;
+          if (!sec_p)
+            value *= 60;
+        }
+
       value *= 1000;	/* Time measures in microseconds */
       if (value < 0)
 	{
@@ -935,7 +992,7 @@ hack_time_text (GtkWidget *widget, const char *line, Time *store, Bool sec_p)
 		   "Error:\n\n"
 		   "Unparsable time format: \"%s\"\n",
 		   line);
-	  warning_dialog (widget, b, False, 100);
+	  warning_dialog (s->toplevel_widget, b, False, 100);
 	}
       else
 	*store = value;
@@ -996,81 +1053,79 @@ normalize_directory (const char *path)
     while (s[0] == '/' && s[1] == '/')
       strcpy (s, s+1);
 
+  /* and strip trailing whitespace for good measure. */
+  L = strlen(p2);
+  while (isspace(p2[L-1]))
+    p2[--L] = 0;
+
   return p2;
 }
 
 
-void
-prefs_ok_cb (GtkButton *button, gpointer user_data)
+/* Flush out any changes made in the main dialog window (where changes
+   take place immediately: clicking on a checkbox causes the init file
+   to be written right away.)
+ */
+static Bool
+flush_dialog_changes_and_save (state *s)
 {
-  /* prefs_pair *pair = (prefs_pair *) client_data; */
-  prefs_pair *pair = global_prefs_pair;  /* I hate C so much... */
-
-  saver_preferences *p =  pair->a;
-  saver_preferences *p2 = pair->b;
+  saver_preferences *p = &s->prefs;
+  saver_preferences P2, *p2 = &P2;
+  GtkList *list_widget = GTK_LIST (name_to_widget (s, "list"));
+  GList *kids = gtk_container_children (GTK_CONTAINER (list_widget));
   Bool changed = False;
+  GtkWidget *w;
+  int i;
 
-# define SECONDS(field, name) \
-  hack_time_text (GTK_WIDGET(button), gtk_entry_get_text (\
-                    GTK_ENTRY (name_to_widget (GTK_WIDGET(button), (name)))), \
-                  (field), \
-                  True)
+  if (s->saving_p) return False;
+  s->saving_p = True;
 
-# define MINUTES(field, name) \
-  hack_time_text (GTK_WIDGET(button), gtk_entry_get_text (\
-                    GTK_ENTRY (name_to_widget (GTK_WIDGET(button), (name)))), \
-                  (field), \
-                  False)
+  *p2 = *p;
 
-# define INTEGER(field, name) do { \
-    char *line = gtk_entry_get_text (\
-                    GTK_ENTRY (name_to_widget (GTK_WIDGET(button), (name)))); \
-    unsigned int value; \
-    char c; \
-    if (! *line) \
-      ; \
-    else if (sscanf (line, "%u%c", &value, &c) != 1) \
-      { \
-	char b[255]; \
-	sprintf (b, "Error:\n\n" "Not an integer: \"%s\"\n", line); \
-	warning_dialog (GTK_WIDGET (button), b, False, 100); \
-      } \
-   else \
-     *(field) = value; \
-  } while(0)
+  /* Flush any checkbox changes in the list down into the prefs struct.
+   */
+  for (i = 0; kids; kids = kids->next, i++)
+    {
+      GtkWidget *line = GTK_WIDGET (kids->data);
+      GtkWidget *line_hbox = GTK_WIDGET (GTK_BIN (line)->child);
+      GtkWidget *line_check =
+        GTK_WIDGET (gtk_container_children (GTK_CONTAINER (line_hbox))->data);
+      Bool checked =
+        gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (line_check));
 
-# define PATHNAME(field, name) do { \
-    char *line = gtk_entry_get_text (\
-                    GTK_ENTRY (name_to_widget (GTK_WIDGET(button), (name)))); \
-    if (! *line) \
-      ; \
-    else if (!directory_p (line)) \
-      { \
-	char b[255]; \
-	sprintf (b, "Error:\n\n" "Directory does not exist: \"%s\"\n", line); \
-	warning_dialog (GTK_WIDGET (button), b, False, 100); \
-        if ((field)) free ((field)); \
-        (field) = strdup(line); \
-      } \
-   else { \
-     if ((field)) free ((field)); \
-     (field) = strdup(line); \
-    } \
-  } while(0)
+      if (flush_changes (s, i, (checked ? 1 : 0), 0, 0))
+        changed = True;
+    }
 
-# define CHECKBOX(field, name) \
-  field = gtk_toggle_button_get_active (\
-             GTK_TOGGLE_BUTTON (name_to_widget (GTK_WIDGET(button), (name))))
 
-  MINUTES (&p2->timeout,          "timeout_text");
-  MINUTES (&p2->cycle,            "cycle_text");
+  /* Flush the non-hack-specific settings down into the prefs struct.
+   */
+
+# define SECONDS(FIELD,NAME) \
+    w = name_to_widget (s, (NAME)); \
+    hack_time_text (s, gtk_entry_get_text (GTK_ENTRY (w)), (FIELD), True)
+
+# define MINUTES(FIELD,NAME) \
+    w = name_to_widget (s, (NAME)); \
+    hack_time_text (s, gtk_entry_get_text (GTK_ENTRY (w)), (FIELD), False)
+
+# define CHECKBOX(FIELD,NAME) \
+    w = name_to_widget (s, (NAME)); \
+    (FIELD) = gtk_toggle_button_get_active (GTK_TOGGLE_BUTTON (w))
+
+# define PATHNAME(FIELD,NAME) \
+    w = name_to_widget (s, (NAME)); \
+    (FIELD) = normalize_directory (gtk_entry_get_text (GTK_ENTRY (w)))
+
+  MINUTES  (&p2->timeout,         "timeout_spinbutton");
+  MINUTES  (&p2->cycle,           "cycle_spinbutton");
   CHECKBOX (p2->lock_p,           "lock_button");
-  MINUTES (&p2->lock_timeout,     "lock_text");
+  MINUTES  (&p2->lock_timeout,    "lock_spinbutton");
 
-  CHECKBOX (p2->dpms_enabled_p,   "dpms_button");
-  MINUTES (&p2->dpms_standby,     "dpms_standby_text");
-  MINUTES (&p2->dpms_suspend,     "dpms_suspend_text");
-  MINUTES (&p2->dpms_off,         "dpms_off_text");
+  CHECKBOX (p2->dpms_enabled_p,  "dpms_button");
+  MINUTES  (&p2->dpms_standby,    "dpms_standby_spinbutton");
+  MINUTES  (&p2->dpms_suspend,    "dpms_suspend_spinbutton");
+  MINUTES  (&p2->dpms_off,        "dpms_off_spinbutton");
 
   CHECKBOX (p2->grab_desktop_p,   "grab_desk_button");
   CHECKBOX (p2->grab_video_p,     "grab_video_button");
@@ -1084,98 +1139,296 @@ prefs_ok_cb (GtkButton *button, gpointer user_data)
   CHECKBOX (p2->install_cmap_p,   "install_button");
   CHECKBOX (p2->fade_p,           "fade_button");
   CHECKBOX (p2->unfade_p,         "unfade_button");
-  SECONDS (&p2->fade_seconds,     "fade_text");
+  SECONDS  (&p2->fade_seconds,    "fade_spinbutton");
 
 # undef SECONDS
 # undef MINUTES
-# undef INTEGER
-# undef PATHNAME
 # undef CHECKBOX
+# undef PATHNAME
 
-# define COPY(field) \
-  if (p->field != p2->field) changed = True; \
+  /* Warn if the image directory doesn't exist.
+   */
+  if (p2->image_directory &&
+      *p2->image_directory &&
+      !directory_p (p2->image_directory))
+    {
+      char b[255];
+      sprintf (b, "Error:\n\n" "Directory does not exist: \"%s\"\n",
+               p2->image_directory);
+      warning_dialog (s->toplevel_widget, b, False, 100);
+    }
+
+
+  /* Map the mode menu to `saver_mode' enum values. */
+  {
+    GtkOptionMenu *opt = GTK_OPTION_MENU (name_to_widget (s, "mode_menu"));
+    GtkMenu *menu = GTK_MENU (gtk_option_menu_get_menu (opt));
+    GtkWidget *selected = gtk_menu_get_active (menu);
+    GList *kids = gtk_container_children (GTK_CONTAINER (menu));
+    int menu_elt = g_list_index (kids, (gpointer) selected);
+    if (menu_elt < 0 || menu_elt >= countof(mode_menu_order)) abort();
+    p2->mode = mode_menu_order[menu_elt];
+  }
+
+  if (p2->mode == ONE_HACK)
+    {
+      int list_elt = selected_list_element (s);
+      p2->selected_hack = (list_elt >= 0
+                           ? s->list_elt_to_hack_number[list_elt]
+                           : -1);
+    }
+
+# define COPY(field, name) \
+  if (p->field != p2->field) { \
+    changed = True; \
+    if (s->debug_p) \
+      fprintf (stderr, "%s: %s => %d\n", blurb(), name, p2->field); \
+  } \
   p->field = p2->field
 
-  COPY(timeout);
-  COPY(cycle);
-  COPY(lock_p);
-  COPY(lock_timeout);
+  COPY(mode,             "mode");
+  COPY(selected_hack,    "selected_hack");
 
-  COPY(dpms_enabled_p);
-  COPY(dpms_standby);
-  COPY(dpms_suspend);
-  COPY(dpms_off);
+  COPY(timeout,        "timeout");
+  COPY(cycle,          "cycle");
+  COPY(lock_p,         "lock_p");
+  COPY(lock_timeout,   "lock_timeout");
 
-  COPY (grab_desktop_p);
-  COPY (grab_video_p);
-  COPY (random_image_p);
+  COPY(dpms_enabled_p, "dpms_enabled_p");
+  COPY(dpms_standby,   "dpms_standby");
+  COPY(dpms_suspend,   "dpms_suspend");
+  COPY(dpms_off,       "dpms_off");
+
+  COPY(verbose_p,        "verbose_p");
+  COPY(capture_stderr_p, "capture_stderr_p");
+  COPY(splash_p,         "splash_p");
+
+  COPY(install_cmap_p,   "install_cmap_p");
+  COPY(fade_p,           "fade_p");
+  COPY(unfade_p,         "unfade_p");
+  COPY(fade_seconds,     "fade_seconds");
+
+  COPY(grab_desktop_p, "grab_desktop_p");
+  COPY(grab_video_p,   "grab_video_p");
+  COPY(random_image_p, "random_image_p");
+
+# undef COPY
 
   if (!p->image_directory ||
       !p2->image_directory ||
       strcmp(p->image_directory, p2->image_directory))
-    changed = True;
+    {
+      changed = True;
+      if (s->debug_p)
+        fprintf (stderr, "%s: image_directory => \"%s\"\n",
+                 blurb(), p2->image_directory);
+    }
   if (p->image_directory && p->image_directory != p2->image_directory)
     free (p->image_directory);
-  p->image_directory = normalize_directory (p2->image_directory);
-  if (p2->image_directory) free (p2->image_directory);
+  p->image_directory = p2->image_directory;
   p2->image_directory = 0;
 
-  COPY(verbose_p);
-  COPY(capture_stderr_p);
-  COPY(splash_p);
-
-  COPY(install_cmap_p);
-  COPY(fade_p);
-  COPY(unfade_p);
-  COPY(fade_seconds);
-# undef COPY
-
-  populate_prefs_page (GTK_WIDGET (button), pair);
+  populate_prefs_page (s);
 
   if (changed)
     {
       Display *dpy = GDK_DISPLAY();
-      sync_server_dpms_settings (dpy, p->dpms_enabled_p,
+      Bool enabled_p = (p->dpms_enabled_p && p->mode != DONT_BLANK);
+      sync_server_dpms_settings (dpy, enabled_p,
                                  p->dpms_standby / 1000,
                                  p->dpms_suspend / 1000,
                                  p->dpms_off / 1000,
                                  False);
 
-      demo_write_init_file (GTK_WIDGET (button), p);
+      changed = demo_write_init_file (s, p);
+    }
+
+  s->saving_p = False;
+  return changed;
+}
+
+
+/* Flush out any changes made in the popup dialog box (where changes
+   take place only when the OK button is clicked.)
+ */
+static Bool
+flush_popup_changes_and_save (state *s)
+{
+  Bool changed = False;
+  saver_preferences *p = &s->prefs;
+  int list_elt = selected_list_element (s);
+
+  GtkEntry *cmd = GTK_ENTRY (name_to_widget (s, "cmd_text"));
+  GtkCombo *vis = GTK_COMBO (name_to_widget (s, "visual_combo"));
+
+  const char *visual = gtk_entry_get_text (GTK_ENTRY (GTK_COMBO (vis)->entry));
+  const char *command = gtk_entry_get_text (cmd);
+
+  char c;
+  unsigned long id;
+
+  if (s->saving_p) return False;
+  s->saving_p = True;
+
+  if (list_elt < 0)
+    goto DONE;
+
+  if (maybe_reload_init_file (s) != 0)
+    {
+      changed = True;
+      goto DONE;
+    }
+
+  /* Sanity-check and canonicalize whatever the user typed into the combo box.
+   */
+  if      (!strcasecmp (visual, ""))                   visual = "";
+  else if (!strcasecmp (visual, "any"))                visual = "";
+  else if (!strcasecmp (visual, "default"))            visual = "Default";
+  else if (!strcasecmp (visual, "default-n"))          visual = "Default-N";
+  else if (!strcasecmp (visual, "default-i"))          visual = "Default-I";
+  else if (!strcasecmp (visual, "best"))               visual = "Best";
+  else if (!strcasecmp (visual, "mono"))               visual = "Mono";
+  else if (!strcasecmp (visual, "monochrome"))         visual = "Mono";
+  else if (!strcasecmp (visual, "gray"))               visual = "Gray";
+  else if (!strcasecmp (visual, "grey"))               visual = "Gray";
+  else if (!strcasecmp (visual, "color"))              visual = "Color";
+  else if (!strcasecmp (visual, "gl"))                 visual = "GL";
+  else if (!strcasecmp (visual, "staticgray"))         visual = "StaticGray";
+  else if (!strcasecmp (visual, "staticcolor"))        visual = "StaticColor";
+  else if (!strcasecmp (visual, "truecolor"))          visual = "TrueColor";
+  else if (!strcasecmp (visual, "grayscale"))          visual = "GrayScale";
+  else if (!strcasecmp (visual, "greyscale"))          visual = "GrayScale";
+  else if (!strcasecmp (visual, "pseudocolor"))        visual = "PseudoColor";
+  else if (!strcasecmp (visual, "directcolor"))        visual = "DirectColor";
+  else if (1 == sscanf (visual, " %ld %c", &id, &c))   ;
+  else if (1 == sscanf (visual, " 0x%lx %c", &id, &c)) ;
+  else
+    {
+      gdk_beep ();				  /* unparsable */
+      visual = "";
+      gtk_entry_set_text (GTK_ENTRY (GTK_COMBO (vis)->entry), "Any");
+    }
+
+  changed = flush_changes (s, list_elt, -1, command, visual);
+  if (changed)
+    {
+      changed = demo_write_init_file (s, p);
+
+      /* Do this to re-launch the hack if (and only if) the command line
+         has changed. */
+      populate_demo_window (s, selected_list_element (s));
+    }
+
+ DONE:
+  s->saving_p = False;
+  return changed;
+}
+
+
+
+
+void
+pref_changed_cb (GtkWidget *widget, gpointer user_data)
+{
+  state *s = global_state_kludge;  /* I hate C so much... */
+  if (! s->initializing_p)
+    {
+      s->initializing_p = True;
+      flush_dialog_changes_and_save (s);
+      s->initializing_p = False;
     }
 }
 
 
+/* Callback on menu items in the "mode" options menu.
+ */
 void
-prefs_cancel_cb (GtkButton *button, gpointer user_data)
+mode_menu_item_cb (GtkWidget *widget, gpointer user_data)
 {
-  /* prefs_pair *pair = (prefs_pair *) client_data; */
-  prefs_pair *pair = global_prefs_pair;  /* I hate C so much... */
+  state *s = (state *) user_data;
+  saver_preferences *p = &s->prefs;
+  GtkList *list = GTK_LIST (name_to_widget (s, "list"));
+  int list_elt;
 
-  *pair->b = *pair->a;
-  populate_prefs_page (GTK_WIDGET (button), pair);
+  GList *menu_items = gtk_container_children (GTK_CONTAINER (widget->parent));
+  int menu_index = 0;
+  saver_mode new_mode;
+  int old_selected = p->selected_hack;
+
+  while (menu_items)
+    {
+      if (menu_items->data == widget)
+        break;
+      menu_index++;
+      menu_items = menu_items->next;
+    }
+  if (!menu_items) abort();
+
+  new_mode = mode_menu_order[menu_index];
+
+  /* Keep the same list element displayed as before; except if we're
+     switching *to* "one screensaver" mode from any other mode, scroll
+     to and select "the one".
+   */
+  list_elt = -1;
+  if (new_mode == ONE_HACK)
+    list_elt = (p->selected_hack >= 0
+                ? s->hack_number_to_list_elt[p->selected_hack]
+                : -1);
+
+  if (list_elt < 0)
+    list_elt = selected_list_element (s);
+
+  {
+    saver_mode old_mode = p->mode;
+    p->mode = new_mode;
+    populate_demo_window (s, list_elt);
+    force_list_select_item (s, list, list_elt, True);
+    p->mode = old_mode;  /* put it back, so the init file gets written */
+  }
+
+  pref_changed_cb (widget, user_data);
+
+  if (old_selected != p->selected_hack)
+    abort();    /* dammit, not again... */
 }
 
 
 void
-pref_changed_cb (GtkButton *button, gpointer user_data)
+switch_page_cb (GtkNotebook *notebook, GtkNotebookPage *page,
+                gint page_num, gpointer user_data)
 {
-  if (! initializing_p)
-    apply_changes_and_save (GTK_WIDGET (button));
+  state *s = global_state_kludge;  /* I hate C so much... */
+  pref_changed_cb (GTK_WIDGET (notebook), user_data);
+
+  /* If we're switching to page 0, schedule the current hack to be run.
+     Otherwise, schedule it to stop. */
+  if (page_num == 0)
+    populate_demo_window (s, selected_list_element (s));
+  else
+    schedule_preview (s, 0);
 }
 
+
+static time_t last_doubleclick_time = 0;   /* FMH!  This is to suppress the
+                                              list_select_cb that comes in
+                                              *after* we've double-clicked.
+                                            */
 
 static gint
 list_doubleclick_cb (GtkWidget *button, GdkEventButton *event,
-                     gpointer client_data)
+                     gpointer data)
 {
+  state *s = (state *) data;
   if (event->type == GDK_2BUTTON_PRESS)
     {
-      GtkList *list = GTK_LIST (name_to_widget (button, "list"));
-      int which = gtk_list_child_position (list, GTK_WIDGET (button));
+      GtkList *list = GTK_LIST (name_to_widget (s, "list"));
+      int list_elt = gtk_list_child_position (list, GTK_WIDGET (button));
 
-      if (which >= 0)
-        run_hack (GTK_WIDGET (button), which, True);
+      last_doubleclick_time = time ((time_t *) 0);
+
+      if (list_elt >= 0)
+        run_hack (s, list_elt, True);
     }
 
   return FALSE;
@@ -1183,30 +1436,27 @@ list_doubleclick_cb (GtkWidget *button, GdkEventButton *event,
 
 
 static void
-list_select_cb (GtkList *list, GtkWidget *child)
+list_select_cb (GtkList *list, GtkWidget *child, gpointer data)
 {
-  /* prefs_pair *pair = (prefs_pair *) client_data; */
-  prefs_pair *pair = global_prefs_pair;  /* I hate C so much... */
+  state *s = (state *) data;
+  time_t now = time ((time_t *) 0);
 
-  int which = gtk_list_child_position (list, GTK_WIDGET (child));
-  apply_changes_and_save (GTK_WIDGET (list));
-  populate_demo_window (GTK_WIDGET (list), which, pair);
+  if (now >= last_doubleclick_time + 2)
+    {
+      int list_elt = gtk_list_child_position (list, GTK_WIDGET (child));
+      populate_demo_window (s, list_elt);
+      flush_dialog_changes_and_save (s);
+    }
 }
 
 static void
-list_unselect_cb (GtkList *list, GtkWidget *child)
+list_unselect_cb (GtkList *list, GtkWidget *child, gpointer data)
 {
-  /* prefs_pair *pair = (prefs_pair *) client_data; */
-  prefs_pair *pair = global_prefs_pair;  /* I hate C so much... */
-
-  apply_changes_and_save (GTK_WIDGET (list));
-  populate_demo_window (GTK_WIDGET (list), -1, pair);
+  state *s = (state *) data;
+  populate_demo_window (s, -1);
+  flush_dialog_changes_and_save (s);
 }
 
-
-static int updating_enabled_cb = 0;  /* kludge to make sure that enabled_cb
-                                        is only run by user action, not by
-                                        program action. */
 
 /* Called when the checkboxes that are in the left column of the
    scrolling list are clicked.  This both populates the right pane
@@ -1214,9 +1464,9 @@ static int updating_enabled_cb = 0;  /* kludge to make sure that enabled_cb
    also syncs this checkbox with  the right pane Enabled checkbox.
  */
 static void
-list_checkbox_cb (GtkWidget *cb, gpointer client_data)
+list_checkbox_cb (GtkWidget *cb, gpointer data)
 {
-  prefs_pair *pair = (prefs_pair *) client_data;
+  state *s = (state *) data;
 
   GtkWidget *line_hbox = GTK_WIDGET (cb)->parent;
   GtkWidget *line = GTK_WIDGET (line_hbox)->parent;
@@ -1227,60 +1477,24 @@ list_checkbox_cb (GtkWidget *cb, gpointer client_data)
   GtkAdjustment *adj;
   double scroll_top;
 
-  GtkToggleButton *enabled =
-    GTK_TOGGLE_BUTTON (name_to_widget (cb, "enabled"));
-
-  int which = gtk_list_child_position (list, line);
+  int list_elt = gtk_list_child_position (list, line);
 
   /* remember previous scroll position of the top of the list */
   adj = gtk_scrolled_window_get_vadjustment (scroller);
   scroll_top = adj->value;
 
-  apply_changes_and_save (GTK_WIDGET (list));
-  gtk_list_select_item (list, which);
-  /* ensure_selected_item_visible (GTK_WIDGET (list)); */
-  populate_demo_window (GTK_WIDGET (list), which, pair);
+  flush_dialog_changes_and_save (s);
+  force_list_select_item (s, list, list_elt, False);
+  populate_demo_window (s, list_elt);
   
-  updating_enabled_cb++;
-  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (enabled),
-                                GTK_TOGGLE_BUTTON (cb)->active);
-  updating_enabled_cb--;
-
   /* restore the previous scroll position of the top of the list.
      this is weak, but I don't really know why it's moving... */
   gtk_adjustment_set_value (adj, scroll_top);
 }
 
 
-/* Called when the right pane Enabled checkbox is clicked.  This syncs
-   the corresponding checkbox inside the scrolling list to the state
-   of this checkbox.
- */
-void
-enabled_cb (GtkWidget *cb, gpointer client_data)
-{
-  int which = selected_hack_number (cb);
-  
-  if (updating_enabled_cb) return;
-
-  if (which != -1)
-    {
-      GtkList *list = GTK_LIST (name_to_widget (cb, "list"));
-      GList *kids = GTK_LIST (list)->children;
-      GtkWidget *line = GTK_WIDGET (g_list_nth_data (kids, which));
-      GtkWidget *line_hbox = GTK_WIDGET (GTK_BIN (line)->child);
-      GtkWidget *line_check =
-        GTK_WIDGET (gtk_container_children (GTK_CONTAINER (line_hbox))->data);
-
-      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (line_check),
-                                    GTK_TOGGLE_BUTTON (cb)->active);
-    }
-}
-
-
-
 typedef struct {
-  prefs_pair *pair;
+  state *state;
   GtkFileSelection *widget;
 } file_selection_data;
 
@@ -1290,10 +1504,10 @@ static void
 store_image_directory (GtkWidget *button, gpointer user_data)
 {
   file_selection_data *fsd = (file_selection_data *) user_data;
-  prefs_pair *pair = fsd->pair;
+  state *s = fsd->state;
   GtkFileSelection *selector = fsd->widget;
-  GtkWidget *top = toplevel_widget;
-  saver_preferences *p = pair->a;
+  GtkWidget *top = s->toplevel_widget;
+  saver_preferences *p = &s->prefs;
   char *path = gtk_file_selection_get_filename (selector);
 
   if (p->image_directory && !strcmp(p->image_directory, path))
@@ -1310,9 +1524,9 @@ store_image_directory (GtkWidget *button, gpointer user_data)
   if (p->image_directory) free (p->image_directory);
   p->image_directory = normalize_directory (path);
 
-  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "image_text")),
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, "image_text")),
                       (p->image_directory ? p->image_directory : ""));
-  demo_write_init_file (GTK_WIDGET (top), p);
+  demo_write_init_file (s, p);
 }
 
 
@@ -1340,9 +1554,8 @@ browse_image_dir_close (GtkWidget *widget, GdkEvent *event, gpointer user_data)
 void
 browse_image_dir_cb (GtkButton *button, gpointer user_data)
 {
-  /* prefs_pair *pair = (prefs_pair *) client_data; */
-  prefs_pair *pair = global_prefs_pair;  /* I hate C so much... */
-  saver_preferences *p = pair->a;
+  state *s = global_state_kludge;  /* I hate C so much... */
+  saver_preferences *p = &s->prefs;
   static file_selection_data *fsd = 0;
 
   GtkFileSelection *selector = GTK_FILE_SELECTION(
@@ -1352,7 +1565,7 @@ browse_image_dir_cb (GtkButton *button, gpointer user_data)
     fsd = (file_selection_data *) malloc (sizeof (*fsd));  
 
   fsd->widget = selector;
-  fsd->pair = pair;
+  fsd->state = s;
 
   if (p->image_directory && *p->image_directory)
     gtk_file_selection_set_filename (selector, p->image_directory);
@@ -1374,46 +1587,125 @@ browse_image_dir_cb (GtkButton *button, gpointer user_data)
 }
 
 
+void
+settings_cb (GtkButton *button, gpointer user_data)
+{
+  state *s = global_state_kludge;  /* I hate C so much... */
+  int list_elt = selected_list_element (s);
+
+  populate_demo_window (s, list_elt);   /* reset the widget */
+  populate_popup_window (s);		/* create UI on popup window */
+  gtk_widget_show (s->popup_widget);
+}
+
+static void
+settings_sync_cmd_text (state *s)
+{
+# ifdef HAVE_XML
+  GtkWidget *cmd = GTK_WIDGET (name_to_widget (s, "cmd_text"));
+  char *cmd_line = get_configurator_command_line (s->cdata);
+  gtk_entry_set_text (GTK_ENTRY (cmd), cmd_line);
+  gtk_entry_set_position (GTK_ENTRY (cmd), strlen (cmd_line));
+  free (cmd_line);
+# endif /* HAVE_XML */
+}
+
+void
+settings_adv_cb (GtkButton *button, gpointer user_data)
+{
+  state *s = global_state_kludge;  /* I hate C so much... */
+  GtkNotebook *notebook =
+    GTK_NOTEBOOK (name_to_widget (s, "opt_notebook"));
+
+  settings_sync_cmd_text (s);
+  gtk_notebook_set_page (notebook, 1);
+}
+
+void
+settings_std_cb (GtkButton *button, gpointer user_data)
+{
+  state *s = global_state_kludge;  /* I hate C so much... */
+  GtkNotebook *notebook =
+    GTK_NOTEBOOK (name_to_widget (s, "opt_notebook"));
+
+  /* Re-create UI to reflect the in-progress command-line settings. */
+  populate_popup_window (s);
+
+  gtk_notebook_set_page (notebook, 0);
+}
+
+void
+settings_switch_page_cb (GtkNotebook *notebook, GtkNotebookPage *page,
+                         gint page_num, gpointer user_data)
+{
+  state *s = global_state_kludge;  /* I hate C so much... */
+  GtkWidget *adv = name_to_widget (s, "adv_button");
+  GtkWidget *std = name_to_widget (s, "std_button");
+
+  if (page_num == 0)
+    {
+      gtk_widget_show (adv);
+      gtk_widget_hide (std);
+    }
+  else if (page_num == 1)
+    {
+      gtk_widget_hide (adv);
+      gtk_widget_show (std);
+    }
+  else
+    abort();
+}
+
+
+
+void
+settings_cancel_cb (GtkButton *button, gpointer user_data)
+{
+  state *s = global_state_kludge;  /* I hate C so much... */
+  gtk_widget_hide (s->popup_widget);
+}
+
+void
+settings_ok_cb (GtkButton *button, gpointer user_data)
+{
+  state *s = global_state_kludge;  /* I hate C so much... */
+  GtkNotebook *notebook = GTK_NOTEBOOK (name_to_widget (s, "opt_notebook"));
+  int page = gtk_notebook_get_current_page (notebook);
+
+  if (page == 0)
+    /* Regenerate the command-line from the widget contents before saving.
+       But don't do this if we're looking at the command-line page already,
+       or we will blow away what they typed... */
+    settings_sync_cmd_text (s);
+
+  flush_popup_changes_and_save (s);
+  gtk_widget_hide (s->popup_widget);
+}
+
+static void
+wm_popup_close_cb (GtkWidget *widget, GdkEvent *event, gpointer data)
+{
+  state *s = (state *) data;
+  settings_cancel_cb (0, (gpointer) s);
+}
+
+
 
 /* Populating the various widgets
  */
 
 
-/* Formats a `Time' into "H:MM:SS".  (Time is microseconds.)
+/* Returns the number of the last hack run by the server.
  */
-static void
-format_time (char *buf, Time time)
+static int
+server_current_hack (void)
 {
-  int s = time / 1000;
-  unsigned int h = 0, m = 0;
-  if (s >= 60)
-    {
-      m += (s / 60);
-      s %= 60;
-    }
-  if (m >= 60)
-    {
-      h += (m / 60);
-      m %= 60;
-    }
-  sprintf (buf, "%u:%02u:%02u", h, m, s);
-}
-
-
-/* Finds the number of the last hack to run, and makes that item be
-   selected by default.
- */
-static void
-scroll_to_current_hack (GtkWidget *toplevel, prefs_pair *pair)
-{
-  saver_preferences *p =  pair->a;
   Atom type;
   int format;
   unsigned long nitems, bytesafter;
   CARD32 *data = 0;
   Display *dpy = GDK_DISPLAY();
-  int which = 0;
-  GtkList *list;
+  int hack_number = -1;
 
   if (XGetWindowProperty (dpy, RootWindow (dpy, 0), /* always screen #0 */
                           XA_SCREENSAVER_STATUS,
@@ -1424,35 +1716,48 @@ scroll_to_current_hack (GtkWidget *toplevel, prefs_pair *pair)
       && type == XA_INTEGER
       && nitems >= 3
       && data)
-    which = (int) data[2] - 1;
+    hack_number = (int) data[2] - 1;
 
   if (data) free (data);
 
-  if (which < 0)
-    return;
+  return hack_number;
+}
 
-  list = GTK_LIST (name_to_widget (toplevel, "list"));
-  apply_changes_and_save (toplevel);
-  if (which < p->screenhacks_count)
+
+/* Finds the number of the last hack to run, and makes that item be
+   selected by default.
+ */
+static void
+scroll_to_current_hack (state *s)
+{
+  saver_preferences *p = &s->prefs;
+  int hack_number;
+
+  if (p->mode == ONE_HACK)
+    hack_number = p->selected_hack;
+  else
+    hack_number = server_current_hack ();
+
+  if (hack_number >= 0 && hack_number < p->screenhacks_count)
     {
-      gtk_list_select_item (list, which);
-      ensure_selected_item_visible (GTK_WIDGET (list));
-      populate_demo_window (toplevel, which, pair);
+      int list_elt = s->hack_number_to_list_elt[hack_number];
+      GtkList *list = GTK_LIST (name_to_widget (s, "list"));
+      force_list_select_item (s, list, list_elt, True);
+      populate_demo_window (s, list_elt);
     }
 }
 
 
-
 static void
-populate_hack_list (GtkWidget *toplevel, prefs_pair *pair)
+populate_hack_list (state *s)
 {
-  saver_preferences *p =  pair->a;
-  GtkList *list = GTK_LIST (name_to_widget (toplevel, "list"));
-  screenhack **hacks = p->screenhacks;
-  screenhack **h;
-
-  for (h = hacks; h && *h; h++)
+  saver_preferences *p = &s->prefs;
+  GtkList *list = GTK_LIST (name_to_widget (s, "list"));
+  int i;
+  for (i = 0; i < p->screenhacks_count; i++)
     {
+      screenhack *hack = p->screenhacks[s->list_elt_to_hack_number[i]];
+
       /* A GtkList must contain only GtkListItems, but those can contain
          an arbitrary widget.  We add an Hbox, and inside that, a Checkbox
          and a Label.  We handle single and double click events on the
@@ -1464,9 +1769,9 @@ populate_hack_list (GtkWidget *toplevel, prefs_pair *pair)
       GtkWidget *line_check;
       GtkWidget *line_label;
 
-      char *pretty_name = (h[0]->name
-                           ? strdup (h[0]->name)
-                           : make_hack_name (h[0]->command));
+      char *pretty_name = (hack->name
+                           ? strdup (hack->name)
+                           : make_hack_name (hack->command));
 
       line = gtk_list_item_new ();
       line_hbox = gtk_hbox_new (FALSE, 0);
@@ -1478,7 +1783,7 @@ populate_hack_list (GtkWidget *toplevel, prefs_pair *pair)
       gtk_box_pack_start (GTK_BOX (line_hbox), line_label, FALSE, FALSE, 0);
 
       gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (line_check),
-                                    h[0]->enabled_p);
+                                    hack->enabled_p);
       gtk_label_set_justify (GTK_LABEL (line_label), GTK_JUSTIFY_LEFT);
 
       gtk_widget_show (line_check);
@@ -1491,11 +1796,11 @@ populate_hack_list (GtkWidget *toplevel, prefs_pair *pair)
       gtk_container_add (GTK_CONTAINER (list), line);
       gtk_signal_connect (GTK_OBJECT (line), "button_press_event",
                           GTK_SIGNAL_FUNC (list_doubleclick_cb),
-                          (gpointer) pair);
+                          (gpointer) s);
 
       gtk_signal_connect (GTK_OBJECT (line_check), "toggled",
                           GTK_SIGNAL_FUNC (list_checkbox_cb),
-                          (gpointer) pair);
+                          (gpointer) s);
 
 #if 0 /* #### */
       GTK_WIDGET (GTK_BIN(line)->child)->style =
@@ -1506,80 +1811,119 @@ populate_hack_list (GtkWidget *toplevel, prefs_pair *pair)
 
   gtk_signal_connect (GTK_OBJECT (list), "select_child",
                       GTK_SIGNAL_FUNC (list_select_cb),
-                      (gpointer) pair);
+                      (gpointer) s);
   gtk_signal_connect (GTK_OBJECT (list), "unselect_child",
                       GTK_SIGNAL_FUNC (list_unselect_cb),
-                      (gpointer) pair);
+                      (gpointer) s);
 }
 
 
 static void
-populate_prefs_page (GtkWidget *top, prefs_pair *pair)
+update_list_sensitivity (state *s)
 {
-  saver_preferences *p =  pair->a;
-  char s[100];
+  saver_preferences *p = &s->prefs;
+  Bool sensitive = (p->mode == RANDOM_HACKS || p->mode == ONE_HACK);
+  Bool checkable = (p->mode == RANDOM_HACKS);
+  Bool blankable = (p->mode != DONT_BLANK);
 
-  format_time (s, p->timeout);
-  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "timeout_text")), s);
-  format_time (s, p->cycle);
-  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "cycle_text")), s);
-  format_time (s, p->lock_timeout);
-  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "lock_text")), s);
+  GtkWidget *head     = name_to_widget (s, "col_head_hbox");
+  GtkWidget *use      = name_to_widget (s, "use_col_frame");
+  GtkWidget *scroller = name_to_widget (s, "scroller");
+  GtkWidget *buttons  = name_to_widget (s, "next_prev_hbox");
+  GtkWidget *blanker  = name_to_widget (s, "blanking_table");
 
-  format_time (s, p->dpms_standby);
-  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "dpms_standby_text")),s);
-  format_time (s, p->dpms_suspend);
-  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "dpms_suspend_text")),s);
-  format_time (s, p->dpms_off);
-  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "dpms_off_text")), s);
+  GtkList *list = GTK_LIST (name_to_widget (s, "list"));
+  GList *kids   = gtk_container_children (GTK_CONTAINER (list));
 
-  format_time (s, p->fade_seconds);
-  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "fade_text")), s);
+  gtk_widget_set_sensitive (GTK_WIDGET (head),     sensitive);
+  gtk_widget_set_sensitive (GTK_WIDGET (scroller), sensitive);
+  gtk_widget_set_sensitive (GTK_WIDGET (buttons),  sensitive);
 
-  gtk_toggle_button_set_active (
-                   GTK_TOGGLE_BUTTON (name_to_widget (top, "lock_button")),
-                   p->lock_p);
-  gtk_toggle_button_set_active (
-                   GTK_TOGGLE_BUTTON (name_to_widget (top, "verbose_button")),
-                   p->verbose_p);
-  gtk_toggle_button_set_active (
-                   GTK_TOGGLE_BUTTON (name_to_widget (top, "capture_button")),
-                   p->capture_stderr_p);
-  gtk_toggle_button_set_active (
-                   GTK_TOGGLE_BUTTON (name_to_widget (top, "splash_button")),
-                   p->splash_p);
+  gtk_widget_set_sensitive (GTK_WIDGET (blanker),  blankable);
 
-  gtk_toggle_button_set_active (
-                   GTK_TOGGLE_BUTTON (name_to_widget (top, "dpms_button")),
-                   p->dpms_enabled_p);
+  if (checkable)
+    gtk_widget_show (use);   /* the "Use" column header */
+  else
+    gtk_widget_hide (use);
 
-  gtk_toggle_button_set_active (
-                   GTK_TOGGLE_BUTTON (name_to_widget (top,"grab_desk_button")),
-                   p->grab_desktop_p);
-  gtk_toggle_button_set_active (
-                   GTK_TOGGLE_BUTTON (name_to_widget(top,"grab_video_button")),
-                   p->grab_video_p);
-  gtk_toggle_button_set_active (
-                   GTK_TOGGLE_BUTTON (name_to_widget(top,"grab_image_button")),
-                   p->random_image_p);
-  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "image_text")),
+  while (kids)
+    {
+      GtkBin *line = GTK_BIN (kids->data);
+      GtkContainer *line_hbox = GTK_CONTAINER (line->child);
+      GtkWidget *line_check =
+        GTK_WIDGET (gtk_container_children (line_hbox)->data);
+      
+      if (checkable)
+        gtk_widget_show (line_check);
+      else
+        gtk_widget_hide (line_check);
+
+      kids = kids->next;
+    }
+}
+
+
+static void
+populate_prefs_page (state *s)
+{
+  saver_preferences *p = &s->prefs;
+  char str[100];
+
+# define FMT_MINUTES(NAME,N) \
+    sprintf (str, "%d", ((N) + 59) / (60 * 1000)); \
+    gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, (NAME))), str)
+
+# define FMT_SECONDS(NAME,N) \
+    sprintf (str, "%d", ((N) / 1000)); \
+    gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, (NAME))), str)
+
+  FMT_MINUTES ("timeout_spinbutton",      p->timeout);
+  FMT_MINUTES ("cycle_spinbutton",        p->cycle);
+  FMT_MINUTES ("lock_spinbutton",         p->lock_timeout);
+  FMT_MINUTES ("dpms_standby_spinbutton", p->dpms_standby);
+  FMT_MINUTES ("dpms_suspend_spinbutton", p->dpms_suspend);
+  FMT_MINUTES ("dpms_off_spinbutton",     p->dpms_off);
+  FMT_SECONDS ("fade_spinbutton",         p->fade_seconds);
+
+# undef FMT_MINUTES
+# undef FMT_SECONDS
+
+# define TOGGLE_ACTIVE(NAME,ACTIVEP) \
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (name_to_widget (s,(NAME))),\
+                                (ACTIVEP))
+
+  TOGGLE_ACTIVE ("lock_button",       p->lock_p);
+  TOGGLE_ACTIVE ("verbose_button",    p->verbose_p);
+  TOGGLE_ACTIVE ("capture_button",    p->capture_stderr_p);
+  TOGGLE_ACTIVE ("splash_button",     p->splash_p);
+  TOGGLE_ACTIVE ("dpms_button",       p->dpms_enabled_p);
+  TOGGLE_ACTIVE ("grab_desk_button",  p->grab_desktop_p);
+  TOGGLE_ACTIVE ("grab_video_button", p->grab_video_p);
+  TOGGLE_ACTIVE ("grab_image_button", p->random_image_p);
+  TOGGLE_ACTIVE ("install_button",    p->install_cmap_p);
+  TOGGLE_ACTIVE ("fade_button",       p->fade_p);
+  TOGGLE_ACTIVE ("unfade_button",     p->unfade_p);
+
+# undef TOGGLE_ACTIVE
+
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (s, "image_text")),
                       (p->image_directory ? p->image_directory : ""));
-  gtk_widget_set_sensitive (GTK_WIDGET (name_to_widget (top, "image_text")),
+  gtk_widget_set_sensitive (name_to_widget (s, "image_text"),
                             p->random_image_p);
-  gtk_widget_set_sensitive (
-                       GTK_WIDGET (name_to_widget (top,"image_browse_button")),
+  gtk_widget_set_sensitive (name_to_widget (s, "image_browse_button"),
                             p->random_image_p);
 
-  gtk_toggle_button_set_active (
-                   GTK_TOGGLE_BUTTON (name_to_widget (top, "install_button")),
-                   p->install_cmap_p);
-  gtk_toggle_button_set_active (
-                   GTK_TOGGLE_BUTTON (name_to_widget (top, "fade_button")),
-                   p->fade_p);
-  gtk_toggle_button_set_active (
-                   GTK_TOGGLE_BUTTON (name_to_widget (top, "unfade_button")),
-                   p->unfade_p);
+  /* Map the `saver_mode' enum to mode menu to values. */
+  {
+    GtkOptionMenu *opt = GTK_OPTION_MENU (name_to_widget (s, "mode_menu"));
 
+    int i;
+    for (i = 0; i < countof(mode_menu_order); i++)
+      if (mode_menu_order[i] == p->mode)
+        break;
+    gtk_option_menu_set_history (opt, i);
+    update_list_sensitivity (s);
+  }
 
   {
     Bool found_any_writable_cells = False;
@@ -1611,92 +1955,104 @@ populate_prefs_page (GtkWidget *top, prefs_pair *pair)
 #endif /* HAVE_DPMS_EXTENSION */
 
 
+# define SENSITIZE(NAME,SENSITIVEP) \
+    gtk_widget_set_sensitive (name_to_widget (s, (NAME)), (SENSITIVEP))
+
     /* Blanking and Locking
      */
-    gtk_widget_set_sensitive (
-                           GTK_WIDGET (name_to_widget (top, "lock_label")),
-                           p->lock_p);
-    gtk_widget_set_sensitive (
-                           GTK_WIDGET (name_to_widget (top, "lock_text")),
-                           p->lock_p);
+    SENSITIZE ("lock_spinbutton", p->lock_p);
+    SENSITIZE ("lock_mlabel",     p->lock_p);
 
     /* DPMS
      */
-    gtk_widget_set_sensitive (
-                      GTK_WIDGET (name_to_widget (top, "dpms_frame")),
-                      dpms_supported);
-    gtk_widget_set_sensitive (
-                      GTK_WIDGET (name_to_widget (top, "dpms_button")),
-                      dpms_supported);
-    gtk_widget_set_sensitive (
-                       GTK_WIDGET (name_to_widget (top, "dpms_standby_label")),
-                       dpms_supported && p->dpms_enabled_p);
-    gtk_widget_set_sensitive (
-                       GTK_WIDGET (name_to_widget (top, "dpms_standby_text")),
-                       dpms_supported && p->dpms_enabled_p);
-    gtk_widget_set_sensitive (
-                       GTK_WIDGET (name_to_widget (top, "dpms_suspend_label")),
-                       dpms_supported && p->dpms_enabled_p);
-    gtk_widget_set_sensitive (
-                       GTK_WIDGET (name_to_widget (top, "dpms_suspend_text")),
-                       dpms_supported && p->dpms_enabled_p);
-    gtk_widget_set_sensitive (
-                       GTK_WIDGET (name_to_widget (top, "dpms_off_label")),
-                       dpms_supported && p->dpms_enabled_p);
-    gtk_widget_set_sensitive (
-                       GTK_WIDGET (name_to_widget (top, "dpms_off_text")),
-                       dpms_supported && p->dpms_enabled_p);
+    SENSITIZE ("dpms_frame",              dpms_supported);
+    SENSITIZE ("dpms_button",             dpms_supported);
+    SENSITIZE ("dpms_standby_label",      dpms_supported && p->dpms_enabled_p);
+    SENSITIZE ("dpms_standby_mlabel",     dpms_supported && p->dpms_enabled_p);
+    SENSITIZE ("dpms_standby_spinbutton", dpms_supported && p->dpms_enabled_p);
+    SENSITIZE ("dpms_suspend_label",      dpms_supported && p->dpms_enabled_p);
+    SENSITIZE ("dpms_suspend_mlabel",     dpms_supported && p->dpms_enabled_p);
+    SENSITIZE ("dpms_suspend_spinbutton", dpms_supported && p->dpms_enabled_p);
+    SENSITIZE ("dpms_off_label",          dpms_supported && p->dpms_enabled_p);
+    SENSITIZE ("dpms_off_mlabel",         dpms_supported && p->dpms_enabled_p);
+    SENSITIZE ("dpms_off_spinbutton",     dpms_supported && p->dpms_enabled_p);
 
     /* Colormaps
      */
-    gtk_widget_set_sensitive (
-                           GTK_WIDGET (name_to_widget (top, "cmap_frame")),
-                           found_any_writable_cells);
-    gtk_widget_set_sensitive (
-                           GTK_WIDGET (name_to_widget (top, "install_button")),
-                           found_any_writable_cells);
-    gtk_widget_set_sensitive (
-                           GTK_WIDGET (name_to_widget (top, "fade_button")),
-                           found_any_writable_cells);
-    gtk_widget_set_sensitive (
-                           GTK_WIDGET (name_to_widget (top, "unfade_button")),
-                           found_any_writable_cells);
+    SENSITIZE ("cmap_frame",      found_any_writable_cells);
+    SENSITIZE ("install_button",  found_any_writable_cells);
+    SENSITIZE ("fade_button",     found_any_writable_cells);
+    SENSITIZE ("unfade_button",   found_any_writable_cells);
 
-    gtk_widget_set_sensitive (
-                           GTK_WIDGET (name_to_widget (top, "fade_label")),
-                           (found_any_writable_cells &&
-                            (p->fade_p || p->unfade_p)));
-    gtk_widget_set_sensitive (
-                           GTK_WIDGET (name_to_widget (top, "fade_text")),
-                           (found_any_writable_cells &&
-                            (p->fade_p || p->unfade_p)));
+    SENSITIZE ("fade_label",      (found_any_writable_cells &&
+                                   (p->fade_p || p->unfade_p)));
+    SENSITIZE ("fade_spinbutton", (found_any_writable_cells &&
+                                   (p->fade_p || p->unfade_p)));
+
+# undef SENSITIZE
   }
-
 }
 
 
 static void
-sensitize_demo_widgets (GtkWidget *toplevel, Bool sensitive_p)
+populate_popup_window (state *s)
 {
-  const char *names[] = { "cmd_label", "cmd_text", "enabled",
-                          "visual", "visual_combo",
-                          "demo", "manual" };
-  int i;
-  for (i = 0; i < countof(names); i++)
+  saver_preferences *p = &s->prefs;
+  GtkWidget *parent = name_to_widget (s, "settings_vbox");
+  GtkLabel *doc = GTK_LABEL (name_to_widget (s, "doc"));
+  int list_elt = selected_list_element (s);
+  int hack_number = (list_elt >= 0 && list_elt < p->screenhacks_count
+                     ? s->list_elt_to_hack_number[list_elt]
+                     : -1);
+  screenhack *hack = (hack_number >= 0 ? p->screenhacks[hack_number] : 0);
+  char *doc_string = 0;
+
+# ifdef HAVE_XML
+  if (s->cdata)
     {
-      GtkWidget *w = name_to_widget (toplevel, names[i]);
-      gtk_widget_set_sensitive (GTK_WIDGET(w), sensitive_p);
+      free_conf_data (s->cdata);
+      s->cdata = 0;
     }
 
-  /* I don't know how to handle these yet... */
-  {
-    const char *names2[] = { "cut_menu", "copy_menu", "paste_menu" };
-    for (i = 0; i < countof(names2); i++)
-      {
-        GtkWidget *w = name_to_widget (toplevel, names2[i]);
-        gtk_widget_set_sensitive (GTK_WIDGET(w), False);
-      }
-  }
+  if (hack)
+    {
+      GtkWidget *cmd = GTK_WIDGET (name_to_widget (s, "cmd_text"));
+      const char *cmd_line = gtk_entry_get_text (GTK_ENTRY (cmd));
+      s->cdata = load_configurator (cmd_line, s->debug_p);
+      if (s->cdata && s->cdata->widget)
+        gtk_box_pack_start (GTK_BOX (parent), s->cdata->widget, TRUE, TRUE, 0);
+    }
+
+  doc_string = (s->cdata
+                ? s->cdata->description
+                : 0);
+# else  /* !HAVE_XML */
+  doc_string = "Descriptions not available: no XML support compiled in.";
+# endif /* !HAVE_XML */
+
+  gtk_label_set_text (doc, (doc_string
+                            ? doc_string
+                            : "No description available."));
+}
+
+
+static void
+sensitize_demo_widgets (state *s, Bool sensitive_p)
+{
+  const char *names1[] = { "demo", "settings" };
+  const char *names2[] = { "cmd_label", "cmd_text", "manual",
+                           "visual", "visual_combo" };
+  int i;
+  for (i = 0; i < countof(names1); i++)
+    {
+      GtkWidget *w = name_to_widget (s, names1[i]);
+      gtk_widget_set_sensitive (GTK_WIDGET(w), sensitive_p);
+    }
+  for (i = 0; i < countof(names2); i++)
+    {
+      GtkWidget *w = name_to_widget (s, names2[i]);
+      gtk_widget_set_sensitive (GTK_WIDGET(w), sensitive_p);
+    }
 }
 
 
@@ -1705,43 +2061,61 @@ sensitize_demo_widgets (GtkWidget *toplevel, Bool sensitive_p)
    a string in their font, and resize them to just fit that.
  */
 static void
-fix_text_entry_sizes (GtkWidget *toplevel)
+fix_text_entry_sizes (state *s)
 {
-  const char *names[] = { "timeout_text", "cycle_text", "lock_text",
-                          "dpms_standby_text", "dpms_suspend_text",
-                          "dpms_off_text", "fade_text" };
+  const char * const spinbuttons[] = {
+    "timeout_spinbutton", "cycle_spinbutton", "lock_spinbutton",
+    "dpms_standby_spinbutton", "dpms_suspend_spinbutton",
+    "dpms_off_spinbutton",
+    "-fade_spinbutton" };
   int i;
   int width = 0;
   GtkWidget *w;
 
-  for (i = 0; i < countof(names); i++)
+  for (i = 0; i < countof(spinbuttons); i++)
     {
-      w = GTK_WIDGET (name_to_widget (toplevel, names[i]));
-      if (width == 0)
-        width = gdk_text_width (w->style->font, "00:00:00_", 9);
+      const char *n = spinbuttons[i];
+      int cols = 4;
+      while (*n == '-') n++, cols--;
+      w = GTK_WIDGET (name_to_widget (s, n));
+      width = gdk_text_width (w->style->font, "MMMMMMMM", cols);
       gtk_widget_set_usize (w, width, -2);
     }
 
-  /* Now fix the size of the combo box.
+  /* Now fix the width of the combo box.
    */
-  w = GTK_WIDGET (name_to_widget (GTK_WIDGET (toplevel), "visual_combo"));
+  w = GTK_WIDGET (name_to_widget (s, "visual_combo"));
   w = GTK_COMBO (w)->entry;
-  width = gdk_text_width (w->style->font, "PseudoColor___", 14);
+  width = gdk_string_width (w->style->font, "PseudoColor___");
   gtk_widget_set_usize (w, width, -2);
 
-  /* Now fix the size of the file entry text.
+  /* Now fix the width of the file entry text.
    */
-  w = GTK_WIDGET (name_to_widget (GTK_WIDGET (toplevel), "image_text"));
-  width = gdk_text_width (w->style->font, "MMMMMMMMMMMMMM", 14);
+  w = GTK_WIDGET (name_to_widget (s, "image_text"));
+  width = gdk_string_width (w->style->font, "mmmmmmmmmmmmmm");
   gtk_widget_set_usize (w, width, -2);
 
-#if 0
-  /* Now fix the size of the list.
+  /* Now fix the width of the command line text.
    */
-  w = GTK_WIDGET (name_to_widget (GTK_WIDGET (toplevel), "list"));
-  width = gdk_text_width (w->style->font, "nnnnnnnnnnnnnnnnnnnnnn", 22);
+  w = GTK_WIDGET (name_to_widget (s, "cmd_text"));
+  width = gdk_string_width (w->style->font, "mmmmmmmmmmmmmmmmmmmm");
   gtk_widget_set_usize (w, width, -2);
-#endif
+
+  /* Now fix the height of the list.
+   */
+  {
+    int lines = 10;
+    int height;
+    int leading = 3;  /* approximate is ok... */
+    int border = 2;
+    w = GTK_WIDGET (name_to_widget (s, "list"));
+    height = w->style->font->ascent + w->style->font->descent;
+    height += leading;
+    height *= lines;
+    height += border * 2;
+    w = GTK_WIDGET (name_to_widget (s, "scroller"));
+    gtk_widget_set_usize (w, -2, height);
+  }
 }
 
 
@@ -1809,7 +2183,7 @@ static char *down_arrow_xpm[] = {
 };
 
 static void
-pixmapify_button (GtkWidget *toplevel, int down_p)
+pixmapify_button (state *s, int down_p)
 {
   GdkPixmap *pixmap;
   GdkBitmap *mask;
@@ -1817,8 +2191,7 @@ pixmapify_button (GtkWidget *toplevel, int down_p)
   GtkStyle *style;
   GtkWidget *w;
 
-  w = GTK_WIDGET (name_to_widget (GTK_WIDGET (toplevel),
-                                  (down_p ? "next" : "prev")));
+  w = GTK_WIDGET (name_to_widget (s, (down_p ? "next" : "prev")));
   style = gtk_widget_get_style (w);
   mask = 0;
   pixmap = gdk_pixmap_create_from_xpm_d (w->window, &mask,
@@ -1835,13 +2208,15 @@ pixmapify_button (GtkWidget *toplevel, int down_p)
 static void
 map_next_button_cb (GtkWidget *w, gpointer user_data)
 {
-  pixmapify_button (w, 1);
+  state *s = (state *) user_data;
+  pixmapify_button (s, 1);
 }
 
 static void
 map_prev_button_cb (GtkWidget *w, gpointer user_data)
 {
-  pixmapify_button (w, 0);
+  state *s = (state *) user_data;
+  pixmapify_button (s, 0);
 }
 
 
@@ -1871,13 +2246,10 @@ you_are_not_a_unique_or_beautiful_snowflake (GtkWidget *label,
 /* Feel the love.  Thanks to Nat Friedman for finding this workaround.
  */
 static void
-eschew_gtk_lossage (GtkWidget *toplevel)
+eschew_gtk_lossage (GtkLabel *label)
 {
-  GtkWidgetAuxInfo *aux_info;
-  GtkWidget *label = GTK_WIDGET (name_to_widget (toplevel, "doc"));
-
-  aux_info = g_new0 (GtkWidgetAuxInfo, 1);
-  aux_info->width = label->allocation.width;
+  GtkWidgetAuxInfo *aux_info = g_new0 (GtkWidgetAuxInfo, 1);
+  aux_info->width = GTK_WIDGET (label)->allocation.width;
   aux_info->height = -2;
   aux_info->x = -1;
   aux_info->y = -1;
@@ -1885,136 +2257,73 @@ eschew_gtk_lossage (GtkWidget *toplevel)
   gtk_object_set_data (GTK_OBJECT (label), "gtk-aux-info", aux_info);
 
   gtk_signal_connect (GTK_OBJECT (label), "size_allocate",
-		      you_are_not_a_unique_or_beautiful_snowflake, NULL);
+                      you_are_not_a_unique_or_beautiful_snowflake,
+                      0);
 
-  gtk_widget_queue_resize (label); 
-}
+  gtk_widget_set_usize (GTK_WIDGET (label), -2, -2);
 
-
-char *
-get_hack_blurb (screenhack *hack)
-{
-  char *doc_string;
-  char *prog_name = strdup (hack->command);
-  char *pretty_name = (hack->name
-                       ? strdup (hack->name)
-                       : make_hack_name (hack->command));
-  char doc_name[255], doc_class[255];
-  char *s, *s2;
-
-  for (s = prog_name; *s && !isspace(*s); s++)
-    ;
-  *s = 0;
-  s = strrchr (prog_name, '/');
-  if (s) strcpy (prog_name, s+1);
-
-  sprintf (doc_name,  "hacks.%s.documentation", pretty_name);
-  sprintf (doc_class, "hacks.%s.documentation", prog_name);
-  free (prog_name);
-  free (pretty_name);
-
-  doc_string = get_string_resource (doc_name, doc_class);
-  if (doc_string)
-    {
-      for (s = doc_string; *s; s++)
-        {
-          if (*s == '\n')
-            {
-              /* skip over whitespace at beginning of line */
-              s++;
-              while (*s && (*s == ' ' || *s == '\t'))
-                s++;
-            }
-          else if (*s == ' ' || *s == '\t')
-            {
-              /* compress all other horizontal whitespace. */
-              *s = ' ';
-              s++;
-              for (s2 = s; *s2 && (*s2 == ' ' || *s2 == '\t'); s2++)
-                ;
-              if (s2 > s) strcpy (s, s2);
-              s--;
-            }
-        }
-
-      while (*s && isspace (*s))      /* Strip trailing whitespace */
-        *(--s) = 0;
-
-      /* Delete whitespace at end of each line. */
-      for (; s > doc_string; s--)
-        if (*s == '\n' && (s[-1] == ' ' || s[-1] == '\t'))
-          {
-            for (s2 = s-1;
-                 s2 > doc_string && (*s2 == ' ' || *s2 == '\t');
-                 s2--)
-              ;
-            s2++;
-            if (s2 < s) strcpy (s2, s);
-            s = s2;
-          }
-      
-      /* Delete leading blank lines. */
-      for (s = doc_string; *s == '\n'; s++)
-        ;
-      if (s > doc_string) strcpy (doc_string, s);
-    }
-  else
-    {
-      static int doc_installed = 0;
-      if (doc_installed == 0)
-        {
-          if (get_boolean_resource ("hacks.documentation.isInstalled",
-                                    "hacks.documentation.isInstalled"))
-            doc_installed = 1;
-          else
-            doc_installed = -1;
-        }
-
-      if (doc_installed < 0)
-        doc_string =
-          strdup ("Error:\n\n"
-                  "The documentation strings do not appear to be "
-                  "installed.  This is probably because there is "
-                  "an \"XScreenSaver\" app-defaults file installed "
-                  "that is from an older version of the program. "
-                  "To fix this problem, delete that file, or "
-                  "install a current version (either will work.)");
-      else
-        doc_string = strdup ("");
-    }
-
-  return doc_string;
+  gtk_widget_queue_resize (GTK_WIDGET (label));
 }
 
 
 static void
-populate_demo_window (GtkWidget *toplevel, int which, prefs_pair *pair)
+populate_demo_window (state *s, int list_elt)
 {
-  saver_preferences *p = pair->a;
-  screenhack *hack = (which >= 0 && which < p->screenhacks_count
-		      ? p->screenhacks[which] : 0);
-  GtkFrame *frame = GTK_FRAME (name_to_widget (toplevel, "frame"));
-  GtkLabel *doc = GTK_LABEL (name_to_widget (toplevel, "doc"));
-  GtkEntry *cmd = GTK_ENTRY (name_to_widget (toplevel, "cmd_text"));
-  GtkToggleButton *enabled =
-    GTK_TOGGLE_BUTTON (name_to_widget (toplevel, "enabled"));
-  GtkCombo *vis = GTK_COMBO (name_to_widget (toplevel, "visual_combo"));
+  saver_preferences *p = &s->prefs;
+  screenhack *hack;
+  char *pretty_name;
+  GtkFrame *frame1 = GTK_FRAME (name_to_widget (s, "preview_frame"));
+  GtkFrame *frame2 = GTK_FRAME (name_to_widget (s, "doc_frame"));
+  GtkEntry *cmd    = GTK_ENTRY (name_to_widget (s, "cmd_text"));
+  GtkCombo *vis    = GTK_COMBO (name_to_widget (s, "visual_combo"));
+  GtkWidget *list  = GTK_WIDGET (name_to_widget (s, "list"));
 
-  char *pretty_name = (hack
-                       ? (hack->name
-                          ? strdup (hack->name)
-                          : make_hack_name (hack->command))
-                       : 0);
-  char *doc_string = hack ? get_hack_blurb (hack) : 0;
+  if (p->mode == BLANK_ONLY)
+    {
+      hack = 0;
+      pretty_name = strdup ("Blank Screen");
+      schedule_preview (s, 0);
+    }
+  else if (p->mode == DONT_BLANK)
+    {
+      hack = 0;
+      pretty_name = strdup ("Screen Saver Disabled");
+      schedule_preview (s, 0);
+    }
+  else
+    {
+      int hack_number = (list_elt >= 0 && list_elt < p->screenhacks_count
+                         ? s->list_elt_to_hack_number[list_elt]
+                         : -1);
+      hack = (hack_number >= 0 ? p->screenhacks[hack_number] : 0);
 
-  gtk_frame_set_label (frame, (pretty_name ? pretty_name : ""));
-  gtk_label_set_text (doc, (doc_string ? doc_string : ""));
+      pretty_name = (hack
+                     ? (hack->name
+                        ? strdup (hack->name)
+                        : make_hack_name (hack->command))
+                     : 0);
+
+      if (hack)
+        schedule_preview (s, hack->command);
+      else
+        schedule_preview (s, 0);
+    }
+
+  if (!pretty_name)
+    pretty_name = strdup ("Preview");
+
+  gtk_frame_set_label (frame1, pretty_name);
+  gtk_frame_set_label (frame2, pretty_name);
+
   gtk_entry_set_text (cmd, (hack ? hack->command : ""));
   gtk_entry_set_position (cmd, 0);
 
-  updating_enabled_cb++;
-  gtk_toggle_button_set_active (enabled, (hack ? hack->enabled_p : False));
-  updating_enabled_cb--;
+  {
+    char title[255];
+    sprintf (title, "%s: %.100s Settings",
+             progclass, (pretty_name ? pretty_name : "???"));
+    gtk_window_set_title (GTK_WINDOW (s->popup_widget), title);
+  }
 
   gtk_entry_set_text (GTK_ENTRY (GTK_COMBO (vis)->entry),
                       (hack
@@ -2023,14 +2332,13 @@ populate_demo_window (GtkWidget *toplevel, int which, prefs_pair *pair)
                           : "Any")
                        : ""));
 
-  gtk_container_resize_children (GTK_CONTAINER (GTK_WIDGET (doc)->parent));
-
-  sensitize_demo_widgets (toplevel, (hack ? True : False));
+  sensitize_demo_widgets (s, (hack ? True : False));
 
   if (pretty_name) free (pretty_name);
-  if (doc_string) free (doc_string);
 
-  _selected_hack_number = which;
+  ensure_selected_item_visible (list);
+
+  s->_selected_list_element = list_elt;
 }
 
 
@@ -2053,11 +2361,77 @@ widget_deleter (GtkWidget *widget, gpointer data)
 }
 
 
+static char **sort_hack_cmp_names_kludge;
 static int
-maybe_reload_init_file (GtkWidget *widget, prefs_pair *pair)
+sort_hack_cmp (const void *a, const void *b)
 {
+  if (a == b)
+    return 0;
+  else
+    return strcmp (sort_hack_cmp_names_kludge[*(int *) a],
+                   sort_hack_cmp_names_kludge[*(int *) b]);
+}
+
+
+static void
+initialize_sort_map (state *s)
+{
+  saver_preferences *p = &s->prefs;
+  int i;
+
+  if (s->list_elt_to_hack_number) free (s->list_elt_to_hack_number);
+  if (s->hack_number_to_list_elt) free (s->hack_number_to_list_elt);
+
+  s->list_elt_to_hack_number = (int *)
+    calloc (sizeof(int), p->screenhacks_count + 1);
+  s->hack_number_to_list_elt = (int *)
+    calloc (sizeof(int), p->screenhacks_count + 1);
+
+  /* Initialize table to 1:1 mapping */
+  for (i = 0; i < p->screenhacks_count; i++)
+    s->list_elt_to_hack_number[i] = i;
+
+  /* Generate list of names (once)
+   */
+  sort_hack_cmp_names_kludge = (char **)
+    calloc (sizeof(char *), p->screenhacks_count);
+  for (i = 0; i < p->screenhacks_count; i++)
+    {
+      screenhack *hack = p->screenhacks[i];
+      char *name = (hack->name && *hack->name
+                    ? strdup (hack->name)
+                    : make_hack_name (hack->command));
+      char *str;
+      for (str = name; *str; str++)
+        *str = tolower(*str);
+      sort_hack_cmp_names_kludge[i] = name;
+    }
+
+  /* Sort alphabetically
+   */
+  qsort (s->list_elt_to_hack_number,
+         p->screenhacks_count,
+         sizeof(*s->list_elt_to_hack_number),
+         sort_hack_cmp);
+
+  /* Free names
+   */
+  for (i = 0; i < p->screenhacks_count; i++)
+    free (sort_hack_cmp_names_kludge[i]);
+  free (sort_hack_cmp_names_kludge);
+  sort_hack_cmp_names_kludge = 0;
+
+  /* Build inverse table */
+  for (i = 0; i < p->screenhacks_count; i++)
+    s->hack_number_to_list_elt[s->list_elt_to_hack_number[i]] = i;
+}
+
+
+static int
+maybe_reload_init_file (state *s)
+{
+  saver_preferences *p = &s->prefs;
   int status = 0;
-  saver_preferences *p =  pair->a;
 
   static Bool reentrant_lock = False;
   if (reentrant_lock) return 0;
@@ -2067,7 +2441,7 @@ maybe_reload_init_file (GtkWidget *widget, prefs_pair *pair)
     {
       const char *f = init_file_name();
       char *b;
-      int which;
+      int list_elt;
       GtkList *list;
 
       if (!f || !*f) return 0;
@@ -2076,18 +2450,19 @@ maybe_reload_init_file (GtkWidget *widget, prefs_pair *pair)
                "Warning:\n\n"
                "file \"%s\" has changed, reloading.\n",
                f);
-      warning_dialog (widget, b, False, 100);
+      warning_dialog (s->toplevel_widget, b, False, 100);
       free (b);
 
       load_init_file (p);
+      initialize_sort_map (s);
 
-      which = selected_hack_number (widget);
-      list = GTK_LIST (name_to_widget (widget, "list"));
+      list_elt = selected_list_element (s);
+      list = GTK_LIST (name_to_widget (s, "list"));
       gtk_container_foreach (GTK_CONTAINER (list), widget_deleter, NULL);
-      populate_hack_list (widget, pair);
-      gtk_list_select_item (list, which);
-      populate_prefs_page (widget, pair);
-      populate_demo_window (widget, which, pair);
+      populate_hack_list (s);
+      force_list_select_item (s, list, list_elt, True);
+      populate_prefs_page (s);
+      populate_demo_window (s, list_elt);
       ensure_selected_item_visible (GTK_WIDGET (list));
 
       status = 1;
@@ -2097,6 +2472,655 @@ maybe_reload_init_file (GtkWidget *widget, prefs_pair *pair)
   return status;
 }
 
+
+
+/* Making the preview window have the right X visual (so that GL works.)
+ */
+
+static Visual *get_best_gl_visual (state *);
+
+static GdkVisual *
+x_visual_to_gdk_visual (Visual *xv)
+{
+  GList *gvs = gdk_list_visuals();
+  if (!xv) return gdk_visual_get_system();
+  for (; gvs; gvs = gvs->next)
+    {
+      GdkVisual *gv = (GdkVisual *) gvs->data;
+      if (xv == GDK_VISUAL_XVISUAL (gv))
+        return gv;
+    }
+  fprintf (stderr, "%s: couldn't convert X Visual 0x%lx to a GdkVisual\n",
+           blurb(), (unsigned long) xv->visualid);
+  abort();
+}
+
+static void
+clear_preview_window (state *s)
+{
+  GtkWidget *p;
+  GdkWindow *window;
+
+  if (!s->toplevel_widget) return;  /* very early */
+  p = name_to_widget (s, "preview");
+  window = p->window;
+
+  if (!window) return;
+
+  /* Flush the widget background down into the window, in case a subproc
+     has changed it. */
+  gdk_window_set_background (window, &p->style->bg[GTK_STATE_NORMAL]);
+  gdk_window_clear (window);
+
+  if (s->running_preview_error_p)
+    {
+      const char * const lines[] = { "No Preview", "Available" };
+      int lh = p->style->font->ascent + p->style->font->descent;
+      int y, i;
+      gint w, h;
+      gdk_window_get_size (window, &w, &h);
+      y = (h - (lh * countof(lines))) / 2;
+      y += p->style->font->ascent;
+      for (i = 0; i < countof(lines); i++)
+        {
+          int sw = gdk_string_width (p->style->font, lines[i]);
+          int x = (w - sw) / 2;
+          gdk_draw_string (window, p->style->font,
+                           p->style->fg_gc[GTK_STATE_NORMAL],
+                           x, y, lines[i]);
+          y += lh;
+        }
+    }
+
+  gdk_flush ();
+
+  /* Is there a GDK way of doing this? */
+  XSync (GDK_DISPLAY(), False);
+}
+
+
+static void
+fix_preview_visual (state *s)
+{
+  GtkWidget *widget = name_to_widget (s, "preview");
+  Visual *xvisual = get_best_gl_visual (s);
+  GdkVisual *visual = x_visual_to_gdk_visual (xvisual);
+  GdkVisual *dvisual = gdk_visual_get_system();
+  GdkColormap *cmap = (visual == dvisual
+                       ? gdk_colormap_get_system ()
+                       : gdk_colormap_new (visual, False));
+
+  if (s->debug_p)
+    fprintf (stderr, "%s: using %s visual 0x%lx\n", blurb(),
+             (visual == dvisual ? "default" : "non-default"),
+             (xvisual ? (unsigned long) xvisual->visualid : 0L));
+
+  if (!GTK_WIDGET_REALIZED (widget) ||
+      gtk_widget_get_visual (widget) != visual)
+    {
+      gtk_widget_unrealize (widget);
+      gtk_widget_set_visual (widget, visual);
+      gtk_widget_set_colormap (widget, cmap);
+      gtk_widget_realize (widget);
+    }
+
+  /* Set the Widget colors to be white-on-black. */
+  {
+    GdkWindow *window = widget->window;
+    GtkStyle *style = gtk_style_copy (widget->style);
+    GdkColormap *cmap = gtk_widget_get_colormap (widget);
+    GdkColor *fg = &style->fg[GTK_STATE_NORMAL];
+    GdkColor *bg = &style->bg[GTK_STATE_NORMAL];
+    GdkGC *fgc = gdk_gc_new(window);
+    GdkGC *bgc = gdk_gc_new(window);
+    if (!gdk_color_white (cmap, fg)) abort();
+    if (!gdk_color_black (cmap, bg)) abort();
+    gdk_gc_set_foreground (fgc, fg);
+    gdk_gc_set_background (fgc, bg);
+    gdk_gc_set_foreground (bgc, bg);
+    gdk_gc_set_background (bgc, fg);
+    style->fg_gc[GTK_STATE_NORMAL] = fgc;
+    style->bg_gc[GTK_STATE_NORMAL] = fgc;
+    gtk_widget_set_style (widget, style);
+  }
+
+  gtk_widget_show (widget);
+}
+
+
+/* Subprocesses
+ */
+
+static char *
+subproc_pretty_name (state *s)
+{
+  if (s->running_preview_cmd)
+    {
+      char *ps = strdup (s->running_preview_cmd);
+      char *ss = strchr (ps, ' ');
+      if (ss) *ss = 0;
+      ss = strrchr (ps, '/');
+      if (ss) *ss = 0;
+      else ss = ps;
+      return ss;
+    }
+  else
+    return strdup ("???");
+}
+
+
+static void
+reap_zombies (state *s)
+{
+  int wait_status = 0;
+  pid_t pid;
+  while ((pid = waitpid (-1, &wait_status, WNOHANG|WUNTRACED)) > 0)
+    {
+      if (s->debug_p)
+        {
+          if (pid == s->running_preview_pid)
+            {
+              char *ss = subproc_pretty_name (s);
+              fprintf (stderr, "%s: pid %lu (%s) died\n", blurb(), pid, ss);
+              free (ss);
+            }
+          else
+            fprintf (stderr, "%s: pid %lu died\n", blurb(), pid);
+        }
+    }
+}
+
+
+/* Mostly lifted from driver/subprocs.c */
+static Visual *
+get_best_gl_visual (state *s)
+{
+  Display *dpy = GDK_DISPLAY();
+  pid_t forked;
+  int fds [2];
+  int in, out;
+  char buf[1024];
+
+  char *av[10];
+  int ac = 0;
+
+  av[ac++] = "xscreensaver-gl-helper";
+  av[ac] = 0;
+
+  if (pipe (fds))
+    {
+      perror ("error creating pipe:");
+      return 0;
+    }
+
+  in = fds [0];
+  out = fds [1];
+
+  switch ((int) (forked = fork ()))
+    {
+    case -1:
+      {
+        sprintf (buf, "%s: couldn't fork", blurb());
+        perror (buf);
+        exit (1);
+      }
+    case 0:
+      {
+        int stdout_fd = 1;
+
+        close (in);  /* don't need this one */
+        close (ConnectionNumber (dpy));		/* close display fd */
+
+        if (dup2 (out, stdout_fd) < 0)		/* pipe stdout */
+          {
+            perror ("could not dup() a new stdout:");
+            return 0;
+          }
+
+        execvp (av[0], av);			/* shouldn't return. */
+
+        if (errno != ENOENT)
+          {
+            /* Ignore "no such file or directory" errors, unless verbose.
+               Issue all other exec errors, though. */
+            sprintf (buf, "%s: running %s", blurb(), av[0]);
+            perror (buf);
+          }
+        exit (1);                               /* exits fork */
+        break;
+      }
+    default:
+      {
+        int result = 0;
+        int wait_status = 0;
+
+        FILE *f = fdopen (in, "r");
+        unsigned long v = 0;
+        char c;
+
+        close (out);  /* don't need this one */
+
+        *buf = 0;
+        fgets (buf, sizeof(buf)-1, f);
+        fclose (f);
+
+        /* Wait for the child to die. */
+        waitpid (-1, &wait_status, 0);
+
+        if (1 == sscanf (buf, "0x%x %c", &v, &c))
+          result = (int) v;
+
+        if (result == 0)
+          {
+            if (s->debug_p)
+              fprintf (stderr, "%s: %s did not report a GL visual!\n",
+                       blurb(), av[0]);
+            return 0;
+          }
+        else
+          {
+            Visual *v = id_to_visual (DefaultScreenOfDisplay (dpy), result);
+            if (s->debug_p)
+              fprintf (stderr, "%s: %s says the GL visual is 0x%X.\n",
+                       blurb(), av[0], result);
+            if (!v) abort();
+            return v;
+          }
+      }
+    }
+
+  abort();
+}
+
+
+static void
+kill_preview_subproc (state *s)
+{
+  s->running_preview_error_p = False;
+
+  reap_zombies (s);
+  clear_preview_window (s);
+
+  if (s->subproc_check_timer_id)
+    {
+      gtk_timeout_remove (s->subproc_check_timer_id);
+      s->subproc_check_timer_id = 0;
+      s->subproc_check_countdown = 0;
+    }
+
+  if (s->running_preview_pid)
+    {
+      int status = kill (s->running_preview_pid, SIGTERM);
+      char *ss = subproc_pretty_name (s);
+
+      if (status < 0)
+        {
+          if (errno == ESRCH)
+            {
+              if (s->debug_p)
+                fprintf (stderr, "%s: pid %lu (%s) was already dead.\n",
+                         blurb(), s->running_preview_pid, ss);
+            }
+          else
+            {
+              char buf [1024];
+              sprintf (buf, "%s: couldn't kill pid %lu (%s)",
+                       blurb(), s->running_preview_pid, ss);
+              perror (buf);
+            }
+        }
+      else if (s->debug_p)
+        fprintf (stderr, "%s: killed pid %lu (%s)\n", blurb(),
+                 s->running_preview_pid, ss);
+
+      free (ss);
+      s->running_preview_pid = 0;
+      if (s->running_preview_cmd) free (s->running_preview_cmd);
+      s->running_preview_cmd = 0;
+    }
+
+  reap_zombies (s);
+}
+
+
+static void
+exec_program (const char *cmd, int nice_level)
+{
+  char *av[1024];
+  int ac = 0;
+  char *token = strtok (strdup(cmd), " \t");
+  while (token)
+    {
+      av[ac++] = token;
+      token = strtok(0, " \t");
+    }
+  av[ac] = 0;
+
+  nice (nice_level - nice (0));
+
+  usleep (250000);  /* pause for 1/4th second before launching, to give the
+                       previous program time to die and flush its X buffer,
+                       so we don't get leftover turds on the window. */
+
+  execvp (av[0], av);			/* shouldn't return. */
+
+  {
+    char buf [512];
+    sprintf (buf, "%s: could not execute \"%s\"", blurb(), av[0]);
+    perror (buf);
+  }
+  fflush(stderr);
+  fflush(stdout);
+  exit (1);	/* Note that this only exits a child fork.  */
+}
+
+
+/* Immediately and unconditionally launches the given process,
+   after appending the -window-id option; sets running_preview_pid.
+ */
+static void
+launch_preview_subproc (state *s)
+{
+  saver_preferences *p = &s->prefs;
+  Window id;
+  Bool hairy_p;
+  char *new_cmd;
+  pid_t forked;
+  int nice_level = nice (0) - p->nice_inferior;
+  const char *cmd = s->desired_preview_cmd;
+
+  GtkWidget *pr = name_to_widget (s, "preview");
+  GdkWindow *window = pr->window;
+
+  s->running_preview_error_p = False;
+
+  if (s->preview_suppressed_p)
+    {
+      kill_preview_subproc (s);
+      return;
+    }
+
+  new_cmd = malloc (strlen (cmd) + 40);
+
+  id = (window ? GDK_WINDOW_XWINDOW (window) : 0);
+  if (id == 0)
+    {
+      /* No window id?  No command to run. */
+      free (new_cmd);
+      new_cmd = 0;
+    }
+  else
+    {
+      strcpy (new_cmd, cmd);
+      sprintf (new_cmd + strlen (new_cmd), " -window-id 0x%X", id);
+    }
+
+  hairy_p = (new_cmd && !!strpbrk (new_cmd, "*?$&!<>[];`'\\\"="));
+  if (hairy_p)
+    {
+      /* Command requires a full shell?  Forget it. */
+      free (new_cmd);
+      new_cmd = 0;
+      if (s->debug_p)
+        fprintf (stderr, "%s: command is hairy: not previewing\n", blurb());
+    }
+
+  kill_preview_subproc (s);
+  if (! new_cmd)
+    {
+      s->running_preview_error_p = True;
+      clear_preview_window (s);
+      return;
+    }
+
+  switch ((int) (forked = fork ()))
+    {
+    case -1:
+      {
+        char buf[255];
+        sprintf (buf, "%s: couldn't fork", blurb());
+        perror (buf);
+        s->running_preview_error_p = True;
+        return;
+      }
+    case 0:
+      {
+        close (ConnectionNumber (GDK_DISPLAY()));
+        exec_program (new_cmd, nice_level);
+        abort();
+        break;
+
+      default:
+
+        if (s->running_preview_cmd) free (s->running_preview_cmd);
+        s->running_preview_cmd = strdup (s->desired_preview_cmd);
+        s->running_preview_pid = forked;
+
+        if (s->debug_p)
+          {
+            char *ss = subproc_pretty_name (s);
+            fprintf (stderr, "%s: forked %lu (%s)\n", blurb(), forked, ss);
+            free (ss);
+          }
+        break;
+      }
+    }
+
+  schedule_preview_check (s);
+}
+
+
+/* Modify $DISPLAY and $PATH for the benefit of subprocesses.
+ */
+static void
+hack_environment (state *s)
+{
+  static const char *def_path =
+# ifdef DEFAULT_PATH_PREFIX
+    DEFAULT_PATH_PREFIX;
+# else
+    "";
+# endif
+
+  Display *dpy = GDK_DISPLAY();
+  const char *odpy = DisplayString (dpy);
+  char *ndpy = (char *) malloc(strlen(odpy) + 20);
+  strcpy (ndpy, "DISPLAY=");
+  strcat (ndpy, odpy);
+  if (putenv (ndpy))
+    abort ();
+
+  if (s->debug_p)
+    fprintf (stderr, "%s: %s\n", blurb(), ndpy);
+
+  if (def_path && *def_path)
+    {
+      const char *opath = getenv("PATH");
+      char *npath = (char *) malloc(strlen(def_path) + strlen(opath) + 20);
+      strcpy (npath, "PATH=");
+      strcat (npath, def_path);
+      strcat (npath, ":");
+      strcat (npath, opath);
+
+      if (putenv (npath))
+	abort ();
+
+      if (s->debug_p)
+        fprintf (stderr, "%s: added \"%s\" to $PATH\n", blurb(), def_path);
+    }
+}
+
+
+/* Called from a timer:
+   Launches the currently-chosen subprocess, if it's not already running.
+   If there's a different process running, kills it.
+ */
+static int
+update_subproc_timer (gpointer data)
+{
+  state *s = (state *) data;
+  if (! s->desired_preview_cmd)
+    kill_preview_subproc (s);
+  else if (!s->running_preview_cmd ||
+           !!strcmp (s->desired_preview_cmd, s->running_preview_cmd))
+    launch_preview_subproc (s);
+
+  s->subproc_timer_id = 0;
+  return FALSE;  /* do not re-execute timer */
+}
+
+
+/* Call this when you think you might want a preview process running.
+   It will set a timer that will actually launch that program a second
+   from now, if you haven't changed your mind (to avoid double-click
+   spazzing, etc.)  `cmd' may be null meaning "no process".
+ */
+static void
+schedule_preview (state *s, const char *cmd)
+{
+  int delay = 1000 * 0.5;   /* 1/2 second hysteresis */
+
+  if (s->debug_p)
+    {
+      if (cmd)
+        fprintf (stderr, "%s: scheduling preview \"%s\"\n", blurb(), cmd);
+      else
+        fprintf (stderr, "%s: scheduling preview death\n", blurb());
+    }
+
+  if (s->desired_preview_cmd) free (s->desired_preview_cmd);
+  s->desired_preview_cmd = (cmd ? strdup (cmd) : 0);
+
+  if (s->subproc_timer_id)
+    gtk_timeout_remove (s->subproc_timer_id);
+  s->subproc_timer_id = gtk_timeout_add (delay, update_subproc_timer, s);
+}
+
+
+/* Called from a timer:
+   Checks to see if the subproc that should be running, actually is.
+ */
+static int
+check_subproc_timer (gpointer data)
+{
+  state *s = (state *) data;
+  Bool again_p = True;
+
+  if (s->running_preview_error_p ||   /* already dead */
+      s->running_preview_pid <= 0)
+    {
+      again_p = False;
+    }
+  else
+    {
+      int status;
+      reap_zombies (s);
+      status = kill (s->running_preview_pid, 0);
+      if (status < 0 && errno == ESRCH)
+        s->running_preview_error_p = True;
+
+      if (s->debug_p)
+        {
+          char *ss = subproc_pretty_name (s);
+          fprintf (stderr, "%s: timer: pid %lu (%s) is %s\n", blurb(),
+                   s->running_preview_pid, ss,
+                   (s->running_preview_error_p ? "dead" : "alive"));
+          free (ss);
+        }
+
+      if (s->running_preview_error_p)
+        {
+          clear_preview_window (s);
+          again_p = False;
+        }
+    }
+
+  /* Otherwise, it's currently alive.  We might be checking again, or we
+     might be satisfied. */
+
+  if (--s->subproc_check_countdown <= 0)
+    again_p = False;
+
+  if (again_p)
+    return TRUE;     /* re-execute timer */
+  else
+    {
+      s->subproc_check_timer_id = 0;
+      s->subproc_check_countdown = 0;
+      return FALSE;  /* do not re-execute timer */
+    }
+}
+
+
+/* Call this just after launching a subprocess.
+   This sets a timer that will, five times a second for two seconds,
+   check whether the program is still running.  The assumption here
+   is that if the process didn't stay up for more than a couple of
+   seconds, then either the program doesn't exist, or it doesn't
+   take a -window-id argument.
+ */
+static void
+schedule_preview_check (state *s)
+{
+  int seconds = 2;
+  int ticks = 5;
+
+  if (s->debug_p)
+    fprintf (stderr, "%s: scheduling check\n", blurb());
+
+  if (s->subproc_check_timer_id)
+    gtk_timeout_remove (s->subproc_check_timer_id);
+  s->subproc_check_timer_id =
+    gtk_timeout_add (1000 / ticks,
+                     check_subproc_timer, (gpointer) s);
+  s->subproc_check_countdown = ticks * seconds;
+}
+
+
+static Bool
+screen_blanked_p (void)
+{
+  Atom type;
+  int format;
+  unsigned long nitems, bytesafter;
+  CARD32 *data = 0;
+  Display *dpy = GDK_DISPLAY();
+  Bool blanked_p = False;
+
+  if (XGetWindowProperty (dpy, RootWindow (dpy, 0), /* always screen #0 */
+                          XA_SCREENSAVER_STATUS,
+                          0, 3, False, XA_INTEGER,
+                          &type, &format, &nitems, &bytesafter,
+                          (unsigned char **) &data)
+      == Success
+      && type == XA_INTEGER
+      && nitems >= 3
+      && data)
+    blanked_p = (data[0] == XA_BLANK || data[0] == XA_LOCK);
+
+  if (data) free (data);
+
+  return blanked_p;
+}
+
+/* Wake up every now and then and see if the screen is blanked.
+   If it is, kill off the small-window demo -- no point in wasting
+   cycles by running two screensavers at once...
+ */
+static int
+check_blanked_timer (gpointer data)
+{
+  state *s = (state *) data;
+  Bool blanked_p = screen_blanked_p ();
+  if (blanked_p && s->running_preview_pid)
+    {
+      if (s->debug_p)
+        fprintf (stderr, "%s: screen is blanked: killing preview\n", blurb());
+      kill_preview_subproc (s);
+    }
+
+  return True;  /* re-execute timer */
+}
 
 
 /* Setting window manager icon
@@ -2143,7 +3167,7 @@ mapper (XrmDatabase *db, XrmBindingList bindings, XrmQuarkList quarks,
 
 
 static void
-the_network_is_not_the_computer (GtkWidget *parent)
+the_network_is_not_the_computer (state *s)
 {
   Display *dpy = GDK_DISPLAY();
   char *rversion, *ruser, *rhost;
@@ -2208,11 +3232,11 @@ the_network_is_not_the_computer (GtkWidget *parent)
 	      "xscreensaver as \"%s\".\n"
               "\n"
               "Restart the xscreensaver daemon now?\n",
-	      progname, luser, lhost,
+	      blurb(), luser, lhost,
 	      d,
 	      (ruser ? ruser : "???"), (rhost ? rhost : "???"),
-	      progname,
-	      progname, (ruser ? ruser : "???"),
+	      blurb(),
+	      blurb(), (ruser ? ruser : "???"),
 	      luser);
     }
   else if (rhost && *rhost && !!strcmp (rhost, lhost))
@@ -2230,14 +3254,14 @@ the_network_is_not_the_computer (GtkWidget *parent)
 	       "%s won't work right.\n"
                "\n"
                "Restart the daemon on \"%s\" as \"%s\" now?\n",
-	       progname, luser, lhost,
+	       blurb(), luser, lhost,
 	       d,
 	       (ruser ? ruser : "???"), (rhost ? rhost : "???"),
 	       luser,
-	       progname,
+	       blurb(),
                lhost, luser);
     }
-  else if (!!strcmp (rversion, short_version))
+  else if (!!strcmp (rversion, s->short_version))
     {
       /* Warn that the version numbers don't match.
        */
@@ -2248,14 +3272,14 @@ the_network_is_not_the_computer (GtkWidget *parent)
 	       "is version %s.  This could cause problems.\n"
               "\n"
               "Restart the xscreensaver daemon now?\n",
-	       progname, short_version,
+	       blurb(), s->short_version,
 	       d,
 	       rversion);
     }
 
 
   if (*msg)
-    warning_dialog (parent, msg, True, 1);
+    warning_dialog (s->toplevel_widget, msg, True, 1);
 
   free (msg);
 }
@@ -2267,9 +3291,13 @@ the_network_is_not_the_computer (GtkWidget *parent)
 static int
 demo_ehandler (Display *dpy, XErrorEvent *error)
 {
-  fprintf (stderr, "\nX error in %s:\n", progname);
+  state *s = global_state_kludge;  /* I hate C so much... */
+  fprintf (stderr, "\nX error in %s:\n", blurb());
   if (XmuPrintDefaultErrorMessage (dpy, error, stderr))
-    exit (-1);
+    {
+      kill_preview_subproc (s);
+      exit (-1);
+    }
   else
     fprintf (stderr, " (nonfatal.)\n");
   return 0;
@@ -2293,7 +3321,8 @@ g_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
   if (strstr (message, "unknown window"))
     return;
 
-  fprintf (stderr, "%s: %s-%s: %s%s", blurb(), log_domain,
+  fprintf (stderr, "%s: %s-%s: %s%s", blurb(),
+           (log_domain ? log_domain : progclass),
            (log_level == G_LOG_LEVEL_ERROR    ? "error" :
             log_level == G_LOG_LEVEL_CRITICAL ? "critical" :
             log_level == G_LOG_LEVEL_WARNING  ? "warning" :
@@ -2319,19 +3348,65 @@ static struct poptOption crapplet_options[] = {
 #endif /* HAVE_CRAPPLET */
 #endif /* 0 */
 
-#define USAGE() \
-  fprintf (stderr, "usage: %s [ -display dpy-string ] [ -prefs ]\n", \
-           real_progname)
+const char *usage = "[--display dpy] [--prefs]"
+# ifdef HAVE_CRAPPLET
+                    " [--crapplet]"
+# endif
+                    " [--debug]";
 
 
 static void
-map_window_cb (GtkWidget *w, gpointer user_data)
+map_popup_window_cb (GtkWidget *w, gpointer user_data)
 {
-  Boolean oi = initializing_p;
-  initializing_p = True;
-  eschew_gtk_lossage (w);
-  ensure_selected_item_visible (GTK_WIDGET(name_to_widget(w, "list")));
-  initializing_p = oi;
+  state *s = (state *) user_data;
+  Boolean oi = s->initializing_p;
+  GtkLabel *label = GTK_LABEL (name_to_widget (s, "doc"));
+  s->initializing_p = True;
+  eschew_gtk_lossage (label);
+  s->initializing_p = oi;
+}
+
+
+#if 0
+static void
+print_widget_tree (GtkWidget *w, int depth)
+{
+  int i;
+  for (i = 0; i < depth; i++)
+    fprintf (stderr, "  ");
+  fprintf (stderr, "%s\n", gtk_widget_get_name (w));
+
+  if (GTK_IS_LIST (w))
+    {
+      for (i = 0; i < depth+1; i++)
+        fprintf (stderr, "  ");
+      fprintf (stderr, "...list kids...\n");
+    }
+  else if (GTK_IS_CONTAINER (w))
+    {
+      GList *kids = gtk_container_children (GTK_CONTAINER (w));
+      while (kids)
+        {
+          print_widget_tree (GTK_WIDGET (kids->data), depth+1);
+          kids = kids->next;
+        }
+    }
+}
+#endif /* 0 */
+
+static int
+delayed_scroll_kludge (gpointer data)
+{
+  state *s = (state *) data;
+  GtkWidget *w = GTK_WIDGET (name_to_widget (s, "list"));
+  ensure_selected_item_visible (w);
+
+  /* Oh, this is just fucking lovely, too. */
+  w = GTK_WIDGET (name_to_widget (s, "preview"));
+  gtk_widget_hide (w);
+  gtk_widget_show (w);
+
+  return FALSE;  /* do not re-execute timer */
 }
 
 
@@ -2339,36 +3414,32 @@ int
 main (int argc, char **argv)
 {
   XtAppContext app;
-  prefs_pair Pair, *pair;
-  saver_preferences P, P2, *p, *p2;
+  state S, *s;
+  saver_preferences *p;
   Bool prefs = False;
   int i;
   Display *dpy;
   Widget toplevel_shell;
-  GtkWidget *gtk_window;
   char *real_progname = argv[0];
-  char *s;
+  char window_title[255];
+  Bool crapplet_p = False;
+  char *str;
 
-  initializing_p = True;
+  str = strrchr (real_progname, '/');
+  if (str) real_progname = str+1;
 
-  s = strrchr (real_progname, '/');
-  if (s) real_progname = s+1;
+  s = &S;
+  memset (s, 0, sizeof(*s));
+  s->initializing_p = True;
+  p = &s->prefs;
 
-  p = &P;
-  p2 = &P2;
-  pair = &Pair;
-  pair->a = p;
-  pair->b = p2;
-  memset (p,  0, sizeof (*p));
-  memset (p2, 0, sizeof (*p2));
-
-  global_prefs_pair = pair;  /* I hate C so much... */
+  global_state_kludge = s;  /* I hate C so much... */
 
   progname = real_progname;
 
-  short_version = (char *) malloc (5);
-  memcpy (short_version, screensaver_id + 17, 4);
-  short_version [4] = 0;
+  s->short_version = (char *) malloc (5);
+  memcpy (s->short_version, screensaver_id + 17, 4);
+  s->short_version [4] = 0;
 
 
   /* Register our error message logger for every ``log domain'' known.
@@ -2376,11 +3447,16 @@ main (int argc, char **argv)
      for all of the domains that seem to be in use.
   */
   {
-    const char * const domains[] = { "Gtk", "Gdk", "GLib", "GModule",
-                                     "GThread", "Gnome", "GnomeUI", 0 };
-    for (i = 0; domains[i]; i++)
+    const char * const domains[] = { 0,
+                                     "Gtk", "Gdk", "GLib", "GModule",
+                                     "GThread", "Gnome", "GnomeUI" };
+    for (i = 0; i < countof(domains); i++)
       g_log_set_handler (domains[i], G_LOG_LEVEL_MASK, g_log_handler, 0);
   }
+
+#ifdef DEFAULT_ICONDIR  /* from -D on compile line */
+  add_pixmap_directory (DEFAULT_ICONDIR);
+#endif
 
   /* This is gross, but Gtk understands --display and not -display...
    */
@@ -2406,10 +3482,21 @@ main (int argc, char **argv)
 # else  /* !HAVE_CRAPPLET */
         fprintf (stderr, "%s: not compiled with --crapplet support\n",
                  real_progname);
-        USAGE ();
+        fprintf (stderr, "%s: %s\n", real_progname, usage);
         exit (1);
 # endif /* !HAVE_CRAPPLET */
       }
+  else if (argv[i] &&
+           (!strcmp(argv[i], "--debug") ||
+            !strcmp(argv[i], "-debug") ||
+            !strcmp(argv[i], "-d")))
+    {
+      int j;
+      s->debug_p = True;
+      for (j = i; j < argc; j++)  /* remove it from the list */
+        argv[j] = argv[j+1];
+      argc--;
+    }
 
   /* Let Gtk open the X connection, then initialize Xt to use that
      same connection.  Doctor Frankenstein would be proud.
@@ -2421,7 +3508,7 @@ main (int argc, char **argv)
       GnomeClientFlags flags = 0;
 
       int init_results = gnome_capplet_init ("screensaver-properties",
-                                             short_version,
+                                             s->short_version,
                                              argc, argv, NULL, 0, NULL);
       /* init_results is:
          0 upon successful initialization;
@@ -2514,16 +3601,18 @@ main (int argc, char **argv)
   XtGetApplicationNameAndClass (dpy, &progname, &progclass);
   XSetErrorHandler (demo_ehandler);
 
+  /* Let's just ignore these.  They seem to confuse Irix Gtk... */
+  signal (SIGPIPE, SIG_IGN);
 
   /* After doing Xt-style command-line processing, complain about any
      unrecognized command-line arguments.
    */
   for (i = 1; i < argc; i++)
     {
-      char *s = argv[i];
-      if (s[0] == '-' && s[1] == '-')
-	s++;
-      if (!strcmp (s, "-prefs"))
+      char *str = argv[i];
+      if (str[0] == '-' && str[1] == '-')
+	str++;
+      if (!strcmp (str, "-prefs"))
 	prefs = True;
       else if (crapplet_p)
         /* There are lots of random args that we don't care about when we're
@@ -2532,7 +3621,7 @@ main (int argc, char **argv)
       else
 	{
 	  fprintf (stderr, "%s: unknown option: %s\n", real_progname, argv[i]);
-          USAGE ();
+          fprintf (stderr, "%s: %s\n", real_progname, usage);
           exit (1);
 	}
     }
@@ -2544,7 +3633,7 @@ main (int argc, char **argv)
    */
   p->db = db;
   load_init_file (p);
-  *p2 = *p;
+  initialize_sort_map (s);
 
   /* Now that Xt has been initialized, and the resources have been read,
      we can set our `progname' variable to something more in line with
@@ -2584,12 +3673,13 @@ main (int argc, char **argv)
 
   /* Create the window and all its widgets.
    */
-  gtk_window = create_xscreensaver_demo ();
-  toplevel_widget = gtk_window;
+  s->base_widget     = create_xscreensaver_demo ();
+  s->popup_widget    = create_xscreensaver_settings_dialog ();
+  s->toplevel_widget = s->base_widget;
 
-  /* Set the window's title. */
+
+  /* Set the main window's title. */
   {
-    char title[255];
     char *v = (char *) strdup(strchr(screensaver_id, ' '));
     char *s1, *s2, *s3, *s4;
     s1 = (char *) strchr(v,  ' '); s1++;
@@ -2598,38 +3688,77 @@ main (int argc, char **argv)
     s4 = (char *) strchr(s3, ')');
     *s2 = 0;
     *s4 = 0;
-    sprintf (title, "%.50s %.50s, %.50s", progclass, s1, s3);
-    gtk_window_set_title (GTK_WINDOW (gtk_window), title);
+    sprintf (window_title, "%.50s %.50s, %.50s", progclass, s1, s3);
+    gtk_window_set_title (GTK_WINDOW (s->toplevel_widget), window_title);
+    gtk_window_set_title (GTK_WINDOW (s->popup_widget),    window_title);
     free (v);
+  }
+
+  /* Adjust the (invisible) notebooks on the popup dialog... */
+  {
+    GtkNotebook *notebook =
+      GTK_NOTEBOOK (name_to_widget (s, "opt_notebook"));
+    GtkWidget *std = GTK_WIDGET (name_to_widget (s, "std_button"));
+    int page = 0;
+
+# ifdef HAVE_XML
+    gtk_widget_hide (std);
+# else  /* !HAVE_XML */
+    /* Make the advanced page be the only one available. */
+    gtk_widget_set_sensitive (std, False);
+    std = GTK_WIDGET (name_to_widget (s, "adv_button"));
+    gtk_widget_hide (std);
+    page = 1;
+# endif /* !HAVE_XML */
+
+    gtk_notebook_set_page (notebook, page);
+    gtk_notebook_set_show_tabs (notebook, False);
   }
 
   /* Various other widget initializations...
    */
-  gtk_signal_connect (GTK_OBJECT (gtk_window), "delete_event",
-                      GTK_SIGNAL_FUNC (wm_close_cb), NULL);
+  gtk_signal_connect (GTK_OBJECT (s->toplevel_widget), "delete_event",
+                      GTK_SIGNAL_FUNC (wm_toplevel_close_cb),
+                      (gpointer) s);
+  gtk_signal_connect (GTK_OBJECT (s->popup_widget), "delete_event",
+                      GTK_SIGNAL_FUNC (wm_popup_close_cb),
+                      (gpointer) s);
 
-  populate_hack_list (gtk_window, pair);
-  populate_prefs_page (gtk_window, pair);
-  sensitize_demo_widgets (gtk_window, False);
-  fix_text_entry_sizes (gtk_window);
-  scroll_to_current_hack (gtk_window, pair);
+  populate_hack_list (s);
+  populate_prefs_page (s);
+  sensitize_demo_widgets (s, False);
+  fix_text_entry_sizes (s);
+  scroll_to_current_hack (s);
 
-  gtk_signal_connect (
-              GTK_OBJECT (name_to_widget (GTK_WIDGET (gtk_window), "list")),
-              "map", GTK_SIGNAL_FUNC(map_window_cb), 0);
-  gtk_signal_connect (
-              GTK_OBJECT (name_to_widget (GTK_WIDGET (gtk_window), "prev")),
-              "map", GTK_SIGNAL_FUNC(map_prev_button_cb), 0);
-  gtk_signal_connect (
-              GTK_OBJECT (name_to_widget (GTK_WIDGET (gtk_window), "next")),
-              "map", GTK_SIGNAL_FUNC(map_next_button_cb), 0);
+  gtk_signal_connect (GTK_OBJECT (name_to_widget (s, "cancel_button")),
+                      "map", GTK_SIGNAL_FUNC(map_popup_window_cb),
+                      (gpointer) s);
+
+  gtk_signal_connect (GTK_OBJECT (name_to_widget (s, "prev")),
+                      "map", GTK_SIGNAL_FUNC(map_prev_button_cb),
+                      (gpointer) s);
+  gtk_signal_connect (GTK_OBJECT (name_to_widget (s, "next")),
+                      "map", GTK_SIGNAL_FUNC(map_next_button_cb),
+                      (gpointer) s);
+
+
+  /* Hook up callbacks to the items on the mode menu. */
+  {
+    GtkOptionMenu *opt = GTK_OPTION_MENU (name_to_widget (s, "mode_menu"));
+    GtkMenu *menu = GTK_MENU (gtk_option_menu_get_menu (opt));
+    GList *kids = gtk_container_children (GTK_CONTAINER (menu));
+    for (; kids; kids = kids->next)
+      gtk_signal_connect (GTK_OBJECT (kids->data), "activate",
+                          GTK_SIGNAL_FUNC (mode_menu_item_cb),
+                          (gpointer) s);
+  }
 
 
   /* Handle the -prefs command-line argument. */
   if (prefs)
     {
       GtkNotebook *notebook =
-        GTK_NOTEBOOK (name_to_widget (gtk_window, "notebook"));
+        GTK_NOTEBOOK (name_to_widget (s, "notebook"));
       gtk_notebook_set_page (notebook, 1);
     }
 
@@ -2637,39 +3766,71 @@ main (int argc, char **argv)
   if (crapplet_p)
     {
       GtkWidget *capplet;
-      GtkWidget *top_vbox;
+      GtkWidget *outer_vbox;
+
+      gtk_widget_hide (s->toplevel_widget);
 
       capplet = capplet_widget_new ();
 
-      top_vbox = GTK_BIN (gtk_window)->child;
+      /* Make there be a "Close" button instead of "OK" and "Cancel" */
+      capplet_widget_changes_are_immediate (CAPPLET_WIDGET (capplet));
 
-      gtk_widget_ref (top_vbox);
-      gtk_container_remove (GTK_CONTAINER (gtk_window), top_vbox);
-      GTK_OBJECT_SET_FLAGS (top_vbox, GTK_FLOATING);
+# if 1
+        /* In crapplet-mode, take off the menubar. */
+        gtk_widget_hide (name_to_widget (s, "menubar"));
+# endif
 
-      /* In crapplet-mode, take off the menubar. */
-      gtk_widget_hide (name_to_widget (gtk_window, "menubar"));
+      /* Reparent our top-level container to be a child of the capplet
+         window.
+       */
+      outer_vbox = GTK_BIN (s->toplevel_widget)->child;
+      gtk_widget_ref (outer_vbox);
+      gtk_container_remove (GTK_CONTAINER (s->toplevel_widget),
+                            outer_vbox);
+      GTK_OBJECT_SET_FLAGS (outer_vbox, GTK_FLOATING);
+      gtk_container_add (GTK_CONTAINER (capplet), outer_vbox);
 
-      gtk_container_add (GTK_CONTAINER (capplet), top_vbox);
-      gtk_widget_show (capplet);
-      gtk_widget_hide (gtk_window);
+      /* Find the window above us, and set the title and close handler. */
+      {
+        GtkWidget *window = capplet;
+        while (window && !GTK_IS_WINDOW (window))
+          window = window->parent;
+        if (window)
+          {
+            gtk_window_set_title (GTK_WINDOW (window), window_title);
+            gtk_signal_connect (GTK_OBJECT (window), "delete_event",
+                                GTK_SIGNAL_FUNC (wm_toplevel_close_cb),
+                                (gpointer) s);
+          }
+      }
 
-      /* Hook up the Control Center's redundant Help button, too. */
-      gtk_signal_connect (GTK_OBJECT (capplet), "help",
-                          GTK_SIGNAL_FUNC (doc_menu_cb), 0);
-
-      /* Issue any warnings about the running xscreensaver daemon. */
-      the_network_is_not_the_computer (top_vbox);
+      s->toplevel_widget = capplet;
     }
-  else
 # endif /* HAVE_CRAPPLET */
-    {
-      gtk_widget_show (gtk_window);
-      init_icon (GTK_WIDGET(gtk_window)->window);
 
-      /* Issue any warnings about the running xscreensaver daemon. */
-      the_network_is_not_the_computer (gtk_window);
-    }
+
+  gtk_widget_show (s->toplevel_widget);
+  init_icon (GTK_WIDGET (s->toplevel_widget)->window);  /* after `show' */
+  hack_environment (s);
+  fix_preview_visual (s);
+
+  /* Realize page zero, so that we can diddle the scrollbar when the
+     user tabs back to it -- otherwise, the current hack isn't scrolled
+     to the first time they tab back there, when started with "-prefs".
+     (Though it is if they then tab away, and back again.)
+
+     #### Bah!  This doesn't work.  Gtk eats my ass!  Someone who
+     #### understands this crap, explain to me how to make this work.
+  */
+  gtk_widget_realize (name_to_widget (s, "demos_table"));
+
+
+  gtk_timeout_add (60 * 1000, check_blanked_timer, s);
+
+
+  /* Issue any warnings about the running xscreensaver daemon. */
+  the_network_is_not_the_computer (s);
+
 
   /* Run the Gtk event loop, and not the Xt event loop.  This means that
      if there were Xt timers or fds registered, they would never get serviced,
@@ -2678,7 +3839,27 @@ main (int argc, char **argv)
      Xt so that we could process the command line and use the X resource
      manager.
    */
-  initializing_p = False;
+  s->initializing_p = False;
+
+  /* This totally sucks -- set a timer that whacks the scrollbar 0.5 seconds
+     after we start up.  Otherwise, it always appears scrolled to the top
+     when in crapplet-mode. */
+  gtk_timeout_add (500, delayed_scroll_kludge, s);
+
+
+#if 0
+  /* Load every configurator in turn, to scan them for errors all at once. */
+  {
+    int i;
+    for (i = 0; i < p->screenhacks_count; i++)
+      {
+        screenhack *hack = p->screenhacks[s->hack_number_to_list_elt[i]];
+        conf_data *d = load_configurator (hack->command, False);
+        if (d) free_conf_data (d);
+      }
+  }
+#endif
+
 
 # ifdef HAVE_CRAPPLET
   if (crapplet_p)
@@ -2687,6 +3868,7 @@ main (int argc, char **argv)
 # endif /* HAVE_CRAPPLET */
     gtk_main ();
 
+  kill_preview_subproc (s);
   exit (0);
 }
 

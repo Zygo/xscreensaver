@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="webcollage" _label="WebCollage">
+
+  <command arg="-root"/>
+
+  <number id="timeout" type="slider" arg="-delay %"
+          _label="URL Timeout" _low-label="2 seconds" _high-label="2 minutes"
+          low="2" high="120" default="30"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="30" default="1"
+          convert="invert"/>
+
+  <string id="filter"  _label="Per-Image Filter Program" arg="-filter %"/>
+
+  <string id="filter2" _label="Overall Filter Program" arg="-filter2 %"/>
+
+  <file id="dictionary" _label="Dictionary File" arg="-dictionary %"/>
+
+  <_description>
+This program makes collages out of random images pulled off of the
+World Wide Web.  It finds these images by doing random web searches,
+and then extracting images from the returned pages.  It can also be set
+up to filter the images through the `VidWhacker' program, above, which
+looks really great.
+
+(Note that most of the images it finds are text, and not pictures.
+This is because most of the web is pictures of text.  Which is pretty
+sad.)  Written by Jamie Zawinski.
+  </_description>
+</screensaver>

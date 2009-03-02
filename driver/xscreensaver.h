@@ -84,6 +84,8 @@ struct saver_info {
   Bool screen_blanked_p;	/* Whether the saver is currently active. */
   Window mouse_grab_window;	/* Window holding our mouse grab */
   Window keyboard_grab_window;	/* Window holding our keyboard grab */
+  int mouse_grab_screen;	/* The screen number the mouse grab is on */
+  int keyboard_grab_screen;	/* The screen number the keyboard grab is on */
   Bool fading_possible_p;	/* Whether fading to/from black is possible. */
   Bool throttled_p;             /* Whether we should temporarily just blank
                                    the screen, not run hacks. */
@@ -182,6 +184,7 @@ struct saver_info {
 struct saver_screen_info {
   saver_info *global;
 
+  int number;
   Screen *screen;
   Widget toplevel_shell;
 
@@ -303,6 +306,7 @@ extern void unblank_screen (saver_info *si);
 extern void get_screen_viewport (saver_screen_info *ssi,
                                  int *x_ret, int *y_ret,
                                  int *w_ret, int *h_ret,
+                                 int target_x, int target_y,
                                  Bool verbose_p);
 
 
@@ -318,7 +322,9 @@ extern Bool passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 #endif /* NO_LOCKING */
 
 extern void set_locked_p (saver_info *si, Bool locked_p);
-extern int move_mouse_grab (saver_info *si, Window to, Cursor cursor);
+extern int move_mouse_grab (saver_info *si, Window to, Cursor cursor,
+                            int to_screen_no);
+extern int mouse_screen (saver_info *si);
 
 
 /* =======================================================================

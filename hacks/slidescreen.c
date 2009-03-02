@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 1998 
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 1998, 2001 
  * Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -47,6 +47,12 @@ init_slide (Display *dpy, Window window)
   grid_size = get_integer_resource ("gridSize", "Integer");
   pix_inc = get_integer_resource ("pixelIncrement", "Integer");
   border = get_integer_resource ("internalBorderWidth", "InternalBorderWidth");
+
+  /* Don't let the grid be smaller than 3x3 */
+  if (grid_size > xgwa.width / 3)
+    grid_size = xgwa.width / 3;
+  if (grid_size > xgwa.height / 3)
+    grid_size = xgwa.height / 3;
 
   {
     XColor fgc, bgc;
@@ -140,7 +146,7 @@ init_slide (Display *dpy, Window window)
   if (delay < 0) delay = 0;
   if (delay2 < 0) delay2 = 0;
   if (pix_inc < 1) pix_inc = 1;
-  if (grid_size < 1) grid_size = 1;
+  if (grid_size < 10) grid_size = 10;
 
   gcv.foreground = fg;
   gcv.function = GXcopy;

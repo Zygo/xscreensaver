@@ -311,9 +311,9 @@ static void setup_X (Display * disp, Window win)
 	visual = xwa.visual;
 
 	if (width % 2)
-		width++;
+		width--;
 	if (height % 2)
-		height++;
+		height--;
 
 	gcv.function = GXcopy;
 	gcv.subwindow_mode = IncludeInferiors;

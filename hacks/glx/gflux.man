@@ -5,7 +5,7 @@ gflux \- rippling surface graphics hack
 .B gflux
 [\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
 [\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
-[\-squares \fInum\fP] [\-resolution \fInum\fP] [\-draw \fInum\fP]
+[\-squares \fInum\fP] [\-resolution \fInum\fP] [\-mode \fImode\fP]
 [\-flat \fInum\fP] [\-speed \fInum\fP]
 [\-rotationx \fInum\fP] [\-rotationy \fInum\fP] [\-rotationz \fInum\fP]
 [\-waves \fInum\fP] [\-waveChange \fInum\fP] [\-waveHeight \fInum\fP]
@@ -35,8 +35,20 @@ Specifies the size of the grid in squares. default 19
 .B \-resolution \fInum\fP\fP
 Specifies the wireframe detail of the squares. default 4
 .TP 8
-.B \-draw \fInum\fP\fP
-Specifies the draw method. 0 = wireframe, 1 = solid, 2 = light (default), 3 = checker texture mapped, 4 = PNM image is read from stdin and mapped to the surface
+.B \-mode \fImode\fP\fP
+Specifies the draw method: wireframe; solid (meaning a solid colored
+surface); light (same as solid, but with lighting effects);
+checker (a texture-mapped checkerboard pattern); or grab (meaning
+grab an image to manipulate.)
+
+When grabbing images, the image will be grabbed from the portion of
+the screen underlying the window, or from the system's video input,
+or from a random file on disk, as indicated by
+the \fIgrabDesktopImages\fP, \fIgrabVideoFrames\fP,
+and \fIchooseRandomImages\fP options in the \fI~/.xscreensaver\fP
+file; see
+.BR xscreensaver-demo (1)
+for more details.
 .TP 8
 .B \-flat \fInum\fP\fP
 0 for smooth shading 1 for flat. default 0
@@ -83,6 +95,8 @@ It's not unknown for this and other OpenGL hacks to fail under hardware accelara
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-getimage (1)
 .SH COPYRIGHT
 Copyright \(co 2000 by Josiah Pease.  Permission to use, copy, modify,
 distribute, and sell this software and its documentation for any purpose is

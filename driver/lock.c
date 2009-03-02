@@ -75,6 +75,9 @@ enum passwd_state { pw_read, pw_ok, pw_null, pw_fail, pw_cancel, pw_time };
 
 struct passwd_dialog_data {
 
+  saver_screen_info *prompt_screen;
+  int previous_mouse_x, previous_mouse_y;
+
   enum passwd_state state;
   char typed_passwd [80];
   XtIntervalId timer;
@@ -141,10 +144,18 @@ make_passwd_window (saver_info *si)
   struct passwd *p = getpwuid (getuid ());
   XSetWindowAttributes attrs;
   unsigned long attrmask = 0;
-  Screen *screen = si->default_screen->screen;
   passwd_dialog_data *pw = (passwd_dialog_data *) calloc (1, sizeof(*pw));
-  Colormap cmap = DefaultColormapOfScreen (screen);
+  Screen *screen;
+  Colormap cmap;
   char *f;
+
+  pw->prompt_screen = &si->screens [mouse_screen (si)];
+  if (si->prefs.verbose_p)
+    fprintf (stderr, "%s: %d: creating password dialog.\n",
+             blurb(), pw->prompt_screen->number);
+
+  screen = pw->prompt_screen->screen;
+  cmap = DefaultColormapOfScreen (screen);
 
   pw->ratio = 1.0;
 
@@ -335,9 +346,40 @@ make_passwd_window (saver_info *si)
   attrmask |= CWOverrideRedirect; attrs.override_redirect = True;
   attrmask |= CWEventMask; attrs.event_mask = ExposureMask|KeyPressMask;
 
+  /* We need to remember the mouse position and restore it afterward, or
+     sometimes (perhaps only with Xinerama?) the mouse gets warped to
+     inside the bounds of the lock dialog window.
+   */
+  {
+    Window pointer_root, pointer_child;
+    int root_x, root_y, win_x, win_y;
+    unsigned int mask;
+    pw->previous_mouse_x = 0;
+    pw->previous_mouse_y = 0;
+    if (XQueryPointer (si->dpy, RootWindowOfScreen (pw->prompt_screen->screen),
+                       &pointer_root, &pointer_child,
+                       &root_x, &root_y, &win_x, &win_y, &mask))
+      {
+        pw->previous_mouse_x = root_x;
+        pw->previous_mouse_y = root_y;
+        if (si->prefs.verbose_p)
+          fprintf (stderr, "%s: %d: mouse is at %d,%d.\n",
+                   blurb(), pw->prompt_screen->number,
+                   pw->previous_mouse_x, pw->previous_mouse_y);
+      }
+    else if (si->prefs.verbose_p)
+      fprintf (stderr, "%s: %d: unable to determine mouse position?\n",
+               blurb(), pw->prompt_screen->number);
+  }
+
+  /* Figure out where on the desktop to place the window so that it will
+     actually be visible; this takes into account virtual viewports as
+     well as Xinerama. */
   {
     int x, y, w, h;
-    get_screen_viewport (si->default_screen, &x, &y, &w, &h, False);
+    get_screen_viewport (pw->prompt_screen, &x, &y, &w, &h,
+                         pw->previous_mouse_x, pw->previous_mouse_y,
+                         si->prefs.verbose_p);
     if (si->prefs.debug_p) w /= 2;
     pw->x = x + ((w + pw->width) / 2) - pw->width;
     pw->y = y + ((h + pw->height) / 2) - pw->height;
@@ -371,13 +413,13 @@ make_passwd_window (saver_info *si)
     XGCValues gcv;
     GC gc;
     pw->save_under = XCreatePixmap (si->dpy,
-                                    si->default_screen->screensaver_window,
+                                    pw->prompt_screen->screensaver_window,
                                     pw->width + (pw->border_width*2) + 1,
                                     pw->height + (pw->border_width*2) + 1,
-                                    si->default_screen->current_depth);
+                                    pw->prompt_screen->current_depth);
     gcv.function = GXcopy;
     gc = XCreateGC (si->dpy, pw->save_under, GCFunction, &gcv);
-    XCopyArea (si->dpy, si->default_screen->screensaver_window,
+    XCopyArea (si->dpy, pw->prompt_screen->screensaver_window,
                pw->save_under, gc,
                pw->x - pw->border_width, pw->y - pw->border_width,
                pw->width + (pw->border_width*2) + 1,
@@ -389,11 +431,15 @@ make_passwd_window (saver_info *si)
   XMapRaised (si->dpy, si->passwd_dialog);
   XSync (si->dpy, False);
 
-  move_mouse_grab (si, si->passwd_dialog, si->screens[0].cursor);
+  move_mouse_grab (si, si->passwd_dialog,
+                   pw->prompt_screen->cursor,
+                   pw->prompt_screen->number);
   undo_vp_motion (si);
 
   si->pw_data = pw;
 
+  if (cmap)
+    XInstallColormap (si->dpy, cmap);
   draw_passwd_window (si);
   XSync (si->dpy, False);
 }
@@ -546,10 +592,10 @@ draw_passwd_window (saver_info *si)
 
   /* The logo
    */
-  x1 = pw->shadow_width * 3;
-  y1 = pw->shadow_width * 3;
-  x2 = pw->logo_width - (pw->shadow_width * 6);
-  y2 = pw->logo_height - (pw->shadow_width * 6);
+  x1 = pw->shadow_width * 6;
+  y1 = pw->shadow_width * 6;
+  x2 = pw->logo_width - (pw->shadow_width * 12);
+  y2 = pw->logo_height - (pw->shadow_width * 12);
 
   if (pw->logo_pixmap)
     {
@@ -578,20 +624,22 @@ draw_passwd_window (saver_info *si)
   XSetForeground (si->dpy, gc2, pw->thermo_background);
 
   pw->thermo_field_x = pw->logo_width + pw->shadow_width;
-  pw->thermo_field_y = pw->shadow_width * 3;
-  pw->thermo_field_height = pw->height - (pw->shadow_width * 6);
+  pw->thermo_field_y = pw->shadow_width * 5;
+  pw->thermo_field_height = pw->height - (pw->shadow_width * 10);
 
+#if 0
   /* Solid border inside the logo box. */
   XSetForeground (si->dpy, gc1, pw->foreground);
   XDrawRectangle (si->dpy, si->passwd_dialog, gc1, x1, y1, x2-1, y2-1);
+#endif
 
   /* The shadow around the logo
    */
   draw_shaded_rectangle (si->dpy, si->passwd_dialog,
-			 pw->shadow_width * 2,
-			 pw->shadow_width * 2,
-			 pw->logo_width - (pw->shadow_width * 4),
-			 pw->logo_height - (pw->shadow_width * 4),
+			 pw->shadow_width * 4,
+			 pw->shadow_width * 4,
+			 pw->logo_width - (pw->shadow_width * 8),
+			 pw->logo_height - (pw->shadow_width * 8),
 			 pw->shadow_width,
 			 pw->shadow_bottom, pw->shadow_top);
 
@@ -599,19 +647,19 @@ draw_passwd_window (saver_info *si)
    */
   draw_shaded_rectangle (si->dpy, si->passwd_dialog,
 			 pw->logo_width,
-			 pw->shadow_width * 2,
+			 pw->shadow_width * 4,
 			 pw->thermo_width + (pw->shadow_width * 2),
-			 pw->height - (pw->shadow_width * 4),
+			 pw->height - (pw->shadow_width * 8),
 			 pw->shadow_width,
 			 pw->shadow_bottom, pw->shadow_top);
 
+#if 1
   /* Solid border inside the thermometer. */
   XSetForeground (si->dpy, gc1, pw->foreground);
   XDrawRectangle (si->dpy, si->passwd_dialog, gc1, 
-		  pw->logo_width + pw->shadow_width,
-		  pw->shadow_width * 3,
-		  pw->thermo_width - 1,
-		  pw->height - (pw->shadow_width * 6) - 1);
+		  pw->thermo_field_x, pw->thermo_field_y,
+                  pw->thermo_width - 1, pw->thermo_field_height - 1);
+#endif
 
   /* The shadow around the whole window
    */
@@ -688,7 +736,7 @@ update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
 
   /* the thermometer
    */
-  y = pw->thermo_field_height * (1.0 - pw->ratio);
+  y = (pw->thermo_field_height - 2) * (1.0 - pw->ratio);
   if (y > 0)
     {
       XFillRectangle (si->dpy, si->passwd_dialog, gc2,
@@ -713,17 +761,33 @@ update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
 static void
 destroy_passwd_window (saver_info *si)
 {
+  saver_preferences *p = &si->prefs;
   passwd_dialog_data *pw = si->pw_data;
-  Screen *screen = si->default_screen->screen;
-  Colormap cmap = DefaultColormapOfScreen (screen);
-  Pixel black = BlackPixelOfScreen (screen);
-  Pixel white = WhitePixelOfScreen (screen);
+  saver_screen_info *ssi = pw->prompt_screen;
+  Colormap cmap = DefaultColormapOfScreen (ssi->screen);
+  Pixel black = BlackPixelOfScreen (ssi->screen);
+  Pixel white = WhitePixelOfScreen (ssi->screen);
+  XEvent event;
 
   if (pw->timer)
     XtRemoveTimeOut (pw->timer);
 
-  move_mouse_grab (si, RootWindowOfScreen(si->screens[0].screen),
-                   si->screens[0].cursor);
+  move_mouse_grab (si, RootWindowOfScreen (ssi->screen),
+                   ssi->cursor, ssi->number);
+
+  if (p->verbose_p)
+    fprintf (stderr, "%s: %d: moving mouse back to %d,%d.\n",
+             blurb(), ssi->number,
+             pw->previous_mouse_x, pw->previous_mouse_y);
+
+  XWarpPointer (si->dpy, None, RootWindowOfScreen (ssi->screen),
+                0, 0, 0, 0,
+                pw->previous_mouse_x, pw->previous_mouse_y);
+
+  XSync (si->dpy, False);
+  while (XCheckMaskEvent (si->dpy, PointerMotionMask, &event))
+    if (p->verbose_p)
+      fprintf (stderr, "%s: discarding MotionNotify event.\n", blurb());
 
   if (si->passwd_dialog)
     {
@@ -736,10 +800,9 @@ destroy_passwd_window (saver_info *si)
       XGCValues gcv;
       GC gc;
       gcv.function = GXcopy;
-      gc = XCreateGC (si->dpy, si->default_screen->screensaver_window,
-                      GCFunction, &gcv);
+      gc = XCreateGC (si->dpy, ssi->screensaver_window, GCFunction, &gcv);
       XCopyArea (si->dpy, pw->save_under,
-                 si->default_screen->screensaver_window, gc,
+                 ssi->screensaver_window, gc,
                  0, 0,
                  pw->width + (pw->border_width*2) + 1,
                  pw->height + (pw->border_width*2) + 1,
@@ -785,6 +848,9 @@ destroy_passwd_window (saver_info *si)
 
   memset (pw, 0, sizeof(*pw));
   free (pw);
+
+  if (cmap)
+    XInstallColormap (si->dpy, cmap);
 
   si->pw_data = 0;
 }
@@ -893,37 +959,40 @@ static Bool vp_got_error = False;
 static void
 xfree_lock_mode_switch (saver_info *si, Bool lock_p)
 {
-  static Bool mode_locked_p = False;
+  static Bool any_mode_locked_p = False;
   saver_preferences *p = &si->prefs;
-  int screen = 0;  /* always screen 0 */
+  int screen;
   int event, error;
   Bool status;
   XErrorHandler old_handler;
 
-  if (mode_locked_p == lock_p)
+  if (any_mode_locked_p == lock_p)
     return;
   if (!XF86VidModeQueryExtension (si->dpy, &event, &error))
     return;
 
-  XSync (si->dpy, False);
-  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
-  status = XF86VidModeLockModeSwitch (si->dpy, screen, lock_p);
-  XSync (si->dpy, False);
-  XSetErrorHandler (old_handler);
-  if (vp_got_error) status = False;
+  for (screen = 0; screen < si->nscreens; screen++)
+    {
+      XSync (si->dpy, False);
+      old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+      status = XF86VidModeLockModeSwitch (si->dpy, screen, lock_p);
+      XSync (si->dpy, False);
+      XSetErrorHandler (old_handler);
+      if (vp_got_error) status = False;
 
-  if (status)
-    mode_locked_p = lock_p;
+      if (status)
+        any_mode_locked_p = lock_p;
 
-  if (!status && (p->verbose_p || !lock_p))
-    /* Only print this when verbose, or when we locked but can't unlock.
-       I tried printing this message whenever it comes up, but
-       mode-locking always fails if DontZoom is set in XF86Config. */
-    fprintf (stderr, "%s: unable to %s mode switching!\n",
-             blurb(), (lock_p ? "lock" : "unlock"));
-  else if (p->verbose_p)
-    fprintf (stderr, "%s: %s mode switching.\n",
-             blurb(), (lock_p ? "locked" : "unlocked"));
+      if (!status && (p->verbose_p || !lock_p))
+        /* Only print this when verbose, or when we locked but can't unlock.
+           I tried printing this message whenever it comes up, but
+           mode-locking always fails if DontZoom is set in XF86Config. */
+        fprintf (stderr, "%s: %d: unable to %s mode switching!\n",
+                 blurb(), screen, (lock_p ? "lock" : "unlock"));
+      else if (p->verbose_p)
+        fprintf (stderr, "%s: %d: %s mode switching.\n",
+                 blurb(), screen, (lock_p ? "locked" : "unlocked"));
+    }
 }
 
 static int
@@ -945,40 +1014,47 @@ undo_vp_motion (saver_info *si)
 {
 #ifdef HAVE_XF86VMODE
   saver_preferences *p = &si->prefs;
-  int screen = 0;  /* always screen 0 */
-  saver_screen_info *ssi = &si->screens[screen];
-  int event, error, x, y;
-  Bool status;
+  int screen;
+  int event, error;
 
-  if (ssi->blank_vp_x == -1 && ssi->blank_vp_y == -1)
-    return;
   if (!XF86VidModeQueryExtension (si->dpy, &event, &error))
     return;
-  if (!XF86VidModeGetViewPort (si->dpy, 0, &x, &y))
-    return;
-  if (ssi->blank_vp_x == x && ssi->blank_vp_y == y)
-    return;
+
+  for (screen = 0; screen < si->nscreens; screen++)
+    {
+      saver_screen_info *ssi = &si->screens[screen];
+      int x, y;
+      Bool status;
+
+      if (ssi->blank_vp_x == -1 && ssi->blank_vp_y == -1)
+        break;
+      if (!XF86VidModeGetViewPort (si->dpy, screen, &x, &y))
+        return;
+      if (ssi->blank_vp_x == x && ssi->blank_vp_y == y)
+        return;
     
-  /* We're going to move the viewport.  The mouse has just been grabbed on
-     (and constrained to, thus warped to) the password window, so it is no
-     longer near the edge of the screen.  However, wait a bit anyway, just
-     to make sure the server drains its last motion event, so that the
-     screen doesn't continue to scroll after we've reset the viewport.
-   */
-  XSync (si->dpy, False);
-  usleep (250000);  /* 1/4 second */
-  XSync (si->dpy, False);
+      /* We're going to move the viewport.  The mouse has just been grabbed on
+         (and constrained to, thus warped to) the password window, so it is no
+         longer near the edge of the screen.  However, wait a bit anyway, just
+         to make sure the server drains its last motion event, so that the
+         screen doesn't continue to scroll after we've reset the viewport.
+       */
+      XSync (si->dpy, False);
+      usleep (250000);  /* 1/4 second */
+      XSync (si->dpy, False);
 
-  status = XF86VidModeSetViewPort (si->dpy, screen,
-                                   ssi->blank_vp_x, ssi->blank_vp_y);
+      status = XF86VidModeSetViewPort (si->dpy, screen,
+                                       ssi->blank_vp_x, ssi->blank_vp_y);
 
-  if (!status)
-    fprintf (stderr, "%s: unable to move vp from (%d,%d) back to (%d,%d)!\n",
-             blurb(), x, y, ssi->blank_vp_x, ssi->blank_vp_y);
-  else if (p->verbose_p)
-    fprintf (stderr, "%s: vp moved to (%d,%d); moved it back to (%d,%d).\n",
-             blurb(), x, y, ssi->blank_vp_x, ssi->blank_vp_y);
-
+      if (!status)
+        fprintf (stderr,
+                 "%s: %d: unable to move vp from (%d,%d) back to (%d,%d)!\n",
+                 blurb(), screen, x, y, ssi->blank_vp_x, ssi->blank_vp_y);
+      else if (p->verbose_p)
+        fprintf (stderr,
+                 "%s: %d: vp moved to (%d,%d); moved it back to (%d,%d).\n",
+                 blurb(), screen, x, y, ssi->blank_vp_x, ssi->blank_vp_y);
+    }
 #endif /* HAVE_XF86VMODE */
 }
 
@@ -1225,8 +1301,6 @@ Bool
 unlock_p (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
-  Screen *screen = si->default_screen->screen;
-  Colormap cmap = DefaultColormapOfScreen (screen);
   Bool status;
 
   raise_window (si, True, True, True);
@@ -1238,7 +1312,6 @@ unlock_p (saver_info *si)
     destroy_passwd_window (si);
 
   make_passwd_window (si);
-  if (cmap) XInstallColormap (si->dpy, cmap);
 
   compose_status = calloc (1, sizeof (*compose_status));
 
@@ -1250,9 +1323,6 @@ unlock_p (saver_info *si)
 
   free (compose_status);
   compose_status = 0;
-
-  cmap = si->default_screen->cmap;
-  if (cmap) XInstallColormap (si->dpy, cmap);
 
   return status;
 }

@@ -448,46 +448,90 @@ findNode(Bogie *bl, char *name)
 static int
 lookupHost(ping_target *target) 
 {
-
   struct hostent *hent;
+  struct sockaddr_in *iaddr;
 
-    /* Local Variables */
+  int iip[4];
+  char c;
 
-    struct sockaddr_in *iaddr;
+  iaddr = (struct sockaddr_in *) &(target->address);
+  iaddr->sin_family = AF_INET;
 
-    /* Set up the target address we first assume that the name is the
-       IP address as a string */
+  if (4 == sscanf(target->name, "%d.%d.%d.%d%c",
+                  &iip[0], &iip[1], &iip[2], &iip[3], &c))
+    {
+      /* It's an IP address.
+       */
+      unsigned char ip[4];
 
-    iaddr = (struct sockaddr_in *) &(target->address);
-    iaddr->sin_family = AF_INET;
-    if ((iaddr->sin_addr.s_addr = inet_addr(target->name)) >= 0) {
-      char ip[4];
-      ip[3] = iaddr->sin_addr.s_addr >> 24 & 255;
-      ip[2] = iaddr->sin_addr.s_addr >> 16 & 255;
-      ip[1] = iaddr->sin_addr.s_addr >>  8 & 255;
-      ip[0] = iaddr->sin_addr.s_addr       & 255;
+      ip[0] = iip[0];
+      ip[1] = iip[1];
+      ip[2] = iip[2];
+      ip[3] = iip[3];
+
+      if (ip[3] == 0)
+        {
+          if (debug_p > 1)
+            fprintf (stderr, "%s:   ignoring bogus IP %s\n",
+                     progname, target->name);
+          return 0;
+        }
+
+      iaddr->sin_addr.s_addr = ((ip[3] << 24) |
+                                (ip[2] << 16) |
+                                (ip[1] <<  8) |
+                                (ip[0]));
       hent = gethostbyaddr (ip, 4, AF_INET);
-      if (hent && hent->h_name && *hent->h_name) {
+
+      if (debug_p > 1)
+        fprintf (stderr, "%s:   %s => %s\n",
+                 progname, target->name,
+                 ((hent && hent->h_name && *hent->h_name)
+                  ? hent->h_name : "<unknown>"));
+
+      if (hent && hent->h_name && *hent->h_name)
         target->name = strdup (hent->h_name);
-        return 1;
-      }
     }
+  else
+    {
+      /* It's a host name.
+       */
+      hent = gethostbyname (target->name);
+      if (!hent)
+        {
+          fprintf (stderr, "%s: could not resolve host:  %s\n",
+                   progname, target->name);
+          return 0;
+        }
 
-    /* Conversion of IP address failed, try to look the host up by name */
+      memcpy (&iaddr->sin_addr, hent->h_addr_list[0],
+              sizeof(iaddr->sin_addr));
 
-    hent = gethostbyname(target->name);
-    if (hent == NULL) {
-      fprintf(stderr, "%s: could not resolve host %s\n",
-              progname, target->name);
-      return 0;
+      if (debug_p > 1)
+        fprintf (stderr, "%s:   %s => %d.%d.%d.%d\n",
+                 progname, target->name,
+                 iaddr->sin_addr.s_addr       & 255,
+                 iaddr->sin_addr.s_addr >>  8 & 255,
+                 iaddr->sin_addr.s_addr >> 16 & 255,
+                 iaddr->sin_addr.s_addr >> 24 & 255);
     }
-    memcpy(&iaddr->sin_addr, hent->h_addr_list[0],
-           sizeof(iaddr->sin_addr));
-
-    /* Done */
-
-    return 1;
+  return 1;
 }
+
+
+static void
+print_host (FILE *out, unsigned long ip, const char *name)
+{
+  char ips[50];
+  sprintf (ips, "%d.%d.%d.%d",
+           (ip)       & 255,
+           (ip >>  8) & 255,
+           (ip >> 16) & 255,
+           (ip >> 24) & 255);
+  if (!name || !*name) name = "<unknown>";
+  fprintf (out, "%-16s %s\n", ips, name);
+}
+
 
 /*
  * Create a target for a host.
@@ -523,15 +567,29 @@ newHost(char *name)
     if (! lookupHost(target))
 	goto target_init_error;
 
+    /* Don't ever use loopback (127.0.0) hosts */
+    {
+      struct sockaddr_in *iaddr = (struct sockaddr_in *) &(target->address);
+      unsigned long ip = iaddr->sin_addr.s_addr;
+      if ((ip         & 255) == 127 &&
+          ((ip >>  8) & 255) == 0 &&
+          ((ip >> 16) & 255) == 0)
+        {
+          if (debug_p)
+            fprintf (stderr, "%s:   ignoring loopback host %s\n",
+                     progname, target->name);
+          goto target_init_error;
+        }
+    }
+
     /* Done */
 
     if (debug_p)
       {
         struct sockaddr_in *iaddr = (struct sockaddr_in *) &(target->address);
         unsigned long ip = iaddr->sin_addr.s_addr;
-        fprintf (stderr, "%s:   added host %d.%d.%d.%d (%s)\n", progname,
-                 ip & 255, ip >> 8 & 255, ip >> 16 & 255, ip >> 24 & 255, 
-                 target->name);
+        fprintf (stderr, "%s:   added ", progname);
+        print_host (stderr, ip, target->name);
       }
 
     return target;
@@ -605,8 +663,8 @@ readPingHostsFile(char *fname)
 	/* Get the name and address */
 
 	name = addr = NULL;
-	if ((addr = strtok(buf, " \t\n")) != NULL)
-	    name = strtok(NULL, " \t\n");
+	if ((addr = strtok(buf, " ,;\t\n")) != NULL)
+	    name = strtok(NULL, " ,;\t\n");
 	else
 	    continue;
 
@@ -624,7 +682,22 @@ readPingHostsFile(char *fname)
               addr = NULL;
             }
         }
-        /*printf ("\"%s\" \"%s\"\n", name, addr);*/
+
+        /* If the name is all digits, it's not a name. */
+        if (name)
+          {
+            const char *s;
+            for (s = name; *s; s++)
+              if (*s < '0' || *s > '9')
+                break;
+            if (! *s)
+              {
+                if (debug_p > 1)
+                  fprintf (stderr, "%s:  skipping bogus name \"%s\" (%s)\n",
+                           progname, name, addr);
+                name = NULL;
+              }
+          }
 
 	/* Create a new target using first the name then the address */
 
@@ -672,8 +745,10 @@ delete_duplicate_hosts (ping_target *list)
               if (ip1 == ip2)
                 {
                   if (debug_p)
-                    fprintf (stderr, "%s: deleted duplicate: %s\n",
-                             progname, rest2->next->name);
+                    {
+                      fprintf (stderr, "%s: deleted duplicate: ", progname);
+                      print_host (stderr, ip2, rest2->next->name);
+                    }
                   rest2->next = rest2->next->next;
                 }
             }
@@ -756,6 +831,17 @@ subnetHostsList(int base, int subnet_width)
               (((unsigned char) hent->h_addr_list[0][1]) << 16) |
               (((unsigned char) hent->h_addr_list[0][2]) <<  8) |
               (((unsigned char) hent->h_addr_list[0][3])));
+
+    if (base == ((127 << 24) | 1))
+      {
+        fprintf (stderr,
+                 "%s: unable to determine local subnet address: \"%s\"\n"
+                 "       resolves to loopback address %d.%d.%d.%d.\n",
+                 progname, hostname,
+                 (base >> 24) & 255, (base >> 16) & 255,
+                 (base >>  8) & 255, (base      ) & 255);
+        return NULL;
+      }
 
     for (i = 255; i >= 0; i--) {
         int ip = (base & 0xFFFFFF00) | i;
@@ -840,6 +926,19 @@ init_ping(void)
     pi->targets = parse_mode (socket_initted_p);
     pi->targets = delete_duplicate_hosts (pi->targets);
 
+
+    if (debug_p)
+      {
+        ping_target *t;
+        fprintf (stderr, "%s: Target list:\n", progname);
+        for (t = pi->targets; t; t = t->next)
+          {
+            struct sockaddr_in *iaddr = (struct sockaddr_in *) &(t->address);
+            unsigned long ip = iaddr->sin_addr.s_addr;
+            fprintf (stderr, "%s:   ", progname);
+            print_host (stderr, ip, t->name);
+          }
+      }
 
     /* Make sure there is something to ping */
 
@@ -1395,6 +1494,9 @@ init_sonar(Display *dpy, Window win)
                      h2, s2, v2,
                      si->sweep_colors, &si->sweep_segs,
                      False, True, False);
+
+    if (si->sweep_segs <= 0)
+      si->sweep_segs = 1;
 
     /* Done */
 

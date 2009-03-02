@@ -101,6 +101,26 @@ checkerboard (Screen *screen, Window window)
       }
 }
 
+static void
+hack_subproc_environment (Display *dpy)
+{
+  /* Store $DISPLAY into the environment, so that the $DISPLAY variable that
+     the spawned processes inherit is what we are actually using.
+   */
+  const char *odpy = DisplayString (dpy);
+  char *ndpy = (char *) malloc(strlen(odpy) + 20);
+  strcpy (ndpy, "DISPLAY=");
+  strcat (ndpy, odpy);
+
+  /* Allegedly, BSD 4.3 didn't have putenv(), but nobody runs such systems
+     any more, right?  It's not Posix, but everyone seems to have it. */
+#ifdef HAVE_PUTENV
+  if (putenv (ndpy))
+    abort ();
+#endif /* HAVE_PUTENV */
+}
+
+
 void
 grab_screen_image (Screen *screen, Window window)
 {
@@ -134,6 +154,7 @@ grab_screen_image (Screen *screen, Window window)
   checkerboard (screen, window);
 
   XSync (dpy, True);
+  hack_subproc_environment (dpy);
   system (cmd);
   free (cmd);
   XSync (dpy, True);

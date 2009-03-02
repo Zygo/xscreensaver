@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 1998, 2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -189,6 +189,14 @@ jigsaw_init(Display *dpy, Window window)
   height = xgwa.height / GRID_HEIGHT;
   x_border = (xgwa.width  - (width  * GRID_WIDTH)) / 2;
   y_border = (xgwa.height - (height * GRID_WIDTH)) / 2;
+
+  if (width < 4 || height < 4)
+    {
+      fprintf (stderr, "%s: window too small: %dx%d (need at least %dx%d)\n",
+               progname, xgwa.width, xgwa.height,
+               GRID_WIDTH * 4, GRID_HEIGHT * 4);
+      exit (1);
+    }
 
   if (!state)
     state = (XPoint *) malloc(width * height * sizeof(XPoint));

@@ -89,7 +89,7 @@ static Bool do_wander;
 static XrmOptionDescRec opts[] = {
   { "-text",   ".text",   XrmoptionSepArg, 0 },
   { "-spin",   ".spin",   XrmoptionSepArg, 0 },
-  { "+spin",   ".spin",   XrmoptionNoArg, "" },
+  { "+spin",   ".spin",   XrmoptionNoArg, "False" },
   { "-wander", ".wander", XrmoptionNoArg, "True" },
   { "+wander", ".wander", XrmoptionNoArg, "False" }
 };

@@ -84,8 +84,7 @@ static const char sccsid[] = "@(#)cage.c	4.07 98/01/04 xlockmore";
 # define HACK_DRAW			draw_cage
 # define HACK_RESHAPE			reshape_cage
 # define cage_opts			xlockmore_opts
-# define DEFAULTS			"*cycles:		1       \n"			\
-							"*delay:		25000   \n"			\
+# define DEFAULTS			"*delay:		25000   \n"			\
 							"*showFPS:      False   \n"			\
 							"*wireframe:	False	\n"
 # include "xlockmore.h"		/* from the xscreensaver distribution */

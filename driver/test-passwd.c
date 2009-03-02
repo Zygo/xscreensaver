@@ -14,12 +14,6 @@
    itself.
  */
 
-#define WHICH_PASS   100
-#define WHICH_SPLASH 101
-#define WHICH_TTY    102
-
-#define WHICH        WHICH_PASS
-
 #ifdef HAVE_CONFIG_H
 # include "config.h"
 #endif
@@ -61,7 +55,8 @@ const char *signal_name(int signal) { return "???"; }
 void restore_real_vroot (saver_info *si) {}
 void store_saver_status (saver_info *si) {}
 void saver_exit (saver_info *si, int status, const char *core) { exit(status);}
-int move_mouse_grab (saver_info *si, Window to, Cursor cursor) { return 0; }
+int move_mouse_grab (saver_info *si, Window to, Cursor c, int ts) { return 0; }
+int mouse_screen (saver_info *si) { return 0; }
 
 const char *blurb(void) { return progname; }
 Atom XA_SCREENSAVER, XA_DEMO, XA_PREFS;
@@ -70,6 +65,7 @@ void
 get_screen_viewport (saver_screen_info *ssi,
                      int *x_ret, int *y_ret,
                      int *w_ret, int *h_ret,
+                     int tx, int ty,
                      Bool verbose_p)
 {
   *x_ret = 0;
@@ -99,6 +95,7 @@ static char *fallback[] = {
 int
 main (int argc, char **argv)
 {
+  enum { PASS, SPLASH, TTY } which;
   Widget toplevel_shell = 0;
   saver_screen_info ssip;
   saver_info sip;
@@ -124,6 +121,17 @@ main (int argc, char **argv)
     if (*s) strcpy (progname, s+1);
   }
 
+  if (argc != 2) goto USAGE;
+  else if (!strcmp (argv[1], "pass"))   which = PASS;
+  else if (!strcmp (argv[1], "splash")) which = SPLASH;
+  else if (!strcmp (argv[1], "tty"))    which = TTY;
+  else
+    {
+    USAGE:
+      fprintf (stderr, "usage: %s [ pass | splash | tty ]\n", progname);
+      exit (1);
+    }
+
   /* before hack_uid() for proper permissions */
   lock_priv_init (argc, argv, True);
 
@@ -137,79 +145,81 @@ main (int argc, char **argv)
 
   progclass = "XScreenSaver";
 
-#if (WHICH != WHICH_TTY)
-  toplevel_shell = XtAppInitialize (&si->app, progclass, 0, 0,
-				    &argc, argv, fallback,
-				    0, 0);
+  if (which != TTY)
+    {
+      toplevel_shell = XtAppInitialize (&si->app, progclass, 0, 0,
+                                        &argc, argv, fallback,
+                                        0, 0);
 
-  si->dpy = XtDisplay (toplevel_shell);
-  p->db = XtDatabase (si->dpy);
-  si->default_screen->toplevel_shell = toplevel_shell;
-  si->default_screen->screen = XtScreen(toplevel_shell);
-  si->default_screen->default_visual =
-    si->default_screen->current_visual =
-      DefaultVisualOfScreen(si->default_screen->screen);
-  si->default_screen->screensaver_window =
-    RootWindowOfScreen(si->default_screen->screen);
-  si->default_screen->current_depth =
-    visual_depth(si->default_screen->screen,
-                 si->default_screen->current_visual);
+      si->dpy = XtDisplay (toplevel_shell);
+      p->db = XtDatabase (si->dpy);
+      si->default_screen->toplevel_shell = toplevel_shell;
+      si->default_screen->screen = XtScreen(toplevel_shell);
+      si->default_screen->default_visual =
+        si->default_screen->current_visual =
+        DefaultVisualOfScreen(si->default_screen->screen);
+      si->default_screen->screensaver_window =
+        RootWindowOfScreen(si->default_screen->screen);
+      si->default_screen->current_depth =
+        visual_depth(si->default_screen->screen,
+                     si->default_screen->current_visual);
 
-  db = p->db;
-  XtGetApplicationNameAndClass (si->dpy, &progname, &progclass);
+      db = p->db;
+      XtGetApplicationNameAndClass (si->dpy, &progname, &progclass);
 
-  load_init_file (&si->prefs);
+      load_init_file (&si->prefs);
 
-#endif /* (WHICH != 2) */
+    }
 
   p->verbose_p = True;
 
   while (1)
     {
-#if WHICH == WHICH_PASS
-      if (unlock_p (si))
-	fprintf (stderr, "%s: password correct\n", progname);
+      if (which == PASS)
+        {
+          if (unlock_p (si))
+            fprintf (stderr, "%s: password correct\n", progname);
+          else
+            fprintf (stderr, "%s: password INCORRECT!\n", progname);
+
+          XSync(si->dpy, False);
+          sleep (3);
+        }
+      else if (which == SPLASH)
+        {
+          XEvent event;
+          make_splash_dialog (si);
+          XtAppAddTimeOut (si->app, p->splash_duration + 1000,
+                           idle_timer, (XtPointer) si);
+          while (si->splash_dialog)
+            {
+              XtAppNextEvent (si->app, &event);
+              if (event.xany.window == si->splash_dialog)
+                handle_splash_event (si, &event);
+              XtDispatchEvent (&event);
+            }
+          XSync (si->dpy, False);
+          sleep (1);
+        }
+      else if (which == TTY)
+        {
+          char *pass;
+          char buf[255];
+          struct passwd *p = getpwuid (getuid ());
+          printf ("\n%s: %s's password: ", progname, p->pw_name);
+
+          pass = fgets (buf, sizeof(buf)-1, stdin);
+          if (!pass || !*pass)
+            exit (0);
+          if (pass[strlen(pass)-1] == '\n')
+            pass[strlen(pass)-1] = 0;
+
+          if (passwd_valid_p (pass, True))
+            printf ("%s: Ok!\n", progname);
+          else
+            printf ("%s: Wrong!\n", progname);
+        }
       else
-	fprintf (stderr, "%s: password INCORRECT!\n", progname);
-
-      XSync(si->dpy, False);
-      sleep (3);
-#elif WHICH == WHICH_SPLASH
-      {
-	XEvent event;
-	make_splash_dialog (si);
-	XtAppAddTimeOut (si->app, p->splash_duration + 1000,
-			 idle_timer, (XtPointer) si);
-	while (si->splash_dialog)
-	  {
-	    XtAppNextEvent (si->app, &event);
-	    if (event.xany.window == si->splash_dialog)
-	      handle_splash_event (si, &event);
-	    XtDispatchEvent (&event);
-	  }
-	XSync (si->dpy, False);
-	sleep (1);
-      }
-#elif WHICH == WHICH_TTY
-      {
-        char *pass;
-        char buf[255];
-        struct passwd *p = getpwuid (getuid ());
-        printf ("\n%s: %s's password: ", progname, p->pw_name);
-
-        pass = fgets (buf, sizeof(buf)-1, stdin);
-        if (!pass || !*pass)
-          exit (0);
-        if (pass[strlen(pass)-1] == '\n')
-          pass[strlen(pass)-1] = 0;
-
-        if (passwd_valid_p (pass, True))
-          printf ("%s: Ok!\n", progname);
-        else
-          printf ("%s: Wrong!\n", progname);
-      }
-#else
-# error bogus WHICH value!
-#endif
+        abort();
     }
 }

@@ -113,6 +113,8 @@ static void init_distort(Display *dpy, Window window)
 	if (get_boolean_resource("bounce", "Boolean"))
 		effect = &move_lense;
 
+	XGetWindowAttributes (dpy, window, &xgwa);
+
 	if (effect == NULL && radius == 0 && speed == 0 && number == 0
 		&& !blackhole && !vortex && !magnify && !reflect) {
 /* if no cmdline options are given, randomly choose one of:
@@ -201,6 +203,9 @@ static void init_distort(Display *dpy, Window window)
                 abort(); break;
 		}
 
+        /* but if the window is small, reduce default radius */
+        if (xgwa.width < radius * 8)
+          radius = xgwa.width/8;
 	}
 
 	if (delay < 0)
@@ -222,7 +227,6 @@ static void init_distort(Display *dpy, Window window)
 	if (draw == NULL)
 		draw = &plain_draw;
 
-	XGetWindowAttributes (dpy, window, &xgwa);
 	black_pixel = BlackPixelOfScreen( xgwa.screen );
 
 	gcv.function = GXcopy;

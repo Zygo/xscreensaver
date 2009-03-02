@@ -114,6 +114,12 @@
  */
 #undef HAVE_XF86VMODE_GAMMA_RAMP
 
+/*  Define this if you have the Xinerama extension.  This is standard on
+ *  sufficiently-recent XFree86 systems, and possibly elsewhere.  (It's
+ *  available if the file /usr/include/X11/extensions/Xinerama.h exists.)
+ */
+#undef HAVE_XINERAMA
+
 /*  Define this if you have a Linux-like /proc/interrupts file which can be
  *  examined to determine when keyboard activity has occurred.
  */
@@ -141,6 +147,10 @@
     xscreensaver control panel in the Gnome Control Center (gnomecc).
  */
 #undef HAVE_CRAPPLET
+
+/*  Define this if you have the XML library.
+ */
+#undef HAVE_XML
 
 /*  Define this if you have the XPM library installed.  Some of the demos can
  *  make use of this if it is available.
@@ -185,11 +195,10 @@
 #undef HAVE_DOUBLE_BUFFER_EXTENSION
 
 /*  Some screenhacks like to run an external program to generate random pieces
-    of text; set this to the one you like ("yow" and "fortune" are the most
-    likely prospects.)  Note that this is just the default; X resources can
-    be used to override it.
+    of text; set this to the one you like.  Note that this is just the
+    default; X resources can be used to override it.
  */
-#define ZIPPY_PROGRAM "fortune"
+#define FORTUNE_PROGRAM "fortune"
 
 
 

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2001 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -169,6 +169,23 @@ Atom XA_DEMO, XA_PREFS, XA_EXIT, XA_LOCK, XA_BLANK;
 
 
 static XrmOptionDescRec options [] = {
+
+  { "-verbose",		   ".verbose",		XrmoptionNoArg, "on" },
+  { "-silent",		   ".verbose",		XrmoptionNoArg, "off" },
+
+  /* xscreensaver-demo uses this one */
+  { "-nosplash",	   ".splash",		XrmoptionNoArg, "off" },
+  { "-no-splash",	   ".splash",		XrmoptionNoArg, "off" },
+
+  /* useful for debugging */
+  { "-no-capture-stderr",  ".captureStderr",	XrmoptionNoArg, "off" },
+
+  /* There's really no reason to have these command-line args; they just
+     lead to confusion when the .xscreensaver file has conflicting values.
+   */
+#if 0
+  { "-splash",		   ".splash",		XrmoptionNoArg, "on" },
+  { "-capture-stderr",	   ".captureStderr",	XrmoptionNoArg, "on" },
   { "-timeout",		   ".timeout",		XrmoptionSepArg, 0 },
   { "-cycle",		   ".cycle",		XrmoptionSepArg, 0 },
   { "-lock-mode",	   ".lock",		XrmoptionNoArg, "on" },
@@ -180,11 +197,7 @@ static XrmOptionDescRec options [] = {
   { "-visual",		   ".visualID",		XrmoptionSepArg, 0 },
   { "-install",		   ".installColormap",	XrmoptionNoArg, "on" },
   { "-no-install",	   ".installColormap",	XrmoptionNoArg, "off" },
-  { "-verbose",		   ".verbose",		XrmoptionNoArg, "on" },
-  { "-silent",		   ".verbose",		XrmoptionNoArg, "off" },
   { "-timestamp",	   ".timestamp",	XrmoptionNoArg, "on" },
-  { "-capture-stderr",	   ".captureStderr",	XrmoptionNoArg, "on" },
-  { "-no-capture-stderr",  ".captureStderr",	XrmoptionNoArg, "off" },
   { "-xidle-extension",	   ".xidleExtension",	XrmoptionNoArg, "on" },
   { "-no-xidle-extension", ".xidleExtension",	XrmoptionNoArg, "off" },
   { "-mit-extension",	   ".mitSaverExtension",XrmoptionNoArg, "on" },
@@ -193,15 +206,9 @@ static XrmOptionDescRec options [] = {
   { "-no-sgi-extension",   ".sgiSaverExtension",XrmoptionNoArg, "off" },
   { "-proc-interrupts",	   ".procInterrupts",	XrmoptionNoArg, "on" },
   { "-no-proc-interrupts", ".procInterrupts",	XrmoptionNoArg, "off" },
-  { "-splash",		   ".splash",		XrmoptionNoArg, "on" },
-  { "-no-splash",	   ".splash",		XrmoptionNoArg, "off" },
-  { "-nosplash",	   ".splash",		XrmoptionNoArg, "off" },
   { "-idelay",		   ".initialDelay",	XrmoptionSepArg, 0 },
   { "-nice",		   ".nice",		XrmoptionSepArg, 0 },
-
-  /* Actually these are built in to Xt, but just to be sure... */
-  { "-synchronous",	   ".synchronous",	XrmoptionNoArg, "on" },
-  { "-xrm",		   NULL,		XrmoptionResArg, NULL }
+#endif /* 0 */
 };
 
 static char *defaults[] = {
@@ -219,34 +226,21 @@ do_help (saver_info *si)
   fflush (stdout);
   fflush (stderr);
   fprintf (stdout, "\
-xscreensaver %s, copyright (c) 1991-2001 by Jamie Zawinski <jwz@jwz.org>\n\
-The standard Xt command-line options are accepted; other options include:\n\
+xscreensaver %s, copyright (c) 1991-2002 by Jamie Zawinski <jwz@jwz.org>\n\
 \n\
-    -timeout <minutes>       When the screensaver should activate.\n\
-    -cycle <minutes>         How long to let each hack run before switching.\n\
-    -lock-mode               Require a password before deactivating.\n\
-    -lock-timeout <minutes>  Grace period before locking; default 0.\n\
-    -visual <id-or-class>    Which X visual to run on.\n\
-    -install                 Install a private colormap.\n\
-    -verbose                 Be loud.\n\
-    -no-splash               Don't display a splash-screen at startup.\n\
-    -help                    This message.\n\
+  All xscreensaver configuration is via the `~/.xscreensaver' file.\n\
+  Rather than editing that file by hand, just run `xscreensaver-demo':\n\
+  that program lets you configure the screen saver graphically,\n\
+  including timeouts, locking, and display modes.\n\
 \n\
-See the manual for other options and X resources.\n\
-\n\
-The `xscreensaver' program should be left running in the background.\n\
-Use the `xscreensaver-demo' and `xscreensaver-command' programs to\n\
-manipulate a running xscreensaver.\n\
-\n\
-The `*programs' resource controls which graphics demos will be launched by\n\
-the screensaver.  See `man xscreensaver' or the web page for more details.\n\
-\n\
-Just getting started?  Try this:\n\
+  Just getting started?  Try this:\n\
 \n\
         xscreensaver &\n\
         xscreensaver-demo\n\
 \n\
-For updates, check http://www.jwz.org/xscreensaver/\n\
+  For updates, online manual, and FAQ, please see the web page:\n\
+\n\
+       http://www.jwz.org/xscreensaver/\n\
 \n",
 	  si->version);
   fflush (stdout);
@@ -635,7 +629,7 @@ print_banner (saver_info *si)
 
   if (p->verbose_p)
     fprintf (stderr,
-	     "%s %s, copyright (c) 1991-2001 "
+	     "%s %s, copyright (c) 1991-2002 "
 	     "by Jamie Zawinski <jwz@jwz.org>.\n",
 	     progname, si->version);
 
@@ -710,6 +704,7 @@ initialize_per_screen_info (saver_info *si, Widget toplevel_shell)
       saver_screen_info *ssi = &si->screens[i];
       ssi->global = si;
       ssi->screen = ScreenOfDisplay (si->dpy, i);
+      ssi->number = i;
 
       /* Note: we can't use the resource ".visual" because Xt is SO FUCKED. */
       ssi->default_visual =
@@ -915,7 +910,9 @@ maybe_reload_init_file (saver_info *si)
 
       /* If the DPMS settings in the init file have changed,
          change the settings on the server to match. */
-      sync_server_dpms_settings (si->dpy, p->dpms_enabled_p,
+      sync_server_dpms_settings (si->dpy,
+                                 (p->dpms_enabled_p  &&
+                                  p->mode != DONT_BLANK),
                                  p->dpms_standby / 1000,
                                  p->dpms_suspend / 1000,
                                  p->dpms_off / 1000,
@@ -950,12 +947,24 @@ main_loop (saver_info *si)
 	    fprintf (stderr, "%s: demoing %d at %s.\n", blurb(),
 		     si->selection_mode, timestring());
 	  else
-	    if (p->verbose_p)
-	      fprintf (stderr, "%s: blanking screen at %s.\n", blurb(),
-		       timestring());
+            fprintf (stderr, "%s: blanking screen at %s.\n", blurb(),
+                     timestring());
 	}
 
       maybe_reload_init_file (si);
+
+      if (p->mode == DONT_BLANK)
+        {
+          if (p->verbose_p)
+            fprintf (stderr, "%s: idle with blanking disabled at %s.\n",
+                     blurb(), timestring());
+
+          /* Go around the loop and wait for the next bout of idleness,
+             or for the init file to change, or for a remote command to
+             come in, or something.
+           */
+          continue;
+        }
 
       if (! blank_screen (si))
         {
@@ -995,6 +1004,8 @@ main_loop (saver_info *si)
 
 
 #ifndef NO_LOCKING
+      /* Maybe start locking the screen.
+       */
       {
         Time lock_timeout = p->lock_timeout;
 
@@ -1038,6 +1049,8 @@ main_loop (saver_info *si)
 	maybe_reload_init_file (si);
 
 #ifndef NO_LOCKING
+        /* Maybe unlock the screen.
+         */
 	if (si->locked_p)
 	  {
 	    saver_screen_info *ssi = si->default_screen;
@@ -1140,6 +1153,7 @@ main (int argc, char **argv)
   print_banner (si);
 
   load_init_file (p);  /* must be before initialize_per_screen_info() */
+  blurb_timestamp_p = p->timestamp_p;  /* kludge */
   initialize_per_screen_info (si, shell); /* also sets si->fading_possible_p */
 
   /* We can only issue this warnings now. */
@@ -1156,7 +1170,6 @@ main (int argc, char **argv)
   lock_initialization (si, &argc, argv);
 
   if (p->xsync_p) XSynchronize (si->dpy, True);
-  blurb_timestamp_p = p->timestamp_p;  /* kludge */
 
   if (p->verbose_p) analyze_display (si);
   initialize_server_extensions (si);
@@ -1168,7 +1181,9 @@ main (int argc, char **argv)
   init_sigchld ();
 
   disable_builtin_screensaver (si, True);
-  sync_server_dpms_settings (si->dpy, p->dpms_enabled_p,
+  sync_server_dpms_settings (si->dpy,
+                             (p->dpms_enabled_p  &&
+                              p->mode != DONT_BLANK),
                              p->dpms_standby / 1000,
                              p->dpms_suspend / 1000,
                              p->dpms_off / 1000,
@@ -1661,13 +1676,13 @@ analyze_display (saver_info *si)
     const char *name; const char *desc; Bool useful_p;
   } exts[] = {
 
-   { "SCREEN_SAVER",                            "SGI Screen-Saver",
+   { "SCREEN_SAVER", /* underscore */           "SGI Screen-Saver",
 #     ifdef HAVE_SGI_SAVER_EXTENSION
         True
 #     else
         False
 #     endif
-   }, { "SCREEN-SAVER",                         "SGI Screen-Saver",
+   }, { "SCREEN-SAVER", /* dash */              "SGI Screen-Saver",
 #     ifdef HAVE_SGI_SAVER_EXTENSION
         True
 #     else
@@ -1732,20 +1747,31 @@ analyze_display (saver_info *si)
    },
   };
 
-  fprintf (stderr, "%s: running on display \"%s\"\n", blurb(),
-	   DisplayString(si->dpy));
-  fprintf (stderr, "%s: vendor is %s, %d\n", blurb(),
+  fprintf (stderr, "%s: running on display \"%s\" (%d screen%s).\n",
+           blurb(),
+	   DisplayString(si->dpy),
+           si->nscreens, (si->nscreens == 1 ? "" : "s"));
+  fprintf (stderr, "%s: vendor is %s, %d.\n", blurb(),
 	   ServerVendor(si->dpy), VendorRelease(si->dpy));
 
   fprintf (stderr, "%s: useful extensions:\n", blurb());
   for (i = 0; i < countof(exts); i++)
     {
       int op = 0, event = 0, error = 0;
-      if (XQueryExtension (si->dpy, exts[i].name, &op, &event, &error))
-	fprintf (stderr, "%s:  %s%s\n", blurb(),
-                 exts[i].desc,
-                 (exts[i].useful_p ? "" :
-                  "       \t<== unsupported at compile-time!"));
+      char buf [255];
+      int j;
+      if (!XQueryExtension (si->dpy, exts[i].name, &op, &event, &error))
+        continue;
+      sprintf (buf, "%s:   ", blurb());
+      j = strlen (buf);
+      strcat (buf, exts[i].desc);
+      if (!exts[i].useful_p)
+        {
+          int k = j + 18;
+          while (strlen (buf) < k) strcat (buf, " ");
+          strcat (buf, "<-- not supported at compile time!");
+        }
+      fprintf (stderr, "%s\n", buf);
     }
 
   for (i = 0; i < si->nscreens; i++)
@@ -1770,15 +1796,16 @@ analyze_display (saver_info *si)
 	  for (j = 0; j < 32; j++)
 	    if (colormapped_depths & (1 << j))
 	      fprintf (stderr, " %d", j);
-	  fprintf (stderr, "\n");
+	  fprintf (stderr, ".\n");
 	}
       if (non_mapped_depths)
 	{
-	  fprintf (stderr, "%s: screen %d non-mapped depths:", blurb(), i);
+	  fprintf (stderr, "%s: screen %d non-colormapped depths:",
+                   blurb(), i);
 	  for (j = 0; j < 32; j++)
 	    if (non_mapped_depths & (1 << j))
 	      fprintf (stderr, " %d", j);
-	  fprintf (stderr, "\n");
+	  fprintf (stderr, ".\n");
 	}
     }
 }

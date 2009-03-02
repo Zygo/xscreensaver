@@ -229,7 +229,7 @@ static XrmOptionDescRec opts[] = {
   { "-molecule", ".molecule", XrmoptionSepArg, 0 },
   { "-timeout",".timeout",XrmoptionSepArg, 0 },
   { "-spin",   ".spin",   XrmoptionSepArg, 0 },
-  { "+spin",   ".spin",   XrmoptionNoArg, "" },
+  { "+spin",   ".spin",   XrmoptionNoArg, "False" },
   { "-wander", ".wander", XrmoptionNoArg, "True" },
   { "+wander", ".wander", XrmoptionNoArg, "False" },
   { "-labels", ".labels", XrmoptionNoArg, "True" },

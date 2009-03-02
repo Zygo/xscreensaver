@@ -42,6 +42,16 @@ doc_menu_cb                            (GtkMenuItem     *menuitem,
                                         gpointer         user_data);
 
 void
+switch_page_cb                         (GtkNotebook     *notebook,
+                                        GtkNotebookPage *page,
+                                        gint             page_num,
+                                        gpointer         user_data);
+
+void
+pref_changed_cb                        (GtkWidget       *widget,
+                                        gpointer         user_data);
+
+void
 run_next_cb                            (GtkButton       *button,
                                         gpointer         user_data);
 
@@ -54,29 +64,21 @@ run_this_cb                            (GtkButton       *button,
                                         gpointer         user_data);
 
 void
-apply_manual_cb                        (GtkButton       *button,
-                                        gpointer         user_data);
-
-void
-prefs_ok_cb                            (GtkButton       *button,
-                                        gpointer         user_data);
-
-void
-prefs_cancel_cb                        (GtkButton       *button,
-                                        gpointer         user_data);
-
-void
 manual_cb                              (GtkButton       *button,
                                         gpointer         user_data);
 
 void
-notebook_switch_page_cb                (GtkNotebook     *notebook,
-                                        GtkNotebookPage *page,
-                                        gint             page_num,
+settings_cb                            (GtkButton       *button,
                                         gpointer         user_data);
 
 void
-pref_changed_cb                        (GtkToggleButton *togglebutton,
+browse_image_dir_cb                    (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+settings_switch_page_cb                (GtkNotebook     *notebook,
+                                        GtkNotebookPage *page,
+                                        gint             page_num,
                                         gpointer         user_data);
 
 void
@@ -84,5 +86,17 @@ enabled_cb                             (GtkToggleButton *togglebutton,
                                         gpointer         user_data);
 
 void
-browse_image_dir_cb                    (GtkButton       *button,
+settings_adv_cb                        (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+settings_std_cb                        (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+settings_ok_cb                         (GtkButton       *button,
+                                        gpointer         user_data);
+
+void
+settings_cancel_cb                     (GtkButton       *button,
                                         gpointer         user_data);

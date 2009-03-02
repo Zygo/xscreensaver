@@ -54,11 +54,11 @@ COMPILATION PROBLEMS:
 
     Before doing this, you'll need to nuke `config.cache'.
 
-    If you get errors about not being able to find Motif or Gtk (the
-    Xm/ or gtk/ header files), and you can't find them on your system,
+    If you get errors about not being able to find Gtk or Motif (the
+     gtk/ or Xm/ header files), and you can't find them on your system,
     then your system is horked and your vendor is lame.  Perhaps the
     problem is that you don't have some kind of ``development option''
-    installed.  Xt/is free and available on all systems; Xm/ (Motif)
+    installed.  Xt/ is free and available on all systems; Xm/ (Motif)
     is available on all commercial systems except SunOS 4.x and some
     early releases of Solaris.  Linux and other free Unixes systems
     usually come with Gtk, but a Motif clone is also available from
@@ -152,17 +152,11 @@ RUN-TIME PROBLEMS:
            diagnostics; the `-no-capture' option prevents the data from being
            displayed on the screensaver window as well.)
 
-           You also might want to use the `-timestamp' option, which will
-           cause the xscreensaver messages to include the time at which
-           they were printed.
-
         *  If the problem is intermittent, you might want to capture the
            log information to a file and examine it later.  For example,
            you could start it from your login script like this (csh syntax):
 
-              ( cd ~/src/xscreensaver/ ; \
-                xscreensaver -sync -verbose -timestamp -no-capture \
-                >>&LOG & )
+               xscreensaver -sync -verbose -no-capture >>& saverlog &
 
         *  Hackers only: If you're feeling adventurous enough to run gdb
            on the xscreensaver driver process itself, make sure you've

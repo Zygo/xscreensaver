@@ -77,6 +77,7 @@ static XrmOptionDescRec default_options [] = {
   { "-install",	".installColormap",	XrmoptionNoArg, "True" },
   { "-noinstall",".installColormap",	XrmoptionNoArg, "False" },
   { "-visual",	".visualID",		XrmoptionSepArg, 0 },
+  { "-window-id", ".windowID",		XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 
@@ -86,6 +87,7 @@ static char *default_defaults[] = {
   "*mono:		false",
   "*installColormap:	false",
   "*visualID:		default",
+  "*windowID:		",
   "*desktopGrabber:	xscreensaver-getimage %s",
   0
 };
@@ -275,9 +277,9 @@ pick_visual (Screen *screen)
 
 
 /* Notice when the user has requested a different visual or colormap
-   on a pre-existing window (e.g., "-root -visual truecolor") and 
-   complain, since when drawing on an existing window, we have no 
-   choice about these things.
+   on a pre-existing window (e.g., "-root -visual truecolor" or
+   "-window-id 0x2c00001 -install") and complain, since when drawing
+   on an existing window, we have no choice about these things.
  */
 static void
 visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
@@ -346,6 +348,7 @@ main (int argc, char **argv)
   Visual *visual;
   Colormap cmap;
   Bool root_p;
+  Window on_window = 0;
   XEvent event;
   Boolean dont_clear /*, dont_map */;
   char version[255];
@@ -404,7 +407,8 @@ main (int argc, char **argv)
       int i;
       int x = 18;
       int end = 78;
-      Bool help_p = !strcmp(argv[1], "-help");
+      Bool help_p = (!strcmp(argv[1], "-help") ||
+                     !strcmp(argv[1], "--help"));
       fprintf (stderr, "%s\n", version);
       for (s = progclass; *s; s++) fprintf(stderr, " ");
       fprintf (stderr, "  http://www.jwz.org/xscreensaver/\n\n");
@@ -427,7 +431,44 @@ main (int argc, char **argv)
 	  if (argp) fprintf (stderr, " <arg>");
 	  if (i != merged_options_size - 1) fprintf (stderr, ", ");
 	}
+
       fprintf (stderr, ".\n");
+
+#if 0
+      if (help_p)
+        {
+          fprintf (stderr, "\nResources:\n\n");
+          for (i = 0; i < merged_options_size; i++)
+            {
+              const char *opt = merged_options [i].option;
+              const char *res = merged_options [i].specifier + 1;
+              const char *val = merged_options [i].value;
+              char *s = get_string_resource ((char *) res, (char *) res);
+
+              if (s)
+                {
+                  int L = strlen(s);
+                while (L > 0 && (s[L-1] == ' ' || s[L-1] == '\t'))
+                  s[--L] = 0;
+                }
+
+              fprintf (stderr, "    %-16s %-18s ", opt, res);
+              if (merged_options [i].argKind == XrmoptionSepArg)
+                {
+                  fprintf (stderr, "[%s]", (s ? s : "?"));
+                }
+              else
+                {
+                  fprintf (stderr, "%s", (val ? val : "(null)"));
+                  if (val && s && !strcasecmp (val, s))
+                    fprintf (stderr, " [default]");
+                }
+              fprintf (stderr, "\n");
+            }
+          fprintf (stderr, "\n");
+        }
+#endif
+
       exit (help_p ? 0 : 1);
     }
 
@@ -439,7 +480,24 @@ main (int argc, char **argv)
 
   root_p = get_boolean_resource ("root", "Boolean");
 
-  if (root_p)
+  {
+    char *s = get_string_resource ("windowID", "WindowID");
+    if (s && *s)
+      on_window = get_integer_resource ("windowID", "WindowID");
+    if (s) free (s);
+  }
+
+  if (on_window)
+    {
+      XWindowAttributes xgwa;
+      window = (Window) on_window;
+      XtDestroyWidget (toplevel);
+      XGetWindowAttributes (dpy, window, &xgwa);
+      cmap = xgwa.colormap;
+      visual = xgwa.visual;
+      visual_warning (screen, window, visual, cmap, True);
+    }
+  else if (root_p)
     {
       XWindowAttributes xgwa;
       window = RootWindowOfScreen (XtScreen (toplevel));
@@ -550,7 +608,7 @@ main (int argc, char **argv)
       XClearWindow (dpy, window);
     }
 
-  if (!root_p)
+  if (!root_p && !on_window)
     /* wait for it to be mapped */
     XIfEvent (dpy, &event, MapNotify_event_p, (XPointer) window);
 

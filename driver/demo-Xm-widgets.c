@@ -46,6 +46,7 @@
 #endif /* HAVE_XMCOMBOBOX */
 
 #include <stdio.h>
+#include <stdlib.h>
 
 
 
@@ -457,6 +458,111 @@ create_demos_page (Widget parent)
 static Widget
 create_options_page (Widget parent)
 {
+  /* This is what the layout is today:
+
+     Form (horizontal)
+       Label ("Saver Timeout")
+       Label ("Cycle Timeout")
+       Label ("Fade Duration")
+       Label ("Fade Ticks")
+       Label ("Lock Timeout")
+       Label ("Password Timeout")
+
+       Text (timeout)
+       Text (cycle)
+       Text (fade seconds)
+       Text (fade ticks)
+       Text (lock)
+       Text (passwd)
+
+       Toggle ("Verbose")
+       Toggle ("Install Colormap")
+       Toggle ("Fade Colormap")
+       Toggle ("Unfade Colormap")
+       Toggle ("Require Password")
+
+       HR
+       Button ("OK")
+       Button ("Cancel")
+   */
+
+  /* This is what it should be:
+
+     Form (horizontal)
+       Form (vertical) ("column1")
+         Frame
+           Label ("Blanking and Locking")
+           Form
+             Label ("Blank After")
+             Label ("Cycle After")
+             Text ("Blank After")
+             Text ("Cycle After")
+             HR
+             Checkbox ("Require Password")
+             Label ("Lock After")
+             Text ("Lock After")
+         Frame
+           Label ("Image Manipulation")
+           Form
+             Checkbox ("Grab Desktop Images")
+             Checkbox ("Grab Video Frames")
+             Checkbox ("Choose Random Image")
+             Text (pathname)
+             Button ("Browse")
+         Frame
+           Label ("Diagnostics")
+           Form
+             Checkbox ("Verbose Diagnostics")
+             Checkbox ("Display Subprocess Errors")
+             Checkbox ("Display Splash Screen at Startup")
+       Form (vertical) ("column2")
+         Frame
+           Label ("Display Power Management")
+           Form
+             Checkbox ("Power Management Enabled")
+             Label ("Standby After")
+             Label ("Suspend After")
+             Label ("Off After")
+             Text ("Standby After")
+             Text ("Suspend After")
+             Text ("Off After")
+         Frame
+           Label ("Colormaps")
+           Form
+             Checkbox ("Install Colormap")
+             HR
+             Checkbox ("Fade To Black When Blanking")
+             Checkbox ("Fade From Black When Unblanking")
+             Label ("Fade Duration")
+             Text ("Fade Duration")
+
+       timeoutLabel
+       cycleLabel
+       fadeSecondsLabel
+       fadeTicksLabel
+       lockLabel
+       passwdLabel
+
+       timeoutText
+       cycleText
+       fadeSecondsText
+       fadeTicksText
+       lockText
+       passwdText
+
+       verboseToggle
+       cmapToggle
+       fadeToggle
+       unfadeToggle
+       lockToggle
+
+       separator
+       OK
+       Cancel
+   */
+
+
+
   Arg av[64];
   int ac = 0;
   Widget children[100];

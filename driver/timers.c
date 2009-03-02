@@ -99,6 +99,7 @@ notice_events (saver_info *si, Window window, Bool top_p)
   unsigned long events;
   Window root, parent, *kids;
   unsigned int nkids;
+  int screen_no;
 
   if (XtWindowToWidget (si->dpy, window))
     /* If it's one of ours, don't mess up its event mask. */
@@ -108,6 +109,11 @@ notice_events (saver_info *si, Window window, Bool top_p)
     return;
   if (window == root)
     top_p = False;
+
+  /* Figure out which screen this window is on, for the diagnostics. */
+  for (screen_no = 0; screen_no < si->nscreens; screen_no++)
+    if (root == RootWindowOfScreen (si->screens[screen_no].screen))
+      break;
 
   XGetWindowAttributes (si->dpy, window, &attrs);
   events = ((attrs.all_event_masks | attrs.do_not_propagate_mask)
@@ -131,8 +137,8 @@ notice_events (saver_info *si, Window window, Bool top_p)
   if (top_p && p->verbose_p && (events & KeyPressMask))
     {
       /* Only mention one window per tree (hack hack). */
-      fprintf (stderr, "%s: selected KeyPress on 0x%lX\n", blurb(),
-	       (unsigned long) window);
+      fprintf (stderr, "%s: %d: selected KeyPress on 0x%lX\n",
+               blurb(), screen_no, (unsigned long) window);
       top_p = False;
     }
 
@@ -336,8 +342,14 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
       int root_x, root_y, x, y;
       unsigned int mask;
 
-      XQueryPointer (si->dpy, ssi->screensaver_window, &root, &child,
-		     &root_x, &root_y, &x, &y, &mask);
+      if (!XQueryPointer (si->dpy, ssi->screensaver_window, &root, &child,
+                          &root_x, &root_y, &x, &y, &mask))
+        {
+          /* If XQueryPointer() returns false, the mouse is not on this screen.
+           */
+          root_x = -1;
+          root_y = -1;
+        }
 
       if (root_x == ssi->poll_mouse_last_root_x &&
 	  root_y == ssi->poll_mouse_last_root_y &&
@@ -349,23 +361,37 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
 
 #ifdef DEBUG_TIMERS
       if (p->verbose_p)
-	if (root_x == ssi->poll_mouse_last_root_x &&
-	    root_y == ssi->poll_mouse_last_root_y &&
-	    child  == ssi->poll_mouse_last_child)
-	  fprintf (stderr, "%s: modifiers changed at %s on screen %d.\n",
-		   blurb(), timestring(), i);
-	else
-	  fprintf (stderr, "%s: pointer moved at %s on screen %d.\n",
-		   blurb(), timestring(), i);
-
-# if 0
-      fprintf (stderr, "%s: old: %d %d 0x%x ; new: %d %d 0x%x\n",
-               blurb(), 
-               ssi->poll_mouse_last_root_x,
-               ssi->poll_mouse_last_root_y,
-               (unsigned int) ssi->poll_mouse_last_child,
-               root_x, root_y, (unsigned int) child);
-# endif /* 0 */
+        {
+          if (root_x == ssi->poll_mouse_last_root_x &&
+              root_y == ssi->poll_mouse_last_root_y &&
+              child  == ssi->poll_mouse_last_child)
+            fprintf (stderr, "%s: %d: modifiers changed: 0x%04x -> 0x%04x.\n",
+                     blurb(), i, ssi->poll_mouse_last_mask, mask);
+          else
+            {
+              fprintf (stderr, "%s: %d: pointer moved: ", blurb(), i);
+              if (ssi->poll_mouse_last_root_x == -1)
+                fprintf (stderr, "off screen");
+              else
+                fprintf (stderr, "%d,%d",
+                         ssi->poll_mouse_last_root_x,
+                         ssi->poll_mouse_last_root_y);
+              fprintf (stderr, " -> ");
+              if (root_x == -1)
+                fprintf (stderr, "off screen.");
+              else
+                fprintf (stderr, "%d,%d", root_x, root_y);
+              if (ssi->poll_mouse_last_root_x == -1 || root_x == -1)
+                fprintf (stderr, ".\n");
+              else
+#   undef ABS
+#   define ABS(x)((x)<0?-(x):(x))
+                fprintf (stderr, " (%d,%d).\n",
+                         ABS(ssi->poll_mouse_last_root_x - root_x),
+                         ABS(ssi->poll_mouse_last_root_y - root_y));
+# undef ABS
+            }
+        }
 
 #endif /* DEBUG_TIMERS */
 
@@ -424,8 +450,13 @@ check_for_clock_skew (saver_info *si)
 
 #ifdef DEBUG_TIMERS
   if (p->verbose_p)
-    fprintf (stderr, "%s: checking wall clock (%d).\n", blurb(),
-             (si->last_wall_clock_time == 0 ? 0 : shift));
+    {
+      int i = (si->last_wall_clock_time == 0 ? 0 : shift);
+      fprintf (stderr,
+               "%s: checking wall clock for hibernation (%d:%02d:%02d).\n",
+               blurb(),
+               (i / (60 * 60)), ((i / 60) % 60), (i % 60));
+    }
 #endif /* DEBUG_TIMERS */
 
   if (si->last_wall_clock_time != 0 &&
@@ -692,14 +723,46 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 #ifdef DEBUG_TIMERS
 	if (p->verbose_p)
 	  {
+            Window root, window;
+            int x, y;
+            const char *type = 0;
 	    if (event.xany.type == MotionNotify)
-	      fprintf (stderr,"%s: MotionNotify at %s\n",blurb(),timestring());
+              {
+                type = "MotionNotify";
+                root = event.xmotion.root;
+                window = event.xmotion.window;
+                x = event.xmotion.x_root;
+                y = event.xmotion.y_root;
+              }
 	    else if (event.xany.type == KeyPress)
-	      fprintf (stderr, "%s: KeyPress seen on 0x%X at %s\n", blurb(),
-		       (unsigned int) event.xkey.window, timestring ());
+              {
+                type = "KeyPress";
+                root = event.xkey.root;
+                window = event.xkey.window;
+                x = y = -1;
+              }
 	    else if (event.xany.type == ButtonPress)
-	      fprintf (stderr, "%s: ButtonPress seen on 0x%X at %s\n", blurb(),
-		       (unsigned int) event.xbutton.window, timestring ());
+              {
+                type = "ButtonPress";
+                root = event.xkey.root;
+                window = event.xkey.window;
+                x = event.xmotion.x_root;
+                y = event.xmotion.y_root;
+              }
+
+            if (type)
+              {
+                int i;
+                for (i = 0; i < si->nscreens; i++)
+                  if (root == RootWindowOfScreen (si->screens[i].screen))
+                    break;
+                fprintf (stderr,"%s: %d: %s on 0x%x",
+                         blurb(), i, type, (unsigned long) window);
+                if (x == -1)
+                  fprintf (stderr, "\n");
+                else
+                  fprintf (stderr, " at %d,%d.\n", x, y);
+              }
 	  }
 #endif /* DEBUG_TIMERS */
 
@@ -1088,7 +1151,9 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
 
   /* If the DPMS settings on the server have changed, change them back to
      what ~/.xscreensaver says they should be. */
-  sync_server_dpms_settings (si->dpy, p->dpms_enabled_p,
+  sync_server_dpms_settings (si->dpy,
+                             (p->dpms_enabled_p  &&
+                              p->mode != DONT_BLANK),
                              p->dpms_standby / 1000,
                              p->dpms_suspend / 1000,
                              p->dpms_off / 1000,

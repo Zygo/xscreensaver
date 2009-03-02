@@ -266,7 +266,7 @@ launch_text_generator (sws_configuration *sc)
         oprogram = cmd;
       else
 #endif
-        oprogram = ZIPPY_PROGRAM;
+        oprogram = FORTUNE_PROGRAM;
     }
 
  program = (char *) malloc (strlen (oprogram) + 10);
@@ -721,6 +721,9 @@ init_sws (ModeInfo *mi)
     }
 
   launch_text_generator (sc);
+
+  /* one more reshape, after line_height has been computed */
+  reshape_sws (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 }
 
 

@@ -150,7 +150,7 @@
     likely prospects.)  Note that this is just the default; X resources can
     be used to override it.
  */
-#define ZIPPY_PROGRAM "fortune"
+#define FORTUNE_PROGRAM "fortune"
 
 
 

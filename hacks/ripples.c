@@ -436,12 +436,20 @@ setup_X(Display * disp, Window win)
   bigheight = xwa.height;
   visual = xwa.visual;
 
-#if 1 /* I'm not entirely sure if I need this */
+
+  /* This causes buffer_map to be 1 pixel taller and wider than orig_map,
+     which can cause the two XImages to have different bytes-per-line,
+     which causes stair-stepping.  So this better not be necessary...
+     -jwz, 23-Nov-01
+   */
+#if 0 /* I'm not entirely sure if I need this */
   if (bigwidth % 2)
     bigwidth++;
   if (bigheight % 2)
     bigheight++;
 #endif
+
+
   width = bigwidth / 2;
   height = bigheight / 2;
 

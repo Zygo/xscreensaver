@@ -66,8 +66,7 @@ static const char sccsid[] = "@(#)stairs.c	4.07 97/11/24 xlockmore";
 # define HACK_DRAW			draw_stairs
 # define HACK_RESHAPE		reshape_stairs
 # define stairs_opts		xlockmore_opts
-# define DEFAULTS			"*cycles:		1       \n"			\
-							"*delay:		20000   \n"			\
+# define DEFAULTS			"*delay:		20000   \n"			\
 							"*showFPS:      False   \n"			\
 							"*wireframe:	False	\n"
 # include "xlockmore.h"		/* from the xscreensaver distribution */

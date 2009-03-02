@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 2001
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -23,5 +23,13 @@ extern void grab_screen_image (Screen *, Window);
    (assuming a screen image has been grabbed onto it.)  Yes, this is a
    total kludge. */
 extern Bool use_subwindow_mode_p(Screen *screen, Window window);
+
+/* Whether the given window is:
+   - the real root window;
+   - the virtual root window;
+   - a direct child of the root window;
+   - a direct child of the window manager's decorations.
+ */
+extern Bool top_level_window_p(Screen *screen, Window window);
 
 #endif /* __GRABSCREEN_H__ */

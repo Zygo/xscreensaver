@@ -64,8 +64,7 @@ static Atom XA_WM_PROTOCOLS, XA_WM_DELETE_WINDOW;
 static void
 usage (void)
 {
-  fprintf (stderr,
-           "usage: %s [--geom =WxH+X+Y | --fullscreen | --root] [--wire]\n",
+  fprintf (stderr, "usage: %s [--wire] [--geom G | --root | --window-id ID]\n",
            progname);
   exit (1);
 }
@@ -111,6 +110,7 @@ int init_view(int *argc, char *argv[])
   int ix;
   int fullscreen = 0;
   int on_root = 0;
+  Window on_window = 0;
 
   int undef = -65536;
   int x = undef, y = undef;
@@ -149,6 +149,17 @@ int init_view(int *argc, char *argv[])
           if (geom || fullscreen) usage();
           on_root = 1;
         }
+      else if (!strcmp(argv[ix], "-window-id") &&
+               *argc > ix+1)
+        {
+          unsigned long id;
+          char c;
+          if (1 != sscanf (argv[ix+1], "%lu %c", &id, &c) &&
+              1 != sscanf (argv[ix+1], "0x%lx %c", &id, &c))
+            usage();
+          ix++;
+          on_window = (Window) id;
+        }
       else if (!strcmp(argv[ix], "-fullscreen") ||
                !strcmp(argv[ix], "-full"))
         {
@@ -174,9 +185,9 @@ int init_view(int *argc, char *argv[])
   XA_WM_PROTOCOLS = XInternAtom (dpy, "WM_PROTOCOLS", False);
   XA_WM_DELETE_WINDOW = XInternAtom (dpy, "WM_DELETE_WINDOW", False);
 
-  if (on_root)
+  if (on_root || on_window)
     {
-      window = RootWindow (dpy, screen);
+      window = (on_window ? on_window : RootWindow (dpy, screen));
       XGetWindowAttributes (dpy, window, &xgwa);
       visual = xgwa.visual;
       w = xgwa.width;
@@ -346,7 +357,7 @@ int init_view(int *argc, char *argv[])
   return 1;
 }
 
-static void setup_window()
+static void setup_window(void)
 {
   glEnable(GL_CULL_FACE);
   glEnable(GL_LIGHTING);

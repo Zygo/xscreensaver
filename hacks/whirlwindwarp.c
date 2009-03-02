@@ -83,7 +83,7 @@ static Bool init_whirlwindwarp(Display *dpy, Window window) {
   return 1;
 }
 
-static float myrnd() { /* between -1.0 and +1.0 */
+static float myrnd(void) { /* between -1.0 and +1.0 */
   return 2.0*((float)((random()%10000000)/10000000.0)-0.5);
 }
 

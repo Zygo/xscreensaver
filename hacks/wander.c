@@ -187,7 +187,8 @@ char *defaults [] =
 XrmOptionDescRec options [] =
 {
     { "-advance", ".advance", XrmoptionSepArg, 0 },
-    { "-circles", ".circles", XrmoptionSepArg, 0 },
+    { "-circles", ".circles",   XrmoptionNoArg, "True" },
+    { "-no-circles",".circles", XrmoptionNoArg, "False" },
     { "-density", ".density", XrmoptionSepArg, 0 },
     { "-length",  ".length",  XrmoptionSepArg, 0 },
     { "-delay",   ".delay",   XrmoptionSepArg, 0 },

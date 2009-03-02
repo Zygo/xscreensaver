@@ -20,6 +20,8 @@ struct screenhack {
   char *command;
 };
 
+typedef enum { RANDOM_HACKS, ONE_HACK, BLANK_ONLY, DONT_BLANK } saver_mode;
+
 typedef struct saver_preferences saver_preferences;
 
 
@@ -56,6 +58,9 @@ struct saver_preferences {
 
   screenhack **screenhacks;	/* the programs to run */
   int screenhacks_count;
+
+  saver_mode mode;		/* hack-selection mode */
+  int selected_hack;		/* in one_hack mode, this is the one */
 
   int nice_inferior;		/* nice value for subprocs */
   int inferior_memory_limit;	/* setrlimit(LIMIT_AS) value for subprocs */

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="maze" _label="Maze">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-solve-delay %"
+          _label="Solve Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="10000" default="5000"
+          convert="invert"/>
+
+  <number id="pre-delay" type="slider" arg="-pre-delay %"
+          _label="Pre-Solve Delay"
+          _low-label="0 Seconds" _high-label="10 Seconds"
+          low="0" high="10000000" default="2000000"/>
+
+  <number id="post-delay" type="slider" arg="-post-delay %"
+          _label="Post-Solve Delay"
+          _low-label="0 Seconds" _high-label="10 Seconds"
+          low="0" high="10000000" default="4000000"/>
+
+  <number id="grid-size" type="spinbutton" arg="-grid-size %"
+          _label="Grid Size" low="0" high="100" default="0"/>
+
+  <select id="generator">
+    <option id="mrandom" _label="Random Generator"/>
+    <option id="m0"      _label="Backtracking Generator"
+                         arg-set="-generator 0"/>
+    <option id="m1"      _label="Seeding Generator"
+                         arg-set="-generator 1"/>
+    <option id="m2"      _label="Joining Generator"
+                         arg-set="-generator 2"/>
+  </select>
+
+  <select id="ignorance">
+    <option id="smart" _label="Head Toward Exit"/>
+    <option id="dumb"  _label="Ignorant of Exit Direction"
+            arg-set="-ignorant"/>
+  </select>
+
+  <!-- #### -max-length [5] -->
+  <!-- #### -bridge -->
+  <!-- #### -live-color [green] -->
+  <!-- #### -dead-color [red] -->
+  <!-- #### -skip-color [orange] -->
+  <!-- #### -surround-color [slateblue] -->
+
+  <_description>
+This is the ancient X maze demo, modified to work with xscreensaver.
+It generates a random maze, then solves it with visual feedback.
+Originally by Jim Randell; modified by a cast of thousands.
+  </_description>
+</screensaver>

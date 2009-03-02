@@ -3,3 +3,4 @@
  */
 
 GtkWidget* create_xscreensaver_demo (void);
+GtkWidget* create_xscreensaver_settings_dialog (void);

@@ -216,7 +216,8 @@ char *defaults [] = {
 };
 
 XrmOptionDescRec options [] = {
-  { "-random",		".random",	XrmoptionSepArg, 0 },
+  { "-random",		".random",	XrmoptionNoArg, "True" },
+  { "-no-random",	".random",	XrmoptionNoArg, "False" },
   { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-ncolors",		".ncolors",	XrmoptionSepArg, 0 },
   { "-offset",		".offset",	XrmoptionSepArg, 0 },

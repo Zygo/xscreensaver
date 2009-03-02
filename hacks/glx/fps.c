@@ -72,7 +72,6 @@ fps_init (ModeInfo *mi)
 static void
 fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
 {
-  int i;
   /* save the current state */
   /* note: could be expensive! */
 

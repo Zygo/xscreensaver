@@ -305,7 +305,7 @@ exec_vms_command (const char *command)
 
 
 static void
-exec_screenhack (saver_info *si, const char *command)
+exec_screenhack (saver_screen_info *ssi, const char *command)
 {
   /* I don't believe what a sorry excuse for an operating system UNIX is!
 
@@ -341,6 +341,7 @@ exec_screenhack (saver_info *si, const char *command)
      what I've seen in Emacs, dealing with process groups isn't especially
      portable.)
    */
+  saver_info *si = ssi->global;
   saver_preferences *p = &si->prefs;
 
 #ifndef VMS
@@ -359,8 +360,9 @@ exec_screenhack (saver_info *si, const char *command)
     }
 
   if (p->verbose_p)
-    fprintf (stderr, "%s: spawning \"%s\" in pid %lu%s.\n",
-	     blurb(), command, (unsigned long) getpid (),
+    fprintf (stderr, "%s: %d: spawning \"%s\" in pid %lu%s.\n",
+	     blurb(), ssi->number, command,
+             (unsigned long) getpid (),
 	     (hairy_p ? " (via shell)" : ""));
 
   if (hairy_p)
@@ -373,8 +375,8 @@ exec_screenhack (saver_info *si, const char *command)
 
 #else /* VMS */
   if (p->verbose_p)
-    fprintf (stderr, "%s: spawning \"%s\" in pid %lu.\n",
-	     blurb(), command, getpid());
+    fprintf (stderr, "%s: %d: spawning \"%s\" in pid %lu.\n",
+	     blurb(), ssi->number, command, getpid());
   exec_vms_command (command);
 #endif /* VMS */
 
@@ -399,6 +401,7 @@ enum job_status {
 struct screenhack_job {
   char *name;
   pid_t pid;
+  int screen;
   enum job_status status;
   struct screenhack_job *next;
 };
@@ -412,8 +415,9 @@ show_job_list (void)
   struct screenhack_job *job;
   fprintf(stderr, "%s: job list:\n", blurb());
   for (job = jobs; job; job = job->next)
-    fprintf (stderr, "  %5ld: (%s) %s\n",
+    fprintf (stderr, "  %5ld: %2d: (%s) %s\n",
 	     (long) job->pid,
+             job->screen,
 	     (job->status == job_running ? "running" :
 	      job->status == job_stopped ? "stopped" :
 	      job->status == job_killed  ? " killed" :
@@ -426,7 +430,7 @@ show_job_list (void)
 static void clean_job_list (void);
 
 static struct screenhack_job *
-make_job (pid_t pid, const char *cmd)
+make_job (pid_t pid, int screen, const char *cmd)
 {
   struct screenhack_job *job = (struct screenhack_job *) malloc (sizeof(*job));
 
@@ -458,6 +462,7 @@ make_job (pid_t pid, const char *cmd)
 
   job->name = strdup(name);
   job->pid = pid;
+  job->screen = screen;
   job->status = job_running;
   job->next = jobs;
   jobs = job;
@@ -596,31 +601,27 @@ kill_job (saver_info *si, pid_t pid, int signal)
   default: abort();
   }
 
-#ifdef SIGSTOP
   if (p->verbose_p)
-    fprintf (stderr, "%s: %s pid %lu.\n", blurb(),
-	     (signal == SIGTERM ? "killing" :
-	      signal == SIGSTOP ? "suspending" :
-	      signal == SIGCONT ? "resuming" : "signalling"),
-	     (unsigned long) job->pid);
-#else  /* !SIGSTOP */
-  if (p->verbose_p)
-    fprintf (stderr, "%s: %s pid %lu.\n", blurb(), "killing",
-	     (unsigned long) job->pid);
-#endif /* !SIGSTOP */
+    fprintf (stderr, "%s: %d: %s pid %lu (%s)\n",
+             blurb(), job->screen,
+             (job->status == job_killed  ? "killing" :
+              job->status == job_stopped ? "suspending" : "resuming"),
+             (unsigned long) job->pid,
+             job->name);
 
   status = kill (job->pid, signal);
 
   if (p->verbose_p && status < 0)
     {
       if (errno == ESRCH)
-	fprintf (stderr, "%s: child process %lu (%s) was already dead.\n",
-		 blurb(), job->pid, job->name);
+	fprintf (stderr,
+                 "%s: %d: child process %lu (%s) was already dead.\n",
+		 blurb(), job->screen, job->pid, job->name);
       else
 	{
 	  char buf [1024];
-	  sprintf (buf, "%s: couldn't kill child process %lu (%s)",
-		   blurb(), job->pid, job->name);
+	  sprintf (buf, "%s: %d: couldn't kill child process %lu (%s)",
+		   blurb(), job->screen, job->pid, job->name);
 	  perror (buf);
 	}
     }
@@ -702,6 +703,7 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
   saver_preferences *p = &si->prefs;
   struct screenhack_job *job = find_job (kid);
   const char *name = job ? job->name : "<unknown>";
+  int screen_no = job ? job->screen : 0;
 
   if (WIFEXITED (wait_status))
     {
@@ -720,11 +722,11 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
 	  (exit_status != 0 &&
 	   (p->verbose_p || job->status != job_killed)))
 	fprintf (stderr,
-		 "%s: child pid %lu (%s) exited abnormally (code %d).\n",
-		 blurb(), (unsigned long) kid, name, exit_status);
+		 "%s: %d: child pid %lu (%s) exited abnormally (code %d).\n",
+		 blurb(), screen_no, (unsigned long) kid, name, exit_status);
       else if (p->verbose_p)
-	fprintf (stderr, "%s: child pid %lu (%s) exited normally.\n",
-		 blurb(), (unsigned long) kid, name);
+	fprintf (stderr, "%s: %d: child pid %lu (%s) exited normally.\n",
+		 blurb(), screen_no, (unsigned long) kid, name);
 
       if (job)
 	job->status = job_dead;
@@ -735,8 +737,8 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
 	  !job ||
 	  job->status != job_killed ||
 	  WTERMSIG (wait_status) != SIGTERM)
-	fprintf (stderr, "%s: child pid %lu (%s) terminated with %s.\n",
-		 blurb(), (unsigned long) kid, name,
+	fprintf (stderr, "%s: %d: child pid %lu (%s) terminated with %s.\n",
+		 blurb(), screen_no, (unsigned long) kid, name,
 		 signal_name (WTERMSIG(wait_status)));
 
       if (job)
@@ -861,32 +863,57 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 
     AGAIN:
 
-      if (p->screenhacks_count == 1)
-	/* If there is only one hack in the list, there is no choice. */
-	new_hack = 0;
-
+      if (p->screenhacks_count < 1)
+        {
+          /* No hacks at all */
+          new_hack = -1;
+        }
       else if (si->selection_mode == -1)
-	/* Select the next hack, wrapping. */
-	new_hack = (ssi->current_hack + 1) % p->screenhacks_count;
-
+        {
+          /* Select the next hack, wrapping. */
+          new_hack = (ssi->current_hack + 1) % p->screenhacks_count;
+        }
       else if (si->selection_mode == -2)
-	/* Select the previous hack, wrapping. */
-	new_hack = ((ssi->current_hack + p->screenhacks_count - 1)
-		    % p->screenhacks_count);
-
+        {
+          /* Select the previous hack, wrapping. */
+          if (ssi->current_hack < 0)
+            new_hack = p->screenhacks_count - 1;
+          else
+            new_hack = ((ssi->current_hack + p->screenhacks_count - 1)
+                        % p->screenhacks_count);
+        }
       else if (si->selection_mode > 0)
-	/* Select a specific hack, by number.  No negotiation. */
 	{
+          /* Select a specific hack, by number (via the ACTIVATE command.) */
 	  new_hack = ((si->selection_mode - 1) % p->screenhacks_count);
 	  force = True;
 	}
-      else
+      else if (p->mode == ONE_HACK &&
+               p->selected_hack >= 0)
+	{
+          /* Select a specific hack, by number (via "One Saver" mode.) */
+          new_hack = p->selected_hack;
+	  force = True;
+	}
+      else if (p->mode == BLANK_ONLY || p->mode == DONT_BLANK)
+        {
+          new_hack = -1;
+        }
+      else  /* (p->mode == RANDOM_HACKS) */
 	{
 	  /* Select a random hack (but not the one we just ran.) */
 	  while ((new_hack = random () % p->screenhacks_count)
 		 == ssi->current_hack)
 	    ;
 	}
+
+      if (new_hack < 0)   /* don't run a hack */
+        {
+          ssi->current_hack = -1;
+          if (si->selection_mode < 0)
+            si->selection_mode = 0;
+          return;
+        }
 
       ssi->current_hack = new_hack;
       hack = p->screenhacks[ssi->current_hack];
@@ -939,13 +966,13 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
 	  nice_subproc (p->nice_inferior);	/* change process priority */
 	  limit_subproc_memory (p->inferior_memory_limit, p->verbose_p);
 	  hack_subproc_environment (ssi);	/* set $DISPLAY */
-	  exec_screenhack (si, hack->command);	/* this does not return */
+	  exec_screenhack (ssi, hack->command);	/* this does not return */
 	  abort();
 	  break;
 
 	default:
 	  ssi->pid = forked;
-	  (void) make_job (forked, hack->command);
+	  (void) make_job (forked, ssi->number, hack->command);
 	  break;
 	}
     }
@@ -1078,12 +1105,7 @@ hack_subproc_environment (saver_screen_info *ssi)
   saver_info *si = ssi->global;
   const char *odpy = DisplayString (si->dpy);
   char *ndpy = (char *) malloc(strlen(odpy) + 20);
-  int screen_number;
   char *s;
-
-  for (screen_number = 0; screen_number < si->nscreens; screen_number++)
-    if (ssi == &si->screens[screen_number])
-      break;
 
   strcpy (ndpy, "DISPLAY=");
   s = ndpy + strlen(ndpy);
@@ -1094,7 +1116,7 @@ hack_subproc_environment (saver_screen_info *ssi)
   while (isdigit(*s)) s++;			/* skip over dpy number */
   while (*s == '.') s++;			/* skip over dot */
   if (s[-1] != '.') *s++ = '.';			/* put on a dot */
-  sprintf(s, "%d", screen_number);		/* put on screen number */
+  sprintf(s, "%d", ssi->number);		/* put on screen number */
 
   /* Allegedly, BSD 4.3 didn't have putenv(), but nobody runs such systems
      any more, right?  It's not Posix, but everyone seems to have it. */
@@ -1197,9 +1219,10 @@ get_best_gl_visual (saver_screen_info *ssi)
           {
             Visual *v = id_to_visual (ssi->screen, result);
             if (si->prefs.verbose_p)
-              fprintf (stderr, "%s: %s says the GL visual is 0x%X%s.\n",
-                       blurb(), av[0], result,
-                       (v == ssi->default_visual ? " (the default)" : ""));
+              fprintf (stderr, "%s: %d: %s: GL visual is 0x%X%s.\n",
+                       blurb(), ssi->number,
+                       av[0], result,
+                       (v == ssi->default_visual ? " (default)" : ""));
             return v;
           }
       }

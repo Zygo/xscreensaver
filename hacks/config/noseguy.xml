@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="noseguy" _label="Noseguy">
+
+  <command arg="-root"/>
+
+  <select id="mode">
+    <option id="program" _label="Get Text from Program"/>
+    <option id="file"    _label="Get Text from File" arg-set="-mode file"/>
+    <option id="string"  _label="Use Text Below"     arg-set="-mode string"/>
+  </select>
+
+  <file   id="program" _label="Text Program" arg="-program %"/>
+  <file   id="file"    _label="Text File"    arg="-filename %"/>
+  <string id="string"  _label="Text"         arg="-text %"/>
+
+  <!-- #### -font [-*-new century schoolbook-*-r-*-*-*-180-*-*-*-*-*-*] -->
+  <!-- #### -text-foreground [?] -->
+  <!-- #### -text-background [?] -->
+
+  <_description>
+A little man with a big nose wanders around your screen saying
+things.  The things which he says can come from a file, or from an
+external program like `zippy' or `fortune'.  This was extracted from
+`xnlock' by Dan Heller.  Colorized by Jamie Zawinski.
+  </_description>
+</screensaver>

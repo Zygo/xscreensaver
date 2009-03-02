@@ -97,6 +97,9 @@ main (int argc, char **argv)
 # endif /* !HAVE_XF86VMODE_GAMMA */
     }
 
+  fprintf (stderr, "%s: fading %d screen%s\n",
+           progname, ScreenCount(dpy), ScreenCount(dpy) == 1 ? "" : "s");
+
   while (1)
     {
       XSync (dpy, False);
