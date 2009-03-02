@@ -1,0 +1,247 @@
+/*-
+ * This is way old.  Work is on going to integrate xlock with xscreensaver
+ * see julia.c and slip.c for an example.  --David Bagley
+ */
+
+/*-
+**  Helpful definitions for porting xlock modes to xscreensaver.
+**  by Charles Hannum, mycroft@ai.mit.edu
+**
+**  for xlock 2.3 and xscreensaver 1.2, 28AUG92
+**
+**
+**  Modified for xlockmore 3.0 by Anthony Thyssen <anthony@cit.gu.edu.au>
+**  on August 1995. This includes the delay option and a random number
+**  generator to use instead of rand() as given in xlockmore 3.0  :-)
+**
+**
+**  To use, just copy the appropriate file from xlock, add a target
+**  for it in the Imakefile, and do the following:
+**
+**  1) If you include math.h, make sure it is before xlock.h.
+**  2) Make sure the first thing you do in initfoo() is to call
+**     XGetWindowAttributes.  This is what actually sets up the
+**     colormap and whatnot.
+**  3) Add an appropriate PROGRAM() line at the end of the .c file.
+**     The information you need for this comes from xlock's file
+**     resource.c.
+**
+**  That's about all there is to it.
+**
+**  As an added bonus, if you put an empty definition of PROGRAM() in
+**  xlock's xlock.h, you can now use the code with either xlock or
+**  xscreensaver.
+**
+**
+**  If you make any improvements to this code, please send them to me!
+**  It could certainly use some more work.
+*/
+ 
+#include "screenhack.h"
+ 
+#define MAXSCREENS 1
+ 
+static GC gc;
+static unsigned long *pixels = 0, fg_pixel, bg_pixel;
+static int npixels;
+static Colormap cmap;
+ 
+static int batchcount;
+static unsigned int delay;
+static unsigned int cycles;
+static double saturation;
+ 
+#ifndef min
+#define min(a,b) ((a)<(b)?(a):(b))
+#endif
+ 
+typedef struct {
+  GC gc;
+  int npixels;
+  u_long *pixels;
+} perscreen;
+ 
+static perscreen Scr[MAXSCREENS];
+static Display *dsp;
+ 
+static int screen = 0;
+ 
+static void
+My_XGetWindowAttributes (dpy, win, xgwa)
+  Display *dpy;
+  Window win;
+  XWindowAttributes *xgwa;
+{
+  XGetWindowAttributes (dpy, win, xgwa);
+ 
+  if (! pixels) {
+    XGCValues gcv;
+    XColor color;
+    int n;
+    int i, shift;
+ 
+    cmap = xgwa->colormap;
+ 
+    i = get_integer_resource ("ncolors", "Integer");
+    if (i <= 2) i = 2, mono_p = True;
+    shift = 360 / i;
+    pixels = (unsigned long *) calloc (i, sizeof (unsigned long));
+    fg_pixel = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
+    bg_pixel = get_pixel_resource ("background", "Background", dpy, cmap);
+    if (! mono_p) {
+      for (npixels = 0; npixels < i; npixels++) {
+        hsv_to_rgb ((360*npixels)/i, saturation, 1.0,
+                           &color.red, &color.green, &color.blue);
+        if (! XAllocColor (dpy, cmap, &color))
+          break;
+        pixels[npixels] = color.pixel;
+      }
+    }
+    n = get_integer_resource ("delay", "Usecs");
+    if (n >= 0) delay = n;
+    n = get_integer_resource ("count", "Integer");
+    if (n > 0) batchcount = n;
+    n = get_integer_resource ("cycles", "Integer");
+    if (n >= 0) cycles = n;
+ 
+    gcv.foreground = fg_pixel;
+    gcv.background = bg_pixel;
+    gc = XCreateGC (dpy, win, GCForeground|GCBackground, &gcv);
+ 
+    XClearWindow (dpy, win);
+ 
+    Scr[screen].gc = gc;
+    Scr[screen].npixels = npixels;
+    Scr[screen].pixels = pixels;
+  }
+}
+ 
+#define XGetWindowAttributes(a,b,c) My_XGetWindowAttributes(a,b,c)
+ 
+#undef BlackPixel
+#define BlackPixel(a,b) bg_pixel
+#undef WhitePixel
+#define WhitePixel(a,b) fg_pixel
+#define mono mono_p
+ 
+#define seconds() time((time_t*)0)
+ 
+/*-
+** Addition by Anthony Thyssen for xlockmore 3.0
+*/
+/*-
+** RANDOM NUMBER GENERATOR
+*/
+#if 1
+/*-
+Dr. Park's algorithm published in the Oct. '88 ACM 
+"Random Number Generators: Good Ones Are Hard To Find"
+His version available at ftp://cs.wm.edu/pub/rngs.tar
+Present form by many authors.
+*/
+ 
+static long Seed = 1;       /* This is required to be 32 bits long */
+ 
+/*-
+ *      Given an integer, this routine initializes the RNG seed.
+ */
+void SetRNG(s)
+long s;
+{
+  Seed = s;
+}
+ 
+/*-
+ *      Returns an integer between 0 and 2147483647, inclusive.
+ */
+long LongRNG()
+{
+  if ((Seed = Seed % 44488 * 48271 - Seed / 44488 * 3399) < 0)
+    Seed += 2147483647;
+  return Seed - 1;
+}
+ 
+#define SRAND(X) SetRNG((long) X)
+#define LRAND() LongRNG()
+ 
+#define NRAND(X) ((int)(LRAND()%(X)))
+#define MAXRAND (2147483648.0)
+ 
+#else
+ 
+/* Using rand() as setup in xscreenhacks.h  :-(  */
+#define SRAND(X) srand(unsigned) X)
+#define LRAND()  rand()
+ 
+#define NRAND(X) ((int)(LRAND()%(X)))
+#define MAXRAND  (32768.0)
+ 
+#endif
+ 
+char *defaults[] = {
+  "*background: black",
+  "*foreground: white",
+  "*ncolors:    64",
+  "*delay:      -1",
+  "*count:      -1",
+  "*cycles:     -1",
+  0
+};
+ 
+XrmOptionDescRec options[] = {
+  {"-ncolors",  ".ncolors",     XrmoptionSepArg, 0},
+  {"-delay",    ".delay",       XrmoptionSepArg, 0},
+  {"-count",    ".count",       XrmoptionSepArg, 0},
+  {"-cycles",   ".cycles",      XrmoptionSepArg, 0},
+};
+int options_size = (sizeof (options) / sizeof (options[0]));
+ 
+#define PROGRAM(Y,Z,D,B,C,S) \
+char *progclass = Y;                    \
+                                        \
+void screenhack (dpy, window)           \
+  Display *dpy;                         \
+  Window window;                        \
+{                                       \
+  batchcount = B;                       \
+  delay = D;                            \
+  cycles = C;                           \
+  saturation = S;                       \
+  dsp = dpy;                            \
+                                        \
+  SetRNG((int) time ((time_t *) 0));    \
+  init##Z (window);                     \
+  for (;;) {                            \
+    draw##Z (window);                   \
+    XSync (dpy, True);                  \
+    if (delay) usleep (delay);          \
+  }                                     \
+}
+ 
+=======8<--------CUT HERE----------axes/crowbars permitted---------------
+ 
+You use this header as .xlock.h include then add something like the
+following to the end of the module itself -- life.c in this case.
+ 
+=======8<--------CUT HERE----------axes/crowbars permitted---------------
+/*
+ *  Anthony's additions for Jamie Zawinski's <jwz@mcom.com> screensaver
+ */
+PROGRAM("XLockLife",life,750000,40,140,1.0)
+ 
+=======8<--------CUT HERE----------axes/crowbars permitted---------------
+ 
+Maybe you can add these to your modules anyway and add a empty
+PROGRAM() #define in the normal xlock.h file.
+ 
+The module is then linked to the other xscreensaver modules
+ 
+    screenhack.o visual.o resources.o usleep.o hsv.o
+ 
+Simple enough!
+ 
+ 
+  Anthony Thyssen ( System Programmer )    http://www.sct.gu.edu.au/~anthony/
+-------------------------------------------------------------------------------
+     PGP Public Key available -- finger -l anthony@lyrch.cit.gu.edu.au
+ 

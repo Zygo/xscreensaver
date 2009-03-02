@@ -1,0 +1,170 @@
+############################################################
+#
+# $Id : Makefile.in 4.04 1997/07/10 $
+#
+# xlockmore Makefile.in for autoconf (UNIX/VMS X11 support)
+############################################################
+
+# @SET_MAKE@
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@/
+UTILDIR = $(top_srcdir)/xlock/
+UTILOBJDIR = ./
+
+N =
+O = .o
+#O = .obj
+C = .c
+#C = .cc
+S = $(N) $(N)
+#S = ,
+
+DM =
+DU = $(UTILDIR)
+DOU = $(UTILOBJDIR)
+OU = $(O)$(S)$(DOU)
+CU = $(C) $(DU)
+
+# please define
+# C as the C source code extension
+# O as the object extension
+# S as the separator for object code
+
+
+# List of object files
+XLOCKUTILOBJS = $(DOU)xlock$(OU)passwd$(OU)resource$(O)$(S)\
+$(DOU)utils$(OU)logout$(OU)mode$(OU)ras$(OU)xbm$(O)$(S)\
+$(DOU)color$(OU)sound$(O)
+
+# This debugging is new and is untested on many systems.
+@CHECK@CHECKDEF = -DDEBUG
+@CHECK@CHECKLDFLAG = -g
+@CHECK@XLOCKCHECKOBJS = $(S)$(DOU)memcheck$(O)
+
+XLOCKUTILHDRS = xlock.h mode.h vroot.h ras.h version.h config.h
+XLOCKUTILSRCS = $(DU)xlock$(CU)passwd$(CU)resource$(C) \
+$(DU)utils$(CU)logout$(CU)mode$(CU)ras$(CU)xbm$(C) \
+$(DU)color$(CU)sound$(C)
+
+XLOCKCHECKSRCS = $(DU)memcheck$(C)
+
+# default target
+all : $(XLOCKUTILOBJS)
+
+# this tells GNU make not to export variables into the environment
+# But other makes do not understand its significance, so it must
+# not be the first target in the file. So it is here, before
+# any variables are created, but after the default target
+.NOEXPORT :
+
+SHELL = /bin/sh
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+mandir = @mandir@/man1
+xapploaddir = @APPDEFAULTS@
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTPGMFLAGS = @INSTPGMFLAGS@
+
+
+#CC = cc -g
+#CC = cc -Ac -g
+#CC = cc -Xc -g
+#CC = acc -g
+#CC = CC -g
+#CC = gcc -g -Wall -ansi -pedantic
+#CC = gcc -g -Wall
+#CC = g++ -g -Wall
+CC = @CC@
+
+LINT = lint
+#LINT = alint
+
+LN_S = @LN_S@
+RM = rm -f
+RM_S = $(RM)
+ECHO = echo
+
+#BLN_S = set file/enter=[]
+#RM = delete/noconfirm/nolog
+#RM_S = set file/remove/nolog
+#ECHO = write sys$output
+
+DEFINES = -DDEF_FILESEARCHPATH=\"$(xapploaddir)/%N%S\"
+DEFS = @DEFS@ $(DEFINES)
+XLOCKINC = @XLOCKINC@ -I. -I.. -I../..
+CFLAGS = @CFLAGS@
+#CFLAGS = -O
+#CFLAGS = -g
+LDFLAGS = @LDFLAGS@ $(CHECKLDFLAG)
+XLIBS = @XLIBS@
+XLOCKLIBS = @XLOCKLIBS@
+#3Dfx Glide VooDoo graphics device driver for Mesa 2.3?  _NOT_ tested.
+#XLOCKLIBS = @XLOCKLIBS@ -lglide -ltexus $(SOUNDLIB) $(CRYPTLIB) $(PASSWDLIB)
+#If you have purify, and want to use it, uncomment this definition or
+# run the make as `make PURIFY=purify'
+# or run configure with the --with-purify argument.
+PURIFY = @PURIFY@
+
+.SUFFIXES : $(C) $(O)
+
+$(C)$(O) :
+	$(CC) -c -o $@ $(CPPFLAGS) $(DEFS) $(XLOCKINC) $(CFLAGS) $<
+
+install :
+
+install-program :
+
+install-man :
+
+install-ad :
+
+uninstall :
+
+uninstall-program :
+
+uninstall-man :
+
+uninstall-ad :
+
+depend:
+
+lint :
+
+xrdb :
+	xrdb $(UTILDIR)XLock.ad
+
+man :
+	nroff -man $(UTILDIR)/xlock.man | more
+
+html :
+	man2html $(mandir)/xlock.1 > $(UTILOBJDIR)xlock.html
+
+hlp :
+	(echo '1 XLOCK' ; \
+ nroff -man < $(UTILDIR)xlock.man \
+ | sed -e 's/.^H//g' -e 's/^ *Page [0-9].*//' \
+ -e 's/^ *Xlock(.*//' \
+ -e 's/^     //' \
+ -e 's/^NAME.*//;s/^SYNOPSIS//;s/^DESCRIPTION//' \
+ -e 's/\(Copyright\) .*c.*\(19\)/\1 (C) \2/' \
+ -e 's/^\([A-Z][A-Z]*\) \([A-Z][A-Z]*\)/\1_\2/' \
+ -e 's/^\([A-Z]\)/2 \1/' \
+ | more -flsu | cat ) \
+ > $(UTILOBJDIR)xlock.hlp
+
+clean :
+	$(RM) *.o core *~ *% *.bak *.orig make.log MakeOut xlock memdiag.xlock-*
+
+distclean : clean
+	$(RM) Makefile
+
+clean.all : distclean
+

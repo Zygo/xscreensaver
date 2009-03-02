@@ -1,0 +1,1869 @@
+Content-type: text/html
+
+<HTML><HEAD><TITLE>Manpage of XLOCK</TITLE>
+</HEAD><BODY>
+<H1>XLOCK</H1>
+Section: User Commands  (1)<BR>Updated: 01 Jan 1997<BR><A HREF="#index">Index</A>
+<BR><A HREF="http:/cgi-bin/man2html">Return to Main Contents</A>
+<HR>
+
+<A NAME="lbAB">&nbsp;</A>
+<H2>NAME</H2>
+
+xlock - Locks the local X display until a password is entered.
+<P>
+<A NAME="ixAAB"></A>
+<A NAME="lbAC">&nbsp;</A>
+<H2>SYNOPSIS</H2>
+
+<B>xlock</B>
+
+[
+<B>-help</B>
+
+]
+[
+<B>-version</B>
+
+]
+[
+<B>-resources</B>
+
+]
+[
+<B>-display</B><I> displayname</I>
+
+]
+[
+<B>-visual</B><I> visualname</I>
+
+]
+[
+<B>-name</B><I> resourcename</I>
+
+]
+[
+<B>-mode</B><I> modename</I>
+
+]
+[
+<B>-delay</B><I> usecs</I>
+
+]
+[
+<B>-batchcount</B><I> num</I>
+
+]
+[
+<B>-cycles</B><I> num</I>
+
+]
+[
+<B>-saturation</B><I> value</I>
+
+]
+[
+<B>-/+allowaccess</B>
+
+]
+[
+<B>-/+nolock</B>
+
+]
+[
+<B>-/+inwindow</B>
+
+]
+[
+<B>-/+inroot</B>
+
+]
+[
+<B>-/+remote</B>
+
+]
+[
+<B>-/+mono</B>
+
+]
+[
+<B>-/+allowroot</B>
+
+]
+[
+<B>-/+debug</B>
+
+]
+[
+<B>-/+echokeys</B>
+
+]
+[
+<B>-/+enablesaver</B>
+
+]
+[
+<B>-/+grabmouse</B>
+
+]
+[
+<B>-/+grabserver</B>
+
+]
+[
+<B>-/+install</B>
+
+]
+[
+<B>-/+sound</B>
+
+]
+[
+<B>-/+timeelapsed</B>
+
+]
+[
+<B>-/+usefirst</B>
+
+]
+[
+<B>-/+verbose</B>
+
+]
+[
+<B>-nice</B><I> level</I>
+
+]
+[
+<B>-lockdelay</B><I> seconds</I>
+
+]
+[
+<B>-timeout</B><I> seconds</I>
+
+]
+[
+<B>-font</B><I> fontname</I>
+
+]
+[
+<B>-msgfont</B><I> message-fontname</I>
+
+]
+[
+<B>-bg</B><I> color</I>
+
+]
+[
+<B>-fg</B><I> color</I>
+
+]
+[
+<B>-background</B><I> color</I>
+
+]
+[
+<B>-foreground</B><I> color</I>
+
+]
+[
+<B>-username</B><I> string</I>
+
+]
+[
+<B>-password</B><I> string</I>
+
+]
+[
+<B>-info</B><I> string</I>
+
+]
+[
+<B>-validate</B><I> string</I>
+
+]
+[
+<B>-invalid</B><I> string</I>
+
+]
+[
+<B>-geometry</B><I> geom</I>
+
+]
+[
+<B>-icongeometry</B><I> geom</I>
+
+]
+[
+<B>-/+fullrandom</B>
+
+]
+[
+<B>-/+wireframe</B>
+
+]
+[
+<B>-/+use3d</B>
+
+]
+[
+<B>-delta3d</B><I> value</I>
+
+]
+[
+<B>-none3d</B><I> color</I>
+
+]
+[
+<B>-right3d</B><I> color</I>
+
+]
+[
+<B>-left3d</B><I> color</I>
+
+]
+[
+<B>-both3d</B><I> color</I>
+
+]
+[
+<B>-program</B><I> programname</I>
+
+]
+[
+<B>-messagesfile</B><I> formatted-filename</I>
+
+]
+[
+<B>-messagefile</B><I> filename</I>
+
+]
+[
+<B>-message</B><I> string</I>
+
+]
+[
+<B>-mfont</B><I> mode-fontname</I>
+
+]
+[
+<B>-imagefile</B><I> filename</I>
+
+]
+[
+<B>-neighbors</B><I> num</I>
+
+]
+[
+<B>-/+mouse</B>
+
+]
+[
+<B>-cpasswd</B><I> crypted-password</I>
+
+]
+[
+<B>-forceLogout</B><I> minutes</I>
+
+]
+[
+<B>-logoutButtonLabel</B><I> textstring</I>
+
+]
+[
+<B>-logoutButtonHelp</B><I> textstring</I>
+
+]
+[
+<B>-logoutFailedString</B><I> textstring</I>
+
+]
+[
+<B>-/+dtsaver</B>
+
+]
+[
+<B>-locksound</B><I> string</I>
+
+]
+[
+<B>-infosound</B><I> string</I>
+
+]
+[
+<B>-validsound</B><I> string</I>
+
+]
+[
+<B>-invalidsound</B><I> string</I>
+
+]
+<P>
+<A NAME="lbAD">&nbsp;</A>
+<H2>DESCRIPTION</H2>
+
+<B>xlock</B>
+
+locks the X server till the user enters their password at the keyboard.
+While
+<B>xlock</B>
+
+is running,
+all new server connections are refused.
+The screen saver is disabled.
+The mouse cursor is turned off.
+The screen is blanked and a changing pattern is put on the screen.
+If a key or a mouse button is pressed then the user is prompted for the
+password of the user who started
+<B>xlock</B>.
+
+<P>
+If the correct password is typed, then the screen is unlocked and the X
+server is restored.  When typing the password Control-U and Control-H are
+active as kill and erase respectively.  To return to the locked screen,
+click in the small icon version of the changing pattern.
+<P>
+In the lower part of the password screen a message is displayed.  This
+message is taken from the first file of the following that exists:
+$HOME/.xlockmessage, $HOME/.plan, or $HOME/.signature.
+<P>
+On systems which support new BSD style authentication, the password
+may be prefixed by an authentication style followed by a colon
+(i.e. &quot;style:password&quot;).  See the <A HREF="http:/cgi-bin/man2html?man5/login.conf.5">login.conf</A>(5) for more information
+on authentication styles.
+<P>
+<A NAME="lbAE">&nbsp;</A>
+<H2>NOTE ON ETIQUETTE</H2>
+
+<I>Xlock</I>
+
+should not be used on public terminals when there is a high demand for them.
+<P>
+If you find a public terminal that has been locked by another user and
+there are no other terminals available, and the terminal appears to have
+been left idle for a while (normally more than 15 minutes), it is fair to
+try to reset the session in some manner.
+<P>
+<A NAME="lbAF">&nbsp;</A>
+<H2>OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>-help</B>
+
+<DD>
+Print options and a brief description to standard output.
+<DT><B>-version</B>
+
+<DD>
+Print version number (if &gt;= 4.00) to standard output.
+<DT><B>-resources</B>
+
+<DD>
+Print default resource file to standard output.
+<DT><B>-display</B><I>&nbsp;displayname</I>
+
+<DD>
+The
+<I>display</I>
+
+option sets the X11 display to lock.
+<B>xlock</B>
+
+locks all available screens on a given server,
+and restricts you to locking only a local server such as
+<B>unix:0,</B>
+
+<B>localhost:0,</B>
+
+or
+<B>:0</B>
+
+unless you set the
+<B>-remote</B>
+
+option.
+<DT><B>-visual</B><I>&nbsp;visualname</I>
+
+<DD>
+<I>visualname</I>
+
+which is one of &quot;StaticGray&quot;, &quot;GrayScale&quot;, &quot;StaticColor&quot;, &quot;PseudoColor&quot;,
+&quot;TrueColor&quot;, or &quot;DirectColor&quot;.  May not be available depending on how it
+is initially configured.  This is under construction.
+<DT><B>-name</B><I>&nbsp;resourcename</I>
+
+<DD>
+<I>resourcename</I>
+
+is used instead of
+<B>XLock</B>
+
+when looking for resources to configure
+<B>xlock</B>.
+
+<DT><B>-mode</B><I>&nbsp;modename</I>
+
+<DD>
+As of this writing there are over 60 display modes supported
+(plus one more for random selection of one of these).
+<DT><B>ant</B>
+
+<DD>
+Shows Langton's and Turk's generalized ants.
+<DT><B>ball</B>
+
+<DD>
+Shows bouncing balls.
+<DT><B>bat</B>
+
+<DD>
+Shows bouncing flying bats.
+<DT><B>blot</B>
+
+<DD>
+Shows Rorschach's ink blot test.
+<DT><B>bouboule</B>
+
+<DD>
+Shows Mimi's bouboule of moving stars.
+<DT><B>bounce</B>
+
+<DD>
+Shows bouncing footballs.
+<DT><B>braid</B>
+
+<DD>
+Shows random braids and knots.
+<DT><B>bug</B>
+
+<DD>
+Shows Palmiter's bug evolution and a garden of Eden.
+<DT><B>cartoon</B>
+
+<DD>
+Shows bouncing cartoons.  Not compiled in by default.
+<DT><B>clock</B>
+
+<DD>
+Shows Packard's oclock.
+<DT><B>crystal</B>
+
+<DD>
+Shows polygons in 2D plane groups.
+<DT><B>daisy</B>
+
+<DD>
+Shows a meadow of daisies.
+<DT><B>dclock</B>
+
+<DD>
+Shows a floating digital clock.
+<DT><B>demon</B>
+
+<DD>
+Shows Griffeath's cellular automata.
+<DT><B>drift</B>
+
+<DD>
+Shows cosmic drifting flame fractals.
+<DT><B>escher</B>
+
+<DD>
+Shows Escher-like GL stuff.  May not be available depending on how it was
+configured.
+<DT><B>eyes</B>
+
+<DD>
+Shows eyes following a bouncing grelb.
+<DT><B>fadeplot</B>
+
+<DD>
+Shows f fading plot of sine squared.
+<DT><B>flag</B>
+
+<DD>
+Shows a waving flag of your operating system.
+<DT><B>flame</B>
+
+<DD>
+Shows cosmic flame fractals.
+<DT><B>forest</B>
+
+<DD>
+Shows binary trees of a fractal forest.
+<DT><B>galaxy</B>
+
+<DD>
+Shows crashing spiral galaxies.
+<DT><B>gears</B>
+
+<DD>
+Shows GL's gears.  May not be available depending on how it was configured.
+<DT><B>geometry</B>
+
+<DD>
+Shows morphing of a complete graph.
+<DT><B>grav</B>
+
+<DD>
+Shows orbiting planets.
+<DT><B>helix</B>
+
+<DD>
+Shows string art.
+<DT><B>hop</B>
+
+<DD>
+Shows real plane iterated fractals.
+<DT><B>hyper</B>
+
+<DD>
+Shows a spinning tesseract in 4D space.
+<DT><B>ico</B>
+
+<DD>
+Shows a bouncing polyhedra. 
+<DT><B>ifs</B>
+
+<DD>
+Shows a modified iterated function system. 
+<DT><B>image</B>
+
+<DD>
+Shows randomly appearing logos. 
+<DT><B>julia</B>
+
+<DD>
+Shows the Julia set. 
+<DT><B>kaleid</B>
+
+<DD>
+Shows a kaleidoscope.
+<DT><B>laser</B>
+
+<DD>
+Shows spinning lasers.
+<DT><B>life</B>
+
+<DD>
+Shows Conway's game of life.
+<DT><B>life1d</B>
+
+<DD>
+Shows Wolfram's game of 1D life.
+<DT><B>life3d</B>
+
+<DD>
+Shows Bays' game of 3D life.
+<DT><B>lightning</B>
+
+<DD>
+Shows Keith's fractal lightning bolts.
+<DT><B>lisa</B>
+
+<DD>
+Shows animated lissajous loops.
+<DT><B>lissie</B>
+
+<DD>
+Shows lissajous worms.
+<DT><B>loop</B>
+
+<DD>
+Shows Langton's self-producing loops.
+<DT><B>marquee</B>
+
+<DD>
+Shows messages.
+<DT><B>maze</B>
+
+<DD>
+Shows a random maze and a depth first search solution.
+<DT><B>morph3d</B>
+
+<DD>
+Shows GL morphing polyhedra.  May not be available depending on how it
+was configured.
+<DT><B>mountain</B>
+
+<DD>
+Shows Papo's mountain range.
+<DT><B>munch</B>
+
+<DD>
+Shows munching squares. 
+<DT><B>nose</B>
+
+<DD>
+Shows a man with a big nose runs around spewing out messages.
+<DT><B>pacman</B>
+
+<DD>
+Shows Pacman(tm).
+<DT><B>pipes</B>
+
+<DD>
+Shows a self-building pipe system.  May not be available depending on how it
+was configured.
+<DT><B>penrose</B>
+
+<DD>
+Shows Penrose's quasiperiodic tilings.
+<DT><B>petal</B>
+
+<DD>
+Shows various GCD Flowers.
+<DT><B>puzzle</B>
+
+<DD>
+Shows a puzzle being scrambled and then solved.
+<DT><B>pyro</B>
+
+<DD>
+Shows fireworks.
+<DT><B>qix</B>
+
+<DD>
+Shows spinning lines a la Qix(tm).
+<DT><B>roll</B>
+
+<DD>
+Shows a rolling ball.
+<DT><B>rotor</B>
+
+<DD>
+Shows Tom's Roto-Rooter.
+<DT><B>rubik</B>
+
+<DD>
+Shows an auto-solving Rubik's Cube.  May not be available depending on how it
+was configured.
+<DT><B>shape </B>
+
+<DD>
+Shows stippled rectangles, ellipses, and triangles.
+<DT><B>sierpinski</B>
+
+<DD>
+Shows a Sierpinski's triangle.
+<DT><B>slip</B>
+
+<DD>
+Shows slipping blits. 
+<DT><B>sphere</B>
+
+<DD>
+Shows a bunch of shaded spheres.
+<DT><B>spiral</B>
+
+<DD>
+Shows helixes of dots.
+<DT><B>spline</B>
+
+<DD>
+Shows colorful moving splines.
+<DT><B>sproingies</B>
+
+<DD>
+Shows Sproingies!  Nontoxic.  Safe for pets and small children.
+May not be available depending on how it was configured.
+<DT><B>star </B>
+
+<DD>
+Shows a star field with a twist.
+<DT><B>strange</B>
+
+<DD>
+Shows strange attractors.
+<DT><B>superquadrics</B>
+
+<DD>
+Shows 3D mathematical shapes.  May not be available depending on how it
+was configured.
+<DT><B>swarm</B>
+
+<DD>
+Shows a swarm of bees following a wasp.
+<DT><B>swirl</B>
+
+<DD>
+Shows animated swirling patterns.
+<DT><B>triangle</B>
+
+<DD>
+Shows a triangular mountain range.
+<DT><B>tube</B>
+
+<DD>
+Shows an animated tube.
+<DT><B>turtle</B>
+
+<DD>
+Shows turtle fractals.
+<DT><B>vines</B>
+
+<DD>
+Shows fractal-like vines.
+<DT><B>voters</B>
+
+<DD>
+Shows Dewdney's Voters.
+<DT><B>wator</B>
+
+<DD>
+Shows Dewdney's Water-Torus planet of fish and sharks.
+<DT><B>wire</B>
+
+<DD>
+Shows a random circuit with 2 electrons.
+<DT><B>world</B>
+
+<DD>
+Shows spinning Earths.
+<DT><B>worm</B>
+
+<DD>
+Shows wiggly worms.
+<DT><B>blank</B>
+
+<DD>
+Shows nothing but a black screen.  Does not show up in random mode.
+<DT><B>bomb</B>
+
+<DD>
+Shows a bomb and will autologout after a time.  Does not show up in random
+mode and may be available depending on how it was configured.
+<DT><B>random</B>
+
+<DD>
+Shows a random mode from above except blank (and bomb).
+<P>
+<DT><B>-delay</B><I>&nbsp;usecs</I>
+
+<DD>
+The
+<I>delay</I>
+
+option sets the speed at which a mode will operate.  It simply sets the
+number of microseconds to delay between batches of animations.  In
+blank mode, it is important to set this to some small number of seconds,
+because the keyboard and mouse are only checked after each delay, so you
+cannot set the delay too high, but a delay of zero would needlessly
+consume cpu checking for mouse and keyboard input in a tight loop, since
+blank mode has no work to do.
+<DT><B>-batchcount</B><I>&nbsp;num</I>
+
+<DD>
+The
+<I>batchcount</I>
+
+option sets number of
+<I>things</I>
+
+to do per batch to
+<I>num .</I>
+
+<P>
+In ant mode this refers the number of ants.
+<P>
+In ball mode it is the number of balls.
+<P>
+In bat mode it is the number of bats, could be less because of conflicts.
+<P>
+In blot mode this refers to the number of pixels rendered in the same color.
+<P>
+In bouboule mode it is the number of stars.
+<P>
+In bounce mode it is the number of balls, could be less because of conflicts.
+<P>
+In braid mode it is the upper bound number of strands.
+<P>
+In bug mode it is the number of bugs, could be less because of conflicts.
+<P>
+In cartoon mode it means nothing.
+<P>
+In clock mode it is the percentage of the screen, but less than 100%.
+<P>
+In crystal mode it is the number of polygons.
+<P>
+In daisy mode it is the number flowers that make a meadow.
+<P>
+In dclock mode it means nothing.
+<P>
+In demon mode this refers the number of colors.
+<P>
+In drift mode it is the number of levels to recurse (larger = more complex).
+<P>
+In escher mode it is the current picture.
+<P>
+In eyes mode it is the number of eyes.
+<P>
+In flame mode it is the number of steps.
+<P>
+In flame mode it is the number of levels to recurse (larger = more complex).
+<P>
+In forest mode it is the number trees that make a forest.
+<P>
+In galaxy mode it means the number of galaxies.
+<P>
+In gears mode it is the number of degrees to rotate the set of gears by.
+<P>
+In geometry mode it is the number of vertices.
+<P>
+In grav mode it is the number of planets.
+<P>
+In helix mode it means nothing.
+<P>
+In hop mode this refers to the number of pixels rendered in the same color.
+<P>
+In hyper mode it means nothing.
+<P>
+In ico mode it is the ith platonic solid.
+<P>
+In ifs mode it means nothing.
+<P>
+In image mode it means it is the number of logos on screen at once.
+<P>
+In julia mode it is the depth of recursion.
+<P>
+In kaleid mode it means nothing.
+<P>
+In laser mode it is the number lasers.
+<P>
+In life mode it is the number of generations before a glider is introduced.
+<P>
+In life1d mode it means nothing.
+<P>
+In life3d mode it is the number of generations before a glider is introduced.
+<P>
+In lisa mode it is the number of loops.
+<P>
+In lissie mode it is the number of worms.
+<P>
+In loop mode it means nothing.
+<P>
+In marquee mode it means nothing.
+<P>
+In maze mode it means nothing.
+<P>
+In morph3d mode it is the ith platonic solid.
+<P>
+In mountain mode it is the number of mountains. 
+<P>
+In munch mode it means nothing. 
+<P>
+In nose mode it means nothing.
+<P>
+In qix mode it is the number of lines rendered in the same color.
+<P>
+In pacman mode it means the number of ghosts.
+<P>
+In penrose mode it means nothing.
+<P>
+In petal mode it the greatest random number of petals.
+<P>
+In pipes mode it shows different joints, 0 random, 1 spherical, 2 bolted
+elbow, 3 elbow, and 4 alternating.
+<P>
+In puzzle mode it the number of moves.
+<P>
+In pyro mode it is the maximum number flying rockets at one time.
+<P>
+In roll mode it is the number of points.
+<P>
+In rotor mode it is the number of rotor thingys which whirr...
+<P>
+In rubik mode it is the number of moves.
+<P>
+In shape mode it means nothing.
+<P>
+In sierpinski mode it is the number of points. 
+<P>
+In slip mode it means nothing.
+<P>
+In sphere mode it means nothing.
+<P>
+In spiral mode it is the number of spirals.
+<P>
+In spline mode it is the number of points &quot;splined&quot;.
+<P>
+In sproingies mode it is the number of sproingies.
+<P>
+In star mode it is the number of stars on the screen at once.
+<P>
+In strange mode it means nothing.
+<P>
+In superquadrics mode its the number of horizontal and vertical lines in
+the superquadric. 
+<P>
+In swirl mode it means the number of &quot;knots&quot;.
+<P>
+In swarm mode it is the number of bees.
+<P>
+In triangular mode it is the number of mountains. 
+<P>
+In tube mode it is a rectangle (= 1), an ellipse (= 2), or a polygon if
+greater.
+<P>
+In turtle mode it means nothing.
+<P>
+In vines mode it is draw a complete vine (= 0) or a portion (= 1).
+<P>
+In voters mode it means the number of parties, 2 or 3.
+<P>
+In wator mode it means the breed time for the fish.
+<P>
+In wire mode it means the length of the circuit.
+<P>
+In world mode it is the number of worlds.
+<P>
+In worm mode it is the number of worms.
+<P>
+In blank mode it means nothing.
+<P>
+In bomb mode it means the number of minutes to autologout.
+<P>
+A negative
+<I>batchcount</I>
+
+allows for randomness.  The range from the minimum allowed nonnegative
+<I>batchcount</I>
+
+for a particular mode to the
+ABS(
+<I>batchcount</I>
+
+) (or maximum allowed
+<I>batchcount</I>
+
+, whichever is less).
+<DT><B>-cycles</B><I>&nbsp;num</I>
+
+<DD>
+The
+<I>cycles</I>
+
+option sets the number of cycles until time out for ant, blot, braid,
+bug, clock, crystal, daisy, demon, eyes, flag, forest, galaxy, helix, hop,
+hyper, ico, kaleid, laser, life, life1d, life3d, lisa, lissie, loop,
+mountain, petal, sierpinski, shape, spline +erase, triangle, tube, voters,
+wator, and wire.  For worm it is the length of the lines, for fadeplot,
+julia and spiral it is the length of the trail of dots, munch it is the
+minimum size of the squares, for qix it is the number of lines, for
+spline -erase it means the number of splines * 64 (for compatibility with
++erase), for gears it is the number of degrees to increment the spin of
+each gear by, for pipes it is the number of systems to draw before
+clearing the screen, for rubik it is the number of steps to complete a
+90 move, for superquadrics it is the number of frames it takes
+to morph from one shape to another.  For others it means nothing.
+<DT><B>-size</B><I>&nbsp;num</I>
+
+<DD>
+The
+<I>size</I>
+
+option sets the size maximum size of a star in bouboule, pyro and star,
+size of ball in ball and bounce, size of bat in bat, size of clock in clock,
+size of the polygon in crystal, size of polyhedron in ico, size of lissie in
+lissie, size of dots of flag, width of maze hallway, size of side of penrose
+tile, radius of loop in lisa, radius of ball in roll, number of corners in
+sierpinski, size of tube in tube, width of worm in worm, size of cells in
+ant, bug, life, life1d, pacman, voters, wator, and wire.  In pipes it is the
+maximum length of a system.  In sproingies it is the size of the screen.  A
+negative number allows for randomness, similar to
+<I>batchcount.</I>
+
+<DT><B>-saturation</B><I>&nbsp;value</I>
+
+<DD>
+The
+<I>saturation</I>
+
+option sets saturation of the color ramp used to
+<I>value .</I>
+
+0 is grayscale and 1 is very rich color.  0.4 is a nice pastel.
+<DT><B>+/-nolock</B>
+
+<DD>
+The
+<I>nolock</I>
+
+option causes
+<B>xlock</B>
+
+to only draw the patterns and not lock the display.
+A key press or a mouse click will terminate the screen saver.
+<DT><B>-/+inwindow</B>
+
+<DD>
+Runs
+<B>xlock</B>
+
+in a window, so that you can iconify, move, or resize it and
+still use your screen for other stuff.  When running in a window,
+<B>xlock</B>
+
+no longer locks your screen, it just looks good.
+<DT><B>-/+inroot</B>
+
+<DD>
+Runs
+<B>xlock</B>
+
+in your root window.  Like the
+<I>inwindow</I>
+
+option it no longer locks the screen, it just looks good.
+<DT><B>-/+remote</B>
+
+<DD>
+The
+<I>remote</I>
+
+option tells
+<B>xlock</B>
+
+to not stop you from locking remote X11 servers.  This option should be
+used with care and is intended mainly to lock X11 terminals which cannot
+run
+<B>xlock</B>
+
+locally.  If you lock someone else's workstation, they will have to know
+<B>your</B>
+
+password to unlock it.  Using
+<I>+remote</I>
+
+overrides any resource derived values for
+<I>remote</I>
+
+and prevents
+<B>xlock</B>
+
+from being used to lock other X11 servers.  (Use `+' instead of `-' to
+override resources for other options that can take the `+' modifier
+similarly.)
+<DT><B>-/+mono</B>
+
+<DD>
+The
+<I>mono</I>
+
+option causes
+<B>xlock</B>
+
+to display monochrome, (black and white) pixels rather than the default
+colored ones on color displays.
+<DT><B>-/+allowaccess</B>
+
+<DD>
+This option is required for servers which do not allow clients to modify
+the host access control list.  It is also useful if you need to run x
+clients on a server which is locked for some reason...  When
+<I>allowaccess</I>
+
+is true, the X11 server is left open for clients to attach and thus
+lowers the inherent security of this lock screen.  A side effect of using
+this option is that if
+<B>xlock</B>
+
+is killed -KILL, the access control list is not lost.
+<DT><B>-/+allowroot</B>
+
+<DD>
+The
+<I>allowroot</I>
+
+option allows the root password to unlock the server as well as the user
+who started
+<B>xlock</B>.
+
+May not be able to turn this on and off depending on your system and how
+<B>xlock</B>
+
+was configured.
+<DT><B>-/+debug</B>
+
+<DD>
+Allows
+<B>xlock</B>
+
+to be debugged by doing all but locking the screen.
+<DT><B>-/+echokeys</B>
+
+<DD>
+The
+<I>echokeys</I>
+
+option causes
+<B>xlock</B>
+
+to echo '?' characters for each key typed into the password prompt.
+Some consider this a security risk, so the default is to not echo
+anything. 
+<DT><B>-/+enablesaver</B>
+
+<DD>
+By default
+<B>xlock</B>
+
+will disable the normal X server's screen saver since
+it is in effect a replacement for it.  Since it is possible to set delay
+parameters long enough to cause phosphor burn on some displays, this
+option will turn back on the default screen saver which is very careful
+to keep most of the screen black.
+<DT><B>-/+grabmouse</B>
+
+<DD>
+The
+<I>grabmouse</I>
+
+option causes
+<B>xlock</B>
+
+to grab the mouse and keyboard, this is the default.
+<B>xlock</B>
+
+can not lock the screen without this.
+<DT><B>-/+grabserver</B>
+
+<DD>
+The
+<I>grabserver</I>
+
+option causes
+<B>xlock</B>
+
+to grab the server.  This is not usually needed but some unsecure X servers
+can be defeated without this.
+<DT><B>-/+install</B>
+
+<DD>
+Allows
+<B>xlock</B>
+
+to install its own colormap if
+<B>xlock</B>
+
+runs out of colors.
+May not work on with some window managers (fvwm) and does not work with
+the -inroot option.
+<DT><B>-/+sound</B>
+
+<DD>
+Allows you to turn on and off sound if installed with the capability.
+<DT><B>-/+timeelapsed</B>
+
+<DD>
+Allows you to find out how long a machine is locked so you can complain
+to an administrator that someone is hogging a machine.
+<DT><B>-/+usefirst</B>
+
+<DD>
+The
+<I>usefirst</I>
+
+option causes
+<B>xlock</B>
+
+to use the keystroke which got you to the password screen as the first
+character in the password.  The default is to ignore the first key
+pressed.
+<DT><B>-/+verbose</B>
+
+<DD>
+Verbose mode, tells what options it is going to use.
+<DT><B>-nice</B><I>&nbsp;nicelevel</I>
+
+<DD>
+The
+<I>nice</I>
+
+option sets system nicelevel of the
+<B>xlock</B>
+
+process to
+<I>nicelevel .</I>
+
+<DT><B>-lockdelay</B><I>&nbsp;seconds</I>
+
+<DD>
+The
+<I>lockdelay</I>
+
+option sets the number of
+<I>seconds</I>
+
+before the screen needs a password to be unlocked.  Good for use with
+an autolocking mechanism like <A HREF="http:/cgi-bin/man2html?man1/xautolock.1">xautolock</A>(1).
+<DT><B>-timeout</B><I>&nbsp;seconds</I>
+
+<DD>
+The
+<I>timeout</I>
+
+option sets the number of
+<I>seconds</I>
+
+before the password screen will time out.
+<DT><B>-font</B><I>&nbsp;fontname</I>
+
+<DD>
+The
+<I>font</I>
+
+option sets the font to be used on the prompt screen.
+<DT><B>-msgfont</B><I>&nbsp;fontname</I>
+
+<DD>
+option sets the font to be used for the message that is displayed in
+the lower part of the password screen.
+<DT><B>-fg</B><I>&nbsp;color</I>
+
+<DD>
+The
+<I>fg</I>
+
+option sets the color of the text on the password screen to
+<I>color .</I>
+
+<DT><B>-bg</B><I>&nbsp;color</I>
+
+<DD>
+The
+<I>bg</I>
+
+option sets the color of the background on the password screen to
+<I>color .</I>
+
+<DT><B>-foreground</B><I>&nbsp;color</I>
+
+<DD>
+The
+<I>foreground</I>
+
+option sets the color of the text on the password screen to
+<I>color .</I>
+
+<DT><B>-background</B><I>&nbsp;color</I>
+
+<DD>
+The
+<I>background</I>
+
+option sets the color of the background on the password screen to
+<I>color .</I>
+
+<DT><B>-username</B><I>&nbsp;string</I>
+
+<DD>
+Text
+<I>string</I>
+
+is shown in front of user name, defaults to &quot;Name: &quot;.
+<DT><B>-password</B><I>&nbsp;string</I>
+
+<DD>
+Text
+<I>string</I>
+
+is the password prompt string, defaults to &quot;Password: &quot;.
+<DT><B>-info</B><I>&nbsp;string</I>
+
+<DD>
+Text
+<I>string</I>
+
+is an informational message to tell the user what to do, defaults to
+&quot;Enter password to unlock; select icon to lock.&quot;.
+<DT><B>-validate</B><I>&nbsp;string</I>
+
+<DD>
+Text
+<I>string</I>
+
+is a message shown while validating the password, defaults to
+&quot;Validating login...&quot;
+<DT><B>-invalid</B><I>&nbsp;string</I>
+
+<DD>
+Text
+<I>string</I>
+
+is a message shown when password is invalid, defaults to
+&quot;Invalid login.&quot;
+<DT><B>-geometry</B><I>&nbsp;geom</I>
+
+<DD>
+The
+<I>geometry</I>
+
+option sets
+<I>geom</I>
+
+the size and offset of the lock window (normally the entire screen).
+The entire screen format is still used for entering the password.  The
+purpose is to see the screen even though it is locked.  This should be
+used with caution since many of the modes will fail if the windows
+are far from square or are too small (size must be greater than 0x0).
+This should also be used with -enablesaver to protect screen from
+phosphor burn.
+<DT><B>-icongeometry</B><I>&nbsp;geom</I>
+
+<DD>
+The
+<I>icongeometry</I>
+
+option sets
+<I>geom</I>
+
+the size of the iconic screen (normally 64x64) seen when entering the
+password.  This should be used with caution since many of the modes will
+fail if the windows are far from square or are too small (size must be
+greater than 0x0).  The greatest size is 256x256.  There should be some
+limit so users could see who has locked the screen.  Position
+information of icon is ignored.
+<DT><B>-/+fullrandom</B>
+
+<DD>
+Turn on/off randomness options within modes.  Not implemented on all
+mode options.
+<DT><B>-/+wireframe</B>
+
+<DD>
+Turn on/off wireframe, available on gears, sproingies and superquadrics.
+Other modes should use this in the future as well (e.g. daisy, life3d,
+triangle).
+<DT><B>-/+use3d</B>
+
+<DD>
+Turn on/off 3d view, available on bouboule, pyro, star, and worm.
+<DT><B>-delta3d</B><I>&nbsp;value</I>
+
+<DD>
+Space between the center of your 2 eyes for 3d mode.
+<DT><B>-none3d</B><I>&nbsp;color</I>
+
+<DD>
+Color used for empty size in 3d mode.
+<DT><B>-right3d</B><I>&nbsp;color</I>
+
+<DD>
+Color used for right eye in 3d mode.
+<DT><B>-left3d</B><I>&nbsp;color</I>
+
+<DD>
+Color used for left eye in 3d mode.
+<DT><B>-both3d</B><I>&nbsp;color</I>
+
+<DD>
+Color used for overlapping images for left and right eye in 3d mode.
+<DT><B>-program</B><I>&nbsp;programname</I>
+
+<DD>
+The
+<I>program</I>
+
+option sets the program to be used as the fortune generator.  Currently
+used only for marquee and nose modes.
+<DT><B>-messagesfile</B><I>&nbsp;formatted-filename</I>
+
+<DD>
+The
+<I>messagesfile</I>
+
+option sets the file to be used as the fortune generator.  The first
+entry is the number of fortunes, the next line contains the first fortune.
+Fortunes begin with a &quot;%%&quot; on a line by itself.  Currently used only for
+marquee and nose modes.  If one exists, it takes precedence over the
+fortune program.
+<DT><B>-messagefile</B><I>&nbsp;filename</I>
+
+<DD>
+The
+<I>messagefile</I>
+
+option sets the file where the contents are the message.  Currently
+used only for marquee and nose modes.  If one exists, it takes
+precedence over the fortune program and messagesfile.
+<DT><B>-message</B><I>&nbsp;textstring</I>
+
+<DD>
+The
+<I>message</I>
+
+option sets the message.  Currently used only for marquee and nose modes.
+If one exists, it takes precedence over the fortune program,
+messagesfile and messagefile.
+<DT><B>-mfont</B><I>&nbsp;mode-fontname</I>
+
+<DD>
+The
+<I>mfont</I>
+
+option sets the font to be used in the mode.  Currently used only for
+marquee and nose modes.
+<DT><B>-imagefile</B><I>&nbsp;filename</I>
+
+<DD>
+The
+<I>imagefile</I>
+
+option sets the ras or xpm file to be displayed with image or puzzle mode.
+Raster files work with -install as well.
+<DT><B>-neighbors</B><I>&nbsp;num</I>
+
+<DD>
+The
+<I>neighbors </I>
+
+option sets the number of neighbors of a cell to 3, 4, 6, 9 (may not have
+real mathematical meaning) or 12 for several automata modes.  Setting it to
+0 typically randomizes this, except in life where it is set to 4.
+<DT><B>-/+mouse</B>
+
+<DD>
+Turn on and off mouse interaction in
+<I>eyes, julia, and swarm.</I>
+
+<P>
+</DL>
+<A NAME="lbAG">&nbsp;</A>
+<H2>MORE OPTIONS (these may not be available)</H2>
+
+<DL COMPACT>
+<DT><B>-cpasswd</B><I>&nbsp;crypted-password</I>
+
+<DD>
+The
+<I>cpasswd</I>
+
+option sets the key to be this text string to unlock
+<B>xlock</B>
+
+instead of password file.
+<DT><B>-forceLogout</B><I>&nbsp;minutes</I>
+
+<DD>
+The
+<I>forceLogout</I>
+
+option sets
+<I>minutes</I>
+
+to auto-logout.
+<DT><B>-logoutButtonLabel</B><I>&nbsp;string</I>
+
+<DD>
+Text
+<I>string</I>
+
+is a message shown inside logout button when logout button is displayed.
+Defaults to
+&quot;Logout&quot;.
+<DT><B>-logoutButtonHelp</B><I>&nbsp;string</I>
+
+<DD>
+Text
+<I>string</I>
+
+is a message shown outside logout button when logout button is
+displayed.  Defaults to
+&quot;Click the \&quot;Logout\&quot; button to log out current\n
+user and make workstation available.&quot;
+<DT><B>-logoutFailedString</B><I>&nbsp;string</I>
+
+<DD>
+Text
+<I>string</I>
+
+is a message shown when a logout is attempted and fails.
+Defaults to
+&quot;Logout attempt FAILED.\n
+Current user could not be automatically logged out.&quot;
+<DT><B>-/+dtsaver</B>
+
+<DD>
+Turn on/off CDE Saver Mode.
+<DT><B>-locksound</B><I>&nbsp;string</I>
+
+<DD>
+Text
+<I>string</I>
+
+references sound to use at lock time.  Default sound, male voice:
+&quot;Thank you, for your cooperation.&quot;
+<DT><B>-infosound</B><I>&nbsp;string</I>
+
+<DD>
+Text
+<I>string</I>
+
+references sound to use for information.  Default sound, male voice:
+&quot;Identify please.&quot;
+<DT><B>-validsound</B><I>&nbsp;string</I>
+
+<DD>
+Text
+<I>string</I>
+
+references sound to when a password is valid.  Default sound, female voice:
+&quot;Complete.&quot;
+<DT><B>-invalidsound</B><I>&nbsp;string</I>
+
+<DD>
+Text
+<I>string</I>
+
+references sound to when a password is invalid.  Default sound, female
+voice: &quot;I am not programmed to give you that information.&quot;
+<P>
+</DL>
+<A NAME="lbAH">&nbsp;</A>
+<H2>SPECIAL MODE DEPENDENT OPTIONS</H2>
+
+<DL COMPACT>
+<DT><B>-/+truchet</B>
+
+<DD>
+Turn on and off Truchet lines (trail) in
+<I>ant.</I>
+
+<DT><B>-/+grow</B>
+
+<DD>
+Turn on and off growing fractals (else they are animated) for
+<I>drift.</I>
+
+<DT><B>-/+liss</B>
+
+<DD>
+Turn on and off using lissajous figures to get points for
+<I>drift.</I>
+
+<DT><B>-/+noants</B>
+
+<DD>
+Turn off and on ants in
+<I>escher.</I>
+
+<DT><B>-/+solidmoebius</B>
+
+<DD>
+Turn on and off solid Mobius strip in
+<I>escher.</I>
+
+<DT><B>-/+decay</B>
+
+<DD>
+Turn on and off decaying orbits for
+<I>grav.</I>
+
+<DT><B>-/+trail</B>
+
+<DD>
+Turn on and off decaying trail of dots for
+<I>grav.</I>
+
+<DT><B>-/+martin</B>
+
+<DD>
+Turn on and off Barry Martin's square root
+<I>hop.</I>
+
+<DT><B>-/+ejk1...ejk6</B>
+
+<DD>
+Turn on and off Ed J. Kubaitis'
+<I>hops.</I>
+
+<DT><B>-/+rr</B>
+
+<DD>
+Turn on and off Renaldo Recuerdo's
+<I>hop.</I>
+
+<DT><B>-/+jong</B>
+
+<DD>
+Turn on and off Jong's
+<I>hop.</I>
+
+<DT><B>-/+sine</B>
+
+<DD>
+Turn on and off Barry Martin's sine
+<I>hop.</I>
+
+<DT><B>-rule</B><I>&nbsp;num</I>
+
+<DD>
+Allows one to set
+<I>life</I>
+
+parameters &lt;living_min&gt;&lt;living_max&gt;&lt;birth_min&gt;&lt;birth_max&gt;.  For example,
+Conway's rule is 2333.  Unfortunately, this requires the rule to be
+contiguous.
+<DT><B>-/+totalistic</B>
+
+<DD>
+Turn on and off totalistic rules for
+<I>life1d.</I>
+
+If this is off then it follows rules of the LCAU collection.  These
+rules may not be symmetric and are more general.
+<DT><B>-rule3d</B><I>&nbsp;num</I>
+
+<DD>
+Allows one to set
+<I>life3d</I>
+
+parameters &lt;living_min&gt;&lt;living_max&gt;&lt;birth_min&gt;&lt;birth_max&gt;.  For example,
+Bay's 4 rules are 4555, 5766, 5655, and 6767.  Unfortunately, this requires
+the rule to be contiguous.
+<DT><B>-/+ammann</B>
+
+<DD>
+Turn on and off lines for
+<I>penrose.</I>
+
+<DT><B>-/+erase</B>
+
+<DD>
+Turn on and off erasing for
+<I>spline.</I>
+
+If this option is on,
+<I>cycles</I>
+
+is divided by 64 to compute the number of lines, so as to be compatible
+when using -fullrandom.
+<DT><B>-trek</B><I>&nbsp;num</I>
+
+<DD>
+If its a high number you will see the space ship all the time in
+<I>star.</I>
+
+<DT><B>-/+rock</B>
+
+<DD>
+Turn on and off rocks for
+<I>star.</I>
+
+If this is off, stars will be seen instead.
+<DT><B>-/+straight</B>
+
+<DD>
+Turn on if
+<I>star</I>
+
+gets you motion sick.
+<DT><B>-factory</B><I>&nbsp;num</I>
+
+<DD>
+Number of extra factory parts in 
+<I>pipes.</I>
+
+<DT><B>-/+fisheye</B>
+
+<DD>
+Turn on if you want a zoomed-in view of
+<I>pipes.</I>
+
+<DT><B>-/+tightturns</B>
+
+<DD>
+Turn on if you want the
+<I>pipes</I>
+
+to bend more often. 
+<DT><B>-/+rotatepipes</B>
+
+<DD>
+Turn on if you want the pipe system rotated in
+<I>pipes.</I>
+
+<DT><B>-duration</B><I>&nbsp;seconds</I>
+
+<DD>
+Allows one to set a duration for a mode in
+<I>random.</I>
+
+Duration of 0 is defined as infinite.
+<DT><B>-modelist</B><I>&nbsp;textstring</I>
+
+<DD>
+Allows one to pass a list of files to randomly display to
+<I>random.</I>
+
+&quot;all&quot; will get all files but blank (and bomb if compiled in). &quot;all,blank&quot;
+will get all modes.  &quot;all,-image bounce,+blank&quot; will get all modes but
+image and bounce.  &quot;bug wator&quot; will get only bug and wator.  &quot;allgl&quot; will
+get only the GL modes if compiled in, all-allgl will get all but the GL
+modes, &quot;allnice&quot; will weed out high cpu usage modes (as well as hackers and
+gl modes).  &quot;alluse3d&quot; will get all the modes that support this option.
+&quot;allmouse&quot; will get all the modes that support mouse interaction.
+Similarly, &quot;allautomata&quot; for automata modes, &quot;allfractal&quot; for fractal
+modes, &quot;allgeometry&quot; for geometry modes, &quot;allspace&quot; for space modes.  The
+random mode itself can not be referenced.
+<DT><B>-/+sequential</B>
+
+<DD>
+Turn on non-random
+<I>random</I>
+
+option.
+<P>
+</DL>
+<A NAME="lbAI">&nbsp;</A>
+<H2>**WARNING**</H2>
+
+<B>xlock</B>
+
+can appear to hang if it is competing with a high-priority process for
+the CPU. For example, if
+<B>xlock</B>
+
+is started after a process with 'nice -20'
+(high priority),
+<B>xlock</B>
+
+will take  considerable amount of time to respond.
+<P>
+<A NAME="lbAJ">&nbsp;</A>
+<H2>SHADOW PASSWORDS</H2>
+
+If the machine is using a shadow password system, then
+<B>xlock</B>
+
+may not be set up to get the real password and so must be given one
+of its own. This can be either on the command line, via the
+<B>-cpasswd</B>
+
+option,
+or in the file
+<B>$HOME/.xlockrc</B>,
+
+with the first taking precedence.  In both cases an encrypted password
+is expected (see <A HREF="http:/cgi-bin/man2html?man8/makekey.8">makekey</A>(8)).  If neither is given, then
+<B>xlock</B>
+
+will prompt for a password and will use that, also storing an
+encrypted version of it in
+<B>$HOME/.xlockrc</B>
+
+for future use.
+<P>
+<A NAME="lbAK">&nbsp;</A>
+<H2>BUGS</H2>
+
+&quot;kill -KILL
+<B>xlock</B>
+
+&quot; causes the server that was locked to be unusable, since all hosts
+(including localhost) were removed from the access control list
+to lock out new X clients, and since
+<B>xlock</B>
+
+could not catch SIGKILL, it terminated before restoring the access
+control list.  This will leave the X server in a state where
+<I>&quot;you can no longer connect to that server,
+and this operation cannot be reversed unless you reset the server.&quot;</I>
+<TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT><TT>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</TT>-From the X11R4 Xlib Documentation, Chapter 7.<BR>
+<BR>
+
+NCD terminals do not allow xlock to remove all the hosts from the access
+control list.  Therefore you will need to use the &quot;-remote&quot; and
+&quot;-allowaccess&quot; switches.  If you happen to run without &quot;-allowaccess&quot; on an
+NCD terminal,
+<B>xlock</B>
+
+will not work and you will need to reboot the terminal, or simply go into
+the SETUP menus, under 'Network Parameters', and turn off TCP/IP access
+control. 
+<BR>
+
+<A NAME="lbAL">&nbsp;</A>
+<H2>SEE ALSO</H2>
+
+<A HREF="http:/cgi-bin/man2html?man1/X.1">X</A>(1), Xlib Documentation.
+<P>
+<A NAME="lbAM">&nbsp;</A>
+<H2>AUTHOR</H2>
+
+Maintained by:
+<BR>
+
+<BR>&nbsp;David&nbsp;A.&nbsp;Bagley&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;(<A HREF="mailto:bagleyd@bigfoot.com">bagleyd@bigfoot.com</A>)
+<BR>
+
+<BR>&nbsp;The&nbsp;latest&nbsp;version&nbsp;is&nbsp;currently&nbsp;at:
+<BR>
+
+<BR>&nbsp;<A HREF="ftp://ftp.x.org">ftp.x.org</A>&nbsp;in&nbsp;/contrib/applications/xlockmore-4.??.tar.gz
+<P>
+Original Author:
+<BR>
+
+<BR>&nbsp;Patrick&nbsp;J.&nbsp;Naughton<TT>&nbsp;&nbsp;&nbsp;&nbsp;</TT>&nbsp;(<A HREF="mailto:naughton@eng.sun.com">naughton@eng.sun.com</A>)<BR>
+<BR>
+
+<BR>&nbsp;Mailstop&nbsp;21-14
+<BR>
+
+<BR>&nbsp;Sun&nbsp;Microsystems&nbsp;Laboratories,&nbsp;Inc.
+<BR>
+
+<BR>&nbsp;Mountain&nbsp;View,&nbsp;CA&nbsp;&nbsp;94043
+<BR>
+
+<BR>&nbsp;415/336-1080
+<P>
+with many additional contributors.
+<P>
+<A NAME="lbAN">&nbsp;</A>
+<H2>COPYRIGHT</H2>
+
+Copyright (c) 1988-91 by Patrick J. Naughton
+<BR>
+
+Copyright (c) 1993-97 by David A. Bagley
+<P>
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation. 
+<BR>
+
+The original BSD daemon is Copyright (c) 1988 Marshall Kirk McKusick.
+All Rights Reserved.
+<BR>
+
+Sun, HP, and SGI icons have their respective copyrights.
+
+<HR>
+<A NAME="index">&nbsp;</A><H2>Index</H2>
+<DL>
+<DT><A HREF="#lbAB">NAME</A><DD>
+<DT><A HREF="#lbAC">SYNOPSIS</A><DD>
+<DT><A HREF="#lbAD">DESCRIPTION</A><DD>
+<DT><A HREF="#lbAE">NOTE ON ETIQUETTE</A><DD>
+<DT><A HREF="#lbAF">OPTIONS</A><DD>
+<DT><A HREF="#lbAG">MORE OPTIONS (these may not be available)</A><DD>
+<DT><A HREF="#lbAH">SPECIAL MODE DEPENDENT OPTIONS</A><DD>
+<DT><A HREF="#lbAI">**WARNING**</A><DD>
+<DT><A HREF="#lbAJ">SHADOW PASSWORDS</A><DD>
+<DT><A HREF="#lbAK">BUGS</A><DD>
+<DT><A HREF="#lbAL">SEE ALSO</A><DD>
+<DT><A HREF="#lbAM">AUTHOR</A><DD>
+<DT><A HREF="#lbAN">COPYRIGHT</A><DD>
+</DL>
+<HR>
+This document was created by
+<A HREF="http:/cgi-bin/man2html">man2html</A>,
+using the manual pages.<BR>
+Time: 15:10:05 GMT, October 02, 1997
+</BODY>
+</HTML>

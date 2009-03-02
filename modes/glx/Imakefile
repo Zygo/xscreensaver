@@ -1,0 +1,38 @@
+#ifndef XCOMM
+#define XCOMM /**/#
+#endif
+XCOMM @(#)Sub Imakefile	xlockmore
+XCOMM
+
+#include "../../iconfig.h"
+
+DG=
+OG=$(O)$(S)$(DG)
+CG=$(C) $(DG)
+
+XCOMM  please define
+XCOMM  C as the C source code extension
+XCOMM  O as the object extension
+XCOMM  S as the separator for object code
+
+XCOMM  List of object files
+XLOCKGLOBJS = $(DG)escher$(OG)gears$(OG)morph3d$(OG)rubik$(O)$(S)\
+$(DG)superquadrics$(O)$(S)\
+$(DG)buildlwo$(OG)pipes$(OG)pipeobjs$(O)$(S)\
+$(DG)sproingies$(OG)sproingiewrap$(OG)s1_b$(O)$(S)\
+$(DG)s1_1$(OG)s1_2$(OG)s1_3$(OG)s1_4$(OG)s1_5$(OG)s1_6$(O)
+
+XCOMM default target
+all:: $(XLOCKGLOBJS) 
+
+DependTarget()
+
+XLOCKINC = -I. -I../../xlock
+
+DependTarget()
+LintTarget()
+
+distclean::	clean
+	$(RM) Makefile config.status config.cache config.log config.h
+
+clean.all:: distclean

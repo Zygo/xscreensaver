@@ -1,0 +1,35 @@
+These files are just examples of configuration files for xlock and
+other tools which I use.  They are not normally required.
+
+descrip.mms is no longer maintained since I can no longer check it on my
+  VMS system.  make.com should work fine.
+fortune.dat is for those who do not have fortune.  On VMS it is very costly
+  to spawn a process.
+indent.pro is just my indenting style for xlock.
+play.sh is a hack to get sound.
+rplay* are ideas for setting up a more sophisticated sound package.
+system.*wm*rc.xlock files are for fvwm2, fvwm, openwin (olwm & olvwm) and
+  motif (mwm and dtwm) window managers.  By default they include all modes
+  which may not be available depending on your system.  The openwin file can
+  be referenced directly, the others need to be placed in menu files.
+*life* stuff is for adding life patterns to life.c not all formats are
+  handled.  However, the major format that is not handled here is close to
+  the format I use already in life.c.
+xlockrandimage.pl picks a random image.  Does not have to be used since
+  it is built in, one can just give a directory name.
+
+Contributed by Charles Vidal <cvidal@newlog.com>
+xlock.tcl is another xlock launcher similar to xmlock and xalock but using
+  tcl.
+xlock.java and xlockFrame.java is yet another xlock launcher similar to
+  xmlock and xalock but this time using java.  Seems to require JDK 1.1.1,
+  on my 1.0 it can not spawn xlock.
+
+Contributed by Igor Markov <imarkov@math.ucla.edu>
+xlocksat.pl  use like "xlock -saturation `xlocksat.pl`"  The idea is that
+  high saturation looks weird at night and low saturation looks weird
+  during the day.  Unfortuantely, as the day progresses the saturation does
+  not change.
+xlockranddur.pl  use like "xlock random -duration `xlockranddur.pl`"
+  This gives a random duration of a mode (providing you have fortune!).
+

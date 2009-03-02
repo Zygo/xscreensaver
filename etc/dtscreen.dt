@@ -1,0 +1,782 @@
+###############################################################################
+#
+#     dtscreen.dt
+#
+#     Actions for defining screen savers to the Common Desktop Environment.
+#
+#    (c) Copyright 1993, 1994, 1995 Hewlett-Packard Company
+#    (c) Copyright 1993, 1994, 1995 International Business Machines Corp.
+#    (c) Copyright 1993, 1994, 1995 Sun Microsystems, Inc.
+#    (c) Copyright 1993, 1994, 1995 Novell, Inc.
+#
+#     $XConsortium: dtscreen.dt.src /main/cde1_maint/1 1995/07/15 03:07:30 drk $
+#
+###############################################################################
+set DtDbVersion=1.0
+
+###############################################################################
+#
+# WARNING:  This file may be overwritten in subsequent installations of
+#     the Common Desktop Environment (CDE).  Consequently, any system wide
+#     changes should be made to an equivalent database file in
+#     /etc/dt/types and not in this file.
+#
+###############################################################################
+
+###################################################################
+#
+# Actions
+#
+# Note: the following are dtscreen's original action changed to use xlock
+###################################################################
+ACTION StartDtscreenHop
+{
+	LABEL		StartDtscreenHop
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode hop
+	DESCRIPTION	hop: Real plane iterated fractals
+}
+#	EXEC_STRING	/usr/dt/bin/dtscreen -mode hop
+#	DESCRIPTION	hop: Hopalong iterated fractals
+
+ACTION StartDtscreenQix
+{
+	LABEL		StartDtscreenQix
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode qix
+	DESCRIPTION	qix: Spinning lines a la Qix(tm)
+}
+#	EXEC_STRING	/usr/dt/bin/dtscreen -mode qix
+#	DESCRIPTION	qix: Spinning lines
+
+ACTION StartDtscreenImage
+{
+	LABEL		StartDtscreenImage
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode image
+	DESCRIPTION	image: Randomly appearing logos
+}
+#	EXEC_STRING	/usr/dt/bin/dtscreen -mode image
+#	DESCRIPTION	image: Random bouncing image
+
+ACTION StartDtscreenLife
+{
+	LABEL		StartDtscreenLife
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode life
+	DESCRIPTION	life: Conway's game of Life
+}
+#	EXEC_STRING	/usr/dt/bin/dtscreen -mode life
+
+ACTION StartDtscreenSwarm
+{
+	LABEL		StartDtscreenSwarm
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode swarm
+	DESCRIPTION	swarm: A swarm of bees following a wasp
+}
+#	EXEC_STRING	/usr/dt/bin/dtscreen -mode swarm
+#	DESCRIPTION	swarm: Swarm of bees
+
+ACTION StartDtscreenRotor
+{
+	LABEL		StartDtscreenRotor
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode rotor
+	DESCRIPTION	rotor: Tom's Roto-Rotor
+}
+#	EXEC_STRING	/usr/dt/bin/dtscreen -mode rotor
+#	DESCRIPTION	rotor: Rotor
+
+ACTION StartDtscreenPyro
+{
+	LABEL		StartDtscreenPyro
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode pyro
+	DESCRIPTION	pyro: Fireworks
+}
+#	EXEC_STRING	/usr/dt/bin/dtscreen -mode pyro
+
+ACTION StartDtscreenFlame
+{
+	LABEL		StartDtscreenFlame
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode flame
+	DESCRIPTION	flame: Cosmic flame fractals
+}
+#	EXEC_STRING	/usr/dt/bin/dtscreen -mode flame
+#	DESCRIPTION	flame: Cosmic Flame Fractals
+
+ACTION StartDtscreenWorm
+{
+	LABEL		StartDtscreenWorm
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode worm
+	DESCRIPTION	worm: Wiggly worms
+}
+#	EXEC_STRING	/usr/dt/bin/dtscreen -mode worm
+#	DESCRIPTION	worm: Wiggly Worms
+
+ACTION StartDtscreenBlank
+{
+	LABEL		StartDtscreenBlank
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode blank
+	DESCRIPTION	blank: Nothing but a blank screen
+}
+#	DESCRIPTION	blank: Blank Screen
+
+###################################################################
+#
+# xlock's modes that dtscreen doesn't have.
+#
+###################################################################
+ACTION StartDtscreenAnt
+{
+	LABEL		StartDtscreenAnt
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode ant
+	DESCRIPTION	ant: Langton's and Turk's generalized ants
+}
+
+ACTION StartDtscreenBall
+{
+	LABEL		StartDtscreenBall
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode ball
+	DESCRIPTION	ball: Bouncing balls
+}
+
+ACTION StartDtscreenBat
+{
+	LABEL		StartDtscreenBat
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode bat
+	DESCRIPTION	bat: Bouncing flying bats
+}
+
+ACTION StartDtscreenBlot
+{
+	LABEL		StartDtscreenBlot
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode blot
+	DESCRIPTION	blot: Rorschach's ink blot test
+}
+
+ACTION StartDtscreenBouboule
+{
+	LABEL		StartDtscreenBouboule
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode bouboule
+	DESCRIPTION	bouboule: Mimi's bouboule of moving stars
+}
+
+ACTION StartDtscreenBounce
+{
+	LABEL		StartDtscreenBounce
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode bounce
+	DESCRIPTION	bounce: Bouncing footballs
+}
+
+ACTION StartDtscreenBraid
+{
+	LABEL		StartDtscreenBraid
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode braid
+	DESCRIPTION	braid: Random braids and knots
+}
+
+ACTION StartDtscreenBug
+{
+	LABEL		StartDtscreenBug
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode bug
+	DESCRIPTION	bug: Palmiter's bug evolution and garden of Eden
+}
+
+ACTION StartDtscreenCartoon
+{
+	LABEL		StartDtscreenCartoon
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode cartoon
+	DESCRIPTION	cartoon: Bouncing cartoons
+}
+
+ACTION StartDtscreenClock
+{
+	LABEL		StartDtscreenClock
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode clock
+	DESCRIPTION	clock: Packard's clock
+}
+
+ACTION StartDtscreenCrystal
+{
+	LABEL		StartDtscreenCrystal
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode crystal
+	DESCRIPTION	crystal: Polygons in 2D plane groups
+}
+
+ACTION StartDtscreenDaisy
+{
+	LABEL		StartDtscreenDaisy
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode daisy
+	DESCRIPTION	daisy: A meadow of daisies
+}
+
+ACTION StartDtscreenDclock
+{
+	LABEL		StartDtscreenDclock
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode dclock
+	DESCRIPTION	dclock: A floating digital clock
+}
+
+ACTION StartDtscreenDemon
+{
+	LABEL		StartDtscreenDemon
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode demon
+	DESCRIPTION	demon: Griffeath's cellular automata
+}
+
+ACTION StartDtscreenDrift
+{
+	LABEL		StartDtscreenDrift
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode drift
+	DESCRIPTION	drift: Cosmic drifting flame fractals
+}
+
+ACTION StartDtscreenEscher
+{
+	LABEL		StartDtscreenEscher
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode escher
+	DESCRIPTION	escher: Some Escher like scenes
+}
+
+ACTION StartDtscreenEyes
+{
+	LABEL		StartDtscreenEyes
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode eyes
+	DESCRIPTION	eyes: Eyes following a bouncing grelb
+}
+
+ACTION StartDtscreenFadeplot
+{
+	LABEL		StartDtscreenFadeplot
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode fadeplot
+	DESCRIPTION	fadeplot: A fading plot of sine squared
+}
+
+ACTION StartDtscreenFlag
+{
+	LABEL		StartDtscreenFlag
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode flag
+	DESCRIPTION	flag: A waving flag of your operating system
+}
+
+ACTION StartDtscreenForest
+{
+	LABEL		StartDtscreenForest
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode forest
+	DESCRIPTION	forest: Binary trees of a fractal forest
+}
+
+ACTION StartDtscreenGalaxy
+{
+	LABEL		StartDtscreenGalaxy
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode galaxy
+	DESCRIPTION	galaxy: Crashing spiral galaxies
+}
+
+ACTION StartDtscreenGears
+{
+	LABEL		StartDtscreenGears
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode gears
+	DESCRIPTION	gears: GL's gears
+}
+
+ACTION StartDtscreenGeometry
+{
+	LABEL		StartDtscreenGeometry
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode geometry
+	DESCRIPTION	geometry: Morphing of a complete graph
+}
+
+ACTION StartDtscreenGrav
+{
+	LABEL		StartDtscreenGrav
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode grav
+	DESCRIPTION	grav: Orbiting planets
+}
+
+ACTION StartDtscreenHelix
+{
+	LABEL		StartDtscreenHelix
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode helix
+	DESCRIPTION	helix: String art
+}
+
+ACTION StartDtscreenHyper
+{
+	LABEL		StartDtscreenHyper
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode hyper
+	DESCRIPTION	hyper: A spinning tesseract in 4D space
+}
+
+ACTION StartDtscreenIco
+{
+	LABEL		StartDtscreenIco
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode ico
+	DESCRIPTION	ico: A bouncing polyhedra
+}
+
+ACTION StartDtscreenIfs
+{
+	LABEL		StartDtscreenIfs
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode ifs
+	DESCRIPTION	ifs: A modified iterated function system
+}
+
+ACTION StartDtscreenJulia
+{
+	LABEL		StartDtscreenJulia
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode julia
+	DESCRIPTION	julia: The Julia set
+}
+
+ACTION StartDtscreenKaleid
+{
+	LABEL		StartDtscreenKaleid
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode kaleid
+	DESCRIPTION	kaleid: A kaleidoscope
+}
+
+ACTION StartDtscreenLaser
+{
+	LABEL		StartDtscreenLaser
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode laser
+	DESCRIPTION	laser: Spinning lasers
+}
+
+ACTION StartDtscreenLife1d
+{
+	LABEL		StartDtscreenLife1d
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode life1d
+	DESCRIPTION	life1d: Wolfram's game of 1D Life
+}
+
+ACTION StartDtscreenLife3d
+{
+	LABEL		StartDtscreenLife3d
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode life3d
+	DESCRIPTION	life3d: Bays' game of 3D Life
+}
+
+ACTION StartDtscreenLightning
+{
+	LABEL		StartDtscreenLightning
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode lightning
+	DESCRIPTION	lightning: Keith's fractal lightning bolts
+}
+
+ACTION StartDtscreenLisa
+{
+	LABEL		StartDtscreenLisa
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode lisa
+	DESCRIPTION	lisa: Animated lisajous loops
+}
+
+ACTION StartDtscreenLissie
+{
+	LABEL		StartDtscreenLissie
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode lissie
+	DESCRIPTION	lissie: Lissajous worms
+}
+
+ACTION StartDtscreenLoop
+{
+	LABEL		StartDtscreenLoop
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode loop
+	DESCRIPTION	loop: Langton's self-producing loops
+}
+
+ACTION StartDtscreenMarquee
+{
+	LABEL		StartDtscreenMarquee
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode marquee
+	DESCRIPTION	marquee: Messages
+}
+
+ACTION StartDtscreenMaze
+{
+	LABEL		StartDtscreenMaze
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode maze
+	DESCRIPTION	maze: A random maze and a depth first search solution
+}
+
+ACTION StartDtscreenMorph3d
+{
+	LABEL		StartDtscreenMorph3d
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode morph3d
+	DESCRIPTION	morph3d: GL morphing polyhedra
+}
+
+ACTION StartDtscreenMountain
+{
+	LABEL		StartDtscreenMountain
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode mountain
+	DESCRIPTION	mountain: Papo's mountain range
+}
+
+ACTION StartDtscreenMunch
+{
+	LABEL		StartDtscreenMunch
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode munch
+	DESCRIPTION	munch: Munching squares
+}
+
+ACTION StartDtscreenNose
+{
+	LABEL		StartDtscreenNose
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode nose
+	DESCRIPTION	nose: A man with a big nose runs around spewing out messages
+}
+
+ACTION StartDtscreenPacman
+{
+	LABEL		StartDtscreenPacman
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode pacman
+	DESCRIPTION	pacman: Pacman(tm)
+}
+
+ACTION StartDtscreenPenrose
+{
+	LABEL		StartDtscreenPenrose
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode penrose
+	DESCRIPTION	penrose: Penrose's quasiperiodic tilings
+}
+
+ACTION StartDtscreenPetal
+{
+	LABEL		StartDtscreenPetal
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode petal
+	DESCRIPTION	petal: Various GCD Flowers
+}
+
+ACTION StartDtscreenPipes
+{
+	LABEL		StartDtscreenPipes
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode pipes
+	DESCRIPTION	pipes: A selfbuilding pipe system
+}
+
+ACTION StartDtscreenPuzzle
+{
+	LABEL		StartDtscreenPuzzle
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode puzzle
+	DESCRIPTION	puzzle: A puzzle being scrambled and then solved
+}
+
+ACTION StartDtscreenRoll
+{
+	LABEL		StartDtscreenRoll
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode roll
+	DESCRIPTION	roll: A rolling ball
+}
+
+ACTION StartDtscreenRubik
+{
+	LABEL		StartDtscreenRubik
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode rubik
+	DESCRIPTION	rubik: An auto-solving Rubik's cube
+}
+
+ACTION StartDtscreenShape
+{
+	LABEL		StartDtscreenShape
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode shape
+	DESCRIPTION	shape: Stippled rectangles, ellipses, and triangles
+}
+
+ACTION StartDtscreenSierpinski
+{
+	LABEL		StartDtscreenSierpinski
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode sierpinski
+	DESCRIPTION	sierpinski: Sierpinski's triangle
+}
+
+ACTION StartDtscreenSlip
+{
+	LABEL		StartDtscreenSlip
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode slip
+	DESCRIPTION	slip: Slipping blits
+}
+
+ACTION StartDtscreenSphere
+{
+	LABEL		StartDtscreenSphere
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode sphere
+	DESCRIPTION	sphere: A bunch of shaded spheres
+}
+
+ACTION StartDtscreenSpiral
+{
+	LABEL		StartDtscreenSpiral
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode spiral
+	DESCRIPTION	spiral: Helixes of dots
+}
+
+ACTION StartDtscreenSpline
+{
+	LABEL		StartDtscreenSpline
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode spline
+	DESCRIPTION	spline: Colorful moving splines
+}
+
+ACTION StartDtscreenSproingies
+{
+	LABEL		StartDtscreenSproingies
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode sproingies
+	DESCRIPTION	sproingies: Sproingies! Nontoxic. Safe for pets and small children
+}
+
+ACTION StartDtscreenStar
+{
+	LABEL		StartDtscreenStar
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode star
+	DESCRIPTION	star: A star field with a twist
+}
+
+ACTION StartDtscreenStrange
+{
+	LABEL		StartDtscreenStrange
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode strange
+	DESCRIPTION	strange: Strange attractors
+}
+
+ACTION StartDtscreenSuperquadrics
+{
+	LABEL		StartDtscreenSuperquadrics
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode superquadrics
+	DESCRIPTION	superquadrics: 3D mathematical shapes
+}
+
+ACTION StartDtscreenSwirl
+{
+	LABEL		StartDtscreenSwirl
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode swirl
+	DESCRIPTION	swirl: Animated swirling patterns
+}
+
+ACTION StartDtscreenTriangle
+{
+	LABEL		StartDtscreenTriangle
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode triangle
+	DESCRIPTION	triangle: A triangle mountain range
+}
+
+ACTION StartDtscreenTube
+{
+	LABEL		StartDtscreenTube
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode tube
+	DESCRIPTION	tube: An animated tube
+}
+
+ACTION StartDtscreenTurtle
+{
+	LABEL		StartDtscreenTurtle
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode turtle
+	DESCRIPTION	turtle: Turtle fractals
+}
+
+ACTION StartDtscreenVines
+{
+	LABEL		StartDtscreenVines
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode vines
+	DESCRIPTION	vines: Fractals
+}
+
+ACTION StartDtscreenVoters
+{
+	LABEL		StartDtscreenVoters
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode voters
+	DESCRIPTION	voters: Dewdney's Voters
+}
+
+ACTION StartDtscreenWator
+{
+	LABEL		StartDtscreenWator
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode wator
+	DESCRIPTION	wator: Dewdney's Water-Torus planet of fish and sharks
+}
+
+ACTION StartDtscreenWire
+{
+	LABEL		StartDtscreenWire
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode wire
+	DESCRIPTION	wire: A random circuit with 2 electrons
+}
+
+ACTION StartDtscreenWorld
+{
+	LABEL		StartDtscreenWorld
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode world
+	DESCRIPTION	world: Spinning Earths
+}
+
+ACTION StartDtscreenBomb
+{
+	LABEL		StartDtscreenBomb
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode bomb
+	DESCRIPTION	bomb: A bomb and will autologout after a time
+}
+
+ACTION StartDtscreenRandom
+{
+	LABEL		StartDtscreenRandom
+	TYPE		COMMAND
+	WINDOW_TYPE	NO_STDIO
+	EXEC_STRING	$DTSCREEN -mode random
+	DESCRIPTION	random: A random mode except blank and bomb
+}
+

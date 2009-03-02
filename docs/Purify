@@ -1,0 +1,1146 @@
+Old Purify Problems (problems are now marked in code with "PURIFY")
+
+---
+Summary of unresolved memory problems with xlockmore-4.03
+cartoon - Possible 29756 byte memory leak from XPutImage
+swirl - Possible 256 byte memory leak from XPutImage
+life - Possible 132 byte memory leak from XPutImage
+resource.c - 1 byte memory leak
+There are also some unitialized memory reads that appear to be internal to X11.
+---
+
+SOLVED since xlockmore-4.02
+memory leaks:               galaxy.c, life3d.c
+
+MesaGL 2.3 fixes many cumulative leaks and unitialized memory reads that existed
+in MesaGL 2.2.  This affected all GL modes.  MesaGL 2.3 or newer is recommended
+since it fixes these memory leaks and runs faster.  Cumulative means that the
+memory leaks occur each time the mode is run when in random mode, which is why
+after some time it may crash xlock since it runs out of available memory.
+
+
+
+-------------
+Purify log from TS for xlockmore-4.03 (BETA2)
+Purify4.0.1 SunOS4 with XPM, RPLAY, and HACKERS enabled.
+-------------
+****  Purify instrumented ./xlock (pid 20572 at Tue Jul  8 17:05:31 1997)
+  * Purify 4.0.1 SunOS 4.1, Copyright (C) 1992-1996 Pure Atria Corp. All rights reserved. 
+  * For contact information type: "purify -help"
+  * For TTY output, use the option "-windows=no"
+  * Command-line: ./xlock 
+  * Options settings: -chain-length=25 -purify \
+    -purify-home=/vol/pure/purify-4.0.1-sunos4 
+  * Purify licensed to MICRON TECHNOLOGY INC
+  * Purify checking enabled.
+
+****  Purify instrumented ./xlock (pid 20572)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	GetDatabase    [libX11.so.4.10]
+	XrmGetFileDatabase [libX11.so.4.10]
+	parsefilepath  [resource.c:1006]
+	getResources   [resource.c:1295]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+  * Reading 4 bytes from 0x344ec4 in the heap.
+  * Address 0x344ec4 is 4 bytes into a malloc'd block at 0x344ec0 of 12 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [libX11.so.4.10]
+	XrmGetFileDatabase [libX11.so.4.10]
+	parsefilepath  [resource.c:1006]
+	getResources   [resource.c:1295]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+
+****  Purify instrumented ./xlock (pid 20572)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	GetDatabase    [libX11.so.4.10]
+	XrmGetFileDatabase [libX11.so.4.10]
+	parsefilepath  [resource.c:1006]
+	getResources   [resource.c:1295]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+  * Reading 4 bytes from 0x344ec4 in the heap.
+  * Address 0x344ec4 is 4 bytes into a malloc'd block at 0x344ec0 of 12 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [libX11.so.4.10]
+	XrmGetFileDatabase [libX11.so.4.10]
+	parsefilepath  [resource.c:1006]
+	getResources   [resource.c:1295]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+
+****  Purify instrumented ./xlock (pid 20572)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	GetDatabase    [libX11.so.4.10]
+	XrmGetFileDatabase [libX11.so.4.10]
+	parsefilepath  [resource.c:1006]
+	getResources   [resource.c:1325]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+  * Reading 4 bytes from 0x35ce44 in the heap.
+  * Address 0x35ce44 is 4 bytes into a malloc'd block at 0x35ce40 of 12 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [libX11.so.4.10]
+	XrmGetFileDatabase [libX11.so.4.10]
+	parsefilepath  [resource.c:1006]
+	getResources   [resource.c:1325]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+
+****  Purify instrumented ./xlock (pid 20572)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	GetDatabase    [libX11.so.4.10]
+	XrmGetFileDatabase [libX11.so.4.10]
+	parsefilepath  [resource.c:1006]
+	getResources   [resource.c:1325]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+  * Reading 4 bytes from 0x35ce44 in the heap.
+  * Address 0x35ce44 is 4 bytes into a malloc'd block at 0x35ce40 of 12 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [libX11.so.4.10]
+	XrmGetFileDatabase [libX11.so.4.10]
+	parsefilepath  [resource.c:1006]
+	getResources   [resource.c:1325]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+
+****  Purify instrumented ./xlock (pid 20572)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	GetDatabase    [libX11.so.4.10]
+	XrmGetStringDatabase [libX11.so.4.10]
+	getResources   [resource.c:1364]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+  * Reading 4 bytes from 0x343b9c in the heap.
+  * Address 0x343b9c is 4 bytes into a malloc'd block at 0x343b98 of 12 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [libX11.so.4.10]
+	XrmGetStringDatabase [libX11.so.4.10]
+	getResources   [resource.c:1364]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+
+****  Purify instrumented ./xlock (pid 20572)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	GetDatabase    [libX11.so.4.10]
+	XrmGetStringDatabase [libX11.so.4.10]
+	getResources   [resource.c:1364]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+  * Reading 4 bytes from 0x343b9c in the heap.
+  * Address 0x343b9c is 4 bytes into a malloc'd block at 0x343b98 of 12 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [libX11.so.4.10]
+	XrmGetStringDatabase [libX11.so.4.10]
+	getResources   [resource.c:1364]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+
+****  Purify instrumented ./xlock (pid 20572)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	XrmDestroyDatabase [libX11.so.4.10]
+	getResources   [resource.c:1454]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+  * Reading 4 bytes from 0x344ec4 in the heap.
+  * Address 0x344ec4 is 4 bytes into a malloc'd block at 0x344ec0 of 12 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	NewDatabase    [libX11.so.4.10]
+	XrmGetFileDatabase [libX11.so.4.10]
+	parsefilepath  [resource.c:1006]
+	getResources   [resource.c:1295]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+
+****  Purify instrumented ./xlock (pid 20572)  ****
+Current file descriptors in use: 7
+FIU: file descriptor 0: <stdin>
+FIU: file descriptor 1: <stdout>
+FIU: file descriptor 2: <stderr>
+FIU: file descriptor 4: "/usr/local/xlock.staff", O_RDONLY
+   * File info: -rw-r--r--  1 root     staff           15 Apr 18 11:59
+   * File position: 15
+   * This file descriptor was allocated from:
+	open           [rtlib.o]
+	_endopen       [libc.so.1.8]
+	fopen          [libc.so.1.8]
+	my_fopen       [utils.c:168]
+	fullLock       [logout.c:478]
+	getResources   [resource.c:1471]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+FIU: file descriptor 5: <unnamed socket>, O_RDWR
+   * This file descriptor was allocated from:
+	socket         [rtlib.o]
+	clntudp_bufcreate [libc.so.1.8]
+	load_dom_binding [libc.so.1.8]
+	_yp_dobind_soft [libc.so.1.8]
+	_yp_dobind     [libc.so.1.8]
+	yp_match       [libc.so.1.8]
+	getnamefromyellow [libc.so.1.8]
+	matchuid       [libc.so.1.8]
+	getpwuid       [libc.so.1.8]
+	fullLock       [logout.c:469]
+	getResources   [resource.c:1471]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+FIU: file descriptor 26: <reserved for Purify internal use>
+FIU: file descriptor 27: <reserved for Purify internal use>
+
+****  Purify instrumented ./xlock (pid 20572)  ****
+Purify: Searching for all memory leaks...
+
+Memory leaked: 1 bytes (2.83e-05%); potentially leaked: 29756 bytes (0.843%)
+
+MLK: 1 byte leaked at 0x35d280
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	GetResource    [resource.c:886]
+	getResources   [resource.c:1336]
+	main           [xlock.c:1797]
+	start          [crt0.o]
+
+PLK: 29756 bytes potentially leaked at 0x4cd5f8
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_XAllocScratch [libX11.so.4.10]
+	SendZImage     [libX11.so.4.10]
+	PutImageRequest [libX11.so.4.10]
+	PutSubImage    [libX11.so.4.10]
+	XPutImage      [libX11.so.4.10]
+	put_cartoon    [cartoon.c:210]
+	draw_cartoon   [cartoon.c:354]
+	call_callback_hook [mode.c:493]
+	draw_random    [random.c:394]
+	call_callback_hook [mode.c:493]
+	runMainLoop    [xlock.c:1037]
+	justDisplay    [xlock.c:1448]
+	lockDisplay    [xlock.c:1611]
+	main           [xlock.c:2242]
+	start          [crt0.o]
+
+Purify Heap Analysis (combining suppressed and unsuppressed blocks)
+                         Blocks      Bytes
+              Leaked          2         13
+  Potentially Leaked          1      29756
+              In-Use        152    3501445
+  ----------------------------------------
+     Total Allocated        155    3531214
+
+****  Purify instrumented ./xlock (pid 20572)  ****
+  * Program exited with status code 0.
+  * 7 access errors, 7 total occurrences.
+  * 1 byte leaked.
+  * 29756 bytes potentially leaked.
+  * Basic memory usage (including Purify overhead):
+     2888048 code
+      495704 data/bss
+    15470848 heap (peak use)
+        2096 stack
+  * Shared library memory usage (including Purify overhead):
+      688128 libX11_pure_p3_c0_401_413V.so.4.10 (shared code)
+       49152 libX11_pure_p3_c0_401_413V.so.4.10 (private data)
+       49152 libXext_pure_p3_c0_401_413V.so.4.10 (shared code)
+        8192 libXext_pure_p3_c0_401_413V.so.4.10 (private data)
+      688128 libc_pure_p3_c0_401_413V.so.1.8 (shared code)
+       16384 libc_pure_p3_c0_401_413V.so.1.8 (private data)
+        8192 libdl.so.1.0 (shared code)
+        8192 libdl.so.1.0 (private data)
+        8192 libinternal_stubs.so.1.0 (shared code)
+        8192 libinternal_stubs.so.1.0 (private data)
+  * Memory mapped usage:
+        4096 mmap'd at 0xef1ed000
+
+
+-------------
+Purify log from MGB for xlockmore-3.12 with known solved problems removed
+Purify3.2 Solaris2 with XPM and HACKERS enabled.
+-------------
+
+****  Purify instrumented xlock (pid 13982 at Sat Nov 16 23:06:18 1996)
+  * Purify 3.2 Solaris 2, Copyright (C) 1992-1996 Pure Software Inc. All rights reserved. 
+  * For contact information type: "purify -help"
+  * For TTY output, use the option "-windows=no"
+  * Command-line: ./xlock -mode random +enablesaver 
+  * Options settings: -purify \
+    -purify-home=/private/projects/purify/purify-3.2-solaris2 
+PureLA: 7 simple licenses, 8 users.  Please remedy.
+  * Purify licensed to Universitaet Passau or FORWISS
+  * Purify checking enabled.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwuid_r     [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffd720 on the stack.
+  * Address 0xefffd720 is 992 bytes below frame pointer in function getpwuid_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwuid_r     [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffd71c on the stack.
+  * Address 0xefffd71c is 996 bytes below frame pointer in function getpwuid_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwuid_r     [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffd718 on the stack.
+  * Address 0xefffd718 is 1000 bytes below frame pointer in function getpwuid_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwuid_r     [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffd714 on the stack.
+  * Address 0xefffd714 is 1004 bytes below frame pointer in function getpwuid_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwuid_r     [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffd708 on the stack.
+  * Address 0xefffd708 is 1016 bytes below frame pointer in function getpwuid_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwuid_r     [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffd704 on the stack.
+  * Address 0xefffd704 is 1020 bytes below frame pointer in function getpwuid_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwuid_r     [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffd724 on the stack.
+  * Address 0xefffd724 is 988 bytes below frame pointer in function getpwuid_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	strcmp         [rtlib.o]
+	fullLock       [logout.c:460]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+	_start         [crt1.o]
+  * Reading 9 bytes from 0x1a9798 in the heap.
+  * Address 0x1a9798 is 48 bytes into a malloc'd block at 0x1a9768 of 1072 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	_nss_XbyY_buf_alloc [libc.so.1]
+	getpwuid       [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_nsc_trydoorcall [libc.so.1]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getUserName    [passwd.c:348]
+	initPasswd     [passwd.c:1464]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe298 on the stack.
+  * Address 0xefffe298 is 24 bytes below frame pointer in function _nsc_trydoorcall.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_nsc_trydoorcall [libc.so.1]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getUserName    [passwd.c:348]
+	initPasswd     [passwd.c:1464]
+	main           [xlock.c:1594]
+  * Reading 8 bytes from 0xefffe290 on the stack.
+  * Address 0xefffe290 is 32 bytes below frame pointer in function _nsc_trydoorcall.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_nsc_trydoorcall [libc.so.1]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getUserName    [passwd.c:348]
+	initPasswd     [passwd.c:1464]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe29c on the stack.
+  * Address 0xefffe29c is 20 bytes below frame pointer in function _nsc_trydoorcall.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getUserName    [passwd.c:348]
+	initPasswd     [passwd.c:1464]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe340 on the stack.
+  * Address 0xefffe340 is 992 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getUserName    [passwd.c:348]
+	initPasswd     [passwd.c:1464]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe33c on the stack.
+  * Address 0xefffe33c is 996 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getUserName    [passwd.c:348]
+	initPasswd     [passwd.c:1464]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe338 on the stack.
+  * Address 0xefffe338 is 1000 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getUserName    [passwd.c:348]
+	initPasswd     [passwd.c:1464]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe334 on the stack.
+  * Address 0xefffe334 is 1004 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getUserName    [passwd.c:348]
+	initPasswd     [passwd.c:1464]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe328 on the stack.
+  * Address 0xefffe328 is 1016 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getUserName    [passwd.c:348]
+	initPasswd     [passwd.c:1464]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe324 on the stack (3 bytes at 0xefffe325 uninit).
+  * Address 0xefffe324 is 1020 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getUserName    [passwd.c:348]
+	initPasswd     [passwd.c:1464]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe344 on the stack.
+  * Address 0xefffe344 is 988 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	my_passwd_entry [passwd.c:276]
+	getUserName    [passwd.c:348]
+	initPasswd     [passwd.c:1464]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0x1a977c in the heap.
+  * Address 0x1a977c is 20 bytes into a malloc'd block at 0x1a9768 of 1072 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	_nss_XbyY_buf_alloc [libc.so.1]
+	getpwuid       [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	strcpy         [rtlib.o]
+	getUserName    [passwd.c:351]
+	initPasswd     [passwd.c:1464]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 9 bytes from 0x1a9798 in the heap.
+  * Address 0x1a9798 is 48 bytes into a malloc'd block at 0x1a9768 of 1072 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	_nss_XbyY_buf_alloc [libc.so.1]
+	getpwuid       [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_nsc_trydoorcall [libc.so.1]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getCryptedUserPasswd [passwd.c:456]
+	initPasswd     [passwd.c:1477]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe298 on the stack.
+  * Address 0xefffe298 is 24 bytes below frame pointer in function _nsc_trydoorcall.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_nsc_trydoorcall [libc.so.1]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getCryptedUserPasswd [passwd.c:456]
+	initPasswd     [passwd.c:1477]
+	main           [xlock.c:1594]
+  * Reading 8 bytes from 0xefffe290 on the stack.
+  * Address 0xefffe290 is 32 bytes below frame pointer in function _nsc_trydoorcall.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_nsc_trydoorcall [libc.so.1]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getCryptedUserPasswd [passwd.c:456]
+	initPasswd     [passwd.c:1477]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe29c on the stack.
+  * Address 0xefffe29c is 20 bytes below frame pointer in function _nsc_trydoorcall.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getCryptedUserPasswd [passwd.c:456]
+	initPasswd     [passwd.c:1477]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe340 on the stack.
+  * Address 0xefffe340 is 992 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getCryptedUserPasswd [passwd.c:456]
+	initPasswd     [passwd.c:1477]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe33c on the stack.
+  * Address 0xefffe33c is 996 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getCryptedUserPasswd [passwd.c:456]
+	initPasswd     [passwd.c:1477]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe338 on the stack.
+  * Address 0xefffe338 is 1000 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getCryptedUserPasswd [passwd.c:456]
+	initPasswd     [passwd.c:1477]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe334 on the stack.
+  * Address 0xefffe334 is 1004 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getCryptedUserPasswd [passwd.c:456]
+	initPasswd     [passwd.c:1477]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe328 on the stack.
+  * Address 0xefffe328 is 1016 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getCryptedUserPasswd [passwd.c:456]
+	initPasswd     [passwd.c:1477]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe324 on the stack (3 bytes at 0xefffe325 uninit).
+  * Address 0xefffe324 is 1020 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	my_passwd_entry [passwd.c:275]
+	getCryptedUserPasswd [passwd.c:456]
+	initPasswd     [passwd.c:1477]
+	main           [xlock.c:1594]
+  * Reading 4 bytes from 0xefffe344 on the stack.
+  * Address 0xefffe344 is 988 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	my_passwd_entry [passwd.c:276]
+	getCryptedUserPasswd [passwd.c:456]
+	initPasswd     [passwd.c:1477]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0x1a977c in the heap.
+  * Address 0x1a977c is 20 bytes into a malloc'd block at 0x1a9768 of 1072 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	_nss_XbyY_buf_alloc [libc.so.1]
+	getpwuid       [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read (2 times):
+  * This is occurring while in:
+	strlen         [rtlib.o]
+	_nss_nis_ypmatch [nss_nis.so.1]
+	_nss_nis_lookup [nss_nis.so.1]
+	getbyname      [getspent.c]
+	nss_search     [libc.so.1]
+	getspnam_r     [libc.so.1]
+  * Reading 9 bytes from 0x1a9798 in the heap.
+  * Address 0x1a9798 is 48 bytes into a malloc'd block at 0x1a9768 of 1072 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	_nss_XbyY_buf_alloc [libc.so.1]
+	getpwuid       [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_nsc_trydoorcall [libc.so.1]
+	getpwnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:557]
+	initPasswd     [passwd.c:1480]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffe308 on the stack.
+  * Address 0xefffe308 is 24 bytes below frame pointer in function _nsc_trydoorcall.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_nsc_trydoorcall [libc.so.1]
+	getpwnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:557]
+	initPasswd     [passwd.c:1480]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 8 bytes from 0xefffe300 on the stack.
+  * Address 0xefffe300 is 32 bytes below frame pointer in function _nsc_trydoorcall.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	_nsc_trydoorcall [libc.so.1]
+	getpwnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:557]
+	initPasswd     [passwd.c:1480]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffe30c on the stack.
+  * Address 0xefffe30c is 20 bytes below frame pointer in function _nsc_trydoorcall.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:557]
+	initPasswd     [passwd.c:1480]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffe3b0 on the stack.
+  * Address 0xefffe3b0 is 992 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:557]
+	initPasswd     [passwd.c:1480]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffe3ac on the stack.
+  * Address 0xefffe3ac is 996 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:557]
+	initPasswd     [passwd.c:1480]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffe3a8 on the stack.
+  * Address 0xefffe3a8 is 1000 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:557]
+	initPasswd     [passwd.c:1480]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffe3a4 on the stack.
+  * Address 0xefffe3a4 is 1004 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:557]
+	initPasswd     [passwd.c:1480]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffe398 on the stack.
+  * Address 0xefffe398 is 1016 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:557]
+	initPasswd     [passwd.c:1480]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffe394 on the stack.
+  * Address 0xefffe394 is 1020 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	process_getpw  [getpwnam_r.c]
+	getpwnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:557]
+	initPasswd     [passwd.c:1480]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 4 bytes from 0xefffe3b4 on the stack.
+  * Address 0xefffe3b4 is 988 bytes below frame pointer in function getpwnam_r.
+
+****  Purify instrumented xlock (pid 13982)  ****
+UMR: Uninitialized memory read:
+  * This is occurring while in:
+	strcpy         [rtlib.o]
+	getCryptedRootPasswd [passwd.c:567]
+	initPasswd     [passwd.c:1480]
+	main           [xlock.c:1594]
+	_start         [crt1.o]
+  * Reading 2 bytes from 0x1a979d in the heap.
+  * Address 0x1a979d is 53 bytes into a malloc'd block at 0x1a9768 of 1072 bytes.
+  * This block was allocated from:
+	malloc         [rtlib.o]
+	_nss_XbyY_buf_alloc [libc.so.1]
+	getpwuid       [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+
+****  Purify instrumented xlock (pid 13982)  ****
+Process 14073 about to exec /bin/sh as "sh".
+
+****  Purify instrumented xlock (pid 13982)  ****
+Process 14094 about to exec /bin/sh as "sh".
+
+****  Purify instrumented xlock (pid 13982)  ****
+Process 14096 about to exec /bin/sh as "sh".
+.
+. repeats a lot (David Bagley)
+.
+****  Purify instrumented xlock (pid 13982)  ****
+Process 15649 about to exec /bin/sh as "sh".
+
+****  Purify instrumented xlock (pid 13982)  ****
+Process 15651 about to exec /bin/sh as "sh".
+
+****  Purify instrumented xlock (pid 13982)  ****
+Current file descriptors in use: 11
+FIU: file descriptor 0: <stdin>
+FIU: file descriptor 1: <unnamed pipe[1]>, O_RDWR
+   * Duplication of file descriptor 10.
+   * File position: 355929
+   * This file descriptor was allocated from:
+	fcntl          [libc.so.1]
+	popen          [libc.so.1]
+	getWords       [utils.c:215]
+	think          [nose.c:258]
+	move           [nose.c:133]
+	draw_nose      [nose.c:466]
+FIU: file descriptor 2: <stderr>
+FIU: file descriptor 4: "/etc/.name_service_door", O_RDONLY
+   * File info: ?r--r--r--  1 root     root             0 Apr  1  1996
+   * This file descriptor was allocated from:
+	open           [libc.so.1]
+	_nsc_trydoorcall [libc.so.1]
+	getpwuid_r     [libc.so.1]
+	fullLock       [logout.c:443]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+FIU: file descriptor 5: <inherited from parent>
+FIU: file descriptor 6: <inherited from parent>
+FIU: file descriptor 7: "/common/staff/bmg/etc/xlock.staff", O_RDONLY
+   * File info: -rw-r--r--  1 berberic public           9 Nov 16 20:17
+   * File position: 9
+   * This file descriptor was allocated from:
+	open           [libc.so.1]
+	_endopen       [fopen.c]
+	fopen          [libc.so.1]
+	fullLock       [logout.c:452]
+	getResources   [resource.c:1173]
+	main           [xlock.c:1590]
+FIU: file descriptor 8: "/dev/udp", O_RDWR
+   * File info: c---------  0 root     root             0 Nov 16 23:06
+   * File position: 0
+   * This file descriptor was allocated from:
+	open           [libc.so.1]
+	t_open         [t_open.c]
+	clnt_tli_create [clnt_generic.c]
+	load_dom_binding [yp_bind.c]
+	check_binding  [yp_bind.c]
+	__yp_dobind    [yp_bind.c]
+FIU: file descriptor 26: <reserved for Purify internal use>
+FIU: file descriptor 27: <reserved for Purify internal use>
+FIU: file descriptor 63: <inherited from parent>
+
+****  Purify instrumented xlock (pid 13982)  ****
+Purify: Searching for all memory leaks...
+
+Memory leaked: 421896 bytes (70%); potentially leaked: 73149 bytes (12.1%)
+
+MLK: 83968 bytes leaked in 6 chunks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	startover      [galaxy.c:141]
+	init_galaxy    [galaxy.c:256]
+	call_init_hook [mode.c:403]
+	draw_random    [random.c:301]
+	call_callback_hook [mode.c:432]
+  * Chunk of 18496 bytes at 0x244fe0
+  * Chunk of 18112 bytes at 0x28aed8
+  * Chunk of 15040 bytes at 0x234160
+  * Chunk of 11584 bytes at 0x217ba8
+  * Chunk of 11136 bytes at 0x1f1ec0
+  * Chunk of 9600 bytes at 0x1d3ae8
+
+MLK: 40070 bytes leaked in 1044 chunks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	XStringListToTextProperty [omXChar.c]
+	set_window_title [mode.c:335]
+	call_init_hook [mode.c:401]
+	draw_random    [random.c:301]
+	call_callback_hook [mode.c:432]
+  * Chunk of 67 bytes (17 times); last chunk at 0x2a0958
+  * Chunk of 61 bytes (17 times); last chunk at 0x2a5830
+  * Chunk of 60 bytes (17 times); last chunk at 0x2bf2e0
+  * Chunk of 58 bytes (17 times); last chunk at 0x2bd900
+  * Chunk of 55 bytes (33 times); last chunk at 0x2bfd40
+  * Chunk of 52 bytes (17 times); last chunk at 0x2a5330
+  * Chunk of 51 bytes (17 times); last chunk at 0x287480
+  * Chunk of 49 bytes (34 times); last chunk at 0x2af4b8
+  * Chunk of 48 bytes (17 times); last chunk at 0x2bef30
+  * Chunk of 47 bytes (34 times); last chunk at 0x2bc690
+  * Chunk of 46 bytes (51 times); last chunk at 0x2bfdc0
+  * Chunk of 45 bytes (17 times); last chunk at 0x2bc710
+  * Chunk of 44 bytes (17 times); last chunk at 0x2bd578
+  * Chunk of 43 bytes (17 times); last chunk at 0x2bc7f8
+  * Chunk of 42 bytes (17 times); last chunk at 0x2bd4f8
+  * Chunk of 40 bytes (83 times); last chunk at 0x2bdcc8
+  * Chunk of 39 bytes (51 times); last chunk at 0x2d3d68
+  * Chunk of 38 bytes (83 times); last chunk at 0x2bf5a8
+  * Chunk of 37 bytes (17 times); last chunk at 0x2b02f0
+  * Chunk of 36 bytes (16 times); last chunk at 0x2bf168
+  * Chunk of 35 bytes (34 times); last chunk at 0x2bc788
+  * Chunk of 34 bytes (17 times); last chunk at 0x2a58b8
+  * Chunk of 33 bytes (67 times); last chunk at 0x2a5f50
+  * Chunk of 32 bytes (17 times); last chunk at 0x2d3ef8
+  * Chunk of 31 bytes (17 times); last chunk at 0x2bf418
+  * Chunk of 30 bytes (51 times); last chunk at 0x2d3f60
+  * Chunk of 29 bytes (84 times); last chunk at 0x2beda0
+  * Chunk of 27 bytes (68 times); last chunk at 0x2d3dd8
+  * Chunk of 25 bytes (50 times); last chunk at 0x2bc898
+  * Chunk of 24 bytes (34 times); last chunk at 0x2956a0
+  * Chunk of 22 bytes (16 times); last chunk at 0x2afc40
+
+MLK: 4288 bytes leaked in 67 chunks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	calloc         [rtlib.o]
+	BaseOffset     [life3d.c:1278]
+	SetMem         [life3d.c:1301]
+	GetPattern     [life3d.c:1503]
+	init_life3d    [life3d.c:1994]
+  * Chunk of 64 bytes (67 times); last chunk at 0x2bf390
+
+MLK: 3072 bytes leaked in 48 chunks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	calloc         [rtlib.o]
+	BaseOffset     [life3d.c:1278]
+	ChangeMem      [life3d.c:1313]
+	IncrementNbrs3D [life3d.c:1352]
+	RunLife3D      [life3d.c:1382]
+  * Chunk of 64 bytes (48 times); last chunk at 0x2b07c0
+
+MLK: 1024 bytes leaked at 0x1cbb18
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_nss_files_XY_all [nss_files.so.1]
+	nss_search     [libc.so.1]
+	getspnam_r     [libc.so.1]
+	getCryptedUserPasswd [passwd.c:460]
+	initPasswd     [passwd.c:1477]
+
+MLK: 1024 bytes leaked at 0x1cc620
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_nss_files_XY_all [nss_files.so.1]
+	nss_search     [libc.so.1]
+	getspnam_r     [libc.so.1]
+	getCryptedRootPasswd [passwd.c:562]
+	initPasswd     [passwd.c:1480]
+
+MLK: 285 bytes leaked in 6 chunks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	XStringListToTextProperty [omXChar.c]
+	set_window_title [mode.c:335]
+	call_init_hook [mode.c:401]
+	init_random    [random.c:271]
+	call_init_hook [mode.c:403]
+  * Chunk of 61 bytes (3 times); last chunk at 0x2bf6d0
+  * Chunk of 36 bytes at 0x1d14d0
+  * Chunk of 33 bytes (2 times); last chunk at 0x2682a8
+
+MLK: 189 bytes leaked in 3 chunks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	XStringListToTextProperty [omXChar.c]
+	set_window_title [mode.c:335]
+	call_init_hook [mode.c:401]
+	justDisplay    [xlock.c:1309]
+	lockDisplay    [xlock.c:1522]
+  * Chunk of 63 bytes (3 times); last chunk at 0x2913e8
+
+MLK: 189 bytes leaked in 3 chunks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	XStringListToTextProperty [omXChar.c]
+	set_window_title [mode.c:335]
+	call_init_hook [mode.c:401]
+	ReadXString    [xlock.c:965]
+	getPassword    [xlock.c:1218]
+  * Chunk of 63 bytes (3 times); last chunk at 0x2bde48
+
+MLK: 64 bytes leaked at 0x26c9b8
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	calloc         [rtlib.o]
+	BaseOffset     [life3d.c:1278]
+	SetMem         [life3d.c:1301]
+	shooter        [life3d.c:1806]
+	draw_life3d    [life3d.c:2018]
+
+MLK: 64 bytes leaked at 0x27d990
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	calloc         [rtlib.o]
+	BaseOffset     [life3d.c:1278]
+	SetMem         [life3d.c:1301]
+	shooter        [life3d.c:1804]
+	draw_life3d    [life3d.c:2018]
+
+MLK: 1 byte leaked at 0x1bdce0
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	GetResource    [resource.c:784]
+	getResources   [resource.c:1062]
+	main           [xlock.c:1590]
+	_start         [crt1.o]
+
+PLK: 27968 bytes potentially leaked in 2 chunks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	startover      [galaxy.c:141]
+	draw_galaxy    [galaxy.c:365]
+	call_callback_hook [mode.c:432]
+	draw_random    [random.c:303]
+	call_callback_hook [mode.c:432]
+  * Chunk of 16256 bytes at 0x2602e8
+  * Chunk of 11712 bytes at 0x237c68
+
+PLK: 27136 bytes potentially leaked in 2 chunks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	startover      [galaxy.c:141]
+	init_galaxy    [galaxy.c:256]
+	call_init_hook [mode.c:403]
+	draw_random    [random.c:301]
+	call_callback_hook [mode.c:432]
+  * Chunk of 14400 bytes at 0x21f778
+  * Chunk of 12736 bytes at 0x20f5c8
+
+PLK: 133 bytes potentially leaked in 3 chunks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	XStringListToTextProperty [omXChar.c]
+	set_window_title [mode.c:335]
+	call_init_hook [mode.c:401]
+	draw_random    [random.c:301]
+	call_callback_hook [mode.c:432]
+  * Chunk of 55 bytes at 0x1c0370
+  * Chunk of 40 bytes at 0x205fe8
+  * Chunk of 38 bytes at 0x1f07f8
+
+Purify Heap Analysis (combining suppressed and unsuppressed chunks)
+                         Chunks      Bytes
+              Leaked       2482     421896
+  Potentially Leaked         27      81349
+              In-Use        404      99180
+  ----------------------------------------
+     Total Allocated       2913     602425
+
+****  Purify instrumented xlock (pid 13982)  ****
+  * Program exited with status code 0.
+  * 67 access errors, 63424 total occurrences.
+  * 421896 bytes leaked.
+  * 73149 bytes potentially leaked.
+  * Basic memory usage (including Purify overhead):
+     1281336 code
+      296700 data/bss
+     7217156 heap (peak use)
+        4544 stack
+  * Shared library memory usage (including Purify overhead):
+       66392 libXext.so.6.0_pure_p1_c0_032_55.so.6.0 (shared code)
+        1568 libXext.so.6.0_pure_p1_c0_032_55.so.6.0 (private data)
+       53931 libSM.so.6.0_pure_p1_c0_032_55.so.6.0 (shared code)
+        3520 libSM.so.6.0_pure_p1_c0_032_55.so.6.0 (private data)
+      116342 libICE.so.6.0_pure_p1_c0_032_55.so.6.0 (shared code)
+       11916 libICE.so.6.0_pure_p1_c0_032_55.so.6.0 (private data)
+     1021050 libX11.so.6.0_pure_p1_c0_032_55.so.6.0 (shared code)
+       34092 libX11.so.6.0_pure_p1_c0_032_55.so.6.0 (private data)
+       80960 libXpm.so.4.3_pure_p1_c0_032_55.so.4.3 (shared code)
+        2456 libXpm.so.4.3_pure_p1_c0_032_55.so.4.3 (private data)
+      135785 libm.so.1_pure_p1_c0_032_55.so.1 (shared code)
+        5872 libm.so.1_pure_p1_c0_032_55.so.1 (private data)
+       75114 libsocket.so.1_pure_p1_c0_032_55.so.1 (shared code)
+        4092 libsocket.so.1_pure_p1_c0_032_55.so.1 (private data)
+      610638 libnsl.so.1_pure_p1_c0_032_55.so.1 (shared code)
+       64760 libnsl.so.1_pure_p1_c0_032_55.so.1 (private data)
+      802819 libc.so.1_pure_p1_c0_032_55.so.1 (shared code)
+       33644 libc.so.1_pure_p1_c0_032_55.so.1 (private data)
+        1204 libdl.so.1_pure_p1_c0_032_55.so.1 (shared code)
+           0 libdl.so.1_pure_p1_c0_032_55.so.1 (private data)
+        1889 libinternal_stubs.so.1 (shared code)
+         208 libinternal_stubs.so.1 (private data)
+       14073 libintl.so.1_pure_p1_c0_032_55.so.1 (shared code)
+        3676 libintl.so.1_pure_p1_c0_032_55.so.1 (private data)
+       16096 libmp.so.1_pure_p1_c0_032_55.so.1 (shared code)
+         828 libmp.so.1_pure_p1_c0_032_55.so.1 (private data)
+       37381 libw.so.1_pure_p1_c0_032_55.so.1 (shared code)
+        1612 libw.so.1_pure_p1_c0_032_55.so.1 (private data)
+       21322 nss_files.so.1_pure_p1_c0_032_55.so.1 (shared code)
+        1224 nss_files.so.1_pure_p1_c0_032_55.so.1 (private data)
+       21994 nss_nis.so.1_pure_p1_c0_032_55.so.1 (shared code)
+        1536 nss_nis.so.1_pure_p1_c0_032_55.so.1 (private data)

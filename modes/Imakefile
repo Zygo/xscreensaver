@@ -1,0 +1,229 @@
+#ifndef XCOMM
+#define XCOMM /**/#
+#endif
+XCOMM @(#)Sub Imakefile	xlockmore
+XCOMM
+
+#include "../iconfig.h"
+
+top_srcdir = ..
+UTILSDIR = ../xlock/
+GLDIR = glx/
+BITMAPDIR = $(top_srcdir)/bitmaps/
+PIXMAPDIR = $(top_srcdir)/pixmaps/
+DM =
+DU = $(UTILSDIR)
+DG = $(GLDIR)
+OM = $(O)$(S)$(DM)
+OU = $(O)$(S)$(DU)
+OG = $(O)$(S)$(DG)
+CM = $(C) $(DM)
+CU = $(C) $(DU)
+CG = $(C) $(DG)
+
+XCOMM  please define
+XCOMM  C as the C source code extension
+XCOMM  O as the object extension
+XCOMM  S as the separator for object code
+
+XCOMM Here is your chance to override the default icon:
+XCOMM TINYBITMAP = $(BITMAPTYPE)
+TINYBITMAP = t-x11
+SMALLBITMAP = s-$(BITMAPTYPE)
+MEDIUMBITMAP = m-$(BITMAPTYPE)
+LARGEBITMAP = l-$(BITMAPTYPE)
+MEDIUMPIXMAP = m-$(PIXMAPTYPE)
+LARGEPIXMAP = l-$(PIXMAPTYPE)
+
+XCOMM EYESBITMAP = $(MEDIUMBITMAP)
+EYESBITMAP = m-grelb
+FLAGBITMAP = $(MEDIUMBITMAP)
+IMAGEBITMAP = $(MEDIUMBITMAP)
+XCOMM IMAGEBITMAP = l-bob #Slackware icon
+XCOMM IMAGEBITMAP = m-xlock #XLock icon
+XCOMM LIFEBITMAP = $(SMALLBITMAP)
+LIFEBITMAP = s-grelb
+LIFE1DBITMAP = $(TINYBITMAP)
+MAZEBITMAP = $(LARGEBITMAP)
+XCOMM MAZEBITMAP = m-xlock
+XCOMM PACMANBITMAP = $(MEDIUMBITMAP)
+PACMANBITMAP = m-ghost
+XCOMM PUZZLEBITMAP = $(LARGEBITMAP)
+PUZZLEBITMAP = l-xlock
+XCOMM PUZZLEBITMAP = l-linux
+IMAGEPIXMAP = $(MEDIUMPIXMAP)
+XCOMM IMAGEPIXMAP = m-xlock
+XCOMM PUZZLEPIXMAP = $(LARGEPIXMAP)
+PUZZLEPIXMAP = l-xlock
+XCOMM PUZZLEPIXMAP = l-linux
+
+XCOMM  List of object files
+XLOCKUTILOBJS = $(DU)xlock$(OU)passwd$(OU)resource$(O)$(S)\
+$(DU)utils$(OU)logout$(OU)mode$(OU)ras$(OU)xbm$(O)$(S)\
+$(DU)color$(OU)sound$(O)
+#ifdef Debug
+XLOCKDEBUGOBJS = $(S)memcheck$(O)
+#endif
+XLOCKMODEOBJS = $(M)ant$(OM)ball$(OM)bat$(OM)blot$(OM)\
+bouboule$(OM)bounce$(OM)braid$(OM)bug$(OM)\
+cartoon$(OM)clock$(OM)crystal$(OM)\
+daisy$(OM)dclock$(OM)demon$(OM)drift$(OM)eyes$(OM)\
+fadeplot$(OM)flag$(OM)flame$(OM)forest$(OM)\
+galaxy$(OM)geometry$(OM)grav$(OM)\
+helix$(OM)hop$(OM)hyper$(OM)\
+ico$(OM)ifs$(OM)image$(OM)julia$(OM)kaleid$(OM)\
+laser$(OM)life$(OM)life1d$(OM)life3d$(OM)\
+lightning$(OM)lisa$(OM)lissie$(OM)loop$(OM)\
+marquee$(OM)maze$(OM)mountain$(OM)munch$(OM)nose$(OM)\
+pacman$(OM)penrose$(OM)petal$(OM)puzzle$(OM)pyro$(OM)\
+qix$(OM)roll$(OM)rotor$(OM)\
+shape$(OM)sierpinski$(OM)slip$(OM)\
+sphere$(OM)spiral$(OM)spline$(OM)\
+star$(OM)strange$(OM)swarm$(OM)swirl$(OM)\
+triangle$(OM)tube$(OM)turtle$(OM)vines$(OM)voters$(OM)\
+wator$(OM)wire$(OM)world$(OM)worm$(O)
+XLOCKGLOBJS = $(DG)escher$(OG)gears$(OG)morph3d$(OG)rubik$(O)$(S)\
+$(DG)superquadrics$(O)$(S)\
+$(DG)buildlwo$(OG)pipes$(OG)pipeobjs$(O)$(S)\
+$(DG)sproingies$(OG)sproingiewrap$(OG)s1_b$(O)$(S)\
+$(DG)s1_1$(OG)s1_2$(OG)s1_3$(OG)s1_4$(OG)s1_5$(OG)s1_6$(O)
+XLOCKUTILMODEOBJS = blank$(OM)bomb$(OM)random$(O)
+XLOCKOBJS = $(XLOCKUTILOBJS)$(XLOCKDEBUGOBJS)$(S)$(XLOCKGLOBJS)$(S)\
+$(XLOCKMODEOBJS)$(S)$(XLOCKUTILMODEOBJS)
+
+XCOMM  List of source files
+BITMAPS = eyes.xbm flag.xbm ghost.xbm image.xbm life.xbm life1d.xbm \
+maze.xbm puzzle.xbm
+PIXMAPS = image.xpm puzzle.xpm
+XLOCKUTILHDRS = xlock.h mode.h vroot.h ras.h version.h config.h
+XLOCKUTILSRCS = $(DU)xlock$(CU)passwd$(CU)resource$(C) \
+$(DU)utils$(CU)logout$(CU)mode$(CU)ras$(CU)xbm$(C) \
+$(DU)color$(CU)sound$(C)
+XLOCKDEBUGSRCS = $(DU)memcheck$(C)
+XLOCKMODESRCS = $(M)ant$(CM)ball$(CM)bat$(CM)blot$(CM)\
+bouboule$(CM)bounce$(CM)braid$(CM)bug$(CM)\
+cartoon$(CM)clock$(CM)crystal$(CM)\
+daisy$(CM)dclock$(CM)demon$(CM)drift$(CM)eyes$(CM)\
+fadeplot$(CM)flag$(CM)flame$(CM)forest$(CM)\
+galaxy$(CM)geometry$(CM)grav$(CM)\
+helix$(CM)hop$(CM)hyper$(CM)\
+ico$(CM)ifs$(CM)image$(CM)julia$(CM)kaleid$(CM)\
+laser$(CM)life$(CM)life1d$(CM)life3d$(CM)\
+lightning$(CM)lisa$(CM)lissie$(CM)loop$(CM)\
+marquee$(CM)maze$(CM)mountain$(CM)munch$(CM)nose$(CM)\
+pacman$(CM)penrose$(CM)petal$(CM)puzzle$(CM)pyro$(CM)\
+qix$(CM)roll$(CM)rotor$(CM)\
+shape$(CM)sierpinski$(CM)slip$(CM)\
+sphere$(CM)spiral$(CM)spline$(CM)\
+star$(CM)strange$(CM)swarm$(CM)swirl$(CM)\
+triangle$(CM)tube$(CM)turtle$(CM)vines$(CM)voters$(CM)\
+wator$(CM)wire$(CM)world$(CM)worm$(C)
+XLOCKGLSRCS = $(DG)escher$(CG)gears$(CG)morph3d$(CG)rubik$(C) \
+$(DG)superquadrics$(C) \
+$(DG)buildlwo$(CG)pipes$(CG)pipeobjs$(C) \
+$(DG)sproingies$(CG)sproingiewrap$(CG)s1_b$(C) \
+$(DG)s1_1$(CG)s1_2$(CG)s1_3$(CG)s1_4$(CG)s1_5$(CG)s1_6$(C)
+XLOCKUTILMODESRCS = $(M)blank$(CM)bomb$(CM)random$(C)
+XLOCKSRCS = $(XLOCKUTILSRCS) $(XLOCKDEBUGSRCS) $(XLOCKGLSRCS) \
+$(XLOCKMODESRCS) $(XLOCKUTILMODESRCS)
+
+AllTarget($(UTILSDIR)xlock)
+#ifdef XpmLibrary
+depend:: $(BITMAPS) $(PIXMAPS)
+#else
+depend:: $(BITMAPS)
+#endif
+NormalProgramTarget($(UTILSDIR)xlock, $(XLOCKOBJS), $(DEPXLIB), $(LOCAL_LIBRARIES), NullParameter)
+
+DependTarget()
+LintTarget()
+
+InstallProgram(xlock$(E),$(BINDIR))
+InstallAppDefaults(XLock)
+InstallManPage(xlock,$(MANDIR))
+
+eyes$(O) : eyes$(C) eyes.xbm
+flag$(O) : flag$(C) flag.xbm
+life$(O) : life$(C) life.xbm
+life1d$(O) : life1d$(C) life1d.xbm
+maze$(O) : maze$(C) maze.xbm
+pacman$(O) : pacman$(C) ghost.xbm
+# Do not need xpm files if not using them but not worth figuring out
+image$(O) : image$(C) image.xbm image.xpm
+puzzle$(O) : puzzle$(C) puzzle.xbm puzzle.xpm
+
+eyes.xbm : $(BITMAPDIR)$(EYESBITMAP).xbm
+	$(RM) eyes.xbm ; $(LN_S) $(BITMAPDIR)$(EYESBITMAP).xbm eyes.xbm
+
+flag.xbm : $(BITMAPDIR)$(FLAGBITMAP).xbm
+	$(RM) flag.xbm ; $(LN_S) $(BITMAPDIR)$(FLAGBITMAP).xbm flag.xbm
+
+image.xbm : $(BITMAPDIR)$(IMAGEBITMAP).xbm
+	$(RM) image.xbm ; $(LN_S) $(BITMAPDIR)$(IMAGEBITMAP).xbm image.xbm
+
+ghost.xbm : $(BITMAPDIR)$(PACMANBITMAP).xbm
+	$(RM) ghost.xbm ; $(LN_S) $(BITMAPDIR)$(PACMANBITMAP).xbm ghost.xbm
+
+life.xbm : $(BITMAPDIR)$(LIFEBITMAP).xbm
+	$(RM) life.xbm ; $(LN_S) $(BITMAPDIR)$(LIFEBITMAP).xbm life.xbm
+
+life1d.xbm : $(BITMAPDIR)$(LIFE1DBITMAP).xbm
+	$(RM) life1d.xbm ; $(LN_S) $(BITMAPDIR)$(LIFE1DBITMAP).xbm life1d.xbm
+
+maze.xbm : $(BITMAPDIR)$(MAZEBITMAP).xbm
+	$(RM) maze.xbm ; $(LN_S) $(BITMAPDIR)$(MAZEBITMAP).xbm maze.xbm
+
+puzzle.xbm : $(BITMAPDIR)$(PUZZLEBITMAP).xbm
+	$(RM) puzzle.xbm ; $(LN_S) $(BITMAPDIR)$(PUZZLEBITMAP).xbm puzzle.xbm
+
+image.xpm : $(PIXMAPDIR)$(IMAGEPIXMAP).xpm
+	$(RM) image.xpm ; $(LN_S) $(PIXMAPDIR)$(IMAGEPIXMAP).xpm image.xpm
+
+puzzle.xpm : $(PIXMAPDIR)$(PUZZLEPIXMAP).xpm
+	$(RM) puzzle.xpm ; $(LN_S) $(PIXMAPDIR)$(PUZZLEPIXMAP).xpm puzzle.xpm
+
+$(UTILSDIR)xlock.o : $(UTILSDIR)xlock.c
+$(UTILSDIR)passwd.o :  $(UTILSDIR)passwd.c
+$(UTILSDIR)resource.o : $(UTILSDIR)resource.c
+$(UTILSDIR)utils.o : $(UTILSDIR)utils.c
+$(UTILSDIR)logout.o : $(UTILSDIR)logout.c
+$(UTILSDIR)mode.o : $(UTILSDIR)mode.c
+$(UTILSDIR)ras.o : $(UTILSDIR)ras.c
+$(UTILSDIR)xbm.o : $(UTILSDIR)xbm.c
+$(UTILSDIR)color.o : $(UTILSDIR)color.c
+$(UTILSDIR)sound.o : $(UTILSDIR)sound.c
+$(UTILSDIR)memcheck.o : $(UTILSDIR)memcheck.c
+
+$(XLOCKUTILOBJS) :
+	cd $(UTILSDIR) ; \
+$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+$(GLDIR)escher.o : $(GLDIR)escher.c
+$(GLDIR)gears.o :  $(GLDIR)gears.c
+$(GLDIR)morph3d.o : $(GLDIR)morph3d.c
+$(GLDIR)rubik.o : $(GLDIR)rubik.c
+$(GLDIR)superquadrics.o : $(GLDIR)superquadrics.c
+$(GLDIR)buildlwo.o : $(GLDIR)buildlwo.c
+$(GLDIR)pipes.o : $(GLDIR)pipes.c
+$(GLDIR)pipeobjs.o : $(GLDIR)pipeobjs.c
+$(GLDIR)sproingies.o : $(GLDIR)sproingies.c
+$(GLDIR)sproingiewrap.o : $(GLDIR)sproingiewrap.c
+$(GLDIR)s1_b.o : $(GLDIR)s1_b.c
+$(GLDIR)s1_1.o : $(GLDIR)s1_1.c
+$(GLDIR)s1_2.o : $(GLDIR)s1_2.c
+$(GLDIR)s1_3.o : $(GLDIR)s1_3.c
+$(GLDIR)s1_4.o : $(GLDIR)s1_4.c
+$(GLDIR)s1_5.o : $(GLDIR)s1_5.c
+$(GLDIR)s1_6.o : $(GLDIR)s1_6.c
+
+$(XLOCKGLOBJS) :
+	cd $(GLDIR) ; \
+$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+XLOCKINC = -I$(top_srcdir) -I. -I$(UTILSDIR)
+
+distclean::	clean
+	$(RM) Makefile $(BITMAPS) $(PIXMAPS) \
+config.status config.cache config.log config.h
+
+clean.all:: distclean
