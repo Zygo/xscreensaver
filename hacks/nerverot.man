@@ -1,0 +1,128 @@
+.TH XScreenSaver 1 "20-Mar-2001" "X Version 11"
+.SH NAME
+nerverot - induces edginess in the viewer
+.SH SYNOPSIS
+.B nerverot
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-db] [\-no\-db] [\-colors \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-count \fIinteger\fP] [\-line\-width \fIinteger\fP] [\-event\-chance \fIfraction\fP] [\-iter\-amt \fIfraction\fP] [\-nervousness \fIfraction\fP] [\-max\-nerve\-radius \fIfraction\fP] [\-min\-radius \fIinteger\fP] [\-max\-radius \fIinteger\fP] [\-min\-scale \fIfraction\fP] [\-max\-scale \fIfraction\fP]
+.SH DESCRIPTION
+The goal of \fInerverot\fP is to be interesting and compelling to
+watch, yet induce a state of nervous edginess in the viewer. This manpage
+describes v1.3 of the program.
+.SH OPTIONS
+.I nerverot
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-db
+.B \-no\-db
+Use double-buffering (or not, respectively). Double-buffering may make 
+things look better for larger line widths and/or larger numbers of
+blots, but "better" may equate to yielding less of the desired edginess
+effect. You'll be calmer after watching the double-buffered variant;
+you're more likely to go into epileptic fits with it off. Hence, it
+is off (false) by default, resource \fIdoubleBuffer\fP.
+.TP 8
+.B \-colors \fIinteger\fP
+How many colors should be used (if possible). The colors
+form a smooth ramp between two randomly-chosen colors. Defaults to 4,
+resource \fIcolors\fP.
+.TP 8
+.B \-delay \fImicroseconds\fP
+The interframe delay, in microseconds. Defaults to 10000, resource
+\fIdelay\fP.
+.TP 8
+.B \-max\-iters \fIinteger\fP
+The maximum number of iterations (frames) before a new model is
+generated. The actual number of iterations per model is a random number
+between 1 and this value. Defaults to 1200, resource
+\fImaxIters\fP.
+.TP 8
+.B \-count \fIinteger\fP
+How many "blots" to draw at a time. This number may be rounded down to
+fit the particularly chosen model, and has a fixed minimum per-model.
+Defaults to 250, resource \fIcount\fP.
+.TP 8
+.B \-line\-width \fIinteger\fP
+The width of the lines to draw. 0 means an optimized pixel-thick line.
+Defaults to 0, resource \fIlineWidth\fP.
+.TP 8
+.B \-event\-chance \fIfraction\fP
+The chance, per iteration, for a life-altering event to occur (such as
+picking a new rotation target), in the range 0..1. Defaults to 0.2,
+resource \fIeventChance\fP.
+.TP 8 
+.B \-iter\-amt \fIfraction\fP
+The fraction of movement towards a target (such as rotation angle or scale)
+that happens per iteration, in the range 0..1. Defaults to 0.01,
+resource \fIiterAmt\fP.
+.TP 8
+.B \-nervousness \fIfraction\fP
+How nervous the drawing is, in the range 0..1. This is how jumpy the points
+on each blot are. Defaults to 0.3, resource \fInervousness\fP.
+.TP 8
+.B \-max\-nerve\-radius \fIfraction\fP
+The maximum radius of blot nervousness, as a fraction of the radius of the
+blot, in the range 0..1. Defaults to 0.7, resource \fImaxNerveRadius\fP.
+.TP 8
+.B \-min\-radius \fIinteger\fP
+The minimum radius for a blot, in the range 1..100. Defaults to 3,
+resource \fIminRadius\fP.
+.TP 8
+.B \-max\-radius \fIinteger\fP
+The maximum radius for a blot, in the range 1..100. Defaults to 25,
+resource \fImaxRadius\fP.
+.TP 8
+.B \-min\-scale \fIfraction\fP
+The minimum overall scale of drawing, as a fraction of
+\fImin(windowHeight,windowWidth)\fP, in the range 0..10. Defaults to 0.6,
+resource \fIminScale\fP.
+.TP 8
+.B \-max\-scale \fIfraction\fP
+The maximum overall scale of drawing, as a fraction of
+\fImin(windowHeight,windowWidth)\fP, in the range 0..10. Defaults to 1.75,
+resource \fImaxScale\fP.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH X RESOURCES
+There are resource equivalents for each option, noted above.
+.SH BUGS
+.I nerverot
+should have more models.
+.TP 8
+XDBE should be detected and used, if available.
+.SH SEE ALSO
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2000-2001 by Dan Bornstein. All rights reserved.
+
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation. No representations are made about the suitability of this
+software for any purpose. It is provided "as is" without express or 
+implied warranty.
+.SH AUTHOR
+Dan Bornstein <danfuzz@milk.com>.
