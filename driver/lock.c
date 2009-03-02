@@ -27,6 +27,10 @@
 # include <syslog.h>
 #endif /* HAVE_SYSLOG */
 
+#ifdef HAVE_XF86VMODE
+# include <X11/extensions/xf86vmode.h>
+#endif /* HAVE_XF86VMODE */
+
 #ifdef _VROOT_H_
 ERROR!  You must not include vroot.h in this file.
 #endif
@@ -103,8 +107,15 @@ struct passwd_dialog_data {
   Pixmap save_under;
 };
 
+static void draw_passwd_window (saver_info *si);
+static void update_passwd_window (saver_info *si, const char *printed_passwd,
+				  float ratio);
+static void destroy_passwd_window (saver_info *si);
+static void undo_vp_motion (saver_info *si);
+static void set_vp_mode_switch_locked (saver_info *si, Bool locked_p);
 
-void
+
+static void
 make_passwd_window (saver_info *si)
 {
   struct passwd *p = getpwuid (getuid ());
@@ -298,13 +309,13 @@ make_passwd_window (saver_info *si)
   attrmask |= CWEventMask; attrs.event_mask = ExposureMask|KeyPressMask;
 
   {
-    Dimension w = WidthOfScreen(screen);
-    Dimension h = HeightOfScreen(screen);
+    int x, y, w, h;
+    get_screen_viewport (si->default_screen, &x, &y, &w, &h, False);
     if (si->prefs.debug_p) w /= 2;
-    pw->x = ((w + pw->width) / 2) - pw->width;
-    pw->y = ((h + pw->height) / 2) - pw->height;
-    if (pw->x < 0) pw->x = 0;
-    if (pw->y < 0) pw->y = 0;
+    pw->x = x + ((w + pw->width) / 2) - pw->width;
+    pw->y = y + ((h + pw->height) / 2) - pw->height;
+    if (pw->x < x) pw->x = x;
+    if (pw->y < y) pw->y = y;
   }
 
   pw->border_width = get_integer_resource ("passwd.borderWidth",
@@ -346,6 +357,10 @@ make_passwd_window (saver_info *si)
 
   XMapRaised (si->dpy, si->passwd_dialog);
   XSync (si->dpy, False);
+
+  move_mouse_grab (si, si->passwd_dialog, si->screens[0].cursor);
+  undo_vp_motion (si);
+  set_vp_mode_switch_locked (si, True);
 
   si->pw_data = pw;
 
@@ -550,6 +565,7 @@ update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
   XGCValues gcv;
   GC gc1, gc2;
   int x, y;
+  XRectangle rects[1];
 
   pw->ratio = ratio;
   gcv.foreground = pw->passwd_foreground;
@@ -567,22 +583,34 @@ update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
 
   /* the "password" text field
    */
+  rects[0].x =  pw->passwd_field_x;
+  rects[0].y =  pw->passwd_field_y;
+  rects[0].width = pw->passwd_field_width;
+  rects[0].height = pw->passwd_field_height;
+
   XFillRectangle (si->dpy, si->passwd_dialog, gc2,
-		  pw->passwd_field_x, pw->passwd_field_y,
-		  pw->passwd_field_width, pw->passwd_field_height);
+                  rects[0].x, rects[0].y, rects[0].width, rects[0].height);
+
+  XSetClipRectangles (si->dpy, gc1, 0, 0, rects, 1, Unsorted);
+
   XDrawString (si->dpy, si->passwd_dialog, gc1,
-	       pw->passwd_field_x + pw->shadow_width,
-	       pw->passwd_field_y + (pw->passwd_font->ascent +
-				     pw->passwd_font->descent),
-	       pw->passwd_string, strlen(pw->passwd_string));
+               rects[0].x + pw->shadow_width,
+               rects[0].y + (pw->passwd_font->ascent +
+                             pw->passwd_font->descent),
+               pw->passwd_string, strlen(pw->passwd_string));
+
+  XSetClipMask (si->dpy, gc1, None);
 
   /* The I-beam
    */
   if (pw->i_beam != 0)
     {
-      x = (pw->passwd_field_x + pw->shadow_width +
+      x = (rects[0].x + pw->shadow_width +
 	   string_width (pw->passwd_font, pw->passwd_string));
-      y = pw->passwd_field_y + pw->shadow_width;
+      y = rects[0].y + pw->shadow_width;
+
+      if (x > rects[0].x + rects[0].width - 1)
+        x = rects[0].x + rects[0].width - 1;
       XDrawLine (si->dpy, si->passwd_dialog, gc1, 
 		 x, y, x, y + pw->passwd_font->ascent);
     }
@@ -625,6 +653,10 @@ destroy_passwd_window (saver_info *si)
 
   if (pw->timer)
     XtRemoveTimeOut (pw->timer);
+
+  move_mouse_grab (si, RootWindowOfScreen(si->screens[0].screen),
+                   si->screens[0].cursor);
+  set_vp_mode_switch_locked (si, False);
 
   if (si->passwd_dialog)
     {
@@ -682,6 +714,72 @@ destroy_passwd_window (saver_info *si)
 
   si->pw_data = 0;
 }
+
+static void
+undo_vp_motion (saver_info *si)
+{
+#ifdef HAVE_XF86VMODE
+  saver_preferences *p = &si->prefs;
+  int screen = 0;  /* always screen 0 */
+  saver_screen_info *ssi = &si->screens[screen];
+  int event, error, x, y;
+  Bool status;
+
+  if (ssi->blank_vp_x == -1 && ssi->blank_vp_y == -1)
+    return;
+  if (!XF86VidModeQueryExtension (si->dpy, &event, &error))
+    return;
+  if (!XF86VidModeGetViewPort (si->dpy, 0, &x, &y))
+    return;
+  if (ssi->blank_vp_x == x && ssi->blank_vp_y == y)
+    return;
+    
+  /* We're going to move the viewport.  The mouse has just been grabbed on
+     (and constrained to, thus warped to) the password window, so it is no
+     longer near the edge of the screen.  However, wait a bit anyway, just
+     to make sure the server drains its last motion event, so that the
+     screen doesn't continue to scroll after we've reset the viewport.
+   */
+  XSync (si->dpy, False);
+  usleep (250);  /* 1/4 second */
+  XSync (si->dpy, False);
+
+  status = XF86VidModeSetViewPort (si->dpy, screen,
+                                   ssi->blank_vp_x, ssi->blank_vp_y);
+
+  if (!status)
+    fprintf (stderr, "%s: unable to move vp from (%d,%d) back to (%d,%d)!\n",
+             blurb(), x, y, ssi->blank_vp_x, ssi->blank_vp_y);
+  else if (p->verbose_p)
+    fprintf (stderr, "%s: vp moved to (%d,%d); moved it back to (%d,%d).\n",
+             blurb(), x, y, ssi->blank_vp_x, ssi->blank_vp_y);
+
+#endif /* HAVE_XF86VMODE */
+}
+
+
+static void
+set_vp_mode_switch_locked (saver_info *si, Bool locked_p)
+{
+#ifdef HAVE_XF86VMODE
+  saver_preferences *p = &si->prefs;
+  int screen = 0;  /* always screen 0 */
+  int event, error;
+  Bool status;
+
+  if (!XF86VidModeQueryExtension (si->dpy, &event, &error))
+    return;
+  status = XF86VidModeLockModeSwitch (si->dpy, screen, locked_p);
+
+  if (!status)
+    fprintf (stderr, "%s: unable to %s vp switching!\n",
+             blurb(), (locked_p ? "lock" : "unlock"));
+  else if (p->verbose_p)
+    fprintf (stderr, "%s: %s vp switching.\n",
+             blurb(), (locked_p ? "locked" : "unlocked"));
+#endif /* HAVE_XF86VMODE */
+}
+
 
 
 /* Interactions

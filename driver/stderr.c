@@ -163,15 +163,17 @@ print_stderr_1 (saver_screen_info *ssi, char *string)
 	      ssi->stderr_text_y = 0;
 #else
 	      int offset = ssi->stderr_line_height * 5;
+              XWindowAttributes xgwa;
+              XGetWindowAttributes (dpy, window, &xgwa);
+
 	      XCopyArea (dpy, window, window, ssi->stderr_gc,
 			 0, v_border + offset,
-			 WidthOfScreen (screen),
-			 (HeightOfScreen (screen) - v_border - v_border
-			  - offset),
+			 xgwa.width,
+			 (xgwa.height - v_border - v_border - offset),
 			 0, v_border);
 	      XClearArea (dpy, window,
-			  0, HeightOfScreen (screen) - v_border - offset,
-			  WidthOfScreen (screen), offset, False);
+			  0, xgwa.height - v_border - offset,
+			  xgwa.width, offset, False);
 	      ssi->stderr_text_y -= offset;
 #endif
 	    }
@@ -202,7 +204,9 @@ make_stderr_overlay_window (saver_screen_info *ssi)
     {
       int depth = visual_depth (ssi->screen, visual);
       XSetWindowAttributes attrs;
+      XWindowAttributes xgwa;
       unsigned long attrmask;
+      XGetWindowAttributes (si->dpy, ssi->screensaver_window, &xgwa);
 
       if (si->prefs.debug_p)
 	fprintf(real_stderr,
@@ -224,7 +228,7 @@ make_stderr_overlay_window (saver_screen_info *ssi)
 
       ssi->stderr_overlay_window =
 	XCreateWindow(si->dpy, ssi->screensaver_window, 0, 0,
-		      WidthOfScreen(ssi->screen), HeightOfScreen(ssi->screen),
+		      xgwa.width, xgwa.height,
 		      0, depth, InputOutput, visual, attrmask, &attrs);
       XMapRaised(si->dpy, ssi->stderr_overlay_window);
     }

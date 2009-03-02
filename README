@@ -58,7 +58,7 @@ locking mode, when the proper password is typed.)
 
 It is trivially easy to add new display modes to xscreensaver: any program
 which can be invoked in such a way that it draws on the root window of the
-screen can be used as a screensaver.  You just change a resource setting --
+screen can be used as a screensaver.  You just change a config file --
 there's no need to recompile or reinstall anything.
 
                               ============
@@ -77,6 +77,46 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.11:   * Made it so that you can't scroll the screen while the
+                        lock dialog is up (with XFree86 virtual viewports.)
+                      * Fixed a bug in `flag' that caused bob's chin to get cut
+                        off after a few iterations.
+Changes since 3.10:   * Made `xjack' be black-on-white-ish, so that it looks
+                        less like a computer screen and more like the
+                        typewritten paper it's supposed to be.
+                      * New version of `pulsar'.
+                      * Fixed Solaris compilation problem in `phosphor'.
+                      * Made xscreensaver notice XFree86's virtual root window
+                        hack, so that if the X server's root window is larger
+                        than the monitor's displayable resolution, the screen
+                        saver will limit itself to the area that actually
+                        appears on the screen.
+                      * Made the xscreensaver daemon do a better job of
+                        picking the visual class that should be used for GL
+                        programs.  Less user intervention should be needed
+                        now: you can use the logical visual name `GL' instead
+                        of having to figure out by hand which one to use.
+                      * Oops, the visual was defaulting to "best" instead of
+                        "default", because the .xscreensaver file was not being
+                        loaded quite early enough.
+                      * Made configure figure out how to build icmp ping
+                        support into the `sonar' hack automatically.
+                      * Made warnings about not being able to read shadow
+                        passwords not be printed if compiled with PAM support.
+                      * Improved PAM startup diagnostics.
+                      * Worked around the Solaris PAM bug that was causing
+                        crashes there, so now PAM is turned on by default.
+                      * Made configure detect the number of arguments that
+                        pam_strerror() takes, since on Linux, this apparently
+                        changed between 2.0 and 2.2, sigh.
+                      * Made the /proc/interrupts kludge look for "PS/2 Mouse"
+                        as well as "keyboard".
+                      * Made xscreensaver notice when there has been a sudden
+                        large jump in wall-clock time, and if so, lock right
+                        away, instead of waiting for "lockTimeout" to expire
+                        first.  (Laptops need this for safer recovery from
+                        ``hibernation.'')
+                      * Added `-throttle' option to `xscreensaver-command'.
 Changes since 3.09:   * Added `phosphor', `xmatrix', and `pulsar' hacks.
                       * Fixed a bug in the color allocator that sometimes
                         caused `starfish' to fall back to monochrome.

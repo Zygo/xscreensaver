@@ -94,6 +94,13 @@ PASSWD_LIBS	= @PASSWD_LIBS@
 LOCK_SRCS	= @LOCK_SRCS@
 LOCK_OBJS	= @LOCK_OBJS@
 
+XMU_SRCS	= @XMU_SRCS@
+XMU_OBJS	= @XMU_OBJS@
+
+GL_SRCS		= @SAVER_GL_SRCS@
+GL_OBJS		= @SAVER_GL_OBJS@
+GL_LIBS		= @SAVER_GL_LIBS@
+
 DEMO_UTIL_SRCS	= $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
 		  $(UTILS_SRC)/visual.c
 DEMO_UTIL_OBJS	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
@@ -114,9 +121,9 @@ SAVER_OBJS_1	= xscreensaver.o windows.o timers.o subprocs.o \
 		  xset.o splash.o setuid.o stderr.o
 
 SAVER_SRCS	= $(SAVER_SRCS_1) prefs.c $(LOCK_SRCS) \
-		  $(SAVER_UTIL_SRCS) @XMU_SRCS@
+		  $(SAVER_UTIL_SRCS) $(GL_SRCS) $(XMU_SRCS)
 SAVER_OBJS	= $(SAVER_OBJS_1) prefs.o $(LOCK_OBJS) \
-		  $(SAVER_UTIL_OBJS) @XMU_OBJS@
+		  $(SAVER_UTIL_OBJS) $(GL_OBJS) $(XMU_OBJS)
 
 CMD_SRCS	= remote.c xscreensaver-command.c
 CMD_OBJS	= remote.o xscreensaver-command.o
@@ -129,7 +136,7 @@ DEMO_SRCS	= $(DEMO_SRCS_1) remote.c \
 DEMO_OBJS	= $(DEMO_OBJS_1) remote.o \
 		  $(TOOLKIT_OBJS) $(DEMO_UTIL_OBJS)
 
-SAVER_LIBS	= $(LIBS) $(X_LIBS) @SAVER_LIBS@ \
+SAVER_LIBS	= $(LIBS) $(X_LIBS) @SAVER_LIBS@ $(GL_LIBS) \
 		  $(X_PRE_LIBS) -lXt -lX11 -lXext $(X_EXTRA_LIBS) \
 		  $(PASSWD_LIBS)
 

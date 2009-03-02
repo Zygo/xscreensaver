@@ -874,6 +874,43 @@ elif test "$with_dpms" != no; then
 fi
 
 
+# Check for the XF86VMODE server extension header.
+#
+have_xf86vmode=no
+with_xf86vmode_req=unspecified
+AC_ARG_WITH(xf86vmode-ext,
+[  --with-xf86vmode-ext    Include support for XFree86 virtual screens, if
+                          possible (this is the default).
+  --without-xf86vmode-ext Do not compile in support for this extension.],
+  [with_xf86vmode="$withval"; with_xf86vmode_req="$withval"],
+  [with_xf86vmode=yes])
+
+HANDLE_X_PATH_ARG(with_xf86vmode, --with-xf86vmode-ext, xf86vmode)
+
+if test "$with_xf86vmode" = yes; then
+
+  # first check for xf86vmode.h
+  AC_CHECK_X_HEADER(X11/extensions/xf86vmode.h, [have_xf86vmode=yes])
+
+  # if that succeeded, then check for the -lXxf86vm
+  if test "$have_xf86vmode" = yes; then
+    have_xf86vmode=no
+    AC_CHECK_X_LIB(Xxf86vm, XF86VidModeGetViewPort,
+		  [have_xf86vmode=yes; SAVER_LIBS="$SAVER_LIBS -lXxf86vm"], [],
+		  -lXext -lX11)
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test "$have_xf86vmode" = yes; then
+    AC_DEFINE(HAVE_XF86VMODE)
+  fi
+
+elif test "$with_xf86vmode" != no; then
+  echo "error: must be yes or no: --with-xf86vmode-ext=$with_xf86vmode"
+  exit 1
+fi
+
+
 # Check for /proc/interrupts
 #
 have_proc_interrupts=no
@@ -1329,6 +1366,27 @@ EOF
     AC_CHECK_X_LIB($gl_lib_1, glBindTexture, [AC_DEFINE(HAVE_GLBINDTEXTURE)],
 		   [], $GL_LIBS -lX11 -lXext -lm)
 
+
+    # Check whether the `xscreensaver' executable should link against GL.
+    # See comments in utils/visual-gl.c for why this is sometimes necessary.
+    #
+    AC_MSG_CHECKING(whether drastic GL measures must be taken)
+    case "$host" in
+      *-sgi*)
+        AC_MSG_RESULT([yes -- hello, SGI.])
+        AC_DEFINE(DAEMON_USE_GL)
+        SAVER_GL_SRCS='$(UTILS_SRC)/visual-gl.c'
+        SAVER_GL_OBJS='$(UTILS_BIN)/visual-gl.o'
+        SAVER_GL_LIBS="$GL_LIBS"
+      ;;
+      *)
+        AC_MSG_RESULT([no -- non-SGI.])
+        SAVER_GL_SRCS=''
+        SAVER_GL_OBJS=''
+        SAVER_GL_LIBS=''
+      ;;
+    esac
+
   fi
 
 elif test "$with_gl" != no; then
@@ -1654,9 +1712,7 @@ if test "$enable_locking" = yes; then
 [  --with-pam              Include support for PAM (Pluggable Authentication
                           Modules) if possible (this is the default.)
   --without-pam           Do not compile in support for PAM.],
-  [with_pam="$withval"; with_pam_req="$withval"],[with_pam=no])
-#### Leave PAM off by default for now, since it's buggy on Solaris
-#### (and probably Linux, but it's so hard to tell...)
+  [with_pam="$withval"; with_pam_req="$withval"],[with_pam=yes])
 
   HANDLE_X_PATH_ARG(with_pam, --with-pam, PAM)
 
@@ -1669,6 +1725,33 @@ if test "$enable_locking" = yes; then
 	  have_pam=yes
 	  AC_DEFINE(HAVE_PAM)
 	  PASSWD_LIBS="${PASSWD_LIBS} -lpam -ldl"
+
+
+          AC_MSG_CHECKING(how to call pam_strerror)
+          AC_CACHE_VAL(ac_cv_pam_strerror_args,
+           [AC_TRY_COMPILE([#include <stdio.h>
+                            #include <stdlib.h>
+                            #include <security/pam_appl.h>],
+                           [pam_handle_t *pamh = 0;
+                            char *s = pam_strerror(pamh, PAM_SUCCESS);],
+                           [ac_pam_strerror_args=2],
+                           [AC_TRY_COMPILE([#include <stdio.h>
+                                            #include <stdlib.h>
+                                            #include <security/pam_appl.h>],
+                                           [char *s =
+                                             pam_strerror(PAM_SUCCESS);],
+                                           [ac_pam_strerror_args=1],
+                                           [ac_pam_strerror_args=0])])
+            ac_cv_pam_strerror_args=$ac_pam_strerror_args])
+          ac_pam_strerror_args=$ac_cv_pam_strerror_args
+          if test "$ac_pam_strerror_args" = 1 ; then
+            AC_MSG_RESULT(one argument)
+          elif test "$ac_pam_strerror_args" = 2 ; then
+            AC_DEFINE(PAM_STRERROR_TWO_ARGS)
+            AC_MSG_RESULT(two arguments)
+          else
+            AC_MSG_RESULT(unknown)
+          fi
     fi
   elif test "$with_pam" != no; then
   	echo "error: must be yes or no: --with-pam=$with_pam"
@@ -1849,6 +1932,94 @@ if test "$enable_locking" = yes; then
 fi
 
 
+# for the "sonar" hack -- check how to ping.
+#
+AC_MSG_CHECKING(for struct icmp)
+AC_CACHE_VAL(ac_cv_have_icmp,
+ [AC_TRY_COMPILE([#include <stdlib.h>
+                  #include <stdio.h>
+                  #include <math.h>
+                  #include <unistd.h>
+                  #include <limits.h>
+                  #include <signal.h>
+                  #include <fcntl.h>
+                  #include <sys/types.h>
+                  #include <sys/time.h>
+                  #include <sys/ipc.h>
+                  #include <sys/shm.h>
+                  #include <sys/socket.h>
+                  #include <netinet/in_systm.h>
+                  #include <netinet/in.h>
+                  #include <netinet/ip.h>
+                  #include <netinet/ip_icmp.h>
+                  #include <netinet/udp.h>
+                  #include <arpa/inet.h>
+                  #include <netdb.h>],
+                 [struct icmp i;
+                  struct sockaddr s;
+                  struct sockaddr_in si;
+                  struct ip ip;
+                  i.icmp_type = ICMP_ECHO;
+                  i.icmp_code = 0;
+                  i.icmp_cksum = 0;
+                  i.icmp_id = 0;
+                  i.icmp_seq = 0;
+                  si.sin_family = AF_INET;
+                  ip.ip_hl = 0;],
+                 [ac_cv_have_icmp=yes],
+                 [ac_cv_have_icmp=no])])
+ac_have_icmp=$ac_cv_have_icmp
+AC_MSG_RESULT($ac_cv_have_icmp)
+
+AC_MSG_CHECKING(for struct icmphdr)
+AC_CACHE_VAL(ac_cv_have_icmphdr,
+ [AC_TRY_COMPILE([#include <stdlib.h>
+                  #include <stdio.h>
+                  #include <math.h>
+                  #include <unistd.h>
+                  #include <limits.h>
+                  #include <signal.h>
+                  #include <fcntl.h>
+                  #include <sys/types.h>
+                  #include <sys/time.h>
+                  #include <sys/ipc.h>
+                  #include <sys/shm.h>
+                  #include <sys/socket.h>
+                  #include <netinet/in_systm.h>
+                  #include <netinet/in.h>
+                  #include <netinet/ip.h>
+                  #include <netinet/ip_icmp.h>
+                  #include <netinet/udp.h>
+                  #include <arpa/inet.h>
+                  #include <netdb.h>],
+                 [struct icmphdr i;
+                  struct sockaddr s;
+                  struct sockaddr_in si;
+                  struct ip ip;
+                  i.type = ICMP_ECHO;
+                  i.code = 0;
+                  i.cksum = 0;
+                  i.un.echo.id = 0;
+                  i.un.echo.sequence = 0;
+                  si.sin_family = AF_INET;
+                  ip.ip_hl = 0;],
+                 [ac_cv_have_icmphdr=yes],
+                 [ac_cv_have_icmphdr=no])])
+ac_have_icmphdr=$ac_cv_have_icmphdr
+AC_MSG_RESULT($ac_cv_have_icmphdr)
+
+if test "$ac_have_icmp" = yes ; then
+  AC_DEFINE(HAVE_ICMP)
+fi
+if test "$ac_have_icmphdr" = yes ; then
+  AC_DEFINE(HAVE_ICMPHDR)
+fi
+
+
+
+########################## end of tests.
+
+
 if test \! -z "$includedir" ; then 
   INCLUDES="-I$includedir"
 fi
@@ -1911,9 +2082,10 @@ fi
 tab='	'
 if test "$have_gl" = yes; then
   GL_EXES='$(GL_EXES)'
-  GL_KLUDGE=${tab}
+  GL_MEN='$(GL_MEN)'
+  GL_KLUDGE="${tab}  "
 else
-  GL_KLUDGE='  -'${tab}
+  GL_KLUDGE="  -${tab}  "
 fi
 
 AC_SUBST(INCLUDES)
@@ -1937,9 +2109,13 @@ AC_SUBST(PASSWD_SRCS)
 AC_SUBST(PASSWD_OBJS)
 AC_SUBST(XMU_SRCS)
 AC_SUBST(XMU_OBJS)
+AC_SUBST(SAVER_GL_SRCS)
+AC_SUBST(SAVER_GL_OBJS)
+AC_SUBST(SAVER_GL_LIBS)
 AC_SUBST(LOCK_SRCS)
 AC_SUBST(LOCK_OBJS)
 AC_SUBST(GL_EXES)
+AC_SUBST(GL_MEN)
 AC_SUBST(GL_KLUDGE)
 AC_SUBST(HACKDIR)
 AC_SUBST(APPDEFAULTS)
@@ -2023,6 +2199,10 @@ fi
 
 if test "$with_dpms_req" = yes -a "$have_dpms" = no ; then
   warn 'The DPMS extension was requested, but was not found.'
+fi
+
+if test "$with_xf86vmode_req" = yes -a "$have_xf86vmode" = no ; then
+  warn 'The XF86VMODE extension was requested, but was not found.'
 fi
 
 if test "$have_motif" = no -a "$have_athena" = no ; then

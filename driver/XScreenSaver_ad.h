@@ -13,6 +13,7 @@
 "*fadeTicks:		20",
 "*splash:		True",
 "*splashDuration:	5",
+"*visualID:		default",
 "*captureStderr: 	True",
 "*overlayTextForeground:	#FFFF00",
 "*overlayTextBackground:	#000000",
@@ -134,20 +135,22 @@
   PseudoColor:	qix -root -count 5 -solid -transparent -linear		  \
 			-segments 250 -size 100				\\n\
 									  \
-		gears -root					  	\\n\
-		superquadrics -root				  	\\n\
-		morph3d -root					  	\\n\
-		cage -root					  	\\n\
-		moebius -root					  	\\n\
-		stairs -root					  	\\n\
-		pipes -root					  	\\n\
-		sproingies -root				  	\\n\
-		rubik -root					  	\\n\
-		atlantis -root					  	\\n\
-		lament -root					  	\\n\
-		bubble3d -root					  	\\n\
-		glplanet -root					  	\\n\
-		pulsar -root					  	\\n",
+	   GL:	gears -root					  	\\n\
+	   GL:	superquadrics -root				  	\\n\
+	   GL:	morph3d -root					  	\\n\
+	   GL:	cage -root					  	\\n\
+	   GL:	moebius -root					  	\\n\
+	   GL:	stairs -root					  	\\n\
+	   GL:	pipes -root					  	\\n\
+	   GL:	sproingies -root				  	\\n\
+	   GL:	rubik -root					  	\\n\
+	   GL:	atlantis -root					  	\\n\
+	   GL:	lament -root					  	\\n\
+	   GL:	bubble3d -root					  	\\n\
+	   GL:	glplanet -root					  	\\n\
+	   GL:	pulsar -root					  	\\n\
+  -	   GL:  pulsar -root -texture -mipmap -texture_quality  	  \
+		       -light -fog					\\n",
 " ",
 "XScreenSaver.pointerPollTime:		5",
 "XScreenSaver.initialDelay:		0",

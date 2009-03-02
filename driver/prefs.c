@@ -808,15 +808,7 @@ load_init_file (saver_preferences *p)
     p->fade_p = False;
   if (! p->fade_p) p->unfade_p = False;
 
-  if (p->verbose_p && !p->fading_possible_p && (p->fade_p || p->unfade_p))
-    {
-      fprintf (stderr, "%s: there are no PseudoColor or GrayScale visuals.\n",
-	       blurb());
-      fprintf (stderr, "%s: ignoring the request for fading/unfading.\n",
-	       blurb());
-    }
-
-  p->watchdog_timeout = p->cycle;
+  p->watchdog_timeout = p->cycle * 0.6;
   if (p->watchdog_timeout < 30000) p->watchdog_timeout = 30000;	  /* 30 secs */
   if (p->watchdog_timeout > 3600000) p->watchdog_timeout = 3600000; /*  1 hr */
 

@@ -96,6 +96,14 @@
  */
 #undef HAVE_DPMS_EXTENSION
 
+/*  Define this if you have the functions XF86VidModeGetModeLine() and
+ *  XF86VidModeGetViewPort(), in support of virtual desktops where the
+ *  X server's root window is bigger than the actual screen.  This is
+ *  an XFree86 thing, and probably doesn't exist elsewhere.  (It's
+ *  available if the file /usr/include/X11/extensions/xf86vmode.h exists.)
+ */
+#undef HAVE_XF86VMODE
+
 /*  Define this if you have a Linux-like /proc/interrupts file which can be
  *  examined to determine when keyboard activity has occurred.
  */
@@ -147,6 +155,15 @@
  */
 #undef HAVE_GLBINDTEXTURE
 
+/*  Define this if the `xscreensaver' process itself (the driver process)
+    should be linked against GL.  Most systems won't want this (in particular,
+    if you're using Linux and/or Mesa, you don't want this) but SGI systems
+    do want this.  It may also be useful on other systems that have serious
+    GL support -- you only need this if you have a lot of different visuals,
+    not all of which work with GL programs.
+ */
+#undef DAEMON_USE_GL
+
 /*  Define this if you have the X Shared Memory Extension.
  */
 #undef HAVE_XSHM_EXTENSION
@@ -197,11 +214,14 @@
  */
 #define PAM_SERVICE_NAME "xscreensaver"
 
+/* Define if you have PAM and pam_strerror() requires two arguments.  */
+#undef PAM_STRERROR_TWO_ARGS
+
 /*  Define this if your system uses `shadow' passwords, that is, the passwords
  *  live in /etc/shadow instead of /etc/passwd, and one reads them with
  *  getspnam() instead of getpwnam().  (Note that SCO systems do some random
- *  other thing; others might as well.  See the ifdefs in driver/passwd.c if
- *  you're having trouble related to reading passwords.)
+ *  other thing; others might as well.  See the ifdefs in driver/passwd-pwent.c
+ *  if you're having trouble related to reading passwords.)
  */
 #undef HAVE_SHADOW_PASSWD
 
@@ -228,7 +248,8 @@
     VT_UNLOCKSWITCH ioctls.  If this is defined, then when the screen is
     locked, switching to another virtual terminal will also be prevented.
     That is, the whole console will be locked, rather than just the VT on
-    which X is running.
+    which X is running.  (Well, that's the theory anyway -- in practice,
+    I haven't yet figured out how to make that work.)
  */
 #undef HAVE_VT_LOCKSWITCH
 
@@ -319,3 +340,11 @@
    This is necessary at least on SCO OpenServer 5, due to a Unix kernel bug.
  */
 #undef USE_SIGACTION
+
+/* Define this if you do pings with a `struct icmp' and  a `icmp_id' slot.
+ */
+#undef HAVE_ICMP
+
+/* Define this if you do pings with a `struct icmphdr' and a `un.echo.id' slot.
+ */
+#undef HAVE_ICMPHDR

@@ -15,7 +15,25 @@
 
  * Revision History:
  * 4-Apr-1999:  dek@cgl.ucsf.edu  Created module "pulsar"
+ * 27-Apr-1999:  dek@cgl.ucsf.edu  Submitted module "pulsar"
+ * 4-May-1999:  jwz@jwz.org  Added module "pulsar"
+ * 4-May-1999:  dek@cgl.ucsf.edu  Submitted module "pulsar" updates
  *
+ * Notes:
+ * The pulsar screensaver draws a number of rotating, pulsing rectangles
+ * on your screen.  Depending on the options you choose, you can set a number
+ * of interesting OpenGL parameters, including alpha blending, depth testing, fog,
+ * lighting, texturing, mipmapping, bilinear filtering, and line antialiasing.  
+ * Additionally, there is a "frames per second" meter which gives an estimate of
+ * the speed of your graphics card.  
+ *
+ * Example command-line switches:
+ * Only draw a single quad, and don't fill it (boring but fast)
+ * pulsar -wire -quads 1 -fps
+ *
+ * Only try this with hardware graphics acceleration (PPro 200 w/ a Voodoo 2 runs great)
+ * pulsar -quads 10 -texture -mipmap -texture_quality -light -fog -fps
+ *                                                                 
  */
 
 #include <math.h> 
@@ -36,6 +54,7 @@
 # define screensaver_opts				xlockmore_opts
 #define	DEFAULTS                        "*light:			False	\n" \
                                         "*wire:				False	\n" \
+                                        "*quads:			5   	\n" \
                                         "*blend:			True	\n" \
                                         "*fog:				False	\n" \
                                         "*antialias:		False	\n" \
@@ -44,6 +63,7 @@
                                         "*mipmap:			False	\n" \
                                         "*fps:				False	\n" \
                                         "*doDepth:			False	\n" \
+										"*image:			BUILTIN	\n"
 
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -80,15 +100,6 @@
 #define checkImageWidth 64
 #define checkImageHeight 64
 
-char *Textures[] = {
-  "./test.ppm4",
-};
-
-typedef struct {
-    int sizeX, sizeY;
-    GLubyte *data;
-} PPMImage;
-
 /* Functions for handling the frames per second timer */
 #include "GL/glx.h"
 
@@ -96,43 +107,42 @@ typedef struct {
 #define SAMPLE_FRAMES 10
 #endif
 
-static GLint base;
-static int FrameCounter = 0;
-static double oldtime=-1., newtime=-1.;
-static char FPSstring[1024]="FPS: NONE"; 
-
-static float x_pos=0, y_pos=0;
-
-#define FONT "-*-courier-medium-r-normal-*-240-*"
-
-
-
-#define NUM_TRIANGLES 5
-static float scale_x=1, scale_y=1, scale_z=1;
-static int frame = 0;
-struct triangle
-{
-  GLfloat tx, ty, tz;
-  GLfloat rx, ry, rz;
-
-  GLfloat dtx, dty, dtz;
-  GLfloat drx, dry, drz;
-
-};
-struct triangle triangles[NUM_TRIANGLES];
-GLint tri_list;
-
-
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #define WIDTH 800
 #define HEIGHT 600
 
-int global_width=WIDTH, global_height=HEIGHT;
+#define NUM_QUADS 5
+#define DEF_NUM_QUADS	"5"
+#define DEF_LIGHT	  	"False"
+#define DEF_WIRE   		"False"
+#define DEF_BLEND   	"True"
+#define DEF_FOG   		"False"
+#define DEF_ANTIALIAS   "False"
+#define DEF_TEXTURE   	"False"
+#define DEF_TEXTURE_QUALITY   "False"
+#define DEF_MIPMAP   	"False"
+#define DEF_FPS   		"False"
+#define DEF_DO_DEPTH	"False"
+#define DEF_IMAGE   	"BUILTIN"
+
+static int num_quads;
+static int do_light;
+static int do_wire;
+static int do_blend;
+static int do_fog;
+static int do_antialias;
+static int do_texture;
+static int do_texture_quality;
+static int do_mipmap;
+static int do_fps;
+static int do_depth;
+static char *which_image;
 
 
 static XrmOptionDescRec opts[] = {
+  {"-quads",   ".pulsar.quads",   XrmoptionSepArg, (caddr_t) NULL },
   {"-light",   ".pulsar.light",   XrmoptionNoArg, (caddr_t) "true" },
   {"+light",   ".pulsar.light",   XrmoptionNoArg, (caddr_t) "false" },
   {"-wire",   ".pulsar.wire",   XrmoptionNoArg, (caddr_t) "true" },
@@ -153,31 +163,12 @@ static XrmOptionDescRec opts[] = {
   {"+fps",   ".pulsar.fps",   XrmoptionNoArg, (caddr_t) "false" },
   {"-do_depth",   ".pulsar.doDepth",   XrmoptionNoArg, (caddr_t) "true" },
   {"+do_depth",   ".pulsar.doDepth",   XrmoptionNoArg, (caddr_t) "false" },
+  {"-image",   ".pulsar.image",  XrmoptionSepArg, (caddr_t) NULL },
 };
 
-#define DEF_LIGHT  "False"
-#define DEF_WIRE   "False"
-#define DEF_BLEND   "True"
-#define DEF_FOG   "False"
-#define DEF_ANTIALIAS   "False"
-#define DEF_TEXTURE   "False"
-#define DEF_TEXTURE_QUALITY   "False"
-#define DEF_MIPMAP   "False"
-#define DEF_FPS   "False"
-#define DEF_DO_DEPTH   "False"
-
-static int do_light;
-static int do_wire;
-static int do_blend;
-static int do_fog;
-static int do_antialias;
-static int do_texture;
-static int do_texture_quality;
-static int do_mipmap;
-static int do_fps;
-static int do_depth;
 
 static argtype vars[] = {
+  {(caddr_t *) &num_quads, "quads", "Quads", DEF_NUM_QUADS, t_Int},
   {(caddr_t *) &do_light,    "light",   "Light",   DEF_LIGHT,   t_Bool},
   {(caddr_t *) &do_wire,    "wire",   "Wire",   DEF_WIRE,   t_Bool},
   {(caddr_t *) &do_blend,    "blend",   "Blend",   DEF_BLEND,   t_Bool},
@@ -188,10 +179,27 @@ static argtype vars[] = {
   {(caddr_t *) &do_mipmap,    "mipmap",   "Mipmap",   DEF_MIPMAP,   t_Bool},
   {(caddr_t *) &do_fps,    "fps",   "fps",   DEF_FPS,   t_Bool},
   {(caddr_t *) &do_depth,    "doDepth",   "DoDepth",   DEF_DO_DEPTH,   t_Bool},
+  {(caddr_t *) &which_image, "image",   "Image",   DEF_IMAGE,   t_String},
 };
 
 
-ModeSpecOpt screensaver_opts = {countof(opts), opts, countof(vars), vars, NULL};
+static OptionStruct desc[] =
+{
+	{"-quads num", "how many quads to draw"},
+	{"-/+ light", "whether to do enable lighting (slower)"},
+	{"-/+ wire", "whether to do use wireframe instead of filled (faster)"},
+	{"-/+ blend", "whether to do enable blending (slower)"},
+	{"-/+ fog", "whether to do enable fog (?)"},
+	{"-/+ antialias", "whether to do enable antialiased lines (slower)"},
+	{"-/+ texture", "whether to do enable texturing (much slower)"},
+	{"-/+ texture_quality", "whether to do enable linear/mipmap filtering (much much slower)"},
+	{"-/+ mipmap", "whether to do enable mipmaps (much slower)"},
+	{"-/+ fps", "whether to do enable frames per second meter (?)"},
+	{"-/+ depth", "whether to do enable depth buffer checking (slower)"},
+	{"-image <filename>", "texture image to load (PPM, PPM4, TIFF(?), XPM(?))"},
+};
+
+ModeSpecOpt screensaver_opts = {countof(opts), opts, countof(vars), vars, desc};
 
 #ifdef USE_MODULES
 ModStruct   screensaver_description =
@@ -211,6 +219,47 @@ typedef struct {
 } screensaverstruct;
 
 static screensaverstruct *Screensaver = NULL;
+
+struct quad
+{
+  GLfloat tx, ty, tz;
+  GLfloat rx, ry, rz;
+
+  GLfloat dtx, dty, dtz;
+  GLfloat drx, dry, drz;
+
+};
+
+int global_width=WIDTH, global_height=HEIGHT;
+
+
+static GLint base;
+static int FrameCounter = 0;
+static double oldtime=-1., newtime=-1.;
+static char FPSstring[1024]="FPS: NONE"; 
+
+static float x_pos=0, y_pos=0;
+
+#define FONT "-*-courier-medium-r-normal-*-240-*"
+GLint quad_list;
+
+static float scale_x=1, scale_y=1, scale_z=1;
+static int frame = 0;
+
+static GLenum errCode;
+static const GLubyte *errString;
+
+struct quad *quads;
+
+int checkError(int line, char *file)
+{
+  if((errCode = glGetError()) != GL_NO_ERROR) {
+    errString = (char *)gluErrorString(errCode);
+    fprintf(stderr, "OpenGL error: %s detected at line %d in file %s\n", errString, line, file);
+    exit(1);
+  }
+  return 0;
+}
 
 
 void FPS_Setup(void)
@@ -266,7 +315,10 @@ void PrintString(float x, float y, char *string)
   glRasterPos2f( x, y);
   len = (int) strlen(string);
   for (i = 0; i < len; i++) {
-    glCallList(base+string[i]);
+	if (glIsList(base+string[i]))
+	  glCallList(base+string[i]);
+	else
+	  fprintf(stderr, "%d+string[%d] is not a display list!\n", base, i);
   }
 
   /* clean up after our state changes */
@@ -367,12 +419,12 @@ uint32 *LoadTIFF(char *filename, int *width, int *height, int *format)
 }
 #endif
 
-
 /* Load a modified version of PPM format with an extra byte for alpha */
 GLubyte *LoadPPM4(const char *filename, int *width, int *height, int *format)
 {
   char buff[1024];
-  PPMImage *result;
+  GLubyte *data;
+  int sizeX, sizeY;
   FILE *fp;
   int maxval;
 
@@ -385,7 +437,7 @@ GLubyte *LoadPPM4(const char *filename, int *width, int *height, int *format)
 
   if (!fgets(buff, sizeof(buff), fp))
     {
-      perror(filename);
+      perror("Unable to read header filename\n");
       return  Generate_Image(width, height, format);
     }
 
@@ -395,20 +447,13 @@ GLubyte *LoadPPM4(const char *filename, int *width, int *height, int *format)
       return  Generate_Image(width, height, format);
     }
 
-  result = malloc(sizeof(PPMImage));
-  if (!result)
-    {
-      fprintf(stderr, "Unable to allocate memory\n");
-      return  Generate_Image(width, height, format);
-    }
-
   do
     {
       fgets(buff, sizeof(buff), fp);
     }
   while (buff[0] == '#');
     
-  if (sscanf(buff, "%d %d", &result->sizeX, &result->sizeY) != 2)
+  if (sscanf(buff, "%d %d", &sizeX, &sizeY) != 2)
     {
       fprintf(stderr, "Error loading image `%s'\n", filename);
       return  Generate_Image(width, height, format);
@@ -423,14 +468,14 @@ GLubyte *LoadPPM4(const char *filename, int *width, int *height, int *format)
   while (fgetc(fp) != '\n')
     ;
 
-  result->data = (GLubyte *)malloc(4 * result->sizeX * result->sizeY);
-  if (!result)
+  data = (GLubyte *)malloc(4 * sizeX * sizeY);
+  if (data == NULL)
     {
       fprintf(stderr, "Unable to allocate memory\n");
-      exit(1);
+	  exit(1);
     }
 
-  if (fread(result->data, 4 * result->sizeX, result->sizeY, fp) != result->sizeY)
+  if (fread(data, 4 * sizeX, sizeY, fp) != sizeY)
     {
       fprintf(stderr, "Error loading image `%s'\n", filename);
       return  Generate_Image(width, height, format);
@@ -438,17 +483,18 @@ GLubyte *LoadPPM4(const char *filename, int *width, int *height, int *format)
 
   fclose(fp);
 
-  *width = result->sizeX;
-  *height = result->sizeY;
+  *width = sizeX;
+  *height = sizeY;
   *format = GL_RGBA;
-  return result->data;
+  return data;
 }
 
 /* Load a plain PPM image */
 GLubyte *LoadPPM(const char *filename, int *width, int *height, int *format)
 {
   char buff[1024];
-  PPMImage *result;
+  GLubyte *data;
+  GLint sizeX, sizeY;
   FILE *fp;
   int maxval;
 
@@ -471,20 +517,13 @@ GLubyte *LoadPPM(const char *filename, int *width, int *height, int *format)
       return  Generate_Image(width, height, format);
     }
 
-  result = malloc(sizeof(PPMImage));
-  if (!result)
-    {
-      fprintf(stderr, "Unable to allocate memory\n");
-      return  Generate_Image(width, height, format);
-    }
-
   do
     {
       fgets(buff, sizeof(buff), fp);
     }
   while (buff[0] == '#');
     
-  if (sscanf(buff, "%d %d", &result->sizeX, &result->sizeY) != 2)
+  if (sscanf(buff, "%d %d", &sizeX, &sizeY) != 2)
     {
       fprintf(stderr, "Error loading image `%s'\n", filename);
       return  Generate_Image(width, height, format);
@@ -499,14 +538,14 @@ GLubyte *LoadPPM(const char *filename, int *width, int *height, int *format)
   while (fgetc(fp) != '\n')
     ;
 
-  result->data = (GLubyte *)malloc(3 * result->sizeX * result->sizeY);
-  if (!result)
+  data = (GLubyte *)malloc(3 * sizeX * sizeY);
+  if (data == NULL)
     {
       fprintf(stderr, "Unable to allocate memory\n");
-      return  Generate_Image(width, height, format);
+	  exit(1);
     }
 
-  if (fread(result->data, 3 * result->sizeX, result->sizeY, fp) != result->sizeY)
+  if (fread(data, 3 * sizeX, sizeY, fp) != sizeY)
     {
       fprintf(stderr, "Error loading image `%s'\n", filename);
       return  Generate_Image(width, height, format);
@@ -514,10 +553,10 @@ GLubyte *LoadPPM(const char *filename, int *width, int *height, int *format)
 
   fclose(fp);
 
-  *width = result->sizeX;
-  *height = result->sizeY;
+  *width = sizeX;
+  *height = sizeY;
   *format = GL_RGB;
-  return result->data;
+  return data;
 }
 
 /* Create a texture in OpenGL.  First an image is loaded 
@@ -529,9 +568,9 @@ void Create_Texture(char *filename)
   GLint a;
   int format;
 
-  fprintf(stdout, "Loading texture '%s'\n", filename);
-
-  if ( !strncmp((filename+strlen(filename)-3), "ppm", 3))
+  if ( !strncmp(filename, "BUILTIN", 7))
+    image = Generate_Image(&width, &height, &format);
+  else if ( !strncmp((filename+strlen(filename)-3), "ppm", 3))
     image = LoadPPM(filename, &width, &height, &format);
   else if ( !strncmp((filename+strlen(filename)-4), "ppm4", 4))
     image = LoadPPM4(filename, &width, &height, &format);
@@ -549,18 +588,22 @@ void Create_Texture(char *filename)
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  /* perhaps we can edge a bit more speed at the expense of quality */
+  glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
   if (do_texture_quality) {
+	/* with texture_quality, the min and mag filters look *much* nice but are *much* slower */
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
   }
   else {
+	/* default is to do it quick and dirty */
+	/* if you have mipmaps turned on, but not texture quality, nothing will happen! */
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
   }
 
+  /* mipmaps make the image look much nicer */
   if (do_mipmap)
 	a=gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, format, GL_UNSIGNED_BYTE, image);
   else 
@@ -579,13 +622,12 @@ void resetProjection(void) {
 }
 
 
-void GenerateTriangle(void)
+void GenerateQuad(void)
 {
   int i;
 
-  tri_list = glGenLists(1);
-  glNewList(tri_list,GL_COMPILE);
-/*    glBegin(GL_TRIANGLES); */
+  quad_list = glGenLists(1);
+  glNewList(quad_list,GL_COMPILE);
   glBegin(GL_QUADS);
   glColor4f(1,0,0,.4); glNormal3f(0,0,1);  glTexCoord2f(0,0); glVertex2f(-1, -1);
   glColor4f(0,1,0,.4); glNormal3f(0,0,1);  glTexCoord2f(0,1); glVertex2f(-1,  1);
@@ -594,18 +636,20 @@ void GenerateTriangle(void)
   glEnd();
   glEndList();
 
-  for (i=0; i < NUM_TRIANGLES; i++)
-    {
-      triangles[i].rx = 0.;
-      triangles[i].ry = 0.;
-      triangles[i].rz = 0.;
-      triangles[i].tx = 0.;
-      triangles[i].ty = 0.;
-      triangles[i].tz = -10;
 
-      triangles[i].drx = drand48() * 5.;
-      triangles[i].dry = drand48() * 5.;
-      triangles[i].drz = 0;
+  quads = (struct quad *) malloc(sizeof(struct quad) * num_quads);
+  for (i=0; i < num_quads; i++)
+    {
+      quads[i].rx = 0.;
+      quads[i].ry = 0.;
+      quads[i].rz = 0.;
+      quads[i].tx = 0.;
+      quads[i].ty = 0.;
+      quads[i].tz = -10;
+
+      quads[i].drx = drand48() * 5.;
+      quads[i].dry = drand48() * 5.;
+      quads[i].drz = 0;
     }
 }
 
@@ -659,29 +703,27 @@ void initializeGL(GLsizei width, GLsizei height)
 	
 
   if (do_texture)
-	{
-	  Create_Texture(Textures[0]); 
-	}
+	  Create_Texture(which_image); 
 
-  GenerateTriangle();
+  GenerateQuad();
 }
-void drawTriangles(void) {
+void drawQuads(void) {
   int i;
-  for (i=0; i < NUM_TRIANGLES; i++)
+  for (i=0; i < num_quads; i++)
     {
       glPushMatrix();
-      glTranslatef(triangles[i].tx,0,0);
-      glTranslatef(0,triangles[i].ty,0);
-      glTranslatef(0,0,triangles[i].tz);
-      glRotatef(triangles[i].rx, 1,0,0);
-      glRotatef(triangles[i].ry, 0,1,0);
-      glRotatef(triangles[i].rz, 0,0,1);
-      glCallList(tri_list);
+      glTranslatef(quads[i].tx,0,0);
+      glTranslatef(0,quads[i].ty,0);
+      glTranslatef(0,0,quads[i].tz);
+      glRotatef(quads[i].rx, 1,0,0);
+      glRotatef(quads[i].ry, 0,1,0);
+      glRotatef(quads[i].rz, 0,0,1);
+      glCallList(quad_list);
       glPopMatrix();
 
-      triangles[i].rx += triangles[i].drx;
-      triangles[i].ry += triangles[i].dry;
-      triangles[i].rz += triangles[i].drz;
+      quads[i].rx += quads[i].drx;
+      quads[i].ry += quads[i].dry;
+      quads[i].rz += quads[i].drz;
 
     }
 }
@@ -689,6 +731,7 @@ void drawTriangles(void) {
 GLvoid drawScene(GLvoid) 
 {
 
+  checkError(__LINE__, __FILE__);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   /* we have to do this here because the FPS meter turns these 3 features off!! */
@@ -709,15 +752,22 @@ GLvoid drawScene(GLvoid)
   }
 
   resetProjection();
+
+  /* use XYZ scaling factors to change the size of the pulsar */
   glScalef(scale_x, scale_y, scale_z);
-  drawTriangles();
-  
+  drawQuads();
+
+  /* update the scaling factors- cyclic */
   scale_x = cos(frame/360.)*10.;
   scale_y = sin(frame/360.)*10.;
   scale_z = 1;
 
+  /* increment frame-counter */
   frame++;
-  DoFPS();
+
+  if (do_fps)
+	DoFPS();
+  checkError(__LINE__, __FILE__);
 }
 
 
@@ -777,6 +827,7 @@ void release_screensaver(ModeInfo * mi)
 	(void) free((void *) Screensaver);
 	Screensaver = NULL;
   }
+  free(quads);
   FreeAllGL(mi);
 }
 #endif

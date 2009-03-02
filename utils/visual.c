@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
+/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
  *  by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -35,6 +35,7 @@ extern char *progname;
 static Visual *pick_best_visual (Screen *, Bool, Bool);
 static Visual *pick_mono_visual (Screen *);
 static Visual *pick_best_visual_of_class (Screen *, int);
+static Visual *pick_best_gl_visual (Screen *);
 static Visual *id_to_visual (Screen *, int);
 static Visual *id_to_visual (Screen *screen, int id);
 
@@ -44,7 +45,8 @@ static Visual *id_to_visual (Screen *screen, int id);
 #define MONO_VISUAL	-3
 #define GRAY_VISUAL	-4
 #define COLOR_VISUAL	-5
-#define SPECIFIC_VISUAL	-6
+#define GL_VISUAL	-6
+#define SPECIFIC_VISUAL	-7
 
 Visual *
 get_visual (Screen *screen, const char *string, Bool prefer_writable_cells,
@@ -68,6 +70,7 @@ get_visual (Screen *screen, const char *string, Bool prefer_writable_cells,
   else if (!strcmp (v, "gray")) 		  vclass = GRAY_VISUAL;
   else if (!strcmp (v, "grey")) 		  vclass = GRAY_VISUAL;
   else if (!strcmp (v, "color")) 		  vclass = COLOR_VISUAL;
+  else if (!strcmp (v, "gl"))	 		  vclass = GL_VISUAL;
   else if (!strcmp (v, "staticgray"))	 	  vclass = StaticGray;
   else if (!strcmp (v, "staticcolor"))		  vclass = StaticColor;
   else if (!strcmp (v, "truecolor"))		  vclass = TrueColor;
@@ -125,6 +128,14 @@ get_visual (Screen *screen, const char *string, Bool prefer_writable_cells,
 
       if (!result && verbose_p)
 	fprintf (stderr, "%s: no color visuals.\n", progname);
+    }
+  else if (vclass == GL_VISUAL)
+    {
+      Visual *visual = pick_best_gl_visual (screen);
+      if (visual)
+	result = visual;
+      else if (verbose_p)
+	fprintf (stderr, "%s: no visual suitable for GL.\n", progname, v);
     }
   else if (vclass == SPECIFIC_VISUAL)
     {
@@ -266,6 +277,65 @@ pick_best_visual_of_class (Screen *screen, int visual_class)
   else
     return 0;
 }
+
+static Visual *
+pick_best_gl_visual (Screen *screen)
+{
+  /* The best visual for GL is a TrueColor visual that is half as deep as
+     the screen.  If such a thing doesn't exist, then TrueColor is best.
+     Failing that, the deepest available color visual is best.
+
+     Compare this function to get_gl_visual() in visual-gl.c.
+     This function tries to find the best GL visual using Xlib calls,
+     whereas that function does the same thing using GLX calls.
+   */
+  Display *dpy = DisplayOfScreen (screen);
+  XVisualInfo vi_in, *vi_out;
+  int out_count;
+  Visual *result = 0;
+
+  int ndepths = 0;
+  int *depths = XListDepths (dpy, screen_number (screen), &ndepths);
+  int screen_depth = depths[ndepths];
+  XFree (depths);
+
+  vi_in.class = TrueColor;
+  vi_in.screen = screen_number (screen);
+  vi_in.depth = screen_depth / 2;
+  vi_out = XGetVisualInfo (dpy, (VisualClassMask | VisualScreenMask |
+                                 VisualDepthMask),
+			   &vi_in, &out_count);
+  if (out_count > 0)
+    result = vi_out[0].visual;
+
+  if (vi_out)
+    XFree ((char *) vi_out);
+
+  if (!result && screen_depth > 24)
+    {
+      /* If it's a 32-deep screen and we didn't find a depth-16 visual,
+         see if there's a depth-12 visual. */
+      vi_in.class = TrueColor;
+      vi_in.screen = screen_number (screen);
+      vi_in.depth = 12;
+      vi_out = XGetVisualInfo (dpy, (VisualClassMask | VisualScreenMask |
+                                     VisualDepthMask),
+                               &vi_in, &out_count);
+      if (out_count > 0)
+        result = vi_out[0].visual;
+    }
+
+  if (result)
+    /* No half-depth TrueColor?  Ok, try for any TrueColor (the deepest.) */
+    result = pick_best_visual_of_class (screen, TrueColor);
+
+  if (!result)
+    /* No TrueColor?  Ok, try for anything. */
+    result = pick_best_visual (screen, False, False);
+
+  return result;
+}
+
 
 static Visual *
 id_to_visual (Screen *screen, int id)

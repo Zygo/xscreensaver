@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "27-Apr-99 (3.10)" "X Version 11"
+.TH XScreenSaver 1 "10-May-99 (3.12)" "X Version 11"
 .SH NAME
 xscreensaver-command - control a running xscreensaver process
 .SH SYNOPSIS
@@ -28,6 +28,8 @@ xscreensaver-command - control a running xscreensaver process
 [\-exit] \
 [\-restart] \
 [\-lock] \
+[\-throttle] \
+[\-unthrottle] \
 [\-version] \
 [\-time]
 .SH DESCRIPTION
@@ -132,6 +134,21 @@ Note that locking doesn't work unless the \fIxscreensaver\fP process is
 running as you.  See 
 .BR xscreensaver (1)
 for details.
+.TP 8
+.B \-throttle
+Temporarily switch to ``blank screen'' mode, and don't run any display modes
+at all, until the screensaver is next de-activated.  This is useful if you're
+using a machine remotely, and you find that some display modes are using too
+much CPU.  
+
+(If you want to do this \fIpermanently\fP, that is, you want the screen saver
+to only blank the screen and not run demos at all, then set the \fIprograms\fP
+resource to an empty list:  See
+.BR xscreensaver (1)
+for details.)
+.TP 8
+.B \-unthrottle
+Turn `-throttle' mode off and resume normal behavior.
 .TP 8
 .B \-version
 Prints the version of xscreensaver that is currently running on the display:

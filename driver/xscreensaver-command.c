@@ -44,7 +44,7 @@ Atom XA_VROOT;
 Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_RESPONSE;
 Atom XA_SCREENSAVER_ID, XA_SCREENSAVER_TIME, XA_SELECT, XA_DEMO;
 static Atom XA_ACTIVATE, XA_DEACTIVATE, XA_CYCLE, XA_NEXT, XA_PREV, XA_EXIT;
-static Atom XA_RESTART, XA_PREFS, XA_LOCK;
+static Atom XA_RESTART, XA_PREFS, XA_LOCK, XA_THROTTLE, XA_UNTHROTTLE;
 
 static char *screensaver_version;
 static char *usage = "\n\
@@ -101,7 +101,16 @@ usage: %s -<option>\n\
 \n\
   -lock         Tells the running xscreensaver process to lock the screen\n\
                 immediately.  This is like -activate, but forces locking as\n\
-                well, even if locking is not the default.\n\
+                well, even if locking is not the default.  If the saver is\n\
+                already active, this causes it to be locked as well.\n\
+\n\
+  -throttle     Temporarily switch to ``blank screen'' mode, and don't run\n\
+                any display modes at all, until the screensaver is next\n\
+                de-activated.  This is useful if you're using a machine\n\
+                remotely, and you find that some display modes are using too\n\
+                much CPU.\n\
+\n\
+  -unthrottle   Turn `-throttle' off and resume normal behavior.\n\
 \n\
   -version      Prints the version of xscreensaver that is currently running\n\
                 on the display -- that is, the actual version number of the\n\
@@ -156,6 +165,8 @@ main (int argc, char **argv)
       else if (!strncmp (s, "-preferences",L)) cmd = &XA_PREFS;
       else if (!strncmp (s, "-prefs",L))       cmd = &XA_PREFS;
       else if (!strncmp (s, "-lock", L))       cmd = &XA_LOCK;
+      else if (!strncmp (s, "-throttle", L))   cmd = &XA_THROTTLE;
+      else if (!strncmp (s, "-unthrottle", L)) cmd = &XA_UNTHROTTLE;
       else if (!strncmp (s, "-version", L))    cmd = &XA_SCREENSAVER_VERSION;
       else if (!strncmp (s, "-time", L))       cmd = &XA_SCREENSAVER_TIME;
       else USAGE ();
@@ -256,6 +267,8 @@ main (int argc, char **argv)
   XA_DEMO = XInternAtom (dpy, "DEMO", False);
   XA_PREFS = XInternAtom (dpy, "PREFS", False);
   XA_LOCK = XInternAtom (dpy, "LOCK", False);
+  XA_THROTTLE = XInternAtom (dpy, "THROTTLE", False);
+  XA_UNTHROTTLE = XInternAtom (dpy, "UNTHROTTLE", False);
 
   XSync (dpy, 0);
 

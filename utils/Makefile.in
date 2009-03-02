@@ -101,11 +101,11 @@ X_CFLAGS	= @X_CFLAGS@
 INCLUDES	= -I$(srcdir) -I.. @INCLUDES@
 
 SRCS		= alpha.c colors.c fade.c grabscreen.c hsv.c overlay.c \
-		  resources.c spline.c usleep.c visual.c xmu.c xroger.c \
-		  yarandom.c erase.c sgivideo.c xshm.c xdbe.c
+		  resources.c spline.c usleep.c visual.c visual-gl.c xmu.c \
+		  xroger.c yarandom.c erase.c sgivideo.c xshm.c xdbe.c
 OBJS		= alpha.o colors.o fade.o grabscreen.o hsv.o overlay.o \
-		  resources.o spline.o usleep.o visual.o xmu.o xroger.o \
-		  yarandom.o erase.o sgivideo.o xshm.o xdbe.o
+		  resources.o spline.o usleep.o visual.o visual-gl.o xmu.o \
+		  xroger.o yarandom.o erase.o sgivideo.o xshm.o xdbe.o
 HDRS		= alpha.h colors.h fade.h grabscreen.h hsv.h resources.h \
 		  spline.h usleep.h utils.h version.h visual.h vroot.h xmu.h \
 		  yarandom.h erase.h sgivideo.h xshm.h xdbe.h
@@ -248,6 +248,9 @@ visual.o: $(srcdir)/utils.h
 visual.o: ../config.h
 visual.o: $(srcdir)/resources.h
 visual.o: $(srcdir)/visual.h
+visual-gl.o: $(srcdir)/utils.h
+visual-gl.o: ../config.h
+visual-gl.o: $(srcdir)/visual.h
 xmu.o: ../config.h
 xroger.o: $(srcdir)/utils.h
 xroger.o: ../config.h

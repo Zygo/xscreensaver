@@ -54,6 +54,8 @@
 static Bool proc_interrupts_activity_p (saver_info *si);
 #endif /* HAVE_PROC_INTERRUPTS */
 
+static void check_for_clock_skew (saver_info *si);
+
 
 void
 idle_timer (XtPointer closure, XtIntervalId *id)
@@ -213,6 +215,16 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
   saver_info *si = (saver_info *) closure;
   saver_preferences *p = &si->prefs;
   Time how_long = p->cycle;
+
+  if (si->selection_mode > 0 &&
+      screenhack_running_p (si))
+    /* If we're in "SELECT n" mode, the cycle timer going off will just
+       restart this same hack again.  There's not much point in doing this
+       every 5 or 10 minutes, but on the other hand, leaving one hack running
+       for days is probably not a great idea, since they tend to leak and/or
+       crash.  So, restart the thing once an hour. */
+    how_long = 1000 * 60 * 60;
+
   if (si->dbox_up_p)
     {
       if (p->verbose_p)
@@ -226,8 +238,18 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
       if (p->verbose_p)
 	fprintf (stderr, "%s: changing graphics hacks.\n", blurb());
       kill_screenhack (si);
-      spawn_screenhack (si, False);
+
+      if (!si->throttled_p)
+        spawn_screenhack (si, False);
+      else
+        {
+          raise_window (si, True, True, False);
+          if (p->verbose_p)
+            fprintf (stderr, "%s: not launching new hack (throttled.)\n",
+                     blurb());
+        }
     }
+
   si->cycle_id = XtAppAddTimeOut (si->app, how_long, cycle_timer,
 				  (XtPointer) si);
 
@@ -246,7 +268,7 @@ activate_lock_timer (XtPointer closure, XtIntervalId *id)
   saver_preferences *p = &si->prefs;
 
   if (p->verbose_p)
-    fprintf (stderr, "%s: timed out; activating lock\n", blurb());
+    fprintf (stderr, "%s: timed out; activating lock.\n", blurb());
   si->locked_p = True;
 
 #ifdef HAVE_XHPDISABLERESET
@@ -362,9 +384,59 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
     }
 #endif /* HAVE_PROC_INTERRUPTS */
 
+
   if (active_p)
     reset_timers (si);
+
+  check_for_clock_skew (si);
 }
+
+
+/* An unfortunate situation is this: the saver is not active, because the
+   user has been typing.  The machine is a laptop.  The user closes the lid
+   and suspends it.  The CPU halts.  Some hours later, the user opens the
+   lid.  At this point, Xt's timers will fire, and xscreensaver will blank
+   the screen.
+
+   So far so good -- well, not really, but it's the best that we can do,
+   since the OS doesn't send us a signal *before* shutdown -- but if the
+   user had delayed locking (lockTimeout > 0) then we should start off
+   in the locked state, rather than only locking N minutes from when the
+   lid was opened.  Also, eschewing fading is probably a good idea, to
+   clamp down as soon as possible.
+
+   We only do this when we'd be polling the mouse position anyway.
+   This amounts to an assumption that machines with APM support also
+   have /proc/interrupts.
+ */
+static void
+check_for_clock_skew (saver_info *si)
+{
+  saver_preferences *p = &si->prefs;
+  time_t now = time ((time_t *) 0);
+  long shift = now - si->last_wall_clock_time;
+
+#ifdef DEBUG_TIMERS
+  if (p->verbose_p)
+    fprintf (stderr, "%s: checking wall clock (%d).\n", blurb(),
+             (si->last_wall_clock_time == 0 ? 0 : shift));
+#endif /* DEBUG_TIMERS */
+
+  if (si->last_wall_clock_time != 0 &&
+      shift > (p->timeout / 1000))
+    {
+      if (p->verbose_p)
+        fprintf (stderr, "%s: wall clock has jumped by %d:%02d:%02d!\n",
+                 blurb(),
+                 (shift / (60 * 60)), ((shift / 60) % 60), (shift % 60));
+
+      si->emergency_lock_p = True;
+      idle_timer ((XtPointer) si, 0);
+    }
+
+  si->last_wall_clock_time = now;
+}
+
 
 
 static void
@@ -510,6 +582,12 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	    if (idle >= p->timeout)
               {
                 /* Look, we've been idle long enough.  We're done. */
+                goto DONE;
+              }
+            else if (si->emergency_lock_p)
+              {
+                /* Oops, the wall clock has jumped far into the future, so
+                   we need to lock down in a hurry! */
                 goto DONE;
               }
             else
@@ -774,11 +852,11 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 
    Thanks to Nat Friedman <nat@nat.org> for figuring out all of this crap.
 
-   Note that this only checks for lines with "keyboard" in them.  Perhaps we
-   should also be checking for lines with "PS/2 Mouse" in them.  But that
-   would obviously fail to work for regular serial mice, and obviously just
-   using COM1 would be bad news (turn off the screensaver because the modem
-   is active, yum.)
+   Note that this only checks for lines with "keyboard" or "PS/2 Mouse" in
+   them.  If you have a serial mouse, it won't detect that, it will only detect
+   keyboard activity.  That's because there's no way to tell the difference
+   between a serial mouse and a general serial port, and it would be somewhat
+   unfortunate to have the screensaver turn off when the modem on COM1 burped.
  */
 
 
@@ -816,8 +894,11 @@ proc_interrupts_activity_p (saver_info *si)
   static FILE *f0 = 0;
   FILE *f1 = 0;
   int fd;
-  static char last_line[255] = { 0, };
-  char new_line[sizeof(last_line)];
+  static char last_kbd_line[255] = { 0, };
+  static char last_ptr_line[255] = { 0, };
+  char new_line[sizeof(last_kbd_line)];
+  Bool got_kbd = False, kbd_diff = False;
+  Bool got_ptr = False, ptr_diff = False;
 
   if (!f0)
     {
@@ -867,17 +948,35 @@ proc_interrupts_activity_p (saver_info *si)
   /* Now read through the pseudo-file until we find the "keyboard" line. */
 
   while (fgets (new_line, sizeof(new_line)-1, f1))
-    if (strstr (new_line, "keyboard"))
-      {
-        Bool diff = (*last_line &&
-                     !!strcmp (new_line, last_line));
-        strcpy (last_line, new_line);	/* save this line for next time */
-        fclose (f1);
-        return diff;
-      }
+    {
+      if (!got_kbd && strstr (new_line, "keyboard"))
+        {
+          kbd_diff = (*last_kbd_line && !!strcmp (new_line, last_kbd_line));
+          strcpy (last_kbd_line, new_line);
+          got_kbd = True;
+        }
+      else if (!got_ptr && strstr (new_line, "PS/2 Mouse"))
+        {
+          ptr_diff = (*last_ptr_line && !!strcmp (new_line, last_ptr_line));
+          strcpy (last_ptr_line, new_line);
+          got_ptr = True;
+        }
 
-  /* If we got here, we didn't find a "keyboard" line in the file at all. */
-  fprintf (stderr, "%s: no keyboard data in %s?\n", blurb(), PROC_INTERRUPTS);
+      if (got_kbd && got_ptr)
+        break;
+    }
+
+  if (got_kbd || got_ptr)
+    {
+      fclose (f1);
+      return (kbd_diff || ptr_diff);
+    }
+
+
+  /* If we got here, we didn't find either a "keyboard" or a "PS/2 Mouse"
+     line in the file at all. */
+  fprintf (stderr, "%s: no keyboard or mouse data in %s?\n",
+           blurb(), PROC_INTERRUPTS);
 
  FAIL:
   if (f1)
@@ -920,15 +1019,26 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
 
   if (si->screen_blanked_p)
     {
-      Bool running_p = screenhack_running_p(si);
+      Bool running_p = screenhack_running_p (si);
 
+      if (si->dbox_up_p)
+        {
 #ifdef DEBUG_TIMERS
-      if (si->prefs.verbose_p)
-	fprintf (stderr, "%s: watchdog timer raising %sscreen.\n",
-		 blurb(), (running_p ? "" : "and clearing "));
+          if (si->prefs.verbose_p)
+            fprintf (stderr, "%s: dialog box is up: not raising screen.\n",
+                     blurb());
+#endif /* DEBUG_TIMERS */
+        }
+      else
+        {
+#ifdef DEBUG_TIMERS
+          if (si->prefs.verbose_p)
+            fprintf (stderr, "%s: watchdog timer raising %sscreen.\n",
+                     blurb(), (running_p ? "" : "and clearing "));
 #endif /* DEBUG_TIMERS */
 
-      raise_window (si, True, True, running_p);
+          raise_window (si, True, True, running_p);
+        }
 
       if (!monitor_powered_on_p (si))
 	{
@@ -938,6 +1048,12 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
 		     "killing running hacks.\n", blurb());
 	  kill_screenhack (si);
 	}
+
+      /* Re-schedule this timer.  The watchdog timer defaults to a bit less
+         than the hack cycle period, but is never longer than one hour.
+       */
+      si->watchdog_id = 0;
+      reset_watchdog_timer (si, True);
     }
 }
 

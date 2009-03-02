@@ -793,8 +793,8 @@ screenhack (Display *dpy, Window window)
       XSync (dpy, False);
       screenhack_handle_events (dpy);
 
-      if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput|XtIMSignal))
-        XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput|XtIMSignal);
+      if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
+        XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
 
       if (delay) usleep (delay);
     }

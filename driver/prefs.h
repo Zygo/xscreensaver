@@ -40,12 +40,6 @@ struct saver_preferences {
   Bool unfade_p;		/* whether to fade from black, if possible */
   int fade_seconds;		/* how long that should take */
   int fade_ticks;		/* how many ticks should be used */
-  Bool fading_possible_p;	/* Whether fading to/from black is possible.
-				   (This isn't strictly a preference, as it
-				   can only be known by querying the display;
-				   the caller of the prefs code may fill this
-				   in if it knows/cares, and warnings will be
-				   issued.) */
 
   Bool install_cmap_p;		/* whether we should use our own colormap
 				   when using the screen's default visual. */

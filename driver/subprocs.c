@@ -248,6 +248,17 @@ exec_screenhack (saver_info *si, const char *command)
   Bool hairy_p = !!strpbrk (command, "*?$&!<>[];`'\\\"=");
   /* note: = is in the above because of the sh syntax "FOO=bar cmd". */
 
+  if (getuid() == (uid_t) 0 || geteuid() == (uid_t) 0)
+    {
+      /* If you're thinking of commenting this out, think again.
+         If you do so, you will open a security hole.  Mail jwz
+         so that he may enlighten you as to the error of your ways.
+       */
+      fprintf (stderr, "%s: we're still running as root!  Disaster!\n",
+               blurb());
+      saver_exit (si, 1, 0);
+    }
+
   if (p->verbose_p)
     fprintf (stderr, "%s: spawning \"%s\" in pid %lu%s.\n",
 	     blurb(), command, (unsigned long) getpid (),

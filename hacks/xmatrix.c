@@ -409,7 +409,7 @@ char *defaults [] = {
   ".foreground:		   green",
   "*delay:		   10000",
   "*insert:		   both",
-  "*density:		   85",
+  "*density:		   75",
   0
 };
 

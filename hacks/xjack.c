@@ -23,8 +23,8 @@
 char *progclass = "XJack";
 
 char *defaults [] = {
-  ".background:		black",
-  ".foreground:		#00EE00",
+  ".background:		#FFF0B4",
+  ".foreground:		#000000",
   "XJack.font:		-*-courier-medium-r-*-*-*-240-*-*-m-*-*-*",
   "*delay:		50000",
   0
@@ -40,6 +40,8 @@ void
 screenhack (Display *dpy, Window window)
 {
   static const char *source = "All work and no play makes Jack a dull boy.  ";
+  /* If you're here because you're thinking about making the above string be
+     customizable, then you don't get the joke.  You loser. */
   const char *s = source;
   int columns, rows;		/* characters */
   int left, right;		/* characters */
@@ -154,25 +156,38 @@ screenhack (Display *dpy, Window window)
 
 	      while (lines > 0)
 		{
-		  XCopyArea (dpy, window, window, gc,
-			     0, hspace + line_height,
-			     xgwa.width,
-			     xgwa.height - vspace - vspace - line_height,
-			     0, vspace);
-		  XClearArea (dpy, window,
-			      0, xgwa.height - vspace - line_height,
-			      xgwa.width,
-			      line_height + vspace + vspace,
-			      False);
-		  XClearArea (dpy, window, 0, 0, xgwa.width, vspace, False);
-		  /* See? It's OK. He saw it on the television. */
-		  XClearArea (dpy, window, 0, 0, hspace, xgwa.height, False);
-		  XClearArea (dpy, window, xgwa.width - vspace, 0,
-			      hspace, xgwa.height, False);
+                  int i;
+                  int inc = line_height / 7;
+                  int pix_delay = delay / 1000;
+                  if (inc <= 0) inc = 1;
+                  for (i = 0; i < line_height; i += inc)
+                    {
+                      if (i > line_height)
+                        i = line_height;
+                      XCopyArea (dpy, window, window, gc,
+                                 0, inc,
+                                 xgwa.width, xgwa.height - inc,
+                                 0, 0);
+                      XSync (dpy, False);
+                      if (pix_delay) usleep (pix_delay);
+                    }
 		  y--;
 		  lines--;
-		  XSync (dpy, False);
-		  if (delay) usleep (delay * 10);
+
+                  /* See? It's OK. He saw it on the television. */
+                  XClearArea (dpy, window,
+                              0, xgwa.height - vspace - line_height,
+                              xgwa.width, line_height + vspace + vspace,
+                              False);
+                  XSync (dpy, False);
+
+                  XGetWindowAttributes (dpy, window, &xgwa);
+                  columns = (xgwa.width - hspace - hspace) / char_width;
+                  rows = (xgwa.height - vspace - vspace) / line_height;
+                  if (y > rows) y = rows-1;
+                  if (x > columns) x = columns-2;
+
+                  if (delay) usleep (delay);
 		}
 	      if (y < 0) y = 0;
 	    }

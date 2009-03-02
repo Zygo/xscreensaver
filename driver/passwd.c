@@ -51,7 +51,7 @@ extern Bool kerberos_lock_init (int argc, char **argv, Bool verbose_p);
 extern Bool kerberos_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 #endif
 #ifdef HAVE_PAM
-extern Bool pam_lock_init (int argc, char **argv, Bool verbose_p);
+extern Bool pam_priv_init (int argc, char **argv, Bool verbose_p);
 extern Bool pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p);
 #endif
 extern Bool pwent_lock_init (int argc, char **argv, Bool verbose_p);
@@ -70,7 +70,7 @@ struct auth_methods methods[] = {
                         False, False },
 # endif
 # ifdef HAVE_PAM
-  { "PAM",              pam_lock_init, 0, pam_passwd_valid_p, 
+  { "PAM",              0, pam_priv_init, pam_passwd_valid_p, 
                         False, False },
 # endif
   { "normal",           pwent_lock_init, pwent_priv_init, pwent_passwd_valid_p,
@@ -111,7 +111,11 @@ lock_init (int argc, char **argv, Bool verbose_p)
       if (!methods[i].priv_initted_p)	/* Bail if lock_priv_init failed. */
         continue;
 
-      methods[i].initted_p = methods[i].init (argc, argv, verbose_p);
+      if (!methods[i].init)
+        methods[i].initted_p = True;
+      else
+        methods[i].initted_p = methods[i].init (argc, argv, verbose_p);
+
       if (methods[i].initted_p)
         any_ok = True;
       else if (verbose_p)
@@ -136,7 +140,7 @@ passwd_valid_p (const char *typed_passwd, Bool verbose_p)
              an earlier authentication method fails and a later one succeeds,
              something screwy is probably going on.)
            */
-          if (verbose_p)
+          if (verbose_p && i > 0)
             {
               for (j = 0; j < i; j++)
                 if (methods[j].initted_p)

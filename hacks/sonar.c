@@ -37,7 +37,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.7 $
+ * $Revision: 1.9 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -75,11 +75,10 @@
  * - Now need to define HAVE_PING to compile in the ping stuff.
  */
 
-/* Define one of these, as appropriate.  
-   We should make configure detect this, one of these days.
+/* These are computed by configure now:
+   #define HAVE_ICMP
+   #define HAVE_ICMPHDR
  */
-/* #define HAVE_ICMP */
-/* #define HAVE_ICMPHDR */
 
 
 /* Include Files */
@@ -87,6 +86,10 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+
+#include "screenhack.h"
+#include "colors.h"
+#include "hsv.h"
 
 #if defined(HAVE_ICMP) || defined(HAVE_ICMPHDR)
 # include <unistd.h>
@@ -106,12 +109,6 @@
 # include <arpa/inet.h>
 # include <netdb.h>
 #endif /* HAVE_ICMP || HAVE_ICMPHDR */
-
-#include "screenhack.h"
-#include "colors.h"
-#include "hsv.h"
-
-#include <X11/extensions/XShm.h>
 
 
 /* Defines */
@@ -351,7 +348,7 @@ newBogie(char *name, int distance, int tick, int ttl)
     /* Allocate a bogie and initialize it */
 
     if ((new = (Bogie *) calloc(1, sizeof(Bogie))) == NULL) {
-	fprintf(stderr, "Out of Memory\n");
+	fprintf(stderr, "%s: Out of Memory\n", progname);
 	return NULL;
     }
     new->name = name;
@@ -449,7 +446,8 @@ lookupHost(ping_target *target)
 
 	struct hostent *hent = gethostbyname(target->name);
 	if (hent == NULL) {
-	    fprintf(stderr, "Could not resolve host %s\n", target->name);
+	    fprintf(stderr, "%s: could not resolve host %s\n",
+                    progname, target->name);
 	    return 0;
 	}
 	memcpy(&iaddr->sin_addr, hent->h_addr_list[0],
@@ -482,11 +480,11 @@ newHost(char *name)
     /* Create the target */
 
     if ((target = calloc(1, sizeof(ping_target))) == NULL) {
-	fprintf(stderr, "Out of Memory\n");
+	fprintf(stderr, "%s: Out of Memory\n", progname);
 	goto target_init_error;
     }
     if ((target->name = strdup(name)) == NULL) {
-	fprintf(stderr, "Out of Memory\n");
+	fprintf(stderr, "%s: Out of Memory\n", progname);
 	goto target_init_error;
     }
 
@@ -534,7 +532,7 @@ readPingHostsFile(char *fname)
     /* Make sure we in fact have a file to process */
 
     if ((fname == NULL) || (fname[0] == '\0')) {
-	fprintf(stderr, "Invalid ping host file name\n");
+	fprintf(stderr, "%s: invalid ping host file name\n", progname);
 	return NULL;
     }
 
@@ -542,7 +540,7 @@ readPingHostsFile(char *fname)
 
     if ((fp = fopen(fname, "r")) == NULL) {
 	char msg[1024];
-	sprintf(msg, "Unable to open host file %s", fname);
+	sprintf(msg, "%s: unable to open host file %s", progname, fname);
 	perror(msg);
 	return NULL;
     }
@@ -660,14 +658,14 @@ subnetHostsList(void)
     /* Get our hostname */
 
     if (gethostname(hostname, BUFSIZ)) {
-	fprintf(stderr, "Unable to get local hostname\n");
+	fprintf(stderr, "%s: unable to get local hostname\n", progname);
 	return NULL;
     }
 
     /* Get our IP address and convert it to a string */
 
     if ((hent = gethostbyname(hostname)) == NULL) {
-	fprintf(stderr, "Unable to lookup our IP address\n");
+	fprintf(stderr, "%s: unable to lookup our IP address\n", progname);
 	return NULL;
     }
     strcpy(address, inet_ntoa(*((struct in_addr *)hent->h_addr_list[0])));
@@ -675,7 +673,7 @@ subnetHostsList(void)
     /* Get a pointer to the last "." in the string */
 
     if ((p = strrchr(address, '.')) == NULL) {
-	fprintf(stderr, "Can't parse IP address %s\n", address);
+	fprintf(stderr, "%s: can't parse IP address %s\n", progname, address);
 	return NULL;
     }
     p++;
@@ -716,14 +714,16 @@ init_ping(void)
     /* Create the ping info structure */
 
     if ((pi = (ping_info *) calloc(1, sizeof(ping_info))) == NULL) {
-	fprintf(stderr, "Out of memory\n");
+	fprintf(stderr, "%s: Out of memory\n", progname);
 	goto ping_init_error;
     }
 
     /* Create the ICMP socket and turn off SUID */
 
     if ((pi->icmpsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
-	perror("Can't create ICMP socket");
+	char msg[1024];
+	sprintf(msg, "%s: can't create ICMP socket", progname);
+	perror(msg);
 	fprintf(stderr,
          "%s: this program must be setuid to root for `ping mode' to work.\n",
                 progname);
@@ -762,14 +762,14 @@ init_ping(void)
 
 	/* Unknown source */
 
-	fprintf(stderr, "Illegal pingSource: %s\n", src);
+	fprintf(stderr, "%s: illegal pingSource: %s\n", progname, src);
 	goto ping_init_error;
     }
 
     /* Make sure there is something to ping */
 
     if (pi->targets == NULL) {
-	fprintf(stderr, "Nothing to ping");
+	fprintf(stderr, "%s: nothing to ping", progname);
 	goto ping_init_error;
     }
 
@@ -843,7 +843,7 @@ sendping(ping_info *pi, ping_target *pt)
 			 &pt->address, sizeof(pt->address))) !=  pcktsiz) {
 #if 0
         char errbuf[BUFSIZ];
-        sprintf(errbuf, "Error sending ping to %s", pt->name);
+        sprintf(errbuf, "%s: error sending ping to %s", progname, pt->name);
 	perror(errbuf);
 #endif
     }
@@ -956,7 +956,9 @@ getping(sonar_info *si, ping_info *pi, int ttl)
     sa.sa_flags = 0;
     sa.sa_handler = sigcatcher;
     if (sigaction(SIGALRM, &sa, 0) == -1) {
-	perror("Unable to trap sigalarm");
+	char msg[1024];
+	sprintf(msg, "%s: unable to trap SIGALRM", progname);
+	perror(msg);
 	exit(1);
     }
 
@@ -1003,7 +1005,7 @@ getping(sonar_info *si, ping_info *pi, int ttl)
 	     strdup((char *) &packet[iphdrlen + 
 				    + sizeof(struct ICMP)
 				    + sizeof(struct timeval)])) == NULL) {
-	    fprintf(stderr, "Out of memory\n");
+	    fprintf(stderr, "%s: Out of memory\n", progname);
 	    return bl;
 	}
 
@@ -1126,7 +1128,7 @@ init_sim(void)
     /* Create the simulation info structure */
 
     if ((si = (sim_info *) calloc(1, sizeof(sim_info))) == NULL) {
-	fprintf(stderr, "Out of memory\n");
+	fprintf(stderr, "%s: Out of memory\n", progname);
 	return NULL;
     }
 
@@ -1136,7 +1138,7 @@ init_sim(void)
     if ((si->teamA = (sim_target *)calloc(si->numA, sizeof(sim_target)))
 	== NULL) {
 	free(si);
-	fprintf(stderr, "Out of Memory\n");
+	fprintf(stderr, "%s: Out of Memory\n", progname);
 	return NULL;
     }
     si->teamAID = get_string_resource("teamAName", "TeamAName");
@@ -1144,7 +1146,7 @@ init_sim(void)
 	if ((si->teamA[i].name = (char *) malloc(strlen(si->teamAID) + 4))
 	    == NULL) {
 	    free(si);
-	    fprintf(stderr, "Out of Memory\n");
+	    fprintf(stderr, "%s: Out of Memory\n", progname);
 	    return NULL;
 	}
 	sprintf(si->teamA[i].name, "%s%03d", si->teamAID, i+1);
@@ -1158,7 +1160,7 @@ init_sim(void)
     if ((si->teamB = (sim_target *)calloc(si->numB, sizeof(sim_target)))
 	== NULL) {
 	free(si);
-	fprintf(stderr, "Out of Memory\n");
+	fprintf(stderr, "%s: Out of Memory\n", progname);
 	return NULL;
     }
     si->teamBID = get_string_resource("teamBName", "TeamBName");
@@ -1166,7 +1168,7 @@ init_sim(void)
 	if ((si->teamB[i].name = (char *) malloc(strlen(si->teamBID) + 4))
 	    == NULL) {
 	    free(si);
-	    fprintf(stderr, "Out of Memory\n");
+	    fprintf(stderr, "%s: Out of Memory\n", progname);
 	    return NULL;
 	}
 	sprintf(si->teamB[i].name, "%s%03d", si->teamBID, i+1);
@@ -1206,7 +1208,7 @@ init_sonar(Display *dpy, Window win)
     /* Create the Sonar information structure */
 
     if ((si = (sonar_info *) calloc(1, sizeof(sonar_info))) == NULL) {
-	fprintf(stderr, "Out of memory\n");
+	fprintf(stderr, "%s: Out of memory\n", progname);
 	return NULL;
     }
 
@@ -1233,7 +1235,7 @@ init_sonar(Display *dpy, Window win)
     if (((si->font = XLoadQueryFont(dpy, get_string_resource ("font", "Font")))
 	 == NULL) &&
 	((si->font = XLoadQueryFont(dpy, "fixed")) == NULL)) {
-	fprintf(stderr, "Can't load an appropriate font\n");
+	fprintf(stderr, "%s: can't load an appropriate font\n", progname);
 	return NULL;
     }
 
@@ -1685,7 +1687,7 @@ screenhack(Display *dpy, Window win)
 	if ((sensor_info = (void *) init_sim()) == NULL)
 	    exit(1);
     } else {
-	fprintf(stderr, "Unsupported Sonar mode: %s\n", mode);
+	fprintf(stderr, "%s: unsupported Sonar mode: %s\n", progname, mode);
 	fprintf(stderr,
                 "\tCurrently supported modes are `ping' and `simulation'\n");
 	exit(1);

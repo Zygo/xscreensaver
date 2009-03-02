@@ -1268,7 +1268,6 @@ main (int argc, char **argv)
   short_version [4] = 0;
 
   p->db = db;
-  p->fading_possible_p = True;
   load_init_file (p);
   *p2 = *p;
 

@@ -161,10 +161,6 @@ MapNotify_event_p (Display *dpy, XEvent *event, XPointer window)
 }
 
 
-#ifdef USE_GL
-extern Visual *get_gl_visual (Screen *, const char *, const char *);
-#endif
-
 #ifdef XLOCKMORE
 extern void pre_merge_options (void);
 #endif
@@ -236,6 +232,34 @@ screenhack_handle_events (Display *dpy)
     }
 }
 
+
+static Visual *
+pick_visual (Screen *screen)
+{
+#ifdef USE_GL
+  /* If we're linking against GL (that is, this is the version of screenhack.o
+     that the GL hacks will use, which is different from the one that the
+     non-GL hacks will use) then try to pick the "best" visual by interrogating
+     the GL library instead of by asking Xlib.  GL knows better.
+   */
+  Visual *v = 0;
+  char *string = get_string_resource ("visualID", "VisualID");
+
+  if (!string || !*string ||
+      !strcmp (string, "gl") ||
+      !strcmp (string, "best") ||
+      !strcmp (string, "color") ||
+      !strcmp (string, "default"))
+    v = get_gl_visual (screen);		/* from ../utils/visual-gl.c */
+
+  if (string)
+    free (string);
+  if (v)
+    return v;
+#endif /* USE_GL */
+
+  return get_visual_resource (screen, "visualID", "VisualID", False);
+}
 
 
 int
@@ -364,12 +388,7 @@ main (int argc, char **argv)
     {
       Boolean def_visual_p;
       Screen *screen = XtScreen (toplevel);
-
-#ifdef USE_GL
-      visual = get_gl_visual (screen, "visualID", "VisualID");
-#else
-      visual = get_visual_resource (screen, "visualID", "VisualID", False);
-#endif
+      visual = pick_visual (screen);
 
       if (toplevel->core.width <= 0)
 	toplevel->core.width = 600;

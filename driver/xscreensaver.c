@@ -163,6 +163,7 @@ XrmDatabase db = 0;
 static Atom XA_SCREENSAVER_RESPONSE;
 static Atom XA_ACTIVATE, XA_DEACTIVATE, XA_CYCLE, XA_NEXT, XA_PREV;
 static Atom XA_EXIT, XA_RESTART, XA_LOCK, XA_SELECT;
+static Atom XA_THROTTLE, XA_UNTHROTTLE;
 Atom XA_DEMO, XA_PREFS;
 
 
@@ -424,9 +425,7 @@ privileged_initialization (saver_info *si, int *argc, char **argv)
   lock_priv_init (*argc, argv, si->prefs.verbose_p);
 #endif /* NO_LOCKING */
 
-#ifndef NO_SETUID
   hack_uid (si);
-#endif /* NO_SETUID */
 }
 
 
@@ -449,9 +448,7 @@ lock_initialization (saver_info *si, int *argc, char **argv)
     }
 #endif /* NO_LOCKING */
 
-#ifndef NO_SETUID
   hack_uid (si);
-#endif /* NO_SETUID */
 }
 
 
@@ -498,6 +495,8 @@ connect_to_server (saver_info *si, int *argc, char **argv)
   XA_DEMO = XInternAtom (si->dpy, "DEMO", False);
   XA_PREFS = XInternAtom (si->dpy, "PREFS", False);
   XA_LOCK = XInternAtom (si->dpy, "LOCK", False);
+  XA_THROTTLE = XInternAtom (si->dpy, "THROTTLE", False);
+  XA_UNTHROTTLE = XInternAtom (si->dpy, "UNTHROTTLE", False);
 
   return toplevel_shell;
 }
@@ -702,7 +701,7 @@ initialize_per_screen_info (saver_info *si, Widget toplevel_shell)
 	}
     }
 
-  si->prefs.fading_possible_p = found_any_writable_cells;
+  si->fading_possible_p = found_any_writable_cells;
 }
 
 
@@ -881,6 +880,7 @@ main_loop (saver_info *si)
 
   while (1)
     {
+      Bool was_locked = False;
       sleep_until_idle (si, True);
 
       if (p->verbose_p)
@@ -916,31 +916,57 @@ main_loop (saver_info *si)
         }
 
       kill_screenhack (si);
-      spawn_screenhack (si, True);
+
+      if (!si->throttled_p)
+        spawn_screenhack (si, True);
+      else if (p->verbose_p)
+        fprintf (stderr, "%s: not launching hack (throttled.)\n", blurb());
 
       /* Don't start the cycle timer in demo mode. */
       if (!si->demoing_p && p->cycle)
-	si->cycle_id = XtAppAddTimeOut (si->app, p->cycle, cycle_timer,
+	si->cycle_id = XtAppAddTimeOut (si->app,
+                                        (si->selection_mode
+                                         /* see comment in cycle_timer() */
+                                         ? 1000 * 60 * 60
+                                         : p->cycle),
+                                        cycle_timer,
 					(XtPointer) si);
 
 
 #ifndef NO_LOCKING
-      if (!si->demoing_p &&		/* if not going into demo mode */
-	  p->lock_p &&			/* and locking is enabled */
-	  !si->locking_disabled_p &&	/* and locking is possible */
-	  p->lock_timeout == 0)		/* and locking is not timer-deferred */
-	si->locked_p = True;		/* then lock right now. */
+      {
+        Time lock_timeout = p->lock_timeout;
 
-      /* locked_p might be true already because of the above, or because of
-	 the LOCK ClientMessage.  But if not, and if we're supposed to lock
-	 after some time, set up a timer to do so.
-       */
-      if (p->lock_p &&
-	  !si->locked_p &&
-	  p->lock_timeout > 0)
-	si->lock_id = XtAppAddTimeOut (si->app, p->lock_timeout,
-				       activate_lock_timer,
-				       (XtPointer) si);
+        if (si->emergency_lock_p && p->lock_p && lock_timeout)
+          {
+            int secs = p->lock_timeout / 1000;
+            if (p->verbose_p)
+              fprintf (stderr,
+                     "%s: locking now, instead of waiting for %d:%02d:%02d.\n",
+                       blurb(),
+                       (secs / (60 * 60)), ((secs / 60) % 60), (secs % 60));
+            lock_timeout = 0;
+          }
+
+        si->emergency_lock_p = False;
+
+        if (!si->demoing_p &&           /* if not going into demo mode */
+            p->lock_p &&                /* and locking is enabled */
+            !si->locking_disabled_p &&  /* and locking is possible */
+            lock_timeout == 0)          /* and locking is not timer-deferred */
+          si->locked_p = True;          /* then lock right now. */
+
+        /* locked_p might be true already because of the above, or because of
+           the LOCK ClientMessage.  But if not, and if we're supposed to lock
+           after some time, set up a timer to do so.
+        */
+        if (p->lock_p &&
+            !si->locked_p &&
+            lock_timeout > 0)
+          si->lock_id = XtAppAddTimeOut (si->app, lock_timeout,
+                                         activate_lock_timer,
+                                         (XtPointer) si);
+      }
 #endif /* !NO_LOCKING */
 
 
@@ -956,6 +982,7 @@ main_loop (saver_info *si)
 	    saver_screen_info *ssi = si->default_screen;
 	    if (si->locking_disabled_p) abort ();
 
+            was_locked = True;
 	    si->dbox_up_p = True;
 	    suspend_screenhack (si, True);
 	    XUndefineCursor (si->dpy, ssi->screensaver_window);
@@ -980,8 +1007,19 @@ main_loop (saver_info *si)
       unblank_screen (si);
 
       si->locked_p = False;
+      si->emergency_lock_p = False;
       si->demoing_p = 0;
       si->selection_mode = 0;
+
+      /* If we're throttled, and the user has explicitly unlocked the screen,
+         then unthrottle.  If we weren't locked, then don't unthrottle
+         automatically, because someone might have just bumped the desk... */
+      if (was_locked)
+        {
+          if (si->throttled_p && p->verbose_p)
+            fprintf (stderr, "%s: unthrottled.\n", blurb());
+          si->throttled_p = False;
+        }
 
       if (si->cycle_id)
 	{
@@ -1025,13 +1063,20 @@ main (int argc, char **argv)
   process_command_line (si, &argc, argv);
   print_banner (si);
 
-  initialize_per_screen_info (si, shell);  /* also sets p->fading_possible_p */
+  load_init_file (p);  /* must be before initialize_per_screen_info() */
+  initialize_per_screen_info (si, shell); /* also sets si->fading_possible_p */
+
+  /* We can only issue this warnings now. */
+  if (p->verbose_p && !si->fading_possible_p && (p->fade_p || p->unfade_p))
+    fprintf (stderr,
+             "%s: there are no PseudoColor or GrayScale visuals.\n"
+             "%s: ignoring the request for fading/unfading.\n",
+             blurb(), blurb());
 
   for (i = 0; i < si->nscreens; i++)
     if (ensure_no_screensaver_running (si->dpy, si->screens[i].screen))
       exit (1);
 
-  load_init_file (p);
   lock_initialization (si, &argc, argv);
 
   if (p->xsync_p) XSynchronize (si->dpy, True);
@@ -1081,6 +1126,7 @@ clientmessage_response (saver_info *si, Window w, Bool error,
 Bool
 handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 {
+  saver_preferences *p = &si->prefs;
   Atom type = 0;
   Window window = event->xclient.window;
 
@@ -1113,6 +1159,11 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 				 "activating.");
 	  si->selection_mode = 0;
 	  si->demoing_p = False;
+
+          if (si->throttled_p && p->verbose_p)
+            fprintf (stderr, "%s: unthrottled.\n", blurb());
+	  si->throttled_p = False;
+
 	  if (si->using_mit_saver_extension || si->using_sgi_saver_extension)
 	    {
 	      XForceScreenSaver (si->dpy, ScreenSaverActive);
@@ -1131,6 +1182,10 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
     {
       if (! until_idle_p)
 	{
+          if (si->throttled_p && p->verbose_p)
+            fprintf (stderr, "%s: unthrottled.\n", blurb());
+	  si->throttled_p = False;
+
 	  clientmessage_response(si, window, False,
 				 "DEACTIVATE ClientMessage received.",
 				 "deactivating.");
@@ -1157,6 +1212,11 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 				 "cycling.");
 	  si->selection_mode = 0;	/* 0 means randomize when its time. */
 	  si->demoing_p = False;
+
+          if (si->throttled_p && p->verbose_p)
+            fprintf (stderr, "%s: unthrottled.\n", blurb());
+	  si->throttled_p = False;
+
 	  if (si->cycle_id)
 	    XtRemoveTimeOut (si->cycle_id);
 	  si->cycle_id = 0;
@@ -1176,6 +1236,10 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 			     "cycling.");
       si->selection_mode = (type == XA_NEXT ? -1 : -2);
       si->demoing_p = False;
+
+      if (si->throttled_p && p->verbose_p)
+        fprintf (stderr, "%s: unthrottled.\n", blurb());
+      si->throttled_p = False;
 
       if (! until_idle_p)
 	{
@@ -1200,6 +1264,10 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
       if (which < 0) which = 0;		/* 0 == "random" */
       si->selection_mode = which;
       si->demoing_p = False;
+
+      if (si->throttled_p && p->verbose_p)
+        fprintf (stderr, "%s: unthrottled.\n", blurb());
+      si->throttled_p = False;
 
       if (! until_idle_p)
 	{
@@ -1249,6 +1317,10 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 	      XSync (si->dpy, False);
 	    }
 
+          fflush (stdout);
+          fflush (stderr);
+          if (real_stdout) fflush (real_stdout);
+          if (real_stderr) fflush (real_stderr);
 	  /* make sure error message shows up before exit. */
 	  if (real_stderr && stderr != real_stderr)
 	    dup2 (fileno(real_stderr), fileno(stderr));
@@ -1281,6 +1353,10 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 	      if (which < 0) which = 0;		/* 0 == "random" */
 	      si->selection_mode = which;
 	      si->demoing_p = True;
+
+              if (si->throttled_p && p->verbose_p)
+                fprintf (stderr, "%s: unthrottled.\n", blurb());
+              si->throttled_p = False;
 
 	      return True;
 	    }
@@ -1351,6 +1427,58 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 	}
 #endif /* !NO_LOCKING */
     }
+  else if (type == XA_THROTTLE)
+    {
+      if (si->throttled_p)
+	clientmessage_response (si, window, True,
+                                "THROTTLE ClientMessage received, but "
+                                "already throttled.",
+                                "already throttled.");
+      else
+	{
+	  char buf [255];
+	  char *response = "throttled.";
+	  si->throttled_p = True;
+	  si->selection_mode = 0;
+	  si->demoing_p = False;
+	  sprintf (buf, "THROTTLE ClientMessage received; %s", response);
+	  clientmessage_response (si, window, False, buf, response);
+
+          if (! until_idle_p)
+            {
+              if (si->cycle_id)
+                XtRemoveTimeOut (si->cycle_id);
+              si->cycle_id = 0;
+              cycle_timer ((XtPointer) si, 0);
+            }
+	}
+    }
+  else if (type == XA_UNTHROTTLE)
+    {
+      if (! si->throttled_p)
+	clientmessage_response (si, window, True,
+                                "UNTHROTTLE ClientMessage received, but "
+                                "not throttled.",
+                                "not throttled.");
+      else
+	{
+	  char buf [255];
+	  char *response = "unthrottled.";
+	  si->throttled_p = False;
+	  si->selection_mode = 0;
+	  si->demoing_p = False;
+	  sprintf (buf, "UNTHROTTLE ClientMessage received; %s", response);
+	  clientmessage_response (si, window, False, buf, response);
+
+          if (! until_idle_p)
+            {
+              if (si->cycle_id)
+                XtRemoveTimeOut (si->cycle_id);
+              si->cycle_id = 0;
+              cycle_timer ((XtPointer) si, 0);
+            }
+	}
+    }
   else
     {
       char buf [1024];
@@ -1386,16 +1514,17 @@ analyze_display (saver_info *si)
 {
   int i, j;
   static const char *exts[][2] = {
-    { "SCREEN_SAVER",	   "SGI Screen-Saver" },
-    { "SCREEN-SAVER",	   "SGI Screen-Saver" },
-    { "MIT-SCREEN-SAVER",  "MIT Screen-Saver" },
-    { "XIDLE",		   "XIdle" },
-    { "SGI-VIDEO-CONTROL", "SGI Video-Control" },
-    { "READDISPLAY",	   "SGI Read-Display" },
-    { "MIT-SHM",	   "Shared Memory" },
-    { "DOUBLE-BUFFER",	   "Double-Buffering" },
-    { "DPMS",		   "Power Management" },
-    { "GLX",		   "GLX" }
+    { "SCREEN_SAVER",             "SGI Screen-Saver" },
+    { "SCREEN-SAVER",	          "SGI Screen-Saver" },
+    { "MIT-SCREEN-SAVER",         "MIT Screen-Saver" },
+    { "XIDLE",		          "XIdle" },
+    { "SGI-VIDEO-CONTROL",        "SGI Video-Control" },
+    { "READDISPLAY",	          "SGI Read-Display" },
+    { "MIT-SHM",	          "Shared Memory" },
+    { "DOUBLE-BUFFER",	          "Double-Buffering" },
+    { "DPMS",		          "Power Management" },
+    { "GLX",		          "GLX" },
+    { "XFree86-VidModeExtension", "XF86 Video-Mode" }
   };
 
   fprintf (stderr, "%s: running on display \"%s\"\n", blurb(),

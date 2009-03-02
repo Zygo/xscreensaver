@@ -343,13 +343,13 @@ make_splash_dialog (saver_info *si)
   attrs.event_mask = (ExposureMask | ButtonPressMask | ButtonReleaseMask);
 
   {
-    Dimension w = WidthOfScreen(screen);
-    Dimension h = HeightOfScreen(screen);
+    int sx, sy, w, h;
+    get_screen_viewport (si->default_screen, &sx, &sy, &w, &h, False);
     if (si->prefs.debug_p) w /= 2;
-    x = ((w + sp->width) / 2) - sp->width;
-    y = ((h + sp->height) / 2) - sp->height;
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
+    x = sx + (((w + sp->width)  / 2) - sp->width);
+    y = sy + (((h + sp->height) / 2) - sp->height);
+    if (x < sx) x = sx;
+    if (y < sy) y = sy;
   }
 
   bw = get_integer_resource ("splash.borderWidth", "Dialog.BorderWidth");

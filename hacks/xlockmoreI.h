@@ -109,8 +109,4 @@ extern void xlockmore_screenhack (Display *dpy, Window window,
 				  void (*hack_draw) (ModeInfo *),
 				  void (*hack_free) (ModeInfo *));
 
-#ifdef USE_GL
-extern Visual *get_gl_visual (Screen *screen, char *name, char *class);
-#endif
-
 #endif /* __XLOCKMORE_INTERNAL_H__ */

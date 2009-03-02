@@ -22,6 +22,8 @@
 
 #include <stdio.h>
 #include <ctype.h>
+#include <pwd.h>
+
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Intrinsic.h>
@@ -44,11 +46,11 @@ void monitor_power_on (saver_info *si) {}
 Bool monitor_powered_on_p (saver_info *si) { return True; }
 void initialize_screensaver_window (saver_info *si) {}
 void raise_window (saver_info *si, Bool i, Bool b, Bool d) {}
-void blank_screen (saver_info *si) {}
+Bool blank_screen (saver_info *si) {return False;}
 void unblank_screen (saver_info *si) {}
 Bool select_visual (saver_screen_info *ssi, const char *v) { return False; }
 Bool window_exists_p (Display *dpy, Window window) {return True;}
-void start_notice_events_timer (saver_info *si, Window w, Bool) {}
+void start_notice_events_timer (saver_info *si, Window w, Bool b) {}
 Bool handle_clientmessage (saver_info *si, XEvent *e, Bool u) { return False; }
 int BadWindow_ehandler (Display *dpy, XErrorEvent *error) { exit(1); }
 const char *signal_name(int signal) { return "???"; }
@@ -57,6 +59,18 @@ void saver_exit (saver_info *si, int status, const char *core) { exit(status);}
 
 const char *blurb(void) { return progname; }
 Atom XA_SCREENSAVER, XA_DEMO, XA_PREFS;
+
+void
+get_screen_viewport (saver_screen_info *ssi,
+                     int *x_ret, int *y_ret,
+                     int *w_ret, int *h_ret,
+                     Bool verbose_p)
+{
+  *x_ret = 0;
+  *y_ret = 0;
+  *w_ret = WidthOfScreen (ssi->screen);
+  *h_ret = HeightOfScreen (ssi->screen);
+}
 
 
 void
@@ -79,7 +93,7 @@ static char *fallback[] = {
 int
 main (int argc, char **argv)
 {
-  Widget toplevel_shell;
+  Widget toplevel_shell = 0;
   saver_screen_info ssip;
   saver_info sip;
   saver_info *si = &sip;
@@ -99,22 +113,25 @@ main (int argc, char **argv)
   si->version = (char *) malloc (5);
   memcpy (si->version, screensaver_id + 17, 4);
   progname = argv[0];
-
-# ifdef SCO
-  set_auth_parameters(argc, argv);
-# endif /* SCO */
+  {
+    char *s = strrchr(progname, '/');
+    if (*s) strcpy (progname, s+1);
+  }
 
   /* before hack_uid() for proper permissions */
-  if (! lock_init (argc, argv, True))
+  lock_priv_init (argc, argv, True);
+
+  hack_uid (si);
+
+  if (! lock_init (argc, argv, si->prefs.verbose_p))
     {
       si->locking_disabled_p = True;
       si->nolock_reason = "error getting password";
     }
 
-  hack_uid (si);
-
   progclass = "XScreenSaver";
 
+#if (WHICH != 2)
   toplevel_shell = XtAppInitialize (&si->app, progclass, 0, 0,
 				    &argc, argv, fallback,
 				    0, 0);
@@ -136,6 +153,10 @@ main (int argc, char **argv)
   XtGetApplicationNameAndClass (si->dpy, &progname, &progclass);
 
   load_init_file (&si->prefs);
+
+#endif /* (WHICH != 2) */
+
+  p->verbose_p = True;
 
   while (1)
     {
@@ -162,6 +183,24 @@ main (int argc, char **argv)
 	  }
 	XSync (si->dpy, False);
 	sleep (1);
+      }
+#elif WHICH == 2
+      {
+        char *pass;
+        char buf[255];
+        struct passwd *p = getpwuid (getuid ());
+        printf ("\n%s: %s's password: ", progname, p->pw_name);
+
+        pass = fgets (buf, sizeof(buf)-1, stdin);
+        if (!pass || !*pass)
+          exit (0);
+        if (pass[strlen(pass)-1] == '\n')
+          pass[strlen(pass)-1] = 0;
+
+        if (passwd_valid_p (pass, True))
+          printf ("%s: Ok!\n", progname);
+        else
+          printf ("%s: Wrong!\n", progname);
       }
 #endif
     }

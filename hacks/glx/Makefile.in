@@ -54,10 +54,12 @@ INCLUDES	= -I$(srcdir) -I$(UTILS_SRC) -I$(HACK_SRC) -I../.. @INCLUDES@
 
 UTIL_SRCS	= $(UTILS_SRC)/colors.c $(UTILS_SRC)/hsv.c \
 		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
-		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/yarandom.c
+		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/visual-gl.c \
+		  $(UTILS_SRC)/yarandom.c
 UTIL_OBJS	= $(UTILS_SRC)/colors.o $(UTILS_SRC)/hsv.o \
 		  $(UTILS_SRC)/resources.o $(UTILS_SRC)/usleep.o \
-		  $(UTILS_SRC)/visual.o $(UTILS_SRC)/yarandom.o
+		  $(UTILS_SRC)/visual.o $(UTILS_SRC)/visual-gl.o \
+		   $(UTILS_SRC)/yarandom.o
 
 SRCS		= atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
 		  buildlwo.c cage.c dolphin.c gears.c lament.c moebius.c \
@@ -79,11 +81,13 @@ EXES		= @GL_EXES@
 
 HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
-		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o \
-		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o
+		  $(UTILS_BIN)/visual-gl.o $(UTILS_BIN)/usleep.o \
+		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/hsv.o \
+		  $(UTILS_BIN)/colors.o
 
 HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h
-MEN		= lament.man
+GL_MEN		= lament.man
+MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in
 
 TARFILES	= $(SRCS) $(HDRS) $(MEN) $(EXTRAS)
@@ -182,6 +186,7 @@ $(UTILS_BIN)/hsv.o:		$(UTILS_SRC)/hsv.c
 $(UTILS_BIN)/resources.o:	$(UTILS_SRC)/resources.c
 $(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
 $(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
+$(UTILS_BIN)/visual-gl.o:	$(UTILS_SRC)/visual-gl.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 
 $(UTIL_OBJS):

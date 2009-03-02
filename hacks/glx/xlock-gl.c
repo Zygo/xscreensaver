@@ -1,5 +1,5 @@
-/* xlock-gc.c --- xscreensaver compatibility layer for xlockmore GL modules.
- * xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
+/* xlock-gl.c --- xscreensaver compatibility layer for xlockmore GL modules.
+ * xscreensaver, Copyright (c) 1997, 1998, 1999 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -95,86 +95,5 @@ init_GL(ModeInfo * mi)
     GLXContext *ptr = (GLXContext *) malloc(sizeof(GLXContext));
     *ptr = glx_context;
     return ptr;
-  }
-}
-
-
-Visual *
-get_gl_visual (Screen *screen, char *name, char *class)
-{
-  char *string = get_string_resource (name, class);
-  XVisualInfo *vi = 0;
-  Bool done_once = False;
-
- AGAIN:
-  if (!string || !*string ||
-      !strcmp (string, "best") ||
-      !strcmp (string, "color") ||
-      !strcmp (string, "default"))
-    {
-      Display *dpy = DisplayOfScreen (screen);
-      int screen_num = screen_number (screen);
-      int attrs[20];
-      int i = 0;
-      Bool dbuf_p = !get_boolean_resource ("noBuffer", "NoBuffer");
-
-      done_once = True;
-
-      attrs[i++] = GLX_RGBA;
-      attrs[i++] = GLX_RED_SIZE;   attrs[i++] = 1;
-      attrs[i++] = GLX_GREEN_SIZE; attrs[i++] = 1;
-      attrs[i++] = GLX_BLUE_SIZE;  attrs[i++] = 1;
-      attrs[i++] = GLX_DEPTH_SIZE; attrs[i++] = 1;
-      if (dbuf_p)
-	attrs[i++] = GLX_DOUBLEBUFFER;
-      attrs[i++] = 0;
-
-      vi = glXChooseVisual (dpy, screen_num, attrs);
-      if (vi) goto DONE;
-
-      /* Try without double-buffering. */
-      attrs[i - 1] = 0;
-      vi = glXChooseVisual (dpy, screen_num, attrs);
-      if (vi) goto DONE;
-
-      /* Try mono. */
-      i = 0;
-      if (dbuf_p)
-	attrs[i++] = GLX_DOUBLEBUFFER;
-      attrs[i++] = 0;
-      vi = glXChooseVisual (dpy, screen_num, attrs);
-      if (vi) goto DONE;
-
-      /* Try mono without double-buffering. */
-      attrs[0] = 0;
-      vi = glXChooseVisual (dpy, screen_num, attrs);
-    }
-
- DONE:
-  {
-    Visual *v;
-    if (vi)
-      {
-	v = vi->visual;
-	XFree (vi);
-      }
-    else
-      {
-	v = get_visual (screen, string, False, True);
-	if (!v)
-	  {
-	    if (done_once)
-	      v = DefaultVisualOfScreen (screen);
-	    else
-	      {
-		free (string);
-		string = 0;
-		goto AGAIN;
-	      }
-	  }
-      }
-
-    free (string);
-    return v;
   }
 }

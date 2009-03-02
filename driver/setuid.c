@@ -14,8 +14,6 @@
 # include "config.h"
 #endif
 
-#ifndef NO_SETUID /* whole file */
-
 #include <X11/Xlib.h>		/* not used for much... */
 
 /* This file doesn't need the Xt headers, so stub these types out... */
@@ -34,7 +32,6 @@
 
 #include <pwd.h>		/* for getpwnam() and struct passwd */
 #include <grp.h>		/* for getgrgid() and struct group */
-
 
 static const char *
 uid_gid_string (uid_t uid, gid_t gid)
@@ -310,10 +307,3 @@ hack_uid (saver_info *si)
       }
   }
 }
-
-#else  /* !NO_SETUID */
-
-void hack_uid (saver_info *si) { }
-void describe_uids (saver_info *si, FILE *out) { }
-
-#endif /* NO_SETUID */
