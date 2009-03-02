@@ -1,0 +1,102 @@
+
+PKG:Xlock:
+description        = "Xlock Screen Locker"
+dependencies       = 
+distTreeRootSHARED = $Xlock_DIR
+distTreeRootCLIENT = $Xlock_DIR
+
+DIR:Xlock:SHARED:usr:
+mode  = 0755
+owner = bin
+group = bin
+flags = 
+
+DIR:Xlock:SHARED:usr/local:
+mode  = 0755
+owner = bin
+group = bin
+flags = 
+
+DIR:Xlock:SHARED:usr/local/bin:
+mode  = 0755
+owner = bin
+group = bin
+flags = 
+
+FILE:Xlock:SHARED:usr/local/bin/xlock:
+mode  = 2755
+owner = bin
+group = auth
+flags = 
+exportPath = /usr/local/bin/xlock
+
+FILE:Xlock:SHARED:usr/local/bin/xmlock:
+mode  = 0755
+owner = bin
+group = bin
+flags = 
+exportPath = /usr/local/bin/xmlock
+
+DIR:Xlock:SHARED:usr/local/man:
+mode  = 0755
+owner = bin
+group = bin
+flags = 
+
+DIR:Xlock:SHARED:usr/local/man/man1:
+mode  = 0755
+owner = bin
+group = bin
+flags = 
+
+FILE:Xlock:SHARED:usr/local/man/man1/xlock.1:
+mode  = 0644
+owner = bin
+group = bin
+flags = 
+exportPath = /usr/local/man/man1/xlock.1
+
+DIR:Xlock:SHARED:usr/local/man/cat1:
+mode  = 0755
+owner = bin
+group = bin
+flags = 
+
+FILE:Xlock:SHARED:usr/local/man/cat1/xlock.1:
+mode  = 0644
+owner = bin
+group = bin
+flags = 
+exportPath = /usr/local/man/cat1/xlock.1
+
+DIR:Xlock:SHARED:usr/local/lib:
+mode  = 0755
+owner = bin
+group = bin
+flags = 
+
+DIR:Xlock:SHARED:usr/local/lib/X11:
+mode  = 0755
+owner = bin
+group = bin
+flags = 
+
+DIR:Xlock:SHARED:usr/local/lib/X11/app-defaults:
+mode  = 0755
+owner = bin
+group = bin
+flags = 
+
+FILE:Xlock:CLIENT:usr/local/lib/X11/app-defaults/XLock:
+mode  = 0644
+owner = bin
+group = bin
+flags = 
+exportPath = /usr/lib/X11/app-defaults/XLock
+
+FILE:Xlock:CLIENT:usr/local/lib/X11/app-defaults/XmLock:
+mode  = 0644
+owner = bin
+group = bin
+flags = 
+exportPath = /usr/lib/X11/app-defaults/XmLock

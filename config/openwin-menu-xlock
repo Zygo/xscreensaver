@@ -1,0 +1,134 @@
+# put this in your $OPENWINHOME/lib, usually $OPENWINHOME is /usr/openwin
+
+	"Lock Screen" TITLE PIN
+	"Cellular Automata" MENU
+	  "Automata" TITLE
+		"Ant"			exec xlock -mode ant -neighbors 4 +truchet
+		"Ant Truchet"		exec xlock -mode ant -neighbors 4 -truchet
+		"Bee"			exec xlock -mode ant -neighbors 6 +truchet
+		"Bee Truchet"		exec xlock -mode ant -neighbors 6 -truchet
+		"Bug"			exec xlock -mode bug
+		"Demon"			exec xlock -mode demon
+		"Life"			exec xlock -mode life
+		"Life1d"		exec xlock -mode life1d
+		"Life3d"		exec xlock -mode life3d
+		"Loop"			exec xlock -mode loop
+		"Voters"		exec xlock -mode voters
+		"Wator"			exec xlock -mode wator
+		"Wire"			exec xlock -mode wire
+		"Random Automata"	DEFAULT exec xlock -mode random -modelist ant,bug,demon,life,life1d,life3d,loop,voters,wator,wire -fullrandom -neighbors 0
+	"Cellular Automata" END
+	"Fractal" MENU
+	  "Fractal" TITLE
+		"Drift"		exec xlock -mode drift -fullrandom
+		"Flame"			exec xlock -mode flame
+		"Forest"		exec xlock -mode forest
+		"Fract"		exec xlock -mode fract
+		"Hop"			exec xlock -mode hop -fullrandom
+		"IFS"			exec xlock -mode ifs
+		"Julia"			exec xlock -mode julia
+		"Lightning"		exec xlock -mode lightning
+		"Mountain"		exec xlock -mode mountain
+		"Sierpinski"	exec xlock -mode sierpinski
+		"Strange"		exec xlock -mode strange
+		"Triangle"		exec xlock -mode triangle
+		"Turtle"		exec xlock -mode turtle
+		"Random Fractal"	DEFAULT exec xlock -mode random -modelist drift,flame,forest,fract,hop,ifs,julia,lightning,mountain,sierpinski,strange,triangle,turtle -fullrandom
+	"Fractal" END
+	"Geometry" MENU
+	  "Geometry" TITLE
+		"Braid"			exec xlock -mode braid
+		"Geometry"		exec xlock -mode geometry
+		"Helix"			exec xlock -mode helix -fullrandom
+		"Hyper"			exec xlock -mode hyper
+		"Ico"			exec xlock -mode ico
+		"Kaleid"		exec xlock -mode kaleid
+		"Laser"			exec xlock -mode laser
+		"Lisa"		exec xlock -mode lisa
+		"Lissie"		exec xlock -mode lissie
+		"Penrose"		exec xlock -mode penrose +ammann
+		"Penrose Ammann"	exec xlock -mode penrose -ammann
+		"Petal"			exec xlock -mode petal
+		"Qix"			exec xlock -mode qix
+		"Shape"			exec xlock -mode shape
+		"Sphere"		exec xlock -mode sphere
+		"Spiral"		exec xlock -mode spiral
+		"Spline"		exec xlock -mode spline
+		"Random Geometry"	DEFAULT exec xlock -mode random -modelist braid,geometry,helix,hyper,ico,kaleid,laser,lisa,lissie,penrose,petal,qix,shape,sphere,spiral,spline -fullrandom
+	"Geometry" END
+	"Space" MENU
+	  "Space" TITLE
+		"Bouboule"		exec xlock -mode bouboule +use3d
+		"Bouboule3d"		exec xlock -mode bouboule -use3d
+		"Galaxy"		exec xlock -mode galaxy
+		"Grav"			exec xlock -mode grav +trail +grav
+		"Grav Trail"		exec xlock -mode grav -trail
+		"Grav Decay"		exec xlock -mode grav -grav
+		"Rock"			exec xlock -mode star -rock
+		"Star"			exec xlock -mode star +rock +use3d -trek 0
+		"Star3d"		exec xlock -mode star -use3d
+		"Star Trek"		exec xlock -mode star -trek 100
+		"World"			exec xlock -mode world
+		"Random Space"	DEFAULT exec xlock -mode random -modelist bouboule,galaxy,grav,star,world -fullrandom
+	"Space" END
+	"Assorted" MENU
+	  "Assorted" TITLE
+		"Ball"			exec xlock -mode ball
+		"Bat"			exec xlock -mode bat
+		"Blot"			exec xlock -mode blot
+		"Bounce"		exec xlock -mode bounce
+		"Cartoon"		exec xlock -mode cartoon
+		"Clock"			exec xlock -mode clock
+		"Crystal"		exec xlock -mode crystal
+		"Daisy"			exec xlock -mode daisy
+		"Dclock"		exec xlock -mode dclock
+		"Eyes"			exec xlock -mode eyes
+		"Flag"			exec xlock -mode flag 
+		"Image"			exec xlock -mode image
+		"Marquee"		exec xlock -mode marquee
+		"Maze"			exec xlock -mode maze
+		"Nose"			exec xlock -mode nose
+		"Pacman"		exec xlock -mode pacman
+		"Puzzle"	DEFAULT exec xlock -mode puzzle
+		"Pyro"			exec xlock -mode pyro +use3d
+		"Pyro3d"		exec xlock -mode pyro -use3d
+		"Roll"			exec xlock -mode roll
+		"Rotor"			exec xlock -mode rotor
+		"Slip"			exec xlock -mode slip
+		"Swarm"			exec xlock -mode swarm
+		"Swirl"			exec xlock -mode swirl -install
+		"Tube"			exec xlock -mode tube -install
+		"Worm"			exec xlock -mode worm +use3d
+		"Worm3d"		exec xlock -mode worm -use3d
+	"Assorted" END
+	"GL" MENU
+	  "GL" TITLE
+		"Escher"			exec xlock -mode escher
+		"Gears"			exec xlock -mode gears
+		"Morph3d"			exec xlock -mode morph3d
+		"Pipes"			exec xlock -mode pipes
+		"Sproingies"			exec xlock -mode sproingies
+		"Superquadrics"			exec xlock -mode superquadrics
+		"Random GL"		DEFAULT exec xlock -mode random -modelist allgl -fullrandom
+	"GL" END
+	"Marquee Messages" MENU
+	  "Marquee Messages" TITLE
+		"Back Soon"	DEFAULT	exec xlock -mode marquee -message "$LOGNAME will be back soon."
+		"Overnight"		exec xlock -mode marquee -message "$LOGNAME will be back in the morning."
+		"Rude"			exec xlock -mode marquee -message "$LOGNAME not here, please go away! "
+	"Marquee Messages" END
+	"Nose Messages" MENU
+	  "Nose Messages" TITLE
+		"Back Soon"	DEFAULT	exec xlock -mode nose -message "$LOGNAME will be back soon."
+		"Overnight"		exec xlock -mode nose -message "$LOGNAME will be back in the morning."
+		"Rude"			exec xlock -mode nose -message "$LOGNAME not here, please go away! "
+	"Nose Messages" END
+	"Special" DEFAULT MENU
+	  "Special" TITLE
+		"Blank"			exec xlock -mode blank
+		"Bomb"			exec xlock -mode bomb
+		"Random nice"	DEFAULT	exec xlock -mode random -modelist allnice -fullrandom -neighbors 0
+		"Random standard"	exec xlock -mode random -modelist allstandard -fullrandom -neighbors 0
+		"Random stable"	exec xlock -mode random -modelist allstable -fullrandom -neighbors 0
+		"Random all"	exec xlock -mode random -modelist all -fullrandom -neighbors 0
+	"Special" END

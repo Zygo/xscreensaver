@@ -1,0 +1,6 @@
+PROD:SKUNK97:Xlock:
+description = "Xlock Screen Locker"
+version     = 4.03
+packages    = SKUNK97:Xlock
+required    = SKUNK97:Xlock
+cmpntFiles  = Xlock.cmpnt

@@ -1,0 +1,11 @@
+PKG="xlock"
+NAME="Xlock"
+DESC="Screen Locker"
+VERSION="Version 4.03"
+VENDOR="SCO"
+HOTLINE="1-800-SCO-UNIX"
+EMAIL="rr@sco.com"
+CATEGORY="application"
+CLASSES="xlock"
+ARCH="i386"
+BASEDIR=/

@@ -1,0 +1,15 @@
+These modes are for hackers only.  They are not polished for general release
+or have not been adequately tested.  If you fix them up, mail them back to
+your friendly xlockmore maintainer. :)
+
+fadeplot needs to be less flashy, more variablility
+
+To make using configure, its too easy...
+  configure --enable-hackers ; make
+To make using Imakefile... edit Imakefile (find the spot) then do a 
+  xmkmf ; make depend ; make
+To make using make.com... edit make.com (find the spot) then do a 
+  @make
+
+This will also enable -visual option.  So far this only works on swirl,
+tube, and the GL modes.

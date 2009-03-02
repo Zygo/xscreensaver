@@ -1,0 +1,988 @@
+ant.c
+       fillcell ,                      procedure 
+       truchetcell ,                   procedure 
+       drawcell ,                      procedure 
+       drawtruchet ,                   procedure 
+       draw_anant ,                    procedure 
+       RandomSoup ,                    procedure 
+       GetTable ,                      procedure 
+       GetTurk ,                       procedure 
+       init_ant ,                      procedure 
+       draw_ant ,                      procedure 
+       release_ant ,                   procedure 
+       refresh_ant ,                   procedure 
+   global/file ,                       file level 
+
+ball.c
+       collided ,                      procedure 
+       inwin ,                         function 
+       randomball ,                    procedure 
+       init_ball ,                     procedure 
+       draw_ball ,                     procedure 
+       release_ball ,                  procedure 
+       refresh_ball ,                  procedure 
+   global/file ,                       file level 
+
+bat.c
+       init_images ,                   procedure 
+       checkCollision ,                procedure 
+       drawabat ,                      procedure 
+       movebat ,                       procedure 
+       flapbat ,                       procedure 
+       collide ,                       function 
+       init_bat ,                      procedure 
+       draw_bat ,                      procedure 
+       release_bat ,                   procedure 
+       refresh_bat ,                   procedure 
+   global/file ,                       file level 
+
+blank.c
+       init_blank ,                    procedure 
+       draw_blank ,                    procedure 
+       release_blank ,                 procedure 
+       refresh_blank ,                 procedure 
+   global/file ,                       file level 
+
+blot.c
+       init_blot ,                     procedure 
+       draw_blot ,                     procedure 
+       release_blot ,                  procedure 
+       refresh_blot ,                  procedure 
+   global/file ,                       file level 
+
+bomb.c
+       explode ,                       procedure 
+       rivet ,                         procedure 
+       detonator ,                     procedure 
+       init_bomb ,                     procedure 
+       draw_bomb ,                     procedure 
+       release_bomb ,                  procedure 
+       refresh_bomb ,                  procedure 
+       change_bomb ,                   procedure 
+   global/file ,                       file level 
+
+bouboule.c
+       sinvary ,                       procedure 
+       sininit ,                       procedure 
+       sinfree ,                       procedure 
+       init_bouboule ,                 procedure 
+       draw_bouboule ,                 procedure 
+       release_bouboule ,              procedure 
+       refresh_bouboule ,              procedure 
+   global/file ,                       file level 
+
+bounce.c
+       checkCollision ,                procedure 
+       drawball ,                      procedure 
+       moveball ,                      procedure 
+       spinball ,                      procedure 
+       collide ,                       function 
+       init_bounce ,                   procedure 
+       draw_bounce ,                   procedure 
+       release_bounce ,                procedure 
+       refresh_bounce ,                procedure 
+   global/file ,                       file level 
+
+braid.c
+       applyword ,                     function 
+       applywordto ,                   function 
+       applywordbackto ,               function 
+       init_braid ,                    procedure 
+       draw_braid ,                    procedure 
+       release_braid ,                 procedure 
+       refresh_braid ,                 procedure 
+   global/file ,                       file level 
+
+bug.c
+       cart2hex ,                      procedure 
+       hex2cart ,                      procedure 
+       hexcmove ,                      function 
+       neighbor ,                      function 
+       drawabacterium ,                procedure 
+       drawabug ,                      procedure 
+       eraseabug ,                     procedure 
+       init_buglist ,                  procedure 
+       addto_buglist ,                 procedure 
+       removefrom_buglist ,            procedure 
+       dupin_buglist ,                 procedure 
+       cutfrom_buglist ,               procedure 
+       reattach_buglist ,              procedure 
+       flush_buglist ,                 procedure 
+       dirbug ,                        function 
+       mutatebug ,                     procedure 
+       makebacteria ,                  procedure 
+       redrawbacteria ,                procedure 
+       init_bug ,                      procedure 
+       draw_bug ,                      procedure 
+       release_bug ,                   procedure 
+       refresh_bug ,                   procedure 
+   global/file ,                       file level 
+
+cartoon.c
+       initimage ,                     procedure 
+       put_cartoon ,                   procedure 
+       select_cartoon ,                procedure 
+       move_cartoon ,                  procedure 
+       erase_image ,                   procedure 
+       init_cartoon ,                  procedure 
+       draw_cartoon ,                  procedure 
+       release_cartoon ,               procedure 
+   global/file ,                       file level 
+
+clock.c
+       myrand ,                        function 
+       HourToAngle ,                   function 
+       MinutesToAngle ,                function 
+       SecondsToAngle ,                function 
+       DrawDisk ,                      procedure 
+       DrawBorder ,                    procedure 
+       DrawJewel ,                     procedure 
+       DrawHand ,                      procedure 
+       real_draw_clock ,               procedure 
+       collide ,                       function 
+       new_clock_state ,               function 
+       update_clock ,                  procedure 
+       init_clock ,                    procedure 
+       draw_clock ,                    procedure 
+       release_clock ,                 procedure 
+       refresh_clock ,                 procedure 
+   global/file ,                       file level 
+
+color.c
+       hsb2rgb ,                       procedure 
+       hsbramp ,                       procedure 
+       allocPixel ,                    function 
+       fixColormap ,                   procedure 
+       setColormap ,                   procedure 
+       reserveColors ,                 procedure 
+   global/file ,                       file level 
+
+config.h
+   global/file ,                       file level 
+
+daisy.c
+       drawstem ,                      procedure 
+       drawpetals ,                    function 
+       drawcenter ,                    procedure 
+       drawdaisy ,                     procedure 
+       init_daisy ,                    procedure 
+       draw_daisy ,                    procedure 
+       release_daisy ,                 procedure 
+       refresh_daisy ,                 procedure 
+   global/file ,                       file level 
+
+dclock.c
+       drawDclock ,                    procedure 
+       init_dclock ,                   procedure 
+       draw_dclock ,                   procedure 
+       release_dclock ,                procedure 
+       refresh_dclock ,                procedure 
+   global/file ,                       file level 
+
+demon.c
+       drawcell ,                      procedure 
+       addtolist ,                     procedure 
+       print_state ,                   procedure 
+       free_state ,                    procedure 
+       free_list ,                     procedure 
+       free_struct ,                   procedure 
+       draw_state ,                    procedure 
+       RandomSoup ,                    procedure 
+       init_demon ,                    procedure 
+       draw_demon ,                    procedure 
+       release_demon ,                 procedure 
+       refresh_demon ,                 procedure 
+   global/file ,                       file level 
+
+drift.c
+       halfrandom ,                    function 
+       frandom ,                       function 
+       initmode ,                      procedure 
+       pick_df_coefs ,                 procedure 
+       initfractal ,                   procedure 
+       init_drift ,                    procedure 
+       iter ,                          procedure 
+       draw ,                          procedure 
+       draw_flush ,                    procedure 
+       draw_drift ,                    procedure 
+       release_drift ,                 procedure 
+       refresh_drift ,                 procedure 
+   global/file ,                       file level 
+
+eyes.c
+       TFillArc ,                      procedure 
+       SetTransform ,                  procedure 
+       join_rects ,                    procedure 
+       computePupil ,                  function 
+       make_eye ,                      procedure 
+       fly_touches ,                   function 
+       fly_touches_eye ,               function 
+       eyes_overlap ,                  function 
+       init_fly ,                      procedure 
+       unpaint_fly ,                   procedure 
+       paint_fly ,                     procedure 
+       move_fly ,                      procedure 
+       create_eyes ,                   procedure 
+       paint_eyes ,                    procedure 
+       one_time_init ,                 procedure 
+       free_eyes ,                     procedure 
+       init_eyes ,                     procedure 
+       draw_eyes ,                     procedure 
+       release_eyes ,                  procedure 
+       refresh_eyes ,                  procedure 
+   global/file ,                       file level 
+
+fadeplot.c
+       init_fadeplot ,                 procedure 
+       draw_fadeplot ,                 procedure 
+       refresh_fadeplot ,              procedure 
+       release_fadeplot ,              procedure 
+   global/file ,                       file level 
+
+flag.c
+       random_num ,                    function 
+       initSintab ,                    procedure 
+       affiche ,                       procedure 
+       init_flag ,                     procedure 
+       draw_flag ,                     procedure 
+       release_flag ,                  procedure 
+       refresh_flag ,                  procedure 
+   global/file ,                       file level 
+
+flag.h
+   global/file ,                       file level 
+
+flame.c
+       halfrandom ,                    function 
+       recurse ,                       function 
+       init_flame ,                    procedure 
+       draw_flame ,                    procedure 
+       release_flame ,                 procedure 
+       refresh_flame ,                 procedure 
+   global/file ,                       file level 
+
+forest.c
+       draw_tree ,                     procedure 
+       init_forest ,                   procedure 
+       draw_forest ,                   procedure 
+       release_forest ,                procedure 
+       refresh_forest ,                procedure 
+   global/file ,                       file level 
+
+galaxy.c
+       free_galaxies ,                 procedure 
+       startover ,                     procedure 
+       init_galaxy ,                   procedure 
+       draw_galaxy ,                   procedure 
+       release_galaxy ,                procedure 
+       refresh_galaxy ,                procedure 
+   global/file ,                       file level 
+
+gear.c
+       gear ,                          procedure 
+       draw ,                          procedure 
+       key ,                           function 
+       reshape ,                       procedure 
+       pinit ,                         procedure 
+       init_gear ,                     procedure 
+       draw_gear ,                     procedure 
+       release_gear ,                  procedure 
+   global/file ,                       file level 
+
+geometry.c
+       eraselines ,                    procedure 
+       drawlines ,                     procedure 
+       init_geometry ,                 procedure 
+       draw_geometry ,                 procedure 
+       release_geometry ,              procedure 
+       refresh_geometry ,              procedure 
+   global/file ,                       file level 
+
+grav.c
+       init_planet ,                   procedure 
+       draw_planet ,                   procedure 
+       init_grav ,                     procedure 
+       draw_grav ,                     procedure 
+       release_grav ,                  procedure 
+       refresh_grav ,                  procedure 
+   global/file ,                       file level 
+
+helix.c
+       gcd ,                           function 
+       helix ,                         procedure 
+       random_helix ,                  procedure 
+       init_helix ,                    procedure 
+       draw_helix ,                    procedure 
+       release_helix ,                 procedure 
+       refresh_helix ,                 procedure 
+   global/file ,                       file level 
+
+hop.c
+       init_hop ,                      procedure 
+       draw_hop ,                      procedure 
+       release_hop ,                   procedure 
+       refresh_hop ,                   procedure 
+   global/file ,                       file level 
+
+hyper.c
+       move_line ,                     procedure 
+       init_hyper ,                    procedure 
+       draw_hyper ,                    procedure 
+       release_hyper ,                 procedure 
+       refresh_hyper ,                 procedure 
+   global/file ,                       file level 
+
+image.c
+       init_image ,                    procedure 
+       draw_image ,                    procedure 
+       release_image ,                 procedure 
+       refresh_image ,                 procedure 
+   global/file ,                       file level 
+
+julia.c
+       apply ,                         procedure 
+       incr ,                          procedure 
+       init_julia ,                    procedure 
+       draw_julia ,                    procedure 
+       release_julia ,                 procedure 
+       refresh_julia ,                 procedure 
+   global/file ,                       file level 
+
+kaleid.c
+       init_kaleid ,                   procedure 
+       draw_kaleid ,                   procedure 
+       release_kaleid ,                procedure 
+       refresh_kaleid ,                procedure 
+   global/file ,                       file level 
+
+laser.c
+       init_laser ,                    procedure 
+       draw_laser_once ,               procedure 
+       draw_laser ,                    procedure 
+       release_laser ,                 procedure 
+       refresh_laser ,                 procedure 
+   global/file ,                       file level 
+
+life.c
+       drawcell ,                      procedure 
+       erasecell ,                     procedure 
+       spawn ,                         procedure 
+       ckill ,                         procedure 
+       setcell ,                       procedure 
+       alloccells ,                    procedure 
+       freecells ,                     procedure 
+       init_fates ,                    procedure 
+       RandomSoup ,                    procedure 
+       GetPattern ,                    procedure 
+       shooter ,                       procedure 
+       init_life ,                     procedure 
+       draw_life ,                     procedure 
+       release_life ,                  procedure 
+       refresh_life ,                  procedure 
+       change_life ,                   procedure 
+   global/file ,                       file level 
+
+life1d.c
+       drawcell ,                      procedure 
+       RandomSoup ,                    procedure 
+       power ,                         function 
+       GetRule ,                       procedure 
+       compare ,                       function 
+       init_life1d ,                   procedure 
+       draw_life1d ,                   procedure 
+       release_life1d ,                procedure 
+       refresh_life1d ,                procedure 
+   global/file ,                       file level 
+
+life3d.c
+       Rule2Array ,                    function 
+       Array2Rule ,                    function 
+       Init3D ,                        procedure 
+       NewCell ,                       function 
+       AddToList ,                     procedure 
+       AddToEraseList ,                procedure 
+       DelFromList ,                   procedure 
+       DelFromEraseList ,              procedure 
+       MemInit ,                       procedure 
+       BaseOffset ,                    procedure 
+       GetMem ,                        function 
+       SetMem ,                        procedure 
+       ChangeMem ,                     procedure 
+       ClearMem ,                      procedure 
+       IncrementNbrs3D ,               procedure 
+       End3D ,                         procedure 
+       RunLife3D ,                     procedure 
+       CountCells3D ,                  function 
+       DisplayList ,                   procedure 
+       RandomSoup ,                    procedure 
+       GetPattern ,                    procedure 
+       NewViewpoint ,                  procedure 
+       NewPoint ,                      procedure 
+       SortList ,                      procedure 
+       DrawFace ,                      procedure 
+       DrawCube ,                      function 
+       DrawScreen ,                    procedure 
+       shooter ,                       procedure 
+       initrule ,                      procedure 
+       init_life3d ,                   procedure 
+       draw_life3d ,                   procedure 
+       release_life3d ,                procedure 
+       refresh_life3d ,                procedure 
+       change_life3d ,                 procedure 
+   global/file ,                       file level 
+
+lightning.c
+       setup_multi_strike ,            function 
+       flashing_strike ,               function 
+       flash_duration ,                procedure 
+       random_storm ,                  procedure 
+       generate ,                      procedure 
+       create_fork ,                   procedure 
+       update_bolt ,                   procedure 
+       draw_bolt ,                     procedure 
+       first_strike ,                  procedure 
+       draw_line ,                     procedure 
+       level1_strike ,                 procedure 
+       distance ,                      function 
+       level2_strike ,                 procedure 
+       storm_active ,                  function 
+       wiggle_bolt ,                   procedure 
+       wiggle_line ,                   procedure 
+       init_lightning ,                procedure 
+       draw_lightning ,                procedure 
+       release_lightning ,             procedure 
+       refresh_lightning ,             procedure 
+   global/file ,                       file level 
+
+lissie.c
+       drawlissie ,                    procedure 
+       initlissie ,                    procedure 
+       init_lissie ,                   procedure 
+       draw_lissie ,                   procedure 
+       release_lissie ,                procedure 
+       refresh_lissie ,                procedure 
+   global/file ,                       file level 
+
+logout.c
+       err_handler ,                   function 
+       has_property ,                  function 
+       has_wm_state ,                  function 
+       has_wm_protocols ,              function 
+       send_delete_message ,           procedure 
+       handle_top_level ,              procedure 
+       recurse_tree ,                  procedure 
+       kill_tree ,                     procedure 
+       closedownLogout ,               procedure 
+       sessionLogout ,                 procedure 
+       uglyLogout ,                    procedure 
+       logoutUser ,                    procedure 
+       fullLock ,                      function 
+   global/file ,                       file level 
+
+loop.c
+       addtolist ,                     procedure 
+       print_state ,                   procedure 
+       free_state ,                    procedure 
+       drawcell ,                      procedure 
+       draw_state ,                    procedure 
+       init_table ,                    procedure 
+       init_adam ,                     procedure 
+       do_gen ,                        procedure 
+       free_list ,                     procedure 
+       init_loop ,                     procedure 
+       draw_loop ,                     procedure 
+       release_loop ,                  procedure 
+       refresh_loop ,                  procedure 
+   global/file ,                       file level 
+
+marquee.c
+       font_width ,                    function 
+       is_valid_char ,                 function 
+       is_char_back_char ,             function 
+       char_back_char_width ,          function 
+       fixup_back ,                    function 
+       text_font_width ,               function 
+       text_height ,                   function 
+       add_blanks ,                    function 
+       add_letter ,                    procedure 
+       init_marquee ,                  procedure 
+       draw_marquee ,                  procedure 
+       release_marquee ,               procedure 
+       refresh_marquee ,               procedure 
+   global/file ,                       file level 
+
+maze.c
+       free_maze ,                     procedure 
+       set_maze_sizes ,                procedure 
+       initialize_maze ,               procedure 
+       choose_door ,                   function 
+       draw_maze_walls ,               procedure 
+       backup ,                        function 
+       create_maze_walls ,             procedure 
+       draw_maze_border ,              procedure 
+       draw_wall ,                     procedure 
+       draw_solid_square ,             procedure 
+       solve_maze ,                    procedure 
+       enter_square ,                  procedure 
+       init_maze ,                     procedure 
+       draw_maze ,                     procedure 
+       release_maze ,                  procedure 
+       refresh_maze ,                  procedure 
+   global/file ,                       file level 
+
+mode.c
+       set_default_mode ,              procedure 
+       set_window_title ,              procedure 
+       call_release_hook ,             procedure 
+       release_last_mode ,             procedure 
+       call_init_hook ,                procedure 
+       call_callback_hook ,            procedure 
+       call_refresh_hook ,             procedure 
+       call_change_hook ,              procedure 
+   global/file ,                       file level 
+
+mode.h
+   global/file ,                       file level 
+
+mountain.c
+       spread ,                        procedure 
+       drawamountain ,                 procedure 
+       init_mountain ,                 procedure 
+       draw_mountain ,                 procedure 
+       release_mountain ,              procedure 
+       refresh_mountain ,              procedure 
+   global/file ,                       file level 
+
+nose.c
+       move ,                          procedure 
+       walk ,                          procedure 
+       think ,                         function 
+       talk ,                          procedure 
+       look ,                          function 
+       init_nose ,                     procedure 
+       draw_nose ,                     procedure 
+       release_nose ,                  procedure 
+       refresh_nose ,                  procedure 
+   global/file ,                       file level 
+
+option.c
+       managePrompt ,                  procedure 
+       f_option ,                      procedure 
+       f_Dialog ,                      procedure 
+       Setup_Option ,                  procedure 
+   global/file ,                       file level 
+
+pacman.c
+       clearcorners ,                  procedure 
+       repopulate ,                    procedure 
+       movepac ,                       procedure 
+       init_pacman ,                   procedure 
+       draw_pacman ,                   procedure 
+       release_pacman ,                procedure 
+       refresh_pacman ,                procedure 
+   global/file ,                       file level 
+
+passwd.c
+       new_pwlnode ,                   function 
+       my_passwd_entry ,               function 
+       getUserName ,                   procedure 
+       passwd_invalid ,                function 
+       getCryptedUserPasswd ,          procedure 
+       getCryptedRootPasswd ,          procedure 
+       checkPasswd ,                   function 
+       initDCE ,                       procedure 
+       error_string ,                  function 
+       check_dce_net_passwd ,          function 
+       krb_check_password ,            function 
+       krb_check_password ,            function 
+       get_multiple ,                  procedure 
+       set_multiple ,                  procedure 
+       gpass ,                         procedure 
+       initPasswd ,                    procedure 
+   global/file ,                       file level 
+
+penrose.c
+       vertex_dir ,                    function 
+       add_unit_vec ,                  procedure 
+       fived_to_loc ,                  function 
+       release_screen ,                procedure 
+       init_penrose ,                  procedure 
+       match_rules ,                   function 
+       find_completions ,              function 
+       draw_tile ,                     procedure 
+       check_vertex ,                  procedure 
+       delete_vertex ,                 procedure 
+       fills_vertex ,                  function 
+       fringe_changes ,                function 
+       add_vtype ,                     procedure 
+       alloc_vertex ,                  function 
+       add_tile ,                      function 
+       add_forced_tile ,               function 
+       legal_move ,                    function 
+       add_random_tile ,               procedure 
+       draw_penrose ,                  procedure 
+       release_penrose ,               procedure 
+   global/file ,                       file level 
+
+petal.c
+       gcd ,                           function 
+       numlines ,                      function 
+       compute_petal ,                 function 
+       random_petal ,                  procedure 
+       init_petal ,                    procedure 
+       draw_petal ,                    procedure 
+       release_petal ,                 procedure 
+       refresh_petal ,                 procedure 
+   global/file ,                       file level 
+
+puzzle.c
+       font_width ,                    function 
+       NumberScreen ,                  procedure 
+       setupmove ,                     function 
+       setupmovedelta ,                procedure 
+       wrapupmove ,                    procedure 
+       wrapupmovedelta ,               procedure 
+       moveboxdelta ,                  function 
+       init_puzzle ,                   procedure 
+       draw_puzzle ,                   procedure 
+       release_puzzle ,                procedure 
+   global/file ,                       file level 
+
+pyro.c
+       ignite ,                        procedure 
+       animate ,                       procedure 
+       shootup ,                       procedure 
+       burst ,                         procedure 
+       init_pyro ,                     procedure 
+       draw_pyro ,                     procedure 
+       release_pyro ,                  procedure 
+       refresh_pyro ,                  procedure 
+   global/file ,                       file level 
+
+qix.c
+       init_qix ,                      procedure 
+       draw_qix ,                      procedure 
+       release_qix ,                   procedure 
+       refresh_qix ,                   procedure 
+   global/file ,                       file level 
+
+random.c
+       pickMode ,                      function 
+       strpmtok ,                      function 
+       parsemodelist ,                 procedure 
+       setMode ,                       procedure 
+       init_random ,                   procedure 
+       draw_random ,                   procedure 
+       refresh_random ,                procedure 
+       change_random ,                 procedure 
+   global/file ,                       file level 
+
+ras.c
+       analyze_header ,                procedure 
+       convert_colors ,                procedure 
+       find_nearest ,                  function 
+       GetWhite ,                      function 
+       GetBlack ,                      function 
+       GetForeground ,                 function 
+       GetBackground ,                 function 
+       get_long ,                      function 
+       RasterFileToImage ,             function 
+       SetImageColors ,                procedure 
+   global/file ,                       file level 
+
+ras.h
+   global/file ,                       file level 
+
+resource.c
+       stripname ,                     function 
+       Syntax ,                        procedure 
+       Help ,                          procedure 
+       Version ,                       procedure 
+       DumpResources ,                 procedure 
+       LowerString ,                   procedure 
+       GetResource ,                   procedure 
+       parsefilepath ,                 function 
+       open_display ,                  procedure 
+       printvar ,                      procedure 
+       getResources ,                  procedure 
+       checkResources ,                procedure 
+       get_info ,                      function 
+       descr ,                         function 
+   global/file ,                       file level 
+
+roll.c
+       createsphere ,                  procedure 
+       rotation3d ,                    procedure 
+       project ,                       procedure 
+       init_roll ,                     procedure 
+       draw_roll ,                     procedure 
+       release_roll ,                  procedure 
+       refresh_roll ,                  procedure 
+   global/file ,                       file level 
+
+rotor.c
+       init_rotor ,                    procedure 
+       draw_rotor ,                    procedure 
+       release_rotor ,                 procedure 
+       refresh_rotor ,                 procedure 
+   global/file ,                       file level 
+
+shape.c
+       init_shape ,                    procedure 
+       draw_shape ,                    procedure 
+       release_shape ,                 procedure 
+       refresh_shape ,                 procedure 
+   global/file ,                       file level 
+
+slip.c
+       halfrandom ,                    function 
+       erandom ,                       function 
+       prepare_screen ,                procedure 
+       quantize ,                      function 
+       init_slip ,                     procedure 
+       draw_slip ,                     procedure 
+       release_slip ,                  procedure 
+   global/file ,                       file level 
+
+sound.c
+       play_sound ,                    procedure 
+       play_sound ,                    procedure 
+       play_sound ,                    procedure 
+       play_sound ,                    procedure 
+   global/file ,                       file level 
+
+sphere.c
+       init_sphere ,                   procedure 
+       draw_sphere ,                   procedure 
+       release_sphere ,                procedure 
+       refresh_sphere ,                procedure 
+   global/file ,                       file level 
+
+spiral.c
+       draw_dots ,                     procedure 
+       init_spiral ,                   procedure 
+       draw_spiral ,                   procedure 
+       release_spiral ,                procedure 
+       refresh_spiral ,                procedure 
+   global/file ,                       file level 
+
+spline.c
+       init_spline ,                   procedure 
+       draw_spline ,                   procedure 
+       XDrawSpline ,                   procedure 
+       release_spline ,                procedure 
+       refresh_spline ,                procedure 
+   global/file ,                       file level 
+
+star.c
+       star_reset ,                    procedure 
+       star_tick ,                     procedure 
+       star_compute ,                  procedure 
+       draw_trek ,                     procedure 
+       star_draw ,                     procedure 
+       init_pixmaps ,                  procedure 
+       tick_stars ,                    procedure 
+       compute_move ,                  function 
+       init_star ,                     procedure 
+       draw_star ,                     procedure 
+       release_star ,                  procedure 
+       refresh_star ,                  procedure 
+   global/file ,                       file level 
+
+swarm.c
+       init_swarm ,                    procedure 
+       draw_swarm ,                    procedure 
+       release_swarm ,                 procedure 
+       refresh_swarm ,                 procedure 
+   global/file ,                       file level 
+
+swirl.c
+       random_no ,                     function 
+       initialise_swirl ,              procedure 
+       initialise_image ,              procedure 
+       initialise_colours ,            procedure 
+       set_black_and_white ,           procedure 
+       set_colour ,                    procedure 
+       get_colour ,                    procedure 
+       interpolate ,                   procedure 
+       basic_map ,                     procedure 
+       pre_rotate ,                    procedure 
+       default_visual_info ,           function 
+       create_colourmap ,              procedure 
+       install_map ,                   procedure 
+       create_knots ,                  procedure 
+       do_point ,                      function 
+       draw_block ,                    procedure 
+       draw_point ,                    procedure 
+       next_point ,                    procedure 
+       init_swirl ,                    procedure 
+       draw_swirl ,                    procedure 
+       release_swirl ,                 procedure 
+       refresh_swirl ,                 procedure 
+   global/file ,                       file level 
+
+tri.c
+       startover ,                     procedure 
+       init_tri ,                      procedure 
+       draw_tri ,                      procedure 
+       release_tri ,                   procedure 
+       refresh_tri ,                   procedure 
+   global/file ,                       file level 
+
+triangle.c
+       draw_atriangle ,                procedure 
+       calc_points1 ,                  procedure 
+       calc_points2 ,                  procedure 
+       draw_mesh ,                     procedure 
+       init_triangle ,                 procedure 
+       draw_triangle ,                 procedure 
+       release_triangle ,              procedure 
+       refresh_triangle ,              procedure 
+   global/file ,                       file level 
+
+trig.c
+       init_trig ,                     procedure 
+       draw_trig ,                     procedure 
+       release_trig ,                  procedure 
+   global/file ,                       file level 
+
+tub.c
+       init_tube ,                     procedure 
+       draw_tube ,                     procedure 
+       release_tube ,                  procedure 
+   global/file ,                       file level 
+
+tube.c
+       init_tube ,                     procedure 
+       draw_tube ,                     procedure 
+       release_tube ,                  procedure 
+   global/file ,                       file level 
+
+turtle.c
+       generate_hilbert ,              procedure 
+       generate_cesarovar ,            procedure 
+       generate_harter_heightway ,     procedure 
+       init_turtle ,                   procedure 
+       draw_turtle ,                   procedure 
+       release_turtle ,                procedure 
+   global/file ,                       file level 
+
+utils.c
+       usleep ,                        function 
+       seconds ,                       function 
+       readable ,                      function 
+       strdup ,                        function 
+       SetRNG ,                        procedure 
+       LongRNG ,                       function 
+       strcat_firstword ,              procedure 
+       isRibbon ,                      function 
+       getWords ,                      function 
+       getFont ,                       function 
+       randomImage ,                   procedure 
+       index_dir ,                     function 
+       upcase ,                        procedure 
+       get_dir ,                       procedure 
+       sel_image ,                     function 
+       scan_dir ,                      function 
+       getImage ,                      procedure 
+       destroyImage ,                  procedure 
+       XEraseImage ,                   procedure 
+   global/file ,                       file level 
+
+version.h
+   global/file ,                       file level 
+
+vroot.h
+       VirtualRootWindowOfScreen ,     function 
+   global/file ,                       file level 
+
+wator.c
+       drawcell ,                      procedure 
+       erasecell ,                     procedure 
+       init_kindlist ,                 procedure 
+       addto_kindlist ,                procedure 
+       removefrom_kindlist ,           procedure 
+       dupin_kindlist ,                procedure 
+       cutfrom_kindlist ,              procedure 
+       reattach_kindlist ,             procedure 
+       flush_kindlist ,                procedure 
+       init_wator ,                    procedure 
+       draw_wator ,                    procedure 
+       release_wator ,                 procedure 
+       refresh_wator ,                 procedure 
+   global/file ,                       file level 
+
+wire.c
+       addtolist ,                     procedure 
+       print_state ,                   procedure 
+       free_state ,                    procedure 
+       drawcell ,                      procedure 
+       draw_state ,                    procedure 
+       RandomSoup ,                    procedure 
+       create_path ,                   procedure 
+       do_gen ,                        procedure 
+       free_list ,                     procedure 
+       init_wire ,                     procedure 
+       draw_wire ,                     procedure 
+       release_wire ,                  procedure 
+       refresh_wire ,                  procedure 
+   global/file ,                       file level 
+
+world.c
+       init_world ,                    procedure 
+       draw_world ,                    procedure 
+       release_world ,                 procedure 
+       refresh_world ,                 procedure 
+   global/file ,                       file level 
+
+worm.c
+       worm_doit ,                     procedure 
+       free_worms ,                    procedure 
+       init_worm ,                     procedure 
+       draw_worm ,                     procedure 
+       release_worm ,                  procedure 
+       refresh_worm ,                  procedure 
+   global/file ,                       file level 
+
+xbm.c
+       XbmReadFileToImage ,            function 
+   global/file ,                       file level 
+
+xlock.c
+       error ,                         procedure 
+       warning ,                       procedure 
+       XGrabHosts ,                    procedure 
+       XUngrabHosts ,                  procedure 
+       GrabKeyboardAndMouse ,          procedure 
+       XChangeGrabbedCursor ,          procedure 
+       window_size_changed ,           function 
+       mode_info ,                     function 
+       finish ,                        procedure 
+       xio_error ,                     function 
+       putText ,                       procedure 
+       statusUpdate ,                  procedure 
+       checkLogout ,                   procedure 
+       sub_timers ,                    procedure 
+       runMainLoop ,                   function 
+       ReadXString ,                   function 
+       getPassword ,                   function 
+       event_screen ,                  function 
+       justDisplay ,                   function 
+       sigcatch ,                      procedure 
+       syslogStart ,                   procedure 
+       syslogStop ,                    procedure 
+       lockDisplay ,                   procedure 
+       read_message ,                  procedure 
+       main ,                          function 
+   global/file ,                       file level 
+
+xlock.h
+   global/file ,                       file level 
+
+xmlock.c
+       f_PushButtons ,                 procedure 
+       f_ScrolledListModes ,           procedure 
+       Setup_Widget ,                  procedure 
+       main ,                          function 
+   global/file ,                       file level 
+

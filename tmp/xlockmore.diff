@@ -1,0 +1,112 @@
+***************
+*** 396,402 ****
+        return mode_font;
+  }
+
+! static void
+  randomImage(char *im_file)
+  {
+  #if HAVE_DIRENT_H
+- --- 396,402 ----
+        return mode_font;
+  }
+
+! static char *
+  randomImage(char *im_file)
+  {
+  #if HAVE_DIRENT_H
+***************
+*** 403,416 ****
+        extern char directory_r[DIRBUF];
+        extern struct dirent **image_list;
+        extern int  num_list;
+        int         num;
+
+        if (num_list > 0) {
+                num = NRAND(num_list);
+!               (void) strcpy(im_file, directory_r);
+!               (void) strcat(im_file, image_list[num]->d_name);
+        }
+  #endif
+  }
+
+  #if HAVE_DIRENT_H
+- --- 403,424 ----
+        extern char directory_r[DIRBUF];
+        extern struct dirent **image_list;
+        extern int  num_list;
++       char *newimf;
+        int         num;
+
+        if (num_list > 0) {
+                num = NRAND(num_list);
+!               if ((newimf = malloc(strlen(directory_r)
+!                       + strlen(image_list[num]->d_name) + 1)) != 0)
+!               {
+!                       (void) sprintf(newimf, "%s%s",
+!                               directory_r, image_list[num]->d_name);
+!                       free(im_file);
+!                       im_file = newimf;
+!               }
+        }
+  #endif
++       return im_file;
+  }
+
+  #if HAVE_DIRENT_H
+***************
+*** 520,526 ****
+                        ++numfrag;
+                        filename_tmp = filename_tmp + ip;
+                }
+!               frags[numfrag] = (char *) malloc(strlen(filename_tmp));
+                (void) strcpy(frags[numfrag], filename_tmp);
+        }
+        for (i = 0; i <= numfrag; ++i) {
+- --- 528,534 ----
+                        ++numfrag;
+                        filename_tmp = filename_tmp + ip;
+                }
+!               frags[numfrag] = (char *) malloc(strlen(filename_tmp)+1);
+                (void) strcpy(frags[numfrag], filename_tmp);
+        }
+        for (i = 0; i <= numfrag; ++i) {
+***************
+*** 570,576 ****
+                }
+                /* Core Dumps here for Solaris2 if files names in dir are > 14 characters */
+                namelist_tmp[num_list_tmp - 1] =
+!                       (struct dirent *) malloc(sizeof (struct dirent));
+
+                (void) strcpy(namelist_tmp[num_list_tmp - 1]->d_name, new_entry->d_name);
+
+- --- 578,588 ----
+                }
+                /* Core Dumps here for Solaris2 if files names in dir are > 14 characters */
+                namelist_tmp[num_list_tmp - 1] =
+!                       (struct dirent *) malloc(sizeof (struct dirent)
+! #ifdef SVR4
+!                               + strlen(new_entry->d_name)
+! #endif
+!                       );
+
+                (void) strcpy(namelist_tmp[num_list_tmp - 1]->d_name, new_entry->d_name);
+
+***************
+*** 655,661 ****
+
+        *graphics_format = 0;
+
+!       randomImage(imagefile);
+
+        if (strlen(imagefile))
+                if (readable(imagefile)) {
+- --- 667,673 ----
+
+        *graphics_format = 0;
+
+!       imagefile = randomImage(imagefile);
+
+        if (strlen(imagefile))
+                if (readable(imagefile)) {
+

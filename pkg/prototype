@@ -1,0 +1,18 @@
+i admin=admin
+i pkginfo=pkginfo
+
+d xlock usr 0755 root sys
+d xlock usr/local 0755 root sys
+d xlock usr/local/bin 0755 root sys
+f xlock usr/local/bin/xlock 4755 root sys
+f xlock usr/local/bin/xmlock 0755 root sys
+d xlock usr/local/man 0755 root sys
+d xlock usr/local/man/man1 0755 root sys
+f xlock usr/local/man/man1/xlock.1 0644 root sys
+d xlock usr/local/man/cat1 0755 root sys
+f xlock usr/local/man/cat1/xlock.1 0644 root sys
+d xlock usr/local/lib 0755 root sys
+d xlock usr/local/lib/X11 0755 root sys
+d xlock usr/local/lib/X11/app-defaults 0755 root sys
+f xlock usr/local/lib/X11/app-defaults/XLock 0644 root sys
+f xlock usr/local/lib/X11/app-defaults/XmLock 0644 root sys

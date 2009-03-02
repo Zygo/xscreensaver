@@ -1,0 +1,65 @@
+# This file is a shell script that caches the results of configure
+# tests run on this system so they can be shared between configure
+# scripts and configure runs.  It is not useful on other systems.
+# If it contains results you don't want to keep, you may remove or edit it.
+#
+# By default, configure uses ./config.cache as the cache file,
+# creating it if it does not exist already.  You can give configure
+# the --cache-file=FILE option to use a different cache file; that is
+# what configure does when it calls configure scripts in
+# subdirectories, so they share the cache.
+# Giving --cache-file=/dev/null disables caching, for debugging configure.
+# config.status only pays attention to the cache file if you give it the
+# --recheck option to rerun configure.
+#
+ac_cv_c_const=${ac_cv_c_const='yes'}
+ac_cv_c_inline=${ac_cv_c_inline='inline'}
+ac_cv_c_matherr=${ac_cv_c_matherr='yes'}
+ac_cv_func_connect=${ac_cv_func_connect='no'}
+ac_cv_func_gethostbyname=${ac_cv_func_gethostbyname='no'}
+ac_cv_func_gethostname=${ac_cv_func_gethostname='no'}
+ac_cv_func_gettimeofday=${ac_cv_func_gettimeofday='yes'}
+ac_cv_func_nanosleep=${ac_cv_func_nanosleep='no'}
+ac_cv_func_remove=${ac_cv_func_remove='yes'}
+ac_cv_func_select=${ac_cv_func_select='yes'}
+ac_cv_func_seteuid=${ac_cv_func_seteuid='yes'}
+ac_cv_func_shmat=${ac_cv_func_shmat='yes'}
+ac_cv_func_srand48=${ac_cv_func_srand48='yes'}
+ac_cv_func_strdup=${ac_cv_func_strdup='yes'}
+ac_cv_func_usleep=${ac_cv_func_usleep='no'}
+ac_cv_have_x=${ac_cv_have_x='have_x=yes 		ac_x_includes=//usr/X/include ac_x_libraries=//usr/X/lib'}
+ac_cv_header_dirent_dirent_h=${ac_cv_header_dirent_dirent_h='yes'}
+ac_cv_header_fcntl_h=${ac_cv_header_fcntl_h='yes'}
+ac_cv_header_limits_h=${ac_cv_header_limits_h='yes'}
+ac_cv_header_memory_h=${ac_cv_header_memory_h='yes'}
+ac_cv_header_stdc=${ac_cv_header_stdc='yes'}
+ac_cv_header_sys_select_h=${ac_cv_header_sys_select_h='yes'}
+ac_cv_header_sys_time_h=${ac_cv_header_sys_time_h='yes'}
+ac_cv_header_syslog_h=${ac_cv_header_syslog_h='yes'}
+ac_cv_header_time=${ac_cv_header_time='yes'}
+ac_cv_header_unistd_h=${ac_cv_header_unistd_h='yes'}
+ac_cv_lib_ICE_IceConnectionNumber=${ac_cv_lib_ICE_IceConnectionNumber='no'}
+ac_cv_lib_dir_opendir=${ac_cv_lib_dir_opendir='no'}
+ac_cv_lib_dnet_dnet_ntoa=${ac_cv_lib_dnet_dnet_ntoa='no'}
+ac_cv_lib_dnet_stub_dnet_ntoa=${ac_cv_lib_dnet_stub_dnet_ntoa='no'}
+ac_cv_lib_nsl_gethostbyname=${ac_cv_lib_nsl_gethostbyname='no'}
+ac_cv_lib_socket_connect=${ac_cv_lib_socket_connect='yes'}
+ac_cv_path_dtsaver=${ac_cv_path_dtsaver='no_dtsaver=yes'}
+ac_cv_path_editres=${ac_cv_path_editres='no_editres= ac_editres_includes=/usr/include ac_editres_libraries=/usr/lib/X11'}
+ac_cv_path_gl=${ac_cv_path_gl='no_gl=yes'}
+ac_cv_path_mesagl=${ac_cv_path_mesagl='no_mesagl= ac_mesagl_includes=/usr/local/include ac_mesagl_libraries=/usr/local/lib'}
+ac_cv_path_motif=${ac_cv_path_motif='no_motif= ac_motif_includes= ac_motif_libraries=/usr/lib/X11'}
+ac_cv_path_nas=${ac_cv_path_nas='no_nas=yes'}
+ac_cv_path_rplay=${ac_cv_path_rplay='no_rplay=yes'}
+ac_cv_path_xpm=${ac_cv_path_xpm='no_xpm= ac_xpm_includes=/usr/include/X11 ac_xpm_libraries=/usr/lib/X11'}
+ac_cv_prog_CC=${ac_cv_prog_CC='gcc'}
+ac_cv_prog_CPP=${ac_cv_prog_CPP='gcc -E'}
+ac_cv_prog_LN_S=${ac_cv_prog_LN_S='ln -s'}
+ac_cv_prog_cc_cross=${ac_cv_prog_cc_cross='no'}
+ac_cv_prog_cc_g=${ac_cv_prog_cc_g='yes'}
+ac_cv_prog_cc_works=${ac_cv_prog_cc_works='yes'}
+ac_cv_prog_gcc=${ac_cv_prog_gcc='yes'}
+ac_cv_struct_tm=${ac_cv_struct_tm='time.h'}
+ac_cv_type_pid_t=${ac_cv_type_pid_t='yes'}
+ac_cv_type_size_t=${ac_cv_type_size_t='yes'}
+ac_cv_type_uid_t=${ac_cv_type_uid_t='yes'}

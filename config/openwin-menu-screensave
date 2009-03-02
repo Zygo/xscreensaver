@@ -1,0 +1,133 @@
+# put this in your $OPENWINHOME/lib, usually $OPENWINHOME is /usr/openwin
+
+	"Screensaver" TITLE PIN
+	"Cellular-Automata" MENU
+	  "Automata" TITLE
+		"Ant"			exec xlock -nolock -mode ant -neighbors 4 +truchet
+		"Ant Truchet"		exec xlock -nolock -mode ant -neighbors 4 -truchet
+		"Bee"			exec xlock -nolock -mode ant -neighbors 6 +truchet
+		"Bee Truchet"		exec xlock -nolock -mode ant -neighbors 6 -truchet
+		"Bug"			exec xlock -nolock -mode bug
+		"Demon"			exec xlock -nolock -mode demon
+		"Life"			exec xlock -nolock -mode life
+		"Life1d"		exec xlock -nolock -mode life1d
+		"Life3d"		exec xlock -nolock -mode life3d
+		"Loop"			exec xlock -nolock -mode loop
+		"Voters"		exec xlock -nolock -mode voters
+		"Wator"			exec xlock -nolock -mode wator
+		"Wire"			exec xlock -nolock -mode wire
+		"Random Automata"	DEFAULT exec xlock -nolock -mode random -modelist ant,bug,demon,life,life1d,life3d,loop,voters,wator,wire -fullrandom -neighbors 0
+	"Cellular-Automata" END
+	"Fractal" MENU
+	  "Fractal" TITLE
+		"Drift"			exec xlock -nolock -mode drift -fullrandom
+		"Flame"			exec xlock -nolock -mode flame
+		"Forest"		exec xlock -nolock -mode forest
+		"Fract"		exec xlock -nolock -mode fract
+		"Julia"			exec xlock -nolock -mode julia
+		"Hop"			exec xlock -nolock -mode hop -fullrandom
+		"IFS"			exec xlock -nolock -mode ifs
+		"Lightning"		exec xlock -nolock -mode lightning
+		"Mountain"		exec xlock -nolock -mode mountain
+		"Sierpinski"	exec xlock -nolock -mode sierpinski
+		"Strange"			exec xlock -nolock -mode strange
+		"Triangle"		exec xlock -nolock -mode triangle
+		"Turtle"		exec xlock -nolock -mode turtle
+		"Random Fractal"	DEFAULT exec xlock -nolock -mode random -modelist drift,flame,forest,fract,hop,ifs,julia,lightning,mountain,sierpinski,strange,triangle,turtle -fullrandom
+	"Fractal" END
+	"Geometry" MENU
+	  "Geometry" TITLE
+		"Braid"			exec xlock -nolock -mode braid
+		"Geometry"		exec xlock -nolock -mode geometry
+		"Helix"			exec xlock -nolock -mode helix -fullrandom
+		"Hyper"			exec xlock -nolock -mode hyper
+		"Ico"			exec xlock -nolock -mode ico
+		"Kaleid"		exec xlock -nolock -mode kaleid
+		"Laser"			exec xlock -nolock -mode laser
+		"Lisa"		exec xlock -nolock -mode lisa
+		"Lissie"		exec xlock -nolock -mode lissie
+		"Penrose"		exec xlock -nolock -mode penrose +ammann
+		"Penrose Ammann"	exec xlock -nolock -mode penrose -ammann
+		"Petal"			exec xlock -nolock -mode petal
+		"Qix"			exec xlock -nolock -mode qix
+		"Shape"			exec xlock -nolock -mode shape
+		"Sphere"		exec xlock -nolock -mode sphere
+		"Spiral"		exec xlock -nolock -mode spiral
+		"Spline"		exec xlock -nolock -mode spline
+		"Random Geometry"	DEFAULT exec xlock -nolock -mode random -modelist braid,geometry,helix,hyper,ico,kaleid,laser,lisa,lissie,penrose,petal,qix,shape,sphere,spiral,spline -fullrandom
+	"Geometry" END
+	"Space" MENU
+	  "Space" TITLE
+		"Bouboule"		exec xlock -nolock -mode bouboule +use3d
+		"Bouboule3d"		exec xlock -nolock -mode bouboule -use3d
+		"Galaxy"		exec xlock -nolock -mode galaxy
+		"Grav"			exec xlock -nolock -mode grav +trail +decay
+		"Grav Trail"		exec xlock -nolock -mode grav -trail
+		"Grav Decay"		exec xlock -nolock -mode grav -decay
+		"Rock"			exec xlock -nolock -mode star -rock +use3d -trek 0
+		"Star"			exec xlock -nolock -mode star +rock +use3d -trek 0
+		"Star3d"		exec xlock -nolock -mode star -use3d
+		"Star Trek"		exec xlock -nolock -mode star -trek 100
+		"World"			exec xlock -nolock -mode world
+		"Random Space"	DEFAULT exec xlock -nolock -mode random -modelist bouboule,galaxy,grav,star,world -fullrandom
+	"Space" END
+	"Assorted" MENU
+	  "Assorted" TITLE
+		"Ball"			exec xlock -nolock -mode ball
+		"Bat"			exec xlock -nolock -mode bat
+		"Blot"			exec xlock -nolock -mode blot
+		"Bounce"		exec xlock -nolock -mode bounce
+		"Cartoon"		exec xlock -nolock -mode cartoon
+		"Clock"			exec xlock -nolock -mode clock
+		"Crystal" 	exec xlock -nolock -mode crystal
+		"Daisy"			exec xlock -nolock -mode daisy
+		"Dclock"		exec xlock -nolock -mode dclock
+		"Eyes"			exec xlock -nolock -mode eyes
+		"Flag"			exec xlock -nolock -mode flag 
+		"Image"			exec xlock -nolock -mode image
+		"Marquee"		exec xlock -nolock -mode marquee
+		"Maze"			exec xlock -nolock -mode maze
+		"Nose"			exec xlock -nolock -mode nose
+		"Pacman"		exec xlock -nolock -mode pacman
+		"Puzzle"	DEFAULT exec xlock -nolock -mode puzzle
+		"Pyro"			exec xlock -nolock -mode pyro +use3d
+		"Pyro3d"		exec xlock -nolock -mode pyro -use3d
+		"Roll"			exec xlock -nolock -mode roll
+		"Rotor"			exec xlock -nolock -mode rotor
+		"Slip"			exec xlock -nolock -mode slip
+		"Swarm"			exec xlock -nolock -mode swarm
+		"Swirl"			exec xlock -nolock -mode swirl -install
+		"Tube"			exec xlock -nolock -mode tube -install
+		"Worm"			exec xlock -nolock -mode worm +use3d
+		"Worm3d"		exec xlock -nolock -mode worm -use3d
+	"Assorted" END
+	"GL" DEFAULT MENU
+		"Escher"		exec xlock -nolock -mode escher
+		"Gears"			exec xlock -nolock -mode gears
+		"Morph3d"		exec xlock -nolock -mode morph3d
+		"Pipes"			exec xlock -nolock -mode pipes
+		"Sprongies"		exec xlock -nolock -mode sproingies
+		"Superquadrics"		exec xlock -nolock -mode superquadrics
+		"Random GL"	DEFAULT exec xlock -nolock -mode random -modelist allgl -fullrandom
+	"GL" END
+	"Marquee Messages" MENU
+	  "Marquee Messages" TITLE
+		"Brilliant"			exec xlock -nolock -mode marquee -message "WOW! $LOGNAME, You are Brilliant! "
+		"Love You"		exec xlock -nolock -mode marquee -message "You know, I Love You $LOGNAME."
+		"Available"		exec xlock -nolock -mode marquee -message "Hey, I am available now! "
+	"Marquee Messages" END
+	"Nose Messages" MENU
+	  "Nose Messages" TITLE
+		"Brilliant"			exec xlock -nolock -mode nose -message "WOW! $LOGNAME, You are Brilliant! "
+		"Love You"		exec xlock -nolock -mode nose -message "You know, I Love You $LOGNAME."
+		"Available"		exec xlock -nolock -mode nose -message "Hey, I am available now! "
+	"Nose Messages" END
+	"Special" DEFAULT MENU
+	  "Special" TITLE
+		"Blank"			exec xlock -nolock -mode blank
+		"Bomb"			exec xlock -nolock -mode bomb
+		"Random nice"	DEFAULT	exec xlock -nolock -mode random -modelist allnice -fullrandom -neighbors 0
+		"Random standard"	exec xlock -nolock -mode random -modelist allstandard -fullrandom -neighbors 0
+		"Random stable"	exec xlock -nolock -mode random -modelist allstable -fullrandom -neighbors 0
+		"Random all"	exec xlock -nolock -mode random -modelist all -fullrandom -neighbors 0
+	"Special" END

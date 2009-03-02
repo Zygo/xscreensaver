@@ -1,0 +1,172 @@
+
+
+
+Language assumed to be C
+Complexity threshold =  20
+
+
+
+         Threshold Data Table for Files in:  measure.msr
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   STMTS  LOC    LOC    LOC   CMTS   LINES  %   %  
+
+ant.c
+  init_ant       28   29     0     76    114      8      2    124    6   1 
+  draw_ant       42   48     0     73    108      4      5    115    3   4 
+ball.c
+  draw_ball      21   25     0     64     98      6      0    104    5   0 
+bat.c
+  init_bat       20   24     0     59     83      2      1     86    2   1 
+blank.c
+blot.c
+bomb.c
+bouboule.c
+  init_bouboule  38   49    16     99    185     20     15    219    9   7 
+  draw_bouboule  35   41    17    122    205     19     24    247    8  10 
+bounce.c
+  init_bounce    22   26     0     69     96      3      1    100    3   1 
+braid.c
+  init_braid     24   26     0     51     80     11      2     93   12   2 
+  draw_braid     33   35    12     74    143      7      2    152    4   1 
+bug.c
+  init_bug       26   30     3     79    113      7     10    124    5   8 
+cartoon.c
+clock.c
+color.c
+config.h
+daisy.c
+dclock.c
+demon.c
+  draw_demon     44   44     0     75    121      3     10    134    2   7 
+drift.c
+  iter           20   27     2     72    110     17     15    140   13  12 
+eyes.c
+fadeplot.c
+flag.c
+flag.h
+flame.c
+  recurse        30   39     2     82    127      8     15    136    5  10 
+forest.c
+galaxy.c
+gear.c
+geometry.c
+grav.c
+helix.c
+hop.c
+hyper.c
+image.c
+julia.c
+kaleid.c
+laser.c
+  draw_laser_on  21   21     0     65     91      7      0     98    7   0 
+life.c
+life1d.c
+  init_life1d    24   27     0     69    106      9      0    115    7   0 
+life3d.c
+  SortList       20   25     0     71     96     14      4    114   12   4 
+  shooter        24   24     2     93    110      1      1    112    0   0 
+lightning.c
+lissie.c
+logout.c
+loop.c
+marquee.c
+  draw_marquee   25   25     0     61     99      2      1    102    1   1 
+maze.c
+mode.c
+mode.h
+mountain.c
+nose.c
+  move           22   28     0     37     65      2      2     68    2   2 
+option.c
+pacman.c
+  movepac        44   55    31    123    227     12      4    243    5   1 
+  init_pacman    27   32     2     79    125     11      1    137    8   0 
+  draw_pacman    24   32     0     61    101     14      0    115   12   0 
+passwd.c
+  checkPasswd    31   44    26     57    118     17     22    153   12  15 
+  set_multiple   47   47     9    120    170     15     19    205    8  10 
+penrose.c
+  add_tile       25   30     0     59     96      7      9    112    6   8 
+  add_random_ti  23   25     0     58     78      2      3     82    2   3 
+petal.c
+puzzle.c
+  init_puzzle    25   28     5     80    133     12      0    145    8   0 
+pyro.c
+  burst          21   22     0     72     96      5      2    102    4   2 
+qix.c
+random.c
+  strpmtok       20   20     0     34     57      3      0     60    5   0 
+ras.c
+ras.h
+resource.c
+  open_display   20   26    10     39     72     13      7     91   15   8 
+  getResources   38   38    17    120    193     29      9    233   13   4 
+roll.c
+  draw_roll      20   30     0     47     70      2      0     72    2   0 
+rotor.c
+shape.c
+slip.c
+sound.c
+sphere.c
+spiral.c
+  draw_spiral    21   29     0     48     73     16      6     95   17   7 
+spline.c
+  draw_spline    24   28     3     77    129     13      7    149    9   5 
+star.c
+  star_draw      22   28     0     43     80      1      4     86    1   4 
+swarm.c
+swirl.c
+  create_colour  26   43     8     47     89     15     18    122   14  16 
+  create_knots   33   34     0     49     84      8     12    104    8  12 
+tri.c
+triangle.c
+trig.c
+tub.c
+tube.c
+turtle.c
+utils.c
+  getWords       42   45     2    105    170      7      5    181    3   2 
+  getImage       28   33    12     48     92      7      1     99    7   1 
+version.h
+vroot.h
+wator.c
+  init_wator     21   24     0     72    102      7      5    112    6   4 
+  draw_wator     28   36     2    117    152      5     16    161    3   9 
+wire.c
+world.c
+worm.c
+  init_worm      21   23     0     54     80     11      2     91   12   2 
+xbm.c
+  XbmReadFileTo  22   34     0     64     92      6     12    108    6  11 
+xlock.c
+  statusUpdate   35   37    40     19    143     11      4    154    7   2 
+  ReadXString    53   56     9     88    163     10     19    187    5  10 
+  getPassword    26   28    14     79    127     23      6    154   15   4 
+  justDisplay    28   32    10     50     90     11      7    108   10   7 
+  main           69   76    31    200    314     42     27    381   11   7 
+xlock.h
+xmlock.c
+
+
+
+     [ Those files above without numeric output have no         ]
+     [ subroutines with complexities at or above the threshold. ]
+
+
+
+Complexity Profile:        724 Modules
+
+Complexity Range       Count 
+   1 ... 5              441
+   6 ... 10             144
+  11 ... 15              73
+  16 ... 20              24
+  21 ... 25              19
+  26 ... 30               9
+  31 ... 35               5
+  36 ... 40               2
+  41 ... 45               4
+  46 ... 50               1
+  51 ... 100              2
+ 101 .......              0

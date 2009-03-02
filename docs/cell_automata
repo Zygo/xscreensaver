@@ -1,0 +1,111 @@
+There are a few modes devoted to cellular automata.
+I also added a bunch of options.  So I am providing a little explaination
+so it is not overwhelming.  I also say a little something at the top of the
+C file of each.  If your favorite little automaton is not here... let me know.
+
+The modes are ant, bug, demon, life, life1d, life3d, loop, wator, wire.
+use -install if netscape is stealing all your colors... :)
+"xlock -help" may be helpful too.
+
+ant: Turing Machines where the tape is the screen.
+ Special options:
+  -truchet: this shows the path (good to use with -size at
+    least 10)  Truchet option turned off if its not Turk's ants.
+
+ Mode options:
+  -batchcount <int>: number of ants
+  -size <int>: size of ant in pixels
+  -delay <int>: controls the length of a cycle in microsec
+  -cycles <int>: how many cycles before a new ant
+  
+  -neighbors <int>: 0 random, 4 ants, 6 bees
+  -verbose: verbose help identify ant  (good to use with -inwindow or -debug)
+
+bug: Evolving bugs learn to walk straight (except in the garden)
+ Mode options:
+  -batchcount <int>: number of bugs
+  -size <int>: size of bug in pixels
+  -delay <int>: controls the length of a cycle in microsec
+  -cycles <int>: how many cycles before a new world
+
+demon:
+ Mode options:
+  -batchcount <int>: number of states
+  -size <int>: size of cell in pixels
+  -delay <int>: controls the length of a cycle in microsec
+  -cycles <int>: how many cycles before a new screen
+
+  -neighbors <int>: 0 random, 4 rectangular, 6 hexagonal
+
+life:
+ Special options:
+  -rule <int>: where the integer has 4 digits conforming to the parameters
+     <living_min><living_max><birth_min><birth_max>, so Conway's rule
+     is 2333.  This unfortuantely makes the artificial constraint that
+     the parameters are contiguous between min and max.
+
+ Mode options:
+  -batchcount <int>: number of cycles before glider (if one exists)
+  -size <int>: size of cell in pixels
+  -delay <int>: controls the length of a cycle in microsec
+  -cycles <int>: how many cycles before a new lifeform
+
+  -verbose: verbose help identify life (to be referenced with the source code)
+     (good to use with -inwindow or -debug)
+
+life1d: 1 dimensional life
+ Special options:
+  -totalistic: (default) totalistic 1d life
+  +totalistic: LCAU collection  These rules may not be symmetric and are
+    more general (totalistic is a subset).
+
+ Mode options:
+  -size <int>: size of cell in pixels
+  -delay <int>: controls the length of a cycle in microsec
+  -cycles <int>: how many pages before a new lifeform
+
+  -verbose: verbose help identify life (to be referenced with the source code)
+     (good to use with -inwindow or -debug)
+
+life3d: 3 dimensional life
+ Special options:
+  -rule3d <int>: where the integer has 4 digits conforming to the parameters
+     <living_min><living_max><birth_min><birth_max>.  2 rules with gliders
+     are 4555 & 5766, to other good rules are 5655 & 6767.  This
+     unfortuantely makes the artificial constraint that the parameters are
+     contiguous between min and max.
+  Two exceptions:
+    -rule3d 0:  Picks a random rule from all rules that have known patterns
+    -rule3d 1:  Picks a random rule from all rules that have known gliders
+
+ Mode options:
+  -batchcount <int>: number of cycles before glider (if one exists)
+  -size <int>: size of cell in pixels
+  -delay <int>: controls the length of a cycle in microsec
+  -cycles <int>: how many cycles before a new lifeform
+
+  -verbose: verbose help identify life (to be referenced with the source code)
+     (good to use with -inwindow or -debug)
+
+loop: Chris Langton's loops, its always the same but oriented 4 ways
+    this is far as I know is the best example of a self-generating life form.
+    Caution: this may cause you to question G-d's existence. :)
+ Mode options:
+  -size <int>: size of cell in pixels
+  -delay <int>: controls the length of a cycle in microsec
+  -cycles <int>: how many cycles before it starts over
+
+wator: sharks and fish on a water torus planet
+ Mode options:
+  -batchcount <int>: breed time for the fish
+  -size <int>: size of cell in pixels (sharks and fish become squares
+    and circles)
+  -delay <int>: controls the length of a cycle in microsec
+  -cycles <int>: how many cycles before a new world starts
+
+wire: (this mode lacks a good circuit generator)
+ Mode options:
+  -batchcount <int>: length of random circuit
+  -size <int>: size of cell in pixels
+  -delay <int>: controls the length of a cycle in microsec
+  -cycles <int>: how many cycles before a circuit

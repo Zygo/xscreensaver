@@ -1,0 +1,3478 @@
+
+          MEASURE Data Table for Files in:  measure.lis
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+ant.c
+  fillcell        6    7     0     10     20      2      0     22    9   0 yes
+  truchetcell     6    6     0     22     47      2      2     51    4   4 yes
+  drawcell        3    3     0     16     21      2      0     23    8   0 yes
+  drawtruchet     3    4     0      6     10      1      0     11    9   0 yes
+  draw_anant      8    9     2     23     40      3      3     43    6   6 yes
+  RandomSoup      3    3     0      8     11      1      0     12    8   0 yes
+  GetTable        3    3     0     14     18      1      0     19    5   0 yes
+  GetTurk         5    5     0     15     19      2      3     24    9  13 yes
+  init_ant       28   29     0     76    114      8      2    124    6   1 yes
+  draw_ant       42   48     0     73    108      4      5    115    3   4 yes
+  release_ant     9    9     0     14     23      2      0     25    8   0 yes
+  refresh_ant     1    1     0      4      5      1      0      6   16   0
+  global/file     3    3    33     38    151     34     68    233   18  31 yes
+    file-total: 120  130    35    319    587     63     83    708    9  12
+ball.c
+  collided        3    3     0     54     61     14      0     75   18   0 yes
+  inwin           7   10     0     15     24      1      0     25    4   0 yes
+  randomball     11   12     0     50     66     13      3     81   16   4 yes
+  init_ball      15   17     0     43     62      6      2     70    8   3 yes
+  draw_ball      21   25     0     64     98      6      0    104    5   0 yes
+  release_ball    6    6     0     11     17      3      0     20   15   0 yes
+  refresh_ball    1    1     0      2      3      0      0      3    0   0
+  global/file     1    1    14     21     52     19     15     86   26  22 yes
+    file-total:  65   75    14    260    383     62     20    464   13   4
+bat.c
+  init_images    17   18     4     40     62      6      3     68    8   4 yes
+  checkCollisio   7    8     0     34     44      1      0     45    2   0 yes
+  drawabat        5    5     0     16     26      1      0     27    3   0 yes
+  movebat         6    6     0     23     28      0      9     36    0  24 yes
+  flapbat         2    2     0      7     10      0      0     10    0   0 yes
+  collide         3    3     0      8     11      1      0     12    8   0 yes
+  init_bat       20   24     0     59     83      2      1     86    2   1 yes
+  draw_bat        5    5     0      9     14      1      1     15    6   6 yes
+  release_bat     8    8     2     13     22      4      1     26   15   4 yes
+  refresh_bat     1    1     0      1      2      0      1      3    0  33
+  global/file     6    6    37     31    105     30     29    175   22  21 yes
+    file-total:  80   86    43    241    407     46     45    503   10   9
+blank.c
+  init_blank      2    3     0      3      5      0      1      6    0  16
+  draw_blank      3    4     0      4      8      0      1      9    0  11
+  release_blank   2    3     0      4      6      0      1      7    0  14
+  refresh_blank   1    1     0      1      2      0      1      3    0  33
+  global/file     1    1     3      2     14      9     12     40   39  46 yes
+    file-total:   9   12     3     14     35      9     16     65   20  31
+blot.c
+  init_blot       9   10     0     25     35      4      1     40   10   2 yes
+  draw_blot       8    9     0     35     44      1      0     45    2   0 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  release_blot    4    4     0      8     12      1      0     13    7   0 yes
+  refresh_blot    1    1     0      2      3      0      0      3    0   0
+  global/file     1    1     3     14     27     13     16     62   32  37 yes
+    file-total:  23   25     3     84    121     19     17    163   13  12
+bomb.c
+  explode         5    8     6     15     26      2      4     33    7  13 yes
+  rivet           2    2     0      9     14      1      0     15    6   0 yes
+  detonator       4    5     0     19     30      2      4     38    6  11 yes
+  init_bomb      12   13     5     39     55      5     13     69    8  19 yes
+  draw_bomb       8    8     6     31     51      3      5     56    5   8 yes
+  release_bomb    3    3     0      7     10      0      0     10    0   0 yes
+  refresh_bomb    1    1     0      2      3      0      0      3    0   0
+  change_bomb     2    2     0     10     12      1      1     13    7   7 yes
+  global/file     4    4    21     16     55     22     25    102   28  31 yes
+    file-total:  41   46    38    148    256     36     52    339   12  16
+bouboule.c
+  sinvary         4    4     0      8     14      3      0     17   17   0 yes
+  sininit         3    3     0     11     19      0      1     20    0   5 yes
+  sinfree         2    2     0      7      9      1      0     10   10   0 yes
+  init_bouboule  38   49    16     99    185     20     15    219    9   7 yes
+  draw_bouboule  35   41    17    122    205     19     24    247    8  10 yes
+  release_boubo   9   10     2     20     30      2      0     32    6   0 yes
+  refresh_boubo   1    1     0      1      2      0      1      3    0  33
+  global/file     8    9    44     37    104     28    116    240   21  52 yes
+    file-total: 100  119    79    305    568     73    157    788   11  21
+bounce.c
+  checkCollisio   7    8     0     34     44      1      0     45    2   0 yes
+  drawball        7    7     8     27     45      3      0     48    6   0 yes
+  moveball        7    7     0     28     33      0      6     39    0  15 yes
+  spinball        2    2     0      7     10      0      0     10    0   0 yes
+  collide         3    3     0      8     11      1      0     12    8   0 yes
+  init_bounce    22   26     0     69     96      3      1    100    3   1 yes
+  draw_bounce     5    5     0      9     14      1      1     15    6   6 yes
+  release_bounc   6    6     0     11     17      2      0     19   10   0 yes
+  refresh_bounc   1    1     0      1      2      0      1      3    0  33
+  global/file     3    3    25     23     69     22     37    142   24  34 yes
+    file-total:  63   68    33    217    341     33     46    433    8  11
+braid.c
+  applyword       7    7     0     10     17      1      0     18    5   0 yes
+  applywordto     4    4     0      9     12      1      0     13    7   0 yes
+  applywordback   4    4     0      9     12      1      0     13    7   0 yes
+  init_braid     24   26     0     51     80     11      2     93   12   2 yes
+  draw_braid     33   35    12     74    143      7      2    152    4   1 yes
+  release_braid   2    2     0      4      6      0      0      6    0   0 yes
+  refresh_braid   1    1     0      1      2      0      1      3    0  33
+  global/file     5    5    23     16     55     18     14     87   24  20 yes
+    file-total:  80   84    35    174    327     39     19    385   10   5
+bug.c
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  cart2hex        1    1     0      3      4      0      0      4    0   0
+  hex2cart        1    1     0      3      4      0      0      4    0   0
+  hexcmove        7   11     0     21     30      0      0     30    0   0 yes
+  neighbor       13   19     0     15     28      1      0     29    3   0 yes
+  drawabacteriu   2    2     0      7     12      1      0     13    7   0 yes
+  drawabug        2    2     0      7     12      1      0     13    7   0 yes
+  eraseabug       1    1     0      6      9      1      0     10   10   0 yes
+  init_buglist    1    1     0     13     14      1      2     17    6  12 yes
+  addto_buglist   1    1     0      7      8      0      0      8    0   0 yes
+  removefrom_bu   1    1     0      5      6      0      0      6    0   0 yes
+  dupin_buglist   1    1     0      9     10      1      0     11    9   0 yes
+  cutfrom_bugli   1    1     0      9     10      0      0     10    0   0 yes
+  reattach_bugl   1    1     0      8      9      0      0      9    0   0 yes
+  flush_buglist   3    3     0     11     14      1      2     17    6  12 yes
+  dirbug          3    3     0      8     11      1      1     12    8   8 yes
+  mutatebug       6    6     0     12     18      1      0     19    5   0 yes
+  makebacteria    3    5     0     12     15      1      1     17    6   6 yes
+  redrawbacteri   2    2     0      7      9      2      0     11   18   0 yes
+  init_bug       26   30     3     79    113      7     10    124    5   8 yes
+  draw_bug       15   18     0     63     81      2      6     84    2   6 yes
+  release_bug     5    5     0     14     19      2      0     21    9   0 yes
+  refresh_bug     1    1     0      4      5      1      0      6   16   0
+  global/file     2    2    26     30    105     37     28    170   26  21 yes
+    file-total:  99  118    29    353    546     61     50    645   10   8
+cartoon.c
+  initimage      10   11     2     30     43      4      1     47    8   2 yes
+  put_cartoon     2    2     0      5     13      1      2     15    7  13
+  select_cartoo   7    7     6     11     22      2      2     24    8   8 yes
+  move_cartoon    4   10     0     15     21      5      4     29   19  16 yes
+  erase_image     9    9     0      9     18      1      1     19    5   5 yes
+  init_cartoon    7    7     0     23     31      9      1     40   22   3 yes
+  draw_cartoon    2    2     0      6      8      1      1      9   11  11
+  release_carto   7    7     2     11     19      2      1     21    9   5 yes
+  global/file     7    7    36     18     79     24     41    156   23  34 yes
+    file-total:  55   62    46    128    254     49     54    360   16  17
+clock.c
+  myrand          1    1     0      2      3      0      0      3    0   0 yes
+  HourToAngle     1    1     0      2      5      0      0      5    0   0
+  MinutesToAngl   1    1     0      2      4      0      0      4    0   0
+  SecondsToAngl   1    1     0      2      3      0      0      3    0   0
+  DrawDisk        2    2     0      4     10      1      0     11    9   0 yes
+  DrawBorder      2    2     0      8     16      3      0     19   15   0 yes
+  DrawJewel       2    2     0      8     14      1      0     15    6   0 yes
+  DrawHand        2    2     0     14     22      1      1     24    4   4 yes
+  real_draw_clo   1    1     0      7     11      1      0     12    8   0 yes
+  collide         3    3     0      8     12      1      0     13    7   0 yes
+  new_clock_sta   7    7     0     31     50      6      5     61   10   9 yes
+  update_clock    1    1     0     10     19      1      0     20    5   0 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  init_clock     13   13     0     32     47      7      2     56   12   4 yes
+  draw_clock     10   10     0     14     23      1      0     24    4   0 yes
+  release_clock   4    4     0      8     12      2      0     14   14   0 yes
+  refresh_clock   1    1     0      3      4      1      0      5   20   0
+  global/file     2    2    21     29     87     25     28    127   22  24 yes
+    file-total:  54   54    21    184    342     51     36    416   12   9
+color.c
+  hsb2rgb         7    7     0     37     45      1      2     46    2   4 yes
+  hsbramp         2    2     0     10     12      1      0     13    7   0 yes
+  allocPixel      2    2     0      8     11      1      0     12    8   0 yes
+  fixColormap    16   19     2     50     69      6      9     84    8  11 yes
+  setColormap     2    2     0      3      5      0      9     14    0  64
+  reserveColors   4    7     2     32     41      6      3     50   12   6 yes
+  global/file     2    2     5      1     22     16     19     68   42  46 yes
+    file-total:  35   41     9    141    205     31     42    287   13  17
+config.h
+  global/file     0    0    26      0     26     52     94    172   64  78
+    file-total:   0    0    26      0     26     52     94    172   64  78
+daisy.c
+  drawstem        3    3     3      8     15      1      0     16    6   0 yes
+  drawpetals     11   12     0     34     52      1      0     53    1   0 yes
+  drawcenter      4    5     0     13     19      1      1     21    5   5 yes
+  drawdaisy       5    5     6     21     35      1      3     38    2   7 yes
+  init_daisy      5    5     0     14     20      3      0     23   13   0 yes
+  draw_daisy      3    3     0      4      7      1      0      8   12   0 yes
+  release_daisy   2    2     0      4      6      0      0      6    0   0 yes
+  refresh_daisy   2    2     0      4      7      1      0      8   12   0 yes
+  global/file     1    1     8     10     37     18     13     71   32  26 yes
+    file-total:  36   38    17    112    198     27     17    244   12   7
+dclock.c
+  drawDclock     18   23     0     73    105      7      8    121    6   7 yes
+  init_dclock    15   15     0     50     67      9      5     77   11   6 yes
+  draw_dclock     3    3     0      5      8      1      0      9   11   0 yes
+  release_dcloc   7    7     0     14     21      3      0     24   12   0 yes
+  refresh_dcloc   1    1     0      1      2      0      1      3    0  33
+  global/file     1    1     5     20     38     14      7     61   26  15 yes
+    file-total:  45   50     5    163    241     34     21    295   12   8
+demon.c
+  drawcell        6    7     0     13     26      2      0     28    7   0 yes
+  addtolist       1    1     0      9     10      1      0     11    9   0 yes
+  print_state     2    2     0     10     13      1      0     14    7   0 yes
+  free_state      3    3     0      8     11      1      0     12    8   0 yes
+  free_list       2    2     0      3      5      1      0      6   16   0
+  free_struct     6    6     0      6     12      0      0     12    0   0 yes
+  draw_state      7    7     0     34     45      4      5     52    8  10 yes
+  RandomSoup      3    3     0      8     12      1      0     13    7   0 yes
+  init_demon     18   18     0     54     81     10      0     91   10   0 yes
+  draw_demon     44   44     0     75    121      3     10    134    2   7 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  release_demon   3    3     0      6      9      1      0     10   10   0 yes
+  refresh_demon   1    1     0      4      5      1      0      6   16   0
+  global/file     2    2     9     22     66     26     18    119   28  21 yes
+    file-total:  98   99     9    252    416     52     33    508   11   7
+drift.c
+  halfrandom      2    2     0     11     13      1      0     14    7   0 yes
+  frandom         8    8     0     29     39      4      0     43    9   0 yes
+  initmode        5    7     1     24     31      5      0     37   13   0 yes
+  pick_df_coefs   6    6     0     11     17      2      0     19   10   0 yes
+  initfractal    11   12     1     21     37      4      0     42    9   0 yes
+  init_drift      3    3     0     10     14      3      0     17   17   0 yes
+  iter           20   27     2     72    110     17     15    140   13  12 yes
+  draw            8   11     0     32     41      6      0     47   12   0 yes
+  draw_flush      5    5     0     15     22      2      0     24    8   0 yes
+  draw_drift     11   12     0     21     33      4      0     37   10   0 yes
+  release_drift   2    2     0      4      6      0      0      6    0   0 yes
+  refresh_drift   1    1     0      2      3      0      0      3    0   0
+  global/file     1    1    13     30     83     32     35    139   27  29 yes
+    file-total:  83   97    17    282    449     80     50    568   15  10
+eyes.c
+  TFillArc        4    4     0     18     22      2      0     24    8   0 yes
+  SetTransform    1    1     0      5      6      0      0      6    0   0 yes
+  join_rects      5    5     0     12     13      1      5     18    7  27
+  computePupil    3    4     0     31     34      1      0     35    2   0 yes
+  make_eye        2    2     0     21     39      7      5     51   15  11
+  fly_touches     7    7     0      8     13      1      0     14    7   0 yes
+  fly_touches_e   2    3     0      4      6      0      0      6    0   0 yes
+  eyes_overlap    5    5     0      6     11      0      0     11    0   0 yes
+  init_fly        4    4     0     23     27      5     10     33   15  27 yes
+  unpaint_fly     2    2     0     11     15      1      0     16    6   0 yes
+  paint_fly       2    2     0     13     17      1      2     21    5  10
+  move_fly       13   13     0     37     46      4     14     56    8  23 yes
+  create_eyes    18   19     0     64     82     10     24    106   10  22 yes
+  paint_eyes     12   15     0     40     58      4     24     83    6  29 yes
+  one_time_init   4    4     0      6     11      0      1     11    0   8 yes
+  free_eyes       4    4     0      6     10      1      0     11    9   0 yes
+  init_eyes      14   14     0     36     55      7      8     66   11  12 yes
+  draw_eyes       3    3     0      9     15      3      1     19   16   6 yes
+  release_eyes    6    6     0     13     19      3      0     22   13   0 yes
+  refresh_eyes    3    3     0      8     11      2      2     14   15  15
+  global/file     2    4    46     39    131     78     77    329   37  37 yes
+    file-total: 116  124    46    410    641    131    173    952   16  21
+fadeplot.c
+  init_fadeplot   8    8     0     24     32      4      1     37   11   3 yes
+  draw_fadeplot  13   13     4     36     58      5      5     68    7   7 yes
+  refresh_fadep   1    1     0      1      2      1      0      3   33   0
+  release_fadep   1    1     0      1      2      0      1      3    0  33
+  global/file     1    1     6     10     89     15     20    131   14  18 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+    file-total:  24   24    10     72    183     25     27    242   12  12
+flag.c
+  random_num      1    1     0      2      3      0      0      3    0   0
+  initSintab      2    2     0      4      6      1      0      7   14   0 yes
+  affiche         8    8     3     13     29      1      0     30    3   0 yes
+  init_flag       9   12     0     37     50      6      3     57   10   5 yes
+  draw_flag       5    6     0     21     29      1      1     31    3   3 yes
+  release_flag    4    4     0      6     10      1      0     11    9   0 yes
+  refresh_flag    1    1     0      1      2      0      1      3    0  33
+  global/file     1    1    16     17     49     15      8     76   23  14 yes
+    file-total:  31   35    19    101    178     25     13    218   12   6
+flag.h
+  global/file     0    0     2      1     63      0      0     63    0   0 yes
+    file-total:   0    0     2      1     63      0      0     63    0   0
+flame.c
+  halfrandom      2    2     0     10     12      1      0     13    7   0 yes
+  recurse        30   39     2     82    127      8     15    136    5  10 yes
+  init_flame      4    4     0     17     22      6      0     28   21   0 yes
+  draw_flame      8    8     0     21     31      4      3     38   11   8 yes
+  release_flame   2    2     0      4      6      0      0      6    0   0 yes
+  refresh_flame   1    1     0      2      3      0      0      3    0   0
+  global/file     1    1     6     16     37     14     12     67   27  24 yes
+    file-total:  48   57     8    152    238     33     30    291   12  11
+forest.c
+  draw_tree       4    4     0     25     29     10      2     41   25   6 yes
+  init_forest     5    5     0     12     18      3      0     21   14   0 yes
+  draw_forest     4    4     0     23     27      6      0     33   18   0 yes
+  release_fores   2    2     0      4      6      0      0      6    0   0 yes
+  refresh_fores   2    2     0      4      7      1      0      8   12   0 yes
+  global/file     1    1    14      8     36     20     24     78   35  40 yes
+    file-total:  18   18    14     76    123     40     26    187   24  17
+galaxy.c
+  free_galaxies   4    4     0      8     12      2      0     14   14   0 yes
+  startover      10   10     2     69     91     16      7    110   14   7 yes
+  init_galaxy     5    5     0     19     26      4      0     30   13   0 yes
+  draw_galaxy    14   20     2     69     93     12      3    105   11   3 yes
+  release_galax   3    3     0      6      9      1      0     10   10   0 yes
+  refresh_galax   1    1     0      1      2      0      1      3    0  33
+  global/file     3    3    23     31     70     20     30    109   22  30 yes
+    file-total:  40   46    27    203    303     55     41    381   15  11
+gear.c
+  gear            7    7     0     79     86     21      6    113   19   6 yes
+  draw            2    2     0     26     28      8      1     37   22   3 yes
+  key             8    8     0     16     27      0      0     27    0   0 yes
+  reshape         1    1     0     10     11      2      0     13   15   0 yes
+  pinit           4    4     0     35     43      4      1     48    8   2 yes
+  init_gear       4    4     0     22     28      6      5     39   17  15 yes
+  draw_gear       2    2     0      9     10      4      1     15   28   9 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  release_gear    7    7     0     11     18      2      0     20   10   0 yes
+  global/file     4    4    18     16     53     32     21    117   37  28 yes
+    file-total:  39   39    18    224    304     79     35    429   20  10
+geometry.c
+  eraselines      3    3     0      7     12      1      0     13    7   0 yes
+  drawlines       3    3     0      6     11      1      0     12    8   0 yes
+  init_geometry   9    9     0     38     49      6      3     57   10   5 yes
+  draw_geometry   6    6     0     28     37      5      2     42   11   5 yes
+  release_geome   4    4     0      8     12      2      0     14   14   0 yes
+  refresh_geome   1    1     0      1      2      0      1      3    0  33
+  global/file     1    1     7     16     38     15     10     69   28  20 yes
+    file-total:  27   27     7    104    161     30     16    210   15   9
+grav.c
+  init_planet     3    3     0     19     25      4      3     32   13  10 yes
+  draw_planet     8    8     0     37     47      5      6     57    9  11 yes
+  init_grav       8    8     0     23     35      7      2     43   16   5 yes
+  draw_grav       6    6     0     15     26      4      3     33   13  10 yes
+  release_grav    4    4     0      8     12      2      0     14   14   0 yes
+  refresh_grav    1    1     0      1      2      0      1      3    0  33
+  global/file     3    6    37     20     85     25     10    120   22  10 yes
+    file-total:  33   36    37    123    232     47     25    302   16   9
+helix.c
+  gcd             3    3     0      7      9      1      0     10   10   0 yes
+  helix           7    7     1     28     39      3      0     42    7   0 yes
+  random_helix    7    7     2     30     40      8      0     48   16   0 yes
+  init_helix      6    6     0     22     28      3      0     31    9   0 yes
+  draw_helix      3    3     0      6     10      1      0     11    9   0 yes
+  release_helix   2    2     0      4      6      0      0      6    0   0 yes
+  refresh_helix   1    1     0      3      4      1      0      5   20   0
+  global/file     1    1     4     12     34     16     15     70   32  30 yes
+    file-total:  30   30     7    112    170     33     15    223   16   8
+hop.c
+  init_hop       11   11     3     35     52      6      3     62   10   5 yes
+  draw_hop        9    9     0     33     45      1      0     46    2   0 yes
+  release_hop     3    3     0      7     10      0      0     10    0   0 yes
+  refresh_hop     1    1     0      2      3      0      0      3    0   0
+  global/file     1    1     7     18     35     13     25     76   27  41 yes
+    file-total:  25   25    10     95    145     20     28    197   12  16
+hyper.c
+  move_line       5    8     0     25     33      2      0     35    5   0 yes
+  init_hyper     12   12     0     37     51      5      0     56    8   0 yes
+  draw_hyper      7    8     0     52     74     10      0     84   11   0 yes
+  release_hyper   4    4     0      8     12      2      0     14   14   0 yes
+  refresh_hyper   1    1     0      4      5      1      0      6   16   0
+  global/file     2    2    14     22     51     17     14     88   25  21 yes
+    file-total:  31   35    14    148    226     37     14    283   14   5
+image.c
+  init_image     14   15     2     35     57      3      0     60    5   0 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  draw_image      3    4     0     12     18      1      0     19    5   0 yes
+  release_image   6    6     0     12     18      2      0     20   10   0 yes
+  refresh_image   5    7     0     10     18      1      0     19    5   0 yes
+  global/file     3    4    14     19     48     18     12     84   27  20 yes
+    file-total:  31   36    16     88    159     25     12    202   13   7
+julia.c
+  apply           2    2     0     15     19      6      2     26   24   9 yes
+  incr            1    1     0      5      6      1      0      7   14   0 yes
+  init_julia     15   16     0     43     66      6      0     72    8   0 yes
+  draw_julia     11   11     0     58     75     13      7     94   14   8 yes
+  release_julia   8    8     0     14     22      2      0     24    8   0 yes
+  refresh_julia   1    1     0      4      5      1      0      6   16   0
+  global/file     1    1     5     20     39     12     17     72   23  30 yes
+    file-total:  39   40     5    159    232     41     26    301   15  10
+kaleid.c
+  init_kaleid     8    8     0     24     31      2      0     33    6   0 yes
+  draw_kaleid     9    9     0     81     90      2      0     92    2   0 yes
+  release_kalei   2    2     0      4      6      0      0      6    0   0 yes
+  refresh_kalei   1    1     0      2      3      0      0      3    0   0
+  global/file     1    1     4     15     30     13      9     58   30  23 yes
+    file-total:  21   21     4    126    160     17      9    192    9   5
+laser.c
+  init_laser     17   17     0     55     76     11      1     88   12   1 yes
+  draw_laser_on  21   21     0     65     91      7      0     98    7   0 yes
+  draw_laser      3    3     0      5      8      2      0     10   20   0 yes
+  release_laser   5    5     0      9     14      2      0     16   12   0 yes
+  refresh_laser   1    1     0      1      2      0      1      3    0  33
+  global/file     1    1    13     27     55     22     32     90   28  36 yes
+    file-total:  48   48    13    162    246     44     34    305   15  12
+life.c
+  drawcell        4    4     0     14     23      3      1     27   11   4 yes
+  erasecell       1    1     0      4      6      1      0      7   14   0 yes
+  spawn           5    5     0     42     48      2      0     50    4   0 yes
+  ckill           5    5     0     42     48      1      0     49    2   0 yes
+  setcell         1    1     0      6      7      1      0      8   12   0 yes
+  alloccells      1    1     0      5      8      1      0      9   11   0 yes
+  freecells       5    5     0      5     10      0      0     10    0   0 yes
+  init_fates      3    5     0      7     10      1      0     11    9   0 yes
+  RandomSoup      6   10     0      7     14      1      0     15    6   0 yes
+  GetPattern      4    7     0     11     15      1      0     16    6   0 yes
+  shooter         7    7     0     17     22      1      1     24    4   4 yes
+  init_life      13   16     0     49     70      5      4     81    6   5 yes
+  draw_life      11   12     0     31     45      5      6     57   10  11 yes
+  release_life    3    3     0      6      9      1      0     10   10   0 yes
+  refresh_life    1    1     0      1      2      0      1      3    0  33
+  change_life     4    4     0     13     19      2      0     21    9   0 yes
+  global/file     1    1    22     25    800     46     97    895    5  10 yes
+    file-total:  75   88    22    285   1156     72    110   1293    5   8
+life1d.c
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  drawcell        5    5     0     22     33      2      0     35    5   0 yes
+  RandomSoup      4    6     0      5      9      1      0     10   10   0 yes
+  power           2    2     0      5      7      1      1      8   12  12
+  GetRule        12   12     8     30     47      3      1     50    6   2 yes
+  compare         5    5     0     15     20      1      0     21    4   0 yes
+  init_life1d    24   27     0     69    106      9      0    115    7   0 yes
+  draw_life1d    17   17     0     47     74      7      0     81    8   0 yes
+  release_life1  10   10     0     16     26      2      0     28    7   0 yes
+  refresh_life1   3    3     0      6      9      1      0     10   10   0 yes
+  global/file     5    5    31     33    308     44    112    395   12  26 yes
+    file-total:  87   92    39    248    639     71    114    753   10  15
+life3d.c
+  Rule2Array      5    5     0      7     14      0      0     14    0   0 yes
+  Array2Rule      5    5     0      7     14      0      0     14    0   0 yes
+  Init3D          1    1     0      4      5      0      0      5    0   0
+  NewCell         1    1     0      2      3      0      0      3    0   0
+  AddToList       2    2     0     14     16      1      0     17    5   0 yes
+  AddToEraseLis   1    1     0      5      6      0      0      6    0   0 yes
+  DelFromList     5    5     0     10     17      2      0     19   10   0 yes
+  DelFromEraseL   1    1     0      4      5      0      0      5    0   0
+  MemInit         2    2     0      4      6      1      0      7   14   0 yes
+  BaseOffset      2    2     0      4      6      1      2      9   14  25 yes
+  GetMem          2    2     0      5      7      1      0      8   12   0 yes
+  SetMem          2    2     0      5      7      2      0      9   22   0 yes
+  ChangeMem       2    2     0      5      7      1      0      8   12   0 yes
+  ClearMem        6    7     0      7     13      1      0     14    7   0 yes
+  IncrementNbrs   5    7     0      6     12      1      0     13    7   0 yes
+  End3D           3    3     0      9     12      1      0     13    7   0 yes
+  RunLife3D      11   15     0     25     38      2      8     49    5  17 yes
+  CountCells3D    2    2     0      8     10      1      0     11    9   0 yes
+  DisplayList     2    2     0      9     11      1      0     12    8   0 yes
+  RandomSoup      7    7     0      7     14      1      0     15    6   0 yes
+  GetPattern      8   13     0     21     31      1      0     32    3   0 yes
+  NewViewpoint    1    1     0     11     12      1      0     13    7   0 yes
+  NewPoint        1    1     0      6      7      1      0      8   12   0 yes
+  SortList       20   25     0     71     96     14      4    114   12   4 yes
+  DrawFace        3    5     0     16     21      2      0     23    8   0 yes
+  DrawCube       13   16     0     28     43      3      2     47    6   4 yes
+  DrawScreen      5    5     2     20     31      5      5     40   13  13 yes
+  shooter        24   24     2     93    110      1      1    112    0   0 yes
+  initrule        2    2     0      7      9      1      0     10   10   0 yes
+  init_life3d    12   13     0     51     70      8     10     88   10  12 yes
+  draw_life3d     4    6     0      7     11      3      3     19   21  21
+  release_life3   3    3     0      8     11      2      1     13   15   8 yes
+  refresh_life3   1    1     0      1      2      0      1      3    0  33
+  change_life3d   8    8     0     26     35      5      1     41   12   2 yes
+  global/file     3    3    44     40    972    250    119   1272   20  10 yes
+    file-total: 175  200    48    553   1684    314    157   2086   15   8
+lightning.c
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  setup_multi_s   4    6     0      8     13      3      0     16   18   0 yes
+  flashing_stri   2    2     0      4      6      1      0      7   14   0 yes
+  flash_duratio   1    1     0      6      7      1      0      8   12   0 yes
+  random_storm    7    7     0     27     40      1      0     41    2   0 yes
+  generate        2    2     0     11     13      2      0     15   13   0 yes
+  create_fork     4    5     0     19     22      3      0     25   12   0 yes
+  update_bolt     9   13     0     12     25      2      0     27    7   0 yes
+  draw_bolt       4    4     0      5     10      0      0     10    0   0 yes
+  first_strike    2    2     0     10     16      2      0     18   11   0 yes
+  draw_line       4    4     0      7     18      1      0     19    5   0 yes
+  level1_strike   3    3     0     18     30      2      1     32    6   3 yes
+  distance        1    1     0      2      3      0      0      3    0   0 yes
+  level2_strike   3    3     0     18     30      3      4     37    9  11 yes
+  storm_active    3    3     0      4      7      2      0      9   22   0 yes
+  wiggle_bolt     3    3     0     11     16      3      0     19   15   0 yes
+  wiggle_line     2    2     0      5      7      1      0      8   12   0 yes
+  init_lightnin   3    3     0     10     14      3      0     17   17   0 yes
+  draw_lightnin   9    9     0     25     37      1      0     38    2   0 yes
+  release_light   2    2     0      4      6      0      0      6    0   0 yes
+  refresh_light   1    1     0      1      2      0      1      3    0  33
+  global/file     1    1    23     43    110     60     11    200   35   9 yes
+    file-total:  70   77    23    250    432     91     17    558   17   3
+lissie.c
+  drawlissie     12   12     0     33     45      7      6     58   13  11 yes
+  initlissie      6    6     0     24     37      4      2     43    9   5 yes
+  init_lissie     8    8     0     19     27      6      0     33   18   0 yes
+  draw_lissie     3    3     0      5      9      1      0     10   10   0 yes
+  release_lissi   4    4     0     10     14      2      0     16   12   0 yes
+  refresh_lissi   3    3     0      7     10      1      0     11    9   0 yes
+  global/file     3    6    24     17     53     21      7     85   28  11 yes
+    file-total:  39   42    24    115    195     42     15    256   17   7
+logout.c
+  err_handler     1    1     0      3      4      0      0      4    0   0
+  has_property    5    5     0     10     15      4      0     19   21   0 yes
+  has_wm_state    1    1     0      2      3      0      0      3    0   0
+  has_wm_protoc   1    1     0      2      3      0      0      3    0   0
+  send_delete_m   1    1     0     10     11      2      0     13   15   0 yes
+  handle_top_le   6    6     0     12     18      4      1     22   18   5 yes
+  recurse_tree    8    8     0     20     29      7      1     37   19   3 yes
+  kill_tree       6    6     0     15     22      4      1     27   15   4 yes
+  closedownLogo   3    3     0     13     16     12      8     35   42  33 yes
+  sessionLogout   2    2     0      6      8      1      0      9   11   0 yes
+  uglyLogout      5    7    10     15     28      5      0     33   15   0 yes
+  logoutUser      5    5     8      9     19      2      2     21    9   9 yes
+  fullLock       13   16     2     23     37      7      6     47   15  13 yes
+  global/file     9   10    35      8     69     41     74    211   37  51 yes
+    file-total:  66   72    55    148    282     89     93    484   23  24
+loop.c
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  addtolist       1    1     0      9     10      1      0     11    9   0 yes
+  print_state     2    2     0     10     13      1      0     14    7   0 yes
+  free_state      2    2     0      8     10      1      0     11    9   0 yes
+  drawcell        2    2     0     14     18      1      0     19    5   0 yes
+  draw_state      3    3     0     30     35      3      4     42    7  10 yes
+  init_table      7    7     2     21     32      3      2     37    8   5 yes
+  init_adam       7    7     0     33     43      1      0     44    2   0 yes
+  do_gen          3    3     0     13     16      1      0     17    5   0 yes
+  free_list       2    2     0      3      5      1      0      6   16   0
+  init_loop      11   12     0     47     64      7      7     72    9   9 yes
+  draw_loop      14   19     0     27     43      2      0     45    4   0 yes
+  release_loop    9    9     0     15     24      2      0     26    7   0 yes
+  refresh_loop    1    1     0      4      5      1      0      6   16   0
+  global/file     3    3    25     28    148     31     39    217   17  20 yes
+    file-total:  67   73    27    262    466     56     52    567   10  10
+marquee.c
+  font_width      1    1     0      5      6      1      0      7   14   0 yes
+  is_valid_char   1    1     0      2      3      0      0      3    0   0
+  is_char_back_   1    1     0      2      4      0      0      4    0   0
+  char_back_cha   2    2     0      4      5      1      0      6   16   0
+  fixup_back     12   17     0     28     38      8     10     57   17  20 yes
+  text_font_wid  11   11     0     24     37      1      6     44    2  13 yes
+  text_height     3    5     0      6      9      1      0     10   10   0 yes
+  add_blanks      3    3     0     14     17      0      0     17    0   0 yes
+  add_letter      3    3     0     13     16      0      0     16    0   0 yes
+  init_marquee   14   15     0     42     60      4      2     66    6   3 yes
+  draw_marquee   25   25     0     61     99      2      1    102    1   1 yes
+  release_marqu   5    5     0     11     16      2      0     18   11   0 yes
+  refresh_marqu   1    1     0      1      2      0      1      3    0  33
+  global/file     1    1     4     27     59     27     14    107   31  19 yes
+    file-total:  83   91     4    240    371     47     34    460   11   8
+maze.c
+  free_maze       5    5     0     13     18      0      0     18    0   0 yes
+  set_maze_size   8    8     0     22     33      4      1     37   10   2 yes
+  initialize_ma  19   20     0     70     93      9      9    110    8   8 yes
+  choose_door    11   19     0     28     66      3      7     74    4   9 yes
+  draw_maze_wal   5    5     0      8     15      1      9     21    6  37 yes
+  backup          2    2     0      6      8      0      2      8    0  20
+  create_maze_w  10   10     0     26     39      6      8     48   13  17 yes
+  draw_maze_bor   8    8     0     20     46      2      2     48    4   4 yes
+  draw_wall       5    5     0     14     36      1      2     37    2   5 yes
+  draw_solid_sq   5    5     0     13     31      2      2     33    6   6 yes
+  solve_maze      5    7     0     20     39      4      6     47    9  13 yes
+  enter_square    5    5     0     17     24      4      2     28   14   7 yes
+  init_maze       8    8     0     24     32      3      4     39    8  11 yes
+  draw_maze       8    8     0     27     36      1      3     39    2   7 yes
+  release_maze    5    5     0     10     15      2      0     17   11   0 yes
+  refresh_maze    2    2     0     16     22      1      0     23    4   0 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  global/file     1    1    25     24     91     39     43    181   30  32 yes
+    file-total: 112  123    25    358    644     82    100    808   11  13
+mode.c
+  set_default_m   1    1     0      2      3      0      0      3    0   0
+  set_window_ti   1    1     0      7      8      1      2     11   11  20
+  call_release_   3    3     0      8     11      2      0     13   15   0 yes
+  release_last_   2    2     0      5      7      1      0      8   12   0 yes
+  call_init_hoo   4    4     0     14     18      4      0     22   18   0 yes
+  call_callback   3    3     0      9     12      2      0     14   14   0 yes
+  call_refresh_   5    6     0     13     18      1     12     33    5  40 yes
+  call_change_h   4    4     0      9     13      1      0     14    7   0 yes
+  global/file     6    6    16      5    315     31     27    400    8   7 yes
+    file-total:  29   30    16     72    405     43     41    518    9   9
+mode.h
+  global/file     9    9    87    400    491    105     57    634   17  10 yes
+    file-total:   9    9    87    400    491    105     57    634   17  10
+mountain.c
+  spread          4    7     0      4      8      1      0      9   11   0 yes
+  drawamountain   6    6     0     37     45      7      0     52   13   0 yes
+  init_mountain  14   14     0     29     47      7      0     54   12   0 yes
+  draw_mountain   4    4     0     10     15      1      1     17    6   6 yes
+  release_mount   3    3     0      8     11      2      0     13   15   0 yes
+  refresh_mount   1    1     0      4      5      1      0      6   16   0
+  global/file     1    1     6     14     34     15     12     63   30  26 yes
+    file-total:  33   36     6    106    165     34     13    214   17   7
+nose.c
+  move           22   28     0     37     65      2      2     68    2   2 yes
+  walk           17   20     0     32     50      1      4     52    1   7 yes
+  think           3    3     0      7     10      1      0     11    9   0 yes
+  talk           14   16     0     55     77      8      7     93    9   8 yes
+  look            8    8     0     15     26      1      0     27    3   0 yes
+  init_nose       8    8     0     43     59      3      0     62    4   0 yes
+  draw_nose       3    3     0      9     13      1      3     15    7  18
+  release_nose    6    6     0     12     18      3      0     21   14   0 yes
+  refresh_nose    1    1     0      1      2      0      1      3    0  33
+  global/file     1    1    32     30     97     28     22    150   22  18 yes
+    file-total:  83   94    32    241    417     48     39    502   10   8
+option.c
+  managePrompt    2    2     0     20     22      2      0     24    8   0 yes
+  f_option        5    5     0     28     36      3      0     39    7   0 yes
+  f_Dialog        2    2     0      6      9      1      0     10   10   0 yes
+  Setup_Option    3    3     0     22     29      4      0     33   12   0 yes
+  global/file     1    1    12     11     40     20     21     87   33  34 yes
+    file-total:  13   13    12     87    136     30     21    193   18  13
+pacman.c
+  clearcorners    5    9     0     18     35      1      0     36    2   0 yes
+  repopulate      7    8     2     18     30      5      0     35   14   0 yes
+  movepac        44   55    31    123    227     12      4    243    5   1 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  init_pacman    27   32     2     79    125     11      1    137    8   0 yes
+  draw_pacman    24   32     0     61    101     14      0    115   12   0 yes
+  release_pacma  11   11     2     13     25      2      0     27    7   0 yes
+  refresh_pacma   1    1     0      1      2      0      1      3    0  33
+  global/file     3    3    25     22     64     20     11    102   23  14 yes
+    file-total: 122  151    62    335    609     65     17    698    9   2
+passwd.c
+  new_pwlnode     3    3     3      8     13      3      0     16   18   0 yes
+  my_passwd_ent   9   10     6     21     34      5      5     43   12  12
+  getUserName    12   13    11     26     45     15     17     74   25  27 yes
+  passwd_invali   1    2     0      3      4      1      0      5   20   0
+  getCryptedUse  13   13    11     47     67     17     12     92   20  15 yes
+  getCryptedRoo  16   17    15     54     79     20     14    107   20  15 yes
+  checkPasswd    31   44    26     57    118     17     22    153   12  15 yes
+  initDCE        12   14     0     38     63      4      4     71    5   5 yes
+  error_string   10   10     0     14     26      1      0     27    3   0 yes
+  check_dce_net   9   14     0     50     71     16     14    103   18  16 yes
+  krb_check_pas   3    3     0     10     16      4      5     25   20  23 yes
+  krb_check_pas  12   12     0     58     84     12      8    101   12   8 yes
+  get_multiple    7    7     3     16     25      0      4     30    0  13 yes
+  set_multiple   47   47     9    120    170     15     19    205    8  10 yes
+  gpass          13   16     4     41     62      4      4     72    6   6 yes
+  initPasswd      8   12    10     10     24      1      3     25    4  11 yes
+  global/file    40   47   125     53    214     70     78    364   24  26 yes
+    file-total: 246  284   223    626   1115    205    209   1513   15  15
+penrose.c
+  vertex_dir      7    7     0     13     22      1      0     23    4   0 yes
+  add_unit_vec    3    3     0      4      7      1      0      8   12   0 yes
+  fived_to_loc    4    4     0     17     24      1      0     25    4   0 yes
+  release_scree   4    4     0     16     19      1      0     20    5   0 yes
+  init_penrose   15   16     0     57     77      2      5     83    2   6 yes
+  match_rules    14   14     0     30     47      3      6     56    6  11 yes
+  find_completi   8    8     0     16     25      2      0     27    7   0 yes
+  draw_tile      11   14     0     39     61      5      2     68    7   3 yes
+  check_vertex   12   12     0     33     45      3      3     48    6   6 yes
+  delete_vertex   7    7     0     16     23      1      0     24    4   0 yes
+  fills_vertex    1    1     0      2      5      0      0      5    0   0 yes
+  fringe_change  18   24     0     33     52      2      1     54    3   1 yes
+  add_vtype       3    3     0      7     11      1      0     12    8   0 yes
+  alloc_vertex    5   11     0     21     28      1      0     29    3   0 yes
+  add_tile       25   30     0     59     96      7      9    112    6   8 yes
+  add_forced_ti   5    5     0     16     21      1      1     22    4   4 yes
+  legal_move      3    3     0      8     11      1      1     12    8   8 yes
+  add_random_ti  23   25     0     58     78      2      3     82    2   3 yes
+  draw_penrose   13   15     0     37     50      3      3     55    5   5 yes
+  release_penro   3    3     0      8     11      2      0     13   15   0 yes
+  global/file     1    1    35     47    169     78    168    465   31  49 yes
+    file-total: 185  210    35    537    882    118    202   1243   11  18
+petal.c
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  gcd             3    3     0      7     10      1      0     11    9   0 yes
+  numlines        2    4     3      3      8      0      0      8    0   0 yes
+  compute_petal   4    4     0     21     25      8      7     40   24  21
+  random_petal    2    2     0      5     10      2      0     12   16   0 yes
+  init_petal      8    8     0     21     29      5      0     34   14   0 yes
+  draw_petal      3    3     0      6     10      1      0     11    9   0 yes
+  release_petal   4    4     0      8     12      2      0     14   14   0 yes
+  refresh_petal   1    1     0      3      4      1      0      5   20   0
+  global/file     1    1     9     11     38     20     68    160   34  64
+    file-total:  28   30    12     85    146     40     75    295   21  33
+puzzle.c
+  font_width      1    1     0      5      6      1      0      7   14   0 yes
+  NumberScreen    8    9     0     43     59      4      0     63    6   0 yes
+  setupmove      13   21     0     39     58      3      0     61    4   0 yes
+  setupmovedelt  15   15     6     43     67      5     14     90    6  17 yes
+  wrapupmove      3    3     0      7     10      1      0     11    9   0 yes
+  wrapupmovedel   2    2     0      9     14      3      0     17   17   0 yes
+  moveboxdelta    4    5     0     12     21      1      0     22    4   0 yes
+  init_puzzle    25   28     5     80    133     12      0    145    8   0 yes
+  draw_puzzle     5    5     0     12     17      1      0     18    5   0 yes
+  release_puzzl   9    9     2     16     26      2      0     28    7   0 yes
+  global/file     5    6    21     34     81     24     14    126   22  14 yes
+    file-total:  90  104    34    300    492     57     28    588   10   5
+pyro.c
+  ignite         10   13     0     43     54      3      1     58    5   1 yes
+  animate         8    8     0     36     46      2      4     52    4   8 yes
+  shootup         7    8     0     31     45      2      0     47    4   0 yes
+  burst          21   22     0     72     96      5      2    102    4   2 yes
+  init_pyro      17   18     0     52     77      7      1     85    8   1 yes
+  draw_pyro       8    9     0     17     25      1      0     26    3   0 yes
+  release_pyro    4    4     0      9     13      2      0     15   13   0 yes
+  refresh_pyro    1    1     0      1      2      0      1      3    0  33
+  global/file     4    4    43     37    100     27     36    150   21  26 yes
+    file-total:  80   87    43    298    458     49     45    538    9   8
+qix.c
+  init_qix        6    6     0     26     33      3      1     36    8   2 yes
+  draw_qix        8    8     0     37     49      5      0     54    9   0 yes
+  release_qix     4    4     0      8     12      2      0     14   14   0 yes
+  refresh_qix     1    1     0      4      5      1      0      6   16   0
+  global/file     3    3    12     19     36     13     14     68   26  28 yes
+    file-total:  22   22    12     94    135     24     15    178   15  10
+random.c
+  pickMode        7    7     0     19     27      2      6     32    6  18 yes
+  strpmtok       20   20     0     34     57      3      0     60    5   0 yes
+  parsemodelist  13   13     2     19     35      4      1     39   10   2 yes
+  setMode         3    3     0     13     17      4      2     22   19  10 yes
+  init_random     5    5     0     15     23      2      0     25    8   0 yes
+  draw_random     6    9     0     21     28      3      0     31    9   0 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  refresh_rando   1    1     0      2      3      0      0      3    0   0
+  change_random   2    2     0      3      5      1      1      6   16  16 yes
+  global/file     2    2    11     21     66     23     15    106   25  18 yes
+    file-total:  59   62    13    147    261     42     25    324   13   8
+ras.c
+  analyze_heade   1    1     0      6      7      0      0      7    0   0 yes
+  convert_color   7    7     2     22     33      2      0     35    5   0 yes
+  find_nearest    4    4     2      9     16      1      0     17    5   0 yes
+  GetWhite        1    1     0      2      3      0      0      3    0   0
+  GetBlack        1    1     0      2      3      0      0      3    0   0
+  GetForeground   1    1     0      5      8      1      0      9   11   0 yes
+  GetBackground   1    1     0      5      8      1      0      9   11   0 yes
+  get_long        1    1     0      2      7      0      0      7    0   0 yes
+  RasterFileToI   7    7     0     29     39      1      3     42    2   7 yes
+  SetImageColor   3    3     0     10     13      1      2     16    7  13
+  global/file     2    2     9     15     46     17     10     76   26  17 yes
+    file-total:  29   29    13    107    183     24     15    224   11   7
+ras.h
+  global/file     0    0     6      6     13      2      9     29   13  40 yes
+    file-total:   0    0     6      6     13      2      9     29   13  40
+resource.c
+  stripname       4    5     0      9     12      1      0     13    7   0 yes
+  Syntax          6    6     0     28     36      4      4     40   10  10
+  Help            4    4     0     14     22      4      0     26   15   0 yes
+  Version         1    1     0      3      4      0      0      4    0   0
+  DumpResources   3    3     0     11     20      3      0     23   13   0 yes
+  LowerString     3    3     0      4      7      1      0      8   12   0 yes
+  GetResource     9   12     0     36     49      3      2     54    5   3 yes
+  parsefilepath  13   13     3     41     55      1      1     56    1   1 yes
+  open_display   20   26    10     39     72     13      7     91   15   8 yes
+  printvar        6    6     0     10     21      0      0     21    0   0 yes
+  getResources   38   38    17    120    193     29      9    233   13   4 yes
+  checkResource  12   15     2     16     29      3      1     33    9   3 yes
+  get_info        3    3     0     17     23      4      0     27   14   0 yes
+  descr           2    2     0     13     16      3      0     19   15   0 yes
+  global/file    51   51   181     92    546     93    113    741   14  17 yes
+    file-total: 175  188   213    453   1105    162    137   1389   12  11
+roll.c
+  createsphere    3    3     0      8     11      1      0     12    8   0 yes
+  rotation3d      2    2     0     28     30      4      0     34   11   0 yes
+  project         2    2     0      5      7      1      0      8   12   0 yes
+  init_roll      12   12     0     41     60      2      1     63    3   1 yes
+  draw_roll      20   30     0     47     70      2      0     72    2   0 yes
+  release_roll    5    5     0      9     14      2      0     16   12   0 yes
+  refresh_roll    1    1     0      1      2      0      1      3    0  33
+  global/file     1    1     7     14     38     14      4     60   26   9 yes
+    file-total:  46   56     7    153    232     26      6    268   10   2
+rotor.c
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  init_rotor     13   14     0     45     60     13      8     83   17  11 yes
+  draw_rotor     17   17     0     92    114     13      0    127   10   0 yes
+  release_rotor   5    5     0      9     14      2      0     16   12   0 yes
+  refresh_rotor   1    1     0      4      5      1      0      6   16   0
+  global/file     1    1     5     30     46     16     13     80   25  22 yes
+    file-total:  37   38     5    180    239     45     21    312   15   8
+shape.c
+  init_shape      6    6     0     29     37      3      0     40    7   0 yes
+  draw_shape      6    6     0     26     39      4      0     43    9   0 yes
+  release_shape   5    5     0     10     15      3      0     18   16   0 yes
+  refresh_shape   1    1     0      1      2      0      1      3    0  33
+  global/file     1    1    19     13     42     14     19     81   25  31 yes
+    file-total:  19   19    19     79    135     24     20    185   15  12
+slip.c
+  halfrandom      2    2     0     10     12      1      0     13    7   0 yes
+  erandom         3    3     0     12     16      1      0     17    5   0 yes
+  prepare_scree  10   11     0     21     37      4      0     41    9   0 yes
+  quantize        2    2     0      5      7      1      0      8   12   0 yes
+  init_slip       3    3     0     13     17      4      1     22   19   5 yes
+  draw_slip      19   22     0     54     91     13      2    106   12   2 yes
+  release_slip    2    2     0      4      6      0      0      6    0   0 yes
+  global/file     1    1     3      9     28     13      4     49   31  12 yes
+    file-total:  42   46     3    128    214     37      7    262   14   3
+sound.c
+  play_sound      2    2     0      5      7      1      0      8   12   0 yes
+  play_sound      2    2     0      7      9      1      4     14   10  30
+  play_sound      4    4     0     16     20      2      7     24    9  25
+  play_sound      1    1     0      4      5      1      1      7   16  16
+  global/file     5    5    18      2     28     15      8     60   34  22 yes
+    file-total:  14   14    18     34     69     20     20    113   22  22
+sphere.c
+  init_sphere     4    4     0     13     18      4      0     22   18   0 yes
+  draw_sphere    10   10     0     28     43      2      0     45    4   0 yes
+  release_spher   4    4     0     10     14      2      0     16   12   0 yes
+  refresh_spher   1    1     0      4      5      1      0      6   16   0
+  global/file     1    1     8     12     30     13     30     85   30  50
+    file-total:  20   20     8     67    110     22     30    174   16  21
+spiral.c
+  draw_dots       2    2     0      9     14      3      0     17   17   0 yes
+  init_spiral     8    8     0     40     49      9      5     63   15   9 yes
+  draw_spiral    21   29     0     48     73     16      6     95   17   7 yes
+  release_spira   4    4     0      8     12      2      0     14   14   0 yes
+  refresh_spira   1    1     0      4      5      1      0      6   16   0
+  global/file     1    1    12     20     45     17     15     80   27  25 yes
+    file-total:  37   45    12    129    198     48     26    275   19  11
+spline.c
+  init_spline    19   21     0     39     59      5      2     66    7   3 yes
+  draw_spline    24   28     3     77    129     13      7    149    9   5 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  XDrawSpline     3    3     0     16     21      3      0     24   12   0 yes
+  release_splin   8    8     0     12     20      2      0     22    9   0 yes
+  refresh_splin   2    2     0      6      8      1      0      9   11   0 yes
+  global/file     1    1     7     22     53     23     23    106   30  30 yes
+    file-total:  57   63    10    172    290     47     32    376   13   9
+star.c
+  star_reset      2    2     0     10     13      1      0     14    7   0 yes
+  star_tick       6    6     0     12     18      1      0     19    5   0 yes
+  star_compute    2    2     0     12     15      2      1     18   11   6 yes
+  draw_trek      11   14     2     51     75      4      2     79    5   2 yes
+  star_draw      22   28     0     43     80      1      4     86    1   4 yes
+  init_pixmaps   13   14     2     54     71      2      2     73    2   2 yes
+  tick_stars      3    3     0      7     10      1      0     11    9   0 yes
+  compute_move   12   13     0     25     42      5      7     48   10  14 yes
+  init_star      15   16     0     41     56      4      3     62    6   5 yes
+  draw_star       7    7     0     17     25      1      1     26    3   3 yes
+  release_star    8    8     0     15     23      2      0     25    8   0 yes
+  refresh_star    1    1     0      1      2      0      1      3    0  33
+  global/file     2    2    30     44    120     33     46    195   21  27 yes
+    file-total: 104  116    34    332    550     57     67    659    9  10
+swarm.c
+  init_swarm     13   13     0     52     66      7      7     79    9   9 yes
+  draw_swarm     15   17     0     61     78     12     14    103   13  15 yes
+  release_swarm   9    9     0     13     22      2      0     24    8   0 yes
+  refresh_swarm   1    1     0      1      2      0      1      3    0  33
+  global/file     1    1    11     19     40     13     17     62   24  29 yes
+    file-total:  39   41    11    146    208     34     39    271   14  15
+swirl.c
+  random_no       1    1     0      2      3      0      0      3    0   0
+  initialise_sw   1    1     0     33     34      5     17     43   12  33
+  initialise_im   2    2     0      8     12      4      5     21   25  29 yes
+  initialise_co   4    4     0     48     53      4      4     61    7   7 yes
+  set_black_and   1    1     0     16     17      3      3     23   15  15
+  set_colour      3    6     0     18     22      5      6     33   18  21
+  get_colour      3    6     0     15     19      4      6     29   17  24
+  interpolate     9   11     0     21     24      4      4     32   14  14
+  basic_map       7    9     0     35     53     14     12     79   20  18 yes
+  pre_rotate      3    3     0     18     21     11     11     43   34  34
+  default_visua   5    7     0     11     17      3      4     24   15  19 yes
+  create_colour  26   43     8     47     89     15     18    122   14  16 yes
+  install_map     2    2     0      4     10      1      2     13    9  16
+  create_knots   33   34     0     49     84      8     12    104    8  12 yes
+  do_point       15   20     0     42     71     15     16    102   17  18 yes
+  draw_block      3    3     0      4      7      1      0      8   12   0 yes
+  draw_point      3    6     0     16     20      6      6     32   23  23 yes
+  next_point     18   18     0     50     70      7     13     90    9  15 yes
+  init_swirl      7    7     3     36     46     15     18     78   24  28 yes
+  draw_swirl      7    8     0     28     34     10     19     63   22  35 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  release_swirl   7    7     0     11     18      2      3     23   10  14
+  refresh_swirl   3    3     0      5      8      1      0      9   11   0 yes
+  global/file     1    1    11     47    116     70    169    415   37  59 yes
+    file-total: 164  203    22    564    848    208    348   1450   19  29
+tri.c
+  startover       3    3     0     14     19      1      0     20    5   0 yes
+  init_tri        6    6     0     13     21      3      0     24   12   0 yes
+  draw_tri        7    7     0     21     29      1      0     30    3   0 yes
+  release_tri     5    5     0      8     13      1      0     14    7   0 yes
+  refresh_tri     1    1     0      1      2      0      1      3    0  33
+  global/file     1    1     3     12     27     10      6     47   27  18 yes
+    file-total:  23   23     3     69    111     16      7    138   12   5
+triangle.c
+  draw_atriangl   4    4     2     24     30      4      2     35   11   6 yes
+  calc_points1    1    1     0     10     11      2      0     13   15   0 yes
+  calc_points2    1    1     0     10     11      2      0     13   15   0 yes
+  draw_mesh       9   12     0     17     26      2      0     28    7   0 yes
+  init_triangle   9    9     0     31     44     12      0     56   21   0 yes
+  draw_triangle   7    7     0     27     37      5      3     46   11   7 yes
+  release_trian   2    2     0      4      6      0      0      6    0   0 yes
+  refresh_trian   1    1     0      1      2      0      1      3    0  33
+  global/file     1    1    14     20     56     21     26    107   27  31 yes
+    file-total:  35   38    16    144    223     48     32    307   17  12
+trig.c
+  init_trig       4    4     0     16     21      2      2     25    8   8 yes
+  draw_trig       5    5     0     25     34      2      0     36    5   0 yes
+  release_trig    2    2     0      4      6      0      0      6    0   0 yes
+  global/file     1    1     5      9     22     11      3     41   33  12 yes
+    file-total:  12   12     5     54     83     15      5    108   15   5
+tub.c
+  init_tube       5    5     0     27     33      3      2     38    8   5 yes
+  draw_tube      14   15     0     63     89      4      7    100    4   7 yes
+  release_tube    5    5     0      9     14      2      0     16   12   0 yes
+  global/file     0    0     1     13     22      8      1     32   26   4 yes
+    file-total:  24   25     1    112    158     17     10    186    9   5
+tube.c
+  init_tube       5    5     0     26     32      3      2     37    8   5 yes
+  draw_tube      14   19     0     62     88      4      7     99    4   7 yes
+  release_tube    5    5     0      9     14      2      0     16   12   0 yes
+  global/file     1    1     3     14     25      8      4     41   24  13 yes
+    file-total:  25   30     3    111    159     17     13    193    9   7
+turtle.c
+  generate_hilb   5    5     0     26     34      9      0     43   20   0 yes
+  generate_cesa   3    3     0     34     42      3      0     45    6   0 yes
+  generate_hart   3    3     0     32     40      3      0     43    6   0 yes
+  init_turtle    16   16     0     84    103      3      0    106    2   0 yes
+  draw_turtle    11   11     0     28     44      3      0     47    6   0 yes
+  release_turtl   2    2     0      4      6      0      0      6    0   0 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  global/file     4    4    13     17     48     17     11     78   26  18 yes
+    file-total:  44   44    13    225    317     38     11    368   10   3
+utils.c
+  usleep          5    6     9     18     30      4      5     34   11  14 yes
+  seconds         2    2     3      5      9      1      0     10   10   0 yes
+  readable        2    2     0      5      7      1      0      8   12   0 yes
+  strdup          1    1     0      5      6      1      0      7   14   0 yes
+  SetRNG          1    1     0      2      3      0      0      3    0   0
+  LongRNG         2    2     0      3      5      0      0      5    0   0
+  strcat_firstw   3    4     0      3      6      0      0      6    0   0 yes
+  isRibbon        1    1     0      2      3      0      0      3    0   0
+  getWords       42   45     2    105    170      7      5    181    3   2 yes
+  getFont         6    6     0     11     17      1      0     18    5   0 yes
+  randomImage     3    3     2      9     13      1      0     14    7   0 yes
+  index_dir       5    5     0     14     19      1      0     20    5   0 yes
+  upcase          3    4     0      7     10      1      0     11    9   0 yes
+  get_dir         7    7     8     20     32      1      1     33    3   3 yes
+  sel_image       5    5     0     22     27      2      0     29    6   0 yes
+  scan_dir       15   18     6     27     49      7      2     57   12   3 yes
+  getImage       28   33    12     48     92      7      1     99    7   1 yes
+  destroyImage    9    9     2     11     22      0      0     22    0   0 yes
+  XEraseImage     9    9     0     13     24      0      0     24    0   0 yes
+  global/file    15   16    48      8    108     37     47    195   25  30 yes
+    file-total: 164  179    92    338    652     72     61    779    9   8
+version.h
+  global/file     0    0     1      0      1      1      0      2   50   0
+    file-total:   0    0     1      0      1      1      0      2   50   0
+vroot.h
+  VirtualRootWi   6    7     0     23     34      4      1     39   10   2 yes
+  global/file     2    2    14      1     17      9     44     81   34  72 yes
+    file-total:   8    9    14     24     51     13     45    120   20  46
+wator.c
+  drawcell        4    6     0      9     19      1      0     20    5   0 yes
+  erasecell       1    1     0      4      6      1      0      7   14   0 yes
+  init_kindlist   1    1     0      7      8      0      2     10    0  20 yes
+  addto_kindlis   1    1     0      7      8      0      0      8    0   0 yes
+  removefrom_ki   1    1     0      5      6      0      0      6    0   0 yes
+  dupin_kindlis   1    1     0      9     10      1      0     11    9   0 yes
+  cutfrom_kindl   1    1     0      9     10      0      0     10    0   0 yes
+  reattach_kind   1    1     0      8      9      0      0      9    0   0 yes
+  flush_kindlis   2    2     0      6      8      0      1      9    0  11 yes
+  init_wator     21   24     0     72    102      7      5    112    6   4 yes
+  draw_wator     28   36     2    117    152      5     16    161    3   9 yes
+  release_wator   5    5     0     12     17      2      0     19   10   0 yes
+  refresh_wator   1    1     0      1      2      0      1      3    0  33
+  global/file     1    1    28     26    102     25     22    148   19  17 yes
+    file-total:  69   82    30    292    459     42     47    533    8   9
+wire.c
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  addtolist       1    1     0      9     10      1      0     11    9   0 yes
+  print_state     2    2     0     10     13      1      0     14    7   0 yes
+  free_state      2    2     0      8     10      1      0     11    9   0 yes
+  drawcell        2    2     0     14     18      1      0     19    5   0 yes
+  draw_state      3    3     0     30     35      3      4     42    7  10 yes
+  RandomSoup      6    6     0      4      9      1      0     10   10   0 yes
+  create_path    18   25     3     43     63      2      2     67    3   3 yes
+  do_gen          9   10     2     28     43      2      0     45    4   0 yes
+  free_list       2    2     0      3      5      1      0      6   16   0
+  init_wire      13   14     0     45     65      7      0     72    9   0 yes
+  draw_wire      10   10     0     22     34      2      2     37    5   5 yes
+  release_wire    8    8     0     12     20      2      0     22    9   0 yes
+  refresh_wire    1    1     0      4      5      1      0      6   16   0
+  global/file     3    3    21     25     81     30     38    152   27  31 yes
+    file-total:  80   89    26    257    411     55     46    514   11  10
+world.c
+  init_world     13   13     2     25     40      3      0     43    6   0 yes
+  draw_world     15   19     7     32     59      4      0     63    6   0 yes
+  release_world   4    4     0      6     10      1      0     11    9   0 yes
+  refresh_world   1    1     0      1      2      0      1      3    0  33
+  global/file     1    1    38     20    100     15      9    129   13   8 yes
+    file-total:  34   38    47     84    211     23     10    249    9   4
+worm.c
+  worm_doit      15   16     2     77    107     22      7    134   17   6 yes
+  free_worms      7    7     0     11     18      1      0     19    5   0 yes
+  init_worm      21   23     0     54     80     11      2     91   12   2 yes
+  draw_worm       9    9     0     28     37      6      0     43   13   0 yes
+  release_worm    3    3     0      6      9      1      0     10   10   0 yes
+  refresh_worm    4    4     0      8     12      1      3     16    7  20
+  global/file     2    2    12     24     51     19     16     92   27  23 yes
+    file-total:  61   64    14    208    314     61     28    405   16   8
+xbm.c
+  XbmReadFileTo  22   34     0     64     92      6     12    108    6  11 yes
+  global/file     1    1     3      1      7      3      6     20   30  46 yes
+    file-total:  23   35     3     65     99      9     18    128    8  15
+xlock.c
+  error           1    1     0      8      9      2      0     11   18   0 yes
+  warning         1    1     0      8      9      2      0     11   18   0 yes
+  XGrabHosts      2    2     0      4      6      0      0      6    0   0 yes
+  XUngrabHosts    3    3     0      5      8      0      0      8    0   0 yes
+  GrabKeyboardA   5    5     0     12     23      3      0     26   11   0 yes
+  XChangeGrabbe   2    5     0      2      5      0      0      5    0   0
+  window_size_c   3    4     0     12     16      2      1     18   11   5 yes
+  mode_info       3    6     0     41     46     14      7     62   23  13
+  finish          9   10     4     16     28      1      1     30    3   3 yes
+  xio_error       1    1     0      3      4      0      0      4    0   0 yes
+  putText         9    9     1     24     34      3      1     37    8   2 yes
+  statusUpdate   35   37    40     19    143     11      4    154    7   2 yes
+
+
+          MEASURE Data Table (continued)
+
+FILE NAME            EXT   PDIR  STMT   NCNB    BLK   TEXT   TOTAL BLK CMT 
+  SUBPROGRAM    CMP  CMP   LINES  LOC    LOC    LOC   CMTS   LINES  %   %  PBS
+
+  checkLogout     3    5     0      6      9      1      0     10   10   0 yes
+  sub_timers      3    3     0     13     16      3      4     23   15  20
+  runMainLoop    13   20     3     60     80     13      6     98   13   6 yes
+  ReadXString    53   56     9     88    163     10     19    187    5  10 yes
+  getPassword    26   28    14     79    127     23      6    154   15   4 yes
+  event_screen    3    3     0      6      9      1      0     10   10   0 yes
+  justDisplay    28   32    10     50     90     11      7    108   10   7 yes
+  sigcatch        2    2     0      7     10      1      0     11    9   0 yes
+  syslogStart     1    1     0      7      9      2      1     12   18  10
+  syslogStop      1    1     0     11     14      3      0     17   17   0 yes
+  lockDisplay    12   14    16     32     56      6      1     63    9   1 yes
+  read_message   12   12    15     53     75      5      1     81    6   1 yes
+  main           69   76    31    200    314     42     27    381   11   7 yes
+  global/file    24   25    79    114    246     74    210    513   23  46 yes
+    file-total: 324  362   222    880   1549    233    296   2040   13  16
+xlock.h
+  global/file    57   60   229     35    273     31     63    340   10  18 yes
+    file-total:  57   60   229     35    273     31     63    340   10  18
+xmlock.c
+  f_PushButtons  11   11     5     36     51      5      2     58    8   3 yes
+  f_ScrolledLis   1    1     0      2      3      0      0      3    0   0
+  Setup_Widget    4    4     1     83     93      9      4    105    8   4 yes
+  main            3    3     5     15     25      1      2     28    3   7 yes
+  global/file     7    7    34     15    203     26     24    257   11  10 yes
+    file-total:  26   26    45    151    375     41     32    451    9   7
+
+  TOTALS:      5252 5829  2718  17119  30887   4711   4356  39872   13  12
+
+
+
+
+Some Additional Total Counts (not reported above):
+
+  Statement-Terminating Semicolons
+     Declarative  :  2313
+
+  Noncomment, Nonblank (NCNB) Lines of Code
+     Declarative  :  9053
+     Executable   : 21834
+
+  Inline Comments 
+     With Text    :  1076
+     Without Text :    21
+
+  Full-Line Comment 
+     With Text    :  3280
+     Without Text :   994
+
+
+
+             A L L   F I L E S   C O M P L E X I T Y   R E P O R T
+
+Average Cyclomatic Complexity          7
+Average Extended Complexity            8
+Average Executable Statements         20
+Total Cyclomatic Complexity         5252
+Total Extended Complexity           5829
+Total Executable Statements        14806
+Total Executable Modules             724
+Files Opened                          88
+
+
+                A L L   M O D U L E S   R E P O R T
+
+Functions                            124
+Void Functions                       600
+"main" Programs                        2
+
+
+               A L L   F I L E S   D E T A I L   R E P O R T
+
+Defined Macros                       427
+C Structs                            143
+For Loops                            559
+While loops                          110
+Do...While loops                      23
+Ifs                                 3309
+Cases                                333
+Switches                              71
+Returns                              407
+Improper Returns                       0
+Exits                                 28
+Aborts                                 0
+Asserts                                0
+Continues                             18
+Gotos                                  0
+
+
+NOTE:   No Classes or Other C++ Features Found
+
+
+
+
+
+The following possible metric weaknesses were found:
+
+TEXT COMMENTS <  10%    0%  in file ant.c for void function fillcell
+
+TEXT COMMENTS <  10%    4%  in file ant.c for void function truchetcell
+BLANK LINES <  10%      4%  in file ant.c for void function truchetcell
+LINES > 80 CHARS        6   in file ant.c for void function truchetcell
+
+TEXT COMMENTS <  10%    0%  in file ant.c for void function drawcell
+BLANK LINES <  10%      8%  in file ant.c for void function drawcell
+LINES > 80 CHARS        1   in file ant.c for void function drawcell
+
+TEXT COMMENTS <  10%    0%  in file ant.c for void function drawtruchet
+LINES > 80 CHARS        3   in file ant.c for void function drawtruchet
+
+TEXT COMMENTS <  10%    6%  in file ant.c for void function draw_anant
+BLANK LINES <  10%      6%  in file ant.c for void function draw_anant
+LINES > 80 CHARS       10   in file ant.c for void function draw_anant
+
+TEXT COMMENTS <  10%    0%  in file ant.c for void function RandomSoup
+LINES > 80 CHARS        1   in file ant.c for void function RandomSoup
+
+TEXT COMMENTS <  10%    0%  in file ant.c for void function GetTable
+
+LINES > 80 CHARS        1   in file ant.c for void function GetTurk
+
+TEXT COMMENTS <  10%    1%  in file ant.c for void function init_ant
+BLANK LINES <  10%      6%  in file ant.c for void function init_ant
+COMPLEXITY >  10       28   in file ant.c for void function init_ant
+EXTD COMPLEXITY > 15   29   in file ant.c for void function init_ant
+EX STATEMENTS >  50    76   in file ant.c for void function init_ant
+LINES > 80 CHARS        7   in file ant.c for void function init_ant
+
+TEXT COMMENTS <  10%    4%  in file ant.c for void function draw_ant
+BLANK LINES <  10%      3%  in file ant.c for void function draw_ant
+COMPLEXITY >  10       42   in file ant.c for void function draw_ant
+EXTD COMPLEXITY > 15   48   in file ant.c for void function draw_ant
+EX STATEMENTS >  50    73   in file ant.c for void function draw_ant
+LINES > 80 CHARS       24   in file ant.c for void function draw_ant
+
+TEXT COMMENTS <  10%    0%  in file ant.c for void function release_ant
+BLANK LINES <  10%      8%  in file ant.c for void function release_ant
+LINES > 80 CHARS        1   in file ant.c for void function release_ant
+
+TEXT COMMENTS <  50%   31%  in file ant.c for file level global/file
+LINES > 80 CHARS        4   in file ant.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file ball.c for void function collided
+EX STATEMENTS >  50    54   in file ball.c for void function collided
+
+TEXT COMMENTS <  10%    0%  in file ball.c for function inwin
+BLANK LINES <  10%      4%  in file ball.c for function inwin
+CONTINUES PRESENT       1   in file ball.c for function inwin
+EXIT ROUTES >  1        4   in file ball.c for function inwin
+
+TEXT COMMENTS <  10%    4%  in file ball.c for void function randomball
+COMPLEXITY >  10       11   in file ball.c for void function randomball
+
+TEXT COMMENTS <  10%    3%  in file ball.c for void function init_ball
+BLANK LINES <  10%      8%  in file ball.c for void function init_ball
+COMPLEXITY >  10       15   in file ball.c for void function init_ball
+EXTD COMPLEXITY > 15   17   in file ball.c for void function init_ball
+LINES > 80 CHARS        5   in file ball.c for void function init_ball
+
+TEXT COMMENTS <  10%    0%  in file ball.c for void function draw_ball
+BLANK LINES <  10%      5%  in file ball.c for void function draw_ball
+COMPLEXITY >  10       21   in file ball.c for void function draw_ball
+EXTD COMPLEXITY > 15   25   in file ball.c for void function draw_ball
+EX STATEMENTS >  50    64   in file ball.c for void function draw_ball
+CONTINUES PRESENT       2   in file ball.c for void function draw_ball
+LINES > 80 CHARS       12   in file ball.c for void function draw_ball
+
+TEXT COMMENTS <  10%    0%  in file ball.c for void function release_ball
+
+TEXT COMMENTS <  50%   22%  in file ball.c for file level global/file
+
+TEXT COMMENTS <  10%    4%  in file bat.c for void function init_images
+BLANK LINES <  10%      8%  in file bat.c for void function init_images
+COMPLEXITY >  10       17   in file bat.c for void function init_images
+EXTD COMPLEXITY > 15   18   in file bat.c for void function init_images
+LINES > 80 CHARS        6   in file bat.c for void function init_images
+
+TEXT COMMENTS <  10%    0%  in file bat.c for void function checkCollision
+BLANK LINES <  10%      2%  in file bat.c for void function checkCollision
+LINES > 80 CHARS       12   in file bat.c for void function checkCollision
+
+TEXT COMMENTS <  10%    0%  in file bat.c for void function drawabat
+BLANK LINES <  10%      3%  in file bat.c for void function drawabat
+LINES > 80 CHARS        1   in file bat.c for void function drawabat
+
+BLANK LINES <  10%      0%  in file bat.c for void function movebat
+
+TEXT COMMENTS <  10%    0%  in file bat.c for void function flapbat
+LINES > 80 CHARS        1   in file bat.c for void function flapbat
+
+TEXT COMMENTS <  10%    0%  in file bat.c for function collide
+EXIT ROUTES >  1        2   in file bat.c for function collide
+
+TEXT COMMENTS <  10%    1%  in file bat.c for void function init_bat
+BLANK LINES <  10%      2%  in file bat.c for void function init_bat
+COMPLEXITY >  10       20   in file bat.c for void function init_bat
+EXTD COMPLEXITY > 15   24   in file bat.c for void function init_bat
+EX STATEMENTS >  50    59   in file bat.c for void function init_bat
+LINES > 80 CHARS        7   in file bat.c for void function init_bat
+
+TEXT COMMENTS <  10%    6%  in file bat.c for void function draw_bat
+
+TEXT COMMENTS <  10%    4%  in file bat.c for void function release_bat
+LINES > 80 CHARS        1   in file bat.c for void function release_bat
+
+TEXT COMMENTS <  50%   21%  in file bat.c for file level global/file
+
+TEXT COMMENTS <  50%   46%  in file blank.c for file level global/file
+
+TEXT COMMENTS <  10%    2%  in file blot.c for void function init_blot
+LINES > 80 CHARS        2   in file blot.c for void function init_blot
+
+TEXT COMMENTS <  10%    0%  in file blot.c for void function draw_blot
+BLANK LINES <  10%      2%  in file blot.c for void function draw_blot
+LINES > 80 CHARS        1   in file blot.c for void function draw_blot
+
+TEXT COMMENTS <  10%    0%  in file blot.c for void function release_blot
+
+TEXT COMMENTS <  50%   37%  in file blot.c for file level global/file
+
+BLANK LINES <  10%      7%  in file bomb.c for void function explode
+
+TEXT COMMENTS <  10%    0%  in file bomb.c for void function rivet
+
+BLANK LINES <  10%      6%  in file bomb.c for void function detonator
+LINES > 80 CHARS        4   in file bomb.c for void function detonator
+
+BLANK LINES <  10%      8%  in file bomb.c for void function init_bomb
+COMPLEXITY >  10       12   in file bomb.c for void function init_bomb
+LINES > 80 CHARS        2   in file bomb.c for void function init_bomb
+
+TEXT COMMENTS <  10%    8%  in file bomb.c for void function draw_bomb
+BLANK LINES <  10%      5%  in file bomb.c for void function draw_bomb
+LINES > 80 CHARS        3   in file bomb.c for void function draw_bomb
+
+TEXT COMMENTS <  10%    0%  in file bomb.c for void function release_bomb
+
+TEXT COMMENTS <  10%    7%  in file bomb.c for void function change_bomb
+
+TEXT COMMENTS <  50%   31%  in file bomb.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file bouboule.c for void function sinvary
+
+TEXT COMMENTS <  10%    5%  in file bouboule.c for void function sininit
+LINES > 80 CHARS        1   in file bouboule.c for void function sininit
+
+TEXT COMMENTS <  10%    0%  in file bouboule.c for void function sinfree
+
+TEXT COMMENTS <  10%    7%  in file bouboule.c for void function init_bouboule
+BLANK LINES <  10%      9%  in file bouboule.c for void function init_bouboule
+COMPLEXITY >  10       38   in file bouboule.c for void function init_bouboule
+EXTD COMPLEXITY > 15   49   in file bouboule.c for void function init_bouboule
+EX STATEMENTS >  50    99   in file bouboule.c for void function init_bouboule
+LINES > 80 CHARS        3   in file bouboule.c for void function init_bouboule
+
+BLANK LINES <  10%      8%  in file bouboule.c for void function draw_bouboule
+COMPLEXITY >  10       35   in file bouboule.c for void function draw_bouboule
+EXTD COMPLEXITY > 15   41   in file bouboule.c for void function draw_bouboule
+EX STATEMENTS >  50   122   in file bouboule.c for void function draw_bouboule
+LINES > 80 CHARS        6   in file bouboule.c for void function draw_bouboule
+
+TEXT COMMENTS <  10%    0%  in file bouboule.c for void function release_bouboul
+                            e
+BLANK LINES <  10%      6%  in file bouboule.c for void function release_bouboul
+                            e
+
+LINES > 80 CHARS       16   in file bouboule.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file bounce.c for void function checkCollision
+BLANK LINES <  10%      2%  in file bounce.c for void function checkCollision
+LINES > 80 CHARS       12   in file bounce.c for void function checkCollision
+
+TEXT COMMENTS <  10%    0%  in file bounce.c for void function drawball
+BLANK LINES <  10%      6%  in file bounce.c for void function drawball
+LINES > 80 CHARS        7   in file bounce.c for void function drawball
+
+BLANK LINES <  10%      0%  in file bounce.c for void function moveball
+
+TEXT COMMENTS <  10%    0%  in file bounce.c for void function spinball
+LINES > 80 CHARS        1   in file bounce.c for void function spinball
+
+TEXT COMMENTS <  10%    0%  in file bounce.c for function collide
+EXIT ROUTES >  1        2   in file bounce.c for function collide
+
+TEXT COMMENTS <  10%    1%  in file bounce.c for void function init_bounce
+BLANK LINES <  10%      3%  in file bounce.c for void function init_bounce
+COMPLEXITY >  10       22   in file bounce.c for void function init_bounce
+EXTD COMPLEXITY > 15   26   in file bounce.c for void function init_bounce
+EX STATEMENTS >  50    69   in file bounce.c for void function init_bounce
+EXIT ROUTES >  1        2   in file bounce.c for void function init_bounce
+LINES > 80 CHARS        7   in file bounce.c for void function init_bounce
+
+TEXT COMMENTS <  10%    6%  in file bounce.c for void function draw_bounce
+
+TEXT COMMENTS <  10%    0%  in file bounce.c for void function release_bounce
+
+TEXT COMMENTS <  50%   34%  in file bounce.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file braid.c for function applyword
+
+TEXT COMMENTS <  10%    0%  in file braid.c for function applywordto
+
+TEXT COMMENTS <  10%    0%  in file braid.c for function applywordbackto
+
+TEXT COMMENTS <  10%    2%  in file braid.c for void function init_braid
+COMPLEXITY >  10       24   in file braid.c for void function init_braid
+EXTD COMPLEXITY > 15   26   in file braid.c for void function init_braid
+EX STATEMENTS >  50    51   in file braid.c for void function init_braid
+LINES > 80 CHARS        9   in file braid.c for void function init_braid
+
+TEXT COMMENTS <  10%    1%  in file braid.c for void function draw_braid
+BLANK LINES <  10%      4%  in file braid.c for void function draw_braid
+COMPLEXITY >  10       33   in file braid.c for void function draw_braid
+EXTD COMPLEXITY > 15   35   in file braid.c for void function draw_braid
+EX STATEMENTS >  50    74   in file braid.c for void function draw_braid
+CONTINUES PRESENT       1   in file braid.c for void function draw_braid
+LINES > 80 CHARS       66   in file braid.c for void function draw_braid
+
+TEXT COMMENTS <  10%    0%  in file braid.c for void function release_braid
+
+TEXT COMMENTS <  50%   20%  in file braid.c for file level global/file
+LINES > 80 CHARS        1   in file braid.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file bug.c for function hexcmove
+BLANK LINES <  10%      0%  in file bug.c for function hexcmove
+EXIT ROUTES >  1        7   in file bug.c for function hexcmove
+LINES > 80 CHARS        1   in file bug.c for function hexcmove
+
+TEXT COMMENTS <  10%    0%  in file bug.c for function neighbor
+BLANK LINES <  10%      3%  in file bug.c for function neighbor
+COMPLEXITY >  10       13   in file bug.c for function neighbor
+EXTD COMPLEXITY > 15   19   in file bug.c for function neighbor
+EXIT ROUTES >  1        9   in file bug.c for function neighbor
+LINES > 80 CHARS        2   in file bug.c for function neighbor
+
+TEXT COMMENTS <  10%    0%  in file bug.c for void function drawabacterium
+LINES > 80 CHARS        2   in file bug.c for void function drawabacterium
+
+TEXT COMMENTS <  10%    0%  in file bug.c for void function drawabug
+LINES > 80 CHARS        1   in file bug.c for void function drawabug
+
+TEXT COMMENTS <  10%    0%  in file bug.c for void function eraseabug
+
+LINES > 80 CHARS        1   in file bug.c for void function init_buglist
+
+TEXT COMMENTS <  10%    0%  in file bug.c for void function addto_buglist
+
+TEXT COMMENTS <  10%    0%  in file bug.c for void function removefrom_buglist
+
+TEXT COMMENTS <  10%    0%  in file bug.c for void function dupin_buglist
+
+TEXT COMMENTS <  10%    0%  in file bug.c for void function cutfrom_buglist
+
+TEXT COMMENTS <  10%    0%  in file bug.c for void function reattach_buglist
+
+LINES > 80 CHARS        2   in file bug.c for void function flush_buglist
+
+TEXT COMMENTS <  10%    8%  in file bug.c for function dirbug
+EXIT ROUTES >  1        2   in file bug.c for function dirbug
+
+TEXT COMMENTS <  10%    0%  in file bug.c for void function mutatebug
+EXIT ROUTES >  1        2   in file bug.c for void function mutatebug
+LINES > 80 CHARS        1   in file bug.c for void function mutatebug
+
+TEXT COMMENTS <  10%    6%  in file bug.c for void function makebacteria
+
+TEXT COMMENTS <  10%    0%  in file bug.c for void function redrawbacteria
+
+TEXT COMMENTS <  10%    8%  in file bug.c for void function init_bug
+BLANK LINES <  10%      5%  in file bug.c for void function init_bug
+COMPLEXITY >  10       26   in file bug.c for void function init_bug
+EXTD COMPLEXITY > 15   30   in file bug.c for void function init_bug
+EX STATEMENTS >  50    79   in file bug.c for void function init_bug
+LINES > 80 CHARS       10   in file bug.c for void function init_bug
+
+TEXT COMMENTS <  10%    6%  in file bug.c for void function draw_bug
+BLANK LINES <  10%      2%  in file bug.c for void function draw_bug
+COMPLEXITY >  10       15   in file bug.c for void function draw_bug
+EXTD COMPLEXITY > 15   18   in file bug.c for void function draw_bug
+EX STATEMENTS >  50    63   in file bug.c for void function draw_bug
+LINES > 80 CHARS       10   in file bug.c for void function draw_bug
+
+TEXT COMMENTS <  10%    0%  in file bug.c for void function release_bug
+
+TEXT COMMENTS <  50%   21%  in file bug.c for file level global/file
+LINES > 80 CHARS        1   in file bug.c for file level global/file
+
+TEXT COMMENTS <  10%    2%  in file cartoon.c for void function initimage
+BLANK LINES <  10%      8%  in file cartoon.c for void function initimage
+LINES > 80 CHARS        4   in file cartoon.c for void function initimage
+
+TEXT COMMENTS <  10%    8%  in file cartoon.c for void function select_cartoon
+BLANK LINES <  10%      8%  in file cartoon.c for void function select_cartoon
+
+LINES > 80 CHARS        1   in file cartoon.c for void function move_cartoon
+
+TEXT COMMENTS <  10%    5%  in file cartoon.c for void function erase_image
+
+TEXT COMMENTS <  10%    3%  in file cartoon.c for void function init_cartoon
+
+TEXT COMMENTS <  10%    5%  in file cartoon.c for void function release_cartoon
+
+TEXT COMMENTS <  50%   34%  in file cartoon.c for file level global/file
+LINES > 80 CHARS        1   in file cartoon.c for file level global/file
+
+LINES > 80 CHARS        1   in file clock.c for function myrand
+
+TEXT COMMENTS <  10%    0%  in file clock.c for void function DrawDisk
+
+TEXT COMMENTS <  10%    0%  in file clock.c for void function DrawBorder
+
+TEXT COMMENTS <  10%    0%  in file clock.c for void function DrawJewel
+
+TEXT COMMENTS <  10%    4%  in file clock.c for void function DrawHand
+BLANK LINES <  10%      4%  in file clock.c for void function DrawHand
+LINES > 80 CHARS        1   in file clock.c for void function DrawHand
+
+TEXT COMMENTS <  10%    0%  in file clock.c for void function real_draw_clock
+
+TEXT COMMENTS <  10%    0%  in file clock.c for function collide
+EXIT ROUTES >  1        2   in file clock.c for function collide
+
+TEXT COMMENTS <  10%    9%  in file clock.c for function new_clock_state
+EXIT ROUTES >  1        2   in file clock.c for function new_clock_state
+LINES > 80 CHARS       11   in file clock.c for function new_clock_state
+
+TEXT COMMENTS <  10%    0%  in file clock.c for void function update_clock
+
+TEXT COMMENTS <  10%    4%  in file clock.c for void function init_clock
+COMPLEXITY >  10       13   in file clock.c for void function init_clock
+
+TEXT COMMENTS <  10%    0%  in file clock.c for void function draw_clock
+BLANK LINES <  10%      4%  in file clock.c for void function draw_clock
+
+TEXT COMMENTS <  10%    0%  in file clock.c for void function release_clock
+
+TEXT COMMENTS <  50%   24%  in file clock.c for file level global/file
+LINES > 80 CHARS        5   in file clock.c for file level global/file
+
+TEXT COMMENTS <  10%    4%  in file color.c for void function hsb2rgb
+BLANK LINES <  10%      2%  in file color.c for void function hsb2rgb
+
+TEXT COMMENTS <  10%    0%  in file color.c for void function hsbramp
+
+TEXT COMMENTS <  10%    0%  in file color.c for function allocPixel
+LINES > 80 CHARS        1   in file color.c for function allocPixel
+
+BLANK LINES <  10%      8%  in file color.c for void function fixColormap
+COMPLEXITY >  10       16   in file color.c for void function fixColormap
+EXTD COMPLEXITY > 15   19   in file color.c for void function fixColormap
+LINES > 80 CHARS        4   in file color.c for void function fixColormap
+
+TEXT COMMENTS <  10%    6%  in file color.c for void function reserveColors
+
+TEXT COMMENTS <  50%   46%  in file color.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file daisy.c for void function drawstem
+
+TEXT COMMENTS <  10%    0%  in file daisy.c for function drawpetals
+BLANK LINES <  10%      1%  in file daisy.c for function drawpetals
+COMPLEXITY >  10       11   in file daisy.c for function drawpetals
+LINES > 80 CHARS        8   in file daisy.c for function drawpetals
+
+TEXT COMMENTS <  10%    5%  in file daisy.c for void function drawcenter
+LINES > 80 CHARS        1   in file daisy.c for void function drawcenter
+
+TEXT COMMENTS <  10%    7%  in file daisy.c for void function drawdaisy
+BLANK LINES <  10%      2%  in file daisy.c for void function drawdaisy
+LINES > 80 CHARS        4   in file daisy.c for void function drawdaisy
+
+TEXT COMMENTS <  10%    0%  in file daisy.c for void function init_daisy
+LINES > 80 CHARS        2   in file daisy.c for void function init_daisy
+
+TEXT COMMENTS <  10%    0%  in file daisy.c for void function draw_daisy
+
+TEXT COMMENTS <  10%    0%  in file daisy.c for void function release_daisy
+
+TEXT COMMENTS <  10%    0%  in file daisy.c for void function refresh_daisy
+
+TEXT COMMENTS <  50%   26%  in file daisy.c for file level global/file
+
+TEXT COMMENTS <  10%    7%  in file dclock.c for void function drawDclock
+BLANK LINES <  10%      6%  in file dclock.c for void function drawDclock
+COMPLEXITY >  10       18   in file dclock.c for void function drawDclock
+EXTD COMPLEXITY > 15   23   in file dclock.c for void function drawDclock
+EX STATEMENTS >  50    73   in file dclock.c for void function drawDclock
+LINES > 80 CHARS        2   in file dclock.c for void function drawDclock
+
+TEXT COMMENTS <  10%    6%  in file dclock.c for void function init_dclock
+COMPLEXITY >  10       15   in file dclock.c for void function init_dclock
+LINES > 80 CHARS        2   in file dclock.c for void function init_dclock
+
+TEXT COMMENTS <  10%    0%  in file dclock.c for void function draw_dclock
+
+TEXT COMMENTS <  10%    0%  in file dclock.c for void function release_dclock
+
+TEXT COMMENTS <  50%   15%  in file dclock.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file demon.c for void function drawcell
+BLANK LINES <  10%      7%  in file demon.c for void function drawcell
+LINES > 80 CHARS        2   in file demon.c for void function drawcell
+
+TEXT COMMENTS <  10%    0%  in file demon.c for void function addtolist
+
+TEXT COMMENTS <  10%    0%  in file demon.c for void function print_state
+
+TEXT COMMENTS <  10%    0%  in file demon.c for void function free_state
+
+TEXT COMMENTS <  10%    0%  in file demon.c for void function free_struct
+
+BLANK LINES <  10%      8%  in file demon.c for void function draw_state
+LINES > 80 CHARS        4   in file demon.c for void function draw_state
+
+TEXT COMMENTS <  10%    0%  in file demon.c for void function RandomSoup
+LINES > 80 CHARS        1   in file demon.c for void function RandomSoup
+
+TEXT COMMENTS <  10%    0%  in file demon.c for void function init_demon
+COMPLEXITY >  10       18   in file demon.c for void function init_demon
+EXTD COMPLEXITY > 15   18   in file demon.c for void function init_demon
+EX STATEMENTS >  50    54   in file demon.c for void function init_demon
+LINES > 80 CHARS        7   in file demon.c for void function init_demon
+
+TEXT COMMENTS <  10%    7%  in file demon.c for void function draw_demon
+BLANK LINES <  10%      2%  in file demon.c for void function draw_demon
+COMPLEXITY >  10       44   in file demon.c for void function draw_demon
+EXTD COMPLEXITY > 15   44   in file demon.c for void function draw_demon
+EX STATEMENTS >  50    75   in file demon.c for void function draw_demon
+LINES > 80 CHARS       28   in file demon.c for void function draw_demon
+
+TEXT COMMENTS <  10%    0%  in file demon.c for void function release_demon
+
+TEXT COMMENTS <  50%   21%  in file demon.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file drift.c for function halfrandom
+
+TEXT COMMENTS <  10%    0%  in file drift.c for function frandom
+BLANK LINES <  10%      9%  in file drift.c for function frandom
+EXIT ROUTES >  1        8   in file drift.c for function frandom
+
+TEXT COMMENTS <  10%    0%  in file drift.c for void function initmode
+
+TEXT COMMENTS <  10%    0%  in file drift.c for void function pick_df_coefs
+LINES > 80 CHARS        1   in file drift.c for void function pick_df_coefs
+
+TEXT COMMENTS <  10%    0%  in file drift.c for void function initfractal
+BLANK LINES <  10%      9%  in file drift.c for void function initfractal
+COMPLEXITY >  10       11   in file drift.c for void function initfractal
+LINES > 80 CHARS        2   in file drift.c for void function initfractal
+
+TEXT COMMENTS <  10%    0%  in file drift.c for void function init_drift
+
+COMPLEXITY >  10       20   in file drift.c for void function iter
+EXTD COMPLEXITY > 15   27   in file drift.c for void function iter
+EX STATEMENTS >  50    72   in file drift.c for void function iter
+LINES > 80 CHARS        4   in file drift.c for void function iter
+
+TEXT COMMENTS <  10%    0%  in file drift.c for void function draw
+EXIT ROUTES >  1        2   in file drift.c for void function draw
+LINES > 80 CHARS        1   in file drift.c for void function draw
+
+TEXT COMMENTS <  10%    0%  in file drift.c for void function draw_flush
+BLANK LINES <  10%      8%  in file drift.c for void function draw_flush
+
+TEXT COMMENTS <  10%    0%  in file drift.c for void function draw_drift
+COMPLEXITY >  10       11   in file drift.c for void function draw_drift
+LINES > 80 CHARS        2   in file drift.c for void function draw_drift
+
+TEXT COMMENTS <  10%    0%  in file drift.c for void function release_drift
+
+TEXT COMMENTS <  50%   29%  in file drift.c for file level global/file
+LINES > 80 CHARS        4   in file drift.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file eyes.c for void function TFillArc
+BLANK LINES <  10%      8%  in file eyes.c for void function TFillArc
+
+TEXT COMMENTS <  10%    0%  in file eyes.c for void function SetTransform
+
+TEXT COMMENTS <  10%    0%  in file eyes.c for function computePupil
+BLANK LINES <  10%      2%  in file eyes.c for function computePupil
+
+TEXT COMMENTS <  10%    0%  in file eyes.c for function fly_touches
+EXIT ROUTES >  1        5   in file eyes.c for function fly_touches
+
+TEXT COMMENTS <  10%    0%  in file eyes.c for function fly_touches_eye
+EXIT ROUTES >  1        2   in file eyes.c for function fly_touches_eye
+
+TEXT COMMENTS <  10%    0%  in file eyes.c for function eyes_overlap
+EXIT ROUTES >  1        5   in file eyes.c for function eyes_overlap
+
+LINES > 80 CHARS        2   in file eyes.c for void function init_fly
+
+TEXT COMMENTS <  10%    0%  in file eyes.c for void function unpaint_fly
+
+BLANK LINES <  10%      8%  in file eyes.c for void function move_fly
+COMPLEXITY >  10       13   in file eyes.c for void function move_fly
+
+COMPLEXITY >  10       18   in file eyes.c for void function create_eyes
+EXTD COMPLEXITY > 15   19   in file eyes.c for void function create_eyes
+EX STATEMENTS >  50    64   in file eyes.c for void function create_eyes
+CONTINUES PRESENT       1   in file eyes.c for void function create_eyes
+LINES > 80 CHARS        3   in file eyes.c for void function create_eyes
+
+BLANK LINES <  10%      6%  in file eyes.c for void function paint_eyes
+COMPLEXITY >  10       12   in file eyes.c for void function paint_eyes
+EXIT ROUTES >  1        2   in file eyes.c for void function paint_eyes
+
+TEXT COMMENTS <  10%    8%  in file eyes.c for void function one_time_init
+EXIT ROUTES >  1        2   in file eyes.c for void function one_time_init
+
+TEXT COMMENTS <  10%    0%  in file eyes.c for void function free_eyes
+
+COMPLEXITY >  10       14   in file eyes.c for void function init_eyes
+EXIT ROUTES >  1        4   in file eyes.c for void function init_eyes
+LINES > 80 CHARS        1   in file eyes.c for void function init_eyes
+
+TEXT COMMENTS <  10%    6%  in file eyes.c for void function draw_eyes
+
+TEXT COMMENTS <  10%    0%  in file eyes.c for void function release_eyes
+
+TEXT COMMENTS <  50%   37%  in file eyes.c for file level global/file
+LINES > 80 CHARS        2   in file eyes.c for file level global/file
+
+TEXT COMMENTS <  10%    3%  in file fadeplot.c for void function init_fadeplot
+
+TEXT COMMENTS <  10%    7%  in file fadeplot.c for void function draw_fadeplot
+BLANK LINES <  10%      7%  in file fadeplot.c for void function draw_fadeplot
+COMPLEXITY >  10       13   in file fadeplot.c for void function draw_fadeplot
+LINES > 80 CHARS        4   in file fadeplot.c for void function draw_fadeplot
+
+TEXT COMMENTS <  50%   18%  in file fadeplot.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file flag.c for void function initSintab
+LINES > 80 CHARS        1   in file flag.c for void function initSintab
+
+TEXT COMMENTS <  10%    0%  in file flag.c for void function affiche
+BLANK LINES <  10%      3%  in file flag.c for void function affiche
+LINES > 80 CHARS        5   in file flag.c for void function affiche
+
+TEXT COMMENTS <  10%    5%  in file flag.c for void function init_flag
+LINES > 80 CHARS        1   in file flag.c for void function init_flag
+
+TEXT COMMENTS <  10%    3%  in file flag.c for void function draw_flag
+BLANK LINES <  10%      3%  in file flag.c for void function draw_flag
+LINES > 80 CHARS        3   in file flag.c for void function draw_flag
+
+TEXT COMMENTS <  10%    0%  in file flag.c for void function release_flag
+LINES > 80 CHARS        1   in file flag.c for void function release_flag
+
+TEXT COMMENTS <  50%   14%  in file flag.c for file level global/file
+
+TEXT COMMENTS <  50%    0%  in file flag.h for file level global/file
+BLANK LINES <  10%      0%  in file flag.h for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file flame.c for function halfrandom
+
+BLANK LINES <  10%      5%  in file flame.c for function recurse
+COMPLEXITY >  10       30   in file flame.c for function recurse
+EXTD COMPLEXITY > 15   39   in file flame.c for function recurse
+EX STATEMENTS >  50    82   in file flame.c for function recurse
+EXIT ROUTES >  1        3   in file flame.c for function recurse
+LINES > 80 CHARS       19   in file flame.c for function recurse
+
+TEXT COMMENTS <  10%    0%  in file flame.c for void function init_flame
+
+TEXT COMMENTS <  10%    8%  in file flame.c for void function draw_flame
+LINES > 80 CHARS        2   in file flame.c for void function draw_flame
+
+TEXT COMMENTS <  10%    0%  in file flame.c for void function release_flame
+
+TEXT COMMENTS <  50%   24%  in file flame.c for file level global/file
+
+TEXT COMMENTS <  10%    6%  in file forest.c for void function draw_tree
+
+TEXT COMMENTS <  10%    0%  in file forest.c for void function init_forest
+
+TEXT COMMENTS <  10%    0%  in file forest.c for void function draw_forest
+LINES > 80 CHARS        1   in file forest.c for void function draw_forest
+
+TEXT COMMENTS <  10%    0%  in file forest.c for void function release_forest
+
+TEXT COMMENTS <  10%    0%  in file forest.c for void function refresh_forest
+
+TEXT COMMENTS <  50%   40%  in file forest.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file galaxy.c for void function free_galaxies
+
+TEXT COMMENTS <  10%    7%  in file galaxy.c for void function startover
+EX STATEMENTS >  50    69   in file galaxy.c for void function startover
+LINES > 80 CHARS       11   in file galaxy.c for void function startover
+
+TEXT COMMENTS <  10%    0%  in file galaxy.c for void function init_galaxy
+
+TEXT COMMENTS <  10%    3%  in file galaxy.c for void function draw_galaxy
+COMPLEXITY >  10       14   in file galaxy.c for void function draw_galaxy
+EXTD COMPLEXITY > 15   20   in file galaxy.c for void function draw_galaxy
+EX STATEMENTS >  50    69   in file galaxy.c for void function draw_galaxy
+LINES > 80 CHARS        7   in file galaxy.c for void function draw_galaxy
+
+TEXT COMMENTS <  10%    0%  in file galaxy.c for void function release_galaxy
+
+TEXT COMMENTS <  50%   30%  in file galaxy.c for file level global/file
+LINES > 80 CHARS        1   in file galaxy.c for file level global/file
+
+TEXT COMMENTS <  10%    6%  in file gear.c for void function gear
+EX STATEMENTS >  50    79   in file gear.c for void function gear
+LINES > 80 CHARS       14   in file gear.c for void function gear
+
+TEXT COMMENTS <  10%    3%  in file gear.c for void function draw
+
+TEXT COMMENTS <  10%    0%  in file gear.c for function key
+BLANK LINES <  10%      0%  in file gear.c for function key
+EXIT ROUTES >  1        7   in file gear.c for function key
+
+TEXT COMMENTS <  10%    0%  in file gear.c for void function reshape
+
+TEXT COMMENTS <  10%    2%  in file gear.c for void function pinit
+BLANK LINES <  10%      8%  in file gear.c for void function pinit
+
+LINES > 80 CHARS        1   in file gear.c for void function init_gear
+
+TEXT COMMENTS <  10%    9%  in file gear.c for void function draw_gear
+
+TEXT COMMENTS <  10%    0%  in file gear.c for void function release_gear
+LINES > 80 CHARS        1   in file gear.c for void function release_gear
+
+TEXT COMMENTS <  50%   28%  in file gear.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file geometry.c for void function eraselines
+
+TEXT COMMENTS <  10%    0%  in file geometry.c for void function drawlines
+
+TEXT COMMENTS <  10%    5%  in file geometry.c for void function init_geometry
+
+TEXT COMMENTS <  10%    5%  in file geometry.c for void function draw_geometry
+LINES > 80 CHARS        4   in file geometry.c for void function draw_geometry
+
+TEXT COMMENTS <  10%    0%  in file geometry.c for void function release_geometr
+                            y
+
+TEXT COMMENTS <  50%   20%  in file geometry.c for file level global/file
+
+LINES > 80 CHARS        2   in file grav.c for void function init_planet
+
+BLANK LINES <  10%      9%  in file grav.c for void function draw_planet
+LINES > 80 CHARS        2   in file grav.c for void function draw_planet
+
+TEXT COMMENTS <  10%    5%  in file grav.c for void function init_grav
+LINES > 80 CHARS        3   in file grav.c for void function init_grav
+
+LINES > 80 CHARS        2   in file grav.c for void function draw_grav
+
+TEXT COMMENTS <  10%    0%  in file grav.c for void function release_grav
+
+TEXT COMMENTS <  50%   10%  in file grav.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file helix.c for function gcd
+
+TEXT COMMENTS <  10%    0%  in file helix.c for void function helix
+BLANK LINES <  10%      7%  in file helix.c for void function helix
+
+TEXT COMMENTS <  10%    0%  in file helix.c for void function random_helix
+
+TEXT COMMENTS <  10%    0%  in file helix.c for void function init_helix
+BLANK LINES <  10%      9%  in file helix.c for void function init_helix
+LINES > 80 CHARS        2   in file helix.c for void function init_helix
+
+TEXT COMMENTS <  10%    0%  in file helix.c for void function draw_helix
+
+TEXT COMMENTS <  10%    0%  in file helix.c for void function release_helix
+
+TEXT COMMENTS <  50%   30%  in file helix.c for file level global/file
+
+TEXT COMMENTS <  10%    5%  in file hop.c for void function init_hop
+COMPLEXITY >  10       11   in file hop.c for void function init_hop
+LINES > 80 CHARS        2   in file hop.c for void function init_hop
+
+TEXT COMMENTS <  10%    0%  in file hop.c for void function draw_hop
+BLANK LINES <  10%      2%  in file hop.c for void function draw_hop
+LINES > 80 CHARS        3   in file hop.c for void function draw_hop
+
+TEXT COMMENTS <  10%    0%  in file hop.c for void function release_hop
+
+TEXT COMMENTS <  50%   41%  in file hop.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file hyper.c for void function move_line
+BLANK LINES <  10%      5%  in file hyper.c for void function move_line
+EXIT ROUTES >  1        2   in file hyper.c for void function move_line
+LINES > 80 CHARS        2   in file hyper.c for void function move_line
+
+TEXT COMMENTS <  10%    0%  in file hyper.c for void function init_hyper
+BLANK LINES <  10%      8%  in file hyper.c for void function init_hyper
+COMPLEXITY >  10       12   in file hyper.c for void function init_hyper
+LINES > 80 CHARS        2   in file hyper.c for void function init_hyper
+
+TEXT COMMENTS <  10%    0%  in file hyper.c for void function draw_hyper
+EX STATEMENTS >  50    52   in file hyper.c for void function draw_hyper
+LINES > 80 CHARS        4   in file hyper.c for void function draw_hyper
+
+TEXT COMMENTS <  10%    0%  in file hyper.c for void function release_hyper
+
+TEXT COMMENTS <  50%   21%  in file hyper.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file image.c for void function init_image
+BLANK LINES <  10%      5%  in file image.c for void function init_image
+COMPLEXITY >  10       14   in file image.c for void function init_image
+LINES > 80 CHARS        2   in file image.c for void function init_image
+
+TEXT COMMENTS <  10%    0%  in file image.c for void function draw_image
+LINES > 80 CHARS        2   in file image.c for void function draw_image
+
+TEXT COMMENTS <  10%    0%  in file image.c for void function release_image
+
+TEXT COMMENTS <  10%    0%  in file image.c for void function refresh_image
+LINES > 80 CHARS        2   in file image.c for void function refresh_image
+
+TEXT COMMENTS <  50%   20%  in file image.c for file level global/file
+
+TEXT COMMENTS <  10%    9%  in file julia.c for void function apply
+
+TEXT COMMENTS <  10%    0%  in file julia.c for void function incr
+LINES > 80 CHARS        2   in file julia.c for void function incr
+
+TEXT COMMENTS <  10%    0%  in file julia.c for void function init_julia
+BLANK LINES <  10%      8%  in file julia.c for void function init_julia
+COMPLEXITY >  10       15   in file julia.c for void function init_julia
+EXTD COMPLEXITY > 15   16   in file julia.c for void function init_julia
+EXIT ROUTES >  1        2   in file julia.c for void function init_julia
+LINES > 80 CHARS        3   in file julia.c for void function init_julia
+
+TEXT COMMENTS <  10%    8%  in file julia.c for void function draw_julia
+COMPLEXITY >  10       11   in file julia.c for void function draw_julia
+EX STATEMENTS >  50    58   in file julia.c for void function draw_julia
+LINES > 80 CHARS        4   in file julia.c for void function draw_julia
+
+TEXT COMMENTS <  10%    0%  in file julia.c for void function release_julia
+BLANK LINES <  10%      8%  in file julia.c for void function release_julia
+LINES > 80 CHARS        2   in file julia.c for void function release_julia
+
+TEXT COMMENTS <  50%   30%  in file julia.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file kaleid.c for void function init_kaleid
+BLANK LINES <  10%      6%  in file kaleid.c for void function init_kaleid
+
+TEXT COMMENTS <  10%    0%  in file kaleid.c for void function draw_kaleid
+BLANK LINES <  10%      2%  in file kaleid.c for void function draw_kaleid
+EX STATEMENTS >  50    81   in file kaleid.c for void function draw_kaleid
+
+TEXT COMMENTS <  10%    0%  in file kaleid.c for void function release_kaleid
+
+TEXT COMMENTS <  50%   23%  in file kaleid.c for file level global/file
+
+TEXT COMMENTS <  10%    1%  in file laser.c for void function init_laser
+COMPLEXITY >  10       17   in file laser.c for void function init_laser
+EXTD COMPLEXITY > 15   17   in file laser.c for void function init_laser
+EX STATEMENTS >  50    55   in file laser.c for void function init_laser
+LINES > 80 CHARS        2   in file laser.c for void function init_laser
+
+TEXT COMMENTS <  10%    0%  in file laser.c for void function draw_laser_once
+BLANK LINES <  10%      7%  in file laser.c for void function draw_laser_once
+COMPLEXITY >  10       21   in file laser.c for void function draw_laser_once
+EXTD COMPLEXITY > 15   21   in file laser.c for void function draw_laser_once
+EX STATEMENTS >  50    65   in file laser.c for void function draw_laser_once
+LINES > 80 CHARS        3   in file laser.c for void function draw_laser_once
+
+TEXT COMMENTS <  10%    0%  in file laser.c for void function draw_laser
+
+TEXT COMMENTS <  10%    0%  in file laser.c for void function release_laser
+
+TEXT COMMENTS <  50%   36%  in file laser.c for file level global/file
+
+TEXT COMMENTS <  10%    4%  in file life.c for void function drawcell
+LINES > 80 CHARS        1   in file life.c for void function drawcell
+
+TEXT COMMENTS <  10%    0%  in file life.c for void function erasecell
+
+TEXT COMMENTS <  10%    0%  in file life.c for void function spawn
+BLANK LINES <  10%      4%  in file life.c for void function spawn
+
+TEXT COMMENTS <  10%    0%  in file life.c for void function ckill
+BLANK LINES <  10%      2%  in file life.c for void function ckill
+
+TEXT COMMENTS <  10%    0%  in file life.c for void function setcell
+
+TEXT COMMENTS <  10%    0%  in file life.c for void function alloccells
+LINES > 80 CHARS        3   in file life.c for void function alloccells
+
+TEXT COMMENTS <  10%    0%  in file life.c for void function freecells
+
+TEXT COMMENTS <  10%    0%  in file life.c for void function init_fates
+LINES > 80 CHARS        1   in file life.c for void function init_fates
+
+TEXT COMMENTS <  10%    0%  in file life.c for void function RandomSoup
+
+TEXT COMMENTS <  10%    0%  in file life.c for void function GetPattern
+
+TEXT COMMENTS <  10%    4%  in file life.c for void function shooter
+BLANK LINES <  10%      4%  in file life.c for void function shooter
+
+TEXT COMMENTS <  10%    5%  in file life.c for void function init_life
+BLANK LINES <  10%      6%  in file life.c for void function init_life
+COMPLEXITY >  10       13   in file life.c for void function init_life
+EXTD COMPLEXITY > 15   16   in file life.c for void function init_life
+LINES > 80 CHARS        6   in file life.c for void function init_life
+
+COMPLEXITY >  10       11   in file life.c for void function draw_life
+LINES > 80 CHARS        2   in file life.c for void function draw_life
+
+TEXT COMMENTS <  10%    0%  in file life.c for void function release_life
+
+TEXT COMMENTS <  10%    0%  in file life.c for void function change_life
+
+TEXT COMMENTS <  50%   10%  in file life.c for file level global/file
+BLANK LINES <  10%      5%  in file life.c for file level global/file
+LINES > 80 CHARS        1   in file life.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file life1d.c for void function drawcell
+BLANK LINES <  10%      5%  in file life1d.c for void function drawcell
+LINES > 80 CHARS        4   in file life1d.c for void function drawcell
+
+TEXT COMMENTS <  10%    0%  in file life1d.c for void function RandomSoup
+LINES > 80 CHARS        1   in file life1d.c for void function RandomSoup
+
+TEXT COMMENTS <  10%    2%  in file life1d.c for void function GetRule
+BLANK LINES <  10%      6%  in file life1d.c for void function GetRule
+COMPLEXITY >  10       12   in file life1d.c for void function GetRule
+LINES > 80 CHARS        5   in file life1d.c for void function GetRule
+
+TEXT COMMENTS <  10%    0%  in file life1d.c for function compare
+EXIT ROUTES >  1        2   in file life1d.c for function compare
+
+TEXT COMMENTS <  10%    0%  in file life1d.c for void function init_life1d
+BLANK LINES <  10%      7%  in file life1d.c for void function init_life1d
+COMPLEXITY >  10       24   in file life1d.c for void function init_life1d
+EXTD COMPLEXITY > 15   27   in file life1d.c for void function init_life1d
+EX STATEMENTS >  50    69   in file life1d.c for void function init_life1d
+LINES > 80 CHARS        4   in file life1d.c for void function init_life1d
+
+TEXT COMMENTS <  10%    0%  in file life1d.c for void function draw_life1d
+BLANK LINES <  10%      8%  in file life1d.c for void function draw_life1d
+COMPLEXITY >  10       17   in file life1d.c for void function draw_life1d
+EXTD COMPLEXITY > 15   17   in file life1d.c for void function draw_life1d
+LINES > 80 CHARS        6   in file life1d.c for void function draw_life1d
+
+TEXT COMMENTS <  10%    0%  in file life1d.c for void function release_life1d
+BLANK LINES <  10%      7%  in file life1d.c for void function release_life1d
+LINES > 80 CHARS        1   in file life1d.c for void function release_life1d
+
+TEXT COMMENTS <  10%    0%  in file life1d.c for void function refresh_life1d
+
+TEXT COMMENTS <  50%   26%  in file life1d.c for file level global/file
+LINES > 80 CHARS       31   in file life1d.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for function Rule2Array
+EXIT ROUTES >  1        5   in file life3d.c for function Rule2Array
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for function Array2Rule
+EXIT ROUTES >  1        5   in file life3d.c for function Array2Rule
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function AddToList
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function AddToEraseList
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function DelFromList
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function MemInit
+
+LINES > 80 CHARS        1   in file life3d.c for void function BaseOffset
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for function GetMem
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function SetMem
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function ChangeMem
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function ClearMem
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function IncrementNbrs3D
+LINES > 80 CHARS        1   in file life3d.c for void function IncrementNbrs3D
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function End3D
+
+BLANK LINES <  10%      5%  in file life3d.c for void function RunLife3D
+COMPLEXITY >  10       11   in file life3d.c for void function RunLife3D
+LINES > 80 CHARS       10   in file life3d.c for void function RunLife3D
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for function CountCells3D
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function DisplayList
+LINES > 80 CHARS        1   in file life3d.c for void function DisplayList
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function RandomSoup
+LINES > 80 CHARS        1   in file life3d.c for void function RandomSoup
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function GetPattern
+BLANK LINES <  10%      3%  in file life3d.c for void function GetPattern
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function NewViewpoint
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function NewPoint
+LINES > 80 CHARS        2   in file life3d.c for void function NewPoint
+
+TEXT COMMENTS <  10%    4%  in file life3d.c for void function SortList
+COMPLEXITY >  10       20   in file life3d.c for void function SortList
+EXTD COMPLEXITY > 15   25   in file life3d.c for void function SortList
+EX STATEMENTS >  50    71   in file life3d.c for void function SortList
+LINES > 80 CHARS        3   in file life3d.c for void function SortList
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function DrawFace
+BLANK LINES <  10%      8%  in file life3d.c for void function DrawFace
+
+TEXT COMMENTS <  10%    4%  in file life3d.c for function DrawCube
+BLANK LINES <  10%      6%  in file life3d.c for function DrawCube
+COMPLEXITY >  10       13   in file life3d.c for function DrawCube
+EXTD COMPLEXITY > 15   16   in file life3d.c for function DrawCube
+EXIT ROUTES >  1        2   in file life3d.c for function DrawCube
+LINES > 80 CHARS        2   in file life3d.c for function DrawCube
+
+LINES > 80 CHARS        2   in file life3d.c for void function DrawScreen
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function shooter
+BLANK LINES <  10%      0%  in file life3d.c for void function shooter
+COMPLEXITY >  10       24   in file life3d.c for void function shooter
+EXTD COMPLEXITY > 15   24   in file life3d.c for void function shooter
+EX STATEMENTS >  50    93   in file life3d.c for void function shooter
+LINES > 80 CHARS       60   in file life3d.c for void function shooter
+
+TEXT COMMENTS <  10%    0%  in file life3d.c for void function initrule
+
+COMPLEXITY >  10       12   in file life3d.c for void function init_life3d
+EX STATEMENTS >  50    51   in file life3d.c for void function init_life3d
+LINES > 80 CHARS        6   in file life3d.c for void function init_life3d
+
+TEXT COMMENTS <  10%    8%  in file life3d.c for void function release_life3d
+
+TEXT COMMENTS <  10%    2%  in file life3d.c for void function change_life3d
+
+TEXT COMMENTS <  50%   10%  in file life3d.c for file level global/file
+LINES > 80 CHARS        6   in file life3d.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for function setup_multi_strike
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for function flashing_strike
+EXIT ROUTES >  1        2   in file lightning.c for function flashing_strike
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function flash_duration
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function random_storm
+BLANK LINES <  10%      2%  in file lightning.c for void function random_storm
+LINES > 80 CHARS        3   in file lightning.c for void function random_storm
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function generate
+LINES > 80 CHARS        1   in file lightning.c for void function generate
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function create_fork
+LINES > 80 CHARS        4   in file lightning.c for void function create_fork
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function update_bolt
+BLANK LINES <  10%      7%  in file lightning.c for void function update_bolt
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function draw_bolt
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function first_strike
+LINES > 80 CHARS        1   in file lightning.c for void function first_strike
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function draw_line
+LINES > 80 CHARS        6   in file lightning.c for void function draw_line
+
+TEXT COMMENTS <  10%    3%  in file lightning.c for void function level1_strike
+BLANK LINES <  10%      6%  in file lightning.c for void function level1_strike
+LINES > 80 CHARS        2   in file lightning.c for void function level1_strike
+
+LINES > 80 CHARS        1   in file lightning.c for function distance
+
+BLANK LINES <  10%      9%  in file lightning.c for void function level2_strike
+LINES > 80 CHARS        2   in file lightning.c for void function level2_strike
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for function storm_active
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function wiggle_bolt
+LINES > 80 CHARS        3   in file lightning.c for void function wiggle_bolt
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function wiggle_line
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function init_lightning
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function draw_lightning
+BLANK LINES <  10%      2%  in file lightning.c for void function draw_lightning
+
+TEXT COMMENTS <  10%    0%  in file lightning.c for void function release_lightn
+                            ing
+
+TEXT COMMENTS <  50%    9%  in file lightning.c for file level global/file
+LINES > 80 CHARS        1   in file lightning.c for file level global/file
+
+COMPLEXITY >  10       12   in file lissie.c for void function drawlissie
+LINES > 80 CHARS        2   in file lissie.c for void function drawlissie
+
+TEXT COMMENTS <  10%    5%  in file lissie.c for void function initlissie
+BLANK LINES <  10%      9%  in file lissie.c for void function initlissie
+LINES > 80 CHARS        2   in file lissie.c for void function initlissie
+
+TEXT COMMENTS <  10%    0%  in file lissie.c for void function init_lissie
+LINES > 80 CHARS        2   in file lissie.c for void function init_lissie
+
+TEXT COMMENTS <  10%    0%  in file lissie.c for void function draw_lissie
+
+TEXT COMMENTS <  10%    0%  in file lissie.c for void function release_lissie
+
+TEXT COMMENTS <  10%    0%  in file lissie.c for void function refresh_lissie
+
+TEXT COMMENTS <  50%   11%  in file lissie.c for file level global/file
+LINES > 80 CHARS        1   in file lissie.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file logout.c for function has_property
+EXIT ROUTES >  1        2   in file logout.c for function has_property
+
+TEXT COMMENTS <  10%    0%  in file logout.c for void function send_delete_messa
+                            ge
+
+TEXT COMMENTS <  10%    5%  in file logout.c for void function handle_top_level
+
+TEXT COMMENTS <  10%    3%  in file logout.c for void function recurse_tree
+EXIT ROUTES >  1        2   in file logout.c for void function recurse_tree
+LINES > 80 CHARS        1   in file logout.c for void function recurse_tree
+
+TEXT COMMENTS <  10%    4%  in file logout.c for void function kill_tree
+EXIT ROUTES >  1        2   in file logout.c for void function kill_tree
+LINES > 80 CHARS        1   in file logout.c for void function kill_tree
+
+LINES > 80 CHARS        1   in file logout.c for void function closedownLogout
+
+TEXT COMMENTS <  10%    0%  in file logout.c for void function sessionLogout
+
+TEXT COMMENTS <  10%    0%  in file logout.c for void function uglyLogout
+
+TEXT COMMENTS <  10%    9%  in file logout.c for void function logoutUser
+
+COMPLEXITY >  10       13   in file logout.c for function fullLock
+EXTD COMPLEXITY > 15   16   in file logout.c for function fullLock
+EXIT ROUTES >  1        7   in file logout.c for function fullLock
+LINES > 80 CHARS        1   in file logout.c for function fullLock
+
+LINES > 80 CHARS        1   in file logout.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file loop.c for void function addtolist
+
+TEXT COMMENTS <  10%    0%  in file loop.c for void function print_state
+
+TEXT COMMENTS <  10%    0%  in file loop.c for void function free_state
+
+TEXT COMMENTS <  10%    0%  in file loop.c for void function drawcell
+
+BLANK LINES <  10%      7%  in file loop.c for void function draw_state
+LINES > 80 CHARS        3   in file loop.c for void function draw_state
+
+TEXT COMMENTS <  10%    5%  in file loop.c for void function init_table
+BLANK LINES <  10%      8%  in file loop.c for void function init_table
+LINES > 80 CHARS        3   in file loop.c for void function init_table
+
+TEXT COMMENTS <  10%    0%  in file loop.c for void function init_adam
+BLANK LINES <  10%      2%  in file loop.c for void function init_adam
+LINES > 80 CHARS        3   in file loop.c for void function init_adam
+
+TEXT COMMENTS <  10%    0%  in file loop.c for void function do_gen
+
+TEXT COMMENTS <  10%    9%  in file loop.c for void function init_loop
+BLANK LINES <  10%      9%  in file loop.c for void function init_loop
+COMPLEXITY >  10       11   in file loop.c for void function init_loop
+LINES > 80 CHARS        2   in file loop.c for void function init_loop
+
+TEXT COMMENTS <  10%    0%  in file loop.c for void function draw_loop
+BLANK LINES <  10%      4%  in file loop.c for void function draw_loop
+COMPLEXITY >  10       14   in file loop.c for void function draw_loop
+EXTD COMPLEXITY > 15   19   in file loop.c for void function draw_loop
+LINES > 80 CHARS        2   in file loop.c for void function draw_loop
+
+TEXT COMMENTS <  10%    0%  in file loop.c for void function release_loop
+BLANK LINES <  10%      7%  in file loop.c for void function release_loop
+LINES > 80 CHARS        1   in file loop.c for void function release_loop
+
+TEXT COMMENTS <  50%   20%  in file loop.c for file level global/file
+LINES > 80 CHARS        2   in file loop.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file marquee.c for function font_width
+
+COMPLEXITY >  10       12   in file marquee.c for function fixup_back
+EXTD COMPLEXITY > 15   17   in file marquee.c for function fixup_back
+EXIT ROUTES >  1        3   in file marquee.c for function fixup_back
+LINES > 80 CHARS        1   in file marquee.c for function fixup_back
+
+BLANK LINES <  10%      2%  in file marquee.c for function text_font_width
+COMPLEXITY >  10       11   in file marquee.c for function text_font_width
+LINES > 80 CHARS        1   in file marquee.c for function text_font_width
+
+TEXT COMMENTS <  10%    0%  in file marquee.c for function text_height
+
+TEXT COMMENTS <  10%    0%  in file marquee.c for function add_blanks
+
+TEXT COMMENTS <  10%    0%  in file marquee.c for void function add_letter
+
+TEXT COMMENTS <  10%    3%  in file marquee.c for void function init_marquee
+BLANK LINES <  10%      6%  in file marquee.c for void function init_marquee
+COMPLEXITY >  10       14   in file marquee.c for void function init_marquee
+LINES > 80 CHARS        3   in file marquee.c for void function init_marquee
+
+TEXT COMMENTS <  10%    1%  in file marquee.c for void function draw_marquee
+BLANK LINES <  10%      1%  in file marquee.c for void function draw_marquee
+COMPLEXITY >  10       25   in file marquee.c for void function draw_marquee
+EXTD COMPLEXITY > 15   25   in file marquee.c for void function draw_marquee
+EX STATEMENTS >  50    61   in file marquee.c for void function draw_marquee
+EXIT ROUTES >  1        2   in file marquee.c for void function draw_marquee
+LINES > 80 CHARS       11   in file marquee.c for void function draw_marquee
+
+TEXT COMMENTS <  10%    0%  in file marquee.c for void function release_marquee
+
+TEXT COMMENTS <  50%   19%  in file marquee.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file maze.c for void function free_maze
+
+TEXT COMMENTS <  10%    2%  in file maze.c for void function set_maze_sizes
+LINES > 80 CHARS        3   in file maze.c for void function set_maze_sizes
+
+TEXT COMMENTS <  10%    8%  in file maze.c for void function initialize_maze
+BLANK LINES <  10%      8%  in file maze.c for void function initialize_maze
+COMPLEXITY >  10       19   in file maze.c for void function initialize_maze
+EXTD COMPLEXITY > 15   20   in file maze.c for void function initialize_maze
+EX STATEMENTS >  50    70   in file maze.c for void function initialize_maze
+LINES > 80 CHARS        1   in file maze.c for void function initialize_maze
+
+TEXT COMMENTS <  10%    9%  in file maze.c for function choose_door
+BLANK LINES <  10%      4%  in file maze.c for function choose_door
+COMPLEXITY >  10       11   in file maze.c for function choose_door
+EXTD COMPLEXITY > 15   19   in file maze.c for function choose_door
+EXIT ROUTES >  1        3   in file maze.c for function choose_door
+LINES > 80 CHARS        7   in file maze.c for function choose_door
+
+LINES > 80 CHARS        2   in file maze.c for void function draw_maze_walls
+
+LINES > 80 CHARS        2   in file maze.c for void function create_maze_walls
+
+TEXT COMMENTS <  10%    4%  in file maze.c for void function draw_maze_border
+BLANK LINES <  10%      4%  in file maze.c for void function draw_maze_border
+
+TEXT COMMENTS <  10%    5%  in file maze.c for void function draw_wall
+BLANK LINES <  10%      2%  in file maze.c for void function draw_wall
+
+TEXT COMMENTS <  10%    6%  in file maze.c for void function draw_solid_square
+BLANK LINES <  10%      6%  in file maze.c for void function draw_solid_square
+
+BLANK LINES <  10%      9%  in file maze.c for void function solve_maze
+
+TEXT COMMENTS <  10%    7%  in file maze.c for void function enter_square
+LINES > 80 CHARS        1   in file maze.c for void function enter_square
+
+BLANK LINES <  10%      8%  in file maze.c for void function init_maze
+LINES > 80 CHARS        1   in file maze.c for void function init_maze
+
+TEXT COMMENTS <  10%    7%  in file maze.c for void function draw_maze
+BLANK LINES <  10%      2%  in file maze.c for void function draw_maze
+
+TEXT COMMENTS <  10%    0%  in file maze.c for void function release_maze
+
+TEXT COMMENTS <  10%    0%  in file maze.c for void function refresh_maze
+BLANK LINES <  10%      4%  in file maze.c for void function refresh_maze
+
+TEXT COMMENTS <  50%   32%  in file maze.c for file level global/file
+LINES > 80 CHARS        3   in file maze.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file mode.c for void function call_release_hook
+
+TEXT COMMENTS <  10%    0%  in file mode.c for void function release_last_mode
+
+TEXT COMMENTS <  10%    0%  in file mode.c for void function call_init_hook
+
+TEXT COMMENTS <  10%    0%  in file mode.c for void function call_callback_hook
+
+EXIT ROUTES >  1        2   in file mode.c for void function call_refresh_hook
+
+TEXT COMMENTS <  10%    0%  in file mode.c for void function call_change_hook
+
+TEXT COMMENTS <  50%    7%  in file mode.c for file level global/file
+BLANK LINES <  10%      8%  in file mode.c for file level global/file
+
+TEXT COMMENTS <  50%   10%  in file mode.h for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file mountain.c for void function spread
+LINES > 80 CHARS        1   in file mountain.c for void function spread
+
+TEXT COMMENTS <  10%    0%  in file mountain.c for void function drawamountain
+
+TEXT COMMENTS <  10%    0%  in file mountain.c for void function init_mountain
+COMPLEXITY >  10       14   in file mountain.c for void function init_mountain
+LINES > 80 CHARS        1   in file mountain.c for void function init_mountain
+
+TEXT COMMENTS <  10%    6%  in file mountain.c for void function draw_mountain
+
+TEXT COMMENTS <  10%    0%  in file mountain.c for void function release_mountai
+                            n
+
+TEXT COMMENTS <  50%   26%  in file mountain.c for file level global/file
+
+TEXT COMMENTS <  10%    2%  in file nose.c for void function move
+BLANK LINES <  10%      2%  in file nose.c for void function move
+COMPLEXITY >  10       22   in file nose.c for void function move
+EXTD COMPLEXITY > 15   28   in file nose.c for void function move
+EXIT ROUTES >  1        2   in file nose.c for void function move
+LINES > 80 CHARS        7   in file nose.c for void function move
+
+TEXT COMMENTS <  10%    7%  in file nose.c for void function walk
+BLANK LINES <  10%      1%  in file nose.c for void function walk
+COMPLEXITY >  10       17   in file nose.c for void function walk
+EXTD COMPLEXITY > 15   20   in file nose.c for void function walk
+LINES > 80 CHARS        3   in file nose.c for void function walk
+
+TEXT COMMENTS <  10%    0%  in file nose.c for function think
+EXIT ROUTES >  1        2   in file nose.c for function think
+
+TEXT COMMENTS <  10%    8%  in file nose.c for void function talk
+BLANK LINES <  10%      9%  in file nose.c for void function talk
+COMPLEXITY >  10       14   in file nose.c for void function talk
+EXTD COMPLEXITY > 15   16   in file nose.c for void function talk
+EX STATEMENTS >  50    55   in file nose.c for void function talk
+EXIT ROUTES >  1        2   in file nose.c for void function talk
+LINES > 80 CHARS        4   in file nose.c for void function talk
+
+TEXT COMMENTS <  10%    0%  in file nose.c for function look
+BLANK LINES <  10%      3%  in file nose.c for function look
+EXIT ROUTES >  1        5   in file nose.c for function look
+
+TEXT COMMENTS <  10%    0%  in file nose.c for void function init_nose
+BLANK LINES <  10%      4%  in file nose.c for void function init_nose
+LINES > 80 CHARS        4   in file nose.c for void function init_nose
+
+TEXT COMMENTS <  10%    0%  in file nose.c for void function release_nose
+
+TEXT COMMENTS <  50%   18%  in file nose.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file option.c for void function managePrompt
+BLANK LINES <  10%      8%  in file option.c for void function managePrompt
+
+TEXT COMMENTS <  10%    0%  in file option.c for void function f_option
+BLANK LINES <  10%      7%  in file option.c for void function f_option
+LINES > 80 CHARS        8   in file option.c for void function f_option
+
+TEXT COMMENTS <  10%    0%  in file option.c for void function f_Dialog
+
+TEXT COMMENTS <  10%    0%  in file option.c for void function Setup_Option
+LINES > 80 CHARS        1   in file option.c for void function Setup_Option
+
+TEXT COMMENTS <  50%   34%  in file option.c for file level global/file
+LINES > 80 CHARS        3   in file option.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file pacman.c for void function clearcorners
+BLANK LINES <  10%      2%  in file pacman.c for void function clearcorners
+LINES > 80 CHARS        4   in file pacman.c for void function clearcorners
+
+TEXT COMMENTS <  10%    0%  in file pacman.c for void function repopulate
+LINES > 80 CHARS        1   in file pacman.c for void function repopulate
+
+TEXT COMMENTS <  10%    1%  in file pacman.c for void function movepac
+BLANK LINES <  10%      5%  in file pacman.c for void function movepac
+COMPLEXITY >  10       44   in file pacman.c for void function movepac
+EXTD COMPLEXITY > 15   55   in file pacman.c for void function movepac
+EX STATEMENTS >  50   123   in file pacman.c for void function movepac
+LINES > 80 CHARS       31   in file pacman.c for void function movepac
+
+TEXT COMMENTS <  10%    0%  in file pacman.c for void function init_pacman
+BLANK LINES <  10%      8%  in file pacman.c for void function init_pacman
+COMPLEXITY >  10       27   in file pacman.c for void function init_pacman
+EXTD COMPLEXITY > 15   32   in file pacman.c for void function init_pacman
+EX STATEMENTS >  50    79   in file pacman.c for void function init_pacman
+EXIT ROUTES >  1        2   in file pacman.c for void function init_pacman
+LINES > 80 CHARS       11   in file pacman.c for void function init_pacman
+
+TEXT COMMENTS <  10%    0%  in file pacman.c for void function draw_pacman
+COMPLEXITY >  10       24   in file pacman.c for void function draw_pacman
+EXTD COMPLEXITY > 15   32   in file pacman.c for void function draw_pacman
+EX STATEMENTS >  50    61   in file pacman.c for void function draw_pacman
+LINES > 80 CHARS       18   in file pacman.c for void function draw_pacman
+
+TEXT COMMENTS <  10%    0%  in file pacman.c for void function release_pacman
+BLANK LINES <  10%      7%  in file pacman.c for void function release_pacman
+COMPLEXITY >  10       11   in file pacman.c for void function release_pacman
+LINES > 80 CHARS        2   in file pacman.c for void function release_pacman
+
+TEXT COMMENTS <  50%   14%  in file pacman.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file passwd.c for function new_pwlnode
+EXIT ROUTES >  1        2   in file passwd.c for function new_pwlnode
+
+COMPLEXITY >  10       12   in file passwd.c for void function getUserName
+
+COMPLEXITY >  10       13   in file passwd.c for void function getCryptedUserPas
+                            swd
+LINES > 80 CHARS        1   in file passwd.c for void function getCryptedUserPas
+                            swd
+
+COMPLEXITY >  10       16   in file passwd.c for void function getCryptedRootPas
+                            swd
+EXTD COMPLEXITY > 15   17   in file passwd.c for void function getCryptedRootPas
+                            swd
+EX STATEMENTS >  50    54   in file passwd.c for void function getCryptedRootPas
+                            swd
+
+COMPLEXITY >  10       31   in file passwd.c for function checkPasswd
+EXTD COMPLEXITY > 15   44   in file passwd.c for function checkPasswd
+EX STATEMENTS >  50    57   in file passwd.c for function checkPasswd
+EXIT ROUTES >  1        3   in file passwd.c for function checkPasswd
+LINES > 80 CHARS        9   in file passwd.c for function checkPasswd
+
+TEXT COMMENTS <  10%    5%  in file passwd.c for void function initDCE
+BLANK LINES <  10%      5%  in file passwd.c for void function initDCE
+COMPLEXITY >  10       12   in file passwd.c for void function initDCE
+LINES > 80 CHARS        5   in file passwd.c for void function initDCE
+
+TEXT COMMENTS <  10%    0%  in file passwd.c for function error_string
+BLANK LINES <  10%      3%  in file passwd.c for function error_string
+EXIT ROUTES >  1       10   in file passwd.c for function error_string
+LINES > 80 CHARS        2   in file passwd.c for function error_string
+
+EXIT ROUTES >  1        2   in file passwd.c for function check_dce_net_passwd
+LINES > 80 CHARS        9   in file passwd.c for function check_dce_net_passwd
+
+EXIT ROUTES >  1        2   in file passwd.c for function krb_check_password
+
+TEXT COMMENTS <  10%    8%  in file passwd.c for function krb_check_password
+COMPLEXITY >  10       12   in file passwd.c for function krb_check_password
+EX STATEMENTS >  50    58   in file passwd.c for function krb_check_password
+EXIT ROUTES >  1       10   in file passwd.c for function krb_check_password
+LINES > 80 CHARS        3   in file passwd.c for function krb_check_password
+
+BLANK LINES <  10%      0%  in file passwd.c for void function get_multiple
+EXIT ROUTES >  1        4   in file passwd.c for void function get_multiple
+
+BLANK LINES <  10%      8%  in file passwd.c for void function set_multiple
+COMPLEXITY >  10       47   in file passwd.c for void function set_multiple
+EXTD COMPLEXITY > 15   47   in file passwd.c for void function set_multiple
+EX STATEMENTS >  50   120   in file passwd.c for void function set_multiple
+CONTINUES PRESENT       2   in file passwd.c for void function set_multiple
+EXIT ROUTES >  1        7   in file passwd.c for void function set_multiple
+LINES > 80 CHARS        8   in file passwd.c for void function set_multiple
+
+TEXT COMMENTS <  10%    6%  in file passwd.c for void function gpass
+BLANK LINES <  10%      6%  in file passwd.c for void function gpass
+COMPLEXITY >  10       13   in file passwd.c for void function gpass
+EXTD COMPLEXITY > 15   16   in file passwd.c for void function gpass
+EXIT ROUTES >  1        3   in file passwd.c for void function gpass
+LINES > 80 CHARS        4   in file passwd.c for void function gpass
+
+BLANK LINES <  10%      4%  in file passwd.c for void function initPasswd
+
+TEXT COMMENTS <  50%   26%  in file passwd.c for file level global/file
+COMPLEXITY >  10       40   in file passwd.c for file level global/file
+EXTD COMPLEXITY > 15   47   in file passwd.c for file level global/file
+LINES > 80 CHARS        1   in file passwd.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file penrose.c for function vertex_dir
+BLANK LINES <  10%      4%  in file penrose.c for function vertex_dir
+EXIT ROUTES >  1        3   in file penrose.c for function vertex_dir
+LINES > 80 CHARS        2   in file penrose.c for function vertex_dir
+
+TEXT COMMENTS <  10%    0%  in file penrose.c for void function add_unit_vec
+
+TEXT COMMENTS <  10%    0%  in file penrose.c for function fived_to_loc
+BLANK LINES <  10%      4%  in file penrose.c for function fived_to_loc
+
+TEXT COMMENTS <  10%    0%  in file penrose.c for void function release_screen
+
+TEXT COMMENTS <  10%    6%  in file penrose.c for void function init_penrose
+BLANK LINES <  10%      2%  in file penrose.c for void function init_penrose
+COMPLEXITY >  10       15   in file penrose.c for void function init_penrose
+EXTD COMPLEXITY > 15   16   in file penrose.c for void function init_penrose
+EX STATEMENTS >  50    57   in file penrose.c for void function init_penrose
+LINES > 80 CHARS        3   in file penrose.c for void function init_penrose
+
+BLANK LINES <  10%      6%  in file penrose.c for function match_rules
+COMPLEXITY >  10       14   in file penrose.c for function match_rules
+EXIT ROUTES >  1        3   in file penrose.c for function match_rules
+LINES > 80 CHARS        4   in file penrose.c for function match_rules
+
+TEXT COMMENTS <  10%    0%  in file penrose.c for function find_completions
+BLANK LINES <  10%      7%  in file penrose.c for function find_completions
+EXIT ROUTES >  1        2   in file penrose.c for function find_completions
+
+TEXT COMMENTS <  10%    3%  in file penrose.c for void function draw_tile
+BLANK LINES <  10%      7%  in file penrose.c for void function draw_tile
+COMPLEXITY >  10       11   in file penrose.c for void function draw_tile
+LINES > 80 CHARS       12   in file penrose.c for void function draw_tile
+
+TEXT COMMENTS <  10%    6%  in file penrose.c for void function check_vertex
+BLANK LINES <  10%      6%  in file penrose.c for void function check_vertex
+COMPLEXITY >  10       12   in file penrose.c for void function check_vertex
+LINES > 80 CHARS        3   in file penrose.c for void function check_vertex
+
+TEXT COMMENTS <  10%    0%  in file penrose.c for void function delete_vertex
+BLANK LINES <  10%      4%  in file penrose.c for void function delete_vertex
+
+LINES > 80 CHARS        1   in file penrose.c for function fills_vertex
+
+TEXT COMMENTS <  10%    1%  in file penrose.c for function fringe_changes
+BLANK LINES <  10%      3%  in file penrose.c for function fringe_changes
+COMPLEXITY >  10       18   in file penrose.c for function fringe_changes
+EXTD COMPLEXITY > 15   24   in file penrose.c for function fringe_changes
+LINES > 80 CHARS        1   in file penrose.c for function fringe_changes
+
+TEXT COMMENTS <  10%    0%  in file penrose.c for void function add_vtype
+
+TEXT COMMENTS <  10%    0%  in file penrose.c for function alloc_vertex
+BLANK LINES <  10%      3%  in file penrose.c for function alloc_vertex
+
+TEXT COMMENTS <  10%    8%  in file penrose.c for function add_tile
+BLANK LINES <  10%      6%  in file penrose.c for function add_tile
+COMPLEXITY >  10       25   in file penrose.c for function add_tile
+EXTD COMPLEXITY > 15   30   in file penrose.c for function add_tile
+EX STATEMENTS >  50    59   in file penrose.c for function add_tile
+EXIT ROUTES >  1        2   in file penrose.c for function add_tile
+LINES > 80 CHARS        9   in file penrose.c for function add_tile
+
+TEXT COMMENTS <  10%    4%  in file penrose.c for function add_forced_tile
+BLANK LINES <  10%      4%  in file penrose.c for function add_forced_tile
+
+TEXT COMMENTS <  10%    8%  in file penrose.c for function legal_move
+EXIT ROUTES >  1        2   in file penrose.c for function legal_move
+LINES > 80 CHARS        1   in file penrose.c for function legal_move
+
+TEXT COMMENTS <  10%    3%  in file penrose.c for void function add_random_tile
+BLANK LINES <  10%      2%  in file penrose.c for void function add_random_tile
+COMPLEXITY >  10       23   in file penrose.c for void function add_random_tile
+EXTD COMPLEXITY > 15   25   in file penrose.c for void function add_random_tile
+EX STATEMENTS >  50    58   in file penrose.c for void function add_random_tile
+CONTINUES PRESENT       2   in file penrose.c for void function add_random_tile
+LINES > 80 CHARS        6   in file penrose.c for void function add_random_tile
+
+TEXT COMMENTS <  10%    5%  in file penrose.c for void function draw_penrose
+BLANK LINES <  10%      5%  in file penrose.c for void function draw_penrose
+COMPLEXITY >  10       13   in file penrose.c for void function draw_penrose
+EXIT ROUTES >  1        4   in file penrose.c for void function draw_penrose
+
+TEXT COMMENTS <  10%    0%  in file penrose.c for void function release_penrose
+
+TEXT COMMENTS <  50%   49%  in file penrose.c for file level global/file
+LINES > 80 CHARS        3   in file penrose.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file petal.c for function gcd
+
+TEXT COMMENTS <  10%    0%  in file petal.c for function numlines
+
+TEXT COMMENTS <  10%    0%  in file petal.c for void function random_petal
+
+TEXT COMMENTS <  10%    0%  in file petal.c for void function init_petal
+
+TEXT COMMENTS <  10%    0%  in file petal.c for void function draw_petal
+
+TEXT COMMENTS <  10%    0%  in file petal.c for void function release_petal
+
+TEXT COMMENTS <  10%    0%  in file puzzle.c for function font_width
+
+TEXT COMMENTS <  10%    0%  in file puzzle.c for void function NumberScreen
+BLANK LINES <  10%      6%  in file puzzle.c for void function NumberScreen
+LINES > 80 CHARS        6   in file puzzle.c for void function NumberScreen
+
+TEXT COMMENTS <  10%    0%  in file puzzle.c for function setupmove
+BLANK LINES <  10%      4%  in file puzzle.c for function setupmove
+COMPLEXITY >  10       13   in file puzzle.c for function setupmove
+EXTD COMPLEXITY > 15   21   in file puzzle.c for function setupmove
+EXIT ROUTES >  1        2   in file puzzle.c for function setupmove
+LINES > 80 CHARS        2   in file puzzle.c for function setupmove
+
+BLANK LINES <  10%      6%  in file puzzle.c for void function setupmovedelta
+COMPLEXITY >  10       15   in file puzzle.c for void function setupmovedelta
+LINES > 80 CHARS        5   in file puzzle.c for void function setupmovedelta
+
+TEXT COMMENTS <  10%    0%  in file puzzle.c for void function wrapupmove
+
+TEXT COMMENTS <  10%    0%  in file puzzle.c for void function wrapupmovedelta
+LINES > 80 CHARS        1   in file puzzle.c for void function wrapupmovedelta
+
+TEXT COMMENTS <  10%    0%  in file puzzle.c for function moveboxdelta
+BLANK LINES <  10%      4%  in file puzzle.c for function moveboxdelta
+EXIT ROUTES >  1        2   in file puzzle.c for function moveboxdelta
+LINES > 80 CHARS        4   in file puzzle.c for function moveboxdelta
+
+TEXT COMMENTS <  10%    0%  in file puzzle.c for void function init_puzzle
+BLANK LINES <  10%      8%  in file puzzle.c for void function init_puzzle
+COMPLEXITY >  10       25   in file puzzle.c for void function init_puzzle
+EXTD COMPLEXITY > 15   28   in file puzzle.c for void function init_puzzle
+EX STATEMENTS >  50    80   in file puzzle.c for void function init_puzzle
+LINES > 80 CHARS       15   in file puzzle.c for void function init_puzzle
+
+TEXT COMMENTS <  10%    0%  in file puzzle.c for void function draw_puzzle
+
+TEXT COMMENTS <  10%    0%  in file puzzle.c for void function release_puzzle
+BLANK LINES <  10%      7%  in file puzzle.c for void function release_puzzle
+
+TEXT COMMENTS <  50%   14%  in file puzzle.c for file level global/file
+
+TEXT COMMENTS <  10%    1%  in file pyro.c for void function ignite
+BLANK LINES <  10%      5%  in file pyro.c for void function ignite
+LINES > 80 CHARS        1   in file pyro.c for void function ignite
+
+TEXT COMMENTS <  10%    8%  in file pyro.c for void function animate
+BLANK LINES <  10%      4%  in file pyro.c for void function animate
+LINES > 80 CHARS       14   in file pyro.c for void function animate
+
+TEXT COMMENTS <  10%    0%  in file pyro.c for void function shootup
+BLANK LINES <  10%      4%  in file pyro.c for void function shootup
+LINES > 80 CHARS        6   in file pyro.c for void function shootup
+
+TEXT COMMENTS <  10%    2%  in file pyro.c for void function burst
+BLANK LINES <  10%      4%  in file pyro.c for void function burst
+COMPLEXITY >  10       21   in file pyro.c for void function burst
+EXTD COMPLEXITY > 15   22   in file pyro.c for void function burst
+EX STATEMENTS >  50    72   in file pyro.c for void function burst
+EXIT ROUTES >  1        2   in file pyro.c for void function burst
+LINES > 80 CHARS       10   in file pyro.c for void function burst
+
+TEXT COMMENTS <  10%    1%  in file pyro.c for void function init_pyro
+BLANK LINES <  10%      8%  in file pyro.c for void function init_pyro
+COMPLEXITY >  10       17   in file pyro.c for void function init_pyro
+EXTD COMPLEXITY > 15   18   in file pyro.c for void function init_pyro
+EX STATEMENTS >  50    52   in file pyro.c for void function init_pyro
+LINES > 80 CHARS        8   in file pyro.c for void function init_pyro
+
+TEXT COMMENTS <  10%    0%  in file pyro.c for void function draw_pyro
+BLANK LINES <  10%      3%  in file pyro.c for void function draw_pyro
+LINES > 80 CHARS        1   in file pyro.c for void function draw_pyro
+
+TEXT COMMENTS <  10%    0%  in file pyro.c for void function release_pyro
+
+TEXT COMMENTS <  50%   26%  in file pyro.c for file level global/file
+LINES > 80 CHARS        2   in file pyro.c for file level global/file
+
+TEXT COMMENTS <  10%    2%  in file qix.c for void function init_qix
+BLANK LINES <  10%      8%  in file qix.c for void function init_qix
+
+TEXT COMMENTS <  10%    0%  in file qix.c for void function draw_qix
+BLANK LINES <  10%      9%  in file qix.c for void function draw_qix
+LINES > 80 CHARS        1   in file qix.c for void function draw_qix
+
+TEXT COMMENTS <  10%    0%  in file qix.c for void function release_qix
+
+TEXT COMMENTS <  50%   28%  in file qix.c for file level global/file
+
+BLANK LINES <  10%      6%  in file random.c for function pickMode
+EXIT ROUTES >  1        3   in file random.c for function pickMode
+
+TEXT COMMENTS <  10%    0%  in file random.c for function strpmtok
+BLANK LINES <  10%      5%  in file random.c for function strpmtok
+COMPLEXITY >  10       20   in file random.c for function strpmtok
+EXTD COMPLEXITY > 15   20   in file random.c for function strpmtok
+CONTINUES PRESENT       4   in file random.c for function strpmtok
+EXIT ROUTES >  1        2   in file random.c for function strpmtok
+
+TEXT COMMENTS <  10%    2%  in file random.c for void function parsemodelist
+COMPLEXITY >  10       13   in file random.c for void function parsemodelist
+LINES > 80 CHARS        1   in file random.c for void function parsemodelist
+
+LINES > 80 CHARS        1   in file random.c for void function setMode
+
+TEXT COMMENTS <  10%    0%  in file random.c for void function init_random
+BLANK LINES <  10%      8%  in file random.c for void function init_random
+LINES > 80 CHARS        1   in file random.c for void function init_random
+
+TEXT COMMENTS <  10%    0%  in file random.c for void function draw_random
+BLANK LINES <  10%      9%  in file random.c for void function draw_random
+LINES > 80 CHARS        1   in file random.c for void function draw_random
+
+LINES > 80 CHARS        1   in file random.c for void function change_random
+
+TEXT COMMENTS <  50%   18%  in file random.c for file level global/file
+LINES > 80 CHARS        1   in file random.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file ras.c for void function analyze_header
+
+TEXT COMMENTS <  10%    0%  in file ras.c for void function convert_colors
+BLANK LINES <  10%      5%  in file ras.c for void function convert_colors
+LINES > 80 CHARS        2   in file ras.c for void function convert_colors
+
+TEXT COMMENTS <  10%    0%  in file ras.c for function find_nearest
+LINES > 80 CHARS        2   in file ras.c for function find_nearest
+
+TEXT COMMENTS <  10%    0%  in file ras.c for function GetForeground
+
+TEXT COMMENTS <  10%    0%  in file ras.c for function GetBackground
+
+TEXT COMMENTS <  10%    0%  in file ras.c for function get_long
+
+TEXT COMMENTS <  10%    7%  in file ras.c for function RasterFileToImage
+BLANK LINES <  10%      2%  in file ras.c for function RasterFileToImage
+EXIT ROUTES >  1        6   in file ras.c for function RasterFileToImage
+LINES > 80 CHARS        4   in file ras.c for function RasterFileToImage
+
+TEXT COMMENTS <  50%   17%  in file ras.c for file level global/file
+LINES > 80 CHARS        2   in file ras.c for file level global/file
+
+TEXT COMMENTS <  50%   40%  in file ras.h for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file resource.c for function stripname
+EXIT ROUTES >  1        2   in file resource.c for function stripname
+
+TEXT COMMENTS <  10%    0%  in file resource.c for void function Help
+LINES > 80 CHARS        2   in file resource.c for void function Help
+
+TEXT COMMENTS <  10%    0%  in file resource.c for void function DumpResources
+LINES > 80 CHARS        5   in file resource.c for void function DumpResources
+
+TEXT COMMENTS <  10%    0%  in file resource.c for void function LowerString
+
+TEXT COMMENTS <  10%    3%  in file resource.c for void function GetResource
+BLANK LINES <  10%      5%  in file resource.c for void function GetResource
+LINES > 80 CHARS        1   in file resource.c for void function GetResource
+
+TEXT COMMENTS <  10%    1%  in file resource.c for function parsefilepath
+BLANK LINES <  10%      1%  in file resource.c for function parsefilepath
+COMPLEXITY >  10       13   in file resource.c for function parsefilepath
+LINES > 80 CHARS        1   in file resource.c for function parsefilepath
+
+TEXT COMMENTS <  10%    8%  in file resource.c for void function open_display
+COMPLEXITY >  10       20   in file resource.c for void function open_display
+EXTD COMPLEXITY > 15   26   in file resource.c for void function open_display
+LINES > 80 CHARS        7   in file resource.c for void function open_display
+
+TEXT COMMENTS <  10%    0%  in file resource.c for void function printvar
+BLANK LINES <  10%      0%  in file resource.c for void function printvar
+
+TEXT COMMENTS <  10%    4%  in file resource.c for void function getResources
+COMPLEXITY >  10       38   in file resource.c for void function getResources
+EXTD COMPLEXITY > 15   38   in file resource.c for void function getResources
+EX STATEMENTS >  50   120   in file resource.c for void function getResources
+CONTINUES PRESENT       2   in file resource.c for void function getResources
+LINES > 80 CHARS       10   in file resource.c for void function getResources
+
+TEXT COMMENTS <  10%    3%  in file resource.c for void function checkResources
+BLANK LINES <  10%      9%  in file resource.c for void function checkResources
+COMPLEXITY >  10       12   in file resource.c for void function checkResources
+
+TEXT COMMENTS <  10%    0%  in file resource.c for function get_info
+EXIT ROUTES >  1        3   in file resource.c for function get_info
+
+TEXT COMMENTS <  10%    0%  in file resource.c for function descr
+
+TEXT COMMENTS <  50%   17%  in file resource.c for file level global/file
+COMPLEXITY >  10       51   in file resource.c for file level global/file
+EXTD COMPLEXITY > 15   51   in file resource.c for file level global/file
+LINES > 80 CHARS       12   in file resource.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file roll.c for void function createsphere
+
+TEXT COMMENTS <  10%    0%  in file roll.c for void function rotation3d
+
+TEXT COMMENTS <  10%    0%  in file roll.c for void function project
+
+TEXT COMMENTS <  10%    1%  in file roll.c for void function init_roll
+BLANK LINES <  10%      3%  in file roll.c for void function init_roll
+COMPLEXITY >  10       12   in file roll.c for void function init_roll
+
+TEXT COMMENTS <  10%    0%  in file roll.c for void function draw_roll
+BLANK LINES <  10%      2%  in file roll.c for void function draw_roll
+COMPLEXITY >  10       20   in file roll.c for void function draw_roll
+EXTD COMPLEXITY > 15   30   in file roll.c for void function draw_roll
+LINES > 80 CHARS        3   in file roll.c for void function draw_roll
+
+TEXT COMMENTS <  10%    0%  in file roll.c for void function release_roll
+
+TEXT COMMENTS <  50%    9%  in file roll.c for file level global/file
+
+COMPLEXITY >  10       13   in file rotor.c for void function init_rotor
+LINES > 80 CHARS        7   in file rotor.c for void function init_rotor
+
+TEXT COMMENTS <  10%    0%  in file rotor.c for void function draw_rotor
+COMPLEXITY >  10       17   in file rotor.c for void function draw_rotor
+EXTD COMPLEXITY > 15   17   in file rotor.c for void function draw_rotor
+EX STATEMENTS >  50    92   in file rotor.c for void function draw_rotor
+LINES > 80 CHARS        4   in file rotor.c for void function draw_rotor
+
+TEXT COMMENTS <  10%    0%  in file rotor.c for void function release_rotor
+
+TEXT COMMENTS <  50%   22%  in file rotor.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file shape.c for void function init_shape
+BLANK LINES <  10%      7%  in file shape.c for void function init_shape
+EXIT ROUTES >  1        2   in file shape.c for void function init_shape
+LINES > 80 CHARS        2   in file shape.c for void function init_shape
+
+TEXT COMMENTS <  10%    0%  in file shape.c for void function draw_shape
+BLANK LINES <  10%      9%  in file shape.c for void function draw_shape
+LINES > 80 CHARS        7   in file shape.c for void function draw_shape
+
+TEXT COMMENTS <  10%    0%  in file shape.c for void function release_shape
+
+TEXT COMMENTS <  50%   31%  in file shape.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file slip.c for function halfrandom
+
+TEXT COMMENTS <  10%    0%  in file slip.c for function erandom
+EXIT ROUTES >  1        2   in file slip.c for function erandom
+
+TEXT COMMENTS <  10%    0%  in file slip.c for void function prepare_screen
+BLANK LINES <  10%      9%  in file slip.c for void function prepare_screen
+LINES > 80 CHARS        4   in file slip.c for void function prepare_screen
+
+TEXT COMMENTS <  10%    0%  in file slip.c for function quantize
+
+TEXT COMMENTS <  10%    5%  in file slip.c for void function init_slip
+
+TEXT COMMENTS <  10%    2%  in file slip.c for void function draw_slip
+COMPLEXITY >  10       19   in file slip.c for void function draw_slip
+EXTD COMPLEXITY > 15   22   in file slip.c for void function draw_slip
+EX STATEMENTS >  50    54   in file slip.c for void function draw_slip
+CONTINUES PRESENT       1   in file slip.c for void function draw_slip
+LINES > 80 CHARS        5   in file slip.c for void function draw_slip
+
+TEXT COMMENTS <  10%    0%  in file slip.c for void function release_slip
+
+TEXT COMMENTS <  50%   12%  in file slip.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file sound.c for void function play_sound
+
+TEXT COMMENTS <  50%   22%  in file sound.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file sphere.c for void function init_sphere
+
+TEXT COMMENTS <  10%    0%  in file sphere.c for void function draw_sphere
+BLANK LINES <  10%      4%  in file sphere.c for void function draw_sphere
+LINES > 80 CHARS        1   in file sphere.c for void function draw_sphere
+
+TEXT COMMENTS <  10%    0%  in file sphere.c for void function release_sphere
+
+TEXT COMMENTS <  10%    0%  in file spiral.c for void function draw_dots
+
+TEXT COMMENTS <  10%    9%  in file spiral.c for void function init_spiral
+LINES > 80 CHARS        1   in file spiral.c for void function init_spiral
+
+TEXT COMMENTS <  10%    7%  in file spiral.c for void function draw_spiral
+COMPLEXITY >  10       21   in file spiral.c for void function draw_spiral
+EXTD COMPLEXITY > 15   29   in file spiral.c for void function draw_spiral
+LINES > 80 CHARS        1   in file spiral.c for void function draw_spiral
+
+TEXT COMMENTS <  10%    0%  in file spiral.c for void function release_spiral
+
+TEXT COMMENTS <  50%   25%  in file spiral.c for file level global/file
+LINES > 80 CHARS        1   in file spiral.c for file level global/file
+
+TEXT COMMENTS <  10%    3%  in file spline.c for void function init_spline
+BLANK LINES <  10%      7%  in file spline.c for void function init_spline
+COMPLEXITY >  10       19   in file spline.c for void function init_spline
+EXTD COMPLEXITY > 15   21   in file spline.c for void function init_spline
+LINES > 80 CHARS        3   in file spline.c for void function init_spline
+
+TEXT COMMENTS <  10%    5%  in file spline.c for void function draw_spline
+BLANK LINES <  10%      9%  in file spline.c for void function draw_spline
+COMPLEXITY >  10       24   in file spline.c for void function draw_spline
+EXTD COMPLEXITY > 15   28   in file spline.c for void function draw_spline
+EX STATEMENTS >  50    77   in file spline.c for void function draw_spline
+LINES > 80 CHARS        2   in file spline.c for void function draw_spline
+
+TEXT COMMENTS <  10%    0%  in file spline.c for void function XDrawSpline
+
+TEXT COMMENTS <  10%    0%  in file spline.c for void function release_spline
+LINES > 80 CHARS        1   in file spline.c for void function release_spline
+
+TEXT COMMENTS <  10%    0%  in file spline.c for void function refresh_spline
+
+TEXT COMMENTS <  50%   30%  in file spline.c for file level global/file
+LINES > 80 CHARS        1   in file spline.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file star.c for void function star_reset
+
+TEXT COMMENTS <  10%    0%  in file star.c for void function star_tick
+
+TEXT COMMENTS <  10%    6%  in file star.c for void function star_compute
+LINES > 80 CHARS        3   in file star.c for void function star_compute
+
+TEXT COMMENTS <  10%    2%  in file star.c for void function draw_trek
+BLANK LINES <  10%      5%  in file star.c for void function draw_trek
+COMPLEXITY >  10       11   in file star.c for void function draw_trek
+EX STATEMENTS >  50    51   in file star.c for void function draw_trek
+LINES > 80 CHARS       11   in file star.c for void function draw_trek
+
+TEXT COMMENTS <  10%    4%  in file star.c for void function star_draw
+BLANK LINES <  10%      1%  in file star.c for void function star_draw
+COMPLEXITY >  10       22   in file star.c for void function star_draw
+EXTD COMPLEXITY > 15   28   in file star.c for void function star_draw
+LINES > 80 CHARS       16   in file star.c for void function star_draw
+
+TEXT COMMENTS <  10%    2%  in file star.c for void function init_pixmaps
+BLANK LINES <  10%      2%  in file star.c for void function init_pixmaps
+COMPLEXITY >  10       13   in file star.c for void function init_pixmaps
+EX STATEMENTS >  50    54   in file star.c for void function init_pixmaps
+LINES > 80 CHARS        3   in file star.c for void function init_pixmaps
+
+TEXT COMMENTS <  10%    0%  in file star.c for void function tick_stars
+
+COMPLEXITY >  10       12   in file star.c for function compute_move
+LINES > 80 CHARS        3   in file star.c for function compute_move
+
+TEXT COMMENTS <  10%    5%  in file star.c for void function init_star
+BLANK LINES <  10%      6%  in file star.c for void function init_star
+COMPLEXITY >  10       15   in file star.c for void function init_star
+EXTD COMPLEXITY > 15   16   in file star.c for void function init_star
+LINES > 80 CHARS        4   in file star.c for void function init_star
+
+TEXT COMMENTS <  10%    3%  in file star.c for void function draw_star
+BLANK LINES <  10%      3%  in file star.c for void function draw_star
+
+TEXT COMMENTS <  10%    0%  in file star.c for void function release_star
+BLANK LINES <  10%      8%  in file star.c for void function release_star
+
+TEXT COMMENTS <  50%   27%  in file star.c for file level global/file
+LINES > 80 CHARS        1   in file star.c for file level global/file
+
+TEXT COMMENTS <  10%    9%  in file swarm.c for void function init_swarm
+BLANK LINES <  10%      9%  in file swarm.c for void function init_swarm
+COMPLEXITY >  10       13   in file swarm.c for void function init_swarm
+EX STATEMENTS >  50    52   in file swarm.c for void function init_swarm
+LINES > 80 CHARS        3   in file swarm.c for void function init_swarm
+
+COMPLEXITY >  10       15   in file swarm.c for void function draw_swarm
+EXTD COMPLEXITY > 15   17   in file swarm.c for void function draw_swarm
+EX STATEMENTS >  50    61   in file swarm.c for void function draw_swarm
+LINES > 80 CHARS        2   in file swarm.c for void function draw_swarm
+
+TEXT COMMENTS <  10%    0%  in file swarm.c for void function release_swarm
+BLANK LINES <  10%      8%  in file swarm.c for void function release_swarm
+
+TEXT COMMENTS <  50%   29%  in file swarm.c for file level global/file
+
+LINES > 80 CHARS        2   in file swirl.c for void function initialise_image
+
+TEXT COMMENTS <  10%    7%  in file swirl.c for void function initialise_colours
+BLANK LINES <  10%      7%  in file swirl.c for void function initialise_colours
+LINES > 80 CHARS        1   in file swirl.c for void function initialise_colours
+
+LINES > 80 CHARS        3   in file swirl.c for void function basic_map
+
+EXIT ROUTES >  1        2   in file swirl.c for function default_visual_info
+
+COMPLEXITY >  10       26   in file swirl.c for void function create_colourmap
+EXTD COMPLEXITY > 15   43   in file swirl.c for void function create_colourmap
+LINES > 80 CHARS        9   in file swirl.c for void function create_colourmap
+
+BLANK LINES <  10%      8%  in file swirl.c for void function create_knots
+COMPLEXITY >  10       33   in file swirl.c for void function create_knots
+EXTD COMPLEXITY > 15   34   in file swirl.c for void function create_knots
+
+COMPLEXITY >  10       15   in file swirl.c for function do_point
+EXTD COMPLEXITY > 15   20   in file swirl.c for function do_point
+LINES > 80 CHARS        3   in file swirl.c for function do_point
+
+TEXT COMMENTS <  10%    0%  in file swirl.c for void function draw_block
+
+LINES > 80 CHARS        4   in file swirl.c for void function draw_point
+
+BLANK LINES <  10%      9%  in file swirl.c for void function next_point
+COMPLEXITY >  10       18   in file swirl.c for void function next_point
+EXTD COMPLEXITY > 15   18   in file swirl.c for void function next_point
+LINES > 80 CHARS        4   in file swirl.c for void function next_point
+
+LINES > 80 CHARS        1   in file swirl.c for void function init_swirl
+
+LINES > 80 CHARS        1   in file swirl.c for void function draw_swirl
+
+TEXT COMMENTS <  10%    0%  in file swirl.c for void function refresh_swirl
+
+LINES > 80 CHARS        5   in file swirl.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file tri.c for void function startover
+
+TEXT COMMENTS <  10%    0%  in file tri.c for void function init_tri
+LINES > 80 CHARS        1   in file tri.c for void function init_tri
+
+TEXT COMMENTS <  10%    0%  in file tri.c for void function draw_tri
+BLANK LINES <  10%      3%  in file tri.c for void function draw_tri
+LINES > 80 CHARS        2   in file tri.c for void function draw_tri
+
+TEXT COMMENTS <  10%    0%  in file tri.c for void function release_tri
+LINES > 80 CHARS        1   in file tri.c for void function release_tri
+
+TEXT COMMENTS <  50%   18%  in file tri.c for file level global/file
+
+TEXT COMMENTS <  10%    6%  in file triangle.c for void function draw_atriangle
+LINES > 80 CHARS        3   in file triangle.c for void function draw_atriangle
+
+TEXT COMMENTS <  10%    0%  in file triangle.c for void function calc_points1
+
+TEXT COMMENTS <  10%    0%  in file triangle.c for void function calc_points2
+
+TEXT COMMENTS <  10%    0%  in file triangle.c for void function draw_mesh
+BLANK LINES <  10%      7%  in file triangle.c for void function draw_mesh
+
+TEXT COMMENTS <  10%    0%  in file triangle.c for void function init_triangle
+
+TEXT COMMENTS <  10%    7%  in file triangle.c for void function draw_triangle
+LINES > 80 CHARS        5   in file triangle.c for void function draw_triangle
+
+TEXT COMMENTS <  10%    0%  in file triangle.c for void function release_triangl
+                            e
+
+TEXT COMMENTS <  50%   31%  in file triangle.c for file level global/file
+LINES > 80 CHARS        3   in file triangle.c for file level global/file
+
+TEXT COMMENTS <  10%    8%  in file trig.c for void function init_trig
+BLANK LINES <  10%      8%  in file trig.c for void function init_trig
+
+TEXT COMMENTS <  10%    0%  in file trig.c for void function draw_trig
+BLANK LINES <  10%      5%  in file trig.c for void function draw_trig
+LINES > 80 CHARS        2   in file trig.c for void function draw_trig
+
+TEXT COMMENTS <  10%    0%  in file trig.c for void function release_trig
+
+TEXT COMMENTS <  50%   12%  in file trig.c for file level global/file
+
+TEXT COMMENTS <  10%    5%  in file tub.c for void function init_tube
+BLANK LINES <  10%      8%  in file tub.c for void function init_tube
+
+TEXT COMMENTS <  10%    7%  in file tub.c for void function draw_tube
+BLANK LINES <  10%      4%  in file tub.c for void function draw_tube
+COMPLEXITY >  10       14   in file tub.c for void function draw_tube
+EX STATEMENTS >  50    63   in file tub.c for void function draw_tube
+LINES > 80 CHARS        7   in file tub.c for void function draw_tube
+
+TEXT COMMENTS <  10%    0%  in file tub.c for void function release_tube
+LINES > 80 CHARS        2   in file tub.c for void function release_tube
+
+TEXT COMMENTS <  50%    4%  in file tub.c for file level global/file
+
+TEXT COMMENTS <  10%    5%  in file tube.c for void function init_tube
+BLANK LINES <  10%      8%  in file tube.c for void function init_tube
+
+TEXT COMMENTS <  10%    7%  in file tube.c for void function draw_tube
+BLANK LINES <  10%      4%  in file tube.c for void function draw_tube
+COMPLEXITY >  10       14   in file tube.c for void function draw_tube
+EXTD COMPLEXITY > 15   19   in file tube.c for void function draw_tube
+EX STATEMENTS >  50    62   in file tube.c for void function draw_tube
+LINES > 80 CHARS        9   in file tube.c for void function draw_tube
+
+TEXT COMMENTS <  10%    0%  in file tube.c for void function release_tube
+LINES > 80 CHARS        2   in file tube.c for void function release_tube
+
+TEXT COMMENTS <  50%   13%  in file tube.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file turtle.c for void function generate_hilbert
+
+TEXT COMMENTS <  10%    0%  in file turtle.c for void function generate_cesarova
+                            r
+BLANK LINES <  10%      6%  in file turtle.c for void function generate_cesarova
+                            r
+LINES > 80 CHARS        5   in file turtle.c for void function generate_cesarova
+                            r
+
+TEXT COMMENTS <  10%    0%  in file turtle.c for void function generate_harter_h
+                            eightway
+BLANK LINES <  10%      6%  in file turtle.c for void function generate_harter_h
+                            eightway
+LINES > 80 CHARS        5   in file turtle.c for void function generate_harter_h
+                            eightway
+
+TEXT COMMENTS <  10%    0%  in file turtle.c for void function init_turtle
+BLANK LINES <  10%      2%  in file turtle.c for void function init_turtle
+COMPLEXITY >  10       16   in file turtle.c for void function init_turtle
+EXTD COMPLEXITY > 15   16   in file turtle.c for void function init_turtle
+EX STATEMENTS >  50    84   in file turtle.c for void function init_turtle
+LINES > 80 CHARS        1   in file turtle.c for void function init_turtle
+
+TEXT COMMENTS <  10%    0%  in file turtle.c for void function draw_turtle
+BLANK LINES <  10%      6%  in file turtle.c for void function draw_turtle
+COMPLEXITY >  10       11   in file turtle.c for void function draw_turtle
+LINES > 80 CHARS       10   in file turtle.c for void function draw_turtle
+
+TEXT COMMENTS <  10%    0%  in file turtle.c for void function release_turtle
+
+TEXT COMMENTS <  50%   18%  in file turtle.c for file level global/file
+
+EXIT ROUTES >  1        2   in file utils.c for function usleep
+
+TEXT COMMENTS <  10%    0%  in file utils.c for function seconds
+EXIT ROUTES >  1        2   in file utils.c for function seconds
+
+TEXT COMMENTS <  10%    0%  in file utils.c for function readable
+EXIT ROUTES >  1        2   in file utils.c for function readable
+
+TEXT COMMENTS <  10%    0%  in file utils.c for function strdup
+
+TEXT COMMENTS <  10%    0%  in file utils.c for void function strcat_firstword
+
+TEXT COMMENTS <  10%    2%  in file utils.c for function getWords
+BLANK LINES <  10%      3%  in file utils.c for function getWords
+COMPLEXITY >  10       42   in file utils.c for function getWords
+EXTD COMPLEXITY > 15   45   in file utils.c for function getWords
+EX STATEMENTS >  50   105   in file utils.c for function getWords
+LINES > 80 CHARS       47   in file utils.c for function getWords
+
+TEXT COMMENTS <  10%    0%  in file utils.c for function getFont
+LINES > 80 CHARS        4   in file utils.c for function getFont
+
+TEXT COMMENTS <  10%    0%  in file utils.c for void function randomImage
+
+TEXT COMMENTS <  10%    0%  in file utils.c for function index_dir
+EXIT ROUTES >  1        2   in file utils.c for function index_dir
+
+TEXT COMMENTS <  10%    0%  in file utils.c for void function upcase
+
+TEXT COMMENTS <  10%    3%  in file utils.c for void function get_dir
+BLANK LINES <  10%      3%  in file utils.c for void function get_dir
+
+TEXT COMMENTS <  10%    0%  in file utils.c for function sel_image
+BLANK LINES <  10%      6%  in file utils.c for function sel_image
+EXIT ROUTES >  1        2   in file utils.c for function sel_image
+
+TEXT COMMENTS <  10%    3%  in file utils.c for function scan_dir
+COMPLEXITY >  10       15   in file utils.c for function scan_dir
+EXTD COMPLEXITY > 15   18   in file utils.c for function scan_dir
+CONTINUES PRESENT       2   in file utils.c for function scan_dir
+EXIT ROUTES >  1        4   in file utils.c for function scan_dir
+LINES > 80 CHARS        7   in file utils.c for function scan_dir
+
+TEXT COMMENTS <  10%    1%  in file utils.c for void function getImage
+BLANK LINES <  10%      7%  in file utils.c for void function getImage
+COMPLEXITY >  10       28   in file utils.c for void function getImage
+EXTD COMPLEXITY > 15   33   in file utils.c for void function getImage
+LINES > 80 CHARS        9   in file utils.c for void function getImage
+
+TEXT COMMENTS <  10%    0%  in file utils.c for void function destroyImage
+BLANK LINES <  10%      0%  in file utils.c for void function destroyImage
+
+TEXT COMMENTS <  10%    0%  in file utils.c for void function XEraseImage
+BLANK LINES <  10%      0%  in file utils.c for void function XEraseImage
+LINES > 80 CHARS        8   in file utils.c for void function XEraseImage
+
+TEXT COMMENTS <  50%   30%  in file utils.c for file level global/file
+COMPLEXITY >  10       15   in file utils.c for file level global/file
+EXTD COMPLEXITY > 15   16   in file utils.c for file level global/file
+
+TEXT COMMENTS <  10%    2%  in file vroot.h for function VirtualRootWindowOfScre
+                            en
+LINES > 80 CHARS        1   in file vroot.h for function VirtualRootWindowOfScre
+                            en
+
+LINES > 80 CHARS        3   in file vroot.h for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file wator.c for void function drawcell
+LINES > 80 CHARS        3   in file wator.c for void function drawcell
+
+TEXT COMMENTS <  10%    0%  in file wator.c for void function erasecell
+
+LINES > 80 CHARS        1   in file wator.c for void function init_kindlist
+
+TEXT COMMENTS <  10%    0%  in file wator.c for void function addto_kindlist
+
+TEXT COMMENTS <  10%    0%  in file wator.c for void function removefrom_kindlis
+                            t
+
+TEXT COMMENTS <  10%    0%  in file wator.c for void function dupin_kindlist
+
+TEXT COMMENTS <  10%    0%  in file wator.c for void function cutfrom_kindlist
+
+TEXT COMMENTS <  10%    0%  in file wator.c for void function reattach_kindlist
+
+LINES > 80 CHARS        1   in file wator.c for void function flush_kindlist
+
+TEXT COMMENTS <  10%    4%  in file wator.c for void function init_wator
+BLANK LINES <  10%      6%  in file wator.c for void function init_wator
+COMPLEXITY >  10       21   in file wator.c for void function init_wator
+EXTD COMPLEXITY > 15   24   in file wator.c for void function init_wator
+EX STATEMENTS >  50    72   in file wator.c for void function init_wator
+LINES > 80 CHARS        5   in file wator.c for void function init_wator
+
+TEXT COMMENTS <  10%    9%  in file wator.c for void function draw_wator
+BLANK LINES <  10%      3%  in file wator.c for void function draw_wator
+COMPLEXITY >  10       28   in file wator.c for void function draw_wator
+EXTD COMPLEXITY > 15   36   in file wator.c for void function draw_wator
+EX STATEMENTS >  50   117   in file wator.c for void function draw_wator
+LINES > 80 CHARS       33   in file wator.c for void function draw_wator
+
+TEXT COMMENTS <  10%    0%  in file wator.c for void function release_wator
+
+TEXT COMMENTS <  50%   17%  in file wator.c for file level global/file
+LINES > 80 CHARS        2   in file wator.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file wire.c for void function addtolist
+
+TEXT COMMENTS <  10%    0%  in file wire.c for void function print_state
+
+TEXT COMMENTS <  10%    0%  in file wire.c for void function free_state
+
+TEXT COMMENTS <  10%    0%  in file wire.c for void function drawcell
+LINES > 80 CHARS        1   in file wire.c for void function drawcell
+
+BLANK LINES <  10%      7%  in file wire.c for void function draw_state
+LINES > 80 CHARS        4   in file wire.c for void function draw_state
+
+TEXT COMMENTS <  10%    0%  in file wire.c for void function RandomSoup
+LINES > 80 CHARS        1   in file wire.c for void function RandomSoup
+
+TEXT COMMENTS <  10%    3%  in file wire.c for void function create_path
+BLANK LINES <  10%      3%  in file wire.c for void function create_path
+COMPLEXITY >  10       18   in file wire.c for void function create_path
+EXTD COMPLEXITY > 15   25   in file wire.c for void function create_path
+
+TEXT COMMENTS <  10%    0%  in file wire.c for void function do_gen
+BLANK LINES <  10%      4%  in file wire.c for void function do_gen
+LINES > 80 CHARS        1   in file wire.c for void function do_gen
+
+TEXT COMMENTS <  10%    0%  in file wire.c for void function init_wire
+BLANK LINES <  10%      9%  in file wire.c for void function init_wire
+COMPLEXITY >  10       13   in file wire.c for void function init_wire
+LINES > 80 CHARS        2   in file wire.c for void function init_wire
+
+TEXT COMMENTS <  10%    5%  in file wire.c for void function draw_wire
+BLANK LINES <  10%      5%  in file wire.c for void function draw_wire
+LINES > 80 CHARS        3   in file wire.c for void function draw_wire
+
+TEXT COMMENTS <  10%    0%  in file wire.c for void function release_wire
+LINES > 80 CHARS        1   in file wire.c for void function release_wire
+
+TEXT COMMENTS <  50%   31%  in file wire.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file world.c for void function init_world
+BLANK LINES <  10%      6%  in file world.c for void function init_world
+COMPLEXITY >  10       13   in file world.c for void function init_world
+LINES > 80 CHARS        1   in file world.c for void function init_world
+
+TEXT COMMENTS <  10%    0%  in file world.c for void function draw_world
+BLANK LINES <  10%      6%  in file world.c for void function draw_world
+COMPLEXITY >  10       15   in file world.c for void function draw_world
+EXTD COMPLEXITY > 15   19   in file world.c for void function draw_world
+LINES > 80 CHARS        4   in file world.c for void function draw_world
+
+TEXT COMMENTS <  10%    0%  in file world.c for void function release_world
+
+TEXT COMMENTS <  50%    8%  in file world.c for file level global/file
+LINES > 80 CHARS       30   in file world.c for file level global/file
+
+TEXT COMMENTS <  10%    6%  in file worm.c for void function worm_doit
+COMPLEXITY >  10       15   in file worm.c for void function worm_doit
+EXTD COMPLEXITY > 15   16   in file worm.c for void function worm_doit
+EX STATEMENTS >  50    77   in file worm.c for void function worm_doit
+LINES > 80 CHARS        6   in file worm.c for void function worm_doit
+
+TEXT COMMENTS <  10%    0%  in file worm.c for void function free_worms
+
+TEXT COMMENTS <  10%    2%  in file worm.c for void function init_worm
+COMPLEXITY >  10       21   in file worm.c for void function init_worm
+EXTD COMPLEXITY > 15   23   in file worm.c for void function init_worm
+EX STATEMENTS >  50    54   in file worm.c for void function init_worm
+LINES > 80 CHARS        3   in file worm.c for void function init_worm
+
+TEXT COMMENTS <  10%    0%  in file worm.c for void function draw_worm
+LINES > 80 CHARS        1   in file worm.c for void function draw_worm
+
+TEXT COMMENTS <  10%    0%  in file worm.c for void function release_worm
+
+TEXT COMMENTS <  50%   23%  in file worm.c for file level global/file
+LINES > 80 CHARS        1   in file worm.c for file level global/file
+
+BLANK LINES <  10%      6%  in file xbm.c for function XbmReadFileToImage
+COMPLEXITY >  10       22   in file xbm.c for function XbmReadFileToImage
+EXTD COMPLEXITY > 15   34   in file xbm.c for function XbmReadFileToImage
+EX STATEMENTS >  50    64   in file xbm.c for function XbmReadFileToImage
+EXIT ROUTES >  1        8   in file xbm.c for function XbmReadFileToImage
+LINES > 80 CHARS        5   in file xbm.c for function XbmReadFileToImage
+
+TEXT COMMENTS <  50%   46%  in file xbm.c for file level global/file
+
+TEXT COMMENTS <  10%    0%  in file xlock.c for void function error
+
+TEXT COMMENTS <  10%    0%  in file xlock.c for void function warning
+
+TEXT COMMENTS <  10%    0%  in file xlock.c for void function XGrabHosts
+
+TEXT COMMENTS <  10%    0%  in file xlock.c for void function XUngrabHosts
+
+TEXT COMMENTS <  10%    0%  in file xlock.c for void function GrabKeyboardAndMou
+                            se
+
+TEXT COMMENTS <  10%    5%  in file xlock.c for function window_size_changed
+EXIT ROUTES >  1        3   in file xlock.c for function window_size_changed
+
+TEXT COMMENTS <  10%    3%  in file xlock.c for void function finish
+BLANK LINES <  10%      3%  in file xlock.c for void function finish
+LINES > 80 CHARS        2   in file xlock.c for void function finish
+
+EXIT ROUTES >  1        2   in file xlock.c for function xio_error
+
+TEXT COMMENTS <  10%    2%  in file xlock.c for void function putText
+BLANK LINES <  10%      8%  in file xlock.c for void function putText
+
+TEXT COMMENTS <  10%    2%  in file xlock.c for void function statusUpdate
+BLANK LINES <  10%      7%  in file xlock.c for void function statusUpdate
+COMPLEXITY >  10       35   in file xlock.c for void function statusUpdate
+EXTD COMPLEXITY > 15   37   in file xlock.c for void function statusUpdate
+LINES > 80 CHARS       21   in file xlock.c for void function statusUpdate
+
+TEXT COMMENTS <  10%    0%  in file xlock.c for void function checkLogout
+
+TEXT COMMENTS <  10%    6%  in file xlock.c for function runMainLoop
+COMPLEXITY >  10       13   in file xlock.c for function runMainLoop
+EXTD COMPLEXITY > 15   20   in file xlock.c for function runMainLoop
+EX STATEMENTS >  50    60   in file xlock.c for function runMainLoop
+EXIT ROUTES >  1        3   in file xlock.c for function runMainLoop
+LINES > 80 CHARS        1   in file xlock.c for function runMainLoop
+
+BLANK LINES <  10%      5%  in file xlock.c for function ReadXString
+COMPLEXITY >  10       53   in file xlock.c for function ReadXString
+EXTD COMPLEXITY > 15   56   in file xlock.c for function ReadXString
+EX STATEMENTS >  50    88   in file xlock.c for function ReadXString
+EXIT ROUTES >  1        5   in file xlock.c for function ReadXString
+LINES > 80 CHARS       24   in file xlock.c for function ReadXString
+
+TEXT COMMENTS <  10%    4%  in file xlock.c for function getPassword
+COMPLEXITY >  10       26   in file xlock.c for function getPassword
+EXTD COMPLEXITY > 15   28   in file xlock.c for function getPassword
+EX STATEMENTS >  50    79   in file xlock.c for function getPassword
+EXIT ROUTES >  1        2   in file xlock.c for function getPassword
+LINES > 80 CHARS        3   in file xlock.c for function getPassword
+
+TEXT COMMENTS <  10%    0%  in file xlock.c for function event_screen
+EXIT ROUTES >  1        2   in file xlock.c for function event_screen
+
+TEXT COMMENTS <  10%    7%  in file xlock.c for function justDisplay
+COMPLEXITY >  10       28   in file xlock.c for function justDisplay
+EXTD COMPLEXITY > 15   32   in file xlock.c for function justDisplay
+LINES > 80 CHARS       11   in file xlock.c for function justDisplay
+
+TEXT COMMENTS <  10%    0%  in file xlock.c for void function sigcatch
+LINES > 80 CHARS        1   in file xlock.c for void function sigcatch
+
+TEXT COMMENTS <  10%    0%  in file xlock.c for void function syslogStop
+
+TEXT COMMENTS <  10%    1%  in file xlock.c for void function lockDisplay
+BLANK LINES <  10%      9%  in file xlock.c for void function lockDisplay
+COMPLEXITY >  10       12   in file xlock.c for void function lockDisplay
+
+TEXT COMMENTS <  10%    1%  in file xlock.c for void function read_message
+BLANK LINES <  10%      6%  in file xlock.c for void function read_message
+COMPLEXITY >  10       12   in file xlock.c for void function read_message
+EX STATEMENTS >  50    53   in file xlock.c for void function read_message
+
+TEXT COMMENTS <  10%    7%  in file xlock.c for function main
+COMPLEXITY >  10       69   in file xlock.c for function main
+EXTD COMPLEXITY > 15   76   in file xlock.c for function main
+EX STATEMENTS >  50   200   in file xlock.c for function main
+EXIT ROUTES >  1        2   in file xlock.c for function main
+LINES > 80 CHARS       44   in file xlock.c for function main
+
+TEXT COMMENTS <  50%   46%  in file xlock.c for file level global/file
+COMPLEXITY >  10       24   in file xlock.c for file level global/file
+EXTD COMPLEXITY > 15   25   in file xlock.c for file level global/file
+LINES > 80 CHARS        2   in file xlock.c for file level global/file
+
+TEXT COMMENTS <  50%   18%  in file xlock.h for file level global/file
+COMPLEXITY >  10       57   in file xlock.h for file level global/file
+EXTD COMPLEXITY > 15   60   in file xlock.h for file level global/file
+LINES > 80 CHARS        3   in file xlock.h for file level global/file
+
+TEXT COMMENTS <  10%    3%  in file xmlock.c for void function f_PushButtons
+BLANK LINES <  10%      8%  in file xmlock.c for void function f_PushButtons
+COMPLEXITY >  10       11   in file xmlock.c for void function f_PushButtons
+
+TEXT COMMENTS <  10%    4%  in file xmlock.c for void function Setup_Widget
+BLANK LINES <  10%      8%  in file xmlock.c for void function Setup_Widget
+EX STATEMENTS >  50    83   in file xmlock.c for void function Setup_Widget
+LINES > 80 CHARS        5   in file xmlock.c for void function Setup_Widget
+
+TEXT COMMENTS <  10%    7%  in file xmlock.c for function main
+BLANK LINES <  10%      3%  in file xmlock.c for function main
+EXIT ROUTES >  1        2   in file xmlock.c for function main
+
+TEXT COMMENTS <  50%   10%  in file xmlock.c for file level global/file
+

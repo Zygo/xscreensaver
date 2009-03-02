@@ -1,0 +1,28 @@
+#!/bin/sh
+
+pkgdir=$1
+[ "$pkgdir" ] || pkgdir=dist
+HERE=`pwd`
+
+echo "Installing in $HERE/pkgdir"
+echo ""
+
+./mkinstalldirs $HERE/pkgdir/usr/local/bin
+./mkinstalldirs $HERE/pkgdir/usr/local/man/man1
+./mkinstalldirs $HERE/pkgdir/usr/local/man/cat1
+./mkinstalldirs $HERE/pkgdir/usr/local/lib/X11/app-defaults
+./install-sh -c  xlock $HERE/pkgdir/usr/local/bin
+./install-sh -c -m 644 xlock.man $HERE/pkgdir/usr/local/man/man1/xlock.1
+./install-sh -c -m 644 XLock.ad $HERE/pkgdir/usr/local/lib/X11/app-defaults/XLock
+ echo "install_xlock COMPLETE"
+ echo ""
+./mkinstalldirs $HERE/pkgdir/usr/local/bin
+./mkinstalldirs $HERE/pkgdir/usr/local/lib/X11/app-defaults
+./install-sh -c xmlock $HERE/pkgdir/usr/local/bin
+./install-sh -c -m 644 XmLock.ad $HERE/pkgdir/usr/local/lib/X11/app-defaults/XmLock
+ echo "install_xmlock COMPLETE"
+ echo ""
+ cd $HERE/pkgdir/usr/local/man/man1
+ nroff -man xlock.1 > ../cat1/xlock.1
+ echo "xlock man page creation COMPLETE"
+ echo ""

@@ -1,0 +1,530 @@
+############################################################
+#
+# $Id : Makefile.in 4.03 1997/04/25 $
+#
+# xlockmore Makefile.in for autoconf (UNIX/VMS X11 support)
+############################################################
+
+# default target
+
+all : xlock @XMLOCK@
+
+# this tells GNU make not to export variables into the environment
+# But other makes do not understand its significance, so it must
+# not be the first target in the file. So it is here, before
+# any variables are created, but after the default target
+.NOEXPORT :
+
+SHELL = /bin/sh
+
+srcdir = @srcdir@
+top_srcdir = @top_srcdir@
+VPATH = @srcdir@/
+
+prefix = @prefix@
+exec_prefix = @exec_prefix@
+
+bindir = @bindir@
+mandir = @mandir@/man1
+xapploadroot = @libdir@/X11
+xapploaddir = $(xapploadroot)/app-defaults
+
+BITMAPDIR = @BITMAPDIR@/
+PIXMAPDIR = @PIXMAPDIR@/
+CONFIGDIR = $(srcdir)/config/
+GLDIR = $(srcdir)/glx/
+HACKERDIR = $(srcdir)/hackers/
+
+INSTALL = @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA = @INSTALL_DATA@
+INSTPGMFLAGS = @INSTPGMFLAGS@
+
+#CC = cc -g
+#CC = cc -Ac -g
+#CC = cc -Xc -g
+#CC = acc -g
+#CC = CC -g
+#CC = gcc -g -Wall -ansi -pedantic
+#CC = gcc -g -Wall
+#CC = g++ -g -Wall
+CC = @CC@
+
+LINT = lint
+#LINT = alint
+ 
+#BITMAPTYPE = x11
+#PIXMAPTYPE = x11
+BITMAPTYPE = @BITMAPTYPE@
+PIXMAPTYPE = @PIXMAPTYPE@
+
+# Here is your chance to override the default icon:
+TINYBITMAP = $(BITMAPTYPE)
+TINYBITMAP = t-x11
+SMALLBITMAP = s-$(BITMAPTYPE)
+MEDIUMBITMAP = m-$(BITMAPTYPE)
+LARGEBITMAP = l-$(BITMAPTYPE)
+MEDIUMPIXMAP = m-$(PIXMAPTYPE)
+LARGEPIXMAP = l-$(PIXMAPTYPE)
+
+#EYESBITMAP = $(MEDIUMBITMAP)
+EYESBITMAP = m-grelb
+FLAGBITMAP = $(MEDIUMBITMAP)
+IMAGEBITMAP = $(MEDIUMBITMAP)
+#IMAGEBITMAP = l-bob #Slackware icon
+#IMAGEBITMAP = m-xlock #XLock icon
+#LIFEBITMAP = $(SMALLBITMAP)
+LIFEBITMAP = s-grelb
+LIFE1DBITMAP = $(TINYBITMAP)
+MAZEBITMAP = $(LARGEBITMAP)
+#MAZEBITMAP = m-xlock
+#PACMANBITMAP = $(MEDIUMBITMAP)
+PACMANBITMAP = m-ghost
+#PUZZLEBITMAP = $(LARGEBITMAP)
+PUZZLEBITMAP = l-xlock
+#PUZZLEBITMAP = l-linux
+IMAGEPIXMAP = $(MEDIUMPIXMAP)
+#IMAGEPIXMAP = m-xlock
+#PUZZLEPIXMAP = $(LARGEPIXMAP)
+PUZZLEPIXMAP = l-xlock
+#PUZZLEPIXMAP = l-linux
+
+#SUNOS 4.1.3
+#DEF_PLAY = "/usr/demo/SOUND/play /usr/local/share/sounds/xlock/"
+#IRIX 5.3
+#DEF_PLAY = "/usr/sbin/sfplay /usr/local/share/sounds/xlock/"
+#Digital Unix with Multimedia Services installed:
+#DEF_PLAY = "/usr/bin/mme/decsound -play /usr/local/share/sounds/xlock/"
+#LINUX and others (see config directory)
+#DEF_PLAY = "/usr/local/bin/play.sh /usr/local/share/sounds/xlock/"
+#Uncomment line below if you have one of the above
+#SOUNDDEF = -DDEF_PLAY=\"$(DEF_PLAY)\"
+
+# Add hackers modes as you like.  It may make your xlock unstable.
+# Please do not uncomment for precompiled distributions.
+@HACKERS@HACKERDEF = -DUSE_HACKERS
+@HACKERS@XLOCKHACKEROBJS = $(S)fadeplot$(O)
+
+# Uncomment and change to override defaults for SYSLOG
+# You may want to set all -DSYSLOG_* to LOG_WARNING to maximize messages
+#SYSLOGDEF = -DSYSLOG_FACILITY=LOG_AUTH -DSYSLOG_WARNING=LOG_WARNING \
+# -DSYSLOG_NOTICE=LOG_NOTICE -DSYSLOG_INFO=LOG_INFO
+
+# special password defines
+# (Shadow, KRB4, KRB5, or DCE authentication, AFS, OSF, SUNOS_ADJUNCT_PASSWD)
+#PASSWDDEF  = -DHAVE_SHADOW
+#PASSWDDEF  = -DHAVE_KRB4
+#PASSWDDEF  = -DHAVE_KRB5
+#PASSWDDEF  = -DDCE_PASSWD
+#PASSWDDEF  = -DAFS
+#PASSWDDEF  = -DOSF1_ENH_SEC
+#PASSWDDEF  = -DSUNOS_ADJUNCT_PASSWD
+#
+# special password include path
+# The following is needed for KRB4, KRB5, or DCE authentication, AFS
+#PASSWDINC  = -I/usr/athena/include
+#PASSWDINC  = -I/opt/krb5/include
+#PASSWDINC  = -I/usr/include/reentrant
+#PASSWDINC  = -I/usr/afsws/include
+#
+# special password library (Shadow, KRB4, KRB5, or DCE authentication, AFS, OSF)
+#PASSWDLIB  = -lshadow
+#PASSWDLIB  = -L/usr/athena/lib -lkrb -ldes
+#PASSWDLIB  = -L/opt/krb5/lib -lkrb5 -lcrypto -lcom_err
+#PASSWDLIB  = -ldce -lc_r
+#PASSWDLIB  = -L/usr/afsws/lib -L/usr/afsws/lib/afs -lkauth -lubik -lprot -lrxkad -lrx -llwp -lauth -lsys -ldes -lcmd -lcom_err -laudit /usr/afsws/lib/afs/util.a
+#PASSWDLIB  = -lsecurity
+#
+# special encryption library
+#CRYPTLIB = -lcrypt
+
+LN_S = @LN_S@
+RM = rm -f
+RM_S = $(RM)
+ECHO = echo
+
+#BLN_S = set file/enter=[]
+#RM = delete/noconfirm/nolog
+#RM_S = set file/remove/nolog
+#ECHO = write sys$output
+
+
+DEFINES = -DDEF_FILESEARCHPATH=\"$(xapploadroot)/%T/%N%S\" \
+$(HACKERDEF) $(SOUNDDEF) $(PASSWDDEF) $(SYSLOGDEF)
+DEFS = @DEFS@ $(DEFINES)
+XLOCKINC = @XLOCKINC@ -I$(top_srcdir) -I. $(SOUNDINC) $(PASSWDINC)
+XMLOCKINC = @XMLOCKINC@ -I$(top_srcdir) -I.
+CFLAGS = @CFLAGS@
+#CFLAGS = -O
+#CFLAGS = -g
+LDFLAGS = @LDFLAGS@
+XLIBS = @XLIBS@
+XLOCKLIBS = @XLOCKLIBS@ $(SOUNDLIB) $(CRYPTLIB) $(PASSWDLIB)
+XMLOCKLIBS = @XMLOCKLIBS@
+
+VER = xlockmore
+DISTVER = xlockmore-4.03
+
+N=
+C=.c
+#C++
+#C=.cc
+
+O=.o
+S=$(N) $(N)
+E=
+A=
+
+#VMS
+#O=.obj
+#S=,
+#E=.exe
+#A=;*
+
+# please define
+# C as the C source code extension
+# O as the object extension
+# S as the separator for object code
+# E as the executable extension
+
+####################################################################
+# List of object files
+
+XLOCKCOREOBJS = xlock$(O)$(S)passwd$(O)$(S)resource$(O)$(S)\
+utils$(O)$(S)logout$(O)$(S)mode$(O)$(S)ras$(O)$(S)xbm$(O)$(S)\
+color$(O)$(S)sound$(O)
+XLOCKMODEOBJS = ant$(O)$(S)ball$(O)$(S)bat$(O)$(S)blot$(O)$(S)\
+bouboule$(O)$(S)bounce$(O)$(S)braid$(O)$(S)bug$(O)$(S)\
+clock$(O)$(S)crystal$(O)$(S)\
+daisy$(O)$(S)dclock$(O)$(S)demon$(O)$(S)drift$(O)$(S)eyes$(O)$(S)\
+flag$(O)$(S)flame$(O)$(S)forest$(O)$(S)fract$(O)$(S)\
+galaxy$(O)$(S)geometry$(O)$(S)grav$(O)$(S)\
+helix$(O)$(S)hop$(O)$(S)hyper$(O)$(S)\
+ico$(O)$(S)ifs$(O)$(S)image$(O)$(S)julia$(O)$(S)kaleid$(O)$(S)\
+laser$(O)$(S)life$(O)$(S)life1d$(O)$(S)life3d$(O)$(S)\
+lightning$(O)$(S)lisa$(O)$(S)lissie$(O)$(S)loop$(O)$(S)\
+marquee$(O)$(S)maze$(O)$(S)mountain$(O)$(S)nose$(O)$(S)\
+pacman$(O)$(S)penrose$(O)$(S)petal$(O)$(S)puzzle$(O)$(S)pyro$(O)$(S)\
+qix$(O)$(S)roll$(O)$(S)rotor$(O)$(S)\
+shape$(O)$(S)sierpinski$(O)$(S)slip$(O)$(S)\
+sphere$(O)$(S)spiral$(O)$(S)spline$(O)$(S)\
+star$(O)$(S)strange$(O)$(S)swarm$(O)$(S)swirl$(O)$(S)\
+triangle$(O)$(S)tube$(O)$(S)turtle$(O)$(S)voters$(O)$(S)\
+wator$(O)$(S)wire$(O)$(S)world$(O)$(S)worm$(O)$(S)\
+cartoon$(O)
+XLOCKGLOBJS = escher$(O)$(S)gears$(O)$(S)morph3d$(O)$(S)superquadrics$(O)$(S)\
+buildlwo$(O)$(S)pipes$(O)$(S)pipeobjs$(O)$(S)\
+sproingies$(O)$(S)sproingiewrap$(O)$(S)s1_b$(O)$(S)\
+s1_1$(O)$(S)s1_2$(O)$(S)s1_3$(O)$(S)s1_4$(O)$(S)s1_5$(O)$(S)s1_6$(O)
+XLOCKCOREMODEOBJS = blank$(O)$(S)bomb$(O)$(S)random$(O)
+XLOCKOBJS = $(XLOCKCOREOBJS)$(S)$(XLOCKMODEOBJS)$(S)\
+$(XLOCKGLOBJS)$(XLOCKHACKEROBJS)$(S)$(XLOCKCOREMODEOBJS)
+XMLOCKOBJS = option$(O)$(S)xmlock$(O)
+
+####################################################################
+# List of source files
+# Used for lint, and some dependencies.
+
+BITMAPS = eyes.xbm flag.xbm ghost.xbm image.xbm life.xbm life1d.xbm \
+maze.xbm puzzle.xbm
+PIXMAPS = image.xpm puzzle.xpm
+XLOCKHDRS = xlock.h mode.h vroot.h ras.h version.h config.h gl/buildlwo.H
+XLOCKCORESRCS = xlock$(C) passwd$(C) resource$(C) \
+utils$(C) logout$(C) mode$(C) ras$(C) xbm$(C) \
+color$(C) sound$(C)
+XLOCKMODESRCS = ant$(C) ball$(C) bat$(C) blot$(C) \
+bouboule$(C) bounce$(C) braid$(C) bug$(C) \
+clock$(C) crystal$(C) \
+daisy$(C) dclock$(C) demon$(C) drift$(C) eyes$(C) \
+flag$(C) flame$(C) forest$(C) fract$(C) \
+galaxy$(C) geometry$(C) grav$(C) \
+helix$(C) hop$(C) hyper$(C) \
+ico$(C) ifs$(C) image$(C) julia$(C) kaleid$(C) \
+laser$(C) life$(C) life1d$(C) life3d$(C) \
+lightning$(C) lisa$(C) lissie$(C) loop$(C) \
+marquee$(C) maze$(C) mountain$(C) nose$(C) \
+pacman$(C) penrose$(C) petal$(C) puzzle$(C) pyro$(C) \
+qix$(C) roll$(C) rotor$(C) \
+shape$(C) sierpinski$(C) slip$(C) \
+sphere$(C) spiral$(C) spline$(C) \
+star$(C) strange$(C) swarm$(C) swirl$(C) \
+triangle$(C) tube$(C) turtle$(C) voters$(C) \
+wator$(C) wire$(C) world$(C) worm$(C) \
+cartoon$(C)
+XLOCKGLSRCS = escher$(C) gears$(C) morph3d$(C) superquadrics$(C) \
+buildlwo$(C) pipes$(C) pipeobjs$(C) \
+sproingies$(C) sproingiewrap$(C) buildlwo$(C) s1_b$(C) \
+s1_1$(C) s1_2$(C) s1_3$(C) s1_4$(C) s1_5$(C) s1_6$(C)
+XLOCKCOREMODESRCS = blank$(C) bomb$(C) random$(C)
+XLOCKHACKERSRCS = fadeplot$(C)
+XLOCKSRCS = $(XLOCKCORESRCS) $(XLOCKMODESRCS) $(XLOCKCOREMODESRCS) \
+$(XLOCKGLSRCS) $(XLOCKHACKERSRCS)
+XMLOCKSRCS = option$(C) xmlock$(C)
+
+
+#########################################################################
+
+
+xlock$(E) : $(XLOCKOBJS)
+	$(CC) -o $@ $(XLOCKOBJS) $(LDFLAGS) $(XLOCKLIBS)
+	@ $(ECHO) "$@ BUILD COMPLETE"
+	@ $(ECHO) ""
+
+xmlock$(E) : $(XMLOCKOBJS)
+	$(CC) -o $@ $(XMLOCKOBJS) $(LDFLAGS) $(XMLOCKLIBS)
+	@ $(ECHO) "$@ BUILD COMPLETE"
+	@ $(ECHO) ""
+
+#xlock$(E) : $(XLOCKOBJS)$(S)xlock.opt
+#	$(LINK)/map $(LDFLAGS) $(XLOCKOBJS)$(S)xlock.opt/opt
+
+#xmlock$(E) : $(XMLOCKOBJS)$(S)xmlock.opt
+#	$(LINK)/map $(LDFLAGS) $(XMLOCKOBJS)$(S)xmlock.opt/opt
+
+xlock.opt :
+	@ close/nolog optf
+	@ open/write optf xlock.opt
+#	@ if .not. axp then write optf "sys$library:vaxcrtl/lib"
+	@ write optf "sys$library:vaxcrtl/lib"
+	@ if axp then write optf "sys$library:ucx$ipc_shr/share"
+	@ if axp then write optf "sys$share:decw$xextlibshr/share"
+	@ if axp then write optf "sys$share:decw$xtlibshrr5/share"
+	@ if .not. axp then write optf "sys$library:ucx$ipc/lib"
+#	@ write optf "sys$share:decw$dxmlibshr/share"
+	@ write optf "sys$share:decw$xmlibshr12/share"
+	@ write optf "sys$share:decw$xlibshr/share"
+	@ close optf
+
+xmlock.opt :
+	@ close/nolog optf
+	@ open/write optf xlock.opt
+#	@ if .not. axp then write optf "sys$library:vaxcrtl/lib"
+	@ write optf "sys$library:vaxcrtl/lib"
+	@ if axp then write optf "sys$library:ucx$ipc_shr/share"
+	@ if axp then write optf "sys$share:decw$xextlibshr/share"
+	@ if axp then write optf "sys$share:decw$xtlibshrr5/share"
+	@ if .not. axp then write optf "sys$library:ucx$ipc/lib"
+#	@ write optf "sys$share:decw$dxmlibshr/share"
+	@ write optf "sys$share:decw$xmlibshr12/share"
+	@ write optf "sys$share:decw$xlibshr/share"
+	@ close optf
+
+eyes$(O) : eyes$(C) eyes.xbm
+flag$(O) : flag$(C) flag.xbm
+life$(O) : life$(C) life.xbm
+life1d$(O) : life1d$(C) life1d.xbm
+maze$(O) : maze$(C) maze.xbm
+pacman$(O) : pacman$(C) ghost.xbm
+# Do not need xpm files if not using them but not worth figuring out
+image$(O) : image$(C) image.xbm image.xpm
+puzzle$(O) : puzzle$(C) puzzle.xbm puzzle.xpm
+
+eyes.xbm : $(BITMAPDIR)$(EYESBITMAP).xbm
+	$(RM) eyes.xbm ; $(LN_S) $(BITMAPDIR)$(EYESBITMAP).xbm eyes.xbm
+
+flag.xbm : $(BITMAPDIR)$(FLAGBITMAP).xbm
+	$(RM) flag.xbm ; $(LN_S) $(BITMAPDIR)$(FLAGBITMAP).xbm flag.xbm
+
+image.xbm : $(BITMAPDIR)$(IMAGEBITMAP).xbm
+	$(RM) image.xbm ; $(LN_S) $(BITMAPDIR)$(IMAGEBITMAP).xbm image.xbm
+
+ghost.xbm : $(BITMAPDIR)$(PACMANBITMAP).xbm
+	$(RM) ghost.xbm ; $(LN_S) $(BITMAPDIR)$(PACMANBITMAP).xbm ghost.xbm
+
+life.xbm : $(BITMAPDIR)$(LIFEBITMAP).xbm
+	$(RM) life.xbm ; $(LN_S) $(BITMAPDIR)$(LIFEBITMAP).xbm life.xbm
+
+life1d.xbm : $(BITMAPDIR)$(LIFE1DBITMAP).xbm
+	$(RM) life1d.xbm ; $(LN_S) $(BITMAPDIR)$(LIFE1DBITMAP).xbm life1d.xbm
+
+maze.xbm : $(BITMAPDIR)$(MAZEBITMAP).xbm
+	$(RM) maze.xbm ; $(LN_S) $(BITMAPDIR)$(MAZEBITMAP).xbm maze.xbm
+
+puzzle.xbm : $(BITMAPDIR)$(PUZZLEBITMAP).xbm
+	$(RM) puzzle.xbm ; $(LN_S) $(BITMAPDIR)$(PUZZLEBITMAP).xbm puzzle.xbm
+
+image.xpm : $(PIXMAPDIR)$(IMAGEPIXMAP).xpm
+	$(RM) image.xpm ; $(LN_S) $(PIXMAPDIR)$(IMAGEPIXMAP).xpm image.xpm
+
+puzzle.xpm : $(PIXMAPDIR)$(PUZZLEPIXMAP).xpm
+	$(RM) puzzle.xpm ; $(LN_S) $(PIXMAPDIR)$(PUZZLEPIXMAP).xpm puzzle.xpm
+
+escher$(C) : $(GLDIR)escher$(C)
+	$(RM) escher$(C) ; $(LN_S) $(GLDIR)escher$(C) escher$(C)
+
+gears$(C) : $(GLDIR)gears$(C)
+	$(RM) gears$(C) ; $(LN_S) $(GLDIR)gears$(C) gears$(C)
+
+morph3d$(C) : $(GLDIR)morph3d$(C)
+	$(RM) morph3d$(C) ; $(LN_S) $(GLDIR)morph3d$(C) morph3d$(C)
+
+superquadrics$(C) : $(GLDIR)superquadrics$(C)
+	$(RM) superquadrics$(C) ; $(LN_S) $(GLDIR)superquadrics$(C) superquadrics$(C)
+
+buildlwo$(C) : $(GLDIR)buildlwo$(C)
+	$(RM) buildlwo$(C) ; $(LN_S) $(GLDIR)buildlwo$(C) buildlwo$(C)
+
+pipes$(C) : $(GLDIR)pipes$(C)
+	$(RM) pipes$(C) ; $(LN_S) $(GLDIR)pipes$(C) pipes$(C)
+
+pipeobjs$(C) : $(GLDIR)pipeobjs$(C)
+	$(RM) pipeobjs$(C) ; $(LN_S) $(GLDIR)pipeobjs$(C) pipeobjs$(C)
+
+sproingies$(C) : $(GLDIR)sproingies$(C)
+	$(RM) sproingies$(C) ; $(LN_S) $(GLDIR)sproingies$(C) sproingies$(C)
+
+sproingiewrap$(C) : $(GLDIR)sproingiewrap$(C)
+	$(RM) sproingiewrap$(C) ; $(LN_S) $(GLDIR)sproingiewrap$(C) sproingiewrap$(C)
+
+s1_b$(C) : $(GLDIR)s1_b$(C)
+	$(RM) s1_b$(C) ; $(LN_S) $(GLDIR)s1_b$(C) s1_b$(C)
+
+s1_1$(C) : $(GLDIR)s1_1$(C)
+	$(RM) s1_1$(C) ; $(LN_S) $(GLDIR)s1_1$(C) s1_1$(C)
+
+s1_2$(C) : $(GLDIR)s1_2$(C)
+	$(RM) s1_2$(C) ; $(LN_S) $(GLDIR)s1_2$(C) s1_2$(C)
+
+s1_3$(C) : $(GLDIR)s1_3$(C)
+	$(RM) s1_3$(C) ; $(LN_S) $(GLDIR)s1_3$(C) s1_3$(C)
+
+s1_4$(C) : $(GLDIR)s1_4$(C)
+	$(RM) s1_4$(C) ; $(LN_S) $(GLDIR)s1_4$(C) s1_4$(C)
+
+s1_5$(C) : $(GLDIR)s1_5$(C)
+	$(RM) s1_5$(C) ; $(LN_S) $(GLDIR)s1_5$(C) s1_5$(C)
+
+s1_6$(C) : $(GLDIR)s1_6$(C)
+	$(RM) s1_6$(C) ; $(LN_S) $(GLDIR)s1_6$(C) s1_6$(C)
+
+fadeplot$(C) : $(HACKERDIR)fadeplot$(C)
+	$(RM) fadeplot$(C) ; $(LN_S) $(HACKERDIR)fadeplot$(C) fadeplot$(C)
+
+################################################################
+
+install : install_xlock @INSTALL_XMLOCK@
+
+install_xlock : xlock$(E)
+	$(srcdir)/mkinstalldirs $(bindir)
+	$(srcdir)/mkinstalldirs $(mandir)
+	$(srcdir)/mkinstalldirs $(xapploaddir)
+	$(INSTALL_PROGRAM) $(INSTPGMFLAGS) xlock$(E) $(bindir)
+	$(INSTALL_DATA) xlock.man $(mandir)/xlock.1
+	$(INSTALL_DATA) XLock.ad $(xapploaddir)/XLock
+	@ $(ECHO) "$@ COMPLETE"
+	@ $(ECHO) ""
+
+install_xmlock : xmlock$(E)
+	$(srcdir)/mkinstalldirs $(bindir)
+	$(srcdir)/mkinstalldirs $(xapploaddir)
+	$(INSTALL_PROGRAM) xmlock$(E) $(bindir)
+	$(INSTALL_DATA) XmLock.ad $(xapploaddir)/XmLock
+	@ $(ECHO) "$@ COMPLETE"
+	@ $(ECHO) ""
+
+uninstall : uninstall_xlock @UNINSTALL_XMLOCK@
+
+uninstall_xlock :
+	$(RM) $(bindir)/xlock$(E)$(A)
+	$(RM) $(mandir)/xlock.1
+	$(RM) $(xapploaddir)/XLock
+
+uninstall_xmlock :
+	$(RM) $(bindir)/xmlock$(E)$(A)
+	$(RM) $(xapploaddir)/XmLock
+
+################################################################
+# Dependencies
+
+.SUFFIXES : $(C) $(O) $(E)
+
+$(C)$(O) :
+	$(CC) -c $(CPPFLAGS) $(DEFS) $(XLOCKINC) $(CFLAGS) $<
+
+#	file="" ; \
+#	for i in $(XMLOCKSRCS); do \
+#		if [ "x$${i}" = "x$<" ]; then \
+#			file=$${i} ; \
+#		fi ; \
+#	done ; \
+#	if [ -n $${file} ]; then \
+#		echo "$(CC) -c $(CPPFLAGS) $(DEFS) $(XLOCKINC) $(CFLAGS) $<" ; \
+#		$(CC) -c $(CPPFLAGS) $(DEFS) $(XLOCKINC) $(CFLAGS) $< ; \
+#	else \
+#		echo "$(CC) -c $(CPPFLAGS) $(DEFS) $(XLOCKINC) $(CFLAGS) $<" ; \
+#		$(CC) -c $(CPPFLAGS) $(DEFS) $(XMLOCKINC) $(CFLAGS) $< ; \
+#	fi
+
+option$(O) : option$(C)
+	$(CC) -c $(CPPFLAGS) $(DEFS) $(XMLOCKINC) $(CFLAGS) $<
+
+xmlock$(O) : xmlock$(C)
+	$(CC) -c $(CPPFLAGS) $(DEFS) $(XMLOCKINC) $(CFLAGS) $<
+
+################################################################
+
+
+Makefile : Makefile.in config.status
+	$(SHELL) config.status
+config.status : configure
+	$(SHELL) config.status --recheck
+configure : configure.in
+# enable this rule if you want autoconf to be executed automatically when
+# configure.in is changed. This is commented out, since patching might give
+# configure.in a newer timestamp than configure and not everybody has autoconf
+#	cd $(srcdir); autoconf
+
+################################################################
+# Miscellaneous targets
+
+depend : $(BITMAPS) $(PIXMAPS) $(XLOCKGLSRCS) $(XLOCKHACKERSRCS)
+
+clean :
+	$(RM) *.o core *~ *% *.bak *.orig \
+glx/*~ glx/*% glx/*.bak glx/*.orig \
+hackers/*~ hackers/*% hackers/*.bak hackers/*.orig \
+make.log MakeOut $(XLOCKGLSRCS) $(XLOCKHACKERSRCS) xlock$(E)$(A) xmlock$(E)$(A)
+
+distclean : clean
+	$(RM) Makefile config.status config.cache config.log config.h \
+$(BITMAPS) $(PIXMAPS)
+
+clean.all : distclean
+
+tar : distclean
+	cd .. ; tar cvf $(VER).tar $(VER)/*
+
+compress : tar
+	cd .. ; compress -f $(VER).tar
+
+gzip : tar
+	cd .. ; gzip -f $(VER).tar
+
+dist : gzip
+
+tgz : tar
+	cd .. ; gzip -c $(VER).tar > `echo $(VER) | cut -c1-8`.tgz ; \
+$(RM) $(VER).tar
+
+man :
+	nroff -man $(srcdir)/xlock.man | more
+
+read :
+	more README
+
+lint :
+	$(LINT) -ax -DLINT $(DEFINES) $(XLOCKINC) $(XLOCKSRCS)
+	$(LINT) -ax -DLINT $(DEFINES) $(XMLOCKINC) $(XMLOCKSRCS)
+
+hlp :
+	(echo '1 XLOCK' ; \
+ nroff -man < xlock.man \
+ | sed -e 's/.^H//g' -e 's/^ *Page [0-9].*//' \
+ -e 's/^ *Xlock(.*//' \
+ -e 's/^     //' \
+ -e 's/^NAME.*//;s/^SYNOPSIS//;s/^DESCRIPTION//' \
+ -e 's/\(Copyright\) .*c.*\(19\)/\1 (C) \2/' \
+ -e 's/^\([A-Z][A-Z]*\) \([A-Z][A-Z]*\)/\1_\2/' \
+ -e 's/^\([A-Z]\)/2 \1/' \
+ | more -flsu | cat ) \
+ > xlock.hlp

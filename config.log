@@ -1,0 +1,309 @@
+This file contains any messages produced by compilers while
+running configure, to aid debugging if configure makes a mistake.
+
+configure:635: checking for gcc
+configure:712: checking whether the C compiler (gcc  ) works
+configure:726: gcc -o conftest    conftest.c  1>&5
+configure:746: checking whether the C compiler (gcc  ) is a cross-compiler
+configure:751: checking whether we are using GNU C
+configure:760: gcc -E conftest.c
+configure:775: checking whether gcc accepts -g
+configure:810: checking whether ln -s works
+configure:831: checking how to run the C preprocessor
+configure:852: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:892: checking for AIX
+configure:945: checking for a BSD compatible install
+configure:996: checking for POSIXized ISC
+configure:1020: checking for fcntl.h
+configure:1030: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1020: checking for limits.h
+configure:1030: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1020: checking for sys/select.h
+configure:1030: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1020: checking for sys/time.h
+configure:1030: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1020: checking for syslog.h
+configure:1030: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1020: checking for unistd.h
+configure:1030: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1020: checking for memory.h
+configure:1030: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1058: checking for working const
+configure:1112: gcc -c -g -O2 -Wall  conftest.c 1>&5
+configure: In function `main':
+configure:1086: warning: unused variable `s'
+configure:1106: warning: unused variable `foo'
+configure:1074: warning: unused variable `zero'
+configure:1068: warning: unused variable `x'
+configure:1085: warning: `t' might be used uninitialized in this function
+configure:1103: warning: `b' might be used uninitialized in this function
+configure:1133: checking for uid_t in sys/types.h
+configure:1167: checking for ANSI C header files
+configure:1180: gcc -E  conftest.c >/dev/null 2>conftest.out
+configure:1247: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+configure:1271: checking for pid_t
+configure:1304: checking for size_t
+configure:1337: checking whether time.h and sys/time.h may both be included
+configure:1351: gcc -c -g -O2 -Wall  conftest.c 1>&5
+configure: In function `main':
+configure:1347: warning: unused variable `tp'
+configure:1372: checking whether struct tm is in sys/time.h or time.h
+configure:1385: gcc -c -g -O2 -Wall  conftest.c 1>&5
+configure: In function `main':
+configure:1381: warning: statement with no effect
+configure:1406: checking for inline
+configure:1420: gcc -c -g -O2 -Wall  conftest.c 1>&5
+configure: In function `main':
+configure:1416: warning: control reaches end of non-void function
+configure: At top level:
+configure:1416: warning: return-type defaults to `int'
+configure:1449: checking for gethostname
+configure:1477: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+Undefined			first referenced
+ symbol  			    in file
+gethostname                         /var/tmp/cca001tR1.o
+UX:ld: ERROR: conftest: fatal error: Symbol referencing errors. No output written to conftest
+configure: failed program was:
+#line 1454 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char gethostname(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char gethostname();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_gethostname) || defined (__stub___gethostname)
+choke me
+#else
+gethostname();
+#endif
+
+; return 0; }
+configure:1449: checking for gettimeofday
+configure:1477: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+configure:1449: checking for select
+configure:1477: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+configure:1449: checking for strdup
+configure:1477: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+configure:1502: checking for seteuid
+configure:1530: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+configure:1609: checking for X
+configure:1923: checking for dnet_ntoa in -ldnet
+configure:1942: gcc -o conftest -g -O2 -Wall   conftest.c -ldnet   1>&5
+UX:ld: ERROR:  fatal error: library not found: -ldnet
+configure: failed program was:
+#line 1931 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char dnet_ntoa();
+
+int main() {
+dnet_ntoa()
+; return 0; }
+configure:1964: checking for dnet_ntoa in -ldnet_stub
+configure:1983: gcc -o conftest -g -O2 -Wall   conftest.c -ldnet_stub   1>&5
+UX:ld: ERROR:  fatal error: library not found: -ldnet_stub
+configure: failed program was:
+#line 1972 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char dnet_ntoa();
+
+int main() {
+dnet_ntoa()
+; return 0; }
+configure:2012: checking for gethostbyname
+configure:2040: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+Undefined			first referenced
+ symbol  			    in file
+gethostbyname                       /var/tmp/cca001vC1.o
+UX:ld: ERROR: conftest: fatal error: Symbol referencing errors. No output written to conftest
+configure: failed program was:
+#line 2017 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char gethostbyname(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char gethostbyname();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_gethostbyname) || defined (__stub___gethostbyname)
+choke me
+#else
+gethostbyname();
+#endif
+
+; return 0; }
+configure:2061: checking for gethostbyname in -lnsl
+configure:2080: gcc -o conftest -g -O2 -Wall   conftest.c -lnsl   1>&5
+Undefined			first referenced
+ symbol  			    in file
+gethostbyname                       /var/tmp/cca001vR1.o
+UX:ld: ERROR: conftest: fatal error: Symbol referencing errors. No output written to conftest
+configure: failed program was:
+#line 2069 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char gethostbyname();
+
+int main() {
+gethostbyname()
+; return 0; }
+configure:2110: checking for connect
+configure:2138: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+Undefined			first referenced
+ symbol  			    in file
+connect                             /var/tmp/cca001vc1.o
+UX:ld: ERROR: conftest: fatal error: Symbol referencing errors. No output written to conftest
+configure: failed program was:
+#line 2115 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char connect(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char connect();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_connect) || defined (__stub___connect)
+choke me
+#else
+connect();
+#endif
+
+; return 0; }
+configure:2159: checking for connect in -lsocket
+configure:2178: gcc -o conftest -g -O2 -Wall   conftest.c -lsocket   1>&5
+configure:2202: checking for remove
+configure:2230: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+configure:2294: checking for shmat
+configure:2322: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+configure:2395: checking for IceConnectionNumber in -lICE
+configure:2414: gcc -o conftest -g -O2 -Wall   -L//usr/X/lib conftest.c -lICE   1>&5
+UX:ld: ERROR:  fatal error: library not found: -lICE
+configure: failed program was:
+#line 2403 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char IceConnectionNumber();
+
+int main() {
+IceConnectionNumber()
+; return 0; }
+configure:2503: checking for XPM
+configure:2666: checking for Motif
+configure:2832: checking for Editres
+configure:2992: checking for GL
+configure:3092: checking for MesaGL
+configure:3247: checking for DtSaver
+configure:3341: checking for RPLAY
+configure:3445: checking for NAS
+configure:3554: checking host system type
+configure:3769: checking for dirent.h that defines DIR
+configure:3782: gcc -c -g -O2 -Wall  conftest.c 1>&5
+configure: In function `main':
+configure:3778: warning: unused variable `dirp'
+configure:3807: checking for opendir in -ldir
+configure:3826: gcc -o conftest -g -O2 -Wall   conftest.c -ldir   1>&5
+UX:ld: ERROR:  fatal error: library not found: -ldir
+configure: failed program was:
+#line 3815 "configure"
+#include "confdefs.h"
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char opendir();
+
+int main() {
+opendir()
+; return 0; }
+configure:3892: checking for nanosleep
+configure:3920: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+Undefined			first referenced
+ symbol  			    in file
+nanosleep                           /var/tmp/cca001xy1.o
+UX:ld: ERROR: conftest: fatal error: Symbol referencing errors. No output written to conftest
+configure: failed program was:
+#line 3897 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char nanosleep(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char nanosleep();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_nanosleep) || defined (__stub___nanosleep)
+choke me
+#else
+nanosleep();
+#endif
+
+; return 0; }
+configure:3941: checking for usleep
+configure:3969: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+Undefined			first referenced
+ symbol  			    in file
+usleep                              /var/tmp/cca001yB1.o
+UX:ld: ERROR: conftest: fatal error: Symbol referencing errors. No output written to conftest
+configure: failed program was:
+#line 3946 "configure"
+#include "confdefs.h"
+/* System header to define __stub macros and hopefully few prototypes,
+    which can conflict with char usleep(); below.  */
+#include <assert.h>
+/* Override any gcc2 internal prototype to avoid an error.  */
+/* We use char because int might match the return type of a gcc2
+    builtin and then its argument prototype would still apply.  */
+char usleep();
+
+int main() {
+
+/* The GNU C library defines this for functions which it implements
+    to always fail with ENOSYS.  Some functions are actually named
+    something starting with __ and the normal name is an alias.  */
+#if defined (__stub_usleep) || defined (__stub___usleep)
+choke me
+#else
+usleep();
+#endif
+
+; return 0; }
+configure:3996: checking for srand48
+configure:4024: gcc -o conftest -g -O2 -Wall   conftest.c  1>&5
+configure:4181: checking matherr support
+configure:4198: gcc -c -g -O2 -Wall  conftest.c 1>&5
