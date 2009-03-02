@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="noseguy" _label="Noseguy">
+
+  <command arg="-root"/>
+
+<!--  <file   id="program" _label="Text Program" arg="-program %"/> -->
+
+  <xscreensaver-text />
+
+  <_description>
+A little man with a big nose wanders around your screen saying things.
+
+Written by Dan Heller and Jamie Zawinski; 1992.
+  </_description>
+</screensaver>

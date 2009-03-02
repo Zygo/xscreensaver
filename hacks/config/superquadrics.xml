@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="superquadrics" _label="Superquadrics">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="40000"
+          convert="invert"/>
+
+  <number id="spinspeed" type="slider" arg="-spinspeed %"
+          _label="Spin Speed" _low-label="Slow" _high-label="Fast"
+          low="0.1" high="15.0" default="5.0"/>
+
+  <number id="count" type="slider" arg="-count %"
+           _label="Density" _low-label="Low" _high-label="High"
+          low="0" high="100" default="25"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Duration" _low-label="Short" _high-label="Long"
+          low="0" high="100" default="40"/>
+
+  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Morphing 3D shapes.
+
+Written by Ed Mackey; 1987, 1997.
+  </_description>
+</screensaver>

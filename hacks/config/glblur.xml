@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="glblur" _label="GLBlur">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="10000"
+          convert="invert"/>
+
+  <number id="blursize" type="slider" arg="-blursize %"
+          _label="Blur Smoothness" _low-label="Sparse" _high-label="Dense"
+          low="1" high="100" default="15"/>
+
+  <boolean id="wander" _label="Wander" arg-unset="-no-wander"/>
+
+  <select id="rotation">
+    <option id="no"  _label="Don't Rotate"               arg-set="-spin 0"/>
+    <option id="x"   _label="Rotate around X axis"       arg-set="-spin X"/>
+    <option id="y"   _label="Rotate around Y axis"       arg-set="-spin Y"/>
+    <option id="z"   _label="Rotate around Z axis"       arg-set="-spin Z"/>
+    <option id="xy"  _label="Rotate around X and Y axes" arg-set="-spin XY"/>
+    <option id="xz"  _label="Rotate around X and Z axes" arg-set="-spin XZ"/>
+    <option id="yz"  _label="Rotate around Y and Z axes" arg-set="-spin YZ"/>
+    <option id="xyz" _label="Rotate around all three axes"/>
+  </select>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+This program draws a box and a few line segments, and generates a
+radial blur outward from it.  This creates flowing field effects.
+
+This is done by rendering the scene into a small texture, then
+repeatedly rendering increasingly-enlarged and increasingly-transparent
+versions of that texture onto the frame buffer.  As such, it's quite
+graphics intensive: don't bother trying to run this if you don't have
+hardware-accelerated OpenGL texture support.  It will hurt your
+machine bad.
+
+Written by Jamie Zawinski; 2002.
+  </_description>
+</screensaver>

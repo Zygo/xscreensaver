@@ -1,0 +1,160 @@
+.TH XScreenSaver 1 "13-Mar-01" "X Version 11"
+.SH NAME
+molecule - draws 3D molecular structures
+.SH SYNOPSIS
+.B gltext
+[\-display \fIhost:display.screen\fP] [\-window] [\-root]
+[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP]
+[\-wander] [\-no-wander]
+[\-spin \fIaxes\fP]
+[\-no-spin]
+[\-timeout \fIseconds\fP]
+[\-labels] [\-no-labels]
+[\-titles] [\-no-titles]
+[\-atoms] [\-no-atoms]
+[\-bonds] [\-no-bonds]
+[\-shells] [\-no-shells]
+[\-molecule \fIfile-or-directory\fP]
+[\-verbose]
+[\-wireframe]
+[\-fps]
+.SH DESCRIPTION
+The \fImolecule\fP program draws several different representations of
+molecules.  Some common molecules are built in, and it can read PDB
+(Protein Data Base) files as input.
+.SH OPTIONS
+.I molecule
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-fps
+Display a running tally of how many frames per second are being rendered.
+In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
+your GL performance.
+.TP 8
+.B \-verbose
+Print debugging info on stderr about files being loaded, etc.
+.TP 8
+.B \-wander
+Move the molecules around the screen.
+.TP 8
+.B \-no\-wander
+Keep the molecule centered on the screen.  This is the default.
+.TP 8
+.B \-spin
+Which axes around which the molecule should spin.  The default is "XYZ",
+meaning rotate it freely in space.  "\fB\-spin Z\fP" would rotate the
+molecule in the plane of the screen while not rotating it into or out
+of the screen; etc.
+.TP 8
+.B \-no\-spin
+Don't spin it at all: the same as \fB\-spin ""\fP.
+.TP 8
+.B \-labels
+Draw labels on the atoms (or the spot where the atoms would be.)
+This is the default.
+.TP 8
+.B \-no\-labels
+Do not draw labels on the atoms.
+.TP 8
+.B \-titles
+Print the name of the molecule and its chemical formula at the top of
+the screen.
+.TP 8
+.B \-no\-titles
+Do not print the molecule name.
+.TP 8
+.B \-atoms
+Represent the atoms as shaded spheres of appropriate sizes.
+This is the default.
+.TP 8
+.B \-no\-atoms
+Do not draw spheres for the atoms: only draw bond lines.
+.TP 8
+.B \-bonds
+Represent the atomic bonds as solid tubes of appropriate thicknesses.
+This is the default.
+.TP 8
+.B \-no\-bonds
+Do not draw the bonds: instead, make the spheres for the atoms be
+larger, for a "space-filling" representation of the molecule.
+.TP 8
+.B \-shells
+Draw transparent electron shells around the atoms.  This only works
+if bonds are also being drawn.
+.TP 8
+.B \-no\-shells
+Do not draw electron shells.  This is the default.
+.TP 8
+.B \-shell\-alpha
+When drawing shells, how transparent to make them.  Default 0.4.
+.TP 8
+.B \-wireframe
+Draw a wireframe rendition of the molecule: this will consist only of
+single-pixel lines for the bonds, and text labels where the atoms go.
+This will be very fast.
+.TP 8
+.B \-timeout \fIseconds\fP
+When using the built-in data set, change to a new molecule every
+this-many seconds.  Default is 20 seconds.
+.TP 8
+.B \-molecule \fIfile-or-directory\fP
+Instead of using the built-in molecules, read one from the given file.
+This file must be in PDB (Protein Data Base) format.  (Note that it's
+not uncommon for PDB files to contain only the atoms, with no (or
+little) information about the atomic bonds.)
+
+This can also be a directory, in which case, all of the .pdb files in
+that directory will be loaded.  A new one will be displayed at random
+every few seconds (as per the \fI\-timeout\fP option.)
+.PP
+When the molecule is too large (bigger than about 30 angstroms from
+side to side), the \fI\-label\fP option will be automatically turned
+off, because otherwise, the labels would overlap and completely obscure
+the display.
+
+When the molecule is around 150 angstroms from side to side, wireframe
+mode will be turned on (because otherwise it would be too slow.)
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.PP
+Documentation on the PDB file format:
+
+    http://www.rcsb.org/pdb/docs/format/pdbguide2.2/guide2.2_frame.html
+
+A good source of PDB files:
+
+    http://www.sci.ouc.bc.ca/chem/molecule/molecule.html
+.SH COPYRIGHT
+Copyright \(co 2001-2005 by Jamie Zawinski.
+Permission to use, copy, modify, distribute, and sell this software and
+its documentation for any purpose is hereby granted without fee,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is"
+without express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>

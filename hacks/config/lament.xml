@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="lament" _label="Lament">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="40000" default="20000"
+          convert="invert"/>
+
+  <boolean id="tex"     _label="Textured"  arg-unset="-no-texture"/>
+  <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Animates a simulation of Lemarchand's Box, the Lament Configuration,
+repeatedly solving itself.  Warning: occasionally opens doors.
+
+Written by Jamie Zawinski; 1998.
+  </_description>
+</screensaver>
