@@ -1,0 +1,103 @@
+.TH XScreenSaver 1 "17-Oct-99" "X Version 11"
+.SH NAME
+distort \- distort the content of the screen in interesting ways
+.SH SYNOPSIS
+.B distort
+[\-root] [\-window] [\-mono] [\-install] [\-noinstall] [\-visual \fIvisual\fP] [\-window\-id \fIwindow\-id\fP] [\-delay \fIusecs\fP] [\-radius \fIpixels\fP] [\-speed \fIint\fP] [\-number \fIint\fP] [\-swamp] [\-bounce] [\-reflect] [\-vortex] [\-magnify] [\-blackhole] [\-slow] [\-shm] [\-no\-shm]
+.SH DESCRIPTION
+The \fIdistort\fP program lets circular zones of distortion wander
+randomly around its window, apparently distorting what is under them
+due to the window's pseudo-transparency. The mode of distortion and
+the overall behaviour of the zones can be influenced in various ways.
+.SH OPTIONS
+.I distort
+accepts the following options:
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-window
+Draw on a newly-created window. This is the default.
+.TP 8
+.B \-mono
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-noinstall
+Don't install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use. Legal values are the name of a visual
+class or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window\-id \fIwindow\-id\fP
+Specify which window id to use.
+.TP 8
+.B \-delay \fIusecs\fP
+Specify the delay between subsequent animation frames in microseconds.
+.TP 8
+.B \-radius \fIpixels\fP
+Specify the radius of the distortion zone in pixels.
+.TP 8
+.B \-speed \fIint\fP
+Specify the speed at which the distortion zone moves, where 0 is slow,
+higher numbers are faster (10 is pretty fast.)
+.TP 8
+.B \-number \fIint\fP
+Specify the number of distortion zones.
+.TP 8
+.B \-swamp
+Instead of letting zones wander around, let small zones pop up like
+bubbles in a swamp and leave permanent distortion.
+.TP 8
+.B \-bounce
+Let zones wander around and bounce off the window border. This is the
+default.
+.TP 8
+.B \-reflect
+Mode of distortion that resembles reflection by a cylindrical mirror.
+.TP 8
+.B \-vortex
+Whirlpool-shaped distortion. Way cool.
+.TP 8
+.B \-magnify
+This mode of distortion looks like a magnifying glass.
+.TP 8
+.B \-blackhole
+Suck your pixels beyond the event horizon. Favourite mode of Dr
+Stephen Hawking.
+.TP 8
+.B \-slow
+Make the zone wander slower.
+.TP 8
+.B \-shm
+Use shared memory extension.
+.TP 8
+.B \-no\-shm
+Don't use shared memory extension.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1998 by Jonas Munsin and Jamie Zawinski.  Permission to use, 
+copy, modify, distribute, and sell this software and its documentation for
+any purpose is hereby granted without fee, provided that the above
+copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+No representations are made about the suitability of this software for
+any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHORS
+Jonas Munsin <jmunsin@iki.fi> and Jamie Zawinski <jwz@jwz.org>.
+This manual page by Matthias Warkus <mawa@iname.com>, 17-Oct-1999.
