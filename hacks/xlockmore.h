@@ -74,7 +74,8 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #define MI_BATCHCOUNT(MI)	((MI)->batchcount)
 #define MI_SIZE(MI)		((MI)->size)
 #define MI_IS_DRAWN(MI)		((MI)->is_drawn)
-#define MI_IS_DEBUG(MI)		(False)
+#define MI_IS_DRAWN(MI)		((MI)->is_drawn)
+#define MI_NCOLORS(MI)		((MI)->npixels)
 #define MI_NAME(MI)		(progname)
 
 #define MI_WIDTH(MI)		(MI_WIN_WIDTH((MI)))
@@ -87,6 +88,8 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #define MI_WHITE_PIXEL(MI)	(MI_WIN_WHITE_PIXEL(MI))
 #define MI_IS_FULLRANDOM(MI)	(MI_WIN_IS_FULLRANDOM(MI))
 #define MI_IS_VERBOSE(MI)	(MI_WIN_IS_VERBOSE(MI))
+#define MI_IS_INSTALL(MI)	(MI_WIN_IS_INSTALL(MI))
+#define MI_IS_DEBUG(MI)		(False)
 
 #define MI_CLEARWINDOW(mi) XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi))
 

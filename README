@@ -77,6 +77,24 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.06:   * Configure tweaks (sometimes -lXmu wasn't getting linked
+                        in properly; check for _Xsetlocale in -lXintl.)
+                      * Portability fixes for sonar.c.
+                      * Fixed a compilation problem when you have GL but don't
+                        have XPM.
+                      * Made configure notice when MesaGL requires -lpthread.
+                      * Made `flame' ignore SIGFPE (not sure if this is the
+                        right fix; it seems only to be needed on FreeBSD.)
+                      * Kludged `rd-bomb' work on visuals that are of depth 24
+                        but that *do not* support pixmaps of depth 32.
+                      * Fixed `halo' to work properly in TrueColor.
+                      * Changed `xscreensaver.spec' to install the hacks in
+                        /usr/X11R6/lib/xscreensaver/ by default, since that's
+                        where recent Red Hat distributions put them.
+                      * Added `t3d' hack.
+                      * Updated versions of `crystal', `hopalong', and `flow'
+                        from xlockmore.
+                      * Imported `demon' and `loop' modes from xlockmore.
 Changes since 3.05:   * Oops, the "default-n" visual descriptor was broken;
                         it was always installing a colormap if the
                         `installColormap' preference was set, meaning that

@@ -97,7 +97,7 @@ uninstall: uninstall-program uninstall-man
 install-strip:
 	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
 
-install-program:
+install-program: $(EXES)
 	@exes="$(EXES)" ;						\
 	if [ ! -d $(HACKDIR) ]; then $(INSTALL_DIRS) $(HACKDIR) ; fi ;	\
 	for program in $$exes; do					\
@@ -105,7 +105,7 @@ install-program:
 	  $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;		\
 	done
 
-install-man:
+install-man: $(MEN)
 	@men="$(MEN)" ;							\
 	if [ ! -d $(man1dir) ]; then $(INSTALL_DIRS) $(man1dir) ; fi ;	\
 	for man in $$men; do						\

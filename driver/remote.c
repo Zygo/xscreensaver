@@ -50,11 +50,6 @@ static Bool got_badwindow = False;
 static int
 BadWindow_ehandler (Display *dpy, XErrorEvent *error)
 {
-  /* When we notice a window being created, we spawn a timer that waits
-     30 seconds or so, and then selects events on that window.  This error
-     handler is used so that we can cope with the fact that the window
-     may have been destroyed <30 seconds after it was created.
-   */
   if (error->error_code == BadWindow)
     {
       got_badwindow = True;

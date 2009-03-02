@@ -1,4 +1,4 @@
-# Makefile.in --- xscreensaver, Copyright (c) 1997 Jamie Zawinski.
+# Makefile.in --- xscreensaver, Copyright (c) 1999 Jamie Zawinski.
 # the `../configure' script generates `Makefile' from this file.
 
 @SET_MAKE@
@@ -169,6 +169,12 @@ update_spec_version::
 	fi ;								    \
 	rm $$T
 
+rpm::
+	@								    \
+  VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ;  \
+  cp -p xscreensaver-$$VERS.tar.gz /usr/src/redhat/SOURCES/ ;		    \
+  rpm -ba xscreensaver.spec
+
 test-tar::
 	@								    \
   VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ;  \
@@ -207,10 +213,9 @@ test-tar::
   ( cd BIN/motif ;							    \
     CC=cc ;								    \
     export CC ;								    \
-    ../../configure --with-motif=/usr/local/motif ;			    \
+    ../../configure --without-xpm --with-motif=/usr/local/motif ;	    \
     echo --------------------------------------------------------------- ;  \
-    ( cd utils; gmake ) ;						    \
-    ( cd driver; gmake ) ;						    \
+    gmake ;								    \
     ( cd driver; gmake xscreensaver-demo-Xaw ) ;			    \
     echo --------------------------------------------------------------- ); \
 									    \

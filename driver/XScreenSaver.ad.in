@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 3.06
-!                                22-Nov-98
+!                              version 3.07
+!                                04-Jan-99
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -153,6 +153,8 @@
 		worm -root						\n\
 		rotor -root						\n\
 		ant -root						\n\
+		demon -root						\n\
+		loop -root						\n\
 		vines -root						\n\
 		kaleidescope -root					\n\
 		xjack -root						\n\
@@ -169,6 +171,7 @@
 		rd-bomb -root						\n\
 		rd-bomb -root -speed 1 -size 0.1			\n\
 		sonar -root						\n\
+		t3d -root						\n\
 									  \
 	mono:	rocks -root						\n\
 	color:	rocks -root -fg darksalmon				\n\

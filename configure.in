@@ -183,6 +183,9 @@ else
   fi
 fi
 
+# canonicalize slashes.
+HACKDIR=`echo "${HACKDIR}" | sed 's@/$@@;s@//*@/@g'`
+
 
 AC_PATH_XTRA
 
@@ -567,6 +570,7 @@ else
   XMU_OBJS=''
   SAVER_LIBS="-lXmu $SAVER_LIBS"
   HACK_LIBS="-lXmu $HACK_LIBS"
+  TOOLKIT_LIBS="-lXmu $TOOLKIT_LIBS"
   AC_DEFINE(HAVE_XMU)
 fi
 
@@ -1035,6 +1039,19 @@ if test "$have_motif" = yes ; then
 fi
 
 
+# Check for _Xsetlocale in -lXintl, since at least some recent versions
+# of Motif (on Linux) need it.
+#
+have_xintl=no
+if test "$have_motif" = yes ; then
+  AC_CHECK_X_LIB(Xintl, _Xsetlocale, [have_xintl=yes], [have_xintl=no],
+                 -lX11 -lXext -lm)
+  if test "$have_xintl" = yes; then
+    TOOLKIT_LIBS="$TOOLKIT_LIBS -lXintl"
+  fi
+fi
+
+
 # check for XPM header.
 #
 have_xpm=no
@@ -1164,6 +1181,24 @@ EOF
       AC_MSG_RESULT($ac_cv_mesagl_version_string)
     fi
 
+
+    # If it's MesaGL, check to see if it requires -lpthread.
+    #
+    have_pthread=no
+    mesa_requires_pthread=false
+    if test "$ac_have_mesa_gl" = yes; then
+
+      AC_CHECK_LIB(pthread, pthread_create, [have_pthread=yes], [],)
+      if test "$have_pthread" = yes; then
+        AC_CHECK_X_LIB($gl_lib_1, gl_get_thread_context,
+                       [mesa_requires_pthread=yes], [],
+		       $GL_LIBS -lpthread -lX11 -lXext -lm)
+      fi
+
+      if test "$mesa_requires_pthread" = yes; then
+        GL_LIBS="$GL_LIBS -lpthread"
+      fi
+    fi
 
     # Check for OpenGL 1.1 features.
     #
@@ -2000,20 +2035,26 @@ eval HACKDIR=${HACKDIR}
 eval HACKDIR=${HACKDIR}
 eval HACKDIR=${HACKDIR}
 
-echo ""
-echo "$warnsep"
-echo ""
-echo '      When you run "make install", the "xscreensaver",'
-echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
-echo "      will be installed in ${bindir}."
-echo ""
-echo "      The various graphics demos (80+ different executables) will"
-echo "      be installed in ${HACKDIR}."
-echo ""
-echo "      If you would prefer the demos to be installed elsewhere"
-echo "      (for example, in a dedicated directory) you should re-run"
-echo "      configure with the --enable-subdir=DIR option.  For more"
-echo "      information, run $0 --help."
-echo ""
-echo "$warnsep"
-echo ""
+# canonicalize slashes.
+bindir=`echo  "${bindir}"  | sed 's@/$@@;s@//*@/@g'`
+HACKDIR=`echo "${HACKDIR}" | sed 's@/$@@;s@//*@/@g'`
+
+if test "${bindir}" = "${HACKDIR}" ; then
+  echo ""
+  echo "$warnsep"
+  echo ""
+  echo '      When you run "make install", the "xscreensaver",'
+  echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
+  echo "      will be installed in ${bindir}."
+  echo ""
+  echo "      The various graphics demos (80+ different executables) will"
+  echo "      also be installed in ${HACKDIR}."
+  echo ""
+  echo "      If you would prefer the demos to be installed elsewhere"
+  echo "      (for example, in a dedicated directory) you should re-run"
+  echo "      configure with the --enable-subdir=DIR option.  For more"
+  echo "      information, run $0 --help."
+  echo ""
+  echo "$warnsep"
+  echo ""
+fi

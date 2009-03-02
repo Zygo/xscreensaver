@@ -12,11 +12,14 @@
  * of bogies that move around on the scope while the ping sensor can be
  * used to display hosts on your network.
  *
- * The ping code is only compiled in if you define HAVE_PING, because, 
- * unfortunately, creating an ICMP socket is a privileged operation, the
- * program needs to be installed SUID root if you want to use the ping
- * mode. If you check the code you will see that this privilige is given up
- * immediately after the socket is created.
+ * The ping code is only compiled in if you define HAVE_ICMP or HAVE_ICMPHDR,
+ * because, unfortunately, different systems have different ways of creating
+ * these sorts of packets.
+ *
+ * Also: creating an ICMP socket is a privileged operation, so the program
+ * needs to be installed SUID root if you want to use the ping mode.  If you
+ * check the code you will see that this privilige is given up immediately
+ * after the socket is created.
  *
  * It should be easy to extend this code to support other sorts of sensors.
  * Some ideas:
@@ -34,7 +37,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.6 $
+ * $Revision: 1.7 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -72,40 +75,71 @@
  * - Now need to define HAVE_PING to compile in the ping stuff.
  */
 
+/* Define one of these, as appropriate.  
+   We should make configure detect this, one of these days.
+ */
+/* #define HAVE_ICMP */
+/* #define HAVE_ICMPHDR */
+
+
 /* Include Files */
 
-#ifdef HAVE_PING
-#include <sys/ipc.h>
-#include <sys/shm.h>
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/time.h>
-#include <netinet/in_systm.h>
-#include <netinet/in.h>
-#include <netinet/ip.h>
-#include <netinet/ip_icmp.h>
-#include <netinet/udp.h>
-#include <arpa/inet.h>
-#include <signal.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <netdb.h>
-#include <signal.h>
-#include <limits.h>
-#endif /* HAVE_PING */
-#include <math.h>
-#include <stdio.h>
 #include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+
+#if defined(HAVE_ICMP) || defined(HAVE_ICMPHDR)
+# include <unistd.h>
+# include <limits.h>
+# include <signal.h>
+# include <fcntl.h>
+# include <sys/types.h>
+# include <sys/time.h>
+# include <sys/ipc.h>
+# include <sys/shm.h>
+# include <sys/socket.h>
+# include <netinet/in_systm.h>
+# include <netinet/in.h>
+# include <netinet/ip.h>
+# include <netinet/ip_icmp.h>
+# include <netinet/udp.h>
+# include <arpa/inet.h>
+# include <netdb.h>
+#endif /* HAVE_ICMP || HAVE_ICMPHDR */
+
 #include "screenhack.h"
 #include "colors.h"
 #include "hsv.h"
+
 #include <X11/extensions/XShm.h>
+
 
 /* Defines */
 
-#ifndef MIN
-#define MIN(a,b) ((a)<(b)?(a - 50):(b - 10))
-#endif /* MIN */
+#undef MY_MIN
+#define MY_MIN(a,b) ((a)<(b)?(a - 50):(b - 10))
+
+/* Frigging icmp */
+
+#if defined(HAVE_ICMP)
+# define HAVE_PING
+# define ICMP             icmp
+# define ICMP_TYPE(p)     (p)->icmp_type
+# define ICMP_CODE(p)     (p)->icmp_code
+# define ICMP_CHECKSUM(p) (p)->icmp_cksum
+# define ICMP_ID(p)       (p)->icmp_id
+# define ICMP_SEQ(p)      (p)->icmp_seq
+#elif defined(HAVE_ICMPHDR)
+# define HAVE_PING
+# define ICMP             icmphdr
+# define ICMP_TYPE(p)     (p)->type
+# define ICMP_CODE(p)     (p)->code
+# define ICMP_CHECKSUM(p) (p)->checksum
+# define ICMP_ID(p)       (p)->un.echo.id
+# define ICMP_SEQ(p)      (p)->un.echo.sequence
+#else
+# undef HAVE_PING
+#endif
 
 /* Forward References */
 
@@ -775,7 +809,7 @@ sendping(ping_info *pi, ping_target *pt)
     /* Local Variables */
 
     u_char *packet;
-    struct icmp *icmph;
+    struct ICMP *icmph;
     int result;
 
     /*
@@ -784,24 +818,24 @@ sendping(ping_info *pi, ping_target *pt)
      * name or do an address lookup when it comes back.
      */
 
-    int pcktsiz = sizeof(struct icmp) + sizeof(struct timeval) +
+    int pcktsiz = sizeof(struct ICMP) + sizeof(struct timeval) +
 	strlen(pt->name) + 1;
 
     /* Create the ICMP packet */
 
     if ((packet = (u_char *) malloc(pcktsiz)) == (void *) 0)
 	return;  /* Out of memory */
-    icmph = (struct icmp *) packet;
-    icmph->icmp_type = ICMP_ECHO;
-    icmph->icmp_code = 0;
-    icmph->icmp_cksum = 0;
-    icmph->icmp_id = pi->pid;
-    icmph->icmp_seq = pi->seq++;
-    gettimeofday((struct timeval *) &packet[sizeof(struct icmp)],
+    icmph = (struct ICMP *) packet;
+    ICMP_TYPE(icmph) = ICMP_ECHO;
+    ICMP_CODE(icmph) = 0;
+    ICMP_CHECKSUM(icmph) = 0;
+    ICMP_ID(icmph) = pi->pid;
+    ICMP_SEQ(icmph) = pi->seq++;
+    gettimeofday((struct timeval *) &packet[sizeof(struct ICMP)],
 		 (struct timezone *) 0);
-    strcpy((char *) &packet[sizeof(struct icmp) + sizeof(struct timeval)],
+    strcpy((char *) &packet[sizeof(struct ICMP) + sizeof(struct timeval)],
 	   pt->name);
-    icmph->icmp_cksum = checksum((u_short *)packet, pcktsiz);
+    ICMP_CHECKSUM(icmph) = checksum((u_short *)packet, pcktsiz);
 
     /* Send it */
 
@@ -866,6 +900,7 @@ checksum(u_short *packet, int size)
 
     if (nleft == 1) {
 	*(u_char *)(&answer) = *(u_char *)w ;
+        *(1 + (u_char *)(&answer)) = 0;
 	sum += answer;
     }
 
@@ -908,7 +943,7 @@ getping(sonar_info *si, ping_info *pi, int ttl)
     struct timeval *then;
     struct ip *ip;
     int iphdrlen;
-    struct icmp *icmph;
+    struct ICMP *icmph;
     Bogie *bl = NULL;
     Bogie *new;
     char *name;
@@ -946,18 +981,18 @@ getping(sonar_info *si, ping_info *pi, int ttl)
 	gettimeofday(&now, (struct timezone *) 0);
 	ip = (struct ip *) packet;
 	iphdrlen = ip->ip_hl << 2;
-	icmph = (struct icmp *) &packet[iphdrlen];
+	icmph = (struct ICMP *) &packet[iphdrlen];
 
 	/* Was the packet a reply?? */
 
-	if (icmph->icmp_type != ICMP_ECHOREPLY) {
+	if (ICMP_TYPE(icmph) != ICMP_ECHOREPLY) {
 	    /* Ignore anything but ICMP Replies */
 	    continue; /* Nope */
 	}
 
 	/* Was it for us? */
 
-	if (icmph->icmp_id != pi->pid) {
+	if (ICMP_ID(icmph) != pi->pid) {
 	    /* Ignore packets not set from us */
 	    continue; /* Nope */
 	}
@@ -966,7 +1001,7 @@ getping(sonar_info *si, ping_info *pi, int ttl)
 
 	if ((name =
 	     strdup((char *) &packet[iphdrlen + 
-				    + sizeof(struct icmp)
+				    + sizeof(struct ICMP)
 				    + sizeof(struct timeval)])) == NULL) {
 	    fprintf(stderr, "Out of memory\n");
 	    return bl;
@@ -1001,7 +1036,7 @@ getping(sonar_info *si, ping_info *pi, int ttl)
 	/* Compute the round trip time */
 
 	then =  (struct timeval *) &packet[iphdrlen +
-					  sizeof(struct icmp)];
+					  sizeof(struct ICMP)];
 	new->distance = delta(then, &now) / 100;
 	if (new->distance == 0)
 		new->distance = 2; /* HACK */
@@ -1088,10 +1123,6 @@ init_sim(void)
     sim_info *si;
     int i;
 
-    /* Seed the random number generator */
-
-    srand((int) time(NULL));
-
     /* Create the simulation info structure */
 
     if ((si = (sim_info *) calloc(1, sizeof(sim_info))) == NULL) {
@@ -1117,8 +1148,8 @@ init_sim(void)
 	    return NULL;
 	}
 	sprintf(si->teamA[i].name, "%s%03d", si->teamAID, i+1);
-	si->teamA[i].nexttick = (int) (90.0 * rand() / RAND_MAX);
-	si->teamA[i].nextdist = (int) (100.0 * rand() / RAND_MAX);
+	si->teamA[i].nexttick = (int) (90.0 * random() / RAND_MAX);
+	si->teamA[i].nextdist = (int) (100.0 * random() / RAND_MAX);
     }
 
     /* Team B */
@@ -1139,8 +1170,8 @@ init_sim(void)
 	    return NULL;
 	}
 	sprintf(si->teamB[i].name, "%s%03d", si->teamBID, i+1);
-	si->teamB[i].nexttick = (int) (90.0 * rand() / RAND_MAX);
-	si->teamB[i].nextdist = (int) (100.0 * rand() / RAND_MAX);
+	si->teamB[i].nexttick = (int) (90.0 * random() / RAND_MAX);
+	si->teamB[i].nextdist = (int) (100.0 * random() / RAND_MAX);
     }
 
     /* Done */
@@ -1190,10 +1221,10 @@ init_sonar(Display *dpy, Window win)
     si->height = xwa.height;
     si->centrex = si->width / 2;
     si->centrey = si->height / 2;
-    si->maxx = si->centrex + MIN(si->centrex, si->centrey) - 10;
-    si->minx = si->centrex - MIN(si->centrex, si->centrey) + 10;
-    si->maxy = si->centrey + MIN(si->centrex, si->centrey) - 10;
-    si->miny = si->centrey - MIN(si->centrex, si->centrey) + 10;
+    si->maxx = si->centrex + MY_MIN(si->centrex, si->centrey) - 10;
+    si->minx = si->centrex - MY_MIN(si->centrex, si->centrey) + 10;
+    si->maxy = si->centrey + MY_MIN(si->centrex, si->centrey) - 10;
+    si->miny = si->centrey - MY_MIN(si->centrex, si->centrey) + 10;
     si->radius = si->maxx - si->centrex;
     si->current = 0;
 
@@ -1284,8 +1315,8 @@ updateLocation(sim_target *t)
     int xdist, xtick;
 
     t->movedlasttick = 1;
-    xtick = (int) (3.0 * rand() / RAND_MAX) - 1;
-    xdist = (int) (11.0 * rand() / RAND_MAX) - 5;
+    xtick = (int) (3.0 * random() / RAND_MAX) - 1;
+    xdist = (int) (11.0 * random() / RAND_MAX) - 5;
     if (((t->nexttick + xtick) < 90) && ((t->nexttick + xtick) >= 0))
 	t->nexttick += xtick;
     else

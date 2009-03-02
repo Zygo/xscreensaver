@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1995, 1996, 1997, 1998
+/* xscreensaver, Copyright (c) 1993, 1995, 1996, 1997, 1998, 1999
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -126,6 +126,11 @@ init_circles (Display *dpy, Window window)
 
   cycle_p = mono_p ? False : get_boolean_resource ("cycle", "Cycle");
 
+  /* If the visual isn't color-indexed, don't bother trying to
+     allocate writable cells. */
+  if (cycle_p && !has_writable_cells (xgwa.screen, xgwa.visual))
+    cycle_p = False;
+
 
   if (mono_p)
     ;
@@ -207,6 +212,8 @@ run_circles (Display *dpy, Window window)
   static Bool first_time_p = True;
   Bool done = False;
   Bool inhibit_sleep = False;
+  static int clear_tick = 0;
+
   XFillRectangle (dpy, pixmap, erase_gc, 0, 0, width, height);
   for (i = 0; i < count; i++)
     {
@@ -307,25 +314,15 @@ run_circles (Display *dpy, Window window)
 	      XSetBackground (dpy, copy_gc, colors [bg_index].pixel);
 	    }
 	}
-#if 1
       /* Sometimes go out from the inside instead of the outside */
-      else if ((random () % 10) == 0)
+      else if (clear_tick == 0 && ((random () % 3) == 0))
 	{
-# if 0
-	  if (! mono_p)
-	    {
-	      unsigned long swap = fg_index;
-	      fg_index = bg_index;
-	      bg_index = swap;
-	      XSetForeground (dpy, copy_gc, colors [fg_index].pixel);
-	      XSetBackground (dpy, copy_gc, colors [bg_index].pixel);
-	    }
-# endif
 	  iterations = 0; /* ick */
 	  for (i = 0; i < count; i++)
 	    circles [i].radius %= circles [i].increment;
+
+          clear_tick = ((random() % 8) + 4) | 1;   /* must be odd */
 	}
-#endif
       else
 	{
 	  oiterations = iterations;
@@ -393,10 +390,9 @@ run_circles (Display *dpy, Window window)
 	  if (! (random() % 10))
 	    direction = -1;
 	}
-      if (done)
-	really_first_p = False;
 
       XSync(dpy, False);
+      screenhack_handle_events (dpy);
 
       if (cycle_p && cycle_delay)
 	{
@@ -405,11 +401,28 @@ run_circles (Display *dpy, Window window)
 	    {
 	      rotate_colors (dpy, cmap, colors, ncolors, direction);
 	      usleep(cycle_delay);
+              screenhack_handle_events (dpy);
 	      i += cycle_delay;
 	    }
 	}
+      else if (cmode != seuss_mode &&
+               done && !really_first_p && cycle_delay > 0)
+        usleep (cycle_delay * 50);
       else
-	usleep (d);
+        usleep (d);
+
+      if (done)
+	really_first_p = False;
+    }
+
+  if (done && clear_tick > 0)
+    {
+      clear_tick--;
+      if (!clear_tick)
+        {
+          XClearWindow (dpy, window);
+          if (buffer) XFillRectangle (dpy, buffer, erase_gc, 0,0,width,height);
+        }
     }
 }
 

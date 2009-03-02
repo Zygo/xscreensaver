@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 1998 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,6 +19,7 @@
 #undef srand
 #undef srand48
 #undef frand
+#undef RAND_MAX
 
 #ifdef VMS
 # include "vms-gtod.h"
@@ -26,6 +27,7 @@
 
 #define random()   ya_random()
 #define srandom(i) ya_rand_init(0)
+#define RAND_MAX   0x7FFFFFFF
 
 extern unsigned int ya_random (void);
 extern void ya_rand_init (unsigned int);

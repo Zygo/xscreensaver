@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998
+/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998, 1999
  *  Jamie Zawinski <jwz@jwz.org>
  *
  *  reaction/diffusion textures
@@ -435,6 +435,31 @@ screenhack (Display *dpy, Window win)
 	    vdepth <= 8 ? 8 :
 	    vdepth <= 16 ? 16 :
 	    32);
+
+  /* Ok, this like, sucks and stuff.  There are some XFree86 systems
+     that have depth-24 visuals, that do not accept depth-32 XImages!
+     Which if you ask me is just absurd, since all it would take is
+     for the server to truncate the bits in that case.  So, this crap
+     here detects the specific case of: we have chosen depth 32;
+     and the server does not support depth 32.  In that case, we
+     try and use depth 16 instead.
+
+     The real fix would be to rewrite this program to deal with
+     depth 24 directly (or even better, arbitrary depths, but that
+     would mean going through the XImage routines instead of messing
+     with the XImage->data directly.)
+   */
+  if (pdepth == 32)
+    {
+      int i, pfvc = 0;
+      Bool ok = False;
+      XPixmapFormatValues *pfv = XListPixmapFormats (dpy, &pfvc);
+      for (i = 0; i < pfvc; i++)
+        if (pfv[i].depth == pdepth)
+          ok = True;
+      if (!ok)
+        pdepth = 16;
+    }
 
   cmap = xgwa.colormap;
   ncolors = get_integer_resource ("colors", "Integer");

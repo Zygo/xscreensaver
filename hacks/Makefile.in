@@ -81,7 +81,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  rotor.c ant.c xjack.c xlyap.c jigsaw.c xscreensaver-sgigl.c \
 		  cynosure.c moire2.c flow.c epicycle.c interference.c \
 		  truchet.c bsod.c crystal.c discrete.c distort.c kumppa.c \
-		  sonar.c
+		  sonar.c demon.c loop.c t3d.c
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  bubbles-default.o decayscreen.o deco.o drift.o flag.o \
@@ -96,7 +96,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  rotor.o ant.o xjack.o xlyap.o jigsaw.o xscreensaver-sgigl.o \
 		  cynosure.o moire2.o flow.o epicycle.o interference.o \
 		  truchet.o bsod.o crystal.o discrete.o distort.o kumppa.o \
-		  sonar.o
+		  sonar.o demon.o loop.o t3d.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -107,7 +107,7 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
 		  ant xjack xlyap jigsaw cynosure moire2 flow epicycle \
 		  interference truchet bsod crystal discrete distort kumppa \
-		  sonar
+		  sonar demon loop t3d
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -119,7 +119,7 @@ GRAB_OBJS	= $(GRAB_OBJS_1) $(COLOR_OBJS)
 XSHM_OBJS	= $(UTILS_BIN)/xshm.o
 GRAB_LIBS	= $(SGI_VIDEO_LIBS)
 
-HDRS		= bubbles.h screenhack.h xlockmore.h xlockmoreI.h
+HDRS		= bubbles.h screenhack.h xlockmore.h xlockmoreI.h automata.h
 MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  bubbles.man decayscreen.man deco.man drift.man flag.man \
 		  flame.man forest.man vines.man galaxy.man grav.man \
@@ -131,7 +131,7 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  slip.man sphere.man spiral.man strange.man swirl.man \
 		  xroger.man goop.man starfish.man munch.man rd-bomb.man \
 		  xjack.man xlyap.man jigsaw.man epicycle.man bsod.man \
-		  sonar.man
+		  sonar.man t3d.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  vidwhacker \
@@ -339,125 +339,128 @@ xscreensaver-sgigl: xscreensaver-sgigl.c
 # is pretty much useless in the face of more than one dependency, as far
 # as I can tell.
 #
-attraction:		 $(HACK_OBJS) attraction.o $(COL) $(SPL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) attraction.o $(COL) $(SPL) $(HACK_LIBS)
+attraction:	attraction.o	$(HACK_OBJS) $(COL) $(SPL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
 
-blitspin:		 $(HACK_OBJS) blitspin.o $(GRAB)
-	$(CC_HACK) -o $@ $(HACK_OBJS) blitspin.o $(GRAB) $(XPM_LIBS) $(GRAB_LIBS)
+blitspin:	blitspin.o	$(HACK_OBJS) $(GRAB)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(XPM_LIBS) $(GRAB_LIBS)
 
-bubbles:		 $(HACK_OBJS) bubbles.o bubbles-default.o 
-	$(CC_HACK) -o $@ $(HACK_OBJS) bubbles.o bubbles-default.o $(XPM_LIBS)
+bubbles:	bubbles.o	$(HACK_OBJS) bubbles-default.o 
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) bubbles-default.o $(XPM_LIBS)
 
-decayscreen:		 $(HACK_OBJS) decayscreen.o $(GRAB)
-	$(CC_HACK) -o $@ $(HACK_OBJS) decayscreen.o $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
+decayscreen:	decayscreen.o	$(HACK_OBJS) $(GRAB)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
 
-deco:			 $(HACK_OBJS) deco.o $(COL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) deco.o $(COL) $(HACK_LIBS)
+deco:		deco.o		$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-flame:			 $(HACK_OBJS) flame.o $(COL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) flame.o $(COL) $(HACK_LIBS)
+flame:		flame.o		$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-greynetic:		 $(HACK_OBJS) greynetic.o
-	$(CC_HACK) -o $@ $(HACK_OBJS) greynetic.o $(HACK_LIBS)
+greynetic:	greynetic.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-halo:			 $(HACK_OBJS) halo.o $(COL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) halo.o $(COL) $(HACK_LIBS)
+halo:		halo.o		$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-helix:			 $(HACK_OBJS) helix.o $(HSV) $(ERASE)
-	$(CC_HACK) -o $@ $(HACK_OBJS) helix.o $(HSV) $(ERASE) $(HACK_LIBS)
+helix:		helix.o		$(HACK_OBJS) $(HSV) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(ERASE) $(HACK_LIBS)
 
-hypercube:		 $(HACK_OBJS) hypercube.o
-	$(CC_HACK) -o $@ $(HACK_OBJS) hypercube.o $(HACK_LIBS)
+hypercube:	hypercube.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-imsmap:			 $(HACK_OBJS) imsmap.o $(COL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) imsmap.o $(COL) $(HACK_LIBS)
+imsmap:		imsmap.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-kaleidescope:		 $(HACK_OBJS) kaleidescope.o
-	$(CC_HACK) -o $@ $(HACK_OBJS) kaleidescope.o $(HACK_LIBS)
+kaleidescope:	kaleidescope.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-lmorph:			 $(HACK_OBJS) lmorph.o
-	$(CC_HACK) -o $@ $(HACK_OBJS) lmorph.o $(HACK_LIBS)
+lmorph:		lmorph.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-maze:			 $(HACK_OBJS) maze.o $(ERASE) $(XROG)
-	$(CC_HACK) -o $@ $(HACK_OBJS) maze.o $(ERASE) $(XROG) $(HACK_LIBS)
+maze:		maze.o		$(HACK_OBJS) $(ERASE) $(XROG)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ERASE) $(XROG) $(HACK_LIBS)
 
-moire:			 $(HACK_OBJS) moire.o $(COL) $(SHM)
-	$(CC_HACK) -o $@ $(HACK_OBJS) moire.o $(COL) $(SHM) $(HACK_LIBS)
+moire:		moire.o		$(HACK_OBJS) $(COL) $(SHM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS)
 
-moire2:			 $(HACK_OBJS) moire2.o $(COL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) moire2.o $(COL) $(HACK_LIBS)
+moire2:		moire2.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-noseguy:		 $(HACK_OBJS) noseguy.o
-	$(CC_HACK) -o $@ $(HACK_OBJS) noseguy.o $(XPM_LIBS)
+noseguy:	noseguy.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM_LIBS)
 
-pedal:			 $(HACK_OBJS) pedal.o $(HSV)
-	$(CC_HACK) -o $@ $(HACK_OBJS) pedal.o $(HSV) $(HACK_LIBS)
+pedal:		pedal.o		$(HACK_OBJS) $(HSV)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(HACK_LIBS)
 
-pyro:			 $(HACK_OBJS) pyro.o $(HSV)
-	$(CC_HACK) -o $@ $(HACK_OBJS) pyro.o $(HSV) $(HACK_LIBS)
+pyro:		pyro.o		$(HACK_OBJS) $(HSV)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(HACK_LIBS)
 
-qix:			 $(HACK_OBJS) qix.o $(ALP)
-	$(CC_HACK) -o $@ $(HACK_OBJS) qix.o $(ALP) $(HACK_LIBS)
+qix:		qix.o		$(HACK_OBJS) $(ALP)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ALP) $(HACK_LIBS)
 
-rocks:			 $(HACK_OBJS) rocks.o $(COL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) rocks.o $(COL) $(HACK_LIBS)
+rocks:		rocks.o		$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-rorschach:		 $(HACK_OBJS) rorschach.o $(HSV) $(ERASE)
-	$(CC_HACK) -o $@ $(HACK_OBJS) rorschach.o $(HSV) $(ERASE) $(HACK_LIBS)
+rorschach:	rorschach.o	$(HACK_OBJS) $(HSV) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(ERASE) $(HACK_LIBS)
 
-slidescreen:		 $(HACK_OBJS) slidescreen.o $(GRAB)
-	$(CC_HACK) -o $@ $(HACK_OBJS) slidescreen.o $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
+slidescreen:	slidescreen.o	$(HACK_OBJS) $(GRAB)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
 
-xroger:			 $(HACK_OBJS) xroger-hack.o $(HSV) $(XROG)
-	$(CC_HACK) -o $@ $(HACK_OBJS) xroger-hack.o $(HSV) $(XROG) $(HACK_LIBS)
+xroger:		xroger-hack.o	$(HACK_OBJS) $(HSV) $(XROG)
+	$(CC_HACK) -o $@ xroger-hack.o	$(HACK_OBJS) $(HSV) $(XROG) $(HACK_LIBS)
 
-goop:			 $(HACK_OBJS) goop.o $(ALP) $(SPL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) goop.o $(ALP) $(SPL) $(HACK_LIBS)
+goop:		goop.o		$(HACK_OBJS) $(ALP) $(SPL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ALP) $(SPL) $(HACK_LIBS)
 
-starfish:		 $(HACK_OBJS) starfish.o $(COL) $(SPL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) starfish.o $(COL) $(SPL) $(HACK_LIBS)
+starfish:	starfish.o	$(HACK_OBJS) $(COL) $(SPL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
 
-munch:			 $(HACK_OBJS) munch.o $(COL) $(SPL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) munch.o $(COL) $(SPL) $(HACK_LIBS)
+munch:		munch.o		$(HACK_OBJS) $(COL) $(SPL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
 
-rd-bomb:		 $(HACK_OBJS) rd-bomb.o $(COL) $(SHM)
-	$(CC_HACK) -o $@ $(HACK_OBJS) rd-bomb.o $(COL) $(SHM) $(HACK_LIBS)
+rd-bomb:	rd-bomb.o	$(HACK_OBJS) $(COL) $(SHM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS)
 
-coral: $(HACK_OBJS) coral.o $(COL) $(ERASE)
-	$(CC_HACK) -o $@ $(HACK_OBJS) coral.o $(COL) $(ERASE) $(HACK_LIBS)
+coral:	 	coral.o		$(HACK_OBJS) $(COL) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
 
-xjack: $(HACK_OBJS) xjack.o
-	$(CC_HACK) -o $@ $(HACK_OBJS) xjack.o $(HACK_LIBS)
+xjack:	 	xjack.o		$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-xlyap: $(HACK_OBJS) xlyap.o $(COL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) xlyap.o $(COL) $(HACK_LIBS)
+xlyap:	 	xlyap.o		$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-jigsaw: $(HACK_OBJS) jigsaw.o $(GRAB)
-	$(CC_HACK) -o $@ $(HACK_OBJS) jigsaw.o $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
+jigsaw:	 	jigsaw.o	$(HACK_OBJS) $(GRAB)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
 
-cynosure: $(HACK_OBJS) cynosure.o $(COL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) cynosure.o $(COL) $(HACK_LIBS)
+cynosure:  	cynosure.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-epicycle: $(HACK_OBJS) epicycle.o $(COL) $(ERASE)
-	$(CC_HACK) -o $@ $(HACK_OBJS) epicycle.o $(COL) $(ERASE) $(HACK_LIBS)
+epicycle:  	epicycle.o	$(HACK_OBJS) $(COL) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
 
-interference: $(HACK_OBJS) interference.o $(COL) $(SHM)
-	$(CC_HACK) -o $@ $(HACK_OBJS) interference.o $(COL) $(SHM) $(HACK_LIBS)
+interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS)
 
-truchet: $(HACK_OBJS) truchet.o $(COL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) truchet.o $(COL) $(HACK_LIBS)
+truchet:	 truchet.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-bsod: $(HACK_OBJS) bsod.o $(COL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) bsod.o $(COL) $(HACK_LIBS) $(XPM_LIBS)
+bsod:	 	bsod.o		$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS) $(XPM_LIBS)
 
-distort:		 $(HACK_OBJS) distort.o $(GRAB) $(SHM)
-	$(CC_HACK) -o $@ $(HACK_OBJS) distort.o $(GRAB) $(SHM) $(HACK_LIBS) $(GRAB_LIBS)
+distort:	distort.o	$(HACK_OBJS) $(GRAB) $(SHM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS) $(GRAB_LIBS)
 
-kumppa:		 $(HACK_OBJS) kumppa.o
-	$(CC_HACK) -o $@ $(HACK_OBJS) kumppa.o $(HACK_LIBS)
+kumppa:		kumppa.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-sonar:		 $(HACK_OBJS) sonar.o $(COL)
-	$(CC_HACK) -o $@ $(HACK_OBJS) sonar.o $(COL) $(HACK_LIBS)
+sonar:		sonar.o		$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
+t3d:		t3d.o		$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -546,6 +549,12 @@ rotor:		rotor.o		$(XLOCK_OBJS)
 
 ant:		ant.o		$(XLOCK_OBJS) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+demon:		demon.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+loop:		loop.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
 
 flow:		flow.o		$(XLOCK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
@@ -1249,6 +1258,7 @@ ant.o: $(UTILS_SRC)/grabscreen.h
 ant.o: $(UTILS_SRC)/visual.h
 ant.o: $(UTILS_SRC)/xshm.h
 ant.o: $(UTILS_SRC)/erase.h
+ant.o: $(srcdir)/automata.h
 xjack.o: $(srcdir)/screenhack.h
 xjack.o: ../config.h
 xjack.o: $(UTILS_SRC)/yarandom.h
@@ -1438,4 +1448,39 @@ sonar.o: $(UTILS_SRC)/hsv.h
 sonar.o: $(UTILS_SRC)/colors.h
 sonar.o: $(UTILS_SRC)/grabscreen.h
 sonar.o: $(UTILS_SRC)/visual.h
+demon.o: $(srcdir)/xlockmore.h
+demon.o: ../config.h
+demon.o: $(srcdir)/xlockmoreI.h
+demon.o: $(srcdir)/screenhack.h
+demon.o: $(UTILS_SRC)/yarandom.h
+demon.o: $(UTILS_SRC)/usleep.h
+demon.o: $(UTILS_SRC)/resources.h
+demon.o: $(UTILS_SRC)/hsv.h
+demon.o: $(UTILS_SRC)/colors.h
+demon.o: $(UTILS_SRC)/grabscreen.h
+demon.o: $(UTILS_SRC)/visual.h
+demon.o: $(UTILS_SRC)/xshm.h
+demon.o: $(srcdir)/automata.h
+loop.o: $(srcdir)/xlockmore.h
+loop.o: ../config.h
+loop.o: $(srcdir)/xlockmoreI.h
+loop.o: $(srcdir)/screenhack.h
+loop.o: $(UTILS_SRC)/yarandom.h
+loop.o: $(UTILS_SRC)/usleep.h
+loop.o: $(UTILS_SRC)/resources.h
+loop.o: $(UTILS_SRC)/hsv.h
+loop.o: $(UTILS_SRC)/colors.h
+loop.o: $(UTILS_SRC)/grabscreen.h
+loop.o: $(UTILS_SRC)/visual.h
+loop.o: $(UTILS_SRC)/xshm.h
+loop.o: $(srcdir)/automata.h
+t3d.o: $(srcdir)/screenhack.h
+t3d.o: ../config.h
+t3d.o: $(UTILS_SRC)/yarandom.h
+t3d.o: $(UTILS_SRC)/usleep.h
+t3d.o: $(UTILS_SRC)/resources.h
+t3d.o: $(UTILS_SRC)/hsv.h
+t3d.o: $(UTILS_SRC)/colors.h
+t3d.o: $(UTILS_SRC)/grabscreen.h
+t3d.o: $(UTILS_SRC)/visual.h
 

@@ -38,9 +38,7 @@ static const char sccsid[] = "@(#)cage.c	4.07 98/01/04 xlockmore";
  * Since I'm not a native English speaker, my apologies for any grammatical
  * mistake.
  *
- * My e-mail addresses are
- * vianna@cat.cbpf.br 
- *         and
+ * My e-mail address is
  * m-vianna@usa.net
  *
  * Marcelo F. Vianna (Jun-01-1997)

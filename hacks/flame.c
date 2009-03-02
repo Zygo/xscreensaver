@@ -52,6 +52,8 @@
 #include <math.h>
 #include "screenhack.h"
 
+#include <signal.h>		/* so we can ignore SIGFPE */
+
 #define POINT_BUFFER_SIZE 10
 #define MAXLEV 4
 #define MAXKINDS  10
@@ -100,6 +102,15 @@ init_flame (Display *dpy, Window window)
   XGCValues gcv;
   XWindowAttributes xgwa;
   Colormap cmap;
+
+#if defined(SIGFPE) && defined(SIG_IGN)
+  /* No doubt a better fix would be to track down where the NaN is coming
+     from, and code around that; but this should do.  Apparently most systems
+     (Linux, Solaris, Irix, ...) ignore FPE by default -- but FreeBSD dumps
+     core by default. */
+  signal (SIGFPE, SIG_IGN);
+#endif
+
   XGetWindowAttributes (dpy, window, &xgwa);
   width = xgwa.width;
   height = xgwa.height;

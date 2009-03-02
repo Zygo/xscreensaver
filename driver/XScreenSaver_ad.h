@@ -83,6 +83,8 @@
 		worm -root						\\n\
 		rotor -root						\\n\
 		ant -root						\\n\
+		demon -root						\\n\
+		loop -root						\\n\
 		vines -root						\\n\
 		kaleidescope -root					\\n\
 		xjack -root						\\n\
@@ -99,6 +101,7 @@
 		rd-bomb -root						\\n\
 		rd-bomb -root -speed 1 -size 0.1			\\n\
 		sonar -root						\\n\
+		t3d -root						\\n\
 									  \
 	mono:	rocks -root						\\n\
 	color:	rocks -root -fg darksalmon				\\n\

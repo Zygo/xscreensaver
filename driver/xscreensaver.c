@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1998 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-1999 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -288,6 +288,8 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
 {
   saver_info *si = global_si_kludge;	/* I hate C so much... */
 
+  if (!real_stderr) real_stderr = stderr;
+
   fprintf (real_stderr, "\n"
 	   "#######################################"
 	   "#######################################\n\n"
@@ -304,17 +306,75 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
 	}
       else
 	{
-	  fprintf(real_stderr,
-		  "%s: to dump a core file, re-run with `-sync'.\n"
-		  "%s: see http://www.jwz.org/xscreensaver/bugs.html\n"
-		  "\t\tfor bug reporting information.\n\n",
-		  blurb(), blurb());
+          fprintf (real_stderr,
+                   "#######################################"
+                   "#######################################\n\n");
+          fprintf (real_stderr,
+   "    If at all possible, please re-run xscreensaver with the command line\n"
+   "    arguments `-sync -verbose', and reproduce this bug.  That will cause\n"
+   "    xscreensaver to dump a `core' file to the current directory.  Please\n"
+   "    include the stack trace from that core file in your bug report.\n"
+   "\n"
+   "    http://www.jwz.org/xscreensaver/bugs.html explains how to create the\n"
+   "    most useful bug reports, and how to examine core files.\n"
+   "\n"
+   "    The more information you can provide, the better.  But please report\n"
+   "    report this bug, regardless!\n"
+   "\n");
+          fprintf (real_stderr,
+                   "#######################################"
+                   "#######################################\n\n");
+
 	  saver_exit (si, -1, 0);
 	}
     }
   else
     fprintf (real_stderr, " (nonfatal.)\n");
   return 0;
+}
+
+
+/* This error handler is used only while the X connection is being set up;
+   after we've got a connection, we don't use this handler again.  The only
+   reason for having this is so that we can present a more idiot-proof error
+   message than "cannot open display."
+ */
+static void 
+startup_ehandler (String name, String type, String class,
+                  String defalt,  /* one can't even spel properly
+                                     in this joke of a language */
+                  String *av, Cardinal *ac)
+{
+  char fmt[512];
+  String p[10];
+  saver_info *si = global_si_kludge;	/* I hate C so much... */
+  XrmDatabase *db = XtAppGetErrorDatabase(si->app);
+  *fmt = 0;
+  XtAppGetErrorDatabaseText(si->app, name, type, class, defalt,
+                            fmt, sizeof(fmt)-1, *db);
+
+  fprintf (stderr, "%s: ", blurb());
+
+  memset (p, 0, sizeof(p));
+  if (*ac > countof (p)) *ac = countof (p);
+  memcpy ((char *) p, (char *) av, (*ac) * sizeof(*av));
+  fprintf (stderr, fmt,		/* Did I mention that I hate C? */
+           p[0], p[1], p[2], p[3], p[4], p[5], p[6], p[7], p[8], p[9]);
+  fprintf (stderr, "\n");
+
+  describe_uids (si, stderr);
+  fprintf (stderr, "\n"
+           "%s: Errors at startup are usually authorization problems.\n"
+           "              Did you read the manual?  Specifically, the parts\n"
+           "              that talk about XAUTH, XDM, and root logins?\n"
+           "\n"
+           "              http://www.jwz.org/xscreensaver/man.html\n"
+           "\n",
+           blurb());
+
+  fflush (stderr);
+  fflush (stdout);
+  exit (1);
 }
 
 
@@ -383,9 +443,12 @@ connect_to_server (saver_info *si, int *argc, char **argv)
   Widget toplevel_shell;
 
   XSetErrorHandler (saver_ehandler);
+
+  XtAppSetErrorMsgHandler (si->app, startup_ehandler);
   toplevel_shell = XtAppInitialize (&si->app, progclass,
 				    options, XtNumber (options),
 				    argc, argv, defaults, 0, 0);
+  XtAppSetErrorMsgHandler (si->app, 0);
 
   si->dpy = XtDisplay (toplevel_shell);
   si->prefs.db = XtDatabase (si->dpy);

@@ -32,9 +32,7 @@ static const char sccsid[] = "@(#)rubik.c	4.07 97/11/24 xlockmore";
  * Since I'm not a native English speaker, my apologies for any grammatical
  * mistake.
  *
- * My e-mail addresses are
- * vianna@cat.cbpf.br 
- *         and
+ * My e-mail address is
  * m-vianna@usa.net
  *
  * Marcelo F. Vianna (Jul-31-1997)
