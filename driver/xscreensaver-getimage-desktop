@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2003 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2003, 2005 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -34,7 +34,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.3 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my @grabber   = ("screencapture", "-x");
 my @converter = ("pdf2jpeg");
@@ -101,21 +101,44 @@ sub grab_image {
     }
   }
 
-  # Convert the PDF to a JPEG
+  # On MacOS 10.3, "screencapture -x" always wrote a PDF.
+  # On 10.4.2, it writes a PNG by default, and the output format can be
+  # changed with the new "-t" argument.
+  #
+  # So, for maximal compatibility, we run it without "-t", but look at
+  # the first few bytes to see if it's a PDF, and if it is, convert it
+  # to a JPEG first.  Otherwise, we assume that whatever screencapture
+  # wrote is a file format that xscreensaver-getimage-file can already
+  # cope with (though it will have the extension ".pdf", regardless of
+  # what is actually in the file).
+  #
+  my $pdf_p = 0;
   {
-    my $jpgfile = $tmpfile;
-    $jpgfile =~ s/\.[^.]+$//;
-    $jpgfile .= ".jpg";
-
-    @cmd = (@converter, $tmpfile, $jpgfile);
-    push @cmd, "--verbose" if ($verbose);
-
-    print STDERR "$progname: executing \"" . join(' ', @cmd) . "\"\n"
-      if ($verbose);
-    system (@cmd);
-    unlink $tmpfile;
-    $tmpfile = $jpgfile;
+    local *IN;
+    open (IN, "<$tmpfile") || error ("$tmpfile: $!");
+    my $buf = '';
+    read (IN, $buf, 10);
+    close IN;
+    $pdf_p = ($buf =~ m/^%PDF-/s);
   }
+
+  # If it's a PDF, convert it to a JPEG.
+  #
+  if ($pdf_p)
+    {
+      my $jpgfile = $tmpfile;
+      $jpgfile =~ s/\.[^.]+$//;
+      $jpgfile .= ".jpg";
+
+      @cmd = (@converter, $tmpfile, $jpgfile);
+      push @cmd, "--verbose" if ($verbose);
+
+      print STDERR "$progname: executing \"" . join(' ', @cmd) . "\"\n"
+        if ($verbose);
+      system (@cmd);
+      unlink $tmpfile;
+      $tmpfile = $jpgfile;
+    }
 
   @st = stat($tmpfile);
   $size = (@st ? $st[7] : 0);

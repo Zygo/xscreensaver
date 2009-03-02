@@ -99,6 +99,9 @@ static void (*draw_transparent)(short *src);
                              - (((x)>>3)&0x11111111))
 
 
+static Bool grayscale_p;
+static unsigned long grayscale(unsigned long color);
+
 /*      -------------------------------------------             */
 
 
@@ -197,13 +200,13 @@ draw_transparent_vanilla(short *src)
 
       if (dirty[pixel] > 0) {
         XPutPixel(buffer_map, (across<<1),  (down<<1),
-                  XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady));
+                  grayscale(XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady)));
         XPutPixel(buffer_map, (across<<1)+1,(down<<1),
-                  XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady));
+                  grayscale(XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady)));
         XPutPixel(buffer_map, (across<<1),  (down<<1)+1,
-                  XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady1));
+                  grayscale(XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady1)));
         XPutPixel(buffer_map, (across<<1)+1,(down<<1)+1,
-                  XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady1));
+                  grayscale(XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady1)));
       }
     }
 }
@@ -254,6 +257,52 @@ bright(int dx, unsigned long color)
   return (cadd(color, dx, rmask, rshift) |
           cadd(color, dx, gmask, gshift) |
           cadd(color, dx, bmask, bshift));
+}
+
+
+static unsigned long
+grayscale(unsigned long color)
+{
+  int red;
+  int green;
+  int blue;
+  int total;
+  int gray_r;
+  int gray_g;
+  int gray_b;
+
+  if (!grayscale_p)
+    return color;
+  if (!transparent)
+    return color;
+  if ((rmask == 0) || (gmask == 0) || (bmask == 0))
+    return color;
+
+  red = ((color >> rshift) & rmask);
+  green =  ((color >> gshift) & gmask);
+  blue =  ((color >> bshift) & bmask);
+  total = red * gmask * bmask + green * rmask * bmask + blue * rmask * gmask;
+
+  gray_r = total / (3 * gmask * bmask);
+  if (gray_r < 0)
+    gray_r = 0;
+  if (gray_r > rmask)
+    gray_r = rmask;
+  
+  gray_g = total / (3 * rmask * bmask);
+  if (gray_g < 0)
+    gray_g = 0;
+  if (gray_g > gmask)
+    gray_g = gmask;
+
+  gray_b = total / (3 * rmask * gmask);
+  if (gray_b < 0)
+    gray_b = 0;
+  if (gray_b > bmask)
+    gray_b = bmask;
+
+  return ((unsigned long)
+          ((gray_r << rshift) | (gray_g << gshift) | (gray_b << bshift)));
 }
 
 
@@ -310,23 +359,23 @@ draw_transparent_light(short *src)
 
         if (dx != 0) {
           XPutPixel(buffer_map, (across<<1),  (down<<1),
-                    bright(dx, XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady)));
+                    bright(dx, grayscale(XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady))));
           XPutPixel(buffer_map, (across<<1)+1,(down<<1),
-                    bright(dx, XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady)));
+                    bright(dx, grayscale(XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady))));
           XPutPixel(buffer_map, (across<<1),  (down<<1)+1,
-                    bright(dx, XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady1)));
+                    bright(dx, grayscale(XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady1))));
           XPutPixel(buffer_map, (across<<1)+1,(down<<1)+1,
-                    bright(dx, XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady1)));
+                    bright(dx, grayscale(XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady1))));
         } else {
           /* Could use XCopyArea, but XPutPixel is faster */
           XPutPixel(buffer_map, (across<<1),  (down<<1),
-                    XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady));
+                    grayscale(XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady)));
           XPutPixel(buffer_map, (across<<1)+1,(down<<1),
-                    XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady));
+                    grayscale(XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady)));
           XPutPixel(buffer_map, (across<<1),  (down<<1)+1,
-                    XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady1));
+                    grayscale(XGetPixel(orig_map, (across<<1) + gradx, (down<<1) + grady1)));
           XPutPixel(buffer_map, (across<<1)+1,(down<<1)+1,
-                    XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady1));
+                    grayscale(XGetPixel(orig_map, (across<<1) + gradx1,(down<<1) + grady1)));
         }
       }
     }
@@ -757,9 +806,20 @@ init_ripples(int ndrops, int splash)
     add_drop(ripple_blob, splash);
 
   if (transparent) {
+    if (grayscale_p)
+    {
+      int across, down;
+      for (down = 0; down < bigheight; down++)
+        for (across = 0; across < bigwidth; across++)
+          XPutPixel(buffer_map, across, down,
+                    grayscale(XGetPixel(orig_map, across, down)));
+    }
+    else
+    {  
     /* There's got to be a better way of doing this  XCopyArea? */
     memcpy(buffer_map->data, orig_map->data,
            bigheight * buffer_map->bytes_per_line);
+    }
   } else {
     int across, down, color;
 
@@ -892,6 +952,7 @@ char *defaults[] =
   "*stir: 		False",
   "*fluidity: 		6",
   "*light: 		0",
+  "*grayscale: 		False",
 #ifdef HAVE_XSHM_EXTENSION
   "*useSHM: True",
 #endif				/* HAVE_XSHM_EXTENSION */
@@ -910,6 +971,7 @@ XrmOptionDescRec options[] =
   {"-stir",	".stir",	XrmoptionNoArg, "True"},
   {"-fluidity",	".fluidity",	XrmoptionSepArg, 0},
   {"-light",	".light",	XrmoptionSepArg, 0},
+  {"-grayscale",	".grayscale",	XrmoptionNoArg, "True"},
 #ifdef HAVE_XSHM_EXTENSION
   {"-shm",	".useSHM",	XrmoptionNoArg, "True"},
   {"-no-shm",	".useSHM",	XrmoptionNoArg, "False"},
@@ -928,6 +990,7 @@ void screenhack(Display *disp, Window win)
   int stir = get_boolean_resource("stir", "Boolean");
   int fluidity = get_integer_resource("fluidity", "Integer");
   transparent = get_boolean_resource("water", "Boolean");
+  grayscale_p = get_boolean_resource("grayscale", "Boolean");
 #ifdef HAVE_XSHM_EXTENSION
   use_shm = get_boolean_resource("useSHM", "Boolean");
 #endif /* HAVE_XSHM_EXTENSION */
@@ -964,9 +1027,16 @@ void screenhack(Display *disp, Window win)
     maxbits = MIN(MIN(BITCOUNT(rmask), BITCOUNT(gmask)), BITCOUNT(bmask));
     light -= 8-maxbits;
     if (light < 0) light = 0;
-  } else
+  } else {
+    if (grayscale_p)
+    { 
+      set_mask(visual->red_mask,   &rmask, &rshift);
+      set_mask(visual->green_mask, &gmask, &gshift);
+      set_mask(visual->blue_mask,  &bmask, &bshift);
+    }
     draw_transparent = draw_transparent_vanilla;
-
+  }
+  
   init_ripples(0, -SPLASH); /* Start off without any drops */
 
   /* Main drawing loop */

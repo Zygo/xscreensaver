@@ -1,5 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-1998
- *  by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright (c) 1991-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -201,7 +200,6 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
           else
             fprintf (stderr, "%s: %s\n", progname, err);
 
-          if (v) free (v);
           status = -1;
           goto DONE;
 	}

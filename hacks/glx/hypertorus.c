@@ -1,10 +1,10 @@
 /* hypertorus --- Shows a hypertorus that rotates in 4d */
 
 #if 0
-static const char sccsid[] = "@(#)hypertorus.c  1.1 03/05/18 xlockmore";
+static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #endif
 
-/* Copyright (c) 2003 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2003-2005 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -21,6 +21,8 @@ static const char sccsid[] = "@(#)hypertorus.c  1.1 03/05/18 xlockmore";
  *
  * REVISION HISTORY:
  * C. Steger - 03/05/18: Initial version
+ * C. Steger - 05/09/28: Added the spirals appearance mode
+ *                       and trackball support
  */
 
 /*
@@ -33,83 +35,98 @@ static const char sccsid[] = "@(#)hypertorus.c  1.1 03/05/18 xlockmore";
  * projected 3d torus can then be projected to the screen either perspectively
  * or orthographically.  There are three display modes for the torus: mesh
  * (wireframe), solid, or transparent.  Furthermore, the appearance of the
- * torus can be as a solid object or as a set of see-through bands.  Finally,
- * the colors with with the torus is drawn can be set to either two-sided or
- * to colorwheel.  In the first case, the torus is drawn with red on the
- * outside and green on the inside.  This mode enables you to see that the
- * torus turns inside-out as it rotates in 4d.  The second mode draws the
- * torus in a fully saturated color wheel.  This gives a very nice effect
- * when combined with the see-through bands mode.  The rotation speed for
- * each of the six planes around which the torus rotates can be chosen.
- * This program is very much inspired by Thomas Banchoff's book "Beyond the
- * Third Dimension: Geometry, Computer Graphics, and Higher Dimensions",
- * Scientific American Library, 1990.
+ * torus can be as a solid object or as a set of see-through bands or
+ * see-through spirals.  Finally, the colors with with the torus is drawn can
+ * be set to either two-sided or to colorwheel.  In the first case, the torus
+ * is drawn with red on the outside and green on the inside.  This mode
+ * enables you to see that the torus turns inside-out as it rotates in 4d.
+ * The second mode draws the torus in a fully saturated color wheel.  This
+ * gives a very nice effect when combined with the see-through bands or
+ * see-through spirals mode.  The rotation speed for each of the six planes
+ * around which the torus rotates can be chosen.  This program is very much
+ * inspired by Thomas Banchoff's book "Beyond the Third Dimension: Geometry,
+ * Computer Graphics, and Higher Dimensions", Scientific American Library,
+ * 1990.
  */
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-#define DISP_WIREFRAME            0
-#define DISP_WIREFRAME_STR       "0"
-#define DISP_SURFACE              1
-#define DISP_SURFACE_STR         "1"
-#define DISP_TRANSPARENT          2
-#define DISP_TRANSPARENT_STR     "2"
+#define DISP_WIREFRAME             0
+#define DISP_WIREFRAME_STR        "0"
+#define DISP_SURFACE               1
+#define DISP_SURFACE_STR          "1"
+#define DISP_TRANSPARENT           2
+#define DISP_TRANSPARENT_STR      "2"
 
-#define APPEARANCE_SOLID          0
-#define APPEARANCE_SOLID_STR     "0"
-#define APPEARANCE_BANDS          1
-#define APPEARANCE_BANDS_STR     "1"
+#define APPEARANCE_SOLID           0
+#define APPEARANCE_SOLID_STR      "0"
+#define APPEARANCE_BANDS           1
+#define APPEARANCE_BANDS_STR      "1"
+#define APPEARANCE_SPIRALS         2
+#define APPEARANCE_SPIRALS_STR    "2"
+#define APPEARANCE_SPIRALS_1       3
+#define APPEARANCE_SPIRALS_1_STR  "3"
+#define APPEARANCE_SPIRALS_2       4
+#define APPEARANCE_SPIRALS_2_STR  "4"
+#define APPEARANCE_SPIRALS_4       5
+#define APPEARANCE_SPIRALS_4_STR  "5"
+#define APPEARANCE_SPIRALS_8       6
+#define APPEARANCE_SPIRALS_8_STR  "6"
+#define APPEARANCE_SPIRALS_16      7
+#define APPEARANCE_SPIRALS_16_STR "7"
 
-#define COLORS_TWOSIDED           0
-#define COLORS_TWOSIDED_STR      "0"
-#define COLORS_COLORWHEEL         1
-#define COLORS_COLORWHEEL_STR    "1"
+#define COLORS_TWOSIDED            0
+#define COLORS_TWOSIDED_STR       "0"
+#define COLORS_COLORWHEEL          1
+#define COLORS_COLORWHEEL_STR     "1"
 
-#define DISP_3D_PERSPECTIVE       0
-#define DISP_3D_PERSPECTIVE_STR  "0"
-#define DISP_3D_ORTHOGRAPHIC      1
-#define DISP_3D_ORTHOGRAPHIC_STR "1"
+#define DISP_3D_PERSPECTIVE        0
+#define DISP_3D_PERSPECTIVE_STR   "0"
+#define DISP_3D_ORTHOGRAPHIC       1
+#define DISP_3D_ORTHOGRAPHIC_STR  "1"
 
-#define DISP_4D_PERSPECTIVE       0
-#define DISP_4D_PERSPECTIVE_STR  "0"
-#define DISP_4D_ORTHOGRAPHIC      1
-#define DISP_4D_ORTHOGRAPHIC_STR "1"
+#define DISP_4D_PERSPECTIVE        0
+#define DISP_4D_PERSPECTIVE_STR   "0"
+#define DISP_4D_ORTHOGRAPHIC       1
+#define DISP_4D_ORTHOGRAPHIC_STR  "1"
 
-#define DALPHA                    1.1
-#define DALPHA_STR               "1.1"
-#define DBETA                     1.3
-#define DBETA_STR                "1.3"
-#define DDELTA                    1.5
-#define DDELTA_STR               "1.5"
-#define DZETA                     1.7
-#define DZETA_STR                "1.7"
-#define DETA                      1.9
-#define DETA_STR                 "1.9"
-#define DTHETA                    2.1
-#define DTHETA_STR               "2.1"
+#define DALPHA                     1.1
+#define DALPHA_STR                "1.1"
+#define DBETA                      1.3
+#define DBETA_STR                 "1.3"
+#define DDELTA                     1.5
+#define DDELTA_STR                "1.5"
+#define DZETA                      1.7
+#define DZETA_STR                 "1.7"
+#define DETA                       1.9
+#define DETA_STR                  "1.9"
+#define DTHETA                     2.1
+#define DTHETA_STR                "2.1"
 
-#define DEF_DISPLAY_MODE          DISP_SURFACE_STR   
-#define DEF_APPEARANCE            APPEARANCE_BANDS_STR
-#define DEF_COLORS                COLORS_COLORWHEEL_STR
-#define DEF_3D_PROJECTION         DISP_3D_PERSPECTIVE_STR
-#define DEF_4D_PROJECTION         DISP_4D_PERSPECTIVE_STR
-#define DEF_DALPHA                DALPHA_STR
-#define DEF_DBETA                 DBETA_STR
-#define DEF_DDELTA                DDELTA_STR
-#define DEF_DZETA                 DZETA_STR
-#define DEF_DETA                  DETA_STR
-#define DEF_DTHETA                DTHETA_STR
+#define DEF_DISPLAY_MODE           DISP_SURFACE_STR   
+#define DEF_APPEARANCE             APPEARANCE_BANDS_STR
+#define DEF_COLORS                 COLORS_COLORWHEEL_STR
+#define DEF_3D_PROJECTION          DISP_3D_PERSPECTIVE_STR
+#define DEF_4D_PROJECTION          DISP_4D_PERSPECTIVE_STR
+#define DEF_DALPHA                 DALPHA_STR
+#define DEF_DBETA                  DBETA_STR
+#define DEF_DDELTA                 DDELTA_STR
+#define DEF_DZETA                  DZETA_STR
+#define DEF_DETA                   DETA_STR
+#define DEF_DTHETA                 DTHETA_STR
 
 #ifdef STANDALONE
-# define PROGCLASS       "Hypertorus"
-# define HACK_INIT       init_hypertorus
-# define HACK_DRAW       draw_hypertorus
-# define HACK_RESHAPE    reshape_hypertorus
-# define hypertorus_opts xlockmore_opts
-# define DEFAULTS        "*delay:      25000 \n" \
-                         "*showFPS:    False \n" \
+# define PROGCLASS          "Hypertorus"
+# define HACK_INIT          init_hypertorus
+# define HACK_DRAW          draw_hypertorus
+# define HACK_RESHAPE       reshape_hypertorus
+# define HACK_HANDLE_EVENT  hypertorus_handle_event
+# define EVENT_MASK         PointerMotionMask|KeyReleaseMask
+# define hypertorus_opts    xlockmore_opts
+# define DEFAULTS           "*delay:      25000 \n" \
+                            "*showFPS:    False \n" \
 
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -118,8 +135,10 @@ static const char sccsid[] = "@(#)hypertorus.c  1.1 03/05/18 xlockmore";
 
 #ifdef USE_GL
 
+#include <X11/keysym.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include "gltrackball.h"
 
 
 #ifdef USE_MODULES
@@ -134,6 +153,7 @@ ModStruct   hypertorus_description =
 
 static int display_mode;
 static int appearance;
+static int num_spirals;
 static int colors;
 static int projection_3d;
 static int projection_4d;
@@ -148,13 +168,13 @@ static float speed_yz;
 static float alpha, beta, delta, zeta, eta, theta;
 static float aspect;
 
-static const float offset4d[4] = {
-  0.0, 0.0, 0.0, 2.0
-};
+/* Trackball states */
+trackball_state *trackballs[2];
+int current_trackball;
+Bool button_pressed;
 
-static const float offset3d[4] = {
-  0.0, 0.0, -2.0, 0.0
-};
+static const float offset4d[4] = {  0.0,  0.0,  0.0,  2.0 };
+static const float offset3d[4] = {  0.0,  0.0, -2.0,  0.0 };
 
 
 static XrmOptionDescRec opts[] =
@@ -169,6 +189,16 @@ static XrmOptionDescRec opts[] =
                        APPEARANCE_SOLID_STR },
   {"-bands",           ".hypertorus.appearance",   XrmoptionNoArg,
                        APPEARANCE_BANDS_STR },
+  {"-spirals-1",       ".hypertorus.appearance",   XrmoptionNoArg,
+                       APPEARANCE_SPIRALS_1_STR },
+  {"-spirals-2",       ".hypertorus.appearance",   XrmoptionNoArg,
+                       APPEARANCE_SPIRALS_2_STR },
+  {"-spirals-4",       ".hypertorus.appearance",   XrmoptionNoArg,
+                       APPEARANCE_SPIRALS_4_STR },
+  {"-spirals-8",       ".hypertorus.appearance",   XrmoptionNoArg,
+                       APPEARANCE_SPIRALS_8_STR },
+  {"-spirals-16",      ".hypertorus.appearance",   XrmoptionNoArg,
+                       APPEARANCE_SPIRALS_16_STR },
   {"-twosided",        ".hypertorus.colors",       XrmoptionNoArg,
                        COLORS_TWOSIDED_STR },
   {"-colorwheel",      ".hypertorus.colors",       XrmoptionNoArg,
@@ -222,6 +252,7 @@ static OptionStruct desc[] =
   { "-transparent",     "display the torus as a transparent surface" },
   { "-solid",           "display the torus as a solid object" },
   { "-bands",           "display the torus as see-through bands" },
+  { "-spirals-{1,2,4,8,16}", "display the torus as see-through spirals" },
   { "-twosided",        "display the torus with two colors" },
   { "-colorwheel",      "display the torus with a smooth color wheel" },
   { "-perspective-3d",  "project the torus perspectively from 3d to 2d" },
@@ -362,6 +393,71 @@ static void rotateyz(float m[4][4], float phi)
 }
 
 
+/* Compute the rotation matrix m from the rotation angles. */
+static void rotateall(float al, float be, float de, float ze, float et,
+                      float th, float m[4][4])
+{
+  int i, j;
+
+  for (i=0; i<4; i++)
+    for (j=0; j<4; j++)
+      m[i][j] = (i==j);
+  rotatewx(m,al);
+  rotatewy(m,be);
+  rotatewz(m,de);
+  rotatexy(m,ze);
+  rotatexz(m,et);
+  rotateyz(m,th);
+}
+
+
+/* Multiply two rotation matrices: o=m*n. */
+static void mult_rotmat(float m[4][4], float n[4][4], float o[4][4])
+{
+  int i, j, k;
+
+  for (i=0; i<4; i++)
+  {
+    for (j=0; j<4; j++)
+    {
+      o[i][j] = 0.0;
+      for (k=0; k<4; k++)
+        o[i][j] += m[i][k]*n[k][j];
+    }
+  }
+}
+
+
+/* Compute a 4D rotation matrix from two unit quaternions. */
+static void quats_to_rotmat(float p[4], float q[4], float m[4][4])
+{
+  double al, be, de, ze, et, th;
+  double r00, r01, r02, r12, r22;
+
+  r00 = 1.0-2.0*(p[1]*p[1]+p[2]*p[2]);
+  r01 = 2.0*(p[0]*p[1]+p[2]*p[3]);
+  r02 = 2.0*(p[2]*p[0]-p[1]*p[3]);
+  r12 = 2.0*(p[1]*p[2]+p[0]*p[3]);
+  r22 = 1.0-2.0*(p[1]*p[1]+p[0]*p[0]);
+
+  al = atan2(-r12,r22)*180.0/M_PI;
+  be = atan2(r02,sqrt(r00*r00+r01*r01))*180.0/M_PI;
+  de = atan2(-r01,r00)*180.0/M_PI;
+
+  r00 = 1.0-2.0*(q[1]*q[1]+q[2]*q[2]);
+  r01 = 2.0*(q[0]*q[1]+q[2]*q[3]);
+  r02 = 2.0*(q[2]*q[0]-q[1]*q[3]);
+  r12 = 2.0*(q[1]*q[2]+q[0]*q[3]);
+  r22 = 1.0-2.0*(q[1]*q[1]+q[0]*q[0]);
+
+  ze = atan2(-r12,r22)*180.0/M_PI;
+  et = atan2(r02,sqrt(r00*r00+r01*r01))*180.0/M_PI;
+  th = atan2(-r01,r00)*180.0/M_PI;
+
+  rotateall(al,be,de,ze,et,th,m);
+}
+
+
 /* Compute a fully saturated and bright color based on an angle. */
 static void color(double angle)
 {
@@ -414,7 +510,7 @@ static void color(double angle)
       break;
   }
   if (display_mode == DISP_TRANSPARENT)
-    color[3] = 0.5;
+    color[3] = 0.7;
   else
     color[3] = 1.0;
   glColor3fv(color);
@@ -422,31 +518,32 @@ static void color(double angle)
 }
 
 
-/* Draw a hyperturus projected into 3D. */
+/* Draw a hypertorus projected into 3D.  Note that the spirals appearance
+   will only work correctly if numu and numv are set to 64 or any higher
+   power of 2.  Similarly, the banded appearance will only work correctly
+   if numu and numv are divisible by 4. */
 static void hypertorus(double umin, double umax, double vmin, double vmax,
                        int numu, int numv)
 {
   static GLfloat mat_diff_red[] = { 1.0, 0.0, 0.0, 1.0 };
   static GLfloat mat_diff_green[] = { 0.0, 1.0, 0.0, 1.0 };
-  static GLfloat mat_diff_trans_red[] = { 1.0, 0.0, 0.0, 0.5 };
-  static GLfloat mat_diff_trans_green[] = { 0.0, 1.0, 0.0, 0.5 };
+  static GLfloat mat_diff_trans_red[] = { 1.0, 0.0, 0.0, 0.7 };
+  static GLfloat mat_diff_trans_green[] = { 0.0, 1.0, 0.0, 0.7 };
   float p[3], pu[3], pv[3], n[3], mat[4][4];
-  int i, j, k, l, m;
+  int i, j, k, l, m, b, skew;
   double u, v, ur, vr;
   double cu, su, cv, sv;
   double xx[4], xxu[4], xxv[4], x[4], xu[4], xv[4];
   double r, s, t;
+  float q1[4], q2[4], r1[4][4], r2[4][4];
 
-  /* Compute the rotation that rotates the hypercube in 4D. */
-  for (i=0; i<4; i++)
-    for (j=0; j<4; j++)
-      mat[i][j] = (i==j);
-  rotatewx(mat,alpha);
-  rotatewy(mat,beta);
-  rotatewz(mat,delta);
-  rotatexy(mat,zeta);
-  rotatexz(mat,eta);
-  rotateyz(mat,theta);
+  rotateall(alpha,beta,delta,zeta,eta,theta,r1);
+
+  gltrackball_get_quaternion(trackballs[0],q1);
+  gltrackball_get_quaternion(trackballs[1],q2);
+  quats_to_rotmat(q1,q2,r2);
+
+  mult_rotmat(r2,r1,mat);
 
   if (colors != COLORS_COLORWHEEL)
   {
@@ -463,11 +560,13 @@ static void hypertorus(double umin, double umax, double vmin, double vmax,
     }
   }
 
+  skew = num_spirals;
   ur = umax-umin;
   vr = vmax-vmin;
   for (i=0; i<numu; i++)
   {
-    if (appearance == APPEARANCE_BANDS && ((i & 3) >= 2))
+    if ((appearance == APPEARANCE_BANDS ||
+         appearance == APPEARANCE_SPIRALS) && ((i & 3) >= 2))
       continue;
     if (display_mode == DISP_WIREFRAME)
       glBegin(GL_QUAD_STRIP);
@@ -481,7 +580,16 @@ static void hypertorus(double umin, double umax, double vmin, double vmax,
         m = j;
         u = ur*l/numu+umin;
         v = vr*m/numv+vmin;
-        color(u);
+        if (appearance == APPEARANCE_SPIRALS)
+        {
+          u += 4.0*skew/numv*v;
+          b = ((i/4)&(skew-1))*(numu/(4*skew));
+          color(ur*4*b/numu+umin);
+        }
+        else
+        {
+          color(u);
+        }
         cu = cos(u);
         su = sin(u);
         cv = cos(v);
@@ -557,6 +665,16 @@ static void init(ModeInfo *mi)
   static GLfloat light_specular[] = { 1.0, 1.0, 1.0, 1.0 };
   static GLfloat light_position[] = { 1.0, 1.0, 1.0, 0.0 };
   static GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
+
+  if (appearance >= APPEARANCE_SPIRALS_1)
+  {
+    num_spirals = 1<<(appearance-APPEARANCE_SPIRALS_1);
+    appearance = APPEARANCE_SPIRALS;
+  }
+  else
+  {
+    num_spirals = 0;
+  }
 
   alpha = 0.0;
   beta = 0.0;
@@ -634,24 +752,27 @@ static void init(ModeInfo *mi)
 /* Redisplay the hypertorus. */
 static void display_hypertorus(void)
 {
-  alpha += speed_wx;
-  if (alpha >= 360.0)
-    alpha -= 360.0;
-  beta += speed_wy;
-  if (beta >= 360.0)
-    beta -= 360.0;
-  delta += speed_wz;
-  if (delta >= 360.0)
-    delta -= 360.0;
-  zeta += speed_xy;
-  if (zeta >= 360.0)
-    zeta -= 360.0;
-  eta += speed_xz;
-  if (eta >= 360.0)
-    eta -= 360.0;
-  theta += speed_yz;
-  if (theta >= 360.0)
-    theta -= 360.0;
+  if (!button_pressed)
+  {
+    alpha += speed_wx;
+    if (alpha >= 360.0)
+      alpha -= 360.0;
+    beta += speed_wy;
+    if (beta >= 360.0)
+      beta -= 360.0;
+    delta += speed_wz;
+    if (delta >= 360.0)
+      delta -= 360.0;
+    zeta += speed_xy;
+    if (zeta >= 360.0)
+      zeta -= 360.0;
+    eta += speed_xz;
+    if (eta >= 360.0)
+      eta -= 360.0;
+    theta += speed_yz;
+    if (theta >= 360.0)
+      theta -= 360.0;
+  }
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -669,10 +790,7 @@ static void display_hypertorus(void)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  if (display_mode == DISP_WIREFRAME)
-    hypertorus(0.0,2.0*M_PI,0.0,2.0*M_PI,40,40);
-  else
-    hypertorus(0.0,2.0*M_PI,0.0,2.0*M_PI,60,60);
+  hypertorus(0.0,2.0*M_PI,0.0,2.0*M_PI,64,64);
 }
 
 
@@ -684,6 +802,64 @@ void reshape_hypertorus(ModeInfo * mi, int width, int height)
   hp->WindH = (GLint)height;
   glViewport(0,0,width,height);
   aspect = (GLfloat)width/(GLfloat)height;
+}
+
+
+Bool hypertorus_handle_event(ModeInfo *mi, XEvent *event)
+{
+  Display *display = MI_DISPLAY(mi);
+  KeySym  sym;
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
+  {
+    button_pressed = True;
+    gltrackball_start(trackballs[current_trackball],
+                      event->xbutton.x, event->xbutton.y,
+                      MI_WIDTH(mi), MI_HEIGHT(mi));
+    return True;
+  }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
+  {
+    button_pressed = False;
+    return True;
+  }
+  else if (event->xany.type == KeyPress)
+  {
+    sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
+    if (sym == XK_Shift_L || sym == XK_Shift_R)
+    {
+      current_trackball = 1;
+      if (button_pressed)
+        gltrackball_start(trackballs[current_trackball],
+                          event->xbutton.x, event->xbutton.y,
+                          MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+  }
+  else if (event->xany.type == KeyRelease)
+  {
+    sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
+    if (sym == XK_Shift_L || sym == XK_Shift_R)
+    {
+      current_trackball = 0;
+      if (button_pressed)
+        gltrackball_start(trackballs[current_trackball],
+                          event->xbutton.x, event->xbutton.y,
+                          MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+  }
+  else if (event->xany.type == MotionNotify && button_pressed)
+  {
+    gltrackball_track(trackballs[current_trackball],
+                      event->xmotion.x, event->xmotion.y,
+                      MI_WIDTH(mi), MI_HEIGHT(mi));
+    return True;
+  }
+
+  return False;
 }
 
 
@@ -713,6 +889,11 @@ void init_hypertorus(ModeInfo * mi)
       return;
   }
   hp = &hyper[MI_SCREEN(mi)];
+
+  trackballs[0] = gltrackball_init();
+  trackballs[1] = gltrackball_init();
+  current_trackball = 0;
+  button_pressed = False;
 
   if ((hp->glx_context = init_GL(mi)) != NULL)
   {

@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.38 $
+ * $Revision: 1.39 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -537,8 +537,9 @@ lookupHost(ping_target *target)
       hent = gethostbyname (target->name);
       if (!hent)
         {
-          fprintf (stderr, "%s: could not resolve host:  %s\n",
-                   progname, target->name);
+          if (debug_p)
+            fprintf (stderr, "%s: could not resolve host:  %s\n",
+                     progname, target->name);
           return 0;
         }
 
@@ -608,10 +609,23 @@ newHost(char *name)
       struct sockaddr_in *iaddr = (struct sockaddr_in *) &(target->address);
       unsigned long ip = iaddr->sin_addr.s_addr;
 
-      if ((ntohl (ip) & 0xFFFFFF00L) == 0x7f000000L)  /* 127.0.0 */
+      if ((ntohl (ip) & 0xFFFFFF00L) == 0x7f000000L)  /* 127.0.0.x */
         {
           if (debug_p)
             fprintf (stderr, "%s:   ignoring loopback host %s\n",
+                     progname, target->name);
+          goto target_init_error;
+        }
+    }
+
+    /* Don't ever use broadcast (255.x.x.x) hosts */
+    {
+      struct sockaddr_in *iaddr = (struct sockaddr_in *) &(target->address);
+      unsigned long ip = iaddr->sin_addr.s_addr;
+      if ((ntohl (ip) & 0xFF000000L) == 0xFF000000L)  /* 255.x.x.x */
+        {
+          if (debug_p)
+            fprintf (stderr, "%s:   ignoring broadcast host %s\n",
                      progname, target->name);
           goto target_init_error;
         }

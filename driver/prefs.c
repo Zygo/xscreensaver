@@ -86,7 +86,14 @@ chase_symlinks (const char *file)
 # ifdef HAVE_REALPATH
   if (file)
     {
-      char buf [2048];
+# ifndef PATH_MAX
+#  ifdef MAXPATHLEN
+#   define PATH_MAX MAXPATHLEN
+#  else
+#   define PATH_MAX 2048
+#  endif
+# endif
+      char buf[PATH_MAX];
       if (realpath (file, buf))
         return strdup (buf);
 
@@ -1576,11 +1583,15 @@ stop_the_insanity (saver_preferences *p)
       p->dpms_off < 10 * 1000)
     p->dpms_off      = 4 * 60 * 60 * 1000;			 /* 4 hours */
 
-  /* standby may not be greater than suspend.
-     suspend may not be greater than off.
+  /* suspend may not be greater than off, unless off is 0.
+     standby may not be greater than suspend, unless suspend is 0.
    */
-  if (p->dpms_standby > p->dpms_suspend) p->dpms_standby = p->dpms_suspend;
-  if (p->dpms_suspend > p->dpms_off)     p->dpms_suspend = p->dpms_off;
+  if (p->dpms_off != 0 &&
+      p->dpms_suspend > p->dpms_off)
+    p->dpms_suspend = p->dpms_off;
+  if (p->dpms_suspend != 0 &&
+      p->dpms_standby > p->dpms_suspend)
+    p->dpms_standby = p->dpms_suspend;
 
 
   if (p->dpms_standby == 0 &&	   /* if *all* are 0, then DPMS is disabled */
@@ -1589,6 +1600,9 @@ stop_the_insanity (saver_preferences *p)
     p->dpms_enabled_p = False;
 
 
+  /* Set watchdog timeout to about half of the cycle timeout, but
+     don't let it be faster than 1/2 minute or slower than 1 minute.
+   */
   p->watchdog_timeout = p->cycle * 0.6;
   if (p->watchdog_timeout < 27000) p->watchdog_timeout = 27000;	  /* 27 secs */
   if (p->watchdog_timeout > 57000) p->watchdog_timeout = 57000;   /* 57 secs */

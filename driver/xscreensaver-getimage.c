@@ -136,6 +136,7 @@ ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
   return 0;
 }
 
+#ifndef USE_EXTERNAL_SCREEN_GRABBER
 static int
 ignore_badmatch_ehandler (Display *dpy, XErrorEvent *error)
 {
@@ -144,6 +145,7 @@ ignore_badmatch_ehandler (Display *dpy, XErrorEvent *error)
   else
     return x_ehandler (dpy, error);
 }
+#endif /* ! USE_EXTERNAL_SCREEN_GRABBER */
 
 
 /* Returns True if the given Drawable is a Window; False if it's a Pixmap.
@@ -295,6 +297,7 @@ compute_image_scaling (int src_w, int src_h,
    If out of memory, returns False, and the XImage will have been
    destroyed and freed.
  */
+#ifndef USE_EXTERNAL_SCREEN_GRABBER
 static Bool
 scale_ximage (Screen *screen, Visual *visual,
               XImage *ximage, int new_width, int new_height)
@@ -342,6 +345,7 @@ scale_ximage (Screen *screen, Visual *visual,
 
   return True;
 }
+#endif /* ! USE_EXTERNAL_SCREEN_GRABBER */
 
 
 #ifdef HAVE_GDK_PIXBUF
@@ -1197,7 +1201,8 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
 
         close (out);  /* don't need this one */
         *buf = 0;
-        fgets (buf, sizeof(buf)-1, f);
+        if (! fgets (buf, sizeof(buf)-1, f))
+          *buf = 0;
         fclose (f);
 
         /* Wait for the child to die. */

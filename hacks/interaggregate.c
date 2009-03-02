@@ -321,8 +321,8 @@ inline unsigned long trans_point(int x1, int y1, unsigned long myc, double a,
     } 
     else 
     {
-	int or, og, ob;
-	int r, g, b;
+	int or=0, og=0, ob=0;
+	int r=0, g=0, b=0;
 	int nr, ng, nb;
 	unsigned long c;
 

@@ -29,7 +29,7 @@
 
   <hgroup>
    <select id="xmode">
-    <option id="random" _label="Random" arg-set=""/>
+    <option id="random" _label="Random" />
     <option id="spin" _label="Spin" arg-set="-xmode spin"/>
     <option id="funky" _label="Funky" arg-set="-xmode funky"/>
     <option id="circle" _label="Circle" arg-set="-xmode circle"/>
@@ -41,20 +41,20 @@
    </select>
 
    <select id="ymode">
-    <option id="random" _label="Random" arg-set=""/>
-    <option id="spin" _label="Spin" arg-set="-ymode spin"/>
-    <option id="funky" _label="Funky" arg-set="-ymode funky"/>
-    <option id="circle" _label="Circle" arg-set="-ymode circle"/>
-    <option id="linear" _label="Linear" arg-set="-ymode linear"/>
-    <option id="test" _label="Test" arg-set="-ymode test"/>
-    <option id="fun" _label="Fun" arg-set="-ymode fun"/>
-    <option id="innie" _label="Innie" arg-set="-ymode innie"/>
-    <option id="lissajous" _label="Lissajous" arg-set="-ymode lissajous"/>
+    <option id="randomy" _label="Random" />
+    <option id="spiny" _label="Spin" arg-set="-ymode spin"/>
+    <option id="funkyy" _label="Funky" arg-set="-ymode funky"/>
+    <option id="circley" _label="Circle" arg-set="-ymode circle"/>
+    <option id="lineary" _label="Linear" arg-set="-ymode linear"/>
+    <option id="testy" _label="Test" arg-set="-ymode test"/>
+    <option id="funy" _label="Fun" arg-set="-ymode fun"/>
+    <option id="inniey" _label="Innie" arg-set="-ymode innie"/>
+    <option id="lissajousy" _label="Lissajous" arg-set="-ymode lissajous"/>
    </select>
  </hgroup>
 
   <!-- #### -speed [1] -->
-  <!-- #### -color_modifier [-1] --> 
+  <!-- #### -color_modifier [-1] -->
   <!-- #### -start_time [-1] -->
   <!-- #### -xoffset [1.0] -->
   <!-- #### -yoffset [1.0] -->

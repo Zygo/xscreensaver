@@ -30,6 +30,8 @@
 
   <boolean id="oily" _label="Psychedelic Colors" arg-set="-oily"/>
 
+  <boolean id="gray" _label="Grayscale" arg-set="-grayscale"/>
+
   <number id="ncolors" type="slider" arg="-colors %"
             _low-label="Colors    Two" _high-label="Many"
             low="1" high="255" default="200"/>

@@ -1144,6 +1144,14 @@ AC_MSG_CHECKING(whether this is MacOS X)
 AC_MSG_RESULT($ac_macosx)
 
 
+if test "$ac_macosx" = yes; then
+  if test -n "$GCC"; then
+    # Without these, every link against libGL gets a bunch of useless warnings.
+    osx_crud="-bind_at_load -multiply_defined suppress"
+    AC_MSG_RESULT(adding "$osx_crud" to LDFLAGS)
+     LDFLAGS="$LDFLAGS $osx_crud"
+  fi
+fi
 
 ###############################################################################
 #
@@ -2260,7 +2268,6 @@ if test -n "$with_login_manager_req" ; then
       AC_MSG_CHECKING([for $login_manager_tmp])
       if test -x "$login_manager_tmp" ; then
         AC_MSG_RESULT(yes)
-        with_login_manager="$login_manager_tmp"
       else
         AC_MSG_RESULT(no)
         with_login_manager=""
@@ -2420,6 +2427,7 @@ if test "$with_gtk" = yes; then
     AC_CACHE_CHECK([for Gtk libs], ac_cv_gtk_config_libs,
                    [ac_cv_gtk_config_libs=`$pkg_config --libs $pkgs`])
   fi
+
   ac_gtk_config_cflags=$ac_cv_gtk_config_cflags
   ac_gtk_config_libs=$ac_cv_gtk_config_libs
 
@@ -2955,6 +2963,7 @@ if test "$with_gdk_pixbuf" = yes; then
     AC_CACHE_CHECK([for gdk-pixbuf libs], ac_cv_gdk_pixbuf_config_libs,
                [ac_cv_gdk_pixbuf_config_libs=`$pkg_config --libs $pkgs`])
   fi
+
   ac_gdk_pixbuf_config_cflags=$ac_cv_gdk_pixbuf_config_cflags
   ac_gdk_pixbuf_config_libs=$ac_cv_gdk_pixbuf_config_libs
 
@@ -3107,8 +3116,15 @@ PTY_LIBS=
 AC_CHECK_HEADERS(pty.h util.h)
 AC_CHECK_X_LIB(util, forkpty,
                [PTY_LIBS="-lutil"
+                ac_have_forkpty=yes
                 AC_DEFINE(HAVE_FORKPTY)])
 
+if test "$ac_have_forkpty" != yes ; then
+  # we don't need (or have) -lutil on MacOS 10.4.2...
+  AC_CHECK_X_LIB(c, forkpty,
+                 [PTY_LIBS=""
+                  AC_DEFINE(HAVE_FORKPTY)])
+fi
 
 ###############################################################################
 #

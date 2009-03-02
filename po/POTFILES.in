@@ -1,4 +1,4 @@
-# Auto-generated: Wed Jun 22 18:02:31 PDT 2005
+# Auto-generated: Fri Oct 21 23:44:10 PDT 2005
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -34,6 +34,7 @@ hacks/config/bumps.xml
 hacks/config/cage.xml
 hacks/config/carousel.xml
 hacks/config/ccurve.xml
+hacks/config/celtic.xml
 hacks/config/circuit.xml
 hacks/config/cloudlife.xml
 hacks/config/compass.xml
@@ -42,6 +43,7 @@ hacks/config/cosmos.xml
 hacks/config/crackberg.xml
 hacks/config/critical.xml
 hacks/config/crystal.xml
+hacks/config/cube21.xml
 hacks/config/cubenetic.xml
 hacks/config/cubestorm.xml
 hacks/config/cynosure.xml
@@ -82,6 +84,7 @@ hacks/config/gflux.xml
 hacks/config/glblur.xml
 hacks/config/gleidescope.xml
 hacks/config/glforestfire.xml
+hacks/config/glhanoi.xml
 hacks/config/glknots.xml
 hacks/config/glmatrix.xml
 hacks/config/glplanet.xml
@@ -107,6 +110,7 @@ hacks/config/intermomentary.xml
 hacks/config/jigglypuff.xml
 hacks/config/jigsaw.xml
 hacks/config/juggle.xml
+hacks/config/juggler3d.xml
 hacks/config/julia.xml
 hacks/config/kaleidescope.xml
 hacks/config/klein.xml
@@ -188,6 +192,7 @@ hacks/config/swirl.xml
 hacks/config/t3d.xml
 hacks/config/tangram.xml
 hacks/config/thornbird.xml
+hacks/config/timetunnel.xml
 hacks/config/triangle.xml
 hacks/config/truchet.xml
 hacks/config/twang.xml

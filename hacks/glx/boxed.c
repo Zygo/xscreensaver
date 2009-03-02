@@ -1,4 +1,4 @@
-/* thebox --- 3D bouncing balls that explode */
+/* boxed --- 3D bouncing balls that explode */
 
 #if 0
 static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
@@ -23,6 +23,9 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
  *       as an OpenGL screensaver for the xscreensaver package.
  *       Lots of hardcoded values still in place. Also, there are some
  *       copy/paste leftovers from the gears hack. opts don't work.
+ *
+ * 2005: opts work. added options -balls, -ballsize, -explosion
+ *
  */
 
 #include <X11/Intrinsic.h>
@@ -42,6 +45,9 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 # define boxed_opts	xlockmore_opts
 
 # define DEF_SPEED      "0.5"
+# define DEF_BALLS	"25"
+# define DEF_BALLSIZE   "2.0"
+# define DEF_EXPLOSION	"25.0f"
 # define DEFAULTS	"*delay:     20000   \n" \
 			"*showFPS:   False   \n" \
 			"*wireframe: False   \n"
@@ -60,14 +66,23 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 #define rnd() (frand(1.0))
 
 GLfloat speed;  /* jwz -- overall speed factor applied to all motion */
+int cfg_balls;
+GLfloat cfg_ballsize;
+GLfloat cfg_explosion;
 
 
 static XrmOptionDescRec opts[] = {
     {"-speed", ".boxed.speed", XrmoptionSepArg, 0},
+    {"-balls", ".boxed.balls", XrmoptionSepArg, 0},
+    {"-ballsize", ".boxed.ballsize", XrmoptionSepArg, 0},
+    {"-explosion", ".boxed.explosion", XrmoptionSepArg, 0},
 };
 
 static argtype vars[] = {
     {&speed, "speed", "Speed", DEF_SPEED, t_Float},
+    {&cfg_balls, "balls", "Balls", DEF_BALLS, t_Int},
+    {&cfg_ballsize, "ballsize", "Ball Size", DEF_BALLSIZE, t_Float},
+    {&cfg_explosion, "explosion", "Exlosion", DEF_BALLSIZE, t_Float},
 };
 
 ModeSpecOpt boxed_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -86,12 +101,6 @@ ModStruct   boxed_description = {
 #define TRUE 1
 #define FALSE 0
 
-/* rendering defines */
-
-
-/* box size */
-#define BOX_SIZE 	20.0f
-
 /* camera */
 #define CAM_HEIGHT 	100.0f
 #define CAMDISTANCE_MIN 20.0
@@ -102,11 +111,6 @@ ModStruct   boxed_description = {
 #define MESH_SIZE	10
 #define SPHERE_VERTICES	(2+MESH_SIZE*MESH_SIZE*2)
 #define SPHERE_INDICES	((MESH_SIZE*4 + MESH_SIZE*4*(MESH_SIZE-1))*3)
-
-#define EXPLOSION 10.0f
-#define MAXBALLS  50;
-#define NUMBALLS 12;
-#define BALLSIZE 3.0f;
 
 /*
 **-----------------------------------------------------------------------------
@@ -169,6 +173,7 @@ typedef struct {
    float          cam_x_speed, cam_z_speed, cam_y_speed;
    boxed_config  config;
    float	  tic;
+   float          camtic;
    vectorf        spherev[SPHERE_VERTICES];
    GLint          spherei[SPHERE_INDICES];
    ballman        bman;
@@ -352,8 +357,8 @@ void createball(ball *newball)
    newball->dir.z = (0.5-rnd())  * speed;
    newball->offside = 0;
    newball->bounced = FALSE;
-   newball->radius = BALLSIZE;
-   while (r+g+b < 1.7f ) {
+   newball->radius = cfg_ballsize;
+   while (r+g+b < 1.8f ) {
       newball->color.x = r=rnd();
       newball->color.y = g=rnd();
       newball->color.z = b=rnd();
@@ -371,7 +376,7 @@ void updateballs(ballman *bman)
 
    for (b=0;b<bman->num_balls;b++) {
 
-     GLfloat gravity = 0.15f * speed;
+     GLfloat gravity = 0.30f * speed;
 
       /* apply gravity */
       bman->balls[b].dir.y -= gravity;
@@ -379,10 +384,10 @@ void updateballs(ballman *bman)
       addvectors(&bman->balls[b].loc,&bman->balls[b].loc,&bman->balls[b].dir);
       /* boundary check */
       if (bman->balls[b].loc.y < bman->balls[b].radius) { /* ball onder bodem? (bodem @ y=0) */
-	 if ((bman->balls[b].loc.x < -100.0) || 
-	     (bman->balls[b].loc.x > 100.0) ||
-	     (bman->balls[b].loc.z < -100.0) ||
-	     (bman->balls[b].loc.z > 100.0)) {
+	 if ((bman->balls[b].loc.x < -95.0) || 
+	     (bman->balls[b].loc.x > 95.0) ||
+	     (bman->balls[b].loc.z < -95.0) ||
+	     (bman->balls[b].loc.z > 95.0)) {
 	    if (bman->balls[b].loc.y < -1000.0)
 	      createball(&bman->balls[b]);
 	 } else {
@@ -513,6 +518,16 @@ void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, int ind_
       scalevector(&tman->vertices[pos+1],&tman->vertices[pos+1],scale);
       scalevector(&tman->vertices[pos+2],&tman->vertices[pos+2],scale);
             
+      tman->vertices[pos+0].x += avgdir.x;
+      tman->vertices[pos+0].y += avgdir.y;
+      tman->vertices[pos+0].z += avgdir.z;
+      tman->vertices[pos+1].x += avgdir.x;
+      tman->vertices[pos+1].y += avgdir.y;
+      tman->vertices[pos+1].z += avgdir.z;
+      tman->vertices[pos+2].x += avgdir.x;
+      tman->vertices[pos+2].y += avgdir.y;
+      tman->vertices[pos+2].z += avgdir.z;
+
       /* bereken nieuwe richting */
       scalevector(&tman->tris[i].dir,&avgdir,explosion);
       dvect.x = (0.1f - 0.2f*rnd());
@@ -540,10 +555,10 @@ void updatetris(triman *t)
       /* boundary check */
       if (t->tris[b].far) continue;
       if (t->tris[b].loc.y < 0) { /* onder bodem ? */
-	 if ((t->tris[b].loc.x > -100.0f) &
-	     (t->tris[b].loc.x < 100.0f) &
-	     (t->tris[b].loc.z > -100.0f) &
-	     (t->tris[b].loc.z < 100.0f)) {  /* in veld  */
+	 if ((t->tris[b].loc.x > -95.0f) &
+	     (t->tris[b].loc.x < 95.0f) &
+	     (t->tris[b].loc.z > -95.0f) &
+	     (t->tris[b].loc.z < 95.0f)) {  /* in veld  */
 	    t->tris[b].dir.y = -(t->tris[b].dir.y);
 	    t->tris[b].loc.y = -t->tris[b].loc.y;
 	    scalevector(&t->tris[b].dir,&t->tris[b].dir,0.80f); /* dampening */
@@ -619,11 +634,14 @@ void freetris(triman *t)
  */
 void setdefaultconfig(boxed_config *config) 
 {
-  config->numballs = NUMBALLS;
+  cfg_balls = MAX(3,MIN(40,cfg_balls));
+  cfg_ballsize = MAX(1.0f,MIN(5.0f,cfg_ballsize));
+  cfg_explosion = MAX(0.0f,MIN(50.0f,cfg_explosion));
+  config->numballs = cfg_balls;
   config->textures = TRUE;
   config->transparent = FALSE;
-  config->explosion = 25.0f;
-  config->ballsize = BALLSIZE;
+  config->explosion = cfg_explosion;
+  config->ballsize = cfg_ballsize;
   config->camspeed = 35.0f;
 }
 
@@ -902,12 +920,13 @@ static void draw(ModeInfo * mi)
    glLoadIdentity();
    
    gp->tic += 0.01f;
-
+   gp->camtic += 0.01f + 0.01f * sin(gp->tic * speed);
+   
    /* rotate camera around (0,0,0), looking at (0,0,0), up is (0,1,0) */
-   dcam = CAMDISTANCE_MIN + (CAMDISTANCE_MAX - CAMDISTANCE_MIN) + (CAMDISTANCE_MAX - CAMDISTANCE_MIN)*cos((gp->tic/CAMDISTANCE_SPEED) * speed);
-   v1.x = dcam * sin((gp->tic/gp->cam_x_speed) * speed);
-   v1.z = dcam * cos((gp->tic/gp->cam_z_speed) * speed);
-   v1.y = CAM_HEIGHT * sin((gp->tic/gp->cam_y_speed) * speed) + 1.02 * CAM_HEIGHT;
+   dcam = CAMDISTANCE_MIN + (CAMDISTANCE_MAX - CAMDISTANCE_MIN) + (CAMDISTANCE_MAX - CAMDISTANCE_MIN)*cos((gp->camtic/CAMDISTANCE_SPEED) * speed);
+   v1.x = dcam * sin((gp->camtic/gp->cam_x_speed) * speed);
+   v1.z = dcam * cos((gp->camtic/gp->cam_z_speed) * speed);
+   v1.y = CAM_HEIGHT * sin((gp->camtic/gp->cam_y_speed) * speed) + 1.02 * CAM_HEIGHT;
    gluLookAt(v1.x,v1.y,v1.z,0.0,0.0,0.0,0.0,1.0,0.0); 
 
    if (!wire) {
@@ -1087,8 +1106,11 @@ pinit(ModeInfo * mi)
    gp->cam_y_speed = 1.0f/((float)gp->config.camspeed/250.0 + rnd()*((float)gp->config.camspeed/250.0));
    if (rnd() < 0.5f) gp->cam_x_speed = -gp->cam_x_speed;
    if (rnd() < 0.5f) gp->cam_z_speed = -gp->cam_z_speed;
+
+   /* define initial cam position */
+   gp->tic = gp->camtic = rnd() * 100.0f;
    
-   
+   /* define tex1 (bottom plate) */
    gp->tex1 = (char *)malloc(3*width*height*sizeof(GLuint));
    texpixels = 256*256; /*width*height;*/
    texpixeldata = header_data;

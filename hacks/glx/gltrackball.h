@@ -45,5 +45,9 @@ extern void gltrackball_rotate (trackball_state *);
 void gltrackball_mousewheel (trackball_state *ts,
                              int button, int percent, int horizontal_p);
 
+/* Return the quaternion encapsulated by the trackball state.
+ */
+extern void gltrackball_get_quaternion (trackball_state *ts, float q[4]);
+
 #endif /* __GLTRACKBALL_H__ */
 

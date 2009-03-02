@@ -108,7 +108,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  mismunch.c pacman.c pacman_ai.c pacman_level.c \
 		  fuzzyflakes.c anemotaxis.c memscroller.c substrate.c \
 		  intermomentary.c fireworkx.c fireworkx_mmx.S fiberlamp.c \
-		  boxfit.c interaggregate.c
+		  boxfit.c interaggregate.c celtic.c
 SCRIPTS		= vidwhacker webcollage ljlatest
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -138,7 +138,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  mismunch.o pacman.o pacman_ai.o pacman_level.o \
 		  fuzzyflakes.o anemotaxis.o memscroller.o substrate.o \
 		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o \
-		  interaggregate.o
+		  interaggregate.o celtic.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -147,7 +147,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  penrose pyro qix rocks rorschach sierpinski slidescreen \
 		  slip sphere spiral strange swirl goop starfish munch \
 		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
-		  ant xjack xlyap jigsaw cynosure moire2 flow epicycle \
+		  xjack xlyap jigsaw cynosure moire2 flow epicycle \
 		  interference truchet bsod crystal discrete distort kumppa \
 		  demon loop t3d penetrate deluxe compass squiral xflame \
 		  wander spotlight critical phosphor xmatrix petri shadebobs \
@@ -159,6 +159,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  fontglide apple2 xanalogtv pong  wormhole mismunch \
 		  pacman fuzzyflakes anemotaxis memscroller substrate \
 		  intermomentary fireworkx fiberlamp boxfit interaggregate \
+		  celtic \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -176,7 +177,7 @@ XDBE_OBJS	= $(UTILS_BIN)/xdbe.o
 HDRS		= bubbles.h screenhack.h xlockmore.h xlockmoreI.h automata.h \
 		  bumps.h xpm-pixmap.h apple2.h analogtv.h \
 		  pacman.h pacman_ai.h pacman_level.h
-MEN		= anemone.man ant.man apollonian.man attraction.man \
+MEN		= anemone.man apollonian.man attraction.man \
 	          blaster.man blitspin.man bouboule.man braid.man bsod.man \
 	          bubbles.man bumps.man ccurve.man compass.man coral.man \
 	          critical.man crystal.man cynosure.man decayscreen.man \
@@ -206,7 +207,7 @@ MEN		= anemone.man ant.man apollonian.man attraction.man \
 		  wormhole.man mismunch.man pacman.man fuzzyflakes.man \
 		  anemotaxis.man memscroller.man substrate.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
-		  interaggregate.man
+		  interaggregate.man celtic.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h xml2man.pl .gdbinit \
 		  euler2d.tex \
@@ -842,6 +843,9 @@ boxfit:		boxfit.o	$(HACK_OBJS) $(COL) $(GRAB)
 ifs:		ifs.o		$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
+celtic:		celtic.o	$(HACK_OBJS) $(COL) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
+
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -1086,6 +1090,8 @@ bumps.o: ../config.h
 bumps.o: $(srcdir)/screenhack.h
 ccurve.o: ../config.h
 ccurve.o: $(srcdir)/screenhack.h
+celtic.o: ../config.h
+celtic.o: $(srcdir)/screenhack.h
 cloudlife.o: ../config.h
 cloudlife.o: $(srcdir)/screenhack.h
 compass.o: ../config.h

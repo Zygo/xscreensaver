@@ -665,6 +665,14 @@ push_bond (molecule *m, int from, int to)
 }
 
 
+static void
+parse_error (const char *file, int lineno, const char *line)
+{
+  fprintf (stderr, "%s: %s: parse error, line %d: %s\n",
+           progname, file, lineno, line);
+  exit (1);
+}
+
 
 /* This function is crap.
  */
@@ -749,7 +757,8 @@ parse_pdb_data (molecule *m, const char *data, const char *filename, int line)
           char *name = (char *) calloc (1, 4);
           GLfloat x = -999, y = -999, z = -999;
 
-          sscanf (s+7, " %d ", &id);
+          if (1 != sscanf (s+7, " %d ", &id))
+            parse_error (filename, line, s);
 
           strncpy (name, s+12, 3);
           while (isspace(*name)) name++;
@@ -762,7 +771,9 @@ parse_pdb_data (molecule *m, const char *data, const char *filename, int line)
 	    *ss = tolower(*ss);
             ss++;
           }
-          sscanf (s + 32, " %f %f %f ", &x, &y, &z);
+          if (3 != sscanf (s + 32, " %f %f %f ", &x, &y, &z))
+            parse_error (filename, line, s);
+
 /*
           fprintf (stderr, "%s: %s: %d: atom: %d \"%s\" %9.4f %9.4f %9.4f\n",
                    progname, filename, line,
@@ -776,14 +787,16 @@ parse_pdb_data (molecule *m, const char *data, const char *filename, int line)
           char *name = (char *) calloc (1, 4);
           GLfloat x = -999, y = -999, z = -999;
 
-          sscanf (s+7, " %d ", &id);
+          if (1 != sscanf (s+7, " %d ", &id))
+            parse_error (filename, line, s);
 
           strncpy (name, s+12, 3);
           while (isspace(*name)) name++;
           ss = name + strlen(name)-1;
           while (isspace(*ss) && ss > name)
             *ss-- = 0;
-          sscanf (s + 30, " %f %f %f ", &x, &y, &z);
+          if (3 != sscanf (s + 30, " %f %f %f ", &x, &y, &z))
+            parse_error (filename, line, s);
 /*
           fprintf (stderr, "%s: %s: %d: atom: %d \"%s\" %9.4f %9.4f %9.4f\n",
                    progname, filename, line,

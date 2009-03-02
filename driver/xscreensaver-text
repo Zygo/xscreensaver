@@ -24,7 +24,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.5 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.6 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -282,7 +282,8 @@ sub output() {
 
   } elsif ($text_mode eq 'program') {
 
-    $text_program = which ($text_program);
+    my ($prog, $args) = ($text_program =~ m/^([^\s]+)(.*)$/);
+    $text_program = which ($prog) . $args;
     print STDERR "$progname: running $text_program\n" if ($verbose);
 
     if ($wrap_columns && $wrap_columns > 0) {

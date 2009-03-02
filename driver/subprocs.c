@@ -71,6 +71,59 @@ extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 extern saver_info *global_si_kludge;	/* I hate C so much... */
 
 
+/* Used when printing error/debugging messages from signal handlers.
+ */
+static const char *
+no_malloc_number_to_string (long num)
+{
+  static char string[128] = "";
+  int num_digits;
+  Bool negative_p = False;
+
+  num_digits = 0;
+
+  if (num == 0)
+    return "0";
+
+  if (num < 0)
+    {
+      negative_p = True;
+      num = -num;
+    }
+
+  while ((num > 0) && (num_digits < sizeof(string - 1)))
+    {
+      int digit;
+      digit = (int) num % 10;
+      num_digits++;
+      string[sizeof(string) - 1 - num_digits] = digit + '0';
+      num /= 10;
+    }
+
+  if (negative_p)
+    {
+      num_digits++;
+      string[sizeof(string) - 1 - num_digits] = '-';
+    }
+
+  return string + sizeof(string) - 1 - num_digits;
+}
+
+/* Like write(), but runs strlen() on the arg to get the length. */
+static int
+write_string (int fd, const char *str)
+{
+  return write (fd, str, strlen (str));
+}
+
+static int
+write_long (int fd, long n)
+{
+  const char *str = no_malloc_number_to_string (n);
+  return write_string (fd, str);
+}
+
+
 /* RLIMIT_AS (called RLIMIT_VMEM on some systems) controls the maximum size
    of a process's address space, i.e., the maximal brk(2) and mmap(2) values.
    Setting this lets you put a cap on how much memory a process can allocate.
@@ -412,8 +465,19 @@ sigchld_handler (int sig)
   saver_info *si = global_si_kludge;	/* I hate C so much... */
 
   if (si->prefs.debug_p)
-    fprintf(stderr, "%s: got SIGCHLD%s\n", blurb(),
+    {
+      /* Don't call fprintf() from signal handlers, as it might malloc.
+      fprintf(stderr, "%s: got SIGCHLD%s\n", blurb(),
 	    (block_sigchld_handler ? " (blocked)" : ""));
+      */
+      write_string (STDERR_FILENO, blurb());
+      write_string (STDERR_FILENO, ": got SIGCHLD");
+
+      if (block_sigchld_handler)
+        write_string (STDERR_FILENO, " (blocked)\n");
+      else
+        write_string (STDERR_FILENO, "\n");
+    }
 
   if (block_sigchld_handler < 0)
     abort();
@@ -430,6 +494,7 @@ sigchld_handler (int sig)
 
 
 #ifndef VMS
+
 static void
 await_dying_children (saver_info *si)
 {
@@ -444,11 +509,29 @@ await_dying_children (saver_info *si)
       if (si->prefs.debug_p)
 	{
 	  if (kid < 0 && errno)
-	    fprintf (stderr, "%s: waitpid(-1) ==> %ld (%d)\n", blurb(),
-		     (long) kid, errno);
-	  else
-	    fprintf (stderr, "%s: waitpid(-1) ==> %ld\n", blurb(),
-		     (long) kid);
+            {
+              /* Don't call fprintf() from signal handlers, as it might malloc.
+	      fprintf (stderr, "%s: waitpid(-1) ==> %ld (%d)\n", blurb(),
+		       (long) kid, errno);
+               */
+              write_string (STDERR_FILENO, blurb());
+              write_string (STDERR_FILENO, ": waitpid(-1) ==> ");
+              write_long   (STDERR_FILENO, (long) kid);
+              write_string (STDERR_FILENO, " (");
+              write_long   (STDERR_FILENO, (long) errno);
+              write_string (STDERR_FILENO, ")\n");
+            }
+          else
+            {
+              /* Don't call fprintf() from signal handlers, as it might malloc.
+              fprintf (stderr, "%s: waitpid(-1) ==> %ld\n", blurb(),
+                       (long) kid);
+               */
+              write_string (STDERR_FILENO, blurb());
+              write_string (STDERR_FILENO, ": waitpid(-1) ==> ");
+              write_long   (STDERR_FILENO, (long) kid);
+              write_string (STDERR_FILENO, "\n");
+            }
 	}
 
       /* 0 means no more children to reap.
@@ -488,12 +571,38 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
       if (!job ||
 	  (exit_status != 0 &&
 	   (p->verbose_p || job->status != job_killed)))
-	fprintf (stderr,
-		 "%s: %d: child pid %lu (%s) exited abnormally (code %d).\n",
-		 blurb(), screen_no, (unsigned long) kid, name, exit_status);
+        {
+          /* Don't call fprintf() from signal handlers, as it might malloc.
+	  fprintf (stderr,
+		   "%s: %d: child pid %lu (%s) exited abnormally (code %d).\n",
+		   blurb(), screen_no, (unsigned long) kid, name, exit_status);
+           */
+          write_string (STDERR_FILENO, blurb());
+          write_string (STDERR_FILENO, ": ");
+          write_long   (STDERR_FILENO, (long) screen_no);
+          write_string (STDERR_FILENO, ": child pid ");
+          write_long   (STDERR_FILENO, (long) kid);
+          write_string (STDERR_FILENO, " (");
+          write_string (STDERR_FILENO, name);
+          write_string (STDERR_FILENO, ") exited abnormally (code ");
+          write_long   (STDERR_FILENO, (long) exit_status);
+          write_string (STDERR_FILENO, ").\n"); 
+        }
       else if (p->verbose_p)
-	fprintf (stderr, "%s: %d: child pid %lu (%s) exited normally.\n",
-		 blurb(), screen_no, (unsigned long) kid, name);
+        {
+          /* Don't call fprintf() from signal handlers, as it might malloc.
+	  fprintf (stderr, "%s: %d: child pid %lu (%s) exited normally.\n",
+		   blurb(), screen_no, (unsigned long) kid, name);
+           */
+          write_string (STDERR_FILENO, blurb());
+          write_string (STDERR_FILENO, ": ");
+          write_long   (STDERR_FILENO, (long) screen_no);
+          write_string (STDERR_FILENO, ": child pid ");
+          write_long   (STDERR_FILENO, (long) kid);
+          write_string (STDERR_FILENO, " (");
+          write_string (STDERR_FILENO, name);
+          write_string (STDERR_FILENO, ") exited normally.\n");
+        }
 
       if (job)
 	job->status = job_dead;
@@ -504,9 +613,23 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
 	  !job ||
 	  job->status != job_killed ||
 	  WTERMSIG (wait_status) != SIGTERM)
-	fprintf (stderr, "%s: %d: child pid %lu (%s) terminated with %s.\n",
-		 blurb(), screen_no, (unsigned long) kid, name,
-		 signal_name (WTERMSIG(wait_status)));
+        {
+          /* Don't call fprintf() from signal handlers, as it might malloc.
+	  fprintf (stderr, "%s: %d: child pid %lu (%s) terminated with %s.\n",
+		   blurb(), screen_no, (unsigned long) kid, name,
+		   signal_name (WTERMSIG(wait_status)));
+           */
+          write_string (STDERR_FILENO, blurb());
+          write_string (STDERR_FILENO, ": ");
+          write_long   (STDERR_FILENO, (long) screen_no);
+          write_string (STDERR_FILENO, ": child pid ");
+          write_long   (STDERR_FILENO, (long) kid);
+          write_string (STDERR_FILENO, " (");
+          write_string (STDERR_FILENO, name);
+          write_string (STDERR_FILENO, ") terminated with signal ");
+          write_long   (STDERR_FILENO, WTERMSIG(wait_status));
+          write_string (STDERR_FILENO, ".\n");
+        }
 
       if (job)
 	job->status = job_dead;
@@ -514,17 +637,41 @@ describe_dead_child (saver_info *si, pid_t kid, int wait_status)
   else if (WIFSTOPPED (wait_status))
     {
       if (p->verbose_p)
-	fprintf (stderr, "%s: child pid %lu (%s) stopped with %s.\n",
-		 blurb(), (unsigned long) kid, name,
-		 signal_name (WSTOPSIG (wait_status)));
+        {
+          /* Don't call fprintf() from signal handlers, as it might malloc.
+	  fprintf (stderr, "%s: child pid %lu (%s) stopped with %s.\n",
+		   blurb(), (unsigned long) kid, name,
+		   signal_name (WSTOPSIG (wait_status)));
+           */
+          write_string (STDERR_FILENO, blurb());
+          write_string (STDERR_FILENO, ": ");
+          write_long   (STDERR_FILENO, (long) screen_no);
+          write_string (STDERR_FILENO, ": child pid ");
+          write_long   (STDERR_FILENO, (long) kid);
+          write_string (STDERR_FILENO, " (");
+          write_string (STDERR_FILENO, name);
+          write_string (STDERR_FILENO, ") stopped with signal ");
+          write_long   (STDERR_FILENO, WSTOPSIG(wait_status));
+          write_string (STDERR_FILENO, ".\n");
+        }
 
       if (job)
 	job->status = job_stopped;
     }
   else
     {
+      /* Don't call fprintf() from signal handlers, as it might malloc.
       fprintf (stderr, "%s: child pid %lu (%s) died in a mysterious way!",
 	       blurb(), (unsigned long) kid, name);
+       */
+      write_string (STDERR_FILENO, blurb());
+      write_string (STDERR_FILENO, ": ");
+      write_long   (STDERR_FILENO, (long) screen_no);
+      write_string (STDERR_FILENO, ": child pid ");
+      write_long   (STDERR_FILENO, (long) kid);
+      write_string (STDERR_FILENO, " (");
+      write_string (STDERR_FILENO, name);
+      write_string (STDERR_FILENO, ") died in a mysterious way!");
       if (job)
 	job->status = job_dead;
     }
@@ -637,7 +784,8 @@ print_path_error (const char *program)
       fprintf (stderr, "\n");
       *path = 0;
 # if defined(HAVE_GETCWD)
-      getcwd (path, sizeof(path));
+      if (! getcwd (path, sizeof(path)))
+        *path = 0;
 # elif defined(HAVE_GETWD)
       getwd (path);
 # endif
@@ -1090,7 +1238,8 @@ get_best_gl_visual (saver_screen_info *ssi)
         close (out);  /* don't need this one */
 
         *buf = 0;
-        fgets (buf, sizeof(buf)-1, f);
+        if (! fgets (buf, sizeof(buf)-1, f))
+          *buf = 0;
         fclose (f);
 
         /* Wait for the child to die. */

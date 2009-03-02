@@ -23,6 +23,15 @@
 extern char *progname;
 
 
+static Bool
+bigendian (void)
+{
+  union { int i; char c[sizeof(int)]; } u;
+  u.i = 1;
+  return !u.c[0];
+}
+
+
 #if defined(HAVE_GDK_PIXBUF)
 
 # include <gdk-pixbuf/gdk-pixbuf.h>
@@ -86,6 +95,15 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
 
       image = XCreateImage (dpy, visual, 32, ZPixmap, 0, 0, w, h, 32, 0);
       image->data = (char *) malloc(h * image->bytes_per_line);
+
+      /* Set the bit order in the XImage structure to whatever the
+         local host's native bit order is.
+       */
+      image->bitmap_bit_order =
+        image->byte_order =
+          (bigendian() ? MSBFirst : LSBFirst);
+
+
       if (!image->data)
         {
           fprintf (stderr, "%s: out of memory (%d x %d)\n", progname, w, h);
@@ -165,15 +183,6 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-#if 0
-static Bool
-bigendian (void)
-{
-  union { int i; char c[sizeof(int)]; } u;
-  u.i = 1;
-  return !u.c[0];
-}
-#endif
 
 
 /* The libxpm version of this function...
@@ -269,6 +278,11 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
        things as necessary) OpenGL pretends everything is client-side, so
        we need to pack things in the right order for the client machine.
      */
+
+    ximage->bitmap_bit_order =
+      ximage->byte_order =
+        (bigendian() ? MSBFirst : LSBFirst);
+
 #if 0
     /* #### Cherub says that the little-endian case must be taken on MacOSX,
             or else the colors/alpha are the wrong way around.  How can

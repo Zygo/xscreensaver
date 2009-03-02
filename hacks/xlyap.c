@@ -217,7 +217,7 @@ static double  minexp, maxexp, prob=0.5;
 static int     expind[MAXFRAMES]={0}, resized[MAXFRAMES]={0};
 static int	numwheels=MAXWHEELS, force=0, Force=0, negative=1;
 static int     rgb_max=65000, nostart=1, stripe_interval=7;
-static int	save=1, show=0, useprod=1, spinlength=256, savefile=0;
+static int	save=1, show=0, useprod=1, spinlength=256/*, savefile=0*/;
 static int	maxframe=0, frame=0, dorecalc=0, mapindex=0, run=1;
 static char	*outname="lyap.out";
 
@@ -246,7 +246,7 @@ static void main_event(void);
 static int complyap(void);
 static void Getkey(XKeyEvent *event);
 static int sendpoint(double expo);
-static void save_to_file(void);
+/*static void save_to_file(void);*/
 static void setforcing(void);
 static void check_params(int mapnum, int parnum);
 static void usage(void);
@@ -605,15 +605,15 @@ complyap(void)
       return FALSE;
     else {
       FlushBuffer();
-      if (savefile)
-	save_to_file();
+/*      if (savefile)
+	save_to_file(); */
       return TRUE;
     }
   }
   if (b >= max_b) {
     FlushBuffer();
-    if (savefile)
-      save_to_file();
+/*    if (savefile)
+      save_to_file();*/
     return TRUE;
   }
   prod = 1.0;
@@ -705,8 +705,8 @@ complyap(void)
     return FALSE;
   else {
     FlushBuffer();
-    if (savefile)
-      save_to_file();
+/*    if (savefile)
+      save_to_file();*/
     return TRUE;
   }
 }
@@ -1316,7 +1316,7 @@ Getkey(XKeyEvent *event)
       redraw(exponents[frame], expind[frame], 1);
       break;
   case 'f':
-  case 'F': save_to_file(); break;
+/*  case 'F': save_to_file(); break;*/
   case 'i': if (stripe_interval > 0) {
       stripe_interval--;
 	if (displayplanes > 1) {
@@ -1568,6 +1568,7 @@ Redraw(void)
   resized[frame] = 0;
 }
 
+#if 0
 /* Store color pics in PPM format and monochrome in PGM */
 static void
 save_to_file(void)
@@ -1643,6 +1644,7 @@ save_to_file(void)
       }
   fclose(outfile);
 }
+#endif
 
 static void
 recalc(void)

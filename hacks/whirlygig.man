@@ -11,7 +11,7 @@ whirlygig -- zooming chains of sinusoidal spots
 [\-wrap 1|0] [\-db] [\-no-db] 
 
 .SH DESCRIPTION
-The \flwhirlygig\fP program draws a series of circles on your screen.
+The \fIwhirlygig\fP program draws a series of circles on your screen.
 They then move about in a cyclic pattern
 .SH OPTIONS
 .I whirlygig
@@ -27,33 +27,33 @@ Draw on the root window.
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-xspeed \flspeed\fP
+.B \-xspeed \fIspeed\fP
 Specify how fast the dots should cycle horizontally.
 Try out values from .01 to 4000. Random by default.
 .TP 8
-.B \-yspeed \flspeed\fP
+.B \-yspeed \fIspeed\fP
 Specify how fast the dots should cycle vertically.
 Try out values from .01 to 4000. Random by default.
 .TP 8
-.B \-xamplitude \flfactor\fP
+.B \-xamplitude \fIfactor\fP
 Specify the horizontal amplitude.
 Try out values from .01 to 10. Defaults to 1.0.
 .TP 8
-.B \-yamplitude \flfactor\fP
+.B \-yamplitude \fIfactor\fP
 Specify the horizontal amplitude.
 Try out values from .01 to 10. Defaults to 1.0.
 .TP 8
-.B \-whirlies \fla number\fP
+.B \-whirlies \fIa number\fP
 Specify how many whirlies you want (per line). Defaults
 to a random number.
 .TP 8
-.B \-nlines \flnumber of lines\fP
+.B \-nlines \fInumber of lines\fP
 Specify how many lines of whirlies you want. Defaults to a 
 random number.
 .TP 8
-.B \-xmode \flmode\fP
+.B \-xmode \fImode\fP
 .TP 8 
-.B \-ymode \flmode\fP
+.B \-ymode \fImode\fP
 Specify which mode to use for calculating the x and y positions of the
 whirlies. Can be any of spin, funky, circle, linear, test, fun, innie
 or lissajous. Defaults to 'change' mode, which randomly selects a new
@@ -63,37 +63,37 @@ mode for x and y every now an then. Unrecognized options default to spin.
 Prints some strings to the window explaining what the initially
 selected modes are, before displaying the whirlies. Off by default.
 .TP 8
-.B \-trail \fl1 or 0\fP
+.B \-trail \fI1 or 0\fP
 Trail mode fails to erase the whirlies as they move, so they leave a
 multicoloured trail behind. Doesn't work if the doubled buffered mode
 is using the X server's double buffer extension, and the useDBEclear 
 resource is true (which it is by default).
 .TP 8
-.B \-speed \flint\fP
+.B \-speed \fIint\fP
 Specifies how fast to cycle through the internal time. Values 1,2 and
 3 look ok, up to 10 is not too bad, but beyond ends up
 flickery. Adjust xspeed and yspeed instead.
 .TP 8
-.B \-start_time \flint\fP
+.B \-start_time \fIint\fP
 Where in the internal time cycle to start. Ranges from 1 to 429496729,
 Defaults to a random value.
 .TP 8
-.B \-xoffset \flfactor\fP
+.B \-xoffset \fIfactor\fP
 Tell the whirlies to be offset by this factor of a sin.
 Defaults to 1.0
 .TP 8
-.B \-yoffset \flfactor\fP
+.B \-yoffset \fIfactor\fP
 Tell the whirlies to be offset by this factor of a cos.
 Defaults to 1.0
 .TP 8
-.B \-offset_period \flfactor\fP
+.B \-offset_period \fIfactor\fP
 Change the period of an offset cycle
 Defaults to 1
 .TP 8
-.B \-color_modifier \flint\fP
+.B \-color_modifier \fIint\fP
 How many colors away from the current should the next whirly be?
 .TP 8
-.B \-wrap \fl1|0\fP
+.B \-wrap \fI1|0\fP
 Causes whirlies that fall off the edge of the screen to wrap over to
 the other end of the screen. Otherwise they disappear and new ones
 to materialize on the other side of the screen. The difference is

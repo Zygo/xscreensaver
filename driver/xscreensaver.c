@@ -1598,10 +1598,12 @@ clientmessage_response (saver_info *si, Window w, Bool error,
 static void
 bogus_clientmessage_warning (saver_info *si, XEvent *event)
 {
+  saver_preferences *p = &si->prefs;
   char *str = XGetAtomName_safe (si->dpy, event->xclient.message_type);
   Window w = event->xclient.window;
   char wdesc[255];
   int screen = 0;
+  Bool root_p = False;
 
   *wdesc = 0;
   for (screen = 0; screen < si->nscreens; screen++)
@@ -1613,8 +1615,18 @@ bogus_clientmessage_warning (saver_info *si, XEvent *event)
     else if (w == RootWindow (si->dpy, screen))
       {
         strcpy (wdesc, "root");
+        root_p = True;
         break;
       }
+
+  /* If this ClientMessage was sent to the real root window instead of to the
+     xscreensaver window, then it might be intended for someone else who is
+     listening on the root window (e.g., the window manager).  So only print
+     the warning if: we are in debug mode; or if the bogus message was
+     actually sent to one of the xscreensaver-created windows.
+   */
+  if (root_p && !p->debug_p)
+    return;
 
   if (!*wdesc)
     {

@@ -141,6 +141,13 @@ convert_ximage_to_rgba32 (Screen *screen, XImage *image)
                              0);
   to->data = (char *) calloc (to->height, to->bytes_per_line);
 
+  /* Set the bit order in the XImage structure to whatever the
+     local host's native bit order is.
+   */
+  to->bitmap_bit_order =
+    to->byte_order =
+    (bigendian() ? MSBFirst : LSBFirst);
+
   if (visual_class (screen, visual) == PseudoColor ||
       visual_class (screen, visual) == GrayScale)
     {

@@ -14,6 +14,7 @@ ripples - interference patterns.
 [\-water]
 [\-stir]
 [\-oily]
+[\-grayscale]
 [\-colors \fInumber\fP]
 [\-no-shm]
 .SH DESCRIPTION
@@ -52,6 +53,11 @@ Moving Splashes.  Boolean.
 .TP 8
 .B \-oily | \-no-oily
 Psychedelic Colors.  Boolean.
+.TP 8
+.B \-grayscale
+Convert the screen image to grayscale.
+Ignored if we don't grab the screen image or if our screen doesn't have
+enough color depth.
 .TP 8
 .B \-colors \fInumber\fP
 Colors Two.  Default: 200.

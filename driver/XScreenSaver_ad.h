@@ -127,7 +127,6 @@
 				triangle -root -delay 1			    \\n\
 -				worm -root				    \\n\
 -				rotor -root				    \\n\
--				ant -root				    \\n\
 -				demon -root				    \\n\
 -				loop -root				    \\n\
 -				vines -root				    \\n\
@@ -219,6 +218,7 @@
 				fireworkx -root				    \\n\
 				fiberlamp -root				    \\n\
 				boxfit -root				    \\n\
+				celtic -root				    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
 				webcollage -root -filter		      \
@@ -302,6 +302,10 @@
 	   GL:			tangram -root				    \\n\
 	   GL:			crackberg -root -flat -lit -crack	      \
 				 -color random				    \\n\
+	   GL:			glhanoi -root				    \\n\
+	   GL:			cube21 -root -colormode six		    \\n\
+	   GL:			timetunnel -root			    \\n\
+	   GL:			juggler3d -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -414,4 +418,5 @@
 "*hacks.memscroller.name:    MemScroller",
 "*hacks.boxfit.name:         BoxFit",
 "*hacks.fliptext.name:       FlipText",
+"*hacks.glhanoi.name:        GLHanoi",
 "*hacks.documentation.isInstalled: True",

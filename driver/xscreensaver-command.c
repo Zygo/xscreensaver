@@ -23,13 +23,21 @@
 # include <unistd.h>
 #endif
 
-#include <X11/Xproto.h>		/* for CARD32 */
+/* #include <X11/Xproto.h>	/ * for CARD32 */
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xutil.h>		/* for XGetClassHint() */
 #include <X11/Xos.h>
 
 #include <X11/Intrinsic.h>	/* only needed to get through xscreensaver.h */
+
+
+/* You might think that to read an array of 32-bit quantities out of a
+   server-side property, you would pass an array of 32-bit data quantities
+   into XGetWindowProperty().  You would be wrong.  You have to use an array
+   of longs, even if long is 64 bits (using 32 of each 64.)
+ */
+typedef long PROP32;
 
 #include "remote.h"
 #include "version.h"
@@ -325,7 +333,7 @@ watch (Display *dpy)
   Window window = RootWindow (dpy, 0);
   XWindowAttributes xgwa;
   XEvent event;
-  CARD32 *last = 0;
+  PROP32 *last = 0;
 
   if (v) free (v);
   XGetWindowAttributes (dpy, window, &xgwa);
@@ -357,7 +365,7 @@ watch (Display *dpy)
               char *s;
               Bool changed = False;
               Bool running = False;
-              CARD32 *data = (CARD32 *) dataP;
+              PROP32 *data = (PROP32 *) dataP;
 
               if (type != XA_INTEGER || nitems < 3)
                 {

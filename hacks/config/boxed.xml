@@ -13,6 +13,18 @@
           _label="Motion Speed" _low-label="Slow" _high-label="Fast"
           low="0.001" high="4.0" default="0.5"/>
 
+  <number id="balls" type="slider" arg="-balls %"
+          _label="Number of Balls" _low-label="Few" _high-label="Lots"
+          low="3" high="40" default="10"/>
+
+  <number id="ballsize" type="slider" arg="-ballsize %"
+          _label="Ball Size" _low-label="Tiny" _high-label="Huge"
+          low="1.0" high="5.0" default="3.0"/>
+
+  <number id="explosion" type="slider" arg="-explosion %"
+          _label="Explosion Force" _low-label="Popcorn" _high-label="Nuke"
+          low="1.0" high="50.0" default="25.0"/>
+
   <hgroup>
    <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
    <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>

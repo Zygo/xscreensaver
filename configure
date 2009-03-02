@@ -7167,6 +7167,15 @@ echo "$as_me:$LINENO: result: $ac_macosx" >&5
 echo "${ECHO_T}$ac_macosx" >&6
 
 
+if test "$ac_macosx" = yes; then
+  if test -n "$GCC"; then
+    # Without these, every link against libGL gets a bunch of useless warnings.
+    osx_crud="-bind_at_load -multiply_defined suppress"
+    echo "$as_me:$LINENO: result: adding \"$osx_crud\" to LDFLAGS" >&5
+echo "${ECHO_T}adding \"$osx_crud\" to LDFLAGS" >&6
+     LDFLAGS="$LDFLAGS $osx_crud"
+  fi
+fi
 
 ###############################################################################
 #
@@ -14387,7 +14396,6 @@ echo $ECHO_N "checking for $login_manager_tmp... $ECHO_C" >&6
       if test -x "$login_manager_tmp" ; then
         echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
-        with_login_manager="$login_manager_tmp"
       else
         echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
@@ -14695,6 +14703,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_gtk_config_libs" >&5
 echo "${ECHO_T}$ac_cv_gtk_config_libs" >&6
   fi
+
   ac_gtk_config_cflags=$ac_cv_gtk_config_cflags
   ac_gtk_config_libs=$ac_cv_gtk_config_libs
 
@@ -16112,7 +16121,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 16119 "configure"
+#line 16128 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -16983,6 +16992,7 @@ fi
 echo "$as_me:$LINENO: result: $ac_cv_gdk_pixbuf_config_libs" >&5
 echo "${ECHO_T}$ac_cv_gdk_pixbuf_config_libs" >&6
   fi
+
   ac_gdk_pixbuf_config_cflags=$ac_cv_gdk_pixbuf_config_cflags
   ac_gdk_pixbuf_config_libs=$ac_cv_gdk_pixbuf_config_libs
 
@@ -18378,6 +18388,7 @@ echo "$as_me:$LINENO: result: $ac_cv_lib_util_forkpty" >&5
 echo "${ECHO_T}$ac_cv_lib_util_forkpty" >&6
 if test $ac_cv_lib_util_forkpty = yes; then
   PTY_LIBS="-lutil"
+                ac_have_forkpty=yes
                 cat >>confdefs.h <<\_ACEOF
 #define HAVE_FORKPTY 1
 _ACEOF
@@ -18389,6 +18400,102 @@ fi
 #  LIBS="$ac_save_LIBS"
 
 
+if test "$ac_have_forkpty" != yes ; then
+  # we don't need (or have) -lutil on MacOS 10.4.2...
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  echo "$as_me:$LINENO: checking for forkpty in -lc" >&5
+echo $ECHO_N "checking for forkpty in -lc... $ECHO_C" >&6
+if test "${ac_cv_lib_c_forkpty+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lc  $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char forkpty ();
+int
+main ()
+{
+forkpty ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_c_forkpty=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_lib_c_forkpty=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_c_forkpty" >&5
+echo "${ECHO_T}$ac_cv_lib_c_forkpty" >&6
+if test $ac_cv_lib_c_forkpty = yes; then
+  PTY_LIBS=""
+                  cat >>confdefs.h <<\_ACEOF
+#define HAVE_FORKPTY 1
+_ACEOF
+
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+fi
 
 ###############################################################################
 #
