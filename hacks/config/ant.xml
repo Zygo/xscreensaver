@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="ant" _label="Ant">
+
+  <command arg="-root"/>
+
+  <boolean id="sharpturn" _label="Sharp Turns" arg-set="-sharpturns"/>
+
+  <boolean id="truchet" _label="Truchet Lines" arg-set="-truchet"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="1000"
+          convert="invert"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Timeout" _low-label="Small" _high-label="Large"
+          low="0" high="800000" default="40000"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Ants Count" low="-20" high="20" default="-3"/>
+
+  <number id="size" type="spinbutton" arg="-size %"
+           _label="Ant Size" low="-18" high="18" default="-12"/>
+
+  <select id="neighbors">
+    <option id="rand" _label="Random Cell Shape"/>
+    <option id="three" _label="Three Sided Cells" 
+            arg-set="-neighbors 3"/>
+    <option id="four" _label="Four Sided Cells"
+            arg-set="-neighbors 4"/>
+    <option id="six" _label="Six Sided Cells" enable="sharpturn"
+            arg-set="-neighbors 6"/>
+    <option id="nine" _label="Nine Sided Cells"
+            arg-set="-neighbors 9"/>
+    <option id="twelve" _label="Twelve Sided Cells" enable="sharpturn"
+            arg-set="-neighbors 12"/>
+  </select>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="2" high="255" default="64"/>
+
+  <_description>
+A cellular automaton that is really a two-dimensional Turing machine:
+as the heads (``ants'') walk along the screen, they change pixel
+values in their path.  Then, as they pass over changed pixels, their
+behavior is influenced.  Written by David Bagley.
+  </_description>
+</screensaver>

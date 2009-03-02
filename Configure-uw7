@@ -1,0 +1,15 @@
+#!/bin/sh
+
+HOST=i486-pc-sysv5
+
+[ -f mout-config ] && mv mout-config mout-config$$
+
+CC="cc"
+CPP="$CC -E"
+CFLAGS="-Xa -Dasm=__asm -DANSICPP -O3 -Kalloca -I/usr/local/include -L/usr/local/lib"
+CXX="CC"
+CXXFLAGS="-O3 -I/usr/local/include -L/usr/local/lib"
+RANLIB=true
+MAKE=/usr/local/bin/make
+export CC CPP CXX RANLIB MAKE CFLAGS CXXFLAGS
+./configure-uw7 --enable-locking $HOST 2>&1 | tee mout-config

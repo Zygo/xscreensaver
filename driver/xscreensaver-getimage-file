@@ -1,0 +1,225 @@
+#!/usr/local/bin/perl -w
+# Copyright © 2001, 2002 Jamie Zawinski <jwz@jwz.org>.
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+#
+# This program attempts to locate a random image from the specified directory,
+# and load it on to the root window, using some other program that can decode
+# image files.  (It attempts to find such a program.)
+#
+# The various xscreensaver hacks that manipulate images ("slidescreen",
+# "jigsaw", etc.) get the image to manipulate by running the
+# "xscreensaver-getimage" program.
+#
+# "xscreensaver-getimage" will invoke this program, depending on the
+# value of the "chooseRandomImages" and "imageDirectory" settings in
+# the ~/.xscreensaver file (or /usr/lib/X11/app-defaults/XScreenSaver).
+#
+# Created: 12-Apr-01.
+
+require 5;
+use diagnostics;
+use strict;
+
+use POSIX;
+use Fcntl;
+
+# use Fcntl ':mode';   # Perl 5.6ism?
+use POSIX ':fcntl_h';  # more portable?
+
+
+my $progname = $0; $progname =~ s@.*/@@g;
+my $version = q{ $Revision: 1.8 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+
+my $verbose = 0;
+
+# These are programs that can be used to put an image file on the root
+# window (including virtual root windows.)  The first one of these programs
+# that exists on $PATH will be used (with the file name as the last arg.)
+#
+# If you add other programs to this list, please let me know!
+#
+my @programs = (
+  "chbg       -once -xscreensaver -max_grow 4 -max_size 100",
+  "xv         -root -quit -viewonly -maxpect -noresetroot -quick24 -rmode 5" .
+  "           -rfg black -rbg black",
+  "xli        -quiet -fullscreen -onroot -center -border black",
+  "xloadimage -quiet -fullscreen -onroot -center -border black",
+
+# this lame program wasn't built with vroot.h:
+# "xsri       -scale -keep-aspect -center-horizontal -center-vertical",
+);
+
+sub pick_displayer {
+  my @names = ();
+
+  foreach my $cmd (@programs) {
+    $_ = $cmd;
+    my ($name) = m/^([^ ]+)/;
+    push @names, "\"$name\"";
+    print STDERR "$progname: looking for $name...\n" if ($verbose > 2);
+    foreach my $dir (split (/:/, $ENV{PATH})) {
+      print STDERR "$progname:   checking $dir/$name\n" if ($verbose > 3);
+      return $cmd if (-x "$dir/$name");
+    }
+  }
+
+  $names[$#names] = "or " . $names[$#names];
+  printf STDERR "$progname: none of: " . join (", ", @names) .
+                " were found on \$PATH.\n";
+  exit 1;
+}
+
+
+my @all_files = ();
+my %seen_inodes;
+
+sub find_all_files {
+  my ($dir) = @_;
+
+  print STDERR "$progname: reading dir $dir/...\n" if ($verbose > 2);
+
+  local *DIR;
+  if (! opendir (DIR, $dir)) {
+    print STDERR "$progname: couldn't open $dir: $!\n";
+    return;
+  }
+  my @files = readdir (DIR);
+  closedir (DIR);
+
+  my @dirs = ();
+
+  foreach my $file (@files) {
+    next if ($file =~ m/^\./);      # ignore dot files
+    next if ($file =~ m/[~%\#]$/);  # ignore backup files
+    next if ($file =~ m/\.(BAK|bak|tmp|orig|rej|rpmsave)$/);
+    next if ($file eq "core");
+
+    $file = "$dir/$file";
+    my @st = stat($file);
+    my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
+        $atime,$mtime,$ctime,$blksize,$blocks) = @st;
+
+    if ($#st == -1) {
+      if ($verbose) {
+        my $ll = readlink $file;
+        if (defined ($ll)) {
+          print STDERR "$progname: dangling symlink: $file -> $ll\n";
+        } else {
+          print STDERR "$progname: unreadable: $file\n";
+        }
+      }
+      next;
+    }
+
+    next if ($seen_inodes{$ino}); # break symlink loops
+    $seen_inodes{$ino} = 1;
+
+    if (S_ISDIR($mode)) {
+      push @dirs, $file;
+      print STDERR "$progname:   found dir  $file\n" if ($verbose > 2);
+    } elsif (S_ISREG($mode) || S_ISLNK($mode)) {
+      push @all_files, $file;
+      print STDERR "$progname:   found file $file\n" if ($verbose > 2);
+    } elsif ($verbose > 2) {
+      print STDERR "$progname:   nonreg $file\n";
+    }
+  }
+
+  foreach (@dirs) {
+    find_all_files ($_);
+  }
+}
+
+
+sub find_random_file {
+  my ($dir) = @_;
+
+  $dir =~ s@/+$@@g;
+
+  print STDERR "$progname: recursively reading $dir...\n" if ($verbose > 1);
+  find_all_files ($dir);
+  print STDERR "$progname: found " . ($#all_files+1) . " files\n"
+    if ($verbose > 1);
+
+  @all_files = sort(@all_files);
+
+  if ($#all_files < 0) {
+    print STDERR "$progname: no files in $dir\n";
+    exit 1;
+  }
+
+  my $n = int (rand ($#all_files + 1));
+  my $file = $all_files[$n];
+
+  print STDERR "$progname: chose file $n: $file\n" if ($verbose > 1);
+  return $file;
+}
+
+
+
+sub display_file {
+  my ($file, $displayer) = @_;
+
+  if (!defined($displayer)) {
+    print STDOUT "$file\n";
+  }  else {
+    my @cmd = split (/ +/, $displayer);
+    push @cmd, $file;   # do it this way to allow file names with spaces.
+    print STDERR "$progname: executing \"" . join(" ", @cmd) . "\"\n"
+      if ($verbose);
+    exec (@cmd) || die;
+  }
+}
+
+
+sub find_and_display {
+  my ($dir, $displayer) = @_;
+  my $file = find_random_file ($dir);
+  display_file ($file, $displayer);
+}
+
+
+sub usage {
+  print STDERR "usage: $progname [--verbose] [--name] directory\n";
+  print STDERR "Puts a randomly selected image on the root window.\n";
+  print STDERR "With --name, merely prints the filename to stdout.\n";
+  exit 1;
+}
+
+sub main {
+  my $dir = undef;
+  my $do_name = 0;
+
+  while ($_ = $ARGV[0]) {
+    shift @ARGV;
+    if ($_ eq "--verbose") { $verbose++; }
+    elsif (m/^-v+$/) { $verbose += length($_)-1; }
+    elsif ($_ eq "--name") { $do_name++; }
+    elsif (m/^-./) { usage; }
+    elsif (!defined($dir)) { $dir = $_; }
+    else { usage; }
+  }
+
+  usage unless (defined($dir));
+  my $displayer = undef;
+
+  $displayer = pick_displayer() unless $do_name;
+
+  if (-d $dir) {
+    find_and_display ($dir, $displayer);
+  } elsif (-f $dir) {
+    display_file ($dir, $displayer);
+  } else {
+    usage();
+  }
+}
+
+main;
+exit 0;
