@@ -1,0 +1,28 @@
+README xglock - February 15, 2005
+=================================
+
+What is it ?
+------------
+This is the GTK/GTK2 GUI to xlock(more).
+As of today it is intended to be compiled with glib2/gtk+2.
+
+Author
+------
+Latest change (mainly GTK2 and a new logo) are all
+by Eric Lassauge <lassauge AT users.sourceforge.net> (approx since 1999 !)
+
+
+Original README:
+================
+Authors: Charles Vidal <vidalc AT club-internet.fr>
+         Remi Cohen-Scali <r.cohenscali AT pobox.com>
+         Eric Lassauge <lassauge AT users.sourceforge.net>
+
+Status: under construction
+
+This used GNU's GTK but now the fontsel widget have been
+integrated into GTK (since between 1.1 & 1.2 ?).
+The xlockmore package does not need the gtkfontsel
+library anymore. The root configure script has been modified.
+		Thank You !
+						R. Cohen-Scali
