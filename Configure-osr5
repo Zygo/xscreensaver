@@ -1,0 +1,38 @@
+#!/bin/sh
+#
+# Configure-osr5 - a front-end to configure for use on SCO OpenServer 5
+#
+# To build with gcc, invoke as Configure-gcc
+#
+
+CFLAGS="-O -I/usr/local/include"
+CPPFLAGS="-I/usr/local/include"
+LDFLAGS="-L/usr/local/lib"
+RANLIB=/bin/true
+M4=/usr/local/bin/m4
+LD="ld -belf"
+INSTALL="/usr/local/bin/install -c"
+TCL_PREFIX=/usr/local
+TK_PREFIX=/usr/local
+AS=/bin/as
+
+MYNAME=`basename $0`
+
+if [ "$MYNAME" = "Configure-gcc" ]
+then
+	echo "Configuring with gcc"
+	CC="gcc -melf $CFLAGS"
+else
+	CC="cc -belf $CFLAGS"
+	CXX="CC -belf $CFLAGS"
+	OPTIMIZE_FLAGS=
+	export OPTIMIZE_FLAGS
+fi
+
+MAKE=/usr/local/bin/make
+RANLIB=true
+
+export AS CC CPPFLAGS LDFLAGS LD INSTALL RANLIB M4 TCL_PREFIX TK_PREFIX
+export CXX MAKE CFLAGS
+
+./configure-osr5 --host=i486-pc-sco3.2v5.0 --target=i486-pc-sco3.2v5.0 $*

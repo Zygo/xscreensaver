@@ -1,0 +1,575 @@
+
+
+			The xlock Hacker's Guide
+			      Ron Hitchens
+
+
+INTRODUCTION
+
+   This document is meant to serve as a guide for those who wish to hack
+xlock; to make changes, add new modes, fix bugs, etc.  The intent is to
+explain non-obvious things about how the various pieces of xlock
+are organized, to help the casual hacker avoid common coding mistakes
+and to stay away from "off limits" parts of xlock.
+
+
+What Is Xlock?
+
+   Xlock is an application for the X Window system which will cover up
+one or more X screens to prevent access.  It may be run manually by a
+user to lock the display or, more commonly, xlock may be run automatically
+by a daemon utility after a period of inactivity.
+
+   Xlock creates a "blanket" window to cover the entire screen, and also
+grabs the X server to prevent access by external clients.  When the
+user presses a key or clicks a mouse button, xlock will prompt for a
+password.  When the proper password is provided, xlock releases the
+server and removes its blanket window.
+
+   While xlock has the display locked, it runs one or more "modes" which
+are code modules that draw various things on the xlock window.  These
+modes act as screen savers.  They attempt to provide amusing and/or
+entertaining displays, while avoiding static imagery which could lead
+to screen phosphor "burn-in".
+
+   The xlock application began life at Sun Microsystems many years
+ago.  It was written by Patrick J. Naughton and was much simpler then.
+That original xlock is almost ubiquitous in the X Windows world.  This
+distribution, known as xlockmore, is maintained by David Bagley and
+is not officially connected with the original xlock, (although it
+received Patrick's blessing).  Major enhancements have been made to
+xlock - many, many new modes have been added and significant structural
+changes have been made.  This document will attempt to inform you of
+how xlock is structured and how the pieces fit together.
+
+
+ORGANIZATION
+
+   Xlock is organized into two basic parts: the "mainline" code, which
+handles startup, window creation, passwords, etc, and the modes,
+which are self-contained modules that draw things on the window(s)
+provided by the mainline code.
+
+   The code which makes up an xlock mode is accessed through a few
+well-defined callback functions, or "hooks".  The mode should not
+concern itself with anything not provided to it via these hooks.
+As of the xlockmore-3.8 release, these hooks have been restructured
+to provide all the environmental information a mode needs to do its
+task.  Prior to this, it was necessary for the modes to access global
+variables.  This is no longer condoned, it is now strongly suggested
+that modes only trust the passed-in information.  These globals will
+probably go away once all the naive modes have been updated.
+
+
+MAINLINE CODE
+
+   The mainline xlock code is concerned with preventing unauthorized
+access to the X server and creating the environment in which the modes
+run.  It also calls the hooks for the current mode in response to
+external events and timing intervals.  The mainline code keeps track
+of the clock and determines when to make calls to a mode.
+
+        < unfinished >
+
+MODES
+
+   The primary focus of this document is writing and maintaining
+modes.  The remainder will be concerned with how to write a mode,
+how a mode accesses the display, what a mode should not do, etc.
+
+
+HOOKS
+
+   Xlock modes are driven entirely through their externally visible
+hook functions.  There are currently five hooks defined, with a sixth
+reserved for future expansion.  The first two, init and callback, are
+the same as in older versions of xlock.  The release, refresh and
+change hooks are new to xlockmore-3.8:
+
+	o init   This hook will be called to prepare a mode for running.
+		The mode should allocate resources, establish its
+		initial state, etc.  This hook may be called
+		multiple times, and the window and/or screen
+		values may be different each time.
+
+	o callback  This is the main driver hook for a mode.  It
+		is called repeatedly, at a time interval determined
+		by defaults or command line arguments.  A mode sees
+		each call as one "tick", it may chose to do something
+		on every tick, or count the calls and only update
+		the screen periodically.  A mode should not spend a
+		lot of time executing the callback function.  If it
+		has a lot of screen updating to do, it should spread
+		the work across multiple calls.  A mode can depend
+		on the init hook being called at least once before
+		the callback hook is called.  But it should not depend
+		on the callback hook ever being called following an init.
+
+	o release  This hook will be called when some other mode is
+		about to be initialized, or when xlock is shutting
+		down.  This hook should free up any long-lived, 
+		dynamically allocated resources the mode has acquired.
+		This would include memory and X resources, such as
+		Pixmaps and GCs.
+
+	o refresh  This hook is called when the drawing window may have
+		been damaged.   It should take steps to repaint the
+		window.  No information about which part(s) of the
+		window have been damaged is provided.  The mode should
+		repaint the entire window.  If no refresh hook is
+		provided, the init hook will be called when a refresh
+		is needed.
+
+	o change  This hook is called when the user requests a change.
+		In the current implementation, this is when the user
+		clicks the middle mouse button.  This hook is currently
+		only used by the random mode, it means to move on to
+		the next mode (random mode runs other modes as slaves).
+		A mode is free to interpret a change request in any
+		way it likes.  The logical thing is to start over,
+		change colors, etc.
+
+
+Calling Conventions
+
+   The prototype for a mode hook is defined in mode.h, and looks like
+this:
+
+	void mode_hook (ModeInfo *mode_info)
+
+   The argument, a pointer to a ModeInfo structure, contains
+all the context information a mode needs to run.  Writers of new modes
+are strongly encouraged to acquire all information they need through
+this handle.
+
+   A ModeInfo handle is provided to every hook type.  The information
+in this structure is current ONLY AT THE TIME THE HOOK IS CALLED.  The
+structure it points to is volatile and the pointer should not be cached
+by the mode.  It is also important to note that xlock may be locking
+several screens simultaneously.  The window information may not be the
+same across subsequent calls to the same callback function.  Use the
+information provided, do not look at globals, and do not stash the pointer.
+
+
+The Init Hook
+
+   A mode's init hook will be called whenever the mainline code wants
+to inform a mode it is about to run on a particular window.  The mainline
+xlock code will only run one mode at a time, but it may be running that
+mode on several screens at once.  It is therefore possible for the init
+hook to be called several times, each with a different window context,
+before its callback hook is run.  An init hook should not assume the
+window provided is the window to be used by the next call to the
+callback hook.  Depending on the nature of the mode, it may be
+necessary to maintain several sets of state information, one for each
+screen.
+
+   The number of active screens, and the maximum possible number of
+screens are provided in the ModeInfo struct.  Modes are encouraged
+to look at this information and allocate data structures dynamically.
+The number of active screens will not change during an xlock run.
+A global symbol, MAXSCREENS, is defined in xlock.h but programmers
+are strongly urged not to use this or any other fixed value.  If
+you use only the information passed to the hooks, your code will
+always be correct.
+
+   An init hook should also be prepared to be called at any time.  The
+mainline xlock code changes window configuration in response to user
+input, and may call the init hook in place of a missing refresh hook.
+An init hook should therefore not expect to be balanced with a call
+to the release hook.  The init hook should not allocate resources on
+each call, it should track its allocations to make sure they are only
+done once.
+
+   Neither should an init hook depend on the callback hook ever being
+called.  It's possible a call to the init hook may be followed by another
+call to the init hook, or a call to the release hook without an intervening
+call to the callback hook.
+
+   An init hook may be called twice in a row, and will be if more than
+one screen is being locked.  To avoid unexpected glitches on-screen,
+it is recommended that you do not draw anything to the screen during
+the init hook.  Save the drawing for the callback hook, with appropriate
+status information if an initial screen paint is needed.
+
+   Be careful not to blindly do dynamic allocations in your init hook,
+keep track of your allocations and only do the necessary state reset
+each time.  Track your allocations so they can be undone by the release
+hook at a later time.
+
+   The init hook will be called for each screen before the callback
+hook is called for any screen.
+
+
+The Callback Hook
+
+   The callback hook is the method by which a mode runs.  The mainline
+code calls a mode's callback hook periodically, usually on a fixed time
+schedule, and checks for user input between each call.
+
+   The time interval between calls to the callback hook is set by a
+field in the LockStruct entry for the mode (see mode.h and mode.c).
+This value may also be set by the user on the command line, or via
+an X resource.  The mainline code attempts to keep the time interval
+between the *beginning* of each call constant.  The time spent executing
+the mode's callback hook is subtracted from the interval to keep the
+ticks as constant as possible.  This is hardly perfect, but an effort
+is made to remain as accurate as is possible on a multi-tasking system.
+
+   A mode should therefore not spend a large amount of time executing 
+in the callback hook.  While in the callback, the mainline code cannot
+respond to external events from the user.  It is preferable for a
+callback hook to do a little bit of the work on each call, rather than
+a complete update each time.
+
+   A callback should pay attention to the context information passed
+to it.  On multi-headed displays, the callback may be called successively
+for each screen on the display.  It may be necessary to maintain
+state information which is indexed by the given screen number, rather
+than simply using local static variables.
+
+   The screen number is provided by the ModeInfo argument and will
+range from 0 to n, where n is the number of active screens minus one.
+There will always be a screen 0.  A mode wishing to paint the same
+imagery one each screen should do the same thing each time the callback
+is called, and advance its state when the screen number is 0.  However,
+the window may not be the same size on every screen.  Do not assume it is.
+
+   A call to the callback hook is not guaranteed following an init call
+for a given screen, but at least one init call is guaranteed before the
+first callback call.  If the window size changes, as when the icon
+window is presented to prompt for the password, an init call
+will be made with the new window information.  A mode should
+always use the window information passed to it rather than caching
+information passed to the init hook, but it can use the information
+passed to the init hook to setup its own data structures and rely
+on the information matching the next callback call, *for that screen*.
+
+
+The Release Hook
+
+   This hook is new to release 3.8.  The release hook will be called by
+the mainline code when it is about to call the init hook of another mode,
+and your init hook has been called at least once since the last call
+to your release hook.
+
+   The release hook should undo any dynamic allocations done by the
+init hook, or anything else that needs to be done to make the mode
+inactive.  Once the release hook returns, the mode is marked as not
+initialized.  If your mode is never initialized again, no further
+calls to any of its hooks will be made.  The release hook is where
+you must surrender any resources that only your mode knows about.
+
+   The release hook is called ONLY ONCE.  It will not be called
+for each screen like most of the other hooks.  A mode should not
+access any of the window information, other that the display handle
+and number of active screens.
+
+   Once the release hook has been called the mode is considered
+to be inactive, the same as if it had never been run at all.
+
+  < Final call at shutdown?? >
+
+
+The Refresh Hook
+
+   This hook is new to release 3.8.  The refresh hook is called when
+the mainline suspects the window may have been damaged.
+
+   When running in "inwindow" mode (xlock runs in a plain window, not locking)
+this may happen when windows are shuffled by the user.  It may also happen
+when in normal full-screen mode and some new window appears on the display.
+In this case, xlock immediately pushes itself to the top, to cover the
+new window.  However, the temporary appearance of the new window may
+have left a "hole" on the display.  The refresh hook should take steps
+to repaint the entire display whenever it is called.
+
+   It will also be called when the window is first mapped.  However,
+a mode should not depend on a refresh call to do its initial screen
+paint.  When running random mode, other modes will be stopped and started
+on the same window, with no intervening refresh call.  A mode should
+usually do a full paint on the first callback following an init call.
+It is a good strategy to have the refresh hook simply set a status flag
+(or whatever) to cause the next callback call to do a full repaint.  This
+would be similar to an init, but internal state would not be reset.
+
+   If no refresh hook is provided for your mode (configured in mode.c),
+then your init hook will be called in place of the refresh hook.  The
+refresh hook is provided so your mode can repair window damage
+without losing the internal state of the mode.
+
+   As of this writing, there is a hack in place which will prevent a
+second call to the init hook (in place of a refresh) if the callback
+hook has not been called since the last init call for that screen.
+This causes undesirable behavior in some naive modes.  It is expected
+this hack will be removed.  Modes should be prepared for their init
+hooks to be called at any time, even repeatedly.
+
+
+The Change Hook
+
+   This hook is new to release 3.8.  It is called when the user requests
+a change.  This is currently in response to a click on the middle mouse
+button.
+
+   In the case of random mode, which runs other modes, it means to
+move on to the next mode without waiting for the time to expire.  Other
+modes are free to interpret this call in way they choose.  If no change
+hook is provided for a mode, no action will be taken when the middle mouse
+button is clicked.
+
+   This hook will be called once for each active screen when a change
+request is made.
+
+
+Hook Calling Sequence
+
+   A typical sequence of calls when running on two screens would be:
+
+	init [screen 0]
+	init [screen 1]
+	refresh [screen 0]	(caused by first mapping the window)
+	refresh [screen 1]
+	callback [screen 0]
+	callback [screen 1]
+	callback [screen 0]
+	callback [screen 1]
+	...
+	refresh [screen 0]	(caused by window damage)
+	refresh [screen 1]
+	callback [screen 0]
+	callback [screen 1]
+	...
+	init [screen 0]		(switch to icon screen)
+	callback [screen 0]
+	callback [screen 1]
+	...
+
+
+HANDS OFF THOSE GLOBALS
+
+   All the environmental information a mode needs is provided to the
+hook functions via the ModeInfo passed as an argument.  But prior to
+the restructuring done in xlockmore-3.8, much of this information
+had to be accessed directly from global variables.  Listed here are
+the globals which correspond to the information passed in ModeInfo.
+You should not access these variables directly (they will go away),
+nor should you use these names for local variables.  The first column
+is the global name, the second column is the macro to use to get
+the same information from the ModeInfo argument (see mode.h):
+
+   These variables pertain to the X screen
+	dsp		MI_DISPLAY	handle to the X server display.
+	screen		MI_SCREEN	Current screen number
+	Scr		MI_PERSCREEN	perscreen struct ptr for curr screen
+	Scr[n].gc	MI_GC		gc handle for current screen
+	Scr[n].npixels	MI_NPIXELS	num available pixels for curr screen
+	Scr[n].cmap	MI_CMAP		colormap handle for current screen
+	Scr[n].pixels	MI_PIXELS	pixel array for current screen
+	Scr[n].pixels[i] MI_PIXEL	a given pixel in the pixel array
+
+   These variables control execution, set by cmd line or resources
+	delay		MI_DELAY	time (microsecs) between callbacks
+	batchcount	MI_BATCHCOUNT	batchcount value
+	cycles		MI_CYCLES	cycles value
+	saturation	MI_SATURATION	colormap saturation value
+
+   These variables are booleans, usually set by cmd line:
+	mono		MI_WIN_IS_MONO	use only B&W (can be set for color)
+	inwindow	MI_WIN_IS_INWINDOW  running in regular window
+	inroot		MI_WIN_IS_INROOT  running in the root window
+
+   The MI_WIN_IS_MONO flag will be true if the global "mono" is set
+(which can be specified on the command line for color displays) or
+if the screen is a monochrome device.  It IS possible to have both
+color and monochrome screens at the same time.  Use the passed-in
+information on a screen-by-screen basis, do not assume they are all
+the same.
+
+   There are several other global booleans in resource.c.  These will
+probably be eliminated in future releases.  Do not access them directly.
+They should not be of interest to a mode anyway, but be careful not to
+use those names in your own code.
+
+
+PLUGGING A NEW MODE INTO XLOCK
+
+   The code making up a mode should be self-contained.  A mode should
+hide all of its internal variables and functions.  Only the hook functions
+and one configuration variable should be visible outside the module
+the mode is defined in.  Because there are some many code modules
+compiled into xlock, written by many different people, the chance
+of naming conflicts is quite high.  Keep all your local stuff local.
+
+   The nexus where the mainline xlock code connects to the individual
+modes is in the file mode.c.  It contains an array of pre-initialized
+LockStruct structures named LockProcs.  This struct is currently
+defined as:
+
+	typedef struct LockStruct_s {
+		char       *cmdline_arg;	/* mode name */
+		ModeHook   *init_hook;		/* func to init a mode */
+		ModeHook   *callback_hook;	/* func to run (tick) a mode */
+		ModeHook   *release_hook;	/* func to shutdown a mode */
+		ModeHook   *refresh_hook;	/* tells mode to repaint */
+		ModeHook   *change_hook;	/* user wants mode to change */
+		ModeHook   *unused_hook;	/* for future expansion */
+		ModeSpecOpt *msopt;		/* this mode's def resources */
+		int         def_delay;		/* default delay for mode */
+		int         def_batchcount;
+		int         def_cycles;
+		float       def_saturation;
+		char       *desc;		/* text description of mode */
+		int         flags;		/* state flags for this mode */
+		void       *userdata;		/* for use by the mode */
+	} LockStruct;
+
+   Of these fields, the hooks and msopt are defined in the mode itself.
+The hooks are names of functions which are called as previously described.
+Init and callback hooks are required, all others are optional.
+Any hooks not provided are specified as NULL.  The field "msopt" is
+a pointer to a ModeSpecOpt struct (xlock.h).  Every mode must define
+one of these structures and make it globally visible to mode.c.  This
+structure provides a handle to X resource information that allows
+for parsing command line arguments unique to your mode and setting
+static variables private to your mode.
+	<< unfinished, see random.c for an example >>
+
+   The remaining fields of the LockStruct struct are defined directly
+in the array in mode.c.  The fields with the names def_* are the default
+values to be used when running this mode, if not overridden by command
+line arguments of resources.
+
+   The field def_delay controls how often the callback hook is called
+(specified in microseconds).
+
+   The floating point number def_saturation controls the saturation of
+the colormap to allocate.  This controls how the color ramp is 
+populated (<<unfinished: how?>>)
+
+   The other two default values, def_batchcount and def_cycles, are
+for use by the mode.  They can be used to control how many thingys
+to draw at once, how often to restart, etc.  These values can be
+specified at run time which allows the user to affect how a mode runs.
+
+   The text pointers cmdline_arg and desc are used when printing
+command line help.  They provide the simple name and a more verbose
+short description.
+
+   The flags field should always be set to zero, it is used internally
+to keep track of state information.
+
+   The last field, userdata, is for use by the mode.  The mode may use
+this generic pointer for any purpose it likes.  The mainline code will
+never touch it and it will be available to all subsequent hook calls.
+This value will survive init - release - init cycles.
+
+
+GETTING INFORMATION FROM ModeInfo
+
+   The ModeInfo structure is defined in mode.h.  It contains several
+types of information and is actually made up of several other structs.
+This structure is likely to undergo major revision in future releases,
+so macros are provided to access all the fields.  Use the macros,
+things are guaranteed to change.
+
+   Of the fields available in ModeInfo, most are copies of the same
+information available in the globals described above.  But some are new.
+Most notably, the window dimensions and black/white pixel values are
+now provided, so there is no need to make direct X library calls to
+get this information yourself.
+
+   There is also some provision for a future debugging facility to
+fake multiple screens by using multiple regular windows.  This
+code is not yet implemented.  When it is, the number returned by
+the MI_SCREEN macro may not correspond to a real X screen.  As of
+this writing, MI_SCREEN and MI_REAL_SCREEN always contain the same
+value.  Use MI_SCREEN as an index to track which window you are
+drawing to, use MI_REAL_SCREEN when calling X Windows functions
+which require actual screen numbers.  The MI_SCREENPTR pointer
+will always be valid, but identical for all faked screens.
+
+   The ModeInfo structure also provides a pointer to the LockStruct
+record that corresponds to the mode.  DO NOT MODIFY THIS STRUCTURE.
+This is provided so that you can see what your compiled in defaults
+where for delay, batchcount, cycles and saturation.  You can also
+get your own name and description and access the userdata field (it's
+ok to modify userdata, do not change anything else, use the macros).
+
+   All fields should be considered read-only, except MI_USERDATA
+and MI_PAUSE.  MI_USERDATA is not used by the mainline code, you
+can use any way you like and its value will be preserved.  However,
+the MI_PAUSE field is special.  MI_PAUSE is examined up upon return
+from your callback hook.  If it is not zero (it will be set zero
+before the call) it is interpreted as a time, in microseconds, to
+delay before making the next callback.
+
+   The MI_PAUSE mechanism is somewhat of a hack, and it is expected
+to change in future revisions of xlock.  Most probably it will be
+moved out of the ModeInfo struct and the callback return value will
+specify the delay value.  This one-time pause mechanism is also
+broken for multiple screens.  It is only noticed on the highest
+numbered screen.   Future revisions of xlock will (hopefully) fix this,
+but for now you can see how it works by looking at the code for maze
+or triangle.
+
+
+EXAMPLE
+
+   <<unfinished>>
+
+   The eyes mode (eyes.c) was written by the same author that did
+the majority of the restructuring for the new mode interface.  It
+should (hopefully) serve as a good example of a properly written
+mode.  It makes use of the new refresh and release hooks.  The
+random mode (random.c) will also illustrate the change hook and
+private resources.  The triangle mode (triangle.c) has also been
+updated to use the new scheme.  It uses the MI_PAUSE mechanism to
+sleep between scenes.
+
+------------------------
+
+   The official xlockmore maintainer is David Bagley.  He can be
+reached at bagleyd@bigfoot.com.  The current release of xlockmore
+is available by anonymous ftp at ftp.x.org in /contrib/applications.
+Alpha versions are available at
+ftp://ftp.tux.org/pub/X-Windows/xlockmore/index.html
+
+   The restructuring of the calling mechanism for mode hooks was
+done by Ron Hitchens <ron@idiom.com>.
+
+------------------------
+
+   This document written by Ron Hitchens <ron@idiom.com>
+It is still very rough and incomplete.  What you see here is
+basically the first draft, brain-dump version.  It needs to be
+polished to make it more readable, condensed to make it less
+redundant and organized to make it more cogent.  But it's a start.
+Hopefully, this will eventually be converted to LaTeX.  When
+I get some time...
+
+
+Last Update:
+Mon Mar 18 03:46:16 MST 1996
+
+
+OK now you got a working mode $file.  What auxiliary files are there to change?
+$file.c mode.c mode.h                       You must have changed already
+modes/random.c                              If its a special mode or gl mode
+modes/Makefile.in make.com modes/Imakefile  Makefiles
+modes/glx/Imakefile                         If it is a gl mode
+xlock/XLock.ad                              Resource file
+xlock/xlock.man                             The manual
+xmlock/modes.h                              Motif launcher file
+xalock/modes.h                              Athena launcher file
+etc/xlock.tcl                               TCL lanuncher file
+etc/xlockFrame.java                         Java lanuncher file
+etc/system.fvwm2rc.xlock                    fvwm2 menu
+etc/system.fvwmrc.xlock                     fvwm menu
+etc/system.olwmrc.xlock                     Openwin menu
+etc/system.mwmrc.xlock                      Motif menu
+etc/dtscreen.dt                             Screensaver actions for CDE
+etc/dtprofile                               CDE profile
+docs/Revisions                              Give credit
+docs/xlock.html                             Web reformat of manual
+docs/xlock.hlp                              VMS reformat of manual

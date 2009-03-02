@@ -1,0 +1,38 @@
+#ifndef XCOMM
+#define XCOMM /**/#
+#endif
+XCOMM @(#)Sub Imakefile	xlockmore
+XCOMM
+
+#include "../iconfig.h"
+
+top_srcdir = ..
+UTILSDIR = .
+
+XCOMM  List of object files
+XMLOCKOBJS = option$(O)$(S)xmlock$(O)
+
+XCOMM  List of source files
+XMLOCKSRCS = option$(C) xmlock$(C)
+
+
+#ifdef XmLibrary
+AllTarget(xmlock)
+NormalProgramTarget(xmlock, $(XMLOCKOBJS), $(DEPXLIB), $(MLIBS), NullParameter)
+#else
+clean::
+	$(RM) xmlock
+#endif
+
+DependTarget()
+LintTarget()
+
+#ifdef XmLibrary
+InstallProgram(xmlock$(E),$(BINDIR))
+InstallAppDefaults(XmLock)
+#endif
+
+distclean::	clean
+	$(RM) Makefile config.status config.cache config.log config.h
+
+clean.all:: distclean
