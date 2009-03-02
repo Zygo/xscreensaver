@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-1996 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -64,15 +64,15 @@
  *   and a few other things.  The included "xscreensaver_command" program
  *   sends these messsages.
  *
- *   If we don't have the XIdle or MIT-SCREENSAVER extensions, then we do the
- *   XAutoLock trick: notice every window that gets created, and wait 30
- *   seconds or so until its creating process has settled down, and then
- *   select KeyPress events on those windows which already select for
- *   KeyPress events.  It's important that we not select KeyPress on windows
- *   which don't select them, because that would interfere with event
- *   propagation.  This will break if any program changes its event mask to
- *   contain KeyRelease or PointerMotion more than 30 seconds after creating
- *   the window, but that's probably pretty rare.
+ *   If we don't have the XIdle, MIT-SCREEN-SAVER, or SGI SCREEN_SAVER
+ *   extensions, then we do the XAutoLock trick: notice every window that
+ *   gets created, and wait 30 seconds or so until its creating process has
+ *   settled down, and then select KeyPress events on those windows which
+ *   already select for KeyPress events.  It's important that we not select
+ *   KeyPress on windows which don't select them, because that would
+ *   interfere with event propagation.  This will break if any program
+ *   changes its event mask to contain KeyRelease or PointerMotion more than
+ *   30 seconds after creating the window, but that's probably pretty rare.
  *   
  *   The reason that we can't select KeyPresses on windows that don't have
  *   them already is that, when dispatching a KeyPress event, X finds the
@@ -97,10 +97,10 @@
  *   one of them if the description above sounds just too flaky to live.  It
  *   is, but those are your choices.
  *
- *   A third idle-detection option could be implement (but is not): when
+ *   A third idle-detection option could be implemented (but is not): when
  *   running on the console display ($DISPLAY is `localhost`:0) and we're on a
  *   machine where /dev/tty and /dev/mouse have reasonable last-modification
- *   times, we could just stat those.  But the incremental benefit of
+ *   times, we could just stat() those.  But the incremental benefit of
  *   implementing this is really small, so forget I said anything.
  *
  *   Debugging hints:
@@ -111,12 +111,12 @@
  *     - you probably can't set breakpoints in functions that are called on
  *       the other side of a call to fork() -- if your clients are dying 
  *       with signal 5, Trace/BPT Trap, you're losing in this way.
- *     - If you aren't using XIdle, don't leave this stopped under the
- *       debugger for very long, or the X input buffer will get huge because
- *       of the keypress events it's selecting for.  This can make your X
- *       server wedge with "no more input buffers."
+ *     - If you aren't using a server extension, don't leave this stopped
+ *       under the debugger for very long, or the X input buffer will get
+ *       huge because of the keypress events it's selecting for.  This can
+ *       make your X server wedge with "no more input buffers."
  *       
- *   ======================================================================== */
+ * ======================================================================== */
 
 #if __STDC__
 #include <stdlib.h>
@@ -134,9 +134,13 @@
 #include <X11/extensions/xidle.h>
 #endif /* HAVE_XIDLE_EXTENSION */
 
-#ifdef HAVE_SAVER_EXTENSION
+#ifdef HAVE_MIT_SAVER_EXTENSION
 #include <X11/extensions/scrnsaver.h>
-#endif /* HAVE_SAVER_EXTENSION */
+#endif /* HAVE_MIT_SAVER_EXTENSION */
+
+#ifdef HAVE_SGI_SAVER_EXTENSION
+#include <X11/extensions/XScreenSaver.h>
+#endif /* HAVE_SGI_SAVER_EXTENSION */
 
 #include "yarandom.h"
 #include "xscreensaver.h"
@@ -193,7 +197,8 @@ extern Time notice_events_timeout;
 extern XtIntervalId lock_id, cycle_id;
 
 Bool use_xidle_extension;
-Bool use_saver_extension;
+Bool use_mit_saver_extension;
+Bool use_sgi_saver_extension;
 Bool verbose_p;
 Bool lock_p, locked_p;
 
@@ -213,10 +218,15 @@ extern Bool demo_mode_p;
 extern Bool dbox_up_p;
 extern int next_mode_p;
 
-#ifdef HAVE_SAVER_EXTENSION
-int saver_ext_event_number = 0;
-int saver_ext_error_number = 0;
-#endif /* HAVE_SAVER_EXTENSION */
+#ifdef HAVE_MIT_SAVER_EXTENSION
+int mit_saver_ext_event_number = 0;
+int mit_saver_ext_error_number = 0;
+#endif /* HAVE_MIT_SAVER_EXTENSION */
+
+#ifdef HAVE_SGI_SAVER_EXTENSION
+int sgi_saver_ext_event_number = 0;
+int sgi_saver_ext_error_number = 0;
+#endif /* HAVE_SGI_SAVER_EXTENSION */
 
 static time_t initial_delay;
 
@@ -252,8 +262,10 @@ static XrmOptionDescRec options [] = {
   { "-silent",		   ".verbose",		XrmoptionNoArg, "off" },
   { "-xidle-extension",	   ".xidleExtension",	XrmoptionNoArg, "on" },
   { "-no-xidle-extension", ".xidleExtension",	XrmoptionNoArg, "off" },
-  { "-ss-extension",	   ".saverExtension",	XrmoptionNoArg, "on" },
-  { "-no-ss-extension",	   ".saverExtension",	XrmoptionNoArg, "off" },
+  { "-mit-extension",	   ".mitSaverExtension",XrmoptionNoArg, "on" },
+  { "-no-mit-extension",   ".mitSaverExtension",XrmoptionNoArg, "off" },
+  { "-sgi-extension",	   ".sgiSaverExtension",XrmoptionNoArg, "on" },
+  { "-no-sgi-extension",   ".sgiSaverExtension",XrmoptionNoArg, "off" },
   { "-lock",		   ".lock",		XrmoptionNoArg, "on" },
   { "-no-lock",		   ".lock",		XrmoptionNoArg, "off" }
 };
@@ -267,7 +279,7 @@ static void
 do_help P((void))
 {
   printf ("\
-xscreensaver %s, copyright (c) 1991-1995 by Jamie Zawinski <jwz@netscape.com>.\n\
+xscreensaver %s, copyright (c) 1991-1996 by Jamie Zawinski <jwz@netscape.com>.\n\
 The standard Xt command-line options are accepted; other options include:\n\
 \n\
     -timeout <minutes>         When the screensaver should activate.\n\
@@ -281,8 +293,10 @@ The standard Xt command-line options are accepted; other options include:\n\
     -silent                    Don't.\n\
     -xidle-extension           Use the R5 XIdle server extension.\n\
     -no-xidle-extension        Don't.\n\
-    -ss-extension              Use the R6 MIT-SCREEN-SAVER server extension.\n\
-    -no-ss-extension           Don't.\n\
+    -mit-extension             Use the R6 MIT_SCREEN_SAVER server extension.\n\
+    -no-mit-extension          Don't.\n\
+    -sgi-extension             Use the SGI SCREEN-SAVER server extension.\n\
+    -no-sgi-extension          Don't.\n\
     -lock                      Require a password before deactivating.\n\
     -no-lock                   Don't.\n\
     -lock-timeout <minutes>    Grace period before locking; default 0.\n\
@@ -301,10 +315,10 @@ more details.\n\n",
 #ifdef NO_DEMO_MODE
   printf ("Support for demo mode was not enabled at compile-time.\n");
 #endif
-#if !defined(HAVE_XIDLE_EXTENSION) && !defined(HAVE_SAVER_EXTENSION)
-  printf ("Support for the XIDLE and MIT-SCREEN-SAVER server extensions\
- was not\nenabled at compile-time.\n");
-#endif /* !HAVE_XIDLE_EXTENSION && !HAVE_SAVER_EXTENSION */
+#if !defined(HAVE_XIDLE_EXTENSION) && !defined(HAVE_MIT_SAVER_EXTENSION) && !defined(HAVE_SGI_SAVER_EXTENSION)
+  printf ("Support for the XIDLE, SCREEN_SAVER, and MIT-SCREEN-SAVER server\
+ extensions\nwas not enabled at compile-time.\n");
+#endif /* !HAVE_XIDLE_EXTENSION && !HAVE_MIT_SAVER_EXTENSION && !HAVE_SGI_SAVER_EXTENSION */
 
   fflush (stdout);
   exit (1);
@@ -469,15 +483,26 @@ get_resources P((void))
 #endif /* !HAVE_XIDLE_EXTENSION */
 
   /* don't set use_saver_extension unless it is explicitly specified */
-  if (get_string_resource ("saverExtension", "Boolean"))
-    use_saver_extension = get_boolean_resource ("saverExtension", "Boolean");
+  if (get_string_resource ("mitSaverExtension", "Boolean"))
+    use_mit_saver_extension = get_boolean_resource ("mitSaverExtension",
+						    "Boolean");
   else
-#ifdef HAVE_SAVER_EXTENSION	/* pick a default */
-    use_saver_extension = True;
-#else  /* !HAVE_SAVER_EXTENSION */
-    use_saver_extension = False;
-#endif /* !HAVE_SAVER_EXTENSION */
+#ifdef HAVE_MIT_SAVER_EXTENSION	/* pick a default */
+    use_mit_saver_extension = True;
+#else  /* !HAVE_MIT_SAVER_EXTENSION */
+    use_mit_saver_extension = False;
+#endif /* !HAVE_MIT_SAVER_EXTENSION */
 
+  /* don't set use_saver_extension unless it is explicitly specified */
+  if (get_string_resource ("sgiSaverExtension", "Boolean"))
+    use_sgi_saver_extension = get_boolean_resource ("sgiSaverExtension",
+						    "Boolean");
+  else
+#ifdef HAVE_SGI_SAVER_EXTENSION	/* pick a default */
+    use_sgi_saver_extension = True;
+#else  /* !HAVE_SGI_SAVER_EXTENSION */
+    use_sgi_saver_extension = False;
+#endif /* !HAVE_SGI_SAVER_EXTENSION */
 
   get_screenhacks ();
 }
@@ -576,7 +601,7 @@ initialize_connection (argc, argv)
   XA_LOCK = XInternAtom (dpy, "LOCK", False);
 }
 
-#ifdef HAVE_SAVER_EXTENSION
+#ifdef HAVE_MIT_SAVER_EXTENSION
 
 static int
 ignore_all_errors_ehandler (dpy, error)
@@ -587,12 +612,11 @@ ignore_all_errors_ehandler (dpy, error)
 }
 
 static void
-init_saver_extension ()
+init_mit_saver_extension ()
 {
   XID kill_id;
   Atom kill_type;
   Window root = RootWindowOfScreen (screen);
-  XScreenSaverInfo *info;
   Pixmap blank_pix = XCreatePixmap (dpy, root, 1, 1, 1);
 
   /* Kill off the old MIT-SCREEN-SAVER client if there is one.
@@ -613,24 +637,26 @@ init_saver_extension ()
 
   XScreenSaverRegister (dpy, XScreenNumberOfScreen (screen),
 			(XID) blank_pix, XA_PIXMAP);
-  info = XScreenSaverAllocInfo ();
-
-#if 0
-  /* #### I think this is noticing that the saver is on, and replacing it
-     without turning it off first. */
-  saver = info->window;
-  if (info->state == ScreenSaverOn)
-    {
-      if (info->kind != ScreenSaverExternal) 
-	{
-	  XResetScreenSaver (display);
-	  XActivateScreenSaver (display);
-	}
-      StartSaver ();
-    }
-#endif
 }
-#endif /* HAVE_SAVER_EXTENSION */
+#endif /* HAVE_MIT_SAVER_EXTENSION */
+
+
+#ifdef HAVE_SGI_SAVER_EXTENSION
+
+static void
+init_sgi_saver_extension ()
+{
+  if (! XScreenSaverEnable (dpy, XScreenNumberOfScreen(screen)))
+    {
+      fprintf (stderr,
+       "%s: %sSGI SCREEN_SAVER extension exists, but can't be initialized;\n\
+		perhaps some other screensaver program is already running?\n",
+	       progname, (verbose_p ? "## " : ""));
+      use_sgi_saver_extension = False;
+    }
+}
+
+#endif /* HAVE_SGI_SAVER_EXTENSION */
 
 
 extern void init_sigchld P((void));
@@ -687,30 +713,63 @@ initialize (argc, argv)
 
   if (verbose_p)
     printf ("\
-%s %s, copyright (c) 1991-1995 by Jamie Zawinski <jwz@netscape.com>.\n\
+%s %s, copyright (c) 1991-1996 by Jamie Zawinski <jwz@netscape.com>.\n\
  pid = %d.\n", progname, screensaver_version, getpid ());
   ensure_no_screensaver_running ();
 
   demo_mode_p = initial_demo_mode_p;
   screensaver_window = 0;
   cursor = 0;
-  initialize_screensaver_window ();
   srandom ((int) time ((time_t *) 0));
   cycle_id = 0;
   lock_id = 0;
   locked_p = False;
 
-  if (use_saver_extension)
+  if (use_sgi_saver_extension)
     {
-#ifdef HAVE_SAVER_EXTENSION
+#ifdef HAVE_SGI_SAVER_EXTENSION
       if (! XScreenSaverQueryExtension (dpy,
-					&saver_ext_event_number,
-					&saver_ext_error_number))
+					&sgi_saver_ext_event_number,
+					&sgi_saver_ext_error_number))
+	{
+	  fprintf (stderr,
+	 "%s: %sdisplay %s does not support the SGI SCREEN_SAVER extension.\n",
+		   progname, (verbose_p ? "## " : ""), DisplayString (dpy));
+	  use_sgi_saver_extension = False;
+	}
+      else if (use_mit_saver_extension)
+	{
+	  fprintf (stderr, "%s: %sSGI SCREEN_SAVER extension used instead\
+ of MIT-SCREEN-SAVER extension.\n",
+		   progname, (verbose_p ? "## " : ""));
+	  use_mit_saver_extension = False;
+	}
+      else if (use_xidle_extension)
+	{
+	  fprintf (stderr,
+	 "%s: %sSGI SCREEN_SAVER extension used instead of XIDLE extension.\n",
+		   progname, (verbose_p ? "## " : ""));
+	  use_xidle_extension = False;
+	}
+#else  /* !HAVE_MIT_SAVER_EXTENSION */
+      fprintf (stderr,
+       "%s: %snot compiled with support for the SGI SCREEN_SAVER extension.\n",
+	       progname, (verbose_p ? "## " : ""));
+      use_sgi_saver_extension = False;
+#endif /* !HAVE_SGI_SAVER_EXTENSION */
+    }
+
+  if (use_mit_saver_extension)
+    {
+#ifdef HAVE_MIT_SAVER_EXTENSION
+      if (! XScreenSaverQueryExtension (dpy,
+					&mit_saver_ext_event_number,
+					&mit_saver_ext_error_number))
 	{
 	  fprintf (stderr,
 	 "%s: %sdisplay %s does not support the MIT-SCREEN-SAVER extension.\n",
 		   progname, (verbose_p ? "## " : ""), DisplayString (dpy));
-	  use_saver_extension = False;
+	  use_mit_saver_extension = False;
 	}
       else if (use_xidle_extension)
 	{
@@ -719,12 +778,12 @@ initialize (argc, argv)
 		   progname, (verbose_p ? "## " : ""));
 	  use_xidle_extension = False;
 	}
-#else  /* !HAVE_SAVER_EXTENSION */
+#else  /* !HAVE_MIT_SAVER_EXTENSION */
       fprintf (stderr,
        "%s: %snot compiled with support for the MIT-SCREEN-SAVER extension.\n",
 	       progname, (verbose_p ? "## " : ""));
-      use_saver_extension = False;
-#endif /* !HAVE_SAVER_EXTENSION */
+      use_mit_saver_extension = False;
+#endif /* !HAVE_MIT_SAVER_EXTENSION */
     }
 
   if (use_xidle_extension)
@@ -745,17 +804,28 @@ initialize (argc, argv)
 #endif /* !HAVE_XIDLE_EXTENSION */
     }
 
+  /* Call this only after having probed for presence of desired extension. */
+  initialize_screensaver_window ();
+
   init_sigchld ();
 
   disable_builtin_screensaver ();
 
-#ifdef HAVE_SAVER_EXTENSION
-  if (use_saver_extension)
-    init_saver_extension ();
-#endif /* HAVE_SAVER_EXTENSION */
+#ifdef HAVE_MIT_SAVER_EXTENSION
+  if (use_mit_saver_extension)
+    init_mit_saver_extension ();
+#endif /* HAVE_MIT_SAVER_EXTENSION */
 
-  if (verbose_p && use_saver_extension)
+#ifdef HAVE_SGI_SAVER_EXTENSION
+  if (use_sgi_saver_extension)
+    init_sgi_saver_extension ();
+#endif /* HAVE_SGI_SAVER_EXTENSION */
+
+  if (verbose_p && use_mit_saver_extension)
     fprintf (stderr, "%s: using MIT-SCREEN-SAVER server extension.\n",
+	     progname);
+  if (verbose_p && use_sgi_saver_extension)
+    fprintf (stderr, "%s: using SGI SCREEN_SAVER server extension.\n",
 	     progname);
   if (verbose_p && use_xidle_extension)
     fprintf (stderr, "%s: using XIdle server extension.\n",
@@ -768,7 +838,9 @@ initialize (argc, argv)
     /* If the user wants demo mode, don't wait around before doing it. */
     initial_delay = 0;
 
-  if (!use_xidle_extension && !use_saver_extension)
+  if (!use_xidle_extension &&
+      !use_mit_saver_extension &&
+      !use_sgi_saver_extension)
     {
       if (initial_delay)
 	{
@@ -924,7 +996,7 @@ handle_clientmessage (event, until_idle_p)
 	{
 	  if (verbose_p)
 	    printf ("%s: ACTIVATE ClientMessage received.\n", progname);
-	  if (use_saver_extension)
+	  if (use_mit_saver_extension || use_sgi_saver_extension)
 	    {
 	      XForceScreenSaver (dpy, ScreenSaverActive);
 	      return False;
@@ -944,7 +1016,7 @@ handle_clientmessage (event, until_idle_p)
 	{
 	  if (verbose_p)
 	    printf ("%s: DEACTIVATE ClientMessage received.\n", progname);
-	  if (use_saver_extension)
+	  if (use_mit_saver_extension || use_sgi_saver_extension)
 	    {
 	      XForceScreenSaver (dpy, ScreenSaverReset);
 	      return False;
@@ -1079,7 +1151,7 @@ handle_clientmessage (event, until_idle_p)
 
 	  if (until_idle_p)
 	    {
-	      if (use_saver_extension)
+	      if (use_mit_saver_extension || use_sgi_saver_extension)
 		{
 		  XForceScreenSaver (dpy, ScreenSaverActive);
 		  return False;

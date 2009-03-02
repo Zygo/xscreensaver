@@ -1,16 +1,18 @@
 ! app-defaults file for XScreenSaver by Jamie Zawinski.
+! See "man xscreensaver" for more info.  If you don't have that,
+! see http://www.netscape.com/people/jwz/ to get the latest version.
 
-*timeout:	10
-*cycle:		10
-*lockTimeout:	0
-*passwdTimeout:	30
-*nice:		10
-*lock:		False
-*verbose:	False
-*fade:		True
-*unfade:	False
-*fadeSeconds:	1
-*fadeTicks:	75
+*timeout:		10
+*cycle:			10
+*lockTimeout:		0
+*passwdTimeout:		30
+*nice:			10
+*lock:			False
+*verbose:		False
+*fade:			True
+*unfade:		False
+*fadeSeconds:		1
+*fadeTicks:		75
 
 *captureStderr: 	True
 *captureStdout: 	True
@@ -21,9 +23,12 @@
 ! Turning on "installColormap" interacts erratically with twm and tvtwm,
 ! but seems to work fine with mwm and olwm.  Try it and see.
 !
-*installColormap: False
+*installColormap:	True
 
-! Programs on this list apply all the time.
+
+! Any program which can draw on the root window will work as a screensaver.
+! The following three resources enumerate them.
+
 *programs:	qix -root						\n\
 		qix -root -solid -delay 0 -segments 100			\n\
 		qix -root -linear -count 10 -size 100 -segments 200	\n\
@@ -49,12 +54,14 @@
 		lmorph -root						\n
 
 ! Programs on this list are run only for monochrome screens.
+! (These are in addition to those listed in "*programs".)
 *monoPrograms:	qix -root -linear -count 5 -size 200 -spread 30		\
 			-segments 75 -solid -xor			\n\
 		rocks -root						\n\
 		noseguy -root						\n
 
 ! Programs on this list are run only for color (really, non-mono) screens.
+! (These are in addition to those listed in "*programs".)
 *colorPrograms:	qix -root -count 4 -solid -transparent			\n\
 		qix -root -count 5 -solid -transparent -linear		\
 			-segments 250 -size 100				\n\
@@ -62,19 +69,66 @@
 		attraction -root -mode filled-splines -segments 0	\n\
 		attraction -root -glow -points 10			\n\
 		rocks -root -fg darksalmon				\n\
-		noseguy -root -fg yellow -bg gray30			\n
+		noseguy -root -fg yellow -bg black			\n\
+		bubbles -root						\n
 
 
-! Some other screenhacks that you might want to track down:
-!
+! Some other programs that you might want to track down (these work as
+! XScreenSaver helpers, but are not distributed with it):
+! 
 !		xdaliclock -root -builtin2				\n\
 !		xswarm -r 2>&-						\n\
 !		xwave -root						\n\
 !		xbouncebits ...						\n\
-!		ico -r							\n\
+!		ico -r -faces -sleep 1 -obj ico				\n\
 !		xsplinefun						\n\
 !		kaleid -root						\n\
 !		xfishtank -c black -d -r 2				\n\
+!		xtacy -root -delay 100 -gravity				\n\
+
+
+! To display a slideshow of images, add commands like this to *programs:
+!
+!		xv -root -rmode 5  image-1.gif  -quit
+!		xv -root -rmode 5  image-2.gif  -quit
+!		xv -root -rmode 5  image-3.gif  -quit
+!		...and so on...
+!
+! however, for this to work, you must also have started the screensaver so
+! that it uses the default colormap (the "-no-install" command-line option, or
+! the "installColormap: False" resource) because when XV is running in "-root"
+! mode, it always assumes that the default colormap is being used, rather than
+! examining the window it is drawing on to see what colormap it has.
+
+
+! Some SGI GL programs work with XScreenSaver; most don't.
+!
+! Bongo works fine:
+!
+!	/usr/demos/bin/bongo -wbongo
+!
+! ElectroPaint sort-of works; XScreenSaver will launch it, and it will run
+! properly, but when it's time to turn off the screensaver, you need to hit
+! the Escape key, rather than just moving the mouse.  Apparently GL programs
+! are able to intercept the keyboard even when X has the keyboard grabbed!
+!
+!	/usr/demos/bin/ep
+!
+! None of the other GL demos I've tried worked, because none of them seem to
+! have command-line options that will make them take up the whole screen; so
+! all you get is a miniscule 100x100 image, which is worthless.  This is a
+! shame, since many of those demos would make fine screensavers.
+!
+! If anyone who understands how "haven" works would like to send me the code
+! necessary to do what it does, I would be much obliged.
+
+
+
+!=============================================================================
+!
+!      You probably don't want to change anything after this point.
+!
+!=============================================================================
 
 
 ! Resources for the dialog boxes:
@@ -103,7 +157,7 @@
 *demoDialog.maxWidth:		600
 
 *label1.labelString:		XScreenSaver %s
-*label2.labelString: Copyright © 1991-1995 by Jamie Zawinski <jwz@netscape.com>
+*label2.labelString: Copyright © 1991-1996 by Jamie Zawinski <jwz@netscape.com>
 *demoList.visibleItemCount:	10
 *demoList.automaticSelection:	True
 *next.labelString:		Run Next
@@ -150,8 +204,8 @@
 *passwdLabel3.alignment:	ALIGNMENT_BEGINNING
 *rogerLabel.width:		150
 
-! You probably won't need to change these.  They aren't consulted if the
-! XIdle extension is being used.
+! You probably won't need to change these.  They are only used if no server
+! extension is in use.
 !
 *pointerPollTime:	5
 *initialDelay:		30

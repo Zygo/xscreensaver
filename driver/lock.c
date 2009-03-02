@@ -499,7 +499,7 @@ passwd_idle_timer (junk1, junk2)
      XtPointer junk2;
 {
   Display *dpy = XtDisplay (passwd_form);
-  Window window = XtWindow (passwd_form);
+  Window window = XtWindow (XtParent(passwd_done));
   static Dimension x, y, d, s, ss;
   static GC gc = 0;
   int max = passwd_timeout / 1000;
@@ -511,18 +511,33 @@ passwd_idle_timer (junk1, junk2)
       Arg av [10];
       int ac = 0;
       XGCValues gcv;
-      unsigned long fg, bg;
-      XtSetArg (av [ac], XtNheight, &d); ac++;
-      XtGetValues (passwd_done, av, ac);
-      ac = 0;
-      XtSetArg (av [ac], XtNwidth, &x); ac++;
-      XtSetArg (av [ac], XtNheight, &y); ac++;
-      XtSetArg (av [ac], XtNforeground, &fg); ac++;
-      XtSetArg (av [ac], XtNbackground, &bg); ac++;
-      XtGetValues (passwd_form, av, ac);
-      x -= d;
-      y -= d;
-      d -= 4;
+      unsigned long fg, bg, ts, bs;
+      Dimension w = 0, h = 0;
+      XtVaGetValues(XtParent(passwd_done),
+		    XmNwidth, &w,
+		    0);
+      XtVaGetValues(passwd_done,
+		    XmNheight, &h,
+		    XmNy, &y,
+		    XtNforeground, &fg,
+		    XtNbackground, &bg,
+		    XmNtopShadowColor, &ts,
+		    XmNbottomShadowColor, &bs,
+		    0);
+
+      if (ts != bg && ts != fg)
+	fg = ts;
+      if (bs != bg && bs != fg)
+	fg = bs;
+
+      d = h / 2;
+      if (d & 1) d++;
+
+      x = (w / 2);
+
+      x -= d/2;
+      y += d/2;
+
       gcv.foreground = fg;
       if (gc) XFreeGC (dpy, gc);
       gc = XCreateGC (dpy, window, GCForeground, &gcv);
@@ -537,7 +552,8 @@ passwd_idle_timer (junk1, junk2)
 
   if (--passwd_idle_timer_tick)
     {
-      id = XtAppAddTimeOut (app, 1000, passwd_idle_timer, 0);
+      id = XtAppAddTimeOut (app, 1000,
+			    (XtTimerCallbackProc) passwd_idle_timer, 0);
       XFillArc (dpy, window, gc, x, y, d, d, ss, s);
       ss += s;
     }
@@ -578,7 +594,7 @@ pop_passwd_dialog (parent)
 #endif
 
   passwd_idle_timer_tick = passwd_timeout / 1000;
-  id = XtAppAddTimeOut (app, 1000, passwd_idle_timer, 0);
+  id = XtAppAddTimeOut (app, 1000, (XtTimerCallbackProc) passwd_idle_timer, 0);
 
 
   XGrabServer (dpy);				/* ############ DANGER! */
@@ -619,7 +635,8 @@ pop_passwd_dialog (parent)
 	{
 	  text_field_set_string (passwd_text, lose, strlen (lose) + 1);
 	  passwd_idle_timer_tick = 1;
-	  id = XtAppAddTimeOut (app, 3000, passwd_idle_timer, 0);
+	  id = XtAppAddTimeOut (app, 3000,
+				(XtTimerCallbackProc) passwd_idle_timer, 0);
 	  while (1)
 	    {
 	      XEvent event;

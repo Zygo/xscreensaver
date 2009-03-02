@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1992-1996 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -24,7 +24,7 @@
 #endif
 
 extern int get_visual_class P((Display *, Visual *));
-extern void screenhack_usleep P((int));
+extern void screenhack_usleep P((unsigned long));
 #define usleep screenhack_usleep
 
 #define MAX_COLORS 4096
@@ -80,16 +80,30 @@ blacken_colormap (dpy, cmap)
 }
 
 
+/* The business with `install_p' and `extra_cmaps' is to fake out the SGI
+   8-bit video hardware, which is capable of installing multiple (4) colormaps
+   simultaniously.  We have to install multiple copies of the same set of
+   colors in order to fill up all the available slots in the hardware color
+   lookup table.
+ */
+
 void
-fade_colormap (dpy, cmap, cmap2, seconds, ticks, out_p)
+fade_colormap (dpy, cmap, cmap2, seconds, ticks, out_p, install_p)
      Display *dpy;
      Colormap cmap, cmap2;
      int seconds, ticks;
      Bool out_p;
+     Bool install_p;
 {
   int i;
   int steps = seconds * ticks;
   XEvent dummy_event;
+
+  Screen *screen = DefaultScreenOfDisplay (dpy);
+  Visual *visual = DefaultVisualOfScreen (screen);
+  Window window = RootWindowOfScreen (screen);
+  static Colormap extra_cmaps[4] = { 0, };
+  int n_extra_cmaps = sizeof(extra_cmaps)/sizeof(*extra_cmaps);
 
   if (! cmap2)
     return;
@@ -98,6 +112,11 @@ fade_colormap (dpy, cmap, cmap2, seconds, ticks, out_p)
     orig_colors [i].pixel = i;
   XQueryColors (dpy, cmap, orig_colors, ncolors);
   memcpy (current_colors, orig_colors, ncolors * sizeof (XColor));
+
+  if (install_p)
+    for (i=0; i < n_extra_cmaps; i++)
+      if (!extra_cmaps[i])
+	extra_cmaps[i] = XCreateColormap (dpy, window, visual, AllocAll);
 
   for (i = (out_p ? steps : 0);
        (out_p ? i > 0 : i < steps);
@@ -111,6 +130,19 @@ fade_colormap (dpy, cmap, cmap2, seconds, ticks, out_p)
 	  current_colors[j].blue  = orig_colors[j].blue  * i / steps;
 	}
       XStoreColors (dpy, cmap2, current_colors, ncolors);
+
+      if (install_p)
+	{
+	  for (j=0; j < n_extra_cmaps; j++)
+	    if (extra_cmaps[j])
+	      XStoreColors (dpy, extra_cmaps[j], current_colors, ncolors);
+
+	  for (j=0; j < n_extra_cmaps; j++)
+	    if (extra_cmaps[j])
+	      XInstallColormap (dpy, extra_cmaps[j]);
+	  XInstallColormap (dpy, cmap2);
+	}
+
       XSync (dpy, False);
 
       /* If there is user activity, bug out.
@@ -127,18 +159,28 @@ fade_colormap (dpy, cmap, cmap2, seconds, ticks, out_p)
 			   &dummy_event))
 	{
 	  XPutBackEvent (dpy, &dummy_event);
-	  return;
+	  goto DONE;
 	}
 
       usleep (1000000 / (ticks * 2)); /* the 2 is a hack... */
     }
+
+DONE:
+
+  if (install_p)
+    {
+      XInstallColormap (dpy, cmap2);
+/*      for (i=0; i < n_extra_cmaps; i++)
+	if (extra_cmaps[i])
+	  XFreeColormap (dpy, extra_cmaps[i]);
+ */
+    }
 }
 
-#if 0
-
 
+#if 0
+#include "../hacks/screenhack.h"
 char *progclass = "foo";
-
 char *defaults [] = {
   0
 };
@@ -158,15 +200,21 @@ screenhack (dpy, w)
   int ticks = 30 * seconds;
   int delay = 1;
 
+  XSynchronize (dpy, True);
+
   while (1)
     {
       XSync (dpy, False);
-      XGrabServer (dpy);
+/*      XGrabServer (dpy); */
+      fprintf(stderr,"out..."); fflush(stderr);
       XInstallColormap (dpy, cmap2);
-      fade_colormap (dpy, cmap, cmap2, seconds, ticks, True);
+      fade_colormap (dpy, cmap, cmap2, seconds, ticks, True, True);
+      fprintf(stderr, "done.\n"); fflush(stderr);
       if (delay) sleep (delay);
-      fade_colormap (dpy, cmap, cmap2, seconds, ticks, False);
+      fprintf(stderr,"in..."); fflush(stderr);
+      fade_colormap (dpy, cmap, cmap2, seconds, ticks, False, True);
       XInstallColormap (dpy, cmap);
+      fprintf(stderr, "done.\n"); fflush(stderr);
       XUngrabServer (dpy);
       XSync (dpy, False);
       if (delay) sleep (delay);

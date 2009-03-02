@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1992-1996 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -97,6 +97,12 @@ read_bitmap (bitmap_name, widthP, heightP)
   int result;
   xpmattrs.valuemask = 0;
   bitmap = 0;
+
+#ifdef XpmCloseness
+  xpmattrs.valuemask |= XpmCloseness;
+  xpmattrs.closeness = 40000;
+#endif
+
   result = XpmReadFileToPixmap (dpy, window, bitmap_name, &bitmap, 0,
 				&xpmattrs);
   switch (result)

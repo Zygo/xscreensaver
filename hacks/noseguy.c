@@ -476,7 +476,8 @@ get_words()
 	    if (! buf[0])
 	      sprintf (buf, "\"%s\" produced no output!", orig_program);
 	    else if (!first_time &&
-		     !strcmp (buf, "sh: fortune: not found\n"))
+		     (strstr (buf, ": not found") ||
+		      strstr (buf, ": Not found")))
 	      switch (random () % 20)
 		{
 		case 1: strcat (buf, "( Get with the program, bub. )\n");

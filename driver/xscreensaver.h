@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1995 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1993-1996 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -61,7 +61,7 @@ extern void spawn_screenhack P((Bool));
 extern void kill_screenhack P((void));
 
 extern Colormap copy_colormap P((Display *, Colormap, Colormap));
-extern void fade_colormap P((Display*, Colormap, Colormap, int, int, Bool));
+extern void fade_colormap P((Display*,Colormap,Colormap,int,int,Bool,Bool));
 extern void blacken_colormap P((Display *, Colormap));
 
 extern int BadWindow_ehandler P((Display *dpy, XErrorEvent *error));

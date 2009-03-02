@@ -16,7 +16,7 @@
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
 .B xscreensaver
-[\-display \fIhost:display.screen\fP] [\-timeout \fIint\fP] [\-cycle \fIint\fP] [\-nice \fIint\fP] [\-verbose] [\-silent] [\-xidle] [\-no-xidle] [\-lock] [\-no-lock] [\-lock\-timeout \fIint\fP] [\-demo] [\-visual \fIvisual\fP] [\-install] [\-no-install] [\-xrm \fIresources\fP]
+[\-display \fIhost:display.screen\fP] [\-timeout \fIint\fP] [\-cycle \fIint\fP] [\-nice \fIint\fP] [\-verbose] [\-silent] [\-lock] [\-no\-lock] [\-lock\-timeout \fIint\fP] [\-demo] [\-visual \fIvisual\fP] [\-install] [\-no\-install] [\-xidle\-extension] [\-no\-xidle\-extension] [\-sgi\-extension] [\-no\-sgi\-extension] [\-mit\-extension] [\-no\-mit\-extension] [\-xrm \fIresources\fP]
 .SH DESCRIPTION
 The \fIxscreensaver\fP program waits until the keyboard and mouse have been 
 idle for a period, and then runs a graphics demo chosen at random.  It 
@@ -66,14 +66,23 @@ and more reliable than what will be done otherwise, so use it if you can.
 .B \-no\-xidle\-extension
 Don't use the \fBXIDLE\fP server extension.
 .TP 8
-.B \-ss\-extension
-Use the \fBMIT\-SCREEN\-SAVER\fP server extension to decide whether the user
+.B \-sgi\-extension
+Use the SGI \fBSCREEN_SAVER\fP server extension to decide whether the user
 is idle.  This is the default if \fIxscreensaver\fP has been compiled with
-support for this extension.  On X11R6 systems, the  \fBMIT\-SCREEN\-SAVER\fP 
+support for this extension.  On SGI systems, the \fBSCREEN_SAVER\fP 
 method is faster and more reliable than what will be done otherwise, so use
 it if you can.
 .TP 8
-.B \-no\-ss\-extension
+.B \-no\-sgi\-extension
+Don't use the SGI \fBSCREEN_SAVER\fP server extension.
+.TP 8
+.B \-mit\-extension
+Use the \fBMIT\-SCREEN\-SAVER\fP server extension to decide whether the user
+is idle.  This is the default if \fIxscreensaver\fP has been compiled with
+support for this extension.  This extension is flaky, so it's use is not
+really recommended.
+.TP 8
+.B \-no\-mit\-extension
 Don't use the \fBMIT\-SCREEN\-SAVER\fP server extension.
 .TP 8
 .B \-lock
@@ -272,17 +281,18 @@ This must be whatever your local variant of \fB/bin/sh\fP is -- in particular,
 it must not be \fBcsh\fP.
 .TP 8
 .B windowCreationTimeout \fR(class \fBTime\fP)
-When \fIXIdle\fP is not in use, this controls the delay between when 
+When server extensions are not in use, this controls the delay between when 
 windows are created and when \fIxscreensaver\fP selects events on them.
 Default 30 seconds.
 .TP 8
 .B pointerPollTime \fR(class \fBTime\fP)
-When \fIXIdle\fP is not in use, this controls how frequently \fIxscreensaver\fP
-checks to see if the mouse position or buttons have changed.  Default 5 seconds.
+When server extensions are not in use, this controls how 
+frequently \fIxscreensaver\fP checks to see if the mouse position or buttons
+have changed.  Default 5 seconds.
 .TP 8
 .B initialDelay \fR(class \fBTime\fP)
-When \fIXIdle\fP is not in use, \fIxscreensaver\fP will wait this many seconds
-before selecting events on existing windows, under the assumption that 
+When server extensions are not in use, \fIxscreensaver\fP will wait this many
+seconds before selecting events on existing windows, under the assumption that 
 \fIxscreensaver\fP is started during your login procedure, and the window 
 state may be in flux.  Default 30 seconds.
 .SH "HOW IT WORKS"
@@ -414,6 +424,7 @@ automatically return to demo mode after restarting.
 .BR decayscreen (1),
 .BR hypercube (1),
 .BR flame (1),
+.BR bubbles (1),
 .BR maze (1),
 .BR ico (1),
 .BR xdaliclock (1),
@@ -428,9 +439,9 @@ the \fBcolorPrograms\fP and/or \fBmonoPrograms\fP resources as well.
 (This is not a bug, but I mention it here because people think that
 it is with great regularity.)
 .PP
-If you are not making use of one of the server extensions (\fBXIDLE\fP
-or \fBMIT-SCREEN-SAVER\fP), then it is possible, in rare situations,
-for \fIxscreensaver\fP to interfere with event propagation and make
+If you are not making use of one of the server extensions (\fBXIDLE\fP,
+\fBSCREEN_SAVER\fP, or \fBMIT-SCREEN-SAVER\fP), then it is possible, in rare
+situations, for \fIxscreensaver\fP to interfere with event propagation and make
 another X program malfunction.  For this to occur, that other application
 would need to \fInot\fP select \fBKeyPress\fP events on its non-leaf windows
 within the first 30 seconds of their existence, but then select for them later.
@@ -502,7 +513,8 @@ The \fBinstallColormap\fP option doesn't work very well with the
 window manager and its descendants.  There is a race condition between the
 screensaver and this window manager, which can result in the screensaver's
 colormap not getting installed properly, meaning the graphics hacks will
-appear in essentially random colors.  The
+appear in essentially random colors.  (If the screen goes white instead of
+black, this is probably why.)  The
 .BR mwm (1)
 and
 .BR olwm (1)
@@ -529,18 +541,22 @@ the \fBfade\fP option, you may notice an unattractive flicker just before
 the fade begins.  This is because the server maps a black window just before 
 it tells the \fIxscreensaver\fP process to activate.  The \fIxscreensaver\fP 
 process immediately unmaps that window, but this results in a flicker.  I 
-haven't figured out how to get around this yet.
+haven't figured a way  to get around this; it seems to be a fundamental
+property of the (mis-) design of this server extension.
 .PP
 There need to be a lot more graphics hacks.  In particular, there should be
 a simulation of a Lavalite (tm).
+.SH UPGRADES
+The latest version can always be found at http://www.netscape.com/people/jwz/.
+There is also usually an up-to-date copy at ftp://ftp.x.org/.
 .SH COPYRIGHT
-Copyright \(co 1992, 1993, 1994, 1995 by Jamie Zawinski.  Permission to use, 
-copy, modify, distribute, and sell this software and its documentation for 
-any purpose is hereby granted without fee, provided that the above copyright
-notice appear in all copies and that both that copyright notice and this
-permission notice appear in supporting documentation.  No representations are
-made about the suitability of this software for any purpose.  It is provided
-"as is" without express or implied warranty.
+Copyright \(co 1992, 1993, 1994, 1995, 1996 by Jamie Zawinski.  Permission 
+to use, copy, modify, distribute, and sell this software and its documentation
+for any purpose is hereby granted without fee, provided that the above
+copyright notice appear in all copies and that both that copyright notice 
+and this permission notice appear in supporting documentation.  No
+representations are made about the suitability of this software for any
+purpose.  It is provided "as is" without express or implied warranty.
 .SH AUTHOR
 Jamie Zawinski <jwz@netscape.com>, 13-aug-92.
 Please let me know if you find any bugs or make any improvements.

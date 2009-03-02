@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1995 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-1996 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,10 +20,16 @@
 
 #include "xscreensaver.h"
 
-#ifdef HAVE_SAVER_EXTENSION
+#ifdef HAVE_MIT_SAVER_EXTENSION
 #include <X11/extensions/scrnsaver.h>
-extern Bool use_saver_extension;
-#endif /* HAVE_SAVER_EXTENSION */
+#endif /* HAVE_MIT_SAVER_EXTENSION */
+
+#ifdef HAVE_SGI_SAVER_EXTENSION
+#include <X11/extensions/XScreenSaver.h>
+#endif /* HAVE_SGI_SAVER_EXTENSION */
+
+extern Bool use_mit_saver_extension;
+extern Bool use_sgi_saver_extension;
 
 #if __STDC__
 extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
@@ -51,9 +57,9 @@ int fade_seconds, fade_ticks;
 static unsigned long black_pixel;
 static Window real_vroot, real_vroot_value;
 
-#ifdef HAVE_SAVER_EXTENSION
-Window server_saver_window = 0;
-#endif /* HAVE_SAVER_EXTENSION */
+#ifdef HAVE_MIT_SAVER_EXTENSION
+Window server_mit_saver_window = 0;
+#endif /* HAVE_MIT_SAVER_EXTENSION */
 
 #define ALL_POINTER_EVENTS \
 	(ButtonPressMask | ButtonReleaseMask | EnterWindowMask | \
@@ -165,14 +171,18 @@ disable_builtin_screensaver ()
   XGetScreenSaver (dpy, &server_timeout, &server_interval,
 		   &prefer_blank, &allow_exp);
 
-#ifdef HAVE_SAVER_EXTENSION
-  if (use_saver_extension)
+#if defined(HAVE_MIT_SAVER_EXTENSION) || defined(HAVE_SGI_SAVER_EXTENSION)
+  if (use_mit_saver_extension || use_sgi_saver_extension)
     {
       /* Override the values specified with "xset" with our own parameters. */
-      prefer_blank = False;
       allow_exp = True;
       server_interval = 0;
       server_timeout = (timeout / 1000);
+
+      /* The SGI extension won't give us events unless blanking is on.
+	 I think (unsure right now) that the MIT extension is the opposite. */
+      prefer_blank = (use_sgi_saver_extension ? True : False);
+
       if (verbose_p)
 	fprintf (stderr,
 		 "%s: configuring server for saver timeout of %d seconds.\n",
@@ -181,7 +191,7 @@ disable_builtin_screensaver ()
 		       prefer_blank, allow_exp);
     }
   else
-#endif /* HAVE_SAVER_EXTENSION */
+#endif /* HAVE_MIT_SAVER_EXTENSION || HAVE_SGI_SAVER_EXTENSION */
   if (server_timeout != 0)
     {
       server_timeout = 0;
@@ -532,9 +542,15 @@ initialize_screensaver_window P((void))
   attrmask = (CWOverrideRedirect | CWEventMask | CWBackingStore | CWColormap |
 	      CWBackPixel | CWBackingPixel | CWBorderPixel);
   attrs.override_redirect = True;
+
+  /* When use_mit_saver_extension or use_sgi_saver_extension is true, we won't
+     actually be reading these events during normal operation; but we still
+     need to see Button events for demo-mode to work properly.
+   */
   attrs.event_mask = (KeyPressMask | KeyReleaseMask |
 		      ButtonPressMask | ButtonReleaseMask |
 		      PointerMotionMask);
+
   attrs.backing_store = NotUseful;
   attrs.colormap = cmap;
   attrs.background_pixel = black_pixel;
@@ -560,8 +576,8 @@ initialize_screensaver_window P((void))
       describe_visual (stderr, dpy, DefaultVisualOfScreen (screen));
     }
 
-#ifdef HAVE_SAVER_EXTENSION
-  if (use_saver_extension)
+#ifdef HAVE_MIT_SAVER_EXTENSION
+  if (use_mit_saver_extension)
     {
       XScreenSaverInfo *info;
       Window root = RootWindowOfScreen (screen);
@@ -604,11 +620,11 @@ initialize_screensaver_window P((void))
 
       info = XScreenSaverAllocInfo ();
       XScreenSaverQueryInfo (dpy, root, info);
-      server_saver_window = info->window;
-      if (! server_saver_window) abort ();
+      server_mit_saver_window = info->window;
+      if (! server_mit_saver_window) abort ();
       XFree (info);
     }
-#endif /* HAVE_SAVER_EXTENSION */
+#endif /* HAVE_MIT_SAVER_EXTENSION */
 
   if (screensaver_window)
     {
@@ -631,15 +647,15 @@ initialize_screensaver_window P((void))
 		       &attrs);
     }
 
-#ifdef HAVE_SAVER_EXTENSION
-  if (!use_saver_extension ||
+#ifdef HAVE_MIT_SAVER_EXTENSION
+  if (!use_mit_saver_extension ||
       window_exists_p (dpy, screensaver_window))
     /* When using the MIT-SCREEN-SAVER extension, the window pointed to
        by screensaver_window only exists while the saver is active.
        So we must be careful to only try and manipulate it while it
        exists...
      */
-#endif /* HAVE_SAVER_EXTENSION */
+#endif /* HAVE_MIT_SAVER_EXTENSION */
     {
       class_hints.res_name = progname;
       class_hints.res_class = progclass;
@@ -689,19 +705,23 @@ raise_window (inhibit_fade, between_hacks_p)
 			      ? cmap
 			      : DefaultColormapOfScreen (screen));
       copy_colormap (dpy, current_map, cmap2);
+      if (verbose_p) fprintf (stderr, "%s: fading... ", progname);
       XGrabServer (dpy);
       /* grab and blacken mouse on the root window (saver not mapped yet) */
       grabbed = grab_mouse (RootWindowOfScreen (screen));
       /* fade what's on the screen to black */
       XInstallColormap (dpy, cmap2);
-      fade_colormap (dpy, current_map, cmap2, fade_seconds, fade_ticks, True);
+      fade_colormap (dpy, current_map, cmap2, fade_seconds, fade_ticks,
+		     True, True);
+      if (verbose_p) fprintf (stderr, "fading done.\n");
       XClearWindow (dpy, screensaver_window);
       XMapRaised (dpy, screensaver_window);
 
-#ifdef HAVE_SAVER_EXTENSION
-      if (server_saver_window && window_exists_p (dpy, server_saver_window))
-	XUnmapWindow (dpy, server_saver_window);
-#endif /* HAVE_SAVER_EXTENSION */
+#ifdef HAVE_MIT_SAVER_EXTENSION
+      if (server_mit_saver_window &&
+	  window_exists_p (dpy, server_mit_saver_window))
+	XUnmapWindow (dpy, server_mit_saver_window);
+#endif /* HAVE_MIT_SAVER_EXTENSION */
 
       /* Once the saver window is up, restore the colormap.
 	 (The "black" pixels of the two colormaps are compatible.) */
@@ -714,10 +734,11 @@ raise_window (inhibit_fade, between_hacks_p)
     {
       XClearWindow (dpy, screensaver_window);
       XMapRaised (dpy, screensaver_window);
-#ifdef HAVE_SAVER_EXTENSION
-      if (server_saver_window && window_exists_p (dpy, server_saver_window))
-	XUnmapWindow (dpy, server_saver_window);
-#endif /* HAVE_SAVER_EXTENSION */
+#ifdef HAVE_MIT_SAVER_EXTENSION
+      if (server_mit_saver_window &&
+	  window_exists_p (dpy, server_mit_saver_window))
+	XUnmapWindow (dpy, server_mit_saver_window);
+#endif /* HAVE_MIT_SAVER_EXTENSION */
     }
 
   if (install_cmap_p)
@@ -752,13 +773,16 @@ unblank_screen ()
       int grabbed;
       Colormap default_map = DefaultColormapOfScreen (screen);
       blacken_colormap (dpy, cmap2);
+      if (verbose_p) fprintf (stderr, "%s: unfading... ", progname);
       XGrabServer (dpy);
       /* grab and blacken mouse on the root window. */
       grabbed = grab_mouse (RootWindowOfScreen (screen));
       XInstallColormap (dpy, cmap2);
       XUnmapWindow (dpy, screensaver_window);
-      fade_colormap (dpy, default_map, cmap2, fade_seconds, fade_ticks, False);
+      fade_colormap (dpy, default_map, cmap2, fade_seconds, fade_ticks,
+		     False, True);
       XInstallColormap (dpy, default_map);
+      if (verbose_p) fprintf (stderr, "unfading done.\n");
       if (grabbed == GrabSuccess)
 	XUngrabPointer (dpy, CurrentTime);
       XUngrabServer (dpy);
@@ -772,9 +796,35 @@ unblank_screen ()
 	}
       XUnmapWindow (dpy, screensaver_window);
     }
+
+
+  /* If the focus window does has a non-default colormap, then install
+     that colormap as well.  (On SGIs, this will cause both the root map
+     and the focus map to be installed simultaniously.  It'd be nice to
+     pick up the other colormaps that had been installed, too; perhaps
+     XListInstalledColormaps could be used for that?)
+   */
+  {
+    Window focus = 0;
+    int revert_to;
+    XGetInputFocus (dpy, &focus, &revert_to);
+    if (focus && focus != PointerRoot && focus != None)
+      {
+	XWindowAttributes xgwa;
+	Colormap default_map = DefaultColormapOfScreen (screen);
+	xgwa.colormap = 0;
+	XGetWindowAttributes (dpy, focus, &xgwa);
+	if (xgwa.colormap &&
+	    xgwa.colormap != default_map)
+	  XInstallColormap (dpy, xgwa.colormap);
+      }
+  }
+
+
   kill_xsetroot_data ();
   ungrab_keyboard_and_mouse ();
   restore_real_vroot ();
+
 #ifdef __hpux
   if (lock_p && hp_locked_p)
     XHPEnableReset (dpy);	/* turn C-Sh-Reset back on */

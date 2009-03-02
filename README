@@ -26,7 +26,8 @@ now be used as a screensaver without modification.  The programs that
 are being run as screensavers don't need to have any special knowledge
 about what it means to be a screensaver.
 
-The XIDLE or MIT-SCREEN-SAVER server extensions will be used if you have them.
+The XIDLE, MIT-SCREEN-SAVER, and/or SGI SCREEN_SAVER server extensions
+will be used if you have them.
 
 Unfortunately, locking doesn't work if you don't have Motif.
 
@@ -57,6 +58,7 @@ window, which are pointed at by the screensaver's default resource settings.
    maze		- This is the X maze demo modified to take a -root option
 		  so that it works with xscreensaver.
    lmorph	- morphing line drawings.
+   bubbles	- condensation forms on your monitor, then pops.
 
 All of these will pop up their own window unless given that -root option.
 See their man pages for more details.
@@ -67,11 +69,12 @@ Other reasonable things to use as screensavers, if you have them, are
   xswarm -r 2>&-		- swimming sperm
   xwave -root			- random 3d graphs
   xbouncebits			- bounce arbitrary bitmaps around
-  ico -r			- it's dull, but it's there
+  ico -r -p8 -faces -sleep 1	- it's dull, but it's there
   xv -root file.gif -quit	- they don't all have to animate!
   xsplinefun			- bouncing splines
   kaleid -root			- qix-like kaleidescope patterns
   xfishtank -c black -d -r 1	- fish (use version 2.0 or later)
+  xtacy -root			- various eye candy
 
 You can get all of these from the contrib directory on ftp.x.org.  If you
 know of (or write) any other interesting programs that can be used as
@@ -83,6 +86,10 @@ also get it from my web page at http://www.netscape.com/people/jwz/.
 	-- Jamie Zawinski <jwz@netscape.com>
 
 
+Changes since 1.26:	Added support for SGI SCREEN_SAVER extension.
+			Made `fade' and `unfade' work on 8-bit SGIs.
+			Made the dialog boxes more Motify.
+			Added `bubbles' hack.
 Changes since 1.25:	Added `lmorph' hack.
 			Added viscosity and mouse-control to attraction.
 			Fixed possible bad color choices in qix and attraction.
@@ -122,7 +129,7 @@ Changes since 1.14:	Broke the driver up into more source files.
 			Moved the hacks into their own directory.
 			Made all `time' parameters accept the 00:00:00 syntax,
 			so that even the parameters which are normally read as
-			`minutes' can be specified in seconds.
+			minutes can be specified in seconds.
 			Added colormap cycling to `imsmap'.
 			Made hyper work with K&R compilers.
 Changes since 1.13:	Added `orbit' option to `attraction' hack.

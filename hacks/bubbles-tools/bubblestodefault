@@ -1,0 +1,115 @@
+#!/usr/bin/perl
+#
+# $Id: bubblestodefault,v 1.1 1996/09/08 01:35:51 jwz Exp $
+#
+#----------------------------------------------------------------------------
+#  Copyright (C) 1995-1996 James Macnicol
+#
+#   This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2, or (at your option) any later
+# version.
+#
+#   This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTIBILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+#-----------------------------------------------------------------------------
+#
+# Contact me (J.Macnicol@student.anu.edu.au) if you have problems.
+#
+# [ The moral of this story is use a version of rm which safely backs up
+# files when you delete them in case you do something stupid like
+# "rm * xpm" which trashed all the scripts in this directory so I had
+# to write them again.  Grrrrrr..... ]
+#
+#-----------------------------------------------------------------------------
+# 
+# This script takes a set of XPM files (from povbubbles, for example)
+# whose names are listed in file with extension .names (of same format
+# as output by povbubbles) and puts them together into a file which can
+# be used in place of the source file bubbles_default.c which comes with
+# bubbles/xscreensaver.
+#
+# To use it, provide as an argument the base-name of the .names file,
+# i.e. if you ran povbubbles on the file foo.pov by typing "povbubbles foo"
+# then this created a file "foo.names" so you can now make a new
+# bubbles_default.c by typing "bubblestodefault foo".
+#
+
+sub die_help {
+    print STDERR "Usage: $0 [-help] base-name\n";
+    print STDERR "  -help gives this message.\n";
+    print STDERR "  base-name is the name of the file used to generate\n";
+    print STDERR "  the XPM files, e.g. if you invoked povbubbles with\n";
+    print STDERR "            \"povbubbles foo\"\n";
+    print STDERR "  then you should invoke $0 with\n";
+    die("            \"$0 foo\"\n");
+}
+
+sub die_usage {
+    die "Usage: $0 [-help] base-name\n";
+}
+
+$infile = undef;
+
+# Process command line arguments
+while ($op = shift) {
+    if ($op eq "-help") {
+        &die_help;
+    } else {
+        $infile = $op;
+        # Ignore further arguments
+        break;
+    }
+}
+if ($infile eq undef) {
+    &die_usage;
+}
+
+$namesfile = $infile . ".names";
+
+if (! -f $namesfile) {
+    die("File list $namesfile doesn't exist\n");
+}
+
+if (-f "bubbles_default.c") {
+    print "Backing up bubbles_default.c...\n";
+    system("mv -f bubbles_default.c bubbles_default.c.bak");
+}
+
+open(OUT, ">bubbles_default.c") || die("Couldn't open bubbles_default.c\n");
+print OUT "#include <stdio.h>\n";
+print OUT "#include \"bubbles.h\"\n";
+print OUT "\n";
+print OUT "#ifndef NO_DEFAULT_BUBBLE\n";
+print OUT "\n";
+
+open(NAMES, $namesfile) || die ("Couldn't open $namesfile\n");
+$numbubbles = 0;
+while (<NAMES>) {
+    if (/\s*(\S+)\:(\S+)\s*/) {
+	$filename = $1;
+	$xpmname = $2;
+	$xpmlist = $xpmlist . $xpmname . ", ";
+	open(CAT, $filename) || die("Couldn't open file $filename listed in\
+$namesfile\n");
+	while (<CAT>) {
+	    print OUT;
+	}
+	close(CAT);
+	$numbubbles++;
+    } else {
+	print STDERR "Can't understand the line \"$_\"\n";
+	print STDERR "  in $namesfile.  Ignoring...\n";
+    }
+}
+print OUT "char **default_bubbles[] = {$xpmlist";
+print OUT "(char **)0};\n";
+print OUT "\n";
+print OUT "int num_default_bubbles = $numbubbles;\n";
+print OUT "\n";
+print OUT "#endif /* NO_DEFAULT_BUBBLE */\n";
+
+close(NAMES);
+close(OUT);

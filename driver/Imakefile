@@ -1,5 +1,5 @@
 /*
- * Imakefile file for xscreensaver, Copyright (c) 1993-1995 Jamie Zawinski.
+ * Imakefile file for xscreensaver, Copyright (c) 1993-1996 Jamie Zawinski.
  *
  * You should not need to edit this file; edit ../config.h instead.
  *
@@ -22,10 +22,16 @@
 # define XIDLE_DEF
 #endif
 
-#ifdef HAVE_SAVER_EXTENSION
-# define SAVER_DEF -DHAVE_SAVER_EXTENSION
+#ifdef HAVE_MIT_SAVER_EXTENSION
+# define MIT_SAVER_DEF -DHAVE_MIT_SAVER_EXTENSION
 #else
-# define SAVER_DEF
+# define MIT_SAVER_DEF
+#endif
+
+#ifdef HAVE_SGI_SAVER_EXTENSION
+# define SGI_SAVER_DEF -DHAVE_SGI_SAVER_EXTENSION
+#else
+# define SGI_SAVER_DEF
 #endif
 
 #ifdef NO_LOCKING
@@ -62,9 +68,9 @@
 
          UTILS = ../utils
       INCLUDES = -I$(UTILS) MOTIF_INC
-       DEFINES = SETUID_DEF XIDLE_DEF SAVER_DEF MOTIF_DEF LOCKING_DEF SHADOW_DEF R5ISMS
-     SAVERLIBS = $(XMULIB) $(XTOOLLIB) $(EXTENSIONLIB) $(XLIB) -lm
-      COMMLIBS = $(XLIB) -lm
+       DEFINES = SETUID_DEF XIDLE_DEF MIT_SAVER_DEF SGI_SAVER_DEF MOTIF_DEF LOCKING_DEF SHADOW_DEF R5ISMS
+     SAVERLIBS = $(XMULIB) $(XTOOLLIB) $(EXTENSIONLIB) $(XLIB)
+      COMMLIBS = $(XLIB)
      UTIL_SRCS = $(UTILS)/resources.c $(UTILS)/fade.c $(UTILS)/visual.c $(UTILS)/usleep.c $(UTILS)/yarandom.c
      UTIL_OBJS = $(UTILS)/resources.o $(UTILS)/fade.o $(UTILS)/visual.o $(UTILS)/usleep.o $(UTILS)/yarandom.o
      DBOX_SRCS = dialogs.c demo.c
@@ -88,8 +94,12 @@
 EXTRA_LIBRARIES = -lXhp11	/* for XHPDisableReset() */
 #endif
 
+#if defined(NetBSDArchitecture) && !defined(NO_LOCKING)
+EXTRA_LIBRARIES = -lcrypt
+#endif
+
 #if defined(i386ScoArchitecture)
-        SCOLIBS = -lintl -lprot -lx -lcrypt_i
+EXTRA_LIBRARIES = -lintl -lprot -lx -lcrypt_i
 #endif
 
 all:: xscreensaver xscreensaver-command
@@ -104,7 +114,7 @@ PROGRAMS = xscreensaver xscreensaver-command
 #define InstallProgram(p,d) InstallProgramWithFlags(p,d,$(INSTUIDFLAGS))
 #endif
 
-ComplexProgramTarget_1(xscreensaver,MOTIF_LIB $(SAVERLIBS),$(SCOLIBS) $(HP_NULL_STR))
+ComplexProgramTarget_1(xscreensaver,MOTIF_LIB $(SAVERLIBS), $(HP_NULL_STR))
 
 #ifdef INSTALL_SETUID
 #undef  InstallProgram

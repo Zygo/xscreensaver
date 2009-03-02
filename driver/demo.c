@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-1995 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1993-1996 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,10 +23,17 @@
 #include "xscreensaver.h"
 #include <stdio.h>
 
-#ifdef HAVE_SAVER_EXTENSION
-extern int saver_ext_event_number;
-extern Window server_saver_window;
-#endif /* HAVE_SAVER_EXTENSION */
+#ifdef HAVE_MIT_SAVER_EXTENSION
+extern int mit_saver_ext_event_number;
+extern Window server_mit_saver_window;
+#endif /* HAVE_MIT_SAVER_EXTENSION */
+
+#ifdef HAVE_SGI_SAVER_EXTENSION
+/* extern int sgi_saver_ext_event_number; */
+#endif /* HAVE_SGI_SAVER_EXTENSION */
+
+extern Bool use_mit_saver_extension;
+extern Bool use_sgi_saver_extension;
 
 extern Time timeout, cycle, lock_timeout;
 #ifndef NO_LOCKING
@@ -420,9 +427,10 @@ res_done_cb (button, client_data, call_data)
 {
   res_cancel_cb (button, client_data, call_data);
 
-  if (res.timeout < 10) res.timeout = 10;
+  /* Throttle the timeouts to minimum sane values. */
+  if (res.timeout < 5) res.timeout = 5;
   if (res.cycle < 2) res.cycle = 2;
-  if (res.passwd_time < 2) res.passwd_time = 30;
+  if (res.passwd_time < 10) res.passwd_time = 10;
 
   timeout = res.timeout * 1000;
   cycle = res.cycle * 1000;
@@ -437,6 +445,28 @@ res_done_cb (button, client_data, call_data)
   fade_p = res.fade;
   unfade_p = res.unfade;
   lock_p = res.lock_p;
+
+#if defined(HAVE_MIT_SAVER_EXTENSION) || defined(HAVE_SGI_SAVER_EXTENSION)
+  if (use_mit_saver_extension || use_sgi_saver_extension)
+    {
+      /* Need to set the server timeout to the new one the user has picked.
+       */
+      int server_timeout, server_interval, prefer_blank, allow_exp;
+      XGetScreenSaver (dpy, &server_timeout, &server_interval,
+		       &prefer_blank, &allow_exp);
+      if (server_timeout != (timeout / 1000))
+	{
+	  server_timeout = (timeout / 1000);
+	  if (verbose_p)
+	    fprintf (stderr,
+		   "%s: configuring server for saver timeout of %d seconds.\n",
+		     progname, server_timeout);
+	  /* Leave all other parameters the same. */
+	  XSetScreenSaver (dpy, server_timeout, server_interval,
+			   prefer_blank, allow_exp);
+	}
+    }
+#endif /* HAVE_MIT_SAVER_EXTENSION || HAVE_SGI_SAVER_EXTENSION */
 }
 
 
@@ -561,7 +591,8 @@ Bool demo_mode_p = False;
 extern XtAppContext app;
 extern Widget toplevel_shell;
 extern Bool use_xidle_extension;
-extern Bool use_saver_extension;
+extern Bool use_mit_saver_extension;
+extern Bool use_sgi_saver_extension;
 extern Time notice_events_timeout;
 
 extern char **screenhacks;
@@ -591,7 +622,9 @@ demo_mode ()
 	  break;
 
 	case CreateNotify:
-	  if (!use_xidle_extension && !use_saver_extension)
+	  if (!use_xidle_extension &&
+	      !use_mit_saver_extension &&
+	      !use_sgi_saver_extension)
 	    {
 	      XtAppAddTimeOut (app, notice_events_timeout, notice_events_timer,
 			       (XtPointer) event.xcreatewindow.window);
@@ -612,17 +645,17 @@ demo_mode ()
 	  /* fall through */
 
 	default:
-#ifdef HAVE_SAVER_EXTENSION
-	  if (event.type == saver_ext_event_number)
+#ifdef HAVE_MIT_SAVER_EXTENSION
+	  if (event.type == mit_saver_ext_event_number)
 	    {
 	      /* Get the "real" server window out of the way as soon
 		 as possible. */
-	      if (server_saver_window &&
-		  window_exists_p (dpy, server_saver_window))
-		XUnmapWindow (dpy, server_saver_window);
+	      if (server_mit_saver_window &&
+		  window_exists_p (dpy, server_mit_saver_window))
+		XUnmapWindow (dpy, server_mit_saver_window);
 	    }
 	  else
-#endif /* HAVE_SAVER_EXTENSION */
+#endif /* HAVE_MIT_SAVER_EXTENSION */
 
 	  XtDispatchEvent (&event);
 	  break;
@@ -643,6 +676,7 @@ demo_mode_hack (hack)
     blank_screen ();
   demo_hack = hack;
   spawn_screenhack (False);
+  /* raise_screenhack_dialog(); */
 }
 
 static void
