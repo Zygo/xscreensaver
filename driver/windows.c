@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-2007 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1044,12 +1044,14 @@ get_screen_viewport (saver_screen_info *ssi,
         {
           target_x = ssi->x;
           target_y = ssi->y;
+          which = ssi->number;
         }
 
       /* Find the Xinerama rectangle that contains the mouse position. */
       for (i = 0; i < si->nscreens; i++)
         {
-          if (target_x >= si->screens[i].x &&
+          if (which == -1 &&
+              target_x >= si->screens[i].x &&
               target_y >= si->screens[i].y &&
               target_x <  si->screens[i].x + si->screens[i].width &&
               target_y <  si->screens[i].y + si->screens[i].height)

@@ -252,6 +252,7 @@ main (int argc, char **argv)
       if (which == PASS)
         {
 	  si->unlock_cb = gui_auth_conv;
+          si->auth_finished_cb = auth_finished_cb;
 
 	  xss_authenticate(si, True);
 
@@ -261,6 +262,7 @@ main (int argc, char **argv)
             fprintf (stderr, "%s: authentication FAILED!\n", progname);
 
           XSync(si->dpy, False);
+          fprintf (stderr, "\n######################################\n\n");
           sleep (3);
         }
       else

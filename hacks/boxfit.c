@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2005, 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2005-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -121,8 +121,10 @@ reset_boxes (state *st)
   else
     {
       st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");  /* re-get */
+      if (st->ncolors < 1) st->ncolors = 1;
       make_smooth_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap,
                             st->colors, &st->ncolors, True, 0, False);
+      if (st->ncolors < 1) abort();
       XClearWindow (st->dpy, st->window);
     }
 }

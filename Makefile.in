@@ -121,6 +121,8 @@ configure::
 									     \
 		s@mandir=.\$${prefix}/man.@mandir=\\\$${datadir}/man@;       \
 									     \
+		s@rm -f conftest@rm -rf conftest@g;			     \
+									     \
 		print;'							     \
 	< configure							     \
 	> $$TMP &&							     \

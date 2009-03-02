@@ -26,6 +26,10 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
  *
  * 2005: opts work. added options -balls, -ballsize, -explosion
  *
+ * 2006: opts work. added option -decay
+ *
+ * 2008: opts work. added option -momentum
+ *
  */
 
 #include "boxed.h"
@@ -54,7 +58,8 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 # define DEF_BALLS	"25"
 # define DEF_BALLSIZE   "2.0"
 # define DEF_EXPLOSION	"15.0"
-# define DEF_DECAY	"0.1"
+# define DEF_DECAY	"0.07"
+# define DEF_MOMENTUM	"0.6"
 
 #undef countof 
 #define countof(x) (int)(sizeof((x))/sizeof((*x)))
@@ -66,6 +71,7 @@ static int cfg_balls;
 static GLfloat cfg_ballsize;
 static GLfloat cfg_explosion;
 static GLfloat cfg_decay;
+static GLfloat cfg_momentum;
 
 
 static XrmOptionDescRec opts[] = {
@@ -74,6 +80,7 @@ static XrmOptionDescRec opts[] = {
     {"-ballsize", ".boxed.ballsize", XrmoptionSepArg, 0},
     {"-explosion", ".boxed.explosion", XrmoptionSepArg, 0},
     {"-decay", ".boxed.decay", XrmoptionSepArg, 0},
+    {"-momentum", ".boxed.momentum", XrmoptionSepArg, 0},
 };
 
 static argtype vars[] = {
@@ -82,6 +89,7 @@ static argtype vars[] = {
     {&cfg_ballsize, "ballsize", "Ball Size", DEF_BALLSIZE, t_Float},
     {&cfg_explosion, "explosion", "Explosion", DEF_EXPLOSION, t_Float},
     {&cfg_decay, "decay", "Explosion Decay", DEF_DECAY, t_Float},
+    {&cfg_momentum, "momentum", "Explosion Momentum", DEF_MOMENTUM, t_Float},
 };
 
 ENTRYPOINT ModeSpecOpt boxed_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -153,6 +161,7 @@ typedef struct {
    float	scalefac;
    float	explosion;
    float	decay;
+   float	momentum;
    vectorf	color;
    tri		*tris;
    GLint	*indices;
@@ -165,6 +174,7 @@ typedef struct {
    float ballsize;
    float explosion;
    float decay;
+   float momentum;
    BOOL textures;
    BOOL transparent;
    float camspeed;
@@ -258,6 +268,12 @@ static inline GLfloat
 squaremagnitude(vectorf * v)
 {
    return v->x * v->x + v->y * v->y + v->z * v->z;
+}
+
+static inline GLfloat
+squaremagnitudehorz(vectorf * v)
+{
+   return v->x * v->x + v->z * v->z;
 }
 
 
@@ -400,7 +416,10 @@ static void updateballs(ballman *bman)
 	       scalevector(&bman->balls[b].dir,&bman->balls[b].dir,0.80f);
 	       if (squaremagnitude(&bman->balls[b].dir) < 0.08f) {
 		  createball(&bman->balls[b]);
-	       }
+               }
+	       if (squaremagnitudehorz(&bman->balls[b].dir) < 0.005f) {
+                 createball(&bman->balls[b]);
+               }
 	    }
 	 }
 	 
@@ -471,13 +490,15 @@ static void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, i
 {
    int pos;
    float explosion;
+   float momentum;
    float scale;
    register int i;
-   vectorf avgdir,dvect;
+   vectorf avgdir,dvect,mvect;
 
    tman->scalefac = b->radius;
    copyvector(&tman->color,&b->color);
    explosion = 1.0f + tman->explosion * 2.0 * rnd();
+   momentum = tman->momentum;
 
    tman->num_tri = ind_num/3;
    
@@ -537,6 +558,12 @@ static void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, i
       dvect.y = (0.15f - 0.3f*rnd());
       dvect.z = (0.1f - 0.2f*rnd());
       addvectors(&tman->tris[i].dir,&tman->tris[i].dir,&dvect);
+
+      /* add ball's momentum to each piece of the exploded ball */
+      mvect.x = b->dir.x * momentum;
+      mvect.y = 0;
+      mvect.z = b->dir.z * momentum;
+      addvectors(&tman->tris[i].dir,&tman->tris[i].dir,&mvect);
    }
 }
 
@@ -643,12 +670,14 @@ static void setdefaultconfig(boxed_config *config)
   cfg_ballsize = MAX(1.0f,MIN(5.0f,cfg_ballsize));
   cfg_explosion = MAX(0.0f,MIN(50.0f,cfg_explosion));
   cfg_decay = MAX(0.0f,MIN(1.0f,cfg_decay));
+  cfg_momentum = MAX(0.0f,MIN(1.0f,cfg_momentum));
 
   config->numballs = cfg_balls;
   config->textures = TRUE;
   config->transparent = FALSE;
   config->explosion = cfg_explosion;
   config->decay = cfg_decay;
+  config->momentum = cfg_momentum;
   config->ballsize = cfg_ballsize;
   config->camspeed = 35.0f;
 }
@@ -1082,6 +1111,10 @@ pinit(ModeInfo * mi)
    
    /* Load configuration */
    setdefaultconfig(&gp->config);
+
+   /* give the decay parameter a better curve */
+   if (gp->config.decay <= 0.8182) { gp->config.decay = gp->config.decay / 3; }
+   else                            { gp->config.decay = (gp->config.decay - 0.75) * 4; }
    
    bman = &gp->bman;
    
@@ -1096,6 +1129,7 @@ pinit(ModeInfo * mi)
    for(i=0;i<bman->num_balls;i++) {
       gp->tman[i].explosion = (float) (((int)gp->config.explosion) / 15.0f );
       gp->tman[i].decay = gp->config.decay;
+      gp->tman[i].momentum = gp->config.momentum;
       gp->tman[i].vertices = NULL;
       gp->tman[i].normals = NULL;
       gp->tman[i].tris = NULL;

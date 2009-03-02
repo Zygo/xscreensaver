@@ -1,5 +1,5 @@
 /* grab-ximage.c --- grab the screen to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 2001-2006 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -318,6 +318,9 @@ pixmap_to_gl_ximage (Screen *screen, Window window, Pixmap pixmap)
     unsigned int bw;
     XGetGeometry (dpy, pixmap, &root, &x, &y, &width, &height, &bw, &depth);
   }
+
+  if (width < 5 || height < 5)  /* something's gone wrong somewhere... */
+    return 0;
 
   /* Convert the server-side Pixmap to a client-side GL-ordered XImage.
    */

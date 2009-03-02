@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1338,7 +1338,7 @@ static void
 drain_input (p_state *state)
 {
   XtAppContext app = XtDisplayToApplicationContext (state->dpy);
-  if (state->input_available_p)
+  if (state->input_available_p && state->pipe)
     {
       unsigned char s[2];
       int n = read (fileno (state->pipe), (void *) s, 1);

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -656,6 +656,8 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
   Bool done = False;
   XRectangle geom_ret_2;
   char *name_ret_2 = 0;
+
+  if (!drawable) abort();
 
   if (callback) {
     geom_ret = &geom_ret_2;

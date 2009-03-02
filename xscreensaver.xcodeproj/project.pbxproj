@@ -59,6 +59,7 @@
 				AF77793D09B6604900EA3033 /* PBXTargetDependency */,
 				AF77793B09B6604900EA3033 /* PBXTargetDependency */,
 				AF77793909B6604800EA3033 /* PBXTargetDependency */,
+				AF1A17840D6D6FA7008AF328 /* PBXTargetDependency */,
 				AF77793709B6604800EA3033 /* PBXTargetDependency */,
 				AF0DCA310C4C744D00D76972 /* PBXTargetDependency */,
 				AF77793509B6604800EA3033 /* PBXTargetDependency */,
@@ -187,6 +188,7 @@
 				AF777A4709B660B500EA3033 /* PBXTargetDependency */,
 				AF777A4509B660B500EA3033 /* PBXTargetDependency */,
 				AF777A4309B660B500EA3033 /* PBXTargetDependency */,
+				AF4FF4D70D52CD0D00666F98 /* PBXTargetDependency */,
 				AF777A4109B660B500EA3033 /* PBXTargetDependency */,
 				AF777A3F09B660B500EA3033 /* PBXTargetDependency */,
 				AF777A3D09B660B500EA3033 /* PBXTargetDependency */,
@@ -211,6 +213,7 @@
 				AF777A1B09B660B300EA3033 /* PBXTargetDependency */,
 				AF777A1909B660B300EA3033 /* PBXTargetDependency */,
 				AF777A1709B660B300EA3033 /* PBXTargetDependency */,
+				AF42C5160D624E9200B27FF6 /* PBXTargetDependency */,
 				AF777A1509B660B300EA3033 /* PBXTargetDependency */,
 				AF777A1309B660B300EA3033 /* PBXTargetDependency */,
 				AF777A1109B660B300EA3033 /* PBXTargetDependency */,
@@ -345,7 +348,23 @@
 		AF0FAF2709CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF0FAF2809CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF0FAF2909CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
+		AF1A17660D6D6EE3008AF328 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
+		AF1A17680D6D6EE3008AF328 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF1A176B0D6D6EE3008AF328 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF1A176C0D6D6EE3008AF328 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF1A176D0D6D6EE3008AF328 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF1A177F0D6D6F3E008AF328 /* lcdscrub.c in Sources */ = {isa = PBXBuildFile; fileRef = AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */; };
+		AF1A17810D6D6F62008AF328 /* lcdscrub.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF1A17800D6D6F62008AF328 /* lcdscrub.xml */; };
 		AF1A26760990E77C00147B80 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF3C714B0D624BF50030CC0D /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF3C714E0D624BF50030CC0D /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF3C714F0D624BF50030CC0D /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF3C71500D624BF50030CC0D /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF3C71510D624BF50030CC0D /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF480FE70990375900FB32B8 /* AGL.framework */; };
+		AF3C71520D624BF50030CC0D /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF480DF1098F528500FB32B8 /* OpenGL.framework */; };
+		AF3C71530D624BF50030CC0D /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF3C715E0D624C600030CC0D /* hypnowheel.c in Sources */ = {isa = PBXBuildFile; fileRef = AF3C715D0D624C600030CC0D /* hypnowheel.c */; };
+		AF3C71600D624C7C0030CC0D /* hypnowheel.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF3C715F0D624C7C0030CC0D /* hypnowheel.xml */; };
 		AF476FBC099D154F001F091E /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF476FBF099D154F001F091E /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AF476FC0099D154F001F091E /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -716,6 +735,15 @@
 		AF4FD6F40CE7A486005EE58E /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
 		AF4FD7010CE7A577005EE58E /* lockward.c in Sources */ = {isa = PBXBuildFile; fileRef = AF4FD7000CE7A577005EE58E /* lockward.c */; };
 		AF4FD7030CE7A5BC005EE58E /* lockward.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF4FD7020CE7A5BC005EE58E /* lockward.xml */; };
+		AF4FF4C10D52CBDE00666F98 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF4FF4C30D52CBDE00666F98 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF4FF4C40D52CBDE00666F98 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF4FF4C50D52CBDE00666F98 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF4FF4C60D52CBDE00666F98 /* AGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF480FE70990375900FB32B8 /* AGL.framework */; };
+		AF4FF4C70D52CBDE00666F98 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF480DF1098F528500FB32B8 /* OpenGL.framework */; };
+		AF4FF4C80D52CBDE00666F98 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF4FF4D10D52CC8400666F98 /* cubicgrid.c in Sources */ = {isa = PBXBuildFile; fileRef = AF4FF4D00D52CC8400666F98 /* cubicgrid.c */; };
+		AF4FF4D40D52CCAA00666F98 /* cubicgrid.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF4FF4D30D52CCAA00666F98 /* cubicgrid.xml */; };
 		AF64232F099F45C3000F4CD4 /* braid.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD56EC10996A76F00BA26F7 /* braid.c */; };
 		AF642330099F45CA000F4CD4 /* braid.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC2587D0988A468000655EE /* braid.xml */; };
 		AF6423F9099FF9C2000F4CD4 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
@@ -1962,6 +1990,34 @@
 			remoteGlobalIDString = AF0DCA420C4CBB0D00D76972;
 			remoteInfo = Voronoi;
 		};
+		AF1A17630D6D6EE3008AF328 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF1A17830D6D6FA7008AF328 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF1A17610D6D6EE3008AF328;
+			remoteInfo = LCDscrub;
+		};
+		AF3C71470D624BF50030CC0D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF42C5150D624E9200B27FF6 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF3C71450D624BF50030CC0D;
+			remoteInfo = Hypnowheel;
+		};
 		AF476FB7099D154F001F091E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -2409,6 +2465,27 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF4FD6E60CE7A486005EE58E;
 			remoteInfo = Lockward;
+		};
+		AF4FF4970D52CA5000666F98 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4FF4930D52CA0800666F98;
+			remoteInfo = m6502.h;
+		};
+		AF4FF4BC0D52CBDE00666F98 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF4FF4D60D52CD0D00666F98 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4FF4BA0D52CBDE00666F98;
+			remoteInfo = CubicGrid;
 		};
 		AF6423F4099FF9C2000F4CD4 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -4949,15 +5026,20 @@
 		AF0DCA340C4C74A200D76972 /* m6502.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = m6502.c; path = hacks/m6502.c; sourceTree = "<group>"; };
 		AF0DCA370C4C74B700D76972 /* m6502.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = m6502.xml; sourceTree = "<group>"; };
 		AF0DCA560C4CBB0D00D76972 /* Voronoi.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Voronoi.saver; sourceTree = BUILT_PRODUCTS_DIR; };
-		AF0DCA570C4CBB0E00D76972 /* XScreenSaver copy.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "XScreenSaver copy.plist"; path = "OSX/XScreenSaver copy.plist"; sourceTree = "<group>"; };
 		AF0DCA5F0C4CBB7300D76972 /* voronoi.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = voronoi.c; path = hacks/glx/voronoi.c; sourceTree = "<group>"; };
 		AF0DCA610C4CBB8E00D76972 /* voronoi.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = voronoi.xml; sourceTree = "<group>"; };
 		AF0FAF0B09CA6FF900EE1051 /* xscreensaver-text */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.perl; name = "xscreensaver-text"; path = "driver/xscreensaver-text"; sourceTree = "<group>"; };
 		AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.perl; name = "xscreensaver-getimage-file"; path = "driver/xscreensaver-getimage-file"; sourceTree = "<group>"; };
+		AF1A17730D6D6EE3008AF328 /* LCDscrub.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LCDscrub.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = lcdscrub.c; path = hacks/lcdscrub.c; sourceTree = "<group>"; };
+		AF1A17800D6D6F62008AF328 /* lcdscrub.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = lcdscrub.xml; sourceTree = "<group>"; };
 		AF34085409B80AAF00F2CEC1 /* StarWars.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StarWars.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF34085509B80AB000F2CEC1 /* StonerView.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = StonerView.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF34085609B80AB000F2CEC1 /* Gleidescope.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Gleidescope.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF34085709B80AB000F2CEC1 /* FontGlide.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = FontGlide.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF3C71590D624BF50030CC0D /* Hypnowheel.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Hypnowheel.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF3C715D0D624C600030CC0D /* hypnowheel.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = hypnowheel.c; path = hacks/glx/hypnowheel.c; sourceTree = "<group>"; };
+		AF3C715F0D624C7C0030CC0D /* hypnowheel.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = hypnowheel.xml; sourceTree = "<group>"; };
 		AF476FC6099D154F001F091E /* Interference.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Interference.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF476FD0099D15AA001F091E /* interference.c */ = {isa = PBXFileReference; fileEncoding = 30; lastKnownFileType = sourcecode.c.c; name = interference.c; path = hacks/interference.c; sourceTree = "<group>"; };
 		AF476FEB099D1686001F091E /* Truchet.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Truchet.saver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -5101,9 +5183,11 @@
 		AF48E1670A0C268500F94CF9 /* glschool.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = glschool.h; path = hacks/glx/glschool.h; sourceTree = "<group>"; };
 		AF48E16B0A0C26A400F94CF9 /* glschool.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = glschool.xml; sourceTree = "<group>"; };
 		AF4FD6FA0CE7A486005EE58E /* Lockward.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Lockward.saver; sourceTree = BUILT_PRODUCTS_DIR; };
-		AF4FD6FD0CE7A486005EE58E /* XScreenSaver copy.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "XScreenSaver copy.plist"; path = "OSX/XScreenSaver copy.plist"; sourceTree = "<group>"; };
 		AF4FD7000CE7A577005EE58E /* lockward.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = lockward.c; path = hacks/glx/lockward.c; sourceTree = "<group>"; };
 		AF4FD7020CE7A5BC005EE58E /* lockward.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = lockward.xml; sourceTree = "<group>"; };
+		AF4FF4CE0D52CBDE00666F98 /* CubicGrid.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = CubicGrid.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF4FF4D00D52CC8400666F98 /* cubicgrid.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = cubicgrid.c; path = hacks/glx/cubicgrid.c; sourceTree = "<group>"; };
+		AF4FF4D30D52CCAA00666F98 /* cubicgrid.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = cubicgrid.xml; sourceTree = "<group>"; };
 		AF642405099FF9C2000F4CD4 /* Extrusion.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Extrusion.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF642409099FFAF0000F4CD4 /* extrusion-helix2.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = "extrusion-helix2.c"; path = "hacks/glx/extrusion-helix2.c"; sourceTree = "<group>"; };
 		AF64240A099FFAF0000F4CD4 /* extrusion-helix3.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = "extrusion-helix3.c"; path = "hacks/glx/extrusion-helix3.c"; sourceTree = "<group>"; };
@@ -5754,7 +5838,6 @@
 		AFE6A16A0CDD78EA002805BF /* involute.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = involute.c; path = hacks/glx/involute.c; sourceTree = "<group>"; };
 		AFE6A16B0CDD78EA002805BF /* involute.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = involute.h; path = hacks/glx/involute.h; sourceTree = "<group>"; };
 		AFE6A1970CDD7B2E002805BF /* MoebiusGears.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = MoebiusGears.saver; sourceTree = BUILT_PRODUCTS_DIR; };
-		AFE6A19A0CDD7B2F002805BF /* XScreenSaver copy.plist */ = {isa = PBXFileReference; lastKnownFileType = text.xml; name = "XScreenSaver copy.plist"; path = "OSX/XScreenSaver copy.plist"; sourceTree = "<group>"; };
 		AFE6A40B0CDD7BC3002805BF /* moebiusgears.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = moebiusgears.c; path = hacks/glx/moebiusgears.c; sourceTree = "<group>"; };
 		AFE6A40D0CDD7BDC002805BF /* moebiusgears.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = moebiusgears.xml; sourceTree = "<group>"; };
 		AFE6A42D0CDD7FAA002805BF /* Abstractile.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Abstractile.saver; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -5815,6 +5898,29 @@
 				AF0DCA4E0C4CBB0D00D76972 /* AGL.framework in Frameworks */,
 				AF0DCA4F0C4CBB0D00D76972 /* OpenGL.framework in Frameworks */,
 				AF0DCA500C4CBB0D00D76972 /* Carbon.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF1A176A0D6D6EE3008AF328 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF1A176B0D6D6EE3008AF328 /* libjwxyz.a in Frameworks */,
+				AF1A176C0D6D6EE3008AF328 /* ScreenSaver.framework in Frameworks */,
+				AF1A176D0D6D6EE3008AF328 /* Cocoa.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF3C714D0D624BF50030CC0D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF3C714E0D624BF50030CC0D /* libjwxyz.a in Frameworks */,
+				AF3C714F0D624BF50030CC0D /* ScreenSaver.framework in Frameworks */,
+				AF3C71500D624BF50030CC0D /* Cocoa.framework in Frameworks */,
+				AF3C71510D624BF50030CC0D /* AGL.framework in Frameworks */,
+				AF3C71520D624BF50030CC0D /* OpenGL.framework in Frameworks */,
+				AF3C71530D624BF50030CC0D /* Carbon.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -6387,6 +6493,19 @@
 				AF4FD6F20CE7A486005EE58E /* AGL.framework in Frameworks */,
 				AF4FD6F30CE7A486005EE58E /* OpenGL.framework in Frameworks */,
 				AF4FD6F40CE7A486005EE58E /* Carbon.framework in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF4FF4C20D52CBDE00666F98 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF4FF4C30D52CBDE00666F98 /* libjwxyz.a in Frameworks */,
+				AF4FF4C40D52CBDE00666F98 /* ScreenSaver.framework in Frameworks */,
+				AF4FF4C50D52CBDE00666F98 /* Cocoa.framework in Frameworks */,
+				AF4FF4C60D52CBDE00666F98 /* AGL.framework in Frameworks */,
+				AF4FF4C70D52CBDE00666F98 /* OpenGL.framework in Frameworks */,
+				AF4FF4C80D52CBDE00666F98 /* Carbon.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -8362,6 +8481,9 @@
 				AFE6A1970CDD7B2E002805BF /* MoebiusGears.saver */,
 				AFE6A42D0CDD7FAA002805BF /* Abstractile.saver */,
 				AF4FD6FA0CE7A486005EE58E /* Lockward.saver */,
+				AF4FF4CE0D52CBDE00666F98 /* CubicGrid.saver */,
+				AF3C71590D624BF50030CC0D /* Hypnowheel.saver */,
+				AF1A17730D6D6EE3008AF328 /* LCDscrub.saver */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -8390,9 +8512,6 @@
 				8D1107310486CEB800E47090 /* XScreenSaver.plist */,
 				AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */,
 				AF0FAF0B09CA6FF900EE1051 /* xscreensaver-text */,
-				AF0DCA570C4CBB0E00D76972 /* XScreenSaver copy.plist */,
-				AFE6A19A0CDD7B2F002805BF /* XScreenSaver copy.plist */,
-				AF4FD6FD0CE7A486005EE58E /* XScreenSaver copy.plist */,
 			);
 			name = Resources;
 			sourceTree = "<group>";
@@ -8497,6 +8616,7 @@
 				AF64270709A1C9EF000F4CD4 /* sonar.c */,
 				AF4771BA099D4997001F091E /* t3d.c */,
 				AF477192099D4864001F091E /* wander.c */,
+				AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */,
 				AF47717C099D47D3001F091E /* compass.c */,
 				AF477145099D43E2001F091E /* deluxe.c */,
 				AF476FF0099D1713001F091E /* truchet.c */,
@@ -8605,6 +8725,7 @@
 				AFE6A16B0CDD78EA002805BF /* involute.h */,
 				AF0DCA5F0C4CBB7300D76972 /* voronoi.c */,
 				AFA563660993970F00F3E977 /* cube21.c */,
+				AF4FF4D00D52CC8400666F98 /* cubicgrid.c */,
 				AFA563460993963400F3E977 /* glhanoi.c */,
 				AF77778B09B64A2A00EA3033 /* gleidescope.c */,
 				AF7777A509B64AFC00EA3033 /* mirrorblob.c */,
@@ -8665,6 +8786,7 @@
 				AFA55E9F0993608800F3E977 /* toaster_handle.c */,
 				AFA55EA00993608800F3E977 /* toaster_handle.dxf */,
 				AFA55EA10993608800F3E977 /* toaster_handle2.c */,
+				AF3C715D0D624C600030CC0D /* hypnowheel.c */,
 				AFA55EA20993608800F3E977 /* toaster_handle2.dxf */,
 				AFA55EA30993608800F3E977 /* toaster_jet.c */,
 				AFA55EA40993608800F3E977 /* toaster_jet.dxf */,
@@ -8797,6 +8919,7 @@
 				AFC2588C0988A468000655EE /* critical.xml */,
 				AFC2588D0988A468000655EE /* crystal.xml */,
 				AFC2588E0988A468000655EE /* cube21.xml */,
+				AF4FF4D30D52CCAA00666F98 /* cubicgrid.xml */,
 				AFC2588F0988A468000655EE /* cubenetic.xml */,
 				AFC258900988A468000655EE /* cubestorm.xml */,
 				AFC258910988A468000655EE /* cynosure.xml */,
@@ -8951,10 +9074,12 @@
 				AFC259240988A469000655EE /* timetunnel.xml */,
 				AF0DCA610C4CBB8E00D76972 /* voronoi.xml */,
 				AFC259250988A469000655EE /* triangle.xml */,
+				AF1A17800D6D6F62008AF328 /* lcdscrub.xml */,
 				AFC259260988A469000655EE /* truchet.xml */,
 				AFC259270988A469000655EE /* twang.xml */,
 				AFC259280988A469000655EE /* vermiculate.xml */,
 				AFC259290988A469000655EE /* vidwhacker.xml */,
+				AF3C715F0D624C7C0030CC0D /* hypnowheel.xml */,
 				AFC2592A0988A469000655EE /* vines.xml */,
 				AF4FD7020CE7A5BC005EE58E /* lockward.xml */,
 				AFC2592B0988A469000655EE /* wander.xml */,
@@ -9079,6 +9204,20 @@
 /* End PBXHeadersBuildPhase section */
 
 /* Begin PBXLegacyTarget section */
+		AF4FF4930D52CA0800666F98 /* m6502.h */ = {
+			isa = PBXLegacyTarget;
+			buildArgumentsString = "m6502.sh $(PRODUCT_NAME) images/m6502/*.asm";
+			buildConfigurationList = AF4FF4940D52CA0800666F98 /* Build configuration list for PBXLegacyTarget "m6502.h" */;
+			buildPhases = (
+			);
+			buildToolPath = /bin/sh;
+			buildWorkingDirectory = hacks/;
+			dependencies = (
+			);
+			name = m6502.h;
+			passBuildSettingsInEnvironment = 1;
+			productName = molecules.h;
+		};
 		AFA56119099378CB00F3E977 /* molecules.h */ = {
 			isa = PBXLegacyTarget;
 			buildArgumentsString = "molecules.sh $(PRODUCT_NAME) ../images/molecules/*.pdb";
@@ -9149,6 +9288,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				AF4FF4980D52CA5000666F98 /* PBXTargetDependency */,
 				AF0DC7AC0C4C73F600D76972 /* PBXTargetDependency */,
 			);
 			name = m6502;
@@ -9174,6 +9314,46 @@
 			name = Voronoi;
 			productName = TopBlock;
 			productReference = AF0DCA560C4CBB0D00D76972 /* Voronoi.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF1A17610D6D6EE3008AF328 /* LCDscrub */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF1A17700D6D6EE3008AF328 /* Build configuration list for PBXNativeTarget "LCDscrub" */;
+			buildPhases = (
+				AF1A17640D6D6EE3008AF328 /* Resources */,
+				AF1A17670D6D6EE3008AF328 /* Sources */,
+				AF1A176A0D6D6EE3008AF328 /* Frameworks */,
+				AF1A176E0D6D6EE3008AF328 /* Rez */,
+				AF1A176F0D6D6EE3008AF328 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF1A17620D6D6EE3008AF328 /* PBXTargetDependency */,
+			);
+			name = LCDscrub;
+			productName = Zoom;
+			productReference = AF1A17730D6D6EE3008AF328 /* LCDscrub.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF3C71450D624BF50030CC0D /* Hypnowheel */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF3C71560D624BF50030CC0D /* Build configuration list for PBXNativeTarget "Hypnowheel" */;
+			buildPhases = (
+				AF3C71480D624BF50030CC0D /* Resources */,
+				AF3C714A0D624BF50030CC0D /* Sources */,
+				AF3C714D0D624BF50030CC0D /* Frameworks */,
+				AF3C71540D624BF50030CC0D /* Rez */,
+				AF3C71550D624BF50030CC0D /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF3C71460D624BF50030CC0D /* PBXTargetDependency */,
+			);
+			name = Hypnowheel;
+			productName = TopBlock;
+			productReference = AF3C71590D624BF50030CC0D /* Hypnowheel.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
 		AF476FB5099D154F001F091E /* Interference */ = {
@@ -10291,6 +10471,26 @@
 			name = Lockward;
 			productName = TopBlock;
 			productReference = AF4FD6FA0CE7A486005EE58E /* Lockward.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF4FF4BA0D52CBDE00666F98 /* CubicGrid */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF4FF4CB0D52CBDE00666F98 /* Build configuration list for PBXNativeTarget "CubicGrid" */;
+			buildPhases = (
+				AF4FF4BD0D52CBDE00666F98 /* Resources */,
+				AF4FF4BF0D52CBDE00666F98 /* Sources */,
+				AF4FF4C20D52CBDE00666F98 /* Frameworks */,
+				AF4FF4C90D52CBDE00666F98 /* Rez */,
+				AF4FF4CA0D52CBDE00666F98 /* ShellScript */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF4FF4BB0D52CBDE00666F98 /* PBXTargetDependency */,
+			);
+			name = CubicGrid;
+			productName = Cubenetic;
+			productReference = AF4FF4CE0D52CBDE00666F98 /* CubicGrid.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
 		AF6423F2099FF9C2000F4CD4 /* Extrusion */ = {
@@ -13411,7 +13611,9 @@
 				AF9D4C2B09B59A49006E59CF /* Jigsaw */,
 				AF477499099D8A74001F091E /* Kaleidescope */,
 				AF477613099DA26C001F091E /* Kumppa */,
+				AF1A17610D6D6EE3008AF328 /* LCDscrub */,
 				AF4774B4099D8B5F001F091E /* LMorph */,
+				AF4FF4930D52CA0800666F98 /* m6502.h */,
 				AF0DC7AB0C4C73F600D76972 /* m6502 */,
 				AF4774CE099D8BFF001F091E /* Maze */,
 				AF975AFC099C6FE400B05160 /* MemScroller */,
@@ -13504,7 +13706,6 @@
 				AFD56F0B0996AAFA00BA26F7 /* Vines */,
 				AFD5709B0996B88E00BA26F7 /* Worm */,
 				AF480D59098EED5100FB32B8 /* All Savers (OpenGL) */,
-				AFA56119099378CB00F3E977 /* molecules.h */,
 				AFA5604A09936E2100F3E977 /* AntInspect */,
 				AFA562DA099393C900F3E977 /* AntMaze */,
 				AFA5606209936F3800F3E977 /* AntSpotlight */,
@@ -13523,6 +13724,7 @@
 				AFA56351099396C000F3E977 /* Cube21 */,
 				AFA55D620993584B00F3E977 /* Cubenetic */,
 				AFA55FD309936BFA00F3E977 /* CubeStorm */,
+				AF4FF4BA0D52CBDE00666F98 /* CubicGrid */,
 				AF4810EB09909FBA00FB32B8 /* DangerBall */,
 				AF77786109B6536000EA3033 /* DNAlogo */,
 				AFA55E0D09935EDC00F3E977 /* Endgame */,
@@ -13547,6 +13749,7 @@
 				AFA55C77099349A600F3E977 /* GLSnake */,
 				AFD56DF10996A03800BA26F7 /* GLText */,
 				AFA55F420993629000F3E977 /* HyperTorus */,
+				AF3C71450D624BF50030CC0D /* Hypnowheel */,
 				AFA55F06099361B700F3E977 /* JigglyPuff */,
 				AFA563A4099398BB00F3E977 /* Juggler3D */,
 				AFA55F2A0993622F00F3E977 /* Klein */,
@@ -13557,6 +13760,7 @@
 				AF77778E09B64A5200EA3033 /* MirrorBlob */,
 				AFA5596D0993317900F3E977 /* Moebius */,
 				AFE6A1820CDD7B2E002805BF /* MoebiusGears */,
+				AFA56119099378CB00F3E977 /* molecules.h */,
 				AFA560FD0993781600F3E977 /* Molecule */,
 				AFA559B50993328000F3E977 /* Morph3D */,
 				AFA5617B09937CF100F3E977 /* Noof */,
@@ -13615,6 +13819,23 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF0DCA620C4CBB8E00D76972 /* voronoi.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF1A17640D6D6EE3008AF328 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF1A17660D6D6EE3008AF328 /* xscreensaver-getimage-file in Resources */,
+				AF1A17810D6D6F62008AF328 /* lcdscrub.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF3C71480D624BF50030CC0D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF3C71600D624C7C0030CC0D /* hypnowheel.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -14059,6 +14280,14 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF4FD7030CE7A5BC005EE58E /* lockward.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF4FF4BD0D52CBDE00666F98 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF4FF4D40D52CCAA00666F98 /* cubicgrid.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -15341,6 +15570,20 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF1A176E0D6D6EE3008AF328 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF3C71540D624BF50030CC0D /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF476FC2099D154F001F091E /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
@@ -15720,6 +15963,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AF4FD6F50CE7A486005EE58E /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF4FF4C90D52CBDE00666F98 /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -16814,6 +17064,34 @@
 			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
 		};
+		AF1A176F0D6D6EE3008AF328 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AF3C71550D624BF50030CC0D /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
 		AF48DEFF0A0C25E000F94CF9 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -16829,6 +17107,20 @@
 			showEnvVarsInLog = 0;
 		};
 		AF4FD6F60CE7A486005EE58E /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AF4FF4CA0D52CBDE00666F98 /* ShellScript */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -19785,6 +20077,24 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF1A17670D6D6EE3008AF328 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF1A17680D6D6EE3008AF328 /* XScreenSaverSubclass.m in Sources */,
+				AF1A177F0D6D6F3E008AF328 /* lcdscrub.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF3C714A0D624BF50030CC0D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF3C714B0D624BF50030CC0D /* XScreenSaverSubclass.m in Sources */,
+				AF3C715E0D624C600030CC0D /* hypnowheel.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF476FBB099D154F001F091E /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -20327,6 +20637,15 @@
 			files = (
 				AF4FD6EC0CE7A486005EE58E /* XScreenSaverSubclass.m in Sources */,
 				AF4FD7010CE7A577005EE58E /* lockward.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF4FF4BF0D52CBDE00666F98 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF4FF4C10D52CBDE00666F98 /* XScreenSaverSubclass.m in Sources */,
+				AF4FF4D10D52CC8400666F98 /* cubicgrid.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -21793,6 +22112,26 @@
 			target = AF0DCA420C4CBB0D00D76972 /* Voronoi */;
 			targetProxy = AF0DCA5B0C4CBB4300D76972 /* PBXContainerItemProxy */;
 		};
+		AF1A17620D6D6EE3008AF328 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF1A17630D6D6EE3008AF328 /* PBXContainerItemProxy */;
+		};
+		AF1A17840D6D6FA7008AF328 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF1A17610D6D6EE3008AF328 /* LCDscrub */;
+			targetProxy = AF1A17830D6D6FA7008AF328 /* PBXContainerItemProxy */;
+		};
+		AF3C71460D624BF50030CC0D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF3C71470D624BF50030CC0D /* PBXContainerItemProxy */;
+		};
+		AF42C5160D624E9200B27FF6 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF3C71450D624BF50030CC0D /* Hypnowheel */;
+			targetProxy = AF42C5150D624E9200B27FF6 /* PBXContainerItemProxy */;
+		};
 		AF476FB6099D154F001F091E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
@@ -22112,6 +22451,21 @@
 			isa = PBXTargetDependency;
 			target = AF4FD6E60CE7A486005EE58E /* Lockward */;
 			targetProxy = AF4FD6FE0CE7A4F9005EE58E /* PBXContainerItemProxy */;
+		};
+		AF4FF4980D52CA5000666F98 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4FF4930D52CA0800666F98 /* m6502.h */;
+			targetProxy = AF4FF4970D52CA5000666F98 /* PBXContainerItemProxy */;
+		};
+		AF4FF4BB0D52CBDE00666F98 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF4FF4BC0D52CBDE00666F98 /* PBXContainerItemProxy */;
+		};
+		AF4FF4D70D52CD0D00666F98 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4FF4BA0D52CBDE00666F98 /* CubicGrid */;
+			targetProxy = AF4FF4D60D52CD0D00666F98 /* PBXContainerItemProxy */;
 		};
 		AF6423F3099FF9C2000F4CD4 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -24002,6 +24356,38 @@
 			};
 			name = Release;
 		};
+		AF1A17710D6D6EE3008AF328 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Debug;
+		};
+		AF1A17720D6D6EE3008AF328 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+			};
+			name = Release;
+		};
+		AF3C71570D624BF50030CC0D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+			};
+			name = Debug;
+		};
+		AF3C71580D624BF50030CC0D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+			};
+			name = Release;
+		};
 		AF476FC4099D154F001F091E /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -24795,6 +25181,48 @@
 			name = Debug;
 		};
 		AF4FD6F90CE7A486005EE58E /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+			};
+			name = Release;
+		};
+		AF4FF4950D52CA0800666F98 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = NO;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				PRODUCT_NAME = m6502.h;
+			};
+			name = Debug;
+		};
+		AF4FF4960D52CA0800666F98 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				COPY_PHASE_STRIP = YES;
+				GCC_ENABLE_FIX_AND_CONTINUE = NO;
+				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
+				PRODUCT_NAME = m6502.h;
+				ZERO_LINK = NO;
+			};
+			name = Release;
+		};
+		AF4FF4CC0D52CBDE00666F98 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+			};
+			name = Debug;
+		};
+		AF4FF4CD0D52CBDE00666F98 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
@@ -27427,6 +27855,24 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		AF1A17700D6D6EE3008AF328 /* Build configuration list for PBXNativeTarget "LCDscrub" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF1A17710D6D6EE3008AF328 /* Debug */,
+				AF1A17720D6D6EE3008AF328 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF3C71560D624BF50030CC0D /* Build configuration list for PBXNativeTarget "Hypnowheel" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF3C71570D624BF50030CC0D /* Debug */,
+				AF3C71580D624BF50030CC0D /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AF476FC3099D154F001F091E /* Build configuration list for PBXNativeTarget "Interference" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -27963,6 +28409,24 @@
 			buildConfigurations = (
 				AF4FD6F80CE7A486005EE58E /* Debug */,
 				AF4FD6F90CE7A486005EE58E /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF4FF4940D52CA0800666F98 /* Build configuration list for PBXLegacyTarget "m6502.h" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF4FF4950D52CA0800666F98 /* Debug */,
+				AF4FF4960D52CA0800666F98 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF4FF4CB0D52CBDE00666F98 /* Build configuration list for PBXNativeTarget "CubicGrid" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF4FF4CC0D52CBDE00666F98 /* Debug */,
+				AF4FF4CD0D52CBDE00666F98 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

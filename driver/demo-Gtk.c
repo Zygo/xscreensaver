@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2007 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -756,9 +756,9 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
      look as good in the plain-old default Latin1 "C" locale.)
    */
 #ifdef HAVE_GTK2
-  sprintf(copy, ("Copyright \xC2\xA9 1991-2006 %s"), s);
+  sprintf(copy, ("Copyright \xC2\xA9 1991-2008 %s"), s);
 #else  /* !HAVE_GTK2 */
-  sprintf(copy, ("Copyright \251 1991-2006 %s"), s);
+  sprintf(copy, ("Copyright \251 1991-2008 %s"), s);
 #endif /* !HAVE_GTK2 */
 
   sprintf (msg, "%s\n\n%s", copy, desc);
@@ -982,7 +982,7 @@ await_xscreensaver (state *s)
                              the length ISO C89 compilers are required to
                              support" in the following expression... */
 # endif
-        strcat (buf,
+        strcat (buf, STFU
 	  _("You are running as root.  This usually means that xscreensaver\n"
             "was unable to contact your X server because access control is\n"
             "turned on.  Try running this command:\n"
@@ -1127,7 +1127,7 @@ force_list_select_item (state *s, GtkWidget *list, int list_elt, Bool scroll_p)
   if (!was) gtk_widget_set_sensitive (parent, True);
 #ifdef HAVE_GTK2
   model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
-  STFU g_assert (model);
+  g_assert (model);
   if (gtk_tree_model_iter_nth_child (model, &iter, NULL, list_elt))
     {
       selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (list));
@@ -4421,6 +4421,7 @@ g_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
                       the .ad file... */
 #endif
 
+STFU
 static char *defaults[] = {
 #include "XScreenSaver_ad.h"
  0

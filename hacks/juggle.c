@@ -2614,7 +2614,8 @@ init_juggle (ModeInfo * mi)
   sp->scale = MIN(MI_HEIGHT(mi)/480.0, MI_WIDTH(mi)/160.0);
 
   if(describe && !sp->mode_font) { /* Check to see if there's room to describe patterns. */
-	sp->mode_font = XQueryFont(MI_DISPLAY(mi), XGContextFromGC(MI_GC(mi)));
+    char *font = get_string_resource (MI_DISPLAY(mi), "font", "Font");
+	sp->mode_font = XLoadQueryFont(MI_DISPLAY(mi), font);
   }
 }
 

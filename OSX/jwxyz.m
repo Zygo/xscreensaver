@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1842,6 +1842,15 @@ copy_pixmap (Pixmap p)
 static void
 query_font (Font fid)
 {
+  if (!fid || !fid->nsfont) {
+    NSLog(@"no NSFont in fid");
+    abort();
+  }
+  if (![fid->nsfont fontName]) {
+    NSLog(@"broken NSFont in fid");
+    abort();
+  }
+
   int first = 32;
   int last = 255;
 
@@ -1993,7 +2002,7 @@ copy_font (Font fid)
 
   // copy the other pointers
   fid2->ps_name = strdup (fid->ps_name);
-  [fid2->nsfont retain];
+//  [fid2->nsfont retain];
   fid2->metrics.fid = fid2;
 
   return fid2;
@@ -2004,6 +2013,7 @@ static NSFont *
 try_font (BOOL fixed, BOOL bold, BOOL ital, BOOL serif, float size,
           char **name_ret)
 {
+  Assert (size > 0, "zero font size");
   const char *prefix = (fixed ? "Monaco" : (serif ? "Times" : "Helvetica"));
   const char *suffix = (bold && ital
                         ? (serif ? "-BoldItalic" : "-BoldOblique")
@@ -2251,7 +2261,14 @@ XUnloadFont (Display *dpy, Font fid)
 {
   free (fid->ps_name);
   free (fid->metrics.per_char);
-  [fid->nsfont release];
+
+  // #### DAMMIT!  I can't tell what's going wrong here, but I keep getting
+  //      crashes in [NSFont ascender] <- query_font, and it seems to go away
+  //      if I never release the nsfont.  So, fuck it, we'll just leak fonts.
+  //      They're probably not very big...
+  //
+  //  [fid->nsfont release];
+
   free (fid);
   return 0;
 }
@@ -2290,13 +2307,8 @@ XSetFont (Display *dpy, GC gc, Font fid)
   if (gc->gcv.font)
     XUnloadFont (dpy, gc->gcv.font);
   gc->gcv.font = copy_font (fid);
+  [gc->gcv.font->nsfont retain];
   return 0;
-}
-
-Font  // really GContext
-XGContextFromGC (GC gc)    // WTF is this actually supposed to do?
-{
-  return gc->gcv.font;
 }
 
 int
@@ -2341,8 +2353,11 @@ static void
 set_font (CGContextRef cgc, GC gc)
 {
   Font font = gc->gcv.font;
-  if (! font)
-    font = gc->gcv.font = XLoadFont (0, 0);
+  if (! font) {
+    font = XLoadFont (0, 0);
+    gc->gcv.font = font;
+    [gc->gcv.font->nsfont retain];
+  }
   CGContextSelectFont (cgc, font->ps_name, font->size, kCGEncodingMacRoman);
   CGContextSetTextMatrix (cgc, CGAffineTransformIdentity);
 }

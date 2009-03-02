@@ -68,6 +68,7 @@ $ julia		:== $'mydir'julia
 $ kaleidescope	:== $'mydir'kaleidescope
 $ kumppa	:== $'mydir'kumppa
 $ laser		:== $'mydir'laser
+$ lcdscrub	:== $'mydir'lcdscrub
 $ lightning	:== $'mydir'lightning
 $ lisa		:== $'mydir'lisa
 $ lissie	:== $'mydir'lissie

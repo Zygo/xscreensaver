@@ -1,4 +1,4 @@
-/* pinion, Copyright (c) 2004-2006 Jamie Zawinski <jwz@jwz.org>
+/* pinion, Copyright (c) 2004-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1295,7 +1295,9 @@ pinion_handle_event (ModeInfo *mi, XEvent *event)
     }
   else if (event->xany.type == ButtonPress &&
            (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5))
+            event->xbutton.button == Button5 ||
+            event->xbutton.button == Button6 ||
+            event->xbutton.button == Button7))
     {
       gltrackball_mousewheel (pp->trackball, event->xbutton.button, 5,
                               !!event->xbutton.state);

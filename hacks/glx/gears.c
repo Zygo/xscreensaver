@@ -1,4 +1,4 @@
-/* gears, Copyright (c) 2007 Jamie Zawinski <jwz@jwz.org>
+/* gears, Copyright (c) 2007-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -124,7 +124,9 @@ gears_handle_event (ModeInfo *mi, XEvent *event)
     }
   else if (event->xany.type == ButtonPress &&
            (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5))
+            event->xbutton.button == Button5 ||
+            event->xbutton.button == Button6 ||
+            event->xbutton.button == Button7))
     {
       gltrackball_mousewheel (bp->trackball, event->xbutton.button, 10,
                               !!event->xbutton.state);
@@ -690,16 +692,20 @@ planetary_gears (ModeInfo *mi)
   g4->y = 0;
   g4->th = -g3->th;
 
+  /* rotate central gear 1/2 tooth-size if odd number of teeth */
+  if (g4->nteeth & 1)
+    g4->th -= (180.0 / g4->nteeth);
+
   g0->inverted_p  = True;
   g0->x           = 0;
   g0->y           = 0;
-  g0->nteeth      = g4->nteeth * 3;
-  g0->r           = g4->r * 3.05;
+  g0->nteeth      = g1->nteeth * 3;
+  g0->r           = g1->r * 3.05;
   g0->inner_r     = g0->r * 0.8;
   g0->inner_r2    = 0;
   g0->inner_r3    = 0;
-  g0->th          = -(g4->th - (180 / g0->nteeth));
-  g0->ratio       = g4->ratio / 3;
+  g0->th          = g1->th + (180 / g0->nteeth);
+  g0->ratio       = g1->ratio / 3;
 
   g0->tooth_slope = 0;
   g0->nubs        = 3;

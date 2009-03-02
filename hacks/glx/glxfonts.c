@@ -1,4 +1,4 @@
-/* glxfonts, Copyright (c) 2001-2006 Jamie Zawinski <jwz@jwz.org>
+/* glxfonts, Copyright (c) 2001-2008 Jamie Zawinski <jwz@jwz.org>
  * Loads X11 fonts for use with OpenGL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -190,7 +190,7 @@ print_gl_string (Display *dpy,
         glRasterPos2f (x, y);
         for (i = 0; i < strlen(string); i++)
           {
-            char c = string[i];
+            unsigned char c = (unsigned char) string[i];
             if (c == '\n')
               {
                 glRasterPos2f (x, (y -= line_height));

@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.04
-!                              13-Nov-2007
+!                              version 5.05
+!                              01-Mar-2008
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -305,6 +305,7 @@ GetViewPortIsFullOfLies: False
 				cwaves -root				    \n\
 				m6502 -root				    \n\
 				abstractile -root			    \n\
+-				lcdscrub -root				    \n\
 - default-n:			webcollage -root			    \n\
 - default-n:  "WebCollage (whacked)"					      \
 				webcollage -root -filter		      \
@@ -395,6 +396,10 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL:			voronoi -root				    \n\
 @GL_KLUDGE@ GL:			moebiusgears -root			    \n\
 @GL_KLUDGE@ GL:			lockward -root				    \n\
+@GL_KLUDGE@ GL:			cubicgrid -root				    \n\
+@GL_KLUDGE@ GL:			hypnowheel -root			    \n\
+@GL_KLUDGE@ GL:	"Hypnowheel (dense)"	hypnowheel -root -count 3 -layers 50 \n\
+@GL_KLUDGE@ GL:	"Hypnowheel (trifoil)"	hypnowheel -root -count 3 -layers 2 -speed 9 -twist 9 -wander \n\
 									      \
 -				xdaliclock -root -font BUILTIN3		    \n\
 -				xplanet -vroot -wait 1 -timewarp 90000        \
@@ -468,7 +473,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *passwd.uname:                  True
 
 *splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright © 1991-2006 by
+*splash.body.label:		Copyright © 1991-2008 by
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Settings
 *splash.help.label:		Help
@@ -539,6 +544,8 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.glschool.name:       GLSchool
 *hacks.glcells.name:        GLCells
 *hacks.moebiusgears.name:   MoebiusGears
+*hacks.cubicgrid.name:      CubicGrid
+*hacks.lcdscrub.name:       LCDscrub
 
 ! obsolete, but still used by xscreensaver-demo-Xm.
 *hacks.documentation.isInstalled: True

@@ -27,7 +27,11 @@
 
   <number id="decay" type="slider" arg="-decay %"
           _label="Explosion Decay" _low-label="Linger" _high-label="Pop!"
-          low="0.0" high="1.0" default="0.1"/>
+          low="0.0" high="1.0" default="0.07"/>
+
+  <number id="momentum" type="slider" arg="-momentum %"
+          _label="Explosion Momentum" _low-label="None" _high-label="Full"
+          low="0.0" high="1.0" default="0.6"/>
 
   <hgroup>
    <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>

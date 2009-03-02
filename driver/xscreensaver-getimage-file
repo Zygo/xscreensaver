@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001-2006 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001-2008 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -26,7 +26,7 @@
 # Created: 12-Apr-01.
 
 require 5;
-use diagnostics;
+#use diagnostics;	# Fails on some MacOS 10.5 systems
 use strict;
 
 use POSIX;
@@ -42,7 +42,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
             # errors about UTF-8 all over the place without this.
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.25 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.26 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 

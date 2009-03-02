@@ -1,4 +1,4 @@
-/* glslideshow, Copyright (c) 2003-2006 Jamie Zawinski <jwz@jwz.org>
+/* glslideshow, Copyright (c) 2003-2008 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and smoothly pans around them; crossfades
  * when loading new images.
  *
@@ -535,7 +535,12 @@ randomize_sprite (ModeInfo *mi, sprite *sp)
    */
   if ((int) (0.5 + (sp->from.w * 1000 / sp->from.h)) !=
       (int) (0.5 + (sp->to.w   * 1000 / sp->to.h)))
-    abort();
+    {
+      fprintf (stderr, "%s: botched aspect: %f x %f vs  %f x %f: %s\n",
+               progname, sp->from.w, sp->from.h, sp->to.w, sp->to.h,
+               sp->img->title);
+      abort();
+    }
 
   sp->from.x /= vp_w;
   sp->from.y /= vp_h;

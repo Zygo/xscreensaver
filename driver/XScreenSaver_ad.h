@@ -206,6 +206,7 @@
 				cwaves -root				    \\n\
 				m6502 -root				    \\n\
 				abstractile -root			    \\n\
+-				lcdscrub -root				    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
 				webcollage -root -filter		      \
@@ -296,6 +297,10 @@
 	   GL:			voronoi -root				    \\n\
 	   GL:			moebiusgears -root			    \\n\
 	   GL:			lockward -root				    \\n\
+	   GL:			cubicgrid -root				    \\n\
+	   GL:			hypnowheel -root			    \\n\
+	   GL:	\"Hypnowheel (dense)\"	hypnowheel -root -count 3 -layers 50 \\n\
+	   GL:	\"Hypnowheel (trifoil)\"	hypnowheel -root -count 3 -layers 2 -speed 9 -twist 9 -wander \\n\
 									      \
 -				xdaliclock -root -font BUILTIN3		    \\n\
 -				xplanet -vroot -wait 1 -timewarp 90000        \
@@ -347,7 +352,7 @@
 "*passwd.asterisks:              True",
 "*passwd.uname:                  True",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright © 1991-2006 by",
+"*splash.body.label:		Copyright © 1991-2008 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",
@@ -410,4 +415,6 @@
 "*hacks.glschool.name:       GLSchool",
 "*hacks.glcells.name:        GLCells",
 "*hacks.moebiusgears.name:   MoebiusGears",
+"*hacks.cubicgrid.name:      CubicGrid",
+"*hacks.lcdscrub.name:       LCDscrub",
 "*hacks.documentation.isInstalled: True",

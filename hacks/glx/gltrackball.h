@@ -1,4 +1,4 @@
-/* gltrackball, Copyright (c) 2002, 2005 Jamie Zawinski <jwz@jwz.org>
+/* gltrackball, Copyright (c) 2002-2008 Jamie Zawinski <jwz@jwz.org>
  * GL-flavored wrapper for trackball.c
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -40,10 +40,12 @@ extern void gltrackball_rotate (trackball_state *);
 /* Call this when a mouse-wheel click is detected.
    Clicks act like horizontal or vertical drags.
    Percent is the length of the drag as a percentage of the screen size.
-   Button is 'Button4' or 'Button5'.
+   Button is 'Button4' or 'Button5' (for the vertical wheel)
+   or 'Button5' or 'Button6' (for the horizontal wheel).
+   If `flip_p' is true, swap the horizontal and vertical axes.
  */
 void gltrackball_mousewheel (trackball_state *ts,
-                             int button, int percent, int horizontal_p);
+                             int button, int percent, int flip_p);
 
 /* Return the quaternion encapsulated by the trackball state.
  */

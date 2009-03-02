@@ -1,4 +1,4 @@
-/* carousel, Copyright (c) 2005-2007 Jamie Zawinski <jwz@jwz.org>
+/* carousel, Copyright (c) 2005-2008 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and rotates them around.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -448,7 +448,9 @@ carousel_handle_event (ModeInfo *mi, XEvent *event)
     }
   else if (event->xany.type == ButtonPress &&
            (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5))
+            event->xbutton.button == Button5 ||
+            event->xbutton.button == Button6 ||
+            event->xbutton.button == Button7))
     {
       gltrackball_mousewheel (ss->trackball, event->xbutton.button, 5,
                               !event->xbutton.state);

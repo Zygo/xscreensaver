@@ -2057,6 +2057,9 @@ echo "command line was: $0 $@"
 
 
 
+
+
+
 # After checking to see that --srcdir is correct (which AC_INIT does)
 # check for some random other files that come later in the tar file,
 # to make sure everything is here.
@@ -2083,7 +2086,20 @@ done
 
 ###############################################################################
 #
-#       Functions to figure out how to disable // comments in ANSI C code.
+#       Check for availability of various gcc command-line options.
+#
+###############################################################################
+
+
+
+
+
+
+
+
+###############################################################################
+#
+#       Function to figure out how to disable // comments in ANSI C code.
 #
 #       (With recent gcc, this is done with "-std=c89".  With older gcc, this
 #       is done by passing "-lang-c89" to cpp, by passing "-Wp,-lang-c89" to
@@ -2917,11 +2933,11 @@ See \`config.log' for more details." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-rm -f conftest$ac_cv_exeext
+rm -rf conftest$ac_cv_exeext
 { echo "$as_me:$LINENO: result: $ac_cv_exeext" >&5
 echo "${ECHO_T}$ac_cv_exeext" >&6; }
 
-rm -f conftest.$ac_ext
+rm -rf conftest.$ac_ext
 EXEEXT=$ac_cv_exeext
 ac_exeext=$EXEEXT
 { echo "$as_me:$LINENO: checking for suffix of object files" >&5
@@ -2944,7 +2960,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.o conftest.obj
+rm -rf conftest.o conftest.obj
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -2974,7 +2990,7 @@ See \`config.log' for more details." >&2;}
    { (exit 1); exit 1; }; }
 fi
 
-rm -f conftest.$ac_cv_objext conftest.$ac_ext
+rm -rf conftest.$ac_cv_objext conftest.$ac_ext
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_objext" >&5
 echo "${ECHO_T}$ac_cv_objext" >&6; }
@@ -3003,7 +3019,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -3013,7 +3029,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -3061,7 +3077,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -3071,7 +3087,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -3099,7 +3115,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -3109,7 +3125,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -3138,7 +3154,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -3148,7 +3164,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -3257,7 +3273,7 @@ for ac_arg in '' -qlanglvl=extc89 -qlanglvl=ansi -std \
 	-Ae "-Aa -D_HPUX_SOURCE" "-Xc -D__EXTENSIONS__"
 do
   CC="$ac_save_CC $ac_arg"
-  rm -f conftest.$ac_objext
+  rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -3267,7 +3283,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -3285,7 +3301,7 @@ fi
 rm -f core conftest.err conftest.$ac_objext
   test "x$ac_cv_prog_cc_c89" != "xno" && break
 done
-rm -f conftest.$ac_ext
+rm -rf conftest.$ac_ext
 CC=$ac_save_CC
 
 fi
@@ -3364,7 +3380,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
  main(int ac, char **av) { return 0; }
 _ACEOF
-rm -f conftest$ac_exeext
+rm -rf conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -3408,8 +3424,8 @@ fi
 echo "${ECHO_T}Turning on gcc compiler warnings." >&6; }
     CC="$CC -pedantic -Wall -Wstrict-prototypes -Wnested-externs -Wmissing-prototypes"
     OBJCC="$OBJCC -Wall"
-    # supposedly gcc 3.4 will have "-Wdeclaration-after-statement"
-    # and then perhaps we can do without -pedantic?
+    # As of gcc 3.4, we have "-Wdeclaration-after-statement"
+    # and so perhaps now we can do without -pedantic?
   else
     case "$host" in
       *-irix5* |*-irix6.0-3* )
@@ -3427,13 +3443,83 @@ echo "${ECHO_T}Turning on SGI compiler warnings." >&6; }
   fi
 
 if test -n "$GCC"; then
+   { echo "$as_me:$LINENO: checking whether gcc accepts -Wno-overlength-strings" >&5
+echo $ECHO_N "checking whether gcc accepts -Wno-overlength-strings... $ECHO_C" >&6; }
+if test "${ac_cv_gcc_accepts_no_overlength+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  rm -rf conftest.$ac_ext
+     touch conftest.$ac_ext
+     if ( ( gcc -c -Wno-overlength-strings conftest.$ac_ext -o/dev/null >/dev/null ) 2>&1 | \
+          grep unrecognized >/dev/null ); then
+       ac_cv_gcc_accepts_no_overlength=no
+     else
+       ac_cv_gcc_accepts_no_overlength=yes
+     fi
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_gcc_accepts_no_overlength" >&5
+echo "${ECHO_T}$ac_cv_gcc_accepts_no_overlength" >&6; }
+   ac_gcc_accepts_no_overlength="$ac_cv_gcc_accepts_no_overlength"
+  fi
+
+if test -n "$GCC"; then
+   { echo "$as_me:$LINENO: checking whether gcc accepts -Wdeclaration-after-statement" >&5
+echo $ECHO_N "checking whether gcc accepts -Wdeclaration-after-statement... $ECHO_C" >&6; }
+if test "${ac_cv_gcc_accepts_no_decl_after+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  rm -rf conftest.$ac_ext
+     touch conftest.$ac_ext
+     if ( ( gcc -c -Wdeclaration-after-statement conftest.$ac_ext -o/dev/null >/dev/null ) 2>&1 | \
+          grep unrecognized >/dev/null ); then
+       ac_cv_gcc_accepts_no_decl_after=no
+     else
+       ac_cv_gcc_accepts_no_decl_after=yes
+     fi
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_gcc_accepts_no_decl_after" >&5
+echo "${ECHO_T}$ac_cv_gcc_accepts_no_decl_after" >&6; }
+   ac_gcc_accepts_no_decl_after="$ac_cv_gcc_accepts_no_decl_after"
+  fi
+
+if test -n "$GCC"; then
    if test -n "$GCC"; then
-   { echo "$as_me:$LINENO: checking whether gcc accepts -std" >&5
-echo $ECHO_N "checking whether gcc accepts -std... $ECHO_C" >&6; }
+   { echo "$as_me:$LINENO: checking whether gcc accepts -no-cpp-precomp" >&5
+echo $ECHO_N "checking whether gcc accepts -no-cpp-precomp... $ECHO_C" >&6; }
+if test "${ac_cv_gcc_accepts_no_cpp_precomp+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  rm -rf conftest.$ac_ext
+     touch conftest.$ac_ext
+     if ( ( gcc -c -no-cpp-precomp conftest.$ac_ext -o/dev/null >/dev/null ) 2>&1 | \
+          grep unrecognized >/dev/null ); then
+       ac_cv_gcc_accepts_no_cpp_precomp=no
+     else
+       ac_cv_gcc_accepts_no_cpp_precomp=yes
+     fi
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_gcc_accepts_no_cpp_precomp" >&5
+echo "${ECHO_T}$ac_cv_gcc_accepts_no_cpp_precomp" >&6; }
+   ac_gcc_accepts_no_cpp_precomp="$ac_cv_gcc_accepts_no_cpp_precomp"
+  fi
+
+   if test "$ac_gcc_accepts_no_cpp_precomp" = yes ; then
+     { echo "$as_me:$LINENO: result: Disabling Objective C extensions in ANSI C code." >&5
+echo "${ECHO_T}Disabling Objective C extensions in ANSI C code." >&6; }
+     CC="$CC -no-cpp-precomp"
+   fi
+  fi
+
+if test -n "$GCC"; then
+   if test -n "$GCC"; then
+   { echo "$as_me:$LINENO: checking whether gcc accepts -std=c89" >&5
+echo $ECHO_N "checking whether gcc accepts -std=c89... $ECHO_C" >&6; }
 if test "${ac_cv_gcc_accepts_std+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if ( ( gcc -E -std=c89 - </dev/null >/dev/null ) 2>&1 | \
+  rm -rf conftest.$ac_ext
+     touch conftest.$ac_ext
+     if ( ( gcc -c -std=c89 conftest.$ac_ext -o/dev/null >/dev/null ) 2>&1 | \
           grep unrecognized >/dev/null ); then
        ac_cv_gcc_accepts_std=no
      else
@@ -3470,32 +3556,6 @@ echo "${ECHO_T}Disabling C++ comments in ANSI C code." >&6; }
    else
      # The old way:
      CC="$CC -Wp,-lang-c89"
-   fi
-  fi
-
-if test -n "$GCC"; then
-   if test -n "$GCC"; then
-   { echo "$as_me:$LINENO: checking whether gcc accepts -no-cpp-precomp" >&5
-echo $ECHO_N "checking whether gcc accepts -no-cpp-precomp... $ECHO_C" >&6; }
-if test "${ac_cv_gcc_accepts_no_cpp_precomp+set}" = set; then
-  echo $ECHO_N "(cached) $ECHO_C" >&6
-else
-  if ( ( gcc -E -no-cpp-precomp - </dev/null >/dev/null ) 2>&1 | \
-          grep unrecognized >/dev/null ); then
-       ac_cv_gcc_accepts_no_cpp_precomp=no
-     else
-       ac_cv_gcc_accepts_no_cpp_precomp=yes
-     fi
-fi
-{ echo "$as_me:$LINENO: result: $ac_cv_gcc_accepts_no_cpp_precomp" >&5
-echo "${ECHO_T}$ac_cv_gcc_accepts_no_cpp_precomp" >&6; }
-   ac_gcc_accepts_no_cpp_precomp="$ac_cv_gcc_accepts_no_cpp_precomp"
-  fi
-
-   if test "$ac_gcc_accepts_no_cpp_precomp" = yes ; then
-     { echo "$as_me:$LINENO: result: Disabling Objective C extensions in ANSI C code." >&5
-echo "${ECHO_T}Disabling Objective C extensions in ANSI C code." >&6; }
-     CC="$CC -no-cpp-precomp"
    fi
   fi
 
@@ -3548,7 +3608,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -3564,7 +3624,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 continue
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 
   # OK, works on sane cases.  Now check whether nonexistent headers
   # can be detected and how.
@@ -3585,7 +3645,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -3603,11 +3663,11 @@ ac_preproc_ok=:
 break
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 
 done
 # Because of `break', _AC_PREPROC_IFELSE's cleaning code was skipped.
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 if $ac_preproc_ok; then
   break
 fi
@@ -3653,7 +3713,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -3669,7 +3729,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 continue
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 
   # OK, works on sane cases.  Now check whether nonexistent headers
   # can be detected and how.
@@ -3690,7 +3750,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -3708,11 +3768,11 @@ ac_preproc_ok=:
 break
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 
 done
 # Because of `break', _AC_PREPROC_IFELSE's cleaning code was skipped.
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 if $ac_preproc_ok; then
   :
 else
@@ -3798,7 +3858,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -3808,7 +3868,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -3855,7 +3915,7 @@ $ac_kw foo_t foo () {return 0; }
 #endif
 
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -3865,7 +3925,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -4077,7 +4137,7 @@ case `${MAKE-make} -f conftest.make 2>/dev/null` in
   *)
     eval ac_cv_prog_make_${ac_make}_set=no;;
 esac
-rm -f conftest.make
+rm -rf conftest.make
 fi
 if eval test \$ac_cv_prog_make_${ac_make}_set = yes; then
   { echo "$as_me:$LINENO: result: yes" >&5
@@ -4146,7 +4206,7 @@ case `"$ac_path_GREP" --version 2>&1` in
     # 10*(2^10) chars as input seems more than enough
     test $ac_count -gt 10 && break
   done
-  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
+  rm -rf conftest.in conftest.tmp conftest.nl conftest.out;;
 esac
 
 
@@ -4228,7 +4288,7 @@ case `"$ac_path_EGREP" --version 2>&1` in
     # 10*(2^10) chars as input seems more than enough
     test $ac_count -gt 10 && break
   done
-  rm -f conftest.in conftest.tmp conftest.nl conftest.out;;
+  rm -rf conftest.in conftest.tmp conftest.nl conftest.out;;
 esac
 
 
@@ -4285,7 +4345,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -4295,7 +4355,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -4329,7 +4389,7 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
 else
   ac_cv_header_stdc=no
 fi
-rm -f conftest*
+rm -rf conftest*
 
 fi
 
@@ -4350,7 +4410,7 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
 else
   ac_cv_header_stdc=no
 fi
-rm -f conftest*
+rm -rf conftest*
 
 fi
 
@@ -4390,7 +4450,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest$ac_exeext
+rm -rf conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -4464,7 +4524,7 @@ $ac_includes_default
 
 #include <$ac_header>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -4474,7 +4534,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -4530,7 +4590,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <$ac_header>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -4540,7 +4600,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -4579,7 +4639,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -4594,7 +4654,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -4668,7 +4728,7 @@ if (sizeof (ac__type_new_))
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -4678,7 +4738,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -4731,7 +4791,7 @@ if (sizeof (ac__type_new_))
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -4741,7 +4801,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -4794,7 +4854,7 @@ if (sizeof (ac__type_new_))
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -4804,7 +4864,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -4855,7 +4915,7 @@ return *(signal (0, 0)) (0) == 1;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -4865,7 +4925,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -4914,7 +4974,7 @@ return 0;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -4924,7 +4984,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -4981,7 +5041,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -4991,7 +5051,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -5049,7 +5109,7 @@ return 0;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -5059,7 +5119,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -5125,7 +5185,7 @@ for ac_lib in '' dir; do
     ac_res=-l$ac_lib
     LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
   fi
-  rm -f conftest.$ac_objext conftest$ac_exeext
+  rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -5135,7 +5195,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -5209,7 +5269,7 @@ for ac_lib in '' x; do
     ac_res=-l$ac_lib
     LIBS="-l$ac_lib  $ac_func_search_save_LIBS"
   fi
-  rm -f conftest.$ac_objext conftest$ac_exeext
+  rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -5219,7 +5279,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -5281,7 +5341,7 @@ struct timeval tv; struct timezone tzp;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -5291,7 +5351,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -5319,7 +5379,7 @@ struct timeval tv; gettimeofday(&tv);
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -5329,7 +5389,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -5437,7 +5497,7 @@ return $ac_func ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -5447,7 +5507,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -5534,7 +5594,7 @@ return $ac_func ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -5544,7 +5604,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -5628,7 +5688,7 @@ return $ac_func ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -5638,7 +5698,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -5721,7 +5781,7 @@ struct icmp i;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -5731,7 +5791,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -5804,7 +5864,7 @@ struct icmphdr i;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -5814,7 +5874,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -5866,7 +5926,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <$ac_header>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -5876,7 +5936,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -5915,7 +5975,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -5930,7 +5990,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -6165,7 +6225,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -6186,7 +6246,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
 done
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 fi # $ac_x_includes = no
 
 if test "$ac_x_libraries" = no; then
@@ -6210,7 +6270,7 @@ XrmInitialize ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -6220,7 +6280,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -6323,7 +6383,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -6333,7 +6393,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -6364,7 +6424,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -6374,7 +6434,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -6436,7 +6496,7 @@ return XOpenDisplay ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -6446,7 +6506,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -6488,7 +6548,7 @@ return dnet_ntoa ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -6498,7 +6558,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -6554,7 +6614,7 @@ return dnet_ntoa ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -6564,7 +6624,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -6655,7 +6715,7 @@ return gethostbyname ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -6665,7 +6725,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -6717,7 +6777,7 @@ return gethostbyname ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -6727,7 +6787,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -6783,7 +6843,7 @@ return gethostbyname ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -6793,7 +6853,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -6879,7 +6939,7 @@ return connect ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -6889,7 +6949,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -6941,7 +7001,7 @@ return connect ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -6951,7 +7011,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -7030,7 +7090,7 @@ return remove ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -7040,7 +7100,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -7092,7 +7152,7 @@ return remove ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -7102,7 +7162,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -7181,7 +7241,7 @@ return shmat ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -7191,7 +7251,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -7243,7 +7303,7 @@ return shmat ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -7253,7 +7313,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -7320,7 +7380,7 @@ return IceConnectionNumber ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -7330,7 +7390,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -7604,7 +7664,7 @@ return regcmp ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -7614,7 +7674,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -7680,7 +7740,7 @@ XPointer foo = (XPointer) 0;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -7690,7 +7750,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -7990,7 +8050,7 @@ if (sizeof (ac__type_new_))
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -8000,7 +8060,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -8052,7 +8112,7 @@ char *p = (char *) alloca (2 * sizeof (int));
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -8062,7 +8122,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -8132,7 +8192,7 @@ char *p = (char *) alloca (1);
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -8142,7 +8202,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -8207,7 +8267,7 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
 else
   ac_cv_os_cray=no
 fi
-rm -f conftest*
+rm -rf conftest*
 
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_os_cray" >&5
@@ -8265,7 +8325,7 @@ return $ac_func ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -8275,7 +8335,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -8344,7 +8404,7 @@ main ()
   return find_stack_direction () < 0;
 }
 _ACEOF
-rm -f conftest$ac_exeext
+rm -rf conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -8415,7 +8475,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <$ac_header>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -8425,7 +8485,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -8464,7 +8524,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -8479,7 +8539,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -8583,7 +8643,7 @@ return $ac_func ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -8593,7 +8653,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -8764,7 +8824,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest$ac_exeext
+rm -rf conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -8807,7 +8867,7 @@ cat >>confdefs.h <<\_ACEOF
 _ACEOF
 
 fi
-rm -f conftest.mmap
+rm -rf conftest.mmap
 
 
 
@@ -8844,7 +8904,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <$ac_header>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -8854,7 +8914,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -8893,7 +8953,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -8908,7 +8968,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -9023,7 +9083,7 @@ return $ac_func ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -9033,7 +9093,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -9085,7 +9145,7 @@ return LC_MESSAGES
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -9095,7 +9155,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -9156,7 +9216,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <libintl.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -9166,7 +9226,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -9205,7 +9265,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -9220,7 +9280,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -9281,7 +9341,7 @@ return (int) dgettext ("","")
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -9291,7 +9351,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -9343,7 +9403,7 @@ return bindtextdomain ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -9353,7 +9413,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -9410,7 +9470,7 @@ return dgettext ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -9420,7 +9480,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -9556,7 +9616,7 @@ return $ac_func ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -9566,7 +9626,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -9689,7 +9749,7 @@ extern int _nl_msg_cat_cntr;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -9699,7 +9759,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -9827,7 +9887,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <linux/version.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -9837,7 +9897,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -9876,7 +9936,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -9891,7 +9951,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -10009,7 +10069,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/Xmu/Error.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -10019,7 +10079,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -10098,7 +10158,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -10108,7 +10168,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -10153,7 +10213,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -10163,7 +10223,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -10366,7 +10426,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/extensions/XScreenSaver.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -10376,7 +10436,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -10497,7 +10557,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/extensions/xidle.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -10507,7 +10567,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -10629,7 +10689,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/extensions/XSGIvc.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -10639,7 +10699,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -10716,7 +10776,7 @@ return XSGIvcQueryGammaMap ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -10726,7 +10786,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -10862,7 +10922,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/extensions/dpms.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -10872,7 +10932,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -10951,7 +11011,7 @@ return DPMSInfo ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -10961,7 +11021,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -11044,7 +11104,7 @@ return DPMSInfo ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -11054,7 +11114,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -11191,7 +11251,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/extensions/Xinerama.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -11201,7 +11261,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -11280,7 +11340,7 @@ return XineramaQueryScreens ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -11290,7 +11350,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -11373,7 +11433,7 @@ return XineramaQueryScreens ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -11383,7 +11443,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -11521,7 +11581,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/extensions/xf86vmode.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -11531,7 +11591,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -11608,7 +11668,7 @@ return XF86VidModeGetViewPort ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -11618,7 +11678,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -11759,7 +11819,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/extensions/xf86vmode.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -11769,7 +11829,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -11847,7 +11907,7 @@ return XF86VidModeSetGamma ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -11857,7 +11917,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -11942,7 +12002,7 @@ return XF86VidModeSetGammaRamp ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -11952,7 +12012,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -12103,7 +12163,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/extensions/Xrandr.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -12113,7 +12173,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -12192,7 +12252,7 @@ return XRenderSetSubpixelOrder ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -12202,7 +12262,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -12285,7 +12345,7 @@ return XRRGetScreenInfo ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -12295,7 +12355,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -12378,7 +12438,7 @@ return XRRGetScreenInfo ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -12388,7 +12448,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -12494,7 +12554,7 @@ return XF86MiscSetGrabKeysState ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -12504,7 +12564,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -12583,7 +12643,7 @@ else
   { echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6; }
 fi
-rm -f conftest*
+rm -rf conftest*
 
   CPPFLAGS="$ac_save_CPPFLAGS"
 
@@ -12653,7 +12713,14 @@ fi
 if test "${enable_locking+set}" = set; then
   enableval=$enable_locking; enable_locking="$enableval"
 else
-  enable_locking=yes
+  if test "$ac_macosx" = yes; then
+    # We can't lock on MacOS X, so default to not compiling in support for it.
+    # But allow --enable-locking to override that, so I can debug Linux locking
+    # under MacOS X11.
+    enable_locking=no
+   else
+    enable_locking=yes
+   fi
 fi
 
 if test "$enable_locking" = yes; then
@@ -12666,20 +12733,6 @@ _ACEOF
 else
   echo "error: must be yes or no: --enable-locking=$enable_locking"
   exit 1
-fi
-
-# We can't lock on MacOS X, so don't even bother compiling in support for it.
-#
-if test "$ac_macosx" = yes; then
-  if test "$enable_locking" = yes; then
-    { echo "$as_me:$LINENO: result: locking disabled: it doesn't work on MacOS X" >&5
-echo "${ECHO_T}locking disabled: it doesn't work on MacOS X" >&6; }
-    enable_locking=no
-    cat >>confdefs.h <<\_ACEOF
-#define NO_LOCKING 1
-_ACEOF
-
-  fi
 fi
 
 
@@ -12702,7 +12755,7 @@ _ACEOF
 
   true
 elif test "$enable_root_passwd" != no; then
-  echo "error: something wrong with root-passwd option. Check configure.in ."
+  echo "error: must be yes or no: --enable-root-passwd=$enable_root_passwd"
   exit 1
 fi
 
@@ -12818,7 +12871,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -12828,7 +12881,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -12892,7 +12945,7 @@ return dlopen ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -12902,7 +12955,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -12960,7 +13013,7 @@ return sigtimedwait ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -12970,7 +13023,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -12994,6 +13047,10 @@ fi
 echo "${ECHO_T}$ac_cv_lib_c_sigtimedwait" >&6; }
 if test $ac_cv_lib_c_sigtimedwait = yes; then
   have_timedwait=yes
+                  cat >>confdefs.h <<\_ACEOF
+#define HAVE_SIGTIMEDWAIT 1
+_ACEOF
+
 fi
 
     if test "$have_timedwait" = no ; then
@@ -13026,7 +13083,7 @@ return sigtimedwait ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -13036,7 +13093,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -13059,7 +13116,12 @@ fi
 { echo "$as_me:$LINENO: result: $ac_cv_lib_rt_sigtimedwait" >&5
 echo "${ECHO_T}$ac_cv_lib_rt_sigtimedwait" >&6; }
 if test $ac_cv_lib_rt_sigtimedwait = yes; then
-  PASSWD_LIBS="${PASSWD_LIBS} -lrt"
+  have_timedwait=yes
+                                      cat >>confdefs.h <<\_ACEOF
+#define HAVE_SIGTIMEDWAIT 1
+_ACEOF
+
+                                      PASSWD_LIBS="${PASSWD_LIBS} -lrt"
 fi
 
     fi
@@ -13069,6 +13131,13 @@ echo $ECHO_N "checking how to call pam_strerror... $ECHO_C" >&6; }
     if test "${ac_cv_pam_strerror_args+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
   cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
@@ -13076,18 +13145,18 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <stdio.h>
-                      #include <stdlib.h>
-                      #include <security/pam_appl.h>
+                        #include <stdlib.h>
+                        #include <security/pam_appl.h>
 int
 main ()
 {
 pam_handle_t *pamh = 0;
-                      char *s = pam_strerror(pamh, PAM_SUCCESS);
+                        char *s = pam_strerror(pamh, PAM_SUCCESS);
   ;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -13097,7 +13166,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -13109,25 +13178,32 @@ else
   echo "$as_me: failed program was:" >&5
 sed 's/^/| /' conftest.$ac_ext >&5
 
-	cat >conftest.$ac_ext <<_ACEOF
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  cat >conftest.$ac_ext <<_ACEOF
 /* confdefs.h.  */
 _ACEOF
 cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 #include <stdio.h>
-                                      #include <stdlib.h>
-                                      #include <security/pam_appl.h>
+                                          #include <stdlib.h>
+                                          #include <security/pam_appl.h>
 int
 main ()
 {
 char *s =
-                                       pam_strerror(PAM_SUCCESS);
+                                           pam_strerror(PAM_SUCCESS);
   ;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -13137,7 +13213,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -13153,9 +13229,11 @@ sed 's/^/| /' conftest.$ac_ext >&5
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CPPFLAGS="$ac_save_CPPFLAGS"
 fi
 
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CPPFLAGS="$ac_save_CPPFLAGS"
       ac_cv_pam_strerror_args=$ac_pam_strerror_args
 fi
 
@@ -13200,7 +13278,7 @@ pam_handle_t *pamh = 0;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -13210,7 +13288,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -13341,7 +13419,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -13351,7 +13429,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -13398,7 +13476,7 @@ main ()
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -13408,7 +13486,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -13497,7 +13575,7 @@ return krb_get_tf_realm ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -13507,7 +13585,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -13612,7 +13690,7 @@ return crypt ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -13622,7 +13700,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -13709,7 +13787,7 @@ return res_search ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -13719,7 +13797,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -13772,7 +13850,7 @@ return res_search ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -13782,7 +13860,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -13929,7 +14007,7 @@ struct passwd_adjunct *p = getpwanam("nobody");
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -13939,7 +14017,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -14011,7 +14089,7 @@ struct pr_passwd *p;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -14021,7 +14099,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -14079,7 +14157,7 @@ return getprpwnam ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -14089,7 +14167,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -14143,7 +14221,7 @@ return getprpwnam ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -14153,7 +14231,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -14224,7 +14302,7 @@ struct s_passwd *p = getspwnam("nobody");
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -14234,7 +14312,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -14289,7 +14367,7 @@ return bigcrypt ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -14299,7 +14377,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -14400,7 +14478,7 @@ struct spwd *p = getspnam("nobody");
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -14410,7 +14488,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -14465,7 +14543,7 @@ return getspnam ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -14475,7 +14553,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -14531,7 +14609,7 @@ return getspnam ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -14541,7 +14619,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -14611,7 +14689,7 @@ return crypt ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -14621,7 +14699,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -14677,7 +14755,7 @@ return crypt ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -14687,7 +14765,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -14832,6 +14910,9 @@ if test -n "$with_login_manager_req" ; then
  fi
 
   case "$with_login_manager_req" in
+    no)
+      with_login_manager=""
+    ;;
     /*)
       # absolute path
       set dummy $with_login_manager_req ; login_manager_tmp=$2
@@ -15364,7 +15445,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <Xm/Xm.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -15374,7 +15455,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -15432,7 +15513,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <Xm/ComboBox.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -15442,7 +15523,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -15508,7 +15589,7 @@ long vers = LesstifVersion;
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -15518,7 +15599,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -15581,7 +15662,7 @@ cat >>conftest.$ac_ext <<_ACEOF
                        exit(0);
                      }
 _ACEOF
-rm -f conftest$ac_exeext
+rm -rf conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -15621,7 +15702,7 @@ fi
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_lesstif_version_string" >&5
 echo "${ECHO_T}$ac_cv_lesstif_version_string" >&6; }
-  rm -f conftest-lt
+  rm -rf conftest-lt
   lesstif_version=$ac_cv_lesstif_version
   lesstif_version_string=$ac_cv_lesstif_version_string
 
@@ -15664,7 +15745,7 @@ cat >>conftest.$ac_ext <<_ACEOF
                        exit(0);
                      }
 _ACEOF
-rm -f conftest$ac_exeext
+rm -rf conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -15704,7 +15785,7 @@ fi
 fi
 { echo "$as_me:$LINENO: result: $ac_cv_motif_version_string" >&5
 echo "${ECHO_T}$ac_cv_motif_version_string" >&6; }
-  rm -f conftest-mt
+  rm -rf conftest-mt
   motif_version=$ac_cv_motif_version
   motif_version_string=$ac_cv_motif_version_string
 
@@ -15803,7 +15884,7 @@ return XpQueryExtension ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -15813,7 +15894,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -15904,7 +15985,7 @@ return _Xsetlocale ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -15914,7 +15995,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -16048,7 +16129,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <GL/gl.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -16058,7 +16139,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -16097,7 +16178,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -16112,7 +16193,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -16183,7 +16264,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <GL/glx.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -16193,7 +16274,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -16258,7 +16339,7 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
   $EGREP "Mesa|MESA" >/dev/null 2>&1; then
   ac_cv_have_mesa_gl=yes
 fi
-rm -f conftest*
+rm -rf conftest*
 
   CPPFLAGS="$ac_save_CPPFLAGS"
        fi
@@ -16328,7 +16409,7 @@ return pthread_create ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -16338,7 +16419,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -16421,7 +16502,7 @@ return glXCreateContext ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -16431,7 +16512,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -16513,7 +16594,7 @@ return glXCreateContext ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -16523,7 +16604,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -16592,7 +16673,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 16599 "configure"
+#line 16680 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -16638,7 +16719,7 @@ EOF
              's/^configure: *\([0-9][0-9]*\)  *\([0-9].*\)$/\1.\2/p'`
 
 
-         rm -f conftest.$ac_ext
+         rm -rf conftest.$ac_ext
 
          CPPFLAGS="$ac_save_CPPFLAGS"
 
@@ -16720,7 +16801,7 @@ return glBindTexture ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -16730,7 +16811,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -16865,7 +16946,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <GL/gle.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -16875,7 +16956,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -16927,7 +17008,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <GL/gutil.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -16937,7 +17018,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -16987,7 +17068,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <GL/tube.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -16997,7 +17078,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -17078,7 +17159,7 @@ return gleCreateGC ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -17088,7 +17169,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -17184,7 +17265,7 @@ return uview_direction ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -17194,7 +17275,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -17275,7 +17356,7 @@ return uview_direction_d ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -17285,7 +17366,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -17494,7 +17575,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <gdk-pixbuf/gdk-pixbuf.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -17504,7 +17585,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -17543,7 +17624,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -17558,7 +17639,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -17637,7 +17718,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <gdk-pixbuf/gdk-pixbuf-xlib.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -17647,7 +17728,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -17686,7 +17767,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -17701,7 +17782,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -17781,7 +17862,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <gdk-pixbuf-xlib/gdk-pixbuf-xlib.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -17791,7 +17872,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -17830,7 +17911,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -17845,7 +17926,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -17954,7 +18035,7 @@ return gdk_pixbuf_new_from_file ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -17964,7 +18045,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -18045,7 +18126,7 @@ return gdk_pixbuf_xlib_init ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -18055,7 +18136,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -18188,7 +18269,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/xpm.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -18198,7 +18279,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -18346,7 +18427,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <jpeglib.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -18356,7 +18437,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -18395,7 +18476,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -18410,7 +18491,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -18509,7 +18590,7 @@ return jpeg_start_compress ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -18519,7 +18600,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -18594,7 +18675,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <$ac_header>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -18604,7 +18685,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -18643,7 +18724,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -18658,7 +18739,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -18756,7 +18837,7 @@ return forkpty ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -18766,7 +18847,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -18852,7 +18933,7 @@ return forkpty ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -18862,7 +18943,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -18985,7 +19066,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/extensions/XShm.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -18995,7 +19076,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -19052,7 +19133,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <sys/ipc.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -19062,7 +19143,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -19101,7 +19182,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -19116,7 +19197,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -19195,7 +19276,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 $ac_includes_default
 #include <sys/shm.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -19205,7 +19286,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -19244,7 +19325,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_cpp conftest.$ac_ext") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } >/dev/null && {
@@ -19259,7 +19340,7 @@ sed 's/^/| /' conftest.$ac_ext >&5
   ac_header_preproc=no
 fi
 
-rm -f conftest.err conftest.$ac_ext
+rm -rf conftest.err conftest.$ac_ext
 { echo "$as_me:$LINENO: result: $ac_header_preproc" >&5
 echo "${ECHO_T}$ac_header_preproc" >&6; }
 
@@ -19365,7 +19446,7 @@ return XShmQueryExtension ();
   return 0;
 }
 _ACEOF
-rm -f conftest.$ac_objext conftest$ac_exeext
+rm -rf conftest.$ac_objext conftest$ac_exeext
 if { (ac_try="$ac_link"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -19375,7 +19456,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_link") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -19511,7 +19592,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/extensions/Xdbe.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -19521,7 +19602,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -19648,7 +19729,7 @@ cat >>conftest.$ac_ext <<_ACEOF
 
 #include <X11/extensions/readdisplay.h>
 _ACEOF
-rm -f conftest.$ac_objext
+rm -rf conftest.$ac_objext
 if { (ac_try="$ac_compile"
 case "(($ac_try" in
   *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
@@ -19658,7 +19739,7 @@ eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
   (eval "$ac_compile") 2>conftest.er1
   ac_status=$?
   grep -v '^ *+' conftest.er1 >conftest.err
-  rm -f conftest.er1
+  rm -rf conftest.er1
   cat conftest.err >&5
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); } && {
@@ -21354,7 +21435,7 @@ _ACEOF
 
 # Transform confdefs.h into a sed script `conftest.defines', that
 # substitutes the proper values into config.h.in to produce config.h.
-rm -f conftest.defines conftest.tail
+rm -rf conftest.defines conftest.tail
 # First, append a space to every undef/define line, to ease matching.
 echo 's/$/ /' >conftest.defines
 # Then, protect against being on the right side of a sed subst, or in
@@ -21421,10 +21502,10 @@ _ACEOF
   ac_in=$ac_out; ac_out=$ac_nxt; ac_nxt=$ac_in
   sed 1,${ac_max_sed_lines}d conftest.defines >conftest.tail
   grep . conftest.tail >/dev/null || break
-  rm -f conftest.defines
+  rm -rf conftest.defines
   mv conftest.tail conftest.defines
 done
-rm -f conftest.defines conftest.tail
+rm -rf conftest.defines conftest.tail
 
 echo "ac_result=$ac_in" >>$CONFIG_STATUS
 cat >>$CONFIG_STATUS <<\_ACEOF
@@ -21898,13 +21979,20 @@ if test "$with_shadow_req" = yes -a "$have_shadow" = no ; then
   warn 'Use of shadow passwords was requested, but they were not found.'
 fi
 
+if test "$ac_macosx" = yes ; then
+  if test "$enable_locking" = yes ; then
+    warn  "You have specified --enable-locking on MacOS X."
+    warn2 "THIS DOES NOT WORK!  Don't do this!"
+  fi
+fi
+
 
 # You are in a twisty maze of namespaces and syntaxes, all alike.
 # Fuck the skull of Unix.
 #
 bindir=`eval eval eval eval eval eval eval echo $bindir`
 HACKDIR=`eval eval eval eval eval eval eval echo $HACKDIR`
-HACKDIR_CONF_DIR=`eval eval eval eval eval eval eval echo $HACKDIR_CONF_DIR`
+HACK_CONF_DIR=`eval eval eval eval eval eval eval echo $HACK_CONF_DIR`
 
 # canonicalize slashes.
 bindir=`echo  "${bindir}"              | sed 's@/$@@;s@//*@/@g'`

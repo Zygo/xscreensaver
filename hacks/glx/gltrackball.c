@@ -1,4 +1,4 @@
-/* gltrackball, Copyright (c) 2002, 2005 Jamie Zawinski <jwz@jwz.org>
+/* gltrackball, Copyright (c) 2002-2008 Jamie Zawinski <jwz@jwz.org>
  * GL-flavored wrapper for trackball.c
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -86,25 +86,41 @@ gltrackball_rotate (trackball_state *ts)
 
 # define Button4 4  /* X11/Xlib.h */
 # define Button5 5
+# define Button6 6
+# define Button7 7
 
 /* Call this when a mouse-wheel click is detected.
    Clicks act like horizontal or vertical drags.
    Percent is the length of the drag as a percentage of the screen size.
-   Button is 'Button4' or 'Button5'.
+   Button is 'Button4' or 'Button5' (for the vertical wheel)
+   or 'Button5' or 'Button6' (for the horizontal wheel).
+   If `flip_p' is true, swap the horizontal and vertical axes.
  */
 void
 gltrackball_mousewheel (trackball_state *ts,
-                        int button, int percent, int horizontal_p)
+                        int button, int percent, int flip_p)
 {
   int up_p;
   double move;
+  int horizontal_p;
+
+#ifdef HAVE_COCOA
+  flip_p = 0;      /* MacOS has already handled this. */
+#endif
+
   switch (button) {
-    case Button4: up_p = 1; break;
-    case Button5: up_p = 0; break;
+  case Button4: up_p = 1; horizontal_p = 0; break;
+  case Button5: up_p = 0; horizontal_p = 0; break;
+  case Button6: up_p = 1; horizontal_p = 1; break;
+  case Button7: up_p = 0; horizontal_p = 1; break;
   default: abort(); break;
   }
 
-  if (horizontal_p) up_p = !up_p;
+  if (flip_p)
+    {
+      horizontal_p = !horizontal_p;
+      up_p = !up_p;
+    }
 
   move = (up_p
           ? 1.0 - (percent / 100.0)

@@ -112,7 +112,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  fuzzyflakes.c anemotaxis.c memscroller.c substrate.c \
 		  intermomentary.c fireworkx.c fireworkx_mmx.S fiberlamp.c \
 		  boxfit.c interaggregate.c celtic.c cwaves.c m6502.c \
-		  asm6502.c abstractile.c \
+		  asm6502.c abstractile.c lcdscrub.c \
 		  webcollage-cocoa.m webcollage-helper-cocoa.m
 SCRIPTS		= vidwhacker webcollage ljlatest
 
@@ -151,7 +151,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  fuzzyflakes.o anemotaxis.o memscroller.o substrate.o \
 		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o \
 		  interaggregate.o celtic.o cwaves.o webcollage-cocoa.o \
-		  webcollage-helper-cocoa.o m6502.0 asm6502.o abstractile.o
+		  webcollage-helper-cocoa.o m6502.0 asm6502.o abstractile.o \
+		  lcdscrub.c 
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -172,7 +173,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  fontglide apple2 xanalogtv pong  wormhole mismunch \
 		  pacman fuzzyflakes anemotaxis memscroller substrate \
 		  intermomentary fireworkx fiberlamp boxfit interaggregate \
-		  celtic cwaves m6502 abstractile \
+		  celtic cwaves m6502 abstractile lcdscrub \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -220,9 +221,10 @@ MEN		= anemone.man apollonian.man attraction.man \
 		  wormhole.man mismunch.man pacman.man fuzzyflakes.man \
 		  anemotaxis.man memscroller.man substrate.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
-		  interaggregate.man celtic.man cwaves.man abstractile.man
+		  interaggregate.man celtic.man cwaves.man abstractile.man \
+		  lcdscrub
 STAR		= *
-EXTRAS		= README Makefile.in xml2man.pl .gdbinit \
+EXTRAS		= README Makefile.in xml2man.pl m6502.sh .gdbinit \
 		  euler2d.tex \
 		  config/README \
 		  config/$(STAR).xml \
@@ -234,6 +236,7 @@ EXTRAS		= README Makefile.in xml2man.pl .gdbinit \
 		  images/bubbles/$(STAR).xpm \
 		  images/noseguy/$(STAR).xbm \
 		  images/noseguy/$(STAR).xpm \
+		  images/m6502/$(STAR).asm \
 		  images/molecules/$(STAR).pdb \
 		  images/pacman/$(STAR).xpm
 
@@ -384,7 +387,7 @@ uninstall-xml:
 	done
 
 clean:
-	-rm -f *.o a.out core $(EXES)
+	-rm -f *.o a.out core $(EXES) m6502.h
 
 distclean: clean
 	-rm -f Makefile TAGS *~ "#"*
@@ -400,7 +403,7 @@ depend:
 # close.  This excludes dependencies on files in /usr/include, etc.  It tries
 # to include only dependencies on files which are themselves a part of this
 # package.
-distdepend::
+distdepend:: m6502.h
 	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
 	$(DEPEND) -w 0 -f - 						    \
 	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
@@ -413,7 +416,8 @@ distdepend::
 	      -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
 	      -e 's@\.\./utils@$$(UTILS_SRC)@g'				    \
 	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
-	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g' ;			    \
+	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g'			    \
+	      -e 's@ $$(srcdir)/\(m6502.h\)@ \1@g' ;			    \
 	  echo ''							    \
 	) > /tmp/distdepend.$$$$ &&					    \
 	mv Makefile.in Makefile.in.bak &&				    \
@@ -856,11 +860,19 @@ celtic:		celtic.o	$(HACK_OBJS) $(COL) $(ERASE)
 cwaves:		cwaves.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
+m6502.h:
+	@echo "building m6502.h from $(srcdir)/images/m6502/*.asm"; \
+	UTILS_SRC="$(UTILS_SRC)" \
+	$(srcdir)/m6502.sh m6502.h $(srcdir)/images/m6502/*.asm
+
 m6502:		m6502.o		asm6502.o $(HACK_OBJS) $(ATV)
 	$(CC_HACK) -o $@ $@.o	asm6502.o $(HACK_OBJS) $(ATV) $(HACK_LIBS)
 
 abstractile:	abstractile.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
+lcdscrub:	lcdscrub.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -1816,6 +1828,16 @@ laser.o: $(UTILS_SRC)/xshm.h
 laser.o: $(UTILS_SRC)/yarandom.h
 laser.o: $(srcdir)/xlockmoreI.h
 laser.o: $(srcdir)/xlockmore.h
+lcdscrub.o: ../config.h
+lcdscrub.o: $(srcdir)/screenhackI.h
+lcdscrub.o: $(srcdir)/screenhack.h
+lcdscrub.o: $(UTILS_SRC)/colors.h
+lcdscrub.o: $(UTILS_SRC)/grabscreen.h
+lcdscrub.o: $(UTILS_SRC)/hsv.h
+lcdscrub.o: $(UTILS_SRC)/resources.h
+lcdscrub.o: $(UTILS_SRC)/usleep.h
+lcdscrub.o: $(UTILS_SRC)/visual.h
+lcdscrub.o: $(UTILS_SRC)/yarandom.h
 lightning.o: ../config.h
 lightning.o: $(srcdir)/screenhackI.h
 lightning.o: $(UTILS_SRC)/colors.h
@@ -1878,6 +1900,7 @@ loop.o: $(srcdir)/xlockmore.h
 m6502.o: $(srcdir)/analogtv.h
 m6502.o: $(srcdir)/asm6502.h
 m6502.o: ../config.h
+m6502.o: m6502.h
 m6502.o: $(srcdir)/screenhackI.h
 m6502.o: $(srcdir)/screenhack.h
 m6502.o: $(UTILS_SRC)/colors.h

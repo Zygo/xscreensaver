@@ -499,7 +499,11 @@ add_default_options (const XrmOptionDescRec *opts,
       xe.xbutton.y = y;
       xe.xbutton.state = state;
       if ([e type] == NSScrollWheel)
-        xe.xbutton.button = ([e deltaY] > 0 ? Button4 : Button5);
+        xe.xbutton.button = ([e deltaY] > 0 ? Button4 :
+                             [e deltaY] < 0 ? Button5 :
+                             [e deltaX] > 0 ? Button6 :
+                             [e deltaX] < 0 ? Button7 :
+                             0);
       else
         xe.xbutton.button = [e buttonNumber] + 1;
       break;

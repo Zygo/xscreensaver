@@ -570,7 +570,9 @@ ENTRYPOINT Bool antinspect_handle_event (ModeInfo *mi, XEvent *event)
   }
   else if (event->xany.type == ButtonPress &&
            (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5))
+            event->xbutton.button == Button5 ||
+            event->xbutton.button == Button6 ||
+            event->xbutton.button == Button7))
     {
       gltrackball_mousewheel (mp->trackball, event->xbutton.button, 5,
                               !event->xbutton.state);

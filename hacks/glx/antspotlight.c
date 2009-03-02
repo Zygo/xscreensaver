@@ -90,7 +90,9 @@ static Bool draw_ant(antspotlightstruct *mp,
   float sin2 = sin(ant_step + 2 * Pi / 3);
   float sin3 = sin(ant_step + 4 * Pi / 3);
   
-  glEnable(GL_POLYGON_SMOOTH);
+/* Apparently this is a performance killer on many systems...
+   glEnable(GL_POLYGON_SMOOTH);
+ */
   glEnable(GL_BLEND);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 

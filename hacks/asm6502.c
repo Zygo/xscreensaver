@@ -1,3 +1,4 @@
+/*-*- indent-tabs-mode:nil -*- */
 /* Copyright (C) 2007 Jeremy English <jhe@jeremyenglish.org>
  * 
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -34,6 +35,10 @@
 #include <unistd.h>
 
 #include "asm6502.h"
+
+#ifdef DEBUGGER
+#  define random rand
+#endif
 
 typedef enum{
   LEFT, RIGHT
@@ -179,10 +184,11 @@ static Bit8 stackPop(machine_6502 *machine) {
 }
 
 static void pushByte(machine_6502 *machine, Bit32 value ) {
-  Bit32 address = 0x600 + machine->codeLen;
+  Bit32 address = machine->defaultCodePC;
   checkAddress(address);
-  machine->memory[0x600 + machine->codeLen] = value & 0xff;
+  machine->memory[address] = value & 0xff;
   machine->codeLen++;
+  machine->defaultCodePC++;
 }
 
 /*
@@ -295,9 +301,9 @@ static BOOL peekValue(machine_6502 *machine, AddrMode adm, Pointer *pointer, Bit
     pointer->value = memReadByte(machine, PC);
     return TRUE;
   case INDIRECT_X:
-    zp = memReadByte(machine, PC);
+    zp = memReadByte(machine, PC) + machine->regX;
     pointer->addr = memReadByte(machine,zp) + 
-      (memReadByte(machine,zp+1)<<8) + machine->regX;
+      (memReadByte(machine,zp+1)<<8);
     pointer->value = memReadByte(machine, pointer->addr);
     return TRUE;
   case INDIRECT_Y:
@@ -360,9 +366,9 @@ static BOOL getValue(machine_6502 *machine, AddrMode adm, Pointer *pointer){
     pointer->value = popByte(machine);
     return TRUE;
   case INDIRECT_X:
-    zp = popByte(machine);
+    zp = popByte(machine) + machine->regX;
     pointer->addr = memReadByte(machine,zp) + 
-      (memReadByte(machine,zp+1)<<8) + machine->regX;
+      (memReadByte(machine,zp+1)<<8);
     pointer->value = memReadByte(machine, pointer->addr);
     return TRUE;
   case INDIRECT_Y:
@@ -406,6 +412,64 @@ static BOOL getValue(machine_6502 *machine, AddrMode adm, Pointer *pointer){
   }
   return FALSE;
 
+}
+
+static void dismem(machine_6502 *machine, AddrMode adm, char *output){
+  Bit8 zp;
+  Bit16 n;
+  switch(adm){
+  case SINGLE:
+    output = "";
+    break;
+  case IMMEDIATE_LESS:
+  case IMMEDIATE_GREAT:
+  case IMMEDIATE_VALUE:
+    n = popByte(machine);
+    sprintf(output,"#$%x",n);
+    break;
+  case INDIRECT_X:
+    zp = popByte(machine);
+    n = memReadByte(machine,zp) + 
+      (memReadByte(machine,zp+1)<<8);
+    sprintf(output,"($%x,x)",n);
+    break;
+  case INDIRECT_Y:
+    zp = popByte(machine);
+    n = memReadByte(machine,zp) + 
+      (memReadByte(machine,zp+1)<<8);
+    sprintf(output,"($%x),y",n);
+    break;
+  case ABS_OR_BRANCH:
+  case ZERO:    
+    n = popByte(machine);
+    sprintf(output,"$%x",n);
+    break;
+  case ZERO_X:
+    n = popByte(machine);
+    sprintf(output,"$%x,x",n);
+    break;
+  case ZERO_Y:
+    n = popByte(machine);
+    sprintf(output,"$%x,y",n);
+    break;
+  case ABS_VALUE:
+    n = popWord(machine);
+    sprintf(output,"$%x",n);
+    break;
+  case ABS_LABEL_X:
+  case ABS_X:
+    n = popWord(machine);
+    sprintf(output,"$%x,x",n);
+    break;
+  case ABS_LABEL_Y:
+  case ABS_Y:
+    n = popWord(machine);
+    sprintf(output,"$%x,x",n);
+    break;
+  case DCB_PARAM:
+    output = "";
+    break;
+  }
 }
 
 /* manZeroNeg - Manage the negative and zero flags */
@@ -867,7 +931,7 @@ static void jmpSBC(machine_6502 *machine, AddrMode adm){
     Bit8 ar = nibble(machine->regA, RIGHT);
     Bit8 br = nibble(ptr.value, RIGHT);
     Bit8 al = nibble(machine->regA, LEFT);
-    Bit8 bl = nibble(machine->regA, LEFT);
+    Bit8 bl = nibble(ptr.value, LEFT);
 
     tmp = 0xf + ar - br + c;
     if ( tmp < 0x10){
@@ -1260,15 +1324,24 @@ static BOOL ishexdigit(char c){
   }
 }
 
+/* isCmdChar() - Is this a valid character for a command. All of the
+   command are alpha except for the entry point code that is "*=" */
+static BOOL isCmdChar(char c){
+  return (isalpha(c) || c == '*' || c == '=');
+}
+  
+
 /* command() - parse a command from the source code. We pass along a
    machine so the opcode can be validated. */
 static BOOL command(machine_6502 *machine, char **s, char **cmd){
   int i = 0;
   skipSpace(s);
-  for(;isalpha(**s) && i < MAX_CMD_LEN; (*s)++)
+  for(;isCmdChar(**s) && i < MAX_CMD_LEN; (*s)++)
     (*cmd)[i++] = **s;
   if (i == 0)
     return TRUE; /* Could be a blank line. */
+  else if (strcmp(*cmd,"*=") == 0)
+    return TRUE; /* This is an entry point. */
   else
     return isCommand(machine,*cmd);
 }
@@ -1619,7 +1692,7 @@ static AsmLine *parseAssembly(machine_6502 *machine, BOOL *codeOk, const char *c
 }
     
 /* fileToBuffer() - Allocates a buffer and loads all of the file into memory. */
-static char *fileToBuffer(char *filename){
+static char *fileToBuffer(const char *filename){
   const int defaultSize = 1024;
   FILE *ifp;
   int c;
@@ -1675,7 +1748,7 @@ static void reset(machine_6502 *machine){
   machine->regX = 0;
   machine->regY = 0;
   machine->regP = setBit(machine->regP, FUTURE_FL, 1);
-  machine->regPC = 0x600; 
+  machine->defaultCodePC = machine->regPC = PROG_START; 
   machine->regSP = STACK_TOP;
   machine->runForever = FALSE;
   machine->labelPtr = 0;
@@ -1696,24 +1769,25 @@ void hexDump(machine_6502 *machine, Bit16 start, Bit16 numbytes, FILE *output){
   fprintf(output,"%s\n",(i&1)?"--":"");
 }
 
-void save_program(machine_6502 *machine, char *filename){
-  FILE *ofp;
-  Bit16 pc = 0x600;
-  Bit16 end = pc + machine->codeLen;
-  Bit16 n;
-  ofp = fopen(filename, "w");
-  if (ofp == NULL)
-    eprintf("Could not open file.");
+/* XXX */
+/* void save_program(machine_6502 *machine, char *filename){ */
+/*   FILE *ofp; */
+/*   Bit16 pc = PROG_START; */
+/*   Bit16 end = pc + machine->codeLen; */
+/*   Bit16 n; */
+/*   ofp = fopen(filename, "w"); */
+/*   if (ofp == NULL) */
+/*     eprintf("Could not open file."); */
   
-  fprintf(ofp,"Bit8 prog[%d] =\n{",machine->codeLen);
-  n = 1;
-  while(pc < end)
-    fprintf(ofp,"0x%.2x,%s",machine->memory[pc++],n++%10?" ":"\n");
-  fseek(ofp,-2,SEEK_CUR);
-  fprintf(ofp,"};\n");
+/*   fprintf(ofp,"Bit8 prog[%d] =\n{",machine->codeLen); */
+/*   n = 1; */
+/*   while(pc < end) */
+/*     fprintf(ofp,"0x%.2x,%s",machine->memory[pc++],n++%10?" ":"\n"); */
+/*   fseek(ofp,-2,SEEK_CUR); */
+/*   fprintf(ofp,"};\n"); */
   
-  fclose(ofp);
-}
+/*   fclose(ofp); */
+/* } */
 
 static BOOL translate(Opcodes *op,Param *param, machine_6502 *machine){
    switch(param->type){
@@ -1738,7 +1812,7 @@ static BOOL translate(Opcodes *op,Param *param, machine_6502 *machine){
     case IMMEDIATE_GREAT:
       if (op->Imm) {
 	pushByte(machine, op->Imm);
-	pushByte(machine, param->lbladdr / 0xFF);
+	pushByte(machine, param->lbladdr >> 8);
 	break;
       }
       else {
@@ -1823,7 +1897,7 @@ static BOOL translate(Opcodes *op,Param *param, machine_6502 *machine){
       else {
 	if (op->BRA) {
 	  pushByte(machine, op->BRA);
-	  if (param->lbladdr < (machine->codeLen + 0x600))
+	  if (param->lbladdr < (machine->codeLen + PROG_START))
 	    pushByte(machine,
 		     (0xff - (machine->codeLen-param->lbladdr)) & 0xff);
 	  else
@@ -1889,8 +1963,10 @@ static BOOL compileLine(AsmLine *asmline, void *args){
   machine_6502 *machine;
   machine = args;
   if (isBlank(asmline->command)) return TRUE;
-
-  if (strcmp("DCB",asmline->command) == 0){
+  if (strcmp("*=",asmline->command) == 0){
+    machine->defaultCodePC = asmline->param->value[0];
+  }
+  else if (strcmp("DCB",asmline->command) == 0){
     int i;
     for(i = 0; i < asmline->param->vp; i++)
       pushByte(machine, asmline->param->value[i]);
@@ -1955,7 +2031,7 @@ static BOOL compileCode(machine_6502 *machine, const char *code){
   AsmLine *asmlist;
 
   reset(machine);
-  machine->regPC = 0x600;
+  machine->defaultCodePC = machine->regPC = PROG_START;
   asmlist = parseAssembly(machine, &codeOk, code);
 
   if(codeOk){
@@ -1966,11 +2042,15 @@ static BOOL compileCode(machine_6502 *machine, const char *code){
     linkLabels(asmlist);
     /* Second pass: translate the instructions */
     machine->codeLen = 0;
+    /* Link label call push_byte which increments defaultCodePC.
+       We need to reset it so the compiled code goes in the 
+       correct spot. */
+    machine->defaultCodePC = PROG_START;
     if (!apply(asmlist, compileLine, machine))
       return FALSE;
 
-    if (machine->codeLen > 0 ){
-      machine->memory[0x600+machine->codeLen] = 0x00;
+    if (machine->defaultCodePC > PROG_START ){
+      machine->memory[machine->defaultCodePC] = 0x00;
       codeOk = TRUE;
     }
     else{
@@ -2011,8 +2091,7 @@ static void execute(machine_6502 *machine){
       fprintf(stderr,"Invalid opcode!\n");
   }
   if( (machine->regPC == 0) || 
-      (!machine->codeRunning) || 
-      (machine->regPC > (machine->codeLen+0x600)) ) {
+      (!machine->codeRunning) ) {
     machine->codeRunning = FALSE;
   }
 }
@@ -2060,13 +2139,37 @@ void trace(machine_6502 *machine, FILE *output){
   }
   fprintf(output,"STACK:");
   hexDump(machine,(STACK_TOP - stacksz) + 1, stacksz, output);
-  fprintf(output,"\n================================================================================\n");
 }
 
-    
+void disassemble(machine_6502 *machine, FILE *output){
+  /* Read the opcode
+     increment the program counter
+     print the opcode
+     loop until end of program. */
+  AddrMode adm;
+  Bit16 addr;
+  Bit8 opcode;
+  int opidx;
+  char *mem;
+  int i;
+  Bit16 opc = machine->regPC;
+  mem = calloc(20,sizeof(char));
+  machine->regPC = PROG_START;
+  do{
+    addr = machine->regPC;
+    opcode = popByte(machine);
+    opidx = opIndex(machine,opcode,&adm);
+    for (i = 0; i < 20; i++) mem[i] = '\0';
+    dismem(machine, adm, mem);
+    fprintf(output,"%x\t%s\t%s\n",
+	    addr,machine->opcodes[opidx].name,mem); 
+  }while((machine->regPC - PROG_START) < machine->codeLen); /*XXX - may need to change since defaultCodePC */
+  free(mem);
+  machine->regPC = opc;
+}
 
 
-void eval_file(machine_6502 *machine, char *filename, Plotter plot, void *plotterState){
+void eval_file(machine_6502 *machine, const char *filename, Plotter plot, void *plotterState){
   char *code = NULL;
 
   machine->plot = plot;
@@ -2080,7 +2183,7 @@ void eval_file(machine_6502 *machine, char *filename, Plotter plot, void *plotte
 
   free(code);
 
-  machine->regPC = 0x600;
+  machine->defaultCodePC = machine->regPC = PROG_START;
   machine->codeRunning = TRUE;
   do{
     sleep(0); /* XXX */
@@ -2088,12 +2191,10 @@ void eval_file(machine_6502 *machine, char *filename, Plotter plot, void *plotte
     trace(machine);
 #endif
     execute(machine);
-    if (!machine->codeRunning) 
-      break;
-  }while((machine->regPC - 0x600) < machine->codeLen);
+  }while(machine->codeRunning);
 }
 
-void start_eval_file(machine_6502 *machine, char *filename, Plotter plot, void *plotterState){
+void start_eval_file(machine_6502 *machine, const char *filename, Plotter plot, void *plotterState){
   char *code = NULL;
   reset(machine);
 
@@ -2108,36 +2209,52 @@ void start_eval_file(machine_6502 *machine, char *filename, Plotter plot, void *
 
   free(code);
 
-  machine->regPC = 0x600;
+  machine->defaultCodePC = machine->regPC = PROG_START;
   machine->codeRunning = TRUE;
   execute(machine);
 }
 
-void start_eval_binary(machine_6502 *machine, Bit8 *program,
-		       unsigned int proglen,
+void start_eval_string(machine_6502 *machine, const char *code,
 		       Plotter plot, void *plotterState){
-  unsigned int pc, n;
   reset(machine);
+
   machine->plot = plot;
   machine->plotterState = plotterState;
 
-  machine->regPC = 0x600;
-  pc = machine->regPC;
-  machine->codeLen = proglen;
-  n = 0;
-  while (n < proglen){
-    machine->memory[pc++] = program[n++];
+  if (! compileCode(machine, code) ){
+    fprintf(stderr,"Could not compile code.\n");
   }
+
+  machine->defaultCodePC = machine->regPC = PROG_START;
   machine->codeRunning = TRUE;
   execute(machine);
 }
+
+/* void start_eval_binary(machine_6502 *machine, Bit8 *program, */
+/* 		       unsigned int proglen, */
+/* 		       Plotter plot, void *plotterState){ */
+/*   unsigned int pc, n; */
+/*   reset(machine); */
+/*   machine->plot = plot; */
+/*   machine->plotterState = plotterState; */
+
+/*   machine->regPC = PROG_START; */
+/*   pc = machine->regPC; */
+/*   machine->codeLen = proglen; */
+/*   n = 0; */
+/*   while (n < proglen){ */
+/*     machine->memory[pc++] = program[n++]; */
+/*   } */
+/*   machine->codeRunning = TRUE; */
+/*   execute(machine); */
+/* } */
 
 void next_eval(machine_6502 *machine, int insno){
   int i = 0;
   for (i = 1; i < insno; i++){
-    if (machine->codeRunning){/* && ((machine->regPC - 0x600) < machine->codeLen))*/
+    if (machine->codeRunning){
 #if 0
-      trace(machine);
+      trace(machine, stdout);
 #endif
       execute(machine);
     }
