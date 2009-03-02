@@ -171,6 +171,7 @@ query_randr_extension (saver_info *si)
   Bool ok = XRRQueryExtension (si->dpy,
                                &si->randr_event_number,
                                &si->randr_error_number);
+
   if (ok)
     {
       int nscreens = ScreenCount (si->dpy);  /* number of *real* screens */
@@ -179,14 +180,18 @@ query_randr_extension (saver_info *si)
       if (p->verbose_p)
 	fprintf (stderr, "%s: selecting RANDR events\n", blurb());
       for (i = 0; i < nscreens; i++)
+# ifdef RRScreenChangeNotifyMask                 /* randr.h 1.5, 2002/09/29 */
         XRRSelectInput (si->dpy, RootWindow (si->dpy, i),
                         RRScreenChangeNotifyMask);
+# else  /* !RRScreenChangeNotifyMask */          /* Xrandr.h 1.4, 2001/06/07 */
+        XRRScreenChangeSelectInput (si->dpy, RootWindow (si->dpy, i), True);
+# endif /* !RRScreenChangeNotifyMask */
     }
 
   return ok;
 }
 
-#endif /* HAVE_XIDLE_EXTENSION */
+#endif /* HAVE_RANDR */
 
 
 

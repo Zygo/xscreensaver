@@ -40,13 +40,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
 # define PROGCLASS						"Screensaver"
 # define HACK_INIT						init_screensaver
@@ -133,26 +126,26 @@ static char *which_image;
 
 
 static XrmOptionDescRec opts[] = {
-  {"-quads",   ".pulsar.quads",   XrmoptionSepArg, (caddr_t) NULL },
-  {"-light",   ".pulsar.light",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+light",   ".pulsar.light",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-wire",   ".pulsar.wire",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+wire",   ".pulsar.wire",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-blend",   ".pulsar.blend",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+blend",   ".pulsar.blend",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-fog",   ".pulsar.fog",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+fog",   ".pulsar.fog",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-antialias",   ".pulsar.antialias",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+antialias",   ".pulsar.antialias",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-texture",   ".pulsar.texture",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+texture",   ".pulsar.texture",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-texture_quality",   ".pulsar.texture_quality",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+texture_quality",   ".pulsar.texture_quality",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-mipmap",   ".pulsar.mipmap",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+mipmap",   ".pulsar.mipmap",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-do_depth",   ".pulsar.doDepth",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+do_depth",   ".pulsar.doDepth",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-image",   ".pulsar.image",  XrmoptionSepArg, (caddr_t) NULL },
+  {"-quads",   ".pulsar.quads",   XrmoptionSepArg, 0 },
+  {"-light",   ".pulsar.light",   XrmoptionNoArg, "true" },
+  {"+light",   ".pulsar.light",   XrmoptionNoArg, "false" },
+  {"-wire",   ".pulsar.wire",   XrmoptionNoArg, "true" },
+  {"+wire",   ".pulsar.wire",   XrmoptionNoArg, "false" },
+  {"-blend",   ".pulsar.blend",   XrmoptionNoArg, "true" },
+  {"+blend",   ".pulsar.blend",   XrmoptionNoArg, "false" },
+  {"-fog",   ".pulsar.fog",   XrmoptionNoArg, "true" },
+  {"+fog",   ".pulsar.fog",   XrmoptionNoArg, "false" },
+  {"-antialias",   ".pulsar.antialias",   XrmoptionNoArg, "true" },
+  {"+antialias",   ".pulsar.antialias",   XrmoptionNoArg, "false" },
+  {"-texture",   ".pulsar.texture",   XrmoptionNoArg, "true" },
+  {"+texture",   ".pulsar.texture",   XrmoptionNoArg, "false" },
+  {"-texture_quality",   ".pulsar.texture_quality",   XrmoptionNoArg, "true" },
+  {"+texture_quality",   ".pulsar.texture_quality",   XrmoptionNoArg, "false" },
+  {"-mipmap",   ".pulsar.mipmap",   XrmoptionNoArg, "true" },
+  {"+mipmap",   ".pulsar.mipmap",   XrmoptionNoArg, "false" },
+  {"-do_depth",   ".pulsar.doDepth",   XrmoptionNoArg, "true" },
+  {"+do_depth",   ".pulsar.doDepth",   XrmoptionNoArg, "false" },
+  {"-image",   ".pulsar.image",  XrmoptionSepArg, 0 },
 };
 
 

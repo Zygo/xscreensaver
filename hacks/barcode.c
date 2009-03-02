@@ -1529,6 +1529,8 @@ static void setup (void)
     theImage = XCreateImage(display, visual, 1, XYBitmap, 0, theBitmap->buf,
 			    theBitmap->width, theBitmap->height, 8,
 			    theBitmap->widthBytes);
+    theImage->bitmap_bit_order = LSBFirst;
+    theImage->byte_order       = LSBFirst;
 }
 
 

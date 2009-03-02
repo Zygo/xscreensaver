@@ -34,13 +34,6 @@ static const char sccsid[] = "@(#)gears.c	4.07 97/11/24 xlockmore";
  * been fixed in MesaGL 2.2 and later releases.
  */
 
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
 # define PROGCLASS					"Gears"
 # define HACK_INIT					init_gears
@@ -73,8 +66,8 @@ static const char sccsid[] = "@(#)gears.c	4.07 97/11/24 xlockmore";
 static int planetary;
 
 static XrmOptionDescRec opts[] = {
-  {"-planetary", ".gears.planetary", XrmoptionNoArg, (caddr_t) "true" },
-  {"+planetary", ".gears.planetary", XrmoptionNoArg, (caddr_t) "false" },
+  {"-planetary", ".gears.planetary", XrmoptionNoArg, "true" },
+  {"+planetary", ".gears.planetary", XrmoptionNoArg, "false" },
 };
 
 static argtype vars[] = {

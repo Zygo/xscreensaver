@@ -216,7 +216,7 @@ static int maybe_reload_init_file (state *);
 static void await_xscreensaver (state *);
 
 static void schedule_preview (state *, const char *cmd);
-static void kill_preview_subproc (state *);
+static void kill_preview_subproc (state *, Bool reset_p);
 static void schedule_preview_check (state *);
 
 
@@ -577,6 +577,11 @@ run_cmd (state *s, Atom command, int arg)
 
   flush_dialog_changes_and_save (s);
   status = xscreensaver_command (GDK_DISPLAY(), command, arg, False, &err);
+
+  /* Kludge: ignore the spurious "window unexpectedly deleted" errors... */
+  if (status < 0 && err && strstr (err, "unexpectedly deleted"))
+    status = 0;
+
   if (status < 0)
     {
       char buf [255];
@@ -620,7 +625,7 @@ exit_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
   state *s = global_state_kludge;  /* I hate C so much... */
   flush_dialog_changes_and_save (s);
-  kill_preview_subproc (s);
+  kill_preview_subproc (s, False);
   gtk_main_quit ();
 }
 
@@ -2009,7 +2014,7 @@ server_current_hack (void)
   Atom type;
   int format;
   unsigned long nitems, bytesafter;
-  CARD32 *data = 0;
+  unsigned char *dataP = 0;
   Display *dpy = GDK_DISPLAY();
   int hack_number = -1;
 
@@ -2017,14 +2022,17 @@ server_current_hack (void)
                           XA_SCREENSAVER_STATUS,
                           0, 3, False, XA_INTEGER,
                           &type, &format, &nitems, &bytesafter,
-                          (unsigned char **) &data)
+                          &dataP)
       == Success
       && type == XA_INTEGER
       && nitems >= 3
-      && data)
-    hack_number = (int) data[2] - 1;
+      && dataP)
+    {
+      CARD32 *data = (CARD32 *) dataP;
+      hack_number = (int) data[2] - 1;
+    }
 
-  if (data) free (data);
+  if (dataP) XFree (dataP);
 
   return hack_number;
 }
@@ -3111,6 +3119,32 @@ clear_preview_window (state *s)
 
 
 static void
+reset_preview_window (state *s)
+{
+  /* On some systems (most recently, MacOS X) OpenGL programs get confused
+     when you kill one and re-start another on the same window.  So maybe
+     it's best to just always destroy and recreate the preview window
+     when changing hacks, instead of always trying to reuse the same one?
+   */
+  GtkWidget *pr = name_to_widget (s, "preview");
+  if (GTK_WIDGET_REALIZED (pr))
+    {
+      Window oid = (pr->window ? GDK_WINDOW_XWINDOW (pr->window) : 0);
+      Window id;
+      gtk_widget_hide (pr);
+      gtk_widget_unrealize (pr);
+      gtk_widget_realize (pr);
+      gtk_widget_show (pr);
+      id = (pr->window ? GDK_WINDOW_XWINDOW (pr->window) : 0);
+      if (s->debug_p)
+        fprintf (stderr, "%s: window id 0x%X -> 0x%X\n", blurb(),
+                 (unsigned int) oid,
+                 (unsigned int) id);
+    }
+}
+
+
+static void
 fix_preview_visual (state *s)
 {
   GtkWidget *widget = name_to_widget (s, "preview");
@@ -3324,7 +3358,7 @@ get_best_gl_visual (state *s)
 
 
 static void
-kill_preview_subproc (state *s)
+kill_preview_subproc (state *s, Bool reset_p)
 {
   s->running_preview_error_p = False;
 
@@ -3370,6 +3404,12 @@ kill_preview_subproc (state *s)
     }
 
   reap_zombies (s);
+
+  if (reset_p)
+    {
+      reset_preview_window (s);
+      clear_preview_window (s);
+    }
 }
 
 
@@ -3386,13 +3426,17 @@ launch_preview_subproc (state *s)
   const char *cmd = s->desired_preview_cmd;
 
   GtkWidget *pr = name_to_widget (s, "preview");
-  GdkWindow *window = pr->window;
+  GdkWindow *window;
+
+  reset_preview_window (s);
+
+  window = pr->window;
 
   s->running_preview_error_p = False;
 
   if (s->preview_suppressed_p)
     {
-      kill_preview_subproc (s);
+      kill_preview_subproc (s, False);
       goto DONE;
     }
 
@@ -3412,7 +3456,7 @@ launch_preview_subproc (state *s)
                (unsigned int) id);
     }
 
-  kill_preview_subproc (s);
+  kill_preview_subproc (s, False);
   if (! new_cmd)
     {
       s->running_preview_error_p = True;
@@ -3559,7 +3603,7 @@ update_subproc_timer (gpointer data)
 {
   state *s = (state *) data;
   if (! s->desired_preview_cmd)
-    kill_preview_subproc (s);
+    kill_preview_subproc (s, True);
   else if (!s->running_preview_cmd ||
            !!strcmp (s->desired_preview_cmd, s->running_preview_cmd))
     launch_preview_subproc (s);
@@ -3682,7 +3726,7 @@ screen_blanked_p (void)
   Atom type;
   int format;
   unsigned long nitems, bytesafter;
-  CARD32 *data = 0;
+  unsigned char *dataP = 0;
   Display *dpy = GDK_DISPLAY();
   Bool blanked_p = False;
 
@@ -3690,14 +3734,17 @@ screen_blanked_p (void)
                           XA_SCREENSAVER_STATUS,
                           0, 3, False, XA_INTEGER,
                           &type, &format, &nitems, &bytesafter,
-                          (unsigned char **) &data)
+                          &dataP)
       == Success
       && type == XA_INTEGER
       && nitems >= 3
-      && data)
-    blanked_p = (data[0] == XA_BLANK || data[0] == XA_LOCK);
+      && dataP)
+    {
+      Atom *data = (Atom *) dataP;
+      blanked_p = (data[0] == XA_BLANK || data[0] == XA_LOCK);
+    }
 
-  if (data) free (data);
+  if (dataP) XFree (dataP);
 
   return blanked_p;
 }
@@ -3715,7 +3762,7 @@ check_blanked_timer (gpointer data)
     {
       if (s->debug_p)
         fprintf (stderr, "%s: screen is blanked: killing preview\n", blurb());
-      kill_preview_subproc (s);
+      kill_preview_subproc (s, True);
     }
 
   return True;  /* re-execute timer */
@@ -3896,7 +3943,7 @@ demo_ehandler (Display *dpy, XErrorEvent *error)
   state *s = global_state_kludge;  /* I hate C so much... */
   fprintf (stderr, "\nX error in %s:\n", blurb());
   XmuPrintDefaultErrorMessage (dpy, error, stderr);
-  kill_preview_subproc (s);
+  kill_preview_subproc (s, False);
   exit (-1);
   return 0;
 }
@@ -4598,7 +4645,7 @@ main (int argc, char **argv)
 # endif /* HAVE_CRAPPLET */
     gtk_main ();
 
-  kill_preview_subproc (s);
+  kill_preview_subproc (s, False);
   exit (0);
 }
 

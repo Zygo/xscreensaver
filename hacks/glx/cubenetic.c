@@ -29,7 +29,7 @@ extern XtAppContext app;
 #define DEF_WAVE_SPEED  "80"
 #define DEF_WAVE_RADIUS "512"
 
-#define DEFAULTS	"*delay:	30000       \n" \
+#define DEFAULTS	"*delay:	20000       \n" \
 			"*count:        5           \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
@@ -113,8 +113,8 @@ static XrmOptionDescRec opts[] = {
   { "+spin",   ".spin",   XrmoptionNoArg, "" },
   { "-wander", ".wander", XrmoptionNoArg, "True" },
   { "+wander", ".wander", XrmoptionNoArg, "False" },
-  {"-texture", ".texture", XrmoptionNoArg, (caddr_t) "true" },
-  {"+texture", ".texture", XrmoptionNoArg, (caddr_t) "false" },
+  {"-texture", ".texture", XrmoptionNoArg, "true" },
+  {"+texture", ".texture", XrmoptionNoArg, "false" },
   {"-waves",       ".waves",      XrmoptionSepArg, 0 },
   {"-wave-speed",  ".waveSpeed",  XrmoptionSepArg, 0 },
   {"-wave-radius", ".waveRadius", XrmoptionSepArg, 0 },

@@ -29,7 +29,7 @@ static const char sccsid[] = "@(#)atlantis.c	5.08 2003/04/09 xlockmore";
  * Thanks goes also to Brian Paul for making it possible and inexpensive
  * to use OpenGL at home.
  *
- * My e-mail address is lassauge@sourceforge.net
+ * My e-mail address is lassauge@users.sourceforge.net
  *
  * Eric Lassauge  (May-13-1998)
  *
@@ -137,11 +137,11 @@ static int do_texture;
 static int do_gradient;
 static XrmOptionDescRec opts[] =
 {
-     {"-whalespeed", ".atlantis.whalespeed", XrmoptionSepArg, (caddr_t) NULL},
-     {"-texture",    ".atlantis.texture",    XrmoptionNoArg, (caddr_t)"true"},
-     {"+texture",    ".atlantis.texture",    XrmoptionNoArg, (caddr_t)"false"},
-     {"-gradient",   ".atlantis.gradient",   XrmoptionNoArg, (caddr_t)"true"},
-     {"+gradient",   ".atlantis.gradient",   XrmoptionNoArg, (caddr_t)"false"},
+     {"-whalespeed", ".atlantis.whalespeed", XrmoptionSepArg, 0},
+     {"-texture",    ".atlantis.texture",    XrmoptionNoArg, "true"},
+     {"+texture",    ".atlantis.texture",    XrmoptionNoArg, "false"},
+     {"-gradient",   ".atlantis.gradient",   XrmoptionNoArg, "true"},
+     {"+gradient",   ".atlantis.gradient",   XrmoptionNoArg, "false"},
 };
 
 static argtype vars[] =

@@ -53,10 +53,10 @@ static Bool trail;
 
 static XrmOptionDescRec opts[] =
 {
-	{(char *) "-decay", (char *) ".grav.decay", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+decay", (char *) ".grav.decay", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-trail", (char *) ".grav.trail", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+trail", (char *) ".grav.trail", XrmoptionNoArg, (caddr_t) "off"}
+	{"-decay", ".grav.decay", XrmoptionNoArg, "on"},
+	{"+decay", ".grav.decay", XrmoptionNoArg, "off"},
+	{"-trail", ".grav.trail", XrmoptionNoArg, "on"},
+	{"+trail", ".grav.trail", XrmoptionNoArg, "off"}
 };
 static argtype vars[] =
 {
@@ -65,8 +65,8 @@ static argtype vars[] =
 };
 static OptionStruct desc[] =
 {
-	{(char *) "-/+decay", (char *) "turn on/off decaying orbits"},
-	{(char *) "-/+trail", (char *) "turn on/off trail dots"}
+	{"-/+decay", "turn on/off decaying orbits"},
+	{"-/+trail", "turn on/off trail dots"}
 };
 
 ModeSpecOpt grav_opts =

@@ -85,13 +85,13 @@
 				maze -root				    \\n\
 				noseguy -root				    \\n\
 				flame -root				    \\n\
-				lmorph -root				    \\n\
+-				lmorph -root				    \\n\
 				deco -root				    \\n\
 				moire -root				    \\n\
 				moire2 -root				    \\n\
 				lightning -root				    \\n\
 				strange -root				    \\n\
-				spiral -root				    \\n\
+-				spiral -root				    \\n\
 				laser -root				    \\n\
 				grav -root				    \\n\
 	       \"Grav (trails)\" 	grav -root -trail -decay		    \\n\
@@ -99,7 +99,7 @@
 				ifs -root				    \\n\
 				julia -root				    \\n\
 				penrose -root				    \\n\
-				sierpinski -root			    \\n\
+-				sierpinski -root			    \\n\
 				braid -root				    \\n\
 				galaxy -root				    \\n\
 				bouboule -root				    \\n\
@@ -107,8 +107,8 @@
 				flag -root				    \\n\
 				sphere -root				    \\n\
 				forest -root				    \\n\
-				lisa -root				    \\n\
-				lissie -root				    \\n\
+-				lisa -root				    \\n\
+-				lissie -root				    \\n\
 				goop -root -max-velocity 0.5 -elasticity      \
 				  0.9					    \\n\
 				starfish -root				    \\n\
@@ -119,12 +119,12 @@
 				coral -root -delay 0			    \\n\
 				mountain -root				    \\n\
 				triangle -root -delay 1			    \\n\
-				worm -root				    \\n\
-				rotor -root				    \\n\
-				ant -root				    \\n\
-				demon -root				    \\n\
-				loop -root				    \\n\
-				vines -root				    \\n\
+-				worm -root				    \\n\
+-				rotor -root				    \\n\
+-				ant -root				    \\n\
+-				demon -root				    \\n\
+-				loop -root				    \\n\
+-				vines -root				    \\n\
 				kaleidescope -root			    \\n\
 				xjack -root				    \\n\
 				xlyap -root -randomize			    \\n\
@@ -149,7 +149,7 @@
 				wander -root				    \\n\
 	      \"Wander (spots)\" 	wander -root -advance 0 -size 10 -circles     \
 				  -length 10000 -reset 100000		    \\n\
-				critical -root				    \\n\
+-				critical -root				    \\n\
 				phosphor -root				    \\n\
 				xmatrix -root				    \\n\
 				petri -root -size 2 -count 20		    \\n\
@@ -204,6 +204,8 @@
 				wormhole -root				    \\n\
 				pacman -root				    \\n\
 				fuzzyflakes -root			    \\n\
+				anemotaxis -root			    \\n\
+				memscroller -root			    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
 				webcollage -root -filter		      \
@@ -220,7 +222,7 @@
 	   GL:			pipes -root				    \\n\
 	   GL:			sproingies -root			    \\n\
 	   GL:			rubik -root				    \\n\
-	   GL:			atlantis -root				    \\n\
+	   GL:			atlantis -root -gradient		    \\n\
 	   GL:			lament -root				    \\n\
 	   GL:			bubble3d -root				    \\n\
 	   GL:			glplanet -root				    \\n\
@@ -246,9 +248,9 @@
 	   GL:			flipscreen3d -root			    \\n\
 	   GL:			glsnake -root				    \\n\
 	   GL:			boxed -root				    \\n\
-	   GL:	\"GLForestFire\"		glforestfire -root		    \\n\
+-	   GL:	\"GLForestFire\"		glforestfire -root		    \\n\
 -	   GL:	\"GLForestFire (rain)\"	glforestfire -root -count 0	    \\n\
-	   GL:			sballs -root				    \\n\
+-	   GL:			sballs -root				    \\n\
 	   GL:			cubenetic -root				    \\n\
 	   GL:			spheremonics -root			    \\n\
 	   GL:			lavalite -root				    \\n\
@@ -493,4 +495,5 @@
 "*hacks.mirrorblob.name:     MirrorBlob",
 "*hacks.blinkbox.name:       BlinkBox",
 "*hacks.fuzzyflakes.name:    FuzzyFlakes",
+"*hacks.memscroller.name:    MemScroller",
 "*hacks.documentation.isInstalled: True",

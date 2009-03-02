@@ -41,11 +41,6 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 static const char sccsid[] = "@(#)flurry.c	4.07 97/11/24 xlockmore";
 #endif
 
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-
 #define DEF_PRESET     "classic"
 #define DEF_BRIGHTNESS "8"
 

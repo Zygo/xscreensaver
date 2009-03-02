@@ -36,7 +36,7 @@ Do not use texture maps.  This is boring and wrong.
 Only draw outlines.
 .TP 8
 .B \-delay \fImicroseconds\fP
-How long to pause between frames.  Default is 10000, or 0.01 second.
+How long to pause between frames.  Default is 20000, or 0.02 second.
 .TP 8
 .B \-fps
 Display a running tally of how many frames per second are being rendered.

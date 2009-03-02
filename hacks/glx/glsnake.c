@@ -164,13 +164,13 @@ static XrmOptionDescRec opts[] = {
     { "-statictime", ".statictime", XrmoptionSepArg, DEF_STATICTIME },
     { "-yangvel", ".yangvel", XrmoptionSepArg, DEF_YANGVEL },
     { "-zangvel", ".zangvel", XrmoptionSepArg, DEF_ZANGVEL },
-    { "-altcolour", ".altcolour", XrmoptionNoArg, (caddr_t) "True" },
-    { "-no-altcolour", ".altcolour", XrmoptionNoArg, (caddr_t) "False" },
-    { "-titles", ".titles", XrmoptionNoArg, (caddr_t) "True" },
-    { "-no-titles", ".titles", XrmoptionNoArg, (caddr_t) "False" },
+    { "-altcolour", ".altcolour", XrmoptionNoArg, "True" },
+    { "-no-altcolour", ".altcolour", XrmoptionNoArg, "False" },
+    { "-titles", ".titles", XrmoptionNoArg, "True" },
+    { "-no-titles", ".titles", XrmoptionNoArg, "False" },
     { "-zoom", ".zoom", XrmoptionSepArg, DEF_ZOOM },
-    { "-wireframe", ".wireframe", XrmoptionNoArg, (caddr_t) "true" },
-    { "-no-wireframe", ".wireframe", XrmoptionNoArg, (caddr_t) "false" },
+    { "-wireframe", ".wireframe", XrmoptionNoArg, "true" },
+    { "-no-wireframe", ".wireframe", XrmoptionNoArg, "false" },
 };
 
 static argtype vars[] = {

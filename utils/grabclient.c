@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 1998, 2001, 2003
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 1998, 2001, 2003, 2004
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -26,6 +26,9 @@
 #include "vroot.h"
 #include <X11/Xatom.h>
 
+#include <X11/Intrinsic.h>   /* for XtInputId, etc */
+
+
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
@@ -35,6 +38,7 @@
 
 
 extern char *progname;
+extern XtAppContext app;
 
 
 static Bool error_handler_hit_p = False;
@@ -76,12 +80,12 @@ xscreensaver_window_p (Display *dpy, Window window)
   Atom type;
   int format;
   unsigned long nitems, bytesafter;
-  char *version;
+  unsigned char *version;
   if (XGetWindowProperty (dpy, window,
 			  XInternAtom (dpy, "_SCREENSAVER_VERSION", False),
 			  0, 1, False, XA_STRING,
 			  &type, &format, &nitems, &bytesafter,
-			  (unsigned char **) &version)
+			  &version)
       == Success
       && type != None)
     return True;
@@ -164,6 +168,27 @@ checkerboard (Screen *screen, Drawable drawable)
       }
 }
 
+
+static char *
+get_name (Display *dpy, Window window)
+{
+  Atom type;
+  int format;
+  unsigned long nitems, bytesafter;
+  unsigned char *name = 0;
+  Atom atom = XInternAtom (dpy, XA_XSCREENSAVER_IMAGE_FILENAME, False);
+  if (XGetWindowProperty (dpy, window, atom,
+                          0, 1024, False, XA_STRING,
+                          &type, &format, &nitems, &bytesafter,
+                          &name)
+      == Success
+      && type != None)
+    return strdup((char *) name);
+  else
+    return 0;
+}
+
+
 static void
 hack_subproc_environment (Display *dpy)
 {
@@ -234,12 +259,127 @@ fork_exec_wait (const char *command)
 }
 
 
+typedef struct {
+  void (*callback) (Screen *, Window, Drawable,
+                    const char *name, void *closure);
+  Screen *screen;
+  Window window;
+  Drawable drawable;
+  void *closure;
+  FILE *read_pipe;
+  FILE *write_pipe;
+  XtInputId pipe_id;
+} grabclient_data;
+
+
+static void finalize_cb (XtPointer closure, int *fd, XtIntervalId *id);
+
+static void
+fork_exec_cb (const char *command,
+              Screen *screen, Window window, Drawable drawable,
+              void (*callback) (Screen *, Window, Drawable,
+                                const char *name, void *closure),
+              void *closure)
+{
+  grabclient_data *data;
+  char buf [255];
+  pid_t forked;
+
+  int fds [2];
+
+  if (pipe (fds))
+    {
+      sprintf (buf, "%s: creating pipe", progname);
+      perror (buf);
+      exit (1);
+    }
+
+  data = (grabclient_data *) calloc (1, sizeof(*data));
+  data->callback   = callback;
+  data->closure    = closure;
+  data->screen     = screen;
+  data->window     = window;
+  data->drawable   = drawable;
+  data->read_pipe  = fdopen (fds[0], "r");
+  data->write_pipe = fdopen (fds[1], "w");
+
+  if (!data->read_pipe || !data->write_pipe)
+    {
+      sprintf (buf, "%s: fdopen", progname);
+      perror (buf);
+      exit (1);
+    }
+
+  data->pipe_id =
+    XtAppAddInput (app, fileno (data->read_pipe),
+                   (XtPointer) (XtInputReadMask | XtInputExceptMask),
+                   finalize_cb, (XtPointer) data);
+
+  switch ((int) (forked = fork ()))
+    {
+    case -1:
+      sprintf (buf, "%s: couldn't fork", progname);
+      perror (buf);
+      return;
+
+    case 0:					/* child */
+
+      fclose (data->read_pipe);
+      data->read_pipe = 0;
+
+      /* clone the write pipe onto stdout so that it gets closed
+         when the fork exits.  This will shut down the pipe and
+         signal the parent.
+       */
+      close (fileno (stdout));
+      dup2 (fds[1], fileno (stdout));
+      close (fds[1]);
+
+      close (fileno (stdin)); /* for kicks */
+
+      exec_simple_command (command);
+      exit (1);  /* exits child fork */
+      break;
+
+    default:					/* parent */
+      fclose (data->write_pipe);
+      data->write_pipe = 0;
+      break;
+    }
+}
+
+
+/* Called in the parent when the forked process dies.
+   Runs the caller's callback, and cleans up.
+ */
+static void
+finalize_cb (XtPointer closure, int *fd, XtIntervalId *id)
+{
+  grabclient_data *data = (grabclient_data *) closure;
+  char *name;
+
+  XtRemoveInput (*id);
+
+  name = get_name (DisplayOfScreen (data->screen), data->window);
+  data->callback (data->screen, data->window, data->drawable,
+                  name, data->closure);
+  free (name);
+
+  fclose (data->read_pipe);
+  memset (data, 0, sizeof (*data));
+  free (data);
+}
+
+
 /* Loads an image into the Drawable.
    When grabbing desktop images, the Window will be unmapped first.
  */
-void
-load_random_image (Screen *screen, Window window, Drawable drawable,
-                   char **name_ret)
+static void
+load_random_image_1 (Screen *screen, Window window, Drawable drawable,
+                     void (*callback) (Screen *, Window, Drawable,
+                                       const char *name, void *closure),
+                     void *closure,
+                     char **name_ret)
 {
   Display *dpy = DisplayOfScreen (screen);
   char *grabber = get_string_resource ("desktopGrabber", "DesktopGrabber");
@@ -274,27 +414,90 @@ load_random_image (Screen *screen, Window window, Drawable drawable,
 
   XSync (dpy, True);
   hack_subproc_environment (dpy);
-  fork_exec_wait (cmd);
+
+  if (callback)
+    {
+      /* Start the image loading in another fork and return immediately.
+         Invoke the callback function when done.
+       */
+      if (name_ret) abort();
+      fork_exec_cb (cmd, screen, window, drawable, callback, closure);
+    }
+  else
+    {
+      /* Wait for the image to load, and return it immediately.
+       */
+      fork_exec_wait (cmd);
+      if (name_ret)
+        *name_ret = get_name (dpy, window);
+    }
+
   free (cmd);
   XSync (dpy, True);
-
-  if (name_ret) 
-    {
-      Atom type;
-      int format;
-      unsigned long nitems, bytesafter;
-      char *name=NULL;
-
-      *name_ret = NULL;
-
-      if (XGetWindowProperty (dpy, window,
-                              XInternAtom (dpy, XA_XSCREENSAVER_IMAGE_FILENAME,
-                                           False),
-                              0, 1024, False, XA_STRING,
-                              &type, &format, &nitems, &bytesafter,
-                              (unsigned char **) &name)
-          == Success
-          && type != None)
-        *name_ret = strdup(name);
-    }
 }
+
+
+/* Loads an image into the Drawable in the background;
+   when the image is fully loaded, runs the callback.
+   When grabbing desktop images, the Window will be unmapped first.
+ */
+void
+fork_load_random_image (Screen *screen, Window window, Drawable drawable,
+                        void (*callback) (Screen *, Window, Drawable,
+                                          const char *name, void *closure),
+                        void *closure)
+{
+  load_random_image_1 (screen, window, drawable, callback, closure, 0);
+}
+
+
+#ifndef DEBUG
+
+/* Loads an image into the Drawable, returning once the image is loaded.
+   When grabbing desktop images, the Window will be unmapped first.
+ */
+void
+load_random_image (Screen *screen, Window window, Drawable drawable,
+                   char **name_ret)
+{
+  load_random_image_1 (screen, window, drawable, 0, 0, name_ret);
+}
+
+#else  /* DEBUG */
+
+typedef struct {
+  char **name_ret;
+  Bool done;
+} debug_closure;
+
+static void
+debug_cb (Screen *screen, Window window, Drawable drawable,
+          const char *name, void *closure)
+{
+  debug_closure *data = (debug_closure *) closure;
+  fprintf (stderr, "%s: GRAB DEBUG: callback\n", progname);
+  if (data->name_ret)
+    *data->name_ret = (name ? strdup (name) : 0);
+  data->done = True;
+}
+
+void
+load_random_image (Screen *screen, Window window, Drawable drawable,
+                   char **name_ret)
+{
+  debug_closure data;
+  data.name_ret = name_ret;
+  data.done = False;
+  fprintf (stderr, "%s: GRAB DEBUG: forking\n", progname);
+  fork_load_random_image (screen, window, drawable, debug_cb, &data);
+  while (! data.done)
+    {
+      fprintf (stderr, "%s: GRAB DEBUG: waiting\n", progname);
+      if (XtAppPending (app) & XtIMAlternateInput)
+        XtAppProcessEvent (app, XtIMAlternateInput);
+      usleep (50000);
+    }
+  fprintf (stderr, "%s: GRAB DEBUG: done\n", progname);
+}
+
+#endif /* DEBUG */

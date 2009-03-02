@@ -96,28 +96,28 @@ static Bool sine;
 
 static XrmOptionDescRec opts[] =
 {
-	{(char *) "-martin", (char *) ".hop.martin", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+martin", (char *) ".hop.martin", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-popcorn", (char *) ".hop.popcorn", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+popcorn", (char *) ".hop.popcorn", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-ejk1", (char *) ".hop.ejk1", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+ejk1", (char *) ".hop.ejk1", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-ejk2", (char *) ".hop.ejk2", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+ejk2", (char *) ".hop.ejk2", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-ejk3", (char *) ".hop.ejk3", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+ejk3", (char *) ".hop.ejk3", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-ejk4", (char *) ".hop.ejk4", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+ejk4", (char *) ".hop.ejk4", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-ejk5", (char *) ".hop.ejk5", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+ejk5", (char *) ".hop.ejk5", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-ejk6", (char *) ".hop.ejk6", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+ejk6", (char *) ".hop.ejk6", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-rr", (char *) ".hop.rr", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+rr", (char *) ".hop.rr", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-jong", (char *) ".hop.jong", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+jong", (char *) ".hop.jong", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-sine", (char *) ".hop.sine", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+sine", (char *) ".hop.sine", XrmoptionNoArg, (caddr_t) "off"}
+	{"-martin", ".hop.martin", XrmoptionNoArg, "on"},
+	{"+martin", ".hop.martin", XrmoptionNoArg, "off"},
+	{"-popcorn", ".hop.popcorn", XrmoptionNoArg, "on"},
+	{"+popcorn", ".hop.popcorn", XrmoptionNoArg, "off"},
+	{"-ejk1", ".hop.ejk1", XrmoptionNoArg, "on"},
+	{"+ejk1", ".hop.ejk1", XrmoptionNoArg, "off"},
+	{"-ejk2", ".hop.ejk2", XrmoptionNoArg, "on"},
+	{"+ejk2", ".hop.ejk2", XrmoptionNoArg, "off"},
+	{"-ejk3", ".hop.ejk3", XrmoptionNoArg, "on"},
+	{"+ejk3", ".hop.ejk3", XrmoptionNoArg, "off"},
+	{"-ejk4", ".hop.ejk4", XrmoptionNoArg, "on"},
+	{"+ejk4", ".hop.ejk4", XrmoptionNoArg, "off"},
+	{"-ejk5", ".hop.ejk5", XrmoptionNoArg, "on"},
+	{"+ejk5", ".hop.ejk5", XrmoptionNoArg, "off"},
+	{"-ejk6", ".hop.ejk6", XrmoptionNoArg, "on"},
+	{"+ejk6", ".hop.ejk6", XrmoptionNoArg, "off"},
+	{"-rr", ".hop.rr", XrmoptionNoArg, "on"},
+	{"+rr", ".hop.rr", XrmoptionNoArg, "off"},
+	{"-jong", ".hop.jong", XrmoptionNoArg, "on"},
+	{"+jong", ".hop.jong", XrmoptionNoArg, "off"},
+	{"-sine", ".hop.sine", XrmoptionNoArg, "on"},
+	{"+sine", ".hop.sine", XrmoptionNoArg, "off"}
 };
 static argtype vars[] =
 {
@@ -135,17 +135,17 @@ static argtype vars[] =
 };
 static OptionStruct desc[] =
 {
-	{(char *) "-/+martin", (char *) "turn on/off sqrt format"},
-	{(char *) "-/+popcorn", (char *) "turn on/off Clifford A. Pickover's popcorn format"},
-	{(char *) "-/+ejk1", (char *) "turn on/off ejk1 format"},
-	{(char *) "-/+ejk2", (char *) "turn on/off ejk2 format"},
-	{(char *) "-/+ejk3", (char *) "turn on/off ejk3 format"},
-	{(char *) "-/+ejk4", (char *) "turn on/off ejk4 format"},
-	{(char *) "-/+ejk5", (char *) "turn on/off ejk5 format"},
-	{(char *) "-/+ejk6", (char *) "turn on/off ejk6 format"},
-	{(char *) "-/+rr", (char *) "turn on/off rr format"},
-	{(char *) "-/+jong", (char *) "turn on/off jong format"},
-	{(char *) "-/+sine", (char *) "turn on/off sine format"}
+	{"-/+martin", "turn on/off sqrt format"},
+	{"-/+popcorn", "turn on/off Clifford A. Pickover's popcorn format"},
+	{"-/+ejk1", "turn on/off ejk1 format"},
+	{"-/+ejk2", "turn on/off ejk2 format"},
+	{"-/+ejk3", "turn on/off ejk3 format"},
+	{"-/+ejk4", "turn on/off ejk4 format"},
+	{"-/+ejk5", "turn on/off ejk5 format"},
+	{"-/+ejk6", "turn on/off ejk6 format"},
+	{"-/+rr",   "turn on/off rr format"},
+	{"-/+jong", "turn on/off jong format"},
+	{"-/+sine", "turn on/off sine format"}
 };
 
 ModeSpecOpt hop_opts =

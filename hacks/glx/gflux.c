@@ -39,14 +39,6 @@
  */
 
 
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-
-#include <X11/Intrinsic.h>
-
-
 #ifdef STANDALONE
 # define PROGCLASS						"gflux"
 # define HACK_INIT						init_gflux
@@ -130,20 +122,20 @@ static Bool button_down_p = False;
 #define HEIGHT 240
 
 static XrmOptionDescRec opts[] = {
-    {"-squares", ".gflux.squares", XrmoptionSepArg, (caddr_t) NULL},
-    {"-resolution", ".gflux.resolution", XrmoptionSepArg, (caddr_t) NULL},
-/*    {"-draw", ".gflux.draw", XrmoptionSepArg, (caddr_t) NULL},*/
-    {"-mode", ".gflux.mode", XrmoptionSepArg, (caddr_t) NULL},
-    {"-flat", ".gflux.flat", XrmoptionSepArg, (caddr_t) NULL},
-    {"-speed", ".gflux.speed", XrmoptionSepArg, (caddr_t) NULL},
-    {"-rotationx", ".gflux.rotationx", XrmoptionSepArg, (caddr_t) NULL},
-    {"-rotationy", ".gflux.rotationy", XrmoptionSepArg, (caddr_t) NULL},
-    {"-rotationz", ".gflux.rotationz", XrmoptionSepArg, (caddr_t) NULL},
-    {"-waves", ".gflux.waves", XrmoptionSepArg, (caddr_t) NULL},
-    {"-waveChange", ".gflux.waveChange", XrmoptionSepArg, (caddr_t) NULL},
-    {"-waveHeight", ".gflux.waveHeight", XrmoptionSepArg, (caddr_t) NULL},
-    {"-waveFreq", ".gflux.waveFreq", XrmoptionSepArg, (caddr_t) NULL},
-    {"-zoom", ".gflux.zoom", XrmoptionSepArg, (caddr_t) NULL},
+    {"-squares", ".gflux.squares", XrmoptionSepArg, 0},
+    {"-resolution", ".gflux.resolution", XrmoptionSepArg, 0},
+/*    {"-draw", ".gflux.draw", XrmoptionSepArg, 0},*/
+    {"-mode", ".gflux.mode", XrmoptionSepArg, 0},
+    {"-flat", ".gflux.flat", XrmoptionSepArg, 0},
+    {"-speed", ".gflux.speed", XrmoptionSepArg, 0},
+    {"-rotationx", ".gflux.rotationx", XrmoptionSepArg, 0},
+    {"-rotationy", ".gflux.rotationy", XrmoptionSepArg, 0},
+    {"-rotationz", ".gflux.rotationz", XrmoptionSepArg, 0},
+    {"-waves", ".gflux.waves", XrmoptionSepArg, 0},
+    {"-waveChange", ".gflux.waveChange", XrmoptionSepArg, 0},
+    {"-waveHeight", ".gflux.waveHeight", XrmoptionSepArg, 0},
+    {"-waveFreq", ".gflux.waveFreq", XrmoptionSepArg, 0},
+    {"-zoom", ".gflux.zoom", XrmoptionSepArg, 0},
 };
 
 

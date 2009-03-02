@@ -75,14 +75,6 @@ static const char sccsid[] = "@(#)cage.c	5.01 2001/03/01 xlockmore";
  * In real OpenGL, PseudoColor DO NOT support texture map (as far as I know).
  */
 
-#ifdef VMS
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-#include <X11/Intrinsic.h>
-#endif
-
 #ifdef STANDALONE
 # define MODE_cage
 # define PROGCLASS			"Cage"

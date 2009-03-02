@@ -90,10 +90,10 @@ static Bool label;
 
 static XrmOptionDescRec opts[] =
 {
-	{(char *) "-altgeom", (char *) ".apollonian.altgeom", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+altgeom", (char *) ".apollonian.altgeom", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-label", (char *) ".apollonian.label", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+label", (char *) ".apollonian.label", XrmoptionNoArg, (caddr_t) "off"},
+	{"-altgeom", ".apollonian.altgeom", XrmoptionNoArg, "on"},
+	{"+altgeom", ".apollonian.altgeom", XrmoptionNoArg, "off"},
+	{"-label", ".apollonian.label", XrmoptionNoArg, "on"},
+	{"+label", ".apollonian.label", XrmoptionNoArg, "off"},
 };
 static argtype vars[] =
 {
@@ -102,8 +102,8 @@ static argtype vars[] =
 };
 static OptionStruct desc[] =
 {
-        {(char *) "-/+altgeom", (char *) "turn on/off alternate geometries (off euclidean space, on includes spherical and hyperbolic)"},
-        {(char *) "-/+label", (char *) "turn on/off alternate space and number labeling"},
+        {"-/+altgeom", "turn on/off alternate geometries (off euclidean space, on includes spherical and hyperbolic)"},
+        {"-/+label", "turn on/off alternate space and number labeling"},
 };
 
 ModeSpecOpt apollonian_opts =

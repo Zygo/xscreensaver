@@ -42,13 +42,6 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
  * 29-Apr-97: Efficiency speed-ups by Marcelo F. Vianna
  */
 
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
 # define PROGCLASS					"Pipes"
 # define HACK_INIT					init_pipes
@@ -88,15 +81,15 @@ static Bool dbuf_p;
 
 static XrmOptionDescRec opts[] =
 {
-	{"-factory", ".pipes.factory", XrmoptionSepArg, (caddr_t) NULL},
-	{"-fisheye", ".pipes.fisheye", XrmoptionNoArg, (caddr_t) "on"},
-	{"+fisheye", ".pipes.fisheye", XrmoptionNoArg, (caddr_t) "off"},
-	{"-tightturns", ".pipes.tightturns", XrmoptionNoArg, (caddr_t) "on"},
-	{"+tightturns", ".pipes.tightturns", XrmoptionNoArg, (caddr_t) "off"},
-      {"-rotatepipes", ".pipes.rotatepipes", XrmoptionNoArg, (caddr_t) "on"},
-      {"+rotatepipes", ".pipes.rotatepipes", XrmoptionNoArg, (caddr_t) "off"},
-      {"-db", ".pipes.doubleBuffer", XrmoptionNoArg, (caddr_t) "on"},
-      {"+db", ".pipes.doubleBuffer", XrmoptionNoArg, (caddr_t) "off"},
+	{"-factory", ".pipes.factory", XrmoptionSepArg, 0},
+	{"-fisheye", ".pipes.fisheye", XrmoptionNoArg, "on"},
+	{"+fisheye", ".pipes.fisheye", XrmoptionNoArg, "off"},
+	{"-tightturns", ".pipes.tightturns", XrmoptionNoArg, "on"},
+	{"+tightturns", ".pipes.tightturns", XrmoptionNoArg, "off"},
+      {"-rotatepipes", ".pipes.rotatepipes", XrmoptionNoArg, "on"},
+      {"+rotatepipes", ".pipes.rotatepipes", XrmoptionNoArg, "off"},
+      {"-db", ".pipes.doubleBuffer", XrmoptionNoArg, "on"},
+      {"+db", ".pipes.doubleBuffer", XrmoptionNoArg, "off"},
 };
 static argtype vars[] =
 {

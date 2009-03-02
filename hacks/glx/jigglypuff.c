@@ -138,19 +138,19 @@ typedef struct {
 static jigglystruct *jss = NULL;
 
 static XrmOptionDescRec opts[] = {
-    {"-random", ".Jigglypuff.random", XrmoptionNoArg, (caddr_t)"true"},
-    {"+random", ".Jigglypuff.random", XrmoptionNoArg, (caddr_t)"false"},
-    {"-tetra", ".Jigglypuff.tetra", XrmoptionNoArg, (caddr_t)"true"},
-    {"+tetra", ".Jigglypuff.tetra", XrmoptionNoArg, (caddr_t)"false"},
-    {"-spooky", ".Jigglypuff.spooky", XrmoptionSepArg, (caddr_t)"0"},
-    {"-color", ".Jigglypuff.color", XrmoptionSepArg, (caddr_t)DEF_COLOR},
-    {"-shininess", ".Jigglypuff.shininess", XrmoptionSepArg, (caddr_t)DEF_SHININESS},
-    {"-complexity", ".Jigglypuff.complexity", XrmoptionSepArg, (caddr_t)DEF_COMPLEXITY},
-    {"-speed", ".Jigglypuff.speed", XrmoptionSepArg, (caddr_t)DEF_SPEED},
-    {"-spherism", ".Jigglypuff.spherism", XrmoptionSepArg, (caddr_t)DEF_SPHERISM},
-    {"-hold", ".Jigglypuff.hold", XrmoptionSepArg, (caddr_t)DEF_HOLD},
-    {"-distance", "Jigglypuff.distance", XrmoptionSepArg, (caddr_t)DEF_DISTANCE},
-    {"-damping", "Jigglypuff.damping", XrmoptionSepArg, (caddr_t)DEF_DAMPING}
+    {"-random", ".Jigglypuff.random", XrmoptionNoArg, "true"},
+    {"+random", ".Jigglypuff.random", XrmoptionNoArg, "false"},
+    {"-tetra", ".Jigglypuff.tetra", XrmoptionNoArg, "true"},
+    {"+tetra", ".Jigglypuff.tetra", XrmoptionNoArg, "false"},
+    {"-spooky", ".Jigglypuff.spooky", XrmoptionSepArg, "0"},
+    {"-color", ".Jigglypuff.color", XrmoptionSepArg, DEF_COLOR},
+    {"-shininess", ".Jigglypuff.shininess", XrmoptionSepArg, DEF_SHININESS},
+    {"-complexity", ".Jigglypuff.complexity", XrmoptionSepArg, DEF_COMPLEXITY},
+    {"-speed", ".Jigglypuff.speed", XrmoptionSepArg, DEF_SPEED},
+    {"-spherism", ".Jigglypuff.spherism", XrmoptionSepArg, DEF_SPHERISM},
+    {"-hold", ".Jigglypuff.hold", XrmoptionSepArg, DEF_HOLD},
+    {"-distance", "Jigglypuff.distance", XrmoptionSepArg, DEF_DISTANCE},
+    {"-damping", "Jigglypuff.damping", XrmoptionSepArg, DEF_DAMPING}
 };
 
 static argtype vars[] = {

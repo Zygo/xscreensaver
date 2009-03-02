@@ -167,10 +167,7 @@ ERROR! Unsupported release of X11
 
 #else  /* HAVE_XMU */
 
-# ifdef __osf__
-  /* Stupid alpha 3.2 compiler returns a FAILURE exit code if compiling
-     an empty file.  Fake it out with a file-private variable. */
-  static const int digital_unix_compiler_sucks;
-# endif /* __osf__ */
+/* Shut up the stupid "gcc -pedantic" warning */
+int _I_dont_care_that_ISO_C_forbids_an_empty_source_file_ = 1;
 
 #endif /* HAVE_XMU */

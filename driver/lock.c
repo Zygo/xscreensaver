@@ -948,6 +948,9 @@ xfree_lock_grab_smasher (saver_info *si, Bool lock_p)
   XSync (si->dpy, False);
   if (error_handler_hit_p) status = 666;
 
+  if (!lock_p && status == MiscExtGrabStateAlready)
+    status = MiscExtGrabStateSuccess;  /* shut up, consider this success */
+
   if (p->verbose_p && status != MiscExtGrabStateSuccess)
     fprintf (stderr, "%s: error: XF86MiscSetGrabKeysState(%d) returned %s\n",
              blurb(), !lock_p,
@@ -1160,7 +1163,7 @@ passwd_animate_timer (XtPointer closure, XtIntervalId *id)
   else
     pw->timer = 0;
 
-  idle_timer ((XtPointer) si, id);
+  idle_timer ((XtPointer) si, 0);
 }
 
 

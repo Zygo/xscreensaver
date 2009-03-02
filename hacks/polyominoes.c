@@ -58,10 +58,10 @@ static Bool plain;
 
 static XrmOptionDescRec opts[] =
 {
-  {(char *) "-identical", (char *) ".polyominoes.identical", XrmoptionNoArg, (caddr_t) "on"},
-  {(char *) "+identical", (char *) ".polyominoes.identical", XrmoptionNoArg, (caddr_t) "off"},
-  {(char *) "-plain", (char *) ".polyominoes.plain", XrmoptionNoArg, (caddr_t) "on"},
-  {(char *) "+plain", (char *) ".polyominoes.plain", XrmoptionNoArg, (caddr_t) "off"}
+  {"-identical", ".polyominoes.identical", XrmoptionNoArg, "on"},
+  {"+identical", ".polyominoes.identical", XrmoptionNoArg, "off"},
+  {"-plain", ".polyominoes.plain", XrmoptionNoArg, "on"},
+  {"+plain", ".polyominoes.plain", XrmoptionNoArg, "off"}
 };
 static argtype vars[] =
 {
@@ -70,8 +70,8 @@ static argtype vars[] =
 };
 static OptionStruct desc[] =
 {
-  {(char *) "-/+identical", (char *) "turn on/off puzzles where the polyomino pieces are identical"},
-  {(char *) "-/+plain", (char *) "turn on/off plain pieces"}
+  {"-/+identical", "turn on/off puzzles where the polyomino pieces are identical"},
+  {"-/+plain", "turn on/off plain pieces"}
 };
 
 ModeSpecOpt polyominoes_opts =

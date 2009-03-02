@@ -264,8 +264,9 @@ analogtv_alloc_image(analogtv *it)
   if (!it->image) {
     it->image = XCreateImage(it->dpy, it->xgwa.visual, it->xgwa.depth, ZPixmap, 0, 0,
                              it->usewidth, it->useheight, 8, 0);
-    it->image->data = (char *)calloc(it->image->height, it->image->bytes_per_line);
+    it->image->data = (char *)malloc(it->image->height * it->image->bytes_per_line);
   }
+  memset (it->image->data, 0, it->image->height * it->image->bytes_per_line);
 }
 
 

@@ -91,14 +91,14 @@ static XrmOptionDescRec opts[] = {
   {"-parts", ".circuit.parts", XrmoptionSepArg, "10" },
   {"-font", ".circuit.font", XrmoptionSepArg, "fixed" },
   {"-rotate-speed", ".circuit.rotatespeed", XrmoptionSepArg, "1" },
-  {"+spin", ".circuit.spin", XrmoptionNoArg, (caddr_t) "false" },
-  {"-spin", ".circuit.spin", XrmoptionNoArg, (caddr_t) "true" },
-  {"+light", ".circuit.light", XrmoptionNoArg, (caddr_t) "false" },
-  {"-light", ".circuit.light", XrmoptionNoArg, (caddr_t) "true" },
-  {"+seven", ".circuit.seven", XrmoptionNoArg, (caddr_t) "false" },
-  {"-seven", ".circuit.seven", XrmoptionNoArg, (caddr_t) "true" },
-  {"+rotate", ".circuit.rotate", XrmoptionNoArg, (caddr_t) "false" },
-  {"-rotate", ".circuit.rotate", XrmoptionNoArg, (caddr_t) "true" },
+  {"+spin", ".circuit.spin", XrmoptionNoArg, "false" },
+  {"-spin", ".circuit.spin", XrmoptionNoArg, "true" },
+  {"+light", ".circuit.light", XrmoptionNoArg, "false" },
+  {"-light", ".circuit.light", XrmoptionNoArg, "true" },
+  {"+seven", ".circuit.seven", XrmoptionNoArg, "false" },
+  {"-seven", ".circuit.seven", XrmoptionNoArg, "true" },
+  {"+rotate", ".circuit.rotate", XrmoptionNoArg, "false" },
+  {"-rotate", ".circuit.rotate", XrmoptionNoArg, "true" },
 };
 
 static argtype vars[] = {
@@ -149,7 +149,7 @@ static int YMAX = 30;
 
 #define MAX_COMPONENTS 30
 
-#define MOVE_MULT 0.05
+#define MOVE_MULT 0.02
 
 static float f_rand(void) {
    return ((float)RAND(10000)/(float)10000);
@@ -1498,7 +1498,7 @@ Component * NewComponent(void)
   c->rotx = f_rand();
   c->roty = f_rand();
   c->rotz = f_rand();
-  c->drot = f_rand() * 7;
+  c->drot = f_rand() * 3;
   c->rdeg = 0;
   c->dz = f_rand()*2 - 1;
   c->norm = 0;

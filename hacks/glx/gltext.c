@@ -25,7 +25,7 @@ extern XtAppContext app;
 #define DEF_SPIN        "XYZ"
 #define DEF_WANDER      "True"
 
-#define DEFAULTS	"*delay:	10000       \n" \
+#define DEFAULTS	"*delay:	20000       \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 			"*spin:       " DEF_SPIN   "\n" \
@@ -301,9 +301,9 @@ init_text (ModeInfo *mi)
 
   {
     Bool spinx=False, spiny=False, spinz=False;
-    double spin_speed   = 1.0;
-    double wander_speed = 0.05;
-    double spin_accel   = 1.0;
+    double spin_speed   = 0.5;
+    double wander_speed = 0.02;
+    double spin_accel   = 0.5;
 
     char *s = do_spin;
     while (*s)

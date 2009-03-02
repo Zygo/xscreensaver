@@ -61,8 +61,8 @@ static Bool tracks;
 
 static XrmOptionDescRec opts[] =
 {
- {"-tracks", ".galaxy.tracks", XrmoptionNoArg, (caddr_t) "on"},
- {"+tracks", ".galaxy.tracks", XrmoptionNoArg, (caddr_t) "off"}
+ {"-tracks", ".galaxy.tracks", XrmoptionNoArg, "on"},
+ {"+tracks", ".galaxy.tracks", XrmoptionNoArg, "off"}
 };
 
 static argtype vars[] =

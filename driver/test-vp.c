@@ -51,6 +51,16 @@ blurb (void)
 }
 
 
+static Bool error_handler_hit_p = False;
+
+static int
+ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
+{
+  error_handler_hit_p = True;
+  return 0;
+}
+
+
 static int
 screen_count (Display *dpy)
 {
@@ -150,11 +160,29 @@ main (int argc, char **argv)
 
   for (i = 0; i < nscreens; i++)
     {
-      int result;
+      int result = 0;
       int x = 0, y = 0, dot = 0;
       XF86VidModeModeLine ml = { 0, };
+      XErrorHandler old_handler;
+
+      XSync (dpy, False);
+      error_handler_hit_p = False;
+      old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
 
       result = XF86VidModeGetViewPort (dpy, i, &x, &y);
+
+      XSync (dpy, False);
+      XSetErrorHandler (old_handler);
+      XSync (dpy, False);
+
+      if (error_handler_hit_p)
+        {
+          fprintf(stderr,
+                  "%s: XF86VidModeGetViewPort(dpy, %d, ...) ==> X error\n",
+                  blurb(), i);
+          continue;
+        }
+
       if (! result)
         fprintf(stderr, "%s: XF86VidModeGetViewPort(dpy, %d, ...) ==> %d\n",
                 blurb(), i, result);

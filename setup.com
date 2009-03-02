@@ -4,6 +4,7 @@ $ set def [.HACKS]
 $ mydisk = f$trnlmn("SYS$DISK")
 $ mydir  = mydisk+f$directory()
 $ anemone	:== $'mydir'anemone
+$ anemotaxis	:== $'mydir'anemotaxis
 $ ant		:== $'mydir'ant
 $ apollonian	:== $'mydir'apollonian
 $ apple2	:== $'mydir'apple2
@@ -66,6 +67,7 @@ $ lissie	:== $'mydir'lissie
 $ lmorph	:== $'mydir'lmorph
 $ loop		:== $'mydir'loop
 $ maze		:== $'mydir'maze
+$ memscroller	:== $'mydir'memscroller
 $ metaballs	:== $'mydir'metaballs
 $ mismunch	:== $'mydir'mismunch
 $ moire2	:== $'mydir'moire2

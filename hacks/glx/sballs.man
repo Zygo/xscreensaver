@@ -134,4 +134,4 @@ and can be found at http://www.cfxweb.net/lonerunner/
 
 .SH AUTHOR
 Mustata Bogdan (LoneRunner) <lonerunner@planetquake.com>
-Eric Lassauge <lassauge@mail.dotcom.fr>
+Eric Lassauge <lassauge@users.sourceforge.net>

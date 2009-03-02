@@ -15,6 +15,56 @@
  * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  *
+ * TODO:
+ *
+ * - Resizing the window makes everything go black forevermore.  No idea why.
+ *
+ *
+ * - When a new image is loaded, there is a glitch: animation pauses during
+ *   the period when we're loading the image-to-fade-in.  On fast (2GHz)
+ *   machines, this stutter is short but noticable (usually less than half a
+ *   second.)  On slower machines, it can be much more pronounced.
+ *
+ *   In xscreensaver 4.17, I added the new functions fork_load_random_image()
+ *   and fork_screen_to_ximage() to make it possible to do image loading in
+ *   the background, in an attempt to solve this (the idea being to only swap
+ *   in the new image once it has been loaded.)  Using those routines, we
+ *   continue animating while the file system is being searched for an image
+ *   file; while that image data is read, parsed, and decompressed; while that
+ *   data is placed on a Pixmap in the X server.
+ *
+ *   However, two things still happen in the "parent" (glslideshow) process:
+ *   converting that server-side Pixmap to a client-side XImage (XGetImage);
+ *   and converting that XImage to an OpenGL texture (gluBuild2DMipmaps).
+ *   It's possible that some new code would allow us to do the Pixmap-to-XImage
+ *   conversion in the forked process (feed it back upstream through a pipe or
+ *   SHM segment or something); however, it turns out that significant
+ *   parent-process image-loading time is being spent in gluBuild2DMipmaps().
+ *
+ *   So, the next step would be to figure out some way to create a texture on
+ *   the other end of the fork that would be usable by the parent process.  Is
+ *   that even possible?  Is it possible to use a single GLX context in a
+ *   multithreaded way like that?  (Or use a second GLX context, but allow the
+ *   two contexts to share data?)
+ *
+ *   Another question remains: is the stalling happening in the GL/GLX
+ *   libraries, or are we actually seeing a stall on the graphics pipeline?
+ *   If the latter, then no amount of threading would help, because the
+ *   bottleneck is pushing the bits from system memory to the graphics card.
+ *
+ *   How does Apple do this with their MacOSX slideshow screen saver?  Perhaps
+ *   it's easier for them because their OpenGL libraries have thread support
+ *   at a lower level?
+ *
+ *
+ * - Even if the glitch was solved, there's still a bug in the background
+ *   loading of images: as soon as the image comes in, we slap it into place
+ *   in the target quad.  This can lead to an image being changed while it is
+ *   still being drawn, if that quad happens to be visible already.  Instead,
+ *   when the callback goes off, we should make sure to load it into the
+ *   invisible quad, or if both are visible, we should wait until one goes
+ *   invisible and then load it there (in other words, wait for the next
+ *   fade-out to end.)
  */
 
 #include <X11/Intrinsic.h>
@@ -104,6 +154,8 @@ typedef struct {
   Bool low_fps_p;		/* Whether we have compensated for a low
                                    frame rate. */
 
+  Bool fork_p;			/* threaded image loading; #### still buggy */
+
   XFontStruct *xfont;
   GLuint font_dlist;
 
@@ -150,6 +202,23 @@ static argtype vars[] = {
 };
 
 ModeSpecOpt slideshow_opts = {countof(opts), opts, countof(vars), vars, NULL};
+
+
+static const char *
+blurb (void)
+{
+  static char buf[255];
+  time_t now = time ((time_t *) 0);
+  char *ct = (char *) ctime (&now);
+  int n = strlen(progname);
+  if (n > 100) n = 99;
+  strncpy(buf, progname, n);
+  buf[n++] = ':';
+  buf[n++] = ' ';
+  strncpy(buf+n, ct+11, 8);
+  strcpy(buf+n+9, ": ");
+  return buf;
+}
 
 
 /* Returns the current time in seconds as a double.
@@ -489,7 +558,7 @@ shrink_image (ModeInfo *mi, XImage *ximage)
 
   if (debug_p)
     fprintf (stderr, "%s: debug: shrinking image %dx%d -> %dx%d\n",
-             progname, ximage->width, ximage->height, w2, h2);
+             blurb(), ximage->width, ximage->height, w2, h2);
 
   ximage2 = XCreateImage (MI_DISPLAY (mi), mi->xgwa.visual,
                           32, ZPixmap, 0, 0,
@@ -498,7 +567,7 @@ shrink_image (ModeInfo *mi, XImage *ximage)
   if (!ximage2->data)
     {
       fprintf (stderr, "%s: out of memory (scaling %dx%d image to %dx%d)\n",
-               progname, ximage->width, ximage->height, w2, h2);
+               blurb(), ximage->width, ximage->height, w2, h2);
       exit (1);
     }
   for (y = 0; y < h2; y++)
@@ -514,16 +583,17 @@ shrink_image (ModeInfo *mi, XImage *ximage)
 /* Load a new image into a texture for the given quad.
  */
 static void
-load_quad (ModeInfo *mi, gls_quad *q)
+load_quad_1 (ModeInfo *mi, gls_quad *q, XImage *ximage,
+             const char *filename, double start_time, double cvt_time)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
-  XImage *ximage;
   int status;
   int max_reduction = 7;
   int err_count = 0;
   int wire = MI_IS_WIREFRAME(mi);
+  double load_time=0, mipmap_time=0;   /* for debugging messages */
 
-  if (q->state != DEAD) abort();
+  /* if (q->state != DEAD) abort(); */
 
   /* Figure out which texid is currently in use, and pick the other one.
    */
@@ -545,16 +615,11 @@ load_quad (ModeInfo *mi, gls_quad *q)
     ss->current_texid = tid;
   }
 
-  if (debug_p)
-    fprintf (stderr, "%s: debug: loading image %d (%dx%d)\n",
-             progname, q->texid, mi->xgwa.width, mi->xgwa.height);
-
   if (wire)
     goto DONE;
 
   if (q->title) free (q->title);
-  q->title = 0;
-  ximage = screen_to_ximage (mi->xgwa.screen, mi->window, &q->title);
+  q->title = (filename ? strdup (filename) : 0);
 
   if (q->title)   /* strip filename to part after last /. */
     {
@@ -563,8 +628,11 @@ load_quad (ModeInfo *mi, gls_quad *q)
     }
 
   if (debug_p)
-    fprintf (stderr, "%s: debug: loaded image %d (%s)\n",
-             progname, q->texid, (q->title ? q->title : "(null)"));
+    {
+      fprintf (stderr, "%s: debug: loaded    image %d: \"%s\"\n",
+               blurb(), q->texid, (q->title ? q->title : "(null)"));
+      load_time = double_time();
+    }
 
   glBindTexture (GL_TEXTURE_2D, q->texid);
   glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
@@ -607,17 +675,17 @@ load_quad (ModeInfo *mi, gls_quad *q)
                   "%s: GLU said: \"%s\".\n"
                   "%s: probably this means "
                   "\"your video card is worthless and weak\"?\n\n",
-                  progname, MI_WIDTH(mi), MI_HEIGHT(mi),
+                  blurb(), MI_WIDTH(mi), MI_HEIGHT(mi),
                   ximage->width, ximage->height,
-                  progname, s,
-                  progname);
+                  blurb(), s,
+                  blurb());
           exit (1);
         }
       else
         {
           if (debug_p)
             fprintf (stderr, "%s: debug: mipmap error (%dx%d): %s\n",
-                     progname, ximage->width, ximage->height, s);
+                     blurb(), ximage->width, ximage->height, s);
           shrink_image (mi, ximage);
           goto AGAIN;
         }
@@ -630,6 +698,24 @@ load_quad (ModeInfo *mi, gls_quad *q)
   ximage->data = 0;
   XDestroyImage(ximage);
 
+  if (debug_p)
+    {
+      fprintf (stderr, "%s: debug: mipmapped image %d: %dx%d\n",
+               blurb(), q->texid, mi->xgwa.width, mi->xgwa.height);
+      mipmap_time = double_time();
+    }
+
+  if (cvt_time == 0)
+    cvt_time = load_time;
+  if (debug_p)
+    fprintf (stderr,
+             "%s: debug: load time elapsed: %.2f + %.2f + %.2f = %.2f sec\n",
+             blurb(),
+             cvt_time    - start_time,
+             load_time   - cvt_time,
+             mipmap_time - load_time,
+             mipmap_time - start_time);
+
  DONE:
 
   /* Re-set "now" so that time spent loading the image file does not count
@@ -641,6 +727,67 @@ load_quad (ModeInfo *mi, gls_quad *q)
   ss->image_start_time = ss->now;
 
   ss->redisplay_needed_p = True;
+}
+
+
+static void slideshow_load_cb (Screen *, Window, XImage *,
+                               const char *filename, void *closure,
+                               double cvt_time);
+
+typedef struct {
+  ModeInfo *mi;
+  gls_quad *q;
+  double start_time;
+} img_load_closure;
+
+
+/* Load a new image into a texture for the given quad.
+ */
+static void
+load_quad (ModeInfo *mi, gls_quad *q)
+{
+  slideshow_state *ss = &sss[MI_SCREEN(mi)];
+  img_load_closure *data;
+
+  if (debug_p)
+    fprintf (stderr, "%s: debug: loading   image %d: %dx%d\n",
+             blurb(), q->texid, mi->xgwa.width, mi->xgwa.height);
+
+  if (q->state != DEAD) abort();
+  if (q->title) free (q->title);
+  q->title = 0;
+
+  if (MI_IS_WIREFRAME(mi))
+    return;
+
+  data = (img_load_closure *) calloc (1, sizeof(*data));
+  data->mi = mi;
+  data->q = q;
+  data->start_time = double_time();
+
+  if (ss->fork_p)
+    {
+      fork_screen_to_ximage (mi->xgwa.screen, mi->window,
+                             slideshow_load_cb, data);
+    }
+  else
+    {
+      char *title = 0;
+      XImage *ximage = screen_to_ximage (mi->xgwa.screen, mi->window, &title);
+      slideshow_load_cb (mi->xgwa.screen, mi->window, ximage, title, data, 0);
+    }
+}
+
+
+static void
+slideshow_load_cb (Screen *screen, Window window, XImage *ximage,
+                   const char *filename, void *closure, double cvt_time)
+{
+  img_load_closure *data = (img_load_closure *) closure;
+  load_quad_1 (data->mi, data->q, ximage, filename,
+               data->start_time, cvt_time);
+  memset (data, 0, sizeof (*data));
+  free (data);
 }
 
 
@@ -682,7 +829,7 @@ glslideshow_handle_event (ModeInfo *mi, XEvent *event)
       event->xany.type == VisibilityNotify)
     {
       if (debug_p)
-        fprintf (stderr, "%s: debug: exposure\n", progname);
+        fprintf (stderr, "%s: debug: exposure\n", blurb());
       ss->redisplay_needed_p = True;
       return True;
     }
@@ -719,6 +866,26 @@ sanity_check (ModeInfo *mi)
 }
 
 
+/* Kludge to add "-v" to invocation of "xscreensaver-getimage" in -debug mode
+ */
+static void
+hack_resources (void)
+{
+#if 0
+  char *res = "desktopGrabber";
+  char *val = get_string_resource (res, "DesktopGrabber");
+  char buf1[255];
+  char buf2[255];
+  XrmValue value;
+  sprintf (buf1, "%.100s.%.100s", progclass, res);
+  sprintf (buf2, "%.200s -v", val);
+  value.addr = buf2;
+  value.size = strlen(buf2);
+  XrmPutResource (&db, buf1, "String", &value);
+#endif
+}
+
+
 void
 init_slideshow (ModeInfo *mi)
 {
@@ -740,11 +907,15 @@ init_slideshow (ModeInfo *mi)
     MI_CLEARWINDOW(mi);
   }
 
+  if (debug_p)
+    fprintf (stderr, "%s: debug: pan: %d; fade: %d; img: %d; zoom: %d%%\n",
+             blurb(), pan_seconds, fade_seconds, image_seconds, zoom);
+
   sanity_check(mi);
 
   if (debug_p)
     fprintf (stderr, "%s: debug: pan: %d; fade: %d; img: %d; zoom: %d%%\n",
-             progname, pan_seconds, fade_seconds, image_seconds, zoom);
+             blurb(), pan_seconds, fade_seconds, image_seconds, zoom);
 
   if (! wire)
     {
@@ -779,10 +950,16 @@ init_slideshow (ModeInfo *mi)
       q->state = DEAD;
     }
 
+  if (debug_p)
+    hack_resources();
+
   load_quad (mi, &ss->quads[0]);
   ss->quads[0].state = IN;
 
   ss->redisplay_needed_p = True;
+
+  ss->fork_p = 0; /* #### buggy */
+
 }
 
 
@@ -823,7 +1000,7 @@ ponder_state_change (ModeInfo *mi)
 
   if (debug_p)
     fprintf (stderr, "%s: debug: %s %3d frames %2d sec %4.1f fps\n",
-             progname, which, frames, secs, fps);
+             blurb(), which, frames, secs, fps);
 
 
   if (fps < fps_cutoff && !ss->low_fps_p)   /* oops, this computer sucks! */
@@ -831,9 +1008,8 @@ ponder_state_change (ModeInfo *mi)
       int i;
 
       fprintf (stderr,
-               "%s: frame rate is only %.1f!  "
-               "Turning off pan/fade to compensate...\n",
-               progname, fps);
+               "%s: only %.1f fps!  Turning off pan/fade to compensate...\n",
+               blurb(), fps);
       zoom = 100;
       fade_seconds = 0;
       ss->low_fps_p = True;
@@ -961,7 +1137,7 @@ draw_slideshow (ModeInfo *mi)
   if (!ss->redisplay_needed_p)
     return;
   else if (debug_p && zoom == 100)
-    fprintf (stderr, "%s: debug: drawing (%d)\n", progname,
+    fprintf (stderr, "%s: debug: drawing (%d)\n", blurb(),
              (int) (ss->now - ss->dawn_of_time));
 
   draw_quads (mi);

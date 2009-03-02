@@ -42,21 +42,16 @@
 static int shadows;
 
 static XrmOptionDescRec opts[] = {
-  {(char *) "-shadows", 
-   (char *) ".antinspect.shadows", XrmoptionNoArg, (caddr_t) "on"},
-
-  {(char *) "+shadows", 
-   (char *) ".antinspect.shadows", XrmoptionNoArg, (caddr_t) "off"}
+  {"-shadows", ".antinspect.shadows", XrmoptionNoArg, "on"},
+  {"+shadows", ".antinspect.shadows", XrmoptionNoArg, "off"}
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &shadows, 
-   (char *) "shadows", (char *) "Shadows", (char *) DEF_SHADOWS, t_Bool}
+  {&shadows, "shadows", "Shadows", DEF_SHADOWS, t_Bool}
 };
 
 static OptionStruct desc[] = {
-  {(char *) "-/+shadows", 
-   (char *) "turn on/off ant shadows"}
+  {"-/+shadows", "turn on/off ant shadows"}
 };
 
 ModeSpecOpt antinspect_opts = {sizeof opts / sizeof opts[0], 

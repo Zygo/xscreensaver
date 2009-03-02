@@ -36,13 +36,6 @@
 #include <stdlib.h>
 #include <sys/time.h>
 
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
 # define PROGCLASS         "Screensaver"
 # define HACK_INIT         init_screensaver

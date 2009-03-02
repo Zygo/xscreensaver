@@ -58,8 +58,8 @@ static Bool track_p;
 
 static XrmOptionDescRec opts[] =
 {
-	{"-mouse", ".julia.mouse", XrmoptionNoArg, (caddr_t) "on"},
-	{"+mouse", ".julia.mouse", XrmoptionNoArg, (caddr_t) "off"},
+	{"-mouse", ".julia.mouse", XrmoptionNoArg, "on"},
+	{"+mouse", ".julia.mouse", XrmoptionNoArg, "off"},
 };
 static argtype vars[] =
 {

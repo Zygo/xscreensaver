@@ -103,8 +103,8 @@ static Bool ammann;
 
 static XrmOptionDescRec opts[] =
 {
-	{(char *) "-ammann", (char *) ".penrose.ammann", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+ammann", (char *) ".penrose.ammann", XrmoptionNoArg, (caddr_t) "off"}
+	{"-ammann", ".penrose.ammann", XrmoptionNoArg, "on"},
+	{"+ammann", ".penrose.ammann", XrmoptionNoArg, "off"}
 };
 static argtype vars[] =
 {
@@ -112,7 +112,7 @@ static argtype vars[] =
 };
 static OptionStruct desc[] =
 {
-	{(char *) "-/+ammann", (char *) "turn on/off Ammann lines"}
+	{"-/+ammann", "turn on/off Ammann lines"}
 };
 
 ModeSpecOpt penrose_opts =

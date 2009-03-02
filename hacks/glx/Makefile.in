@@ -623,6 +623,9 @@ atunnel.o: ../../config.h
 atunnel.o: $(HACK_SRC)/images/tunnel0.xpm
 atunnel.o: $(HACK_SRC)/images/tunnel1.xpm
 atunnel.o: $(HACK_SRC)/images/tunnel2.xpm
+atunnel.o: $(HACK_SRC)/images/tunnel3.xpm
+atunnel.o: $(HACK_SRC)/images/tunnel4.xpm
+atunnel.o: $(HACK_SRC)/images/tunnel5.xpm
 atunnel.o: $(srcdir)/tunnel_draw.h
 atunnel.o: $(srcdir)/xpm-ximage.h
 b_draw.o: $(srcdir)/bubble3d.h

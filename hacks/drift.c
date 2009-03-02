@@ -61,10 +61,10 @@ static Bool liss;
 
 static XrmOptionDescRec opts[] =
 {
-	{(char *) "-grow", (char *) ".drift.grow", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+grow", (char *) ".drift.grow", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-liss", (char *) ".drift.trail", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+liss", (char *) ".drift.trail", XrmoptionNoArg, (caddr_t) "off"}
+	{"-grow", ".drift.grow", XrmoptionNoArg, "on"},
+	{"+grow", ".drift.grow", XrmoptionNoArg, "off"},
+	{"-liss", ".drift.trail", XrmoptionNoArg, "on"},
+	{"+liss", ".drift.trail", XrmoptionNoArg, "off"}
 };
 static argtype vars[] =
 {
@@ -73,8 +73,8 @@ static argtype vars[] =
 };
 static OptionStruct desc[] =
 {
-	{(char *) "-/+grow", (char *) "turn on/off growing fractals, else they are animated"},
-	{(char *) "-/+liss", (char *) "turn on/off using lissojous figures to get points"}
+	{"-/+grow", "turn on/off growing fractals, else they are animated"},
+	{"-/+liss", "turn on/off using lissojous figures to get points"}
 };
 
 ModeSpecOpt drift_opts =

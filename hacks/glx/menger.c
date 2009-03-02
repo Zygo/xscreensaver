@@ -129,7 +129,7 @@ static XrmOptionDescRec opts[] = {
   { "-speed",  ".speed",  XrmoptionSepArg, 0 },
   { "-optimize", ".optimize", XrmoptionNoArg, "True" },
   { "+optimize", ".optimize", XrmoptionNoArg, "False" },
-  {"-depth",   ".maxDepth", XrmoptionSepArg, (caddr_t) 0 },
+  {"-depth",   ".maxDepth", XrmoptionSepArg, 0 },
 };
 
 static argtype vars[] = {

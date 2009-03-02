@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-2003 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright (c) 1991-2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -342,28 +342,29 @@ watch (Display *dpy)
 	  Atom type;
 	  int format;
 	  unsigned long nitems, bytesafter;
-	  CARD32 *data = 0;
+          unsigned char *dataP = 0;
 
 	  if (XGetWindowProperty (dpy,
                                   RootWindow (dpy, 0),  /* always screen #0 */
 				  XA_SCREENSAVER_STATUS,
 				  0, 999, False, XA_INTEGER,
 				  &type, &format, &nitems, &bytesafter,
-				  (unsigned char **) &data)
+				  &dataP)
 	      == Success
 	      && type
-	      && data)
+	      && dataP)
 	    {
               time_t tt;
               char *s;
               Bool changed = False;
               Bool running = False;
+              CARD32 *data = (CARD32 *) dataP;
 
               if (type != XA_INTEGER || nitems < 3)
                 {
                 STATUS_LOSE:
-                  if (last) free (last);
-                  if (data) free (data);
+                  if (last) XFree (last);
+                  if (data) XFree (data);
                   fprintf (stderr, "%s: bad status format on root window.\n",
                            progname);
                   return -1;
@@ -415,13 +416,13 @@ watch (Display *dpy)
 
               fflush (stdout);
 
-              if (last) free (last);
+              if (last) XFree (last);
               last = data;
 	    }
 	  else
 	    {
-	      if (last) free (last);
-	      if (data) free (data);
+	      if (last) XFree (last);
+	      if (dataP) XFree (dataP);
 	      fprintf (stderr, "%s: no saver status on root window.\n",
 		       progname);
 	      return -1;

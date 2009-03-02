@@ -50,6 +50,10 @@ static GC clip_gc;       /* GC for the clip pixmap */
 static int x, y, s;      /* x & y coords of buffer (upper left corner) */
                          /* s is the width of the buffer */
 
+static int off = 0;	/* random offset from currentTimeInMs(), so that
+                           two concurrent copies of spotlight have different
+                           behavior. */
+
 static int oldx, oldy, max_x_speed, max_y_speed;
                          /* used to keep the new buffer position
 			    over the old spotlight image to make sure 
@@ -144,19 +148,14 @@ init_hack (Display *dpy, Window window)
 
   /* avoid remants */
   max_x_speed = max_y_speed = radius;
+  
+  off = random();
 
 #ifdef DEBUG
   /* create GC with white fg */
   gcv.foreground = fg;
   white_gc = XCreateGC(dpy, window, gcflags, &gcv);
 #endif
-  
-  /* initialize x and y to avoid initial `jump' across screen */
-  x = ((1 + sin(((float)currentTimeInMs()) / X_PERIOD * 2. * M_PI))/2.0) 
-    * (sizex - s/2) -s/4  + MINX;
-  y = ((1 + sin(((float)currentTimeInMs()) / Y_PERIOD * 2. * M_PI))/2.0) 
-    * (sizey - s/2) -s/4  + MINY;
-
 }
 
 
@@ -164,7 +163,7 @@ init_hack (Display *dpy, Window window)
  * perform one iteration
  */
 static void
-onestep (Display *dpy, Window window)
+onestep (Display *dpy, Window window, Bool first_p)
 {
     long now;
 
@@ -179,7 +178,7 @@ onestep (Display *dpy, Window window)
 
     s = radius *4 ;   /* s = width of buffer */
 
-    now = currentTimeInMs();
+    now = currentTimeInMs() + off;
 
     /* find new x,y */
     x = ((1 + sin(((float)now) / X_PERIOD * 2. * M_PI))/2.0) 
@@ -187,11 +186,14 @@ onestep (Display *dpy, Window window)
     y = ((1 + sin(((float)now) / Y_PERIOD * 2. * M_PI))/2.0) 
       * (sizey - s/2) -s/4  + MINY;
     
-    /* limit change in x and y to buffer width */
-    if ( x < (oldx - max_x_speed) ) x = oldx - max_x_speed;
-    if ( x > (oldx + max_x_speed) ) x = oldx + max_x_speed;
-    if ( y < (oldy - max_y_speed) ) y = oldy - max_y_speed;
-    if ( y > (oldy + max_y_speed) ) y = oldy + max_y_speed;
+    if (!first_p)
+      {
+        /* limit change in x and y to buffer width */
+        if ( x < (oldx - max_x_speed) ) x = oldx - max_x_speed;
+        if ( x > (oldx + max_x_speed) ) x = oldx + max_x_speed;
+        if ( y < (oldy - max_y_speed) ) y = oldy - max_y_speed;
+        if ( y > (oldy + max_y_speed) ) y = oldy + max_y_speed;
+      }
 
     /* copy area of screen image (pm) to buffer
        Clip to a circle */
@@ -236,9 +238,11 @@ XrmOptionDescRec options [] = {
 void
 screenhack (Display *dpy, Window window)
 {
+  Bool first_p = True;
   init_hack (dpy, window);
   while (1) {
-    onestep(dpy, window);
+    onestep(dpy, window, first_p);
+    first_p = False;
     XSync(dpy, False);
     if (delay) usleep (delay);
     screenhack_handle_events (dpy);

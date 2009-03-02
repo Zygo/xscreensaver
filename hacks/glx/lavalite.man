@@ -68,7 +68,7 @@ think of this as being related to the the heat of the lightbulb in
 the base.  Default: 0.003.
 .TP 8
 .B \-delay \fIusecs\fP
-The delay between steps of the animation; default is 40000 (1/25th second.)
+The delay between steps of the animation; default is 30000 (0.03 second.)
 .TP 8
 .B \-resolution \fIinteger\fP
 The size of the grid from which the mesh is created that is used

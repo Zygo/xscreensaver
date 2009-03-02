@@ -187,6 +187,9 @@ static Atom XA_WM_PROTOCOLS, XA_WM_DELETE_WINDOW;
 void
 screenhack_handle_event (Display *dpy, XEvent *event)
 {
+  if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
+    XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
+
   switch (event->xany.type)
     {
     case KeyPress:

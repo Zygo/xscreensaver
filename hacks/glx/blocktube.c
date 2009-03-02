@@ -98,10 +98,10 @@ GLfloat tunnelWidth=5;
 static XrmOptionDescRec opts[] = {
     { "-holdtime",  ".holdtime",  XrmoptionSepArg, 0 },
     { "-changetime",  ".changetime",  XrmoptionSepArg, 0 },
-    {"-texture",     ".texture",   XrmoptionNoArg, (caddr_t) "True" },
-    {"+texture",     ".texture",   XrmoptionNoArg, (caddr_t) "False" },
-    {"-fog",         ".fog",       XrmoptionNoArg, (caddr_t) "True" },
-    {"+fog",         ".fog",       XrmoptionNoArg, (caddr_t) "False" },
+    {"-texture",     ".texture",   XrmoptionNoArg, "True" },
+    {"+texture",     ".texture",   XrmoptionNoArg, "False" },
+    {"-fog",         ".fog",       XrmoptionNoArg, "True" },
+    {"+fog",         ".fog",       XrmoptionNoArg, "False" },
 };
 
 static argtype vars[] = {

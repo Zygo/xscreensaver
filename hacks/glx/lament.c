@@ -78,7 +78,7 @@
 #define HACK_HANDLE_EVENT lament_handle_event
 #define EVENT_MASK	PointerMotionMask
 #define lament_opts	xlockmore_opts
-#define DEFAULTS	"*delay:	10000   \n"	\
+#define DEFAULTS	"*delay:	20000   \n"	\
 			"*showFPS:      False   \n"     \
 			"*wireframe:	False	\n"	\
 			"*texture:	True	\n"
@@ -93,8 +93,8 @@
 
 static int do_texture;
 static XrmOptionDescRec opts[] = {
-  {"-texture", ".lament.texture", XrmoptionNoArg, (caddr_t) "true" },
-  {"+texture", ".lament.texture", XrmoptionNoArg, (caddr_t) "false" },
+  {"-texture", ".lament.texture", XrmoptionNoArg, "true" },
+  {"+texture", ".lament.texture", XrmoptionNoArg, "false" },
 };
 
 static argtype vars[] = {

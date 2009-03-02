@@ -35,7 +35,7 @@ import Fcntl ':mode' unless defined &S_ISLNK;	# but it is here in Perl 5.8
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.15 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.16 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -46,12 +46,24 @@ my $verbose = 0;
 #
 my $good_file_re = '\.(gif|p?jpe?g|png|tiff?|xbm|xpm)$';
 
+# JPEG, GIF, and PNG files that are are smaller than this size in either
+# direction are rejected: this is so that you can use an image directory
+# that contains both big images and thumbnails, and have it only select
+# the big versions.
+#
+my $min_image_width  = 255;
+my $min_image_height = 255;
+
 
 # These are programs that can be used to put an image file on the root
 # window (including virtual root windows.)  The first one of these programs
 # that exists on $PATH will be used (with the file name as the last arg.)
 #
-# If you add other programs to this list, please let me know!
+# Generally this isn't used any more; when "xscreensaver-getimage" invokes
+# this program, it does so with the "-file" argument (meaning that we just
+# return the file name) and then xscreensaver-getimage loads that file
+# directly.  However, if you invoke "xscreensaver-getimage-file" directly,
+# without "-file", this will be used to actually load the image.
 #
 my @programs = (
   "chbg       -once -xscreensaver -max_grow 4 -max_size 100",
@@ -86,10 +98,10 @@ sub pick_displayer {
 }
 
 
-my @all_files = ();
-my %seen_inodes;
-my $skip_count = 0;
-my $dir_count = 1;
+my @all_files = ();     # list of "good" files we've collected
+my %seen_inodes;        # for breaking recursive symlink loops
+my $skip_count = 0;     # number of files skipped, for diagnostic messages
+my $dir_count = 1;      # number of directories seen, for diagnostic messages
 
 sub find_all_files {
   my ($dir) = @_;
@@ -175,13 +187,20 @@ sub find_random_file {
     exit 1;
   }
 
-  my $n = int (rand ($#all_files + 1));
-  my $file = $all_files[$n];
+  my $max_tries = 50;
+  for (my $i = 0; $i < $max_tries; $i++) {
 
-  print STDERR "$progname: chose file $n: $file\n" if ($verbose > 1);
-  return $file;
+    my $n = int (rand ($#all_files + 1));
+    my $file = $all_files[$n];
+    if (large_enough_p ($file)) {
+      return $file;
+    }
+  }
+
+  print STDERR "$progname: no suitable images in $dir " .
+               "(after $max_tries tries)\n";
+  exit 1;
 }
-
 
 
 sub display_file {
@@ -203,6 +222,139 @@ sub find_and_display {
   my ($dir, $displayer) = @_;
   my $file = find_random_file ($dir);
   display_file ($file, $displayer);
+}
+
+
+sub large_enough_p {
+  my ($file) = @_;
+
+  my ($w, $h) = image_file_size ($file);
+
+  if (!defined ($h)) {
+    print STDERR "$progname: $file: unable to determine image size\n"
+      if ($verbose);
+    # Assume that unknown files are of good sizes: this will happen if
+    # they matched $good_file_re, but we don't have code to parse them.
+    # (This will also happen if the file is junk...)
+    return 1;
+  }
+
+  if ($w < $min_image_width || $h < $min_image_height) {
+    print STDERR "$progname: $file: too small ($w x $h)\n" if ($verbose > 1);
+    return 0;
+  }
+
+  print STDERR "$progname: $file: $w x $h\n" if ($verbose > 1);
+  return 1;
+}
+
+
+
+# Given the raw body of a GIF document, returns the dimensions of the image.
+#
+sub gif_size {
+  my ($body) = @_;
+  my $type = substr($body, 0, 6);
+  my $s;
+  return () unless ($type =~ /GIF8[7,9]a/);
+  $s = substr ($body, 6, 10);
+  my ($a,$b,$c,$d) = unpack ("C"x4, $s);
+  return (($b<<8|$a), ($d<<8|$c));
+}
+
+# Given the raw body of a JPEG document, returns the dimensions of the image.
+#
+sub jpeg_size {
+  my ($body) = @_;
+  my $i = 0;
+  my $L = length($body);
+
+  my $c1 = substr($body, $i, 1); $i++;
+  my $c2 = substr($body, $i, 1); $i++;
+  return () unless (ord($c1) == 0xFF && ord($c2) == 0xD8);
+
+  my $ch = "0";
+  while (ord($ch) != 0xDA && $i < $L) {
+    # Find next marker, beginning with 0xFF.
+    while (ord($ch) != 0xFF) {
+      return () if (length($body) <= $i);
+      $ch = substr($body, $i, 1); $i++;
+    }
+    # markers can be padded with any number of 0xFF.
+    while (ord($ch) == 0xFF) {
+      return () if (length($body) <= $i);
+      $ch = substr($body, $i, 1); $i++;
+    }
+
+    # $ch contains the value of the marker.
+    my $marker = ord($ch);
+
+    if (($marker >= 0xC0) &&
+        ($marker <= 0xCF) &&
+        ($marker != 0xC4) &&
+        ($marker != 0xCC)) {  # it's a SOFn marker
+      $i += 3;
+      return () if (length($body) <= $i);
+      my $s = substr($body, $i, 4); $i += 4;
+      my ($a,$b,$c,$d) = unpack("C"x4, $s);
+      return (($c<<8|$d), ($a<<8|$b));
+
+    } else {
+      # We must skip variables, since FFs in variable names aren't
+      # valid JPEG markers.
+      return () if (length($body) <= $i);
+      my $s = substr($body, $i, 2); $i += 2;
+      my ($c1, $c2) = unpack ("C"x2, $s);
+      my $length = ($c1 << 8) | $c2;
+      return () if ($length < 2);
+      $i += $length-2;
+    }
+  }
+  return ();
+}
+
+# Given the raw body of a PNG document, returns the dimensions of the image.
+#
+sub png_size {
+  my ($body) = @_;
+  return () unless ($body =~ m/^\211PNG\r/);
+  my ($bits) = ($body =~ m/^.{12}(.{12})/s);
+  return () unless defined ($bits);
+  return () unless ($bits =~ /^IHDR/);
+  my ($ign, $w, $h) = unpack("a4N2", $bits);
+  return ($w, $h);
+}
+
+
+# Given the raw body of a GIF, JPEG, or PNG document, returns the dimensions
+# of the image.
+#
+sub image_size {
+  my ($body) = @_;
+  my ($w, $h) = gif_size ($body);
+  if ($w && $h) { return ($w, $h); }
+  ($w, $h) = jpeg_size ($body);
+  if ($w && $h) { return ($w, $h); }
+  # #### TODO: need image parsers for TIFF, XPM, XBM.
+  return png_size ($body);
+}
+
+# Returns the dimensions of the image file.
+#
+sub image_file_size {
+  my ($file) = @_;
+  my $body = '';
+  local *IN;
+  if (! open (IN, "<$file")) {
+    print STDERR "$progname: $file: $!\n" if ($verbose);
+    return undef;
+  }
+  while (<IN>) {
+    $body .= $_;
+    last if (length($body) > 1024 * 100);  # the first 100k should be enough
+  }
+  close IN;
+  return image_size ($body);
 }
 
 

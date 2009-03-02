@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 2001, 2003
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 2001, 2003, 2004
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -35,6 +35,18 @@ extern void load_random_image (Screen *screen,
                                Window top_level_window,
                                Drawable target_window_or_pixmap, 
                                char **filename_return);
+
+/* Like the above, but loads the image in the background and runs the
+   given callback once it has been loaded.
+ */
+extern void fork_load_random_image (Screen *screen, Window window,
+                                    Drawable drawable,
+                                    void (*callback) (Screen *, Window,
+                                                      Drawable,
+                                                      const char *name,
+                                                      void *closure),
+                                    void *closure);
+
 
 /* Whether one should use GCSubwindowMode when drawing on this window
    (assuming a screen image has been grabbed onto it.)  Yes, this is a

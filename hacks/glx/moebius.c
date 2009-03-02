@@ -115,10 +115,10 @@ static int  noants;
 
 static XrmOptionDescRec opts[] =
 {
-  {(char *) "-solidmoebius", (char *) ".moebius.solidmoebius", XrmoptionNoArg, (caddr_t) "on"},
-  {(char *) "+solidmoebius", (char *) ".moebius.solidmoebius", XrmoptionNoArg, (caddr_t) "off"},
-  {(char *) "-noants", (char *) ".moebius.noants", XrmoptionNoArg, (caddr_t) "on"},
-  {(char *) "+noants", (char *) ".moebius.noants", XrmoptionNoArg, (caddr_t) "off"}
+  {"-solidmoebius", ".moebius.solidmoebius", XrmoptionNoArg, "on"},
+  {"+solidmoebius", ".moebius.solidmoebius", XrmoptionNoArg, "off"},
+  {"-noants", ".moebius.noants", XrmoptionNoArg, "on"},
+  {"+noants", ".moebius.noants", XrmoptionNoArg, "off"}
 };
 static argtype vars[] =
 {
@@ -128,8 +128,8 @@ static argtype vars[] =
 };
 static OptionStruct desc[] =
 {
-	{(char *) "-/+solidmoebius", (char *) "select between a SOLID or a NET Moebius Strip"},
-	{(char *) "-/+noants", (char *) "turn on/off walking ants"}
+	{"-/+solidmoebius", "select between a SOLID or a NET Moebius Strip"},
+	{"-/+noants", "turn on/off walking ants"}
 };
 
 ModeSpecOpt moebius_opts =

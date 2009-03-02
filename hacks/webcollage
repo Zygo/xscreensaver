@@ -60,17 +60,18 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.114 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.117 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2004" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
 
 
 
-my @search_methods = (  72, "altavista",  \&pick_from_alta_vista_random_link,
+my @search_methods = (  71, "altavista",   \&pick_from_alta_vista_random_link,
                         10, "livejournal", \&pick_from_livejournal_images,
-                        10, "yahoorand",  \&pick_from_yahoo_random_link,
-                         8, "yahoonews",  \&pick_from_yahoo_news_text,
+                         8, "yahoorand",   \&pick_from_yahoo_random_link,
+                         6, "yahoonews",   \&pick_from_yahoo_news_text,
+                         5, "ircimages",   \&pick_from_ircimages,
 
                      # Alta Vista has a new "random link" URL now.
                      # They added it specifically to better support webcollage!
@@ -122,6 +123,8 @@ my %cookies = (
   "www.nytimes.com"    =>  'NYT-S=18cHMIlJOn2Y1bu5xvEG3Ufuk6E1oJ.' .
                            'FMxWaQV0igaB5Yi/Q/guDnLeoL.pe7i1oakSb' .
                            '/VqfdUdb2Uo27Vzt1jmPn3cpYRlTw9',
+
+  "ircimages.com"      =>  'disclaimer=1',
 );
 
 
@@ -330,7 +333,8 @@ sub get_document_1 {
       my $user_agent = "$progname/$version";
 
       if ($url =~ m@^http://www\.altavista\.com/@ ||
-          $url =~ m@^http://random\.yahoo\.com/@) {
+          $url =~ m@^http://random\.yahoo\.com/@ ||
+          $url =~ m@^http://images\.google\.com/@) {
         # block this, you turkeys.
         $user_agent = "Mozilla/4.76 [en] (X11; U; Linux 2.2.16-22 i686; Nav)";
       }
@@ -1122,7 +1126,7 @@ my $alta_vista_images_url = "http://www.altavista.com/image/results" .
 sub pick_from_alta_vista_images {
   my ( $timeout ) = @_;
 
-  my $words = random_words(0);
+  my $words = random_word();
   my $page = (int(rand(9)) + 1);
   my $search_url = $alta_vista_images_url . $words;
 
@@ -1137,12 +1141,13 @@ sub pick_from_alta_vista_images {
   my @candidates = ();
   foreach my $u (@subpages) {
 
-    # avtext is encoding their URLs now.
-    next unless ($u =~ m@^/r.*\&r=([^&]+).*@);
-    $u = url_unquote($1);
+    # avimages is encoding their URLs now.
+    next unless ($u =~ s/^.*\*\*(http%3a.*$)/$1/gsi);
+    $u = url_unquote($u);
 
     next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
     next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
+    next if ($u =~ m@[/.]yahoo\.com\b@i);         # yahoo and av in cahoots?
     next if ($u =~ m@[/.]doubleclick\.net\b@i);   # you cretins
     next if ($u =~ m@[/.]clicktomarket\.com\b@i); # more cretins
 
@@ -1248,7 +1253,8 @@ sub pick_from_google_image_numbers {
 
     if ($u =~ m@^/imgres\?imgurl=(.*?)\&imgrefurl=(.*?)\&@) {
       my $ref = $2;
-      my $img = "http://$1";
+      my $img = $1;
+      $img = "http://$img" unless ($img =~ m/^http:/i);
 
       LOG ($verbose_filter, "  candidate: $ref");
       push @candidates, $img;
@@ -1307,8 +1313,12 @@ sub pick_from_alta_vista_text {
     # onMouseOver to make it look like they're not!  Well, it makes it
     # easier for us to identify search results...
     #
-    next unless ($u =~ m@^/r.*\&r=([^&]+).*@);
-    $u = url_unquote($1);
+    next unless ($u =~ s/^.*\*\*(http%3a.*$)/$1/gsi);
+    $u = url_unquote($u);
+
+    next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
+    next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
+    next if ($u =~ m@[/.]yahoo\.com\b@i);         # yahoo and av in cahoots?
 
     LOG ($verbose_filter, "  candidate: $u");
     push @candidates, $u;
@@ -1358,8 +1368,14 @@ sub pick_from_hotbot_text {
   foreach my $u (@subpages) {
 
     # Hotbot plays redirection games too
-    next unless ($u =~ m@/director.asp\?.*\btarget=([^&]+)@);
-    $u = url_decode($1);
+    # (not any more?)
+#    next unless ($u =~ m@/director.asp\?.*\btarget=([^&]+)@);
+#    $u = url_decode($1);
+
+    next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
+    next if ($u =~ m@[/.]hotbot\.com\b@i);     # skip hotbot builtins
+    next if ($u =~ m@[/.]lycos\.com\b@i);      # skip hotbot builtins
+    next if ($u =~ m@[/.]inktomi\.com\b@i);    # skip hotbot builtins
 
     LOG ($verbose_filter, "  candidate: $u");
     push @candidates, $u;
@@ -1403,12 +1419,20 @@ sub pick_from_lycos_text {
   foreach my $u (@subpages) {
 
     # Lycos plays redirection games.
-    next unless ($u =~ m@^http://click.lycos.com/director.asp
-                         .*
-                         \btarget=([^&]+)
-                         .*
-                        @x);
-    $u = url_decode($1);
+    # (not any more?)
+#    next unless ($u =~ m@^http://click.lycos.com/director.asp
+#                         .*
+#                         \btarget=([^&]+)
+#                         .*
+#                        @x);
+#    $u = url_decode($1);
+
+    next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
+    next if ($u =~ m@[/.]hotbot\.com\b@i);     # skip lycos builtins
+    next if ($u =~ m@[/.]lycos\.com\b@i);      # skip lycos builtins
+    next if ($u =~ m@[/.]terralycos\.com\b@i); # skip lycos builtins
+    next if ($u =~ m@[/.]inktomi\.com\b@i);    # skip lycos builtins
+
 
     LOG ($verbose_filter, "  candidate: $u");
     push @candidates, $u;
@@ -1506,6 +1530,63 @@ sub pick_from_livejournal_images {
        ": $img");
 
   return ($page, $img);
+}
+
+
+############################################################################
+#
+# Pick images from ircimages.com (images that have been in the /topic of
+# various IRC channels.)
+#
+############################################################################
+
+my $ircimages_url = "http://ircimages.com/";
+
+# ircimages
+sub pick_from_ircimages {
+  my ( $timeout ) = @_;
+
+  $last_search = $ircimages_url;   # for warnings
+
+  my $n = int(rand(2900));
+  my $search_url = $ircimages_url . "page-$n";
+
+  my ( $base, $body ) = get_document ($search_url, undef, $timeout);
+  return () unless $body;
+
+  my @candidates = ();
+
+  $body =~ s/\n/ /gs;
+  $body =~ s/(<A)\b/\n$1/gsi;
+
+  foreach (split (/\n/, $body)) {
+
+    my ($u) = m@<A\s.*\bHREF\s*=\s*([^>]+)>@i;
+    next unless $u;
+
+    if ($u =~ m/^\"([^\"]*)\"/) { $u = $1; }   # quoted string
+    elsif ($u =~ m/^([^\s]*)\s/) { $u = $1; }  # or token
+
+    next unless ($u =~ m/^http:/i);
+    next if ($u =~ m@^http://(searchirc\.com\|ircimages\.com)@i);
+    next unless ($u =~ m@[.](gif|jpg|jpeg|pjpg|pjpeg|png)$@i);
+
+    LOG ($verbose_http, "    HREF: $u");
+    push @candidates, $u;
+  }
+
+  LOG ($verbose_filter, "" . $#candidates+1 . " links on $search_url");
+
+  return () if ($#candidates == -1);
+
+  my $i = int(rand($#candidates+1));
+  my $img = $candidates[$i];
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/" . ($#candidates+1) .
+       ": $img");
+
+  $search_url = $img;  # hmm...
+  return ($search_url, $img);
 }
 
 
@@ -2023,6 +2104,14 @@ sub bellrand {
 }
 
 
+sub exit_cleanup {
+  x_cleanup();
+  if (@pids_to_kill) {
+    print STDERR blurb() . "killing: " . join(' ', @pids_to_kill) . "\n";
+    kill ('TERM', @pids_to_kill);
+  }
+}
+
 sub signal_cleanup {
   my ($sig) = @_;
   print STDERR blurb() . (defined($sig)
@@ -2030,16 +2119,10 @@ sub signal_cleanup {
                           : "exiting.")
                        . "\n"
     if ($verbose_exec);
-
-  x_cleanup();
-
-  if (@pids_to_kill) {
-    print STDERR blurb() . "killing: " . join(' ', @pids_to_kill) . "\n";
-    kill ('TERM', @pids_to_kill);
-  }
-
   exit 1;
 }
+
+
 
 ##############################################################################
 #
@@ -2244,6 +2327,7 @@ my $ppm_to_root_window_cmd = undef;
 
 
 sub x_or_pbm_output {
+  my ($window_id) = @_;
 
   # Check for our helper program, to see whether we need to use PPM pipelines.
   #
@@ -2275,13 +2359,41 @@ sub x_or_pbm_output {
   #
   $ppm_to_root_window_cmd = pick_root_displayer();
 
+  if (defined ($window_id)) {
+    error ("-window-id only works if xscreensaver-getimage is installed")
+      unless ($ppm_to_root_window_cmd =~ m/^xscreensaver-getimage\b/);
+
+    error ("unparsable window id: $window_id")
+      unless ($window_id =~ m/^\d+$|^0x[\da-f]+$/i);
+    $ppm_to_root_window_cmd =~ s/--?root\b/$window_id/ ||
+      error ("unable to munge displayer: $ppm_to_root_window_cmd");
+  }
+
   if (!$img_width || !$img_height) {
-    $_ = "xdpyinfo";
-    which ($_) || error "$_ not found on \$PATH.";
-    $_ = `$_`;
-    ($img_width, $img_height) = m/dimensions: *(\d+)x(\d+) /;
-    if (!defined($img_height)) {
-      error "xdpyinfo failed.";
+
+    if (!defined ($window_id) &&
+        defined ($ENV{XSCREENSAVER_WINDOW})) {
+      $window_id = $ENV{XSCREENSAVER_WINDOW};
+    }
+
+    if (!defined ($window_id)) {
+      $_ = "xdpyinfo";
+      which ($_) || error "$_ not found on \$PATH.";
+      $_ = `$_`;
+      ($img_width, $img_height) = m/dimensions: *(\d+)x(\d+) /;
+      if (!defined($img_height)) {
+        error "xdpyinfo failed.";
+      }
+    } else {  # we have a window id
+      $_ = "xwininfo";
+      which ($_) || error "$_ not found on \$PATH.";
+      $_ .= " -id $window_id";
+      $_ = `$_`;
+      ($img_width, $img_height) = m/^\s*Width:\s*(\d+)\n\s*Height:\s*(\d+)\n/m;
+
+      if (!defined($img_height)) {
+        error "xwininfo failed.";
+      }
     }
   }
 
@@ -2746,8 +2858,12 @@ sub update_imagemap {
   # Write the jpg to a tmp file
   #
   {
-   #my $cmd = "cjpeg < $image_ppm > $imagemap_jpg_tmp";
-    my $cmd = "cp -p $image_ppm $imagemap_jpg_tmp";
+    my $cmd;
+    if (defined ($webcollage_helper)) {
+      $cmd = "cp -p $image_ppm $imagemap_jpg_tmp";
+    } else {
+      $cmd = "cjpeg < $image_ppm > $imagemap_jpg_tmp";
+    }
     my $rc = nontrapping_system ($cmd);
     if ($rc != 0) {
       error ("imagemap jpeg failed: \"$cmd\"\n");
@@ -2808,7 +2924,7 @@ sub init_signals {
   $SIG{PIPE} = 'IGNORE';
 }
 
-END { signal_cleanup(); }
+END { exit_cleanup(); }
 
 
 sub main {
@@ -2823,6 +2939,7 @@ sub main {
   $load_method = "none";
 
   my $root_p = 0;
+  my $window_id = undef;
 
   # historical suckage: the environment variable name is lower case.
   $http_proxy = $ENV{http_proxy} || $ENV{HTTP_PROXY};
@@ -2837,6 +2954,9 @@ sub main {
         $_ eq "-d") {
       $ENV{DISPLAY} = shift @ARGV;
     } elsif ($_ eq "-root") {
+      $root_p = 1;
+    } elsif ($_ eq "-window-id" || $_ eq "--window-id") {
+      $window_id = shift @ARGV;
       $root_p = 1;
     } elsif ($_ eq "-no-output") {
       $no_output_p = 1;
@@ -2990,9 +3110,9 @@ sub main {
   spawn_driftnet ($driftnet_cmd) if ($driftnet_cmd);
 
   if ($urls_only_p) {
-    url_only_output;
+    url_only_output ();
   } else {
-    x_or_pbm_output;
+    x_or_pbm_output ($window_id);
   }
 }
 

@@ -26,13 +26,6 @@ static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
  *                  random scattering of points.
  */
 
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
 # define PROGCLASS					"Sierpinski3D"
 # define HACK_INIT					init_gasket
@@ -76,8 +69,8 @@ static Bool do_spin;
 static Bool do_wander;
 
 static XrmOptionDescRec opts[] = {
-  {"-depth", ".sierpinski3d.maxDepth", XrmoptionSepArg, (caddr_t) 0 },
-  {"-speed", ".sierpinski3d.speed",    XrmoptionSepArg, (caddr_t) 0 },
+  {"-depth", ".sierpinski3d.maxDepth", XrmoptionSepArg, 0 },
+  {"-speed", ".sierpinski3d.speed",    XrmoptionSepArg, 0 },
   { "-spin",   ".spin",   XrmoptionNoArg, "True" },
   { "+spin",   ".spin",   XrmoptionNoArg, "False" },
   { "-wander", ".wander", XrmoptionNoArg, "True" },

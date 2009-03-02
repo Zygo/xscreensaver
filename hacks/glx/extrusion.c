@@ -22,13 +22,6 @@
  * which can be obtained from http://www.linas.org/gle/index.html
   */
 
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-
-#include <X11/Intrinsic.h>
-
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif
@@ -124,19 +117,19 @@ static char *which_name;
 static char *which_image;
 
 static XrmOptionDescRec opts[] = {
-  {"-light",   ".extrusion.light",     XrmoptionNoArg, (caddr_t) "true" },
-  {"+light",   ".extrusion.light",     XrmoptionNoArg, (caddr_t) "false" },
-  {"-wire",    ".extrusion.wire",      XrmoptionNoArg, (caddr_t) "true" },
-  {"+wire",    ".extrusion.wire",      XrmoptionNoArg, (caddr_t) "false" },
-  {"-texture", ".extrusion.texture",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+texture", ".extrusion.texture",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-texture", ".extrusion.texture",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+texture_quality", ".extrusion.texture",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-texture_quality", ".extrusion.texture",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+mipmap", ".extrusion.mipmap",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-mipmap", ".extrusion.mipmap",   XrmoptionNoArg, (caddr_t) "true" },
-  {"-name",   ".extrusion.name",  XrmoptionSepArg, (caddr_t) NULL },
-  {"-image",   ".extrusion.image",  XrmoptionSepArg, (caddr_t) NULL },
+  {"-light",   ".extrusion.light",     XrmoptionNoArg, "true" },
+  {"+light",   ".extrusion.light",     XrmoptionNoArg, "false" },
+  {"-wire",    ".extrusion.wire",      XrmoptionNoArg, "true" },
+  {"+wire",    ".extrusion.wire",      XrmoptionNoArg, "false" },
+  {"-texture", ".extrusion.texture",   XrmoptionNoArg, "true" },
+  {"+texture", ".extrusion.texture",   XrmoptionNoArg, "false" },
+  {"-texture", ".extrusion.texture",   XrmoptionNoArg, "true" },
+  {"+texture_quality", ".extrusion.texture",   XrmoptionNoArg, "false" },
+  {"-texture_quality", ".extrusion.texture",   XrmoptionNoArg, "true" },
+  {"+mipmap", ".extrusion.mipmap",   XrmoptionNoArg, "false" },
+  {"-mipmap", ".extrusion.mipmap",   XrmoptionNoArg, "true" },
+  {"-name",   ".extrusion.name",  XrmoptionSepArg, 0 },
+  {"-image",   ".extrusion.image",  XrmoptionSepArg, 0 },
 };
 
 
@@ -455,7 +448,7 @@ initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
   glClearColor(0,0,0,0);
 /*    glCullFace(GL_BACK); */
 /*    glEnable(GL_CULL_FACE); */
-  glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, TRUE);
+  glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, True);
   glShadeModel(GL_SMOOTH);
 
   if (do_light)

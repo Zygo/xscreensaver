@@ -13,12 +13,6 @@
  *
  * This file contains the OpenGL side; computation of the polyhedra themselves
  * is in "polyhedra.c".
- *
- * KNOWN BUG:
- *
- *   The normals are wrong (inverted) on some faces of some of the duals
- *   (e.g., "Rhombicosacron".)  I can't figure out how to tell when the
- *   normal should be pointing the other way.
  */
 
 #include <X11/Intrinsic.h>
@@ -57,6 +51,8 @@ extern XtAppContext app;
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
+#include <GL/glu.h>
+
 #include "polyhedra.h"
 #include "colors.h"
 #include "rotator.h"
@@ -173,35 +169,39 @@ calc_normal (XYZ p, XYZ p1, XYZ p2)
 }
 
 
+/* Calculate the normals at each vertex of a face, and use the sum to
+   decide which normal to assign to the entire face.  This also solves
+   problems caused by nonconvex faces, in most (but not all) cases.
+ */
 static void
-do_normal(GLfloat x1, GLfloat y1, GLfloat z1,
-	  GLfloat x2, GLfloat y2, GLfloat z2,
-	  GLfloat x3, GLfloat y3, GLfloat z3)
+kludge_normal (int n, const int *indices, const point *points)
 {
-  XYZ p1, p2, p3, p;
-  p1.x = x1; p1.y = y1; p1.z = z1;
-  p2.x = x2; p2.y = y2; p2.z = z2;
-  p3.x = x3; p3.y = y3; p3.z = z3;
+  XYZ normal = { 0, 0, 0 };
+  XYZ p;
+  int i;
 
-  p = calc_normal (p1, p2, p3);
+  for (i = 0; i < n; ++i) {
+    int i1 = indices[i];
+    int i2 = indices[(i + 1) % n];
+    int i3 = indices[(i + 2) % n];
+    XYZ p1, p2, p3;
 
-  glNormal3f (p.x, p.y, p.z);
+    p1.x = points[i1].x; p1.y = points[i1].y; p1.z = points[i1].z;
+    p2.x = points[i2].x; p2.y = points[i2].y; p2.z = points[i2].z;
+    p3.x = points[i3].x; p3.y = points[i3].y; p3.z = points[i3].z;
 
-#ifdef DEBUG
-  /* Draw a line in the direction of this face's normal. */
-  {
-    glPushMatrix();
-    glTranslatef ((x1 + x2 + x3) / 3,
-                  (y1 + y2 + y3) / 3,
-                  (z1 + z2 + z3) / 3);
-    glScalef (0.5, 0.5, 0.5);
-    glBegin(GL_LINE_LOOP);
-    glVertex3f(0, 0, 0);
-    glVertex3f(p.x, p.y, p.z);
-    glEnd();
-    glPopMatrix();
+    p = calc_normal (p1, p2, p3);
+    normal.x += p.x;
+    normal.y += p.y;
+    normal.z += p.z;
   }
-#endif /* DEBUG */
+
+  normalize(&normal);
+  if (normal.x == 0 && normal.y == 0 && normal.z == 0) {
+    glNormal3f (p.x, p.y, p.z);
+  } else {
+    glNormal3f (normal.x, normal.y, normal.z);
+  }
 }
 
 static void
@@ -482,6 +482,14 @@ new_label (ModeInfo *mi)
 
 
 static void
+tess_error (GLenum errorCode)
+{
+  fprintf (stderr, "%s: tesselation error: %s\n",
+           progname, gluErrorString(errorCode));
+  exit (0);
+}
+
+static void
 new_polyhedron (ModeInfo *mi)
 {
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
@@ -489,6 +497,15 @@ new_polyhedron (ModeInfo *mi)
   int wire = MI_IS_WIREFRAME(mi);
   static GLfloat bcolor[4] = {0.0, 0.0, 0.0, 1.0};
   int i;
+
+  /* Use the GLU polygon tesselator so that nonconvex faces are displayed
+     correctly (e.g., for the "pentagrammic concave deltohedron").
+   */
+  GLUtesselator *tobj = gluNewTess();
+  gluTessCallback (tobj, GLU_TESS_BEGIN,  (_GLUfuncptr) &glBegin);
+  gluTessCallback (tobj, GLU_TESS_END,    (_GLUfuncptr) &glEnd);
+  gluTessCallback (tobj, GLU_TESS_VERTEX, (_GLUfuncptr) &glVertex3dv);
+  gluTessCallback (tobj, GLU_TESS_ERROR,  (_GLUfuncptr) &tess_error);
 
   mi->polygon_count = 0;
 
@@ -526,30 +543,22 @@ new_polyhedron (ModeInfo *mi)
           glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, bcolor);
         }
 
-      do_normal (p->points[f->points[0]].x,
-                 p->points[f->points[0]].y,
-                 p->points[f->points[0]].z,
-                 p->points[f->points[1]].x,
-                 p->points[f->points[1]].y,
-                 p->points[f->points[1]].z,
-                 p->points[f->points[2]].x,
-                 p->points[f->points[2]].y,
-                 p->points[f->points[2]].z);
-
-      glBegin (wire ? GL_LINE_LOOP :
-               f->npoints == 3 ? GL_TRIANGLES :
-               f->npoints == 4 ? GL_QUADS :
-               GL_POLYGON);
+      kludge_normal (f->npoints, f->points, p->points);
+      
+      gluTessBeginPolygon (tobj, 0);
+      gluTessBeginContour (tobj);
       for (j = 0; j < f->npoints; j++)
         {
           point *pp = &p->points[f->points[j]];
-          glVertex3f (pp->x, pp->y, pp->z);
+          gluTessVertex (tobj, &pp->x, &pp->x);
         }
-      glEnd();
+      gluTessEndContour (tobj);
+      gluTessEndPolygon (tobj);
     }
   glEndList ();
 
   mi->polygon_count += p->nfaces;
+  gluDeleteTess (tobj);
 }
 
 
@@ -591,6 +600,11 @@ init_polyhedra (ModeInfo *mi)
       glEnable(GL_LIGHT0);
       glEnable(GL_DEPTH_TEST);
       /* glEnable(GL_CULL_FACE); */
+
+      /* We need two-sided lighting for polyhedra where both sides of
+         a face are simultaneously visible (e.g., the "X-hemi-Y-hedrons".)
+       */
+      glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 
       glLightfv(GL_LIGHT0, GL_POSITION, pos);
       glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);

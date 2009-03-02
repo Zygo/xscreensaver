@@ -39,7 +39,7 @@
 #define DEF_SPIN   "True"
 #define DEF_WANDER "True"
 
-#define DEFAULTS        "*delay:           10000        \n" \
+#define DEFAULTS        "*delay:           30000        \n" \
                         "*showFPS:         False        \n" \
                         "*move:            True         \n" \
                         "*spin:            True         \n" \
@@ -79,12 +79,12 @@ static Bool do_titles;
 
 static XrmOptionDescRec opts[] = {
   {"-engine",  ".engine.engine", XrmoptionSepArg, DEF_ENGINE },
-  {"-move",    ".engine.move",   XrmoptionNoArg, (caddr_t) "True"  },
-  {"+move",    ".engine.move",   XrmoptionNoArg, (caddr_t) "False" },
-  {"-spin",    ".engine.spin",   XrmoptionNoArg, (caddr_t) "True"  },
-  {"+spin",    ".engine.spin",   XrmoptionNoArg, (caddr_t) "False" },
-  { "-titles", ".engine.titles", XrmoptionNoArg, (caddr_t) "True"  },
-  { "+titles", ".engine.titles", XrmoptionNoArg, (caddr_t) "False" },
+  {"-move",    ".engine.move",   XrmoptionNoArg, "True"  },
+  {"+move",    ".engine.move",   XrmoptionNoArg, "False" },
+  {"-spin",    ".engine.spin",   XrmoptionNoArg, "True"  },
+  {"+spin",    ".engine.spin",   XrmoptionNoArg, "False" },
+  { "-titles", ".engine.titles", XrmoptionNoArg, "True"  },
+  { "+titles", ".engine.titles", XrmoptionNoArg, "False" },
 };
 
 static argtype vars[] = {
@@ -951,8 +951,8 @@ void init_engine(ModeInfo *mi)
  }
 
  {
-   double spin_speed = 1.0;
-   double wander_speed = 0.03;
+   double spin_speed = 0.5;
+   double wander_speed = 0.01;
 
  e->rot = make_rotator (spin ? spin_speed : 0,
                         spin ? spin_speed : 0,

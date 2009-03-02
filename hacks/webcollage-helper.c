@@ -384,7 +384,7 @@ write_pixbuf (GdkPixbuf *pb, const char *file)
           perror (buf);
           exit (1);
         }
-      fprintf (stderr, " %luK\n", (st.st_size + 1023) / 1024);
+      fprintf (stderr, " %luK\n", ((unsigned long) st.st_size + 1023) / 1024);
     }
 
   fclose (out);

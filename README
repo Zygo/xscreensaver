@@ -76,6 +76,25 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.17:   * Oops, pay no attention to the man behind the curtain.
+Changes since 4.16:   * New hacks, `anemotaxis' and `memscroller'.
+                      * Fixed a bad bug that caused `vidwhacker' to never die.
+                      * Fixed normals and lighting in `polyhedra'.
+                      * Don't reuse the window when changing hacks (to work
+                        around bugs in some GL implementations.)
+                      * Made `xscreensaver-getimage-file' skip thumbnail-sized
+                        images.
+                      * Fixed endian problem in `barcode' on non-x86.
+                      * Updates to `webcollage', `apple2', `fuzzyflakes',
+                        `atunnel', and `pacman'.
+                      * Timing tweaks to `bubble3d', `bouncingcow', `engine',
+                        `gltext', `lavalite', `molecule', `spotlight', 
+                        `sballs', `boxed', `blinkbox', and `circuit'.
+                      * Configure updates for Fedora core 2 / xorg 6.7.0.
+                      * Compile without warnings under gcc 3.3.3.
+                      * I give up: don't blank or lock the screen if we can't
+                        get a keyboard grab.  In that case, both choices are
+                        bad.
 Changes since 4.15:   * New hacks, `polyhedra', `fuzzyflakes', `antinspect',
                         and `providence'.
                       * Minor updates to `webcollage', `bsod', `endgame',

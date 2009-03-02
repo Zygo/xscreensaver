@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 1998, 2003
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 1998, 2003, 2004
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -117,12 +117,12 @@ xscreensaver_window_p (Display *dpy, Window window)
   Atom type;
   int format;
   unsigned long nitems, bytesafter;
-  char *version;
+  unsigned char *version;
   if (XGetWindowProperty (dpy, window,
 			  XInternAtom (dpy, "_SCREENSAVER_VERSION", False),
 			  0, 1, False, XA_STRING,
 			  &type, &format, &nitems, &bytesafter,
-			  (unsigned char **) &version)
+			  &version)
       == Success
       && type != None)
     return True;

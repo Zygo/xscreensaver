@@ -10,13 +10,6 @@
  *
  */
 
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
 # define PROGCLASS					"Klein"
 # define HACK_INIT					init_klein
@@ -89,7 +82,7 @@ static Bool do_spin;
 static Bool do_wander;
 
 static XrmOptionDescRec opts[] = {
-  {"-speed",   ".speed",    XrmoptionSepArg, (caddr_t) 0 },
+  {"-speed",   ".speed",    XrmoptionSepArg, 0 },
   { "-spin",   ".spin",   XrmoptionNoArg, "True" },
   { "+spin",   ".spin",   XrmoptionNoArg, "False" },
   { "-wander", ".wander", XrmoptionNoArg, "True" },

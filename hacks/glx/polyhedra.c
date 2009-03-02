@@ -1737,7 +1737,7 @@ faces(Polyhedron *P)
     int j;
     for (j = 0; j < P->M; j++) {
       int i0, J;
-      int pap;/* papillon edge type */
+      int pap=0;/* papillon edge type */
       if (P->incid[j][i] != -1)
         continue;
       P->incid[j][i] = newF;
@@ -2027,7 +2027,7 @@ construct_polyhedron (Polyhedron *P, Vector *v, int V, Vector *f, int F,
                       char *name, char *dual, char *class, char *star,
                       double azimuth, double elevation, double freeze)
 {
-  int i, j, k, l, ll, ii, *hit, facelets;
+  int i, j, k=0, l, ll, ii, *hit=0, facelets;
 
   polyhedron *result;
   Vector *temp;
