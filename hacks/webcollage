@@ -1,0 +1,1598 @@
+#!/usr/bin/perl -w
+#
+# webcollage, Copyright (c) 1999, 2000 by Jamie Zawinski <jwz@jwz.org>
+# This program decorates the screen with random images from the web.
+# One satisfied customer described it as "a nonstop pop culture brainbath."
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+
+# To run this as a display mode with xscreensaver, add this to `programs':
+#
+#   default-n:  webcollage -root					\n\
+#   default-n:	webcollage -root -filter 'vidwhacker -stdin -stdout'    \n\
+
+require 5;
+#use diagnostics;
+use strict;
+
+use Socket;
+require Time::Local;
+require POSIX;
+use Fcntl ':flock'; # import LOCK_* constants
+use POSIX qw(strftime);
+
+
+my $version = q{ $Revision: 1.65 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $copyright = "WebCollage $version, Copyright (c) 1999" .
+    " Jamie Zawinski <jwz\@jwz.org>\n" .
+    "            http://www.jwz.org/xscreensaver/\n";
+
+my $argv0 = $0;
+my $progname = $argv0; $progname =~ s@.*/@@g;
+
+my $random_redirector = "http://random.yahoo.com/bin/ryl";
+my $image_randomizer_1 = "http://www.altavista.com/query" .
+                         "?mmdo=3" .
+                         "&nbq=12" .
+                         "&stype=simage" .
+                         "&iclr=1" .
+                         "&ibw=1" .
+                         "&iexc=1" .
+                         "&what=web" .
+                         "&q=";
+my $image_randomizer_2 = "http://www.hotbot.com/?clickSrc=search" .
+                         "&submit=SEARCH&SM=SC&LG=any" .
+                         "&AM0=MC&AT0=words&AW0=" .
+                         "&AM1=MN&AT1=words&AW1=" .
+                         "&savenummod=2&date=within" .
+                         "&DV=0&DR=newer&DM=1&DD=1&DY=99&FVI=1&FS=&RD=RG" .
+                         "&RG=all&Domain=&PS=A&PD=&STEM=1&DC=50&DE=0&_v=2" .
+                         "&OPs=MDRTP&NUMMOD=2" .
+                         "&MT=";
+my $image_randomizer_3 = "http://www.altavista.com/cgi-bin/query?pg=q" .
+                         "&text=yes&kl=XX&stype=stext&q=";
+my $image_randomizer_4 = "http://search.news.yahoo.com/search/news_photos?" .
+                         "&z=&n=100&o=o&2=&3=&p=";
+
+# I guess Photopoint got wise to me, because now they are doing error
+# checking on the user ("u=") and album ("a=") parameters.  Oh well.
+#
+#my $photo_randomizer   = "http://albums.photopoint.com/j/View?u=1&a=1&p=";
+#my $photo_randomizer_lo = 10000001;
+#my $photo_randomizer_hi = 12400000;
+
+my $image_ppm   = ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp") . "/webcollage." . $$;
+my $image_tmp1  = $image_ppm . "-1";
+my $image_tmp2  = $image_ppm . "-2";
+
+my $img_width;		  # size of the image being generated.
+my $img_height;
+
+my $http_proxy = undef;
+my $http_timeout = 30;
+my $cvt_timeout = 10;
+
+# programs we can use to write to the root window (tried in ascending order.)
+my $ppm_to_root_window_cmd_1 = "xloadimage -onroot -quiet %%PPM%%";
+my $ppm_to_root_window_cmd_2 = "xli -quiet -onroot -center" .
+                               " -border black %%PPM%%";
+my $ppm_to_root_window_cmd_3 = "xv -root -rmode 5 -viewonly" .
+                               " +noresetroot %%PPM%% -quit";
+
+my $ppm_to_root_window_cmd = undef;     # initialized by x_output()
+
+my $filter_cmd = undef;
+my $post_filter_cmd = undef;
+my $background = undef;
+my $no_output_p = 0;
+my $urls_only_p = 0;
+my $delay = 0;
+
+my $wordlist = "/usr/dict/words";
+
+if (!-r $wordlist) {
+    $wordlist = "/usr/share/dict/words";	# BSD
+}
+if (!-r $wordlist) {
+    $wordlist = "/usr/share/lib/dict/words";    # Irix
+}
+die "$wordlist doesn't exist!\n" unless (-r $wordlist);
+
+
+my $min_width = 50;
+my $min_height = 50;
+my $min_ratio = 1/5;
+
+my $verbose = 0;
+
+my %rejected_urls;
+my @tripwire_words = ("aberrate", "abode", "amorphous", "antioch",
+                      "arrhenius", "arteriole", "blanket", "brainchild",
+                      "burdensome", "carnival", "cherub", "chord", "clever",
+                      "dedicate", "dilogarithm", "dolan", "dryden",
+                      "eggplant");
+
+
+sub blurb {
+    return "$progname: " . strftime ("%H:%M:%S: ", localtime);
+}
+
+
+##############################################################################
+#
+# Retrieving URLs
+#
+##############################################################################
+
+# returns three values: the HTTP response line; the document headers;
+# and the document body.
+#
+sub get_document_1 {
+    my ( $url, $referer, $timeout ) = @_;
+
+    if (!defined($timeout)) { $timeout = $http_timeout; }
+    if ($timeout <= 0) { return (); }
+    if ($timeout > $http_timeout) { $timeout = $http_timeout; }
+
+    if ( $verbose > 3 ) {
+	print STDERR blurb() . "get_document_1 $url " .
+            ($referer ? $referer : "") . "\n";
+    }
+
+    my($url_proto, $dummy, $serverstring, $path) = split(/\//, $url, 4);
+    if (! ($url_proto && $url_proto =~ m/^http:$/i)) {
+        if ($verbose) { print STDERR blurb() . "not an HTTP URL: $url\n"; }
+        return ();
+    }
+
+    $path = "" unless $path;
+
+    my($them,$port) = split(/:/, $serverstring);
+    $port = 80 unless $port;
+
+    my $them2 = $them;
+    my $port2 = $port;
+    if ($http_proxy) {
+        $serverstring = $http_proxy if $http_proxy;
+        ($them2,$port2) = split(/:/, $serverstring);
+        $port2 = 80 unless $port2;
+    }
+
+    my ($remote, $iaddr, $paddr, $proto, $line);
+    $remote = $them2;
+    if ($port2 =~ /\D/) { $port2 = getservbyname($port2, 'tcp') }
+    return unless $port2;
+    $iaddr   = inet_aton($remote) || return;
+    $paddr   = sockaddr_in($port2, $iaddr);
+
+
+    my $head = "";
+    my $body = "";
+
+    @_ =
+    eval {
+        local $SIG{ALRM}  = sub {
+            if ($verbose > 0) {
+                print STDERR blurb() . "timed out ($timeout) for $url\n";
+            }
+            die "alarm\n"
+            };
+        alarm $timeout;
+
+        $proto   = getprotobyname('tcp');
+        if (!socket(S, PF_INET, SOCK_STREAM, $proto)) {
+            print STDERR blurb() . "socket: $!\n" if ($verbose);
+            return;
+        }
+        if (!connect(S, $paddr)) {
+            print STDERR blurb() . "connect($serverstring): $!\n"
+                if ($verbose);
+            return;
+        }
+
+        select(S); $| = 1; select(STDOUT);
+
+        my $cookie;
+        if ($remote =~ m/\baltavista\.com$/i) {
+            # kludge to tell the various altavista sites to be uncensored.
+            $cookie = "AV_ALL=1";
+        }
+
+        print S ("GET " . ($http_proxy ? $url : "/$path") . " HTTP/1.0\r\n" .
+                 "Host: $them\r\n" .
+                 "User-Agent: $progname/$version\r\n" .
+                 ($referer ? "Referer: $referer\r\n" : "") .
+                 ($cookie ? "Cookie: $cookie\r\n" : "") .
+                 "\r\n");
+        my $http = <S>;
+
+        while (<S>) {
+            $head .= $_;
+            last if m@^[\r\n]@;
+        }
+        while (<S>) {
+            $body .= $_;
+        }
+
+        close S;
+
+        if ( $verbose > 3 ) {
+            print STDERR blurb() . "   ==> $http\n";
+        }
+
+        return ( $http, $head, $body );
+    };
+    die if ($@ && $@ ne "alarm\n");       # propagate errors
+    if ($@) {
+        # timed out
+        $head = undef;
+        $body = undef;
+        return ();
+    } else {
+        # didn't
+        alarm 0;
+        return @_;
+    }
+}
+
+
+# returns two values: the document headers; and the document body.
+# if the given URL did a redirect, returns the redirected-to document.
+#
+sub get_document {
+    my ( $url, $referer, $timeout ) = @_;
+    my $start = time;
+
+    my $orig_url = $url;
+    my $loop_count = 0;
+    my $max_loop_count = 4;
+
+    do {
+        if (defined($timeout) && $timeout <= 0) { return (); }
+
+	my ( $http, $head, $body ) = get_document_1 ($url, $referer, $timeout);
+
+        if (defined ($timeout)) {
+            my $now = time;
+            my $elapsed = $now - $start;
+            $timeout -= $elapsed;
+            $start = $now;
+        }
+
+	return () if ( ! $body );
+
+	if ( $http =~ m@HTTP/[0-9.]+ 30[23]@ ) {
+	    $_ = $head;
+	    my ( $location ) = m@^location:[ \t]*(.*)$@im;
+	    if ( $location ) {
+                $location =~ s/[\r\n]$//;
+
+		if ( $verbose > 3 ) {
+		    print STDERR blurb() . "redirect from " .
+                        "$url to $location\n";
+		}
+                $referer = $url;
+		$url = $location;
+
+                if ($url =~ m@^/@) {
+                    $referer =~ m@^(http://[^/]+)@i;
+                    $url = $1 . $url;
+                } elsif (! ($url =~ m@^[a-z]+:@i)) {
+                    $_ = $referer;
+                    s@[^/]+$@@g if m@^http://[^/]+/@i;
+                    $_ .= "/" if m@^http://[^/]+$@i;
+                    $url = $_ . $url;
+                }
+
+	    } else {
+		return ( $url, $body );
+	    }
+
+            if ($loop_count++ > $max_loop_count) {
+		if ( $verbose > 1 ) {
+		    print STDERR blurb() . "too many redirects " .
+                        "($max_loop_count) from $orig_url\n";
+		}
+                $body = undef;
+                return ();
+            }
+
+        } elsif ( $http =~ m@HTTP/[0-9.]+ [4-9][0-9][0-9]@ ) {
+            # http errors -- return nothing.
+            $body = undef;
+            return ();
+
+	} else {
+
+	    return ( $url, $body );
+	}
+
+    } while (1);
+}
+
+
+# given a URL and the body text at that URL, selects and returns a random
+# image from it.  returns () if no suitable images found.
+#
+sub pick_image_from_body {
+    my ( $url, $body ) = @_;
+
+    my $base = $url;
+    $_ = $url;
+
+    # if there's at least one slash after the host, take off the last
+    # pathname component
+    if ( m@^http://[^/]+/@io ) {
+	$base =~ s@[^/]+$@@go;
+    }
+
+    # if there are no slashes after the host at all, put one on the end.
+    if ( m@^http://[^/]+$@io ) {
+	$base .= "/";
+    }
+
+    if ( $verbose > 3 ) {
+	print STDERR blurb() . "base is $base\n";
+    }
+
+
+    $_ = $body;
+
+    # strip out newlines, compress whitespace
+    s/[\r\n\t ]+/ /go;
+
+    # nuke comments
+    s/<!--.*?-->//go;
+
+
+    # There are certain web sites that list huge numbers of dictionary
+    # words in their bodies or in their <META NAME=KEYWORDS> tags (surprise!
+    # Porn sites tend not to be reputable!)
+    #
+    # I do not want webcollage to filter on content: I want it to select
+    # randomly from the set of images on the web.  All the logic here for
+    # rejecting some images is really a set of heuristics for rejecting
+    # images that are not really images: for rejecting *text* that is in
+    # GIF/JPEG form.  I don't want text, I want pictures, and I want the
+    # content of the pictures to be randomly selected from among all the
+    # available content.
+    #
+    # So, filtering out "dirty" pictures by looking for "dirty" keywords
+    # would be wrong: dirty pictures exist, like it or not, so webcollage
+    # should be able to select them.
+    #
+    # However, picking a random URL is a hard thing to do.  The mechanism I'm
+    # using is to search for a selection of random words.  This is not
+    # perfect, but works ok most of the time.  The way it breaks down is when
+    # some URLs get precedence because their pages list *every word* as
+    # related -- those URLs come up more often than others.
+    #
+    # So, after we've retrieved a URL, if it has too many keywords, reject
+    # it.  We reject it not on the basis of what those keywords are, but on
+    # the basis that by having so many, the page has gotten an unfair
+    # advantage against our randomizer.
+    #
+    my $trip_count = 0;
+    foreach my $trip (@tripwire_words) {
+        $trip_count++ if m/$trip/i;
+    }
+    if ($trip_count >= $#tripwire_words - 2) {
+        if ($verbose > 1) {
+            print STDERR blurb() . "there is probably a dictionary in" .
+                " \"$url\": rejecting.\n";
+        }
+        $rejected_urls{$url} = -1;
+        $body = undef;
+        $_ = undef;
+        return ();
+    }
+
+
+    my @urls;
+    my %unique_urls;
+
+    foreach (split(/ *</)) {
+        if ( m/^meta /i ) {
+
+            # Likewise, reject any web pages that have a KEYWORDS meta tag
+            # that is too long.
+            #
+            if (m/name ?= ?\"?keywords\"?/i &&
+                m/content ?= ?\"([^\"]+)\"/) {
+                my $L = length($1);
+                if ($L > 1000) {
+                    if ($verbose > 1) {
+                        print STDERR blurb() . "keywords of" .
+                            " length $L in $url: rejecting.\n";
+                    }
+                    $rejected_urls{$url} = $L;
+                    $body = undef;
+                    $_ = undef;
+                    return ();
+                } elsif ( $verbose > 2 ) {
+                    print STDERR blurb() . "keywords of length $L" .
+                        " in $url (ok.)\n";
+                }
+            }
+
+        } elsif ( m/^(img|a) .*(src|href) ?= ?\"? ?(.*?)[ >\"]/io ) {
+
+	    my $was_inline = ( "$1" eq "a" || "$1" eq "A" );
+	    my $link = $3;
+	    my ( $width )  = m/width ?=[ \"]*(\d+)/oi;
+	    my ( $height ) = m/height ?=[ \"]*(\d+)/oi;
+	    $_ = $link;
+
+	    if ( m@^/@o ) {
+		my $site;
+		( $site = $base ) =~ s@^(http://[^/]*).*@$1@gio;
+		$_ = "$site$link";
+	    } elsif ( ! m@^[^/:?]+:@ ) {
+		$_ = "$base$link";
+                s@/\./@/@g;
+                while (s@/\.\./@/@g) {
+                }
+	    }
+
+	    # skip non-http
+	    if ( ! m@^http://@io ) {
+		next;
+	    }
+
+	    # skip non-image
+	    if ( ! m@[.](gif|jpg|jpeg|pjpg|pjpeg)$@io ) {
+		next;
+	    }
+
+	    # skip really short or really narrow images
+	    if ( $width && $width < $min_width) {
+		if ( $verbose > 2 ) {
+                    if (!$height) { $height = "?"; }
+		    print STDERR blurb() . "skip narrow image " .
+                        "$_ (${width}x$height)\n";
+		}
+		next;
+	    }
+
+	    if ( $height && $height < $min_height) {
+		if ( $verbose > 2 ) {
+                    if (!$width) { $width = "?"; }
+		    print STDERR blurb() . "skip short image " .
+                        "$_ (${width}x$height)\n";
+		}
+		next;
+	    }
+
+            # skip images with ratios that make them look like banners.
+	    if ( $min_ratio && $width && $height &&
+                ($width * $min_ratio ) > $height ) {
+		if ( $verbose > 2 ) {
+                    if (!$height) { $height = "?"; }
+		    print STDERR blurb() . "skip bad ratio " .
+                        "$_ (${width}x$height)\n";
+		}
+		next;
+	    }
+
+	    my $url = $_;
+
+	    if ( $unique_urls{$url} ) {
+		if ( $verbose > 2 ) {
+                    print STDERR blurb() . "skip duplicate image $_\n";
+                }
+		next;
+	    }
+
+	    if ( $verbose > 2 ) {
+		print STDERR blurb() . "got $url" . 
+		    ($width && $height ? " (${width}x${height})" : "") .
+		    ($was_inline ? " (inline)" : "") . "\n";
+	    }
+
+	    $urls[++$#urls] = $url;
+	    $unique_urls{$url}++;
+
+	    # jpegs are preferable to gifs.
+            $_ = $url;
+            if ( ! m@[.]gif$@io ) {
+		$urls[++$#urls] = $url;
+            }
+
+	    # pointers to images are preferable to inlined images.
+	    if ( ! $was_inline ) {
+		$urls[++$#urls] = $url;
+		$urls[++$#urls] = $url;
+	    }
+	}
+    }
+
+    $_ = undef;
+    $body = undef;
+
+    if ( $#urls == 0 ) {
+	if ( $verbose > 2 ) {
+	    print STDERR blurb() . "no images on $base\n";
+	}
+	return ();
+    }
+
+    return () if ( $#urls < 1 );
+
+    # pick a random element of the table
+    my $i = ((rand() * 99999) % $#urls);
+    $url = $urls[$i];
+
+    if ( $verbose > 2 ) {
+	print STDERR blurb() . "picked $url\n";
+    }
+
+    return $url;
+}
+
+
+# Using the URL-randomizer, picks a random image on a random page, and
+# returns two URLs: the page containing the image, and the image.
+# Returns () if nothing found this time.
+#
+sub pick_from_url_randomizer {
+    my ( $timeout ) = @_;
+
+    if ( $verbose > 3 ) {
+	print STDERR "\n\n$progname: picking from $random_redirector...\n\n";
+    }
+
+    my ( $base, $body ) = get_document ($random_redirector, undef, $timeout);
+
+    if (!$base || !$body) {
+        $body = undef;
+        return;
+    }
+    my $img = pick_image_from_body ($base, $body);
+    $body = undef;
+
+    if ($img) {
+        return ($base, $img, "yahoo");
+    } else {
+        return ();
+    }
+}
+
+
+sub random_word {
+    
+    my $word = 0;
+    if (open (IN, "<$wordlist")) {
+        my $size = (stat(IN))[7];
+        my $pos = rand $size;
+        if (seek (IN, $pos, 0)) {
+            $word = <IN>;   # toss partial line
+            $word = <IN>;   # keep next line
+        }
+	if (!$word) {
+          seek( IN, 0, 0 );
+          $word = <IN>;
+	}
+        close (IN);
+    }
+
+    return 0 if (!$word);
+
+    $word =~ s/^[ \t\n\r]+//;
+    $word =~ s/[ \t\n\r]+$//;
+    $word =~ s/ys$/y/;
+    $word =~ s/ally$//;
+    $word =~ s/ly$//;
+    $word =~ s/ies$/y/;
+    $word =~ s/ally$/al/;
+    $word =~ s/izes$/ize/;
+    $word =~ tr/A-Z/a-z/;
+
+    if ( $word =~ s/[ \t\n\r]/\+/g ) {  # convert intra-word spaces to "+".
+      $word = "\%22$word\%22";	        # And put quotes (%22) around it.
+    }
+
+    return $word;
+}
+
+
+
+# Using the image-randomizer, picks a random image on a random page, and
+# returns two URLs: the page containing the image, and the image.
+# Returns () if nothing found this time.
+#
+sub pick_from_image_randomizer {
+    my ( $timeout, $which ) = @_;
+
+    my $words = random_word;
+    $words .= "%20" . random_word;
+    $words .= "%20" . random_word;
+    $words .= "%20" . random_word;
+    $words .= "%20" . random_word;
+
+    my $search_url = ($which == 0 ? $image_randomizer_1 :
+                      $which == 1 ? $image_randomizer_2 :
+                      $which == 2 ? $image_randomizer_3 :
+                      $image_randomizer_4) .
+        $words;
+
+    # Pick a random search-result page instead of always taking the first.
+    # This assumes there are at least 10 pages...
+    if ($which == 0) {
+        $search_url .= "&pgno=" . (int(rand(9)) + 1);
+    } elsif ($which == 2) {
+        $search_url .= "&stq=" . (10 * (int(rand(9)) + 1));
+    }
+
+    if ( $verbose > 3 ) {
+        $_ = $words; s/%20/ /g; print STDERR blurb() . "search words: $_\n";
+    }
+
+    if ( $verbose > 3 ) {
+	print STDERR "\n\n$progname: picking from $search_url\n";
+    }
+
+    my $start = time;
+    my ( $base, $body ) = get_document ($search_url, undef, $timeout);
+    if (defined ($timeout)) {
+        $timeout -= (time - $start);
+        if ($timeout <= 0) {
+            $body = undef;
+            return ();
+        }
+    }
+
+    return () if (! $body);
+
+
+    my @subpages;
+    my $skipped = 0;
+
+    my $search_count = "?";
+    if ($which == 0 &&
+        $body =~ m@found (approximately |about )?(<B>)?(\d+)(</B>)? image@) {
+        $search_count = $3;
+    } elsif ($which == 1 && $body =~ m@<NOBR>((\d{1,3})(,\d{3})*)&nbsp;@i) {
+        $search_count = $1;
+    } elsif ($which == 2 && $body =~ m@found ((\d{1,3})(,\d{3})*|\d+) Web p@) {
+        $search_count = $1;
+    }
+    1 while ($search_count =~ s/^(\d+)(\d{3})/$1,$2/);
+
+    my $length = length($body);
+    my $href_count = 0;
+
+    $_ = $body;
+
+#    s/Result [Pp]ages:.*$//s;            # trim off page footer
+#    s/^.*?IMAGE RESULTS//s;              # trim off page header
+
+    s/Have you tried these resources.*//s;  # let's try it again
+
+    s/[\r\n\t ]+/ /g;
+
+    s/(<A )/\n$1/gi;
+    foreach (split(/\n/)) {
+        $href_count++;
+        my ($u) = m@<A\s.*\bHREF\s*=\s*([^>]+)>@i;
+        next unless $u;
+        if ($u =~ m/^\"([^\"]*)\"/) { $u = $1; }   # quoted string
+        elsif ($u =~ m/^([^\s]*)\s/) { $u = $1; }  # or token
+
+        if ($which == 1) {
+            # Kludge to decode HotBot pages
+            next unless ($u =~ m@/director\.asp\?target=(http%3A[^&>]+)@);
+            $u = url_decode($1);
+        }
+
+        next unless ($u =~ m@^http://@i);  # skip non-http and relative urls.
+
+        next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
+        next if ($u =~ m@[/.]altavista\.[a-z]{2}\b@i); # altavista.fr, etc
+        next if ($u =~ m@[/.]av\.com\b@i);
+        next if ($u =~ m@[/.]virage\.com\b@i);
+        next if ($u =~ m@[/.]photoloft\.com\b@i);
+        next if ($u =~ m@[/.]shopping\.com\b@i);
+        next if ($u =~ m@[/.]thetrip\.com\b@i);
+        next if ($u =~ m@[/.]cmgi\.com\b@i);
+        next if ($u =~ m@[/.]intelihealth\.com\b@i);
+        next if ($u =~ m@[/.]wildweb\.com\b@i);
+        next if ($u =~ m@[/.]digital\.com\b@i);
+        next if ($u =~ m@[/.]doubleclick\.net\b@i);
+        next if ($u =~ m@[/.]freeim\.org\b@i);
+        next if ($u =~ m@[/.]clicktomarket\.com\b@i);  # you cretins
+        next if ($u =~ m@[/.]teragram\.com\b@i);
+
+        # must lose this one for altavista, even though it loses images of
+        # every single customer of akamai.  Oh well, those people have lots
+        # of money, and so their images are probably boring anyway.
+        next if ($u =~ m@[/.]akamai\.net@i);
+
+        if ($which == 0 && $u =~ m@[/.]corbis\.com@) {
+           $skipped = 1;
+            if ( $verbose > 3 ) {
+                print STDERR blurb() . "skipping corbis URL: $u\n";
+            }
+            next;
+
+        } elsif ($which == 3 &&
+                 ($u =~ m@^http://[^/]+$@ ||		  # no slashes
+                  $u =~ m@/$@ ||			  # ends in /
+                  ! ($u =~ m@dailynews\.yahoo\.com@))) {  # not dailynews
+#            $skipped = 1;
+            if ( $verbose > 3 ) {
+                print STDERR blurb() . "skipping non-AP URL: $u\n";
+            }
+            next;
+
+        } elsif ( $rejected_urls{$u} ) {
+            if ( $verbose > 3 ) {
+                my $L = $rejected_urls{$u};
+                print STDERR blurb() . "pre-rejecting sub-page: $u\n";
+            }
+            next;
+
+        } elsif ( $verbose > 3 ) {
+            print STDERR blurb() . "sub-page: $u\n";
+        }
+
+        $subpages[++$#subpages] = $u;
+    }
+
+    if ( $#subpages < 0 ) {
+        if (!$skipped && $verbose > 1) {
+            print STDERR blurb() . "found nothing on $base " .
+                "($length bytes, $href_count links).\n";
+        }
+        $body = undef;
+        $_ = undef;
+	return ();
+    }
+
+    # pick a random element of the table
+    my $i = ((rand() * 99999) % ($#subpages + 1));
+    my $subpage = $subpages[$i];
+
+    if ( $verbose > 3 ) {
+	print STDERR blurb() . "picked page $subpage\n";
+    }
+
+
+    $body = undef;
+    $_ = undef;
+
+    my ( $base2, $body2 ) = get_document ($subpage, $base, $timeout);
+
+    if (!$base2 || !$body2) {
+        $body2 = undef;
+        return ();
+    }
+
+    my $img = pick_image_from_body ($base2, $body2);
+    $body2 = undef;
+
+    if ($img) {
+        return ($base2, $img,
+                ($which == 0 ? "imagevista" :
+                 $which == 1 ? "hotbot" :
+                 $which == 2 ? "altavista" :
+                 "ap") .
+                "/$search_count");
+    } else {
+        return ();
+    }
+}
+
+
+# Using the photo site, generate a random URL that will hopefully point
+# to an image.  Returns two URLs, both of which are the URL of the image.
+# Returns () if nothing found this time.
+#
+#sub pick_from_photo_randomizer {
+#    my ( $timeout ) = @_;
+#    my $n = ($photo_randomizer_lo +
+#             int(rand() * ($photo_randomizer_hi - $photo_randomizer_lo)));
+#    my $url = $photo_randomizer . $n;
+#    return ( $url, $url, "photopoint" );
+#}
+
+
+# Picks a random image on a random page, and returns two URLs:
+# the page containing the image, and the image. 
+# Returns () if nothing found this time.
+# Uses the url-randomizer 1 time in 5, else the image randomizer.
+#
+my $total_0 = 0;
+my $total_1 = 0;
+my $total_2 = 0;
+my $total_3 = 0;
+my $total_4 = 0;
+my $count_0 = 0;
+my $count_1 = 0;
+my $count_2 = 0;
+my $count_3 = 0;
+my $count_4 = 0;
+
+sub pick_image {
+    my ( $timeout ) = @_;
+    my $r = int(rand(100));
+
+    my ($base, $img, $source, $total, $count);
+
+    if ($r < 20) {
+        ($base, $img, $source) = pick_from_url_randomizer ($timeout);
+        $total = ++$total_0;
+        $count = ++$count_0 if $img;
+
+    } elsif ($r < 60) {
+        ($base, $img, $source) = pick_from_image_randomizer ($timeout, 0);
+        $total = ++$total_1;
+        $count = ++$count_1 if $img;
+
+     } elsif ($r < 65) {
+         ($base, $img, $source) = pick_from_image_randomizer ($timeout, 3);
+         $total = ++$total_4;
+         $count = ++$count_4 if $img;
+
+#    } elsif ($r < 70) {
+#        ($base, $img, $source) = pick_from_photo_randomizer ($timeout);
+#        $total = ++$total_4;
+#        $count = ++$count_4 if $img;
+
+#    } elsif ($r < 80) {
+#        # HotBot sucks: 98% of the time, it says "no pages match your
+#        # search", and then if I load the URL again by hand, it works.
+#        # I don't understand what's going wrong here, but we're not getting
+#        # any good data back from them, so forget it for now.
+#
+#        ($base, $img, $source) = pick_from_image_randomizer ($timeout, 1);
+#        $total = ++$total_2;
+#        $count = ++$count_2 if $img;
+
+    } else {
+        ($base, $img, $source) = pick_from_image_randomizer ($timeout, 2);
+        $total = ++$total_3;
+        $count = ++$count_3 if $img;
+    }
+
+    if ($source && $total > 0) {
+        $source .= " " . int(($count / $total) * 100) . "%";
+    }
+    return ($base, $img, $source);
+}
+
+
+# Does %-decoding.
+#
+sub url_decode {
+    ($_) = @_;
+    tr/+/ /;
+    s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+    return $_;
+}
+
+
+# Given the raw body of a GIF document, returns the dimensions of the image.
+#
+sub gif_size {
+    my ($body) = @_;
+    my $type = substr($body, 0, 6);
+    my $s;
+    return () unless ($type =~ /GIF8[7,9]a/);
+    $s = substr ($body, 6, 10);
+    my ($a,$b,$c,$d) = unpack ("C"x4, $s);
+    return (($b<<8|$a), ($d<<8|$c));
+}
+
+# Given the raw body of a JPEG document, returns the dimensions of the image.
+#
+sub jpeg_size {
+    my ($body) = @_;
+    my $i = 0;
+    my $L = length($body);
+    
+    my $c1 = substr($body, $i, 1); $i++;
+    my $c2 = substr($body, $i, 1); $i++;
+    return () unless (ord($c1) == 0xFF && ord($c2) == 0xD8);
+
+    my $ch = "0";
+    while (ord($ch) != 0xDA && $i < $L) {
+        # Find next marker, beginning with 0xFF.
+        while (ord($ch) != 0xFF) {
+            $ch = substr($body, $i, 1); $i++;
+        }
+        # markers can be padded with any number of 0xFF.
+        while (ord($ch) == 0xFF) {
+            $ch = substr($body, $i, 1); $i++;
+        }
+
+        # $ch contains the value of the marker.
+        my $marker = ord($ch);
+
+        if (($marker >= 0xC0) &&
+            ($marker <= 0xCF) &&
+            ($marker != 0xC4) &&
+            ($marker != 0xCC)) {  # it's a SOFn marker
+            $i += 3;
+            my $s = substr($body, $i, 4); $i += 4;
+            my ($a,$b,$c,$d) = unpack("C"x4, $s);
+            return (($c<<8|$d), ($a<<8|$b));
+
+        } else {
+            # We must skip variables, since FFs in variable names aren't
+            # valid JPEG markers.
+            my $s = substr($body, $i, 2); $i += 2;
+            my ($c1, $c2) = unpack ("C"x2, $s); 
+            my $length = ($c1 << 8) | $c2;
+            return () if ($length < 2);
+            $i += $length-2;
+        }
+    }
+    return ();
+}
+
+# Given the raw body of a GIF or JPEG document, returns the dimensions of
+# the image.
+#
+sub image_size {
+    my ($body) = @_;
+    my ($w, $h) = gif_size ($body);
+    if ($w && $h) { return ($w, $h); }
+    return jpeg_size ($body);
+}
+
+
+# returns the full path of the named program, or undef.
+#
+sub which {
+    my ($prog) = @_;
+    foreach (split (/:/, $ENV{PATH})) {
+        if (-x "$_/$prog") {
+            return $prog;
+        }
+    }
+    return undef;
+}
+
+
+# Like rand(), but chooses numbers with a bell curve distribution.
+sub bellrand {
+    ($_) = @_;
+    $_ = 1.0 unless defined($_);
+    $_ /= 3.0;
+    return (rand($_) + rand($_) + rand($_));
+}
+
+
+##############################################################################
+#
+# Generating a list of urls only
+#
+##############################################################################
+
+sub url_only_output {
+    do {
+        my ($base, $img) = pick_image;
+        if ($img) {
+            $base =~ s/ /%20/g;
+            $img  =~ s/ /%20/g;
+            print "$img $base\n";
+        }
+    } while (1);
+}
+
+##############################################################################
+#
+# Running as an xscreensaver module
+#
+##############################################################################
+
+sub x_cleanup {
+    my ($sig) = @_;
+    if ($verbose > 0) { print STDERR blurb() . "caught signal $sig.\n"; }
+    unlink $image_ppm, $image_tmp1, $image_tmp2;
+    exit 1;
+}
+
+
+# Like system, but prints status about exit codes, and kills this process
+# with whatever signal killed the sub-process, if any.
+#
+sub nontrapping_system {
+    $! = 0;
+    
+    if ($verbose > 1) {
+        $_ = join(" ", @_);
+        s/\"[^\"]+\"/\"...\"/g;
+        print STDERR blurb() . "executing \"$_\"\n";
+    }
+
+    my $rc = system @_;
+
+    if ($rc == 0) {
+        if ($verbose > 1) {
+            print STDERR blurb() . "subproc exited normally.\n";
+        }
+    } elsif (($rc & 0xff) == 0) {
+        $rc >>= 8;
+        if ($verbose) {
+            print blurb() . "subproc exited with status $rc.\n";
+        }
+    } else {
+        if ($rc & 0x80) {
+            if ($verbose) {
+                print blurb() . "subproc dumped core.\n";
+            }
+            $rc &= ~0x80;
+        }
+        if ($verbose) {
+            print blurb() . "subproc died with signal $rc.\n";
+        }
+        # die that way ourselves.
+        kill $rc, $$;
+    }
+
+    return $rc;
+}
+
+
+# Given the URL of a GIF or JPEG image, and the body of that image, writes a
+# PPM to the given output file.  Returns the width/height of the image if 
+# successful.
+#
+sub image_to_pnm {
+    my ($url, $body, $output) = @_;
+    my ($cmd, $cmd2, $w, $h);
+
+    if ((@_ = gif_size ($body))) {
+        ($w, $h) = @_;
+        $cmd = "giftopnm";
+    } elsif ((@_ = jpeg_size ($body))) {
+        ($w, $h) = @_;
+        $cmd = "djpeg";
+    } else {
+        return ();
+    }
+
+    $cmd2 = "exec $cmd";        # yes, this really is necessary.  if we don't
+                                # do this, the process doesn't die properly.
+    if ($verbose <= 1) {
+        #
+        # We get a "giftopnm: got a 'Application Extension' extension"
+        # warning any time it's an animgif.
+        #
+        # Note that "giftopnm: EOF / read error on image data" is not
+        # always a fatal error -- sometimes the image looks fine anyway.
+        #
+        $cmd2 .= " 2>/dev/null";
+    }
+
+    # There exist corrupted GIF and JPEG files that can make giftopnm and
+    # djpeg lose their minds and go into a loop.  So this gives those programs
+    # a small timeout -- if they don't complete in time, kill them.
+    #
+    my $pid;
+    @_ = eval {
+        my $timed_out;
+
+        local $SIG{ALRM}  = sub {
+            if ($verbose > 0) {
+                print STDERR blurb() . "timed out ($cvt_timeout) for " .
+                    "$cmd on \"$url\" in pid $pid\n";
+            }
+            kill ('TERM', $pid) if ($pid);
+            $timed_out = 1;
+            $body = undef;
+        };
+
+        if (($pid = open(PIPE, "| $cmd2 > $output"))) {
+            $timed_out = 0;
+            alarm $cvt_timeout;
+            print PIPE $body;
+            $body = undef;
+            close PIPE;
+
+            if ($verbose > 3) { print STDERR blurb() . "awaiting $pid\n"; }
+            waitpid ($pid, 0);
+            if ($verbose > 3) { print STDERR blurb() . "$pid completed\n"; }
+
+
+            my $size = (stat($output))[7];
+            if ($size < 5) {
+                if ($verbose) {
+                    print STDERR blurb() . "$cmd on ${w}x$h \"$url\" failed" .
+                        " ($size bytes)\n";
+                }
+                return ();
+            }
+
+            if ($verbose > 1) {
+                print STDERR blurb() . "created ${w}x$h $output ($cmd)\n";
+            }
+            return ($w, $h);
+        } else {
+            print STDERR blurb() . "$cmd failed: $!\n";
+            return ();
+        }
+    };
+    die if ($@ && $@ ne "alarm\n");       # propagate errors
+    if ($@) {
+        # timed out
+        $body = undef;
+        return ();
+    } else {
+        # didn't
+        alarm 0;
+        $body = undef;
+        return @_;
+    }
+}
+
+sub x_output {
+
+    my $win_cmd_1 = $ppm_to_root_window_cmd_1;
+    my $win_cmd_2 = $ppm_to_root_window_cmd_2;
+    my $win_cmd_3 = $ppm_to_root_window_cmd_3;
+    $win_cmd_1 =~ s/^([^ \t\r\n]+).*$/$1/;
+    $win_cmd_2 =~ s/^([^ \t\r\n]+).*$/$1/;
+    $win_cmd_3 =~ s/^([^ \t\r\n]+).*$/$1/;
+
+    # make sure the various programs we execute exist, right up front.
+    foreach ("ppmmake", "giftopnm", "djpeg", "pnmpaste", "pnmscale",
+             "pnmcut") {
+        which ($_) || die blurb() . "$_ not found on \$PATH.\n";
+    }
+
+    if (which($win_cmd_1)) {
+        $ppm_to_root_window_cmd = $ppm_to_root_window_cmd_1;
+    } elsif (which($win_cmd_2)) {
+        $ppm_to_root_window_cmd = $ppm_to_root_window_cmd_2;
+    } elsif (which($win_cmd_3)) {
+        $ppm_to_root_window_cmd = $ppm_to_root_window_cmd_3;
+     } else {
+        die blurb() . "didn't find $win_cmd_1, $win_cmd_2, or $win_cmd_3 on \$PATH.\n";
+    }
+
+    $SIG{HUP}  = \&x_cleanup;
+    $SIG{INT}  = \&x_cleanup;
+    $SIG{QUIT} = \&x_cleanup;
+    $SIG{ABRT} = \&x_cleanup;
+    $SIG{KILL} = \&x_cleanup;
+    $SIG{TERM} = \&x_cleanup;
+
+    # Need this so that if giftopnm dies, we don't die.
+    $SIG{PIPE} = 'IGNORE';
+
+    if (!$img_width || !$img_height) {
+        $_ = "xdpyinfo";
+        which ($_) || die blurb() . "$_ not found on \$PATH.\n";
+        $_ = `$_`;
+        ($img_width, $img_height) = m/dimensions: *(\d+)x(\d+) /;
+        if (!defined($img_height)) {
+            die blurb() . "xdpyinfo failed.\n";
+        }
+    }
+
+    my $bgcolor = "#000000";
+    my $bgimage = undef;
+
+    if ($background) {
+        if ($background =~ m/^\#[0-9a-f]+$/i) {
+            $bgcolor = $background;
+        } elsif (-r $background) {
+            $bgimage = $background;
+            
+        } elsif (! $background =~ m@^[-a-z0-9 ]+$@i) {
+            print STDERR blurb() . "not a color or readable file: " .
+                "$background\n";
+            exit 1;
+        } else {
+            # default to assuming it's a color
+            $bgcolor = $background;
+        }
+    }
+
+    # Create the sold-colored base image.
+    #
+    $_ = "ppmmake '$bgcolor' $img_width $img_height";
+    if ($verbose > 1) {
+        print STDERR blurb() . "creating base image: $_\n";
+    }
+    nontrapping_system "$_ > $image_ppm";
+
+    # Paste the default background image in the middle of it.
+    #
+    if ($bgimage) {
+        my ($iw, $ih);
+
+        my $body = "";
+        local *IMG;
+        open(IMG, "<$bgimage") || die ("couldn't open $bgimage: $!\n");
+        my $cmd;
+        while (<IMG>) { $body .= $_; }
+        close (IMG);
+        if ((@_ = gif_size ($body))) {
+            ($iw, $ih) = @_;
+            $cmd = "giftopnm |";
+        } elsif ((@_ = jpeg_size ($body))) {
+            ($iw, $ih) = @_;
+            $cmd = "djpeg |";
+        } elsif ($body =~ m/^P\d\n(\d+) (\d+)\n/) {
+            $iw = $1;
+            $ih = $2;
+            $cmd = "";
+        } else {
+            die blurb() . "$bgimage is not a GIF, JPEG, or PPM.\n";
+        }
+
+        my $x = int (($img_width  - $iw) / 2);
+        my $y = int (($img_height - $ih) / 2);
+        if ($verbose > 1) {
+            print STDERR blurb() . "pasting $bgimage (${iw}x$ih) into base ".
+                "image at $x,$y\n";
+        }
+
+        $cmd .= "pnmpaste - $x $y $image_ppm > $image_tmp1";
+        open (IMG, "| $cmd") || die ("running $cmd: $!\n");
+        print IMG $body;
+        $body = undef;
+        close (IMG);
+        if ($verbose > 1) {
+            print STDERR blurb() . "subproc exited normally.\n";
+        }
+        rename ($image_tmp1, $image_ppm) ||
+            die ("renaming $image_tmp1 to $image_ppm: $!\n");
+    }
+
+    while (1) {
+        my ($base, $img, $source) = pick_image();
+        if ($img) {
+            my ($headers, $body) = get_document ($img, $base);
+            if ($body) {
+                handle_image ($base, $img, $body, $source);
+                $body = undef;
+            }
+        }
+        unlink $image_tmp1, $image_tmp2;
+        sleep $delay;
+    }
+}
+
+sub handle_image {
+    my ($base, $img, $body, $source) = @_;
+
+    if ($verbose > 1) {
+        print STDERR blurb() . "got $img (" . length($body) . ")\n";
+    }
+
+    my ($iw, $ih) = image_to_pnm ($img, $body, $image_tmp1);
+    $body = undef;
+    return 0 unless ($iw && $ih);
+
+    my $ow = $iw;  # used only for error messages
+    my $oh = $ih;
+
+    # don't just tack this onto the front of the pipeline -- we want it to
+    # be able to change the size of the input image.
+    #
+    if ($filter_cmd) {
+        if ($verbose > 1) {
+            print STDERR blurb() . "running $filter_cmd\n";
+        }
+
+        my $rc = nontrapping_system "($filter_cmd) < $image_tmp1 >$image_tmp2";
+        if ($rc != 0) {
+            if ($verbose) {
+                print STDERR blurb() . "failed command: \"$filter_cmd\"\n";
+                print STDERR blurb() . "failed url: \"$img\" (${ow}x$oh)\n";
+            }
+            return;
+        }
+        rename ($image_tmp2, $image_tmp1);
+
+        # re-get the width/height in case the filter resized it.
+        local *IMG;
+        open(IMG, "<$image_tmp1") || return 0;
+        $_ = <IMG>;
+        $_ = <IMG>;
+        ($iw, $ih) = m/^(\d+) (\d+)$/;
+        close (IMG);
+        return 0 unless ($iw && $ih);
+    }
+
+    my $target_w = $img_width;
+    my $target_h = $img_height;
+
+    my $cmd = "";
+
+
+    # Usually scale the image to fit on the screen -- but sometimes scale it
+    # to fit on half or a quarter of the screen.  Note that we don't merely
+    # scale it to fit, we instead cut it in half until it fits -- that should
+    # give a wider distribution of sizes.
+    #
+    if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; }
+    if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; }
+
+    if ($iw > $target_w || $ih > $target_h) {
+        while ($iw > $target_w ||
+               $ih > $target_h) {
+            $iw = int($iw / 2);
+            $ih = int($ih / 2);
+        }
+        if ($iw <= 10 || $ih <= 10) {
+            if ($verbose > 1) {
+                print STDERR blurb() . "scaling to ${iw}x$ih would " .
+                    "have been bogus.\n";
+            }
+            return 0;
+        }
+
+        if ($verbose > 1) {
+            print STDERR blurb() . "scaling to ${iw}x$ih\n";
+        }
+
+        $cmd .= " | pnmscale -xsize $iw -ysize $ih";
+    }
+
+
+    my $src = $image_tmp1;
+
+    my $crop_x = 0;     # the sub-rectangle of the image
+    my $crop_y = 0;     # that we will actually paste.
+    my $crop_w = $iw;
+    my $crop_h = $ih;
+
+    # The chance that we will randomly crop out a section of an image starts
+    # out fairly low, but goes up for images that are very large, or images
+    # that have ratios that make them look like banners (we try to avoid
+    # banner images entirely, but they slip through when the IMG tags didn't
+    # have WIDTH and HEIGHT specified.)
+    #
+    my $crop_chance = 0.2;
+    if ($iw > $img_width * 0.4 || $ih > $img_height * 0.4) {
+        $crop_chance += 0.2;
+    }
+    if ($iw > $img_width * 0.7 || $ih > $img_height * 0.7) {
+        $crop_chance += 0.2;
+    }
+    if ($min_ratio && ($iw * $min_ratio) > $ih) {
+        $crop_chance += 0.7;
+    }
+
+    if ($verbose > 2 && $crop_chance > 0.1) {
+        print STDERR blurb() . "crop chance: $crop_chance\n";
+    }
+
+    if (rand() < $crop_chance) {
+
+        my $ow = $crop_w;
+        my $oh = $crop_h;
+
+        if ($crop_w > $min_width) {
+            # if it's a banner, select the width linearly.
+            # otherwise, select a bell.
+            my $r = (($min_ratio && ($iw * $min_ratio) > $ih)
+                     ? rand()
+                     : bellrand());
+            $crop_w = $min_width + int ($r * ($crop_w - $min_width));
+            $crop_x = int (rand() * ($ow - $crop_w));
+        }
+        if ($crop_h > $min_height) {
+            # height always selects as a bell.
+            $crop_h = $min_height + int (bellrand() * ($crop_h - $min_height));
+            $crop_y = int (rand() * ($oh - $crop_h));
+        }
+
+        if ($verbose > 1 &&
+            ($crop_x != 0   || $crop_y != 0 ||
+             $crop_w != $iw || $crop_h != $ih)) {
+            print STDERR blurb() . "randomly cropping to " .
+                "${crop_w}x$crop_h \@ $crop_x,$crop_y\n";
+        }
+    }
+
+    # Where the image should logically land -- this might be negative.
+    #
+    my $x = int((rand() * ($img_width  + $crop_w/2)) - $crop_w*3/4);
+    my $y = int((rand() * ($img_height + $crop_h/2)) - $crop_h*3/4);
+
+    # if we have chosen to paste the image outside of the rectangle of the
+    # screen, then we need to crop it.
+    #
+    if ($x < 0 ||
+        $y < 0 ||
+        $x + $crop_w > $img_width ||
+        $y + $crop_h > $img_height) {
+
+        if ($verbose > 1) {
+            print STDERR blurb() . "cropping for effective paste of " .
+                "${crop_w}x$crop_h \@ $x,$y\n";
+        }
+
+        if ($x < 0) { $crop_x -= $x; $crop_w += $x; $x = 0; }
+        if ($y < 0) { $crop_y -= $y; $crop_h += $y; $y = 0; }
+
+        if ($x + $crop_w >= $img_width)  { $crop_w = $img_width  - $x - 1; }
+        if ($y + $crop_h >= $img_height) { $crop_h = $img_height - $y - 1; }
+    }
+
+    # If any cropping needs to happen, add pnmcut.
+    #
+    if ($crop_x != 0   || $crop_y != 0 ||
+        $crop_w != $iw || $crop_h != $ih) {
+        $iw = $crop_w;
+        $ih = $crop_h;
+        $cmd .= " | pnmcut $crop_x $crop_y $iw $ih";
+        if ($verbose > 1) {
+            print STDERR blurb() . "cropping to ${crop_w}x$crop_h \@ " .
+                "$crop_x,$crop_y\n";
+        }
+    }
+
+    if ($verbose > 1) {
+        print STDERR blurb() . "pasting ${iw}x$ih \@ $x,$y in $image_ppm\n";
+    }
+
+    $cmd .= " | pnmpaste - $x $y $image_ppm";
+
+    $cmd =~ s@^ *\| *@@;
+    my $rc = nontrapping_system "($cmd) < $image_tmp1 > $image_tmp2";
+
+    if ($rc != 0) {
+        if ($verbose) {
+            print STDERR blurb() . "failed command: \"$cmd\"\n";
+            print STDERR blurb() . "failed url: \"$img\" (${ow}x$oh)\n";
+        }
+        return;
+    }
+
+    rename ($image_tmp2, $image_ppm) || return;
+
+    my $target = "$image_ppm";
+
+    # don't just tack this onto the end of the pipeline -- we don't want it
+    # to end up in $image_ppm, because we don't want the results to be
+    # cumulative.
+    #
+    if ($post_filter_cmd) {
+        $target = $image_tmp1;
+        $rc = nontrapping_system "($post_filter_cmd) < $image_ppm > $target";
+        if ($rc != 0) {
+            if ($verbose) {
+                print STDERR blurb() . "filter failed: " .
+                    "\"$post_filter_cmd\"\n";
+            }
+            return;
+        }
+    }
+
+    if (!$no_output_p) {
+        my $tsize = (stat($target))[7];
+        if ($tsize > 200) {
+            $cmd = $ppm_to_root_window_cmd;
+            $cmd =~ s/%%PPM%%/$target/;
+
+            # xv seems to hate being killed.  it tends to forget to clean
+            # up after itself, and leaves windows around and colors allocated.
+            # I had this same problem with vidwhacker, and I'm not entirely
+            # sure what I did to fix it.  But, let's try this: launch xv
+            # in the background, so that killing this process doesn't kill it.
+            # it will die of its own accord soon enough.  So this means we
+            # start pumping bits to the root window in parallel with starting
+            # the next network retrieval, which is probably a better thing
+            # to do anyway.
+            #
+            $cmd .= "&";
+
+            $rc = nontrapping_system ($cmd);
+
+            if ($rc != 0) {
+                if ($verbose) {
+                    print STDERR blurb() . "display failed: \"$cmd\"\n";
+                }
+                return;
+            }
+
+        } elsif ($verbose > 1) {
+            print STDERR blurb() . "$target size is $tsize\n";
+        }
+    }
+
+    if ($verbose > 0) {
+        print STDOUT "image: ${iw}x${ih} @ $x,$y $base $source\n";
+    }
+
+    return 1;
+}
+
+
+sub main {
+    $| = 1;
+    srand(time ^ $$);
+
+    my $root_p = 0;
+
+    # historical suckage: the environment variable name is lower case.
+    $http_proxy = $ENV{http_proxy} || $ENV{HTTP_PROXY};
+
+    while ($_ = $ARGV[0]) {
+        shift @ARGV;
+        if ($_ eq "-display" ||
+            $_ eq "-displ" ||
+            $_ eq "-disp" ||
+            $_ eq "-dis" ||
+            $_ eq "-dpy" ||
+            $_ eq "-d") {
+            $ENV{DISPLAY} = shift @ARGV;
+        } elsif ($_ eq "-root") {
+            $root_p = 1;
+        } elsif ($_ eq "-no-output") {
+            $no_output_p = 1;
+        } elsif ($_ eq "-urls-only") {
+            $urls_only_p = 1;
+            $no_output_p = 1;
+        } elsif ($_ eq "-verbose") {
+            $verbose++;
+        } elsif (m/^-v+$/) {
+            $verbose += length($_)-1;
+        } elsif ($_ eq "-delay") {
+            $delay = shift @ARGV;
+        } elsif ($_ eq "-timeout") {
+            $http_timeout = shift @ARGV;
+        } elsif ($_ eq "-filter") {
+            $filter_cmd = shift @ARGV;
+        } elsif ($_ eq "-filter2") {
+            $post_filter_cmd = shift @ARGV;
+        } elsif ($_ eq "-background" || $_ eq "-bg") {
+            $background = shift @ARGV;
+        } elsif ($_ eq "-size") {
+            $_ = shift @ARGV;
+            if (m@^(\d+)x(\d+)$@) {
+                $img_width = $1;
+                $img_height = $2;
+            } else {
+                die blurb() . "argument to \"-size\" must be" .
+                    " of the form \"640x400\"\n";
+            }
+        } elsif ($_ eq "-proxy" || $_ eq "-http-proxy") {
+            $http_proxy = shift @ARGV;
+        } else {
+            die "$copyright\nusage: $progname [-root]" .
+                " [-display dpy] [-root] [-verbose] [-timeout secs]\n" .
+                "\t\t  [-delay secs] [-filter cmd] [-filter2 cmd]\n" .
+                "\t\t  [-http-proxy host[:port]]\n";
+        }
+    }
+
+    if ($http_proxy && $http_proxy eq "") {
+        $http_proxy = undef;
+    }
+    if ($http_proxy && $http_proxy =~ m@^http://([^/]*)/?$@ ) {
+        # historical suckage: allow "http://host:port" as well as "host:port".
+        $http_proxy = $1;
+    }
+
+    if (!$root_p && !$no_output_p) {
+        die "$copyright" .
+            blurb() . "the -root argument is mandatory (for now.)\n";
+    }
+
+    if (!$no_output_p && !$ENV{DISPLAY}) {
+        die blurb() . "\$DISPLAY is not set.\n";
+    }
+
+    if ($urls_only_p) {
+        url_only_output;
+    } else {
+        x_output;
+    }
+}
+
+main;
+exit (0);
