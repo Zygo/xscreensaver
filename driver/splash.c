@@ -414,7 +414,9 @@ make_splash_dialog (saver_info *si)
 		   attrmask, &attrs);
   XSetWindowBackground (si->dpy, si->splash_dialog, sp->background);
 
-  sp->logo_pixmap = xscreensaver_logo (ssi->screen, ssi->current_visual,
+  sp->logo_pixmap = xscreensaver_logo (ssi->screen, 
+                                       /* same visual as si->splash_dialog */
+                                       DefaultVisualOfScreen (ssi->screen),
                                        si->splash_dialog, cmap,
                                        sp->background, 
                                        &sp->logo_pixels, &sp->logo_npixels,

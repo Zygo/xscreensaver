@@ -1,21 +1,25 @@
-.TH XScreenSaver 1 "" "X Version 11"
+.TH XScreenSaver 1 "30-Oct-99" "X Version 11"
 .SH NAME
-gears - draw interlocking gears, for xscreensaver.
+moebiusgears - draw a moebius strip of interlocking gears.
 .SH SYNOPSIS
-.B gears
+.B moebiusgears
 [\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
 [\-visual \fIvisual\fP]
 [\-delay \fIusecs\fP] 
 [\-speed \fIfloat\fP] 
 [\-no\-spin]
 [\-no\-wander]
+[\-no\-roll]
 [-count \fIinteger\fP]
+[-teeth \fIinteger\fP]
 [-wireframe]
 [-fps]
 .SH DESCRIPTION
-This draws a set of rotating gears.
+The \fImoebiusgears\fP program draws a closed, interlinked chain of
+rotating gears. The layout of the gears follows the path of a
+moebius strip.
 .SH OPTIONS
-.I gears
+.I moebiusgears
 accepts the following options:
 .TP 8
 .B \-window
@@ -44,8 +48,14 @@ Don't rotate the object.
 .B \-no\-wander
 Don't wander the object around the screen.
 .TP 8
+.B \-no\-roll
+Don't slowly roll the moebius strip inside out.
+.TP 8
 .B \-count \fIinteger\fP
-How many gears to draw.  Default: 0 for random.
+How many gears to draw.  Default: 17.  Minimum 11, must be odd.
+.TP 8
+.B \-teeth \fIinteger\fP
+How many teeth to draw on each draw.  Default: 15.  Minimum 7, must be odd.
 .TP 8
 .B \-wireframe
 Render in wireframe instead of solid.
@@ -74,6 +84,3 @@ suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH AUTHOR
 Jamie Zawinski.
-
-An earlier version of this program by Brian Paul was written in 1997;
-this version was rewritten from scratch by jwz in 2007.

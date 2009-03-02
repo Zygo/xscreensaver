@@ -1,6 +1,6 @@
 /*
- * Fireworkx 1.5 - pyrotechnics simulation program
- * Copyright (c) 1999-2005 Rony B Chandran <ronybc@asia.com>
+ * Fireworkx 1.6 - pyrotechnics simulation program (XScreensaver version)
+ * Copyright (c) 1999-2007 Rony B Chandran <ronybc@asia.com>
  *
  * From Kerala, INDIA
  * 
@@ -30,9 +30,9 @@
 #include <math.h>
 #include "screenhack.h"
 
-#define FWXVERSION "1.5"
+#define FWXVERSION "1.6"
 
-#define SHELLCOUNT 3                   /* 3 or 5  */
+#define SHELLCOUNT 3                   /* 3 ; see light() before changing this value */
 #define PIXCOUNT 500                   /* 500     */
 #define POWER 5                        /* 5       */
 #define FTWEAK 12                      /* 12      */
@@ -99,9 +99,10 @@ static int explode(struct state *st, fireshell *fs)
   if(fs->vgn){
     if(--fs->cy == fs->shy){  
       fs->vgn   = 0;
-      fs->flash = rnd(30000)+15000;}
+      fs->flash = rnd(30000)+25000;
+      fs->flash = fs->flash*fs->flash; }
     else{  
-      fs->flash = 50+(fs->cy - fs->shy)*2;
+      fs->flash = 200000+(fs->cy - fs->shy)*(fs->cy - fs->shy)*8;
       prgb=(unsigned int *)(palaka + (fs->cy * w + fs->cx + rnd(5)-2)*4);
      *prgb=(rnd(8)+8)*0x000f0f10;
       return(1);}}    
@@ -114,10 +115,10 @@ static int explode(struct state *st, fireshell *fs)
   if(fp->burn){ --fp->burn; 
   if(fs->special){
   fp->x += fp->xv = fp->xv * air + (float)(rnd(200)-100)/2000;
-  fp->y += fp->yv = fp->yv * air + (float)(rnd(200)-100)/2000 + adg; }
+  fp->y += fp->yv = fp->yv * air + (float)(rnd(200)-100)/2000+ adg;}
   else{
   fp->x += fp->xv = fp->xv * air + (float)(rnd(200)-100)/20000;
-  fp->y += fp->yv = fp->yv * air + adg; }
+  fp->y += fp->yv = fp->yv * air + (float)(rnd(200)-100)/40000+ adg; }
   if(fp->y > h){
   if(rnd(5)==3) {fp->yv *= -0.24; fp->y = h;}
   else fp->burn=0;} /* touch muddy ground :) */
@@ -140,7 +141,8 @@ static void recycle(struct state *st, fireshell *fs,int x,int y)
                rnd(255);
   fs->life = rnd(st->rndlife)+st->minlife;
   fs->air  = 1-(float)(rnd(200))/10000;
-  fs->flash   = rnd(30000)+15000;        /* million jouls */
+  fs->flash   = rnd(30000)+25000;       /*  million jouls...              */
+  fs->flash   = fs->flash*fs->flash;
   fs->cshift  = !rnd(5) ? 120:0; 
   fs->special = !rnd(10) ? 1:0; 
   if(st->verbose)
@@ -169,15 +171,14 @@ static void glow(struct state *st)
   pm+=n; po+=n; h-=2; 
   pa = pm-(w*4);
   pb = pm+(w*4);
-  for(n=4;(signed) n< (signed) (w*h*4-4); n++){
+  for(n=4;n<w*h*4-4;n++){
   q    = pm[n-4] + (pm[n]*8) + pm[n+4] + 
          pa[n-4] + pa[n] + pa[n+4] + 
          pb[n-4] + pb[n] + pb[n+4];
   q    -= q>8 ? 8:q;
-  pm[n] = q/16;
-  q     = q/8;
-  if(q>255) q=255;
-  po[n] = q;}
+  pm[n] = q>>4;
+  q     = q>>3;
+  po[n] = q>255 ? 255 : q;}
   pm+=n; po+=n;
   for(n=0;n<w*4;n++)
   {pm[n]=0; po[n]=0;}}   /* clean last line */
@@ -205,7 +206,7 @@ static void blur(struct state *st)
 
 static void light_2x2(struct state *st, fireshell *fss)
 {
-  unsigned int l,t,n,x,y;
+  unsigned int l,t,x,y;
   float s;
   int w = st->width;
   int h = st->height;
@@ -216,11 +217,21 @@ static void light_2x2(struct state *st, fireshell *fss)
   if(st->glow_on) sim=dim;
   for(y=0;y<h;y+=2){
   for(x=0;x<w;x+=2){
-  f = fss; s = 0;
+  f = fss;
+
+/* Note: The follwing loop is unrolled for speed.
+         check this before changing the value of SHELLCOUNT
+  s = 0;
   for(n=SHELLCOUNT;n;n--,f++){
-  s += f->flash/(sqrt(1+(f->cx - x)*(f->cx - x)+
-                        (f->cy - y)*(f->cy - y)));}
-  l = s;
+  s += f->flash/(1+(f->cx - x)*(f->cx - x)+(f->cy - y)*(f->cy - y));} */
+
+  s  = f->flash/(1+(f->cx - x)*(f->cx - x)+(f->cy - y)*(f->cy - y));
+  f++;
+  s += f->flash/(1+(f->cx - x)*(f->cx - x)+(f->cy - y)*(f->cy - y));
+  f++;
+  s += f->flash/(1+(f->cx - x)*(f->cx - x)+(f->cy - y)*(f->cy - y));
+
+  l = sqrtf(s);
 
   t = l + sim[0];
   dim[0] = (t > 255 ? 255 : t);	
@@ -370,15 +381,16 @@ fireworkx_init (Display *dpy, Window win)
   st->rndlife  = get_integer_resource(st->dpy, "maxlife" , "Integer");
   st->delay    = get_integer_resource(st->dpy, "delay"   , "Integer");
   st->minlife  = st->rndlife/4;
-  if(st->rndlife<1000) st->flash_fade=0.98;
-  if(st->rndlife<500) st->flash_fade=0.97;
+  st->flash_fade=0.98;
+  if(st->rndlife < 1000) st->flash_fade=0.96;
+  if(st->rndlife <  500) st->flash_fade=0.94;
   if(st->verbose){
   printf("Fireworkx %s - pyrotechnics simulation program \n", FWXVERSION);
-  printf("Copyright (c) 1999-2005 Rony B Chandran <ronybc@asia.com> \n\n");
+  printf("Copyright (c) 1999-2007 Rony B Chandran <ronybc@asia.com> \n\n");
   printf("url: http://www.ronybc.8k.com \n\n");}
 
   XGetWindowAttributes(st->dpy,win,&xwa);
-  st->depth     = xwa.depth;
+  st->depth = xwa.depth;
   vi        = xwa.visual;
   cmap      = xwa.colormap;
   st->bigendian = (ImageByteOrder(st->dpy) == MSBFirst);

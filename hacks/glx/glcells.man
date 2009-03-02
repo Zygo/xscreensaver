@@ -95,5 +95,5 @@ appear in supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH AUTHOR
-Matthias Toussaint <glcells@mtoussaint.de>, 17-Jun-2007.
+Matthias Toussaint <glcells@mtoussaint.de>, 17-Jun-2007, http://www.mtoussaint.de/bits.html.
  

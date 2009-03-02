@@ -4,7 +4,7 @@
 /*-
  * Cells growing on your screen
  *
- * Copyright (c) 2006 by Matthias Toussaint
+ * Copyright (c) 2007 by Matthias Toussaint
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -18,7 +18,10 @@
  * event will the author be liable for any lost revenue or profits or
  * other special, indirect and consequential damages.
  *
- * 2006: Written by Matthias Toussaint
+ * 2007: Written by Matthias Toussaint
+ * 0.1 Initial version
+ * 0.2 Bugfixes (threading) and code cleanup by Jamie Zavinsky
+ *     Window scaling bug + performance bug in tick()
  */
  
 #include <sys/time.h> /* gettimeofday */
@@ -116,11 +119,12 @@ typedef struct    /* hacks state */
 {
   GLXContext *glx_context;
   int width, height;    /* current size of viewport */
+  double screen_scale;  /* we scale content with window size */
   int num_cells;        /* current number of cell in list */
   Cell *cell;           /* array of cells */
   int cell_polys;
   GLfloat color[4];     /* current cell color */
-  int radius;           /* cell radius */
+  double radius;        /* cell radius */
   int move_dist;        /* min distance from neighbours for forking */
   int max_cells;        /* maximum number of cells */
   int num_seeds;        /* number of initial seeds */
@@ -252,7 +256,9 @@ ENTRYPOINT ModeSpecOpt glcells_opts = { countof(opts), opts,                    
 */
 static inline int random_interval( int min, int max )
 {
-  return min+(random()%(max-min));
+  int n = max - min;
+  if (n == 0) n = 1;
+  return min+(random()%n);
 }
 
 static inline int random_max( int max )
@@ -951,9 +957,10 @@ static void draw_nucleus( State *st )
 
 static void create_cells( State *st )
 {
+  int border = (int)(200.0 * st->screen_scale);
   int i, foodcnt;
-  int w = st->width-400;
-  int h = st->height-400;
+  int w = st->width-2*border;
+  int h = st->height-2*border;
   
   st->color[0] = 0.5 + random_max( 1000 ) * 0.0005;
   st->color[1] = 0.5 + random_max( 1000 ) * 0.0005;
@@ -975,8 +982,8 @@ static void create_cells( State *st )
   st->num_cells = st->num_seeds;
 
   for (i=0; i<st->num_cells; ++i) {
-    st->cell[i].x        = 200 + random_max( w );
-    st->cell[i].y        = 200 + random_max( h );
+    st->cell[i].x        = border + random_max( w );
+    st->cell[i].y        = border + random_max( h );
     st->cell[i].vx       = 0.0;
     st->cell[i].vy       = 0.0;
     st->cell[i].age      = random_max( 0x0f );
@@ -999,6 +1006,7 @@ static void tick( State *st )
   int num_living = 0;
   const double check_dist = 0.75*st->move_dist;
   const double grow_dist = 0.75*st->radius;
+  const double adult_radius = st->radius;
   
   /* find number of cells capable of division 
      and count living cells
@@ -1068,7 +1076,8 @@ static void tick( State *st )
             const double dy = st->cell[b].y - st->cell[j].y;
             
             if (fabs(dx) < check_dist || fabs(dy) < check_dist) {
-              const double dist = sqrt( dx*dx+dy*dy );
+              const double dist = dx*dx+dy*dy;
+              /*const double dist = sqrt( dx*dx+dy*dy );*/
               if (dist<min_dist) {
                 min_dist = dist;
                 min_index = j;
@@ -1086,9 +1095,9 @@ static void tick( State *st )
         }
         st->cell[b].min_dist = len;
         /* if not adult (radius too small) */
-        if (st->cell[b].radius < st->radius) {
+        if (st->cell[b].radius < adult_radius) {
           /* if too small 60% stop shrinking */
-          if (st->cell[b].radius < st->radius * 0.6) {
+          if (st->cell[b].radius < adult_radius * 0.6) {
             st->cell[b].growth = 1.0;
           }
           /* at safe distance we start growing again */
@@ -1158,7 +1167,18 @@ reshape_glcells( ModeInfo *mi, int width, int height )
   State *st  = &sstate[MI_SCREEN(mi)];
   st->height = height;
   st->width  = width;
+  st->screen_scale = (double)width / 1600.0;
   
+  st->radius = s_radius;
+  if (st->radius < 5) st->radius = 5;
+  if (st->radius > 200) st->radius = 200;
+  st->radius *= st->screen_scale;
+       
+  st->move_dist = s_min_dist;
+  if (st->move_dist < 1.0) st->move_dist = 1.0;
+  if (st->move_dist > 3.0) st->move_dist = 3.0;
+  st->move_dist *= st->radius;
+
   glViewport (0, 0, (GLint) width, (GLint) height);
 
   glMatrixMode(GL_PROJECTION);

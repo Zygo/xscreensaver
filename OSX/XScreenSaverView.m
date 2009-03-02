@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006, 2007 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -313,7 +313,18 @@ add_default_options (const XrmOptionDescRec *opts,
     XClearWindow (xdpy, xwindow);
     
     [[self window] setAcceptsMouseMovedEvents:YES];
-    
+
+    /* In MacOS 10.5, this enables "QuartzGL", meaning that the Quartz
+       drawing primitives will run on the GPU instead of the CPU.
+       It seems like it might make things worse rather than better,
+       though...  Plus it makes us binary-incompatible with 10.4.
+
+# if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
+    [[self window] setPreferredBackingLocation:
+                     NSWindowBackingLocationVideoMemory];
+# endif
+     */
+
     /* Kludge: even though the init_cb functions are declared to take 2 args,
       actually call them with 3, for the benefit of xlockmore_init() and
       xlockmore_setup().

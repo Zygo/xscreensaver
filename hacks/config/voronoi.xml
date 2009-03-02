@@ -11,7 +11,7 @@
 
   <number id="points" type="slider" arg="-points %"
           _label="Points" _low-label="Few" _high-label="Many"
-          low="1" high="50" default="10"/>
+          low="1" high="100" default="25"/>
 
   <number id="pointSize" type="slider" arg="-point-size %"
           _label="Point Size" _low-label="0" _high-label="50 pixels"
@@ -23,7 +23,7 @@
 
   <number id="pointDelay" type="slider" arg="-point-delay %"
           _label="Insertion Speed" _low-label="Slow" _high-label="Fast"
-          low="0.0" high="3.0" default="0.1"
+          low="0.0" high="3.0" default="0.05"
           convert="invert"/>
 
   <number id="zoomSpeed" type="slider" arg="-zoom-speed %"
@@ -32,7 +32,9 @@
 
   <number id="zoomDelay" type="slider" arg="-zoom-delay %"
           _label="Zoom Frequency" _low-label="0" _high-label="60 Seconds"
-          low="0" high="60" default="10"/>
+          low="0" high="60" default="15"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
 Draws a randomly-colored Voronoi tessellation, and periodically zooms 

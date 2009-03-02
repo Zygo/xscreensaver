@@ -6,6 +6,8 @@ pong - Pong Home Video Game Emulator
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
 [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
 [\-visual \fIvisual\fP]
+[\-clock \fIfloat\fP]
+[\-noise]
 .SH DESCRIPTION
 The
 .I pong 
@@ -30,6 +32,12 @@ Install a private colormap for the window.
 .B \-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-clock
+The score of the game will be the current time.
+.TP 8
+.B \-noise \fIfloat\fP
+How noisy the video signal should be (between 0.0 and 4.0 or so).
 .SH ENVIRONMENT
 .PP
 .TP 8

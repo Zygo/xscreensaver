@@ -87,22 +87,26 @@ static void random_colors(struct state *st);
 
 /* why strip bit? */
 #define R (random()&((1<<30)-1))
+#define BELLRAND(x) (((random()%(x)) + (random()%(x)) + (random()%(x)))/3)
 
 /* returns number of pixels that the pixack produces.  called once. */
 static void
 pixack_init(struct state *st, int *size_h, int *size_v) 
 {
-  int sz_base;
-  st->width = get_integer_resource (st->dpy, "width", "Integer");
+  st->width  = get_integer_resource (st->dpy, "width",  "Integer");
   st->height = get_integer_resource (st->dpy, "height", "Integer");
-  sz_base = 80 + (R%40);
-  if (st->width <= 0) st->width = (R%20) ? sz_base : (28 + R%10);
-  if (st->height <= 0) st->height = (R%20) ? sz_base : (28 + R%10);
+
+  if (st->width <= 0 && st->height <= 0 && (R & 1))
+    st->width = st->height = 48 + BELLRAND(256);
+
+  if (st->width  <= 0) st->width  = 48 + BELLRAND(256);
+  if (st->height <= 0) st->height = 48 + BELLRAND(256);
 
   /* jwz: when (and only when) XSHM is in use on an SGI 8-bit visual,
      we get shear unless st->width is a multiple of 4.  I don't understand
      why.  This is undoubtedly the wrong fix... */
-  st->width &= ~0x7;
+  if (visual_depth (st->xgwa.screen, st->xgwa.visual) == 8)
+    st->width &= ~0x7;
 
   /* don't go there */
   if (st->width < 10) st->width = 10;

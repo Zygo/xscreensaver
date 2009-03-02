@@ -1,4 +1,4 @@
-/* glknots, Copyright (c) 2003-2006 Jamie Zawinski <jwz@jwz.org>
+/* glknots, Copyright (c) 2003-2007 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -158,12 +158,10 @@ make_knot (ModeInfo *mi)
               di = (di * di * 3);
             }
 
-          tube (ox, oy, oz,
-                x, y, z,
-                di, dist/3,
-                faces, True, wire, wire);
-
-          mi->polygon_count += faces;
+          mi->polygon_count += tube (ox, oy, oz,
+                                     x, y, z,
+                                     di, dist/3,
+                                     faces, True, wire, wire);
         }
 
       ox = x;

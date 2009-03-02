@@ -14,6 +14,7 @@ install_prefix	=
 prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
+datarootdir	= @datarootdir@
 datadir		= @datadir@
 localedir	= $(datadir)/locale
 mandir		= @mandir@
@@ -523,7 +524,7 @@ install-gnome:: $(LOGO)
 # ../utils/images/screensaver-*.png
 # into /usr/share/xscreensaver/glade/
 install-gnome::
-	@if [ "$(GTK_GLADEDIR)" != "" ]; then                                 \
+	@if [ "$(GTK_DATADIR)" != "" ]; then                                 \
            if [ ! -d "$(install_prefix)$(GTK_GLADEDIR)" ]; then               \
              echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"         ;\
                   $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"         ;\
@@ -540,7 +541,7 @@ install-gnome::
 # xscreensaver-demo.glade2
 # into /usr/share/xscreensaver/glade/
 install-gnome:: xscreensaver-demo.glade2
-	@if [ "$(GTK_GLADEDIR)" != "" ]; then				      \
+	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
 	  if [ ! -d "$(install_prefix)$(GTK_GLADEDIR)" ]; then		      \
 	    echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"	     ;\
 	         $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"	     ;\
@@ -587,7 +588,7 @@ uninstall-gnome::
 # ../utils/images/screensaver-*.png
 # into /usr/share/xscreensaver/glade/
 uninstall-gnome::
-	@if [ "$(GTK_GLADEDIR)" != "" ]; then				      \
+	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
 	   for target in $(GTK_ICONS) ; do				      \
 	     dest=`echo $$target | sed 's@^.*/@@'`			     ;\
 	     echo rm -f $(install_prefix)$(GTK_GLADEDIR)/$$dest              ;\
@@ -598,7 +599,7 @@ uninstall-gnome::
 # xscreensaver-demo.glade2
 # into /usr/share/xscreensaver/glade/
 uninstall-gnome:: xscreensaver-demo.glade2
-	@if [ "$(GTK_GLADEDIR)" != "" ]; then				      \
+	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
 	  target=xscreensaver-demo.glade2				     ;\
 	  echo rm -f $(install_prefix)$(GTK_GLADEDIR)/$$target               ;\
 	       rm -f $(install_prefix)$(GTK_GLADEDIR)/$$target               ;\
@@ -691,7 +692,7 @@ tags:
 	find $(srcdir) -name '*.[chly]' -print | xargs etags -a
 
 echo_tarfiles:
-	@$(MAKE) XScreenSaver_ad.h XScreenSaver_Xm_ad.h 2>&1 >&- /dev/null
+	@$(MAKE) XScreenSaver_ad.h XScreenSaver_Xm_ad.h 2>&1 >&/dev/null
 	@echo $(TARFILES)
 
 check_men:
@@ -795,7 +796,7 @@ xscreensaver-demo-Gtk: $(DEMO_OBJS) $(GTK_OBJS)
 	-lXt -lX11 $(XDPMS_LIBS) $(XINERAMA_LIBS) -lXext $(X_EXTRA_LIBS)
 
 demo-Gtk.o: XScreenSaver_ad.h
-demo-Xm.o:  XScreenSaver_ad_Xm.h
+demo-Xm.o:  XScreenSaver_Xm_ad.h
 
 xscreensaver-getimage: $(GETIMG_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(GETIMG_OBJS) $(GETIMG_LIBS) -lm

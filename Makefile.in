@@ -143,7 +143,7 @@ bump-version::
   if [ -f $${ADIR}xscreensaver-$$MAJOR.$$NEW.tar.gz ]; then		    \
     echo "WARNING: $${ADIR}xscreensaver-$$MAJOR.$$NEW.tar.gz already exists.";\
   fi ;									    \
-  echo -n "Bumping $$MAJOR.$$MINOR to $$MAJOR.$$NEW ($$D), ok? ";	    \
+  /bin/echo -n "Bumping $$MAJOR.$$MINOR to $$MAJOR.$$NEW ($$D), ok? ";	    \
   read line;								    \
   if [ "x$$line" != "xyes" -a  "x$$line" != "xy" ]; then		    \
     exit 1 ; 								    \
@@ -152,7 +152,7 @@ bump-version::
   sed -e "s/\([0-9]\.[0-9][0-9]*\)/$$MAJOR.$$NEW/"			    \
       -e "s/\(([0-9][0-9]*-[A-Za-z][a-z][a-z]-[0-9][0-9][0-9]*\))/($$D)/"   \
         $$SRC > $$TMP ;							    \
-  echo -n "New version and date are ";					    \
+  /bin/echo -n "New version and date are ";				    \
   sed -n "s/[^0-9]*\([0-9]\.[0-9][0-9]*\) (\([-A-Za-z0-9]*\)).*/\1, \2./p"  \
      $$TMP;								    \
   cat $$TMP > $$SRC ;							    \
@@ -170,7 +170,7 @@ version-date::
   D=`date '+%d-%b-%Y'`;							    \
   TMP=/tmp/bv.$$ ;							    \
   sed -e "s/([0-9][^()]*)/($$D)/" < $$SRC > $$TMP ;			    \
-  echo -n "Updating date in $$SRC to \"$$D\"... " ;			    \
+  /bin/echo -n "Updating date in $$SRC to \"$$D\"... " ;		    \
   if cmp -s $$SRC $$TMP ; then						    \
     echo "unchanged." ;							    \
   else									    \
@@ -184,7 +184,7 @@ update_spec_version::
 	@S=$(srcdir)/xscreensaver.spec ;				    \
 	U=$(srcdir)/utils/version.h ;					    \
 	VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' < $$U` ;	    \
-	echo -n "Updating $$S to \"$$VERS\"... " ;			    \
+	/bin/echo -n "Updating $$S to \"$$VERS\"... " ;			    \
 	T=/tmp/xs.$$$$ ;						    \
 	sed "s/^\(%define.version[^0-9]*\)\(.*\)/\1$$VERS/"		    \
 	  < $$S > $$T ;							    \
@@ -300,14 +300,14 @@ www::
   fi ;									    \
   chmod a-w $$NAME ;							    \
   if [ -f $$DNAME ]; then						    \
-    echo -n "WARNING: $$DNAME already exists!  Overwrite? ";		    \
+    /bin/echo -n "WARNING: $$DNAME already exists!  Overwrite? ";	    \
     read line;								    \
     if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then		    \
       exit 1 ; 								    \
     fi ;								    \
   fi ;									    \
   if [ -f $$DNAME2 ]; then						    \
-    echo -n "WARNING: $$DNAME2 already exists!  Overwrite? ";		    \
+    /bin/echo -n "WARNING: $$DNAME2 already exists!  Overwrite? ";	    \
     read line;								    \
     if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then		    \
       exit 1 ; 								    \
@@ -325,7 +325,7 @@ www::
   echo '' ;								    \
 									    \
   OLDEST=`ls xscreensaver*.tar.gz | head -1` ;				    \
-  echo -n "Delete $$DEST/$$OLDEST? ";					    \
+  /bin/echo -n "Delete $$DEST/$$OLDEST? ";				    \
   read line;								    \
   if [ "x$$line" = "xyes" -o "x$$line" = "xy" ]; then			    \
     set -x ;								    \
@@ -343,7 +343,7 @@ www::
   cvs diff -U0 changelog.html ;						    \
   set +x ;								    \
 									    \
-  echo -n "Ok? ";							    \
+  /bin/echo -n "Ok? ";							    \
   read line;								    \
   if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then			    \
     exit 1 ;								    \
@@ -370,7 +370,7 @@ check_years::
 
 count::
 	@ \
-  echo -n "Current hack count: " ; \
+  /bin/echo -n "Current hack count: " ; \
   ( ( cd hacks;     make -s INSTALL=true install-program install-scripts ) ; \
     ( cd hacks/glx; make -s INSTALL=true install-program ) ) | \
     grep true | \

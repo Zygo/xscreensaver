@@ -1,5 +1,5 @@
 %define	name xscreensaver
-%define	version 5.03
+%define	version 5.04
 
 Summary:	X screen saver and locker
 Name:		%{name}
@@ -22,8 +22,11 @@ BuildRequires:	gettext
 BuildRequires:	pam-devel
 BuildRequires:	gtk2-devel
 BuildRequires:	desktop-file-utils
-# Red Hat:
-BuildRequires:	xorg-x11-devel
+# Red Hat (pre-FC5):
+#BuildRequires:	xorg-x11-devel
+#BuildRequires:	libglade2-devel
+# Red Hat 5, CentOS5, FC5, and up:
+BuildRequires:	xorg-x11-proto-devel
 BuildRequires:	libglade2-devel
 # Mandrake:
 #BuildRequires:	libxorg-x11-devel

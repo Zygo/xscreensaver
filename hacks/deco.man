@@ -3,11 +3,27 @@
 deco - draw tacky 70s basement wall panelling
 .SH SYNOPSIS
 .B deco
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIseconds\fP] [\-max\-depth \fIint\fP] [\-min\-width \fIint\fP] [\-min\-height \fIint\fP] [\-cycle] [\-no\-cycle] [\-cycle\-delay]
+[\-display \fIhost:display.screen\fP]
+[\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP]
+[\-window]
+[\-root]
+[\-mono]
+[\-install]
+[\-visual \fIvisual\fP]
+[\-delay \fIseconds\fP]
+[\-max\-depth \fIint\fP]
+[\-min\-width \fIint\fP]
+[\-min\-height \fIint\fP]
+[\-line-width \yIint\fP]
+[\-smooth\-colors]
+[\-golden\-ratio]
+[\-mondrian]
 .SH DESCRIPTION
 The \fIdeco\fP program subdivides and colors rectangles randomly.
 It looks kind of like Brady-Bunch-era rec-room wall paneling.
-(Raven says: "this screensaver is ugly enough to peel paint.")
+(Raven says: "This screensaver is ugly enough to peel paint.")
+Can also produce more aesthetically pleasing displays via options.
 .SH OPTIONS
 .I deco
 accepts the following options:
@@ -34,18 +50,31 @@ How long to wait before starting over.  Default 5 seconds.
 .B \-max\-depth \fIinteger\fP
 How deep to subdivide.  Default 12.
 .TP 8
-.B \-min-width \fIinteger\fP
-.B \-min-height \fIinteger\fP
+.B \-min\-width \fIinteger\fP
+.TP 8
+.B \-min\-height \fIinteger\fP
 The size of the smallest rectangle to draw.  Default 20x20.
 .TP 8
-.B \-cycle
+.B \-line\-width \fIinteger\fP
+Width of lines drawn between rectangles. Default zero (minimal width).
 .TP 8
-.B \-no\-cycle
-Whether to do color cycling.  Default False.
+.B \-smooth\-colors
 .TP 8
-.B \-cycle\-delay \fIusecs\fP
-If color cycling, how often to change the colors.  Default 1000000,
-or 1 second.
+.B \-no\-smooth\-colors
+Whether to use a smooth color palette instead of a random one.
+Less jarring. Default False.
+.TP 8
+.B \-golden\-ratio
+.TP 8
+.B \-no\-golden\-ratio
+Whether to subdivide rectangles using the golden ratio instead of 1/2.
+This ratio is supposed to be more aesthetically pleasing. Default false.
+.TP 8
+.B \-mondrian
+.TP 8
+.B \-no\-mondrian
+Whether to imitiate style of some famous paintings by Piet Mondrian.
+Overrides line-width and colormap options. Default false.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -68,4 +97,5 @@ suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH AUTHOR
 Jamie Zawinski <jwz@jwz.org>, 26-Apr-97, based on code by
-Michael D. Bayne <mdb@go2net.com>.
+Michael D. Bayne <mdb@go2net.com>. Golden ratio and 
+Mondrian settings by Lars Huttar.

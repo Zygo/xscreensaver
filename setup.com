@@ -3,6 +3,7 @@ $ set NOON
 $ set def [.HACKS]
 $ mydisk = f$trnlmn("SYS$DISK")
 $ mydir  = mydisk+f$directory()
+$ abstractile	:== $'mydir'abstractile
 $ anemone	:== $'mydir'anemone
 $ anemotaxis	:== $'mydir'anemotaxis
 $ apollonian	:== $'mydir'apollonian
@@ -123,6 +124,7 @@ $ twang		:== $'mydir'twang
 $ vermiculate	:== $'mydir'vermiculate
 $ vines		:== $'mydir'vines
 $ wander	:== $'mydir'wander
+$ webcollage-helper	:== $'mydir'webcollage-helper
 $ whirlwindwarp	:== $'mydir'whirlwindwarp
 $ whirlygig	:== $'mydir'whirlygig
 $ worm		:== $'mydir'worm

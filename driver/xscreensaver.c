@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2007 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1406,7 +1406,6 @@ main (int argc, char **argv)
   if (!spasswd)
     {
       fprintf(stderr, "Could not figure out who the current user is!\n");
-      fprintf(stderr, "spasswd is %x\n", (unsigned int) spasswd);
       return 1;
     }
 

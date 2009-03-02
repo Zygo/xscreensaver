@@ -15,9 +15,7 @@
 #include <stdio.h>
 #include "xpm-pixmap.h"
 
-#define ALIVE   1
-#define CHANGED 2
-#define UNDEAD  4
+#define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 
 typedef struct {
   double scale;
@@ -31,11 +29,13 @@ typedef struct {
   XWindowAttributes xgwa;
   GC gc;
   int delay;
+  int scale;
   int ncolors;
   XColor *colors;
 
   int nwaves;
   wave *waves;
+  int debug_p;
 
 } state;
 
@@ -51,6 +51,9 @@ cwaves_init (Display *dpy, Window window)
   st->window = window;
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
 
+  st->debug_p = get_boolean_resource (dpy, "debug", "Boolean");
+  st->scale = get_integer_resource (dpy, "scale", "Integer");
+  if (st->scale <= 0) st->scale = 1;
   st->ncolors = get_integer_resource (dpy, "ncolors", "Integer");
   if (st->ncolors < 4) st->ncolors = 4;
   st->colors = (XColor *) malloc (sizeof(*st->colors) * (st->ncolors+1));
@@ -66,9 +69,9 @@ cwaves_init (Display *dpy, Window window)
 
   for (i = 0; i < st->nwaves; i++)
     {
-      st->waves[i].scale  = frand(0.05) + 0.005;
+      st->waves[i].scale  = frand(0.03) + 0.005;
       st->waves[i].offset = frand(M_PI);
-      st->waves[i].delta  = (frand(2) - 1) / 20.0;
+      st->waves[i].delta  = (BELLRAND(2)-1) / 15.0;
     }
 
   return st;
@@ -84,7 +87,7 @@ cwaves_draw (Display *dpy, Window window, void *closure)
   for (i = 0; i < st->nwaves; i++)
     st->waves[i].offset += st->waves[i].delta;
 
-  for (x = 0; x < st->xgwa.width; x++)
+  for (x = 0; x < st->xgwa.width; x += st->scale)
     {
       double v = 0;
       int j;
@@ -95,7 +98,58 @@ cwaves_draw (Display *dpy, Window window, void *closure)
       j = st->ncolors * (v/2 + 0.5);
       if (j < 0 || j >= st->ncolors) abort();
       XSetForeground (st->dpy, st->gc, st->colors[j].pixel);
-      XDrawLine (st->dpy, st->window, st->gc, x, 0, x, st->xgwa.height);
+      XFillRectangle (st->dpy, st->window, st->gc, 
+                      x, 0, st->scale, st->xgwa.height);
+    }
+
+  if (st->debug_p)
+    {
+      int wh = (st->xgwa.height / (st->nwaves + 1)) * 0.9;
+      int i;
+      XSetLineAttributes (st->dpy, st->gc, 2, LineSolid, CapRound, JoinRound);
+      XSetForeground (st->dpy, st->gc, BlackPixelOfScreen (st->xgwa.screen));
+      for (i = 0; i < st->nwaves; i++)
+        {
+          int y = st->xgwa.height * i / (st->nwaves + 1);
+          int ox = -1, oy = -1;
+
+          for (x = 0; x < st->xgwa.width; x += st->scale)
+            {
+              int yy;
+              double v = 0;
+              v = cos ((x * st->waves[i].scale) - st->waves[i].offset);
+              v /= 2;
+
+              yy = y + wh/2 + (wh * v);
+              if (ox == -1)
+                ox = x, oy = yy;
+              XDrawLine (st->dpy, st->window, st->gc, ox, oy, x, yy);
+              ox = x;
+              oy = yy;
+            }
+        }
+
+      {
+        int y = st->xgwa.height * i / (st->nwaves + 1);
+        int ox = -1, oy = -1;
+
+        for (x = 0; x < st->xgwa.width; x += st->scale)
+          {
+            int yy;
+            double v = 0;
+            for (i = 0; i < st->nwaves; i++)
+              v += cos ((x * st->waves[i].scale) - st->waves[i].offset);
+            v /= st->nwaves;
+            v /= 2;
+
+            yy = y + wh/2 + (wh * v);
+            if (ox == -1)
+              ox = x, oy = yy;
+            XDrawLine (st->dpy, st->window, st->gc, ox, oy, x, yy);
+            ox = x;
+            oy = yy;
+          }
+      }
     }
 
   return st->delay;
@@ -135,6 +189,8 @@ static const char *cwaves_defaults [] = {
   ".foreground:		   white",
   "*ncolors:		   600",
   "*nwaves:		   15",
+  "*scale:		   2",
+  "*debug:		   False",
   "*delay:		   20000",
   0
 };
@@ -143,6 +199,8 @@ static XrmOptionDescRec cwaves_options [] = {
   { "-delay",		".delay",		XrmoptionSepArg, 0 },
   { "-waves",		".nwaves",		XrmoptionSepArg, 0 },
   { "-colors",		".ncolors",		XrmoptionSepArg, 0 },
+  { "-scale",		".scale",		XrmoptionSepArg, 0 },
+  { "-debug",		".debug",		XrmoptionNoArg, "True" },
   { 0, 0, 0, 0 }
 };
 

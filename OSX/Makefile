@@ -20,8 +20,13 @@ distdepend:: update_plist_version
 debug:
 	cd ..; xcodebuild -target $(XCODE_TARGET) -configuration Debug   build
 
-release:
+release::
 	cd ..; xcodebuild -target $(XCODE_TARGET) -configuration Release build
+
+release:: sign
+
+sign:
+	codesign -vfs 'Jamie Zawinski' build/Release/*.saver
 
 echo_tarfiles:
 	@echo `find . \
@@ -38,7 +43,7 @@ update_plist_version:
   V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' $$SRC` ;		      \
   T=/tmp/xs.$$$$ ;							      \
   for S in XScreenSaver.plist SaverTester.plist ; do			      \
-    echo -n "Updating version number in $$S to \"$$V\"... " ;		      \
+    /bin/echo -n "Updating version number in $$S to \"$$V\"... " ;	      \
     KEYS="CFBundleVersion|CFBundleShortVersionString" ;			      \
     perl -0777 -pne							      \
       "s@(<key>($$KEYS)</key>\s*<string>)[^<>]+(</string>)@\$${1}$$V\$${3}@g" \

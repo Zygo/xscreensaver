@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2007 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -93,7 +93,7 @@ no_malloc_number_to_string (long num)
       num = -num;
     }
 
-  while ((num > 0) && (num_digits < sizeof(string - 1)))
+  while ((num > 0) && (num_digits < sizeof(string) - 1))
     {
       int digit;
       digit = (int) num % 10;

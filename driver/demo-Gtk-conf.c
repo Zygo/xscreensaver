@@ -749,6 +749,7 @@ make_adjustment (const char *filename, parameter *p)
                  : p->value);
   gfloat si = (p->high - p->low) / 100;
   gfloat pi = (p->high - p->low) / 10;
+  gfloat page_size = ((p->type == SLIDER) ? 1 : 0);
 
   if (p->value < p->low || p->value > p->high)
     {
@@ -786,8 +787,8 @@ make_adjustment (const char *filename, parameter *p)
 
   return GTK_ADJUSTMENT (gtk_adjustment_new (value,
                                              p->low,
-                                             p->high + 1,
-                                             si, pi, 1));
+                                             p->high + page_size,
+                                             si, pi, page_size));
 }
 
 

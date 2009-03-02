@@ -509,7 +509,7 @@ selected_hack_number (Widget toplevel)
 static int
 demo_write_init_file (Widget widget, saver_preferences *p)
 {
-  if (!write_init_file (p, short_version, False))
+  if (!write_init_file (XtDisplay (widget), p, short_version, False))
     return 0;
   else
     {
@@ -672,7 +672,7 @@ manual_cb (Widget button, XtPointer client_data, XtPointer ignored)
   s = strrchr (name2, '/');
   if (s) name = s+1;
 
-  cmd = get_string_resource ("manualCommand", "ManualCommand");
+  cmd = get_string_resource (XtDisplay (button), "manualCommand", "ManualCommand");
   if (cmd)
     {
       char *cmd2 = (char *) malloc (strlen (cmd) + (strlen (name2) * 4) + 100);
@@ -968,7 +968,7 @@ populate_hack_list (Widget toplevel, prefs_pair *pair)
     {
       char *pretty_name = (h[0]->name
                            ? strdup (h[0]->name)
-                           : make_hack_name (h[0]->command));
+                           : make_hack_name (XtDisplay (toplevel), h[0]->command));
 
       XmString xmstr = XmStringCreate (pretty_name, XmSTRING_DEFAULT_CHARSET);
       XmListAddItem (list, xmstr, 0);
@@ -1209,13 +1209,13 @@ pixmapify_buttons (Widget toplevel)
 
 
 char *
-get_hack_blurb (screenhack *hack)
+get_hack_blurb (Display *dpy, screenhack *hack)
 {
   char *doc_string;
   char *prog_name = strdup (hack->command);
   char *pretty_name = (hack->name
                        ? strdup (hack->name)
-                       : make_hack_name (hack->command));
+                       : make_hack_name (dpy, hack->command));
   char doc_name[255], doc_class[255];
   char *s, *s2;
 
@@ -1230,7 +1230,7 @@ get_hack_blurb (screenhack *hack)
   free (prog_name);
   free (pretty_name);
 
-  doc_string = get_string_resource (doc_name, doc_class);
+  doc_string = get_string_resource (dpy, doc_name, doc_class);
   if (doc_string)
     {
       for (s = doc_string; *s; s++)
@@ -1329,9 +1329,9 @@ populate_demo_window (Widget toplevel, int which, prefs_pair *pair)
   char *pretty_name = (hack
                        ? (hack->name
                           ? strdup (hack->name)
-                          : make_hack_name (hack->command))
+                          : make_hack_name (XtDisplay (toplevel), hack->command))
                        : 0);
-  char *doc_string = hack ? get_hack_blurb (hack) : 0;
+  char *doc_string = hack ? get_hack_blurb (XtDisplay (toplevel), hack) : 0;
 
   XmString xmstr;
 
@@ -1408,7 +1408,7 @@ maybe_reload_init_file (Widget widget, prefs_pair *pair)
       warning_dialog (widget, b, 100);
       free (b);
 
-      load_init_file (p);
+      load_init_file (XtDisplay (widget), p);
 
       which = selected_hack_number (widget);
       list = name_to_widget (widget, "list");
@@ -1768,7 +1768,7 @@ main (int argc, char **argv)
      was in argv[0].
    */
   p->db = db;
-  load_init_file (p);
+  load_init_file (dpy, p);
   *p2 = *p;
 
   /* Now that Xt has been initialized, and the resources have been read,

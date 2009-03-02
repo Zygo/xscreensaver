@@ -101,6 +101,7 @@ prefix = @prefix@
 exec_prefix = @exec_prefix@
 #datadir = $(prefix)/@DATADIRNAME@      -- not for xscreensaver
 datadir = @PO_DATADIR@
+datarootdir = @datarootdir@
 localedir = $(datadir)/locale
 #localedir = $(prefix)/share/locale
 #gnulocaledir = $(prefix)/share/locale  -- not for xscreensaver

@@ -18,11 +18,10 @@
            low="0.0" high="10.0" default="0.0"/>
 
   <hgroup>
-   <!-- #### defaults are wrong -->
    <number id="width" type="spinbutton" arg="-width %"
-           _label="Tile Size" low="10" high="100" default="64"/>
+           _label="Tile Size" low="0" high="500" default="0"/>
    <number id="pixheight" type="spinbutton" arg="-height %"
-           _label="x" low="10" high="100" default="64"/>
+           _label="x"         low="0" high="500" default="0"/>
   </hgroup>
 
   <hgroup>

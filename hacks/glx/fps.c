@@ -1,4 +1,4 @@
-/* tube, Copyright (c) 2001, 2006 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright (c) 2001-2007 Jamie Zawinski <jwz@jwz.org>
  * Utility function to draw a frames-per-second display.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -17,6 +17,7 @@
 #include "xlockmoreI.h"
 
 #ifdef HAVE_COCOA
+# undef usleep /* conflicts with 10.5 headers... */
 # include <OpenGL/gl.h>
 # include <OpenGL/glu.h>
 # include <AGL/agl.h>

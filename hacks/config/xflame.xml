@@ -9,7 +9,7 @@
           low="0" high="20000" default="10000"
           convert="invert"/>
 
-  <file id="bitmap" _label="Bitmap File" arg="-bitmap %"/>
+<!--  <file id="bitmap" _label="Bitmap File" arg="-bitmap %"/> -->
 
   <!-- #### -baseline [20] -->
   <!-- #### -hspread [30] -->
