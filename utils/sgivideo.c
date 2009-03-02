@@ -318,13 +318,19 @@ grab_video_frame(Screen *screen, Visual *visual, Drawable dest)
     {
       int i;
       VLServer server = vlOpenVideo (NULL);
+
+      if (!server) return False;
+
       for (i = 0; i < 5; i++)	/* if we get all black images, retry up to
 				   five times. */
 	{
 	  VLDevList dl;
 	  int j;
-	  vlGetDeviceList(server, &dl);
-	  vlCloseVideo(server);
+
+          j = vlGetDeviceList(server, &dl);
+          vlCloseVideo(server);
+          if (j < 0) return False;
+
 	  for (j = 0; j < dl.numDevices; j++)
 	    {
 	      VLDevice *d = &dl.devices[j];

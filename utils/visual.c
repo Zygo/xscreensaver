@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
+/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
  *  by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -36,8 +36,6 @@ static Visual *pick_best_visual (Screen *, Bool, Bool);
 static Visual *pick_mono_visual (Screen *);
 static Visual *pick_best_visual_of_class (Screen *, int);
 static Visual *pick_best_gl_visual (Screen *);
-static Visual *id_to_visual (Screen *, int);
-static Visual *id_to_visual (Screen *screen, int id);
 
 
 #define DEFAULT_VISUAL	-1
@@ -338,7 +336,7 @@ pick_best_gl_visual (Screen *screen)
 }
 
 
-static Visual *
+Visual *
 id_to_visual (Screen *screen, int id)
 {
   Display *dpy = DisplayOfScreen (screen);

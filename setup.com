@@ -38,6 +38,7 @@ $ greynetic	:== $'mydir'greynetic
 $ halo		:== $'mydir'halo
 $ helix		:== $'mydir'helix
 $ hopalong	:== $'mydir'hopalong
+$ hyperball	:== $'mydir'hyperball
 $ hypercube	:== $'mydir'hypercube
 $ ifs		:== $'mydir'ifs
 $ imsmap	:== $'mydir'imsmap
@@ -93,6 +94,7 @@ $ xflame	:== $'mydir'xflame
 $ xjack		:== $'mydir'xjack
 $ xlyap		:== $'mydir'xlyap
 $ xmatrix	:== $'mydir'xmatrix
+$ xrayswarm	:== $'mydir'xrayswarm
 $ xroger	:== $'mydir'xroger
 $ xspirograph	:== $'mydir'xspirograph
 $ xsublim	:== $'mydir'xsublim

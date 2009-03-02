@@ -37,7 +37,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.16 $
+ * $Revision: 1.17 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -215,13 +215,14 @@ void *sensor_info;			/* Information about the sensor */
  * A list of targets to ping.
  */
 
-#ifdef HAVE_PING
 typedef struct ping_target {
     char *name;			/* The name of the target */
     struct sockaddr address;	/* The address of the target */
     struct ping_target *next;	/* The next one in the list */
 } ping_target;
 
+
+#ifdef HAVE_PING
 /*
  * Ping Information.
  *

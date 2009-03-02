@@ -71,6 +71,7 @@
 	      \"Ripples (stir)\"	ripples -root -oily -light 2 -stir	    \\n\
 	   \"Ripples (desktop)\"	ripples -root -water -light 6		    \\n\
 				hypercube -root				    \\n\
+				hyperball -root				    \\n\
 				halo -root				    \\n\
 				maze -root				    \\n\
 				noseguy -root				    \\n\
@@ -154,7 +155,9 @@
 				xspirograph -root			    \\n\
 				nerverot -root				    \\n\
 -	    \"NerveRot (dense)\"	nerverot -root -count 1000		    \\n\
--	    \"NerveRot (thick)\"	nerverot -root -count 64 -line-width 4	    \\n\
+-	    \"NerveRot (thick)\"	nerverot -root -count 100 -line-width 4       \
+			        -max-nerve-radius 0.8 -nervousness 0.5 -db  \\n\
+				xrayswarm -root				    \\n\
   color: 			bubbles -root				    \\n\
   default-n:			webcollage -root			    \\n\
   default-n:  \"WebCollage (whacked)\"					      \
@@ -181,7 +184,7 @@
 				  -texture_quality -light -fog		    \\n\
 	   GL:			extrusion -root				    \\n\
 	   GL:			sierpinski3d -root			    \\n\
-	   GL:			starwars -root				    \\n\
+	   GL:			gflux -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -227,7 +230,7 @@
 "*passwd.passwdFont:		*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1",
 "*passwd.thermometer.width:	8",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright © 1991-1999 by",
+"*splash.body.label:		Copyright © 1991-2000 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Demo",
 "*splash.prefs.label:		Prefs",
@@ -471,6 +474,10 @@ eight cubes, each touching six others.	To make it easier to		\
 visualize the rotation, it uses a different color for the edges of	\
 each face.  Don't think about it too long, or your brain will melt.	\
 Written by Joe Keane, Fritz Mueller, and Jamie Zawinski.",
+"*hacks.hyperball.documentation:						\
+Hyperball is to hypercube as icosahedron is to cube: this displays	\
+a 2D projection of the sequence of 3D objects which are the projections	\
+of the 4D analog to the icosahedron.  Written by Joe Keane.",
 "*hacks.halo.documentation:						\
 This draws trippy psychedelic circular patterns that hurt to look at.	\
 It can also animate the control-points, but that takes a lot of CPU	\
@@ -899,6 +906,14 @@ triangle fractal, using GL.  Written by Tim Robinson and Jamie Zawinski.",
 This draws rippling interference patterns like splashing water.		\
 With the -water option, it manipulates your desktop image to look	\
 like something is dripping into it.  Written by Tom Hammersley.",
+"*hacks.gflux.name: GFlux",
+"*hacks.gflux.documentation:     					\
+Draws a rippling waves on a rotating wireframe grid, using GL.		\
+Written by Josiah Pease.",
+"*hacks.xrayswarm.name: XRaySwarm",
+"*hacks.xrayswarm.documentation:     					\
+Draws a few swarms of critters flying around the screen, with nicely	\
+faded color trails behind them.  Written by Chris Leger.",
 "*hacks.xdaliclock.name: XDaliClock",
 "*hacks.xdaliclock.documentation:					\
 XDaliClock draws a large digital clock, the numbers of which change by	\
@@ -940,7 +955,7 @@ don't have it already, you can find it at                               \
 <http://metalab.unc.edu/pub/Linux/X11/demos/>.",
 "*hacks.xsnow.documentation:						\
 Draws falling snow and the occasional tiny Santa.  By Rick Jansen.      \
-You can find it at <http://zoutmijn.bpa.nl/rick/Xsnow/>.",
+You can find it at <http://www.euronet.nl/~rja/Xsnow/>.",
 "*hacks.goban.documentation:						\
 Replays historical games of go (aka wei-chi and baduk) on the screen.   \
 By Scott Draves.  You can find it at <http://www.draves.org/goban/>.",

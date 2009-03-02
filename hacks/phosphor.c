@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999, 2000 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -529,6 +529,7 @@ static void
 scroll (p_state *state)
 {
   int x, y;
+
   for (x = 0; x < state->grid_width; x++)
     {
       p_cell *from = 0, *to = 0;
@@ -553,7 +554,7 @@ scroll (p_state *state)
         }
 
       to = from;
-      if (to->state == FLARE || to->state == NORMAL)
+      if (to && (to->state == FLARE || to->state == NORMAL))
         {
           to->state = FADE;
           to->changed = True;

@@ -384,13 +384,17 @@ void screenhack(Display *pDisplay, Window Win )
 
 		if( i++ >= cycles )
 		{
+                        XWindowAttributes XWinAttribs;
+                        XGetWindowAttributes( pDisplay, Win, &XWinAttribs );
+
 			i = 0;
-			XClearWindow( pDisplay, Win );
 			memset( pImage->data, 0, pImage->bytes_per_line * pImage->height );
 			for( iShadeBob=0; iShadeBob<nShadeBobCount; iShadeBob++ )
 				ResetShadeBob( &aShadeBobs[ iShadeBob ] );
+                        XFreeColors( pDisplay, XWinAttribs.colormap, aiColorVals, iColorCount, 0 );
 			free( aiColorVals );
 			aiColorVals = SetPalette( pDisplay, Win, sColor, &iColorCount );
+                        XClearWindow( pDisplay, Win );
 		}
 
 		for( iShadeBob=0; iShadeBob<nShadeBobCount; iShadeBob++ )

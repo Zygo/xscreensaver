@@ -1,4 +1,4 @@
-# configure.in --- xscreensaver, Copyright (c) 1997 Jamie Zawinski.
+# configure.in --- xscreensaver, Copyright (c) 1997-2000 Jamie Zawinski.
 #
 
 AC_INIT(driver/subprocs.c)
@@ -997,13 +997,21 @@ if test "$with_dpms" = yes; then
   # first check for dpms.h
   AC_CHECK_X_HEADER(X11/extensions/dpms.h, [have_dpms=yes])
 
-  # if that succeeded, then check for the -lXdpms
+  # if that succeeded, then check for the DPMS code in the libraries
   if test "$have_dpms" = yes; then
+
+    # first look in -lXext (this is where it is with XFree86 4.0)
     have_dpms=no
-    AC_CHECK_X_LIB(Xdpms, DPMSInfo,
-                  [have_dpms=yes; SAVER_LIBS="$SAVER_LIBS -lXdpms"], [true],
-                  -lXext -lX11)
+    AC_CHECK_X_LIB(Xext, DPMSInfo, [have_dpms=yes], [true], -lXext -lX11)
+
+    # if that failed, look in -lXdpms (this is where it was in XFree86 3.x)
+    if test "$have_dpms" = no; then
+      AC_CHECK_X_LIB(Xdpms, DPMSInfo,
+                    [have_dpms=yes; SAVER_LIBS="$SAVER_LIBS -lXdpms"], [true],
+                    -lXext -lX11)
+    fi
   fi
+
 
   # if that succeeded, then we've really got it.
   if test "$have_dpms" = yes; then
@@ -1619,8 +1627,8 @@ if test "$with_gtk" = yes; then
     gtk_path="$gnome_dir:$gtk_path"
   fi
 
-  AC_PATH_PROGS(glib_config,  glib-config,,  $gtk_path)
-  AC_PATH_PROGS(gtk_config,   gtk-config,,   $gtk_path)
+  AC_PATH_PROGS(glib_config,  glib12-config glib-config,,  $gtk_path)
+  AC_PATH_PROGS(gtk_config,   gtk12-config  gtk-config,,   $gtk_path)
 
   if test "$with_gnome" = yes; then
     AC_PATH_PROGS(gnome_config, gnome-config,, $gtk_path)
@@ -1635,7 +1643,7 @@ if test "$with_gtk" = yes; then
 
   if test "$have_gtk" = yes; then
     AC_CACHE_CHECK([Gtk version number], ac_cv_gtk_version_string,
-                   [ac_cv_gtk_version_string=`$glib_config --version`])
+                   [ac_cv_gtk_version_string=`$gtk_config --version`])
     ac_gtk_version_string=$ac_cv_gtk_version_string
     # M4 sucks!!
     changequote(X,Y)
@@ -1671,7 +1679,7 @@ if test "$with_gtk" = yes; then
     AC_MSG_CHECKING(for Gnome capplet includes)
     AC_CACHE_VAL(ac_cv_gnome_config_cflags,
       [if ( $gnome_config --cflags $gnome_config_libs 2>&1 >/dev/null | \
-            grep -q Unknown ) ; then
+            grep Unknown >/dev/null ) ; then
          ac_cv_gnome_config_cflags=''
        else
          ac_cv_gnome_config_cflags=`$gnome_config --cflags $gnome_config_libs`
@@ -1689,7 +1697,7 @@ if test "$with_gtk" = yes; then
     AC_MSG_CHECKING(for Gnome capplet libs)
     AC_CACHE_VAL(ac_cv_gnome_config_libs,
       [if ( $gnome_config --libs $gnome_config_libs 2>&1 >/dev/null |
-            grep -q Unknown ) ; then
+            grep Unknown >/dev/null ) ; then
          ac_cv_gnome_config_libs=''
        else
          ac_cv_gnome_config_libs=`$gnome_config --libs $gnome_config_libs`
@@ -2016,28 +2024,6 @@ EOF
     #
     AC_CHECK_X_LIB($gl_lib_1, glBindTexture, [AC_DEFINE(HAVE_GLBINDTEXTURE)],
                    [true], $GL_LIBS -lX11 -lXext -lm)
-
-
-    # Check whether the `xscreensaver' executable should link against GL.
-    # See comments in utils/visual-gl.c for why this is sometimes necessary.
-    #
-    AC_MSG_CHECKING(whether drastic GL measures must be taken)
-    case "$host" in
-      *-sgi*)
-        AC_MSG_RESULT([yes -- hello, SGI.])
-        AC_DEFINE(DAEMON_USE_GL)
-        SAVER_GL_SRCS='$(UTILS_SRC)/visual-gl.c'
-        SAVER_GL_OBJS='$(UTILS_BIN)/visual-gl.o'
-        SAVER_GL_LIBS="$GL_LIBS"
-      ;;
-      *)
-        AC_MSG_RESULT([no -- non-SGI.])
-        SAVER_GL_SRCS=''
-        SAVER_GL_OBJS=''
-        SAVER_GL_LIBS=''
-      ;;
-    esac
-
   fi
 
 elif test "$with_gl" != no; then

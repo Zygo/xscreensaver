@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "19-Jul-2000 (3.25)" "X Version 11"
+.TH XScreenSaver 1 "10-Nov-2000 (3.26)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -1247,6 +1247,7 @@ http://www.jwz.org/xscreensaver/
 .BR X (1),
 .BR xscreensaver\-demo (1),
 .BR xscreensaver\-command (1),
+.BR xscreensaver\-gl\-helper (1),
 .BR xdm (1),
 .BR xset (1),
 .BR Xsecurity (1),
@@ -1365,7 +1366,7 @@ http://www.jwz.org/xscreensaver/
 .BR xv (1),
 .BR xwave (1).
 .SH COPYRIGHT
-Copyright \(co 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999
+Copyright \(co 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
 by Jamie Zawinski.  Permission to use, copy, modify, distribute, and sell
 this software and its documentation for any purpose is hereby granted without
 fee, provided that the above copyright notice appear in all copies and that

@@ -1,4 +1,4 @@
-/* nerverot, nervous rotation of random thingies, v1.0
+/* nerverot, nervous rotation of random thingies, v1.2
  * by Dan Bornstein, danfuzz@milk.com
  * Copyright (c) 2000 Dan Bornstein.
  *
@@ -13,28 +13,7 @@
  * The goal of this screensaver is to be interesting and compelling to
  * watch, yet induce a state of nervous edginess in the viewer.
  *
- * Brief description of options/resources:
- *
- *   -fg <color>: foreground color
- *   -bg <color>: background color
- *   -delay <usec>: delay between frames
- *   -event-chance <frac>: chance, per iteration, that an interesting event
- *     will happen (range 0..1)
- *   -iter-amt <frac>: amount, per iteration, to move towards rotation and
- *     scale targets (range 0..1)
- *   -count <n>: number of blots
- *   -colors <n>: number of colors to use
- *   -lineWidth <n>: width of lines (0 means an optimized thin line)
- *   -nervousness <frac>: amount of nervousness (range 0..1)
- *   -min-scale <frac>: minimum scale of drawing as fraction of base scale
- *     (which is the minumum of the width or height of the screen) (range
- *     0..10)
- *   -max-scale <frac>: maximum scale of drawing as fraction of base scale
- *     (which is the minumum of the width or height of the screen) (range
- *     0..10)
- *   -min-radius <n>: minimum radius for drawing blots (range 1..100)
- *   -max-radius <n>: maximum radius for drawing blots (range 1..100)
- *   -max-nerve-radius <frac>: maximum nervousness radius (range 0..1)
+ * See the included man page for more details.
  */
 
 #include <math.h>
@@ -44,11 +23,11 @@
 
 /* random float in the range (-1..1) */
 #define RAND_FLOAT_PM1 \
-        (((FLOAT) (random() & 0xffff)) / ((FLOAT) 0x10000) * 2 - 1)
+        (((FLOAT) ((random() >> 8) & 0xffff)) / ((FLOAT) 0x10000) * 2 - 1)
 
 /* random float in the range (0..1) */
 #define RAND_FLOAT_01 \
-        (((FLOAT) (random() & 0xffff)) / ((FLOAT) 0x10000))
+        (((FLOAT) ((random() >> 8) & 0xffff)) / ((FLOAT) 0x10000))
 
 
 
@@ -87,6 +66,9 @@ static int colorCount;
 /* width of lines */
 static int lineWidth;
 
+/* whether or not to do double-buffering */
+static Bool doubleBuffer;
+
 
 
 /* non-user-modifiable immutable definitions */
@@ -103,9 +85,10 @@ static int windowHeight;
 static int centerX;
 static int centerY;
 
-static Display *display; /* the display to draw on */
-static Window window;    /* the window to draw on */
-static GC *gcs;          /* array of gcs, one per color used */
+static Display *display;  /* the display to draw on */
+static Window window;     /* the window to draw on */
+static Drawable drawable; /* the thing to directly draw on */
+static GC *gcs;           /* array of gcs, one per color used */
 
 
 
@@ -278,8 +261,9 @@ static void setupBlotsSphere (void)
 
 	initBlot (&blots[n], x, y, z);
     }
-
 }
+
+
 
 /* set up the initial array of blots to be a simple cube */
 static void setupBlotsCube (void)
@@ -336,6 +320,7 @@ static void setupBlotsCube (void)
     scaleBlotsToRadius1 ();
     randomlyReorderBlots ();
 }
+
 
 
 /* set up the initial array of blots to be a cylinder */
@@ -436,6 +421,115 @@ static void setupBlotsSquiggle (void)
 
 
 
+/* set up the initial array of blots to be near the corners of a
+ * cube, distributed slightly */
+static void setupBlotsCubeCorners (void)
+{
+    int n;
+
+    blotCount = requestedBlotCount;
+    blots = calloc (sizeof (Blot), blotCount);
+
+    for (n = 0; n < blotCount; n++)
+    {
+	FLOAT x = rint (RAND_FLOAT_01) * 2 - 1;
+	FLOAT y = rint (RAND_FLOAT_01) * 2 - 1;
+	FLOAT z = rint (RAND_FLOAT_01) * 2 - 1;
+
+	x += RAND_FLOAT_PM1 * 0.3;
+	y += RAND_FLOAT_PM1 * 0.3;
+	z += RAND_FLOAT_PM1 * 0.3;
+
+	initBlot (&blots[n], x, y, z);
+    }
+
+    scaleBlotsToRadius1 ();
+}
+
+
+
+/* forward declaration for recursive use immediately below */
+static void setupBlots (void);
+
+/* set up the blots to be two of the other choices, placed next to
+ * each other */
+static void setupBlotsDuo (void)
+{
+    int origRequest = requestedBlotCount;
+    FLOAT tx, ty, tz, radius;
+    Blot *blots1, *blots2;
+    int count1, count2;
+    int n;
+
+    if (requestedBlotCount < 15)
+    {
+	/* special case bottom-out */
+	setupBlotsSphere ();
+	return;
+    }
+
+    tx = RAND_FLOAT_PM1;
+    ty = RAND_FLOAT_PM1;
+    tz = RAND_FLOAT_PM1;
+    radius = sqrt (tx * tx + ty * ty + tz * tz);
+    tx /= radius;
+    ty /= radius;
+    tz /= radius;
+
+    /* recursive call to setup set 1 */
+    requestedBlotCount = origRequest / 2;
+    setupBlots ();
+
+    if (blotCount >= origRequest)
+    {
+	/* return immediately if this satisfies the original count request */
+	return;
+    }
+
+    blots1 = blots;
+    count1 = blotCount;
+    blots = NULL;
+    blotCount = 0;
+    
+    /* translate to new position */
+    for (n = 0; n < count1; n++)
+    {
+	blots1[n].x += tx;
+	blots1[n].y += ty;
+	blots1[n].z += tz;
+    }
+
+    /* recursive call to setup set 2 */
+    requestedBlotCount = origRequest - count1;
+    setupBlots ();
+    blots2 = blots;
+    count2 = blotCount;
+
+    /* translate to new position */
+    for (n = 0; n < count2; n++)
+    {
+	blots2[n].x -= tx;
+	blots2[n].y -= ty;
+	blots2[n].z -= tz;
+    }
+
+    /* combine the two arrays */
+    blotCount = count1 + count2;
+    blots = calloc (sizeof (Blot), blotCount);
+    memcpy (&blots[0],      blots1, sizeof (Blot) * count1);
+    memcpy (&blots[count1], blots2, sizeof (Blot) * count2);
+    free (blots1);
+    free (blots2);
+
+    scaleBlotsToRadius1 ();
+    randomlyReorderBlots ();
+
+    /* restore the original requested count, for future iterations */
+    requestedBlotCount = origRequest;
+}
+
+
+
 /* free the blots, in preparation for a new shape */
 static void freeBlots (void)
 {
@@ -463,7 +557,7 @@ static void freeBlots (void)
 /* set up the initial arrays of blots */
 static void setupBlots (void)
 {
-    int which = RAND_FLOAT_01 * 4;
+    int which = RAND_FLOAT_01 * 7;
 
     freeBlots ();
 
@@ -481,15 +575,29 @@ static void setupBlots (void)
 	case 3:
 	    setupBlotsSquiggle ();
 	    break;
+	case 4:
+	    setupBlotsCubeCorners ();
+	    break;
+	case 5:
+	case 6:
+	    setupBlotsDuo ();
+	    break;
     }
+}
 
+
+
+/* set up the segments arrays */
+static void setupSegs (void)
+{
     /* there are blotShapeCount - 1 line segments per blot */
     segCount = blotCount * (blotShapeCount - 1);
     segsToErase = calloc (sizeof (LineSegment), segCount);
     segsToDraw = calloc (sizeof (LineSegment), segCount);
 
     /* erase the world */
-    XFillRectangle (display, window, gcs[0], 0, 0, windowWidth, windowHeight);
+    XFillRectangle (display, drawable, gcs[0], 0, 0, 
+		    windowWidth, windowHeight);
 }
 
 
@@ -566,8 +674,19 @@ static void setup (void)
     centerY = windowHeight / 2;
     baseScale = (xgwa.height < xgwa.width) ? xgwa.height : xgwa.width;
 
+    if (doubleBuffer)
+    {
+	drawable = XCreatePixmap (display, window, xgwa.width, xgwa.height,
+				  xgwa.depth);
+    }
+    else
+    {
+	drawable = window;
+    }
+
     setupColormap (&xgwa);
     setupBlots ();
+    setupSegs ();
 
     /* set up the initial rotation, scale, and light values as random, but
      * with the targets equal to where it is */
@@ -683,6 +802,7 @@ static void updateWithFeeling (void)
     {
 	itersTillNext = RAND_FLOAT_01 * 1234;
 	setupBlots ();
+	setupSegs ();
 	renderSegs ();
     }
 
@@ -770,18 +890,18 @@ static void updateWithFeeling (void)
 	    }
 	    case 7:
 	    {
-		centerXOff = RAND_FLOAT_PM1 * maxRadius / 2;
+		centerXOff = RAND_FLOAT_PM1 * maxRadius;
 		break;
 	    }
 	    case 8:
 	    {
-		centerYOff = RAND_FLOAT_PM1 * maxRadius / 2;
+		centerYOff = RAND_FLOAT_PM1 * maxRadius;
 		break;
 	    }
 	    case 9:
 	    {
-		centerXOff = RAND_FLOAT_PM1 * maxRadius / 2;
-		centerYOff = RAND_FLOAT_PM1 * maxRadius / 2;
+		centerXOff = RAND_FLOAT_PM1 * maxRadius;
+		centerYOff = RAND_FLOAT_PM1 * maxRadius;
 		break;
 	    }
 	    case 10:
@@ -822,11 +942,17 @@ static void eraseAndDraw (void)
     for (n = 0; n < segCount; n++)
     {
 	LineSegment *seg = &segsToErase[n];
-	XDrawLine (display, window, gcs[0], 
+	XDrawLine (display, drawable, gcs[0], 
 		   seg->x1, seg->y1, seg->x2, seg->y2);
 	seg = &segsToDraw[n];
-	XDrawLine (display, window, seg->gc,
+	XDrawLine (display, drawable, seg->gc,
 		   seg->x1, seg->y1, seg->x2, seg->y2);
+    }
+
+    if (doubleBuffer)
+    {
+	XCopyArea (display, drawable, window, gcs[0], 0, 0, 
+		   windowWidth, windowHeight, 0, 0);
     }
 }
 
@@ -856,6 +982,7 @@ char *defaults [] = {
     "*count:		250",
     "*colors:		4",
     "*delay:		10000",
+    "*doubleBuffer:	false",
     "*eventChance:      0.2",
     "*iterAmt:          0.01",
     "*lineWidth:        0",
@@ -871,8 +998,9 @@ char *defaults [] = {
 XrmOptionDescRec options [] = {
   { "-count",            ".count",          XrmoptionSepArg, 0 },
   { "-colors",           ".colors",         XrmoptionSepArg, 0 },
-  { "-cube",             ".cube",           XrmoptionNoArg,  "true" },
   { "-delay",            ".delay",          XrmoptionSepArg, 0 },
+  { "-db",               ".doubleBuffer",   XrmoptionNoArg,  "true" },
+  { "-no-db",            ".doubleBuffer",   XrmoptionNoArg,  "false" },
   { "-event-chance",     ".eventChance",    XrmoptionSepArg, 0 },
   { "-iter-amt",         ".iterAmt",        XrmoptionSepArg, 0 },
   { "-line-width",       ".lineWidth",      XrmoptionSepArg, 0 },
@@ -896,6 +1024,8 @@ static void initParams (void)
 	fprintf (stderr, "error: delay must be at least 0\n");
 	problems = 1;
     }
+    
+    doubleBuffer = get_boolean_resource ("doubleBuffer", "Boolean");
 
     requestedBlotCount = get_integer_resource ("count", "Count");
     if (requestedBlotCount <= 0)

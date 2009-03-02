@@ -830,6 +830,9 @@ create_xscreensaver_demo (void)
   gtk_signal_connect (GTK_OBJECT (prev), "clicked",
                       GTK_SIGNAL_FUNC (run_prev_cb),
                       NULL);
+  gtk_signal_connect (GTK_OBJECT (enabled), "toggled",
+                      GTK_SIGNAL_FUNC (enabled_cb),
+                      NULL);
   gtk_signal_connect (GTK_OBJECT (demo), "clicked",
                       GTK_SIGNAL_FUNC (run_this_cb),
                       NULL);

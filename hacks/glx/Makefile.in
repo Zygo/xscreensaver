@@ -1,4 +1,5 @@
-# hacks/glx/Makefile.in --- xscreensaver, Copyright (c) 1999 Jamie Zawinski.
+# hacks/glx/Makefile.in --- xscreensaver, Copyright (c) 1999, 2000
+#  by Jamie Zawinski.
 # the `../../configure' script generates `hacks/glx/Makefile' from this file.
 
 @SET_MAKE@
@@ -63,7 +64,8 @@ UTIL_OBJS	= $(UTILS_SRC)/colors.o $(UTILS_SRC)/hsv.o \
 		  $(UTILS_SRC)/visual.o $(UTILS_SRC)/visual-gl.o \
 		   $(UTILS_SRC)/yarandom.o
 
-SRCS		= atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
+SRCS		= xscreensaver-gl-helper.c \
+		  atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
 		  buildlwo.c cage.c dolphin.c gears.c lament.c moebius.c \
 		  morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c s1_3.c \
 		  s1_4.c s1_5.c s1_6.c s1_b.c shark.c sproingies.c \
@@ -71,9 +73,10 @@ SRCS		= atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
 		  xlock-gl.c xpm-ximage.c glplanet.c pulsar.c \
 		  extrusion.c extrusion-helix2.c extrusion-helix3.c \
 		  extrusion-helix4.c extrusion-joinoffset.c extrusion-screw.c \
-		  extrusion-taper.c extrusion-twistoid.c sierpinski3d.c
+		  extrusion-taper.c extrusion-twistoid.c sierpinski3d.c gflux.c
 
-OBJS		= atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
+OBJS		= xscreensaver-gl-helper.o \
+		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
 		  buildlwo.o cage.o dolphin.o gears.o lament.o moebius.o \
 		  morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o s1_3.o \
 		  s1_4.o s1_5.o s1_6.o s1_b.o shark.o sproingies.o \
@@ -81,13 +84,15 @@ OBJS		= atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
 		  xlock-gl.o xpm-ximage.o glplanet.o pulsar.o \
 		  extrusion.o extrusion-helix2.o extrusion-helix3.o \
 		  extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
-		  extrusion-taper.o extrusion-twistoid.o sierpinski3d.o
+		  extrusion-taper.o extrusion-twistoid.o sierpinski3d.o gflux.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
-		  sierpinski3d
+		  sierpinski3d gflux
 GLE_EXES	= extrusion
-EXES		= @GL_EXES@ @GLE_EXES@
+UTIL_EXES	= xscreensaver-gl-helper
+HACK_EXES	= @GL_EXES@ @GLE_EXES@
+EXES		= $(HACK_EXES) $(UTIL_EXES)
 
 HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
@@ -96,7 +101,7 @@ HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/colors.o
 
 HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h
-GL_MEN		= lament.man
+GL_MEN		= lament.man xscreensaver-gl-helper.man gflux.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in
 
@@ -112,16 +117,30 @@ uninstall: uninstall-program uninstall-man
 install-strip:
 	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
 
-install-program: $(EXES)
+# the hacks, in $HACKDIR
+install-program:: $(HACK_EXES)
 	@if [ ! -d $(install_prefix)$(HACKDIR) ]; then			\
 	  $(INSTALL_DIRS) $(install_prefix)$(HACKDIR) ;			\
 	 fi ;								\
-	exes="$(EXES)" ;						\
+	exes="$(HACK_EXES)" ;						\
 	for program in $$exes; do					\
 	  echo $(INSTALL_PROGRAM) $$program				\
 	    $(install_prefix)$(HACKDIR)/$$program ;			\
 	  $(INSTALL_PROGRAM) $$program					\
 	    $(install_prefix)$(HACKDIR)/$$program ;			\
+	done
+
+# the xscreensaver-gl-helper program, in $bindir
+install-program:: $(UTIL_EXES)
+	@if [ ! -d $(install_prefix)$(bindir) ]; then			\
+	  $(INSTALL_DIRS) $(install_prefix)$(bindir) ;			\
+	 fi ;								\
+	exes="$(UTIL_EXES)" ;						\
+	for program in $$exes; do					\
+	  echo $(INSTALL_PROGRAM) $$program				\
+	    $(install_prefix)$(bindir)/$$program ;			\
+	  $(INSTALL_PROGRAM) $$program					\
+	    $(install_prefix)$(bindir)/$$program ;			\
 	done
 
 install-man: $(MEN)
@@ -137,11 +156,20 @@ install-man: $(MEN)
 	    $(install_prefix)$(man1dir)/$$instname ;			\
 	done
 
-uninstall-program:
-	@exes="$(EXES)" ;						\
+# the hacks, in $HACKDIR
+uninstall-program::
+	@exes="$(HACK_EXES)" ;						\
 	for program in $$exes; do					\
 	  echo rm -f $(install_prefix)$(HACKDIR)/$$program ;		\
 	  rm -f $(install_prefix)$(HACKDIR)/$$program ;			\
+	done
+
+# the xscreensaver-gl-helper program, in $bindir
+uninstall-program::
+	@exes="$(UTIL_EXES)" ;						\
+	for program in $$exes; do					\
+	  echo rm -f $(install_prefix)$(bindir)/$$program ;		\
+	  rm -f $(install_prefix)$(bindir)/$$program ;			\
 	done
 
 uninstall-man:
@@ -221,6 +249,16 @@ $(HACK_BIN)/xlockmore.o: $(HACK_SRC)/xlockmore.c
 .c.o:
 	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
 
+
+# How to build the "xscreensaver-gl-helper" program, that lets the daemon
+# know which visual is the right one for GL programs.
+#
+HELPER_OBJS = xscreensaver-gl-helper.o $(UTILS_BIN)/visual-gl.o \
+	      $(UTILS_BIN)/visual.o $(UTILS_BIN)/resources.o
+xscreensaver-gl-helper: $(HELPER_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(HELPER_OBJS) $(LIBS) $(X_LIBS) $(HACK_POST2)
+
+
 # These hacks use a slightly-differently-compiled variant of screenhack.c.
 # This is how to make the the other .o file from it.
 #
@@ -286,12 +324,17 @@ extrusion:	$(EXTRUSION_OBJS) $(HACK_OBJS)
 sierpinski3d:	sierpinski3d.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(HACK_LIBS)
 
+gflux:		gflux.o		$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(HACK_LIBS)
 
 ##############################################################################
 #
 # DO NOT DELETE: updated by make distdepend
 # $(srcdir)/DO $(srcdir)/NOT $(srcdir)/DELETE: $(srcdir)/updated $(srcdir)/by $(srcdir)/make $(srcdir)/distdepend
 
+xscreensaver-gl-helper.o: $(UTILS_SRC)/utils.h
+xscreensaver-gl-helper.o: ../../config.h
+xscreensaver-gl-helper.o: $(UTILS_SRC)/visual.h
 atlantis.o: $(HACK_SRC)/xlockmore.h
 atlantis.o: ../../config.h
 atlantis.o: $(HACK_SRC)/xlockmoreI.h
@@ -585,4 +628,16 @@ sierpinski3d.o: $(UTILS_SRC)/colors.h
 sierpinski3d.o: $(UTILS_SRC)/grabscreen.h
 sierpinski3d.o: $(UTILS_SRC)/visual.h
 sierpinski3d.o: $(UTILS_SRC)/xshm.h
+gflux.o: $(HACK_SRC)/xlockmore.h
+gflux.o: ../../config.h
+gflux.o: $(HACK_SRC)/xlockmoreI.h
+gflux.o: $(HACK_SRC)/screenhack.h
+gflux.o: $(UTILS_SRC)/yarandom.h
+gflux.o: $(UTILS_SRC)/usleep.h
+gflux.o: $(UTILS_SRC)/resources.h
+gflux.o: $(UTILS_SRC)/hsv.h
+gflux.o: $(UTILS_SRC)/colors.h
+gflux.o: $(UTILS_SRC)/grabscreen.h
+gflux.o: $(UTILS_SRC)/visual.h
+gflux.o: $(UTILS_SRC)/xshm.h
 

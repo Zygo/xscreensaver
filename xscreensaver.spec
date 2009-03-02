@@ -1,5 +1,5 @@
 %define	name	xscreensaver
-%define	version	3.25
+%define	version	3.26
 %define	release	1
 %define	serial	1
 %define	prefix	/usr/X11R6
@@ -93,20 +93,22 @@ make  install_prefix=$RPM_BUILD_ROOT \
       AD_DIR=%{prefix}/lib/X11/app-defaults \
       install-strip
 
-# Make a pair of lists, of the GL and non-GL hacks.
+# Make a pair of lists, of the GL and non-GL executable.
 # Do this by parsing the output of a dummy run of "make install"
-# in the hacks/ and hacks/glx/ directories.
+# in the driver/, hacks/ and hacks/glx/ directories.
 #
 list_files() {
-  make -s install_prefix=$RPM_BUILD_ROOT INSTALL=true install   |
-    sed -n -e 's@.* /\([^ ]*\)$@/\1@p'                          |
-    sed    -e "s@^$RPM_BUILD_ROOT@@"                            \
-           -e "s@/bin/..@@"                                     |
+  make -s install_prefix=$RPM_BUILD_ROOT INSTALL=true $1  |
+    sed -n -e 's@.* /\([^ ]*\)$@/\1@p'                    |
+    sed    -e "s@^$RPM_BUILD_ROOT@@"                      \
+           -e "s@/bin/\.\./@/@"                           |
     sort
 }
 
-( cd hacks ; list_files > $RPM_BUILD_DIR/xscreensaver-%{version}/hacks-non-gl )
-( cd hacks/glx ; list_files > $RPM_BUILD_DIR/xscreensaver-%{version}/hacks-gl )
+( cd hacks ; list_files install ; cd ../driver; list_files install-program ) \
+   > $RPM_BUILD_DIR/xscreensaver-%{version}/exes-non-gl
+( cd hacks/glx ; list_files install ) \
+   > $RPM_BUILD_DIR/xscreensaver-%{version}/exes-gl
 
 
 
@@ -130,21 +132,20 @@ chmod -R a+r,u+w,og-w $RPM_BUILD_ROOT
 if [ -d $RPM_BUILD_ROOT    ]; then rm -r $RPM_BUILD_ROOT    ; fi
 if [ -d $RPM_BUILD_ROOT-gl ]; then rm -r $RPM_BUILD_ROOT-gl ; fi
 
-%files -f hacks-non-gl
+%files -f exes-non-gl
 %defattr(-,root,root)
 
 # Files for the "xscreensaver" package:
 #
 %doc                README README.debugging
-                    %{prefix}/bin/*
 %dir                %{prefix}/lib/xscreensaver
 %config             %{prefix}/lib/X11/app-defaults/*
                     %{prefix}/man/man1/xscreensaver*
                     /etc/pam.d/*
 %config(missingok)  /usr/bin/*.kss
-%config(missingok)  "/usr/share/control-center/Desktop/screensaver-properties.desktop"
-%config(missingok)  "/usr/share/gnome/apps/Settings/Desktop/screensaver-properties.desktop"
+%config(missingok)  /usr/share/control-center/Desktop/screensaver-properties.desktop
+%config(missingok)  /usr/share/gnome/apps/Settings/Desktop/screensaver-properties.desktop
 
 # Files for the "xscreensaver-gl" package:
 #
-%{?USE_GL:%files -f hacks-gl gl}
+%{?USE_GL:%files -f exes-gl gl}

@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "19-Jul-2000 (3.25)" "X Version 11"
+.TH XScreenSaver 1 "10-Nov-2000 (3.26)" "X Version 11"
 .SH NAME
 xscreensaver-demo - interactively control the background xscreensaver daemon
 .SH SYNOPSIS
@@ -87,6 +87,12 @@ the dialog box visible again.
 
 Single-clicking in the list will populate the fields on the right side of
 the window.
+
+Each name in the list has a checkbox next to it: this is a duplicate of
+the \fIEnabled\fP checkbox, and indicates (and controls) whether
+xscreensaver will  use this display mode at all.  If the box is not
+checked, then this demo will not be run automatically (though you can
+run it explicitly by double-clicking on its name.)
 .TP 4
 .B Arrow Buttons
 Beneath the list are a pair of up and down arrows. Clicking on the down 
@@ -101,12 +107,12 @@ will invoke it.  (Note that most of these programs have their own man pages
 that describe the command-line options they take.)
 .TP 4
 .B Enabled
-The \fIEnabled\fI checkbox controls whether xscreensaver will use this
+The \fIEnabled\fP checkbox controls whether xscreensaver will use this
 display mode at all.  This way, all the modes can remain available, but
 you can choose which ones will be automatically run.
 .TP 4
 .B Visual
-The \fIVisual\fI field is where you can select the X visual type that this
+The \fIVisual\fP field is where you can select the X visual type that this
 demo will require.  If you specify one (other than \fIAny\fP) then the
 program will only be run on that kind of visual.  For example, you can
 specify that a particular program should only be run if color is available,

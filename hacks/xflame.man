@@ -13,7 +13,7 @@ The \fIxflame\fP program draws animated flames across the bottom of the
 screen.  The flames occasionally flare up.  If a bitmap is specified,
 that image will float above the flames, burning.
 .SH OPTIONS
-.I phosphor
+.I xflame
 accepts the following options:
 .TP 8
 .B \-window

@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991, 1992, 1993, 1995, 1997, 1998
+ * xscreensaver, Copyright (c) 1991, 1992, 1993, 1995, 1997, 1998, 1999, 2000
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -67,7 +67,7 @@ extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 
 #include "xscreensaver.h"
 #include "yarandom.h"
-
+#include "visual.h"    /* for id_to_visual() */
 
 extern saver_info *global_si_kludge;	/* I hate C so much... */
 
@@ -1043,6 +1043,111 @@ hack_subproc_environment (saver_screen_info *ssi)
     abort ();
 #endif /* HAVE_PUTENV */
 }
+
+
+/* GL crap */
+
+Visual *
+get_best_gl_visual (saver_screen_info *ssi)
+{
+  saver_info *si = ssi->global;
+  pid_t forked;
+  int fds [2];
+  int in, out;
+  char buf[1024];
+
+  char *av[10];
+  int ac = 0;
+
+  av[ac++] = "xscreensaver-gl-helper";
+  av[ac] = 0;
+
+  if (pipe (fds))
+    {
+      perror ("error creating pipe:");
+      return 0;
+    }
+
+  in = fds [0];
+  out = fds [1];
+
+  switch ((int) (forked = fork ()))
+    {
+    case -1:
+      {
+        sprintf (buf, "%s: couldn't fork", blurb());
+        perror (buf);
+        saver_exit (si, 1, 0);
+      }
+    case 0:
+      {
+        int stdout_fd = 1;
+
+        close (in);  /* don't need this one */
+        close (ConnectionNumber (si->dpy));	/* close display fd */
+
+        if (dup2 (out, stdout_fd) < 0)		/* pipe stdout */
+          {
+            perror ("could not dup() a new stdout:");
+            return 0;
+          }
+        hack_subproc_environment (ssi);		/* set $DISPLAY */
+
+        execvp (av[0], av);			/* shouldn't return. */
+
+        if (errno != ENOENT || si->prefs.verbose_p)
+          {
+            /* Ignore "no such file or directory" errors, unless verbose.
+               Issue all other exec errors, though. */
+            sprintf (buf, "%s: running %s", blurb(), av[0]);
+            perror (buf);
+          }
+        exit (1);                               /* exits fork */
+        break;
+      }
+    default:
+      {
+        int result = 0;
+        int wait_status = 0;
+
+        FILE *f = fdopen (in, "r");
+        unsigned long v = 0;
+        char c;
+
+        close (out);  /* don't need this one */
+
+        *buf = 0;
+        fgets (buf, sizeof(buf)-1, f);
+        fclose (f);
+
+        /* Wait for the child to die. */
+        waitpid (-1, &wait_status, 0);
+
+        if (1 == sscanf (buf, "0x%x %c", &v, &c))
+          result = (int) v;
+
+        if (result == 0)
+          {
+            if (si->prefs.verbose_p)
+              fprintf (stderr, "%s: %s did not report a GL visual!\n",
+                       blurb(), av[0]);
+            return 0;
+          }
+        else
+          {
+            Visual *v = id_to_visual (ssi->screen, result);
+            if (si->prefs.verbose_p)
+              fprintf (stderr, "%s: %s says the GL visual is 0x%X%s.\n",
+                       blurb(), av[0], result,
+                       (v == ssi->default_visual ? " (the default)" : ""));
+            return v;
+          }
+      }
+    }
+
+  abort();
+}
+
 
 
 /* Restarting the xscreensaver process from scratch. */

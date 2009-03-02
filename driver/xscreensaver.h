@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-1998 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2000 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -201,8 +201,10 @@ struct saver_screen_info {
                                    value here overrides prefs->install_cmap_p.)
                                  */
   Visual *current_visual;	/* The visual of the window. */
-  Visual *default_visual;	/* visual to use when none other specified */
   int current_depth;		/* How deep the visual (and the window) are. */
+
+  Visual *default_visual;	/* visual to use when none other specified */
+  Visual *best_gl_visual;	/* visual to use for GL hacks */
 
   Window real_vroot;		/* The original virtual-root window. */
   Window real_vroot_value;	/* What was in the __SWM_VROOT property. */
@@ -403,6 +405,7 @@ extern int BadWindow_ehandler (Display *dpy, XErrorEvent *error);
 extern Bool window_exists_p (Display *dpy, Window window);
 extern char *timestring (void);
 extern Bool display_is_on_console_p (saver_info *si);
+extern Visual *get_best_gl_visual (saver_screen_info *ssi);
 
 extern Atom XA_VROOT, XA_XSETROOT_ID;
 extern Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;

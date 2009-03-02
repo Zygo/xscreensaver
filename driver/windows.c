@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2000 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1466,16 +1466,14 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
 	  visual_name = "default";
 	  install_cmap_p = False;
 	}
-#ifdef DAEMON_USE_GL
       else if (!strcmp(visual_name, "gl") ||
                !strcmp(visual_name, "Gl") ||
                !strcmp(visual_name, "GL"))
         {
-          new_v = get_gl_visual (ssi->screen);
+          new_v = ssi->best_gl_visual;
           if (!new_v && p->verbose_p)
             fprintf (stderr, "%s: no GL visuals.\n", progname);
         }
-#endif /* DAEMON_USE_GL */
 
       if (!new_v)
         new_v = get_visual (ssi->screen, visual_name, True, False);

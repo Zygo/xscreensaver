@@ -171,7 +171,7 @@ ensure_selected_item_visible (GtkWidget *widget)
        kids; kids = kids->next)
     nkids++;
 
-  adj = gtk_scrolled_window_get_vadjustment (scroller);                        
+  adj = gtk_scrolled_window_get_vadjustment (scroller);
 
   gdk_window_get_geometry (GTK_WIDGET(vp)->window,
                            &ignore, &ignore, &ignore, &parent_h, &ignore);
@@ -919,6 +919,80 @@ list_unselect_cb (GtkList *list, GtkWidget *child)
   populate_demo_window (GTK_WIDGET (list), -1, pair);
 }
 
+
+static int updating_enabled_cb = 0;  /* kludge to make sure that enabled_cb
+                                        is only run by user action, not by
+                                        program action. */
+
+/* Called when the checkboxes that are in the left column of the
+   scrolling list are clicked.  This both populates the right pane
+   (just as clicking on the label (really, listitem) does) and
+   also syncs this checkbox with  the right pane Enabled checkbox.
+ */
+static void
+list_checkbox_cb (GtkWidget *cb, gpointer client_data)
+{
+  prefs_pair *pair = (prefs_pair *) client_data;
+
+  GtkWidget *line_hbox = GTK_WIDGET (cb)->parent;
+  GtkWidget *line = GTK_WIDGET (line_hbox)->parent;
+
+  GtkList *list = GTK_LIST (GTK_WIDGET (line)->parent);
+  GtkViewport *vp = GTK_VIEWPORT (GTK_WIDGET (list)->parent);
+  GtkScrolledWindow *scroller = GTK_SCROLLED_WINDOW (GTK_WIDGET (vp)->parent);
+  GtkAdjustment *adj;
+  double scroll_top;
+
+  GtkToggleButton *enabled =
+    GTK_TOGGLE_BUTTON (name_to_widget (cb, "enabled"));
+
+  int which = gtk_list_child_position (list, line);
+
+  /* remember previous scroll position of the top of the list */
+  adj = gtk_scrolled_window_get_vadjustment (scroller);
+  scroll_top = adj->value;
+
+  apply_changes_and_save (GTK_WIDGET (list));
+  gtk_list_select_item (list, which);
+  /* ensure_selected_item_visible (GTK_WIDGET (list)); */
+  populate_demo_window (GTK_WIDGET (list), which, pair);
+  
+  updating_enabled_cb++;
+  gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (enabled),
+                                GTK_TOGGLE_BUTTON (cb)->active);
+  updating_enabled_cb--;
+
+  /* restore the previous scroll position of the top of the list.
+     this is weak, but I don't really know why it's moving... */
+  gtk_adjustment_set_value (adj, scroll_top);
+}
+
+
+/* Called when the right pane Enabled checkbox is clicked.  This syncs
+   the corresponding checkbox inside the scrolling list to the state
+   of this checkbox.
+ */
+void
+enabled_cb (GtkWidget *cb, gpointer client_data)
+{
+  int which = selected_hack_number (cb);
+  
+  if (updating_enabled_cb) return;
+
+  if (which != -1)
+    {
+      GtkList *list = GTK_LIST (name_to_widget (cb, "list"));
+      GList *kids = GTK_LIST (list)->children;
+      GtkWidget *line = GTK_WIDGET (g_list_nth_data (kids, which));
+      GtkWidget *line_hbox = GTK_WIDGET (GTK_BIN (line)->child);
+      GtkWidget *line_check =
+        GTK_WIDGET (gtk_container_children (GTK_CONTAINER (line_hbox))->data);
+
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (line_check),
+                                    GTK_TOGGLE_BUTTON (cb)->active);
+    }
+}
+
 
 /* Populating the various widgets
  */
@@ -1040,18 +1114,50 @@ populate_hack_list (GtkWidget *toplevel, prefs_pair *pair)
 
   for (h = hacks; h && *h; h++)
     {
+      /* A GtkList must contain only GtkListItems, but those can contain
+         an arbitrary widget.  We add an Hbox, and inside that, a Checkbox
+         and a Label.  We handle single and double click events on the
+         line itself, for clicking on the text, but the interior checkbox
+         also handles its own events.
+       */
       GtkWidget *line;
+      GtkWidget *line_hbox;
+      GtkWidget *line_check;
+      GtkWidget *line_label;
+
       char *pretty_name = (h[0]->name
                            ? strdup (h[0]->name)
                            : make_pretty_name (h[0]->command));
 
-      line = gtk_list_item_new_with_label (pretty_name);
+      line = gtk_list_item_new ();
+      line_hbox = gtk_hbox_new (FALSE, 0);
+      line_check = gtk_check_button_new ();
+      line_label = gtk_label_new (pretty_name);
+
+      gtk_container_add (GTK_CONTAINER (line), line_hbox);
+      gtk_box_pack_start (GTK_BOX (line_hbox), line_check, FALSE, FALSE, 0);
+      gtk_box_pack_start (GTK_BOX (line_hbox), line_label, FALSE, FALSE, 0);
+
+      gtk_toggle_button_set_active (GTK_TOGGLE_BUTTON (line_check),
+                                    h[0]->enabled_p);
+      gtk_label_set_justify (GTK_LABEL (line_label), GTK_JUSTIFY_LEFT);
+
+      gtk_widget_show (line_check);
+      gtk_widget_show (line_label);
+      gtk_widget_show (line_hbox);
+      gtk_widget_show (line);
+
       free (pretty_name);
 
       gtk_container_add (GTK_CONTAINER (list), line);
       gtk_signal_connect (GTK_OBJECT (line), "button_press_event",
                           GTK_SIGNAL_FUNC (list_doubleclick_cb),
                           (gpointer) pair);
+
+      gtk_signal_connect (GTK_OBJECT (line_check), "toggled",
+                          GTK_SIGNAL_FUNC (list_checkbox_cb),
+                          (gpointer) pair);
+
 #if 0 /* #### */
       GTK_WIDGET (GTK_BIN(line)->child)->style =
         gtk_style_copy (GTK_WIDGET (text_line)->style);
@@ -1474,7 +1580,11 @@ populate_demo_window (GtkWidget *toplevel, int which, prefs_pair *pair)
   gtk_label_set_text (doc, (doc_string ? doc_string : ""));
   gtk_entry_set_text (cmd, (hack ? hack->command : ""));
   gtk_entry_set_position (cmd, 0);
+
+  updating_enabled_cb++;
   gtk_toggle_button_set_active (enabled, (hack ? hack->enabled_p : False));
+  updating_enabled_cb--;
+
   gtk_entry_set_text (GTK_ENTRY (GTK_COMBO (vis)->entry),
                       (hack
                        ? (hack->visual && *hack->visual

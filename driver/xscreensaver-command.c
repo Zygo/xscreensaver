@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-1999
+/* xscreensaver-command, Copyright (c) 1991-2000
  *  by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -52,7 +52,7 @@ static char *usage = "\n\
 usage: %s -<option>\n\
 \n\
   This program provides external control of a running xscreensaver process.\n\
-  Version %s, copyright (c) 1991-1999 Jamie Zawinski <jwz@jwz.org>.\n\
+  Version %s, copyright (c) 1991-2000 Jamie Zawinski <jwz@jwz.org>.\n\
 \n\
   The xscreensaver program is a daemon that runs in the background.\n\
   You control a running xscreensaver process by sending it messages\n\

@@ -97,7 +97,7 @@ stored in the RESOURCE_MANAGER property.
 to get the default HTTP proxy host and port.
 .SH FILES AND URLS
 .TP
-.I /usr/dict/words \fRor\fP /usr/share/lib/dict/words
+.I /usr/dict/words \fRor\fP /usr/share/lib/dict/words \fRor\fP /usr/share/dict/words
 To find the random words to feed to search engines.
 .PP
 .I http://random.yahoo.com/bin/ryl, http://image.altavista.com/

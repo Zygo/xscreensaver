@@ -609,7 +609,7 @@ bsd (Display *dpy, Window window, int delay)
 
   for (bp = syncing; *bp;)
     {
-      char *bsd_bufs, oc;
+      char *bsd_bufs, oc = 0;
       for (;*bp && (*bp != ' '); bp++)
         ;
       if (*bp == ' ')

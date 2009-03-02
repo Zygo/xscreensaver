@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1999 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2000 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -219,7 +219,7 @@ do_help (saver_info *si)
   fflush (stdout);
   fflush (stderr);
   fprintf (stdout, "\
-xscreensaver %s, copyright (c) 1991-1999 by Jamie Zawinski <jwz@jwz.org>\n\
+xscreensaver %s, copyright (c) 1991-2000 by Jamie Zawinski <jwz@jwz.org>\n\
 The standard Xt command-line options are accepted; other options include:\n\
 \n\
     -timeout <minutes>       When the screensaver should activate.\n\
@@ -376,6 +376,7 @@ startup_ehandler (String name, String type, String class,
           "              the parts of the manual that talk about XAUTH, XDM,\n"
           "              and root logins?\n"
           "\n"
+          "              http://www.jwz.org/xscreensaver/faq.html\n"
           "              http://www.jwz.org/xscreensaver/man.html\n"
           "\n",
            blurb());
@@ -593,7 +594,7 @@ print_banner (saver_info *si)
 
   if (p->verbose_p)
     fprintf (stderr,
-	     "%s %s, copyright (c) 1991-1999 "
+	     "%s %s, copyright (c) 1991-2000 "
 	     "by Jamie Zawinski <jwz@jwz.org>.\n",
 	     progname, si->version);
 
@@ -649,7 +650,7 @@ print_banner (saver_info *si)
 
 
 /* Examine all of the display's screens, and populate the `saver_screen_info'
-   structures.
+   structures.  Make sure this is called after hack_environment() sets $PATH.
  */
 static void
 initialize_per_screen_info (saver_info *si, Widget toplevel_shell)
@@ -675,6 +676,9 @@ initialize_per_screen_info (saver_info *si, Widget toplevel_shell)
 
       ssi->current_visual = ssi->default_visual;
       ssi->current_depth = visual_depth (ssi->screen, ssi->current_visual);
+
+      /* Execute a subprocess to find the GL visual. */
+      ssi->best_gl_visual = get_best_gl_visual (ssi);
 
       if (ssi == si->default_screen)
 	/* Since this is the default screen, use the one already created. */

@@ -152,6 +152,7 @@ struct pam_closure {
    So we get around this by using a global variable instead.  Shoot me!
 
    (I've been told this is bug 4092227, and is fixed in Solaris 7.)
+   (I've also been told that it's fixed in Solaris 2.6 by patch 106257-05.)
  */
 static void *suns_pam_implementation_blows = 0;
 

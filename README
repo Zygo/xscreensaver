@@ -77,6 +77,21 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.25:   * Added "enabled" checkboxes in the list of hacks in
+                        xscreensaver-demo (Gtk version only.)
+                      * New hacks `hyperball', `xrayswarm', and `gflux'.
+                      * New versions of `nerverot', `galaxy', and `hypercube'.
+                      * Small fixes to `phosphor', `shadebobs', `xflame',
+                        and `sonar'.
+                      * Added external helper program `xscreensaver-gl-helper'
+                        to figure out which X visual to use for OpenGL
+                        programs.
+                      * Configure updates for XFree86 4.0, and for BSD.
+                      * Made it be more tolerant of bogus /etc/group files.
+                      * When installing the PAM config file, first try to just
+                        copy an existing "xdm" or "login" config file, so that
+                        xscreensaver does authentication in the same way as the
+                        rest of the system.
 Changes since 3.24:   * New hack, `nerverot'.
                       * Added BSD kernel panic to `bsod'.
                       * New version of `shadebobs'.
@@ -85,7 +100,8 @@ Changes since 3.24:   * New hack, `nerverot'.
                         format changes; made it search the AP photo gallery.
                       * Revamped command-line options of `sonar' and made it
                         properly handle subnets.
-                      * The `bubbles' hack can now trickle up or down the screen.
+                      * The `bubbles' hack can now trickle up or down the
+                        screen.
                       * The `xsublim' hack can now read its text from programs.
                       * Support for GLE version 3 in `extrusion'.
                       * Fixed compilation problems in `maze'.

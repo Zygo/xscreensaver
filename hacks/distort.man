@@ -3,7 +3,7 @@
 distort \- distort the content of the screen in interesting ways
 .SH SYNOPSIS
 .B distort
-[\-root] [\-window] [\-mono] [\-install] [\-noinstall] [\-visual \fIvisual\fP] [\-window\-id \fIwindow\-id\fP] [\-delay \fIusecs\fP] [\-radius \fIpixels\fP] [\-speed \fIfloat\fP] [\-number \fIint\fP] [\-swamp] [\-bounce] [\-reflect] [\-vortex] [\-magnify] [\-blackhole] [\-slow] [\-shm] [\-no\-shm]
+[\-root] [\-window] [\-mono] [\-install] [\-noinstall] [\-visual \fIvisual\fP] [\-window\-id \fIwindow\-id\fP] [\-delay \fIusecs\fP] [\-radius \fIpixels\fP] [\-speed \fIint\fP] [\-number \fIint\fP] [\-swamp] [\-bounce] [\-reflect] [\-vortex] [\-magnify] [\-blackhole] [\-slow] [\-shm] [\-no\-shm]
 .SH DESCRIPTION
 The \fIdistort\fP program lets circular zones of distortion wander
 randomly around its window, apparently distorting what is under them
@@ -41,9 +41,9 @@ Specify the delay between subsequent animation frames in microseconds.
 .B \-radius \fIpixels\fP
 Specify the radius of the distortion zone in pixels.
 .TP 8
-.B \-speed \fIfloat\fP
-Specify the speed of the distortion zone, where 1.0 is kind of slow,
-0.5 is twice as slow and 2.0 is twice as fast.
+.B \-speed \fIint\fP
+Specify the speed at which the distortion zone moves, where 0 is slow,
+higher numbers are faster (10 is pretty fast.)
 .TP 8
 .B \-number \fIint\fP
 Specify the number of distortion zones.

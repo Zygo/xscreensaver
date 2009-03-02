@@ -985,6 +985,8 @@ passwd_animate_timer (XtPointer closure, XtIntervalId *id)
 }
 
 
+static XComposeStatus *compose_status;
+
 static void
 handle_passwd_key (saver_info *si, XKeyEvent *event)
 {
@@ -995,7 +997,7 @@ handle_passwd_key (saver_info *si, XKeyEvent *event)
   char s[2];
   char *stars = 0;
   int i;
-  int size = XLookupString (event, s, 1, 0, 0);
+  int size = XLookupString (event, s, 1, 0, compose_status);
 
   if (size != 1) return;
 
@@ -1207,11 +1209,16 @@ unlock_p (saver_info *si)
   make_passwd_window (si);
   if (cmap) XInstallColormap (si->dpy, cmap);
 
+  compose_status = calloc (1, sizeof (*compose_status));
+
   handle_typeahead (si);
   passwd_event_loop (si);
 
   status = (si->pw_data->state == pw_ok);
   destroy_passwd_window (si);
+
+  free (compose_status);
+  compose_status = 0;
 
   cmap = si->default_screen->cmap;
   if (cmap) XInstallColormap (si->dpy, cmap);

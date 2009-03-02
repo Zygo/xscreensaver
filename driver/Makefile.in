@@ -210,8 +210,12 @@ install-program: $(EXES)
 	fi ;								      \
 	echo $$inst xscreensaver $(install_prefix)$(bindir)/xscreensaver ;    \
 	$$inst xscreensaver $(install_prefix)$(bindir)/xscreensaver
+	@echo $(INSTALL_PROGRAM) xscreensaver-command \
+	  $(install_prefix)$(bindir)/xscreensaver-command ; \
 	$(INSTALL_PROGRAM) xscreensaver-command \
 	  $(install_prefix)$(bindir)/xscreensaver-command
+	@echo $(INSTALL_PROGRAM) xscreensaver-demo \
+	  $(install_prefix)$(bindir)/xscreensaver-demo ; \
 	$(INSTALL_PROGRAM) xscreensaver-demo \
 	  $(install_prefix)$(bindir)/xscreensaver-demo
 
@@ -286,8 +290,26 @@ install-pam:
 	conf="$(PAM_CONF)" ;						\
 									\
 	if [ -d $$dir ] ; then						\
-	  echo $(INSTALL_DATA) $$src $$dir/$$dest ;			\
-	  $(INSTALL_DATA) $$src $$dir/$$dest ;				\
+									\
+	  if [ -f $$dir/xdm ]; then					\
+	    src2=$$dir/xdm ;						\
+	  elif [ -f $$dir/login ]; then					\
+	    src2=$$dir/login ;						\
+	  fi ;								\
+									\
+	  if [ -z "$$src2" ]; then					\
+	    echo $(INSTALL_DATA) $$src $$dir/$$dest ;			\
+	    $(INSTALL_DATA) $$src $$dir/$$dest ;			\
+	  else								\
+	    src="xscreensaver.pam.$$$$" ;				\
+	    echo "grep '^#%\|^auth' $$src2 > $$src" ;			\
+	          grep '^#%\|^auth' $$src2 > $$src ;			\
+	    echo $(INSTALL_DATA) $$src $$dir/$$dest ;			\
+	         $(INSTALL_DATA) $$src $$dir/$$dest ;			\
+	    echo rm -f $$src ;						\
+	         rm -f $$src ;						\
+	  fi ;								\
+									\
 	  if [ ! -f $$dir/$$dest ]; then				\
 	    e=echo ;							\
  $$e ""									     ;\
@@ -618,6 +640,7 @@ subprocs.o: ../config.h
 subprocs.o: $(srcdir)/xscreensaver.h
 subprocs.o: $(srcdir)/prefs.h
 subprocs.o: $(UTILS_SRC)/yarandom.h
+subprocs.o: $(UTILS_SRC)/visual.h
 xset.o: ../config.h
 xset.o: $(srcdir)/xscreensaver.h
 xset.o: $(srcdir)/prefs.h

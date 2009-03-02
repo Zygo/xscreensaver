@@ -1,6 +1,6 @@
 #!/usr/local/bin/perl5 -w
 #
-# webcollage, Copyright (c) 1999 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright (c) 1999, 2000 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -27,7 +27,7 @@ require POSIX;
 use Fcntl ':flock'; # import LOCK_* constants
 
 
-my $version = q{ $Revision: 1.54 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.60 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -96,7 +96,10 @@ my $delay = 0;
 my $wordlist = "/usr/dict/words";
 
 if (!-r $wordlist) {
-    $wordlist = "/usr/share/lib/dict/words";    # irix
+    $wordlist = "/usr/share/dict/words";	# BSD
+}
+if (!-r $wordlist) {
+    $wordlist = "/usr/share/lib/dict/words";    # Irix
 }
 die "$wordlist doesn't exist!\n" unless (-r $wordlist);
 
@@ -665,6 +668,8 @@ sub pick_from_image_randomizer {
 #    s/Result [Pp]ages:.*$//s;            # trim off page footer
 #    s/^.*?IMAGE RESULTS//s;              # trim off page header
 
+    s/Have you tried these resources.*//s;  # let's try it again
+
     s/[\r\n\t ]+/ /g;
 
     s/(<A )/\n$1/gi;
@@ -683,22 +688,29 @@ sub pick_from_image_randomizer {
 
         next unless ($u =~ m@^http://@i);  # skip non-http and relative urls.
 
-        next if ($u =~ m@[/.]altavista\.com@i);  # skip altavista builtins
-        next if ($u =~ m@[/.]av\.com@i);
-        next if ($u =~ m@[/.]virage\.com@i);
-        next if ($u =~ m@[/.]photoloft\.com@i);
-        next if ($u =~ m@[/.]shopping\.com@i);
-        next if ($u =~ m@[/.]thetrip\.com@i);
-        next if ($u =~ m@[/.]cmgi\.com@i);
-        next if ($u =~ m@[/.]intelihealth\.com@i);
-        next if ($u =~ m@[/.]wildweb\.com@i);
-        next if ($u =~ m@[/.]digital\.com@i);
-        next if ($u =~ m@[/.]doubleclick\.net@i);
-        next if ($u =~ m@[/.]freeim\.org@i);
-        next if ($u =~ m@[/.]clicktomarket\.com@i);  # you cretins
+        next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
+        next if ($u =~ m@[/.]altavista\.[a-z]{2}\b@i); # altavista.fr, etc
+        next if ($u =~ m@[/.]av\.com\b@i);
+        next if ($u =~ m@[/.]virage\.com\b@i);
+        next if ($u =~ m@[/.]photoloft\.com\b@i);
+        next if ($u =~ m@[/.]shopping\.com\b@i);
+        next if ($u =~ m@[/.]thetrip\.com\b@i);
+        next if ($u =~ m@[/.]cmgi\.com\b@i);
+        next if ($u =~ m@[/.]intelihealth\.com\b@i);
+        next if ($u =~ m@[/.]wildweb\.com\b@i);
+        next if ($u =~ m@[/.]digital\.com\b@i);
+        next if ($u =~ m@[/.]doubleclick\.net\b@i);
+        next if ($u =~ m@[/.]freeim\.org\b@i);
+        next if ($u =~ m@[/.]clicktomarket\.com\b@i);  # you cretins
+        next if ($u =~ m@[/.]teragram\.com\b@i);
+
+        # must lose this one for altavista, even though it loses images of
+        # every single customer of akamai.  Oh well, those people have lots
+        # of money, and so their images are probably boring anyway.
+        next if ($u =~ m@[/.]akamai\.net@i);
 
         if ($which == 0 && $u =~ m@[/.]corbis\.com@) {
-            $skipped = 1;
+           $skipped = 1;
             if ( $verbose > 3 ) {
                 print STDERR "$progname: skipping corbis URL: $u\n";
             }
@@ -804,7 +816,6 @@ my $count_4 = 0;
 
 sub pick_image {
     my ( $timeout ) = @_;
-
     my $r = int(rand(100));
 
     my ($base, $img, $source, $total, $count);
@@ -819,7 +830,7 @@ sub pick_image {
         $total = ++$total_1;
         $count = ++$count_1 if $img;
 
-     } elsif ($r < 70) {
+     } elsif ($r < 65) {
          ($base, $img, $source) = pick_from_image_randomizer ($timeout, 3);
          $total = ++$total_4;
          $count = ++$count_4 if $img;
@@ -1207,7 +1218,7 @@ sub x_output {
         } elsif ((@_ = jpeg_size ($body))) {
             ($iw, $ih) = @_;
             $cmd = "djpeg |";
-        } elsif ($body =~ "^P\d\n(\d+) (\d+)\n") {
+        } elsif ($body =~ m/^P\d\n(\d+) (\d+)\n/) {
             $iw = $1;
             $ih = $2;
             $cmd = "";

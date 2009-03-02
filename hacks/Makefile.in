@@ -30,7 +30,7 @@ DEPEND_DEFINES	= @DEPEND_DEFINES@
 SHELL		= /bin/sh
 INSTALL		= @INSTALL@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
-INSTALL_SCRIPT  = @INSTALL_PROGRAM@
+INSTALL_SCRIPT  = @INSTALL_SCRIPT@
 INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_DIRS	= @INSTALL_DIRS@
 HACKDIR		= @HACKDIR@
@@ -86,7 +86,8 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  sonar.c demon.c loop.c t3d.c penetrate.c deluxe.c compass.c \
 		  squiral.c xflame.c wander.c spotlight.c critical.c \
 		  phosphor.c xmatrix.c petri.c shadebobs.c xsublim.c ccurve.c \
-		  blaster.c bumps.c ripples.c xteevee.c xspirograph.c nerverot.c
+		  blaster.c bumps.c ripples.c xteevee.c xspirograph.c \
+		  nerverot.c xrayswarm.c hyperball.c
 SCRIPTS		= vidwhacker webcollage
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -105,7 +106,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  sonar.o demon.o loop.o t3d.o penetrate.o deluxe.o compass.o \
 		  squiral.o xflame.o wander.o spotlight.o critical.o \
 		  phosphor.o xmatrix.o petri.o shadebobs.o xsublim.o ccurve.o \
-		  blaster.o bumps.o ripples.o xteevee.o xspirograph.o nerverot.o
+		  blaster.o bumps.o ripples.o xteevee.o xspirograph.o \
+		  nerverot.o xrayswarm.o hyperball.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -119,7 +121,7 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  sonar demon loop t3d penetrate deluxe compass squiral \
 		  xflame wander spotlight critical phosphor xmatrix petri \
 		  shadebobs xsublim ccurve blaster bumps ripples xteevee \
-		  xspirograph nerverot
+		  xspirograph nerverot xrayswarm hyperball
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -572,6 +574,11 @@ xspirograph:	xspirograph.o	$(HACK_OBJS) $(COL) $(ERASE)
 nerverot:	nerverot.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
+xrayswarm:	xrayswarm.o	$(HACK_OBJS) 
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+hyperball:	hyperball.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -1793,4 +1800,22 @@ nerverot.o: $(UTILS_SRC)/hsv.h
 nerverot.o: $(UTILS_SRC)/colors.h
 nerverot.o: $(UTILS_SRC)/grabscreen.h
 nerverot.o: $(UTILS_SRC)/visual.h
+xrayswarm.o: $(srcdir)/screenhack.h
+xrayswarm.o: ../config.h
+xrayswarm.o: $(UTILS_SRC)/yarandom.h
+xrayswarm.o: $(UTILS_SRC)/usleep.h
+xrayswarm.o: $(UTILS_SRC)/resources.h
+xrayswarm.o: $(UTILS_SRC)/hsv.h
+xrayswarm.o: $(UTILS_SRC)/colors.h
+xrayswarm.o: $(UTILS_SRC)/grabscreen.h
+xrayswarm.o: $(UTILS_SRC)/visual.h
+hyperball.o: $(srcdir)/screenhack.h
+hyperball.o: ../config.h
+hyperball.o: $(UTILS_SRC)/yarandom.h
+hyperball.o: $(UTILS_SRC)/usleep.h
+hyperball.o: $(UTILS_SRC)/resources.h
+hyperball.o: $(UTILS_SRC)/hsv.h
+hyperball.o: $(UTILS_SRC)/colors.h
+hyperball.o: $(UTILS_SRC)/grabscreen.h
+hyperball.o: $(UTILS_SRC)/visual.h
 

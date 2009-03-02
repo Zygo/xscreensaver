@@ -533,6 +533,13 @@ FlameAdvance(void)
           if (used) 
             newtop = y - 1;
         }
+ 
+      /* clean up the right gutter */
+      {
+        int v1 = (int)*ptr1;
+        v1 = (v1 * residual) >> 8;
+        *ptr1 = (unsigned char)v1;
+      }
     }
 
   top = newtop - 1;

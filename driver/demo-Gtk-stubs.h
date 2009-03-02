@@ -80,3 +80,7 @@ pref_changed_cb                        (GtkNotebook     *notebook,
                                         GtkNotebookPage *page,
                                         gint             page_num,
                                         gpointer         user_data);
+
+void
+enabled_cb                             (GtkToggleButton *togglebutton,
+                                        gpointer         user_data);
