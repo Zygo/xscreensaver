@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="glsnake" _label="GlSnake">
+
+  <command arg="-root"/>
+
+  <number id="duration" type="slider" arg="-statictime %"
+          _label="Duration" _low-label="1" _high-label="30 Seconds"
+          low="1000" high="30000" default="5000"/>
+
+  <number id="velocity" type="slider" arg="-velocity %"
+          _label="Velocity" _low-label="Slow" _high-label="Fast"
+          low="0.05" high="5.0" default="1.0"/>
+
+  <number id="yspin" type="slider" arg="-yspin %"
+          _label="Y Rotation" _low-label="Slow" _high-label="Fast"
+          low="0.0" high="1.0" default="0.10"/>
+
+  <number id="zspin" type="slider" arg="-zspin %"
+          _label="Z Rotation" _low-label="Slow" _high-label="Fast"
+          low="0.0" high="1.0" default="0.10"/>
+
+  <number id="packing" type="slider" arg="-explode %"
+          _label="Packing" _low-label="Tight" _high-label="Loose"
+          low="0.0" high="0.5" default="0.03"/>
+
+  <boolean id="scarycolour" _label="Scary Colors" arg-set="-scarycolour"/>
+
+  <boolean id="labels" _label="Show Labels" arg-unset="-no-labels"/>
+
+  <select id="render">
+    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
+    <option id="solid" _label="Solid"/>
+  </select>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Draws a simulation of the Rubik's Snake puzzle.
+Written by Jamie Wilkinson, Andrew Bennetts, and Peter Aylett.
+  </_description>
+</screensaver>

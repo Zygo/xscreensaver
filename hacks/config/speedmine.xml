@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="speedmine" _label="SpeedMine">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="80000" default="30000"
+          convert="invert"/>
+
+  <boolean id="sharpturn" _label="Sharp Turns" arg-set="-sharpturns"/>
+
+  <select id="mode">
+    <option id="speedmine" _label="Mine Shaft"/>
+    <option id="speedworm" _label="Worm" arg-set="-worm"/>
+  </select>
+
+  <select id="render">
+    <option id="wire"  _label="Wireframe" arg-set="-wire"/>
+    <option id="solid" _label="Solid"/>
+  </select>
+
+  <number id="velocity" type="slider" arg="-maxspeed %"
+          _label="Max Velocity" _low-label="Slow" _high-label="Fast"
+          low="1" high="1000" default="700"/>
+
+  <number id="thrust" type="slider" arg="-thrust %"
+          _label="Thrust" _low-label="Slow" _high-label="Fast"
+          low="0.0" high="4.0" default="1.0"/>
+
+  <number id="gravity" type="slider" arg="-gravity %"
+          _label="Gravity" _low-label="Low" _high-label="High"
+          low="0.0" high="25.0" default="9.8"/>
+
+  <boolean id="terrain" _label="Rocky Walls" arg-unset="-noterrain"/>
+
+  <boolean id="bump"    _label="Allow Wall Collisions" arg-unset="-nobumps"/>
+
+  <boolean id="bonus"   _label="Present Bonuses" arg-unset="-nobonuses"/>
+
+  <boolean id="xhair"   _label="Display Crosshair" arg-unset="-nocrosshair"/>
+
+  <!-- #### -vertigo [1.0] -->
+  <!-- #### -darkground [#101010] -->
+  <!-- #### -lightground [#a0a0a0] -->
+  <!-- #### -tunnelend [#000000] -->
+  <!-- #### -smoothness [6] -->
+  <!-- #### -curviness [1.0] -->
+  <!-- #### -twistiness [1.0] -->
+  <!-- #### -nowidening -->
+  <!-- #### -psychedelic -->
+
+  <_description>
+Simulates speeding down a rocky mineshaft, or a funky dancing worm.
+Written by Conrad Parker.
+  </_description>
+</screensaver>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="deluxe" _label="Deluxe">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="5000"
+          convert="invert"/>
+
+  <number id="thickness" type="slider" arg="-thickness %"
+          _label="Lines" _low-label="Thin" _high-label="Thick"
+          low="1" high="150" default="50"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="1" high="20" default="5"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="20"/>
+
+  <!-- #### -speed [15] -->
+
+  <boolean id="transparent" _label="Transparency" arg-set="-transparent"/>
+
+  <boolean id="db" _label="Double Buffer" arg-unset="-no-db"/>
+
+  <_description>
+This draws a pulsing sequence of stars, circles, and lines.  It would
+look better if it was faster, but as far as I can tell, there is no
+way to make this be both: fast, and flicker-free.  Yet another reason
+X sucks.  Written by Jamie Zawinski.
+  </_description>
+</screensaver>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="flurry" _label="Flurry">
+
+  <command arg="-root"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <select id="preset">
+    <option id="classic" _label="Classic" arg-set="-preset classic"/>
+    <option id="rgb" _label="RGB" arg-set="-preset rgb"/>
+    <option id="fire" _label="Fire" arg-set="-preset fire"/>
+    <option id="water" _label="Water" arg-set="-preset water"/>
+    <option id="binary" _label="Binary" arg-set="-preset binary"/>
+    <option id="psychedelic" _label="Psychedelic" arg-set="-preset psychedelic"/>
+    <option id="psychedelic" _label="Random" arg-set="-preset random"/>
+    <option id="psychedelic" _label="Insane" arg-set="-preset insane"/>
+  </select>
+
+  <_description>
+This port of the OSX screensaver of the same name draws a colourful
+star(fish)like flurry of particles.
+
+xscreensaver port by Tobias Sargeant &lt;tobias.sargeant@bigpond.com&gt;
+
+Original Mac version by Calum Robinson &lt;calumr@mac.com&gt;
+
+http://homepage.mac.com/calumr
+  </_description>
+</screensaver>

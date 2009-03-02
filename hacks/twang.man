@@ -1,0 +1,107 @@
+.TH XScreenSaver 1 "07-Feb-2002" "X Version 11"
+.SH NAME
+twang - pluck pieces of the screen
+.SH SYNOPSIS
+.B twang
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-shm] [\-no-shm] [\-delay \fImicroseconds\fP] [\-border-color \fIcolor\fP] [\-border-width \fIinteger\fP] [\-event-chance \fIfraction\fP] [\-friction \fIfraction\fP] [\-springiness \fIfraction\fP] [\-tile-size \fIinteger\fP] [\-transference \fIfraction\fP]
+.SH DESCRIPTION
+\fITwang\fP divides the screen into equal-sized tiles, and then plucks
+them in various ways. Tiles are affected by their neighbors, so waves
+of motion flow through the grid. This manpage
+describes v1.3 of the program.
+.SH OPTIONS
+.I twang
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-shm
+.TP 8
+.B \-no-shm
+Use the shared memory extension (or not, respectively), if available. 
+This may speed things
+up a bit, but probably won't make that much difference. If available,
+defaults to true, resource \fIuseSHM\fP.
+.TP 8
+.B \-delay \fImicroseconds\fP
+The interframe delay, in microseconds. Defaults to 10000, resource
+\fIdelay\fP.
+.TP 8
+.B \-border-color \fIcolor\fP
+Color of the border surrounding each tile. Defaults to blue, resource
+\fIborderColor\fP.
+.TP 8
+.B \-border-width \fIinteger\fP
+Width of the border surrounding each tile. Defaults to 3, resource
+\fIborderWidth\fP.
+.TP 8
+.B \-event-chance \fIfraction\fP
+The chance, per iteration, for an event to occur (such as tweaking
+the orientation of a tile), in the range 0..1. Defaults to 0.01,
+resource \fIeventChance\fP.
+.TP 8
+.B \-friction \fIfraction\fP
+How much friction there is in the system, in the range 0..1. 
+This is the amount by which velocities are damped per iteration.
+Defaults to 0.05, resource \fIfriction\fP.
+.TP 8
+.B \-springiness \fIfraction\fP
+How springy the tiles are, in the range 0..1. 
+This is the fraction of an orientation that gets turned into a velocity
+towards the center (resting point). Defaults to 0.1, resource 
+\fIspringiness\fP.
+.TP 8
+.B \-tile-size \fIinteger\fP
+Size (width and height) of each tile, not including the outer edge
+of the border. Defaults to 120, resource \fItileSize\fP.
+.TP 8
+.B \-transference \fIfraction\fP
+How much a tile's neighbors affect it, in the range 0..1. 
+This is the fraction of an orientation of a neighbor that gets turned 
+into a velocity in the same direction Defaults to 0.025, resource 
+\fItransference\fP.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH X RESOURCES
+There are resource equivalents for each option, noted above.
+.SH BUGS
+.I twang
+should have more interesting events.
+.TP 8
+Ways of speeding it up need to be investigated. It's kinda sluggish,
+especially on hugeass displays.
+.SH SEE ALSO
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2002 by Dan Bornstein. All rights reserved.
+
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation. No representations are made about the suitability of this
+software for any purpose. It is provided "as is" without express or 
+implied warranty.
+.SH AUTHOR
+Dan Bornstein <danfuzz@milk.com>.

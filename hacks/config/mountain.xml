@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="mountain" _label="Mountain">
+
+  <command arg="-root"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="0" high="100" default="30"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="0"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="64"/>
+
+  <_description>
+Generates random 3d plots that look vaguely mountainous.  Written by
+Pascal Pensa.
+  </_description>
+</screensaver>
