@@ -900,9 +900,7 @@ lock.o: $(srcdir)/types.h
 lock.o: $(UTILS_SRC)/resources.h
 lock.o: $(srcdir)/xscreensaver.h
 mlstring.o: $(srcdir)/mlstring.h
-passwd.o: $(srcdir)/auth.h
 passwd.o: ../config.h
-passwd.o: $(srcdir)/types.h
 passwd-pwent.o: ../config.h
 prefs.o: ../config.h
 prefs.o: $(srcdir)/prefs.h

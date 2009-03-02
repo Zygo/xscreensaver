@@ -102,7 +102,8 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c \
 		  antinspect.c providence.c pinion.c boing.c texfont.c \
 		  carousel.c fliptext.c antmaze.c tangram.c tangram_shapes.c \
 		  crackberg.c glhanoi.c cube21.c timetunnel.c juggler3d.c \
-		  topblock.c glschool.c glschool_gl.c glschool_alg.c
+		  topblock.c glschool.c glschool_gl.c glschool_alg.c \
+		  glcells.c voronoi.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -134,7 +135,8 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  antinspect.o providence.o pinion.o boing.o texfont.o \
 		  carousel.o fliptext.o antmaze.o tangram.o tangram_shapes.o \
 		  crackberg.o glhanoi.o cube21.o timetunnel.o juggler3d.o \
-		  topblock.o glschool.o glschool_gl.o glschool_alg.o
+		  topblock.o glschool.o glschool_gl.o glschool_alg.o \
+		  glcells.o voronoi.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -147,7 +149,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  gleidescope mirrorblob blinkbox noof polyhedra \
 		  antinspect providence pinion boing carousel fliptext \
 		  antmaze tangram crackberg glhanoi cube21 timetunnel \
-		  juggler3d topblock glschool
+		  juggler3d topblock glschool glcells voronoi
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -187,7 +189,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  antinspect.man providence.man pinion.man boing.man \
 		  carousel.man fliptext.man antmaze.man tangram.man \
 		  crackberg.man glhanoi.man cube21.man timetunnel.man \
-		  juggler3d.man topblock.man glschool.man
+		  juggler3d.man topblock.man glschool.man glcells.man \
+		  voronoi.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl molecules.sh starwars.txt
 
@@ -694,12 +697,18 @@ juggler3d:	juggler3d.o	$(HACK_TRACK_OBJS)
 dnalogo:	dnalogo.o      tube.o normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o  tube.o normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-topblock:	topblock.o	$(DB_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(DB_OBJS) $(HACK_LIBS)
+topblock:	topblock.o	sphere.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	sphere.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 SCHOOL_OBJS=glschool.o glschool_alg.o glschool_gl.o sphere.o tube.o $(HACK_OBJS)
 glschool: $(SCHOOL_OBJS)
 	$(CC_HACK) -o $@ $(SCHOOL_OBJS) $(HACK_LIBS)
+
+glcells:	glcells.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+voronoi:	voronoi.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
 ##############################################################################
 #
@@ -1253,6 +1262,18 @@ glblur.o: $(UTILS_SRC)/xshm.h
 glblur.o: $(UTILS_SRC)/yarandom.h
 glblur.o: $(HACK_SRC)/xlockmoreI.h
 glblur.o: $(HACK_SRC)/xlockmore.h
+glcells.o: ../../config.h
+glcells.o: $(HACK_SRC)/screenhackI.h
+glcells.o: $(UTILS_SRC)/colors.h
+glcells.o: $(UTILS_SRC)/grabscreen.h
+glcells.o: $(UTILS_SRC)/hsv.h
+glcells.o: $(UTILS_SRC)/resources.h
+glcells.o: $(UTILS_SRC)/usleep.h
+glcells.o: $(UTILS_SRC)/visual.h
+glcells.o: $(UTILS_SRC)/xshm.h
+glcells.o: $(UTILS_SRC)/yarandom.h
+glcells.o: $(HACK_SRC)/xlockmoreI.h
+glcells.o: $(HACK_SRC)/xlockmore.h
 gleidescope.o: ../../config.h
 gleidescope.o: $(srcdir)/grab-ximage.h
 gleidescope.o: $(HACK_SRC)/screenhackI.h
@@ -1971,6 +1992,18 @@ tunnel_draw.o: $(UTILS_SRC)/visual.h
 tunnel_draw.o: $(UTILS_SRC)/xshm.h
 tunnel_draw.o: $(UTILS_SRC)/yarandom.h
 tunnel_draw.o: $(HACK_SRC)/xlockmoreI.h
+voronoi.o: ../../config.h
+voronoi.o: $(HACK_SRC)/screenhackI.h
+voronoi.o: $(UTILS_SRC)/colors.h
+voronoi.o: $(UTILS_SRC)/grabscreen.h
+voronoi.o: $(UTILS_SRC)/hsv.h
+voronoi.o: $(UTILS_SRC)/resources.h
+voronoi.o: $(UTILS_SRC)/usleep.h
+voronoi.o: $(UTILS_SRC)/visual.h
+voronoi.o: $(UTILS_SRC)/xshm.h
+voronoi.o: $(UTILS_SRC)/yarandom.h
+voronoi.o: $(HACK_SRC)/xlockmoreI.h
+voronoi.o: $(HACK_SRC)/xlockmore.h
 whale.o: $(srcdir)/atlantis.h
 whale.o: ../../config.h
 whale.o: $(HACK_SRC)/screenhackI.h

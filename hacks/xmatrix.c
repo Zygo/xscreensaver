@@ -1226,7 +1226,7 @@ hack_text (m_state *state)
                "\001disable grid nodes 21 - 48\n"
                "\n"
                "\002Warning: Disabling nodes 21-48 will disconnect sector 11"
-               " (27 nodes)\n"
+               " (28 nodes)\n"
                "\n"
                "\002         ARE YOU SURE? (y/n) "
 

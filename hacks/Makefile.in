@@ -110,8 +110,9 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  mismunch.c pacman.c pacman_ai.c pacman_level.c \
 		  fuzzyflakes.c anemotaxis.c memscroller.c substrate.c \
 		  intermomentary.c fireworkx.c fireworkx_mmx.S fiberlamp.c \
-		  boxfit.c interaggregate.c celtic.c webcollage-cocoa.m \
-		  webcollage-helper-cocoa.m
+		  boxfit.c interaggregate.c celtic.c cwaves.c m6502.c \
+		  asm6502.c \
+		  webcollage-cocoa.m webcollage-helper-cocoa.m
 SCRIPTS		= vidwhacker webcollage ljlatest
 
 # Programs that are mentioned in XScreenSaver.ad, and that have XML files,
@@ -148,8 +149,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  mismunch.o pacman.o pacman_ai.o pacman_level.o \
 		  fuzzyflakes.o anemotaxis.o memscroller.o substrate.o \
 		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o \
-		  interaggregate.o celtic.o webcollage-cocoa.o \
-		  webcollage-helper-cocoa.o
+		  interaggregate.o celtic.o cwaves.o webcollage-cocoa.o \
+		  webcollage-helper-cocoa.o m6502.0 asm6502.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -170,7 +171,7 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  fontglide apple2 xanalogtv pong  wormhole mismunch \
 		  pacman fuzzyflakes anemotaxis memscroller substrate \
 		  intermomentary fireworkx fiberlamp boxfit interaggregate \
-		  celtic \
+		  celtic cwaves m6502 \
 		  @JPEG_EXES@
 SEXES		= sonar
 JPEG_EXES	= webcollage-helper
@@ -187,7 +188,7 @@ XDBE_OBJS	= $(UTILS_BIN)/xdbe.o
 
 HDRS		= screenhack.h screenhackI.h xlockmore.h xlockmoreI.h \
 		  automata.h bubbles.h bumps.h xpm-pixmap.h apple2.h \
-		  analogtv.h pacman.h pacman_ai.h pacman_level.h
+		  analogtv.h pacman.h pacman_ai.h pacman_level.h asm6502.h
 MEN		= anemone.man apollonian.man attraction.man \
 	          blaster.man blitspin.man bouboule.man braid.man bsod.man \
 	          bubbles.man bumps.man ccurve.man compass.man coral.man \
@@ -218,7 +219,7 @@ MEN		= anemone.man apollonian.man attraction.man \
 		  wormhole.man mismunch.man pacman.man fuzzyflakes.man \
 		  anemotaxis.man memscroller.man substrate.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
-		  interaggregate.man celtic.man
+		  interaggregate.man celtic.man cwaves.man
 STAR		= *
 EXTRAS		= README Makefile.in xml2man.pl .gdbinit \
 		  euler2d.tex \
@@ -761,7 +762,7 @@ xrayswarm:	xrayswarm.o	$(HACK_OBJS)
 hyperball:	hyperball.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-zoom:	zoom.o	$(HACK_OBJS) $(GRAB)
+zoom:	zoom.o			$(HACK_OBJS) $(GRAB)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS)
 
 whirlwindwarp:	whirlwindwarp.o	$(HACK_OBJS) $(COL)
@@ -851,6 +852,11 @@ ifs:		ifs.o		$(HACK_OBJS) $(COL)
 celtic:		celtic.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
 
+cwaves:		cwaves.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
+m6502:		m6502.o		asm6502.o $(HACK_OBJS) $(ATV)
+	$(CC_HACK) -o $@ $@.o	asm6502.o $(HACK_OBJS) $(ATV) $(HACK_LIBS)
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -1069,6 +1075,7 @@ apple2.o: $(UTILS_SRC)/usleep.h
 apple2.o: $(UTILS_SRC)/visual.h
 apple2.o: $(UTILS_SRC)/xshm.h
 apple2.o: $(UTILS_SRC)/yarandom.h
+asm6502.o: $(srcdir)/asm6502.h
 attraction.o: ../config.h
 attraction.o: $(srcdir)/screenhackI.h
 attraction.o: $(srcdir)/screenhack.h
@@ -1316,6 +1323,17 @@ crystal.o: $(UTILS_SRC)/xshm.h
 crystal.o: $(UTILS_SRC)/yarandom.h
 crystal.o: $(srcdir)/xlockmoreI.h
 crystal.o: $(srcdir)/xlockmore.h
+cwaves.o: ../config.h
+cwaves.o: $(srcdir)/screenhackI.h
+cwaves.o: $(srcdir)/screenhack.h
+cwaves.o: $(UTILS_SRC)/colors.h
+cwaves.o: $(UTILS_SRC)/grabscreen.h
+cwaves.o: $(UTILS_SRC)/hsv.h
+cwaves.o: $(UTILS_SRC)/resources.h
+cwaves.o: $(UTILS_SRC)/usleep.h
+cwaves.o: $(UTILS_SRC)/visual.h
+cwaves.o: $(UTILS_SRC)/yarandom.h
+cwaves.o: $(srcdir)/xpm-pixmap.h
 cynosure.o: ../config.h
 cynosure.o: $(srcdir)/screenhackI.h
 cynosure.o: $(srcdir)/screenhack.h
@@ -1843,6 +1861,19 @@ loop.o: $(UTILS_SRC)/xshm.h
 loop.o: $(UTILS_SRC)/yarandom.h
 loop.o: $(srcdir)/xlockmoreI.h
 loop.o: $(srcdir)/xlockmore.h
+m6502.o: $(srcdir)/analogtv.h
+m6502.o: $(srcdir)/asm6502.h
+m6502.o: ../config.h
+m6502.o: $(srcdir)/screenhackI.h
+m6502.o: $(srcdir)/screenhack.h
+m6502.o: $(UTILS_SRC)/colors.h
+m6502.o: $(UTILS_SRC)/grabscreen.h
+m6502.o: $(UTILS_SRC)/hsv.h
+m6502.o: $(UTILS_SRC)/resources.h
+m6502.o: $(UTILS_SRC)/usleep.h
+m6502.o: $(UTILS_SRC)/visual.h
+m6502.o: $(UTILS_SRC)/xshm.h
+m6502.o: $(UTILS_SRC)/yarandom.h
 maze.o: ../config.h
 maze.o: $(srcdir)/screenhackI.h
 maze.o: $(srcdir)/screenhack.h

@@ -1,0 +1,88 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+voronoi - draws a randomly-colored Voronoi tessellation
+.SH SYNOPSIS
+.B voronoi
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-points \fIint\fP]
+[\-point\-size \fIint\fP]
+[\-point\-speed \fIratio\fP]
+[\-point\-delay \fIseconds\fP]
+[\-zoom\-speed \fIratio\fP]
+[\-zoom\-delay \fIseconds\fP]
+[\-fps]
+.SH DESCRIPTION
+Draws a randomly-colored Voronoi tessellation, and periodically zooms 
+in and adds new points.  The existing points also wander around.
+
+There are a set of control points on the plane, each at the center of
+a colored cell.  Every pixel within that cell is closer to that cell's
+control point than to any other control point.  That is what
+determines the cell's shapes.
+
+When running in a window, you can click  to insert a new point at
+the mouse position.  Clicking on an existing point lets you drag
+it around.
+
+This implementation takes advantage of the OpenGL depth buffer to
+compute the cells for us, by rendering the intersection of overlapping
+cones in an orthographic plane.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-points \fIint\fP
+How many points to add each time we zoom in.
+.TP 8
+.B \-point\-size \fIint\fP
+How big to draw the stars, in pixels.  0 for no stars.
+.TP 8
+.B \-point\-speed \fIratio\fP
+How fast the points should wander.  
+Less than 1 for slower, greater than 1 for faster.
+.TP 8
+.B \-point\-delay \fIseconds\fP
+How quickly to insert new points, when adding.
+.TP 8
+.B \-zoom\-speed \fIratio\fP
+How fast to zoom in.
+Less than 1 for slower, greater than 1 for faster.
+.TP 8
+.B \-zoom\-delay \fIseconds\fP
+Zoom in every this-many seconds.
+.TP 8
+.B \-fps | \-no-fps
+Whether to show a frames-per-second display at the bottom of the screen.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2007 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski.

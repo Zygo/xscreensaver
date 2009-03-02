@@ -1870,7 +1870,6 @@ passwd_event_loop (saver_info *si)
       si->pw_data->i_beam = 0;
       update_passwd_window (si, msg, 0.0);
       XSync (si->dpy, False);
-      sleep (1);
 
       /* Swallow all pending KeyPress/KeyRelease events. */
       {
@@ -2066,7 +2065,8 @@ auth_finished_cb (saver_info *si)
       }
     }
 
-  destroy_passwd_window (si);
+  if (si->pw_data)
+    destroy_passwd_window (si);
 }
 
 
