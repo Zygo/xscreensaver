@@ -1,0 +1,1700 @@
+<HTML>
+<BODY>
+<PRE>
+
+</PRE>
+<H2>NAME</H2><PRE>
+     xlock - Locks the  local  X  display  until  a  password  is
+     entered.
+
+
+
+</PRE>
+<H2>SYNOPSIS</H2><PRE>
+     <STRONG>xlock</STRONG> [ -<STRONG>help</STRONG> ] [ -<STRONG>version</STRONG>  ]  [  -<STRONG>resources</STRONG>  ]  [  -<STRONG>display</STRONG>
+     <EM>displayname</EM>  ] [ -<STRONG>visual</STRONG> <EM>visualname</EM> ] [ -<STRONG>name</STRONG> <EM>resourcename</EM> ]
+     [ -<STRONG>mode</STRONG> <EM>modename</EM> ] [ -<STRONG>delay</STRONG> <EM>usecs</EM> ] [ -<STRONG>batchcount</STRONG>  <EM>num</EM>  ]  [
+     -<STRONG>count</STRONG>  <EM>num</EM> ] [ -<STRONG>cycles</STRONG> <EM>num</EM> ] [ -<STRONG>ncolors</STRONG> <EM>num</EM> ] [ -<STRONG>size</STRONG> <EM>num</EM> ]
+     [ -<STRONG>saturation</STRONG> <EM>value</EM> ] [ -<STRONG>erasemode</STRONG> <EM>modename</EM> ] [  -<STRONG>erasedelay</STRONG>
+     <EM>usecs</EM>  ] [ <STRONG>-/+allowaccess</STRONG> ] [ -<STRONG>vtlock</STRONG> <EM>modename</EM> ] [ <STRONG>-/+nolock</STRONG>
+     ] [ <STRONG>-/+inwindow</STRONG> ] [ <STRONG>-/+inroot</STRONG> ] [ <STRONG>-/+remote</STRONG> ] [ <STRONG>-/+mono</STRONG> ]  [
+     <STRONG>-/+allowroot</STRONG> ] [ <STRONG>-/+debug</STRONG> ] [ <STRONG>-/+description</STRONG> ] [ <STRONG>-/+echokeys</STRONG>
+     ] [ <STRONG>-/+enablesaver</STRONG> ] [ <STRONG>-/+resetsaver</STRONG> ] [ <STRONG>-/+grabmouse</STRONG> ] [  <STRONG>-</STRONG>
+     <STRONG>/+grabserver</STRONG>  ] [ <STRONG>-/+install</STRONG> ] [ <STRONG>-/+mousemotion</STRONG> ] [ <STRONG>-/+sound</STRONG>
+     ] [ <STRONG>-/+timeelapsed</STRONG> ] [ <STRONG>-/+usefirst</STRONG> ] [ <STRONG>-/+verbose</STRONG> ] [  -<STRONG>nice</STRONG>
+     <EM>level</EM>  ] [ -<STRONG>lockdelay</STRONG> <EM>seconds</EM> ] [ -<STRONG>timeout</STRONG> <EM>seconds</EM> ] [ -<STRONG>font</STRONG>
+     <EM>fontname</EM> ] [ -<STRONG>planfont</STRONG> <EM>fontname</EM> ] [ -<STRONG>bg</STRONG> <EM>color</EM> ] [ -<STRONG>fg</STRONG>  <EM>color</EM>
+     ]  [  -<STRONG>background</STRONG>  <EM>color</EM> ] [ -<STRONG>foreground</STRONG> <EM>color</EM> ] [ -<STRONG>username</STRONG>
+     <EM>string</EM> ] [ -<STRONG>password</STRONG> <EM>string</EM> ] [ -<STRONG>info</STRONG> <EM>string</EM> ]  [  -<STRONG>validate</STRONG>
+     <EM>string</EM>   ]  [  -<STRONG>invalid</STRONG>  <EM>string</EM>  ]  [  -<STRONG>geometry</STRONG>  <EM>geom</EM>  ]  [
+     -<STRONG>icongeometry</STRONG> <EM>geom</EM> ] [ -<STRONG>glgeometry</STRONG> <EM>geom</EM> ] [ <STRONG>-/+wireframe</STRONG> ] [
+     <STRONG>-/+showfps</STRONG>  ] [ -<STRONG>fpsfont</STRONG> <EM>fontname</EM> ] [ <STRONG>-/+fpstop</STRONG> ] [ <STRONG>-/+use3d</STRONG>
+     ] [ -<STRONG>delta3d</STRONG> <EM>value</EM> ] [ -<STRONG>none3d</STRONG> <EM>color</EM> ] [ -<STRONG>right3d</STRONG> <EM>color</EM> ]  [
+     -<STRONG>left3d</STRONG> <EM>color</EM> ] [ -<STRONG>both3d</STRONG> <EM>color</EM> ] [ -<STRONG>program</STRONG> <EM>programname</EM> ] [
+     -<STRONG>messagesfile</STRONG> <EM>formatted</EM>-<EM>filename</EM> ] [ -<STRONG>messagefile</STRONG> <EM>filename</EM> ]
+     [  -<STRONG>message</STRONG>  <EM>string</EM>  ]  [  -<STRONG>messagefont</STRONG> <EM>fontname</EM> ] [ -<STRONG>bitmap</STRONG>
+     <EM>filename</EM> ] [  -<STRONG>cpasswd</STRONG>  <EM>crypted</EM>-<EM>password</EM>  ]  [  -<STRONG>forceLogout</STRONG>
+     <EM>minutes</EM>  ]  [  -<STRONG>logoutButtonLabel</STRONG> <EM>textstring</EM> ] [ -<STRONG>logoutBut-</STRONG>
+     <STRONG>tonHelp</STRONG> <EM>textstring</EM> ] [ -<STRONG>logoutFailedString</STRONG> <EM>textstring</EM> ] [  <STRONG>-</STRONG>
+     <STRONG>/+dtsaver</STRONG>  ]  [  -<STRONG>modulepath</STRONG>  <EM>path</EM> ] [ -<STRONG>locksound</STRONG> <EM>string</EM> ] [
+     -<STRONG>infosound</STRONG> <EM>string</EM> ] [ -<STRONG>validsound</STRONG> <EM>string</EM> ]  [  -<STRONG>invalidsound</STRONG>
+     <EM>string</EM>  ]  [  -<STRONG>startCmd</STRONG>  <EM>string</EM>  ]  [  -<STRONG>endCmd</STRONG>  <EM>string</EM>  ]  [
+     -<STRONG>logoutCmd</STRONG> <EM>string</EM> ]
+
+
+
+</PRE>
+<H2>DESCRIPTION</H2><PRE>
+     <STRONG>xlock</STRONG> locks the X server till the user enters their password
+     at  the  keyboard.   While  <STRONG>xlock</STRONG> is running, all new server
+     connections are refused.  The screen saver is disabled.  The
+     mouse  cursor  is  turned  off.  The screen is blanked and a
+     changing pattern is put on the screen.  If a key or a  mouse
+     button is pressed then the user is prompted for the password
+     of the user who started <STRONG>xlock</STRONG>.
+
+     If the  correct  password  is  typed,  then  the  screen  is
+     unlocked  and  the  X  server  is restored.  When typing the
+     password Control-U and Control-H  are  active  as  kill  and
+     erase  respectively.   To return to the locked screen, click
+     in the small icon version of the changing pattern.
+
+     In  the  lower  part  of  the  password  screen  a  text  is
+     displayed.  This message is taken from the first file of the
+     following that exists:   $HOME/.xlocktext,  $HOME/.plan,  or
+     $HOME/.signature.
+
+     On systems which support new BSD style  authentication,  the
+     password may be prefixed by an authentication style followed
+     by a colon (i.e. "style:password").  See  the  login.conf(5)
+     for more information on authentication styles.
+
+
+
+</PRE>
+<H2>NOTE ON ETIQUETTE</H2><PRE>
+     <EM>Xlock</EM> should not be used on public terminals when there is a
+     high demand for them.
+
+     If you find a  public  terminal  that  has  been  locked  by
+     another user and there are no other terminals available, and
+     the terminal appears to have been  left  idle  for  a  while
+     (normally  more than 15 minutes), it is fair to try to reset
+     the session in some manner.
+
+
+
+</PRE>
+<H2>OPTIONS</H2><PRE>
+     -<STRONG>help</STRONG>
+          Print options and a brief description to standard  out-
+          put.
+
+     -<STRONG>version</STRONG>
+          Print version number (if &gt;= 4.00) to standard output.
+
+     -<STRONG>resources</STRONG>
+          Print default resource file to standard output.
+
+     -<STRONG>display</STRONG> <EM>displayname</EM>
+          The <EM>display</EM> option sets the X11 display to lock.  <STRONG>xlock</STRONG>
+          locks all available screens on a given server, and res-
+          tricts you to locking  only  a  local  server  such  as
+          <STRONG>unix:0,</STRONG>  <STRONG>localhost:0,</STRONG>  or <STRONG>:0</STRONG> unless you set the -<STRONG>remote</STRONG>
+          option.
+
+     -<STRONG>visual</STRONG> <EM>visualname</EM>
+          <EM>visualname</EM> which is one of  "StaticGray",  "GrayScale",
+          "StaticColor",        "PseudoColor",       "TrueColor",
+          "DirectColor", or "default".  default used to  set  the
+          screen's  default  visual  (the visual of the root win-
+          dow).
+
+     -<STRONG>name</STRONG> <EM>resourcename</EM>
+          <EM>resourcename</EM> is used instead of <STRONG>XLock</STRONG> when looking  for
+          resources to configure <STRONG>xlock</STRONG>.
+
+     -<STRONG>mode</STRONG> <EM>modename</EM>
+          As of this writing there are over 90 display modes sup-
+          ported  (plus  one  more for random selection of one of
+          these).
+
+     <STRONG>ant</STRONG>     Shows Langton's and Turk's generalized ants.
+
+     <STRONG>atlantis</STRONG>
+             Shows  moving  sharks/whales/dolphin.   May  not  be
+             available depending on how it was configured.
+
+     <STRONG>ball</STRONG>    Shows bouncing balls.
+
+     <STRONG>bat</STRONG>     Shows bouncing flying bats.
+
+     <STRONG>blot</STRONG>    Shows Rorschach's ink blot test.
+
+     <STRONG>bouboule</STRONG>
+             Shows Mimi's bouboule of moving stars.
+
+     <STRONG>bounce</STRONG>  Shows bouncing footballs.
+
+     <STRONG>braid</STRONG>   Shows random braids and knots.
+
+     <STRONG>bubble</STRONG>  Shows popping bubbles.
+
+     <STRONG>bubble3d</STRONG>
+             Shows Richard Jones's GL bubbles.  May not be avail-
+             able depending on how it was configured.
+
+     <STRONG>bug</STRONG>     Shows Palmiter's bug evolution and a garden of Eden.
+
+     <STRONG>clock</STRONG>   Shows Packard's oclock.
+
+     <STRONG>coral</STRONG>   Shows a coral reef.
+
+     <STRONG>crystal</STRONG> Shows polygons in 2D plane groups.
+
+     <STRONG>daisy</STRONG>   Shows a meadow of daisies.
+
+     <STRONG>dclock</STRONG>  Shows a floating digital clock or message.
+
+     <STRONG>deco</STRONG>    Shows art as ugly as sin.
+
+     <STRONG>demon</STRONG>   Shows Griffeath's cellular automata.
+
+     <STRONG>dilemma</STRONG> Shows Lloyd's Prisoner's Dilemma simulation.
+
+     <STRONG>discrete</STRONG>
+             Shows various discrete maps.
+
+     <STRONG>dragon</STRONG>  Shows Deventer's Hexagonal Dragons Maze.
+
+     <STRONG>drift</STRONG>   Shows cosmic drifting flame fractals.
+
+     <STRONG>cage</STRONG>    Shows the Impossible Cage, an Escher-like GL  scene.
+             May not be available depending on how it was config-
+             ured.
+
+     <STRONG>euler2d</STRONG> Shows a simulation  of  2D  incompressible  inviscid
+             fluid.
+
+     <STRONG>eyes</STRONG>    Shows eyes following a bouncing grelb.
+
+     <STRONG>fadeplot</STRONG>
+             Shows a fading plot of sine squared.
+
+     <STRONG>fire</STRONG>    Shows a 3D fire-like image.  May  not  be  available
+             depending on how it was configured.
+
+     <STRONG>flag</STRONG>    Shows a waving flag image.  This may be  text  or  a
+             graphic  image.   Default  text  is the hostname and
+             operating system.
+
+     <STRONG>flame</STRONG>   Shows cosmic flame fractals.
+
+     <STRONG>flow</STRONG>    Shows dynamic strange attractors.
+
+     <STRONG>forest</STRONG>  Shows binary trees of a fractal forest.
+
+     <STRONG>galaxy</STRONG>  Shows crashing spiral galaxies.
+
+     <STRONG>gears</STRONG>   Shows GL's gears.  May not be available depending on
+             how it was configured.
+
+     <STRONG>glplanet</STRONG>
+             Animates texture mapped sphere (planet)
+
+     <STRONG>goop</STRONG>    Shows goop from a lava lamp.
+
+     <STRONG>grav</STRONG>    Shows orbiting planets.
+
+     <STRONG>helix</STRONG>   Shows string art.
+
+     <STRONG>hop</STRONG>     Shows real plane iterated fractals.
+
+     <STRONG>hyper</STRONG>   Shows spinning n-dimensional hypercubes.
+
+     <STRONG>ico</STRONG>     Shows a bouncing polyhedron.
+
+     <STRONG>ifs</STRONG>     Shows a modified iterated function system.
+
+     <STRONG>image</STRONG>   Shows randomly appearing logos.
+
+     <STRONG>juggle</STRONG>  Shows a Juggler, juggling.
+     <STRONG>julia</STRONG>   Shows the Julia set.
+
+     <STRONG>kaleid</STRONG>  Shows Brewster's Kaleidoscope.
+
+     <STRONG>kumppa</STRONG>  Shows kumppa.
+
+     <STRONG>laser</STRONG>   Shows spinning lasers.
+
+     <STRONG>life</STRONG>    Shows Conway's game of life.
+
+     <STRONG>life1d</STRONG>  Shows Wolfram's game of 1D life.
+
+     <STRONG>life3d</STRONG>  Shows Bays' game of 3D life.
+
+     <STRONG>lightning</STRONG>
+             Shows Keith's fractal lightning bolts.
+
+     <STRONG>lisa</STRONG>    Shows animated lissajous loops.
+
+     <STRONG>lissie</STRONG>  Shows lissajous worms.
+
+     <STRONG>loop</STRONG>    Shows Langton's self-producing loops.
+
+     <STRONG>mandelbrot</STRONG>
+             Shows mandelbrot sets.
+
+     <STRONG>marquee</STRONG> Shows text.
+
+     <STRONG>matrix</STRONG>  Shows the matrix.
+
+     <STRONG>maze</STRONG>    Shows a random maze and a depth first  search  solu-
+             tion.
+
+     <STRONG>moebius</STRONG> Shows the Moebius Strip II, an Escher-like GL  scene
+             with ants.  May not be available depending on how it
+             was configured.
+
+     <STRONG>molecule</STRONG>
+             Draws molecules, based on coordinates from PDB (Pro-
+             tein Data Base) files.
+
+     <STRONG>morph3d</STRONG> Shows GL morphing polyhedra.  May not  be  available
+             depending on how it was configured.
+
+     <STRONG>mountain</STRONG>
+             Shows Papo's mountain range.
+
+     <STRONG>munch</STRONG>   Shows munching squares.
+
+     <STRONG>nose</STRONG>    Shows a man with a big nose runs around spewing  out
+             text.
+
+     <STRONG>pacman</STRONG>  Shows Pacman(tm).
+
+     <STRONG>penrose</STRONG> Shows Penrose's quasiperiodic tilings.
+
+     <STRONG>petal</STRONG>   Shows various GCD Flowers.
+
+     <STRONG>pipes</STRONG>   Shows a  self-building  pipe  system.   May  not  be
+             available depending on how it was configured.
+
+     <STRONG>polyominoes</STRONG>
+             Shows attempts to place polyominoes into  a  rectan-
+             gle.
+
+     <STRONG>puzzle</STRONG>  Shows a puzzle being scrambled and then solved.
+
+     <STRONG>pyro</STRONG>    Shows fireworks.
+
+     <STRONG>qix</STRONG>     Shows spinning lines a la Qix(tm).
+
+     <STRONG>roll</STRONG>    Shows a rolling ball.
+
+     <STRONG>rotor</STRONG>   Shows Tom's Roto-Rooter.
+
+     <STRONG>rubik</STRONG>   Shows an auto-solving  Rubik's  Cube.   May  not  be
+             available depending on how it was configured.
+
+     <STRONG>sballs</STRONG>  Shows balls spinning like crazy in GL.  May  not  be
+             available depending on how it was configured.
+
+     <STRONG>scooter</STRONG> Shows a journey through space tunnel and stars.
+
+     <STRONG>shape</STRONG>   Shows stippled rectangles, ellipses, and triangles.
+
+     <STRONG>sierpinski</STRONG>
+             Shows a Sierpinski's triangle.
+
+     <STRONG>sierpinski3d</STRONG>
+             Shows a Sierpinski's gasket.
+
+     <STRONG>slip</STRONG>    Shows slipping blits.
+
+     <STRONG>solitare</STRONG>
+             Shows Klondike's game of solitare.
+
+     <STRONG>space</STRONG>   Shows a journey into deep space.
+
+     <STRONG>sphere</STRONG>  Shows a bunch of shaded spheres.
+
+     <STRONG>spiral</STRONG>  Shows a helical locus of points.
+
+     <STRONG>spline</STRONG>  Shows colorful moving splines.
+
+     <STRONG>sproingies</STRONG>
+             Shows Sproingies!   Nontoxic.   Safe  for  pets  and
+             small  children.   May not be available depending on
+             how it was configured.
+
+     <STRONG>stairs</STRONG>  Shows Infinite Stairs, an Escher-like GL scene.  May
+             not be available depending on how it was configured.
+
+     <STRONG>star</STRONG>    Shows a star field with a twist.
+
+     <STRONG>starfish</STRONG>
+             Shows starfish.
+
+     <STRONG>strange</STRONG> Shows strange attractors.
+
+     <STRONG>superquadrics</STRONG>
+             Shows 3D mathematical shapes.  May not be  available
+             depending on how it was configured.
+
+     <STRONG>swarm</STRONG>   Shows a swarm of bees following a wasp.
+
+     <STRONG>swirl</STRONG>   Shows animated swirling patterns.
+
+     <STRONG>t3d</STRONG>     Shows a Flying Balls Clock Demo.
+
+     <STRONG>tetris</STRONG>  Shows an autoplaying tetris game.
+
+     <STRONG>text3d</STRONG>  Shows 3D moving texts.
+
+     <STRONG>thornbird</STRONG>
+             Shows an animated Bird in a Thorn Bush fractal map.
+
+     <STRONG>tik_tak</STRONG> Shows rotating polygons.
+
+     <STRONG>triangle</STRONG>
+             Shows a triangular mountain range.
+
+     <STRONG>tube</STRONG>    Shows an animated tube.
+
+     <STRONG>turtle</STRONG>  Shows turtle fractals.
+
+     <STRONG>vines</STRONG>   Shows fractal-like vines.
+
+     <STRONG>voters</STRONG>  Shows Dewdney's Voters.
+
+     <STRONG>wator</STRONG>   Shows  Dewdney's  Water-Torus  planet  of  fish  and
+             sharks.
+
+     <STRONG>wire</STRONG>    Shows a random circuit with 2 electrons.
+
+     <STRONG>world</STRONG>   Shows spinning Earths.
+
+     <STRONG>worm</STRONG>    Shows wiggly worms.
+
+     <STRONG>xjack</STRONG>   Shows Jack having one of those days.
+
+     <STRONG>xcl</STRONG>     Shows a Control Line combat model race
+
+     <STRONG>blank</STRONG>   Shows nothing but a black screen.  Does not show  up
+             in random mode.
+
+     <STRONG>bomb</STRONG>    Shows a bomb and will autologout after a time.  Does
+             not  show  up  in  random  mode and may be available
+             depending on how it was configured.
+
+     <STRONG>random</STRONG>  Shows a random mode from  above  except  blank  (and
+             bomb).
+
+
+     -<STRONG>delay</STRONG> <EM>usecs</EM>
+          The <EM>delay</EM> option sets the speed at which  a  mode  will
+          operate.   It simply sets the number of microseconds to
+          delay between batches of animations.  In blank mode, it
+          is  important  to  set  this  to  some  small number of
+          seconds,  because  the  keyboard  and  mouse  are  only
+          checked  after  each delay, so you cannot set the delay
+          too high, but a delay of zero would needlessly  consume
+          cpu  checking  for  mouse and keyboard input in a tight
+          loop, since blank mode has no work to do.
+
+     -<STRONG>count</STRONG> <EM>num</EM>
+          The <EM>batchcount</EM> option sets number of <EM>things</EM> to  do  per
+          batch to <EM>num</EM> .
+
+          In ant mode this refers the number of ants.
+
+          In atlantis mode it is the number of sharks.
+
+          In ball mode it is the number of balls.
+
+          In bat mode it is the number of  bats,  could  be  less
+          because of conflicts.
+
+          In blot mode this refers to the number of  pixels  ren-
+          dered in the same color.
+
+          In bouboule mode it is the number of stars.
+
+          In bounce mode it is the number of balls, could be less
+          because of conflicts.
+
+          In braid mode it is the upper bound number of strands.
+
+          In bubble mode it is the number of bubbles.
+          In bubble3d mode it is the number of bubbles.
+
+          In bug mode it is the number of  bugs,  could  be  less
+          because of conflicts.
+
+          In cage mode it is means nothing.
+
+          In clock mode it is the percentage of the  screen,  but
+          less than 100%.
+
+          In coral mode it is the number of seeds.
+
+          In crystal mode it is the number of polygons.
+
+          In daisy mode it is the  number  flowers  that  make  a
+          meadow.
+
+          In dclock mode it means nothing.
+
+          In deco mode it is the depth.
+
+          In demon mode this refers the number of colors.
+
+          In dilemma mode  this  refers  the  number  of  initial
+          defectors.
+
+          In discrete mode it is the number of points.
+
+          In drift mode it is the number  of  levels  to  recurse
+          (larger = more complex).
+
+          In dragon mode it means nothing.
+
+          In euler2d mode it is the number of segments.
+
+          In eyes mode it is the number of eyes.
+
+          In fadeplot mode it is the number of steps.
+
+          In fire mode it is the number of fire particles (set it
+          to 0 to have rain).
+
+          In flag mode it means nothing.
+
+          In flame mode it is the number  of  levels  to  recurse
+          (larger = more complex).
+
+          In flow mode it is the number of bees.
+
+          In forest mode it is  the  number  trees  that  make  a
+          forest.
+
+          In galaxy mode it means the number of galaxies.
+
+          In gears mode it is the number of degrees to rotate the
+          set of gears by.
+
+          In glplanet mode it is the number of hundredth  degrees
+          to roll the planet by.
+
+          In goop mode it is the number of blobs per plane.
+
+          In grav mode it is the number of planets.
+
+          In helix mode it means nothing.
+
+          In hop mode this refers to the number  of  pixels  ren-
+          dered in the same color.
+
+          In hyper mode it the number of dimensions.
+
+          In ico mode it is the ith platonic solid.
+
+          In ifs mode it means nothing.
+
+          In image mode it means it is the  number  of  logos  on
+          screen at once.
+
+          In juggle mode it is speed in milliseconds  betewwen  a
+          throw and the next catch.
+
+          In julia mode it is the depth of recursion.
+
+          In kaleid mode it is the number of pens.
+
+          In kumppa mode it means nothing.
+
+          In lament mode it means nothing.
+
+          In laser mode it is the number lasers.
+
+          In life mode it is the number of generations  before  a
+          glider is introduced.
+
+          In life1d mode it means nothing.
+
+          In life3d mode it is the number of generations before a
+          glider is introduced.
+
+          In lisa mode it is the number of loops.
+
+          In lissie mode it is the number of worms.
+
+          In loop mode it is the number of flaws.
+          In mandelbrot mode it is the order.
+
+          In marquee mode it means nothing.
+
+          In matrix mode it means nothing.
+
+          In maze mode it means nothing.
+
+          In moebius mode it is means nothing.
+
+          In molecule mode it means nothing.
+
+          In morph3d mode it is the ith platonic solid.
+
+          In mountain mode it is the number of mountains.
+
+          In munch mode it means nothing.
+
+          In nose mode it means nothing.
+
+          In qix mode it is the number of points.
+
+          In pacman mode it means the number of ghosts.
+
+          In penrose mode it means nothing.
+
+          In petal mode it the greatest random number of petals.
+
+          In pipes mode it shows different joints,  0  random,  1
+          spherical, 2 bolted elbow, 3 elbow, and 4 alternating.
+
+          In polyominoes mode it means nothing.
+
+          In puzzle mode it the number of moves.
+
+          In pyro mode it is the maximum number flying rockets at
+          one time.
+
+          In roll mode it is the number of points.
+
+          In rotor mode it is the number of rotor  thingys  which
+          whirr...
+
+          In rubik mode it is the number of moves.
+
+          In sballs mode it is the number of spheres.
+
+          In scooter mode it is the number of doors.
+
+          In shape mode it means nothing.
+
+          In sierpinski mode it is the number of points.
+          In slip mode it means nothing.
+
+          In solitare mode it means nothing.
+
+          In space mode it is the number of stars.
+
+          In sphere mode it means nothing.
+
+          In spiral mode it is the number of spirals.
+
+          In spline mode it is the number of points "splined".
+
+          In sproingies mode it is the number of sproingies.
+
+          In stairs mode it is means nothing.
+
+          In star mode it is the number of stars on the screen at
+          once.
+
+          In starfish mode it means nothing.
+
+          In strange mode it means nothing.
+
+          In superquadrics mode its the number of horizontal  and
+          vertical lines in the superquadric.
+
+          In swirl mode it means the number of "knots".
+
+          In swarm mode it is the number of bees.
+
+          In t3d mode it means nothing.
+
+          In tetris mode it means nothing.
+
+          In text3d mode it means nothing.
+
+          In thornbird mode it is the number of points.
+
+          In triangular mode it is the number of mountains.
+
+          In tube mode it is a rectangle (= 1), an ellipse (= 2),
+          or a polygon if greater.
+
+          In turtle mode it means nothing.
+
+          In vines mode it is draw a complete vine  (=  0)  or  a
+          portion (= 1).
+
+          In voters mode it means the number of parties, 2 or 3.
+
+          In wator mode it means the breed time for the fish.
+
+          In wire mode it means the length of the circuit.
+
+          In world mode it is the number of worlds.
+
+          In worm mode it is the number of worms.
+
+          In xcl mode it represents the number of planes.
+
+          In xjack mode it means nothing.
+
+          In blank mode it means nothing.
+
+          In bomb mode it means the number of minutes to  autolo-
+          gout.
+
+          A negative <EM>count</EM> allows for randomness.  The range from
+          the  minimum allowed nonnegative <EM>count</EM> for a particular
+          mode to the ABS( <EM>count</EM> ) (or maximum  allowed  <EM>count</EM>  ,
+          whichever is less).
+
+     -<STRONG>batchcount</STRONG> <EM>num</EM>
+          The <EM>batchcount</EM> option is depreciated but  should  still
+          work as <EM>count</EM>.
+
+     -<STRONG>cycles</STRONG> <EM>num</EM>
+          The <EM>cycles</EM> option sets the number of cycles until  time
+          out  for  ant, blot, braid, bug, clock, crystal, daisy,
+          deco, demon, dilemma,  discrete,  dragon,  eyes,  flag,
+          flow,  forest,  galaxy,  helix, hop, hyper, ico, laser,
+          life, life1d, life3d, lisa, lissie,  loop,  mandelbrot,
+          mountain, petal, sierpinski, shape, spline +erase, t3d,
+          thornbird, triangle, tube,  voters,  wator,  and  wire.
+          For euler2d and worm it is the length of the lines, for
+          atlantis it is the shark speed, for fadeplot, julia and
+          spiral  it is the length of the trail of dots, munch it
+          is the minimum size of the squares, for  kaleid  it  is
+          the  % of black, for qix it is the number of lines, for
+          spline -erase it means the number of splines * 64  (for
+          compatibility  with +erase), for gears it is the number
+          of degrees to increment the spin of each gear  by,  for
+          glplanet  it  is  the  number  of  hundredth degrees to
+          rotate the planet by, for molecule it is  the  time  in
+          seconds  until  timeout,  for pipes it is the number of
+          systems to draw before clearing the screen,  for  rubik
+          it  is  the  number of steps to complete a 90 move, for
+          sballs it is the sphere speed value, for scooter it  is
+          the speed, for superquadrics it is the number of frames
+          it takes to morph  from  one  shape  to  another.   for
+          text3d  it is the number of times drawing a word before
+          the next one, For others it means nothing.
+
+     -<STRONG>size</STRONG> <EM>num</EM>
+          The <EM>size</EM> option sets the size maximum size of a star in
+          bouboule,  pyro  and  star,  size  of  ball in ball and
+          bounce, size of bat in bat, maximum size of  bubble  in
+          bubble, size of clock in clock, minimum size of rectan-
+          gles in deco, size  of  the  polygons  in  crystal  and
+          tik_tak,  size  of polyhedron in ico, size of lissie in
+          lissie, size of dots of flag, for kaleid it is the sym-
+          metry,  width  of maze hallway, size of side of penrose
+          tile, radius of loop in lisa, radius of ball  in  roll,
+          number  of  corners  in  sierpinski, number of stars in
+          scooter, size of tube in tube, width of worm  in  worm,
+          line  width  in  rotor,  size  of  cells  in  ant, bug,
+          dilemma, dragon, life, life1d, pacman, tetris,  voters,
+          wator,  and wire.  In pipes it is the maximum length of
+          a system.  In atlantis it is the shark size.   A  nega-
+          tive number allows for randomness, similar to <EM>count</EM>. In
+          fire, gears, sballs and sproingies it is  the  size  of
+          the  screen,  this  is  because on many slow systems it
+          runs too slow when the picture covers the full screen.
+
+     -<STRONG>ncolors</STRONG> <EM>num</EM>
+          The <EM>ncolors</EM> option sets the maximum number of colors to
+          be used.
+
+     -<STRONG>saturation</STRONG> <EM>value</EM>
+          The <EM>saturation</EM> option sets saturation of the color ramp
+          used  to  <EM>value</EM>  .  0  is  grayscale and 1 is very rich
+          color.  0.4 is a nice pastel.
+
+     -<STRONG>erasemode</STRONG> <EM>modename</EM>
+          As of this writing there are over 9  erase  modes  sup-
+          ported  (if  its  not  chosen its assumed random).  The
+          erase modes are random_lines, random_squares, venetian,
+          triple_wipe, quad_wipe, circle_wipe, three_circle_wipe,
+          squaretate, no_fade.
+
+     -<STRONG>erasedelay</STRONG> <EM>usecs</EM>
+          The <EM>erasedelay</EM> option sets the number  of  microseconds
+          for  steps  of  the  <STRONG>erasemode</STRONG>  (a setting of 0 and the
+          <STRONG>erasemode</STRONG> is bypassed).
+
+     <STRONG>+/-nolock</STRONG>
+          The <EM>nolock</EM> option causes <STRONG>xlock</STRONG> to only  draw  the  pat-
+          terns and not lock the display.  A key press or a mouse
+          click will terminate the screen saver.
+
+     <STRONG>-/+inwindow</STRONG>
+          Runs <STRONG>xlock</STRONG> in a window, so that you can iconify,  move,
+          or resize it and still use your screen for other stuff.
+          When running in a window, <STRONG>xlock</STRONG> no  longer  locks  your
+          screen, it just looks good.
+
+     <STRONG>-/+inroot</STRONG>
+          Runs <STRONG>xlock</STRONG> in your  root  window.   Like  the  <EM>inwindow</EM>
+          option  it  no  longer  locks the screen, it just looks
+          good.
+
+     <STRONG>-/+remote</STRONG>
+          The <EM>remote</EM> option tells <STRONG>xlock</STRONG>  to  not  stop  you  from
+          locking remote X11 servers.  This option should be used
+          with care and is intended mainly to lock X11  terminals
+          which  cannot  run  <STRONG>xlock</STRONG> locally.  If you lock someone
+          else's workstation, they will have to know  <STRONG>your</STRONG>  pass-
+          word   to  unlock  it.   Using  +<EM>remote</EM>  overrides  any
+          resource derived values for <EM>remote</EM> and  prevents  <STRONG>xlock</STRONG>
+          from  being  used  to lock other X11 servers.  (Use `+'
+          instead of `-' to override resources for other  options
+          that can take the `+' modifier similarly.)
+
+     <STRONG>-/+mono</STRONG>
+          The <EM>mono</EM> option causes  <STRONG>xlock</STRONG>  to  display  monochrome,
+          (black  and  white)  pixels  rather  than  the  default
+          colored ones on color displays.
+
+     <STRONG>-/+allowaccess</STRONG>
+          This option is required for servers which do not  allow
+          clients  to modify the host access control list.  It is
+          also useful if you need to run x clients  on  a  server
+          which is locked for some reason...  When <EM>allowaccess</EM> is
+          true, the X11 server is left open for clients to attach
+          and  thus  lowers  the  inherent  security of this lock
+          screen.  A side effect of using this option is that  if
+          <STRONG>xlock</STRONG>  is  killed -KILL, the access control list is not
+          lost.
+
+     -<STRONG>vtlock</STRONG> <EM>modename</EM>
+          This option is used on a XFree86 system  to  manage  VT
+          switching in [off|noswitch|switch|restore] mode.
+
+     <EM>off</EM>       means no VT switch locking.
+
+     <EM>switch</EM>    means VT switch locking + switching  to  xlock  VT
+               when activated.
+
+     <EM>restore</EM>   means VT switch locking + switching  to  xlock  VT
+               when  activated  +  switching  back to previous VT
+               when desactivated.
+
+     <EM>noswitch</EM>  means VT switch locking  only  when  xlock  VT  is
+               active.
+
+     <STRONG>-/+allowroot</STRONG>
+          The <EM>allowroot</EM> option allows the root password to unlock
+          the  server as well as the user who started <STRONG>xlock</STRONG>.  May
+          not be able to turn this on and off depending  on  your
+          system and how <STRONG>xlock</STRONG> was configured.
+
+     <STRONG>-/+debug</STRONG>
+          Allows <STRONG>xlock</STRONG> to be debugged by doing  all  but  locking
+          the screen.
+
+     <STRONG>-/+description</STRONG>
+          The  <EM>description</EM>  option  causes  <STRONG>xlock</STRONG>  shows  a  mode
+          description  above  password window.  The default is to
+          show this description.
+
+     <STRONG>-/+echokeys</STRONG>
+          The <EM>echokeys</EM> option causes <STRONG>xlock</STRONG> to echo '?' characters
+          for each key typed into the password prompt.  Some con-
+          sider this a security risk, so the default  is  to  not
+          echo anything.
+
+     <STRONG>-/+enablesaver</STRONG>
+          By default <STRONG>xlock</STRONG> will disable  the  normal  X  server's
+          screen  saver  since  it is in effect a replacement for
+          it.  Since it is possible to set delay parameters  long
+          enough  to  cause  phosphor burn on some displays, this
+          option will turn back on the default screen saver which
+          is very careful to keep most of the screen black.
+
+     <STRONG>-/+resetsaver</STRONG>
+          By default <STRONG>xlock</STRONG> will call XResetScreenSaver.  This may
+          be undesirable with DPMS monitors.
+
+     <STRONG>-/+grabmouse</STRONG>
+          The <EM>grabmouse</EM> option causes <STRONG>xlock</STRONG> to grab the mouse and
+          keyboard,  this is the default.  <STRONG>xlock</STRONG> can not lock the
+          screen without this.
+
+     <STRONG>-/+grabserver</STRONG>
+          The <EM>grabserver</EM> option causes <STRONG>xlock</STRONG> to grab the  server.
+          This  is not usually needed but some unsecure X servers
+          can be defeated without this.
+
+     <STRONG>-/+install</STRONG>
+          Allows <STRONG>xlock</STRONG> to install its own colormap if <STRONG>xlock</STRONG>  runs
+          out  of  colors.   May  not  work  on  with some window
+          managers (fvwm) and does  not  work  with  the  -inroot
+          option.
+
+     <STRONG>-/+mousemotion</STRONG>
+          Allows you to turn on and off the  sensitivity  to  the
+          mouse to bring up the password window.
+
+     <STRONG>-/+sound</STRONG>
+          Allows you to turn on and off sound if  installed  with
+          the capability.
+
+     <STRONG>-/+timeelapsed</STRONG>
+          Allows you to find out how long a machine is locked  so
+          you  can  complain  to an administrator that someone is
+          hogging a machine.
+
+     <STRONG>-/+usefirst</STRONG>
+          The <EM>usefirst</EM> option causes <STRONG>xlock</STRONG> to use  the  keystroke
+          which got you to the password screen as the first char-
+          acter in the password.  The default is  to  ignore  the
+          first key pressed.
+
+     <STRONG>-/+verbose</STRONG>
+          Verbose mode, tells what options it is going to use.
+
+     -<STRONG>nice</STRONG> <EM>nicelevel</EM>
+          The <EM>nice</EM> option sets system nicelevel of the <STRONG>xlock</STRONG> pro-
+          cess to <EM>nicelevel</EM> .
+
+     -<STRONG>lockdelay</STRONG> <EM>seconds</EM>
+          The <EM>lockdelay</EM> option sets the number of <EM>seconds</EM>  before
+          the  screen  needs a password to be unlocked.  Good for
+          use with an autolocking mechanism like xautolock(1).
+
+     -<STRONG>timeout</STRONG> <EM>seconds</EM>
+          The <EM>timeout</EM> option sets the number  of  <EM>seconds</EM>  before
+          the password screen will time out.
+
+     -<STRONG>font</STRONG> <EM>fontname</EM>
+          The <EM>font</EM> option sets the font to be used on the  prompt
+          screen.
+
+     -<STRONG>planfont</STRONG> <EM>fontname</EM>
+          option sets the font to be used for the  text  that  is
+          displayed in the lower part of the password screen.
+
+     -<STRONG>fg</STRONG> <EM>color</EM>
+          The <EM>fg</EM> option sets the color of the text on  the  pass-
+          word screen to <EM>color</EM> .
+
+     -<STRONG>bg</STRONG> <EM>color</EM>
+          The <EM>bg</EM> option sets the color of the background  on  the
+          password screen to <EM>color</EM> .
+
+     -<STRONG>foreground</STRONG> <EM>color</EM>
+          The <EM>foreground</EM> option sets the color of the text on the
+          password screen to <EM>color</EM> .
+
+     -<STRONG>background</STRONG> <EM>color</EM>
+          The <EM>background</EM> option sets the color of the  background
+          on the password screen to <EM>color</EM> .
+
+     -<STRONG>username</STRONG> <EM>string</EM>
+          Text <EM>string</EM> is shown in front of user name, defaults to
+          "Name: ".
+
+     -<STRONG>password</STRONG> <EM>string</EM>
+          Text <EM>string</EM> is the password prompt string, defaults  to
+          "Password: ".
+
+     -<STRONG>info</STRONG> <EM>string</EM>
+          Text <EM>string</EM> is an informational  message  to  tell  the
+          user what to do, defaults to "Enter password to unlock;
+          select icon to lock.".
+
+     -<STRONG>validate</STRONG> <EM>string</EM>
+          Text <EM>string</EM> is a message  shown  while  validating  the
+          password, defaults to "Validating login..."
+
+     -<STRONG>invalid</STRONG> <EM>string</EM>
+          Text  <EM>string</EM>  is  a  message  shown  when  password  is
+          invalid, defaults to "Invalid login."
+
+     -<STRONG>geometry</STRONG> <EM>geom</EM>
+          The <EM>geometry</EM> option sets <EM>geom</EM> the size  and  offset  of
+          the  lock  window  (normally  the  entire screen).  The
+          entire screen format is still  used  for  entering  the
+          password.  The purpose is to see the screen even though
+          it is locked.  This should be used with  caution  since
+          many of the modes will fail if the windows are far from
+          square or are too small  (size  must  be  greater  than
+          0x0).   This  should  also be used with -enablesaver to
+          protect screen from phosphor burn.
+
+     -<STRONG>icongeometry</STRONG> <EM>geom</EM>
+          The <EM>icongeometry</EM> option  sets  <EM>geom</EM>  the  size  of  the
+          iconic  screen  (normally 64x64) seen when entering the
+          password.  This should be used with caution since  many
+          of  the  modes  will  fail  if the windows are far from
+          square or are too small  (size  must  be  greater  than
+          0x0).   The  greatest size is 256x256.  There should be
+          some limit so  users  could  see  who  has  locked  the
+          screen.  Position information of icon is ignored.
+
+     -<STRONG>glgeometry</STRONG> <EM>geom</EM>
+          The <EM>glgeometry</EM> option sets <EM>geom</EM> the size of the  screen
+          for gl modes.  Not normally available or needed.
+
+     <STRONG>-/+wireframe</STRONG>
+          Turn on/off wireframe, available  on  atlantis,  daisy,
+          fire,  gears, lament, life3d, mountain, sballs, sproin-
+          gies, superquadrics, and triangle.
+
+     <STRONG>-/+showfps</STRONG>
+          Turn  on/off  frame  per  sec  display,  available   on
+          atlantis,  bubble3d, cage, fire, gears, invert, lament,
+          moebius, morph3d, rubik, sballs, stairs, and  superqua-
+          drics.
+
+     <STRONG>-/+fpstop</STRONG>
+          Turn on/off frame per sec display  on  top  of  screen,
+          used if showfps is on.
+
+     -<STRONG>fpsfont</STRONG> <EM>fontname</EM>
+          The <EM>fpsfont</EM> option sets the font  to  be  used  in  the
+          frame per sec display, used if showfps is on.
+
+     <STRONG>-/+use3d</STRONG>
+          Turn on/off 3d view, available on bouboule, pyro, star,
+          and worm.
+
+     -<STRONG>delta3d</STRONG> <EM>value</EM>
+          Space between the center of your 2 eyes for 3d mode.
+
+     -<STRONG>none3d</STRONG> <EM>color</EM>
+          Color used for empty size in 3d mode.
+
+     -<STRONG>right3d</STRONG> <EM>color</EM>
+          Color used for right eye in 3d mode.
+
+     -<STRONG>left3d</STRONG> <EM>color</EM>
+          Color used for left eye in 3d mode.
+
+     -<STRONG>both3d</STRONG> <EM>color</EM>
+          Color used for overlapping images for  left  and  right
+          eye in 3d mode.
+
+     -<STRONG>program</STRONG> <EM>programname</EM>
+          The <EM>program</EM> option sets the program to be used  as  the
+          fortune generator.  Currently used only for marquee and
+          nose modes.
+
+     -<STRONG>messagesfile</STRONG> <EM>formatted</EM>-<EM>filename</EM>
+          The <EM>messagesfile</EM> option sets the file to be used as the
+          fortune  generator.   The  first entry is the number of
+          fortunes, the next line  contains  the  first  fortune.
+          Fortunes  begin  with  a  "%%"  on  a  line  by itself.
+          Currently used only for marquee and nose modes.  If one
+          exists, it takes precedence over the fortune program.
+
+     -<STRONG>messagefile</STRONG> <EM>filename</EM>
+          The <EM>messagefile</EM> option sets the file whose contents are
+          displayed.   Currently  used  only for marquee and nose
+          modes.  If one exists, it  takes  precedence  over  the
+          fortune program and messagesfile.
+
+     -<STRONG>message</STRONG> <EM>textstring</EM>
+          The <EM>message</EM> option sets the text to be displayed  in  a
+          mode.   Currently  used only for flag, marquee and nose
+          modes.  If one exists, it  takes  precedence  over  the
+          fortune program, messagesfile and message.
+
+     -<STRONG>messagefont</STRONG> <EM>fontname</EM>
+          The <EM>messagefont</EM> option sets the font to be used in  the
+          mode.   Currently used only for flag, marquee, and nose
+          modes.
+
+     -<STRONG>bitmap</STRONG> <EM>filename</EM>
+          The <EM>bitmap</EM> option sets the xbm, xpm, or ras file to  be
+          displayed with flag, image, life, life1d, maze, or puz-
+          zle mode.  For eyes and  pacman  only  a  xbm  file  is
+          accepted.   Certain modes reject the bitmap if too big.
+          /
+
+
+
+</PRE>
+<H2>MORE OPTIONS (these may not be available)</H2><PRE>
+     -<STRONG>cpasswd</STRONG> <EM>crypted</EM>-<EM>password</EM>
+          The <EM>cpasswd</EM> option sets the key to be this text  string
+          to unlock <STRONG>xlock</STRONG> instead of password file.
+
+     -<STRONG>forceLogout</STRONG> <EM>minutes</EM>
+          The <EM>forceLogout</EM> option sets <EM>minutes</EM> to auto-logout.
+
+     -<STRONG>logoutButtonLabel</STRONG> <EM>string</EM>
+          Text <EM>string</EM> is a message  shown  inside  logout  button
+          when logout button is displayed.  Defaults to "Logout".
+
+     -<STRONG>logoutButtonHelp</STRONG> <EM>string</EM>
+          Text <EM>string</EM> is a message shown  outside  logout  button
+          when  logout  button  is displayed.  Defaults to "Click
+          the \"Logout\" button to log  out  current\n  user  and
+          make workstation available."
+
+     -<STRONG>logoutFailedString</STRONG> <EM>string</EM>
+          Text <EM>string</EM>  is  a  message  shown  when  a  logout  is
+          attempted  and  fails.   Defaults  to  "Logout  attempt
+          FAILED.\n  Current  user  could  not  be  automatically
+          logged out."
+
+     <STRONG>-/+dtsaver</STRONG>
+          Turn on/off CDE Saver Mode.  This option is only avail-
+          able if CDE support was compiled in.
+
+     -<STRONG>modulepath</STRONG> <EM>path</EM>
+          The <EM>modulepath</EM> option sets the <EM>directories</EM>  that  <STRONG>xlock</STRONG>
+          searches  for  mode  modules  to  load.   It is a colon
+          separated list of directories to  search.  If  "%S"  is
+          included  in  the  path,  it is replaced by the default
+          modulepath.  To add a private module directory  to  the
+          default  path, use something like '%S:~/mymoduledir' as
+          the path.  This option is only available if module sup-
+          port was compiled in.
+
+     -<STRONG>locksound</STRONG> <EM>string</EM>
+          Text <EM>string</EM> references  sound  to  use  at  lock  time.
+          Default  sound,  male  voice:   "Thank  you,  for  your
+          cooperation."
+
+     -<STRONG>infosound</STRONG> <EM>string</EM>
+          Text <EM>string</EM> references sound to  use  for  information.
+          Default sound, male voice:  "Identify please."
+
+     -<STRONG>validsound</STRONG> <EM>string</EM>
+          Text <EM>string</EM> references sound  to  when  a  password  is
+          valid.  Default sound, female voice:  "Complete."
+
+     -<STRONG>invalidsound</STRONG> <EM>string</EM>
+          Text <EM>string</EM> references sound  to  when  a  password  is
+          invalid.   Default  sound, female voice: "I am not pro-
+          grammed to give you that information."
+
+     -<STRONG>startCmd</STRONG> <EM>string</EM>
+          Text <EM>string</EM> command  to  execute  when  the  screen  is
+          locked.  Commonly  used instructions include:  "zaway".
+          This command, if still  running  when  the  screensaver
+          exist, will be killed.
+
+     -<STRONG>endCmd</STRONG> <EM>string</EM>
+          Text <EM>string</EM> command  to  execute  when  the  screen  is
+          unlocked.
+
+     -<STRONG>logoutCmd</STRONG> <EM>string</EM>
+          Text <EM>string</EM> command to execute when  the  program  logs
+          the  user out (either via the autologout or by pressing
+          the logout button).
+
+     -<STRONG>mailCmd</STRONG> <EM>string</EM>
+          Text <EM>string</EM> command to  execute  when  the  program  to
+          check mail.
+
+     -<STRONG>mailIcon</STRONG> <EM>string</EM>
+          Text <EM>string</EM> of file for the "mail arrived" bitmap.
+
+     -<STRONG>nomailIcon</STRONG> <EM>string</EM>
+          Text <EM>string</EM> of file for the "no mail" bitmap.
+
+     <STRONG>-dpmsstandby</STRONG>  <STRONG>seconds</STRONG>
+          Allows one to  set  DPMS  Standby  for  monitor  (0  is
+          defined  as  infinite).   (Horizontal sync on, Vertical
+          sync off, RGB guns off, power supply on, tube filaments
+          energized,   (screen  saver  mode).   Typical  17  inch
+          screen...  110 out of 120 watts with a 3  sec  recovery
+          time.)   This  option is only available if DPMS support
+          was compiled in.
+
+     <STRONG>-dpmssuspend</STRONG>  <STRONG>seconds</STRONG>
+          Allows one to  set  DPMS  Suspend  for  monitor  (0  is
+          defined  as  infinite).  (Horizontal sync off, Vertical
+          sync on, RGB guns off, power supply off, tube filaments
+          energized.   Typical  17 inch screen ...  15 out of 120
+          watts with a 3 sec recovery time.)  This option is only
+          available if DPMS support was compiled in.
+
+     <STRONG>-dpmsoff</STRONG>  <STRONG>seconds</STRONG>
+          Allows one to set DPMS Power  Off  for  monitor  (0  is
+          defined  as  infinite).  (Horizontal sync off, Vertical
+          sync off, Small auxiliary circuit stays on  to  monitor
+          the HS/VS signals to enable power on when data needs to
+          be displayed on the screen.  Typical 17 inch screen ...
+          5  out of 120 watts with a 10 sec recovery time.)  This
+          option is only available if DPMS support  was  compiled
+          in.
+
+
+
+</PRE>
+<H2>SPECIAL MODE DEPENDENT OPTIONS</H2><PRE>
+     -<STRONG>neighbors</STRONG> <EM>num</EM>
+          The <EM>neighbors</EM> option sets the number of neighbors of  a
+          cell  to  3,  4,  6,  9 (may not have real mathematical
+          meaning), or 12 for several automata modes  (<EM>ant</EM>,  <EM>bug</EM>,
+          <EM>demon</EM>,  <EM>dilemma</EM>, <EM>life</EM>, <EM>loop</EM>, and <EM>wire</EM>) (<EM>bug</EM> and <EM>loop</EM> do
+          not span this full range).  Setting it to  0  typically
+          randomizes   this,   except   where  bitmaps  are  used
+          (<EM>dilemma</EM>, <EM>life</EM>, <EM>voters</EM>, and <EM>wator</EM>).
+
+     <STRONG>-/+eyes</STRONG>
+          Turn on and off eyes for <EM>ant</EM> and <EM>bug</EM>.
+
+     <STRONG>-/+cycle</STRONG>
+          Turn on and off colour cycling  in  <EM>crystal</EM>,  <EM>starfish</EM>,
+          <EM>tetris</EM>, and <EM>tik</EM>_<EM>tak</EM>.
+
+     <STRONG>-/+trackmouse</STRONG>
+          Turn on and off mouse interaction in <EM>eyes</EM>, <EM>fire</EM>, <EM>julia</EM>,
+          <EM>solitare</EM>,  <EM>sballs</EM>,  <EM>swarm</EM>, and <EM>tetris</EM>. For <EM>solitare</EM> and
+          <EM>tetris</EM> this may not be available depending on how <STRONG>xlock</STRONG>
+          was configured.
+
+     <STRONG>-/+texture</STRONG>
+          Turn on and off texturing in <EM>fire</EM>, <EM>lament</EM>  and  <EM>sballs</EM>.
+          This  may  not  be available depending on how <STRONG>xlock</STRONG> was
+          configured.
+
+     -<STRONG>rule</STRONG> <EM>S</EM>&lt;<EM>neighborhood</EM>&gt;/<EM>B</EM>&lt;<EM>neighborhood</EM>&gt;
+          Allows one to set the rule for <EM>life</EM> and <EM>life3d</EM>. Special
+          parameters:  P, picks a random rule from all rules that
+          have known patterns; G, picks a random  rule  from  all
+          rules that have known gliders.  For <EM>life</EM> a good example
+          is Conway's rule which  is  S23/B3.   For  <EM>life3d</EM>  good
+          examples  are  Bay's  rules  which are S45/B5, S567/B6,
+          S56/B5, and S67/B67.
+
+     -<STRONG>lifefile</STRONG> <EM>filename</EM>
+          The <EM>lifefile</EM> option sets the <EM>life</EM> and <EM>life3d</EM>  lifeform.
+          Only  one format is currently supported, similar to the
+          #P xlife format.  For <EM>life3d</EM>, 2 linefeeds in a row  are
+          assumed to advance the depth.
+
+     -<STRONG>whalespeed</STRONG> <EM>num</EM>
+          Allows one to set the speed of the whales  and  dolphin
+          in <EM>atlantis</EM>.
+
+     <STRONG>-/+truchet</STRONG>
+          Turn on and off Truchet lines (trail) in <EM>ant</EM>.
+
+     <STRONG>-/+boil</STRONG>
+          Turn on and off having the bubbles bubble up in <EM>bubble</EM>.
+
+     -<STRONG>nx</STRONG> <EM>num</EM>
+          Allows one to set  the  number  of  unit  cells  in  x-
+          direction in <EM>crystal</EM>.
+
+     -<STRONG>ny</STRONG> <EM>num</EM>
+          Allows one to set  the  number  of  unit  cells  in  y-
+          direction in <EM>crystal</EM>.
+
+     <STRONG>-/+centre</STRONG>
+          Turn on and off the centering on screen in <EM>crystal</EM>.
+
+     <STRONG>-/+maxsize</STRONG>
+          Turn on and off the centering on screen in <EM>crystal</EM>.
+
+     <STRONG>-/+cell</STRONG>
+          Turn on and off the drawing of unit cell in <EM>crystal</EM>.
+
+     <STRONG>-/+grid</STRONG>
+          Turn on and off the drwing of grid of  unit  cells  (if
+          -cell is on) in <EM>crystal</EM>.
+
+     <STRONG>-/+garden</STRONG>
+          Turn off and on garden look in <EM>daisy</EM>.
+
+     <STRONG>-/+popex</STRONG>
+          Turn on and off the  population  explosion  counter  in
+          <EM>dclock</EM>.
+
+     <STRONG>-/+forest</STRONG>
+          Turn on and off the tropical deforest  (hectares/acres)
+          counter in <EM>dclock</EM>.
+
+     <STRONG>-/+hiv</STRONG>
+          Turn on and off the HIV infection counter in <EM>dclock</EM>.
+
+     <STRONG>-/+lab</STRONG>
+          Turn on and off the Animal Research counter in <EM>dclock</EM>.
+
+     <STRONG>-/+veg</STRONG>
+          Turn on and  off  the  Animal  Consumation  counter  in
+          <EM>dclock</EM>.
+
+     <STRONG>-/+y2k</STRONG>
+          Turn on and off the Year 2000 countdown in <EM>dclock</EM>.
+
+     <STRONG>-/+millennium</STRONG>
+          Turn on and off the Second Millennium (January 1, 2001)
+          countdown in <EM>dclock</EM>.
+
+     -<STRONG>bonus</STRONG> <EM>value</EM>
+          Allows one to set the bonus for cheating... between 1.0
+          and 4.0 in <EM>dilemma</EM>.
+
+     <STRONG>-/+conscious</STRONG>
+          Turn off and on self-awareness in <EM>dilemma</EM>.
+
+     <STRONG>-/+grow</STRONG>
+          Turn  on  and  off  growing  fractals  (else  they  are
+          animated) for <EM>drift</EM>.
+
+     <STRONG>-/+liss</STRONG>
+          Turn on and off using lissajous figures to  get  points
+          for <EM>drift</EM>.
+
+     <STRONG>-/+framerate</STRONG>
+          Turn on and off displaying of the frame rate  for  <EM>fire</EM>
+          and <EM>sballs</EM>
+
+     <STRONG>-/+fog</STRONG>
+          Turn on and off fog for <EM>fire</EM>.
+
+     <STRONG>-/+shadows</STRONG>
+          Turn on and off shadows for <EM>fire</EM>.
+
+     <STRONG>-trees</STRONG> <EM>num</EM>
+          Validate the displaying of trees for  <EM>fire</EM>  if  greater
+          than zero.
+
+     <STRONG>-/+invert</STRONG>
+          Turn on and off inverting of the <EM>flag</EM>.
+
+     <STRONG>-/+tracks</STRONG>
+          Turn on and off star tracks in <EM>galaxy</EM>.
+
+     <STRONG>-/+light</STRONG>
+          Turn on and off lighting of the planet for <EM>glplanet</EM>.
+
+     <STRONG>-/+bounce</STRONG>
+          Turn on and off bouncing movement  of  the  planet  for
+          <EM>glplanet</EM>.
+
+     -<STRONG>pimage</STRONG> <EM>filename</EM>
+          Use the named xbm or xpm file for texturing the  planet
+          for  <EM>glplanet</EM>.  Use BUILTIN as filename for the builtin
+          image taken from Xearth.
+
+     <STRONG>-/+roll</STRONG>
+          Turn on and off rolling of the planet for <EM>glplanet</EM>.
+
+     <STRONG>-/+rotate</STRONG>
+          Turn on and off rotation of the planet for <EM>glplanet</EM>.
+
+     <STRONG>-/+texture</STRONG>
+          Turn on and off texturing of the planet for <EM>glplanet</EM>.
+
+     <STRONG>-/+stars</STRONG>
+          Turn on and off showing stars  in  the  background  for
+          <EM>glplanet</EM>.
+
+     <STRONG>-/+decay</STRONG>
+          Turn on and off decaying orbits for <EM>grav</EM>.
+
+     <STRONG>-/+trail</STRONG>
+          Turn on and off decaying trail of dots for <EM>grav</EM>.
+
+     <STRONG>-/+ellipse</STRONG>
+          Turn on and off ellipse format in <EM>helix</EM>.
+
+     <STRONG>-/+martin</STRONG>
+          Turn on and off  Barry  Martin's  square  root  <EM>hop</EM>.  <STRONG>-</STRONG>
+          <STRONG>/+popcorn</STRONG>  Turn  on and off Clifford A. Pickover's pop-
+          corn <EM>hop</EM>.
+
+     <STRONG>-/+ejk1...ejk6</STRONG>
+          Turn on and off Ed J. Kubaitis' <EM>hops</EM>.
+
+     <STRONG>-/+rr</STRONG>
+          Turn on and off Renaldo Recuerdo's <EM>hop</EM>.
+
+     <STRONG>-/+jong</STRONG>
+          Turn on and off Jong's <EM>hop</EM>.
+
+     <STRONG>-/+sine</STRONG>
+          Turn on and off Barry Martin's sine <EM>hop</EM>.
+
+     -<STRONG>pattern</STRONG> &lt;<EM>pattern</EM>&gt;
+          Allows one to set the pattern for <EM>juggle</EM>.
+
+     -<STRONG>patterntrace</STRONG> <EM>num</EM>
+          Allows one to see the trails for <EM>juggle</EM>.
+
+     <STRONG>-/+solid</STRONG>
+          Turn off and on solid color (else its a  4  panel  look
+          (half white)) for <EM>juggle</EM>.
+
+     <STRONG>-/+uni</STRONG>
+          Turn off and on Unicycle for <EM>juggle</EM>.
+
+     <STRONG>-/+disconnected</STRONG>
+          Turn on and off disconnected pen movement in <EM>kaleid</EM>.
+
+     <STRONG>-/+serial</STRONG>
+          Turn on and off  sequential  allocation  of  colors  in
+          <EM>kaleid</EM>.
+
+     <STRONG>-/+alternate</STRONG>
+          Turn on and off alternate rotated display mode <EM>kaleid</EM>.
+
+     <STRONG>-/+quad</STRONG>
+          Turn on and off quad mirrored/rotated mode  similar  to
+          size 4 in <EM>kaleid</EM>.
+
+     <STRONG>-/+oct</STRONG>
+          Turn on and off oct mirrored/rotated  mode  similar  to
+          size 8 in <EM>kaleid</EM>.
+
+     <STRONG>-/+linear</STRONG>
+          Turn on and  off  Cartesian/Polar  coordinate  mode  in
+          <EM>kaleid</EM>.
+
+     <STRONG>-/+callahan</STRONG>
+          Turn on and off  Paul  Callahan's  S2b34/B2a  hexagonal
+          <EM>life</EM>.
+
+     <STRONG>-/+andreen</STRONG>
+          Turn on and off Bob Andreen's S2a2b4a/B2a3a4b hexagonal
+          <EM>life</EM>.
+
+     <STRONG>-/+totalistic</STRONG>
+          Turn on and off totalistic rules for <EM>life1d</EM>. If this is
+          off  then  it  follows  rules  of  the LCAU collection.
+          These rules may not be symmetric and are more general.
+
+     <STRONG>-/+additive</STRONG>
+          Turn on and off additive functions mode in <EM>lisa</EM>.
+
+     <STRONG>-/+noants</STRONG>
+          Turn off and on ants in <EM>moebius</EM>.
+
+     <STRONG>-/+solidmoebius</STRONG>
+          Turn on and off solid Mobius strip in <EM>moebius</EM>.
+
+     <STRONG>-/+atoms</STRONG>
+          Turn on and off the drawing of spheres for the atoms in
+          <EM>molecule</EM>.
+
+     <STRONG>-/+bbox</STRONG>
+          Turn on and off showing the molecules in a blue box  in
+          <EM>molecule</EM>.
+
+     <STRONG>-/+bonds</STRONG>
+          Turn on and off the drawing  of  the  atomic  bonds  in
+          <EM>molecule</EM>.
+
+     -<STRONG>molecule</STRONG> <EM>filename</EM>
+          Read a molecule structure from a pdb file in <EM>molecule</EM>.
+
+     <STRONG>-/+labels</STRONG>
+          Turn on and off the labeling of the atoms in <EM>molecule</EM>.
+
+     -<STRONG>spin</STRONG>{<EM>x</EM>|<EM>y</EM>|<EM>z</EM>}
+          Set the axis for molecule  rotation  in  <EM>molecule</EM>.  The
+          default is "XYZ".
+
+     <STRONG>+spin</STRONG>
+          Turn off the molecule rotation in <EM>molecule</EM>.
+
+     <STRONG>-/+titles</STRONG>
+          Turn on and off the molecule description in <EM>molecule</EM>.
+
+     <STRONG>-/+wander</STRONG>
+          Turn on and off the moving of the molecule on a  sinoid
+          curve in <EM>molecule</EM>.
+
+     <STRONG>-/+ammann</STRONG>
+          Turn on and off lines for <EM>penrose</EM>.
+
+     -<STRONG>increment</STRONG> <EM>value</EM>
+          Allows fine adjustments to order in <EM>mandelbrot</EM>.
+
+     <STRONG>-/+erase</STRONG>
+          Turn on and off erasing for <EM>spline</EM>. If this  option  is
+          on,  <EM>cycles</EM>  is  divided by 64 to compute the number of
+          lines, so as to be compatible when using -fullrandom.
+
+     -<STRONG>factory</STRONG> <EM>num</EM>
+          Number of extra factory parts in <EM>pipes</EM>.
+
+     <STRONG>-/+fisheye</STRONG>
+          Turn on if you want a zoomed-in view of <EM>pipes</EM>.
+
+     <STRONG>-/+tightturns</STRONG>
+          Turn on if you want the <EM>pipes</EM> to bend more often.
+
+     <STRONG>-/+rotatepipes</STRONG>
+          Turn on if you want the pipe system rotated in <EM>pipes</EM>.
+
+     <STRONG>-/+complete</STRONG>
+          Turn on or off complete graph morphing in <EM>qix</EM>.
+
+     -<STRONG>size[xyz]</STRONG> <EM>num</EM>
+          Number represents the number of cubies on the x, y,  or
+          z  axis.   Negative  numbers offer randomness from 2 to
+          the absolute value of the number.  <EM>star</EM>.
+
+     <STRONG>-/+hideshuffling</STRONG>
+          Turn on or off hidden shuffle phase for <EM>rubik</EM>.
+
+     <STRONG>-/+border</STRONG>
+          Turn on or off borders in <EM>shape</EM>.
+
+     <STRONG>-/+</STRONG><EM>shape</EM>
+          Turn on or off shadowing in <EM>shape</EM>.
+
+     <STRONG>-/+</STRONG><EM>shape</EM>
+          Turn on or off stippling in <EM>shape</EM>.
+
+     -<STRONG>intensity</STRONG> <EM>value</EM>
+          Set the brightness (default  2185)  of  the  sierpinski
+          structure for <EM>sierpinski3d</EM>.
+
+     -<STRONG>maxdepth</STRONG> <EM>value</EM>
+          Set the maximum depth (up  to  10)  of  the  sierpinski
+          structure for <EM>sierpinski3d</EM>.
+
+     -<STRONG>speed</STRONG> <EM>value</EM>
+          Determines after how much steps the depth  changes  for
+          <EM>sierpinski3d</EM>.
+
+     -<STRONG>trek</STRONG> <EM>num</EM>
+          If its a high number you will see the  space  ship  all
+          the time in <EM>star</EM>.
+
+     <STRONG>-/+rock</STRONG>
+          Turn on and off rocks for <EM>star</EM>. If this is  off,  stars
+          will be seen instead.
+
+     <STRONG>-/+straight</STRONG>
+          Turn on if <EM>star</EM> gets you motion sick.
+
+     -<STRONG>cyclepeed</STRONG> <EM>num</EM>
+          Set speed of cycling in <EM>starfish</EM>.
+
+     -<STRONG>rotation</STRONG> <EM>num</EM>
+          Set rotation velocity in <EM>starfish</EM>.
+
+     -<STRONG>thickness</STRONG> <EM>num</EM>
+          Set thickness in <EM>starfish</EM>.
+
+     <STRONG>-/+rock</STRONG>
+          Turn on and off blob for <EM>starfish</EM>.
+
+     -<STRONG>spinspeed</STRONG> <EM>num</EM>
+          Set speed of rotation, in degrees per frame for  <EM>super-</EM>
+          <EM>quadrics</EM>.
+
+     <STRONG>-/+bonus</STRONG>
+          Turn on in <EM>tetris</EM> to see 5 square bonus pieces.
+
+     <STRONG>-/+well</STRONG>
+          Turn on in <EM>tetris</EM> to see welltris.
+
+     -<STRONG>ttfont</STRONG> <EM>filename</EM>
+          Sets the True Type font file (or font  directory)  used
+          for <EM>text3d</EM>
+
+     -<STRONG>extrusion</STRONG> <EM>num</EM>
+          Sets length of the text extrusion for <EM>text3d</EM>
+
+     -<STRONG>rot_amplitude</STRONG> <EM>float</EM>
+          Sets rotation amplitude value of each letter for <EM>text3d</EM>
+
+     -<STRONG>rot_frequency</STRONG> <EM>float</EM>
+          Sets rotation frequency for <EM>text3d</EM>
+
+     <STRONG>-/+no_split</STRONG>
+          Turn on and off word splitting for <EM>text3d</EM>
+
+     -<STRONG>ttanimate</STRONG> <EM>function</EM>_<EM>name</EM>
+          Sets the animation function used for <EM>text3d</EM>.  Currently
+          one  of  :  Random  FullRandom  Default  Default2  None
+           Crazy  UpDown  Extrude  RotateXY  RotateYZ   Frequency
+           Amplitude
+
+     -<STRONG>speed</STRONG> <EM>km</EM>/<EM>h</EM>
+          The speed for all planes in km/h for <EM>xcl</EM>.
+
+     -<STRONG>frametime</STRONG> <EM>microseconds</EM>
+          The time for one frame on the screen. This time is used
+          to calculate the delay time and depends on the speed of
+          the X server for <EM>xcl</EM>.
+
+     -<STRONG>line_length</STRONG> <EM>mm</EM>
+          The distance between the pilot and the plane for <EM>xcl</EM>.
+
+     -<STRONG>spectator</STRONG> <EM>mm</EM>
+          The distance between spectator and pilot. It should  be
+          grater  than the line_length and the half wing width of
+          the plane to be not dangerous  for  the  spectator  for
+          <EM>xcl</EM>.
+
+     -<STRONG>viewmodel</STRONG>
+          Shows an animated view of one model for <EM>xcl</EM>.
+
+     <STRONG>-/+oldcolor</STRONG>
+          Sets the colors for the first two planes fixed  to  red
+          and yellow in <EM>xcl</EM>.
+
+     -<STRONG>xcldebug</STRONG>
+          Shows some additional timing information to  make  sure
+          that the calibrate procedure goes right in <EM>xcl</EM>.
+
+     -<STRONG>automatic</STRONG>
+             The auto scale for automatic fit into the window  is
+             <EM>De</EM>activated with this option for <EM>xcl</EM>.
+
+     -<STRONG>randomstart</STRONG>
+          Use a random start point for models at startup for <EM>xcl</EM>.
+
+     -<STRONG>duration</STRONG> <EM>seconds</EM>
+          Allows one to set a duration  for  a  mode  in  <EM>random</EM>.
+          Duration of 0 is defined as infinite.
+
+     <STRONG>-/+fullrandom</STRONG>
+          Turn on/off randomness options within modes in  <EM>random</EM>.
+          Not implemented for all mode options.
+
+     -<STRONG>modelist</STRONG> <EM>textstring</EM>
+          Allows one to pass a list of files to randomly  display
+          to <EM>random</EM>. "all" will get all files but blank (and bomb
+          if  compiled  in).  "all,blank"  will  get  all  modes.
+          "all,-image bounce,+blank" will get all modes but image
+          and bounce.  "bug wator" will get only bug  and  wator.
+          "allgl"  will  get  only  the  GL modes if compiled in,
+          all-allgl will get all but the GL modes, "allnice" will
+          weed  out  high cpu usage modes (as well as hackers and
+          gl modes).  "allxpm" will get all modes that  use  xpm.
+          "allwrite"  will  get  all modes that take advantage of
+          writable colormaps (not including xpm).   "all3d"  will
+          get all the modes that support this option.  "allmouse"
+          will get all the modes that support mouse  interaction.
+          Similarly,  "allautomata" for automata modes, "allfrac-
+          tal" for  fractal  modes,  "allgeometry"  for  geometry
+          modes,  "allspace"  for  space  modes.  The random mode
+          itself can not be referenced.
+
+     <STRONG>-/+sequential</STRONG>
+          Turn on non-random <EM>random</EM> option.
+
+
+
+</PRE>
+<H2>**WARNING**</H2><PRE>
+     <STRONG>xlock</STRONG> can appear to hang if it is  competing  with  a  high-
+     priority  process  for  the  CPU.  For  example, if <STRONG>xlock</STRONG> is
+     started after a process with  'nice  -20'  (high  priority),
+     <STRONG>xlock</STRONG> will take  considerable amount of time to respond.
+
+
+
+</PRE>
+<H2>SHADOW PASSWORDS</H2><PRE>
+     If the machine is using a shadow password system, then <STRONG>xlock</STRONG>
+     may  not  be  set up to get the real password and so must be
+     given one of its own. This can  be  either  on  the  command
+     line,   via   the   <STRONG>-cpasswd</STRONG>   option,   or   in   the  file
+     <STRONG>$HOME/.xlockrc</STRONG>, with the first taking precedence.   In  both
+     cases  an  encrypted  password is expected (see makekey(8)).
+     If neither is given, then <STRONG>xlock</STRONG> will prompt for  a  password
+     and  will  use that, also storing an encrypted version of it
+     in <STRONG>$HOME/.xlockrc</STRONG> for future use.
+
+
+
+</PRE>
+<H2>BUGS</H2><PRE>
+     "kill -KILL <STRONG>xlock</STRONG> " causes the server that was locked to  be
+     unusable, since all hosts (including localhost) were removed
+     from the access control list to lock out new X clients,  and
+     since  <STRONG>xlock</STRONG>  could  not catch SIGKILL, it terminated before
+     restoring the access control list.  This will  leave  the  X
+     server  in  a state where "<EM>you</EM> <EM>can</EM> <EM>no</EM> <EM>longer</EM> <EM>connect</EM> <EM>to</EM> <EM>that</EM>
+     <EM>server</EM>, <EM>and</EM> <EM>this</EM> <EM>operation</EM> <EM>cannot</EM>  <EM>be</EM>  <EM>reversed</EM>  <EM>unless</EM>  <EM>you</EM>
+     <EM>reset</EM>  <EM>the</EM> <EM>server</EM>."            -From the X11R4 Xlib Documen-
+     tation, Chapter 7.
+     NCD terminals do not allow xlock to  remove  all  the  hosts
+     from  the  access  control list.  Therefore you will need to
+     use the "-remote" and "-allowaccess" switches.  If you  hap-
+     pen  to run without "-allowaccess" on an NCD terminal, <STRONG>xlock</STRONG>
+     will not work and you will need to reboot the  terminal,  or
+     simply  go into the SETUP menus, under 'Network Parameters',
+     and turn off TCP/IP access control.
+
+
+</PRE>
+<H2>SEE ALSO</H2><PRE>
+     X(1), Xlib Documentation.
+
+
+
+</PRE>
+<H2>AUTHOR</H2><PRE>
+     Maintained by:
+          David Albert Bagley, &lt;<EM>bagleyd</EM>@<EM>tux</EM>.<EM>org</EM>&gt;
+
+     The latest version is currently at:
+          <EM>ftp</EM>://<EM>ftp</EM>.<EM>tux</EM>.<EM>org</EM>/<EM>pub</EM>/<EM>tux</EM>/<EM>bagleyd</EM>/<EM>xlockmore</EM>
+          <EM>ftp</EM>://<EM>ftp</EM>.<EM>x</EM>.<EM>org</EM>/<EM>contrib</EM>/<EM>applications</EM>
+
+     Original Author:
+          Patrick J. Naughton, &lt;<EM>naughton</EM>@<EM>eng</EM>.<EM>sun</EM>.<EM>com</EM>&gt;
+          Mailstop 21-14
+          Sun Microsystems Laboratories, Inc.
+          Mountain View, CA  94043
+          415/336-1080
+
+     with many additional contributors.
+
+
+
+</PRE>
+<H2>COPYRIGHT</H2><PRE>
+     Copyright (c) 1988-1991 by Patrick J. Naughton
+     Copyright (c) 1993-2001 by David A. Bagley
+
+     Permission  to  use,  copy,  modify,  and  distribute   this
+     software  and  its documentation for any purpose and without
+     fee is hereby granted, provided  that  the  above  copyright
+     notice  appear  in  all  copies and that both that copyright
+     notice and this permission notice appear in supporting docu-
+     mentation.
+     The original BSD daemon is Copyright (c) 1988 Marshall  Kirk
+     McKusick.  All Rights Reserved.
+     DEC, HP, IBM, Linux, SCO, SGI,  and  Sun  icons  have  their
+     respective copyrights.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</PRE>
+</BODY>
+</HTML>
