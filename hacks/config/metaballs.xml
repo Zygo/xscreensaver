@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="metaballs" _label="MetaBalls">
+
+  <command arg="-root"/>
+
+ <!-- #### -color [random] -->
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="2" high="256" default="256"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Number of MetaBalls" _low-label="Two" _high-label="Many"
+	  low="2" high="255" default="10"/>
+
+  <number id="radius" type="slider" arg="-radius %"
+          _label="MetaBall Radius" _low-label="Small" _high-label="Big" low="2" high="100" default="100"/>
+
+  <number id="delta" type="slider" arg="-delta %"
+          _label="MetaBall Movement" _low-label="Small" _high-label="Big" low="1" high="20" default="3"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="5000"
+          convert="invert"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Duration" _low-label="Short" _high-label="Long"
+          low="100" high="3000" default="1000"/>
+
+  <_description>
+
+Draws two dimensional metaballs: overlapping and merging balls with
+fuzzy edges.  By W.P. van Paassen.
+
+  </_description>
+</screensaver>

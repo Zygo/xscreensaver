@@ -1,0 +1,179 @@
+2003-02-12  Eric Lassauge <lassauge@mail.dotcom.fr>
+
+	* fr.po: Updated French translation.
+
+2002-06-18  Carlos Perello Marin <carlos@gnome-db.org>
+
+	* INFO, xscreensaver.pot: Updated from 4.0.5 release.
+	
+2002-06-16  Carlos Perello Marin <carlos@gnome-db.org>
+
+	* INFO: Added extra info. I will take all translations from here, you
+	don't need to send me it by mail.
+
+2002-06-16  Pablo Saratxaga  <pablo@mandrakesoft.com>
+
+	* vi.po: Added Vietnamese file
+
+2002-06-14  Pablo Gonzalo del Campo <pablodc@bigfoot.com>
+
+	* es.po: Updated Spanish Translation.
+
+2002-06-14  Pablo Gonzalo del Campo <pablodc@bigfoot.com>
+
+	* es.po: Updated Spanish Translation.
+
+2002-06-12  Abel Cheung  <maddog@linux.org.hk>
+
+	* zh_TW.po: New traditional Chinese translation.
+
+2002-06-09  Takeshi Aihana <aihana@gnome.gr.jp>
+
+	* ja.po: Added as Japanese translation.
+
+2002-06-06  Christian Rose  <menthos@menthos.com>
+
+	* sv.po: Added from xscreensaver module.
+
+2002-06-06  Ole Laursen  <olau@hardworking.dk>
+
+	* da.po: Added and halfway-updated from xscreensaver module.
+
+2002-06-06  T-Aõivo Leedjärv  <toivo@linux.ee>$)B
+
+	* et.po: Added from xscreensaver module.
+
+2002-06-06  Carlos Perello Marin <carlos@gnome-db.org>
+
+	* es.po,nl.po,no.po,pt.po,sk.po,zh_CN.po: Added from xscreensaver
+	module.
+	* xscreensaver.pot: Added from latest release (4.04.2).
+	* INFO: Added info about this module.
+
+2002-06-04  Vincent van Adrighem <V.vanAdrighem@dirck.mine.nu>
+
+        * nl.po: Added Dutch translation.
+
+2002-05-26  Pablo Gonzalo del Campo
+
+	* es.po: Updated Spanish Translation.
+
+2002-05-25  Pablo Gonzalo del Campo
+
+	* es.po: Updated Spanish Translation.
+
+2002-05-23  Pablo Gonzalo del Campo
+
+	* es.po: Updated Spanish Translation.
+
+2002-05-23  Wang Jian  <lark@linux.net.cn>
+
+	* zh_CN.po: Backported Simplified Chinese translation from HEAD.
+
+2002-05-19  Pablo Gonzalo del Campo <pablodc@bigfoot.com>
+
+	* es.po: Updated Spanish Translation.
+						
+2002-05-17  Wang Jian  <lark@linux.net.cn>
+
+	* zh_CN.po: Added Simplified Chinese translation by
+	He Qiangqiang <carton@linux.net.cn>.
+
+2002-05-11  Stanislav Visnovsky  <visnovsky@nenya.ms.mff.cuni.cz>
+
+        * sk.po: Backported Slovak translation from HEAD.
+	
+2002-05-01  Germ-Aán Poo-Caamaño  <gpoo@ubiobio.cl>$)B
+
+	* es.po: Updated Spanish translation from
+	Guillermo Movia <gmovia@hotpop.com> and converted to UTF-8
+
+2002-04-29  Pablo Saratxaga  <pablo@mandrakesoft.com>
+
+	* wa.po: Updated Walloon file
+
+2002-04-27  Duarte Loreto <happyguy_pt@hotmail.com>
+
+        * pt.po: Added Portuguese translation.
+
+2002-04-26  T-Aõivo Leedjärv  <toivo@linux.ee>$)B
+
+        * et.po: Updated Estonian translation.
+
+2002-04-26  Ole Laursen  <olau@hardworking.dk>
+
+	* da.po: Updated Danish translation.
+
+2002-04-21  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* no.po: Updated Norwegian (bokm-Aål) translation.$)B
+
+2002-04-08  Stanislav Visnovsky  <visnovsky@nenya.ms.mff.cuni.cz>
+
+	* sk.po: Updated Slovak translation by Marcel Telka <marcel@telka.sk>.
+
+2002-04-06  Ole Laursen  <olau@hardworking.dk>
+
+	* da.po: Updated Danish translation.
+
+2002-04-02  Stanislav Visnovsky  <visnovsky@nenya.ms.mff.cuni.cz>
+
+	* sk.po: Updated Slovak translation by Marcel Telka <marcel@telka.sk>.
+
+2002-04-01  Duarte Loreto <happyguy_pt@hotmail.com>
+
+        * pt.po: Updated Portuguese translation.
+
+2002-03-31  Christian Rose  <menthos@menthos.com>
+
+	* sv.po: Updated Swedish translation (not complete yet).
+
+2002-03-29  Zbigniew Chyla  <cyba@gnome.pl>
+
+	* pl.po: Updated Polish translation by
+	GNOME PL Team <translators@gnome.pl>.
+
+2002-03-27  Duarte Loreto <happyguy_pt@hotmail.com>
+
+        * pt.po: Updated Portuguese translation.
+
+2002-03-27  Abel Cheung  <maddog@linux.org.hk>
+
+	* zh_TW.po: New traditional Chinese translation.
+
+2002-03-25  Stanislav Visnovsky  <visnovsky@nenya.ms.mff.cuni.cz>
+
+	* sk.po: Added initial Slovak translation Marcel Telka <marcel@telka.sk>.
+
+2002-03-23  Ole Laursen  <olau@hardworking.dk>
+
+	* da.po: Added Danish translation.
+
+2002-03-23  Zbigniew Chyla  <cyba@gnome.pl>
+
+	* pl.po: Updated Polish translation by
+	GNOME PL Team <translators@gnome.pl>.
+
+2002-03-22  T-Aõivo Leedjärv  <toivo@linux.ee>$)B
+
+	* et.po: Added Estonian translation.
+
+2002-03-18  Vincent van Adrighem <V.vanAdrighem@dirck.mine.nu>
+
+	* nl.po: Added dutch translation (from stable controlcenter)
+	
+2002-03-18  Kjartan Maraas  <kmaraas@gnome.org>
+
+	* no.po: Updated Norwegian (bokm-Aål) translation.$)B
+	
+2002-03-18  Valek Filippov  <frob@df.ru>
+
+	* ru.po: updated russian translation.
+
+2002-03-18  Christophe Merlet <redfox@eikonex.org>
+
+	* fr.po: Updated French translation.
+
+2002-03-18  Carlos Perell-Aó Marín <carlos@gnome-db.org>$)B
+
+	* es.po: Fixed a dup string.

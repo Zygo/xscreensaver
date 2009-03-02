@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="fluidballs" _label="FluidBalls">
+
+  <command arg="-root"/>
+
+  <number id="count" type="slider" arg="-count %"
+           _label="Balls" _low-label="Few" _high-label="Many"
+          low="1" high="3000" default="300"/>
+
+  <number id="size" type="slider" arg="-size %"
+           _label="Ball Size" _low-label="Small" _high-label="Large"
+          low="3" high="200" default="25"/>
+
+  <number id="gravity" type="slider" arg="-gravity %"
+           _label="Gravity" _low-label="      Freefall" _high-label="Jupiter"
+          low="0.0" high="0.1" default="0.01"/>
+
+  <number id="wind" type="slider" arg="-wind %"
+           _label="Wind" _low-label="Still" _high-label="Hurricane"
+          low="0.0" high="0.1" default="0.00"/>
+
+  <number id="elasticity" type="slider" arg="-elasticity %"
+           _label="Friction" _low-label="Clay" _high-label="Rubber"
+          low="0.2" high="1.0" default="0.97"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <boolean id="random" _label="Various Ball Sizes"    arg-unset="-nonrandom"/>
+  <boolean id="shake"  _label="Shake Box"             arg-unset="-no-shake"/>
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Models the physics of bouncing balls, or of particles in a gas or
+fluid, depending on the settings.  If "Shake Box" is selected, then
+every now and then, the box will be rotated, changing which direction
+is down (in order to keep the settled balls in motion.)
+By Peter Birtles and Jamie Zawinski.
+  </_description>
+</screensaver>

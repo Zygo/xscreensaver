@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="endgame" _label="Endgame">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="50000" default="20000"
+          convert="invert"/>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Black slips out of three mating nets, but the fourth one holds him tight!
+A brilliant composition!
+Written by Blair Tennessy.
+  </_description>
+</screensaver>
