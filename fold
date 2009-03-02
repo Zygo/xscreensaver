@@ -1,0 +1,118 @@
+#!/bin/sh
+# The "folder" folds individual xscreensaver revisions into a single branch history.
+
+# Synchronize the current repository with the origin to get the current state of the branch heads
+git push origin refs/heads/*:refs/heads/*
+git fetch origin refs/heads/*:refs/heads/*
+
+# For now we rewrite the 'master' branch
+git checkout master || exit 1
+
+# There is a tag on an empty commit named 'genesis'.  We reset the current branch head there.
+git reset --hard genesis || exit 1
+
+# This loop cherry-picks each branch head, which is assumed to be the only revision on the branch.
+(
+	for x in \
+		xscreensaver-1.17 \
+		xscreensaver-1.18.src \
+		xscreensaver-1.21 \
+		xscreensaver-1.22 \
+		xscreensaver-1.24.zip \
+		xscreensaver-1.25 \
+		xscreensaver-1.26 \
+		xscreensaver-1.27 \
+		xscreensaver_1.27.orig \
+		xscreensaver-2.06 \
+		xscreensaver-2.07 \
+		xscreensaver-2.10 \
+		xscreensaver-2.14 \
+		xscreensaver-2.16 \
+		xscreensaver_2.16.orig \
+		xscreensaver-2.16-src \
+		xscreensaver-2.17 \
+		xscreensaver-2.21 \
+		xscreensaver-2.23 \
+		xscreensaver-2.24 \
+		xscreensaver-2.31 \
+		xscreensaver-2.34 \
+		xscreensaver_2.34.orig \
+		xscreensaver-3.01 \
+		xscreensaver-3.02 \
+		xscreensaver-3.03 \
+		xscreensaver-3.04 \
+		xscreensaver-3.06 \
+		xscreensaver-3.07 \
+		xscreensaver-3.08 \
+		xscreensaver-3.09 \
+		xscreensaver-3.10 \
+		xscreensaver-3.12 \
+		xscreensaver-3.15 \
+		xscreensaver-3.15-dist \
+		xscreensaver-3.16 \
+		xscreensaver-3.17 \
+		xscreensaver-3.18 \
+		xscreensaver-3.19 \
+		xscreensaver-3.20 \
+		xscreensaver-3.21 \
+		xscreensaver-3.22 \
+		xscreensaver_3.22.orig \
+		xscreensaver-3.23 \
+		xscreensaver-3.24 \
+		xscreensaver-3.25 \
+		xscreensaver-3.26 \
+		xscreensaver-3.28 \
+		xscreensaver-3.29 \
+		xscreensaver-3.30 \
+		xscreensaver-3.31 \
+		xscreensaver-3.32 \
+		xscreensaver-3.33 \
+		xscreensaver-3.33-packetstormsecurity.org \
+		xscreensaver-3.34 \
+		xscreensaver_3.34.orig \
+		xscreensaver-4.00 \
+		xscreensaver-4.01 \
+		xscreensaver-4.02 \
+		xscreensaver-4.02-packetstormsecurity.org \
+		xscreensaver-4.03 \
+		xscreensaver-4.04.2 \
+		xscreensaver-4.05 \
+		xscreensaver-4.06 \
+		xscreensaver-4.06-openbsd \
+		xscreensaver-4.07 \
+		xscreensaver-4.08 \
+		xscreensaver-4.09 \
+		xscreensaver-4.10 \
+		xscreensaver-4.11 \
+		xscreensaver-4.12 \
+		xscreensaver-4.13 \
+		xscreensaver-4.14 \
+		xscreensaver-4.15 \
+		xscreensaver-4.16 \
+		xscreensaver-4.16-openbsd \
+		xscreensaver-4.18 \
+		xscreensaver-4.18-packetstormsecurity.org \
+		xscreensaver-4.19 \
+		xscreensaver-4.21 \
+		xscreensaver_4.21.orig \
+		xscreensaver-4.22 \
+		xscreensaver_4.24.orig \
+		xscreensaver_5.05.orig \
+		xscreensaver-5.07 \
+		xscreensaver-5.08 \
+	; do 
+		# Ignore errors - the initial commit has no files.
+		git rm -rfq .
+
+		# Grab the current state of the branch head, or stop if this fails.
+		git checkout "$x" . || exit 1
+
+		# Commit using the branch head's commit log message as our log message.
+		# Ignore errors - we might commit an identical tree, which will cause
+		# commit to abort, and we want to drop the commit in that case
+		git commit -m"$(git log --pretty=format:%s%n%b "$x")"
+	done; 
+	exit 0
+
+# If we get out of that loop unscathed, push the new head upstream
+) && git push origin +master:master 
