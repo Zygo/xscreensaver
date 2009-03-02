@@ -463,7 +463,7 @@ if test $have_sgi != yes; then
 fi
 
 
-# Check for the XIDLE server extension header,
+# Check for the XIDLE server extension header.
 #
 have_xidle=no
 with_xidle_req=unspecified
@@ -478,6 +478,43 @@ if test $with_xidle = yes; then
 		     AC_DEFINE(HAVE_XIDLE_EXTENSION)])
 elif test $with_xidle != no; then
   echo "error: must be yes or no: --with-xidle-ext=$with_xidle"
+  exit 1
+fi
+
+
+# Check for the XSHM server extension header.
+#
+have_xshm=no
+with_xshm_req=unspecified
+AC_ARG_WITH(xshm-ext,
+[  --with-xshm-ext         Include support for the XSHM (Shared Memory) server
+                          extension, if possible (this is the default).
+  --without-xshm-ext      Do not compile in support for this extension.],
+  [with_xshm="$withval"; with_xshm_req="$withval"],[with_xshm=yes])
+if test $with_xshm = yes; then
+
+  # first check for Xshm.h.
+  AC_CHECK_X_HEADER(X11/extensions/XShm.h, [have_xshm=yes])
+
+  # if that succeeded, then check for sys/ipc.h.
+  if test $have_xshm = yes; then
+    have_xshm=no
+    AC_CHECK_X_HEADER(sys/ipc.h, [have_xshm=yes])
+  fi
+
+  # if that succeeded, then check for sys/shm.h.
+  if test $have_xshm = yes; then
+    have_xshm=no
+    AC_CHECK_X_HEADER(sys/shm.h, [have_xshm=yes])
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test $have_xshm = yes; then
+    AC_DEFINE(HAVE_XSHM_EXTENSION)
+  fi
+
+elif test $with_xshm != no; then
+  echo "error: must be yes or no: --with-xshm-ext=$with_xshm"
   exit 1
 fi
 
@@ -596,6 +633,7 @@ fi
 
 # If we have Motif, check whether it's really LessTif.
 #
+have_lesstif=no
 if test $have_motif = yes ; then
   AC_CACHE_CHECK([whether Motif is really LessTif], 
 		 ac_cv_have_lesstif,
@@ -990,7 +1028,7 @@ if test $enable_locking = yes; then
   #
   if test $need_setuid = no ; then
     case "$host" in
-      *-hpux* | *-aix* | *-netbsd* )
+      *-hpux* | *-aix* | *-netbsd* | *-freebsd* | *-openbsd* )
         need_setuid=yes
       ;;
     esac
@@ -1124,6 +1162,10 @@ fi
 
 if test $with_xidle_req = yes -a $have_xidle = no ; then
   warn 'The XIdle extension was requested, but was not found.'
+fi
+
+if test $with_xshm_req = yes -a $have_xshm = no ; then
+  warn 'The XSHM extension was requested, but was not found.'
 fi
 
 if test $have_motif = no -a $have_athena = no ; then

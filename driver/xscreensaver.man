@@ -539,6 +539,11 @@ been taken to make this a safe thing to do.
 It also may mean that your system uses shadow passwords instead of the
 standard \fIgetpwent\fP interface; in that case, you may need to change
 some options in \fIconfig.h\fP and recompile.
+
+If you change your password after xscreensaver has been launched, it will
+continue using your old password to unlock the screen until xscreensaver
+is restarted.  This turns out to be kind of hard to fix.  (But remember,
+kids!  Unix security doesn't do much more than keep honest people honest...)
 .TP 8
 TWM and Colormaps
 The \fBinstallColormap\fP option doesn't work very well with the

@@ -918,7 +918,7 @@ blank_screen (saver_info *si)
 			    ssi->screensaver_window,
 			    ssi->screensaver_window);
     }
-  store_activate_time (si, True);
+  store_activate_time (si, si->screen_blanked_p);
   raise_window (si, False, False, False);
   /* #### */
   grab_keyboard_and_mouse (si->dpy, si->screens[0].screensaver_window,
@@ -1035,6 +1035,8 @@ unblank_screen (saver_info *si)
       kill_xsetroot_data (si->dpy, ssi->screensaver_window, p->verbose_p);
     }
 
+  store_activate_time(si, False);  /* store unblank time */
+
   ungrab_keyboard_and_mouse (si->dpy);
   restore_real_vroot (si);
 
@@ -1113,7 +1115,7 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
       raise_window (si, True, True, False);
       store_vroot_property (si->dpy,
 			    ssi->screensaver_window, ssi->screensaver_window);
-      store_activate_time (si, False);
+      store_activate_time (si, True);
 
       XDestroyWindow (si->dpy, old_w);
       if (old_c &&

@@ -69,6 +69,7 @@
 		starfish -root -blob					\\n\
 		munch -root						\\n\
 		fadeplot -root						\\n\
+		coral -root						\\n\
 									  \
 	mono:	rocks -root						\\n\
 	color:	rocks -root -fg darksalmon				\\n\
@@ -80,6 +81,9 @@
 	color:	attraction -root -mode filled-splines -segments 0	\\n\
 	color:	attraction -root -glow -points 10			\\n\
 	color:	bubbles -root						\\n\
+									  \
+        color:  rd-bomb -root						\\n\
+        color:  rd-bomb -root -speed 1 -size 0.1			\\n\
 									  \
   PseudoColor:	qix -root -count 4 -solid -transparent			\\n\
   PseudoColor:	qix -root -count 5 -solid -transparent -linear		  \

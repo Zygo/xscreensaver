@@ -25,11 +25,15 @@ void
 free_colors(Display *dpy, Colormap cmap, XColor *colors, int ncolors)
 {
   int i;
-  unsigned long *pixels = (unsigned long *) malloc(sizeof(*pixels) * ncolors);
-  for (i = 0; i < ncolors; i++)
-    pixels[i] = colors[i].pixel;
-  XFreeColors (dpy, cmap, pixels, ncolors, 0L);
-  free(pixels);
+  if (ncolors > 0)
+    {
+      unsigned long *pixels = (unsigned long *)
+	malloc(sizeof(*pixels) * ncolors);
+      for (i = 0; i < ncolors; i++)
+	pixels[i] = colors[i].pixel;
+      XFreeColors (dpy, cmap, pixels, ncolors, 0L);
+      free(pixels);
+    }
 }
 
 

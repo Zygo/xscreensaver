@@ -18,8 +18,8 @@
 #define SCALE	6
 
 struct qpoint {
-  long x, y;
-  long dx, dy;
+  int x, y;
+  int dx, dy;
 };
 
 struct qline {

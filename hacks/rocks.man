@@ -3,7 +3,7 @@
 rocks - animation of flying through an asteroid field
 .SH SYNOPSIS
 .B rocks
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-count \fIinteger\fP] [\-delay \fIusecs\fP] [\-speed \fIinteger\fP] [\-norotate] [\-nomove] [\-3d]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-ncolors \fIn\fP] [\-install] [\-visual \fIvisual\fP] [\-count \fIinteger\fP] [\-delay \fIusecs\fP] [\-speed \fIinteger\fP] [\-norotate] [\-nomove] [\-3d]
 .SH DESCRIPTION
 The \fIrocks\fP program draws an animation of an asteroid field moving past
 the observer (or vice versa).  Sometimes the observer picks up spin on Z axis.
@@ -16,6 +16,12 @@ Draw on a newly-created window.  This is the default.
 .TP 8
 .B \-root
 Draw on the root window.
+.TP 8
+.B \-mono
+Make all the rocks the same color.
+.TP 8
+.B \-ncolors colors
+How many different colors to use.  Default 5.  Colors are chosen randomly.
 .TP 8
 .B \-install
 Install a private colormap for the window.

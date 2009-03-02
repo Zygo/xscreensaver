@@ -7,14 +7,22 @@
  * documentation.  No representations are made about the suitability of this
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
+ *
+ * 19971004: Johannes Keukelaar <johannes@nada.kth.se>: Use helix screen
+ *           eraser.
  */
 
 #include "screenhack.h"
+#include "erase.h"
 
 static GC draw_gc, erase_gc;
 static unsigned int default_fg_pixel;
 static int iterations, offset;
 static Bool xsym, ysym;
+static int erase_speed, sleep_time, erase_mode;
+
+void erase_window (Display *dpy, Window win, GC gc, int width, int height,
+		   int mode, int delay);
 
 static void
 init_rorschach (Display *dpy, Window window)
@@ -89,15 +97,10 @@ hurm (Display *dpy, Window window)
       XDrawPoints (dpy, window, draw_gc, points, j, CoordModeOrigin);
       XSync (dpy, True);
     }
-  sleep (5);
-  for (i = 0; i < (ylim >> 1); i++)
-    {
-      y = (random () % ylim);
-      XDrawLine (dpy, window, erase_gc, 0, y, xlim, y);
-      XFlush (dpy);
-      if ((i % 50) == 0)
-	usleep (10000);
-    }
+  sleep ( sleep_time );
+
+  erase_window(dpy, window, erase_gc, xlim, ylim, erase_mode, erase_speed);
+
   XClearWindow (dpy, window);
   if (got_color) XFreeColors (dpy, cmap, &color.pixel, 1, 0);
   XSync (dpy, True);
@@ -114,6 +117,9 @@ char *defaults [] = {
   "*ysymmetry:	false",
   "*iterations:	4000",
   "*offset:	4",
+  "Rorschach.eraseSpeed: 400",
+  "Rorschach.delay: 5",
+  "Rorschach.eraseMode: -1",
   0
 };
 
@@ -122,12 +128,18 @@ XrmOptionDescRec options [] = {
   { "-offset",		".offset",	XrmoptionSepArg, 0 },
   { "-xsymmetry",	".xsymmetry",	XrmoptionNoArg, "true" },
   { "-ysymmetry",	".ysymmetry",	XrmoptionNoArg, "true" },
+  { "-erase-speed",	".eraseSpeed",		XrmoptionSepArg, 0 },
+  { "-delay",           ".delay",               XrmoptionSepArg, 0 },
+  { "-erase-mode",      ".eraseMode",           XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 
 void
 screenhack (Display *dpy, Window window)
 {
+  erase_speed = get_integer_resource("eraseSpeed", "Integer");
+  sleep_time = get_integer_resource("delay", "Integer");
+  erase_mode = get_integer_resource("eraseMode", "Integer");
   init_rorschach (dpy, window);
   while (1)
     hurm (dpy, window);

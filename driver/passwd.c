@@ -214,16 +214,18 @@ lock_init (int argc, char **argv)
 Bool
 passwd_valid_p (const char *typed_passwd)
 {
+  char *s = 0;  /* note that on some systems, crypt() may return null */
+
   if (encrypted_user_passwd &&
-      !strcmp ((char *) crypt (typed_passwd, encrypted_user_passwd),
-	       encrypted_user_passwd))
+      (s = (char *) crypt (typed_passwd, encrypted_user_passwd)) &&
+      !strcmp (s, encrypted_user_passwd))
     return True;
 
   /* do not allow root to have a null password. */
   else if (typed_passwd[0] &&
 	   encrypted_root_passwd &&
-	   !strcmp ((char *) crypt (typed_passwd, encrypted_root_passwd),
-		    encrypted_root_passwd))
+	   (s = (char *) crypt (typed_passwd, encrypted_root_passwd)) &&
+	   !strcmp (s, encrypted_root_passwd))
     return True;
 
   else

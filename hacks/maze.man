@@ -3,7 +3,7 @@
 maze \- an automated X11 demo repeatedly creating and solving a random maze
 .SH SYNOPSIS
 .B maze 
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-grid\-size \fIpixels\fP] [\-live\-color \fIcolor\fP] [\-dead\-color \fIcolor\fP] [\-solve\-delay \fIusecs\fP] [\-pre\-delay \fIusecs\fP] [\-post\-delay \fIusecs\fP]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-grid\-size \fIpixels\fP] [\-live\-color \fIcolor\fP] [\-dead\-color \fIcolor\fP] [\-solve\-delay \fIusecs\fP] [\-pre\-delay \fIusecs\fP] [\-post\-delay \fIusecs\fP] [\-generator \fIinteger\fP] [\-max\-length \fIinteger\fP] [\-bridge] [\-no\-bridge]
 .SH DESCRIPTION
 The \fImaze\fP program creates a "random" maze and then solves it with 
 graphical feedback. 
@@ -45,6 +45,31 @@ Default 2000000 (2 seconds.)
 .B \-post\-delay \fIinteger\fP
 Delay (in microseconds) after solving a maze and before generating a new one.
 Default 4000000 (4 seconds.)
+.TP 8
+.B \-generator \fInum\fP
+Sets the algorithm that will be used to generate the mazes. The
+default is \-1, which randomly selects an algorithm for each maze that
+is generated. Generator 0 is the original one, and works by walking
+around randomly until we hit a place we've been before, then
+backtracking and trying a new direction somewhere. Generator 1 picks a
+random spot in the maze, then draws a straight wall from that spot in
+a random direction until it hits another wall (and continues until the
+maze is complete). Generator 2 is based on sets. Initially all cells
+are in different sets. Then two neighboring cells are chosen and if
+they are in different sets, their sets are joined. If they were in the
+same set, a wall is built between them. This continues until the maze is
+complete. 
+
+All generators generate mazes with a certain 'characteristic'. See if you
+can spot them!
+.TP 8
+.B \-max\-length \fInum\fP
+Controls the maximum length of walls drawn in one go by generator 1.
+.TP 8
+.B \-bridge
+.TP 8
+.B \-no\-bridge
+Controls whether or not a 'bridge' will appear over the logo.
 .PP
 Clicking the mouse in the maze window controls it.
 .TP 16
@@ -96,6 +121,8 @@ WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
 OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .SH AUTHOR(s)
 .nf
+Johannes Keukelaar [ Generators 1 and 2 ] johannes@nada.kth.se 
+  Royal Institute of Technology, Stockholm, Sweden
 Jim Randell	[ XScreenSaver version ] jmr@mddjmr.fc.hp.com
   HPLabs, Bristol
 Richard Hess	[ X11 extensions ]  	{...}!uunet!cimshop!rhess

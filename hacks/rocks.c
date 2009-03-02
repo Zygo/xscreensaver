@@ -10,7 +10,10 @@
  * implied warranty.
  */
 
-/* Flying through an asteroid field.  Based on TI Explorer Lisp code by 
+/* 18-Sep-97: Johannes Keukelaar <johannes@nada.kth.se>: Added some color.
+ * Using -mono gives the old behaviour.  (Modified by jwz.)
+ */
+/*   Flying through an asteroid field.  Based on TI Explorer Lisp code by 
    John Nguyen <johnn@hx.lcs.mit.edu>
  */
 
@@ -46,8 +49,11 @@ static Display *dpy;
 static Window window;
 static int width, height, midx, midy;
 static int dep_x, dep_y;
+static int ncolors;
+static XColor *colors;
 static float max_dep;
-static GC draw_gc, erase_gc;
+static GC erase_gc;
+static GC *draw_gcs;
 static Bool rotate_p;
 static Bool move_p;
 static int speed;
@@ -67,6 +73,7 @@ struct rock {
   int depth;
   int size, x, y;
   int diff;
+  int color;
 };
 
 static struct rock *rocks;
@@ -84,6 +91,7 @@ rock_reset (struct rock *rock)
   rock->r = (SIN_RESOLUTION * 0.7) + (random () % (30 * SIN_RESOLUTION));
   rock->theta = random () % SIN_RESOLUTION;
   rock->depth = MAX_DEPTH * DEPTH_SCALE;
+  rock->color = random() % ncolors;
   rock_compute (rock);
   rock_draw (rock, True);
 }
@@ -142,7 +150,7 @@ rock_draw (rock, draw_p)
      Bool draw_p;
 {
   GC gc = (draw_p 
-	   ? (threed ? erase_gc : draw_gc)
+	   ? (threed ? erase_gc : draw_gcs[rock->color])
 	   : erase_gc);
 
   if (rock->x <= 0 || rock->y <= 0 || rock->x >= width || rock->y >= height)
@@ -375,7 +383,7 @@ init_rocks (Display *d, Window w)
   XGCValues gcv;
   Colormap cmap;
   XWindowAttributes xgwa;
-  unsigned int fg, bg;
+  unsigned int bg;
   dpy = d;
   window = w;
   XGetWindowAttributes (dpy, window, &xgwa);
@@ -387,13 +395,57 @@ init_rocks (Display *d, Window w)
   if (speed > 100) speed = 100;
   rotate_p = get_boolean_resource ("rotate", "Boolean");
   move_p = get_boolean_resource ("move", "Boolean");
-  fg = get_pixel_resource ("foreground", "Foreground", dpy, cmap);
+  if (mono_p)
+    ncolors = 2;
+  else
+    ncolors = get_integer_resource ("colors", "Colors");
+
+  if (ncolors < 2)
+    {
+      ncolors = 2;
+      mono_p = True;
+  }
+
+  colors = (XColor *) malloc(ncolors * sizeof(*colors));
+  draw_gcs = (GC *) malloc(ncolors * sizeof(*draw_gcs));
+
   bg = get_pixel_resource ("background", "Background", dpy, cmap);
-  gcv.foreground = fg;
-  gcv.background = bg;
-  draw_gc = XCreateGC (dpy, window, GCForeground|GCBackground, &gcv);
+  colors[0].pixel = bg;
+  colors[0].flags = DoRed|DoGreen|DoBlue;
+  XQueryColor(dpy, cmap, &colors[0]);
+
+  ncolors--;
+  make_random_colormap(dpy, xgwa.visual, cmap, colors+1, &ncolors, True,
+		       True, 0, True);
+  ncolors++;
+
+  if (ncolors < 2)
+    {
+      ncolors = 2;
+      mono_p = True;
+  }
+
+  if (mono_p)
+    {
+      unsigned int fg = get_pixel_resource("foreground", "Foreground",
+					   dpy, cmap);
+      colors[1].pixel = fg;
+      colors[1].flags = DoRed|DoGreen|DoBlue;
+      XQueryColor(dpy, cmap, &colors[1]);
+      gcv.foreground = fg;
+      gcv.background = bg;
+      draw_gcs[0] = XCreateGC (dpy, window, GCForeground|GCBackground, &gcv);
+      draw_gcs[1] = draw_gcs[0];
+    }
+  else
+    for( i = 0; i < ncolors; i++ )
+      {
+	gcv.foreground = colors[i].pixel;
+	gcv.background = bg;
+	draw_gcs[i] = XCreateGC (dpy, window, GCForeground|GCBackground, &gcv);
+      }
+
   gcv.foreground = bg;
-  gcv.background = fg;
   erase_gc = XCreateGC (dpy, window, GCForeground|GCBackground, &gcv);
 
   max_dep = (move_p ? MAX_DEP : 0);
@@ -420,7 +472,8 @@ init_rocks (Display *d, Window w)
     }
 
   /* don't want any exposure events from XCopyPlane */
-  XSetGraphicsExposures (dpy, draw_gc, False);
+  for( i = 0; i < ncolors; i++)
+    XSetGraphicsExposures (dpy, draw_gcs[i], False);
   XSetGraphicsExposures (dpy, erase_gc, False);
 
   nrocks = get_integer_resource ("count", "Count");
@@ -437,6 +490,7 @@ char *progclass = "Rocks";
 char *defaults [] = {
   "Rocks.background:	Black",		/* to placate SGI */
   "Rocks.foreground:	#E9967A",
+  "*colors:	5",
   "*count:	100",
   "*delay:	50000",
   "*speed:	100",
@@ -462,6 +516,7 @@ XrmOptionDescRec options [] = {
   {"-left3d",		".left3d",	XrmoptionSepArg, 0 },
   {"-right3d",		".right3d",	XrmoptionSepArg, 0 },
   {"-delta3d",		".delta3d",	XrmoptionSepArg, 0 },
+  { "-colors",		".colors",	XrmoptionSepArg, 0 },
   { 0, 0, 0, 0 }
 };
 

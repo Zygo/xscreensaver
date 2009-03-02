@@ -1,11 +1,11 @@
 /* -*- Mode: C; tab-width: 4 -*-
- * tri --- Sierpinski triangle fractal.
+ * sierpinski --- Sierpinski's triangle fractal.
  */
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)tri.c	4.00 97/01/01 xlockmore";
+static const char sccsid[] = "@(#)sierpinski.c	4.05 97/09/19 xlockmore";
 #endif
 
-/* Copyright (c) 1988-91 by Patrick J. Naughton.
+/* Copyright (c) 1996 by Desmond Daignault
  *
  * Permission to use, copy, modify, and distribute this software and its
  * documentation for any purpose and without fee is hereby granted,
@@ -20,6 +20,8 @@ static const char sccsid[] = "@(#)tri.c	4.00 97/01/01 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
+ * 18-Sep-97: 3D version Antti Kuntsi <kuntsi@iki.fi>.
+ * 20-May-97: Changed the name tri to sierpinski for more compatiblity
  * 10-May-97: jwz@netscape.com: turned into a standalone program.
  * 05-Sep-96: Desmond Daignault Datatimes Incorporated
  *            <tekdd@dtol.datatimes.com> .
@@ -27,9 +29,9 @@ static const char sccsid[] = "@(#)tri.c	4.00 97/01/01 xlockmore";
 
 #ifdef STANDALONE
 # define PROGCLASS					"Sierpinski"
-# define HACK_INIT					init_tri
-# define HACK_DRAW					draw_tri
-# define tri_opts					xlockmore_opts
+# define HACK_INIT					init_sierpinski
+# define HACK_DRAW					draw_sierpinski
+# define sierpinski_opts			xlockmore_opts
 # define DEFAULTS	"*count:		2000    \n"			\
 					"*cycles:		100     \n"			\
 					"*delay:		400000  \n"			\
@@ -39,113 +41,133 @@ static const char sccsid[] = "@(#)tri.c	4.00 97/01/01 xlockmore";
 # include "xlock.h"					/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-ModeSpecOpt tri_opts = {
-  0, NULL, 0, NULL, NULL };
+ModeSpecOpt sierpinski_opts =
+{0, NULL, 0, NULL, NULL};
+
+#define MAXCORNERS 4
 
 typedef struct {
 	int         width, height;
 	int         time;
 	int         px, py;
 	int         total_npoints;
-	int         npoints[3];
-	unsigned long colors[3];
-	XPoint     *pointBuffer[3];
-	XPoint      vertex[3];
-} tristruct;
+  int         corners;
+	int         npoints[MAXCORNERS];
+	unsigned long colors[MAXCORNERS];
+	XPoint     *pointBuffer[MAXCORNERS];
+	XPoint      vertex[MAXCORNERS];
+} sierpinskistruct;
 
-static tristruct *tris = NULL;
+static sierpinskistruct *tris = NULL;
 
 static void
 startover(ModeInfo * mi)
 {
 	int         j;
-	tristruct  *tp = &tris[MI_SCREEN(mi)];
+	sierpinskistruct *sp = &tris[MI_SCREEN(mi)];
 
 	if (MI_NPIXELS(mi) > 2) {
-		tp->colors[0] = (NRAND(MI_NPIXELS(mi)));
-		tp->colors[1] = (tp->colors[0] + MI_NPIXELS(mi) / 7 +
-			     NRAND(2 * MI_NPIXELS(mi) / 7)) % MI_NPIXELS(mi);
-		tp->colors[2] = (tp->colors[0] + 4 * MI_NPIXELS(mi) / 7 +
-			     NRAND(2 * MI_NPIXELS(mi) / 7)) % MI_NPIXELS(mi);
+    if (sp->corners == 3) {
+		sp->colors[0] = (NRAND(MI_NPIXELS(mi)));
+		sp->colors[1] = (sp->colors[0] + MI_NPIXELS(mi) / 7 +
+			 NRAND(2 * MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
+		sp->colors[2] = (sp->colors[0] + 4 * MI_NPIXELS(mi) / 7 +
+			 NRAND(2 * MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
+   } else if (sp->corners == 4) {
+		sp->colors[0] = (NRAND(MI_NPIXELS(mi)));
+		sp->colors[1] = (sp->colors[0] + MI_NPIXELS(mi) / 7 +
+			 NRAND(MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
+		sp->colors[2] = (sp->colors[0] + 3 * MI_NPIXELS(mi) / 7 +
+			 NRAND(MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
+		sp->colors[3] = (sp->colors[0] + 5 * MI_NPIXELS(mi) / 7 +
+			 NRAND(MI_NPIXELS(mi) / 7 + 1)) % MI_NPIXELS(mi);
+   } else {
+     (void) fprintf(stderr, "colors not set for %d corners\n", sp->corners);
+	 }
 	}
-	for (j = 0; j < 3; j++) {
-		tp->vertex[j].x = NRAND(tp->width);
-		tp->vertex[j].y = NRAND(tp->height);
+	for (j = 0; j < sp->corners; j++) {
+		sp->vertex[j].x = NRAND(sp->width);
+		sp->vertex[j].y = NRAND(sp->height);
 	}
-	tp->px = NRAND(tp->width);
-	tp->py = NRAND(tp->height);
-	tp->time = 0;
+	sp->px = NRAND(sp->width);
+	sp->py = NRAND(sp->height);
+	sp->time = 0;
 	XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
 }
 
 void
-init_tri(ModeInfo * mi)
+init_sierpinski(ModeInfo * mi)
 {
-	tristruct  *tp;
+	sierpinskistruct *sp;
 	int         i;
 
 	if (tris == NULL) {
-		if ((tris = (tristruct *) calloc(MI_NUM_SCREENS(mi),
-						 sizeof (tristruct))) == NULL)
+		if ((tris = (sierpinskistruct *) calloc(MI_NUM_SCREENS(mi),
+					 sizeof (sierpinskistruct))) == NULL)
 			return;
 	}
-	tp = &tris[MI_SCREEN(mi)];
+	sp = &tris[MI_SCREEN(mi)];
 
-	tp->width = MI_WIN_WIDTH(mi);
-	tp->height = MI_WIN_HEIGHT(mi);
+	sp->width = MI_WIN_WIDTH(mi);
+	sp->height = MI_WIN_HEIGHT(mi);
 
-	tp->total_npoints = MI_BATCHCOUNT(mi);
-	if (tp->total_npoints < 1)
-		tp->total_npoints = 1;
-	for (i = 0; i < 3; i++) {
-		if (!tp->pointBuffer[i])
-			tp->pointBuffer[i] = (XPoint *) malloc(tp->total_npoints *
+	sp->total_npoints = MI_BATCHCOUNT(mi);
+	if (sp->total_npoints < 1)
+		sp->total_npoints = 1;
+  sp->corners = (LRAND() & 1) + 3;
+	for (i = 0; i < sp->corners; i++) {
+		if (!sp->pointBuffer[i])
+			sp->pointBuffer[i] = (XPoint *) malloc(sp->total_npoints *
 							    sizeof (XPoint));
 	}
 	startover(mi);
 }
 
 void
-draw_tri(ModeInfo * mi)
+draw_sierpinski(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
 	GC          gc = MI_GC(mi);
-	tristruct  *tp = &tris[MI_SCREEN(mi)];
-	XPoint     *xp[3];
+	sierpinskistruct *sp = &tris[MI_SCREEN(mi)];
+	XPoint     **xp;
 	int         i = 0, v;
 
+    xp = (XPoint **) malloc (sp->corners * sizeof (XPoint *));
+    
 	if (MI_NPIXELS(mi) <= 2)
 		XSetForeground(display, gc, MI_WIN_WHITE_PIXEL(mi));
-	for (i = 0; i < 3; i++)
-		xp[i] = tp->pointBuffer[i];
-	for (i = 0; i < tp->total_npoints; i++) {
-		v = NRAND(3);
-		tp->px = (tp->px + tp->vertex[v].x) / 2;
-		tp->py = (tp->py + tp->vertex[v].y) / 2;
-		xp[v]->x = tp->px;
-		xp[v]->y = tp->py;
+	for (i = 0; i < sp->corners; i++)
+		xp[i] = sp->pointBuffer[i];
+	for (i = 0; i < sp->total_npoints; i++) {
+		v = NRAND(sp->corners);
+		sp->px = (sp->px + sp->vertex[v].x) / 2;
+		sp->py = (sp->py + sp->vertex[v].y) / 2;
+		xp[v]->x = sp->px;
+		xp[v]->y = sp->py;
 		xp[v]++;
-		tp->npoints[v]++;
+		sp->npoints[v]++;
 	}
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < sp->corners; i++) {
 		if (MI_NPIXELS(mi) > 2)
-			XSetForeground(display, gc, MI_PIXEL(mi, tp->colors[i]));
-		XDrawPoints(display, MI_WINDOW(mi), gc, tp->pointBuffer[i], tp->npoints[i],
+			XSetForeground(display, gc, MI_PIXEL(mi, sp->colors[i]));
+		XDrawPoints(display, MI_WINDOW(mi), gc, sp->pointBuffer[i], sp->npoints[i],
 			    CoordModeOrigin);
-		tp->npoints[i] = 0;
+		sp->npoints[i] = 0;
 	}
-	if (++tp->time >= MI_CYCLES(mi))
+	if (++sp->time >= MI_CYCLES(mi))
 		startover(mi);
+
+    free (xp);
 }
 
 void
-release_tri(ModeInfo * mi)
+release_sierpinski(ModeInfo * mi)
 {
 	if (tris != NULL) {
 		int         screen, i;
 
 		for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-			for (i = 0; i < 3; i++)
+			for (i = 0; i < MAXCORNERS; i++)
 				if (tris[screen].pointBuffer[i] != NULL) {
 					(void) free((void *) tris[screen].pointBuffer[i]);
 				}
@@ -156,7 +178,7 @@ release_tri(ModeInfo * mi)
 }
 
 void
-refresh_tri(ModeInfo * mi)
+refresh_sierpinski(ModeInfo * mi)
 {
 	/* Do nothing, it will refresh by itself */
 }

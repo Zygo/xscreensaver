@@ -11,6 +11,7 @@ $ bubbles     :== $'mydir'bubbles
 $ decays*creen:== $'mydir'decayscreen
 $ deco        :== $'mydir'deco
 $ drift       :== $'mydir'drift
+$ fadeplot    :== $'mydir'fadeplot
 $ flag        :== $'mydir'flag
 $ flame       :== $'mydir'flame
 $ forest      :== $'mydir'forest

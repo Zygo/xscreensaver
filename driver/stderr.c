@@ -353,14 +353,14 @@ initialize_stderr (saver_info *si)
   if (done) return;
   done = True;
 
+  real_stderr = stderr;
+  real_stdout = stdout;
+
   stderr_dialog_p = get_boolean_resource ("captureStderr", "Boolean");
   stdout_dialog_p = get_boolean_resource ("captureStdout", "Boolean");
 
   if (!stderr_dialog_p && !stdout_dialog_p)
     return;
-
-  real_stderr = stderr;
-  real_stdout = stdout;
 
   if (pipe (fds))
     {

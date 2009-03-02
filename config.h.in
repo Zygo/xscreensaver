@@ -121,6 +121,10 @@
  */
 #undef HAVE_MESA_GL
 
+/*  Define this if you have the X Shared Memory Extension.
+ */
+#undef HAVE_XSHM_EXTENSION
+
 /*  Some screenhacks like to run an external program to generate random pieces
     of text; set this to the one you like ("yow" and "fortune" are the most
     likely prospects.)  Note that this is just the default; X resources can

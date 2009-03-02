@@ -105,6 +105,8 @@ window, which are pointed at by the screensaver's default resource settings.
    goop		- Squishy transparent oil-and-bubble images
    starfish	- Radially-symmetric throbbing colormap-hacking blobs.
    munch	- The classic 1962-vintage "munching squares" hack.
+   rd-bomb      - Reaction-diffusion fractals.
+   coral        - Simulation of coral growth, sort of.
    fadeplot	- Draws a swimming ribbon.
    escher	- Draws some escher-like scenes (GLX only.)
    gears	- Draws interlocking rotating gears (GLX only.)
@@ -140,6 +142,13 @@ http://people.netscape.com/jwz/xscreensaver/.
 	-- Jamie Zawinski <jwz@netscape.com>
 
 
+Changes since 2.09:	Fixed color bugs in rd-bomb; sped up coral.
+Changes since 2.07:	New hacks "rd-bomb" and "coral".
+			New version of "maze" with some new algorithms.
+			New colorized version of "rocks".
+			Fixed a bug in qix on 64-bit machines.
+			Fixed a bug in the -time option.
+			Fixed a bug in configure related to LessTif.
 Changes since 2.06:	Minor header tweaks in windows.c and flag.c.
 			Made multi-architecture (VPATH) builds work properly.
 			Merged new GL stuff from xlockmore (rubik, morph3d.)

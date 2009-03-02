@@ -52,12 +52,14 @@ UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/grabscreen.c $(UTILS_SRC)/hsv.c \
 		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/spline.c \
 		  $(UTILS_SRC)/usleep.c $(UTILS_SRC)/visual.c \
-		  $(UTILS_SRC)/xroger.c $(UTILS_SRC)/yarandom.c
+		  $(UTILS_SRC)/xroger.c $(UTILS_SRC)/yarandom.c \
+	 	  $(UTILS_SRC)/erase.c
 UTIL_OBJS	= $(UTILS_SRC)/alpha.o $(UTILS_SRC)/colors.o \
 		  $(UTILS_SRC)/grabscreen.o $(UTILS_SRC)/hsv.o \
 		  $(UTILS_SRC)/resources.o $(UTILS_SRC)/spline.o \
 		  $(UTILS_SRC)/usleep.o $(UTILS_SRC)/visual.o \
-		  $(UTILS_SRC)/xroger.o $(UTILS_SRC)/yarandom.o
+		  $(UTILS_SRC)/xroger.o $(UTILS_SRC)/yarandom.o \
+		  $(UTILS_SRC)/erase.o
 
 SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  bubbles_default.c decayscreen.c deco.c drift.c flag.c \
@@ -67,7 +69,8 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  maze.c moire.c noseguy.c pedal.c penrose.c pyro.c qix.c \
 		  rocks.c rorschach.c screenhack.c sierpinski.c slidescreen.c \
 		  slip.c sphere.c spiral.c strange.c swirl.c xlockmore.c \
-		  xroger-hack.c goop.c starfish.c munch.c fadeplot.c
+		  xroger-hack.c goop.c starfish.c munch.c fadeplot.c \
+		  rd-bomb.c coral.c
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  bubbles_default.o decayscreen.o deco.o drift.o flag.o \
@@ -77,7 +80,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  maze.o moire.o noseguy.o pedal.o penrose.o pyro.o qix.o \
 		  rocks.o rorschach.o screenhack.o sierpinski.o slidescreen.o \
 		  slip.o sphere.o spiral.o strange.o swirl.o xlockmore.o \
-		  xroger-hack.o goop.o starfish.o munch.o fadeplot.o
+		  xroger-hack.o goop.o starfish.o munch.o fadeplot.o \
+		  rd-bomb.o coral.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest fract galaxy grav greynetic halo \
@@ -85,7 +89,7 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  laser lightning lisa lmorph maze moire noseguy pedal \
 		  penrose pyro qix rocks rorschach sierpinski slidescreen \
 		  slip sphere spiral strange swirl xroger goop starfish munch \
-		  fadeplot
+		  fadeplot rd-bomb coral
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -104,7 +108,7 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  noseguy.man pedal.man penrose.man pyro.man qix.man \
 		  rocks.man rorschach.man sierpinski.man slidescreen.man \
 		  slip.man sphere.man spiral.man strange.man swirl.man \
-		  xroger.man goop.man starfish.man munch.man
+		  xroger.man goop.man starfish.man munch.man rd-bomb.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock.h default.xbm bob.xbm .gdbinit \
 		  noses/nose-$(STAR).xbm noses/nose-$(STAR).xpm \
@@ -211,6 +215,7 @@ $(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
 $(UTILS_BIN)/xmu.o:		$(UTILS_SRC)/xmu.c
 $(UTILS_BIN)/xroger.o:		$(UTILS_SRC)/xroger.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
+$(UTILS_BIN)/erase.o:		$(UTILS_SRC)/erase.c
 
 $(UTIL_OBJS):
 	cd $(UTILS_BIN) ; \
@@ -233,6 +238,7 @@ HSV		= $(UTILS_BIN)/hsv.o
 SPL		= $(UTILS_BIN)/spline.o
 XROG		= $(UTILS_BIN)/xroger.o
 GRAB		= $(UTILS_BIN)/grabscreen.o
+ERASE		= $(UTILS_BIN)/erase.o
 COL		= $(COLOR_OBJS)
 
 CC_HACK		= $(CC) $(LDFLAGS)
@@ -268,8 +274,8 @@ greynetic:		 $(HACK_OBJS) greynetic.o
 halo:			 $(HACK_OBJS) halo.o $(COL)
 	$(CC_HACK) -o $@ $(HACK_OBJS) halo.o $(COL) $(HACK_LIBS)
 
-helix:			 $(HACK_OBJS) helix.o $(HSV)
-	$(CC_HACK) -o $@ $(HACK_OBJS) helix.o $(HSV) $(HACK_LIBS)
+helix:			 $(HACK_OBJS) helix.o $(HSV) $(ERASE)
+	$(CC_HACK) -o $@ $(HACK_OBJS) helix.o $(HSV) $(ERASE) $(HACK_LIBS)
 
 hypercube:		 $(HACK_OBJS) hypercube.o
 	$(CC_HACK) -o $@ $(HACK_OBJS) hypercube.o $(HACK_LIBS)
@@ -301,11 +307,11 @@ pyro:			 $(HACK_OBJS) pyro.o $(HSV)
 qix:			 $(HACK_OBJS) qix.o $(ALP)
 	$(CC_HACK) -o $@ $(HACK_OBJS) qix.o $(ALP) $(HACK_LIBS)
 
-rocks:			 $(HACK_OBJS) rocks.o
-	$(CC_HACK) -o $@ $(HACK_OBJS) rocks.o $(HACK_LIBS)
+rocks:			 $(HACK_OBJS) rocks.o $(COL)
+	$(CC_HACK) -o $@ $(HACK_OBJS) rocks.o $(COL) $(HACK_LIBS)
 
-rorschach:		 $(HACK_OBJS) rorschach.o $(HSV)
-	$(CC_HACK) -o $@ $(HACK_OBJS) rorschach.o $(HSV) $(HACK_LIBS)
+rorschach:		 $(HACK_OBJS) rorschach.o $(HSV) $(ERASE)
+	$(CC_HACK) -o $@ $(HACK_OBJS) rorschach.o $(HSV) $(ERASE) $(HACK_LIBS)
 
 slidescreen:		 $(HACK_OBJS) slidescreen.o $(GRAB_OBJS)
 	$(CC_HACK) -o $@ $(HACK_OBJS) slidescreen.o $(GRAB_OBJS) $(HACK_LIBS)
@@ -321,6 +327,12 @@ starfish:		 $(HACK_OBJS) starfish.o $(COL) $(SPL)
 
 munch:			 $(HACK_OBJS) munch.o $(COL) $(SPL)
 	$(CC_HACK) -o $@ $(HACK_OBJS) munch.o $(COL) $(SPL) $(HACK_LIBS)
+
+rd-bomb:		 $(HACK_OBJS) rd-bomb.o $(COL)
+	$(CC_HACK) -o $@ $(HACK_OBJS) rd-bomb.o $(COL) $(HACK_LIBS)
+
+coral: $(HACK_OBJS) coral.o $(COLOR_OBJS)
+	$(CC_HACK) -o $@ $(HACK_OBJS) coral.o $(COLOR_OBJS) $(HACK_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -572,6 +584,7 @@ helix.o: $(UTILS_SRC)/hsv.h
 helix.o: $(UTILS_SRC)/colors.h
 helix.o: $(UTILS_SRC)/grabscreen.h
 helix.o: $(UTILS_SRC)/visual.h
+helix.o: $(UTILS_SRC)/erase.h
 hopalong.o: $(srcdir)/xlockmore.h
 hopalong.o: $(srcdir)/../config.h
 hopalong.o: $(srcdir)/xlockmoreI.h
@@ -767,6 +780,7 @@ rorschach.o: $(UTILS_SRC)/hsv.h
 rorschach.o: $(UTILS_SRC)/colors.h
 rorschach.o: $(UTILS_SRC)/grabscreen.h
 rorschach.o: $(UTILS_SRC)/visual.h
+rorschach.o: $(UTILS_SRC)/erase.h
 screenhack.o: $(UTILS_SRC)/xmu.h
 screenhack.o: $(srcdir)/screenhack.h
 screenhack.o: $(srcdir)/../config.h
@@ -914,4 +928,22 @@ fadeplot.o: $(UTILS_SRC)/hsv.h
 fadeplot.o: $(UTILS_SRC)/colors.h
 fadeplot.o: $(UTILS_SRC)/grabscreen.h
 fadeplot.o: $(UTILS_SRC)/visual.h
+rd-bomb.o: $(srcdir)/screenhack.h
+rd-bomb.o: $(srcdir)/../config.h
+rd-bomb.o: $(UTILS_SRC)/yarandom.h
+rd-bomb.o: $(UTILS_SRC)/usleep.h
+rd-bomb.o: $(UTILS_SRC)/resources.h
+rd-bomb.o: $(UTILS_SRC)/hsv.h
+rd-bomb.o: $(UTILS_SRC)/colors.h
+rd-bomb.o: $(UTILS_SRC)/grabscreen.h
+rd-bomb.o: $(UTILS_SRC)/visual.h
+coral.o: $(srcdir)/screenhack.h
+coral.o: $(srcdir)/../config.h
+coral.o: $(UTILS_SRC)/yarandom.h
+coral.o: $(UTILS_SRC)/usleep.h
+coral.o: $(UTILS_SRC)/resources.h
+coral.o: $(UTILS_SRC)/hsv.h
+coral.o: $(UTILS_SRC)/colors.h
+coral.o: $(UTILS_SRC)/grabscreen.h
+coral.o: $(UTILS_SRC)/visual.h
 
