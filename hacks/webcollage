@@ -27,7 +27,7 @@ require POSIX;
 use Fcntl ':flock'; # import LOCK_* constants
 
 
-my $version = q{ $Revision: 1.32 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.36 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -56,6 +56,9 @@ my $image_randomizer_2 = "http://www.hotbot.com/?clickSrc=search" .
                          "&MT=";
 my $image_randomizer_3 = "http://www.altavista.com/cgi-bin/query?pg=q" .
                          "&text=yes&kl=XX&stype=stext&q=";
+my $photo_randomizer   = "http://albums.photopoint.com/j/View?u=1&a=1&p=";
+my $photo_randomizer_lo = 10000001;
+my $photo_randomizer_hi = 12400000;
 
 my $image_ppm   = ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp") . "/webcollage." . $$;
 my $image_tmp1  = $image_ppm . "-1";
@@ -67,8 +70,15 @@ my $img_height;
 my $http_proxy = undef;
 my $http_timeout = 30;
 my $cvt_timeout = 10;
-my $ppm_to_root_window_cmd = "xv -root -rmode 5 -viewonly" .
-                             " +noresetroot %%PPM%% -quit";
+
+# if we have xli, use it to write to the root window.  else use xv.
+my $ppm_to_root_window_cmd_1 = "xli -quiet -onroot -center" .
+                               " -border black %%PPM%%";
+my $ppm_to_root_window_cmd_2 = "xv -root -rmode 5 -viewonly" .
+                               " +noresetroot %%PPM%% -quit";
+
+my $ppm_to_root_window_cmd = undef;     # initialized by x_output()
+
 my $filter_cmd = undef;
 my $post_filter_cmd = undef;
 my $background = undef;
@@ -640,7 +650,7 @@ sub pick_from_image_randomizer {
         next if ($u =~ m@[/.]digital\.com@i);
         next if ($u =~ m@[/.]doubleclick\.net@i);
 
-        if ($which == 0 && $u =~ m@[/.]corbis\.com/@) {
+        if ($which == 0 && $u =~ m@[/.]corbis\.com@) {
             $skipped = 1;
             if ( $verbose > 3 ) {
                 print STDERR "$progname: skipping corbis URL: $u\n";
@@ -696,6 +706,19 @@ sub pick_from_image_randomizer {
 }
 
 
+# Using the photo site, generate a random URL that will hopefully point
+# to an image.  Returns two URLs, both of which are the URL of the image.
+# Returns () if nothing found this time.
+#
+sub pick_from_photo_randomizer {
+    my ( $timeout ) = @_;
+    my $n = ($photo_randomizer_lo +
+             int(rand() * ($photo_randomizer_hi - $photo_randomizer_lo)));
+    my $url = $photo_randomizer . $n;
+    return ( $url, $url, "photopoint" );
+}
+
+
 # Picks a random image on a random page, and returns two URLs:
 # the page containing the image, and the image. 
 # Returns () if nothing found this time.
@@ -705,10 +728,12 @@ my $total_0 = 0;
 my $total_1 = 0;
 my $total_2 = 0;
 my $total_3 = 0;
+my $total_4 = 0;
 my $count_0 = 0;
 my $count_1 = 0;
 my $count_2 = 0;
 my $count_3 = 0;
+my $count_4 = 0;
 
 sub pick_image {
     my ( $timeout ) = @_;
@@ -725,6 +750,11 @@ sub pick_image {
         ($base, $img, $source) = pick_from_image_randomizer ($timeout, 0);
         $total = ++$total_1;
         $count = ++$count_1 if $img;
+
+    } elsif ($r < 70) {
+        ($base, $img, $source) = pick_from_photo_randomizer ($timeout);
+        $total = ++$total_4;
+        $count = ++$count_4 if $img;
 
 #    } elsif ($r < 80) {
 #        # HotBot sucks: 98% of the time, it says "no pages match your
@@ -1006,13 +1036,23 @@ sub image_to_pnm {
 
 sub x_output {
 
-    my $win_cmd = $ppm_to_root_window_cmd;
-    $win_cmd =~ s/^([^ \t\r\n]+).*$/$1/;
+    my $win_cmd_1 = $ppm_to_root_window_cmd_1;
+    my $win_cmd_2 = $ppm_to_root_window_cmd_2;
+    $win_cmd_1 =~ s/^([^ \t\r\n]+).*$/$1/;
+    $win_cmd_2 =~ s/^([^ \t\r\n]+).*$/$1/;
 
     # make sure the various programs we execute exist, right up front.
     foreach ("ppmmake", "giftopnm", "djpeg", "pnmpaste", "pnmscale",
-             "pnmcut", $win_cmd) {
+             "pnmcut") {
         which ($_) || die "$progname: $_ not found on \$PATH.\n";
+    }
+
+    if (which($win_cmd_1)) {
+        $ppm_to_root_window_cmd = $ppm_to_root_window_cmd_1;
+    } elsif (which($win_cmd_2)) {
+        $ppm_to_root_window_cmd = $ppm_to_root_window_cmd_2;
+    } else {
+        die "$progname: neither $win_cmd_1 nor $win_cmd_2 found on \$PATH.\n";
     }
 
     $SIG{HUP}  = \&x_cleanup;

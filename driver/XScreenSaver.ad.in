@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 3.17
-!                                15-Jul-99
+!                              version 3.18
+!                                13-Oct-99
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -58,6 +58,15 @@
 ! This is how the "Help" button loads URLs (/bin/sh syntax.)
 ! The "helpURL" will be substituted for up to two occurrences of "%s".
 *loadURL: netscape -remote 'openURL(%s)' || netscape '%s'
+
+
+! The format used for printing the date and time in the password dialog box
+! (see the strftime(3) manual page for details.)
+*dateFormat:		%d-%b-%y (%a); %I:%M %p
+! To show the time only:
+! *dateFormat:		%I:%M %p
+! For 24 hour time:
+! *dateFormat:		%H:%M
 
 
 ! Turning on "installColormap" interacts erratically with twm and tvtwm,
@@ -203,6 +212,9 @@
 		   -minlifespan 1 -maxlifespan 1 -instantdeathchan 0	  \
 		   -minorchan 0 -anychan 0.3				\n\
 		shadebobs -root						\n\
+		ccurve -root						\n\
+		blaster -root						\n\
+		bumps -root						\n\
     default-n:  webcollage -root					\n\
  -  default-n:	webcollage -root -filter 'vidwhacker -stdin -stdout'    \n\
  -  default-n:	vidwhacker -root					\n\
@@ -261,13 +273,24 @@
 !     default-n:  xv -root -rmode 5 -random -viewonly -wloop              \
 !                    -wait 30 $HOME/bitmaps/*.jpg                       \n\
 !
+! or, if you prefer "xli" to "xv", like this: (but note that xli's "-delay"
+! option doesn't work in conjunction with "-onroot", so you need to add a
+! line for each image individually... "xv" is better in this respect.)
+!
+!     default-n: xli -quiet -onroot -center -border black                 \
+!                    $HOME/bitmaps/pic1.jpg                             \n\
+!     default-n: xli -quiet -onroot -center -border black                 \
+!                    $HOME/bitmaps/pic2.jpg                             \n\
+!     default-n: xli -quiet -onroot -center -border black                 \
+!                    $HOME/bitmaps/pic3.jpg                             \n\
+!
 ! Note that we've used "default-n" as the visual name, rather than just
 ! "default": this means "default visual, no install", that is, it's like
 ! specifying the command-line arguments "-visual default -no-install".
-! This is necessary because, when XV is running in "-root" mode, it always
-! assumes that the default visual and colormap are being used, rather than 
-! examining the window it is drawing on to see what visual and colormap it
-! has.  If we didn't force the default visual to be used, xv would get an
+! This is necessary because, when XV or XLI arerunning in "-root" mode, they
+! always assume that the default visual and colormap are being used, rather
+! than  examining the window it is drawing on to see what visual and colormap
+! it has.  If we didn't force the default visual to be used, we would get an
 ! X error.  If we didn't force the default colormap to be installed, the
 ! colors would be all wrong.  "default-i" may also be used as a visual name
 ! (meaning, "-visual default -install") but you probably won't ever need
@@ -327,6 +350,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *Dialog.bodyFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
 *Dialog.labelFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
 *Dialog.buttonFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1
+*Dialog.dateFont:		*-courier-medium-r-*-*-*-80-*-*-*-iso8859-1
 *Dialog.foreground:		#000000
 *Dialog.background:		#BFBFBF
 *Dialog.Button.foreground:	#000000

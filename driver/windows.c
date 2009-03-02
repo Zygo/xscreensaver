@@ -803,12 +803,17 @@ get_screen_viewport (saver_screen_info *ssi,
 #ifdef HAVE_XF86VMODE
   saver_info *si = ssi->global;
   int screen_no = screen_number (ssi->screen);
-  int event, error;
+  int op, event, error;
   int dot;
   XF86VidModeModeLine ml;
   int x, y;
 
-  if (XF86VidModeQueryExtension (si->dpy, &event, &error) &&
+  /* Check for Xinerama first, because the VidModeExtension is broken
+     when Xinerama is present.  Wheee!
+   */
+
+  if (!XQueryExtension (si->dpy, "XINERAMA", &op, &event, &error) &&
+      XF86VidModeQueryExtension (si->dpy, &event, &error) &&
       XF86VidModeGetModeLine (si->dpy, screen_no, &dot, &ml) &&
       XF86VidModeGetViewPort (si->dpy, screen_no, &x, &y))
     {
@@ -821,6 +826,35 @@ get_screen_viewport (saver_screen_info *ssi,
       if (*x_ret == 0 && *y_ret == 0 && *w_ret == w && *h_ret == h)
         /* There is no viewport -- the screen does not scroll. */
         return;
+
+
+      /* Apparently some versions of XFree86 return nonsense here!
+         I've had reports of 1024x768 viewports at -1936862040, -1953705044.
+         So, sanity-check the values and give up if they are out of range.
+       */
+      if (*x_ret <  0 || *x_ret >= w ||
+          *y_ret <  0 || *y_ret >= h ||
+          *w_ret <= 0 || *w_ret >  w ||
+          *h_ret <= 0 || *h_ret >  h)
+        {
+          static int warned_once = 0;
+          if (!warned_once)
+            {
+              fprintf (stderr, "\n"
+                  "%s: X SERVER BUG: %dx%d viewport at %d,%d is impossible.\n"
+                  "%s: The XVidMode server extension is returning nonsense.\n"
+                  "%s: Please report this bug to your X server vendor.\n\n",
+                       blurb(), *w_ret, *h_ret, *x_ret, *y_ret,
+                       blurb(), blurb());
+              warned_once = 1;
+            }
+          *x_ret = 0;
+          *y_ret = 0;
+          *w_ret = w;
+          *h_ret = h;
+          return;
+        }
+          
 
       sprintf (msg, "%s: vp is %dx%d+%d+%d",
                blurb(), *w_ret, *h_ret, *x_ret, *y_ret);

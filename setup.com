@@ -5,11 +5,14 @@ $ mydisk = f$trnlmn("SYS$DISK")
 $ mydir  = mydisk+f$directory()
 $ ant		:== $'mydir'ant
 $ attraction	:== $'mydir'attraction
+$ blaster	:== $'mydir'blaster
 $ blitspin	:== $'mydir'blitspin
 $ bouboule	:== $'mydir'bouboule
 $ braid		:== $'mydir'braid
 $ bsod		:== $'mydir'bsod
 $ bubbles	:== $'mydir'bubbles
+$ bumps		:== $'mydir'bumps
+$ ccurve	:== $'mydir'ccurve
 $ compass	:== $'mydir'compass
 $ coral		:== $'mydir'coral
 $ critical	:== $'mydir'critical

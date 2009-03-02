@@ -217,7 +217,7 @@ windows (Display *dpy, Window window, int delay, Bool w95p)
      "\n"
      "_Press any key to continue");
 
-  const char *wnt =
+  const char *wnt = /* from Jim Niemira <urmane@urmane.org> */
     ("*** STOP: 0x0000001E (0x80000003,0x80106fc0,0x8025ea21,0xfd6829e8)\n"
    "Unhandled Kernel exception c0000047 from fa8418b4 (8025ea21,fd6829e8)\n"
    "\n"

@@ -41,6 +41,8 @@
 	-no-screensaver      Draw over active windows       
 	-outline             Draw a contrasting outline around words (Default)
 	-no-outline          Draw words without an outline
+	-center              Draw words in the center of the screen (Default)
+	-no-center           Draw words randomly around the screen
 */
 
 
@@ -103,10 +105,12 @@ char*        defaults[] =
 	 "Submit.\\n"
 	 "Conform.\\n"
 	 "Obey.\\n"
+	 "OBEY. OBEY. OBEY.\\n"
 	 "Consume.\\n"
 	 "Be silent.\\n"
 	 "Fear.\\n"
 	 "Waste.\\n"
+	 "Money.\\n"
 	 "Watch TV.\\n"
 	 "Hate yourself.\\n"
 	 "Buy needlessly.\\n"
@@ -117,6 +121,9 @@ char*        defaults[] =
 	 "You serve no purpose.\\n"
 	 "Your contributions are ignored.\\n"
 	 "They are laughing at you.\\n"
+	 "They lied to you.\\n"
+	 "They read your mail.\\n"
+	 "They know.\\n"
 	 "Surrender.\\n"
 	 "You will fail.\\n"
 	 "Never question.\\n"

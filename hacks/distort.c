@@ -20,16 +20,29 @@
  *	-more distortion matrices (fortunately, I'm out of ideas :)
  * Stuff that would be cool but probably too much of a resource hog:
  *	-some kind of interpolation to avoid jaggies
+ *    -large speed values leaves the image distorted
  * program idea borrowed from a screensaver on a non-*NIX OS,
+ *
+ * 28 Sep 1999 Jonas Munsin (jmunsin@iki.fi)
+ *    Added about 10x faster algortim for 8, 16 and 32 bpp (modifies pixels
+ *    directly avoiding costly XPutPixle(XGetPixel()) calls, inspired by
+ *    xwhirl made by horvai@clipper.ens.fr (Peter Horvai) and the XFree86
+ *    Xlib sources.
+ *    This piece of code is really horrible, but it works, and at the moment
+ *    I don't have time or inspiration to fix something that works (knock
+ *    on wood).
+ * 08 Oct 1999 Jonas Munsin (jmunsin@iki.fi)
+ *	Corrected several bugs causing references beyond allocated memory.
  */
 
 #include <math.h>
 #include "screenhack.h"
 #include <X11/Xutil.h>
+#include <X11/Xmd.h>
 
 #ifdef HAVE_XSHM_EXTENSION
 # include "xshm.h"
-static Bool use_shm;
+static Bool use_shm = False;
 static XShmSegmentInfo shm_info;
 #endif /* HAVE_XSHM_EXTENSION */
 
@@ -41,7 +54,7 @@ struct coo {
 };
 static struct coo xy_coo[10];
 
-static int delay, radius, speed, number, blackhole, vortex, magnify, reflect;
+static int delay, radius, speed, number, blackhole, vortex, magnify, reflect, slow;
 static XWindowAttributes xgwa;
 static GC gc;
 static Window g_window;
@@ -49,9 +62,11 @@ static Display *g_dpy;
 static unsigned long black_pixel;
 
 static XImage *orig_map, *buffer_map;
+static unsigned long *buffer_map_cache;
 
 static int ***from;
 static int ****from_array;
+static int *fast_from = NULL;
 static void (*effect) (int) = NULL;
 static void move_lense(int);
 static void swamp_thing(int);
@@ -60,6 +75,14 @@ static void init_round_lense(void);
 static void (*draw) (int) = NULL;
 static void reflect_draw(int);
 static void plain_draw(int);
+
+static void (*draw_routine)(XImage *, XImage *, int, int, int *) = NULL;
+static void fast_draw_8(XImage *, XImage *, int, int, int *);
+static void fast_draw_16(XImage *, XImage *, int, int, int *);
+static void fast_draw_32(XImage *, XImage *, int, int, int *);
+static void generic_draw(XImage *, XImage *, int, int, int *);
+static int bpp_size = 0;
+
 
 static void init_distort(Display *dpy, Window window) 
 {
@@ -83,6 +106,7 @@ static void init_distort(Display *dpy, Window window)
 	vortex = get_boolean_resource("vortex", "Boolean");
 	magnify = get_boolean_resource("magnify", "Boolean");
 	reflect = get_boolean_resource("reflect", "Boolean");
+	slow = get_boolean_resource("slow", "Boolean");
 	
 	if (get_boolean_resource("swamp", "Boolean"))
 		effect = &swamp_thing;
@@ -102,16 +126,17 @@ static void init_distort(Display *dpy, Window window)
  * -radius 100 -number 1 -speed 2 -vortex
  * -radius 100 -number 1 -speed 2 -vortex -magnify
  * -radius 100 -number 1 -speed 2 -vortex -magnify -blackhole
- * -radius 50 -number 4 -speed 2 -swamp
- * -radius 50 -number 4 -speed 2 -swamp -blackhole
- * -radius 50 -number 4 -speed 2 -swamp -vortex
- * -radius 50 -number 4 -speed 2 -swamp -vortex -magnify
- * -radius 50 -number 4 -speed 2 -swamp -vortex -magnify -blackhole
  * -radius 80 -number 1 -speed 2 -reflect
  * -radius 50 -number 3 -speed 2 -reflect
+ * jwz: not these
+ *   -radius 50 -number 4 -speed 2 -swamp
+ *   -radius 50 -number 4 -speed 2 -swamp -blackhole
+ *   -radius 50 -number 4 -speed 2 -swamp -vortex
+ *   -radius 50 -number 4 -speed 2 -swamp -vortex -magnify
+ *   -radius 50 -number 4 -speed 2 -swamp -vortex -magnify -blackhole
  */
 		
-		i = (random() % 17);
+		i = (random() % 12 /* 17 */);
 
 		draw = &plain_draw;
 
@@ -146,27 +171,34 @@ static void init_distort(Display *dpy, Window window)
 			case 9:
 				radius=100;number=1;speed=2;vortex=1;magnify=1;blackhole=1;
 				effect=&move_lense;break;
+
 			case 10:
-				radius=50;number=4;speed=2;
-				effect=&swamp_thing;break;
-			case 11:
-				radius=50;number=4;speed=2;blackhole=1;
-				effect=&swamp_thing;break;
-			case 12:
-				radius=50;number=4;speed=2;vortex=1;
-				effect=&swamp_thing;break;
-			case 13:
-				radius=50;number=4;speed=2;vortex=1;magnify=1;
-				effect=&swamp_thing;break;
-			case 14:
-				radius=50;number=4;speed=2;vortex=1;magnify=1;blackhole=1;
-				effect=&swamp_thing;break;
-			case 15:
 				radius=80;number=1;speed=2;reflect=1;
 				draw = &reflect_draw;effect = &move_lense;break;
-			case 16: default:
+			case 11:
 				radius=50;number=4;speed=2;reflect=1;
 				draw = &reflect_draw;effect = &move_lense;break;
+
+#if 0 /* jwz: not these */
+			case 12:
+				radius=50;number=4;speed=2;
+				effect=&swamp_thing;break;
+			case 13:
+				radius=50;number=4;speed=2;blackhole=1;
+				effect=&swamp_thing;break;
+			case 14:
+				radius=50;number=4;speed=2;vortex=1;
+				effect=&swamp_thing;break;
+			case 15:
+				radius=50;number=4;speed=2;vortex=1;magnify=1;
+				effect=&swamp_thing;break;
+			case 16:
+				radius=50;number=4;speed=2;vortex=1;magnify=1;blackhole=1;
+				effect=&swamp_thing;break;
+#endif
+
+            default:
+                abort(); break;
 		}
 
 	}
@@ -205,6 +237,12 @@ static void init_distort(Display *dpy, Window window)
 	buffer_map = 0;
 	orig_map = XGetImage(dpy, window, 0, 0, xgwa.width, xgwa.height,
 						 ~0L, ZPixmap);
+	buffer_map_cache = malloc(sizeof(unsigned long)*(2*radius+speed+2)*(2*radius+speed+2));
+
+	if (buffer_map_cache == NULL) {
+		perror("distort");
+		exit(EXIT_FAILURE);
+	}
 
 # ifdef HAVE_XSHM_EXTENSION
 
@@ -229,6 +267,31 @@ static void init_distort(Display *dpy, Window window)
 		  calloc(buffer_map->height, buffer_map->bytes_per_line);
 	}
 
+	if ((buffer_map->byte_order == orig_map->byte_order)
+			&& (buffer_map->depth == orig_map->depth)
+			&& (buffer_map->format == ZPixmap)
+			&& (orig_map->format == ZPixmap)
+			&& !slow) {
+		switch (orig_map->bits_per_pixel) {
+			case 32:
+				draw_routine = &fast_draw_32;
+				bpp_size = sizeof(CARD32);
+				break;
+			case 16:
+				draw_routine = &fast_draw_16;
+				bpp_size = sizeof(CARD16);
+				break;
+			case 8:
+				draw_routine = &fast_draw_8;
+				bpp_size = sizeof(CARD8);
+				break;
+			default:
+				draw_routine = &generic_draw;
+				break;
+		}
+	} else {
+		draw_routine = &generic_draw;
+	}
 	init_round_lense();
 
 	for (i = 0; i < number; i++) {
@@ -241,6 +304,7 @@ static void init_distort(Display *dpy, Window window)
 		xy_coo[i].xmove = speed + (i%2)*2*(-speed);
 		xy_coo[i].ymove = speed + (i%2)*2*(-speed);
 	}
+
 }
 
 /* example: initializes a "see-trough" matrix */
@@ -255,6 +319,26 @@ static void init_distort(Display *dpy, Window window)
 	} 
 }
 */
+static void convert(void) {
+	int *p;
+	int i, j;
+	fast_from = calloc(1, sizeof(int)*((buffer_map->bytes_per_line/bpp_size)*(2*radius+speed+2) + 2*radius+speed+2));
+	if (fast_from == NULL) {
+		perror("distort");
+		exit(EXIT_FAILURE);
+	}
+	p = fast_from;
+	for (i = 0; i < 2*radius+speed+2; i++) {
+		for (j = 0; j < 2*radius+speed+2; j++) {
+			*(p + i + j*buffer_map->bytes_per_line/bpp_size)
+				= from[i][j][0] + xgwa.width*from[i][j][1];
+			if (*(p + i + j*buffer_map->bytes_per_line/bpp_size) < 0
+					|| *(p + i + j*buffer_map->bytes_per_line/bpp_size) >= orig_map->height*orig_map->width) {
+				*(p + i + j*buffer_map->bytes_per_line/bpp_size) = 0;
+			}
+		}
+	}
+}
 
 /* makes a lense with the Radius=loop and centred in
  * the point (radius, radius)
@@ -264,7 +348,7 @@ static void make_round_lense(int radius, int loop)
 	int i, j;
 
 	for (i = 0; i < 2*radius+speed+2; i++) {
-		for(j = 0; j < 2*radius+speed+2; j++) {
+		for(j = 0; j < ((0 == bpp_size) ? (2*radius+speed+2) : (buffer_map->bytes_per_line/bpp_size)); j++) {
 			double r, d;
 			r = sqrt ((i-radius)*(i-radius)+(j-radius)*(j-radius));
 			if (loop == 0)
@@ -280,18 +364,18 @@ static void make_round_lense(int radius, int loop)
 		 * (with permission) from the whirl plugin for gimp,
 		 * Copyright (C) 1996 Federico Mena Quintero
 		 */
-		/* 2.5 is just a constant used because it looks good :) */
-					angle = 2.5*(1-d)*(1-d);
+		/* 5 is just a constant used because it looks good :) */
+					angle = 5*(1-d)*(1-d);
 
         /* Avoid atan2: DOMAIN error message */
 					if ((radius-j) == 0.0 && (radius-i) == 0.0) {
 						from[i][j][0] = radius + cos(angle)*r;
 						from[i][j][1] = radius + sin(angle)*r;
 					} else {
-      				  	from[i][j][0] = radius +
-									cos(angle - atan2(radius-j, -(radius-i)))*r;
-			        	from[i][j][1] = radius +
-									sin(angle - atan2(radius-j, -(radius-i)))*r;
+						from[i][j][0] = radius +
+							cos(angle - atan2(radius-j, -(radius-i)))*r;
+						from[i][j][1] = radius +
+							sin(angle - atan2(radius-j, -(radius-i)))*r;
 					}
 					if (magnify) {
 						r = sin(d*M_PI_2);
@@ -319,6 +403,12 @@ static void make_round_lense(int radius, int loop)
 			}
 		}
 	}
+
+	/* this is really just a quick hack to keep both the compability mode with all depths and still
+	 * allow the custom optimized draw routines with the minimum amount of work */
+	if (0 != bpp_size) {
+		convert();
+	}
 }
 
 #ifndef EXIT_FAILURE
@@ -328,23 +418,23 @@ static void make_round_lense(int radius, int loop)
 static void allocate_lense(void)
 {
 	int i, j;
+	int s = ((0 != bpp_size) ? (buffer_map->bytes_per_line/bpp_size) : (2*radius+speed+2));
 	/* maybe this should be redone so that from[][][] is in one block;
 	 * then pointers could be used instead of arrays in some places (and
 	 * maybe give a speedup - maybe also consume less memory)
 	 */
-
-	from = (int ***)malloc((2*radius+speed+2) * sizeof(int **));
+	from = (int ***)malloc(s*sizeof(int **));
 	if (from == NULL) {
 		perror("distort");
 		exit(EXIT_FAILURE);
 	}
-	for (i = 0; i < 2*radius+speed+2; i++) {
+	for (i = 0; i < s; i++) {
 		from[i] = (int **)malloc((2*radius+speed+2) * sizeof(int *));
 		if (from[i] == NULL) {
 			perror("distort");
 			exit(EXIT_FAILURE);
 		}
-		for (j = 0; j < 2*radius+speed+2; j++) {
+		for (j = 0; j < s; j++) {
 			from[i][j] = (int *)malloc(2 * sizeof(int));
 			if (from[i][j] == NULL) {
 				perror("distort");
@@ -375,27 +465,82 @@ static void init_round_lense(void)
 	}
 }
 
+/* If fast_draw_8, fast_draw_16 or fast_draw_32 are to be used, the following properties
+ * of the src and dest XImages must hold (otherwise the generic, slooow, method provided
+ * by X is to be used):
+ *	src->byte_order == dest->byte_order
+ *	src->format == ZPixmap && dest->format == ZPixmap
+ *	src->depth == dest->depth == the depth the function in question asumes
+ * x and y is the coordinates in src from where to cut out the image from,
+ * distort_matrix is a precalculated array of how to distort the matrix
+ */
+
+static void fast_draw_8(XImage *src, XImage *dest, int x, int y, int *distort_matrix) {
+	CARD8 *u = (CARD8 *)dest->data;
+	CARD8 *t = (CARD8 *)src->data + x + y*src->bytes_per_line/sizeof(CARD8);
+
+	while (u < (CARD8 *)(dest->data + sizeof(CARD8)*dest->height
+				*dest->bytes_per_line/sizeof(CARD8))) {
+		*u++ = t[*distort_matrix++];
+	}
+}
+
+static void fast_draw_16(XImage *src, XImage *dest, int x, int y, int *distort_matrix) {
+	CARD16 *u = (CARD16 *)dest->data;
+	CARD16 *t = (CARD16 *)src->data + x + y*src->bytes_per_line/sizeof(CARD16);
+
+	while (u < (CARD16 *)(dest->data + sizeof(CARD16)*dest->height
+				*dest->bytes_per_line/sizeof(CARD16))) {
+		*u++ = t[*distort_matrix++];
+	}
+}
+
+static void fast_draw_32(XImage *src, XImage *dest, int x, int y, int *distort_matrix) {
+	CARD32 *u = (CARD32 *)dest->data;
+	CARD32 *t = (CARD32 *)src->data + x + y*src->bytes_per_line/sizeof(CARD32);
+
+	while (u < (CARD32 *)(dest->data + sizeof(CARD32)*dest->height
+				*dest->bytes_per_line/sizeof(CARD32))) {
+		*u++ = t[*distort_matrix++];
+	}
+}
+
+static void generic_draw(XImage *src, XImage *dest, int x, int y, int *distort_matrix) {
+	int i, j;
+	for (i = 0; i < dest->width; i++)
+		for (j = 0; j < dest->height; j++)
+			if (from[i][j][0] + x >= 0 &&
+					from[i][j][0] + x < src->width &&
+					from[i][j][1] + y >= 0 &&
+					from[i][j][1] + y < src->height)
+				XPutPixel(dest, i, j,
+						XGetPixel(src,
+							from[i][j][0] + x,
+							from[i][j][1] + y));
+}
 
 /* generate an XImage of from[][][] and draw it on the screen */
 static void plain_draw(int k)
 {
-	int i, j;
-	for(i = 0 ; i < 2*radius+speed+2; i++) {
-		for(j = 0 ; j < 2*radius+speed+2 ; j++) {
-			if (xy_coo[k].x+from[i][j][0] >= 0 &&
-					xy_coo[k].x+from[i][j][0] < xgwa.width &&
-					xy_coo[k].y+from[i][j][1] >= 0 &&
-					xy_coo[k].y+from[i][j][1] < xgwa.height)
-				XPutPixel(buffer_map, i, j,
-						XGetPixel(orig_map,
-							xy_coo[k].x+from[i][j][0],
-							xy_coo[k].y+from[i][j][1]));
-		}
-	}
+	if (xy_coo[k].x+2*radius+speed+2 > orig_map->width ||
+			xy_coo[k].y+2*radius+speed+2 > orig_map->height)
+		return;
 
-	XPutImage(g_dpy, g_window, gc, buffer_map, 0, 0, xy_coo[k].x, xy_coo[k].y,
-			2*radius+speed+2, 2*radius+speed+2);
+	draw_routine(orig_map, buffer_map, xy_coo[k].x, xy_coo[k].y, fast_from);
+
+# ifdef HAVE_XSHM_EXTENSION
+	if (use_shm)
+		XShmPutImage(g_dpy, g_window, gc, buffer_map, 0, 0, xy_coo[k].x, xy_coo[k].y,
+				2*radius+speed+2, 2*radius+speed+2, False);
+	else
+# endif
+
+	if (!use_shm)
+		XPutImage(g_dpy, g_window, gc, buffer_map, 0, 0, xy_coo[k].x, xy_coo[k].y,
+				2*radius+speed+2, 2*radius+speed+2);
+
 }
+
 
 /* generate an XImage from the reflect algoritm submitted by
  * Randy Zack <randy@acucorp.com>
@@ -486,6 +631,7 @@ static void move_lense(int k)
 	xy_coo[k].x = xy_coo[k].x + xy_coo[k].xmove;
 	xy_coo[k].y = xy_coo[k].y + xy_coo[k].ymove;
 
+	/* bounce against othe lenses */
 	for (i = 0; i < number; i++) {
 		if ((i != k)
 		
@@ -546,7 +692,7 @@ char *defaults [] = {
 	"*visualID:			Best",
 #endif
 
-	"*delay:			10000",
+	"*delay:			1000",
 	"*radius:			0",
 	"*speed:			0",
 	"*number:			0",
@@ -573,6 +719,7 @@ XrmOptionDescRec options [] = {
 	{ "-vortex",	".vortex",	XrmoptionNoArg, "True" },
 	{ "-magnify",	".magnify",	XrmoptionNoArg, "True" },
 	{ "-blackhole",	".blackhole",	XrmoptionNoArg, "True" },
+	{ "-slow",	".slow",	XrmoptionNoArg, "True" },
 #ifdef HAVE_XSHM_EXTENSION
 	{ "-shm",		".useSHM",	XrmoptionNoArg, "True" },
 	{ "-no-shm",	".useSHM",	XrmoptionNoArg, "False" },

@@ -1523,7 +1523,8 @@ analyze_display (saver_info *si)
     { "DOUBLE-BUFFER",	          "Double-Buffering" },
     { "DPMS",		          "Power Management" },
     { "GLX",		          "GLX" },
-    { "XFree86-VidModeExtension", "XF86 Video-Mode" }
+    { "XFree86-VidModeExtension", "XF86 Video-Mode" },
+    { "XINERAMA",		  "Xinerama" }
   };
 
   fprintf (stderr, "%s: running on display \"%s\"\n", blurb(),

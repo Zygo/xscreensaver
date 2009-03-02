@@ -299,6 +299,10 @@ main (int argc, char **argv)
   dpy = XtDisplay (toplevel);
   db = XtDatabase (dpy);
   XtGetApplicationNameAndClass (dpy, &progname, &progclass);
+
+  /* half-assed way of avoiding buffer-overrun attacks. */
+  if (strlen (progname) >= 100) progname[100] = 0;
+
   XSetErrorHandler (screenhack_ehandler);
 
   XA_WM_PROTOCOLS = XInternAtom (dpy, "WM_PROTOCOLS", False);

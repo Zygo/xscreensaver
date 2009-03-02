@@ -27,6 +27,7 @@
 "*prefsCommand: xscreensaver-demo -prefs",
 "*helpURL: http://www.jwz.org/xscreensaver/man.html",
 "*loadURL: netscape -remote 'openURL(%s)' || netscape '%s'",
+"*dateFormat:		%d-%b-%y (%a); %I:%M %p",
 "*installColormap:	True",
 "*programs:	qix -root -solid -delay 0 -segments 100			\\n\
 		qix -root -count 4 -solid -transparent			\\n\
@@ -127,6 +128,9 @@
 		   -minlifespan 1 -maxlifespan 1 -instantdeathchan 0	  \
 		   -minorchan 0 -anychan 0.3				\\n\
 		shadebobs -root						\\n\
+		ccurve -root						\\n\
+		blaster -root						\\n\
+		bumps -root						\\n\
     default-n:  webcollage -root					\\n\
  -  default-n:	webcollage -root -filter 'vidwhacker -stdin -stdout'    \\n\
  -  default-n:	vidwhacker -root					\\n\
@@ -167,6 +171,7 @@
 "*Dialog.bodyFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
 "*Dialog.labelFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
 "*Dialog.buttonFont:		*-helvetica-bold-r-*-*-*-140-*-*-*-iso8859-1",
+"*Dialog.dateFont:		*-courier-medium-r-*-*-*-80-*-*-*-iso8859-1",
 "*Dialog.foreground:		#000000",
 "*Dialog.background:		#BFBFBF",
 "*Dialog.Button.foreground:	#000000",

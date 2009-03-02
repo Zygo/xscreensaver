@@ -1,46 +1,66 @@
+/* lmorph, Copyright (c) 1993-1999 Sverre H. Huseby and Glenn T. Lines
+ *
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation.  No representations are made about the suitability of this
+ * software for any purpose.  It is provided "as is" without express or
+ * implied warranty.
+ */
 
-/**************************************************************************
- *
- *  FILE            lmorph.c
- *  MODULE OF       xscreensaver
- *
- *  DESCRIPTION     Bilinear interpolation for morphing line shapes.
- *
- *  WRITTEN BY      Sverre H. Huseby                Glenn T. Lines
- *                  Kurvn. 30                       Østgaardsgt. 5
- *                  N-0495 Oslo                     N-0474 Oslo
- *                  Norway                          Norway
- *
- *                  Phone:  +47 901 63 579          Phone:  +47 22 04 67 28
- *                  E-mail: sverrehu@online.no      E-mail: gtl@si.sintef.no
- *                  URL:    http://home.sol.no/~sverrehu/
- *
- *                  The original idea, and the bilinear interpolation
- *                  mathematics used, emerged in the head of the wise
- *                  Glenn T. Lines.
- *
- *  MODIFICATIONS   june 1998 (shh)
- *                    * Minor code cleanup.
- *
- *                  march 1997 (shh)
- *                    * Added -mailfile option to allow checking for
- *                      new mail while the screensaver is active.
- *
- *                  january 1997 (shh)
- *                    * Some code reformatting.
- *                    * Added possibility to use float arithmetic.
- *                    * Added -figtype option.
- *                    * Made color blue default.
- *
- *                  december 1995 (jwz)
- *                    * Function headers converted from ANSI to K&R.
- *                    * Added posibility for random number of steps, and
- *                      made this the default.
- *
- *                  march 1995 (shh)
- *                    * Converted from an MS-Windows program to X Window.
- *
- **************************************************************************/
+/*------------------------------------------------------------------------
+ |
+ |  FILE            lmorph.c
+ |  MODULE OF       xscreensaver
+ |
+ |  DESCRIPTION     Smooth and non-linear morphing between 1D curves.
+ |
+ |  WRITTEN BY      Sverre H. Huseby                Glenn T. Lines
+ |                  Kurvn. 30                       Østgaardsgt. 5
+ |                  N-0495 Oslo                     N-0474 Oslo
+ |                  Norway                          Norway
+ |
+ |                  Phone:  +47 901 63 579          Phone:  +47 22 04 67 28
+ |                  E-mail: sverrehu@online.no      E-mail: glennli@ifi.uio.no
+ |                  URL:    http://home.sol.no/~sverrehu/
+ |
+ |                  The original idea, and the bilinear interpolation
+ |                  mathematics used, emerged in the head of the wise
+ |                  Glenn T. Lines.
+ |
+ |  MODIFICATIONS   october 1999 (shh)
+ |                    * Removed option to use integer arithmetic.
+ |                    * Increased default number of points, and brightened
+ |                      the foreground color a little bit.
+ |                    * Minor code cleanup (very minor, that is).
+ |                    * Default number of steps is no longer random.
+ |                    * Added -linewidth option (and resource).
+ |
+ |                  october 1999 (gtl)
+ |	              * Added cubic interpolation between shapes 
+ |		      * Added non-linear transformation speed  
+ |
+ |                  june 1998 (shh)
+ |                    * Minor code cleanup.
+ |
+ |                  january 1997 (shh)
+ |                    * Some code reformatting.
+ |                    * Added possibility to use float arithmetic.
+ |                    * Added -figtype option.
+ |                    * Made color blue default.
+ |
+ |                  december 1995 (jwz)
+ |                    * Function headers converted from ANSI to K&R.
+ |                    * Added posibility for random number of steps, and
+ |                      made this the default.
+ |
+ |                  march 1995 (shh)
+ |                    * Converted from an MS-Windows program to X Window.
+ |
+ |                  november 1993 (gtl, shh, lots of beer)
+ |                    * Original Windows version (we didn't know better).
+ +----------------------------------------------------------------------*/
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -48,19 +68,12 @@
 #include <math.h>
 #include "screenhack.h"
 
-/**************************************************************************
- *                                                                        *
- *                       P R I V A T E    D A T A                         *
- *                                                                        *
- **************************************************************************/
+/*-----------------------------------------------------------------------+
+|  PRIVATE DATA                                                          |
++-----------------------------------------------------------------------*/
 
 /* define MARGINS to make some space around the figure. */
 #define MARGINS
-
-/* define USE_FLOAT to avoid using integer calculations in
-   createPoints. integer calculation is supposed to be faster, but it
-   won't work for displays larger than 2048x2048 or so pixels. */
-#undef USE_FLOAT
 
 #define MAXFIGS    20
 #define TWO_PI     (2.0 * M_PI)
@@ -76,6 +89,8 @@ static int
     nWork,                      /* current work array number. */
     nFrom,                      /* current from array number. */
     nTo,                        /* current to array number. */
+    nNext,                      /* current next array number (after to).*/
+    shift,                      /* shifts the starting point of a figure */
     figType;
 static long delay;              /* usecs to wait between updates. */
 static XPoint
@@ -85,49 +100,46 @@ static XPoint
     *aPrev,                     /* previous points displayed. */
     *aCurr,                     /* the current points displayed. */  
     *aFrom,                     /* figure converting from. */
-    *aTo;                       /* figure converting to. */
+    *aTo,                       /* figure converting to. */
+    *aNext,                     /* figure converting to next time. */
+    *aSlopeFrom,                /* slope at start of morph */ 
+    *aSlopeTo;                  /* slope at end of morph */ 
 static int         scrWidth, scrHeight;
 static double      currGamma, maxGamma = 1.0, deltaGamma;
 static GC          gcDraw, gcClear;
 static Display     *dpy;
 static Window      window;
 
-
-
-/**************************************************************************
- *                                                                        *
- *                        P U B L I C    D A T A                          *
- *                                                                        *
- **************************************************************************/
+/*-----------------------------------------------------------------------+
+|  PUBLIC DATA                                                           |
++-----------------------------------------------------------------------*/
 
 char *progclass = "LMorph";
 
 char *defaults [] = {
     ".background: black",
-    ".foreground: blue",
-    "*points: 150",
-    "*steps: 0",
-    "*delay: 50000",
+    ".foreground: #4444FF",
+    "*points: 200",
+    "*steps: 150",
+    "*delay: 70000",
     "*figtype: all",
+    "*linewidth: 5",
     0
 };
 
 XrmOptionDescRec options [] = {
-  { "-points",      ".points",      XrmoptionSepArg, 0 },
-  { "-steps",       ".steps",       XrmoptionSepArg, 0 },
-  { "-delay",       ".delay",       XrmoptionSepArg, 0 },
-  { "-figtype",     ".figtype",     XrmoptionSepArg, 0 },
-  { 0, 0, 0, 0 }
+    { "-points",      ".points",      XrmoptionSepArg, 0 },
+    { "-steps",       ".steps",       XrmoptionSepArg, 0 },
+    { "-delay",       ".delay",       XrmoptionSepArg, 0 },
+    { "-figtype",     ".figtype",     XrmoptionSepArg, 0 },
+    { "-linewidth",   ".linewidth",   XrmoptionSepArg, 0 },
+    { 0, 0, 0, 0 }
 };
 int options_size = (sizeof (options) / sizeof (options[0]));
 
-
-
-/**************************************************************************
- *                                                                        *
- *                   P R I V A T E    F U N C T I O N S                   *
- *                                                                        *
- **************************************************************************/
+/*-----------------------------------------------------------------------+
+|  PRIVATE FUNCTIONS                                                     |
++-----------------------------------------------------------------------*/
 
 static void *
 xmalloc(size_t size)
@@ -144,11 +156,11 @@ xmalloc(size_t size)
 static void
 initPointArrays(void)
 {
-    int q, w,
-        mx, my,                 /* max screen coordinates. */
-        mp,                     /* max point number. */
-        s, rx, ry,
-        marginx, marginy;
+    int    q, w;
+    int    mx, my;            /* max screen coordinates. */
+    int    mp;                /* max point number. */
+    int    s, rx, ry;
+    int    marginx, marginy;
     double scalex, scaley;
 
     mx = scrWidth - 1;
@@ -219,7 +231,8 @@ initPointArrays(void)
 	a[numFigs][mp].y = a[numFigs][0].y;
 	++numFigs;
 
-	/*  */
+
+	/* */
 	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
 	rx = mx / 2;
 	ry = my / 2;
@@ -230,6 +243,7 @@ initPointArrays(void)
 	a[numFigs][mp].x = a[numFigs][0].x;
 	a[numFigs][mp].y = a[numFigs][0].y;
 	++numFigs;
+
 
 	/*  */
 	a[numFigs] = (XPoint *) xmalloc(numPoints * sizeof(XPoint));
@@ -331,7 +345,8 @@ initLMorph(void)
     XWindowAttributes wa;
     Colormap          cmap;
     char              *ft;
-    
+    int               i;
+
     numPoints = get_integer_resource("points", "Integer");
     steps = get_integer_resource("steps", "Integer");
     delay = get_integer_resource("delay", "Integer");
@@ -369,15 +384,29 @@ initLMorph(void)
     aPrev = NULL;
     currGamma = maxGamma + 1.0;  /* force creation of new figure at startup */
     nTo = RND(numFigs);
+    do {
+        nNext = RND(numFigs);
+    } while (nNext == nTo);
 
-    { /* jwz for version 2.11 */
-      int width = random() % 10;
-      int style = LineSolid;
-      int cap   = (width > 1 ? CapRound  : CapButt);
-      int join  = (width > 1 ? JoinRound : JoinBevel);
-      if (width == 1) width = 0;
-      XSetLineAttributes(dpy, gcDraw,  width, style, cap, join);
-      XSetLineAttributes(dpy, gcClear, width, style, cap, join);
+    aSlopeTo = (XPoint *) xmalloc(numPoints * sizeof(XPoint)); 
+    aSlopeFrom = (XPoint *) xmalloc(numPoints * sizeof(XPoint)); 
+    aNext = (XPoint *) xmalloc(numPoints * sizeof(XPoint)); 
+
+    for (i = 0; i < numPoints ; i++) {
+        aSlopeTo[i].x = 0.0;
+        aSlopeTo[i].y = 0.0; 
+    }
+
+    {   /* jwz for version 2.11 */
+        /*      int width = random() % 10;*/
+        int width = get_integer_resource("linewidth", "Integer");
+        int style = LineSolid;
+        int cap   = (width > 1 ? CapRound  : CapButt);
+        int join  = (width > 1 ? JoinRound : JoinBevel);
+        if (width == 1)
+            width = 0;
+        XSetLineAttributes(dpy, gcDraw,  width, style, cap, join);
+        XSetLineAttributes(dpy, gcClear, width, style, cap, join);
     }
 }
 
@@ -385,32 +414,33 @@ initLMorph(void)
 static void
 createPoints(void)
 {
-    int             q;
+    int    q;
     XPoint *pa = aCurr, *pa1 = aFrom, *pa2 = aTo;
-#ifdef USE_FLOAT
-    float           fg, f1g;
-#else
-    long            lg, l1g;
-#endif
+    XPoint *qa1 = aSlopeFrom, *qa2 = aSlopeTo; 
+    float  fg, f1g;
+    float  speed;
 
-#ifdef USE_FLOAT
     fg  = currGamma;
     f1g = 1.0 - currGamma;
-#else
-    lg  = 8192L * currGamma;
-    l1g = 8192L * (1.0 - currGamma);
-#endif
     for (q = numPoints; q; q--) {
-#ifdef USE_FLOAT
-        pa->x = (short) (f1g * pa1->x + fg * pa2->x);
-        pa->y = (short) (f1g * pa1->y + fg * pa2->y);
-#else
-        pa->x = (short) ((l1g * pa1->x + lg * pa2->x) / 8192L);
-        pa->y = (short) ((l1g * pa1->y + lg * pa2->y) / 8192L);
-#endif
+        speed = 0.45 * sin(TWO_PI * (double) (q + shift) / (numPoints - 1));
+        fg = currGamma + 1.67 * speed
+            * exp(-200.0 * (currGamma - 0.5 + 0.7 * speed)
+                  * (currGamma - 0.5 + 0.7 * speed));
+
+        f1g = 1.0 - fg;
+        pa->x = (short) (f1g * f1g * f1g * pa1->x + f1g * f1g * fg
+                         * (3 * pa1->x + qa1->x) + f1g * fg * fg
+                         * (3 * pa2->x - qa2->x) + fg * fg * fg * pa2->x);
+        pa->y = (short) (f1g * f1g * f1g * pa1->y + f1g * f1g * fg
+                         * (3 * pa1->y + qa1->y) + f1g * fg * fg
+                         * (3 * pa2->y - qa2->y) + fg * fg * fg * pa2->y);
+
         ++pa;
         ++pa1;
         ++pa2;
+	++qa1;
+	++qa2;
     }
 }
 
@@ -418,13 +448,13 @@ createPoints(void)
 static void
 drawImage(void)
 {
-    int             q;
+    int    q;
     XPoint *old0, *old1, *new0, *new1;
 
     /* Problem: update the window without too much flickering. I do
      * this by handling each linesegment separately. First remove a
      * line, then draw the new line. The problem is that this leaves
-     * small black pixels on the figure. To fix this, I draw the
+     * small black pixels on the figure. To fix this, we draw the
      * entire figure using XDrawLines() afterwards. */
     if (aPrev) {
 	old0 = aPrev;
@@ -432,8 +462,8 @@ drawImage(void)
 	new0 = aCurr;
 	new1 = aCurr + 1;
 	for (q = numPoints - 1; q; q--) {
-	    XDrawLine(dpy, window, gcClear,
-		      old0->x, old0->y, old1->x, old1->y);
+	   XDrawLine(dpy, window, gcClear,
+	     old0->x, old0->y, old1->x, old1->y); 
 	    XDrawLine(dpy, window, gcDraw,
 		      new0->x, new0->y, new1->x, new1->y);
 	    ++old0;
@@ -451,36 +481,38 @@ drawImage(void)
 static void
 animateLMorph(void)
 {
+    int i;
     if (currGamma > maxGamma) {
         currGamma = 0.0;
-        if (maxGamma == 1.0) {
-            nFrom = nTo;
-            aFrom = a[nFrom];
-        } else {
-            memcpy(aTmp, aCurr, numPoints * sizeof(XPoint));
-            aFrom = aTmp;
-            nFrom = -1;
-        }
+        nFrom = nTo;
+        nTo = nNext;
+        aFrom = a[nFrom];
+	aTo = a[nTo];
         do {
-            nTo = RND(numFigs);
-        } while (nTo == nFrom);
-        aTo = a[nTo];
+            nNext = RND(numFigs);
+        } while (nNext == nTo);
+	aNext = a[nNext];
+
+	shift = RND(numPoints);
         if (RND(2)) {
             /* reverse the array to get more variation. */
             int    i1, i2;
             XPoint p;
             
             for (i1 = 0, i2 = numPoints - 1; i1 < numPoints / 2; i1++, i2--) {
-                p = aTo[i1];
-                aTo[i1] = aTo[i2];
-                aTo[i2] = p;
+                p = aNext[i1];
+                aNext[i1] = aNext[i2];
+                aNext[i2] = p;
             }
         }
-        /* occationally interrupt the next run. */
-        if (RND(4) == 0)
-            maxGamma = 0.1 + 0.7 * (RND(1001) / 1000.0); /* partial run */
-        else
-            maxGamma = 1.0;                              /* full run */
+
+	/* calculate the slopes */
+	for (i = 0; i < numPoints ; i++) {
+            aSlopeFrom[i].x = aSlopeTo[i].x;
+            aSlopeFrom[i].y = aSlopeTo[i].y;
+            aSlopeTo[i].x = aNext[i].x - aTo[i].x;
+            aSlopeTo[i].y = (aNext[i].y - aTo[i].y);
+	}
     }
 
     createPoints();
@@ -491,13 +523,9 @@ animateLMorph(void)
     currGamma += deltaGamma;
 }
 
-
-
-/**************************************************************************
- *                                                                        *
- *                    P U B L I C    F U N C T I O N S                    *
- *                                                                        *
- **************************************************************************/
+/*-----------------------------------------------------------------------+
+|  PUBLIC FUNCTIONS                                                      |
++-----------------------------------------------------------------------*/
 
 void
 screenhack(Display *disp, Window win)
@@ -506,8 +534,9 @@ screenhack(Display *disp, Window win)
     window = win;
     initLMorph();
     for (;;) {
-	animateLMorph();
+      	animateLMorph();
         screenhack_handle_events (dpy);
 	usleep(delay);
-    }
+	}
+
 }

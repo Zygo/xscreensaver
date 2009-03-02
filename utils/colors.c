@@ -102,12 +102,17 @@ make_color_ramp (Display *dpy, Colormap cmap,
 {
   Bool verbose_p = True;  /* argh. */
   int i;
-  int ncolors = *ncolorsP;
-  int wanted = ncolors;
+  int total_ncolors = *ncolorsP;
+  int ncolors, wanted;
   Bool wanted_writable = (allocate_p && writable_p);
   double dh, ds, dv;		/* deltas */
 
+  wanted = total_ncolors;
+  if (closed_p)
+    wanted = (wanted / 2) + 1;
+
  AGAIN:
+  ncolors = total_ncolors;
 
   memset (colors, 0, (*ncolorsP) * sizeof(*colors));
 
@@ -180,20 +185,23 @@ make_color_ramp (Display *dpy, Colormap cmap,
   /* we weren't able to allocate all the colors we wanted;
      decrease the requested number and try again.
    */
-  ncolors = (ncolors > 170 ? ncolors - 20 :
-	     ncolors > 100 ? ncolors - 10 :
-	     ncolors >  75 ? ncolors -  5 :
-	     ncolors >  25 ? ncolors -  3 :
-	     ncolors >  10 ? ncolors -  2 :
-	     ncolors >   2 ? ncolors -  1 :
-	     0);
-  *ncolorsP = ncolors;
-  if (ncolors > 0)
+  total_ncolors = (total_ncolors > 170 ? total_ncolors - 20 :
+                   total_ncolors > 100 ? total_ncolors - 10 :
+                   total_ncolors >  75 ? total_ncolors -  5 :
+                   total_ncolors >  25 ? total_ncolors -  3 :
+                   total_ncolors >  10 ? total_ncolors -  2 :
+                   total_ncolors >   2 ? total_ncolors -  1 :
+                   0);
+  *ncolorsP = total_ncolors;
+  ncolors = total_ncolors;
+  if (total_ncolors > 0)
     goto AGAIN;
 
  WARN:
   
-  if (verbose_p)
+  if (verbose_p &&
+      /* don't warn if we got 0 writable colors -- probably TrueColor. */
+      (ncolors != 0 || !wanted_writable))
     complain (wanted, ncolors, wanted_writable, wanted_writable && writable_p);
 }
 

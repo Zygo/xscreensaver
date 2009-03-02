@@ -20,6 +20,7 @@
 #ifndef NO_LOCKING   /* whole file */
 
 #include <X11/Intrinsic.h>
+#include <X11/Xos.h>		/* for time() */
 #include "xscreensaver.h"
 #include "resources.h"
 
@@ -89,6 +90,7 @@ struct passwd_dialog_data {
   char *body_label;
   char *user_label;
   char *passwd_label;
+  char *date_label;
   char *user_string;
   char *passwd_string;
 
@@ -96,6 +98,7 @@ struct passwd_dialog_data {
   XFontStruct *body_font;
   XFontStruct *label_font;
   XFontStruct *passwd_font;
+  XFontStruct *date_font;
 
   Pixel foreground;
   Pixel background;
@@ -149,6 +152,7 @@ make_passwd_window (saver_info *si)
 					"Dialog.Label.Label");
   pw->passwd_label = get_string_resource ("passwd.passwd.label",
 					  "Dialog.Label.Label");
+  pw->date_label = get_string_resource ("dateFormat", "DateFormat");
 
   if (!pw->heading_label)
     pw->heading_label = strdup("ERROR: REESOURCES NOT INSTALLED CORRECTLY");
@@ -156,6 +160,7 @@ make_passwd_window (saver_info *si)
     pw->body_label = strdup("ERROR: REESOURCES NOT INSTALLED CORRECTLY");
   if (!pw->user_label) pw->user_label = strdup("ERROR");
   if (!pw->passwd_label) pw->passwd_label = strdup("ERROR");
+  if (!pw->date_label) pw->date_label = strdup("ERROR");
 
   /* Put the version number in the label. */
   {
@@ -186,6 +191,11 @@ make_passwd_window (saver_info *si)
   f = get_string_resource("passwd.passwdFont", "Dialog.Font");
   pw->passwd_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
   if (!pw->passwd_font) pw->passwd_font = XLoadQueryFont (si->dpy, "fixed");
+  if (f) free (f);
+
+  f = get_string_resource("passwd.dateFont", "Dialog.Font");
+  pw->date_font = XLoadQueryFont (si->dpy, (f ? f : "fixed"));
+  if (!pw->date_font) pw->date_font = XLoadQueryFont (si->dpy, "fixed");
   if (f) free (f);
 
   pw->foreground = get_pixel_resource ("passwd.foreground",
@@ -396,7 +406,9 @@ draw_passwd_window (saver_info *si)
 	    pw->body_font->ascent + pw->body_font->descent +
 	    (2 * MAX ((pw->label_font->ascent + pw->label_font->descent),
 		      (pw->passwd_font->ascent + pw->passwd_font->descent +
-		       (pw->shadow_width * 4)))));
+		       (pw->shadow_width * 4)))) +
+            pw->date_font->ascent + pw->date_font->descent
+            );
   spacing = ((pw->height - (2 * pw->shadow_width) -
 	      pw->internal_border - height)) / 8;
   if (spacing < 0) spacing = 0;
@@ -503,6 +515,26 @@ draw_passwd_window (saver_info *si)
 			 x1, y1, x2, y2,
 			 pw->shadow_width,
 			 pw->shadow_bottom, pw->shadow_top);
+
+
+  /* The date, below the text fields
+   */
+  {
+    char buf[100];
+    time_t now = time ((time_t *) 0);
+    struct tm *tm = localtime (&now);
+    memset (buf, 0, sizeof(buf));
+    strftime (buf, sizeof(buf)-1, pw->date_label, tm);
+
+    XSetFont (si->dpy, gc1, pw->date_font->fid);
+    y1 += pw->shadow_width;
+    y1 += (spacing + tb_height);
+    y1 += spacing/2;
+    sw = string_width (pw->date_font, buf);
+    x2 = x1 + x2 - sw;
+    XDrawString (si->dpy, si->passwd_dialog, gc1, x2, y1, buf, strlen(buf));
+  }
+
 
   /* the logo
    */

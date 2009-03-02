@@ -27,14 +27,14 @@ static const char sccsid[] = "@(#)galaxy.c	4.04 97/07/28 xlockmore";
  * 10-May-97: jwz@jwz.org: turned into a standalone program.
  * 18-Apr-97: Memory leak fixed by Tom Schmidt <tschmidt@micron.com>
  * 07-Apr-97: Modified by Dave Mitchell <davem@magnet.com>
- * 23-Oct-94: Modified by David Bagley <bagleyd@bigfoot.com>
- *		random star sizes
- *		colors change depending on velocity
+ *            random star sizes
+ *            colors change depending on velocity
+ * 23-Oct-94: Modified by David Bagley <bagleyd@tux.org>
  * 10-Oct-94: Add colors by Hubert Feyer
  * 30-Sep-94: Initial port by Hubert Feyer
  * 09-Mar-94: VMS can generate a random number 0.0 which results in a
  *            division by zero, corrected by Jouk Jansen
- *            <joukj@crys.chem.uva.nl>
+ *            <joukj@hrem.stm.tudelft.nl>
  */
 
 #ifdef STANDALONE

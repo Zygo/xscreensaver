@@ -77,6 +77,22 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.17:   * New versions of `shadebobs', `lmorph', and `distort'.
+                      * Added `ccurve', `blaster', and `bumps' hacks.
+                      * Replaced `forest' hack with a rewritten version.
+                      * Worked around a Xinerama server bug.
+                      * Fixed a bug I introduced in 3.10 that caused some
+                        hacks to print out superfluous warnings about not
+                        having gotten enough colors.
+                      * Made `sproingies' obey the `-delay' option.
+                      * Fixed a portability bug in `shadebobs'.
+                      * Made `webcollage' and `vidwhacker' use `xli' in
+                        preference to `xv', if it is available.
+                      * Added a new source of images to `webcollage'.
+                      * If running under KDE, xscreensaver will add itself to
+                        KDE's list of screensavers (via xscreensaver.kss.)
+                      * Improved detection of GL libraries.
+                      * Made the password dialog include the date and time.
 Changes since 3.16:   * New version of `webcollage' -- deals better with
                         corrupted images, and can use an http proxy.
                       * New hack, `xsublim' (run it in the background,

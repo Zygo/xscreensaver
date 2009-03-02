@@ -596,7 +596,7 @@ ComputeGround(sp_instance * si)
 }
 
 void
-DisplaySproingies(int screen)
+DisplaySproingies(int screen,int pause)
 {
 	sp_instance *si = &si_list[screen];
 	int         t;
@@ -651,10 +651,11 @@ DisplaySproingies(int screen)
 }
 
 void
-NextSproingieDisplay(int screen)
+NextSproingieDisplay(int screen,int pause)
 {
 	NextSproingie(screen);
-	DisplaySproingies(screen);
+        if (pause) usleep(pause);
+	DisplaySproingies(screen,pause);
 }
 
 #if 0

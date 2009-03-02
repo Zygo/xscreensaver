@@ -38,6 +38,9 @@
          behavioral constants.
 
        - General cleanup and portability tweaks.
+
+   * 4-Oct-99, jwz: added support for packed-24bpp (versus 32bpp.)
+
  */
 
 
@@ -320,6 +323,55 @@ Flame2Image32(void)
 }
 
 static void
+Flame2Image24(void)
+{
+  int x,y;
+  unsigned char *ptr;
+  unsigned char *ptr1;
+  int v1,v2,v3,v4;
+
+  ptr  = (unsigned char *)xim->data;
+  ptr += (top << 1) * xim->bytes_per_line;
+  ptr1 = flame + 1 + (top * (fwidth + 2));
+
+  for( y = top; y < fheight; y++)
+    {
+      unsigned char *last_ptr = ptr;
+      for( x = 0; x < fwidth; x++)
+        {
+          v1 = (int)*ptr1;
+          v2 = (int)*(ptr1 + 1);
+          v3 = (int)*(ptr1 + fwidth + 2);
+          v4 = (int)*(ptr1 + fwidth + 2 + 1);
+          ptr1++;
+
+          ptr[2] = ((unsigned int)ctab[v1] & 0x00FF0000) >> 16;
+          ptr[1] = ((unsigned int)ctab[v1] & 0x0000FF00) >> 8;
+          ptr[0] = ((unsigned int)ctab[v1] & 0x000000FF);
+          ptr += 3;
+
+          ptr[2] = ((unsigned int)ctab[(v1 + v2) >> 1] & 0x00FF0000) >> 16;
+          ptr[1] = ((unsigned int)ctab[(v1 + v2) >> 1] & 0x0000FF00) >> 8;
+          ptr[0] = ((unsigned int)ctab[(v1 + v2) >> 1] & 0x000000FF);
+          ptr += ((width - 1) * 3);
+
+          ptr[2] = ((unsigned int)ctab[(v1 + v3) >> 1] & 0x00FF0000) >> 16;
+          ptr[1] = ((unsigned int)ctab[(v1 + v3) >> 1] & 0x0000FF00) >> 8;
+          ptr[0] = ((unsigned int)ctab[(v1 + v3) >> 1] & 0x000000FF);
+          ptr += 3;
+
+          ptr[2] = ((unsigned int)ctab[(v1 + v4) >> 1] & 0x00FF0000) >> 16;
+          ptr[1] = ((unsigned int)ctab[(v1 + v4) >> 1] & 0x0000FF00) >> 8;
+          ptr[0] = ((unsigned int)ctab[(v1 + v4) >> 1] & 0x000000FF);
+          ptr -= ((width - 1) * 3);
+        }
+
+      ptr = last_ptr + (xim->bytes_per_line << 1);
+      ptr1 += 2;
+    }
+}
+
+static void
 Flame2Image8(void)
 {
   int x,y;
@@ -381,13 +433,21 @@ Flame2Image1234567(void)
 static void
 Flame2Image(void)
 {
-  if (depth >= 24)      Flame2Image32();
-  else if (depth == 16) Flame2Image16();
-  else if (depth == 8)  Flame2Image8();
-  else if (depth == 15) Flame2Image16(); 
-  else if (depth <  8)  Flame2Image1234567();
-  else if (depth == 12) Flame2Image16();
+  switch (xim->bits_per_pixel)
+    {
+    case 32: Flame2Image32(); break;
+    case 24: Flame2Image24(); break;
+    case 16: Flame2Image16(); break;
+    case 8:  Flame2Image8();  break;
+    default:
+      if (xim->bits_per_pixel <= 7)
+        Flame2Image1234567();
+      else
+        abort();
+      break;
+    }
 }
+
 
 static void
 FlameActive(void)

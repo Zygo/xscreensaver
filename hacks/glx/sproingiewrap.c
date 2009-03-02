@@ -58,7 +58,7 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
 # define HACK_INIT					init_sproingies
 # define HACK_DRAW					draw_sproingies
 # define sproingies_opts			xlockmore_opts
-# define DEFAULTS	"*delay:		100     \n"			\
+# define DEFAULTS	"*delay:		0     \n"			\
 					"*count:		5       \n"			\
 					"*cycles:		0       \n"			\
 					"*size:			0       \n"			\
@@ -88,8 +88,8 @@ ModStruct   sproingies_description =
 #include <time.h>
 
 void        NextSproingie(int screen);
-void        NextSproingieDisplay(int screen);
-void        DisplaySproingies(int screen);
+void        NextSproingieDisplay(int screen,int pause);
+void        DisplaySproingies(int screen,int pause);
 
 #if 0
 void        ReshapeSproingies(int w, int h);
@@ -181,7 +181,7 @@ init_sproingies(ModeInfo * mi)
 
 		swap_display = display;
 		swap_window = window;
-		DisplaySproingies(MI_SCREEN(mi));
+		DisplaySproingies(MI_SCREEN(mi),mi->pause);
 	} else {
 		MI_CLEARWINDOW(mi);
 	}
@@ -204,7 +204,7 @@ draw_sproingies(ModeInfo * mi)
 	swap_display = display;
 	swap_window = window;
 
-	NextSproingieDisplay(MI_SCREEN(mi));	/* It will swap. */
+	NextSproingieDisplay(MI_SCREEN(mi),mi->pause);	/* It will swap. */
 }
 
 void

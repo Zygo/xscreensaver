@@ -1,7 +1,7 @@
 Begin3
 Title:          xscreensaver
-Version:        3.17
-Entered-date:   15JUL99
+Version:        3.18
+Entered-date:   13OCT99
 Description:    A modular screen saver and locker for the X Window System.
                 Highly customizable: allows the use of any program that
                 can draw on the root window as a display mode.
@@ -10,16 +10,16 @@ Keywords:       screen saver, screen lock, lock, xlock, X11
 Author:         jwz@jwz.org (Jamie Zawinski)
 Maintained-by:  jwz@jwz.org (Jamie Zawinski)
 Primary-site:   http://www.jwz.org/xscreensaver/
-                1141K xscreensaver-3.17.tar.gz
-                35K  xscreensaver.README
+                1163K xscreensaver-3.18.tar.gz
+                36K  xscreensaver.README
                 1K   xscreensaver.lsm
 Alternate-site: sunsite.unc.edu /pub/Linux/X11/screensavers/
-                1141K xscreensaver-3.17.tar.gz
-                35K  xscreensaver.README
+                1163K xscreensaver-3.18.tar.gz
+                36K  xscreensaver.README
                 1K   xscreensaver.lsm
 Alternate-site: ftp.x.org /contrib/applications/
-                1141K xscreensaver-3.17.tar.gz
-                35K  xscreensaver.README
+                1163K xscreensaver-3.18.tar.gz
+                36K  xscreensaver.README
                 1K   xscreensaver.lsm
 Platforms:      Linux, Irix, SunOS, Solaris, HPUX, AIX, FreeBSD, NetBSD,
                 BSDI, SCO, OSF1, Ultrix, VMS.

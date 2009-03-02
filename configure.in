@@ -1809,8 +1809,6 @@ if test "$with_gl" = yes; then
   #
   if test "$have_gl" = yes ; then
 
-    AC_DEFINE(HAVE_GL)
-
     # We need to know whether it's MesaGL so that we know which libraries
     # to link against.
     #
@@ -1820,16 +1818,46 @@ if test "$with_gl" = yes; then
       ])
     ac_have_mesa_gl=$ac_cv_have_mesa_gl
  
-    if test "$ac_have_mesa_gl" = no ; then
-      gl_lib_1="GL"
-      GL_LIBS="-lGL -lGLU"
-    else
-      AC_DEFINE(HAVE_MESA_GL)
-      gl_lib_1="MesaGL"
-      GL_LIBS="-lMesaGL -lMesaGLU"
+
+    # If we have Mesa headers, check to see if we can link against -lMesaGL.
+    # If we don't have Mesa headers, or we don't have -lMesaGL, try -lGL.
+    # Else, warn that GL is busted.  (We have the headers, but no libs.)
+    #
+    gl_lib_1=""
+    GL_LIBS=""
+
+    if test "$ac_have_mesa_gl" = yes ; then
+      AC_CHECK_X_LIB(MesaGL, glXCreateContext, 
+                     [gl_lib_1="MesaGL"
+                      GL_LIBS="-lMesaGL -lMesaGLU"],
+                     [], -lMesaGLU -lX11 -lXext -lm)
     fi
 
+    if test "$gl_lib_1" = "" ; then
+      AC_CHECK_X_LIB(GL, glXCreateContext, 
+                     [gl_lib_1="GL"
+                      GL_LIBS="-lGL -lGLU"],
+                     [], -lGLU -lX11 -lXext -lm)
+    fi
 
+    if test "$gl_lib_1" = "" ; then
+      # we have headers, but no libs -- bail.
+      have_gl=no
+      ac_have_mesa_gl=no
+    else
+      # linking works -- we can build the GL hacks.
+      AC_DEFINE(HAVE_GL)
+      if test "$ac_have_mesa_gl" = yes ; then
+        AC_DEFINE(HAVE_MESA_GL)
+      fi
+    fi
+  fi
+
+
+  # Now that we know we have GL headers and libs, do some more GL testing.
+  #
+
+  if test "$have_gl" = yes ; then
     # If it's MesaGL, we'd like to issue a warning if the version number
     # is less than or equal to 2.6, because that version had a security bug.
     #
@@ -2749,7 +2777,7 @@ if test "$do_dir_warning" = yes; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}."
   echo ""
-  echo "      The various graphics demos (90+ different executables) will"
+  echo "      The various graphics demos (100+ different executables) will"
   echo "      also be installed in ${HACKDIR}."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere"

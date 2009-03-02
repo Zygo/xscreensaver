@@ -62,7 +62,7 @@ get_visual (Screen *screen, const char *string, Bool prefer_writable_cells,
     for (tmp = v; *tmp; tmp++)
       if (isupper (*tmp)) *tmp = _tolower (*tmp);
 
-  if (!v)					  vclass = BEST_VISUAL;
+  if (!v || !*v)				  vclass = BEST_VISUAL;
   else if (!strcmp (v, "default"))		  vclass = DEFAULT_VISUAL;
   else if (!strcmp (v, "best")) 		  vclass = BEST_VISUAL;
   else if (!strcmp (v, "mono")) 		  vclass = MONO_VISUAL;

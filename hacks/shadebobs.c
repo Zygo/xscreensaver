@@ -28,6 +28,9 @@
  *                on cycle, and the extents of the sinus pattern change in
  *                real-time.
  * [06/22/99] - Shane Smit: Fixed delay to be fast and use little CPU :).
+ * [09/17/99] - Shane Smit: Made all calculations based on the size of the
+ *                window. Thus, it'll look the same at 100x100 as it does at
+ *                1600x1200 ( Only smaller :).
  */
 
 #include <math.h>
@@ -39,10 +42,10 @@
 char *progclass = "ShadeBobs";
 
 char *defaults [] = {
-  "*degrees:  512",
+  "*degrees:  0",	/* default: Automatic degree calculation */
   "*color:    random",
-  "*count:    2",
-  "*cycles:   50",
+  "*count:    4",
+  "*cycles:   10",
   "*ncolors:  64",    /* changing this doesn't work particularly well */
   "*delay:    5000",
   0
@@ -63,6 +66,8 @@ static unsigned short nMaxExtentX, nMaxExtentY;
 static unsigned short nMinExtentX, nMinExtentY;
 static unsigned short nHalfWidth, nHalfHeight;
 static char *sColor;
+static unsigned char nBobRadius, nBobDiameter; 
+static float nExtentDelta; 
 
 #define RANDOM() ((int) (random() & 0X7FFFFFFFL))
 
@@ -70,14 +75,12 @@ static char *sColor;
 /* Ahem. Chocolate is a flavor; not a food. Thank you */
 
 
-#define MAPSIZE 32
-
 typedef struct
 {
-  char anDeltaMap[ MAPSIZE * MAPSIZE ];  /* 32 x 32 Delta Map */
+  char *anDeltaMap;
   double nVelocityX, nVelocityY;
   double nAngleX, nAngleY;
-  short nExtentX, nExtentY;
+  float nExtentX, nExtentY;
 } SShadeBob;
 
 
@@ -96,17 +99,23 @@ static void InitShadeBob( SShadeBob *pShadeBob, Bool bDark )
   double nDelta;
   char iWidth, iHeight;
 
-  for( iHeight=-16; iHeight<16; iHeight++ )
-    for( iWidth=-16; iWidth<16; iWidth++ )
+  if( ( pShadeBob->anDeltaMap = calloc( nBobDiameter * nBobDiameter, sizeof(char) ) ) == NULL )
+  {
+    fprintf( stderr, "Could not allocate Delta Map!\n" );
+    return;
+  }
+
+  for( iHeight=-nBobRadius; iHeight<nBobRadius; iHeight++ )
+    for( iWidth=-nBobRadius; iWidth<nBobRadius; iWidth++ )
     {
-      nDelta = 9 - (sqrt( pow( iWidth+0.5, 2 ) + pow( iHeight+0.5, 2 ) ) / 2 );
+      nDelta = 9 - ( ( sqrt( pow( iWidth+0.5, 2 ) + pow( iHeight+0.5, 2 ) ) / nBobRadius ) * 8 );
       if( nDelta < 0 )  nDelta = 0;
       if( bDark ) nDelta = -nDelta;
-      pShadeBob->anDeltaMap[ (iWidth+(MAPSIZE/2))*MAPSIZE
-                           + iHeight+(MAPSIZE/2) ] = (char)nDelta;
+      pShadeBob->anDeltaMap[ ( iWidth + nBobRadius ) * nBobDiameter
+                           + iHeight + nBobRadius ] = (char)nDelta;
     }
-
-	ResetShadeBob( pShadeBob );
+  
+  ResetShadeBob( pShadeBob );
 }
 
 
@@ -131,15 +140,13 @@ static void Execute( SShadeBob *pShadeBob, Display *pDisplay,
   pShadeBob->nAngleX += pShadeBob->nVelocityX;
   pShadeBob->nAngleY += pShadeBob->nVelocityY;
 
-  if(      pShadeBob->nAngleX >= nDegreeCount ) pShadeBob->nAngleX -= nDegreeCount;
-  else if( pShadeBob->nAngleX < 0 )             pShadeBob->nAngleX += nDegreeCount;
-  if(      pShadeBob->nAngleY >= nDegreeCount ) pShadeBob->nAngleY -= nDegreeCount;
-  else if( pShadeBob->nAngleY < 0 )             pShadeBob->nAngleY += nDegreeCount;
+  if( pShadeBob->nAngleX >= nDegreeCount ) pShadeBob->nAngleX -= nDegreeCount;
+  if( pShadeBob->nAngleY >= nDegreeCount ) pShadeBob->nAngleY -= nDegreeCount;
 
-  pShadeBob->nExtentX += ( RANDOM() % 5 ) - 2;
+  pShadeBob->nExtentX += ( ( ( RANDOM() % 5 ) - 2 ) / 2.0F ) * nExtentDelta;
   if( pShadeBob->nExtentX > nMaxExtentX ) pShadeBob->nExtentX = nMaxExtentX;
   if( pShadeBob->nExtentX < nMinExtentX ) pShadeBob->nExtentX = nMinExtentX;
-  pShadeBob->nExtentY += ( RANDOM() % 5 ) - 2;
+  pShadeBob->nExtentY += ( ( ( RANDOM() % 5 ) - 2 ) / 2.0F ) * nExtentDelta;
   if( pShadeBob->nExtentY > nMaxExtentY ) pShadeBob->nExtentY = nMaxExtentY;
   if( pShadeBob->nExtentY < nMinExtentY ) pShadeBob->nExtentY = nMinExtentY;
 
@@ -149,9 +156,9 @@ static void Execute( SShadeBob *pShadeBob, Display *pDisplay,
   nYPos = (unsigned int)(( anSinTable[ (int)pShadeBob->nAngleY ] * pShadeBob->nExtentY )
                          + nHalfHeight);
 
-  for( iHeight=0; iHeight < MAPSIZE; iHeight++ )
+  for( iHeight=0; iHeight<nBobDiameter; iHeight++ )
   {
-    for( iWidth=0; iWidth < MAPSIZE; iWidth++ )
+    for( iWidth=0; iWidth<nBobDiameter; iWidth++ )
     {
       nColor = XGetPixel( pXImage, nXPos + iWidth, nYPos + iHeight );
 
@@ -160,7 +167,7 @@ static void Execute( SShadeBob *pShadeBob, Display *pDisplay,
         if( aXColors[ nIndex ].pixel == nColor )
           break;
 
-      nIndex += pShadeBob->anDeltaMap[ iWidth * MAPSIZE + iHeight ];
+      nIndex += pShadeBob->anDeltaMap[ iWidth * nBobDiameter + iHeight ];
       if( nIndex >= ncolors ) nIndex = ncolors-1;
       if( nIndex < 0 )  nIndex = 0;
 
@@ -168,9 +175,9 @@ static void Execute( SShadeBob *pShadeBob, Display *pDisplay,
                  aXColors[ nIndex ].pixel );
     }
   }
-  /* Place graphics in window */
+
   XPutImage( pDisplay, MainWindow, *pGC, pXImage,
-             nXPos, nYPos, nXPos, nYPos, MAPSIZE, MAPSIZE );
+             nXPos, nYPos, nXPos, nYPos, nBobDiameter, nBobDiameter );
   XSync (pDisplay, False);
 }
 
@@ -242,6 +249,8 @@ static void SetPalette(Display *pDisplay, Window Win, char *sColor,
                      False, True, False );
     *ncolorsP = n1 + n2;
   }
+
+  XSetWindowBackground( pDisplay, Win, aXColors[ 0 ].pixel );
 }
 
 
@@ -282,19 +291,30 @@ static void Initialize( Display *pDisplay, Window Win,
 			    (*pXImage)->height);
 
   /*  These are precalculations used in Execute(). */
-  nMaxExtentX = ( XWinAttribs.width / 2 ) - 20;
-  nMaxExtentY = ( XWinAttribs.height / 2 ) - 20;
+  nBobDiameter = XWinAttribs.width / 25;
+  nBobRadius = nBobDiameter / 2;
+  nExtentDelta = nBobRadius / 5.0F;
+#ifdef VERBOSE
+  printf( "Bob Diameter = %d\n", nBobDiameter );
+#endif
+
+  nHalfWidth = ( XWinAttribs.width / 2 ) - nBobRadius;
+  nHalfHeight = ( XWinAttribs.height / 2 ) - nBobRadius;
+  nMaxExtentX = nHalfWidth - nBobRadius;
+  nMaxExtentY = nHalfHeight - nBobRadius;
   nMinExtentX = nMaxExtentX / 3;
   nMinExtentY = nMaxExtentY / 3;
-  nHalfWidth = ( XWinAttribs.width / 2 ) - 16;
-  nHalfHeight = ( XWinAttribs.height / 2 ) - 16;
-
+  
   /*  Create the Sin and Cosine lookup tables. */
   nDegreeCount = get_integer_resource( "degrees", "Integer" );
-  if( nDegreeCount < 90 ) nDegreeCount = 90;
-  if( nDegreeCount > 5400 ) nDegreeCount = 5400;
+  if(      nDegreeCount == 0   ) nDegreeCount = ( XWinAttribs.width / 6 ) + 400;
+  else if( nDegreeCount < 90   ) nDegreeCount = 90;
+  else if( nDegreeCount > 5400 ) nDegreeCount = 5400;
   CreateTables( nDegreeCount );
-
+#ifdef VERBOSE
+  printf( "Using a %d degree circle.\n", nDegreeCount );
+#endif /* VERBOSE */
+  
   /*  Get the colors. */
   sColor = get_string_resource( "color", "Color" );
   if( sColor == NULL)
@@ -337,18 +357,18 @@ void screenhack(Display *pDisplay, Window Win )
     InitShadeBob( &aShadeBobs[ iShadeBob ], iShadeBob % 2 );
 
   delay = get_integer_resource( "delay", "Integer" );
-  cycles = get_integer_resource( "cycles", "Integer" ) * (nDegreeCount / 3);
+  cycles = get_integer_resource( "cycles", "Integer" ) * nDegreeCount;
   i = cycles;
 
-  while (1)
+  while( 1 )
   {
     screenhack_handle_events( pDisplay );
 
     if (i++ >= cycles)
     {
       i = 0;
-      XClearWindow (pDisplay, Win);
-      memset (pImage->data, 0, pImage->bytes_per_line * pImage->height);
+      XClearWindow( pDisplay, Win );
+      memset( pImage->data, 0, pImage->bytes_per_line * pImage->height );
       for( iShadeBob=0; iShadeBob<nShadeBobCount; iShadeBob++ )
         ResetShadeBob( &aShadeBobs[ iShadeBob ] );
       SetPalette( pDisplay, Win, sColor, &ncolors, aXColors );
@@ -375,6 +395,8 @@ void screenhack(Display *pDisplay, Window Win )
   free( anSinTable );
   free( pImage->data );
   XDestroyImage( pImage );
+  for( iShadeBob=0; iShadeBob<nShadeBobCount; iShadeBob++ )
+    free( aShadeBobs[ iShadeBob ].anDeltaMap );
   free( aShadeBobs );
 }
 
