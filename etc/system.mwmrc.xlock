@@ -1,0 +1,427 @@
+# Add this to your system or personal menu file contents
+# System
+#  Motif file: /usr/lib/X11/system.mwmrc
+#  Desktop file: /usr/dt/config/C/sys.dtwmrc
+# Personal
+#  Motif file: $HOME/.mwmrc
+#  Desktop file: $HOME/.dt/dtwmrc
+# Put this in your RootMenu (mwm) or ProgramsMenu (dtwm) uncommented.
+#  "Lock_Saver"      f.menu Lock_Saver
+# For dt you may have to add the full path of xlock to "xlock" depending
+# whether the location xlock is installed is in a path of DT.
+# See /usr/dt/bin/Xsession look for instances of $PATH for system setup.
+# See supplied dtprofile for personal setup...i.e. DTSOURCEPROFILE=true 
+
+Menu Automata-Lock
+{
+  "Automata-Lock" f.title
+	"Ant"	f.exec "xlock -mode ant -neighbors 4 +truchet &"
+	"Ant Truchet"	f.exec "xlock -mode ant -neighbors 4 -truchet &
+	"Bee"	f.exec "xlock -mode ant -neighbors 6 +truchet &"
+	"Bee Truchet"	f.exec "xlock -mode ant -neighbors 6 -truchet &"
+	"Bug"	f.exec "xlock -mode bug &"
+	"Demon"	f.exec "xlock -mode demon &"
+	"Dilemma"	f.exec "xlock -mode dilemma &"
+	"Life"	f.exec "xlock -mode life &"
+	"Life Callahan"	f.exec "xlock -mode life -callahan -size 7 &"
+	"Life1d"	f.exec "xlock -mode life1d &"
+	"Life3d"	f.exec "xlock -mode life3d &"
+	"Loop"	f.exec "xlock -mode loop &"
+	"Voters"	f.exec "xlock -mode voters &"
+	"Wator"	f.exec "xlock -mode wator &"
+	"Wire"	f.exec "xlock -mode wire &"
+	"Random Automata"	f.exec "xlock -mode random -modelist allautomata -fullrandom -neighbors 0 &"
+}
+
+Menu Fractal-Lock
+{
+  "Fractal-Lock" f.title
+	"Coral"	f.exec "xlock -mode coral &"
+	"Discrete"	f.exec "xlock -mode discrete &"
+	"Drift"	f.exec "xlock -mode drift -fullrandom &"
+	"Flame"	f.exec "xlock -mode flame &"
+	"Flow"	f.exec "xlock -mode flow &"
+	"Forest"	f.exec "xlock -mode forest &"
+	"Hop"	f.exec "xlock -mode hop -fullrandom &"
+	"IFS"	f.exec "xlock -mode ifs &"
+	"Julia"	f.exec "xlock -mode julia +mouse &"
+	"Juliaptr"	f.exec "xlock -mode julia -mouse &"
+	"Lightning"	f.exec "xlock -mode lightning &"
+	"Mandelbrot"	f.exec "xlock -mode mandelbrot -install &"
+	"Mountain"	f.exec "xlock -mode mountain &"
+	"Sierpinski"	f.exec "xlock -mode sierpinski &"
+	"Strange"	f.exec "xlock -mode strange &"
+	"Thornbird"	f.exec "xlock -mode thornbird &"
+	"Triangle"	f.exec "xlock -mode triangle &"
+	"Turtle"	f.exec "xlock -mode turtle &"
+	"Vines"	f.exec "xlock -mode vines &"
+	"Random Fractal"	f.exec "xlock -mode random -modelist allfractal -fullrandom &"
+}
+
+Menu Geometry-Lock
+{
+  "Geometry-Lock" f.title
+	"Braid"	f.exec "xlock -mode braid &"
+	"Fadeplot"	f.exec "xlock -mode fadeplot &"
+	"Helix"	f.exec "xlock -mode helix -fullrandom &"
+	"Hyper"	f.exec "xlock -mode hyper &"
+	"Ico"	f.exec "xlock -mode ico &"
+	"Kaleid"	f.exec "xlock -mode kaleid &"
+	"Laser"	f.exec "xlock -mode laser &"
+	"Lisa"	f.exec "xlock -mode lisa &"
+	"Lissie"	f.exec "xlock -mode lissie &"
+	"Penrose"	f.exec "xlock -mode penrose +ammann &"
+	"Penrose Ammann"	f.exec "xlock -mode penrose -ammann &"
+	"Petal"	f.exec "xlock -mode petal &"
+	"Qix"	f.exec "xlock -mode qix +complete &"
+	"Qix complete"	f.exec "xlock -mode qix -complete &"
+	"Rotor"	f.exec "xlock -mode rotor &"
+	"Shape"	f.exec "xlock -mode shape &"
+	"Sphere"	f.exec "xlock -mode sphere &"
+	"Spiral"	f.exec "xlock -mode spiral &"
+	"Spline"	f.exec "xlock -mode spline &"
+	"Random Geometry"	f.exec "xlock -mode random -modelist allgeometry -fullrandom &"
+}
+
+Menu Space-Lock
+{
+  "Space-Lock" f.title
+	"Bouboule"	f.exec "xlock -mode bouboule +use3d &"
+	"Bouboule3d"	f.exec "xlock -mode bouboule -use3d &"
+	"Galaxy"	f.exec "xlock -mode galaxy &"
+	"Grav"	f.exec "xlock -mode grav +trail +decay &"
+	"Grav Trail"	f.exec "xlock -mode grav -trail &"
+	"Grav Decay"	f.exec "xlock -mode grav -decay &"
+	"Rock"	f.exec "xlock -mode star -rock &"
+	"Star"	f.exec "xlock -mode star +rock +use3d -trek 0 &"
+	"Star3d"	f.exec "xlock -mode star -use3d &"
+	"Star Trek"	f.exec "xlock -mode star -trek 100 &"
+	"World"	f.exec "xlock -mode world &"
+	"Random Space"	f.exec "xlock -mode random -modelist allspace -fullrandom &"
+}
+
+Menu Assorted-Lock
+{
+  "Assorted-Lock" f.title
+	"Ball"	f.exec "xlock -mode ball &"
+	"Blot"	f.exec "xlock -mode blot &"
+	"Bounce"	f.exec "xlock -mode bounce &"
+	"Bubble"	f.exec "xlock -mode bubble &"
+	"Clock"	f.exec "xlock -mode clock &"
+	"Crystal"	f.exec "xlock -mode crystal &"
+	"Daisy"	f.exec "xlock -mode daisy &"
+	"Dclock"	f.exec "xlock -mode dclock &"
+	"Deco"	f.exec "xlock -mode deco &"
+	"Eyes"	f.exec "xlock -mode eyes +mouse &"
+	"Eyesptr"	f.exec "xlock -mode eyes -mouse &"
+	"Goop"	f.exec "xlock -mode goop &"
+	"Marquee"	f.exec "xlock -mode marquee &"
+	"Munch"	f.exec "xlock -mode munch &"
+	"Nose"	f.exec "xlock -mode nose &"
+	"Pacman"	f.exec "xlock -mode pacman &"
+	"Pyro"	f.exec "xlock -mode pyro +use3d &"
+	"Pyro3d"	f.exec "xlock -mode pyro -use3d &"
+	"Roll"	f.exec "xlock -mode roll &"
+	"Slip"	f.exec "xlock -mode slip &"
+	"Swarm"	f.exec "xlock -mode swarm +mouse &"
+	"Swarmptr"	f.exec "xlock -mode swarm -mouse &"
+	"Swirl"	f.exec "xlock -mode swirl -install &"
+	"Tube"	f.exec "xlock -mode tube -install &"
+	"Worm"	f.exec "xlock -mode worm +use3d &"
+	"Worm3d"	f.exec "xlock -mode worm -use3d &"
+}
+
+Menu XPM-Lock
+{
+  "XPM-Lock" f.title
+	"Bat"	f.exec "xlock -mode bat &"
+	"Cartoon"	f.exec "xlock -mode cartoon &"
+	"Image"	f.exec "xlock -mode image &"
+	"Flag"	f.exec "xlock -mode flag &"
+	"Life"	f.exec "xlock -mode life &"
+	"Life1d"	f.exec "xlock -mode life1d &"
+	"Maze"	f.exec "xlock -mode maze &"
+	"Puzzle"	f.exec "xlock -mode puzzle &"
+	"Random XPM"	f.exec "xlock -mode random -modelist allxpm -fullrandom &"
+}
+
+Menu GL-Lock
+{
+  "GL-Lock" f.title
+	"Atlantis"	f.exec "xlock -mode atlantis &"
+	"Bubble3d"	f.exec "xlock -mode bubble3d &"
+	"Cage"	f.exec "xlock -mode cage &"
+	"Gears"	f.exec "xlock -mode gears &"
+	"Moebius"	f.exec "xlock -mode moebius &"
+	"Morph3d"	f.exec "xlock -mode morph3d &"
+	"Pipes"	f.exec "xlock -mode pipes &"
+	"Rubik"	f.exec "xlock -mode rubik &"
+	"Sproingies"	f.exec "xlock -mode sproingies &"
+	"Stairs"	f.exec "xlock -mode stairs &"
+	"Superquadrics"	f.exec "xlock -mode superquadrics &"
+	"Random GL"	f.exec "xlock -mode random -modelist allgl -fullrandom &"
+}
+
+Menu Marquee-Message-Lock
+{
+  "Marquee-Message-Lock" f.title
+	"Back Soon"	f.exec "xlock -mode marquee -message "$LOGNAME will be back soon." &"
+  "Overnight"	f.exec "xlock -mode marquee -message "$LOGNAME will be back in the morning." &"
+  "Rude"	f.exec "xlock -mode marquee -message "$LOGNAME not here, please go away! " &"
+}
+
+Menu Nose-Message-Lock
+{
+  "Nose-Message-Lock" f.title
+  "Back Soon"	f.exec "xlock -mode nose -message "$LOGNAME will be back soon."
+  "Overnight"	f.exec "xlock -mode nose -message "$LOGNAME will be back in the morning." &"
+  "Rude"	f.exec "xlock -mode nose -message "$LOGNAME not here, please go away! " &"
+}
+
+Menu Special-Lock
+{
+  "Special-Lock" f.title
+	"Blank"	f.exec "xlock -mode blank &"
+	"Bomb"	f.exec "xlock -mode bomb &"
+	"Random nice"	f.exec "xlock -mode random -modelist allnice -fullrandom -neighbors 0 &"
+	"Random standard"	f.exec "xlock -mode random -modelist all-allgl -fullrandom -neighbors 0 &"
+	"Random all"	f.exec "xlock -mode random -modelist all -fullrandom -neighbors 0 &"
+	"Random 3d"	f.exec "xlock -mode random -modelist all3d -use3d -fullrandom &"
+	"Random ptr"	f.exec "xlock -mode random -modelist allmouse -mouse -fullrandom &"
+	"Random write"	f.exec "xlock -mode random -modelist allwrite -fullrandom &"
+}
+
+Menu Screenlock
+{
+  "Screenlock" f.title
+	"Cellular Automata"	f.menu Automata-Lock
+	no-label		f.separator
+	"Fractal"	f.menu Fractal-Lock
+	no-label		f.separator
+	"Geometry"	f.menu Geometry-Lock
+	no-label		f.separator
+	"Space"	f.menu Space-Lock
+	no-label		f.separator
+	"Assorted"	f.menu Assorted-Lock
+	no-label		f.separator
+	"XPM"	f.menu XPM-Lock
+	no-label		f.separator
+	"GL"	f.menu GL-Lock
+	no-label		f.separator
+	"Marquee Message"	f.menu Marquee-Message-Lock
+	no-label		f.separator
+	"Nose Message"	f.menu Nose-Message-Lock
+	no-label		f.separator
+	"Special"	f.menu Special-Lock
+}
+
+Menu Automata-Saver
+{
+  "Automata-Saver" f.title
+	"Ant"	f.exec "xlock -nolock -mode ant -neighbors 4 +truchet &"
+	"Ant Truchet"	f.exec "xlock -nolock -mode ant -neighbors 4 -truchet &"
+	"Bee"	f.exec "xlock -nolock -mode ant -neighbors 6 +truchet &"
+	"Bee Truchet"	f.exec "xlock -nolock -mode ant -neighbors 6 -truchet &"
+	"Bug"	f.exec "xlock -nolock -mode bug &"
+	"Demon"	f.exec "xlock -nolock -mode demon &"
+	"Dilemma"	f.exec "xlock -nolock -mode dilemma &"
+	"Life"	f.exec "xlock -nolock -mode life &"
+	"Life Callahan"	f.exec "xlock -nolock -mode life -callahan -size 7 &"
+	"Life1d"	f.exec "xlock -nolock -mode life1d &"
+	"Life3d"	f.exec "xlock -nolock -mode life3d &"
+	"Loop"	f.exec "xlock -nolock -mode loop &"
+	"Voters"	f.exec "xlock -nolock -mode voters &"
+	"Wator"	f.exec "xlock -nolock -mode wator &"
+	"Wire"	f.exec "xlock -nolock -mode wire &"
+	"Random Automata"	f.exec "xlock -nolock -mode random -modelist allautomata -fullrandom -neighbors 0 &"
+}
+
+Menu Fractal-Saver
+{
+  "Fractal-Saver" f.title
+	"Coral"	f.exec "xlock -nolock -mode coral &"
+	"Discrete"	f.exec "xlock -nolock -mode discrete &"
+	"Drift"	f.exec "xlock -nolock -mode drift -fullrandom &"
+	"Flame"	f.exec "xlock -nolock -mode flame &"
+	"Flow"	f.exec "xlock -nolock -mode flow &"
+	"Forest"	f.exec "xlock -nolock -mode forest &"
+	"Hop"	f.exec "xlock -nolock -mode hop -fullrandom &"
+	"IFS"	f.exec "xlock -nolock -mode ifs &"
+	"Julia"	f.exec "xlock -nolock -mode julia +mouse &"
+	"Juliaptr"	f.exec "xlock -nolock -mode julia -mouse &"
+	"Lightning"	f.exec "xlock -nolock -mode lightning &"
+	"Mandelbrot"	f.exec "xlock -nolock -mode mandelbrot -install &"
+	"Mountain"	f.exec "xlock -nolock -mode mountain &"
+	"Sierpinski"	f.exec "xlock -nolock -mode sierpinski &"
+	"Strange"	f.exec "xlock -nolock -mode strange &"
+	"Thornbird"	f.exec "xlock -nolock -mode thornbird &"
+	"Triangle"	f.exec "xlock -nolock -mode triangle &"
+	"Turtle"	f.exec "xlock -nolock -mode turtle &"
+	"Vines"	f.exec "xlock -nolock -mode vines &"
+	"Random Fractal"	f.exec "xlock -nolock -mode random -modelist allfractal -fullrandom &"
+}
+
+Menu Geometry-Saver
+{
+  "Geometry-Saver" f.title
+	"Braid"	f.exec "xlock -nolock -mode braid &"
+	"Fadeplot"	f.exec "xlock -nolock -mode fadeplot &"
+	"Helix"	f.exec "xlock -nolock -mode helix -fullrandom &"
+	"Hyper"	f.exec "xlock -nolock -mode hyper &"
+	"Ico"	f.exec "xlock -nolock -mode ico &"
+	"Kaleid"	f.exec "xlock -nolock -mode kaleid &"
+	"Laser"	f.exec "xlock -nolock -mode laser &"
+	"Lisa"	f.exec "xlock -nolock -mode lisa &"
+	"Lissie"	f.exec "xlock -nolock -mode lissie &"
+	"Penrose"	f.exec "xlock -nolock -mode penrose +ammann &"
+	"Penrose Ammann"	f.exec "xlock -nolock -mode penrose -ammann &"
+	"Petal"	f.exec "xlock -nolock -mode petal &"
+	"Qix"	f.exec "xlock -nolock -mode qix +complete &"
+	"Qix complete"	f.exec "xlock -nolock -mode qix -complete &"
+	"Rotor"	f.exec "xlock -nolock -mode rotor &"
+	"Shape"	f.exec "xlock -nolock -mode shape &"
+	"Sphere"	f.exec "xlock -nolock -mode sphere &"
+	"Spiral"	f.exec "xlock -nolock -mode spiral &"
+	"Spline"	f.exec "xlock -nolock -mode spline &"
+	"Random Geometry"	f.exec "xlock -nolock -mode random -modelist allgeometry -fullrandom &"
+}
+
+Menu Space-Saver
+{
+  "Space-Saver" f.title
+	"Bouboule"	f.exec "xlock -nolock -mode bouboule +use3d &"
+	"Bouboule3d"	f.exec "xlock -nolock -mode bouboule -use3d &"
+	"Galaxy"	f.exec "xlock -nolock -mode galaxy &"
+	"Grav"	f.exec "xlock -nolock -mode grav +trail +decay &"
+	"Grav Trail"	f.exec "xlock -nolock -mode grav -trail &"
+	"Grav Decay"	f.exec "xlock -nolock -mode grav -decay &"
+	"Rock"	f.exec "xlock -nolock -mode star -rock &"
+	"Star"	f.exec "xlock -nolock -mode star +rock +use3d +trek 0 &"
+	"Star3d"	f.exec "xlock -nolock -mode star -use3d &"
+	"Star Trek"	f.exec "xlock -nolock -mode star -trek 100 &"
+	"World"	f.exec "xlock -nolock -mode world &"
+	"Random Space"	f.exec "xlock -nolock -mode random -modelist allspace -fullrandom &"
+}
+
+Menu Assorted-Saver
+{
+  "Assorted-Saver" f.title
+	"Ball"	f.exec "xlock -nolock -mode ball &"
+	"Blot"	f.exec "xlock -nolock -mode blot &"
+	"Bounce"	f.exec "xlock -nolock -mode bounce &"
+	"Bubble"	f.exec "xlock -nolock -mode bubble &"
+	"Clock"	f.exec "xlock -nolock -mode clock &"
+	"Crystal"	f.exec "xlock -nolock -mode crystal &"
+	"Daisy"	f.exec "xlock -nolock -mode daisy &"
+	"Dclock"	f.exec "xlock -nolock -mode dclock &"
+	"Deco"	f.exec "xlock -nolock -mode deco &"
+	"Eyes"	f.exec "xlock -nolock -mode eyes +mouse &"
+	"Eyesptr"	f.exec "xlock -nolock -mode eyes -mouse &"
+	"Goop"	f.exec "xlock -nolock -mode goop &"
+	"Marquee"	f.exec "xlock -nolock -mode marquee &"
+	"Munch"	f.exec "xlock -nolock -mode munch &"
+	"Nose"	f.exec "xlock -nolock -mode nose &"
+	"Pacman"	f.exec "xlock -nolock -mode pacman &"
+	"Pyro"	f.exec "xlock -nolock -mode pyro +use3d &"
+	"Pyro3d"	f.exec "xlock -nolock -mode pyro -use3d &"
+	"Roll"	f.exec "xlock -nolock -mode roll &"
+	"Slip"	f.exec "xlock -nolock -mode slip &"
+	"Swarm"	f.exec "xlock -nolock -mode swarm +mouse &"
+	"Swarmptr"	f.exec "xlock -nolock -mode swarm -mouse &"
+	"Swirl"	f.exec "xlock -nolock -mode swirl -install &"
+	"Tube"	f.exec "xlock -nolock -mode tube -install &"
+	"Worm"	f.exec "xlock -nolock -mode worm +use3d &"
+	"Worm3d"	f.exec "xlock -nolock -mode worm -use3d &"
+}
+
+Menu XPM-Saver
+{
+  "XPM-Saver" f.title
+	"Bat"	f.exec "xlock -nolock -mode bat &"
+	"Cartoon"	f.exec "xlock -nolock -mode cartoon &"
+	"Image"	f.exec "xlock -nolock -mode image &"
+	"Flag"	f.exec "xlock -nolock -mode flag &"
+	"Life"	f.exec "xlock -nolock -mode life &"
+	"Life1d"	f.exec "xlock -nolock -mode life1d &"
+	"Maze"	f.exec "xlock -nolock -mode maze &"
+	"Puzzle"	f.exec "xlock -nolock -mode puzzle &"
+	"Random XPM"	f.exec "xlock -nolock -mode random -modelist allxpm -fullrandom &"
+}
+
+Menu GL-Saver
+{
+  "GL-Saver" f.title
+	"Atlantis"	f.exec "xlock -nolock -mode atlantis &"
+	"Bubble3d"	f.exec "xlock -nolock -mode bubble3d &"
+	"Cage"	f.exec "xlock -nolock -mode cage &"
+	"Gears"	f.exec "xlock -nolock -mode gears &"
+	"Moebius"	f.exec "xlock -nolock -mode moebius &"
+	"Morph3d"	f.exec "xlock -nolock -mode morph3d &"
+	"Pipes"	f.exec "xlock -nolock -mode pipes &"
+	"Rubik"	f.exec "xlock -nolock -mode rubik &"
+	"Sproingies"	f.exec "xlock -nolock -mode sproingies &"
+	"Stairs"	f.exec "xlock -nolock -mode stairs &"
+	"Superquadrics"	f.exec "xlock -nolock -mode superquadrics &"
+	"Random GL"	f.exec "xlock -nolock -mode random -modelist allgl -fullrandom &"
+}
+
+Menu Marquee-Message-Saver
+{
+  "Marquee-Message-Saver" f.title
+	"Brilliant"	f.exec "xlock -nolock -mode marquee -message "WOW! $LOGNAME, You are Brilliant! " &"
+  "Love You"	f.exec "xlock -mode marquee -message "You know, I Love You $LOGNAME." &"
+  "Available"	f.exec "xlock -mode marquee -message "Hey, I am available now! " &"
+}
+
+Menu Nose-Message-Saver
+{
+  "Nose-Message-Saver" f.title
+  "Brilliant!"	f.exec "xlock -mode nose -message "WOW! $LOGNAME, You are Briilliant! "
+  "Love You"	f.exec "xlock -mode nose -message "You know, I Love You $LOGNAME." &"
+  "Available"	f.exec "xlock -mode nose -message "Hey, I am available now! " &"
+}
+
+Menu Special-Saver
+{
+  "Special-Saver" f.title
+	"Blank"	f.exec "xlock -nolock -mode blank &"
+	"Bomb"	f.exec "xlock -nolock -mode bomb &"
+	"Random nice"	f.exec "xlock -nolock -mode random -modelist allnice -fullrandom -neighbors 0 &"
+	"Random standard"	f.exec "xlock -nolock -mode random -modelist all-allgl -fullrandom -neighbors 0 &"
+	"Random all"	f.exec "xlock -nolock -mode random -modelist all -fullrandom -neighbors 0 &"
+	"Random 3d"	f.exec "xlock -nolock -mode random -modelist all3d -use3d -fullranodm &"
+	"Random ptr"	f.exec "xlock -nolock -mode random -modelist allmouse -mouse -fullrandom &"
+	"Random write"	f.exec "xlock -nolock -mode random -modelist allwrite -fullrandom &"
+}
+
+Menu Screensaver
+{
+  "Screensaver" f.title
+	"Cellular Automata"	f.menu Automata-Saver
+	no-label		f.separator
+	"Fractal"	f.menu Fractal-Saver
+	no-label		f.separator
+	"Geometry"	f.menu Geometry-Saver
+	no-label		f.separator
+	"Space"	f.menu Space-Saver
+	no-label		f.separator
+	"Assorted"	f.menu Assorted-Saver
+	no-label		f.separator
+	"XPM"	f.menu XPM-Saver
+	no-label		f.separator
+	"GL"	f.menu GL-Saver
+	no-label		f.separator
+	"Marquee Message"	f.menu Marquee-Message-Saver
+	no-label		f.separator
+	"Nose Message"	f.menu Nose-Message-Saver
+	no-label		f.separator
+	"Special"	f.menu Special-Saver
+}
+
+Menu "Lock_Saver"
+{
+  "Lock_Saver" f.title
+	"Screenlock"	f.menu Screenlock
+	"Screensaver"	f.menu Screensaver
+}
+

@@ -1,0 +1,1651 @@
+1 XLOCK
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+2 NNNNAAAAMMMMEEEE
+xlock - Locks the  local  X  display  until  a  password  is
+entered.
+
+
+2 SSSSYYYYNNNNOOOOPPPPSSSSIIIISSSS
+xxxxlllloooocccckkkk [ -hhhheeeellllpppp ] [ -vvvveeeerrrrssssiiiioooonnnn  ]  [  -rrrreeeessssoooouuuurrrrcccceeeessss  ]  [  -ddddiiiissssppppllllaaaayyyy
+_d_i_s_p_l_a_y_n_a_m_e  ] [ -vvvviiiissssuuuuaaaallll _v_i_s_u_a_l_n_a_m_e ] [ -nnnnaaaammmmeeee _r_e_s_o_u_r_c_e_n_a_m_e ]
+[ -mmmmooooddddeeee _m_o_d_e_n_a_m_e ] [ -ddddeeeellllaaaayyyy _u_s_e_c_s ] [ -bbbbaaaattttcccchhhhccccoooouuuunnnntttt  _n_u_m  ]  [
+-ccccoooouuuunnnntttt  _n_u_m ] [ -ccccyyyycccclllleeeessss _n_u_m ] [ -nnnnccccoooolllloooorrrrssss _n_u_m ] [ -ssssiiiizzzzeeee _n_u_m ]
+[ -ssssaaaattttuuuurrrraaaattttiiiioooonnnn _v_a_l_u_e ] [ ----////++++aaaalllllllloooowwwwaaaacccccccceeeessssssss ] [ ----////++++nnnnoooolllloooocccckkkk ]  [  ----
+////++++iiiinnnnwwwwiiiinnnnddddoooowwww  ]  [  ----////++++iiiinnnnrrrrooooooootttt  ] [ ----////++++rrrreeeemmmmooootttteeee ] [ ----////++++mmmmoooonnnnoooo ] [ ----
+////++++aaaalllllllloooowwwwrrrrooooooootttt ] [ ----////++++ddddeeeebbbbuuuugggg ] [ ----////++++eeeecccchhhhooookkkkeeeeyyyyssss ] [  ----////++++eeeennnnaaaabbbblllleeeessssaaaavvvveeeerrrr
+]  [  ----////++++rrrreeeesssseeeettttssssaaaavvvveeeerrrr ] [ ----////++++ggggrrrraaaabbbbmmmmoooouuuusssseeee ] [ ----////++++ggggrrrraaaabbbbsssseeeerrrrvvvveeeerrrr ] [ ----
+////++++iiiinnnnssssttttaaaallllllll ] [ ----////++++mmmmoooouuuusssseeeemmmmoooottttiiiioooonnnn ] [ ----////++++ssssoooouuuunnnndddd ] [ ----////++++ttttiiiimmmmeeeeeeeellllaaaappppsssseeeedddd
+]  [ ----////++++uuuusssseeeeffffiiiirrrrsssstttt ] [ ----////++++vvvveeeerrrrbbbboooosssseeee ] [ -nnnniiiicccceeee _l_e_v_e_l ] [ -lllloooocccckkkkddddeeee----
+llllaaaayyyy _s_e_c_o_n_d_s ] [ -ttttiiiimmmmeeeeoooouuuutttt _s_e_c_o_n_d_s ]  [  -ffffoooonnnntttt  _f_o_n_t_n_a_m_e  ]  [
+-ppppllllaaaannnnffffoooonnnntttt  _f_o_n_t_n_a_m_e  ]  [ -bbbbgggg _c_o_l_o_r ] [ -ffffgggg _c_o_l_o_r ] [ -bbbbaaaacccckkkk----
+ggggrrrroooouuuunnnndddd _c_o_l_o_r ] [ -ffffoooorrrreeeeggggrrrroooouuuunnnndddd _c_o_l_o_r ] [ -uuuusssseeeerrrrnnnnaaaammmmeeee _s_t_r_i_n_g ]  [
+-ppppaaaasssssssswwwwoooorrrrdddd  _s_t_r_i_n_g  ] [ -iiiinnnnffffoooo _s_t_r_i_n_g ] [ -vvvvaaaalllliiiiddddaaaatttteeee _s_t_r_i_n_g ] [
+-iiiinnnnvvvvaaaalllliiiidddd _s_t_r_i_n_g ] [ -ggggeeeeoooommmmeeeettttrrrryyyy _g_e_o_m ] [ -iiiiccccoooonnnnggggeeeeoooommmmeeeettttrrrryyyy _g_e_o_m  ]
+[  -ggggllllggggeeeeoooommmmeeeettttrrrryyyy _g_e_o_m ] [ ----////++++ffffuuuullllllllrrrraaaannnnddddoooommmm ] [ ----////++++wwwwiiiirrrreeeeffffrrrraaaammmmeeee ] [ ----
+////++++uuuusssseeee3333dddd ] [ -ddddeeeellllttttaaaa3333dddd _v_a_l_u_e ] [ -nnnnoooonnnneeee3333dddd _c_o_l_o_r  ]  [  -rrrriiiigggghhhhtttt3333dddd
+_c_o_l_o_r  ] [ -lllleeeefffftttt3333dddd _c_o_l_o_r ] [ -bbbbooootttthhhh3333dddd _c_o_l_o_r ] [ -pppprrrrooooggggrrrraaaammmm _p_r_o_-
+_g_r_a_m_n_a_m_e ] [ -mmmmeeeessssssssaaaaggggeeeessssffffiiiilllleeee _f_o_r_m_a_t_t_e_d-_f_i_l_e_n_a_m_e ] [  -mmmmeeeessssssssaaaaggggeeee----
+ffffiiiilllleeee  _f_i_l_e_n_a_m_e ] [ -mmmmeeeessssssssaaaaggggeeee _s_t_r_i_n_g ] [ -mmmmeeeessssssssaaaaggggeeeeffffoooonnnntttt _f_o_n_t_n_a_m_e
+] [ -bbbbiiiittttmmmmaaaapppp _f_i_l_e_n_a_m_e ] [ -nnnneeeeiiiigggghhhhbbbboooorrrrssss _n_u_m ]  [  ----////++++mmmmoooouuuusssseeee  ]  [
+-ccccppppaaaasssssssswwwwdddd  _c_r_y_p_t_e_d-_p_a_s_s_w_o_r_d  ]  [  -ffffoooorrrrcccceeeeLLLLooooggggoooouuuutttt  _m_i_n_u_t_e_s  ] [
+-llllooooggggoooouuuuttttBBBBuuuuttttttttoooonnnnLLLLaaaabbbbeeeellll _t_e_x_t_s_t_r_i_n_g ]  [  -llllooooggggoooouuuuttttBBBBuuuuttttttttoooonnnnHHHHeeeellllpppp  _t_e_x_t_-
+_s_t_r_i_n_g ] [ -llllooooggggoooouuuuttttFFFFaaaaiiiilllleeeeddddSSSSttttrrrriiiinnnngggg _t_e_x_t_s_t_r_i_n_g ] [ ----////++++ddddttttssssaaaavvvveeeerrrr ] [
+-mmmmoooodddduuuulllleeeeppppaaaatttthhhh _p_a_t_h ] [ -lllloooocccckkkkssssoooouuuunnnndddd _s_t_r_i_n_g ] [ -iiiinnnnffffoooossssoooouuuunnnndddd _s_t_r_i_n_g
+]  [  -vvvvaaaalllliiiiddddssssoooouuuunnnndddd  _s_t_r_i_n_g  ]  [  -iiiinnnnvvvvaaaalllliiiiddddssssoooouuuunnnndddd  _s_t_r_i_n_g  ]  [
+-ssssttttaaaarrrrttttCCCCmmmmdddd _s_t_r_i_n_g ] [ -eeeennnnddddCCCCmmmmdddd _s_t_r_i_n_g ] [ -llllooooggggoooouuuuttttCCCCmmmmdddd _s_t_r_i_n_g ]
+
+
+2 DDDDEEEESSSSCCCCRRRRIIIIPPPPTTTTIIIIOOOONNNN
+xxxxlllloooocccckkkk locks the X server till the user enters their password
+at  the  keyboard.   While  xxxxlllloooocccckkkk is running, all new server
+connections are refused.  The screen saver is disabled.  The
+mouse  cursor  is  turned  off.  The screen is blanked and a
+changing pattern is put on the screen.  If a key or a  mouse
+button is pressed then the user is prompted for the password
+of the user who started xxxxlllloooocccckkkk.
+
+2 If the  correct  password  is  typed,  then  the  screen  is
+unlocked  and  the  X  server  is restored.  When typing the
+password Control-U and Control-H  are  active  as  kill  and
+erase  respectively.   To return to the locked screen, click
+in the small icon version of the changing pattern.
+
+2 In  the  lower  part  of  the  password  screen  a  text  is
+displayed.  This message is taken from the first file of the
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                    1
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+following that exists:   $HOME/.xlocktext,  $HOME/.plan,  or
+$HOME/.signature.
+
+2 On systems which support new BSD style  authentication,  the
+password may be prefixed by an authentication style followed
+by a colon (i.e. "style:password").  See  the  login.conf(5)
+for more information on authentication styles.
+
+
+2 NNNNOOOOTTTTEEEE OOOONNNN EEEETTTTIIIIQQQQUUUUEEEETTTTTTTTEEEE
+_X_l_o_c_k should not be used on public terminals when there is a
+high demand for them.
+
+2 If you find a  public  terminal  that  has  been  locked  by
+another user and there are no other terminals available, and
+the terminal appears to have been  left  idle  for  a  while
+(normally  more than 15 minutes), it is fair to try to reset
+the session in some manner.
+
+
+2 OOOOPPPPTTTTIIIIOOOONNNNSSSS
+-hhhheeeellllpppp
+     Print options and a brief description to standard  out-
+     put.
+
+-vvvveeeerrrrssssiiiioooonnnn
+     Print version number (if >= 4.00) to standard output.
+
+-rrrreeeessssoooouuuurrrrcccceeeessss
+     Print default resource file to standard output.
+
+-ddddiiiissssppppllllaaaayyyy _d_i_s_p_l_a_y_n_a_m_e
+     The _d_i_s_p_l_a_y option sets the X11 display to lock.  xxxxlllloooocccckkkk
+     locks all available screens on a given server, and res-
+     tricts you to locking  only  a  local  server  such  as
+     uuuunnnniiiixxxx::::0000,,,,  llllooooccccaaaallllhhhhoooosssstttt::::0000,,,,  or ::::0000 unless you set the -rrrreeeemmmmooootttteeee
+     option.
+
+-vvvviiiissssuuuuaaaallll _v_i_s_u_a_l_n_a_m_e
+     _v_i_s_u_a_l_n_a_m_e which is one of  "StaticGray",  "GrayScale",
+     "StaticColor",        "PseudoColor",       "TrueColor",
+     "DirectColor", or "default".  default used to  set  the
+     screen's  default  visual  (the visual of the root win-
+     dow).
+
+-nnnnaaaammmmeeee _r_e_s_o_u_r_c_e_n_a_m_e
+     _r_e_s_o_u_r_c_e_n_a_m_e is used instead of XXXXLLLLoooocccckkkk when looking  for
+     resources to configure xxxxlllloooocccckkkk.
+
+-mmmmooooddddeeee _m_o_d_e_n_a_m_e
+     As of this writing there are over 60 display modes sup-
+     ported  (plus  one  more for random selection of one of
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                    2
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+     these).
+
+aaaannnntttt     Shows Langton's and Turk's generalized ants.
+
+aaaattttllllaaaannnnttttiiiissss
+        Shows  moving  sharks/whales/dolphin.   May  not  be
+        available depending on how it was configured.
+
+bbbbaaaallllllll    Shows bouncing balls.
+
+bbbbaaaatttt     Shows bouncing flying bats.
+
+bbbbllllooootttt    Shows Rorschach's ink blot test.
+
+bbbboooouuuubbbboooouuuulllleeee
+        Shows Mimi's bouboule of moving stars.
+
+bbbboooouuuunnnncccceeee  Shows bouncing footballs.
+
+bbbbrrrraaaaiiiidddd   Shows random braids and knots.
+
+bbbbuuuubbbbbbbblllleeee  Shows popping bubbles.
+
+bbbbuuuubbbbbbbblllleeee3333dddd
+        Shows Richard Jones's GL bubbles.  May not be avail-
+        able depending on how it was configured.
+
+bbbbuuuugggg     Shows Palmiter's bug evolution and a garden of Eden.
+
+ccccaaaarrrrttttoooooooonnnn Shows  bouncing  cartoons.   May  not  be  available
+        depending on how it was configured.
+
+cccclllloooocccckkkk   Shows Packard's oclock.
+
+ccccoooorrrraaaallll   Shows a coral reef.
+
+ccccrrrryyyyssssttttaaaallll Shows polygons in 2D plane groups.
+
+ddddaaaaiiiissssyyyy   Shows a meadow of daisies.
+
+ddddcccclllloooocccckkkk  Shows a floating digital clock.
+
+ddddeeeeccccoooo    Shows art as ugly as sin.
+
+ddddeeeemmmmoooonnnn   Shows Griffeath's cellular automata.
+
+ddddiiiilllleeeemmmmmmmmaaaa Shows Lloyd's Prisoner's Dilemma simulation.
+
+ddddiiiissssccccrrrreeeetttteeee
+        Shows various discrete maps.
+
+ddddrrrriiiifffftttt   Shows cosmic drifting flame fractals.
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                    3
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+ccccaaaaggggeeee    Shows the Impossible Cage, an Escher-like GL  scene.
+        May not be available depending on how it was config-
+        ured.
+
+eeeeyyyyeeeessss    Shows eyes following a bouncing grelb.
+
+ffffaaaaddddeeeeppppllllooootttt
+        Shows a fading plot of sine squared.
+
+ffffllllaaaagggg    Shows a waving flag of your operating system.
+
+ffffllllaaaammmmeeee   Shows cosmic flame fractals.
+
+fffflllloooowwww    Shows dynamic strange attractors.
+
+ffffoooorrrreeeesssstttt  Shows binary trees of a fractal forest.
+
+ggggaaaallllaaaaxxxxyyyy  Shows crashing spiral galaxies.
+
+ggggeeeeaaaarrrrssss   Shows GL's gears.  May not be available depending on
+        how it was configured.
+
+ggggoooooooopppp    Shows goop from a lava lamp.
+
+ggggrrrraaaavvvv    Shows orbiting planets.
+
+hhhheeeelllliiiixxxx   Shows string art.
+
+hhhhoooopppp     Shows real plane iterated fractals.
+
+hhhhyyyyppppeeeerrrr   Shows spinning n-dimensional hypercubes.
+
+iiiiccccoooo     Shows a bouncing polyhedron.
+
+iiiiffffssss     Shows a modified iterated function system.
+
+iiiimmmmaaaaggggeeee   Shows randomly appearing logos.
+
+jjjjuuuulllliiiiaaaa   Shows the Julia set.
+
+kkkkaaaalllleeeeiiiidddd  Shows Brewster's Kaleidoscope.
+
+llllaaaasssseeeerrrr   Shows spinning lasers.
+
+lllliiiiffffeeee    Shows Conway's game of life.
+
+lllliiiiffffeeee1111dddd  Shows Wolfram's game of 1D life.
+
+lllliiiiffffeeee3333dddd  Shows Bays' game of 3D life.
+
+lllliiiigggghhhhttttnnnniiiinnnngggg
+        Shows Keith's fractal lightning bolts.
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                    4
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+lllliiiissssaaaa    Shows animated lissajous loops.
+
+lllliiiissssssssiiiieeee  Shows lissajous worms.
+
+lllloooooooopppp    Shows Langton's self-producing loops.
+
+mmmmaaaannnnddddeeeellllbbbbrrrrooootttt
+        Shows mandelbrot sets.
+
+mmmmaaaarrrrqqqquuuueeeeeeee Shows text.
+
+mmmmaaaazzzzeeee    Shows a random maze and a depth first  search  solu-
+        tion.
+
+mmmmooooeeeebbbbiiiiuuuussss Shows the Moebius Strip II, an Escher-like GL  scene
+        with ants.  May not be available depending on how it
+        was configured.
+
+mmmmoooorrrrpppphhhh3333dddd Shows GL morphing polyhedra.  May not  be  available
+        depending on how it was configured.
+
+mmmmoooouuuunnnnttttaaaaiiiinnnn
+        Shows Papo's mountain range.
+
+mmmmuuuunnnncccchhhh   Shows munching squares.
+
+nnnnoooosssseeee    Shows a man with a big nose runs around spewing  out
+        text.
+
+ppppaaaaccccmmmmaaaannnn  Shows Pacman(tm).
+
+ppppiiiippppeeeessss   Shows a  self-building  pipe  system.   May  not  be
+        available depending on how it was configured.
+
+ppppeeeennnnrrrroooosssseeee Shows Penrose's quasiperiodic tilings.
+
+ppppeeeettttaaaallll   Shows various GCD Flowers.
+
+ppppuuuuzzzzzzzzlllleeee  Shows a puzzle being scrambled and then solved.
+
+ppppyyyyrrrroooo    Shows fireworks.
+
+qqqqiiiixxxx     Shows spinning lines a la Qix(tm).
+
+rrrroooollllllll    Shows a rolling ball.
+
+rrrroooottttoooorrrr   Shows Tom's Roto-Rooter.
+
+rrrruuuubbbbiiiikkkk   Shows an auto-solving  Rubik's  Cube.   May  not  be
+        available depending on how it was configured.
+
+sssshhhhaaaappppeeee   Shows stippled rectangles, ellipses, and triangles.
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                    5
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+ssssiiiieeeerrrrppppiiiinnnnsssskkkkiiii
+        Shows a Sierpinski's triangle.
+
+sssslllliiiipppp    Shows slipping blits.
+
+sssspppphhhheeeerrrreeee  Shows a bunch of shaded spheres.
+
+ssssppppiiiirrrraaaallll  Shows a helical locus of points.
+
+sssspppplllliiiinnnneeee  Shows colorful moving splines.
+
+sssspppprrrrooooiiiinnnnggggiiiieeeessss
+        Shows Sproingies!   Nontoxic.   Safe  for  pets  and
+        small  children.   May not be available depending on
+        how it was configured.
+
+ssssttttaaaaiiiirrrrssss  Shows Infinite Stairs, an Escher-like GL scene.  May
+        not be available depending on how it was configured.
+
+ssssttttaaaarrrr    Shows a star field with a twist.
+
+ssssttttrrrraaaannnnggggeeee Shows strange attractors.
+
+ssssuuuuppppeeeerrrrqqqquuuuaaaaddddrrrriiiiccccssss
+        Shows 3D mathematical shapes.  May not be  available
+        depending on how it was configured.
+
+sssswwwwaaaarrrrmmmm   Shows a swarm of bees following a wasp.
+
+sssswwwwiiiirrrrllll   Shows animated swirling patterns.
+
+tttthhhhoooorrrrnnnnbbbbiiiirrrrdddd
+        Shows an animated Bird in a Thorn Bush fractal map.
+
+ttttrrrriiiiaaaannnngggglllleeee
+        Shows a triangular mountain range.
+
+ttttuuuubbbbeeee    Shows an animated tube.
+
+ttttuuuurrrrttttlllleeee  Shows turtle fractals.
+
+vvvviiiinnnneeeessss   Shows fractal-like vines.
+
+vvvvooootttteeeerrrrssss  Shows Dewdney's Voters.
+
+wwwwaaaattttoooorrrr   Shows  Dewdney's  Water-Torus  planet  of  fish  and
+        sharks.
+
+wwwwiiiirrrreeee    Shows a random circuit with 2 electrons.
+
+wwwwoooorrrrlllldddd   Shows spinning Earths.
+
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                    6
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+wwwwoooorrrrmmmm    Shows wiggly worms.
+
+bbbbllllaaaannnnkkkk   Shows nothing but a black screen.  Does not show  up
+        in random mode.
+
+bbbboooommmmbbbb    Shows a bomb and will autologout after a time.  Does
+        not  show  up  in  random  mode and may be available
+        depending on how it was configured.
+
+rrrraaaannnnddddoooommmm  Shows a random mode from  above  except  blank  (and
+        bomb).
+
+
+-ddddeeeellllaaaayyyy _u_s_e_c_s
+     The _d_e_l_a_y option sets the speed at which  a  mode  will
+     operate.   It simply sets the number of microseconds to
+     delay between batches of animations.  In blank mode, it
+     is  important  to  set  this  to  some  small number of
+     seconds,  because  the  keyboard  and  mouse  are  only
+     checked  after  each delay, so you cannot set the delay
+     too high, but a delay of zero would needlessly  consume
+     cpu  checking  for  mouse and keyboard input in a tight
+     loop, since blank mode has no work to do.
+
+-ccccoooouuuunnnntttt _n_u_m
+     The _b_a_t_c_h_c_o_u_n_t option sets number of _t_h_i_n_g_s to  do  per
+     batch to _n_u_m .
+
+     In ant mode this refers the number of ants.
+
+     In atlantis mode it is the number of sharks.
+
+     In ball mode it is the number of balls.
+
+     In bat mode it is the number of  bats,  could  be  less
+     because of conflicts.
+
+     In blot mode this refers to the number of  pixels  ren-
+     dered in the same color.
+
+     In bouboule mode it is the number of stars.
+
+     In bounce mode it is the number of balls, could be less
+     because of conflicts.
+
+     In braid mode it is the upper bound number of strands.
+
+     In bubble mode it is the number of bubbles.
+
+     In bubble3d mode it is the number of bubbles.
+
+     In bug mode it is the number of  bugs,  could  be  less
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                    7
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+     because of conflicts.
+
+     In cage mode it is means nothing.
+
+     In cartoon mode it means nothing.
+
+     In clock mode it is the percentage of the  screen,  but
+     less than 100%.
+
+     In coral mode it is the number of seeds.
+
+     In crystal mode it is the number of polygons.
+
+     In daisy mode it is the  number  flowers  that  make  a
+     meadow.
+
+     In dclock mode it means nothing.
+
+     In deco mode it is the depth.
+
+     In demon mode this refers the number of colors.
+
+     In dilemma mode  this  refers  the  number  of  initial
+     defectors.
+
+     In discrete mode it is the number of points.
+
+     In drift mode it is the number  of  levels  to  recurse
+     (larger = more complex).
+
+     In eyes mode it is the number of eyes.
+
+     In fadeplot mode it is the number of steps.
+
+     In flag mode it means nothing.
+
+     In flame mode it is the number  of  levels  to  recurse
+     (larger = more complex).
+
+     In flow mode it is the number of bees.
+
+     In forest mode it is  the  number  trees  that  make  a
+     forest.
+
+     In galaxy mode it means the number of galaxies.
+
+     In gears mode it is the number of degrees to rotate the
+     set of gears by.
+
+     In goop mode it means nothing.
+
+     In grav mode it is the number of planets.
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                    8
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+     In helix mode it means nothing.
+
+     In hop mode this refers to the number  of  pixels  ren-
+     dered in the same color.
+
+     In hyper mode it the number of dimensions.
+
+     In ico mode it is the ith platonic solid.
+
+     In ifs mode it means nothing.
+
+     In image mode it means it is the  number  of  logos  on
+     screen at once.
+
+     In julia mode it is the depth of recursion.
+
+     In kaleid mode it is the number of pens.
+
+     In laser mode it is the number lasers.
+
+     In life mode it is the number of generations  before  a
+     glider is introduced.
+
+     In life1d mode it means nothing.
+
+     In life3d mode it is the number of generations before a
+     glider is introduced.
+
+     In lisa mode it is the number of loops.
+
+     In lissie mode it is the number of worms.
+
+     In loop mode it means nothing.
+
+     In mandelbrot mode it is the order.
+
+     In marquee mode it means nothing.
+
+     In maze mode it means nothing.
+
+     In moebius mode it is means nothing.
+
+     In morph3d mode it is the ith platonic solid.
+
+     In mountain mode it is the number of mountains.
+
+     In munch mode it means nothing.
+
+     In nose mode it means nothing.
+
+     In qix mode it is the number of points.
+
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                    9
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+     In pacman mode it means the number of ghosts.
+
+     In penrose mode it means nothing.
+
+     In petal mode it the greatest random number of petals.
+
+     In pipes mode it shows different joints,  0  random,  1
+     spherical, 2 bolted elbow, 3 elbow, and 4 alternating.
+
+     In puzzle mode it the number of moves.
+
+     In pyro mode it is the maximum number flying rockets at
+     one time.
+
+     In roll mode it is the number of points.
+
+     In rotor mode it is the number of rotor  thingys  which
+     whirr...
+
+     In rubik mode it is the number of moves.
+
+     In shape mode it means nothing.
+
+     In sierpinski mode it is the number of points.
+
+     In slip mode it means nothing.
+
+     In sphere mode it means nothing.
+
+     In spiral mode it is the number of spirals.
+
+     In spline mode it is the number of points "splined".
+
+     In sproingies mode it is the number of sproingies.
+
+     In stairs mode it is means nothing.
+
+     In star mode it is the number of stars on the screen at
+     once.
+
+     In strange mode it means nothing.
+
+     In superquadrics mode its the number of horizontal  and
+     vertical lines in the superquadric.
+
+     In swirl mode it means the number of "knots".
+
+     In swarm mode it is the number of bees.
+
+     In thornbird mode it is the number of points.
+
+     In triangular mode it is the number of mountains.
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   10
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+     In tube mode it is a rectangle (= 1), an ellipse (= 2),
+     or a polygon if greater.
+
+     In turtle mode it means nothing.
+
+     In vines mode it is draw a complete vine  (=  0)  or  a
+     portion (= 1).
+
+     In voters mode it means the number of parties, 2 or 3.
+
+     In wator mode it means the breed time for the fish.
+
+     In wire mode it means the length of the circuit.
+
+     In world mode it is the number of worlds.
+
+     In worm mode it is the number of worms.
+
+     In blank mode it means nothing.
+
+     In bomb mode it means the number of minutes to  autolo-
+     gout.
+
+     A negative _c_o_u_n_t allows for randomness.  The range from
+     the  minimum allowed nonnegative _c_o_u_n_t for a particular
+     mode to the ABS( _c_o_u_n_t ) (or maximum  allowed  _c_o_u_n_t  ,
+     whichever is less).
+
+-bbbbaaaattttcccchhhhccccoooouuuunnnntttt _n_u_m
+     The _b_a_t_c_h_c_o_u_n_t option is depreciated but  should  still
+     work as _c_o_u_n_t.
+
+-ccccyyyycccclllleeeessss _n_u_m
+     The _c_y_c_l_e_s option sets the number of cycles until  time
+     out  for  ant, blot, braid, bug, clock, crystal, daisy,
+     deco,  demon,  dilemma,  discrete,  eyes,  flag,  flow,
+     forest,  galaxy,  helix,  hop, hyper, ico, laser, life,
+     life1d, life3d, lisa, lissie, loop,  mandelbrot,  moun-
+     tain,  petal,  sierpinski, shape, spline +erase, thorn-
+     bird, triangle, tube, voters,  wator,  and  wire.   For
+     worm  it is the length of the lines, for atlantis it is
+     the shark speed, for fadeplot, julia and spiral  it  is
+     the  length  of  the  trail  of  dots,  munch it is the
+     minimum size of the squares, for kaleid it is the %  of
+     black,  for  qix  it is the number of lines, for spline
+     -erase it means the number of splines * 64 (for  compa-
+     tibility  with  +erase),  for gears it is the number of
+     degrees to increment the spin  of  each  gear  by,  for
+     pipes it is the number of systems to draw before clear-
+     ing the screen, for rubik it is the number of steps  to
+     complete  a 90 move, for superquadrics it is the number
+     of frames it takes to morph from one shape to  another.
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   11
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+     For others it means nothing.
+
+-ssssiiiizzzzeeee _n_u_m
+     The _s_i_z_e option sets the size maximum size of a star in
+     bouboule,  pyro  and  star,  size  of  ball in ball and
+     bounce, size of bat in bat, maximum size of  bubble  in
+     bubble, size of clock in clock, minimum size of rectan-
+     gles in deco, size of the polygon in crystal,  size  of
+     polyhedron  in  ico,  size of lissie in lissie, size of
+     dots of flag, for kaleid it is the symmetry,  width  of
+     maze  hallway,  size of side of penrose tile, radius of
+     loop in lisa, radius of ball in roll, number of corners
+     in  sierpinski,  size of tube in tube, width of worm in
+     worm, line width in rotor, size of cells in  ant,  bug,
+     dilemma, life, life1d, pacman, voters, wator, and wire.
+     In pipes it is the maximum  length  of  a  system.   In
+     atlantis it is the shark size.  In sproingies it is the
+     size of the screen.  A negative number allows for  ran-
+     domness, similar to _c_o_u_n_t.
+
+-nnnnccccoooolllloooorrrrssss _n_u_m
+     The _n_c_o_l_o_r_s option sets the maximum number of colors to
+     be used.
+
+-ssssaaaattttuuuurrrraaaattttiiiioooonnnn _v_a_l_u_e
+     The _s_a_t_u_r_a_t_i_o_n option sets saturation of the color ramp
+     used  to  _v_a_l_u_e  .  0  is  grayscale and 1 is very rich
+     color.  0.4 is a nice pastel.
+
+++++////----nnnnoooolllloooocccckkkk
+     The _n_o_l_o_c_k option causes xxxxlllloooocccckkkk to only  draw  the  pat-
+     terns and not lock the display.  A key press or a mouse
+     click will terminate the screen saver.
+
+----////++++iiiinnnnwwwwiiiinnnnddddoooowwww
+     Runs xxxxlllloooocccckkkk in a window, so that you can iconify,  move,
+     or resize it and still use your screen for other stuff.
+     When running in a window, xxxxlllloooocccckkkk no  longer  locks  your
+     screen, it just looks good.
+
+----////++++iiiinnnnrrrrooooooootttt
+     Runs xxxxlllloooocccckkkk in your  root  window.   Like  the  _i_n_w_i_n_d_o_w
+     option  it  no  longer  locks the screen, it just looks
+     good.
+
+----////++++rrrreeeemmmmooootttteeee
+     The _r_e_m_o_t_e option tells xxxxlllloooocccckkkk  to  not  stop  you  from
+     locking remote X11 servers.  This option should be used
+     with care and is intended mainly to lock X11  terminals
+     which  cannot  run  xxxxlllloooocccckkkk locally.  If you lock someone
+     else's workstation, they will have to know  yyyyoooouuuurrrr  pass-
+     word   to  unlock  it.   Using  +_r_e_m_o_t_e  overrides  any
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   12
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+     resource derived values for _r_e_m_o_t_e and  prevents  xxxxlllloooocccckkkk
+     from  being  used  to lock other X11 servers.  (Use `+'
+     instead of `-' to override resources for other  options
+     that can take the `+' modifier similarly.)
+
+----////++++mmmmoooonnnnoooo
+     The _m_o_n_o option causes  xxxxlllloooocccckkkk  to  display  monochrome,
+     (black  and  white)  pixels  rather  than  the  default
+     colored ones on color displays.
+
+----////++++aaaalllllllloooowwwwaaaacccccccceeeessssssss
+     This option is required for servers which do not  allow
+     clients  to modify the host access control list.  It is
+     also useful if you need to run x clients  on  a  server
+     which is locked for some reason...  When _a_l_l_o_w_a_c_c_e_s_s is
+     true, the X11 server is left open for clients to attach
+     and  thus  lowers  the  inherent  security of this lock
+     screen.  A side effect of using this option is that  if
+     xxxxlllloooocccckkkk  is  killed -KILL, the access control list is not
+     lost.
+
+----////++++aaaalllllllloooowwwwrrrrooooooootttt
+     The _a_l_l_o_w_r_o_o_t option allows the root password to unlock
+     the  server as well as the user who started xxxxlllloooocccckkkk.  May
+     not be able to turn this on and off depending  on  your
+     system and how xxxxlllloooocccckkkk was configured.
+
+----////++++ddddeeeebbbbuuuugggg
+     Allows xxxxlllloooocccckkkk to be debugged by doing  all  but  locking
+     the screen.
+
+----////++++eeeecccchhhhooookkkkeeeeyyyyssss
+     The _e_c_h_o_k_e_y_s option causes xxxxlllloooocccckkkk to echo '?' characters
+     for each key typed into the password prompt.  Some con-
+     sider this a security risk, so the default  is  to  not
+     echo anything.
+
+----////++++eeeennnnaaaabbbblllleeeessssaaaavvvveeeerrrr
+     By default xxxxlllloooocccckkkk will disable  the  normal  X  server's
+     screen  saver  since  it is in effect a replacement for
+     it.  Since it is possible to set delay parameters  long
+     enough  to  cause  phosphor burn on some displays, this
+     option will turn back on the default screen saver which
+     is very careful to keep most of the screen black.
+
+----////++++rrrreeeesssseeeettttssssaaaavvvveeeerrrr
+     By default xxxxlllloooocccckkkk will call XResetScreenSaver.  This may
+     be undesirable with DPMS monitors.
+
+----////++++ggggrrrraaaabbbbmmmmoooouuuusssseeee
+     The _g_r_a_b_m_o_u_s_e option causes xxxxlllloooocccckkkk to grab the mouse and
+     keyboard,  this is the default.  xxxxlllloooocccckkkk can not lock the
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   13
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+     screen without this.
+
+----////++++ggggrrrraaaabbbbsssseeeerrrrvvvveeeerrrr
+     The _g_r_a_b_s_e_r_v_e_r option causes xxxxlllloooocccckkkk to grab the  server.
+     This  is not usually needed but some unsecure X servers
+     can be defeated without this.
+
+----////++++iiiinnnnssssttttaaaallllllll
+     Allows xxxxlllloooocccckkkk to install its own colormap if xxxxlllloooocccckkkk  runs
+     out  of  colors.   May  not  work  on  with some window
+     managers (fvwm) and does  not  work  with  the  -inroot
+     option.
+
+----////++++mmmmoooouuuusssseeeemmmmoooottttiiiioooonnnn
+     Allows you to turn on and off the  sensitivity  to  the
+     mouse to bring up the password window.
+
+----////++++ssssoooouuuunnnndddd
+     Allows you to turn on and off sound if  installed  with
+     the capability.
+
+----////++++ttttiiiimmmmeeeeeeeellllaaaappppsssseeeedddd
+     Allows you to find out how long a machine is locked  so
+     you  can  complain  to an administrator that someone is
+     hogging a machine.
+
+----////++++uuuusssseeeeffffiiiirrrrsssstttt
+     The _u_s_e_f_i_r_s_t option causes xxxxlllloooocccckkkk to use  the  keystroke
+     which got you to the password screen as the first char-
+     acter in the password.  The default is  to  ignore  the
+     first key pressed.
+
+----////++++vvvveeeerrrrbbbboooosssseeee
+     Verbose mode, tells what options it is going to use.
+
+-nnnniiiicccceeee _n_i_c_e_l_e_v_e_l
+     The _n_i_c_e option sets system nicelevel of the xxxxlllloooocccckkkk pro-
+     cess to _n_i_c_e_l_e_v_e_l .
+
+-lllloooocccckkkkddddeeeellllaaaayyyy _s_e_c_o_n_d_s
+     The _l_o_c_k_d_e_l_a_y option sets the number of _s_e_c_o_n_d_s  before
+     the  screen  needs a password to be unlocked.  Good for
+     use with an autolocking mechanism like xautolock(1).
+
+-ttttiiiimmmmeeeeoooouuuutttt _s_e_c_o_n_d_s
+     The _t_i_m_e_o_u_t option sets the number  of  _s_e_c_o_n_d_s  before
+     the password screen will time out.
+
+-ffffoooonnnntttt _f_o_n_t_n_a_m_e
+     The _f_o_n_t option sets the font to be used on the  prompt
+     screen.
+
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   14
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+-ppppllllaaaannnnffffoooonnnntttt _f_o_n_t_n_a_m_e
+     option sets the font to be used for the  text  that  is
+     displayed in the lower part of the password screen.
+
+-ffffgggg _c_o_l_o_r
+     The _f_g option sets the color of the text on  the  pass-
+     word screen to _c_o_l_o_r .
+
+-bbbbgggg _c_o_l_o_r
+     The _b_g option sets the color of the background  on  the
+     password screen to _c_o_l_o_r .
+
+-ffffoooorrrreeeeggggrrrroooouuuunnnndddd _c_o_l_o_r
+     The _f_o_r_e_g_r_o_u_n_d option sets the color of the text on the
+     password screen to _c_o_l_o_r .
+
+-bbbbaaaacccckkkkggggrrrroooouuuunnnndddd _c_o_l_o_r
+     The _b_a_c_k_g_r_o_u_n_d option sets the color of the  background
+     on the password screen to _c_o_l_o_r .
+
+-uuuusssseeeerrrrnnnnaaaammmmeeee _s_t_r_i_n_g
+     Text _s_t_r_i_n_g is shown in front of user name, defaults to
+     "Name: ".
+
+-ppppaaaasssssssswwwwoooorrrrdddd _s_t_r_i_n_g
+     Text _s_t_r_i_n_g is the password prompt string, defaults  to
+     "Password: ".
+
+-iiiinnnnffffoooo _s_t_r_i_n_g
+     Text _s_t_r_i_n_g is an informational  message  to  tell  the
+     user what to do, defaults to "Enter password to unlock;
+     select icon to lock.".
+
+-vvvvaaaalllliiiiddddaaaatttteeee _s_t_r_i_n_g
+     Text _s_t_r_i_n_g is a message  shown  while  validating  the
+     password, defaults to "Validating login..."
+
+-iiiinnnnvvvvaaaalllliiiidddd _s_t_r_i_n_g
+     Text  _s_t_r_i_n_g  is  a  message  shown  when  password  is
+     invalid, defaults to "Invalid login."
+
+-ggggeeeeoooommmmeeeettttrrrryyyy _g_e_o_m
+     The _g_e_o_m_e_t_r_y option sets _g_e_o_m the size  and  offset  of
+     the  lock  window  (normally  the  entire screen).  The
+     entire screen format is still  used  for  entering  the
+     password.  The purpose is to see the screen even though
+     it is locked.  This should be used with  caution  since
+     many of the modes will fail if the windows are far from
+     square or are too small  (size  must  be  greater  than
+     0x0).   This  should  also be used with -enablesaver to
+     protect screen from phosphor burn.
+
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   15
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+-iiiiccccoooonnnnggggeeeeoooommmmeeeettttrrrryyyy _g_e_o_m
+     The _i_c_o_n_g_e_o_m_e_t_r_y option  sets  _g_e_o_m  the  size  of  the
+     iconic  screen  (normally 64x64) seen when entering the
+     password.  This should be used with caution since  many
+     of  the  modes  will  fail  if the windows are far from
+     square or are too small  (size  must  be  greater  than
+     0x0).   The  greatest size is 256x256.  There should be
+     some limit so  users  could  see  who  has  locked  the
+     screen.  Position information of icon is ignored.
+
+-ggggllllggggeeeeoooommmmeeeettttrrrryyyy _g_e_o_m
+     The _g_l_g_e_o_m_e_t_r_y option sets _g_e_o_m the size of the  screen
+     for gl modes.  Not normally available or needed.
+
+----////++++ffffuuuullllllllrrrraaaannnnddddoooommmm
+     Turn  on/off  randomness  options  within  modes.   Not
+     implemented on all mode options.
+
+----////++++wwwwiiiirrrreeeeffffrrrraaaammmmeeee
+     Turn on/off wireframe, available  on  atlantis,  daisy,
+     gears, life3d, mountain, sproingies, superquadrics, and
+     triangle.
+
+----////++++uuuusssseeee3333dddd
+     Turn on/off 3d view, available on bouboule, pyro, star,
+     and worm.
+
+-ddddeeeellllttttaaaa3333dddd _v_a_l_u_e
+     Space between the center of your 2 eyes for 3d mode.
+
+-nnnnoooonnnneeee3333dddd _c_o_l_o_r
+     Color used for empty size in 3d mode.
+
+-rrrriiiigggghhhhtttt3333dddd _c_o_l_o_r
+     Color used for right eye in 3d mode.
+
+-lllleeeefffftttt3333dddd _c_o_l_o_r
+     Color used for left eye in 3d mode.
+
+-bbbbooootttthhhh3333dddd _c_o_l_o_r
+     Color used for overlapping images for  left  and  right
+     eye in 3d mode.
+
+-pppprrrrooooggggrrrraaaammmm _p_r_o_g_r_a_m_n_a_m_e
+     The _p_r_o_g_r_a_m option sets the program to be used  as  the
+     fortune generator.  Currently used only for marquee and
+     nose modes.
+
+-mmmmeeeessssssssaaaaggggeeeessssffffiiiilllleeee _f_o_r_m_a_t_t_e_d-_f_i_l_e_n_a_m_e
+     The _m_e_s_s_a_g_e_s_f_i_l_e option sets the file to be used as the
+     fortune  generator.   The  first entry is the number of
+     fortunes, the next line  contains  the  first  fortune.
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   16
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+     Fortunes  begin  with  a  "%%"  on  a  line  by itself.
+     Currently used only for marquee and nose modes.  If one
+     exists, it takes precedence over the fortune program.
+
+-mmmmeeeessssssssaaaaggggeeeeffffiiiilllleeee _f_i_l_e_n_a_m_e
+     The _m_e_s_s_a_g_e_f_i_l_e option sets the file whose contents are
+     displayed.   Currently  used  only for marquee and nose
+     modes.  If one exists, it  takes  precedence  over  the
+     fortune program and messagesfile.
+
+-mmmmeeeessssssssaaaaggggeeee _t_e_x_t_s_t_r_i_n_g
+     The _m_e_s_s_a_g_e option sets the text to be displayed  in  a
+     mode.   Currently  used only for flag, marquee and nose
+     modes.  If one exists, it  takes  precedence  over  the
+     fortune program, messagesfile and message.
+
+-mmmmeeeessssssssaaaaggggeeeeffffoooonnnntttt _f_o_n_t_n_a_m_e
+     The _m_e_s_s_a_g_e_f_o_n_t option sets the font to be used in  the
+     mode.   Currently used only for flag, marquee, and nose
+     modes.
+
+-bbbbiiiittttmmmmaaaapppp _f_i_l_e_n_a_m_e
+     The _b_i_t_m_a_p option sets the xbm, xpm, or ras file to  be
+     displayed with flag, image, life, life1d, maze, or puz-
+     zle mode.  For eyes and  pacman  only  a  xbm  file  is
+     accepted.  Certain modes reject the bitmap if too big.
+
+-nnnneeeeiiiigggghhhhbbbboooorrrrssss _n_u_m
+     The _n_e_i_g_h_b_o_r_s option sets the number of neighbors of  a
+     cell  to  3,  4,  6,  9 (may not have real mathematical
+     meaning), or 12 for several automata modes.  Setting it
+     to 0 typically randomizes this, except in life where it
+     is set to 8.
+
+----////++++mmmmoooouuuusssseeee
+     Turn on and off mouse interaction in _e_y_e_s,  _j_u_l_i_a,  _a_n_d
+     _s_w_a_r_m.
+
+
+2 MMMMOOOORRRREEEE OOOOPPPPTTTTIIIIOOOONNNNSSSS ((((tttthhhheeeesssseeee mmmmaaaayyyy nnnnooootttt bbbbeeee aaaavvvvaaaaiiiillllaaaabbbblllleeee))))
+-ccccppppaaaasssssssswwwwdddd _c_r_y_p_t_e_d-_p_a_s_s_w_o_r_d
+     The _c_p_a_s_s_w_d option sets the key to be this text  string
+     to unlock xxxxlllloooocccckkkk instead of password file.
+
+-ffffoooorrrrcccceeeeLLLLooooggggoooouuuutttt _m_i_n_u_t_e_s
+     The _f_o_r_c_e_L_o_g_o_u_t option sets _m_i_n_u_t_e_s to auto-logout.
+
+-llllooooggggoooouuuuttttBBBBuuuuttttttttoooonnnnLLLLaaaabbbbeeeellll _s_t_r_i_n_g
+     Text _s_t_r_i_n_g is a message  shown  inside  logout  button
+     when logout button is displayed.  Defaults to "Logout".
+
+-llllooooggggoooouuuuttttBBBBuuuuttttttttoooonnnnHHHHeeeellllpppp _s_t_r_i_n_g
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   17
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+     Text _s_t_r_i_n_g is a message shown  outside  logout  button
+     when  logout  button  is displayed.  Defaults to "Click
+     the \"Logout\" button to log  out  current\n  user  and
+     make workstation available."
+
+-llllooooggggoooouuuuttttFFFFaaaaiiiilllleeeeddddSSSSttttrrrriiiinnnngggg _s_t_r_i_n_g
+     Text _s_t_r_i_n_g  is  a  message  shown  when  a  logout  is
+     attempted  and  fails.   Defaults  to  "Logout  attempt
+     FAILED.\n  Current  user  could  not  be  automatically
+     logged out."
+
+----////++++ddddttttssssaaaavvvveeeerrrr
+     Turn on/off CDE Saver Mode.  This option is only avail-
+     able if CDE support was compiled in.
+
+-mmmmoooodddduuuulllleeeeppppaaaatttthhhh _p_a_t_h
+     The _m_o_d_u_l_e_p_a_t_h option sets the _d_i_r_e_c_t_o_r_i_e_s  that  xxxxlllloooocccckkkk
+     searches  for  mode  modules  to  load.   It is a colon
+     separated list of directories to  search.  If  "%S"  is
+     included  in  the  path,  it is replaced by the default
+     modulepath.  To add a private module directory  to  the
+     default  path, use something like '%S:~/mymoduledir' as
+     the path.  This option is only available if module sup-
+     port was compiled in.
+
+-lllloooocccckkkkssssoooouuuunnnndddd _s_t_r_i_n_g
+     Text _s_t_r_i_n_g references  sound  to  use  at  lock  time.
+     Default  sound,  male  voice:   "Thank  you,  for  your
+     cooperation."
+
+-iiiinnnnffffoooossssoooouuuunnnndddd _s_t_r_i_n_g
+     Text _s_t_r_i_n_g references sound to  use  for  information.
+     Default sound, male voice:  "Identify please."
+
+-vvvvaaaalllliiiiddddssssoooouuuunnnndddd _s_t_r_i_n_g
+     Text _s_t_r_i_n_g references sound  to  when  a  password  is
+     valid.  Default sound, female voice:  "Complete."
+
+-iiiinnnnvvvvaaaalllliiiiddddssssoooouuuunnnndddd _s_t_r_i_n_g
+     Text _s_t_r_i_n_g references sound  to  when  a  password  is
+     invalid.   Default  sound, female voice: "I am not pro-
+     grammed to give you that information."
+
+-ssssttttaaaarrrrttttCCCCmmmmdddd _s_t_r_i_n_g
+     Text _s_t_r_i_n_g command  to  execute  when  the  screen  is
+     locked.  Commonly  used instructions include:  "zaway".
+     This command, if still  running  when  the  screensaver
+     exist, will be killed.
+
+-eeeennnnddddCCCCmmmmdddd _s_t_r_i_n_g
+     Text _s_t_r_i_n_g command  to  execute  when  the  screen  is
+     unlocked.
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   18
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+-llllooooggggoooouuuuttttCCCCmmmmdddd _s_t_r_i_n_g
+     Text _s_t_r_i_n_g command to execute when  the  program  logs
+     the  user out (either via the autologout or by pressing
+     the logout button).
+
+-mmmmaaaaiiiillllCCCCmmmmdddd _s_t_r_i_n_g
+     Text _s_t_r_i_n_g command to  execute  when  the  program  to
+     check mail.
+
+-mmmmaaaaiiiillllIIIIccccoooonnnn _s_t_r_i_n_g
+     Text _s_t_r_i_n_g of file for the "mail arrived" bitmap.
+
+-nnnnoooommmmaaaaiiiillllIIIIccccoooonnnn _s_t_r_i_n_g
+     Text _s_t_r_i_n_g of file for the "no mail" bitmap.
+
+----ddddppppmmmmssssssssttttaaaannnnddddbbbbyyyy  sssseeeeccccoooonnnnddddssss
+     Allows one to  set  DPMS  Standby  for  monitor  (0  is
+     defined  as  infinite).   (Horizontal sync on, Vertical
+     sync off, RGB guns off, power supply on, tube filaments
+     energized,   (screen  saver  mode).   Typical  17  inch
+     screen...  110 out of 120 watts with a 3  sec  recovery
+     time.)   This  option is only available if DPMS support
+     was compiled in.
+
+----ddddppppmmmmssssssssuuuussssppppeeeennnndddd  sssseeeeccccoooonnnnddddssss
+     Allows one to  set  DPMS  Suspend  for  monitor  (0  is
+     defined  as  infinite).  (Horizontal sync off, Vertical
+     sync on, RGB guns off, power supply off, tube filaments
+     energized.   Typical  17 inch screen ...  15 out of 120
+     watts with a 3 sec recovery time.)  This option is only
+     available if DPMS support was compiled in.
+
+----ddddppppmmmmssssooooffffffff  sssseeeeccccoooonnnnddddssss
+     Allows one to set DPMS Power  Off  for  monitor  (0  is
+     defined  as  infinite).  (Horizontal sync off, Vertical
+     sync off, Small auxiliary circuit stays on  to  monitor
+     the HS/VS signals to enable power on when data needs to
+     be displayed on the screen.  Typical 17 inch screen ...
+     5  out of 120 watts with a 10 sec recovery time.)  This
+     option is only available if DPMS support  was  compiled
+     in.
+
+
+2 SSSSPPPPEEEECCCCIIIIAAAALLLL MMMMOOOODDDDEEEE DDDDEEEEPPPPEEEENNNNDDDDEEEENNNNTTTT OOOOPPPPTTTTIIIIOOOONNNNSSSS
+-wwwwhhhhaaaalllleeeessssppppeeeeeeeedddd _n_u_m
+     Allows one to set the speed of the whales  and  dolphin
+     in _a_t_l_a_n_t_i_s.
+
+----////++++ttttrrrruuuucccchhhheeeetttt
+     Turn on and off Truchet lines (trail) in _a_n_t.
+
+----////++++bbbbooooiiiillll
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   19
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+     Turn on and off having the bubbles bubble up in _b_u_b_b_l_e.
+
+-bbbboooonnnnuuuussss _v_a_l_u_e
+     Allows one to set the bonus for cheating... between 1.0
+     and 4.0 in _d_i_l_e_m_m_a.
+
+----////++++ggggaaaarrrrddddeeeennnn
+     Turn off and on garden look in _d_a_i_s_y.
+
+----////++++ccccoooonnnnsssscccciiiioooouuuussss
+     Turn off and on self-awareness in _d_i_l_e_m_m_a.
+
+----////++++ggggrrrroooowwww
+     Turn  on  and  off  growing  fractals  (else  they  are
+     animated) for _d_r_i_f_t.
+
+----////++++lllliiiissssssss
+     Turn on and off using lissajous figures to  get  points
+     for _d_r_i_f_t.
+
+----////++++nnnnooooaaaannnnttttssss
+     Turn off and on ants in _m_o_e_b_i_u_s.
+
+----////++++ssssoooolllliiiiddddmmmmooooeeeebbbbiiiiuuuussss
+     Turn on and off solid Mobius strip in _m_o_e_b_i_u_s.
+
+----////++++iiiinnnnvvvveeeerrrrtttt
+     Turn on and off inverting of the _f_l_a_g.
+
+----////++++ttttrrrraaaacccckkkkssss
+     Turn on and off star tracks in _g_a_l_a_x_y.
+
+----////++++ddddeeeeccccaaaayyyy
+     Turn on and off decaying orbits for _g_r_a_v.
+
+----////++++ttttrrrraaaaiiiillll
+     Turn on and off decaying trail of dots for _g_r_a_v.
+
+----////++++eeeelllllllliiiippppsssseeee
+     Turn on and off ellipse format in _h_e_l_i_x.
+
+----////++++mmmmaaaarrrrttttiiiinnnn
+     Turn on and off Barry Martin's square root _h_o_p.
+
+----////++++eeeejjjjkkkk1111............eeeejjjjkkkk6666
+     Turn on and off Ed J. Kubaitis' _h_o_p_s.
+
+----////++++rrrrrrrr
+     Turn on and off Renaldo Recuerdo's _h_o_p.
+
+----////++++jjjjoooonnnngggg
+     Turn on and off Jong's _h_o_p.
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   20
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+----////++++ssssiiiinnnneeee
+     Turn on and off Barry Martin's sine _h_o_p.
+
+----////++++ddddiiiissssccccoooonnnnnnnneeeecccctttteeeedddd
+     Turn on and off disconnected pen movement in _k_a_l_e_i_d.
+
+----////++++sssseeeerrrriiiiaaaallll
+     Turn on and off  sequential  allocation  of  colors  in
+     _k_a_l_e_i_d.
+
+----////++++aaaalllltttteeeerrrrnnnnaaaatttteeee
+     Turn on and off alternate rotated display mode _k_a_l_e_i_d.
+
+----////++++qqqquuuuaaaadddd
+     Turn on and off quad mirrored/rotated mode  similar  to
+     size 4 in _k_a_l_e_i_d.
+
+----////++++oooocccctttt
+     Turn on and off oct mirrored/rotated  mode  similar  to
+     size 8 in _k_a_l_e_i_d.
+
+----////++++lllliiiinnnneeeeaaaarrrr
+     Turn on and  off  Cartesian/Polar  coordinate  mode  in
+     _k_a_l_e_i_d.
+
+-rrrruuuulllleeee _S<_n_e_i_g_h_b_o_r_h_o_o_d>/_B<_n_e_i_g_h_b_o_r_h_o_o_d>
+     Allows one to set _l_i_f_e survival and  birth  parameters.
+     For  example, Conway's rule is S23/B3.  Special parame-
+     ters: P, picks a random rule from all rules  that  have
+     known  patterns;  G, picks a random rule from all rules
+     that have known gliders.
+
+-lllliiiiffffeeeeffffiiiilllleeee _f_i_l_e_n_a_m_e
+     The _l_i_f_e_f_i_l_e option sets the lifeform.  Only one format
+     is currently supported, the #P xlife format.
+
+----////++++ccccaaaallllllllaaaahhhhaaaannnn
+     Turn on and off  Paul  Callahan's  S2b34/B2a  hexagonal
+     _l_i_f_e.
+
+----////++++aaaannnnddddrrrreeeeeeeennnn
+     Turn on and off Bob Andreen's S2a2b4a/B2a3a4b hexagonal
+     _l_i_f_e.
+
+----////++++ttttoooottttaaaalllliiiissssttttiiiicccc
+     Turn on and off totalistic rules for _l_i_f_e_1_d. If this is
+     off  then  it  follows  rules  of  the LCAU collection.
+     These rules may not be symmetric and are more general.
+
+-rrrruuuulllleeee3333dddd _S<_n_e_i_g_h_b_o_r_h_o_o_d>/_B<_n_e_i_g_h_b_o_r_h_o_o_d>
+     Allows one to set _l_i_f_e_3_d survival and birth parameters.
+     For  example,  Bay's  rules are S45/B5, S567/B6 S56/B5,
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   21
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+     and S67/B67.  There is currently no  way  of  accessing
+     neighborhoods beyond 9.  Special parameters: P, picks a
+     random rule from all rules that have known patterns; G,
+     picks  a  random  rule  from  all rules that have known
+     gliders.
+
+-lllliiiiffffeeee3333ddddffffiiiilllleeee _f_i_l_e_n_a_m_e
+     The _l_i_f_e_3_d_f_i_l_e option sets the lifeform.  Only one for-
+     mat  is  currently  supported,  similar to the #P xlife
+     format.  2 linefeeds in a row are  assumed  to  advance
+     the depth.
+
+----////++++aaaaddddddddiiiittttiiiivvvveeee
+     Turn on and off additive functions mode in _l_i_s_a.
+
+----////++++aaaammmmmmmmaaaannnnnnnn
+     Turn on and off lines for _p_e_n_r_o_s_e.
+
+-iiiinnnnccccrrrreeeemmmmeeeennnntttt _v_a_l_u_e
+     Allows fine adjustments to order in _m_a_n_d_e_l_b_r_o_t.
+
+----////++++eeeerrrraaaasssseeee
+     Turn on and off erasing for _s_p_l_i_n_e. If this  option  is
+     on,  _c_y_c_l_e_s  is  divided by 64 to compute the number of
+     lines, so as to be compatible when using -fullrandom.
+
+-ffffaaaaccccttttoooorrrryyyy _n_u_m
+     Number of extra factory parts in _p_i_p_e_s.
+
+----////++++ffffiiiisssshhhheeeeyyyyeeee
+     Turn on if you want a zoomed-in view of _p_i_p_e_s.
+
+----////++++ttttiiiigggghhhhttttttttuuuurrrrnnnnssss
+     Turn on if you want the _p_i_p_e_s to bend more often.
+
+----////++++rrrroooottttaaaatttteeeeppppiiiippppeeeessss
+     Turn on if you want the pipe system rotated in _p_i_p_e_s.
+
+----////++++ccccoooommmmpppplllleeeetttteeee
+     Turn on or off complete graph morphing in _q_i_x.
+
+----////++++hhhhiiiiddddeeeesssshhhhuuuufffffffflllliiiinnnngggg
+     Turn on or off hidden shuffle phase for _r_u_b_i_k.
+
+----////++++bbbboooorrrrddddeeeerrrr
+     Turn on or off borders in _s_h_a_p_e.
+
+----////++++_s_h_a_p_e
+     Turn on or off shadowing in _s_h_a_p_e.
+
+----////++++_s_h_a_p_e
+     Turn on or off stippling in _s_h_a_p_e.
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   22
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+-ttttrrrreeeekkkk _n_u_m
+     If its a high number you will see the  space  ship  all
+     the time in _s_t_a_r.
+
+----////++++rrrroooocccckkkk
+     Turn on and off rocks for _s_t_a_r. If this is  off,  stars
+     will be seen instead.
+
+----////++++ssssttttrrrraaaaiiiigggghhhhtttt
+     Turn on if _s_t_a_r gets you motion sick.
+
+-ssssppppiiiinnnnssssppppeeeeeeeedddd _n_u_m
+     Set speed of rotation, in degrees per frame for  _s_u_p_e_r_-
+     _q_u_a_d_r_i_c_s.
+
+-dddduuuurrrraaaattttiiiioooonnnn _s_e_c_o_n_d_s
+     Allows one to set a duration  for  a  mode  in  _r_a_n_d_o_m.
+     Duration of 0 is defined as infinite.
+
+-mmmmooooddddeeeelllliiiisssstttt _t_e_x_t_s_t_r_i_n_g
+     Allows one to pass a list of files to randomly  display
+     to _r_a_n_d_o_m. "all" will get all files but blank (and bomb
+     if  compiled  in).  "all,blank"  will  get  all  modes.
+     "all,-image bounce,+blank" will get all modes but image
+     and bounce.  "bug wator" will get only bug  and  wator.
+     "allgl"  will  get  only  the  GL modes if compiled in,
+     all-allgl will get all but the GL modes, "allnice" will
+     weed  out  high cpu usage modes (as well as hackers and
+     gl modes).  "allxpm" will get all modes that  use  xpm.
+     "allwrite"  will  get  all modes that take advantage of
+     writable colormaps (not including xpm).   "all3d"  will
+     get all the modes that support this option.  "allmouse"
+     will get all the modes that support mouse  interaction.
+     Similarly,  "allautomata" for automata modes, "allfrac-
+     tal" for  fractal  modes,  "allgeometry"  for  geometry
+     modes,  "allspace"  for  space  modes.  The random mode
+     itself can not be referenced.
+
+----////++++sssseeeeqqqquuuueeeennnnttttiiiiaaaallll
+     Turn on non-random _r_a_n_d_o_m option.
+
+
+********WWWWAAAARRRRNNNNIIIINNNNGGGG********
+xxxxlllloooocccckkkk can appear to hang if it is  competing  with  a  high-
+priority  process  for  the  CPU.  For  example, if xxxxlllloooocccckkkk is
+started after a process with  'nice  -20'  (high  priority),
+xxxxlllloooocccckkkk will take  considerable amount of time to respond.
+
+
+2 SSSSHHHHAAAADDDDOOOOWWWW PPPPAAAASSSSSSSSWWWWOOOORRRRDDDDSSSS
+2 If the machine is using a shadow password system, then xxxxlllloooocccckkkk
+may  not  be  set up to get the real password and so must be
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   23
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+given one of its own. This can  be  either  on  the  command
+line,   via   the   ----ccccppppaaaasssssssswwwwdddd   option,   or   in   the  file
+$$$$HHHHOOOOMMMMEEEE////....xxxxlllloooocccckkkkrrrrcccc, with the first taking precedence.   In  both
+cases  an  encrypted  password is expected (see makekey(8)).
+2 If neither is given, then xxxxlllloooocccckkkk will prompt for  a  password
+and  will  use that, also storing an encrypted version of it
+in $$$$HHHHOOOOMMMMEEEE////....xxxxlllloooocccckkkkrrrrcccc for future use.
+
+
+2 BBBBUUUUGGGGSSSS
+"kill -KILL xxxxlllloooocccckkkk " causes the server that was locked to  be
+unusable, since all hosts (including localhost) were removed
+from the access control list to lock out new X clients,  and
+since  xxxxlllloooocccckkkk  could  not catch SIGKILL, it terminated before
+restoring the access control list.  This will  leave  the  X
+server  in  a state where "_y_o_u _c_a_n _n_o _l_o_n_g_e_r _c_o_n_n_e_c_t _t_o _t_h_a_t
+_s_e_r_v_e_r, _a_n_d _t_h_i_s _o_p_e_r_a_t_i_o_n _c_a_n_n_o_t  _b_e  _r_e_v_e_r_s_e_d  _u_n_l_e_s_s  _y_o_u
+_r_e_s_e_t  _t_h_e _s_e_r_v_e_r."            -From the X11R4 Xlib Documen-
+tation, Chapter 7.
+2 NCD terminals do not allow xlock to  remove  all  the  hosts
+from  the  access  control list.  Therefore you will need to
+use the "-remote" and "-allowaccess" switches.  If you  hap-
+pen  to run without "-allowaccess" on an NCD terminal, xxxxlllloooocccckkkk
+will not work and you will need to reboot the  terminal,  or
+simply  go into the SETUP menus, under 'Network Parameters',
+and turn off TCP/IP access control.
+
+2 SSSSEEEEEEEE AAAALLLLSSSSOOOO
+2 X(1), Xlib Documentation.
+
+
+2 AAAAUUUUTTTTHHHHOOOORRRR
+2 Maintained by:
+     David Albert Bagley, <_b_a_g_l_e_y_d@_b_i_g_f_o_o_t._c_o_m>
+
+2 The latest version is currently at:
+     _f_t_p://_f_t_p._t_u_x._o_r_g/_p_u_b/_t_u_x/_b_a_g_l_e_y_d/_x_l_o_c_k_m_o_r_e
+     _f_t_p://_f_t_p._x._o_r_g/_c_o_n_t_r_i_b/_a_p_p_l_i_c_a_t_i_o_n_s
+
+2 Original Author:
+     Patrick J. Naughton, <_n_a_u_g_h_t_o_n@_e_n_g._s_u_n._c_o_m>
+     Mailstop 21-14
+     Sun Microsystems Laboratories, Inc.
+     Mountain View, CA  94043
+     415/336-1080
+
+with many additional contributors.
+
+
+2 CCCCOOOOPPPPYYYYRRRRIIIIGGGGHHHHTTTT
+2 Copyright (C) 1988-91 by Patrick J. Naughton
+2 Copyright (C) 1993-98 by David A. Bagley
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   24
+
+
+
+
+
+
+2 User Commands                                            XLOCK(1)
+
+
+
+2 Permission  to  use,  copy,  modify,  and  distribute   this
+software  and  its documentation for any purpose and without
+fee is hereby granted, provided  that  the  above  copyright
+notice  appear  in  all  copies and that both that copyright
+notice and this permission notice appear in supporting docu-
+mentation.
+2 The original BSD daemon is Copyright (C) 1988 Marshall  Kirk
+2 McKusick.  All Rights Reserved.
+2 DEC, HP, IBM, Linux, SCO, SGI,  and  Sun  icons  have  their
+respective copyrights.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2 X11R6 Contrib       Last change: 18 Jun 1998                   25
+
+
+

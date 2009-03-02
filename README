@@ -1,0 +1,792 @@
+xlockmore-4.11: the maintained version of xlock
+see docs/Revisions for more version stuff
+see docs/TODO for stuff to do :)
+
+Currently the maintainer's real job is changing.
+The future maintainance of xlockmore is unknown. 
+If there is no new releases at ftp://ftp.tux.org/pub/tux/bagleyd/xlockmore
+after 3 months (1 October 98) and no response mail received from
+bagleyd@bigfoot.com, consider xlockmore as no longer maintained.
+(Many thanks for all those who had patience with me... :) ).
+
+Primary site: ftp://ftp.tux.org/pub/people/david-bagley/xlockmore
+Secondary site: ftp://ftp.x.org/contrib/applications
+Web page: http://www.tux.org/~bagleyd/xlockmore.html
+Maintainer: David A. Bagley <bagleyd@bigfoot.com>
+
+Majordomos: Mail to majordomo@tux.org with just
+subscribe [choice] [your-email-address]
+  in the body.
+    choice                  brief description
+    ------                  -----------------
+    xlock-beta              Xlock beta and production announcements
+    xlock-alpha             Xlock alpha ("daily") release announcements
+    xlock                   Xlock/Xlockmore development discussion
+  If there is trailing signature junk, just put "end" as the last line to
+  be read.  If you need help just put "help" in the body.
+
+SECURITY WARNING:
+-----------------
+xlock using the MesaGL Libraries (< 3.0) setuid root has a known method for
+users to obtain root privledges!
+
+Please send all bug reports to bagleyd@bigfoot.com .
+Alpha versions may be available through web page or primary ftp site.
+Adapted from Patrick J. Naughton's original xlock, with lots of help
+ from others.
+
+
+How to build?
+-------------
+  An ANSI C compiler is required for build.
+  motif (and editres) are used to build xmlock and are not used in xlock.
+  athena and sxlib are used to build xalock and are not used in xlock.
+
+  Check below to see if your machine is one mentioned that causes
+  problems, otherwise it should be easy.  Just to be safe after installing 
+  test it with something like: `/usr/local/bin/xlock -debug -verbose`
+
+  There are 3 ways to build:
+
+  configure:
+    `configure --help` to see options.
+
+		configure ; make ; make install
+
+		For Linux and others you may want something like:
+    configure --prefix=/usr/X11R6 ; make ; make install
+    that way it will install it in /usr/X11R6 not /usr/local
+		For Suns you may want:
+    configure --prefix=/usr/openwin ; make ; make install
+
+  imake:
+    Sometimes this is not setup correctly by the distributer ... i.e. not
+    my fault.  You may want to do these quick edits to the iconfig.h so you
+    have more capabilities:
+
+    Do you have XPM?              If so, uncomment "#define XpmLibrary".
+    Do you have OpenGL or MesaGL? If so, uncomment "#define GLLibrary".
+    Do you have CDE?              If so, uncomment "#define DtSaverLibrary".
+    Do you have RPLAY?            If so, uncomment "#define RplayLibrary".
+    Do you have NAS?              If so, uncomment "#define NasLibrary".
+    Do you have Motif?            If so, uncomment "#define XmLibrary".
+
+    Examine iconfig.h for other optional capabilities.
+
+    xmkmf ; make Makefiles ; make depend ; make ; make install
+    or
+    xmkmf -a ; make ; make install
+
+  make.com:
+    See VMS below.
+
+
+Note to binary redistributers:
+-----------------------------
+  Probably should not distribute with any library requirements
+  (except possibly XPM, unless you statically link them in
+  and with USE_BOMB since it might not run right if you do not know
+  if your users will use xdm or not.  For example:
+    configure --without-xpm --without-opengl --without-mesagl
+      --without-dtsaver --without-rplay --without-nas --disable-bomb; make
+  You may want to distribute it with the xlock/XLock.ad file with "XLock."
+  instances replaced with "*".  On Sun's, I need it to override the system
+  XLock.ad  file.
+  Please let me know if there are other concerns.
+
+
+Likely Problems
+---------------
+  Make sure you use the new XLock.ad resource file (or at least remove the
+    old one) otherwise several modes will not be set up nicely.  This is
+    usually put as a file in $HOME/XLock and/or
+    $WHEREVER_X11_IS_LOADED/lib/X11/app-defaults/XLock .
+
+  "Key: " this usually means you should get your administrator to setuid
+    xlock to root or at least setgid xlock to shadow.  If you do not have
+    a friendly administrator it is asking for a key (password) that it will
+    save encrypted your $HOME/.xlockrc file.
+
+  AIX (IBM RS6000)
+    AIX's "make":
+      AIX's "make" can not handle "+=" so if you use the iconfig.h, you
+      have to group all your DEFINES into one long line and use "="
+      instead.  GNU's "make" solves this problem.
+    AIX 3.1 and less:
+      it SHOULD compile automatically with -DLESS_THAN_AIX3_2 using the
+      iconfig.h, since the passwd struct is not available.
+    AIX 3.2 and greater:
+      one must have setuid xlock to root if you want to use it
+      without being root.
+       su - root
+       chown root xlock
+       chmod u+s xlock
+       chmod og+rx xlock
+    AFS users:
+      See iconfig.h, grep on "AFS". 
+    Some machines have an alternate password shadowing method, if someone  
+      figures it out mail me the patch.
+    AIX with DCE you will need "-ls" among the XLOCKLIBS.
+
+  Alpha-OSF/1 (Digital Equipment Corp)
+
+    Enhanced security:
+      Compile with -DOSF1_ENH_SEC see iconfig.h
+        chown auth.auth xlock
+        chmod 2755 xlock
+      Unfortunately the following is reportedly broken since xlockmore-2.10
+      and needs a patch, I heard it produces the following at runtime.
+Unaligned access pid=1767 <xlock> va=140489e24 pc=3ff807d9978 ra=3ff807d9880
+type=ldq
+Segmentation fault (core dumped)
+
+  Apollo (HP)
+    Shift-Control-Break is caught.  See HP.
+
+  CDE (DT) Common Desktop Environment.
+    Go to the CDE DT CONFIG SECTION of the
+     iconfig.h and uncomment (should be autodetected if you use configure)
+XCOMM #define DtSaverLibrary
+    Here's what it does:
+      The DT screensaver is part of the dtwm window manager and what it does
+      is create a full-screen-sized window for each screen of your display.
+      This is different from other screen savers which use virtual roots.
+
+      What the DTSAVER option does is basically call a DT routine that
+      returns the id's of the windows it creates for the screensaver.  Then
+      xlockmore will use these windows to display its stuff.
+
+      DT has a program where you can select your screensaver modes (or
+      screen saver programs), ala xmlock, and set your screensaver settings.
+      It also creates a small window where if you select a particular mode
+      it will run the screen saver and display it on that small window.
+
+    Here's how to set it up on your home directory.
+      cp etc/dtprofile $HOME/.dtprofile
+        This uses a ksh syntax.  If your shell is csh or other change it
+        accordingly.
+      cp etc/dtscreen.dt $HOME/.dt/types
+        The actions points to /usr/remote so you may want to change this.
+      After this you need to completely logout from your CDE session and log 
+      back in so it will read the .dtprofile.  (If you just modify the actions
+      in dtscreen.dt you don't need to log out; you can simply restart your
+      dtwm.)
+    Here's how to set it up on your system.
+      edit /usr/dt/bin/Xsession DTSCREENSAVERLIST to contain the
+        DTSCREENSAVERLIST stuff in .dtprofile
+      cp etc/dtscreen.dt /usr/dt/appconfig/types/C/dtscreen.dt
+
+    The disadvantage to the above is some features of xlock are abscent,
+      in particular, the logout lab feature.  Here is a work around on
+      Solaris in 3 patches:
+      1. Take out Screen option.
+      2. Put in /usr/local/bin/xlock as the default locker.
+      3. Turn off the default DT locking mechanism.
+*** /usr/dt/app-defaults/C/Dtstyle.orig	Fri Apr 12 11:53:00 1996
+--- /usr/dt/app-defaults/C/Dtstyle	Thu Jul 24 09:47:34 1997
+***************
+*** 24,30 ****
+  !#   Do not translate the following
+  !###
+  !# componentList specifies the buttons that appear in the Style Manager.
+! Dtstyle*componentList:  Color Font Backdrop Keyboard Mouse Beep Screen Dtwm Startup
+  
+  !# The Style Manager may be oriented vertically by commenting out this line
+  Dtstyle*mainRC.orientation:         HORIZONTAL
+--- 24,31 ----
+  !#   Do not translate the following
+  !###
+  !# componentList specifies the buttons that appear in the Style Manager.
+! !#Dtstyle*componentList:  Color Font Backdrop Keyboard Mouse Beep Screen Dtwm Startup
+! Dtstyle*componentList:  Color Font Backdrop Keyboard Mouse Beep Dtwm Startup
+  
+  !# The Style Manager may be oriented vertically by commenting out this line
+  Dtstyle*mainRC.orientation:         HORIZONTAL
+*** /usr/dt/appconfig/types/C/dt.dt.orig	Fri Apr 12 11:53:28 1996
+--- /usr/dt/appconfig/types/C/dt.dt	Thu Jul 24 11:32:21 1997
+***************
+*** 226,235 ****
+  ACTION LockDisplay
+  {
+  	LABEL		LockDisplay
+!         TYPE            TT_MSG
+!         TT_CLASS	TT_REQUEST
+!         TT_SCOPE	TT_SESSION
+!         TT_OPERATION	Display_Lock
+          DESCRIPTION     The LockDisplay action locks the workstation. \
+                          You must know the user's or root password to \
+                          unlock the workstation.
+--- 226,239 ----
+  ACTION LockDisplay
+  {
+  	LABEL		LockDisplay
+! #        TYPE            TT_MSG
+! #        TT_CLASS	TT_REQUEST
+! #        TT_SCOPE	TT_SESSION
+! #        TT_OPERATION	Display_Lock
+!         TYPE            COMMAND
+!         ARG_COUNT	0
+!         WINDOW_TYPE	NO_STDIO
+!         EXEC_STRING	/usr/local/bin/xlock
+          DESCRIPTION     The LockDisplay action locks the workstation. \
+                          You must know the user's or root password to \
+                          unlock the workstation.
+*** /usr/dt/config/C/sys.resources.orig	Fri Apr 12 11:53:15 1996
+--- /usr/dt/config/C/sys.resources	Thu Jul 24 11:33:57 1997
+***************
+*** 82,88 ****
+  
+  
+  dtsession*saverTimeout:  10 
+! dtsession*lockTimeout:   30
+  dtsession*cycleTimeout:  3 
+  dtsession*saverList: StartDtscreenBlank
+  
+--- 82,89 ----
+  
+  
+  dtsession*saverTimeout:  10 
+! !#dtsession*lockTimeout:   30
+! dtsession*lockTimeout:   0
+  dtsession*cycleTimeout:  3 
+  dtsession*saverList: StartDtscreenBlank
+  
+
+  DCE authentication (tested only on HP's)
+    See iconfig.h (xmkmf) or modes/Makefile.in (configure).
+
+  Digital Unix
+    Reported that 3.2D (8bpp) password screen color map gets messed up
+    sometimes when in random mode as it switches from one mode to another.
+    
+  ESIX
+    Similar to Solaris2.x.  You will need a -DSVR4 to compile.
+    chmod 440 /etc/shadow
+    if you get libX11.so.xxx not found
+      link with the static versions of the X libraries 
+    chmod 2755 xlock
+
+  FreeBSD
+    One may have to setuid xlock to root (are there any objections?).
+    Also see "XFree86" if applicable.
+
+  HP
+    Shift-Control-Break is caught.  This uses a library Xhp11 that may
+      not exist on some systems.  Comment out
+        XHPDisableReset(dsp);
+      and
+        XHPEnableReset(dsp);
+      in "xlock.c" if you do not have this library.
+      May have to setuid xlock to root.
+    The optimizer may break in xlock/ .
+    HP's "make":
+      HP's "make" can not handle "+=" so if you use the iconfig.h, you
+      have to group all your DEFINES into one long line and use "="
+      instead.  GNU's "make" solves this problem.
+    HP-UX with Secured Passwords:
+      Compile with -DHPUX_SECURE_PASSWD and setuid xlock to root.
+    HP-UX with Passwd Etc:
+      Compile with -DHP_PASSWDETC .
+      Link with -lrgy -lnck -lndbm .
+    Calls to XSetScreenSaver when using CDE (i.e. not called with -dtsaver)
+      is not supported.  This can cause a disruption in the rpc ttdbserver
+      system resulting in the CDE lock and exit buttons to fail, 5 to 50%
+      of the time.  I am told this will not be fixed by HP, only documented.
+      The only supported method of doing this stuff is via dtstyle.
+
+  IRIX (SGI)
+    OpenGL works but may be a little flaky.
+
+  KERBEROS
+    See iconfig.h (xmkmf) or modes/Makefile.in (configure).
+    
+  Linux (Intel 80386, 80486, & Pentium)
+    If you are using elf _or_ shadow passwords:
+      xlock should compile with -DHAVE_SHADOW
+      this is already forced if you have elf so do not worry, it should
+      work even if you do not have shadow passwording.
+    If you are _not_ using elf and are using shadow passwords:
+      (this old version of shadowing has a _MAJOR_ known security flaw)
+      link with -lshadow -lgdbm
+    Next if using shadow passwords:
+      chown root.root xlock  (or root.shadow if it exists)
+      chmod 4755 xlock
+      (chmod 2755 xlock may be better if shadow has group read for root group)
+      Also check that the following was done:
+        Your /usr/X11R6/lib/X11/config/linux.cf should have
+#define HasShadowPasswd         YES
+          This would let the iconfig.h work automatically for compile/link.
+        chown root.root /etc/shadow   (or root.shadow if it exists)
+        chmod 400 /etc/shadow
+        (chmod 440 /etc/shadow may be better).
+    So far, Slackware (a major Linux distribution) does NOT come with shadow
+      passwords standard.  If you want to install shadow passwords (be
+      careful, it can be tricky) it's on sunsite.unc.edu in
+      /pub/Linux/system/Admin .
+    Also see "XFree86" if applicable.
+
+  Linux (Alpha)
+    Change the order of XLIB and XPMLIB in the iconfig.h so the XPMLIB
+     comes first.  Intel stuff above probably applies as well.
+
+  MesaGL and OpenGL
+    I assume the Mesa 3-D Graphics Library for the Imakefile.  See below
+      on availability.  Follow its instructions and then go to MesaGL
+      section of the iconfig.h and uncomment
+XCOMM #define GLLibrary
+      MesaGL and sometimes OpenGL are autodetected if you use configure.
+
+  Rplay
+    Audio package.  See below on availability.  Follow its instructions and
+      then go to iconfig.h and uncomment (should be autodetected if you use
+      configure)
+XCOMM #define RplayLibrary
+      See config directory for example.  (Note: The example files are
+      concerned with getting it working ... not security).
+
+  Solaris2.x (Sun SPARC)
+    Solaris2.6 may not work with rplay.  configure --without-rplay
+    If you get something like:
+xlock.c:1584: `sigset_t' undeclared (first use this function)
+      try removing -I/usr/include from the Makefiles or get rid of -Xc
+      in the xlock/Makefile.  If someone figures out a way around this
+      in the code let me know.
+    To get xlock working with Sun's GL libraries and includes
+      If you get "macro `glNormal3f' used with just one arg" ... you need
+         -DSUN_OGL_NO_VERTEX_MACROS
+      If using Imakefile, see iconfig.h .
+      After a make, use on a display that supports GLX  `xdpyinfo | grep GLX`
+    It is possible to get xlock working with Sun's OpenGL libraries
+      and MesaGL's includes (I could not find Sun's OpenGL includes, so you
+      probably have to pay extra for them).
+      1. configure --without-opengl --with-mesagl --x-includes=/usr/openwin \
+            --x-libraries=/usr/openwin <+your options>
+      2. edit the modes/Makefile
+        Take out "Mesa" from the library stuff.
+      3. edit config.h
+        uncomment "#define OPENGL_MESA_INCLUDES"
+      4. make
+      5. Use on a display that supports GLX  `xdpyinfo | grep GLX`
+    Imake will compile with the -DHAVE_SHADOW switch.
+    With GNU's gcc, get rid of the "-ansi" during compilation, also
+      one may want to get rid of the -xF references in
+      /usr/openwin/lib/config/sun.cf and Imake.tmpl if you get a
+      cc: language F not recognized
+    Solaris2.x NIS+ or not using NIS (/etc/passwd):
+      If you use netgroup make sure there is a return at the end of file.
+
+  SunOS4.1.x (Sun Sparc & 680x0)
+    bubble will crash the xnews server if patch 100444-76 OpenWindows V3.0
+      Server patch is installed.  To test this
+      `strings /usr/openwin/bin/xnews | grep Patch`
+      It would then show Patch #3000-124 if 10044-76 is installed.
+    Put in a link from /usr/include/X11 to your ${OPENWINHOME}/include/X11
+      to use the xmkmf or use the configure file provided.
+    gcc -Wall gives a lot of silly warnings, its safe to disregard them.
+ 
+  Ultrix (DEC)
+    I heard that the logout button just kills xlock.
+    USE_XLOCKRC feature unimplemented, but may not be hard to do.
+    xlock must be either setuid root or setgid authread to validate the
+      password on an Ultrix system.
+
+  VMS (DEC)
+    You may want to set a few things like vroot, bomb, and sound (see audio
+      below) at the top of the file.
+    All you should need to do to build the executable is:
+        $ @make
+    To run xlock a symbol needs to be defined, for example:
+        XLOCK:==$H268SYSEXE:XLOCK
+      where H268SYSEXE is a logical name pointing to the directory where
+      XLOCK.EXE resides. The '$' after == means this is a foreign command
+      and VMS makes the command line available to the program.
+    If the link bombs out I recommend trying it again like the following:
+        $ @make clean
+        $ @make
+    -allowroot only works if you have SYSPRV enabled which is a bit limiting.
+      Unless one uses the privileged install by a system manager.  To do
+      this, the following command needs to be executed at system startup
+      (i.e. included in systartup_vms.com):
+         INSTALL ADD {dev}:[{dir}]XLOCK.EXE/PRIV=(SYSPRV)
+      where {dev}:[{dir}] is the full path of the executable.
+    The XLock file normally in /usr/lib/X11/app-defaults needs to be in the
+      directory DECW$SYSTEM_DEFAULTS on VMS systems and be called
+      'DECW$XLOCK.DAT'.
+    USE_XLOCKRC, USE_AUTO_LOGOUT, USE_BUTTON_LOGOUT, & USE_MULTIPLE_ROOT
+      features are not implemented.
+    To use audio:
+      Set "sound" to be 1 in the make.com file.  Only available on the Alpha.
+      To get it work on a VAX some editing of the make.com is needed
+        (scan for USE_VMSPLAY)
+      The default sound files are hard coded to be in the current directory
+        see line 128 or so of the resource.c file but can be overruled from
+        the command line or the resourcefile decw$xlock.dat.
+      Sounds did not work for me on the VAX.
+      It should work OK on an AXP. (Due to a bug in the SO driver on some
+        models running VMS7.0, sounds are only available on the headset).
+    To use new event loop:
+       For VMS7.0 and higher : new event loop is used by default.
+         You do not need to install extra software.
+       For VMS6.2 or lower :
+         You need some UNIX utilities installed (XVMSUTILS).  See where to get
+         it below.
+         Look at the make.com and xvmsutil stuff.
+
+  XFree86
+    Control-Alt-Backspace will defeat locking mechanism and return your
+      console back unless you put "DontZap" in your XF86Config file.
+      (In X11R5, that would be a "dontzap" in your Xconfig file).
+    Control-Alt-F1 (among others) will defeat locking mechanism with
+      virtual terminals. This is not too good, right?  If you are using
+      Linux, try vlock on tsx-11.mit.edu in /pub/linux/sources/usr.bin .
+      The current XFree86 (as far as I know) does not have a server
+      extension for catching or disabling VT switching.
+    Here is a work around, put this line in /etc/profile:
+        alias x='(startx >/dev/null &);clear;logout'
+      then use 'x' instead of 'startx' (with no other active VT's).
+
+  XPM
+    Full color pixmap package.  See below on availability.  Follow its
+      instructions and then go to iconfig.h and uncomment (should be
+      autodetected if you use configure)
+XCOMM #define XpmLibrary
+
+  X-Terminal
+    (My heart bleeds for you.)
+    To get xlock to run, run with -remote option or set XLock.remote on
+    in XLock.ad .  You might have to use -allowaccess as well.
+        
+  tvtwm
+    One used to get following error when running xlock (+nolock) with
+      tvtwm.
+    X Error of failed request:  BadWindow (invalid Window parameter)
+    What happens is that RootWindow(dsp, screen) fails when tvtwm is
+      running.  There is a kludge fix, but multiscreens will not work
+      right with tvtwm and xlock. (grep on TVTWM in xlock.c).
+    Another option, don't compile with -DUSE_VROOT .  If you debug it
+      mail ME -OR- both the author of tvtwm and ME the patch. 
+    StickyAbove problems:
+      Windows in a tvtwm that have "StickyAbove" set to true are still
+      visible when xlock (+inroot) is running. If this bothers you,
+      don't compile with -DUSE_VROOT .  Is it possible to have xlock
+      set "StickyAbove" to true as well? 
+
+  fvwm
+    -install does not install colormaps.  fvwm will not allow an
+    application to install its own colormap.  You could always edit the
+    source if you have it, (fvwm-1.24r)colormaps.c, where it says 
+ if(ReInstall)
+   {
+     XInstallColormap(dpy,last_cmap);
+   }
+    make sure this does not happen.
+
+  swirl (and tube) mode
+    Use with -install to see colormap change.
+    See "fvwm" if applicable.
+    "swirl" cycles its colors, except black and white.
+    This is easily seen when on a color monitor one enters:
+       ./xlock -mode swirl -inwindow -install
+    now move the mouse in the window.
+    If you find this annoying compile swirl.c with -DFORCEFIXEDCOLORS.
+    I hear it LOCKS UP on i386BsdArchitecture and tvtwm.
+    With twm (and fvwm see above) the colormap does not change.
+
+  SafeWord
+    Edit config.h.in ... uncomment SAFEWORD line near bottom.
+    In modes/Makefile.in make sure SAFEWORD is linked in, comment out
+      similar link that does not contain safeword libraries.
+    Put the cust*.h files in the main xlock directory.
+    Use configure, make.
+    Get back to me if it works or does not work.
+     
+  Dynamic Linking
+    Hacked in but not currently working.
+    How to use elf on the sun with gcc and Gnu's make
+      Put this in iconfig.h
+#define Modules
+      xmkmf -a
+      Edit Makefile(s)
+        edit out all "-z text -M mapfile"
+        edit out change "ccs" to "local" so that the "make" path is to
+           Gnu's "make".
+        make
+        make install
+      Also added some stuff to configure but it is working less then xmkmf.
+      This patch was originally written for Linux.  Not all distributions
+      have "dlfcn.h" which is needed.  It may work better on Linux.
+      xlock core dumps right away... gdb gives 
+        Program received signal SIGSEGV, Segmentation fault.
+        0x40002d2b in _dl_debug_state ()
+
+
+Personal Use
+------------
+  You may want to compile with USE_XLOCKRC .  xlock will then prompt
+  you the first time you use it for a password.  It is then encrypted
+  and stored in your $HOME/.xlockrc file.  This is also good for
+  users who have an unrecognized shadow password environment.  See
+  iconfig.h file (xmkmf) or `configure --help` for an example.
+  Please note that it may be rude to use xlock in a lab environment.
+
+Lab Environment
+---------------
+  The auto logout feature, when enabled, will log out a user after
+  30 minutes (by default).  The timeout can be changed or disabled
+  with a command-line option (or x resource -- this is allowed because
+  the logout button can always be used; see below).  The time
+  remaining before auto-logout is displayed on the password entry
+  screen.
+ 
+  The logout button, when enabled, is a button that appears on the
+  password entry screen after 5 minutes (configurable at
+  compile-time) that, when clicked, logs out the user.  The rationale
+  for this thing is that in a lab environment, we wanted a way for
+  users to be able to reliably lock their display for short periods
+  of time, but still be allowed to have the display locked for longer
+  than that if the lab isn't busy.  If the lab IS busy, and there is
+  a need for workstations, the logout button can be used to logout
+  someone who's been gone for more than 5 minutes.
+ 
+  Of course, the auto-logout and the logout button are
+  enabled/disabled by compile-time defines.  All these are OFF by
+  default.  One can also force use these features with a local policy
+  of exemptions (e.g. username or group). See the iconfig.h file or
+  `configure --help` for an example.  Edit your /etc/xlock.staff
+  file to reflect your policy.  If using xdm, you may just want to use
+  -DCLOSEDOWN_LOGOUT (or -DSESSION_LOGOUT <- old way) in conjuction
+  with -DUSE_AUTO_LOGOUT or -DUSE_BUTTON_LOGOUT.  That way all
+  backgrounded processes owned by a user do not have to be killed.
+
+  Don't PANIC, the auto-logout and the logout button will not run if
+  you are root.  Otherwise, it will kill all of root's processes, not
+  a good idea.  As long as you do not lock the screen (using -nolock,
+  -inwindow, or -inroot) the policy of xlock users does not go into
+  effect.
+
+
+xlock still does not work:  :-(
+-------------------------------
+  If all that does not work you may need to adjust xlock.h, passwd.c
+  xlock.c, and resource.c since these files are highly implementation
+  dependent.  If you have to make this kind of change to get it working,
+  let me know.
+
+  You can try compiling with -g and running it with -debug and your
+  favorite debugger, so xlock will run in a more friendly way (i.e. it
+  does not lock the screen).  There are also may be compile time switches
+  that could be turned on with -DDEBUG depending on what is not working
+  correctly.
+
+  Here is a simple recipe:
+    Make sure the 12th line in the iconfig.h is a comment
+      (This is because the debug library for xpm is not usually installed)
+XCOMM #define XpmLibrary
+    xmkmf  <or configure --without-xpm>
+    edit Makefile  on the line with CC = gcc or or CC = cc change to
+               CC = gcc -g -DDEBUG
+    make depend <but not if using configure>
+    make
+    gdb xlock  (xdb or dbx xlock may work too.)
+    run -debug <other xlock options you want here>
+    where
+    print <relevant variables>
+      (you may have to use "up" to take you to xlockmore code)>
+    Mail me the results.
+
+  If xlock crashes for you when in random mode... try this and mail
+    me the results.  (If it runs for a long time partial result will do
+    (gut the middle part)).
+  xlock -mode random -modelist all +install -debug -verbose
+    -modelist all: all modes except blank
+    -debug: so it does not lock the screen.
+    -verbose: for maximum verbosity.
+    +install: so it does not keep changing the colormap
+
+
+Other things to try: (if you got it working :-) )
+-------------------------------------------------
+
+  Check out etc directory for menus and other goodies.
+
+  If you like to check out what xlock looks like on multiscreens and you
+    do not have them... but do have Linux and Xnest ... try:
+     Xnest -scrns 3 :1 &
+     xterm -display :1.0
+    And run xlock from the created xterm.
+    If you are using MesaGL, it must be compiled without SHM extension do
+      to a bug in Xnest (even in XFree3.3 == X11R6.3) or you will get
+      "BadDrawable (invalid Pixmap or Window parameter)".
+
+  You may want to change the 1st line of XLock.ad "random" to "blank",
+  "life", or whatever your favorite is and copy it to
+  /usr/lib/X11/app-defaults or $HOME (or wherever your application
+  defaults files are) and rename to XLock .
+
+  You may want some of the modes never to come up in random.  This is
+  already hard coded for the blank mode.  See xlock man page on "modelist".
+  In mode.c you can hard code others by just putting the stuff that you do
+  not like in the LockProcs to the end of the static array and in
+  random.c increase NUMSPECIAL by the number of new screens that you do
+  not want displayed.
+
+  You may want to move xlock into /usr/bin/X11 (or wherever your X
+  binaries are). You may also want to move xlock.man to
+  /usr/man/man1/xlock.1 .
+
+  If you want to remove some unwanted modes just edit "mode.h" and
+  "mode.c" grep the for the unwanted modes.  You might want to edit
+  the man page and your favorite make file as well.
+
+  I am very interested in cellular automata.  I am always looking to
+  improve ant, life, life3d, and life1d.  If anyone knows any new
+  collections (I have lifep.zip (May 94) and xlife 3.0) let me know.  If
+  you would like further information let me know.  There are several
+  run-time options to check out, see docs/cell_automata.
+
+  Still like xscreensaver better?  (Obscenities omitted ;) ) Try
+  setting your apps-defaults file for xscreensaver like:
+*programs:      xlock -nolock +grabmouse -mode random
+
+  If you want to hack a new mode check out docs/HACKERS.GUIDE.  Then
+  when working, just mail it to me, grep on "Maintainer" for the
+  address.
+
+
+Other related stuff (all not maintained by me):
+--------------------------------------------------------------------
+  NAME
+   LOCATION (last seen at)
+   DESCRIPTION
+ =============
+  audio/VMS
+    http://axp616.gsi.de:8080/www/vms/mzsw.html
+  fortune
+    ftp://igor.girton.cam.ac.uk/pub/funny/cookie.tgz 
+    ftp://ftp.uu.net/systems/unix/BSD/games/fortune
+    ftp://ftp.sterling.com/usenet/alt.sources/index (grep for cookie)
+    Please note that my format is slightly different.  The number at the
+      top of the file should match `grep -c "^%%$" fortune.dat`
+  imake
+    ftp://hpux.csc.liv.ac.uk/hpux/X11/Core/imake-5.06/imake-5.06-ss-9.03.tar.gz
+    I had to worry about FIXUP_CPP_WHITESPACE.
+  Lesstif
+    ftp://ftp.hungry.com/pub/hungry/lesstif/lesstif-current.tar.gz
+    Lesstif Library (just like Motif)
+  Man2HTML
+    ftp://sunsite.unc.edu/pub/Linux/system/Manual-pagers/vh-man2html-1.4.tar.gz
+  MesaGL
+    ftp://iris.ssec.wisc.edu/pub/Mesa
+    Mesa 3-D Graphics Library (like GL) Mesa-2.3 or greater required.
+    Mesa-2.2 and below has some memory leaks.
+  NAS (audio package)
+    ftp://ftp.x.org/contrib/audio/nas
+  rplay (audio package)
+    ftp://ftp.x.org/contrib/audio/rplay
+  sx
+    Use with Athena.
+    ftp://sunsite.unc.edu/pub/Linux/X11/devel/librairies/clibs/libsx.tar.gz
+  UNIX/VMS
+    Unix-like routines XVMSUTILS can be found at
+      http://axp616.gsi.de:8080/www/vms/mzsw.html
+  xautolock (runs xlock after a idle time)
+    ftp://ftp.x.org/contrib/applications
+    (I use openwin and I put this in my $HOME/.openwin-init)
+    toolwait /usr/local/bin/xautolock -time 5 -locker "xlock -lockdelay 30"
+  XPM
+    ftp://ftp.x.org/contrib/libraries
+    color pixmaps
+  XPM/VMS
+    use the one above or xlock may bomb out,
+    compile with cc/standard=vaxc/define=(need_strcasecmp,need_strdup)
+      except when using XVMSUTILS.
+  xscreensaver
+    ftp://ftp.x.org/contrib/applications
+    http://www.netscape.com/people/jwz/xscreensaver
+
+
+Operation: (Blurb taken from Darren Senn's xlock)
+------------------------------------------------- 
+
+  Under X, run xlock.  The screen will clear, and some pretty animated
+  picture (exactly which depends on which module is active) will appear
+  on the screen.  If you hit a key, then the screen will clear, and
+  (unless you've changed the application defaults file that I packaged
+  with this) you'll get a black screen with some graphics in the top
+  center.  These graphics consist of a reduced size image of the module
+  you were viewing, the name of the user who executed xlock, and
+  password prompt field, and some short instructions.
+ 
+  At this point, you can either click on the graphic to return to xlock,
+  or you can type a password.  If the password is verifiable as the
+  root password, or the password of the user listed above, then xlock
+  will terminate.  THIS IS THE ONLY WAY TO STOP XLOCK WITHOUT SHUTTING
+  DOWN THE X SERVER.  That's what makes it a lock.
+
+ 
+Resources: (Also taken from Darren Senn's xlock)
+------------------------------------------------
+ 
+  There are two sets of resources for XLock.  The first set are (what I
+  call) global XLock resources, while the second set consists of
+  module-specific resources.
+ 
+  The global resources are:
+        XLock.mode: This sets the module.
+        XLock.font: This is the font used on the password entry screen.
+        XLock.background: The background color for the password entry screen.
+        XLock.foreground: The foreground color for the password entry screen.
+        XLock.username: The label for the field indicating the user name.
+        XLock.password: The label for the password prompt.
+        XLock.info: The "short instructions" to print.
+        XLock.validate: A message to display while checking the password
+        XLock.invalid: A message to display if the password is incorrect
+        XLock.nice: How much XLock should nice itself.
+        XLock.timeout: How long to wait idle at the password prompt.
+        XLock.timeelapsed: Message to see how long lock running (yes or no)
+        XLock.mono: Monochrome mode (yes or no)
+        XLock.nolock: disable the lock mechanism (yes or no)
+        XLock.remote: allow remote locking (meaningless under linux)
+        XLock.allowroot: allow the root password to unlock (yes or no)
+        XLock.enablesaver: allow the system screensaver to work (yes or no)
+        XLock.allowaccess: allow other clients to connect while active
+        XLock.echokeys: Echo "?" for each password keypress (yes or no)
+        XLock.usefirst: Ignore the first character typed (yes or no)
+        XLock.verbose: Verbose mode. (yes or no)
+        XLock.inwindow: allow the xlock to run in a window (yes or no)
+        XLock.inroot: allow the xlock to run in the root window (yes or no)
+        XLock.grabmouse: Grab the keyboard and mouse (yes or no)
+ 
+  XLock has a number of modules which it can display.  (See the man page
+  for a complete list).  It turns out that each module is characterized
+  by a number of initializations, separated by a number of "draws".
+  Each module has the following resources defined:
+
+        XLock.<module>.delay: How long to wait between draws (usec)
+        XLock.<module>.batchcount: May mean various things (see man page).
+        XLock.<module>.cycles: Controls the timeout of screen (see man page).
+        XLock.<module>.size: Controls size of objects on screen (see man page).
+        XLock.<module>.saturation: Saturation (as in HSV) of colors to use.
+
+
+Acknowledgments:
+----------------
+
+  I did not write the original algorithms in any of the lock screens
+  (except wator, bug, life1d, demon, ant, daisy, and voters), although I
+  did convert many of the new ones to run with xlock.  I tried to follow
+  the original style of Patrick Naughton.  Updates are made at
+  ftp.x.org in directory /contrib/applications.  Many of the additions
+  were "borrowed" from xscreensaver (Jamie Zawinski <jwz@netscape.com>).
+  Some of the others were "borrowed" from old demos from Sun.  Many more
+  are contributions.
+
+  I will consider putting new ones in if (1) they are more or less public
+  domain (i.e. BSD, sorry no GNU copyrights), (2) they are neat (I am
+  biased towards mathematically based programs (especially the Computer
+  Recreations of Scientific American)), and (3) I have the time.
+
+  Also many thanks to the people that helped me countless times with 
+  xlock mentioned in "Revisions", especially Jouk Jansen, Tom Schmidt,
+  David Hansen, Ed Mackey, Marcelo Vianna, Ron Hitchens, and Heath Kehoe.
+

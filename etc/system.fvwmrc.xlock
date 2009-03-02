@@ -1,0 +1,397 @@
+# Add this to your system or personal menu file
+# System: /usr/lib/X11/fvwm/system.fvwmrc
+# Personal $HOME/.fvwmrc
+# Put this in your "Utilities" uncommented.
+#	Popup	"Lock_Saver"	Lock_Saver
+# This is for fvwm <=1.24r
+# For -install to work right you must disable it before fvwm is compiled
+# see README
+
+Popup "Automata-Lock"
+	Title	"Automata-Lock"
+	Exec	"Ant"	exec xlock -mode ant -neighbors 4 +truchet &
+	Exec	"Ant Truchet"	exec xlock -mode ant -neighbors 4 -truchet &
+	Exec	"Bee"	exec xlock -mode ant -neighbors 6 +truchet &
+	Exec	"Bee Truchet"	exec xlock -mode ant -neighbors 6 -truchet &
+	Exec	"Bug"	exec xlock -mode bug &
+	Exec	"Demon"	exec xlock -mode demon &
+	Exec	"Dilemma"	exec xlock -mode dilemma &
+	Exec	"Life"	exec xlock -mode life &
+	Exec	"Life Callahan"	exec xlock -mode life -callahan -size 7 &
+	Exec	"Life1d"	exec xlock -mode life1d &
+	Exec	"Life3d"	exec xlock -mode life3d &
+	Exec	"Loop"	exec xlock -mode loop &
+	Exec	"Voters"	exec xlock -mode voters &
+	Exec	"Wator"	exec xlock -mode wator &
+	Exec	"Wire"	exec xlock -mode wire &
+	Exec	"Random Automata"	exec xlock -mode random -modelist allautomata -fullrandom -neighbors 0 &
+EndPopup
+
+Popup "Fractal-Lock"
+	Title	"Fractal-Lock"
+	Exec	"Coral"	exec xlock -mode coral &
+	Exec	"Discrete"	exec xlock -mode discrete &
+	Exec	"Drift"	exec xlock -mode drift -fullrandom &
+	Exec	"Flame"	exec xlock -mode flame &
+	Exec	"Flow"	exec xlock -mode flow &
+	Exec	"Forest"	exec xlock -mode forest &
+	Exec	"Hop"	exec xlock -mode hop -fullrandom &
+	Exec	"IFS"	exec xlock -mode ifs &
+	Exec	"Julia"	exec xlock -mode julia +mouse &
+	Exec	"Juliaptr"	exec xlock -mode julia -mouse &
+	Exec	"Lightning"	exec xlock -mode lightning &
+	Exec	"Mandelbrot"	exec xlock -mode mandelbrot -install &
+	Exec	"Mountain"	exec xlock -mode mountain &
+	Exec	"Sierpinski"	exec xlock -mode sierpinski &
+	Exec	"Strange"	exec xlock -mode strange &
+	Exec	"Thornbird"	exec xlock -mode thornbird &
+	Exec	"Triangle"	exec xlock -mode triangle &
+	Exec	"Turtle"	exec xlock -mode turtle &
+	Exec	"Vines"	exec xlock -mode vines &
+	Exec	"Random Fractal"	exec xlock -mode random -modelist allfractal -fullrandom &
+EndPopup
+
+Popup "Geometry-Lock"
+	Title	"Geometry-Lock"
+	Exec	"Braid"	exec xlock -mode braid &
+	Exec	"Fadeplot"	exec xlock -mode fadeplot &
+	Exec	"Helix"	exec xlock -mode helix -fullrandom &
+	Exec	"Hyper"	exec xlock -mode hyper &
+	Exec	"Ico"	exec xlock -mode ico &
+	Exec	"Kaleid"	exec xlock -mode kaleid &
+	Exec	"Laser"	exec xlock -mode laser &
+	Exec	"Lisa"	exec xlock -mode lisa &
+	Exec	"Lissie"	exec xlock -mode lissie &
+	Exec	"Penrose"	exec xlock -mode penrose +ammann &
+	Exec	"Penrose Ammann"	exec xlock -mode penrose -ammann &
+	Exec	"Petal"	exec xlock -mode petal &
+	Exec	"Qix"	exec xlock -mode qix +complete &
+	Exec	"Qix complete"	exec xlock -mode qix -complete &
+	Exec	"Rotor"	exec xlock -mode rotor &
+	Exec	"Shape"	exec xlock -mode shape &
+	Exec	"Sphere"	exec xlock -mode sphere &
+	Exec	"Spiral"	exec xlock -mode spiral &
+	Exec	"Spline"	exec xlock -mode spline &
+	Exec	"Random Geometry"	exec xlock -mode random -modelist allgeometry -fullrandom &
+EndPopup
+
+Popup "Space-Lock"
+	Title	"Space-Lock"
+	Exec	"Bouboule"	exec xlock -mode bouboule +use3d &
+	Exec	"Bouboule3d"	exec xlock -mode bouboule -use3d &
+	Exec	"Galaxy"	exec xlock -mode galaxy &
+	Exec	"Grav"	exec xlock -mode grav +trail +decay &
+	Exec	"Grav Trail"	exec xlock -mode grav -trail &
+	Exec	"Grav Decay"	exec xlock -mode grav -decay &
+	Exec	"Rock"	exec xlock -mode star -rock &
+	Exec	"Star"	exec xlock -mode star +rock +use3d -trek 0 &
+	Exec	"Star3d"	exec xlock -mode star -use3d &
+	Exec	"Star Trek"	exec xlock -mode star -trek 100 &
+	Exec	"World"	exec xlock -mode world &
+	Exec	"Random Space"	exec xlock -mode random -modelist allspace -fullrandom &
+EndPopup
+
+Popup "Assorted-Lock"
+	Title	"Assorted-Lock"
+	Exec	"Ball"	exec xlock -mode ball &
+	Exec	"Blot"	exec xlock -mode blot &
+	Exec	"Bounce"	exec xlock -mode bounce &
+	Exec	"Bubble"	exec xlock -mode bubble &
+	Exec	"Clock"	exec xlock -mode clock &
+	Exec	"Crystal"	exec xlock -mode crystal &
+	Exec	"Daisy"	exec xlock -mode daisy &
+	Exec	"Dclock"	exec xlock -mode dclock &
+	Exec	"Deco"	exec xlock -mode deco &
+	Exec	"Eyes"	exec xlock -mode eyes +mouse &
+	Exec	"Eyesptr"	exec xlock -mode eyes -mouse &
+	Exec	"Goop"	exec xlock -mode goop &
+	Exec	"Marquee"	exec xlock -mode marquee &
+	Exec	"Munch"	exec xlock -mode munch &
+	Exec	"Nose"	exec xlock -mode nose &
+	Exec	"Pacman"	exec xlock -mode pacman &
+	Exec	"Pyro"	exec xlock -mode pyro +use3d &
+	Exec	"Pyro3d"	exec xlock -mode pyro -use3d &
+	Exec	"Roll"	exec xlock -mode roll &
+	Exec	"Slip"	exec xlock -mode slip &
+	Exec	"Swarm"	exec xlock -mode swarm +mouse &
+	Exec	"Swarmptr"	exec xlock -mode swarm -mouse &
+	Exec	"Swirl"	exec xlock -mode swirl -install &
+	Exec	"Tube"	exec xlock -mode tube -install &
+	Exec	"Worm"	exec xlock -mode worm +use3d &
+	Exec	"Worm3d"	exec xlock -mode worm -use3d &
+EndPopup
+
+Popup "XPM-Lock"
+	Exec	"Bat"	exec xlock -mode bat &
+	Exec	"Cartoon"	exec xlock -mode cartoon &
+	Exec	"Image"	exec xlock -mode image &
+	Exec	"Flag"	exec xlock -mode flag &
+	Exec	"Life"	exec xlock -mode life &
+	Exec	"Life1d"	exec xlock -mode life1d &
+	Exec	"Maze"	exec xlock -mode maze &
+	Exec	"Puzzle"	exec xlock -mode puzzle &
+	Exec	"Random XPM"	exec xlock -mode random -modelist allxpm -fullrandom &
+EndPopup
+
+Popup "GL-Lock"
+	Exec	"Atlantis"	exec xlock -mode atlantis &
+	Exec	"Bubble3d"	exec xlock -mode bubble3d &
+	Exec	"Cage"	exec xlock -mode cage &
+	Exec	"Gears"	exec xlock -mode gears &
+	Exec	"Moebius"	exec xlock -mode moebius &
+	Exec	"Morph3d"	exec xlock -mode morph3d &
+	Exec	"Pipes"	exec xlock -mode pipes &
+	Exec	"Rubik"	exec xlock -mode rubik &
+	Exec	"Sproingies"	exec xlock -mode sproingies &
+	Exec	"Stairs"	exec xlock -mode stairs &
+	Exec	"Superquadrics"	exec xlock -mode superquadrics &
+	Exec	"Random GL"	exec xlock -mode random -modelist allgl -fullrandom &
+EndPopup
+
+Popup "Marquee-Message-Lock"
+	Title	"Marquee-Message-Lock"
+	Exec	"Back Soon"	exec xlock -mode marquee -message "$LOGNAME will be back soon." &
+  Exec	"Overnight"	exec xlock -mode marquee -message "$LOGNAME will be back in the morning." &
+  Exec	"Rude"	exec xlock -mode marquee -message "$LOGNAME not here, please go away! " &
+EndPopup
+
+Popup "Nose-Message-Lock"
+	Title	"Nose-Message-Lock"
+  Exec	"Back Soon"	exec xlock -mode nose -message "$LOGNAME will be back soon."
+  Exec	"Overnight"	exec xlock -mode nose -message "$LOGNAME will be back in the morning." &
+  Exec	"Rude"	exec xlock -mode nose -message "$LOGNAME not here, please go away! " &
+EndPopup
+
+Popup "Special-Lock"
+	Title	"Special-Lock"
+	Exec	"Blank"	exec xlock -mode blank &
+	Exec	"Bomb"	exec xlock -mode bomb &
+	Exec	"Random nice"	exec xlock -mode random -modelist allnice -fullrandom -neighbors 0 &
+	Exec	"Random standard"	exec xlock -mode random -modelist all-allgl -fullrandom -neighbors 0 &
+	Exec	"Random all"	exec xlock -mode random -modelist all -fullrandom -neighbors 0 &
+	Exec	"Random 3d"	exec xlock -mode random -modelist all3d -use3d -fullrandom &
+	Exec	"Random ptr"	exec xlock -mode random -modelist allmouse -mouse -fullrandom &
+	Exec	"Random write"	exec xlock -mode random -modelist allwrite -fullrandom &
+EndPopup
+
+Popup "Screenlock"
+	Title	"Screenlock"
+	Popup	"Cellular Automata"	Automata-Lock
+	Nop	""
+	Popup	"Fractal"	Fractal-Lock
+	Nop	""
+	Popup	"Geometry"	Geometry-Lock
+	Nop	""
+	Popup	"Space"	Space-Lock
+	Nop	""
+	Popup	"Assorted"	Assorted-Lock
+	Nop	""
+	Popup	"XPM"	XPM-Lock
+	Nop	""
+	Popup	"GL"	GL-Lock
+	Nop	""
+	Popup	"Marquee Message"	Marquee-Message-Lock
+	Nop	""
+	Popup	"Nose Message"	Nose-Message-Lock
+	Nop	""
+	Popup	"Special"	Special-Lock
+EndPopup
+
+Popup "Automata-Saver"
+	Title	"Automata-Saver"
+	Exec	"Ant"	exec xlock -nolock -mode ant -neighbors 4 +truchet &
+	Exec	"Ant Truchet"	exec xlock -nolock -mode ant -neighbors 4 -truchet &
+	Exec	"Bee"	exec xlock -nolock -mode ant -neighbors 6 +truchet &
+	Exec	"Bee Truchet"	exec xlock -nolock -mode ant -neighbors 6 -truchet &
+	Exec	"Bug"	exec xlock -nolock -mode bug &
+	Exec	"Demon"	exec xlock -nolock -mode demon &
+	Exec	"Dilemma"	exec xlock -nolock -mode dilemma &
+	Exec	"Life"	exec xlock -nolock -mode life &
+	Exec	"Life Callahan"	exec xlock -nolock -mode life -callahan -size 7 &
+	Exec	"Life1d"	exec xlock -nolock -mode life1d &
+	Exec	"Life3d"	exec xlock -nolock -mode life3d &
+	Exec	"Loop"	exec xlock -nolock -mode loop &
+	Exec	"Voters"	exec xlock -nolock -mode voters &
+	Exec	"Wator"	exec xlock -nolock -mode wator &
+	Exec	"Wire"	exec xlock -nolock -mode wire &
+	Exec	"Random Automata"	exec xlock -nolock -mode random -modelist allautomata -fullrandom -neighbors 0 &
+
+EndPopup
+
+Popup "Fractal-Saver"
+	Title	"Fractal-Saver"
+	Exec	"Coral"	exec xlock -nolock -mode coral &
+	Exec	"Discrete"	exec xlock -nolock -mode discrete &
+	Exec	"Drift"	exec xlock -nolock -mode drift -fullrandom &
+	Exec	"Flame"	exec xlock -nolock -mode flame &
+	Exec	"Flow"	exec xlock -nolock -mode flow &
+	Exec	"Forest"	exec xlock -nolock -mode forest &
+	Exec	"Hop"	exec xlock -nolock -mode hop -fullrandom &
+	Exec	"IFS"	exec xlock -nolock -mode ifs &
+	Exec	"Julia"	exec xlock -nolock -mode julia +mouse &
+	Exec	"Juliaptr"	exec xlock -nolock -mode julia -mouse &
+	Exec	"Lightning"	exec xlock -nolock -mode lightning &
+	Exec	"Mandelbrot"	exec xlock -nolock -mode mandelbrot -install &
+	Exec	"Mountain"	exec xlock -nolock -mode mountain &
+	Exec	"Sierpinski"	exec xlock -nolock -mode sierpinski &
+	Exec	"Strange"	exec xlock -nolock -mode strange &
+	Exec	"Thornbird"	exec xlock -nolock -mode thornbird &
+	Exec	"Triangle"	exec xlock -nolock -mode triangle &
+	Exec	"Turtle"	exec xlock -nolock -mode turtle &
+	Exec	"Vines"	exec xlock -nolock -mode vines &
+	Exec	"Random Fractal"	exec xlock -nolock -mode random -modelist allfractal -fullrandom &
+EndPopup
+
+Popup "Geometry-Saver"
+	Title	"Geometry-Saver"
+	Exec	"Braid"	exec xlock -nolock -mode braid &
+	Exec	"Fadeplot"	exec xlock -nolock -mode fadeplot &
+	Exec	"Helix"	exec xlock -nolock -mode helix -fullrandom &
+	Exec	"Hyper"	exec xlock -nolock -mode hyper &
+	Exec	"Ico"	exec xlock -nolock -mode ico &
+	Exec	"Kaleid"	exec xlock -nolock -mode kaleid &
+	Exec	"Laser"	exec xlock -nolock -mode laser &
+	Exec	"Lisa"	exec xlock -nolock -mode lisa &
+	Exec	"Lissie"	exec xlock -nolock -mode lissie &
+	Exec	"Penrose"	exec xlock -nolock -mode penrose +ammann &
+	Exec	"Penrose Ammann"	exec xlock -nolock -mode penrose -ammann &
+	Exec	"Petal"	exec xlock -nolock -mode petal &
+	Exec	"Qix"	exec xlock -nolock -mode qix +complete &
+	Exec	"Qix complete"	exec xlock -nolock -mode qix -complete &
+	Exec	"Rotor"	exec xlock -nolock -mode rotor &
+	Exec	"Shape"	exec xlock -nolock -mode shape &
+	Exec	"Sphere"	exec xlock -nolock -mode sphere &
+	Exec	"Spiral"	exec xlock -nolock -mode spiral &
+	Exec	"Spline"	exec xlock -nolock -mode spline &
+	Exec	"Random Geometry"	exec xlock -nolock -mode random -modelist allgeometry -fullrandom &
+EndPopup
+
+Popup "Space-Saver"
+	Title	"Space-Saver"
+	Exec	"Bouboule"	exec xlock -nolock -mode bouboule +use3d &
+	Exec	"Bouboule3d"	exec xlock -nolock -mode bouboule -use3d &
+	Exec	"Galaxy"	exec xlock -nolock -mode galaxy &
+	Exec	"Grav"	exec xlock -nolock -mode grav +trail +decay &
+	Exec	"Grav Trail"	exec xlock -nolock -mode grav -trail &
+	Exec	"Grav Decay"	exec xlock -nolock -mode grav -decay &
+	Exec	"Rock"	exec xlock -nolock -mode star -rock &
+	Exec	"Star"	exec xlock -nolock -mode star +rock +use3d +trek 0 &
+	Exec	"Star3d"	exec xlock -nolock -mode star -use3d &
+	Exec	"Star Trek"	exec xlock -nolock -mode star -trek 100 &
+	Exec	"World"	exec xlock -nolock -mode world &
+	Exec	"Random Space"	exec xlock -nolock -mode random -modelist allspace -fullrandom &
+EndPopup
+
+Popup "Assorted-Saver"
+	Title	"Assorted-Saver"
+	Exec	"Ball"	exec xlock -nolock -mode ball &
+	Exec	"Blot"	exec xlock -nolock -mode blot &
+	Exec	"Bounce"	exec xlock -nolock -mode bounce &
+	Exec	"Bubble"	exec xlock -nolock -mode bubble &
+	Exec	"Clock"	exec xlock -nolock -mode clock &
+	Exec	"Crystal"	exec xlock -nolock -mode crystal &
+	Exec	"Daisy"	exec xlock -nolock -mode daisy &
+	Exec	"Dclock"	exec xlock -nolock -mode dclock &
+	Exec	"Deco"	exec xlock -nolock -mode deco &
+	Exec	"Eyes"	exec xlock -nolock -mode eyes +mouse &
+	Exec	"Eyesptr"	exec xlock -nolock -mode eyes -mouse &
+	Exec	"Goop"	exec xlock -nolock -mode goop &
+	Exec	"Marquee"	exec xlock -nolock -mode marquee &
+	Exec	"Munch"	exec xlock -nolock -mode munch &
+	Exec	"Nose"	exec xlock -nolock -mode nose &
+	Exec	"Pacman"	exec xlock -nolock -mode pacman &
+	Exec	"Pyro"	exec xlock -nolock -mode pyro +use3d &
+	Exec	"Pyro3d"	exec xlock -nolock -mode pyro -use3d &
+	Exec	"Roll"	exec xlock -nolock -mode roll &
+	Exec	"Slip"	exec xlock -nolock -mode slip &
+	Exec	"Swarm"	exec xlock -nolock -mode swarm +mouse &
+	Exec	"Swarmptr"	exec xlock -nolock -mode swarm -mouse &
+	Exec	"Swirl"	exec xlock -nolock -mode swirl -install &
+	Exec	"Tube"	exec xlock -nolock -mode tube -install &
+	Exec	"Worm"	exec xlock -nolock -mode worm +use3d &
+	Exec	"Worm3d"	exec xlock -nolock -mode worm -use3d &
+EndPopup
+
+Popup "XPM-Saver"
+	Exec	"Bat"	exec xlock -nolock -mode bat &
+	Exec	"Cartoon"	exec xlock -nolock -mode cartoon &
+	Exec	"Image"	exec xlock -nolock -mode image &
+	Exec	"Flag"	exec xlock -nolock -mode flag &
+	Exec	"Life"	exec xlock -nolock -mode life &
+	Exec	"Life1d"	exec xlock -nolock -mode life1d &
+	Exec	"Maze"	exec xlock -nolock -mode maze &
+	Exec	"Puzzle"	exec xlock -nolock -mode puzzle &
+	Exec	"Random XPM"	exec xlock -nolock -mode random -modelist allxpm -fullrandom &
+EndPopup
+
+Popup "GL-Saver"
+	Exec	"Atlantis"	exec xlock -nolock -mode atlantis &
+	Exec	"Bubble3d"	exec xlock -nolock -mode bubble3d &
+	Exec	"Cage"	exec xlock -nolock -mode cage &
+	Exec	"Gears"	exec xlock -nolock -mode gears &
+	Exec	"Moebius"	exec xlock -nolock -mode moebius &
+	Exec	"Morph3d"	exec xlock -nolock -mode morph3d &
+	Exec	"Pipes"	exec xlock -nolock -mode pipes &
+	Exec	"Rubik"	exec xlock -nolock -mode rubik &
+	Exec	"Sproingies"	exec xlock -nolock -mode sproingies &
+	Exec	"Stairs"	exec xlock -nolock -mode stairs &
+	Exec	"Superquadrics"	exec xlock -nolock -mode superquadrics &
+	Exec	"Random GL"	exec xlock -nolock -mode random -modelist allgl -fullrandom &
+EndPopup
+
+Popup "Marquee-Message-Saver"
+	Title	"Marquee-Message-Saver"
+	Exec	"Brilliant"	exec xlock -nolock -mode marquee -message "WOW! $LOGNAME, You are Brilliant! " &
+  Exec	"Love You"	exec xlock -mode marquee -message "You know, I Love You $LOGNAME." &
+  Exec	"Available"	exec xlock -mode marquee -message "Hey, I am available now! " &
+EndPopup
+
+Popup "Nose-Message-Saver"
+	Title	"Nose-Message-Saver"
+  Exec	"Brilliant!"	exec xlock -mode nose -message "WOW! $LOGNAME, You are Briilliant! "
+  Exec	"Love You"	exec xlock -mode nose -message "You know, I Love You $LOGNAME." &
+  Exec	"Available"	exec xlock -mode nose -message "Hey, I am available now! " &
+EndPopup
+
+Popup "Special-Saver"
+	Title	"Special-Saver"
+	Exec	"Blank"	exec xlock -nolock -mode blank &
+	Exec	"Bomb"	exec xlock -nolock -mode bomb &
+	Exec	"Random nice"	exec xlock -nolock -mode random -modelist allnice -fullrandom -neighbors 0 &
+	Exec	"Random standard"	exec xlock -nolock -mode random -modelist all-allgl -fullrandom -neighbors 0 &
+	Exec	"Random all"	exec xlock -nolock -mode random -modelist all -fullrandom -neighbors 0 &
+	Exec	"Random 3d"	exec xlock -nolock -mode random -modelist all3d -use3d -fullrandom &
+	Exec	"Random ptr"	exec xlock -nolock -mode random -modelist allmouse -mouse -fullrandom &
+	Exec	"Random write"	exec xlock -nolock -mode random -modelist allwrite -fullrandom &
+EndPopup
+
+Popup "Screensaver"
+	Title	"Screensaver"
+	Popup	"Cellular Automata"	Automata-Saver
+	Nop	""
+	Popup	"Fractal"	Fractal-Saver
+	Nop	""
+	Popup	"Geometry"	Geometry-Saver
+	Nop	""
+	Popup	"Space"	Space-Saver
+	Nop	""
+	Popup	"Assorted"	Assorted-Saver
+	Nop	""
+	Popup	"XPM"	XPM-Saver
+	Nop	""
+	Popup	"GL"	GL-Saver
+	Nop	""
+	Popup	"Marquee Message"	Marquee-Message-Saver
+	Nop	""
+	Popup	"Nose Message"	Nose-Message-Saver
+	Nop	""
+	Popup	"Special"	Special-Saver
+EndPopup
+
+Popup "Lock_Saver"
+	Title	"Lock_Saver"
+	Popup	"Screenlock"	Screenlock
+	Nop	""
+	Popup	"Screensaver"	Screensaver
+EndPopup
+

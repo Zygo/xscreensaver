@@ -1,0 +1,51 @@
+This is for getting xlockmore modes running in xscreensaver-2.17.
+xlockmore-modes will install first ...
+So during an installation these executables will be overwritten
+if there is a conflict with the xscreensavers modes.
+
+See docs/TODO for current problems.
+
+0. OK say you have xscreensaver-2.17/ .  Drop xlockmore in that directory
+   change the name of xlockmore to "xlockmore".
+   (This is not 100% tested so it would be wise to read it first!)
+
+      cd xscreensaver-2.17/xlockmore/xscreensaver
+
+1. Makefile.in replaces ../../Makefile.in
+   configure.in replaces ../../configure.in
+   need autoconf to replace configure... (pick it from your favorite gnu site)
+
+      mv ../../configure.in ../../configure.in.orig
+      mv ../../Makefile.in ../../Makefile.in.orig
+      cp ./configure.in ../../configure.in
+      cp ./Makefile.in ../../Makefile.in
+      cd ../..
+      autoconf
+      cd xlockmore/xscreensaver
+
+2. modes/glx directory goes in xscreensaver/hacks/glx with the old
+   Makefile.in (do not write over this file!) and xlock-gl.c
+
+      mv ../../hacks/glx ../../hacks/glx.orig
+      cp -R ../modes/glx ../../hacks/glx
+      cp ../../hacks/glx.orig/Makefile.in ../../hacks/glx/
+      cp ../../hacks/glx.orig/xlock-gl.c ../../hacks/glx/
+
+
+3. change Makefiles... backups (.inxl) files should already be there.
+
+     cp ../xlock/Makefile.inxs ../xlock/Makefile.in
+     cp ../modes/Makefile.inxs ../modes/Makefile.in
+
+
+4. Remove a file that annoys me...
+
+     mv ../../hacks/ant.c ../../hacks/ant.c.orig
+     cp ant.c ../../hacks/ant.c
+
+
+5. Then its all ready...
+
+     cd ../..
+     configure
+     make

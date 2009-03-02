@@ -1,0 +1,274 @@
+/*-
+ * config.h.in --- xlockmore
+ *
+ *  The best way to set these parameters is by running the included `configure'
+ *  script.  That examines your system, and generates `config.h' from
+ *  `config.h.in'.
+ *
+ *  If something goes very wrong, you can edit `config.h' directly, but beware
+ *  that your changes will be lost if you ever run `configure' again.
+ *
+ *  At the bottom, there are a few things commented out that are not
+ *  automatically detected (past "NOT AUTOMATICALLY DETECTED YET").
+ * 
+ */
+
+/* Define to empty if the keyword does not work.  */
+#undef const
+
+/* Define to empty if the keyword does not work.  */
+#undef inline
+
+/* Define to the type of elements in the array set by `getgroups'. Usually
+   this is either `int' or `gid_t'.  */
+#undef GETGROUPS_T
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef gid_t
+
+/* Define if you have <sys/wait.h> that is POSIX.1 compatible.  */
+#undef HAVE_SYS_WAIT_H
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef pid_t
+
+/* Define as the return type of signal handlers (int or void).  */
+#undef RETSIGTYPE
+
+/* Define to `unsigned' if <sys/types.h> doesn't define.  */
+#undef size_t
+
+/* Define if you have the ANSI C header files.  */
+#undef STDC_HEADERS
+
+/* Define if you can safely include both <sys/time.h> and <time.h>.  */
+#undef TIME_WITH_SYS_TIME
+
+/* Define if your <sys/time.h> declares struct tm.  */
+#undef TM_IN_SYS_TIME
+
+/* Define if you have the gettimeofday function.  */
+#undef HAVE_GETTIMEOFDAY
+
+/* Define if gettimeofday requires two arguments.  */
+#undef GETTIMEOFDAY_TWO_ARGS
+
+/* Define to `int' if <sys/types.h> doesn't define.  */
+#undef uid_t
+
+/* Define if you have the gethostname function.  */
+#undef HAVE_GETHOSTNAME
+
+/* Define if you have the select function.  */
+#undef HAVE_SELECT
+
+/* Define if you have the strdup function.  */
+#undef HAVE_STRDUP
+
+/* Define if you have the seteuid function.  */
+#undef HAVE_SETEUID
+
+/* Define if you have the setreuid function.  */
+#undef HAVE_SETREUID
+
+/* Define one of these if they exist (usually not used any more).  */
+#undef HAVE_NANOSLEEP
+#undef HAVE_USLEEP
+
+/* If left undefined will default to internal Random Number Generator */
+#undef SRAND
+#undef LRAND
+#undef MAXRAND
+
+/* Enable use of matherr function */
+#undef USE_MATHERR
+
+/* Define if you have the <dirent.h> header file.  */
+#undef HAVE_DIRENT_H
+
+/* Define if you have the <fcntl.h> header file.  */
+#undef HAVE_FCNTL_H
+
+/* Define if you have the <limits.h> header file.  */
+#undef HAVE_LIMITS_H
+
+/* Define if you have the <ndir.h> header file.  */
+#undef HAVE_NDIR_H
+
+/* Define if you have the <sys/dir.h> header file.  */
+#undef HAVE_SYS_DIR_H
+
+/* Define if you have the <sys/ndir.h> header file.  */
+#undef HAVE_SYS_NDIR_H
+
+/* Define if you have the <sys/time.h> header file.  */
+#undef HAVE_SYS_TIME_H
+
+/* Define if you have the <sys/select.h> header file.  */
+#undef HAVE_SYS_SELECT_H
+
+/* Define if you have the <syslog.h> header file.  */
+#undef HAVE_SYSLOG_H
+
+/* Define if you have the <unistd.h> header file.  */
+#undef HAVE_UNISTD_H
+
+/* Define if you have the shadow passwords (or elf).  */
+#undef HAVE_SHADOW
+
+/* Define if you have the sigset_t structure.  */
+#undef HAVE_STRUCT_SIGSET_T
+
+/* Various system defines.  */
+#undef SYSV
+#undef SVR4
+#undef linux
+#undef SOLARIS2
+#undef LESS_THAN_SOLARIS2_5
+#undef SUNOS4
+#undef _POSIX_SOURCE
+#undef _BSD_SOURCE
+#undef _GNU_SOURCE
+#undef AIXV3
+#undef LESS_THAN_AIX3_2
+#undef SUN_OGL_NO_VERTEX_MACROS
+
+
+/* Define if you have XPM (look for it under a X11 dir).  */
+#undef USE_XPM
+
+/* Define if you have XPM (when its not under a X11 dir, not the norm).  */
+#undef USE_XPMINC
+
+/* Define if you have XMU (Editres).  */
+#undef USE_XMU
+
+/* Define if you have GL (MesaGL).  */
+#undef USE_GL
+
+/* Define if you have DtSaver.  */
+#undef USE_DTSAVER
+
+/* Define if you have DPMS (Display Power Management Signaling).  */
+#undef USE_DPMS
+
+/* Define one of these for sounds.  */
+#undef USE_RPLAY
+#undef USE_NAS
+#undef USE_VMSPLAY
+#undef DEF_PLAY
+
+/* Allows xlock to run in root window (some window managers have problems) */
+#undef USE_VROOT
+
+/* Users can not turn off allowroot */
+#undef ALWAYS_ALLOW_ROOT
+
+/* Paranoid administrator option (a check is also done to see if you have it) */
+#undef USE_SYSLOG
+
+/* Multiple users ... security? */
+#undef USE_MULTIPLE_USER
+
+/* Multiple root users ... security? */
+#undef USE_MULTIPLE_ROOT
+
+/* Allow a window to be placed over xlock */
+#undef USE_WINDOW_VISIBILITY
+
+/* Some machines may still need this (fd_set errors may be a sign) */
+#undef USE_OLD_EVENT_LOOP
+
+/* This patches up old __VMS_VER < 70000000 */
+#undef USE_VMSUTILS
+
+/* For personal use you may want to consider: */
+/* Unfriendly paranoid admininistrator or unknown shadow passwd algorithm */
+#undef USE_XLOCKRC
+
+/* For labs you may want to consider: */
+
+/* Enable auto-logout code, minutes until auto-logout */
+#undef USE_AUTO_LOGOUT
+
+/* Set default for auto-logout code, hard limit is USE_AUTO_LOGOUT */
+#undef DEF_AUTO_LOGOUT
+
+/* Enable logout button, minutes until button appears */
+#undef USE_BUTTON_LOGOUT
+
+/* Set default for logout button code, hard limit is USE_LOGOUT_BUTTON */
+#undef DEF_BUTTON_LOGOUT
+
+/* Enable automatic logout mode (does not come up in random mode) */
+#undef USE_BOMB
+
+/* Enable unstable bubble3d mode */
+#undef USE_UNSTABLE
+
+/* Define one of these with USE_AUTO_LOGOUT, USE_LOGOUT_BUTTON, and/or
+   USE_BOMB, if using xdm */
+#undef CLOSEDOWN_LOGOUT
+#undef SESSION_LOGOUT
+
+/* File of staff who are exempt */
+#undef STAFF_FILE
+
+/* Netgroup that is exempt */
+#undef STAFF_NETGROUP
+
+/* Digital Unix Enhanced Security */
+#undef OSF1_ENH_SEC
+
+/* Kerberos 4 */
+#undef HAVE_KRB4
+
+/* Kerberos 5 */
+#undef HAVE_KRB5
+
+/* DCE Passwording */
+#undef DCE_PASSWD
+
+/* Define to use and link against PAM */
+#undef PAM
+
+/* AIX AFS Passwording */
+#undef AFS
+
+/* SUNOS Adjunct Passwording */
+#undef SUNOS_ADJUNCT_PASSWD
+
+/* USE Xmb function series */
+#undef USE_MB
+
+/* The FOLLOWING are NOT AUTOMATICALLY DETECTED YET */
+
+/* Force NON-MESA GL using MESA includes, uncomment next line */
+/* #define OPENGL_MESA_INCLUDES */
+
+/* EXTRA SOUND STUFF if you do not have RPLAY or NAS */
+/* SUNOS 4.1.3 */
+/* #define DEF_PLAY "/usr/demo/SOUND/play /usr/local/share/sounds/xlock/" */
+/* IRIX 5.3 */
+/* #define DEF_PLAY "/usr/sbin/sfplay /usr/local/share/sounds/xlock/" */
+/* Digital Unix with Multimedia Services installed */
+/* #define DEF_PLAY "/usr/bin/mme/decsound -play
+   /usr/local/share/sounds/xlock/" */
+/* LINUX and others (see config directory) */
+/* #define DEF_PLAY "/usr/local/bin/play.sh /usr/local/share/sounds/xlock/" */
+
+/* EXTRA SYSLOG STUFF if you want to override defaults for SYSLOG */
+/* You may want to set all -DSYSLOG_* to LOG_WARNING to maximize messages */
+/* #define SYSLOG_FACILITY LOG_AUTH */
+/* #define SYSLOG_WARNING LOG_WARNING */
+/* #define SYSLOG_NOTICE LOG_NOTICE */
+/* #define SYSLOG_INFO LOG_INFO */
+
+/* #define SAFEWORD */
+/* #define FX */
+
+/* Full screen colormaps are not allowed on compliant window managers
+   like FVWM, TVWM, SCWM, and DEC WINDOWS and tricks xlock, this fix does
+   not work on TrueColor
+ */
+/* #define COMPLIANT_COLORMAP */
