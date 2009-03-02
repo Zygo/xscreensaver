@@ -622,6 +622,19 @@ build_molecule (ModeInfo *mi)
       glEnable(GL_CULL_FACE);
     }
 
+  if (do_labels && !wire)
+    {
+      /* This is so all polygons are drawn slightly farther back in the depth
+         buffer, so that when we render text directly on top of the spheres,
+         it still shows up. */
+      glEnable (GL_POLYGON_OFFSET_FILL);
+      glPolygonOffset (1.0, (do_bonds ? 10.0 : 35.0));
+    }
+  else
+    {
+      glDisable (GL_POLYGON_OFFSET_FILL);
+    }
+
   if (!wire)
     set_atom_color (mi, 0, False);
 
@@ -659,55 +672,44 @@ build_molecule (ModeInfo *mi)
           }
       }
 
-  for (i = 0; i < m->natoms; i++)
-    {
-      molecule_atom *a = &m->atoms[i];
-      int i;
+  if (!wire && do_atoms)
+    for (i = 0; i < m->natoms; i++)
+      {
+        molecule_atom *a = &m->atoms[i];
+        GLfloat size = atom_size (a);
+        set_atom_color (mi, a, False);
+        sphere (a->x, a->y, a->z, size, wire);
+      }
 
-      if (!wire && do_atoms)
-        {
-          GLfloat size = atom_size (a);
-          set_atom_color (mi, a, False);
-          sphere (a->x, a->y, a->z, size, wire);
-        }
+  /* Second pass to draw labels, after all atoms and bonds are in place
+   */
+  if (do_labels)
+    for (i = 0; i < m->natoms; i++)
+      {
+        molecule_atom *a = &m->atoms[i];
+        int j;
 
-      if (do_labels)
-        {
-          glPushAttrib (GL_LIGHTING | GL_DEPTH_TEST);
-          glDisable (GL_LIGHTING);
-          glDisable (GL_DEPTH_TEST);
+        glPushAttrib (GL_LIGHTING | GL_DEPTH_TEST);
+        glDisable (GL_LIGHTING);
+/*        glDisable (GL_DEPTH_TEST);*/
 
-          if (!wire)
-            set_atom_color (mi, a, True);
+        if (!wire)
+          set_atom_color (mi, a, True);
 
-          glRasterPos3f (a->x, a->y, a->z);
+        glRasterPos3f (a->x, a->y, a->z);
 
-          {
-            GLdouble mm[17], pm[17];
-            GLint vp[5];
-            GLdouble wx=-1, wy=-1, wz=-1;
-            glGetDoublev (GL_MODELVIEW_MATRIX, mm);
-            glGetDoublev (GL_PROJECTION_MATRIX, pm);
-            glGetIntegerv (GL_VIEWPORT, vp);
+        /* Before drawing the string, shift the origin  to center
+           the text over the origin of the sphere. */
+        glBitmap (0, 0, 0, 0,
+                  -string_width (mc->xfont1, a->label) / 2,
+                  -mc->xfont1->descent,
+                  NULL);
 
-            /* Convert 3D coordinates to window coordinates */
-            gluProject (a->x, a->y, a->z, mm, pm, vp, &wx, &wy, &wz);
+        for (j = 0; j < strlen(a->label); j++)
+          glCallList (mc->font1_dlist + (int)(a->label[j]));
 
-            /* Fudge the window coordinates to center the string */
-            wx -= string_width (mc->xfont1, a->label) / 2;
-            wy -= mc->xfont1->descent;
-
-            /* Convert new window coordinates back to 3D coordinates */
-            gluUnProject (wx, wy, wz, mm, pm, vp, &wx, &wy, &wz);
-            glRasterPos3f (wx, wy, wz);
-          }
-
-          for (i = 0; i < strlen(a->label); i++)
-            glCallList (mc->font1_dlist + (int)(a->label[i]));
-
-          glPopAttrib();
-        }
-    }
+        glPopAttrib();
+      }
 
   if (do_bbox)
     draw_bounding_box (mi);
@@ -1100,6 +1102,7 @@ reshape_molecule (ModeInfo *mi, int width, int height)
   gluLookAt( 0.0, 0.0, 15.0,
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
+
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glTranslatef(0.0, 0.0, -15.0);

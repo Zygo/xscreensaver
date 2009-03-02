@@ -25,6 +25,7 @@ extern Pixmap
 xscreensaver_logo (Display *dpy, Window window, Colormap cmap,
                    unsigned long background_color,
                    unsigned long **pixels_ret, int *npixels_ret,
+                   Pixmap *mask_ret,
                    Bool big_p);
 
 #endif /* __XSCREENSAVER_RESOURCES_H__ */

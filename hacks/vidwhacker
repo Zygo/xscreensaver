@@ -1,6 +1,5 @@
-#!/bin/sh
-#
-# vidwhacker, for xscreensaver.  Copyright (c) 1998, 1999 Jamie Zawinski.
+#!/usr/bin/perl -w
+# vidwhacker, for xscreensaver.  Copyright (c) 1998-2001 Jamie Zawinski.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -10,436 +9,446 @@
 # software for any purpose.  It is provided "as is" without express or 
 # implied warranty.
 #
-#
-# This script grabs a frame of video, then uses various pbm filters to
+# This program grabs a frame of video, then uses various pbm filters to
 # munge the image in random nefarious ways, then uses xloadimage, xli, or xv
 # to put it on the root window.  This works out really nicely if you just
 # feed some random TV station into it...
 #
-# The video grabbing part is SGI-specific -- if you want to use this on
-# another system, add a new clause to the grab() procedure.
+# Created: 14-Apr-01.
+
+require 5;
+use diagnostics;
+use strict;
+
+my $progname = $0; $progname =~ s@.*/@@g;
+my $version = q{ $Revision: 1.17 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+
+my $verbose = 0;
+my $use_stdin = 0;
+my $use_stdout = 0;
+my $video_p = 0;
+my $file_p = 1;
+my $delay = 5;
+my $imagedir;
+
+my $screen_width = -1;
 
 
-# need perl to generate random numbers -- I don't know another way to do
-# that from a shell script.
-perl=perl
 
-
-onroot=false
-verbose=false
-delay=3
-use_stdin=false
-use_stdout=false
-
-pid=""
-tmp=${TMPDIR:-/tmp}/vidwhacker.$$
-tmp_rgb=$tmp-00000.rgb
-tmp_ppm0=$tmp-0.ppm
-tmp_ppm1=$tmp-1.ppm
-tmp_ppm2=$tmp-2.ppm
-tmp_ppm3=$tmp-3.ppm
-tmp_ppm4=$tmp-4.ppm
-tmp_ppmS=$tmp-S.ppm
-
-
-# Figure out whether to use xloadimage, xli, or xv.
-pick_displayer() {
-  displayer=
-  for prog in xloadimage xli xv ; do
-    IFS=:
-    for p in $PATH; do
-      IFS=
-      if [ "$p" = "" ]; then p=. ; fi
-      if [ -x $p/$prog ]; then
-        displayer=$prog
-        break 2
-      fi
-    done
-  done
-
-  if [ "$displayer" = "xloadimage" ]; then
-    displayer_args="-quiet"
-    displayer_win_args=""
-    displayer_root_args="-onroot"
-  elif [ "$displayer" = "xli" ]; then
-    displayer_args="-quiet"
-    displayer_win_args=""
-    displayer_root_args="-onroot -center -border black"
-  elif [ "$displayer" = "xv" ]; then
-    displayer_args="-quick24"
-    displayer_win_args="-geom +0+0"
-    displayer_root_args="-root -rmode 5 -noresetroot -rfg black -rbg black -viewonly"
-  else
-    echo "$0: neither xli nor xv found on \$PATH"
-    exit -1
-  fi
-}
-
-# Process command-line args
-getargs() {
-
-  while [ $# != 0 ]; do
-    case "$1" in
-    -display | -disp | -dis | -dpy | -d )
-      shift
-      DISPLAY="$1"
-      export DISPLAY
-      ;;
-    -root )
-      onroot=true
-      ;;
-    -window )
-      onroot=false
-      ;;
-    -verbose )
-      verbose=true
-      ;;
-    -stdin )
-      use_stdin=true
-      ;;
-    -stdout )
-      use_stdout=true
-      ;;
-    -delay)
-      shift
-      delay="$1"
-      ;;
-    * )
-      echo "VidWhacker, Copyright (c) 1999 Jamie Zawinski <jwz@jwz.org>" >&2
-      echo "            http://www.jwz.org/xscreensaver/" >&2
-      echo "" >&2
-      echo "usage: $0 [-display dpy] [-verbose] [-root | -window]" >&2
-      echo "                  [-stdin] [-stdout] [-delay secs]" >&2
-      exit 1
-      ;;
-    esac
-    shift
-  done
-
-  pick_displayer
-
-  if [ "$onroot" = true ]; then
-    displayer_args="$displayer_args $displayer_root_args"
-  else
-    displayer_args="$displayer_args $displayer_win_args"
-  fi
-
-
-  screen_width=''
-  if [ "$use_stdout" = false ]; then
-    screen_width=`xdpyinfo 2>/dev/null | 
-        sed -n 's/.* dimensions: *\([0-9]*\).*/\1/p'`
-    if [ "$screen_width" = "" ]; then
-      screen_width=800
-    fi
-  fi
-}
-
-
-clean() {
-  rm -f $tmp_rgb $tmp_ppm1 $tmp_ppm2 $tmp_ppm3 $tmp_ppm4
-}
-
-clean2() {
-  clean
-  rm -f $tmp_ppm0 $tmp_ppmS
-}
-
-
-# Grab a frame of video.  leaves it in $tmp_ppm1.
+# ####  This list was lifted from driver/xscreensaver-getimage-file
 #
-grab() {
-  uname=`uname`
-  if [ $uname = IRIX ]; then
-    #
-    # SGI's "vidtomem" returns an SGI RGB image of the default video input,
-    # and has stupid non-overridable ouput-file-naming conventions.  So, let 
-    # it write its file; and then convert it to a pgm.
-    #
-    
-    vidtomem -f $tmp
-    sgitopnm $tmp_rgb > $tmp_ppm1
-
-    # Cut off the close-captioning blips in the NTSC overscan region.  YMMV.
-    #  | pnmcut 12 7 695 477 
-
-  elif [ $uname = Linux ]; then
-
-    # Marcus Herbert says the following works with his Connectix Qcam.
-    # Don't have qcam?  Well, do something else then...  and send me a patch.
-
-    qcam > $tmp_ppm1
-
-    # Friedrich Delgado Friedrichs says the following works if you have
-    # XawTV installed:
-    #
-    #   streamer -o $tmp_ppm1
-    #
-
-    # James Isaacs says this works for the ATI video capture card:
-    #
-    #   atitv snap $tmp_ppm1
-    #
-
-  else
-    echo "$0: don't know how to grab video on this OS." >&2
-    clean2
-    exit 1
-  fi
-}
-
-
-# Use perl to pick a random foreground/background color in pbm's syntax.
+# These are programs that can be used to put an image file on the root
+# window (including virtual root windows.)  The first one of these programs
+# that exists on $PATH will be used (with the file name as the last arg.)
 #
-randcolor() {
-  $perl -e 'srand(time ^ $$);
-            printf("#%02x%02x%02x-#%02x%02x%02x",
-                   int(rand()*60),
-                   int(rand()*60),
-                   int(rand()*60),
-                   120+int(rand()*135),
-                   120+int(rand()*135),
-                   120+int(rand()*135))'
+# If you add other programs to this list, please let me know!
+#
+my @displayer_programs = (
+  "xv         -root -quit -viewonly -maxpect -noresetroot -quick24 -rmode 5" .
+  "           -rfg black -rbg black",
+  "xli        -quiet -fullscreen -onroot -center -border black",
+  "xloadimage -quiet -fullscreen -onroot -center -border black",
+  "chbg       -once -xscreensaver -max_grow 4",
+
+# this lame program wasn't built with vroot.h:
+# "xsri       -scale -keep-aspect -center-horizontal -center-vertical",
+);
+
+
+# List of interesting PPM filter pipelines.
+# In this list, the following magic words may be used:
+#
+#  COLORS       a randomly-selected pair of RGB foreground/background colors.
+#  FILE1        the (already-existing) input PPM file (ok to overwrite it).
+#  FILE2-FILE4  names of other tmp files you can use.
+#
+# These commands should read from FILE1, and write to stdout.
+# All tmp files will be deleted afterward.
+#
+my @filters = (
+  "ppmtopgm FILE1 | pgmedge | pgmtoppm COLORS | ppmnorm",
+  "ppmtopgm FILE1 | pgmenhance | pgmtoppm COLORS",
+  "ppmtopgm FILE1 | pgmoil | pgmtoppm COLORS",
+  "ppmtopgm FILE1 | pgmbentley | pgmtoppm COLORS",
+
+  "ppmrelief FILE1 | ppmtopgm | pgmedge | ppmrelief | ppmtopgm |" .
+   " pgmedge | pnminvert | pgmtoppm COLORS",
+
+  "ppmspread 71 FILE1 > FILE2 ; " .
+  " pnmarith -add FILE1 FILE2 ; ",
+
+  "pnmflip -lr < FILE1 > FILE2 ; " .
+  " pnmarith -multiply FILE1 FILE2 > FILE3 ; " .
+  " pnmflip -tb FILE3 | ppmnorm > FILE2 ; " .
+  " pnmarith -multiply FILE1 FILE2",
+
+  "pnmflip -lr FILE1 > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2",
+
+  "pnmflip -tb FILE1 > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2",
+
+  "pnmflip -lr FILE1 | pnmflip -tb > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2",
+
+  "ppmtopgm < FILE1 | pgmedge > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2 > FILE3 ; " .
+  " cp FILE3 FILE1 ; " .
+  " ppmtopgm < FILE1 | pgmedge > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2 > FILE3 ; " .
+  " ppmnorm < FILE1",
+
+  "pnmflip -lr < FILE1 > FILE2 ; " .
+  " pnmarith -multiply FILE1 FILE2 | ppmrelief | ppmnorm | pnminvert",
+
+  "pnmflip -lr FILE1 > FILE2 ; " .
+  " pnmarith -subtract FILE1 FILE2 | ppmrelief | ppmtopgm | pgmedge",
+
+  "pgmcrater -number 20000 -width WIDTH -height HEIGHT FILE1 | " .
+  "   pgmtoppm COLORS > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2 > FILE3 ; " .
+  " pnmflip -tb FILE3 | ppmnorm > FILE2 ; " .
+  " pnmarith -multiply FILE1 FILE2",
+
+  "ppmshift 30 FILE1 | ppmtopgm | pgmoil | pgmedge | " .
+  "   pgmtoppm COLORS > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2",
+
+  "ppmpat -madras WIDTH HEIGHT | pnmdepth 255 > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2",
+
+  "ppmpat -tartan WIDTH HEIGHT | pnmdepth 255 > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2",
+
+  "ppmpat -camo WIDTH HEIGHT | pnmdepth 255 | ppmshift 50 > FILE2 ; " .
+  " pnmarith -multiply FILE1 FILE2",
+
+  "pgmnoise WIDTH HEIGHT | pgmedge | pgmtoppm COLORS > FILE2 ; " .
+  " pnmarith -difference FILE1 FILE2 | pnmdepth 255 | pnmsmooth",
+);
+
+
+sub error {
+  ($_) = @_;
+  print STDERR "$progname: $_\n";
+  exit 1;
 }
 
-rand() {
-  $perl -e "srand(time ^ $$); print int(rand() * $1)"
+# ####  Lifted from driver/xscreensaver-getimage-file
+#
+sub pick_displayer {
+  my @names = ();
+
+  foreach my $cmd (@displayer_programs) {
+    $_ = $cmd;
+    my ($name) = m/^([^ ]+)/;
+    push @names, "\"$name\"";
+    print STDERR "$progname: looking for $name...\n" if ($verbose > 2);
+    foreach my $dir (split (/:/, $ENV{PATH})) {
+      print STDERR "$progname:   checking $dir/$name\n" if ($verbose > 3);
+      return $cmd if (-x "$dir/$name");
+    }
+  }
+
+  $names[$#names] = "or " . $names[$#names];
+  printf STDERR "$progname: none of: " . join (", ", @names) .
+                " were found on \$PATH.\n";
+  exit 1;
 }
 
 
+# Choose random foreground and background colors
+#
+sub randcolors {
+  return sprintf ("#%02x%02x%02x-#%02x%02x%02x",
+                  int(rand()*60),
+                  int(rand()*60),
+                  int(rand()*60),
+                  120+int(rand()*135),
+                  120+int(rand()*135),
+                  120+int(rand()*135));
+}
+
+
+sub filter_subst {
+  my ($filter, $width, $height, @tmpfiles) = @_;
+  my $colors = randcolors();
+  $filter =~ s/\bWIDTH\b/$width/g;
+  $filter =~ s/\bHEIGHT\b/$height/g;
+  $filter =~ s/\bCOLORS\b/'$colors'/g;
+  my $i = 1;
+  foreach my $t (@tmpfiles) {
+    $filter =~ s/\bFILE$i\b/$t/g;
+    $i++;
+  }
+  if ($filter =~ m/([A-Z]+)/) {
+    error "internal error: what is \"$1\"?";
+  }
+  $filter =~ s/  +/ /g;
+  return $filter;
+}
 
 # Frobnicate the image in some random way.
 #
-frob() {
+sub frob_ppm {
+  my ($ppm_data) = @_;
+  $_ = $ppm_data;
 
-  w_h=`head -2 $tmp_ppm1 | tail -1`
-  width=`echo $w_h | awk '{print $1}'`
-  height=`echo $w_h | awk '{print $2}'`
+  error "0-length data" if (!defined($ppm_data) || $ppm_data eq  "");
+  error "not a PPM file" unless (m/^P\d\n/s);
+  my ($width, $height) = m/^P\d\n(\d+) (\d+)\n/s;
+  error "got a bogus PPM" unless ($width && $height);
 
-  N=`rand 17`
+  my $tmpdir = $ENV{TMPDIR};
+  $tmpdir = "/tmp" unless $tmpdir;
+  my $fn = sprintf("$tmpdir/vw.%04x", $$);
+  my @files = ( "$fn", "$fn.1", "$fn.2", "$fn.3" );
 
-  if [ "$verbose" = true ]; then
-    echo "mode $N..." >&2
-  fi
+  my $n = int(rand($#filters+1));
+  my $filter = $filters[$n];
 
-  if   [ $N = 0 ]; then
-    ppmtopgm $tmp_ppm1 | pgmedge | pgmtoppm `randcolor` | ppmnorm
+  if ($verbose == 1) {
+    printf STDERR "$progname: running filter $n\n";
+  } elsif ($verbose > 1) {
+    my $f = $filter;
+    $f =~ s/  +/ /g;
+    $f =~ s/^ */\t/;
+    $f =~ s/ *\|/\n\t|/g;
+    $f =~ s/ *\; */ ;\n\t/g;
+    print STDERR "$progname: filter $n:\n\n$f\n\n" if $verbose;
+  }
 
-  elif [ $N = 1 ]; then
-    ppmtopgm $tmp_ppm1 | 
-    pgmenhance | 
-    pgmtoppm `randcolor`
+  $filter = filter_subst ($filter, $width, $height, @files);
 
-  elif [ $N = 2 ]; then
-    ppmtopgm $tmp_ppm1 | pgmoil | pgmtoppm `randcolor`
+  unlink @files;
 
-  elif [ $N = 3 ]; then 
-    ppmrelief $tmp_ppm1 | ppmtopgm | pgmedge | ppmrelief | ppmtopgm |
-      pgmedge | pnminvert | pgmtoppm `randcolor`
+  local *OUT;
+  open (OUT, ">$files[0]") || error ("writing $files[0]: $!");
+  print OUT $ppm_data;
+  close OUT;
 
-  elif [ $N = 4 ]; then
-    ppmspread 71 $tmp_ppm1 > $tmp_ppm2
-    pnmarith -add $tmp_ppm1 $tmp_ppm2
+  $filter = "( $filter )";
+  $filter .= "2>/dev/null" unless ($verbose > 1);
 
-  elif [ $N = 5 ]; then
-    pnmflip -lr $tmp_ppm1 > $tmp_ppm2
-    pnmarith -multiply $tmp_ppm1 $tmp_ppm2 > $tmp_ppm3
-    pnmflip -tb $tmp_ppm3 | ppmnorm > $tmp_ppm2
-    pnmarith -multiply $tmp_ppm1 $tmp_ppm2
+  local *IN;
+  open (IN, "$filter |") || error ("opening pipe: $!");
+  $ppm_data = "";
+  while (<IN>) { $ppm_data .= $_; }
+  close IN;
 
-  elif [ $N = 6 ]; then
-    N2=`rand 3`
-    if [ $N2 = 0 ]; then
-      pnmflip -lr $tmp_ppm1 > $tmp_ppm2
-    elif [ $N2 = 1 ]; then
-      pnmflip -tb $tmp_ppm1 > $tmp_ppm2
-    else
-      pnmflip -lr $tmp_ppm1 > $tmp_ppm2
-      pnmflip -tb $tmp_ppm2 > $tmp_ppm3
-      cp $tmp_ppm3 $tmp_ppm2
-    fi
-
-    pnmarith -difference $tmp_ppm1 $tmp_ppm2
-
-  elif [ $N = 7 ]; then
-
-    for i in 1 2 3 ; do
-      ppmtopgm $tmp_ppm1 | pgmedge > $tmp_ppm2
-      pnmarith -difference $tmp_ppm1 $tmp_ppm2 > $tmp_ppm3
-      cp $tmp_ppm3 $tmp_ppm1
-    done
-    ppmnorm < $tmp_ppm1
-
-  elif [ $N = 8 ]; then
-    pnmflip -lr $tmp_ppm1 > $tmp_ppm2
-    pnmarith -multiply $tmp_ppm1 $tmp_ppm2 | ppmrelief | ppmnorm | pnminvert
-
-  elif [ $N = 9 ]; then
-    pnmflip -lr $tmp_ppm1 > $tmp_ppm2
-    pnmarith -subtract $tmp_ppm1 $tmp_ppm2 | ppmrelief | ppmtopgm | pgmedge
-
-  elif [ $N = 10 ]; then
-    ppmtopgm $tmp_ppm1 | pgmbentley | pgmtoppm `randcolor`
-
-  elif [ $N = 11 ]; then
-    pgmcrater -number 20000 -height $height -width $width | pgmtoppm `randcolor` > $tmp_ppm2
-    pnmarith -difference $tmp_ppm1 $tmp_ppm2 > $tmp_ppm3
-    pnmflip -tb $tmp_ppm3 | ppmnorm > $tmp_ppm2
-    pnmarith -multiply $tmp_ppm1 $tmp_ppm2
-
-  elif [ $N = 12 ]; then
-    ppmshift 30 $tmp_ppm1 | ppmtopgm | pgmoil | pgmedge |  pgmtoppm `randcolor` > $tmp_ppm2
-    pnmarith -difference $tmp_ppm1 $tmp_ppm2 
-
- elif [ $N = 13 ]; then
-    ppmpat -madras $width $height | pnmdepth 255 > $tmp_ppm2
-    pnmarith -difference $tmp_ppm1 $tmp_ppm2
- 
-  elif [ $N = 14 ]; then
-    ppmpat -tartan $width $height | pnmdepth 255 > $tmp_ppm2
-    pnmarith -difference  $tmp_ppm1 $tmp_ppm2 
-  
-  elif [ $N = 15 ]; then
-    ppmpat -camo $width $height | pnmdepth 255 | ppmshift 50 > $tmp_ppm2
-    pnmarith -multiply $tmp_ppm1 $tmp_ppm2
-  
-  elif [ $N = 16 ]; then
-    pgmnoise $width $height | pgmedge | pgmtoppm `randcolor` > $tmp_ppm2
-    pnmarith -difference $tmp_ppm1 $tmp_ppm2 | pnmdepth 255 | pnmsmooth
-
-  else cat $tmp_ppm1
-  fi
+  unlink @files;
+  return $ppm_data;
 }
 
 
-# Grab a frame and frob it.  leave it in $tmp_ppm3.
-#
-whack() {
-  clean
+sub read_config {
+  my $conf = "$ENV{HOME}/.xscreensaver";
 
-  while [ ! -f $tmp_ppm1 ]; do
-    if [ "$use_stdin" != true ]; then
-      grab
-    else
-      cp $tmp_ppmS $tmp_ppm0
-      cp $tmp_ppm0 $tmp_ppm1
-    fi
-  done
+  my $had_dir = defined($imagedir);
 
-  rm -f $tmp_rgb
+  local *IN;
+  open (IN, "<$conf") ||  error "reading $conf: $!";
+  while (<IN>) {
+    if (!$imagedir && m/^imageDirectory:\s+([^\s]+)\s*$/i) { $imagedir = $1; }
+    elsif (m/^grabVideoFrames:\s+true\s*$/i)     { $video_p = 1; }
+    elsif (m/^grabVideoFrames:\s+false\s*$/i)    { $video_p = 0; }
+    elsif (m/^chooseRandomImages:\s+true\s*$/i)  { $file_p  = 1; }
+    elsif (m/^chooseRandomImages:\s+false\s*$/i) { $file_p  = 0; }
+  }
+  close IN;
 
-  if [ "$screen_width" != "" ]; then
-    frob | pnmscale -width $screen_width > $tmp_ppm3
-  else
-    frob > $tmp_ppm3
-  fi
+  $file_p = 1 if $had_dir;
 
-  rm -f $tmp_ppm1 $tmp_ppm2
+
+  if (!$file_p && !$video_p) {
+#    error "neither grabVideoFrames nor chooseRandomImages are set\n\t" .
+#      "in $conf; $progname requires one or both."
+    $file_p = 1;
+  }
+
+  if ($file_p) {
+    error "no imageDirectory set in $conf" unless $imagedir;
+    error "imageDirectory $imagedir doesn't exist" unless (-d $imagedir);
+  }
+
+  if ($verbose > 1) {
+    printf STDERR "$progname: grab video: $video_p\n";
+    printf STDERR "$progname: grab images: $file_p\n";
+    printf STDERR "$progname: directory: $imagedir\n";
+  }
+
 }
 
 
-# Kill off the xli or xv subprocess, if it's running
-#
-kill_pid() {
-  if [ "$pid" != "" ]; then
+sub get_ppm {
+  if ($use_stdin) {
+    print STDERR "$progname: reading from stdin\n" if ($verbose > 1);
+    my $ppm = "";
+    while (<STDIN>) { $ppm .= $_; }
+    return $ppm;
 
-    if [ "$verbose" = true ]; then
-      echo "killing pid $pid..." >&2
-    fi
+  } else {
 
-    # need to do this to avoid "6898 Terminated" messages!
-    # apparently one can't redirect the output of the builtin `kill' command.
-#    ( sh -c "kill $pid" ) >/dev/null 2>/dev/null </dev/null
+    my $do_file_p;
 
-    # wtf?  that doesn't work either.  Is it writing to /dev/tty??
-    kill $pid >/dev/null 2>&1
+    if ($file_p && $video_p) {
+      $do_file_p = (int(rand(2)) == 0);
+      print STDERR "$progname: doing " . ($do_file_p ? "files" : "video") ."\n"
+        if ($verbose);
+    }
+    elsif ($file_p)  { $do_file_p = 1; }
+    elsif ($video_p) { $do_file_p = 0; }
+    else {
+      error "internal error: not grabbing files or video?";
+    }
 
-    pid=""
-  fi
+    my $v = ($verbose <= 1 ? "" : "-" . ("v" x ($verbose-1)));
+    my $cmd;
+    if ($do_file_p) {
+      $cmd = "xscreensaver-getimage-file  $v --name $imagedir";
+    } else {
+      $cmd = "xscreensaver-getimage-video $v --stdout";
+    }
+
+    my $ppm;
+
+    if ($do_file_p) {
+
+      print STDERR "$progname: running \"$cmd\"\n" if ($verbose > 1);
+      my $fn = `$cmd`;
+      $fn =~ s/\n$//s;
+      error "didn't get a file?" if ($fn eq "");
+
+      print STDERR "$progname: selected file $fn\n" if ($verbose > 1);
+
+      if    ($fn =~ m/\.gif/i)   { $cmd = "giftopnm < $fn"; }
+      elsif ($fn =~ m/\.jpe?g/i) { $cmd = "djpeg < $fn"; }
+      else {
+        error "unrecognized file extension on $fn";
+      }
+
+      print STDERR "$progname: converting with \"$cmd\"\n" if ($verbose > 1);
+      $cmd .= " 2>/dev/null" unless ($verbose > 1);
+      $ppm = `$cmd`;
+
+    } else {
+
+      print STDERR "$progname: running \"$cmd\"\n" if ($verbose > 1);
+      $ppm = `$cmd`;
+      error "no data?" if ($ppm eq "");
+      error "not a PPM file" unless ($ppm =~ m/^P\d\n/s);
+
+      $_ = $ppm;
+      my ($width, $height) = m/^P\d\n(\d+) (\d+)\n/s;
+      error "got a bogus PPM" unless ($width && $height);
+      print STDERR "$progname: grabbed ${width}x$height PPM\n"
+        if ($verbose > 1);
+      $_ = 0;
+    }
+
+    return $ppm;
+  }
 }
 
-# called when this process is signalled (for cleanup)
-#
-my_trap() {
-  if [ "$verbose" = true ]; then
-    echo "trapped signal!" >&2
-  fi
-  kill_pid
-  clean2
-  exit 1
+sub dispose_ppm {
+  my ($ppm) = @_;
+
+  error "0-length data" if (!defined($ppm) || $ppm eq  "");
+  error "not a PPM file" unless ($ppm =~ m/^P\d\n/s);
+
+  if ($use_stdout) {
+    print STDERR "$progname: writing to stdout\n" if ($verbose > 1);
+    print $ppm;
+
+  } else {
+    my $displayer = pick_displayer();
+
+    my $tmpdir = $ENV{TMPDIR};
+    $tmpdir = "/tmp" unless $tmpdir;
+    my $fn = sprintf("$tmpdir/vw.%04x", $$);
+    local *OUT;
+    unlink $fn;
+    open (OUT, ">$fn") || error "writing $fn: $!";
+    print OUT $ppm;
+    close OUT;
+
+    my @cmd = split (/ +/, $displayer);
+    push @cmd, $fn;
+    print STDERR "$progname: executing \"" . join(" ", @cmd) . "\"\n"
+      if ($verbose);
+    system (@cmd);
+
+    unlink $fn;
+  }
 }
 
-main() {
 
-  getargs $@
+my $stdin_ppm = undef;
 
-  trap my_trap 1 2 3 6 9 13 15
+sub vidwhack {
+  my $ppm;
+  if ($use_stdin) {
+    if (!defined($stdin_ppm)) {
+      $stdin_ppm = get_ppm();
+    }
+    $ppm = $stdin_ppm;
+  } else {
+    $ppm = get_ppm();
+  }
 
-  if [ "$use_stdin" = true ]; then
-   cat > $tmp_ppmS
-  fi
-
-  while true; do
-
-    # Loop grabbing and frobbing images.
-    #
-    # If we're running on the root, run xv or xli in the foreground
-    # (with -exit, if xv) and then wait.
-    #
-    # If we're running in a window, spawn xv or xli in the background; then
-    # when it's time to put up the new image, kill off the currently-running
-    # xv or xli.
-
-    if [ "$verbose" = true ]; then
-      whack
-    else
-      whack >/dev/null 2>&1
-    fi
-
-    kill_pid
-
-    if [ ! -s $tmp_ppm3 ]; then
-      echo "$0: no image grabbed" >&2
-
-    elif [ "$use_stdout" = true ]; then
-
-      cat $tmp_ppm3
-      clean2
-      exit 0
-
-    else
-
-#      pnmtosgi < $tmp_ppm3 > $tmp_ppm2
-#      rm -f $tmp_ppm3
-       mv $tmp_ppm3 $tmp_ppm2
-
-      if [ -s $tmp_ppm2 ]; then
-        if [ "$verbose" = true ]; then
-          echo "launching $displayer $displayer_args $tmp_ppm2" >&2
-	  ls -lF $tmp_ppm2
-        fi
-
-	mv $tmp_ppm2 $tmp_ppm0
-        eval "$displayer $displayer_args $tmp_ppm0 &"
-
-# this doesn't work -- leaves xv processes around, instead of stray xset
-# data.  Sigh.
-#
-#	# cat the file so that we can nuke it without racing against xv.
-#        cat $tmp_ppm2 | $displayer $displayer_args - &
-
-        pid=$!
-      fi
-    fi
-
-    clean
-    sleep $delay
-
-  done
-  exit 1
+  $ppm = frob_ppm ($ppm);
+  dispose_ppm ($ppm);
+  $ppm = undef;
 }
 
-main $@
 
-# to find stray xv data:
-# xwininfo -root -children|grep 'xv image comments' | awk '{print "xkill -id ", $1}'
+sub usage {
+  print STDERR "VidWhacker, Copyright (c) 2001 Jamie Zawinski <jwz\@jwz.org>\n";
+  print STDERR "            http://www.jwz.org/xscreensaver/";
+  print STDERR "\n";
+  print STDERR "usage: $0 [-display dpy] [-verbose] [-root | -window]\n";
+  print STDERR "                  [-stdin] [-stdout] [-delay secs]\n";
+  print STDERR "                  [-directory image_directory]\n";
+  exit 1;
+}
+
+sub main {
+  while ($_ = $ARGV[0]) {
+    shift @ARGV;
+    if ($_ eq "--verbose") { $verbose++; }
+    elsif (m/^-v+$/) { $verbose += length($_)-1; }
+    elsif (m/^(-display|-disp|-dis|-dpy|-d)$/) { $ENV{DISPLAY} = shift @ARGV; }
+    elsif (m/^--?stdin$/) { $use_stdin = 1; }
+    elsif (m/^--?stdout$/) { $use_stdout = 1; }
+    elsif (m/^--?delay$/) { $delay = shift @ARGV; }
+    elsif (m/^--?dir(ectory)?$/) { $imagedir = shift @ARGV; }
+    elsif (m/^--?root$/) { }
+    elsif (m/^--?window$/) {
+      print STDERR "$progname: sorry, \"-window\" is unimplemented.\n";
+      print STDERR "$progname: use \"-stdout\" and pipe to a displayer.\n";
+      exit 1;
+    }
+    elsif (m/^-./) { usage; }
+    else { usage; }
+  }
+
+  read_config;
+
+  if (!$use_stdout) {
+    $_ = `xdpyinfo 2>-`;
+    ($screen_width) =~ m/ dimensions: +(\d+)x(\d+) pixels/;
+    $screen_width = 800 unless $screen_width > 0;
+  }
+
+  if ($use_stdout) {
+    vidwhack();
+  } else {
+    while (1) {
+      vidwhack();
+      sleep $delay;
+    }
+  }
+}
+
+main;
+exit 0;

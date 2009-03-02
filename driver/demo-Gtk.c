@@ -33,6 +33,7 @@
 #endif /* HAVE_UNAME */
 
 #include <stdio.h>
+#include <sys/stat.h>
 
 #include <X11/Xproto.h>		/* for CARD32 */
 #include <X11/Xatom.h>		/* for XA_INTEGER */
@@ -938,6 +939,63 @@ hack_time_text (GtkWidget *widget, const char *line, Time *store, Bool sec_p)
 }
 
 
+static Bool
+directory_p (const char *path)
+{
+  struct stat st;
+  if (!path || !*path)
+    return False;
+  else if (stat (path, &st))
+    return False;
+  else if (!S_ISDIR (st.st_mode))
+    return False;
+  else
+    return True;
+}
+
+static char *
+normalize_directory (const char *path)
+{
+  int L;
+  char *p2, *s;
+  if (!path) return 0;
+  L = strlen (path);;
+  p2 = (char *) malloc (L + 2);
+  strcpy (p2, path);
+  if (p2[L-1] == '/')  /* remove trailing slash */
+    p2[--L] = 0;
+
+  for (s = p2; s && *s; s++)
+    {
+      if (*s == '/' &&
+          (!strncmp (s, "/../", 4) ||			/* delete "XYZ/../" */
+           !strncmp (s, "/..\000", 4)))			/* delete "XYZ/..$" */
+        {
+          char *s0 = s;
+          while (s0 > p2 && s0[-1] != '/')
+            s0--;
+          if (s0 > p2)
+            {
+              s0--;
+              s += 3;
+              strcpy (s0, s);
+              s = s0-1;
+            }
+        }
+      else if (*s == '/' && !strncmp (s, "/./", 3))	/* delete "/./" */
+        strcpy (s, s+2), s--;
+      else if (*s == '/' && !strncmp (s, "/.\000", 3))	/* delete "/.$" */
+        *s = 0, s--;
+    }
+
+  for (s = p2; s && *s; s++)		/* normalize consecutive slashes */
+    while (s[0] == '/' && s[1] == '/')
+      strcpy (s, s+1);
+
+  return p2;
+}
+
+
 void
 prefs_ok_cb (GtkButton *button, gpointer user_data)
 {
@@ -977,6 +1035,23 @@ prefs_ok_cb (GtkButton *button, gpointer user_data)
      *(field) = value; \
   } while(0)
 
+# define PATHNAME(field, name) do { \
+    char *line = gtk_entry_get_text (\
+                    GTK_ENTRY (name_to_widget (GTK_WIDGET(button), (name)))); \
+    if (! *line) \
+      ; \
+    else if (!directory_p (line)) \
+      { \
+	char b[255]; \
+	sprintf (b, "Error:\n\n" "Directory does not exist: \"%s\"\n", line); \
+	warning_dialog (GTK_WIDGET (button), b, False, 100); \
+      } \
+   else { \
+     if ((field)) free ((field)); \
+     (field) = strdup(line); \
+    } \
+  } while(0)
+
 # define CHECKBOX(field, name) \
   field = gtk_toggle_button_get_active (\
              GTK_TOGGLE_BUTTON (name_to_widget (GTK_WIDGET(button), (name))))
@@ -991,6 +1066,11 @@ prefs_ok_cb (GtkButton *button, gpointer user_data)
   MINUTES (&p2->dpms_suspend,     "dpms_suspend_text");
   MINUTES (&p2->dpms_off,         "dpms_off_text");
 
+  CHECKBOX (p2->grab_desktop_p,   "grab_desk_button");
+  CHECKBOX (p2->grab_video_p,     "grab_video_button");
+  CHECKBOX (p2->random_image_p,   "grab_image_button");
+  PATHNAME (p2->image_directory,  "image_text");
+
   CHECKBOX (p2->verbose_p,        "verbose_button");
   CHECKBOX (p2->capture_stderr_p, "capture_button");
   CHECKBOX (p2->splash_p,         "splash_button");
@@ -1003,6 +1083,7 @@ prefs_ok_cb (GtkButton *button, gpointer user_data)
 # undef SECONDS
 # undef MINUTES
 # undef INTEGER
+# undef PATHNAME
 # undef CHECKBOX
 
 # define COPY(field) \
@@ -1018,6 +1099,20 @@ prefs_ok_cb (GtkButton *button, gpointer user_data)
   COPY(dpms_standby);
   COPY(dpms_suspend);
   COPY(dpms_off);
+
+  COPY (grab_desktop_p);
+  COPY (grab_video_p);
+  COPY (random_image_p);
+
+  if (!p->image_directory ||
+      !p2->image_directory ||
+      strcmp(p->image_directory, p2->image_directory))
+    changed = True;
+  if (p->image_directory && p->image_directory != p2->image_directory)
+    free (p->image_directory);
+  p->image_directory = normalize_directory (p2->image_directory);
+  if (p2->image_directory) free (p2->image_directory);
+  p2->image_directory = 0;
 
   COPY(verbose_p);
   COPY(capture_stderr_p);
@@ -1175,6 +1270,103 @@ enabled_cb (GtkWidget *cb, gpointer client_data)
                                     GTK_TOGGLE_BUTTON (cb)->active);
     }
 }
+
+
+
+typedef struct {
+  prefs_pair *pair;
+  GtkFileSelection *widget;
+} file_selection_data;
+
+
+
+static void
+store_image_directory (GtkWidget *button, gpointer user_data)
+{
+  file_selection_data *fsd = (file_selection_data *) user_data;
+  prefs_pair *pair = fsd->pair;
+  GtkFileSelection *selector = fsd->widget;
+  GtkWidget *top = toplevel_widget;
+  saver_preferences *p = pair->a;
+  char *path = gtk_file_selection_get_filename (selector);
+
+  if (p->image_directory && !strcmp(p->image_directory, path))
+    return;  /* no change */
+
+  if (!directory_p (path))
+    {
+      char b[255];
+      sprintf (b, "Error:\n\n" "Directory does not exist: \"%s\"\n", path);
+      warning_dialog (GTK_WIDGET (top), b, False, 100);
+      return;
+    }
+
+  if (p->image_directory) free (p->image_directory);
+  p->image_directory = normalize_directory (path);
+
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "image_text")),
+                      (p->image_directory ? p->image_directory : ""));
+  demo_write_init_file (GTK_WIDGET (top), p);
+}
+
+
+static void
+browse_image_dir_cancel (GtkWidget *button, gpointer user_data)
+{
+  file_selection_data *fsd = (file_selection_data *) user_data;
+  gtk_widget_hide (GTK_WIDGET (fsd->widget));
+}
+
+static void
+browse_image_dir_ok (GtkWidget *button, gpointer user_data)
+{
+  browse_image_dir_cancel (button, user_data);
+  store_image_directory (button, user_data);
+}
+
+static void
+browse_image_dir_close (GtkWidget *widget, GdkEvent *event, gpointer user_data)
+{
+  browse_image_dir_cancel (widget, user_data);
+}
+
+
+void
+browse_image_dir_cb (GtkButton *button, gpointer user_data)
+{
+  /* prefs_pair *pair = (prefs_pair *) client_data; */
+  prefs_pair *pair = global_prefs_pair;  /* I hate C so much... */
+  saver_preferences *p = pair->a;
+  static file_selection_data *fsd = 0;
+
+  GtkFileSelection *selector = GTK_FILE_SELECTION(
+    gtk_file_selection_new ("Please select the image directory."));
+
+  if (!fsd)
+    fsd = (file_selection_data *) malloc (sizeof (*fsd));  
+
+  fsd->widget = selector;
+  fsd->pair = pair;
+
+  if (p->image_directory && *p->image_directory)
+    gtk_file_selection_set_filename (selector, p->image_directory);
+
+  gtk_signal_connect (GTK_OBJECT (selector->ok_button),
+                      "clicked", GTK_SIGNAL_FUNC (browse_image_dir_ok),
+                      (gpointer *) fsd);
+  gtk_signal_connect (GTK_OBJECT (selector->cancel_button),
+                      "clicked", GTK_SIGNAL_FUNC (browse_image_dir_cancel),
+                      (gpointer *) fsd);
+  gtk_signal_connect (GTK_OBJECT (selector), "delete_event",
+                      GTK_SIGNAL_FUNC (browse_image_dir_close),
+                      (gpointer *) fsd);
+
+  gtk_widget_set_sensitive (GTK_WIDGET (selector->file_list), False);
+
+  gtk_window_set_modal (GTK_WINDOW (selector), True);
+  gtk_widget_show (GTK_WIDGET (selector));
+}
+
 
 
 /* Populating the various widgets
@@ -1356,6 +1548,23 @@ populate_prefs_page (GtkWidget *top, prefs_pair *pair)
                    p->dpms_enabled_p);
 
   gtk_toggle_button_set_active (
+                   GTK_TOGGLE_BUTTON (name_to_widget (top,"grab_desk_button")),
+                   p->grab_desktop_p);
+  gtk_toggle_button_set_active (
+                   GTK_TOGGLE_BUTTON (name_to_widget(top,"grab_video_button")),
+                   p->grab_video_p);
+  gtk_toggle_button_set_active (
+                   GTK_TOGGLE_BUTTON (name_to_widget(top,"grab_image_button")),
+                   p->random_image_p);
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "image_text")),
+                      (p->image_directory ? p->image_directory : ""));
+  gtk_widget_set_sensitive (GTK_WIDGET (name_to_widget (top, "image_text")),
+                            p->random_image_p);
+  gtk_widget_set_sensitive (
+                       GTK_WIDGET (name_to_widget (top,"image_browse_button")),
+                            p->random_image_p);
+
+  gtk_toggle_button_set_active (
                    GTK_TOGGLE_BUTTON (name_to_widget (top, "install_button")),
                    p->install_cmap_p);
   gtk_toggle_button_set_active (
@@ -1382,6 +1591,10 @@ populate_prefs_page (GtkWidget *top, prefs_pair *pair)
 	    break;
 	  }
       }
+
+#ifdef HAVE_XF86VMODE_GAMMA
+    found_any_writable_cells = True;  /* if we can gamma fade, go for it */
+#endif
 
 #ifdef HAVE_DPMS_EXTENSION
     {
@@ -1508,6 +1721,12 @@ fix_text_entry_sizes (GtkWidget *toplevel)
   w = GTK_WIDGET (name_to_widget (GTK_WIDGET (toplevel), "visual_combo"));
   w = GTK_COMBO (w)->entry;
   width = gdk_text_width (w->style->font, "PseudoColor___", 14);
+  gtk_widget_set_usize (w, width, -2);
+
+  /* Now fix the size of the file entry text.
+   */
+  w = GTK_WIDGET (name_to_widget (GTK_WIDGET (toplevel), "image_text"));
+  width = gdk_text_width (w->style->font, "MMMMMMMMMMMMMM", 14);
   gtk_widget_set_usize (w, width, -2);
 
 #if 0

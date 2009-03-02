@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-1998 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,7 +20,6 @@
 #include "visual.h"
 #include "usleep.h"
 #include "fade.h"
-
 
 Colormap
 copy_colormap (Screen *screen, Visual *visual,
@@ -76,12 +75,18 @@ blacken_colormap (Screen *screen, Colormap cmap)
 static void fade_screens_1 (Display *dpy, Colormap *cmaps,
 			    Window *black_windows, int seconds, int ticks,
 			    Bool out_p, Bool clear_windows);
+
 #ifdef HAVE_SGI_VC_EXTENSION
 static int sgi_gamma_fade (Display *dpy,
 			   Window *black_windows, int seconds, int ticks,
 			   Bool out_p, Bool clear_windows);
 #endif /* HAVE_SGI_VC_EXTENSION */
 
+#ifdef HAVE_XF86VMODE_GAMMA
+static int xf86_gamma_fade (Display *dpy,
+                            Window *black_windows, int seconds, int ticks,
+                            Bool out_p, Bool clear_windows);
+#endif /* HAVE_XF86VMODE_GAMMA */
 
 
 void
@@ -107,11 +112,24 @@ fade_screens (Display *dpy, Colormap *cmaps, Window *black_windows,
 
  AGAIN:
 
+/* #### printf("\n\nfade_screens %d %d %d\n", seconds, ticks, out_p); */
+
 #ifdef HAVE_SGI_VC_EXTENSION
   /* First try to do it by fading the gamma in an SGI-specific way... */
-  if (0 != sgi_gamma_fade(dpy, black_windows, seconds, ticks, out_p,
+  if (0 == sgi_gamma_fade(dpy, black_windows, seconds, ticks, out_p,
 			  clear_windows))
+    ;
+  else
 #endif /* HAVE_SGI_VC_EXTENSION */
+
+#ifdef HAVE_XF86VMODE_GAMMA
+  /* Then try to do it by fading the gamma in an XFree86-specific way... */
+  if (0 == xf86_gamma_fade(dpy, black_windows, seconds, ticks, out_p,
+                           clear_windows))
+    ;
+  else
+#endif /* HAVE_XF86VMODE_GAMMA */
+
     /* Else, do it the old-fashioned way, which (somewhat) loses if
        there are TrueColor windows visible. */
     fade_screens_1 (dpy, cmaps, black_windows, seconds, ticks,
@@ -359,11 +377,14 @@ fade_screens_1 (Display *dpy, Colormap *cmaps, Window *black_windows,
 }
 
 
+
+/* SGI Gamma fading */
+
 #ifdef HAVE_SGI_VC_EXTENSION
 
 # include <X11/extensions/XSGIvc.h>
 
-struct screen_gamma_info {
+struct screen_sgi_gamma_info {
   int gamma_map;  /* ??? always using 0 */
   int nred, ngreen, nblue;
   unsigned short *red1, *green1, *blue1;
@@ -374,8 +395,8 @@ struct screen_gamma_info {
 };
 
 
-static void whack_gamma(Display *dpy, int screen,
-			struct screen_gamma_info *info, float ratio);
+static void sgi_whack_gamma(Display *dpy, int screen,
+                            struct screen_sgi_gamma_info *info, float ratio);
 
 static int
 sgi_gamma_fade (Display *dpy,
@@ -392,7 +413,7 @@ sgi_gamma_fade (Display *dpy,
 #endif
   int i, screen;
   int status = -1;
-  struct screen_gamma_info *info = (struct screen_gamma_info *)
+  struct screen_sgi_gamma_info *info = (struct screen_sgi_gamma_info *)
     calloc(nscreens, sizeof(*info));
 
   /* Get the current gamma maps for all screens.
@@ -453,7 +474,7 @@ sgi_gamma_fade (Display *dpy,
   if (!out_p)
     for (screen = 0; screen < nscreens; screen++)
       {
-	whack_gamma(dpy, screen, &info[screen], 0.0);
+	sgi_whack_gamma(dpy, screen, &info[screen], 0.0);
 	if (black_windows && black_windows[screen])
 	  {
 	    XUnmapWindow (dpy, black_windows[screen]);
@@ -470,8 +491,8 @@ sgi_gamma_fade (Display *dpy,
     {
       for (screen = 0; screen < nscreens; screen++)
 	{
-	  whack_gamma(dpy, screen, &info[screen],
-		      (((float)i) / ((float)steps)));
+	  sgi_whack_gamma(dpy, screen, &info[screen],
+                          (((float)i) / ((float)steps)));
 
 	  /* If there is user activity, bug out.  (Bug out on keypresses or
 	     mouse presses, but not motion, and not release events.  Bugging
@@ -531,7 +552,7 @@ sgi_gamma_fade (Display *dpy,
   usleep(100000);  /* 1/10th second */
 
   for (screen = 0; screen < nscreens; screen++)
-    whack_gamma(dpy, screen, &info[screen], 1.0);
+    sgi_whack_gamma(dpy, screen, &info[screen], 1.0);
   XSync(dpy, False);
 
   status = 0;
@@ -552,8 +573,8 @@ sgi_gamma_fade (Display *dpy,
 }
 
 static void
-whack_gamma(Display *dpy, int screen, struct screen_gamma_info *info,
-	    float ratio)
+sgi_whack_gamma(Display *dpy, int screen, struct screen_sgi_gamma_info *info,
+                float ratio)
 {
   int k;
 
@@ -578,44 +599,214 @@ whack_gamma(Display *dpy, int screen, struct screen_gamma_info *info,
 #endif /* HAVE_SGI_VC_EXTENSION */
 
 
-
 
-#if 0
-#include "screenhack.h"
+/* XFree86 4.x+ Gamma fading */
 
-char *progclass = "foo";
-char *defaults [] = {
-  0
-};
+#ifdef HAVE_XF86VMODE_GAMMA
 
-XrmOptionDescRec options [] = {0};
-int options_size = 0;
+#include <X11/extensions/xf86vmode.h>
 
-void
-screenhack (dpy, w)
-     Display *dpy;
-     Window w;
+static Bool xf86_whack_gamma(Display *dpy, int screen,
+                             XF86VidModeGamma *info, float ratio);
+static Bool xf86_check_gamma_extension (Display *dpy);
+
+static int
+xf86_gamma_fade (Display *dpy,
+                 Window *black_windows, int seconds, int ticks,
+                 Bool out_p, Bool clear_windows)
 {
-  int seconds = 3;
-  int ticks = 20;
-  int delay = 1;
+  int steps = seconds * ticks;
+  long usecs_per_step = (long)(seconds * 1000000) / (long)steps;
+  XEvent dummy_event;
+  int nscreens = ScreenCount(dpy);
+  struct timeval then, now;
+#ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tzp;
+#endif
+  int i, screen;
+  int status = -1;
+  XF86VidModeGamma *info = 0;
 
-  while (1)
+  static int ext_ok = -1;
+
+  /* Only probe the extension once: the answer isn't going to change. */
+  if (ext_ok == -1)
+    ext_ok = (xf86_check_gamma_extension (dpy) ? 1 : 0);
+
+  /* If this server doesn't have the gamma extension, bug out. */
+  if (ext_ok == 0)
+    goto FAIL;
+
+  info = (XF86VidModeGamma *) calloc(nscreens, sizeof(*info));
+
+  /* Get the current gamma maps for all screens.
+     Bug out and return -1 if we can't get them for some screen.
+   */
+  for (screen = 0; screen < nscreens; screen++)
     {
-      XSync (dpy, False);
-
-      fprintf(stderr,"out..."); fflush(stderr);
-      fade_screens (dpy, 0, seconds, ticks, True);
-      fprintf(stderr, "done.\n"); fflush(stderr);
-
-      if (delay) sleep (delay);
-
-      fprintf(stderr,"in..."); fflush(stderr);
-      fade_screens (dpy, 0, seconds, ticks, False);
-      fprintf(stderr, "done.\n"); fflush(stderr);
-
-      if (delay) sleep (delay);
+      if (!XF86VidModeGetGamma(dpy, screen, &info[screen]))
+	goto FAIL;
     }
+
+#ifdef GETTIMEOFDAY_TWO_ARGS
+  gettimeofday(&then, &tzp);
+#else
+  gettimeofday(&then);
+#endif
+
+  /* If we're fading in (from black), then first crank the gamma all the
+     way down to 0, then take the windows off the screen.
+   */
+  if (!out_p)
+    for (screen = 0; screen < nscreens; screen++)
+      {
+	xf86_whack_gamma(dpy, screen, &info[screen], 0.0);
+	if (black_windows && black_windows[screen])
+	  {
+	    XUnmapWindow (dpy, black_windows[screen]);
+	    XClearWindow (dpy, black_windows[screen]);
+	    XSync(dpy, False);
+	  }
+      }
+
+
+  /* Iterate by steps of the animation... */
+  for (i = (out_p ? steps : 0);
+       (out_p ? i > 0 : i < steps);
+       (out_p ? i-- : i++))
+    {
+      for (screen = 0; screen < nscreens; screen++)
+	{
+	  xf86_whack_gamma(dpy, screen, &info[screen],
+                           (((float)i) / ((float)steps)));
+
+	  /* If there is user activity, bug out.  (Bug out on keypresses or
+	     mouse presses, but not motion, and not release events.  Bugging
+	     out on motion made the unfade hack be totally useless, I think.)
+
+	     We put the event back so that the calling code can notice it too.
+	     It would be better to not remove it at all, but that's harder
+	     because Xlib has such a non-design for this kind of crap, and
+	     in this application it doesn't matter if the events end up out
+	     of order, so in the grand unix tradition we say "fuck it" and
+	     do something that mostly works for the time being.
+	   */
+	  if (XCheckMaskEvent (dpy, (KeyPressMask|ButtonPressMask),
+			       &dummy_event))
+	    {
+	      XPutBackEvent (dpy, &dummy_event);
+	      goto DONE;
+	    }
+
+#ifdef GETTIMEOFDAY_TWO_ARGS
+	  gettimeofday(&now, &tzp);
+#else
+	  gettimeofday(&now);
+#endif
+
+	  /* If we haven't already used up our alotted time, sleep to avoid
+	     changing the colormap too fast. */
+	  {
+	    long diff = (((now.tv_sec - then.tv_sec) * 1000000) +
+			 now.tv_usec - then.tv_usec);
+	    then.tv_sec = now.tv_sec;
+	    then.tv_usec = now.tv_usec;
+	    if (usecs_per_step > diff)
+	      usleep (usecs_per_step - diff);
+	  }
+	}
+    }
+  
+
+ DONE:
+
+  if (out_p && black_windows)
+    {
+      for (screen = 0; screen < nscreens; screen++)
+	{
+	  if (clear_windows)
+	    XClearWindow (dpy, black_windows[screen]);
+	  XMapRaised (dpy, black_windows[screen]);
+	}
+      XSync(dpy, False);
+    }
+
+  /* I can't explain this; without this delay, we get a flicker.
+     I suppose there's some lossage with stale bits being in the
+     hardware frame buffer or something, and this delay gives it
+     time to flush out.  This sucks! */
+  usleep(100000);  /* 1/10th second */
+
+  for (screen = 0; screen < nscreens; screen++)
+    xf86_whack_gamma(dpy, screen, &info[screen], 1.0);
+  XSync(dpy, False);
+
+  status = 0;
+
+ FAIL:
+  if (info) free(info);
+
+  return status;
 }
 
-#endif
+
+/* VidModeExtension version 2.0 or better is needed to do gamma. */
+# define XF86_VIDMODE_NAME "XFree86-VidModeExtension"
+# define XF86_VIDMODE_MIN_MAJOR 2
+# define XF86_VIDMODE_MIN_MINOR 0
+
+static Bool
+xf86_check_gamma_extension (Display *dpy)
+{
+  int op, event, error, major, minor;
+
+  if (!XQueryExtension (dpy, XF86_VIDMODE_NAME, &op, &event, &error))
+    return False;  /* display doesn't have the extension. */
+
+  if (!XF86VidModeQueryVersion (dpy, &major, &minor))
+    return False;  /* unable to get version number? */
+
+  if (major < XF86_VIDMODE_MIN_MAJOR || 
+      (major == XF86_VIDMODE_MIN_MAJOR &&
+       minor < XF86_VIDMODE_MIN_MINOR))
+    return False;  /* extension is too old. */
+
+  /* Copacetic */
+  return True;
+}
+
+
+/* XFree doesn't let you set gamma to a value smaller than this.
+   Apparently they didn't anticipate the trick I'm doing here...
+ */
+#define XF86_MIN_GAMMA  0.1
+
+
+static Bool
+xf86_whack_gamma(Display *dpy, int screen, XF86VidModeGamma *info,
+                 float ratio)
+{
+  Bool status;
+  XF86VidModeGamma g2;
+
+  if (ratio < 0) ratio = 0;
+  if (ratio > 1) ratio = 1;
+
+  g2.red   = info->red   * ratio;
+  g2.green = info->green * ratio;
+  g2.blue  = info->blue  * ratio;
+
+# ifdef XF86_MIN_GAMMA
+  if (g2.red   < XF86_MIN_GAMMA) g2.red   = XF86_MIN_GAMMA;
+  if (g2.green < XF86_MIN_GAMMA) g2.green = XF86_MIN_GAMMA;
+  if (g2.blue  < XF86_MIN_GAMMA) g2.blue  = XF86_MIN_GAMMA;
+# endif
+
+/* #### printf("  G %4.2f %4.2f\n", ratio, g2.red); */
+
+  status = XF86VidModeSetGamma (dpy, screen, &g2);
+  XSync(dpy, False);
+  return status;
+}
+
+#endif /* HAVE_XF86VMODE_GAMMA */

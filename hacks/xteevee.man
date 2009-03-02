@@ -19,6 +19,15 @@ picks a mode to display from the available options.  If modes are explicitly
 set on the command-line, they over-ride the implicit options and will be
 choosen among exclusively.  If modes are explicitly excluded from the
 command-line, the they are simply removed from contention.
+
+The image that it manipulates will be grabbed from the portion of
+the screen underlying the window, or from the system's video input,
+or from a random file on disk, as indicated by
+the \fIgrabDesktopImages\fP, \fIgrabVideoFrames\fP,
+and \fIchooseRandomImages\fP options in the \fI~/.xscreensaver\fP
+file; see
+.BR xscreensaver-demo (1)
+for more details.
 .PP
 .SH OPTIONS
 .I xteevee
@@ -98,7 +107,9 @@ mode, as a percentage.
 should simulate more TV problems.
 .SH SEE ALSO
 .BR X (1),
-.BR xscreensaver (1)
+.BR xscreensaver (1),
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-getimage (1)
 .SH COPYRIGHT
 Copyright \(co 1999 by Greg Knauss.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 

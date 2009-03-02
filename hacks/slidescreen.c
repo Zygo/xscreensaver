@@ -37,8 +37,6 @@ init_slide (Display *dpy, Window window)
 
   XGetWindowAttributes (dpy, window, &xgwa);
   grab_screen_image (xgwa.screen, window);
-
-  XGetWindowAttributes (dpy, window, &xgwa);  /* re-retrieve colormap */
   cmap = xgwa.colormap;
   visual = xgwa.visual;
   max_width = xgwa.width;

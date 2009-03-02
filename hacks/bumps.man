@@ -1,14 +1,14 @@
 .TH XScreenSaver 1 "05-Apr-1999" "X Version 11"
 .SH NAME
-spotlight - move spotlight around desktop
+bumps - move distorting spotlight around desktop
 .SH SYNOPSIS
-.B spotlight
+.B bumps
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
 [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
 [\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-radius \fIpixels\fP]
 .SH DESCRIPTION
-The \fIspotlight\fP program takes an image and exposes small sections
-of it as if through a wandering spotlight beam.
+The \fIbumps\fP program takes an image and exposes small, distorted
+sections of it as if through an odd wandering spotlight beam.
 
 The image that it manipulates will be grabbed from the portion of
 the screen underlying the window, or from the system's video input,
@@ -19,7 +19,7 @@ file; see
 .BR xscreensaver-demo (1)
 for more details.
 .SH OPTIONS
-.I spotlight
+.I bumps
 accepts the following options:
 .TP 8
 .B \-window
@@ -58,7 +58,7 @@ stored in the RESOURCE_MANAGER property.
 .BR xscreensaver\-demo (1),
 .BR xscreensaver\-getimage (1)
 .SH COPYRIGHT
-Copyright \(co 1999 by Rick Schultz.  Permission to use, copy, modify, 
+Copyright \(co 1999 by Shane Smit.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 
 hereby granted without fee, provided that the above copyright notice appear 
 in all copies and that both that copyright notice and this permission notice
@@ -66,5 +66,4 @@ appear in supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH CREDITS
-Hacked together by Rick Schultz <rick@skapunx.net>, based on StefView for
-BackSpace by Darcy Brockbank and on several other xscreensaver hacks.
+Shane Smit <blackend@inconnect.com>, 8-Oct-1999.

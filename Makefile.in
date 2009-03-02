@@ -175,8 +175,9 @@ rpm::
   mkdir $$DIR ;								   \
   ( cd $$DIR; mkdir BUILD RPMS RPMS/$$ARCH SOURCES SPECS SRPMS ) ;	   \
   cp -p xscreensaver-$$VERS.tar.gz $$DIR/SOURCES/ ;			   \
-  rpm -vba --define "_topdir $$DIR"					   \
-           --define "USE_GL yes" xscreensaver.spec ;			   \
+  rpm --define "_topdir $$DIR"						   \
+      --define "USE_GL yes"						   \
+      -v -ba xscreensaver.spec ;					   \
   echo '' ;								   \
   echo 'RPM build complete' ;						   \
   echo '' ;								   \

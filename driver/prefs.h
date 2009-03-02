@@ -74,6 +74,11 @@ struct saver_preferences {
   Time dpms_suspend;		/* how long until monitor power-saves */
   Time dpms_off;		/* how long until monitor powers down */
 
+  Bool grab_desktop_p;		/* These are not used by "xscreensaver" */
+  Bool grab_video_p;		/*  itself: they are used by the external */
+  Bool random_image_p;		/*  "xscreensaver-getimage" program, and set */
+  char *image_directory;	/*  by the "xscreensaver-demo" configurator. */
+
   Bool use_xidle_extension;	/* which extension to use, if possible */
   Bool use_mit_saver_extension;
   Bool use_sgi_saver_extension;

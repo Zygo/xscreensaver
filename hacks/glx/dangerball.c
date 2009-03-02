@@ -49,16 +49,7 @@ extern XtAppContext app;
 
 #ifdef USE_GL /* whole file */
 
-#ifdef HAVE_UNAME
-# include <sys/utsname.h>
-#endif /* HAVE_UNAME */
-
-
 #include <GL/glu.h>
-#include "glutstroke.h"
-#include "glut_roman.h"
-#define GLUT_FONT (&glutStrokeRoman)
-
 
 typedef struct {
   GLXContext *glx_context;

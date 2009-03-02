@@ -24,6 +24,7 @@
 
 /* Includes ******************************************************************/
 #include "screenhack.h"
+#include "colorbars.h"
 #include <X11/Xutil.h>
 
 
@@ -41,8 +42,6 @@
 #define XTEEVEE_ARG_DELAY_BETWEEN       "delayBetween"
 #define XTEEVEE_STATIC_COLOR_COUNT      6
 #define XTEEVEE_STATIC_TILE_COUNT       16
-#define XTEEVEE_BARS_COLOR_TOP_COUNT    7
-#define XTEEVEE_BARS_COLOR_BOTTOM_COUNT 5
 
 
 /* Globals *******************************************************************/
@@ -119,7 +118,8 @@ void xteevee_Static(Display* x_Disp,Window x_Win,XWindowAttributes* x_WinAttr,
 	{
 		color_Color.red = color_Color.green = color_Color.blue =
 		 (((double)color_Index+1)/XTEEVEE_STATIC_COLOR_COUNT)*65535;
-		if (XAllocColor(x_Disp,x_WinAttr->colormap,&color_Color) == 0)
+		if (!x_WinAttr->colormap ||
+                    !XAllocColor(x_Disp,x_WinAttr->colormap,&color_Color))
 		{
 			/* NOTE: I have no idea what to do here.  Why would
 			         this fail? */
@@ -301,7 +301,7 @@ void xteevee_Roll(Display* x_Disp,Window x_Win,XWindowAttributes* x_WinAttr,
 		}
 
 		XSync(x_Disp,0);
-		sleep(0);
+                usleep(50000);
 		screenhack_handle_events(x_Disp);
 	}
 
@@ -313,114 +313,20 @@ void xteevee_Roll(Display* x_Disp,Window x_Win,XWindowAttributes* x_WinAttr,
 void xteevee_Bars(Display* x_Disp,Window x_Win,XWindowAttributes* x_WinAttr,
       time_t hack_Time,Pixmap hack_Pm)
 {
-	GC        x_GcTop[XTEEVEE_BARS_COLOR_TOP_COUNT];
-	GC        x_GcBottom[XTEEVEE_BARS_COLOR_BOTTOM_COUNT];
-	XGCValues x_GcVal;
-	int       color_Index;
-	XColor    color_Color;
-	char*     color_ColorTop[] =
-	{
-		"grey",
-		"yellow",
-		"light blue",
-		"green",
-		"orange",
-		"red",
-		"purple"
-	};
-	char*     color_ColorBottom[] =
-	{
-		"black",
-		"white",
-		"black",
-		"black",
-		"black"
-	};
+  draw_colorbars (x_Disp, x_Win, 0, 0, x_WinAttr->width, x_WinAttr->height);
 
-	/* Build the GCs */
-	for (color_Index = 0;color_Index < XTEEVEE_BARS_COLOR_TOP_COUNT;
-	 color_Index++)
-	{
-		if (XParseColor(x_Disp,x_WinAttr->colormap,
-		 color_ColorTop[color_Index],&color_Color) == 0)
-		{
-			/* NOTE: Um, badness? */
-		}
-		if (XAllocColor(x_Disp,x_WinAttr->colormap,&color_Color) == 0)
-		{
-			/* NOTE: More badness? */
-		}
-		x_GcVal.foreground = color_Color.pixel;
-		x_GcTop[color_Index] =
-		 XCreateGC(x_Disp,x_Win,GCForeground,&x_GcVal);
-	}
-	for (color_Index = 0;color_Index < XTEEVEE_BARS_COLOR_BOTTOM_COUNT;
-	 color_Index++)
-	{
-		if (XParseColor(x_Disp,x_WinAttr->colormap,
-		 color_ColorBottom[color_Index],&color_Color) == 0)
-		{
-			/* NOTE: Um, badness? */
-		}
-		if (XAllocColor(x_Disp,x_WinAttr->colormap,&color_Color) == 0)
-		{
-			/* NOTE: More badness? */
-		}
-		x_GcVal.foreground = color_Color.pixel;
-		x_GcBottom[color_Index] =
-		 XCreateGC(x_Disp,x_Win,GCForeground,&x_GcVal);
-	}
-
-	/* Draw color-bar test pattern */
-	XClearWindow(x_Disp,x_Win);
-	for (color_Index = 0;color_Index < XTEEVEE_BARS_COLOR_TOP_COUNT;
-	 color_Index++)
-	{
-		XFillRectangle(x_Disp,x_Win,x_GcTop[color_Index],
-		 ((x_WinAttr->width/XTEEVEE_BARS_COLOR_TOP_COUNT)+1)*
-		 color_Index,
-		 0,
-		 (x_WinAttr->width/XTEEVEE_BARS_COLOR_TOP_COUNT)+1,
-		 (x_WinAttr->height/5)*4);
-	}
-	for (color_Index = 0;color_Index < XTEEVEE_BARS_COLOR_BOTTOM_COUNT;
-	 color_Index++)
-	{
-		XFillRectangle(x_Disp,x_Win,x_GcBottom[color_Index],
-		 ((x_WinAttr->width/XTEEVEE_BARS_COLOR_BOTTOM_COUNT)+1)*
-		 color_Index,
-		 (x_WinAttr->height/5)*4,
-		 (x_WinAttr->width/XTEEVEE_BARS_COLOR_BOTTOM_COUNT)+1,
-		 x_WinAttr->height-(x_WinAttr->height/5)*4);
-	}
-
-	/* Go! */
-	if (hack_Time > 0)
-	{
-		hack_Time += time(NULL);
-	}
-	while ((time(NULL) < hack_Time) || (hack_Time == 0))
-	{
-		screenhack_handle_events(x_Disp);
-		usleep(100000);
-	}
-
-	/* Free everything */
-	for (color_Index = 0;color_Index < XTEEVEE_BARS_COLOR_TOP_COUNT;
-	 color_Index++)
-	{
-		xteevee_FreeColorForeground(x_Disp,x_WinAttr,
-		 x_GcTop[color_Index]);
-		XFreeGC(x_Disp,x_GcTop[color_Index]);
-	}
-	for (color_Index = 0;color_Index < XTEEVEE_BARS_COLOR_BOTTOM_COUNT;
-	 color_Index++)
-	{
-		xteevee_FreeColorForeground(x_Disp,x_WinAttr,
-		 x_GcBottom[color_Index]);
-		XFreeGC(x_Disp,x_GcBottom[color_Index]);
-	}
+  /* Go! */
+  if (hack_Time > 0)
+    {
+      hack_Time += time(NULL);
+    }
+  while ((time(NULL) < hack_Time) || (hack_Time == 0))
+    {
+      screenhack_handle_events(x_Disp);
+      usleep(100000);
+    }
 }
+
 
 /* Standard XScreenSaver entry point ======================================= */
 void screenhack(Display* x_Disp,Window x_Win)
@@ -455,6 +361,7 @@ void screenhack(Display* x_Disp,Window x_Win)
 	/* Grab the screen to give us time to do whatever we want */
 	XGetWindowAttributes(x_Disp,x_Win,&x_WinAttr);
 	grab_screen_image(x_WinAttr.screen,x_Win);
+
 	x_GcVal.subwindow_mode = IncludeInferiors;
 	x_Gc = XCreateGC(x_Disp,x_Win,GCSubwindowMode,&x_GcVal);
 	screen_Pm = XCreatePixmap(x_Disp,x_Win,x_WinAttr.width,

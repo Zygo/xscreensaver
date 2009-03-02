@@ -740,6 +740,10 @@ initialize_per_screen_info (saver_info *si, Widget toplevel_shell)
     }
 
   si->fading_possible_p = found_any_writable_cells;
+
+#ifdef HAVE_XF86VMODE_GAMMA
+  si->fading_possible_p = True;  /* if we can gamma fade, go for it */
+#endif
 }
 
 

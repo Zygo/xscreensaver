@@ -19,11 +19,6 @@
  */
 #undef HAVE_READ_DISPLAY_EXTENSION
 
-/* Define this if you have the Iris Video Library (dmedia/vl.h on SGI.)
-   A few of the screenhacks will take advantage of this if it's available.
- */
-#undef HAVE_SGI_VIDEO
-
 /* Define this if you have the XHPDisableReset function (an HP only thing.)
  */
 #undef HAVE_XHPDISABLERESET
@@ -103,6 +98,15 @@
  *  available if the file /usr/include/X11/extensions/xf86vmode.h exists.)
  */
 #undef HAVE_XF86VMODE
+
+/*  Define this if you have the functions XF86VidModeGetGamma() and
+ *  XF86VidModeSetGamma(), which allow clients to change the gamma
+ *  response of the monitor.  This is an XFree86 4.x thing, and probably
+ *  doesn't exist elsewhere.  (It's available if the file
+ *  /usr/include/X11/extensions/xf86vmode.h exists and has stuff about
+ *  gamma in it.)
+ */
+#undef HAVE_XF86VMODE_GAMMA
 
 /*  Define this if you have a Linux-like /proc/interrupts file which can be
  *  examined to determine when keyboard activity has occurred.

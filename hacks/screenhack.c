@@ -86,6 +86,7 @@ static char *default_defaults[] = {
   "*mono:		false",
   "*installColormap:	false",
   "*visualID:		default",
+  "*desktopGrabber:	xscreensaver-getimage %s",
   0
 };
 

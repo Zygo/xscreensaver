@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 3.31
-!                              29-Mar-2001
+!                              version 3.32
+!                              15-Apr-2001
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -36,6 +36,10 @@
 *dpmsStandby:		2:00:00
 *dpmsSuspend:		2:00:00
 *dpmsOff:		4:00:00
+*grabDesktopImages:	True
+*grabVideoFrames:	False
+*chooseRandomImages:	False
+*imageDirectory:	
 *nice:			10
 *lock:			False
 *lockVTs:		True

@@ -360,7 +360,7 @@ make_passwd_window (saver_info *si)
   pw->logo_pixmap = xscreensaver_logo (si->dpy, si->passwd_dialog, cmap,
                                        pw->background, 
                                        &pw->logo_pixels, &pw->logo_npixels,
-                                       True);
+                                       0, True);
 
   /* Before mapping the window, save the bits that are underneath the
      rectangle the window will occlude.  When we lower the window, we
