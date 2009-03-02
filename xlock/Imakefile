@@ -1,0 +1,47 @@
+#ifndef XCOMM
+#define XCOMM /**/#
+#endif
+XCOMM @(#)Sub Imakefile	xlockmore
+XCOMM
+
+#include "../iconfig.h"
+top_srcdir = ..
+UTILSDIR = ./
+UTILOBJDIR = ./
+
+DU = $(UTILDIR)
+DOU = $(UTILOBJDIR)
+OU = $(O)$(S)$(DOU)
+CU = $(C) $(DU)
+
+XCOMM  List of object files
+XLOCKUTILOBJS = $(DOU)xlock$(OU)passwd$(OU)resource$(O)$(S)\
+$(DOU)utils$(OU)logout$(OU)mode$(OU)ras$(OU)xbm$(O)$(S)\
+$(DOU)color$(OU)visual$(OU)sound$(O)
+#ifdef Check
+XLOCKCHECKOBJS = $(S)memcheck$(O)
+#endif
+
+XCOMM  List of source files
+XLOCKUTILHDRS = xlock.h mode.h vroot.h ras.h version.h config.h
+XLOCKUTILSRCS = $(DU)xlock$(CU)passwd$(CU)resource$(C) \
+$(DU)utils$(CU)logout$(CU)mode$(CU)ras$(CU)xbm$(C) \
+$(DU)color$(CU)visual$(CU)sound$(C)
+XLOCKCHECKSRCS = $(DU)memcheck$(C)
+
+XCOMM default target
+
+all:: $(XLOCKUTILOBJS) $(XLOCKDEBUGOBJS)
+
+DependTarget()
+LintTarget()
+
+InstallProgram(xlock, $(BINDIR))
+InstallAppDefaults(XLock)
+InstallManPage(xlock, $(MANDIR))
+
+distclean::	clean
+	$(RM) Makefile config.status config.cache config.log config.h memdiag.xlock-*
+
+clean.all:: distclean
+

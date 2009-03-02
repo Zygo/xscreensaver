@@ -1,0 +1,133 @@
+Content-Type: text/plain; charset=us-ascii; name="xlock.plog.sun4os4"
+Content-Transfer-Encoding: 7bit
+Content-Disposition: inline; filename="xlock.plog.sun4os4"
+
+****  Purify instrumented xlock/xlock (pid 25527 at Wed Feb 25 17:02:40 1998)
+  * Purify 4.0.1 SunOS 4.1, Copyright (C) 1992-1996 Pure Atria Corp. All rights reserved. 
+  * For contact information type: "purify -help"
+  * For TTY output, use the option "-windows=no"
+  * Command-line: xlock/xlock -sequential 
+  * Options settings: -chain-length=25 -windows=yes -purify \
+    -purify-home=/vol/pure/purify-4.0.1-sunos4 
+  * Purify checking enabled.
+
+****  Purify instrumented xlock/xlock (pid 25527)  ****
+Current file descriptors in use: 7
+FIU: file descriptor 0: <stdin>
+FIU: file descriptor 1: <stdout>
+FIU: file descriptor 2: <stderr>
+FIU: file descriptor 4: "/usr/local/xlock.staff", O_RDONLY
+   * File info: -rw-r--r--  1 root     staff           15 Apr 18  1997
+   * File position: 15
+   * This file descriptor was allocated from:
+	open           [rtlib.o]
+	_endopen       [libc.so.1.8]
+	fopen          [libc.so.1.8]
+	my_fopen       [utils.c:182]
+	fullLock       [logout.c:476]
+	getResources   [resource.c:1615]
+	main           [xlock.c:2086]
+	start          [crt0.o]
+FIU: file descriptor 5: <unnamed socket>, O_RDWR
+   * This file descriptor was allocated from:
+	socket         [rtlib.o]
+	clntudp_bufcreate [libc.so.1.8]
+	load_dom_binding [libc.so.1.8]
+	_yp_dobind_soft [libc.so.1.8]
+	_yp_dobind     [libc.so.1.8]
+	yp_match       [libc.so.1.8]
+	getnamefromyellow [libc.so.1.8]
+	matchuid       [libc.so.1.8]
+	getpwuid       [libc.so.1.8]
+	fullLock       [logout.c:467]
+	getResources   [resource.c:1615]
+	main           [xlock.c:2086]
+	start          [crt0.o]
+FIU: file descriptor 26: <reserved for Purify internal use>
+FIU: file descriptor 27: <reserved for Purify internal use>
+
+****  Purify instrumented xlock/xlock (pid 25527)  ****
+Purify: Searching for all memory leaks...
+
+Memory leaked: 442 bytes (0.00378%); potentially leaked: 29756 bytes (0.255%)
+
+MLK: 440 bytes leaked in 5 blocks
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	calloc         [rtlib.o]
+	XCreateImage   [libX11.so.4.3]
+	init_flag      [flag.c:419]
+	call_init_hook [mode.c:813]
+	draw_random    [random.c:534]
+	call_callback_hook [mode.c:842]
+	runMainLoop    [xlock.c:1107]
+	justDisplay    [xlock.c:1698]
+	lockDisplay    [xlock.c:1875]
+	main           [xlock.c:2522]
+	start          [crt0.o]
+  * Block of 88 bytes (5 times); last block at 0x123b008
+
+MLK: 1 byte leaked at 0x39e6e0
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	GetResource    [resource.c:982]
+	getResources   [resource.c:1431]
+	main           [xlock.c:2086]
+	start          [crt0.o]
+
+MLK: 1 byte leaked at 0x400540
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	GetResource    [resource.c:982]
+	getResources   [resource.c:1577]
+	main           [xlock.c:2086]
+	start          [crt0.o]
+
+PLK: 29756 bytes potentially leaked at 0x3cc610
+  * This memory was allocated from:
+	malloc         [rtlib.o]
+	_XAllocScratch [libX11.so.4.3]
+	dX__SendZImage [libX11.so.4.3]
+	dX__PutImageRequest [libX11.so.4.3]
+	dX__PutSubImage [libX11.so.4.3]
+	XPutImage      [libX11.so.4.3]
+	put_cartoon    [cartoon.c:232]
+	draw_cartoon   [cartoon.c:374]
+	call_callback_hook [mode.c:842]
+	draw_random    [random.c:536]
+	call_callback_hook [mode.c:842]
+	runMainLoop    [xlock.c:1107]
+	justDisplay    [xlock.c:1698]
+	lockDisplay    [xlock.c:1875]
+	main           [xlock.c:2522]
+	start          [crt0.o]
+
+Purify Heap Analysis (combining suppressed and unsuppressed blocks)
+                         Blocks      Bytes
+              Leaked          8        454
+  Potentially Leaked          1      29756
+              In-Use        299   11660442
+  ----------------------------------------
+     Total Allocated        308   11690652
+
+****  Purify instrumented xlock/xlock (pid 25527)  ****
+  * Program exited with status code 0.
+  * 0 access errors, 0 total occurrences.
+  * 442 bytes leaked.
+  * 29756 bytes potentially leaked.
+  * Basic memory usage (including Purify overhead):
+     3233296 code
+      531096 data/bss
+    23630080 heap (peak use)
+        2224 stack
+  * Shared library memory usage (including Purify overhead):
+      335872 libX11_pure_p3_c0_401_413V.so.4.3 (shared code)
+       40960 libX11_pure_p3_c0_401_413V.so.4.3 (private data)
+      688128 libc_pure_p3_c0_401_413V.so.1.8 (shared code)
+       16384 libc_pure_p3_c0_401_413V.so.1.8 (private data)
+        8192 libdl.so.1.0 (shared code)
+        8192 libdl.so.1.0 (private data)
+        8192 libinternal_stubs.so.1.0 (shared code)
+        8192 libinternal_stubs.so.1.0 (private data)
+  * Memory mapped usage:
+        4096 mmap'd at 0xef298000
