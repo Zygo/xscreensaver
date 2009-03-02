@@ -29,8 +29,10 @@ DEPEND_DEFINES	= @DEPEND_DEFINES@
 
 SHELL		= /bin/sh
 INSTALL		= @INSTALL@
+SUID_FLAGS      = -o root -m 4755
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT  = @INSTALL_SCRIPT@
+INSTALL_SETUID  = @INSTALL_SETUID@
 INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_DIRS	= @INSTALL_DIRS@
 HACKDIR		= @HACKDIR@
@@ -111,7 +113,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  nerverot.o xrayswarm.o hyperball.o zoom.o whirlwindwarp.o \
 		  rotzoomer.o
 
-EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
+NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
 		  helix hopalong hypercube ifs imsmap julia kaleidescope \
 		  laser lightning lisa lmorph maze moire noseguy pedal \
@@ -120,11 +122,12 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
 		  ant xjack xlyap jigsaw cynosure moire2 flow epicycle \
 		  interference truchet bsod crystal discrete distort kumppa \
-		  sonar demon loop t3d penetrate deluxe compass squiral \
-		  xflame wander spotlight critical phosphor xmatrix petri \
-		  shadebobs xsublim ccurve blaster bumps ripples xteevee \
-		  xspirograph nerverot xrayswarm hyperball zoom whirlwindwarp \
-		  rotzoomer
+		  demon loop t3d penetrate deluxe compass squiral xflame \
+		  wander spotlight critical phosphor xmatrix petri shadebobs \
+		  xsublim ccurve blaster bumps ripples xteevee xspirograph \
+		  nerverot xrayswarm hyperball zoom whirlwindwarp rotzoomer
+SEXES		= sonar
+EXES		= $(NEXES) $(SEXES)
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -179,17 +182,28 @@ install:   install-program   install-scripts install-man
 uninstall: uninstall-program uninstall-man
 
 install-strip:
-	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
+	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' \
+		INSTALL_SETUID='$(INSTALL_SETUID) -s' \
+		install
 
 install-program: $(EXES)
 	@if [ ! -d $(install_prefix)$(HACKDIR) ]; then			\
 	  $(INSTALL_DIRS) $(install_prefix)$(HACKDIR) ;			\
 	 fi ;								\
-	for program in $(EXES); do					\
+	for program in $(NEXES); do					\
 	  echo $(INSTALL_PROGRAM) $$program				\
 	    $(install_prefix)$(HACKDIR)/$$program ;			\
 	  $(INSTALL_PROGRAM) $$program					\
 	    $(install_prefix)$(HACKDIR)/$$program ;			\
+	done ;								\
+	if [ @SETUID_HACKS@ = yes ]; then				\
+	  sinst="$(INSTALL_SETUID)" ;					\
+	else								\
+	  sinst="$(INSTALL_PROGRAM)" ;					\
+	fi ;								\
+	for program in $(SEXES); do					\
+	  echo $$sinst $$program $(install_prefix)$(HACKDIR)/$$program ;\
+	       $$sinst $$program $(install_prefix)$(HACKDIR)/$$program ;\
 	done
 
 install-scripts: $(SCRIPTS) munge-scripts

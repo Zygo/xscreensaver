@@ -45,6 +45,7 @@ extern XtAppContext app;
 
 #include "xlockmore.h"
 #include "colors.h"
+#include "tube.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -347,106 +348,6 @@ init_text (ModeInfo *mi)
 }
 
 
-static void
-unit_tube (Bool wire)
-{
-  int i;
-  int faces = TUBE_FACES;
-  GLfloat step = M_PI * 2 / faces;
-  GLfloat th;
-  int z = 0;
-
-  /* side walls
-   */
-  glFrontFace(GL_CCW);
-
-# ifdef SMOOTH_TUBE
-  glBegin(wire ? GL_LINES : GL_QUAD_STRIP);
-# else
-  glBegin(wire ? GL_LINES : GL_QUADS);
-# endif
-
-  for (i = 0, th = 0; i <= faces; i++)
-    {
-      GLfloat x = cos (th);
-      GLfloat y = sin (th);
-      glNormal3f(x, 0, y);
-      glVertex3f(x, 0.0, y);
-      glVertex3f(x, 1.0, y);
-      th += step;
-
-# ifndef SMOOTH_TUBE
-      x = cos (th);
-      y = sin (th);
-      glVertex3f(x, 1.0, y);
-      glVertex3f(x, 0.0, y);
-# endif
-    }
-  glEnd();
-
-  /* End caps
-   */
-  for (z = 0; z <= 1; z++)
-    {
-      glFrontFace(z == 0 ? GL_CCW : GL_CW);
-      glNormal3f(0, (z == 0 ? -1 : 1), 0);
-      glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
-      if (! wire) glVertex3f(0, z, 0);
-      for (i = 0, th = 0; i <= faces; i++)
-        {
-          GLfloat x = cos (th);
-          GLfloat y = sin (th);
-          glVertex3f(x, z, y);
-          th += step;
-        }
-      glEnd();
-    }
-}
-
-
-static void
-tube (GLfloat x1, GLfloat y1, GLfloat z1,
-      GLfloat x2, GLfloat y2, GLfloat z2,
-      GLfloat diameter, GLfloat cap_size,
-      Bool wire)
-{
-  GLfloat length, angle, a, b, c;
-
-  if (diameter <= 0) abort();
-
-  a = (x2 - x1);
-  b = (y2 - y1);
-  c = (z2 - z1);
-
-  length = sqrt (a*a + b*b + c*c);
-  angle = acos (a / length);
-
-  glPushMatrix();
-  glTranslatef(x1, y1, z1);
-  glScalef (length, length, length);
-
-  if (c == 0 && b == 0)
-    glRotatef (angle / (M_PI / 180), 0, 1, 0);
-  else
-    glRotatef (angle / (M_PI / 180), 0, -c, b);
-
-  glRotatef (-90, 0, 0, 1);
-  glScalef (diameter/length, 1, diameter/length);
-
-  /* extend the endpoints of the tube by the cap size in both directions */
-  if (cap_size != 0)
-    {
-      GLfloat c = cap_size/length;
-      glTranslatef (0, -c, 0);
-      glScalef (1, 1+c+c, 1);
-    }
-
-  unit_tube (wire);
-  glPopMatrix();
-}
-
-
-
 static int
 fill_character (GLUTstrokeFont font, int c, Bool wire)
 {
@@ -471,12 +372,17 @@ fill_character (GLUTstrokeFont font, int c, Bool wire)
         for (j = stroke->num_coords, coord = stroke->coord;
              j > 0; j--, coord++)
           {
+# ifdef SMOOTH_TUBE
+            int smooth = True;
+# else
+            int smooth = False;
+# endif
             if (j != stroke->num_coords)
-              tube (lx, ly, 0,
+              tube (lx,       ly,       0,
                     coord->x, coord->y, 0,
                     tube_width,
                     tube_width * 0.15,
-                    wire);
+                    TUBE_FACES, smooth, wire);
             lx = coord->x;
             ly = coord->y;
           }

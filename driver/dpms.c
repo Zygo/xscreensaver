@@ -59,8 +59,17 @@ sync_server_dpms_settings (Display *dpy, Bool enabled_p,
   BOOL o_enabled = False;
   CARD16 o_power = 0;
   CARD16 o_standby = 0, o_suspend = 0, o_off = 0;
+  Bool bogus_p = False;
 
-  Bool bogus_p = (standby_secs == 0 || suspend_secs == 0 || off_secs == 0);
+  if (standby_secs == 0 && suspend_secs == 0 && off_secs == 0)
+    /* all zero implies "DPMS disabled" */
+    enabled_p = False;
+
+  else if ((standby_secs != 0 && standby_secs < 10) ||
+           (suspend_secs != 0 && suspend_secs < 10) ||
+           (off_secs     != 0 && off_secs     < 10))
+    /* any negative, or any positive-and-less-than-10-seconds, is crazy. */
+    bogus_p = True;
 
   if (bogus_p) enabled_p = False;
 

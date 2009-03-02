@@ -766,7 +766,7 @@ AC_PROG_PERL
 
 if test -z "$PERL" ; then
   # don't let it be blank...
-  PERL=/usr/local/bin/perl5
+  PERL=/usr/bin/perl
 fi
 
 AC_PATH_XTRA
@@ -2383,8 +2383,7 @@ AC_ARG_WITH(zippy,[
                           default (though it can be overridden with X
                           resources.)  If you don't specify this, the default
                           is to use \"yow\" from the Emacs distribution (if you
-                          have it) or else to use \"fortune\".
-],
+                          have it) or else to use \"fortune\".],
   [with_zippy_req="$withval"; with_zippy="$withval"],[with_zippy=yes])
 
 if test "$with_zippy" = no || test "$with_zippy" = yes ; then
@@ -2521,6 +2520,31 @@ AC_DEFINE_UNQUOTED(ZIPPY_PROGRAM, "$ac_cv_zippy_program")
 
 ###############################################################################
 #
+#       Check whether it's ok to install some hacks as setuid (e.g., "sonar")
+#       This should be safe, but let's give people the option.
+#
+###############################################################################
+
+setuid_hacks_default=no
+setuid_hacks="$setuid_hacks_default"
+AC_ARG_WITH(setuid-hacks,
+[  --with-setuid-hacks     Allow some demos to be installed \`setuid root'
+                          (which is needed in order to ping other hosts.)
+],
+  [setuid_hacks="$withval"], [setuid_hacks="$setuid_hacks_default"])
+
+HANDLE_X_PATH_ARG(setuid_hacks, --with-setuid-hacks, setuid hacks)
+
+if test "$setuid_hacks" = yes; then
+  true
+elif test "$setuid_hacks" != no; then
+  echo "error: must be yes or no: --with-setuid-hacks=$setuid_hacks"
+  exit 1
+fi
+
+
+###############################################################################
+#
 #       Done testing.  Now, set up the various -I and -L variables,
 #       and decide which GUI program to build by default.
 #
@@ -2573,12 +2597,18 @@ else
   LOCK_OBJS='$(NOLOCK_OBJS_1)'
 fi
 
+INSTALL_SETUID='$(INSTALL) $(SUID_FLAGS)'
+
 if test "$need_setuid" = yes; then
   NEED_SETUID=yes
-  INSTALL_SETUID='$(INSTALL) $(SUID_FLAGS)'
 else
   NEED_SETUID=no
-  INSTALL_SETUID='$(INSTALL_PROGRAM)'
+fi
+
+if test "$setuid_hacks" = yes; then
+  SETUID_HACKS=yes
+else
+  SETUID_HACKS=no
 fi
 
 tab='	'
@@ -2619,6 +2649,7 @@ AC_SUBST(GLE_LIBS)
 AC_SUBST(XDPMS_LIBS)
 AC_SUBST(PASSWD_LIBS)
 AC_SUBST(INSTALL_SETUID)
+AC_SUBST(SETUID_HACKS)
 AC_SUBST(INSTALL_DIRS)
 AC_SUBST(NEED_SETUID)
 AC_SUBST(INSTALL_PAM)

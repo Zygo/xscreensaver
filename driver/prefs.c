@@ -964,12 +964,25 @@ load_init_file (saver_preferences *p)
     p->fade_p = False;
   if (! p->fade_p) p->unfade_p = False;
 
-  if (p->dpms_standby <= 0 || p->dpms_suspend <= 0 || p->dpms_off <= 0)
+  /* The DPMS settings may have the value 0.
+     But if they are negative, or are a range less than 10 seconds,
+     reset them to sensible defaults.  (Since that must be a mistake.)
+   */
+  if (p->dpms_standby != 0 &&
+      p->dpms_standby < 10 * 1000)
+    p->dpms_standby =  2 * 60 * 60 * 1000;			 /* 2 hours */
+  if (p->dpms_suspend != 0 &&
+      p->dpms_suspend < 10 * 1000)
+    p->dpms_suspend =  2 * 60 * 60 * 1000;			 /* 2 hours */
+  if (p->dpms_off != 0 &&
+      p->dpms_off < 10 * 1000)
+    p->dpms_off      = 4 * 60 * 60 * 1000;			 /* 4 hours */
+
+  if (p->dpms_standby == 0 &&	   /* if *all* are 0, then DPMS is disabled */
+      p->dpms_suspend == 0 &&
+      p->dpms_off     == 0)
     p->dpms_enabled_p = False;
 
-  if (p->dpms_standby <= 10000) p->dpms_standby = 10000;	 /* 10 secs */
-  if (p->dpms_suspend <= 10000) p->dpms_suspend = 10000;	 /* 10 secs */
-  if (p->dpms_off     <= 10000) p->dpms_off     = 10000;	 /* 10 secs */
 
   p->watchdog_timeout = p->cycle * 0.6;
   if (p->watchdog_timeout < 30000) p->watchdog_timeout = 30000;	  /* 30 secs */

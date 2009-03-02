@@ -61,6 +61,7 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 					"*cycles:		5       \n"			\
 					"*size:			500     \n"			\
 	               	"*showFPS:      False   \n"		    \
+	               	"*fpsSolid:     True    \n"		    \
 					"*fisheye:		True    \n"			\
 					"*tightturns:	False   \n"			\
 					"*rotatepipes:	True    \n"

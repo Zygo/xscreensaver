@@ -169,13 +169,22 @@ update_spec_version::
 rpm::
 	@								   \
   VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ; \
-  DIR=/usr/src/redhat ;							   \
+  DIR=`pwd`/rpm_build ;							   \
+  ARCH=`rpm --showrc | sed -n 's/^build arch *: //p'` ;			   \
+  rm -rf $$DIR ;							   \
+  mkdir $$DIR ;								   \
+  ( cd $$DIR; mkdir BUILD RPMS RPMS/$$ARCH SOURCES SPECS SRPMS ) ;	   \
   cp -p xscreensaver-$$VERS.tar.gz $$DIR/SOURCES/ ;			   \
-  rpm --define "USE_GL yes" -ba xscreensaver.spec ;			   \
+  rpm -vba --define "_topdir $$DIR"					   \
+           --define "USE_GL yes" xscreensaver.spec ;			   \
+  echo '' ;								   \
+  echo 'RPM build complete' ;						   \
+  echo '' ;								   \
   rm -f $$DIR/xscreensaver-$$VERS.tar.gz ;				   \
   rm -rf $$DIR/BUILD/xscreensaver-$$VERS ;				   \
   mv $$DIR/SRPMS/xscreensaver*-$$VERS-*.rpm . ;				   \
-  mv $$DIR/RPMS/i386/xscreensaver*-$$VERS-*.rpm . ;			   \
+  mv $$DIR/RPMS/$$ARCH/xscreensaver*-$$VERS-*.rpm . ;			   \
+  rm -rf $$DIR ;							   \
   echo '' ;								   \
   ls -lFG xscreensaver*-$$VERS-*.rpm
 
