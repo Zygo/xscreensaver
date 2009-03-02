@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright (c) 1999-2005 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright (c) 1999-2008 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -60,21 +60,24 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.143 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
-my $copyright = "WebCollage $version, Copyright (c) 1999-2005" .
+my $version = q{ $Revision: 1.148 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $copyright = "WebCollage $version, Copyright (c) 1999-2008" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
 
 
 
 my @search_methods = ( 20, "googlephotos",  \&pick_from_google_image_photos,
-                       11, "googleimgs",    \&pick_from_google_images,
-                       11, "googlenums",    \&pick_from_google_image_numbers,
-                       20, "altavista",     \&pick_from_alta_vista_random_link,
-                       13, "flickr_recent", \&pick_from_flickr_recent,
+                       10, "googleimgs",    \&pick_from_google_images,
+                       10, "googlenums",    \&pick_from_google_image_numbers,
+
+                       19, "altavista",     \&pick_from_alta_vista_random_link,
+                       12, "flickr_recent", \&pick_from_flickr_recent,
                        10, "flickr_random", \&pick_from_flickr_random,
-                        9, "livejournal",   \&pick_from_livejournal_images,
-                        6, "yahoorand",     \&pick_from_yahoo_random_link,
+                       10, "livejournal",   \&pick_from_livejournal_images,
+                        5, "twitter",       \&pick_from_twitter_images,
+                        4, "yahoorand",     \&pick_from_yahoo_random_link,
+
 
                      # This is a cute way to search for a certain webcams.
                      # Not included in default methods, since these images
@@ -215,6 +218,8 @@ my %warningless_sites = (
   "blogger.com"             => 1,
   "multiply.com"            => 1,
   "wikimedia.org"           => 1,
+  "twitpic.com"             => 1,
+  "amazonaws.com"           => 1,  # used by twitpic.com
 
   "yimg.com"                => 1,  # This is where dailynews.yahoo.com stores
   "eimg.com"                => 1,  # its images, so pick_from_yahoo_news_text()
@@ -258,7 +263,19 @@ my %entity_table = (
    "ocirc"  => 'ô', "otilde" => 'õ', "ouml"   => 'ö', "divide" => '÷',
    "oslash" => 'ø', "ugrave" => 'ù', "uacute" => 'ú', "ucirc"  => 'û',
    "uuml"   => 'ü', "yacute" => 'ý', "thorn"  => 'þ', "yuml"   => 'ÿ',
-   "ndash"  => '-', "mdash"  => "--"
+
+   # HTML 4 entities that do not have 1:1 Latin1 mappings.
+   "bull"  => "*",   "hellip"=> "...",  "prime" => "'",  "Prime" => "\"",
+   "frasl" => "/",   "trade" => "[tm]", "larr"  => "<-", "rarr"  => "->",
+   "harr"  => "<->", "lArr"  => "<=",   "rArr"  => "=>", "hArr"  => "<=>",
+   "empty" => "Ø",   "minus" => "-",    "lowast"=> "*",  "sim"   => "~",
+   "cong"  => "=~",  "asymp" => "~",    "ne"    => "!=", "equiv" => "==",
+   "le"    => "<=",  "ge"    => ">=",   "lang"  => "<",  "rang"  => ">",
+   "loz"   => "<>",  "OElig" => "OE",   "oelig" => "oe", "Yuml"  => "Y",
+   "circ"  => "^",   "tilde" => "~",    "ensp"  => " ",  "emsp"  => " ",
+   "thinsp"=> " ",   "ndash" => "-",    "mdash" => "--", "lsquo" => "`",
+   "rsquo" => "'",   "sbquo" => "'",    "ldquo" => "\"", "rdquo" => "\"",
+   "bdquo" => "\"",  "lsaquo"=> "<",    "rsaquo"=> ">",
 );
 
 
@@ -1850,6 +1867,105 @@ sub pick_from_ircimages($) {
 
   $search_url = $img;  # hmm...
   return ($search_url, $img);
+}
+
+
+############################################################################
+#
+# Pick images from Twitter's list of recently-posted images.
+#
+############################################################################
+
+my $twitter_img_url = "http://twitpic.com/public_timeline/feed.rss";
+
+# With most of our image sources, we get a random page and then select
+# from the images on it.  However, in the case of Twitter, the page
+# of images tends to update slowly; so we'll remember the last N entries
+# on it and randomly select from those, to get a wider variety each time.
+
+my $twit_cache_size = 1000;
+my @twit_cache = (); # fifo, for ordering by age
+my %twit_cache = (); # hash, for detecting dups
+
+# twitter
+sub pick_from_twitter_images($) {
+  my ($timeout) = @_;
+
+  $last_search = $twitter_img_url;   # for warnings
+
+  my ( $base, $body ) = get_document ($twitter_img_url, undef, $timeout);
+
+  # Update the cache.
+
+  if ($body) {
+    $body =~ s/\n/ /gs;
+    $body =~ s/(<item)\b/\n$1/gsi;
+
+    my @items = split (/\n/, $body);
+    shift @items;
+    foreach (@items) {
+      next unless (m@<link>([^<>]*)</link>@si);
+      my $page = html_unquote ($1);
+
+      $page =~ s@/$@@s;
+      $page .= '/full';
+
+      next if ($twit_cache{$page}); # already have it
+
+      LOG ($verbose_filter, "  candidate: $page");
+      push @twit_cache, $page;
+      $twit_cache{$page} = $page;
+    }
+  }
+
+  # Pull from the cache.
+
+  return () if ($#twit_cache == -1);
+
+  my $n = $#twit_cache+1;
+  my $i = int(rand($n));
+  my $page = $twit_cache[$i];
+
+  # delete this one from @twit_cache and from %twit_cache.
+  #
+  @twit_cache = ( @twit_cache[0 .. $i-1],
+                  @twit_cache[$i+1 .. $#twit_cache] );
+  delete $twit_cache{$page};
+
+  # Keep the size of the cache under the limit by nuking older entries
+  #
+  while ($#twit_cache >= $twit_cache_size) {
+    my $page = shift @twit_cache;
+    delete $twit_cache{$page};
+  }
+
+  ( $base, $body ) = get_document ($page, undef, $timeout);
+  my $img = undef;
+
+  foreach (split (/<img\s+/, $body)) {
+    my ($src) = m/\bsrc=[\"\'](.*?)[\"\']/si;
+    next unless $src;
+    next if m@/js/@s;
+    next if m@/images/@s;
+
+    $img = $src;
+
+    # Sometimes these images are hosted on twitpic, sometimes on Amazon.
+    if ($img =~ m@^/@) {
+      $base =~ s@^(https?://[^/]+)/.*@$1@s;
+      $img = $base . $img;
+    }
+    last;
+  }
+
+  if (!$img) {
+    LOG ($verbose_load, "no matching images on $page\n");
+    return ();
+  }
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
+
+  return ($page, $img);
 }
 
 

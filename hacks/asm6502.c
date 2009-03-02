@@ -1027,7 +1027,7 @@ static void jmpSTY(machine_6502 *machine, AddrMode adm){
 static void assignOpCodes(Opcodes *opcodes){
 
  #define SETOP(num, _name, _Imm, _ZP, _ZPX, _ZPY, _ABS, _ABSX, _ABSY, _INDX, _INDY, _SNGL, _BRA, _func) \
-{opcodes[num].name[4] = '\0'; \
+{opcodes[num].name[3] = '\0'; \
  strncpy(opcodes[num].name, _name, 3); opcodes[num].Imm = _Imm; opcodes[num].ZP = _ZP; \
  opcodes[num].ZPX = _ZPX; opcodes[num].ZPY = _ZPY; opcodes[num].ABS = _ABS; \
  opcodes[num].ABSX = _ABSX; opcodes[num].ABSY = _ABSY; opcodes[num].INDX = _INDX; \
@@ -1897,12 +1897,11 @@ static BOOL translate(Opcodes *op,Param *param, machine_6502 *machine){
       else {
 	if (op->BRA) {
 	  pushByte(machine, op->BRA);
-	  if (param->lbladdr < (machine->codeLen + PROG_START))
-	    pushByte(machine,
-		     (0xff - (machine->codeLen-param->lbladdr)) & 0xff);
-	  else
-	    pushByte(machine,
-		     (param->lbladdr - machine->codeLen-1) & 0xff);
+          {
+            int diff = abs(param->lbladdr - machine->defaultCodePC);
+            int backward = (param->lbladdr < machine->defaultCodePC);
+            pushByte(machine, (backward) ? 0xff - diff : diff - 1);
+          }
 	}
 	else {
 	  fprintf(stderr,"%s does not take BRANCH parameters.\n",op->name);
@@ -1993,14 +1992,28 @@ static BOOL compileLine(AsmLine *asmline, void *args){
 static BOOL indexLabels(AsmLine *asmline, void *arg){
   machine_6502 *machine; 
   int thisPC;
+  Bit16 oldDefault;
   machine = arg;
+  oldDefault = machine->defaultCodePC;
   thisPC = machine->regPC;
   /* Figure out how many bytes this instruction takes */
   machine->codeLen = 0;
+
   if ( ! compileLine(asmline, machine) ){
     return FALSE;
   }
-  machine->regPC += machine->codeLen;
+
+  /* If the machine's defaultCodePC has changed then we encountered a
+     *= which changes the load address. We need to initials our code
+     *counter with the current default. */
+  if (oldDefault == machine->defaultCodePC){    
+    machine->regPC += machine->codeLen;
+  }
+  else {
+    machine->regPC = machine->defaultCodePC;
+    oldDefault = machine->defaultCodePC;
+  }
+
   if (asmline->labelDecl) {
     asmline->label->addr = thisPC;
   }
@@ -2040,6 +2053,20 @@ static BOOL compileCode(machine_6502 *machine, const char *code){
       return FALSE;
     /* update label references */
     linkLabels(asmlist);
+
+#if 0 /* prints out some debugging information */
+    {
+      AsmLine *p;
+      if(asmlist != NULL){
+        for (p = asmlist; p != NULL; p = p->next)
+          fprintf(stderr,"%s lbl: %s addr: %d ParamLbl: %s ParamAddr: %d\n",
+                  p->command, p->label->label, p->label->addr,
+                  p->param->label, p->param->lbladdr);
+            }
+    }
+
+#endif    
+
     /* Second pass: translate the instructions */
     machine->codeLen = 0;
     /* Link label call push_byte which increments defaultCodePC.

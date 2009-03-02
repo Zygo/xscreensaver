@@ -1,45 +1,91 @@
-/* munch.c
- * A munching squares implementation for X
- * Tim Showalter <tjs@andrew.cmu.edu>
- * 
- * Copyright 1997, Tim Showalter
- * Permission is granted to copy, modify, and use this as long
- * as this notice remains intact.  No warranties are expressed or implied.
- * CMU Sucks.
- * 
- * Some code stolen from / This is meant to work with
- * xscreensaver, Copyright (c) 1992, 1995, 1996
- * Jamie Zawinski <jwz@jwz.org>
+/* Munching Squares and Mismunch
  *
- * Permission to use, copy, modify, distribute, and sell this software and its
- * documentation for any purpose is hereby granted without fee, provided that
- * the above copyright notice appear in all copies and that both that
- * copyright notice and this permission notice appear in supporting
- * documentation.  No representations are made about the suitability of this
- * software for any purpose.  It is provided "as is" without express or 
- * implied warranty.
- */
-
-/* Munching Squares is this simplistic, silly screen hack (according
-   to HAKMEM, discovered by Jackson Wright in 1962) where you take
-   Y = X XOR T and graph it over and over.  According to HAKMEM, it 
-   takes 5 instructions of PDP-1 assembly.  This is a little more
-   complicated than that, mostly X's fault, but it does some other
-   random things.
-
-   http://www.inwap.com/pdp10/hbaker/hakmem/hacks.html#item146
+ * Portions copyright 1992-2008 Jamie Zawinski <jwz@jwz.org>
+ *
+ *   Permission to use, copy, modify, distribute, and sell this
+ *   software and its documentation for any purpose is hereby
+ *   granted without fee, provided that the above copyright notice
+ *   appear in all copies and that both that copyright notice and
+ *   this permission notice appear in supporting documentation.  No
+ *   representations are made about the suitability of this software
+ *   for any purpose.  It is provided "as is" without express or
+ *   implied warranty.
+ *
+ * Portions Copyright 1997, Tim Showalter
+ *
+ *   Permission is granted to copy, modify, and use this as long
+ *   as this notice remains intact.  No warranties are expressed or
+ *   implied.  CMU Sucks.
+ * 
+ * Portions Copyright 2004 Steven Hazel <sah@thalassocracy.org>
+ *
+ *   (The "mismunch" part).
+ * 
+ * "munch.c" and "mismunch.c" merged by jwz, 29-Aug-2008.
+ *
+ *
+ *
+ ***********************************************************************
+ *
+ * HAKMEM
+ *
+ * MIT AI Memo 239, Feb. 29, 1972.
+ * Beeler, M., Gosper, R.W., and Schroeppel, R.
+ *
+ * http://www.inwap.com/pdp10/hbaker/hakmem/hacks.html#item146
+ *
+ ***********************************************************************
+ *
+ * ITEM 146: MUNCHING SQUARES
+ *
+ *     Another simple display program. It is thought that this was
+ *     discovered by Jackson Wright on the RLE PDP-1 circa 1962.
+ *
+ *          DATAI 2
+ *          ADDB 1,2
+ *          ROTC 2,-22
+ *          XOR 1,2
+ *          JRST .-4
+ *
+ *     2=X, 3=Y. Try things like 1001002 in data switches. This also
+ *     does * interesting things with operations other than XOR, and
+ *     rotations * other than -22. (Try IOR; AND; TSC; FADR; FDV(!);
+ *     ROT * -14, -9, -20, * ...)
+ *
+ * ITEM 147 (Schroeppel):
+ *
+ *     Munching squares is just views of the graph Y = X XOR T for
+ *     consecutive values of T = time.
+ *
+ * ITEM 147 (Cohen, Beeler):
+ *
+ *     A modification to munching squares which reveals them in frozen
+ *     states through opening and closing curtains: insert FADR 2,1
+ *     before the XOR. Try data switches =
+ *
+ *          4000,,4         1000,,2002      2000,,4        0,,1002
+ *
+ *     (Notation: <left half>,,<right half>)
+ *     Also try the FADR after the XOR, switches = 1001,,1.
+ *
+ ***********************************************************************
  */
 
 #include <math.h>
-/*#include <assert.h>*/
 #include "screenhack.h"
 
-/* flags for random things.  Must be < log2(random's maximum), incidentially.
- */
-#define SHIFT_KX (0x01)
-#define SHIFT_KT (0x02)
-#define SHIFT_KY (0x04)
-#define GRAV     (0x08)
+typedef struct _muncher {
+  int mismunch;
+  int width;
+  int atX, atY;
+  int kX, kT, kY;
+  int grav;
+  XColor fgc;
+  int yshadow, xshadow;
+  int x, y, t;
+  int doom;
+  int done;
+} muncher;
 
 
 struct state {
@@ -47,214 +93,325 @@ struct state {
   Window window;
 
   GC gc;
-  int delay, hold, clear, logminwidth, shiftk, xor;
+  int delay, simul, clear, xor;
+  int logminwidth, logmaxwidth;
+  int restart, window_width, window_height;
 
-  int logmaxwidth;
-  int maxwidth;
-  int randflags;
-  int thiswidth;
-  XWindowAttributes xgwa;
+  int draw_n;  /* number of squares before we have to clear */
+  int draw_i;
+  int mismunch;
 
-  int munch_t;
-
-  int reset;
-  int atX, atY, kX, kT, kY, grav;
-  int square_count;
+  muncher **munchers;
 };
 
-
-static int munchOnce (struct state *st, int width)
-{
-
-    if (st->munch_t == 0) {
-      /*
-        fprintf(stderr,"Doing width %d at %d %d shift %d %d %d grav %d\n",
-        width, atX, atY, kX, kT, kY, grav);
-      */
-    
-      if (!mono_p) {
-        XColor fgc;
-	fgc.red = random() % 65535;
-	fgc.green = random() % 65535;
-	fgc.blue = random() % 65535;
-    
-	if (XAllocColor(st->dpy, st->xgwa.colormap, &fgc)) {
-          XSetForeground(st->dpy, st->gc, fgc.pixel);
-	}
-      }
-    }
-    
-    /* Finally draw this munching square. */
-    /* for(munch_t = 0; munch_t < width; munch_t++) */
-    {
-      int x;
-      for(x = 0; x < width; x++) {
-        /* figure out the next point */
-        int y = ((x ^ ((st->munch_t + st->kT) % width)) + st->kY) % width;
-        int drawX = ((x + st->kX) % width) + st->atX;
-        int drawY = (st->grav ? y + st->atY : st->atY + width - 1 - y);
-
-        /* used to be bugs where it would draw partially offscreen.
-           while that might be a pretty feature, I didn'munch_t want it to do
-           that yet.  if these trigger, please let me know.
-        */
-        /*	    assert(drawX >= 0 && drawX < xgwa.width);
-          assert(drawY >= 0 && drawY < xgwa.height);
-        */
-
-        XDrawPoint(st->dpy, st->window, st->gc, drawX, drawY);
-        /* XXX may want to change this to XDrawPoints,
-           but it's fast enough without it for the moment. */
-	    
-      }
-    }
-
-    st->munch_t++;
-    if (st->munch_t >= width) {
-      st->munch_t = 0;
-      return 1;
-    }
-
-    return 0;
-}
 
 /*
  * dumb way to get # of digits in number.  Probably faster than actually
  * doing a log and a division, maybe.
  */
-static int dumb_log_2(int k)
+static int dumb_log_2(int k) 
 {
-    int r = -1;
-    while (k > 0) {
-	k >>= 1; r++;
-    }
-    return r;
+  int r = -1;
+  while (k > 0) {
+    k >>= 1; r++;
+  }
+  return r;
 }
+
+
+static void calc_logwidths (struct state *st) 
+{
+  /* Choose a range of square sizes based on the window size.  We want
+     a power of 2 for the square width or the munch doesn't fill up.
+     Also, if a square doesn't fit inside an area 20% smaller than the
+     window, it's too big.  Mismunched squares that big make things
+     look too noisy. */
+
+  if (st->window_height < st->window_width) {
+    st->logmaxwidth = (int)dumb_log_2(st->window_height * 0.8);
+  } else {
+    st->logmaxwidth = (int)dumb_log_2(st->window_width * 0.8);
+  }
+
+  if (st->logmaxwidth < 2) {
+    st->logmaxwidth = 2;
+  }
+
+  /* we always want three sizes of squares */
+  st->logminwidth = st->logmaxwidth - 2;
+
+  if (st->logminwidth < 2) {
+    st->logminwidth = 2;
+  }
+}
+
+
+
+static muncher *make_muncher (struct state *st) 
+{
+  int logwidth;
+  XWindowAttributes xgwa;
+  muncher *m = (muncher *) malloc(sizeof(muncher));
+
+  XGetWindowAttributes(st->dpy, st->window, &xgwa);
+
+  m->mismunch = st->mismunch;
+
+  /* choose size -- power of two */
+  logwidth = (st->logminwidth +
+              (random() % (1 + st->logmaxwidth - st->logminwidth)));
+
+  m->width = 1 << logwidth;
+
+  /* draw at this location */
+  m->atX = (random() % (xgwa.width <= m->width ? 1
+                        : xgwa.width - m->width));
+  m->atY = (random() % (xgwa.height <= m->width ? 1
+                        : xgwa.width - m->width));
+
+  /* wrap-around by these values; no need to % as we end up doing that
+     later anyway */
+  m->kX = ((random() % 2)
+           ? (random() % m->width) : 0);
+  m->kT = ((random() % 2)
+           ? (random() % m->width) : 0);
+  m->kY = ((random() % 2)
+           ? (random() % m->width) : 0);
+
+  /* set the gravity of the munch, or rather, which direction we draw
+     stuff in. */
+  m->grav = random() % 2;
+
+  /* I like this color scheme better than random colors. */
+  switch (random() % 4) {
+    case 0:
+      m->fgc.red = random() % 65536;
+      m->fgc.blue = random() % 32768;
+      m->fgc.green = random() % 16384;
+      break;
+
+    case 1:
+      m->fgc.red = 0;
+      m->fgc.blue = random() % 65536;
+      m->fgc.green = random() % 16384;
+      break;
+
+    case 2:
+      m->fgc.red = random() % 8192;
+      m->fgc.blue = random() % 8192;
+      m->fgc.green = random() % 49152;
+      break;
+
+    case 3:
+      m->fgc.red = random() % 65536;
+      m->fgc.green = m->fgc.red;
+      m->fgc.blue = m->fgc.red;
+      break;
+  }
+
+  /* Sometimes draw a mostly-overlapping copy of the square.  This
+     generates all kinds of neat blocky graphics when drawing in xor
+     mode. */
+  if (!m->mismunch || (random() % 4)) {
+    m->xshadow = 0;
+    m->yshadow = 0;
+  } else {
+    m->xshadow = (random() % (m->width/3)) - (m->width/6);
+    m->yshadow = (random() % (m->width/3)) - (m->width/6);
+  }
+
+  /* Start with a random y value -- this sort of controls the type of
+     deformities seen in the squares. */
+  m->y = random() % 256;
+
+  m->t = 0;
+
+  /*
+    Doom each square to be aborted at some random point.
+    (When doom == (width - 1), the entire square will be drawn.)
+  */
+  m->doom = (m->mismunch ? (random() % m->width) : (m->width - 1));
+  m->done = 0;
+
+  return m;
+}
+
+
+static void munch (struct state *st, muncher *m) 
+{
+  int drawX, drawY;
+  XWindowAttributes xgwa;
+
+  if (m->done) {
+    return;
+  }
+
+  XGetWindowAttributes(st->dpy, st->window, &xgwa);
+
+  if (!mono_p) {
+    /* XXX there are probably bugs with this. */
+    if (XAllocColor(st->dpy, xgwa.colormap, &m->fgc)) {
+      XSetForeground(st->dpy, st->gc, m->fgc.pixel);
+    }
+  }
+
+  /* Finally draw this pass of the munching error. */
+
+  for(m->x = 0; m->x < m->width; m->x++) {
+    /* figure out the next point */
+
+    /*
+      The ordinary Munching Squares calculation is:
+      m->y = ((m->x ^ ((m->t + m->kT) % m->width)) + m->kY) % m->width;
+
+      We create some feedback by plugging in y in place of x, and
+      make a couple of values negative so that some parts of some
+      squares get drawn in the wrong place.
+    */
+    if (m->mismunch)
+      m->y = ((-m->y ^ ((-m->t + m->kT) % m->width)) + m->kY) % m->width;
+    else
+      m->y = ((m->x ^ ((m->t + m->kT) % m->width)) + m->kY) % m->width;
+
+    drawX = ((m->x + m->kX) % m->width) + m->atX;
+    drawY = (m->grav ? m->y + m->atY : m->atY + m->width - 1 - m->y);
+
+    XDrawPoint(st->dpy, st->window, st->gc, drawX, drawY);
+    if ((m->xshadow != 0) || (m->yshadow != 0)) {
+      /* draw the corresponding shadow point */
+      XDrawPoint(st->dpy, st->window, st->gc, drawX + m->xshadow, drawY + m->yshadow);
+    }
+    /* XXX may want to change this to XDrawPoints,
+       but it's fast enough without it for the moment. */
+
+  }
+
+  m->t++;
+  if (m->t > m->doom) {
+    m->done = 1;
+  }
+}
+
 
 static void *
 munch_init (Display *dpy, Window w)
 {
-    struct state *st = (struct state *) calloc (1, sizeof(*st));
-    XGCValues gcv;
-    
-    st->dpy = dpy;
-    st->window = w;
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+  XWindowAttributes xgwa;
+  XGCValues gcv;
+  int i;
+  char *mm;
 
-    /* get the dimensions of the window */
-    XGetWindowAttributes (st->dpy, w, &st->xgwa);
-    
-    /* We need a square; limit on screen size? */
-    /* we want a power of 2 for the width or the munch doesn't fill up.
-     */
-    st->logmaxwidth = (int)
-	dumb_log_2(st->xgwa.height < st->xgwa.width ? st->xgwa.height : st->xgwa.width);
+  st->dpy = dpy;
+  st->window = w;
+  st->restart = 0;
 
-    st->maxwidth = 1 << st->logmaxwidth;
+  /* get the dimensions of the window */
+  XGetWindowAttributes(st->dpy, w, &xgwa);
 
-    if (st->logmaxwidth < st->logminwidth) {
-	/* off-by-one error here?  Anyone running on < 640x480? */
-	fprintf(stderr, "munch: screen too small; use -logminwidth\n");
-	fprintf(stderr, "\t(width is %d; log is %d; log must be at least "
-		"%d)\n", 
-		(st->xgwa.height < st->xgwa.width ? st->xgwa.height : st->xgwa.width),
-		st->logmaxwidth, st->logminwidth);
-	exit(0);
-    }
-    
-    /* create the gc */
-    gcv.foreground= get_pixel_resource(st->dpy, st->xgwa.colormap,
-                                       "foreground","Foreground");
-    gcv.background= get_pixel_resource(st->dpy, st->xgwa.colormap,
-                                       "background","Background");
-    
-    st->gc = XCreateGC(st->dpy, w, GCForeground|GCBackground, &gcv);
-    
-    st->delay = get_integer_resource (st->dpy, "delay", "Integer");
-    if (st->delay < 0) st->delay = 0;
-    
-    st->hold = get_integer_resource (st->dpy, "hold", "Integer");
-    if (st->hold < 0) st->hold = 0;
-    
-    st->clear = get_integer_resource (st->dpy, "clear", "Integer");
-    if (st->clear < 0) st->clear = 0;
+  /* create the gc */
+  gcv.foreground= get_pixel_resource(st->dpy, xgwa.colormap,
+                                     "foreground","Foreground");
+  gcv.background= get_pixel_resource(st->dpy, xgwa.colormap,
+                                     "background","Background");
 
-    st->logminwidth = get_integer_resource (st->dpy, "logminwidth", "Integer");
-    if (st->logminwidth < 2) st->logminwidth = 2;
+  st->gc = XCreateGC(st->dpy, w, GCForeground|GCBackground, &gcv);
 
-    st->shiftk = get_boolean_resource(st->dpy, "shift", "Boolean");
+  st->delay = get_integer_resource(st->dpy, "delay", "Integer");
+  if (st->delay < 0) st->delay = 0;
 
-    st->xor = get_boolean_resource(st->dpy, "xor", "Boolean");
+  st->simul = get_integer_resource(st->dpy, "simul", "Integer");
+  if (st->simul < 1) st->simul = 1;
 
-    /* always draw xor on mono. */
-    if (mono_p || st->xor) {
-	XSetFunction(st->dpy, st->gc, GXxor);
-    }
+  st->clear = get_integer_resource(st->dpy, "clear", "Integer");
+  if (st->clear < 0) st->clear = 0;
 
-    st->reset = 1;
+  st->xor = get_boolean_resource(st->dpy, "xor", "Boolean");
 
-    return st;
+  mm = get_string_resource (st->dpy, "mismunch", "Mismunch");
+  if (!mm || !*mm || !strcmp(mm, "random"))
+    st->mismunch = random() & 1;
+  else
+    st->mismunch = get_boolean_resource (st->dpy, "mismunch", "Mismunch");
+
+  st->window_width = xgwa.width;
+  st->window_height = xgwa.height;
+
+  calc_logwidths(st);
+
+  /* always draw xor on mono. */
+  if (mono_p || st->xor) {
+    XSetFunction(st->dpy, st->gc, GXxor);
+  }
+
+  st->munchers = (muncher **) calloc(st->simul, sizeof(muncher *));
+  for (i = 0; i < st->simul; i++) {
+    st->munchers[i] = make_muncher(st);
+  }
+
+  return st;
 }
 
 static unsigned long
 munch_draw (Display *dpy, Window w, void *closure)
 {
   struct state *st = (struct state *) closure;
-  int this_delay = st->delay;
+  int i;
 
-  if (st->reset)
-    {
-      st->reset = 0;
+  for (i = 0; i < 5; i++) {
 
-      this_delay = st->hold;
-      /* saves some calls to random.  big deal */
-      st->randflags = random();
+  /* for (draw_i = 0; draw_i < simul; draw_i++)  */
+  {
+    munch(st, st->munchers[st->draw_i]);
 
-      /* choose size -- power of two */
-      st->thiswidth = 1 << (st->logminwidth +
-                        (random() % (1 + st->logmaxwidth - st->logminwidth)));
+    if (st->munchers[st->draw_i]->done) {
+      st->draw_n++;
 
-      if (st->clear && ++st->square_count >= st->clear) {
-        XClearWindow(st->dpy, w);
-        st->square_count = 0;
+      free(st->munchers[st->draw_i]);
+      st->munchers[st->draw_i] = make_muncher(st);
+    }
+  }
+
+  st->draw_i++;
+  if (st->draw_i >= st->simul) {
+    int i = 0;
+    st->draw_i = 0;
+    if (st->restart || (st->clear && st->draw_n >= st->clear)) {
+
+      char *mm = get_string_resource (st->dpy, "mismunch", "Mismunch");
+      if (!mm || !*mm || !strcmp(mm, "random"))
+        st->mismunch = random() & 1;
+
+      for (i = 0; i < st->simul; i++) {
+        free(st->munchers[i]);
+        st->munchers[i] = make_muncher(st);
       }
 
-      /* draw at this location */
-      st->atX = (random() % (st->xgwa.width <= st->thiswidth ? 1
-                         : st->xgwa.width - st->thiswidth));
-      st->atY = (random() % (st->xgwa.height <= st->thiswidth ? 1
-                         : st->xgwa.width - st->thiswidth));
-		  
-      /* wrap-around by these values; no need to %
-         as we end up doing that later anyway*/
-      st->kX = ((st->shiftk && (st->randflags & SHIFT_KX))
-            ? (random() % st->thiswidth) : 0);
-      st->kT = ((st->shiftk && (st->randflags & SHIFT_KT))
-            ? (random() % st->thiswidth) : 0);
-      st->kY = ((st->shiftk && (st->randflags & SHIFT_KY))
-            ? (random() % st->thiswidth) : 0);
-		  
-      /* set the gravity of the munch, or rather,
-         which direction we draw stuff in. */
-      st->grav = (st->randflags & GRAV);
+      XClearWindow(st->dpy, w);
+      st->draw_n = 0;
+      st->restart = 0;
     }
+  }
 
-  if (munchOnce (st, st->thiswidth))
-    st->reset = 1;
+  }
 
-/*  printf("%d\n",this_delay);*/
-  return this_delay;
+  return st->delay;
 }
+
 
 static void
 munch_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
   struct state *st = (struct state *) closure;
-  st->xgwa.width = w;
-  st->xgwa.height = h;
-  st->logmaxwidth = (int)
-    dumb_log_2(st->xgwa.height < st->xgwa.width ? st->xgwa.height : st->xgwa.width);
-  st->maxwidth = 1 << st->logmaxwidth;
+  if (w != st->window_width ||
+      h != st->window_height) {
+    st->window_width = w;
+    st->window_height = h;
+    calc_logwidths(st);
+    st->restart = 1;
+    st->draw_i = 0;
+  }
 }
 
 static Bool
@@ -270,30 +427,30 @@ munch_free (Display *dpy, Window window, void *closure)
   free (st);
 }
 
-
+
 static const char *munch_defaults [] = {
-    ".background:	black",
-    ".foreground:	white",
-    "*fpsSolid:		true",
-    "*delay:	        10000",
-    "*hold:		100000",
-    "*clear:		50",
-    "*logminwidth:	7",
-    "*shift:		True",
-    "*xor:		True",
-    0
+  ".background:       black",
+  ".foreground:       white",
+  "*fpsSolid:	      true",
+  "*delay:            10000",
+  "*mismunch:         random",
+  "*simul:            5",
+  "*clear:            65",
+  "*xor:              True",
+  0
 };
 
 static XrmOptionDescRec munch_options [] = {
-    { "-delay",		".delay",	XrmoptionSepArg, 0 },
-    { "-hold",		".hold",	XrmoptionSepArg, 0 },
-    { "-clear",         ".clear",       XrmoptionSepArg, "true" },
-    { "-shift",         ".shift",       XrmoptionNoArg, "true" },
-    { "-no-shift",	".shift",       XrmoptionNoArg, "false" },
-    { "-logminwidth",	".logminwidth", XrmoptionSepArg, 0 },
-    { "-xor",           ".xor",		XrmoptionNoArg, "true" },
-    { "-no-xor",	".xor",		XrmoptionNoArg, "false" },
-    { 0, 0, 0, 0 }
+  { "-delay",         ".delay",       XrmoptionSepArg,  0 },
+  { "-simul",         ".simul",       XrmoptionSepArg,  0 },
+  { "-clear",         ".clear",       XrmoptionSepArg, "true" },
+  { "-xor",           ".xor",         XrmoptionNoArg,  "true" },
+  { "-no-xor",        ".xor",         XrmoptionNoArg,  "false" },
+  { "-classic",       ".mismunch",    XrmoptionNoArg,  "false" },
+  { "-mismunch",      ".mismunch",    XrmoptionNoArg,  "true" },
+  { "-random",        ".mismunch",    XrmoptionNoArg,  "random" },
+  { 0, 0, 0, 0 }
 };
+
 
 XSCREENSAVER_MODULE ("Munch", munch)

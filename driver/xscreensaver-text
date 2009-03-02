@@ -30,7 +30,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.15 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.17 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -74,7 +74,20 @@ my %entity_table = (
    "ocirc"  => 'ô', "otilde" => 'õ', "ouml"   => 'ö', "divide" => '÷',
    "oslash" => 'ø', "ugrave" => 'ù', "uacute" => 'ú', "ucirc"  => 'û',
    "uuml"   => 'ü', "yacute" => 'ý', "thorn"  => 'þ', "yuml"   => 'ÿ',
-   "apos"   => '\''
+   "apos"   => '\'',
+
+   # HTML 4 entities that do not have 1:1 Latin1 mappings.
+   "bull"  => "*",   "hellip"=> "...",  "prime" => "'",  "Prime" => "\"",
+   "frasl" => "/",   "trade" => "[tm]", "larr"  => "<-", "rarr"  => "->",
+   "harr"  => "<->", "lArr"  => "<=",   "rArr"  => "=>", "hArr"  => "<=>",
+   "empty" => "Ø",   "minus" => "-",    "lowast"=> "*",  "sim"   => "~",
+   "cong"  => "=~",  "asymp" => "~",    "ne"    => "!=", "equiv" => "==",
+   "le"    => "<=",  "ge"    => ">=",   "lang"  => "<",  "rang"  => ">",
+   "loz"   => "<>",  "OElig" => "OE",   "oelig" => "oe", "Yuml"  => "Y",
+   "circ"  => "^",   "tilde" => "~",    "ensp"  => " ",  "emsp"  => " ",
+   "thinsp"=> " ",   "ndash" => "-",    "mdash" => "-",  "lsquo" => "`",
+   "rsquo" => "'",   "sbquo" => "'",    "ldquo" => "\"", "rdquo" => "\"",
+   "bdquo" => "\"",  "lsaquo"=> "<",    "rsaquo"=> ">",
 );
 
 # Maps certain UTF8 characters (2 or 3 bytes) to the corresponding
@@ -631,6 +644,8 @@ sub reformat_html($$) {
     s/[ \t]+$//gm;                # lose whitespace at end of line again
   }
 
+  s/^\n+//gs;
+
   y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
   print STDOUT $_;
 }
@@ -694,6 +709,8 @@ sub reformat_rss($) {
 
     $title = rss_field_to_html ($title || '');
     $body1 = rss_field_to_html ($body1 || '');
+
+    $title = '' if ($body1 eq $title);  # Identical in Twitter's atom feed.
 
     reformat_html ("$title<P>$body1", 1);
     print "\n";

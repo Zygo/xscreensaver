@@ -395,6 +395,8 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
   int i;
   CGRect wr = d->frame;
 
+  push_fg_gc (d, gc, YES);
+
 # ifdef XDRAWPOINTS_IMAGES
 
   unsigned int argb = gc->gcv.foreground;
@@ -440,7 +442,6 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
   CGRect *rects = (CGRect *) malloc (count * sizeof(CGRect));
   CGRect *r = rects;
   
-  push_fg_gc (d, gc, YES);
   for (i = 0; i < count; i++) {
     r->size.width = r->size.height = 1;
     if (i > 0 && mode == CoordModePrevious) {
@@ -458,6 +459,8 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
   free (rects);
 
 # endif /* ! XDRAWPOINTS_IMAGES */
+
+  pop_gc (d, gc);
 
   return 0;
 }
@@ -1704,9 +1707,62 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
   return image;
 }
 
+
+/* Returns a transformation matrix to do rotation as per the provided
+   EXIF "Orientation" value.
+ */
+static CGAffineTransform
+exif_rotate (int rot, CGSize rect)
+{
+  CGAffineTransform trans = CGAffineTransformIdentity;
+  switch (rot) {
+  case 2:		// flip horizontal
+    trans = CGAffineTransformMakeTranslation (rect.width, 0);
+    trans = CGAffineTransformScale (trans, -1, 1);
+    break;
+
+  case 3:		// rotate 180
+    trans = CGAffineTransformMakeTranslation (rect.width, rect.height);
+    trans = CGAffineTransformRotate (trans, M_PI);
+    break;
+
+  case 4:		// flip vertical
+    trans = CGAffineTransformMakeTranslation (0, rect.height);
+    trans = CGAffineTransformScale (trans, 1, -1);
+    break;
+
+  case 5:		// transpose (UL-to-LR axis)
+    trans = CGAffineTransformMakeTranslation (rect.height, rect.width);
+    trans = CGAffineTransformScale (trans, -1, 1);
+    trans = CGAffineTransformRotate (trans, 3 * M_PI / 2);
+    break;
+
+  case 6:		// rotate 90
+    trans = CGAffineTransformMakeTranslation (0, rect.width);
+    trans = CGAffineTransformRotate (trans, 3 * M_PI / 2);
+    break;
+
+  case 7:		// transverse (UR-to-LL axis)
+    trans = CGAffineTransformMakeScale (-1, 1);
+    trans = CGAffineTransformRotate (trans, M_PI / 2);
+    break;
+
+  case 8:		// rotate 270
+    trans = CGAffineTransformMakeTranslation (rect.height, 0);
+    trans = CGAffineTransformRotate (trans, M_PI / 2);
+    break;
+
+  default: 
+    break;
+  }
+
+  return trans;
+}
+
+
 void
 jwxyz_draw_NSImage (Display *dpy, Drawable d, void *nsimg_arg,
-                    XRectangle *geom_ret)
+                    XRectangle *geom_ret, int exif_rotation)
 {
   NSImage *nsimg = (NSImage *) nsimg_arg;
 
@@ -1721,16 +1777,29 @@ jwxyz_draw_NSImage (Display *dpy, Drawable d, void *nsimg_arg,
   CGImageRef cgi = CGImageSourceCreateImageAtIndex (cgsrc, 0, NULL);
 
   NSSize imgr = [nsimg size];
+  Bool rot_p = (exif_rotation >= 5);
+
+  if (rot_p)
+    imgr = NSMakeSize (imgr.height, imgr.width);
+
   CGRect winr = d->frame;
   float rw = winr.size.width  / imgr.width;
   float rh = winr.size.height / imgr.height;
   float r = (rw < rh ? rw : rh);
 
-  CGRect dst;
+  CGRect dst, dst2;
   dst.size.width  = imgr.width  * r;
   dst.size.height = imgr.height * r;
   dst.origin.x = (winr.size.width  - dst.size.width)  / 2;
   dst.origin.y = (winr.size.height - dst.size.height) / 2;
+
+  dst2.origin.x = dst2.origin.y = 0;
+  if (rot_p) {
+    dst2.size.width = dst.size.height; 
+    dst2.size.height = dst.size.width;
+  } else {
+    dst2.size = dst.size;
+  }
 
   // Clear the part not covered by the image to background or black.
   //
@@ -1741,8 +1810,17 @@ jwxyz_draw_NSImage (Display *dpy, Drawable d, void *nsimg_arg,
     draw_rect (dpy, d, 0, 0, 0, winr.size.width, winr.size.height, NO, YES);
   }
 
+  CGAffineTransform trans = 
+    exif_rotate (exif_rotation, rot_p ? dst2.size : dst.size);
+
+  CGContextSaveGState (d->cgc);
+  CGContextConcatCTM (d->cgc, 
+                      CGAffineTransformMakeTranslation (dst.origin.x,
+                                                        dst.origin.y));
+  CGContextConcatCTM (d->cgc, trans);
   //Assert (CGImageGetColorSpace (cgi) == dpy->colorspace, "bad colorspace");
-  CGContextDrawImage (d->cgc, dst, cgi);
+  CGContextDrawImage (d->cgc, dst2, cgi);
+  CGContextRestoreGState (d->cgc);
 
   CFRelease (cgsrc);
   CGImageRelease (cgi);

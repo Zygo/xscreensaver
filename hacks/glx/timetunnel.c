@@ -10,6 +10,8 @@
  * implied warranty.
  */
 
+#define GL_GLEXT_PROTOTYPES 1
+
 #include <math.h> /* for log2 */
 
 #define DEFAULTS	"*delay:	30000       \n" \
@@ -46,22 +48,29 @@
 
 static float start, end, dilate;
 static Bool do_texture, drawlogo, wire, reverse, do_fog;
-#ifdef GET_SUED_BY_THE_BBC
-static Bool locklogo;
-#endif
+static const char *do_tx1, *do_tx2, *do_tx3, *do_tun1, *do_tun2, *do_tun3;
 
 static XrmOptionDescRec opts[] = {
   {"-texture"	, ".texture",   XrmoptionNoArg, "true" },
+  {"+texture"	, ".texture",   XrmoptionNoArg, "false" },
   {"-start"	, ".start",    	XrmoptionSepArg, 0 },
   {"-end"	, ".end",    	XrmoptionSepArg, 0 },
   {"-dilate"	, ".dilate",   XrmoptionSepArg, 0 },
-#ifdef GET_SUED_BY_THE_BBC
-  {"-locklogo"	, ".locklogo",  XrmoptionNoArg, "true" },
-#endif
-  {"-logo"	, ".drawlogo",   XrmoptionNoArg, "true" },
   {"+logo"	, ".drawlogo",   XrmoptionNoArg, "false" },
   {"-reverse"	, ".reverse",   XrmoptionNoArg, "true" },
-  {"-fog"	, ".fog",  	XrmoptionNoArg, "false" },
+  {"+fog"	, ".fog",  	XrmoptionNoArg, "false" },
+  {"-marquee"   , ".marquee", XrmoptionSepArg, 0},
+  /* {"+marquee"   , ".marquee", XrmoptionNoArg, "(none)"}, */
+  {"-tardis"   , ".tardis", XrmoptionSepArg, 0},
+  /* {"+tardis"   , ".tardis", XrmoptionNoArg, "(none)"}, */
+  {"-head"   , ".head", XrmoptionSepArg, 0},
+  /* {"+head"   , ".head", XrmoptionNoArg, "(none)"}, */
+  {"-tun1"   , ".tun1", XrmoptionSepArg, 0},
+  /* {"+tun1"   , ".tun1", XrmoptionNoArg, "(none)"}, */
+  {"-tun2"   , ".tun2", XrmoptionSepArg, 0},
+  /* {"+tun2"   , ".tun2", XrmoptionNoArg, "(none)"}, */
+  {"-tun3"   , ".tun3", XrmoptionSepArg, 0},
+  /* {"+tun3"   , ".tun3", XrmoptionNoArg, "(none)"}, */
 };
 
 static argtype vars[] = {
@@ -69,12 +78,15 @@ static argtype vars[] = {
   {&start, "start", "Start", DEF_START, t_Float},
   {&end,     "end",   "End", DEF_END  , t_Float},
   {&dilate,     "dilate",   "Dilate", DEF_DILATE  , t_Float},
-#ifdef GET_SUED_BY_THE_BBC
-  {&locklogo,     "locklogo",   "LockLogo", DEF_LOCKLOGO  , t_Bool},
-#endif
   {&drawlogo,     "drawlogo",   "DrawLogo", DEF_DRAWLOGO  , t_Bool},
   {&reverse,     "reverse",   "Reverse", DEF_REVERSE  , t_Bool},
-  {&do_fog,     "fog",   "Fog", DEF_FOG  , t_Bool},
+  {&do_fog,     "fog",  "Fog", DEF_FOG  , t_Bool},
+  {&do_tx1,	"marquee", "Marquee", "(none)", t_String},
+  {&do_tx2,	"tardis", "Tardis", "(none)", t_String},
+  {&do_tx3,	"head",	"Head", "(none)", t_String},
+  {&do_tun1,	"tun1",	"Tunnel 1", "(none)", t_String},
+  {&do_tun2,	"tun2",	"Tunnel 2", "(none)", t_String},
+  {&do_tun3,	"tun3",	"Tunnel 3", "(none)", t_String},
 };
 
 ENTRYPOINT ModeSpecOpt tunnel_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -84,12 +96,6 @@ ENTRYPOINT ModeSpecOpt tunnel_opts = {countof(opts), opts, countof(vars), vars, 
 #include "images/timetunnel0.xpm"
 #include "images/timetunnel1.xpm"
 #include "images/timetunnel2.xpm"
-#ifdef GET_SUED_BY_THE_BBC
-# include "images/tardis.xpm"
-# include "images/whologo.xpm"
-# include "images/whohead1.xpm"
-/* #include "images/whohead_psy.xpm" */
-# endif /* GET_SUED_BY_THE_BBC */
 
 
 #ifdef USE_GL /* whole file */
@@ -167,7 +173,7 @@ static void init_effects(effect_t *e, int effectnum)
 		{8.08, 0.75 , 0.0}, 
 		{8.08, 0.0 , 0.0},
 		{10.0, 0.0, 0.0}};
-	/* effect 3: cylender. alpha  */
+	/* effect 3: cylinder. alpha  */
 	float e3d[5][2] = 
 		{{0.0, 0.0}, 
 		 {6.41, 0.00},
@@ -262,7 +268,7 @@ static void init_effects(effect_t *e, int effectnum)
 	if (effectnum == 2)
 		init_effect(e, 8, 3, 1.0,  (float *) e2d);
 
-	/* effect 3: cylender tunnel  */
+	/* effect 3: cylinder tunnel  */
 	if (effectnum == 3)
 		init_effect(e, 5, 2, 0.889  ,  (float *) e3d);
 
@@ -388,9 +394,7 @@ tunnel_handle_event (ModeInfo *mi, XEvent *event)
     }
   else if (event->xany.type == ButtonPress &&
            (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
+            event->xbutton.button == Button5))
     {
       gltrackball_mousewheel (tc->trackball, event->xbutton.button, 10,
                               !!event->xbutton.state);
@@ -526,7 +530,7 @@ static void draw_sign(ModeInfo *mi, tunnel_configuration *tc, float z,  float al
 } /* draw sign */
 
 
-/* draw a time tunnel.  used for both cylender and diamond tunnels.
+/* draw a time tunnel.  used for both cylinder and diamond tunnels.
    uses texture shifter (indexed by shiftnum) to simulate motion.
    tunnel does not move, and is acutally a display list.  if alpha = 0, skip */
 static void draw_cyl(ModeInfo *mi, tunnel_configuration *tc, float alpha, int texnum, int listnum, int shiftnum)
@@ -843,11 +847,14 @@ static int wrapVal(int val, int min, int max)
     anegative : create b/w image from zero alpha. zero alpha gets bw_color,
 		nonzero alpha gets 1.0 - bwcolor, then alpha flipped to 1-alpha.
 
+  Inputs: xpm structure, or filename of xmp image.  if filename == NULL, use structure.
+  Outputs: texture bound to texutre Id texbind.
+
 */
 
 static float mylog2(float x) { return ( log(x) / log(2));}
 
-static void LoadTexture(ModeInfo * mi, char **fn, GLuint texbind, int blur, float bw_color, Bool anegative, Bool onealpha)
+static void LoadTexture(ModeInfo * mi, char **fn, const char *filename, GLuint texbind, int blur, float bw_color, Bool anegative, Bool onealpha)
 {
 	/* looping and temporary array index variables */
 	int ix, iy, bx, by, indx, indy, boxsize, cchan, tmpidx, dtaidx;
@@ -864,8 +871,14 @@ static void LoadTexture(ModeInfo * mi, char **fn, GLuint texbind, int blur, floa
 	boxsize = 2;
 	boxdiv = 1.0 / ( boxsize * 2.0 + 1.0) / ( boxsize * 2.0 + 1.0);
 
-        if ((teximage = xpm_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
-                         MI_COLORMAP(mi), fn)) == None) {
+
+	if (filename) 
+        	teximage = xpm_file_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
+                         MI_COLORMAP(mi), filename);
+        else 
+		teximage = xpm_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi),
+                         MI_COLORMAP(mi), fn);
+	if (teximage == NULL) {
             fprintf(stderr, "%s: error reading the texture.\n", progname);
             glDeleteTextures(1, &texbind);
             do_texture = False;
@@ -987,7 +1000,7 @@ static void LoadTexture(ModeInfo * mi, char **fn, GLuint texbind, int blur, floa
         XDestroyImage(teximage);
 }
 
-/* creates cylender for time tunnel. sides, zmin, zmax, rad(ius) obvious.
+/* creates cylinder for time tunnel. sides, zmin, zmax, rad(ius) obvious.
    stretch scales texture coords; makes tunnel go slower the larger it is.
    not drawn, but put into display list. */
 static void makecyl(int sides, float zmin, float zmax, float rad, float stretch) 
@@ -1080,32 +1093,41 @@ init_tunnel (ModeInfo *mi)
 
   if (do_texture)
   {
+	  /* the following textures are loaded, and possible overridden:
+		tunnel 1, tunnel 2, tunnel 3, marquee, tardis, head */
           glGenTextures(MAX_TEXTURE, tc->texture_binds);
 	  
-	  /*LoadTexture(*mi, **fn, texbind, bluralpha, bw_color,  anegative, onealpha)*/
-          LoadTexture(mi, timetunnel0_xpm, tc->texture_binds[0], 0, 0.0, False, False);
-          LoadTexture(mi, timetunnel1_xpm, tc->texture_binds[2], 0, 0.0, False, False);
-          LoadTexture(mi, timetunnel2_xpm, tc->texture_binds[5], 0, 0.0, False, False);
-          LoadTexture(mi, tunnelstar_xpm, tc->texture_binds[4], 0, 0.0, False, False);
-# ifdef GET_SUED_BY_THE_BBC
-	  if (locklogo) {
-# endif /* GET_SUED_BY_THE_BBC */
-          	LoadTexture(mi, (char **) logo_180_xpm, tc->texture_binds[3],  0,0.0, False, False);
-		tc->texture_binds[1] = tc->texture_binds[3];
-		tc->texture_binds[6] = tc->texture_binds[3];
-		tc->texture_binds[8] = tc->texture_binds[3];
+	  /*LoadTexture(*mi, **fn, *filename, texbind, bluralpha, bw_color,  anegative, onealpha)*/
+  	  if (strcasecmp (do_tun1, "(none)")) /* tunnel 1 */
+         	LoadTexture(mi, NULL, do_tun1, tc->texture_binds[0],  0,0.0, False, False);
+	  else
+          	LoadTexture(mi, timetunnel0_xpm, NULL, tc->texture_binds[0], 0, 0.0, False, False);
+  	  if (strcasecmp (do_tun2, "(none)")) /* tunnel 2 */
+         	LoadTexture(mi, NULL, do_tun2, tc->texture_binds[2],  0,0.0, False, False);
+	  else
+          	LoadTexture(mi, timetunnel1_xpm, NULL, tc->texture_binds[2], 0, 0.0, False, False);
+  	  if (strcasecmp (do_tun3, "(none)")) /* tunnel 3 */
+         	LoadTexture(mi, NULL, do_tun3, tc->texture_binds[5],  0,0.0, False, False);
+	  else
+          	LoadTexture(mi, timetunnel2_xpm, NULL, tc->texture_binds[5], 0, 0.0, False, False);
+          LoadTexture(mi, tunnelstar_xpm, NULL, tc->texture_binds[4], 0, 0.0, False, False);
+  	  if (strcasecmp (do_tx1, "(none)")) /* marquee */
+         	LoadTexture(mi, NULL, do_tx1, tc->texture_binds[3],  0,0.0, False, False);
+	  else
+         	LoadTexture(mi, (char **) logo_180_xpm, NULL, tc->texture_binds[3],  0,0.0, False, False);
+  	  if (strcasecmp (do_tx2, "(none)")) /* tardis */
+         	LoadTexture(mi, NULL, do_tx2, tc->texture_binds[1], 0, 0.0 ,False, False);
+	  else
+         	LoadTexture(mi, (char **) logo_180_xpm, NULL, tc->texture_binds[1],  0,0.0, False, False);
+  	  if (strcasecmp (do_tx3, "(none)")) { /* head */
+         	LoadTexture(mi,  NULL, do_tx3, tc->texture_binds[6], 0, 0.0 ,False, False);
 		/* negative */
-          	LoadTexture(mi, (char **) logo_180_xpm, tc->texture_binds[9],  2,1.0, True, True);
-# ifdef GET_SUED_BY_THE_BBC
-	 } else {
-          	LoadTexture(mi, whologo_xpm, tc->texture_binds[3],  0,0.0, False, False);
-          	LoadTexture(mi, tardis_xpm, tc->texture_binds[1], 0, 0.0 ,False, False);
-          	LoadTexture(mi, whohead1_xpm, tc->texture_binds[6], 0, 1.0, False, False);
-          	/* LoadTexture(mi, whohead_psy_xpm, tc->texture_binds[8], 1, 0.7, False, False); */
+          	LoadTexture(mi,  NULL, do_tx3, tc->texture_binds[9],  2,1.0, True, True);
+	  } else {
+         	LoadTexture(mi, (char **) logo_180_xpm, NULL, tc->texture_binds[6],  0,0.0, False, False);
 		/* negative */
-          	LoadTexture(mi, whohead1_xpm, tc->texture_binds[9], 2, 1.0, True, True);
+          	LoadTexture(mi, (char **) logo_180_xpm, NULL, tc->texture_binds[9],  2,1.0, True, True);
 	  }
-# endif /* GET_SUED_BY_THE_BBC */
           glEnable(GL_TEXTURE_2D);
 	  check_gl_error("tex");
   }
@@ -1191,7 +1213,7 @@ draw_tunnel (ModeInfo *mi)
   /* then tardis tunnel */
   make_wall_tunnel(mi, tc, tc->effects[1].state[0], tc->effects[7].state[0]);
 
-  /* then cylender tunnel */
+  /* then cylinder tunnel */
   glEnable(GL_BLEND);
   draw_cyl(mi, tc, tc->effects[3].state[0], 2, tc->cyllist, 1); 
 
@@ -1199,7 +1221,7 @@ draw_tunnel (ModeInfo *mi)
   /* tardis */
   if (drawlogo)
   	draw_sign(mi, tc, tc->effects[2].state[0], tc->effects[2].state[1], 2.0, 1, 0);
-  /* logo */
+  /* marquee */
   if (drawlogo)
   	draw_sign(mi, tc, tc->effects[5].state[0], tc->effects[5].state[1], 1.0, 3, 0);
   /*who head brite*/

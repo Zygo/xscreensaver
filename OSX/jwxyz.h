@@ -358,7 +358,7 @@ extern Pixmap XCreatePixmapFromBitmapData (Display *, Drawable,
 extern XPixmapFormatValues *XListPixmapFormats (Display *, int *count_ret);
 
 extern void jwxyz_draw_NSImage (Display *, Drawable, void *NSImage_arg,
-                                XRectangle *geom_ret);
+                                XRectangle *geom_ret, int exif_rotation);
 
 extern int XSetGraphicsExposures (Display *, GC, Bool);
 extern Bool XTranslateCoordinates (Display *, Window src_w, Window dest_w,

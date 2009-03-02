@@ -37,7 +37,9 @@ DEPEND_DEFINES	= @DEPEND_DEFINES@
 
 SHELL		= /bin/sh
 INSTALL		= @INSTALL@
+SUID_FLAGS      = -o root -m 4755
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SETUID  = @INSTALL_SETUID@
 INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_DIRS	= @INSTALL_DIRS@
 
@@ -106,7 +108,8 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c fps-gl.c \
 		  timetunnel.c juggler3d.c topblock.c glschool.c \
 		  glschool_gl.c glschool_alg.c glcells.c voronoi.c \
 		  moebiusgears.c lockward.c cubicgrid.c hypnowheel.c \
-		  skytentacles.c teapot.c
+		  skytentacles.c teapot.c sonar.c sonar-sim.c sonar-icmp.c \
+		  jigsaw.c photopile.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -141,13 +144,14 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  timetunnel.o juggler3d.o topblock.o glschool.o \
 		  glschool_gl.o glschool_alg.o glcells.o voronoi.o \
 		  moebiusgears.o lockward.o cubicgrid.o hypnowheel.o \
-		  skytentacles.o teapot.o
+		  skytentacles.o teapot.o sonar.o sonar-sim.o sonar-icmp.o \
+		  jigsaw.o photopile.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
 		  sierpinski3d gflux stonerview starwars gltext molecule \
 		  dangerball circuit menger engine flipscreen3d glsnake boxed \
-		  glforestfire sballs cubenetic spheremonics lavalite queens \
+		  sballs cubenetic spheremonics lavalite queens \
 		  endgame glblur flurry atunnel flyingtoasters bouncingcow \
 		  glslideshow jigglypuff klein hypertorus glmatrix cubestorm \
 		  glknots blocktube flipflop antspotlight polytopes \
@@ -155,13 +159,18 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  antinspect providence pinion boing carousel fliptext \
 		  antmaze tangram crackberg glhanoi cube21 timetunnel \
 		  juggler3d topblock glschool glcells voronoi moebiusgears \
-		  lockward cubicgrid hypnowheel skytentacles
+		  lockward cubicgrid hypnowheel skytentacles jigsaw photopile
 GLE_EXES	= extrusion
+SUID_EXES	= sonar
 GL_UTIL_EXES	= xscreensaver-gl-helper
-HACK_EXES	= @GL_EXES@ @GLE_EXES@
+HACK_EXES_1	= @GL_EXES@ @GLE_EXES@
+HACK_EXES	= $(HACK_EXES_1) @SUID_EXES@
 XSHM_OBJS	= $(UTILS_BIN)/xshm.o
 GRAB_OBJS	= $(UTILS_BIN)/grabclient.o grab-ximage.o $(XSHM_OBJS)
 EXES		= @GL_UTIL_EXES@ $(HACK_EXES)
+
+RETIRED_EXES	= glforestfire
+RETIRED_GL_EXES	= @RETIRED_GL_EXES@
 
 HACK_OBJS	= $(HACK_BIN)/screenhack.o $(HACK_BIN)/fps.o \
 		  xlockmore-gl.o xlock-gl-utils.o glxfonts.o fps-gl.o \
@@ -178,10 +187,10 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  tunnel_draw.h ants.h polyhedra.h normals.h glxfonts.h \
 		  texfont.h tangram_shapes.h sproingies.h extrusion.h \
 		  glschool.h glschool_gl.h glschool_alg.h topblock.h \
-		  involute.h teapot.h
+		  involute.h teapot.h sonar.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
-		  flipscreen3d.man gears.man gflux.man glforestfire.man \
+		  flipscreen3d.man gears.man gflux.man \
 		  glplanet.man glsnake.man gltext.man lament.man lavalite.man \
 		  menger.man moebius.man molecule.man morph3d.man pipes.man \
 		  pulsar.man queens.man rubik.man sballs.man sierpinski3d.man \
@@ -198,15 +207,17 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  crackberg.man glhanoi.man cube21.man timetunnel.man \
 		  juggler3d.man topblock.man glschool.man glcells.man \
 		  voronoi.man moebiusgears.man lockward.man cubicgrid.man \
-		  hypnowheel.man skytentacles.man
+		  hypnowheel.man skytentacles.man sonar.man jigsaw.man \
+		  photopile.man
 MEN		= @GL_MEN@
+RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl molecules.sh starwars.txt
 
 TARFILES	= $(SRCS) $(HDRS) $(MEN) $(EXTRAS)
 
 
 default: all
-all: $(EXES)
+all: $(EXES) $(RETIRED_EXES)
 
 install:   install-program    install-xml   install-man
 uninstall: uninstall-program  uninstall-xml uninstall-man
@@ -216,7 +227,7 @@ install-strip:
 
 # the hacks, in $HACKDIR
 install-program:: $(EXES)
-	@exes="$(HACK_EXES)" ;						\
+	@exes="$(HACK_EXES_1)" ;					\
 	 idir="$(install_prefix)$(HACKDIR)" ;				\
 	 if [ "$$exes" != "" ]; then					\
 	   if [ ! -d $$idir ]; then					\
@@ -226,7 +237,33 @@ install-program:: $(EXES)
 	     echo $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
 		  $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
 	   done ;							\
+									\
+	   exes="$(SUID_EXES)" ;					\
+	   if [ @SETUID_HACKS@ = yes ]; then				\
+	     sinst="$(INSTALL_SETUID)" ;				\
+	   else								\
+	     sinst="$(INSTALL_PROGRAM)" ;				\
+	   fi ;								\
+	   for program in $$exes; do					\
+	     echo $$sinst $$program $$idir/$$program ;			\
+	     if   $$sinst $$program $$idir/$$program ; then		\
+	        true ;							\
+	     elif [ @SETUID_HACKS@ = yes ]; then			\
+	       echo $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
+	       if   $(INSTALL_PROGRAM) $$program $$idir/$$program ; then\
+	         echo "" ;						\
+	         echo "WARNING: unable to install $$program setuid:"	\
+	              "installed non-setuid instead." ;			\
+	         echo "" ;						\
+	       else							\
+	         exit 1 ;						\
+	       fi ;							\
+	     else							\
+	       exit 1 ;							\
+	     fi ;							\
+	   done ;							\
 	 fi
+
 
 # the xscreensaver-gl-helper program, in $bindir
 install-program:: $(EXES)
@@ -718,8 +755,19 @@ hypnowheel:	hypnowheel.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 TENTACLE_OBJS=normals.o xpm-ximage.o $(HACK_TRACK_OBJS)
-skytentacles:	skytentacles.o $(TENTACLE_OBJS)
-	$(CC_HACK) -o $@ $@.o  $(TENTACLE_OBJS) $(XPM_LIBS)
+skytentacles:	skytentacles.o	$(TENTACLE_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(TENTACLE_OBJS) $(XPM_LIBS)
+
+SONAR_OBJS=sonar-sim.o sonar-icmp.o texfont.o $(HACK_TRACK_OBJS)
+sonar:		sonar.o		$(SONAR_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(SONAR_OBJS) $(XPM_LIBS)
+
+JIGSAW_OBJS=normals.o $(UTILS_BIN)/spline.o $(HACK_TRACK_GRAB_OBJS)
+jigsaw:		jigsaw.o	$(JIGSAW_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(JIGSAW_OBJS) $(HACK_LIBS)
+
+photopile:	photopile.o	texfont.o $(HACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	texfont.o $(HACK_GRAB_OBJS) $(HACK_LIBS)
 
 ##############################################################################
 #
@@ -1582,6 +1630,24 @@ jigglypuff.o: $(UTILS_SRC)/yarandom.h
 jigglypuff.o: $(HACK_SRC)/xlockmoreI.h
 jigglypuff.o: $(HACK_SRC)/xlockmore.h
 jigglypuff.o: $(srcdir)/xpm-ximage.h
+jigsaw.o: ../../config.h
+jigsaw.o: $(HACK_SRC)/fps.h
+jigsaw.o: $(srcdir)/gltrackball.h
+jigsaw.o: $(srcdir)/grab-ximage.h
+jigsaw.o: $(srcdir)/normals.h
+jigsaw.o: $(srcdir)/rotator.h
+jigsaw.o: $(HACK_SRC)/screenhackI.h
+jigsaw.o: $(UTILS_SRC)/colors.h
+jigsaw.o: $(UTILS_SRC)/grabscreen.h
+jigsaw.o: $(UTILS_SRC)/hsv.h
+jigsaw.o: $(UTILS_SRC)/resources.h
+jigsaw.o: $(UTILS_SRC)/spline.h
+jigsaw.o: $(UTILS_SRC)/usleep.h
+jigsaw.o: $(UTILS_SRC)/visual.h
+jigsaw.o: $(UTILS_SRC)/xshm.h
+jigsaw.o: $(UTILS_SRC)/yarandom.h
+jigsaw.o: $(HACK_SRC)/xlockmoreI.h
+jigsaw.o: $(HACK_SRC)/xlockmore.h
 juggler3d.o: ../../config.h
 juggler3d.o: $(HACK_SRC)/fps.h
 juggler3d.o: $(srcdir)/gltrackball.h
@@ -1772,6 +1838,21 @@ noof.o: $(HACK_SRC)/xlockmoreI.h
 noof.o: $(HACK_SRC)/xlockmore.h
 normals.o: ../../config.h
 normals.o: $(srcdir)/normals.h
+photopile.o: ../../config.h
+photopile.o: $(HACK_SRC)/fps.h
+photopile.o: $(srcdir)/grab-ximage.h
+photopile.o: $(HACK_SRC)/screenhackI.h
+photopile.o: $(srcdir)/texfont.h
+photopile.o: $(UTILS_SRC)/colors.h
+photopile.o: $(UTILS_SRC)/grabscreen.h
+photopile.o: $(UTILS_SRC)/hsv.h
+photopile.o: $(UTILS_SRC)/resources.h
+photopile.o: $(UTILS_SRC)/usleep.h
+photopile.o: $(UTILS_SRC)/visual.h
+photopile.o: $(UTILS_SRC)/xshm.h
+photopile.o: $(UTILS_SRC)/yarandom.h
+photopile.o: $(HACK_SRC)/xlockmoreI.h
+photopile.o: $(HACK_SRC)/xlockmore.h
 pinion.o: ../../config.h
 pinion.o: $(HACK_SRC)/fps.h
 pinion.o: $(srcdir)/gltrackball.h
@@ -1966,6 +2047,46 @@ skytentacles.o: $(UTILS_SRC)/yarandom.h
 skytentacles.o: $(HACK_SRC)/xlockmoreI.h
 skytentacles.o: $(HACK_SRC)/xlockmore.h
 skytentacles.o: $(srcdir)/xpm-ximage.h
+sonar-icmp.o: ../../config.h
+sonar-icmp.o: $(HACK_SRC)/fps.h
+sonar-icmp.o: $(HACK_SRC)/screenhackI.h
+sonar-icmp.o: $(srcdir)/sonar.h
+sonar-icmp.o: $(UTILS_SRC)/colors.h
+sonar-icmp.o: $(UTILS_SRC)/grabscreen.h
+sonar-icmp.o: $(UTILS_SRC)/hsv.h
+sonar-icmp.o: $(UTILS_SRC)/resources.h
+sonar-icmp.o: $(UTILS_SRC)/usleep.h
+sonar-icmp.o: $(UTILS_SRC)/version.h
+sonar-icmp.o: $(UTILS_SRC)/visual.h
+sonar-icmp.o: $(UTILS_SRC)/yarandom.h
+sonar.o: ../../config.h
+sonar.o: $(HACK_SRC)/fps.h
+sonar.o: $(srcdir)/gltrackball.h
+sonar.o: $(srcdir)/rotator.h
+sonar.o: $(HACK_SRC)/screenhackI.h
+sonar.o: $(srcdir)/sonar.h
+sonar.o: $(srcdir)/texfont.h
+sonar.o: $(UTILS_SRC)/colors.h
+sonar.o: $(UTILS_SRC)/grabscreen.h
+sonar.o: $(UTILS_SRC)/hsv.h
+sonar.o: $(UTILS_SRC)/resources.h
+sonar.o: $(UTILS_SRC)/usleep.h
+sonar.o: $(UTILS_SRC)/visual.h
+sonar.o: $(UTILS_SRC)/xshm.h
+sonar.o: $(UTILS_SRC)/yarandom.h
+sonar.o: $(HACK_SRC)/xlockmoreI.h
+sonar.o: $(HACK_SRC)/xlockmore.h
+sonar-sim.o: ../../config.h
+sonar-sim.o: $(HACK_SRC)/fps.h
+sonar-sim.o: $(HACK_SRC)/screenhackI.h
+sonar-sim.o: $(srcdir)/sonar.h
+sonar-sim.o: $(UTILS_SRC)/colors.h
+sonar-sim.o: $(UTILS_SRC)/grabscreen.h
+sonar-sim.o: $(UTILS_SRC)/hsv.h
+sonar-sim.o: $(UTILS_SRC)/resources.h
+sonar-sim.o: $(UTILS_SRC)/usleep.h
+sonar-sim.o: $(UTILS_SRC)/visual.h
+sonar-sim.o: $(UTILS_SRC)/yarandom.h
 spheremonics.o: ../../config.h
 spheremonics.o: $(HACK_SRC)/fps.h
 spheremonics.o: $(srcdir)/gltrackball.h

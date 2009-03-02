@@ -1912,6 +1912,12 @@ gui_auth_conv(int num_msg,
   const char *info_msg, *prompt;
   struct auth_response *responses;
 
+  if (si->unlock_state == ul_cancel ||
+      si->unlock_state == ul_time)
+    /* If we've already cancelled or timed out in this PAM conversation,
+       don't prompt again even if PAM asks us to! */
+    return -1;
+
   if (!(responses = calloc(num_msg, sizeof(struct auth_response))))
     goto fail;
 
@@ -2049,7 +2055,7 @@ auth_finished_cb (saver_info *si)
               event.xany.type == Expose)
             draw_passwd_window (si);
           else if (event.xany.type == ButtonPress || 
-                   event.xany.type == ButtonRelease)
+                   event.xany.type == KeyPress)
             break;
           XSync (si->dpy, False);
         }

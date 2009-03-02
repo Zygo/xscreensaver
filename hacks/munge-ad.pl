@@ -18,48 +18,87 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my $version = q{ $Revision: 1.3 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
 
 my $verbose = 0;
 
-# These are marked as disabled by default in the .ad file.
+# 1 means disabled: marked with "-" by default in the .ad file.
+# 2 means retired: not mentioned in .ad at all.
 #
 my %disable = ( 
-   'abstractile' => 1,
-   'antinspect' => 1,
-   'antmaze' => 1,
-   'ant' => 1,
-   'carousel' => 1,
-   'critical' => 1,
-   'demon' => 1,
-   'dnalogo' => 1,
-   'glblur' => 1,
-   'glforestfire' => 1,
-   'glslideshow' => 1,
-   'hyperball' => 1,
-   'juggle' => 1,
-   'laser' => 1,
-   'lcdscrub' => 1,
-   'lightning' => 1,
-   'lisa' => 1,
-   'lissie' => 1,
-   'lmorph' => 1,
-   'loop' => 1,
-   'rotor' => 1,
-   'sballs' => 1,
-   'sierpinski' => 1,
-   'sphere' => 1,
-   'spiral' => 1,
-   'thornbird' => 1,
-   'vidwhacker' => 1,
-   'vines' => 1,
-   'webcollage' => 1,
-   'worm' => 1,
+   'abstractile'	=> 1,
+   'ant'		=> 1,
+   'antinspect'		=> 1,
+   'antmaze'		=> 1,
+   'antspotlight'	=> 1,
+   'braid'		=> 1,
+   'critical'		=> 1,
+   'crystal'		=> 1,
+   'demon'		=> 1,
+   'dnalogo'		=> 1,
+   'fadeplot'		=> 1,
+   'glblur'		=> 1,
+   'glforestfire'	=> 1,
+   'glplanet'		=> 1,
+   'glslideshow'	=> 1,
+   'hyperball'		=> 1,
+   'hypercube'		=> 1,
+   'jigglypuff'		=> 1,
+   'juggle'		=> 1,
+   'kaleidescope'	=> 1,
+   'laser'		=> 1,
+   'lcdscrub'		=> 1,
+   'lightning'		=> 1,
+   'lisa'		=> 1,
+   'lissie'		=> 1,
+   'lmorph'		=> 1,
+   'loop'		=> 1,
+   'nerverot'		=> 1,
+   'noseguy'		=> 1,
+   'polyominoes'	=> 1,
+   'providence'		=> 1,
+   'pyro'		=> 1,
+   'rdbomb'		=> 2,  # alternate name
+   'rocks'		=> 1,
+   'rotor'		=> 1,
+   'sballs'		=> 1,
+   'sierpinski'		=> 1,
+   'sphere'		=> 1,
+   'spiral'		=> 1,
+   'thornbird'		=> 1,
+   'vidwhacker'		=> 1,
+   'vines'		=> 1,
+   'webcollage'		=> 1,
+   'worm'		=> 1,
+   'xsublim'		=> 2,
   );
+
+
+# Parse the RETIRED_EXES variable from the Makefiles to populate %disable.
+#
+sub parse_makefiles() {
+  foreach my $mf ( "Makefile.in", "glx/Makefile.in" ) {
+    my $body = '';
+    local *IN;
+    open (IN, "<$mf") || error ("$mf: $!");
+    while (<IN>) { $body .= $_; }
+    close IN;
+
+    $body =~ s/\\\n//gs;
+    my ($var) = ($body =~ m/^RETIRED_EXES\s*=\s*(.*)$/mi);
+    error ("no RETIRED_EXES in $mf") unless $var;
+    foreach my $hack (split (/\s+/, $var)) {
+      $disable{$hack} = 2;
+    }
+  }
+}
 
 
 sub munge_ad($) {
   my ($file) = @_;
+
+  parse_makefiles();
+
   my $body = '';
   local *IN;
   open (IN, "<$file") || error ("$file: $!");
@@ -78,7 +117,7 @@ sub munge_ad($) {
   #
   my $dir = $file;
   $dir =~ s@/[^/]*$@@s;
-  my @counts = (0,0,0,0,0,0);
+  my @counts = (0,0,0,0,0,0,0,0,0,0);
   foreach my $xml (sort (glob ("$dir/../hacks/config/*.xml"))) {
     my $b = '';
     open (IN, "<$xml") || error ("$xml: $!");
@@ -94,7 +133,7 @@ sub munge_ad($) {
     if ($name ne $name2) {
       my $s = sprintf("*hacks.%s.name:", $xml);
       $mid2 .= sprintf ("%-28s%s\n", $s, $name);
-      $counts[1]++;
+      $counts[9]++;
     }
 
     # Grab the year.
@@ -102,7 +141,6 @@ sub munge_ad($) {
       ($b =~ m/<_description>.*Written by.*?;\s+(19[6-9]\d|20\d\d)\b/si);
     error ("no year in $xml.xml") unless $year;
     $hacks{$xml} = $year;
-    $counts[0]++;
   }
 
   # Splice in new names.
@@ -122,15 +160,25 @@ sub munge_ad($) {
     my $cmd = "$hack -root";
     my $ts = (length($cmd) / 8) * 8;
     while ($ts < 40) { $cmd .= "\t"; $ts += 8; }
-    next if ($hack eq 'ant' || $hack eq 'rdbomb');
+
+    my $dis = $disable{$hack} || 0;
 
     my $glp;
     my $glep = ($hack eq 'extrusion');
     if (-f "$hack.c" || -f "$hack") { $glp = 0; }
     elsif (-f "glx/$hack.c") { $glp = 1; }
-    else { error ("is $hack X or GL?"); }
+    elsif ($dis != 2) { error ("is $hack X or GL?"); }
 
-    my $dis = ($disable{$hack} ? '-' : '');
+    $counts[($disable{$hack} || 0)]++;
+    if ($glp) {
+      $counts[6+($disable{$hack} || 0)]++;
+    } else {
+      $counts[3+($disable{$hack} || 0)]++;
+    }
+
+    next if ($dis == 2);
+
+    $dis = ($dis ? '-' : '');
     my $vis = ($glp
                ? (($dis ? '' : $glep ? '@GLE_KLUDGE@' : '@GL_KLUDGE@') .
                   ' GL: ')
@@ -139,10 +187,8 @@ sub munge_ad($) {
 
     if ($glp) {
       ($segregate_p ? $ghacks : $xhacks) .= $cmd;
-      $counts[4+defined($disable{$hack})]++;
     } else {
       $xhacks .= $cmd;
-      $counts[2+defined($disable{$hack})]++;
     }
   }
 
@@ -157,9 +203,11 @@ sub munge_ad($) {
   error ("unparsable") unless $mid;
   $body = $top . $mid2 . $bot;
 
-  print STDERR "$progname: Total: $counts[0]; " .
-    "X11: $counts[2]+$counts[3]; GL: $counts[4]+$counts[5]; " .
-      "Names: $counts[1]\n"
+  print STDERR "$progname: " .
+    "Total: $counts[0]+$counts[1]+$counts[2]; " .
+      "X11: $counts[3]+$counts[4]+$counts[5]; " .
+       "GL: $counts[6]+$counts[7]+$counts[8]; " .
+    "Names: $counts[9]\n"
         if ($verbose);
 
   # Write file if changed.

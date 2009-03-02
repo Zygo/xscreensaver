@@ -96,6 +96,10 @@
    can make use of this if it is available. */
 #undef HAVE_GDK_PIXBUF
 
+/* Define this if you have the gdk_pixbuf_apply_embedded_orientation function
+   (gdk-pixbuf 2.12). */
+#undef HAVE_GDK_PIXBUF_APPLY_EMBEDDED_ORIENTATION
+
 /* Define to 1 if you have the `getcwd' function. */
 #undef HAVE_GETCWD
 

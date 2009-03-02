@@ -23,35 +23,33 @@
           _label="Grid size" low="0" high="100" default="0"/>
 
   <select id="generator">
-    <option id="mrandom" _label="Random generator"/>
-    <option id="m0"      _label="Backtracking generator"
+    <option id="mrandom" _label="Random maze generator"/>
+    <option id="m0"      _label="Depth-first backtracking maze generator"
                          arg-set="-generator 0"/>
-    <option id="m1"      _label="Seeding generator"
+    <option id="m1"      _label="Wall-building maze generator (Prim)"
                          arg-set="-generator 1"/>
-    <option id="m2"      _label="Joining generator"
+    <option id="m2"      _label="Set-joining maze generator (Kruskal)"
                          arg-set="-generator 2"/>
   </select>
 
-  <select id="ignorance">
-    <option id="smart" _label="Head toward exit"/>
-    <option id="dumb"  _label="Ignorant of exit direction"
-            arg-set="-ignorant"/>
-  </select>
+  <hgroup>
+   <select id="ignorance">
+     <option id="smart" _label="Head toward exit"/>
+     <option id="dumb"  _label="Ignorant of exit direction"
+             arg-set="-ignorant"/>
+   </select>
 
-  <!-- #### -max-length [5] -->
-  <!-- #### -bridge -->
-  <!-- #### -live-color [green] -->
-  <!-- #### -dead-color [red] -->
-  <!-- #### -skip-color [orange] -->
-  <!-- #### -surround-color [slateblue] -->
-
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
 
   <_description>
-This generates random mazes (with various different algorithms), and
-then solves them.  Backtracking and look-ahead paths are displayed in
-different colors.
+This generates random mazes (with three different maze-generation
+algorithms), and then solves them.  Backtracking and look-ahead paths
+are displayed in different colors.
 
-Written by Jim Randell and many others; 1992.
+http://en.wikipedia.org/wiki/Maze_generation_algorithm
+
+Written by Martin Weiss, Dave Lemke, Jim Randell, Jamie Zawinski,
+Johannes Keukelaar, and Zack Weinberg; 1985.
   </_description>
 </screensaver>

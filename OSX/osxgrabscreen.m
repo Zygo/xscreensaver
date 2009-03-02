@@ -207,6 +207,33 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
 }
 
 
+/* Returns the EXIF rotation property of the image, if any.
+ */
+static int
+exif_rotation (const char *filename)
+{
+  /* This is a ridiculous amount of rigamarole to go through, but for some
+     reason the "Orientation" tag does not exist in the "NSImageEXIFData"
+     dictionary inside the NSBitmapImageRep of the NSImage.  Several other
+     EXIF tags are there (e.g., shutter speed) but not orientation.  WTF?
+   */
+  CFStringRef s = CFStringCreateWithCString (NULL, filename, 
+                                             kCFStringEncodingUTF8);
+  CFURLRef url = CFURLCreateWithFileSystemPath (NULL, s, 
+                                                kCFURLPOSIXPathStyle, 0);
+  CGImageSourceRef cgimg = CGImageSourceCreateWithURL (url, NULL);
+  if (! cgimg) return -1;
+
+  NSDictionary *props = (NSDictionary *)
+    CGImageSourceCopyPropertiesAtIndex (cgimg, 0, NULL);
+  int rot = [[props objectForKey:@"Orientation"] intValue];
+  CFRelease (cgimg);
+  CFRelease (url);
+  CFRelease (s);
+  return rot;
+}
+
+
 /* Loads an image file and splats it onto the drawable.
    The image is drawn as large as possible while preserving its aspect ratio.
    If geom_ret is provided, the actual rectangle the rendered image takes
@@ -222,7 +249,8 @@ osx_load_image_file (Screen *screen, Window xwindow, Drawable drawable,
   if (!img)
     return False;
 
-  jwxyz_draw_NSImage (DisplayOfScreen (screen), drawable, img, geom_ret);
+  jwxyz_draw_NSImage (DisplayOfScreen (screen), drawable, img, geom_ret,
+                      exif_rotation (filename));
   [img release];
   return True;
 }

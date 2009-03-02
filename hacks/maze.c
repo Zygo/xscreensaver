@@ -1,6 +1,12 @@
 /******************************************************************************
  * [ maze ] ...
  *
+ * modified:  [ 13-08-08 ] Jamie Zawinski <jwz@jwz.org>
+ *              Removed the bridge option: it didn't look good, and it made
+ *              the code a lot harder to understand.
+ *              Made the maze stay out of the area used for the -fps display.
+ *              Cleaned up and commented.
+ *
  * modified:  [ 1-04-00 ]  Johannes Keukelaar <johannes@nada.kth.se>
  *              Added -ignorant option (not the default) to remove knowlege
  *              of the direction in which the exit lies.
@@ -144,10 +150,12 @@ struct state {
 
   GC	gc, cgc, tgc, sgc, ugc, logo_gc, erase_gc;
   Pixmap logo_map;
-  int logo_width, logo_height; /* in pixels */
+
+  int logo_x, logo_y;		/* in grid cells (or -1) */
+  int logo_width, logo_height;	/* in pixels */
+  int fps_width, fps_height;	/* in pixels */
 
   int solve_delay, pre_solve_delay, post_solve_delay;
-  int logo_x, logo_y;
 
   unsigned short maze[MAX_MAZE_SIZE_X][MAX_MAZE_SIZE_Y];
 
@@ -163,7 +171,7 @@ struct state {
 
   int x, y, restart, stop, state, max_length;
   int sync_p, sync_tick;
-  int bridge_p, ignorant_p;
+  int ignorant_p;
 
   struct solve_state *solve_state;
 
@@ -180,6 +188,11 @@ struct state {
 };
 
 
+static void draw_wall (struct state *, int, int, int, GC);
+static void draw_solid_square (struct state *, int, int, int, GC);
+static void build_wall (struct state *, int, int, int);
+
+
 static void
 set_maze_sizes (struct state *st, int width, int height)
 {
@@ -191,13 +204,18 @@ set_maze_sizes (struct state *st, int width, int height)
 }
 
 
+/* Resets the maze grid, picks the starting and ending points,
+   and the position of the logo, if any.
+ */
 static void
-initialize_maze (struct state *st) /* draw the surrounding wall and start/end squares */
+initialize_maze (struct state *st)
 {
-  register int i, j, wall;
+  int i, j, wall;
   int logow = 1 + st->logo_width / st->grid_width;
   int logoh = 1 + st->logo_height / st->grid_height;
   
+ AGAIN:
+
   /* initialize all squares */
   for ( i=0; i<st->maze_size_x; i++) {
     for ( j=0; j<st->maze_size_y; j++) {
@@ -285,38 +303,65 @@ initialize_maze (struct state *st) /* draw the surrounding wall and start/end sq
   /* set logo */
   if ((st->maze_size_x-logow >= 6) && (st->maze_size_y-logoh >= 6))
     {
-      /* not closer than 3 grid units from a wall */
+      /* not closer than 3 grid units from a wall, to ensure that it
+         won't overlap the entrance or exit. */
       st->logo_x = get_random (st->maze_size_x - logow - 5) + 3;
       st->logo_y = get_random (st->maze_size_y - logoh - 5) + 3;
       for (i=0; i<logow; i++)
 	for (j=0; j<logoh; j++)
-	  st->maze[st->logo_x + i][st->logo_y + j] |= DOOR_IN_TOP;
+          /* mark as having doors to prevent these cells being used in maze. */
+	  st->maze[st->logo_x + i][st->logo_y + j] |= DOOR_IN_ANY;
     }
   else
     st->logo_y = st->logo_x = -1;
 
-  /* #### should mask out the cells covered by the FPS display if "doFPS"
-          is true.  But that's hard, because the "logo_x" crap that does
-          that trick for the logo is scattered all around the code... */
+  /* mask out the fps area */
+  if (st->fps_width > 0)
+    {
+      int fpsw = 1 + st->fps_width  / st->grid_width;
+      int fpsh = 1 + st->fps_height / st->grid_width;
+
+      /* if the chosen logo position overlapped the fps area, try again! */
+      if (st->logo_x < fpsw+3 && st->logo_y+logoh > st->maze_size_y-fpsh-4)
+        goto AGAIN;
+
+      /* if the start or end point is inside the fps area, try again! */
+      if ((st->start_x <= fpsw && st->start_y >= st->maze_size_y-fpsh-1) ||
+          (st->end_x   <= fpsw && st->end_y   >= st->maze_size_y-fpsh-1))
+        goto AGAIN;
+
+      for (i=0; i<fpsw; i++)
+	for (j=0; j<fpsh; j++) {
+          /* mark as having doors to prevent these cells being used in maze.
+             mark as visit to prevent it being colored "unreachable". */
+	  st->maze[i][st->maze_size_y - j - 1] |= DOOR_IN_ANY|SOLVER_VISIT;
+          /* take off left/bottom wall or the FPS text overlaps it */
+	  st->maze[i][st->maze_size_y - j - 1] &= ~(WALL_BOTTOM|WALL_LEFT);
+        }
+    }
 }
 
-static int choose_door (struct state *st);
-static int backup (struct state *st);
-static void draw_wall (struct state *, int, int, int, GC);
-static void draw_solid_square (struct state *, int, int, int, GC);
-/*static void enter_square (struct state *, int);*/
-static void build_wall (struct state *, int, int, int);
-/*static void break_wall (struct state *, int, int, int);*/
 
-static void join_sets(struct state *, int, int);
+/****************************************************************************
+ Generator 2: Set-based maze generator.
 
-#define DEBUG_SETS 0
+ Put each square in the maze in a separate set.  Also, make a list of all the
+ hedges.  Randomize that list.  Walk through the list. If, for a certain
+ hedge, the two squares on both sides of it are in different sets, union the
+ sets and remove the hedge.  Continue until all hedges have been processed or
+ only one set remains.
+
+ This is essentially the "Kruskal" algorithm.
+
+ ****************************************************************************/
+
+static void mask_out_set_rect(struct state *st, int x, int y, int w, int h);
 
 /* Initialise the sets. */
 static void 
 init_sets(struct state *st)
 {
-  int i, t, r, xx, yy;
+  int i, t, r;
 
   if(st->sets)
     free(st->sets);
@@ -346,86 +391,21 @@ init_sets(struct state *st)
     {
       st->hedges[2*((st->maze_size_y-1)*st->maze_size_x+i)] = -1;
     }
-  /* Mask out a possible logo. */
+
+  /* Mask out the logo area. */
   if(st->logo_x!=-1)
     {
-      int logow = 1 + st->logo_width / st->grid_width;
+      int logow = 1 + st->logo_width  / st->grid_width;
       int logoh = 1 + st->logo_height / st->grid_height;
-      int bridge_dir, bridge_c;
+      mask_out_set_rect(st, st->logo_x, st->logo_y, logow, logoh);
+    }
 
-      if(st->bridge_p && logoh>=3 && logow>=3)
-	{
-	  bridge_dir = 1+random()%2;
-	  if(bridge_dir==1)
-	    {
-	      bridge_c = st->logo_y+random()%(logoh-2)+1;
-	    }
-	  else
-	    {
-	      bridge_c = st->logo_x+random()%(logow-2)+1;
-	    }
-	}
-      else
-	{
-	  bridge_dir = 0;
-	  bridge_c = -1;
-	}
-
-      for(xx = st->logo_x; xx < st->logo_x+logow; xx++)
-	for(yy = st->logo_y; yy < st->logo_y+logoh; yy++)
-	  {
-	    /* I should check for the bridge here, except that I join the
-             * bridge together below.
-             */
-	    st->hedges[2*(xx+st->maze_size_x*yy)+1] = -1;
-	    st->hedges[2*(xx+st->maze_size_x*yy)] = -1;
-	  }
-      for(xx = st->logo_x; xx < st->logo_x+logow; xx++)
-	{
-	  if(!(bridge_dir==2 && xx==bridge_c))
-	    {
-	      build_wall(st, xx, st->logo_y, 0);
-	      build_wall(st, xx, st->logo_y+logoh, 0);
-	    }
-	  st->hedges[2*(xx+st->maze_size_x*(st->logo_y-1))] = -1;
-	  if(bridge_dir==1)
-	    {
-	      build_wall(st, xx, bridge_c, 0);
-	      build_wall(st, xx, bridge_c, 2);
-	    }
-	}
-      for(yy = st->logo_y; yy < st->logo_y+logoh; yy++)
-	{
-	  if(!(bridge_dir==1 && yy==bridge_c))
-	    {
-	      build_wall(st, st->logo_x, yy, 3);
-	      build_wall(st, st->logo_x+logow, yy, 3);
-	    }
-	  st->hedges[2*(st->logo_x-1+st->maze_size_x*yy)+1] = -1;
-	  if(bridge_dir==2)
-	    {
-	      build_wall(st, bridge_c, yy, 1);
-	      build_wall(st, bridge_c, yy, 3);
-	    }
-	}
-      /* Join the whole bridge together. */
-      if(st->bridge_p)
-	{
-	  if(bridge_dir==1)
-	    {
-	      xx = st->logo_x-1;
-	      yy = bridge_c;
-	      for(i = st->logo_x; i < st->logo_x+logow+1; i++)
-		join_sets(st, xx+yy*st->maze_size_x, i+yy*st->maze_size_x);
-	    }
-	  else
-	    {
-	      yy = st->logo_y-1;
-	      xx = bridge_c;
-	      for(i = st->logo_y; i < st->logo_y+logoh+1; i++)
-		join_sets(st, xx+yy*st->maze_size_x, xx+i*st->maze_size_x);
-	    }
-	}
+  /* Mask out the FPS area. */
+  if(st->fps_width > 0)
+    {
+      int fpsw = 1 + st->fps_width  / st->grid_width;
+      int fpsh = 1 + st->fps_height / st->grid_height;
+      mask_out_set_rect(st, 0, st->maze_size_y-fpsh, fpsw, fpsh);
     }
 
   for(i = 0; i < st->maze_size_x*st->maze_size_y*2; i++)
@@ -480,42 +460,11 @@ exit_sets(struct state *st)
   st->sets = 0;
 }
 
-#if DEBUG_SETS
-/* Temporary hack. */
-static void
-show_set(int num, GC gc)
-{
-  int st->x, st->y, set;
 
-  set = get_set(num);
-
-  for(st->x = 0; st->x < st->maze_size_x; st->x++)
-    for(st->y = 0; st->y < st->maze_size_y; st->y++)
-      {
-	if(get_set(st->x+st->y*st->maze_size_x)==set)
-	  {
-	    XFillRectangle(st->dpy, st->window, st->gc,  border_x + st->bw + st->grid_width * st->x, 
-			 border_y + st->bw + st->grid_height * st->y, 
-			 st->grid_width-2*st->bw , st->grid_height-2*st->bw);
-	  }
-      }
-}
-#endif
-
-/* Second alternative maze creator: Put each square in the maze in a 
- * separate set. Also, make a list of all the hedges. Randomize that list.
- * Walk through the list. If, for a certain hedge, the two squares on both
- * sides of it are in different sets, union the sets and remove the hedge.
- * Continue until all hedges have been processed or only one set remains.
- */
 static void
 set_create_maze(struct state *st)
 {
   int i, h, xx, yy, dir, v, w;
-#if DEBUG_SETS
-  int cont = 0;
-  char c;
-#endif
 
   /* Do almost all the setup. */
   init_sets(st);
@@ -545,48 +494,62 @@ set_create_maze(struct state *st)
 	  break;
 	}
 
-#if DEBUG_SETS
-      show_set(st, xx+yy*st->maze_size_x, st->logo_gc);
-      show_set(st, v+w*st->maze_size_x, st->tgc);
-#endif
       if(get_set(st, xx+yy*st->maze_size_x)!=get_set(st, v+w*st->maze_size_x))
 	{
-#if DEBUG_SETS
-	  printf("Join!");
-#endif
 	  join_sets(st, xx+yy*st->maze_size_x, v+w*st->maze_size_x);
 	  /* Don't draw the wall. */
 	}
       else
 	{
-#if DEBUG_SETS
-	  printf("Build.");
-#endif
 	  /* Don't join the sets. */
 	  build_wall(st, xx, yy, dir); 
 	}
-#if DEBUG_SETS
-      if(!cont)
-	{
-	  XSync(st->dpy, False);
-	  c = getchar();
-	  if(c=='c')
-	    cont = 1;
-	}
-      show_set(xx+yy*st->maze_size_x, st->erase_gc);
-      show_set(v+w*st->maze_size_x, st->erase_gc);
-#endif
     }
 
   /* Free some memory. */
   exit_sets(st);
 }
 
-/* First alternative maze creator: Pick a random, empty corner in the maze.
- * Pick a random direction. Draw a wall in that direction, from that corner
- * until we hit a wall. Option: Only draw the wall if it's going to be 
- * shorter than a certain length. Otherwise we get lots of long walls.
- */
+/* mark a rectangle as being unavailable for usage in the maze */
+static void
+mask_out_set_rect(struct state *st, int x, int y, int w, int h)
+{
+  int xx, yy;
+  for(xx = x; xx < x+w; xx++)
+    for(yy = y; yy < y+h; yy++)
+      {
+        st->hedges[2*(xx+st->maze_size_x*yy)+1] = -1;
+        st->hedges[2*(xx+st->maze_size_x*yy)] = -1;
+      }
+  for(xx = x; xx < x+w; xx++)
+    {
+      build_wall(st, xx, y, 0);
+      build_wall(st, xx, y+h, 0);
+      st->hedges[2*(xx+st->maze_size_x*(y-1))] = -1;
+    }
+  for(yy = y; yy < y+h; yy++)
+    {
+      build_wall(st, x, yy, 3);
+      build_wall(st, x+w, yy, 3);
+      st->hedges[2*(x-1+st->maze_size_x*yy)+1] = -1;
+    }
+}
+
+
+/****************************************************************************
+ Generator 1: Wall-building maze generator.
+
+ Pick a random, empty corner in the maze.  Pick a random direction. Draw a
+ wall in that direction, from that corner until we hit a wall.  Option: Only
+ draw the wall if it's going to be shorter than a certain length.  Otherwise
+ we get lots of long walls.
+
+ This is essentially the "Prim" algorithm.
+ ****************************************************************************/
+
+static void alt_mask_out_rect(struct state *st, char *corners, 
+                              int x, int y, int w, int h);
+
 static void
 alt_create_maze(struct state *st)
 {
@@ -631,159 +594,21 @@ alt_create_maze(struct state *st)
       corners[i*width] = 1;
       corners[i*width+width-1] = 1;
     }
-  /* Walls around logo. In fact, inside the logo, too. */
-  /* Also draw the walls. */
+
+  /* mask out the logo area */
   if(st->logo_x!=-1)
     {
       int logow = 1 + st->logo_width / st->grid_width;
       int logoh = 1 + st->logo_height / st->grid_height;
-      int bridge_dir, bridge_c;
+      alt_mask_out_rect (st, corners, st->logo_x, st->logo_y, logow, logoh);
+    }
 
-      if(st->bridge_p && logoh>=3 && logow>=3)
-	{
-	  bridge_dir = 1+random()%2;
-	  if(bridge_dir==1)
-	    {
-	      bridge_c = st->logo_y+random()%(logoh-2)+1;
-	    }
-	  else
-	    {
-	      bridge_c = st->logo_x+random()%(logow-2)+1;
-	    }
-	}
-      else
-	{
-	  bridge_dir = 0;
-	  bridge_c = -1;
-	}
-      for(i = st->logo_x; i <= st->logo_x + logow; i++)
-	{
-	  for(j = st->logo_y; j <= st->logo_y + logoh; j++)
-	    {
-	      corners[i+width*j] = 1;
-	    }
-	}
-      for(xx = st->logo_x; xx < st->logo_x+logow; xx++)
-	{
-	  if(!(bridge_dir==2 && xx==bridge_c))
-	    {
-	      build_wall(st, xx, st->logo_y, 0);
-	      build_wall(st, xx, st->logo_y+logoh, 0);
-	    }
-	  if(bridge_dir==1)
-	    {
-	      build_wall(st, xx, bridge_c, 0);
-	      build_wall(st, xx, bridge_c, 2);
-	    }
-	}
-      for(yy = st->logo_y; yy < st->logo_y+logoh; yy++)
-	{
-	  if(!(bridge_dir==1 && yy==bridge_c))
-	    {
-	      build_wall(st, st->logo_x, yy, 3);
-	      build_wall(st, st->logo_x+logow, yy, 3);
-	    }
-	  if(bridge_dir==2)
-	    {
-	      build_wall(st, bridge_c, yy, 1);
-	      build_wall(st, bridge_c, yy, 3);
-	    }
-	}
-      /* Connect one wall of the logo with an outside wall. */
-      if(st->bridge_p)
-	dir = (bridge_dir+1)%4;
-      else
-	dir = random()%4;
-      switch(dir)
-	{
-	case 0:
-	  xx = st->logo_x+(random()%(logow+1));
-	  yy = st->logo_y;
-	  break;
-	case 1:
-	  xx = st->logo_x+logow;
-	  yy = st->logo_y+(random()%(logoh+1));
-	  break;
-	case 2:
-	  xx = st->logo_x+(random()%(logow+1));
-	  yy = st->logo_y+logoh;
-	  break;
-	case 3:
-	  xx = st->logo_x;
-	  yy = st->logo_y+(random()%(logoh+1));
-	  break;
-	}
-      do
-	{
-	  corners[xx+width*yy] = 1;
-	  switch(dir)
-	    {
-	    case 0:
-	      build_wall(st, xx-1, yy-1, 1);
-	      yy--;
-	      break;
-	    case 1:
-	      build_wall(st, xx, yy, 0);
-	      xx++;
-	      break;
-	    case 2:
-	      build_wall(st, xx, yy, 3);
-	      yy++;
-	      break;
-	    case 3:
-	      build_wall(st, xx-1, yy-1, 2);
-	      xx--;
-	      break;	  
-	    }
-	}
-      while(!corners[xx+width*yy]);
-      if(st->bridge_p)
-	{
-	  dir = (dir+2)%4;
-	  switch(dir)
-	    {
-	    case 0:
-	      xx = st->logo_x+(random()%(logow+1));
-	      yy = st->logo_y;
-	      break;
-	    case 1:
-	      xx = st->logo_x+logow;
-	      yy = st->logo_y+(random()%(logoh+1));
-	      break;
-	    case 2:
-	      xx = st->logo_x+(random()%(logow+1));
-	      yy = st->logo_y+logoh;
-	      break;
-	    case 3:
-	      xx = st->logo_x;
-	      yy = st->logo_y+(random()%(logoh+1));
-	      break;
-	    }
-	  do
-	    {
-	      corners[xx+width*yy] = 1;
-	      switch(dir)
-		{
-		case 0:
-		  build_wall(st, xx-1, yy-1, 1);
-		  yy--;
-		  break;
-		case 1:
-		  build_wall(st, xx, yy, 0);
-		  xx++;
-		  break;
-		case 2:
-		  build_wall(st, xx, yy, 3);
-		  yy++;
-		  break;
-		case 3:
-		  build_wall(st, xx-1, yy-1, 2);
-		  xx--;
-		  break;	  
-		}
-	    }
-	  while(!corners[xx+width*yy]);
-	}
+  /* mask out the FPS area */
+  if(st->fps_width>0)
+    {
+      int fpsw = 1 + st->fps_width  / st->grid_width;
+      int fpsh = 1 + st->fps_height / st->grid_height;
+      alt_mask_out_rect (st, corners, 0, st->maze_size_y-fpsh, fpsw, fpsh);
     }
 
   /* Count open gridpoints. */
@@ -867,54 +692,51 @@ alt_create_maze(struct state *st)
   free(c_idx);
 }
 
-/* The original maze creator. Start somewhere. Take a step in a random 
- * direction. Keep doing this until we hit a wall. Then, backtrack until
- * we find a point where we can go in another direction.
- */
+
+/* mark a rectangle as being unavailable for usage in the maze */
+static void
+alt_mask_out_rect(struct state *st, char *corners, int x, int y, int w, int h)
+{
+  int i, j, xx, yy;
+  int mazew = st->maze_size_x+1;
+
+  for(i = x; i <= x+w; i++)
+    for(j = y; j <= y+h; j++)
+      corners[i+mazew*j] = 1;
+
+  for(xx = x; xx < x+w; xx++)
+    {
+      build_wall(st, xx, y, 0);
+      if (y+h < st->maze_size_y)
+        build_wall(st, xx, y+h, 0);
+    }
+  for(yy = y; yy < y+h; yy++)
+    {
+      if (x > 0)
+        build_wall(st, x, yy, 3);
+      build_wall(st, x+w, yy, 3);
+    }
+}
+
+
+/****************************************************************************
+ Generator 0: The original maze generator.
+
+ Start somewhere.  Take a step in a random direction.  Keep doing this until
+ we hit a wall.  Then, backtrack until we find a point where we can go in
+ another direction.
+
+ This is essentially the "depth-first recursive backtracker" algorithm.
+ ****************************************************************************/
+
+static int choose_door (struct state *st);
+static int backup (struct state *st);
+
 static void
 create_maze (struct state *st)    /* create a maze layout given the initialized maze */
 {
-  register int i, newdoor = 0;
-  int logow = 1 + st->logo_width / st->grid_width;
-  int logoh = 1 + st->logo_height / st->grid_height;
+  int i, newdoor = 0;
   
-  /* Maybe we should make a bridge? */
-  if(st->bridge_p && st->logo_x >= 0 && logow>=3 && logoh>=3)
-    {
-      int bridge_dir, bridge_c;
-
-      bridge_dir = 1+random()%2;
-      if(bridge_dir==1)
-	{
-	  if(logoh>=3)
-	    bridge_c = st->logo_y+random()%(logoh-2)+1;
-	  else
-	    bridge_c = st->logo_y+random()%logoh;
-	}
-      else
-	{
-	  if(logow>=3)
-	    bridge_c = st->logo_x+random()%(logow-2)+1;
-	  else
-	    bridge_c = st->logo_x+random()%logow;
-	}
-
-      if(bridge_dir==1)
-	{
-	  for(i = st->logo_x; i < st->logo_x+logow; i++)
-	    {
-	      st->maze[i][bridge_c] &= ~DOOR_IN_TOP;
-	    }
-	}
-      else
-	{
-	  for(i = st->logo_y; i < st->logo_y+logoh; i++)
-	    {
-	      st->maze[bridge_c][i] &= ~DOOR_IN_TOP;
-	    }
-	}
-    }
-
   do {
     st->move_list[st->sqnum].x = st->cur_sq_x;
     st->move_list[st->sqnum].y = st->cur_sq_y;
@@ -962,7 +784,7 @@ static int
 choose_door (struct state *st)                                   /* pick a new path */
 {
   int candidates[3];
-  register int num_candidates;
+  int num_candidates;
   
   num_candidates = 0;
   
@@ -1049,12 +871,16 @@ backup (struct state *st)                                          /* back up a 
 }
 
 
+/****************************************************************************
+ Drawing the maze
+ ****************************************************************************/
+
+/* draws the maze outline, and the logo */
 static void
-draw_maze_border (struct state *st)                         /* draw the maze outline */
+draw_maze_border (struct state *st)
 {
-  register int i, j;
-  
-  
+  int i, j;
+
   for ( i=0; i<st->maze_size_x; i++) {
     if ( st->maze[i][0] & WALL_TOP ) {
       XDrawLine(st->dpy, st->window, st->gc,
@@ -1130,6 +956,40 @@ draw_maze_border (struct state *st)                         /* draw the maze out
 }
 
 
+/* Mark the maze grid as having a wall at the given coordinate,
+   and draw that wall on the screen. */
+static void
+build_wall(struct state *st, int i, int j, int dir)
+{
+  /* Draw it on the screen. */
+  draw_wall(st, i, j, dir, st->gc);
+  /* Put it in the maze. */
+  switch(dir)
+    {
+    case 0:
+      st->maze[i][j] |= WALL_TOP;
+      if(j>0)
+	st->maze[i][j-1] |= WALL_BOTTOM;
+      break;
+    case 1:
+      st->maze[i][j] |= WALL_RIGHT;
+      if(i<st->maze_size_x-1)
+	st->maze[i+1][j] |= WALL_LEFT;
+      break;
+    case 2:
+      st->maze[i][j] |= WALL_BOTTOM;
+      if(j<st->maze_size_y-1)
+	st->maze[i][j+1] |= WALL_TOP;
+      break;
+    case 3:
+      st->maze[i][j] |= WALL_LEFT;
+      if(i>0)
+	st->maze[i-1][j] |= WALL_RIGHT;
+      break;
+    }
+}
+
+
 static void
 draw_wall(struct state *st, int i, int j, int dir, GC with_gc)                /* draw a single wall */
 {
@@ -1176,77 +1036,10 @@ draw_wall(struct state *st, int i, int j, int dir, GC with_gc)                /*
   }
 }
 
-/* Actually build a wall. */
-static void
-build_wall(struct state *st, int i, int j, int dir)
-{
-  /* Draw it on the screen. */
-  draw_wall(st, i, j, dir, st->gc);
-  /* Put it in the maze. */
-  switch(dir)
-    {
-    case 0:
-      st->maze[i][j] |= WALL_TOP;
-      if(j>0)
-	st->maze[i][j-1] |= WALL_BOTTOM;
-      break;
-    case 1:
-      st->maze[i][j] |= WALL_RIGHT;
-      if(i<st->maze_size_x-1)
-	st->maze[i+1][j] |= WALL_LEFT;
-      break;
-    case 2:
-      st->maze[i][j] |= WALL_BOTTOM;
-      if(j<st->maze_size_y-1)
-	st->maze[i][j+1] |= WALL_TOP;
-      break;
-    case 3:
-      st->maze[i][j] |= WALL_LEFT;
-      if(i>0)
-	st->maze[i-1][j] |= WALL_RIGHT;
-      break;
-    }
-}
-
-/* Break out a wall. */
-#if 0
-static void
-break_wall(i, j, dir)
-     int i, j, dir;
-{
-  /* Draw it on the screen. */
-  draw_wall(i, j, dir, st->erase_gc);
-  /* Put it in the maze. */
-  switch(dir)
-    {
-    case 0:
-      st->maze[i][j] &= ~WALL_TOP;
-      if(j>0)
-	maze[i][j-1] &= ~WALL_BOTTOM;
-      break;
-    case 1:
-      st->maze[i][j] &= ~WALL_RIGHT;
-      if(i<st->maze_size_x-1)
-	maze[i+1][j] &= ~WALL_LEFT;
-      break;
-    case 2:
-      st->maze[i][j] &= ~WALL_BOTTOM;
-      if(j<st->maze_size_y-1)
-	maze[i][j+1] &= ~WALL_BOTTOM;
-      break;
-    case 3:
-      st->maze[i][j] &= ~WALL_LEFT;
-      if(i>0)
-	maze[i-1][j] &= ~WALL_RIGHT;
-      break;
-    }
-}
-#endif /* 0 */
-
 
 static void
 draw_solid_square(struct state *st, 
-                  int i, int j,          /* draw a solid square in a square */
+                  int i, int j,
 		  int dir, GC with_gc)
 {
   switch (dir) {
@@ -1276,6 +1069,10 @@ draw_solid_square(struct state *st,
       break;
   }
 }
+
+/****************************************************************************
+ Solving the maze
+ ****************************************************************************/
 
 static int
 longdeadend_p(struct state *st, int x1, int y1, int x2, int y2, int endwall)
@@ -1380,8 +1177,9 @@ find_dead_regions(struct state *st)
       }
 }
 
+/* solve the maze by one more tick */
 static int
-solve_maze (struct state *st)                     /* solve it with graphical feedback */
+solve_maze (struct state *st)
 {
   struct solve_state *ss = st->solve_state;
   if (!ss)
@@ -1542,37 +1340,10 @@ solve_maze (struct state *st)                     /* solve it with graphical fee
     return 0;
 } 
 
-#if 0
-static void
-enter_square (int n)                      /* move into a neighboring square */
-{
-  draw_solid_square( (int)st->path[n].x, (int)st->path[n].y, 
-		    (int)st->path[n].dir, st->tgc);
-  
-  st->path[n+1].dir = -1;
-  switch (st->path[n].dir) {
-  case 0: st->path[n+1].x = st->path[n].x;
-    st->path[n+1].y = st->path[n].y - 1;
-    break;
-  case 1: st->path[n+1].x = st->path[n].x + 1;
-    st->path[n+1].y = st->path[n].y;
-    break;
-  case 2: st->path[n+1].x = st->path[n].x;
-    st->path[n+1].y = st->path[n].y + 1;
-    break;
-  case 3: st->path[n+1].x = st->path[n].x - 1;
-    st->path[n+1].y = st->path[n].y;
-    break;
-  }
-}
-#endif /* 0 */
 
-
-/*
- *  jmr additions for Jamie Zawinski's <jwz@jwz.org> screensaver stuff,
- *  note that the code above this has probably been hacked about in some
- *  arbitrary way.
- */
+/****************************************************************************
+ XScreenSaver boilerplate: resources, command line options, and main loop.
+ ****************************************************************************/
 
 static const char *maze_defaults[] = {
   ".background:	   black",
@@ -1581,7 +1352,6 @@ static const char *maze_defaults[] = {
   "*gridSize:	   0",
   "*generator:     -1",
   "*maxLength:     5",
-  "*bridge:        False",
   "*ignorant:      False",
 
   "*solveDelay:	   10000",
@@ -1611,8 +1381,6 @@ static XrmOptionDescRec maze_options[] = {
   { "-surround-color",	".surroundColor",XrmoptionSepArg, 0 },
   { "-generator",       ".generator",   XrmoptionSepArg, 0 },
   { "-max-length",      ".maxLength",   XrmoptionSepArg, 0 },
-  { "-bridge",          ".bridge",      XrmoptionNoArg, "True" },
-  { "-no-bridge",       ".bridge",      XrmoptionNoArg, "False" },
   { 0, 0, 0, 0 }
 };
 
@@ -1622,9 +1390,6 @@ static void *
 maze_init (Display *dpy_arg, Window window_arg)
 {
   struct state *st = (struct state *) calloc (1, sizeof(*st));
-# ifdef DO_STIPPLE
-  Pixmap gray;
-# endif
   int size;
   XWindowAttributes xgwa;
   unsigned long bg, fg, pfg, pbg, sfg, ufg;
@@ -1645,8 +1410,14 @@ maze_init (Display *dpy_arg, Window window_arg)
   st->post_solve_delay = get_integer_resource (st->dpy, "postDelay", "Integer");
   generator = get_integer_resource(st->dpy, "generator", "Integer");
   st->max_length = get_integer_resource(st->dpy, "maxLength", "Integer");
-  st->bridge_p = get_boolean_resource(st->dpy, "bridge", "Boolean");
   st->ignorant_p = get_boolean_resource(st->dpy, "ignorant", "Boolean");
+
+  if (get_boolean_resource (st->dpy, "doFPS", "DoFPS"))
+    {
+      /* Just guess, rather than loading and measuring the "fpsFont"... */
+      st->fps_width = 210;
+      st->fps_height = 62;
+    }
 
   if (!size) st->ifrandom = 1;
 
@@ -1669,10 +1440,6 @@ maze_init (Display *dpy_arg, Window window_arg)
   st->logo_gc = XCreateGC(st->dpy, st->window, 0, 0);
   st->erase_gc = XCreateGC(st->dpy, st->window, 0, 0);
   
-# ifdef DO_STIPPLE
-  gray = XCreateBitmapFromData (st->dpy,st->window,gray1_bits,gray1_width,gray1_height);
-# endif
-
   bg  = get_pixel_resource (st->dpy, xgwa.colormap, "background","Background");
   fg  = get_pixel_resource (st->dpy, xgwa.colormap, "foreground","Foreground");
   pfg = get_pixel_resource (st->dpy, xgwa.colormap, "liveColor", "Foreground");
@@ -1695,15 +1462,6 @@ maze_init (Display *dpy_arg, Window window_arg)
   XSetForeground (st->dpy, st->erase_gc, bg);
   XSetBackground (st->dpy, st->erase_gc, bg);
 
-# ifdef DO_STIPPLE
-  XSetStipple (st->dpy, st->cgc, gray);
-  XSetFillStyle (st->dpy, st->cgc, FillOpaqueStippled);
-  XSetStipple (st->dpy, st->sgc, gray);
-  XSetFillStyle (st->dpy, st->sgc, FillOpaqueStippled);
-  XSetStipple (st->dpy, st->ugc, gray);
-  XSetFillStyle (st->dpy, st->ugc, FillOpaqueStippled);
-# endif
-  
   {
     Window r;
     int x, y;

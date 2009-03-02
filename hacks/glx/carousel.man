@@ -94,6 +94,7 @@ stored in the RESOURCE_MANAGER property.
 .BR xscreensaver-getimage (1)
 .BR xscreensaver (1)
 .BR glslideshow (MANSUFFIX)
+.BR photopile (MANSUFFIX)
 .SH COPYRIGHT
 Copyright \(co 2005 by Jamie Zawinski.
 

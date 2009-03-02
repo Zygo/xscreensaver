@@ -574,6 +574,9 @@ lock_initialization (saver_info *si, int *argc, char **argv)
         }
     }
 
+  if (si->prefs.debug_p)    /* But allow locking anyway in debug mode. */
+    si->locking_disabled_p = False;
+
 #endif /* NO_LOCKING */
 }
 
@@ -2123,6 +2126,10 @@ analyze_display (saver_info *si)
         False, 0
 #     endif
    }, { "DRI",		                        "DRI",
+        True,  0
+   }, { "NV-CONTROL",                           "NVidia",
+        True,  0
+   }, { "NV-GLX",                               "NVidia GLX",
         True,  0
    }, { "Apple-DRI",                            "Apple-DRI (XDarwin)",
         True,  0

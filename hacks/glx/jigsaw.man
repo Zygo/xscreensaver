@@ -1,13 +1,18 @@
-.TH XScreenSaver 1 "25-Nov-97" "X Version 11"
+.TH XScreenSaver 1 "25-Aug-2008" "X Version 11"
 .SH NAME
-jigsaw - permute the screen image like a jigsaw puzzle
+jigsaw - permute an image like a jigsaw puzzle
 .SH SYNOPSIS
 .B jigsaw
-[\-display \fIhost:display.screen\fP] [\-background \fIcolor\fP]
-[\-delay \fIusecs\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP]
+[\-display \fIhost:display.screen\fP]
+[\-delay \fIusecs\fP]
+[\-speed \fIratio\fP]
+[\-complexity \fIratio\fP]
+[\-resolution \fIint\fP]
+[\-thickness \fIfloat\fP]
+[\-no\-wobble]
 [\-fps]
 .SH DESCRIPTION
-The \fIjigsaw\fP program takes an image, carves it up into
+The \fIjigsaw\fP program loads an image, carves it up into
 a jigsaw puzzle, shuffles it, and then solves it.
 
 The image that it manipulates will be grabbed from the portion of
@@ -22,6 +27,31 @@ for more details.
 .I jigsaw
 accepts the following options:
 .TP 8
+.B \-delay \fImicroseconds\fP
+How long to wait between animation frames; default 20000.
+.TP 8
+.B \-speed \fIratio\fP
+Less than 1 for slower, greater than 1 for faster.  Default 1.
+.TP 8
+.B \-complexity \fIratio\fP
+Less than 1 for simpler puzzles (fewer pieces), greater than 1 for
+more complex puzzles (more pieces).  Default 1.
+.TP 8
+.B \-resolution \fIratio\fP
+Smoothness of the edges of the pieces.  Less than 1 for rougher pieces
+(fewer polygons), greater than 1 for more smoother pieces (more polygons).
+Default 1.
+.TP 8
+.B \-thickness \fIfloat\fP
+Thickness of the puzzle pieces (relative to their width).
+Default 0.06.
+.TP 8
+.B \-no\-wobble
+Keep the display stationary instead of very slowly wobbling back and forth.
+.TP 8
+.B \-fps
+Display the current frame rate, polygon count, and CPU load.
+.TP 8
 .B \-window
 Draw on a newly-created window.  This is the default.
 .TP 8
@@ -34,12 +64,6 @@ Install a private colormap for the window.
 .B \-visual \fIvisual\fP
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
-.TP 8
-.B \-delay \fImicroseconds\fP
-How long to wait between shuffling pieces; default 70000, or 0.07 seconds.
-.TP 8
-.B \-fps
-Display the current frame rate and CPU load.
 .SH ENVIRONMENT
 .PP
 .TP 8

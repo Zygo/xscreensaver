@@ -45,8 +45,7 @@ struct state {
   int radius1, radius2;
   double divisor;
 
-  int new_layer;
-  int erasing;
+  enum curstate { NEW_LAYER, DRAW, ERASE1, ERASE2 } drawstate;
   eraser_state *eraser;
 };
 
@@ -193,7 +192,7 @@ xspirograph_init (Display *dpy, Window window)
 
   init_tsg (st);
   st->theta = 1;
-  st->new_layer = 1;
+  st->drawstate = NEW_LAYER;
 
   return st;
 }
@@ -223,62 +222,66 @@ xspirograph_draw (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   Bool free_color = False;
-  Bool flip_p;
+  Bool flip_p = (st->counter & 1);
+  int i;
 
-  /* 5 sec delay before starting the erase */
-  if (st->erasing == 2) {
-    st->erasing--;
-    return (st->long_delay == 0 ? 0 : 5000000);
-  }
+  switch (st->drawstate) {
+    case ERASE1:
+      /* 5 sec delay before starting the erase */
+      st->drawstate = ERASE2;
+      /* shouldn't this use the configured long_delay value??? */
+      return (st->long_delay == 0 ? 0 : 5000000);
 
-  /* erase, delaying 1/50th sec between frames */
-  if (st->erasing || st->eraser) {
-    st->erasing = 0;
-    st->eraser = erase_window (st->dpy, st->window, st->eraser);
-    if (st->eraser)
-      return 20000;
-    else
+    case ERASE2:
+      /* erase, delaying 1/50th sec between frames */
+      st->eraser = erase_window(st->dpy, st->window, st->eraser);
+      if (st->eraser)
+	/* shouldn't this be a configured pause??? */
+	return 20000;
+      st->drawstate = NEW_LAYER;
       /* just finished erasing -- leave screen black for 1 sec */
       return (st->long_delay == 0 ? 0 : 1000000);
-  }
 
-  flip_p = (st->counter & 1);
-
-  if (st->new_layer) {
-
-    st->new_layer = 0;
-    st->counter++;
-
-    if (st->counter > (2 * st->num_layers))
-      {
-        st->counter = 0;
-
-        if (free_color)
-          XFreeColors (st->dpy, st->xgwa.colormap, &st->color.pixel, 1, 0);
-
-        st->erasing = 2;
+    case DRAW:
+      /* most common case put in front */
+      for (i = 0; i < 1000; i++) {
+        if (go(st, st->radius1, (flip_p ? st->radius2 : -st->radius2),
+	       st->distance)) {
+	  st->drawstate = NEW_LAYER;
+	  break;
+	}
       }
+      /* Next draw is delayed sleep_time (initialized value)*/
+      return st->sub_sleep_time;
 
-    if (! flip_p)
-      pick_new (st);
+    case NEW_LAYER:
+      /* Increment counter */
+      st->counter++;
+      if (st->counter > (2 * st->num_layers)) {
+	/* reset to zero, free, and erase next time through */
+	st->counter = 0;
+	if (free_color)
+	  XFreeColors (st->dpy, st->xgwa.colormap, &st->color.pixel, 1, 0);
+	st->drawstate = ERASE1;
+      } else {
+	/* first, third, fifth, ... time through */
+	if (!flip_p)
+	  pick_new (st);
 
-    new_colors (st);
-    st->new_layer = 0;
-  }
-
-  {
-    int i;
-    for (i = 0; i < 1000; i++) {
-      if (go (st, st->radius1, 
-              (flip_p ? st->radius2 : -st->radius2),
-              st->distance)) {
-        st->new_layer = 1;
-        break;
+	new_colors (st);
+	st->drawstate = DRAW;
       }
-    }
+      /* No delay to the next draw */
+      return 0;
+
+    default:
+      /* OOPS!! */
+      fprintf(stderr, "%s: invalid state\n", progname);
+      exit(1);
   }
 
   return st->sub_sleep_time;
+  /* notreached */
 }
 
 

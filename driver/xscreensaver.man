@@ -237,15 +237,15 @@ called \fIxscreensaver.desktop\fP that contains the following five lines:
 .EX
 [Desktop Entry]
 Exec=xscreensaver
-Name=XScreensaver
+Name=XScreenSaver
 Type=Application
 X-KDE-StartupNotify=false
 .EE
 .TP 3
 \fB4: Make the various "lock session" buttons call xscreensaver.\fP
-Replace the file \fI/usr/bin/kdesktop_lock\fP (or 
-possibly \fI/usr/kde/3.5/bin/kdesktop_lock\fP)
-with these two lines:
+Replace the file \fIkdesktop_lock\fP or \fIkrunner_lock\fP
+in \fI/usr/bin/\fP (or possibly \fI/usr/kde/3.5/bin/\fP
+or \fI/usr/lib/kde4/libexec/\fP) with these two lines:
 .EX
 #!/bin/sh
 xscreensaver-command -lock

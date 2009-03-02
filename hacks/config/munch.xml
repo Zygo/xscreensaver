@@ -4,25 +4,36 @@
 
   <command arg="-root"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Frame rate" _low-label="Low" _high-label="High"
-          low="0" high="100000" default="10000"
-          convert="invert"/>
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
 
-  <number id="duration" type="slider" arg="-clear %"
-          _label="Duration" _low-label="Short" _high-label="Long"
-          low="1" high="200" default="50"/>
+    <number id="duration" type="slider" arg="-clear %"
+            _label="Duration" _low-label="Short" _high-label="Long"
+            low="1" high="200" default="65"/>
 
-  <select id="mode">
-    <option id="xor"   _label="XOR"/>
-    <option id="solid" _label="Solid" arg-set="-no-xor"/>
-  </select>
+    <number id="simultaneous" type="slider" arg="-simul %"
+            _label="Simultaneous squares" _low-label="One" _high-label="Many"
+            low="1" high="20" default="5"/>
+   </vgroup>
+   <vgroup>
+    <select id="mismunch">
+      <option id="random"   _label="Munch or mismunch"/>
+      <option id="munch"    _label="Munch only"    arg-set="-classic"/>
+      <option id="mismunch" _label="Mismunch only" arg-set="-mismunch"/>
+    </select>
 
-  <!-- #### -no-shift -->
-  <!-- #### -hold [100000] -->
-  <!-- #### -logminwidth [7] -->
+    <select id="mode">
+      <option id="xor"   _label="XOR"/>
+      <option id="solid" _label="Solid" arg-set="-no-xor"/>
+    </select>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+  </hgroup>
 
   <_description>
         DATAI 2
@@ -31,13 +42,17 @@
         XOR 1,2
         JRST .-4
 
-As reported by HAKMEM, in 1962, Jackson Wright wrote the above PDP-1
-code. That code still lives on here, some 46 years later.  The number
-of lines of enclosing code has increased substantially, however.
+As reported by HAKMEM (MIT AI Memo 239, 1972), Jackson Wright wrote
+the above PDP-1 code in 1962. That code still lives on here, some 46
+years later.
+
+In "mismunch" mode, it displays a creatively broken misimplementation
+of the classic munching squares algorithm instead.
 
 http://en.wikipedia.org/wiki/HAKMEM
 http://en.wikipedia.org/wiki/Munching_square
 
-Written by Jackson Wright and Tim Showalter; 1997.
+Written by Jackson Wright, Tim Showalter, Jamie Zawinski and
+Steven Hazel; 1997.
   </_description>
 </screensaver>

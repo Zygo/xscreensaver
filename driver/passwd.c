@@ -249,6 +249,8 @@ xss_authenticate(saver_info *si, Bool verbose_p)
 {
   int i, j;
 
+  si->unlock_state = ul_read;
+
   for (i = 0; i < countof(methods); i++)
     {
       if (!methods[i].initted_p)
@@ -266,6 +268,20 @@ xss_authenticate(saver_info *si, Bool verbose_p)
                 blurb(), methods[i].name);
 
       check_for_leaks (methods[i].name);
+
+      /* If password authentication failed, but the password was NULL
+         (meaning the user just hit RET) then treat that as "cancel".
+         This means that if the password is literally NULL, it will
+         work; but if not, then NULL passwords are treated as cancel.
+       */
+      if (si->unlock_state == ul_fail &&
+          si->cached_passwd &&
+          !*si->cached_passwd)
+        {
+          fprintf (stderr, "%s: assuming null password means cancel.\n",
+                   blurb());
+          si->unlock_state = ul_cancel;
+        }
 
       if (si->unlock_state == ul_success)
         {
@@ -286,6 +302,18 @@ xss_authenticate(saver_info *si, Bool verbose_p)
                        blurb(), methods[i].name);
             }
           goto DONE;		/* Successfully authenticated! */
+        }
+      else if (si->unlock_state == ul_cancel ||
+               si->unlock_state == ul_time)
+        {
+          /* If any auth method gets a cancel or timeout, don't try the
+             next auth method!  We're done! */
+          fprintf (stderr,
+                   "%s: authentication via %s %s.\n",
+                       blurb(), methods[i].name,
+                   (si->unlock_state == ul_cancel
+                    ? "cancelled" : "timed out"));
+          goto DONE;
         }
     }
 
