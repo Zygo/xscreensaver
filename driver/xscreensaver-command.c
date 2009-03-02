@@ -48,6 +48,11 @@ static Atom XA_ACTIVATE, XA_DEACTIVATE, XA_CYCLE, XA_NEXT, XA_PREV;
 static Atom XA_RESTART, XA_PREFS, XA_THROTTLE, XA_UNTHROTTLE;
 
 static char *screensaver_version;
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support" in the
+                     usage string... */
+# endif
 static char *usage = "\n\
 usage: %s -<option>\n\
 \n\

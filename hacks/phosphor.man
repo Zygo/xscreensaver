@@ -21,7 +21,7 @@ phosphor - simulates an old terminal with long-sustain phosphor
 [\-ticks \fIint\fP] [\-delay \fIusecs\fP] [\-program \fIcommand\fP]
 .SH DESCRIPTION
 The \fIphosphor\fP program draws text on the screen in a very large 
-pixellated font that looks like an old low resolution dumb tty.  The
+pixelated font that looks like an old low resolution dumb tty.  The
 pixels flare and fade out as if the phosphor was very long-sustain.
 .SH OPTIONS
 .I phosphor
@@ -41,7 +41,7 @@ Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-font \fIfont-name\fP
-The X font to use.  Phosphor can take any font and scale it up to pixellate
+The X font to use.  Phosphor can take any font and scale it up to pixelate
 it.  The default is \fIfixed\fP.
 .TP 8
 .B \-scale \fIint\fP

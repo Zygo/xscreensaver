@@ -11,6 +11,11 @@ static unsigned int height = 256;
   pixel[2] = ((((data[2] - 33) & 0x3) << 6) | ((data[3] - 33))); \
   data += 4;
 
+# ifdef __GNUC__
+  __extension__  /* don't warn about "string length is greater than the length
+                    ISO C89 compilers are required to support" when including
+                    the following constant data... */
+# endif
 static char *header_data =
 	"!FY'\"&Q#!&M!!VM-!6Y(!&M##6Q&\"69%\"FU'!FE!!VM$!VI$!&M!!FM#!VU&!'!!"
 	"\"&M%#&M!\"6Q$\"')#!FY#\"FY%\"6Y\"\"&Y#\"6]$\"&U!\"G%!\"7%&!G)!!'-!!')!\"'=!"

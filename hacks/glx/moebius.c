@@ -608,7 +608,7 @@ pinit(void)
                                GL_RGB, GL_UNSIGNED_BYTE, WoodTextureData);
     if (status)
       {
-        const char *s = gluErrorString (status);
+        const char *s = (char *) gluErrorString (status);
         fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
                  progname, WoodTextureWidth, WoodTextureHeight,
                  (s ? s : "(unknown)"));

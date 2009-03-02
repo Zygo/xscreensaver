@@ -142,7 +142,13 @@ ModStruct   planet_description =
  "Animates texture mapped sphere (planet)", 0, NULL};
 #endif
 
+# ifdef __GNUC__
+  __extension__  /* don't warn about "string length is greater than the length
+                    ISO C89 compilers are required to support" when including
+                    the following XPM file... */
+# endif
 #include "../images/earth.xpm"
+
 #include "xpm-ximage.h"
 #include "rotator.h"
 #include "gltrackball.h"

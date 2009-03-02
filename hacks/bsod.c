@@ -17,6 +17,7 @@
 #include "screenhack.h"
 #include "xpm-pixmap.h"
 #include <stdio.h>
+#include <ctype.h>
 #include <time.h>
 #include <sys/time.h>
 #include <X11/Xutil.h>
@@ -224,6 +225,12 @@ windows (Display *dpy, Window window, int delay, int which)
      "\n"
      "_Press any key to continue");
 
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
+
   const char *wnt = /* from Jim Niemira <urmane@urmane.org> */
     ("*** STOP: 0x0000001E (0x80000003,0x80106fc0,0x8025ea21,0xfd6829e8)\n"
    "Unhandled Kernel exception c0000047 from fa8418b4 (8025ea21,fd6829e8)\n"
@@ -412,6 +419,12 @@ sco (Display *dpy, Window window, int delay)
   int lines_1 = 0, lines_2 = 0, lines_3 = 0, lines_4 = 0;
   const char *s;
 
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
+
   const char *sco_panic_1 =
     ("Unexpected trap in kernel mode:\n"
      "\n"
@@ -527,6 +540,12 @@ sparc_linux (Display *dpy, Window window, int delay)
   GC gc;
   int lines = 1;
   const char *s;
+
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
 
   const char *linux_panic =
     ("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
@@ -1002,6 +1021,12 @@ macsbug (Display *dpy, Window window, int delay)
   int col_right, row_top, row_bottom, page_right, page_bottom, body_top;
   int xoff, yoff;
 
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
+
   const char *left = ("    SP     \n"
 		      " 04EB0A58  \n"
 		      "58 00010000\n"
@@ -1064,6 +1089,13 @@ macsbug (Display *dpy, Window window, int delay)
 		      "  PC: 2A0DE3E6\n"
 		      "  Frame Type: B008");
 #else
+
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
+
   const char * body = ("PowerPC unmapped memory exception at 003AFDAC "
 						"BowelsOfTheMemoryMgr+04F9C\n"
 		      " Calling chain using A6/R1 links\n"
@@ -1258,6 +1290,12 @@ macx (Display *dpy, Window window, int delay)
   const char *def_font = "fixed";
   XFontStruct *font;
   GC gc;
+
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
 
   const char *macx_panic =
    ("panic(cpu 0): Unable to find driver for this platform: "
@@ -1636,6 +1674,12 @@ scrolling_puts (scrolling_window *ts, const char* aString, int delay)
 static void
 sparc_solaris (Display* dpy, Window window, int delay)
 {
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
+
   const char *msg1 =
     "BAD TRAP: cpu=0 type=0x31 rp=0x2a10043b5e0 addr=0xf3880 mmu_fsr=0x0\n"
     "BAD TRAP occured in module \"unix\" due to an illegal access to a"
@@ -2065,7 +2109,7 @@ linux_fsck (Display *dpy, Window window, int delay)
 
       if (*linux_panic[i])
         {
-          strftime (prefix, sizeof(prefix)-1, "%b %d %k:%M:%S ", tm);
+          strftime (prefix, sizeof(prefix)-1, "%b %d %H:%M:%S ", tm);
           scrolling_puts (ts, prefix, 0);
           scrolling_puts (ts, sysname, 0);
           scrolling_puts (ts, linux_panic[i], 0);
@@ -2092,6 +2136,183 @@ linux_fsck (Display *dpy, Window window, int delay)
   XClearWindow(dpy, window);
 }
 
+/* VMS by jwz (text sent by Roland Barmettler <roli@barmettler.net>)
+ */
+static void
+vms (Display *dpy, Window window, int delay)
+{
+  XWindowAttributes xgwa;
+  scrolling_window *ts;
+  const char *sysname;
+  int char_delay = 0;
+  int dot_delay = 40000;
+  int chunk_delay = 500000;
+  char *s, *s1;
+  int i;
+  int arg_count;
+
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
+
+  const char *lines[] = {
+    "%CNXMAN,  Lost connection to system #\n"
+    "%SHADOW-I-VOLPROC, DSA0: shadow master has changed.  "
+    "Dump file WILL be written if system crashes.\n"
+    "\n",
+    "",
+
+    "%CNXMAN,  Quorum lost, blocking activity\n"
+    "%CNXMAN,  Timed-out lost connection to system #\n"
+    "%CNXMAN,  Timed-out lost connection to system #\n"
+    "%CNXMAN,  Timed-out lost connection to system #\n"
+    "%CNXMAN,  Proposing reconfiguration of the VMScluster\n",
+    "",
+
+    "%CNXMAN,  Removed from VMScluster system #\n"
+    "%CNXMAN,  Removed from VMScluster system #\n"
+    "%CNXMAN,  Removed from VMScluster system #\n"
+    "%CNXMAN,  Completing VMScluster state transition\n",
+
+    "\n"
+    "**** OpenVMS (TM) Alpha Operating system V7.3-1   - BUGCHECK ****\n"
+    "\n"
+    "** Bugcheck code = 000005DC: CLUEXIT, Node voluntarily exiting "
+    "VMScluster\n"
+    "** Crash CPU: 00    Primary CPU: 00    Active CPUs: 00000001\n"
+    "** Current Process = NULL\n"
+    "** Current PSB ID = 00000001\n"
+    "** Image Name =\n"
+    "\n"
+    "** Dumping error log buffers to HBVS unit 0\n"
+    "**** Unable to dump error log buffers to remaining shadow set members\n"
+    "** Error log buffers not dumped to HBVS unit 200\n"
+    "\n"
+    "** Dumping memory to HBVS unit 0\n"
+    "**** Starting compressed selective memory dump at #...\n",
+
+    "...",
+
+    "\n"
+    "**** Memory dump complete - not all processes or global pages saved\n",
+
+    "\n"
+    "halted CPU 0\n",
+    "",
+
+    "\n"
+    "halt code = 5\n"
+    "HALT instruction executed\n"
+    "PC = ffffffff800c3884\n",
+
+    "\n"
+    "CPU 0 booting\n",
+
+    "\n"
+    "resetting all I/O buses\n"
+    "\n"
+    "\n"
+    };
+  char *args[8];
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  ts = make_scrolling_window (dpy, window, "VMS", False);
+  XClearWindow(dpy,window);
+  ts->sub_x = 0;
+  ts->sub_y = 0;
+  ts->sub_width = xgwa.width;
+  ts->sub_height = xgwa.height;
+
+  sysname = "VMS001";
+# ifdef HAVE_UNAME
+  {
+    struct utsname uts;
+    if (uname (&uts) >= 0)
+      sysname = uts.nodename;
+    s = strchr (sysname, '.');
+    if (s) *s = 0;
+  }
+# endif	/* !HAVE_UNAME */
+
+  args[0] = malloc (strlen(sysname) + 7);
+  strcpy (args[0], sysname);
+  args[0][5] = 0;
+
+  i = strlen(args[0])-1;
+  if (i < 6) i++;
+  args[0][i] = '1' + (random() % 9);
+  args[0][i+1] = 0;
+
+  for (s = args[0]; *s; s++)
+    if (isalpha(*s)) *s = toupper (*s);
+
+  args[1] = strdup (args[0]);
+  args[2] = strdup (args[0]); args[2][i] = '1' + (random() % 9);
+  args[3] = strdup (args[0]); args[3][i] = '1' + (random() % 9);
+
+  args[4] = strdup (args[1]);
+  args[5] = strdup (args[2]);
+  args[6] = strdup (args[3]);
+
+  {
+    time_t t = time ((time_t *) 0);
+    struct tm *tm = localtime (&t);
+    args[7] = malloc (30);
+    strftime (args[7], 29, "%d-%b-%Y %H:%M", tm);
+    for (s = args[7]; *s; s++)
+      if (isalpha(*s)) *s = toupper (*s);
+  }
+
+  arg_count = 0;
+  for (i = 0; i < countof(lines); i++)
+    {
+      const char *fmt = lines[i];
+      if (! strcmp (fmt, "..."))
+        {
+          int steps = 180 + (random() % 60);
+          while (--steps >= 0)
+            {
+              scrolling_puts (ts, ".", 0);
+              XSync (dpy, False);
+              usleep (dot_delay);
+              if (bsod_sleep (dpy, 0))
+                goto DONE;
+            }
+        }
+      else
+        {
+          char *fmt2 = malloc (strlen (fmt) * 2 + 1);
+          for (s = (char *) fmt, s1 = fmt2; *s; s++)
+            {
+              if (*s == '#')
+                {
+                  strcpy (s1, args[arg_count++]);
+                  s1 += strlen(s1);
+                }
+              else
+                *s1++ = *s;
+            }
+          *s1 = 0;
+          scrolling_puts (ts, fmt2, char_delay);
+          free (fmt2);
+          usleep (chunk_delay);
+          if (bsod_sleep (dpy, 0))
+            goto DONE;
+        }
+    }
+
+  XSync(dpy, False);
+  bsod_sleep(dpy, delay);
+
+ DONE:
+  free_scrolling_window (ts);
+  for (i = 0; i < countof (args); i++)
+    free (args[i]);
+}
+
+
 
 
 /* HPUX panic, by Tobias Klausmann <klausman@schwarzvogel.de>
@@ -2104,6 +2325,12 @@ hpux (Display* dpy, Window window, int delay)
   scrolling_window *ts;
   const char *sysname;
   char buf[2048];
+
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
 
   const char *msg1 =
    "Console Login:\n"
@@ -2447,7 +2674,7 @@ struct apple2_state {
 enum {
   A2_SP_ROWMASK=1023,
   A2_SP_PUT=1024,
-  A2_SP_COPY=2048,
+  A2_SP_COPY=2048
 };
 
 static void
@@ -2752,7 +2979,7 @@ ntsc_to_yiq(struct ntsc_dec *it)
 enum {
   A2_CMAP_HISTBITS=5,
   A2_CMAP_LEVELS=2,
-  A2_CMAP_OFFSETS=4,
+  A2_CMAP_OFFSETS=4
 };
 
 #define A2_CMAP_INDEX(COLORMODE, LEVEL, HIST, OFFSET) \
@@ -3850,6 +4077,7 @@ char *defaults [] = {
   "*doHPUX:                True",
   "*doApple2:              True",
   "*doOS390:               True",
+  "*doVMS:		   True",
 
   ".Windows.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".Windows.font2:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
@@ -3929,6 +4157,11 @@ char *defaults [] = {
   "*apple2TVContrast:      90",
   "*apple2SimulateUser:    True",
 
+  ".VMS.font:		   9x15bold",
+  ".VMS.font2:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".VMS.foreground:	   White",
+  ".VMS.background:	   Black",
+
 #ifdef HAVE_XSHM_EXTENSION
   "*useSHM:                True",
 #endif
@@ -3974,6 +4207,8 @@ XrmOptionDescRec options [] = {
   { "-no-hpux",		".doHPUX",		XrmoptionNoArg,  "False" },
   { "-os390",		".doOS390",		XrmoptionNoArg,  "True"  },
   { "-no-os390",	".doOS390",		XrmoptionNoArg,  "False" },
+  { "-vms",		".doVMS",		XrmoptionNoArg,  "True"  },
+  { "-no-vms",		".doVMS",		XrmoptionNoArg,  "False" },
   { 0, 0, 0, 0 }
 };
 
@@ -4000,6 +4235,7 @@ static struct {
   { "HPUX",		hpux },
   { "OS390",		os390 },
   { "Apple2",		apple2 },
+  { "VMS",		vms },
 };
 
 

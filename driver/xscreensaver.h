@@ -20,6 +20,10 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifdef HAVE_SIGACTION
+# include <signal.h>    /* for sigset_t */
+#endif
+
 #include "prefs.h"
 
 extern char *progname;

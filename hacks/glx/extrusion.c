@@ -273,7 +273,7 @@ void Create_Texture(ModeInfo *mi, const char *filename)
     {
       XImage *ximage = xpm_file_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
                                            MI_COLORMAP (mi), filename);
-      image  = ximage->data;
+      image  = (GLubyte *) ximage->data;
       width  = ximage->width;
       height = ximage->height;
       format = GL_RGBA;
@@ -308,7 +308,7 @@ void Create_Texture(ModeInfo *mi, const char *filename)
                                  GL_UNSIGNED_BYTE, image);
       if (status)
         {
-          const char *s = gluErrorString (status);
+          const char *s = (char *) gluErrorString (status);
           fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
                    progname, width, height,
                    (s ? s : "(unknown)"));

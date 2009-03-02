@@ -19,6 +19,7 @@
      <boolean id="macx"       _label="MacOS X"      arg-unset="-no-macx"/>
      <boolean id="blitdamage" _label="NCD X Terminal" arg-unset="-no-blitdamage"/>
      <boolean id="os390"      _label="OS/390"       arg-unset="-no-os390"/>
+     <boolean id="vms"        _label="VMS"          arg-unset="-no-vms"/>
    </vgroup>
    <vgroup>
      <boolean id="bsd"        _label="BSD"          arg-set="-bsd"/>

@@ -90,6 +90,11 @@ static int scale_down;
 #define TUBE_FACES_2     3
 
 
+# ifdef __GNUC__
+  __extension__  /* don't warn about "string length is greater than the length
+                    ISO C89 compilers are required to support" when includng
+                    the following data file... */
+# endif
 const char * const builtin_pdb_data[] = {
 # include "molecules.h"
 };

@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-shadebobs - oscilating vapor trails.
+shadebobs - oscillating vapor trails.
 .SH SYNOPSIS
 .B shadebobs
 [\-display \fIhost:display.screen\fP]
@@ -12,7 +12,7 @@ shadebobs - oscilating vapor trails.
 [\-delay \fInumber\fP]
 [\-cycles \fInumber\fP]
 .SH DESCRIPTION
-This draws smoothly-shaded oscilating oval patterns, that look something
+This draws smoothly-shaded oscillating oval patterns, that look something
 like vapor trails or neon tubes.
 .SH OPTIONS
 .TP 8

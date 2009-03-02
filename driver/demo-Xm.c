@@ -467,6 +467,11 @@ await_xscreensaver (Widget widget)
               "\n");
 
       if (root_p)
+# ifdef __GNUC__
+        __extension__     /* don't warn about "string length is greater than
+                             the length ISO C89 compilers are required to
+                             support" in the following expression... */
+# endif
         strcat (buf,
             "You are running as root.  This usually means that xscreensaver\n"
             "was unable to contact your X server because access control is\n"
@@ -599,7 +604,7 @@ apply_changes_and_save (Widget widget)
   else if (!strcasecmp (visual, "greyscale"))          visual = "GrayScale";
   else if (!strcasecmp (visual, "pseudocolor"))        visual = "PseudoColor";
   else if (!strcasecmp (visual, "directcolor"))        visual = "DirectColor";
-  else if (1 == sscanf (visual, " %ld %c", &id, &c))   ;
+  else if (1 == sscanf (visual, " %lu %c", &id, &c))   ;
   else if (1 == sscanf (visual, " 0x%lx %c", &id, &c)) ;
   else
     {
@@ -1676,6 +1681,12 @@ demo_ehandler (Display *dpy, XErrorEvent *error)
 }
 
 
+
+#ifdef __GNUC__
+ __extension__     /* shut up about "string length is greater than the length
+                      ISO C89 compilers are required to support" when including
+                      the .ad file... */
+#endif
 
 static char *defaults[] = {
 #include "XScreenSaver_ad.h"

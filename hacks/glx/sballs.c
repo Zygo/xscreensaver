@@ -74,16 +74,25 @@ static const char sccsid[] = "@(#)sballs.c	5.02 2001/03/10 xlockmore";
 
 #if defined( USE_XPM ) || defined( USE_XPMINC ) || defined( HAVE_XPM )
 /* USE_XPM & USE_XPMINC in xlock mode ; HAVE_XPM in xscreensaver mode */
-#include "xpm-ximage.h"
-#define I_HAVE_XPM
+# include "xpm-ximage.h"
+# define I_HAVE_XPM
 
-#ifdef STANDALONE
-#include "../images/sball.xpm"
-#include "../images/sball-bg.xpm"
-#else /* !STANDALONE */
-#include "pixmaps/sball.xpm"
-#include "pixmaps/sball-bg.xpm"
-#endif /* !STANDALONE */
+# ifdef STANDALONE
+
+#  ifdef __GNUC__
+   __extension__ /* don't warn about "string length is greater than the length
+                    ISO C89 compilers are required to support" when including
+                    the following XPM file... */
+#  endif
+#  include "../images/sball.xpm"
+#  ifdef __GNUC__
+   __extension__
+#  endif
+#  include "../images/sball-bg.xpm"
+# else /* !STANDALONE */
+#  include "pixmaps/sball.xpm"
+#  include "pixmaps/sball-bg.xpm"
+# endif /* !STANDALONE */
 #endif /* HAVE_XPM */
 
 /* Manage option vars */

@@ -374,7 +374,7 @@ void InitBumpMap( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 	free( aColors );
 }
 
-/* Soften the bump map.  This is to avoid pixellated-looking ridges.
+/* Soften the bump map.  This is to avoid pixelated-looking ridges.
  * |-----|-----|-----|
  * |  0% |12.5%|  0% |	The adjacent pixels are averaged together
  * |-----|-----|-----|	first.  Then than value is averaged with
@@ -442,7 +442,9 @@ void Execute( SBumps *pBumps )
 		if( iScreenY < 0 )							continue;
 		else if( iScreenY >= pBumps->iWinHeight )	break;
 
-		pDOffset = &pBumps->pXImage->data[ (iLightY+pBumps->SpotLight.nLightRadius) * pBumps->pXImage->bytes_per_line ];
+    /* warning: pointer targets in assignment differ in signedness
+       Should pDOffset be a int8?  I can't tell.  -jwz, 22-Jul-2003 */
+		pDOffset = (int8_ *) &pBumps->pXImage->data[ (iLightY+pBumps->SpotLight.nLightRadius) * pBumps->pXImage->bytes_per_line ];
 		pBOffset = pBumps->aBumpMap + ( iScreenY * pBumps->iWinWidth ) + nLightXPos;
 		for( iScreenX=nLightXPos, iLightX=-pBumps->SpotLight.nLightRadius; iLightX<nLightOffsetFar; ++iScreenX, ++iLightX, ++pBOffset, pDOffset+=pBumps->bytesPerPixel )
 		{

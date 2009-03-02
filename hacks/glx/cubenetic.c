@@ -1,4 +1,4 @@
-/* cubenetic, Copyright (c) 2002 Jamie Zawinski <jwz@jwz.org>
+/* cubenetic, Copyright (c) 2002, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -324,7 +324,7 @@ init_texture (ModeInfo *mi)
   cc->texture_height = texture_size;
 
   i = texture_size * texture_size * 4;
-  cc->texture = (char *) malloc (i);
+  cc->texture = (unsigned char *) malloc (i);
   memset (cc->texture, 0xFF, i);
 }
 

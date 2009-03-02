@@ -18,6 +18,12 @@
 #include "demo-Gtk-widgets.h"
 #include "demo-Gtk-support.h"
 
+# ifdef __GNUC__
+#  define STFU __extension__  /* ignore gcc -pendantic warnings in next sexp */
+# else
+#  define STFU /* */
+# endif
+
 GtkWidget*
 create_xscreensaver_demo (void)
 {
@@ -480,7 +486,7 @@ create_xscreensaver_demo (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (demo);
   gtk_container_add (GTK_CONTAINER (demo_manual_hbbox), demo);
-  GTK_WIDGET_SET_FLAGS (demo, GTK_CAN_DEFAULT);
+  STFU GTK_WIDGET_SET_FLAGS (demo, GTK_CAN_DEFAULT);
   gtk_tooltips_set_tip (tooltips, demo, _("Demo the selected screen saver in full-screen mode (click the mouse to return.)"), NULL);
 
   settings = gtk_button_new_with_label (_("Settings..."));
@@ -490,7 +496,7 @@ create_xscreensaver_demo (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (settings);
   gtk_container_add (GTK_CONTAINER (demo_manual_hbbox), settings);
-  GTK_WIDGET_SET_FLAGS (settings, GTK_CAN_DEFAULT);
+  STFU GTK_WIDGET_SET_FLAGS (settings, GTK_CAN_DEFAULT);
   gtk_tooltips_set_tip (tooltips, settings, _("Customization and explanation of the selected screen saver."), NULL);
 
   list_vbox = gtk_vbox_new (FALSE, 0);
@@ -642,7 +648,7 @@ create_xscreensaver_demo (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (next);
   gtk_box_pack_start (GTK_BOX (next_prev_hbox), next, FALSE, FALSE, 0);
-  GTK_WIDGET_SET_FLAGS (next, GTK_CAN_DEFAULT);
+  STFU GTK_WIDGET_SET_FLAGS (next, GTK_CAN_DEFAULT);
   gtk_tooltips_set_tip (tooltips, next, _("Run the next screen saver in the list in full-screen mode (click the mouse to return.)"), NULL);
 
   prev = gtk_button_new_with_label (_("/\\"));
@@ -652,7 +658,7 @@ create_xscreensaver_demo (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (prev);
   gtk_box_pack_start (GTK_BOX (next_prev_hbox), prev, FALSE, FALSE, 0);
-  GTK_WIDGET_SET_FLAGS (prev, GTK_CAN_DEFAULT);
+  STFU GTK_WIDGET_SET_FLAGS (prev, GTK_CAN_DEFAULT);
   gtk_tooltips_set_tip (tooltips, prev, _("Run the previous screen saver in the list in full-screen mode (click the mouse to return.)"), NULL);
 
   preview_frame = gtk_frame_new (_("Description"));
@@ -1645,7 +1651,7 @@ create_xscreensaver_settings_dialog (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (manual);
   gtk_container_add (GTK_CONTAINER (doc_hbuttonbox), manual);
-  GTK_WIDGET_SET_FLAGS (manual, GTK_CAN_DEFAULT);
+  STFU GTK_WIDGET_SET_FLAGS (manual, GTK_CAN_DEFAULT);
   gtk_tooltips_set_tip (tooltips, manual, _("Click here to read the manual for this display mode, if it has one."), NULL);
 
   dialog_action_area = GTK_DIALOG (xscreensaver_settings_dialog)->action_area;
@@ -1678,7 +1684,7 @@ create_xscreensaver_settings_dialog (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (adv_button);
   gtk_container_add (GTK_CONTAINER (dialog_hbuttonbox), adv_button);
-  GTK_WIDGET_SET_FLAGS (adv_button, GTK_CAN_DEFAULT);
+  STFU GTK_WIDGET_SET_FLAGS (adv_button, GTK_CAN_DEFAULT);
   gtk_tooltips_set_tip (tooltips, adv_button, _("Edit the command line directly."), NULL);
 
   std_button = gtk_button_new_with_label (_("Standard <<"));
@@ -1688,7 +1694,7 @@ create_xscreensaver_settings_dialog (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (std_button);
   gtk_container_add (GTK_CONTAINER (dialog_hbuttonbox), std_button);
-  GTK_WIDGET_SET_FLAGS (std_button, GTK_CAN_DEFAULT);
+  STFU GTK_WIDGET_SET_FLAGS (std_button, GTK_CAN_DEFAULT);
   gtk_tooltips_set_tip (tooltips, std_button, _("Back to the graphical configuration options."), NULL);
 
   ok_cancel_hbuttonbox = gtk_hbutton_box_new ();
@@ -1707,7 +1713,7 @@ create_xscreensaver_settings_dialog (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (ok_button);
   gtk_container_add (GTK_CONTAINER (ok_cancel_hbuttonbox), ok_button);
-  GTK_WIDGET_SET_FLAGS (ok_button, GTK_CAN_DEFAULT);
+  STFU GTK_WIDGET_SET_FLAGS (ok_button, GTK_CAN_DEFAULT);
 
   cancel_button = gtk_button_new_with_label (_("Cancel"));
   gtk_widget_set_name (cancel_button, "cancel_button");
@@ -1716,7 +1722,7 @@ create_xscreensaver_settings_dialog (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (cancel_button);
   gtk_container_add (GTK_CONTAINER (ok_cancel_hbuttonbox), cancel_button);
-  GTK_WIDGET_SET_FLAGS (cancel_button, GTK_CAN_DEFAULT);
+  STFU GTK_WIDGET_SET_FLAGS (cancel_button, GTK_CAN_DEFAULT);
 
   gtk_signal_connect (GTK_OBJECT (opt_notebook), "switch_page",
                       GTK_SIGNAL_FUNC (settings_switch_page_cb),

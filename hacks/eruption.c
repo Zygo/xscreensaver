@@ -320,7 +320,7 @@ static void Initialize( Display *pDisplay, Window Win, GC *pGC, XImage **ppImage
 
 	/* Find the preferred bits-per-pixel. (jwz) */
 	{
-		int i, pfvc = 0;
+		int pfvc = 0;
 		XPixmapFormatValues *pfv = XListPixmapFormats( pDisplay, &pfvc );
 		for( i=0; i<pfvc; i++ )
 			if( pfv[ i ].depth == XWinAttribs.depth )

@@ -1,4 +1,5 @@
-/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000
+/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2003
+ * 
  *  by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -77,7 +78,7 @@ get_visual (Screen *screen, const char *string, Bool prefer_writable_cells,
   else if (!strcmp (v, "greyscale"))		  vclass = GrayScale;
   else if (!strcmp (v, "pseudocolor"))		  vclass = PseudoColor;
   else if (!strcmp (v, "directcolor"))		  vclass = DirectColor;
-  else if (1 == sscanf (v, " %ld %c", &id, &c))	  vclass = SPECIFIC_VISUAL;
+  else if (1 == sscanf (v, " %lu %c", &id, &c))	  vclass = SPECIFIC_VISUAL;
   else if (1 == sscanf (v, " 0x%lx %c", &id, &c)) vclass = SPECIFIC_VISUAL;
   else
     {

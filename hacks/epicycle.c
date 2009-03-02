@@ -587,7 +587,6 @@ setup(void)
     }
   else
     {
-      XWindowAttributes xgwa;
       XGetWindowAttributes (dpy, window, &xgwa);
       XSelectInput (dpy, window,
                     xgwa.your_event_mask | ExposureMask |

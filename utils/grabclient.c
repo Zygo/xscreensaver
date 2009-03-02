@@ -110,7 +110,7 @@ checkerboard (Screen *screen, Drawable drawable)
   XGCValues gcv;
   GC gc = XCreateGC (dpy, drawable, 0, &gcv);
   Colormap cmap;
-  int win_width, win_height;
+  unsigned int win_width, win_height;
 
   fg.flags = bg.flags = DoRed|DoGreen|DoBlue;
   fg.red = fg.green = fg.blue = 0x0000;

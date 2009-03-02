@@ -93,7 +93,8 @@ SRCS		= xscreensaver-gl-helper.c \
 		  toaster_slots.c toaster_wing.c toast.c toast2.c \
 		  bouncingcow.c cow_face.c cow_hide.c cow_hoofs.c cow_horns.c \
 		  cow_tail.c cow_udder.c glslideshow.c jigglypuff.c klein.c \
-		  hypertorus.c glmatrix.c cubestorm.c glknots.c blocktube.c
+		  hypertorus.c glmatrix.c cubestorm.c glknots.c blocktube.c \
+		  flipflop.c antspotlight.c polytopes.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -119,7 +120,8 @@ OBJS		= xscreensaver-gl-helper.o \
 		  toaster_slots.o toaster_wing.o toast.o toast2.o \
 		  bouncingcow.o cow_face.o cow_hide.o cow_hoofs.o cow_horns.o \
 		  cow_tail.o cow_udder.o glslideshow.o jigglypuff.o klein.o \
-		  hypertorus.o glmatrix.o cubestorm.o glknots.o blocktube.o
+		  hypertorus.o glmatrix.o cubestorm.o glknots.o blocktube.o \
+		  flipflop.o antspotlight.o polytopes.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -128,7 +130,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  glforestfire sballs cubenetic spheremonics lavalite queens \
 		  endgame glblur flurry atunnel flyingtoasters bouncingcow \
 		  glslideshow jigglypuff klein hypertorus glmatrix cubestorm \
-		  glknots blocktube
+		  glknots blocktube flipflop antspotlight polytopes
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -145,7 +147,8 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  grab-ximage.h font-ximage.h tube.h sphere.h boxed.h \
 		  stonerview-move.h stonerview-osc.h glutstroke.h \
 		  glut_roman.h marching.h rotator.h trackball.h gltrackball.h \
-		  chessmodels.h chessgames.h gllist.h flurry.h tunnel_draw.h
+		  chessmodels.h chessgames.h gllist.h flurry.h tunnel_draw.h \
+		  ants.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man glforestfire.man \
@@ -157,7 +160,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  endgame.man flurry.man glblur.man atunnel.man \
 		  flyingtoasters.man bouncingcow.man glslideshow.man \
 		  jigglypuff.man klein.man hypertorus.man glmatrix.man \
-		  cubestorm.man glknots.man blocktube.man
+		  cubestorm.man glknots.man blocktube.man flipflop.man \
+		  antspotlight.man polytopes.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl
 
@@ -536,6 +540,15 @@ glknots:	glknots.o	tube.o $(TRACK_OBJS) $(HACK_OBJS)
 blocktube:	blocktube.o	$(HACK_OBJS) xpm-ximage.o
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) xpm-ximage.o $(HACK_LIBS) $(XPM_LIBS)
 
+flipflop:	flipflop.o	$(TRACK_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+
+antspotlight:	antspotlight.o	$(TRACK_OBJS) $(GRAB_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(TRACK_OBJS) $(GRAB_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+
+polytopes:	polytopes.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
 # This one works differently (it's not xlock-like.)
 #
 STONER_OBJS=stonerview.o stonerview-move.o stonerview-osc.o stonerview-view.o \
@@ -565,6 +578,11 @@ dnalogo:	dnalogo.o	tube.o $(HACK_OBJS)
 #
 # DO NOT DELETE: updated by make distdepend
 
+antspotlight.o: $(srcdir)/ants.h
+antspotlight.o: ../../config.h
+antspotlight.o: $(srcdir)/gltrackball.h
+antspotlight.o: $(srcdir)/grab-ximage.h
+antspotlight.o: $(srcdir)/rotator.h
 atlantis.o: $(srcdir)/atlantis.h
 atlantis.o: ../../config.h
 atlantis.o: $(HACK_SRC)/images/sea-texture.xpm
@@ -634,6 +652,8 @@ extrusion.o: $(srcdir)/xpm-ximage.h
 extrusion-screw.o: ../../config.h
 extrusion-taper.o: ../../config.h
 extrusion-twistoid.o: ../../config.h
+flipflop.o: ../../config.h
+flipflop.o: $(srcdir)/gltrackball.h
 flipscreen3d.o: ../../config.h
 flipscreen3d.o: $(srcdir)/gltrackball.h
 flipscreen3d.o: $(srcdir)/grab-ximage.h
@@ -641,15 +661,19 @@ flurry.o: ../../config.h
 flurry.o: $(srcdir)/flurry.h
 flurry.o: $(srcdir)/gltrackball.h
 flurry.o: $(srcdir)/rotator.h
+flurry-smoke.o: ../../config.h
 flurry-smoke.o: $(srcdir)/flurry.h
 flurry-smoke.o: $(srcdir)/gltrackball.h
 flurry-smoke.o: $(srcdir)/rotator.h
+flurry-spark.o: ../../config.h
 flurry-spark.o: $(srcdir)/flurry.h
 flurry-spark.o: $(srcdir)/gltrackball.h
 flurry-spark.o: $(srcdir)/rotator.h
+flurry-star.o: ../../config.h
 flurry-star.o: $(srcdir)/flurry.h
 flurry-star.o: $(srcdir)/gltrackball.h
 flurry-star.o: $(srcdir)/rotator.h
+flurry-texture.o: ../../config.h
 flurry-texture.o: $(srcdir)/flurry.h
 flurry-texture.o: $(srcdir)/gltrackball.h
 flurry-texture.o: $(srcdir)/rotator.h
@@ -743,6 +767,7 @@ morph3d.o: ../../config.h
 pipeobjs.o: $(srcdir)/buildlwo.h
 pipes.o: $(srcdir)/buildlwo.h
 pipes.o: ../../config.h
+polytopes.o: ../../config.h
 pulsar.o: ../../config.h
 pulsar.o: $(srcdir)/xpm-ximage.h
 queens.o: ../../config.h

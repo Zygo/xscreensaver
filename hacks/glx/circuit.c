@@ -241,7 +241,7 @@ static const char * smctypes[] = {
 typedef struct {
   int type; /* package type. 0 = to-92, 1 = to-220 */
   GLfloat tw, th; /* texture dimensions */
-  int tnum; /* texture binding */
+  GLuint tnum; /* texture binding */
 } Transistor;
 
 typedef struct {
@@ -392,7 +392,7 @@ void DrawRCA(RCA *);
 void DrawThreeFive(ThreeFive *);
 void DrawSwitch(Switch *);
 
-void freetexture(int);
+void freetexture(GLuint);
 void reorder(Component *[]);
 void circle(float, int,int);
 void bandedCylinder(float, float , GLfloat, GLfloat , GLfloat,  Band **, int);
@@ -2002,7 +2002,7 @@ void display(void)
   glFlush();
 }
 
-void freetexture (int texture) {
+void freetexture (GLuint texture) {
   s_refs[texture]--;
   if (s_refs[texture] < 1) {
     glDeleteTextures(1, &texture);
@@ -2064,7 +2064,7 @@ TexNum * fonttexturealloc (const char *str, float *fg, float *bg)
                              GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
   if (status)
     {
-      const char *s = gluErrorString (status);
+      const char *s = (char *) gluErrorString (status);
       fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
                progname, ximage->width, ximage->height,
                (s ? s : "(unknown)"));

@@ -69,7 +69,7 @@ typedef struct {
   GLuint texid;			   /* which texture to draw */
   enum { IN, OUT, DEAD } state;    /* how to draw it */
   rect from, to;		   /* the journey this quad is taking */
-} quad;
+} gls_quad;
 
 
 typedef struct {
@@ -79,7 +79,7 @@ typedef struct {
   int motion_frames;            /* how many frames each pan takes */
   int fade_frames;              /* how many frames fading in/out takes */
 
-  quad quads[2];		/* the (up to) 2 quads we animate */
+  gls_quad quads[2];		/* the (up to) 2 quads we animate */
   GLuint texids[2];		/* textures: "old" and "new" */
   GLuint current_texid;         /* the "new" one */
 
@@ -157,7 +157,7 @@ double_time (void)
 
 
 static void
-draw_quad (ModeInfo *mi, quad *q)
+draw_quad (ModeInfo *mi, gls_quad *q)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
@@ -316,7 +316,7 @@ draw_quads (ModeInfo *mi)
 /* Re-randomize the state of the given quad.
  */
 static void
-reset_quad (ModeInfo *mi, quad *q)
+reset_quad (ModeInfo *mi, gls_quad *q)
 {
 /*  slideshow_state *ss = &sss[MI_SCREEN(mi)];*/
 
@@ -403,7 +403,7 @@ shrink_image (ModeInfo *mi, XImage *ximage)
 /* Load a new image into a texture for the given quad.
  */
 static void
-load_quad (ModeInfo *mi, quad *q)
+load_quad (ModeInfo *mi, gls_quad *q)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
   XImage *ximage;
@@ -466,7 +466,7 @@ load_quad (ModeInfo *mi, quad *q)
   if (status)
     {
       char buf[100];
-      const char *s = gluErrorString (status);
+      const char *s = (char *) gluErrorString (status);
 
       if (!s || !*s)
         {
@@ -648,7 +648,7 @@ init_slideshow (ModeInfo *mi)
 
   for (i = 0; i < countof(ss->quads); i++)
     {
-      quad *q = &ss->quads[i];
+      gls_quad *q = &ss->quads[i];
       q->texid = ss->current_texid;
       q->state = DEAD;
       reset_quad (mi, q);
@@ -718,7 +718,7 @@ ponder_state_change (ModeInfo *mi)
       /* Reset all quads, and mark only #0 as active. */
       for (i = 0; i < countof(ss->quads); i++)
         {
-          quad *q = &ss->quads[i];
+          gls_quad *q = &ss->quads[i];
           q->state = DEAD;
           reset_quad (mi, q);
           q->texid = ss->current_texid;
@@ -795,7 +795,7 @@ draw_slideshow (ModeInfo *mi)
          It's time to begin fading the visible one out, and the
          invisible one in.  (Reset the invisible one first.)
        */
-      quad *vq, *iq;
+      gls_quad *vq, *iq;
 
       ponder_state_change (mi);
 

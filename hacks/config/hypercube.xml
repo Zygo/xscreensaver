@@ -56,5 +56,8 @@ eight cubes, each touching six others.  To make it easier to
 visualize the rotation, it uses a different color for the edges of
 each face.  Don't think about it too long, or your brain will melt.
 Written by Joe Keane, Fritz Mueller, and Jamie Zawinski.
+
+See also the "polytopes" hack for a more general version of this
+using OpenGL.
   </_description>
 </screensaver>

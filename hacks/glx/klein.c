@@ -64,7 +64,7 @@ enum {
 	SEASHELL,
 	SWALLOWTAIL,
 	BOHEM,
-    SURFACE_LAST,
+    SURFACE_LAST
 };
 
 /* primitives to draw with 
@@ -78,7 +78,7 @@ enum {
 	MY_POINTS = 0,
 	MY_LINES,
 	MY_LINE_LOOP,
-	MY_PRIM_LAST,
+	MY_PRIM_LAST
 };
 
 

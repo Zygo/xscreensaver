@@ -57,6 +57,11 @@ extern XtAppContext app;
 #include "xpm-ximage.h"
 #include <ctype.h>
 
+#ifdef __GNUC__
+  __extension__  /* don't warn about "string length is greater than the length
+                    ISO C89 compilers are required to support" when including
+                    the following XPM file... */
+#endif
 #include "../images/matrix3.xpm"
 
 #ifdef USE_GL /* whole file */
@@ -333,7 +338,7 @@ draw_glyph (ModeInfo *mi, int glyph,
   int wire = MI_IS_WIREFRAME(mi);
   GLfloat w = mp->tex_char_width;
   GLfloat h = mp->tex_char_height;
-  GLfloat cx, cy;
+  GLfloat cx = 0, cy = 0;
   GLfloat S = 1;
   Bool spinner_p = (glyph < 0);
 
@@ -587,6 +592,7 @@ matrix_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
+#if 0
 static Bool
 bigendian (void)
 {
@@ -594,6 +600,7 @@ bigendian (void)
   u.i = 1;
   return !u.c[0];
 }
+#endif
 
 
 /* The image with the characters in it is 512x598, meaning that it needs to
@@ -719,9 +726,15 @@ load_textures (ModeInfo *mi, Bool flip_p)
    */
   {
     int rpos, gpos, bpos, apos;  /* bitfield positions */
+#if 0
+    /* #### Cherub says that the little-endian case must be taken on MacOSX,
+            or else the colors/alpha are the wrong way around.  How can
+            that be the case?
+     */
     if (bigendian())
       rpos = 24, gpos = 16, bpos =  8, apos =  0;
     else
+#endif
       rpos =  0, gpos =  8, bpos = 16, apos = 24;
 
     for (y = 0; y < xi->height; y++)

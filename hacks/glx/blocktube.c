@@ -135,7 +135,7 @@ static Bool LoadGLTextures(ModeInfo *mi)
     glGenTextures(1, &envTexture);
     glBindTexture(GL_TEXTURE_2D, envTexture);
     texti = xpm_to_ximage(MI_DISPLAY(mi), MI_VISUAL(mi), MI_COLORMAP(mi),
-                          envImage_xpm);
+                          blocktube_xpm);
     if (!texti) {
         status = False;
     } else {

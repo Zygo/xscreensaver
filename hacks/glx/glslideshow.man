@@ -2,7 +2,7 @@
 .SH NAME
 glslideshow - slideshow of images using smooth zooming and fades
 .SH SYNOPSIS
-B glslideshow
+.B glslideshow
 [\-display \fIhost:display.screen\fP]
 [\-visual \fIvisual\fP]
 [\-window]

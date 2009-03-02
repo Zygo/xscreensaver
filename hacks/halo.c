@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1995, 1996, 1997, 1998, 1999
+/* xscreensaver, Copyright (c) 1993, 1995, 1996, 1997, 1998, 1999, 2003
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -396,7 +396,7 @@ run_circles (Display *dpy, Window window)
 
       if (cycle_p && cycle_delay)
 	{
-	  int i = 0;
+          i = 0;
 	  while (i < d)
 	    {
 	      rotate_colors (dpy, cmap, colors, ncolors, direction);

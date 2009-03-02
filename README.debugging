@@ -54,15 +54,9 @@ COMPILATION PROBLEMS:
 
     Before doing this, you'll need to nuke `config.cache'.
 
-    If you get errors about not being able to find Gtk or Motif (the
-     gtk/ or Xm/ header files), and you can't find them on your system,
-    then your system is horked and your vendor is lame.  Perhaps the
-    problem is that you don't have some kind of ``development option''
-    installed.  Xt/ is free and available on all systems; Xm/ (Motif)
-    is available on all commercial systems except SunOS 4.x and some
-    early releases of Solaris.  Linux and other free Unixes systems
-    usually come with Gtk, but a Motif clone is also available from
-    http://www.lesstif.org/.
+    If you get errors about not being able to find Gtk, then perhaps
+    the problem is that you don't have some kind of ``development
+    option'' installed.
 
 RUN-TIME PROBLEMS:
 
@@ -81,8 +75,8 @@ RUN-TIME PROBLEMS:
         *  Is the problem in the driver (`xscreensaver'), the GUI
            (`xscreensaver-demo'), or in the graphics hacks?
 
-        *  If the problem is in the GUI, was it built using
-           Motif, Lesstif, or Gtk?  Which version?
+        *  If the problem is in the GUI, was it built using Gtk, Motif,
+           or Lesstif?  Which version?
 
         *  If the problem is in one (or more) of the hacks, which ones?
            If you're not sure, try running `xscreensaver-demo' to go

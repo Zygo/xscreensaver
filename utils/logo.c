@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001-2002 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2002, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -49,7 +49,7 @@ static const char hex[128] = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
 static XImage *
 parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
                 unsigned long transparent_color,
-                unsigned const char * const * data,
+                const char * const * data,
                 int *width_ret, int *height_ret,
                 unsigned long **pixels_ret, int *npixels_ret,
                 unsigned char **mask_ret)
@@ -90,7 +90,7 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
 
   for (i = 0; i < ncolors; i++)
     {
-      const unsigned char *line = *data;
+      const char *line = *data;
       cmap[i].byte = *line++;
       while (*line)
         {
@@ -175,10 +175,11 @@ parse_xpm_data (Display *dpy, Visual *visual, Colormap colormap, int depth,
       ximage->data = (char *) calloc (ximage->height, ximage->bytes_per_line);
       for (y = 0; y < h; y++)
         {
-          const unsigned char *line = *data++;
+          const char *line = *data++;
           for (x = 0; x < w; x++)
             {
-              int p = rmap[*line++];
+              int p = rmap[(int) *line];
+              line++;
               XPutPixel (ximage, x, y,
                          (p == 255 ? transparent_color : pixels[p]));
 

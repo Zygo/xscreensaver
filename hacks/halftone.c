@@ -9,9 +9,9 @@
  * implied warranty.
  *
  * Description:
- * Draws the gravity force in each point on the screen seen through a
- * halftone dot pattern. The gravity force is calculated from a set of
- * moving mass points. View it from a distance for best effect.
+ * Draws the gravitational force in each point on the screen seen
+ * through a halftone dot pattern. The force is calculated from a set
+ * of moving mass points. View it from a distance for best effect.
  */
 
 #include <math.h>

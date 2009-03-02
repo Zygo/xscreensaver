@@ -439,7 +439,7 @@ void getSnapshot (ModeInfo *modeinfo)
 
  if (status)
    {
-     const char *s = gluErrorString (status);
+     const char *s = (char *) gluErrorString (status);
      fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
               progname, ximage->width, ximage->height,
               (s ? s : "(unknown)"));

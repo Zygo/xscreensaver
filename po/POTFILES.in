@@ -1,4 +1,4 @@
-# Auto-generated: Mon Jun 23 16:14:14 PDT 2003
+# Auto-generated: Thu Aug 14 02:52:12 PDT 2003
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -8,6 +8,7 @@ driver/xscreensaver-demo.glade
 driver/xscreensaver-demo.glade2
 hacks/config/anemone.xml
 hacks/config/ant.xml
+hacks/config/antspotlight.xml
 hacks/config/apollonian.xml
 hacks/config/atlantis.xml
 hacks/config/attraction.xml
@@ -52,8 +53,10 @@ hacks/config/eruption.xml
 hacks/config/euler2d.xml
 hacks/config/extrusion.xml
 hacks/config/fadeplot.xml
+hacks/config/fireflies.xml
 hacks/config/flag.xml
 hacks/config/flame.xml
+hacks/config/flipflop.xml
 hacks/config/flipscreen3d.xml
 hacks/config/flow.xml
 hacks/config/fluidballs.xml
@@ -120,6 +123,7 @@ hacks/config/phosphor.xml
 hacks/config/piecewise.xml
 hacks/config/pipes.xml
 hacks/config/polyominoes.xml
+hacks/config/polytopes.xml
 hacks/config/popsquares.xml
 hacks/config/pulsar.xml
 hacks/config/pyro.xml

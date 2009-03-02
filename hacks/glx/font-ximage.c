@@ -1,5 +1,5 @@
 /* font-ximage.c --- renders text to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -31,6 +31,7 @@ extern char *progname;
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
+#if 0
 static Bool
 bigendian (void)
 {
@@ -38,6 +39,7 @@ bigendian (void)
   u.i = 1;
   return !u.c[0];
 }
+#endif
 
 /* return the next larger power of 2. */
 static int
@@ -199,9 +201,15 @@ text_to_ximage (Screen *screen, Visual *visual,
          things as necessary) OpenGL pretends everything is client-side, so
          we need to pack things in the right order for the client machine.
        */
+#if 0
+    /* #### Cherub says that the little-endian case must be taken on MacOSX,
+            or else the colors/alpha are the wrong way around.  How can
+            that be the case?
+     */
       if (bigendian())
         rpos = 24, gpos = 16, bpos =  8, apos =  0;
       else
+#endif
         rpos =  0, gpos =  8, bpos = 16, apos = 24;
 
       fg = (((unsigned long) (texture_fg[0] * 255.0) << rpos) |

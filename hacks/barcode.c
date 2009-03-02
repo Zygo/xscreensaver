@@ -67,7 +67,7 @@ typedef struct
     int width;
     int height;
     int widthBytes;
-    unsigned char *buf;
+    char *buf;
 }
 Bitmap;
 
@@ -594,7 +594,7 @@ static unsigned char font5x8Buf[] =
    0x0f, 0x0f, 0x0f, 0x00
 };
 
-static Bitmap font5x8 = { 8, 1024, 1, font5x8Buf };
+static Bitmap font5x8 = { 8, 1024, 1, (char *) font5x8Buf };
 
 /* draw the given 5x8 character at the given coordinates */
 void bitmapDrawChar5x8 (Bitmap *b, int x, int y, char c)
