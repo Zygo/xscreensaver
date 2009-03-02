@@ -27,15 +27,15 @@
 
   <select id="neighbors">
     <option id="rand" _label="Random Cell Shape"/>
-    <option id="three" _label="Three Sided Cells" 
+    <option id="three" _label="Three Sided Cells"
             arg-set="-neighbors 3"/>
     <option id="four" _label="Four Sided Cells"
             arg-set="-neighbors 4"/>
-    <option id="six" _label="Six Sided Cells" enable="sharpturn"
+    <option id="six" _label="Six Sided Cells"
             arg-set="-neighbors 6"/>
     <option id="nine" _label="Nine Sided Cells"
             arg-set="-neighbors 9"/>
-    <option id="twelve" _label="Twelve Sided Cells" enable="sharpturn"
+    <option id="twelve" _label="Twelve Sided Cells"
             arg-set="-neighbors 12"/>
   </select>
 

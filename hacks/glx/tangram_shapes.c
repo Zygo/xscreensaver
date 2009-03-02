@@ -32,33 +32,46 @@ static void tri_45_90(int wire)
 
     glNormal3f(0, 1, 0);
     glVertex3fv(vertices[0]);
+    glNormal3f(0, 1, 0);
     glVertex3fv(vertices[2]);
+    glNormal3f(0, 1, 0);
     glVertex3fv(vertices[1]);
 
     glNormal3f(0, -1, 0);
     glVertex3fv(vertices[3]);
+    glNormal3f(0, -1, 0);
     glVertex3fv(vertices[4]);
+    glNormal3f(0, -1, 0);
     glVertex3fv(vertices[5]);
     glEnd();
 
     glBegin((wire) ? GL_LINE_LOOP : GL_QUADS);
     glNormal3f(1, 0, 1);
     glVertex3fv(vertices[2]);
+    glNormal3f(1, 0, 1);
     glVertex3fv(vertices[5]);
+    glNormal3f(1, 0, 1);
     glVertex3fv(vertices[4]);
+    glNormal3f(1, 0, 1);
     glVertex3fv(vertices[1]);
 
     glNormal3f(-1, 0, 0);
     glVertex3fv(vertices[0]);
+    glNormal3f(-1, 0, 0);
     glVertex3fv(vertices[1]);
+    glNormal3f(-1, 0, 0);
     glVertex3fv(vertices[4]);
+    glNormal3f(-1, 0, 0);
     glVertex3fv(vertices[3]);
 
     glNormal3f(0, 0, -1);
-    glVertex3fv(vertices[2]);
-    glVertex3fv(vertices[5]);
-    glVertex3fv(vertices[3]);
     glVertex3fv(vertices[0]);
+    glNormal3f(0, 0, -1);
+    glVertex3fv(vertices[3]);
+    glNormal3f(0, 0, -1);
+    glVertex3fv(vertices[5]);
+    glNormal3f(0, 0, -1);
+    glVertex3fv(vertices[2]);
     glEnd();
 }
 
@@ -66,11 +79,12 @@ void unit_cube(int wire)
 {
     glBegin((wire) ? GL_LINE_LOOP : GL_QUADS);
 
-    glNormal3f(0.0f, -1.0f, 0.0f);
-    glVertex3f(0.0f, -alpha, 0.0f);
-    glVertex3f(1.0f, -alpha, 0.0f);
-    glVertex3f(1.0f, -alpha, 1.0f);
-    glVertex3f(0.0f, -alpha, 1.0f);
+
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(0.0f, alpha, 0.0f);
+    glVertex3f(0.0f, alpha, 1.0f);
+    glVertex3f(1.0f, alpha, 1.0f);
+    glVertex3f(1.0f, alpha, 0.0f);
 
     glNormal3f(0.0f, 0.0f, 1.0f);
     glVertex3f(0.0f, -alpha, 1.0f);
@@ -96,11 +110,12 @@ void unit_cube(int wire)
     glVertex3f(0.0f, alpha, 1.0f);
     glVertex3f(0.0f, alpha, 0.0f);
 
-    glNormal3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(0.0f, alpha, 0.0f);
-    glVertex3f(0.0f, alpha, 1.0f);
-    glVertex3f(1.0f, alpha, 1.0f);
-    glVertex3f(1.0f, alpha, 0.0f);
+    glNormal3f(0.0f, -1.0f, 0.0f);
+    glVertex3f(0.0f, -alpha, 0.0f);
+    glVertex3f(1.0f, -alpha, 0.0f);
+    glVertex3f(1.0f, -alpha, 1.0f);
+    glVertex3f(0.0f, -alpha, 1.0f);
+
     glEnd();
 }
 

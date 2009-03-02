@@ -17,6 +17,7 @@
 # include "config.h"
 #endif
 
+#include <ctype.h>
 #include <X11/Intrinsic.h>
 #include <X11/cursorfont.h>
 #include <X11/Xos.h>		/* for time() */
@@ -1424,14 +1425,25 @@ handle_passwd_key (saver_info *si, XKeyEvent *event)
       break;
 
     default:
-      i = strlen (typed_passwd);
-      if (i >= pw_size-1)
-	XBell (si->dpy, 0);
+      /* Though technically the only illegal characters in Unix passwords
+         are LF and NUL, most GUI programs (e.g., GDM) use regular text-entry
+         fields that only let you type printable characters.  So, people
+         who use funky characters in their passwords are already broken.
+         We follow that precedent.
+       */
+      if (isprint ((unsigned char) *s))
+        {
+          i = strlen (typed_passwd);
+          if (i >= pw_size-1)
+            XBell (si->dpy, 0);
+          else
+            {
+              typed_passwd [i] = *s;
+              typed_passwd [i+1] = 0;
+            }
+        }
       else
-	{
-	  typed_passwd [i] = *s;
-	  typed_passwd [i+1] = 0;
-	}
+        XBell (si->dpy, 0);
       break;
     }
 

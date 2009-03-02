@@ -532,7 +532,7 @@ char *progclass = "Noseguy";
 char *defaults [] = {
   ".background:	 black",
   ".foreground:	 gray80",
-  "*program:	 xscreensaver-text --cols 40 | head -15",
+  "*program:	 xscreensaver-text --cols 40 | head -n15",
   "noseguy.font: -*-new century schoolbook-*-r-*-*-*-180-*-*-*-*-*-*",
   0
 };

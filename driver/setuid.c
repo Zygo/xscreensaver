@@ -97,7 +97,7 @@ setgroups_needed_p (uid_t target_group)
   if (n < 0)
     {
       char buf [1024];
-      sprintf (buf, "%s: getgroups(%d, ...)", blurb(), sizeof(groups)-1);
+      sprintf (buf, "%s: getgroups(%ld, ...)", blurb(), (long)sizeof(groups)-1);
       perror (buf);
       return 1;
     }

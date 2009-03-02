@@ -30,7 +30,7 @@
 #endif /* HAVE_UNAME */
 
 #include <stdio.h>
-#include <X11/Xproto.h>		/* for CARD32 */
+/* #include <X11/Xproto.h>	/ * for CARD32 */
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>		/* for XSetClassHint() */
 #include <X11/Xatom.h>
@@ -38,6 +38,13 @@
 #include <signal.h>		/* for the signal names */
 #include <time.h>
 #include <sys/time.h>
+
+/* You might think that to store an array of 32-bit quantities onto a
+   server-side property, you would pass an array of 32-bit data quantities
+   into XChangeProperty().  You would be wrong.  You have to use an array
+   of longs, even if long is 64 bits (using 32 of each 64.)
+ */
+typedef long PROP32;
 
 #ifdef HAVE_MIT_SAVER_EXTENSION
 # include <X11/extensions/scrnsaver.h>
@@ -966,16 +973,16 @@ store_saver_id (saver_screen_info *ssi)
 void
 store_saver_status (saver_info *si)
 {
-  CARD32 *status;
+  PROP32 *status;
   int size = si->nscreens + 2;
   int i;
 
-  status = (CARD32 *) calloc (size, sizeof(CARD32));
+  status = (PROP32 *) calloc (size, sizeof(PROP32));
 
-  status[0] = (CARD32) (si->screen_blanked_p
+  status[0] = (PROP32) (si->screen_blanked_p
                         ? (si->locked_p ? XA_LOCK : XA_BLANK)
                         : 0);
-  status[1] = (CARD32) si->blank_time;
+  status[1] = (PROP32) si->blank_time;
 
   for (i = 0; i < si->nscreens; i++)
     {

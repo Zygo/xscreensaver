@@ -11,7 +11,7 @@
       <option id="top"  _label="Top View" arg-set="-m"/>
     </select>
 
-    <boolean id="reflections" _label="Reflections" arg-unset="+M"/>
+    <boolean id="reflections" _label="Reflections" arg-unset="-M"/>
   </hgroup>
 
   <number id="speed" type="slider" arg="-Z %"
@@ -36,7 +36,7 @@
   <number id="alight" type="slider" arg="-e %"
           _label="Light Level" _low-label="Ambient  Low" _high-label="High"
           low="0.0" high="1.0" default="0.3"/>
-  <number id="vlight" type="slider" arg="-v %"
+  <number id="vlight2" type="slider" arg="-v %"
           _low-label="Vertical  Low" _high-label="High"
           low="0.0" high="1.0" default="0.6"/>
   <number id="contrast" type="slider" arg="-c %"
@@ -80,7 +80,7 @@
   <number id="recurs" type="slider" arg="-l %"
           _low-label="Recursion  0" _high-label="14"
           low="0" high="14" default="10"/>
-  <number id="recurs" type="slider" arg="-t %"
+  <number id="iterate" type="slider" arg="-t %"
           _low-label="Iteration  0" _high-label="10"
           low="0" high="10" default="2"/>
 
@@ -95,7 +95,7 @@
           _low-label="Yf  0.0" _high-label="1.0"
           low="0.0" high="1.0" default="0.0"/>
 
-  <boolean id="cross" _label="Cross Update" arg-unset="+x"/>
+  <boolean id="cross" _label="Cross Update" arg-unset="-x"/>
 
   <_description>
 XMountains generates realistic-looking fractal terrains of snow-capped

@@ -56,21 +56,21 @@ static int  noants;
 
 static XrmOptionDescRec opts[] =
 {
-  {(char *) "-solidmoebius", (char *) ".moebius.solidmoebius", XrmoptionNoArg, (caddr_t) "on"},
-  {(char *) "+solidmoebius", (char *) ".moebius.solidmoebius", XrmoptionNoArg, (caddr_t) "off"},
-  {(char *) "-noants", (char *) ".moebius.noants", XrmoptionNoArg, (caddr_t) "on"},
-  {(char *) "+noants", (char *) ".moebius.noants", XrmoptionNoArg, (caddr_t) "off"}
+  {"-solidmoebius", ".moebius.solidmoebius", XrmoptionNoArg, "on"},
+  {"+solidmoebius", ".moebius.solidmoebius", XrmoptionNoArg, "off"},
+  {"-noants", ".moebius.noants", XrmoptionNoArg, "on"},
+  {"+noants", ".moebius.noants", XrmoptionNoArg, "off"}
 };
 static argtype vars[] =
 {
-  {(caddr_t *) & solidmoebius, (char *) "solidmoebius", (char *) "Solidmoebius", (char *) DEF_SOLIDMOEBIUS, t_Bool},
-  {(caddr_t *) & noants, (char *) "noants", (char *) "Noants", (char *) DEF_NOANTS, t_Bool}
-
+  {&solidmoebius, "solidmoebius", "Solidmoebius", DEF_SOLIDMOEBIUS, t_Bool},
+  {&noants, "noants", "Noants", DEF_NOANTS, t_Bool}
 };
+
 static OptionStruct desc[] =
 {
-	{(char *) "-/+solidmoebius", (char *) "select between a SOLID or a NET Moebius Strip"},
-	{(char *) "-/+noants", (char *) "turn on/off walking ants"}
+	{"-/+solidmoebius", "select between a SOLID or a NET Moebius Strip"},
+	{"-/+noants", "turn on/off walking ants"}
 };
 
 ModeSpecOpt moebius_opts =
@@ -79,7 +79,7 @@ ModeSpecOpt moebius_opts =
 #ifdef USE_MODULES
 ModStruct   moebius_description =
 {"moebius", "init_moebius", "draw_moebius", "release_moebius",
- "draw_moebius", "change_moebius", (char *) NULL, &moebius_opts,
+ "draw_moebius", "change_moebius", NULL, &moebius_opts,
  1000, 1, 1, 1, 4, 1.0, "",
  "draws some ants", 0, NULL};
 
@@ -113,7 +113,7 @@ typedef struct {
 #include "ants.h"
 
 static GLfloat MaterialRed[] = {0.6, 0.0, 0.0, 1.0};
-static GLfloat MaterialMagenta[] = {0.6, 0.2, 0.5, 1.0};
+/*static GLfloat MaterialMagenta[] = {0.6, 0.2, 0.5, 1.0};*/
 static GLfloat MaterialGray8[] = {0.8, 0.8, 0.8, 1.0};
 static GLfloat MaterialGray35[] = {0.30, 0.30, 0.30, 1.0};
 static GLfloat MaterialGray4[] = {0.40, 0.40, 0.40, 1.0};
@@ -150,6 +150,7 @@ static Bool mySphere(float radius) {
   return True;
 }
 
+#if 0
 /* silhouette sphere */
 static Bool mySphere2(float radius) {
   GLUquadricObj *quadObj;
@@ -162,6 +163,7 @@ static Bool mySphere2(float radius) {
 
   return True;
 }
+#endif
 
 /* textured sphere */
 static Bool mySphereTex(float radius) {
@@ -193,7 +195,7 @@ static Bool myCone(float radius) {
 /* no cone */
 static Bool myCone2(float radius) { return True; }
 
-#define ANTCOUNT 4
+#define ANTCOUNT 5
 #define PI 3.14157
 
 static int focus = 0;
@@ -269,11 +271,11 @@ GLuint checktexture, brushedtexture;
 double elevator = 0.0;
 
 void makeCheckImage(void) {
-  int i, j, r, c, k;
+  int i, j;
   
   for (i = 0; i < checkImageWidth; i++) {
     for (j = 0; j < checkImageHeight; j++) {
-      if((((i&0x8)==0)^((j&0x8))==0)) {
+      if(((((i&0x8)==0)^((j&0x8)))==0)) {
 	int c = 102 + random()%32;
 	checkers[i][j][0] = c;
 	checkers[i][j][1] = c;
@@ -302,7 +304,7 @@ void makeCheckImage(void) {
 }
 
 void makeBrushedImage(void) {
-  int i, j, r, c, k;
+  int i, j, c;
 
   for(i = 0; i < checkImageWidth; ++i)
     for(j = 0; j < checkImageHeight; ++j) {
@@ -972,6 +974,9 @@ double fadeoutspeed = 0.0;
 
 void update_ants(void) {
   int i;
+  GLfloat df[4];
+  df[0] = df[1] = df[2] = 0.8*fadeout;
+  df[3] = 1.0;
 
   /* fade out */
   if(fadeoutspeed < -0.00001) {
@@ -985,7 +990,6 @@ void update_ants(void) {
     
     fadeout += fadeoutspeed;
 
-    GLfloat df[4] = {0.8*fadeout, 0.8*fadeout, 0.8*fadeout, 1.0};
     glLightfv(GL_LIGHT0, GL_DIFFUSE, df);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, df);
   }
@@ -998,7 +1002,6 @@ void update_ants(void) {
       fadeoutspeed = 0.0;
       entroducing = 12;
     }
-    GLfloat df[4] = {0.8*fadeout, 0.8*fadeout, 0.8*fadeout, 1.0};
     glLightfv(GL_LIGHT0, GL_DIFFUSE, df);
     glLightfv(GL_LIGHT1, GL_DIFFUSE, df);    
   }
@@ -1171,10 +1174,12 @@ void update_ants(void) {
 	ideal += Pi;
 
       /* compute correction */
-      double dt = sign(ideal) * min(fabs(ideal), PI/90.0);
-      antdirection[i] += dt;
-      if(antdirection[i] > 2.0*PI)
-	antdirection[i] = 0.0;
+      {
+        double dt = sign(ideal) * min(fabs(ideal), PI/90.0);
+        antdirection[i] += dt;
+        if(antdirection[i] > 2.0*PI)
+          antdirection[i] = 0.0;
+      }
     }
     
     antposition[i][0] += antvelocity[i] * cos(antdirection[i]);
@@ -1183,7 +1188,6 @@ void update_ants(void) {
 }
 
 static void pinit(void) {
-  int status;
   glClearDepth(1.0);
   glClearColor(0.0, 0.0, 0.0, 1.0);
   

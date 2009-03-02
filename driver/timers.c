@@ -331,6 +331,16 @@ reset_timers (saver_info *si)
   if (si->cycle_id) abort ();	/* no cycle timer when inactive */
 
   si->last_activity_time = time ((time_t *) 0);
+
+  /* This will (hopefully, supposedly) tell the server to re-set its
+     DPMS timer.  Without this, the -deactivate clientmessage would
+     prevent xscreensaver from blanking, but would not prevent the
+     monitor from powering down. */
+  XForceScreenSaver (si->dpy, ScreenSaverReset);
+
+  /* And if the monitor is already powered off, turn it on.
+     You'd think the above would do that, but apparently not? */
+  monitor_power_on (si);
 }
 
 

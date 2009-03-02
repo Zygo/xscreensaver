@@ -1,5 +1,5 @@
 %define	name xscreensaver
-%define	version 4.22
+%define	version 4.23
 
 Summary:	X screen saver and locker
 Name:		%{name}
@@ -48,7 +48,7 @@ Obsoletes: xscreensaver-gl
 
 %description
 A modular screen saver and locker for the X Window System.
-More than 190 display modes are included in this package.
+More than 200 display modes are included in this package.
 
 %description base
 A modular screen saver and locker for the X Window System.

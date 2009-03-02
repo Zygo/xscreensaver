@@ -4,8 +4,8 @@
             a screen saver and locker for the X window system
                             by Jamie Zawinski
 
-                              version 4.22
-                               22-Jun-2005
+                              version 4.23
+                               21-Oct-2005
 
                      http://www.jwz.org/xscreensaver/
 
@@ -60,11 +60,11 @@ The tags and parameters used here are:
         into the command line (that's what makes it the default.)
         For example:
 
-           <boolean "foo" arg_set="-foo">
+           <boolean _label="foo" arg-set="-foo" />
 
         or if "foo" is the default, and must be explicity turned off,
 
-           <boolean "foo" arg_unset="-no-foo">
+           <boolean _label="foo" arg-unset="-no-foo" />
 
 -----------------------------------------------------------------------
 
@@ -131,9 +131,9 @@ The tags and parameters used here are:
 
         This creates a selection popup menu.
 
-        Options should have _arg-set (_arg-unset is not used here.)
+        Options should have arg-set (arg-unset is not used here.)
 
-        One of the menu items (the default) should have no _arg-set.
+        One of the menu items (the default) should have no arg-set.
 
 -----------------------------------------------------------------------
 
@@ -156,6 +156,37 @@ The tags and parameters used here are:
 
 -----------------------------------------------------------------------
 
+  <hgroup>
+    [ ... <boolean>s ... ]
+    [ ... <number>s ... ]
+    [ ... <select>s ... ]
+    [ ... <string>s ... ]
+    [ ... <file>s ... ]
+    [ ... <vgroup>s ... ]
+  </hgroup>
+
+        A horizontal group of widgets/groups.  No more than 4 widgets 
+        or groups should be used in a row.
+
+-----------------------------------------------------------------------
+
+  <vgroup>
+    [ ... <boolean>s ... ]
+    [ ... <number>s ... ]
+    [ ... <select>s ... ]
+    [ ... <string>s ... ]
+    [ ... <file>s ... ]
+    [ ... <hgroup>s ... ]
+  </vgroup>
+
+        A vertical group of widgets/groups.  No more than 10 widgets 
+        or groups should be used in a column.
+        
+        Since the default alignment of widgets is a column, the 
+        <vgroup> element is only of use inside an <hgroup> element.
+
+-----------------------------------------------------------------------
+
   <_description>
         FREE TEXT
   </_description>
@@ -167,5 +198,10 @@ The tags and parameters used here are:
 
         Make sure you use "&lt;" instead of "<", etc.  Character
         entities are allowed; HTML (and other markup) is not.
+
+-----------------------------------------------------------------------
+
+If you are DTD-minded, you may also find the included files "xss.dtd"
+and "xss.xsd" useful.
 
 -----------------------------------------------------------------------

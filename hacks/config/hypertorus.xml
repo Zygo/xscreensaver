@@ -18,6 +18,16 @@
             arg-set="-solid"/>
     <option id="bands" _label="See-Through Bands"
             arg-set="-bands"/>
+    <option id="bands" _label="See-Through Spirals (1 Spiral)"
+            arg-set="-spirals-1"/>
+    <option id="bands" _label="See-Through Spirals (2 Spirals)"
+            arg-set="-spirals-2"/>
+    <option id="bands" _label="See-Through Spirals (4 Spirals)"
+            arg-set="-spirals-4"/>
+    <option id="bands" _label="See-Through Spirals (8 Spirals)"
+            arg-set="-spirals-8"/>
+    <option id="bands" _label="See-Through Spirals (16 Spirals)"
+            arg-set="-spirals-16"/>
   </select>
 
   <select id="colors">

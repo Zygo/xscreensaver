@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.22
-!                              22-Jun-2005
+!                              version 4.23
+!                              21-Oct-2005
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -226,7 +226,6 @@ GetViewPortIsFullOfLies: False
 				triangle -root -delay 1			    \n\
 -				worm -root				    \n\
 -				rotor -root				    \n\
--				ant -root				    \n\
 -				demon -root				    \n\
 -				loop -root				    \n\
 -				vines -root				    \n\
@@ -318,6 +317,7 @@ GetViewPortIsFullOfLies: False
 				fireworkx -root				    \n\
 				fiberlamp -root				    \n\
 				boxfit -root				    \n\
+				celtic -root				    \n\
 - default-n:			webcollage -root			    \n\
 - default-n:  "WebCollage (whacked)"					      \
 				webcollage -root -filter		      \
@@ -401,6 +401,10 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL:			tangram -root				    \n\
 @GL_KLUDGE@ GL:			crackberg -root -flat -lit -crack	      \
 				 -color random				    \n\
+@GL_KLUDGE@ GL:			glhanoi -root				    \n\
+@GL_KLUDGE@ GL:			cube21 -root -colormode six		    \n\
+@GL_KLUDGE@ GL:			timetunnel -root			    \n\
+@GL_KLUDGE@ GL:			juggler3d -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -543,6 +547,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.memscroller.name:    MemScroller
 *hacks.boxfit.name:         BoxFit
 *hacks.fliptext.name:       FlipText
+*hacks.glhanoi.name:        GLHanoi
 
 ! obsolete, but still used by xscreensaver-demo-Xm.
 *hacks.documentation.isInstalled: True

@@ -45,7 +45,7 @@ The font used for the messages.
 This program will be run periodically, and its output will be the text
 of the messages.  Default:
 
-    xscreensaver-text --cols 40 | head -15
+    xscreensaver-text --cols 40 | head -n15
 
 You can configure the text printed through the "Advanced" tab of
 .BR xscreensaver\-demo (1),

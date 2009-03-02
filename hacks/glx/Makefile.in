@@ -101,7 +101,7 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c \
 		  mirrorblob.c blinkbox.c noof.c polyhedra.c polyhedra-gl.c \
 		  antinspect.c providence.c pinion.c boing.c texfont.c \
 		  carousel.c fliptext.c antmaze.c tangram.c tangram_shapes.c \
-		  crackberg.c
+		  crackberg.c glhanoi.c cube21.c timetunnel.c juggler3d.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -132,7 +132,7 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o \
 		  mirrorblob.o blinkbox.o noof.o polyhedra.o polyhedra-gl.o \
 		  antinspect.o providence.o pinion.o boing.o texfont.o \
 		  carousel.o fliptext.o antmaze.o tangram.o tangram_shapes.o \
-		  crackberg.o
+		  crackberg.o glhanoi.o cube21.o timetunnel.o juggler3d.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -144,7 +144,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  glknots blocktube flipflop antspotlight polytopes \
 		  gleidescope mirrorblob blinkbox noof polyhedra \
 		  antinspect providence pinion boing carousel fliptext \
-		  antmaze tangram crackberg
+		  antmaze tangram crackberg glhanoi cube21 timetunnel juggler3d
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -164,7 +164,7 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  glut_roman.h marching.h rotator.h trackball.h gltrackball.h \
 		  chessmodels.h chessgames.h gllist.h flurry.h tunnel_draw.h \
 		  ants.h polyhedra.h normals.h glxfonts.h texfont.h \
-		  tangram_shapes.h
+		  tangram_shapes.h cube21-tex.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man glforestfire.man \
@@ -181,7 +181,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  mirrorblob.man blinkbox.man noof.man polyhedra.man \
 		  antinspect.man providence.man pinion.man boing.man \
 		  carousel.man fliptext.man antmaze.man tangram.man \
-		  crackberg.man
+		  crackberg.man glhanoi.man cube21.man timetunnel.man \
+		  juggler3d.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in dxf2gl.pl starwars.txt
 
@@ -586,8 +587,8 @@ jigglypuff:	jigglypuff.o	xpm-ximage.o $(HACK_TRACK_OBJS)
 klein:		klein.o		$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-hypertorus:	hypertorus.o	$(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+hypertorus:	hypertorus.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 glmatrix:	glmatrix.o	xpm-ximage.o $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_OBJS) $(XPM_LIBS)
@@ -607,8 +608,8 @@ flipflop:	flipflop.o	$(HACK_TRACK_OBJS)
 antspotlight:	antspotlight.o	$(HACK_TRACK_GRAB_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
 
-polytopes:	polytopes.o	$(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+polytopes:	polytopes.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 # This one works differently (it's not xlock-like.)
 #
@@ -669,11 +670,25 @@ fliptext:	fliptext.o	texfont.o $(HACK_OBJS)
 antmaze:	antmaze.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-tangram:	tangram.o	tangram_shapes.o $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	tangram_shapes.o $(HACK_OBJS) $(HACK_LIBS)
+TANGRAM_OBJS=tangram_shapes.o glxfonts.o $(HACK_OBJS)
+tangram:	tangram.o	$(TANGRAM_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(TANGRAM_OBJS) $(HACK_LIBS)
 
 crackberg:	crackberg.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+glhanoi:	glhanoi.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+cube21:		cube21.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+TIMETUNNEL_OBJS = xpm-ximage.o  $(HACK_TRACK_OBJS)
+timetunnel:	timetunnel.o	$(TIMETUNNEL_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(TIMETUNNEL_OBJS) $(XPM_LIBS)
+
+juggler3d:	juggler3d.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 dnalogo:	dnalogo.o      tube.o normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o  tube.o normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -746,6 +761,8 @@ cow_horns.o: $(srcdir)/gllist.h
 cow_tail.o: $(srcdir)/gllist.h
 cow_udder.o: $(srcdir)/gllist.h
 crackberg.o: ../../config.h
+cube21.o: ../../config.h
+cube21.o: $(srcdir)/cube21-tex.h
 cubenetic.o: ../../config.h
 cubenetic.o: $(srcdir)/gltrackball.h
 cubenetic.o: $(srcdir)/rotator.h
@@ -828,6 +845,8 @@ glforestfire.o: ../../config.h
 glforestfire.o: $(HACK_SRC)/images/ground.xpm
 glforestfire.o: $(HACK_SRC)/images/tree.xpm
 glforestfire.o: $(srcdir)/xpm-ximage.h
+glhanoi.o: ../../config.h
+glhanoi.o: $(srcdir)/rotator.h
 glknots.o: ../../config.h
 glknots.o: $(srcdir)/gltrackball.h
 glknots.o: $(srcdir)/rotator.h
@@ -865,10 +884,13 @@ glxfonts.o: ../../config.h
 glxfonts.o: $(srcdir)/glxfonts.h
 grab-ximage.o: ../../config.h
 hypertorus.o: ../../config.h
+hypertorus.o: $(srcdir)/gltrackball.h
 jigglypuff.o: ../../config.h
 jigglypuff.o: $(srcdir)/gltrackball.h
 jigglypuff.o: $(HACK_SRC)/images/jigglymap.xpm
 jigglypuff.o: $(srcdir)/xpm-ximage.h
+juggler3d.o: ../../config.h
+juggler3d.o: $(srcdir)/gltrackball.h
 klein.o: ../../config.h
 klein.o: $(srcdir)/gltrackball.h
 klein.o: $(srcdir)/rotator.h
@@ -922,6 +944,7 @@ polyhedra-gl.o: $(srcdir)/rotator.h
 polyhedra.o: ../../config.h
 polyhedra.o: $(srcdir)/polyhedra.h
 polytopes.o: ../../config.h
+polytopes.o: $(srcdir)/gltrackball.h
 providence.o: ../../config.h
 providence.o: $(srcdir)/gltrackball.h
 pulsar.o: ../../config.h
@@ -975,9 +998,19 @@ superquadrics.o: ../../config.h
 swim.o: $(srcdir)/atlantis.h
 swim.o: ../../config.h
 tangram.o: ../../config.h
+tangram.o: $(srcdir)/glxfonts.h
 tangram.o: $(srcdir)/tangram_shapes.h
 texfont.o: ../../config.h
 texfont.o: $(srcdir)/texfont.h
+timetunnel.o: ../../config.h
+timetunnel.o: $(srcdir)/gltrackball.h
+timetunnel.o: $(HACK_SRC)/images/timetunnel0.xpm
+timetunnel.o: $(HACK_SRC)/images/timetunnel1.xpm
+timetunnel.o: $(HACK_SRC)/images/timetunnel2.xpm
+timetunnel.o: $(HACK_SRC)/images/tunnelstar.xpm
+timetunnel.o: $(srcdir)/rotator.h
+timetunnel.o: $(UTILS_SRC)/images/logo-180.xpm
+timetunnel.o: $(srcdir)/xpm-ximage.h
 toast2.o: $(srcdir)/gllist.h
 toaster_base.o: $(srcdir)/gllist.h
 toaster_handle2.o: $(srcdir)/gllist.h

@@ -171,6 +171,15 @@ Rotation speed around the xz plane (default: 1.9).
 .TP 8
 .B \-speed-yz \fIfloat\fP
 Rotation speed around the yz plane (default: 2.1).
+.SH INTERACTION
+If you run this program in standalone mode you can rotate the polytope
+by dragging the mouse while pressing the left mouse button.  This
+rotates the polytope in 3D, i.e., around the wx, wy, and wz planes.
+If you press the shift key while dragging the mouse with the left
+button pressed the polytope is rotated in 4D, i.e., around the xy, xz,
+and yz planes.  To examine the polytope at your leisure, it is best to
+set all speeds to 0.  Otherwise, the polytope will rotate while the
+left mouse button is not pressed.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -184,7 +193,7 @@ stored in the RESOURCE_MANAGER property.
 .BR X (1),
 .BR xscreensaver (1)
 .SH COPYRIGHT
-Copyright \(co 2003 by Carsten Steger.  Permission to use, copy,
+Copyright \(co 2003-2005 by Carsten Steger.  Permission to use, copy,
 modify, distribute, and sell this software and its documentation for
 any purpose is hereby granted without fee, provided that the above
 copyright notice appear in all copies and that both that copyright
@@ -193,4 +202,4 @@ No representations are made about the suitability of this software for
 any purpose.  It is provided "as is" without express or implied
 warranty.
 .SH AUTHOR
-Carsten Steger <carsten@mirsanmir.org>, 10-aug-2003.
+Carsten Steger <carsten@mirsanmir.org>, 28-sep-2005.

@@ -30,157 +30,157 @@
 
   <select id="object">
 <option id="random" _label="Display Random Polyhedron"/>
-<option id="" _label="Pentagonal Prism" arg-set="-which pentagonal_prism"/>
-<option id="" _label="Pentagonal Dipyramid" arg-set="-which pentagonal_dipyramid"/>
-<option id="" _label="Pentagonal Antiprism" arg-set="-which pentagonal_antiprism"/>
-<option id="" _label="Pentagonal Deltohedron" arg-set="-which pentagonal_deltohedron"/>
-<option id="" _label="Pentagrammic Prism" arg-set="-which pentagrammic_prism"/>
-<option id="" _label="Pentagrammic Dipyramid" arg-set="-which pentagrammic_dipyramid"/>
-<option id="" _label="Pentagrammic Antiprism" arg-set="-which pentagrammic_antiprism"/>
-<option id="" _label="Pentagrammic Deltohedron" arg-set="-which pentagrammic_deltohedron"/>
-<option id="" _label="Pentagrammic Crossed Antiprism" arg-set="-which pentagrammic_crossed_antiprism"/>
-<option id="" _label="Pentagrammic Concave Deltohedron" arg-set="-which pentagrammic_concave_deltohedron"/>
-<option id="" _label="Tetrahedron" arg-set="-which tetrahedron"/>
-<option id="" _label="Truncated Tetrahedron" arg-set="-which truncated_tetrahedron"/>
-<option id="" _label="Triakistetrahedron" arg-set="-which triakistetrahedron"/>
-<option id="" _label="Octahemioctahedron" arg-set="-which octahemioctahedron"/>
-<option id="" _label="Octahemioctacron" arg-set="-which octahemioctacron"/>
-<option id="" _label="Tetrahemihexahedron" arg-set="-which tetrahemihexahedron"/>
-<option id="" _label="Tetrahemihexacron" arg-set="-which tetrahemihexacron"/>
-<option id="" _label="Octahedron" arg-set="-which octahedron"/>
-<option id="" _label="Cube" arg-set="-which cube"/>
-<option id="" _label="Cuboctahedron" arg-set="-which cuboctahedron"/>
-<option id="" _label="Rhombic Dodecahedron" arg-set="-which rhombic_dodecahedron"/>
-<option id="" _label="Truncated Octahedron" arg-set="-which truncated_octahedron"/>
-<option id="" _label="Tetrakishexahedron" arg-set="-which tetrakishexahedron"/>
-<option id="" _label="Truncated Cube" arg-set="-which truncated_cube"/>
-<option id="" _label="Triakisoctahedron" arg-set="-which triakisoctahedron"/>
-<option id="" _label="Rhombicuboctahedron" arg-set="-which rhombicuboctahedron"/>
-<option id="" _label="Deltoidal Icositetrahedron" arg-set="-which deltoidal_icositetrahedron"/>
-<option id="" _label="Truncated Cuboctahedron" arg-set="-which truncated_cuboctahedron"/>
-<option id="" _label="Disdyakisdodecahedron" arg-set="-which disdyakisdodecahedron"/>
-<option id="" _label="Snub Cube" arg-set="-which snub_cube"/>
-<option id="" _label="Pentagonal Icositetrahedron" arg-set="-which pentagonal_icositetrahedron"/>
-<option id="" _label="Small Cubicuboctahedron" arg-set="-which small_cubicuboctahedron"/>
-<option id="" _label="Small Hexacronic Icositetrahedron" arg-set="-which small_hexacronic_icositetrahedron"/>
-<option id="" _label="Great Cubicuboctahedron" arg-set="-which great_cubicuboctahedron"/>
-<option id="" _label="Great Hexacronic Icositetrahedron" arg-set="-which great_hexacronic_icositetrahedron"/>
-<option id="" _label="Cubohemioctahedron" arg-set="-which cubohemioctahedron"/>
-<option id="" _label="Hexahemioctacron" arg-set="-which hexahemioctacron"/>
-<option id="" _label="Cubitruncated Cuboctahedron" arg-set="-which cubitruncated_cuboctahedron"/>
-<option id="" _label="Tetradyakishexahedron" arg-set="-which tetradyakishexahedron"/>
-<option id="" _label="Great Rhombicuboctahedron" arg-set="-which great_rhombicuboctahedron"/>
-<option id="" _label="Great Deltoidal Icositetrahedron" arg-set="-which great_deltoidal_icositetrahedron"/>
-<option id="" _label="Small Rhombihexahedron" arg-set="-which small_rhombihexahedron"/>
-<option id="" _label="Small Rhombihexacron" arg-set="-which small_rhombihexacron"/>
-<option id="" _label="Stellated Truncated Hexahedron" arg-set="-which stellated_truncated_hexahedron"/>
-<option id="" _label="Great Triakisoctahedron" arg-set="-which great_triakisoctahedron"/>
-<option id="" _label="Great Truncated Cuboctahedron" arg-set="-which great_truncated_cuboctahedron"/>
-<option id="" _label="Great Disdyakisdodecahedron" arg-set="-which great_disdyakisdodecahedron"/>
-<option id="" _label="Great Rhombihexahedron" arg-set="-which great_rhombihexahedron"/>
-<option id="" _label="Great Rhombihexacron" arg-set="-which great_rhombihexacron"/>
-<option id="" _label="Icosahedron" arg-set="-which icosahedron"/>
-<option id="" _label="Dodecahedron" arg-set="-which dodecahedron"/>
-<option id="" _label="Icosidodecahedron" arg-set="-which icosidodecahedron"/>
-<option id="" _label="Rhombic Triacontahedron" arg-set="-which rhombic_triacontahedron"/>
-<option id="" _label="Truncated Icosahedron" arg-set="-which truncated_icosahedron"/>
-<option id="" _label="Pentakisdodecahedron" arg-set="-which pentakisdodecahedron"/>
-<option id="" _label="Truncated Dodecahedron" arg-set="-which truncated_dodecahedron"/>
-<option id="" _label="Triakisicosahedron" arg-set="-which triakisicosahedron"/>
-<option id="" _label="Rhombicosidodecahedron" arg-set="-which rhombicosidodecahedron"/>
-<option id="" _label="Deltoidal Hexecontahedron" arg-set="-which deltoidal_hexecontahedron"/>
-<option id="" _label="Truncated Icosidodechedon" arg-set="-which truncated_icosidodechedon"/>
-<option id="" _label="Disdyakistriacontahedron" arg-set="-which disdyakistriacontahedron"/>
-<option id="" _label="Snub Dodecahedron" arg-set="-which snub_dodecahedron"/>
-<option id="" _label="Pentagonal Hexecontahedron" arg-set="-which pentagonal_hexecontahedron"/>
-<option id="" _label="Small Ditrigonal Icosidodecahedron" arg-set="-which small_ditrigonal_icosidodecahedron"/>
-<option id="" _label="Small Triambic Icosahedron" arg-set="-which small_triambic_icosahedron"/>
-<option id="" _label="Small Icosicosidodecahedron" arg-set="-which small_icosicosidodecahedron"/>
-<option id="" _label="Small Icosacronic Hexecontahedron" arg-set="-which small_icosacronic_hexecontahedron"/>
-<option id="" _label="Small Snub Icosicosidodecahedron" arg-set="-which small_snub_icosicosidodecahedron"/>
-<option id="" _label="Small Hexagonal Hexecontahedron" arg-set="-which small_hexagonal_hexecontahedron"/>
-<option id="" _label="Small Dodecicosidodecahedron" arg-set="-which small_dodecicosidodecahedron"/>
-<option id="" _label="Small Dodecacronic Hexecontahedron" arg-set="-which small_dodecacronic_hexecontahedron"/>
-<option id="" _label="Small Stellated Dodecahedron" arg-set="-which small_stellated_dodecahedron"/>
-<option id="" _label="Great Dodecahedron" arg-set="-which great_dodecahedron"/>
-<option id="" _label="Great Dodecadodecahedron" arg-set="-which great_dodecadodecahedron"/>
-<option id="" _label="Medial Rhombic Triacontahedron" arg-set="-which medial_rhombic_triacontahedron"/>
-<option id="" _label="Truncated Great Dodecahedron" arg-set="-which truncated_great_dodecahedron"/>
-<option id="" _label="Small Stellapentakisdodecahedron" arg-set="-which small_stellapentakisdodecahedron"/>
-<option id="" _label="Rhombidodecadodecahedron" arg-set="-which rhombidodecadodecahedron"/>
-<option id="" _label="Medial Deltoidal Hexecontahedron" arg-set="-which medial_deltoidal_hexecontahedron"/>
-<option id="" _label="Small Rhombidodecahedron" arg-set="-which small_rhombidodecahedron"/>
-<option id="" _label="Small Rhombidodecacron" arg-set="-which small_rhombidodecacron"/>
-<option id="" _label="Snub Dodecadodecahedron" arg-set="-which snub_dodecadodecahedron"/>
-<option id="" _label="Medial Pentagonal Hexecontahedron" arg-set="-which medial_pentagonal_hexecontahedron"/>
-<option id="" _label="Ditrigonal Dodecadodecahedron" arg-set="-which ditrigonal_dodecadodecahedron"/>
-<option id="" _label="Medial Triambic Icosahedron" arg-set="-which medial_triambic_icosahedron"/>
-<option id="" _label="Great Ditrigonal Dodecicosidodecahedron" arg-set="-which great_ditrigonal_dodecicosidodecahedron"/>
-<option id="" _label="Great Ditrigonal Dodecacronic Hexecontahedron" arg-set="-which great_ditrigonal_dodecacronic_hexecontahedron"/>
-<option id="" _label="Small Ditrigonal Dodecicosidodecahedron" arg-set="-which small_ditrigonal_dodecicosidodecahedron"/>
-<option id="" _label="Small Ditrigonal Dodecacronic Hexecontahedron" arg-set="-which small_ditrigonal_dodecacronic_hexecontahedron"/>
-<option id="" _label="Icosidodecadodecahedron" arg-set="-which icosidodecadodecahedron"/>
-<option id="" _label="Medial Icosacronic Hexecontahedron" arg-set="-which medial_icosacronic_hexecontahedron"/>
-<option id="" _label="Icositruncated Dodecadodecahedron" arg-set="-which icositruncated_dodecadodecahedron"/>
-<option id="" _label="Tridyakisicosahedron" arg-set="-which tridyakisicosahedron"/>
-<option id="" _label="Snub Icosidodecadodecahedron" arg-set="-which snub_icosidodecadodecahedron"/>
-<option id="" _label="Medial Hexagonal Hexecontahedron" arg-set="-which medial_hexagonal_hexecontahedron"/>
-<option id="" _label="Great Ditrigonal Icosidodecahedron" arg-set="-which great_ditrigonal_icosidodecahedron"/>
-<option id="" _label="Great Triambic Icosahedron" arg-set="-which great_triambic_icosahedron"/>
-<option id="" _label="Great Icosicosidodecahedron" arg-set="-which great_icosicosidodecahedron"/>
-<option id="" _label="Great Icosacronic Hexecontahedron" arg-set="-which great_icosacronic_hexecontahedron"/>
-<option id="" _label="Small Icosihemidodecahedron" arg-set="-which small_icosihemidodecahedron"/>
-<option id="" _label="Small Icosihemidodecacron" arg-set="-which small_icosihemidodecacron"/>
-<option id="" _label="Small Dodecicosahedron" arg-set="-which small_dodecicosahedron"/>
-<option id="" _label="Small Dodecicosacron" arg-set="-which small_dodecicosacron"/>
-<option id="" _label="Small Dodecahemidodecahedron" arg-set="-which small_dodecahemidodecahedron"/>
-<option id="" _label="Small Dodecahemidodecacron" arg-set="-which small_dodecahemidodecacron"/>
-<option id="" _label="Great Stellated Dodecahedron" arg-set="-which great_stellated_dodecahedron"/>
-<option id="" _label="Great Icosahedron" arg-set="-which great_icosahedron"/>
-<option id="" _label="Great Icosidodecahedron" arg-set="-which great_icosidodecahedron"/>
-<option id="" _label="Great Rhombic Triacontahedron" arg-set="-which great_rhombic_triacontahedron"/>
-<option id="" _label="Great Truncated Icosahedron" arg-set="-which great_truncated_icosahedron"/>
-<option id="" _label="Great Stellapentakisdodecahedron" arg-set="-which great_stellapentakisdodecahedron"/>
-<option id="" _label="Rhombicosahedron" arg-set="-which rhombicosahedron"/>
-<option id="" _label="Rhombicosacron" arg-set="-which rhombicosacron"/>
-<option id="" _label="Great Snub Icosidodecahedron" arg-set="-which great_snub_icosidodecahedron"/>
-<option id="" _label="Great Pentagonal Hexecontahedron" arg-set="-which great_pentagonal_hexecontahedron"/>
-<option id="" _label="Small Stellated Truncated Dodecahedron" arg-set="-which small_stellated_truncated_dodecahedron"/>
-<option id="" _label="Great Pentakisdodekahedron" arg-set="-which great_pentakisdodekahedron"/>
-<option id="" _label="Truncated Dodecadodecahedron" arg-set="-which truncated_dodecadodecahedron"/>
-<option id="" _label="Medial Disdyakistriacontahedron" arg-set="-which medial_disdyakistriacontahedron"/>
-<option id="" _label="Inverted Snub Dodecadodecahedron" arg-set="-which inverted_snub_dodecadodecahedron"/>
-<option id="" _label="Medial Inverted Pentagonal Hexecontahedron" arg-set="-which medial_inverted_pentagonal_hexecontahedron"/>
-<option id="" _label="Great Dodecicosidodecahedron" arg-set="-which great_dodecicosidodecahedron"/>
-<option id="" _label="Great Dodecacronic Hexecontahedron" arg-set="-which great_dodecacronic_hexecontahedron"/>
-<option id="" _label="Small Dodecahemicosahedron" arg-set="-which small_dodecahemicosahedron"/>
-<option id="" _label="Small Dodecahemicosacron" arg-set="-which small_dodecahemicosacron"/>
-<option id="" _label="Great Dodecicosahedron" arg-set="-which great_dodecicosahedron"/>
-<option id="" _label="Great Dodecicosacron" arg-set="-which great_dodecicosacron"/>
-<option id="" _label="Great Snub Dodecicosidodecahedron" arg-set="-which great_snub_dodecicosidodecahedron"/>
-<option id="" _label="Great Hexagonal Hexecontahedron" arg-set="-which great_hexagonal_hexecontahedron"/>
-<option id="" _label="Great Dodecahemicosahedron" arg-set="-which great_dodecahemicosahedron"/>
-<option id="" _label="Great Dodecahemicosacron" arg-set="-which great_dodecahemicosacron"/>
-<option id="" _label="Great Stellated Truncated Dodecahedron" arg-set="-which great_stellated_truncated_dodecahedron"/>
-<option id="" _label="Great Triakisicosahedron" arg-set="-which great_triakisicosahedron"/>
-<option id="" _label="Great Rhombicosidodecahedron" arg-set="-which great_rhombicosidodecahedron"/>
-<option id="" _label="Great Deltoidal Hexecontahedron" arg-set="-which great_deltoidal_hexecontahedron"/>
-<option id="" _label="Great Truncated Icosidodecahedron" arg-set="-which great_truncated_icosidodecahedron"/>
-<option id="" _label="Great Disdyakistriacontahedron" arg-set="-which great_disdyakistriacontahedron"/>
-<option id="" _label="Great Inverted Snub Icosidodecahedron" arg-set="-which great_inverted_snub_icosidodecahedron"/>
-<option id="" _label="Great Inverted Pentagonal Hexecontahedron" arg-set="-which great_inverted_pentagonal_hexecontahedron"/>
-<option id="" _label="Great Dodecahemidodecahedron" arg-set="-which great_dodecahemidodecahedron"/>
-<option id="" _label="Great Dodecahemidodecacron" arg-set="-which great_dodecahemidodecacron"/>
-<option id="" _label="Great Icosihemidodecahedron" arg-set="-which great_icosihemidodecahedron"/>
-<option id="" _label="Great Icosihemidodecacron" arg-set="-which great_icosihemidodecacron"/>
-<option id="" _label="Small Retrosnub Icosicosidodecahedron" arg-set="-which small_retrosnub_icosicosidodecahedron"/>
-<option id="" _label="Small Hexagrammic Hexecontahedron" arg-set="-which small_hexagrammic_hexecontahedron"/>
-<option id="" _label="Great Rhombidodecahedron" arg-set="-which great_rhombidodecahedron"/>
-<option id="" _label="Great Rhombidodecacron" arg-set="-which great_rhombidodecacron"/>
-<option id="" _label="Great Retrosnub Icosidodecahedron" arg-set="-which great_retrosnub_icosidodecahedron"/>
-<option id="" _label="Great Pentagrammic Hexecontahedron" arg-set="-which great_pentagrammic_hexecontahedron"/>
-<option id="" _label="Great Dirhombicosidodecahedron" arg-set="-which great_dirhombicosidodecahedron"/>
-<option id="" _label="Great Dirhombicosidodecacron" arg-set="-which great_dirhombicosidodecacron"/>
+<option _label="Pentagonal Prism" arg-set="-which pentagonal_prism"/>
+<option _label="Pentagonal Dipyramid" arg-set="-which pentagonal_dipyramid"/>
+<option _label="Pentagonal Antiprism" arg-set="-which pentagonal_antiprism"/>
+<option _label="Pentagonal Deltohedron" arg-set="-which pentagonal_deltohedron"/>
+<option _label="Pentagrammic Prism" arg-set="-which pentagrammic_prism"/>
+<option _label="Pentagrammic Dipyramid" arg-set="-which pentagrammic_dipyramid"/>
+<option _label="Pentagrammic Antiprism" arg-set="-which pentagrammic_antiprism"/>
+<option _label="Pentagrammic Deltohedron" arg-set="-which pentagrammic_deltohedron"/>
+<option _label="Pentagrammic Crossed Antiprism" arg-set="-which pentagrammic_crossed_antiprism"/>
+<option _label="Pentagrammic Concave Deltohedron" arg-set="-which pentagrammic_concave_deltohedron"/>
+<option _label="Tetrahedron" arg-set="-which tetrahedron"/>
+<option _label="Truncated Tetrahedron" arg-set="-which truncated_tetrahedron"/>
+<option _label="Triakistetrahedron" arg-set="-which triakistetrahedron"/>
+<option _label="Octahemioctahedron" arg-set="-which octahemioctahedron"/>
+<option _label="Octahemioctacron" arg-set="-which octahemioctacron"/>
+<option _label="Tetrahemihexahedron" arg-set="-which tetrahemihexahedron"/>
+<option _label="Tetrahemihexacron" arg-set="-which tetrahemihexacron"/>
+<option _label="Octahedron" arg-set="-which octahedron"/>
+<option _label="Cube" arg-set="-which cube"/>
+<option _label="Cuboctahedron" arg-set="-which cuboctahedron"/>
+<option _label="Rhombic Dodecahedron" arg-set="-which rhombic_dodecahedron"/>
+<option _label="Truncated Octahedron" arg-set="-which truncated_octahedron"/>
+<option _label="Tetrakishexahedron" arg-set="-which tetrakishexahedron"/>
+<option _label="Truncated Cube" arg-set="-which truncated_cube"/>
+<option _label="Triakisoctahedron" arg-set="-which triakisoctahedron"/>
+<option _label="Rhombicuboctahedron" arg-set="-which rhombicuboctahedron"/>
+<option _label="Deltoidal Icositetrahedron" arg-set="-which deltoidal_icositetrahedron"/>
+<option _label="Truncated Cuboctahedron" arg-set="-which truncated_cuboctahedron"/>
+<option _label="Disdyakisdodecahedron" arg-set="-which disdyakisdodecahedron"/>
+<option _label="Snub Cube" arg-set="-which snub_cube"/>
+<option _label="Pentagonal Icositetrahedron" arg-set="-which pentagonal_icositetrahedron"/>
+<option _label="Small Cubicuboctahedron" arg-set="-which small_cubicuboctahedron"/>
+<option _label="Small Hexacronic Icositetrahedron" arg-set="-which small_hexacronic_icositetrahedron"/>
+<option _label="Great Cubicuboctahedron" arg-set="-which great_cubicuboctahedron"/>
+<option _label="Great Hexacronic Icositetrahedron" arg-set="-which great_hexacronic_icositetrahedron"/>
+<option _label="Cubohemioctahedron" arg-set="-which cubohemioctahedron"/>
+<option _label="Hexahemioctacron" arg-set="-which hexahemioctacron"/>
+<option _label="Cubitruncated Cuboctahedron" arg-set="-which cubitruncated_cuboctahedron"/>
+<option _label="Tetradyakishexahedron" arg-set="-which tetradyakishexahedron"/>
+<option _label="Great Rhombicuboctahedron" arg-set="-which great_rhombicuboctahedron"/>
+<option _label="Great Deltoidal Icositetrahedron" arg-set="-which great_deltoidal_icositetrahedron"/>
+<option _label="Small Rhombihexahedron" arg-set="-which small_rhombihexahedron"/>
+<option _label="Small Rhombihexacron" arg-set="-which small_rhombihexacron"/>
+<option _label="Stellated Truncated Hexahedron" arg-set="-which stellated_truncated_hexahedron"/>
+<option _label="Great Triakisoctahedron" arg-set="-which great_triakisoctahedron"/>
+<option _label="Great Truncated Cuboctahedron" arg-set="-which great_truncated_cuboctahedron"/>
+<option _label="Great Disdyakisdodecahedron" arg-set="-which great_disdyakisdodecahedron"/>
+<option _label="Great Rhombihexahedron" arg-set="-which great_rhombihexahedron"/>
+<option _label="Great Rhombihexacron" arg-set="-which great_rhombihexacron"/>
+<option _label="Icosahedron" arg-set="-which icosahedron"/>
+<option _label="Dodecahedron" arg-set="-which dodecahedron"/>
+<option _label="Icosidodecahedron" arg-set="-which icosidodecahedron"/>
+<option _label="Rhombic Triacontahedron" arg-set="-which rhombic_triacontahedron"/>
+<option _label="Truncated Icosahedron" arg-set="-which truncated_icosahedron"/>
+<option _label="Pentakisdodecahedron" arg-set="-which pentakisdodecahedron"/>
+<option _label="Truncated Dodecahedron" arg-set="-which truncated_dodecahedron"/>
+<option _label="Triakisicosahedron" arg-set="-which triakisicosahedron"/>
+<option _label="Rhombicosidodecahedron" arg-set="-which rhombicosidodecahedron"/>
+<option _label="Deltoidal Hexecontahedron" arg-set="-which deltoidal_hexecontahedron"/>
+<option _label="Truncated Icosidodechedon" arg-set="-which truncated_icosidodechedon"/>
+<option _label="Disdyakistriacontahedron" arg-set="-which disdyakistriacontahedron"/>
+<option _label="Snub Dodecahedron" arg-set="-which snub_dodecahedron"/>
+<option _label="Pentagonal Hexecontahedron" arg-set="-which pentagonal_hexecontahedron"/>
+<option _label="Small Ditrigonal Icosidodecahedron" arg-set="-which small_ditrigonal_icosidodecahedron"/>
+<option _label="Small Triambic Icosahedron" arg-set="-which small_triambic_icosahedron"/>
+<option _label="Small Icosicosidodecahedron" arg-set="-which small_icosicosidodecahedron"/>
+<option _label="Small Icosacronic Hexecontahedron" arg-set="-which small_icosacronic_hexecontahedron"/>
+<option _label="Small Snub Icosicosidodecahedron" arg-set="-which small_snub_icosicosidodecahedron"/>
+<option _label="Small Hexagonal Hexecontahedron" arg-set="-which small_hexagonal_hexecontahedron"/>
+<option _label="Small Dodecicosidodecahedron" arg-set="-which small_dodecicosidodecahedron"/>
+<option _label="Small Dodecacronic Hexecontahedron" arg-set="-which small_dodecacronic_hexecontahedron"/>
+<option _label="Small Stellated Dodecahedron" arg-set="-which small_stellated_dodecahedron"/>
+<option _label="Great Dodecahedron" arg-set="-which great_dodecahedron"/>
+<option _label="Great Dodecadodecahedron" arg-set="-which great_dodecadodecahedron"/>
+<option _label="Medial Rhombic Triacontahedron" arg-set="-which medial_rhombic_triacontahedron"/>
+<option _label="Truncated Great Dodecahedron" arg-set="-which truncated_great_dodecahedron"/>
+<option _label="Small Stellapentakisdodecahedron" arg-set="-which small_stellapentakisdodecahedron"/>
+<option _label="Rhombidodecadodecahedron" arg-set="-which rhombidodecadodecahedron"/>
+<option _label="Medial Deltoidal Hexecontahedron" arg-set="-which medial_deltoidal_hexecontahedron"/>
+<option _label="Small Rhombidodecahedron" arg-set="-which small_rhombidodecahedron"/>
+<option _label="Small Rhombidodecacron" arg-set="-which small_rhombidodecacron"/>
+<option _label="Snub Dodecadodecahedron" arg-set="-which snub_dodecadodecahedron"/>
+<option _label="Medial Pentagonal Hexecontahedron" arg-set="-which medial_pentagonal_hexecontahedron"/>
+<option _label="Ditrigonal Dodecadodecahedron" arg-set="-which ditrigonal_dodecadodecahedron"/>
+<option _label="Medial Triambic Icosahedron" arg-set="-which medial_triambic_icosahedron"/>
+<option _label="Great Ditrigonal Dodecicosidodecahedron" arg-set="-which great_ditrigonal_dodecicosidodecahedron"/>
+<option _label="Great Ditrigonal Dodecacronic Hexecontahedron" arg-set="-which great_ditrigonal_dodecacronic_hexecontahedron"/>
+<option _label="Small Ditrigonal Dodecicosidodecahedron" arg-set="-which small_ditrigonal_dodecicosidodecahedron"/>
+<option _label="Small Ditrigonal Dodecacronic Hexecontahedron" arg-set="-which small_ditrigonal_dodecacronic_hexecontahedron"/>
+<option _label="Icosidodecadodecahedron" arg-set="-which icosidodecadodecahedron"/>
+<option _label="Medial Icosacronic Hexecontahedron" arg-set="-which medial_icosacronic_hexecontahedron"/>
+<option _label="Icositruncated Dodecadodecahedron" arg-set="-which icositruncated_dodecadodecahedron"/>
+<option _label="Tridyakisicosahedron" arg-set="-which tridyakisicosahedron"/>
+<option _label="Snub Icosidodecadodecahedron" arg-set="-which snub_icosidodecadodecahedron"/>
+<option _label="Medial Hexagonal Hexecontahedron" arg-set="-which medial_hexagonal_hexecontahedron"/>
+<option _label="Great Ditrigonal Icosidodecahedron" arg-set="-which great_ditrigonal_icosidodecahedron"/>
+<option _label="Great Triambic Icosahedron" arg-set="-which great_triambic_icosahedron"/>
+<option _label="Great Icosicosidodecahedron" arg-set="-which great_icosicosidodecahedron"/>
+<option _label="Great Icosacronic Hexecontahedron" arg-set="-which great_icosacronic_hexecontahedron"/>
+<option _label="Small Icosihemidodecahedron" arg-set="-which small_icosihemidodecahedron"/>
+<option _label="Small Icosihemidodecacron" arg-set="-which small_icosihemidodecacron"/>
+<option _label="Small Dodecicosahedron" arg-set="-which small_dodecicosahedron"/>
+<option _label="Small Dodecicosacron" arg-set="-which small_dodecicosacron"/>
+<option _label="Small Dodecahemidodecahedron" arg-set="-which small_dodecahemidodecahedron"/>
+<option _label="Small Dodecahemidodecacron" arg-set="-which small_dodecahemidodecacron"/>
+<option _label="Great Stellated Dodecahedron" arg-set="-which great_stellated_dodecahedron"/>
+<option _label="Great Icosahedron" arg-set="-which great_icosahedron"/>
+<option _label="Great Icosidodecahedron" arg-set="-which great_icosidodecahedron"/>
+<option _label="Great Rhombic Triacontahedron" arg-set="-which great_rhombic_triacontahedron"/>
+<option _label="Great Truncated Icosahedron" arg-set="-which great_truncated_icosahedron"/>
+<option _label="Great Stellapentakisdodecahedron" arg-set="-which great_stellapentakisdodecahedron"/>
+<option _label="Rhombicosahedron" arg-set="-which rhombicosahedron"/>
+<option _label="Rhombicosacron" arg-set="-which rhombicosacron"/>
+<option _label="Great Snub Icosidodecahedron" arg-set="-which great_snub_icosidodecahedron"/>
+<option _label="Great Pentagonal Hexecontahedron" arg-set="-which great_pentagonal_hexecontahedron"/>
+<option _label="Small Stellated Truncated Dodecahedron" arg-set="-which small_stellated_truncated_dodecahedron"/>
+<option _label="Great Pentakisdodekahedron" arg-set="-which great_pentakisdodekahedron"/>
+<option _label="Truncated Dodecadodecahedron" arg-set="-which truncated_dodecadodecahedron"/>
+<option _label="Medial Disdyakistriacontahedron" arg-set="-which medial_disdyakistriacontahedron"/>
+<option _label="Inverted Snub Dodecadodecahedron" arg-set="-which inverted_snub_dodecadodecahedron"/>
+<option _label="Medial Inverted Pentagonal Hexecontahedron" arg-set="-which medial_inverted_pentagonal_hexecontahedron"/>
+<option _label="Great Dodecicosidodecahedron" arg-set="-which great_dodecicosidodecahedron"/>
+<option _label="Great Dodecacronic Hexecontahedron" arg-set="-which great_dodecacronic_hexecontahedron"/>
+<option _label="Small Dodecahemicosahedron" arg-set="-which small_dodecahemicosahedron"/>
+<option _label="Small Dodecahemicosacron" arg-set="-which small_dodecahemicosacron"/>
+<option _label="Great Dodecicosahedron" arg-set="-which great_dodecicosahedron"/>
+<option _label="Great Dodecicosacron" arg-set="-which great_dodecicosacron"/>
+<option _label="Great Snub Dodecicosidodecahedron" arg-set="-which great_snub_dodecicosidodecahedron"/>
+<option _label="Great Hexagonal Hexecontahedron" arg-set="-which great_hexagonal_hexecontahedron"/>
+<option _label="Great Dodecahemicosahedron" arg-set="-which great_dodecahemicosahedron"/>
+<option _label="Great Dodecahemicosacron" arg-set="-which great_dodecahemicosacron"/>
+<option _label="Great Stellated Truncated Dodecahedron" arg-set="-which great_stellated_truncated_dodecahedron"/>
+<option _label="Great Triakisicosahedron" arg-set="-which great_triakisicosahedron"/>
+<option _label="Great Rhombicosidodecahedron" arg-set="-which great_rhombicosidodecahedron"/>
+<option _label="Great Deltoidal Hexecontahedron" arg-set="-which great_deltoidal_hexecontahedron"/>
+<option _label="Great Truncated Icosidodecahedron" arg-set="-which great_truncated_icosidodecahedron"/>
+<option _label="Great Disdyakistriacontahedron" arg-set="-which great_disdyakistriacontahedron"/>
+<option _label="Great Inverted Snub Icosidodecahedron" arg-set="-which great_inverted_snub_icosidodecahedron"/>
+<option _label="Great Inverted Pentagonal Hexecontahedron" arg-set="-which great_inverted_pentagonal_hexecontahedron"/>
+<option _label="Great Dodecahemidodecahedron" arg-set="-which great_dodecahemidodecahedron"/>
+<option _label="Great Dodecahemidodecacron" arg-set="-which great_dodecahemidodecacron"/>
+<option _label="Great Icosihemidodecahedron" arg-set="-which great_icosihemidodecahedron"/>
+<option _label="Great Icosihemidodecacron" arg-set="-which great_icosihemidodecacron"/>
+<option _label="Small Retrosnub Icosicosidodecahedron" arg-set="-which small_retrosnub_icosicosidodecahedron"/>
+<option _label="Small Hexagrammic Hexecontahedron" arg-set="-which small_hexagrammic_hexecontahedron"/>
+<option _label="Great Rhombidodecahedron" arg-set="-which great_rhombidodecahedron"/>
+<option _label="Great Rhombidodecacron" arg-set="-which great_rhombidodecacron"/>
+<option _label="Great Retrosnub Icosidodecahedron" arg-set="-which great_retrosnub_icosidodecahedron"/>
+<option _label="Great Pentagrammic Hexecontahedron" arg-set="-which great_pentagrammic_hexecontahedron"/>
+<option _label="Great Dirhombicosidodecahedron" arg-set="-which great_dirhombicosidodecahedron"/>
+<option _label="Great Dirhombicosidodecacron" arg-set="-which great_dirhombicosidodecacron"/>
   </select>
 
 
@@ -191,8 +191,8 @@
 
   <_description>
 Displays different 3D solids and some information about each.
-A new solid is chosen every few seconds.  There are 75 uniform 
-polyhedra, plus 5 inifite sets of prisms and antiprisms; 
+A new solid is chosen every few seconds.  There are 75 uniform
+polyhedra, plus 5 infinite sets of prisms and antiprisms;
 including their duals brings the total to 160.
 
 Written by Dr. Zvi Har'El and Jamie Zawinski.

@@ -5,7 +5,6 @@ $ mydisk = f$trnlmn("SYS$DISK")
 $ mydir  = mydisk+f$directory()
 $ anemone	:== $'mydir'anemone
 $ anemotaxis	:== $'mydir'anemotaxis
-$ ant		:== $'mydir'ant
 $ apollonian	:== $'mydir'apollonian
 $ apple2	:== $'mydir'apple2
 $ attraction	:== $'mydir'attraction
@@ -19,6 +18,7 @@ $ bsod		:== $'mydir'bsod
 $ bubbles	:== $'mydir'bubbles
 $ bumps		:== $'mydir'bumps
 $ ccurve	:== $'mydir'ccurve
+$ celtic	:== $'mydir'celtic
 $ cloudlife	:== $'mydir'cloudlife
 $ compass	:== $'mydir'compass
 $ coral		:== $'mydir'coral

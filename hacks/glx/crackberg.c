@@ -719,7 +719,7 @@ static void triles_set_visible(cberg_state *cberg, Trile **root, int x, int y)
 {
     Trile *parent = NULL, 
           *iter = *root;
-    int goleft;
+    int goleft=0;
 
     while (iter != NULL) {
         parent = iter;
@@ -999,7 +999,7 @@ static void find_bounds(double y, double *left, double *right, LS *ls,
 
 static void mark_visible(cberg_state *cberg)
 {
-    double trough, peak, yval, left, right;
+    double trough, peak, yval, left=0, right=0;
     double x1,y1, x2,y2, x3,y3, x4,y4;
     int start, stop, x, y;
     LS ls[4];

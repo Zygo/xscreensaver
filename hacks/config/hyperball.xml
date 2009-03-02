@@ -19,31 +19,31 @@
     <vgroup>
       <number id="xw" type="slider" arg="-xw %"
               _label="XW Rotation" _low-label="Low" _high-label="High"
-              low="0" high="20" value="0"/>
+              low="0" high="20" default="0"/>
       <number id="xy" type="slider" arg="-xy %"
               _label="XY Rotation" _low-label="Low" _high-label="High"
-              low="0" high="20" value="3"/>
+              low="0" high="20" default="3"/>
       <number id="xz" type="slider" arg="-xz %"
               _label="XZ Rotation" _low-label="Low" _high-label="High"
-              low="0" high="20" value="5"/>
+              low="0" high="20" default="5"/>
     </vgroup>
     <vgroup>
       <number id="yw" type="slider" arg="-yw %"
               _label="YW Rotation" _low-label="Low" _high-label="High"
-              low="0" high="20" value="10"/>
+              low="0" high="20" default="10"/>
       <number id="yz" type="slider" arg="-yz %"
               _label="YZ Rotation" _low-label="Low" _high-label="High"
-              low="0" high="20" value="0"/>
+              low="0" high="20" default="0"/>
       <number id="zw" type="slider" arg="-zw %"
               _label="ZW Rotation" _low-label="Low" _high-label="High"
-              low="0" high="20" value="0"/>
+              low="0" high="20" default="0"/>
     </vgroup>
   </hgroup>
 
   <_description>
 Hyperball is to hypercube as dodecahedron is to cube: this displays
 a 2D projection of the sequence of 3D objects which are the projections
-of the 4D analog to the dodecahedron.  Technically, it is a "120 cell 
+of the 4D analog to the dodecahedron.  Technically, it is a "120 cell
 polytope."  Written by Joe Keane.
 
 See also the "polytopes" hack for a more general version of this

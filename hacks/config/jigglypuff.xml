@@ -44,14 +44,14 @@
   <boolean id="wireframe" _label="Wireframe" arg-set="-wireframe"/>
 
   <select id="color">
-   <option id="cycle"     _label="Cycle" arg-set=""/>
+   <option id="cycle"     _label="Cycle" />
    <option id="flowerbox" _label="Flower box" arg-set="-color flowerbox"/>
    <option id="clownbarf" _label="Clown barf" arg-set="-color clownbarf"/>
    <option id="chrome" _label="Chrome" arg-set="-color chrome"/>
   </select>
 
   <select id="start">
-   <option id="sphere" _label="Sphere" arg-set=""/>
+   <option id="sphere" _label="Sphere" />
    <option id="tetrahedron" _label="Tetrahedron" arg-set="-tetra"/>
   </select>
 

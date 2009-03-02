@@ -60,20 +60,21 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.127 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.129 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2005" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
 
 
 
-my @search_methods = (  58, "altavista",    \&pick_from_alta_vista_random_link,
+my @search_methods = (  56, "altavista",    \&pick_from_alta_vista_random_link,
                         11, "livejournal",  \&pick_from_livejournal_images,
-                         7, "yahoorand",    \&pick_from_yahoo_random_link,
+                         5, "yahoorand",    \&pick_from_yahoo_random_link,
                         10, "googlephotos", \&pick_from_google_image_photos,
-                         6, "googleimgs",   \&pick_from_google_images,
+                         5, "googleimgs",   \&pick_from_google_images,
                          3, "googlenums",   \&pick_from_google_image_numbers,
-                         5, "flickr",       \&pick_from_flickr,
+                         2, "flickr_recent", \&pick_from_flickr_recent,
+                         8, "flickr_random", \&pick_from_flickr_random,
 
                      # In Apr 2002, Google asked me to stop searching them.
                      # I asked them to add a "random link" url.  They said
@@ -803,6 +804,29 @@ sub pick_image_from_body($$) {
   return $url;
 }
 
+# Given a URL and the RSS feed from that URL, pick a random image from
+# the feed.  This is a lot simpler than extracting images out of a page:
+# we already know we have reasonable images, so we just pick one.
+# Returns: the real URL of the page (preferably not the RSS version),
+# and the image.
+
+sub pick_image_from_rss($$) {
+  my ( $url, $body ) = @_;
+  my @suitable = ($body =~ m/<enclosure url="(.*?)"/g);
+
+  my ($base) = ($body =~ m@<link>([^<>]+)</link>@i);
+  $base = $url unless $base;
+
+  # pick a random element of the table
+  if (@suitable) {
+    my $i = int(rand(scalar @suitable));
+    my $url = $suitable[$i];
+    LOG ($verbose_load, "picked image " .($i+1) . "/" . 
+                        ($#suitable+1) . ": $url");
+    return ($base, $url);
+  }
+  return;
+}
 
 
 ############################################################################
@@ -1763,8 +1787,8 @@ my @flickr_cache = (); # fifo, for ordering by age
 my %flickr_cache = (); # hash, for detecting dups
 
 
-# flickr
-sub pick_from_flickr($) {
+# flickr_recent
+sub pick_from_flickr_recent($) {
   my ($timeout) = @_;
 
   my $start = 16 * int(rand(100));
@@ -1829,6 +1853,47 @@ sub pick_from_flickr($) {
   LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
 
   return ($page, $img);
+}
+
+
+############################################################################
+#
+# Pick images from a random RSS feed on Flickr.
+#
+############################################################################
+
+my $flickr_rss_base = ("http://www.flickr.com/services/feeds/photos_public.gne" .
+                       "?format=rss_200_enc&tags=");
+
+# Picks a random RSS feed; picks a random image from that feed;
+# returns 2 URLs: the page containing the image, and the image.
+# Mostly by Joe Mcmahon <mcmahon@yahoo-inc.com>
+#
+# flickr_random
+sub pick_from_flickr_random($) {
+  my $timeout = shift;
+
+  my $rss = $flickr_rss_base . random_word();
+  $last_search = $rss;
+
+  print STDERR "\n\n" if ($verbose_load);
+  LOG ($verbose_load, "URL: $last_search");
+
+  $suppress_audit = 1;
+
+  my ( $base, $body ) = get_document ($last_search, undef, $timeout);
+  if (!$base || !$body) {
+    $body = undef;
+    return;
+  }
+
+  my $img;
+  ($base, $img) = pick_image_from_rss ($base, $body);
+  $body = undef;
+  return () unless defined ($img);
+
+  LOG ($verbose_load, "redirected to: $base");
+  return ($base, $img);
 }
 
 
@@ -3360,6 +3425,10 @@ sub main() {
     $wordlist = $dict;
   } else {
     pick_dictionary();
+  }
+
+  if ($imagemap_base && !($img_width && $img_height)) {
+    error ("-size WxH is required with -imagemap");
   }
 
   init_signals();

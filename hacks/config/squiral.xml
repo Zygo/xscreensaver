@@ -20,9 +20,9 @@
           _label="Handedness" _low-label="Left" _high-label="Right"
           low="0.0" high="1.0" default="0.5"/>
 
-  <number id="fill" type="slider" arg="-density %"
-          _label="Density" _low-label="Sparse" _high-label="Dense"
-          low="10" high="100" default="75"/>
+  <number id="fill" type="slider" arg="-fill %"
+           _label="Density" _low-label="Sparse" _high-label="Dense"
+          low="0" high="100" default="75"/>
 
   <number id="ncolors" type="slider" arg="-ncolors %"
             _label="Number of Colors" _low-label="Two" _high-label="Many"

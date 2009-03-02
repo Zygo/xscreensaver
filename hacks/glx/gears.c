@@ -61,16 +61,21 @@ static const char sccsid[] = "@(#)gears.c	4.07 97/11/24 xlockmore";
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #define DEF_PLANETARY "False"
+#define DEF_SPIN "True"
 
 static int planetary;
+static int spin;
 
 static XrmOptionDescRec opts[] = {
   {"-planetary", ".gears.planetary", XrmoptionNoArg, "true" },
   {"+planetary", ".gears.planetary", XrmoptionNoArg, "false" },
+  {"-spin", ".gears.spin", XrmoptionNoArg, "true" },
+  {"+spin", ".gears.spin", XrmoptionNoArg, "false" },
 };
 
 static argtype vars[] = {
   {&planetary, "planetary", "Planetary", DEF_PLANETARY, t_Bool},
+  {&spin, "spin", "Spin", DEF_SPIN, t_Bool},
 };
 
 ModeSpecOpt gears_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -535,13 +540,14 @@ draw(ModeInfo * mi)
 
     gltrackball_rotate (gp->trackball);
 
-    {
-      double x, y, z;
-      get_rotation (gp->rot, &x, &y, &z, !gp->button_down_p);
-      glRotatef (x * 360, 1.0, 0.0, 0.0);
-      glRotatef (y * 360, 0.0, 1.0, 0.0);
-      glRotatef (z * 360, 0.0, 0.0, 1.0);
-    }
+    if (spin)
+	  {
+		double x, y, z;
+		get_rotation (gp->rot, &x, &y, &z, !gp->button_down_p);
+		glRotatef (x * 360, 1.0, 0.0, 0.0);
+		glRotatef (y * 360, 0.0, 1.0, 0.0);
+		glRotatef (z * 360, 0.0, 0.0, 1.0);
+	  }
 
     if (!planetary) {
       glPushMatrix();

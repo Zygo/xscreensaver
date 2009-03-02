@@ -65,7 +65,7 @@ there's no need to recompile or reinstall anything.
 Along with the xscreensaver daemon itself, this package also includes
 numerous graphics hacks for use as screensavers.  There is nothing
 magic about these: they are just programs that draw on the root window.
-More than 190 such programs are included.  For details, see the
+More than 200 such programs are included.  For details, see the
 xscreensaver web page, or the enclosed manual pages.
 
 The latest version of xscreensaver is always available on the web at
@@ -76,6 +76,25 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.22:   * New hacks, `glhanoi', `cube21', `timetunnel',
+                        `juggler3d', and `celtic'.
+                      * New versions of `tangram', `webcollage', `hypertorus',
+                        `polytopes', and `ripples'.
+                      * `sonar' is now quiet about unresolvable hosts.
+                      * Minor corrections to BASIC code in `apple2'.
+                      * xscreensaver-demo now provides an RPM clue when none
+                        of the hacks seem to be installed.
+                      * Don't install `ant' by default, since there is some
+                        Java tool of that name, which was causing confusion.
+                        And also it's boring.
+                      * Made screen grabbing work again on MacOS 10.4.2.
+                      * No longer prints bogus warnings about ClientMessages
+                        intended for the window manager.
+                      * Ignore unprintable characters in passwd entry field.
+                      * Fixed yet another cross-host-display image-loading
+                        endian problem.
+                      * `xscreensaver-command -watch' and `-time' now work
+                        on 64-bit machines.
 Changes since 4.21:   * Fixed a bug in the new mouse-motion code that caused
                         the screen to never blank on multi-head non-Xinerama
                         systems.  Oops.

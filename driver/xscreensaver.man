@@ -796,6 +796,14 @@ Name=XScreensaver
 Type=Application
 X-KDE-StartupNotify=false
 .EE
+.TP 3
+\fB4: Make the various "lock session" buttons call xscreensaver.\fP
+Replace the file \fI/usr/bin/kdesktop_lock\fP with these two lines:
+.EX
+#!/bin/sh
+xscreensaver-command -lock
+.EE
+Make sure the file is executable (chmod a+x).
 .RE
 .PP
 Now use xscreensaver normally, controlling it via the usual

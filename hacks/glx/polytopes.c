@@ -1,10 +1,10 @@
 /* polytopes --- Shows one of the six regular polytopes rotating in 4d */
 
 #if 0
-static const char sccsid[] = "@(#)polytopes.c  1.1 03/05/18 xlockmore";
+static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
 #endif
 
-/* Copyright (c) 2003 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2003-2005 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -21,6 +21,7 @@ static const char sccsid[] = "@(#)polytopes.c  1.1 03/05/18 xlockmore";
  *
  * REVISION HISTORY:
  * C. Steger - 03/08/10: Initial version
+ * C. Steger - 05/09/28: Added trackball support
  */
 
 /*
@@ -113,13 +114,15 @@ static const char sccsid[] = "@(#)polytopes.c  1.1 03/05/18 xlockmore";
 #define DEF_DTHETA                DTHETA_STR
 
 #ifdef STANDALONE
-# define PROGCLASS       "Polytopes"
-# define HACK_INIT       init_polytopes
-# define HACK_DRAW       draw_polytopes
-# define HACK_RESHAPE    reshape_polytopes
-# define polytopes_opts xlockmore_opts
-# define DEFAULTS        "*delay:      25000 \n" \
-                         "*showFPS:    False \n"
+# define PROGCLASS          "Polytopes"
+# define HACK_INIT          init_polytopes
+# define HACK_DRAW          draw_polytopes
+# define HACK_RESHAPE       reshape_polytopes
+# define HACK_HANDLE_EVENT  polytopes_handle_event
+# define EVENT_MASK         PointerMotionMask|KeyReleaseMask
+# define polytopes_opts     xlockmore_opts
+# define DEFAULTS           "*delay:      25000 \n" \
+                            "*showFPS:    False \n"
 
 # include "xlockmore.h"         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -128,8 +131,10 @@ static const char sccsid[] = "@(#)polytopes.c  1.1 03/05/18 xlockmore";
 
 #ifdef USE_GL
 
+#include <X11/keysym.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
+#include "gltrackball.h"
 
 
 #ifdef USE_MODULES
@@ -157,6 +162,11 @@ static float speed_yz;
 /* 4D rotation angles */
 static float alpha, beta, delta, zeta, eta, theta;
 static float aspect;
+
+/* Trackball states */
+trackball_state *trackballs[2];
+int current_trackball;
+Bool button_pressed;
 
 static const float offset4d[4] = {  0.0,  0.0,  0.0,  3.0 };
 static const float offset3d[4] = {  0.0,  0.0, -2.0,  0.0 };
@@ -2382,19 +2392,67 @@ static void rotateyz(float m[4][4], float phi)
 
 
 /* Compute the rotation matrix m from the rotation angles. */
-static void rotateall(float m[4][4])
+static void rotateall(float al, float be, float de, float ze, float et,
+                      float th, float m[4][4])
 {
   int i, j;
 
   for (i=0; i<4; i++)
     for (j=0; j<4; j++)
       m[i][j] = (i==j);
-  rotatewx(m,alpha);
-  rotatewy(m,beta);
-  rotatewz(m,delta);
-  rotatexy(m,zeta);
-  rotatexz(m,eta);
-  rotateyz(m,theta);
+  rotatewx(m,al);
+  rotatewy(m,be);
+  rotatewz(m,de);
+  rotatexy(m,ze);
+  rotatexz(m,et);
+  rotateyz(m,th);
+}
+
+
+/* Multiply two rotation matrices: o=m*n. */
+static void mult_rotmat(float m[4][4], float n[4][4], float o[4][4])
+{
+  int i, j, k;
+
+  for (i=0; i<4; i++)
+  {
+    for (j=0; j<4; j++)
+    {
+      o[i][j] = 0.0;
+      for (k=0; k<4; k++)
+        o[i][j] += m[i][k]*n[k][j];
+    }
+  }
+}
+
+
+/* Compute a 4D rotation matrix from two unit quaternions. */
+static void quats_to_rotmat(float p[4], float q[4], float m[4][4])
+{
+  double al, be, de, ze, et, th;
+  double r00, r01, r02, r12, r22;
+
+  r00 = 1.0-2.0*(p[1]*p[1]+p[2]*p[2]);
+  r01 = 2.0*(p[0]*p[1]+p[2]*p[3]);
+  r02 = 2.0*(p[2]*p[0]-p[1]*p[3]);
+  r12 = 2.0*(p[1]*p[2]+p[0]*p[3]);
+  r22 = 1.0-2.0*(p[1]*p[1]+p[0]*p[0]);
+
+  al = atan2(-r12,r22)*180.0/M_PI;
+  be = atan2(r02,sqrt(r00*r00+r01*r01))*180.0/M_PI;
+  de = atan2(-r01,r00)*180.0/M_PI;
+
+  r00 = 1.0-2.0*(q[1]*q[1]+q[2]*q[2]);
+  r01 = 2.0*(q[0]*q[1]+q[2]*q[3]);
+  r02 = 2.0*(q[2]*q[0]-q[1]*q[3]);
+  r12 = 2.0*(q[1]*q[2]+q[0]*q[3]);
+  r22 = 1.0-2.0*(q[1]*q[1]+q[0]*q[0]);
+
+  ze = atan2(-r12,r22)*180.0/M_PI;
+  et = atan2(r02,sqrt(r00*r00+r01*r01))*180.0/M_PI;
+  th = atan2(-r01,r00)*180.0/M_PI;
+
+  rotateall(al,be,de,ze,et,th,m);
 }
 
 
@@ -2422,10 +2480,16 @@ static void normal(float *p, float *q, float *r, float *n)
 /* Project an array of vertices from 4d to 3d. */
 static void project(float vert[][4], float v[][4], int num)
 {
-  float m[4][4], s;
+  float s, q1[4], q2[4], r1[4][4], r2[4][4], m[4][4];
   int i, j, k;
 
-  rotateall(m);
+  rotateall(alpha,beta,delta,zeta,eta,theta,r1);
+
+  gltrackball_get_quaternion(trackballs[0],q1);
+  gltrackball_get_quaternion(trackballs[1],q2);
+  quats_to_rotmat(q1,q2,r2);
+
+  mult_rotmat(r2,r1,m);
 
   /* Project the vertices from 4d to 3d. */
   for (i=0; i<num; i++)
@@ -2786,24 +2850,27 @@ static void init(ModeInfo *mi)
 /* Redisplay the polytopes. */
 static void display_polytopes(ModeInfo *mi)
 {
-  alpha += speed_wx;
-  if (alpha >= 360.0)
-    alpha -= 360.0;
-  beta += speed_wy;
-  if (beta >= 360.0)
-    beta -= 360.0;
-  delta += speed_wz;
-  if (delta >= 360.0)
-    delta -= 360.0;
-  zeta += speed_xy;
-  if (zeta >= 360.0)
-    zeta -= 360.0;
-  eta += speed_xz;
-  if (eta >= 360.0)
-    eta -= 360.0;
-  theta += speed_yz;
-  if (theta >= 360.0)
-    theta -= 360.0;
+  if (!button_pressed)
+  {
+    alpha += speed_wx;
+    if (alpha >= 360.0)
+      alpha -= 360.0;
+    beta += speed_wy;
+    if (beta >= 360.0)
+      beta -= 360.0;
+    delta += speed_wz;
+    if (delta >= 360.0)
+      delta -= 360.0;
+    zeta += speed_xy;
+    if (zeta >= 360.0)
+      zeta -= 360.0;
+    eta += speed_xz;
+    if (eta >= 360.0)
+      eta -= 360.0;
+    theta += speed_yz;
+    if (theta >= 360.0)
+      theta -= 360.0;
+  }
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -2863,6 +2930,64 @@ void reshape_polytopes(ModeInfo * mi, int width, int height)
 }
 
 
+Bool polytopes_handle_event(ModeInfo *mi, XEvent *event)
+{
+  Display *display = MI_DISPLAY(mi);
+  KeySym  sym;
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
+  {
+    button_pressed = True;
+    gltrackball_start(trackballs[current_trackball],
+                      event->xbutton.x, event->xbutton.y,
+                      MI_WIDTH(mi), MI_HEIGHT(mi));
+    return True;
+  }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
+  {
+    button_pressed = False;
+    return True;
+  }
+  else if (event->xany.type == KeyPress)
+  {
+    sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
+    if (sym == XK_Shift_L || sym == XK_Shift_R)
+    {
+      current_trackball = 1;
+      if (button_pressed)
+        gltrackball_start(trackballs[current_trackball],
+                          event->xbutton.x, event->xbutton.y,
+                          MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+  }
+  else if (event->xany.type == KeyRelease)
+  {
+    sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
+    if (sym == XK_Shift_L || sym == XK_Shift_R)
+    {
+      current_trackball = 0;
+      if (button_pressed)
+        gltrackball_start(trackballs[current_trackball],
+                          event->xbutton.x, event->xbutton.y,
+                          MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+  }
+  else if (event->xany.type == MotionNotify && button_pressed)
+  {
+    gltrackball_track(trackballs[current_trackball],
+                      event->xmotion.x, event->xmotion.y,
+                      MI_WIDTH(mi), MI_HEIGHT(mi));
+    return True;
+  }
+
+  return False;
+}
+
+
 /*
  *-----------------------------------------------------------------------------
  *-----------------------------------------------------------------------------
@@ -2889,6 +3014,11 @@ void init_polytopes(ModeInfo * mi)
       return;
   }
   hp = &poly[MI_SCREEN(mi)];
+
+  trackballs[0] = gltrackball_init();
+  trackballs[1] = gltrackball_init();
+  current_trackball = 0;
+  button_pressed = False;
 
   if ((hp->glx_context = init_GL(mi)) != NULL)
   {

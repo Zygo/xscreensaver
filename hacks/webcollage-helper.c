@@ -24,6 +24,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#undef HAVE_STDLIB_H /* stupid jconfig.h! */
 #include <jpeglib.h>
 #include <gdk-pixbuf/gdk-pixbuf.h>
 

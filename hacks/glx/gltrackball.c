@@ -107,3 +107,11 @@ gltrackball_mousewheel (trackball_state *ts,
   else
     gltrackball_track (ts, 50, 50*move, 100, 100);
 }
+
+void
+gltrackball_get_quaternion (trackball_state *ts, float q[4])
+{
+  int i;
+  for (i=0; i<4; i++)
+    q[i] = ts->q[i];
+}
