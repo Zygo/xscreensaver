@@ -116,6 +116,7 @@ static void Execute( struct state *st )
 	  else if (st->particles[i].xpos >= st->iWinWidth - 2)
 	    {
 	      st->particles[i].xpos = st->iWinWidth - 2;
+	      if (st->particles[i].xpos < 1) st->particles[i].xpos = 1;
 	      st->particles[i].xdir = -st->particles[i].xdir + 4;
 	      st->particles[i].colorindex = st->iColorCount;
 	    }
@@ -129,9 +130,11 @@ static void Execute( struct state *st )
 	  else if (st->particles[i].ypos >= st->iWinHeight - 3)
 	    {
 	      st->particles[i].ypos = st->iWinHeight- 3;
+	      if (st->particles[i].ypos < 1) st->particles[i].ypos = 1;
 	      st->particles[i].ydir = (-st->particles[i].ydir >> 2) - (random() % 2);
 	      st->particles[i].colorindex = st->iColorCount;
 	    }
+
 	  
 	  /* st->gravity kicks in */
 	  st->particles[i].ydir += st->gravity;
@@ -140,6 +143,7 @@ static void Execute( struct state *st )
 	  st->particles[i].colorindex--;
 	  
 	  /* draw particle */
+	  if (st->iWinHeight <= 2 || st->iWinWidth <= 2) continue;
 	  st->fire[st->particles[i].ypos][st->particles[i].xpos] = st->particles[i].colorindex;
 	  st->fire[st->particles[i].ypos][st->particles[i].xpos - 1] = st->particles[i].colorindex;
 	  st->fire[st->particles[i].ypos + 1][st->particles[i].xpos] = st->particles[i].colorindex;

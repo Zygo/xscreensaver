@@ -451,7 +451,7 @@ random_squares (eraser_state *st)
     {
       st->cols = 10 + random() % 30;
       size = st->width / st->cols;
-      rows = (st->height / size) + 1;
+      rows = (size ? (st->height / size) : 0) + 1;
       st->nlines = st->cols * rows;
       st->lines = (int *) calloc (st->nlines, sizeof(*st->lines));
 
@@ -469,7 +469,7 @@ random_squares (eraser_state *st)
     }
 
   size = st->width / st->cols;
-  rows = (st->height / size) + 1;
+  rows = (size ? (st->height / size) : 0) + 1;
 
   for (i = st->nlines * st->prev_ratio;
        i < st->nlines * st->ratio;

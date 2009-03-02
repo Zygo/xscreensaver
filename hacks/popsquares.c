@@ -83,8 +83,8 @@ popsquares_init (Display *dpy, Window window)
 
   st->sw = st->xgwa.width / st->subdivision;
   st->sh = st->xgwa.height / st->subdivision;
-  st->gw = st->xgwa.width / st->sw;
-  st->gh = st->xgwa.height / st->sh;
+  st->gw = st->sw ? st->xgwa.width / st->sw : 0;
+  st->gh = st->sh ? st->xgwa.height / st->sh : 0;
   st->nsquares = st->gw * st->gh;
 
   gcv.foreground = fg.pixel;

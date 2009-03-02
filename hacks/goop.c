@@ -258,9 +258,11 @@ make_layer (Display *dpy, Window window, int width, int height, int nblobs)
 
   blob_max = (width < height ? width : height) / 2;
   blob_min = (blob_max * 2) / 3;
-  for (i = 0; i < layer->nblobs; i++)
+  for (i = 0; i < layer->nblobs; i++){
+    int j = blob_max - blob_min;
     layer->blobs[i] = make_blob (dpy, width, height,
-				 (random() % (blob_max-blob_min)) + blob_min);
+				 (j ? random() % j : 0) + blob_min);
+  }
 
   layer->pixmap = XCreatePixmap (dpy, window, width, height, 1);
   layer->gc = XCreateGC (dpy, layer->pixmap, 0, &gcv);

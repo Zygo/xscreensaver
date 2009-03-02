@@ -12,6 +12,9 @@
  */
 
 
+/* Define this to allow the root password to unlock the screen. */
+#undef ALLOW_ROOT_PASSWD
+
 /* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
    systems. This function is required for `alloca.c' support on those systems.
    */
@@ -211,6 +214,10 @@
 /* Define this if you want to use PAM (Pluggable Authentication Modules) to
    lock/unlock the screen, instead of standard /etc/passwd authentication. */
 #undef HAVE_PAM
+
+/* Define this if you have pam_fail_delay function. see driver/passwd-pam.c.
+   */
+#undef HAVE_PAM_FAIL_DELAY
 
 /* Define this if you have a Linux-like /proc/interrupts file which can be
    examined to determine when keyboard activity has occurred. */

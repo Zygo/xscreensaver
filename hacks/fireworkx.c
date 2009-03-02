@@ -42,7 +42,7 @@ void mmx_blur(char *a, int b, int c, int d);
 void mmx_glow(char *a, int b, int c, int d, char *e);
 #endif
 
-#define rnd(x) ((int)(random() % (x)))
+#define rnd(x) ((x) ? (int)(random() % (x)) : 0)
 
 typedef struct {
   unsigned int burn;
@@ -161,6 +161,7 @@ static void glow(struct state *st)
   unsigned int w = st->width;
   unsigned int h = st->height;
   unsigned char *pa, *pb, *pm, *po;
+  if (!st->xim) return;
   pm = st->palaka1;
   po = st->palaka2;
   for(n=0;n<w*4;n++) 
@@ -168,7 +169,7 @@ static void glow(struct state *st)
   pm+=n; po+=n; h-=2; 
   pa = pm-(w*4);
   pb = pm+(w*4);
-  for(n=4;n<w*h*4-4;n++){
+  for(n=4;(signed) n< (signed) (w*h*4-4); n++){
   q    = pm[n-4] + (pm[n]*8) + pm[n+4] + 
          pa[n-4] + pa[n] + pa[n+4] + 
          pb[n-4] + pb[n] + pb[n+4];
@@ -272,6 +273,7 @@ static void resize(struct state *st)
   st->palaka2 = NULL;
   st->xim = XCreateImage(st->dpy, xwa.visual, xwa.depth, ZPixmap, 0, 0,
 		     st->width, st->height, 8, 0);
+  if (!st->xim) return;
   st->palaka1 = (unsigned char *) calloc(st->xim->height+1,st->xim->width*4) + 8;
   if(st->flash_on|st->glow_on)
   st->palaka2 = (unsigned char *) calloc(st->xim->height+1,st->xim->width*4) + 8;
@@ -286,6 +288,7 @@ static void put_image(struct state *st)
 {
   int x,y,i,j;
   unsigned char r, g, b;
+  if (!st->xim) return;
   i = 0;
   j = 0;
   if (st->depth==16) {

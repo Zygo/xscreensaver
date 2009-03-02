@@ -225,7 +225,7 @@ make_puzzle_pixmap_pair (Display *dpy, Drawable d, int size, int bw,
                          int *x_ret, int *y_ret,
                          Pixmap *mask_ret, Pixmap *outline_ret)
 {
-  int w = size * 3;
+  int w = (size ? size * 3 : 2);
   int h = w;
   int x = size;
   int y = size;
@@ -404,8 +404,8 @@ jigsaw_init_1 (struct state *st)
   make_puzzle_pixmaps (st);
 
   cmap = xgwa.colormap;
-  st->width  = xgwa.width  / st->piece_width;
-  st->height = xgwa.height / st->piece_height;
+  st->width  = (st->piece_width ? xgwa.width  / st->piece_width : 0);
+  st->height = (st->piece_height ? xgwa.height / st->piece_height : 0);
   st->x_border = (xgwa.width  - (st->width  * st->piece_width)) / 2;
   st->y_border = (xgwa.height - (st->height * st->piece_width)) / 2;
 

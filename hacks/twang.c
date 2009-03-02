@@ -554,8 +554,8 @@ static void setupModel (struct state *st)
 	st->tileSize = st->windowHeight / 2;
     }
 
-    st->columns = st->windowWidth / st->tileSize;
-    st->rows = st->windowHeight / st->tileSize;
+    st->columns = st->tileSize ? st->windowWidth / st->tileSize : 0;
+    st->rows = st->tileSize ? st->windowHeight / st->tileSize : 0;
 
     if ((st->maxColumns != 0) && (st->columns > st->maxColumns))
     {

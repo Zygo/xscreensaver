@@ -198,10 +198,12 @@ squiral_draw (Display *dpy, Window window, void *closure)
     memset(&st->fill[(st->height-st->inclear-1)*st->width], 0, sizeof(int)*st->width);
     st->inclear++;
     XDrawLine(st->dpy, st->window, st->erase_gc, 0, st->inclear, st->width-1, st->inclear);
-    memset(&st->fill[st->inclear*st->width], 0, sizeof(int)*st->width);
+    if (st->inclear < st->height)
+      memset(&st->fill[st->inclear*st->width], 0, sizeof(int)*st->width);
     XDrawLine(st->dpy, st->window, st->erase_gc, 0, st->height-st->inclear-1, st->width-1,
               st->height-st->inclear-1);
-    memset(&st->fill[(st->height-st->inclear-1)*st->width], 0, sizeof(int)*st->width);
+    if (st->height - st->inclear >= 1)
+      memset(&st->fill[(st->height-st->inclear-1)*st->width], 0, sizeof(int)*st->width);
     st->inclear++;
     if(st->inclear>st->height/2) st->inclear=st->height;
   }

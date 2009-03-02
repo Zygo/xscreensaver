@@ -441,7 +441,7 @@ xlockmore_init (Display *dpy, Window window,
   mi->size	 = get_integer_resource (dpy, "size", "Int");
 
   mi->threed = get_boolean_resource (dpy, "use3d", "Boolean");
-  mi->threed_delta = get_float_resource (dpy, "delta3d", "Boolean");
+  mi->threed_delta = get_float_resource (dpy, "delta3d", "Float");
   mi->threed_right_color = get_pixel_resource (dpy,
 					       mi->xgwa.colormap, "right3d", "Color");
   mi->threed_left_color = get_pixel_resource (dpy,

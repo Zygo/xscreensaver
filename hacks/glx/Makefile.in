@@ -1064,6 +1064,7 @@ toaster_slots.o: $(srcdir)/gllist.h
 toaster_wing.o: $(srcdir)/gllist.h
 toast.o: $(srcdir)/gllist.h
 topblock.o: ../../config.h
+topblock.o: $(srcdir)/gltrackball.h
 topblock.o: $(srcdir)/sphere.h
 topblock.o: $(srcdir)/topblock.h
 trackball.o: ../../config.h

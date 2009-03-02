@@ -92,6 +92,9 @@ static const char sccsid[] = "@(#)crystal.c	4.12 98/09/10 xlockmore";
 #define DEF_MAXSIZE "False"
 #define DEF_CYCLE "True"
 
+#undef NRAND
+#define NRAND(n)           ( (n) ? (int) (LRAND() % (n)) : 0)
+
 #define min(a,b) ((a) <= (b) ? (a) : (b))
 
 static int  nx, ny;
@@ -980,9 +983,12 @@ init_crystal(ModeInfo * mi)
 			cryst->offset_w = (int) (cryst->b * 0.5);
 		}
 	} else {
+		int max_repeat = 10;
 		cryst->offset_w = -1;
-		while (cryst->offset_w < 4 || (int) (cryst->offset_w - cryst->b *
-				    sin((cryst->gamma - 90) * PI_RAD)) < 4) {
+		while (max_repeat-- && 
+		  (cryst->offset_w < 4 || (int) (cryst->offset_w - cryst->b *
+				    sin((cryst->gamma - 90) * PI_RAD)) < 4)
+			   ) {
 			cryst->b = NRAND((int) (cryst->win_height / (cos((cryst->gamma - 90) *
 					    PI_RAD))) - cell_min) + cell_min;
 			if (cryst->planegroup > 8)

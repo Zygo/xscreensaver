@@ -358,7 +358,7 @@ static circle *init_circles(struct state *st, int n, int w, int h)
   dr = floor(maxradius * h) - r0 + 1;
 
   for (i=0;i<n;i++) {
-    c[i].r = r0 + random() % dr;
+    c[i].r = r0 + ((dr > 0) ? random() % dr : 0);
     c[i].x = c[i].r + frand(w - 1 - 2 * c[i].r);
     c[i].y = c[i].r + frand(h - 1 - 2 * c[i].r);
     c[i].visible = random() & 1;

@@ -21,5 +21,5 @@ extern void DisplaySproingies(int screen,int pause);
 extern void NextSproingieDisplay(int screen,int pause);
 extern void ReshapeSproingies(int w, int h);
 extern void CleanupSproingies(int screen);
-extern void InitSproingies(int wfmode, int grnd, int mspr, int screen, 
-                           int numscreens, int mono);
+extern void InitSproingies(int wfmode, int grnd, int mspr, int smrtspr,
+                           int screen, int numscreens, int mono);

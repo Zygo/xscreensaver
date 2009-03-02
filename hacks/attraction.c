@@ -729,12 +729,17 @@ attraction_draw (Display *dpy, Window window, void *closure)
 	  if(st->cbounce_p)  /* with correct bouncing */
 	    {
               /* so long as it's out of range, keep bouncing */
+	      /* limit the maximum number to bounce to 4.*/
+	      int bounce_allowed = 4;
 	
-              while( (st->balls[i].x >= (st->xlim - st->balls[i].size)) ||
+              while( bounce_allowed && (
+		     (st->balls[i].x >= (st->xlim - st->balls[i].size)) ||
                      (st->balls[i].y >= (st->ylim - st->balls[i].size)) ||
                      (st->balls[i].x <= 0) ||
                      (st->balls[i].y <= 0) )
+		     )
                 {
+                  bounce_allowed--;
                   if (st->balls[i].x >= (st->xlim - st->balls[i].size))
                     {
                       st->balls[i].x = (2*(st->xlim - st->balls[i].size) - st->balls[i].x);

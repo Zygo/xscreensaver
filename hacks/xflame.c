@@ -607,6 +607,10 @@ loadBitmap(struct state *st, int *w, int *h)
 {
   char *bitmap_name = get_string_resource (st->dpy, "bitmap", "Bitmap");
 
+#ifdef HAVE_COCOA
+  bitmap_name = "(default)"; /* #### always use builtin */
+#endif /* HAVE_COCOA */
+  
   if (!bitmap_name ||
       !*bitmap_name ||
       !strcmp(bitmap_name, "none"))

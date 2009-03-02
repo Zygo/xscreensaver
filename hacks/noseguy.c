@@ -196,6 +196,17 @@ move (struct state *st)
 		st->move_length = st->Width / 100 + random() % 90, tries = 8;
 	    else
 		tries--;
+	    /* There maybe the case that we won't be able to exit from
+	       this routine (especially when the geometry is too small)!!
+
+	       Ensure that we can exit from this routine.
+	     */
+#if 1
+	    if (!tries && (st->move_length <= 1)) {
+	      st->move_length = 1;
+	      break;
+	    }
+#endif
 	    switch (random() % 8)
 	    {
 	    case 0:
@@ -239,7 +250,8 @@ move (struct state *st)
 	    }
 	} while (!st->move_dir);
     }
-    walk(st, st->move_dir);
+    if (st->move_dir)
+      walk(st, st->move_dir);
     --st->move_length;
     st->next_fn = move;
 }

@@ -352,11 +352,11 @@ static inline void drawPoint(int x, int y, unsigned long color, double intensity
 {
     unsigned long c;
 
-    if ( x >= f->width ) x -= f->width;
-    else if ( x < 0 ) x += f->width;
+    while ( x >= f->width ) x -= f->width;
+    while ( x < 0 ) x += f->width;
 	
-    if ( y >= f->height ) y -= f->height;
-    else if ( y < 0 ) y += f->height;
+    while ( y >= f->height ) y -= f->height;
+    while ( y < 0 ) y += f->height;
 
     /* if ( in_bounds(f, x, y) ) ... */
 
@@ -566,7 +566,7 @@ static void build_field(Display *dpy, Window window, XWindowAttributes xgwa, GC 
 	{
 	    if (i < base_orbits )
 	    {
-		if ( f->base_on_center )
+	        if ( f->base_on_center )
 		    circle->center = &f->center_of_universe; 
 		else
 		{
@@ -719,7 +719,9 @@ static void drawIntersections(Display *dpy, Window window, GC fgc, struct field 
 		double d, dsqr, dx, dy;
 		Circle *c2 = f->circles + j;
 
+#ifdef TIME_ME
 		++f->possible_intersections;
+#endif
 		dx = c2->x - c1->x;
 		dy = c2->y - c1->y;
 
@@ -745,7 +747,9 @@ static void drawIntersections(Display *dpy, Window window, GC fgc, struct field 
 		     * intersection 
 		     */
 
+#ifdef TIME_ME
 		    ++f->intersection_count;
+#endif
 
 		    /* unit vector in direction of c1 to c2 */
 		    bx = dx / d;

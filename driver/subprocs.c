@@ -1140,14 +1140,17 @@ hack_subproc_environment (saver_screen_info *ssi)
   const char *odpy = DisplayString (si->dpy);
   char *ndpy = (char *) malloc (strlen(odpy) + 20);
   char *nssw = (char *) malloc (40);
-  char *s;
+  char *s, *c;
 
   strcpy (ndpy, "DISPLAY=");
   s = ndpy + strlen(ndpy);
   strcpy (s, odpy);
 
-  while (*s && *s != ':') s++;			/* skip to colon */
-  while (*s == ':') s++;			/* skip over colons */
+  /* We have to find the last colon since it is the boundary between
+     hostname & screen - IPv6 numeric format addresses may have many
+     colons before that point, and DECnet addresses always have two colons */
+  c = strrchr(s,':');				/* skip to last colon */
+  if (c != NULL) s = c+1;
   while (isdigit(*s)) s++;			/* skip over dpy number */
   while (*s == '.') s++;			/* skip over dot */
   if (s[-1] != '.') *s++ = '.';			/* put on a dot */

@@ -42,30 +42,30 @@
           low="0.0" high="1.0" default="0.2"/>
 
   <number id="minlifespeed" type="slider" arg="-minlifespeed %"
-          _label="Minium Rate of Growth" _low-label="Slow" _high-label="Fast"
+          _label="Minimum Rate of Growth" _low-label="Slow" _high-label="Fast"
           low="0.0" high="1.0" default="0.04"/>
 
     </vgroup>
     <vgroup>
 
   <number id="maxlifespeed" type="slider" arg="-maxlifespeed %"
-          _label="Maxium Rate of Growth" _low-label="Slow" _high-label="Fast"
+          _label="Maximum Rate of Growth" _low-label="Slow" _high-label="Fast"
           low="0.0" high="1.0" default="0.13"/>
 
   <number id="mindeathspeed" type="slider" arg="-mindeathspeed %"
-          _label="Minium Rate of Death" _low-label="Slow" _high-label="Fast"
+          _label="Minimum Rate of Death" _low-label="Slow" _high-label="Fast"
           low="0.0" high="1.0" default="0.42"/>
 
   <number id="maxdeathspeed" type="slider" arg="-maxdeathspeed %"
-          _label="Maxium Rate of Death" _low-label="Slow" _high-label="Fast"
+          _label="Maximum Rate of Death" _low-label="Slow" _high-label="Fast"
           low="0.0" high="1.0" default="0.46"/>
 
   <number id="minlifespan" type="slider" arg="-minlifespan %"
-          _label="Minium Lifespan" _low-label="Short" _high-label="Long"
+          _label="Minimum Lifespan" _low-label="Short" _high-label="Long"
           low="0" high="3000" default="500"/>
 
   <number id="maxlifespan" type="slider" arg="-maxlifespan %"
-          _label="Maxium Lifespan" _low-label="Short" _high-label="Long"
+          _label="Maximum Lifespan" _low-label="Short" _high-label="Long"
           low="0" high="3000" default="1500"/>
 
     </vgroup>

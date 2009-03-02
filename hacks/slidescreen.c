@@ -326,7 +326,8 @@ slidescreen_draw (Display *dpy, Window window, void *closure)
      /* alternate between horizontal and vertical slides */
      /* note that draw_dir specifies the direction the _hole_ moves, not the tiles */
      if (st->draw_last == VERTICAL) {
-       if ((st->draw_rnd = random () % (st->grid_w - 1)) < st->hole_x) {
+       if (((st->grid_w > 1) ? st->draw_rnd = random () % (st->grid_w - 1) : 0)
+	   < st->hole_x) {
          st->draw_dx = -1; st->draw_dir = LEFT;  st->hole_x -= st->draw_rnd;
        } else {
          st->draw_dx =  1; st->draw_dir = RIGHT; st->draw_rnd -= st->hole_x;
@@ -334,7 +335,8 @@ slidescreen_draw (Display *dpy, Window window, void *closure)
        st->draw_dy = 0; st->draw_w = st->draw_size = st->draw_rnd + 1; st->draw_h = 1;
        st->draw_last = HORIZONTAL;
      } else {
-       if ((st->draw_rnd = random () % (st->grid_h - 1)) < st->hole_y) {
+       if (((st->grid_h > 1) ? st->draw_rnd = random () % (st->grid_h - 1) : 0)
+	   < st->hole_y) {
          st->draw_dy = -1; st->draw_dir = UP;    st->hole_y -= st->draw_rnd;
        } else {
          st->draw_dy =  1; st->draw_dir = DOWN;  st->draw_rnd -= st->hole_y;

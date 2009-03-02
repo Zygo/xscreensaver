@@ -121,8 +121,8 @@ struct state {
 };
 
 
-#define cell_x(c) (((c) - st->arr) % st->arr_width)
-#define cell_y(c) (((c) - st->arr) / st->arr_width)
+#define cell_x(c) (st->arr_width ? ((c) - st->arr) % st->arr_width : 0)
+#define cell_y(c) (st->arr_width ? ((c) - st->arr) / st->arr_width : 0)
 
 
 static int random_life_value (struct state *st)
@@ -437,8 +437,8 @@ setup_display (struct state *st)
           }
       }
 
-    st->xSize = st->windowWidth / st->arr_width;
-    st->ySize = st->windowHeight / st->arr_height;
+    st->xSize = st->arr_width ? st->windowWidth / st->arr_width : 0;
+    st->ySize = st->arr_height ? st->windowHeight / st->arr_height : 0;
     if (st->xSize > st->ySize)
     {
 	st->xSize = st->ySize;
@@ -482,6 +482,9 @@ static void setup_arr (struct state *st)
 
     XFillRectangle (st->dpy, st->window, st->coloredGCs[0], 0, 0, 
 		    st->windowWidth, st->windowHeight);
+    
+    if (!st->arr_width) st->arr_width = 1;
+    if (!st->arr_height) st->arr_height = 1;
 
     st->arr = (cell *) calloc (sizeof(cell), st->arr_width * st->arr_height);  
     if (!st->arr)
@@ -494,7 +497,7 @@ static void setup_arr (struct state *st)
     for (y = 0; y < st->arr_height; y++)
     {
       int row = y * st->arr_width;
-	for (x = 0; x < st->arr_width; x++) 
+       for (x = 0; x < st->arr_width; x++) 
 	{
 	    st->arr[row+x].speed = 0.0;
 	    st->arr[row+x].growth = 0.0;
@@ -586,8 +589,8 @@ static void randblip (struct state *st, int doit)
     
     while (n--) 
     {
-	int x = random () % st->arr_width;
-	int y = random () % st->arr_height;
+      int x = st->arr_width ? random () % st->arr_width : 0;
+      int y = st->arr_height ? random () % st->arr_height : 0;
 	int c;
 	FLOAT s;
 	if (b)
@@ -597,7 +600,7 @@ static void randblip (struct state *st, int doit)
 	}
 	else
 	{
-	    c = (random () % (st->count-1)) + 1;
+	    c = ((st->count - 1) ? random () % (st->count-1) : 0) + 1;
 	    s = RAND_FLOAT * (st->maxlifespeed - st->minlifespeed) + st->minlifespeed;
 	}
 	newcell (st, &st->arr[y * st->arr_width + x], c, s);
@@ -637,7 +640,7 @@ static void update (struct state *st)
 	    int x = cell_x(a) + coords->x;
 	    int y = cell_y(a) + coords->y;
 	    coords++;
-	    
+
 	    if (x < 0) x = st->arr_width - 1;
 	    else if (x >= st->arr_width) x = 0;
 	    
@@ -650,9 +653,9 @@ static void update (struct state *st)
 	if (a->growth >= st->diaglim) 
 	    killcell (st, a);
     }
-    
+
     randblip (st, (st->head->next) == st->tail);
-    
+
     for (a = st->head->next; a != st->tail; a = a->next)
     {
 	if (a->isnext) 

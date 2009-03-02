@@ -6642,27 +6642,27 @@ msgid "Fertility"
 msgstr "Termékenység"
 
 #: hacks/config/petri.xml.h:12
-msgid "Maxium Lifespan"
+msgid "Maximum Lifespan"
 msgstr "Maximális élettartam"
 
 #: hacks/config/petri.xml.h:13
-msgid "Maxium Rate of Death"
+msgid "Maximum Rate of Death"
 msgstr "Maximális halálozási ráta"
 
 #: hacks/config/petri.xml.h:14
-msgid "Maxium Rate of Growth"
+msgid "Maximum Rate of Growth"
 msgstr "Maximális növekedési ráta"
 
 #: hacks/config/petri.xml.h:15
-msgid "Minium Lifespan"
+msgid "Minimum Lifespan"
 msgstr "Minimális élettartam"
 
 #: hacks/config/petri.xml.h:16
-msgid "Minium Rate of Death"
+msgid "Minimum Rate of Death"
 msgstr "Minimális halálozási ráta"
 
 #: hacks/config/petri.xml.h:17
-msgid "Minium Rate of Growth"
+msgid "Minimum Rate of Growth"
 msgstr "Minimális növekedési ráta"
 
 #: hacks/config/petri.xml.h:18

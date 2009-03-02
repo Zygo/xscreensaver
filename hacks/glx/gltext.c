@@ -35,10 +35,6 @@
 
 #include <ctype.h>
 
-#ifdef HAVE_LOCALE_H
-# include <locale.h>
-#endif /* HAVE_LOCALE_H */
-
 #ifdef USE_GL /* whole file */
 
 #ifdef HAVE_COCOA
@@ -329,15 +325,6 @@ init_text (ModeInfo *mi)
 {
   text_configuration *tp;
   int i;
-
-  /* setlocale (LC_TIME, "") only refers to environment:
-     not needed
-   */
-#if 0
-# ifdef HAVE_SETLOCALE
-  setlocale (LC_TIME, "");      /* for strftime() calls */
-# endif
-#endif
 
   if (!tps) {
     tps = (text_configuration *)

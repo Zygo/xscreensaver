@@ -3,7 +3,7 @@
 imsmap - generate fractal maps
 .SH SYNOPSIS
 .B imsmap
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIint\fP] [\-delay \fIseconds\fP] [\-iterations \fIint\fP] [\-mode h|s|v|random]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIint\fP] [\-delay \fIseconds\fP] [\-delay2 \fImicroseconds\fP] [\-iterations \fIint\fP] [\-mode h|s|v|random]
 .SH DESCRIPTION
 The \fIimsmap\fP program generates map or cloud-like patterns.  It looks
 quite different in monochrome and color.
@@ -32,6 +32,9 @@ How many colors to use.  Default 50.
 .TP 8
 .B \-delay \fIinteger\fP
 How long to delay between images.  Default 10 seconds.
+.TP 8
+.B \-delay2 \fIinteger\fP
+How long to delay between bitmaps.  Default 200000 (0.2 seconds).
 .TP 8
 .B \-iterations \fIinteger\fP
 A measure of the resolution of the resultant image, from 0 to 7.  Default 7.

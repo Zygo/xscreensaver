@@ -185,8 +185,7 @@ XDBE_OBJS	= $(UTILS_BIN)/xdbe.o
 
 HDRS		= screenhack.h screenhackI.h xlockmore.h xlockmoreI.h \
 		  automata.h bubbles.h bumps.h xpm-pixmap.h apple2.h \
-		  analogtv.h pacman.h pacman_ai.h pacman_level.h \
-		  change_locale.h
+		  analogtv.h pacman.h pacman_ai.h pacman_level.h
 MEN		= anemone.man apollonian.man attraction.man \
 	          blaster.man blitspin.man bouboule.man braid.man bsod.man \
 	          bubbles.man bumps.man ccurve.man compass.man coral.man \
@@ -1442,7 +1441,6 @@ rotor.o: $(srcdir)/xlockmore.h
 rotzoomer.o: ../config.h
 rotzoomer.o: $(srcdir)/screenhackI.h
 rotzoomer.o: $(srcdir)/screenhack.h
-screenhack.o: $(srcdir)/change_locale.h
 screenhack.o: ../config.h
 screenhack.o: $(srcdir)/screenhackI.h
 shadebobs.o: ../config.h

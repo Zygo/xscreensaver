@@ -17,7 +17,7 @@
             _label="Number of Colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="64"/>
 
-  <boolean id="3d" _label="Do Red/Blue 3D seperation" arg-set="-3d"/>
+  <boolean id="3d" _label="Do Red/Blue 3D separation" arg-set="-3d"/>
 
   <_description>
 This draws what looks like a spinning, deforming balloon with

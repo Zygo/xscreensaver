@@ -23,6 +23,7 @@ History
 25/02/2006 v1.0 release
 29/04/2006 v1.11 updated to better fit with xscreensaver v5
                  colors defaults to 7 (no black)
+19/06/2006 v1.2  fixed dropSpeed = 7 bug, added gltrackball support and some code neatening, thanks to Valdis Kletnieks and JWZ for their input.
 */
 
 #include <math.h>
@@ -40,6 +41,7 @@ History
 #include "xlockmore.h"
 #include "topblock.h"
 #include "sphere.h"
+#include "gltrackball.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -53,6 +55,8 @@ History
 typedef struct
 {
   GLXContext *glx_context;
+  trackball_state *trackball;
+  Bool button_down_p;
   int numFallingBlocks;
   GLfloat highest,highestFalling;
   GLfloat eyeLine,eyeX,eyeY,eyeZ;
@@ -201,18 +205,18 @@ init_topBlock (ModeInfo *mi)
 	tb->carpetWidth = 8 * size;
 	tb->carpetLength = tb->carpetWidth;
   
-  maxFalling=maxFalling*size;
+  maxFalling*=size;
 
 	if (spawn<4) { spawn=4; }
 	if (spawn>1000) { spawn=1000; }
 
 	if (rotateSpeed<1) {rotateSpeed=1; }
 	if (rotateSpeed>1000) {rotateSpeed=1000;}
-  rotateSpeed = rotateSpeed / 100;
+  rotateSpeed /= 100;
 
 	if (resolution<4) {resolution=4;}
 	if (resolution>20) {resolution=20;}
-  resolution=resolution*2;
+  resolution*=2;
 
 	if (maxColors<1) {maxColors=1;}
 	if (maxColors>8) {maxColors=8;}
@@ -283,6 +287,7 @@ init_topBlock (ModeInfo *mi)
     tb->eyeY=20;
     tb->eyeZ=0;
   }
+  tb->trackball = gltrackball_init ();
 }
 
 /* provides the per frame entertainment */
@@ -304,20 +309,23 @@ draw_topBlock (ModeInfo *mi) {
 
 	generateNewBlock(mi);
 
-	if (rotate) { tb->rotation += rotateSpeed; } 
+	if (rotate && (!tb->button_down_p)) { tb->rotation += rotateSpeed; } 
 	if (tb->rotation>=360) { tb->rotation=tb->rotation-360; } 
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		/* clear current */
 	glLoadIdentity();	/* resets directions, do it every time ! */
-
 	if (!follow) {
-		if (tb->highest>tb->eyeLine) { tb->eyeLine=tb->eyeLine + ((tb->highest-tb->eyeLine)/100);	} /* creates a smooth camera transition */
+		if (tb->highest>tb->eyeLine) { tb->eyeLine+=((tb->highest-tb->eyeLine)/100);	} /* creates a smooth camera transition */
 		gluLookAt(camX, camY+tb->eyeLine, camZ, tb->eyeX, tb->eyeY+tb->eyeLine, tb->eyeZ, 0.0, 1.0, 0.0);		/* setup viewer, xyz cam, xyz looking at and where is up normaly 0,1,0 */
 		glRotatef(90, 1.0, 0.0, 0.0);			/* x axis */
 	} else {
 		glRotatef(90, 0.0, 0.0, 1.0);     /* z axis */
 		followBlock(mi);
 	}
+	glRotatef(-90, 1.0, 0.0, 0.0);		
+  gltrackball_rotate (tb->trackball);
+	glRotatef(90, 1.0, 0.0, 0.0);		
+
 	/* rotate the world */
 	glRotatef(tb->rotation, 0.0, 0.0, 1.0);		
 
@@ -393,11 +401,11 @@ draw_topBlock (ModeInfo *mi) {
 	    spcN2y = 0;
 			if (llCurrent->height>tb->highestFalling) {tb->highestFalling=llCurrent->height;}
 			/* all blocks fall at the same rate to avoid mid air collisions */
-			llCurrent->height=llCurrent->height-dropSpeed;
+			llCurrent->height-=dropSpeed;
 			if (llCurrent->height<=0) {
 				llCurrent->falling=0;
 				if (tb->highest==0) { 
-					tb->highest=tb->highest+blockHeight; 
+					tb->highest+=blockHeight; 
 				}
 			} 
 			if ( (llCurrent->height<=tb->highest+1) && (llCurrent->falling==1) ) {
@@ -451,11 +459,12 @@ draw_topBlock (ModeInfo *mi) {
 							( (spcC2x==spcN2x) && (spcC2y==spcN2y) ) ||
 							( (spcC2x==spcN1x) && (spcC2y==spcN1y) )
 						){
-				      if ( (llCurrent->height<=llNode->height+blockHeight+TOLLERANCE) && (llCurrent->height>=llNode->height+blockHeight-TOLLERANCE) )  {
+              if ( fabs(llCurrent->height-(llNode->height+blockHeight)) <= TOLERANCE) { 
+
 						    llCurrent->falling=0;
 							  llCurrent->height=llNode->height+blockHeight; /* if this is missing then small errors build up until the model fails */
-							  if ( (llCurrent->height<=tb->highest+TOLLERANCE) && (llCurrent->height>=tb->highest-TOLLERANCE) ) { 
-							   tb->highest=tb->highest+blockHeight; 
+                if ( fabs(llCurrent->height-tb->highest) <= TOLERANCE+blockHeight ) {
+                 tb->highest+=blockHeight; 
 							  }
 						  }
 					  }
@@ -493,11 +502,11 @@ static void followBlock(ModeInfo *mi) {
   cx=0;cy=0;
 	if ((tb->blockNodeFollow!=NULL) && (tb->followMode==1)){
 
-		if (tb->highest>tb->eyeLine) { tb->eyeLine=tb->eyeLine + ((tb->highest-tb->eyeLine)/100);	} 
+		if (tb->highest>tb->eyeLine) { tb->eyeLine+= ((tb->highest-tb->eyeLine)/100);	} 
 		  /*tb->blockNodeFollow->color=1;  only noticable if you set the colors to 1 */
 		
-			if (tb->blockNodeFollow->height > tb->eyeZ) { tb->eyeZ=tb->eyeZ +  ((tb->blockNodeFollow->height - tb->eyeZ)/100); } 
-			if (tb->blockNodeFollow->height < tb->eyeZ) { tb->eyeZ=tb->eyeZ - ((tb->eyeZ - tb->blockNodeFollow->height)/100); } 
+			if (tb->blockNodeFollow->height > tb->eyeZ) { tb->eyeZ+= ((tb->blockNodeFollow->height - tb->eyeZ)/100); } 
+			if (tb->blockNodeFollow->height < tb->eyeZ) { tb->eyeZ-= ((tb->eyeZ - tb->blockNodeFollow->height)/100); } 
 		
 
 		/* when the scene is rotated we need to know where the block is in the 2 dimensional coordinates of the carpet area
@@ -516,16 +525,11 @@ static void followBlock(ModeInfo *mi) {
 		yTarget = sin(rangle) * tb->followRadius + cy;
 		if (tb->followAngle>360) { tb->followAngle=tb->followAngle-360; }
 
-		if (xTarget < tb->eyeX) { tb->eyeX=tb->eyeX - ((tb->eyeX - xTarget)/100); }
-		if (xTarget > tb->eyeX) { tb->eyeX=tb->eyeX + ((xTarget - tb->eyeX)/100); }
+		if (xTarget < tb->eyeX) { tb->eyeX-= ((tb->eyeX - xTarget)/100); }
+		if (xTarget > tb->eyeX) { tb->eyeX+= ((xTarget - tb->eyeX)/100); }
 
-		if (yTarget < tb->eyeY) { tb->eyeY=tb->eyeY - ((tb->eyeY - yTarget)/100); }
-		if (yTarget > tb->eyeY) { tb->eyeY=tb->eyeY + ((yTarget - tb->eyeY)/100); }
- /*
-		tb->eyeX = xTarget;
-		tb->eyeY = yTarget;
-***************************************************************************
-*/
+		if (yTarget < tb->eyeY) { tb->eyeY-= ((tb->eyeY - yTarget)/100); }
+		if (yTarget > tb->eyeY) { tb->eyeY+= ((yTarget - tb->eyeY)/100); }
 		if (!tb->blockNodeFollow->falling) {  
 			tb->followMode=0; 
 			/*tb->blockNodeFollow->color=2;  only noticable if you set the colors to 1 */
@@ -538,13 +542,13 @@ static void followBlock(ModeInfo *mi) {
 /* each quater of the circle has to be adjusted for */
 static double quadrantCorrection(double angle,int cx,int cy,int x,int y) {
 	if ((x>=cx) && (y>=cy)) {
-		angle = angle + (90-(angle-90) * 2); 
+		angle +=  (90-(angle-90) * 2); 
 	} else if ((x>=cx) && (y<=cy)) {
-		angle = angle + 90; 
+		angle +=  90; 
 	} else if ((x<=cx) && (y<=cy)) {
-		angle = angle + 90; 
+		angle +=  90; 
 	} else if ((x<=cx) && (y>=cy)) {
-		angle = angle + (90-(angle-90) * 2); 
+		angle += (90-(angle-90) * 2); 
 	}
 	return(angle-180);
 }
@@ -786,46 +790,77 @@ topBlock_handle_event (ModeInfo *mi, XEvent *event) {
     char c = 0;
     XLookupString (&event->xkey, &c, 1, &keysym, 0);
     if (c == 'a') {
-			tb->eyeX=tb->eyeX+1;
+			tb->eyeX++;
 			return True;
 		} else if (c == 'z') {
-			tb->eyeX=tb->eyeX-1;
+			tb->eyeX--;
 			return True;
 		} else if (c == 's') {
-			tb->eyeY=tb->eyeY+1;
+			tb->eyeY--;
 			return True;
 		} else if (c == 'x') {
-			tb->eyeY=tb->eyeY-1;
+			tb->eyeY++;
 			return True;
 		} else if (c == 'd') {
-			tb->eyeZ=tb->eyeZ+1;
+			tb->eyeZ++;
 			return True;
 		} else if (c == 'c') {
-			tb->eyeZ=tb->eyeZ-1;
+			tb->eyeZ--;
 			return True;
 		} else if (c == 'f') {
-			camX=camX+1;
+			camX++;
 			return True;
 		} else if (c == 'v') {
-			camX=camX-1;
+			camX--;
 			return True;
 		} else if (c == 'g') {
-			camY=camY+1;
+			camY++;
 			return True;
 		} else if (c == 'b') {
-			camY=camY-1;
+			camY--;
 			return True;
 		} else if (c == 'h') {
-			camZ=camZ+1;
+			camZ++;
 			return True;
 		} else if (c == 'n') {
-			camZ=camZ-1;
+			camZ--;
 			return True;
 		} else if (c == 'r') {
-			tb->rotation += 1;
+			tb->rotation++;
 			return True;
 		}
 	}
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
+    {
+      tb->button_down_p = True;
+      gltrackball_start (tb->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
+    {
+      tb->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (tb->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           tb->button_down_p)
+    {
+      gltrackball_track (tb->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
 	return False;
 }
 

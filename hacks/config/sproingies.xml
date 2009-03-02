@@ -6,14 +6,15 @@
 
   <number id="count" type="slider" arg="-count %"
            _label="Sproingies" _low-label="One" _high-label="Lots"
-          low="1" high="30" default="5"/>
+          low="1" high="30" default="8"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="40000" default="25000"
+          low="0" high="40000" default="30000"
           convert="invert"/>
 
   <hgroup>
+   <boolean id="nofall" _label="Fall Off Edge" arg-set="-fall"/>
    <boolean id="wire" _label="Wireframe" arg-set="-wireframe"/>
    <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
   </hgroup>

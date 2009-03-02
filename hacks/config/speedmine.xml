@@ -42,7 +42,6 @@
   <!-- #### -psychedelic -->
 
   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
-  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>
 Simulates speeding down a rocky mineshaft, or a funky dancing worm.

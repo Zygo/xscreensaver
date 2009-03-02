@@ -1442,6 +1442,19 @@ display_desktop (Screen *screen, Window window, Drawable drawable,
 }
 
 
+/* Whether the given Drawable is unreasonably small.
+ */
+static Bool
+drawable_miniscule_p (Display *dpy, Drawable drawable)
+{
+  Window root;
+  int xx, yy;
+  unsigned int bw, d, w = 0, h = 0;
+  XGetGeometry (dpy, drawable, &root, &xx, &yy, &w, &h, &bw, &d);
+  return (w < 32 || h < 32);
+}
+
+
 /* Grabs an image (from a file, video, or the desktop) and renders it on
    the Drawable.  If `file' is specified, always use that file.  Otherwise,
    select randomly, based on the other arguments.
@@ -1525,6 +1538,15 @@ get_image (Screen *screen,
       image_p = False;
     }
 
+  /* If the target drawable is really small, no good can come of that.
+     Always do colorbars in that case.
+   */
+  if (drawable_miniscule_p (dpy, drawable))
+    {
+      desk_p  = False;
+      video_p = False;
+      image_p = False;
+    }
 
 # ifndef _VROOT_H_
 #  error Error!  This file definitely needs vroot.h!

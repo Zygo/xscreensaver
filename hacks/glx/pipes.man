@@ -18,7 +18,7 @@ pipes - fill the screen with a plumbing system.
 [-db]
 [-fps]
 .SH DESCRIPTION
-If you've ever been in the same room with a Windows NT machine, you've
+If you've ever been in the same room as a Windows NT machine, you've
 probably seen this GL hack.  It fills the screen with a plumbing system.
 .SH OPTIONS
 .TP 8

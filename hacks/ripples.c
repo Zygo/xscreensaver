@@ -757,10 +757,13 @@ add_drop(struct state *st, ripple_mode mode, int drop)
   case ripple_blob: {
     double power;
 
+    int tmp_i, tmp_j;
     power = drop_dist[random() % (sizeof(drop_dist)/sizeof(drop_dist[0]))]; /* clumsy */
     dheight = (int)(drop * (power + 0.01));
-    newx = radius + border + (random() % (int)(st->width - 2*border - 2*radius*power));
-    newy = radius + border + (random() % (int)(st->height - 2*border - 2*radius*power));
+    tmp_i = (int)(st->width - 2*border - 2*radius*power);
+    tmp_j = (int)(st->height - 2*border - 2*radius*power);
+    newx = radius + border + ((tmp_i > 0) ? random() % tmp_i : 0);
+    newy = radius + border + ((tmp_j > 0) ? random() % tmp_j : 0);
     add_circle_drop(st, newx, newy, radius, dheight);
   }
   break;
@@ -770,12 +773,15 @@ add_drop(struct state *st, ripple_mode mode, int drop)
     int x;
     int cx, cy;
     short *buf = (random()&1) ? st->bufferA : st->bufferB;
+    int tmp_i, tmp_j;
 
     radius = (1 + (random() % 5)) * (1 + (random() % 5));
     dheight = drop / 128;
     if (random() & 1) dheight = -dheight;
-    newx = radius + border + (random() % (st->width - 2*border - 2*radius));
-    newy = radius + border + (random() % (st->height - 2*border - 2*radius));
+    tmp_i = st->width - 2*border - 2*radius;
+    tmp_j = st->height - 2*border - 2*radius;
+    newx = radius + border + ((tmp_i > 0) ? random() % tmp_i : 0);
+    newy = radius + border + ((tmp_j > 0) ? random() % tmp_j : 0);
     x = newy * st->width + newx;
     for (cy = -radius; cy <= radius; cy++)
       for (cx = -radius; cx <= radius; cx++)

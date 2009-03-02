@@ -289,7 +289,8 @@ critical_init (Display *dpy, Window window)
      screens. */
   model_w = 80;
   st->settings.cell_size = st->wattr.width / model_w;
-  model_h = st->wattr.height / st->settings.cell_size;
+  model_h = st->settings.cell_size ?
+    st->wattr.height / st->settings.cell_size : 0;
 
   /* Construct the initial model state. */
 

@@ -20,6 +20,7 @@ static const char sccsid[] = "@(#)julia.c	4.03 97/04/10 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
+ * 10-Jun-06: j.grahl@ucl.ac.uk: tweaked functions for parameter of Julia set
  * 28-May-97: jwz@jwz.org: added interactive frobbing with the mouse.
  * 10-May-97: jwz@jwz.org: turned into a standalone program.
  * 02-Dec-95: snagged boilerplate from hop.c
@@ -159,6 +160,7 @@ incr(ModeInfo * mi, juliastruct * jp)
 	else
 	  {
 	  NOTRACK:
+#if 0
 		jp->cr = 1.5 * (sin(M_PI * (jp->inc / 300.0)) *
 						sin(jp->inc * M_PI / 200.0));
 		jp->ci = 1.5 * (cos(M_PI * (jp->inc / 300.0)) *
@@ -166,6 +168,15 @@ incr(ModeInfo * mi, juliastruct * jp)
 
 		jp->cr += 0.5 * cos(M_PI * jp->inc / 400.0);
 		jp->ci += 0.5 * sin(M_PI * jp->inc / 400.0);
+#else
+        jp->cr = 1.5 * (sin(M_PI * (jp->inc / 290.0)) *
+                        sin(jp->inc * M_PI / 210.0));
+        jp->ci = 1.5 * (cos(M_PI * (jp->inc / 310.0)) *
+                        cos(jp->inc * M_PI / 190.0));
+
+        jp->cr += 0.5 * cos(M_PI * jp->inc / 395.0);
+        jp->ci += 0.5 * sin(M_PI * jp->inc / 410.0);
+#endif
 	  }
 }
 
