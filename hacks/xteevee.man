@@ -29,6 +29,10 @@ file; see
 .BR xscreensaver-demo (1)
 for more details.
 .PP
+See also
+.BR xanalogtv (1)
+for a more sophisticated (but more graphics-intensive) implementation
+of this concept.
 .SH OPTIONS
 .I xteevee
 accepts the following options:
@@ -107,6 +111,9 @@ mode, as a percentage.
 should simulate more TV problems.
 .SH SEE ALSO
 .BR X (1),
+.BR xanalogtv (1),
+.BR apple2 (1),
+.BR bsod (1),
 .BR xscreensaver (1),
 .BR xscreensaver\-demo (1),
 .BR xscreensaver\-getimage (1)

@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* drift --- drifting recursive fractal cosmic flames */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)drift.c	5.00 2000/11/01 xlockmore";
-
 #endif
 
 /*-

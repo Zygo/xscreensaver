@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.13
-!                              07-Sep-2003
+!                              version 4.14
+!                              25-Oct-2003
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -146,7 +146,7 @@
 	   "Qix (transparent)" 	qix -root -count 4 -solid -transparent	    \n\
 		"Qix (linear)" 	qix -root -count 5 -solid -transparent	      \
 				  -linear -segments 250 -size 100	    \n\
-- mono: 	   "Qix (xor)" 	qix -root -linear -count 5 -size 200	      \
+-		   "Qix (xor)" 	qix -root -linear -count 5 -size 200	      \
 				  -spread 30 -segments 75 -solid -xor	    \n\
 									      \
 	  "Attraction (balls)" 	attraction -root -mode balls		    \n\
@@ -258,6 +258,7 @@
 				blaster -root				    \n\
 				bumps -root				    \n\
 				xteevee -root				    \n\
+				xanalogtv -root				    \n\
 				xspirograph -root			    \n\
 				nerverot -root				    \n\
 -	    "NerveRot (dense)"	nerverot -root -count 1000		    \n\
@@ -291,7 +292,11 @@
  	                	barcode -root				    \n\
  	                	piecewise -root				    \n\
  	                	cloudlife -root				    \n\
-  color: 			bubbles -root				    \n\
+		   "FontGlide"	fontglide -root -page			    \n\
+	"FontGlide (scroller)"	fontglide -root -scroll			    \n\
+				apple2 -root				    \n\
+                                bubbles -root				    \n\
+				pong -root				    \n\
 - default-n:			webcollage -root			    \n\
 - default-n:  "WebCollage (whacked)"					      \
 				webcollage -root -filter		      \
@@ -356,8 +361,13 @@
 @GL_KLUDGE@ GL:			blocktube -root				    \n\
 @GL_KLUDGE@ GL:			flipflop -root				    \n\
 @GL_KLUDGE@ GL:			antspotlight -root			    \n\
-@GL_KLUDGE@ GL:			polytopes -root				    \n\
 -	   GL:			glslideshow -root			    \n\
+@GL_KLUDGE@ GL:			polytopes -root				    \n\
+@GL_KLUDGE@ GL:			gleidescope -root			    \n\
+- 	   GL:			mirrorblob -root			    \n\
+@GL_KLUDGE@ GL:	    "MirrorBlob (color only)"				      \
+                                mirrorblob -root -colour -no-texture	    \n\
+@GL_KLUDGE@ GL:			blinkbox -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -398,28 +408,6 @@
 ! colors would be all wrong.  "default-i" may also be used as a visual name
 ! (meaning, "-visual default -install") but you probably won't ever need
 ! to use that.
-!
-!
-! Some of the GL demos that SGI ships work with XScreenSaver; most don't.
-! XScreenSaver includes a program (not built or installed by default)
-! called "xscreensaver-sgigl".  To use the SGI demos with XScreenSaver,
-! build that program, and use it to launch the SGI demos.  For example,
-! on Irix 6.2, you can do this:
-!
-!     xscreensaver-sgigl /usr/demos/bin/ep -S
-!     xscreensaver-sgigl /usr/demos/bin/bongo
-!
-! On Irix 6.3, things have moved, so you need to do it like this:
-!
-!     xscreensaver-sgigl /usr/sbin/ep -S
-!
-! (But note that, on non-SGIs, the bundled "stonerview" hack is a decent
-! clone of "ep".  Yay!)
-!
-! You can also use the "ant" demo, but first you need to wrap a shell script
-! around it that cds to its home directory, so that it can find its files;
-! and also pass it the -S argument, to prevent it from forking.  What a mess!
-! Basically, the SGI demo writers went out of their way to make my life hell.
 
 
 
@@ -471,7 +459,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *passwd.thermometer.width:	8
 
 *splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright © 1991-2002 by
+*splash.body.label:		Copyright © 1991-2003 by
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Settings
 *splash.help.label:		Help
@@ -624,6 +612,7 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.shadebobs.name:      ShadeBobs
 *hacks.ccurve.name:         C Curve
 *hacks.xteevee.name:        XTeeVee
+*hacks.xanalogtv.name:      XAnalogTV
 *hacks.xspirograph.name:    XSpiroGraph
 *hacks.nerverot.name:       NerveRot
 *hacks.webcollage.name:     WebCollage
@@ -657,6 +646,9 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.blocktube.name:      BlockTube
 *hacks.flipflop.name:       FlipFlop
 *hacks.antspotlight.name:   AntSpotlight
+*hacks.fontglide.name:      FontGlide
+*hacks.mirrorblob.name:     MirrorBlob
+*hacks.blinkbox.name:       BlinkBox
 
 ! obsolete, but still used by xscreensaver-demo-Xm.
 *hacks.documentation.isInstalled: True

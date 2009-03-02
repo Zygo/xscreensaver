@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* hop --- real plane fractals */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)hop.c	5.00 2000/11/01 xlockmore";
-
 #endif
 
 /*-

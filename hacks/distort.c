@@ -248,7 +248,7 @@ static void init_distort(Display *dpy, Window window)
 		gcflags |= GCSubwindowMode;
 	gc = XCreateGC (dpy, window, gcflags, &gcv);
 
-    load_random_image (xgwa.screen, window, window);
+    load_random_image (xgwa.screen, window, window, NULL);
 
 	buffer_map = 0;
 	orig_map = XGetImage(dpy, window, 0, 0, xgwa.width, xgwa.height,

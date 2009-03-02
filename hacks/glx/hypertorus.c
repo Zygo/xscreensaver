@@ -1,8 +1,7 @@
 /* hypertorus --- Shows a hypertorus that rotates in 4d */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)hypertorus.c  1.1 03/05/18 xlockmore";
-
 #endif
 
 /* Copyright (c) 2003 Carsten Steger <carsten@mirsanmir.org>. */

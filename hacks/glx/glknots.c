@@ -80,7 +80,7 @@ static char *do_spin;
 static GLfloat speed;
 static Bool do_wander;
 static GLfloat thickness;
-static int segments;
+static unsigned int segments;
 static int duration;
 
 static XrmOptionDescRec opts[] = {
@@ -114,7 +114,7 @@ make_knot (ModeInfo *mi)
   GLfloat diam = (4 * thickness);
   int faces = (wire ? 3 : 6);
 
-  int i;
+  unsigned int i;
   double x, y, z, ox=0, oy=0, oz=0;
   double mu;
 

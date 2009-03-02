@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.25 $
+ * $Revision: 1.29 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -482,7 +482,7 @@ lookupHost(ping_target *target)
                                 (ip[2] << 16) |
                                 (ip[1] <<  8) |
                                 (ip[0]));
-      hent = gethostbyaddr (ip, 4, AF_INET);
+      hent = gethostbyaddr ((const char *) ip, 4, AF_INET);
 
       if (debug_p > 1)
         fprintf (stderr, "%s:   %s => %s\n",
@@ -1012,8 +1012,13 @@ sendping(ping_info *pi, ping_target *pt)
     ICMP_CHECKSUM(icmph) = 0;
     ICMP_ID(icmph) = pi->pid;
     ICMP_SEQ(icmph) = pi->seq++;
+# ifdef GETTIMEOFDAY_TWO_ARGS
     gettimeofday((struct timeval *) &packet[sizeof(struct ICMP)],
 		 (struct timezone *) 0);
+# else
+    gettimeofday((struct timeval *) &packet[sizeof(struct ICMP)]);
+# endif
+
     strcpy((char *) &packet[sizeof(struct ICMP) + sizeof(struct timeval)],
 	   pt->name);
     ICMP_CHECKSUM(icmph) = checksum((u_short *)packet, pcktsiz);
@@ -1117,7 +1122,7 @@ getping(sonar_info *si, ping_info *pi)
     /* Local Variables */
 
     struct sockaddr from;
-    unsigned int fromlen;
+    unsigned int fromlen;  /* Posix says socklen_t, but that's not portable */
     int result;
     u_char packet[1024];
     struct timeval now;
@@ -1175,7 +1180,11 @@ getping(sonar_info *si, ping_info *pi)
 
 	/* Check the packet */
 
+# ifdef GETTIMEOFDAY_TWO_ARGS
 	gettimeofday(&now, (struct timezone *) 0);
+# else
+	gettimeofday(&now);
+# endif
 	ip = (struct ip *) packet;
         iphdrlen = IP_HDRLEN(ip) << 2;
 	icmph = (struct ICMP *) &packet[iphdrlen];
@@ -1904,6 +1913,7 @@ parse_mode (Bool ping_works_p)
 # endif /* HAVE_PING */
 
       for (next = token;
+           *next &&
            *next != ',' && *next != ' ' && *next != '\t' && *next != '\n';
            next++)
         ;
@@ -2032,7 +2042,11 @@ screenhack(Display *dpy, Window win)
 
 	/* Call the sensor and display the results */
 
+# ifdef GETTIMEOFDAY_TWO_ARGS
 	gettimeofday(&start, (struct timezone *) 0);
+# else
+	gettimeofday(&start);
+# endif
 	bl = sensor(si, sensor_info);
 	Sonar(si, bl);
 
@@ -2042,7 +2056,11 @@ screenhack(Display *dpy, Window win)
 	if (si->current == 0)
 	  si->sweepnum++;
 	XSync (dpy, False);
+# ifdef GETTIMEOFDAY_TWO_ARGS
 	gettimeofday(&finish, (struct timezone *) 0);
+# else
+	gettimeofday(&finish);
+# endif
 	sleeptime = si->delay - delta(&start, &finish);
         screenhack_handle_events (dpy);
 	if (sleeptime > 0L)

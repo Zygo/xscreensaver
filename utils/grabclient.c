@@ -104,7 +104,7 @@ static void
 checkerboard (Screen *screen, Drawable drawable)
 {
   Display *dpy = DisplayOfScreen (screen);
-  int x, y;
+  unsigned int x, y;
   int size = 24;
   XColor fg, bg;
   XGCValues gcv;
@@ -180,7 +180,8 @@ hack_subproc_environment (Display *dpy)
    When grabbing desktop images, the Window will be unmapped first.
  */
 void
-load_random_image (Screen *screen, Window window, Drawable drawable)
+load_random_image (Screen *screen, Window window, Drawable drawable,
+                   char **name_ret)
 {
   Display *dpy = DisplayOfScreen (screen);
   char *grabber = get_string_resource ("desktopGrabber", "DesktopGrabber");
@@ -218,4 +219,24 @@ load_random_image (Screen *screen, Window window, Drawable drawable)
   system (cmd);
   free (cmd);
   XSync (dpy, True);
+
+  if (name_ret) 
+    {
+      Atom type;
+      int format;
+      unsigned long nitems, bytesafter;
+      char *name=NULL;
+
+      *name_ret = NULL;
+
+      if (XGetWindowProperty (dpy, window,
+                              XInternAtom (dpy, XA_XSCREENSAVER_IMAGE_FILENAME,
+                                           False),
+                              0, 1024, False, XA_STRING,
+                              &type, &format, &nitems, &bytesafter,
+                              (unsigned char **) &name)
+          == Success
+          && type != None)
+        *name_ret = strdup(name);
+    }
 }

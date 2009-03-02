@@ -308,7 +308,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS pkg_config glib_config gtk_config gnome_config have_gnome_help xml_config gdk_pixbuf_config fortune_tmp INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOMEHELP_Y GNOMEHELP_N HACKDIR GNOME_DATADIR GLADE_DATADIR PO_DATADIR GNOME_PANELDIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS pkg_config glib_config gtk_config gnome_config have_gnome_help xml_config gdk_pixbuf_config fortune_tmp INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOMEHELP_Y GNOMEHELP_N HACKDIR GNOME_DATADIR GLADE_DATADIR PO_DATADIR GNOME_PANELDIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -2523,6 +2523,8 @@ echo "${ECHO_T}no idea" >&6
     esac
   fi
 
+  OBJCC="$CC"
+
   echo "$as_me:$LINENO: checking whether the compiler works on ANSI C" >&5
 echo $ECHO_N "checking whether the compiler works on ANSI C... $ECHO_C" >&6
   if test "$cross_compiling" = yes; then
@@ -2571,6 +2573,7 @@ fi
     echo "$as_me:$LINENO: result: Turning on gcc compiler warnings." >&5
 echo "${ECHO_T}Turning on gcc compiler warnings." >&6
     CC="$CC -pedantic -Wall -Wstrict-prototypes -Wnested-externs"
+    OBJCC="$OBJCC -Wall"
     # supposedly gcc 3.4 will have "-Wdeclaration-after-statement"
     # and then perhaps we can do without -pedantic?
   else
@@ -6447,6 +6450,18 @@ echo "${ECHO_T}$ac_cv_xpointer" >&6
 _ACEOF
 
   fi
+
+echo "$as_me:$LINENO: checking whether this is MacOS X" >&5
+echo $ECHO_N "checking whether this is MacOS X... $ECHO_C" >&6
+  ac_macosx=no
+  case "$host" in
+    *-apple-darwin* )
+      ac_macosx=yes
+    ;;
+  esac
+echo "$as_me:$LINENO: result: $ac_macosx" >&5
+echo "${ECHO_T}$ac_macosx" >&6
+
 
 
 ###############################################################################
@@ -11076,6 +11091,19 @@ else
   exit 1
 fi
 
+# We can't lock on MacOS X, so don't even bother compiling in support for it.
+#
+if test "$ac_macosx" = yes; then
+  if test "$enable_locking" = yes; then
+    echo "$as_me:$LINENO: result: locking disabled: it doesn't work on MacOS X" >&5
+echo "${ECHO_T}locking disabled: it doesn't work on MacOS X" >&6
+    enable_locking=no
+    cat >>confdefs.h <<\_ACEOF
+#define NO_LOCKING 1
+_ACEOF
+
+  fi
+fi
 
 
 ###############################################################################
@@ -15364,7 +15392,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 15373 "configure"
+#line 15401 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -18514,6 +18542,17 @@ else
   LOCK_OBJS='$(NOLOCK_OBJS_1)'
 fi
 
+if test "$ac_macosx" = yes; then
+  EXES_OSX='$(EXES_OSX)'
+  SCRIPTS_OSX='$(SCRIPTS_OSX)'
+  MEN_OSX='$(MEN_OSX)'
+else
+  EXES_OSX=
+  SCRIPTS_OSX=
+  MEN_OSX=
+fi
+
+
 INSTALL_SETUID='$(INSTALL_PROGRAM) $(SUID_FLAGS)'
 
 if test "$need_setuid" = yes; then
@@ -18657,6 +18696,11 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 #       Perform substitutions and write Makefiles.
 #
 ###############################################################################
+
+
+
+
+
 
 
 
@@ -19440,6 +19484,10 @@ s,@SETUID_HACKS@,$SETUID_HACKS,;t t
 s,@INSTALL_DIRS@,$INSTALL_DIRS,;t t
 s,@NEED_SETUID@,$NEED_SETUID,;t t
 s,@INSTALL_PAM@,$INSTALL_PAM,;t t
+s,@OBJCC@,$OBJCC,;t t
+s,@EXES_OSX@,$EXES_OSX,;t t
+s,@SCRIPTS_OSX@,$SCRIPTS_OSX,;t t
+s,@MEN_OSX@,$MEN_OSX,;t t
 s,@PASSWD_SRCS@,$PASSWD_SRCS,;t t
 s,@PASSWD_OBJS@,$PASSWD_OBJS,;t t
 s,@XMU_SRCS@,$XMU_SRCS,;t t
@@ -20169,10 +20217,12 @@ fi
 if test "$gtk2_halfassed" != no ; then
   warnL "GTK version $gtk2_halfassed was found, but at least one supporting"
   warn2 "library ($gtk2_halfassed_lib) was not, so GTK 2.x can't be used."
-  v="$ac_gtk_version_string"
-  warn2 "GTK $v is also installed, so it will be used instead."
-  warn2 "Please read the above output and the \`config.log' file"
-  warn2 "for more details."
+  if test "$have_gtk" = yes ; then
+    v="$ac_gtk_version_string"
+    warn2 "GTK $v is also installed, so it will be used instead."
+    warn2 "Please read the above output and the \`config.log' file"
+    warn2 "for more details."
+  fi
 fi
 
 
@@ -20526,7 +20576,7 @@ if test "$do_dir_warning" = yes; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}/."
   echo ""
-  echo "      The various graphics demos (160+ different executables) will"
+  echo "      The various graphics demos (175+ different executables) will"
   echo "      be installed in ${HACKDIR}/."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere,"

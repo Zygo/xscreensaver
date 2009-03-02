@@ -768,7 +768,7 @@ static void
 draw_label (ModeInfo *mi, const char *s)
 {
   spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)];
-  int i;
+  unsigned int i;
   
   glPushAttrib(GL_TRANSFORM_BIT | GL_ENABLE_BIT);
   glDisable(GL_LIGHTING);
@@ -871,7 +871,7 @@ init_spheremonics (ModeInfo *mi)
 
   cc->m_max = 4; /* 9? */
   {
-    int i;
+    unsigned int i;
     for (i = 0; i < countof(cc->dm); i++)
       cc->dm[i] = 1;  /* going up! */
 

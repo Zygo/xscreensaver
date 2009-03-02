@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* sierpinski --- Sierpinski's triangle fractal */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)sierpinski.c	5.00 2000/11/01 xlockmore";
-
 #endif
 
 /*-

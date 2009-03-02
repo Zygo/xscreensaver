@@ -603,9 +603,9 @@ screenhack (Display *display, Window window)
                 int size;
                 size = (int)(15.0 + 5.0 * sin((double)internal_time / 180.0));
 		/* First delete the old circle... */
-                if (!info->trail && ( !dbeclear_p ||
+                if (!info->trail && ( !dbeclear_p
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-		    !backb
+		    || !backb
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 		    )) {
                     XSetForeground(display, bgc, BlackPixel(display, screen));

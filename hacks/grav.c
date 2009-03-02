@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* grav --- planets spinning around a pulsar */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)grav.c	5.00 2000/11/01 xlockmore";
-
 #endif
 
 /*-

@@ -27,6 +27,7 @@
      <boolean id="sparclinux" _label="Sparc Linux"  arg-set="-sparclinux"/>
      <boolean id="solaris"    _label="Solaris"      arg-unset="-no-solaris"/>
      <boolean id="sco"        _label="SCO"          arg-unset="-no-sco"/>
+     <boolean id="hvx"        _label="HVX/GCOS6"    arg-unset="-no-hvx"/>
      <boolean id="hpux"       _label="HPUX"         arg-unset="-no-hpux"/>
      <boolean id="amiga"      _label="AmigaDOS"     arg-unset="-no-amiga"/>
      <boolean id="atari"      _label="Atari"        arg-set="-atari"/>

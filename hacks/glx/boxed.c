@@ -1,8 +1,7 @@
 /* thebox --- 3D bouncing balls that explode */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
-
 #endif
 
 /*-

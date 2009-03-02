@@ -29,6 +29,7 @@
 #define DEFAULTS       "*delay:       20000       \n" \
                        "*showFPS:       False       \n" \
 		       "*wireframe:	False     \n"	\
+		       "*reflections:	True     \n"	\
 
 # include "xlockmore.h"
 
@@ -48,12 +49,18 @@
 static XrmOptionDescRec opts[] = {
   {"+rotate", ".chess.rotate", XrmoptionNoArg, (caddr_t) "false" },
   {"-rotate", ".chess.rotate", XrmoptionNoArg, (caddr_t) "true" },
+  {"+reflections", ".chess.reflections", XrmoptionNoArg, (caddr_t) "false" },
+  {"-reflections", ".chess.reflections", XrmoptionNoArg, (caddr_t) "true" },
+  {"+smooth", ".chess.smooth", XrmoptionNoArg, (caddr_t) "false" },
+  {"-smooth", ".chess.smooth", XrmoptionNoArg, (caddr_t) "true" },
 };
 
-int rotate;
+int rotate, reflections, smooth;
 
 static argtype vars[] = {
   {(caddr_t *) &rotate, "rotate", "Rotate", "True", t_Bool},
+  {(caddr_t *) &reflections, "reflections", "Reflections", "True", t_Bool},
+  {(caddr_t *) &smooth, "smooth", "Smooth", "True", t_Bool},
 };
 
 ModeSpecOpt chess_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -94,71 +101,35 @@ GLfloat colors[2][3] =
     {0.5, 0.5, 0.5},
   };
 
-/* well, i prefer silver tip */
-GLfloat whites[3][3] = 
+#define WHITES 5
+
+/* i prefer silvertip */
+GLfloat whites[WHITES][3] = 
   {
     {1.0, 0.5, 0.0},
     {0.8, 0.45, 1.0},
-    {0.37, 0.56, 0.87},   
+    {0.43, 0.54, 0.76},
+    {0.8, 0.8, 0.8},
+    {0.15, 0.77, 0.54},
   };
-
-/* int board[BOARDSIZE][BOARDSIZE]; */
 
 #include "chessgames.h"
 
 ChessGame game;
-
-/* void buildBoard(void) { */
-/*   board[0][5] = BKING; */
-/*   board[1][4] = BPAWN; */
-/*   board[1][2] = BPAWN; */
-/*   board[1][0] = BPAWN; */
-/*   board[2][2] = BPAWN; */
-/*   board[2][4] = BPAWN; */
-/*   board[2][7] = KNIGHT; */
-/*   board[3][0] = PAWN; */
-/*   board[3][2] = ROOK; */
-/*   board[4][0] = PAWN; */
-/*   board[4][4] = KING; */
-/*   board[4][5] = PAWN; */
-/*   board[6][0] = BPAWN; */
-/*   board[6][7] = PAWN; */
-/*   board[7][0] = BBISHOP; */
-/* } */
+int oldwhite = -1;
 
 void build_colors(void) {
-  int white = random()%3;
-  colors[0][0] = whites[white][0];
-  colors[0][1] = whites[white][1];
-  colors[0][2] = whites[white][2];
-}
 
-/* int moves[MOVES][4] =  */
-/*   { {3, 2, 6, 2}, */
-/*     {7, 0, 6, 1}, */
-/*     {6, 2, 6, 6}, */
-/*     {0, 5, 0, 4}, */
-/*     {6, 6, 0, 6}, */
-/*     {0, 4, 1, 3}, */
-/*     {2, 7, 1, 5}, */
-/*     {2, 2, 3, 2}, */
-/*     {0, 6, 0, 3},  */
-/*     {1, 3, 2, 2}, */
-/*     {0, 3, 6, 3}, */
-/*     {3, 2, 4, 2}, /\* pawn to bishop 5 *\/ */
-/*     {1, 5, 0, 3}, /\* check *\/ */
-/*     {2, 2, 3, 2}, */
-/*     {0, 3, 2, 4}, /\* takes pawn *\/ */
-/*     {3, 2, 2, 2}, */
-/*     {2, 4, 0, 3}, */
-/*     {2, 2, 3, 2}, */
-/*     {6, 3, 6, 1}, /\* rook takes bishop *\/ */
-/*     {6, 0, 7, 0}, */
-/*     {6, 1, 3, 1}, */
-/*     {3, 2, 2, 3}, */
-/*     {3, 1, 3, 3}, */
-/*     {0, 0, 2, 3}, */
-/*   }; */
+  /* find new white */
+  int newwhite = oldwhite;
+  while(newwhite == oldwhite)
+    newwhite = random()%WHITES;
+  oldwhite = newwhite;
+
+  colors[0][0] = whites[oldwhite][0];
+  colors[0][1] = whites[oldwhite][1];
+  colors[0][2] = whites[oldwhite][2];
+}
 
 /* yay its c */
 int mpiece = 0, tpiece, steps = 0, done = 1;
@@ -192,13 +163,23 @@ Bool chess_handle_event (ModeInfo *mi, XEvent *event) {
   return False;
 }
 
-GLfloat position[] = { 3.0, 7.0, 3.0, 1.0 };
+GLfloat position[] = { 0.0, 5.0, 5.0, 1.0 };
+GLfloat position2[] = { 5.0, 5.0, 5.0, 1.0 };
+GLfloat diffuse2[] = {1.0, 1.0, 1.0, 1.0};
+GLfloat ambient2[] = {0.6, 0.6, 0.6, 1.0};
 
 /* configure lighting */
 void setup_lights(void) {
   glEnable(GL_LIGHTING);
   glLightfv(GL_LIGHT0, GL_POSITION, position);
+  glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse2);
   glEnable(GL_LIGHT0);
+
+/*   glLightModelfv(GL_LIGHT_MODEL_AMBIENT, ambient2); */
+
+  glLightfv(GL_LIGHT1, GL_SPECULAR, diffuse2);
+  glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse2);
+  glEnable(GL_LIGHT1);
 }
 
 /** draw pieces */
@@ -377,14 +358,32 @@ void display(Chesscreen *c) {
   glRotatef(theta*100, 0.0, 1.0, 0.0);
   glTranslatef(-0.5*BOARDSIZE, 0.0, -0.5*BOARDSIZE);
 
+  position[0] = 4.0 + 1.0*-sin(theta*100*M_PI/180.0);
+  position[2] = 4.0 + 1.0*cos(theta*100*M_PI/180.0);
+  position[1] = 8.0;
+
+  position2[0] = 4.0 + 8.0*-sin(theta*100*M_PI/180.0);
+  position2[2] = 4.0 + 8.0*cos(theta*100*M_PI/180.0);
+
+  glEnable(GL_LIGHTING);
+  glLightfv(GL_LIGHT0, GL_POSITION, position);
+  glLightfv(GL_LIGHT1, GL_POSITION, position2);
+  glEnable(GL_LIGHT0);
+
   /** draw board, pieces */
   if(!wire) {
     glEnable(GL_LIGHTING);
     glEnable(GL_COLOR_MATERIAL);
-    draw_reflections();
-    glEnable(GL_BLEND);
+
+    if(reflections) {
+      draw_reflections();
+      glEnable(GL_BLEND);
+    }
+
     drawBoard();
-    glDisable(GL_BLEND);
+
+    if(reflections)
+      glDisable(GL_BLEND);
   }
   else
     drawBoard();
@@ -442,13 +441,15 @@ void init_chess(ModeInfo *mi) {
   if(!wire) {
     setup_lights();
     glColorMaterial(GL_FRONT, GL_DIFFUSE);
-    glShadeModel(GL_SMOOTH);
+    glShadeModel(smooth ? GL_SMOOTH : GL_FLAT);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glEnable(GL_DEPTH_TEST);
   }
   else
     glPolygonMode(GL_FRONT, GL_LINE);
 }
+
+int oldgame = -1;
 
 /** does dirty work drawing scene, moving pieces */
 void draw_chess(ModeInfo *mi) {
@@ -494,8 +495,13 @@ void draw_chess(ModeInfo *mi) {
       moving = 1;
     }
     else if(done == 1) {
-      /* copy over new game */
-      game = games[random()%GAMES];
+      int newgame = oldgame;
+      while(newgame == oldgame)
+	newgame = random()%GAMES;
+
+      /* same old game */
+      oldgame = newgame;
+      game = games[oldgame];
       build_colors();
       done = 2;
       count = 0;
@@ -507,9 +513,14 @@ void draw_chess(ModeInfo *mi) {
   }
 
   /* set lighting */
-  if(done)
+  if(done) {
     glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 
 	     done == 1 ? 1.0+0.1*count : 100.0/count);
+    glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 
+	     done == 1 ? 1.0+0.1*count : 100.0/count);
+    glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 0.15);
+    glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.15);
+  }
 
   display(c);
 

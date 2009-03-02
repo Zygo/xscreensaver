@@ -1433,8 +1433,8 @@ parse_command_line_into_parameters_1 (const char *filename,
 {
   GList *p;
   parameter *match = 0;
-  int which = -1;
-  int index = 0;
+  gint which = -1;
+  gint index = 0;
 
   for (p = parms; p; p = p->next)
     {
@@ -1502,11 +1502,11 @@ parse_command_line_into_parameters_1 (const char *filename,
       break;
     case BOOLEAN:
       if (which != 0 && which != 1) abort();
-      parameter_set_switch (match, (gpointer) which);
+      parameter_set_switch (match, GINT_TO_POINTER(which));
       break;
     case SELECT_OPTION:
       if (which != 1) abort();
-      parameter_set_switch (parent, (gpointer) index);
+      parameter_set_switch (parent, GINT_TO_POINTER(index));
       break;
     default:
       break;
@@ -1553,13 +1553,13 @@ parameter_set_switch (parameter *p, gpointer value)
     case BOOLEAN:
       {
         GtkToggleButton *b = GTK_TOGGLE_BUTTON (p->widget);
-        gtk_toggle_button_set_active (b, (int) value);
+        gtk_toggle_button_set_active (b, GPOINTER_TO_INT(value));
         break;
       }
     case SELECT:
       {
         gtk_option_menu_set_history (GTK_OPTION_MENU (p->widget),
-                                     (int) value);
+                                     GPOINTER_TO_INT(value));
         break;
       }
     default:

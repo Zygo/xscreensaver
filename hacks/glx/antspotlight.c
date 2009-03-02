@@ -357,6 +357,7 @@ void build_ant(void) {
   ant->direction = 0.0;
   ant->velocity = 0.02;
   ant->material = MaterialGray5;
+  ant->step = 0;
   find_goal();
 }
 
@@ -479,6 +480,8 @@ void draw_antspotlight_strip(ModeInfo *mi) {
   ant->position[0] += ant->velocity * cos(ant->direction);
   ant->position[2] += ant->velocity * sin(-ant->direction);
   ant->step += 10*ant->velocity;
+  while(ant->step > 2*Pi)
+    ant->step -= 2*Pi;
 }
 
 void reshape_antspotlight(ModeInfo * mi, int width, int height) {
@@ -625,7 +628,7 @@ void get_snapshot(ModeInfo *modeinfo) {
   if(MI_IS_WIREFRAME(modeinfo))
     return;
 
-  ximage = screen_to_ximage(modeinfo->xgwa.screen, modeinfo->window);
+  ximage = screen_to_ximage(modeinfo->xgwa.screen, modeinfo->window, NULL);
 
   qw = QW; qh = QH;
   tw = modeinfo->xgwa.width;

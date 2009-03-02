@@ -26,20 +26,12 @@
 #include <GL/gl.h>
 
 #include "yarandom.h"
+#include "usleep.h"
 #include "stonerview-move.h"
 
 extern int init_view(int *argc, char *argv[]);
 extern void win_draw(void);
 
-
-static void 
-stonerview_usleep (unsigned long usecs)
-{
-  struct timeval tv;
-  tv.tv_sec  = usecs / 1000000L;
-  tv.tv_usec = usecs % 1000000L;
-  (void) select (0, 0, 0, 0, &tv);
-}
 
 int main(int argc, char *argv[])
 {
@@ -58,7 +50,7 @@ int main(int argc, char *argv[])
     {
       win_draw();
       move_increment();
-      stonerview_usleep (20000);
+      usleep (20000);
     }
 
   return 0;

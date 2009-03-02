@@ -18,6 +18,7 @@
    This XImage will be 32 bits per pixel, 8 each per R, G, and B, with the
    extra byte set to 0xFF.
  */
-XImage * screen_to_ximage (Screen *screen, Window window);
+XImage * screen_to_ximage (Screen *screen, Window window,
+                           char **filename_return);
 
 #endif /* __GRAB_XIMAGE_H__ */

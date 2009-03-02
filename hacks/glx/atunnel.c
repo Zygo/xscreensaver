@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* atunnels --- OpenGL Advanced Tunnel Screensaver */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)atunnels.c	5.07 2003/02/12 xlockmore";
 #endif
 

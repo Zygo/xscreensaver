@@ -6,6 +6,7 @@ $ mydir  = mydisk+f$directory()
 $ anemone	:== $'mydir'anemone
 $ ant		:== $'mydir'ant
 $ apollonian	:== $'mydir'apollonian
+$ apple2	:== $'mydir'apple2
 $ attraction	:== $'mydir'attraction
 $ barcode	:== $'mydir'barcode
 $ blaster	:== $'mydir'blaster
@@ -37,6 +38,7 @@ $ flag		:== $'mydir'flag
 $ flame		:== $'mydir'flame
 $ flow		:== $'mydir'flow
 $ fluidballs	:== $'mydir'fluidballs
+$ fontglide	:== $'mydir'fontglide
 $ forest	:== $'mydir'forest
 $ galaxy	:== $'mydir'galaxy
 $ goop		:== $'mydir'goop
@@ -77,6 +79,7 @@ $ petri		:== $'mydir'petri
 $ phosphor	:== $'mydir'phosphor
 $ piecewise	:== $'mydir'piecewise
 $ polyominoes	:== $'mydir'polyominoes
+$ pong		:== $'mydir'pong
 $ popsquares	:== $'mydir'popsquares
 $ pyro		:== $'mydir'pyro
 $ qix		:== $'mydir'qix
@@ -111,6 +114,7 @@ $ webcollage-helper	:== $'mydir'webcollage-helper
 $ whirlwindwarp	:== $'mydir'whirlwindwarp
 $ whirlygig	:== $'mydir'whirlygig
 $ worm		:== $'mydir'worm
+$ xanalogtv	:== $'mydir'xanalogtv
 $ xflame	:== $'mydir'xflame
 $ xjack		:== $'mydir'xjack
 $ xlyap		:== $'mydir'xlyap

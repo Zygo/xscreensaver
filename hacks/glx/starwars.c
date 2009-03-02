@@ -443,7 +443,7 @@ get_more_lines (sws_configuration *sc)
           if (sc->buf_tail > (s - sc->buf))
             {
               int i = sc->buf_tail - (s - sc->buf);
-              memcpy (sc->buf, s, i);
+              memmove (sc->buf, s, i);
               sc->buf_tail = i;
               sc->buf[sc->buf_tail] = 0;
             }

@@ -405,7 +405,7 @@ void getSnapshot (ModeInfo *modeinfo)
   if (MI_IS_WIREFRAME(modeinfo))
     return;
 
- ximage = screen_to_ximage (modeinfo->xgwa.screen, modeinfo->window);
+ ximage = screen_to_ximage (modeinfo->xgwa.screen, modeinfo->window, NULL);
 
   qw = QW; qh = QH;
   tw = modeinfo->xgwa.width;

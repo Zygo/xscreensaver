@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* bubble3d.c - 3D bubbles  */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)bubble3d.c  4.11 98/06/16 xlockmore";
-
 #endif
 
 /*-

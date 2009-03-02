@@ -18,9 +18,8 @@
                                 http://www.nine.org/notw/notw.html
  */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)penrose.c	5.00 2000/11/01 xlockmore";
-
 #endif
 
 /*-

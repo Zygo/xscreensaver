@@ -56,6 +56,8 @@ AC_DEFUN(AC_PROG_CC_ANSI,
     esac
   fi
 
+  OBJCC="$CC"
+
   AC_MSG_CHECKING([whether the compiler works on ANSI C])
   AC_TRY_RUN([ main(int ac, char **av) { return 0; } ],
      AC_MSG_RESULT(yes),
@@ -66,6 +68,7 @@ AC_DEFUN(AC_PROG_CC_ANSI,
   if test -n "$GCC"; then
     AC_MSG_RESULT(Turning on gcc compiler warnings.)
     CC="$CC -pedantic -Wall -Wstrict-prototypes -Wnested-externs"
+    OBJCC="$OBJCC -Wall"
     # supposedly gcc 3.4 will have "-Wdeclaration-after-statement"
     # and then perhaps we can do without -pedantic?
   else
@@ -849,6 +852,16 @@ AC_PATH_X_APP_DEFAULTS
 AC_X_RANDOM_PATHS
 AC_XPOINTER
 
+AC_MSG_CHECKING(whether this is MacOS X)
+  ac_macosx=no
+  case "$host" in
+    *-apple-darwin* )
+      ac_macosx=yes
+    ;;
+  esac
+AC_MSG_RESULT($ac_macosx)
+
+
 
 ###############################################################################
 #
@@ -1459,6 +1472,15 @@ else
   exit 1
 fi
 
+# We can't lock on MacOS X, so don't even bother compiling in support for it.
+#
+if test "$ac_macosx" = yes; then
+  if test "$enable_locking" = yes; then
+    AC_MSG_RESULT(locking disabled: it doesn't work on MacOS X)
+    enable_locking=no
+    AC_DEFINE(NO_LOCKING)
+  fi
+fi
 
 
 ###############################################################################
@@ -3407,6 +3429,17 @@ else
   LOCK_OBJS='$(NOLOCK_OBJS_1)'
 fi
 
+if test "$ac_macosx" = yes; then
+  EXES_OSX='$(EXES_OSX)'
+  SCRIPTS_OSX='$(SCRIPTS_OSX)'
+  MEN_OSX='$(MEN_OSX)'
+else
+  EXES_OSX=
+  SCRIPTS_OSX=
+  MEN_OSX=
+fi
+
+
 INSTALL_SETUID='$(INSTALL_PROGRAM) $(SUID_FLAGS)'
 
 if test "$need_setuid" = yes; then
@@ -3569,6 +3602,11 @@ AC_SUBST(SETUID_HACKS)
 AC_SUBST(INSTALL_DIRS)
 AC_SUBST(NEED_SETUID)
 AC_SUBST(INSTALL_PAM)
+
+AC_SUBST(OBJCC)
+AC_SUBST(EXES_OSX)
+AC_SUBST(SCRIPTS_OSX)
+AC_SUBST(MEN_OSX)
 
 AC_SUBST(PASSWD_SRCS)
 AC_SUBST(PASSWD_OBJS)
@@ -3761,10 +3799,12 @@ fi
 if test "$gtk2_halfassed" != no ; then
   warnL "GTK version $gtk2_halfassed was found, but at least one supporting"
   warn2 "library ($gtk2_halfassed_lib) was not, so GTK 2.x can't be used."
-  v="$ac_gtk_version_string"
-  warn2 "GTK $v is also installed, so it will be used instead."
-  warn2 "Please read the above output and the \`config.log' file"
-  warn2 "for more details."
+  if test "$have_gtk" = yes ; then
+    v="$ac_gtk_version_string"
+    warn2 "GTK $v is also installed, so it will be used instead."
+    warn2 "Please read the above output and the \`config.log' file"
+    warn2 "for more details."
+  fi
 fi
 
 
@@ -4113,7 +4153,7 @@ if test "$do_dir_warning" = yes; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}/."
   echo ""
-  echo "      The various graphics demos (160+ different executables) will"
+  echo "      The various graphics demos (175+ different executables) will"
   echo "      be installed in ${HACKDIR}/."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere,"

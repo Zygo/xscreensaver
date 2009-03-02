@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* euler2d --- 2 Dimensional Incompressible Inviscid Fluid Flow */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)euler2d.c	5.00 2000/11/01 xlockmore";
-
 #endif
 
 /*

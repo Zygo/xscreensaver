@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* juggle */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)juggle.c	5.00 2000/11/01 xlockmore";
-
 #endif
 
 /*-
@@ -1474,7 +1473,13 @@ draw_juggle(ModeInfo * mi)
 
 	{
 	  struct timeval tv;
-	  (void)gettimeofday(&tv, NULL);
+# ifdef GETTIMEOFDAY_TWO_ARGS
+      struct timezone tzp;
+	  gettimeofday(&tv, &tzp);
+# else
+	  gettimeofday(&tv);
+# endif
+
 	  sp->time = (int) ((tv.tv_sec - sp->begintime)*1000 + tv.tv_usec/1000);
 	}
 	for (traj = sp->head->next; traj != sp->head; traj = traj->next) {

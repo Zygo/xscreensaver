@@ -102,7 +102,7 @@ static void init_hack(Display *dpy, Window window)
 
   orig_map = NULL;
   pm = XCreatePixmap(dpy, window, sizex, sizey, xgwa.depth);
-  load_random_image (xgwa.screen, window, pm);
+  load_random_image (xgwa.screen, window, pm, NULL);
 
   if (!lenses) {
     orig_map = XGetImage(dpy, pm, 0, 0, sizex, sizey, ~0L, ZPixmap);

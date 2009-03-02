@@ -3,7 +3,7 @@
 
 @SET_MAKE@
 .SUFFIXES:
-.SUFFIXES: .c .o
+.SUFFIXES: .c .m .o
 
 srcdir		= @srcdir@
 VPATH		= @srcdir@
@@ -36,6 +36,7 @@ GNOME_BINDIR	= $(bindir)
 HACK_CONF_DIR	= @HACK_CONF_DIR@
 
 CC		= @CC@
+OBJCC		= @OBJCC@
 CFLAGS		= @CFLAGS@
 LDFLAGS		= @LDFLAGS@
 DEFS		= @DEFS@
@@ -192,6 +193,10 @@ DEMO_OBJS_1	= prefs.o dpms.o $(XMU_OBJS)
 DEMO_SRCS	= prefs.c dpms.c remote.c exec.c $(DEMO_UTIL_SRCS)
 DEMO_OBJS	= prefs.o dpms.o remote.o exec.o $(DEMO_UTIL_OBJS)
 
+PDF2JPEG_SRCS	= pdf2jpeg.m
+PDF2JPEG_OBJS	= pdf2jpeg.o
+PDF2JPEG_LIBS	= -framework Cocoa
+
 SAVER_LIBS	= $(LIBS) $(X_LIBS) $(XMU_LIBS) @SAVER_LIBS@ \
 		  $(XDPMS_LIBS) $(GL_LIBS) $(X_PRE_LIBS) \
 		  -lXt -lX11 -lXext $(X_EXTRA_LIBS) \
@@ -204,18 +209,25 @@ GETIMG_LIBS	= $(LIBS) $(X_LIBS) $(XPM_LIBS) $(JPEG_LIBS) \
 		  $(X_PRE_LIBS) -lXt -lX11 $(XMU_LIBS) -lXext $(X_EXTRA_LIBS)
 
 EXES		= xscreensaver xscreensaver-command xscreensaver-demo \
-		  xscreensaver-getimage
+		  xscreensaver-getimage @EXES_OSX@
 EXES2		= @ALL_DEMO_PROGRAMS@
-SCRIPTS		= xscreensaver-getimage-file xscreensaver-getimage-video
+EXES_OSX	= pdf2jpeg
+
+SCRIPTS_1	= xscreensaver-getimage-file xscreensaver-getimage-video
+SCRIPTS_OSX	= xscreensaver-getimage-desktop
+SCRIPTS		= $(SCRIPTS_1) @SCRIPTS_OSX@
 
 HDRS		= XScreenSaver_ad.h xscreensaver.h prefs.h remote.h \
 		  demo-Gtk-widgets.h demo-Gtk-stubs.h demo-Gtk-support.h \
 		  demo-Gtk-conf.h
-MEN		= xscreensaver.man xscreensaver-demo.man \
+MEN_1		= xscreensaver.man xscreensaver-demo.man \
 		  xscreensaver-command.man \
 		  xscreensaver-getimage.man \
 		  xscreensaver-getimage-file.man \
 		  xscreensaver-getimage-video.man
+MEN_OSX		= xscreensaver-getimage-desktop.man pdf2jpeg.man
+MEN		= $(MEN_1) @MEN_OSX@
+
 EXTRAS		= README Makefile.in XScreenSaver.ad.in xscreensaver.pam \
 		  xscreensaver-demo.glade xscreensaver-demo.glade2 \
 		  xscreensaver-demo.glade2p \
@@ -230,8 +242,9 @@ VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 TARFILES	= $(EXTRAS) $(VMSFILES) $(SAVER_SRCS_1) \
 		  $(MOTIF_SRCS) $(GTK_SRCS) $(PWENT_SRCS) \
 		  $(KERBEROS_SRCS) $(PAM_SRCS) $(LOCK_SRCS_1) $(DEMO_SRCS_1) \
-		  $(CMD_SRCS) $(GETIMG_SRCS_1) $(HDRS) $(SCRIPTS) \
-		  $(TEST_SRCS) $(MEN)
+		  $(CMD_SRCS) $(GETIMG_SRCS_1) $(PDF2JPEG_SRCS) $(HDRS) \
+		  $(SCRIPTS_1) $(SCRIPTS_OSX) $(MEN_1) $(MEN_OSX) \
+		  $(TEST_SRCS)
 
 
 default: $(EXES)
@@ -274,18 +287,11 @@ install-program: $(EXES)
 	fi ;								      \
 	echo $$inst xscreensaver $(install_prefix)$(bindir)/xscreensaver ;    \
 	$$inst xscreensaver $(install_prefix)$(bindir)/xscreensaver
-	@echo $(INSTALL_PROGRAM) xscreensaver-command \
-	  $(install_prefix)$(bindir)/xscreensaver-command ; \
-	$(INSTALL_PROGRAM) xscreensaver-command \
-	  $(install_prefix)$(bindir)/xscreensaver-command
-	@echo $(INSTALL_PROGRAM) xscreensaver-demo \
-	  $(install_prefix)$(bindir)/xscreensaver-demo ; \
-	$(INSTALL_PROGRAM) xscreensaver-demo \
-	  $(install_prefix)$(bindir)/xscreensaver-demo
-	@echo $(INSTALL_PROGRAM) xscreensaver-getimage \
-	  $(install_prefix)$(bindir)/xscreensaver-getimage ; \
-	$(INSTALL_PROGRAM) xscreensaver-getimage \
-	  $(install_prefix)$(bindir)/xscreensaver-getimage
+	@for exe in xscreensaver-command xscreensaver-demo	           \
+		    xscreensaver-getimage @EXES_OSX@ ; do	           \
+	  echo $(INSTALL_PROGRAM) $$exe $(install_prefix)$(bindir)/$$exe ; \
+	       $(INSTALL_PROGRAM) $$exe $(install_prefix)$(bindir)/$$exe ; \
+	 done
 
 install-ad: XScreenSaver.ad
 	@if [ ! -d $(install_prefix)$(AD_DIR) ]; then			      \
@@ -831,7 +837,10 @@ $(SAVER_UTIL_OBJS):
 
 # How we build object files in this directory.
 .c.o:
-	$(CC) -c $(INCLUDES) $(DEFS)  $(CFLAGS) $(X_CFLAGS) $<
+	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+
+.m.o:
+	$(OBJCC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
 
 # subprocs takes an extra -D option.
 subprocs.o: subprocs.c
@@ -888,6 +897,9 @@ xscreensaver-demo-Gtk: $(DEMO_OBJS) $(GTK_OBJS)
 
 xscreensaver-getimage: $(GETIMG_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(GETIMG_OBJS) $(GETIMG_LIBS) -lm
+
+pdf2jpeg: $(PDF2JPEG_OBJS)
+	$(OBJCC) $(LDFLAGS) -o $@ $(PDF2JPEG_OBJS) $(PDF2JPEG_LIBS) -lm
 
 
 TEST_PASSWD_OBJS = test-passwd.o $(LOCK_OBJS_1) $(PASSWD_OBJS) \

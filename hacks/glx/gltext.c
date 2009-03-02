@@ -389,9 +389,9 @@ text_extents (const char *string, int *wP, int *hP)
 
         if (w > *wP) *wP = w;
         *hP += line_height;
-        s++;
         lines++;
         if (*s == 0) break;
+        s++;
       }
     else
       s++;

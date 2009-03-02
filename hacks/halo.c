@@ -257,7 +257,7 @@ run_circles (Display *dpy, Window window)
   if (cycle_p && cmode != seuss_mode)
     {
       struct timeval now;
-      static struct timeval then = { 0, };
+      static struct timeval then = { 0, 0 };
       unsigned long diff;
 #ifdef GETTIMEOFDAY_TWO_ARGS
       struct timezone tzp;

@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* flow --- flow of strange bees */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)flow.c 4.10 98/04/24 xlockmore";
-
 #endif
 
 /*-

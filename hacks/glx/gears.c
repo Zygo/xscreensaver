@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* gears --- 3D gear wheels */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)gears.c	4.07 97/11/24 xlockmore";
-
 #endif
 
 /*-

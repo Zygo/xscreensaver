@@ -370,6 +370,9 @@ init_balls (Display *dpy, Window window)
       state->m[i] = pow(state->r[i],3) * M_PI * 1.3333;
     }
 
+  memcpy (state->opx, state->px, sizeof (*state->opx) * (state->count + 1));
+  memcpy (state->opy, state->py, sizeof (*state->opx) * (state->count + 1));
+
   return state;
 }
 
@@ -423,7 +426,7 @@ check_wall_clock (b_state *state, float max_d)
   if (tick++ > 20)  /* don't call gettimeofday() too often -- it's slow. */
     {
       struct timeval now;
-      static struct timeval last = {0, };
+      static struct timeval last = { 0, 0 };
 # ifdef GETTIMEOFDAY_TWO_ARGS
       struct timezone tzp;
       gettimeofday(&now, &tzp);
@@ -483,9 +486,9 @@ repaint_balls (b_state *state)
       x2b = (state->px[a] + state->r[a] - state->xmin);
       y2b = (state->py[a] + state->r[a] - state->ymin);
 
-      if (!state->dbeclear_p ||
+      if (!state->dbeclear_p
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
-          !state->backb
+          || !state->backb
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 	  )
 	{

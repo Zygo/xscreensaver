@@ -56,7 +56,7 @@ typedef struct
   short xpos,ypos;
 } BLOB;
 
-static unsigned char nBlobCount;
+static unsigned int nBlobCount;
 static unsigned char radius;
 static unsigned char delta;
 static unsigned char dradius;

@@ -27,7 +27,7 @@ use Text::Wrap qw(wrap);
 use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.8 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.9 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -275,14 +275,19 @@ sub lj_latest {
 
   $|=1;  # unbuffer stdout
 
-  if ($verbose) {
-    $_ = $url;
-    s@^[a-z]+:/+([^/?\#]+).*$@$1@;
-    my $host = $_;
-    print STDOUT "Contacting $host...";
-  }
+  $_ = $url;
+  s@^[a-z]+:/+([^/?\#]+).*$@$1@;
+  my $host = $_;
+
+  print STDOUT "Contacting $host..." if ($verbose);
 
   my ($http, $head, $body) = get_document ($url);
+
+  if (!$body) {
+    print STDOUT "$progname: no response from $host\n";
+    return;
+  }
+
   print STDOUT "\n\n" if ($verbose);
 
 #  $body = `cat /tmp/last`;

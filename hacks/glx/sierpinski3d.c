@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* Sierpinski3D --- 3D sierpinski gasket */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
-
 #endif
 
 /*-

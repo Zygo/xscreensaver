@@ -1667,6 +1667,14 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
     {
       if (until_idle_p)
 	{
+          if (p->mode == DONT_BLANK)
+            {
+              clientmessage_response(si, window, True,
+                         "ACTIVATE ClientMessage received in DONT_BLANK mode.",
+                                     "screen blanking is currently disabled.");
+              return False;
+            }
+
 	  clientmessage_response(si, window, False,
 				 "ACTIVATE ClientMessage received.",
 				 "activating.");
@@ -1770,6 +1778,14 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
       char buf [255];
       char buf2 [255];
       long which = event->xclient.data.l[1];
+
+      if (p->mode == DONT_BLANK)
+        {
+          clientmessage_response(si, window, True,
+                           "SELECT ClientMessage received in DONT_BLANK mode.",
+                                 "screen blanking is currently disabled.");
+          return False;
+        }
 
       sprintf (buf, "SELECT %ld ClientMessage received.", which);
       sprintf (buf2, "activating (%ld).", which);
@@ -1890,7 +1906,11 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 			      "not compiled with support for locking.",
 			      "locking not enabled.");
 #else /* !NO_LOCKING */
-      if (si->locking_disabled_p)
+      if (p->mode == DONT_BLANK)
+        clientmessage_response(si, window, True,
+                             "LOCK ClientMessage received in DONT_BLANK mode.",
+                               "screen blanking is currently disabled.");
+      else if (si->locking_disabled_p)
 	clientmessage_response (si, window, True,
 		      "LOCK ClientMessage received, but locking is disabled.",
 			      "locking not enabled.");

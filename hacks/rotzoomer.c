@@ -321,7 +321,7 @@ static void setup_X (Display * disp, Window win)
 	if (use_subwindow_mode_p (xwa.screen, window))	/* see grabscreen.c */
 		gcflags |= GCSubwindowMode;
 	gc = XCreateGC (display, window, gcflags, &gcv);
-        load_random_image (xwa.screen, window, window);
+        load_random_image (xwa.screen, window, window, NULL);
 
 	orig_map = XGetImage (display, window, 0, 0, width, height, ~0L, ZPixmap);
 

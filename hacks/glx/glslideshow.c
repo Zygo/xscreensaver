@@ -33,6 +33,7 @@
 # define DEF_IMAGE_DURATION "30"
 # define DEF_ZOOM           "75"
 # define DEF_FPS_CUTOFF     "5"
+# define DEF_TITLES         "False"
 # define DEF_DEBUG          "False"
 
 #define DEFAULTS  "*delay:           20000                \n" \
@@ -45,6 +46,8 @@
 		  "*wireframe:       False                \n" \
                   "*showFPS:         False                \n" \
 	          "*fpsSolid:        True                 \n" \
+		  "*titles:        " DEF_TITLES  "\n" \
+		  "*titleFont:       -*-times-bold-r-normal-*-180-*\n" \
                   "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n"
 
 # include "xlockmore.h"
@@ -69,6 +72,7 @@ typedef struct {
   GLuint texid;			   /* which texture to draw */
   enum { IN, OUT, DEAD } state;    /* how to draw it */
   rect from, to;		   /* the journey this quad is taking */
+  char *title;
 } gls_quad;
 
 
@@ -100,6 +104,9 @@ typedef struct {
   Bool low_fps_p;		/* Whether we have compensated for a low
                                    frame rate. */
 
+  XFontStruct *xfont;
+  GLuint font_dlist;
+
 } slideshow_state;
 
 static slideshow_state *sss = NULL;
@@ -107,15 +114,18 @@ static slideshow_state *sss = NULL;
 
 /* Command-line arguments
  */
-int fade_seconds;    /* Duration in seconds of fade transitions.
-                        If 0, jump-cut instead of fading. */
-int pan_seconds;     /* Duration of each pan through an image. */
-int image_seconds;   /* How many seconds until loading a new image. */
-int zoom;            /* How far in to zoom when panning, in percent of image
-                        size: that is, 75 means "when zoomed all the way in,
-                        75% of the image will be on screen."  */
-int fps_cutoff;      /* If the frame-rate falls below this, turn off zooming.*/
-Bool debug_p;	     /* Be loud and do weird things. */
+static int fade_seconds;    /* Duration in seconds of fade transitions.
+                               If 0, jump-cut instead of fading. */
+static int pan_seconds;     /* Duration of each pan through an image. */
+static int image_seconds;   /* How many seconds until loading a new image. */
+static int zoom;            /* How far in to zoom when panning, in percent of
+                               image size: that is, 75 means "when zoomed all
+                               the way in, 75% of the image will be visible."
+                             */
+static int fps_cutoff;      /* If the frame-rate falls below this, turn off
+                               zooming.*/
+static Bool do_titles;	    /* Display image titles. */
+static Bool debug_p;	    /* Be loud and do weird things. */
 
 
 static XrmOptionDescRec opts[] = {
@@ -124,6 +134,8 @@ static XrmOptionDescRec opts[] = {
   {"-duration", ".slideshow.imageDuration", XrmoptionSepArg, 0     },
   {"-zoom",     ".slideshow.zoom",          XrmoptionSepArg, 0     },
   {"-cutoff",   ".slideshow.FPScutoff",     XrmoptionSepArg, 0     },
+  {"-titles",   ".slideshow.titles",        XrmoptionNoArg, "True" },
+  {"+titles",   ".slideshow.titles",        XrmoptionNoArg, "True" },
   {"-debug",    ".slideshow.debug",         XrmoptionNoArg, "True" },
 };
 
@@ -134,6 +146,7 @@ static argtype vars[] = {
   { &zoom,          "zoom",         "Zoom",         DEF_ZOOM,           t_Int},
   { &fps_cutoff,    "FPScutoff",    "FPSCutoff",    DEF_FPS_CUTOFF,     t_Int},
   { &debug_p,       "debug",        "Debug",        DEF_DEBUG,         t_Bool},
+  { &do_titles,     "titles",       "Titles",       DEF_TITLES,        t_Bool},
 };
 
 ModeSpecOpt slideshow_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -153,6 +166,90 @@ double_time (void)
 # endif
 
   return (now.tv_sec + ((double) now.tv_usec * 0.000001));
+}
+
+
+static void
+load_font (ModeInfo *mi, char *res, XFontStruct **fontP, GLuint *dlistP)
+{
+  const char *font = get_string_resource (res, "Font");
+  XFontStruct *f;
+  Font id;
+  int first, last;
+
+  if (!font) font = "-*-times-bold-r-normal-*-180-*";
+
+  f = XLoadQueryFont(mi->dpy, font);
+  if (!f) f = XLoadQueryFont(mi->dpy, "fixed");
+
+  id = f->fid;
+  first = f->min_char_or_byte2;
+  last = f->max_char_or_byte2;
+  
+  clear_gl_error ();
+  *dlistP = glGenLists ((GLuint) last+1);
+  check_gl_error ("glGenLists");
+  glXUseXFont(id, first, last-first+1, *dlistP + first);
+  check_gl_error ("glXUseXFont");
+
+  *fontP = f;
+}
+
+
+static void
+print_title_string (ModeInfo *mi, const char *string, GLfloat x, GLfloat y)
+{
+  slideshow_state *ss = &sss[MI_SCREEN(mi)];
+  XFontStruct *font = ss->xfont;
+  GLfloat line_height = font->ascent + font->descent;
+
+  y -= line_height;
+
+  glPushAttrib (GL_TRANSFORM_BIT |  /* for matrix contents */
+                GL_ENABLE_BIT);     /* for various glDisable calls */
+  glDisable (GL_LIGHTING);
+  glDisable (GL_DEPTH_TEST);
+  {
+    glMatrixMode(GL_PROJECTION);
+    glPushMatrix();
+    {
+      glLoadIdentity();
+
+      glMatrixMode(GL_MODELVIEW);
+      glPushMatrix();
+      {
+        unsigned int i;
+        int x2 = x;
+        glLoadIdentity();
+
+        gluOrtho2D (0, mi->xgwa.width, 0, mi->xgwa.height);
+
+        glRasterPos2f (x, y);
+        for (i = 0; i < strlen(string); i++)
+          {
+            char c = string[i];
+            if (c == '\n')
+              {
+                glRasterPos2f (x, (y -= line_height));
+                x2 = x;
+              }
+            else
+              {
+                glCallList (ss->font_dlist + (int)(c));
+                x2 += (font->per_char
+                       ? font->per_char[c - font->min_char_or_byte2].width
+                       : font->min_bounds.width);
+              }
+          }
+      }
+      glPopMatrix();
+    }
+    glMatrixMode(GL_PROJECTION);
+    glPopMatrix();
+  }
+  glPopAttrib();
+
+  glMatrixMode(GL_MODELVIEW);
 }
 
 
@@ -250,6 +347,20 @@ draw_quad (ModeInfo *mi, gls_quad *q)
             glVertex3f (x, 0, 0); glVertex3f (x, 1, 0);
           }
       glEnd();
+    }
+
+  if (do_titles &&
+      q->state != DEAD &&
+      q->title && *q->title)
+    {
+      /* #### this is wrong -- I really want to draw this with
+         "1,1,1,opacity", so that the text gets laid down on top
+         of the image with alpha, but that doesn't work, and I
+         don't know why...
+       */
+      glColor4f (opacity, opacity, opacity, 1);
+      print_title_string (mi, q->title,
+                          10, mi->xgwa.height - 10);
     }
 
   glPopMatrix();
@@ -441,7 +552,19 @@ load_quad (ModeInfo *mi, gls_quad *q)
   if (wire)
     goto DONE;
 
-  ximage = screen_to_ximage (mi->xgwa.screen, mi->window);
+  if (q->title) free (q->title);
+  q->title = 0;
+  ximage = screen_to_ximage (mi->xgwa.screen, mi->window, &q->title);
+
+  if (q->title)   /* strip filename to part after last /. */
+    {
+      char *s = strrchr (q->title, '/');
+      if (s) strcpy (q->title, s+1);
+    }
+
+  if (debug_p)
+    fprintf (stderr, "%s: debug: loaded image %d (%s)\n",
+             progname, q->texid, (q->title ? q->title : "(null)"));
 
   glBindTexture (GL_TEXTURE_2D, q->texid);
   glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
@@ -519,7 +642,6 @@ load_quad (ModeInfo *mi, gls_quad *q)
 
   ss->redisplay_needed_p = True;
 }
-
 
 
 void
@@ -641,6 +763,8 @@ init_slideshow (ModeInfo *mi)
 
   ss->pan_start_time   = ss->now;
   ss->image_start_time = ss->now;
+
+  load_font (mi, "titleFont", &ss->xfont, &ss->font_dlist);
 
   for (i = 0; i < countof(ss->texids); i++)
     glGenTextures (1, &ss->texids[i]);

@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "07-Sep-2003 (4.13)" "X Version 11"
+.TH XScreenSaver 1 "25-Oct-2003 (4.14)" "X Version 11"
 .SH NAME
 xscreensaver-demo - interactively control the background xscreensaver daemon
 .SH SYNOPSIS

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="blinkbox" _label="BlinkBox">
+
+  <command arg="-root"/>
+
+  <number id="Speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Fast" _high-label="Slow"
+          low="0" high="50000" default="30000"/>
+
+  <_description>
+Shows a ball contained inside of a bounding box.
+Colored blocks blink in when the ball hits the edges.
+Written by Jeremy English.
+  </_description>
+</screensaver>

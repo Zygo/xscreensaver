@@ -84,24 +84,21 @@ hacks are displayed and which aren't.
 .BR doBlitDamage ,
 .BR doSolaris ,
 .BR doHPUX ,
+.BR doApple2 ,
 .BR doOS390 ,
+.BR doVMS ,
 and
-.BR doApple2 .
+.BR doHVX .
 Each of these is a Boolean resource, they all default to true, except
 for doAtari, doBSD, and doSparcLinux, which are turned off by default,
 because they're really not all that interesting looking unless you're a
 fan of those systems.  
 
 There are command-line options for all of these:
-e.g., \fI\-bsd\fP, \fI\-no-bsd\fP.
+e.g., \fI\-bsd\fP, \fI\-no-bsd\fP.  (Also note the \fI\-only\fP option.)
 .SH BUGS
-Unlike the systems that the images are borrowed from,
-.I bsod
-does not require a reboot after running.
-.PP
-.I bsod
-should also emulate more systems, but systems with interesting crash
-graphics are not as common as one might hope.
+Unlike the systems being simulated, \fIbsod\fP does not require a
+reboot after running.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

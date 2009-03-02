@@ -32,8 +32,9 @@ for use with those
 .BR xscreensaver (1)
 programs that run an external program to generate text.  For example:
 .EX
-phosphor -scale 2 -program 'ljlatest --cols 40'
+fontglide -program ljlatest
 starwars -program ljlatest
+phosphor -scale 2 -program 'ljlatest --cols 40'
 .EE
 .SH OPTIONS
 .I ljlatest
@@ -72,7 +73,9 @@ The output is always ISO-8859-1, regardless of locale.
 .BR xscreensaver (1),
 .BR fortune (1),
 .BR phosphor (1),
+.BR apple2 (1),
 .BR starwars (1),
+.BR fontglide (1),
 .BR dadadodo (1),
 .BR webcollage (1),
 .BR driftnet (1)

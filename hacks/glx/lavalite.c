@@ -96,6 +96,7 @@ extern XtAppContext app;
 #define DEFAULTS	"*delay:	10000       \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
+			"*geometry:	640x640     \n" \
 			"*count:      " DEF_COUNT " \n" \
 			"*style:      " DEF_STYLE " \n" \
 			"*speed:      " DEF_SPEED " \n" \
@@ -557,7 +558,7 @@ draw_wing (GLfloat w, GLfloat h, GLfloat d, Bool wire)
   int polys = 0;
   int maxx = coords[0][countof(coords[0])-1][0];
   int maxy = coords[0][countof(coords[0])-1][1];
-  int x;
+  unsigned int x;
 
   for (x = 1; x < countof(coords[0]); x++)
     {

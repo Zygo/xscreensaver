@@ -1578,7 +1578,6 @@ mode_menu_item_cb (GtkWidget *widget, gpointer user_data)
   GList *menu_items = gtk_container_children (GTK_CONTAINER (widget->parent));
   int menu_index = 0;
   saver_mode new_mode;
-  int old_selected = p->selected_hack;
 
   while (menu_items)
     {
@@ -1592,17 +1591,12 @@ mode_menu_item_cb (GtkWidget *widget, gpointer user_data)
   new_mode = mode_menu_order[menu_index];
 
   /* Keep the same list element displayed as before; except if we're
-     switching *to* "one screensaver" mode from any other mode, scroll
-     to and select "the one".
+     switching *to* "one screensaver" mode from any other mode, set
+     "the one" to be that which is currently selected.
    */
-  list_elt = -1;
+  list_elt = selected_list_element (s);
   if (new_mode == ONE_HACK)
-    list_elt = (p->selected_hack >= 0
-                ? s->hack_number_to_list_elt[p->selected_hack]
-                : -1);
-
-  if (list_elt < 0)
-    list_elt = selected_list_element (s);
+    p->selected_hack = s->list_elt_to_hack_number[list_elt];
 
   {
     saver_mode old_mode = p->mode;
@@ -1613,9 +1607,6 @@ mode_menu_item_cb (GtkWidget *widget, gpointer user_data)
   }
 
   pref_changed_cb (widget, user_data);
-
-  if (old_selected != p->selected_hack)
-    abort();    /* dammit, not again... */
 }
 
 
@@ -2374,7 +2365,7 @@ populate_prefs_page (state *s)
 # define THROTTLE(NAME) if (p->NAME != 0 && p->NAME < 60000) p->NAME = 60000
   THROTTLE (timeout);
   THROTTLE (cycle);
-  THROTTLE (passwd_timeout);
+  /* THROTTLE (passwd_timeout); */  /* GUI doesn't set this; leave it alone */
 # undef THROTTLE
 
 # define FMT_MINUTES(NAME,N) \
@@ -4540,9 +4531,11 @@ main (int argc, char **argv)
   free (window_title);
   window_title = 0;
 
+#ifdef HAVE_GTK2
   /* After picking the default size, allow -geometry to override it. */
   if (geom)
     gtk_window_parse_geometry (GTK_WINDOW (s->toplevel_widget), geom);
+#endif
 
   gtk_widget_show (s->toplevel_widget);
   init_icon (GTK_WIDGET (s->toplevel_widget)->window);  /* after `show' */

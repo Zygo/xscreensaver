@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* crystal --- polygons moving according to plane group rules */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)crystal.c	4.12 98/09/10 xlockmore";
-
 #endif
 
 /*-

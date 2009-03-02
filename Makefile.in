@@ -319,4 +319,5 @@ count::
     ( cd hacks/glx; make -s INSTALL=true install-program ) ) | \
     grep true | \
     grep -v helper | \
+    grep -v ljlatest | \
     wc -l

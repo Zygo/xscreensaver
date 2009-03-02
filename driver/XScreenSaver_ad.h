@@ -48,7 +48,7 @@
 	   \"Qix (transparent)\" 	qix -root -count 4 -solid -transparent	    \\n\
 		\"Qix (linear)\" 	qix -root -count 5 -solid -transparent	      \
 				  -linear -segments 250 -size 100	    \\n\
-- mono: 	   \"Qix (xor)\" 	qix -root -linear -count 5 -size 200	      \
+-		   \"Qix (xor)\" 	qix -root -linear -count 5 -size 200	      \
 				  -spread 30 -segments 75 -solid -xor	    \\n\
 									      \
 	  \"Attraction (balls)\" 	attraction -root -mode balls		    \\n\
@@ -160,6 +160,7 @@
 				blaster -root				    \\n\
 				bumps -root				    \\n\
 				xteevee -root				    \\n\
+				xanalogtv -root				    \\n\
 				xspirograph -root			    \\n\
 				nerverot -root				    \\n\
 -	    \"NerveRot (dense)\"	nerverot -root -count 1000		    \\n\
@@ -193,7 +194,11 @@
  	                	barcode -root				    \\n\
  	                	piecewise -root				    \\n\
  	                	cloudlife -root				    \\n\
-  color: 			bubbles -root				    \\n\
+		   \"FontGlide\"	fontglide -root -page			    \\n\
+	\"FontGlide (scroller)\"	fontglide -root -scroll			    \\n\
+				apple2 -root				    \\n\
+                                bubbles -root				    \\n\
+				pong -root				    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
 				webcollage -root -filter		      \
@@ -258,8 +263,13 @@
 	   GL:			blocktube -root				    \\n\
 	   GL:			flipflop -root				    \\n\
 	   GL:			antspotlight -root			    \\n\
-	   GL:			polytopes -root				    \\n\
 -	   GL:			glslideshow -root			    \\n\
+	   GL:			polytopes -root				    \\n\
+	   GL:			gleidescope -root			    \\n\
+- 	   GL:			mirrorblob -root			    \\n\
+	   GL:	    \"MirrorBlob (color only)\"				      \
+                                mirrorblob -root -colour -no-texture	    \\n\
+	   GL:			blinkbox -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -310,7 +320,7 @@
 "*passwd.passwdFont:		*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1",
 "*passwd.thermometer.width:	8",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright © 1991-2002 by",
+"*splash.body.label:		Copyright © 1991-2003 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",
@@ -435,6 +445,7 @@
 "*hacks.shadebobs.name:      ShadeBobs",
 "*hacks.ccurve.name:         C Curve",
 "*hacks.xteevee.name:        XTeeVee",
+"*hacks.xanalogtv.name:      XAnalogTV",
 "*hacks.xspirograph.name:    XSpiroGraph",
 "*hacks.nerverot.name:       NerveRot",
 "*hacks.webcollage.name:     WebCollage",
@@ -468,4 +479,7 @@
 "*hacks.blocktube.name:      BlockTube",
 "*hacks.flipflop.name:       FlipFlop",
 "*hacks.antspotlight.name:   AntSpotlight",
+"*hacks.fontglide.name:      FontGlide",
+"*hacks.mirrorblob.name:     MirrorBlob",
+"*hacks.blinkbox.name:       BlinkBox",
 "*hacks.documentation.isInstalled: True",

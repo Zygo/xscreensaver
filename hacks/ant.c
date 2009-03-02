@@ -4,9 +4,8 @@
  *         as Greg Turk's turmites) whose tape is the screen
  */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)ant.c	5.00 2000/11/01 xlockmore";
-
 #endif
 
 /*-

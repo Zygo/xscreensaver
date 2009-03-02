@@ -718,6 +718,8 @@ char *defaults [] = {
 };
 
 XrmOptionDescRec options [] = {
+  { "-foreground",".foreground",     XrmoptionSepArg, 0 },
+  { "-fg",        ".foreground",     XrmoptionSepArg, 0 },
   { "-delay",     ".delay",          XrmoptionSepArg, 0 },
   { "-bitmap",    ".bitmap",         XrmoptionSepArg, 0 },
   { "-baseline",  ".bitmapBaseline", XrmoptionSepArg, 0 },

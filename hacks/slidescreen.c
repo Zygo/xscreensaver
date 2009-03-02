@@ -36,7 +36,7 @@ init_slide (Display *dpy, Window window)
   Visual *visual;
 
   XGetWindowAttributes (dpy, window, &xgwa);
-  load_random_image (xgwa.screen, window, window);
+  load_random_image (xgwa.screen, window, window, NULL);
   cmap = xgwa.colormap;
   visual = xgwa.visual;
   max_width = xgwa.width;

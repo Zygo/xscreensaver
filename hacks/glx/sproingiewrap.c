@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* sproingiewrap.c - sproingies wrapper */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
-
 #endif
 
 /*-
