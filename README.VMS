@@ -1,0 +1,59 @@
+OpenVMS port of Xscreensavser version 2.05     July 1997
+==========================================
+
+Xscreensaver distribution can be found in 3 subdirectories:
+
+[.DRIVER]   The Xscreensaver and Xscreensaver-command programs.
+[.HACKS]    Graphic demos ,can be run either through the xscreensaver program 
+            or standalone.
+[.UTILS]    A small libraries of various utilities.
+
+This port has been tested with  VAX VMS 6.1 (compiled with DEC 5 5.0 and
+Motif 1.2) and AXP VMS 6.2 (compiled with DEC C 5.0 and Motif 1.2-4). 
+
+To rebuild, you need to rebuild [.UTILS] directory first and create the
+object library (look at the end of COMPILE*.COM procedure).
+
+You can now build the [.HACKS] directory and the [.DRIVER] directory.
+
+A one-step build is now available via the MAKEVMS.COM script. 
+
+WARNING : before building [.HACKS], you may need to correct some of the
+DECwindows bitmap files. Some files are bogus !! (they have a long line of 
+null chars  at the end). These files are under 
+SYS$COMMON:[DECW$INCLUDE.BITMAPS] directory:
+
+STIPPLE.XBM
+HLINES2.XBM
+LIGHT_GRAY.XBM
+ROOT_WEAVES.XBM
+VLINES2.XBM
+
+These files are all used by Greynetic demo.
+
+Nota: link procedure automagically select appropriate X and Motif Libraries
+(X11R4/Motif 1.1 - X11R5/Motif 1.2). 
+
+The SETUP.COM procedure gives you a definition of all DCL foreign command
+symbols needed to run Xscreensaver and all the graphic hacks. You need to
+modify this procedure if you install these programs in another directory tree.
+
+VMS .HLP files are provied for all programms of this distribution.
+
+You can easily add new graphic demos without recompiling Xscreensaver. You just
+need to add them in resource file XSCREENSAVER.DAT. This file (originally
+present in [.DRIVER] directory ) can be installed under your SYS$LOGIN 
+directory for a per-user customization basis. You can also install it under 
+the system-wide user resource directory SYS$COMMON:[DECW$DEFAULT.USER] 
+(with (W:RE) protections). The new graphics hack must be run in root-window 
+mode to be accepted by Xscreensaver.
+
+The graphic demos are spawn into subprocess created by the system() call (in
+the Unix version the execvp() call is used).
+
+The VMS passord checking programs were picked up in the Xlock distribution.
+
+Enjoy,
+
+Patrick MOREAU - CENA/Athis-Mons - FRANCE  (pmoreau@cena.dgac.fr)
+                                           (moreau_p@decus.decus.fr)
