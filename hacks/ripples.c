@@ -466,7 +466,7 @@ setup_X(Display * disp, Window win)
 
     gc = XCreateGC(display, window, gcflags, &gcv);
 
-    grab_screen_image(xwa.screen, window);
+    load_random_image (xwa.screen, window, window);
 
     orig_map = XGetImage(display, window, 0, 0, xwa.width, xwa.height,
 			 ~0L, ZPixmap);

@@ -243,8 +243,12 @@
 	   GL:			lavalite -root				    \\n\
 	   GL:			queens -root				    \\n\
 	   GL:			endgame -root				    \\n\
-	   GL:			atunnel -root				    \\n\
 -	   GL:			glblur -root				    \\n\
+	   GL:			atunnel -root				    \\n\
+	   GL:			flyingtoasters -root			    \\n\
+	   GL:			bouncingcow -root			    \\n\
+	   GL:			jigglypuff -root			    \\n\
+-	   GL:			glslideshow -root			    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -448,4 +452,8 @@
 "*hacks.electricsheep.name:  ElectricSheep",
 "*hacks.sphereEversion.name: SphereEversion",
 "*hacks.fluidballs.name:     FluidBalls",
+"*hacks.flyingtoasters.name: FlyingToasters",
+"*hacks.bouncingcow.name:    BouncingCow",
+"*hacks.jigglypuff.name:     JigglyPuff",
+"*hacks.glslideshow.name:    GLSlideshow",
 "*hacks.documentation.isInstalled: True",

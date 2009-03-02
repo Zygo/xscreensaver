@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 1998, 2001 
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 1998, 2001, 2003 
  * Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -36,7 +36,7 @@ init_slide (Display *dpy, Window window)
   Visual *visual;
 
   XGetWindowAttributes (dpy, window, &xgwa);
-  grab_screen_image (xgwa.screen, window);
+  load_random_image (xgwa.screen, window, window);
   cmap = xgwa.colormap;
   visual = xgwa.visual;
   max_width = xgwa.width;

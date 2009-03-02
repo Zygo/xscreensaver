@@ -109,14 +109,11 @@ init_hack (Display *dpy, Window window)
 #endif
   window_gc = XCreateGC(dpy, window, gcflags, &gcv);
 
-
-  /* grab screen to window */
-  grab_screen_image(xgwa.screen, window);
-
-  /* save screen to pixmap for copying later */
+  /* grab screen to pixmap */
   pm = XCreatePixmap(dpy, window, sizex, sizey, xgwa.depth);
-  XCopyArea(dpy, window, pm, window_gc, 0, 0, sizex, sizey, 0, 0);
-
+  load_random_image (xgwa.screen, window, pm);
+  XClearWindow(dpy, window);
+  XFlush (dpy);
 
   /* create buffer to reduce flicker */
   buffer = XCreatePixmap(dpy, window, sizex, sizey, xgwa.depth);

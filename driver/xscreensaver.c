@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2002 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -127,6 +127,9 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <X11/Xlib.h>
+
+#include <X11/Xlibint.h>
+
 #include <X11/Xatom.h>
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
@@ -228,7 +231,7 @@ do_help (saver_info *si)
   fflush (stdout);
   fflush (stderr);
   fprintf (stdout, "\
-xscreensaver %s, copyright (c) 1991-2002 by Jamie Zawinski <jwz@jwz.org>\n\
+xscreensaver %s, copyright (c) 1991-2003 by Jamie Zawinski <jwz@jwz.org>\n\
 \n\
   All xscreensaver configuration is via the `~/.xscreensaver' file.\n\
   Rather than editing that file by hand, just run `xscreensaver-demo':\n\
@@ -686,7 +689,7 @@ print_banner (saver_info *si)
 
   if (p->verbose_p)
     fprintf (stderr,
-	     "%s %s, copyright (c) 1991-2002 "
+	     "%s %s, copyright (c) 1991-2003 "
 	     "by Jamie Zawinski <jwz@jwz.org>.\n",
 	     progname, si->version);
 

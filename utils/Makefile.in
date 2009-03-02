@@ -261,6 +261,7 @@ logo.o: $(srcdir)/images/logo-180.xpm
 logo.o: $(srcdir)/images/logo-50.xpm
 logo.o: $(srcdir)/resources.h
 logo.o: $(srcdir)/utils.h
+logo.o: $(srcdir)/visual.h
 overlay.o: ../config.h
 overlay.o: $(srcdir)/utils.h
 overlay.o: $(srcdir)/visual.h

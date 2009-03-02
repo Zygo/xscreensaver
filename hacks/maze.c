@@ -1706,7 +1706,8 @@ screenhack(Display *display, Window window)
   {
     unsigned long *pixels; /* ignored - unfreed */
     int npixels;
-    logo_map = xscreensaver_logo (dpy, win, xgwa.colormap, bg,
+    logo_map = xscreensaver_logo (xgwa.screen, xgwa.visual, win,
+                                  xgwa.colormap, bg,
                                   &pixels, &npixels, 0,
                                   logo_width > 150);
   }

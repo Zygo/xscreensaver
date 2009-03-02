@@ -1,5 +1,5 @@
 %define	name		xscreensaver
-%define	version		4.08
+%define	version		4.09
 %define	release		1
 %define	serial		1
 %define	x11_prefix	/usr/X11R6
@@ -14,6 +14,7 @@
 # %define	USE_GL		yes
 
 Summary:	X screen saver and locker
+Summary(fr):	Economiseur d'écran et verrouillage de terminaux X
 Name:		%{name}
 Version:	%{version}
 Release:	%{release}
@@ -37,10 +38,19 @@ More than 150 display modes are included in this package.
 %{?USE_GL:See also the xscreensaver-gl package, which}
 %{?USE_GL:includes optional OpenGL display modes.}
 
+%description -l fr
+Un économiseur d'écran et verrouillage modulaire pour X-Window.
+Hautement configurable: permet l'utilisation de n'importe quel programme
+qui peut dessiner dans la fenêtre root.
+Plus de 150 modes d'affichage sont inclus dans ce paquet.
+%{?USE_GL:Voir aussi le paquet xscreensaver-gl, qui inclut}
+%{?USE_GL:des modules optionnels OpenGL.}
+
 %{?USE_GL:%package gl}
 %{?USE_GL:Group:	Amusements/Graphics}
 %{?USE_GL:Requires:	xscreensaver = %{version}}
 %{?USE_GL:Summary:	A set of GL screensavers}
+%{?USE_GL:Summary(fr):	Un ensemble d'économiseurs d'écran OpenGL}
 %{?USE_GL:%description gl}
 %{?USE_GL:The xscreensaver-gl package contains even more screensavers for your}
 %{?USE_GL:mind-numbing, ambition-eroding, time-wasting, hypnotized viewing}
@@ -49,6 +59,13 @@ More than 150 display modes are included in this package.
 %{?USE_GL:Install the xscreensaver-gl package if you need more screensavers}
 %{?USE_GL:for use with the X Window System and you have OpenGL or Mesa}
 %{?USE_GL:installed.}
+%{?USE_GL:%description -l fr gl}
+%{?USE_GL:Le paquet xscreensaver-gl contient encore plus d'économiseurs}
+%{?USE_GL:d'écran pour votre plaisir visuel.}
+%{?USE_GL: }
+%{?USE_GL:Ces économiseurs d'écran nécessitent OpenGL ou Mesa.}
+%{?USE_GL:Installez le paquet xscreensaver-gl si vous désirez plus}
+%{?USE_GL:d'économiseur d'écran et que vous avez OpenGL ou Mesa installé.}
 
 %prep
 %setup -q
@@ -172,3 +189,7 @@ if [ -d $RPM_BUILD_ROOT-gl ]; then rm -r $RPM_BUILD_ROOT-gl ; fi
 #
 %{?USE_GL:%files -f exes-gl gl}
 %{?USE_GL:%defattr(-,root,root)}
+
+%changelog
+* Wed Mar 05 2003 Eric Lassauge <lassauge@mail.dotcom.fr>
+- Updated for xscreensaver-4.08 with french translations

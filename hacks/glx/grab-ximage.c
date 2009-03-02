@@ -86,7 +86,7 @@ spread_bits (unsigned char value, unsigned char width)
 
 
 /* Returns an XImage structure containing an image of the desktop.
-   (As a side-effect, that image will be painted onto the given Window.)
+   (As a side-effect, that image *may* be painted onto the given Window.)
    This XImage will be 32 bits per pixel, 8 each per R, G, and B, with the
    extra byte set to 0xFF.
  */
@@ -94,28 +94,33 @@ XImage *
 screen_to_ximage (Screen *screen, Window window)
 {
   Display *dpy = DisplayOfScreen (screen);
+  Pixmap pixmap = 0;
   XWindowAttributes xgwa;
   int win_width, win_height;
   int tex_width, tex_height;
-
-  grab_screen_image (screen, window);
 
   XGetWindowAttributes (dpy, window, &xgwa);
   win_width = xgwa.width;
   win_height = xgwa.height;
 
+  pixmap = XCreatePixmap(dpy, window, xgwa.width, xgwa.height, xgwa.depth);
+  load_random_image (screen, window, pixmap);
+
   /* GL texture sizes must be powers of two. */
   tex_width  = to_pow2(win_width);
   tex_height = to_pow2(win_height);
 
-  /* Convert the server-side Drawable to a client-side GL-ordered XImage.
+  /* Convert the server-side Pixmap to a client-side GL-ordered XImage.
    */
   {
     XImage *ximage1, *ximage2;
     XColor *colors = 0;
 
-    ximage1 = XGetImage (dpy, window, 0, 0, win_width, win_height, ~0L,
+    ximage1 = XGetImage (dpy, pixmap, 0, 0, win_width, win_height, ~0L,
                          ZPixmap);
+    XFreePixmap (dpy, pixmap);
+    pixmap = 0;
+
     ximage2 = XCreateImage (dpy, xgwa.visual, 32, ZPixmap, 0, 0,
                             tex_width, tex_height, 32, 0);
 
@@ -151,9 +156,9 @@ screen_to_ximage (Screen *screen, Window window)
 
       if (colors == 0)  /* truecolor */
         {
-          srmsk = ximage1->red_mask;
-          sgmsk = ximage1->green_mask;
-          sbmsk = ximage1->blue_mask;
+          srmsk = ximage2->red_mask;
+          sgmsk = ximage2->green_mask;
+          sbmsk = ximage2->blue_mask;
 
           decode_mask (srmsk, &srpos, &srsiz);
           decode_mask (sgmsk, &sgpos, &sgsiz);
@@ -214,6 +219,7 @@ screen_to_ximage (Screen *screen, Window window)
         }
     }
 
+    if (pixmap) XFreePixmap (dpy, pixmap);
     if (colors) free (colors);
     free (ximage1->data);
     ximage1->data = 0;

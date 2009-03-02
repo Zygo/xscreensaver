@@ -47,6 +47,11 @@
   static void xfree_lock_mode_switch (saver_info *si, Bool lock_p);
 #endif /* HAVE_XF86VMODE */
 
+#ifdef HAVE_XF86MISCSETGRABKEYSSTATE
+# include <X11/extensions/xf86misc.h>
+  static void xfree_lock_grab_smasher (saver_info *si, Bool lock_p);
+#endif /* HAVE_XF86MISCSETGRABKEYSSTATE */
+
 
 #ifdef _VROOT_H_
 ERROR!  You must not include vroot.h in this file.
@@ -150,8 +155,9 @@ make_passwd_window (saver_info *si)
   Screen *screen;
   Colormap cmap;
   char *f;
+  saver_screen_info *ssi = &si->screens [mouse_screen (si)];
 
-  pw->prompt_screen = &si->screens [mouse_screen (si)];
+  pw->prompt_screen = ssi;
   if (si->prefs.verbose_p)
     fprintf (stderr, "%s: %d: creating password dialog.\n",
              blurb(), pw->prompt_screen->number);
@@ -401,7 +407,8 @@ make_passwd_window (saver_info *si)
 		   attrmask, &attrs);
   XSetWindowBackground (si->dpy, si->passwd_dialog, pw->background);
 
-  pw->logo_pixmap = xscreensaver_logo (si->dpy, si->passwd_dialog, cmap,
+  pw->logo_pixmap = xscreensaver_logo (ssi->screen, ssi->current_visual,
+                                       si->passwd_dialog, cmap,
                                        pw->background, 
                                        &pw->logo_pixels, &pw->logo_npixels,
                                        0, True);
@@ -897,6 +904,38 @@ hp_lock_reset (saver_info *si, Bool lock_p)
 }
 #endif /* HAVE_XHPDISABLERESET */
 
+
+#ifdef HAVE_XF86MISCSETGRABKEYSSTATE
+
+/* This function enables and disables the Ctrl-Alt-KP_star and 
+   Ctrl-Alt-KP_slash hot-keys, which (in XFree86 4.2) break any
+   grabs and/or kill the grabbing client.  That would effectively
+   unlock the screen, so we don't like that.
+
+   The Ctrl-Alt-KP_star and Ctrl-Alt-KP_slash hot-keys only exist
+   if AllowDeactivateGrabs and/or AllowClosedownGrabs are turned on
+   in XF86Config.  I believe they are disabled by default.
+
+   This does not affect any other keys (specifically Ctrl-Alt-BS or
+   Ctrl-Alt-F1) but I wish it did.  Maybe it will someday.
+ */
+static void
+xfree_lock_grab_smasher (saver_info *si, Bool lock_p)
+{
+  saver_preferences *p = &si->prefs;
+  int status = XF86MiscSetGrabKeysState (si->dpy, !lock_p);
+
+  if (p->verbose_p && status != MiscExtGrabStateSuccess)
+    fprintf (stderr, "%s: error: XF86MiscSetGrabKeysState returned %s\n",
+             blurb(),
+             (status == MiscExtGrabStateSuccess ? "MiscExtGrabStateSuccess" :
+              status == MiscExtGrabStateLocked  ? "MiscExtGrabStateLocked"  :
+              status == MiscExtGrabStateAlready ? "MiscExtGrabStateAlready" :
+              "unknown value"));
+}
+#endif /* HAVE_XF86MISCSETGRABKEYSSTATE */
+
+
 
 
 /* This function enables and disables the C-Sh-F1 ... F12 hot-keys,
@@ -1356,6 +1395,9 @@ set_locked_p (saver_info *si, Bool locked_p)
 #endif
 #ifdef HAVE_XF86VMODE
   xfree_lock_mode_switch (si, locked_p);        /* turn off/on C-Alt-Plus */
+#endif
+#ifdef HAVE_XF86MISCSETGRABKEYSSTATE
+  xfree_lock_grab_smasher (si, locked_p);       /* turn off/on C-Alt-KP-*,/ */
 #endif
 
   store_saver_status (si);			/* store locked-p */

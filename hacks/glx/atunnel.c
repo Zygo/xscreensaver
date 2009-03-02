@@ -61,8 +61,8 @@ static const char sccsid[] = "@(#)atunnels.c	5.07 2003/02/12 xlockmore";
 #include <math.h>
 #include "tunnel_draw.h"
 
-#if defined( USE_XPM ) || defined( USE_XPMINC ) || defined( HAVE_XPM )
-/* USE_XPM & USE_XPMINC in xlock mode ; HAVE_XPM in xscreensaver mode */
+#if defined( USE_XPM ) || defined( USE_XPMINC ) || defined(STANDALONE)
+/* USE_XPM & USE_XPMINC in xlock mode ; STANDALONE in xscreensaver mode */
 #include "xpm-ximage.h"
 #define I_HAVE_XPM
 

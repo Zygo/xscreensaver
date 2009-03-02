@@ -306,10 +306,17 @@ void InitBumpMap( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 	uint16_ maxHeight;
 	double softenMultiplier = 1.0f;
 	BOOL bInvert = (BOOL)get_boolean_resource( "invert", "Boolean" );
+    Pixmap p;
 
 	aColors = (XColor*)malloc( pBumps->iWinWidth * sizeof(XColor) );
-	grab_screen_image( pXWinAttribs->screen, pBumps->Win );
-	pScreenImage = XGetImage( pBumps->pDisplay, pBumps->Win, 0, 0, pBumps->iWinWidth, pBumps->iWinHeight, ~0L, ZPixmap );
+
+    p = XCreatePixmap(pBumps->pDisplay, pBumps->Win,
+                      pXWinAttribs->width, pXWinAttribs->height,
+                      pXWinAttribs->depth);
+    load_random_image (pXWinAttribs->screen, pBumps->Win, p);
+
+	pScreenImage = XGetImage( pBumps->pDisplay, p, 0, 0, pBumps->iWinWidth, pBumps->iWinHeight, ~0L, ZPixmap );
+    XFreePixmap (pBumps->pDisplay, p);
 
 	/* jwz: get the grabbed bits off the screen fast */
 	XClearWindow (pBumps->pDisplay, pBumps->Win);

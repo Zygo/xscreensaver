@@ -29,7 +29,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.10 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.11 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -98,7 +98,8 @@ sub pick_grabber {
 }
 
 
-my $use_stdout = 0;
+my $use_stdout_p = 0;
+my $return_filename_p = 0;
 
 sub grab_image {
   my $cmd = pick_grabber();
@@ -113,7 +114,11 @@ sub grab_image {
       error "\"$cmd\" produced no data.";
     }
 
-  if ($use_stdout) {
+  if ($return_filename_p) {
+    print STDERR "$progname: wrote \"$tmpfile\"\n" if ($verbose);
+    print STDOUT "$tmpfile\n";
+
+  } elsif ($use_stdout_p) {
     local *IN;
     my $ppm = "";
     my $reader  = "<$tmpfile";
@@ -147,7 +152,7 @@ sub grab_image {
 
 
 sub usage {
-  print STDERR "usage: $progname [--verbose] [--stdout]\n";
+  print STDERR "usage: $progname [--verbose] [--name | --stdout]\n";
   exit 1;
 }
 
@@ -156,7 +161,8 @@ sub main {
     shift @ARGV;
     if ($_ eq "--verbose") { $verbose++; }
     elsif (m/^-v+$/) { $verbose += length($_)-1; }
-    elsif (m/^--?stdout$/) { $use_stdout = 1; }
+    elsif (m/^--?stdout$/) { $use_stdout_p = 1; }
+    elsif (m/^--?name$/)   { $return_filename_p = 1; }
     elsif (m/^-./) { usage; }
     else { usage; }
   }

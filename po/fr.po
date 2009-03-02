@@ -5,7 +5,7 @@
 # http://lassauge.free.fr/xscreensaver/
 msgid ""
 msgstr ""
-"Project-Id-Version: xscreensaver 4.07\n"
+"Project-Id-Version: xscreensaver 4.08\n"
 "POT-Creation-Date: 2002-05-10 19:02-0700\n"
 "PO-Revision-Date: 2002-03-18 09:47+0100\n"
 "Last-Translator: Eric Lassauge <lassauge@mail.dotcom.fr>\n"
@@ -1372,7 +1372,7 @@ msgstr ""
 
 #: hacks/config/attraction.xml.h:30
 msgid "Tails"
-msgstr "Trainée"
+msgstr "Trainées"
 
 #: hacks/config/attraction.xml.h:31 hacks/config/euler2d.xml.h:16
 #: hacks/config/juggle.xml.h:9
@@ -1544,7 +1544,7 @@ msgstr ""
 
 #: hacks/config/bsod.xml.h:6
 msgid "BSOD"
-msgstr ""
+msgstr "Ecran Bleu de la Mort"
 
 #: hacks/config/bsod.xml.h:7
 msgid ""
@@ -1679,7 +1679,7 @@ msgstr "1 seconde"
 
 #: hacks/config/ccurve.xml.h:4
 msgid "C Curve"
-msgstr ""
+msgstr "Courbes C"
 
 #: hacks/config/ccurve.xml.h:5
 msgid "Delay"
@@ -1730,7 +1730,7 @@ msgstr "Vitesse de rotation"
 #: hacks/config/circuit.xml.h:12 hacks/config/dangerball.xml.h:9
 #: hacks/config/engine.xml.h:7
 msgid "Spin"
-msgstr ""
+msgstr "Rotation"
 
 #: hacks/config/compass.xml.h:1
 msgid "Compass"
@@ -2461,8 +2461,9 @@ msgid "Friction"
 msgstr ""
 
 #: hacks/config/fluidballs.xml.h:8
+#, fuzzy
 msgid "Glass"
-msgstr "Verre"
+msgstr "Classique"
 
 #: hacks/config/fluidballs.xml.h:9 hacks/config/qix.xml.h:9
 #: hacks/config/speedmine.xml.h:4
@@ -2486,8 +2487,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/fluidballs.xml.h:15
+#, fuzzy
 msgid "Sandpaper"
-msgstr "Papier de verre"
+msgstr "Standard"
 
 #: hacks/config/fluidballs.xml.h:16
 msgid "Shake Box"
@@ -5235,12 +5237,15 @@ msgstr ""
 #~ msgid "Draw Eyes"
 #~ msgstr "Affiche les yeux"
 
+#~ msgid "Atunnel"
+#~ msgstr "GL Tunnel"
+
 #~ msgid ""
 #~ "Draws an animation of a textured tunnel in GL. Requires OpenGL, and a "
 #~ "machine with fast hardware support for texture maps. Written by Eric "
-#~ "Lassauge &lt;lassauge@mail.dotcom.fr&gt;."
+#~ "Lassauge and Roman Podobedov."
 #~ msgstr ""
-#~ "Dessine l'animation d'un tunnel texturé en 3D quasi-hypnotique.Nécessite "
+#~ "Dessine l'animation d'un tunnel texturé en 3D quasi-hypnotique. Nécessite "
 #~ "une machine ayant un support matériel accéléré OpenGL pour les textures. "
 #~ "Ecris par Eric Lassauge <lassauge@mail.dotcom.fr>"
 
@@ -5249,6 +5254,15 @@ msgstr ""
 
 #~ msgid "Barcode"
 #~ msgstr "Code barre"
+
+#~ msgid "Barcode Clock (24 Hour)"
+#~ msgstr "Horloge code barre (24 heures)"
+
+#~ msgid "Barcode Clock (AM/PM)"
+#~ msgstr "Horloge code barre (AM/PM)"
+
+#~ msgid "Scrolling Barcodes"
+#~ msgstr "Code barre déroulant"
 
 #~ msgid "90 deg Rotation Speed"
 #~ msgstr "Vitesse de rotation à 90°"
@@ -5267,6 +5281,9 @@ msgstr ""
 
 #~ msgid "Hide Sheep"
 #~ msgstr "Cache le mouton"
+
+#~ msgid "Megabytes of Local Sheep Storage"
+#~ msgstr "Mo pour la sauvegarde des moutons locaux"
 
 #~ msgid "Nickname"
 #~ msgstr "Pseudo"
@@ -5304,8 +5321,11 @@ msgstr ""
 #~ msgid "Positive"
 #~ msgstr "Positive"
 
-#~ msgid "Classic"
-#~ msgstr "Classique"
+#~ msgid "Rubber"
+#~ msgstr "Caoutchouc"
+
+#~ msgid "Binary"
+#~ msgstr "Binaire"
 
 #~ msgid "Fire"
 #~ msgstr "Feux"
@@ -5314,7 +5334,7 @@ msgstr ""
 #~ msgstr "Fou"
 
 #~ msgid "Psychedelic"
-#~ msgstr "Psychédilique"
+#~ msgstr "Psychédélique"
 
 #~ msgid "RGB"
 #~ msgstr "RVB"
@@ -5391,6 +5411,12 @@ msgstr ""
 #~ msgid "Number of MetaBalls"
 #~ msgstr "Nombre de métaballes"
 
+#~ msgid "Maximum radius"
+#~ msgstr "Rayon max"
+
+#~ msgid "Minimum radius"
+#~ msgstr "Rayon mini"
+
 #~ msgid "Border"
 #~ msgstr "Epaisseur de la bordure"
 
@@ -5411,6 +5437,9 @@ msgstr ""
 
 #~ msgid "90 deg"
 #~ msgstr "90°"
+
+#~ msgid "Circle"
+#~ msgstr "Cercle"
 
 #~ msgid "Leave a trail"
 #~ msgstr "Trainée"

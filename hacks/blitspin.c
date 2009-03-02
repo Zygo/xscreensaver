@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-1997 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-1997, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -90,11 +90,11 @@ read_screen (Display *dpy, Window window, int *widthP, int *heightP)
   *widthP = xgwa.width;
   *heightP = xgwa.height;
 
-  grab_screen_image(xgwa.screen, window);
   p = XCreatePixmap(dpy, window, *widthP, *heightP, xgwa.depth);
   gcv.function = GXcopy;
   gc = XCreateGC (dpy, window, GCFunction, &gcv);
-  XCopyArea (dpy, window, p, gc, 0, 0, *widthP, *heightP, 0, 0);
+
+  load_random_image (xgwa.screen, window, p);
 
   /* Reset the window's background color... */
   XSetWindowBackground (dpy, window,

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 2001
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 2001, 2003
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -13,11 +13,28 @@
 #ifndef __GRABSCREEN_H__
 #define __GRABSCREEN_H__
 
-/* This will write a snapshot of the screen image into the given window.
-   Beware that the colormap of the window may also be changed (to match
-   the bits that were drawn.)
+/* This will write an image onto the given Drawable.
+   The Drawable (arg 3) may be a Window or a Pixmap.
+
+   The Window must be the top-level window.  The image *may or may not*
+   be written to the window, though it will definitely be written to
+   the drawable.  It's fine for args 2 and 3 to be the same window, or
+   for arg 2 to be a Window, and arg 3 to be a Pixmap.
+
+   The loaded image might be from a file, or from a screen shot of the
+   desktop, or from the system's video input, depending on user
+   preferences.
+
+   Many colors may be allocated from the window's colormap.
  */
+extern void load_random_image (Screen *screen,
+                               Window top_level_window,
+                               Drawable target_window_or_pixmap);
+
+
+/* Uh, don't call this. */
 extern void grab_screen_image (Screen *, Window);
+
 
 /* Whether one should use GCSubwindowMode when drawing on this window
    (assuming a screen image has been grabbed onto it.)  Yes, this is a

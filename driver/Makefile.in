@@ -45,6 +45,7 @@ CONF_DEFS	= -DHACK_CONFIGURATION_PATH='"$(HACK_CONF_DIR)"'
 
 LIBS		= @LIBS@
 INTL_LIBS	= @INTLLIBS@
+JPEG_LIBS	= @JPEG_LIBS@
 PERL		= @PERL@
 
 DEPEND		= @DEPEND@
@@ -198,7 +199,7 @@ SAVER_LIBS	= $(LIBS) $(X_LIBS) $(XMU_LIBS) @SAVER_LIBS@ \
 CMD_LIBS	= $(LIBS) $(X_LIBS) \
 		  $(X_PRE_LIBS) -lX11 -lXext $(X_EXTRA_LIBS)
 
-GETIMG_LIBS	= $(LIBS) $(X_LIBS) $(XPM_LIBS) \
+GETIMG_LIBS	= $(LIBS) $(X_LIBS) $(XPM_LIBS) $(JPEG_LIBS) \
 		  $(X_PRE_LIBS) -lXt -lX11 $(XMU_LIBS) -lXext $(X_EXTRA_LIBS)
 
 EXES		= xscreensaver xscreensaver-command xscreensaver-demo \

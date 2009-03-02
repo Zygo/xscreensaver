@@ -1,5 +1,5 @@
 /* -*- mode: C; tab-width: 4 -*-
- * xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 1998, 2002
+ * xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 1998, 2002, 2003
  * Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -248,7 +248,7 @@ static void init_distort(Display *dpy, Window window)
 		gcflags |= GCSubwindowMode;
 	gc = XCreateGC (dpy, window, gcflags, &gcv);
 
-	grab_screen_image (xgwa.screen, window);
+    load_random_image (xgwa.screen, window, window);
 
 	buffer_map = 0;
 	orig_map = XGetImage(dpy, window, 0, 0, xgwa.width, xgwa.height,

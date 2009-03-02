@@ -1,4 +1,4 @@
-# Auto-generated: Tue Feb 18 22:47:48 PST 2003
+# Auto-generated: Mon Mar 17 14:30:01 PST 2003
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -16,6 +16,7 @@ hacks/config/barcode.xml
 hacks/config/blaster.xml
 hacks/config/blitspin.xml
 hacks/config/bouboule.xml
+hacks/config/bouncingcow.xml
 hacks/config/boxed.xml
 hacks/config/braid.xml
 hacks/config/bsod.xml
@@ -54,6 +55,7 @@ hacks/config/flipscreen3d.xml
 hacks/config/flow.xml
 hacks/config/fluidballs.xml
 hacks/config/flurry.xml
+hacks/config/flyingtoasters.xml
 hacks/config/forest.xml
 hacks/config/galaxy.xml
 hacks/config/gears.xml
@@ -61,6 +63,7 @@ hacks/config/gflux.xml
 hacks/config/glblur.xml
 hacks/config/glforestfire.xml
 hacks/config/glplanet.xml
+hacks/config/glslideshow.xml
 hacks/config/glsnake.xml
 hacks/config/gltext.xml
 hacks/config/goban.xml
@@ -80,6 +83,7 @@ hacks/config/jigsaw.xml
 hacks/config/juggle.xml
 hacks/config/julia.xml
 hacks/config/kaleidescope.xml
+hacks/config/klein.xml
 hacks/config/kumppa.xml
 hacks/config/lament.xml
 hacks/config/laser.xml

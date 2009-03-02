@@ -1,9 +1,16 @@
 /*
  * engine.c - GL representation of a 4 stroke engine
  *
- * version 1.01
+ * version 2.00
  *
  * Copyright (C) 2001 Ben Buxton (bb@cactii.net)
+ * modified by Ed Beroset (beroset@mindspring.com)
+ *  new to 2.0 version is:
+ *  - command line argument to specify number of cylinders
+ *  - command line argument to specify included angle of engine
+ *  - removed broken command line argument to specify rotation speed
+ *  - included crankshaft shapes and firing orders for real engines
+ *    verified using the Bosch _Automotive Handbook_, 5th edition, pp 402,403
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,16 +29,18 @@
 # define HACK_INIT                                      init_engine
 # define HACK_DRAW                                      draw_engine
 # define HACK_HANDLE_EVENT				engine_handle_event
-# define HACK_RESHAPE                           reshape_engine
+# define HACK_RESHAPE                                   reshape_engine
 # define EVENT_MASK					PointerMotionMask
-# define engine_opts                                     xlockmore_opts
+# define engine_opts                                    xlockmore_opts
 /* insert defaults here */
 
-#define DEFAULTS        "*delay:       10000       \n" \
-                        "*showFPS:       False       \n" \
-                        "*move:       True       \n" \
-                        "*spin:       True       \n" \
-                        "*rotatespeed:      1\n" \
+#define DEF_ENGINE "(none)"
+
+#define DEFAULTS        "*delay:           10000        \n" \
+                        "*showFPS:         False        \n" \
+                        "*move:            True         \n" \
+                        "*spin:            True         \n" \
+                        "*engine:        " DEF_ENGINE  "\n" \
 
 # include "xlockmore.h"                         /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -51,16 +60,19 @@
 #include <GL/glu.h>
 
 
-static int rotatespeed;
-static int move;
-static int movepaused = 0;
-static int spin;
+
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
+static int engineType;
+static char *which_engine;
+static int move;
+static int movepaused = 0;
+static int spin;
+
 static XrmOptionDescRec opts[] = {
-  {"-rotate-speed", ".engine.rotatespeed", XrmoptionSepArg, "1" },
+  {"-engine", ".engine.engine", XrmoptionSepArg, DEF_ENGINE },
   {"-move", ".engine.move", XrmoptionNoArg, (caddr_t) "true" },
   {"+move", ".engine.move", XrmoptionNoArg, (caddr_t) "false" },
   {"-spin", ".engine.spin", XrmoptionNoArg, (caddr_t) "true" },
@@ -68,7 +80,7 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &rotatespeed, "rotatespeed", "Rotatespeed", "1", t_Int},
+  {(caddr_t *) &which_engine, "engine", "Engine", DEF_ENGINE, t_String},
   {(caddr_t *) &move, "move", "Move", "True", t_Bool},
   {(caddr_t *) &spin, "spin", "Spin", "True", t_Bool},
 };
@@ -83,7 +95,6 @@ ModStruct   engine_description =
  "A four stroke engine", 0, NULL};
 
 #endif
-
 
 typedef struct {
   GLXContext *glx_context;
@@ -110,9 +121,20 @@ static Engine *engine = NULL;
 #define M_PI 3.14159265
 #endif
 
+/* these defines are used to provide symbolic means
+ * by which to refer to various portions or multiples
+ * of a cyle in degrees
+ */
+#define HALFREV 180
+#define ONEREV 360
+#define TWOREV 720
+
 #define MOVE_MULT 0.05
 
 #define RAND_RANGE(min, max) ((min) + (max - min) * f_rand())
+
+float crankOffset;
+float crankWidth = 1.5;
 
 int win_w, win_h;
 
@@ -126,13 +148,122 @@ static GLfloat blue[] = {0, 0, 1, 1.0};
 static GLfloat white[] = {1.0, 1, 1, 1.0};
 static GLfloat yellow_t[] = {1, 1, 0, 0.4};
 
-void circle(float, int,int);
 GLvoid normal(GLfloat [], GLfloat [], GLfloat [], 
                   GLfloat *, GLfloat *, GLfloat *);
 
-float sin_table[720];
-float cos_table[720];
-float tan_table[720];
+float sin_table[TWOREV];
+float cos_table[TWOREV];
+float tan_table[TWOREV];
+
+/* 
+ * this table represents both the firing order and included angle of engine.
+ * To simplify things, we always number from 0 starting at the flywheel and 
+ * moving down the crankshaft toward the back of the engine.  This doesn't
+ * always match manufacturer's schemes.  For example, the Porsche 911 engine
+ * is a flat six with the following configuration (Porsche's numbering):
+ *
+ *    3  2  1
+ *  |=            firing order is 1-6-2-4-3-5 in this diagram
+ *     6  5  4
+ *
+ * We renumber these using our scheme but preserve the effective firing order:
+ *
+ *   0  2  4
+ * |=             firing order is 4-1-2-5-0-3 in this diagram
+ *    1  3  5
+ *
+ * To avoid going completely insane, we also reorder these so the newly 
+ * renumbered cylinder 0 is always first: 0-3-4-1-2-5
+ *   
+ * For a flat 6, the included angle is 180 degrees (0 would be a inline engine).
+ * Because these are all four-stroke engines, each piston goes through
+ * 720 degrees of rotation for each time the spark plug sparks, so in this case,
+ * we would use the following angles:
+ * cylinder     firing order     angle
+ * --------     ------------     -----
+ *    0               0             0
+ *    1               3           360
+ *    2               4           240
+ *    3               1           600
+ *    4               2           480
+ *    5               5           120
+ *
+ */
+
+typedef struct 
+{
+    int cylinders;
+    int includedAngle;
+    int pistonAngle[12];  /* twelve cylinders should suffice... */
+    int speed;		/*  step size in degrees for engine speed */
+    const char *engineName;  /* currently unused */
+} engine_type;
+
+engine_type engines[] = {
+    { 3,   0, { 0, 240, 480,   0,   0,   0,
+                0,   0,   0,   0,   0,   0 }, 12,
+     "Honda Insight" },
+    { 4,   0, { 0, 180, 540, 360,   0,   0,
+                0,   0,   0,   0,   0,   0 }, 12,
+     "BMW M3" },
+    { 4, 180, { 0, 360, 180, 540,   0,   0,
+                0,   0,   0,   0,   0,   0 }, 12,
+     "VW Beetle" },
+    { 5,   0, { 0, 576, 144, 432, 288,   0,
+                0,   0,   0,   0,   0,   0 }, 12,
+     "Audi Quattro" },
+    { 6,   0, { 0, 240, 480, 120, 600, 360,
+                0,   0,   0,   0,   0,   0 }, 12,
+     "BMW M5" },
+    { 6,  90, { 0, 360, 480, 120, 240, 600,
+                0,   0,   0,   0,   0,   0 }, 12,
+     "Subaru XT" },
+    { 6, 180, { 0, 360, 240, 600, 480, 120,
+                0,   0,   0,   0,   0,   0 }, 12,
+     "Porsche 911" },
+    { 8,  90, { 0, 450,  90, 180, 270, 360,
+              540, 630,   0,   0,   0,   0 }, 15,
+     "Corvette Z06" },
+    {10,  90, { 0,  72, 432, 504, 288, 360,
+              144, 216, 576, 648,   0,   0 }, 12,
+     "Dodge Viper" },
+    {12,  60, { 0, 300, 240, 540, 480,  60,
+              120, 420, 600, 180, 360, 660 }, 12,
+     "Jaguar XKE" },
+};
+
+/* this define is just a little shorter way of referring to members of the 
+ * table above
+ */
+#define ENG engines[engineType]
+
+/* given a number of cylinders and an included angle, finds matching engine */
+int find_engine(const char *name)
+{
+  int i;
+
+  if (!name || !*name || !strcasecmp (name, "(none)"))
+    return (random() % countof(engines));
+
+  for (i = 0; i < countof(engines); i++) {
+    if (!strcasecmp(name, engines[i].engineName))
+      return i;
+  }
+
+  fprintf (stderr, "%s: unknown engine type \"%s\"\n", progname, name);
+  fprintf (stderr, "%s: available models are:\n", progname);
+  for (i = 0; i < countof(engines); i++) {
+    fprintf (stderr, "\t %-13s (%d cylinders",
+             engines[i].engineName, engines[i].cylinders);
+    if (engines[i].includedAngle == 0)
+      fprintf (stderr, ")\n");
+    else if (engines[i].includedAngle == 180)
+      fprintf (stderr, ", flat)\n");
+    else
+      fprintf (stderr, ", V)\n");
+  }
+  exit(1);
+}
 
 /* we use trig tables to speed things up - 200 calls to sin()
  in one frame can be a bit harsh..
@@ -142,14 +273,14 @@ void make_tables(void) {
 int i;
 float f;
 
-  f = 360 / (M_PI * 2);
-  for (i = 0 ; i <= 720 ; i++) {
+  f = ONEREV / (M_PI * 2);
+  for (i = 0 ; i <= TWOREV ; i++) {
     sin_table[i] = sin(i/f);
   }
-  for (i = 0 ; i <= 720 ; i++) {
+  for (i = 0 ; i <= TWOREV ; i++) {
     cos_table[i] = cos(i/f);
   }
-  for (i = 0 ; i <= 720 ; i++) {
+  for (i = 0 ; i <= TWOREV ; i++) {
     tan_table[i] = tan(i/f);
   }
 }
@@ -158,15 +289,15 @@ float f;
 /* for a tube, endcaps is 0 (none), 1 (left), 2 (right) or 3(both) */
 /* angle is how far around the axis to go (up to 360) */
 
-void cylinder (GLfloat x, GLfloat y, GLfloat z, float length, float outer, float inner, int endcaps, int sang,
-                 int eang) {
+void cylinder (GLfloat x, GLfloat y, GLfloat z, 
+    float length, float outer, float inner, int endcaps, int sang, int eang) {
 int a; /* current angle around cylinder */
 int b = 0; /* previous */
 int angle, norm, step, sangle;
 float z1, y1, z2, y2, ex=0;
 float y3, z3;
 float Z1, Y1, Z2, Y2, xl, Y3, Z3;
-GLfloat y2c[720], z2c[720];
+GLfloat y2c[TWOREV], z2c[TWOREV];
 GLfloat ony, onz; /* previous normals */
 int nsegs, tube = 0;
 
@@ -185,7 +316,7 @@ int nsegs, tube = 0;
   Y2 = y;
   xl = x + length;
   if (inner < outer && endcaps < 3) tube = 1;
-  step = 360/nsegs;
+  step = ONEREV/nsegs;
 
   glBegin(GL_QUADS);
   for (a = sangle ; a <= angle || b <= angle ; a+= step) {
@@ -207,7 +338,7 @@ int nsegs, tube = 0;
     glNormal3f(0, y2, z2);
     glVertex3f(xl,y2,z2);
     glVertex3f(x,y2,z2);
-    if (a == sangle && angle - sangle < 360) {
+    if (a == sangle && angle - sangle < ONEREV) {
       if (tube)
         glVertex3f(x, Y1, Z1);
       else
@@ -250,7 +381,7 @@ int nsegs, tube = 0;
   }
   glEnd();
 
-  if (angle - sangle < 360) {
+  if (angle - sangle < ONEREV) {
     GLfloat nx, ny, nz;
     GLfloat v1[3], v2[3], v3[3];
     v1[0] = x; v1[1] = y; v1[2] = z;
@@ -286,7 +417,7 @@ int nsegs, tube = 0;
     for(ex = start ; ex <= end ; ex += length) {
       z1 = outer*cos_table[sangle]+z;
       y1 = y+sin_table[sangle]*outer;
-      step = 360/nsegs;
+      step = ONEREV/nsegs;
       glBegin(GL_TRIANGLES);
       b = 0;
       for (a = sangle ; a <= angle || b <= angle; a+= step) {
@@ -302,6 +433,11 @@ int nsegs, tube = 0;
     }
   }
   glPopMatrix();
+}
+
+/* this is just a convenience function to make a solid rod */
+void rod (GLfloat x, GLfloat y, GLfloat z, float length, float diameter) {
+    cylinder(x, y, z, length, diameter, diameter, 3, 0, ONEREV);
 }
 
 GLvoid normal(GLfloat v1[], GLfloat v2[], GLfloat v3[], 
@@ -323,61 +459,6 @@ GLvoid normal(GLfloat v1[], GLfloat v2[], GLfloat v3[],
 } 
 
 
-
-void circle(float radius, int segments, int half) {
-float x1 = 0, x2 = 0;
-float y1 = 0, y2 = 0;
-int i, t, s;
-
-  if (half) {
-    t = 270; s = 90;
-    x1 = radius, y1 = 0;
-  } else {
-    t = 360, s = 0;
-  }
-  glBegin(GL_TRIANGLES);
-  glNormal3f(1, 0, 0);
-  for(i=s;i<=t;i+=10)
-  {
-    float angle=i;
-    x2=radius*(float)cos_table[(int)angle];
-    y2=radius*(float)sin_table[(int)angle];
-    glVertex3f(0,0,0);
-    glVertex3f(x1,y1,0);
-    glVertex3f(x2,y2,0);
-    x1=x2;
-    y1=y2;
-  }
-  glEnd();
-}
-
-void ring(GLfloat inner, GLfloat outer, int nsegs) {
-GLfloat z1, z2, y1, y2;
-GLfloat Z1, Z2, Y1, Y2;
-int i;
-
-  z1 = inner; y1 = 0;
-  Z1 = outer; Y1 = 0;
-  glBegin(GL_QUADS);
-  glNormal3f(1, 0, 0);
-  for(i=0; i <=360 ; i+= 360/nsegs)
-  {
-    float angle=i;
-    z2=inner*(float)sin_table[(int)angle];
-    y2=inner*(float)cos_table[(int)angle];
-    Z2=outer*(float)sin_table[(int)angle];
-    Y2=outer*(float)cos_table[(int)angle];
-    glVertex3f(0, Y1, Z1);
-    glVertex3f(0, y1, z1);
-    glVertex3f(0, y2, z2);
-    glVertex3f(0, Y2, Z2);
-    z1=z2;
-    y1=y2;
-    Z1=Z2;
-    Y1=Y2;
-  }
-  glEnd();
-}
 
 void Rect(GLfloat x, GLfloat y, GLfloat z, GLfloat w, GLfloat h,
             GLfloat t) {
@@ -436,22 +517,24 @@ int i;
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, colour);
   glMaterialfv(GL_FRONT, GL_SPECULAR, colour);
   glMateriali(GL_FRONT, GL_SHININESS, 20);
-  cylinder(0, 0, 0, 2, 1, 0.7, 2, 0, 360); /* body */
+  cylinder(0, 0, 0, 2, 1, 0.7, 2, 0, ONEREV); /* body */
   colour[0] = colour[1] = colour[2] = 0.2;
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, colour);
-  cylinder(1.6, 0, 0, 0.1, 1.05, 1.05, 0, 0, 360); /* ring */
-  cylinder(1.8, 0, 0, 0.1, 1.05, 1.05, 0, 0, 360); /* ring */
+  cylinder(1.6, 0, 0, 0.1, 1.05, 1.05, 0, 0, ONEREV); /* ring */
+  cylinder(1.8, 0, 0, 0.1, 1.05, 1.05, 0, 0, ONEREV); /* ring */
   glEndList();
 }
 
-void CrankBit(GLfloat x, GLfloat y, GLfloat z) {
-  Rect(x, y, z, 0.2, 1.8, 1);
+void CrankBit(GLfloat x) {
+  Rect(x, -1.4, 0.5, 0.2, 1.8, 1);
+  cylinder(x, -0.5, 0, 0.2, 2, 2, 1, 60, 120);
 }
 
 void boom(GLfloat x, GLfloat y, int s) {
 static GLfloat red[] = {0, 0, 0, 0.9};
 static GLfloat lpos[] = {0, 0, 0, 1};
 static GLfloat d = 0, wd;
+int flameOut = 720/ENG.speed/ENG.cylinders;
 static int time = 0;
 
   if (time == 0 && s) {
@@ -461,11 +544,11 @@ static int time = 0;
     glEnable(GL_LIGHT1); 
   } else if (time == 0 && !s) {
     return;
-  } else if (time >= 8 && time < 16 && !s) {
+  } else if (time >= 8 && time < flameOut && !s) {
     time++;
     red[0] -= 0.2; red[1] -= 0.1;
     d-= 0.04;
-  } else if (time >= 16) {
+  } else if (time >= flameOut) {
     time = 0;
     glDisable(GL_LIGHT1);
     return;
@@ -474,7 +557,7 @@ static int time = 0;
     d+= 0.04;
     time++;
   }
-  lpos[0] = x; lpos[1] = y-d;
+  lpos[0] = x-d; lpos[1] = y;
   glLightfv(GL_LIGHT1, GL_POSITION, lpos);
   glLightfv(GL_LIGHT1, GL_DIFFUSE, red);
   glLightfv(GL_LIGHT1, GL_SPECULAR, red);
@@ -482,17 +565,14 @@ static int time = 0;
   glLighti(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 0);
 
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
-  glPushMatrix();
-  glRotatef(90, 0, 0, 1);
   wd = d*3;
   if (wd > 0.7) wd = 0.7;
   glEnable(GL_BLEND);
   glDepthMask(GL_FALSE);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  cylinder(y-d, -x, 0, d, wd, wd, 1, 0, 360);
+  rod(x, y, 0, d, wd);
   glDepthMask(GL_TRUE);
   glDisable(GL_BLEND);
-  glPopMatrix();
 }
 
 void display(Engine *e) {
@@ -501,12 +581,17 @@ static int a = 0;
 GLfloat zb, yb;
 static GLfloat ln[730], yp[730], ang[730];
 static int ln_init = 0;
-static int spark;
+static int lastPlug = 0;
+int half;
+int sides;
+int j, b;
+static float rightSide;
 
   glEnable(GL_LIGHTING);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
-  gluLookAt(viewer[0], viewer[1], viewer[2], lookat[0], lookat[1], lookat[2], 0.0, 1.0, 0.0);
+  gluLookAt(viewer[0], viewer[1], viewer[2], lookat[0], lookat[1], lookat[2], 
+	0.0, 1.0, 0.0);
   glPushMatrix();
   glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
   glLightfv(GL_LIGHT0, GL_SPECULAR, light_sp);
@@ -521,9 +606,9 @@ static int spark;
     double x, y, z;
     gltrackball_rotate (e->trackball);
     get_rotation(e->rot, &x, &y, &z, !e->button_down_p);
-    glRotatef(x*360, 1.0, 0.0, 0.0);
-    glRotatef(y*360, 0.0, 1.0, 0.0);
-    glRotatef(x*360, 0.0, 0.0, 1.0);
+    glRotatef(x*ONEREV, 1.0, 0.0, 0.0);
+    glRotatef(y*ONEREV, 0.0, 1.0, 0.0);
+    glRotatef(x*ONEREV, 0.0, 0.0, 1.0);
   }
 
 /* So the rotation appears around the centre of the engine */
@@ -540,169 +625,172 @@ static int spark;
     for (ln_init = 0 ; ln_init < 730 ; ln_init++) {
       zb = sin_table[ln_init];
       yb = cos_table[ln_init];
-      yp[ln_init] = yb + sqrt(25 - (zb*zb)); /* y ordinate of piston */
-      ln[ln_init] = sqrt(zb*zb + (yb-yp[ln_init])*(yb-yp[ln_init])); /* length of rod */
-      ang[ln_init] = asin(zb/5)*57; /* angle of connecting rod */
+      /* y ordinate of piston */
+      yp[ln_init] = yb + sqrt(25 - (zb*zb)); 
+      /* length of rod */
+      ln[ln_init] = sqrt(zb*zb + (yb-yp[ln_init])*(yb-yp[ln_init])); 
+      /* angle of connecting rod */
+      ang[ln_init] = asin(zb/5)*57; 
       ang[ln_init] *= -1;
     }
   }
 
-  zb = sin_table[a];
-  yb = cos_table[a];
-
-/* pistons */
-  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
   glPushMatrix();
-  glTranslatef(0, yp[a]-0.3, 0);
-  glCallList(2);
+  sides = (ENG.includedAngle == 0) ? 1 : 2;
+  for (half = 0; half < sides; half++, glRotatef(ENG.includedAngle,1,0,0))
+  {
+    /* pistons */
+      /* glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white); */
+      for (j = 0; j < ENG.cylinders; j += sides)
+      {
+	b = (a + ENG.pistonAngle[j+half]) % ONEREV;
+	glPushMatrix();
+	glTranslatef(crankWidth/2 + crankOffset*(j+half), yp[b]-0.3, 0);
+	glCallList(2);
+	glPopMatrix();
+      }
+    /* spark plugs */
+      glPushMatrix();
+      glRotatef(90, 0, 0, 1); 
+      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
+      for (j = 0; j < ENG.cylinders; j += sides) 
+      {
+	cylinder(8.5, -crankWidth/2-crankOffset*(j+half), 0, 
+	    0.5, 0.4, 0.3, 1, 0, ONEREV); 
+      }
+      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
+      for (j = 0; j < ENG.cylinders; j += sides)
+      {
+	rod(8, -crankWidth/2-crankOffset*(j+half), 0, 0.5, 0.2); 
+	rod(9, -crankWidth/2-crankOffset*(j+half), 0, 1, 0.15); 
+      }   
+
+     /* rod */
+      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
+      for (j = 0; j < ENG.cylinders; j += sides)
+      {
+	  b = (a+HALFREV+ENG.pistonAngle[j+half]) % TWOREV; 
+	  glPushMatrix();
+	  glRotatef(ang[b], 0, 1, 0);
+	  rod(-cos_table[b], -crankWidth/2-crankOffset*(j+half), -sin_table[b], 
+		ln[b], 0.2);
+	  glPopMatrix();
+      }
+      glPopMatrix();
+
+	/* engine block */
+      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, yellow_t);
+      glEnable(GL_BLEND);
+      glDepthMask(GL_FALSE);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      rightSide = (sides > 1) ? 0 : 1.6;
+    /* left plate */
+      Rect(-crankWidth/2, -0.5,  1, 0.2, 9, 2);
+    /* right plate */
+      Rect(0.3+crankOffset*ENG.cylinders-rightSide, -0.5, 1, 0.2, 9, 2);
+    /* head plate */
+      Rect(-crankWidth/2+0.2, 8.3, 1, 
+	    crankWidth/2+0.1+crankOffset*ENG.cylinders-rightSide, 0.2, 2);
+    /* front rail */
+      Rect(-crankWidth/2+0.2, 3, 1, 
+	    crankWidth/2+0.1+crankOffset*ENG.cylinders-rightSide, 0.2, 0.2);
+    /* back rail */
+      Rect(-crankWidth/2+0.2, 3, -1+0.2, 
+	    crankWidth/2+0.1+crankOffset*ENG.cylinders-rightSide, 0.2, 0.2);
+    /* plates between cylinders */
+      for (j=0; j < ENG.cylinders - (sides == 1); j += sides)
+	Rect(0.4+crankWidth+crankOffset*(j-half), 3, 1, 1, 5.3, 2);
+      glDepthMask(GL_TRUE);
+  }
   glPopMatrix();
-  glPushMatrix();
-  glTranslatef(3.2, yp[(a > 180 ? a-180 : a+180)]-0.3, 0);
-  glCallList(2);
-  glPopMatrix();
-  glPushMatrix();
-  glTranslatef(6.5, yp[a]-0.3, 0);
-  glCallList(2);
-  glPopMatrix();
-  glPushMatrix();
-  glTranslatef(9.8, yp[(a > 180 ? a-180 : a+180)]-0.3, 0);
-  glCallList(2);
-  glPopMatrix();
 
-/* spark plugs */
-  glPushMatrix();
-  glRotatef(90, 0, 0, 1);
-  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
-  cylinder(8.5, 0, 0, 0.5, 0.4, 0.3, 1, 0, 360);
-  cylinder(8.5, -3.2, 0, 0.5, 0.4, 0.3, 1, 0, 360);
-  cylinder(8.5, -6.5, 0, 0.5, 0.4, 0.3, 1, 0, 360);
-  cylinder(8.5, -9.8, 0, 0.5, 0.4, 0.3, 1, 0, 360);
-
-  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
-  cylinder(8, 0, 0, 0.5, 0.2, 0.2, 1, 0, 360);
-  cylinder(8, -3.2, 0, 0.5, 0.2, 0.2, 1, 0, 360);
-  cylinder(8, -6.5, 0, 0.5, 0.2, 0.2, 1, 0, 360);
-  cylinder(8, -9.8, 0, 0.5, 0.2, 0.2, 1, 0, 360);
-
-  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
-  cylinder(9, 0, 0, 1, 0.15, 0.15, 1, 0, 360);
-  cylinder(9, -3.2, 0, 1, 0.15, 0.15, 1, 0, 360);
-  cylinder(9, -6.5, 0, 1, 0.15, 0.15, 1, 0, 360);
-  cylinder(9, -9.8, 0, 1, 0.15, 0.15, 1, 0, 360);
-
-  glPopMatrix();
-
-  if (a == 0) spark = 1 - spark;
-
-  if (spark == 0) {
-    if (a == 0)
-      boom(0, 8, 1);
-    else if (a == 180) 
-      boom(3.2, 8, 1);
-    if (a < 180)
-      boom(0, 8, 0);
-    else if (a < 360)
-      boom(3.2, 8, 0);
-  } else {
-    if (a == 0)
-      boom(6.5, 8, 1);
-    else if (a == 180) 
-      boom(9.8, 8, 1);
-    if (a < 180)
-      boom(6.5, 8, 0);
-    else if (a < 360)
-      boom(9.8, 8, 0);
+	/* see which of our plugs should fire now, if any */
+  for (j = 0; j < ENG.cylinders; j++)
+  {
+    if (0 == ((a + ENG.pistonAngle[j]) % TWOREV))
+    {
+	glPushMatrix();
+	if (j & 1) 
+	    glRotatef(ENG.includedAngle,1,0,0);
+	glRotatef(90, 0, 0, 1); 
+	boom(8, -crankWidth/2-crankOffset*j, 1); 
+	lastPlug = j;
+	glPopMatrix();
+    }
   }
 
-
-
-  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
-  glPushMatrix();
-  cylinder(-0.8, yb, zb, 1.6, 0.3, 0.3, 1, 0, 365);
-  cylinder(5.7, yb, zb, 1.7, 0.3, 0.3, 1, 0, 365);
-
-  cylinder(2.4, -yb, -zb, 1.7, 0.3, 0.3, 1, 0, 365);
-  cylinder(9.0, -yb, -zb, 1.7, 0.3, 0.3, 1, 0, 365);
-  glPopMatrix();
-
- /* rod */
-  glPushMatrix();
-  glRotatef(90, 0, 0, 1);
-  glRotatef(ang[a], 0, -1, 0);
-  cylinder(yb, 0, zb, ln[a], 0.2, 0.2, 0, 0, 365);
-  cylinder(yb, -6.4, zb, ln[a], 0.2, 0.2, 0, 0, 365);
-  glPopMatrix();
-
-  glPushMatrix();
-  glRotatef(90, 0, 0, 1);
-  glRotatef(ang[a+180], 0, -1, 0);
-  cylinder(-yb, -3.2, -zb, ln[a], 0.2, 0.2, 0, 0, 365);
-  cylinder(-yb, -9.7, -zb, ln[a], 0.2, 0.2, 0, 0, 365);
-  glPopMatrix();
-
-
-  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, yellow_t);
-  glEnable(GL_BLEND);
-  glDepthMask(GL_FALSE);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  Rect(-1, 8.3, 1, 12, 0.2, 2);
-  Rect(-1.2, -0.5, 1, 0.2, 9, 2);
-
-  Rect(1.4, 3, 1, 0.6, 5.3, 2);
-  Rect(4.4, 3, 1, 1, 5.3, 2);
-  Rect(7.7, 3, 1, 0.8, 5.3, 2);
-  Rect(10.8, -0.5, 1, 0.2, 8.8, 2);
-
-  Rect(-1, 2.8, 1, 12, 0.2, 0.2); 
-  Rect(-1, 2.8, -1, 12, 0.2, 0.2); 
-
-  glDepthMask(GL_TRUE);
+  if (lastPlug != j)
+  {
+    /* this code causes the last plug explosion to dim gradually */
+    if (lastPlug & 1) 
+      glRotatef(ENG.includedAngle, 1, 0, 0);
+    glRotatef(90, 0, 0, 1); 
+    boom(8, -crankWidth/2-crankOffset*lastPlug, 0); 
+  }
   glDisable(GL_BLEND);
 
-
-  a+=10; if (a >= 360) a = 0;
+  a += ENG.speed; 
+  if (a >= TWOREV) 
+    a = 0;
   glPopMatrix();
   glFlush();
 }
 
 void makeshaft (void) {
 int i;
+int j;
+const static float crankThick = 0.2;
+const static float crankDiam = 0.3;
+
   i = glGenLists(1);
   glNewList(i, GL_COMPILE);
-  cylinder(10.4, 0, 0, 2, 0.3, 0.3, 1, 0, 365);
-  cylinder(7.1, 0, 0, 2, 0.3, 0.3, 0, 0, 365);
-  cylinder(3.8, 0, 0, 2, 0.3, 0.3, 0, 0, 365);
-  cylinder(0.5, 0, 0, 2, 0.3, 0.3, 0, 0, 365);
-  cylinder(-1.5, 0, 0, 1, 0.3, 0.3, 1, 0, 365);
 
-  cylinder(12.4, 0, 0, 1, 3, 2.5, 0, 0, 365);
-  Rect(12.4, -0.3, 2.8, 0.5, 0.6, 5.6);
-  Rect(12.4, -2.8, 0.3, 0.5, 5.6, 0.6);
+  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
+  /* draw the flywheel */
+  cylinder(-2.5, 0, 0, 1, 3, 2.5, 0, 0, ONEREV);
+  Rect(-2, -0.3, 2.8, 0.5, 0.6, 5.6);
+  Rect(-2, -2.8, 0.3, 0.5, 5.6, 0.6);
 
-  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, green);
-  CrankBit(0.5, -0.4, 0.5);
-  cylinder(0.5, 0.5, 0, 0.2, 2, 2, 1, 240, 300);
-  CrankBit(-0.7, -0.4, 0.5);
-  cylinder(-0.7, 0.5, 0, 0.2, 2, 2, 1, 240, 300);
+  /* now make each of the shaft bits between the cranks, 
+   * starting from the flywheel end which is at X-coord 0. 
+   * the first cranskhaft bit is always 2 units long 
+   */
+  rod(-2, 0, 0, 2, crankDiam);
 
-  CrankBit(2.5, -1.4, 0.5);
-  cylinder(2.5, -0.5, 0, 0.2, 2, 2, 1, 60, 120);
-  CrankBit(3.8, -1.4, 0.5);
-  cylinder(3.8, -0.5, 0, 0.2, 2, 2, 1, 60, 120);
+  /* Each crank is crankWidth units wide and the total width of a cylinder assembly
+   * is 3.3 units. For inline engines, there is just a single crank per cylinder
+   * width.  For other engine configurations, there is a crank between each pair
+   * of adjacent cylinders on one side of the engine, so the crankOffset length is 
+   * halved.
+   */
+  crankOffset = 3.3;
+  if (ENG.includedAngle != 0)
+    crankOffset /= 2;
+  for (j = 0; j < ENG.cylinders - 1; j++)
+    rod(crankWidth - crankThick + crankOffset*j, 0, 0, 
+	crankOffset - crankWidth + 2 * crankThick, crankDiam);
+  /* the last bit connects to the engine wall on the non-flywheel end */
+  rod(crankWidth - crankThick + crankOffset*j, 0, 0, 0.9, crankDiam);
 
-  CrankBit(5.8, -0.4, 0.5);
-  cylinder(5.8, 0.5, 0, 0.2, 2, 2, 1, 240, 300);
-  CrankBit(7.1, -0.4, 0.5);
-  cylinder(7.1, 0.5, 0, 0.2, 2, 2, 1, 240, 300);
 
-  CrankBit(9.1, -1.4, 0.5);
-  cylinder(9.1, -0.5, 0, 0.2, 2, 2, 1, 60, 120);
-  CrankBit(10.4, -1.4, 0.5);
-  cylinder(10.4, -0.5, 0, 0.2, 2, 2, 1, 60, 120);
-
+  for (j = 0; j < ENG.cylinders; j++)
+  {
+    glPushMatrix();
+    if (j & 1)
+        glRotatef(HALFREV+ENG.pistonAngle[j]+ENG.includedAngle,1,0,0);
+    else
+        glRotatef(HALFREV+ENG.pistonAngle[j],1,0,0);
+    /* draw wrist pin */
+    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
+    rod(crankOffset*j, -1.0, 0.0, crankWidth, crankDiam);
+    glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, green);
+    /* draw right part of crank */
+    CrankBit(crankOffset*j); 
+    /* draw left part of crank */
+    CrankBit(crankWidth-crankThick+crankOffset*j);
+    glPopMatrix();
+  }
   glEndList();
-
 }
 
 void reshape_engine(ModeInfo *mi, int width, int height)
@@ -738,8 +826,9 @@ Engine *e;
    e->dy = (float)(random() % 1000)/30000;
    e->dz = (float)(random() % 1000)/30000;
  } else {
-  viewer[0] = 0; viewer[1] = 6; viewer[2] = 15;
-  lookat[0] = 0; lookat[1] = 4; lookat[2] = 0; 
+  viewer[0] = 0; viewer[1] = 2; viewer[2] = 18;
+  lookat[0] = 0; lookat[1] = 0; lookat[2] = 0; 
+
  }
  if (spin) {
    e->da = (float)(random() % 1000)/125 - 4;
@@ -775,6 +864,7 @@ Engine *e;
  glEnable(GL_LIGHT0);
  glEnable(GL_NORMALIZE);
  make_tables();
+ engineType = find_engine(which_engine);
  makeshaft();
  makepiston();
 }

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2002 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-2003 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -404,7 +404,8 @@ make_splash_dialog (saver_info *si)
 		   attrmask, &attrs);
   XSetWindowBackground (si->dpy, si->splash_dialog, sp->background);
 
-  sp->logo_pixmap = xscreensaver_logo (si->dpy, si->splash_dialog, cmap,
+  sp->logo_pixmap = xscreensaver_logo (ssi->screen, ssi->current_visual,
+                                       si->splash_dialog, cmap,
                                        sp->background, 
                                        &sp->logo_pixels, &sp->logo_npixels,
                                        0, True);

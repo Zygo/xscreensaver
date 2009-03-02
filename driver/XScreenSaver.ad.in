@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.08
-!                              18-Feb-2003
+!                              version 4.09
+!                              17-Mar-2003
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -341,8 +341,12 @@
 @GL_KLUDGE@ GL:			lavalite -root				    \n\
 @GL_KLUDGE@ GL:			queens -root				    \n\
 @GL_KLUDGE@ GL:			endgame -root				    \n\
-@GL_KLUDGE@ GL:			atunnel -root				    \n\
 -	   GL:			glblur -root				    \n\
+@GL_KLUDGE@ GL:			atunnel -root				    \n\
+@GL_KLUDGE@ GL:			flyingtoasters -root			    \n\
+@GL_KLUDGE@ GL:			bouncingcow -root			    \n\
+@GL_KLUDGE@ GL:			jigglypuff -root			    \n\
+-	   GL:			glslideshow -root			    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -637,6 +641,10 @@ XScreenSaver*doc.fontList:       *-helvetica-medium-r-*-*-*-100-*-*-*-iso8859-1
 *hacks.electricsheep.name:  ElectricSheep
 *hacks.sphereEversion.name: SphereEversion
 *hacks.fluidballs.name:     FluidBalls
+*hacks.flyingtoasters.name: FlyingToasters
+*hacks.bouncingcow.name:    BouncingCow
+*hacks.jigglypuff.name:     JigglyPuff
+*hacks.glslideshow.name:    GLSlideshow
 
 ! obsolete, but still used by xscreensaver-demo-Xm.
 *hacks.documentation.isInstalled: True

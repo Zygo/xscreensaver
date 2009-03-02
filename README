@@ -70,6 +70,13 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.08:   * New hacks, `flyingtoasters', `bouncingcow',
+                        `jigglypuff', and `glslideshow'.
+                      * More models in `engine'.
+                      * Rewrote `xscreensaver-getimage' to remove reliance on
+                        external image loaders (xv, chbg, xloadimage, etc.)
+                        and to reduce flicker when loading files.
+                      * Made `gflux' and `flipscreen3d' be mouse-spinnable.
 Changes since 4.07:   * New hacks, `atunnels' and `piecewise'.
                       * Physics improvement in `fluidballs'.
                       * Various fixes for XDarwin systems (X11 on MacOS X.)

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 1998
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 1998, 2003
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -184,10 +184,12 @@ top_level_window_p (Screen *screen, Window window)
 
 
 
+static Bool error_handler_hit_p = False;
 static XErrorHandler old_ehandler = 0;
 static int
 BadWindow_ehandler (Display *dpy, XErrorEvent *error)
 {
+  error_handler_hit_p = True;
   if (error->error_code == BadWindow || error->error_code == BadDrawable)
     return 0;
   else if (!old_ehandler)
@@ -235,6 +237,7 @@ install_screen_colormaps (Screen *screen)
 
   XSync (dpy, False);
   old_ehandler = XSetErrorHandler (BadWindow_ehandler);
+  error_handler_hit_p = False;
 
   vroot = VirtualRootWindowOfScreen (screen);
   if (XQueryTree (dpy, vroot, &real_root, &parent, &kids, &nkids))

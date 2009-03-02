@@ -896,9 +896,7 @@ Graphics options:
                           demos, which will make it possible for them to read
                           GIF, JPEG, and PNG files as well.  (The path here is
 			  ignored if GTK 2.x is being used.)
-  --with-jpeg             Include support for the JPEG library in some demos.
-                          (If this library is available, webcollage will be a
-                        . lot faster.)
+  --with-jpeg             Include support for the JPEG library.
   --with-xshm-ext         Include support for the Shared Memory extension.
   --with-xdbe-ext         Include support for the DOUBLE-BUFFER extension.
   --with-readdisplay      Include support for the XReadDisplay extension.
@@ -10419,10 +10417,113 @@ fi
 
 ###############################################################################
 #
+#       Check for XF86MiscSetGrabKeysState (but only bother if we are already
+#	using other XF86 stuff.)
+#
+###############################################################################
+
+have_xf86miscsetgrabkeysstate=no
+if test "$have_xf86gamma" = yes -o "$have_xf86vmode" = yes; then
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  echo "$as_me:$LINENO: checking for XF86MiscSetGrabKeysState in -lXxf86misc" >&5
+echo $ECHO_N "checking for XF86MiscSetGrabKeysState in -lXxf86misc... $ECHO_C" >&6
+if test "${ac_cv_lib_Xxf86misc_XF86MiscSetGrabKeysState+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lXxf86misc -lXext -lX11 $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+#line $LINENO "configure"
+#include "confdefs.h"
+
+/* Override any gcc2 internal prototype to avoid an error.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+/* We use char because int might match the return type of a gcc2
+   builtin and then its argument prototype would still apply.  */
+char XF86MiscSetGrabKeysState ();
+#ifdef F77_DUMMY_MAIN
+#  ifdef __cplusplus
+     extern "C"
+#  endif
+   int F77_DUMMY_MAIN() { return 1; }
+#endif
+int
+main ()
+{
+XF86MiscSetGrabKeysState ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+         { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_lib_Xxf86misc_XF86MiscSetGrabKeysState=yes
+else
+  echo "$as_me: failed program was:" >&5
+cat conftest.$ac_ext >&5
+ac_cv_lib_Xxf86misc_XF86MiscSetGrabKeysState=no
+fi
+rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+echo "$as_me:$LINENO: result: $ac_cv_lib_Xxf86misc_XF86MiscSetGrabKeysState" >&5
+echo "${ECHO_T}$ac_cv_lib_Xxf86misc_XF86MiscSetGrabKeysState" >&6
+if test $ac_cv_lib_Xxf86misc_XF86MiscSetGrabKeysState = yes; then
+  have_xf86miscsetgrabkeysstate=yes
+else
+  true
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+  if test "$have_xf86miscsetgrabkeysstate" = yes ; then
+    SAVER_LIBS="$SAVER_LIBS -lXxf86misc"
+    cat >>confdefs.h <<\_ACEOF
+#define HAVE_XF86MISCSETGRABKEYSSTATE 1
+_ACEOF
+
+  fi
+fi
+
+
+###############################################################################
+#
 #       Check for HP XHPDisableReset and XHPEnableReset.
 #
 ###############################################################################
 
+echo "$as_me:$LINENO: checking for XHPDisableReset in X11/XHPlib.h" >&5
+echo $ECHO_N "checking for XHPDisableReset in X11/XHPlib.h... $ECHO_C" >&6
 
   ac_save_CPPFLAGS="$CPPFLAGS"
   if test \! -z "$includedir" ; then
@@ -10442,6 +10543,11 @@ if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
 _ACEOF
 
                    SAVER_LIBS="-lXhp11 $SAVER_LIBS"
+                   echo "$as_me:$LINENO: result: yes" >&5
+echo "${ECHO_T}yes" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
 fi
 rm -f conftest*
 
@@ -14654,7 +14760,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 14663 "configure"
+#line 14769 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -19315,7 +19421,13 @@ if test "$have_jpeg" = no ; then
     echo ''
   fi
 
-  warn2 "This means the \`webcollage' program will be much slower."
+  if test "$have_gdk_pixbuf" = no ; then
+    warn2 "This means that it won't be possible for the image-manipulating"
+    warn2 "display modes to load files from disk; and it also means that"
+    warn2 "the \`webcollage' program will be much slower."
+  else
+    warn2 "This means the \`webcollage' program will be much slower."
+  fi
 fi
 
 

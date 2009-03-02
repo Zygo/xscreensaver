@@ -642,9 +642,9 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
      look as good in the plain-old default Latin1 "C" locale.)
    */
 #ifdef HAVE_GTK2
-  sprintf(copy, ("Copyright \xC2\xA9 1991-2002 %s"), s);
+  sprintf(copy, ("Copyright \xC2\xA9 1991-2003 %s"), s);
 #else  /* !HAVE_GTK2 */
-  sprintf(copy, ("Copyright \251 1991-2002 %s"), s);
+  sprintf(copy, ("Copyright \251 1991-2003 %s"), s);
 #endif /* !HAVE_GTK2 */
 
   sprintf (msg, "%s\n\n%s", copy, desc);

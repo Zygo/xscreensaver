@@ -1438,7 +1438,7 @@ blitdamage (Display *dpy, Window window, int delay)
 
   XGetWindowAttributes(dpy, window, &xwa);
 
-  grab_screen_image(xwa.screen, window);
+  load_random_image (xwa.screen, window, window);
 
   w = xwa.width;
   h = xwa.height;
@@ -1574,7 +1574,7 @@ make_scrolling_window (Display *dpy, Window window,
   if (!grab_screen_p) ts->sub_height += ts->sub_y, ts->sub_y = 0;
 
   if (grab_screen_p)
-    grab_screen_image (xgwa.screen, window);
+    load_random_image (xgwa.screen, window, window);
 
   sprintf (buf1, "%.50s.background", name);
   sprintf (buf2, "%.50s.Background", name);

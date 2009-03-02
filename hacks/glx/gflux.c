@@ -52,6 +52,8 @@
 # define HACK_INIT						init_gflux
 # define HACK_DRAW						draw_gflux
 # define HACK_RESHAPE					reshape_gflux
+# define HACK_HANDLE_EVENT				gflux_handle_event
+# define EVENT_MASK						PointerMotionMask
 # define gflux_opts						xlockmore_opts
 #define DEFAULTS                        "*delay:		20000   \n" \
 										"*showFPS:      False   \n" \
@@ -102,6 +104,7 @@
 #include <math.h>
 
 #include "grab-ximage.h"
+#include "gltrackball.h"
 
 
 static enum {wire=0,solid,light,checker,textured,grab} _draw; /* draw style */
@@ -119,6 +122,9 @@ static int _waves = 3;
 static int _waveChange = 50;
 static float _waveHeight = 1.0;
 static float _waveFreq = 3.0;
+
+static trackball_state *trackball;
+static Bool button_down_p = False;
 
 #define WIDTH 320
 #define HEIGHT 240
@@ -240,6 +246,43 @@ double getGrid(double,double,double);
 /* BEGINNING OF FUNCTIONS */
 
 
+Bool
+gflux_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button & Button1)
+    {
+      button_down_p = True;
+      gltrackball_start (trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button & Button1)
+    {
+      button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           button_down_p)
+    {
+      gltrackball_track (trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
+
+
+static void
+userRot(void)
+{
+  gltrackball_rotate (trackball);
+}
+
 /* draw the gflux once */
 void draw_gflux(ModeInfo * mi)
 {
@@ -342,6 +385,8 @@ void init_gflux(ModeInfo * mi)
             return;
     }
     gp = &gflux[screen];
+
+    trackball = gltrackball_init ();
 
     {
       char *s = get_string_resource ("mode", "Mode");
@@ -717,6 +762,7 @@ void displayTexture(void)
     glRotatef(anglex,1,0,0);
     glRotatef(angley,0,1,0);
     glRotatef(anglez,0,0,1);
+    userRot();
     glScalef(1,1,(GLfloat)_waveHeight);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 	glEnable(GL_TEXTURE_2D);
@@ -756,10 +802,12 @@ void displayTexture(void)
         glEnd();
     }
 
-    time -= _speed;
-    anglex -= _rotationx;
-    angley -= _rotationy;
-    anglez -= _rotationz;
+    if (! button_down_p) {
+      time -= _speed;
+      anglex -= _rotationx;
+      angley -= _rotationy;
+      anglez -= _rotationz;
+    }
 }
 void displaySolid(void)
 {
@@ -777,6 +825,7 @@ void displaySolid(void)
     glRotatef(anglex,1,0,0);
     glRotatef(angley,0,1,0);
     glRotatef(anglez,0,0,1);
+    userRot();
     glScalef(1,1,(GLfloat)_waveHeight);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
@@ -796,10 +845,12 @@ void displaySolid(void)
         glEnd();
     }
 
-    time -= _speed;
-    anglex -= _rotationx;
-    angley -= _rotationy;
-    anglez -= _rotationz;
+    if (! button_down_p) {
+      time -= _speed;
+      anglex -= _rotationx;
+      angley -= _rotationy;
+      anglez -= _rotationz;
+    }
 
 }
 
@@ -819,6 +870,7 @@ void displayLight(void)
     glRotatef(anglex,1,0,0);
     glRotatef(angley,0,1,0);
     glRotatef(anglez,0,0,1);
+    userRot();
     glScalef(1,1,(GLfloat)_waveHeight);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
@@ -848,10 +900,12 @@ void displayLight(void)
         glEnd();
     }
 
-    time -= _speed;
-    anglex -= _rotationx;
-    angley -= _rotationy;
-    anglez -= _rotationz;
+    if (! button_down_p) {
+      time -= _speed;
+      anglex -= _rotationx;
+      angley -= _rotationy;
+      anglez -= _rotationz;
+    }
 }
 
 void displayWire(void)
@@ -872,6 +926,7 @@ void displayWire(void)
     glRotatef(anglex,1,0,0);
     glRotatef(angley,0,1,0);
     glRotatef(anglez,0,0,1);
+    userRot();
     glScalef(1,1,(GLfloat)_waveHeight);
     glClear(GL_COLOR_BUFFER_BIT);
 
@@ -896,10 +951,12 @@ void displayWire(void)
         glEnd();
     }
 
-    time -= _speed;
-    anglex -= _rotationx;
-    angley -= _rotationy;
-    anglez -= _rotationz;
+    if (! button_down_p) {
+      time -= _speed;
+      anglex -= _rotationx;
+      angley -= _rotationy;
+      anglez -= _rotationz;
+    }
 }
 
 /* generates new ripples */
@@ -908,6 +965,8 @@ void calcGrid(void)
     static int counter=0;
     double tmp;
     static int newWave;
+
+    if (button_down_p) return;
 
     tmp = 1.0/((double)_waveChange);
     if(!(counter%_waveChange)) {
