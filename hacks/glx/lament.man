@@ -2,7 +2,7 @@
 .SH NAME
 lament - animates the Lament Configuration
 .SH SYNOPSIS
-.B goop
+.B lament
 [\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-texture] [\-no\-texture] [\-wireframe]
 .SH DESCRIPTION
 The \fIlament\fP program draws an animation of a particular puzzle box

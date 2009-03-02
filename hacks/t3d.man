@@ -25,16 +25,12 @@ to rotate to the left and the
 to rotate the view to the right. Use the
 .B middle mouse button
 to change the optical axis and the moving direction.
+.B 0
+(zero) will stop you.
 .B Q
-will stop you.
+quits.
 .PP
 .SH OPTIONS
-.TP
-.BI "-display " "host:dpy"
-Specifys the display in the usual way.
-.TP
-.BI "-geometry " "WxH+X+Y"
-Sets the size and location of the t3d window.
 .TP
 .BI "-move " "factor"
 Modifies the direction move of t3d. The clock looks 30 degrees*
@@ -46,20 +42,13 @@ Modifies the wobbling (sounds nice :-) of t3d by multiplying the
 default deformation of the clock with
 .I factor.
 .TP
-.BI "-nice " "factor"
-Renices t3d by
-.I factor
-because t3d uses your process time. The default renice factor is 20, so
-you can't do anything wrong with not renicing t3d. If you want more speed,
-you should set nice to a smaller value.
-.TP
 .B -minutes
 Shows one small ball for every minute, instead of one for every 2.5 minutes.
 .TP
 .BI "-mag " "factor"
-Changes the magnification of t3d. By default, t3d uses a 200x200 window. A
-.I factor
-of 2 means, it will use a 400x400 window.
+Changes the magnification of t3d. By default, t3d draws a 200x200 image.
+A .I factor
+of 2 means, it will use a 400x400 image.
 .TP
 .BI "-cycle " "period"
 Sets the moving cycle to

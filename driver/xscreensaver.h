@@ -65,6 +65,7 @@ struct saver_info {
   Bool using_xidle_extension;	   /* which extension is being used.         */
   Bool using_mit_saver_extension;  /* Note that `p->use_*' is the *request*, */
   Bool using_sgi_saver_extension;  /* and `si->using_*' is the *reality*.    */
+  Bool using_proc_interrupts;
 
 # ifdef HAVE_MIT_SAVER_EXTENSION
   int mit_saver_ext_event_number;
@@ -252,6 +253,9 @@ extern Bool query_sgi_saver_extension (saver_info *);
 #ifdef HAVE_XIDLE_EXTENSION
 extern Bool query_xidle_extension (saver_info *);
 #endif
+#ifdef HAVE_PROC_INTERRUPTS
+extern Bool query_proc_interrupts_available (saver_info *, const char **why);
+#endif
 
 /* Display Power Management System (DPMS) interface. */
 extern Bool monitor_powered_on_p (saver_info *si);
@@ -316,7 +320,7 @@ extern void skull (Display *, Window, GC, GC, int, int, int, int);
    timers
    ======================================================================= */
 
-extern void start_notice_events_timer (saver_info *, Window);
+extern void start_notice_events_timer (saver_info *, Window, Bool verbose_p);
 extern void cycle_timer (XtPointer si, XtIntervalId *id);
 extern void activate_lock_timer (XtPointer si, XtIntervalId *id);
 extern void reset_watchdog_timer (saver_info *si, Bool on_p);
@@ -369,6 +373,7 @@ extern int saver_ehandler (Display *dpy, XErrorEvent *error);
 extern int BadWindow_ehandler (Display *dpy, XErrorEvent *error);
 extern Bool window_exists_p (Display *dpy, Window window);
 extern char *timestring (void);
+extern Bool display_is_on_console_p (saver_info *si);
 
 extern Atom XA_VROOT, XA_XSETROOT_ID;
 extern Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;

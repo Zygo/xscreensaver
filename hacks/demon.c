@@ -57,7 +57,7 @@ static const char sccsid[] = "@(#)demon.c	4.07 97/11/24 xlockmore";
 					"*size:		   -7 \n"	\
 					"*ncolors:	   64 \n"	\
 					"*neighbors:    0 \n"
-# define UNIFORM_COLORS
+# define SMOOTH_COLORS
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"			/* in xlockmore distribution */

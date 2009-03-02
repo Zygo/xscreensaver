@@ -77,6 +77,13 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.07:   * Fixed some bugs in my port of `t3d'.
+                      * Added `penetrate' and `deluxe' hacks.
+                      * When linking against Motif 2.x, also link against XPM.
+                      * Added support for using /proc/interrupts for idle
+                        detection on Linux.  Now xscreensaver shouldn't kick
+                        in when the user is active on a non-X virtual console.
+                      * Upgraded to autoconf 2.13.
 Changes since 3.06:   * Configure tweaks (sometimes -lXmu wasn't getting linked
                         in properly; check for _Xsetlocale in -lXintl.)
                       * Portability fixes for sonar.c.

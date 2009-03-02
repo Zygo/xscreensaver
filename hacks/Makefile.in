@@ -81,7 +81,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  rotor.c ant.c xjack.c xlyap.c jigsaw.c xscreensaver-sgigl.c \
 		  cynosure.c moire2.c flow.c epicycle.c interference.c \
 		  truchet.c bsod.c crystal.c discrete.c distort.c kumppa.c \
-		  sonar.c demon.c loop.c t3d.c
+		  sonar.c demon.c loop.c t3d.c penetrate.c deluxe.c
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  bubbles-default.o decayscreen.o deco.o drift.o flag.o \
@@ -96,7 +96,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  rotor.o ant.o xjack.o xlyap.o jigsaw.o xscreensaver-sgigl.o \
 		  cynosure.o moire2.o flow.o epicycle.o interference.o \
 		  truchet.o bsod.o crystal.o discrete.o distort.o kumppa.o \
-		  sonar.o demon.o loop.o t3d.o
+		  sonar.o demon.o loop.o t3d.o penetrate.o deluxe.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -107,7 +107,7 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
 		  ant xjack xlyap jigsaw cynosure moire2 flow epicycle \
 		  interference truchet bsod crystal discrete distort kumppa \
-		  sonar demon loop t3d
+		  sonar demon loop t3d penetrate deluxe
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -460,6 +460,12 @@ sonar:		sonar.o		$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 t3d:		t3d.o		$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
+penetrate:	penetrate.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
+deluxe:		deluxe.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 
@@ -1483,4 +1489,22 @@ t3d.o: $(UTILS_SRC)/hsv.h
 t3d.o: $(UTILS_SRC)/colors.h
 t3d.o: $(UTILS_SRC)/grabscreen.h
 t3d.o: $(UTILS_SRC)/visual.h
+penetrate.o: $(srcdir)/screenhack.h
+penetrate.o: ../config.h
+penetrate.o: $(UTILS_SRC)/yarandom.h
+penetrate.o: $(UTILS_SRC)/usleep.h
+penetrate.o: $(UTILS_SRC)/resources.h
+penetrate.o: $(UTILS_SRC)/hsv.h
+penetrate.o: $(UTILS_SRC)/colors.h
+penetrate.o: $(UTILS_SRC)/grabscreen.h
+penetrate.o: $(UTILS_SRC)/visual.h
+deluxe.o: $(srcdir)/screenhack.h
+deluxe.o: ../config.h
+deluxe.o: $(UTILS_SRC)/yarandom.h
+deluxe.o: $(UTILS_SRC)/usleep.h
+deluxe.o: $(UTILS_SRC)/resources.h
+deluxe.o: $(UTILS_SRC)/hsv.h
+deluxe.o: $(UTILS_SRC)/colors.h
+deluxe.o: $(UTILS_SRC)/grabscreen.h
+deluxe.o: $(UTILS_SRC)/visual.h
 

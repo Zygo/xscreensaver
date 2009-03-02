@@ -85,7 +85,7 @@ tar:
 # nearly impossible to customize --help blurb.  This horrid set of regexps
 # go through and clean up the help text, by inserting whitespace and ripping
 # out options we don't use.  Odds are good that this will fail with any version
-# of autoconf other than 2.12.
+# of autoconf other than the ones I've tried (2.12 and 2.13.)
 #
 configure::
 	autoconf

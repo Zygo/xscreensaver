@@ -189,6 +189,11 @@ HACKDIR=`echo "${HACKDIR}" | sed 's@/$@@;s@//*@/@g'`
 
 AC_PATH_XTRA
 
+if test "$have_x" != yes; then
+  AC_MSG_ERROR(Couldn't find X11 headers/libs.  Try \`$0 --help'.)
+fi
+
+
 # Try and find the app-defaults directory.
 # It sucks that autoconf doesn't do this already...
 #
@@ -844,6 +849,40 @@ elif test "$with_dpms" != no; then
 fi
 
 
+# Check for /proc/interrupts
+#
+have_proc_interrupts=no
+with_proc_interrupts_req=unspecified
+AC_ARG_WITH(proc-interrupts,
+[  --with-proc-interrupts  Include support for consulting the /proc/interrupts
+                          file to notice keyboard activity, if possible.
+  --without-proc-interrupts   Do not compile in support for this method.],
+  [with_proc_interrupts="$withval"; with_proc_interrupts_req="$withval"],
+  [with_proc_interrupts=yes])
+
+if test "$with_proc_interrupts" = yes; then
+
+   AC_MSG_CHECKING(whether /proc/interrupts contains keyboard data)
+   AC_CACHE_VAL(ac_cv_have_proc_interrupts,
+    [ac_cv_have_proc_interrupts=no
+     if grep keyboard /proc/interrupts >/dev/null 2>&1 ; then
+       ac_cv_have_proc_interrupts=yes
+     fi
+    ])
+   have_proc_interrupts=$ac_cv_have_proc_interrupts
+
+  AC_MSG_RESULT($have_proc_interrupts)
+
+  if test "$have_proc_interrupts" = yes; then
+    AC_DEFINE(HAVE_PROC_INTERRUPTS)
+  fi
+
+elif test "$with_proc_interrupts" != no; then
+  echo "error: must be yes or no: --with-proc-interrupts=$with_proc_interrupts"
+  exit 1
+fi
+
+
 
 # Check for Motif and Athena --with and --without arguments.
 #
@@ -1026,6 +1065,57 @@ if test "$have_lesstif" = yes ; then
 fi
 
 
+if test "$have_motif" = yes ; then
+  mtv=unknown
+  echo unknown > conftest-mt
+  AC_CACHE_CHECK([Motif version number],
+		 ac_cv_motif_version_string,
+      [AC_TRY_X_RUN([#include <stdio.h>
+		     #include <Xm/Xm.h>
+		     int main() {
+		       FILE *f = fopen("conftest-mt", "w");
+		       if (!f) exit(1);
+		       fprintf(f, "%d %d.%d\n", XmVersion,
+		     	  XmVERSION, XmREVISION);
+		       fclose(f);
+		       exit(0);
+		     }],
+		    [mtv=`cat conftest-mt`
+		     ac_cv_motif_version=`echo $mtv | sed 's/ .*//'`
+		     ac_cv_motif_version_string=`echo $mtv | sed 's/.* //'`],
+		    [ac_cv_motif_version=unknown
+		     ac_cv_motif_version_string=unknown],
+		    [ac_cv_motif_version=unknown
+		     ac_cv_motif_version_string=unknown])])
+  rm -f conftest-mt
+  motif_version=$ac_cv_motif_version
+  motif_version_string=$ac_cv_motif_version_string
+
+fi
+
+
+# If this is Motif 2.x, and we have XPM, then link against XPM as well.
+# The deal is, Motif 2.x requires XPM -- but it's a compilation option of
+# the library whether to build the XPM code into libXm, or whether to rely
+# on an external libXm.  So the only way to tell whether XPM is a link-time
+# requirement is to examine libXm.a, which is very difficult to do in an
+# autoconf script.  So... if it's Motif 2.x, we always link against XPM if
+# the XPM lib exists (and this will be a no-op if libXm happens to already
+# have the XPM code in it.)
+#
+motif_requires_xpm=no
+if test "$have_motif" = yes ; then
+   AC_MSG_CHECKING(whether Motif requires XPM)
+   if test "$motif_version" -ge 2000; then
+     motif_requires_xpm=yes
+     AC_MSG_RESULT(maybe)
+   else
+     AC_MSG_RESULT(no)
+   fi
+fi
+
+
+
 # Some versions of Motif (2.1.0, at least) require -lXp, the "X Printing
 # Extension".   Why this extension isn't in -lXext with all the others,
 # I have no idea.
@@ -1074,6 +1164,15 @@ if test "$with_xpm" = yes; then
 elif test "$with_xpm" != no; then
   echo "error: must be yes or no: --with-xpm=$with_xpm"
   exit 1
+fi
+
+# See comment near $motif_requires_xpm, above.
+# Need to do this here, after both Motif and XPM have been checked for.
+#
+if test "$have_motif" = yes -a "$have_xpm" = yes ; then
+  if test "$motif_requires_xpm" = yes ; then
+    TOOLKIT_LIBS="$TOOLKIT_LIBS $XPM_LIBS"
+  fi
 fi
 
 
@@ -1185,7 +1284,7 @@ EOF
     # If it's MesaGL, check to see if it requires -lpthread.
     #
     have_pthread=no
-    mesa_requires_pthread=false
+    mesa_requires_pthread=no
     if test "$ac_have_mesa_gl" = yes; then
 
       AC_CHECK_LIB(pthread, pthread_create, [have_pthread=yes], [],)
@@ -1462,7 +1561,7 @@ if test "$enable_vt_locking" = yes; then
   ac_vt_lockswitch=$ac_cv_vt_lockswitch
   AC_MSG_RESULT($ac_vt_lockswitch)
 
-elif test "$enable_locking" = no; then
+elif test "$enable_vt_locking" = no; then
   true
 else
   echo "error: must be yes or no: --enable-vt-locking=$enable_vt_locking"
@@ -1928,7 +2027,7 @@ fi
 
 
 if test "$have_gl" = yes -a "$ac_have_mesa_gl" = yes ; then
-  preferred_mesagl=2.7
+  preferred_mesagl=3.0
 
   if test "$ac_mesagl_version" = unknown; then
     warnL "Unable to determine the MesaGL version number!"
@@ -1975,8 +2074,8 @@ if test "$have_gl" = no ; then
   warn2 're-running configure.  (Remember to delete the'
   warn2 "config.cache file first.)  If your vendor doesn't ship"
   warn2 'their own implementation of OpenGL, you can get a free'
-  warn2 'version at <http://www.ssec.wisc.edu/~brianp/Mesa.html>.'
-  warn2 'For general OpenGL info, see <http://www.opengl.org/>.'
+  warn2 'version at <http://www.mesa3d.org/>.  For general OpenGL'
+  warn2 'info, see <http://www.opengl.org/>.'
 
 fi
 

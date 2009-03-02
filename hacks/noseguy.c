@@ -542,7 +542,9 @@ get_words (void)
 	      sprintf (buf, "\"%s\" produced no output!", orig_program);
 	    else if (!first_time &&
 		     (strstr (buf, ": not found") ||
-		      strstr (buf, ": Not found")))
+		      strstr (buf, ": Not found") ||
+                      strstr (buf, ": command not found") ||
+                      strstr (buf, ": Command not found")))
 	      switch (random () % 20)
 		{
 		case 1: strcat (buf, "( Get with the program, bub. )\n");

@@ -474,7 +474,7 @@ amiga (Display *dpy, Window window, int delay)
   int height;
   unsigned long fg, bg, bg2;
   Pixmap pixmap = 0;
-  int pix_w, pix_h;
+  int pix_w = 0, pix_h = 0;
 
   const char *string =
     ("_Software failure.  Press left mouse button to continue.\n"

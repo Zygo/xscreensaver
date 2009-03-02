@@ -158,9 +158,9 @@ create_xshm_image (Display *dpy, Visual *visual,
 	  shmdt (shm_info->shmaddr);
 	  image = 0;
 	}
-
 #ifdef DEBUG
-      fprintf(stderr, "%s: XShmAttach(dpy, shm_info) ==> True\n", progname);
+      else
+        fprintf(stderr, "%s: XShmAttach(dpy, shm_info) ==> True\n", progname);
 #endif
 
       XSync(dpy, False);

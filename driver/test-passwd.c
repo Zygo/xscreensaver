@@ -48,7 +48,7 @@ void blank_screen (saver_info *si) {}
 void unblank_screen (saver_info *si) {}
 Bool select_visual (saver_screen_info *ssi, const char *v) { return False; }
 Bool window_exists_p (Display *dpy, Window window) {return True;}
-void start_notice_events_timer (saver_info *si, Window w) {}
+void start_notice_events_timer (saver_info *si, Window w, Bool) {}
 Bool handle_clientmessage (saver_info *si, XEvent *e, Bool u) { return False; }
 int BadWindow_ehandler (Display *dpy, XErrorEvent *error) { exit(1); }
 const char *signal_name(int signal) { return "???"; }

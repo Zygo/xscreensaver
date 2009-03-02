@@ -15,6 +15,7 @@ $ crystal	:== $'mydir'crystal
 $ cynosure	:== $'mydir'cynosure
 $ decayscreen	:== $'mydir'decayscreen
 $ deco		:== $'mydir'deco
+$ deluxe	:== $'mydir'deluxe
 $ demon		:== $'mydir'demon
 $ discrete	:== $'mydir'discrete
 $ distort	:== $'mydir'distort
@@ -53,6 +54,7 @@ $ mountain	:== $'mydir'mountain
 $ munch		:== $'mydir'munch
 $ noseguy	:== $'mydir'noseguy
 $ pedal		:== $'mydir'pedal
+$ penetrate	:== $'mydir'penetrate
 $ penrose	:== $'mydir'penrose
 $ pyro		:== $'mydir'pyro
 $ qix		:== $'mydir'qix

@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 3.07
-!                                04-Jan-99
+!                              version 3.08
+!                                15-Mar-99
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -38,6 +38,12 @@
 *overlayTextBackground:	#000000
 *overlayStderr:		True
 *font:			*-medium-r-*-140-*-m-*
+
+! The default is to use these extensions if available (as noted.)
+*sgiSaverExtension:	True
+*mitSaverExtension:	False
+*xidleExtension:	True
+*procInterrupts:	True
 
 ! This is what the "Demo" button on the splash screen runs (/bin/sh syntax.)
 *demoCommand: xscreensaver-demo
@@ -172,6 +178,8 @@
 		rd-bomb -root -speed 1 -size 0.1			\n\
 		sonar -root						\n\
 		t3d -root						\n\
+		penetrate -root						\n\
+		deluxe -root						\n\
 									  \
 	mono:	rocks -root						\n\
 	color:	rocks -root -fg darksalmon				\n\
@@ -343,7 +351,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *passwd.thermometer.width:	8
 
 *splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright © 1991-1998 by
+*splash.body.label:		Copyright © 1991-1999 by
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Demo
 *splash.prefs.label:		Prefs
@@ -378,8 +386,8 @@ XScreenSaver*XmList.fontList:      *-courier-medium-r-*-*-*-120-*-*-*-iso8859-1
 
 *label1.labelString:		XScreenSaver %s
 *label1.label:			XScreenSaver %s
-*label2.labelString: Copyright © 1991-1998 by Jamie Zawinski <jwz@jwz.org>
-*label2.label:	     Copyright © 1991-1998 by Jamie Zawinski <jwz@jwz.org>
+*label2.labelString: Copyright © 1991-1999 by Jamie Zawinski <jwz@jwz.org>
+*label2.label:	     Copyright © 1991-1999 by Jamie Zawinski <jwz@jwz.org>
 *demoList.visibleItemCount:	10
 *demoList.automaticSelection:	True
 *next.labelString:		Run Next

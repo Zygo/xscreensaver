@@ -13,15 +13,13 @@
                           of the command-line options provided by screenhack.c.
 */
 
-#undef FASTDRAW
+#define FASTDRAW
+#define FASTCOPY
 #undef USE_POLYGON
-
-#ifdef FASTDRAW
-# define FASTCOPY
-#endif
 
 #include <stdio.h>
 #include <math.h>
+#include <time.h> /* for localtime() and gettimeofday() */
 
 #include "screenhack.h"
 
@@ -136,11 +134,17 @@ static double
 gettime (void)
 {
   struct timeval time1;
-  struct timezone zone1;
   struct tm *zeit;
-  
+  time_t lt;
+
+#ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone zone1;
   gettimeofday(&time1,&zone1);
-  zeit=localtime(&time1.tv_sec);
+#else
+  gettimeofday(&time1);
+#endif
+  lt = time1.tv_sec;	/* avoid type cast lossage */
+  zeit=localtime(&lt);
   
   return (zeit->tm_sec+60*(zeit->tm_min+60*(zeit->tm_hour))
 	  + time1.tv_usec*1.0E-6);
@@ -251,9 +255,13 @@ initialize (void)
   scrnWidth = xgwa.width;
   scrnHeight = xgwa.height;
 
-  cycle = 60.0 / get_float_resource ("cycle", "Float");
-  movef = get_float_resource ("move", "Float") / 2;
-  wobber *= get_float_resource ("wobble", "Float");
+  {
+    float f = get_float_resource ("cycle", "Float");
+    if (f <= 0 || f > 60) f = 6.0;
+    cycle = 60.0 / f;
+  }
+  movef = get_float_resource ("move", "Float");
+  wobber = get_float_resource ("wobble", "Float");
 
   {
     double magfac = get_float_resource ("mag", "Float");
@@ -265,7 +273,7 @@ initialize (void)
     minutes=1; maxk+=60-24;
   }
 
-  timewait = get_integer_resource ("wait", "Integer");
+  timewait = get_integer_resource ("delay", "Integer");
   fastch = get_integer_resource ("fast", "Integer");
   cycl = get_boolean_resource ("colcycle", "Integer");
   hsvcycl = get_float_resource ("hsvcycle", "Integer");
@@ -295,13 +303,6 @@ initialize (void)
 
   if (fastch>maxfast)
 		fastch=maxfast;
-  
-#ifdef PRTDBX
-  printf("Set options:\ndisplay: '%s'\ngeometry: '%s'\n",display,geometry);
-  printf("move\t%.2f\nwobber\t%.2f\nmag\t%.2f\ncycle\t%.4f\n",
-	 movef,wobber,mag/10,cycle);
-  printf("nice\t%i\nfast\t%i\nmarks\t%i\nwait\t%i\n",niced,fastch,maxk,timewait);
-#endif
   
   xgc=( XGCValues *) malloc(sizeof(XGCValues) );
   xorgc=( XGCValues *) malloc(sizeof(XGCValues) );
@@ -348,6 +349,13 @@ initialize (void)
   XFillRectangle (dpy, fastmask   , gc, 0, 0, fastcw, fastch+1);
   
 #endif
+
+#ifdef PRTDBX
+  printf("move\t%.2f\nwobber\t%.2f\nmag\t%.2f\ncycle\t%.4f\n",
+	 movef,wobber,mag/10,cycle);
+  printf("fast\t%i\nmarks\t%i\nwait\t%i\n",fastch,maxk,timewait);
+#endif
+ 
 }
 
 static void fill_kugel(int i, Pixmap buf, int setcol);
@@ -521,7 +529,7 @@ fill_kugel(int i, Pixmap buf, int setcol)
       XPutImage(dpy, buf, orgc, fastcircles[d-1], 0, 0,
 		(int)(kugeln[i].x1)-d/2, (int)(kugeln[i].y1)-d/2, d, d);
 #	endif
-	}
+    }
   else
 #endif
     {
@@ -715,23 +723,46 @@ event_handler(void)
 	      starty=scrnHeight/2;
 	      scrnH2=startx;
 	      scrnW2=starty;
-	    }; break;
+	    };
+          break;
+
 	case KeyPress:
 	  {
 	    KeySym kpr=XKeycodeToKeysym(dpy,event.xkey.keycode,0);
-	    if (kpr=='s') /* s */
-	      vspeed=0.5;
-	    if (kpr=='a')
-	      vspeed=-0.3;
-	    if (kpr=='q')
-	      {
-		speed=0;vspeed=0;
-	      }
-	    /*	printf("%i\n",event.xkey.keycode);*/
-	    if (kpr=='z') mag*=1.02;
-	    if (kpr=='x') mag/=1.02;
-	  }
+
+            switch (kpr)
+              {
+              case 's': case 'S':
+                vspeed = 0.5;
+                break;
+              case 'a': case 'A':
+                vspeed = -0.3;
+                break;
+
+              case '0':
+                speed = 0;
+                vspeed = 0;
+                break;
+
+              case 'z': case 'Z':
+                mag *= 1.02;
+                break;
+
+              case 'x': case 'X':
+                mag /= 1.02;
+                break;
+
+              default:
+                screenhack_handle_event (dpy, &event);
+                break;
+              }
+          }
+
+        case ButtonPress: case ButtonRelease:
+          break;
+
 	default:
+          screenhack_handle_event (dpy, &event);
 	  break;
 	}
     }
@@ -754,10 +785,10 @@ char *defaults [] = {
   ".foreground:	white",
   "*move:	0.5",
   "*wobble:	2.0",
-  "*cycle:	6.0",
+  "*cycle:	10.0",
   "*mag:	1",
   "*minutes:	False",
-  "*timewait:   40000",
+  "*delay:      40000",
   "*fast:	50",
   "*ccycle:	False",
   "*hsvcycle:	0.0",
@@ -770,7 +801,7 @@ XrmOptionDescRec options [] = {
   { "-cycle",		".cycle",	XrmoptionSepArg, 0 },
   { "-mag",		".mag",		XrmoptionSepArg, 0 },
   { "-minutes",		".minutes",	XrmoptionSepArg, 0 },
-  { "-timewait",	".timewait",	XrmoptionSepArg, 0 },
+  { "-delay",		".delay",	XrmoptionSepArg, 0 },
   { "-fast",		".fast",	XrmoptionSepArg, 0 },
   { "-colcycle",	".colcycle",	XrmoptionSepArg, 0 },
   { "-hsvcycle",	".hsvcycle",	XrmoptionSepArg, 0 },

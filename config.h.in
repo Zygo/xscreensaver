@@ -96,6 +96,12 @@
  */
 #undef HAVE_DPMS_EXTENSION
 
+/*  Define this if you have a Linux-like /proc/interrupts file which can be
+ *  examined to determine when keyboard activity has occurred.
+ */
+#undef HAVE_PROC_INTERRUPTS
+
+
 
 /* *************************************************************************
                           CONFIGURING GRAPHICS TOOLKITS

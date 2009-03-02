@@ -270,8 +270,9 @@ initialise_image(ModeInfo * mi, SWIRL_P swirl)
 	  swirl->ximage = XCreateImage(dpy, swirl->visual, swirl->rdepth, ZPixmap,
 								   0, 0, swirl->width, swirl->height,
 								   8, 0);
-	  swirl->ximage->data = swirl->image =
-		(char *) calloc(swirl->height, swirl->ximage->bytes_per_line);
+	  swirl->image = (unsigned char *)
+        calloc(swirl->height, swirl->ximage->bytes_per_line);
+      swirl->ximage->data = (char *) swirl->image;
 	}
 }
 

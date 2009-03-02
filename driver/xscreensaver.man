@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "04-Jan-99 (3.07)" "X Version 11"
+.TH XScreenSaver 1 "15-Mar-99 (3.08)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -39,6 +39,8 @@ xscreensaver - graphics hack and screen locker, launched when the user is idle
 [\-no\-sgi\-extension] \
 [\-xidle\-extension] \
 [\-no\-xidle\-extension] \
+[\-proc\-interrupts] \
+[\-no\-proc\-interrupts] \
 [\-xrm \fIresources\fP]
 .SH DESCRIPTION
 The \fIxscreensaver\fP program waits until the keyboard and mouse have been 
@@ -423,6 +425,24 @@ used to decide whether the user is idle.  This is the default
 if \fIxscreensaver\fP has been compiled with support for this extension.
 (This extension is only available for X11R4 and X11R5 systems, unfortunately.)
 .TP 8
+.B procInterrupts\fP (class \fBBoolean\fP)
+This resource controls whether the \fB/proc/interrupts\fP file should be
+consulted to decide whether the user is idle.  This is the default
+if \fIxscreensaver\fP has been compiled on a system which supports this
+mechanism (i.e., Linux systems.)  
+
+The benefit to doing this is that \fIxscreensaver\fP can note that the user
+is active even when the X console is not the active one: if the user is 
+typing in another virtual console, xscreensaver will notice that and will
+fail to activate.  For example, if you're playing Quake in VGA-mode, 
+xscreensaver won't wake up in the middle of your game and start competing 
+for CPU.
+
+The drawback to doing this is that perhaps you \fIreally do\fP want idleness
+on the X console to cause the X display to lock, even if there is activity
+on other virtual consoles.  If you want that, then set this option to False.
+(Or just lock the X console manually.)
+.TP 8
 .B overlayStderr\fP (class \fBBoolean\fP)
 If \fBcaptureStderr\fP is True, and your server supports ``overlay'' visuals,
 then the text will be written into one of the higher layers instead of into
@@ -519,6 +539,12 @@ Same as setting the \fIxidleExtension\fP resource to \fItrue\fP.
 .TP 8
 .B \-no\-xidle\-extension
 Same as setting the \fIxidleExtension\fP resource to \fIfalse\fP.
+.TP 8
+.B \-proc\-interrupts
+Same as setting the \fIprocInterrupts\fP resource to \fItrue\fP.
+.TP 8
+.B \-no\-proc\-interrupts
+Same as setting the \fIprocInterrupts\fP resource to \fIfalse\fP.
 .TP 8
 .B \-xrm \fIresource-specification\fP
 As with all other Xt programs, you can specify X resources on the command-line
@@ -948,7 +974,7 @@ unlock the screen.
 
 This is a design flaw in PAM (there is no way for a client to tell the
 difference between PAM responding ``I have never heard of your module,''
-and responding, ``you typed the wrong password.''  As far as I can tell,
+and responding, ``you typed the wrong password.'')  As far as I can tell,
 there is no way for xscreensaver to automatically work around this, or
 detect the problem in advance, so if you have PAM, make sure it is
 configured correctly!
@@ -1027,17 +1053,6 @@ periodically, like
 .BR xclock (1)
 or
 .BR xload (1).
-.TP 8
-.B Doom and Quake
-On some systems, Doom, Quake, and other games intercept the keyboard in
-ways that X programs can never detect.  Therefore, when running these games,
-xscreensaver might think the console is idle, and activate.  In the worst
-case, xscreensaver might blank the screen and mess up the game.  Alternately,
-xscreensaver might activate on the X display while leaving the game visible,
-and merely cause the game to slow down.
-
-I don't know how to fix this, because I don't know how to detect the kind 
-of keyboard activity that occurs during these games.  Suggestions are welcome.
 .TP 8
 .B Latency and Responsiveness
 If the subprocess is drawing too quickly and the connection to the X

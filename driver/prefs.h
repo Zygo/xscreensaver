@@ -68,6 +68,7 @@ struct saver_preferences {
   Bool use_xidle_extension;	/* which extension to use, if possible */
   Bool use_mit_saver_extension;
   Bool use_sgi_saver_extension;
+  Bool use_proc_interrupts;
 
   char *shell;			/* where to find /bin/sh */
 
