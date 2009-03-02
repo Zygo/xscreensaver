@@ -476,7 +476,9 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	 */
 	if (!until_idle_p)
 	  {
-	    if (si->demoing_p && event.xany.type == MotionNotify)
+	    if (si->demoing_p &&
+		(event.xany.type == MotionNotify ||
+		 event.xany.type == KeyRelease))
 	      /* When we're demoing a single hack, mouse motion doesn't
 		 cause deactivation.  Only clicks and keypresses do. */
 	      ;

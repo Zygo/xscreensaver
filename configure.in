@@ -149,7 +149,7 @@ fi
 AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv)
 AC_CHECK_FUNCS(sigaction syslog)
 
-AC_CHECK_HEADERS(unistd.h crypt.h)
+AC_CHECK_HEADERS(unistd.h crypt.h sys/select.h)
 
 dnl	/usr/local/src/ssh-1.2.17/putenv.c -- AC_REPLACE_FUNCS(putenv)
 

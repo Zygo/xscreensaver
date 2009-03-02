@@ -289,6 +289,9 @@
 /* Define if you have the <crypt.h> header file.  */
 #undef HAVE_CRYPT_H
 
+/* Define if you have <sys/select.h> that defines fd_set and FD_SET.  */
+#undef HAVE_SYS_SELECT_H
+
 /* Define to use sigaction() instead of signal() for SIGCHLD-related activity.
    This is necessary at least on SCO OpenServer 5, due to a Unix kernel bug.
  */

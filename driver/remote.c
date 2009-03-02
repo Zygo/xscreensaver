@@ -18,7 +18,10 @@
 #include <stdlib.h>
 #include <sys/time.h>
 #include <sys/types.h>
-#include <sys/select.h>
+
+#ifdef HAVE_SYS_SELECT_H
+# include <sys/select.h>
+#endif /* HAVE_SYS_SELECT_H */
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>

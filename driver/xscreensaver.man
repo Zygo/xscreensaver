@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "24-Oct-98 (3.01)" "X Version 11"
+.TH XScreenSaver 1 "25-Oct-98 (3.02)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -62,9 +62,10 @@ For the impatient, try this:
 xscreensaver &
 xscreensaver-demo
 .EE
-The \fIxscreensaver\-demo\fP program should pop up a dialog box
-that lets you experiment with the xscreensaver settings and graphics
-modes.
+The
+.BR xscreensaver-demo (1)
+program should pop up a dialog box that lets you experiment with the
+xscreensaver settings and graphics modes.
 
 .B Note:
 unlike
@@ -78,7 +79,7 @@ programs.
 .SH CONFIGURATION
 Options to \fIxscreensaver\fP are specified in one of two places: in 
 a \fI.xscreensaver\fP file in your home directory; or in the X resource
-database.  If a \fI.xscreensaver\fP file exists, it overrides any settings
+database.  If the \fI.xscreensaver\fP file exists, it overrides any settings
 in the resource database.  
 
 The syntax of the \fI.xscreensaver\fP file is similar to that of
@@ -306,15 +307,15 @@ If the display has multiple screens, then a different program will be run
 for each screen.  (All screens are blanked and unblanked simultaniously.)
 
 Note that you must escape the newlines; here is an example of how you
-might set this in your \fI~/.Xdefaults\fP file:
+might set this in your \fI~/.xscreensaver\fP file:
 
 .RS 8
 .EX
-xscreensaver.programs:  \\
-        qix -root                          \\n\\
-        ico -r -faces -sleep 1 -obj ico    \\n\\
-        xdaliclock -builtin2 -root         \\n\\
-        xv -root -rmode 5 image.gif -quit  \\n
+programs:  \\
+       qix -root                          \\n\\
+       ico -r -faces -sleep 1 -obj ico    \\n\\
+       xdaliclock -builtin2 -root         \\n\\
+       xv -root -rmode 5 image.gif -quit  \\n
 .EE
 .RE
 .RS 8
@@ -325,17 +326,17 @@ programs listed in the \fIprograms\fP resource.
 To use a program as a screensaver, two things are required: that that
 program draw on the root window (or be able to be configured to draw on
 the root window); and that that program understand ``virtual root''
-windows, as used by virtual window managers such as \fItvtwm\fP.  (Generally,
-this is accomplished by just including the \fI"vroot.h"\fP header file in
-the program's source.)
+windows, as used by virtual window managers such as
+.BR tvtwm (1).
+(Generally, this is accomplished by just including the \fI"vroot.h"\fP 
+header file in the program's source.)
 
 If there are some programs that you want to run only when using a color
 display, and others that you want to run only when using a monochrome
 display, you can specify that like this:
-
 .EX
-    mono:   mono-program  -root        \\n\\
-    color:  color-program -root        \\n\\
+       mono:   mono-program  -root        \\n\\
+       color:  color-program -root        \\n\\
 .EE
 .RE
 .RS 8
@@ -343,17 +344,12 @@ More generally, you can specify the kind of visual that should be used for
 the window on which the program will be drawing.  For example, if one 
 program works best if it has a colormap, but another works best if it has
 a 24-bit visual, both can be accommodated:
-
 .EX
-    PseudoColor: cmap-program  -root   \\n\\
-    TrueColor:   24bit-program -root   \\n\\
+       PseudoColor: cmap-program  -root   \\n\\
+       TrueColor:   24bit-program -root   \\n\\
 .EE
 .RE
 .RS 8
-(This sort of thing used to be accomplished with the \fIcolorPrograms\fP
-and \fImonoPrograms\fP resources, but those resources have now been removed;
-a warning will be issued if they are used.)
-
 In addition to the symbolic visual names described above (in the discussion
 of the \fIvisualID\fP resource) one other visual name is supported in
 the \fIprograms\fP list:
@@ -530,13 +526,12 @@ using the \fI\-xrm\fP argument.  Most of the interesting resources have
 command-line equivalents, however.
 .SH HOW IT WORKS
 When it is time to activate the screensaver, a full-screen black window is
-created on each screen of the display.  The window or windows is given the
-appropriate properties so that, to any subsequently-created programs, it 
-will appear to be a ``virtual root'' window.  Because of this, any program 
-which draws on the root window (and which understands virtual roots) can be
-used as a screensaver.
+created on each screen of the display.  Each window is created in such a way
+that, to any subsequently-created programs, it will appear to be a ``virtual
+root'' window.  Because of this, any program which draws on the root 
+window (and which understands virtual roots) can be used as a screensaver.
 
-When the user becomes active again, the screensaver windows are unmapped and
+When the user becomes active again, the screensaver windows are unmapped, and
 the running subprocesses are killed by sending them \fBSIGTERM\fP.  This is 
 also how the subprocesses are killed when the screensaver decides that it's
 time to run a different demo: the old one is killed and a new one is launched.
@@ -880,8 +875,8 @@ how to configure the system to do this for all users automatically.
 In order for it to be safe for xscreensaver to be launched by \fIxdm\fP,
 certain precautions had to be taken, among them that xscreensaver never
 runs as \fIroot\fP.  In particular, if it is launched as root (as \fIxdm\fP
-is likely to do), xscreensaver will disavow its privileges, and switch to
-a safe user id (such as \fInobody\fP.)
+is likely to do), xscreensaver will disavow its privileges, and switch 
+itself to a safe user id (such as \fInobody\fP.)
 
 An implication of this is that if you log in as \fIroot\fP on the console, 
 xscreensaver will refuse to lock the screen (because it can't tell
@@ -923,8 +918,8 @@ If you get an error message like ``couldn't get password of \fIuser\fP''
 then this probably means that you're on a system in which the
 .BR getpwent (3)
 library routine can only be effectively used by root.  If this is the case, 
-then \fIxscreensaver\fP must be installed as setuid to root.  Care has 
-been taken to make this a safe thing to do.  
+then \fIxscreensaver\fP must be installed as setuid to root in order for
+locking to work.  Care has been taken to make this a safe thing to do.  
 
 It also may mean that your system uses shadow passwords instead of the standard
 .BR getpwent (3)
@@ -1087,16 +1082,16 @@ If anyone would care to explain it to me, that would be great.
 Your mileage, therefore, may vary dramatically.
 .TP 8
 .B MesaGL and Voodoo Cards
-If you have a 3Dfx/Voodoo card, the default settings for xscreensaver will run
-the GL-based graphics demos in such a way that they will not take advantage
-of the 3D acceleration hardware.  The solution is to change the \fBprograms\fP
-entries for the GL hacks from this:
+If you have a 3Dfx/Voodoo card, the default settings for xscreensaver will
+run the GL-based graphics demos in such a way that they will not take 
+advantage of the 3D acceleration hardware.  The solution is to change
+the \fBprograms\fP entries for the GL hacks from this:
 .EX
-    gears -root                       \\n\\
+       gears -root                        \\n\\
 .EE
 to this:
 .EX
-    MESA_GLX_FX=fullscreen  gears     \\n\\
+       MESA_GLX_FX=fullscreen  gears      \\n\\
 .EE
 That is, make sure that \fB$MESA_GLX_FX\fP is set to \fIfullscreen\fP, and
 don't tell the program to draw on the root window.  This may seem strange,
@@ -1105,8 +1100,9 @@ but the setup used by Mesa and these kinds of cards \fIis\fP strange!
 For those who don't know, these cards work by sitting between your normal
 video card and the monitor, and seizing control of the monitor when it's 
 time to do 3D.  But this means that accelerated 3D only happens in full-screen
-mode (you can't do it in a window) and that 3D will probably drive your 
-monitor at a lower resolution, as well.  It's bizarre.
+mode (you can't do it in a window, and you can't see the output of 3D and 2D
+programs simultaniously), and that 3D will probably drive your monitor at a
+lower resolution, as well.  It's bizarre.
 .TP 8
 .B Extensions
 If you are not making use of one of the server extensions (\fBXIDLE\fP,

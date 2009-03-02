@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "24-Oct-98 (3.01)" "X Version 11"
+.TH XScreenSaver 1 "25-Oct-98 (3.02)" "X Version 11"
 .SH NAME
 xscreensaver-demo - interactively control the background xscreensaver daemon
 .SH SYNOPSIS
@@ -77,8 +77,6 @@ so that the settings will persist next time.
 .B Quit
 Exits the \fIxscreensaver-demo\fP program.  The background \fIxscreensaver\fP
 daemon will continue running as before.
-.BR xscreensaver\-command (1).
-
 .P
 The Preferences dialog box lets you change the following settings.
 
@@ -156,25 +154,25 @@ screen-saving mode.
 accepts the following command line options.
 .TP 8
 .B \-display \fIhost:display.screen\fP
-The X display to use.  The \fIxscreensaver\-demo\fP program will control
-the \fIxscreensaver\fP daemon that is running on that same display.
-
-It's important that the \fIxscreensaver\fP and \fIxscreensaver\-demo\fP
-processes be running on the same machine, or at least, on two machines
-that share a file system: when \fIxscreensaver\-demo\fP writes a new version
-of the \fI~/.xscreensaver\fP file, it's important that the \fIxscreensaver\fP
-see that same file.  If the two processes are seeing 
-different \fI~/.xscreensaver\fP files, things will malfunction.
+The X display to use.  The \fIxscreensaver\-demo\fP program will open its
+window on that display, and also control the \fIxscreensaver\fP daemon that
+is managing that same display.
 .TP 8
 .B \-prefs
 Start up in Preferences mode: this is just like launching the program with
 no arguments, and then pressing the \fIPreferences\fP button.
+.P
+It is important that the \fIxscreensaver\fP and \fIxscreensaver\-demo\fP
+processes be running on the same machine, or at least, on two machines
+that share a file system.  When \fIxscreensaver\-demo\fP writes a new version
+of the \fI~/.xscreensaver\fP file, it's important that the \fIxscreensaver\fP
+see that same file.  If the two processes are seeing 
+different \fI~/.xscreensaver\fP files, things will malfunction.
 .SH ENVIRONMENT
 .PP
 .TP 8
 .B DISPLAY
-to get the default host and display number.  See the comments about 
-the \fI\-display\fP command-line option above.
+to get the default host and display number.
 .TP 8
 .B PATH
 to find the sub-programs to run.  However, note that the sub-programs 
