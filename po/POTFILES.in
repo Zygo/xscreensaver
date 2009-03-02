@@ -1,10 +1,11 @@
-# Auto-generated: Fri May 31 20:43:52 PDT 2002
+# Auto-generated: Tue Jun 11 02:09:09 PDT 2002
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
 driver/xscreensaver-demo.glade
+driver/xscreensaver-demo.glade2
 hacks/config/anemone.xml
 hacks/config/ant.xml
 hacks/config/apollonian.xml
@@ -38,6 +39,7 @@ hacks/config/discrete.xml
 hacks/config/distort.xml
 hacks/config/drift.xml
 hacks/config/electricsheep.xml
+hacks/config/endgame.xml
 hacks/config/engine.xml
 hacks/config/epicycle.xml
 hacks/config/euler2d.xml

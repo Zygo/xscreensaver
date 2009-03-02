@@ -12376,6 +12376,8 @@ parse_gtk_version_string() {
 
 
 jurassic_gtk=no
+gtk2_halfassed=no
+
 if test "$with_gtk" = yes; then
   have_gtk=no
 
@@ -12489,6 +12491,10 @@ echo "${ECHO_T}no" >&6
 #define HAVE_GTK2 1
 _ACEOF
 
+    else
+      if test -n "$ac_gtk_version_string" ; then
+        gtk2_halfassed="$ac_gtk_version_string"
+      fi
     fi
 
     if test "$have_gtk" = no; then
@@ -12503,7 +12509,7 @@ _ACEOF
 
       # Now check for Gnome...
       #
-      if test "$have_gtk" = yes; then
+      if test "$have_gtk" = yes -a "$with_gnome" = yes; then
         old_pkgs="$pkgs"
         ok=yes
         pkg_check_version capplet    1.0
@@ -12750,6 +12756,11 @@ echo "${ECHO_T}$ac_cv_gtk_config_libs" >&6
     ac_gtk_config_libs=$ac_cv_gtk_config_libs
 
     # Check for Gnome Capplet support.
+    # Note that this is only needed with Gnome 1.x, not Gnome 2.x.
+    # In a Gnome 2.x world, libcapplet will not exist.
+    # (In fact, this likely won't even be checked, since in a Gnome 2.x
+    # world, we will probably be up in the "$pkg_config" branch instead
+    # of here in the "$gnome_config" branch.)
     #
     if test "$have_gnome" = yes -a "$have_gtk" = yes; then
       gnome_config_libs="gtk capplet gnomeui gdk_pixbuf"
@@ -12818,6 +12829,7 @@ _ACEOF
 
   if test "$have_gtk" = yes -a "$have_gtk2" = no; then
     # check for this function that was not in libcapplet 1.2.
+    # (only needed in Gnome/Gtk 1.x, not Gnome/Gtk 2.x)
 
   ac_save_CPPFLAGS="$CPPFLAGS"
   ac_save_LDFLAGS="$LDFLAGS"
@@ -12908,13 +12920,16 @@ fi
 
   GNOME_DATADIR=""
   if test "$have_gnome" = yes -a "$have_gtk" = yes; then
-    if test -n "$gnome_config"; then
-      GNOME_DATADIR=`$gnome_config --datadir`
+    if test -n "$pkg_config"; then
+      if test "$have_gtk2" = yes; then
+        GNOME_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
+      else
+        GNOME_DATADIR=`$pkg_config --variable=prefix gtk+`
+      fi
     else
-      #### is this right?
-      GNOME_DATADIR=`$pkg_config --variable=prefix gtk+`
-      GNOME_DATADIR="$GNOME_DATADIR/share"
+      GNOME_DATADIR=`$gtk_config --prefix`
     fi
+    GNOME_DATADIR="$GNOME_DATADIR/share"
   fi
 
   # .desktop files go in different places in Gnome 1.x and Gnome 2.x...
@@ -13094,11 +13109,21 @@ if test "$with_xml" = yes; then
     #
     pkgs=""
     ok="yes"
-    pkg_check_version xml2 1.0
 
-    if test "$ok" = no; then
+    # If we have Gtk 2.x, then *only* XML 2.x will work.
+    # If we have Gtk 1.x, or don't have Gtk at all, then
+    # either XML 1.x or 2.x will work.
+
+    # First check for XML 2.x.
+    #
+    pkg_check_version libxml-2.0 2.4.6
+
+    # If that didn't work (we don't have XML 2.x) and we *don't* have
+    # Gtk 2.x, then check to see if we have XML 1.x
+    #
+    if test "$ok" = no -a "$have_gtk2" = no; then
       ok=yes
-      pkg_check_version xml 1.0
+      pkg_check_version libxml 1.0
     fi
 
     have_xml="$ok"
@@ -13129,7 +13154,7 @@ echo "${ECHO_T}$ac_cv_xml_config_libs" >&6
   else
     #
     # the old way...
-    # run {gnome,gtk}-config based tests.
+    # run {xml2,xml}-config based tests.
     #
 
     for ac_prog in xml2-config xml-config
@@ -13421,13 +13446,13 @@ fi
   # note: $X_LIBS includes $x_libraries
   LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
 
-  echo "$as_me:$LINENO: checking for xmlParseChunk in -lxml" >&5
-echo $ECHO_N "checking for xmlParseChunk in -lxml... $ECHO_C" >&6
-if test "${ac_cv_lib_xml_xmlParseChunk+set}" = set; then
+  echo "$as_me:$LINENO: checking for xmlParseChunk in -lc" >&5
+echo $ECHO_N "checking for xmlParseChunk in -lc... $ECHO_C" >&6
+if test "${ac_cv_lib_c_xmlParseChunk+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   ac_check_lib_save_LIBS=$LIBS
-LIBS="-lxml $ac_xml_config_libs $LIBS"
+LIBS="-lc $ac_xml_config_libs $LIBS"
 cat >conftest.$ac_ext <<_ACEOF
 #line $LINENO "configure"
 #include "confdefs.h"
@@ -13465,18 +13490,18 @@ if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
   ac_status=$?
   echo "$as_me:$LINENO: \$? = $ac_status" >&5
   (exit $ac_status); }; }; then
-  ac_cv_lib_xml_xmlParseChunk=yes
+  ac_cv_lib_c_xmlParseChunk=yes
 else
   echo "$as_me: failed program was:" >&5
 cat conftest.$ac_ext >&5
-ac_cv_lib_xml_xmlParseChunk=no
+ac_cv_lib_c_xmlParseChunk=no
 fi
 rm -f conftest.$ac_objext conftest$ac_exeext conftest.$ac_ext
 LIBS=$ac_check_lib_save_LIBS
 fi
-echo "$as_me:$LINENO: result: $ac_cv_lib_xml_xmlParseChunk" >&5
-echo "${ECHO_T}$ac_cv_lib_xml_xmlParseChunk" >&6
-if test $ac_cv_lib_xml_xmlParseChunk = yes; then
+echo "$as_me:$LINENO: result: $ac_cv_lib_c_xmlParseChunk" >&5
+echo "${ECHO_T}$ac_cv_lib_c_xmlParseChunk" >&6
+if test $ac_cv_lib_c_xmlParseChunk = yes; then
   have_xml=yes
                     xml_halfassed=no
                     XML_LIBS="$ac_xml_config_libs"
@@ -14491,7 +14516,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 14500 "configure"
+#line 14525 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -15365,20 +15390,33 @@ if test "$with_gdk_pixbuf" = yes; then
     #
     pkgs=''
     ok="yes"
-    pkg_check_version gdk-pixbuf-2.0      2.0.0
-    pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
-    have_gdk_pixbuf="$ok"
-    have_gdk_pixbuf2="$ok"
 
-    if test "$have_gdk_pixbuf2" = no; then
+    # If we have Gtk 2.x, then *only* gdk-pixbuf 2.x will work.
+    # If we have Gtk 1.x, then *only* gdk-pixbuf 1.x will work.
+    # If we don't have Gtk at all, then either will work.
+
+    if test "$have_gtk" = no -o "$have_gtk2" = yes; then
       #
-      # We don't have pixbuf 2.x; check for 1.x.
+      # we don't have Gtk; or we have Gtk 2.x.  Check for pixbuf 2.x.
       #
-      pkgs=''
-      ok="yes"
-      pkg_check_version gdk-pixbuf      0.0
-      pkg_check_version gdk-pixbuf-xlib 0.0
+      pkg_check_version gdk-pixbuf-2.0      2.0.0
+      pkg_check_version gdk-pixbuf-xlib-2.0 2.0.0
       have_gdk_pixbuf="$ok"
+      have_gdk_pixbuf2="$ok"
+    fi
+
+    if test "$have_gtk" = no -o "$have_gtk2" = no; then
+      #
+      # we don't have Gtk; or we have Gtk 1.x.
+      # If we don't have pixbuf 2.x, then check for pixbuf 1.x.
+      #
+      if test "$have_gdk_pixbuf2" = no; then
+        pkgs=''
+        ok="yes"
+        pkg_check_version gdk-pixbuf      0.0
+        pkg_check_version gdk-pixbuf-xlib 0.0
+        have_gdk_pixbuf="$ok"
+      fi
     fi
 
     if test "$have_gdk_pixbuf" = yes; then
@@ -15404,6 +15442,7 @@ echo "${ECHO_T}$ac_cv_gdk_pixbuf_config_libs" >&6
     ac_gdk_pixbuf_config_cflags=$ac_cv_gdk_pixbuf_config_cflags
     ac_gdk_pixbuf_config_libs=$ac_cv_gdk_pixbuf_config_libs
   fi
+
 
   if test "$have_gdk_pixbuf" = no; then
     #
@@ -15523,7 +15562,7 @@ echo "${ECHO_T}$ac_cv_gdk_pixbuf_config_libs" >&6
 
     have_gdk_pixbuf=no
 
-    # check for header 1...
+    # check for header A...
 
   ac_save_CPPFLAGS="$CPPFLAGS"
   if test \! -z "$includedir" ; then
@@ -15638,7 +15677,7 @@ fi
 
   CPPFLAGS="$ac_save_CPPFLAGS"
 
-    # if that worked, check for header 2...
+    # if that worked, check for header B...
     if test "$have_gdk_pixbuf" = yes; then
       have_gdk_pixbuf=no
       gdk_pixbuf_halfassed=yes
@@ -15757,7 +15796,7 @@ fi
 
   CPPFLAGS="$ac_save_CPPFLAGS"
 
-      # yay, it has a new name in GTK2...
+      # yay, it has a new name in Gtk 2.x...
       if test "$have_gdk_pixbuf" = no; then
         have_gdk_pixbuf=no
         gdk_pixbuf_halfassed=yes
@@ -15886,7 +15925,7 @@ fi
     have_gdk_pixbuf=no
     gdk_pixbuf_halfassed=yes
 
-    # library 1...
+    # library A...
 
   ac_save_CPPFLAGS="$CPPFLAGS"
   ac_save_LDFLAGS="$LDFLAGS"
@@ -15967,7 +16006,7 @@ fi
   LDFLAGS="$ac_save_LDFLAGS"
 #  LIBS="$ac_save_LIBS"
 
-    # library 2...
+    # library B...
     if test "$have_gdk_pixbuf" = yes; then
       have_gdk_pixbuf=no
 
@@ -17465,11 +17504,24 @@ fi
 # After computing $HACK_CONF_DIR, make sure $GLADE_DATADIR has a value
 # so that we know where to install the Gtk pixmaps.
 #
+# It should usually be "/usr/share/pixmaps/", but we can't just use
+# "$(prefix)/share/pixmaps" because that would usually result in
+# "/usr/X11R6/share/pixmaps/", which is wrong.  It needs to be the
+# Gnome/Gtk prefix, not the overall prefix.
+#
 if test -n "$GNOME_DATADIR" ; then
   GLADE_DATADIR='$(GNOME_DATADIR)/xscreensaver'
 elif test "$have_gtk" = yes; then
-  # should this be "$(prefix)/share/pixmaps"? But /usr/X11R6/share/ is wrong...
-  GLADE_DATADIR='/usr/share/xscreensaver'
+  if test -n "$pkg_config"; then
+    if test "$have_gtk2" = yes; then
+      GLADE_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
+    else
+      GLADE_DATADIR=`$pkg_config --variable=prefix gtk+`
+    fi
+  else
+    GLADE_DATADIR=`$gtk_config --prefix`
+  fi
+  GLADE_DATADIR="$GLADE_DATADIR/share/xscreensaver"
 else
   GLADE_DATADIR=''
 fi
@@ -17542,7 +17594,7 @@ APPDEFAULTS=$ac_x_app_defaults
 
 
 
-ac_config_files="$ac_config_files Makefile utils/Makefile driver/Makefile hacks/Makefile hacks/glx/Makefile po/Makefile.in driver/XScreenSaver.ad"
+ac_config_files="$ac_config_files Makefile utils/Makefile driver/Makefile hacks/Makefile hacks/glx/Makefile po/Makefile.in driver/XScreenSaver.ad driver/xscreensaver.kss"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -18039,6 +18091,7 @@ do
   "hacks/glx/Makefile" ) CONFIG_FILES="$CONFIG_FILES hacks/glx/Makefile" ;;
   "po/Makefile.in" ) CONFIG_FILES="$CONFIG_FILES po/Makefile.in" ;;
   "driver/XScreenSaver.ad" ) CONFIG_FILES="$CONFIG_FILES driver/XScreenSaver.ad" ;;
+  "driver/xscreensaver.kss" ) CONFIG_FILES="$CONFIG_FILES driver/xscreensaver.kss" ;;
   "default-1" ) CONFIG_COMMANDS="$CONFIG_COMMANDS default-1" ;;
   "default-2" ) CONFIG_COMMANDS="$CONFIG_COMMANDS default-2" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
@@ -18898,8 +18951,17 @@ elif test "$jurassic_gtk" = yes ; then
   warn2 "Gtk $pref_gtk or newer is required.  Motif will be used instead."
 
 elif test "$with_gtk_req" = yes -a "$have_gtk" = no ; then
-  warnL "Use of Gtk was requested, but it wasn't found;"
-  warn2 "Motif will be used instead."
+  warnL "Use of Gtk was requested, but it wasn't found."
+  if test "$have_motif" = yes; then
+    warn2 "Motif will be used instead."
+  fi
+fi
+
+if test "$gtk2_halfassed" != no ; then
+  warnL "GTK version $gtk2_halfassed was found, but some other supporting"
+  warn2 "libraries were not, so GTK 2.x can't be used.  Please"
+  warn2 "read the above output and the \`config.log' file to see"
+  warn2 "which libraries are missing."
 fi
 
 

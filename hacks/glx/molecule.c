@@ -1355,7 +1355,7 @@ init_molecule (ModeInfo *mi)
                             spinz ? spin_speed : 0,
                             1.0,
                             do_wander ? wander_speed : 0,
-                            True);
+                            (spinx && spiny && spinz));
     mc->trackball = gltrackball_init ();
   }
 

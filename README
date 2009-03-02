@@ -70,6 +70,10 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.04:   * More `configure' tweaks to try and get things working
+                        on systems that both Gtk 1.x and 2.x installed.
+                      * New hack, `endgame'.
+                      * Minor updates to `gltext'.
 Changes since 4.03:   * Support for GTK 2.x / GNOME 2.x.
                       * The `configure' script will now use `pkg-config' if
                         you have it, in preference to `gtk-config', etc.
@@ -86,7 +90,7 @@ Changes since 4.03:   * Support for GTK 2.x / GNOME 2.x.
                         will close a race condition that could sometimes cause
                         your desktop background to be changed; and also makes
                         it possible for those programs to operate on image
-                        files when running in non-root mode.
+                        files when running in windowed mode.
                       * `webcollage' can now be used in conjunction with
                         `driftnet' to display images snooped from your local
                         ethernet instead of obtained from search engines.

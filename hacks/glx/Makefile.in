@@ -81,7 +81,7 @@ SRCS		= xscreensaver-gl-helper.c \
 		  menger.c engine.c flipscreen3d.c font-ximage.c \
 		  grab-ximage.c glsnake.c boxed.c glforestfire.c sballs.c \
 		  cubenetic.c spheremonics.c marching.c lavalite.c rotator.c \
-		  trackball.c gltrackball.c queens.c
+		  trackball.c gltrackball.c queens.c endgame.c chessmodels.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -99,13 +99,14 @@ OBJS		= xscreensaver-gl-helper.o \
 		  menger.o engine.o flipscreen3d.o font-ximage.o \
 	          grab-ximage.o glsnake.o boxed.o glforestfire.o sballs.o \
 		  cubenetic.o spheremonics.o marching.o lavalite.o rotator.o \
-		  trackball.o gltrackball.o queens.o
+		  trackball.o gltrackball.o queens.o endgame.o chessmodels.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
 		  sierpinski3d gflux stonerview starwars gltext molecule \
 		  dangerball circuit menger engine flipscreen3d glsnake boxed \
-		  glforestfire sballs cubenetic spheremonics lavalite queens
+		  glforestfire sballs cubenetic spheremonics lavalite queens \
+		  endgame
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -121,7 +122,8 @@ HACK_OBJS	= screenhack-gl.o xlock-gl.o fps.o $(HACK_BIN)/xlockmore.o \
 HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  grab-ximage.h font-ximage.h tube.h sphere.h boxed.h \
 		  stonerview-move.h stonerview-osc.h glutstroke.h \
-		  glut_roman.h marching.h rotator.h trackball.h gltrackball.h
+		  glut_roman.h marching.h rotator.h trackball.h gltrackball.h \
+		  chessmodels.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man glforestfire.man \
@@ -129,7 +131,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  menger.man moebius.man molecule.man morph3d.man pipes.man \
 		  pulsar.man queens.man rubik.man sballs.man sierpinski3d.man \
 		  spheremonics.man sproingies.man stairs.man starwars.man \
-		  stonerview.man superquadrics.man xscreensaver-gl-helper.man
+		  stonerview.man superquadrics.man xscreensaver-gl-helper.man \
+		  endgame.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in
 
@@ -453,6 +456,10 @@ lavalite:	lavalite.o	$(LLOBJS)
 queens:		queens.o	$(TRACK_OBJS) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(TRACK_OBJS) $(HACK_OBJS) $(HACK_LIBS)
 
+CHESSOBJS=chessmodels.o $(TRACK_OBJS) $(HACK_OBJS)
+endgame:	endgame.o	$(CHESSOBJS)
+	$(CC_HACK) -o $@ $@.o   $(CHESSOBJS) $(HACK_LIBS)
+
 # This one works differently (it's not xlock-like.)
 #
 STONER_OBJS=stonerview.o stonerview-move.o stonerview-osc.o stonerview-view.o \
@@ -499,6 +506,7 @@ bubble3d.o: ../../config.h
 buildlwo.o: $(srcdir)/buildlwo.h
 cage.o: ../../config.h
 cage.o: $(srcdir)/e_textures.h
+chessmodels.o: $(srcdir)/chessmodels.h
 circuit.o: ../../config.h
 circuit.o: $(srcdir)/font-ximage.h
 cubenetic.o: ../../config.h
@@ -510,6 +518,9 @@ dangerball.o: $(srcdir)/rotator.h
 dangerball.o: $(srcdir)/sphere.h
 dangerball.o: $(srcdir)/tube.h
 dolphin.o: $(srcdir)/atlantis.h
+endgame.o: $(srcdir)/chessmodels.h
+endgame.o: ../../config.h
+endgame.o: $(srcdir)/gltrackball.h
 engine.o: ../../config.h
 extrusion-helix2.o: ../../config.h
 extrusion-helix3.o: ../../config.h

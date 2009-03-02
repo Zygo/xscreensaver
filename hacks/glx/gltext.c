@@ -92,7 +92,7 @@ static Bool do_wander;
 static XrmOptionDescRec opts[] = {
   { "-text",   ".text",   XrmoptionSepArg, 0 },
   { "-spin",   ".spin",   XrmoptionSepArg, 0 },
-  { "+spin",   ".spin",   XrmoptionNoArg, "False" },
+  { "+spin",   ".spin",   XrmoptionNoArg, "" },
   { "-wander", ".wander", XrmoptionNoArg, "True" },
   { "+wander", ".wander", XrmoptionNoArg, "False" }
 };
@@ -269,16 +269,33 @@ init_text (ModeInfo *mi)
   }
 
   {
+    Bool spinx=False, spiny=False, spinz=False;
     double spin_speed   = 1.0;
     double wander_speed = 0.05;
     double spin_accel   = 1.0;
 
-    tp->rot = make_rotator (do_spin ? spin_speed : 0,
-                            do_spin ? spin_speed : 0,
-                            do_spin ? spin_speed : 0,
+    char *s = do_spin;
+    while (*s)
+      {
+        if      (*s == 'x' || *s == 'X') spinx = True;
+        else if (*s == 'y' || *s == 'Y') spiny = True;
+        else if (*s == 'z' || *s == 'Z') spinz = True;
+        else
+          {
+            fprintf (stderr,
+         "%s: spin must contain only the characters X, Y, or Z (not \"%s\")\n",
+                     progname, do_spin);
+            exit (1);
+          }
+        s++;
+      }
+
+    tp->rot = make_rotator (spinx ? spin_speed : 0,
+                            spiny ? spin_speed : 0,
+                            spinz ? spin_speed : 0,
                             spin_accel,
                             do_wander ? wander_speed : 0,
-                            True);
+                            False);
     tp->trackball = gltrackball_init ();
   }
 

@@ -233,6 +233,7 @@
 	   GL:			spheremonics -root			    \\n\
 	   GL:			lavalite -root				    \\n\
 	   GL:			queens -root				    \\n\
+	   GL:			endgame -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \

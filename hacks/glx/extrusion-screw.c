@@ -19,7 +19,7 @@
 #include <math.h>
 #include <stdlib.h>
 #include <GL/gl.h>
-#include <GL/glut.h>
+/*#include <GL/glut.h>*/
 #ifdef HAVE_GLE3
 #include <GL/gle.h>
 #else
