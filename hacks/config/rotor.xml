@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="rotor" _label="Rotor">
+
+  <command arg="-root"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="0" high="20" default="4"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Length" _low-label="Short" _high-label="Long"
+          low="2" high="100" default="20"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="200"/>
+
+  <number id="size" type="spinbutton" arg="-size %"
+           _label="Size" low="-50" high="50" default="-6"/>
+
+  <_description>
+Another ancient xlock demo, this one by Tom Lawrence.  It draws a
+line segment moving along a complex spiraling curve.  I tweaked this
+to generate curvier lines, but still frames of it don't look like
+much.
+  </_description>
+</screensaver>

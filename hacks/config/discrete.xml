@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="discrete" _label="Discrete">
+
+  <command arg="-root"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Timeout" _low-label="Small" _high-label="Large"
+          low="100" high="10000" default="2500"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="1000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="100"/>
+
+  <_description>
+More ``discrete map'' systems, including new variants of Hopalong and
+Julia, and a few others.  Written by Tim Auckland.
+  </_description>
+</screensaver>

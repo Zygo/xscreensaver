@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="stairs" _label="Stairs">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="20000"
+          convert="invert"/>
+
+  <select id="render">
+    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
+    <option id="solid" _label="Solid"/>
+  </select>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+by Marcelo Vianna's third Escher GL hack, this one draws an
+``infinite'' staircase.
+  </_description>
+</screensaver>

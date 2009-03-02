@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="cage" _label="Cage">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="30000" default="25000"
+          convert="invert"/>
+
+<!--
+  <select id="render">
+    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
+    <option id="solid" _label="Solid"/>
+  </select>
+-->
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+This draws Escher's ``Impossible Cage,'' a 3d analog of a moebius
+strip, and rotates it in three dimensions.  Written by Marcelo
+Vianna.
+  </_description>
+</screensaver>
