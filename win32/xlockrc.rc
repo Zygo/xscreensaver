@@ -1,0 +1,19 @@
+#include <windows.h>
+#include <scrnsave.h>
+
+STRINGTABLE
+BEGIN
+  IDS_DESCRIPTION "xlock95 Screen Saver"
+END
+
+ICON_APP	ICON	DISCARDABLE	"xlock.ico"
+
+DLG_SCRNSAVECONFIGURE DIALOG 6, 18, 160, 63
+STYLE DS_MODALFRAME | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU
+CAPTION "xlock95 Screen Saver setup"
+FONT 8, "MS Sans Serif"
+BEGIN
+    LTEXT       "Hello, world!", -1, 10, 10, 40, 10
+    PUSHBUTTON    "OK", IDOK, 117, 10, 40, 14
+    PUSHBUTTON    "Cancel", IDCANCEL, 117, 32, 40, 14
+END

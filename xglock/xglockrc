@@ -1,0 +1,41 @@
+  style "tooltip"
+  {
+    font = "-adobe-helvetica-medium-r-normal--*-80-*-*-*-*-*-*"
+    fg[NORMAL] = { 0.0, 0.0, 0.0 }
+    bg[NORMAL] = { 1.0, 1.0, 1.0 }
+  }
+
+  style "button"
+  {
+     font = "-adobe-helvetica-bold-r-normal--*-100-*-*-*-*-*-*"
+     fg[PRELIGHT] = { 1.0, 1.0, 1.0 }
+     bg[PRELIGHT] = { 0.67, 0.85, 0.90 }
+     fg[ACTIVE] =   { 1.0, 1.0, 1.0 }
+     bg[ACTIVE] =   { 0.67, 0.85, 0.90 }
+     fg[NORMAL] =   { 1.0, 1.0, 1.0 }
+     bg[NORMAL] =   { 0.67, 0.85, 0.90 }
+  }
+
+  style "preview" = "button"
+  {
+     fg[PRELIGHT] = { 0.0, 0.0, 0.0 }
+     bg[PRELIGHT] = { 1.0, 1.0, 1.0 }
+     fg[ACTIVE] =   { 0.0, 0.0, 0.0 }
+     bg[ACTIVE] =   { 1.0, 1.0, 1.0 }
+     fg[NORMAL] =   { 0.0, 0.0, 0.0 }
+     bg[NORMAL] =   { 1.0, 1.0, 1.0 }
+  }
+
+  style "special" = "button"
+  {
+     bg[NORMAL] = { 0.98, 0.50, 0.50 }
+     bg[ACTIVE] =   { 1.00, 0.75, 0.79 }
+     bg[PRELIGHT] =   { 1.00, 0.00, 0.00 }
+  }
+
+  widget "xglock.*GtkButton*"   style "button"
+
+  widget "gtk-tooltips" style "tooltip"
+
+  widget "*preview_button*" style "preview"
+  widget "*special_button*" style "special"

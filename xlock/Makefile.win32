@@ -1,0 +1,40 @@
+# build applications
+CC=gcc
+
+# compiler flags
+#CFLAGS=-DWIN32 -D_DEBUG -DCOMPLIANT_COLORMAP -DSYSV -mno-cygwin -mwindows -O2
+CFLAGS=-DWIN32 -DCOMPLIANT_COLORMAP -DSYSV -mno-cygwin -mwindows -O2
+
+# Include & Library directories
+INCS=-I/usr/include/w32api -I../win32
+
+# sources
+SRC=	automata.c	\
+		color.c		\
+		erase.c		\
+		iostuff.c	\
+		mode.c		\
+		parsecmd.c	\
+		random.c	\
+		ras.c		\
+		resource.c	\
+		spline.c	\
+		util.c		\
+		vis.c		\
+		xbm.c		\
+		xlock.c		\
+		xlockimage.c
+
+# objects
+OBJS=	$(SRC:.c=.o)
+
+# general rules
+.c.o:
+	$(CC) $(CFLAGS) -c -o $@ $< $(INCS)
+
+# specific rules
+all:	$(OBJS)
+
+clean:
+	rm -f *.o *~
+

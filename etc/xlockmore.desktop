@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Xlock
+Comment=Screen Saver
+Comment[fr]=Economiseur d'écran
+Exec=/usr/local/bin/xlock -mode random
+Icon=gnome-lockscreen.png
+Terminal=0
+Type=Application

@@ -1,0 +1,67 @@
+bat           (requires XBM)
+bounce        (requress XBM)
+bubble        (requires XCreatePixmap(), XSetGraphicsExposures(),
+               XCopyPlane())
+cage          (requires OpenGL)
+cartoon       (requires XPM)
+dclock        (requires XCreatePixmap(), XCopyPlane(),
+               XSetGraphicsExposures(), XSetFont(), XFreeFont())
+dilemma       (requires XBM)
+eyes          (requires XBM)
+flag          (requires XBM)
+gears         (requires OpenGL)
+ifs           (requires XCreatePixmap(), XSetBackground(),
+               XSetGraphicsExposures(), XCopyPlane())
+image         (requires XBM)
+marquee       (requires XTextExtents(), XSetFont(), XCopyArea(),
+               XFreeFont())
+moebius       (requires OpenGL)
+morph3d       (requires OpenGL)
+nose          (requires XBM)
+pacman        (requires XBM)
+penrose       (many errors)
+pipes         (requires OpenGL)
+puzzle        (requires XBM)
+rubik         (requires OpenGL)
+shape         (requires XBM)
+slip          (requires XSetGraphicsExposures(), XCopyArea())
+sproingies    (requires OpenGL)
+stairs        (requires OpenGL)
+star          (requires XBM)
+strange       (requires XCopyPlane(), XCreatePixmap(),
+               XSetGraphicsExposures(), XSetBackground())
+superquadrics (requires OpenGL)
+swirl         (requires XPutPixel(), ScreenCount(), BitmapPad())
+voters        (requires XBM)
+wator         (requires XBM)
+world         (requires XBM)
+
+
+These probably require some non trivial effort
+To add... change modes/Makefile.win32 and
+change the WIN32 ifdef in xlock/modes.c
+atlantis
+atunnels
+billiards does not exist so it has to be written first ;)
+biof
+bubble3d
+decay need xbm
+fire
+goop
+glplanet
+invert
+kaleid2
+kumppa
+lament
+molecule
+noof
+run
+sballs
+sierpinski3d
+skewb
+starfish
+solitare
+t3d
+text3d
+text3d2
+xcl
