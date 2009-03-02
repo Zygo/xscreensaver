@@ -465,13 +465,17 @@ initialize_screensaver_window ()
 	fade_p = unfade_p = 0;
     }
 
-  attrmask = CWOverrideRedirect | CWEventMask | CWBackingStore | CWColormap;
+  attrmask = (CWOverrideRedirect | CWEventMask | CWBackingStore | CWColormap |
+	      CWBackPixel | CWBackingPixel | CWBorderPixel);
   attrs.override_redirect = True;
   attrs.event_mask = (KeyPressMask | KeyReleaseMask |
 		      ButtonPressMask | ButtonReleaseMask |
 		      PointerMotionMask);
   attrs.backing_store = NotUseful;
   attrs.colormap = cmap;
+  attrs.background_pixel = black_pixel;
+  attrs.backing_pixel = black_pixel;
+  attrs.border_pixel = black_pixel;
 
 /*  if (demo_mode_p || lock_p) width = width / 2;   #### */
 
@@ -565,7 +569,8 @@ raise_window (inhibit_fade, between_hacks_p)
       fade_colormap (dpy, current_map, cmap2, fade_seconds, fade_ticks, True);
       XClearWindow (dpy, screensaver_window);
       XMapRaised (dpy, screensaver_window);
-      /* Once the saver window is up, restore the colormap. */
+      /* Once the saver window is up, restore the colormap.
+	 (The "black" pixels of the two colormaps are compatible.) */
       XInstallColormap (dpy, cmap);
       if (grabbed == GrabSuccess)
 	XUngrabPointer (dpy, CurrentTime);

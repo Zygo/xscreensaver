@@ -139,12 +139,10 @@ initwin (dsp, win)
 	}
       else
 	{
+	  XQueryColor (dsp, cmap, &fg_color);
+	  XQueryColor (dsp, cmap, &bg_color);
 	  fg_color.pixel = fg_pixel;
-	  if (! XQueryColor (dsp, cmap, &fg_color))
-	    abort ();
 	  bg_color.pixel = bg_pixel;
-	  if (! XQueryColor (dsp, cmap, &bg_color))
-	    abort ();
 	}
       fg_color.flags = DoRed|DoGreen|DoBlue;
       bg_color.flags = DoRed|DoGreen|DoBlue;

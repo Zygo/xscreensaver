@@ -185,7 +185,7 @@ pop_up_dialog_box (dialog, form, where)
      It's important that the screensaver dialogs not get decorated or
      otherwise reparented by the window manager, because they need to be
      children of the *real* root window, not the WM's virtual root, in
-     order for us to guarentee tha they are visible above the screensaver
+     order for us to guarentee that they are visible above the screensaver
      window itself.
    */
   Arg av [100];

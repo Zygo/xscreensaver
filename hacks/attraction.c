@@ -184,7 +184,7 @@ init_balls (dpy, window)
       {
 	XColor color;
 	color.pixel = default_fg_pixel;
-	if (!XQueryColor (dpy, cmap, &color)) abort ();
+	XQueryColor (dpy, cmap, &color);
 	if (!XAllocColor (dpy, cmap, &color)) abort ();
 	pixel_stack [i] = color.pixel;
       }

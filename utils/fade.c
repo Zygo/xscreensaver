@@ -17,6 +17,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xos.h>
 
+extern int get_visual_class ();
 extern void screenhack_usleep ();
 #define usleep screenhack_usleep
 
@@ -31,13 +32,23 @@ copy_colormap (dpy, cmap, into_cmap)
      Colormap cmap, into_cmap;
 {
   int i;
-  ncolors = CellsOfScreen (DefaultScreenOfDisplay (dpy));
+  Screen *screen = DefaultScreenOfDisplay (dpy);
+  Visual *visual = DefaultVisualOfScreen (screen);
+  Window window = RootWindowOfScreen (screen);
+  int vclass = get_visual_class (dpy, visual);
+
+  ncolors = CellsOfScreen (screen);
+
+  /* If this is a colormap on a mono visual, or one with insanely many
+     color cells, bug out. */
   if (ncolors <= 2 || ncolors > MAX_COLORS)
     return 0;
+  /* If this is a non-writable visual, bug out. */
+  if (vclass == StaticGray || vclass == StaticColor || vclass == TrueColor)
+    return 0;
+
   if (! into_cmap)
-    into_cmap = XCreateColormap (dpy, RootWindow (dpy, DefaultScreen (dpy)),
-				 DefaultVisual (dpy, DefaultScreen (dpy)),
-				 AllocAll);
+    into_cmap = XCreateColormap (dpy, window, visual, AllocAll);
   if (! cmap)
     cmap = DefaultColormap (dpy, DefaultScreen (dpy));
   for (i = 0; i < ncolors; i++)

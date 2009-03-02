@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-1993 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver, Copyright (c) 1991-1994 Jamie Zawinski <jwz@lucid.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -256,7 +256,7 @@ static void
 do_help ()
 {
   printf ("\
-xscreensaver %s, copyright (c) 1991-1993 by Jamie Zawinski <jwz@lucid.com>.\n\
+xscreensaver %s, copyright (c) 1991-1994 by Jamie Zawinski <jwz@lucid.com>.\n\
 The standard Xt command-line options are accepted; other options include:\n\
 \n\
     -timeout <minutes>		when the screensaver should activate\n\
@@ -580,7 +580,7 @@ initialize (argc, argv)
 
   if (verbose_p)
     printf ("\
-%s %s, copyright (c) 1991-1993 by Jamie Zawinski <jwz@lucid.com>.\n\
+%s %s, copyright (c) 1991-1994 by Jamie Zawinski <jwz@lucid.com>.\n\
  pid = %d.\n", progname, screensaver_version, getpid ());
   ensure_no_screensaver_running ();
 

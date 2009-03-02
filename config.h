@@ -1,14 +1,19 @@
 /*
- * Config file for xscreensaver, Copyright (c) 1991-1993 Jamie Zawinski.
+ * Config file for xscreensaver, Copyright (c) 1991-1994 Jamie Zawinski.
  * This file is included by the various Imakefiles.
  */
 
 /*  Uncomment the following line if you have the XIdle extension installed.
- *  XIdle comes on the X11r5 contrib tape, in .../contrib/extensions/xidle/.
+ *  XIdle comes on the X11r5 contrib tape, in .../contrib/extensions/xidle/
+ *  (and maybe it will be on the r6 tape as well but I'm not sure where.)
  *  Installing it is the morally superior thing to do, but xscreensaver will
  *  work without it.
+ *
+ *  Actually it's likely that the R6 `screensaver' server extension will turn
+ *  out to be the better thing to use, but I haven't had time to add support
+ *  for it yet.  (See README to find the latest version of this program.)
  */
-#define HAVE_XIDLE
+/* #define HAVE_XIDLE */
 
 /*  Uncomment the following line if you have the XPM library installed.
  *  Some of the demos can make use of this.

@@ -113,6 +113,24 @@ get_visual_depth (dpy, visual)
 }
 
 
+int
+get_visual_class (dpy, visual)
+     Display *dpy;
+     Visual *visual;
+{
+  XVisualInfo vi_in, *vi_out;
+  int out_count, c;
+  vi_in.screen = DefaultScreen (dpy);
+  vi_in.visualid = XVisualIDFromVisual (visual);
+  vi_out = XGetVisualInfo (dpy, VisualScreenMask|VisualIDMask,
+			   &vi_in, &out_count);
+  if (! vi_out) abort ();
+  c = vi_out [0].class;
+  XFree ((char *) vi_out);
+  return c;
+}
+
+
 Visual *
 get_visual_resource (dpy, name, class)
      Display *dpy;

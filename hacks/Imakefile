@@ -9,7 +9,7 @@
 
 #ifdef HAVE_XPM
  /* Yeah, this means that all hacks link against libXpm even though only
-    one hack actually use it.  It doesn't matter: it's a library. */
+    one hack actually uses it.  It doesn't matter: it's a library. */
 # define XPMDEFS -DHAVE_XPM
 # define XPMLIB -lXpm
 #else

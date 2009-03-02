@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "30-oct-93" "X Version 11"
+.TH XScreenSaver 1 "12-May-94" "X Version 11"
 .SH NAME
 xscreensaver - run graphics hacks after the user has been idle for a while
 .SH SYNOPSIS
@@ -400,9 +400,12 @@ in code intended for use as a screensaver.  This prevents too much graphics
 activity from being buffered up.
 .PP
 The screensaver only runs on the default screen of the display.  If you have
-more than one screen, you must run multiple screensaver processes, one for
-each screen.  (I don't actually know whether this works, because I don't 
-have access to a multi-screen machine.  Comments welcome.)
+more than one screen, you can run multiple screensaver processes, one for
+each screen.  This interacts poorly with locking.  In an ideal world, the
+screensaver would save (and lock) both screens simultaniously, and any activity
+would restore both screens.  It would be nice if one could run different hacks
+on each screen simultaniously.  However, I don't have access to a multi-headed
+workstation, so it would be hard for me to implement something like this.
 .PP
 If you don't have Motif, you can't compile with support for locking or
 demo mode.
@@ -457,13 +460,13 @@ are sent to the screensaver window instead.  This could be solved by making
 xscreensaver forward all unrecognised ClientMessages to the real root window,
 but there may be other problems as well.
 .SH COPYRIGHT
-Copyright \(co 1992, 1993 by Jamie Zawinski.  Permission to use, copy, modify, 
-distribute, and sell this software and its documentation for any purpose is 
-hereby granted without fee, provided that the above copyright notice appear 
-in all copies and that both that copyright notice and this permission notice
-appear in supporting documentation.  No representations are made about the 
-suitability of this software for any purpose.  It is provided "as is" without
-express or implied warranty.
+Copyright \(co 1992, 1993, 1994 by Jamie Zawinski.  Permission to use, copy, 
+modify, distribute, and sell this software and its documentation for any
+purpose is hereby granted without fee, provided that the above copyright
+notice appear in all copies and that both that copyright notice and this
+permission notice appear in supporting documentation.  No representations are
+made about the suitability of this software for any purpose.  It is provided
+"as is" without express or implied warranty.
 .SH AUTHOR
 Jamie Zawinski <jwz@lucid.com>, 13-aug-92.
 Please let me know if you find any bugs or make any improvements.

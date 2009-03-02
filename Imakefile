@@ -1,5 +1,5 @@
 /*
- * Imakefile file for xscreensaver, Copyright (c) 1991-1993 Jamie Zawinski.
+ * Imakefile file for xscreensaver, Copyright (c) 1991-1994 Jamie Zawinski.
  *
  * You should not need to edit this file; edit config.h instead.
  *
@@ -11,8 +11,8 @@
             TAR = gnutar
        COMPRESS = compress
    COMPRESS_EXT = Z
-#      COMPRESS = gzip --verbose --best
-#  COMPRESS_EXT = gz
+/**/#      COMPRESS = gzip --verbose --best
+/**/#  COMPRESS_EXT = gz
 
 all:: utils/Makefile driver/Makefile hacks/Makefile
 	cd utils  ; $(MAKE) $@ CC="$(CC)" CCOPTIONS="$(CCOPTIONS)" CDEBUGFLAGS="$(CDEBUGFLAGS)"
@@ -33,7 +33,7 @@ driver/Makefile: driver/Imakefile config.h
 hacks/Makefile: hacks/Imakefile config.h
 	cd hacks  ; $(IMAKE_CMD) -DTOPDIR=$(TOP) -DCURDIR=$(CURRENT_DIR)/hacks
 
-# This really makes me sick...
+/* This really makes me sick... */
 tar: utils/Makefile driver/Makefile hacks/Makefile
 	@NAME=`sed -n							    \
   's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/xscreensaver-\1/p' utils/version.h` ;  \

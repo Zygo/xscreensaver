@@ -75,9 +75,18 @@ You can get all of these from the contrib directory on ftp.x.org.  If you
 know of (or write) any other interesting programs that can be used as
 screensavers, please let me know!
 
+This program should be updated to take advantage of the new R6 `screensaver'
+server extension instead of XIdle.  I didn't have time to do this before the
+deadline for the R6 contrib tape, but by the time you read this, maybe it's
+done - check a later release.
+
+The latest version of xscreensaver is on LUCID.COM and FTP.X.ORG.
+
 	-- Jamie Zawinski <jwz@lucid.com>
 
 
+Changes since 1.21:	Minor tweaks for X11R6.
+			Fixes for non-default visuals.
 Changes since 1.20:	Fixed bug in color blitspin; added default image.
 			Added diagnostics to noseguy.  Fixed off-by-one
 			error in flame.  Added some missing casts.

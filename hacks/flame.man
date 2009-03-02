@@ -2,7 +2,7 @@
 .SH NAME
 flame - draw weird cosmic fractals
 .SH SYNOPSIS
-.B hopalong
+.B flame
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-ncolors \fIinteger\fP] [\-iterations \fIinteger\fP] [\-points \fIinteger\fP] [\-delay \fImicroseconds\fP] [\-delay2 \fImicroseconds\fP]
 .SH DESCRIPTION
 The \fIflame\fP program generates colorful fractal displays.

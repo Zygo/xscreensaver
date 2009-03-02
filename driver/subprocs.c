@@ -80,12 +80,13 @@ extern int putenv (/* const char * */);	/* getenv() is in stdlib.h... */
 extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 #endif
 
-# if defined(SVR4) || defined(SYSV)
-#  define random() rand()
-# else /* !totally-losing-SYSV */
-extern long random();			/* rand() is in stdlib.h... */
-# endif /* !totally-losing-SYSV */
-
+# ifndef random
+#  if defined(SVR4) || defined(SYSV)
+#   define random() rand()
+#  else /* !totally-losing-SYSV */
+    extern long random();		/* rand() is in stdlib.h... */
+#  endif /* !totally-losing-SYSV */
+# endif /* random defined */
 
 #include "xscreensaver.h"
 

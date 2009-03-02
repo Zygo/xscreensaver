@@ -71,8 +71,7 @@ init_one_qix (dpy, window, nlines)
       if (!XAllocColor (dpy, cmap, &qix->lines[0].color))
 	{
 	  qix->lines[0].color.pixel = default_fg_pixel;
-	  if (!XQueryColor (dpy, cmap, &qix->lines[0].color))
-	    abort ();
+	  XQueryColor (dpy, cmap, &qix->lines[0].color);
 	  if (!XAllocColor (dpy, cmap, &qix->lines[0].color))
 	    abort ();
 	}

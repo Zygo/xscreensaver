@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-1993 Jamie Zawinski <jwz@lucid.com>
+/* xscreensaver-command, Copyright (c) 1991-1994 Jamie Zawinski <jwz@lucid.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -26,7 +26,7 @@ static char *screensaver_version;
 static char *usage = "usage: %s -<switch>\n\
 \n\
   This program provides external control of a running xscreensaver process.\n\
-  Version %s, copyright (c) 1991-1993 Jamie Zawinski <jwz@lucid.com>.\n\
+  Version %s, copyright (c) 1991-1994 Jamie Zawinski <jwz@lucid.com>.\n\
 \n\
   -demo		Enter interactive demo mode.\n\
   -deactivate	Turns off the screensaver if it is on, as user input would.\n\

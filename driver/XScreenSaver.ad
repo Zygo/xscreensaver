@@ -95,7 +95,7 @@
 *demoDialog.maxWidth:		600
 
 *label1.labelString:		XScreenSaver %s
-*label2.labelString: Copyright © 1991-1993 by Jamie Zawinski <jwz@lucid.com>
+*label2.labelString: Copyright © 1991-1994 by Jamie Zawinski <jwz@lucid.com>
 *demoList.visibleItemCount:	10
 *demoList.automaticSelection:	True
 *next.labelString:		Run Next

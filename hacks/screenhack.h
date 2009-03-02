@@ -74,13 +74,21 @@ extern char *defaults [];
 
 #if __STDC__
 # if defined(SVR4) || defined(SYSV)
-extern int rand (void);
-extern void srand (unsigned int);
-#  define random() rand()
-#  define srandom(i) srand((unsigned int)(i))
+#  ifndef random
+    extern int rand (void);
+#   define random() rand()
+#  endif
+#  ifndef srandom
+    extern void srand (unsigned int);
+#   define srandom(i) srand((unsigned int)(i))
+#  endif
 # else /* !totally-losing-SYSV */
-extern long random (void);
-extern void srandom (int);
+#  ifndef random
+    extern long random (void);
+#  endif
+#  ifndef srandom
+    extern void srandom (int);
+#  endif
 # endif /* !totally-losing-SYSV */
 #endif /* __STDC__ */
 
