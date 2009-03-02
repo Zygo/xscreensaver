@@ -1,0 +1,12 @@
+Authors: Charles Vidal <vidalc@club-internet.fr>
+         Remi Cohen-Scali <r.cohenscali@pobox.com>
+         Eric Lassauge <lassauge@mail.dotcom.fr>
+
+Status: under construction
+
+This used GNU's GTK but now the fontsel widget have been
+integrated into GTK (since between 1.1 & 1.2 ?).
+The xlockmore package does not need the gtkfontsel
+library anymore. The root configure script has been modified.
+		Thank You !
+						R. Cohen-Scali
