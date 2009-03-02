@@ -1,5 +1,5 @@
 /* exec.c --- executes a program in *this* pid, without an intervening process.
- * xscreensaver, Copyright (c) 1991-2002 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -58,6 +58,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <ctype.h>
+#include <sys/stat.h>
 
 #ifndef ESRCH
 # include <errno.h>
@@ -246,3 +247,53 @@ nice_process (int nice_level)
 
 #endif
 }
+
+
+/* Whether the given command exists on $PATH.
+   (Anything before the first space is considered to be the program name.)
+ */
+int
+on_path_p (const char *program)
+{
+  int result = 0;
+  struct stat st;
+  char *cmd = strdup (program);
+  char *token = strchr (cmd, ' ');
+  char *path = 0;
+  int L;
+
+  if (token) *token = 0;
+  token = 0;
+
+  if (strchr (cmd, '/'))
+    {
+      result = (0 == stat (cmd, &st));
+      goto DONE;
+    }
+
+  path = getenv("PATH");
+  if (!path || !*path)
+    goto DONE;
+
+  L = strlen (cmd);
+  path = strdup (path);
+  token = strtok (path, ":");
+
+  while (token)
+    {
+      char *p2 = (char *) malloc (strlen (token) + L + 3);
+      strcpy (p2, token);
+      strcat (p2, "/");
+      strcat (p2, cmd);
+      result = (0 == stat (p2, &st));
+      if (result)
+        goto DONE;
+      token = strtok (0, ":");
+    }
+
+ DONE:
+  free (cmd);
+  if (path) free (path);
+  return result;
+}
+

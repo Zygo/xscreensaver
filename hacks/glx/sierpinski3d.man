@@ -34,7 +34,7 @@ Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
 Number of frames before changing shape.  Default: 150.
 .TP 8
 .B \-depth \fInumber\fP
-Max depth to descend.  Default: 3.  You probably don't have enough
+Max depth to descend.  Default: 5.  You probably don't have enough
 memory for 6.
 .TP 8
 .B \-wireframe

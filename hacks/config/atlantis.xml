@@ -8,10 +8,9 @@
            _label="Whale Speed" _low-label="Slow" _high-label="Fast"
           low="0" high="1000" default="250"/>
 
-  <number id="sharkspeed" type="slider" arg="-delay %"
+  <number id="sharkspeed" type="slider" arg="-cycles %"
           _label="Shark Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="500000" default="25000"
-          convert="invert"/>
+          low="0" high="1000" default="100"/>
 
   <number id="sharkproximity" type="slider" arg="-size %"
           _label="Shark Proximity" _low-label="Shy" _high-label="Agressive"

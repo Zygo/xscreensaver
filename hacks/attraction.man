@@ -88,7 +88,7 @@ of the balls controls their mass.
 .TP 8
 .B \-segments integer
 If in \fIlines\fP or \fIpolygons\fP mode, how many sets of line segments
-or polygons should be drawn. Default 100.  This has no effect in \fIballs\fP
+or polygons should be drawn. Default 500.  This has no effect in \fIballs\fP
 mode.  If \fIsegments\fP is 0, then no segments will ever be erased (this
 is only useful in color.)
 .TP 8

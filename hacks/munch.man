@@ -18,7 +18,7 @@ munch - munching squares screen hack
 .B munch
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
 [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
-[\-visual \fIvisual\fP] [\-delay \fIseconds\fP] [\-xor] [\-noxor] [\-shift]
+[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-xor] [\-noxor] [\-shift]
 [\-noshift] [\-logminwidth \fIminimum width\fP]
 .SH DESCRIPTION
 The
@@ -51,8 +51,8 @@ Install a private colormap for the window.
 Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
-.B \-delay \fIseconds\fP
-How long to wait before starting over.  Default 5 seconds.
+.B \-delay \fImicroseconds\fP
+How long to wait before starting over.  Default 5000.
 .TP 8
 .B \-xor
 Use the XOR drawing function.  (Default.)

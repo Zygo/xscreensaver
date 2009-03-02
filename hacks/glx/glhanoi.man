@@ -31,13 +31,7 @@ Draw on a newly-created window.  This is the default.
 Draw on the root window.
 .TP 8
 .B \-delay \fInumber\fP
-Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds.).
-.TP 8
-.B \-speed \fInumber\fP
-Speed of disk animation. Default: 12.0 er, units per second. Let's call them metres.
-.TP 8
-.B \-rotspeed \fInumber\fP
-Speed of disk animation. Default: 0.1 rads per second.
+Per-frame delay, in microseconds.  Default: 15000 (0.015 seconds.).
 .TP 8
 .B \-count \fInumber\fP
 Number of disks.  Default: 7.

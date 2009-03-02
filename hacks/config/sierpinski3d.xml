@@ -15,7 +15,7 @@
           convert="invert"/>
 
   <number id="depth" type="spinbutton" arg="-depth %"
-          _label="Max Depth" low="1" high="6" default="3"/>
+          _label="Max Depth" low="1" high="6" default="5"/>
 
   <select id="render">
     <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>

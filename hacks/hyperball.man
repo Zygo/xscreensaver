@@ -43,7 +43,7 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
-Default 100000, or about 1/10th second.
+Default 20000, or about 0.02 seconds.
 .TP 8
 .B \-xw \fIfloat\fP
 .TP 8
@@ -57,9 +57,9 @@ Default 100000, or about 1/10th second.
 .TP 8
 .B \-zw \fIfloat\fP
 The amount that the ball should be rotated around the specified axis at
-each frame of the animation, expressed in radians.  These should be small
-floating-point values (less than 0.05 works best.)  Default: xy=0.01,
-xz=0.005, yw=0.01.
+each frame of the animation, expressed in 0.001 radians.  These should be small
+floating-point values (less than 50 works best.)  Default: xy=3,
+xz=5, yw=10.
 .SH ENVIRONMENT
 .PP
 .TP 8

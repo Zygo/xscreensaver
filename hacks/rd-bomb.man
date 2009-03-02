@@ -7,7 +7,7 @@ rd-bomb - reaction/diffusion textures
 [\-background \fIcolor\fP] [\-window] [\-root] [\-install]
 [\-visual \fIvisual\fP] [\-width \fIn\fP] [\-height \fIn\fP]
 [\-reaction \fIn\fP] [\-diffusion \fIn\fP]
-[\-size \fIf\fP] [\-speed \fIf\fP] [\-delay \fIusecs\fP]
+[\-size \fIf\fP] [\-speed \fIf\fP] [\-delay \fImillisecs\fP]
 .SH DESCRIPTION
 
 The \fIrd-bomb\fP program draws reaction/diffusion textures.  The code
@@ -54,24 +54,22 @@ Specify the size of the tile, in pixels.
 .TP 8
 .B \-diffusion \fIn\fP
 These are constants in the equations that effect its visual nature.
-Each may be one of 0, 1, or 2.  
+Each may be one of 0, 1, or 2. Default is -1: these constants are
+chosen randomly.
 .TP 8
 .B \-radius \fIn\fP
 Size of the seed.
 .TP 8
-.B \-palette \fIn\fP
-Selects a palette.  Must be between 0 and 80, inclusive.
-.TP 8
 .B \-size \fIf\fP
 What fraction of the window is actively drawn, a floating point number
-between 0 (exclusive) and 1 (inclusive).  Default is 0.66.
+between 0 (exclusive) and 1 (inclusive).  Default is 1.0.
 .TP 8
 .B \-speed \fIf\fP
 When a fraction of the screen is active, the active area moves at this
 rate (a floating point number).  Default is zero.  Suggested value: 1.0.
 .TP 8
-.B \-delay \fIusecs\fP
-How many microseconds to delay between frames; default 1000, or 
+.B \-delay \fImillisecs\fP
+How many milliseconds to delay between frames; default 1, or 
 about 1/1000th of a second.
 .SH ENVIRONMENT
 .PP

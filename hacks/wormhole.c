@@ -76,7 +76,7 @@ typedef struct WORMHOLE{
 	Pixmap work;
 } wormhole;
 
-inline int rnd( int q ){
+/*inline*/ static int rnd( int q ){
 
 	return random() % q;
 
@@ -268,12 +268,14 @@ static void moveColorChanger( color_changer * ch, Display * display, Colormap * 
 
 }
 
+#if 0
 static void destroyColorChanger( color_changer * ch, Display * display, Colormap * cmap ){
 	int q;
 	for ( q = 0; q < ch->max; q++ )
 		XFreeColors( display, *cmap, &( ch->shade[q].pixel ), 1, 0 );
 	free( ch->shade );
 }
+#endif
 
 static void resizeWormhole( wormhole * worm, Display * display, Window * win ){
 	
@@ -337,11 +339,13 @@ static void initWormhole( wormhole * worm, Display * display, Window * win ){
 
 }
 
+#if 0
 static void destroyWormhole( wormhole * worm, Display * display, Colormap * cmap ){
 	destroyColorChanger( &(worm->changer), display, cmap );
 	XFreePixmap( display, worm->work );
 	free( worm->stars );
 }
+#endif
 
 static double Cos( int a ){
 	return cos( a * 180.0 / M_PI );
@@ -678,5 +682,5 @@ void screenhack (Display *dpy, Window window) {
 		*/
 	}
 
-	destroyWormhole( &worm, dpy, &cmap );
+/* not reached:	destroyWormhole( &worm, dpy, &cmap ); */
 }

@@ -34,7 +34,7 @@ Draw on a newly-created window.  This is the default.
 Draw on the root window.
 .TP 8
 .B \-delay \fInumber\fP
-Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds.).
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
 .TP 8
 .B \-count \fInumber\fP
 How many boxes make up the object.  Default: 5.

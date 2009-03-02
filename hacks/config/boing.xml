@@ -15,9 +15,9 @@
   <vgroup>
    <hgroup>
     <number id="meridians" type="spinbutton" arg="-meridians %"
-            _label="Meridians" low="1" high="90" default="8"/>
+            _label="Meridians" low="1" high="90" default="16"/>
     <number id="parallels" type="spinbutton" arg="-parallels %"
-            _label="Parallels" low="1" high="90" default="16"/>
+            _label="Parallels" low="1" high="90" default="8"/>
    </hgroup>
    <hgroup>
     <boolean id="smoothing" _label="Smoothing" arg-set="-smooth"/>

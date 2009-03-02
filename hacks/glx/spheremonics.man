@@ -39,7 +39,7 @@ Draw on the root window.
 Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds.).
 .TP 8
 .B \-duration \fInumber\fP
-Duration.  5 - 1000.  Default: 500.
+Duration.  5 - 1000.  Default: 100.
 .TP 8
 .B \-resolution \fInumber\fP
 Resolution.  5 - 100.  Default: 64.

@@ -24,7 +24,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.6 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.7 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -308,7 +308,7 @@ sub output() {
     safe_system ("date", "+%c");
     print "\n";
     my $ut = `uptime`;
-    $ut =~ s/^[ \d:]*//;
+    $ut =~ s/^[ \d:]*(am|pm)?//i;
     $ut =~ s/,\s*(load)/\n$1/;
     print "$ut\n";
   }

@@ -113,7 +113,7 @@ stored in the RESOURCE_MANAGER property.
 .BR xscreensaver-demo (1),
 .BR xscreensaver-getimage (1),
 .BR xscreensaver (1),
-.BR carousel (1)
+.BR carousel (MANSUFFIX)
 .SH COPYRIGHT
 Copyright \(co 2003-2005 by Jamie Zawinski, based on an earlier version
 that was

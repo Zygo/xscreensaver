@@ -11,7 +11,7 @@
 
   <number id="ncolors" type="slider" arg="-ncolors %"
             _label="Number of Colors" _low-label="Two" _high-label="Many"
-            low="1" high="255" default="200"/>
+            low="1" high="255" default="64"/>
 
   <_description>
 This one draws crackling fractal lightning bolts.  It's simple,

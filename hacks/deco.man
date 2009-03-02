@@ -33,7 +33,6 @@ How long to wait before starting over.  Default 5 seconds.
 .TP 8
 .B \-max\-depth \fIinteger\fP
 How deep to subdivide.  Default 12.
-Default 8.
 .TP 8
 .B \-min-width \fIinteger\fP
 .B \-min-height \fIinteger\fP

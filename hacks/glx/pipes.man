@@ -48,7 +48,7 @@ Length of each pipe system.  Default: 500.
 How much gadgetry to create; Useful range is 0-10.  Default: 2.
 .TP 8
 .B \-delay \fInumber\fP
-How long (in microseconds) to sleep between frames.  Default: 100.
+How long (in microseconds) to sleep between frames.  Default: 10000.
 .TP 8
 .B \-fisheye | \-no-fisheye
 Whether to use a fisheye lens.

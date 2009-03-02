@@ -20,14 +20,6 @@ Draw on the root window.
 .B \-mono 
 If on a color display, pretend we're on a monochrome display.
 .TP 8
-.B \-erase\-speed \fIusecs\fP
-This controls the speed at which the screen will be erased. Lower numbers 
-erase faster.
-.TP 8
-.B \-erase\-mode \fIinteger\fP
-This sets the erase mode. Mode \-1 chooses a random mode each time. There
-are currently 6 modes defined (0\-5).
-.TP 8
 .B \-delay \fIseconds\fP
 This sets the number of seconds that the helix will be on the screen.
 .TP 8

@@ -17,7 +17,7 @@
           _label="Horizontal Symmetries" low="-10" high="10" default="-3"/>
 
   <number id="ny" type="spinbutton" arg="-ny %"
-          _label="Vertical Symmetries" low="-10" high="10" default="-2"/>
+          _label="Vertical Symmetries" low="-10" high="10" default="-3"/>
 
   <number id="count" type="spinbutton" arg="-count %"
           _label="Count" low="-5000" high="5000" default="-500"/>

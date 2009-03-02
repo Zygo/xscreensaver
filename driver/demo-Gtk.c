@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2005 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -144,6 +144,7 @@ enum {
 
 /* from exec.c */
 extern void exec_command (const char *shell, const char *command, int nice);
+extern int on_path_p (const char *program);
 
 static void hack_subproc_environment (Window preview_window_id, Bool debug_p);
 
@@ -1029,6 +1030,7 @@ manual_cb (GtkButton *button, gpointer user_data)
   int list_elt = selected_list_element (s);
   int hack_number;
   char *name, *name2, *cmd, *str;
+  char *oname = 0;
   if (list_elt < 0) return;
   hack_number = s->list_elt_to_hack_number[list_elt];
 
@@ -1037,6 +1039,7 @@ manual_cb (GtkButton *button, gpointer user_data)
 
   name = strdup (p->screenhacks[hack_number]->command);
   name2 = name;
+  oname = name;
   while (isspace (*name2)) name2++;
   str = name2;
   while (*str && !isspace (*str)) str++;
@@ -1064,7 +1067,7 @@ manual_cb (GtkButton *button, gpointer user_data)
                       False, 100);
     }
 
-  free (name);
+  free (oname);
 }
 
 
@@ -2351,52 +2354,6 @@ scroll_to_current_hack (state *s)
       force_list_select_item (s, list, list_elt, True);
       populate_demo_window (s, list_elt);
     }
-}
-
-
-static Bool
-on_path_p (const char *program)
-{
-  int result = False;
-  struct stat st;
-  char *cmd = strdup (program);
-  char *token = strchr (cmd, ' ');
-  char *path = 0;
-  int L;
-
-  if (token) *token = 0;
-  token = 0;
-
-  if (strchr (cmd, '/'))
-    {
-      result = (0 == stat (cmd, &st));
-      goto DONE;
-    }
-
-  path = getenv("PATH");
-  if (!path || !*path)
-    goto DONE;
-
-  L = strlen (cmd);
-  path = strdup (path);
-  token = strtok (path, ":");
-
-  while (token)
-    {
-      char *p2 = (char *) malloc (strlen (token) + L + 3);
-      strcpy (p2, token);
-      strcat (p2, "/");
-      strcat (p2, cmd);
-      result = (0 == stat (p2, &st));
-      if (result)
-        goto DONE;
-      token = strtok (0, ":");
-    }
-
- DONE:
-  free (cmd);
-  if (path) free (path);
-  return result;
 }
 
 

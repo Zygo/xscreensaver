@@ -336,11 +336,18 @@ reset_timers (saver_info *si)
      DPMS timer.  Without this, the -deactivate clientmessage would
      prevent xscreensaver from blanking, but would not prevent the
      monitor from powering down. */
+#if 0
+  /* #### With some servers, this causes the screen to flicker every
+     time a key is pressed!  Ok, I surrender.  I give up on ever
+     having DPMS work properly.
+   */
   XForceScreenSaver (si->dpy, ScreenSaverReset);
 
   /* And if the monitor is already powered off, turn it on.
      You'd think the above would do that, but apparently not? */
   monitor_power_on (si);
+#endif
+
 }
 
 

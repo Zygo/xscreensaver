@@ -255,7 +255,7 @@ Disk *pop(int idx)
 	return DOPOP(&glhanoi->pole[idx]);
 }
 
-inline void swap(int *x, int *y)
+/* inline */ static void swap(int *x, int *y)
 {
 	*x = *x ^ *y;
 	*y = *x ^ *y;

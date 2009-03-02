@@ -37,12 +37,8 @@ Time in microseconds to sleep between ticks.  Default 25000.
 How many ticks should elapse between cycling colors.  0 to disable
 color cycling.  Default 2.
 .TP 8
-.B \-cycle-colors \fIinteger\fP
-How many ticks should elapse between cycling colors.  0 to use
-just one color. Default 1.
-.TP 8
 .B \-ncolors \fIinteger\fP
-How many colors should be used (if possible).  Default 32.
+How many colors should be used (if possible).  Default 64.
 The colors are chosen randomly.
 .TP 8
 .B \-cell-size \fIinteger\fP

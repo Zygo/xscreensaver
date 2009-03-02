@@ -93,11 +93,13 @@ static int
 setgroups_needed_p (uid_t target_group)
 {
   gid_t groups[1024];
-  int n = getgroups (sizeof(groups)-1, groups);
+  int n, size;
+  size = sizeof(groups) / sizeof(gid_t);
+  n = getgroups (size - 1, groups);
   if (n < 0)
     {
       char buf [1024];
-      sprintf (buf, "%s: getgroups(%ld, ...)", blurb(), (long)sizeof(groups)-1);
+      sprintf (buf, "%s: getgroups(%ld, ...)", blurb(), (long int)(size - 1));
       perror (buf);
       return 1;
     }
@@ -161,7 +163,7 @@ set_ids_by_number (uid_t uid, gid_t gid, char **message_ret)
     {
       char buf [1024];
       gid_t groups[1024];
-      int n;
+      int n, size;
 
       if (sgs_errno)
 	{
@@ -178,7 +180,8 @@ set_ids_by_number (uid_t uid, gid_t gid, char **message_ret)
             }
 
 	  fprintf (stderr, "%s: effective group list: ", blurb());
-          n = getgroups (sizeof(groups)-1, groups);
+	  size = sizeof(groups) / sizeof(gid_t);
+          n = getgroups (size - 1, groups);
           if (n < 0)
             fprintf (stderr, "unknown!\n");
           else

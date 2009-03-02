@@ -40,9 +40,6 @@ Number of times to iterate each function. Default: 9
 .TP 8
 .B \-functions \fInumber\fP
 Number of functions to be iterated. Default: 3
-.TP 8
-.B \-ncolors \fInumber\fP
-Number of colors.  Default: 20.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -55,7 +52,7 @@ stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
-.BR ifs (1)
+.BR ifs (MANSUFFIX)
 .SH COPYRIGHT
 Copyright \(co Chris Le Sueur (thefishface@gmail.com) February 2005
 

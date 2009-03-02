@@ -13,14 +13,14 @@ mirrorblob - Draws a wobbly blob that distorts the image behind it.
 [\-walls]
 [\-colour]
 [\-texture]
-[\-bgimage]
 [\-offset_texture]
 [\-blend]
 [\-antialias]
 [\-x_res \fInumber\fP]
 [\-y_res \fInumber\fP]
 [\-field_points \fInumber\fP]
-[\-hold_frames \fInumber\fP]
+[\-fade_time \fInumber\fP]
+[\-hold_time \fInumber\fP]
 [\-fps]
 .SH DESCRIPTION
 Draws a wobbling blob, making use of alpha blending, fog,
@@ -55,9 +55,6 @@ Draw coloured blob.  If also textured, the texture will have color mixed in.
 .B \-texture | \-no-texture
 Whether to wrap a texture image on the blob.
 .TP 8
-.B \-bgimage | \-no-bgimage
-Whether to also draw the texture on the background.
-.TP 8
 .B \-offset_texture | \-no-offset_texture
 Whether to ofset the texture calculations to only use a region of the image
  under the blob.  This works well when blend is enabled.
@@ -79,11 +76,11 @@ Number of rows of verticies used to calculatethe blob, combined with x_res to
 .B \-field_points \fInumber\fP
 Number of points used to distort the blob.
 .TP 8
-.B \-hold_frames \fInumber\fP
-Number of frames between changing images.
+.B \-hold_time \fInumber\fP
+Time until loading a new image.
 .TP 8
-.B \-fade_speed \fInumber\fP
-Speed at which fading occurs when changing images.
+.B \-fade_time \fInumber\fP
+Crossfade duration time.
 .TP 8
 .B \-fps | \-no-fps
 Whether to show a frames-per-second display at the bottom of the screen.

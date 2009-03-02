@@ -29,11 +29,11 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-xspeed \fIspeed\fP
 Specify how fast the dots should cycle horizontally.
-Try out values from .01 to 4000. Random by default.
+Try out values from .01 to 4000. Defaults to 1.0.
 .TP 8
 .B \-yspeed \fIspeed\fP
 Specify how fast the dots should cycle vertically.
-Try out values from .01 to 4000. Random by default.
+Try out values from .01 to 4000. Defaults to 1.0.
 .TP 8
 .B \-xamplitude \fIfactor\fP
 Specify the horizontal amplitude.

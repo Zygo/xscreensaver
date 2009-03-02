@@ -15,7 +15,7 @@
 
   <number id="trees" type="slider" arg="-trees %"
           _label="Number of trees" _low-label="Desert" _high-label="Forest"
-          low="0" high="15" default="5"/>
+          low="0" high="20" default="5"/>
 
   <select id="render">
     <option id="normal" _label="Normal"/>

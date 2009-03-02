@@ -44,7 +44,7 @@ curves smoother, at the expense of a higher polygon count.
 How thick the tubes should be.  Default 0.3.
 .TP 8
 .B \-duration \fIseconds\fP
-How long to leave each knot up.  Default 5 seconds.
+How long to leave each knot up.  Default 8 seconds.
 .TP 8
 .B \-wander | \-no-wander
 Whether the cubes should wander around the screen.

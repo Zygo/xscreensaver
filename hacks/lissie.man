@@ -31,13 +31,13 @@ Draw on the root window.
 Count.	0 - 20.  Default: 1.
 .TP 8
 .B \-cycles \fInumber\fP
-Timeout.  0 - 800000.  Default: 2000.
+Timeout. Default: 20000.
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
 .TP 8
 .B \-ncolors \fInumber\fP
-Number of Colors.  Default: 64.
+Number of Colors.  Default: 200.
 .TP 8
 .B \-size \fInumber\fP
 Size.  -500 to +500.  Default: -200.

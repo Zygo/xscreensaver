@@ -284,8 +284,9 @@ pick_font_1 (state *s, sentence *se)
   se->font = XLoadQueryFont (s->dpy, pattern);
   if (! se->font)
     {
-      fprintf (stderr, "%s: unable to load font %s\n",
-               progname, pattern);
+      if (s->debug_p)
+        fprintf (stderr, "%s: unable to load font %s\n",
+                 progname, pattern);
       return False;
     }
 
@@ -325,7 +326,7 @@ pick_font (state *s, sentence *se)
   for (i = 0; i < 20; i++)
     if (pick_font_1 (s, se))
       return;
-  fprintf (stderr, "%s: too many failures: giving up!\n", progname);
+  fprintf (stderr, "%s: too many font-loading failures: giving up!\n", progname);
   exit (1);
 }
 

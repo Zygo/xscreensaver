@@ -175,14 +175,14 @@ Apple ][ and Applesoft are trademarks of Apple Computer.
 
 .SH SEE ALSO
 .BR xscreensaver (1),
-.BR bsod (1),
+.BR bsod (MANSUFFIX),
 .BR xscreensaver-text (1),
 .BR fortune (1),
-.BR phosphor (1),
-.BR starwars (1),
-.BR ljlatest (1),
+.BR phosphor (MANSUFFIX),
+.BR starwars (MANSUFFIX),
+.BR ljlatest (MANSUFFIX),
 .BR dadadodo (1),
-.BR webcollage (1),
+.BR webcollage (MANSUFFIX),
 .BR driftnet (1)
 .BR EtherPEG ,
 .BR EtherPeek ,

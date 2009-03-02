@@ -2,7 +2,7 @@
 .SH NAME
 antmaze \- ant maze walker
 .SH SYNOPSIS
-.B antinspect
+.B antmaze
 [\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
 [\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
 .SH DESCRIPTION
@@ -19,9 +19,6 @@ Draw on the root window.
 .TP 8
 .B \-install
 Install a private colormap for the window.
-.TP 8
-.B \-shadows
-Draw shadows on ground
 .TP 8
 .B \-visual \fIvisual\fP\fP
 Specify which visual to use.  Legal values are the name of a visual class,

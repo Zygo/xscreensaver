@@ -28,7 +28,7 @@ Draw on the root window.
 Count.	0 - 100.  Default: 30.
 .TP 8
 .B \-delay \fInumber\fP
-Per-frame delay, in microseconds.  Default: 0 (0.00 seconds.).
+Per-frame delay, in microseconds.  Default: 1000 (0.001 seconds.).
 .TP 8
 .B \-ncolors \fInumber\fP
 Number of colors.  Default: 64.

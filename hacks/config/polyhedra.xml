@@ -17,17 +17,6 @@
           _label="Duration" _low-label="1 second" _high-label="30 seconds"
           low="1" high="30" default="12"/>
 
-  <select id="rotation">
-    <option id="no"  _label="Don't Rotate" arg-set="-no-spin"/>
-    <option id="x"   _label="Rotate around X axis" arg-set="-spin X"/>
-    <option id="y"   _label="Rotate around Y axis" arg-set="-spin Y"/>
-    <option id="z"   _label="Rotate around Z axis" arg-set="-spin Z"/>
-    <option id="xy"  _label="Rotate around X and Y axes" arg-set="-spin XY"/>
-    <option id="xz"  _label="Rotate around X and Z axes" arg-set="-spin XZ"/>
-    <option id="yz"  _label="Rotate around Y and Z axes" arg-set="-spin YZ"/>
-    <option id="xyz" _label="Rotate around all three axes"/>
-  </select>
-
   <select id="object">
 <option id="random" _label="Display Random Polyhedron"/>
 <option _label="Pentagonal Prism" arg-set="-which pentagonal_prism"/>
@@ -185,8 +174,9 @@
 
 
   <boolean id="titles"  _label="Show Description" arg-unset="-no-titles"/>
-  <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
-  <boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
+  <boolean id="spin"    _label="Spin"      arg-unset="-no-spin"/>
+  <boolean id="wander"  _label="Wander"    arg-unset="-no-wander"/>
+  <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>

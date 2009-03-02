@@ -30,12 +30,12 @@ or the id number (decimal or hex) of a specific visual.
 .B \-count \fIinteger\fP
 How many bubbles to draw per layer.  Default: random.
 .TP 8
-.B \-layers \fIinteger\fP
-How many layers to draw.  Default: random, based on screen depth.
+.B \-planes \fIinteger\fP
+How many planes to draw.  Default: random, based on screen depth.
 .TP 8
 .B \-delay \fImicroseconds\fP
 How much of a delay should be introduced between steps of the animation.
-Default 100000, or about 1/10th second.
+Default 12000, or about 0.012 seconds.
 .TP 8
 .B \-transparent
 If \fI\-layers\fP is greater than 1, then each layer will be drawn in one

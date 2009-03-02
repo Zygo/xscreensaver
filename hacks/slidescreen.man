@@ -48,7 +48,7 @@ or the id number (decimal or hex) of a specific visual.
 The size of the grid cells.  Default 70 pixels.
 .TP 8
 .B \-ibw \fIpixels\fP
-The size of the "gutter" between grid cells.  Default 1 pixel.
+The size of the "gutter" between grid cells.  Default 4 pixel.
 .TP 8
 .B \-increment \fIpixels\fP
 How many pixels by which a piece should be moved when sliding to a new 

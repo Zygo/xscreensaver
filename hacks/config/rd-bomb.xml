@@ -33,7 +33,7 @@
 
   <!-- #### default is wrong -->
   <number id="radius" type="spinbutton" arg="-radius %"
-          _label="Seed Radius" low="1" high="1000" default="500"/>
+          _label="Seed Radius" low="1" high="60" default="15"/>
 
   <number id="epoch" type="slider" arg="-epoch %"
            _label="Epoch" _low-label="Small" _high-label="Large"

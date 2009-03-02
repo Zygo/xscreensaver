@@ -27,7 +27,7 @@
 "*splash:		True",
 "*splashDuration:	0:00:05",
 "*visualID:		default",
-"*captureStderr: 	True",
+"*captureStderr: 	False",
 "*ignoreUninstalledPrograms: False",
 "*textMode:		file",
 "*textLiteral:		XScreenSaver",

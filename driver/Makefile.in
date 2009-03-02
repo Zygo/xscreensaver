@@ -379,6 +379,7 @@ install-man: $(MEN)
 	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
 	  sed -e "s/^\.TH.*/$$TH/"					\
 	      -e 's/^\(\.BR xscr.*(\)[^()]\(.*\)/\1$(mansuffix)\2/'	\
+	      -e 's@(MANSUFFIX)@($(mansuffix))@g'			\
 	    < $(srcdir)/$$man > $$T ;					\
 	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
 	   $(install_prefix)$(manNdir)/$$instname ;			\

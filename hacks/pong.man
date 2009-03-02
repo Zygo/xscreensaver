@@ -56,8 +56,8 @@ Pong may be a trademark.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
-.BR xanalogtv (1),
-.BR apple2 (1)
+.BR xanalogtv (MANSUFFIX),
+.BR apple2 (MANSUFFIX)
 .SH COPYRIGHT
 2003 by Jeremy English.  Permission to use, copy, modify, 
 distribute, and sell this software and its documentation for any purpose is 

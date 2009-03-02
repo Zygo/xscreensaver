@@ -1,6 +1,6 @@
 /* glsnake.c - OpenGL imitation of Rubik's Snake
  * 
- * (c) 2001-2003 Jamie Wilkinson <jaq@spacepants.org>
+ * (c) 2001-2005 Jamie Wilkinson <jaq@spacepants.org>
  * (c) 2001-2003 Andrew Bennetts <andrew@puzzling.org> 
  * (c) 2001-2003 Peter Aylett <peter@ylett.com>
  * 
@@ -44,26 +44,33 @@
 #define RIGHT   270.0
 
 #ifdef HAVE_GETTIMEOFDAY
-#ifdef GETTIMEOFDAY_TWO_ARGS
-# include <sys/time.h>
-# include <time.h>
-  typedef struct timeval snaketime;
-# define GETSECS(t) ((t).tv_sec)
-# define GETMSECS(t) ((t).tv_usec/1000)
-#else /* GETTIMEOFDAY_TWO_ARGS */
-# include <sys/time.h>
-# include <time.h>
-  typedef struct timeval snaketime;
-# define GETSECS(t) ((t).tv_sec)
-# define GETMSECS(t) ((t).tv_usec/1000)
-#endif
-#else /* HAVE_GETTIMEOFDAY */
-#ifdef HAVE_FTIME
-# include <sys/timeb.h>
-  typedef struct timeb snaketime;
-# define GETSECS(t) ((long)(t).time)
-# define GETMSECS(t) ((t).millitm/1000)
-#endif /* HAVE_FTIME */
+# ifdef GETTIMEOFDAY_TWO_ARGS
+
+#  include <sys/time.h>
+#  include <time.h>
+   typedef struct timeval snaketime;
+#  define GETSECS(t) ((t).tv_sec)
+#  define GETMSECS(t) ((t).tv_usec/1000)
+
+# else /* !GETTIMEOFDAY_TWO_ARGS */
+
+#  include <sys/time.h>
+#  include <time.h>
+   typedef struct timeval snaketime;
+#  define GETSECS(t) ((t).tv_sec)
+#  define GETMSECS(t) ((t).tv_usec/1000)
+
+# endif /* GETTIMEOFDAY_TWO_ARGS */
+
+#else /* !HAVE_GETTIMEOFDAY */
+# ifdef HAVE_FTIME
+
+#  include <sys/timeb.h>
+   typedef struct timeb snaketime;
+#  define GETSECS(t) ((long)(t).time)
+#  define GETMSECS(t) ((t).millitm/1000)
+
+# endif /* HAVE_FTIME */
 #endif /* HAVE_GETTIMEOFDAY */
 
 #include <math.h>
@@ -79,26 +86,26 @@
 #define DEF_ZANGVEL     0.14
 #define DEF_EXPLODE     0.03
 #define DEF_ANGVEL      1.0
-#define DEF_ACCEL       0.1
 #define DEF_STATICTIME  5000
 #define DEF_ALTCOLOUR   0
 #define DEF_TITLES      1
 #define DEF_INTERACTIVE 0
 #define DEF_ZOOM        25.0
 #define DEF_WIREFRAME   0
+#define DEF_TRANSPARENT 1
 #else
 /* xscreensaver options doobies prefer strings */
 #define DEF_YANGVEL     "0.10"
 #define DEF_ZANGVEL     "0.14"
 #define DEF_EXPLODE     "0.03"
 #define DEF_ANGVEL      "1.0"
-#define DEF_ACCEL       "0.1"
 #define DEF_STATICTIME  "5000"
 #define DEF_ALTCOLOUR   "False"
 #define DEF_TITLES      "True"
 #define DEF_INTERACTIVE "False"
 #define DEF_ZOOM        "25.0"
 #define DEF_WIREFRAME   "False"
+#define DEF_TRANSPARENT "True"
 #endif
 
 /* static variables */
@@ -110,16 +117,16 @@
 #endif
 
 static GLfloat explode;
-static GLfloat accel;
 static long statictime;
-static GLfloat yspin = 0;
-static GLfloat zspin = 0;
+static GLfloat yspin = 60.0;
+static GLfloat zspin = -45.0;
 static GLfloat yangvel;
 static GLfloat zangvel;
 static Bool altcolour;
 static Bool titles;
 static Bool interactive;
 static Bool wireframe;
+static Bool transparent;
 static GLfloat zoom;
 static GLfloat angvel;
 
@@ -138,7 +145,9 @@ extern XtAppContext app;
 #define DEFAULTS "*delay:          30000                      \n" \
                  "*count:          30                         \n" \
                  "*showFPS:        False                      \n" \
-		 "*labelfont:   -*-times-bold-r-normal-*-180-*\n" \
+                 "*labelfont:   -*-times-bold-r-normal-*-180-*\n" \
+
+
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -149,23 +158,23 @@ extern XtAppContext app;
 static XrmOptionDescRec opts[] = {
     { "-explode", ".explode", XrmoptionSepArg, DEF_EXPLODE },
     { "-angvel", ".angvel", XrmoptionSepArg, DEF_ANGVEL },
-    { "-accel", ".accel", XrmoptionSepArg, DEF_ACCEL },
     { "-statictime", ".statictime", XrmoptionSepArg, DEF_STATICTIME },
     { "-yangvel", ".yangvel", XrmoptionSepArg, DEF_YANGVEL },
     { "-zangvel", ".zangvel", XrmoptionSepArg, DEF_ZANGVEL },
-    { "-altcolour", ".altcolour", XrmoptionNoArg, "True" },
-    { "-no-altcolour", ".altcolour", XrmoptionNoArg, "False" },
-    { "-titles", ".titles", XrmoptionNoArg, "True" },
-    { "-no-titles", ".titles", XrmoptionNoArg, "False" },
+    { "-altcolour", ".altcolour", XrmoptionNoArg, (caddr_t) "True" },
+    { "-no-altcolour", ".altcolour", XrmoptionNoArg, (caddr_t) "False" },
+    { "-titles", ".titles", XrmoptionNoArg, (caddr_t) "True" },
+    { "-no-titles", ".titles", XrmoptionNoArg, (caddr_t) "False" },
     { "-zoom", ".zoom", XrmoptionSepArg, DEF_ZOOM },
-    { "-wireframe", ".wireframe", XrmoptionNoArg, "true" },
-    { "-no-wireframe", ".wireframe", XrmoptionNoArg, "false" },
+    { "-wireframe", ".wireframe", XrmoptionNoArg, (caddr_t) "true" },
+    { "-no-wireframe", ".wireframe", XrmoptionNoArg, (caddr_t) "false" },
+    { "-transparent", ".transparent", XrmoptionNoArg, (caddr_t) "true" },
+    { "-no-transparent", ".transparent", XrmoptionNoArg, (caddr_t) "false" },
 };
 
 static argtype vars[] = {
     {&explode, "explode", "Explode", DEF_EXPLODE, t_Float},
     {&angvel, "angvel", "Angular Velocity", DEF_ANGVEL, t_Float},
-    {&accel, "accel", "Acceleration", DEF_ACCEL, t_Float},
     {&statictime, "statictime", "Static Time", DEF_STATICTIME, t_Int},
     {&yangvel, "yangvel", "Angular Velocity about Y axis", DEF_YANGVEL, t_Float},
     {&zangvel, "zangvel", "Angular Velocity about X axis", DEF_ZANGVEL, t_Float},
@@ -174,13 +183,14 @@ static argtype vars[] = {
     {&titles, "titles", "Titles", DEF_TITLES, t_Bool},
     {&zoom, "zoom", "Zoom", DEF_ZOOM, t_Float},
     {&wireframe, "wireframe", "Wireframe", DEF_WIREFRAME, t_Bool},
+    {&transparent, "transparent", "Transparent!", DEF_TRANSPARENT, t_Bool},
 };
 
-ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
+ModeSpecOpt sws_opts = {(int)countof(opts), opts, (int)countof(vars), vars, NULL};
 #endif
 
 struct model_s {
-    char * name;
+    const char * name;
     float node[NODE_COUNT];
 };
 
@@ -206,7 +216,7 @@ struct glsnake_cfg {
     /* snake metrics */
     int is_cyclic;
     int is_legal;
-    int last_turn;
+    float last_turn;
     int debug;
 
     /* the shape of the model */
@@ -216,14 +226,14 @@ struct glsnake_cfg {
     int selected;
 
     /* models */
-    int prev_model;
-    int next_model;
+    unsigned int prev_model;
+    unsigned int next_model;
 
     /* model morphing */
     int new_morph;
 
     /* colours */
-    float colour[2][3];
+    float colour[2][4];
     int next_colour;
     int prev_colour;
 
@@ -236,7 +246,7 @@ struct glsnake_cfg {
     int old_width, old_height;
 
     /* the id of the display lists for drawing a node */
-    int node_solid, node_wire;
+    GLuint node_solid, node_wire;
 
     /* is the window fullscreen? */
     int fullscreen;
@@ -246,20 +256,24 @@ struct glsnake_cfg {
 #define COLOUR_ACYCLIC 1
 #define COLOUR_INVALID 2
 #define COLOUR_AUTHENTIC 3
+#define COLOUR_ORIGLOGO 4
 
-float colour[][2][3] = {
+float colour[][2][4] = {
     /* cyclic - green */
-    { { 0.4, 0.8, 0.2 },
-      { 1.0, 1.0, 1.0 } },
+    { { 0.4, 0.8, 0.2, 0.6 },
+      { 1.0, 1.0, 1.0, 0.6 } },
     /* acyclic - blue */
-    { { 0.3, 0.1, 0.9 },
-      { 1.0, 1.0, 1.0 } },
+    { { 0.3, 0.1, 0.9, 0.6 },
+      { 1.0, 1.0, 1.0, 0.6 } },
     /* invalid - grey */
-    { { 0.3, 0.1, 0.9 },
-      { 1.0, 1.0, 1.0 } },
+    { { 0.3, 0.1, 0.9, 0.6 },
+      { 1.0, 1.0, 1.0, 0.6 } },
     /* authentic - purple and green */
-    { { 0.38, 0.0, 0.55 },
-      { 0.0,  0.5, 0.34 } }
+    { { 0.38, 0.0, 0.55, 0.7 },
+      { 0.0,  0.5, 0.34, 0.7 } },
+    /* old "authentic" colours from the logo */
+    { { 171/255.0, 0, 1.0, 1.0 },
+      { 46/255.0, 205/255.0, 227/255.0, 1.0 } }
 };
 
 struct model_s model[] = {
@@ -267,19 +281,19 @@ struct model_s model[] = {
     { "straight",
       { ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO,
 	ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO,
-	ZERO, ZERO }
+	ZERO, ZERO, ZERO }
     },
     /* the models in the Rubik's snake manual */
-#define START_MODEL 1
     { "ball",
       { RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT,
 	RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT,
-	RIGHT, LEFT, RIGHT, LEFT }
+	RIGHT, LEFT, RIGHT, LEFT, ZERO }
     },
+#define START_MODEL 2
     { "snow",
       { RIGHT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, RIGHT,
 	RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT,
-	RIGHT, LEFT, LEFT, LEFT }
+	RIGHT, LEFT, LEFT, LEFT, ZERO }
     },
     { "propellor",
       { ZERO, ZERO, ZERO, RIGHT, LEFT, RIGHT, ZERO, LEFT, ZERO, ZERO,
@@ -289,62 +303,64 @@ struct model_s model[] = {
     { "flamingo",
       { ZERO, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, PIN, RIGHT, RIGHT, PIN,
 	RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, RIGHT, ZERO, ZERO,
-	ZERO, PIN }
+	ZERO, PIN, ZERO }
     },
     { "cat",
       { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN,
 	ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO,
-	ZERO }
+	ZERO, ZERO }
     },
     { "rooster",
       { ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, LEFT, RIGHT, PIN, RIGHT,
 	ZERO, PIN, PIN, ZERO, RIGHT, PIN, RIGHT, LEFT, ZERO, LEFT, ZERO,
-	PIN }
+	PIN, ZERO }
     },
     /* These models were taken from Andrew and Peter's original snake.c
      * as well as some newer ones made up by Jamie, Andrew and Peter. */
     { "half balls",
       { LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT,
 	LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT,
-	RIGHT, LEFT, LEFT, LEFT }
+	RIGHT, LEFT, LEFT, LEFT, ZERO }
     },
     { "zigzag1",
       { RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT,
 	LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT,
-	RIGHT, RIGHT, LEFT, LEFT }
+	RIGHT, RIGHT, LEFT, LEFT, ZERO }
     },
     { "zigzag2",
       { PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN,
-	ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN }
+	ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN,
+	ZERO }
     },
     { "zigzag3",
       { PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN,
-	LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN }
+	LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN,
+	ZERO }
     },
     { "caterpillar",
       { RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT,
 	LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN,
-	LEFT, LEFT }
+	LEFT, LEFT, ZERO }
     },
     { "bow",
       { RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT,
 	LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT,
-	RIGHT, RIGHT, LEFT, LEFT }
+	RIGHT, RIGHT, LEFT, LEFT, ZERO }
     },
     { "turtle",
       { ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT,
 	LEFT, RIGHT, LEFT, LEFT, PIN, LEFT, LEFT, LEFT, RIGHT, LEFT,
-	RIGHT, RIGHT, RIGHT }
+	RIGHT, RIGHT, RIGHT, ZERO }
     },
     { "basket",
       { RIGHT, PIN, ZERO, ZERO, PIN, LEFT, ZERO, LEFT, LEFT, ZERO,
 	LEFT, PIN, ZERO, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, ZERO,
-	PIN, LEFT }
+	PIN, LEFT, ZERO }
     },
     { "thing",
       { PIN, RIGHT, LEFT, RIGHT, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT,
 	LEFT, RIGHT, PIN, RIGHT, LEFT, RIGHT, RIGHT, LEFT, PIN, LEFT,
-	RIGHT, LEFT, LEFT }
+	RIGHT, LEFT, LEFT, ZERO }
     },
     { "hexagon",
       { ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, RIGHT, ZERO, ZERO,
@@ -378,41 +394,41 @@ struct model_s model[] = {
     { "bird",
       { ZERO, ZERO, ZERO, ZERO, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT,
 	ZERO, RIGHT, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT,
-	LEFT, ZERO, PIN }
+	LEFT, ZERO, PIN, ZERO }
     },
     { "seal",
       { RIGHT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO,
 	LEFT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, LEFT, LEFT, PIN, RIGHT,
-	RIGHT, LEFT }
+	RIGHT, LEFT, ZERO }
     },
     { "dog",
       { ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN,
-	ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN }
+	ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO }
     },
     { "frog",
       { RIGHT, RIGHT, LEFT, LEFT, RIGHT, PIN, RIGHT, PIN, LEFT, PIN,
 	RIGHT, ZERO, LEFT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, LEFT,
-	RIGHT, LEFT, LEFT }
+	RIGHT, LEFT, LEFT, ZERO }
     },
     { "quavers",
       { LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, ZERO, ZERO, ZERO,
 	RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, ZERO, LEFT, LEFT,
-	RIGHT, LEFT, RIGHT, RIGHT }
+	RIGHT, LEFT, RIGHT, RIGHT, ZERO }
     },
     { "fly",
       { LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, ZERO, PIN, ZERO, ZERO,
 	LEFT, PIN, RIGHT, ZERO, ZERO, PIN, ZERO, LEFT, LEFT, RIGHT, LEFT,
-	RIGHT, RIGHT }
+	RIGHT, RIGHT, ZERO }
     },
     { "puppy",
       { ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO,
 	RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT,
-	LEFT }
+	LEFT, ZERO, ZERO }
     },
     { "stars",
       { LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT,
 	ZERO, ZERO, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN,
-	RIGHT, LEFT }
+	RIGHT, LEFT, ZERO }
     },
     { "mountains",
       { RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN,
@@ -482,7 +498,7 @@ struct model_s model[] = {
     { "duck",
       { LEFT, PIN, LEFT, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, LEFT,
 	PIN, RIGHT, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, LEFT, PIN,
-	LEFT }
+	LEFT, ZERO }
     },
     { "prayer",
       { RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO, ZERO,
@@ -497,7 +513,7 @@ struct model_s model[] = {
     { "tie fighter",
       { PIN, LEFT, RIGHT, LEFT, LEFT, PIN, RIGHT, ZERO, RIGHT, LEFT,
 	ZERO, PIN, LEFT, LEFT, RIGHT, RIGHT, RIGHT, PIN, LEFT, ZERO,
-	LEFT, RIGHT, ZERO }
+	LEFT, RIGHT, ZERO, ZERO }
     },
     { "Strong Arms",
       { PIN, PIN, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, ZERO, RIGHT,
@@ -507,7 +523,7 @@ struct model_s model[] = {
 
     /* the following modesl were created during the slug/compsoc codefest
      * febrray 2003 */
-    { "cool gegl",
+    { "cool looking gegl",
       { PIN, PIN, ZERO, ZERO, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, LEFT,
 	ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, LEFT, RIGHT, PIN, ZERO,
 	ZERO, ZERO }
@@ -532,7 +548,7 @@ struct model_s model[] = {
 	RIGHT, LEFT, RIGHT, ZERO, LEFT, RIGHT, LEFT, ZERO, RIGHT, LEFT,
 	RIGHT, ZERO, LEFT, ZERO }
     },
-    { "arse gegl",
+    { "not very good (but accurate) gegl",
       { ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO,
 	PIN, PIN, ZERO, RIGHT, LEFT, ZERO, PIN, ZERO, PIN, PIN, ZERO,
 	PIN, ZERO }
@@ -625,627 +641,635 @@ struct model_s model[] = {
 
     /* These models come from the website at 
      * http://www.geocities.com/stigeide/snake */
+#if 0
     { "Abstract",
-        { RIGHT, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT, LEFT, PIN, ZERO, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO, PIN, ZERO, RIGHT, LEFT, RIGHT, ZERO }
+      { RIGHT, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT, LEFT, PIN, ZERO, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO, PIN, ZERO, RIGHT, LEFT, RIGHT, ZERO, ZERO }
     },
-    { "AlanH1",
-        { LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN }
+#endif
+    { "toadstool",
+      { LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, ZERO }
     },
     { "AlanH2",
-        { LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT }
+      { LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, ZERO }
     },
     { "AlanH3",
-        { LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN }
+      { LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, ZERO }
     },
     { "AlanH4",
-        { ZERO, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO, RIGHT, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT, LEFT, ZERO, RIGHT, LEFT, RIGHT, PIN, ZERO, ZERO }
+      { ZERO, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO, RIGHT, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT, LEFT, ZERO, RIGHT, LEFT, RIGHT, PIN, ZERO, ZERO, ZERO }
     },
     { "Alien",
-        { RIGHT, LEFT, RIGHT, PIN, ZERO, ZERO, PIN, RIGHT, LEFT, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, ZERO, PIN, PIN }
+      { RIGHT, LEFT, RIGHT, PIN, ZERO, ZERO, PIN, RIGHT, LEFT, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, ZERO, PIN, PIN, ZERO }
     },
     { "Angel",
-        { ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT }
+      { ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, ZERO }
     },
     { "AnotherFigure",
-        { LEFT, PIN, RIGHT, ZERO, ZERO, PIN, RIGHT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, PIN, ZERO }
+      { LEFT, PIN, RIGHT, ZERO, ZERO, PIN, RIGHT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, PIN, ZERO, ZERO }
     },
     { "Ball",
-        { LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT }
+        { LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT , ZERO }
     },
     { "Basket",
-        { ZERO, RIGHT, RIGHT, ZERO, RIGHT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, ZERO, LEFT }
+        { ZERO, RIGHT, RIGHT, ZERO, RIGHT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, ZERO, LEFT , ZERO }
     },
     { "Beetle",
-        { PIN, LEFT, RIGHT, ZERO, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, ZERO, LEFT, RIGHT, PIN, RIGHT }
+        { PIN, LEFT, RIGHT, ZERO, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, ZERO, LEFT, RIGHT, PIN, RIGHT , ZERO }
     },
-    { "Bone",
-        { PIN, PIN, LEFT, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, PIN, PIN }
+    { "bone",
+        { PIN, PIN, LEFT, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, PIN, PIN , ZERO }
     },
     { "Bow",
-        { LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT }
+        { LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT , ZERO }
     },
-    { "Bra",
-        { RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT }
+    { "bra",
+        { RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT , ZERO }
     },
-    { "BronchoSaurian",
-        { ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, PIN }
+    { "bronchosaurus",
+        { ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, PIN , ZERO }
     },
     { "Cactus",
-        { PIN, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, PIN, LEFT, PIN, ZERO, ZERO }
+        { PIN, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, PIN, LEFT, PIN, ZERO, ZERO , ZERO }
     },
     { "Camel",
-        { RIGHT, ZERO, PIN, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, ZERO, ZERO, LEFT }
+        { RIGHT, ZERO, PIN, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, ZERO, ZERO, LEFT , ZERO }
     },
     { "Candlestick",
-        { LEFT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, RIGHT }
+        { LEFT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, RIGHT , ZERO }
     },
     { "Cat",
-        { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO }
+        { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO , ZERO }
     },
     { "Cave",
-        { RIGHT, ZERO, ZERO, PIN, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, LEFT, PIN, RIGHT, RIGHT, LEFT, PIN, ZERO, ZERO }
+        { RIGHT, ZERO, ZERO, PIN, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, LEFT, PIN, RIGHT, RIGHT, LEFT, PIN, ZERO, ZERO , ZERO }
     },
     { "Chains",
-        { PIN, ZERO, ZERO, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO }
+        { PIN, ZERO, ZERO, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO , ZERO }
     },
     { "Chair",
-        { RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, LEFT, RIGHT, LEFT, LEFT }
+        { RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, LEFT, RIGHT, LEFT, LEFT , ZERO }
     },
     { "Chick",
-        { RIGHT, RIGHT, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, LEFT, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, LEFT, LEFT }
+        { RIGHT, RIGHT, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, LEFT, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, LEFT, LEFT , ZERO }
     },
     { "Clockwise",
-        { RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT }
+        { RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT , ZERO }
     },
-    { "Cobra",
-        { ZERO, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, LEFT, ZERO, LEFT, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT }
+    { "cobra",
+        { ZERO, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, LEFT, ZERO, LEFT, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT , ZERO }
     },
+#if 0
     { "Cobra2",
-        { LEFT, ZERO, PIN, ZERO, PIN, LEFT, ZERO, PIN, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, PIN, ZERO, RIGHT, PIN, ZERO, PIN, ZERO, RIGHT }
+        { LEFT, ZERO, PIN, ZERO, PIN, LEFT, ZERO, PIN, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, PIN, ZERO, RIGHT, PIN, ZERO, PIN, ZERO, RIGHT , ZERO }
     },
+#endif
     { "Cobra3",
-        { ZERO, LEFT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, ZERO, ZERO, LEFT, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, LEFT }
+        { ZERO, LEFT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, ZERO, ZERO, LEFT, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, LEFT , ZERO }
     },
     { "Compact1",
-        { ZERO, ZERO, PIN, ZERO, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, PIN, PIN, ZERO, ZERO, LEFT, PIN }
+        { ZERO, ZERO, PIN, ZERO, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, PIN, PIN, ZERO, ZERO, LEFT, PIN , ZERO }
     },
     { "Compact2",
-        { LEFT, PIN, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, ZERO }
+        { LEFT, PIN, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, ZERO , ZERO }
     },
     { "Compact3",
-        { ZERO, PIN, ZERO, PIN, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN }
+        { ZERO, PIN, ZERO, PIN, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN , ZERO }
     },
     { "Compact4",
-        { PIN, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, ZERO }
+        { PIN, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, ZERO , ZERO }
     },
     { "Compact5",
-        { LEFT, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, PIN, LEFT }
+        { LEFT, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, PIN, LEFT , ZERO }
     },
     { "Contact",
-        { PIN, ZERO, ZERO, PIN, LEFT, LEFT, PIN, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, PIN, RIGHT, RIGHT, PIN, ZERO, ZERO, PIN, RIGHT, PIN }
+        { PIN, ZERO, ZERO, PIN, LEFT, LEFT, PIN, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, PIN, RIGHT, RIGHT, PIN, ZERO, ZERO, PIN, RIGHT, PIN , ZERO }
     },
     { "Contact2",
-        { RIGHT, PIN, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, PIN, LEFT }
+        { RIGHT, PIN, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, PIN, LEFT , ZERO }
     },
     { "Cook",
-        { ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, RIGHT, LEFT, PIN, LEFT, ZERO, PIN, PIN, ZERO, LEFT, PIN, LEFT, RIGHT, ZERO, RIGHT, ZERO, PIN }
+        { ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, RIGHT, LEFT, PIN, LEFT, ZERO, PIN, PIN, ZERO, LEFT, PIN, LEFT, RIGHT, ZERO, RIGHT, ZERO, PIN , ZERO }
     },
     { "Counterclockwise",
-        { LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT }
+        { LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT , ZERO }
     },
     { "Cradle",
-        { LEFT, LEFT, ZERO, PIN, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, PIN, ZERO, RIGHT, RIGHT, LEFT, LEFT, ZERO, ZERO, RIGHT }
+        { LEFT, LEFT, ZERO, PIN, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, PIN, ZERO, RIGHT, RIGHT, LEFT, LEFT, ZERO, ZERO, RIGHT , ZERO }
     },
     { "Crankshaft",
-        { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, ZERO, PIN, RIGHT }
+        { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, ZERO, PIN, RIGHT , ZERO }
     },
     { "Cross",
-        { ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN }
+        { ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN , ZERO }
     },
     { "Cross2",
-        { ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, PIN, PIN, ZERO }
+        { ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, PIN, PIN, ZERO , ZERO }
     },
     { "Cross3",
-        { ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, PIN, PIN, ZERO }
+        { ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, ZERO, PIN, PIN, ZERO, ZERO }
     },
     { "CrossVersion1",
-        { PIN, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, PIN, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN }
+        { PIN, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, PIN, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, ZERO }
     },
     { "CrossVersion2",
-        { RIGHT, LEFT, PIN, LEFT, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, LEFT, LEFT, PIN, LEFT, RIGHT }
+        { RIGHT, LEFT, PIN, LEFT, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, LEFT, LEFT, PIN, LEFT, RIGHT, ZERO }
     },
     { "Crown",
-        { LEFT, ZERO, PIN, ZERO, RIGHT, ZERO, ZERO, LEFT, ZERO, PIN, ZERO, RIGHT, LEFT, ZERO, PIN, ZERO, RIGHT, ZERO, ZERO, LEFT, ZERO, PIN, ZERO }
+        { LEFT, ZERO, PIN, ZERO, RIGHT, ZERO, ZERO, LEFT, ZERO, PIN, ZERO, RIGHT, LEFT, ZERO, PIN, ZERO, RIGHT, ZERO, ZERO, LEFT, ZERO, PIN, ZERO, ZERO }
     },
     { "DNAStrand",
-        { RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT }
+        { RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, ZERO }
     },
     { "Diamond",
-        { ZERO, RIGHT, ZERO, ZERO, LEFT, ZERO, ZERO, RIGHT, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, ZERO, ZERO, LEFT }
+        { ZERO, RIGHT, ZERO, ZERO, LEFT, ZERO, ZERO, RIGHT, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, ZERO, ZERO, LEFT, ZERO }
     },
     { "Dog",
-        { RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO, LEFT, RIGHT }
+        { RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO, LEFT, RIGHT, ZERO }
     },
     { "DogFace",
-        { ZERO, ZERO, PIN, PIN, ZERO, LEFT, LEFT, RIGHT, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, RIGHT, RIGHT, ZERO, PIN, PIN, ZERO, ZERO, PIN }
+        { ZERO, ZERO, PIN, PIN, ZERO, LEFT, LEFT, RIGHT, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, RIGHT, RIGHT, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO }
     },
     { "DoublePeak",
-        { ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, LEFT, ZERO, PIN, ZERO, RIGHT, RIGHT, LEFT, PIN, LEFT, RIGHT }
+        { ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, LEFT, ZERO, PIN, ZERO, RIGHT, RIGHT, LEFT, PIN, LEFT, RIGHT, ZERO }
     },
     { "DoubleRoof",
-        { ZERO, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT }
+        { ZERO, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO }
     },
-    { "DoubleToboggan",
-        { ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, ZERO, ZERO, PIN }
+    { "txoboggan",
+        { ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, ZERO, ZERO, PIN, ZERO }
     },
     { "Doubled",
-        { LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT, ZERO, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT }
+        { LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT, ZERO, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, ZERO }
     },
     { "Doubled1",
-        { LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, ZERO, RIGHT, ZERO, RIGHT, ZERO, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT }
+        { LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, ZERO, RIGHT, ZERO, RIGHT, ZERO, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, ZERO }
     },
     { "Doubled2",
-        { LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, LEFT, RIGHT, ZERO, RIGHT, LEFT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT }
+        { LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, LEFT, RIGHT, ZERO, RIGHT, LEFT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, ZERO }
     },
     { "DumblingSpoon",
-        { PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, ZERO }
+        { PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, ZERO, ZERO }
     },
     { "Embrace",
-        { PIN, ZERO, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO }
+        { PIN, ZERO, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, ZERO }
     },
     { "EndlessBelt",
-        { ZERO, RIGHT, LEFT, ZERO, ZERO, ZERO, LEFT, RIGHT, ZERO, PIN, RIGHT, LEFT, ZERO, LEFT, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT, ZERO, LEFT, RIGHT }
+        { ZERO, RIGHT, LEFT, ZERO, ZERO, ZERO, LEFT, RIGHT, ZERO, PIN, RIGHT, LEFT, ZERO, LEFT, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO }
     },
     { "Entrance",
-        { LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT }
+        { LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, ZERO }
     },
     { "Esthetic",
-        { LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT }
+        { LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, ZERO }
     },
-    { "Explotion",
-        { RIGHT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT }
+    { "Explosion",
+        { RIGHT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, ZERO }
     },
     { "F-ZeroXCar",
-        { RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT }
+        { RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, ZERO }
     },
     { "Face",
-        { ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT }
+        { ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO }
     },
     { "Fantasy",
-        { LEFT, LEFT, RIGHT, PIN, ZERO, RIGHT, ZERO, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, ZERO, LEFT, ZERO, PIN, LEFT, RIGHT, RIGHT, RIGHT, PIN }
+        { LEFT, LEFT, RIGHT, PIN, ZERO, RIGHT, ZERO, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, ZERO, LEFT, ZERO, PIN, LEFT, RIGHT, RIGHT, RIGHT, PIN, ZERO }
     },
     { "Fantasy1",
-        { PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, LEFT, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN }
+        { PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, LEFT, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO }
     },
     { "FaserGun",
-        { ZERO, ZERO, LEFT, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, RIGHT, ZERO, PIN }
+        { ZERO, ZERO, LEFT, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, RIGHT, ZERO, PIN, ZERO }
     },
     { "FelixW",
-        { ZERO, RIGHT, ZERO, PIN, LEFT, ZERO, LEFT, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT, RIGHT, ZERO, RIGHT, PIN, ZERO, LEFT, ZERO }
+        { ZERO, RIGHT, ZERO, PIN, LEFT, ZERO, LEFT, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT, RIGHT, ZERO, RIGHT, PIN, ZERO, LEFT, ZERO, ZERO }
     },
     { "Flamingo",
-        { ZERO, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, PIN, LEFT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, LEFT, ZERO, ZERO, ZERO, PIN }
+        { ZERO, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, PIN, LEFT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, LEFT, ZERO, ZERO, ZERO, PIN, ZERO }
     },
     { "FlatOnTheTop",
-        { ZERO, PIN, PIN, ZERO, PIN, RIGHT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, PIN }
+        { ZERO, PIN, PIN, ZERO, PIN, RIGHT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO }
     },
     { "Fly",
-        { ZERO, LEFT, PIN, RIGHT, ZERO, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT }
+        { ZERO, LEFT, PIN, RIGHT, ZERO, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO }
     },
     { "Fountain",
-        { LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, PIN, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, PIN, RIGHT, PIN }
+        { LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, PIN, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, PIN, RIGHT, PIN, ZERO }
     },
     { "Frog",
-        { LEFT, LEFT, RIGHT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, RIGHT, LEFT, RIGHT, RIGHT }
+        { LEFT, LEFT, RIGHT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, RIGHT, LEFT, RIGHT, RIGHT, ZERO }
     },
     { "Frog2",
-        { LEFT, ZERO, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, RIGHT, ZERO, RIGHT }
+        { LEFT, ZERO, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, RIGHT, ZERO, RIGHT, ZERO }
     },
     { "Furby",
-        { PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, PIN, ZERO, ZERO, PIN }
+        { PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, PIN, ZERO, ZERO, PIN, ZERO }
     },
     { "Gate",
-        { ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, RIGHT, ZERO, PIN, PIN, ZERO }
+        { ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, ZERO }
     },
     { "Ghost",
-        { LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT }
+        { LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO }
     },
     { "Globus",
-        { RIGHT, LEFT, ZERO, PIN, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, PIN, ZERO, RIGHT, LEFT, ZERO }
+        { RIGHT, LEFT, ZERO, PIN, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, PIN, ZERO, RIGHT, LEFT, ZERO, ZERO }
     },
     { "Grotto",
-        { PIN, PIN, ZERO, LEFT, RIGHT, LEFT, ZERO, PIN, RIGHT, PIN, LEFT, ZERO, ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, PIN, ZERO, RIGHT, LEFT, RIGHT }
+        { PIN, PIN, ZERO, LEFT, RIGHT, LEFT, ZERO, PIN, RIGHT, PIN, LEFT, ZERO, ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, PIN, ZERO, RIGHT, LEFT, RIGHT, ZERO }
     },
     { "H",
-        { PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, LEFT, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO }
+        { PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, LEFT, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO }
     },
     { "HeadOfDevil",
-        { PIN, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, ZERO, ZERO }
+        { PIN, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, ZERO, ZERO, ZERO }
     },
     { "Heart",
-        { RIGHT, ZERO, ZERO, ZERO, PIN, LEFT, PIN, LEFT, RIGHT, RIGHT, ZERO, PIN, ZERO, LEFT, LEFT, RIGHT, PIN, RIGHT, PIN, ZERO, ZERO, ZERO, LEFT }
+        { RIGHT, ZERO, ZERO, ZERO, PIN, LEFT, PIN, LEFT, RIGHT, RIGHT, ZERO, PIN, ZERO, LEFT, LEFT, RIGHT, PIN, RIGHT, PIN, ZERO, ZERO, ZERO, LEFT, ZERO }
     },
     { "Heart2",
-        { ZERO, PIN, ZERO, ZERO, LEFT, ZERO, LEFT, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO, RIGHT, ZERO, ZERO, PIN, ZERO }
+        { ZERO, PIN, ZERO, ZERO, LEFT, ZERO, LEFT, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO }
     },
     { "Hexagon",
-        { ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO }
+        { ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, ZERO }
     },
     { "HoleInTheMiddle1",
-        { ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT }
+        { ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, ZERO }
     },
     { "HoleInTheMiddle2",
-        { ZERO, LEFT, RIGHT, ZERO, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT }
+        { ZERO, LEFT, RIGHT, ZERO, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, ZERO }
     },
     { "HouseBoat",
-        { RIGHT, RIGHT, PIN, LEFT, LEFT, LEFT, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, RIGHT, PIN }
+        { RIGHT, RIGHT, PIN, LEFT, LEFT, LEFT, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, ZERO }
     },
     { "HouseByHouse",
-        { LEFT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT }
+        { LEFT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, RIGHT, ZERO }
     },
     { "Infinity",
-        { LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT }
+        { LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, ZERO }
     },
     { "Integral",
-        { RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT }
+        { RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO }
     },
     { "Iron",
-        { ZERO, ZERO, ZERO, ZERO, PIN, RIGHT, ZERO, RIGHT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, ZERO, RIGHT }
+        { ZERO, ZERO, ZERO, ZERO, PIN, RIGHT, ZERO, RIGHT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, ZERO, RIGHT, ZERO }
     },
-    { "JustSquares",
-        { RIGHT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, LEFT, PIN, RIGHT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, LEFT }
+    { "just squares",
+        { RIGHT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, LEFT, PIN, RIGHT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, LEFT, ZERO }
     },
     { "Kink",
-        { ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO }
+        { ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO }
     },
     { "Knot",
-        { LEFT, LEFT, PIN, LEFT, ZERO, LEFT, RIGHT, LEFT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, RIGHT, LEFT, RIGHT, ZERO, RIGHT, PIN, RIGHT, RIGHT, LEFT }
+        { LEFT, LEFT, PIN, LEFT, ZERO, LEFT, RIGHT, LEFT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, RIGHT, LEFT, RIGHT, ZERO, RIGHT, PIN, RIGHT, RIGHT, LEFT, ZERO }
     },
     { "Leaf",
-        { ZERO, PIN, PIN, ZERO, ZERO, LEFT, ZERO, LEFT, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO }
+        { ZERO, PIN, PIN, ZERO, ZERO, LEFT, ZERO, LEFT, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO }
     },
     { "LeftAsRight",
-        { RIGHT, PIN, LEFT, RIGHT, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, RIGHT, LEFT, RIGHT, PIN, LEFT }
+        { RIGHT, PIN, LEFT, RIGHT, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, RIGHT, LEFT, RIGHT, PIN, LEFT, ZERO }
     },
     { "Long-necked",
-        { PIN, ZERO, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, PIN, PIN, ZERO }
+        { PIN, ZERO, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, PIN, PIN, ZERO, ZERO }
     },
-    { "LunaModule",
-        { PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT }
+    { "lunar module",
+        { PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, ZERO }
     },
-    { "MagnifyingGlass",
-        { ZERO, ZERO, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, ZERO, ZERO }
+    { "magnifying glass",
+        { ZERO, ZERO, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, ZERO, ZERO, ZERO }
     },
     { "Mask",
-        { ZERO, ZERO, ZERO, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT }
+        { ZERO, ZERO, ZERO, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, ZERO }
     },
     { "Microscope",
-        { PIN, PIN, ZERO, ZERO, PIN, ZERO, RIGHT, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, LEFT, ZERO, PIN, PIN, ZERO, PIN, PIN }
+        { PIN, PIN, ZERO, ZERO, PIN, ZERO, RIGHT, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, LEFT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO }
     },
     { "Mirror",
-        { PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, LEFT, RIGHT, PIN, RIGHT, ZERO, PIN, PIN, ZERO }
+        { PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, PIN, ZERO, ZERO, LEFT, RIGHT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, ZERO }
     },
     { "MissPiggy",
-        { ZERO, LEFT, LEFT, PIN, RIGHT, ZERO, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, ZERO, LEFT, PIN, RIGHT, RIGHT, ZERO, RIGHT }
+        { ZERO, LEFT, LEFT, PIN, RIGHT, ZERO, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, ZERO, LEFT, PIN, RIGHT, RIGHT, ZERO, RIGHT, ZERO }
     },
     { "Mole",
-        { ZERO, RIGHT, ZERO, RIGHT, LEFT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO, LEFT, ZERO, RIGHT, RIGHT, PIN, LEFT }
+        { ZERO, RIGHT, ZERO, RIGHT, LEFT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO, LEFT, ZERO, RIGHT, RIGHT, PIN, LEFT, ZERO }
     },
     { "Monk",
-        { LEFT, ZERO, PIN, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT }
+        { LEFT, ZERO, PIN, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO }
     },
     { "Mountain",
-        { ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, LEFT, PIN, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO }
+        { ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, LEFT, PIN, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO }
     },
-    { "Mountains",
-        { ZERO, PIN, ZERO, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, PIN, ZERO }
+    { "mountains",
+        { ZERO, PIN, ZERO, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, PIN, ZERO, ZERO }
     },
     { "MouseWithoutTail",
-        { ZERO, PIN, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO }
+        { ZERO, PIN, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, ZERO }
     },
-    { "Mushroom",
-        { PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, LEFT, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, ZERO, PIN }
+    { "mushroom",
+        { PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, LEFT, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, ZERO, PIN, ZERO }
     },
-    { "Necklace",
-        { ZERO, ZERO, LEFT, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, RIGHT, ZERO, ZERO }
+    { "necklace",
+        { ZERO, ZERO, LEFT, ZERO, ZERO, ZERO, LEFT, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO, RIGHT, ZERO, ZERO, ZERO }
     },
     { "NestledAgainst",
-        { LEFT, ZERO, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT }
+        { LEFT, ZERO, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, ZERO }
     },
     { "NoClue",
-        { ZERO, RIGHT, PIN, LEFT, LEFT, LEFT, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO, RIGHT, RIGHT, RIGHT, PIN, LEFT, ZERO }
+        { ZERO, RIGHT, PIN, LEFT, LEFT, LEFT, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO, RIGHT, RIGHT, RIGHT, PIN, LEFT, ZERO, ZERO }
     },
     { "Noname",
-        { LEFT, PIN, RIGHT, PIN, RIGHT, ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT }
+        { LEFT, PIN, RIGHT, PIN, RIGHT, ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, ZERO }
     },
     { "Obelisk",
-        { PIN, ZERO, ZERO, ZERO, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, ZERO, ZERO, ZERO }
+        { PIN, ZERO, ZERO, ZERO, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, ZERO, ZERO, ZERO, ZERO }
     },
     { "Ostrich",
-        { ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, PIN }
+        { ZERO, ZERO, PIN, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, PIN, ZERO }
     },
     { "Ostrich2",
-        { PIN, PIN, ZERO, PIN, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO }
+        { PIN, PIN, ZERO, PIN, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO }
     },
-    { "PairOfGlasses",
-        { ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, LEFT, ZERO, PIN, ZERO, RIGHT, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO }
+    { "pair of glasses",
+        { ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, LEFT, ZERO, PIN, ZERO, RIGHT, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO }
     },
     { "Parrot",
-        { ZERO, ZERO, ZERO, ZERO, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, RIGHT, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, ZERO, PIN }
+        { ZERO, ZERO, ZERO, ZERO, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, RIGHT, ZERO, RIGHT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, ZERO, PIN, ZERO }
     },
     { "Penis",
-        { PIN, PIN, RIGHT, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, LEFT, PIN, PIN }
+        { PIN, PIN, RIGHT, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, LEFT, PIN, PIN, ZERO }
     },
     { "PictureCommingSoon",
-        { LEFT, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, ZERO, RIGHT, RIGHT }
+        { LEFT, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, ZERO, RIGHT, RIGHT, ZERO }
     },
     { "Pitti",
-        { LEFT, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, RIGHT }
+        { LEFT, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, RIGHT, ZERO }
     },
     { "Plait",
-        { LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT }
+        { LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, ZERO }
     },
     { "Platform",
-        { RIGHT, PIN, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT }
+        { RIGHT, PIN, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, LEFT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO }
     },
     { "PodRacer",
-        { ZERO, PIN, ZERO, PIN, RIGHT, PIN, ZERO, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, ZERO, LEFT, ZERO, PIN, LEFT }
+        { ZERO, PIN, ZERO, PIN, RIGHT, PIN, ZERO, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, ZERO, LEFT, ZERO, PIN, LEFT, ZERO }
     },
+#if 0
     { "Pokemon",
-        { LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT }
+        { LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, ZERO }
     },
+#endif
     { "Prawn",
-        { RIGHT, PIN, ZERO, PIN, RIGHT, ZERO, PIN, PIN, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, LEFT, PIN, ZERO, PIN, LEFT }
+        { RIGHT, PIN, ZERO, PIN, RIGHT, ZERO, PIN, PIN, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, PIN, PIN, ZERO, LEFT, PIN, ZERO, PIN, LEFT, ZERO }
     },
     { "Propeller",
-        { ZERO, ZERO, ZERO, RIGHT, ZERO, LEFT, RIGHT, LEFT, ZERO, ZERO, ZERO, RIGHT, ZERO, LEFT, RIGHT, LEFT, ZERO, ZERO, ZERO, RIGHT, ZERO, LEFT, RIGHT }
+        { ZERO, ZERO, ZERO, RIGHT, ZERO, LEFT, RIGHT, LEFT, ZERO, ZERO, ZERO, RIGHT, ZERO, LEFT, RIGHT, LEFT, ZERO, ZERO, ZERO, RIGHT, ZERO, LEFT, RIGHT, ZERO }
     },
     { "Pyramid",
-        { ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, RIGHT, LEFT, LEFT, LEFT, PIN, RIGHT, RIGHT, RIGHT, LEFT }
+        { ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, RIGHT, LEFT, LEFT, LEFT, PIN, RIGHT, RIGHT, RIGHT, LEFT, ZERO }
     },
     { "QuarterbackTiltedAndReadyToHut",
-        { PIN, ZERO, RIGHT, RIGHT, LEFT, RIGHT, PIN, RIGHT, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT, LEFT, ZERO, PIN }
+        { PIN, ZERO, RIGHT, RIGHT, LEFT, RIGHT, PIN, RIGHT, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT, LEFT, ZERO, PIN, ZERO }
     },
     { "Ra",
-        { PIN, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT }
+        { PIN, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO }
     },
     { "Rattlesnake",
-        { LEFT, ZERO, LEFT, ZERO, LEFT, ZERO, LEFT, LEFT, ZERO, LEFT, ZERO, LEFT, ZERO, LEFT, RIGHT, ZERO, PIN, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT }
+        { LEFT, ZERO, LEFT, ZERO, LEFT, ZERO, LEFT, LEFT, ZERO, LEFT, ZERO, LEFT, ZERO, LEFT, RIGHT, ZERO, PIN, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, ZERO }
     },
     { "Revelation",
-        { ZERO, ZERO, ZERO, PIN, ZERO, ZERO, PIN, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, PIN, ZERO, ZERO, PIN }
+        { ZERO, ZERO, ZERO, PIN, ZERO, ZERO, PIN, RIGHT, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, LEFT, PIN, ZERO, ZERO, PIN, ZERO }
     },
     { "Revolution1",
-        { LEFT, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT }
+        { LEFT, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, ZERO }
     },
     { "Ribbon",
-        { RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT }
+        { RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO }
     },
     { "Rocket",
-        { RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, RIGHT, ZERO, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, ZERO, LEFT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT }
+        { RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, RIGHT, ZERO, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, ZERO, LEFT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, ZERO }
     },
     { "Roofed",
-        { ZERO, LEFT, PIN, RIGHT, ZERO, PIN, LEFT, ZERO, PIN, ZERO, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, LEFT, ZERO, PIN, ZERO, RIGHT }
+        { ZERO, LEFT, PIN, RIGHT, ZERO, PIN, LEFT, ZERO, PIN, ZERO, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, LEFT, ZERO, PIN, ZERO, RIGHT, ZERO }
     },
     { "Roofs",
-        { PIN, PIN, RIGHT, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, LEFT, PIN, PIN }
+        { PIN, PIN, RIGHT, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, LEFT, PIN, PIN, ZERO }
     },
     { "RowHouses",
-        { RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT }
+        { RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO }
     },
     { "Sculpture",
-        { RIGHT, LEFT, PIN, ZERO, ZERO, ZERO, LEFT, RIGHT, LEFT, PIN, ZERO, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO, ZERO, ZERO, PIN, LEFT, RIGHT, LEFT }
+        { RIGHT, LEFT, PIN, ZERO, ZERO, ZERO, LEFT, RIGHT, LEFT, PIN, ZERO, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO, ZERO, ZERO, PIN, LEFT, RIGHT, LEFT, ZERO }
     },
     { "Seal",
-        { LEFT, LEFT, LEFT, PIN, RIGHT, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, LEFT }
+        { LEFT, LEFT, LEFT, PIN, RIGHT, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, LEFT, ZERO }
     },
     { "Seal2",
-        { RIGHT, PIN, ZERO, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO }
+        { RIGHT, PIN, ZERO, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, PIN, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, ZERO }
     },
     { "Sheep",
-        { RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, LEFT }
+        { RIGHT, LEFT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, LEFT, LEFT, RIGHT, LEFT, ZERO }
     },
     { "Shelter",
-        { LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, RIGHT }
+        { LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, ZERO, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO }
     },
     { "Ship",
-        { PIN, RIGHT, LEFT, LEFT, LEFT, LEFT, PIN, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, ZERO, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, LEFT, ZERO, PIN, PIN }
+        { PIN, RIGHT, LEFT, LEFT, LEFT, LEFT, PIN, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, ZERO, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, LEFT, ZERO, PIN, PIN, ZERO }
     },
     { "Shpongle",
-        { LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO }
+        { LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, ZERO }
     },
     { "Slide",
-        { LEFT, RIGHT, LEFT, RIGHT, ZERO, LEFT, RIGHT, LEFT, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, RIGHT, LEFT }
+        { LEFT, RIGHT, LEFT, RIGHT, ZERO, LEFT, RIGHT, LEFT, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, RIGHT, LEFT, ZERO }
     },
     { "SmallShip",
-        { ZERO, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO, LEFT, RIGHT, ZERO, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO, LEFT }
+        { ZERO, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO, LEFT, RIGHT, ZERO, LEFT, RIGHT, ZERO, RIGHT, LEFT, ZERO, LEFT, RIGHT, ZERO, LEFT, ZERO }
     },
     { "SnakeReadyToStrike",
-        { LEFT, ZERO, LEFT, ZERO, LEFT, ZERO, LEFT, RIGHT, ZERO, RIGHT, ZERO, RIGHT, ZERO, LEFT, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, LEFT }
+        { LEFT, ZERO, LEFT, ZERO, LEFT, ZERO, LEFT, RIGHT, ZERO, RIGHT, ZERO, RIGHT, ZERO, LEFT, ZERO, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO, LEFT, ZERO }
     },
     { "Snakes14",
-        { RIGHT, RIGHT, PIN, ZERO, RIGHT, LEFT, RIGHT, ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, PIN, ZERO, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, LEFT, RIGHT }
+        { RIGHT, RIGHT, PIN, ZERO, RIGHT, LEFT, RIGHT, ZERO, ZERO, ZERO, RIGHT, PIN, LEFT, PIN, ZERO, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO }
     },
     { "Snakes15",
-        { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, ZERO, PIN, RIGHT }
+        { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, ZERO, PIN, RIGHT, ZERO }
     },
     { "Snakes18",
-        { PIN, PIN, LEFT, PIN, LEFT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, ZERO, PIN }
+        { PIN, PIN, LEFT, PIN, LEFT, PIN, RIGHT, ZERO, RIGHT, PIN, RIGHT, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO }
     },
     { "Snowflake",
-        { LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT }
+        { LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, RIGHT, ZERO }
     },
     { "Snowman",
-        { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO }
+        { ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO }
     },
     { "Source",
-        { PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN }
+        { PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, ZERO }
     },
     { "Spaceship",
-        { PIN, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, PIN }
+        { PIN, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, RIGHT, PIN, PIN, ZERO }
     },
     { "Spaceship2",
-        { PIN, PIN, LEFT, PIN, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, LEFT, LEFT, PIN, PIN }
+        { PIN, PIN, LEFT, PIN, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, LEFT, LEFT, PIN, PIN, ZERO }
     },
     { "Speedboat",
-        { LEFT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, LEFT, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT }
+        { LEFT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, LEFT, ZERO, ZERO, PIN, ZERO, ZERO, RIGHT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT, ZERO }
     },
     { "Speedboat2",
-        { PIN, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, PIN, ZERO, RIGHT, PIN, LEFT }
+        { PIN, RIGHT, LEFT, LEFT, RIGHT, RIGHT, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, LEFT, LEFT, RIGHT, RIGHT, LEFT, PIN, ZERO, RIGHT, PIN, LEFT, ZERO }
     },
     { "Spider",
-        { RIGHT, RIGHT, ZERO, ZERO, LEFT, RIGHT, LEFT, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, RIGHT, LEFT, RIGHT, ZERO, ZERO, LEFT }
+        { RIGHT, RIGHT, ZERO, ZERO, LEFT, RIGHT, LEFT, PIN, ZERO, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, ZERO, PIN, RIGHT, LEFT, RIGHT, ZERO, ZERO, LEFT, ZERO }
     },
     { "Spitzbergen",
-        { PIN, LEFT, ZERO, RIGHT, RIGHT, LEFT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO, PIN, RIGHT, LEFT, LEFT, ZERO }
+        { PIN, LEFT, ZERO, RIGHT, RIGHT, LEFT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO, PIN, RIGHT, LEFT, LEFT, ZERO, ZERO }
     },
     { "Square",
-        { ZERO, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, ZERO }
+        { ZERO, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, ZERO, LEFT, LEFT, PIN, RIGHT, RIGHT, ZERO, ZERO, ZERO }
     },
     { "SquareHole",
-        { PIN, ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, PIN }
+        { PIN, ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, PIN, ZERO }
     },
     { "Stage",
-        { RIGHT, ZERO, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO }
+        { RIGHT, ZERO, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, LEFT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, ZERO }
     },
     { "Stairs",
-        { ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO }
+        { ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, ZERO }
     },
     { "Stairs2",
-        { ZERO, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO }
+        { ZERO, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, ZERO }
     },
     { "Straight",
-        { ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO }
+        { ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO }
     },
     { "Swan",
-        { ZERO, PIN, ZERO, PIN, LEFT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, RIGHT }
+        { ZERO, PIN, ZERO, PIN, LEFT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, LEFT, PIN, LEFT, RIGHT, ZERO }
     },
     { "Swan2",
-        { PIN, ZERO, PIN, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, PIN, PIN }
+        { PIN, ZERO, PIN, RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, RIGHT, PIN, ZERO, ZERO, ZERO, ZERO, ZERO, PIN, PIN, ZERO }
     },
     { "Swan3",
-        { PIN, PIN, ZERO, ZERO, ZERO, RIGHT, ZERO, RIGHT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, ZERO, RIGHT }
+        { PIN, PIN, ZERO, ZERO, ZERO, RIGHT, ZERO, RIGHT, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, ZERO, RIGHT, ZERO }
     },
     { "Symbol",
-        { RIGHT, RIGHT, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, LEFT, RIGHT }
+        { RIGHT, RIGHT, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, ZERO, PIN, PIN, ZERO, PIN, LEFT, LEFT, RIGHT, ZERO }
     },
     { "Symmetry",
-        { RIGHT, ZERO, LEFT, RIGHT, LEFT, ZERO, LEFT, RIGHT, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, LEFT }
+        { RIGHT, ZERO, LEFT, RIGHT, LEFT, ZERO, LEFT, RIGHT, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, RIGHT, ZERO, RIGHT, LEFT, RIGHT, ZERO, LEFT, ZERO }
     },
     { "Symmetry2",
-        { ZERO, PIN, LEFT, LEFT, PIN, ZERO, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, PIN, LEFT }
+        { ZERO, PIN, LEFT, LEFT, PIN, ZERO, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, PIN, LEFT, ZERO }
     },
     { "TableFireworks",
-        { ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, RIGHT, PIN, RIGHT, LEFT, ZERO, RIGHT, PIN }
+        { ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, RIGHT, PIN, RIGHT, LEFT, ZERO, RIGHT, PIN, ZERO }
     },
     { "Tapering",
-        { ZERO, ZERO, RIGHT, LEFT, PIN, LEFT, ZERO, PIN, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, PIN, RIGHT, LEFT, ZERO, ZERO }
+        { ZERO, ZERO, RIGHT, LEFT, PIN, LEFT, ZERO, PIN, PIN, ZERO, LEFT, PIN, RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, PIN, RIGHT, LEFT, ZERO, ZERO, ZERO }
     },
     { "TaperingTurned",
-        { ZERO, ZERO, RIGHT, LEFT, PIN, LEFT, ZERO, PIN, PIN, ZERO, LEFT, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, PIN, RIGHT, LEFT, ZERO, ZERO }
+        { ZERO, ZERO, RIGHT, LEFT, PIN, LEFT, ZERO, PIN, PIN, ZERO, LEFT, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, RIGHT, PIN, RIGHT, LEFT, ZERO, ZERO, ZERO }
     },
     { "TeaLightStick",
-        { RIGHT, ZERO, PIN, PIN, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN }
+        { RIGHT, ZERO, PIN, PIN, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, ZERO }
     },
-    { "Tent",
-        { RIGHT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO }
+    { "thighmaster",
+        { RIGHT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, ZERO }
     },
     { "Terraces",
-        { RIGHT, LEFT, ZERO, RIGHT, LEFT, PIN, LEFT, LEFT, PIN, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT }
+        { RIGHT, LEFT, ZERO, RIGHT, LEFT, PIN, LEFT, LEFT, PIN, LEFT, RIGHT, RIGHT, RIGHT, LEFT, LEFT, LEFT, RIGHT, PIN, RIGHT, RIGHT, PIN, RIGHT, LEFT, ZERO }
     },
     { "Terrier",
-        { PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO }
+        { PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO }
     },
     { "Three-Legged",
-        { RIGHT, ZERO, LEFT, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, RIGHT, ZERO, PIN, ZERO, LEFT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, RIGHT, ZERO, LEFT }
+        { RIGHT, ZERO, LEFT, RIGHT, ZERO, LEFT, PIN, RIGHT, ZERO, RIGHT, ZERO, PIN, ZERO, LEFT, ZERO, LEFT, PIN, RIGHT, ZERO, LEFT, RIGHT, ZERO, LEFT, ZERO }
     },
     { "ThreePeaks",
-        { RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT }
+        { RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT, ZERO }
     },
     { "ToTheFront",
-        { ZERO, PIN, RIGHT, LEFT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, LEFT, LEFT, PIN, ZERO, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT }
+        { ZERO, PIN, RIGHT, LEFT, LEFT, LEFT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, LEFT, LEFT, PIN, ZERO, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, ZERO }
     },
     { "Top",
-        { PIN, LEFT, LEFT, PIN, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, PIN, RIGHT, PIN, RIGHT, RIGHT, PIN, ZERO }
+        { PIN, LEFT, LEFT, PIN, LEFT, ZERO, ZERO, RIGHT, LEFT, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, PIN, RIGHT, PIN, RIGHT, RIGHT, PIN, ZERO, ZERO }
     },
     { "Transport",
-        { PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, ZERO, ZERO }
+        { PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, ZERO, ZERO, ZERO }
     },
     { "Triangle",
-        { ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT }
+        { ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT, LEFT, ZERO, ZERO, ZERO, ZERO, ZERO, ZERO, RIGHT, ZERO }
     },
     { "Tripple",
-        { PIN, ZERO, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN }
+        { PIN, ZERO, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, PIN, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, PIN, LEFT, PIN, LEFT, PIN, RIGHT, PIN, ZERO }
     },
+#if 0
     { "Turtle",
-        { RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO }
+        { RIGHT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, PIN, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, ZERO, LEFT, RIGHT, ZERO, ZERO }
     },
+#endif
     { "Twins",
-        { ZERO, PIN, ZERO, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, ZERO, ZERO, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, PIN, ZERO, ZERO }
+        { ZERO, PIN, ZERO, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, PIN, ZERO, ZERO, PIN, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, ZERO, PIN, ZERO, ZERO, ZERO }
     },
     { "TwoSlants",
-        { ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, PIN }
+        { ZERO, PIN, ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, ZERO, RIGHT, PIN, ZERO }
     },
     { "TwoWings",
-        { PIN, LEFT, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, ZERO }
+        { PIN, LEFT, ZERO, RIGHT, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, PIN, PIN, ZERO, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, LEFT, ZERO, ZERO }
     },
     { "UFO",
-        { LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, PIN, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT }
+        { LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, LEFT, PIN, LEFT, LEFT, LEFT, RIGHT, LEFT, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO }
     },
-    { "USSEnterprice",
-        { LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, ZERO }
+    { "USS Enterprise",
+        { LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, LEFT, ZERO, PIN, PIN, ZERO, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, ZERO, ZERO }
     },
     { "UpAndDown",
-        { ZERO, PIN, ZERO, PIN, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO }
+        { ZERO, PIN, ZERO, PIN, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, ZERO }
     },
     { "Upright",
-        { ZERO, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, PIN, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO }
+        { ZERO, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, PIN, ZERO, ZERO, LEFT, PIN, RIGHT, ZERO, ZERO, PIN, RIGHT, RIGHT, LEFT, RIGHT, LEFT, LEFT, ZERO, ZERO }
     },
     { "Upside-down",
-        { PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, RIGHT, LEFT, LEFT, PIN, RIGHT, RIGHT, LEFT, LEFT, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN }
+        { PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, RIGHT, RIGHT, LEFT, LEFT, PIN, RIGHT, RIGHT, LEFT, LEFT, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, ZERO }
     },
     { "Valley",
-        { ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO }
+        { ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, RIGHT, ZERO, PIN, ZERO, LEFT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, PIN, LEFT, ZERO, ZERO }
     },
     { "Viaduct",
-        { PIN, RIGHT, PIN, LEFT, PIN, ZERO, ZERO, PIN, RIGHT, ZERO, RIGHT, RIGHT, ZERO, RIGHT, PIN, ZERO, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO }
+        { PIN, RIGHT, PIN, LEFT, PIN, ZERO, ZERO, PIN, RIGHT, ZERO, RIGHT, RIGHT, ZERO, RIGHT, PIN, ZERO, ZERO, PIN, LEFT, PIN, RIGHT, PIN, ZERO, ZERO }
     },
     { "View",
-        { ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT, PIN, RIGHT, PIN, LEFT }
+        { ZERO, RIGHT, PIN, LEFT, PIN, RIGHT, ZERO, ZERO, RIGHT, PIN, LEFT, LEFT, RIGHT, RIGHT, PIN, LEFT, ZERO, ZERO, LEFT, PIN, RIGHT, PIN, LEFT, ZERO }
     },
     { "Waterfall",
-        { LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT }
+        { LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, PIN, LEFT, ZERO, RIGHT, ZERO }
     },
-    { "WindWheel",
-        { PIN, RIGHT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO }
+    { "windwheel",
+        { PIN, RIGHT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, ZERO, ZERO }
     },
     { "Window",
-        { PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO }
+        { PIN, ZERO, PIN, PIN, ZERO, ZERO, PIN, ZERO, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, ZERO, PIN, PIN, ZERO, ZERO, ZERO, ZERO, ZERO }
     },
     { "WindowToTheWorld",
-        { PIN, LEFT, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO }
+        { PIN, LEFT, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, RIGHT, PIN, LEFT, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO, PIN, ZERO, ZERO }
     },
     { "Windshield",
-        { PIN, PIN, ZERO, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, ZERO, PIN, PIN, ZERO, PIN }
+        { PIN, PIN, ZERO, RIGHT, PIN, LEFT, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, RIGHT, PIN, LEFT, ZERO, PIN, PIN, ZERO, PIN, ZERO }
     },
     { "WingNut",
-        { ZERO, ZERO, ZERO, ZERO, PIN, RIGHT, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, RIGHT, RIGHT, PIN, ZERO, ZERO, ZERO, ZERO }
+        { ZERO, ZERO, ZERO, ZERO, PIN, RIGHT, RIGHT, RIGHT, PIN, RIGHT, LEFT, PIN, LEFT, RIGHT, PIN, RIGHT, RIGHT, RIGHT, PIN, ZERO, ZERO, ZERO, ZERO, ZERO }
     },
     { "Wings2",
-        { RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, ZERO, PIN, ZERO }
+        { RIGHT, ZERO, PIN, ZERO, LEFT, PIN, RIGHT, PIN, RIGHT, LEFT, RIGHT, RIGHT, LEFT, LEFT, RIGHT, LEFT, PIN, LEFT, PIN, RIGHT, ZERO, PIN, ZERO, ZERO }
     },
     { "WithoutName",
-        { PIN, RIGHT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN }
+        { PIN, RIGHT, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, ZERO, PIN, RIGHT, PIN, LEFT, PIN, ZERO, PIN, RIGHT, RIGHT, PIN, LEFT, LEFT, PIN, ZERO }
     },
     { "Wolf",
-        { ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN }
+        { ZERO, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, PIN, ZERO, PIN, PIN, ZERO, PIN, ZERO, ZERO, ZERO, PIN, PIN, ZERO, ZERO, ZERO, PIN, ZERO }
     },
     { "X",
-        { LEFT, ZERO, ZERO, PIN, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, RIGHT, PIN, ZERO, ZERO }
+        { LEFT, ZERO, ZERO, PIN, LEFT, RIGHT, RIGHT, PIN, LEFT, RIGHT, ZERO, PIN, PIN, ZERO, LEFT, RIGHT, PIN, LEFT, LEFT, RIGHT, PIN, ZERO, ZERO, ZERO }
     },
 };
 
-int models = (sizeof(model) / sizeof(struct model_s));
+size_t models = sizeof(model) / sizeof(struct model_s);
 
 #define VOFFSET 0.045
 
@@ -1345,31 +1369,48 @@ void calc_rotation();
 inline void ui_mousedrag();
 #endif
 
+GLfloat white_light[] = { 1.0, 1.0, 1.0, 1.0 };
+GLfloat lmodel_ambient[] = { 0.2, 0.2, 0.2, 1.0 };
+GLfloat mat_specular[] = { 0.1, 0.1, 0.1, 1.0 };
+GLfloat mat_shininess[] = { 20.0 };
+
 void gl_init(
 #ifndef HAVE_GLUT
 	     ModeInfo * mi
 #endif
 	     ) {
-    float light_pos[][3] = {{0.0, 0.0, 20.0}, {0.0, 20.0, 0.0}};
-    float light_dir[][3] = {{0.0, 0.0,-20.0}, {0.0,-20.0, 0.0}};
+    float light_pos[][3] = {{0.0, 10.0, 20.0}, {0.0, 20.0, -1.0}};
+    float light_dir[][3] = {{0.0, -10.0,-20.0}, {0.0,-20.0, 1.0}};
 
-    glClearColor(0.0, 0.0, 0.0, 0.0);
     glEnable(GL_DEPTH_TEST);
     glShadeModel(GL_SMOOTH);
     glCullFace(GL_BACK);
-    glEnable(GL_CULL_FACE);
+    /*glEnable(GL_CULL_FACE);*/
     glEnable(GL_NORMALIZE);
+    if (transparent) {
+	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+    }
 
     if (!wireframe) {
-	glColor3f(1.0, 1.0, 1.0);
+	/*glColor4f(1.0, 1.0, 1.0, 1.0);*/
 	glLightfv(GL_LIGHT0, GL_POSITION, light_pos[0]);
 	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, light_dir[0]);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, white_light);
+	/*glLightfv(GL_LIGHT0, GL_SPECULAR, white_light);*/
+#if 1
 	glLightfv(GL_LIGHT1, GL_POSITION, light_pos[1]);
 	glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light_dir[1]);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, white_light);
+	glLightfv(GL_LIGHT1, GL_SPECULAR, white_light);
+#endif
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+	glMaterialfv(GL_FRONT, GL_SPECULAR, mat_specular);
+	glMaterialfv(GL_FRONT, GL_SHININESS, mat_shininess);
 	glEnable(GL_LIGHTING);
 	glEnable(GL_LIGHT0);
 	glEnable(GL_LIGHT1);
-	glEnable(GL_COLOR_MATERIAL);
+	/*glEnable(GL_COLOR_MATERIAL);*/
     }
 }
 
@@ -1389,8 +1430,7 @@ void gettime(snaketime *t)
 #endif /* !HAVE_GETTIMEOFDAY */
 }
 
-
-void start_morph(int model_index, int immediate);
+void start_morph(unsigned int model_index, int immediate);
 
 /* wot initialises it */
 void glsnake_init(
@@ -1607,9 +1647,12 @@ void draw_title(
 #endif
 
     /* draw some text */
-    glPushAttrib(GL_TRANSFORM_BIT | GL_ENABLE_BIT);
+    glPushAttrib((GLbitfield) GL_TRANSFORM_BIT | GL_ENABLE_BIT);
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
+    if (transparent) {
+	glDisable(GL_BLEND);
+    }
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     glLoadIdentity();
@@ -1617,23 +1660,38 @@ void draw_title(
     glPushMatrix();
     glLoadIdentity();
 #ifdef HAVE_GLUT
-    gluOrtho2D(0, glc->width, 0, glc->height);
+    gluOrtho2D((GLdouble) 0., (GLdouble) glc->width, (GLdouble) 0., (GLdouble) glc->height);
 #else
-    gluOrtho2D(0, mi->xgwa.width, 0, mi->xgwa.height);
+    gluOrtho2D((GLdouble) 0., (GLdouble) mi->xgwa.width, (GLdouble) 0., (GLdouble) mi->xgwa.height);
 #endif
-    glColor3f(1.0, 1.0, 1.0);
+    glColor4f(1.0, 1.0, 1.0, 1.0);
     {
 	char interactstr[] = "interactive";
-	char * s;
+	const char * s;
+#ifdef HAVE_GLUT
+	int w;
+#endif
+	
 	if (interactive)
 	    s = interactstr;
 	else
 	    s = model[glc->next_model].name;
-
-        print_gl_string (mi->dpy, bp->font, bp->font_list,
-                         mi->xgwa.width, mi->xgwa.height,
-                         10, mi->xgwa.height - 10,
-                         s);
+	
+#ifdef HAVE_GLUT
+	{
+	    unsigned int i = 0;
+	    
+	    w = glutBitmapLength(GLUT_BITMAP_HELVETICA_12, (const unsigned char *) s);
+	    glRasterPos2f((GLfloat) (glc->width - w - 3), 4.0);
+	    while (s[i] != '\0')
+		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, s[i++]);
+	}
+#else
+	print_gl_string(mi->dpy, bp->font, bp->font_list,
+			mi->xgwa.width, mi->xgwa.height,
+			10.0, (float) mi->xgwa.height - 10.0,
+			s);
+#endif
     }
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
@@ -1669,7 +1727,7 @@ void glsnake_reshape(
     glViewport(0, 0, (GLint) w, (GLint) h);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluPerspective(zoom, w/(GLfloat)h, 0.05, 100.0);
+    gluPerspective(zoom, (GLdouble) w / (GLdouble) h, 0.05, 100.0);
     gluLookAt(0.0, 0.0, 20.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
     glMatrixMode(GL_MODELVIEW);
     /*gluLookAt(0.0, 0.0, 20.0, 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);*/
@@ -1791,7 +1849,7 @@ float morph_percent(void) {
 	     * target */
 	    ang_diff = fabs(glc->node[i] -
 			    model[glc->next_model].node[i]);
-	    if (ang_diff > 180.0) ang_diff = 180 - ang_diff;
+	    if (ang_diff > 180.0) ang_diff = 180.0 - ang_diff;
 	    /* if it's the biggest so far, record it */
 	    if (rot > rot_max) rot_max = rot;
 	    if (ang_diff > ang_diff_max) ang_diff_max = ang_diff;
@@ -1820,14 +1878,16 @@ void morph_colour(void) {
     glc->colour[0][0] = colour[glc->prev_colour][0][0] * compct + colour[glc->next_colour][0][0] * percent;
     glc->colour[0][1] = colour[glc->prev_colour][0][1] * compct + colour[glc->next_colour][0][1] * percent;
     glc->colour[0][2] = colour[glc->prev_colour][0][2] * compct + colour[glc->next_colour][0][2] * percent;
+    glc->colour[0][3] = colour[glc->prev_colour][0][3] * compct + colour[glc->next_colour][0][3] * percent;
 
     glc->colour[1][0] = colour[glc->prev_colour][1][0] * compct + colour[glc->next_colour][1][0] * percent;
     glc->colour[1][1] = colour[glc->prev_colour][1][1] * compct + colour[glc->next_colour][1][1] * percent;
     glc->colour[1][2] = colour[glc->prev_colour][1][2] * compct + colour[glc->next_colour][1][2] * percent;
+    glc->colour[1][3] = colour[glc->prev_colour][1][3] * compct + colour[glc->next_colour][1][3] * percent;
 }
 
 /* Start morph process to this model */
-void start_morph(int model_index, int immediate) {
+void start_morph(unsigned int model_index, int immediate) {
     /* if immediate, don't bother morphing, go straight to the next model */
     if (immediate) {
 	int i;
@@ -1854,9 +1914,11 @@ void start_morph(int model_index, int immediate) {
 	glc->colour[0][0] = colour[glc->next_colour][0][0];
 	glc->colour[0][1] = colour[glc->next_colour][0][1];
 	glc->colour[0][2] = colour[glc->next_colour][0][2];
+	glc->colour[0][3] = colour[glc->next_colour][0][3];
 	glc->colour[1][0] = colour[glc->next_colour][1][0];
 	glc->colour[1][1] = colour[glc->next_colour][1][1];
 	glc->colour[1][2] = colour[glc->next_colour][1][2];
+	glc->colour[1][3] = colour[glc->next_colour][1][3];
     }
     glc->morphing = 1;
 
@@ -1899,7 +1961,7 @@ float morph(long iter_msec) {
 #ifdef HAVE_GLUT
 void glsnake_idle();
 
-void restore_idle(int value)
+void restore_idle(int v __attribute__((__unused__)))
 {
     glutIdleFunc(glsnake_idle);
 }
@@ -2048,7 +2110,7 @@ void glsnake_display(
 #endif
     
     /* clear the buffer */
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glClear((GLbitfield) GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
     /* go into the modelview stack */
     glMatrixMode(GL_MODELVIEW);
@@ -2080,9 +2142,9 @@ void glsnake_display(
 	/*printf("ang = %f\n", ang);*/
 	
 	glTranslatef(0.5, 0.5, 0.5);		/* move to center */
-	glRotatef(90, 0.0, 0.0, -1.0);		/* reorient  */
+	glRotatef(90.0, 0.0, 0.0, -1.0);	/* reorient  */
 	glTranslatef(1.0 + explode, 0.0, 0.0);	/* move to new pos. */
-	glRotatef(180 + ang, 1.0, 0.0, 0.0);	/* pivot to new angle */
+	glRotatef(180.0 + ang, 1.0, 0.0, 0.0);	/* pivot to new angle */
 	glTranslatef(-0.5, -0.5, -0.5);		/* return from center */
 
 	glGetFloatv(GL_MODELVIEW_MATRIX, rotmat);
@@ -2113,7 +2175,7 @@ void glsnake_display(
     glTranslatef(-com[0], -com[1], -com[2]);
 
     glDisable(GL_LIGHTING);
-    glColor3f(1.0, 0.0, 0.0);
+    glColor4f(1.0, 0.0, 0.0, 1.0);
     glBegin(GL_LINE_STRIP);
     for (i = 0; i < NODE_COUNT - 1; i++) {
 	glVertex3fv(positions[i]);
@@ -2141,9 +2203,13 @@ void glsnake_display(
 	/* choose a colour for this node */
 	if ((i == glc->selected || i == glc->selected+1) && interactive)
 	    /* yellow */
-	    glColor3f(1.0, 1.0, 0.0);
-	else
-	    glColor3fv(glc->colour[(i+1)%2]);
+	    glColor4f(1.0, 1.0, 0.0, 1.0);
+	else {
+	    /*glColor4fv(glc->colour[(i+1)%2]);*/
+	    glMaterialfv(GL_FRONT, GL_AMBIENT, glc->colour[(i+1)%2]);
+	    glMaterialfv(GL_FRONT, GL_DIFFUSE, glc->colour[(i+1)%2]);
+	    /*glMaterialfv(GL_FRONT, GL_SPECULAR, glc->colour[(i+1)%2]);*/
+	}
 
 	/* draw the node */
 	if (wireframe)
@@ -2157,9 +2223,9 @@ void glsnake_display(
 	ang = glc->node[i];
 	
 	glTranslatef(0.5, 0.5, 0.5);		/* move to center */
-	glRotatef(90, 0.0, 0.0, -1.0);		/* reorient  */
+	glRotatef(90.0, 0.0, 0.0, -1.0);	/* reorient  */
 	glTranslatef(1.0 + explode, 0.0, 0.0);	/* move to new pos. */
-	glRotatef(180 + ang, 1.0, 0.0, 0.0);	/* pivot to new angle */
+	glRotatef(180.0 + ang, 1.0, 0.0, 0.0);	/* pivot to new angle */
 	glTranslatef(-0.5, -0.5, -0.5);		/* return from center */
     }
 
@@ -2197,8 +2263,8 @@ int main(int argc, char ** argv) {
     glc = malloc(sizeof(struct glsnake_cfg));
     memset(glc, 0, sizeof(struct glsnake_cfg));
 
-    glc->width = 320;
-    glc->height = 240;
+    glc->width = 640;
+    glc->height = 480;
     
     ui_init(&argc, argv);
 
@@ -2234,7 +2300,7 @@ float cumquat[4] = {0.0,0.0,0.0,0.0}, oldquat[4] = {0.0,0.0,0.0,0.1};
 float rotation[16];
 
 /* mouse drag vectors: start and end */
-float m_s[3], m_e[3];
+float mouse_start[3], mouse_end[3];
 
 /* dragging boolean */
 int dragging = 0;
@@ -2272,9 +2338,7 @@ inline void ui_mousedrag() {
     glMultMatrixf(rotation);
 }
 
-void ui_keyboard(unsigned char c, int x, int y) {
-    int i;
-    
+void ui_keyboard(unsigned char c, int x __attribute__((__unused__)), int y __attribute__((__unused__))) {
     switch (c) {
       case 27:  /* ESC */
       case 'q':
@@ -2300,18 +2364,18 @@ void ui_keyboard(unsigned char c, int x, int y) {
 	break;
       case ',':
 	/* previous model */
-	glc->next_model = (glc->next_model + models - 1) % models;
+	glc->next_model = (glc->next_model + (int)models - 1) % (int)models;
 	start_morph(glc->next_model, 0);
 	
 	/* Reset glc->last_morph time */
 	gettime(&glc->last_morph);			
 	break;
       case '+':
-	angvel += DEF_ACCEL;
+	angvel += DEF_ANGVEL;
 	break;
       case '-':
-	if (angvel > DEF_ACCEL)
-	    angvel -= DEF_ACCEL;
+	if (angvel > DEF_ANGVEL)
+	    angvel -= DEF_ANGVEL;
 	break;
       case 'i':
 	if (interactive) {
@@ -2330,6 +2394,14 @@ void ui_keyboard(unsigned char c, int x, int y) {
 	    glEnable(GL_LIGHTING);
 	glutPostRedisplay();
 	break;
+      case 'a':
+	transparent = 1 - transparent;
+	if (transparent) {
+	    glEnable(GL_BLEND);
+	} else {
+	    glDisable(GL_BLEND);
+	}
+	break;
       case 'p':
 	if (glc->paused) {
 	    /* unpausing, reset last_iteration and last_morph time */
@@ -2341,21 +2413,25 @@ void ui_keyboard(unsigned char c, int x, int y) {
       case 'd':
 	/* dump the current model so we can add it! */
 	printf("# %s\nnoname:\t", model[glc->next_model].name);
-	for (i = 0; i < NODE_COUNT; i++) {
-	    if (glc->node[i] == ZERO)
-		printf("Z");
-	    else if (glc->node[i] == LEFT)
-		printf("L");
-	    else if (glc->node[i] == PIN)
-		printf("P");
-	    else if (glc->node[i] == RIGHT)
-		printf("R");
-	    /*
-	      else
-	      printf("%f", node[i].curAngle);
-	    */
-	    if (i < NODE_COUNT - 1)
-		printf(" ");
+	{
+	    int i;
+	    
+	    for (i = 0; i < NODE_COUNT; i++) {
+		if (glc->node[i] == ZERO)
+		    printf("Z");
+		else if (glc->node[i] == LEFT)
+		    printf("L");
+		else if (glc->node[i] == PIN)
+		    printf("P");
+		else if (glc->node[i] == RIGHT)
+		    printf("R");
+		/*
+		  else
+		  printf("%f", node[i].curAngle);
+		*/
+		if (i < NODE_COUNT - 1)
+		    printf(" ");
+	    }
 	}
 	printf("\n");
 	break;
@@ -2375,7 +2451,7 @@ void ui_keyboard(unsigned char c, int x, int y) {
 	if (interactive || glc->paused)
 	    glutPostRedisplay();
 	break;
-      case 'a':
+      case 'c':
 	altcolour = 1 - altcolour;
 	break;
       case 'z':
@@ -2391,8 +2467,7 @@ void ui_keyboard(unsigned char c, int x, int y) {
     }
 }
 
-void ui_special(int key, int x, int y) {
-    int i;
+void ui_special(int key, int x __attribute__((__unused__)), int y __attribute__((__unused__))) {
     float *destAngle = &(model[glc->next_model].node[glc->selected]);
     int unknown_key = 0;
 
@@ -2431,11 +2506,11 @@ void ui_mouse(int button, int state, int x, int y) {
 	switch (state) {
 	  case GLUT_DOWN:
 	    dragging = 1;
-	    m_s[0] = M_SQRT1_2 * 
+	    mouse_start[0] = M_SQRT1_2 * 
 		(x - (glc->width / 2.0)) / (glc->width / 2.0);
-	    m_s[1] = M_SQRT1_2 * 
+	    mouse_start[1] = M_SQRT1_2 * 
 		((glc->height / 2.0) - y) / (glc->height / 2.0);
-	    m_s[2] = sqrt(1-(m_s[0]*m_s[0]+m_s[1]*m_s[1]));
+	    mouse_start[2] = sqrt((double)(1-(mouse_start[0]*mouse_start[0]+mouse_start[1]*mouse_start[1])));
 	    break;
 	  case GLUT_UP:
 	    dragging = 0;
@@ -2458,25 +2533,25 @@ void ui_motion(int x, int y) {
     if (dragging) {
 	/* construct the motion end vector from the x,y position on the
 	 * window */
-	m_e[0] = (x - (glc->width/ 2.0)) / (glc->width / 2.0);
-	m_e[1] = ((glc->height / 2.0) - y) / (glc->height / 2.0);
+	mouse_end[0] = M_SQRT1_2 * (x - (glc->width/ 2.0)) / (glc->width / 2.0);
+	mouse_end[1] = M_SQRT1_2 * ((glc->height / 2.0) - y) / (glc->height / 2.0);
 	/* calculate the normal of the vector... */
-	norm = m_e[0] * m_e[0] + m_e[1] * m_e[1];
+	norm = mouse_end[0] * mouse_end[0] + mouse_end[1] * mouse_end[1];
 	/* check if norm is outside the sphere and wraparound if necessary */
 	if (norm > 1.0) {
-	    m_e[0] = -m_e[0];
-	    m_e[1] = -m_e[1];
-	    m_e[2] = sqrt(norm - 1);
+	    mouse_end[0] = -mouse_end[0];
+	    mouse_end[1] = -mouse_end[1];
+	    mouse_end[2] = sqrt(norm - 1);
 	} else {
 	    /* the z value comes from projecting onto an elliptical spheroid */
-	    m_e[2] = sqrt(1 - norm);
+	    mouse_end[2] = sqrt(1 - norm);
 	}
 
-	/* now here, build a quaternion from m_s and m_e */
-	q[0] = m_s[1] * m_e[2] - m_s[2] * m_e[1];
-	q[1] = m_s[2] * m_e[0] - m_s[0] * m_e[2];
-	q[2] = m_s[0] * m_e[1] - m_s[1] * m_e[0];
-	q[3] = m_s[0] * m_e[0] + m_s[1] * m_e[1] + m_s[2] * m_e[2];
+	/* now here, build a quaternion from mouse_start and mouse_end */
+	q[0] = mouse_start[1] * mouse_end[2] - mouse_start[2] * mouse_end[1];
+	q[1] = mouse_start[2] * mouse_end[0] - mouse_start[0] * mouse_end[2];
+	q[2] = mouse_start[0] * mouse_end[1] - mouse_start[1] * mouse_end[0];
+	q[3] = mouse_start[0] * mouse_end[0] + mouse_start[1] * mouse_end[1] + mouse_start[2] * mouse_end[2];
 
 	/* new rotation is the product of the new one and the old one */
 	cumquat[0] = q[3] * oldquat[0] + q[0] * oldquat[3] + 
@@ -2517,5 +2592,6 @@ void ui_init(int * argc, char ** argv) {
     interactive = DEF_INTERACTIVE;
     zoom = DEF_ZOOM;
     wireframe = DEF_WIREFRAME;
+    transparent = DEF_TRANSPARENT;
 }
 #endif /* HAVE_GLUT */

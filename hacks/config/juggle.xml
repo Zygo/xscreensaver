@@ -15,7 +15,7 @@
 
   <number id="tail" type="slider" arg="-tail %"
           _label="Trail Length" _low-label="None" _high-label="Long"
-          low="0" high="100" default="0"/>
+          low="0" high="100" default="1"/>
 
   <boolean id="describe" _label="turn on/off pattern descriptions." arg-unset="-no-describe"/>
 

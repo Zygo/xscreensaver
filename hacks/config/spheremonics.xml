@@ -11,7 +11,7 @@
 
   <number id="duration" type="slider" arg="-duration %"
           _label="Duration" _low-label="Short" _high-label="Long"
-          low="5" high="1000" default="500"/>
+          low="5" high="1000" default="100"/>
 
   <number id="resolution" type="slider" arg="-resolution %"
           _label="Resolution" _low-label="Low" _high-label="High"

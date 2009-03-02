@@ -17,7 +17,7 @@
           _label="Interpolation Steps" _low-label="Less" _high-label="More"
           low="100" high="500" default="150"/>
 
-  <number id="thickness" type="slider" arg="-thickness %"
+  <number id="thickness" type="slider" arg="-linewidth %"
           _label="Lines" _low-label="Thin" _high-label="Thick"
           low="1" high="50" default="5"/>
 

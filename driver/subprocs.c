@@ -954,6 +954,7 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
         
       if (!force &&
 	  (!hack->enabled_p ||
+	   !on_path_p (hack->command) ||
 	   !select_visual_of_hack (ssi, hack)))
 	{
 	  if (++retry_count > (p->screenhacks_count*4))

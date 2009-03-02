@@ -11,7 +11,7 @@ pulsar - intersecting planes, alpha blending, fog, and textures.
 [\-wire]
 [\-delay \fInumber\fP]
 [\-quads \fInumber\fP]
-[\-bitmap \fIfile\fP]
+[\-image \fIfile\fP]
 [\-light]
 [\-fog]
 [\-texture]
@@ -46,7 +46,7 @@ Render in wireframe instead of solid.
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
 .TP 8
-.B \-bitmap \fIfile\fP
+.B \-image \fIfile\fP
 The texture map to use.
 .TP 8
 .B \-quads \fInumber\fP

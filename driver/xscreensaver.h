@@ -427,6 +427,8 @@ extern void store_saver_status (saver_info *si);
 extern const char *signal_name (int signal);
 extern void exec_command (const char *shell, const char *command,
                           int nice_level);
+extern int on_path_p (const char *program);
+
 
 /* =======================================================================
    subprocs diagnostics
