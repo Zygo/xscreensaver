@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="hopalong" _label="Hopalong">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="10000"
+          convert="invert"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Duration" _low-label="Small" _high-label="Large"
+          low="0" high="800000" default="2500"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Color Contrast" _low-label="Low" _high-label="High"
+          low="100" high="10000" default="1000"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="200"/>
+
+  <hgroup>
+    <vgroup>
+      <boolean id="sine"    _label="Sine"    arg-set="-sine"/>
+      <boolean id="martin"  _label="Martin"  arg-set="-martin"/>
+      <boolean id="popcorn" _label="Popcorn" arg-set="-popcorn"/>
+      <boolean id="jong"    _label="Jong"    arg-set="-jong"/>
+    </vgroup>
+    <vgroup>
+      <boolean id="rr"      _label="RR"      arg-set="-rr"/>
+      <boolean id="ejk1"    _label="EJK1"    arg-set="-ejk1"/>
+      <boolean id="ejk2"    _label="EJK2"    arg-set="-ejk2"/>
+      <boolean id="ejk3"    _label="EJK3"    arg-set="-ejk3"/>
+    </vgroup>
+    <vgroup>
+      <boolean id="ejk4"    _label="EJK4"    arg-set="-ejk4"/>
+      <boolean id="ejk5"    _label="EJK5"    arg-set="-ejk5"/>
+      <boolean id="ejk6"    _label="EJK6"    arg-set="-ejk6"/>
+    </vgroup>
+  </hgroup>
+
+  <_description>
+This draws lacy fractal patterns, based on iteration in the imaginary
+plane, from a 1986 Scientific American article.  Mostly written by
+Patrick Naughton.
+  </_description>
+</screensaver>

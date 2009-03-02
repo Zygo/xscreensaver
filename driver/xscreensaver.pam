@@ -1,0 +1,10 @@
+#%PAM-1.0
+
+# Red Hat says this is right for them, as of 7.3:
+auth       required	/lib/security/pam_stack.so service=system-auth
+
+# SuSE 9.0 uses this (along with "--with-passwd-helper" of "unix2_chkpwd")
+# auth     required       pam_unix2.so	nullok
+
+# This is what we were using before:
+# auth       required	/lib/security/pam_pwdb.so shadow nullok

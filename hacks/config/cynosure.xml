@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="cynosure" _label="Cynosure">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="800000" default="500000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="128"/>
+
+  <number id="iterations" type="slider" arg="-iterations %"
+          _label="Duration" _low-label="Short" _high-label="Long"
+          low="2" high="200" default="100"/>
+
+
+  <_description>
+A hack similar to `greynetic', but less frenetic.  The first
+implementation was by Stephen Linhart; then Ozymandias G. Desiderata
+wrote a Java applet clone.  That clone was discovered by Jamie
+Zawinski, and ported to C for inclusion here.
+  </_description>
+</screensaver>

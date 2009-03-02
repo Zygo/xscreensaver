@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="ssystem" _label="SSystem">
+
+  <command arg="-fullscreen :32"/>
+
+  <_description>
+SSystem is a GL Solar System simulator.  It simulates flybys of Sun,
+the nine planets and a few major satellites, with four camera modes.
+Written by Raul Alonso.  This is not included with the XScreenSaver
+package, but is packaged separately.
+
+Note: SSystem does not work as a screen saver on all systems, because
+it doesn't communicate with xscreensaver properly.  It happens to work
+with some window managers, but not with others, so your mileage may
+vary.
+
+SSystem was once available at &lt;http://www1.las.es/~amil/ssystem/&gt;,
+but is now gone.  You may still be able to find copies elsewhere.
+
+SSystem has since evolved into Celestia, found at
+&lt;http://www.shatters.net/celestia/&gt;.  Sadly, Celestia does not work
+with xscreensaver at all.  You are encouraged to nag the authors into
+adding xscreensaver support!
+  </_description>
+</screensaver>

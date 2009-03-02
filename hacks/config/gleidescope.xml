@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="gleidescope" _label="Gleidescope">
+
+  <command arg="-root"/>
+
+  <boolean id="move"	_label="Move" arg-unset="-no-move"/>
+  <boolean id="rotate"	_label="Rotate" arg-unset="-no-rotate"/>
+  <boolean id="zoom"	_label="Zoom" arg-set="-zoom"/>
+  <file id="image"		_label="Image file" arg="-image %"/>
+  <number id="size"		_label="Size of tube" arg="-size %"
+	  type="slider" _low-label="Small" _high-label="Large"
+	  low="1" high="10" default="7" />
+  <number id="duration" type="slider" arg="-duration %"
+          _label="Image Duration"
+          _low-label="10 Seconds" _high-label="5 Minutes"
+          low="10" high="300" default="30"/>
+  <boolean id="showfps"	_label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+An OpenGL kaleidescope that operates on your desktop image, or on
+image files loaded from disk.  Written by andrew dean.
+  </_description>
+</screensaver>
