@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2001 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,23 +11,24 @@
  * Blue Screen of Death: the finest in personal computer emulation.
  * Concept cribbed from Stephen Martin <smartin@mks.com>;
  * this version written by jwz, 4-Jun-98.
- *
- *   TODO:
- *      -  Should simulate a Unix kernel panic and reboot.
- *      -  Making various boot noises would be fun, too.
- *      -  Should randomize the various hex numbers printed.
  */
 
 #include "screenhack.h"
 #include "xpm-pixmap.h"
 #include <stdio.h>
+#include <time.h>
+#include <sys/time.h>
 #include <X11/Xutil.h>
 
+#ifdef HAVE_UNAME
+# include <sys/utsname.h>
+#endif /* HAVE_UNAME */
 
 #include "images/amiga.xpm"
 #include "images/atari.xbm"
 #include "images/mac.xbm"
 #include "images/macbomb.xbm"
+#include "images/hmac.xpm"
 
 
 static int
@@ -1221,6 +1222,151 @@ mac1 (Display *dpy, Window window, int delay)
 }
 
 
+static Bool
+macx (Display *dpy, Window window, int delay)
+{
+  XGCValues gcv;
+  XWindowAttributes xgwa;
+  char *fontname = 0;
+  const char *def_font = "fixed";
+  XFontStruct *font;
+  GC gc;
+
+  const char *macx_panic =
+   ("panic(cpu 0): Unable to find driver for this platform: "
+    "\"PowerMac 3,5\".\n"
+    "\n"
+    "backtrace: 0x0008c2f4 0x0002a7a0 0x001f0204 0x001d4e4c 0x001d4c5c "
+    "0x001a56cc 0x01d5dbc 0x001c621c 0x00037430 0x00037364\n"
+    "\n"
+    "\n"
+    "\n"
+    "No debugger configured - dumping debug information\n"
+    "\n"
+    "version string : Darwin Kernel Version 1.3:\n"
+    "Thu Mar  1 06:56:40 PST 2001; root:xnu/xnu-123.5.obj~1/RELEASE_PPC\n"
+    "\n"
+    "\n"
+    "\n"
+    "\n"
+    "DBAT0: 00000000 00000000\n"
+    "DBAT1: 00000000 00000000\n"
+    "DBAT2: 80001FFE 8000003A\n"
+    "DBAT3: 90001FFE 9000003A\n"
+    "MSR=00001030\n"
+    "backtrace: 0x0008c2f4 0x0002a7a0 0x001f0204 0x001d4e4c 0x001d4c5c "
+    "0x001a56cc 0x01d5dbc 0x001c621c 0x00037430 0x00037364\n"
+    "\n"
+    "panic: We are hanging here...\n");
+
+  if (!get_boolean_resource("doMacX", "DoMacX"))
+    return False;
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+
+  gcv.background = get_pixel_resource("macX.background",
+                                      "MacX.Background",
+				      dpy, xgwa.colormap);
+  XSetWindowBackground(dpy, window, gcv.background);
+  XClearWindow(dpy, window);
+
+  fontname = get_string_resource ((xgwa.height > 900
+				   ? "macX.font2"
+				   : "macX.font"),
+				  "MacX.Font");
+  if (!fontname || !*fontname) fontname = (char *)def_font;
+  font = XLoadQueryFont (dpy, fontname);
+  if (!font) font = XLoadQueryFont (dpy, def_font);
+  if (!font) exit(-1);
+  if (fontname && fontname != def_font)
+    free (fontname);
+
+  gcv.font = font->fid;
+  gcv.foreground = get_pixel_resource("macsbug.foreground",
+				      "MacsBug.Foreground",
+				      dpy, xgwa.colormap);
+  gcv.background = get_pixel_resource("macsbug.background",
+				      "MacsBug.Background",
+				      dpy, xgwa.colormap);
+
+
+  gcv.foreground = get_pixel_resource("macX.textForeground",
+                                      "MacX.TextForeground",
+				      dpy, xgwa.colormap);
+  gcv.background = get_pixel_resource("macX.textBackground",
+                                      "MacX.TextBackground",
+				      dpy, xgwa.colormap);
+  gc = XCreateGC(dpy, window, GCForeground|GCBackground|GCFont, &gcv);
+
+#if defined(HAVE_GDK_PIXBUF) || defined (HAVE_XPM)
+  {
+    Pixmap pixmap = 0;
+    Pixmap mask = 0;
+    int x, y, pix_w, pix_h;
+    pixmap = xpm_data_to_pixmap (dpy, window, (char **) happy_mac,
+                                 &pix_w, &pix_h, &mask);
+
+    x = (xgwa.width - pix_w) / 2;
+    y = (xgwa.height - pix_h) / 2;
+    if (y < 0) y = 0;
+    XSync(dpy, False);
+    bsod_sleep(dpy, 2);
+    XSetClipMask (dpy, gc, mask);
+    XSetClipOrigin (dpy, gc, x, y);
+    XCopyArea (dpy, pixmap, window, gc, 0, 0, pix_w, pix_h, x, y);
+    XSetClipMask (dpy, gc, None);
+    XFreePixmap (dpy, pixmap);
+  }
+#endif /* HAVE_GDK_PIXBUF || HAVE_XPM */
+
+  bsod_sleep(dpy, 3);
+
+  {
+    const char *s;
+    int x = 0, y = 0;
+    int char_width, line_height;
+    char_width = (font->per_char
+                  ? font->per_char['n'-font->min_char_or_byte2].width
+                  : font->min_bounds.width);
+    line_height = font->ascent + font->descent;
+
+    s = macx_panic;
+    y = font->ascent;
+    while (*s)
+      {
+        int ox = x;
+        int oy = y;
+        if (*s == '\n' || x + char_width >= xgwa.width)
+          {
+            x = 0;
+            y += line_height;
+          }
+
+        if (*s == '\n')
+          {
+            /* Note that to get this goofy effect, they must be actually
+               emitting LF CR at the end of each line instead of CR LF!
+             */
+            XDrawImageString (dpy, window, gc, ox, oy, " ", 1);
+            XDrawImageString (dpy, window, gc, ox, y, " ", 1);
+          }
+        else
+          {
+            XDrawImageString (dpy, window, gc, x, y, s, 1);
+            x += char_width;
+          }
+        s++;
+      }
+  }
+
+  XFreeGC(dpy, gc);
+  XSync(dpy, False);
+  bsod_sleep(dpy, delay);
+  XClearWindow(dpy, window);
+  return True;
+}
+
+
 
 
 
@@ -1310,17 +1456,12 @@ blitdamage (Display *dpy, Window window, int delay)
  * Anton Solovyev <solovam@earthlink.net>
  */ 
 
-static int solaris_max_scroll = 10;
-
 typedef struct
 {
   Display *dpy;
   Window window;
-  GC gc;
-  Pixmap subwindow;             /* The text subwindow */
+  GC gc, erase_gc;
   XFontStruct *xfs;
-  int width;                    /* Window width in pixels */
-  int height;                   /* Window height in pixels */
   int sub_width;                /* Text subwindow width in pixels */
   int sub_height;               /* Text subwindow height in pixels */
   int sub_x;                    /* upper left corner of the text subwindow */
@@ -1328,162 +1469,151 @@ typedef struct
   int char_width;               /* Char width in pixels */
   int line_height;              /* Line height in pixels */
   int columns;                  /* Number of columns in the text screen */
-  int lines;                    /* Number of lines in the text screen */
-  int x;                        /* position of the cursor */
-  int y;                        /* position of the cursor */
-} solaris_console;
+  int x;                        /* horizontal position of the cursor */
+} scrolling_window;
 
 
-static solaris_console *
-make_solaris_console (Display *dpy, Window window)
+static scrolling_window *
+make_scrolling_window (Display *dpy, Window window,
+                       const char *name,
+                       Bool grab_screen_p)
 {
   const char *def_font = "fixed";
-  solaris_console* ts;
-
+  scrolling_window* ts;
   XWindowAttributes xgwa;
   XGCValues gcv;
-  char* fontname;
+  char* fn;
+  char buf1[100], buf2[100];
 
-  ts = malloc(sizeof(solaris_console));
-
+  ts = malloc (sizeof (*ts));
   ts->window = window;
   ts->dpy = dpy;
 
   ts->x = 0;
-  ts->y = 0;
 
   XGetWindowAttributes (dpy, window, &xgwa);
-  ts->width = xgwa.width;
-  ts->height = xgwa.height;
-  ts->sub_width = ts->width * 0.8;
-  ts->sub_height = ts->height * 0.8;
 
-  fontname = get_string_resource ("solaris.font", "Solaris.Font");
-  ts->xfs = XLoadQueryFont (dpy, fontname);
+  if (grab_screen_p)
+    {
+      ts->sub_width = xgwa.width * 0.8;
+      ts->sub_height = xgwa.height * 0.8;
+    }
+  else
+    {
+      ts->sub_width  = xgwa.width - 20;
+      ts->sub_height = xgwa.height - 20;
+      if (ts->sub_width  < 20) ts->sub_width  = 20;
+      if (ts->sub_height < 20) ts->sub_height = 20;
+    }
+
+  sprintf (buf1, "%.50s.font", name);
+  sprintf (buf2, "%.50s.Font", name);
+  fn = get_string_resource (buf1, buf2);
+  ts->xfs = XLoadQueryFont (dpy, fn);
   if (!ts->xfs)
     {
-      fontname = get_string_resource("solaris.font2", "Solaris.Font");
-      ts->xfs = XLoadQueryFont(dpy, fontname);
+      sprintf (buf1, "%.50s.font2", name);
+      fn = get_string_resource(buf1, buf2);
+      ts->xfs = XLoadQueryFont(dpy, fn);
     }
   if (!ts->xfs)
     ts->xfs = XLoadQueryFont(dpy, def_font);
   if (!ts->xfs)
-    {
-      fprintf (stderr, "Can't load font\n");
-      XFreeFont (dpy, ts->xfs);
-      free (ts);
-      exit (1);
-    }
+    exit (1);
   gcv.font = ts->xfs->fid;
   ts->char_width = (ts->xfs->per_char
-                    ? ts->xfs->per_char[ts->xfs->min_char_or_byte2 +
-                                       ts->xfs->default_char].width
-                    : ts->xfs->max_bounds.width);
+                    ? ts->xfs->per_char['n'-ts->xfs->min_char_or_byte2].width
+                    : ts->xfs->min_bounds.width);
   ts->line_height = ts->xfs->ascent + ts->xfs->descent + 1;
 
   ts->columns = ts->sub_width / ts->char_width;
-  ts->lines = ts->sub_height / ts->line_height;
 
-  ts->sub_x = (ts->width - ts->sub_width) / 2;
-  ts->sub_y = (ts->height - ts->sub_height) / 2;
+  ts->sub_x = (xgwa.width - ts->sub_width) / 2;
+  ts->sub_y = (xgwa.height - ts->sub_height) / 2;
 
-  ts->subwindow = XCreatePixmap (dpy, window, ts->sub_width,
-                                 ts->sub_height * (solaris_max_scroll + 1),
-                                 xgwa.depth);
-  grab_screen_image (xgwa.screen, window);
-  gcv.function = GXcopy;
-  gcv.background = XBlackPixel (dpy, XDefaultScreen(dpy));
-  gcv.foreground = XWhitePixel (dpy, XDefaultScreen(dpy));
+  if (!grab_screen_p) ts->sub_height += ts->sub_y, ts->sub_y = 0;
+
+  if (grab_screen_p)
+    grab_screen_image (xgwa.screen, window);
+
+  sprintf (buf1, "%.50s.background", name);
+  sprintf (buf2, "%.50s.Background", name);
+  gcv.background = get_pixel_resource (buf1, buf2, dpy, xgwa.colormap);
+
+  sprintf (buf1, "%.50s.foreground", name);
+  sprintf (buf2, "%.50s.Foreground", name);
+  gcv.foreground = get_pixel_resource (buf1, buf2, dpy, xgwa.colormap);
+
   ts->gc = XCreateGC (dpy, window,
-                      GCFunction | GCBackground | GCForeground | GCFont,
+                      GCForeground | GCBackground | GCFont,
                       &gcv);
-  XCopyArea (dpy, window, ts->subwindow, ts->gc,
-             ts->sub_x, ts->sub_y, ts->sub_width, ts->sub_height,
-             0, 0);
-  XFillRectangle (dpy, ts->subwindow, ts->gc, 0, ts->sub_height,
-                  ts->sub_width, ts->sub_height * solaris_max_scroll);
-
-  gcv.background = XWhitePixel (dpy, XDefaultScreen (dpy));
-  gcv.foreground = XBlackPixel (dpy, XDefaultScreen (dpy));
-  XChangeGC (dpy, ts->gc, GCBackground | GCForeground, &gcv);
-
+  gcv.foreground = gcv.background;
+  ts->erase_gc = XCreateGC (dpy, window,
+                            GCForeground | GCBackground,
+                            &gcv);
+  XSetWindowBackground (dpy, window, gcv.background);
   return(ts);
 }
 
 static void
-free_solaris_console (solaris_console* ts)
+free_scrolling_window (scrolling_window* ts)
 {
-  XFreePixmap (ts->dpy, ts->subwindow);
   XFreeGC (ts->dpy, ts->gc);
+  XFreeGC (ts->dpy, ts->erase_gc);
   XFreeFont (ts->dpy, ts->xfs);
   free (ts);
 }
 
 static void
-solaris_draw (solaris_console* ts)
+scrolling_putc (scrolling_window* ts, const char aChar)
 {
-  XCopyArea (ts->dpy, ts->subwindow, ts->window, ts->gc, 0,
-             (ts->y + 1) * ts->line_height, ts->sub_width,
-             ts->sub_height, ts->sub_x, ts->sub_y);
-}
-
-static void
-solaris_putc (solaris_console* ts, const char aChar)
-{
-  if (ts->y >= solaris_max_scroll * ts->lines)
-    return;
-
-  if (!ts->y && !ts->x)
-    solaris_draw (ts);
-
   switch (aChar)
     {
     case '\n':
-      ts->y++;
       ts->x = 0;
-      solaris_draw (ts);
+      XCopyArea (ts->dpy, ts->window, ts->window, ts->gc,
+                 ts->sub_x, ts->sub_y + ts->line_height,
+                 ts->sub_width, ts->sub_height,
+                 ts->sub_x, ts->sub_y);
+      XFillRectangle (ts->dpy, ts->window, ts->erase_gc,
+                      ts->sub_x, ts->sub_y + ts->sub_height - ts->line_height,
+                      ts->sub_width, ts->line_height);
       break;
     case '\b':
       if(ts->x > 0)
         ts->x--;
       break;
     default:
-      XDrawImageString (ts->dpy, ts->subwindow, ts->gc,
-                        (ts->x * ts->char_width -
-                         ts->xfs->min_bounds.lbearing),
-                        (ts->sub_height + (ts->y + 1) *
-                         ts->line_height - ts->xfs->descent),
-                        &aChar, 1);
-      XCopyArea (ts->dpy, ts->subwindow, ts->window, ts->gc,
-                 ts->x * ts->char_width,
-                 ts->y * ts->line_height + ts->sub_height,
-                 ts->xfs->max_bounds.rbearing - ts->xfs->min_bounds.lbearing,
-                 ts->line_height, ts->sub_x + ts->x * ts->char_width,
-                 ts->sub_y + ts->sub_height - ts->line_height);
-      ts->x++;
       if (ts->x >= ts->columns)
-        {
-          ts->x = 0;
-          solaris_putc(ts, '\n');
-        }
+        scrolling_putc (ts, '\n');
+      XDrawImageString (ts->dpy, ts->window, ts->gc,
+                        (ts->sub_x +
+                         (ts->x * ts->char_width)
+                         - ts->xfs->min_bounds.lbearing),
+                        (ts->sub_y + ts->sub_height - ts->xfs->descent),
+                        &aChar, 1);
+      ts->x++;
       break;
     }
 }
 
-static void
-solaris_puts (solaris_console* ts, const char* aString, int delay)
+static Bool
+scrolling_puts (scrolling_window *ts, const char* aString, int delay)
 {
   const char *c;
   for (c = aString; *c; ++c)
     {
-      solaris_putc (ts, *c);
+      scrolling_putc (ts, *c);
       if (delay)
         {
           XSync(ts->dpy, 0);
           usleep(delay);
+          if (bsod_sleep (ts->dpy, 0))
+            return True;
         }
     }
   XSync (ts->dpy, 0);
+  return False;
 }
 
 static Bool
@@ -1525,49 +1655,435 @@ sparc_solaris (Display* dpy, Window window, int delay)
     "rebooting...\n"
     "Resetting ...";
 
-  solaris_console* ts;
+  scrolling_window *ts;
   int i;
   char buf[256];
 
   if (!get_boolean_resource("doSolaris", "DoSolaris"))
     return False;
 
-  ts = make_solaris_console (dpy, window);
+  ts = make_scrolling_window (dpy, window, "Solaris", True);
 
-  solaris_puts (ts, msg1, 0);
+  scrolling_puts (ts, msg1, 0);
   if (bsod_sleep (dpy, 3))
     goto DONE;
 
-  solaris_puts (ts, msg2, 0);
+  scrolling_puts (ts, msg2, 0);
   if (bsod_sleep (dpy, 2))
     goto DONE;
 
   for (i = 1; i <= 100; ++i)
     {
       sprintf(buf, "\b\b\b\b\b\b\b\b\b\b\b%3d%% done", i);
-      solaris_puts(ts, buf, 0);
+      scrolling_puts (ts, buf, 0);
       if (bsod_sleep (dpy, -1))
         goto DONE;
     }
 
-  solaris_puts (ts, msg3, 0);
+  scrolling_puts (ts, msg3, 0);
   if (bsod_sleep (dpy, 2))
     goto DONE;
 
-  solaris_puts (ts, msg4, 0);
+  scrolling_puts (ts, msg4, 0);
   if (bsod_sleep(dpy, 3))
     goto DONE;
-
-  XFillRectangle (ts->dpy, ts->window, ts->gc, 0, 0,
-                  ts->width, ts->height);
 
   bsod_sleep (dpy, 3);
 
  DONE:
-  free_solaris_console (ts);
+  free_scrolling_window (ts);
 
   return True;
 }
+
+/* Linux panic and fsck, by jwz
+ */
+static Bool
+linux_fsck (Display *dpy, Window window, int delay)
+{
+  XWindowAttributes xgwa;
+  scrolling_window *ts;
+  int i;
+  const char *sysname;
+  char buf[1024];
+
+  const char *linux_panic[] = {
+   " kernel: Unable to handle kernel paging request at virtual "
+     "address 0000f0ad\n",
+   " kernel:  printing eip:\n",
+   " kernel: c01becd7\n",
+   " kernel: *pde = 00000000\n",
+   " kernel: Oops: 0000\n",
+   " kernel: CPU:    0\n",
+   " kernel: EIP:    0010:[<c01becd7>]    Tainted: P \n",
+   " kernel: EFLAGS: 00010286\n",
+   " kernel: eax: 0000ff00   ebx: ca6b7e00   ecx: ce1d7a60   edx: ce1d7a60\n",
+   " kernel: esi: ca6b7ebc   edi: 00030000   ebp: d3655ca0   esp: ca6b7e5c\n",
+   " kernel: ds: 0018   es: 0018   ss: 0018\n",
+   " kernel: Process crond (pid: 1189, stackpage=ca6b7000)\n",
+   " kernel: Stack: d3655ca0 ca6b7ebc 00030054 ca6b7e7c c01c1e5b "
+       "00000287 00000020 c01c1fbf \n",
+   "",
+   " kernel:        00005a36 000000dc 000001f4 00000000 00000000 "
+       "ce046d40 00000001 00000000 \n",
+   "", "", "",
+   " kernel:        ffffffff d3655ca0 d3655b80 00030054 c01bef93 "
+       "d3655ca0 ca6b7ebc 00030054 \n",
+   "", "", "",
+   " kernel: Call Trace:    [<c01c1e5b>] [<c01c1fbf>] [<c01bef93>] "
+       "[<c01bf02b>] [<c0134c4f>]\n",
+   "", "", "",
+   " kernel:   [<c0142562>] [<c0114f8c>] [<c0134de3>] [<c010891b>]\n",
+   " kernel: \n",
+   " kernel: Code: 2a 00 75 08 8b 44 24 2c 85 c0 74 0c 8b 44 24 58 83 48 18 "
+      "08 \n",
+   0
+  };
+
+  if (!get_boolean_resource("doLinux", "DoLinux"))
+    return False;
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  XSetWindowBackground (dpy, window, 
+                        get_pixel_resource("Linux.background",
+                                           "Linux.Background",
+                                           dpy, xgwa.colormap));
+  XClearWindow(dpy, window);
+
+  sysname = "linux";
+# ifdef HAVE_UNAME
+  {
+    struct utsname uts;
+    char *s;
+    if (uname (&uts) >= 0)
+      sysname = uts.nodename;
+    s = strchr (sysname, '.');
+    if (s) *s = 0;
+  }
+# endif	/* !HAVE_UNAME */
+
+
+  ts = make_scrolling_window (dpy, window, "Linux", False);
+
+  scrolling_puts (ts, "waiting for X server to shut down ", 0);
+  usleep (100000);
+  if (bsod_sleep (dpy, 0))
+    goto PANIC;
+  scrolling_puts (ts,
+                  "XIO:  fatal IO error 2 (broken pipe) on X server \":0.0\"\n"
+                  "        after 339471 requests (339471 known processed) "
+                  "with 0 events remaining\n",
+                  0);
+  if (scrolling_puts (ts, ".........\n", 300000))
+    goto PANIC;
+  if (bsod_sleep (dpy, 0))
+    goto PANIC;
+  scrolling_puts (ts,
+                  "xinit:  X server slow to shut down, sending KILL signal.\n",
+                  0);
+  scrolling_puts (ts, "waiting for server to die ", 0);
+  if (scrolling_puts (ts, "...\n", 300000))
+    goto PANIC;
+  if (bsod_sleep (dpy, 0))
+    goto PANIC;
+  scrolling_puts (ts, "xinit:  Can't kill server\n", 0);
+
+  if (bsod_sleep (dpy, 2))
+    goto PANIC;
+
+  sprintf (buf, "\n%s Login: ", sysname);
+  scrolling_puts (ts, buf, 0);
+  if (bsod_sleep (dpy, 1))
+    goto PANIC;
+  scrolling_puts (ts,
+    "\n\n"
+    "Parallelizing fsck version 1.22 (22-Jun-2001)\n"
+    "e2fsck 1.22, 22-Jun-2001 for EXT2 FS 0.5b, 95/08/09\n"
+    "Warning!  /dev/hda1 is mounted.\n"
+    "/dev/hda1 contains a file system with errors, check forced.\n",
+                0);
+  if (bsod_sleep (dpy, 1))
+    goto PANIC;
+
+  if (0 == random() % 2)
+  scrolling_puts (ts,
+     "Couldn't find ext2 superblock, trying backup blocks...\n"
+     "The filesystem size (according to the superblock) is 3644739 blocks\n"
+     "The physical size of the device is 3636706 blocks\n"
+     "Either the superblock or the partition table is likely to be corrupt!\n"
+     "Abort<y>? no\n",
+                0);
+  if (bsod_sleep (dpy, 1))
+    goto PANIC;
+
+ AGAIN:
+
+  scrolling_puts (ts, "Pass 1: Checking inodes, blocks, and sizes\n", 0);
+  if (bsod_sleep (dpy, 2))
+    goto PANIC;
+
+  i = (random() % 60) - 20;
+  while (--i > 0)
+    {
+      int b = random() % 0xFFFF;
+      sprintf (buf, "Deleted inode %d has zero dtime.  Fix<y>? yes\n\n", b);
+      scrolling_puts (ts, buf, 0);
+    }
+
+  i = (random() % 40) - 10;
+  if (i > 0)
+    {
+      int g = random() % 0xFFFF;
+      int b = random() % 0xFFFFFFF;
+
+      if (bsod_sleep (dpy, 1))
+        goto PANIC;
+
+      sprintf (buf, "Warning: Group %d's copy of the group descriptors "
+               "has a bad block (%d).\n", g, b);
+      scrolling_puts (ts, buf, 0);
+
+      b = random() % 0x3FFFFF;
+      while (--i > 0)
+        {
+          b += random() % 0xFFFF;
+          sprintf (buf,
+                   "Error reading block %d (Attempt to read block "
+                   "from filesystem resulted in short read) while doing "
+                   "inode scan.  Ignore error<y>?",
+                   b);
+          scrolling_puts (ts, buf, 0);
+          usleep (10000);
+          scrolling_puts (ts, " yes\n\n", 0);
+        }
+    }
+
+  if (0 == (random() % 10))
+    {
+
+      if (bsod_sleep (dpy, 1))
+        goto PANIC;
+
+      i = 3 + (random() % 10);
+      while (--i > 0)
+        scrolling_puts (ts, "Could not allocate 256 block(s) for inode table: "
+                        "No space left on device\n", 0);
+      scrolling_puts (ts, "Restarting e2fsck from the beginning...\n", 0);
+
+      if (bsod_sleep (dpy, 2))
+        goto PANIC;
+
+      goto AGAIN;
+    }
+
+  i = (random() % 20) - 5;
+
+  if (i > 0)
+    if (bsod_sleep (dpy, 1))
+      goto PANIC;
+
+  while (--i > 0)
+    {
+      int j = 5 + (random() % 10);
+      int w = random() % 4;
+
+      while (--j > 0)
+        {
+          int b = random() % 0xFFFFF;
+          int g = random() % 0xFFF;
+
+          if (0 == (random() % 10))
+            b = 0;
+          else if (0 == (random() % 10))
+            b = -1;
+
+          if (w == 0)
+            sprintf (buf,
+                     "Inode table for group %d not in group.  (block %d)\n"
+                     "WARNING: SEVERE DATA LOSS POSSIBLE.\n"
+                     "Relocate<y>?",
+                     g, b);
+          else if (w == 1)
+            sprintf (buf,
+                     "Block bitmap for group %d not in group.  (block %d)\n"
+                     "Relocate<y>?",
+                     g, b);
+          else if (w == 2)
+            sprintf (buf,
+                     "Inode bitmap %d for group %d not in group.\n"
+                     "Continue<y>?",
+                     b, g);
+          else /* if (w == 3) */
+            sprintf (buf,
+                     "Bad block %d in group %d's inode table.\n"
+                     "WARNING: SEVERE DATA LOSS POSSIBLE.\n"
+                     "Relocate<y>?",
+                     b, g);
+
+          scrolling_puts (ts, buf, 0);
+          scrolling_puts (ts, " yes\n\n", 0);
+        }
+      if (bsod_sleep (dpy, 0))
+        goto PANIC;
+      usleep (1000);
+    }
+
+
+  if (0 == random() % 10) goto PANIC;
+  scrolling_puts (ts, "Pass 2: Checking directory structure\n", 0);
+  if (bsod_sleep (dpy, 2))
+    goto PANIC;
+
+  i = (random() % 20) - 5;
+  while (--i > 0)
+    {
+      int n = random() % 0xFFFFF;
+      int o = random() % 0xFFF;
+      sprintf (buf, "Directory inode %d, block 0, offset %d: "
+               "directory corrupted\n"
+               "Salvage<y>? ",
+               n, o);
+      scrolling_puts (ts, buf, 0);
+      usleep (1000);
+      scrolling_puts (ts, " yes\n\n", 0);
+
+      if (0 == (random() % 100))
+        {
+          sprintf (buf, "Missing '.' in directory inode %d.\nFix<y>?", n);
+          scrolling_puts (ts, buf, 0);
+          usleep (1000);
+          scrolling_puts (ts, " yes\n\n", 0);
+        }
+
+      if (bsod_sleep (dpy, 0))
+        goto PANIC;
+    }
+
+  if (0 == random() % 10) goto PANIC;
+  scrolling_puts (ts,
+                  "Pass 3: Checking directory connectivity\n"
+                  "/lost+found not found.  Create? yes\n",
+                0);
+  if (bsod_sleep (dpy, 2))
+    goto PANIC;
+
+  /* Unconnected directory inode 4949 (/var/spool/squid/06/???)
+     Connect to /lost+found<y>? yes
+
+     '..' in /var/spool/squid/06/08 (20351) is <The NULL inode> (0), should be 
+     /var/spool/squid/06 (20350).
+     Fix<y>? yes
+
+     Unconnected directory inode 128337 (/var/spool/squid/06/???)
+     Connect to /lost+found<y>? yes
+   */
+
+
+  if (0 == random() % 10) goto PANIC;
+  scrolling_puts (ts, "Pass 4: Checking reference counts\n", 0);
+  if (bsod_sleep (dpy, 2))
+    goto PANIC;
+
+  /* Inode 2 ref count is 19, should be 20.  Fix<y>? yes
+
+     Inode 4949 ref count is 3, should be 2.  Fix<y>? yes
+
+        ...
+
+     Inode 128336 ref count is 3, should be 2.  Fix<y>? yes
+
+     Inode 128337 ref count is 3, should be 2.  Fix<y>? yes
+
+   */
+
+
+  if (0 == random() % 10) goto PANIC;
+  scrolling_puts (ts, "Pass 5: Checking group summary information\n", 0);
+  if (bsod_sleep (dpy, 2))
+    goto PANIC;
+
+  i = (random() % 200) - 50;
+  if (i > 0)
+    {
+      scrolling_puts (ts, "Block bitmap differences: ", 0);
+      while (--i > 0)
+        {
+          sprintf (buf, " %d", -(random() % 0xFFF));
+          scrolling_puts (ts, buf, 0);
+          usleep (1000);
+        }
+      scrolling_puts (ts, "\nFix? yes\n\n", 0);
+    }
+
+
+  i = (random() % 100) - 50;
+  if (i > 0)
+    {
+      scrolling_puts (ts, "Inode bitmap differences: ", 0);
+      while (--i > 0)
+        {
+          sprintf (buf, " %d", -(random() % 0xFFF));
+          scrolling_puts (ts, buf, 0);
+          usleep (1000);
+        }
+      scrolling_puts (ts, "\nFix? yes\n\n", 0);
+    }
+
+  i = (random() % 20) - 5;
+  while (--i > 0)
+    {
+      int g = random() % 0xFFFF;
+      int c = random() % 0xFFFF;
+      sprintf (buf,
+               "Free blocks count wrong for group #0 (%d, counted=%d).\nFix? ",
+               g, c);
+      scrolling_puts (ts, buf, 0);
+      usleep (1000);
+      scrolling_puts (ts, " yes\n\n", 0);
+      if (bsod_sleep (dpy, 0))
+        goto PANIC;
+    }
+
+ PANIC:
+
+  i = 0;
+  scrolling_puts (ts, "\n\n", 0);
+  while (linux_panic[i])
+    {
+      time_t t = time ((time_t *) 0);
+      struct tm *tm = localtime (&t);
+      char prefix[100];
+
+      if (*linux_panic[i])
+        {
+          strftime (prefix, sizeof(prefix)-1, "%b %d %k:%M:%S ", tm);
+          scrolling_puts (ts, prefix, 0);
+          scrolling_puts (ts, sysname, 0);
+          scrolling_puts (ts, linux_panic[i], 0);
+          XSync(dpy, False);
+          usleep(1000);
+        }
+      else
+        usleep (300000);
+
+      if (bsod_sleep (dpy, 0))
+        goto DONE;
+      i++;
+    }
+
+  if (bsod_sleep (dpy, 4))
+    goto DONE;
+
+
+  XSync(dpy, False);
+  bsod_sleep(dpy, delay);
+
+ DONE:
+  free_scrolling_window (ts);
+  XClearWindow(dpy, window);
+  return True;
+}
+
 
 
 char *progclass = "BSOD";
@@ -1582,9 +2098,11 @@ char *defaults [] = {
   "*doMac:		   True",
   "*doMacsBug:		   True",
   "*doMac1:		   True",
+  "*doMacX:		   True",
   "*doSCO:		   True",
   "*doAtari:		   False",	/* boring */
   "*doBSD:		   False",	/* boring */
+  "*doLinux:		   True",
   "*doSparcLinux:	   False",	/* boring */
   "*doBlitDamage:          True",
   "*doSolaris:             True",
@@ -1617,10 +2135,21 @@ char *defaults [] = {
   ".mac1.foreground:	   Black",
   ".mac1.background:	   White",
 
+  ".macX.textForeground:   White",
+  ".macX.textBackground:   Black",
+  ".macX.background:	   #888888",
+  ".macX.font:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".macX.font2:		   -*-courier-bold-r-*-*-*-240-*-*-m-*-*-*",
+
   ".SCO.font:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".SCO.font2:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".SCO.foreground:	   White",
   ".SCO.background:	   Black",
+
+  ".Linux.font:		   9x15bold",
+  ".Linux.font2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".Linux.foreground: White",
+  ".Linux.background: Black",
 
   ".SparcLinux.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".SparcLinux.font2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
@@ -1636,6 +2165,8 @@ char *defaults [] = {
 
   ".Solaris.font:           -sun-gallant-*-*-*-*-19-*-*-*-*-120-*-*",
   ".Solaris.font2:          -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".Solaris.foreground:     Black",
+  ".Solaris.background:     White",
   "*dontClearRoot:          True",
   0
 };
@@ -1654,6 +2185,7 @@ XrmOptionDescRec options [] = {
   { "-no-mac",		".doMac",		XrmoptionNoArg,  "False" },
   { "-mac1",		".doMac1",		XrmoptionNoArg,  "True"  },
   { "-no-mac1",		".doMac1",		XrmoptionNoArg,  "False" },
+  { "-no-macx",		".doMacX",		XrmoptionNoArg,  "False" },
   { "-atari",		".doAtari",		XrmoptionNoArg,  "True"  },
   { "-no-atari",	".doAtari",		XrmoptionNoArg,  "False" },
   { "-macsbug",		".doMacsBug",		XrmoptionNoArg,  "True"  },
@@ -1662,6 +2194,8 @@ XrmOptionDescRec options [] = {
   { "-no-sco",		".doSCO",		XrmoptionNoArg,  "False" },
   { "-bsd",		".doBSD",		XrmoptionNoArg,  "True"  },
   { "-no-bsd",		".doBSD",		XrmoptionNoArg,  "False" },
+  { "-linux",		".doLinux",		XrmoptionNoArg,  "True" },
+  { "-no-linux",	".doLinux",		XrmoptionNoArg,  "False" },
   { "-sparclinux",	".doSparcLinux",	XrmoptionNoArg,  "True"  },
   { "-no-sparclinux",	".doSparcLinux",	XrmoptionNoArg,  "False" },
   { "-blitdamage",	".doBlitDamage",	XrmoptionNoArg,  "True"  },
@@ -1692,22 +2226,24 @@ screenhack (Display *dpy, Window window)
   while (1)
     {
       Bool did;
-      do {  i = (random() & 0xFF) % 13; } while (i == j);
+      do {  i = (random() & 0xFF) % 15; } while (i == j);
       switch (i)
 	{
-	case 0: did = windows(dpy, window, delay, 0); break;
-	case 1: did = windows(dpy, window, delay, 1); break;
-	case 2: did = windows(dpy, window, delay, 2); break;
-	case 3: did = amiga(dpy, window, delay); break;
-	case 4: did = mac(dpy, window, delay); break;
-	case 5: did = macsbug(dpy, window, delay); break;
-	case 6: did = mac1(dpy, window, delay); break;
-	case 7: did = sco(dpy, window, delay); break;
-	case 8: did = sparc_linux(dpy, window, delay); break;
- 	case 9: did = bsd(dpy, window, delay); break;
-	case 10: did = atari(dpy, window, delay); break;
-	case 11: did = blitdamage(dpy, window, delay); break;
-	case 12: did = sparc_solaris(dpy, window, delay); break;
+	case 0:  did = windows(dpy, window, delay, 0); break;
+	case 1:  did = windows(dpy, window, delay, 1); break;
+	case 2:  did = windows(dpy, window, delay, 2); break;
+	case 3:  did = amiga(dpy, window, delay); break;
+	case 4:  did = mac(dpy, window, delay); break;
+	case 5:  did = macsbug(dpy, window, delay); break;
+	case 6:  did = mac1(dpy, window, delay); break;
+	case 7:  did = macx(dpy, window, delay); break;
+	case 8:  did = sco(dpy, window, delay); break;
+	case 9:  did = sparc_linux(dpy, window, delay); break;
+ 	case 10: did = bsd(dpy, window, delay); break;
+	case 11: did = atari(dpy, window, delay); break;
+	case 12: did = blitdamage(dpy, window, delay); break;
+	case 13: did = sparc_solaris(dpy, window, delay); break;
+	case 14: did = linux_fsck(dpy, window, delay); break;
 	default: abort(); break;
 	}
       loop++;

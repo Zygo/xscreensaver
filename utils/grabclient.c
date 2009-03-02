@@ -137,7 +137,7 @@ grab_screen_image (Screen *screen, Window window)
       exit (1);
     }
 
-  sprintf (id, "0x%x", (unsigned long) window);
+  sprintf (id, "0x%lx", (unsigned long) window);
   cmd = (char *) malloc (strlen(grabber) + strlen(id) + 1);
 
   /* Needn't worry about buffer overflows here, because the buffer is

@@ -22,6 +22,7 @@
           low="10" high="120" default="40"/>
 
   <boolean id="wander" _label="Wander" arg-set="-wander"/>
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <select id="style">
     <option id="classic" _label="Classic Lavalite" arg-set="-style classic"/>

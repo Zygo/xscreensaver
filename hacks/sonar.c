@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.21 $
+ * $Revision: 1.22 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -523,7 +523,7 @@ static void
 print_host (FILE *out, unsigned long ip, const char *name)
 {
   char ips[50];
-  sprintf (ips, "%d.%d.%d.%d",
+  sprintf (ips, "%lu.%lu.%lu.%lu",
            (ip)       & 255,
            (ip >>  8) & 255,
            (ip >> 16) & 255,
@@ -787,9 +787,9 @@ subnetHostsList(int base, int subnet_width)
     if (subnet_width < 24)
       {
         fprintf (stderr,
-    "%s: pinging %u hosts is a bad idea; please use a subnet mask of 24 bits\n"
+   "%s: pinging %lu hosts is a bad idea; please use a subnet mask of 24 bits\n"
                  "       or more (255 hosts max.)\n",
-                 progname, (1L << (32 - subnet_width)) - 1);
+                 progname, (unsigned long) (1L << (32 - subnet_width)) - 1);
         exit (1);
       }
     else if (subnet_width > 30)
@@ -860,9 +860,15 @@ subnetHostsList(int base, int subnet_width)
           fprintf(stderr, "%s:  subnet: %s (%d.%d.%d.%d & %d.%d.%d.%d / %d)\n",
                   progname,
                   address,
-                  (base>>24)&255, (base>>16)&255, (base>>8)&255, base&mask&255,
-                  (mask>>24)&255, (mask>>16)&255, (mask>>8)&255, mask&255,
-                  subnet_width);
+                  (int) (base>>24)&255,
+                  (int) (base>>16)&255,
+                  (int) (base>> 8)&255,
+                  (int) (base&mask&255),
+                  (int) (mask>>24)&255,
+                  (int) (mask>>16)&255,
+                  (int) (mask>> 8)&255,
+                  (int) (mask&255),
+                  (int) subnet_width);
 
         p = address + strlen(address) + 1;
 	sprintf(p, "%d", i);
@@ -1840,6 +1846,7 @@ parse_mode (Bool ping_works_p)
 {
   char *source = get_string_resource ("ping", "Ping");
   char *token, *end;
+  char dummy;
 
   ping_target *hostlist = 0;
 
@@ -1909,7 +1916,7 @@ parse_mode (Bool ping_works_p)
         {
           new = subnetHostsList(0, 24);
         }
-      else if (1 == sscanf (token, "subnet/%d %c", &m))
+      else if (1 == sscanf (token, "subnet/%d %c", &m, &dummy))
         {
           new = subnetHostsList(0, m);
         }

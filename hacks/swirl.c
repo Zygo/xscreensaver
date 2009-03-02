@@ -224,9 +224,7 @@ initialise_swirl(ModeInfo * mi, SWIRL_P swirl)
 #endif /* !STANDALONE */
 
 
-#ifdef STANDALONE
-# define MI_COLORMAP MI_WIN_COLORMAP
-#else /* !STANDALONE */
+#ifndef STANDALONE
 	swirl->fg = MI_FG_COLOR(mi);
 	swirl->bg = MI_BG_COLOR(mi);
 	swirl->fgcol.pixel = swirl->fg;

@@ -114,11 +114,12 @@ print_stderr_1 (saver_screen_info *ssi, char *string)
   if (! ssi->stderr_font)
     {
       char *font_name = get_string_resource ("font", "Font");
-      if (!font_name) font_name = "fixed";
+      if (!font_name) font_name = strdup ("fixed");
       ssi->stderr_font = XLoadQueryFont (dpy, font_name);
       if (! ssi->stderr_font) ssi->stderr_font = XLoadQueryFont (dpy, "fixed");
       ssi->stderr_line_height = (ssi->stderr_font->ascent +
 				 ssi->stderr_font->descent);
+      free (font_name);
     }
 
   if (! ssi->stderr_gc)

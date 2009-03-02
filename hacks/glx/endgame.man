@@ -8,7 +8,7 @@ endgame \- endgame chess screensaver
 .SH DESCRIPTION
 endgame replays a brilliant chess ending
 .SH OPTIONS
-.I chess
+.I endgame
 accepts the following options:
 .TP 8
 .B \-window
@@ -16,6 +16,9 @@ Draw on a newly-created window.  This is the default.
 .TP 8
 .B \-root
 Draw on the root window.
+.TP 8
+.B \-wire
+wireframe mode might be to your liking.
 .TP 8
 .B \-install
 Install a private colormap for the window.

@@ -264,8 +264,8 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
   else
     {
       if (p->debug_p)
-        fprintf (stderr, "%s: not starting cycle_timer: how_long == %d\n",
-                 blurb(), how_long);
+        fprintf (stderr, "%s: not starting cycle_timer: how_long == %ld\n",
+                 blurb(), (unsigned long) how_long);
     }
 }
 
@@ -450,7 +450,7 @@ check_for_clock_skew (saver_info *si)
       shift > (p->timeout / 1000))
     {
       if (p->verbose_p)
-        fprintf (stderr, "%s: wall clock has jumped by %d:%02d:%02d!\n",
+        fprintf (stderr, "%s: wall clock has jumped by %ld:%02ld:%02ld!\n",
                  blurb(),
                  (shift / (60 * 60)), ((shift / 60) % 60), (shift % 60));
 
@@ -738,7 +738,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
                 for (i = 0; i < si->nscreens; i++)
                   if (root == RootWindowOfScreen (si->screens[i].screen))
                     break;
-                fprintf (stderr,"%s: %d: %s on 0x%x",
+                fprintf (stderr,"%s: %d: %s on 0x%lx",
                          blurb(), i, type, (unsigned long) window);
                 if (x == -1)
                   fprintf (stderr, "\n");

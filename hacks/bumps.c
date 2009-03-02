@@ -1,4 +1,5 @@
-/* Bumps, Copyright (c) 2002 Shane Smit <CodeWeaver@DigitalLoom.org>
+/* -*- mode: C; tab-width: 4 -*-
+ * Bumps, Copyright (c) 2002 Shane Smit <CodeWeaver@DigitalLoom.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,50 +23,73 @@
  *  [10/01/99] - Shane Smit: Creation
  *  [10/08/99] - Shane Smit: Port to C. (Ick)
  *  [03/08/02] - Shane Smit: New movement code.
+ *  [09/12/02] - Shane Smit: MIT-SHM XImages.
+ * 							 Thanks to Kennett Galbraith <http://www.Alpha-II.com/>
+ * 							 for code optimization.
  */
-
 
 #include "bumps.h"
 
+/* This function pointer will point to the appropriate PutPixel*() function below. */
+void (*MyPutPixel)( int8_ *, uint32_ );
 
+void PutPixel32( int8_ *pData, uint32_ pixel )
+{
+	*(uint32_ *)pData = pixel;
+}
+
+void PutPixel24( int8_ *pData, uint32_ pixel )
+{
+	pData[ 2 ] = ( pixel & 0x00FF0000 ) >> 16;
+	pData[ 1 ] = ( pixel & 0x0000FF00 ) >> 8;
+	pData[ 0 ] = ( pixel & 0x000000FF );
+}
+
+void PutPixel16( int8_ *pData, uint32_ pixel )
+{
+	*(uint16_ *)pData = (uint16_)pixel;
+}
+
+void PutPixel8( int8_ *pData, uint32_ pixel )
+{
+	*(uint8_ *)pData = (uint8_)pixel;
+}
+
+/* Creates the light map, which is a circular image... going from black around the edges
+ * to white in the center. */
 void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iDiameter, uint16_ nColorCount )
 {
-	double nDelta;
-	int16_ iHeight, iWidth;
+	double nDist;
+	int16_ iDistX, iDistY;
+	uint8_ *pLOffset;
 	
-	pSpotLight->nDiameter = iDiameter;
+	pSpotLight->nFalloffDiameter = iDiameter;
+	pSpotLight->nFalloffRadius = pSpotLight->nFalloffDiameter / 2;
+	pSpotLight->nLightDiameter = iDiameter / 2;
+	pSpotLight->nLightRadius = pSpotLight->nLightDiameter / 2;
 #ifdef VERBOSE
-	printf( "%s: Light Diameter: %d\n", progclass, pSpotLight->nDiameter );
+	printf( "%s: Falloff Diameter: %d\n", progclass, pSpotLight->nFalloffDiameter );
+	printf( "%s: Spot Light Diameter: %d\n", progclass, pSpotLight->nLightDiameter );
 #endif
 
-	pSpotLight->aLightMap = calloc( pSpotLight->nDiameter * pSpotLight->nDiameter, sizeof(uint8_) );
-	memset( pSpotLight->aLightMap, 0, pSpotLight->nDiameter * pSpotLight->nDiameter );
+	pSpotLight->aLightMap = malloc( pSpotLight->nLightDiameter * pSpotLight->nLightDiameter * sizeof(uint8_) );
 
-	/* The falloff max values... 3/4 of the entire lightmap. */
-	pSpotLight->nRadius = (uint16_)(pSpotLight->nDiameter / 2.5F);
-	
-	for( iHeight=-pSpotLight->nRadius; iHeight<pSpotLight->nRadius; iHeight++ )
-		for( iWidth=-pSpotLight->nRadius; iWidth<pSpotLight->nRadius; iWidth++ )
+	pLOffset = pSpotLight->aLightMap;
+	for( iDistY=-pSpotLight->nLightRadius; iDistY<pSpotLight->nLightRadius; ++iDistY )
+	{
+		for( iDistX=-pSpotLight->nLightRadius; iDistX<pSpotLight->nLightRadius; ++iDistX )
 		{
-			nDelta = ( nColorCount * 2.5F ) - ( ( sqrt( pow( iWidth+0.5F, 2 ) + pow( iHeight+0.5F, 2 ) ) / pSpotLight->nRadius ) * ( nColorCount * 2.5F ) );
-			nDelta += nColorCount;
-			if( nDelta >= ( nColorCount * 2 ) ) nDelta = ( nColorCount * 2 ) - 1;
-			if( nDelta >= nColorCount )
-				pSpotLight->aLightMap[ ( ( iHeight + (pSpotLight->nDiameter/2) ) * pSpotLight->nDiameter ) + iWidth + (pSpotLight->nDiameter/2) ] = (uint8_)nDelta;
-		}
+			nDist = sqrt( pow( iDistX+0.5F, 2 ) + pow( iDistY+0.5F, 2 ) );
+			if( nDist / pSpotLight->nLightRadius <= 1.0f )
+				*pLOffset = (uint8_)(nColorCount - ( ( nDist / pSpotLight->nLightRadius ) * ( nColorCount - 1 ) ));
+			else
+				*pLOffset = 0;
 
-	/* The actual lightmap... Use 1/4 to save time within the loop. */
-	pSpotLight->nRadius = pSpotLight->nDiameter / 4;
-
-	for( iHeight=-pSpotLight->nRadius; iHeight<pSpotLight->nRadius; iHeight++ )
-		for( iWidth=-pSpotLight->nRadius; iWidth<pSpotLight->nRadius; iWidth++ )
-		{
-			nDelta = nColorCount - ( ( sqrt( pow( iWidth+0.5F, 2 ) + pow( iHeight+0.5F, 2 ) ) / pSpotLight->nRadius ) * ( nColorCount - 1 ) );
-			if( nDelta >= 1 )
-				pSpotLight->aLightMap[ ( ( iHeight + (pSpotLight->nDiameter/2) ) * pSpotLight->nDiameter ) + iWidth + (pSpotLight->nDiameter/2) ] = (uint8_)nDelta;
+			++pLOffset;
 		}
+	}
 		
-	pSpotLight->nRadius = pSpotLight->nDiameter / 2;	/* Now set the radius back to what it should be. */
+	/* Initialize movement variables.	*/
 	pSpotLight->nAccelX = 0;
 	pSpotLight->nAccelY = 0;
 	pSpotLight->nVelocityX = ( RANDOM() % 2 ) ? pSpotLight->nVelocityMax : -pSpotLight->nVelocityMax;
@@ -73,17 +97,18 @@ void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iDiameter, uint16_ nColorC
 }
 
 
+/* Calculates the position of the spot light on the screen. */
 void CalcLightPos( SBumps *pBumps )
 {
 	SSpotLight *pSpotLight = &pBumps->SpotLight;
 	float nGravity;
 
 	/* X */
-	if( pSpotLight->nXPos < pSpotLight->nDiameter * 1 )									nGravity = 1.0f;
-	else if( pSpotLight->nXPos > pBumps->iWinWidth - ( pSpotLight->nDiameter * 1 ) )	nGravity = -1.0f;
-	else																				nGravity = ( ( RANDOM() % 201 ) / 100.0f ) - 1.0f;
+	if( pSpotLight->nXPos < pSpotLight->nFalloffRadius )							nGravity = 1.0f;
+	else if( pSpotLight->nXPos > pBumps->iWinWidth - pSpotLight->nFalloffRadius )	nGravity = -1.0f;
+	else																			nGravity = ( ( RANDOM() % 201 ) / 100.0f ) - 1.0f;
 		
-	pSpotLight->nAccelX += nGravity * ( pSpotLight->nAccelMax / 10.0f );
+	pSpotLight->nAccelX += nGravity * ( pSpotLight->nAccelMax / 5.0f );
 	if( pSpotLight->nAccelX < -pSpotLight->nAccelMax )		pSpotLight->nAccelX = -pSpotLight->nAccelMax;
 	else if( pSpotLight->nAccelX > pSpotLight->nAccelMax )	pSpotLight->nAccelX = pSpotLight->nAccelMax;
 
@@ -94,11 +119,11 @@ void CalcLightPos( SBumps *pBumps )
 	pSpotLight->nXPos += pSpotLight->nVelocityX;
 
 	/* Y */
-	if( pSpotLight->nYPos < pSpotLight->nDiameter * 1 )									nGravity = 1.0f;
-	else if( pSpotLight->nYPos > pBumps->iWinHeight - ( pSpotLight->nDiameter * 1 ) )	nGravity = -1.0f;
-	else																				nGravity = ( ( RANDOM() % 201 ) / 100.0f ) - 1.0f;
+	if( pSpotLight->nYPos < pSpotLight->nFalloffRadius )								nGravity = 1.0f;
+	else if( pSpotLight->nYPos > pBumps->iWinHeight - pSpotLight->nFalloffRadius )	nGravity = -1.0f;
+	else																			nGravity = ( ( RANDOM() % 201 ) / 100.0f ) - 1.0f;
 		
-	pSpotLight->nAccelY += nGravity * ( pSpotLight->nAccelMax / 10.0f );
+	pSpotLight->nAccelY += nGravity * ( pSpotLight->nAccelMax / 5.0f );
 	if( pSpotLight->nAccelY < -pSpotLight->nAccelMax )		pSpotLight->nAccelY = -pSpotLight->nAccelMax;
 	else if( pSpotLight->nAccelY > pSpotLight->nAccelMax )	pSpotLight->nAccelY = pSpotLight->nAccelMax;
 
@@ -110,28 +135,83 @@ void CalcLightPos( SBumps *pBumps )
 }
 
 
+/* Main initialization function. */
 void CreateBumps( SBumps *pBumps, Display *pNewDisplay, Window NewWin )
 {
 	XWindowAttributes XWinAttribs;
 	XGCValues GCValues;
 	int32_ nGCFlags;
-	uint16_ iWidth, iHeight;
 	uint16_ iDiameter;
-	
+
+	/* Make size and velocity a function of window size, so it appears the same at 100x60 as it does in 3200x1200. */
 	XGetWindowAttributes( pNewDisplay, NewWin, &XWinAttribs );
 	pBumps->iWinWidth = XWinAttribs.width;
 	pBumps->iWinHeight = XWinAttribs.height;
 	pBumps->SpotLight.nXPos = XWinAttribs.width / 2.0f;
 	pBumps->SpotLight.nYPos = XWinAttribs.height / 2.0f;
-	pBumps->SpotLight.nVelocityMax = ( ( XWinAttribs.width < XWinAttribs.height ) ? XWinAttribs.width : XWinAttribs.height ) / 128.0f;
+	pBumps->SpotLight.nVelocityMax = ( ( XWinAttribs.width < XWinAttribs.height ) ? XWinAttribs.width : XWinAttribs.height ) / 140.0f;
 	pBumps->SpotLight.nAccelMax = pBumps->SpotLight.nVelocityMax / 10.0f;
 	pBumps->pDisplay = pNewDisplay;
 	pBumps->Win = NewWin;
+	pBumps->pXImage = NULL;
+	
+	iDiameter = ( ( pBumps->iWinWidth < pBumps->iWinHeight ) ? pBumps->iWinWidth : pBumps->iWinHeight ) / 2;
 
-	pBumps->pXImage = XCreateImage( pBumps->pDisplay, XWinAttribs.visual, XWinAttribs.depth, ZPixmap, 0, NULL,
-		pBumps->iWinWidth, pBumps->iWinHeight, BitmapPad( pBumps->pDisplay ), 0 );
-	pBumps->pXImage->data = calloc( pBumps->pXImage->bytes_per_line * pBumps->pXImage->height, sizeof(int8_) );
+#ifdef HAVE_XSHM_EXTENSION
+	pBumps->bUseShm = get_boolean_resource( "useSHM", "Boolean" );
 
+	if( pBumps->bUseShm )
+	{
+		pBumps->pXImage = create_xshm_image( pBumps->pDisplay, XWinAttribs.visual, XWinAttribs.depth,
+											 ZPixmap, NULL, &pBumps->XShmInfo, iDiameter, iDiameter );
+		if( !pBumps->pXImage )
+		{
+			fprintf( stderr, "%s: Unable to create XShmImage.\n", progname );
+			pBumps->bUseShm = False;
+		}
+	}
+#endif /* HAVE_XSHM_EXTENSION */
+	if( !pBumps->pXImage )
+	{
+		pBumps->pXImage = XCreateImage( pBumps->pDisplay, XWinAttribs.visual, XWinAttribs.depth, 
+									ZPixmap, 0, NULL, iDiameter, iDiameter, BitmapPad( pBumps->pDisplay ), 0 );
+		pBumps->pXImage->data = malloc( pBumps->pXImage->bytes_per_line * pBumps->pXImage->height * sizeof(int8_) );
+	}
+
+	/* For speed, access the XImage data directly using my own PutPixel routine. */
+	switch( pBumps->pXImage->bits_per_pixel )
+	{
+		case 32:
+			pBumps->bytesPerPixel = 4;
+			MyPutPixel = PutPixel32;
+			break;
+		
+		case 24:
+			pBumps->bytesPerPixel = 3;
+			MyPutPixel = PutPixel24;
+			break;
+
+		case 16:
+			pBumps->bytesPerPixel = 2;
+			MyPutPixel = PutPixel16;
+			break;
+
+		case 8:
+			pBumps->bytesPerPixel = 1;
+			MyPutPixel = PutPixel8;
+			break;
+
+		default:
+			fprintf( stderr, "%s: Unknown XImage depth.", progname );
+#ifdef HAVE_XSHM_EXTENSION
+			if( pBumps->bUseShm )
+				destroy_xshm_image( pBumps->pDisplay, pBumps->pXImage, &pBumps->XShmInfo );
+			else
+#endif /* HAVE_XSHM_EXTENSION */
+				XDestroyImage( pBumps->pXImage );
+			exit( 1 );
+	}
+	
 	GCValues.function = GXcopy;
 	GCValues.subwindow_mode = IncludeInferiors;
 	nGCFlags = GCForeground | GCFunction;
@@ -140,82 +220,69 @@ void CreateBumps( SBumps *pBumps, Display *pNewDisplay, Window NewWin )
 	pBumps->GraphicsContext = XCreateGC( pBumps->pDisplay, pBumps->Win, nGCFlags, &GCValues );
 	
 	SetPalette( pBumps, &XWinAttribs );
-	iDiameter = ( ( pBumps->iWinWidth < pBumps->iWinHeight ) ? pBumps->iWinWidth : pBumps->iWinHeight ) / 3;
 	CreateSpotLight( &pBumps->SpotLight, iDiameter, pBumps->nColorCount );
 	InitBumpMap( pBumps, &XWinAttribs );
 
-	/* Clear the image. */
-  if (pBumps->aXColors[ 0 ].pixel == 0)
-    memset (pBumps->pXImage->data, 0,
-            pBumps->pXImage->bytes_per_line * pBumps->pXImage->height);
-  else
-    for( iHeight=0; iHeight<pBumps->iWinHeight; iHeight++ )
-      for( iWidth=0; iWidth<pBumps->iWinWidth; iWidth++ )
-        XPutPixel( pBumps->pXImage, iWidth, iHeight,
-                   pBumps->aXColors[ 0 ].pixel );
-  XSetWindowBackground( pBumps->pDisplay, pBumps->Win,
-                        pBumps->aXColors[ 0 ].pixel );
-  XClearWindow (pBumps->pDisplay, pBumps->Win);
+	XSetWindowBackground( pBumps->pDisplay, pBumps->Win, pBumps->aColors[ 0 ] );
+	XClearWindow (pBumps->pDisplay, pBumps->Win);
 }
 
 
+/* Creates a specialized phong shade palette. */
 void SetPalette( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 {
+	XColor BaseColor;
 	XColor Color;
 	char *sColor;			/* Spotlight Color */
 	int16_ iColor;
-	uint32_ *aPixels;
 	
 	sColor = get_string_resource( "color", "Color" );
 
-	Color.red = RANDOM() % 0xFFFF; 
-	Color.green = RANDOM() % 0xFFFF;
-	Color.blue = RANDOM() % 0xFFFF;
+	BaseColor.red = RANDOM() % 0xFFFF; 
+	BaseColor.green = RANDOM() % 0xFFFF;
+	BaseColor.blue = RANDOM() % 0xFFFF;
 	
 	/* Make one color full intesity to avoid dark spotlights.	*/
 	switch( RANDOM() % 3 )
 	{
-		case 0:	Color.red	= 0xFFFF;	break;
-		case 1: Color.green	= 0xFFFF;	break;
-		case 2: Color.blue	= 0xFFFF;	break;
+		case 0:	BaseColor.red	= 0xFFFF;	break;
+		case 1: BaseColor.green	= 0xFFFF;	break;
+		case 2: BaseColor.blue	= 0xFFFF;	break;
 	}
 
-	if( strcasecmp( sColor, "random" ) && !XParseColor( pBumps->pDisplay, pXWinAttribs->colormap, sColor, &Color ) )
+	if( strcasecmp( sColor, "random" ) && !XParseColor( pBumps->pDisplay, pXWinAttribs->colormap, sColor, &BaseColor ) )
 		fprintf( stderr, "%s: color %s not found in database. Choosing random...\n", progname, sColor );
 
 #ifdef VERBOSE
-	printf( "%s: Spotlight color is <%d,%d,%d> RGB.\n", progclass, Color.red, Color.green, Color.blue );
+	printf( "%s: Spotlight color is <%d,%d,%d> RGB.\n", progclass, BaseColor.red, BaseColor.green, BaseColor.blue );
 #endif  /*  VERBOSE */
 
 	pBumps->nColorCount = get_integer_resource( "colorcount", "Integer" );
 	if( pBumps->nColorCount < 2 )	pBumps->nColorCount = 2;
 	if( pBumps->nColorCount > 128 )	pBumps->nColorCount = 128;
 
-	pBumps->aXColors = calloc( pBumps->nColorCount, sizeof(XColor ) );
-	        aPixels  = calloc( pBumps->nColorCount, sizeof(uint32_) );
+	pBumps->aColors = malloc( pBumps->nColorCount * sizeof(uint32_ ) );
 
-	/* Creates a phong shade:                 / SpotColor  \                               Index/ColorCount 
-	 *							PhongShade = | ------------ | Index + ( 65535 - SpotColor )^ 
+	/* Creates a phong shade:                 / BaseColor  \                               Index/ColorCount 
+	 *							PhongShade = | ------------ | Index + ( 65535 - BaseColor )^ 
 	 *										  \ ColorCount /												*/
 	pBumps->nColorCount--;
 	for( iColor=0; iColor<=pBumps->nColorCount; iColor++ )
 	{
-		pBumps->aXColors[ iColor ].red   = (uint16_)( ( ( Color.red   / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - Color.red,   iColor/(double)pBumps->nColorCount ) );
-		pBumps->aXColors[ iColor ].green = (uint16_)( ( ( Color.green / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - Color.green, iColor/(double)pBumps->nColorCount ) );
-		pBumps->aXColors[ iColor ].blue  = (uint16_)( ( ( Color.blue  / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - Color.blue,  iColor/(double)pBumps->nColorCount ) );
+		Color.red   = (uint16_)( ( ( BaseColor.red   / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - BaseColor.red,   iColor/(double)pBumps->nColorCount ) );
+		Color.green = (uint16_)( ( ( BaseColor.green / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - BaseColor.green, iColor/(double)pBumps->nColorCount ) );
+		Color.blue  = (uint16_)( ( ( BaseColor.blue  / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - BaseColor.blue,  iColor/(double)pBumps->nColorCount ) );
 
-		if( !XAllocColor( pBumps->pDisplay, pXWinAttribs->colormap, &pBumps->aXColors[ iColor ] ) )
+		if( !XAllocColor( pBumps->pDisplay, pXWinAttribs->colormap, &Color ) )
 		{
-			XFreeColors( pBumps->pDisplay, pXWinAttribs->colormap, aPixels, iColor, 0 );
-			free( pBumps->aXColors );
-			free(         aPixels );
+			XFreeColors( pBumps->pDisplay, pXWinAttribs->colormap, pBumps->aColors, iColor, 0 );
+			free( pBumps->aColors );
+			pBumps->aColors = malloc( pBumps->nColorCount * sizeof(uint32_) );
 			pBumps->nColorCount--;
-			pBumps->aXColors = calloc( pBumps->nColorCount, sizeof(XColor) );
-	                aPixels  = calloc( pBumps->nColorCount, sizeof(uint32_) );
 			iColor = -1;
 		}
 		else
-			aPixels[ iColor ] = pBumps->aXColors[ iColor ].pixel;
+			pBumps->aColors[ iColor ] = Color.pixel;
 	}
 	pBumps->nColorCount++;
 
@@ -223,42 +290,69 @@ void SetPalette( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 	printf( "%s: Allocated %d colors.\n", progclass, pBumps->nColorCount );
 #endif  /*  VERBOSE */
 
-	XSetWindowBackground( pBumps->pDisplay, pBumps->Win, pBumps->aXColors[ 0 ].pixel );
+	XSetWindowBackground( pBumps->pDisplay, pBumps->Win, pBumps->aColors[ 0 ] );
 }
 
 
+/* Grabs the current contents of the window to use an intensity-based bump map. */
 void InitBumpMap( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 {
 	XImage *pScreenImage;
-	XColor *aColors;
+	XColor *aColors, *pColor;
 	uint8_ nSoften;
 	uint16_ iWidth, iHeight;
+	uint32_ nAverager;
+	uint16_	*pBump;
+	uint16_ maxHeight;
+	double softenMultiplier = 1.0f;
 	BOOL bInvert = (BOOL)get_boolean_resource( "invert", "Boolean" );
-	
-	aColors = (XColor*)calloc( pBumps->iWinWidth, sizeof(XColor) );
+
+	aColors = (XColor*)malloc( pBumps->iWinWidth * sizeof(XColor) );
 	grab_screen_image( pXWinAttribs->screen, pBumps->Win );
 	pScreenImage = XGetImage( pBumps->pDisplay, pBumps->Win, 0, 0, pBumps->iWinWidth, pBumps->iWinHeight, ~0L, ZPixmap );
 
-        /* jwz: get the grabbed bits off the screen fast */
-        XClearWindow (pBumps->pDisplay, pBumps->Win);
-        XSync (pBumps->pDisplay, 0);
+	/* jwz: get the grabbed bits off the screen fast */
+	XClearWindow (pBumps->pDisplay, pBumps->Win);
+	XSync (pBumps->pDisplay, 0);
 
-	pBumps->aBumpMap = calloc( pBumps->iWinWidth * pBumps->iWinHeight, sizeof(uint16_) );
-	for( iHeight=0; iHeight<pBumps->iWinHeight; iHeight++ )
-	{
-		for( iWidth=0; iWidth<pBumps->iWinWidth; iWidth++ )
-			aColors[ iWidth ].pixel = XGetPixel( pScreenImage, iWidth, iHeight );
-
-		XQueryColors( pBumps->pDisplay, pXWinAttribs->colormap, aColors, pBumps->iWinWidth );
+	pBumps->aBumpMap = malloc( pBumps->iWinWidth * pBumps->iWinHeight * sizeof(uint16_) );
 	
-		if( bInvert )
+	nSoften = get_integer_resource( "soften", "Integer" );
+	while( nSoften-- )
+		softenMultiplier *= 1.0f + ( 1.0f / 3.0f );	/* Softening takes the max height down, so scale up to compensate. */
+	maxHeight = pBumps->SpotLight.nLightRadius * softenMultiplier;
+	nAverager = ( 3 * 0xFFFF ) / maxHeight;
+
+	pBump = pBumps->aBumpMap;
+	if( bInvert )	/* Funny, it's actually the 'else' that inverts the bump map... */
+	{
+		for( iHeight=0; iHeight<pBumps->iWinHeight; iHeight++ )
+		{
+			pColor = aColors;
 			for( iWidth=0; iWidth<pBumps->iWinWidth; iWidth++ )
-				pBumps->aBumpMap[ ( iHeight * pBumps->iWinWidth ) + iWidth ] = (uint16_)
-					( ( aColors[ iWidth ].red + aColors[ iWidth ].green + aColors[ iWidth ].blue ) / ( 0x2FFFD / (double)pBumps->SpotLight.nDiameter ) );
-		else
+				(pColor++)->pixel = XGetPixel( pScreenImage, iWidth, iHeight );
+
+			XQueryColors( pBumps->pDisplay, pXWinAttribs->colormap, aColors, pBumps->iWinWidth );
+
+			pColor = aColors;
+			for( iWidth=pBumps->iWinWidth; iWidth; --iWidth, ++pColor, ++pBump )
+				*pBump = ( ( pColor->red + pColor->green + pColor->blue ) / nAverager );
+		}
+	}
+	else
+	{
+		for( iHeight=0; iHeight<pBumps->iWinHeight; iHeight++ )
+		{
+			pColor = aColors;
 			for( iWidth=0; iWidth<pBumps->iWinWidth; iWidth++ )
-				pBumps->aBumpMap[ ( iHeight * pBumps->iWinWidth ) + iWidth ] = (uint16_)
-					( pBumps->SpotLight.nDiameter - ( ( aColors[ iWidth ].red + aColors[ iWidth ].green + aColors[ iWidth ].blue ) / ( 0x2FFFD / (double)pBumps->SpotLight.nDiameter ) ) );
+				(pColor++)->pixel = XGetPixel( pScreenImage, iWidth, iHeight );
+
+			XQueryColors( pBumps->pDisplay, pXWinAttribs->colormap, aColors, pBumps->iWinWidth );
+	
+			pColor = aColors;
+			for( iWidth=pBumps->iWinWidth; iWidth; --iWidth, ++pColor, ++pBump )
+				*pBump = ( maxHeight - ( ( pColor->red + pColor->green + pColor->blue ) / nAverager ) );
+		}
 	}
 
 	XDestroyImage( pScreenImage );
@@ -269,96 +363,157 @@ void InitBumpMap( SBumps *pBumps, XWindowAttributes *pXWinAttribs )
 #endif
 	while( nSoften-- )
 		SoftenBumpMap( pBumps );
+
 	free( aColors );
 }
 
-
+/* Soften the bump map.  This is to avoid pixellated-looking ridges.
+ * |-----|-----|-----|
+ * |  0% |12.5%|  0% |	The adjacent pixels are averaged together
+ * |-----|-----|-----|	first.  Then than value is averaged with
+ * |12.5%| 50% |12.5%|	the pixel is question. This essentially weights
+ * |-----|-----|-----|  each pixel as shown on the left.
+ * |  0% |12.5%|  0% |
+ * |-----|-----|-----|
+ */
 void SoftenBumpMap( SBumps *pBumps )
 {
-	uint16_ *pOffset;
-	uint16_ nHeight;
-	uint16_ iWidth, iHeight;
-	uint16_ *pTempBuffer = calloc( pBumps->iWinWidth * pBumps->iWinHeight, sizeof(uint16_) );
+	uint16_ *pOffset, *pTOffset;
+	uint32_ nHeight;
+	uint32_ iWidth, iHeight;
+	uint16_ *aTempBuffer = malloc( pBumps->iWinWidth * pBumps->iWinHeight * sizeof(uint16_) );
 
-	for( iHeight=1; iHeight<pBumps->iWinHeight-1; iHeight++ )
+	pOffset = pBumps->aBumpMap;
+	pTOffset = aTempBuffer;
+	for( iHeight=pBumps->iWinHeight; iHeight; --iHeight )
 	{
-		pOffset = pBumps->aBumpMap + ( iHeight * pBumps->iWinWidth );
-		for( iWidth=1; iWidth<pBumps->iWinWidth-1; iWidth++ )
-		{	
-			nHeight = 0;
-			nHeight += pOffset[ iWidth ];
-			nHeight += pOffset[ iWidth - pBumps->iWinWidth ];
-			nHeight += pOffset[ iWidth + 1 ];
-			nHeight += pOffset[ iWidth + pBumps->iWinWidth ];
-			nHeight += pOffset[ iWidth - 1 ];
-			nHeight /= 5;
-			pTempBuffer[ ( iHeight * pBumps->iWinWidth ) + iWidth ] = nHeight;
+		for( iWidth=pBumps->iWinWidth; iWidth; --iWidth, ++pOffset, ++pTOffset )
+		{
+			if( iHeight==pBumps->iWinHeight || iHeight==1 ||
+				iWidth==pBumps->iWinWidth || iWidth==1 )
+			{
+				*pTOffset = 0;
+				continue;
+			}
+
+			nHeight = pOffset[ -pBumps->iWinWidth ];
+			nHeight += pOffset[ 1 ];
+			nHeight += pOffset[ pBumps->iWinWidth ];
+			nHeight += pOffset[ -1 ];
+			nHeight >>= 2;
+			nHeight += pOffset[ 0 ];
+			nHeight >>= 1;
+			*pTOffset = nHeight;
 		}
 	}						
-	
-	memcpy( pBumps->aBumpMap, pTempBuffer, pBumps->iWinWidth * pBumps->iWinHeight * 2 );
-	free( pTempBuffer );
+
+	memcpy( pBumps->aBumpMap, aTempBuffer, pBumps->iWinWidth * pBumps->iWinHeight * sizeof(uint16_) );
+	free( aTempBuffer );
 }
 
 
+/* This is where we slap down some pixels... */
 void Execute( SBumps *pBumps )
 {
-	uint16_ nLightXPos, nLightYPos;
-	uint16_ iWidth, iHeight;
-	uint16_ iLightWidth, iLightHeight;
+	int32_ nLightXPos, nLightYPos;
+	int32_ iScreenX, iScreenY;
+	int32_ iLightX, iLightY;
 	uint16_ *pBOffset;
-	uint8_ *pLOffset;
-	int16_ nX, nY;
+	int8_ *pDOffset;
+	int32_ nX, nY;
 	uint16_ nColor;
+	int32_ nLightOffsetFar = pBumps->SpotLight.nFalloffDiameter - pBumps->SpotLight.nLightRadius;
+
 	CalcLightPos( pBumps );
 	
 	/* Offset to upper left hand corner. */
-	nLightXPos = pBumps->SpotLight.nXPos - pBumps->SpotLight.nRadius;
-	nLightYPos = pBumps->SpotLight.nYPos - pBumps->SpotLight.nRadius;
-
-	for( iHeight=nLightYPos, iLightHeight=0; iLightHeight<pBumps->SpotLight.nDiameter; iHeight++, iLightHeight++ )
+	nLightXPos = pBumps->SpotLight.nXPos - pBumps->SpotLight.nFalloffRadius;
+	nLightYPos = pBumps->SpotLight.nYPos - pBumps->SpotLight.nFalloffRadius;
+	
+	for( iScreenY=nLightYPos, iLightY=-pBumps->SpotLight.nLightRadius; iLightY<nLightOffsetFar; ++iScreenY, ++iLightY )
 	{
-		pBOffset = pBumps->aBumpMap + ( iHeight * pBumps->iWinWidth );
-		pLOffset = pBumps->SpotLight.aLightMap + ( iLightHeight * pBumps->SpotLight.nDiameter );
-		for( iWidth=nLightXPos, iLightWidth=0; iLightWidth<pBumps->SpotLight.nDiameter; iWidth++, iLightWidth++ )
+		if( iScreenY < 0 )							continue;
+		else if( iScreenY >= pBumps->iWinHeight )	break;
+
+		pDOffset = &pBumps->pXImage->data[ (iLightY+pBumps->SpotLight.nLightRadius) * pBumps->pXImage->bytes_per_line ];
+		pBOffset = pBumps->aBumpMap + ( iScreenY * pBumps->iWinWidth ) + nLightXPos;
+		for( iScreenX=nLightXPos, iLightX=-pBumps->SpotLight.nLightRadius; iLightX<nLightOffsetFar; ++iScreenX, ++iLightX, ++pBOffset, pDOffset+=pBumps->bytesPerPixel )
 		{
-			if( pLOffset[ iLightWidth ] )
-			{				
-				nX = pBOffset[ iWidth + 1                 ] - pBOffset[ iWidth ] + iLightWidth;
-				nY = pBOffset[ iWidth + pBumps->iWinWidth ] - pBOffset[ iWidth ] + iLightHeight;
-
-				if( nX < 0 )					nX = 0;
-				else if( nX >= pBumps->SpotLight.nDiameter )	nX = pBumps->SpotLight.nDiameter - 1;
-
-				if( nY < 0 )					nY = 0;
-				else if( nY >= pBumps->SpotLight.nDiameter )	nY = pBumps->SpotLight.nDiameter - 1;
-
-				nColor = pBumps->SpotLight.aLightMap[ ( nY * pBumps->SpotLight.nDiameter ) + nX ];
-				if( nColor >= pBumps->nColorCount )
-					nColor = 1;
-
-				if( pLOffset[ iLightWidth ] >= pBumps->nColorCount )
-					if( nColor > pLOffset[ iLightWidth ] - pBumps->nColorCount )
-						nColor = pLOffset[ iLightWidth ] - pBumps->nColorCount;
-						
-				XPutPixel( pBumps->pXImage, iWidth, iHeight, pBumps->aXColors[ nColor ].pixel );
+			if( iScreenX < 0 )							continue;
+			else if( iScreenX >= pBumps->iWinWidth )	break;
+			else if( iScreenY == 0 || iScreenY >= pBumps->iWinHeight-2 ||
+					 iScreenX == 0 || iScreenX >= pBumps->iWinWidth-2 )
+			{
+				MyPutPixel( pDOffset, pBumps->aColors[ 0 ] );
+				continue;
 			}
-			else
-				XPutPixel( pBumps->pXImage, iWidth, iHeight, pBumps->aXColors[ 0 ].pixel );
+
+			/* That's right folks, all the magic of bump mapping occurs in these two lines.  (kinda disappointing, isn't it?) */
+			nX = ( pBOffset[ 1 ] - pBOffset[ 0 ] ) + iLightX;
+			nY = ( pBOffset[ pBumps->iWinWidth ] - pBOffset[ 0 ] ) + iLightY;
+
+			if( nX<0 || nX>=pBumps->SpotLight.nLightDiameter
+			 || nY<0 || nY>=pBumps->SpotLight.nLightDiameter )
+			{
+				MyPutPixel( pDOffset, pBumps->aColors[ 0 ] );
+				continue;
+			}
+				
+			nColor = pBumps->SpotLight.aLightMap[ ( nY * pBumps->SpotLight.nLightDiameter ) + nX ];
+			MyPutPixel( pDOffset, pBumps->aColors[ nColor ] );
 		}
 	}	
 
-	XPutImage( pBumps->pDisplay, pBumps->Win, pBumps->GraphicsContext, pBumps->pXImage, nLightXPos, nLightYPos, nLightXPos, nLightYPos, pBumps->SpotLight.nDiameter, pBumps->SpotLight.nDiameter );
+	/* Allow the spotlight to go *slightly* off the screen by clipping the XImage. */
+	iLightX = iLightY = 0;	/* Use these for XImages X and Y now.	*/
+	nX = nY = pBumps->SpotLight.nFalloffDiameter;	/* Use these for XImage width and height now.	*/
+	if( nLightXPos < 0 )
+	{
+		iLightX = -nLightXPos;
+		nX -= iLightX;
+		nLightXPos = 0;
+	}
+	else if( nLightXPos + nX >= pBumps->iWinWidth )
+	{
+		nX -= ( nLightXPos + nX ) - pBumps->iWinWidth;
+	}
+	
+	if( nLightYPos < 0 )
+	{
+		iLightY = -nLightYPos;
+		nY -= iLightY;
+		nLightYPos = 0;
+	}
+	else if( nLightYPos + nY >= pBumps->iWinHeight )
+	{
+		nY -= ( nLightYPos + nY ) - pBumps->iWinHeight;
+	}
+	
+#ifdef HAVE_XSHM_EXTENSION
+	if( pBumps->bUseShm )
+		XShmPutImage( pBumps->pDisplay, pBumps->Win, pBumps->GraphicsContext, pBumps->pXImage, iLightX, iLightY, nLightXPos, nLightYPos,
+					  nX, nY, False);
+	else
+#endif /* HAVE_XSHM_EXTENSION */
+		XPutImage( pBumps->pDisplay, pBumps->Win, pBumps->GraphicsContext, pBumps->pXImage, iLightX, iLightY, nLightXPos, nLightYPos,
+				   nX, nY );
+	
 	XSync( pBumps->pDisplay, False );
 }
 
 
+/* Clean up */
 void DestroyBumps( SBumps *pBumps )
 {
 	DestroySpotLight( &pBumps->SpotLight );
-	free( pBumps->aXColors );
+	free( pBumps->aColors );
 	free( pBumps->aBumpMap );
-	XDestroyImage( pBumps->pXImage );
+#ifdef HAVE_XSHM_EXTENSION
+	if( pBumps->bUseShm )
+		destroy_xshm_image( pBumps->pDisplay, pBumps->pXImage, &pBumps->XShmInfo );
+	else
+#endif /* HAVE_XSHM_EXTENSION */
+		XDestroyImage( pBumps->pXImage );
 }
 
 

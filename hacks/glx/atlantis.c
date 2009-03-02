@@ -375,10 +375,10 @@ clear_tank (atlantisstruct * ap)
           i = 0;
           while (i < size)
             {
-              pixels[i++] = 0;
-              pixels[i++] = (start + (i>>2)) * 0.56;
-              pixels[i++] = (start + (i>>2));
-              pixels[i++] = 255;
+              pixels[i] = 0; i++;
+              pixels[i] = (start + (i>>2)) * 0.56; i++;
+              pixels[i] = (start + (i>>2)); i++;
+              pixels[i] = 255; i++;
             }
 
           clear_gl_error();

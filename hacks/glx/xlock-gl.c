@@ -1,5 +1,5 @@
 /* xlock-gl.c --- xscreensaver compatibility layer for xlockmore GL modules.
- * xscreensaver, Copyright (c) 1997, 1998, 1999 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -88,6 +88,28 @@ init_GL(ModeInfo * mi)
 	glClearIndex (BlackPixelOfScreen (screen));
       }
   }
+
+
+  /* jwz: the doc for glDrawBuffer says "The initial value is GL_FRONT
+     for single-buffered contexts, and GL_BACK for double-buffered
+     contexts."  However, I find that this is not always the case,
+     at least with Mesa 3.4.2 -- sometimes the default seems to be
+     GL_FRONT even when glGet(GL_DOUBLEBUFFER) is true.  So, let's
+     make sure.
+
+     Oh, hmm -- maybe this only happens when we are re-using the
+     xscreensaver window, and the previous GL hack happened to die with
+     the other buffer selected?  I'm not sure.  Anyway, this fixes it.
+   */
+  {
+    GLboolean d = False;
+    glGetBooleanv (GL_DOUBLEBUFFER, &d);
+    if (d)
+      glDrawBuffer (GL_BACK);
+    else
+      glDrawBuffer (GL_FRONT);
+  }
+
 
   /* GLXContext is already a pointer type.
      Why this function returns a pointer to a pointer, I have no idea...

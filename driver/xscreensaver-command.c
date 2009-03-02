@@ -403,7 +403,7 @@ watch (Display *dpy)
               if (running && changed)
                 {
                   int i;
-                  fprintf (stdout, "RUN", s);
+                  fprintf (stdout, "RUN");
                   for (i = 2; i < nitems; i++)
                     fprintf (stdout, " %d", (int) data[i]);
                   fprintf (stdout, "\n");

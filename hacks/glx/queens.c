@@ -49,9 +49,11 @@
 static XrmOptionDescRec opts[] = {
   {"+rotate", ".queens.rotate", XrmoptionNoArg, (caddr_t) "false" },
   {"-rotate", ".queens.rotate", XrmoptionNoArg, (caddr_t) "true" },
+/*   {"-white", ".queens.white", XrmoptionSepArg, (cadd_t) NULL }, */
+/*   {"-black", ".queens.white", XrmoptionSepArg, (cadd_t) NULL }, */
 };
 
-int rotate;
+int rotate, wire, clearbits;
 
 static argtype vars[] = {
   {(caddr_t *) &rotate, "rotate", "Rotate", "True", t_Bool},
@@ -90,13 +92,18 @@ static Queenscreen *qs = NULL;
 #define QUEEN 1
 #define MINBOARD 5
 #define MAXBOARD 10
+#define COLORSETS 3
 
 /* definition of white/black colors */
-GLfloat colors[2][3] = { {0.5, 0.7, 0.9},
-			 {0.2, 0.3, 0.6} };
+GLfloat colors[COLORSETS][2][3] = 
+  { 
+    {{0.5, 0.7, 0.9}, {0.2, 0.3, 0.6}},
+    {{0.53725490196, 0.360784313725, 0.521568627451}, {0.6, 0.6, 0.6}},
+    {{1.0, 0.5, 0.0}, {0.5, 0.5, 0.5}},
+  };
 
 int board[MAXBOARD][MAXBOARD];
-int work = 0, vb = 0, steps = 0, BOARDSIZE = 8; /* 8 cuz its classic */
+int steps = 0, colorset = 0, BOARDSIZE = 8; /* 8 cuz its classic */
 
 Bool
 queens_handle_event (ModeInfo *mi, XEvent *event)
@@ -177,20 +184,18 @@ void blank(void) {
 }
 
 /* recursively determine solution */
-int findSolution(int row) {
-  int col = 0;
-
+int findSolution(int row, int col) {
   if(row == BOARDSIZE)
     return 1;
   
   while(col < BOARDSIZE) {
     if(!conflicts(row, col)) {
-      board[row][col] = QUEEN;
+      board[row][col] = 1;
 
-      if(findSolution(row+1))
-	return 1;
+      if(findSolution(row+1, 0))
+        return 1;
 
-      board[row][col] = NONE; 
+      board[row][col] = 0;
     }
 
     ++col;
@@ -199,8 +204,8 @@ int findSolution(int row) {
   return 0;
 }
 
-/* driver for finding solution */
-void go(void) { findSolution(0); }
+/** driver for finding solution */
+void go(void) { while(!findSolution(0, random()%BOARDSIZE)); }
 
 /* configure lighting */
 void setup_lights(void) {
@@ -223,7 +228,7 @@ void drawPieces(void) {
   for(i = 0; i < BOARDSIZE; ++i) {
     for(j = 0; j < BOARDSIZE; ++j) {
       if(board[i][j]) {
-	glColor4f(colors[i%2][0], colors[i%2][1], colors[i%2][2], findAlpha());
+	glColor3fv(colors[colorset][i%2]);
 	glCallList(QUEEN);
       }
       
@@ -235,178 +240,102 @@ void drawPieces(void) {
 }
 
 /* draw board */
-void drawBoard(int wire) {
+void drawBoard(void) {
   int i, j;
 
-  if (!wire) glBegin(GL_QUADS);
+  glBegin(GL_QUADS);
 
   for(i = 0; i < BOARDSIZE; ++i)
     for(j = 0; j < BOARDSIZE; ++j) {
       int par = (i-j+BOARDSIZE)%2;
-      glColor4f(colors[par][0], colors[par][1], colors[par][2], findAlpha());
+      glColor3fv(colors[colorset][par]);
       glNormal3f(0.0, 1.0, 0.0);
-      if (wire) glBegin(GL_LINE_LOOP);
-      glVertex3f(j - 0.5, -0.01, i - 0.5);
-      glVertex3f(j + 0.5, -0.01, i - 0.5);
-      glVertex3f(j + 0.5, -0.01, i + 0.5);
-      glVertex3f(j - 0.5, -0.01, i + 0.5);
-      if (wire) glEnd();
+      glVertex3f(i, 0.0, j + 1.0);
+      glVertex3f(i + 1.0, 0.0, j + 1.0);
+      glVertex3f(i + 1.0, 0.0, j);
+      glVertex3f(i, 0.0, j);
+
+      /* draw the bottom, too */
+      glNormal3f(0.0, -1.0, 0.0);
+      glVertex3f(i, 0.0, j);
+      glVertex3f(i + 1.0, 0.0, j);
+      glVertex3f(i + 1.0, 0.0, j + 1.0);
+      glVertex3f(i, 0.0, j + 1.0);
     }
 
-  if (!wire) glEnd();
+  glEnd();
 }
 
 double theta = 0.0;
 
-void display(Queenscreen *c, int wire) {
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+void display(Queenscreen *c) {
+  glClear(clearbits);
   
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  gluLookAt(0.0, 1.0+(0.8*fabs(sin(theta)))*10.0, -1.2*BOARDSIZE,
- 	    0.0, 1.0, 0.0,
- 	    0.0, 0.0, 1.0);
 
-  glScalef(1, -1, 1);
-  gltrackball_rotate (c->trackball);	/* Apply mouse-based camera position */
-  glScalef(1, -1, 1);
+  glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0.8/(0.01+findAlpha()));
 
+  /** setup perspectif */
+  glTranslatef(0.0, 0.0, -1.5*BOARDSIZE);
+  glRotatef(30.0, 1.0, 0.0, 0.0);
+  gltrackball_rotate (c->trackball);
   glRotatef(theta*100, 0.0, 1.0, 0.0);
-  glTranslatef(-0.5 * (BOARDSIZE-1), 0.0, -0.5 * (BOARDSIZE-1));
+  glTranslatef(-0.5*BOARDSIZE, 0.0, -0.5*BOARDSIZE);
 
-  if (!wire) {
-    glEnable(GL_LIGHTING);
-    glEnable(GL_COLOR_MATERIAL);
-    glEnable(GL_BLEND);
-  }
-
-  drawBoard(wire);
-  glTranslatef(0.0, 0.01, 0.0);  
+  drawBoard();
+  glTranslatef(0.5, 0.01, 0.5);  
   drawPieces();
 
-  glDisable(GL_COLOR_MATERIAL);
-  glDisable(GL_BLEND);
-  glDisable(GL_LIGHTING);
-
-  theta += .002;
+  if (!c->button_down_p)
+    theta += .002;
 
   /* zero out board, find new solution of size MINBOARD <= i <= MAXBOARD */
   if(++steps == 512) {
     steps = 0;
     blank();
     BOARDSIZE = MINBOARD + (random() % (MAXBOARD - MINBOARD + 1));
+    colorset = (colorset+1)%COLORSETS;
     go();
   }
 }
 
-#define piece_size 0.1
+int schunks = 15;
+GLfloat spidermodel[][3] =
+  {
+    {0.48, 0.48, 0.22},
+    {0.48, 0.34, 0.18},
+    {0.34, 0.34, 0.10},
+    {0.34, 0.18, 0.30},
+    {0.18, 0.14, 0.38},
+    {0.14, 0.29, 0.01},
+    {0.29, 0.18, 0.18},
+    {0.18, 0.18, 0.16},
+    {0.18, 0.20, 0.26},
+    {0.20, 0.27, 0.14},
+    {0.27, 0.24, 0.08},
+    {0.24, 0.17, 0.00},
+    {0.17, 0.095, 0.08},
+    {0.095, 0.07, 0.00},
+    {0.07, 0.00, 0.12},
+  };
+
 #define EPSILON 0.001
 
-/* Make a revolved piece */
-void revolve_line(double *trace_r, double *trace_h, double max_iheight, 
-		  int rot, int wire) {
-  double theta, norm_theta, sin_theta, cos_theta;
-  double norm_ptheta = 0.0, sin_ptheta = 0.0, cos_ptheta = 1.0;
-  double radius, pradius;
-  double max_height = max_iheight, height, pheight;
-  double dx, dy, len;
-  int npoints, p;
-  double dtheta = (2.0*M_PI) / rot;
-
-  /* Get the number of points */
-  for(npoints = 0; 
-      fabs(trace_r[npoints]) > EPSILON || fabs(trace_h[npoints]) > EPSILON;
-      ++npoints);
-
-  /* If less than two points, can not revolve */
-  if(npoints < 2)
-    return;
-
-  /* If the max_height hasn't been defined, find it */
-  if(max_height < EPSILON)
-    for(p = 0; p < npoints; ++p)
-      if(max_height < trace_h[p])
-	max_height = trace_h[p];
-
-  /* Draw the revolution */
-  for(theta = dtheta; rot > 0; --rot) {
-    sin_theta = sin(theta);
-    cos_theta = cos(theta);
-    norm_theta = theta / (2.0 * M_PI);
-    pradius = trace_r[0] * piece_size;
-    pheight = trace_h[0] * piece_size;
-    
-    for(p = 0; p < npoints; ++p) {
-      radius = trace_r[p] * piece_size;
-      height = trace_h[p] * piece_size;
-
-      /* Get the normalized lengths of the normal vector */
-      dx = radius - pradius;
-      dy = height - pheight;
-      len = sqrt(dx*dx + dy*dy);
-      dx /= len;
-      dy /= len;
-
-      /* If only triangles required */
-      if (fabs(radius) < EPSILON) {
- 	glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLES);
-
-	glNormal3f(dy * sin_ptheta, -dx, dy * cos_ptheta);
-	glTexCoord2f(norm_ptheta, pheight / max_height);
-	glVertex3f(pradius * sin_ptheta, pheight, pradius * cos_ptheta);
-	
-	glNormal3f(dy * sin_theta, -dx, dy * cos_theta);
-	glTexCoord2f(norm_theta, pheight / max_height);
-	glVertex3f(pradius * sin_theta, pheight, pradius * cos_theta);
-	
-	glTexCoord2f(0.5 * (norm_theta + norm_ptheta),
-		     height / max_height);
-	glVertex3f(0.0, height, 0.0);
-	
-	glEnd();
-      } 
-      
-      else {
-	glBegin(wire ? GL_LINE_LOOP : GL_QUADS);
-
-	glNormal3f(dy * sin_ptheta, -dx, dy * cos_ptheta);
-	glTexCoord2f(norm_ptheta, pheight / max_height);
-	glVertex3f(pradius * sin_ptheta, pheight, pradius * cos_ptheta);
-
-	glNormal3f(dy * sin_theta, -dx, dy * cos_theta);
-	glTexCoord2f(norm_theta, pheight / max_height);
-	glVertex3f(pradius * sin_theta, pheight, pradius * cos_theta);
-
-	glTexCoord2f(norm_theta, height / max_height);
-	glVertex3f(radius * sin_theta, height, radius * cos_theta);
-
-	glNormal3f(dy * sin_ptheta, -dx, dy * cos_ptheta);
-	glTexCoord2f(norm_ptheta, height / max_height);
-	glVertex3f(radius * sin_ptheta, height, radius * cos_ptheta);
-
-	glEnd();
-      }
-
-      pradius = radius;
-      pheight = height;
-    }
-
-    sin_ptheta = sin_theta;
-    cos_ptheta = cos_theta;
-    norm_ptheta = norm_theta;
-    theta += dtheta;
+/** draws cylindermodel */
+void draw_model(int chunks, GLfloat model[][3], int r) {
+  int i = 0;
+  GLUquadricObj *quadric = gluNewQuadric();
+  glPushMatrix();
+  glRotatef(-90.0, 1.0, 0.0, 0.0);
+  
+  for(i = 0; i < chunks; ++i) {
+    if(model[i][0] > EPSILON || model[i][1] > EPSILON)
+      gluCylinder(quadric, model[i][0], model[i][1], model[i][2], r, 1);
+    glTranslatef(0.0, 0.0, model[i][2]);
   }
-}
-
-void draw_queen(int wire) {
-  double trace_r[] =
-      { 4.8, 4.8, 3.4, 3.4, 1.8, 1.4, 2.9, 1.8, 1.8, 2.0, 
-	2.7, 2.4, 1.7, 0.95, 0.7, 0.0, 0.0 }; /*, 0.9, 0.7, 0.0, 0.0};*/
-  double trace_h[] =
-      { 0.0, 2.2, 4.0, 5.0, 8.0, 11.8, 11.8, 13.6, 15.2, 17.8,
-	19.2, 20.0, 20.0, 20.8, 20.8, 22.0, 0.0 };/*,21.4, 22.0, 22.0, 0.0 };*/
-
-  revolve_line(trace_r, trace_h, 0.0, 8, wire);
+  
+  glPopMatrix();
 }
 
 void reshape_queens(ModeInfo *mi, int width, int height) {
@@ -419,12 +348,9 @@ void reshape_queens(ModeInfo *mi, int width, int height) {
 }
 
 void init_queens(ModeInfo *mi) {
-  GLfloat mat_shininess[] = { 90.0 };
-  GLfloat mat_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-
   int screen = MI_SCREEN(mi);
-  int wire = MI_IS_WIREFRAME(mi);
   Queenscreen *c;
+  wire = MI_IS_WIREFRAME(mi);
 
   if(!qs && 
      !(qs = (Queenscreen *) calloc(MI_NUM_SCREENS(mi), sizeof(Queenscreen))))
@@ -440,22 +366,24 @@ void init_queens(ModeInfo *mi) {
     MI_CLEARWINDOW(mi);
 
   glClearColor(0.0, 0.0, 0.0, 0.0);
-
-  setup_lights();
   glNewList(1, GL_COMPILE);
-  draw_queen(wire);
+  draw_model(schunks, spidermodel, 24);
   glEndList();
+  
+  clearbits = GL_COLOR_BUFFER_BIT;
 
-  if (!wire) {
-    glColorMaterial(GL_FRONT, GL_DIFFUSE);
+  glColorMaterial(GL_FRONT, GL_DIFFUSE);
+  glEnable(GL_COLOR_MATERIAL);
 
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, mat_shininess);
-
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  
-    glShadeModel(GL_SMOOTH);
+  if(!wire) {
+    setup_lights();
     glEnable(GL_DEPTH_TEST);
+    clearbits |= GL_DEPTH_BUFFER_BIT;
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
   }
+  else
+    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
   /* find a solution */
   go();
@@ -471,7 +399,7 @@ void draw_queens(ModeInfo *mi) {
 
   glXMakeCurrent(disp, w, *(c->glx_context));
 
-  display(c, MI_IS_WIREFRAME(mi));
+  display(c);
 
   if(mi->fps_p) do_fps(mi);
   glFinish(); 

@@ -65,7 +65,7 @@ AC_DEFUN(AC_PROG_CC_ANSI,
 
   if test -n "$GCC"; then
     AC_MSG_RESULT(Turning on gcc compiler warnings.)
-    CC="$CC -Wall -Wstrict-prototypes -Wnested-externs -Wno-format"
+    CC="$CC -Wall -Wstrict-prototypes -Wnested-externs"
   else
     case "$host" in
       *-irix5* |*-irix6.[0-3]* )
@@ -808,9 +808,7 @@ AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE")
 AC_DEFINE_UNQUOTED(PACKAGE, "$GETTEXT_PACKAGE")
 AC_SUBST(GETTEXT_PACKAGE)
 
-# #### no sign of  en_GB
-#ALL_LINGUAS="ca de en_GB et fr it ko pl sv da es fi hu ja no pt pt_BR ru wa"
-ALL_LINGUAS="ca de et fr it ko pl sv da es fi hu ja no pt pt_BR ru wa"
+ALL_LINGUAS="ca da de es et fi fr hu it ja ko nl no pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
 AM_GLIB_GNU_GETTEXT
 
 
@@ -1950,6 +1948,7 @@ if test "$with_gtk" = yes; then
     else
       if test -n "$ac_gtk_version_string" ; then
         gtk2_halfassed="$ac_gtk_version_string"
+        gtk2_halfassed_lib="$req"
       fi
     fi
 
@@ -2109,7 +2108,7 @@ if test "$with_gtk" = yes; then
 
 
   GNOME_DATADIR=""
-  if test "$have_gnome" = yes -a "$have_gtk" = yes; then
+  if test "$have_gtk" = yes; then
     if test -n "$pkg_config"; then
       if test "$have_gtk2" = yes; then
         GNOME_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
@@ -2147,10 +2146,11 @@ fi
 
 # Check for the Gnome Help Browser.
 #
-if test "$have_gnome" = yes; then
-  AC_CHECK_PROG(have_gnome_help, gnome-help-browser, yes, no)
-else
-  have_gnome_help=no
+if test "$have_gtk" = yes; then
+  AC_CHECK_PROGS(have_gnome_help, yelp gnome-help-browser, no)
+  if test "$have_gnome_help" != no; then
+    have_gnome_help=yes
+  fi
 fi
 
 
@@ -2640,7 +2640,9 @@ HANDLE_X_PATH_ARG(with_gle, --with-gle, GLE)
 
 GLE_LIBS=""
 
-if test "$with_gle" = yes; then
+if test "$have_gl" = no ; then
+ true
+elif test "$with_gle" = yes; then
 
   AC_CHECK_X_HEADER(GL/gle.h, have_gle3=yes, have_gle3=no,
                     [#include <GL/gl.h>])
@@ -3359,9 +3361,54 @@ else
 fi
 
 
+# Set PO_DATADIR to something sensible.
+#
+AC_MSG_CHECKING([for locale directory])
+if test -n "$GNOME_DATADIR" ; then
+  PO_DATADIR="$GNOME_DATADIR"
+elif test "$have_gtk" = yes; then
+  if test -n "$pkg_config"; then
+    if test "$have_gtk2" = yes; then
+      PO_DATADIR=`$pkg_config --variable=prefix gtk+-2.0`
+    else
+      PO_DATADIR=`$pkg_config --variable=prefix gtk+`
+    fi
+  else
+    PO_DATADIR=`$gtk_config --prefix`
+  fi
+  PO_DATADIR="$PO_DATADIR/share"
+fi
+
+if test -z "$PO_DATADIR" ; then
+  #
+  # #### Total fucking kludge --
+  # Map /build/prefix/usr/X11R6/share/ to /build/prefix/usr/share/
+  # but of course we need to expand all the nested variables to do that...
+  #
+  dd=$datadir
+  eval dd=${dd}
+  eval dd=${dd}
+  eval dd=${dd}
+  eval dd=${dd}
+  eval dd=${dd}
+  PO_DATADIR=`echo $dd | sed 's@/X11R6/@/@'`
+fi
+
+AC_MSG_RESULT($PO_DATADIR/locale)
+
+
 # canonicalize slashes.
 HACK_CONF_DIR=`echo "${HACK_CONF_DIR}" | sed 's@/$@@;s@//*@/@g'`
 
+# gcc 3.0 likes to issue this warning for every file:
+#
+# cc1: warning: changing search order for system directory "/usr/local/include"
+# cc1: warning:   as it has already been specified as a non-system directory
+#
+# Yay.  We can only avoid that by deleting "-I${prefix}/include" from the list.
+# Which *should* be totally redundant, and thus an ok thing to delete?
+#
+INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 
 
 ###############################################################################
@@ -3414,6 +3461,7 @@ AC_SUBST(GNOMEHELP_N)
 AC_SUBST(HACKDIR)
 AC_SUBST(GNOME_DATADIR)
 AC_SUBST(GLADE_DATADIR)
+AC_SUBST(PO_DATADIR)
 AC_SUBST(GNOME_PANELDIR)
 AC_SUBST(HACK_CONF_DIR)
 AC_SUBST(GTK_EXTRA_OBJS)
@@ -3563,10 +3611,12 @@ elif test "$with_gtk_req" = yes -a "$have_gtk" = no ; then
 fi
 
 if test "$gtk2_halfassed" != no ; then
-  warnL "GTK version $gtk2_halfassed was found, but some other supporting"
-  warn2 "libraries were not, so GTK 2.x can't be used.  Please"
-  warn2 "read the above output and the \`config.log' file to see"
-  warn2 "which libraries are missing."
+  warnL "GTK version $gtk2_halfassed was found, but at least one supporting"
+  warn2 "library ($gtk2_halfassed_lib) was not, so GTK 2.x can't be used."
+  v="$ac_gtk_version_string"
+  warn2 "GTK $v is also installed, so it will be used instead."
+  warn2 "Please read the above output and the \`config.log' file"
+  warn2 "for more details."
 fi
 
 
@@ -3604,6 +3654,12 @@ if test "$have_gtk" = yes ; then
     warn2 'will not be available.  Specify the location of the XML'
     warn2 'library through the --with-xml option to configure.'
   fi
+fi
+
+if test "$have_gtk" = yes -a "$have_gdk_pixbuf" = no ; then
+  warn  "GTK is being used, but the GDK-Pixbuf library and/or"
+  warn2 "headers were not found.  That can't be good.  Please"
+  warn2 "install the GDK-Pixbuf development kit and re-configure."
 fi
 
 if test "$have_motif" = yes -a "$have_lesstif" = yes ; then

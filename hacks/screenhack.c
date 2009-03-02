@@ -338,6 +338,36 @@ visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
 }
 
 
+static void
+fix_fds (void)
+{
+  /* Bad Things Happen if stdin, stdout, and stderr have been closed
+     (as by the `sh incantation "attraction >&- 2>&-").  When you do
+     that, the X connection gets allocated to one of these fds, and
+     then some random library writes to stderr, and random bits get
+     stuffed down the X pipe, causing "Xlib: sequence lost" errors.
+     So, we cause the first three file descriptors to be open to
+     /dev/null if they aren't open to something else already.  This
+     must be done before any other files are opened (or the closing
+     of that other file will again free up one of the "magic" first
+     three FDs.)
+
+     We do this by opening /dev/null three times, and then closing
+     those fds, *unless* any of them got allocated as #0, #1, or #2,
+     in which case we leave them open.  Gag.
+
+     Really, this crap is technically required of *every* X program,
+     if you want it to be robust in the face of "2>&-".
+   */
+  int fd0 = open ("/dev/null", O_RDWR);
+  int fd1 = open ("/dev/null", O_RDWR);
+  int fd2 = open ("/dev/null", O_RDWR);
+  if (fd0 > 2) close (fd0);
+  if (fd1 > 2) close (fd1);
+  if (fd2 > 2) close (fd2);
+}
+
+
 int
 main (int argc, char **argv)
 {
@@ -352,6 +382,8 @@ main (int argc, char **argv)
   XEvent event;
   Boolean dont_clear /*, dont_map */;
   char version[255];
+
+  fix_fds();
 
 #ifdef XLOCKMORE
   pre_merge_options ();
@@ -495,6 +527,7 @@ main (int argc, char **argv)
       XGetWindowAttributes (dpy, window, &xgwa);
       cmap = xgwa.colormap;
       visual = xgwa.visual;
+      screen = xgwa.screen;
       visual_warning (screen, window, visual, cmap, True);
 
       /* Select KeyPress events on the external window.

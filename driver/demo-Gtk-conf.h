@@ -1,5 +1,5 @@
 /* demo-Gtk-conf.c --- implements the dynamic configuration dialogs.
- * xscreensaver, Copyright (c) 2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001, 2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -25,5 +25,7 @@ extern conf_data *load_configurator (const char *cmd_line, gboolean verbose_p);
 extern char *get_configurator_command_line (conf_data *);
 extern void  set_configurator_command_line (conf_data *, const char *cmd_line);
 extern void free_conf_data (conf_data *);
+
+extern const char *hack_configuration_path;
 
 #endif /* _DEMO_GTK_CONF_H_ */

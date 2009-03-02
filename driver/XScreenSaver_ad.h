@@ -27,6 +27,7 @@
 "*splashDuration:	0:00:05",
 "*visualID:		default",
 "*captureStderr: 	True",
+"*ignoreUninstalledPrograms: False",
 "*overlayTextForeground:	#FFFF00",
 "*overlayTextBackground:	#000000",
 "*overlayStderr:		True",
@@ -38,8 +39,8 @@
 "*demoCommand: xscreensaver-demo",
 "*prefsCommand: xscreensaver-demo -prefs",
 "*helpURL: http://www.jwz.org/xscreensaver/man.html",
-"*loadURL: netscape -remote 'openURL(%s)' || netscape '%s'",
-"*manualCommand: gnome-help-browser 'man:%s'",
+"*loadURL: gnome-url-show '%s' || gnome-moz-remote --newwin '%s'",
+"*manualCommand: yelp 'man:%s' || gnome-help-browser 'man:%s'",
 "*dateFormat:		%d-%b-%y (%a); %I:%M %p",
 "*installColormap:	True",
 "*programs:								      \
@@ -185,6 +186,7 @@
 - 	                	thornbird -root				    \\n\
  	                	fluidballs -root			    \\n\
  	                	anemone -root				    \\n\
+ 	                	halftone -root				    \\n\
   color: 			bubbles -root				    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
@@ -234,6 +236,7 @@
 	   GL:			lavalite -root				    \\n\
 	   GL:			queens -root				    \\n\
 	   GL:			endgame -root				    \\n\
+-	   GL:			glblur -root				    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -243,7 +246,8 @@
                                   -markerfile earth -wait 1 -timewarp 400   \\n\
 -				xmountains -b -M -Z 0 -r 1		    \\n\
 -	\"XMountains (top)\"	xmountains -b -M -Z 0 -r 1 -m		    \\n\
--                               xaos -fullscreen -autopilot                   \
+-                               xaos -root -autopilot -nogui -delay 10000     \
+                                  -maxframerate 30                            \
                                   -incoloring -1 -outcoloring -1            \\n\
 -				xfishtank -d -s                             \\n\
 -				xsnow                                       \\n\
@@ -421,6 +425,7 @@
 "*hacks.rotzoomer.name:      RotZoomer",
 "*hacks.stonerview.name:     StonerView",
 "*hacks.starwars.name:       StarWars",
+"*hacks.glblur.name:         GLBlur",
 "*hacks.gltext.name:         GLText",
 "*hacks.dangerball.name:     DangerBall",
 "*hacks.whirlygig.name:      WhirlyGig",

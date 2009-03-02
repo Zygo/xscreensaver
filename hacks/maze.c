@@ -91,11 +91,12 @@ static int solve_delay, pre_solve_delay, post_solve_delay;
 #include  <stdio.h>
 #include  <X11/Xlib.h>
 #include  <X11/Xutil.h>
-#ifndef VMS
-# include  <X11/bitmaps/gray1>
-#else  /* VMS */
-# include "sys$common:[decw$include.bitmaps]gray1.xbm"
-#endif /* VMS */
+
+/* #include  <X11/bitmaps/gray1> */
+#define gray1_width  2
+#define gray1_height 2
+static char gray1_bits[] = { 0x01, 0x02 };
+
 
 #define MAX_MAZE_SIZE_X	500
 #define MAX_MAZE_SIZE_Y	500

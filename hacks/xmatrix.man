@@ -57,6 +57,19 @@ When the number is finally found, display The Matrix as usual.
 .TP 8
 .B \-phone\fP \fInumber\fP
 The phone number to trace, if \fB\-trace\fP is specified.
+.TP 8
+.B \-binary\fP
+Instead of displaying Matrix glyphs, only display ones and zeros.
+.TP 8
+.B \-hexadecimal\fP
+Instead of displaying Matrix glyphs, display hexadecimal digits.
+.TP 8
+.B \-dna\fP
+Instead of displaying Matrix glyphs, display genetic code
+(guanine, adenine, thymine, and cytosine.)
+.TP 8
+.B \-knock\-knock\fP
+Produce some messages at random times.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -52,6 +52,11 @@ and requires Perl 5.
 It will be an order of magnitude faster if you also have
 the \fIwebcollage-helper\fP program installed (a GDK/JPEG image
 compositor), but \fIwebcollage\fP works without it as well.
+
+\fIwebcollage\fP can be used in conjunction with the
+.BR driftnet (1)
+program (the Unix equivalent of EtherPEG) to snoop images from traffic
+on your local subnet, instead of getting images from search engines.
 .SH OPTIONS
 .I webcollage
 accepts the following options:
@@ -151,12 +156,19 @@ stored in the RESOURCE_MANAGER property.
 .B http_proxy\fR or \fPHTTP_PROXY
 to get the default HTTP proxy host and port.
 .SH FILES AND URLS
-.TP
-.I /usr/dict/words \fRor\fP /usr/share/lib/dict/words \fRor\fP /usr/share/dict/words
-To find the random words to feed to search engines.
+.I /usr/dict/words,
+.I /usr/share/lib/dict/words,\fP
+or
+.I /usr/share/dict/words
+to find the random words to feed to search engines.
 .PP
-.I http://random.yahoo.com/bin/ryl, http://image.altavista.com/
-To find random web pages.
+.I http://image.altavista.com/,
+.I http://images.google.com/,
+.I http://news.yahoo.com/
+.I http://random.yahoo.com/bin/ryl,
+and
+.I http://lycospro.lycos.com/,
+to find random web pages.
 .SH BUGS
 When drawing on the root window, it always uses the default colormap.
 This is actually a limitation of xv.  But regardless, when using this
@@ -165,10 +177,19 @@ visual specification (see the
 .BR xscreensaver (1)
 manual for more details.)
 
-Animating GIFs are not supported.
+Animating GIFs are not supported: only the first frame will be used.
 
 Too many of the images that it finds are text, not pictures.  This is 
 because most of the web is pictures of text.  Which is pretty sad.
+.SH UPGRADES
+The latest version of webcollage can be found as a part of
+xscreensaver, at 
+.B http://www.jwz.org/xscreensaver/,
+or on the WebCollage page at 
+.B http://www.jwz.org/webcollage/.
+
+DriftNet:
+.B http://www.ex-parrot.com/~chris/driftnet/
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
@@ -186,12 +207,14 @@ because most of the web is pictures of text.  Which is pretty sad.
 .BR vidwhacker (1),
 .BR dadadodo (1),
 .BR driftnet (1)
+.BR EtherPEG ,
+.BR EtherPeek
 .SH COPYRIGHT
-Copyright \(co 1998-2002 by Jamie Zawinski.  Permission to use, copy, modify, 
-distribute, and sell this software and its documentation for any purpose is 
-hereby granted without fee, provided that the above copyright notice appear 
+Copyright \(co 1998-2002 by Jamie Zawinski.  Permission to use, copy, modify,
+distribute, and sell this software and its documentation for any purpose is
+hereby granted without fee, provided that the above copyright notice appear
 in all copies and that both that copyright notice and this permission notice
-appear in supporting documentation.  No representations are made about the 
+appear in supporting documentation.  No representations are made about the
 suitability of this software for any purpose.  It is provided "as is" without
 express or implied warranty.
 .SH AUTHOR

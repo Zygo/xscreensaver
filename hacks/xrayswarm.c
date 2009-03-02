@@ -233,14 +233,14 @@ void initCMap(void) {
   /* random colors start at 52 */
   numRandomColors = MAX_TRAIL_LEN;
 
-  colors[n++] = random()&255;
-  colors[n++] = random()&255;
-  colors[n++] = colors[n-2]/2 + colors[n-3]/2;
+  colors[n] = random()&255; n++;
+  colors[n] = random()&255; n++;
+  colors[n] = colors[n-2]/2 + colors[n-3]/2; n++;
 
   for (i = 0; i < numRandomColors; i++) {
-    colors[n++] = (colors[n-3] + (random()&31) - 16)&255;
-    colors[n++] = (colors[n-3] + (random()&31) - 16)&255;
-    colors[n++] = colors[n-2]/(float)(i+2) + colors[n-3]/(float)(i+2);
+    colors[n] = (colors[n-3] + (random()&31) - 16)&255; n++;
+    colors[n] = (colors[n-3] + (random()&31) - 16)&255; n++;
+    colors[n] = colors[n-2]/(float)(i+2) + colors[n-3]/(float)(i+2); n++;
   }
   
   numColors = n/3 + 1;

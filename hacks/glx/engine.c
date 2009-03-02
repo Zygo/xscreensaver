@@ -1,7 +1,7 @@
 /*
  * engine.c - GL representation of a 4 stroke engine
  *
- * version 1.0
+ * version 1.01
  *
  * Copyright (C) 2001 Ben Buxton (bb@cactii.net)
  *
@@ -21,7 +21,9 @@
 # define PROGCLASS                                      "Engine"
 # define HACK_INIT                                      init_engine
 # define HACK_DRAW                                      draw_engine
+# define HACK_HANDLE_EVENT				engine_handle_event
 # define HACK_RESHAPE                           reshape_engine
+# define EVENT_MASK					PointerMotionMask
 # define engine_opts                                     xlockmore_opts
 /* insert defaults here */
 
@@ -36,6 +38,9 @@
 # include "xlock.h"                                     /* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
+#include "rotator.h"
+#include "gltrackball.h"
+
 /* lifted from lament.c */
 #define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
@@ -48,6 +53,7 @@
 
 static int rotatespeed;
 static int move;
+static int movepaused = 0;
 static int spin;
 
 #undef countof
@@ -88,6 +94,9 @@ typedef struct {
   GLfloat nx, ny, nz; /* spin vector */
   GLfloat a; /* spin angle */
   GLfloat da; /* spin speed */
+  rotator *rot;
+  trackball_state *trackball;
+  Bool button_down_p;
 } Engine;
 
 static Engine *engine = NULL;
@@ -504,36 +513,22 @@ static int spark;
   glLightfv(GL_LIGHT0, GL_DIFFUSE, light_sp);
 
   if (move) {
-/* calculate position for the whole object */
-    e->x = sin(e->an1)*15;
-    e->an1 += e->dx; 
-    if (e->an1 >= 2*M_PI) e->an1 -= 2*M_PI;
-
-    e->y = sin(e->an2)*15;
-    e->an2 += e->dy; 
-    if (e->an2 >= 2*M_PI) e->an2 -= 2*M_PI;
-
-    e->z = sin(e->an3)*10-10;
-    e->an3 += e->dz; 
-    if (e->an3 >= 2*M_PI) e->an3 -= 2*M_PI;
-    glTranslatef(e->x, e->y, e->z);
+    double x, y, z;
+    get_position (e->rot, &x, &y, &z, !e->button_down_p);
+    glTranslatef(x*16-9, y*14-7, z*16-10);
+  }
+  if (spin) {
+    double x, y, z;
+    gltrackball_rotate (e->trackball);
+    get_rotation(e->rot, &x, &y, &z, !e->button_down_p);
+    glRotatef(x*360, 1.0, 0.0, 0.0);
+    glRotatef(y*360, 0.0, 1.0, 0.0);
+    glRotatef(x*360, 0.0, 0.0, 1.0);
   }
 
-  if (spin) glRotatef(e->a, e->nx, e->ny, e->nz); 
+/* So the rotation appears around the centre of the engine */
   glTranslatef(-5, 0, 0); 
-  if (spin) e->a += e->da;
-  if (spin && (e->a > 360 || e->a < -360)) {
-     e->a -= (e->a > 0) ? 360 : -360;
-     if ((random() % 5) == 4) {
-        e->da = (float)(random() % 1000);
-        e->da = e->da/125 - 4;
-     }
-     if ((random() % 5) == 4) {
-        e->nx = (float)(random() % 100) / 100;
-        e->ny = (float)(random() % 100) / 100;
-        e->nz = (float)(random() % 100) / 100;
-     }
-  }
+
 /* crankshaft */
   glPushMatrix();
   glRotatef(a, 1, 0, 0);
@@ -753,6 +748,20 @@ Engine *e;
    e->nz = (float)(random() % 100) / 100;
  }
 
+ {
+   double spin_speed = 1.0;
+   double wander_speed = 0.03;
+
+ e->rot = make_rotator (spin ? spin_speed : 0,
+                        spin ? spin_speed : 0,
+                        spin ? spin_speed : 0,
+                        1.0,
+                        move ? wander_speed : 0,
+                        True);
+
+    e->trackball = gltrackball_init ();
+ }
+
  if ((e->glx_context = init_GL(mi)) != NULL) {
       reshape_engine(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
  } else {
@@ -770,6 +779,35 @@ Engine *e;
  makepiston();
 }
 
+Bool engine_handle_event (ModeInfo *mi, XEvent *event) {
+   Engine *e = &engine[MI_SCREEN(mi)];
+
+   if (event->xany.type == ButtonPress &&
+       event->xbutton.button & Button1)
+   {
+       e->button_down_p = True;
+       gltrackball_start (e->trackball,
+		          event->xbutton.x, event->xbutton.y,
+			  MI_WIDTH (mi), MI_HEIGHT (mi));
+       movepaused = 1;
+       return True;
+   }
+   else if (event->xany.type == ButtonRelease &&
+            event->xbutton.button & Button1) {
+       e->button_down_p = False;
+       movepaused = 0;
+       return True;
+   }
+   else if (event->xany.type == MotionNotify &&
+            e->button_down_p) {
+      gltrackball_track (e->trackball,
+		         event->xmotion.x, event->xmotion.y,
+			 MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+   }
+  return False;
+}
+
 void draw_engine(ModeInfo *mi) {
 Engine *e = &engine[MI_SCREEN(mi)];
 Window w = MI_WINDOW(mi);
@@ -779,6 +817,7 @@ Display *disp = MI_DISPLAY(mi);
       return;
 
   glXMakeCurrent(disp, w, *(e->glx_context));
+
 
   display(e);
 

@@ -1,5 +1,5 @@
 /* -*- mode: C; tab-width: 4 -*-
- * xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 1998
+ * xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 1998, 2002
  * Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -207,6 +207,18 @@ static void init_distort(Display *dpy, Window window)
         if (xgwa.width < radius * 8)
           radius = xgwa.width/8;
 	}
+
+    /* never allow the radius to be too close to the min window dimension
+     */
+    if (radius >= xgwa.width  * 0.45) radius = xgwa.width  * 0.45;
+    if (radius >= xgwa.height * 0.45) radius = xgwa.height * 0.45;
+
+
+    /* -swamp mode consumes vast amounts of memory, proportional to radius --
+       so throttle radius to a small-ish value (60 => ~30MB.)
+     */
+    if (effect == &swamp_thing && radius > 60)
+      radius = 60;
 
 	if (delay < 0)
 		delay = 0;
@@ -568,6 +580,7 @@ static void reflect_draw(int k)
 		ly = i - cy;
 		lysq = ly * ly;
 		ny = xy_coo[k].y + i;
+		if (ny >= orig_map->height) ny = orig_map->height-1;
 		for(j = 0 ; j < 2*radius+speed+2 ; j++) {
 			lx = j - cx;
 			dist = lx * lx + lysq;

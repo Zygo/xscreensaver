@@ -1,26 +1,25 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Free Software Foundation, Inc.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# xscreensaver fr.po
+# Copyright (C) 2002 Free Software Foundation, Inc.
+# maintainer: Christophe Merlet (RedFox) <redfox@eikonex.org>, 2002.
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: xscreensaver 4.01\n"
 "POT-Creation-Date: 2002-05-10 19:02-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2002-03-18 09:47+0100\n"
+"Last-Translator: Christophe Merlet (RedFox) <redfox@eikonex.org>\n"
+"Language-Team: Gnome French Team <gnomefr@traduc.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: driver/demo-Gtk-conf.c:729
 msgid "Browse..."
-msgstr ""
+msgstr "Parcourir... "
 
 #: driver/demo-Gtk-conf.c:1021
 msgid "Select file."
-msgstr ""
+msgstr "Sélectionnez un fichier."
 
 #: driver/demo-Gtk-support.c:121
 #, c-format
@@ -35,11 +34,12 @@ msgstr ""
 #: driver/demo-Gtk-widgets.c:155 driver/xscreensaver-demo.glade.h:89
 #, fuzzy
 msgid "XScreenSaver"
-msgstr "Propriétés Économiseur d'écran"
+msgstr "Économiseur d'écran"
 
 #: driver/demo-Gtk-widgets.c:176
+#, fuzzy
 msgid "_File"
-msgstr ""
+msgstr "Xflame"
 
 #: driver/demo-Gtk-widgets.c:196 driver/xscreensaver-demo.glade.h:93
 msgid "_Blank Screen Now"
@@ -85,8 +85,9 @@ msgid ""
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:270
+#, fuzzy
 msgid "_Help"
-msgstr ""
+msgstr "Hélice"
 
 #: driver/demo-Gtk-widgets.c:290 driver/xscreensaver-demo.glade.h:92
 msgid "_About..."
@@ -105,8 +106,9 @@ msgid "Go to the documentation on the XScreenSaver web page."
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:342 driver/xscreensaver-demo.glade.h:18
+#, fuzzy
 msgid "Cycle After"
-msgstr ""
+msgstr "Couleurs"
 
 #: driver/demo-Gtk-widgets.c:364 driver/xscreensaver-demo.glade.h:78
 msgid "Whether a password should be required to un-blank the screen."
@@ -117,8 +119,9 @@ msgid "Lock Screen After"
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:374 driver/xscreensaver-demo.glade.h:8
+#, fuzzy
 msgid "Blank After"
-msgstr ""
+msgstr "Rapide"
 
 #: driver/demo-Gtk-widgets.c:397 driver/demo-Gtk-widgets.c:447
 #: driver/demo-Gtk-widgets.c:461 driver/demo-Gtk-widgets.c:1010
@@ -130,8 +133,9 @@ msgstr ""
 #: driver/demo-Gtk-widgets.c:425 driver/demo-Gtk-widgets.c:1014
 #: driver/demo-Gtk-widgets.c:1026 driver/demo-Gtk-widgets.c:1038
 #: driver/xscreensaver-demo.glade.h:99
+#, fuzzy
 msgid "minutes"
-msgstr ""
+msgstr " minutes."
 
 #: driver/demo-Gtk-widgets.c:476 driver/demo-Gtk.c:2336
 #: driver/xscreensaver-demo.glade.h:58
@@ -153,13 +157,14 @@ msgid "Customization and explanation of the selected screen saver."
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:515 driver/xscreensaver-demo.glade.h:52
+#, fuzzy
 msgid "Mode:"
-msgstr ""
+msgstr "Plus"
 
 #: driver/demo-Gtk-widgets.c:533 driver/xscreensaver-demo.glade.h:25
 #, fuzzy
 msgid "Disable Screen Saver"
-msgstr "Propriétés Économiseur d'écran"
+msgstr "Économiseur d'écran"
 
 #: driver/demo-Gtk-widgets.c:536 driver/xscreensaver-demo.glade.h:9
 msgid "Blank Screen Only"
@@ -168,12 +173,12 @@ msgstr ""
 #: driver/demo-Gtk-widgets.c:539 driver/xscreensaver-demo.glade.h:56
 #, fuzzy
 msgid "Only One Screen Saver"
-msgstr "Propriétés Économiseur d'écran"
+msgstr "Économiseur d'écran"
 
 #: driver/demo-Gtk-widgets.c:542 driver/xscreensaver-demo.glade.h:60
 #, fuzzy
 msgid "Random Screen Saver"
-msgstr "Propriétés Économiseur d'écran"
+msgstr "Économiseur d'écran"
 
 #: driver/demo-Gtk-widgets.c:565 driver/xscreensaver-demo.glade.h:75
 msgid "Use"
@@ -182,7 +187,7 @@ msgstr ""
 #: driver/demo-Gtk-widgets.c:585 driver/xscreensaver-demo.glade.h:63
 #, fuzzy
 msgid "Screen Saver"
-msgstr "Propriétés Économiseur d'écran"
+msgstr "Économiseur d'écran"
 
 #: driver/demo-Gtk-widgets.c:638 driver/xscreensaver-demo.glade.h:91
 msgid "\\/"
@@ -206,12 +211,14 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:658 driver/demo-Gtk-widgets.c:1601
 #: driver/xscreensaver-demo.glade.h:22
+#, fuzzy
 msgid "Description"
-msgstr ""
+msgstr "Attraction"
 
 #: driver/demo-Gtk-widgets.c:685 driver/xscreensaver-demo.glade.h:26
+#, fuzzy
 msgid "Display Modes"
-msgstr ""
+msgstr "Affiche un écran sonar."
 
 #: driver/demo-Gtk-widgets.c:701 driver/xscreensaver-demo.glade.h:23
 msgid "Diagnostics"
@@ -232,8 +239,9 @@ msgid ""
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:764 driver/xscreensaver-demo.glade.h:29
+#, fuzzy
 msgid "Display Subprocess Errors"
-msgstr ""
+msgstr "Afficher les parasites."
 
 #: driver/demo-Gtk-widgets.c:779 driver/xscreensaver-demo.glade.h:87
 msgid ""
@@ -246,8 +254,9 @@ msgid "Display Splash Screen at Startup"
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:790 driver/xscreensaver-demo.glade.h:15
+#, fuzzy
 msgid "Colormaps"
-msgstr ""
+msgstr "Couleurs"
 
 #: driver/demo-Gtk-widgets.c:834 driver/xscreensaver-demo.glade.h:88
 msgid ""
@@ -280,16 +289,18 @@ msgid "Fade From Black When Unblanking"
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:904 driver/xscreensaver-demo.glade.h:34
+#, fuzzy
 msgid "Fade Duration"
-msgstr ""
+msgstr "Durée"
 
 #: driver/demo-Gtk-widgets.c:922 driver/xscreensaver-demo.glade.h:44
 msgid "How long it should take for the screen to fade in and out."
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:926 driver/xscreensaver-demo.glade.h:100
+#, fuzzy
 msgid "seconds"
-msgstr ""
+msgstr "secondes"
 
 #: driver/demo-Gtk-widgets.c:936 driver/xscreensaver-demo.glade.h:27
 msgid "Display Power Management"
@@ -334,8 +345,9 @@ msgid ""
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1163 driver/xscreensaver-demo.glade.h:39
+#, fuzzy
 msgid "Grab Desktop Images"
-msgstr ""
+msgstr "Économiseur d'écran"
 
 #: driver/demo-Gtk-widgets.c:1178 driver/xscreensaver-demo.glade.h:82
 msgid ""
@@ -362,8 +374,9 @@ msgid "The directory from which images will be randomly chosen."
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1232 driver/xscreensaver-demo.glade.h:10
+#, fuzzy
 msgid "Browse"
-msgstr ""
+msgstr "Parcourir... "
 
 #: driver/demo-Gtk-widgets.c:1240 driver/demo-Gtk-widgets.c:1593
 #: driver/xscreensaver-demo.glade.h:3
@@ -375,12 +388,14 @@ msgid "XScreenSaver: Mode-Specific Settings"
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1460 driver/xscreensaver-demo.glade.h:64
+#, fuzzy
 msgid "Settings"
-msgstr ""
+msgstr "Paramètres"
 
 #: driver/demo-Gtk-widgets.c:1489 driver/xscreensaver-demo.glade.h:66
+#, fuzzy
 msgid "Standard"
-msgstr ""
+msgstr "Escaliers"
 
 #: driver/demo-Gtk-widgets.c:1526 driver/xscreensaver-demo.glade.h:77
 msgid "Visual:"
@@ -389,12 +404,14 @@ msgstr ""
 #: driver/demo-Gtk-widgets.c:1544 driver/demo-Gtk-widgets.c:1567
 #: driver/demo-Gtk.c:1318 driver/demo-Gtk.c:2355
 #: driver/xscreensaver-demo.glade.h:5
+#, fuzzy
 msgid "Any"
-msgstr ""
+msgstr "Fourmis"
 
 #: driver/demo-Gtk-widgets.c:1545 driver/xscreensaver-demo.glade.h:7
+#, fuzzy
 msgid "Best"
-msgstr ""
+msgstr "Plus dense"
 
 #: driver/demo-Gtk-widgets.c:1546 driver/xscreensaver-demo.glade.h:19
 msgid "Default"
@@ -409,32 +426,37 @@ msgid "GL"
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1549 driver/xscreensaver-demo.glade.h:74
+#, fuzzy
 msgid "TrueColor"
-msgstr ""
+msgstr "Couleurs"
 
 #: driver/demo-Gtk-widgets.c:1550 driver/xscreensaver-demo.glade.h:59
 msgid "PseudoColor"
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1551 driver/xscreensaver-demo.glade.h:69
+#, fuzzy
 msgid "StaticGray"
-msgstr ""
+msgstr "Escaliers"
 
 #: driver/demo-Gtk-widgets.c:1552 driver/xscreensaver-demo.glade.h:42
+#, fuzzy
 msgid "GrayScale"
-msgstr ""
+msgstr "Redimensionné"
 
 #: driver/demo-Gtk-widgets.c:1553 driver/xscreensaver-demo.glade.h:24
 msgid "DirectColor"
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1554 driver/xscreensaver-demo.glade.h:14
+#, fuzzy
 msgid "Color"
-msgstr ""
+msgstr "Couleurs"
 
 #: driver/demo-Gtk-widgets.c:1555 driver/xscreensaver-demo.glade.h:41
+#, fuzzy
 msgid "Gray"
-msgstr ""
+msgstr "Gravité"
 
 #: driver/demo-Gtk-widgets.c:1556 driver/xscreensaver-demo.glade.h:53
 msgid "Mono"
@@ -480,8 +502,9 @@ msgid "OK"
 msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1712 driver/xscreensaver-demo.glade.h:11
+#, fuzzy
 msgid "Cancel"
-msgstr ""
+msgstr "Cage"
 
 #: driver/demo-Gtk.c:511
 msgid "For updates, check http://www.jwz.org/xscreensaver/"
@@ -577,13 +600,14 @@ msgid "No description available."
 msgstr ""
 
 #: driver/demo-Gtk.c:2307
+#, fuzzy
 msgid "Blank Screen"
-msgstr ""
+msgstr "Fondu"
 
 #: driver/demo-Gtk.c:2313
 #, fuzzy
 msgid "Screen Saver Disabled"
-msgstr "Propriétés Économiseur d'écran"
+msgstr "Économiseur d'écran"
 
 #: driver/demo-Gtk.c:2473
 #, c-format
@@ -667,33 +691,37 @@ msgid "Configure the settings of the screensaver."
 msgstr "Configurer l'économiseur d'écran"
 
 #: driver/screensaver-properties.desktop.in.h:2
-#, fuzzy
 msgid "Screensaver"
-msgstr "Propriétés Économiseur d'écran"
+msgstr "Économiseur d'écran"
 
 #: driver/xscreensaver-demo.glade.h:1
 msgid "/\");"
 msgstr ""
 
 #: hacks/config/ant.xml.h:1
+#, fuzzy
 msgid ""
 "A cellular automaton that is really a two-dimensional Turing machine: as the "
 "heads (``ants'') walk along the screen, they change pixel values in their "
 "path. Then, as they pass over changed pixels, their behavior is influenced. "
 "Written by David Bagley."
 msgstr ""
+"Un automate cellulaire qui est en fait une machine de Türing à deux "
+"dimensions: puisque les fourmis en marchant à travers l'écran changent la "
+"valeur des pixels sur leur chemin. Puis, lorsqu'elles repassent sur des "
+"pixels ainsi modifiés leur comportemment en est influencé."
 
 #: hacks/config/ant.xml.h:2
 msgid "Ant"
-msgstr ""
+msgstr "Fourmis"
 
 #: hacks/config/ant.xml.h:3
 msgid "Ant Size"
-msgstr ""
+msgstr "Taille des fourmis"
 
 #: hacks/config/ant.xml.h:4
 msgid "Ants Count"
-msgstr ""
+msgstr "Nombre de fourmis"
 
 #: hacks/config/ant.xml.h:5 hacks/config/apollonian.xml.h:5
 #: hacks/config/atlantis.xml.h:4 hacks/config/attraction.xml.h:8
@@ -758,7 +786,7 @@ msgstr ""
 #: hacks/config/xmatrix.xml.h:4 hacks/config/xmountains.xml.h:1
 #: hacks/config/xrayswarm.xml.h:2 hacks/config/zoom.xml.h:2
 msgid "Fast"
-msgstr ""
+msgstr "Rapide"
 
 #: hacks/config/ant.xml.h:6
 msgid "Four Sided Cells"
@@ -776,7 +804,7 @@ msgstr ""
 #: hacks/config/rubik.xml.h:4 hacks/config/sierpinski.xml.h:3
 #: hacks/config/slip.xml.h:3
 msgid "Large"
-msgstr ""
+msgstr "Importante"
 
 #: hacks/config/ant.xml.h:8 hacks/config/apollonian.xml.h:7
 #: hacks/config/attraction.xml.h:18 hacks/config/blaster.xml.h:6
@@ -848,7 +876,7 @@ msgstr ""
 #: hacks/config/vines.xml.h:3 hacks/config/worm.xml.h:5
 #: hacks/config/xearth.xml.h:17 hacks/config/xfishtank.xml.h:9
 msgid "Number of Colors"
-msgstr ""
+msgstr "Nombre de couleurs"
 
 #: hacks/config/ant.xml.h:11
 msgid "Random Cell Shape"
@@ -925,7 +953,7 @@ msgstr ""
 #: hacks/config/xmatrix.xml.h:13 hacks/config/xmountains.xml.h:4
 #: hacks/config/xrayswarm.xml.h:3 hacks/config/zoom.xml.h:6
 msgid "Slow"
-msgstr ""
+msgstr "Lente"
 
 #: hacks/config/ant.xml.h:15 hacks/config/attraction.xml.h:27
 #: hacks/config/cubenetic.xml.h:23 hacks/config/demon.xml.h:9
@@ -939,7 +967,7 @@ msgstr ""
 #: hacks/config/rubik.xml.h:10 hacks/config/sierpinski.xml.h:8
 #: hacks/config/slip.xml.h:8
 msgid "Small"
-msgstr ""
+msgstr "Faible"
 
 #: hacks/config/ant.xml.h:16 hacks/config/apollonian.xml.h:12
 #: hacks/config/attraction.xml.h:28 hacks/config/blaster.xml.h:9
@@ -997,7 +1025,7 @@ msgstr ""
 #: hacks/config/xmatrix.xml.h:16 hacks/config/xmountains.xml.h:5
 #: hacks/config/xrayswarm.xml.h:4 hacks/config/zoom.xml.h:7
 msgid "Speed"
-msgstr ""
+msgstr "Vitesse"
 
 #: hacks/config/ant.xml.h:17
 msgid "Three Sided Cells"
@@ -1013,8 +1041,9 @@ msgid "Timeout"
 msgstr ""
 
 #: hacks/config/ant.xml.h:19
+#, fuzzy
 msgid "Truchet Lines"
-msgstr ""
+msgstr "Truchet"
 
 #: hacks/config/ant.xml.h:20
 msgid "Twelve Sided Cells"
@@ -1050,23 +1079,25 @@ msgstr ""
 #: hacks/config/worm.xml.h:9 hacks/config/xearth.xml.h:28
 #: hacks/config/xfishtank.xml.h:11
 msgid "Two"
-msgstr ""
+msgstr "Deux"
 
 #: hacks/config/apollonian.xml.h:1
 msgid "Apollonian"
 msgstr ""
 
 #: hacks/config/apollonian.xml.h:2
+#, fuzzy
 msgid "Deep"
-msgstr ""
+msgstr "Plus dense"
 
 #: hacks/config/apollonian.xml.h:3
 msgid "Depth"
 msgstr ""
 
 #: hacks/config/apollonian.xml.h:4
+#, fuzzy
 msgid "Draw Labels"
-msgstr ""
+msgstr "Cellule"
 
 #: hacks/config/apollonian.xml.h:6
 msgid "Include Alternate Geometries"
@@ -1079,8 +1110,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/apollonian.xml.h:10
+#, fuzzy
 msgid "Shallow"
-msgstr ""
+msgstr "Lente"
 
 #: hacks/config/atlantis.xml.h:1
 msgid "Agressive"
@@ -1088,31 +1120,35 @@ msgstr ""
 
 #: hacks/config/atlantis.xml.h:2
 msgid "Atlantis"
-msgstr ""
+msgstr "Atlantis"
 
 #: hacks/config/atlantis.xml.h:3
 msgid "Clear Water"
 msgstr ""
 
 #: hacks/config/atlantis.xml.h:5
+#, fuzzy
 msgid "Flat Background"
-msgstr ""
+msgstr "Arrière-plan"
 
 #: hacks/config/atlantis.xml.h:6
+#, fuzzy
 msgid "Gradient Background"
-msgstr ""
+msgstr "Arrière-plan"
 
 #: hacks/config/atlantis.xml.h:7
+#, fuzzy
 msgid "Number of Sharks"
-msgstr ""
+msgstr "Nombre de fourmis."
 
 #: hacks/config/atlantis.xml.h:8
 msgid "Shark Proximity"
 msgstr ""
 
 #: hacks/config/atlantis.xml.h:9
+#, fuzzy
 msgid "Shark Speed"
-msgstr ""
+msgstr "Vitesse"
 
 #: hacks/config/atlantis.xml.h:10
 msgid "Shimmering Water"
@@ -1151,7 +1187,7 @@ msgstr ""
 #: hacks/config/sproingies.xml.h:7 hacks/config/stairs.xml.h:4
 #: hacks/config/stonerview.xml.h:2 hacks/config/superquadrics.xml.h:8
 msgid "Solid"
-msgstr ""
+msgstr "Uni"
 
 #: hacks/config/atlantis.xml.h:15
 msgid ""
@@ -1161,8 +1197,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/atlantis.xml.h:16
+#, fuzzy
 msgid "Whale Speed"
-msgstr ""
+msgstr "Vitesse"
 
 #: hacks/config/atlantis.xml.h:17 hacks/config/boxed.xml.h:8
 #: hacks/config/cage.xml.h:8 hacks/config/dangerball.xml.h:11
@@ -1181,19 +1218,21 @@ msgstr ""
 
 #: hacks/config/attraction.xml.h:1
 msgid "Attraction"
-msgstr ""
+msgstr "Attraction"
 
 #: hacks/config/attraction.xml.h:2
+#, fuzzy
 msgid "Ball Count"
-msgstr ""
+msgstr "Nombre"
 
 #: hacks/config/attraction.xml.h:3
 msgid "Ball Mass"
 msgstr ""
 
 #: hacks/config/attraction.xml.h:4 hacks/config/fluidballs.xml.h:2
+#, fuzzy
 msgid "Balls"
-msgstr ""
+msgstr "Barres"
 
 #: hacks/config/attraction.xml.h:5
 msgid "Bounce Off Walls"
@@ -1202,8 +1241,9 @@ msgstr ""
 #: hacks/config/attraction.xml.h:6 hacks/config/hopalong.xml.h:1
 #: hacks/config/interference.xml.h:3 hacks/config/qix.xml.h:2
 #: hacks/config/wander.xml.h:3
+#, fuzzy
 msgid "Color Contrast"
-msgstr ""
+msgstr "Couleur du chemin"
 
 #: hacks/config/attraction.xml.h:7
 msgid "Environmental Viscosity"
@@ -1226,7 +1266,7 @@ msgstr ""
 #: hacks/config/superquadrics.xml.h:4 hacks/config/t3d.xml.h:7
 #: hacks/config/twang.xml.h:5 hacks/config/wander.xml.h:8
 msgid "High"
-msgstr ""
+msgstr "Haute"
 
 #: hacks/config/attraction.xml.h:11
 msgid "Ignore Screen Edges"
@@ -1254,7 +1294,7 @@ msgstr ""
 #: hacks/config/lmorph.xml.h:7 hacks/config/pedal.xml.h:5
 #: hacks/config/starfish.xml.h:4 hacks/config/whirlygig.xml.h:3
 msgid "Lines"
-msgstr ""
+msgstr "Lignes"
 
 #: hacks/config/attraction.xml.h:16 hacks/config/braid.xml.h:6
 #: hacks/config/cynosure.xml.h:5 hacks/config/drift.xml.h:8
@@ -1267,7 +1307,7 @@ msgstr ""
 #: hacks/config/spheremonics.xml.h:7 hacks/config/wander.xml.h:10
 #: hacks/config/whirlwindwarp.xml.h:3
 msgid "Long"
-msgstr ""
+msgstr "Long"
 
 #: hacks/config/attraction.xml.h:17 hacks/config/ccurve.xml.h:10
 #: hacks/config/cubenetic.xml.h:12 hacks/config/euler2d.xml.h:7
@@ -1282,7 +1322,7 @@ msgstr ""
 #: hacks/config/superquadrics.xml.h:5 hacks/config/t3d.xml.h:8
 #: hacks/config/twang.xml.h:7 hacks/config/wander.xml.h:11
 msgid "Low"
-msgstr ""
+msgstr "Basse"
 
 #: hacks/config/attraction.xml.h:20
 msgid "Orbital Mode"
@@ -1298,11 +1338,12 @@ msgstr ""
 
 #: hacks/config/attraction.xml.h:23 hacks/config/spotlight.xml.h:3
 msgid "Radius"
-msgstr ""
+msgstr "Rayon"
 
 #: hacks/config/attraction.xml.h:24
+#, fuzzy
 msgid "Repulsion Threshold"
-msgstr ""
+msgstr "Réactivité"
 
 #: hacks/config/attraction.xml.h:25 hacks/config/braid.xml.h:10
 #: hacks/config/cynosure.xml.h:8 hacks/config/drift.xml.h:11
@@ -1314,15 +1355,17 @@ msgstr ""
 #: hacks/config/sierpinski3d.xml.h:5 hacks/config/spheremonics.xml.h:17
 #: hacks/config/wander.xml.h:12 hacks/config/whirlwindwarp.xml.h:6
 msgid "Short"
-msgstr ""
+msgstr "Court"
 
 #: hacks/config/attraction.xml.h:29
+#, fuzzy
 msgid "Splines"
-msgstr ""
+msgstr "Sproingies"
 
 #: hacks/config/attraction.xml.h:30
+#, fuzzy
 msgid "Tails"
-msgstr ""
+msgstr "Trainée"
 
 #: hacks/config/attraction.xml.h:31 hacks/config/euler2d.xml.h:16
 #: hacks/config/juggle.xml.h:9
@@ -1330,8 +1373,9 @@ msgid "Trail Length"
 msgstr ""
 
 #: hacks/config/blaster.xml.h:1
+#, fuzzy
 msgid "Blaster"
-msgstr ""
+msgstr "Rapide"
 
 #: hacks/config/blaster.xml.h:2
 msgid ""
@@ -1352,28 +1396,32 @@ msgid "Few"
 msgstr ""
 
 #: hacks/config/blaster.xml.h:5 hacks/config/penetrate.xml.h:4
+#, fuzzy
 msgid "Lasers"
-msgstr ""
+msgstr "Laser"
 
 #: hacks/config/blaster.xml.h:7
 msgid "Robots"
 msgstr ""
 
 #: hacks/config/blaster.xml.h:10
+#, fuzzy
 msgid "Stars"
-msgstr ""
+msgstr "Escaliers"
 
 #: hacks/config/blitspin.xml.h:1
+#, fuzzy
 msgid "90° Rotation Speed"
-msgstr ""
+msgstr "Rotation"
 
 #: hacks/config/blitspin.xml.h:2
 msgid "Bitmap to rotate"
 msgstr ""
 
 #: hacks/config/blitspin.xml.h:3
+#, fuzzy
 msgid "BlitSpin"
-msgstr ""
+msgstr "Blitspin"
 
 #: hacks/config/blitspin.xml.h:5
 msgid "Fuzzy Rotation Speed"
@@ -1398,15 +1446,17 @@ msgstr ""
 
 #: hacks/config/bouboule.xml.h:1
 msgid "Bouboule"
-msgstr ""
+msgstr "Bouboule"
 
 #: hacks/config/bouboule.xml.h:2 hacks/config/rocks.xml.h:3
+#, fuzzy
 msgid "Do Red/Blue 3D seperation"
-msgstr ""
+msgstr "Utiliser la séparation rouge/bleu pour un effet 3d."
 
 #: hacks/config/bouboule.xml.h:7
+#, fuzzy
 msgid "Number of Spots"
-msgstr ""
+msgstr "Nombre de points."
 
 #: hacks/config/bouboule.xml.h:10
 msgid ""
@@ -1418,8 +1468,9 @@ msgstr ""
 #: hacks/config/gflux.xml.h:1 hacks/config/pyro.xml.h:1
 #: hacks/config/rd-bomb.xml.h:6 hacks/config/rocks.xml.h:1
 #: hacks/config/starwars.xml.h:1 hacks/config/xfishtank.xml.h:1
+#, fuzzy
 msgid "Animation Speed"
-msgstr ""
+msgstr "Animer"
 
 #: hacks/config/boxed.xml.h:2
 msgid "Boxed"
@@ -1433,7 +1484,7 @@ msgstr ""
 
 #: hacks/config/braid.xml.h:1
 msgid "Braid"
-msgstr ""
+msgstr "Galons"
 
 #: hacks/config/braid.xml.h:2
 msgid ""
@@ -1459,37 +1510,42 @@ msgstr ""
 #: hacks/config/vidwhacker.xml.h:3 hacks/config/wander.xml.h:7
 #: hacks/config/xspirograph.xml.h:3
 msgid "Duration"
-msgstr ""
+msgstr "Durée"
 
 #: hacks/config/braid.xml.h:5 hacks/config/epicycle.xml.h:7
 #: hacks/config/nerverot.xml.h:12
+#, fuzzy
 msgid "Line Thickness"
-msgstr ""
+msgstr "Plus fin"
 
 #: hacks/config/braid.xml.h:8
+#, fuzzy
 msgid "Max Rings"
-msgstr ""
+msgstr "Maximum de lignes"
 
 #: hacks/config/bsod.xml.h:1 hacks/config/molecule.xml.h:1
 #: hacks/config/vidwhacker.xml.h:1 hacks/config/webcollage.xml.h:1
+#, fuzzy
 msgid "2 minutes"
-msgstr ""
+msgstr " minutes."
 
 #: hacks/config/bsod.xml.h:2 hacks/config/molecule.xml.h:2
+#, fuzzy
 msgid "5 seconds"
-msgstr ""
+msgstr "secondes"
 
 #: hacks/config/bsod.xml.h:3
 msgid "AmigaDOS"
 msgstr ""
 
 #: hacks/config/bsod.xml.h:4
+#, fuzzy
 msgid "Atari"
-msgstr ""
+msgstr "Atlantis"
 
 #: hacks/config/bsod.xml.h:5
 msgid "BSD"
-msgstr ""
+msgstr "BSD"
 
 #: hacks/config/bsod.xml.h:6
 msgid "BSOD"
@@ -1511,12 +1567,13 @@ msgid "MacsBug"
 msgstr ""
 
 #: hacks/config/bsod.xml.h:11
+#, fuzzy
 msgid "NCD X Terminal"
-msgstr ""
+msgstr "Exécuter dans un terminal"
 
 #: hacks/config/bsod.xml.h:12
 msgid "SCO"
-msgstr ""
+msgstr "SCO"
 
 #: hacks/config/bsod.xml.h:13
 msgid "Sad Mac"
@@ -1524,27 +1581,28 @@ msgstr ""
 
 #: hacks/config/bsod.xml.h:14
 msgid "Solaris"
-msgstr ""
+msgstr "Solaris"
 
 #: hacks/config/bsod.xml.h:15
 msgid "Sparc Linux"
-msgstr ""
+msgstr "Sparc Linux"
 
 #: hacks/config/bsod.xml.h:16
 msgid "Windows"
-msgstr ""
+msgstr "Windows"
 
 #: hacks/config/bsod.xml.h:17
+#, fuzzy
 msgid "Windows 2000"
-msgstr ""
+msgstr "Windows"
 
 #: hacks/config/bsod.xml.h:18
 msgid "Windows NT"
-msgstr ""
+msgstr "Windows NT"
 
 #: hacks/config/bubble3d.xml.h:1
 msgid "Bubble3D"
-msgstr ""
+msgstr "Bubble3D"
 
 #: hacks/config/bubble3d.xml.h:2
 msgid ""
@@ -1554,35 +1612,43 @@ msgstr ""
 
 #: hacks/config/bubbles.xml.h:1 hacks/config/xfishtank.xml.h:2
 msgid "Bubbles"
-msgstr ""
+msgstr "Bulles"
 
 #: hacks/config/bubbles.xml.h:2
+#, fuzzy
 msgid "Bubbles Fall"
-msgstr ""
+msgstr "Bulles"
 
 #: hacks/config/bubbles.xml.h:3
+#, fuzzy
 msgid "Bubbles Float"
-msgstr ""
+msgstr "Bulles"
 
 #: hacks/config/bubbles.xml.h:4
+#, fuzzy
 msgid "Bubbles Rise"
-msgstr ""
+msgstr "Bulles"
 
 #: hacks/config/bubbles.xml.h:5
+#, fuzzy
 msgid "Bubbles exist in three dimensions"
-msgstr ""
+msgstr "Les bulles existent en trois dimensions."
 
 #: hacks/config/bubbles.xml.h:6
+#, fuzzy
 msgid "Don't hide bubbles when they pop"
-msgstr ""
+msgstr "Laisse à l'écran l'image des bulles qui ont éclaté."
 
 #: hacks/config/bubbles.xml.h:7
+#, fuzzy
 msgid "Draw circles instead of pixmap bubbles"
 msgstr ""
+"Dessiner des cercles plutôt que d'utiliser des images pixmap pour les bulles."
 
 #: hacks/config/bubbles.xml.h:9
+#, fuzzy
 msgid "Leave Trails"
-msgstr ""
+msgstr "Trainée"
 
 #: hacks/config/bubbles.xml.h:12
 msgid ""
@@ -1600,11 +1666,11 @@ msgstr ""
 
 #: hacks/config/bumps.xml.h:2
 msgid "Bumps"
-msgstr ""
+msgstr "Sauts"
 
 #: hacks/config/cage.xml.h:1
 msgid "Cage"
-msgstr ""
+msgstr "Cage"
 
 #: hacks/config/cage.xml.h:7
 msgid ""
@@ -1614,15 +1680,15 @@ msgstr ""
 
 #: hacks/config/ccurve.xml.h:1
 msgid "0 seconds"
-msgstr ""
+msgstr "0 seconde"
 
 #: hacks/config/ccurve.xml.h:2 hacks/config/epicycle.xml.h:1
 msgid "1 minute"
-msgstr ""
+msgstr "1 minute"
 
 #: hacks/config/ccurve.xml.h:3 hacks/config/epicycle.xml.h:2
 msgid "1 second"
-msgstr ""
+msgstr "1 seconde"
 
 #: hacks/config/ccurve.xml.h:4
 msgid "C Curve"
@@ -1630,14 +1696,14 @@ msgstr ""
 
 #: hacks/config/ccurve.xml.h:5
 msgid "Delay"
-msgstr ""
+msgstr "Délai"
 
 #: hacks/config/ccurve.xml.h:6 hacks/config/coral.xml.h:5
 #: hacks/config/imsmap.xml.h:5 hacks/config/kumppa.xml.h:1
 #: hacks/config/qix.xml.h:6 hacks/config/squiral.xml.h:2
 #: hacks/config/wander.xml.h:4
 msgid "Density"
-msgstr ""
+msgstr "Densité"
 
 #: hacks/config/ccurve.xml.h:8
 msgid ""
@@ -1659,20 +1725,24 @@ msgid "Directional Lighting"
 msgstr ""
 
 #: hacks/config/circuit.xml.h:5
+#, fuzzy
 msgid "Flat Coloring"
-msgstr ""
+msgstr "Couleur des zones « mortes »"
 
 #: hacks/config/circuit.xml.h:6
+#, fuzzy
 msgid "Parts"
-msgstr ""
+msgstr "Barres"
 
 #: hacks/config/circuit.xml.h:7 hacks/config/flipscreen3d.xml.h:4
+#, fuzzy
 msgid "Rotate"
-msgstr ""
+msgstr "État"
 
 #: hacks/config/circuit.xml.h:8
+#, fuzzy
 msgid "Rotation Speed"
-msgstr ""
+msgstr "Rotation"
 
 #: hacks/config/circuit.xml.h:12 hacks/config/dangerball.xml.h:9
 #: hacks/config/engine.xml.h:7
@@ -1681,7 +1751,7 @@ msgstr ""
 
 #: hacks/config/compass.xml.h:1
 msgid "Compass"
-msgstr ""
+msgstr "Boussole"
 
 #: hacks/config/compass.xml.h:2 hacks/config/deluxe.xml.h:3
 #: hacks/config/interference.xml.h:4 hacks/config/kumppa.xml.h:2
@@ -1701,31 +1771,34 @@ msgstr ""
 #: hacks/config/pedal.xml.h:1 hacks/config/rorschach.xml.h:1
 #: hacks/config/rotzoomer.xml.h:2 hacks/config/wander.xml.h:2
 #: hacks/config/xspirograph.xml.h:1
+#, fuzzy
 msgid "1 Minute"
-msgstr ""
+msgstr " minutes."
 
 #: hacks/config/coral.xml.h:2 hacks/config/deco.xml.h:2
 #: hacks/config/helix.xml.h:2 hacks/config/imsmap.xml.h:2
 #: hacks/config/moire.xml.h:2 hacks/config/pedal.xml.h:2
 #: hacks/config/penrose.xml.h:1 hacks/config/rorschach.xml.h:2
 #: hacks/config/xspirograph.xml.h:2
+#, fuzzy
 msgid "1 Second"
-msgstr ""
+msgstr "Secondes"
 
 #: hacks/config/coral.xml.h:3
 msgid "Coral"
-msgstr ""
+msgstr "Corail"
 
 #: hacks/config/coral.xml.h:4 hacks/config/gflux.xml.h:3
 #: hacks/config/imsmap.xml.h:4 hacks/config/pyro.xml.h:2
 #: hacks/config/qix.xml.h:5 hacks/config/squiral.xml.h:1
 #: hacks/config/xearth.xml.h:4
+#, fuzzy
 msgid "Dense"
-msgstr ""
+msgstr "Plus dense"
 
 #: hacks/config/coral.xml.h:10 hacks/config/squiral.xml.h:13
 msgid "Seeds"
-msgstr ""
+msgstr "Germes"
 
 #: hacks/config/coral.xml.h:11
 msgid ""
@@ -1737,12 +1810,14 @@ msgstr ""
 #: hacks/config/imsmap.xml.h:13 hacks/config/pyro.xml.h:14
 #: hacks/config/qix.xml.h:21 hacks/config/squiral.xml.h:15
 #: hacks/config/xearth.xml.h:24 hacks/config/xmatrix.xml.h:15
+#, fuzzy
 msgid "Sparse"
-msgstr ""
+msgstr "Eparpillement"
 
 #: hacks/config/cosmos.xml.h:1
+#, fuzzy
 msgid "Cosmos"
-msgstr ""
+msgstr "Couleurs"
 
 #: hacks/config/cosmos.xml.h:2
 msgid ""
@@ -1752,7 +1827,7 @@ msgstr ""
 
 #: hacks/config/critical.xml.h:1
 msgid "Critical"
-msgstr ""
+msgstr "Critique"
 
 #: hacks/config/critical.xml.h:2
 msgid ""
@@ -1761,8 +1836,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/crystal.xml.h:1
+#, fuzzy
 msgid "Center on Screen"
-msgstr ""
+msgstr "Centre de l'écran"
 
 #: hacks/config/crystal.xml.h:2 hacks/config/deluxe.xml.h:1
 #: hacks/config/fadeplot.xml.h:1 hacks/config/flow.xml.h:3
@@ -1778,15 +1854,16 @@ msgstr ""
 #: hacks/config/superquadrics.xml.h:1 hacks/config/swirl.xml.h:1
 #: hacks/config/worm.xml.h:2
 msgid "Count"
-msgstr ""
+msgstr "Nombre"
 
 #: hacks/config/crystal.xml.h:3
 msgid "Crystal"
-msgstr ""
+msgstr "Cristal"
 
 #: hacks/config/crystal.xml.h:4
+#, fuzzy
 msgid "Draw Cell"
-msgstr ""
+msgstr "Cellule"
 
 #: hacks/config/crystal.xml.h:5 hacks/config/spheremonics.xml.h:3
 #: hacks/config/xearth.xml.h:6
@@ -1794,8 +1871,9 @@ msgid "Draw Grid"
 msgstr ""
 
 #: hacks/config/crystal.xml.h:7
+#, fuzzy
 msgid "Horizontal Symmetries"
-msgstr ""
+msgstr "Dégradé horizontal"
 
 #: hacks/config/crystal.xml.h:9
 msgid ""
@@ -1804,28 +1882,33 @@ msgid ""
 msgstr ""
 
 #: hacks/config/crystal.xml.h:14
+#, fuzzy
 msgid "Vertical Symmetries"
-msgstr ""
+msgstr "Dégradé vertical"
 
 #: hacks/config/cubenetic.xml.h:1
 msgid "Boxes"
 msgstr ""
 
 #: hacks/config/cubenetic.xml.h:2
+#, fuzzy
 msgid "Cubenetic"
-msgstr ""
+msgstr "Rectangles de couleur"
 
 #: hacks/config/cubenetic.xml.h:3
+#, fuzzy
 msgid "Display Solid Colors"
-msgstr ""
+msgstr "Affiche un écran sonar."
 
 #: hacks/config/cubenetic.xml.h:4
+#, fuzzy
 msgid "Display Surface Patterns"
-msgstr ""
+msgstr "Afficher les parasites."
 
 #: hacks/config/cubenetic.xml.h:5
+#, fuzzy
 msgid "Display Wireframe"
-msgstr ""
+msgstr "Afficher les parasites."
 
 #: hacks/config/cubenetic.xml.h:6 hacks/config/gltext.xml.h:2
 #: hacks/config/menger.xml.h:1 hacks/config/molecule.xml.h:4
@@ -1899,8 +1982,9 @@ msgstr ""
 #: hacks/config/gltext.xml.h:17 hacks/config/menger.xml.h:20
 #: hacks/config/molecule.xml.h:25 hacks/config/spheremonics.xml.h:25
 #: hacks/config/wander.xml.h:15
+#, fuzzy
 msgid "Wander"
-msgstr ""
+msgstr "gestionnaire :"
 
 #: hacks/config/cynosure.xml.h:1
 msgid ""
@@ -1912,7 +1996,7 @@ msgstr ""
 
 #: hacks/config/cynosure.xml.h:2
 msgid "Cynosure"
-msgstr ""
+msgstr "Cynosure"
 
 #: hacks/config/dangerball.xml.h:1
 msgid "DangerBall"
@@ -1925,16 +2009,18 @@ msgid ""
 msgstr ""
 
 #: hacks/config/dangerball.xml.h:7
+#, fuzzy
 msgid "Spike Count"
-msgstr ""
+msgstr "Nombre"
 
 #: hacks/config/dangerball.xml.h:8
 msgid "Spike Growth"
 msgstr ""
 
 #: hacks/config/decayscreen.xml.h:1
+#, fuzzy
 msgid "DecayScreen"
-msgstr ""
+msgstr "Fondu"
 
 #: hacks/config/decayscreen.xml.h:3
 msgid "Fuzzy Melt"
@@ -1957,12 +2043,14 @@ msgid "Melt Down, Right"
 msgstr ""
 
 #: hacks/config/decayscreen.xml.h:8
+#, fuzzy
 msgid "Melt Left"
-msgstr ""
+msgstr "Gauche"
 
 #: hacks/config/decayscreen.xml.h:9
+#, fuzzy
 msgid "Melt Right"
-msgstr ""
+msgstr "Droite"
 
 #: hacks/config/decayscreen.xml.h:10
 msgid "Melt Towards Center"
@@ -1985,8 +2073,9 @@ msgid "Melty Melt"
 msgstr ""
 
 #: hacks/config/decayscreen.xml.h:15
+#, fuzzy
 msgid "Random Melt Style"
-msgstr ""
+msgstr "Paramètres aléatoires"
 
 #: hacks/config/decayscreen.xml.h:16
 msgid "Shuffle Melt"
@@ -2007,7 +2096,7 @@ msgstr ""
 
 #: hacks/config/deco.xml.h:3
 msgid "Deco"
-msgstr ""
+msgstr "Déco"
 
 #: hacks/config/deco.xml.h:6 hacks/config/menger.xml.h:5
 #: hacks/config/sierpinski3d.xml.h:4
@@ -2015,8 +2104,9 @@ msgid "Max Depth"
 msgstr ""
 
 #: hacks/config/deco.xml.h:7
+#, fuzzy
 msgid "Min Size"
-msgstr ""
+msgstr "Taille"
 
 #: hacks/config/deco.xml.h:9
 msgid ""
@@ -2034,17 +2124,19 @@ msgstr ""
 
 #: hacks/config/deluxe.xml.h:2
 msgid "Deluxe"
-msgstr ""
+msgstr "Deluxe"
 
 #: hacks/config/deluxe.xml.h:10 hacks/config/lmorph.xml.h:13
 #: hacks/config/starfish.xml.h:11 hacks/config/thornbird.xml.h:9
+#, fuzzy
 msgid "Thick"
-msgstr ""
+msgstr "Plus fin"
 
 #: hacks/config/deluxe.xml.h:11 hacks/config/lmorph.xml.h:14
 #: hacks/config/starfish.xml.h:12 hacks/config/thornbird.xml.h:11
+#, fuzzy
 msgid "Thin"
-msgstr ""
+msgstr "Plus fin"
 
 #: hacks/config/deluxe.xml.h:12
 msgid ""
@@ -2055,30 +2147,36 @@ msgid ""
 msgstr ""
 
 #: hacks/config/deluxe.xml.h:13
+#, fuzzy
 msgid "Transparency"
-msgstr ""
+msgstr "Transparent"
 
 #: hacks/config/demon.xml.h:1
+#, fuzzy
 msgid ""
 "A cellular automaton that starts with a random field, and organizes it into "
 "stripes and spirals. Written by David Bagley."
 msgstr ""
+"Un automate cellulaire qui démarre avec un champs aléatoire et s'organise en "
+"bandes et spirales."
 
 #: hacks/config/demon.xml.h:2 hacks/config/petri.xml.h:1
+#, fuzzy
 msgid "Cell Size"
-msgstr ""
+msgstr "Taille"
 
 #: hacks/config/demon.xml.h:3
 msgid "Demon"
-msgstr ""
+msgstr "Démon"
 
 #: hacks/config/demon.xml.h:11
+#, fuzzy
 msgid "States"
-msgstr ""
+msgstr "État"
 
 #: hacks/config/discrete.xml.h:1
 msgid "Discrete"
-msgstr ""
+msgstr "Discret"
 
 #: hacks/config/discrete.xml.h:5
 msgid ""
@@ -2087,8 +2185,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/distort.xml.h:1
+#, fuzzy
 msgid "Black Hole"
-msgstr ""
+msgstr "Volume des clics"
 
 #: hacks/config/distort.xml.h:2
 msgid "Bounce"
@@ -2096,15 +2195,17 @@ msgstr ""
 
 #: hacks/config/distort.xml.h:3
 msgid "Distort"
-msgstr ""
+msgstr "Distortion"
 
 #: hacks/config/distort.xml.h:6
+#, fuzzy
 msgid "Lens Count"
-msgstr ""
+msgstr "Nombre"
 
 #: hacks/config/distort.xml.h:7
+#, fuzzy
 msgid "Lens Size"
-msgstr ""
+msgstr "Taille"
 
 #: hacks/config/distort.xml.h:8
 msgid "Magnify"
@@ -2113,11 +2214,12 @@ msgstr ""
 #: hacks/config/distort.xml.h:9 hacks/config/glforestfire.xml.h:10
 #: hacks/config/lament.xml.h:4 hacks/config/sballs.xml.h:6
 msgid "Normal"
-msgstr ""
+msgstr "Normal"
 
 #: hacks/config/distort.xml.h:10
+#, fuzzy
 msgid "Reflect"
-msgstr ""
+msgstr "Effacer"
 
 #: hacks/config/distort.xml.h:14
 msgid "Swamp Thing"
@@ -2138,16 +2240,18 @@ msgid "Use Shared Memory"
 msgstr ""
 
 #: hacks/config/distort.xml.h:17
+#, fuzzy
 msgid "Vortex"
-msgstr ""
+msgstr "Plus court"
 
 #: hacks/config/drift.xml.h:1
 msgid "Drift"
-msgstr ""
+msgstr "Dérive"
 
 #: hacks/config/drift.xml.h:4
+#, fuzzy
 msgid "Fractal Growth"
-msgstr ""
+msgstr "Les fractales doivent grandir."
 
 #: hacks/config/drift.xml.h:5
 msgid "High Dimensional Sphere"
@@ -2161,8 +2265,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/drift.xml.h:7
+#, fuzzy
 msgid "Lissojous Figures"
-msgstr ""
+msgstr "Lissajous"
 
 #: hacks/config/electricsheep.xml.h:1
 msgid "ElectricSheep"
@@ -2186,32 +2291,37 @@ msgid ""
 msgstr ""
 
 #: hacks/config/engine.xml.h:2
+#, fuzzy
 msgid "Engine"
-msgstr ""
+msgstr "Toto"
 
 #: hacks/config/epicycle.xml.h:4
 msgid "Epicycle"
-msgstr ""
+msgstr "Epicycle"
 
 #: hacks/config/epicycle.xml.h:6
 msgid "Harmonics"
 msgstr ""
 
 #: hacks/config/epicycle.xml.h:12
+#, fuzzy
 msgid ""
 "This program draws the path traced out by a point on the edge of a circle. "
 "That circle rotates around a point on the rim of another circle, and so on, "
 "several times. These were the basis for the pre-heliocentric model of "
 "planetary motion. Written by James Youngman."
 msgstr ""
+"Cet économiseur d'écran dessine la trajectoire d'un point sur un cercle en "
+"rotation qui se déplace sur le contour d'un autre cercle."
 
 #: hacks/config/euler2d.xml.h:2
 msgid "Euler2d"
 msgstr ""
 
 #: hacks/config/euler2d.xml.h:10 hacks/config/whirlwindwarp.xml.h:5
+#, fuzzy
 msgid "Particles"
-msgstr ""
+msgstr "Particules à l'écran"
 
 #: hacks/config/euler2d.xml.h:11
 msgid "Power"
@@ -2231,44 +2341,53 @@ msgid ""
 msgstr ""
 
 #: hacks/config/extrusion.xml.h:2
+#, fuzzy
 msgid "Extrusion"
-msgstr ""
+msgstr "Extension"
 
 #: hacks/config/extrusion.xml.h:4
+#, fuzzy
 msgid "Helix 2"
-msgstr ""
+msgstr "Hélice"
 
 #: hacks/config/extrusion.xml.h:5
+#, fuzzy
 msgid "Helix 3"
-msgstr ""
+msgstr "Hélice"
 
 #: hacks/config/extrusion.xml.h:6
+#, fuzzy
 msgid "Helix 4"
-msgstr ""
+msgstr "Hélice"
 
 #: hacks/config/extrusion.xml.h:7
+#, fuzzy
 msgid "Join Offset"
-msgstr ""
+msgstr "Décalage"
 
 #: hacks/config/extrusion.xml.h:8
+#, fuzzy
 msgid "Random Object"
-msgstr ""
+msgstr "Paramètres aléatoires"
 
 #: hacks/config/extrusion.xml.h:9
+#, fuzzy
 msgid "Screw"
-msgstr ""
+msgstr "Scwm"
 
 #: hacks/config/extrusion.xml.h:14
 msgid "Taper"
 msgstr ""
 
 #: hacks/config/extrusion.xml.h:15
+#, fuzzy
 msgid "Texture Image"
-msgstr ""
+msgstr "Centrer l'image."
 
 #: hacks/config/extrusion.xml.h:16
+#, fuzzy
 msgid "Twistoid"
-msgstr ""
+msgstr "Torsion"
 
 #: hacks/config/extrusion.xml.h:17 hacks/config/glplanet.xml.h:9
 #: hacks/config/pulsar.xml.h:19
@@ -2276,18 +2395,21 @@ msgid "Use Flat Coloring"
 msgstr ""
 
 #: hacks/config/extrusion.xml.h:18 hacks/config/glplanet.xml.h:10
+#, fuzzy
 msgid "Use Lighting"
-msgstr ""
+msgstr "Éclairs"
 
 #: hacks/config/fadeplot.xml.h:2
+#, fuzzy
 msgid ""
 "Draws what looks like a waving ribbon following a sinusoidal path. Written "
 "by Bas van Gaalen and Charles Vidal."
-msgstr ""
+msgstr "Anime un semblant de ruban ondulant en suivant un chemin sinusoïde."
 
 #: hacks/config/fadeplot.xml.h:3
+#, fuzzy
 msgid "FadePlot"
-msgstr ""
+msgstr "Ruban"
 
 #: hacks/config/flag.xml.h:1
 msgid "Bitmap for Flag"
@@ -2295,7 +2417,7 @@ msgstr ""
 
 #: hacks/config/flag.xml.h:3
 msgid "Flag"
-msgstr ""
+msgstr "Drapeau"
 
 #: hacks/config/flag.xml.h:10
 msgid "Text for Flag"
@@ -2314,11 +2436,11 @@ msgstr ""
 #: hacks/config/maze.xml.h:1 hacks/config/rotzoomer.xml.h:1
 #: hacks/config/wander.xml.h:1
 msgid "0 Seconds"
-msgstr ""
+msgstr "0 seconde"
 
 #: hacks/config/flame.xml.h:2 hacks/config/maze.xml.h:2
 msgid "10 Seconds"
-msgstr ""
+msgstr "10 secondes"
 
 #: hacks/config/flame.xml.h:3
 msgid "Another iterative fractal generator. Written by Scott Draves."
@@ -2326,19 +2448,22 @@ msgstr ""
 
 #: hacks/config/flame.xml.h:4
 msgid "Complexity"
-msgstr ""
+msgstr "Complexité"
 
 #: hacks/config/flame.xml.h:8
+#, fuzzy
 msgid "Flame"
-msgstr ""
+msgstr "Xflame"
 
 #: hacks/config/flame.xml.h:13
+#, fuzzy
 msgid "Number of Fractals"
-msgstr ""
+msgstr "Nombre de trainées."
 
 #: hacks/config/flipscreen3d.xml.h:2
+#, fuzzy
 msgid "Flipscreen3d"
-msgstr ""
+msgstr "Écran glissant"
 
 #: hacks/config/flipscreen3d.xml.h:3
 msgid ""
@@ -2358,7 +2483,7 @@ msgstr ""
 
 #: hacks/config/flow.xml.h:5
 msgid "Flow"
-msgstr ""
+msgstr "Flux"
 
 #: hacks/config/flow.xml.h:6
 msgid "Freeze Some Bees"
@@ -2385,29 +2510,34 @@ msgid "Zoom In and Out"
 msgstr ""
 
 #: hacks/config/fluidballs.xml.h:1
+#, fuzzy
 msgid "Ball Size"
-msgstr ""
+msgstr "Taille"
 
 #: hacks/config/fluidballs.xml.h:5
+#, fuzzy
 msgid "FluidBalls"
-msgstr ""
+msgstr "Barres"
 
 #: hacks/config/fluidballs.xml.h:6
 msgid "Freefall"
 msgstr ""
 
 #: hacks/config/fluidballs.xml.h:7 hacks/config/twang.xml.h:4
+#, fuzzy
 msgid "Friction"
-msgstr ""
+msgstr "Attraction"
 
 #: hacks/config/fluidballs.xml.h:8
+#, fuzzy
 msgid "Glass"
-msgstr ""
+msgstr "Engrenages"
 
 #: hacks/config/fluidballs.xml.h:9 hacks/config/qix.xml.h:9
 #: hacks/config/speedmine.xml.h:4
+#, fuzzy
 msgid "Gravity"
-msgstr ""
+msgstr "Gravité"
 
 #: hacks/config/fluidballs.xml.h:10
 msgid "Hurricane"
@@ -2426,12 +2556,14 @@ msgid ""
 msgstr ""
 
 #: hacks/config/fluidballs.xml.h:15
+#, fuzzy
 msgid "Sandpaper"
-msgstr ""
+msgstr "gestionnaire :"
 
 #: hacks/config/fluidballs.xml.h:16
+#, fuzzy
 msgid "Shake Box"
-msgstr ""
+msgstr "Shadebobs"
 
 #: hacks/config/fluidballs.xml.h:21 hacks/config/glforestfire.xml.h:16
 msgid "Still"
@@ -2442,12 +2574,13 @@ msgid "Various Ball Sizes"
 msgstr ""
 
 #: hacks/config/fluidballs.xml.h:23
+#, fuzzy
 msgid "Wind"
-msgstr ""
+msgstr "Windows"
 
 #: hacks/config/forest.xml.h:2 hacks/config/glforestfire.xml.h:6
 msgid "Forest"
-msgstr ""
+msgstr "Forêt"
 
 #: hacks/config/forest.xml.h:7
 msgid ""
@@ -2457,7 +2590,7 @@ msgstr ""
 
 #: hacks/config/galaxy.xml.h:4
 msgid "Galaxy"
-msgstr ""
+msgstr "Galaxie"
 
 #: hacks/config/galaxy.xml.h:9 hacks/config/lisa.xml.h:7
 #: hacks/config/lissie.xml.h:8 hacks/config/loop.xml.h:6
@@ -2465,7 +2598,7 @@ msgstr ""
 #: hacks/config/rubik.xml.h:8 hacks/config/sproingies.xml.h:5
 #: hacks/config/wander.xml.h:13 hacks/config/worm.xml.h:6
 msgid "Size"
-msgstr ""
+msgstr "Taille"
 
 #: hacks/config/galaxy.xml.h:12
 msgid ""
@@ -2476,15 +2609,16 @@ msgstr ""
 
 #: hacks/config/gears.xml.h:3
 msgid "Gears"
-msgstr ""
+msgstr "Engrenages"
 
 #: hacks/config/gears.xml.h:4
 msgid "Planetary Gear System"
 msgstr ""
 
 #: hacks/config/gears.xml.h:5 hacks/config/goop.xml.h:9
+#, fuzzy
 msgid "Rotational Speed"
-msgstr ""
+msgstr "Rotation"
 
 #: hacks/config/gears.xml.h:9
 msgid ""
@@ -2508,25 +2642,28 @@ msgid ""
 msgstr ""
 
 #: hacks/config/gflux.xml.h:7
+#, fuzzy
 msgid "Flat Lighting"
-msgstr ""
+msgstr "Éclairs"
 
 #: hacks/config/gflux.xml.h:8
 msgid "GFlux"
 msgstr ""
 
 #: hacks/config/gflux.xml.h:9
+#, fuzzy
 msgid "Mesh Density"
-msgstr ""
+msgstr "Densité"
 
 #: hacks/config/gflux.xml.h:10
 #, fuzzy
 msgid "Screen Image"
-msgstr "Propriétés Économiseur d'écran"
+msgstr "Économiseur d'écran"
 
 #: hacks/config/gflux.xml.h:14 hacks/config/interference.xml.h:18
+#, fuzzy
 msgid "Wave Speed"
-msgstr ""
+msgstr "Vitesse"
 
 #: hacks/config/gflux.xml.h:15
 msgid "Waves"
@@ -2537,8 +2674,9 @@ msgid "Wire Mesh"
 msgstr ""
 
 #: hacks/config/glforestfire.xml.h:2
+#, fuzzy
 msgid "Desert"
-msgstr ""
+msgstr "Plus dense"
 
 #: hacks/config/glforestfire.xml.h:3
 msgid ""
@@ -2552,24 +2690,28 @@ msgid "Fog"
 msgstr ""
 
 #: hacks/config/glforestfire.xml.h:7
+#, fuzzy
 msgid "GLForestFire"
-msgstr ""
+msgstr "Forêt"
 
 #: hacks/config/glforestfire.xml.h:8
+#, fuzzy
 msgid "Huge Fire"
-msgstr ""
+msgstr "Police utilisateur"
 
 #: hacks/config/glforestfire.xml.h:9
 msgid "No shadow"
 msgstr ""
 
 #: hacks/config/glforestfire.xml.h:11
+#, fuzzy
 msgid "Number of trees"
-msgstr ""
+msgstr "Nombre de cycles"
 
 #: hacks/config/glforestfire.xml.h:12
+#, fuzzy
 msgid "Rain"
-msgstr ""
+msgstr "Rotation"
 
 #: hacks/config/glforestfire.xml.h:17
 msgid "Track mouse"
@@ -2577,8 +2719,9 @@ msgstr ""
 
 #: hacks/config/glforestfire.xml.h:18 hacks/config/lament.xml.h:8
 #: hacks/config/sballs.xml.h:17
+#, fuzzy
 msgid "Untextured"
-msgstr ""
+msgstr "Centré"
 
 #: hacks/config/glplanet.xml.h:1
 msgid ""
@@ -2590,7 +2733,7 @@ msgstr ""
 
 #: hacks/config/glplanet.xml.h:3
 msgid "GLPlanet"
-msgstr ""
+msgstr "GLPlanet"
 
 #: hacks/config/glplanet.xml.h:4
 msgid "Image File"
@@ -2601,8 +2744,9 @@ msgid "1"
 msgstr ""
 
 #: hacks/config/glsnake.xml.h:2 hacks/config/penrose.xml.h:2
+#, fuzzy
 msgid "30 Seconds"
-msgstr ""
+msgstr "Secondes"
 
 #: hacks/config/glsnake.xml.h:3
 msgid ""
@@ -2615,36 +2759,40 @@ msgid "GlSnake"
 msgstr ""
 
 #: hacks/config/glsnake.xml.h:7
+#, fuzzy
 msgid "Loose"
-msgstr ""
+msgstr "Boucles"
 
 #: hacks/config/glsnake.xml.h:8
+#, fuzzy
 msgid "Packing"
-msgstr ""
+msgstr "En train d'enregistrer"
 
 #: hacks/config/glsnake.xml.h:9
+#, fuzzy
 msgid "Scary Colors"
-msgstr ""
+msgstr "Couleurs"
 
 #: hacks/config/glsnake.xml.h:11
 msgid "Show Labels"
 msgstr ""
 
 #: hacks/config/glsnake.xml.h:14
+#, fuzzy
 msgid "Tight"
-msgstr ""
+msgstr "Droite"
 
 #: hacks/config/glsnake.xml.h:15 hacks/config/rocks.xml.h:13
 msgid "Velocity"
-msgstr ""
+msgstr "Vélocité"
 
 #: hacks/config/glsnake.xml.h:17
 msgid "Y Rotation"
-msgstr ""
+msgstr "Rotation Y"
 
 #: hacks/config/glsnake.xml.h:18
 msgid "Z Rotation"
-msgstr ""
+msgstr "Rotation Z"
 
 #: hacks/config/gltext.xml.h:1
 msgid ""
@@ -2658,7 +2806,7 @@ msgstr ""
 
 #: hacks/config/gltext.xml.h:16 hacks/config/noseguy.xml.h:5
 msgid "Text"
-msgstr ""
+msgstr "Texte"
 
 #: hacks/config/goban.xml.h:1
 msgid "Goban"
@@ -2675,16 +2823,17 @@ msgid "Additive Colors (reflected light)"
 msgstr ""
 
 #: hacks/config/goop.xml.h:2
+#, fuzzy
 msgid "Blob Count"
-msgstr ""
+msgstr "Nombre"
 
 #: hacks/config/goop.xml.h:3
 msgid "Elasticity"
-msgstr ""
+msgstr "Élasticité"
 
 #: hacks/config/goop.xml.h:5
 msgid "Goop"
-msgstr ""
+msgstr "Gouttes"
 
 #: hacks/config/goop.xml.h:8
 msgid "Opaque Blobs"
@@ -2692,7 +2841,7 @@ msgstr ""
 
 #: hacks/config/goop.xml.h:12
 msgid "Speed Limit"
-msgstr ""
+msgstr "Vitesse limite"
 
 #: hacks/config/goop.xml.h:13
 msgid "Subtractive Colors (transmitted light)"
@@ -2710,24 +2859,28 @@ msgid ""
 msgstr ""
 
 #: hacks/config/goop.xml.h:15
+#, fuzzy
 msgid "Transparent Blobs"
-msgstr ""
+msgstr "Transparent"
 
 #: hacks/config/goop.xml.h:16
+#, fuzzy
 msgid "XOR Blobs"
-msgstr ""
+msgstr "Blob"
 
 #: hacks/config/grav.xml.h:3
 msgid "Grav"
-msgstr ""
+msgstr "Gravité"
 
 #: hacks/config/grav.xml.h:6
+#, fuzzy
 msgid "Object Trails"
-msgstr ""
+msgstr "Trainée"
 
 #: hacks/config/grav.xml.h:7
+#, fuzzy
 msgid "Orbital Decay"
-msgstr ""
+msgstr "L'orbit doit s'aménuiser."
 
 #: hacks/config/grav.xml.h:10
 msgid ""
@@ -2737,7 +2890,7 @@ msgstr ""
 
 #: hacks/config/greynetic.xml.h:2
 msgid "Greynetic"
-msgstr ""
+msgstr "Rectangles de couleur"
 
 #: hacks/config/greynetic.xml.h:5
 msgid ""
@@ -2745,20 +2898,23 @@ msgid ""
 msgstr ""
 
 #: hacks/config/halo.xml.h:1
+#, fuzzy
 msgid "Animate Circles"
-msgstr ""
+msgstr "Cercles animés."
 
 #: hacks/config/halo.xml.h:3
 msgid "Halo"
-msgstr ""
+msgstr "Halo"
 
 #: hacks/config/halo.xml.h:5
+#, fuzzy
 msgid "Number of Circles"
-msgstr ""
+msgstr "Nombre de cycles"
 
 #: hacks/config/halo.xml.h:7 hacks/config/imsmap.xml.h:11
+#, fuzzy
 msgid "Random Mode"
-msgstr ""
+msgstr "Aléatoire"
 
 #: hacks/config/halo.xml.h:8
 msgid "Seuss Mode"
@@ -2773,7 +2929,7 @@ msgstr ""
 
 #: hacks/config/helix.xml.h:4
 msgid "Helix"
-msgstr ""
+msgstr "Hélice"
 
 #: hacks/config/helix.xml.h:5
 msgid ""
@@ -2807,27 +2963,30 @@ msgstr ""
 
 #: hacks/config/hopalong.xml.h:11
 msgid "Hopalong"
-msgstr ""
+msgstr "Cercles psychadéliques"
 
 #: hacks/config/hopalong.xml.h:12
 msgid "Jong"
 msgstr ""
 
 #: hacks/config/hopalong.xml.h:16
+#, fuzzy
 msgid "Martin"
-msgstr ""
+msgstr "Démarre"
 
 #: hacks/config/hopalong.xml.h:18
+#, fuzzy
 msgid "Popcorn"
-msgstr ""
+msgstr "Phosphore"
 
 #: hacks/config/hopalong.xml.h:19
 msgid "RR"
 msgstr ""
 
 #: hacks/config/hopalong.xml.h:20
+#, fuzzy
 msgid "Sine"
-msgstr ""
+msgstr "Taille"
 
 #: hacks/config/hopalong.xml.h:24
 msgid ""
@@ -2836,12 +2995,14 @@ msgid ""
 msgstr ""
 
 #: hacks/config/hyperball.xml.h:1 hacks/config/hypercube.xml.h:1
+#, fuzzy
 msgid "Far"
-msgstr ""
+msgstr "Rapide"
 
 #: hacks/config/hyperball.xml.h:4
+#, fuzzy
 msgid "Hyperball"
-msgstr ""
+msgstr "Hypercube"
 
 #: hacks/config/hyperball.xml.h:5
 msgid ""
@@ -2851,41 +3012,42 @@ msgid ""
 msgstr ""
 
 #: hacks/config/hyperball.xml.h:7 hacks/config/hypercube.xml.h:6
+#, fuzzy
 msgid "Near"
-msgstr ""
+msgstr "Engrenages"
 
 #: hacks/config/hyperball.xml.h:10 hacks/config/hypercube.xml.h:10
 msgid "XW Rotation"
-msgstr ""
+msgstr "Rotation XW"
 
 #: hacks/config/hyperball.xml.h:11 hacks/config/hypercube.xml.h:11
 msgid "XY Rotation"
-msgstr ""
+msgstr "Rotation XY"
 
 #: hacks/config/hyperball.xml.h:12 hacks/config/hypercube.xml.h:12
 msgid "XZ Rotation"
-msgstr ""
+msgstr "Rotation XZ"
 
 #: hacks/config/hyperball.xml.h:13 hacks/config/hypercube.xml.h:13
 msgid "YW Rotation"
-msgstr ""
+msgstr "Rotation YW"
 
 #: hacks/config/hyperball.xml.h:14 hacks/config/hypercube.xml.h:14
 msgid "YZ Rotation"
-msgstr ""
+msgstr "Rotation YZ"
 
 #: hacks/config/hyperball.xml.h:15 hacks/config/hypercube.xml.h:15
 msgid "ZW Rotation"
-msgstr ""
+msgstr "Rotation ZW"
 
 #: hacks/config/hyperball.xml.h:16 hacks/config/hypercube.xml.h:16
 #: hacks/config/zoom.xml.h:8
 msgid "Zoom"
-msgstr ""
+msgstr "Zoom"
 
 #: hacks/config/hypercube.xml.h:4
 msgid "Hypercube"
-msgstr ""
+msgstr "Hypercube"
 
 #: hacks/config/hypercube.xml.h:9
 msgid ""
@@ -2903,26 +3065,31 @@ msgid "IFS"
 msgstr ""
 
 #: hacks/config/ifs.xml.h:7
+#, fuzzy
 msgid ""
 "This one draws spinning, colliding iterated-function-system images. Written "
 "by Massimino Pascal."
-msgstr ""
+msgstr "Dessine des IFS (Iterated-function-system) qui tournent."
 
 #: hacks/config/imsmap.xml.h:3
+#, fuzzy
 msgid "Brightness Gradients"
-msgstr ""
+msgstr "Dégradé horizontal"
 
 #: hacks/config/imsmap.xml.h:7
+#, fuzzy
 msgid "Hue Gradients"
-msgstr ""
+msgstr "Dégradé vertical"
 
 #: hacks/config/imsmap.xml.h:8
+#, fuzzy
 msgid "IMSmap"
-msgstr ""
+msgstr "Imsmap"
 
 #: hacks/config/imsmap.xml.h:12
+#, fuzzy
 msgid "Saturation Gradients"
-msgstr ""
+msgstr "Dégradé horizontal"
 
 #: hacks/config/imsmap.xml.h:14
 msgid ""
@@ -2939,8 +3106,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/interference.xml.h:1
+#, fuzzy
 msgid "Anim Speed"
-msgstr ""
+msgstr "Vitesse"
 
 #: hacks/config/interference.xml.h:2
 msgid ""
@@ -2951,7 +3119,7 @@ msgstr ""
 
 #: hacks/config/interference.xml.h:7
 msgid "Interference"
-msgstr ""
+msgstr "Interférences"
 
 #: hacks/config/interference.xml.h:10 hacks/config/t3d.xml.h:9
 #: hacks/config/xearth.xml.h:11 hacks/config/zoom.xml.h:5
@@ -2959,20 +3127,23 @@ msgid "Magnification"
 msgstr ""
 
 #: hacks/config/interference.xml.h:13
+#, fuzzy
 msgid "Number of Waves"
-msgstr ""
+msgstr "Nombre de fourmis."
 
 #: hacks/config/interference.xml.h:17
+#, fuzzy
 msgid "Wave Size"
-msgstr ""
+msgstr "Taille"
 
 #: hacks/config/jigsaw.xml.h:4
 msgid "Jigsaw"
-msgstr ""
+msgstr "Jigsaw"
 
 #: hacks/config/jigsaw.xml.h:6
+#, fuzzy
 msgid "Solved Duration"
-msgstr ""
+msgstr "Durée"
 
 #: hacks/config/jigsaw.xml.h:8
 msgid ""
@@ -2998,15 +3169,15 @@ msgstr ""
 
 #: hacks/config/juggle.xml.h:6 hacks/config/pipes.xml.h:10
 msgid "None"
-msgstr ""
+msgstr "Aucun"
 
 #: hacks/config/julia.xml.h:3 hacks/config/rorschach.xml.h:4
 msgid "Iterations"
-msgstr ""
+msgstr "Itérations"
 
 #: hacks/config/julia.xml.h:4
 msgid "Julia"
-msgstr ""
+msgstr "Julia"
 
 #: hacks/config/julia.xml.h:11
 msgid ""
@@ -3028,11 +3199,11 @@ msgstr ""
 
 #: hacks/config/kaleidescope.xml.h:4
 msgid "Kaleidescope"
-msgstr ""
+msgstr "Kaleïdoscope"
 
 #: hacks/config/kaleidescope.xml.h:6 hacks/config/qix.xml.h:18
 msgid "Segments"
-msgstr ""
+msgstr "Segmants"
 
 #: hacks/config/kaleidescope.xml.h:9
 msgid "Symmetry"
@@ -3040,15 +3211,16 @@ msgstr ""
 
 #: hacks/config/kaleidescope.xml.h:10
 msgid "Trails"
-msgstr ""
+msgstr "Trainée"
 
 #: hacks/config/kumppa.xml.h:5
 msgid "Kumppa"
-msgstr ""
+msgstr "Kumppa"
 
 #: hacks/config/kumppa.xml.h:7
+#, fuzzy
 msgid "Randomize"
-msgstr ""
+msgstr "Aléatoire"
 
 #: hacks/config/kumppa.xml.h:10
 msgid ""
@@ -3065,11 +3237,11 @@ msgstr ""
 
 #: hacks/config/lament.xml.h:3
 msgid "Lament"
-msgstr ""
+msgstr "Lamentations"
 
 #: hacks/config/laser.xml.h:4
 msgid "Laser"
-msgstr ""
+msgstr "Laser"
 
 #: hacks/config/laser.xml.h:7
 msgid ""
@@ -3079,7 +3251,7 @@ msgstr ""
 
 #: hacks/config/lightning.xml.h:2
 msgid "Lightning"
-msgstr ""
+msgstr "Éclairs"
 
 #: hacks/config/lightning.xml.h:7
 msgid ""
@@ -3089,11 +3261,11 @@ msgstr ""
 
 #: hacks/config/lisa.xml.h:4
 msgid "Lisa"
-msgstr ""
+msgstr "Lisa"
 
 #: hacks/config/lisa.xml.h:10
 msgid "Steps"
-msgstr ""
+msgstr "Pas"
 
 #: hacks/config/lisa.xml.h:11
 msgid ""
@@ -3110,39 +3282,44 @@ msgstr ""
 
 #: hacks/config/lissie.xml.h:5
 msgid "Lissie"
-msgstr ""
+msgstr "Lissie"
 
 #: hacks/config/lmorph.xml.h:1
 msgid "Closed Figures"
 msgstr ""
 
 #: hacks/config/lmorph.xml.h:2
+#, fuzzy
 msgid "Control Points"
-msgstr ""
+msgstr "Centre de contrôle"
 
 #: hacks/config/lmorph.xml.h:4
+#, fuzzy
 msgid "Interpolation Steps"
-msgstr ""
+msgstr "Nombre de pas d'interpolation."
 
 #: hacks/config/lmorph.xml.h:5
+#, fuzzy
 msgid "LMorph"
-msgstr ""
+msgstr "Lmorph"
 
 #: hacks/config/lmorph.xml.h:6
 msgid "Less"
-msgstr ""
+msgstr "Moins"
 
 #: hacks/config/lmorph.xml.h:8
 msgid "More"
-msgstr ""
+msgstr "Plus"
 
 #: hacks/config/lmorph.xml.h:9
+#, fuzzy
 msgid "Open Figures"
-msgstr ""
+msgstr "Motifs ouverts."
 
 #: hacks/config/lmorph.xml.h:10
+#, fuzzy
 msgid "Open and Closed Figures"
-msgstr ""
+msgstr "Motifs ouverts."
 
 #: hacks/config/lmorph.xml.h:15
 msgid ""
@@ -3152,21 +3329,25 @@ msgstr ""
 
 #: hacks/config/loop.xml.h:3
 msgid "Loop"
-msgstr ""
+msgstr "Boucles"
 
 #: hacks/config/loop.xml.h:10
+#, fuzzy
 msgid ""
 "This one produces loop-shaped colonies that spawn, age, and eventually die. "
 "Written by David Bagley."
 msgstr ""
+"Produit des colonies en forme de boucles, qui se développent, vieillissent "
+"et meurent."
 
 #: hacks/config/maze.xml.h:3
 msgid "Backtracking Generator"
 msgstr ""
 
 #: hacks/config/maze.xml.h:5 hacks/config/slidescreen.xml.h:3
+#, fuzzy
 msgid "Grid Size"
-msgstr ""
+msgstr "Taille"
 
 #: hacks/config/maze.xml.h:6
 msgid "Head Toward Exit"
@@ -3182,27 +3363,31 @@ msgstr ""
 
 #: hacks/config/maze.xml.h:9
 msgid "Maze"
-msgstr ""
+msgstr "Labyrinthe"
 
 #: hacks/config/maze.xml.h:10
+#, fuzzy
 msgid "Post-Solve Delay"
-msgstr ""
+msgstr "Délai post-résolution"
 
 #: hacks/config/maze.xml.h:11
+#, fuzzy
 msgid "Pre-Solve Delay"
-msgstr ""
+msgstr "Délai pré-résolution"
 
 #: hacks/config/maze.xml.h:12
+#, fuzzy
 msgid "Random Generator"
-msgstr ""
+msgstr "Economiseur d'écran aléatoire"
 
 #: hacks/config/maze.xml.h:13
 msgid "Seeding Generator"
 msgstr ""
 
 #: hacks/config/maze.xml.h:15
+#, fuzzy
 msgid "Solve Speed"
-msgstr ""
+msgstr "Vitesse"
 
 #: hacks/config/maze.xml.h:16
 msgid ""
@@ -3212,8 +3397,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/menger.xml.h:6
+#, fuzzy
 msgid "Menger"
-msgstr ""
+msgstr "Plus dense"
 
 #: hacks/config/menger.xml.h:19
 msgid ""
@@ -3238,11 +3424,12 @@ msgstr ""
 
 #: hacks/config/moebius.xml.h:5
 msgid "Moebius"
-msgstr ""
+msgstr "Moebius"
 
 #: hacks/config/moebius.xml.h:8
+#, fuzzy
 msgid "Solid Floor"
-msgstr ""
+msgstr "Uni"
 
 #: hacks/config/moebius.xml.h:9 hacks/config/qix.xml.h:20
 msgid "Solid Objects"
@@ -3250,11 +3437,11 @@ msgstr ""
 
 #: hacks/config/moire.xml.h:6
 msgid "Moire"
-msgstr ""
+msgstr "Moirage"
 
 #: hacks/config/moire.xml.h:8 hacks/config/rorschach.xml.h:6
 msgid "Offset"
-msgstr ""
+msgstr "Décalage"
 
 #: hacks/config/moire.xml.h:10
 msgid ""
@@ -3278,11 +3465,11 @@ msgstr ""
 
 #: hacks/config/moire2.xml.h:4
 msgid "Moire2"
-msgstr ""
+msgstr "Moirage2"
 
 #: hacks/config/moire2.xml.h:8 hacks/config/thornbird.xml.h:10
 msgid "Thickness"
-msgstr ""
+msgstr "Plus fin"
 
 #: hacks/config/molecule.xml.h:3
 msgid "Describe Molecule"
@@ -3293,8 +3480,9 @@ msgid "Draw Atomic Bonds"
 msgstr ""
 
 #: hacks/config/molecule.xml.h:6
+#, fuzzy
 msgid "Draw Atoms"
-msgstr ""
+msgstr "Durée (ms)"
 
 #: hacks/config/molecule.xml.h:7 hacks/config/spheremonics.xml.h:2
 msgid "Draw Bounding Box"
@@ -3313,7 +3501,7 @@ msgstr ""
 
 #: hacks/config/molecule.xml.h:12
 msgid "Molecule"
-msgstr ""
+msgstr "Molécule"
 
 #: hacks/config/molecule.xml.h:13
 msgid "PDB File"
@@ -3327,7 +3515,7 @@ msgstr ""
 
 #: hacks/config/morph3d.xml.h:4
 msgid "Morph3D"
-msgstr ""
+msgstr "Morph3D"
 
 #: hacks/config/mountain.xml.h:3
 msgid ""
@@ -3337,7 +3525,7 @@ msgstr ""
 
 #: hacks/config/mountain.xml.h:5
 msgid "Mountain"
-msgstr ""
+msgstr "Montagnes"
 
 #: hacks/config/munch.xml.h:1
 msgid ""
@@ -3349,27 +3537,30 @@ msgstr ""
 
 #: hacks/config/munch.xml.h:5
 msgid "Munch"
-msgstr ""
+msgstr "Munch"
 
 #: hacks/config/munch.xml.h:10 hacks/config/qix.xml.h:26
 msgid "XOR"
-msgstr ""
+msgstr "XOR"
 
 #: hacks/config/nerverot.xml.h:1
+#, fuzzy
 msgid "Blot Count"
-msgstr ""
+msgstr "Nombre"
 
 #: hacks/config/nerverot.xml.h:2
+#, fuzzy
 msgid "Calm"
-msgstr ""
+msgstr "Corail"
 
 #: hacks/config/nerverot.xml.h:3
+#, fuzzy
 msgid "Changes"
-msgstr ""
+msgstr "Cage"
 
 #: hacks/config/nerverot.xml.h:4
 msgid "Colors"
-msgstr ""
+msgstr "Couleurs"
 
 #: hacks/config/nerverot.xml.h:5
 msgid "Crunchiness"
@@ -3382,8 +3573,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/nerverot.xml.h:10
+#, fuzzy
 msgid "Frequent"
-msgstr ""
+msgstr "Fréquence"
 
 #: hacks/config/nerverot.xml.h:16
 msgid "NerveRot"
@@ -3398,8 +3590,9 @@ msgid "Seldom"
 msgstr ""
 
 #: hacks/config/nerverot.xml.h:21
+#, fuzzy
 msgid "Spastic"
-msgstr ""
+msgstr "Parasites"
 
 #: hacks/config/noseguy.xml.h:1
 msgid ""
@@ -3419,7 +3612,7 @@ msgstr ""
 
 #: hacks/config/noseguy.xml.h:4
 msgid "Noseguy"
-msgstr ""
+msgstr "Noseguy"
 
 #: hacks/config/noseguy.xml.h:6
 msgid "Text File"
@@ -3427,8 +3620,9 @@ msgstr ""
 
 #: hacks/config/noseguy.xml.h:7 hacks/config/phosphor.xml.h:8
 #: hacks/config/starwars.xml.h:17
+#, fuzzy
 msgid "Text Program"
-msgstr ""
+msgstr "Programme"
 
 #: hacks/config/noseguy.xml.h:8
 msgid "Use Text Below"
@@ -3436,7 +3630,7 @@ msgstr ""
 
 #: hacks/config/pedal.xml.h:7
 msgid "Pedal"
-msgstr ""
+msgstr "Pedal"
 
 #: hacks/config/pedal.xml.h:8
 msgid ""
@@ -3452,11 +3646,11 @@ msgstr ""
 
 #: hacks/config/penetrate.xml.h:2
 msgid "Explosions"
-msgstr ""
+msgstr "Explosions"
 
 #: hacks/config/penetrate.xml.h:5
 msgid "Penetrate"
-msgstr ""
+msgstr "Penetrate"
 
 #: hacks/config/penetrate.xml.h:7
 msgid "Start badly, but learn"
@@ -3489,7 +3683,7 @@ msgstr ""
 
 #: hacks/config/penrose.xml.h:9
 msgid "Penrose"
-msgstr ""
+msgstr "Penrose"
 
 #: hacks/config/petri.xml.h:2
 msgid "Colony Shape"
@@ -3500,8 +3694,9 @@ msgid "Death Comes"
 msgstr ""
 
 #: hacks/config/petri.xml.h:4
+#, fuzzy
 msgid "Diamond"
-msgstr ""
+msgstr "Démon"
 
 #: hacks/config/petri.xml.h:6
 msgid "Fertility"
@@ -3516,8 +3711,9 @@ msgid "Maxium Rate of Death"
 msgstr ""
 
 #: hacks/config/petri.xml.h:14
+#, fuzzy
 msgid "Maxium Rate of Growth"
-msgstr ""
+msgstr "Simule la croissance d'un récif coralien"
 
 #: hacks/config/petri.xml.h:15
 msgid "Minium Lifespan"
@@ -3528,8 +3724,9 @@ msgid "Minium Rate of Death"
 msgstr ""
 
 #: hacks/config/petri.xml.h:17
+#, fuzzy
 msgid "Minium Rate of Growth"
-msgstr ""
+msgstr "Simule la croissance d'un récif coralien"
 
 #: hacks/config/petri.xml.h:18
 msgid "Mold Varieties"
@@ -3548,12 +3745,14 @@ msgid "Quickly"
 msgstr ""
 
 #: hacks/config/petri.xml.h:24
+#, fuzzy
 msgid "Slowly"
-msgstr ""
+msgstr "Lente"
 
 #: hacks/config/petri.xml.h:26
+#, fuzzy
 msgid "Square"
-msgstr ""
+msgstr "Spirale carrées"
 
 #: hacks/config/petri.xml.h:27
 msgid ""
@@ -3563,31 +3762,38 @@ msgid ""
 msgstr ""
 
 #: hacks/config/phosphor.xml.h:1
+#, fuzzy
 msgid ""
 "Draws a simulation of an old terminal, with large pixels and long-sustain "
 "phosphor. It can run any program as a source of the text it displays. "
 "Written by Jamie Zawinski."
 msgstr ""
+"Dessine une simulation d'un vieux terminal, avec de gros pixels et du "
+"phosphore\n"
+"à disparition lente."
 
 #: hacks/config/phosphor.xml.h:2
+#, fuzzy
 msgid "Fade"
-msgstr ""
+msgstr "Ruban"
 
 #: hacks/config/phosphor.xml.h:4
 msgid "Phosphor"
-msgstr ""
+msgstr "Phosphore"
 
 #: hacks/config/phosphor.xml.h:5
+#, fuzzy
 msgid "Scale"
-msgstr ""
+msgstr "Redimensionné"
 
 #: hacks/config/pipes.xml.h:1
 msgid "Allow Tight Turns"
 msgstr ""
 
 #: hacks/config/pipes.xml.h:2
+#, fuzzy
 msgid "Ball Joints"
-msgstr ""
+msgstr "Astuces pour les boîtes de dialogue"
 
 #: hacks/config/pipes.xml.h:3
 msgid "Curved Pipes"
@@ -3612,16 +3818,18 @@ msgid "Lots"
 msgstr ""
 
 #: hacks/config/pipes.xml.h:11
+#, fuzzy
 msgid "Number of Pipe Systems"
-msgstr ""
+msgstr "Nombre de germes"
 
 #: hacks/config/pipes.xml.h:12
+#, fuzzy
 msgid "Pipe Fittings"
-msgstr ""
+msgstr "Paramètres"
 
 #: hacks/config/pipes.xml.h:13
 msgid "Pipes"
-msgstr ""
+msgstr "Tuyaux"
 
 #: hacks/config/pipes.xml.h:17
 msgid "System Length"
@@ -3661,12 +3869,14 @@ msgid "Enable Depth Buffer"
 msgstr ""
 
 #: hacks/config/pulsar.xml.h:6
+#, fuzzy
 msgid "Enable Fog"
-msgstr ""
+msgstr "Activer"
 
 #: hacks/config/pulsar.xml.h:7
+#, fuzzy
 msgid "Enable Lighting"
-msgstr ""
+msgstr "Éclairs"
 
 #: hacks/config/pulsar.xml.h:8
 msgid "Enable Texture Filtering"
@@ -3685,8 +3895,9 @@ msgid "Pulsar"
 msgstr ""
 
 #: hacks/config/pulsar.xml.h:13
+#, fuzzy
 msgid "Quad Count"
-msgstr ""
+msgstr "Nombre"
 
 #: hacks/config/pulsar.xml.h:16
 msgid "Solid Surface"
@@ -3701,20 +3912,23 @@ msgid "Explosive Yield"
 msgstr ""
 
 #: hacks/config/pyro.xml.h:6
+#, fuzzy
 msgid "Launch Frequency"
-msgstr ""
+msgstr "Fréquence"
 
 #: hacks/config/pyro.xml.h:8
+#, fuzzy
 msgid "Often"
-msgstr ""
+msgstr "Ouvrir"
 
 #: hacks/config/pyro.xml.h:9
+#, fuzzy
 msgid "Particle Density"
-msgstr ""
+msgstr "Particules à l'écran"
 
 #: hacks/config/pyro.xml.h:10
 msgid "Pyro"
-msgstr ""
+msgstr "Pyro"
 
 #: hacks/config/pyro.xml.h:11
 msgid ""
@@ -3722,36 +3936,42 @@ msgid ""
 msgstr ""
 
 #: hacks/config/qix.xml.h:1
+#, fuzzy
 msgid "Additive Colors"
-msgstr ""
+msgstr "Couleur des zones « actives »"
 
 #: hacks/config/qix.xml.h:3
+#, fuzzy
 msgid "Corners"
-msgstr ""
+msgstr "Proche"
 
 #: hacks/config/qix.xml.h:11
+#, fuzzy
 msgid "Line Segments"
-msgstr ""
+msgstr "Segmants"
 
 #: hacks/config/qix.xml.h:12
 msgid "Linear Motion"
 msgstr ""
 
 #: hacks/config/qix.xml.h:15
+#, fuzzy
 msgid "Max Size"
-msgstr ""
+msgstr "Taille maximale"
 
 #: hacks/config/qix.xml.h:16
 msgid "Qix"
-msgstr ""
+msgstr "Qix"
 
 #: hacks/config/qix.xml.h:17
+#, fuzzy
 msgid "Random Motion"
-msgstr ""
+msgstr "Paramètres aléatoires"
 
 #: hacks/config/qix.xml.h:23
+#, fuzzy
 msgid "Subtractive Colors"
-msgstr ""
+msgstr "Couleur des zones « actives »"
 
 #: hacks/config/qix.xml.h:24
 msgid ""
@@ -3763,7 +3983,7 @@ msgstr ""
 
 #: hacks/config/qix.xml.h:25
 msgid "Transparent"
-msgstr ""
+msgstr "Transparent"
 
 #: hacks/config/rd-bomb.xml.h:1
 msgid "/"
@@ -3795,20 +4015,23 @@ msgid "Fill Screen"
 msgstr ""
 
 #: hacks/config/rd-bomb.xml.h:14
+#, fuzzy
 msgid "RD-Bomb"
-msgstr ""
+msgstr "Rd-bombe"
 
 #: hacks/config/rd-bomb.xml.h:15
 msgid "Reaction/Difusion"
 msgstr ""
 
 #: hacks/config/rd-bomb.xml.h:16
+#, fuzzy
 msgid "Seed Radius"
-msgstr ""
+msgstr "Rayon"
 
 #: hacks/config/rd-bomb.xml.h:19 hacks/config/twang.xml.h:12
+#, fuzzy
 msgid "Tile Size"
-msgstr ""
+msgstr "Taille"
 
 #: hacks/config/rd-bomb.xml.h:22
 msgid "Wander Speed"
@@ -3819,20 +4042,23 @@ msgid "Big Drops"
 msgstr ""
 
 #: hacks/config/ripples.xml.h:2
+#, fuzzy
 msgid "Colors    Two"
-msgstr ""
+msgstr "Couleurs"
 
 #: hacks/config/ripples.xml.h:3
 msgid "Drizzle"
 msgstr ""
 
 #: hacks/config/ripples.xml.h:5
+#, fuzzy
 msgid "Grab Screen Image"
-msgstr ""
+msgstr "Économiseur d'écran"
 
 #: hacks/config/ripples.xml.h:6
+#, fuzzy
 msgid "Lighting Effect"
-msgstr ""
+msgstr "Éclairs"
 
 #: hacks/config/ripples.xml.h:8
 msgid "Moving Splashes"
@@ -3844,15 +4070,17 @@ msgstr ""
 
 #: hacks/config/ripples.xml.h:10
 msgid "Ripples"
-msgstr ""
+msgstr "Ondulations"
 
 #: hacks/config/ripples.xml.h:12
+#, fuzzy
 msgid "Small Drops"
-msgstr ""
+msgstr "Petit"
 
 #: hacks/config/ripples.xml.h:13
+#, fuzzy
 msgid "Storm"
-msgstr ""
+msgstr "Agiter"
 
 #: hacks/config/ripples.xml.h:14
 msgid ""
@@ -3863,15 +4091,16 @@ msgstr ""
 
 #: hacks/config/rocks.xml.h:7
 msgid "Rocks"
-msgstr ""
+msgstr "Rochers"
 
 #: hacks/config/rocks.xml.h:8
 msgid "Rotation"
-msgstr ""
+msgstr "Rotation"
 
 #: hacks/config/rocks.xml.h:10
+#, fuzzy
 msgid "Steering"
-msgstr ""
+msgstr "Démarre"
 
 #: hacks/config/rocks.xml.h:11
 msgid ""
@@ -3882,7 +4111,7 @@ msgstr ""
 
 #: hacks/config/rorschach.xml.h:7
 msgid "Rorschach"
-msgstr ""
+msgstr "Rorschach"
 
 #: hacks/config/rorschach.xml.h:9
 msgid ""
@@ -3909,16 +4138,17 @@ msgid ""
 msgstr ""
 
 #: hacks/config/rotor.xml.h:4 hacks/config/wander.xml.h:9
+#, fuzzy
 msgid "Length"
-msgstr ""
+msgstr "Lamentations"
 
 #: hacks/config/rotor.xml.h:8
 msgid "Rotor"
-msgstr ""
+msgstr "Rotor"
 
 #: hacks/config/rotzoomer.xml.h:3
 msgid "Animate"
-msgstr ""
+msgstr "Animer"
 
 #: hacks/config/rotzoomer.xml.h:4
 msgid ""
@@ -3931,8 +4161,9 @@ msgid "Rectangle Count"
 msgstr ""
 
 #: hacks/config/rotzoomer.xml.h:7
+#, fuzzy
 msgid "RotZoomer"
-msgstr ""
+msgstr "Rotor"
 
 #: hacks/config/rotzoomer.xml.h:8
 msgid "Stationary Rectangles"
@@ -3953,8 +4184,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/rubik.xml.h:5
+#, fuzzy
 msgid "Rubik"
-msgstr ""
+msgstr "Rubiks Cube"
 
 #: hacks/config/rubik.xml.h:7
 msgid "Show Shuffling"
@@ -3984,42 +4216,49 @@ msgid "Octahedron"
 msgstr ""
 
 #: hacks/config/sballs.xml.h:8
+#, fuzzy
 msgid "Plane"
-msgstr ""
+msgstr "GLPlanet"
 
 #: hacks/config/sballs.xml.h:9
+#, fuzzy
 msgid "Pyramid"
-msgstr ""
+msgstr "Galons"
 
 #: hacks/config/sballs.xml.h:10
+#, fuzzy
 msgid "Random"
-msgstr ""
+msgstr "Aléatoire"
 
 #: hacks/config/sballs.xml.h:11
+#, fuzzy
 msgid "Sballs"
-msgstr ""
+msgstr "Faible"
 
 #: hacks/config/sballs.xml.h:15
+#, fuzzy
 msgid "Star"
-msgstr ""
+msgstr "Escaliers"
 
 #: hacks/config/sballs.xml.h:16
 msgid "Tetrahedron"
 msgstr ""
 
 #: hacks/config/shadebobs.xml.h:7
+#, fuzzy
 msgid "ShadeBobs"
-msgstr ""
+msgstr "Shadebobs"
 
 #: hacks/config/shadebobs.xml.h:11
+#, fuzzy
 msgid ""
 "This draws smoothly-shaded oscilating oval patterns, that look something "
 "like vapor trails or neon tubes. Written by Shane Smit."
-msgstr ""
+msgstr "Dessine des motifs ovaux nuancés ressemblant à des traînées de vapeur."
 
 #: hacks/config/sierpinski.xml.h:6
 msgid "Sierpinski"
-msgstr ""
+msgstr "Sierpinski"
 
 #: hacks/config/sierpinski.xml.h:10
 msgid ""
@@ -4028,8 +4267,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/sierpinski3d.xml.h:7
+#, fuzzy
 msgid "Sierpinski3D"
-msgstr ""
+msgstr "Sierpinski"
 
 #: hacks/config/sierpinski3d.xml.h:11
 msgid ""
@@ -4043,12 +4283,14 @@ msgid "Border Width"
 msgstr ""
 
 #: hacks/config/slidescreen.xml.h:4
+#, fuzzy
 msgid "Slide Speed"
-msgstr ""
+msgstr "Écran glissant"
 
 #: hacks/config/slidescreen.xml.h:5
+#, fuzzy
 msgid "SlideScreen"
-msgstr ""
+msgstr "Écran glissant"
 
 #: hacks/config/slidescreen.xml.h:8
 msgid ""
@@ -4061,7 +4303,7 @@ msgstr ""
 
 #: hacks/config/slip.xml.h:6
 msgid "Slip"
-msgstr ""
+msgstr "Dérapage."
 
 #: hacks/config/slip.xml.h:10
 msgid ""
@@ -4084,7 +4326,7 @@ msgstr ""
 
 #: hacks/config/sonar.xml.h:3
 msgid "Sonar"
-msgstr ""
+msgstr "Sonar"
 
 #: hacks/config/sonar.xml.h:4
 msgid "Team A Name"
@@ -4113,8 +4355,9 @@ msgid "Allow Wall Collisions"
 msgstr ""
 
 #: hacks/config/speedmine.xml.h:2
+#, fuzzy
 msgid "Display Crosshair"
-msgstr ""
+msgstr "Afficher les parasites."
 
 #: hacks/config/speedmine.xml.h:7
 msgid "Max Velocity"
@@ -4129,8 +4372,9 @@ msgid "Present Bonuses"
 msgstr ""
 
 #: hacks/config/speedmine.xml.h:10
+#, fuzzy
 msgid "Rocky Walls"
-msgstr ""
+msgstr "Rochers"
 
 #: hacks/config/speedmine.xml.h:12
 msgid ""
@@ -4139,16 +4383,18 @@ msgid ""
 msgstr ""
 
 #: hacks/config/speedmine.xml.h:16
+#, fuzzy
 msgid "SpeedMine"
-msgstr ""
+msgstr "Vitesse"
 
 #: hacks/config/speedmine.xml.h:17
+#, fuzzy
 msgid "Thrust"
-msgstr ""
+msgstr "Truchet"
 
 #: hacks/config/speedmine.xml.h:19 hacks/config/worm.xml.h:10
 msgid "Worm"
-msgstr ""
+msgstr "Ver"
 
 #: hacks/config/sphere.xml.h:1
 msgid ""
@@ -4159,7 +4405,7 @@ msgstr ""
 
 #: hacks/config/sphere.xml.h:7
 msgid "Sphere"
-msgstr ""
+msgstr "Sphère"
 
 #: hacks/config/sphereEversion.xml.h:1
 msgid "SphereEversion"
@@ -4177,16 +4423,18 @@ msgid ""
 msgstr ""
 
 #: hacks/config/spheremonics.xml.h:9
+#, fuzzy
 msgid "Resolution"
-msgstr ""
+msgstr "Action par défaut"
 
 #: hacks/config/spheremonics.xml.h:20
 msgid "Smoothed Lines"
 msgstr ""
 
 #: hacks/config/spheremonics.xml.h:23
+#, fuzzy
 msgid "Spheremonics"
-msgstr ""
+msgstr "Sphère"
 
 #: hacks/config/spheremonics.xml.h:24
 msgid ""
@@ -4198,7 +4446,7 @@ msgstr ""
 
 #: hacks/config/spiral.xml.h:2
 msgid "Cycles"
-msgstr ""
+msgstr "Cycles"
 
 #: hacks/config/spiral.xml.h:7
 msgid ""
@@ -4208,7 +4456,7 @@ msgstr ""
 
 #: hacks/config/spiral.xml.h:11
 msgid "Spiral"
-msgstr ""
+msgstr "Spirale"
 
 #: hacks/config/spotlight.xml.h:1
 msgid ""
@@ -4218,7 +4466,7 @@ msgstr ""
 
 #: hacks/config/spotlight.xml.h:6
 msgid "Spotlight"
-msgstr ""
+msgstr "Spotlight"
 
 #: hacks/config/sproingies.xml.h:3
 msgid "Q-Bert meets Marble Madness! Written by Ed Mackey."
@@ -4226,7 +4474,7 @@ msgstr ""
 
 #: hacks/config/sproingies.xml.h:9
 msgid "Sproingies"
-msgstr ""
+msgstr "Sproingies"
 
 #: hacks/config/squiral.xml.h:3
 msgid ""
@@ -4241,19 +4489,20 @@ msgstr ""
 
 #: hacks/config/squiral.xml.h:7
 msgid "Left"
-msgstr ""
+msgstr "Gauche"
 
 #: hacks/config/squiral.xml.h:11 hacks/config/twang.xml.h:8
+#, fuzzy
 msgid "Randomness"
-msgstr ""
+msgstr "Aléatoire"
 
 #: hacks/config/squiral.xml.h:12
 msgid "Right"
-msgstr ""
+msgstr "Droite"
 
 #: hacks/config/squiral.xml.h:17
 msgid "Squiral"
-msgstr ""
+msgstr "Spirale carrées"
 
 #: hacks/config/ssystem.xml.h:1
 msgid "SSystem"
@@ -4277,7 +4526,7 @@ msgstr ""
 
 #: hacks/config/stairs.xml.h:6
 msgid "Stairs"
-msgstr ""
+msgstr "Escaliers"
 
 #: hacks/config/stairs.xml.h:8
 msgid ""
@@ -4286,8 +4535,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/starfish.xml.h:1
+#, fuzzy
 msgid "Color Gradients"
-msgstr ""
+msgstr "Dégradé horizontal"
 
 #: hacks/config/starfish.xml.h:7
 msgid "Pulsating Blob"
@@ -4295,7 +4545,7 @@ msgstr ""
 
 #: hacks/config/starfish.xml.h:10
 msgid "Starfish"
-msgstr ""
+msgstr "Étoile de mer"
 
 #: hacks/config/starfish.xml.h:13
 msgid ""
@@ -4310,8 +4560,9 @@ msgid "Anti-aliased Lines"
 msgstr ""
 
 #: hacks/config/starwars.xml.h:3
+#, fuzzy
 msgid "Centered Text"
-msgstr ""
+msgstr "Centré"
 
 #: hacks/config/starwars.xml.h:4
 msgid ""
@@ -4321,8 +4572,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/starwars.xml.h:5
+#, fuzzy
 msgid "Fade Out"
-msgstr ""
+msgstr "Ruban"
 
 #: hacks/config/starwars.xml.h:7
 msgid "Flush Left Text"
@@ -4345,20 +4597,23 @@ msgid "Star Rotation Speed"
 msgstr ""
 
 #: hacks/config/starwars.xml.h:14
+#, fuzzy
 msgid "StarWars"
-msgstr ""
+msgstr "Escaliers"
 
 #: hacks/config/starwars.xml.h:15
 msgid "Text Columns"
 msgstr ""
 
 #: hacks/config/starwars.xml.h:16
+#, fuzzy
 msgid "Text Lines"
-msgstr ""
+msgstr "Test du paramètrage"
 
 #: hacks/config/starwars.xml.h:18
+#, fuzzy
 msgid "Thick Lines"
-msgstr ""
+msgstr "Plus fin"
 
 #: hacks/config/starwars.xml.h:19
 msgid "Wrap Long Lines"
@@ -4381,7 +4636,7 @@ msgstr ""
 
 #: hacks/config/strange.xml.h:9
 msgid "Strange"
-msgstr ""
+msgstr "Étrange"
 
 #: hacks/config/strange.xml.h:10
 msgid ""
@@ -4399,7 +4654,7 @@ msgstr ""
 
 #: hacks/config/superquadrics.xml.h:10
 msgid "Superquadrics"
-msgstr ""
+msgstr "Superquadriques"
 
 #: hacks/config/swirl.xml.h:4
 msgid ""
@@ -4410,7 +4665,7 @@ msgstr ""
 
 #: hacks/config/swirl.xml.h:8
 msgid "Swirl"
-msgstr ""
+msgstr "Tourbillon"
 
 #: hacks/config/t3d.xml.h:1
 msgid "0°"
@@ -4425,12 +4680,14 @@ msgid "90°"
 msgstr ""
 
 #: hacks/config/t3d.xml.h:4
+#, fuzzy
 msgid "Bigger"
-msgstr ""
+msgstr "Tigre"
 
 #: hacks/config/t3d.xml.h:5
+#, fuzzy
 msgid "Cycle Seconds"
-msgstr ""
+msgstr "Passer d'un mode à l'autre."
 
 #: hacks/config/t3d.xml.h:10
 msgid "Minute Tick Marks"
@@ -4438,25 +4695,28 @@ msgstr ""
 
 #: hacks/config/t3d.xml.h:12
 msgid "Smaller"
-msgstr ""
+msgstr "Petit"
 
 #: hacks/config/t3d.xml.h:14
+#, fuzzy
 msgid "T3D"
-msgstr ""
+msgstr "3D"
 
 #: hacks/config/t3d.xml.h:15
+#, fuzzy
 msgid ""
 "This draws a working analog clock composed of floating, throbbing bubbles. "
 "Written by Bernd Paysan."
-msgstr ""
+msgstr "Horloge analogique composée de bulles flottantes"
 
 #: hacks/config/t3d.xml.h:16
 msgid "Turn Side-to-Side"
 msgstr ""
 
 #: hacks/config/t3d.xml.h:17
+#, fuzzy
 msgid "Wobbliness"
-msgstr ""
+msgstr "Trembler"
 
 #: hacks/config/thornbird.xml.h:1
 msgid ""
@@ -4473,14 +4733,17 @@ msgid "Thornbird"
 msgstr ""
 
 #: hacks/config/triangle.xml.h:2
+#, fuzzy
 msgid ""
 "Generates random mountain ranges using iterative subdivision of triangles. "
 "Written by Tobias Gloth."
 msgstr ""
+"Génère aléatoirement des zones de montagne par subdivision itérative de "
+"triangles."
 
 #: hacks/config/triangle.xml.h:7
 msgid "Triangle"
-msgstr ""
+msgstr "Triangle"
 
 #: hacks/config/truchet.xml.h:4
 msgid ""
@@ -4490,7 +4753,7 @@ msgstr ""
 
 #: hacks/config/truchet.xml.h:5
 msgid "Truchet"
-msgstr ""
+msgstr "Truchet"
 
 #: hacks/config/twang.xml.h:2
 msgid ""
@@ -4502,16 +4765,19 @@ msgid "Jumpy"
 msgstr ""
 
 #: hacks/config/twang.xml.h:11
+#, fuzzy
 msgid "Springiness"
-msgstr ""
+msgstr "Sproingies"
 
 #: hacks/config/twang.xml.h:13
+#, fuzzy
 msgid "Transference"
-msgstr ""
+msgstr "Transparent"
 
 #: hacks/config/twang.xml.h:14
+#, fuzzy
 msgid "Twang"
-msgstr ""
+msgstr "Triangle"
 
 #: hacks/config/vermiculate.xml.h:1
 msgid "Draws squiggly worm-like paths. Written by Tyler Pierce."
@@ -4522,8 +4788,9 @@ msgid "Vermiculate"
 msgstr ""
 
 #: hacks/config/vidwhacker.xml.h:2 hacks/config/webcollage.xml.h:2
+#, fuzzy
 msgid "2 seconds"
-msgstr ""
+msgstr "secondes"
 
 #: hacks/config/vidwhacker.xml.h:4
 msgid "Image Directory"
@@ -4552,7 +4819,7 @@ msgstr ""
 
 #: hacks/config/vines.xml.h:8
 msgid "Vines"
-msgstr ""
+msgstr "Vignes"
 
 #: hacks/config/wander.xml.h:5
 msgid "Draw Spots"
@@ -4564,8 +4831,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/wander.xml.h:14
+#, fuzzy
 msgid "Sustain"
-msgstr ""
+msgstr "Montagnes"
 
 #: hacks/config/webcollage.xml.h:3
 msgid "Dictionary File"
@@ -4606,8 +4874,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/whirlwindwarp.xml.h:7
+#, fuzzy
 msgid "Trail Size"
-msgstr ""
+msgstr "Trainée"
 
 #: hacks/config/whirlwindwarp.xml.h:8
 msgid "WhirlwindWarp"
@@ -4657,32 +4926,38 @@ msgid "24-Hour Time"
 msgstr ""
 
 #: hacks/config/xdaliclock.xml.h:3
+#, fuzzy
 msgid "Cycle Colors"
-msgstr ""
+msgstr "Couleurs"
 
 #: hacks/config/xdaliclock.xml.h:4
+#, fuzzy
 msgid "Display Seconds"
-msgstr ""
+msgstr "Affiche un écran sonar."
 
 #: hacks/config/xdaliclock.xml.h:5
+#, fuzzy
 msgid "Huge Font"
-msgstr ""
+msgstr "Police utilisateur"
 
 #: hacks/config/xdaliclock.xml.h:6 hacks/config/xmatrix.xml.h:8
+#, fuzzy
 msgid "Large Font"
-msgstr ""
+msgstr "Importante"
 
 #: hacks/config/xdaliclock.xml.h:7
 msgid "Medium Font"
 msgstr ""
 
 #: hacks/config/xdaliclock.xml.h:8 hacks/config/xmatrix.xml.h:14
+#, fuzzy
 msgid "Small Font"
-msgstr ""
+msgstr "Faible"
 
 #: hacks/config/xdaliclock.xml.h:9
+#, fuzzy
 msgid "XDaliClock"
-msgstr ""
+msgstr "Horloge 3D"
 
 #: hacks/config/xdaliclock.xml.h:10
 msgid ""
@@ -4693,8 +4968,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/xearth.xml.h:1
+#, fuzzy
 msgid "Bright"
-msgstr ""
+msgstr "Droite"
 
 #: hacks/config/xearth.xml.h:2
 msgid "Date/Time Stamp"
@@ -4705,8 +4981,9 @@ msgid "Day  Dim"
 msgstr ""
 
 #: hacks/config/xearth.xml.h:5
+#, fuzzy
 msgid "Display Stars"
-msgstr ""
+msgstr "Afficher les parasites."
 
 #: hacks/config/xearth.xml.h:8
 msgid "Label Cities"
@@ -4717,8 +4994,9 @@ msgid "Lower Left"
 msgstr ""
 
 #: hacks/config/xearth.xml.h:10
+#, fuzzy
 msgid "Lower Right"
-msgstr ""
+msgstr "Droite"
 
 #: hacks/config/xearth.xml.h:13
 msgid "Mercator Projection"
@@ -4729,8 +5007,9 @@ msgid "Night   Dim"
 msgstr ""
 
 #: hacks/config/xearth.xml.h:15
+#, fuzzy
 msgid "No Stars"
-msgstr ""
+msgstr "Escaliers"
 
 #: hacks/config/xearth.xml.h:16
 msgid "North/South Rotation"
@@ -4753,8 +5032,9 @@ msgid "Sharp"
 msgstr ""
 
 #: hacks/config/xearth.xml.h:23
+#, fuzzy
 msgid "Spacing"
-msgstr ""
+msgstr "En train d'enregistrer"
 
 #: hacks/config/xearth.xml.h:26
 msgid "Terminator   Blurry"
@@ -4769,8 +5049,9 @@ msgid "Upper Left"
 msgstr ""
 
 #: hacks/config/xearth.xml.h:30
+#, fuzzy
 msgid "Upper Right"
-msgstr ""
+msgstr "Droite"
 
 #: hacks/config/xearth.xml.h:31
 msgid ""
@@ -4782,16 +5063,18 @@ msgid ""
 msgstr ""
 
 #: hacks/config/xearth.xml.h:32
+#, fuzzy
 msgid "Xearth"
-msgstr ""
+msgstr "Distant"
 
 #: hacks/config/xfishtank.xml.h:5
 msgid "Fish"
 msgstr ""
 
 #: hacks/config/xfishtank.xml.h:6
+#, fuzzy
 msgid "Fish Speed"
-msgstr ""
+msgstr "Vitesse"
 
 #: hacks/config/xfishtank.xml.h:7
 msgid ""
@@ -4820,7 +5103,7 @@ msgstr ""
 
 #: hacks/config/xflame.xml.h:8
 msgid "Xflame"
-msgstr ""
+msgstr "Xflame"
 
 #: hacks/config/xjack.xml.h:4
 msgid ""
@@ -4832,7 +5115,7 @@ msgstr ""
 
 #: hacks/config/xjack.xml.h:5
 msgid "Xjack"
-msgstr ""
+msgstr "Xjack"
 
 #: hacks/config/xlyap.xml.h:1
 msgid ""
@@ -4843,7 +5126,7 @@ msgstr ""
 
 #: hacks/config/xlyap.xml.h:2
 msgid "Xlyap"
-msgstr ""
+msgstr "Xlyap"
 
 #: hacks/config/xmatrix.xml.h:1
 msgid ""
@@ -4876,12 +5159,14 @@ msgid "Matrix Encoding"
 msgstr ""
 
 #: hacks/config/xmatrix.xml.h:10
+#, fuzzy
 msgid "Phone Number"
-msgstr ""
+msgstr "Nombre"
 
 #: hacks/config/xmatrix.xml.h:11
+#, fuzzy
 msgid "Run Trace Program"
-msgstr ""
+msgstr "Enlever Programme"
 
 #: hacks/config/xmatrix.xml.h:12
 msgid "Slider Algorithm"
@@ -4893,15 +5178,17 @@ msgstr ""
 
 #: hacks/config/xmatrix.xml.h:18
 msgid "Xmatrix"
-msgstr ""
+msgstr "Xmatrix"
 
 #: hacks/config/xmountains.xml.h:2
+#, fuzzy
 msgid "Reflections"
-msgstr ""
+msgstr "Action par défaut"
 
 #: hacks/config/xmountains.xml.h:3
+#, fuzzy
 msgid "Side View"
-msgstr ""
+msgstr "Utiliser un visionneur"
 
 #: hacks/config/xmountains.xml.h:6
 msgid "Top View"
@@ -4918,8 +5205,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/xmountains.xml.h:8
+#, fuzzy
 msgid "Xmountains"
-msgstr ""
+msgstr "Montagnes"
 
 #: hacks/config/xrayswarm.xml.h:1
 msgid ""
@@ -4942,8 +5230,9 @@ msgid "Xsnow"
 msgstr ""
 
 #: hacks/config/xspirograph.xml.h:4
+#, fuzzy
 msgid "Layers"
-msgstr ""
+msgstr "Laser"
 
 #: hacks/config/xspirograph.xml.h:5
 msgid ""
@@ -4960,8 +5249,9 @@ msgid "Color Bars Enabled"
 msgstr ""
 
 #: hacks/config/xteevee.xml.h:2
+#, fuzzy
 msgid "Cycle Through Modes"
-msgstr ""
+msgstr "Cycle entre les couleurs"
 
 #: hacks/config/xteevee.xml.h:3
 msgid "Rolling Enabled"
@@ -4972,22 +5262,28 @@ msgid "Static Enabled"
 msgstr ""
 
 #: hacks/config/xteevee.xml.h:5
+#, fuzzy
 msgid "XTeeVee"
-msgstr ""
+msgstr "Xtélé"
 
 #: hacks/config/xteevee.xml.h:6
+#, fuzzy
 msgid ""
 "XTeeVee simulates various television problems, including static, loss of "
 "vertical hold, and a test pattern. By Greg Knauss."
 msgstr ""
+"Simule différents problèmes de télévision comme les parasites, la perte de\n"
+"synchrnisation verticale et des mires."
 
 #: hacks/config/zoom.xml.h:3
+#, fuzzy
 msgid "Lens Offset"
-msgstr ""
+msgstr "Décalage"
 
 #: hacks/config/zoom.xml.h:4
+#, fuzzy
 msgid "Lenses"
-msgstr ""
+msgstr "Moins"
 
 #: hacks/config/zoom.xml.h:9
 msgid ""
@@ -4995,3 +5291,54 @@ msgid ""
 "option the result is like looking through many overlapping lenses rather "
 "than just a simple zoom. Written by James Macnicol."
 msgstr ""
+
+#, fuzzy
+#~ msgid "Display Subprocess _Errors"
+#~ msgstr "Afficher les parasites."
+
+#, fuzzy
+#~ msgid "F_ade Duration"
+#~ msgstr "Durée"
+
+#, fuzzy
+#~ msgid "Grab Desktop _Images"
+#~ msgstr "Économiseur d'écran"
+
+#, fuzzy
+#~ msgid "_Blank After"
+#~ msgstr "Rapide"
+
+#, fuzzy
+#~ msgid "_Browse"
+#~ msgstr "Parcourir... "
+
+#, fuzzy
+#~ msgid "_Display Modes"
+#~ msgstr "Affiche un écran sonar."
+
+#, fuzzy
+#~ msgid "_Mode:"
+#~ msgstr "Plus"
+
+#, fuzzy
+#~ msgid "Anemone"
+#~ msgstr "Démon"
+
+#, fuzzy
+#~ msgid "90 deg Rotation Speed"
+#~ msgstr "Rotation"
+
+#, fuzzy
+#~ msgid "Endgame"
+#~ msgstr "Toto"
+
+#, fuzzy
+#~ msgid "Max Blobs"
+#~ msgstr "Blob"
+
+#, fuzzy
+#~ msgid "Random Lamp Style"
+#~ msgstr "Paramètres aléatoires"
+
+#~ msgid "MacOS"
+#~ msgstr "MacOS"

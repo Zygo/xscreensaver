@@ -16,55 +16,6 @@
 
    Good source of PDB files:
    http://www.sci.ouc.bc.ca/chem/molecule/molecule.html
-
-   TO DO:
-
-     - I'm not sure the text labels are being done in the best way;
-       they are sometimes, but not always, occluded by spheres that
-       pass in front of them. 
-
-   GENERAL OPENGL NAIVETY:
-
-       I don't understand the *right* way to place text in front of the
-       atoms.  What I'm doing now is close, but has glitches.  I think I
-       understand glPolygonOffset(), but I think it doesn't help me.
-
-       Here's how I'd phrase the problem I'm trying to solve:
-
-       - I have a bunch of spherical objects of various sizes
-       - I want a piece of text in the scene, between each object
-         and the observer
-       - the position of this text should be apparently tangential 
-         to the surface of the sphere, so that:
-         - it is never inside the sphere;
-         - but can be occluded by other objects in the scene.
-
-       So I was trying to use glPolygonOffset() to say "pretend all
-       polygons are N units deeper than they actually are" where N was
-       somewhere around the maximal radius of the objects.  Which wasn't a
-       perfect solution, but was close.  But it turns out that can't work,
-       because the second arg to glPolygonOffset() is multiplied by some
-       minimal depth quantum which is not revealed, so I can't pass it an
-       offset in scene units -- only in multiples of the quantum.  So I
-       don't know how many quanta in radius my spheres are.
-
-       I think I need to position and render the text with glRasterPos3f()
-       so that the text is influenced by the depth buffer.  If I used 2f,
-       or an explicit constant Z value, then the text would always be in
-       front of each sphere, and text would be visible for spheres that
-       were fully occluded, which isn't what I want.
-
-       So my only guess at this point is that I need to position the text
-       exactly where I want it, tangential to the spheres -- but that
-       means I need to be able to compute that XYZ position, which is
-       dependent on the position of the observer!  Which means two things:
-       first, while generating my scene, I need to take into account the
-       position of the observer, and I don't have a clue how to do that;
-       and second, it means I can't put my whole molecule in a display
-       list, because the XYZ position of the text in the scene changes at
-       every frame, as the molecule rotates.
-
-       This just *can't* be as hard as it seems!
  */
 
 #include <X11/Intrinsic.h>
@@ -691,21 +642,6 @@ build_molecule (ModeInfo *mi)
       glEnable(GL_CULL_FACE);
     }
 
-#if 0
-  if (do_labels && !wire)
-    {
-      /* This is so all polygons are drawn slightly farther back in the depth
-         buffer, so that when we render text directly on top of the spheres,
-         it still shows up. */
-      glEnable (GL_POLYGON_OFFSET_FILL);
-      glPolygonOffset (1.0, (do_bonds ? 10.0 : 35.0));
-    }
-  else
-    {
-      glDisable (GL_POLYGON_OFFSET_FILL);
-    }
-#endif
-
   if (!wire)
     set_atom_color (mi, 0, False);
 
@@ -750,50 +686,6 @@ build_molecule (ModeInfo *mi)
         GLfloat size = atom_size (a);
         set_atom_color (mi, a, False);
         sphere (a->x, a->y, a->z, size, wire);
-      }
-
-  /* Second pass to draw labels, after all atoms and bonds are in place
-   */
-  if (do_labels)
-    for (i = 0; i < m->natoms; i++)
-      {
-        molecule_atom *a = &m->atoms[i];
-        int j;
-
-        if (!wire)
-          {
-            glDisable (GL_LIGHTING);
-#if 1
-            glDisable (GL_DEPTH_TEST);
-#endif
-          }
-
-        if (!wire)
-          set_atom_color (mi, a, True);
-
-        glRasterPos3f (a->x, a->y, a->z);
-
-        /* Before drawing the string, shift the origin to center
-           the text over the origin of the sphere. */
-        glBitmap (0, 0, 0, 0,
-                  -string_width (mc->xfont1, a->label) / 2,
-                  -mc->xfont1->descent,
-                  NULL);
-
-        for (j = 0; j < strlen(a->label); j++)
-          glCallList (mc->font1_dlist + (int)(a->label[j]));
-
-        /* More efficient to always call glEnable() with correct values
-           than to call glPushAttrib()/glPopAttrib(), since reading
-           attributes from GL does a round-trip and  stalls the pipeline.
-         */
-        if (!wire)
-          {
-            glEnable(GL_LIGHTING);
-#if 1
-            glEnable(GL_DEPTH_TEST);
-#endif
-          }
       }
 
   if (do_bbox)
@@ -1374,6 +1266,94 @@ init_molecule (ModeInfo *mi)
 }
 
 
+/* Put the labels on the atoms.
+   This can't be a part of the display list because of the games
+   we play with the translation matrix.
+ */
+void
+draw_labels (ModeInfo *mi)
+{
+  molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
+  molecule *m = &mc->molecules[mc->which];
+  int i, j;
+
+  if (!do_labels)
+    return;
+
+  if (!wire)
+    glDisable (GL_LIGHTING);   /* don't light fonts */
+
+  for (i = 0; i < m->natoms; i++)
+    {
+      molecule_atom *a = &m->atoms[i];
+      GLfloat size = atom_size (a);
+      GLfloat m[4][4];
+
+      glPushMatrix();
+
+      if (!wire)
+        set_atom_color (mi, a, True);
+
+      /* First, we translate the origin to the center of the atom.
+
+         Then we retrieve the prevailing modelview matrix (which
+         includes any rotation, wandering, and user-trackball-rolling
+         of the scene.
+
+         We set the top 3x3 cells of that matrix to be the identity
+         matrix.  This removes all rotation from the matrix, while
+         leaving the translation alone.  This has the effect of
+         leaving the prevailing coordinate system perpendicular to
+         the camera view: were we to draw a square face, it would
+         be in the plane of the screen.
+
+         Now we translate by `size' toward the viewer -- so that the
+         origin is *just in front* of the ball.
+
+         Then we draw the label text, allowing the depth buffer to
+         do its work: that way, labels on atoms will be occluded
+         properly when other atoms move in front of them.
+
+         This technique (of neutralizing rotation relative to the
+         observer, after both rotations and translations have been
+         applied) is known as "billboarding".
+       */
+
+      glTranslatef(a->x, a->y, a->z);               /* get matrix */
+      glGetFloatv (GL_MODELVIEW_MATRIX, &m[0][0]);  /* load rot. identity */
+      m[0][0] = 1; m[1][0] = 0; m[2][0] = 0;
+      m[0][1] = 0; m[1][1] = 1; m[2][1] = 0;
+      m[0][2] = 0; m[1][2] = 0; m[2][2] = 1;
+      glLoadIdentity();                             /* reset modelview */
+      glMultMatrixf (&m[0][0]);                     /* replace with ours */
+
+      glTranslatef (0, 0, (size * 1.1));           /* move toward camera */
+
+      glRasterPos3f (0, 0, 0);                     /* draw text here */
+
+      /* Before drawing the string, shift the origin to center
+         the text over the origin of the sphere. */
+      glBitmap (0, 0, 0, 0,
+                -string_width (mc->xfont1, a->label) / 2,
+                -mc->xfont1->descent,
+                NULL);
+
+      for (j = 0; j < strlen(a->label); j++)
+        glCallList (mc->font1_dlist + (int)(a->label[j]));
+
+      glPopMatrix();
+    }
+
+  /* More efficient to always call glEnable() with correct values
+     than to call glPushAttrib()/glPopAttrib(), since reading
+     attributes from GL does a round-trip and  stalls the pipeline.
+   */
+  if (!wire)
+    glEnable (GL_LIGHTING);
+}
+
+
 void
 draw_molecule (ModeInfo *mi)
 {
@@ -1450,6 +1430,8 @@ draw_molecule (ModeInfo *mi)
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glCallList (mc->molecule_dlist);
+  draw_labels (mi);
+
   glPopMatrix ();
 
   if (mi->fps_p) do_fps (mi);

@@ -1,4 +1,5 @@
 /* menger, Copyright (c) 2001, 2002 Jamie Zawinski <jwz@jwz.org>
+ *         Copyright (c) 2002 Aurelien Jacobs <aurel@gnuage.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -35,19 +36,14 @@
  *
  *  The straightforward way to generate this object creates way more polygons
  *  than are needed, since there end up being many buried, interior faces.
- *  So first we go through and generate the list of all the squares; then we
- *  sort the list and delete any squares that have a duplicate: if there are
- *  two of them, then they will be interior and facing each other, so we
- *  don't need either.  Doing this reduces the polygon count by 20% - 33%.
+ *  So during the recursive building of the object we store which face of
+ *  each unitary cube we need to draw. Doing this reduces the polygon count
+ *  by 40% - 60%.
  *
  *  Another optimization we could do to reduce the polygon count would be to
  *  merge adjascent coplanar squares together into rectangles.  This would
  *  result in the outer faces being composed of 1xN strips.  It's tricky to
  *  to find these adjascent faces in non-exponential time, though.
- *
- *  We could take advantage of the object's triple symmetry to reduce the
- *  size of the `squares' array, though that wouldn't actually reduce the
- *  number of polygons in the scene.
  *
  *  We could actually simulate large depths with a texture map -- if the
  *  depth is such that the smallest holes are only a few pixels across,
@@ -95,23 +91,6 @@ extern XtAppContext app;
 
 #include <GL/glu.h>
 
-typedef struct {
-  unsigned int x0 : 8;     /* 8     bottom left */
-  unsigned int y0 : 8;     /* 16                */
-  unsigned int z0 : 8;     /* 24                */
-
-  unsigned int x1 : 8;     /* 32    top right   */
-  unsigned int y1 : 8;     /* 40                */
-  unsigned int z1 : 8;     /* 48                */
-  
-  int          nx : 2;     /* 50    normal      */
-  int          ny : 2;     /* 52                */
-  int          nz : 2;     /* 54                */
-
-                           /* 2 bits left over; 56 bits / 7 bytes total, */
-                           /* which is surely rounded up to 8 bytes.     */
-} square;
-
 
 typedef struct {
   GLXContext *glx_context;
@@ -122,8 +101,6 @@ typedef struct {
   GLuint sponge_list1;            /* in their own lists, to make it easy  */
   GLuint sponge_list2;            /* to color them differently.           */
 
-  square *squares;
-  unsigned long squares_size;
   unsigned long squares_fp;
 
   int current_depth;
@@ -189,244 +166,190 @@ reshape_sponge (ModeInfo *mi, int width, int height)
 }
 
 
-/* Pushes a 1x1x1 cube at XYZ into the sp->squares list.
- */
-static void
-cube (sponge_configuration *sp, Bool wireframe_p,
-      int x, int y, int z, int s)
-{
-  square *sq;
-
-# define PP(NX, NY, NZ, X0, Y0, Z0, X1, Y1, Z1) \
-         (sq = &sp->squares[sp->squares_fp++], \
-          sq->nx = (NX), \
-          sq->ny = (NY), \
-          sq->nz = (NZ), \
-          sq->x0 = x+((X0)*s), \
-          sq->y0 = y+((Y0)*s), \
-          sq->z0 = z+((Z0)*s), \
-          sq->x1 = x+((X1)*s), \
-          sq->y1 = y+((Y1)*s), \
-          sq->z1 = z+((Z1)*s))
-
-  PP (0,  0, -1,   0, 1, 0,   1, 0, 0);
-  PP (0,  0,  1,   0, 0, 1,   1, 1, 1);
-  PP (0, -1,  0,   0, 0, 0,   1, 0, 1);
-  PP (0,  1,  0,   0, 1, 1,   1, 1, 0);
-
-  if (wireframe_p) return;  /* don't need the rest */
-
-  PP (-1, 0,  0,   0, 0, 1,   0, 1, 0);
-  PP ( 1, 0,  0,   1, 0, 0,   1, 1, 1);
-# undef PP
-
-  if (sp->squares_fp >= sp->squares_size) abort();
-}
-
+#define X0 0x01
+#define X1 0x02
+#define Y0 0x04
+#define Y1 0x08
+#define Z0 0x10
+#define Z1 0x20
 
 static int
-iexp (int i, int n)
+cube (float x0, float x1, float y0, float y1, float z0, float z1,
+      int faces, int wireframe)
 {
-  int ii = 1;
-  while (n-- > 0) ii *= i;
-  return ii;
-}
+  int n = 0;
 
-
-static void
-descend_cubes (sponge_configuration *sp, Bool wireframe_p, int countdown,
-               int x, int y, int z)
-{
-  int descend_p = (countdown > 0);
-  int facet_size = iexp (3, countdown);
-  int s = facet_size;
-
-  if (wireframe_p)
+  if (faces & X0)
     {
-      cube (sp, wireframe_p, x+1*s, y+1*s, z,     1);
-      cube (sp, wireframe_p, x+1*s, y+1*s, z+2*s, 1);
-      cube (sp, wireframe_p, x,     y+1*s, z+1*s, 1);
-      cube (sp, wireframe_p, x+2*s, y+1*s, z+1*s, 1);
-      cube (sp, wireframe_p, x+1*s, y,     z+1*s, 1);
-      cube (sp, wireframe_p, x+1*s, y+2*s, z+1*s, 1);
-
-      if (!descend_p) return;
+      glBegin (wireframe ? GL_LINE_LOOP : GL_POLYGON);
+      glNormal3f (-1.0, 0.0, 0.0);
+      glVertex3f (x0, y1, z0);
+      glVertex3f (x0, y0, z0);
+      glVertex3f (x0, y0, z1);
+      glVertex3f (x0, y1, z1);
+      glEnd ();
+      n++;
+    }
+  if (faces & X1)
+    {
+      glBegin (wireframe ? GL_LINE_LOOP : GL_POLYGON);
+      glNormal3f (1.0, 0.0, 0.0);
+      glVertex3f (x1, y1, z1);
+      glVertex3f (x1, y0, z1);
+      glVertex3f (x1, y0, z0);
+      glVertex3f (x1, y1, z0);
+      glEnd ();
+      n++;
+    }
+  if (faces & Y0)
+    {
+      glBegin (wireframe ? GL_LINE_LOOP : GL_POLYGON);
+      glNormal3f (0.0, -1.0, 0.0);
+      glVertex3f (x0, y0, z0);
+      glVertex3f (x0, y0, z1);
+      glVertex3f (x1, y0, z1);
+      glVertex3f (x1, y0, z0);
+      glEnd ();
+      n++;
+    }
+  if (faces & Y1)
+    {
+      glBegin (wireframe ? GL_LINE_LOOP : GL_POLYGON);
+      glNormal3f (0.0, 1.0, 0.0);
+      glVertex3f (x0, y1, z0);
+      glVertex3f (x0, y1, z1);
+      glVertex3f (x1, y1, z1);
+      glVertex3f (x1, y1, z0);
+      glEnd ();
+      n++;
+    }
+  if (faces & Z0)
+    {
+      glBegin (wireframe ? GL_LINE_LOOP : GL_POLYGON);
+      glNormal3f (0.0, 0.0, -1.0);
+      glVertex3f (x1, y1, z0);
+      glVertex3f (x1, y0, z0);
+      glVertex3f (x0, y0, z0);
+      glVertex3f (x0, y1, z0);
+      glEnd ();
+      n++;
+    }
+  if (faces & Z1)
+    {
+      glBegin (wireframe ? GL_LINE_LOOP : GL_POLYGON);
+      glNormal3f (0.0, 0.0, 1.0);
+      glVertex3f (x0, y1, z1);
+      glVertex3f (x0, y0, z1);
+      glVertex3f (x1, y0, z1);
+      glVertex3f (x1, y1, z1);
+      glEnd ();
+      n++;
     }
 
-# define CUBE(xx,yy,zz) \
-         (descend_p \
-          ? descend_cubes (sp, wireframe_p, countdown-1, \
-                           x+(xx)*s, y+(yy)*s, z+(zz)*s) \
-          : cube (sp, wireframe_p, x+(xx)*s, y+(yy)*s, z+(zz)*s, 1))
-
-  CUBE(0, 2, 0); CUBE(1, 2, 0); CUBE(2, 2, 0);   /* top front row */
-  CUBE(0, 1, 0);                CUBE(2, 1, 0);   /* middle front row */
-  CUBE(0, 0, 0); CUBE(1, 0, 0); CUBE(2, 0, 0);   /* bottom front row */
-  CUBE(0, 2, 1);                CUBE(2, 2, 1);   /* top middle row */
-  CUBE(0, 0, 1);                CUBE(2, 0, 1);   /* bottom middle row */
-  CUBE(0, 2, 2); CUBE(1, 2, 2); CUBE(2, 2, 2);   /* top back row */
-  CUBE(0, 1, 2);                CUBE(2, 1, 2);   /* middle back row */
-  CUBE(0, 0, 2); CUBE(1, 0, 2); CUBE(2, 0, 2);   /* bottom back row */
-# undef CUBE
+  return n;
 }
 
-
-static int cmp_squares (const void *a, const void *b);
-static void delete_redundant_faces (sponge_configuration *);
-
-static void
-build_sponge (sponge_configuration *sp, Bool wireframe_p, int countdown)
+static int
+menger_recurs (int level, float x0, float x1, float y0, float y1,
+               float z0, float z1, int faces, Bool wireframe, int orig)
 {
-  sp->squares_fp = 0;
+  float xi, yi, zi;
+  int f, x, y, z;
+  static int forig;
+  int n = 0;
 
-  if (countdown <= 0)
+  if (orig)
     {
-      cube (sp, wireframe_p, 0, 0, 0, 1);
+      forig = faces;
+      if (wireframe)
+        n += cube (x0, x1, y0, y1, z0, z1,
+                   faces & (X0 | X1 | Y0 | Y1), wireframe);
+    }
+
+  if (level == 0)
+    {
+      if (!wireframe)
+        n += cube (x0, x1, y0, y1, z0, z1, faces, wireframe);
     }
   else
     {
-      if (wireframe_p)
-        {
-          int facet_size = iexp(3, countdown);
-          cube (sp, wireframe_p, 0, 0, 0, facet_size);
-        }
-      descend_cubes (sp, wireframe_p, countdown - 1,
-                     0, 0, 0);
+      xi = (x1 - x0) / 3;
+      yi = (y1 - y0) / 3;
+      zi = (z1 - z0) / 3;
+
+      for (x = 0; x < 3; x++)
+        for (y = 0; y < 3; y++)
+          for (z = 0; z < 3; z++)
+            {
+              if ((x != 1 && y != 1)
+                  || (y != 1 && z != 1)
+                  || (x != 1 && z != 1))
+                {
+                  f = faces;
+
+                  if (x == 1 || (x == 2 && (y != 1 && z != 1)))
+                    f &= ~X0;
+                  if (x == 1 || (x == 0 && (y != 1 && z != 1)))
+                    f &= ~X1;
+                  if (forig & X0 && x == 2 && (y == 1 || z == 1))
+                    f |= X0;
+                  if (forig & X1 && x == 0 && (y == 1 || z == 1))
+                    f |= X1;
+
+                  if (y == 1 || (y == 2 && (x != 1 && z != 1)))
+                    f &= ~Y0;
+                  if (y == 1 || (y == 0 && (x != 1 && z != 1)))
+                    f &= ~Y1;
+                  if (forig & Y0 && y == 2 && (x == 1 || z == 1))
+                    f |= Y0;
+                  if (forig & Y1 && y == 0 && (x == 1 || z == 1))
+                    f |= Y1;
+
+                  if (z == 1 || (z == 2 && (x != 1 && y != 1)))
+                    f &= ~Z0;
+                  if (z == 1 || (z == 0 && (x != 1 && y != 1)))
+                    f &= ~Z1;
+                  if (forig & Z0 && z == 2 && (x == 1 || y == 1))
+                    f |= Z0;
+                  if (forig & Z1 && z == 0 && (x == 1 || y == 1))
+                    f |= Z1;
+
+                  n += menger_recurs (level-1,
+                                      x0+x*xi, x0+(x+1)*xi,
+                                      y0+y*yi, y0+(y+1)*yi,
+                                      z0+z*zi, z0+(z+1)*zi, f, wireframe, 0);
+                }
+              else if (wireframe && (x != 1 || y != 1 || z != 1))
+                n += cube (x0+x*xi, x0+(x+1)*xi,
+                           y0+y*yi, y0+(y+1)*yi,
+                           z0+z*zi, z0+(z+1)*zi,
+                           forig & (X0 | X1 | Y0 | Y1), wireframe);
+            }
     }
 
-  if (!wireframe_p && do_optimize)
-    {
-      qsort (sp->squares, sp->squares_fp, sizeof(*sp->squares),
-             cmp_squares);
-      delete_redundant_faces (sp);
-    }
-
-  {
-    int i, j;
-    square *sq;
-    GLfloat s = 1.0 / iexp (3, countdown);
-    s *= 3;
-
-    glDeleteLists (sp->sponge_list0, 1);
-    glDeleteLists (sp->sponge_list1, 1);
-    glDeleteLists (sp->sponge_list2, 1);
-
-    for (j = 0; j < 3; j++)
-      {
-        sq = sp->squares;
-        glNewList ((j == 0 ? sp->sponge_list0 :
-                    j == 1 ? sp->sponge_list1 :
-                    sp->sponge_list2),
-                   GL_COMPILE);
-        glPushMatrix();
-        glTranslatef (-1.5, -1.5, -1.5);
-        glScalef(s, s, s);
-
-        for (i = 0; i < sp->squares_fp; i++)
-          {
-            if ((j == 0 && sq->nx != 0) ||
-                (j == 1 && sq->ny != 0) ||
-                (j == 2 && sq->nz != 0))
-              {
-                glBegin (wireframe_p ? GL_LINE_LOOP : GL_QUADS);
-                glNormal3i (sq->nx, sq->ny, sq->nz);
-                if (sq->nz)
-                  {
-                    glVertex3i (sq->x1, sq->y0, sq->z0);
-                    glVertex3i (sq->x1, sq->y1, sq->z0);
-                    glVertex3i (sq->x0, sq->y1, sq->z0);
-                    glVertex3i (sq->x0, sq->y0, sq->z0);
-                  }
-                else if (sq->ny)
-                  {
-                    glVertex3i (sq->x1, sq->y0, sq->z0);
-                    glVertex3i (sq->x1, sq->y0, sq->z1);
-                    glVertex3i (sq->x0, sq->y0, sq->z1);
-                    glVertex3i (sq->x0, sq->y0, sq->z0);
-                  }
-                else
-                  {
-                    glVertex3i (sq->x0, sq->y1, sq->z0);
-                    glVertex3i (sq->x0, sq->y1, sq->z1);
-                    glVertex3i (sq->x0, sq->y0, sq->z1);
-                    glVertex3i (sq->x0, sq->y0, sq->z0);
-                  }
-                glEnd();
-              }
-            sq++;
-          }
-        glPopMatrix();
-        glEndList();
-      }
-  }
+  return n;
 }
-
-
-static int
-cmp_squares (const void *aa, const void *bb)
-{
-  square *a = (square *) aa;
-  square *b = (square *) bb;
-  int i, p0, p1;
-
-  p0 = (a->x0 < a->x1 ? a->x0 : a->x1);
-  p1 = (b->x0 < b->x1 ? b->x0 : b->x1);
-  if ((i = (p0 - p1))) return i;
-
-  p0 = (a->y0 < a->y1 ? a->y0 : a->y1);
-  p1 = (b->y0 < b->y1 ? b->y0 : b->y1);
-  if ((i = (p0 - p1))) return i;
-
-  p0 = (a->z0 < a->z1 ? a->z0 : a->z1);
-  p1 = (b->z0 < b->z1 ? b->z0 : b->z1);
-  if ((i = (p0 - p1))) return i;
-
-
-  p0 = (a->x0 > a->x1 ? a->x0 : a->x1);
-  p1 = (b->x0 > b->x1 ? b->x0 : b->x1);
-  if ((i = (p0 - p1))) return i;
-
-  p0 = (a->y0 > a->y1 ? a->y0 : a->y1);
-  p1 = (b->y0 > b->y1 ? b->y0 : b->y1);
-  if ((i = (p0 - p1))) return i;
-
-  p0 = (a->z0 > a->z1 ? a->z0 : a->z1);
-  p1 = (b->z0 > b->z1 ? b->z0 : b->z1);
-  if ((i = (p0 - p1))) return i;
-
-  return 0;
-
-}
-
 
 static void
-delete_redundant_faces (sponge_configuration *sp)
+build_sponge (sponge_configuration *sp, Bool wireframe, int level)
 {
-  square *sq = sp->squares;
-  square *end = sq + sp->squares_fp;
-  square *out = sq;
-  int i = 0;
+  glDeleteLists (sp->sponge_list0, 1);
+  glNewList(sp->sponge_list0, GL_COMPILE);
+  sp->squares_fp = menger_recurs (level, -1.5, 1.5, -1.5, 1.5, -1.5, 1.5,
+                                  X0 | X1, wireframe,1);
+  glEndList();
 
-  while (sq < end)
-    {
-      if (cmp_squares (sq, sq+1)) /* they differ - keep this one */
-        {
-          if (sq != out)
-            *out = *sq;
-          out++;
-          i++;
-        }
-      sq++;
-    }
+  glDeleteLists (sp->sponge_list1, 1);
+  glNewList(sp->sponge_list1, GL_COMPILE);
+  sp->squares_fp += menger_recurs (level, -1.5, 1.5, -1.5, 1.5, -1.5, 1.5,
+                                   Y0 | Y1, wireframe,1);
+  glEndList();
 
-# if 0
-  fprintf (stderr, "%s: optimized away %d polygons (%d%%)\n",
-           progname,
-           sp->squares_fp - i,
-           100 - ((i * 100) / sp->squares_fp));
-# endif
-
-  sp->squares_fp = i;
+  glDeleteLists (sp->sponge_list2, 1);
+  glNewList(sp->sponge_list2, GL_COMPILE);
+  sp->squares_fp += menger_recurs (level, -1.5, 1.5, -1.5, 1.5, -1.5, 1.5,
+                                   Z0 | Z1, wireframe,1);
+  glEndList();
 }
 
 
@@ -504,7 +427,9 @@ init_sponge (ModeInfo *mi)
       glEnable(GL_LIGHT1);
 
       glEnable(GL_DEPTH_TEST);
-      glEnable(GL_CULL_FACE);
+      glEnable(GL_NORMALIZE);
+
+      glShadeModel(GL_SMOOTH);
     }
 
   {
@@ -528,30 +453,6 @@ init_sponge (ModeInfo *mi)
   sp->ccolor1 = sp->ncolors / 3;
   sp->ccolor2 = sp->ccolor1 * 2;
 
-  {
-    int d = max_depth < 1 ? 1 : max_depth;
-    unsigned long facet_size = iexp(3, d);
-    unsigned long bytes;
-    float be_miserly = 0.741;
-    sp->squares_size = iexp(facet_size, 3) * 6 * be_miserly;
-    bytes = sp->squares_size * sizeof (*sp->squares);
-
-    sp->squares_fp = 0;
-    sp->squares = calloc (1, bytes);
-
-    if (!sp->squares)
-      {
-        fprintf (stderr, "%s: out of memory", progname);
-        if ((sp->squares_size >> 20) > 1)
-          fprintf (stderr, " (%luMB for %luM polygons)\n",
-                   bytes >> 20, sp->squares_size >> 20);
-        else
-          fprintf (stderr, " (%luKB for %luK polygons)\n",
-                   bytes >> 10, sp->squares_size >> 10);
-        exit (1);
-      }
-  }
-
   sp->sponge_list0 = glGenLists (1);
   sp->sponge_list1 = glGenLists (1);
   sp->sponge_list2 = glGenLists (1);
@@ -573,12 +474,6 @@ draw_sponge (ModeInfo *mi)
 
   if (!sp->glx_context)
     return;
-
-  glShadeModel(GL_SMOOTH);
-
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_NORMALIZE);
-  glEnable(GL_CULL_FACE);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

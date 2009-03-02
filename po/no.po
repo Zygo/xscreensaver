@@ -1381,8 +1381,9 @@ msgid "Stars"
 msgstr "Stjerner"
 
 #: hacks/config/blitspin.xml.h:1
+#, fuzzy
 msgid "90° Rotation Speed"
-msgstr ""
+msgstr "Roteringshastighet"
 
 #: hacks/config/blitspin.xml.h:2
 msgid "Bitmap to rotate"
@@ -5199,6 +5200,144 @@ msgid ""
 "than just a simple zoom. Written by James Macnicol."
 msgstr ""
 
+#, fuzzy
+#~ msgid "Copyright Â© 1991-2002 %s"
+#~ msgstr "Opphavsrett © 1991-2002 %s"
+
+#, fuzzy
+#~ msgid "Choose _Random Image:"
+#~ msgstr "Velg tilfeldig bilde:"
+
+#, fuzzy
+#~ msgid "Display Subprocess _Errors"
+#~ msgstr "Vis feil i underprosesser"
+
+#, fuzzy
+#~ msgid "Display _Splash Screen at Startup"
+#~ msgstr "Vis oppstartsskjerm"
+
+#, fuzzy
+#~ msgid "F_ade Duration"
+#~ msgstr "Varighet"
+
+#, fuzzy
+#~ msgid "Grab Desktop _Images"
+#~ msgstr "Hent bilder fra skrivebordet"
+
+#, fuzzy
+#~ msgid "Install _Colormap"
+#~ msgstr "Installer fargekart"
+
+#, fuzzy
+#~ msgid ""
+#~ "No Preview\n"
+#~ "Available"
+#~ msgstr "Ingen forhåndsvisning"
+
+#, fuzzy
+#~ msgid "Preview of screen saver"
+#~ msgstr "Ny skjermsparer"
+
+#, fuzzy
+#~ msgid "Stand_by After"
+#~ msgstr "Ventemodus etter"
+
+#, fuzzy
+#~ msgid "Sus_pend After"
+#~ msgstr "Pause etter"
+
+#, fuzzy
+#~ msgid "_Advanced"
+#~ msgstr "Avansert"
+
+#, fuzzy
+#~ msgid "_Advanced >>"
+#~ msgstr "Avansert >>"
+
+#, fuzzy
+#~ msgid "_Blank After"
+#~ msgstr "Blank ut etter"
+
+#, fuzzy
+#~ msgid "_Browse"
+#~ msgstr "Bla gjennom"
+
+#, fuzzy
+#~ msgid "_Command Line:"
+#~ msgstr "Kommandolinje:"
+
+#, fuzzy
+#~ msgid "_Cycle After"
+#~ msgstr "Skift etter"
+
+#, fuzzy
+#~ msgid "_Display Modes"
+#~ msgstr "Visningsmodi"
+
+#, fuzzy
+#~ msgid "_Lock Screen After"
+#~ msgstr "Lås skjermen etter"
+
+#, fuzzy
+#~ msgid "_Mode:"
+#~ msgstr "Modus:"
+
+#, fuzzy
+#~ msgid "_Off After"
+#~ msgstr "Av etter"
+
+#, fuzzy
+#~ msgid "_Power Management Enabled"
+#~ msgstr "Strømstyring aktivert"
+
+#, fuzzy
+#~ msgid "_Preview"
+#~ msgstr "Forhåndsvisning"
+
+#, fuzzy
+#~ msgid "_Quit"
+#~ msgstr "_Avslutt"
+
+#, fuzzy
+#~ msgid "_Settings..."
+#~ msgstr "Innstillinger..."
+
+#, fuzzy
+#~ msgid "_Standard <<"
+#~ msgstr "Generell <<"
+
+#, fuzzy
+#~ msgid "_Verbose Dialognostics"
+#~ msgstr "Utfyllende diagnostikk"
+
+#, fuzzy
+#~ msgid "_Visual:"
+#~ msgstr "Synlig:"
+
+#, fuzzy
+#~ msgid "no preview"
+#~ msgstr "Ingen forhåndsvisning"
+
+#, fuzzy
+#~ msgid "preview"
+#~ msgstr "Forhåndsvisning"
+
+#, fuzzy
+#~ msgid "Anemone"
+#~ msgstr "Demon"
+
+#, fuzzy
+#~ msgid "90 deg Rotation Speed"
+#~ msgstr "Roteringshastighet"
+
+#, fuzzy
+#~ msgid "Max Blobs"
+#~ msgstr "XOR-spor"
+
+#, fuzzy
+#~ msgid "Random Lamp Style"
+#~ msgstr "Tilfeldig størrelse opp til"
+
 #~ msgid "Default Location"
 #~ msgstr "Standard lokasjon"
 
@@ -5900,9 +6039,6 @@ msgstr ""
 
 #~ msgid "Custom"
 #~ msgstr "Egendefinert"
-
-#~ msgid "New screensaver"
-#~ msgstr "Ny skjermsparer"
 
 #~ msgid "Configure GNOME's use of sound"
 #~ msgstr "Konfigurér bruk av lyd i GNOME."

@@ -14,33 +14,75 @@
 
 #define NBITS 12
 
-#ifndef VMS
-# include <X11/bitmaps/stipple>
-# include <X11/bitmaps/cross_weave>
-# include <X11/bitmaps/dimple1>
-# include <X11/bitmaps/dimple3>
-# include <X11/bitmaps/flipped_gray>
-# include <X11/bitmaps/gray1>
-# include <X11/bitmaps/gray3>
-# include <X11/bitmaps/hlines2>
-# include <X11/bitmaps/light_gray>
-# include <X11/bitmaps/root_weave>
-# include <X11/bitmaps/vlines2>
-# include <X11/bitmaps/vlines3>
-#else /* VMS */
-# include "sys$common:[decw$include.bitmaps]stipple.xbm"
-# include "sys$common:[decw$include.bitmaps]cross_weave.xbm"
-# include "sys$common:[decw$include.bitmaps]dimple1.xbm"
-# include "sys$common:[decw$include.bitmaps]dimple3.xbm"
-# include "sys$common:[decw$include.bitmaps]flipped_gray.xbm"
-# include "sys$common:[decw$include.bitmaps]gray1.xbm"
-# include "sys$common:[decw$include.bitmaps]gray3.xbm"
-# include "sys$common:[decw$include.bitmaps]hlines2.xbm"
-# include "sys$common:[decw$include.bitmaps]light_gray.xbm"
-# include "sys$common:[decw$include.bitmaps]root_weave.xbm"
-# include "sys$common:[decw$include.bitmaps]vlines2.xbm"
-# include "sys$common:[decw$include.bitmaps]vlines3.xbm"
-#endif /* VMS */
+/* On some systems (notably MacOS X) these files are messed up.
+ * They're tiny, so we might as well just inline them here.
+ *
+ * # include <X11/bitmaps/stipple>
+ * # include <X11/bitmaps/cross_weave>
+ * # include <X11/bitmaps/dimple1>
+ * # include <X11/bitmaps/dimple3>
+ * # include <X11/bitmaps/flipped_gray>
+ * # include <X11/bitmaps/gray1>
+ * # include <X11/bitmaps/gray3>
+ * # include <X11/bitmaps/hlines2>
+ * # include <X11/bitmaps/light_gray>
+ * # include <X11/bitmaps/root_weave>
+ * # include <X11/bitmaps/vlines2>
+ * # include <X11/bitmaps/vlines3>
+*/
+
+#define stipple_width  16
+#define stipple_height 4
+static char stipple_bits[] = { 0x55, 0x55, 0xee, 0xee, 0x55, 0x55, 0xba, 0xbb};
+
+#define cross_weave_width  16
+#define cross_weave_height 16
+static char cross_weave_bits[] = {
+   0x55, 0x55, 0x88, 0x88, 0x55, 0x55, 0x22, 0x22, 0x55, 0x55, 0x88, 0x88,
+   0x55, 0x55, 0x22, 0x22, 0x55, 0x55, 0x88, 0x88, 0x55, 0x55, 0x22, 0x22,
+   0x55, 0x55, 0x88, 0x88, 0x55, 0x55, 0x22, 0x22};
+
+#define dimple1_width 16
+#define dimple1_height 16
+static char dimple1_bits[] = {
+   0x55, 0x55, 0x00, 0x00, 0x55, 0x55, 0x00, 0x00, 0x55, 0x55, 0x00, 0x00,
+   0x55, 0x55, 0x00, 0x00, 0x55, 0x55, 0x00, 0x00, 0x55, 0x55, 0x00, 0x00,
+   0x55, 0x55, 0x00, 0x00, 0x55, 0x55, 0x00, 0x00};
+
+#define dimple3_width 16
+#define dimple3_height 16
+static char dimple3_bits[] = {
+   0x11, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x11, 0x11, 0x00, 0x00,
+   0x00, 0x00, 0x00, 0x00, 0x11, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+   0x11, 0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+#define flipped_gray_width  4
+#define flipped_gray_height 2
+static char flipped_gray_bits[] = { 0x07, 0x0d};
+#define gray1_width  2
+#define gray1_height 2
+static char gray1_bits[] = { 0x01, 0x02};
+#define gray3_width  4
+#define gray3_height 4
+static char gray3_bits[] = { 0x01, 0x00, 0x04, 0x00};
+#define hlines2_width  1
+#define hlines2_height 2
+static char hlines2_bits[] = { 0x01, 0x00};
+#define light_gray_width  4
+#define light_gray_height 2
+static char light_gray_bits[] = { 0x08, 0x02};
+#define root_weave_width  4
+#define root_weave_height 4
+static char root_weave_bits[] = { 0x07, 0x0d, 0x0b, 0x0e};
+#define vlines2_width  2
+#define vlines2_height 1
+static char vlines2_bits[] = { 0x01};
+#define vlines3_width  3
+#define vlines3_height 1
+static char vlines3_bits[] = { 0x02};
+
+
+
 
 static Pixmap pixmaps [NBITS];
 static GC gc;
@@ -161,7 +203,7 @@ char *progclass = "Greynetic";
 char *defaults [] = {
   ".background:	black",
   ".foreground:	white",
-  "*delay:	0",
+  "*delay:	10000",
   0
 };
 

@@ -1,229 +1,227 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Free Software Foundation, Inc.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: xscreensaver 4.04\n"
 "POT-Creation-Date: 2002-05-10 19:02-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2001-10-25 06:13:57+0900\n"
+"Last-Translator: Young-Ho Cha <ganadist@chollian.net>\n"
+"Language-Team: Korean <ko@li.org>\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=utf-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: driver/demo-Gtk-conf.c:729
 msgid "Browse..."
-msgstr ""
+msgstr "찾아보기..."
 
 #: driver/demo-Gtk-conf.c:1021
 msgid "Select file."
-msgstr ""
+msgstr "파일 선택"
 
 #: driver/demo-Gtk-support.c:121
 #, c-format
 msgid "Couldn't find pixmap file: %s"
-msgstr ""
+msgstr "그림 파일을 찾을 수 없음: %s"
 
 #: driver/demo-Gtk-support.c:130
 #, c-format
 msgid "Error loading pixmap file: %s"
-msgstr ""
+msgstr "그림 파일을 읽는 중 오류: %s"
 
 #: driver/demo-Gtk-widgets.c:155 driver/xscreensaver-demo.glade.h:89
-#, fuzzy
 msgid "XScreenSaver"
-msgstr "ȭ�� ��ȣ��"
+msgstr "화면 보호기"
 
 #: driver/demo-Gtk-widgets.c:176
 msgid "_File"
-msgstr ""
+msgstr "파일(_F)"
 
 #: driver/demo-Gtk-widgets.c:196 driver/xscreensaver-demo.glade.h:93
 msgid "_Blank Screen Now"
-msgstr ""
+msgstr "지금 빈 화면으로 바꿈(_B)"
 
 #: driver/demo-Gtk-widgets.c:205 driver/xscreensaver-demo.glade.h:2
 msgid ""
 "Activate the XScreenSaver daemon now (locking the screen if so configured.)"
 msgstr ""
+"지금 화면보호기 데몬을 활성화 합니다(설정 되어 있으면 화면을 잠급니다.)"
 
 #: driver/demo-Gtk-widgets.c:209 driver/xscreensaver-demo.glade.h:97
 msgid "_Lock Screen Now"
-msgstr ""
+msgstr "지금 화면 잠금(_L)"
 
 #: driver/demo-Gtk-widgets.c:218 driver/xscreensaver-demo.glade.h:51
 msgid "Lock the screen now (even if \"Lock Screen\" is unchecked.)"
-msgstr ""
+msgstr "(\"화면 잠금\"이 설정 되어있지 않아도)지금 화면을 잠급니다."
 
 #: driver/demo-Gtk-widgets.c:222 driver/xscreensaver-demo.glade.h:96
 msgid "_Kill Daemon"
-msgstr ""
+msgstr "데몬 강제 종료(_K)"
 
 #: driver/demo-Gtk-widgets.c:231 driver/xscreensaver-demo.glade.h:71
 msgid "Tell the running XScreenSaver daemon to exit."
-msgstr ""
+msgstr "실행되고 있는 화면보호기 데몬에 종료를 알립니다."
 
 #: driver/demo-Gtk-widgets.c:235 driver/xscreensaver-demo.glade.h:98
 msgid "_Restart Daemon"
-msgstr ""
+msgstr "데몬 재시작(_R)"
 
 #: driver/demo-Gtk-widgets.c:244 driver/xscreensaver-demo.glade.h:49
 msgid "Kill and re-launch the XScreenSaver daemon."
-msgstr ""
+msgstr "화면보호기 데몬을 강제로 종료하고 다시 실행합니다."
 
 #: driver/demo-Gtk-widgets.c:257 driver/xscreensaver-demo.glade.h:95
 msgid "_Exit"
-msgstr ""
+msgstr "마침(_E)"
 
 #: driver/demo-Gtk-widgets.c:266 driver/xscreensaver-demo.glade.h:33
 msgid ""
 "Exit the xscreensaver-demo program (but leave the XScreenSaver daemon "
 "running in the background.)"
 msgstr ""
+"xscreensaver-demo 프로그램을 마칩니다. (하지만 화면보호기 데몬은 여전히 계속 "
+"실행되고 있습니다.)"
 
 #: driver/demo-Gtk-widgets.c:270
 msgid "_Help"
-msgstr ""
+msgstr "도움말(_H)"
 
 #: driver/demo-Gtk-widgets.c:290 driver/xscreensaver-demo.glade.h:92
 msgid "_About..."
-msgstr ""
+msgstr "이 프로그램은(_A)..."
 
 #: driver/demo-Gtk-widgets.c:299 driver/xscreensaver-demo.glade.h:30
 msgid "Display version information."
-msgstr ""
+msgstr "판 번호 정보를 표시합니다."
 
 #: driver/demo-Gtk-widgets.c:303 driver/xscreensaver-demo.glade.h:94
 msgid "_Documentation..."
-msgstr ""
+msgstr "문서(_D)..."
 
 #: driver/demo-Gtk-widgets.c:312 driver/xscreensaver-demo.glade.h:38
 msgid "Go to the documentation on the XScreenSaver web page."
-msgstr ""
+msgstr "XScreenSaver 웹 페이지의 문서로 갑니다"
 
 #: driver/demo-Gtk-widgets.c:342 driver/xscreensaver-demo.glade.h:18
 msgid "Cycle After"
-msgstr ""
+msgstr "화면 보호기 변경 시간"
 
 #: driver/demo-Gtk-widgets.c:364 driver/xscreensaver-demo.glade.h:78
 msgid "Whether a password should be required to un-blank the screen."
-msgstr ""
+msgstr "화면을 원래대로 되돌릴 때 비밀번호가 필요합니다."
 
 #: driver/demo-Gtk-widgets.c:366 driver/xscreensaver-demo.glade.h:50
 msgid "Lock Screen After"
-msgstr ""
+msgstr "화면 보호기 잠금 시간"
 
 #: driver/demo-Gtk-widgets.c:374 driver/xscreensaver-demo.glade.h:8
 msgid "Blank After"
-msgstr ""
+msgstr "화면 꺼지는 시간"
 
 #: driver/demo-Gtk-widgets.c:397 driver/demo-Gtk-widgets.c:447
 #: driver/demo-Gtk-widgets.c:461 driver/demo-Gtk-widgets.c:1010
 #: driver/xscreensaver-demo.glade.h:43
 msgid "How long before the monitor goes completely black."
-msgstr ""
+msgstr "화면이 완전히 검게 변하는데 걸리는 걸리는 시간입니다."
 
 #: driver/demo-Gtk-widgets.c:401 driver/demo-Gtk-widgets.c:413
 #: driver/demo-Gtk-widgets.c:425 driver/demo-Gtk-widgets.c:1014
 #: driver/demo-Gtk-widgets.c:1026 driver/demo-Gtk-widgets.c:1038
 #: driver/xscreensaver-demo.glade.h:99
 msgid "minutes"
-msgstr ""
+msgstr "분"
 
 #: driver/demo-Gtk-widgets.c:476 driver/demo-Gtk.c:2336
 #: driver/xscreensaver-demo.glade.h:58
 msgid "Preview"
-msgstr ""
+msgstr "미리보기"
 
 #: driver/demo-Gtk-widgets.c:484 driver/xscreensaver-demo.glade.h:21
 msgid ""
 "Demo the selected screen saver in full-screen mode (click the mouse to "
 "return.)"
 msgstr ""
+"선택한 화면보호기를 전체화면에서 미리 봅니다.(마우스를 누르면 되돌아 옵니다.)"
 
 #: driver/demo-Gtk-widgets.c:486 driver/xscreensaver-demo.glade.h:65
 msgid "Settings..."
-msgstr ""
+msgstr "설정..."
 
 #: driver/demo-Gtk-widgets.c:494 driver/xscreensaver-demo.glade.h:17
 msgid "Customization and explanation of the selected screen saver."
-msgstr ""
+msgstr "선택한 화면보호기를 설정합니다."
 
 #: driver/demo-Gtk-widgets.c:515 driver/xscreensaver-demo.glade.h:52
 msgid "Mode:"
-msgstr ""
+msgstr "모드:"
 
 #: driver/demo-Gtk-widgets.c:533 driver/xscreensaver-demo.glade.h:25
-#, fuzzy
 msgid "Disable Screen Saver"
-msgstr "ȭ�� ��ȣ��"
+msgstr "화면 보호기 사용하지 않음"
 
 #: driver/demo-Gtk-widgets.c:536 driver/xscreensaver-demo.glade.h:9
 msgid "Blank Screen Only"
-msgstr ""
+msgstr "빈화면만 사용"
 
 #: driver/demo-Gtk-widgets.c:539 driver/xscreensaver-demo.glade.h:56
-#, fuzzy
 msgid "Only One Screen Saver"
-msgstr "ȭ�� ��ȣ��"
+msgstr "화면보호기 하나만 사용"
 
 #: driver/demo-Gtk-widgets.c:542 driver/xscreensaver-demo.glade.h:60
-#, fuzzy
 msgid "Random Screen Saver"
-msgstr "ȭ�� ��ȣ��"
+msgstr "임의의 화면보호기 사용"
 
 #: driver/demo-Gtk-widgets.c:565 driver/xscreensaver-demo.glade.h:75
 msgid "Use"
-msgstr ""
+msgstr "사용"
 
 #: driver/demo-Gtk-widgets.c:585 driver/xscreensaver-demo.glade.h:63
-#, fuzzy
 msgid "Screen Saver"
-msgstr "ȭ�� ��ȣ��"
+msgstr "화면 보호기"
 
 #: driver/demo-Gtk-widgets.c:638 driver/xscreensaver-demo.glade.h:91
 msgid "\\/"
-msgstr ""
+msgstr "\\/"
 
 #: driver/demo-Gtk-widgets.c:646 driver/xscreensaver-demo.glade.h:61
 msgid ""
 "Run the next screen saver in the list in full-screen mode (click the mouse "
 "to return.)"
 msgstr ""
+"목록에서 다음 화면 보호기를 전체 화면 모드에서 실행합니다. (마우스를 누르면 "
+"원래대로 되돌아옵니다.)"
 
 #: driver/demo-Gtk-widgets.c:648
 msgid "/\\"
-msgstr ""
+msgstr "/\\"
 
 #: driver/demo-Gtk-widgets.c:656 driver/xscreensaver-demo.glade.h:62
 msgid ""
 "Run the previous screen saver in the list in full-screen mode (click the "
 "mouse to return.)"
 msgstr ""
+"목록에서 이전 화면 보호기를 전체 화면 모드에서 실행합니다. (마우스를 누르면 "
+"원래대로 되돌아옵니다.)"
 
 #: driver/demo-Gtk-widgets.c:658 driver/demo-Gtk-widgets.c:1601
 #: driver/xscreensaver-demo.glade.h:22
 msgid "Description"
-msgstr ""
+msgstr "설명"
 
 #: driver/demo-Gtk-widgets.c:685 driver/xscreensaver-demo.glade.h:26
 msgid "Display Modes"
-msgstr ""
+msgstr "표시 모드"
 
 #: driver/demo-Gtk-widgets.c:701 driver/xscreensaver-demo.glade.h:23
 msgid "Diagnostics"
-msgstr ""
+msgstr "진단"
 
 #: driver/demo-Gtk-widgets.c:745 driver/xscreensaver-demo.glade.h:80
 msgid "Whether the daemon should print lots of debugging information."
-msgstr ""
+msgstr "데몬이 많은 디버깅 정보를 출력하도록 합니다."
 
 #: driver/demo-Gtk-widgets.c:747 driver/xscreensaver-demo.glade.h:76
 msgid "Verbose Diagnostics"
-msgstr ""
+msgstr "자세한 진단"
 
 #: driver/demo-Gtk-widgets.c:762 driver/xscreensaver-demo.glade.h:79
 msgid ""
@@ -233,7 +231,7 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:764 driver/xscreensaver-demo.glade.h:29
 msgid "Display Subprocess Errors"
-msgstr ""
+msgstr "하위 프로세스 오류 표시"
 
 #: driver/demo-Gtk-widgets.c:779 driver/xscreensaver-demo.glade.h:87
 msgid ""
@@ -243,11 +241,11 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:781 driver/xscreensaver-demo.glade.h:28
 msgid "Display Splash Screen at Startup"
-msgstr ""
+msgstr "시작할 때 시작화면 표시"
 
 #: driver/demo-Gtk-widgets.c:790 driver/xscreensaver-demo.glade.h:15
 msgid "Colormaps"
-msgstr ""
+msgstr "색상맵"
 
 #: driver/demo-Gtk-widgets.c:834 driver/xscreensaver-demo.glade.h:88
 msgid ""
@@ -257,7 +255,7 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:836 driver/xscreensaver-demo.glade.h:48
 msgid "Install Colormap"
-msgstr ""
+msgstr "색상맵 설치"
 
 #: driver/demo-Gtk-widgets.c:859 driver/xscreensaver-demo.glade.h:86
 msgid ""
@@ -289,11 +287,11 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:926 driver/xscreensaver-demo.glade.h:100
 msgid "seconds"
-msgstr ""
+msgstr "초"
 
 #: driver/demo-Gtk-widgets.c:936 driver/xscreensaver-demo.glade.h:27
 msgid "Display Power Management"
-msgstr ""
+msgstr "화면 전원 관리"
 
 #: driver/demo-Gtk-widgets.c:980 driver/xscreensaver-demo.glade.h:84
 msgid "Whether the monitor should be powered down after a while."
@@ -301,19 +299,19 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:982 driver/xscreensaver-demo.glade.h:57
 msgid "Power Management Enabled"
-msgstr ""
+msgstr "전원 관리 사용"
 
 #: driver/demo-Gtk-widgets.c:1050 driver/xscreensaver-demo.glade.h:55
 msgid "Off After"
-msgstr ""
+msgstr "끌 시간:"
 
 #: driver/demo-Gtk-widgets.c:1063 driver/xscreensaver-demo.glade.h:70
 msgid "Suspend After"
-msgstr ""
+msgstr "중지 시간:"
 
 #: driver/demo-Gtk-widgets.c:1076 driver/xscreensaver-demo.glade.h:68
 msgid "Standby After"
-msgstr ""
+msgstr "대기 시간:"
 
 #: driver/demo-Gtk-widgets.c:1099 driver/xscreensaver-demo.glade.h:45
 msgid "How long until the monitor goes into power-saving mode."
@@ -325,7 +323,7 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1117 driver/xscreensaver-demo.glade.h:47
 msgid "Image Manipulation"
-msgstr ""
+msgstr "그림 처리"
 
 #: driver/demo-Gtk-widgets.c:1161 driver/xscreensaver-demo.glade.h:81
 msgid ""
@@ -335,7 +333,7 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1163 driver/xscreensaver-demo.glade.h:39
 msgid "Grab Desktop Images"
-msgstr ""
+msgstr "바탕화면을 그대로 사용"
 
 #: driver/demo-Gtk-widgets.c:1178 driver/xscreensaver-demo.glade.h:82
 msgid ""
@@ -363,12 +361,12 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1232 driver/xscreensaver-demo.glade.h:10
 msgid "Browse"
-msgstr ""
+msgstr "찾아보기"
 
 #: driver/demo-Gtk-widgets.c:1240 driver/demo-Gtk-widgets.c:1593
 #: driver/xscreensaver-demo.glade.h:3
 msgid "Advanced"
-msgstr ""
+msgstr "고급 설정"
 
 #: driver/demo-Gtk-widgets.c:1438 driver/xscreensaver-demo.glade.h:90
 msgid "XScreenSaver: Mode-Specific Settings"
@@ -376,11 +374,11 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1460 driver/xscreensaver-demo.glade.h:64
 msgid "Settings"
-msgstr ""
+msgstr "설정"
 
 #: driver/demo-Gtk-widgets.c:1489 driver/xscreensaver-demo.glade.h:66
 msgid "Standard"
-msgstr ""
+msgstr "표준 설정"
 
 #: driver/demo-Gtk-widgets.c:1526 driver/xscreensaver-demo.glade.h:77
 msgid "Visual:"
@@ -448,49 +446,49 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1569 driver/xscreensaver-demo.glade.h:16
 msgid "Command Line:"
-msgstr ""
+msgstr "명령행:"
 
 #: driver/demo-Gtk-widgets.c:1641 driver/xscreensaver-demo.glade.h:31
 msgid "Documentation..."
-msgstr ""
+msgstr "문서..."
 
 #: driver/demo-Gtk-widgets.c:1649 driver/xscreensaver-demo.glade.h:13
 msgid "Click here to read the manual for this display mode, if it has one."
-msgstr ""
+msgstr "여기를 누르면 이 표시모드에 대한 설명서를 읽을 수 있습니다."
 
 #: driver/demo-Gtk-widgets.c:1674 driver/xscreensaver-demo.glade.h:4
 msgid "Advanced >>"
-msgstr ""
+msgstr "고급 >>"
 
 #: driver/demo-Gtk-widgets.c:1682 driver/xscreensaver-demo.glade.h:32
 msgid "Edit the command line directly."
-msgstr ""
+msgstr "명령행에 직접 입력하십시오."
 
 #: driver/demo-Gtk-widgets.c:1684 driver/xscreensaver-demo.glade.h:67
 msgid "Standard <<"
-msgstr ""
+msgstr "표준 <<"
 
 #: driver/demo-Gtk-widgets.c:1692 driver/xscreensaver-demo.glade.h:6
 msgid "Back to the graphical configuration options."
-msgstr ""
+msgstr "그래픽 환경의 설정 옵션으로 되돌아 갑니다."
 
 #: driver/demo-Gtk-widgets.c:1703 driver/demo-Gtk.c:587
 #: driver/xscreensaver-demo.glade.h:54
 msgid "OK"
-msgstr ""
+msgstr "확인"
 
 #: driver/demo-Gtk-widgets.c:1712 driver/xscreensaver-demo.glade.h:11
 msgid "Cancel"
-msgstr ""
+msgstr "취소"
 
 #: driver/demo-Gtk.c:511
 msgid "For updates, check http://www.jwz.org/xscreensaver/"
-msgstr ""
+msgstr "업데이트 하려면 http://www.jwz.org/xscreensaver/ 를 확인하십시오"
 
 #: driver/demo-Gtk.c:517
-#, c-format
-msgid "Copyright � 1991-2002 %s"
-msgstr ""
+#, fuzzy, c-format
+msgid "Copyright  1991-2002 %s"
+msgstr "Copyright 1991-2002 %s"
 
 #: driver/demo-Gtk.c:624
 msgid ""
@@ -498,6 +496,9 @@ msgid ""
 "\n"
 "No Help URL has been specified.\n"
 msgstr ""
+"오류:\n"
+"\n"
+"도움말 URL이 지정되지 않았습니다.\n"
 
 #: driver/demo-Gtk.c:710
 msgid ""
@@ -506,6 +507,9 @@ msgid ""
 "The xscreensaver daemon did not start up properly.\n"
 "\n"
 msgstr ""
+"오류:\n"
+"\n"
+"xscreensaver 데몬이 올바로 시작되지 않았습니다.\n"
 
 #: driver/demo-Gtk.c:716
 msgid ""
@@ -528,7 +532,7 @@ msgstr ""
 
 #: driver/demo-Gtk.c:732
 msgid "Please check your $PATH and permissions."
-msgstr ""
+msgstr "경로와 허가권을 확인하십시오."
 
 #: driver/demo-Gtk.c:767
 msgid ""
@@ -544,6 +548,9 @@ msgid ""
 "\n"
 "Couldn't write %s\n"
 msgstr ""
+"오류:\n"
+"\n"
+"%s을(를) 쓸 수 없습니다\n"
 
 #: driver/demo-Gtk.c:831
 msgid ""
@@ -574,16 +581,15 @@ msgstr ""
 
 #: driver/demo-Gtk.c:2058
 msgid "No description available."
-msgstr ""
+msgstr "설명이 없습니다"
 
 #: driver/demo-Gtk.c:2307
 msgid "Blank Screen"
-msgstr ""
+msgstr "빈 화면"
 
 #: driver/demo-Gtk.c:2313
-#, fuzzy
 msgid "Screen Saver Disabled"
-msgstr "ȭ�� ��ȣ��"
+msgstr "화면 보호기 사용않음"
 
 #: driver/demo-Gtk.c:2473
 #, c-format
@@ -595,7 +601,7 @@ msgstr ""
 
 #: driver/demo-Gtk.c:2540
 msgid "No Preview"
-msgstr ""
+msgstr "미리보기 없음"
 
 #: driver/demo-Gtk.c:2540
 msgid "Available"
@@ -660,16 +666,15 @@ msgstr ""
 #: driver/demo-Gtk.c:3636
 #, c-format
 msgid "%s: unknown option: %s\n"
-msgstr ""
+msgstr "%s: 알수없는 옵션: %s\n"
 
 #: driver/screensaver-properties.desktop.in.h:1
 msgid "Configure the settings of the screensaver."
-msgstr "ȭ�� ��ȣ�� ����"
+msgstr "화면 보호기를 설정합니다"
 
 #: driver/screensaver-properties.desktop.in.h:2
-#, fuzzy
 msgid "Screensaver"
-msgstr "ȭ�� ��ȣ��"
+msgstr "화면 보호기"
 
 #: driver/xscreensaver-demo.glade.h:1
 msgid "/\");"
@@ -685,15 +690,15 @@ msgstr ""
 
 #: hacks/config/ant.xml.h:2
 msgid "Ant"
-msgstr ""
+msgstr "개미"
 
 #: hacks/config/ant.xml.h:3
 msgid "Ant Size"
-msgstr ""
+msgstr "개미 크기"
 
 #: hacks/config/ant.xml.h:4
 msgid "Ants Count"
-msgstr ""
+msgstr "개미 수"
 
 #: hacks/config/ant.xml.h:5 hacks/config/apollonian.xml.h:5
 #: hacks/config/atlantis.xml.h:4 hacks/config/attraction.xml.h:8
@@ -758,11 +763,11 @@ msgstr ""
 #: hacks/config/xmatrix.xml.h:4 hacks/config/xmountains.xml.h:1
 #: hacks/config/xrayswarm.xml.h:2 hacks/config/zoom.xml.h:2
 msgid "Fast"
-msgstr ""
+msgstr "빠름"
 
 #: hacks/config/ant.xml.h:6
 msgid "Four Sided Cells"
-msgstr ""
+msgstr "4각형 단위"
 
 #: hacks/config/ant.xml.h:7 hacks/config/attraction.xml.h:13
 #: hacks/config/cubenetic.xml.h:11 hacks/config/demon.xml.h:5
@@ -776,7 +781,7 @@ msgstr ""
 #: hacks/config/rubik.xml.h:4 hacks/config/sierpinski.xml.h:3
 #: hacks/config/slip.xml.h:3
 msgid "Large"
-msgstr ""
+msgstr "넓음"
 
 #: hacks/config/ant.xml.h:8 hacks/config/apollonian.xml.h:7
 #: hacks/config/attraction.xml.h:18 hacks/config/blaster.xml.h:6
@@ -813,11 +818,11 @@ msgstr ""
 #: hacks/config/worm.xml.h:4 hacks/config/xearth.xml.h:12
 #: hacks/config/xfishtank.xml.h:8
 msgid "Many"
-msgstr ""
+msgstr "많음"
 
 #: hacks/config/ant.xml.h:9
 msgid "Nine Sided Cells"
-msgstr ""
+msgstr "9각형 단위"
 
 #: hacks/config/ant.xml.h:10 hacks/config/apollonian.xml.h:8
 #: hacks/config/attraction.xml.h:19 hacks/config/bouboule.xml.h:6
@@ -848,19 +853,20 @@ msgstr ""
 #: hacks/config/vines.xml.h:3 hacks/config/worm.xml.h:5
 #: hacks/config/xearth.xml.h:17 hacks/config/xfishtank.xml.h:9
 msgid "Number of Colors"
-msgstr ""
+msgstr "색상 수"
 
 #: hacks/config/ant.xml.h:11
 msgid "Random Cell Shape"
-msgstr ""
+msgstr "무작위 단위"
 
 #: hacks/config/ant.xml.h:12 hacks/config/speedmine.xml.h:11
+#, fuzzy
 msgid "Sharp Turns"
-msgstr ""
+msgstr "갑자기 꺽여 돌기"
 
 #: hacks/config/ant.xml.h:13
 msgid "Six Sided Cells"
-msgstr ""
+msgstr "6각형 단위"
 
 #: hacks/config/ant.xml.h:14 hacks/config/apollonian.xml.h:11
 #: hacks/config/atlantis.xml.h:13 hacks/config/attraction.xml.h:26
@@ -925,7 +931,7 @@ msgstr ""
 #: hacks/config/xmatrix.xml.h:13 hacks/config/xmountains.xml.h:4
 #: hacks/config/xrayswarm.xml.h:3 hacks/config/zoom.xml.h:6
 msgid "Slow"
-msgstr ""
+msgstr "느림"
 
 #: hacks/config/ant.xml.h:15 hacks/config/attraction.xml.h:27
 #: hacks/config/cubenetic.xml.h:23 hacks/config/demon.xml.h:9
@@ -939,7 +945,7 @@ msgstr ""
 #: hacks/config/rubik.xml.h:10 hacks/config/sierpinski.xml.h:8
 #: hacks/config/slip.xml.h:8
 msgid "Small"
-msgstr ""
+msgstr "작음"
 
 #: hacks/config/ant.xml.h:16 hacks/config/apollonian.xml.h:12
 #: hacks/config/attraction.xml.h:28 hacks/config/blaster.xml.h:9
@@ -997,11 +1003,11 @@ msgstr ""
 #: hacks/config/xmatrix.xml.h:16 hacks/config/xmountains.xml.h:5
 #: hacks/config/xrayswarm.xml.h:4 hacks/config/zoom.xml.h:7
 msgid "Speed"
-msgstr ""
+msgstr "빠르기"
 
 #: hacks/config/ant.xml.h:17
 msgid "Three Sided Cells"
-msgstr ""
+msgstr "3각형 단위"
 
 #: hacks/config/ant.xml.h:18 hacks/config/demon.xml.h:12
 #: hacks/config/discrete.xml.h:10 hacks/config/fadeplot.xml.h:11
@@ -1010,7 +1016,7 @@ msgstr ""
 #: hacks/config/rubik.xml.h:12 hacks/config/sierpinski.xml.h:11
 #: hacks/config/slip.xml.h:11
 msgid "Timeout"
-msgstr ""
+msgstr "시간제한"
 
 #: hacks/config/ant.xml.h:19
 msgid "Truchet Lines"
@@ -1018,7 +1024,7 @@ msgstr ""
 
 #: hacks/config/ant.xml.h:20
 msgid "Twelve Sided Cells"
-msgstr ""
+msgstr "12각형 단위"
 
 #: hacks/config/ant.xml.h:21 hacks/config/apollonian.xml.h:13
 #: hacks/config/attraction.xml.h:32 hacks/config/bouboule.xml.h:11
@@ -1050,7 +1056,7 @@ msgstr ""
 #: hacks/config/worm.xml.h:9 hacks/config/xearth.xml.h:28
 #: hacks/config/xfishtank.xml.h:11
 msgid "Two"
-msgstr ""
+msgstr "둘"
 
 #: hacks/config/apollonian.xml.h:1
 msgid "Apollonian"
@@ -1080,7 +1086,7 @@ msgstr ""
 
 #: hacks/config/apollonian.xml.h:10
 msgid "Shallow"
-msgstr ""
+msgstr "얕음"
 
 #: hacks/config/atlantis.xml.h:1
 msgid "Agressive"
@@ -1088,7 +1094,7 @@ msgstr ""
 
 #: hacks/config/atlantis.xml.h:2
 msgid "Atlantis"
-msgstr ""
+msgstr "아틀란티스"
 
 #: hacks/config/atlantis.xml.h:3
 msgid "Clear Water"
@@ -1104,7 +1110,7 @@ msgstr ""
 
 #: hacks/config/atlantis.xml.h:7
 msgid "Number of Sharks"
-msgstr ""
+msgstr "상어 마리수"
 
 #: hacks/config/atlantis.xml.h:8
 msgid "Shark Proximity"
@@ -1112,7 +1118,7 @@ msgstr ""
 
 #: hacks/config/atlantis.xml.h:9
 msgid "Shark Speed"
-msgstr ""
+msgstr "상어 빠르기"
 
 #: hacks/config/atlantis.xml.h:10
 msgid "Shimmering Water"
@@ -1135,7 +1141,7 @@ msgstr ""
 #: hacks/config/sproingies.xml.h:4 hacks/config/stairs.xml.h:2
 #: hacks/config/starwars.xml.h:11 hacks/config/superquadrics.xml.h:6
 msgid "Show Frames-per-Second"
-msgstr ""
+msgstr "1초에 보여줄 수 있는 프레임 표시"
 
 #: hacks/config/atlantis.xml.h:12
 msgid "Shy"
@@ -1151,7 +1157,7 @@ msgstr ""
 #: hacks/config/sproingies.xml.h:7 hacks/config/stairs.xml.h:4
 #: hacks/config/stonerview.xml.h:2 hacks/config/superquadrics.xml.h:8
 msgid "Solid"
-msgstr ""
+msgstr "색상 채움"
 
 #: hacks/config/atlantis.xml.h:15
 msgid ""
@@ -1162,7 +1168,7 @@ msgstr ""
 
 #: hacks/config/atlantis.xml.h:16
 msgid "Whale Speed"
-msgstr ""
+msgstr "고래 빠르기"
 
 #: hacks/config/atlantis.xml.h:17 hacks/config/boxed.xml.h:8
 #: hacks/config/cage.xml.h:8 hacks/config/dangerball.xml.h:11
@@ -1180,16 +1186,19 @@ msgid "Wireframe"
 msgstr ""
 
 #: hacks/config/attraction.xml.h:1
+#, fuzzy
 msgid "Attraction"
-msgstr ""
+msgstr "길이 (천분의 일초)"
 
 #: hacks/config/attraction.xml.h:2
+#, fuzzy
 msgid "Ball Count"
-msgstr ""
+msgstr "계산:"
 
 #: hacks/config/attraction.xml.h:3
+#, fuzzy
 msgid "Ball Mass"
-msgstr ""
+msgstr "혼란"
 
 #: hacks/config/attraction.xml.h:4 hacks/config/fluidballs.xml.h:2
 msgid "Balls"
@@ -1203,15 +1212,16 @@ msgstr ""
 #: hacks/config/interference.xml.h:3 hacks/config/qix.xml.h:2
 #: hacks/config/wander.xml.h:3
 msgid "Color Contrast"
-msgstr ""
+msgstr "색상 밝기"
 
 #: hacks/config/attraction.xml.h:7
 msgid "Environmental Viscosity"
 msgstr ""
 
 #: hacks/config/attraction.xml.h:9
+#, fuzzy
 msgid "Filled Splines"
-msgstr ""
+msgstr "개비"
 
 #: hacks/config/attraction.xml.h:10 hacks/config/ccurve.xml.h:9
 #: hacks/config/cubenetic.xml.h:10 hacks/config/euler2d.xml.h:5
@@ -1226,11 +1236,11 @@ msgstr ""
 #: hacks/config/superquadrics.xml.h:4 hacks/config/t3d.xml.h:7
 #: hacks/config/twang.xml.h:5 hacks/config/wander.xml.h:8
 msgid "High"
-msgstr ""
+msgstr "높음"
 
 #: hacks/config/attraction.xml.h:11
 msgid "Ignore Screen Edges"
-msgstr ""
+msgstr "화면 가장자리 무시"
 
 #: hacks/config/attraction.xml.h:12
 msgid "Inward"
@@ -1254,7 +1264,7 @@ msgstr ""
 #: hacks/config/lmorph.xml.h:7 hacks/config/pedal.xml.h:5
 #: hacks/config/starfish.xml.h:4 hacks/config/whirlygig.xml.h:3
 msgid "Lines"
-msgstr ""
+msgstr "선"
 
 #: hacks/config/attraction.xml.h:16 hacks/config/braid.xml.h:6
 #: hacks/config/cynosure.xml.h:5 hacks/config/drift.xml.h:8
@@ -1267,7 +1277,7 @@ msgstr ""
 #: hacks/config/spheremonics.xml.h:7 hacks/config/wander.xml.h:10
 #: hacks/config/whirlwindwarp.xml.h:3
 msgid "Long"
-msgstr ""
+msgstr "김"
 
 #: hacks/config/attraction.xml.h:17 hacks/config/ccurve.xml.h:10
 #: hacks/config/cubenetic.xml.h:12 hacks/config/euler2d.xml.h:7
@@ -1282,7 +1292,7 @@ msgstr ""
 #: hacks/config/superquadrics.xml.h:5 hacks/config/t3d.xml.h:8
 #: hacks/config/twang.xml.h:7 hacks/config/wander.xml.h:11
 msgid "Low"
-msgstr ""
+msgstr "낮음"
 
 #: hacks/config/attraction.xml.h:20
 msgid "Orbital Mode"
@@ -1294,7 +1304,7 @@ msgstr ""
 
 #: hacks/config/attraction.xml.h:22
 msgid "Polygons"
-msgstr ""
+msgstr "폴리곤"
 
 #: hacks/config/attraction.xml.h:23 hacks/config/spotlight.xml.h:3
 msgid "Radius"
@@ -1314,24 +1324,26 @@ msgstr ""
 #: hacks/config/sierpinski3d.xml.h:5 hacks/config/spheremonics.xml.h:17
 #: hacks/config/wander.xml.h:12 hacks/config/whirlwindwarp.xml.h:6
 msgid "Short"
-msgstr ""
+msgstr "짧음"
 
 #: hacks/config/attraction.xml.h:29
 msgid "Splines"
-msgstr ""
+msgstr "개비"
 
 #: hacks/config/attraction.xml.h:30
 msgid "Tails"
-msgstr ""
+msgstr "꼬리"
 
 #: hacks/config/attraction.xml.h:31 hacks/config/euler2d.xml.h:16
 #: hacks/config/juggle.xml.h:9
+#, fuzzy
 msgid "Trail Length"
-msgstr ""
+msgstr "길이"
 
 #: hacks/config/blaster.xml.h:1
+#, fuzzy
 msgid "Blaster"
-msgstr ""
+msgstr "빠르게"
 
 #: hacks/config/blaster.xml.h:2
 msgid ""
@@ -1349,27 +1361,28 @@ msgstr ""
 #: hacks/config/thornbird.xml.h:3 hacks/config/whirlwindwarp.xml.h:1
 #: hacks/config/xfishtank.xml.h:4
 msgid "Few"
-msgstr ""
+msgstr "적음"
 
 #: hacks/config/blaster.xml.h:5 hacks/config/penetrate.xml.h:4
 msgid "Lasers"
-msgstr ""
+msgstr "레이져"
 
 #: hacks/config/blaster.xml.h:7
 msgid "Robots"
-msgstr ""
+msgstr "로봇"
 
 #: hacks/config/blaster.xml.h:10
 msgid "Stars"
-msgstr ""
+msgstr "별"
 
 #: hacks/config/blitspin.xml.h:1
-msgid "90� Rotation Speed"
-msgstr ""
+#, fuzzy
+msgid "90 Rotation Speed"
+msgstr "회전 빠르기"
 
 #: hacks/config/blitspin.xml.h:2
 msgid "Bitmap to rotate"
-msgstr ""
+msgstr "회전할 그림"
 
 #: hacks/config/blitspin.xml.h:3
 msgid "BlitSpin"
@@ -1402,11 +1415,11 @@ msgstr ""
 
 #: hacks/config/bouboule.xml.h:2 hacks/config/rocks.xml.h:3
 msgid "Do Red/Blue 3D seperation"
-msgstr ""
+msgstr "빨강/파랑  3d 분리 사용"
 
 #: hacks/config/bouboule.xml.h:7
 msgid "Number of Spots"
-msgstr ""
+msgstr "점의 개수"
 
 #: hacks/config/bouboule.xml.h:10
 msgid ""
@@ -1419,7 +1432,7 @@ msgstr ""
 #: hacks/config/rd-bomb.xml.h:6 hacks/config/rocks.xml.h:1
 #: hacks/config/starwars.xml.h:1 hacks/config/xfishtank.xml.h:1
 msgid "Animation Speed"
-msgstr ""
+msgstr "움직임 속도"
 
 #: hacks/config/boxed.xml.h:2
 msgid "Boxed"
@@ -1459,41 +1472,42 @@ msgstr ""
 #: hacks/config/vidwhacker.xml.h:3 hacks/config/wander.xml.h:7
 #: hacks/config/xspirograph.xml.h:3
 msgid "Duration"
-msgstr ""
+msgstr "시간"
 
 #: hacks/config/braid.xml.h:5 hacks/config/epicycle.xml.h:7
 #: hacks/config/nerverot.xml.h:12
 msgid "Line Thickness"
-msgstr ""
+msgstr "선 굵기"
 
 #: hacks/config/braid.xml.h:8
+#, fuzzy
 msgid "Max Rings"
-msgstr ""
+msgstr "주요 설정"
 
 #: hacks/config/bsod.xml.h:1 hacks/config/molecule.xml.h:1
 #: hacks/config/vidwhacker.xml.h:1 hacks/config/webcollage.xml.h:1
 msgid "2 minutes"
-msgstr ""
+msgstr "2분"
 
 #: hacks/config/bsod.xml.h:2 hacks/config/molecule.xml.h:2
 msgid "5 seconds"
-msgstr ""
+msgstr "5초"
 
 #: hacks/config/bsod.xml.h:3
 msgid "AmigaDOS"
-msgstr ""
+msgstr "아미가OS"
 
 #: hacks/config/bsod.xml.h:4
 msgid "Atari"
-msgstr ""
+msgstr "아타리"
 
 #: hacks/config/bsod.xml.h:5
 msgid "BSD"
-msgstr ""
+msgstr "BSD"
 
 #: hacks/config/bsod.xml.h:6
 msgid "BSOD"
-msgstr ""
+msgstr "파란 화면"
 
 #: hacks/config/bsod.xml.h:7
 msgid ""
@@ -1512,11 +1526,11 @@ msgstr ""
 
 #: hacks/config/bsod.xml.h:11
 msgid "NCD X Terminal"
-msgstr ""
+msgstr "NCD X 터미널"
 
 #: hacks/config/bsod.xml.h:12
 msgid "SCO"
-msgstr ""
+msgstr "SCO"
 
 #: hacks/config/bsod.xml.h:13
 msgid "Sad Mac"
@@ -1524,23 +1538,23 @@ msgstr ""
 
 #: hacks/config/bsod.xml.h:14
 msgid "Solaris"
-msgstr ""
+msgstr "솔라리스"
 
 #: hacks/config/bsod.xml.h:15
 msgid "Sparc Linux"
-msgstr ""
+msgstr "Sparc 리눅스"
 
 #: hacks/config/bsod.xml.h:16
 msgid "Windows"
-msgstr ""
+msgstr "윈도우즈"
 
 #: hacks/config/bsod.xml.h:17
 msgid "Windows 2000"
-msgstr ""
+msgstr "윈도우즈 2000"
 
 #: hacks/config/bsod.xml.h:18
 msgid "Windows NT"
-msgstr ""
+msgstr "윈도우즈 NT"
 
 #: hacks/config/bubble3d.xml.h:1
 msgid "Bubble3D"
@@ -1554,7 +1568,7 @@ msgstr ""
 
 #: hacks/config/bubbles.xml.h:1 hacks/config/xfishtank.xml.h:2
 msgid "Bubbles"
-msgstr ""
+msgstr "거품"
 
 #: hacks/config/bubbles.xml.h:2
 msgid "Bubbles Fall"
@@ -1569,20 +1583,22 @@ msgid "Bubbles Rise"
 msgstr ""
 
 #: hacks/config/bubbles.xml.h:5
+#, fuzzy
 msgid "Bubbles exist in three dimensions"
-msgstr ""
+msgstr "삼차원에 거품존재."
 
 #: hacks/config/bubbles.xml.h:6
 msgid "Don't hide bubbles when they pop"
-msgstr ""
+msgstr "거품이 터질때 숨기지 않음"
 
 #: hacks/config/bubbles.xml.h:7
 msgid "Draw circles instead of pixmap bubbles"
-msgstr ""
+msgstr "거품 그림대신 원을 그림"
 
 #: hacks/config/bubbles.xml.h:9
+#, fuzzy
 msgid "Leave Trails"
-msgstr ""
+msgstr "꼬리"
 
 #: hacks/config/bubbles.xml.h:12
 msgid ""
@@ -1603,8 +1619,9 @@ msgid "Bumps"
 msgstr ""
 
 #: hacks/config/cage.xml.h:1
+#, fuzzy
 msgid "Cage"
-msgstr ""
+msgstr "크게"
 
 #: hacks/config/cage.xml.h:7
 msgid ""
@@ -1614,15 +1631,15 @@ msgstr ""
 
 #: hacks/config/ccurve.xml.h:1
 msgid "0 seconds"
-msgstr ""
+msgstr "0초"
 
 #: hacks/config/ccurve.xml.h:2 hacks/config/epicycle.xml.h:1
 msgid "1 minute"
-msgstr ""
+msgstr "1분"
 
 #: hacks/config/ccurve.xml.h:3 hacks/config/epicycle.xml.h:2
 msgid "1 second"
-msgstr ""
+msgstr "1초"
 
 #: hacks/config/ccurve.xml.h:4
 msgid "C Curve"
@@ -1630,14 +1647,14 @@ msgstr ""
 
 #: hacks/config/ccurve.xml.h:5
 msgid "Delay"
-msgstr ""
+msgstr "지연"
 
 #: hacks/config/ccurve.xml.h:6 hacks/config/coral.xml.h:5
 #: hacks/config/imsmap.xml.h:5 hacks/config/kumppa.xml.h:1
 #: hacks/config/qix.xml.h:6 hacks/config/squiral.xml.h:2
 #: hacks/config/wander.xml.h:4
 msgid "Density"
-msgstr ""
+msgstr "밀도"
 
 #: hacks/config/ccurve.xml.h:8
 msgid ""
@@ -1659,8 +1676,9 @@ msgid "Directional Lighting"
 msgstr ""
 
 #: hacks/config/circuit.xml.h:5
+#, fuzzy
 msgid "Flat Coloring"
-msgstr ""
+msgstr "칼라"
 
 #: hacks/config/circuit.xml.h:6
 msgid "Parts"
@@ -1672,22 +1690,22 @@ msgstr ""
 
 #: hacks/config/circuit.xml.h:8
 msgid "Rotation Speed"
-msgstr ""
+msgstr "회전 빠르기"
 
 #: hacks/config/circuit.xml.h:12 hacks/config/dangerball.xml.h:9
 #: hacks/config/engine.xml.h:7
 msgid "Spin"
-msgstr ""
+msgstr "회전함"
 
 #: hacks/config/compass.xml.h:1
 msgid "Compass"
-msgstr ""
+msgstr "나침반"
 
 #: hacks/config/compass.xml.h:2 hacks/config/deluxe.xml.h:3
 #: hacks/config/interference.xml.h:4 hacks/config/kumppa.xml.h:2
 #: hacks/config/nerverot.xml.h:6 hacks/config/pipes.xml.h:4
 msgid "Double Buffer"
-msgstr ""
+msgstr "더블 버퍼링 사용"
 
 #: hacks/config/compass.xml.h:6
 msgid ""
@@ -1702,7 +1720,7 @@ msgstr ""
 #: hacks/config/rotzoomer.xml.h:2 hacks/config/wander.xml.h:2
 #: hacks/config/xspirograph.xml.h:1
 msgid "1 Minute"
-msgstr ""
+msgstr "1분"
 
 #: hacks/config/coral.xml.h:2 hacks/config/deco.xml.h:2
 #: hacks/config/helix.xml.h:2 hacks/config/imsmap.xml.h:2
@@ -1710,22 +1728,23 @@ msgstr ""
 #: hacks/config/penrose.xml.h:1 hacks/config/rorschach.xml.h:2
 #: hacks/config/xspirograph.xml.h:2
 msgid "1 Second"
-msgstr ""
+msgstr "1초"
 
 #: hacks/config/coral.xml.h:3
+#, fuzzy
 msgid "Coral"
-msgstr ""
+msgstr "수정"
 
 #: hacks/config/coral.xml.h:4 hacks/config/gflux.xml.h:3
 #: hacks/config/imsmap.xml.h:4 hacks/config/pyro.xml.h:2
 #: hacks/config/qix.xml.h:5 hacks/config/squiral.xml.h:1
 #: hacks/config/xearth.xml.h:4
 msgid "Dense"
-msgstr ""
+msgstr "빡빡함"
 
 #: hacks/config/coral.xml.h:10 hacks/config/squiral.xml.h:13
 msgid "Seeds"
-msgstr ""
+msgstr "씨앗"
 
 #: hacks/config/coral.xml.h:11
 msgid ""
@@ -1738,11 +1757,11 @@ msgstr ""
 #: hacks/config/qix.xml.h:21 hacks/config/squiral.xml.h:15
 #: hacks/config/xearth.xml.h:24 hacks/config/xmatrix.xml.h:15
 msgid "Sparse"
-msgstr ""
+msgstr "드뭄"
 
 #: hacks/config/cosmos.xml.h:1
 msgid "Cosmos"
-msgstr ""
+msgstr "우주"
 
 #: hacks/config/cosmos.xml.h:2
 msgid ""
@@ -1751,8 +1770,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/critical.xml.h:1
+#, fuzzy
 msgid "Critical"
-msgstr ""
+msgstr "수정"
 
 #: hacks/config/critical.xml.h:2
 msgid ""
@@ -1778,15 +1798,16 @@ msgstr ""
 #: hacks/config/superquadrics.xml.h:1 hacks/config/swirl.xml.h:1
 #: hacks/config/worm.xml.h:2
 msgid "Count"
-msgstr ""
+msgstr "개수"
 
 #: hacks/config/crystal.xml.h:3
 msgid "Crystal"
-msgstr ""
+msgstr "수정"
 
 #: hacks/config/crystal.xml.h:4
+#, fuzzy
 msgid "Draw Cell"
-msgstr ""
+msgstr "단위"
 
 #: hacks/config/crystal.xml.h:5 hacks/config/spheremonics.xml.h:3
 #: hacks/config/xearth.xml.h:6
@@ -1794,8 +1815,9 @@ msgid "Draw Grid"
 msgstr ""
 
 #: hacks/config/crystal.xml.h:7
+#, fuzzy
 msgid "Horizontal Symmetries"
-msgstr ""
+msgstr "가로로 서서히 변화"
 
 #: hacks/config/crystal.xml.h:9
 msgid ""
@@ -1804,8 +1826,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/crystal.xml.h:14
+#, fuzzy
 msgid "Vertical Symmetries"
-msgstr ""
+msgstr "세로로 서서히 변화"
 
 #: hacks/config/cubenetic.xml.h:1
 msgid "Boxes"
@@ -1816,8 +1839,9 @@ msgid "Cubenetic"
 msgstr ""
 
 #: hacks/config/cubenetic.xml.h:3
+#, fuzzy
 msgid "Display Solid Colors"
-msgstr ""
+msgstr "채운 색상"
 
 #: hacks/config/cubenetic.xml.h:4
 msgid "Display Surface Patterns"
@@ -1831,7 +1855,7 @@ msgstr ""
 #: hacks/config/menger.xml.h:1 hacks/config/molecule.xml.h:4
 #: hacks/config/spheremonics.xml.h:1
 msgid "Don't Rotate"
-msgstr ""
+msgstr "회전하지 않음"
 
 #: hacks/config/cubenetic.xml.h:7
 msgid ""
@@ -1844,43 +1868,43 @@ msgstr ""
 #: hacks/config/menger.xml.h:7 hacks/config/molecule.xml.h:14
 #: hacks/config/spheremonics.xml.h:10
 msgid "Rotate around X and Y axes"
-msgstr ""
+msgstr "X축과 Y축으로 회전"
 
 #: hacks/config/cubenetic.xml.h:15 hacks/config/gltext.xml.h:6
 #: hacks/config/menger.xml.h:8 hacks/config/molecule.xml.h:15
 #: hacks/config/spheremonics.xml.h:11
 msgid "Rotate around X and Z axes"
-msgstr ""
+msgstr "X축과 Z축으로 회전"
 
 #: hacks/config/cubenetic.xml.h:16 hacks/config/gltext.xml.h:7
 #: hacks/config/menger.xml.h:9 hacks/config/molecule.xml.h:16
 #: hacks/config/spheremonics.xml.h:12
 msgid "Rotate around X axis"
-msgstr ""
+msgstr "X축으로 회전"
 
 #: hacks/config/cubenetic.xml.h:17 hacks/config/gltext.xml.h:8
 #: hacks/config/menger.xml.h:10 hacks/config/molecule.xml.h:17
 #: hacks/config/spheremonics.xml.h:13
 msgid "Rotate around Y and Z axes"
-msgstr ""
+msgstr "Y축과 Z축으로 회전"
 
 #: hacks/config/cubenetic.xml.h:18 hacks/config/gltext.xml.h:9
 #: hacks/config/menger.xml.h:11 hacks/config/molecule.xml.h:18
 #: hacks/config/spheremonics.xml.h:14
 msgid "Rotate around Y axis"
-msgstr ""
+msgstr "Y축으로 회전"
 
 #: hacks/config/cubenetic.xml.h:19 hacks/config/gltext.xml.h:10
 #: hacks/config/menger.xml.h:12 hacks/config/molecule.xml.h:19
 #: hacks/config/spheremonics.xml.h:15
 msgid "Rotate around Z axis"
-msgstr ""
+msgstr "Z축으로 회전"
 
 #: hacks/config/cubenetic.xml.h:20 hacks/config/gltext.xml.h:11
 #: hacks/config/menger.xml.h:13 hacks/config/molecule.xml.h:20
 #: hacks/config/spheremonics.xml.h:16
 msgid "Rotate around all three axes"
-msgstr ""
+msgstr "모든 세 축으로 회전"
 
 #: hacks/config/cubenetic.xml.h:25
 msgid "Surface Pattern Complexity"
@@ -1900,7 +1924,7 @@ msgstr ""
 #: hacks/config/molecule.xml.h:25 hacks/config/spheremonics.xml.h:25
 #: hacks/config/wander.xml.h:15
 msgid "Wander"
-msgstr ""
+msgstr "떠돌아 다님"
 
 #: hacks/config/cynosure.xml.h:1
 msgid ""
@@ -1911,8 +1935,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/cynosure.xml.h:2
+#, fuzzy
 msgid "Cynosure"
-msgstr ""
+msgstr "닫기"
 
 #: hacks/config/dangerball.xml.h:1
 msgid "DangerBall"
@@ -1942,59 +1967,59 @@ msgstr ""
 
 #: hacks/config/decayscreen.xml.h:4
 msgid "Melt Away From Center"
-msgstr ""
+msgstr "화면 바깥으로 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:5
 msgid "Melt Down"
-msgstr ""
+msgstr "아래로 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:6
 msgid "Melt Down, Left"
-msgstr ""
+msgstr "왼쪽 아래로 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:7
 msgid "Melt Down, Right"
-msgstr ""
+msgstr "오른쪽 아래로 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:8
 msgid "Melt Left"
-msgstr ""
+msgstr "왼쪽으로 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:9
 msgid "Melt Right"
-msgstr ""
+msgstr "오른쪽으로 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:10
 msgid "Melt Towards Center"
-msgstr ""
+msgstr "중앙으로 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:11
 msgid "Melt Up"
-msgstr ""
+msgstr "위로 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:12
 msgid "Melt Up, Left"
-msgstr ""
+msgstr "왼쪽 위로 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:13
 msgid "Melt Up, Right"
-msgstr ""
+msgstr "오른쪽 위로 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:14
 msgid "Melty Melt"
-msgstr ""
+msgstr "녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:15
 msgid "Random Melt Style"
-msgstr ""
+msgstr "아무 스타일로 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:16
 msgid "Shuffle Melt"
-msgstr ""
+msgstr "아무데나 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:19
 msgid "Stretchy Melt"
-msgstr ""
+msgstr "늘어져서 녹아 내림"
 
 #: hacks/config/decayscreen.xml.h:20
 msgid ""
@@ -2006,8 +2031,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/deco.xml.h:3
+#, fuzzy
 msgid "Deco"
-msgstr ""
+msgstr "데모"
 
 #: hacks/config/deco.xml.h:6 hacks/config/menger.xml.h:5
 #: hacks/config/sierpinski3d.xml.h:4
@@ -2015,8 +2041,9 @@ msgid "Max Depth"
 msgstr ""
 
 #: hacks/config/deco.xml.h:7
+#, fuzzy
 msgid "Min Size"
-msgstr ""
+msgstr "크기:"
 
 #: hacks/config/deco.xml.h:9
 msgid ""
@@ -2039,12 +2066,12 @@ msgstr ""
 #: hacks/config/deluxe.xml.h:10 hacks/config/lmorph.xml.h:13
 #: hacks/config/starfish.xml.h:11 hacks/config/thornbird.xml.h:9
 msgid "Thick"
-msgstr ""
+msgstr "굵기"
 
 #: hacks/config/deluxe.xml.h:11 hacks/config/lmorph.xml.h:14
 #: hacks/config/starfish.xml.h:12 hacks/config/thornbird.xml.h:11
 msgid "Thin"
-msgstr ""
+msgstr "얕음"
 
 #: hacks/config/deluxe.xml.h:12
 msgid ""
@@ -2056,7 +2083,7 @@ msgstr ""
 
 #: hacks/config/deluxe.xml.h:13
 msgid "Transparency"
-msgstr ""
+msgstr "투명"
 
 #: hacks/config/demon.xml.h:1
 msgid ""
@@ -2066,7 +2093,7 @@ msgstr ""
 
 #: hacks/config/demon.xml.h:2 hacks/config/petri.xml.h:1
 msgid "Cell Size"
-msgstr ""
+msgstr "단위 크기"
 
 #: hacks/config/demon.xml.h:3
 msgid "Demon"
@@ -2087,8 +2114,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/distort.xml.h:1
+#, fuzzy
 msgid "Black Hole"
-msgstr ""
+msgstr "누를때 소리 크기"
 
 #: hacks/config/distort.xml.h:2
 msgid "Bounce"
@@ -2099,8 +2127,9 @@ msgid "Distort"
 msgstr ""
 
 #: hacks/config/distort.xml.h:6
+#, fuzzy
 msgid "Lens Count"
-msgstr ""
+msgstr "계산:"
 
 #: hacks/config/distort.xml.h:7
 msgid "Lens Size"
@@ -2112,8 +2141,9 @@ msgstr ""
 
 #: hacks/config/distort.xml.h:9 hacks/config/glforestfire.xml.h:10
 #: hacks/config/lament.xml.h:4 hacks/config/sballs.xml.h:6
+#, fuzzy
 msgid "Normal"
-msgstr ""
+msgstr "수정"
 
 #: hacks/config/distort.xml.h:10
 msgid "Reflect"
@@ -2135,7 +2165,7 @@ msgstr ""
 #: hacks/config/rotzoomer.xml.h:10 hacks/config/swirl.xml.h:10
 #: hacks/config/twang.xml.h:15 hacks/config/xflame.xml.h:7
 msgid "Use Shared Memory"
-msgstr ""
+msgstr "공유 메모리 사용"
 
 #: hacks/config/distort.xml.h:17
 msgid "Vortex"
@@ -2146,8 +2176,9 @@ msgid "Drift"
 msgstr ""
 
 #: hacks/config/drift.xml.h:4
+#, fuzzy
 msgid "Fractal Growth"
-msgstr ""
+msgstr "프랙탈이 커짐"
 
 #: hacks/config/drift.xml.h:5
 msgid "High Dimensional Sphere"
@@ -2214,8 +2245,9 @@ msgid "Particles"
 msgstr ""
 
 #: hacks/config/euler2d.xml.h:11
+#, fuzzy
 msgid "Power"
-msgstr ""
+msgstr "느리게"
 
 #: hacks/config/euler2d.xml.h:13
 msgid ""
@@ -2251,8 +2283,9 @@ msgid "Join Offset"
 msgstr ""
 
 #: hacks/config/extrusion.xml.h:8
+#, fuzzy
 msgid "Random Object"
-msgstr ""
+msgstr "무작위"
 
 #: hacks/config/extrusion.xml.h:9
 msgid "Screw"
@@ -2263,12 +2296,14 @@ msgid "Taper"
 msgstr ""
 
 #: hacks/config/extrusion.xml.h:15
+#, fuzzy
 msgid "Texture Image"
-msgstr ""
+msgstr "중앙의 그림."
 
 #: hacks/config/extrusion.xml.h:16
+#, fuzzy
 msgid "Twistoid"
-msgstr ""
+msgstr "꼬임:"
 
 #: hacks/config/extrusion.xml.h:17 hacks/config/glplanet.xml.h:9
 #: hacks/config/pulsar.xml.h:19
@@ -2291,15 +2326,15 @@ msgstr ""
 
 #: hacks/config/flag.xml.h:1
 msgid "Bitmap for Flag"
-msgstr ""
+msgstr "깃발의 그림"
 
 #: hacks/config/flag.xml.h:3
 msgid "Flag"
-msgstr ""
+msgstr "깃발"
 
 #: hacks/config/flag.xml.h:10
 msgid "Text for Flag"
-msgstr ""
+msgstr "깃발의 글자"
 
 #: hacks/config/flag.xml.h:11
 msgid ""
@@ -2314,11 +2349,11 @@ msgstr ""
 #: hacks/config/maze.xml.h:1 hacks/config/rotzoomer.xml.h:1
 #: hacks/config/wander.xml.h:1
 msgid "0 Seconds"
-msgstr ""
+msgstr "0초"
 
 #: hacks/config/flame.xml.h:2 hacks/config/maze.xml.h:2
 msgid "10 Seconds"
-msgstr ""
+msgstr "10초"
 
 #: hacks/config/flame.xml.h:3
 msgid "Another iterative fractal generator. Written by Scott Draves."
@@ -2326,7 +2361,7 @@ msgstr ""
 
 #: hacks/config/flame.xml.h:4
 msgid "Complexity"
-msgstr ""
+msgstr "복잡도"
 
 #: hacks/config/flame.xml.h:8
 msgid "Flame"
@@ -2334,7 +2369,7 @@ msgstr ""
 
 #: hacks/config/flame.xml.h:13
 msgid "Number of Fractals"
-msgstr ""
+msgstr "프랙탈 개수"
 
 #: hacks/config/flipscreen3d.xml.h:2
 msgid "Flipscreen3d"
@@ -2358,7 +2393,7 @@ msgstr ""
 
 #: hacks/config/flow.xml.h:5
 msgid "Flow"
-msgstr ""
+msgstr "흐름"
 
 #: hacks/config/flow.xml.h:6
 msgid "Freeze Some Bees"
@@ -2389,16 +2424,18 @@ msgid "Ball Size"
 msgstr ""
 
 #: hacks/config/fluidballs.xml.h:5
+#, fuzzy
 msgid "FluidBalls"
-msgstr ""
+msgstr "혼란"
 
 #: hacks/config/fluidballs.xml.h:6
 msgid "Freefall"
 msgstr ""
 
 #: hacks/config/fluidballs.xml.h:7 hacks/config/twang.xml.h:4
+#, fuzzy
 msgid "Friction"
-msgstr ""
+msgstr "설명"
 
 #: hacks/config/fluidballs.xml.h:8
 msgid "Glass"
@@ -2426,8 +2463,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/fluidballs.xml.h:15
+#, fuzzy
 msgid "Sandpaper"
-msgstr ""
+msgstr "넓음"
 
 #: hacks/config/fluidballs.xml.h:16
 msgid "Shake Box"
@@ -2442,12 +2480,13 @@ msgid "Various Ball Sizes"
 msgstr ""
 
 #: hacks/config/fluidballs.xml.h:23
+#, fuzzy
 msgid "Wind"
-msgstr ""
+msgstr "넓음"
 
 #: hacks/config/forest.xml.h:2 hacks/config/glforestfire.xml.h:6
 msgid "Forest"
-msgstr ""
+msgstr "숲"
 
 #: hacks/config/forest.xml.h:7
 msgid ""
@@ -2465,7 +2504,7 @@ msgstr ""
 #: hacks/config/rubik.xml.h:8 hacks/config/sproingies.xml.h:5
 #: hacks/config/wander.xml.h:13 hacks/config/worm.xml.h:6
 msgid "Size"
-msgstr ""
+msgstr "크기"
 
 #: hacks/config/galaxy.xml.h:12
 msgid ""
@@ -2516,29 +2555,30 @@ msgid "GFlux"
 msgstr ""
 
 #: hacks/config/gflux.xml.h:9
+#, fuzzy
 msgid "Mesh Density"
-msgstr ""
+msgstr "밀도"
 
 #: hacks/config/gflux.xml.h:10
-#, fuzzy
 msgid "Screen Image"
-msgstr "ȭ�� ��ȣ��"
+msgstr "화면 그림"
 
 #: hacks/config/gflux.xml.h:14 hacks/config/interference.xml.h:18
 msgid "Wave Speed"
-msgstr ""
+msgstr "물결 빠르기"
 
 #: hacks/config/gflux.xml.h:15
 msgid "Waves"
-msgstr ""
+msgstr "물결"
 
 #: hacks/config/gflux.xml.h:16
 msgid "Wire Mesh"
 msgstr ""
 
 #: hacks/config/glforestfire.xml.h:2
+#, fuzzy
 msgid "Desert"
-msgstr ""
+msgstr "빡빡하게"
 
 #: hacks/config/glforestfire.xml.h:3
 msgid ""
@@ -2552,8 +2592,9 @@ msgid "Fog"
 msgstr ""
 
 #: hacks/config/glforestfire.xml.h:7
+#, fuzzy
 msgid "GLForestFire"
-msgstr ""
+msgstr "숲"
 
 #: hacks/config/glforestfire.xml.h:8
 msgid "Huge Fire"
@@ -2561,11 +2602,11 @@ msgstr ""
 
 #: hacks/config/glforestfire.xml.h:9
 msgid "No shadow"
-msgstr ""
+msgstr "그림자 없음"
 
 #: hacks/config/glforestfire.xml.h:11
 msgid "Number of trees"
-msgstr ""
+msgstr "나무 개수"
 
 #: hacks/config/glforestfire.xml.h:12
 msgid "Rain"
@@ -2578,7 +2619,7 @@ msgstr ""
 #: hacks/config/glforestfire.xml.h:18 hacks/config/lament.xml.h:8
 #: hacks/config/sballs.xml.h:17
 msgid "Untextured"
-msgstr ""
+msgstr "텍스쳐 없음"
 
 #: hacks/config/glplanet.xml.h:1
 msgid ""
@@ -2594,15 +2635,15 @@ msgstr ""
 
 #: hacks/config/glplanet.xml.h:4
 msgid "Image File"
-msgstr ""
+msgstr "그림 파일"
 
 #: hacks/config/glsnake.xml.h:1
 msgid "1"
-msgstr ""
+msgstr "1"
 
 #: hacks/config/glsnake.xml.h:2 hacks/config/penrose.xml.h:2
 msgid "30 Seconds"
-msgstr ""
+msgstr "30초"
 
 #: hacks/config/glsnake.xml.h:3
 msgid ""
@@ -2623,28 +2664,30 @@ msgid "Packing"
 msgstr ""
 
 #: hacks/config/glsnake.xml.h:9
+#, fuzzy
 msgid "Scary Colors"
-msgstr ""
+msgstr "색상:"
 
 #: hacks/config/glsnake.xml.h:11
 msgid "Show Labels"
 msgstr ""
 
 #: hacks/config/glsnake.xml.h:14
+#, fuzzy
 msgid "Tight"
-msgstr ""
+msgstr "높음"
 
 #: hacks/config/glsnake.xml.h:15 hacks/config/rocks.xml.h:13
 msgid "Velocity"
-msgstr ""
+msgstr "속도"
 
 #: hacks/config/glsnake.xml.h:17
 msgid "Y Rotation"
-msgstr ""
+msgstr "Y축 회전"
 
 #: hacks/config/glsnake.xml.h:18
 msgid "Z Rotation"
-msgstr ""
+msgstr "Z축 회전"
 
 #: hacks/config/gltext.xml.h:1
 msgid ""
@@ -2653,12 +2696,14 @@ msgid ""
 msgstr ""
 
 #: hacks/config/gltext.xml.h:4
+#, fuzzy
 msgid "GLText"
-msgstr ""
+msgstr "테스트"
 
 #: hacks/config/gltext.xml.h:16 hacks/config/noseguy.xml.h:5
+#, fuzzy
 msgid "Text"
-msgstr ""
+msgstr "테스트"
 
 #: hacks/config/goban.xml.h:1
 msgid "Goban"
@@ -2675,8 +2720,9 @@ msgid "Additive Colors (reflected light)"
 msgstr ""
 
 #: hacks/config/goop.xml.h:2
+#, fuzzy
 msgid "Blob Count"
-msgstr ""
+msgstr "계산:"
 
 #: hacks/config/goop.xml.h:3
 msgid "Elasticity"
@@ -2692,7 +2738,7 @@ msgstr ""
 
 #: hacks/config/goop.xml.h:12
 msgid "Speed Limit"
-msgstr ""
+msgstr "빠르기 제한"
 
 #: hacks/config/goop.xml.h:13
 msgid "Subtractive Colors (transmitted light)"
@@ -2710,24 +2756,28 @@ msgid ""
 msgstr ""
 
 #: hacks/config/goop.xml.h:15
+#, fuzzy
 msgid "Transparent Blobs"
-msgstr ""
+msgstr "투명한 흔적"
 
 #: hacks/config/goop.xml.h:16
+#, fuzzy
 msgid "XOR Blobs"
-msgstr ""
+msgstr "꼬리"
 
 #: hacks/config/grav.xml.h:3
 msgid "Grav"
 msgstr ""
 
 #: hacks/config/grav.xml.h:6
+#, fuzzy
 msgid "Object Trails"
-msgstr ""
+msgstr "꼬리"
 
 #: hacks/config/grav.xml.h:7
+#, fuzzy
 msgid "Orbital Decay"
-msgstr ""
+msgstr "괘도를 속임."
 
 #: hacks/config/grav.xml.h:10
 msgid ""
@@ -2745,8 +2795,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/halo.xml.h:1
+#, fuzzy
 msgid "Animate Circles"
-msgstr ""
+msgstr "움직이는 원"
 
 #: hacks/config/halo.xml.h:3
 msgid "Halo"
@@ -2754,11 +2805,11 @@ msgstr ""
 
 #: hacks/config/halo.xml.h:5
 msgid "Number of Circles"
-msgstr ""
+msgstr "원 개수"
 
 #: hacks/config/halo.xml.h:7 hacks/config/imsmap.xml.h:11
 msgid "Random Mode"
-msgstr ""
+msgstr "무작위 모드"
 
 #: hacks/config/halo.xml.h:8
 msgid "Seuss Mode"
@@ -2810,12 +2861,14 @@ msgid "Hopalong"
 msgstr ""
 
 #: hacks/config/hopalong.xml.h:12
+#, fuzzy
 msgid "Jong"
-msgstr ""
+msgstr "길게"
 
 #: hacks/config/hopalong.xml.h:16
+#, fuzzy
 msgid "Martin"
-msgstr ""
+msgstr "주설정"
 
 #: hacks/config/hopalong.xml.h:18
 msgid "Popcorn"
@@ -2826,8 +2879,9 @@ msgid "RR"
 msgstr ""
 
 #: hacks/config/hopalong.xml.h:20
+#, fuzzy
 msgid "Sine"
-msgstr ""
+msgstr "개비"
 
 #: hacks/config/hopalong.xml.h:24
 msgid ""
@@ -2837,7 +2891,7 @@ msgstr ""
 
 #: hacks/config/hyperball.xml.h:1 hacks/config/hypercube.xml.h:1
 msgid "Far"
-msgstr ""
+msgstr "멀리"
 
 #: hacks/config/hyperball.xml.h:4
 msgid "Hyperball"
@@ -2852,7 +2906,7 @@ msgstr ""
 
 #: hacks/config/hyperball.xml.h:7 hacks/config/hypercube.xml.h:6
 msgid "Near"
-msgstr ""
+msgstr "가까움"
 
 #: hacks/config/hyperball.xml.h:10 hacks/config/hypercube.xml.h:10
 msgid "XW Rotation"
@@ -2881,7 +2935,7 @@ msgstr ""
 #: hacks/config/hyperball.xml.h:16 hacks/config/hypercube.xml.h:16
 #: hacks/config/zoom.xml.h:8
 msgid "Zoom"
-msgstr ""
+msgstr "확대"
 
 #: hacks/config/hypercube.xml.h:4
 msgid "Hypercube"
@@ -2921,8 +2975,9 @@ msgid "IMSmap"
 msgstr ""
 
 #: hacks/config/imsmap.xml.h:12
+#, fuzzy
 msgid "Saturation Gradients"
-msgstr ""
+msgstr "가로로 서서히 변화"
 
 #: hacks/config/imsmap.xml.h:14
 msgid ""
@@ -2940,7 +2995,7 @@ msgstr ""
 
 #: hacks/config/interference.xml.h:1
 msgid "Anim Speed"
-msgstr ""
+msgstr "움직임 빠르기"
 
 #: hacks/config/interference.xml.h:2
 msgid ""
@@ -2955,24 +3010,26 @@ msgstr ""
 
 #: hacks/config/interference.xml.h:10 hacks/config/t3d.xml.h:9
 #: hacks/config/xearth.xml.h:11 hacks/config/zoom.xml.h:5
+#, fuzzy
 msgid "Magnification"
-msgstr ""
+msgstr "설정"
 
 #: hacks/config/interference.xml.h:13
 msgid "Number of Waves"
-msgstr ""
+msgstr "물결 개수"
 
 #: hacks/config/interference.xml.h:17
 msgid "Wave Size"
-msgstr ""
+msgstr "물결 크기"
 
 #: hacks/config/jigsaw.xml.h:4
 msgid "Jigsaw"
 msgstr ""
 
 #: hacks/config/jigsaw.xml.h:6
+#, fuzzy
 msgid "Solved Duration"
-msgstr ""
+msgstr "회전 빠르기"
 
 #: hacks/config/jigsaw.xml.h:8
 msgid ""
@@ -2986,7 +3043,7 @@ msgstr ""
 
 #: hacks/config/juggle.xml.h:1
 msgid "Checkered Balls"
-msgstr ""
+msgstr "체크무뉘 공"
 
 #: hacks/config/juggle.xml.h:2
 msgid "Draws a juggling stick-man. Written by Tim Auckland."
@@ -2998,11 +3055,12 @@ msgstr ""
 
 #: hacks/config/juggle.xml.h:6 hacks/config/pipes.xml.h:10
 msgid "None"
-msgstr ""
+msgstr "없음"
 
 #: hacks/config/julia.xml.h:3 hacks/config/rorschach.xml.h:4
+#, fuzzy
 msgid "Iterations"
-msgstr ""
+msgstr "반복:"
 
 #: hacks/config/julia.xml.h:4
 msgid "Julia"
@@ -3032,15 +3090,15 @@ msgstr ""
 
 #: hacks/config/kaleidescope.xml.h:6 hacks/config/qix.xml.h:18
 msgid "Segments"
-msgstr ""
+msgstr "조각"
 
 #: hacks/config/kaleidescope.xml.h:9
 msgid "Symmetry"
-msgstr ""
+msgstr "대칭"
 
 #: hacks/config/kaleidescope.xml.h:10
 msgid "Trails"
-msgstr ""
+msgstr "꼬리"
 
 #: hacks/config/kumppa.xml.h:5
 msgid "Kumppa"
@@ -3048,7 +3106,7 @@ msgstr ""
 
 #: hacks/config/kumppa.xml.h:7
 msgid "Randomize"
-msgstr ""
+msgstr "무작위"
 
 #: hacks/config/kumppa.xml.h:10
 msgid ""
@@ -3064,12 +3122,14 @@ msgid ""
 msgstr ""
 
 #: hacks/config/lament.xml.h:3
+#, fuzzy
 msgid "Lament"
-msgstr ""
+msgstr "길이"
 
 #: hacks/config/laser.xml.h:4
+#, fuzzy
 msgid "Laser"
-msgstr ""
+msgstr "빠르게"
 
 #: hacks/config/laser.xml.h:7
 msgid ""
@@ -3088,8 +3148,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/lisa.xml.h:4
+#, fuzzy
 msgid "Lisa"
-msgstr ""
+msgstr "선"
 
 #: hacks/config/lisa.xml.h:10
 msgid "Steps"
@@ -3109,8 +3170,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/lissie.xml.h:5
+#, fuzzy
 msgid "Lissie"
-msgstr ""
+msgstr "적게"
 
 #: hacks/config/lmorph.xml.h:1
 msgid "Closed Figures"
@@ -3122,27 +3184,30 @@ msgstr ""
 
 #: hacks/config/lmorph.xml.h:4
 msgid "Interpolation Steps"
-msgstr ""
+msgstr "인터폴레이션 단계"
 
 #: hacks/config/lmorph.xml.h:5
+#, fuzzy
 msgid "LMorph"
-msgstr ""
+msgstr "많이"
 
 #: hacks/config/lmorph.xml.h:6
 msgid "Less"
-msgstr ""
+msgstr "적음"
 
 #: hacks/config/lmorph.xml.h:8
 msgid "More"
-msgstr ""
+msgstr "많음"
 
 #: hacks/config/lmorph.xml.h:9
+#, fuzzy
 msgid "Open Figures"
-msgstr ""
+msgstr " 설정..."
 
 #: hacks/config/lmorph.xml.h:10
+#, fuzzy
 msgid "Open and Closed Figures"
-msgstr ""
+msgstr " 설정..."
 
 #: hacks/config/lmorph.xml.h:15
 msgid ""
@@ -3185,24 +3250,28 @@ msgid "Maze"
 msgstr ""
 
 #: hacks/config/maze.xml.h:10
+#, fuzzy
 msgid "Post-Solve Delay"
-msgstr ""
+msgstr "긴 지연"
 
 #: hacks/config/maze.xml.h:11
+#, fuzzy
 msgid "Pre-Solve Delay"
-msgstr ""
+msgstr "긴 지연"
 
 #: hacks/config/maze.xml.h:12
+#, fuzzy
 msgid "Random Generator"
-msgstr ""
+msgstr "무작위"
 
 #: hacks/config/maze.xml.h:13
 msgid "Seeding Generator"
 msgstr ""
 
 #: hacks/config/maze.xml.h:15
+#, fuzzy
 msgid "Solve Speed"
-msgstr ""
+msgstr "빠르기"
 
 #: hacks/config/maze.xml.h:16
 msgid ""
@@ -3212,8 +3281,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/menger.xml.h:6
+#, fuzzy
 msgid "Menger"
-msgstr ""
+msgstr "빡빡하게"
 
 #: hacks/config/menger.xml.h:19
 msgid ""
@@ -3238,19 +3308,21 @@ msgstr ""
 
 #: hacks/config/moebius.xml.h:5
 msgid "Moebius"
-msgstr ""
+msgstr "모비우스"
 
 #: hacks/config/moebius.xml.h:8
+#, fuzzy
 msgid "Solid Floor"
-msgstr ""
+msgstr "채운 색상"
 
 #: hacks/config/moebius.xml.h:9 hacks/config/qix.xml.h:20
 msgid "Solid Objects"
 msgstr ""
 
 #: hacks/config/moire.xml.h:6
+#, fuzzy
 msgid "Moire"
-msgstr ""
+msgstr "많이"
 
 #: hacks/config/moire.xml.h:8 hacks/config/rorschach.xml.h:6
 msgid "Offset"
@@ -3277,24 +3349,25 @@ msgid ""
 msgstr ""
 
 #: hacks/config/moire2.xml.h:4
+#, fuzzy
 msgid "Moire2"
-msgstr ""
+msgstr "많이"
 
 #: hacks/config/moire2.xml.h:8 hacks/config/thornbird.xml.h:10
 msgid "Thickness"
-msgstr ""
+msgstr "굵음"
 
 #: hacks/config/molecule.xml.h:3
 msgid "Describe Molecule"
-msgstr ""
+msgstr "분자 설명"
 
 #: hacks/config/molecule.xml.h:5
 msgid "Draw Atomic Bonds"
-msgstr ""
+msgstr "원자 결합 그림"
 
 #: hacks/config/molecule.xml.h:6
 msgid "Draw Atoms"
-msgstr ""
+msgstr "원자 그림"
 
 #: hacks/config/molecule.xml.h:7 hacks/config/spheremonics.xml.h:2
 msgid "Draw Bounding Box"
@@ -3313,11 +3386,11 @@ msgstr ""
 
 #: hacks/config/molecule.xml.h:12
 msgid "Molecule"
-msgstr ""
+msgstr "분자"
 
 #: hacks/config/molecule.xml.h:13
 msgid "PDB File"
-msgstr ""
+msgstr "PDB 파일"
 
 #: hacks/config/morph3d.xml.h:1
 msgid ""
@@ -3337,7 +3410,7 @@ msgstr ""
 
 #: hacks/config/mountain.xml.h:5
 msgid "Mountain"
-msgstr ""
+msgstr "산"
 
 #: hacks/config/munch.xml.h:1
 msgid ""
@@ -3356,20 +3429,23 @@ msgid "XOR"
 msgstr ""
 
 #: hacks/config/nerverot.xml.h:1
+#, fuzzy
 msgid "Blot Count"
-msgstr ""
+msgstr "계산:"
 
 #: hacks/config/nerverot.xml.h:2
+#, fuzzy
 msgid "Calm"
-msgstr ""
+msgstr "수정"
 
 #: hacks/config/nerverot.xml.h:3
+#, fuzzy
 msgid "Changes"
-msgstr ""
+msgstr "크게"
 
 #: hacks/config/nerverot.xml.h:4
 msgid "Colors"
-msgstr ""
+msgstr "색상"
 
 #: hacks/config/nerverot.xml.h:5
 msgid "Crunchiness"
@@ -3395,7 +3471,7 @@ msgstr ""
 
 #: hacks/config/nerverot.xml.h:18 hacks/config/pyro.xml.h:12
 msgid "Seldom"
-msgstr ""
+msgstr "가끔"
 
 #: hacks/config/nerverot.xml.h:21
 msgid "Spastic"
@@ -3427,8 +3503,9 @@ msgstr ""
 
 #: hacks/config/noseguy.xml.h:7 hacks/config/phosphor.xml.h:8
 #: hacks/config/starwars.xml.h:17
+#, fuzzy
 msgid "Text Program"
-msgstr ""
+msgstr "깃발의 글자"
 
 #: hacks/config/noseguy.xml.h:8
 msgid "Use Text Below"
@@ -3455,8 +3532,9 @@ msgid "Explosions"
 msgstr ""
 
 #: hacks/config/penetrate.xml.h:5
+#, fuzzy
 msgid "Penetrate"
-msgstr ""
+msgstr "일반"
 
 #: hacks/config/penetrate.xml.h:7
 msgid "Start badly, but learn"
@@ -3488,8 +3566,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/penrose.xml.h:9
+#, fuzzy
 msgid "Penrose"
-msgstr ""
+msgstr "빡빡하게"
 
 #: hacks/config/petri.xml.h:2
 msgid "Colony Shape"
@@ -3500,8 +3579,9 @@ msgid "Death Comes"
 msgstr ""
 
 #: hacks/config/petri.xml.h:4
+#, fuzzy
 msgid "Diamond"
-msgstr ""
+msgstr "데모"
 
 #: hacks/config/petri.xml.h:6
 msgid "Fertility"
@@ -3545,11 +3625,11 @@ msgstr ""
 
 #: hacks/config/petri.xml.h:21
 msgid "Quickly"
-msgstr ""
+msgstr "빠름"
 
 #: hacks/config/petri.xml.h:24
 msgid "Slowly"
-msgstr ""
+msgstr "느림"
 
 #: hacks/config/petri.xml.h:26
 msgid "Square"
@@ -3570,24 +3650,27 @@ msgid ""
 msgstr ""
 
 #: hacks/config/phosphor.xml.h:2
+#, fuzzy
 msgid "Fade"
-msgstr ""
+msgstr "이름:"
 
 #: hacks/config/phosphor.xml.h:4
 msgid "Phosphor"
 msgstr ""
 
 #: hacks/config/phosphor.xml.h:5
+#, fuzzy
 msgid "Scale"
-msgstr ""
+msgstr "작은"
 
 #: hacks/config/pipes.xml.h:1
 msgid "Allow Tight Turns"
 msgstr ""
 
 #: hacks/config/pipes.xml.h:2
+#, fuzzy
 msgid "Ball Joints"
-msgstr ""
+msgstr "혼란"
 
 #: hacks/config/pipes.xml.h:3
 msgid "Curved Pipes"
@@ -3609,31 +3692,33 @@ msgstr ""
 
 #: hacks/config/pipes.xml.h:9
 msgid "Lots"
-msgstr ""
+msgstr "많음"
 
 #: hacks/config/pipes.xml.h:11
 msgid "Number of Pipe Systems"
-msgstr ""
+msgstr "파이프 개수"
 
 #: hacks/config/pipes.xml.h:12
+#, fuzzy
 msgid "Pipe Fittings"
-msgstr ""
+msgstr "설정"
 
 #: hacks/config/pipes.xml.h:13
 msgid "Pipes"
-msgstr ""
+msgstr "파이프"
 
 #: hacks/config/pipes.xml.h:17
 msgid "System Length"
-msgstr ""
+msgstr "파이프 길이"
 
 #: hacks/config/polyominoes.xml.h:3
 msgid "Identical Pieces"
 msgstr ""
 
 #: hacks/config/polyominoes.xml.h:7
+#, fuzzy
 msgid "Polyominoes"
-msgstr ""
+msgstr "폴리곤"
 
 #: hacks/config/polyominoes.xml.h:8
 msgid ""
@@ -3654,23 +3739,23 @@ msgstr ""
 
 #: hacks/config/pulsar.xml.h:4
 msgid "Enable Blending"
-msgstr ""
+msgstr "블렌딩 사용"
 
 #: hacks/config/pulsar.xml.h:5
 msgid "Enable Depth Buffer"
-msgstr ""
+msgstr "깊이 버퍼 사용"
 
 #: hacks/config/pulsar.xml.h:6
 msgid "Enable Fog"
-msgstr ""
+msgstr "안개 사용"
 
 #: hacks/config/pulsar.xml.h:7
 msgid "Enable Lighting"
-msgstr ""
+msgstr "광원 사용"
 
 #: hacks/config/pulsar.xml.h:8
 msgid "Enable Texture Filtering"
-msgstr ""
+msgstr "텍스쳐 필터링 사용"
 
 #: hacks/config/pulsar.xml.h:9
 msgid "Enable Texture Mipmaps"
@@ -3678,23 +3763,25 @@ msgstr ""
 
 #: hacks/config/pulsar.xml.h:10
 msgid "Enable Texturing"
-msgstr ""
+msgstr "텍스쳐 사용"
 
 #: hacks/config/pulsar.xml.h:12
 msgid "Pulsar"
-msgstr ""
+msgstr "펄사"
 
 #: hacks/config/pulsar.xml.h:13
+#, fuzzy
 msgid "Quad Count"
-msgstr ""
+msgstr "계산:"
 
 #: hacks/config/pulsar.xml.h:16
+#, fuzzy
 msgid "Solid Surface"
-msgstr ""
+msgstr "꽉채운 흔적"
 
 #: hacks/config/pulsar.xml.h:18
 msgid "Texture PPM File"
-msgstr ""
+msgstr "텍스쳐 PPM 파일"
 
 #: hacks/config/pyro.xml.h:3
 msgid "Explosive Yield"
@@ -3706,11 +3793,11 @@ msgstr ""
 
 #: hacks/config/pyro.xml.h:8
 msgid "Often"
-msgstr ""
+msgstr "자주"
 
 #: hacks/config/pyro.xml.h:9
 msgid "Particle Density"
-msgstr ""
+msgstr "조각 밀도"
 
 #: hacks/config/pyro.xml.h:10
 msgid "Pyro"
@@ -3726,12 +3813,14 @@ msgid "Additive Colors"
 msgstr ""
 
 #: hacks/config/qix.xml.h:3
+#, fuzzy
 msgid "Corners"
-msgstr ""
+msgstr "숲"
 
 #: hacks/config/qix.xml.h:11
+#, fuzzy
 msgid "Line Segments"
-msgstr ""
+msgstr "조각"
 
 #: hacks/config/qix.xml.h:12
 msgid "Linear Motion"
@@ -3739,15 +3828,16 @@ msgstr ""
 
 #: hacks/config/qix.xml.h:15
 msgid "Max Size"
-msgstr ""
+msgstr "최대 크기"
 
 #: hacks/config/qix.xml.h:16
 msgid "Qix"
 msgstr ""
 
 #: hacks/config/qix.xml.h:17
+#, fuzzy
 msgid "Random Motion"
-msgstr ""
+msgstr "움직임 빠르기"
 
 #: hacks/config/qix.xml.h:23
 msgid "Subtractive Colors"
@@ -3762,22 +3852,23 @@ msgid ""
 msgstr ""
 
 #: hacks/config/qix.xml.h:25
+#, fuzzy
 msgid "Transparent"
-msgstr ""
+msgstr "투명한 흔적"
 
 #: hacks/config/rd-bomb.xml.h:1
 msgid "/"
-msgstr ""
+msgstr "/"
 
 #: hacks/config/rd-bomb.xml.h:3
 #, no-c-format
 msgid "1%"
-msgstr ""
+msgstr "1%"
 
 #: hacks/config/rd-bomb.xml.h:5
 #, no-c-format
 msgid "100%"
-msgstr ""
+msgstr "100%"
 
 #: hacks/config/rd-bomb.xml.h:7
 msgid ""
@@ -3792,7 +3883,7 @@ msgstr ""
 
 #: hacks/config/rd-bomb.xml.h:10
 msgid "Fill Screen"
-msgstr ""
+msgstr "화면 채움"
 
 #: hacks/config/rd-bomb.xml.h:14
 msgid "RD-Bomb"
@@ -3803,36 +3894,37 @@ msgid "Reaction/Difusion"
 msgstr ""
 
 #: hacks/config/rd-bomb.xml.h:16
+#, fuzzy
 msgid "Seed Radius"
-msgstr ""
+msgstr "씨앗"
 
 #: hacks/config/rd-bomb.xml.h:19 hacks/config/twang.xml.h:12
 msgid "Tile Size"
-msgstr ""
+msgstr "타일 크기"
 
 #: hacks/config/rd-bomb.xml.h:22
 msgid "Wander Speed"
-msgstr ""
+msgstr "이동 속도"
 
 #: hacks/config/ripples.xml.h:1
 msgid "Big Drops"
-msgstr ""
+msgstr "큰 방울"
 
 #: hacks/config/ripples.xml.h:2
 msgid "Colors    Two"
-msgstr ""
+msgstr "색상    2개"
 
 #: hacks/config/ripples.xml.h:3
 msgid "Drizzle"
-msgstr ""
+msgstr "보슬비"
 
 #: hacks/config/ripples.xml.h:5
 msgid "Grab Screen Image"
-msgstr ""
+msgstr "이전 화면 사용"
 
 #: hacks/config/ripples.xml.h:6
 msgid "Lighting Effect"
-msgstr ""
+msgstr "광원 효과"
 
 #: hacks/config/ripples.xml.h:8
 msgid "Moving Splashes"
@@ -3840,19 +3932,19 @@ msgstr ""
 
 #: hacks/config/ripples.xml.h:9
 msgid "Psychedelic Colors"
-msgstr ""
+msgstr "현란한 색상 사용"
 
 #: hacks/config/ripples.xml.h:10
 msgid "Ripples"
-msgstr ""
+msgstr "물결"
 
 #: hacks/config/ripples.xml.h:12
 msgid "Small Drops"
-msgstr ""
+msgstr "작은 방울"
 
 #: hacks/config/ripples.xml.h:13
 msgid "Storm"
-msgstr ""
+msgstr "폭풍"
 
 #: hacks/config/ripples.xml.h:14
 msgid ""
@@ -3866,12 +3958,14 @@ msgid "Rocks"
 msgstr ""
 
 #: hacks/config/rocks.xml.h:8
+#, fuzzy
 msgid "Rotation"
-msgstr ""
+msgstr "반복:"
 
 #: hacks/config/rocks.xml.h:10
+#, fuzzy
 msgid "Steering"
-msgstr ""
+msgstr "설정"
 
 #: hacks/config/rocks.xml.h:11
 msgid ""
@@ -3895,11 +3989,11 @@ msgstr ""
 
 #: hacks/config/rorschach.xml.h:10
 msgid "With X Symmetry"
-msgstr ""
+msgstr "X축 대칭"
 
 #: hacks/config/rorschach.xml.h:11
 msgid "With Y Symmetry"
-msgstr ""
+msgstr "Y축 대칭"
 
 #: hacks/config/rotor.xml.h:1
 msgid ""
@@ -3910,7 +4004,7 @@ msgstr ""
 
 #: hacks/config/rotor.xml.h:4 hacks/config/wander.xml.h:9
 msgid "Length"
-msgstr ""
+msgstr "길이"
 
 #: hacks/config/rotor.xml.h:8
 msgid "Rotor"
@@ -3918,7 +4012,7 @@ msgstr ""
 
 #: hacks/config/rotzoomer.xml.h:3
 msgid "Animate"
-msgstr ""
+msgstr "움직임"
 
 #: hacks/config/rotzoomer.xml.h:4
 msgid ""
@@ -3962,11 +4056,11 @@ msgstr ""
 
 #: hacks/config/sballs.xml.h:1
 msgid "Cube"
-msgstr ""
+msgstr "정육면체"
 
 #: hacks/config/sballs.xml.h:2
 msgid "Dodecahedron"
-msgstr ""
+msgstr "십이면체"
 
 #: hacks/config/sballs.xml.h:3
 msgid ""
@@ -3977,23 +4071,23 @@ msgstr ""
 
 #: hacks/config/sballs.xml.h:5
 msgid "Icosahedron"
-msgstr ""
+msgstr "이십면체"
 
 #: hacks/config/sballs.xml.h:7
 msgid "Octahedron"
-msgstr ""
+msgstr "팔면체"
 
 #: hacks/config/sballs.xml.h:8
 msgid "Plane"
-msgstr ""
+msgstr "평면"
 
 #: hacks/config/sballs.xml.h:9
 msgid "Pyramid"
-msgstr ""
+msgstr "피라미드"
 
 #: hacks/config/sballs.xml.h:10
 msgid "Random"
-msgstr ""
+msgstr "무작위"
 
 #: hacks/config/sballs.xml.h:11
 msgid "Sballs"
@@ -4005,7 +4099,7 @@ msgstr ""
 
 #: hacks/config/sballs.xml.h:16
 msgid "Tetrahedron"
-msgstr ""
+msgstr "사면체"
 
 #: hacks/config/shadebobs.xml.h:7
 msgid "ShadeBobs"
@@ -4040,11 +4134,12 @@ msgstr ""
 #: hacks/config/slidescreen.xml.h:1 hacks/config/twang.xml.h:1
 #: hacks/config/zoom.xml.h:1
 msgid "Border Width"
-msgstr ""
+msgstr "테두리 굵기"
 
 #: hacks/config/slidescreen.xml.h:4
+#, fuzzy
 msgid "Slide Speed"
-msgstr ""
+msgstr "빠르기"
 
 #: hacks/config/slidescreen.xml.h:5
 msgid "SlideScreen"
@@ -4084,15 +4179,15 @@ msgstr ""
 
 #: hacks/config/sonar.xml.h:3
 msgid "Sonar"
-msgstr ""
+msgstr "음탐기"
 
 #: hacks/config/sonar.xml.h:4
 msgid "Team A Name"
-msgstr ""
+msgstr "A 팀 이름"
 
 #: hacks/config/sonar.xml.h:5
 msgid "Team B Name"
-msgstr ""
+msgstr "B 팀 이름"
 
 #: hacks/config/sonar.xml.h:6
 msgid ""
@@ -4118,7 +4213,7 @@ msgstr ""
 
 #: hacks/config/speedmine.xml.h:7
 msgid "Max Velocity"
-msgstr ""
+msgstr "최대 속도"
 
 #: hacks/config/speedmine.xml.h:8
 msgid "Mine Shaft"
@@ -4148,7 +4243,7 @@ msgstr ""
 
 #: hacks/config/speedmine.xml.h:19 hacks/config/worm.xml.h:10
 msgid "Worm"
-msgstr ""
+msgstr "벌레"
 
 #: hacks/config/sphere.xml.h:1
 msgid ""
@@ -4159,7 +4254,7 @@ msgstr ""
 
 #: hacks/config/sphere.xml.h:7
 msgid "Sphere"
-msgstr ""
+msgstr "구"
 
 #: hacks/config/sphereEversion.xml.h:1
 msgid "SphereEversion"
@@ -4185,8 +4280,9 @@ msgid "Smoothed Lines"
 msgstr ""
 
 #: hacks/config/spheremonics.xml.h:23
+#, fuzzy
 msgid "Spheremonics"
-msgstr ""
+msgstr "빠르기"
 
 #: hacks/config/spheremonics.xml.h:24
 msgid ""
@@ -4208,7 +4304,7 @@ msgstr ""
 
 #: hacks/config/spiral.xml.h:11
 msgid "Spiral"
-msgstr ""
+msgstr "나선"
 
 #: hacks/config/spotlight.xml.h:1
 msgid ""
@@ -4218,7 +4314,7 @@ msgstr ""
 
 #: hacks/config/spotlight.xml.h:6
 msgid "Spotlight"
-msgstr ""
+msgstr "조명"
 
 #: hacks/config/sproingies.xml.h:3
 msgid "Q-Bert meets Marble Madness! Written by Ed Mackey."
@@ -4237,19 +4333,19 @@ msgstr ""
 
 #: hacks/config/squiral.xml.h:5
 msgid "Handedness"
-msgstr ""
+msgstr "회전방향"
 
 #: hacks/config/squiral.xml.h:7
 msgid "Left"
-msgstr ""
+msgstr "왼손잡이"
 
 #: hacks/config/squiral.xml.h:11 hacks/config/twang.xml.h:8
 msgid "Randomness"
-msgstr ""
+msgstr "무작위성"
 
 #: hacks/config/squiral.xml.h:12
 msgid "Right"
-msgstr ""
+msgstr "오른손잡이"
 
 #: hacks/config/squiral.xml.h:17
 msgid "Squiral"
@@ -4277,7 +4373,7 @@ msgstr ""
 
 #: hacks/config/stairs.xml.h:6
 msgid "Stairs"
-msgstr ""
+msgstr "계단"
 
 #: hacks/config/stairs.xml.h:8
 msgid ""
@@ -4286,8 +4382,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/starfish.xml.h:1
+#, fuzzy
 msgid "Color Gradients"
-msgstr ""
+msgstr "색상 밝기"
 
 #: hacks/config/starfish.xml.h:7
 msgid "Pulsating Blob"
@@ -4295,7 +4392,7 @@ msgstr ""
 
 #: hacks/config/starfish.xml.h:10
 msgid "Starfish"
-msgstr ""
+msgstr "불가사리"
 
 #: hacks/config/starfish.xml.h:13
 msgid ""
@@ -4310,8 +4407,9 @@ msgid "Anti-aliased Lines"
 msgstr ""
 
 #: hacks/config/starwars.xml.h:3
+#, fuzzy
 msgid "Centered Text"
-msgstr ""
+msgstr "중앙"
 
 #: hacks/config/starwars.xml.h:4
 msgid ""
@@ -4334,31 +4432,33 @@ msgstr ""
 
 #: hacks/config/starwars.xml.h:9
 msgid "Font Point Size"
-msgstr ""
+msgstr "글꼴 크기"
 
 #: hacks/config/starwars.xml.h:10
 msgid "Scroll Speed"
-msgstr ""
+msgstr "스크롤 빠르기"
 
 #: hacks/config/starwars.xml.h:13
 msgid "Star Rotation Speed"
-msgstr ""
+msgstr "별 회전 빠르기"
 
 #: hacks/config/starwars.xml.h:14
 msgid "StarWars"
-msgstr ""
+msgstr "스타워즈"
 
 #: hacks/config/starwars.xml.h:15
 msgid "Text Columns"
 msgstr ""
 
 #: hacks/config/starwars.xml.h:16
+#, fuzzy
 msgid "Text Lines"
-msgstr ""
+msgstr "선"
 
 #: hacks/config/starwars.xml.h:18
+#, fuzzy
 msgid "Thick Lines"
-msgstr ""
+msgstr "선"
 
 #: hacks/config/starwars.xml.h:19
 msgid "Wrap Long Lines"
@@ -4410,10 +4510,10 @@ msgstr ""
 
 #: hacks/config/swirl.xml.h:8
 msgid "Swirl"
-msgstr ""
+msgstr "소용돌이"
 
 #: hacks/config/t3d.xml.h:1
-msgid "0�"
+msgid "0"
 msgstr ""
 
 #: hacks/config/t3d.xml.h:2
@@ -4421,16 +4521,17 @@ msgid "5 Minute Tick Marks"
 msgstr ""
 
 #: hacks/config/t3d.xml.h:3
-msgid "90�"
+msgid "90"
 msgstr ""
 
 #: hacks/config/t3d.xml.h:4
 msgid "Bigger"
-msgstr ""
+msgstr "큼"
 
 #: hacks/config/t3d.xml.h:5
+#, fuzzy
 msgid "Cycle Seconds"
-msgstr ""
+msgstr "초"
 
 #: hacks/config/t3d.xml.h:10
 msgid "Minute Tick Marks"
@@ -4438,7 +4539,7 @@ msgstr ""
 
 #: hacks/config/t3d.xml.h:12
 msgid "Smaller"
-msgstr ""
+msgstr "작음"
 
 #: hacks/config/t3d.xml.h:14
 msgid "T3D"
@@ -4456,7 +4557,7 @@ msgstr ""
 
 #: hacks/config/t3d.xml.h:17
 msgid "Wobbliness"
-msgstr ""
+msgstr "흔들림"
 
 #: hacks/config/thornbird.xml.h:1
 msgid ""
@@ -4466,7 +4567,7 @@ msgstr ""
 
 #: hacks/config/thornbird.xml.h:6
 msgid "Points"
-msgstr ""
+msgstr "점"
 
 #: hacks/config/thornbird.xml.h:12
 msgid "Thornbird"
@@ -4499,19 +4600,19 @@ msgstr ""
 
 #: hacks/config/twang.xml.h:6
 msgid "Jumpy"
-msgstr ""
+msgstr "급함"
 
 #: hacks/config/twang.xml.h:11
 msgid "Springiness"
-msgstr ""
+msgstr "탄성"
 
 #: hacks/config/twang.xml.h:13
 msgid "Transference"
-msgstr ""
+msgstr "움직임"
 
 #: hacks/config/twang.xml.h:14
 msgid "Twang"
-msgstr ""
+msgstr "울림"
 
 #: hacks/config/vermiculate.xml.h:1
 msgid "Draws squiggly worm-like paths. Written by Tyler Pierce."
@@ -4519,15 +4620,15 @@ msgstr ""
 
 #: hacks/config/vermiculate.xml.h:2
 msgid "Vermiculate"
-msgstr ""
+msgstr "벌레 자국"
 
 #: hacks/config/vidwhacker.xml.h:2 hacks/config/webcollage.xml.h:2
 msgid "2 seconds"
-msgstr ""
+msgstr "2 초"
 
 #: hacks/config/vidwhacker.xml.h:4
 msgid "Image Directory"
-msgstr ""
+msgstr "그림 디렉토리"
 
 #: hacks/config/vidwhacker.xml.h:5
 msgid ""
@@ -4552,7 +4653,7 @@ msgstr ""
 
 #: hacks/config/vines.xml.h:8
 msgid "Vines"
-msgstr ""
+msgstr "덩쿨"
 
 #: hacks/config/wander.xml.h:5
 msgid "Draw Spots"
@@ -4564,12 +4665,13 @@ msgid ""
 msgstr ""
 
 #: hacks/config/wander.xml.h:14
+#, fuzzy
 msgid "Sustain"
-msgstr ""
+msgstr "산"
 
 #: hacks/config/webcollage.xml.h:3
 msgid "Dictionary File"
-msgstr ""
+msgstr "사전 파일"
 
 #: hacks/config/webcollage.xml.h:5
 msgid "Overall Filter Program"
@@ -4592,7 +4694,7 @@ msgstr ""
 
 #: hacks/config/webcollage.xml.h:10
 msgid "URL Timeout"
-msgstr ""
+msgstr "URL 시간제한"
 
 #: hacks/config/webcollage.xml.h:11
 msgid "WebCollage"
@@ -4607,11 +4709,11 @@ msgstr ""
 
 #: hacks/config/whirlwindwarp.xml.h:7
 msgid "Trail Size"
-msgstr ""
+msgstr "잔상 길이"
 
 #: hacks/config/whirlwindwarp.xml.h:8
 msgid "WhirlwindWarp"
-msgstr ""
+msgstr "소용돌이 이동"
 
 #: hacks/config/whirlygig.xml.h:1
 msgid "Amplitude"
@@ -4623,7 +4725,7 @@ msgstr ""
 
 #: hacks/config/whirlygig.xml.h:5
 msgid "Whirlies"
-msgstr ""
+msgstr "소용돌이"
 
 #: hacks/config/whirlygig.xml.h:6
 msgid "WhirlyGig"
@@ -4650,19 +4752,20 @@ msgstr ""
 
 #: hacks/config/xdaliclock.xml.h:1
 msgid "12-Hour Time"
-msgstr ""
+msgstr "12 시간"
 
 #: hacks/config/xdaliclock.xml.h:2
 msgid "24-Hour Time"
-msgstr ""
+msgstr "24 시간"
 
 #: hacks/config/xdaliclock.xml.h:3
 msgid "Cycle Colors"
-msgstr ""
+msgstr "색상 순환"
 
 #: hacks/config/xdaliclock.xml.h:4
+#, fuzzy
 msgid "Display Seconds"
-msgstr ""
+msgstr "초"
 
 #: hacks/config/xdaliclock.xml.h:5
 msgid "Huge Font"
@@ -4670,15 +4773,15 @@ msgstr ""
 
 #: hacks/config/xdaliclock.xml.h:6 hacks/config/xmatrix.xml.h:8
 msgid "Large Font"
-msgstr ""
+msgstr "큰 글꼴"
 
 #: hacks/config/xdaliclock.xml.h:7
 msgid "Medium Font"
-msgstr ""
+msgstr "중간 글꼴"
 
 #: hacks/config/xdaliclock.xml.h:8 hacks/config/xmatrix.xml.h:14
 msgid "Small Font"
-msgstr ""
+msgstr "작은 글꼴"
 
 #: hacks/config/xdaliclock.xml.h:9
 msgid "XDaliClock"
@@ -4694,11 +4797,11 @@ msgstr ""
 
 #: hacks/config/xearth.xml.h:1
 msgid "Bright"
-msgstr ""
+msgstr "밝음"
 
 #: hacks/config/xearth.xml.h:2
 msgid "Date/Time Stamp"
-msgstr ""
+msgstr "날짜/시간 표시"
 
 #: hacks/config/xearth.xml.h:3
 msgid "Day  Dim"
@@ -4706,7 +4809,7 @@ msgstr ""
 
 #: hacks/config/xearth.xml.h:5
 msgid "Display Stars"
-msgstr ""
+msgstr "별 표시"
 
 #: hacks/config/xearth.xml.h:8
 msgid "Label Cities"
@@ -4714,11 +4817,11 @@ msgstr ""
 
 #: hacks/config/xearth.xml.h:9
 msgid "Lower Left"
-msgstr ""
+msgstr "왼쪽 아래"
 
 #: hacks/config/xearth.xml.h:10
 msgid "Lower Right"
-msgstr ""
+msgstr "오른쪽 아래"
 
 #: hacks/config/xearth.xml.h:13
 msgid "Mercator Projection"
@@ -4726,15 +4829,15 @@ msgstr ""
 
 #: hacks/config/xearth.xml.h:14
 msgid "Night   Dim"
-msgstr ""
+msgstr "야간 조명"
 
 #: hacks/config/xearth.xml.h:15
 msgid "No Stars"
-msgstr ""
+msgstr "별 없음"
 
 #: hacks/config/xearth.xml.h:16
 msgid "North/South Rotation"
-msgstr ""
+msgstr "북/남 회전"
 
 #: hacks/config/xearth.xml.h:18
 msgid "Orthographic Projection"
@@ -4742,19 +4845,20 @@ msgstr ""
 
 #: hacks/config/xearth.xml.h:19
 msgid "Real Time"
-msgstr ""
+msgstr "실시간"
 
 #: hacks/config/xearth.xml.h:20
 msgid "Shaded Image"
 msgstr ""
 
 #: hacks/config/xearth.xml.h:21
+#, fuzzy
 msgid "Sharp"
-msgstr ""
+msgstr "갑자기 꺽여 돌기"
 
 #: hacks/config/xearth.xml.h:23
 msgid "Spacing"
-msgstr ""
+msgstr "간격"
 
 #: hacks/config/xearth.xml.h:26
 msgid "Terminator   Blurry"
@@ -4762,15 +4866,15 @@ msgstr ""
 
 #: hacks/config/xearth.xml.h:27
 msgid "Time Warp"
-msgstr ""
+msgstr "시간 이동"
 
 #: hacks/config/xearth.xml.h:29
 msgid "Upper Left"
-msgstr ""
+msgstr "왼쪽 위"
 
 #: hacks/config/xearth.xml.h:30
 msgid "Upper Right"
-msgstr ""
+msgstr "오른쪽 위"
 
 #: hacks/config/xearth.xml.h:31
 msgid ""
@@ -4787,11 +4891,11 @@ msgstr ""
 
 #: hacks/config/xfishtank.xml.h:5
 msgid "Fish"
-msgstr ""
+msgstr "물고기"
 
 #: hacks/config/xfishtank.xml.h:6
 msgid "Fish Speed"
-msgstr ""
+msgstr "물고기 빠르기"
 
 #: hacks/config/xfishtank.xml.h:7
 msgid ""
@@ -4802,11 +4906,11 @@ msgstr ""
 
 #: hacks/config/xfishtank.xml.h:12
 msgid "XFishTank"
-msgstr ""
+msgstr "어항"
 
 #: hacks/config/xflame.xml.h:1
 msgid "Bitmap File"
-msgstr ""
+msgstr "그림 파일"
 
 #: hacks/config/xflame.xml.h:2
 msgid ""
@@ -4820,7 +4924,7 @@ msgstr ""
 
 #: hacks/config/xflame.xml.h:8
 msgid "Xflame"
-msgstr ""
+msgstr "불꽃"
 
 #: hacks/config/xjack.xml.h:4
 msgid ""
@@ -4853,11 +4957,11 @@ msgstr ""
 
 #: hacks/config/xmatrix.xml.h:2
 msgid "Binary Encoding"
-msgstr ""
+msgstr "이진 인코딩"
 
 #: hacks/config/xmatrix.xml.h:3
 msgid "Expansion Algorithm"
-msgstr ""
+msgstr "확장 알고리즘"
 
 #: hacks/config/xmatrix.xml.h:5
 msgid "Full"
@@ -4869,19 +4973,19 @@ msgstr ""
 
 #: hacks/config/xmatrix.xml.h:7
 msgid "Hexadecimal Encoding"
-msgstr ""
+msgstr "16진 인코딩"
 
 #: hacks/config/xmatrix.xml.h:9
 msgid "Matrix Encoding"
-msgstr ""
+msgstr "매트릭스 알고리즘"
 
 #: hacks/config/xmatrix.xml.h:10
 msgid "Phone Number"
-msgstr ""
+msgstr "전화 번호"
 
 #: hacks/config/xmatrix.xml.h:11
 msgid "Run Trace Program"
-msgstr ""
+msgstr "추적 프로그램 실행"
 
 #: hacks/config/xmatrix.xml.h:12
 msgid "Slider Algorithm"
@@ -4893,7 +4997,7 @@ msgstr ""
 
 #: hacks/config/xmatrix.xml.h:18
 msgid "Xmatrix"
-msgstr ""
+msgstr "매트릭스"
 
 #: hacks/config/xmountains.xml.h:2
 msgid "Reflections"
@@ -4918,8 +5022,9 @@ msgid ""
 msgstr ""
 
 #: hacks/config/xmountains.xml.h:8
+#, fuzzy
 msgid "Xmountains"
-msgstr ""
+msgstr "산"
 
 #: hacks/config/xrayswarm.xml.h:1
 msgid ""
@@ -4929,7 +5034,7 @@ msgstr ""
 
 #: hacks/config/xrayswarm.xml.h:5
 msgid "XRaySwarm"
-msgstr ""
+msgstr "벌떼"
 
 #: hacks/config/xsnow.xml.h:1
 msgid ""
@@ -4960,8 +5065,9 @@ msgid "Color Bars Enabled"
 msgstr ""
 
 #: hacks/config/xteevee.xml.h:2
+#, fuzzy
 msgid "Cycle Through Modes"
-msgstr ""
+msgstr "색상속에서 순환"
 
 #: hacks/config/xteevee.xml.h:3
 msgid "Rolling Enabled"
@@ -4973,7 +5079,7 @@ msgstr ""
 
 #: hacks/config/xteevee.xml.h:5
 msgid "XTeeVee"
-msgstr ""
+msgstr "고장난 텔레비젼"
 
 #: hacks/config/xteevee.xml.h:6
 msgid ""
@@ -4987,7 +5093,7 @@ msgstr ""
 
 #: hacks/config/zoom.xml.h:4
 msgid "Lenses"
-msgstr ""
+msgstr "렌즈"
 
 #: hacks/config/zoom.xml.h:9
 msgid ""
@@ -4995,3 +5101,129 @@ msgid ""
 "option the result is like looking through many overlapping lenses rather "
 "than just a simple zoom. Written by James Macnicol."
 msgstr ""
+
+#, fuzzy
+#~ msgid "Copyright  1991-2002 %s"
+#~ msgstr "Copyright 1991-2002 %s"
+
+#~ msgid "*"
+#~ msgstr "*"
+
+#~ msgid "Choose _Random Image:"
+#~ msgstr "임의의 그림 사용(_R):"
+
+#~ msgid "Display Subprocess _Errors"
+#~ msgstr "하위 프로세스 오류 표시(_E)"
+
+#~ msgid "Display _Splash Screen at Startup"
+#~ msgstr "시작할 때 시작화면 표시(_S)"
+
+#~ msgid "F_ade Duration"
+#~ msgstr "사라짐 지연 시간(_A):"
+
+#~ msgid "Fade from Black When _Unblanking"
+#~ msgstr "서서히 원래 화면으로 되돌아 옴(_U)"
+
+#~ msgid "Fade to Black when _Blanking"
+#~ msgstr "서서히 화면 보호기 시작(_B)"
+
+#~ msgid "Grab Desktop _Images"
+#~ msgstr "바탕화면 그림 사용(_I)"
+
+#~ msgid "Grab _Video Frames"
+#~ msgstr "외부 비디오장치 사용(_V)"
+
+#~ msgid "Install _Colormap"
+#~ msgstr "색상맵 설치(_C)"
+
+#~ msgid ""
+#~ "No Preview\n"
+#~ "Available"
+#~ msgstr ""
+#~ "미리보기\n"
+#~ "없음"
+
+#~ msgid "Preview of screen saver"
+#~ msgstr "화면 보호기 미리보기"
+
+#~ msgid "Stand_by After"
+#~ msgstr "대기 시간(_B):"
+
+#~ msgid "Sus_pend After"
+#~ msgstr "중지 시간(_P):"
+
+#~ msgid "_Advanced"
+#~ msgstr "고급 설정(_A)"
+
+#~ msgid "_Advanced >>"
+#~ msgstr "고급(_A) >>"
+
+#~ msgid "_Blank After"
+#~ msgstr "화면 꺼지는 시간(_B)"
+
+#~ msgid "_Browse"
+#~ msgstr "찾아보기(_B)"
+
+#~ msgid "_Command Line:"
+#~ msgstr "명령행(_C):"
+
+#~ msgid "_Cycle After"
+#~ msgstr "화면 보호기 변경 시간(_C)"
+
+#~ msgid "_Display Modes"
+#~ msgstr "표시 모드(_D)"
+
+#~ msgid "_Lock Screen After"
+#~ msgstr "화면 보호기 잠금 시간(_L)"
+
+#~ msgid "_Mode:"
+#~ msgstr "모드(_M):"
+
+#~ msgid "_Off After"
+#~ msgstr "끌 시간(_O):"
+
+#~ msgid "_Power Management Enabled"
+#~ msgstr "전원 관리 사용(_P)"
+
+#~ msgid "_Preview"
+#~ msgstr "미리보기(_P)"
+
+#~ msgid "_Quit"
+#~ msgstr "마침(_Q)"
+
+#~ msgid "_Settings..."
+#~ msgstr "설정(_S)..."
+
+#~ msgid "_Standard <<"
+#~ msgstr "표준(_S) <<"
+
+#~ msgid "_Verbose Dialognostics"
+#~ msgstr "자세한 진단(_V)"
+
+#~ msgid "no preview"
+#~ msgstr "미리보기 없음"
+
+#~ msgid "preview"
+#~ msgstr "미리보기"
+
+#~ msgid "Anemone"
+#~ msgstr "말미잘"
+
+#~ msgid "Tentacles"
+#~ msgstr "촉수"
+
+#~ msgid "90 deg Rotation Speed"
+#~ msgstr "90도 회전 빠르기"
+
+#, fuzzy
+#~ msgid "Faceted"
+#~ msgstr "빠르게"
+
+#~ msgid "Queens"
+#~ msgstr "여왕"
+
+#~ msgid "0 deg"
+#~ msgstr "0도"
+
+#~ msgid "90 deg"
+#~ msgstr "90도"

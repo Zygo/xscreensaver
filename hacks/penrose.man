@@ -73,9 +73,9 @@ tile.  Default 10,000 or .01 seconds.
 How long to wait between starting a completely new tiling.  Default 3 seconds.
 
 .TP 8
-.B \-ammann \fIinteger\fP
+.B \-ammann
 .TP 8
-.B \-no\-ammann \fIinteger\fP
+.B \-no\-ammann
 Whether Ammann lines should be added.
 
 .SH ENVIRONMENT

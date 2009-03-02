@@ -90,7 +90,7 @@ chase_symlinks (const char *file)
       if (realpath (file, buf))
         return strdup (buf);
 
-      sprintf (buf, "%s: realpath", blurb());
+      sprintf (buf, "%.100s: realpath %.200s", blurb(), file);
       perror(buf);
     }
 # endif /* HAVE_REALPATH */
@@ -256,6 +256,7 @@ static const char * const prefs[] = {
   "fadeTicks",
   "captureStderr",
   "captureStdout",		/* not saved -- obsolete */
+  "ignoreUninstalledPrograms",
   "font",
   "dpmsEnabled",
   "dpmsStandby",
@@ -768,8 +769,10 @@ write_init_file (saver_preferences *p, const char *version_string,
       CHECK("splashDuration")	type = pref_time, t = p->splash_duration;
       CHECK("demoCommand")	type = pref_str,  s = p->demo_command;
       CHECK("prefsCommand")	type = pref_str,  s = p->prefs_command;
-      CHECK("helpURL")		type = pref_str,  s = p->help_url;
-      CHECK("loadURL")		type = pref_str,  s = p->load_url_command;
+/*    CHECK("helpURL")		type = pref_str,  s = p->help_url; */
+      CHECK("helpURL")		continue;  /* don't save */
+/*    CHECK("loadURL")		type = pref_str,  s = p->load_url_command; */
+      CHECK("loadURL")		continue;  /* don't save */
       CHECK("nice")		type = pref_int,  i = p->nice_inferior;
       CHECK("memoryLimit")	type = pref_byte, i = p->inferior_memory_limit;
       CHECK("fade")		type = pref_bool, b = p->fade_p;
@@ -778,6 +781,9 @@ write_init_file (saver_preferences *p, const char *version_string,
       CHECK("fadeTicks")	type = pref_int,  i = p->fade_ticks;
       CHECK("captureStderr")	type = pref_bool, b = p->capture_stderr_p;
       CHECK("captureStdout")	continue;  /* don't save */
+      CHECK("ignoreUninstalledPrograms")
+                                type = pref_bool, b = p->ignore_uninstalled_p;
+
       CHECK("font")		type = pref_str,  s =    stderr_font;
 
       CHECK("dpmsEnabled")	type = pref_bool, b = p->dpms_enabled_p;
@@ -999,6 +1005,8 @@ load_init_file (saver_preferences *p)
   p->inferior_memory_limit = get_byte_resource ("memoryLimit", "MemoryLimit");
   p->splash_p       = get_boolean_resource ("splash", "Boolean");
   p->capture_stderr_p = get_boolean_resource ("captureStderr", "Boolean");
+  p->ignore_uninstalled_p = get_boolean_resource ("ignoreUninstalledPrograms",
+                                                  "Boolean");
 
   p->initial_delay   = 1000 * get_seconds_resource ("initialDelay", "Time");
   p->splash_duration = 1000 * get_seconds_resource ("splashDuration", "Time");

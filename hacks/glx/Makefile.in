@@ -14,7 +14,11 @@ prefix		= @prefix@
 exec_prefix	= @exec_prefix@
 bindir		= @bindir@
 mandir		= @mandir@
-man1dir		= $(mandir)/man1
+# maybe this should be 6 (games)?
+mansuffix	= 1
+manNdir		= $(mandir)/man$(mansuffix)
+
+# maybe this should be 6 (games)?
 mansuffix	= 1
 
 CC		= @CC@
@@ -81,7 +85,8 @@ SRCS		= xscreensaver-gl-helper.c \
 		  menger.c engine.c flipscreen3d.c font-ximage.c \
 		  grab-ximage.c glsnake.c boxed.c glforestfire.c sballs.c \
 		  cubenetic.c spheremonics.c marching.c lavalite.c rotator.c \
-		  trackball.c gltrackball.c queens.c endgame.c chessmodels.c
+		  trackball.c gltrackball.c queens.c endgame.c chessmodels.c \
+		  glblur.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -99,14 +104,15 @@ OBJS		= xscreensaver-gl-helper.o \
 		  menger.o engine.o flipscreen3d.o font-ximage.o \
 	          grab-ximage.o glsnake.o boxed.o glforestfire.o sballs.o \
 		  cubenetic.o spheremonics.o marching.o lavalite.o rotator.o \
-		  trackball.o gltrackball.o queens.o endgame.o chessmodels.o
+		  trackball.o gltrackball.o queens.o endgame.o chessmodels.o \
+		  glblur.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
 		  sierpinski3d gflux stonerview starwars gltext molecule \
 		  dangerball circuit menger engine flipscreen3d glsnake boxed \
 		  glforestfire sballs cubenetic spheremonics lavalite queens \
-		  endgame
+		  endgame glblur
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -123,7 +129,7 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  grab-ximage.h font-ximage.h tube.h sphere.h boxed.h \
 		  stonerview-move.h stonerview-osc.h glutstroke.h \
 		  glut_roman.h marching.h rotator.h trackball.h gltrackball.h \
-		  chessmodels.h
+		  chessmodels.h chessgames.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man glforestfire.man \
@@ -132,7 +138,7 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  pulsar.man queens.man rubik.man sballs.man sierpinski3d.man \
 		  spheremonics.man sproingies.man stairs.man starwars.man \
 		  stonerview.man superquadrics.man xscreensaver-gl-helper.man \
-		  endgame.man
+		  endgame.man glblur.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in
 
@@ -178,7 +184,7 @@ install-program:: $(EXES)
 
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
-	 idir="$(install_prefix)$(man1dir)" ;				\
+	 idir="$(install_prefix)$(manNdir)" ;				\
 	 if [ ! -d $$idir ]; then					\
 	  $(INSTALL_DIRS) $$idir ;					\
 	 fi ;								\
@@ -208,7 +214,7 @@ uninstall-program::
 
 uninstall-man:
 	@men="$(MEN)" ;							\
-	 idir="$(install_prefix)$(man1dir)" ;				\
+	 idir="$(install_prefix)$(manNdir)" ;				\
 	 for man in $$men; do						\
 	   instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
 	   echo rm -f $$idir/$$instname ;				\
@@ -425,8 +431,8 @@ circuit:	circuit.o	$(HACK_OBJS) font-ximage.o
 menger:		menger.o	$(HACK_OBJS) $(TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
 
-engine:		engine.o	$(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(HACK_LIBS)
+engine:		engine.o	$(HACK_OBJS) $(TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
 
 flipscreen3d:	flipscreen3d.o	$(HACK_OBJS) $(GRAB_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB_OBJS) $(HACK_LIBS)
@@ -459,6 +465,10 @@ queens:		queens.o	$(TRACK_OBJS) $(HACK_OBJS)
 CHESSOBJS=chessmodels.o $(TRACK_OBJS) $(HACK_OBJS)
 endgame:	endgame.o	$(CHESSOBJS)
 	$(CC_HACK) -o $@ $@.o   $(CHESSOBJS) $(HACK_LIBS)
+
+glblur:	glblur.o		$(HACK_OBJS) $(TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
+
 
 # This one works differently (it's not xlock-like.)
 #
@@ -518,10 +528,13 @@ dangerball.o: $(srcdir)/rotator.h
 dangerball.o: $(srcdir)/sphere.h
 dangerball.o: $(srcdir)/tube.h
 dolphin.o: $(srcdir)/atlantis.h
+endgame.o: $(srcdir)/chessgames.h
 endgame.o: $(srcdir)/chessmodels.h
 endgame.o: ../../config.h
 endgame.o: $(srcdir)/gltrackball.h
 engine.o: ../../config.h
+engine.o: $(srcdir)/gltrackball.h
+engine.o: $(srcdir)/rotator.h
 extrusion-helix2.o: ../../config.h
 extrusion-helix3.o: ../../config.h
 extrusion-helix4.o: ../../config.h
@@ -541,6 +554,9 @@ gears.o: $(srcdir)/gltrackball.h
 gears.o: $(srcdir)/rotator.h
 gflux.o: ../../config.h
 gflux.o: $(srcdir)/grab-ximage.h
+glblur.o: ../../config.h
+glblur.o: $(srcdir)/gltrackball.h
+glblur.o: $(srcdir)/rotator.h
 glforestfire.o: ../../config.h
 glforestfire.o: $(HACK_SRC)/images/ground.xpm
 glforestfire.o: $(HACK_SRC)/images/tree.xpm

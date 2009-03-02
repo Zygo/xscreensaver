@@ -437,6 +437,9 @@ load_image_internal (Screen *screen, Window window,
   GdkPixbuf *pb;
   Display *dpy = DisplayOfScreen (screen);
   char *filename = get_filename (dpy, ac, av);
+#ifdef HAVE_GTK2
+  GError *gerr = 0;
+#endif /* HAVE_GTK2 */
 
   if (!filename)
     {
@@ -448,11 +451,15 @@ load_image_internal (Screen *screen, Window window,
     fprintf (stderr, "%s: loading \"%s\"\n", progname, filename);
 
   gdk_pixbuf_xlib_init (dpy, screen_number (screen));
+#ifdef HAVE_GTK2
+  g_type_init();
+#else  /* !HAVE_GTK2 */
   xlib_rgb_init (dpy, screen);
+#endif /* !HAVE_GTK2 */
 
   pb = gdk_pixbuf_new_from_file (filename
 #ifdef HAVE_GTK2
-				 , NULL
+                                 , &gerr
 #endif /* HAVE_GTK2 */
 	  );
 
@@ -507,12 +514,26 @@ load_image_internal (Screen *screen, Window window,
       if (win_width  < w) w = win_width;
       if (win_height < h) h = win_height;
 
+      /* The window might have no-op background of None, so to clear it,
+         draw a black rectangle first, then do XClearWindow (in case the
+         actual background color is non-black...) */
+      {
+        XGCValues gcv;
+        GC gc;
+        /* #### really we should allocate "black" instead, but I'm lazy... */
+        gcv.foreground = BlackPixelOfScreen (screen);
+        gc = XCreateGC (dpy, window, GCForeground, &gcv);
+        XFillRectangle (dpy, window, gc, 0, 0, win_width, win_height);
+        XFreeGC (dpy, gc);
+        XClearWindow (dpy, window);
+        XFlush (dpy);
+      }
+
       /* #### Note that this always uses the default colormap!  Morons!
               Owen says that in Gnome 2.0, I should try using
               gdk_pixbuf_render_pixmap_and_mask_for_colormap() instead.
               But I don't have Gnome 2.0 yet.
        */
-      XClearWindow (dpy, window);
       gdk_pixbuf_xlib_render_to_drawable_alpha (pb, window,
                                                 srcx, srcy, destx, desty, w, h,
                                                 GDK_PIXBUF_ALPHA_FULL, 127,
@@ -526,6 +547,11 @@ load_image_internal (Screen *screen, Window window,
   else if (filename)
     {
       fprintf (stderr, "%s: unable to load %s\n", progname, filename);
+#ifdef HAVE_GTK2
+      if (gerr && gerr->message && *gerr->message)
+        fprintf (stderr, "%s: reason %s\n", progname, gerr->message);
+#endif /* HAVE_GTK2 */
+
       goto FAIL;
     }
   else
@@ -623,8 +649,8 @@ main (int argc, char **argv)
               !strcmp (argv[i], "--root"))
             window = RootWindowOfScreen (screen);
 
-          else if ((1 == sscanf (argv[i], " 0x%x %c", &w, &dummy) ||
-                    1 == sscanf (argv[i], " %d %c",   &w, &dummy)) &&
+          else if ((1 == sscanf (argv[i], " 0x%lx %c", &w, &dummy) ||
+                    1 == sscanf (argv[i], " %ld %c",   &w, &dummy)) &&
                    w != 0)
             window = (Window) w;
           else

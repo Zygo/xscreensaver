@@ -302,7 +302,7 @@ static void
 drawImage(Drawable curr_window, double sint, double cost)
 {
   int q,numpt,mx2=mx/2;
-  double cx,cy,cz,nx,ny,nz;
+  double cx,cy,cz,nx=0,ny=0,nz=0;
 
   if ((numpt=aCurr->numpt)==1) return;
   XSetForeground(dpy, gcDraw, aCurr->col);

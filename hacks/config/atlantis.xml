@@ -10,7 +10,7 @@
 
   <number id="sharkspeed" type="slider" arg="-delay %"
           _label="Shark Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="500" default="100"
+          low="0" high="500000" default="25000"
           convert="invert"/>
 
   <number id="sharkproximity" type="slider" arg="-size %"

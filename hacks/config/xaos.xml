@@ -6,8 +6,11 @@
 
   <!-- #### write me -->
 
+  <command arg="-root"/>
   <command arg="-autopilot"/>
   <command arg="-nogui"/>
+  <command arg="-delay 10000"/>
+  <command arg="-maxframerate 30"/>
   <command arg="-incoloring -1"/>
   <command arg="-outcoloring -1"/>
 
@@ -15,6 +18,6 @@
 XaoS generates fast fly-through animations of the Mandelbrot and other
 fractal sets.  Written by Thomas Marsh and Jan Hubicka.  This is not
 included with the XScreenSaver package, but if you don't have it
-already, you can find it at &lt;http://limax.paru.cas.cz/~hubicka/XaoS/&gt;.
+already, you can find it at &lt;http://xaos.theory.org/&gt;.
   </_description>
 </screensaver>

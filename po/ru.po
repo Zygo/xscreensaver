@@ -1,22 +1,20 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR Free Software Foundation, Inc.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+# Russian translation for xscreensaver
+# Andrew W. Nosenko <awn@bcs.zp.ua>
 #
-#, fuzzy
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: xscreensaver 4.05\n"
 "POT-Creation-Date: 2002-05-10 19:02-0700\n"
-"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
-"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2002-10-04 01:31+0300\n"
+"Last-Translator: \"Andrew W. Nosenko\" <awn@bcs.zp.ua>\n"
+"Language-Team: Russian\n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Type: text/plain; charset=koi8-r\n"
 "Content-Transfer-Encoding: 8bit\n"
 
 #: driver/demo-Gtk-conf.c:729
 msgid "Browse..."
-msgstr ""
+msgstr "Обзор..."
 
 #: driver/demo-Gtk-conf.c:1021
 msgid "Select file."
@@ -25,21 +23,20 @@ msgstr ""
 #: driver/demo-Gtk-support.c:121
 #, c-format
 msgid "Couldn't find pixmap file: %s"
-msgstr ""
+msgstr "Не удалось найти файл изображения: %s"
 
 #: driver/demo-Gtk-support.c:130
 #, c-format
 msgid "Error loading pixmap file: %s"
-msgstr ""
+msgstr "Ошибка загрузки файла изображения: %s"
 
 #: driver/demo-Gtk-widgets.c:155 driver/xscreensaver-demo.glade.h:89
-#, fuzzy
 msgid "XScreenSaver"
 msgstr "Хранитель экрана"
 
 #: driver/demo-Gtk-widgets.c:176
 msgid "_File"
-msgstr ""
+msgstr "Файл"
 
 #: driver/demo-Gtk-widgets.c:196 driver/xscreensaver-demo.glade.h:93
 msgid "_Blank Screen Now"
@@ -60,7 +57,7 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:222 driver/xscreensaver-demo.glade.h:96
 msgid "_Kill Daemon"
-msgstr ""
+msgstr "Убить демон"
 
 #: driver/demo-Gtk-widgets.c:231 driver/xscreensaver-demo.glade.h:71
 msgid "Tell the running XScreenSaver daemon to exit."
@@ -68,29 +65,31 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:235 driver/xscreensaver-demo.glade.h:98
 msgid "_Restart Daemon"
-msgstr ""
+msgstr "Перезапустить демон"
 
 #: driver/demo-Gtk-widgets.c:244 driver/xscreensaver-demo.glade.h:49
 msgid "Kill and re-launch the XScreenSaver daemon."
-msgstr ""
+msgstr "Убить, после чего повторно запустить XScreenSaver демон."
 
 #: driver/demo-Gtk-widgets.c:257 driver/xscreensaver-demo.glade.h:95
 msgid "_Exit"
-msgstr ""
+msgstr "Выход"
 
 #: driver/demo-Gtk-widgets.c:266 driver/xscreensaver-demo.glade.h:33
 msgid ""
 "Exit the xscreensaver-demo program (but leave the XScreenSaver daemon "
 "running in the background.)"
 msgstr ""
+"Выйти из программы xscreensaver-demo (но оставить XScreenSaver демон "
+"работающим в фоновом режиме)."
 
 #: driver/demo-Gtk-widgets.c:270
 msgid "_Help"
-msgstr ""
+msgstr "Справка"
 
 #: driver/demo-Gtk-widgets.c:290 driver/xscreensaver-demo.glade.h:92
 msgid "_About..."
-msgstr ""
+msgstr "О программе..."
 
 #: driver/demo-Gtk-widgets.c:299 driver/xscreensaver-demo.glade.h:30
 msgid "Display version information."
@@ -98,7 +97,7 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:303 driver/xscreensaver-demo.glade.h:94
 msgid "_Documentation..."
-msgstr ""
+msgstr "Документация..."
 
 #: driver/demo-Gtk-widgets.c:312 driver/xscreensaver-demo.glade.h:38
 msgid "Go to the documentation on the XScreenSaver web page."
@@ -114,7 +113,7 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:366 driver/xscreensaver-demo.glade.h:50
 msgid "Lock Screen After"
-msgstr ""
+msgstr "Запирать экран после"
 
 #: driver/demo-Gtk-widgets.c:374 driver/xscreensaver-demo.glade.h:8
 msgid "Blank After"
@@ -125,105 +124,108 @@ msgstr ""
 #: driver/xscreensaver-demo.glade.h:43
 msgid "How long before the monitor goes completely black."
 msgstr ""
+"Через какое время монитор должен начать показывать только \"черный экран\"."
 
 #: driver/demo-Gtk-widgets.c:401 driver/demo-Gtk-widgets.c:413
 #: driver/demo-Gtk-widgets.c:425 driver/demo-Gtk-widgets.c:1014
 #: driver/demo-Gtk-widgets.c:1026 driver/demo-Gtk-widgets.c:1038
 #: driver/xscreensaver-demo.glade.h:99
 msgid "minutes"
-msgstr ""
+msgstr "минут(ы)"
 
 #: driver/demo-Gtk-widgets.c:476 driver/demo-Gtk.c:2336
 #: driver/xscreensaver-demo.glade.h:58
 msgid "Preview"
-msgstr ""
+msgstr "Предпросмотр"
 
 #: driver/demo-Gtk-widgets.c:484 driver/xscreensaver-demo.glade.h:21
 msgid ""
 "Demo the selected screen saver in full-screen mode (click the mouse to "
 "return.)"
 msgstr ""
+"Показать выбранный хранитель в полноэкранном режиме (возврат обратно по "
+"щелчку мыши)."
 
 #: driver/demo-Gtk-widgets.c:486 driver/xscreensaver-demo.glade.h:65
 msgid "Settings..."
-msgstr ""
+msgstr "Настройки..."
 
 #: driver/demo-Gtk-widgets.c:494 driver/xscreensaver-demo.glade.h:17
 msgid "Customization and explanation of the selected screen saver."
-msgstr ""
+msgstr "Настройка о объяснение выбранного хранителя экрана."
 
 #: driver/demo-Gtk-widgets.c:515 driver/xscreensaver-demo.glade.h:52
 msgid "Mode:"
-msgstr ""
+msgstr "Режим:"
 
 #: driver/demo-Gtk-widgets.c:533 driver/xscreensaver-demo.glade.h:25
-#, fuzzy
 msgid "Disable Screen Saver"
-msgstr "Хранитель экрана"
+msgstr "Запретить хранитель экрана"
 
 #: driver/demo-Gtk-widgets.c:536 driver/xscreensaver-demo.glade.h:9
 msgid "Blank Screen Only"
-msgstr ""
+msgstr "Только очищать экран"
 
 #: driver/demo-Gtk-widgets.c:539 driver/xscreensaver-demo.glade.h:56
-#, fuzzy
 msgid "Only One Screen Saver"
-msgstr "Хранитель экрана"
+msgstr "Один постоянный хранитель экрана"
 
 #: driver/demo-Gtk-widgets.c:542 driver/xscreensaver-demo.glade.h:60
-#, fuzzy
 msgid "Random Screen Saver"
-msgstr "Хранитель экрана"
+msgstr "Случайный хранитель экрана"
 
 #: driver/demo-Gtk-widgets.c:565 driver/xscreensaver-demo.glade.h:75
 msgid "Use"
-msgstr ""
+msgstr "Использовать"
 
 #: driver/demo-Gtk-widgets.c:585 driver/xscreensaver-demo.glade.h:63
-#, fuzzy
 msgid "Screen Saver"
 msgstr "Хранитель экрана"
 
 #: driver/demo-Gtk-widgets.c:638 driver/xscreensaver-demo.glade.h:91
 msgid "\\/"
-msgstr ""
+msgstr "\\/"
 
 #: driver/demo-Gtk-widgets.c:646 driver/xscreensaver-demo.glade.h:61
 msgid ""
 "Run the next screen saver in the list in full-screen mode (click the mouse "
 "to return.)"
 msgstr ""
+"Исполнить следующий в списке хранитель экрана в полноэкранном режиме "
+"(возврат обратно по щелчку мыши)."
 
 #: driver/demo-Gtk-widgets.c:648
 msgid "/\\"
-msgstr ""
+msgstr "/\\"
 
 #: driver/demo-Gtk-widgets.c:656 driver/xscreensaver-demo.glade.h:62
 msgid ""
 "Run the previous screen saver in the list in full-screen mode (click the "
 "mouse to return.)"
 msgstr ""
+"Исполнить предыдущий в списке хранитель экрана в полноэкранном режиме "
+"(возврат обратно по щелчку мыши)."
 
 #: driver/demo-Gtk-widgets.c:658 driver/demo-Gtk-widgets.c:1601
 #: driver/xscreensaver-demo.glade.h:22
 msgid "Description"
-msgstr ""
+msgstr "Описание"
 
 #: driver/demo-Gtk-widgets.c:685 driver/xscreensaver-demo.glade.h:26
 msgid "Display Modes"
-msgstr ""
+msgstr "Режимы экрана"
 
 #: driver/demo-Gtk-widgets.c:701 driver/xscreensaver-demo.glade.h:23
 msgid "Diagnostics"
-msgstr ""
+msgstr "Диагностика"
 
 #: driver/demo-Gtk-widgets.c:745 driver/xscreensaver-demo.glade.h:80
 msgid "Whether the daemon should print lots of debugging information."
-msgstr ""
+msgstr "Должен ли демон выводить большое количество отладочной информации."
 
 #: driver/demo-Gtk-widgets.c:747 driver/xscreensaver-demo.glade.h:76
 msgid "Verbose Diagnostics"
-msgstr ""
+msgstr "Расширенная диагностика"
 
 #: driver/demo-Gtk-widgets.c:762 driver/xscreensaver-demo.glade.h:79
 msgid ""
@@ -233,7 +235,7 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:764 driver/xscreensaver-demo.glade.h:29
 msgid "Display Subprocess Errors"
-msgstr ""
+msgstr "Показывать ошибки подпроцессов"
 
 #: driver/demo-Gtk-widgets.c:779 driver/xscreensaver-demo.glade.h:87
 msgid ""
@@ -293,82 +295,90 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:936 driver/xscreensaver-demo.glade.h:27
 msgid "Display Power Management"
-msgstr ""
+msgstr "Управление питанием монитора"
 
 #: driver/demo-Gtk-widgets.c:980 driver/xscreensaver-demo.glade.h:84
 msgid "Whether the monitor should be powered down after a while."
 msgstr ""
+"Должен ли монитор снижать энергопотребление или отключаться через какое-то "
+"время."
 
 #: driver/demo-Gtk-widgets.c:982 driver/xscreensaver-demo.glade.h:57
 msgid "Power Management Enabled"
-msgstr ""
+msgstr "Управление питанием разрешено"
 
 #: driver/demo-Gtk-widgets.c:1050 driver/xscreensaver-demo.glade.h:55
 msgid "Off After"
-msgstr ""
+msgstr "Выключать через"
 
 #: driver/demo-Gtk-widgets.c:1063 driver/xscreensaver-demo.glade.h:70
 msgid "Suspend After"
-msgstr ""
+msgstr "Режим Suspend через"
 
 #: driver/demo-Gtk-widgets.c:1076 driver/xscreensaver-demo.glade.h:68
 msgid "Standby After"
-msgstr ""
+msgstr "Режим Standby через"
 
 #: driver/demo-Gtk-widgets.c:1099 driver/xscreensaver-demo.glade.h:45
 msgid "How long until the monitor goes into power-saving mode."
-msgstr ""
+msgstr "Через какое время монитор должен перейти в режим энергосбережения."
 
 #: driver/demo-Gtk-widgets.c:1113 driver/xscreensaver-demo.glade.h:46
 msgid "How long until the monitor powers down."
-msgstr ""
+msgstr "Через какое время монитор должен отключиться."
 
 #: driver/demo-Gtk-widgets.c:1117 driver/xscreensaver-demo.glade.h:47
 msgid "Image Manipulation"
-msgstr ""
+msgstr "Манипуляции с изображениями"
 
 #: driver/demo-Gtk-widgets.c:1161 driver/xscreensaver-demo.glade.h:81
 msgid ""
 "Whether the image-manipulating modes should be allowed to operate on an "
 "image of your desktop."
 msgstr ""
+"Позволяется ли \"хранителям экрана\", манипулирующим изображениями, работать "
+"с изображением вашего рабочего стола."
 
 #: driver/demo-Gtk-widgets.c:1163 driver/xscreensaver-demo.glade.h:39
 msgid "Grab Desktop Images"
-msgstr ""
+msgstr "Захватывать изображения с рабочего стола"
 
 #: driver/demo-Gtk-widgets.c:1178 driver/xscreensaver-demo.glade.h:82
 msgid ""
 "Whether the image-manipulating modes should operate on images captured from "
 "the system's video input (if there is one)."
 msgstr ""
+"Должны ли \"хранители экрана\", манипулирующие изображениями, работать с "
+"изображениями, захваченными с системного видео входа (если таковой имеется)."
 
 #: driver/demo-Gtk-widgets.c:1180 driver/xscreensaver-demo.glade.h:40
 msgid "Grab Video Frames"
-msgstr ""
+msgstr "Захватывать видео кадры"
 
 #: driver/demo-Gtk-widgets.c:1195 driver/xscreensaver-demo.glade.h:83
 msgid ""
 "Whether the image-manipulating modes should operate on random images loaded "
 "from disk."
 msgstr ""
+"Должны ли \"хранители экрана\", манипулирующим изображениями, работать со "
+"случайными изображениями, загруженными с диска."
 
 #: driver/demo-Gtk-widgets.c:1197 driver/xscreensaver-demo.glade.h:12
 msgid "Choose Random Image:"
-msgstr ""
+msgstr "Выбирать случайное изображение:"
 
 #: driver/demo-Gtk-widgets.c:1230 driver/xscreensaver-demo.glade.h:73
 msgid "The directory from which images will be randomly chosen."
-msgstr ""
+msgstr "Каталог, из которого случайным образом будут выбираться изображения."
 
 #: driver/demo-Gtk-widgets.c:1232 driver/xscreensaver-demo.glade.h:10
 msgid "Browse"
-msgstr ""
+msgstr "Обзор"
 
 #: driver/demo-Gtk-widgets.c:1240 driver/demo-Gtk-widgets.c:1593
 #: driver/xscreensaver-demo.glade.h:3
 msgid "Advanced"
-msgstr ""
+msgstr "Расширенные"
 
 #: driver/demo-Gtk-widgets.c:1438 driver/xscreensaver-demo.glade.h:90
 msgid "XScreenSaver: Mode-Specific Settings"
@@ -376,11 +386,11 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1460 driver/xscreensaver-demo.glade.h:64
 msgid "Settings"
-msgstr ""
+msgstr "Настройки"
 
 #: driver/demo-Gtk-widgets.c:1489 driver/xscreensaver-demo.glade.h:66
 msgid "Standard"
-msgstr ""
+msgstr "Стандартные"
 
 #: driver/demo-Gtk-widgets.c:1526 driver/xscreensaver-demo.glade.h:77
 msgid "Visual:"
@@ -398,7 +408,7 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1546 driver/xscreensaver-demo.glade.h:19
 msgid "Default"
-msgstr ""
+msgstr "По умолчанию"
 
 #: driver/demo-Gtk-widgets.c:1547 driver/xscreensaver-demo.glade.h:20
 msgid "Default-N"
@@ -406,15 +416,15 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1548 driver/xscreensaver-demo.glade.h:37
 msgid "GL"
-msgstr ""
+msgstr "GL"
 
 #: driver/demo-Gtk-widgets.c:1549 driver/xscreensaver-demo.glade.h:74
 msgid "TrueColor"
-msgstr ""
+msgstr "TrueColor"
 
 #: driver/demo-Gtk-widgets.c:1550 driver/xscreensaver-demo.glade.h:59
 msgid "PseudoColor"
-msgstr ""
+msgstr "PseudoColor"
 
 #: driver/demo-Gtk-widgets.c:1551 driver/xscreensaver-demo.glade.h:69
 msgid "StaticGray"
@@ -448,11 +458,11 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1569 driver/xscreensaver-demo.glade.h:16
 msgid "Command Line:"
-msgstr ""
+msgstr "Командная строка:"
 
 #: driver/demo-Gtk-widgets.c:1641 driver/xscreensaver-demo.glade.h:31
 msgid "Documentation..."
-msgstr ""
+msgstr "Документация..."
 
 #: driver/demo-Gtk-widgets.c:1649 driver/xscreensaver-demo.glade.h:13
 msgid "Click here to read the manual for this display mode, if it has one."
@@ -460,15 +470,15 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:1674 driver/xscreensaver-demo.glade.h:4
 msgid "Advanced >>"
-msgstr ""
+msgstr "Расширенные >>"
 
 #: driver/demo-Gtk-widgets.c:1682 driver/xscreensaver-demo.glade.h:32
 msgid "Edit the command line directly."
-msgstr ""
+msgstr "Редактировать командную строку напрямую."
 
 #: driver/demo-Gtk-widgets.c:1684 driver/xscreensaver-demo.glade.h:67
 msgid "Standard <<"
-msgstr ""
+msgstr "Стандартные <<"
 
 #: driver/demo-Gtk-widgets.c:1692 driver/xscreensaver-demo.glade.h:6
 msgid "Back to the graphical configuration options."
@@ -477,11 +487,11 @@ msgstr ""
 #: driver/demo-Gtk-widgets.c:1703 driver/demo-Gtk.c:587
 #: driver/xscreensaver-demo.glade.h:54
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: driver/demo-Gtk-widgets.c:1712 driver/xscreensaver-demo.glade.h:11
 msgid "Cancel"
-msgstr ""
+msgstr "Отменить"
 
 #: driver/demo-Gtk.c:511
 msgid "For updates, check http://www.jwz.org/xscreensaver/"
@@ -490,7 +500,7 @@ msgstr ""
 #: driver/demo-Gtk.c:517
 #, c-format
 msgid "Copyright ╘ 1991-2002 %s"
-msgstr ""
+msgstr "Copyright (C) 1991-2002 %s"
 
 #: driver/demo-Gtk.c:624
 msgid ""
@@ -528,7 +538,7 @@ msgstr ""
 
 #: driver/demo-Gtk.c:732
 msgid "Please check your $PATH and permissions."
-msgstr ""
+msgstr "Проверьте значение переменной $PATH и права доступа."
 
 #: driver/demo-Gtk.c:767
 msgid ""
@@ -536,6 +546,9 @@ msgid ""
 "\n"
 "Couldn't determine init file name!\n"
 msgstr ""
+"Ошибка:\n"
+"\n"
+"Не удалось определить имя инициализационного файла!\n"
 
 #: driver/demo-Gtk.c:772
 #, c-format
@@ -544,6 +557,9 @@ msgid ""
 "\n"
 "Couldn't write %s\n"
 msgstr ""
+"Ошибка:\n"
+"\n"
+"Не удалось записать %s\n"
 
 #: driver/demo-Gtk.c:831
 msgid ""
@@ -559,6 +575,9 @@ msgid ""
 "\n"
 "Unparsable time format: \"%s\"\n"
 msgstr ""
+"Ошибка:\n"
+"\n"
+"Невозможно определить формат времени: \"%s\"\n"
 
 #: driver/demo-Gtk.c:1528
 #, c-format
@@ -567,23 +586,25 @@ msgid ""
 "\n"
 "Directory does not exist: \"%s\"\n"
 msgstr ""
+"Ошибка:\n"
+"\n"
+"Каталога не существует: \"%s\"\n"
 
 #: driver/demo-Gtk.c:2053
 msgid "Descriptions not available: no XML support compiled in."
-msgstr ""
+msgstr "Описание недоступно: поддержка XML не была включена при компиляции."
 
 #: driver/demo-Gtk.c:2058
 msgid "No description available."
-msgstr ""
+msgstr "Описание отсутствует."
 
 #: driver/demo-Gtk.c:2307
 msgid "Blank Screen"
 msgstr ""
 
 #: driver/demo-Gtk.c:2313
-#, fuzzy
 msgid "Screen Saver Disabled"
-msgstr "Хранитель экрана"
+msgstr "Хранитель экрана запрещен"
 
 #: driver/demo-Gtk.c:2473
 #, c-format
@@ -609,6 +630,10 @@ msgid ""
 "The XScreenSaver daemon doesn't seem to be running\n"
 "on display \"%s\".  Launch it now?"
 msgstr ""
+"Предупреждение:\n"
+"\n"
+"XScreenSaver демон, похоже, не запущен\n"
+"для экрана \"%s\".  Запустить его сейчас?"
 
 #: driver/demo-Gtk.c:3220
 #, c-format
@@ -660,20 +685,19 @@ msgstr ""
 #: driver/demo-Gtk.c:3636
 #, c-format
 msgid "%s: unknown option: %s\n"
-msgstr ""
+msgstr "%s: неизвестный параметр: %s\n"
 
 #: driver/screensaver-properties.desktop.in.h:1
 msgid "Configure the settings of the screensaver."
 msgstr "Настройка хранителя экрана."
 
 #: driver/screensaver-properties.desktop.in.h:2
-#, fuzzy
 msgid "Screensaver"
 msgstr "Хранитель экрана"
 
 #: driver/xscreensaver-demo.glade.h:1
 msgid "/\");"
-msgstr ""
+msgstr "/\");"
 
 #: hacks/config/ant.xml.h:1
 msgid ""
@@ -758,7 +782,7 @@ msgstr ""
 #: hacks/config/xmatrix.xml.h:4 hacks/config/xmountains.xml.h:1
 #: hacks/config/xrayswarm.xml.h:2 hacks/config/zoom.xml.h:2
 msgid "Fast"
-msgstr ""
+msgstr "Быстро"
 
 #: hacks/config/ant.xml.h:6
 msgid "Four Sided Cells"
@@ -776,7 +800,7 @@ msgstr ""
 #: hacks/config/rubik.xml.h:4 hacks/config/sierpinski.xml.h:3
 #: hacks/config/slip.xml.h:3
 msgid "Large"
-msgstr ""
+msgstr "Большой"
 
 #: hacks/config/ant.xml.h:8 hacks/config/apollonian.xml.h:7
 #: hacks/config/attraction.xml.h:18 hacks/config/blaster.xml.h:6
@@ -813,7 +837,7 @@ msgstr ""
 #: hacks/config/worm.xml.h:4 hacks/config/xearth.xml.h:12
 #: hacks/config/xfishtank.xml.h:8
 msgid "Many"
-msgstr ""
+msgstr "Много"
 
 #: hacks/config/ant.xml.h:9
 msgid "Nine Sided Cells"
@@ -848,7 +872,7 @@ msgstr ""
 #: hacks/config/vines.xml.h:3 hacks/config/worm.xml.h:5
 #: hacks/config/xearth.xml.h:17 hacks/config/xfishtank.xml.h:9
 msgid "Number of Colors"
-msgstr ""
+msgstr "Количество цветов"
 
 #: hacks/config/ant.xml.h:11
 msgid "Random Cell Shape"
@@ -925,7 +949,7 @@ msgstr ""
 #: hacks/config/xmatrix.xml.h:13 hacks/config/xmountains.xml.h:4
 #: hacks/config/xrayswarm.xml.h:3 hacks/config/zoom.xml.h:6
 msgid "Slow"
-msgstr ""
+msgstr "Медленно"
 
 #: hacks/config/ant.xml.h:15 hacks/config/attraction.xml.h:27
 #: hacks/config/cubenetic.xml.h:23 hacks/config/demon.xml.h:9
@@ -939,7 +963,7 @@ msgstr ""
 #: hacks/config/rubik.xml.h:10 hacks/config/sierpinski.xml.h:8
 #: hacks/config/slip.xml.h:8
 msgid "Small"
-msgstr ""
+msgstr "Маленький"
 
 #: hacks/config/ant.xml.h:16 hacks/config/apollonian.xml.h:12
 #: hacks/config/attraction.xml.h:28 hacks/config/blaster.xml.h:9
@@ -997,7 +1021,7 @@ msgstr ""
 #: hacks/config/xmatrix.xml.h:16 hacks/config/xmountains.xml.h:5
 #: hacks/config/xrayswarm.xml.h:4 hacks/config/zoom.xml.h:7
 msgid "Speed"
-msgstr ""
+msgstr "Скорость"
 
 #: hacks/config/ant.xml.h:17
 msgid "Three Sided Cells"
@@ -1050,7 +1074,7 @@ msgstr ""
 #: hacks/config/worm.xml.h:9 hacks/config/xearth.xml.h:28
 #: hacks/config/xfishtank.xml.h:11
 msgid "Two"
-msgstr ""
+msgstr "Два"
 
 #: hacks/config/apollonian.xml.h:1
 msgid "Apollonian"
@@ -1084,7 +1108,7 @@ msgstr ""
 
 #: hacks/config/atlantis.xml.h:1
 msgid "Agressive"
-msgstr ""
+msgstr "Агрессивно"
 
 #: hacks/config/atlantis.xml.h:2
 msgid "Atlantis"
@@ -1092,31 +1116,31 @@ msgstr ""
 
 #: hacks/config/atlantis.xml.h:3
 msgid "Clear Water"
-msgstr ""
+msgstr "Чистая вода"
 
 #: hacks/config/atlantis.xml.h:5
 msgid "Flat Background"
-msgstr ""
+msgstr "Плоский фон"
 
 #: hacks/config/atlantis.xml.h:6
 msgid "Gradient Background"
-msgstr ""
+msgstr "Градиентный фон"
 
 #: hacks/config/atlantis.xml.h:7
 msgid "Number of Sharks"
-msgstr ""
+msgstr "Количество акул"
 
 #: hacks/config/atlantis.xml.h:8
 msgid "Shark Proximity"
-msgstr ""
+msgstr "Поведение акулы"
 
 #: hacks/config/atlantis.xml.h:9
 msgid "Shark Speed"
-msgstr ""
+msgstr "Скорость акулы"
 
 #: hacks/config/atlantis.xml.h:10
 msgid "Shimmering Water"
-msgstr ""
+msgstr "Мерцающая вода"
 
 #: hacks/config/atlantis.xml.h:11 hacks/config/boxed.xml.h:5
 #: hacks/config/bubble3d.xml.h:4 hacks/config/cage.xml.h:3
@@ -1135,11 +1159,11 @@ msgstr ""
 #: hacks/config/sproingies.xml.h:4 hacks/config/stairs.xml.h:2
 #: hacks/config/starwars.xml.h:11 hacks/config/superquadrics.xml.h:6
 msgid "Show Frames-per-Second"
-msgstr ""
+msgstr "Показывать количество кадров в секунду"
 
 #: hacks/config/atlantis.xml.h:12
 msgid "Shy"
-msgstr ""
+msgstr "Пугливо"
 
 #: hacks/config/atlantis.xml.h:14 hacks/config/boxed.xml.h:7
 #: hacks/config/cage.xml.h:5 hacks/config/extrusion.xml.h:12
@@ -1151,7 +1175,7 @@ msgstr ""
 #: hacks/config/sproingies.xml.h:7 hacks/config/stairs.xml.h:4
 #: hacks/config/stonerview.xml.h:2 hacks/config/superquadrics.xml.h:8
 msgid "Solid"
-msgstr ""
+msgstr "Сплошной"
 
 #: hacks/config/atlantis.xml.h:15
 msgid ""
@@ -1162,7 +1186,7 @@ msgstr ""
 
 #: hacks/config/atlantis.xml.h:16
 msgid "Whale Speed"
-msgstr ""
+msgstr "Скорость кита"
 
 #: hacks/config/atlantis.xml.h:17 hacks/config/boxed.xml.h:8
 #: hacks/config/cage.xml.h:8 hacks/config/dangerball.xml.h:11
@@ -1177,7 +1201,7 @@ msgstr ""
 #: hacks/config/stairs.xml.h:7 hacks/config/stonerview.xml.h:4
 #: hacks/config/superquadrics.xml.h:11
 msgid "Wireframe"
-msgstr ""
+msgstr "Каркасное изображение"
 
 #: hacks/config/attraction.xml.h:1
 msgid "Attraction"
@@ -1185,7 +1209,7 @@ msgstr ""
 
 #: hacks/config/attraction.xml.h:2
 msgid "Ball Count"
-msgstr ""
+msgstr "Количество мячей"
 
 #: hacks/config/attraction.xml.h:3
 msgid "Ball Mass"
@@ -1193,11 +1217,11 @@ msgstr ""
 
 #: hacks/config/attraction.xml.h:4 hacks/config/fluidballs.xml.h:2
 msgid "Balls"
-msgstr ""
+msgstr "Мячи"
 
 #: hacks/config/attraction.xml.h:5
 msgid "Bounce Off Walls"
-msgstr ""
+msgstr "Отскакивать от стен"
 
 #: hacks/config/attraction.xml.h:6 hacks/config/hopalong.xml.h:1
 #: hacks/config/interference.xml.h:3 hacks/config/qix.xml.h:2
@@ -1211,7 +1235,7 @@ msgstr ""
 
 #: hacks/config/attraction.xml.h:9
 msgid "Filled Splines"
-msgstr ""
+msgstr "Заполненные сплайны"
 
 #: hacks/config/attraction.xml.h:10 hacks/config/ccurve.xml.h:9
 #: hacks/config/cubenetic.xml.h:10 hacks/config/euler2d.xml.h:5
@@ -1226,11 +1250,11 @@ msgstr ""
 #: hacks/config/superquadrics.xml.h:4 hacks/config/t3d.xml.h:7
 #: hacks/config/twang.xml.h:5 hacks/config/wander.xml.h:8
 msgid "High"
-msgstr ""
+msgstr "Высокое"
 
 #: hacks/config/attraction.xml.h:11
 msgid "Ignore Screen Edges"
-msgstr ""
+msgstr "Игнорировать границы экрана"
 
 #: hacks/config/attraction.xml.h:12
 msgid "Inward"
@@ -1254,7 +1278,7 @@ msgstr ""
 #: hacks/config/lmorph.xml.h:7 hacks/config/pedal.xml.h:5
 #: hacks/config/starfish.xml.h:4 hacks/config/whirlygig.xml.h:3
 msgid "Lines"
-msgstr ""
+msgstr "Линии"
 
 #: hacks/config/attraction.xml.h:16 hacks/config/braid.xml.h:6
 #: hacks/config/cynosure.xml.h:5 hacks/config/drift.xml.h:8
@@ -1267,7 +1291,7 @@ msgstr ""
 #: hacks/config/spheremonics.xml.h:7 hacks/config/wander.xml.h:10
 #: hacks/config/whirlwindwarp.xml.h:3
 msgid "Long"
-msgstr ""
+msgstr "Длинный"
 
 #: hacks/config/attraction.xml.h:17 hacks/config/ccurve.xml.h:10
 #: hacks/config/cubenetic.xml.h:12 hacks/config/euler2d.xml.h:7
@@ -1282,7 +1306,7 @@ msgstr ""
 #: hacks/config/superquadrics.xml.h:5 hacks/config/t3d.xml.h:8
 #: hacks/config/twang.xml.h:7 hacks/config/wander.xml.h:11
 msgid "Low"
-msgstr ""
+msgstr "Низкое"
 
 #: hacks/config/attraction.xml.h:20
 msgid "Orbital Mode"
@@ -1294,11 +1318,11 @@ msgstr ""
 
 #: hacks/config/attraction.xml.h:22
 msgid "Polygons"
-msgstr ""
+msgstr "Многоугольники"
 
 #: hacks/config/attraction.xml.h:23 hacks/config/spotlight.xml.h:3
 msgid "Radius"
-msgstr ""
+msgstr "Радиус"
 
 #: hacks/config/attraction.xml.h:24
 msgid "Repulsion Threshold"
@@ -1314,20 +1338,20 @@ msgstr ""
 #: hacks/config/sierpinski3d.xml.h:5 hacks/config/spheremonics.xml.h:17
 #: hacks/config/wander.xml.h:12 hacks/config/whirlwindwarp.xml.h:6
 msgid "Short"
-msgstr ""
+msgstr "Короткий"
 
 #: hacks/config/attraction.xml.h:29
 msgid "Splines"
-msgstr ""
+msgstr "Сплайны"
 
 #: hacks/config/attraction.xml.h:30
 msgid "Tails"
-msgstr ""
+msgstr "Хвосты"
 
 #: hacks/config/attraction.xml.h:31 hacks/config/euler2d.xml.h:16
 #: hacks/config/juggle.xml.h:9
 msgid "Trail Length"
-msgstr ""
+msgstr "Длинна следа"
 
 #: hacks/config/blaster.xml.h:1
 msgid "Blaster"
@@ -1349,7 +1373,7 @@ msgstr ""
 #: hacks/config/thornbird.xml.h:3 hacks/config/whirlwindwarp.xml.h:1
 #: hacks/config/xfishtank.xml.h:4
 msgid "Few"
-msgstr ""
+msgstr "Мало"
 
 #: hacks/config/blaster.xml.h:5 hacks/config/penetrate.xml.h:4
 msgid "Lasers"
@@ -1364,8 +1388,9 @@ msgid "Stars"
 msgstr ""
 
 #: hacks/config/blitspin.xml.h:1
+#, fuzzy
 msgid "90╟ Rotation Speed"
-msgstr ""
+msgstr "Скорость анимации"
 
 #: hacks/config/blitspin.xml.h:2
 msgid "Bitmap to rotate"
@@ -1419,7 +1444,7 @@ msgstr ""
 #: hacks/config/rd-bomb.xml.h:6 hacks/config/rocks.xml.h:1
 #: hacks/config/starwars.xml.h:1 hacks/config/xfishtank.xml.h:1
 msgid "Animation Speed"
-msgstr ""
+msgstr "Скорость анимации"
 
 #: hacks/config/boxed.xml.h:2
 msgid "Boxed"
@@ -1459,7 +1484,7 @@ msgstr ""
 #: hacks/config/vidwhacker.xml.h:3 hacks/config/wander.xml.h:7
 #: hacks/config/xspirograph.xml.h:3
 msgid "Duration"
-msgstr ""
+msgstr "Продолжительность"
 
 #: hacks/config/braid.xml.h:5 hacks/config/epicycle.xml.h:7
 #: hacks/config/nerverot.xml.h:12
@@ -1473,23 +1498,23 @@ msgstr ""
 #: hacks/config/bsod.xml.h:1 hacks/config/molecule.xml.h:1
 #: hacks/config/vidwhacker.xml.h:1 hacks/config/webcollage.xml.h:1
 msgid "2 minutes"
-msgstr ""
+msgstr "2 минуты"
 
 #: hacks/config/bsod.xml.h:2 hacks/config/molecule.xml.h:2
 msgid "5 seconds"
-msgstr ""
+msgstr "5 секунд"
 
 #: hacks/config/bsod.xml.h:3
 msgid "AmigaDOS"
-msgstr ""
+msgstr "AmigaDOS"
 
 #: hacks/config/bsod.xml.h:4
 msgid "Atari"
-msgstr ""
+msgstr "Atari"
 
 #: hacks/config/bsod.xml.h:5
 msgid "BSD"
-msgstr ""
+msgstr "BSD"
 
 #: hacks/config/bsod.xml.h:6
 msgid "BSOD"
@@ -1516,7 +1541,7 @@ msgstr ""
 
 #: hacks/config/bsod.xml.h:12
 msgid "SCO"
-msgstr ""
+msgstr "SCO"
 
 #: hacks/config/bsod.xml.h:13
 msgid "Sad Mac"
@@ -1524,23 +1549,23 @@ msgstr ""
 
 #: hacks/config/bsod.xml.h:14
 msgid "Solaris"
-msgstr ""
+msgstr "Solaris"
 
 #: hacks/config/bsod.xml.h:15
 msgid "Sparc Linux"
-msgstr ""
+msgstr "Sparc Linux"
 
 #: hacks/config/bsod.xml.h:16
 msgid "Windows"
-msgstr ""
+msgstr "Windows"
 
 #: hacks/config/bsod.xml.h:17
 msgid "Windows 2000"
-msgstr ""
+msgstr "Windows 2000"
 
 #: hacks/config/bsod.xml.h:18
 msgid "Windows NT"
-msgstr ""
+msgstr "Windows NT"
 
 #: hacks/config/bubble3d.xml.h:1
 msgid "Bubble3D"
@@ -1637,7 +1662,7 @@ msgstr ""
 #: hacks/config/qix.xml.h:6 hacks/config/squiral.xml.h:2
 #: hacks/config/wander.xml.h:4
 msgid "Density"
-msgstr ""
+msgstr "Плотность"
 
 #: hacks/config/ccurve.xml.h:8
 msgid ""
@@ -1702,7 +1727,7 @@ msgstr ""
 #: hacks/config/rotzoomer.xml.h:2 hacks/config/wander.xml.h:2
 #: hacks/config/xspirograph.xml.h:1
 msgid "1 Minute"
-msgstr ""
+msgstr "1 минута"
 
 #: hacks/config/coral.xml.h:2 hacks/config/deco.xml.h:2
 #: hacks/config/helix.xml.h:2 hacks/config/imsmap.xml.h:2
@@ -1710,7 +1735,7 @@ msgstr ""
 #: hacks/config/penrose.xml.h:1 hacks/config/rorschach.xml.h:2
 #: hacks/config/xspirograph.xml.h:2
 msgid "1 Second"
-msgstr ""
+msgstr "1 секунда"
 
 #: hacks/config/coral.xml.h:3
 msgid "Coral"
@@ -1721,11 +1746,11 @@ msgstr ""
 #: hacks/config/qix.xml.h:5 hacks/config/squiral.xml.h:1
 #: hacks/config/xearth.xml.h:4
 msgid "Dense"
-msgstr ""
+msgstr "Плотно"
 
 #: hacks/config/coral.xml.h:10 hacks/config/squiral.xml.h:13
 msgid "Seeds"
-msgstr ""
+msgstr "Зерна"
 
 #: hacks/config/coral.xml.h:11
 msgid ""
@@ -1738,7 +1763,7 @@ msgstr ""
 #: hacks/config/qix.xml.h:21 hacks/config/squiral.xml.h:15
 #: hacks/config/xearth.xml.h:24 hacks/config/xmatrix.xml.h:15
 msgid "Sparse"
-msgstr ""
+msgstr "Редко"
 
 #: hacks/config/cosmos.xml.h:1
 msgid "Cosmos"
@@ -1778,7 +1803,7 @@ msgstr ""
 #: hacks/config/superquadrics.xml.h:1 hacks/config/swirl.xml.h:1
 #: hacks/config/worm.xml.h:2
 msgid "Count"
-msgstr ""
+msgstr "Количество"
 
 #: hacks/config/crystal.xml.h:3
 msgid "Crystal"
@@ -2314,11 +2339,11 @@ msgstr ""
 #: hacks/config/maze.xml.h:1 hacks/config/rotzoomer.xml.h:1
 #: hacks/config/wander.xml.h:1
 msgid "0 Seconds"
-msgstr ""
+msgstr "0 секунд"
 
 #: hacks/config/flame.xml.h:2 hacks/config/maze.xml.h:2
 msgid "10 Seconds"
-msgstr ""
+msgstr "10 секунд"
 
 #: hacks/config/flame.xml.h:3
 msgid "Another iterative fractal generator. Written by Scott Draves."
@@ -2520,9 +2545,8 @@ msgid "Mesh Density"
 msgstr ""
 
 #: hacks/config/gflux.xml.h:10
-#, fuzzy
 msgid "Screen Image"
-msgstr "Хранитель экрана"
+msgstr "Изображение экрана"
 
 #: hacks/config/gflux.xml.h:14 hacks/config/interference.xml.h:18
 msgid "Wave Speed"
@@ -2986,7 +3010,7 @@ msgstr ""
 
 #: hacks/config/juggle.xml.h:1
 msgid "Checkered Balls"
-msgstr ""
+msgstr "Пёстрые мячики"
 
 #: hacks/config/juggle.xml.h:2
 msgid "Draws a juggling stick-man. Written by Tim Auckland."
@@ -2998,7 +3022,7 @@ msgstr ""
 
 #: hacks/config/juggle.xml.h:6 hacks/config/pipes.xml.h:10
 msgid "None"
-msgstr ""
+msgstr "Отсутствует"
 
 #: hacks/config/julia.xml.h:3 hacks/config/rorschach.xml.h:4
 msgid "Iterations"
@@ -3767,17 +3791,17 @@ msgstr ""
 
 #: hacks/config/rd-bomb.xml.h:1
 msgid "/"
-msgstr ""
+msgstr "/"
 
 #: hacks/config/rd-bomb.xml.h:3
 #, no-c-format
 msgid "1%"
-msgstr ""
+msgstr "1%"
 
 #: hacks/config/rd-bomb.xml.h:5
 #, no-c-format
 msgid "100%"
-msgstr ""
+msgstr "100%"
 
 #: hacks/config/rd-bomb.xml.h:7
 msgid ""
@@ -3800,19 +3824,19 @@ msgstr ""
 
 #: hacks/config/rd-bomb.xml.h:15
 msgid "Reaction/Difusion"
-msgstr ""
+msgstr "Реакция/диффузия"
 
 #: hacks/config/rd-bomb.xml.h:16
 msgid "Seed Radius"
-msgstr ""
+msgstr "Радиус зерен"
 
 #: hacks/config/rd-bomb.xml.h:19 hacks/config/twang.xml.h:12
 msgid "Tile Size"
-msgstr ""
+msgstr "Размер плитки"
 
 #: hacks/config/rd-bomb.xml.h:22
 msgid "Wander Speed"
-msgstr ""
+msgstr "Скорость блуждания"
 
 #: hacks/config/ripples.xml.h:1
 msgid "Big Drops"
@@ -4178,7 +4202,7 @@ msgstr ""
 
 #: hacks/config/spheremonics.xml.h:9
 msgid "Resolution"
-msgstr ""
+msgstr "Разрешение"
 
 #: hacks/config/spheremonics.xml.h:20
 msgid "Smoothed Lines"
@@ -4523,7 +4547,7 @@ msgstr ""
 
 #: hacks/config/vidwhacker.xml.h:2 hacks/config/webcollage.xml.h:2
 msgid "2 seconds"
-msgstr ""
+msgstr "2 секунды"
 
 #: hacks/config/vidwhacker.xml.h:4
 msgid "Image Directory"
@@ -4995,3 +5019,86 @@ msgid ""
 "option the result is like looking through many overlapping lenses rather "
 "than just a simple zoom. Written by James Macnicol."
 msgstr ""
+
+#~ msgid "Copyright б╘ 1991-2002 %s"
+#~ msgstr "Copyright (C) 1991-2002 %s"
+
+#~ msgid "*"
+#~ msgstr "*"
+
+#~ msgid "Choose _Random Image:"
+#~ msgstr "Выбирать случайное изображение:"
+
+#~ msgid "Display Subprocess _Errors"
+#~ msgstr "Показывать ошибки подпроцессов"
+
+#, fuzzy
+#~ msgid "Display _Splash Screen at Startup"
+#~ msgstr "Запретить хранитель экрана"
+
+#~ msgid "Grab Desktop _Images"
+#~ msgstr "Захватывать изображения с рабочего стола"
+
+#~ msgid "Grab _Video Frames"
+#~ msgstr "Захватывать видео кадры"
+
+#~ msgid ""
+#~ "No Preview\n"
+#~ "Available"
+#~ msgstr ""
+#~ "Предпросмотр\n"
+#~ "недоступен"
+
+#~ msgid "Preview of screen saver"
+#~ msgstr "Предпросмотр хранителя экрана"
+
+#~ msgid "Stand_by After"
+#~ msgstr "Режим Standby через"
+
+#~ msgid "Sus_pend After"
+#~ msgstr "Режим Suspend через"
+
+#~ msgid "_Advanced"
+#~ msgstr "Расширенные"
+
+#~ msgid "_Advanced >>"
+#~ msgstr "Расширенные >>"
+
+#~ msgid "_Browse"
+#~ msgstr "Обзор"
+
+#~ msgid "_Command Line:"
+#~ msgstr "Командная строка:"
+
+#~ msgid "_Display Modes"
+#~ msgstr "Режимы экрана"
+
+#~ msgid "_Lock Screen After"
+#~ msgstr "Запирать экран после"
+
+#~ msgid "_Mode:"
+#~ msgstr "Режим:"
+
+#~ msgid "_Off After"
+#~ msgstr "Выключать через"
+
+#~ msgid "_Power Management Enabled"
+#~ msgstr "Управление питанием разрешено"
+
+#~ msgid "_Preview"
+#~ msgstr "Предпросмотр"
+
+#~ msgid "_Quit"
+#~ msgstr "Выход"
+
+#~ msgid "_Settings..."
+#~ msgstr "Настройки..."
+
+#~ msgid "_Standard <<"
+#~ msgstr "Стандартные <<"
+
+#~ msgid "_Verbose Dialognostics"
+#~ msgstr "Расширенная диагностика"
+
+#~ msgid "Activity"
+#~ msgstr "Активность"

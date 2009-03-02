@@ -205,7 +205,7 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
       xpm_data = 0;
       if (! XpmReadFileToData ((char *) filename, &xpm_data))
         {
-          fprintf (stderr, "%s: unable to read XPM file %f\n",
+          fprintf (stderr, "%s: unable to read XPM file %s\n",
                    progname, filename);
           exit (1);
         }
@@ -240,7 +240,7 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
       const char *c = xpm_image.colorTable[i].c_color;
       if (!c)
         {
-          fprintf(stderr, "%s: bogus color table?  ($d)\n", progname, i);
+          fprintf(stderr, "%s: bogus color table?  (%d)\n", progname, i);
           exit (1);
         }
       else if (!strncasecmp (c, "None", 4))

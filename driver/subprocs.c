@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991-2001 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -365,12 +365,12 @@ kill_job (saver_info *si, pid_t pid, int signal)
       if (errno == ESRCH)
 	fprintf (stderr,
                  "%s: %d: child process %lu (%s) was already dead.\n",
-		 blurb(), job->screen, job->pid, job->name);
+		 blurb(), job->screen, (unsigned long) job->pid, job->name);
       else
 	{
 	  char buf [1024];
 	  sprintf (buf, "%s: %d: couldn't kill child process %lu (%s)",
-		   blurb(), job->screen, job->pid, job->name);
+		   blurb(), job->screen, (unsigned long) job->pid, job->name);
 	  perror (buf);
 	}
     }
@@ -765,8 +765,13 @@ spawn_screenhack_1 (saver_screen_info *ssi, Bool first_time_p)
                      (unsigned long) getpid ());
 
 	  exec_command (p->shell, hack->command, p->nice_inferior);
-          /* If that returned, we were unable to exec the subprocess. */
-          print_path_error (hack->command);
+
+          /* If that returned, we were unable to exec the subprocess.
+             Print an error message, if desired.
+           */
+          if (! p->ignore_uninstalled_p)
+            print_path_error (hack->command);
+
           exit (1);  /* exits child fork */
 	  break;
 
@@ -1011,14 +1016,23 @@ get_best_gl_visual (saver_screen_info *ssi)
         /* Wait for the child to die. */
         waitpid (-1, &wait_status, 0);
 
-        if (1 == sscanf (buf, "0x%x %c", &v, &c))
+        if (1 == sscanf (buf, "0x%lx %c", &v, &c))
           result = (int) v;
 
         if (result == 0)
           {
             if (si->prefs.verbose_p)
-              fprintf (stderr, "%s: %s did not report a GL visual!\n",
-                       blurb(), av[0]);
+              {
+                int L = strlen(buf);
+                fprintf (stderr, "%s: %s did not report a GL visual!\n",
+                         blurb(), av[0]);
+
+                if (L && buf[L-1] == '\n')
+                  buf[--L] = 0;
+                if (*buf)
+                  fprintf (stderr, "%s: %s said: \"%s\"\n",
+                           blurb(), av[0], buf);
+              }
             return 0;
           }
         else

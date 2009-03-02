@@ -1,4 +1,7 @@
 /*
+ * models for the xss chess screensavers
+ * hacked from:
+ *
  * glChess - A 3D chess interface
  *
  * Copyright (C) 2002  Robert  Ancell <bob27@users.sourceforge.net>
@@ -27,8 +30,6 @@
 #include <GL/glu.h>
 
 #include "chessmodels.h"
-
-double piece_size = 0.1;
 
 #define ROT 16
 
@@ -131,27 +132,27 @@ void revolve_line(double *trace_r, double *trace_h, double max_ih, int rot) {
 }
 
 void gen_model_lists(void) {
-  glNewList(1, GL_COMPILE);
+  glNewList(KING, GL_COMPILE);
   draw_king();
   glEndList();
   
-  glNewList(2, GL_COMPILE);
+  glNewList(QUEEN, GL_COMPILE);
   draw_queen();
   glEndList();
 
-  glNewList(3, GL_COMPILE);
+  glNewList(BISHOP, GL_COMPILE);
   draw_bishop();
   glEndList();
 
-  glNewList(4, GL_COMPILE);
+  glNewList(KNIGHT, GL_COMPILE);
   draw_knight();
   glEndList();
 
-  glNewList(5, GL_COMPILE);
+  glNewList(ROOK, GL_COMPILE);
   draw_rook();
   glEndList();
 
-  glNewList(6, GL_COMPILE);
+  glNewList(PAWN, GL_COMPILE);
   draw_pawn();
   glEndList();
 }

@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <number id="timeout" type="slider" arg="-delay %"
+  <number id="timeout" type="slider" arg="-timeout %"
           _label="URL Timeout" _low-label="2 seconds" _high-label="2 minutes"
           low="2" high="120" default="30"/>
 

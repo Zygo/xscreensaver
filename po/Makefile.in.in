@@ -65,7 +65,7 @@
 #
 #     - For xscreensaver, $(prefix) is generally /usr/X11R6/, but some files
 #	need to go under /usr/ instead of under /usr/X11R6/ -- for those, we
-#	use @GNOME_DATADIR@ instead of @prefix@.  So I changed $(datadir) and
+#	use @PO_DATADIR@ instead of @prefix@.  So I changed $(datadir) and
 #	$(gnulocaledir) appropriately.
 #
 #     - WTF is $(gettextsrcdir) doing in here?
@@ -100,7 +100,7 @@ VPATH = @srcdir@
 prefix = @prefix@
 exec_prefix = @exec_prefix@
 #datadir = $(prefix)/@DATADIRNAME@      -- not for xscreensaver
-datadir = @GNOME_DATADIR@
+datadir = @PO_DATADIR@
 localedir = $(datadir)/locale
 #gnulocaledir = $(prefix)/share/locale  -- not for xscreensaver
 gnulocaledir = $(localedir)
@@ -139,7 +139,7 @@ COMPILE = $(CC) -c $(DEFS) $(INCLUDES) $(CPPFLAGS) $(CFLAGS) $(XCFLAGS)
 SOURCES = 
 POFILES = @POFILES@
 GMOFILES = @GMOFILES@
-DISTFILES_1 = ChangeLog Makefile.in.in POTFILES.in
+DISTFILES_1 = ChangeLog Makefile.in.in POTFILES.in update.sh
 DISTFILES = $(DISTFILES_1) $(GETTEXT_PACKAGE).pot \
 	    $(POFILES) $(GMOFILES) $(SOURCES)
 
@@ -167,8 +167,9 @@ INSTOBJEXT = @INSTOBJEXT@
 .po.mo:
 	$(MSGFMT) -o $@ $<
 
+# jwz: the "-" means "ignore any errors here, because I don't give a shit."
 .po.gmo:
-	@file=`echo $* | sed 's,.*/,,'`.gmo ; \
+	@-file=`echo $* | sed 's,.*/,,'`.gmo ; \
 	 rm -f "$$file" ; \
 	 echo $(GMSGFMT) -o "$$file" $< ; \
 	      $(GMSGFMT) -o "$$file" $<

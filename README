@@ -70,6 +70,34 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.05:   * New hack, `glblur' (disabled by default, since it
+                        requires fast OpenGL texture support.)
+                      * New hack, `halftone'.
+                      * Updates to `endgame', `queens', `bumps', `glplanet',
+                        `engine', and `circuit'.
+                      * New version of `menger' that uses far fewer polygons.
+                      * Fixed minor bug in `critical' that could cause some
+                        bogus X servers to crash.
+                      * Better labels in `molecule': the labels now appear to
+                        be attached to the atoms, instead of floating in front
+                        of the whole scene.
+                      * Fixed bug that could rarely cause GL hacks to fail to
+                        double-buffer (causing intermittent flickering.)
+                      * Fixed a relative-URL-parsing bug in `webcollage'.
+                      * Fixed a bug that (sometimes) caused the window manager
+                        close box to kill `xscreensaver-demo' with a crash
+                        instead of a graceful exit.
+                      * Updated xscreensaver.pam to the Red Hat 7.3 way.
+                      * More Gnome2-related configure crap.
+                      * Updated to latest `config.guess' and `config.sub'.
+                      * Fixed occasional core dump in `distort'.
+                      * Added a Linux fsck failure and kernel panic to `bsod'.
+                      * Added MacOS X kernel panic to `bsod'.
+                      * Fixed a bug in `bsod' (all bsod bugs are ironic.)
+                      * Fixed a bug that caused `xscreensaver-gl-helper' to
+                        print a nonsense visual ID with some versions of
+                        `printf': this could cause GL programs to display
+                        incorrectly (e.g., flickery.)
 Changes since 4.04:   * More `configure' tweaks to try and get things working
                         on systems that both Gtk 1.x and 2.x installed.
                       * New hack, `endgame'.

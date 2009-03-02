@@ -75,6 +75,7 @@ hacks are displayed and which aren't.
 .BR doSCO ,
 .BR doAtari ,
 .BR doBSD ,
+.BR doLinux ,
 .BR doSparcLinux ,
 .BR doBlitDamage ,
 and
