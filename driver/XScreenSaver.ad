@@ -34,6 +34,7 @@
 		xroger -root						\n\
 		imsmap -root						\n\
 		slidescreen -root					\n\
+		decayscreen -root					\n\
 		hypercube -root						\n\
 		halo -root						\n\
 		maze -root						\n

@@ -467,7 +467,7 @@ initialize_screensaver_window ()
   attrs.backing_store = NotUseful;
   attrs.colormap = cmap;
 
-/*  if (demo_mode_p || lock_p || locked_p) width = width / 2;  #### */
+/*  if (demo_mode_p || lock_p) width = width / 2;  #### */
 
   if (screensaver_window)
     {

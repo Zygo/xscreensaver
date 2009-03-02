@@ -44,6 +44,7 @@ window, which are pointed at by the screensaver's default resource settings.
    imsmap	- Generates random maps or cloud formations.
    hypercube	- 2d projection of a hypercube rotating on all four axes.
    slidescreen	- Divides the screen into a grid and plays a 16-puzzle on it.
+   decayscreen	- A melting effect.
    halo		- Random circular patterns.
    pyro		- Fireworks.  Looks a lot like the version in xlock.
    hopalong	- Fractals.  I snarfed this code from xlock.
@@ -75,3 +76,26 @@ me know!
 
 [*] It may be necessary to include "vroot.h" in the program, but that would
 be necessary for it to work with virtual-root window managers anyway.
+
+
+
+Changes since 1.17:	Added support for shadow password files.
+			Fixed some Motif-related locking bugs.
+			Added diagnostics when locking is disabled.
+			Made blitspin able to use the XPM library.
+			Added `decayscreen' hack.
+Changes since 1.16:	Added `halo' hack.
+Changes since 1.15:	Portability fixes.
+Changes since 1.14:	Broke the driver up into more source files.
+			Moved the hacks into their own directory.
+			Made all `time' parameters accept the 00:00:00 syntax,
+			so that even the parameters which are normally read as
+			`minutes' can be specified in seconds.
+			Added colormap cycling to `imsmap'.
+			Made hyper work with K&R compilers.
+Changes since 1.13:	Added `orbit' option to `attraction' hack.
+			Added `lock-timeout' option.
+			Cleaned up options of `maze' hack.
+Changes since 1.8:	Added demo mode, and locking.
+			Added `maze' hack.
+			Added `norotate' option to `rocks' hack.

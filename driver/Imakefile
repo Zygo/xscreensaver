@@ -33,6 +33,12 @@
 # define SETUID_DEF
 #endif
 
+#ifdef HAVE_SHADOW
+# define SHADOW_DEF -DHAVE_SHADOW
+#else
+# define SHADOW_DEF
+#endif
+
 #ifdef NO_MOTIF
 # define MOTIF_DEF -DNO_MOTIF
 # define MOTIF_SRC
@@ -49,9 +55,9 @@
 
           UTILS = ../utils
        INCLUDES = -I$(UTILS) MOTIF_INC
-        DEFINES = SETUID_DEF XIDLE_DEF MOTIF_DEF LOCKING_DEF R5ISMS
+        DEFINES = SETUID_DEF XIDLE_DEF MOTIF_DEF LOCKING_DEF SHADOW_DEF R5ISMS
       SAVERLIBS = $(XMULIB) $(XTOOLLIB) $(EXTENSIONLIB) $(XLIB) -lm
-       COMMLIBS = $(XLIB) -lm
+       COMMLIBS = $(XLIB) -lm -Bstatic -lcrypt -Bdynamic
       UTIL_SRCS = $(UTILS)/resources.c $(UTILS)/fade.c $(UTILS)/usleep.c
       UTIL_OBJS = $(UTILS)/resources.o $(UTILS)/fade.o $(UTILS)/usleep.o
       DBOX_SRCS = dialogs.c demo.c lock.c

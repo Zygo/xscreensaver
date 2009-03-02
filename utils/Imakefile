@@ -8,11 +8,11 @@
 #include "../config.h"
 
 #ifdef NO_SELECT
-        DEFINES = -DNO_SELECT
+    DEFINES = -DNO_SELECT
 #endif
-           SRCS = fade.c hsv.c resources.c spline.c usleep.c xroger.c
-           OBJS = fade.o hsv.o resources.o spline.o usleep.o xroger.o
-       TARFILES = README Imakefile ad2c $(SRCS) spline.h version.h
+       SRCS = fade.c hsv.c resources.c spline.c usleep.c xroger.c grabscreen.c
+       OBJS = fade.o hsv.o resources.o spline.o usleep.o xroger.o grabscreen.o
+   TARFILES = README Imakefile ad2c $(SRCS) spline.h version.h
 
 all:: $(OBJS)
 

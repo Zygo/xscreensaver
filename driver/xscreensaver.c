@@ -94,6 +94,12 @@
  *   it if the description above sounds just too flaky to live.  It is, but
  *   those are your choices.
  *
+ *   A third idle-detection option could be implement (but is not): when running
+ *   on the console display ($DISPLAY is `localhost`:0) and we're on a machine
+ *   where /dev/tty and /dev/mouse have reasonable last-modification times, we
+ *   could just stat those.  But the incremental benefit of implementing this
+ *   is really small, so forget I said anything.
+ *
  *   Debugging hints:
  *     - Have a second terminal handy.
  *     - Be careful where you set your breakpoints, you don't want this to
@@ -196,6 +202,7 @@ extern Bool fade_p, unfade_p;
 extern int fade_seconds, fade_ticks;
 extern Bool install_cmap_p;
 extern Bool locking_disabled_p;
+extern char *nolock_reason;
 extern Bool demo_mode_p;
 extern Bool dbox_up_p;
 extern int next_mode_p;
@@ -411,6 +418,7 @@ get_resources ()
 
 #ifdef NO_LOCKING
   locking_disabled_p = True;
+  nolock_reason = "not compiled with locking support";
   if (lock_p)
     {
       lock_p = False;
@@ -420,8 +428,8 @@ get_resources ()
 #else  /* ! NO_LOCKING */
   if (lock_p && locking_disabled_p)
     {
-      fprintf (stderr, "%s: %slocking is disabled.\n", progname,
-	       (verbose_p ? "## " : ""));
+      fprintf (stderr, "%s: %slocking is disabled (%s).\n", progname,
+	       (verbose_p ? "## " : ""), nolock_reason);
       lock_p = False;
     }
 #endif /* ! NO_LOCKING */
@@ -531,10 +539,14 @@ initialize (argc, argv)
 
 #ifdef NO_LOCKING
   locking_disabled_p = True;
+  nolock_reason = "not compiled with locking support";
 #else
   locking_disabled_p = False;
   if (! lock_init ())	/* before hack_uid() for proper permissions */
-    locking_disabled_p = True;
+    {
+      locking_disabled_p = True;
+      nolock_reason = "error getting password";
+    }
 #endif
 
   hack_uid ();

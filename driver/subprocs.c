@@ -40,11 +40,12 @@ extern char **environ;		/* why isn't this in some header file? */
 #endif
 
 #if __STDC__
-extern int putenv (const char *);	/* getenv() is in stdlib.h... */
+extern int putenv (/* const char * */);	/* getenv() is in stdlib.h... */
 extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 #endif
 
 # if defined(SVR4) || defined(SYSV)
+#  undef PRIO_PROCESS
 #  define random() rand()
 # else /* !totally-losing-SYSV */
 extern long random();			/* rand() is in stdlib.h... */
@@ -62,6 +63,7 @@ int current_hack = -1;
 char *demo_hack;
 int next_mode_p = 0;
 Bool locking_disabled_p = False;
+char *nolock_reason = 0;
 int nice_inferior = 0;
 
 extern Bool demo_mode_p;
@@ -496,8 +498,14 @@ hack_uid ()
      to something safe. */
   if (getuid () == 0)
     {
-      struct passwd *p = getpwnam ("nobody");
+      struct passwd *p;
+      /* Locking can't work when running as root, because we have no way of
+	 knowing what the user id of the logged in user is (so we don't know
+	 whose password to prompt for.)
+       */
       locking_disabled_p = True;
+      nolock_reason = "running as root";
+      p = getpwnam ("nobody");
       if (! p) p = getpwnam ("daemon");
       if (! p) p = getpwnam ("bin");
       if (! p) p = getpwnam ("sys");
@@ -542,7 +550,11 @@ hack_uid ()
 	 !strcmp (p->pw_name, "daemon") ||
 	 !strcmp (p->pw_name, "bin") ||
 	 !strcmp (p->pw_name, "sys"))
-       locking_disabled_p = True;
+       {
+	 locking_disabled_p = True;
+	 nolock_reason = hack_uid_buf;
+	 sprintf (nolock_reason, "running as %s", p->pw_name);
+       }
    }
 #endif /* NO_LOCKING */
 }

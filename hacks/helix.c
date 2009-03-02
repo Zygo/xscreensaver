@@ -130,7 +130,7 @@ random_helix (dpy, window)
   factor3 = 2;
   factor4 = 2;
 
-  divisor = ((frand (3.0) + 1) * (((random() % 1) * 2) - 1));
+  divisor = ((frand (3.0) + 1) * (((random() & 1) * 2) - 1));
 
   if ((random () & 1) == 0)
     {
@@ -147,8 +147,8 @@ random_helix (dpy, window)
     d_angle = random () % 360;
 
 #define random_factor()				\
-  (((random() % 7) ? ((random() % 1) + 1) : 3)	\
-   * (((random() % 1) * 2) - 1))
+  (((random() % 7) ? ((random() & 1) + 1) : 3)	\
+   * (((random() & 1) * 2) - 1))
 
   while (gcd (gcd (gcd (factor1, factor2), factor3), factor4) != 1)
     {
@@ -164,7 +164,7 @@ random_helix (dpy, window)
     {
       hsv_to_rgb (random () % 360, frand (1.0), frand (0.5) + 0.5,
 		  &color.red, &color.green, &color.blue);
-      if (got_color = XAllocColor (dpy, cmap, &color))
+      if ((got_color = XAllocColor (dpy, cmap, &color)))
 	XSetForeground (dpy, draw_gc, color.pixel);
       else
 	XSetForeground (dpy, draw_gc, default_fg_pixel);

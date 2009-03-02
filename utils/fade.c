@@ -96,9 +96,9 @@ fade_colormap (dpy, cmap, cmap2, seconds, ticks, out_p)
       int j;
       for (j = 0; j < ncolors; j++)
 	{
-	  current_colors[j].red   = orig_colors[j].red   * i / steps;
-	  current_colors[j].green = orig_colors[j].green * i / steps;
-	  current_colors[j].blue  = orig_colors[j].blue  * i / steps;
+	  current_colors[j].red   = (int)orig_colors[j].red   * i / steps;
+	  current_colors[j].green = (int)orig_colors[j].green * i / steps;
+	  current_colors[j].blue  = (int)orig_colors[j].blue  * i / steps;
 	}
       XStoreColors (dpy, cmap2, current_colors, ncolors);
       XSync (dpy, False);

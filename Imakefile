@@ -9,6 +9,10 @@
 
        TARFILES = README Imakefile config.h screenblank.txt
             TAR = gnutar
+       COMPRESS = compress
+   COMPRESS_EXT = Z
+#      COMPRESS = gzip --verbose --best
+#  COMPRESS_EXT = gz
 
 all:: utils/Makefile driver/Makefile hacks/Makefile
 	cd utils  ; $(MAKE) $@ CC="$(CC)" CCOPTIONS="$(CCOPTIONS)" CDEBUGFLAGS="$(CDEBUGFLAGS)"
@@ -32,13 +36,13 @@ hacks/Makefile: hacks/Imakefile config.h
 # This really makes me sick...
 tar: utils/Makefile driver/Makefile hacks/Makefile
 	@NAME=`sed -n							    \
-  's/[^0-9]*\([0-9].[0-9]*\).*/xscreensaver-\1/p' utils/version.h` ;	    \
+  's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/xscreensaver-\1/p' utils/version.h` ;  \
   rm -f $$NAME ; ln -s . $$NAME ;					    \
-  echo creating tar file $${NAME}.tar.Z... ;				    \
+  echo creating tar file $${NAME}.tar.$(COMPRESS_EXT)... ;		    \
    $(TAR) -vchf - `echo $(TARFILES)				    	    \
    \`cd driver ; make echo_tarfiles | sed 's|^|driver/|g;s| | driver/|g'\`  \
    \`cd utils  ; make echo_tarfiles | sed 's|^|utils/|g; s| | utils/|g'\`   \
    \`cd hacks  ; make echo_tarfiles | sed 's|^|hacks/|g; s| | hacks/|g'\`   \
    | sed "s|^|$$NAME/|g; s| | $$NAME/|g" `				    \
-   | compress > $${NAME}.tar.Z ;					    \
+   | $(COMPRESS) > $${NAME}.tar.$(COMPRESS_EXT) ;			    \
   rm $$NAME

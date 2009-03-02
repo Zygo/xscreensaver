@@ -18,6 +18,9 @@
 # define P(x)x
 #else
 # define P(x)()
+# ifndef const
+#  define const /**/
+# endif
 #endif
 
 #ifdef NO_MOTIF

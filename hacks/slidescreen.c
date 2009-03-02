@@ -20,51 +20,18 @@ static int grid_w, grid_h;
 static int delay, delay2;
 static GC gc;
 
-static Bool
-MapNotify_event_p (dpy, event, window)
-     Display *dpy;
-     XEvent *event;
-     XPointer window;
-{
-  return (event->xany.type == MapNotify &&
-	  event->xvisibility.window == (Window) window);
-}
-
-
-static Bool
-screensaver_window_p (dpy, window)
-     Display *dpy;
-     Window window;
-{
-  Atom type;
-  int format;
-  unsigned long nitems, bytesafter;
-  char *version;
-  Pixmap pixmap;
-  if (XGetWindowProperty (dpy, window,
-			  XInternAtom (dpy, "_SCREENSAVER_VERSION", False),
-			  0, 1, False, XA_STRING,
-			  &type, &format, &nitems, &bytesafter,
-			  (unsigned char **) &version)
-      == Success
-      && type != None)
-    return True;
-  return False;
-}
-
 static void
 init_slide (dpy, window)
      Display *dpy;
      Window window;
 {
   int i;
-  XEvent event;
   XGCValues gcv;
   XWindowAttributes xgwa;
   int border;
   int root_p;
   unsigned long fg;
-  Pixmap pixmap = 0;
+  Pixmap pixmap;
   Drawable d;
   Colormap cmap;
 
@@ -90,47 +57,7 @@ init_slide (dpy, window)
   gc = XCreateGC (dpy, window, GCForeground |GCFunction | GCSubwindowMode,
 		  &gcv);
 
-  if (screensaver_window_p (dpy, window))
-    {
-      /* note: this assumes vroot.h didn't encapsulate the XRootWindowOfScreen
-	 function, only the RootWindowOfScreen macro... */
-      Window real_root = XRootWindowOfScreen (DefaultScreenOfDisplay (dpy));
-
-      XSetWindowBackgroundPixmap (dpy, window, None);
-
-      /* prevent random viewer of the screen saver (locker) from messing
-	 with windows.   We don't check whether it succeeded, because what
-	 are our options, really... */
-      XGrabPointer (dpy, real_root, True, ButtonPressMask|ButtonReleaseMask,
-		    GrabModeAsync, GrabModeAsync, None, None, CurrentTime);
-      XGrabKeyboard (dpy, real_root, True, GrabModeSync, GrabModeAsync,
-		     CurrentTime);
-
-      XUnmapWindow (dpy, window);
-      XSync (dpy, True);
-      sleep (5);     /* wait for everyone to swap in and handle exposes... */
-      XMapWindow (dpy, window);
-
-      XUngrabPointer (dpy, CurrentTime);
-      XUngrabKeyboard (dpy, CurrentTime);
-
-      XSync (dpy, True);
-    }
-  else if (root_p)
-    {
-      pixmap = XCreatePixmap(dpy, window, xgwa.width, xgwa.height, xgwa.depth);
-      XCopyArea (dpy, RootWindowOfScreen (xgwa.screen), pixmap, gc,
-		 xgwa.x, xgwa.y, xgwa.width, xgwa.height, 0, 0);
-      XSetWindowBackgroundPixmap (dpy, window, pixmap);
-    }
-  else
-    {
-      XSetWindowBackgroundPixmap (dpy, window, None);
-      XMapWindow (dpy, window);
-      XFlush (dpy);
-      XIfEvent (dpy, &event, MapNotify_event_p, (XPointer) window);
-      XSync (dpy, True);
-    }
+  pixmap = grab_screen_image (dpy, window, root_p);
 
   XGetWindowAttributes (dpy, window, &xgwa);
   bitmap_w = xgwa.width;

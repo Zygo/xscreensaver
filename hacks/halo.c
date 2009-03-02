@@ -13,6 +13,9 @@
    but X doesn't support arithmetic combinations of pixmaps!!  What losers.
    I suppose I could crank out the 2's compliment math by hand, but that's
    a real drag...
+
+   This would probably look good with shapes other than circles as well.
+
  */
 
 #include "screenhack.h"

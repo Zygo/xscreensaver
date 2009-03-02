@@ -16,16 +16,26 @@
 
    The input bitmap may be non-square, it is padded and centered
    with the background color.  Another way would be to subdivide
-   the bitmap into square components and rotate them independently,
-   but I don't think that would be as interesting looking.
+   the bitmap into square components and rotate them independently
+   (and preferably in parallel), but I don't think that would be as
+   interesting looking.
 
    It's too bad almost nothing uses blitter hardware these days,
    or this might actually win.
  */
 
 #include "screenhack.h"
-#include <X11/Xmu/Drawing.h>
 #include <stdio.h>
+
+#ifdef HAVE_XPM
+# include <X11/xpm.h>
+# ifndef PIXEL_ALREADY_TYPEDEFED
+#  define PIXEL_ALREADY_TYPEDEFED /* Sigh, Xmu/Drawing.h needs this... */
+# endif
+#endif
+
+#include <X11/Xmu/Drawing.h>
+
 
 static Display *dpy;
 static Window window;
@@ -35,6 +45,7 @@ static GC SET, CLR, CPY, IOR, AND, XOR;
 static GC gc;
 static int delay, delay2;
 static Pixmap bitmap;
+static int depth;
 
 static void rotate(), init (), display ();
 
@@ -84,8 +95,14 @@ init ()
   unsigned int real_size;
   char *bitmap_name;
   int i;
+#ifdef HAVE_XPM
+  XpmAttributes xpmattrs;
+  int result;
+#endif
+
   XGetWindowAttributes (dpy, window, &xgwa);
   cmap = xgwa.colormap;
+  depth = xgwa.depth;
 
   delay = get_integer_resource ("delay", "Integer");
   delay2 = get_integer_resource ("delay2", "Integer");
@@ -97,7 +114,37 @@ init ()
       fprintf (stderr, "%s: no bitmap specified\n", progname);
       exit (1);
     }
-  bitmap = XmuLocateBitmapFile (DefaultScreenOfDisplay (dpy), bitmap_name,
+#ifdef HAVE_XPM
+  xpmattrs.valuemask = 0;
+  bitmap = 0;
+  result = XpmReadFileToPixmap (dpy,window, bitmap_name, &bitmap, 0, &xpmattrs);
+  switch (result)
+    {
+    case XpmColorError:
+      fprintf (stderr, "%s: warning: xpm color substitution performed\n",
+	       progname);
+      /* fall through */
+    case XpmSuccess:
+      width = xpmattrs.width;
+      height = xpmattrs.height;
+      break;
+    case XpmFileInvalid:
+    case XpmOpenFailed:
+      bitmap = 0;
+      break;
+    case XpmColorFailed:
+      fprintf (stderr, "%s: xpm: color allocation failed\n", progname);
+      exit (-1);
+    case XpmNoMemory:
+      fprintf (stderr, "%s: xpm: out of memory\n", progname);
+      exit (-1);
+    default:
+      fprintf (stderr, "%s: xpm: unknown error code %d\n", progname, result);
+      exit (-1);
+    }
+  if (! bitmap)
+#endif
+    bitmap = XmuLocateBitmapFile (DefaultScreenOfDisplay (dpy), bitmap_name,
 				0, 0, &width, &height, &xh, &yh);
   if (! bitmap)
     {
@@ -113,10 +160,10 @@ init ()
     if (size & (1<<i)) break;
   if (size & (~(1<<i)))
     size = (size>>i)<<(i+1);
-  self = XCreatePixmap (dpy, window, size, size, 1);
-  temp = XCreatePixmap (dpy, window, size, size, 1);
-  mask = XCreatePixmap (dpy, window, size, size, 1);
-  gcv.foreground = 1;
+  self = XCreatePixmap (dpy, window, size, size, depth);
+  temp = XCreatePixmap (dpy, window, size, size, depth);
+  mask = XCreatePixmap (dpy, window, size, size, depth);
+  gcv.foreground = (depth == 1 ? 1 : (~0));
   gcv.function=GXset;  SET = XCreateGC(dpy,self,GCFunction|GCForeground,&gcv);
   gcv.function=GXclear;CLR = XCreateGC(dpy,self,GCFunction|GCForeground,&gcv);
   gcv.function=GXcopy; CPY = XCreateGC(dpy,self,GCFunction|GCForeground,&gcv);
@@ -146,8 +193,14 @@ display (pixmap)
       last_w = xgwa.width;
       last_h = xgwa.height;
     }
-  XCopyPlane (dpy, pixmap, window, gc, 0, 0, size, size,
-	      (xgwa.width-size)>>1, (xgwa.height-size)>>1, 1);
+#ifdef HAVE_XPM
+  if (depth != 1)
+    XCopyArea (dpy, pixmap, window, gc, 0, 0, size, size,
+	       (xgwa.width-size)>>1, (xgwa.height-size)>>1);
+  else
+#endif
+    XCopyPlane (dpy, pixmap, window, gc, 0, 0, size, size,
+		(xgwa.width-size)>>1, (xgwa.height-size)>>1, 1);
 /*
   XDrawRectangle (dpy, window, gc,
 		  ((xgwa.width-size)>>1)-1, ((xgwa.height-size)>>1)-1,

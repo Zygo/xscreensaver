@@ -1,3 +1,13 @@
+/* xscreensaver, Copyright (c) 1992, 1993 Jamie Zawinski <jwz@lucid.com>
+ *
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation.  No representations are made about the suitability of this
+ * software for any purpose.  It is provided "as is" without express or 
+ * implied warranty.
+ */
 
 #if 0
  * Found in Don Hopkin`s .plan file:
@@ -100,15 +110,17 @@ extern unsigned int get_seconds_resource P((char*,char*));
 extern Visual *get_visual_resource P((Display *, char *, char *));
 extern int get_visual_depth P((Display *, Visual *));
 
-void hsv_to_rgb P((int,double,double,unsigned short*,
-		   unsigned short*,unsigned short*));
-void rgb_to_hsv P((unsigned short,unsigned short,unsigned short,
-		   int*,double*,double*));
-void cycle_hue P((XColor*,int));
+extern void hsv_to_rgb P((int,double,double,unsigned short*,
+			  unsigned short*,unsigned short*));
+extern void rgb_to_hsv P((unsigned short,unsigned short,unsigned short,
+			  int*,double*,double*));
+extern void cycle_hue P((XColor*,int));
 
-void make_color_ramp P((int h1, double s1, double v1,
-			int h2, double s2, double v2,
-			XColor *pixels, int npixels));
+extern void make_color_ramp P((int h1, double s1, double v1,
+			       int h2, double s2, double v2,
+			       XColor *pixels, int npixels));
+
+extern Pixmap grab_screen_image P((Display *dpy, Window window, int root_p));
 
 static double _frand_tmp_;
 #define frand(f)							\
