@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# vidwhacker, for xscreensaver.  Copyright (c) 1998-2003 Jamie Zawinski.
+# vidwhacker, for xscreensaver.  Copyright (c) 1998-2004 Jamie Zawinski.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.24 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.25 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $use_stdin = 0;
@@ -33,27 +33,8 @@ my $imagedir;
 
 my $screen_width = -1;
 
+my $displayer = "xscreensaver-getimage -root -file";
 
-
-# ####  This list was lifted from driver/xscreensaver-getimage-file
-#
-# These are programs that can be used to put an image file on the root
-# window (including virtual root windows.)  The first one of these programs
-# that exists on $PATH will be used (with the file name as the last arg.)
-#
-# If you add other programs to this list, please let me know!
-#
-my @displayer_programs = (
-  "xscreensaver-getimage -root -file",
-# "xv         -root -quit -viewonly -maxpect -noresetroot -quick24 -rmode 5" .
-# "           -rfg black -rbg black",
-# "xli        -quiet -fullscreen -onroot -center -border black",
-# "xloadimage -quiet -fullscreen -onroot -center -border black",
-# "chbg       -once -xscreensaver -max_grow 4",
-
-# this lame program wasn't built with vroot.h:
-# "xsri       -scale -keep-aspect -center-horizontal -center-vertical",
-);
 
 # apparently some versions of netpbm call it "pamoil" instead of "pgmoil"...
 #
@@ -143,8 +124,15 @@ sub error {
 #
 my @all_tmpfiles = ();
 
-sub signal_cleanup {
+sub exit_cleanup {
+  print STDERR "$progname: delete tmp files\n" if ($verbose);
   unlink @all_tmpfiles;
+}
+
+sub signal_cleanup {
+  my ($sig) = @_;
+  print STDERR "$progname: caught SIG$sig\n" if ($verbose);
+  exit 1;
 }
 
 sub init_signals {
@@ -160,32 +148,9 @@ sub init_signals {
   $SIG{PIPE} = 'IGNORE';
 }
 
-END { signal_cleanup(); }
+END { exit_cleanup(); }
 
 
-
-
-# ####  Lifted from driver/xscreensaver-getimage-file
-#
-sub pick_displayer {
-  my @names = ();
-
-  foreach my $cmd (@displayer_programs) {
-    $_ = $cmd;
-    my ($name) = m/^([^ ]+)/;
-    push @names, "\"$name\"";
-    print STDERR "$progname: looking for $name...\n" if ($verbose > 2);
-    foreach my $dir (split (/:/, $ENV{PATH})) {
-      print STDERR "$progname:   checking $dir/$name\n" if ($verbose > 3);
-      return $cmd if (-x "$dir/$name");
-    }
-  }
-
-  $names[$#names] = "or " . $names[$#names];
-  printf STDERR "$progname: none of: " . join (", ", @names) .
-                " were found on \$PATH.\n";
-  exit 1;
-}
 
 
 # returns the full path of the named program, or undef.
@@ -416,8 +381,6 @@ sub dispose_ppm {
     print $ppm;
 
   } else {
-    my $displayer = pick_displayer();
-
     my $tmpdir = $ENV{TMPDIR};
     $tmpdir = "/tmp" unless $tmpdir;
     my $fn =  sprintf ("%s/vidwhacker-%08x", $tmpdir, rand(0xFFFFFFFF));
@@ -434,7 +397,15 @@ sub dispose_ppm {
       if ($verbose);
     system (@cmd);
 
+    my $exit_value  = $? >> 8;
+    my $signal_num  = $? & 127;
+    my $dumped_core = $? & 128;
+
     unlink $fn;
+
+    error ("$cmd[0]: core dumped!") if ($dumped_core);
+    error ("$cmd[0]: signal $signal_num!") if ($signal_num);
+    error ("$cmd[0]: exited with $exit_value!") if ($exit_value);
   }
 }
 
@@ -469,9 +440,10 @@ sub usage {
   print STDERR "VidWhacker, Copyright (c) 2001 Jamie Zawinski <jwz\@jwz.org>\n";
   print STDERR "            http://www.jwz.org/xscreensaver/";
   print STDERR "\n";
-  print STDERR "usage: $0 [-display dpy] [-verbose] [-root | -window]\n";
-  print STDERR "                  [-stdin] [-stdout] [-delay secs]\n";
-  print STDERR "                  [-directory image_directory]\n";
+  print STDERR "usage: $0 [-display dpy] [-verbose]\n";
+  print STDERR "\t\t[-root | -window | -window-id 0xXXXXX ]\n";
+  print STDERR "\t\t[-stdin] [-stdout] [-delay secs]\n";
+  print STDERR "\t\t[-directory image_directory]\n";
   exit 1;
 }
 
@@ -486,6 +458,13 @@ sub main {
     elsif (m/^--?delay$/) { $delay = shift @ARGV; }
     elsif (m/^--?dir(ectory)?$/) { $imagedir = shift @ARGV; }
     elsif (m/^--?root$/) { }
+    elsif (m/^--?window-id$/) {
+      my $id = shift @ARGV;
+      error ("unparsable window id: $id")
+        unless ($id =~ m/^\d+$|^0x[\da-f]+$/i);
+      $displayer =~ s/--?root\b/$id/ ||
+        error ("unable to munge displayer: $displayer");
+    }
     elsif (m/^--?window$/) {
       print STDERR "$progname: sorry, \"-window\" is unimplemented.\n";
       print STDERR "$progname: use \"-stdout\" and pipe to a displayer.\n";

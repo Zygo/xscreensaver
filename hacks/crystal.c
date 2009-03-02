@@ -108,18 +108,18 @@ static Bool unit_cell, grid_cell, centre, maxsize, cycle_p;
 
 static XrmOptionDescRec opts[] =
 {
-	{"-nx", "crystal.nx", XrmoptionSepArg, (caddr_t) NULL},
-	{"-ny", "crystal.ny", XrmoptionSepArg, (caddr_t) NULL},
-	{"-centre", ".crystal.centre", XrmoptionNoArg, (caddr_t) "on"},
-	{"+centre", ".crystal.centre", XrmoptionNoArg, (caddr_t) "off"},
-	{"-maxsize", ".crystal.maxsize", XrmoptionNoArg, (caddr_t) "on"},
-	{"+maxsize", ".crystal.maxsize", XrmoptionNoArg, (caddr_t) "off"},
-	{"-cell", ".crystal.cell", XrmoptionNoArg, (caddr_t) "on"},
-	{"+cell", ".crystal.cell", XrmoptionNoArg, (caddr_t) "off"},
-	{"-grid", ".crystal.grid", XrmoptionNoArg, (caddr_t) "on"},
-	{"+grid", ".crystal.grid", XrmoptionNoArg, (caddr_t) "off"},
-	{"-shift", ".crystal.shift", XrmoptionNoArg, (caddr_t) "on"},
-	{"+shift", ".crystal.shift", XrmoptionNoArg, (caddr_t) "off"}
+	{"-nx", "crystal.nx", XrmoptionSepArg, 0},
+	{"-ny", "crystal.ny", XrmoptionSepArg, 0},
+	{"-centre", ".crystal.centre", XrmoptionNoArg, "on"},
+	{"+centre", ".crystal.centre", XrmoptionNoArg, "off"},
+	{"-maxsize", ".crystal.maxsize", XrmoptionNoArg, "on"},
+	{"+maxsize", ".crystal.maxsize", XrmoptionNoArg, "off"},
+	{"-cell", ".crystal.cell", XrmoptionNoArg, "on"},
+	{"+cell", ".crystal.cell", XrmoptionNoArg, "off"},
+	{"-grid", ".crystal.grid", XrmoptionNoArg, "on"},
+	{"+grid", ".crystal.grid", XrmoptionNoArg, "off"},
+	{"-shift", ".crystal.shift", XrmoptionNoArg, "on"},
+	{"+shift", ".crystal.shift", XrmoptionNoArg, "off"}
 };
 
 static argtype vars[] =

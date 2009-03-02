@@ -89,7 +89,7 @@ find_screensaver_window (Display *dpy, char **version)
       Atom type;
       int format;
       unsigned long nitems, bytesafter;
-      char *v;
+      unsigned char *v;
       int status;
 
       /* We're walking the list of root-level windows and trying to find
@@ -106,7 +106,7 @@ find_screensaver_window (Display *dpy, char **version)
                                    XA_SCREENSAVER_VERSION,
                                    0, 200, False, XA_STRING,
                                    &type, &format, &nitems, &bytesafter,
-                                   (unsigned char **) &v);
+                                   &v);
       XSync (dpy, False);
       XSetErrorHandler (old_handler);
       old_handler = 0;
@@ -121,7 +121,7 @@ find_screensaver_window (Display *dpy, char **version)
 	{
           Window ret = kids[i];
 	  if (version)
-	    *version = v;
+	    *version = (char *) v;
           XFree (kids);
 	  return ret;
 	}
@@ -217,21 +217,22 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
 	  Atom type;
 	  int format;
 	  unsigned long nitems, bytesafter;
-	  CARD32 *data = 0;
+	  unsigned char *dataP = 0;
 
 	  if (XGetWindowProperty (dpy,
                                   RootWindow (dpy, 0),
 				  XA_SCREENSAVER_STATUS,
 				  0, 999, False, XA_INTEGER,
 				  &type, &format, &nitems, &bytesafter,
-				  (unsigned char **) &data)
+				  &dataP)
 	      == Success
 	      && type
-	      && data)
+	      && dataP)
 	    {
               Atom blanked;
               time_t tt;
               char *s;
+              Atom *data = (Atom *) dataP;
 
               if (type != XA_INTEGER || nitems < 3)
                 {
@@ -298,7 +299,7 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
 	    }
 	  else
 	    {
-	      if (data) free (data);
+	      if (dataP) XFree (dataP);
 	      fprintf (stdout, "\n");
 	      fflush (stdout);
 	      fprintf (stderr, "no saver status on root window.\n");
@@ -414,7 +415,7 @@ xscreensaver_command_response (Display *dpy, Window window,
 	      Atom type;
 	      int format;
 	      unsigned long nitems, bytesafter;
-	      char *msg = 0;
+	      unsigned char *msg = 0;
 
 	      XSync (dpy, False);
               if (old_handler) abort();
@@ -424,7 +425,7 @@ xscreensaver_command_response (Display *dpy, Window window,
 					0, 1024, True,
 					AnyPropertyType,
 					&type, &format, &nitems, &bytesafter,
-					(unsigned char **) &msg);
+					&msg);
 	      XSync (dpy, False);
               XSetErrorHandler (old_handler);
               old_handler = 0;
@@ -473,7 +474,7 @@ xscreensaver_command_response (Display *dpy, Window window,
 		  else
 		    {
 		      int ret = (msg[0] == '+' ? 0 : -1);
-                      sprintf (err, "%s: %s\n", progname, msg+1);
+                      sprintf (err, "%s: %s\n", progname, (char *) msg+1);
 
                       if (error_ret)
                         *error_ret = strdup (err);
@@ -531,30 +532,30 @@ server_xscreensaver_version (Display *dpy,
 
   if (version_ret)
     {
-      char *v = 0;
+      unsigned char *v = 0;
       XGetWindowProperty (dpy, window, XA_SCREENSAVER_VERSION, 0, 1,
 			  False, XA_STRING, &type, &format, &nitems,
-			  &bytesafter, (unsigned char **) &v);
+			  &bytesafter, &v);
       if (v)
 	{
-	  *version_ret = strdup (v);
+	  *version_ret = strdup ((char *) v);
 	  XFree (v);
 	}
     }
 
   if (user_ret || host_ret)
     {
-      char *id = 0;
+      unsigned char *id = 0;
       const char *user = 0;
       const char *host = 0;
 
       XGetWindowProperty (dpy, window, XA_SCREENSAVER_ID, 0, 512,
 			  False, XA_STRING, &type, &format, &nitems,
-			  &bytesafter, (unsigned char **) &id);
+			  &bytesafter, &id);
       if (id && *id)
 	{
 	  const char *old_tag = " on host ";
-	  const char *s = strstr (id, old_tag);
+	  const char *s = strstr ((char *) id, old_tag);
 	  if (s)
 	    {
 	      /* found ID of the form "1234 on host xyz". */
@@ -564,7 +565,7 @@ server_xscreensaver_version (Display *dpy,
 	  else
 	    {
 	      char *o = 0, *p = 0, *c = 0;
-	      o = strchr (id, '(');
+	      o = strchr ((char *) id, '(');
 	      if (o) p = strchr (o, '@');
 	      if (p) c = strchr (p, ')');
 	      if (c)

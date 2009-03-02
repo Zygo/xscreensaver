@@ -23,7 +23,7 @@ extern XtAppContext app;
 #define EVENT_MASK      PointerMotionMask
 #define sws_opts	xlockmore_opts
 
-#define DEF_SPEED       "1.0"
+#define DEF_SPEED       "0.7"
 #define DEF_TEXTURE     "(none)"
 
 #define DEFAULTS	"*delay:	30000       \n" \
@@ -100,7 +100,7 @@ static const char *do_texture;
 static XrmOptionDescRec opts[] = {
   { "-speed",      ".speed",     XrmoptionSepArg, 0 },
   {"-texture",     ".texture",   XrmoptionSepArg, 0 },
-  {"+texture",     ".texture",   XrmoptionNoArg, (caddr_t) "(none)" },
+  {"+texture",     ".texture",   XrmoptionNoArg, "(none)" },
 };
 
 static argtype vars[] = {

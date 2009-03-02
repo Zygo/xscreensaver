@@ -103,14 +103,6 @@ static const char sccsid[] = "@(#)rubik.c	5.01 2001/03/01 xlockmore";
  *  BOTTOM => X, Z
  */
 
-#ifdef VMS
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-#include <X11/Intrinsic.h>
-#endif
-
 #ifdef STANDALONE
 # define MODE_rubik
 # define PROGCLASS	"Rubik"
@@ -143,11 +135,11 @@ static Bool hideshuffling;
 
 static XrmOptionDescRec opts[] =
 {
-        {(char *) "-sizex", (char *) ".rubik.sizex", XrmoptionSepArg, (caddr_t) NULL},
-        {(char *) "-sizey", (char *) ".rubik.sizey", XrmoptionSepArg, (caddr_t) NULL},
-        {(char *) "-sizez", (char *) ".rubik.sizez", XrmoptionSepArg, (caddr_t) NULL},
-	{(char *) "-hideshuffling", (char *) ".rubik.hideshuffling", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+hideshuffling", (char *) ".rubik.hideshuffling", XrmoptionNoArg, (caddr_t) "off"}
+        {"-sizex", ".rubik.sizex", XrmoptionSepArg, 0},
+        {"-sizey", ".rubik.sizey", XrmoptionSepArg, 0},
+        {"-sizez", ".rubik.sizez", XrmoptionSepArg, 0},
+	{"-hideshuffling", ".rubik.hideshuffling", XrmoptionNoArg, "on"},
+	{"+hideshuffling", ".rubik.hideshuffling", XrmoptionNoArg, "off"}
 };
 
 static argtype vars[] =
@@ -160,10 +152,10 @@ static argtype vars[] =
 
 static OptionStruct desc[] =
 {
-	{(char *) "-sizex num", (char *) "number of cubies along x axis (overrides size)"},
-	{(char *) "-sizey num", (char *) "number of cubies along y axis (overrides size)"},
-	{(char *) "-sizez num", (char *) "number of cubies along z axis (overrides size)"},
-	{(char *) "-/+hideshuffling", (char *) "turn on/off hidden shuffle phase"}
+	{"-sizex num", "number of cubies along x axis (overrides size)"},
+	{"-sizey num", "number of cubies along y axis (overrides size)"},
+	{"-sizez num", "number of cubies along z axis (overrides size)"},
+	{"-/+hideshuffling", "turn on/off hidden shuffle phase"}
 };
 
 ModeSpecOpt rubik_opts =

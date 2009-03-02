@@ -48,8 +48,8 @@
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 static XrmOptionDescRec opts[] = {
-  {"+rotate", ".flipflop.rotate", XrmoptionNoArg, (caddr_t) "false" },
-  {"-rotate", ".flipflop.rotate", XrmoptionNoArg, (caddr_t) "true" },
+  {"+rotate", ".flipflop.rotate", XrmoptionNoArg, "false" },
+  {"-rotate", ".flipflop.rotate", XrmoptionNoArg, "true" },
 };
 
 
@@ -57,7 +57,7 @@ static XrmOptionDescRec opts[] = {
 static int rotate, wire, clearbits;
 
 static argtype vars[] = {
-  {(caddr_t *) &rotate, "rotate", "Rotate", "True", t_Bool},
+  { &rotate, "rotate", "Rotate", "True", t_Bool},
 };
 
 ModeSpecOpt flipflop_opts = {countof(opts), opts, countof(vars), vars, NULL};

@@ -1,5 +1,5 @@
 /* grab-ximage.c --- grab the screen to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001, 2003, 2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,5 +20,15 @@
  */
 XImage * screen_to_ximage (Screen *screen, Window window,
                            char **filename_return);
+
+/* Like the above, but loads the image in the background and runs the
+   given callback once it has been loaded.
+ */
+void fork_screen_to_ximage (Screen *screen, Window window,
+                            void (*callback) (Screen *, Window, XImage *,
+                                              const char *filename,
+                                              void *closure,
+                                              double cvt_time),
+                            void *closure);
 
 #endif /* __GRAB_XIMAGE_H__ */

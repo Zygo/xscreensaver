@@ -90,30 +90,30 @@ static Bool sharpturn;
 
 static XrmOptionDescRec opts[] =
 {
-	{(char *) "-neighbors", (char *) ".ant.neighbors", XrmoptionSepArg, (caddr_t) NULL},
-	{(char *) "-truchet", (char *) ".ant.truchet", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+truchet", (char *) ".ant.truchet", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-eyes", (char *) ".ant.eyes", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+eyes", (char *) ".ant.eyes", XrmoptionNoArg, (caddr_t) "off"},
-	{(char *) "-sharpturn", (char *) ".ant.sharpturn", XrmoptionNoArg, (caddr_t) "on"},
-	{(char *) "+sharpturn", (char *) ".ant.sharpturn", XrmoptionNoArg, (caddr_t) "off"},
-	{"-neighbors", ".ant.neighbors", XrmoptionSepArg, (caddr_t) 0},
-	{"+neighbors", ".ant.neighbors", XrmoptionSepArg, (caddr_t) 0}
+	{"-neighbors", ".ant.neighbors", XrmoptionSepArg, NULL},
+	{"-truchet", ".ant.truchet", XrmoptionNoArg, "on"},
+	{"+truchet", ".ant.truchet", XrmoptionNoArg, "off"},
+	{"-eyes", ".ant.eyes", XrmoptionNoArg, "on"},
+	{"+eyes", ".ant.eyes", XrmoptionNoArg, "off"},
+	{"-sharpturn", ".ant.sharpturn", XrmoptionNoArg, "on"},
+	{"+sharpturn", ".ant.sharpturn", XrmoptionNoArg, "off"},
+	{"-neighbors", ".ant.neighbors", XrmoptionSepArg, 0},
+	{"+neighbors", ".ant.neighbors", XrmoptionSepArg, 0}
 };
 static argtype vars[] =
 {
 	{&neighbors, "neighbors", "Neighbors", DEF_NEIGHBORS, t_Int},
 	{&truchet,   "truchet",   "Truchet",   DEF_TRUCHET,   t_Bool},
 	{&eyes,      "eyes",      "Eyes",      DEF_EYES,      t_Bool},
-       {&sharpturn, "sharpturn", "SharpTurn", DEF_SHARPTURN, t_Bool},
+    {&sharpturn, "sharpturn", "SharpTurn", DEF_SHARPTURN, t_Bool},
 	{&neighbors, "neighbors", "Neighbors", DEF_NEIGHBORS, t_Int}
 };
 static OptionStruct desc[] =
 {
-	{(char *) "-neighbors num", (char *) "squares 4 or 8, hexagons 6, triangles 3 or 12"},
-	{(char *) "-/+truchet", (char *) "turn on/off Truchet lines"},
-	{(char *) "-/+eyes", (char *) "turn on/off eyes"},
-	{(char *) "-/+sharpturn", (char *) "turn on/off sharp turns (6, 8 or 12 neighbors only)"}
+	{"-neighbors num", "squares 4 or 8, hexagons 6, triangles 3 or 12"},
+	{"-/+truchet", "turn on/off Truchet lines"},
+	{"-/+eyes", "turn on/off eyes"},
+	{"-/+sharpturn", "turn on/off sharp turns (6, 8 or 12 neighbors only)"}
 };
 
 ModeSpecOpt ant_opts =

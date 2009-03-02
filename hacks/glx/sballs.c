@@ -23,7 +23,7 @@ static const char sccsid[] = "@(#)sballs.c	5.02 2001/03/10 xlockmore";
  * Mustata Bogdan (LoneRunner) <lonerunner@planetquake.com>
  * and can be found at http://www.cfxweb.net/lonerunner/
  *
- * Eric Lassauge  (November-07-2000) <lassauge@mail.dotcom.fr>
+ * Eric Lassauge  (November-07-2000) <lassauge@users.sourceforge.net>
  * 				    http://lassauge.free.fr/linux.html
  *
  * REVISION HISTORY:
@@ -46,9 +46,9 @@ static const char sccsid[] = "@(#)sballs.c	5.02 2001/03/10 xlockmore";
 #define HACK_DRAW 	draw_sballs
 #define HACK_RESHAPE 	reshape_sballs
 #define sballs_opts 	xlockmore_opts
-#define DEFAULTS 	"*delay: 	10000 \n" \
+#define DEFAULTS 	"*delay: 	30000 \n" \
  			"*size: 	    0 \n" \
-			"*cycles:	   10 \n" \
+			"*cycles:	    4 \n" \
  			"*object: 	    0 \n" \
  			"*trackmouse: 	False \n" \
  			"*showFPS: 	False \n" \
@@ -98,19 +98,18 @@ static const char sccsid[] = "@(#)sballs.c	5.02 2001/03/10 xlockmore";
 /* Manage option vars */
 #define DEF_TEXTURE	"True"
 #define DEF_TRACKMOUSE  "False"
-#define DEF_OBJECT	"2"
-#define DEF_OBJECT_INDX	2
+#define DEF_OBJECT	"0"
 static Bool do_texture;
 static Bool do_trackmouse;
 static int  object;
 static int  spheres;
 
 static XrmOptionDescRec opts[] = {
-    {(char *) "-texture", (char *) ".sballs.texture", XrmoptionNoArg, (caddr_t) "on"},
-    {(char *) "+texture", (char *) ".sballs.texture", XrmoptionNoArg, (caddr_t) "off"},
-    {(char *) "-trackmouse", (char *) ".sballs.trackmouse", XrmoptionNoArg, (caddr_t) "on"},
-    {(char *) "+trackmouse", (char *) ".sballs.trackmouse", XrmoptionNoArg, (caddr_t) "off"},
-    {(char *) "-object", (char *) ".sballs.object", XrmoptionSepArg, (caddr_t) NULL},
+    {"-texture", ".sballs.texture", XrmoptionNoArg, "on"},
+    {"+texture", ".sballs.texture", XrmoptionNoArg, "off"},
+    {"-trackmouse", ".sballs.trackmouse", XrmoptionNoArg, "on"},
+    {"+trackmouse", ".sballs.trackmouse", XrmoptionNoArg, "off"},
+    {"-object", ".sballs.object", XrmoptionSepArg, 0},
 
 };
 
@@ -122,11 +121,11 @@ static argtype vars[] = {
 };
 
 static OptionStruct desc[] = {
-    /*{(char *) "-count spheres", (char *) "set number of spheres"},*/
-    /*{(char *) "-cycles speed", (char *) "set ball speed value"},*/
-    {(char *) "-/+texture", (char *) "turn on/off texturing"},
-    {(char *) "-/+trackmouse", (char *) "turn on/off the tracking of the mouse"},
-    {(char *) "-object num", (char *) "number of the 3D object (0 means random)"},
+    /*{"-count spheres", "set number of spheres"},*/
+    /*{"-cycles speed", "set ball speed value"},*/
+    {"-/+texture", "turn on/off texturing"},
+    {"-/+trackmouse", "turn on/off the tracking of the mouse"},
+    {"-object num", "number of the 3D object (0 means random)"},
 };
 
 ModeSpecOpt sballs_opts =
@@ -516,8 +515,8 @@ static void drawSphere(ModeInfo * mi,int sphere_num)
   float x = polygons[object].v[sphere_num][0];
   float y = polygons[object].v[sphere_num][1];
   float z = polygons[object].v[sphere_num][2];
-  int numMajor = 10;
-  int numMinor = 10;
+  int numMajor = 15;
+  int numMinor = 30;
   float radius = sb->radius[sphere_num];
   double majorStep = (M_PI / numMajor);
   double minorStep = (2.0 * M_PI / numMinor);
@@ -550,6 +549,8 @@ static void drawSphere(ModeInfo * mi,int sphere_num)
       glNormal3f((x * r1) / radius, (y * r1) / radius, z1 / radius);
       glTexCoord2f(j / (GLfloat) numMinor, (i + 1) / (GLfloat) numMajor);
       glVertex3f(x * r1, y * r1, z1);
+
+      mi->polygon_count++;
     }
     glEnd();
   }
@@ -600,6 +601,8 @@ static void Draw(ModeInfo * mi)
     sballsstruct *sb = &sballs[MI_SCREEN(mi)];
     int sphere;
 
+    mi->polygon_count = 0;
+
     if (do_trackmouse && !MI_IS_ICONIC(mi))
 	trackmouse(mi);
 
@@ -631,6 +634,7 @@ static void Draw(ModeInfo * mi)
     glNormal3f(0, 0, 1); glTexCoord2f(1,0); glVertex3f(-8, 4.1, -4);
     glNormal3f(0, 0, 1); glTexCoord2f(1,1); glVertex3f(-8, -4.1, -4);
     glEnd();
+    mi->polygon_count++;
 
     /* rotate the mouse */
     glRotatef(sb->rot[0], 1.0f, 0.0f, 0.0f);
@@ -690,10 +694,8 @@ static void Init(ModeInfo * mi)
     sb->speed = MI_CYCLES(mi);
 
     /* initialise object number */
-    if (object == 0)
-	object = NRAND(MAX_OBJ);
     if ((object == 0) || (object > MAX_OBJ))
-	object = DEF_OBJECT_INDX;
+      object = NRAND(MAX_OBJ-1)+1;
     object--;
 
     /* initialise sphere number */
@@ -851,10 +853,8 @@ void change_sballs(ModeInfo * mi)
 	return;
 
     /* initialise object number */
-    if (object == 0)
-	object = NRAND(MAX_OBJ);
     if ((object == 0) || (object > MAX_OBJ))
-	object = DEF_OBJECT_INDX;
+      object = NRAND(MAX_OBJ-1)+1;
     object--;
 
     /* correct sphere number */

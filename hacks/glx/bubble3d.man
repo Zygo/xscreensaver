@@ -25,7 +25,7 @@ Draw on a newly-created window.  This is the default.
 Draw on the root window.
 .TP 8
 .B \-delay \fInumber\fP
-Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
+Per-frame delay, in microseconds.  Default: 15000 (0.015 seconds.).
 .TP 8
 .B \-fps | \-no-fps
 Whether to show a frames-per-second display at the bottom of the screen.

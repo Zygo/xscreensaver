@@ -16,6 +16,7 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <GL/gl.h>	/* only for GLfloat */
@@ -26,6 +27,7 @@
 extern char *progname;
 
 #include <X11/Xutil.h>
+#include <sys/time.h>
 
 #undef MAX
 #define MAX(a,b) ((a)>(b)?(a):(b))
@@ -94,16 +96,10 @@ bigendian (void)
 }
 
 
-/* Returns an XImage structure containing an image of the desktop.
-   (As a side-effect, that image *may* be painted onto the given Window.)
-   This XImage will be 32 bits per pixel, 8 each per R, G, and B, with the
-   extra byte set to 0xFF.
- */
-XImage *
-screen_to_ximage (Screen *screen, Window window, char **filename_return)
+static XImage *
+screen_to_ximage_1 (Screen *screen, Window window, Pixmap pixmap)
 {
   Display *dpy = DisplayOfScreen (screen);
-  Pixmap pixmap = 0;
   XWindowAttributes xgwa;
   int win_width, win_height;
   int tex_width, tex_height;
@@ -111,9 +107,6 @@ screen_to_ximage (Screen *screen, Window window, char **filename_return)
   XGetWindowAttributes (dpy, window, &xgwa);
   win_width = xgwa.width;
   win_height = xgwa.height;
-
-  pixmap = XCreatePixmap(dpy, window, xgwa.width, xgwa.height, xgwa.depth);
-  load_random_image (screen, window, pixmap, filename_return);
 
   /* GL texture sizes must be powers of two. */
   tex_width  = to_pow2(win_width);
@@ -245,4 +238,93 @@ screen_to_ximage (Screen *screen, Window window, char **filename_return)
 
     return ximage2;
   }
+}
+
+
+/* Returns an XImage structure containing an image of the desktop.
+   (As a side-effect, that image *may* be painted onto the given Window.)
+   This XImage will be 32 bits per pixel, 8 each per R, G, and B, with the
+   extra byte set to 0xFF.
+ */
+XImage *
+screen_to_ximage (Screen *screen, Window window, char **filename_return)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  Pixmap pixmap = 0;
+  XWindowAttributes xgwa;
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  pixmap = XCreatePixmap (dpy, window, xgwa.width, xgwa.height, xgwa.depth);
+  load_random_image (screen, window, pixmap, filename_return);
+
+  return screen_to_ximage_1 (screen, window, pixmap);
+}
+
+
+typedef struct {
+  void (*callback) (Screen *, Window, XImage *,
+                    const char *name, void *closure, double cvt_time);
+  void *closure;
+  Pixmap pixmap;
+} img_closure;
+
+
+/* Returns the current time in seconds as a double.
+ */
+static double
+double_time (void)
+{
+  struct timeval now;
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tzp;
+  gettimeofday(&now, &tzp);
+# else
+  gettimeofday(&now);
+# endif
+
+  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
+}
+
+
+static void
+img_cb (Screen *screen, Window window, Drawable drawable,
+        const char *name, void *closure)
+{
+  XImage *ximage;
+  double cvt_time = double_time();
+  img_closure *data = (img_closure *) closure;
+  /* copy closure data to stack and free the original before running cb */
+  img_closure dd = *data;
+  memset (data, 0, sizeof (*data));
+  free (data);
+  data = 0;
+  ximage = screen_to_ximage_1 (screen, window, dd.pixmap);
+  dd.callback (screen, window, ximage, name, dd.closure, cvt_time);
+}
+
+
+/* Like the above, but loads the image in the background and runs the
+   given callback once it has been loaded.
+ */
+#include <X11/Intrinsic.h>
+extern XtAppContext app;
+
+void
+fork_screen_to_ximage (Screen *screen, Window window,
+                       void (*callback) (Screen *, Window, XImage *,
+                                         const char *name,
+                                         void *closure,
+                                         double cvt_time),
+                       void *closure)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  XWindowAttributes xgwa;
+  img_closure *data = (img_closure *) calloc (1, sizeof(*data));
+  data->callback = callback;
+  data->closure  = closure;
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  data->pixmap = XCreatePixmap (dpy, window, xgwa.width, xgwa.height,
+                                xgwa.depth);
+  fork_load_random_image (screen, window, data->pixmap, img_cb, data);
 }

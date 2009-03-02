@@ -50,11 +50,21 @@ blurb (void)
 }
 
 
+static Bool error_handler_hit_p = False;
+
+static int
+ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
+{
+  error_handler_hit_p = True;
+  return 0;
+}
+
+
 int
 main (int argc, char **argv)
 {
-  int event_number, error_number;
-  int major, minor;
+  int event_number = -1, error_number = -1;
+  int major = -1, minor = -1;
   int nscreens = 0;
   int i;
 
@@ -93,10 +103,27 @@ main (int argc, char **argv)
 
   for (i = 0; i < nscreens; i++)
     {
-      XRRScreenConfiguration *rrc =
-        (major >= 0 ? XRRGetScreenInfo (dpy, RootWindow (dpy, i)) : 0);
+      XRRScreenConfiguration *rrc;
+      XErrorHandler old_handler;
 
-      if (rrc)
+      XSync (dpy, False);
+      error_handler_hit_p = False;
+      old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+
+      rrc = (major >= 0 ? XRRGetScreenInfo (dpy, RootWindow (dpy, i)) : 0);
+
+      XSync (dpy, False);
+      XSetErrorHandler (old_handler);
+      XSync (dpy, False);
+
+      if (error_handler_hit_p)
+        {
+          fprintf(stderr, "%s:   XRRGetScreenInfo(dpy, %d) ==> X error:\n",
+                  blurb(), i);
+          /* do it again without the error handler to print the error */
+          rrc = XRRGetScreenInfo (dpy, RootWindow (dpy, i));
+        }
+      else if (rrc)
         {
           SizeID current_size = -1;
           Rotation current_rotation = ~0;

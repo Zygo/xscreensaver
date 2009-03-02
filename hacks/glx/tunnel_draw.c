@@ -2,10 +2,10 @@
 /* atunnels --- OpenGL Advanced Tunnel Demo */
 
 #if 0
-static const char sccsid[] = "@(#)tunnel_draw.c	5.02 2002/03/16 xlockmore";
+static const char sccsid[] = "@(#)tunnel_draw.c	5.13 2004/05/25 xlockmore";
 #endif
 
-/* Copyright (c) E. Lassauge, 2002. */
+/* Copyright (c) E. Lassauge, 2002-2004. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -24,10 +24,13 @@ static const char sccsid[] = "@(#)tunnel_draw.c	5.02 2002/03/16 xlockmore";
  * Email: romka@ut.ee
  * WEB: http://romka.demonews.com
  *
- * Eric Lassauge  (March-16-2002) <lassauge@mail.dotcom.fr>
+ * Eric Lassauge  (May-25-2004) <lassauge@users.sourceforge.net>
  * 				    http://lassauge.free.fr/linux.html
  *
  * REVISION HISTORY:
+ * E.Lassauge - 25-May-2004:
+ *	- added more texture
+ *	- random texture init
  *
  */
 
@@ -45,6 +48,12 @@ static const char sccsid[] = "@(#)tunnel_draw.c	5.02 2002/03/16 xlockmore";
 #include <GL/glu.h>
 
 #include "tunnel_draw.h"
+
+#ifdef STANDALONE /* For NRAND() */
+#include "xlockmoreI.h"          /* in xscreensaver distribution */
+#else /* STANDALONE */
+#include "xlock.h"              /* in xlockmore distribution */
+#endif /* STANDALONE */
 
 typedef struct 
 {
@@ -207,7 +216,7 @@ static void LoadPath(void)
 void InitTunnel(void)
 {
 	LoadPath();
-	current_texture = 0;
+	current_texture = NRAND(MAX_TEXTURE);
 }
 
 void DrawTunnel(int do_texture, int do_light, GLuint *textures)
@@ -425,7 +434,7 @@ void SplashScreen(int do_wire, int do_texture, int do_light)
 			tFlag = 0;
 			ModeXFlag = 1;
 			current_texture++;
-			if (current_texture > 2) current_texture = 0;
+			if (current_texture >= MAX_TEXTURE) current_texture = 0;
 		}
 		/*  Now we want to draw splash screen */
 		glLoadIdentity();

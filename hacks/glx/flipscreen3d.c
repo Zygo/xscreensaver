@@ -63,8 +63,8 @@ GLfloat qx = -6 , qy = 6;
 
 
 static XrmOptionDescRec opts[] = {
-  {"+rotate", ".screenflip.rotate", XrmoptionNoArg, (caddr_t) "false" },
-  {"-rotate", ".screenflip.rotate", XrmoptionNoArg, (caddr_t) "true" },
+  {"+rotate", ".screenflip.rotate", XrmoptionNoArg, "false" },
+  {"-rotate", ".screenflip.rotate", XrmoptionNoArg, "true" },
 };
 
 

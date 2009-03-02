@@ -21,16 +21,16 @@ extern XtAppContext app;
 #define MAX_COUNT 20
 #define ALPHA_AMT 0.05
 
-/* this should be between 1 and 4 */
-#define DEF_WH      "1"
+/* this should be between 1 and 8 */
+#define DEF_WH       "2"
 #define DEF_DISSOLVE "False"
-#define DEF_FADE    "True"
+#define DEF_FADE     "True"
 
-#define DEFAULTS	"*delay:	  30000         \n" \
-        			"*wireframe:  False      \n" \
-                	"*boxsize:  " DEF_WH      "\n" \
-                    "*dissolve:  " DEF_DISSOLVE "\n" \
-                    "*fade:     " DEF_FADE    "\n" \
+#define DEFAULTS	"*delay:	30000		 \n" \
+			"*wireframe:	False		 \n" \
+			"*boxsize:  "	DEF_WH		"\n" \
+			"*dissolve: "	DEF_DISSOLVE	"\n" \
+			"*fade:	"	DEF_FADE	"\n" \
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -61,7 +61,7 @@ typedef struct{
 struct Bounding_box {
   Tdpos top;
   Tdpos bottom;
-} bbox = {{7,7,10},{-7,-7,-10}};
+} bbox = {{14,14,20},{-14,-14,-20}};
 
 struct Ball {
   GLfloat x;
@@ -100,18 +100,18 @@ static Bool do_fade;
 static GLfloat des_amt   = 1;
 
 static XrmOptionDescRec opts[] = {
-  { "-boxsize", ".boxsize", XrmoptionSepArg, 0 },
-  { "-dissolve", ".dissolve", XrmoptionNoArg, "True" },
+  { "-boxsize",  ".boxsize",  XrmoptionSepArg, 0      },
+  { "-dissolve", ".dissolve", XrmoptionNoArg, "True"  },
   { "+dissolve", ".dissolve", XrmoptionNoArg, "False" },
-  { "-fade",    ".fade",    XrmoptionNoArg, "True" },
-  { "+fade",    ".fade",    XrmoptionNoArg, "False" }
+  { "-fade",     ".fade",     XrmoptionNoArg, "True"  },
+  { "+fade",     ".fade",     XrmoptionNoArg, "False" }
 
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &bscale.wh,  "boxsize",  "Boxsize",  DEF_WH,      t_Float},
-  {(caddr_t *) &do_dissolve, "dissolve",  "Dissolve",  DEF_DISSOLVE, t_Bool},
-  {(caddr_t *) &do_fade,    "fade",     "Fade",     DEF_FADE,    t_Bool},
+  {&bscale.wh,   "boxsize",   "Boxsize",  DEF_WH,       t_Float},
+  {&do_dissolve, "dissolve",  "Dissolve", DEF_DISSOLVE, t_Bool},
+  {&do_fade,     "fade",      "Fade",     DEF_FADE,     t_Bool},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -281,9 +281,9 @@ init_ball (ModeInfo *mi)
     exit(1);
   }
   if( (bscale.wh < 1) ||
-      (bscale.wh > 4) ) {
+      (bscale.wh > 8) ) {
     fprintf(stderr,"Boxsize out of range. Using default\n");
-    bscale.wh = 1;
+    bscale.wh = 2;
   }
   if (do_dissolve){
     des_amt = bscale.wh / MAX_COUNT;
@@ -346,12 +346,16 @@ draw_ball (ModeInfo *mi)
    glRotated(0.25,1,0,0);
 
 
+   glPushMatrix();
+   glScalef(0.5,0.5,0.5);
+
    glColor3f(1,1,1);
    glPushMatrix();
    glTranslatef(ball.x += mo.x,
                 ball.y += mo.y,
                 ball.z += mo.z);
 
+   glScalef(2,2,2);
    glCallList(ballList);
    glPopMatrix();
 
@@ -441,6 +445,7 @@ draw_ball (ModeInfo *mi)
   }
 
 
+   glPopMatrix();
    glFinish();
    glXSwapBuffers(dpy, window);
 

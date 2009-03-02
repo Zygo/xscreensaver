@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997, 2001 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 2001, 2004 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -81,7 +81,7 @@ get_overlay_prop (Screen *screen, struct overlay_data **data_ret)
   Atom actual_type;
   int actual_format;
   unsigned long nitems, bytes_after;
-  struct overlay_data *data = 0;
+  unsigned char *data = 0;
   Display *dpy = DisplayOfScreen(screen);
   Window window = RootWindowOfScreen(screen);
   Atom XA_SERVER_OVERLAY_VISUALS =
@@ -93,7 +93,7 @@ get_overlay_prop (Screen *screen, struct overlay_data **data_ret)
 			       XA_SERVER_OVERLAY_VISUALS,
 			       &actual_type, &actual_format,
 			       &nitems, &bytes_after,
-			       (unsigned char **) &data);
+			       &data);
   if (result != Success ||
       actual_type != XA_SERVER_OVERLAY_VISUALS ||
       actual_format != 32 ||
@@ -104,8 +104,9 @@ get_overlay_prop (Screen *screen, struct overlay_data **data_ret)
     }
   else
     {
-      *data_ret = data;
-      return nitems / (sizeof(*data) / sizeof(CARD32));
+      struct overlay_data *d = (struct overlay_data *) data;
+      *data_ret = d;
+      return nitems / (sizeof(*d) / sizeof(CARD32));
     }
 }
 

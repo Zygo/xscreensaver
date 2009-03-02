@@ -76,12 +76,27 @@ idle_timer (XtPointer closure, XtIntervalId *id)
   fake_event.xany.display = si->dpy;
   fake_event.xany.window  = 0;
   XPutBackEvent (si->dpy, &fake_event);
+
+  /* If we are the timer that just went off, clear the pointer to the id. */
+  if (id)
+    {
+      if (si->timer_id && *id != si->timer_id)
+        abort();  /* oops, scheduled timer twice?? */
+      si->timer_id = 0;
+    }
 }
 
 
-static void
+void
 schedule_wakeup_event (saver_info *si, Time when, Bool verbose_p)
 {
+  if (si->timer_id)
+    {
+      if (verbose_p)
+        fprintf (stderr, "%s: idle_timer already running\n", blurb());
+      return;
+    }
+
   /* Wake up periodically to ask the server if we are idle. */
   si->timer_id = XtAppAddTimeOut (si->app, when, idle_timer,
                                   (XtPointer) si);
@@ -301,6 +316,7 @@ reset_timers (saver_info *si)
         fprintf (stderr, "%s: killing idle_timer  (%ld, %ld)\n",
                  blurb(), p->timeout, si->timer_id);
       XtRemoveTimeOut (si->timer_id);
+      si->timer_id = 0;
     }
 
   schedule_wakeup_event (si, p->timeout, p->debug_p); /* sets si->timer_id */
@@ -332,7 +348,13 @@ check_pointer_timer (XtPointer closure, XtIntervalId *id)
      */
     abort ();
 
-  si->check_pointer_timer_id =
+  if (id && *id == si->check_pointer_timer_id)  /* this is us - it's expired */
+    si->check_pointer_timer_id = 0;
+
+  if (si->check_pointer_timer_id)		/* only queue one at a time */
+    XtRemoveTimeOut (si->check_pointer_timer_id);
+
+  si->check_pointer_timer_id =			/* now re-queue */
     XtAppAddTimeOut (si->app, p->pointer_timeout, check_pointer_timer,
 		     (XtPointer) si);
 
@@ -597,10 +619,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
     {
       if (polling_for_idleness)
         /* This causes a no-op event to be delivered to us in a while, so that
-           we come back around through the event loop again.  Use of this timer
-           is economical: for example, if the screensaver should come on in 5
-           minutes, and the user has been idle for 2 minutes, then this
-           timeout will go off no sooner than 3 minutes from now.  */
+           we come back around through the event loop again.  */
         schedule_wakeup_event (si, p->timeout, p->debug_p);
 
       if (polling_mouse_position)
@@ -618,6 +637,15 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	if (until_idle_p)
 	  {
 	    Time idle;
+
+            /* We may be idle; check one last time to see if the mouse has
+               moved, just in case the idle-timer went off within the 5 second
+               window between mouse polling.  If the mouse has moved, then
+               check_pointer_timer() will reset last_activity_time.
+             */
+            if (polling_mouse_position)
+              check_pointer_timer ((XtPointer) si, 0);
+
 #ifdef HAVE_XIDLE_EXTENSION
 	    if (si->using_xidle_extension)
 	      {
@@ -681,7 +709,10 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
               {
                 /* The event went off, but it turns out that the user has not
                    yet been idle for long enough.  So re-signal the event.
-                   */
+                   Be economical: if we should blank after 5 minutes, and the
+                   user has been idle for 2 minutes, then set this timer to
+                   go off in 3 minutes.
+                 */
                 if (polling_for_idleness)
                   schedule_wakeup_event (si, p->timeout - idle, p->debug_p);
               }
@@ -884,6 +915,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 
             XRRScreenChangeNotifyEvent *xrr_event =
               (XRRScreenChangeNotifyEvent *) &event;
+            /* XRRRootToScreen is in Xrandr.h 1.4, 2001/06/07 */
             int screen = XRRRootToScreen (si->dpy, xrr_event->window);
 
             if (p->verbose_p)
@@ -903,8 +935,10 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
                            xrr_event->width, xrr_event->height);
               }
 
+# ifdef RRScreenChangeNotifyMask
             /* Inform Xlib that it's ok to update its data structures. */
-            XRRUpdateConfiguration (&event);
+            XRRUpdateConfiguration (&event); /* Xrandr.h 1.9, 2002/09/29 */
+# endif /* RRScreenChangeNotifyMask */
 
             /* Resize the existing xscreensaver windows and cached ssi data. */
             resize_screensaver_window (si);
@@ -1273,5 +1307,92 @@ reset_watchdog_timer (saver_info *si, Bool on_p)
       if (p->debug_p)
 	fprintf (stderr, "%s: restarting watchdog_timer (%ld, %ld)\n",
 		 blurb(), p->watchdog_timeout, si->watchdog_id);
+    }
+}
+
+
+/* It's possible that a race condition could have led to the saver
+   window being unexpectedly still mapped.  This can happen like so:
+
+    - screen is blanked
+    - hack is launched
+    - that hack tries to grab a screen image (it does this by
+      first unmapping the saver window, then remapping it.)
+    - hack unmaps window
+    - hack waits
+    - user becomes active
+    - hack re-maps window (*)
+    - driver kills subprocess
+    - driver unmaps window (**)
+
+   The race is that (*) might have been sent to the server before
+   the client process was killed, but, due to scheduling randomness,
+   might not have been received by the server until after (**).
+   In other words, (*) and (**) might happen out of order, meaning
+   the driver will unmap the window, and then after that, the
+   recently-dead client will re-map it.  This leaves the user
+   locked out (it looks like a desktop, but it's not!)
+
+   To avoid this: after un-blanking the screen, we launch a timer
+   that wakes up once a second for ten seconds, and makes damned
+   sure that the window is still unmapped.
+ */
+
+void
+de_race_timer (XtPointer closure, XtIntervalId *id)
+{
+  saver_info *si = (saver_info *) closure;
+  saver_preferences *p = &si->prefs;
+  int secs = 1;
+
+  if (id == 0)  /* if id is 0, this is the initialization call. */
+    {
+      si->de_race_ticks = 10;
+      if (p->verbose_p)
+        fprintf (stderr, "%s: starting de-race timer (%d seconds.)\n",
+                 blurb(), si->de_race_ticks);
+    }
+  else
+    {
+      int i;
+      XSync (si->dpy, False);
+      for (i = 0; i < si->nscreens; i++)
+        {
+          saver_screen_info *ssi = &si->screens[i];
+          Window w = ssi->screensaver_window;
+          XWindowAttributes xgwa;
+          XGetWindowAttributes (si->dpy, w, &xgwa);
+          if (xgwa.map_state != IsUnmapped)
+            {
+              if (p->verbose_p)
+                fprintf (stderr,
+                         "%s: %d: client race! emergency unmap 0x%lx.\n",
+                         blurb(), i, (unsigned long) w);
+              XUnmapWindow (si->dpy, w);
+            }
+          else if (p->debug_p)
+            fprintf (stderr, "%s: %d: (de-race of 0x%lx is cool.)\n",
+                     blurb(), i, (unsigned long) w);
+        }
+      XSync (si->dpy, False);
+
+      si->de_race_ticks--;
+    }
+
+  if (id && *id == si->de_race_id)
+    si->de_race_id = 0;
+
+  if (si->de_race_id) abort();
+
+  if (si->de_race_ticks <= 0)
+    {
+      si->de_race_id = 0;
+      if (p->verbose_p)
+        fprintf (stderr, "%s: de-race completed.\n", blurb());
+    }
+  else
+    {
+      si->de_race_id = XtAppAddTimeOut (si->app, secs * 1000,
+                                        de_race_timer, closure);
     }
 }

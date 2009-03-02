@@ -62,8 +62,8 @@ static Bool additive;
 
 static XrmOptionDescRec opts[] =
 {
-	{(char *) "-additive", (char *) ".lisa.additive", XrmoptionNoArg, (caddr_t) "True"},
-	{(char *) "+additive", (char *) ".lisa.additive", XrmoptionNoArg, (caddr_t) "False"}
+	{"-additive", ".lisa.additive", XrmoptionNoArg, "True"},
+	{"+additive", ".lisa.additive", XrmoptionNoArg, "False"}
 };
 
 static argtype vars[] =
@@ -73,7 +73,7 @@ static argtype vars[] =
 
 static OptionStruct desc[] =
 {
-	{(char *) "-/+additive", (char *) "turn on/off additive functions mode"}
+	{"-/+additive", "turn on/off additive functions mode"}
 };
 
 ModeSpecOpt lisa_opts =

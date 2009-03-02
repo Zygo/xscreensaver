@@ -109,33 +109,33 @@ static float	rangle_acc = 0.0;	/* rotate acceleration */
 static XrmOptionDescRec opts[] =
 {
 #ifdef GRAB
-	{"-grab",		(char *) ".gleidescope.grab",		XrmoptionNoArg,		"true"},
+	{"-grab",		".gleidescope.grab",		XrmoptionNoArg,		"true"},
 #endif
-	{"-move",		(char *) ".gleidescope.move",		XrmoptionNoArg,		"true"},
-	{"-no-move",	(char *) ".gleidescope.nomove",		XrmoptionNoArg,		"true"},
-	{"-rotate",		(char *) ".gleidescope.rotate",		XrmoptionNoArg,		"true"},
-	{"-no-rotate",	(char *) ".gleidescope.norotate",	XrmoptionNoArg,		"true"},
-	/*{"-size",		(char *) ".gleidescope.size",		XrmoptionNoArg,		"-1"},*/
-	{"-zoom",		(char *) ".gleidescope.zoom",		XrmoptionNoArg,		"true"},
-	{"-no-zoom",	(char *) ".gleidescope.nozoom",		XrmoptionNoArg,		"true"},
-	{"-image",		(char *) ".gleidescope.image",		XrmoptionSepArg,	"DEFAULT"},
-	{"-duration",	(char *) ".gleidescope.duration",	XrmoptionSepArg,	"30"},
+	{"-move",		".gleidescope.move",		XrmoptionNoArg,		"true"},
+	{"-no-move",	".gleidescope.nomove",		XrmoptionNoArg,		"true"},
+	{"-rotate",		".gleidescope.rotate",		XrmoptionNoArg,		"true"},
+	{"-no-rotate",	".gleidescope.norotate",	XrmoptionNoArg,		"true"},
+	/*{"-size",		".gleidescope.size",		XrmoptionNoArg,		"-1"},*/
+	{"-zoom",		".gleidescope.zoom",		XrmoptionNoArg,		"true"},
+	{"-no-zoom",	".gleidescope.nozoom",		XrmoptionNoArg,		"true"},
+	{"-image",		".gleidescope.image",		XrmoptionSepArg,	"DEFAULT"},
+	{"-duration",	".gleidescope.duration",	XrmoptionSepArg,	"30"},
 };
 
 
 static argtype vars[] = {
 #ifdef GRAB
-	{(caddr_t *) &grab,			"grab",		"Grab",		"False",	t_Bool},
+	{&grab,			"grab",		"Grab",		"False",	t_Bool},
 #endif
-	{(caddr_t *) &move,			"move",		"Move",		"False",	t_Bool},
-	{(caddr_t *) &nomove,		"nomove",	"noMove",	"False",	t_Bool},
-	{(caddr_t *) &rotate,		"rotate",	"Rotate",	"False",	t_Bool},
-	{(caddr_t *) &norotate,		"norotate",	"noRotate",	"False",	t_Bool},
-	/*{(caddr_t *) &size,			"size",		"Size",		"-1",		t_Int},*/
-	{(caddr_t *) &zoom,			"zoom",		"Zoom",		"False",	t_Bool},
-	{(caddr_t *) &nozoom,		"nozoom",	"noZoom",	"False",	t_Bool},
-	{(caddr_t *) &image,		"image",	"Image",	"DEFAULT",	t_String},
-	{(caddr_t *) &duration,		"duration",	"Duration",	"30",		t_Int},
+	{&move,			"move",		"Move",		"False",	t_Bool},
+	{&nomove,		"nomove",	"noMove",	"False",	t_Bool},
+	{&rotate,		"rotate",	"Rotate",	"False",	t_Bool},
+	{&norotate,		"norotate",	"noRotate",	"False",	t_Bool},
+	/*{&size,		"size",		"Size",		"-1",		t_Int},*/
+	{&zoom,			"zoom",		"Zoom",		"False",	t_Bool},
+	{&nozoom,		"nozoom",	"noZoom",	"False",	t_Bool},
+	{&image,		"image",	"Image",	"DEFAULT",	t_String},
+	{&duration,		"duration",	"Duration",	"30",		t_Int},
 };
 
 static OptionStruct desc[] = {

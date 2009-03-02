@@ -21,6 +21,12 @@
  *
  */
 
+#ifndef __PACMAN_H__
+#define __PACMAN_H__
+
+#include "config.h"
+#include "xlockmoreI.h"
+
 #define LEVHEIGHT 	32U
 #define LEVWIDTH 	40U
 
@@ -31,6 +37,8 @@
 #define GHOSTS 4U
 #define MAXMOUTH 11
 #define MAXGPOS 2
+#define MAXGDIR 4
+#define MAXGWAG 2
 #define MINGRIDSIZE 4
 #define MINSIZE 3
 #define NOWHERE 16383
@@ -50,9 +58,6 @@
 #define GETFACTOR(x, y) ((x) > (y) ? 1 : ((x) < (y) ? -1 : 0))
 #define SIGN(x) GETFACTOR((x), 0)
 #define TRACEVECS 40
-
-#define DEF_TRACKMOUSE "False"
-static Bool trackmouse;
 
 typedef struct { int vx, vy; } tracevec_struct;
 
@@ -107,7 +112,10 @@ typedef struct {
 	unsigned int	nghosts;
 	Pixmap      	pacmanPixmap[4][MAXMOUTH];
 /*	Pixmap	    	ghostPixmap[4][MAXGPOS];*/
-	Pixmap	    	ghostPixmap;
+/*  	Pixmap	    	ghostPixmap; */
+        Pixmap          ghostPixmap[4][MAXGDIR][MAXGWAG];
+/*          Pixmap          ghostMask[4][MAXGDIR][MAXGWAG]; */
+        Pixmap          ghostMask;
 	char        	level[LEVHEIGHT * LEVWIDTH];
 	unsigned int	wallwidth;
 	unsigned int	dotsleft;
@@ -118,72 +126,10 @@ typedef struct {
 } pacmangamestruct;
 
 #define DIRVECS 4
-static const struct { int dx, dy; } dirvecs[DIRVECS] =
-	{ {-1, 0}, {0, 1}, {1, 0}, {0, -1}};
 
-static pacmangamestruct *pacmangames = (pacmangamestruct *) NULL;
+extern pacmangamestruct *pacmangames;
+extern Bool trackmouse;
 
 typedef char lev_t[LEVHEIGHT][LEVWIDTH + 1];
 
-/* function type definitions */
-
-	/* level generation */
-static int 	creatlevelblock(lev_t *level, const unsigned x, 
-				const unsigned y);
-static void 	setblockto(lev_t *level, const unsigned x, const unsigned y, 
-				const char c);
-static int 	checkset(lev_t *level, const unsigned x, const unsigned y);
-static int 	checksetout(lev_t *level, const unsigned x, const unsigned y);
-static int 	checkunsetdef(lev_t *level, const unsigned x, const unsigned y);
-static void 	clearlevel(lev_t *level);
-static void 	copylevel(char *dest, lev_t *level);
-static void 	createjail(lev_t *level, const unsigned width, 
-				const unsigned height);
-static void 	finishjail(lev_t *level, const unsigned width, 
-				const unsigned height);
-static int 	tryset(lev_t *level, const unsigned xpos, const unsigned ypos, 
-				const char *block);
-static int 	creatlevelblock(lev_t *level, const unsigned x, 
-				const unsigned y);
-static void 	filllevel(lev_t *level);
-static void 	frmtlevel(lev_t *level);
-static unsigned countdots(ModeInfo * mi);
-static int 	createnewlevel(ModeInfo * mi);
-static int	check_pos(pacmangamestruct *pp, int y, int x, int ghostpass);
-static int 	check_dot(pacmangamestruct *pp, unsigned int x, unsigned int y);
-
-	/* graphics rendering */
-static void 	drawlevel(ModeInfo * mi);
-
-	/* AI */
-static int 	ghost_get_posdirs(pacmangamestruct *pp, int *posdirs, 
-				ghoststruct *g);
-static void 	ghost_random(pacmangamestruct *pp, ghoststruct *g);
-static void 	ghost_chasing(pacmangamestruct *pp, ghoststruct *g);
-static void 	ghost_hiding(pacmangamestruct *pp, ghoststruct *g);
-static void 	ghost_update(pacmangamestruct *pp, ghoststruct *g);
-
-static void 	pac_dot_vec(pacmangamestruct *pp, pacmanstruct *p, 
-				long *vx, long *vy);
-static int 	pac_ghost_prox_and_vector(pacmangamestruct *pp, 
-				pacmanstruct *p, int *vx, int *vy);
-static int 	pac_get_posdirs(pacmangamestruct *pp, pacmanstruct *p, 
-				int *posdirs);
-static void 	pac_clear_trace(pacmanstruct *p);
-static void 	pac_save_trace(pacmanstruct *p, const int vx, const int vy);
-static int 	pac_check_trace(const pacmanstruct *p, const int vx, 
-				const int vy);
-static void 	pac_eating(pacmangamestruct *pp, pacmanstruct *p);
-#if 0
-static void 	pac_chasing(pacmangamestruct *pp, pacmanstruct *p);
-#endif
-static void 	pac_random(pacmangamestruct *pp, pacmanstruct *p);
-static int	pac_get_vector_screen(pacmangamestruct *pp, pacmanstruct *p, 
-			const int x, const int y, int *vx, int *vy);
-static int 	pac_trackmouse(ModeInfo * mi, pacmangamestruct *pp, 
-			pacmanstruct *p);
-static void 	pac_update(ModeInfo * mi, pacmangamestruct *pp, 
-			pacmanstruct *p);
-
-	/* generic functions */
-static void 	repopulate(ModeInfo * mi);
+#endif /* __PACMAN_H__ */

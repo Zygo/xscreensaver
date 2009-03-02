@@ -71,12 +71,12 @@ void
 a2_scroll(apple2_state_t *st)
 {
   int i;
-  st->textlines[st->cursy][st->cursx] ^= 0xc0;     /* turn off cursor */
+  st->textlines[st->cursy][st->cursx] |= 0xc0;     /* turn off cursor */
+
   for (i=0; i<23; i++) {
     memcpy(st->textlines[i],st->textlines[i+1],40);
   }
   memset(st->textlines[23],0xe0,40);
-  st->textlines[st->cursy][st->cursx] ^= 0xc0;     /* turn cursor back on */
 }
 
 static void

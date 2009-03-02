@@ -20,16 +20,16 @@ struct glb_config glb_config =
 	3,			/* subdivision_depth */
 #endif
 	5,			/* nr_nudge_axes */
-	0.3,			/* nudge_angle_factor */
-	0.15,			/* nudge_factor */
+	0.01,			/* nudge_angle_factor */
+	0.20,			/* nudge_factor */
 	0.1,			/* rotation_factor */
 	8,			/* create_bubbles_every */
 	8,			/* max_bubbles */
 	{0.7, 0.8, 0.9, 1.0},	/* p_bubble_group */
 	0.5,			/* max_size */
 	0.1,			/* min_size */
-	0.1,			/* max_speed */
-	0.03,			/* min_speed */
+	0.03,			/* max_speed */
+	0.005,			/* min_speed */
 	1.5,			/* scale_factor */
 	-4,			/* screen_bottom */
 	4,			/* screen_top */

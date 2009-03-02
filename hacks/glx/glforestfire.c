@@ -25,7 +25,7 @@ static const char sccsid[] = "@(#)fire.c	5.02 2001/09/26 xlockmore";
  * of Mesa (Mesa-3.2/3Dfx/demos/). This mode is the result of the merge of
  * two of the David's demos (fire and rain).
  *
- * Eric Lassauge  (October-10-2000) <lassauge@mail.dotcom.fr>
+ * Eric Lassauge  (October-10-2000) <lassauge@users.sourceforge.net>
  * 				    http://lassauge.free.fr/linux.html
  *
  * REVISION HISTORY:
@@ -180,18 +180,18 @@ static int frame = 0;
 static XFontStruct *mode_font = None;
 
 static XrmOptionDescRec opts[] = {
-    {(char *) "-texture", (char *) ".fire.texture", XrmoptionNoArg, (caddr_t) "on"},
-    {(char *) "+texture", (char *) ".fire.texture", XrmoptionNoArg, (caddr_t) "off"},
-    {(char *) "-fog", (char *) ".fire.fog", XrmoptionNoArg, (caddr_t) "on"},
-    {(char *) "+fog", (char *) ".fire.fog", XrmoptionNoArg, (caddr_t) "off"},
-    {(char *) "-shadows", (char *) ".fire.shadows", XrmoptionNoArg, (caddr_t) "on"},
-    {(char *) "+shadows", (char *) ".fire.shadows", XrmoptionNoArg, (caddr_t) "off"},
-    {(char *) "-trackmouse", (char *) ".fire.trackmouse", XrmoptionNoArg, (caddr_t) "on"},
-    {(char *) "+trackmouse", (char *) ".fire.trackmouse", XrmoptionNoArg, (caddr_t) "off"},
-    {(char *) "-wander", (char *) ".fire.wander", XrmoptionNoArg, (caddr_t) "on"},
-    {(char *) "+wander", (char *) ".fire.wander", XrmoptionNoArg, (caddr_t) "off"},
-    {(char *) "-trees", (char *) ".fire.trees", XrmoptionSepArg, (caddr_t) NULL},
-    {(char *) "-rain", (char *) ".fire.count", XrmoptionNoArg, (caddr_t) "0"},
+    {"-texture", ".fire.texture", XrmoptionNoArg, "on"},
+    {"+texture", ".fire.texture", XrmoptionNoArg, "off"},
+    {"-fog", ".fire.fog", XrmoptionNoArg, "on"},
+    {"+fog", ".fire.fog", XrmoptionNoArg, "off"},
+    {"-shadows", ".fire.shadows", XrmoptionNoArg, "on"},
+    {"+shadows", ".fire.shadows", XrmoptionNoArg, "off"},
+    {"-trackmouse", ".fire.trackmouse", XrmoptionNoArg, "on"},
+    {"+trackmouse", ".fire.trackmouse", XrmoptionNoArg, "off"},
+    {"-wander", ".fire.wander", XrmoptionNoArg, "on"},
+    {"+wander", ".fire.wander", XrmoptionNoArg, "off"},
+    {"-trees", ".fire.trees", XrmoptionSepArg, 0},
+    {"-rain", ".fire.count", XrmoptionNoArg, "0"},
 
 };
 
@@ -205,12 +205,12 @@ static argtype vars[] = {
 };
 
 static OptionStruct desc[] = {
-    {(char *) "-/+texture", (char *) "turn on/off texturing"},
-    {(char *) "-/+fog", (char *) "turn on/off fog"},
-    {(char *) "-/+shadows", (char *) "turn on/off shadows"},
-    {(char *) "-/+trackmouse", (char *) "turn on/off the tracking of the mouse"},
-    {(char *) "-/+wander", (char *) "turn on/off wandering"},
-    {(char *) "-trees num", (char *) "number of trees (0 disables)"},
+    {"-/+texture", "turn on/off texturing"},
+    {"-/+fog", "turn on/off fog"},
+    {"-/+shadows", "turn on/off shadows"},
+    {"-/+trackmouse", "turn on/off the tracking of the mouse"},
+    {"-/+wander", "turn on/off wandering"},
+    {"-trees num", "number of trees (0 disables)"},
 };
 
 ModeSpecOpt fire_opts =

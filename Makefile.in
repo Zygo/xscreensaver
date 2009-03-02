@@ -283,7 +283,7 @@ www::
   TMP=/tmp/xd.$$$$ ;							    \
   sed "s/xscreensaver-[0-9]\.[0-9][0-9]*/$$HEAD/g" download.html > $$TMP ;  \
   echo '' ;								    \
-  diff -u0 download.html $$TMP ;					    \
+  diff -U0 download.html $$TMP ;					    \
   echo '' ;								    \
 									    \
   OLDEST=`ls xscreensaver*.tar.gz | head -1` ;				    \
@@ -301,7 +301,7 @@ www::
   rm -f $$TMP ;								    \
 									    \
   (cd ..; $(MAKE) xscreensaver/changelog.html );			    \
-  cvs diff -u0 changelog.html ;						    \
+  cvs diff -U0 changelog.html ;						    \
   set +x ;								    \
 									    \
   echo -n "Ok? ";							    \

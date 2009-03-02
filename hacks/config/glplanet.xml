@@ -4,9 +4,6 @@
 
   <command arg="-root"/>
 
-  <!-- #### -no-rotate -->
-  <!-- #### -no-roll -->
-  <!-- #### -no-wander -->
   <!-- #### -no-texture -->
   <!-- #### -no-stars -->
 
@@ -19,13 +16,20 @@
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="15000"
+          low="0" high="50000" default="20000"
           convert="invert"/>
 
   <select id="render">
     <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
     <option id="solid" _label="Solid"/>
   </select>
+
+  <hgroup>
+   <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
+   <boolean id="rotate" _label="Rotate"    arg-unset="-no-rotate"/>
+   <boolean id="roll"   _label="Roll"      arg-unset="-no-roll"/>
+   <boolean id="stars"  _label="Stars"     arg-unset="-no-stars"/>
+  </hgroup>
 
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 

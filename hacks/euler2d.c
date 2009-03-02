@@ -68,22 +68,20 @@ static float power = 1;
 
 static XrmOptionDescRec opts[] =
 {
-  {(char* ) "-eulertail", (char *) ".euler2d.eulertail",
-   XrmoptionSepArg, (caddr_t) NULL},
-  {(char* ) "-eulerpower", (char *) ".euler2d.eulerpower",
-   XrmoptionSepArg, (caddr_t) NULL},
+  {"-eulertail", ".euler2d.eulertail",   XrmoptionSepArg, NULL},
+  {"-eulerpower", ".euler2d.eulerpower", XrmoptionSepArg, NULL},
 };
 static argtype vars[] =
 {
   {&tail_len, "eulertail",
-   (char *) "EulerTail", (char *) DEF_EULERTAIL, t_Int},
+   "EulerTail", (char *) DEF_EULERTAIL, t_Int},
   {&power, "eulerpower",
-   (char *) "EulerPower", (char *) "1", t_Float},
+   "EulerPower", "1", t_Float},
 };
 static OptionStruct desc[] =
 {
-  {(char *) "-eulertail len", (char *) "Length of Euler2d tails"},
-  {(char *) "-eulerpower power", (char *) "power of interaction law for points for Euler2d"},
+  {"-eulertail len", "Length of Euler2d tails"},
+  {"-eulerpower power", "power of interaction law for points for Euler2d"},
 };
 
 ModeSpecOpt euler2d_opts =

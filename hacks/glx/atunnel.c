@@ -2,10 +2,10 @@
 /* atunnels --- OpenGL Advanced Tunnel Screensaver */
 
 #if 0
-static const char sccsid[] = "@(#)atunnels.c	5.07 2003/02/12 xlockmore";
+static const char sccsid[] = "@(#)atunnels.c	5.13 2004/05/25 xlockmore";
 #endif
 
-/* Copyright (c) E. Lassauge, 2003. */
+/* Copyright (c) E. Lassauge, 2003-2004. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -24,11 +24,13 @@ static const char sccsid[] = "@(#)atunnels.c	5.07 2003/02/12 xlockmore";
  * Email: romka@ut.ee
  * WEB: http://romka.demonews.com
  *
- * Eric Lassauge  (March-16-2002) <lassauge@mail.dotcom.fr>
+ * Eric Lassauge  (May-25-2004) <lassauge@users.sourceforge.net>
  * 				    http://lassauge.free.fr/linux.html
  *
  * REVISION HISTORY:
  *
+ * E.Lassauge - 25-May-2004:
+ *	- added more texture !
  * E.Lassauge - 16-Mar-2002:
  *	- created based on the Roman demo.
  *	- deleted all external file stuff to use xpm textures and
@@ -70,12 +72,19 @@ static const char sccsid[] = "@(#)atunnels.c	5.07 2003/02/12 xlockmore";
 #include "../images/tunnel0.xpm"
 #include "../images/tunnel1.xpm"
 #include "../images/tunnel2.xpm"
+#include "../images/tunnel3.xpm"
+#include "../images/tunnel4.xpm"
+#include "../images/tunnel5.xpm"
 #else /* !STANDALONE */
 #include "pixmaps/tunnel0.xpm"
 #include "pixmaps/tunnel1.xpm"
 #include "pixmaps/tunnel2.xpm"
+#include "pixmaps/tunnel3.xpm"
+#include "pixmaps/tunnel4.xpm"
+#include "pixmaps/tunnel5.xpm"
 #endif /* !STANDALONE */
 #endif /* HAVE_XPM */
+
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -89,12 +98,12 @@ static Bool do_wire;
 static Bool do_texture;
 
 static XrmOptionDescRec opts[] = {
-  {(char *)"-light",   (char *)".atunnels.light",      XrmoptionNoArg, (caddr_t) "true" },
-  {(char *)"+light",   (char *)".atunnels.light",      XrmoptionNoArg, (caddr_t) "false" },
-  {(char *)"-wire",    (char *)".atunnels.wire",       XrmoptionNoArg, (caddr_t) "true" },
-  {(char *)"+wire",    (char *)".atunnels.wire",       XrmoptionNoArg, (caddr_t) "false" },
-  {(char *)"-texture", (char *)".atunnels.texture",    XrmoptionNoArg, (caddr_t) "true" },
-  {(char *)"+texture", (char *)".atunnels.texture",    XrmoptionNoArg, (caddr_t) "false" },
+  {"-light",   ".atunnels.light",      XrmoptionNoArg, "true" },
+  {"+light",   ".atunnels.light",      XrmoptionNoArg, "false" },
+  {"-wire",    ".atunnels.wire",       XrmoptionNoArg, "true" },
+  {"+wire",    ".atunnels.wire",       XrmoptionNoArg, "false" },
+  {"-texture", ".atunnels.texture",    XrmoptionNoArg, "true" },
+  {"+texture", ".atunnels.texture",    XrmoptionNoArg, "false" },
 };
 
 static argtype vars[] = {
@@ -105,9 +114,9 @@ static argtype vars[] = {
 
 static OptionStruct desc[] =
 {
-  {(char *)"-/+ light",   (char *)"whether to do enable lighting (slower)"},
-  {(char *)"-/+ wire",    (char *)"whether to do use wireframe instead of filled (faster)"},
-  {(char *)"-/+ texture", (char *)"whether to apply a texture (slower)"},
+  {"-/+ light",   "whether to do enable lighting (slower)"},
+  {"-/+ wire",    "whether to do use wireframe instead of filled (faster)"},
+  {"-/+ texture", "whether to apply a texture (slower)"},
 };
 
 ModeSpecOpt atunnels_opts = {countof(opts), opts, countof(vars), vars, desc};
@@ -128,7 +137,8 @@ typedef struct {
 } atunnelsstruct;
 
 static atunnelsstruct *Atunnels = NULL;
-static GLuint texture[3]; /* texture id: GL world */
+
+static GLuint texture[MAX_TEXTURE]; /* texture id: GL world */
 
 /*=================== Load Texture =========================================*/
 static void LoadTexture(ModeInfo * mi, char **fn, int t_num)
@@ -179,10 +189,13 @@ static void Init(ModeInfo * mi)
   	glClearColor(0, 0, 0, 0);
 	if (do_texture)
 	{
-		glGenTextures(3, texture);
+		glGenTextures(MAX_TEXTURE, texture);
 		LoadTexture(mi, texture0,0);
 		LoadTexture(mi, texture1,1);
 		LoadTexture(mi, texture2,2);
+		LoadTexture(mi, texture3,3);
+		LoadTexture(mi, texture4,4);
+		LoadTexture(mi, texture5,5);
 		glEnable(GL_TEXTURE_2D);
 	}
 	InitTunnel();

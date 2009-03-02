@@ -82,4 +82,4 @@ and can be found at http://romka.demonews.com
 
 .SH AUTHOR
 Roman Podobedov <romka@ut.ee> 
-Eric Lassauge <lassauge@mail.dotcom.fr>
+Eric Lassauge <lassauge@users.sourceforge.net>

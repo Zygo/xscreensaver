@@ -269,8 +269,24 @@ grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor,
     fprintf (stderr, "%s: couldn't grab pointer!  (%s)\n",
              blurb(), grab_string(mstatus));
 
-  return (kstatus == GrabSuccess ||
-	  mstatus == GrabSuccess);
+
+  /* When should we allow blanking to proceed?  The current theory
+     is that a keyboard grab is manditory; a mouse grab is optional.
+
+     - If we don't have a keyboard grab, then we won't be able to
+       read a password to unlock, so the kbd grab is manditory.
+       (We can't conditionalize this on locked_p, because someone
+       might run "xscreensaver-command -lock" at any time.)
+
+     - If we don't have a mouse grab, then we might not see mouse
+       clicks as a signal to unblank -- but we will still see kbd
+       activity, so that's not a disaster.
+   */
+
+  if (kstatus != GrabSuccess)	/* Do not blank without a kbd grab.   */
+    return False;
+
+  return True;			/* Grab is good, go ahead and blank.  */
 }
 
 static void
@@ -348,25 +364,26 @@ ensure_no_screensaver_running (Display *dpy, Screen *screen)
       Atom type;
       int format;
       unsigned long nitems, bytesafter;
-      char *version;
+      unsigned char *version;
 
       if (XGetWindowProperty (dpy, kids[i], XA_SCREENSAVER_VERSION, 0, 1,
 			      False, XA_STRING, &type, &format, &nitems,
-			      &bytesafter, (unsigned char **) &version)
+			      &bytesafter, &version)
 	  == Success
 	  && type != None)
 	{
-	  char *id;
+	  unsigned char *id;
 	  if (!XGetWindowProperty (dpy, kids[i], XA_SCREENSAVER_ID, 0, 512,
 				   False, XA_STRING, &type, &format, &nitems,
-				   &bytesafter, (unsigned char **) &id)
+				   &bytesafter, &id)
 	      == Success
 	      || type == None)
-	    id = "???";
+	    id = (unsigned char *) "???";
 
 	  fprintf (stderr,
       "%s: already running on display %s (window 0x%x)\n from process %s.\n",
-		   blurb(), DisplayString (dpy), (int) kids [i], id);
+		   blurb(), DisplayString (dpy), (int) kids [i],
+                   (char *) id);
 	  status = True;
 	}
     }
@@ -434,7 +451,7 @@ kill_xsetroot_data_1 (Display *dpy, Window window,
   Atom type;
   int format;
   unsigned long nitems, bytesafter;
-  Pixmap *dataP = 0;
+  unsigned char *dataP = 0;
 
   /* If the user has been using xv or xsetroot as a screensaver (to display
      an image on the screensaver window, as a kind of slideshow) then the
@@ -454,17 +471,18 @@ kill_xsetroot_data_1 (Display *dpy, Window window,
    */
   if (XGetWindowProperty (dpy, window, prop, 0, 1,
 			  True, AnyPropertyType, &type, &format, &nitems, 
-			  &bytesafter, (unsigned char **) &dataP)
+			  &bytesafter, &dataP)
       == Success
       && type != None)
     {
-      if (dataP && *dataP && type == XA_PIXMAP && format == 32 &&
+      Pixmap *pixP = (Pixmap *) dataP;
+      if (pixP && *pixP && type == XA_PIXMAP && format == 32 &&
 	  nitems == 1 && bytesafter == 0)
 	{
 	  if (verbose_p)
 	    fprintf (stderr, "%s: destroying %s data (0x%lX).\n",
-		     blurb(), atom_name, *dataP);
-	  safe_XKillClient (dpy, *dataP);
+		     blurb(), atom_name, *pixP);
+	  safe_XKillClient (dpy, *pixP);
 	}
       else
 	fprintf (stderr,
@@ -472,7 +490,7 @@ kill_xsetroot_data_1 (Display *dpy, Window window,
                  "\t%lu, %lu; type: %lu, format: %d, "
                  "nitems: %lu, bytesafter %ld\n",
 		 blurb(), atom_name,
-                 (unsigned long) dataP, (dataP ? *dataP : 0), type,
+                 (unsigned long) pixP, (pixP ? *pixP : 0), type,
 		 format, nitems, bytesafter);
     }
 }
@@ -522,7 +540,8 @@ save_real_vroot (saver_screen_info *ssi)
       Atom type;
       int format;
       unsigned long nitems, bytesafter;
-      Window *vrootP = 0;
+      unsigned char *dataP = 0;
+      Window *vrootP;
       int j;
 
       /* Skip this window if it is the xscreensaver window of any other
@@ -537,11 +556,13 @@ save_real_vroot (saver_screen_info *ssi)
 
       if (XGetWindowProperty (dpy, kids[i], XA_VROOT, 0, 1, False, XA_WINDOW,
 			      &type, &format, &nitems, &bytesafter,
-			      (unsigned char **) &vrootP)
+			      &dataP)
 	  != Success)
 	continue;
-      if (! vrootP)
+      if (! dataP)
 	continue;
+
+      vrootP = (Window *) dataP;
       if (ssi->real_vroot)
 	{
 	  if (*vrootP == ssi->screensaver_window) abort ();
@@ -781,9 +802,14 @@ saver_sighup_handler (int sig)
 
   fprintf (stderr, "%s: %s received: restarting...\n",
            blurb(), signal_name(sig));
-  unblank_screen (si);
-  kill_screenhack (si);
-  XSync (si->dpy, False);
+
+  if (si->screen_blanked_p)
+    {
+      unblank_screen (si);
+      kill_screenhack (si);
+      XSync (si->dpy, False);
+    }
+
   restart_process (si);   /* Does not return */
   abort ();
 }
@@ -1829,12 +1855,17 @@ blank_screen (saver_info *si)
                                 mscreen);
 
 
+# if 0
   if (si->using_mit_saver_extension || si->using_sgi_saver_extension)
     /* If we're using a server extension, then failure to get a grab is
        not a big deal -- even without the grab, we will still be able
        to un-blank when there is user activity, since the server will
        tell us. */
+    /* #### No, that's not true: if we don't have a keyboard grab,
+            then we can't read passwords to unlock.
+     */
     ok = True;
+# endif /* 0 */
 
   if (!ok)
     return False;
@@ -2043,6 +2074,13 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
   Visual *new_v = 0;
   Bool got_it;
 
+  /* On some systems (most recently, MacOS X) OpenGL programs get confused
+     when you kill one and re-start another on the same window.  So maybe
+     it's best to just always destroy and recreate the xscreensaver window
+     when changing hacks, instead of trying to reuse the old one?
+   */
+  Bool always_recreate_window_p = True;
+
   if (visual_name && *visual_name)
     {
       if (!strcmp(visual_name, "default-i") ||
@@ -2086,7 +2124,8 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
   ssi->install_cmap_p = install_cmap_p;
 
   if (new_v &&
-      ((ssi->current_visual != new_v) ||
+      (always_recreate_window_p ||
+       (ssi->current_visual != new_v) ||
        (install_cmap_p != was_installed_p)))
     {
       Colormap old_c = ssi->cmap;

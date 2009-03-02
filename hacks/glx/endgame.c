@@ -48,14 +48,14 @@
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 static XrmOptionDescRec opts[] = {
-  {"+rotate", ".chess.rotate", XrmoptionNoArg, (caddr_t) "false" },
-  {"-rotate", ".chess.rotate", XrmoptionNoArg, (caddr_t) "true" },
-  {"+reflections", ".chess.reflections", XrmoptionNoArg, (caddr_t) "false" },
-  {"-reflections", ".chess.reflections", XrmoptionNoArg, (caddr_t) "true" },
-  {"+shadows", ".chess.shadows", XrmoptionNoArg, (caddr_t) "false" },
-  {"-shadows", ".chess.shadows", XrmoptionNoArg, (caddr_t) "true" },
-  {"+smooth", ".chess.smooth", XrmoptionNoArg, (caddr_t) "false" },
-  {"-smooth", ".chess.smooth", XrmoptionNoArg, (caddr_t) "true" },
+  {"+rotate", ".chess.rotate", XrmoptionNoArg, "false" },
+  {"-rotate", ".chess.rotate", XrmoptionNoArg, "true" },
+  {"+reflections", ".chess.reflections", XrmoptionNoArg, "false" },
+  {"-reflections", ".chess.reflections", XrmoptionNoArg, "true" },
+  {"+shadows", ".chess.shadows", XrmoptionNoArg, "false" },
+  {"-shadows", ".chess.shadows", XrmoptionNoArg, "true" },
+  {"+smooth", ".chess.smooth", XrmoptionNoArg, "false" },
+  {"-smooth", ".chess.smooth", XrmoptionNoArg, "true" },
 };
 
 int rotate, reflections, smooth, shadows;

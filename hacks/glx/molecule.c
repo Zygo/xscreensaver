@@ -77,8 +77,8 @@
 #include <sys/time.h>
 #include <GL/glu.h>
 
-#define SPHERE_SLICES 16  /* how densely to render spheres */
-#define SPHERE_STACKS 10
+#define SPHERE_SLICES 24  /* how densely to render spheres */
+#define SPHERE_STACKS 12
 
 #define SMOOTH_TUBE       /* whether to have smooth or faceted tubes */
 
@@ -165,6 +165,9 @@ typedef struct {
   int which;			   /* which of the molecules is being shown */
   int nmolecules;
   molecule *molecules;
+
+  int mode;  /* 0 = normal, 1 = out, 2 = in */
+  int mode_tick;
 
   GLuint molecule_dlist;
 
@@ -1337,8 +1340,9 @@ init_molecule (ModeInfo *mi)
 
   {
     Bool spinx=False, spiny=False, spinz=False;
-    double spin_speed   = 2.0;
-    double wander_speed = 0.03;
+    double spin_speed   = 0.5;
+    double spin_accel   = 0.3;
+    double wander_speed = 0.01;
 
     char *s = do_spin;
     while (*s)
@@ -1359,7 +1363,7 @@ init_molecule (ModeInfo *mi)
     mc->rot = make_rotator (spinx ? spin_speed : 0,
                             spiny ? spin_speed : 0,
                             spinz ? spin_speed : 0,
-                            1.0,
+                            spin_accel,
                             do_wander ? wander_speed : 0,
                             (spinx && spiny && spinz));
     mc->trackball = gltrackball_init ();
@@ -1374,6 +1378,7 @@ init_molecule (ModeInfo *mi)
                                                "NoLabelThreshold");
   mc->wireframe_threshold = get_float_resource ("wireframeThreshold",
                                                 "WireframeThreshold");
+  mc->mode = 0;
 
   if (wire)
     do_bonds = 1;
@@ -1468,11 +1473,54 @@ draw_labels (ModeInfo *mi)
 }
 
 
+static void
+pick_new_molecule (ModeInfo *mi, time_t last)
+{
+  molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
+
+  if (mc->nmolecules == 1)
+    {
+      if (last != 0) return;
+      mc->which = 0;
+    }
+  else if (last == 0)
+    {
+      mc->which = random() % mc->nmolecules;
+    }
+  else
+    {
+      int n = mc->which;
+      while (n == mc->which)
+        n = random() % mc->nmolecules;
+      mc->which = n;
+    }
+          
+  glNewList (mc->molecule_dlist, GL_COMPILE);
+  ensure_bounding_box_visible (mi);
+
+  do_labels = orig_do_labels;
+  do_bonds = orig_do_bonds;
+  MI_IS_WIREFRAME(mi) = orig_wire;
+
+  if (mc->molecule_size > mc->no_label_threshold)
+    do_labels = 0;
+  if (mc->molecule_size > mc->wireframe_threshold)
+    MI_IS_WIREFRAME(mi) = 1;
+
+  if (MI_IS_WIREFRAME(mi))
+    do_bonds = 1;
+
+  build_molecule (mi);
+  glEndList();
+}
+
+
 void
 draw_molecule (ModeInfo *mi)
 {
   static time_t last = 0;
   time_t now = time ((time_t *) 0);
+  GLfloat speed = 4.0;  /* speed at which the zoom out/in happens */
 
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
@@ -1481,48 +1529,48 @@ draw_molecule (ModeInfo *mi)
   if (!mc->glx_context)
     return;
 
-  if (last + timeout <= now && /* randomize molecules every -timeout seconds */
-      !mc->button_down_p)
+  if (last == 0)
     {
-      if (mc->nmolecules == 1)
-        {
-          if (last != 0) goto SKIP;
-          mc->which = 0;
-        }
-      else if (last == 0)
-        {
-          mc->which = random() % mc->nmolecules;
-        }
-      else
-        {
-          int n = mc->which;
-          while (n == mc->which)
-            n = random() % mc->nmolecules;
-          mc->which = n;
-        }
-
+      pick_new_molecule (mi, last);
       last = now;
-
-
-      glNewList (mc->molecule_dlist, GL_COMPILE);
-      ensure_bounding_box_visible (mi);
-
-      do_labels = orig_do_labels;
-      do_bonds = orig_do_bonds;
-      MI_IS_WIREFRAME(mi) = orig_wire;
-
-      if (mc->molecule_size > mc->no_label_threshold)
-        do_labels = 0;
-      if (mc->molecule_size > mc->wireframe_threshold)
-        MI_IS_WIREFRAME(mi) = 1;
-
-      if (MI_IS_WIREFRAME(mi))
-        do_bonds = 1;
-
-      build_molecule (mi);
-      glEndList();
     }
- SKIP:
+  else if (mc->mode == 0)
+    {
+      static int tick = 0;
+      if (tick++ > 10)
+        {
+          time_t now = time((time_t *) 0);
+          if (last == 0) last = now;
+          tick = 0;
+
+          if (!mc->button_down_p &&
+              mc->nmolecules > 1 &&
+              last + timeout <= now)
+            {
+              /* randomize molecules every -timeout seconds */
+              mc->mode = 1;    /* go out */
+              mc->mode_tick = 10 * speed;
+              last = now;
+            }
+        }
+    }
+  else if (mc->mode == 1)   /* out */
+    {
+      if (--mc->mode_tick <= 0)
+        {
+          mc->mode_tick = 10 * speed;
+          mc->mode = 2;  /* go in */
+          pick_new_molecule (mi, last);
+          last = now;
+        }
+    }
+  else if (mc->mode == 2)   /* in */
+    {
+      if (--mc->mode_tick <= 0)
+        mc->mode = 0;  /* normal */
+    }
+  else
+    abort();
 
   glPushMatrix ();
   glScalef(1.1, 1.1, 1.1);
@@ -1543,8 +1591,19 @@ draw_molecule (ModeInfo *mi)
   }
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  if (mc->mode != 0)
+    {
+      GLfloat s = (mc->mode == 1
+                   ? mc->mode_tick / (10 * speed)
+                   : ((10 * speed) - mc->mode_tick + 1) / (10 * speed));
+      glScalef (s, s, s);
+    }
+
   glCallList (mc->molecule_dlist);
-  draw_labels (mi);
+
+  if (mc->mode == 0)
+    draw_labels (mi);
 
   glPopMatrix ();
 

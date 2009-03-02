@@ -157,6 +157,9 @@ struct saver_info {
   XtIntervalId watchdog_id;	/* Timer to implement `prefs.watchdog */
   XtIntervalId check_pointer_timer_id;	/* `prefs.pointer_timeout' */
 
+  XtIntervalId de_race_id;	/* Timer to make sure screen un-blanks */
+  int de_race_ticks;
+
   time_t last_activity_time;		   /* Used only when no server exts. */
   time_t last_wall_clock_time;             /* Used to detect laptop suspend. */
   saver_screen_info *last_activity_screen;
@@ -383,8 +386,11 @@ extern void cycle_timer (XtPointer si, XtIntervalId *id);
 extern void activate_lock_timer (XtPointer si, XtIntervalId *id);
 extern void reset_watchdog_timer (saver_info *si, Bool on_p);
 extern void idle_timer (XtPointer si, XtIntervalId *id);
+extern void de_race_timer (XtPointer si, XtIntervalId *id);
 extern void sleep_until_idle (saver_info *si, Bool until_idle_p);
 extern void reset_timers (saver_info *si);
+extern void schedule_wakeup_event (saver_info *si, Time when, Bool verbose_p);
+
 
 /* =======================================================================
    remote control

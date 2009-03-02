@@ -35,17 +35,18 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 */
 
 #ifdef STANDALONE
-# define PROGCLASS					"boxed"
-# define HACK_INIT					init_boxed
-# define HACK_DRAW					draw_boxed
-# define HACK_RESHAPE				        reshape_boxed
-# define boxed_opts					xlockmore_opts
-# define DEFAULTS	"*delay:		20000   \n"			\
-     "*showFPS:         False   \n"			\
+# define PROGCLASS	"boxed"
+# define HACK_INIT	init_boxed
+# define HACK_DRAW	draw_boxed
+# define HACK_RESHAPE	reshape_boxed
+# define boxed_opts	xlockmore_opts
+# define DEFAULTS	"*delay:   20000   \n"	\
+			"*showFPS: False   \n"	\
+			"*speed:   0.5     \n"	\
 
-# include "xlockmore.h"				/* from the xscreensaver distribution */
+# include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
-# include "xlock.h"					/* from the xlockmore distribution */
+# include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
 #ifdef USE_GL
@@ -56,23 +57,18 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 #undef rnd
 #define rnd() (frand(1.0))
 
-/* #define DEF_PLANETARY "False"
+GLfloat speed;  /* jwz -- overall speed factor applied to all motion */
 
-static int planetary;
 
 static XrmOptionDescRec opts[] = {
-  {"-planetary", ".gears.planetary", XrmoptionNoArg, (caddr_t) "true" },
-  {"+planetary", ".gears.planetary", XrmoptionNoArg, (caddr_t) "false" },
+    {"-speed", ".boxed.speed", XrmoptionSepArg, 0},
 };
 
 static argtype vars[] = {
-  {&planetary, "planetary", "Planetary", DEF_PLANETARY, t_Bool},
+    {&speed, "speed", "Speed", "1.0", t_Float},
 };
-*/
 
-/* ModeSpecOpts boxed_opts = {countof(opts), opts, countof(vars), vars, NULL}; */
-
-ModeSpecOpt boxed_opts = {0, NULL, 0, NULL, NULL};
+ModeSpecOpt boxed_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 #ifdef USE_MODULES
 
@@ -90,6 +86,7 @@ ModStruct   boxed_description = {
 
 /* rendering defines */
 
+
 /* box size */
 #define BOX_SIZE 	20.0f
 
@@ -100,7 +97,7 @@ ModStruct   boxed_description = {
 #define CAMDISTANCE_SPEED 1.5
 
 /* rendering the sphere */
-#define MESH_SIZE	5
+#define MESH_SIZE	10
 #define SPHERE_VERTICES	(2+MESH_SIZE*MESH_SIZE*2)
 #define SPHERE_INDICES	((MESH_SIZE*4 + MESH_SIZE*4*(MESH_SIZE-1))*3)
 
@@ -342,14 +339,15 @@ static void generatesphere(void)
  * create fresh ball 
  */
 
-void createball(ball *newball) {
+void createball(ball *newball) 
+{
    float r=0.0f,g=0.0f,b=0.0f;
    newball->loc.x = 5-10*rnd();
    newball->loc.y = 35+20*rnd();
    newball->loc.z = 5-10*rnd();
-   newball->dir.x = 0.5f-rnd();
+   newball->dir.x = (0.5f-rnd()) * speed;
    newball->dir.y = 0.0;
-   newball->dir.z = 0.5-rnd();
+   newball->dir.z = (0.5-rnd())  * speed;
    newball->offside = 0;
    newball->bounced = FALSE;
    newball->radius = BALLSIZE;
@@ -363,15 +361,18 @@ void createball(ball *newball) {
 
 /* Update position of each ball */
 
-void updateballs(ballman *bman) {
+void updateballs(ballman *bman) 
+{
    register int b,j;
    vectorf dvect,richting,relspeed,influence;
    GLfloat squaredist;
 
    for (b=0;b<bman->num_balls;b++) {
 
+     GLfloat gravity = 0.15f * speed;
+
       /* apply gravity */
-      bman->balls[b].dir.y -= 0.15f;
+      bman->balls[b].dir.y -= gravity;
       /* apply movement */
       addvectors(&bman->balls[b].loc,&bman->balls[b].loc,&bman->balls[b].dir);
       /* boundary check */
@@ -457,7 +458,8 @@ void updateballs(ballman *bman) {
 * explode ball into triangles
 */
 
-void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, int ind_num, ball *b) {
+void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, int ind_num, ball *b)
+{
    int pos;
    float explosion;
    float scale;
@@ -511,9 +513,9 @@ void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, int ind_
             
       /* bereken nieuwe richting */
       scalevector(&tman->tris[i].dir,&avgdir,explosion);
-      dvect.x = 0.1f - 0.2f*rnd();
-      dvect.y = 0.15f - 0.3f*rnd();
-      dvect.z = 0.1f - 0.2f*rnd(); 
+      dvect.x = (0.1f - 0.2f*rnd());
+      dvect.y = (0.15f - 0.3f*rnd());
+      dvect.z = (0.1f - 0.2f*rnd());
       addvectors(&tman->tris[i].dir,&tman->tris[i].dir,&dvect);
    }
 }
@@ -523,13 +525,14 @@ void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, int ind_
 * update position of each tri
 */
 
-void updatetris(triman *t) {
+void updatetris(triman *t) 
+{
    int b;
    GLfloat xd,zd;
    
    for (b=0;b<t->num_tri;b++) {
       /* apply gravity */
-      t->tris[b].dir.y -= 0.1f;
+      t->tris[b].dir.y -= (0.1f * speed);
       /* apply movement */
       addvectors(&t->tris[b].loc,&t->tris[b].loc,&t->tris[b].dir);
       /* boundary check */
@@ -595,7 +598,8 @@ void updatetris(triman *t) {
 /*
  * free memory allocated by a tri manager
  */
-void freetris(triman *t) {
+void freetris(triman *t) 
+{
    if (!t) return;
    if (t->tris) free(t->tris);
    if (t->vertices) free(t->vertices);
@@ -611,7 +615,8 @@ void freetris(triman *t) {
 /*
  *load defaults in config structure
  */
-void setdefaultconfig(boxed_config *config) {
+void setdefaultconfig(boxed_config *config) 
+{
   config->numballs = NUMBALLS;
   config->textures = TRUE;
   config->transparent = FALSE;
@@ -896,10 +901,10 @@ static void draw(ModeInfo * mi)
    gp->tic += 0.01f;
 
    /* rotate camera around (0,0,0), looking at (0,0,0), up is (0,1,0) */
-   dcam = CAMDISTANCE_MIN + (CAMDISTANCE_MAX - CAMDISTANCE_MIN) + (CAMDISTANCE_MAX - CAMDISTANCE_MIN)*cos(gp->tic/CAMDISTANCE_SPEED);
-   v1.x = dcam * sin(gp->tic/gp->cam_x_speed);
-   v1.z = dcam * cos(gp->tic/gp->cam_z_speed);
-   v1.y = CAM_HEIGHT * sin(gp->tic/gp->cam_y_speed) + 1.02 * CAM_HEIGHT;
+   dcam = CAMDISTANCE_MIN + (CAMDISTANCE_MAX - CAMDISTANCE_MIN) + (CAMDISTANCE_MAX - CAMDISTANCE_MIN)*cos((gp->tic/CAMDISTANCE_SPEED) * speed);
+   v1.x = dcam * sin((gp->tic/gp->cam_x_speed) * speed);
+   v1.z = dcam * cos((gp->tic/gp->cam_z_speed) * speed);
+   v1.y = CAM_HEIGHT * sin((gp->tic/gp->cam_y_speed) * speed) + 1.02 * CAM_HEIGHT;
    gluLookAt(v1.x,v1.y,v1.z,0.0,0.0,0.0,0.0,1.0,0.0); 
 
    glLightfv(GL_LIGHT0, GL_AMBIENT, l0_ambient); 

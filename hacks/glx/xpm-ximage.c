@@ -9,7 +9,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * Alpha channel support by Eric Lassauge <lassauge@mail.dotcom.fr>.
+ * Alpha channel support by Eric Lassauge <lassauge@users.sourceforge.net>
  */
 
 #ifdef HAVE_CONFIG_H

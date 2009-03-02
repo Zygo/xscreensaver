@@ -153,8 +153,8 @@ static XrmOptionDescRec opts[] = {
   { "-speed",  ".speed",  XrmoptionSepArg, 0 },
   { "-ntoasters",  ".ntoasters", XrmoptionSepArg, 0 },
   { "-nslices",    ".nslices",   XrmoptionSepArg, 0 },
-  {"-texture",     ".texture",   XrmoptionNoArg, (caddr_t) "True" },
-  {"+texture",     ".texture",   XrmoptionNoArg, (caddr_t) "False" },
+  {"-texture",     ".texture",   XrmoptionNoArg, "True" },
+  {"+texture",     ".texture",   XrmoptionNoArg, "False" },
 };
 
 static argtype vars[] = {

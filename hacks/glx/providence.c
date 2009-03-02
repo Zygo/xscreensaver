@@ -42,21 +42,16 @@
 static int eye;
 
 static XrmOptionDescRec opts[] = {
-  {(char *) "-eye", 
-   (char *) ".providence.eye", XrmoptionNoArg, (caddr_t) "on"},
-
-  {(char *) "+eye", 
-   (char *) ".providence.eye", XrmoptionNoArg, (caddr_t) "off"}
+  {"-eye", ".providence.eye", XrmoptionNoArg, "on"},
+  {"+eye", ".providence.eye", XrmoptionNoArg, "off"}
 };
 
 static argtype vars[] = {
-  {(caddr_t *) &eye, 
-   (char *) "eye", (char *) "Eye", (char *) DEF_EYE, t_Bool}
+  {&eye, "eye", "Eye", DEF_EYE, t_Bool}
 };
 
 static OptionStruct desc[] = {
-  {(char *) "-/+eye", 
-   (char *) "turn on/off eye of providence"}
+  {"-/+eye", "turn on/off eye of providence"}
 };
 
 ModeSpecOpt providence_opts = {

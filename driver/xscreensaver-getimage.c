@@ -180,7 +180,7 @@ root_window_p (Screen *screen, Window window)
   Atom type;
   int format;
   unsigned long nitems, bytesafter;
-  char *version;
+  unsigned char *version;
 
   if (window != RootWindowOfScreen (screen))
     return False;
@@ -189,7 +189,7 @@ root_window_p (Screen *screen, Window window)
 			  XInternAtom (dpy, "_SCREENSAVER_VERSION", False),
 			  0, 1, False, XA_STRING,
 			  &type, &format, &nitems, &bytesafter,
-			  (unsigned char **) &version)
+			  &version)
       == Success
       && type != None)
     return False;

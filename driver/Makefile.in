@@ -897,8 +897,8 @@ xscreensaver-demo-Xm: $(DEMO_OBJS) $(MOTIF_OBJS)
 
 xscreensaver-demo-Gtk: $(DEMO_OBJS) $(GTK_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(DEMO_OBJS) $(GTK_OBJS) $(LIBS) $(X_LIBS) \
-	$(GTK_LIBS) $(XML_LIBS) $(INTL_LIBS) $(X_PRE_LIBS) -lXt -lX11 \
-	$(XDPMS_LIBS) -lXext $(X_EXTRA_LIBS)
+	$(GTK_LIBS) $(XPM_LIBS) $(XML_LIBS) $(INTL_LIBS) $(X_PRE_LIBS) \
+	-lXt -lX11 $(XDPMS_LIBS) -lXext $(X_EXTRA_LIBS)
 
 xscreensaver-getimage: $(GETIMG_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(GETIMG_OBJS) $(GETIMG_LIBS) -lm

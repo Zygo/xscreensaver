@@ -77,7 +77,7 @@ static int  neighbors;
 
 static XrmOptionDescRec opts[] =
 {
-	{(char *) "-neighbors", (char *) ".demon.neighbors", XrmoptionSepArg, (caddr_t) NULL}
+	{"-neighbors", ".demon.neighbors", XrmoptionSepArg, 0}
 };
 
 static argtype vars[] =
@@ -86,7 +86,7 @@ static argtype vars[] =
 };
 static OptionStruct desc[] =
 {
-	{(char *) "-neighbors num", (char *) "squares 4 or 8, hexagons 6, triangles 3, 9 or 12"}
+	{"-neighbors num", "squares 4 or 8, hexagons 6, triangles 3, 9 or 12"}
 };
 
 ModeSpecOpt demon_opts =

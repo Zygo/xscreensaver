@@ -1194,6 +1194,24 @@ main_loop (saver_info *si)
           continue;
         }
 
+      /* Since we're about to blank the screen, kill the de-race timer,
+         if any.  It might still be running if we have unblanked and then
+         re-blanked in a short period (e.g., when using the "next" button
+         in xscreensaver-demo.)
+       */
+      if (si->de_race_id)
+        {
+          if (p->verbose_p)
+            fprintf (stderr, "%s: stopping de-race timer (%d remaining.)\n",
+                     blurb(), si->de_race_ticks);
+          XtRemoveTimeOut (si->de_race_id);
+          si->de_race_id = 0;
+        }
+
+
+      /* Now, try to blank.
+       */
+
       if (! blank_screen (si))
         {
           /* We were unable to grab either the keyboard or mouse.
@@ -1204,13 +1222,29 @@ main_loop (saver_info *si)
              see any events, and the display would be wedged.
 
              So, just go around the loop again and wait for the
-             next bout of idleness.
+             next bout of idleness.  (If the user remains idle, we
+             will next try to blank the screen again in no more than
+             60 seconds.)
           */
+          Time retry = 60 * 1000;
+          if (p->timeout < retry)
+            retry = p->timeout;
 
-          fprintf (stderr,
+          if (p->debug_p)
+            {
+              fprintf (stderr,
+                  "%s: DEBUG MODE: unable to grab -- BLANKING ANYWAY.\n",
+                       blurb());
+            }
+          else
+            {
+              fprintf (stderr,
                   "%s: unable to grab keyboard or mouse!  Blanking aborted.\n",
-                   blurb());
-          continue;
+                       blurb());
+
+              schedule_wakeup_event (si, retry, p->debug_p);
+              continue;
+            }
         }
 
       kill_screenhack (si);
@@ -1352,58 +1386,10 @@ main_loop (saver_info *si)
 	  si->lock_id = 0;
 	}
 
-      /* It's possible that a race condition could have led to the saver
-         window being unexpectedly still mapped.  This can happen like so:
-
-          - screen is blanked
-          - hack is launched
-          - that hack tries to grab a screen image (it does this by
-            first unmapping the saver window, then remapping it.)
-          - hack unmaps window
-          - hack waits
-          - user becomes active
-          - hack re-maps window (*)
-          - driver kills subprocess
-          - driver unmaps window (**)
-
-         The race is that (*) might have been sent to the server before
-         the client process was killed, but, due to scheduling randomness,
-         might not have been received by the server until after (**).
-         In other words, (*) and (**) might happen out of order, meaning
-         the driver will unmap the window, and then after that, the
-         recently-dead client will re-map it.  This leaves the user
-         locked out (it looks like a desktop, but it's not!)
-
-         To avoid this: after un-blanking the screen, sleep for a second,
-         and then really make sure the window is unmapped.
-
-         Update: actually, let's do that once a second for 8 seconds,
-         because sometimes the machine is slow, and we miss...
-       */
-      {
-        int i, j;
-        for (j = 0; j < 8; j++)
-          {
-            XSync (si->dpy, False);
-            sleep (1);
-            for (i = 0; i < si->nscreens; i++)
-              {
-                saver_screen_info *ssi = &si->screens[i];
-                Window w = ssi->screensaver_window;
-                XWindowAttributes xgwa;
-                XGetWindowAttributes (si->dpy, w, &xgwa);
-                if (xgwa.map_state != IsUnmapped)
-                  {
-                    if (p->verbose_p)
-                      fprintf (stderr,
-                               "%s: %d: client race! emergency unmap 0x%lx.\n",
-                               blurb(), i, (unsigned long) w);
-                    XUnmapWindow (si->dpy, w);
-                  }
-              }
-            XSync (si->dpy, False);
-          }
-      }
+      /* Since we're unblanked now, break race conditions and make
+         sure we stay that way (see comment in timers.c.) */
+      if (! si->de_race_id)
+        de_race_timer ((XtPointer) si, 0);
     }
 }
 

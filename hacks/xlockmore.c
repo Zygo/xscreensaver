@@ -1,5 +1,5 @@
 /* xlockmore.c --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997, 1998, 2001, 2002
+ * xscreensaver, Copyright (c) 1997, 1998, 2001, 2002, 2004
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -24,11 +24,13 @@
 #include <sys/time.h>
 #include "screenhack.h"
 #include "xlockmoreI.h"
+#include <X11/Intrinsic.h>
 
 #define countof(x) (sizeof((x))/sizeof(*(x)))
 
 #define MAX_COLORS (1L<<13)
 
+extern XtAppContext app;
 extern ModeSpecOpt xlockmore_opts[];
 extern const char *app_defaults;
 
@@ -217,6 +219,9 @@ xlockmore_handle_events (ModeInfo *mi,
                          void (*reshape) (ModeInfo *, int, int),
                          Bool (*hook) (ModeInfo *, XEvent *))
 {
+  if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
+    XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
+
   while (XPending (mi->dpy))
     {
       XEvent event;

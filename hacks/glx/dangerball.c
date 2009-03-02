@@ -266,7 +266,7 @@ init_ball (ModeInfo *mi)
 
   {
     double spin_speed   = 10.0;
-    double wander_speed = 0.15;
+    double wander_speed = 0.12;
     double spin_accel   = 2.0;
 
     bp->rot = make_rotator (do_spin ? spin_speed : 0,

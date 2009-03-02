@@ -29,7 +29,7 @@ static const char sccsid[] = "@(#)whale.c	1.3 98/06/18 xlockmore";
  * Thanks goes also to Brian Paul for making it possible and inexpensive
  * to use OpenGL at home.
  *
- * My e-mail address is lassauge@sagem.fr
+ * My e-mail address is lassauge@users.sourceforge.net
  *
  * Eric Lassauge  (May-13-1998)
  *

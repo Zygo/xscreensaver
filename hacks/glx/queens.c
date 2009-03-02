@@ -47,10 +47,10 @@
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 static XrmOptionDescRec opts[] = {
-  {"+rotate", ".queens.rotate", XrmoptionNoArg, (caddr_t) "false" },
-  {"-rotate", ".queens.rotate", XrmoptionNoArg, (caddr_t) "true" },
-  {"+flat", ".queens.flat", XrmoptionNoArg, (caddr_t) "false" },
-  {"-flat", ".queens.flat", XrmoptionNoArg, (caddr_t) "true" },
+  {"+rotate", ".queens.rotate", XrmoptionNoArg, "false" },
+  {"-rotate", ".queens.rotate", XrmoptionNoArg, "true" },
+  {"+flat", ".queens.flat", XrmoptionNoArg, "false" },
+  {"-flat", ".queens.flat", XrmoptionNoArg, "true" },
 };
 
 int rotate, wire, clearbits, flat;

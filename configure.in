@@ -1296,6 +1296,8 @@ AC_ARG_WITH(xf86vmode-ext,
 
 HANDLE_X_PATH_ARG(with_xf86vmode, --with-xf86vmode-ext, xf86vmode)
 
+VIDMODE_LIBS=""
+
 if test "$with_xf86vmode" = yes; then
 
   # first check for xf86vmode.h
@@ -1306,7 +1308,9 @@ if test "$with_xf86vmode" = yes; then
   if test "$have_xf86vmode" = yes; then
     have_xf86vmode=no
     AC_CHECK_X_LIB(Xxf86vm, XF86VidModeGetViewPort,
-                  [have_xf86vmode=yes; SAVER_LIBS="$SAVER_LIBS -lXxf86vm"],
+                  [have_xf86vmode=yes;
+                   VIDMODE_LIBS="-lXxf86vm";
+                   SAVER_LIBS="$SAVER_LIBS $VIDMODE_LIBS"],
                    [true], -lXext -lX11)
   fi
 
@@ -2755,15 +2759,15 @@ if test "$with_gl" = yes; then
     if test "$ac_have_mesa_gl" = yes ; then
       AC_CHECK_X_LIB(MesaGL, glXCreateContext, 
                      [gl_lib_1="MesaGL"
-                      GL_LIBS="-lMesaGL -lMesaGLU $GL_LIBS"],
-                     [], -lMesaGLU $GL_LIBS -lX11 -lXext -lm)
+                      GL_LIBS="-lMesaGL -lMesaGLU $VIDMODE_LIBS $GL_LIBS"],
+                     [], -lMesaGLU $GL_LIBS -lX11 -lXext $VIDMODE_LIBS -lm)
     fi
 
     if test "$gl_lib_1" = "" ; then
       AC_CHECK_X_LIB(GL, glXCreateContext, 
                      [gl_lib_1="GL"
-                      GL_LIBS="-lGL -lGLU $GL_LIBS"],
-                     [], -lGLU $GL_LIBS -lX11 -lXext -lm)
+                      GL_LIBS="-lGL -lGLU $VIDMODE_LIBS $GL_LIBS"],
+                     [], -lGLU $GL_LIBS -lX11 -lXext $VIDMODE_LIBS -lm)
     fi
 
     if test "$gl_lib_1" = "" ; then

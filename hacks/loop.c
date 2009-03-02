@@ -109,7 +109,7 @@ static int  neighbors;
 
 static XrmOptionDescRec opts[] =
 {
-	{(char *) "-neighbors", (char *) ".loop.neighbors", XrmoptionSepArg, (caddr_t) NULL}
+	{"-neighbors", ".loop.neighbors", XrmoptionSepArg, 0}
 };
 
 static argtype vars[] =
@@ -119,7 +119,7 @@ static argtype vars[] =
 
 static OptionStruct desc[] =
 {
-	{(char *) "-neighbors num", (char *) "squares 4 or hexagons 6"}
+	{"-neighbors num", "squares 4 or hexagons 6"}
 };
 
 ModeSpecOpt loop_opts =
@@ -1425,6 +1425,9 @@ release_loop(ModeInfo * mi)
 	}
 }
 
+static void *stop_warning_about_triangleUnit_already;
+
+
 void
 init_loop(ModeInfo * mi)
 {
@@ -1433,6 +1436,8 @@ init_loop(ModeInfo * mi)
 	int         i, size = MI_SIZE(mi);
 	loopstruct *lp;
 	XGCValues   gcv;
+
+    stop_warning_about_triangleUnit_already = (void *) &triangleUnit;
 
 	if (loops == NULL) {
 		if ((loops = (loopstruct *) calloc(MI_NUM_SCREENS(mi),

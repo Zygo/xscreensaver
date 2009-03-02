@@ -70,13 +70,6 @@ static const char sccsid[] = "@(#)superquadrics.c	4.07 97/11/24 xlockmore";
  * Ed Mackey
  */
 
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
 # define PROGCLASS					"Superquadrics"
 # define HACK_INIT					init_superquadrics
@@ -107,7 +100,7 @@ static float spinspeed;
 
 static XrmOptionDescRec opts[] =
 {
-  {"-spinspeed", ".superquadrics.spinspeed", XrmoptionSepArg, (caddr_t) NULL}
+  {"-spinspeed", ".superquadrics.spinspeed", XrmoptionSepArg, 0}
 };
 static argtype vars[] =
 {

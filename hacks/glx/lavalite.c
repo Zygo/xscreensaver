@@ -93,19 +93,18 @@ extern XtAppContext app;
 #define DEF_BTEX	"(none)"
 #define DEF_TTEX	"(none)"
 
-#define DEFAULTS	"*delay:	10000       \n" \
+#define DEFAULTS	"*delay:	30000       \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
-			"*geometry:	640x640     \n" \
+			"*geometry:	600x900     \n" \
 			"*count:      " DEF_COUNT " \n" \
 			"*style:      " DEF_STYLE " \n" \
 			"*speed:      " DEF_SPEED " \n" \
 			"*spin:       " DEF_SPIN   "\n" \
 			"*wander:     " DEF_WANDER "\n" \
 			"*resolution: " DEF_RESOLUTION "\n" \
-			"*smooth: "     DEF_SMOOTH "\n" \
+			"*smooth: "     DEF_SMOOTH     "\n" \
 			"*impatient:  " DEF_IMPATIENT " \n" \
-			"*geometry:	600x900\n" \
 			"*lavaColor:  "	DEF_LCOLOR "\n" \
 			"*fluidColor: "	DEF_FCOLOR "\n" \
 			"*baseColor:  "	DEF_BCOLOR "\n" \

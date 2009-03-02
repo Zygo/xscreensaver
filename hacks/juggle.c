@@ -133,21 +133,19 @@ static Bool solid;
 
 static XrmOptionDescRec opts[] =
 {
-  {(char* ) "-pattern", (char *) ".juggle.pattern",
-   XrmoptionSepArg, (caddr_t) NULL},
-  {(char* ) "-trail", (char *) ".juggle.trail",
-   XrmoptionSepArg, (caddr_t) NULL},
+  {(char* ) "-pattern", ".juggle.pattern", XrmoptionSepArg, NULL},
+  {(char* ) "-trail", ".juggle.trail",     XrmoptionSepArg, NULL},
 #ifdef UNI
-  {(char *) "-uni", (char *) ".juggle.uni", XrmoptionNoArg, (caddr_t) "on"},
-  {(char *) "+uni", (char *) ".juggle.uni", XrmoptionNoArg, (caddr_t) "off"},
+  {"-uni", ".juggle.uni", XrmoptionNoArg, "on"},
+  {"+uni", ".juggle.uni", XrmoptionNoArg, "off"},
 #endif
-  {(char *) "-solid", (char *) ".juggle.solid", XrmoptionNoArg, (caddr_t) "on"},
-  {(char *) "+solid", (char *) ".juggle.solid", XrmoptionNoArg, (caddr_t) "off"}
+  {"-solid", ".juggle.solid", XrmoptionNoArg, "on"},
+  {"+solid", ".juggle.solid", XrmoptionNoArg, "off"}
 };
 static argtype vars[] =
 {
   {&pattern, "pattern", 
-   (char *) "Pattern", (char *) DEF_PATTERN, t_String},
+   "Pattern", (char *) DEF_PATTERN, t_String},
   {&trail, "trail", "Trail", DEF_TRAIL, t_Int},
 #ifdef UNI
   {&uni, "uni", "Uni", DEF_UNI, t_Bool},
@@ -156,12 +154,12 @@ static argtype vars[] =
 };
 static OptionStruct desc[] =
 {
-  {(char *) "-pattern string", (char *) "Cambridge Juggling Pattern"},
-  {(char *) "-trail num", (char *) "Trace Juggling Patterns"},
+  {"-pattern string", "Cambridge Juggling Pattern"},
+  {"-trail num", "Trace Juggling Patterns"},
 #ifdef UNI
-  {(char *) "-/+uni", (char *) "Unicycle"},
+  {"-/+uni", "Unicycle"},
 #endif
-  {(char *) "-/+solid", (char *) "solid color (else its a 4 panel look (half white))"}
+  {"-/+solid", "solid color (else its a 4 panel look (half white))"}
 };
 
 ModeSpecOpt juggle_opts =
@@ -313,44 +311,44 @@ static PatternIndex* patternindex = (PatternIndex *) NULL;
 
 /* List of popular patterns, in any order */
 static patternstruct portfolio[] = {
-  {(char *) "[+2 1]", (char *) "+3 1, Typical 2 ball juggler"},
-  {(char *) "[2 0]", (char *) "4 0, 2 balls 1 hand"},
-  {(char *) "[2 0 1]", (char *) "5 0 1"},
-  {(char *) "[+2 0 +2 0 0]", (char *) "+5 0 +5 0 0"},
-  {(char *) "[3]", (char *) "3, cascade"},
-  {(char *) "[+3]", (char *) "+3, reverse cascade"},
-  {(char *) "[=3]", (char *) "=3, cascade under arm"},
-  {(char *) "[&3]", (char *) "&3, cascade catching under arm"},
-  {(char *) "[_3]", (char *) "_3, bouncing cascade"},
-  {(char *) "[+3 x3 =3]", (char *) "+3 x3 =3, Mill's mess"},
-  {(char *) "[3 2 1]", (char *) "5 3 1"},
-  {(char *) "[3 3 1]", (char *) "4 4 1"},
-  {(char *) "[3 1 2]", (char *) "6 1 2, See-saw"},
-  {(char *) "[=3 3 1 2]", (char *) "=4 5 1 2"},
-  {(char *) "[=3 2 2 3 1 2]", (char *) "=6 2 2 5 1 2, =4 5 1 2 stretched"},
-  {(char *) "[+3 3 1 3]", (char *) "+4 4 1 3, anemic shower box"},
-  {(char *) "[3 3 1]", (char *) "4 4 1"},
-  {(char *) "[+3 2 3]", (char *) "+4 2 3"},
-  {(char *) "[+3 1]", (char *) "+5 1, 3 shower"},
-  {(char *) "[_3 1]", (char *) "_5 1, bouncing 3 shower"},
-  {(char *) "[3 0 3 0 3]", (char *) "5 0 5 0 5, shake 3 out of 5"},
-  {(char *) "[3 3 3 0 0]", (char *) "5 5 5 0 0, flash 3 out of 5"},
-  {(char *) "[3 3 0]", (char *) "4 5 0, complete waste of a 5 ball juggler"},
-  {(char *) "[3 3 3 0 0 0 0]", (char *) "7 7 7 0 0 0 0, 3 flash"},
-  {(char *) "[+3 0 +3 0 +3 0 0]", (char *) "+7 0 +7 0 +7 0 0"},
-  {(char *) "[4]", (char *) "4, 4 cascade"},
-  {(char *) "[+4 3]", (char *) "+5 3, 4 ball half shower"},
-  {(char *) "[4 4 2]", (char *) "5 5 2"},
-  {(char *) "[+4 4 4 +4]", (char *) "+4 4 4 +4, 4 columns"},
-  {(char *) "[4 3 +4]", (char *) "5 3 +4"},
-  {(char *) "[+4 1]", (char *) "+7 1, 4 shower"},
-  {(char *) "[4 4 4 4 0]", (char *) "5 5 5 5 0, learning 5"},
-  {(char *) "[5]", (char *) "5, 5 cascade"},
-  {(char *) "[_5 _5 _5 _5 _5 5 5 5 5 5]", (char *) "_5 _5 _5 _5 _5 5 5 5 5 5, jump rope"},
-  {(char *) "[+5 x5 =5]", (char *) "+5 x5 =5, Mill's mess for 5"},
-  {(char *) "[6]", (char *) "6, 6 cascade"},
-  {(char *) "[7]", (char *) "7, 7 cascade"},
-  {(char *) "[_7]", (char *) "_7, bouncing 7 cascade"},
+  {"[+2 1]", "+3 1, Typical 2 ball juggler"},
+  {"[2 0]", "4 0, 2 balls 1 hand"},
+  {"[2 0 1]", "5 0 1"},
+  {"[+2 0 +2 0 0]", "+5 0 +5 0 0"},
+  {"[3]", "3, cascade"},
+  {"[+3]", "+3, reverse cascade"},
+  {"[=3]", "=3, cascade under arm"},
+  {"[&3]", "&3, cascade catching under arm"},
+  {"[_3]", "_3, bouncing cascade"},
+  {"[+3 x3 =3]", "+3 x3 =3, Mill's mess"},
+  {"[3 2 1]", "5 3 1"},
+  {"[3 3 1]", "4 4 1"},
+  {"[3 1 2]", "6 1 2, See-saw"},
+  {"[=3 3 1 2]", "=4 5 1 2"},
+  {"[=3 2 2 3 1 2]", "=6 2 2 5 1 2, =4 5 1 2 stretched"},
+  {"[+3 3 1 3]", "+4 4 1 3, anemic shower box"},
+  {"[3 3 1]", "4 4 1"},
+  {"[+3 2 3]", "+4 2 3"},
+  {"[+3 1]", "+5 1, 3 shower"},
+  {"[_3 1]", "_5 1, bouncing 3 shower"},
+  {"[3 0 3 0 3]", "5 0 5 0 5, shake 3 out of 5"},
+  {"[3 3 3 0 0]", "5 5 5 0 0, flash 3 out of 5"},
+  {"[3 3 0]", "4 5 0, complete waste of a 5 ball juggler"},
+  {"[3 3 3 0 0 0 0]", "7 7 7 0 0 0 0, 3 flash"},
+  {"[+3 0 +3 0 +3 0 0]", "+7 0 +7 0 +7 0 0"},
+  {"[4]", "4, 4 cascade"},
+  {"[+4 3]", "+5 3, 4 ball half shower"},
+  {"[4 4 2]", "5 5 2"},
+  {"[+4 4 4 +4]", "+4 4 4 +4, 4 columns"},
+  {"[4 3 +4]", "5 3 +4"},
+  {"[+4 1]", "+7 1, 4 shower"},
+  {"[4 4 4 4 0]", "5 5 5 5 0, learning 5"},
+  {"[5]", "5, 5 cascade"},
+  {"[_5 _5 _5 _5 _5 5 5 5 5 5]", "_5 _5 _5 _5 _5 5 5 5 5 5, jump rope"},
+  {"[+5 x5 =5]", "+5 x5 =5, Mill's mess for 5"},
+  {"[6]", "6, 6 cascade"},
+  {"[7]", "7, 7 cascade"},
+  {"[_7]", "_7, bouncing 7 cascade"},
 };
 
 /* Private Functions */

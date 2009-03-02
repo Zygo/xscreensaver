@@ -35,13 +35,6 @@
  */
 
 
-/*-
- * due to a Bug/feature in VMS X11/Intrinsic.h has to be placed before xlock.
- * otherwise caddr_t is not defined correctly
- */
-
-#include <X11/Intrinsic.h>
-
 #ifdef STANDALONE
 # define PROGCLASS						"Planet"
 # define HACK_INIT						init_planet
@@ -50,7 +43,7 @@
 # define HACK_HANDLE_EVENT				planet_handle_event
 # define EVENT_MASK						PointerMotionMask
 # define planet_opts					xlockmore_opts
-#define DEFAULTS	"*delay:			15000   \n"	\
+#define DEFAULTS	"*delay:			20000   \n"	\
 					"*showFPS:			False   \n" \
                     "*rotate:           True    \n" \
                     "*roll:             True    \n" \
@@ -89,7 +82,7 @@
 #define DEF_TEXTURE "True"
 #define DEF_STARS   "True"
 #define DEF_LIGHT   "True"
-#define DEF_RESOLUTION "64"
+#define DEF_RESOLUTION "128"
 #define DEF_IMAGE   "BUILTIN"
 
 #undef countof
@@ -105,20 +98,20 @@ static char *which_image;
 static int resolution;
 
 static XrmOptionDescRec opts[] = {
-  {"-rotate",  ".glplanet.rotate",  XrmoptionNoArg, (caddr_t) "true" },
-  {"+rotate",  ".glplanet.rotate",  XrmoptionNoArg, (caddr_t) "false" },
-  {"-roll",    ".glplanet.roll",    XrmoptionNoArg, (caddr_t) "true" },
-  {"+roll",    ".glplanet.roll",    XrmoptionNoArg, (caddr_t) "false" },
-  {"-wander",  ".glplanet.wander",  XrmoptionNoArg, (caddr_t) "true" },
-  {"+wander",  ".glplanet.wander",  XrmoptionNoArg, (caddr_t) "false" },
-  {"-texture", ".glplanet.texture", XrmoptionNoArg, (caddr_t) "true" },
-  {"+texture", ".glplanet.texture", XrmoptionNoArg, (caddr_t) "false" },
-  {"-stars",   ".glplanet.stars",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+stars",   ".glplanet.stars",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-light",   ".glplanet.light",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+light",   ".glplanet.light",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-image",   ".glplanet.image",  XrmoptionSepArg, (caddr_t) 0 },
-  {"-resolution", ".glplanet.resolution", XrmoptionSepArg, (caddr_t) 0 },
+  {"-rotate",  ".glplanet.rotate",  XrmoptionNoArg, "true" },
+  {"+rotate",  ".glplanet.rotate",  XrmoptionNoArg, "false" },
+  {"-roll",    ".glplanet.roll",    XrmoptionNoArg, "true" },
+  {"+roll",    ".glplanet.roll",    XrmoptionNoArg, "false" },
+  {"-wander",  ".glplanet.wander",  XrmoptionNoArg, "true" },
+  {"+wander",  ".glplanet.wander",  XrmoptionNoArg, "false" },
+  {"-texture", ".glplanet.texture", XrmoptionNoArg, "true" },
+  {"+texture", ".glplanet.texture", XrmoptionNoArg, "false" },
+  {"-stars",   ".glplanet.stars",   XrmoptionNoArg, "true" },
+  {"+stars",   ".glplanet.stars",   XrmoptionNoArg, "false" },
+  {"-light",   ".glplanet.light",   XrmoptionNoArg, "true" },
+  {"+light",   ".glplanet.light",   XrmoptionNoArg, "false" },
+  {"-image",   ".glplanet.image",  XrmoptionSepArg, 0 },
+  {"-resolution", ".glplanet.resolution", XrmoptionSepArg, 0 },
 };
 
 static argtype vars[] = {
@@ -549,8 +542,8 @@ init_planet (ModeInfo * mi)
   }
 
   {
-    double spin_speed   = 1.0;
-    double wander_speed = 0.05;
+    double spin_speed   = 0.5;
+    double wander_speed = 0.02;
     gp->rot = make_rotator (do_roll ? spin_speed : 0,
                             do_roll ? spin_speed : 0,
                             0, 1,
@@ -657,7 +650,7 @@ draw_planet (ModeInfo * mi)
   glRotatef (gp->z * 360, 0.0, 0.0, 1.0);
   if (do_rotate && !gp->button_down_p)
     {
-      gp->z -= 0.01;     /* the sun sets in the west */
+      gp->z -= 0.005;     /* the sun sets in the west */
       if (gp->z < 0) gp->z += 1;
     }
 

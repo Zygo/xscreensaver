@@ -10,6 +10,7 @@
 #else   /* for xscreensaver */
 # include "config.h"
 # include <GL/gl.h>
+# undef APIENTRY
 # define APIENTRY /**/
 #endif
 

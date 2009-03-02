@@ -16,7 +16,7 @@
 #include <GL/glu.h>
 
 /* Static configuration. */
-#define GLB_SLOW_GL          1	/* Set this if you have a slow GL
+#define GLB_SLOW_GL          0	/* Set this if you have a slow GL
 				   * implementation. If you have an accelerated
 				   * graphics card, set this to 0.
 				 */
