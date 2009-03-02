@@ -243,14 +243,25 @@ cycle_timer (XtPointer closure, XtIntervalId *id)
         }
     }
 
-  si->cycle_id = XtAppAddTimeOut (si->app, how_long, cycle_timer,
-				  (XtPointer) si);
+  if (how_long > 0)
+    {
+      si->cycle_id = XtAppAddTimeOut (si->app, how_long, cycle_timer,
+                                      (XtPointer) si);
 
-#ifdef DEBUG_TIMERS
-  if (p->verbose_p)
-    fprintf (stderr, "%s: starting cycle_timer (%ld, %ld)\n",
-	    blurb(), how_long, si->cycle_id);
-#endif /* DEBUG_TIMERS */
+# ifdef DEBUG_TIMERS
+      if (p->verbose_p)
+        fprintf (stderr, "%s: starting cycle_timer (%ld, %ld)\n",
+                 blurb(), how_long, si->cycle_id);
+# endif /* DEBUG_TIMERS */
+    }
+# ifdef DEBUG_TIMERS
+  else
+    {
+      if (p->verbose_p)
+        fprintf (stderr, "%s: not starting cycle_timer: how_long == %d\n",
+                 blurb(), how_long);
+    }
+# endif /* DEBUG_TIMERS */
 }
 
 

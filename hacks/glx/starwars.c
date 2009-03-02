@@ -43,7 +43,7 @@ extern XtAppContext app;
 #define HACK_RESHAPE	reshape_sws
 #define sws_opts	xlockmore_opts
 
-#define DEF_PROGRAM    ZIPPY_PROGRAM
+#define DEF_PROGRAM    "(default)"
 #define DEF_LINES      "125"
 #define DEF_STEPS      "35"
 #define DEF_SPIN       "0.03"
@@ -88,6 +88,7 @@ extern XtAppContext app;
 #ifdef USE_GL /* whole file */
 
 #include <GL/glu.h>
+#include <sys/stat.h>
 #include "glutstroke.h"
 #include "glut_roman.h"
 #define GLUT_FONT (&glutStrokeRoman)
@@ -253,8 +254,22 @@ static void
 launch_text_generator (sws_configuration *sc)
 {
   char *oprogram = get_string_resource ("program", "Program");
-  char *program = (char *) malloc (strlen (oprogram) + 10);
+  char *program;
 
+  if (!strcasecmp(oprogram, "(default)"))
+    {
+#ifdef __linux__
+      static int done_once = 0;
+      struct stat st;
+      char *cmd = "cat /usr/src/linux/README";
+      if (!(done_once++) && !stat (cmd+4, &st))
+        oprogram = cmd;
+      else
+#endif
+        oprogram = ZIPPY_PROGRAM;
+    }
+
+ program = (char *) malloc (strlen (oprogram) + 10);
   strcpy (program, "( ");
   strcat (program, oprogram);
   strcat (program, " ) 2>&1");
@@ -496,6 +511,41 @@ box (double width, double height, double depth)
 #endif /* DEBUG */
 
 
+/* Construct stars (number of stars is dependent on size of screen) */
+static void
+init_stars (ModeInfo *mi, int width, int height)
+{
+  sws_configuration *sc = &scs[MI_SCREEN(mi)];
+  int i, j;
+  int nstars = width * height / 320;
+  int max_size = 3;
+  GLfloat inc = 0.5;
+  int steps = max_size / inc;
+
+  glDeleteLists (sc->star_list, 1);
+  sc->star_list = glGenLists (1);
+  glNewList (sc->star_list, GL_COMPILE);
+
+  glEnable(GL_POINT_SMOOTH);
+
+  for (j = 1; j <= steps; j++)
+    {
+      glPointSize(inc * j);
+      glBegin (GL_POINTS);
+      for (i = 0; i < nstars / steps; i++)
+        {
+          glColor3f (0.6 + frand(0.3),
+                     0.6 + frand(0.3),
+                     0.6 + frand(0.3));
+          glVertex2f (2 * width  * (0.5 - frand(1.0)),
+                      2 * height * (0.5 - frand(1.0)));
+        }
+      glEnd ();
+    }
+  glEndList ();
+}
+
+
 /* Window management, etc
  */
 void
@@ -533,27 +583,6 @@ reshape_sws (ModeInfo *mi, int width, int height)
 
     /* And then let's scale so that the bottom of the screen is 1.0 wide. */
     glScalef (4200, 4200, 4200);
-  }
-
-
-  /* Construct stars (number of stars is dependent on size of screen) */
-  {
-    int i;
-    int nstars = width * height / 320;
-    glDeleteLists (sc->star_list, 1);
-    sc->star_list = glGenLists (1);
-    glNewList (sc->star_list, GL_COMPILE);
-    glBegin (GL_POINTS);
-    for (i = 0; i < nstars; i++)
-      {
-        GLfloat c = 0.6 + 0.3 * random() / RAND_MAX;
-        glColor3f (c, c, c);
-        glVertex3f (2 * width  * (0.5 - 1.0 * random() / RAND_MAX),
-                    2 * height * (0.5 - 1.0 * random() / RAND_MAX),
-                    0.0);
-      }
-    glEnd ();
-    glEndList ();
   }
 
 
@@ -640,8 +669,8 @@ init_sws (ModeInfo *mi)
   if ((sc->glx_context = init_GL(mi)) != NULL) {
     gl_init(mi);
     reshape_sws (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+    init_stars (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   }
-
 
 
   font_height = GLUT_FONT->top - GLUT_FONT->bottom;
@@ -666,7 +695,6 @@ init_sws (ModeInfo *mi)
 
   sc->subproc_relaunch_delay = 2 * 1000;
   sc->total_lines = max_lines-1;
-  launch_text_generator (sc);
 
   if (random() & 1)
     star_spin = -star_spin;
@@ -686,6 +714,8 @@ init_sws (ModeInfo *mi)
                progname, alignment_str);
       exit (1);
     }
+
+  launch_text_generator (sc);
 }
 
 

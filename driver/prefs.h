@@ -58,6 +58,7 @@ struct saver_preferences {
   int screenhacks_count;
 
   int nice_inferior;		/* nice value for subprocs */
+  int inferior_memory_limit;	/* setrlimit(LIMIT_AS) value for subprocs */
 
   Time initial_delay;		/* how long to sleep after launch */
   Time splash_duration;		/* how long the splash screen stays up */

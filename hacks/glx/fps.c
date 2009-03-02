@@ -21,6 +21,11 @@
 #include <GL/glu.h>
 #include <GL/glx.h>
 
+#undef DEBUG  /* Defining this causes check_gl_error() to be called inside
+                 time-critical sections, which could slow things down (since
+                 it might result in a round-trip, and stall of the pipeline.)
+               */
+
 extern void clear_gl_error (void);
 extern void check_gl_error (const char *type);
 
@@ -75,9 +80,21 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
     y = mi->xgwa.height + y;
 
   clear_gl_error ();
-  glPushAttrib(GL_ALL_ATTRIB_BITS);
+
+  /* Sadly, this causes a stall of the graphics pipeline (as would the
+     equivalent calls to glGet*.)  But there's no way around this, short
+     of having each caller set up the specific display matrix we need
+     here, which would kind of defeat the purpose of centralizing this
+     code in one file.
+   */
+  glPushAttrib(GL_TRANSFORM_BIT |  /* for matrix contents */
+               GL_ENABLE_BIT |     /* for various glDisable calls */
+               GL_CURRENT_BIT |    /* for glColor3f() */
+               GL_LIST_BIT);       /* for glListBase() */
   {
+# ifdef DEBUG
     check_gl_error ("glPushAttrib");
+# endif
 
     /* disable lighting and texturing when drawing bitmaps!
        (glPopAttrib() restores these, I believe.)
@@ -93,7 +110,9 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
     {
+# ifdef DEBUG
       check_gl_error ("glPushMatrix");
+# endif
       glLoadIdentity();
 
       /* Each matrix mode has its own stack, so we need to push/pop
@@ -101,11 +120,15 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
       glMatrixMode(GL_MODELVIEW);
       glPushMatrix();
       {
+# ifdef DEBUG
         check_gl_error ("glPushMatrix");
+# endif
         glLoadIdentity();
 
         gluOrtho2D(0, mi->xgwa.width, 0, mi->xgwa.height);
+# ifdef DEBUG
         check_gl_error ("gluOrtho2D");
+# endif
 
         /* clear the background */
         if (fps_clear_p)
@@ -119,10 +142,12 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
         /* draw the text */
         glColor3f (1, 1, 1);
         glRasterPos2f (x, y);
-        for (i = 0; i < strlen(string); i++)
-          glCallList (font_dlist + (int)string[i]);
+        glListBase (font_dlist);
+        glCallLists (strlen(string), GL_UNSIGNED_BYTE, string);
 
+# ifdef DEBUG
         check_gl_error ("fps_print_string");
+# endif
       }
       glPopMatrix();
     }
@@ -132,7 +157,9 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
   }
   /* clean up after our state changes */
   glPopAttrib();
+# ifdef DEBUG
   check_gl_error ("glPopAttrib");
+# endif
 }
 
 

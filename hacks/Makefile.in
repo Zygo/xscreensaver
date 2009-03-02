@@ -89,7 +89,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  phosphor.c xmatrix.c petri.c shadebobs.c xsublim.c ccurve.c \
 		  blaster.c bumps.c ripples.c xteevee.c xspirograph.c \
 		  nerverot.c xrayswarm.c hyperball.c zoom.c whirlwindwarp.c \
-		  rotzoomer.c
+		  rotzoomer.c whirlygig.c speedmine.c
 SCRIPTS		= vidwhacker webcollage
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -110,7 +110,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  phosphor.o xmatrix.o petri.o shadebobs.o xsublim.o ccurve.o \
 		  blaster.o bumps.o ripples.o xteevee.o xspirograph.o \
 		  nerverot.o xrayswarm.o hyperball.o zoom.o whirlwindwarp.o \
-		  rotzoomer.o
+		  rotzoomer.o whirlygig.o speedmine.o
 
 NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -124,7 +124,8 @@ NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  demon loop t3d penetrate deluxe compass squiral xflame \
 		  wander spotlight critical phosphor xmatrix petri shadebobs \
 		  xsublim ccurve blaster bumps ripples xteevee xspirograph \
-		  nerverot xrayswarm hyperball zoom whirlwindwarp rotzoomer
+		  nerverot xrayswarm hyperball zoom whirlwindwarp rotzoomer \
+		  whirlygig speedmine
 SEXES		= sonar
 EXES		= $(NEXES) $(SEXES)
 
@@ -154,7 +155,7 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  vidwhacker.man webcollage.man xsublim.man distort.man \
 		  phosphor.man xmatrix.man xteevee.man xflame.man petri.man \
 		  nerverot.man zoom.man whirlwindwarp.man hyperball.man \
-		  rotzoomer.man
+		  rotzoomer.man whirlygig.man speedmine.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  images/$(STAR).xbm \
@@ -601,6 +602,12 @@ whirlwindwarp:	whirlwindwarp.o	$(HACK_OBJS) $(COL)
 
 rotzoomer:	rotzoomer.o	$(HACK_OBJS) $(GRAB) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
+
+whirlygig:	whirlygig.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
+speedmine:	speedmine.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -1088,4 +1095,8 @@ whirlwindwarp.o: $(srcdir)/screenhack.h
 whirlwindwarp.o: ../config.h
 rotzoomer.o: $(srcdir)/screenhack.h
 rotzoomer.o: ../config.h
+whirlygig.o: $(srcdir)/screenhack.h
+whirlygig.o: ../config.h
+speedmine.o: $(srcdir)/screenhack.h
+speedmine.o: ../config.h
 

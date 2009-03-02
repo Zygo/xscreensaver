@@ -103,19 +103,25 @@ static const char sccsid[] = "@(#)atlantis.c	1.3 98/06/18 xlockmore";
  * OpenGL(TM) is a trademark of Silicon Graphics, Inc.
  */
 
+#define DEF_TEXTURE "True"
+#define DEF_GRADIENT "False"
+#define DEF_WHALESPEED  "250"
+
 #ifdef STANDALONE
 # define PROGCLASS	"Atlantis"
 # define HACK_INIT	init_atlantis
 # define HACK_DRAW	draw_atlantis
 # define HACK_RESHAPE	reshape_atlantis
 # define atlantis_opts	xlockmore_opts
-# define DEFAULTS	"*delay:       40000 \n" \
+# define DEFAULTS	"*delay:       25000 \n" \
 			 "*count:          4 \n" \
 			 "*showFPS:    False \n" \
 			 "*cycles:       100 \n" \
 			 "*size:        6000 \n" \
 			 "*wireframe:  False \n" \
-			 "*whalespeed:   250 \n"
+			 "*texture:    " DEF_TEXTURE    " \n" \
+			 "*gradient:   " DEF_GRADIENT   " \n" \
+			 "*whalespeed: " DEF_WHALESPEED " \n"
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
@@ -128,22 +134,23 @@ static const char sccsid[] = "@(#)atlantis.c	1.3 98/06/18 xlockmore";
 #include <GL/glu.h>
 
 
-#define DEF_TEXTURE "True"
-
-#define DEF_WHALESPEED  "250"
 static int  whalespeed;
 static int do_texture;
+static int do_gradient;
 static XrmOptionDescRec opts[] =
 {
      {"-whalespeed", ".atlantis.whalespeed", XrmoptionSepArg, (caddr_t) NULL},
      {"-texture",    ".atlantis.texture",    XrmoptionNoArg, (caddr_t)"true"},
      {"+texture",    ".atlantis.texture",    XrmoptionNoArg, (caddr_t)"false"},
+     {"-gradient",   ".atlantis.gradient",   XrmoptionNoArg, (caddr_t)"true"},
+     {"+gradient",   ".atlantis.gradient",   XrmoptionNoArg, (caddr_t)"false"},
 };
 
 static argtype vars[] =
 {
  {(caddr_t *) & whalespeed, "whalespeed", "WhaleSpeed", DEF_WHALESPEED, t_Int},
  {(caddr_t *) &do_texture,  "texture",    "Texture",    DEF_TEXTURE,   t_Bool},
+ {(caddr_t *) &do_gradient, "gradient",   "Gradient",   DEF_GRADIENT,  t_Bool},
 };
 
 static OptionStruct desc[] =
@@ -240,7 +247,6 @@ Init(ModeInfo *mi)
 	{0.4, 0.4, 0.4, 1.0};
 	static float lmodel_localviewer[] =
 	{0.0};
-	float       fblue = 0.0, fgreen;
 
 	glFrontFace(GL_CCW);
 
@@ -317,10 +323,7 @@ Init(ModeInfo *mi)
 
 	InitFishs(ap);
 
-	/* Add a little randomness */
-	fblue = ((float) (NRAND(50)) / 100.0) + 0.50;
-	fgreen = fblue * 0.56;
-	glClearColor(0.0, fgreen, fblue, 0.0);
+	glClearColor(0.0, 0.39, 0.7, 0.0);
 }
 
 void
@@ -335,6 +338,95 @@ reshape_atlantis(ModeInfo * mi, int width, int height)
 	gluPerspective(400.0, (GLdouble) width / (GLdouble) height, 1.0, 2000000.0);
 	glMatrixMode(GL_MODELVIEW);
 }
+
+
+static void
+clear_tank (atlantisstruct * ap)
+{
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  if (do_gradient && !ap->wire)
+    {
+      static GLint gradient_list = -1;
+      static GLint gradient_tex = -1;
+
+      if (gradient_list == -1)
+        {
+          unsigned char *pixels = 0;
+          int start = 64;
+          int end = start + 128;
+          int size = 4 * (end - start);
+          int i;
+
+          pixels = (unsigned char *) malloc (size);
+          i = 0;
+          while (i < size)
+            {
+              pixels[i++] = 0;
+              pixels[i++] = (start + (i>>2)) * 0.56;
+              pixels[i++] = (start + (i>>2));
+              pixels[i++] = 255;
+            }
+
+          clear_gl_error();
+
+          glGenTextures(1, &gradient_tex);
+          glBindTexture(GL_TEXTURE_1D, gradient_tex);
+
+          glTexImage1D(GL_TEXTURE_1D, 0, 4,
+                       (end - start), 0,
+                       GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+          check_gl_error ("gradient texture");
+          glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+          glTexParameteri(GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+
+          gradient_list = glGenLists(1);
+          glNewList(gradient_list, GL_COMPILE);
+
+          glDepthMask (False);
+          glDisable(GL_DEPTH_TEST);
+          glDisable(GL_LIGHTING);
+          glDisable(GL_TEXTURE_2D);
+          glEnable(GL_TEXTURE_1D);
+          glBindTexture(GL_TEXTURE_1D, gradient_tex);
+          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL); 
+          glTexParameterf(GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+
+          glMatrixMode(GL_PROJECTION);
+          glPushMatrix();
+          glLoadIdentity();
+          glRotatef(90, 0, 0, 1);
+          glTranslatef(-1, -1, 0);
+          glScalef(2, 2, 1);
+
+          glBegin(GL_QUADS);
+          glTexCoord1i(1); glVertex3i(1, 0, 0);
+          glTexCoord1i(0); glVertex3i(0, 0, 0);
+          glTexCoord1i(0); glVertex3i(0, 1, 0);
+          glTexCoord1i(1); glVertex3i(1, 1, 0);
+          glEnd();
+
+          glPopMatrix();
+
+          glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE); 
+          glDisable(GL_TEXTURE_1D);
+
+          glDepthMask (True);
+          glEnable(GL_DEPTH_TEST);
+          glEnable(GL_CULL_FACE);
+          glEnable(GL_LIGHTING);
+          if (do_texture)
+            glEnable(GL_TEXTURE_2D);
+
+          glEndList();
+          check_gl_error ("gradient list");
+        }
+
+      glCallList(gradient_list);
+    }
+}
+
 
 static void
 Animate(atlantisstruct * ap)
@@ -358,7 +450,7 @@ AllDisplay(atlantisstruct * ap)
 {
 	int         i;
 
-	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        clear_tank(ap);
 
 	for (i = 0; i < ap->num_sharks; i++) {
 		glPushMatrix();

@@ -16,7 +16,16 @@
 attraction - interactions of opposing forces
 .SH SYNOPSIS
 .B attraction
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-points \fIint\fP] [\-threshold \fIint\fP] [\-mode balls | lines | polygons | splines | filled-splines | tails ] [\-size \fIint\fP] [\-segments \fIint\fP] [\-delay \fIusecs\fP] [\-color-shift \fIint\fP] [\-radius \fIint\fP] [\-vx \fIint\fP] [\-vy \fIint\fP] [\-glow] [\-noglow] [\-orbit] [\-viscosity \fIfloat\fP] [\-mouse] [\-no-mouse] [\-mouse-size]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
+[\-visual \fIvisual\fP] [\-points \fIint\fP] [\-threshold \fIint\fP]
+[\-mode balls | lines | polygons | splines | filled-splines | tails ]
+[\-size \fIint\fP] [\-segments \fIint\fP] [\-delay \fIusecs\fP]
+[\-color-shift \fIint\fP] [\-radius \fIint\fP]
+[\-vx \fIint\fP] [\-vy \fIint\fP] [\-glow] [\-noglow]
+[\-orbit] [\-viscosity \fIfloat\fP] [\-mouse] [\-no-mouse] [\-mouse-size]
+[\-walls] [\-nowalls] [\-maxspeed] [\-nomaxspeed]
+[\-correct-bounce] [\-fast-bounce]
 .SH DESCRIPTION
 The \fIattraction\fP program has several visually different modes of 
 operation, all of which are based on the interactions of a set of control
@@ -152,9 +161,42 @@ Turns off \fB\-mouse\fP.
 .B \-mouse-size integer
 In \fB\-mouse\fP mode, this sets the mass of the mouse (analagously to the
 \fB\-size\fP parameter.)
-.SH ENVIRONMENT
-.PP
 .TP 8
+.B \-nowalls
+This will cause the balls to continue on past the edge of the
+screen or window.  They will still be kept track of and can come back.
+.TP 8
+.B \-walls
+This will cause the balls to bounce when they get
+to the edge of the screen or window.  This is the default behavior.
+.TP 8
+.B \-maxspeed
+Imposes a maximum speed (default).  If a ball ends up going faster than
+this, it will be treated as though there were .9  viscosity until it is
+under the limit. This stops the balls from continually accelerating (which
+they have a tendancy to do), but also causes balls moving very fast to
+tend to clump in the lower right corner.
+.TP 8
+.B \-nomaxspeed
+If this is specified, no maximum speed is set for the balls.
+.TP 8
+.B \-fast-bounce
+Uses the old, simple bouncing algorithm (default).  This simply moves any
+ball that is out of bounds back to a wall and reverses its velocity.
+This works fine for most cases, but under some circumstances, the
+simplification can lead to annoying effects.
+.TP 8
+.B \-correct-bounce
+Uses a more intelligent bouncing algorithm.  This method actually reflects
+the balls off the walls until they are within bounds.  This can be slow
+if balls are bouncing a whole lot, perhaps because of -nomaxspeed.
+.TP 8
+.B \-graphmode none | x | y | both | speed
+For "x", "y", and "both", displays the given velocities of each ball as a
+bar graph in the same window as the balls.  For "speed", displays the total
+speed of each ball.  Default is "none".
+.BR
+.SH ENVIRONMENT
 .B DISPLAY
 to get the default host and display number.
 .TP 8
@@ -176,3 +218,6 @@ made about the suitability of this software for any purpose.  It is provided
 Jamie Zawinski <jwz@jwz.org>, 13-aug-92.
 
 Viscosity and mouse support by Philip Edward Cutone, III.
+
+Walls, speed limit options, new bouncing, graphs, and tail mode fix by
+Matthew Strait. 31 March 2001

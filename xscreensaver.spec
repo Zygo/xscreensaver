@@ -1,5 +1,5 @@
 %define	name		xscreensaver
-%define	version		3.32
+%define	version		3.33
 %define	release		1
 %define	serial		1
 %define	x11_prefix	/usr/X11R6
@@ -76,6 +76,7 @@ RPMOPTS=""
 CFLAGS="$RPM_OPT_FLAGS" \
  ./configure --prefix=%{x11_prefix} \
              --enable-subdir=../lib/xscreensaver \
+             --with-zippy=/usr/games/fortune \
              --without-setuid-hacks \
              $RPMOPTS
 
@@ -122,7 +123,7 @@ list_files() {
 }
 
 ( cd hacks ; list_files install ; \
-  cd ../driver; list_files install-program ) \
+  cd ../driver; list_files install-program install-scripts ) \
    > $RPM_BUILD_DIR/xscreensaver-%{version}/exes-non-gl
 ( cd hacks/glx ; list_files install ) \
    > $RPM_BUILD_DIR/xscreensaver-%{version}/exes-gl

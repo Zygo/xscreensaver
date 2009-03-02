@@ -71,6 +71,32 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.32:   * New hacks, `speedmine' and `whirlygig'.
+                      * Sped up `pyro', made the explosions look a bit better.
+                      * Added better stars to `glplanet' and `starwars'.
+                      * Many internal changes to `webcollage'.
+                      * Some new options to `attraction'.
+                      * Minor fix to `noseguy' to avoid un-erased pixels.
+                      * Rewrote the screen-eraser effects so that they complete
+                        in the same amount of time regardless of how slow
+                        your X server is (some of them were glacial on servers
+                        with slow blitting.)
+                      * Fixed a potential free memory reference that could
+                        sometimes cause a crash at startup.
+                      * Possibly fixed a problem that could cause the daemon
+                        to crash with an X error.  I was never able to
+                        reproduce this problem, but I think I might have
+                        figured out what caused it.
+                      * Worked around a problem that caused PAM authentication
+                        to fail on some Red Hat 7.x systems.
+                      * Added a `memoryLimit' parameter that controls the
+                        amount of memory a graphics hack may allocate: if they
+                        try to allocate more than this, malloc() will fail
+                        (and they will exit or (safely) crash, rather than
+                        hogging memory.)  Default is 50M.
+                      * Made `gnome-help-browser' be the default way to display
+                        man pages in `xscreensaver-demo', if running on a 
+                        GNOME system.
 Changes since 3.31:   * The image-manipulating hacks (`slidescreen', etc.) can
                         now operate on randomly chosen image files from disk,
                         or on frames captured from the system's video input,

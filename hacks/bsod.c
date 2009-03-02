@@ -1427,7 +1427,7 @@ sparc_solaris (Display* dpy, Window window, int delay)
 {
   const char *msg1 =
     "BAD TRAP: cpu=0 type=0x31 rp=0x2a10043b5e0 addr=0xf3880 mmu_fsr=0x0\n"
-    "BAD TRAP occurred in module \"unix\" due to an illegal access to a"
+    "BAD TRAP occured in module \"unix\" due to an illegal access to a"
     " user address.\n"
     "adb: trap type = 0x31\n"
     "addr=0xf3880\n"

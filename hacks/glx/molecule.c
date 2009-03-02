@@ -552,7 +552,8 @@ print_title_string (ModeInfo *mi, const char *string,
   
   y -= line_height;
 
-  glPushAttrib (GL_LIGHTING | GL_DEPTH_TEST);
+  glPushAttrib (GL_TRANSFORM_BIT |  /* for matrix contents */
+                GL_ENABLE_BIT);     /* for various glDisable calls */
   glDisable (GL_LIGHTING);
   glDisable (GL_DEPTH_TEST);
   {
@@ -622,6 +623,7 @@ build_molecule (ModeInfo *mi)
       glEnable(GL_CULL_FACE);
     }
 
+#if 0
   if (do_labels && !wire)
     {
       /* This is so all polygons are drawn slightly farther back in the depth
@@ -634,6 +636,7 @@ build_molecule (ModeInfo *mi)
     {
       glDisable (GL_POLYGON_OFFSET_FILL);
     }
+#endif
 
   if (!wire)
     set_atom_color (mi, 0, False);
@@ -689,16 +692,20 @@ build_molecule (ModeInfo *mi)
         molecule_atom *a = &m->atoms[i];
         int j;
 
-        glPushAttrib (GL_LIGHTING | GL_DEPTH_TEST);
-        glDisable (GL_LIGHTING);
-/*        glDisable (GL_DEPTH_TEST);*/
+        if (!wire)
+          {
+            glDisable (GL_LIGHTING);
+#if 1
+            glDisable (GL_DEPTH_TEST);
+#endif
+          }
 
         if (!wire)
           set_atom_color (mi, a, True);
 
         glRasterPos3f (a->x, a->y, a->z);
 
-        /* Before drawing the string, shift the origin  to center
+        /* Before drawing the string, shift the origin to center
            the text over the origin of the sphere. */
         glBitmap (0, 0, 0, 0,
                   -string_width (mc->xfont1, a->label) / 2,
@@ -708,7 +715,17 @@ build_molecule (ModeInfo *mi)
         for (j = 0; j < strlen(a->label); j++)
           glCallList (mc->font1_dlist + (int)(a->label[j]));
 
-        glPopAttrib();
+        /* More efficient to always call glEnable() with correct values
+           than to call glPushAttrib()/glPopAttrib(), since reading
+           attributes from GL does a round-trip and  stalls the pipeline.
+         */
+        if (!wire)
+          {
+            glEnable(GL_LIGHTING);
+#if 1
+            glEnable(GL_DEPTH_TEST);
+#endif
+          }
       }
 
   if (do_bbox)
@@ -1098,7 +1115,7 @@ reshape_molecule (ModeInfo *mi, int width, int height)
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
 
-  gluPerspective( 30.0, 1/h, 1.0, 100.0 );
+  gluPerspective( 30.0, 1/h, 20.0, 40.0 );
   gluLookAt( 0.0, 0.0, 15.0,
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);

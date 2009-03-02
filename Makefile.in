@@ -63,6 +63,7 @@ tar:
   's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/xscreensaver-\1/p' utils/version.h` ;  \
   rm -rf $$NAME ; ln -s . $$NAME ;					    \
   FILES= ;								    \
+  ADIR=archive/ ;							    \
   for subdir in $(SUBDIRS) ; do						    \
     d=`pwd` ;								    \
     cd $$subdir ;							    \
@@ -71,8 +72,8 @@ tar:
       | sed \"s|^|$$subdir/|g;s| | $$subdir/|g\"			    \
       ` ";								    \
     cd $$d ; done ;							    \
-  echo creating tar file $${NAME}.tar.gz... ;				    \
-  GZIP="-9v" $(TAR) -vchzf $${NAME}.tar.gz				    \
+  echo creating tar file $$ADIR$$NAME.tar.gz... ;			    \
+  GZIP="-9v" $(TAR) -vchzf $$ADIR$$NAME.tar.gz			    \
     `echo $(TARFILES) $$FILES | sed "s|^|$$NAME/|g; s| | $$NAME/|g" ` ;	    \
   rm $$NAME
 
@@ -127,11 +128,12 @@ bump-version::
   NEW=`echo $$MINOR + 1 | bc` ;						    \
   NEW=`echo $$NEW | sed 's/^\([0-9]\)$$/0\1/'` ;			    \
   D=`date '+%d-%b-%Y'`;							    \
-  if [ ! -f xscreensaver-$$MAJOR.$$MINOR.tar.gz ]; then			    \
-    echo "WARNING: xscreensaver-$$MAJOR.$$MINOR.tar.gz does not exist.";    \
+  ADIR=archive/ ;							    \
+  if [ ! -f $${ADIR}xscreensaver-$$MAJOR.$$MINOR.tar.gz ]; then		    \
+   echo "WARNING: $${ADIR}xscreensaver-$$MAJOR.$$MINOR.tar.gz does not exist.";\
   fi ;									    \
-  if [ -f xscreensaver-$$MAJOR.$$NEW.tar.gz ]; then			    \
-    echo "WARNING: xscreensaver-$$MAJOR.$$NEW.tar.gz already exists.";	    \
+  if [ -f $${ADIR}xscreensaver-$$MAJOR.$$NEW.tar.gz ]; then		    \
+    echo "WARNING: $${ADIR}xscreensaver-$$MAJOR.$$NEW.tar.gz already exists.";\
   fi ;									    \
   echo -n "Bumping $$MAJOR.$$MINOR to $$MAJOR.$$NEW ($$D), ok? ";	    \
   read line;								    \
@@ -171,10 +173,11 @@ rpm::
   VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ; \
   DIR=`pwd`/rpm_build ;							   \
   ARCH=`rpm --showrc | sed -n 's/^build arch *: //p'` ;			   \
+  ADIR=archive/ ;							   \
   rm -rf $$DIR ;							   \
   mkdir $$DIR ;								   \
   ( cd $$DIR; mkdir BUILD RPMS RPMS/$$ARCH SOURCES SPECS SRPMS ) ;	   \
-  cp -p xscreensaver-$$VERS.tar.gz $$DIR/SOURCES/ ;			   \
+  cp -p $${ADIR}xscreensaver-$$VERS.tar.gz $$DIR/SOURCES/ ;		   \
   rpm --define "_topdir $$DIR"						   \
       --define "USE_GL yes"						   \
       -v -ba xscreensaver.spec ;					   \
@@ -193,7 +196,8 @@ test-tar::
 	@								    \
   VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ;  \
   D=xscreensaver-$$VERS ;						    \
-  NAME="$$D.tar.gz" ;							    \
+  ADIR=archive/ ;							    \
+  NAME="$${ADIR}$$D.tar.gz" ;						    \
   if [ ! -f $$NAME ]; then						    \
     echo "$$NAME does not exist!  Did you forget to \`make tar'?" ;	    \
     exit 1 ; 								    \
@@ -206,7 +210,7 @@ test-tar::
    chmod -R u+w $$D ;							    \
   fi ;									    \
   rm -rf $$D ;								    \
-  zcat $$D.tar.gz | tar -xf - ;						    \
+  zcat $${ADIR}$$D.tar.gz | tar -xf - ;					    \
   cd $$D ;								    \
   chmod -R a-w . ;							    \
   chmod u+w . ;								    \
@@ -242,7 +246,8 @@ www::
   DEST=$$HOME/www/xscreensaver ;					    \
   VERS=`sed -n 's/[^0-9]*\([0-9]\.[0-9][0-9]*\).*/\1/p' utils/version.h` ;  \
   HEAD="xscreensaver-$$VERS" ;						    \
-  NAME="$$HEAD.tar.gz" ;						    \
+  ADIR=archive/ ;							    \
+  NAME="$$ADIR$$HEAD.tar.gz" ;						    \
 									    \
   if [ ! -f $$NAME ]; then						    \
     echo "$$NAME does not exist!  Did you forget to \`make tar'?" ;	    \

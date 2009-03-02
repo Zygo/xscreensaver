@@ -292,16 +292,27 @@ int
 saver_ehandler (Display *dpy, XErrorEvent *error)
 {
   saver_info *si = global_si_kludge;	/* I hate C so much... */
+  int i;
 
   if (!real_stderr) real_stderr = stderr;
 
   fprintf (real_stderr, "\n"
 	   "#######################################"
 	   "#######################################\n\n"
-	   "%s: X Error!  PLEASE REPORT THIS BUG.\n\n"
-	   "#######################################"
-	   "#######################################\n\n",
+	   "%s: X Error!  PLEASE REPORT THIS BUG.\n",
 	   blurb());
+
+  for (i = 0; i < si->nscreens; i++)
+    fprintf (real_stderr, "%s: screen %d: 0x%x, 0x%x, 0x%x\n",
+             blurb(), i,
+             RootWindowOfScreen (si->screens[i].screen),
+             si->screens[i].real_vroot,
+             si->screens[i].screensaver_window);
+
+  fprintf (real_stderr, "\n"
+	   "#######################################"
+	   "#######################################\n\n");
+
   if (XmuPrintDefaultErrorMessage (dpy, error, real_stderr))
     {
       fprintf (real_stderr, "\n");
@@ -1176,9 +1187,12 @@ main (int argc, char **argv)
  */
 
 
+static Bool error_handler_hit_p = False;
+
 static int
 ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
 {
+  error_handler_hit_p = True;
   return 0;
 }
 
@@ -1194,11 +1208,13 @@ XGetAtomName_safe (Display *dpy, Atom atom)
   if (!atom) return 0;
 
   XSync (dpy, False);
+  error_handler_hit_p = False;
   old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
   result = XGetAtomName (dpy, atom);
   XSync (dpy, False);
   XSetErrorHandler (old_handler);
   XSync (dpy, False);
+  if (error_handler_hit_p) result = 0;
 
   if (result)
     return result;
@@ -1219,6 +1235,8 @@ clientmessage_response (saver_info *si, Window w, Bool error,
   char *proto;
   int L;
   saver_preferences *p = &si->prefs;
+  XErrorHandler old_handler;
+
   if (error || p->verbose_p)
     fprintf (stderr, "%s: %s\n", blurb(), stderr_msg);
 
@@ -1228,9 +1246,23 @@ clientmessage_response (saver_info *si, Window w, Bool error,
   strcpy (proto+1, protocol_msg);
   L++;
 
+  /* Ignore all X errors while sending a response to a ClientMessage.
+     Pretty much the only way we could get an error here is if the
+     window we're trying to send the reply on has been deleted, in
+     which case, the sender of the ClientMessage won't see our response
+     anyway.
+   */
+  XSync (si->dpy, False);
+  error_handler_hit_p = False;
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+
   XChangeProperty (si->dpy, w, XA_SCREENSAVER_RESPONSE, XA_STRING, 8,
 		   PropModeReplace, (unsigned char *) proto, L);
+
   XSync (si->dpy, False);
+  XSetErrorHandler (old_handler);
+  XSync (si->dpy, False);
+
   free (proto);
 }
 

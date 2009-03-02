@@ -11,7 +11,8 @@
  */
 
 /* Make a little guy with a big nose and a hat wanter around the screen,
-   spewing out messages.  Derived from xnlock by Dan Heller <argv@sun.com>.
+   spewing out messages.  Derived from xnlock by 
+   Dan Heller <argv@danheller.com>.
  */
 
 #include "screenhack.h"

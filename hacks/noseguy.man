@@ -66,9 +66,9 @@ stored in the RESOURCE_MANAGER property.
 .BR xscreensaver (1),
 .BR xnlock (1)
 .SH COPYRIGHT
-Copyright 1985, 1990 by Dan Heller <argv@sun.com>.
+Copyright 1985, 1990 by Dan Heller <argv@danheller.com>.
 .SH AUTHOR
-Dan Heller <argv@sun.com>, 1985.
+Dan Heller <argv@danheller.com>, 1985.
 
 Ability to run standalone or with \fIxscreensaver\fP added by 
 Jamie Zawinski <jwz@jwz.org>, 13-aug-92.

@@ -93,15 +93,14 @@ OBJS		= xscreensaver-gl-helper.o \
 		  stonerview-view.o starwars.o glut_stroke.o glut_swidth.o \
 		  gltext.o molecule.o dangerball.o sphere.o tube.o
 
-GL_EXES_1	= cage gears moebius pipes sproingies stairs superquadrics \
+GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
 		  sierpinski3d gflux stonerview starwars gltext molecule \
 		  dangerball
-UTIL_EXES	= xscreensaver-gl-helper
-GL_EXES		= $(UTIL_EXES) $(GL_EXES_1)
 GLE_EXES	= extrusion
+GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
-EXES		= $(HACK_EXES)
+EXES		= @GL_UTIL_EXES@ $(HACK_EXES)
 
 HACK_OBJS	= screenhack-gl.o xlock-gl.o fps.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
@@ -130,68 +129,70 @@ install-strip:
 	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
 
 # the hacks, in $HACKDIR
-install-program:: $(HACK_EXES)
-	@if [ ! -d $(install_prefix)$(HACKDIR) ]; then			\
-	  $(INSTALL_DIRS) $(install_prefix)$(HACKDIR) ;			\
-	 fi ;								\
-	exes="$(HACK_EXES)" ;						\
-	for program in $$exes; do					\
-	  echo $(INSTALL_PROGRAM) $$program				\
-	    $(install_prefix)$(HACKDIR)/$$program ;			\
-	  $(INSTALL_PROGRAM) $$program					\
-	    $(install_prefix)$(HACKDIR)/$$program ;			\
-	done
+install-program:: $(EXES)
+	@exes="$(HACK_EXES)" ;						\
+	 idir="$(install_prefix)$(HACKDIR)" ;				\
+	 if [ "$$exes" != "" ]; then					\
+	   if [ ! -d $$idir ]; then					\
+	     $(INSTALL_DIRS) $$idir ;					\
+	   fi ;								\
+	   for program in $$exes; do					\
+	     echo $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
+		  $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
+	   done ;							\
+	 fi
 
 # the xscreensaver-gl-helper program, in $bindir
-install-program:: $(HACK_EXES)
-	@if [ "$(HACK_EXES)" != "" ]; then				\
-	   if [ ! -d $(install_prefix)$(bindir) ]; then			\
-	     $(INSTALL_DIRS) $(install_prefix)$(bindir) ;		\
+install-program:: $(EXES)
+	@exes="$(GL_UTIL_EXES)" ;					\
+	 idir="$(install_prefix)$(bindir)" ;				\
+	 if [ "$$exes" != "" ]; then					\
+	   if [ ! -d $$idir ]; then					\
+	     $(INSTALL_DIRS) $$idir ;					\
 	   fi ;								\
-	   exes="$(UTIL_EXES)" ;					\
 	   for program in $$exes; do					\
-	     echo $(INSTALL_PROGRAM) $$program				\
-	       $(install_prefix)$(bindir)/$$program ;			\
-	     $(INSTALL_PROGRAM) $$program				\
-	       $(install_prefix)$(bindir)/$$program ;			\
+	     echo $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
+		  $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
 	   done ;							\
 	 fi
 
 install-man: $(MEN)
 	@men="$(MEN)" ;							\
-	if [ ! -d $(install_prefix)$(man1dir) ]; then			\
-	  $(INSTALL_DIRS) $(install_prefix)$(man1dir) ;			\
+	 idir="$(install_prefix)$(man1dir)" ;				\
+	 if [ ! -d $$idir ]; then					\
+	  $(INSTALL_DIRS) $$idir ;					\
 	 fi ;								\
-	for man in $$men; do						\
-	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
-	   $(install_prefix)$(man1dir)/$$instname ;			\
-	  $(INSTALL_DATA) $(srcdir)/$$man				\
-	    $(install_prefix)$(man1dir)/$$instname ;			\
-	done
+	 for man in $$men; do						\
+	   instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	   echo $(INSTALL_DATA) $(srcdir)/$$man $$idir/$$instname ;	\
+		$(INSTALL_DATA) $(srcdir)/$$man $$idir/$$instname ;	\
+	 done
 
 # the hacks, in $HACKDIR
 uninstall-program::
-	@exes="$(GL_EXES_1) $(GLE_EXES)" ;				\
-	for program in $$exes; do					\
-	  echo rm -f $(install_prefix)$(HACKDIR)/$$program ;		\
-	  rm -f $(install_prefix)$(HACKDIR)/$$program ;			\
-	done
+	@exes="$(HACK_EXES)" ;						\
+	 idir="$(install_prefix)$(HACKDIR)" ;				\
+	 for program in $$exes; do					\
+	   echo rm -f $$idir/$$program ;				\
+		rm -f $$idir/$$program ;				\
+	 done
 
 # the xscreensaver-gl-helper program, in $bindir
 uninstall-program::
-	@exes="$(UTIL_EXES)" ;						\
-	for program in $$exes; do					\
-	  echo rm -f $(install_prefix)$(bindir)/$$program ;		\
-	  rm -f $(install_prefix)$(bindir)/$$program ;			\
+	@exes="$(GL_UTIL_EXES)" ;					\
+	 idir="$(install_prefix)$(bindir)" ;				\
+	 for program in $$exes; do					\
+	   echo rm -f $$idir/$$program ;				\
+		rm -f $$idir/$$program ;				\
 	done
 
 uninstall-man:
-	@men="$(GL_MEN)" ;						\
-	for man in $$men; do						\
-	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
-	  echo rm -f $(install_prefix)$(man1dir)/$$instname ;		\
-	  rm -f $(install_prefix)$(man1dir)/$$instname ;		\
+	@men="$(MEN)" ;							\
+	 idir="$(install_prefix)$(man1dir)" ;				\
+	 for man in $$men; do						\
+	   instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	   echo rm -f $$idir/$$instname ;				\
+		rm -f $$idir/$$instname ;				\
 	done
 
 clean:

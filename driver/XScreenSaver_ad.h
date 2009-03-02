@@ -14,6 +14,7 @@
 "*chooseRandomImages:	False",
 "*imageDirectory:	",
 "*nice:			10",
+"*memoryLimit:		50M",
 "*lock:			False",
 "*lockVTs:		True",
 "*verbose:		False",
@@ -38,8 +39,7 @@
 "*prefsCommand: xscreensaver-demo -prefs",
 "*helpURL: http://www.jwz.org/xscreensaver/man.html",
 "*loadURL: netscape -remote 'openURL(%s)' || netscape '%s'",
-"*manualCommand: xterm +sb -fg black -bg gray75 -T '%s manual' \
-        -e /bin/sh -c 'man \"%s\" || read foo'",
+"*manualCommand: gnome-help-browser 'man:%s'",
 "*dateFormat:		%d-%b-%y (%a); %I:%M %p",
 "*installColormap:	True",
 "*programs:								      \
@@ -171,6 +171,10 @@
 -	   \"RotZoomer (mobile)\" rotzoomer -root -move			    \\n\
 -	   \"RotZoomer (sweep)\"  rotzoomer -root -sweep			    \\n\
 				whirlwindwarp -root			    \\n\
+ 	            \"WhirlyGig\"	whirlygig -root -nlines 20 -whirlies 40       \
+                                  -xspeed 0.5				    \\n\
+ 	            \"SpeedMine\"	speedmine -root				    \\n\
+ 	            \"SpeedWorm\"	speedmine -root -worm			    \\n\
   color: 			bubbles -root				    \\n\
   default-n:			webcollage -root			    \\n\
   default-n:  \"WebCollage (whacked)\"					      \
@@ -426,26 +430,18 @@ others tend to generate images that look like heat-maps or CAT-scans.	\
 Written by Juergen Nickelsen and Jamie Zawinski.",
 "*hacks.slidescreen.name: SlideScreen",
 "*hacks.slidescreen.documentation:					\
-This grabs an image of whatever is on your screen, divides it into a	\
-grid, and then randomly shuffles the squares around as if it was one	\
-of those annoying ``16-puzzle'' games, where there is a grid of		\
-squares, one of which is missing.  I hate trying to solve those		\
-puzzles, but watching one permute itself is more amusing.  Written by	\
-Jamie Zawinski.",
+This takes an image, divides it into a grid, and then randomly shuffles \
+the squares around as if it was one of those annoying ``16-puzzle''     \
+games, where there is a grid of squares, one of which is missing.       \
+I hate trying to solve those puzzles, but watching one permute itself   \
+is more amusing.  Written by Jamie Zawinski.",
 "*hacks.decayscreen.name: DecayScreen",
 "*hacks.decayscreen.documentation:					\
-This grabs an image of whatever is on your screen, and makes it melt.	\
-You've no doubt seen this effect before, but no screensaver would	\
-really be complete without it.	It works best if there's something	\
-colorful visible.  Warning, if the effect continues after the screen	\
-saver is off, seek medical attention.  Written by David Wald and	\
-Vivek Khera.								\
-								    \\n\\n\
-A number of these screenhacks have the ability to take an image of	\
-your desktop and manipulate it in some way.  On SGI systems, these	\
-programs are able to (at random) pull their source image from the	\
-system's video input instead!  This works nicely if you leave some	\
-some random television station plugged in.",
+This takes an image and makes it melt.  You've no doubt seen this       \
+effect before, but no screensaver would really be complete without it.  \
+It works best if there's something colorful visible.  Warning, if the   \
+effect continues after the screen saver is off, seek medical attention. \
+Written by David Wald and Vivek Khera.",
 "*hacks.jigsaw.documentation:						\
 This grabs a screen image, carves it up into a jigsaw puzzle,		\
 shuffles it, and then solves the puzzle.  This works especially well	\
@@ -969,6 +965,13 @@ files as input.  Written by Jamie Zawinski.",
 "*hacks.dangerball.documentation:                                     \
 Draws a ball that periodically extrudes many random spikes.  Ouch!   \
 Written by Jamie Zawinski.",
+"*hacks.whirlygig.name: WhirlyGig",
+"*hacks.whirlygig.documentation:                                     \
+Draws zooming chains of sinusoidal spots.  Written by Ashton Trey Belew.",
+"*hacks.speedmine.name: SpeedMine",
+"*hacks.speedmine.documentation:                                     \
+Simulates speeding down a rocky mineshaft, or a funky dancing worm. \
+Written by Conrad Parker.",
 "*hacks.xdaliclock.name: XDaliClock",
 "*hacks.xdaliclock.documentation:					\
 XDaliClock draws a large digital clock, the numbers of which change by	\
