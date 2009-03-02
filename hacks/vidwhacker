@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.20 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.21 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $use_stdin = 0;
@@ -332,7 +332,7 @@ sub get_ppm {
 
     if ($do_file_p) {
 
-      print STDERR "$progname: running \"$cmd\"\n" if ($verbose > 1);
+      print STDERR "$progname: running: $cmd\n" if ($verbose > 1);
       my $fn = `$cmd`;
       $fn =~ s/\n$//s;
       error "didn't get a file?" if ($fn eq "");
@@ -342,17 +342,21 @@ sub get_ppm {
       if    ($fn =~ m/\.gif/i)   { $cmd = "giftopnm < \"$fn\""; }
       elsif ($fn =~ m/\.jpe?g/i) { $cmd = "djpeg < \"$fn\""; }
       elsif ($fn =~ m/\.png/i)   { $cmd = "pngtopnm < \"$fn\""; }
+      elsif ($fn =~ m/\.xpm/i)   { $cmd = "xpmtoppm < \"$fn\""; }
+      elsif ($fn =~ m/\.bmp/i)   { $cmd = "bmptoppm < \"$fn\""; }
+      elsif ($fn =~ m/\.tiff?/i) { $cmd = "tifftopnm < \"$fn\""; }
+      elsif ($fn =~ m/\.p[bgp]m/i) { return `cat \"$fn\"`; }
       else {
         error "unrecognized file extension on $fn";
       }
 
-      print STDERR "$progname: converting with \"$cmd\"\n" if ($verbose > 1);
+      print STDERR "$progname: converting with: $cmd\n" if ($verbose > 1);
       $cmd .= " 2>/dev/null" unless ($verbose > 1);
       $ppm = `$cmd`;
 
     } else {
 
-      print STDERR "$progname: running \"$cmd\"\n" if ($verbose > 1);
+      print STDERR "$progname: running: $cmd\n" if ($verbose > 1);
       $ppm = `$cmd`;
       error "no data?" if ($ppm eq "");
       error "not a PPM file" unless ($ppm =~ m/^P\d\n/s);
@@ -412,7 +416,14 @@ sub vidwhack {
     }
     $ppm = $stdin_ppm;
   } else {
-    $ppm = get_ppm();
+    my $max_err_count = 20;
+    my $err_count = 0;
+    while (!defined($ppm)) {
+      $ppm = get_ppm();
+      $err_count++ if (!defined ($ppm));
+      error ("too many errors, too few images!")
+        if ($err_count > $max_err_count);
+    }
   }
 
   $ppm = frob_ppm ($ppm);

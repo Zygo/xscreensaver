@@ -53,29 +53,38 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.96 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.102 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2002" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
 
 
 
-my @search_methods = (  40, "imagevista", \&pick_from_alta_vista_images,
-                        30, "altavista",  \&pick_from_alta_vista_text,
-                        19, "yahoorand",  \&pick_from_yahoo_random_link,
+my @search_methods = (  77, "altavista",  \&pick_from_alta_vista_random_link,
+                        12, "yahoorand",  \&pick_from_yahoo_random_link,
                          9, "lycos",      \&pick_from_lycos_text,
                          2, "yahoonews",  \&pick_from_yahoo_news_text,
 
-                     # Hotbot gives me "no matches" just about every time.
-                     # Then I try the same URL again, and it works.  I guess
-                     # it caches searches, and webcollage always busts its
-                     # cache and time out?  Or it just sucks.
-                     #   0, "hotbot",     \&pick_from_hotbot_text,
+                     # Alta Vista has a new "random link" URL now.
+                     # They added it specifically to better support webcollage!
+                     # That was super cool of them.  This is how we used to do
+                     # it, before:
+                     #
+                     #  0, "avimages", \&pick_from_alta_vista_images,
+                     #  0, "avtext",   \&pick_from_alta_vista_text,
 
                      # Google asked (nicely) for me to stop searching them.
+                     # I asked them to add a "random link" url.  They said
+                     # "that would be easy, we'll think about it" and then
+                     # never wrote back.  Booo Google!  Booooo!
+                     #
                      #   0, "googlenums", \&pick_from_google_image_numbers,
                      #   0, "googleimgs", \&pick_from_google_images,
 
+                     # I suspect Hotbot is actually the same search engine
+                     # data as Lycos.
+                     #
+                     #  0, "hotbot",     \&pick_from_hotbot_text,
                       );
 
 # programs we can use to write to the root window (tried in ascending order.)
@@ -128,19 +137,20 @@ my $opacity = 0.85;
 #
 my %poisoners = (
   "die.net"                 => 1,  # 'l33t h4ck3r d00dz.
-  "genforum.genealogy.com"  => 1,  # Cluttering altavista with human names.
-  "rootsweb.com"            => 1,  # Cluttering altavista with human names.
+  "genforum.genealogy.com"  => 1,  # Cluttering avtext with human names.
+  "rootsweb.com"            => 1,  # Cluttering avtext with human names.
   "akamai.net"              => 1,  # Lots of sites have their images on Akamai.
-                                   # But those are pretty much all banners.
+  "akamaitech.net"          => 1,  # But those are pretty much all banners.
                                    # Since Akamai is super-expensive, let's
                                    # go out on a limb and assume that all of
                                    # their customers are rich-and-boring.
-  "bartleby.com"            => 1,  # Dictionary, cluttering altavista.
-  "encyclopedia.com"        => 1,  # Dictionary, cluttering altavista.
-  "onlinedictionary.datasegment.com" => 1,  # Dictionary, cluttering altavista.
-  "hotlinkpics.com"         => 1,  # Porn site that has poisoned imagevista
+  "bartleby.com"            => 1,  # Dictionary, cluttering avtext.
+  "encyclopedia.com"        => 1,  # Dictionary, cluttering avtext.
+  "onlinedictionary.datasegment.com" => 1,  # Dictionary, cluttering avtext.
+  "hotlinkpics.com"         => 1,  # Porn site that has poisoned avimages
                                    # (I don't see how they did it, though!)
   "alwayshotels.com"        => 1,  # Poisoned Lycos pretty heavily.
+  "nextag.com"              => 1,  # Poisoned Alta Vista real good.
 );
 
 
@@ -300,6 +310,7 @@ sub get_document_1 {
       my $cookie = $cookies{$them};
 
       my $user_agent = "$progname/$version";
+
       if ($url =~ m@^http://www\.altavista\.com/@) {
         # block this, you turkeys.
         $user_agent = "Mozilla/4.76 [en] (X11; U; Linux 2.2.16-22 i686; Nav)";
@@ -822,9 +833,9 @@ sub pick_from_search_engine {
     $search_count = $1;
   } elsif ($body =~ m@found about ((\d{1,3})(,\d{3})*|\d+) results@) {
     $search_count = $1;
-  } elsif ($body =~ m@\b\d+ - \d+ of (\d+)\b@i) { # imagevista
+  } elsif ($body =~ m@\b\d+ - \d+ of (\d+)\b@i) { # avimages
     $search_count = $1;
-  } elsif ($body =~ m@About ((\d{1,3})(,\d{3})*) images@i) { # imagevista
+  } elsif ($body =~ m@About ((\d{1,3})(,\d{3})*) images@i) { # avimages
     $search_count = $1;
   } elsif ($body =~ m@We found ((\d{1,3})(,\d{3})*|\d+) results@i) { # *vista
     $search_count = $1;
@@ -834,9 +845,9 @@ sub pick_from_search_engine {
     $search_count = $1;    # lycos
   } elsif ($body =~ m@WEB.*?RESULTS.*?\b((\d{1,3})(,\d{3})*)\b.*?Matches@i) {
     $search_count = $1;                          # hotbot
-  } elsif ($body =~ m@no photos were found containing@i) { # imagevista
+  } elsif ($body =~ m@no photos were found containing@i) { # avimages
     $search_count = "0";
-  } elsif ($body =~ m@found no document matching@i) { # altavista
+  } elsif ($body =~ m@found no document matching@i) { # avtext
     $search_count = "0";
   }
   1 while ($search_count =~ s/^(\d+)(\d{3})/$1,$2/);
@@ -1006,27 +1017,69 @@ sub pick_from_yahoo_random_link {
 
 ############################################################################
 #
+# Pick images from random pages returned by the Alta Vista Random Link
+#
+############################################################################
+
+# altavista
+my $alta_vista_random_link = "http://www.altavista.com/image/randomlink";
+
+
+# Picks a random page; picks a random image on that page;
+# returns two URLs: the page containing the image, and the image.
+# Returns () if nothing found this time.
+#
+sub pick_from_alta_vista_random_link {
+  my ( $timeout ) = @_;
+
+  print STDERR "\n\n" if ($verbose_load);
+  LOG ($verbose_load, "URL: $alta_vista_random_link");
+
+  $last_search = $alta_vista_random_link;   # for warnings
+
+  $suppress_audit = 1;
+
+  my ( $base, $body ) = get_document ($alta_vista_random_link,
+                                      undef, $timeout);
+  if (!$base || !$body) {
+    $body = undef;
+    return;
+  }
+
+  LOG ($verbose_load, "redirected to: $base");
+
+  my $img = pick_image_from_body ($base, $body);
+  $body = undef;
+
+  if ($img) {
+    return ($base, $img);
+  } else {
+    return ();
+  }
+}
+
+
+############################################################################
+#
 # Pick images by feeding random words into Alta Vista Image Search
 #
 ############################################################################
 
 
-my $alta_vista_images_url = "http://www.altavista.com/cgi-bin/query" .
+my $alta_vista_images_url = "http://www.altavista.com/image/results" .
                             "?ipht=1" .       # photos
                             "&igrph=1" .      # graphics
                             "&iclr=1" .       # color
                             "&ibw=1" .        # b&w
                             "&micat=1" .      # no partner sites
-                            "&imgset=1" .     # no partner sites
-                            "&stype=simage" . # do image search
-                            "&mmW=1" .        # unknown, but required
+                            "&sc=on" .        # "site collapse"
                             "&q=";
 
-# imagevista
+# avimages
 sub pick_from_alta_vista_images {
   my ( $timeout ) = @_;
 
-  my $words = random_words(1);
+  my $words = random_words(0);
   my $page = (int(rand(9)) + 1);
   my $search_url = $alta_vista_images_url . $words;
 
@@ -1041,7 +1094,7 @@ sub pick_from_alta_vista_images {
   my @candidates = ();
   foreach my $u (@subpages) {
 
-    # altavista is encoding their URLs now.
+    # avtext is encoding their URLs now.
     next unless ($u =~ m@^/r.*\&r=([^&]+).*@);
     $u = url_unquote($1);
 
@@ -1179,18 +1232,19 @@ sub pick_from_google_image_numbers {
 ############################################################################
 
 
-my $alta_vista_url_1 = "http://www.altavista.com/cgi-bin/query?pg=q" .
-                       "&text=yes&kl=XX&stype=stext&q=";
-my $alta_vista_url_2 = "http://www.altavista.com/sites/search/web?pg=q" .
-                       "&kl=XX&search=Search&q=";
+my $alta_vista_url = "http://www.altavista.com/web/results" .
+                     "?pg=aq" .
+                     "&aqmode=s" .
+                     "&filetype=html" .
+                     "&sc=on" .        # "site collapse"
+                     "&nbq=50" .
+                     "&aqo=";
 
-my $alta_vista_url = $alta_vista_url_2;
-
-# altavista
+# avtext
 sub pick_from_alta_vista_text {
   my ( $timeout ) = @_;
 
-  my $words = random_words(1);
+  my $words = random_words(0);
   my $page = (int(rand(9)) + 1);
   my $search_url = $alta_vista_url . $words;
 
@@ -1229,23 +1283,28 @@ sub pick_from_alta_vista_text {
 #
 ############################################################################
 
-my $hotbot_search_url = "http://hotbot.lycos.com/" .
-                        "?SM=SC" .
-                        "&DV=0" .
-                        "&LG=any" .
-                        "&FVI=1" .
-                        "&DC=100" .
-                        "&DE=0" .
-                        "&SQ=1" .
-                        "&TR=13" .
-                        "&AM1=MC" .
-                        "&MT=";
+my $hotbot_search_url =("http://hotbot.lycos.com/default.asp" .
+                        "?ca=w" .
+                        "&descriptiontype=0" .
+                        "&imagetoggle=1" .
+                        "&matchmode=any" .
+                        "&nummod=2" .
+                        "&recordcount=50" .
+                        "&sitegroup=1" .
+                        "&stem=1" .
+                        "&cobrand=undefined" .
+                        "&query=");
 
 sub pick_from_hotbot_text {
   my ( $timeout ) = @_;
 
-  my $words = random_words(0);
-  my $search_url = $hotbot_search_url . $words;
+  # lycos seems to always give us back dictionaries and word lists if
+  # we search for more than one word...
+  #
+  my $words = random_word();
+
+  my $start = int(rand(8)) * 10 + 1;
+  my $search_url = $hotbot_search_url . $words . "&first=$start&page=more";
 
   my ($search_hit_count, @subpages) =
     pick_from_search_engine ($timeout, $search_url, $words);
@@ -1254,7 +1313,7 @@ sub pick_from_hotbot_text {
   foreach my $u (@subpages) {
 
     # Hotbot plays redirection games too
-    next unless ($u =~ m@^/director.asp\?target=([^&]+)@);
+    next unless ($u =~ m@/director.asp\?.*\btarget=([^&]+)@);
     $u = url_decode($1);
 
     LOG ($verbose_filter, "  candidate: $u");
@@ -1273,17 +1332,22 @@ sub pick_from_hotbot_text {
 #
 ############################################################################
 
-my $lycos_search_url = "http://lycospro.lycos.com/srchpro/" .
+my $lycos_search_url = "http://search.lycos.com/default.asp" .
                        "?lpv=1" .
-                       "&t=any" .
+                       "&loc=searchhp" .
+                       "&tab=web" .
                        "&query=";
 
 sub pick_from_lycos_text {
   my ( $timeout ) = @_;
 
-  my $words = random_words(0);
+  # lycos seems to always give us back dictionaries and word lists if
+  # we search for more than one word...
+  #
+  my $words = random_word();
+
   my $start = int(rand(8)) * 10 + 1;
-  my $search_url = $lycos_search_url . $words . "&start=$start";
+  my $search_url = $lycos_search_url . $words . "&first=$start&page=more";
 
   my ($search_hit_count, @subpages) =
     pick_from_search_engine ($timeout, $search_url, $words);
@@ -1291,14 +1355,10 @@ sub pick_from_lycos_text {
   my @candidates = ();
   foreach my $u (@subpages) {
 
-    # Lycos plays exact the same redirection game as hotbot.
-    # Note that "id=0" is used for internal advertising links,
-    # and 1+ are used for  search results.
-    next unless ($u =~ m@^http://click.hotbot.com/director.asp
+    # Lycos plays redirection games.
+    next unless ($u =~ m@^http://click.lycos.com/director.asp
                          .*
-                         [?&]id=[1-9]\d*
-                         .*
-                         \&target=([^&]+)
+                         \btarget=([^&]+)
                          .*
                         @x);
     $u = url_decode($1);
@@ -1319,14 +1379,21 @@ sub pick_from_lycos_text {
 #
 ############################################################################
 
-my $yahoo_news_url = "http://search.news.yahoo.com/search/news_photos?" .
-                     "&z=&n=100&o=o&2=&3=&p=";
+my $yahoo_news_url = "http://search.news.yahoo.com/search/news" .
+                     "?a=1" .
+                     "&c=news_photos" .
+                     "&s=-%24s%2C-date" .
+                     "&n=100" .
+                     "&o=o" .
+                     "&2=" .
+                     "&3=" .
+                     "&p=";
 
 # yahoonews
 sub pick_from_yahoo_news_text {
   my ( $timeout ) = @_;
 
-  my $words = random_words(1);
+  my $words = random_words(0);
   my $search_url = $yahoo_news_url . $words;
 
   my ($search_hit_count, @subpages) =
@@ -1407,8 +1474,8 @@ sub get_driftnet_file {
   open (IN, $file) || error ("$id: $file: $!");
   my $body = '';
   while (<IN>) { $body .= $_; }
-  close IN;
-  unlink ($file);
+  close IN || error ("$id: $file: $!");
+  unlink ($file) || error ("$id: $file: rm: $!");
   return ($id, $body);
 }
 
@@ -1689,6 +1756,7 @@ sub save_recent_url {
 
   $_ = $url;
   my ($site) = m@^http://([^ \t\n\r/:]+)@;
+  return unless defined ($site);
 
   if ($base eq $driftnet_magic) {
     $site = $driftnet_magic;

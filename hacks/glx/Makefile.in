@@ -86,7 +86,8 @@ SRCS		= xscreensaver-gl-helper.c \
 		  grab-ximage.c glsnake.c boxed.c glforestfire.c sballs.c \
 		  cubenetic.c spheremonics.c marching.c lavalite.c rotator.c \
 		  trackball.c gltrackball.c queens.c endgame.c chessmodels.c \
-		  glblur.c
+		  glblur.c gllist.c flurry.c flurry-smoke.c flurry-spark.c \
+		  flurry-star.c flurry-texture.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -105,14 +106,15 @@ OBJS		= xscreensaver-gl-helper.o \
 	          grab-ximage.o glsnake.o boxed.o glforestfire.o sballs.o \
 		  cubenetic.o spheremonics.o marching.o lavalite.o rotator.o \
 		  trackball.o gltrackball.o queens.o endgame.o chessmodels.o \
-		  glblur.o
+		  glblur.o gllist.o flurry.o flurry-smoke.o flurry-spark.o \
+		  flurry-star.o flurry-texture.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
 		  sierpinski3d gflux stonerview starwars gltext molecule \
 		  dangerball circuit menger engine flipscreen3d glsnake boxed \
 		  glforestfire sballs cubenetic spheremonics lavalite queens \
-		  endgame glblur
+		  endgame glblur flurry
 GLE_EXES	= extrusion
 GL_UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
@@ -129,7 +131,7 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  grab-ximage.h font-ximage.h tube.h sphere.h boxed.h \
 		  stonerview-move.h stonerview-osc.h glutstroke.h \
 		  glut_roman.h marching.h rotator.h trackball.h gltrackball.h \
-		  chessmodels.h chessgames.h
+		  chessmodels.h chessgames.h gllist.h flurry.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man glforestfire.man \
@@ -138,7 +140,7 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  pulsar.man queens.man rubik.man sballs.man sierpinski3d.man \
 		  spheremonics.man sproingies.man stairs.man starwars.man \
 		  stonerview.man superquadrics.man xscreensaver-gl-helper.man \
-		  endgame.man glblur.man
+		  endgame.man flurry.man glblur.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in
 
@@ -360,6 +362,12 @@ atlantis:	atlantis.o	$(ATLANTIS_OBJS)
 cage:		cage.o		$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
+FLURRY_OBJS_1 = flurry-smoke.o flurry-spark.o flurry-star.o flurry-texture.o
+FLURRY_OBJS = $(FLURRY_OBJS_1) $(HACK_OBJS) $(TRACK_OBJS)
+
+flurry:		flurry.o $(FLURRY_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(FLURRY_OBJS) $(HACK_LIBS) -lm
+
 gears:		gears.o		$(HACK_OBJS) $(TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TRACK_OBJS) $(HACK_LIBS)
 
@@ -382,7 +390,7 @@ rubik:		rubik.o	$(HACK_OBJS)
 stairs:		stairs.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-SPROINGIES = sproingiewrap.o buildlwo.o \
+SPROINGIES = sproingiewrap.o gllist.o \
 	     s1_1.o s1_2.o s1_3.o s1_4.o s1_5.o s1_6.o s1_b.o
 sproingies: sproingies.o $(HACK_OBJS) $(SPROINGIES)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SPROINGIES) $(HACK_LIBS)
@@ -547,6 +555,22 @@ extrusion-taper.o: ../../config.h
 extrusion-twistoid.o: ../../config.h
 flipscreen3d.o: ../../config.h
 flipscreen3d.o: $(srcdir)/grab-ximage.h
+flurry.o: ../../config.h
+flurry.o: $(srcdir)/flurry.h
+flurry.o: $(srcdir)/gltrackball.h
+flurry.o: $(srcdir)/rotator.h
+flurry-smoke.o: $(srcdir)/flurry.h
+flurry-smoke.o: $(srcdir)/gltrackball.h
+flurry-smoke.o: $(srcdir)/rotator.h
+flurry-spark.o: $(srcdir)/flurry.h
+flurry-spark.o: $(srcdir)/gltrackball.h
+flurry-spark.o: $(srcdir)/rotator.h
+flurry-star.o: $(srcdir)/flurry.h
+flurry-star.o: $(srcdir)/gltrackball.h
+flurry-star.o: $(srcdir)/rotator.h
+flurry-texture.o: $(srcdir)/flurry.h
+flurry-texture.o: $(srcdir)/gltrackball.h
+flurry-texture.o: $(srcdir)/rotator.h
 font-ximage.o: ../../config.h
 fps.o: ../../config.h
 gears.o: ../../config.h
@@ -561,6 +585,7 @@ glforestfire.o: ../../config.h
 glforestfire.o: $(HACK_SRC)/images/ground.xpm
 glforestfire.o: $(HACK_SRC)/images/tree.xpm
 glforestfire.o: $(srcdir)/xpm-ximage.h
+gllist.o: $(srcdir)/gllist.h
 glplanet.o: ../../config.h
 glplanet.o: $(srcdir)/gltrackball.h
 glplanet.o: $(HACK_SRC)/images/earth.xpm
@@ -618,13 +643,13 @@ queens.o: $(srcdir)/gltrackball.h
 rotator.o: ../../config.h
 rotator.o: $(srcdir)/rotator.h
 rubik.o: ../../config.h
-s1_1.o: $(srcdir)/buildlwo.h
-s1_2.o: $(srcdir)/buildlwo.h
-s1_3.o: $(srcdir)/buildlwo.h
-s1_4.o: $(srcdir)/buildlwo.h
-s1_5.o: $(srcdir)/buildlwo.h
-s1_6.o: $(srcdir)/buildlwo.h
-s1_b.o: $(srcdir)/buildlwo.h
+s1_1.o: $(srcdir)/gllist.h
+s1_2.o: $(srcdir)/gllist.h
+s1_3.o: $(srcdir)/gllist.h
+s1_4.o: $(srcdir)/gllist.h
+s1_5.o: $(srcdir)/gllist.h
+s1_6.o: $(srcdir)/gllist.h
+s1_b.o: $(srcdir)/gllist.h
 sballs.o: ../../config.h
 sballs.o: $(HACK_SRC)/images/sball-bg.xpm
 sballs.o: $(HACK_SRC)/images/sball.xpm
@@ -637,8 +662,8 @@ spheremonics.o: ../../config.h
 spheremonics.o: $(srcdir)/gltrackball.h
 spheremonics.o: $(srcdir)/rotator.h
 sphere.o: ../../config.h
-sproingies.o: $(srcdir)/buildlwo.h
 sproingies.o: ../../config.h
+sproingies.o: $(srcdir)/gllist.h
 sproingiewrap.o: ../../config.h
 stairs.o: ../../config.h
 stairs.o: $(srcdir)/e_textures.h

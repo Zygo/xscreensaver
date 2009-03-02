@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2001 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2002 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -799,14 +799,53 @@ xf86_gamma_fade (Display *dpy,
 }
 
 
+/* This bullshit is needed because the VidMode extension doesn't work
+   on remote displays -- but if the remote display has the extension
+   at all, XF86VidModeQueryExtension returns true, and then
+   XF86VidModeQueryVersion dies with an X error.  Thank you XFree,
+   may I have another.
+ */
+
+static Bool error_handler_hit_p = False;
+
+static int
+ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
+{
+  error_handler_hit_p = True;
+  return 0;
+}
+
+static Bool
+safe_XF86VidModeQueryVersion (Display *dpy, int *majP, int *minP)
+{
+  Bool result;
+  XErrorHandler old_handler;
+  XSync (dpy, False);
+  error_handler_hit_p = False;
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+
+  result = XF86VidModeQueryVersion (dpy, majP, minP);
+
+  XSync (dpy, False);
+  XSetErrorHandler (old_handler);
+  XSync (dpy, False);
+
+  return (error_handler_hit_p
+          ? False
+          : result);
+}
+
+
+
 /* VidModeExtension version 2.0 or better is needed to do gamma.
    2.0 added gamma values; 2.1 added gamma ramps.
  */
-# define XF86_VIDMODE_NAME "XFree86-VidModeExtension"
 # define XF86_VIDMODE_GAMMA_MIN_MAJOR 2
 # define XF86_VIDMODE_GAMMA_MIN_MINOR 0
 # define XF86_VIDMODE_GAMMA_RAMP_MIN_MAJOR 2
 # define XF86_VIDMODE_GAMMA_RAMP_MIN_MINOR 1
+
+
 
 /* Returns 0 if gamma fading not available; 1 if only gamma value setting
    is available; 2 if gamma ramps are available.
@@ -814,12 +853,12 @@ xf86_gamma_fade (Display *dpy,
 static int
 xf86_check_gamma_extension (Display *dpy)
 {
-  int op, event, error, major, minor;
+  int event, error, major, minor;
 
-  if (!XQueryExtension (dpy, XF86_VIDMODE_NAME, &op, &event, &error))
+  if (!XF86VidModeQueryExtension (dpy, &event, &error))
     return 0;  /* display doesn't have the extension. */
 
-  if (!XF86VidModeQueryVersion (dpy, &major, &minor))
+  if (!safe_XF86VidModeQueryVersion (dpy, &major, &minor))
     return 0;  /* unable to get version number? */
 
   if (major < XF86_VIDMODE_GAMMA_MIN_MAJOR || 

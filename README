@@ -59,7 +59,7 @@ there's no need to recompile or reinstall anything.
 Along with the xscreensaver daemon itself, this package also includes
 numerous graphics hacks for use as screensavers.  There is nothing
 magic about these: they are just programs that draw on the root window.
-More than 140 such programs are included.  For details, see the
+More than 150 such programs are included.  For details, see the
 xscreensaver web page, or the enclosed manual pages.
 
 The latest version of xscreensaver is always available on the web at
@@ -70,6 +70,18 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.06:   * New hacks, `flurry', `metaballs', `eruption',
+                        `popsquares', and `barcode'.
+                      * Minor updates to `maze' for high density mazes.
+                      * Added double buffering to `fluidballs' and `whirlygig'.
+                      * Bug fixes for running xscreensaver to a remote XFree86
+                        display (which nobody would ever do...)
+                      * Updated `webcollage' (faster Alta Vista searching.)
+                      * Updated `glplanet' so the sun sets in the west.
+                      * Updated `sproingies' with smooth, unsegmented surfaces.
+                      * Fixed Perl version-sensitivity in
+                        `xscreensaver-getimage-file'.
+                      * Fixed GTK2 scrolling bug in `xscreensaver-demo'.
 Changes since 4.05:   * New hack, `glblur' (disabled by default, since it
                         requires fast OpenGL texture support.)
                       * New hack, `halftone'.

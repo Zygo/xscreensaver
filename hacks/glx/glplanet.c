@@ -439,31 +439,6 @@ init_sun (ModeInfo * mi)
 
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
 
-static void
-pick_velocity (ModeInfo * mi)
-{
-#if 0
-  planetstruct *gp = &planets[MI_SCREEN(mi)];
-
-  gp->box_width =  15.0;
-  gp->box_height = 15.0;
-  gp->box_depth =  5.0;
-
-  gp->tx = 0.0;
-  gp->ty = 0.0;
-  gp->tz = frand(360);
-
-  gp->dtx = (frand(0.4) + frand(0.3)) * RANDSIGN();
-  gp->dty = (frand(0.4) + frand(0.3)) * RANDSIGN();
-  gp->dtz = (frand(5.0) + frand(5.0));  /* the sun sets in the west */
-
-  gp->dx = (frand(0.2) + frand(0.2)) * RANDSIGN();
-  gp->dy = (frand(0.2) + frand(0.2)) * RANDSIGN();
-  gp->dz = (frand(0.2) + frand(0.2)) * RANDSIGN();
-#endif
-}
-
-
 void
 reshape_planet (ModeInfo *mi, int width, int height)
 {
@@ -527,8 +502,6 @@ init_planet (ModeInfo * mi)
 	  return;
   }
   gp = &planets[screen];
-
-  pick_velocity (mi);
 
   if ((gp->glx_context = init_GL(mi)) != NULL) {
 	reshape_planet(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
@@ -672,8 +645,8 @@ draw_planet (ModeInfo * mi)
   glRotatef (gp->z * 360, 0.0, 0.0, 1.0);
   if (do_rotate && !gp->button_down_p)
     {
-      gp->z += 0.01;
-      if (gp->z > 1) gp->z -= 1;
+      gp->z -= 0.01;     /* the sun sets in the west */
+      if (gp->z < 0) gp->z += 1;
     }
 
   glCallList (gp->platelist);

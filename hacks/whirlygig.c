@@ -16,36 +16,40 @@
 #include <math.h>
 #include "screenhack.h"
 
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+# include "xdbe.h"
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+
 #define NCOLORS 100
 #define FULL_CYCLE 429496729
 #define START_ARC 0
 #define END_ARC 23040
 
 struct info {
-    Bool            writable;               /* Is the screen writable */
-    double         xspeed;               /* A factor to modify the horizontal movement */
-    double         yspeed;               /* A factor to modify vertical movement */
-    double         xamplitude;
-    double         yamplitude;
-    int                whirlies;               /*  How many whirlies per line do you want? */
-    int                nlines;                 /*  How many lines of whirlies do you want? */
-    int                half_width;         /* 1/2 the width of the screen */
-    int                half_height;
-    int                speed;
-    int                trail;
-    int                color_modifier;
-    double                xoffset;
-    double                yoffset;
-    double                offset_period;
-    int                       wrap;
+    Bool writable; /* Is the screen writable */
+    double xspeed; /* A factor to modify the horizontal movement */
+    double yspeed; /* A factor to modify vertical movement */
+    double xamplitude;
+    double yamplitude;
+    int whirlies; /*  How many whirlies per line do you want? */
+    int nlines;   /*  How many lines of whirlies do you want? */
+    int half_width;         /* 1/2 the width of the screen */
+    int half_height;
+    int speed;
+    int trail;
+    int color_modifier;
+    double xoffset;
+    double yoffset;
+    double offset_period;
+    int wrap;
 };
 
 enum object_mode {
     spin_mode, funky_mode, circle_mode, linear_mode, test_mode, fun_mode, innie_mode, lissajous_mode
 } mode;
 
-static void explain(int, struct info *, Display *, Window, GC);
-
+static void explain(int, int, struct info *, Display *, Window, GC);
+static void draw_explain_string(int, int, Display *, Window, GC);
 static void spin(unsigned long int, struct info *, int *, int);
 static void funky(unsigned long int, struct info *, int *, int);
 static void circle(unsigned long int, struct info *, int *, int);
@@ -54,8 +58,6 @@ static void linear(unsigned long int, struct info *, int *, int);
 static void lissajous(unsigned long int, struct info *, int *, int);
 static void test(unsigned long int, struct info *, int *, int);
 static void innie(unsigned long int, struct info *, int *, int, double);
-
-
 
 XColor colors[NCOLORS];
 int ncolors = NCOLORS;
@@ -76,11 +78,16 @@ char *defaults [] = {
   "*trail: 0",
   "*color_modifier: -1",
   "*start_time: -1",
-  "*explain: 0",
+  "*explain: False",
   "*xoffset: 1.0",
   "*yoffset: 1.0",
   "*offset_period:    1",
   "*wrap:               0",
+  "*doubleBuffer:	True",
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  "*useDBE:		True",
+  "*useDBEClear:	True",
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
   0
 };
 
@@ -116,63 +123,87 @@ XrmOptionDescRec options [] = {
       /*  Tell the whirlies to be offset by this factor of a cos */
   { "-offset_period",          ".offset_period", XrmoptionSepArg, 0 },
       /*  Change the period of an offset cycle */
-  { "-explain",                    ".explain", XrmoptionSepArg, 0 },
+  { "-explain",                    ".explain", XrmoptionNoArg, "True" },
       /*  Specify whether or not to print an explanation of the function used. */
   { "-wrap",                      ".wrap", XrmoptionSepArg, 0 },
       /* Specify if you want whirlies which are out of the boundary of the screen to be
          wrapped around to the other side */
+  { "-db",		".doubleBuffer", XrmoptionNoArg,  "True" },
+  { "-no-db",		".doubleBuffer", XrmoptionNoArg,  "False" },
   { 0, 0, 0, 0 }
 };
-
-
-static const char funky_explanation[] =
-"Funky mode is me goofing off.";
-
-static const char test_explanation[] =
-"Test mode is a mode that I play around with ideas in.";
 
 static const char spin_explanation[] =
 "Spin mode is a simple sin/cos with every argument modified";
 
+static const char funky_explanation[] =
+"Funky mode is me goofing off.";
+
 static const char circle_explanation[] =
 "Circle mode graphs the x and y positions as you trace the edge of a circle over time.";
+
+static const char linear_explanation[] =
+"Linear mode draws a straight line";
+
+static const char test_explanation[] =
+"Test mode is a mode that I play around with ideas in.";
 
 static const char fun_explanation[] =
 "Fun mode is the coolest.";
 
-static const char linear_explanation[] =
-"I draw a straight line -- woo hoo";
+static const char innie_explanation[] =
+"Innie mode does something or other. Looks cool, though.";
 
 static const char lissajous_explanation[] =
-"This draws a slightly modified lissajous curve";
+"Lissajous mode draws a slightly modified lissajous curve";
 
 static void
-explain(int mode, struct info *info, Display *display, Window window, GC fgc)
+explain(int xmode, int ymode, struct info *info, Display *display, Window window, GC fgc)
 {
     XClearWindow(display, window);
-    switch(mode) {
-        case spin_mode:
-            XDrawString(display, window, fgc, 50, info->half_height-100, spin_explanation, strlen(spin_explanation));
-            break;
-        case funky_mode:
-            XDrawString(display, window, fgc, 50, info->half_height-100, funky_explanation, strlen(funky_explanation));
-            break;
-        case circle_mode:
-            XDrawString(display, window, fgc, 50, info->half_height-100, circle_explanation, strlen(circle_explanation));
-            break;
-        case fun_mode:
-            XDrawString(display, window, fgc, 50, info->half_height-100, fun_explanation, strlen(fun_explanation));
-            break;
-        case linear_mode:
-            XDrawString(display, window, fgc, 50, info->half_height-100, linear_explanation, strlen(linear_explanation));
-            break;
-    case lissajous_mode:
-            XDrawString(display, window, fgc, 50, info->half_height-100, lissajous_explanation, strlen(linear_explanation));
-      
-    }
+    draw_explain_string(xmode, info->half_height-100, display, window, fgc);
+/*    draw_explain_string(ymode, info->half_height-50, display, window, fgc);*/
     XSync(display, False);
     sleep(3);
     XClearWindow(display, window);
+}
+
+static void
+draw_explain_string(int mode, int offset, Display *display, Window window, GC fgc) 
+{
+  switch(mode) {
+  case spin_mode:
+    XDrawString(display, window, fgc, 50, offset, spin_explanation, 
+		strlen(spin_explanation));
+    break;
+  case funky_mode:
+    XDrawString(display, window, fgc, 50, offset, funky_explanation, 
+		strlen(funky_explanation));
+    break;
+  case circle_mode:
+    XDrawString(display, window, fgc, 50, offset, circle_explanation, 
+		strlen(circle_explanation));
+    break;
+  case linear_mode:
+    XDrawString(display, window, fgc, 50, offset, linear_explanation, 
+		strlen(linear_explanation));
+    break;
+  case test_mode:
+    XDrawString(display, window, fgc, 50, offset, test_explanation, 
+		strlen(test_explanation));
+    break;
+  case fun_mode:
+    XDrawString(display, window, fgc, 50, offset, fun_explanation, 
+		strlen(fun_explanation));
+    break;
+  case innie_mode:
+    XDrawString(display, window, fgc, 50, offset, innie_explanation, 
+		strlen(innie_explanation));
+    break;
+  case lissajous_mode:
+    XDrawString(display, window, fgc, 50, offset, lissajous_explanation, 
+		strlen(linear_explanation));    
+  }
 }
 
 static void
@@ -351,8 +382,15 @@ screenhack (Display *display, Window window)
         /*  The following are all X related toys */
     XGCValues gcv;      /* The structure to hold the GC data */
     XWindowAttributes xgwa;       /*  A structure to hold window data */
+    Pixmap b=0, ba=0;	/* double-buffer to reduce flicker */
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+    XdbeBackBuffer backb = 0;
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+
     GC fgc, bgc;
     int screen;
+    Bool dbuf = get_boolean_resource ("doubleBuffer", "Boolean");
+    Bool dbeclear_p = get_boolean_resource ("useDBEClear", "Boolean");
 
     unsigned long int current_time = 0; /* The global int telling the current time */
     unsigned long int start_time = current_time;
@@ -369,11 +407,35 @@ screenhack (Display *display, Window window)
         /* Set up the X toys that I will be using later */
     screen = DefaultScreen(display);
     XGetWindowAttributes (display, window, &xgwa);
+    if (dbuf)
+      {
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+	if (dbeclear_p)
+	  b = xdbe_get_backbuffer (display, window, XdbeBackground);
+	else
+	  b = xdbe_get_backbuffer (display, window, XdbeUndefined);
+	backb = b;
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+
+	if (!b)
+	  {
+	    ba = XCreatePixmap (display, window, xgwa.width, xgwa.height,xgwa.depth);
+	    b = ba;
+	  }
+      }
+    else
+      {
+	b = window;
+      }
+
     gcv.foreground = get_pixel_resource("foreground", "Foreground", display, xgwa.colormap);
-    fgc = XCreateGC (display, window, GCForeground, &gcv);
+    fgc = XCreateGC (display, b, GCForeground, &gcv);
     gcv.foreground = get_pixel_resource("background", "Background", display, xgwa.colormap);
-    bgc = XCreateGC (display, window, GCForeground, &gcv);
+    bgc = XCreateGC (display, b, GCForeground, &gcv);
     make_uniform_colormap (display, xgwa.visual, xgwa.colormap, colors, &ncolors, True, &info->writable, True);
+
+    if (ba) XFillRectangle (display, ba, bgc, 0, 0, xgwa.width, xgwa.height);
+
         /* info is a structure holding all the random pieces of information I may want to 
            pass to my baby functions -- much of it I may never use, but it is nice to
            have around just in case I want it to make a funky function funkier */
@@ -395,26 +457,28 @@ screenhack (Display *display, Window window)
     xmode_str = get_string_resource("xmode", "Mode");
     ymode_str = get_string_resource("ymode", "Mode");
     wrap = get_integer_resource("wrap", "Integer");
-    modifier = 3000.0 + (1500.0 * random() / (RAND_MAX + 1.0));
+    modifier = 3000.0 + frand(1500.0);
     if (! xmode_str) xmode = spin_mode;
     else if (! strcmp (xmode_str, "spin")) xmode = spin_mode;
     else if (! strcmp (xmode_str, "funky")) xmode = funky_mode;
+    else if (! strcmp (xmode_str, "circle")) xmode = circle_mode;
     else if (! strcmp (xmode_str, "linear")) xmode = linear_mode;
+    else if (! strcmp (xmode_str, "test")) xmode = test_mode;
     else if (! strcmp (xmode_str, "fun")) xmode = fun_mode;
     else if (! strcmp (xmode_str, "innie")) xmode = innie_mode;
     else if (! strcmp (xmode_str, "lissajous")) xmode = lissajous_mode;
-    else if (! strcmp (xmode_str, "test")) xmode = test_mode;
     else {
         xmode = spin_mode;
     }
     if (! ymode_str) ymode = spin_mode;
     else if (! strcmp (ymode_str, "spin")) ymode = spin_mode;
     else if (! strcmp (ymode_str, "funky")) ymode = funky_mode;
+    else if (! strcmp (ymode_str, "circle")) ymode = circle_mode;
     else if (! strcmp (ymode_str, "linear")) ymode = linear_mode;
+    else if (! strcmp (ymode_str, "test")) ymode = test_mode;
     else if (! strcmp (ymode_str, "fun")) ymode = fun_mode;
     else if (! strcmp (ymode_str, "innie")) ymode = innie_mode;
     else if (! strcmp (ymode_str, "lissajous")) ymode = lissajous_mode;
-    else if (! strcmp (ymode_str, "test")) ymode = test_mode;
     else {
         ymode = spin_mode;
     }
@@ -424,14 +488,14 @@ screenhack (Display *display, Window window)
     else
         current_time = get_integer_resource("start_time", "Integer");
     if (info->whirlies == -1)
-        info->whirlies = 1 + (int)(15.0 * random() / (RAND_MAX + 1.0));
+        info->whirlies = 1 + (random() % 15);
     if (info->nlines == -1)
-        info->nlines = 1 + (int)(5.0 * random() / (RAND_MAX + 1.0));
+        info->nlines = 1 + (random() % 5);
     if (info->color_modifier == -1)
-        info->color_modifier = 1 + (int)(25.0 * random() / (RAND_MAX + 1.0));
-    if (get_integer_resource("explain", "Integer") == 1)
-        explain(mode, info, display, window, fgc);
-    current_color = 1 + (int)((double)NCOLORS * random() / (RAND_MAX + 1.0));
+        info->color_modifier = 1 + (random() % 25);
+    if (get_boolean_resource("explain", "Integer"))
+        explain(xmode, ymode, info, display, window, fgc);
+    current_color = 1 + (random() % NCOLORS);
         /* Now that info is full, lets play! */
     
     while (1) {
@@ -441,20 +505,20 @@ screenhack (Display *display, Window window)
         if (! strcmp (xmode_str, "change") && ! strcmp (ymode_str, "change")) {
             if ((current_time - start_time) > change_time) {
                 start_time = current_time;
-                xmode = 1 + (int)(4.0 * random() / (RAND_MAX + 1.0));
-                ymode = 1 + (int)(4.0 * random() / (RAND_MAX + 1.0));
+                xmode = 1 + (random() % 4);
+                ymode = 1 + (random() % 4);
             }
         }
         else if (! strcmp (xmode_str, "change")) {
             if ((current_time - start_time) > change_time) {
                 start_time = current_time;
-                xmode = 1 + (int)(3.5 * random() / (RAND_MAX + 1.0));
+                xmode = 1 + (random() % 4);
             }
         }
         else if (! strcmp (ymode_str, "change")) {
             if ((current_time - start_time) > change_time) {
                 start_time = current_time;
-                ymode = 1 + (int)(3.0 * random() / (RAND_MAX + 1.0));
+                ymode = 1 + (random() % 3);
                 printf("Changing ymode to %d\n", ymode);
             }
         }
@@ -470,8 +534,9 @@ screenhack (Display *display, Window window)
                     /* I want the distance between whirlies to increase more each whirly */
                 internal_time = current_time + (10 * wcount) + (wcount * wcount); 
             switch (xmode) {
-                    /* All these functions expect an int time, the struct info, a pointer to an array of positions, 
-                       and the index that the the function will fill of the array */
+	      /* All these functions expect an int time, the struct info,
+		 a pointer to an array of positions, and the index that the 
+		 the function will fill of the array */
                 case spin_mode:
                     spin(internal_time, info, pos, 0);
                     break;
@@ -534,10 +599,14 @@ screenhack (Display *display, Window window)
                 double line_offset = 20.0 * (double)lcount * sin(arg); 
                 int size;
                 size = (int)(15.0 + 5.0 * sin((double)internal_time / 180.0));
-/* First delete the old circle... */
-                if (! info->trail) {
+		/* First delete the old circle... */
+                if (!info->trail && ( !dbeclear_p ||
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+		    !backb
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+		    )) {
                     XSetForeground(display, bgc, BlackPixel(display, screen));
-                    XFillArc(display, window, bgc, last_x[wcount][lcount], last_y[wcount][lcount], last_size[wcount][lcount], last_size[wcount][lcount], START_ARC, END_ARC);
+                    XFillArc(display, b, bgc, last_x[wcount][lcount], last_y[wcount][lcount], last_size[wcount][lcount], last_size[wcount][lcount], START_ARC, END_ARC);
                 }
                     /* Now, lets draw in the new circle */
                 {  /* Starting new scope for local x_pos and y_pos */
@@ -551,7 +620,12 @@ screenhack (Display *display, Window window)
                         ypos = (int)(info->yoffset*line_offset)+pos[1]; 
                     }
                     if (start_time == current_time) {
-                            /* smoothen should move from one mode to another prettily... */
+		      /* smoothen should move from one mode to another prettily... */
+
+		      /* Note: smoothen has not been modified to take the double
+			 buffering code into account, and needs to be hacked on
+			 before uncommenting.
+		      */
 /* 
    smoothen(xpos, last_x[wcount][lcount], ypos, last_y[wcount][lcount], size, color_offset, colors, display, window, bgc, screen, info);
  */
@@ -560,10 +634,29 @@ screenhack (Display *display, Window window)
                     last_y[wcount][lcount] = ypos;
                     last_size[wcount][lcount] = size;
                     XSetForeground(display, bgc, colors[color_offset].pixel);
-                    XFillArc(display, window, bgc, xpos, ypos, size, size, START_ARC, END_ARC);
+                    XFillArc(display, b, bgc, xpos, ypos, size, size, START_ARC, END_ARC);
                 } /* End of my temporary scope for xpos and ypos */
             }  /* End of the for each line in nlines */
         } /* End of the for each whirly in whirlies */
+
+
+
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+	if (backb)
+	  {
+	    XdbeSwapInfo info[1];
+	    info[0].swap_window = window;
+	    info[0].swap_action = (dbeclear_p ? XdbeBackground : XdbeUndefined);
+	    XdbeSwapBuffers (display, info, 1);
+	  }
+	else
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+	  if (dbuf)
+	    {
+	      XCopyArea (display, b, window, bgc, 0, 0,
+			 xgwa.width, xgwa.height, 0, 0);
+	    }
+
         XSync(display, False);
         if (current_time == FULL_CYCLE)
             current_time = 1;

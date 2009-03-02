@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.06
-!                              23-Oct-2002
+!                              version 4.07
+!                              03-Feb-2003
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -285,6 +285,10 @@
  	                	fluidballs -root			    \n\
  	                	anemone -root				    \n\
  	                	halftone -root				    \n\
+ 	                	metaballs -root				    \n\
+ 	                	eruption -root				    \n\
+ 	                	popsquares -root			    \n\
+ 	                	barcode -root				    \n\
   color: 			bubbles -root				    \n\
 - default-n:			webcollage -root			    \n\
 - default-n:  "WebCollage (whacked)"					      \
@@ -306,6 +310,7 @@
 @GL_KLUDGE@ GL:			lament -root				    \n\
 @GL_KLUDGE@ GL:			bubble3d -root				    \n\
 @GL_KLUDGE@ GL:			glplanet -root				    \n\
+@GL_KLUDGE@ GL:			flurry -root -preset random		    \n\
 @GL_KLUDGE@ GL:			pulsar -root				    \n\
 -	   GL:	   "Pulsar (textures)"					      \
 				  pulsar -root -texture -mipmap		      \

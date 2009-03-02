@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2002 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -274,11 +274,22 @@ windows (Display *dpy, Window window, int delay, int which)
     ("Physical memory dump complete. Contact your system administrator or\n"
      "technical support group.\n");
 
+  const char *wmea =
+    ("    Windows protection error.  You need to restart your computer.");
+  const char *wmeb =
+    ("    System halted.");
+
   if (which < 0 || which > 2) abort();
+
+  /* kludge to lump Win2K and WinME together; seems silly to add another
+     preference/command line option just for this little one. */
+  if (which == 2 && (random() % 2))
+    which = 3;
 
   if (!get_boolean_resource((which == 0 ? "doWindows" :
                              which == 1 ? "doNT" :
-                                          "doWin2K"),
+                             which == 2 ? "doWin2K" :
+                                          "doWin2K"), /* "doWinME" ? */
                             "DoWindows"))
     return False;
 
@@ -287,10 +298,12 @@ windows (Display *dpy, Window window, int delay, int which)
   fontname = get_string_resource ((xgwa.height > 600
 				   ? (which == 0 ? "windows95.font2" :
                                       which == 1 ? "windowsNT.font2" :
-                                                   "windows2K.font2")
+                                      which == 2 ? "windows2K.font2" :
+                                                   "windowsME.font2")
 				   : (which == 0 ? "windows95.font" :
 				      which == 1 ? "windowsNT.font" :
-                                                   "windows2K.font")),
+				      which == 2 ? "windows2K.font" :
+                                                   "windowsME.font")),
 				  "Windows.Font");
   if (!fontname || !*fontname) fontname = (char *)def_font;
   font = XLoadQueryFont (dpy, fontname);
@@ -302,12 +315,14 @@ windows (Display *dpy, Window window, int delay, int which)
   gcv.font = font->fid;
   gcv.foreground = get_pixel_resource((which == 0 ? "windows95.foreground" :
 				       which == 1 ? "windowsNT.foreground" :
-                                                    "windows2K.foreground"),
+				       which == 2 ? "windows2K.foreground" :
+                                                    "windowsME.foreground"),
 				      "Windows.Foreground",
 				      dpy, xgwa.colormap);
   gcv.background = get_pixel_resource((which == 0 ? "windows95.background" :
 				       which == 1 ? "windowsNT.background" :
-                                                    "windows2K.background"),
+				       which == 2 ? "windows2K.background" :
+                                                    "windowsME.background"),
 				      "Windows.Background",
 				      dpy, xgwa.colormap);
   XSetWindowBackground(dpy, window, gcv.background);
@@ -320,7 +335,7 @@ windows (Display *dpy, Window window, int delay, int which)
 		0, 0, xgwa.width, xgwa.height, w95, 0);
   else if (which == 1)
     draw_string(dpy, window, gc, &gcv, font, 0, 0, 10, 10, wnt, 750);
-  else
+  else if (which == 2)
     {
       int line_height = font->ascent + font->descent + 1;
       int x = 20;
@@ -331,6 +346,31 @@ windows (Display *dpy, Window window, int delay, int which)
       bsod_sleep(dpy, 4);
       draw_string(dpy, window, gc, &gcv, font, x, y, 10, 10, w2kb, 750);
     }
+  else if (which == 3)
+    {
+      int line_height = font->ascent + font->descent;
+      int x = 0;
+      int y = (xgwa.height - line_height * 3) / 2;
+      draw_string (dpy, window, gc, &gcv, font, x, y, 10, 10, wmea, 0);
+      y += line_height * 2;
+      x = draw_string (dpy, window, gc, &gcv, font, x, y, 10, 10, wmeb, 0);
+      y += line_height;
+      while (delay > 0)
+        {
+          XDrawImageString (dpy, window, gc, x, y, "_", 1);
+          XSync(dpy, False);
+          usleep(120000L);
+          XDrawImageString (dpy, window, gc, x, y, " ", 1);
+          XSync(dpy, False);
+          usleep(120000L);
+          if (bsod_sleep(dpy, 0))
+            delay = 0;
+          else
+            delay--;
+        }
+    }
+  else
+    abort();
 
   XFreeGC(dpy, gc);
   XSync(dpy, False);

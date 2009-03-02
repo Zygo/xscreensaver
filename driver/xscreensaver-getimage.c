@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001, 2002 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001, 2002, 2003 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -141,14 +141,14 @@ static void load_image_internal (Screen *screen, Window window,
 
 
 static void
-get_image (Screen *screen, Window window, Bool verbose_p)
+get_image (Screen *screen, Window window,
+           Bool verbose_p,
+           Bool desk_p,
+           Bool video_p,
+           Bool image_p,
+           char *dir)
 {
   Display *dpy = DisplayOfScreen (screen);
-  Bool desk_p  = get_boolean_resource ("grabDesktopImages",  "Boolean");
-  Bool video_p = get_boolean_resource ("grabVideoFrames",    "Boolean");
-  Bool image_p = get_boolean_resource ("chooseRandomImages", "Boolean");
-  char *dir    = get_string_resource ("imageDirectory", "ImageDirectory");
-
   enum { do_desk, do_video, do_image, do_bars } which = do_bars;
   int count = 0;
 
@@ -199,24 +199,33 @@ get_image (Screen *screen, Window window, Bool verbose_p)
       if (desk_p)  desk_p  = False, changed_p = True;
       if (video_p) video_p = False, changed_p = True;
 # ifndef HAVE_BUILTIN_IMAGE_LOADER
+      /* We can display images on non-top-level windows with the builtin
+         loader, but not if we're using the external (chbg-based) loader. */
       if (image_p) image_p = False, changed_p = True;
+# endif /* !HAVE_BUILTIN_IMAGE_LOADER */
+
       if (changed_p && verbose_p)
         fprintf (stderr, "%s: not a top-level window: using colorbars.\n",
                  progname);
-# endif /* !HAVE_BUILTIN_IMAGE_LOADER */
     }
   else if (window != VirtualRootWindowOfScreen (screen))
     {
+      /* We can display images on non-root windows with the builtin loader,
+         but not if we're using the external (chbg-based) loader.
+         We can never display video on non-root windows (since that always
+         uses the external image loader.)
+      */
       Bool changed_p = False;
       if (video_p) video_p = False, changed_p = True;
 # ifndef HAVE_BUILTIN_IMAGE_LOADER
       if (!desk_p) desk_p  = True,  changed_p = True;
       if (image_p) image_p = False, changed_p = True;
+# endif /* !HAVE_BUILTIN_IMAGE_LOADER */
+
       if (changed_p && verbose_p)
         fprintf (stderr,
                  "%s: not running on root window: grabbing desktop.\n",
                  progname);
-# endif /* !HAVE_BUILTIN_IMAGE_LOADER */
     }
 
   count = 0;
@@ -573,7 +582,7 @@ load_image_internal (Screen *screen, Window window,
 
 
 
-#if 0
+#ifdef DEBUG
 static Bool
 mapper (XrmDatabase *db, XrmBindingList bindings, XrmQuarkList quarks,
 	XrmRepresentation *type, XrmValue *value, XPointer closure)
@@ -594,8 +603,31 @@ mapper (XrmDatabase *db, XrmBindingList bindings, XrmQuarkList quarks,
 
   return False;
 }
-#endif
+#endif /* DEBUG */
 
+
+#define USAGE "usage: %s [ -options... ] window-id\n"			      \
+   "\n"									      \
+   "    This program puts an image on the given window.\n"		      \
+   "\n"									      \
+   "    It is used by those xscreensaver demos that operate on images.\n"     \
+   "    The image may be a file loaded from disk, a frame grabbed from\n"     \
+   "    the system's video camera, or a screenshot of the desktop,\n"         \
+   "    depending on command-line options or the ~/.xscreensaver file.\n"     \
+   "\n"									      \
+   "    Options include:\n"						      \
+   "\n"									      \
+   "      -display host:dpy.screen    which display to use\n"		      \
+   "      -root                       draw to the root window\n"	      \
+   "      -verbose                    print diagnostics\n"		      \
+   "      -images  / -no-images       whether to allow image file loading\n"  \
+   "      -video   / -no-video        whether to allow video grabs\n"	      \
+   "      -desktop / -no-desktop      whether to allow desktop screen grabs\n"\
+   "      -directory <path>           where to find image files to load\n"    \
+   "\n"									      \
+   "    The XScreenSaver Control Panel (xscreensaver-demo) lets you set the\n"\
+   "    defaults for these options in your ~/.xscreensaver file.\n"           \
+   "\n"
 
 int
 main (int argc, char **argv)
@@ -604,73 +636,40 @@ main (int argc, char **argv)
   Widget toplevel;
   Display *dpy;
   Screen *screen;
+  char *oprogname = progname;
+
   Window window = (Window) 0;
-  Bool verbose_p = False;
   char *s;
   int i;
 
   progname = argv[0];
   s = strrchr (progname, '/');
   if (s) progname = s+1;
+  oprogname = progname;
+
+  /* half-assed way of avoiding buffer-overrun attacks. */
+  if (strlen (progname) >= 100) progname[100] = 0;
+
 
   /* We must read exactly the same resources as xscreensaver.
      That means we must have both the same progclass *and* progname,
      at least as far as the resource database is concerned.  So,
      put "xscreensaver" in argv[0] while initializing Xt.
    */
-  argv[0] = "xscreensaver";
+  progname = argv[0] = "xscreensaver";
+
+  /* allow one dash or two. */
+  for (i = 1; i < argc; i++)
+    if (argv[i][0] == '-' && argv[i][1] == '-') argv[i]++;
+
   toplevel = XtAppInitialize (&app, progclass, 0, 0, &argc, argv,
-			      defaults, 0, 0);
-  argv[0] = progname;
+                              defaults, 0, 0);
   dpy = XtDisplay (toplevel);
   screen = XtScreen (toplevel);
   db = XtDatabase (dpy);
-
   XtGetApplicationNameAndClass (dpy, &s, &progclass);
   XSetErrorHandler (x_ehandler);
   XSync (dpy, False);
-
-  /* half-assed way of avoiding buffer-overrun attacks. */
-  if (strlen (progname) >= 100) progname[100] = 0;
-
-  for (i = 1; i < argc; i++)
-    {
-      if (argv[i][0] == '-' && argv[i][1] == '-') argv[i]++;
-      if (!strcmp (argv[i], "-v") ||
-          !strcmp (argv[i], "-verbose"))
-        verbose_p = True;
-      else if (window == 0)
-        {
-          unsigned long w;
-          char dummy;
-
-          if (!strcmp (argv[i], "root") ||
-              !strcmp (argv[i], "-root") ||
-              !strcmp (argv[i], "--root"))
-            window = RootWindowOfScreen (screen);
-
-          else if ((1 == sscanf (argv[i], " 0x%lx %c", &w, &dummy) ||
-                    1 == sscanf (argv[i], " %ld %c",   &w, &dummy)) &&
-                   w != 0)
-            window = (Window) w;
-          else
-            goto LOSE;
-        }
-      else
-        {
-         LOSE:
-          fprintf (stderr,
-            "usage: %s [ -display host:dpy.screen ] [ -v ] window-id\n",
-                   progname);
-          fprintf (stderr, "\n"
-	"\tThis program puts an image of the desktop on the given window.\n"
-	"\tIt is used by those xscreensaver demos that operate on images.\n"
-	"\n");
-          exit (1);
-        }
-    }
-
-  if (window == 0) goto LOSE;
 
   /* Randomize -- only need to do this here because this program
      doesn't use the `screenhack.h' or `lockmore.h' APIs. */
@@ -681,20 +680,77 @@ main (int argc, char **argv)
   P.db = db;
   load_init_file (&P);
 
-  if (P.verbose_p)
-    verbose_p = True;
+  progname = argv[0] = oprogname;
 
-#if 0
-  /* Print out all the resources we read. */
-  {
-    XrmName name = { 0 };
-    XrmClass class = { 0 };
-    int count = 0;
-    XrmEnumerateDatabase (db, &name, &class, XrmEnumAllLevels, mapper,
-			  (XtPointer) &count);
-  }
-#endif
+  for (i = 1; i < argc; i++)
+    {
+      /* Have to re-process these, or else the .xscreensaver file
+         has priority over the command line...
+       */
+      if (!strcmp (argv[i], "-v") || !strcmp (argv[i], "-verbose"))
+        P.verbose_p = True;
+      else if (!strcmp (argv[i], "-desktop"))    P.grab_desktop_p = True;
+      else if (!strcmp (argv[i], "-no-desktop")) P.grab_desktop_p = False;
+      else if (!strcmp (argv[i], "-video"))      P.grab_video_p = True;
+      else if (!strcmp (argv[i], "-no-video"))   P.grab_video_p = False;
+      else if (!strcmp (argv[i], "-images"))     P.random_image_p = True;
+      else if (!strcmp (argv[i], "-no-images"))  P.random_image_p = False;
+      else if (!strcmp (argv[i], "-directory") || !strcmp (argv[i], "-dir"))
+        P.image_directory = argv[++i];
+      else if (window == 0)
+        {
+          unsigned long w;
+          char dummy;
 
-  get_image (screen, window, verbose_p);
+          if (!strcmp (argv[i], "-root") ||
+              !strcmp (argv[i], "root"))
+            window = RootWindowOfScreen (screen);
+
+          else if ((1 == sscanf (argv[i], " 0x%lx %c", &w, &dummy) ||
+                    1 == sscanf (argv[i], " %ld %c",   &w, &dummy)) &&
+                   w != 0)
+            window = (Window) w;
+          else
+            {
+              if (argv[i][0] == '-')
+                fprintf (stderr, "\n%s: unknown option \"%s\"\n",
+                         progname, argv[i]);
+              else
+                fprintf (stderr, "\n%s: unparsable window ID: \"%s\"\n",
+                         progname, argv[i]);
+              goto LOSE;
+            }
+        }
+      else
+        {
+          fprintf (stderr, "\n%s: unknown option \"%s\"\n",
+                   progname, argv[i]);
+         LOSE:
+          fprintf (stderr, USAGE, progname);
+          exit (1);
+        }
+    }
+
+  if (window == 0)
+    {
+      fprintf (stderr, "\n%s: no window specified!\n", progname);
+      goto LOSE;
+    }
+
+
+#ifdef DEBUG
+  if (P.verbose_p)       /* Print out all the resources we can see. */
+    {
+      XrmName name = { 0 };
+      XrmClass class = { 0 };
+      int count = 0;
+      XrmEnumerateDatabase (db, &name, &class, XrmEnumAllLevels, mapper,
+                            (XtPointer) &count);
+    }
+#endif /* DEBUG */
+
+  get_image (screen, window, P.verbose_p,
+             P.grab_desktop_p, P.grab_video_p, P.random_image_p,
+             P.image_directory);
   exit (0);
 }

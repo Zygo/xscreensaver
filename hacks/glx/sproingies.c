@@ -22,7 +22,7 @@ static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/28 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
- * 07-Dec-96: Written.
+ * See sproingiewrap.c
  */
 
 #ifdef STANDALONE
@@ -35,7 +35,7 @@ static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/28 xlockmore";
 
 #include <GL/gl.h>
 #include <GL/glu.h>
-#include "buildlwo.h"
+#include "gllist.h"
 
 #define MAXSPROING 100
 #define T_COUNT 40
@@ -50,7 +50,9 @@ typedef struct {
 	int         rotx, roty, dist, wireframe, flatshade, groundlevel,
 	            maxsproingies, mono;
 	int         sframe, target_rx, target_ry, target_dist, target_count;
-	GLuint      sproingies[6], TopsSides, SproingieBoom;
+	struct gllist *sproingies[6];
+	struct gllist *SproingieBoom;
+	GLuint TopsSides;
 	struct sPosColor *positions;
 } sp_instance;
 
@@ -59,8 +61,13 @@ static int  active_screens = 0;
 
 void        SproingieSwap(void);
 
-extern struct lwo LWO_s1_1, LWO_s1_2, LWO_s1_3, LWO_s1_4;
-extern struct lwo LWO_s1_5, LWO_s1_6, LWO_s1_b;
+extern struct gllist *s1_1;
+extern struct gllist *s1_2;
+extern struct gllist *s1_3;
+extern struct gllist *s1_4;
+extern struct gllist *s1_5;
+extern struct gllist *s1_6;
+extern struct gllist *s1_b;
 
 static int
 myrand(int range)
@@ -505,7 +512,8 @@ RenderSproingie(int t, sp_instance * si)
 		clipplane[3] = ((GLdouble) (thisSproingie->frame) / 9.0) +
 			(si->wireframe ? 0.0 : 0.1);
 		glClipPlane(GL_CLIP_PLANE0, clipplane);
-		glCallList(si->sproingies[0]);
+/**		glCallList(si->sproingies[0]);*/
+/**/	renderList(si->sproingies[0]);
 		glDisable(GL_CLIP_PLANE0);
 	} else if (thisSproingie->frame >= BOOM_FRAME) {
 		glTranslatef((GLfloat) (thisSproingie->x) + 0.5,
@@ -524,7 +532,8 @@ RenderSproingie(int t, sp_instance * si)
 /*-
  * PURIFY 4.0.1 reports an unitialized memory read on the next line when using
  * MesaGL 2.2.  This has been tracked to MesaGL 2.2 src/points.c line 313. */
-		glCallList(si->SproingieBoom);
+/**		glCallList(si->SproingieBoom);*/
+/**/	renderList(si->SproingieBoom);
 		glPointSize(1.0);
 		if (!si->wireframe) {
 			glEnable(GL_LIGHTING);
@@ -533,11 +542,13 @@ RenderSproingie(int t, sp_instance * si)
 		glTranslatef((GLfloat) (thisSproingie->x + 1),
 			     (GLfloat) (thisSproingie->y - 1), (GLfloat) (thisSproingie->z - 1));
 		glRotatef((GLfloat) - 90.0, 0.0, 1.0, 0.0);
-		glCallList(si->sproingies[thisSproingie->frame - 6]);
+/**		glCallList(si->sproingies[thisSproingie->frame - 6]);*/
+/**/	renderList(si->sproingies[thisSproingie->frame - 6]);
 	} else {
 		glTranslatef((GLfloat) (thisSproingie->x), (GLfloat) (thisSproingie->y),
 			     (GLfloat) (thisSproingie->z));
-		glCallList(si->sproingies[thisSproingie->frame]);
+/**		glCallList(si->sproingies[thisSproingie->frame]);*/
+/**/	renderList(si->sproingies[thisSproingie->frame]);
 	}
 
 	glPopMatrix();
@@ -674,8 +685,8 @@ void
 CleanupSproingies(int screen)
 {
 	sp_instance *si = &si_list[screen];
+/*
 	int         t;
-
 	if (si->SproingieBoom) {
 		for (t = 0; t < 6; ++t)
 			glDeleteLists(si->sproingies[t], 1);
@@ -685,6 +696,10 @@ CleanupSproingies(int screen)
 
 		--active_screens;
 		si->SproingieBoom = 0;
+	}
+*/
+	if (si->TopsSides) {
+		glDeleteLists(si->TopsSides, 2);
 	}
 	if (si->positions) {
 		(void) free((void *) (si->positions));
@@ -774,7 +789,7 @@ InitSproingies(int wfmode, int grnd, int mspr, int screen, int numscreens,
 
 	if (!(si->TopsSides = build_TopsSides(si->wireframe)))
 		(void) fprintf(stderr, "build_TopsSides\n");
-
+/*
 	if (!(si->sproingies[0] = BuildLWO(si->wireframe, &LWO_s1_1)))
 		(void) fprintf(stderr, "BuildLWO - 1\n");
 	if (!(si->sproingies[1] = BuildLWO(si->wireframe, &LWO_s1_2)))
@@ -790,6 +805,14 @@ InitSproingies(int wfmode, int grnd, int mspr, int screen, int numscreens,
 
 	if (!(si->SproingieBoom = BuildLWO(si->wireframe, &LWO_s1_b)))
 		(void) fprintf(stderr, "BuildLWO - b\n");
+*/
+	si->sproingies[0]=s1_1;
+	si->sproingies[1]=s1_2;
+	si->sproingies[2]=s1_3;
+	si->sproingies[3]=s1_4;
+	si->sproingies[4]=s1_5;
+	si->sproingies[5]=s1_6;
+	si->SproingieBoom=s1_b;
 
 	if (si->wireframe) {
 		glShadeModel(GL_FLAT);

@@ -91,6 +91,13 @@
 # define DEFAULT_ICONDIR GLADE_DIR
 #endif
 
+#ifndef HAVE_XML
+ /* Kludge: this is defined in demo-Gtk-conf.c when HAVE_XML.
+    It is unused otherwise, so in that case, stub it out. */
+ static const char *hack_configuration_path = 0;
+#endif
+
+
 
 #include "version.h"
 #include "prefs.h"
@@ -297,8 +304,12 @@ ensure_selected_item_visible (GtkWidget *widget)
 
   path = gtk_tree_model_get_path (model, &iter);
   
+# if 0
   gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW (widget),
 				path, NULL, FALSE, 0.0, 0.0);
+# else
+  gtk_tree_view_set_cursor (GTK_TREE_VIEW (widget), path, NULL, FALSE);
+# endif
 #else /* !HAVE_GTK2 */
 
   GtkScrolledWindow *scroller = 0;
@@ -2470,14 +2481,7 @@ populate_prefs_page (state *s)
 static void
 populate_popup_window (state *s)
 {
-  saver_preferences *p = &s->prefs;
-  GtkWidget *parent = name_to_widget (s, "settings_vbox");
   GtkLabel *doc = GTK_LABEL (name_to_widget (s, "doc"));
-  int list_elt = selected_list_element (s);
-  int hack_number = (list_elt >= 0 && list_elt < s->list_count
-                     ? s->list_elt_to_hack_number[list_elt]
-                     : -1);
-  screenhack *hack = (hack_number >= 0 ? p->screenhacks[hack_number] : 0);
   char *doc_string = 0;
 
   /* #### not in Gtk 1.2
@@ -2491,14 +2495,24 @@ populate_popup_window (state *s)
       s->cdata = 0;
     }
 
-  if (hack)
-    {
-      GtkWidget *cmd = GTK_WIDGET (name_to_widget (s, "cmd_text"));
-      const char *cmd_line = gtk_entry_get_text (GTK_ENTRY (cmd));
-      s->cdata = load_configurator (cmd_line, s->debug_p);
-      if (s->cdata && s->cdata->widget)
-        gtk_box_pack_start (GTK_BOX (parent), s->cdata->widget, TRUE, TRUE, 0);
-    }
+  {
+    saver_preferences *p = &s->prefs;
+    int list_elt = selected_list_element (s);
+    int hack_number = (list_elt >= 0 && list_elt < s->list_count
+                       ? s->list_elt_to_hack_number[list_elt]
+                       : -1);
+    screenhack *hack = (hack_number >= 0 ? p->screenhacks[hack_number] : 0);
+    if (hack)
+      {
+        GtkWidget *parent = name_to_widget (s, "settings_vbox");
+        GtkWidget *cmd = GTK_WIDGET (name_to_widget (s, "cmd_text"));
+        const char *cmd_line = gtk_entry_get_text (GTK_ENTRY (cmd));
+        s->cdata = load_configurator (cmd_line, s->debug_p);
+        if (s->cdata && s->cdata->widget)
+          gtk_box_pack_start (GTK_BOX (parent), s->cdata->widget,
+                              TRUE, TRUE, 0);
+      }
+  }
 
   doc_string = (s->cdata
                 ? s->cdata->description

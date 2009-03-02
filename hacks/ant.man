@@ -6,9 +6,15 @@ ant - cellular automaton.
 [\-display \fIhost:display.screen\fP]
 [\-visual \fIvisual\fP]
 [\-window]
+[\-install]
+[\-noinstall]
 [\-root]
-[\-sharpturns]
+[\-eyes]
+[\-no-eyes]
 [\-truchet]
+[\-no-truchet]
+[\-sharpturn]
+[\-no-sharpturn]
 [\-delay \fInumber\fP]
 [\-cycles \fInumber\fP]
 [\-count \fInumber\fP]
@@ -42,8 +48,11 @@ Whether to do sharp turns.
 .B \-truchet | \-no-truchet
 Whether to use truchet lines.
 .TP 8
+.B \-eyes | \-no-eyes
+Whether to draw eyes on the ants.
+.TP 8
 .B \-delay \fInumber\fP
-Per-frame delay, in microseconds.  Default: 1000 (0.00 seconds.).
+Per-frame delay, in microseconds.  Default: 1000 (0.0001 seconds.).
 .TP 8
 .B \-cycles \fInumber\fP
 How long to wait until resetting.  0 - 800000.  Default: 40000.

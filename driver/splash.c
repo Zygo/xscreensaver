@@ -732,6 +732,7 @@ handle_splash_event (saver_info *si, XEvent *event)
 	  if (which && sp->pressed == which)
 	    {
 	      destroy_splash_window (si);
+              sp = si->sp_data;
 	      switch (which)
 		{
 		case 1: do_demo (si); break;
@@ -747,8 +748,9 @@ handle_splash_event (saver_info *si, XEvent *event)
               /* click and release on the window but not in a button:
                  treat that as "dismiss the splash dialog." */
 	      destroy_splash_window (si);
+              sp = si->sp_data;
             }
-	  sp->pressed = 0;
+	  if (sp) sp->pressed = 0;
 	  update_splash_window (si);
 	}
       break;

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001, 2002 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001, 2002, 2003 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -30,12 +30,27 @@ use strict;
 use POSIX;
 use Fcntl;
 
-# use Fcntl ':mode';   # Perl 5.6ism?
-use POSIX ':fcntl_h';  # more portable?
+# Apparently the "old way" to get S_ISLNK and friends is to do this:
+#
+use POSIX ':fcntl_h';
+
+# But apparently the "new way" is to do this:
+#
+#  use Fcntl ':mode';
+#
+# but of course that will generate an error on "old" (pre-5.6?) Perl versions.
+# So we do it like this instead:
+#
+BEGIN {
+  if (! defined(&S_ISLNK)) {  # perhaps defined by "POSIX"?
+    require Fcntl;
+    import  Fcntl ':mode';    # if not, look for it in "Fcntl".
+  }
+}
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.10 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.11 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -87,7 +102,7 @@ sub find_all_files {
 
   local *DIR;
   if (! opendir (DIR, $dir)) {
-    print STDERR "$progname: couldn't open $dir: $!\n";
+    print STDERR "$progname: couldn't open $dir: $!\n" if ($verbose);
     return;
   }
   my @files = readdir (DIR);
