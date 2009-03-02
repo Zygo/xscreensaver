@@ -17,7 +17,8 @@ starwars - draws a perspective text crawl, like at the beginning of the movie
 .SH SYNOPSIS
 .B starwars
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]
-[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
+[\-visual \fIvisual\fP]
+[\-delay \fImicroseconds\fP]
 [\-program \fIcommand\fP]
 [\-size \fIinteger\fP ]
 [\-columns \fIinteger\fP]
@@ -27,8 +28,11 @@ starwars - draws a perspective text crawl, like at the beginning of the movie
 [\-spin \fIfloat\fP]
 [\-steps \fIinteger\fP]
 [\-delay \fIusecs\fP]
-[\-no-smooth]
-[\-no-thick]
+[\-font \fIxlfd\fP]
+[\-no\-textures]
+[\-no\-smooth]
+[\-no\-thick]
+[\-fps]
 .SH DESCRIPTION
 The \fIstarwars\fP program runs another program to generate a stream of
 text, then animates that text receeding into the background at an angle,
@@ -71,23 +75,24 @@ won't.
 
 Some examples:
 .EX
-starwars -columns 76 -program 'cat /usr/src/linux*/README'
-starwars -program 'ping www.starwars.com'
-starwars -no-wrap -left -program 'finger @gnu.org'
-starwars -no-wrap -left -program 'ps -ef'
-starwars -no-wrap -left -program 'od -txC /dev/random'
+starwars -program 'cat /usr/src/linux*/README'
+starwars -columns 30 -program 'ping www.starwars.com'
+starwars -left -no-wrap -program 'ps -auxwwf'
+starwars -left -no-wrap -columns 45 -program 'top -bn1'
+starwars -left -columns 40 -program 'od -txC /dev/urandom'
+starwars -font fixed -program 'od -txC /dev/urandom'
 .EE
 .TP 8
 .B \-size \fIinteger\fP
 How large a font to use, in points.  (Well, in some arbitrary unit 
-we're calling "points" for the sake of argument.)  The \fB\-columns\fP
-option overrides this.
+we're calling "points" for the sake of argument.)  Default: 24.
 .TP 8
 .B \-columns \fIinteger\fP
 How many columns of text should be visible on the bottom line of the
-screen.  The default is 80.  This option overrides the \fB\-size\fP
-option: if you specify a number of columns, the font will be scaled
-as needed to fit.
+screen.  Default: 60.
+
+Only one of \fI\-columns\fP and \fI\-size\fP may be specified;
+if both are specified, \fI\-columns\fP takes priority.
 .TP 8
 .B \-wrap
 Word-wrap lines when they reach the rightmost column.  This is the default.
@@ -114,19 +119,35 @@ If the animation looks jerky to you, increase this number.
 .B \-delay \fIusecs\fP
 The delay between steps of the animation; default is 40000 (1/25th second.)
 .TP 8
+.B \-font \fIfont-name\fP
+The name of the font to use.  For best effect, this should be a large
+font (at least 36 points.)  The bigger the font, the better looking the
+characters will be.  Note that the size of this font affects only the
+clarity of the characters, not their size on the screen: for that, use
+the \fI\-size\fP or \fI\-columns\fP options.
+
+Default: -*-utopia-bold-r-normal-*-*-400-*-*-*-*-iso8859-1
+.TP 8
+.B \-no\-textures
+Instead of texture-mapping a real font to render the text, use a
+built-in font composed of line segments.  On graphics cards without
+texture support, the line-segment font will have much better
+performance.
+.TP 8
+.B \-no\-smooth
+When using the line-segment font, turn off anti-aliasing of the lines
+used to draw the font.  This will make the text blockier, but may
+improve performance.
+.TP 8
+.B \-no\-thick
+When using the line-segment font, turn off use of thick lines for the
+characters that are close to the foreground.  This will make the text
+appear unnaturally skinny, but may improve performance.
+.TP 8
 .B \-fps
 Display a running tally of how many frames per second are being rendered.
 In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
 your GL performance.
-.TP 8
-.B \-no\-smooth
-Turn off anti-aliasing of the lines used to draw the font.
-This will make the text blockier, but may improve performance.
-.TP 8
-.B \-no\-thick
-Turn off use of thick lines for the characters that are close to the
-foreground.  This will make the text appear unnaturally skinny, but 
-may improve performance.
 .SH ENVIRONMENT
 .PP
 .TP 8
@@ -149,7 +170,7 @@ stored in the RESOURCE_MANAGER property.
 .BR EtherPEG ,
 .BR EtherPeek
 .SH COPYRIGHT
-Copyright \(co 1998-2004 by Jamie Zawinski and Claudio Matsuoka.
+Copyright \(co 1998-2005 by Jamie Zawinski and Claudio Matsuoka.
 Permission to use, copy, modify, distribute, and sell this software and
 its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

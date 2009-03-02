@@ -1,5 +1,5 @@
 /*
- * starwars, Copyright (c) 1998-2001, 2004 Jamie Zawinski <jwz@jwz.org> and
+ * starwars, Copyright (c) 1998-2005 Jamie Zawinski <jwz@jwz.org> and
  * Claudio Matsuoka <claudio@helllabs.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -11,26 +11,19 @@
  * implied warranty.
  *
  * Star Wars -- Phosphor meets a well-known scroller from a galaxy far,
- *           far away. Hacked by Claudio Matsuoka. Includes portions of
- *           mjk's GLUT library, Copyright (c) 1994, 1995, 1996 by Mark J.
- *           Kilgard. Roman simplex stroke font Copyright (c) 1989, 1990,
- *           1991 by Sun Microsystems, Inc. and the X Consortium.
+ *           far away.
  *
- *      Notes:
- *         - I tried texturized fonts but the roman simplex stroke font
- *           was the most readable for the 80-column text from fortune.
- *         - The proportional font is bad for text from ps(1) or w(1).
- *         - Apparently the RIVA TNT cards for PCs don't like the stars to
- *           be drawn in orthogonal perspective, causing unnecessary system
- *           load.
- *
- *      History:
- *           20000221 claudio   First version
- *           20010124 jwz       Rewrote large sections to add the ability to
+ * Feb 2000 Claudio Matsuoka    First version.
+ * Jan 2001 Jamie Zawinski      Rewrote large sections to add the ability to
  *                              run a subprocess, customization of the font
  *                              size and other parameters, etc.
- *           20010224 jepler@mail.inetnebr.com  made the lines be anti-aliased,
- *                              made the text fade to black at the end.
+ * Feb 2001 jepler@inetnebr.com Added anti-aliased lines, and fade-to-black.
+ * Feb 2005 Jamie Zawinski      Added texture fonts.
+ *
+ *
+ * For the fanboys:
+ *
+ *     starwars -program 'cat starwars.txt' -columns 25 -no-wrap -texture
  */
 
 #include <X11/Intrinsic.h>
@@ -54,31 +47,39 @@ extern XtAppContext app;
 #define DEF_SMOOTH     "True"
 #define DEF_THICK      "True"
 #define DEF_FADE       "True"
+#define DEF_TEXTURES   "True"
+#define DEF_DEBUG      "False"
+
+/* Utopia 480 needs a 2048x2048 texture.
+   Utopia 400 needs a 1024x1024 texture.
+   Utopia 180 needs a 512x512 texture.
+   Times 240 needs a 512x512 texture.
+ */
+#define DEF_FONT       "-*-utopia-bold-r-normal-*-*-400-*-*-*-*-iso8859-1"
 
 #define TAB_WIDTH        8
-
-#define BASE_FONT_SIZE    18 /* magic */
-#define BASE_FONT_COLUMNS 80 /* magic */
 
 #define MAX_THICK_LINES   25
 #define FONT_WEIGHT       14
 #define KEEP_ASPECT
-#undef DEBUG
 
-#define DEFAULTS	"*delay:	40000 \n"		     \
-			"*showFPS:      False \n"		     \
-			"*fpsTop:       True \n"		     \
-			"*program:	" DEF_PROGRAM		"\n" \
-			"*lines:	" DEF_LINES		"\n" \
-			"*spin:		" DEF_SPIN		"\n" \
-			"*steps:	" DEF_STEPS		"\n" \
-                        "*smooth:       " DEF_SMOOTH            "\n" \
-                        "*thick:        " DEF_THICK             "\n" \
-                        "*fade:         " DEF_FADE              "\n" \
-			"*starwars.fontSize: " DEF_FONT_SIZE	"\n" \
-			"*starwars.columns:  " DEF_COLUMNS	"\n" \
-			"*starwars.lineWrap: " DEF_WRAP		"\n" \
-			"*starwars.alignment:" DEF_ALIGN	"\n"
+#define DEFAULTS "*delay:	  40000 \n"		     \
+		 "*showFPS:	  False \n"		     \
+		 "*fpsTop:	  True \n"		     \
+		 "*program:	" DEF_PROGRAM		"\n" \
+		 "*lines:	" DEF_LINES		"\n" \
+		 "*spin:	" DEF_SPIN		"\n" \
+		 "*steps:	" DEF_STEPS		"\n" \
+		 "*smooth:	" DEF_SMOOTH		"\n" \
+		 "*thick:	" DEF_THICK		"\n" \
+		 "*fade:	" DEF_FADE		"\n" \
+		 "*textures:	" DEF_TEXTURES		"\n" \
+		 "*fontSize:	" DEF_FONT_SIZE		"\n" \
+		 "*columns:	" DEF_COLUMNS		"\n" \
+		 "*lineWrap:	" DEF_WRAP		"\n" \
+		 "*alignment:	" DEF_ALIGN		"\n" \
+		 "*font:	" DEF_FONT		"\n" \
+		 "*debug:	" DEF_DEBUG		"\n" \
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -90,6 +91,7 @@ extern XtAppContext app;
 #include <ctype.h>
 #include <GL/glu.h>
 #include <sys/stat.h>
+#include "texfont.h"
 #include "glutstroke.h"
 #include "glut_roman.h"
 #define GLUT_FONT (&glutStrokeRoman)
@@ -103,6 +105,8 @@ typedef struct {
   GLXContext *glx_context;
 
   GLuint text_list, star_list;
+  texture_font_data *texfont;
+  int polygon_count;
 
   FILE *pipe;
   XtInputId pipe_id;
@@ -112,14 +116,15 @@ typedef struct {
   int buf_tail;
   char **lines;
   int total_lines;
-  int columns;
 
   double star_theta;
+  double char_width;
   double line_height;
   double font_scale;
   double intra_line_scroll;
 
-  int line_pixel_height;
+  int line_pixel_width;   /* in font units (for wrapping text) */
+  int line_pixel_height;  /* in screen units (for computing line thickness) */
   GLfloat line_thickness;
 
 } sws_configuration;
@@ -137,42 +142,50 @@ static int wrap_p;
 static int smooth_p;
 static int thick_p;
 static int fade_p;
+static int textures_p;
+static int debug_p;
 static char *alignment_str;
 static int alignment;
 
 static XrmOptionDescRec opts[] = {
-  {"-program",   ".starwars.program",  XrmoptionSepArg, 0 },
-  {"-lines",     ".starwars.lines",    XrmoptionSepArg, 0 },
-  {"-steps",     ".starwars.steps",    XrmoptionSepArg, 0 },
-  {"-spin",      ".starwars.spin",     XrmoptionSepArg, 0 },
-  {"-size",	 ".starwars.fontSize", XrmoptionSepArg, 0 },
-  {"-columns",	 ".starwars.columns",  XrmoptionSepArg, 0 },
-  {"-smooth",    ".starwars.smooth",   XrmoptionNoArg,  "True" },
-  {"-no-smooth", ".starwars.smooth",   XrmoptionNoArg,  "False" },
-  {"-thick",     ".starwars.thick",    XrmoptionNoArg,  "True" },
-  {"-no-thick",  ".starwars.thick",    XrmoptionNoArg,  "False" },
-  {"-fade",      ".starwars.fade",     XrmoptionNoArg,  "True" },
-  {"-no-fade",   ".starwars.fade",     XrmoptionNoArg,  "False" },
-  {"-wrap",	 ".starwars.lineWrap", XrmoptionNoArg,  "True" },
-  {"-no-wrap",	 ".starwars.lineWrap", XrmoptionNoArg,  "False" },
-  {"-nowrap",	 ".starwars.lineWrap", XrmoptionNoArg,  "False" },
-  {"-left",      ".starwars.alignment",XrmoptionNoArg,  "Left" },
-  {"-right",     ".starwars.alignment",XrmoptionNoArg,  "Right" },
-  {"-center",    ".starwars.alignment",XrmoptionNoArg,  "Center" },
+  {"-program",     ".program",   XrmoptionSepArg, 0 },
+  {"-lines",       ".lines",     XrmoptionSepArg, 0 },
+  {"-steps",       ".steps",     XrmoptionSepArg, 0 },
+  {"-spin",        ".spin",      XrmoptionSepArg, 0 },
+  {"-size",	   ".fontSize",  XrmoptionSepArg, 0 },
+  {"-columns",	   ".columns",   XrmoptionSepArg, 0 },
+  {"-font",        ".font",      XrmoptionSepArg, 0 },
+  {"-fade",        ".fade",      XrmoptionNoArg,  "True"   },
+  {"-no-fade",     ".fade",      XrmoptionNoArg,  "False"  },
+  {"-textures",    ".textures",  XrmoptionNoArg,  "True"   },
+  {"-smooth",      ".smooth",    XrmoptionNoArg,  "True"   },
+  {"-no-smooth",   ".smooth",    XrmoptionNoArg,  "False"  },
+  {"-thick",       ".thick",     XrmoptionNoArg,  "True"   },
+  {"-no-thick",    ".thick",     XrmoptionNoArg,  "False"  },
+  {"-no-textures", ".textures",  XrmoptionNoArg,  "False"  },
+  {"-wrap",	   ".lineWrap",  XrmoptionNoArg,  "True"   },
+  {"-no-wrap",	   ".lineWrap",  XrmoptionNoArg,  "False"  },
+  {"-nowrap",	   ".lineWrap",  XrmoptionNoArg,  "False"  },
+  {"-left",        ".alignment", XrmoptionNoArg,  "Left"   },
+  {"-right",       ".alignment", XrmoptionNoArg,  "Right"  },
+  {"-center",      ".alignment", XrmoptionNoArg,  "Center" },
+  {"-debug",       ".debug",     XrmoptionNoArg,  "True"   },
 };
 
 static argtype vars[] = {
-  {&program,        "program",   "Program",    DEF_PROGRAM, t_String},
-  {&max_lines,      "lines",     "Integer",    DEF_LINES,   t_Int},
-  {&scroll_steps,   "steps",     "Integer",    DEF_STEPS,   t_Int},
-  {&star_spin,      "spin",      "Float",      DEF_SPIN,    t_Float},
-  {&font_size,      "fontSize",  "Float",      DEF_STEPS,   t_Float},
-  {&target_columns, "columns",   "Integer",    DEF_COLUMNS, t_Int},
-  {&wrap_p,         "lineWrap",  "Boolean",    DEF_COLUMNS, t_Bool},
-  {&alignment_str,  "alignment", "Alignment", DEF_ALIGN,    t_String},
-  {&smooth_p,       "smooth",    "Boolean",   DEF_SMOOTH,   t_Bool},
-  {&thick_p,        "thick",     "Boolean",   DEF_THICK,    t_Bool},
-  {&fade_p,         "fade",      "Boolean",   DEF_FADE,     t_Bool},
+  {&program,        "program",   "Program",    DEF_PROGRAM,   t_String},
+  {&max_lines,      "lines",     "Integer",    DEF_LINES,     t_Int},
+  {&scroll_steps,   "steps",     "Integer",    DEF_STEPS,     t_Int},
+  {&star_spin,      "spin",      "Float",      DEF_SPIN,      t_Float},
+  {&font_size,      "fontSize",  "Float",      DEF_FONT_SIZE, t_Float},
+  {&target_columns, "columns",   "Integer",    DEF_COLUMNS,   t_Int},
+  {&wrap_p,         "lineWrap",  "Boolean",    DEF_WRAP,      t_Bool},
+  {&alignment_str,  "alignment", "Alignment",  DEF_ALIGN,     t_String},
+  {&smooth_p,       "smooth",    "Boolean",    DEF_SMOOTH,    t_Bool},
+  {&thick_p,        "thick",     "Boolean",    DEF_THICK,     t_Bool},
+  {&fade_p,         "fade",      "Boolean",    DEF_FADE,      t_Bool},
+  {&textures_p,     "textures",  "Boolean",    DEF_TEXTURES,  t_Bool},
+  {&debug_p,        "debug",     "Boolean",    DEF_DEBUG,     t_Bool},
 };
 
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -408,23 +421,52 @@ drain_input (sws_configuration *sc)
 }
 
 
+static int
+string_width (sws_configuration *sc, const char *s)
+{
+  if (textures_p)
+    return texture_string_width (sc->texfont, s, 0);
+  else
+    return glutStrokeLength (GLUT_FONT, (unsigned char *) s);
+}
+
+static int
+char_width (sws_configuration *sc, char c)
+{
+  char s[2];
+  s[0] = c;
+  s[1] = 0;
+  return string_width (sc, s);
+}
+
+
 /* Populates the sc->lines list with as many lines as are currently in
    sc->buf (which was filled by drain_input().
  */
 static void
 get_more_lines (sws_configuration *sc)
 {
+  /* wrap anyway, if it's absurdly long. */
+  int wrap_pix = (wrap_p ? sc->line_pixel_width : 10000);
+  
   int col = 0;
+  int col_pix = 0;
+
   char *s = sc->buf;
   while (sc->total_lines < max_lines)
     {
+      int cw;
+
       if (s >= sc->buf + sc->buf_tail)
         {
           /* Reached end of buffer before end of line.  Bail. */
           return;
         }
 
-      if (*s == '\r' || *s == '\n' || col > sc->columns)
+      cw = char_width (sc, *s);
+
+      if (*s == '\r' || *s == '\n' ||
+          col_pix + cw >= wrap_pix)
         {
           int L = s - sc->buf;
 
@@ -453,7 +495,9 @@ get_more_lines (sws_configuration *sc)
           sc->lines[sc->total_lines] = (char *) malloc (L+1);
           memcpy (sc->lines[sc->total_lines], sc->buf, L);
           sc->lines[sc->total_lines][L] = 0;
-          latin1_to_ascii (sc->lines[sc->total_lines]);
+
+          if (!textures_p)
+            latin1_to_ascii (sc->lines[sc->total_lines]);
 
           {
             char *t = sc->lines[sc->total_lines];
@@ -481,12 +525,18 @@ get_more_lines (sws_configuration *sc)
           sc->buf[sc->buf_tail] = 0;
           s = sc->buf;
           col = 0;
+          col_pix = 0;
         }
       else
         {
           col++;
+          col_pix += cw;
           if (*s == '\t')
-            col = TAB_WIDTH * ((col / TAB_WIDTH) + 1);
+            {
+              int tab_pix = TAB_WIDTH * sc->char_width;
+              col     = TAB_WIDTH * ((col / TAB_WIDTH) + 1);
+              col_pix = tab_pix   * ((col / tab_pix)   + 1);
+            }
           s++;
         }
     }
@@ -494,24 +544,55 @@ get_more_lines (sws_configuration *sc)
 
 
 static void
-draw_string (int x, int y, const char *s)
+draw_string (sws_configuration *sc, GLfloat x, GLfloat y, const char *s)
 {
+  const char *os = s;
   if (!s || !*s) return;
   glPushMatrix ();
   glTranslatef (x, y, 0);
 
-  while (*s)
-    glutStrokeCharacter (GLUT_FONT, *s++);
+  if (textures_p)
+    print_texture_string (sc->texfont, s);
+  else
+    while (*s)
+      glutStrokeCharacter (GLUT_FONT, *s++);
   glPopMatrix ();
+
+  if (debug_p)
+    {
+      GLfloat w;
+      GLfloat h = sc->line_height / sc->font_scale;
+      char c[2];
+      c[1]=0;
+      s = os;
+      if (textures_p) glDisable (GL_TEXTURE_2D);
+      glLineWidth (1);
+      glColor3f (0.4, 0.4, 0.4);
+      glPushMatrix ();
+      glTranslatef (x, y, 0);
+      while (*s)
+        {
+          *c = *s++;
+          w = string_width (sc, c);
+          glBegin (GL_LINE_LOOP);
+          glVertex3f (0, 0, 0);
+          glVertex3f (w, 0, 0);
+          glVertex3f (w, h, 0);
+          glVertex3f (0, h, 0);
+          glEnd();
+          glTranslatef (w, 0, 0);
+        }
+      glPopMatrix ();
+      if (textures_p) glEnable (GL_TEXTURE_2D);
+    }
 }
 
 
-#ifdef DEBUG
 static void
-grid (double width, double height, double spacing, double z)
+grid (double width, double height, double xspacing, double yspacing, double z)
 {
   double x, y;
-  for (y = 0; y <= height/2; y += spacing)
+  for (y = 0; y <= height/2; y += yspacing)
     {
       glBegin(GL_LINES);
       glVertex3f(-width/2,  y, z);
@@ -520,7 +601,7 @@ grid (double width, double height, double spacing, double z)
       glVertex3f( width/2, -y, z);
       glEnd();
     }
-  for (x = 0; x <= width/2; x += spacing)
+  for (x = 0; x <= width/2; x += xspacing)
     {
       glBegin(GL_LINES);
       glVertex3f( x, -height/2, z);
@@ -581,7 +662,6 @@ box (double width, double height, double depth)
   glVertex3f( width/2,   height/2, -depth/2);
   glEnd();
 }
-#endif /* DEBUG */
 
 
 /* Construct stars (number of stars is dependent on size of screen) */
@@ -590,7 +670,8 @@ init_stars (ModeInfo *mi, int width, int height)
 {
   sws_configuration *sc = &scs[MI_SCREEN(mi)];
   int i, j;
-  int nstars = width * height / 320;
+  int size = (width > height ? width : height);
+  int nstars = size * size / 320;
   int max_size = 3;
   GLfloat inc = 0.5;
   int steps = max_size / inc;
@@ -610,8 +691,8 @@ init_stars (ModeInfo *mi, int width, int height)
           glColor3f (0.6 + frand(0.3),
                      0.6 + frand(0.3),
                      0.6 + frand(0.3));
-          glVertex2f (2 * width  * (0.5 - frand(1.0)),
-                      2 * height * (0.5 - frand(1.0)));
+          glVertex2f (2 * size * (0.5 - frand(1.0)),
+                      2 * size * (0.5 - frand(1.0)));
         }
       glEnd ();
     }
@@ -632,21 +713,33 @@ reshape_sws (ModeInfo *mi, int width, int height)
     GLfloat desired_aspect = (GLfloat) 3/4;
     int w = mi->xgwa.width;
     int h = mi->xgwa.height;
+    int yoff = 0;
 
 #ifdef KEEP_ASPECT
-    h = w * desired_aspect;
+    {
+      int h2 = w * desired_aspect;
+      yoff = (h - h2) / 2;      /* Wide window: letterbox at top and bottom. */
+      if (yoff < 0) yoff = 0;   /* Tall window: clip off the top. */
+      h = h2;
+    }
 #endif
 
     glMatrixMode (GL_PROJECTION);
-    glViewport (0, 0, w, h);
+    glViewport (0, yoff, w, h);
 
     glMatrixMode (GL_MODELVIEW);
     glLoadIdentity ();
-    gluPerspective (80.0, 1/desired_aspect, 10, 500000);
+    gluPerspective (80.0, 1/desired_aspect, 1000, 55000);
     gluLookAt (0.0, 0.0, 4600.0,
                0.0, 0.0, 0.0,
                0.0, 1.0, 0.0);
     glRotatef (-60.0, 1.0, 0.0, 0.0);
+
+#if 0
+    glRotatef (60.0, 1.0, 0.0, 0.0);
+    glTranslatef (260, 3200, 0);
+    glScalef (1.85, 1.85, 1);
+#endif
 
     /* The above gives us an arena where the bottom edge of the screen is
        represented by the line (-2100,-3140,0) - ( 2100,-3140,0). */
@@ -698,7 +791,7 @@ gl_init (ModeInfo *mi)
   glDisable (GL_LIGHTING);
   glDisable (GL_DEPTH_TEST);
 
-  if (smooth_p) 
+  if (smooth_p)
     {
       glEnable (GL_LINE_SMOOTH);
       glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
@@ -745,26 +838,50 @@ init_sws (ModeInfo *mi)
     init_stars (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   }
 
-
-  font_height = GLUT_FONT->top - GLUT_FONT->bottom;
-  sc->font_scale = 1.0 / glutStrokeWidth (GLUT_FONT, 'z');   /* 'n' seems
-                                                                too wide */
-  if (target_columns > 0)
+  if (textures_p)
     {
-      sc->columns = target_columns;
+      int cw, lh;
+      sc->texfont = load_texture_font (MI_DISPLAY(mi), "font");
+      cw = texture_string_width (sc->texfont, "n", &lh);
+      sc->char_width = cw;
+      font_height = lh;
+      glEnable(GL_ALPHA_TEST);
+      glEnable (GL_TEXTURE_2D);
     }
   else
     {
-      if (font_size <= 0)
-        font_size = BASE_FONT_SIZE;
-      sc->columns = BASE_FONT_COLUMNS * ((double) BASE_FONT_SIZE / font_size);
+      font_height = GLUT_FONT->top - GLUT_FONT->bottom;
+      sc->char_width = glutStrokeWidth (GLUT_FONT, 'z'); /* 'n' seems wide */
     }
+  
+  sc->font_scale = 1.0 / sc->char_width;
 
-  sc->font_scale /= sc->columns;
+
+  /* We consider a font that consumes 80 columns to be "18 points".
+
+     If neither -size nor -columns was specified, default to 60 columns
+     (which is 24 points.)
+
+     If both were specified, -columns has priority.
+   */
+  {
+    int base_col  = 80;
+    int base_size = 18;
+
+    if (target_columns <= 0 && font_size <= 0)
+      target_columns = 60;
+
+    if (target_columns > 0)
+      font_size = base_size * (base_col / (double) target_columns);
+    else if (font_size > 0)
+      target_columns = base_col * (base_size / (double) font_size);
+  }
+
+  sc->line_pixel_width = target_columns * sc->char_width;
+
+  sc->font_scale /= target_columns;
   sc->line_height = font_height * sc->font_scale;
 
-
-  if (!wrap_p) sc->columns = 1000;  /* wrap anyway, if it's absurdly long. */
 
   sc->subproc_relaunch_delay = 2 * 1000;
   sc->total_lines = max_lines-1;
@@ -813,7 +930,9 @@ draw_stars (ModeInfo *mi)
                -0.5 * MI_HEIGHT(mi), 0.5 * MI_HEIGHT(mi),
                -100.0, 100.0);
       glRotatef (sc->star_theta, 0.0, 0.0, 1.0);
+      if (textures_p) glDisable (GL_TEXTURE_2D);
       glCallList (sc->star_list);
+      if (textures_p) glEnable (GL_TEXTURE_2D);
     }
     glPopMatrix ();
   }
@@ -845,21 +964,30 @@ draw_sws (ModeInfo *mi)
   glMatrixMode (GL_MODELVIEW);
   glPushMatrix ();
 
-#ifdef DEBUG
-  glColor3f (0.4, 0.4, 0.4);
-  glLineWidth (1);
-  glTranslatef(0, 1, 0);
-  box (1, 1, 1);
-  glTranslatef(0, -1, 0);
-  box (1, 1, 1);
-  grid (1, 1, sc->line_height, 0);
-#endif /* DEBUG */
+  if (debug_p)
+    {
+      int i;
+      glPushMatrix ();
+      if (textures_p) glDisable (GL_TEXTURE_2D);
+      glLineWidth (1);
+      glColor3f (0.4, 0.4, 0.4);
+      glTranslatef (0,-1, 0);
+      for (i = 0; i < 16; i++)
+        {
+          box (1, 1, 1);
+          grid (1, 1, sc->char_width * sc->font_scale, sc->line_height, 0);
+          glTranslatef(0, 1, 0);
+        }
+      if (textures_p) glEnable (GL_TEXTURE_2D);
+      glPopMatrix ();
+    }
 
   /* Scroll to current position */
   glTranslatef (0.0, sc->intra_line_scroll, 0.0);
 
   glColor3f (1.0, 1.0, 0.4);
   glCallList (sc->text_list);
+  mi->polygon_count = sc->polygon_count;
 
   sc->intra_line_scroll += sc->line_height / scroll_steps;
 
@@ -891,10 +1019,12 @@ draw_sws (ModeInfo *mi)
       glDeleteLists (sc->text_list, 1);
       sc->text_list = glGenLists (1);
       glNewList (sc->text_list, GL_COMPILE);
+      sc->polygon_count = 0;
       glPushMatrix ();
       glScalef (sc->font_scale, sc->font_scale, sc->font_scale);
       for (i = 0; i < sc->total_lines; i++)
         {
+          double fade = (fade_p ? 1.0 * i / sc->total_lines : 1.0);
           int offscreen_lines = 3;
 
           double x = -0.5;
@@ -902,15 +1032,19 @@ draw_sws (ModeInfo *mi)
                        * sc->line_height);
           double xoff = 0;
           char *line = sc->lines[i];
-#ifdef DEBUG
-          char n[20];
-          sprintf(n, "%d:", i);
-          draw_string (x / sc->font_scale, y / sc->font_scale, n);
-#endif /* DEBUG */
+
+          if (debug_p)
+            {
+              double xx = x * 1.4;  /* a little more to the left */
+              char n[20];
+              sprintf(n, "%d:", i);
+              draw_string (sc, xx / sc->font_scale, y / sc->font_scale, n);
+            }
+
           if (!line || !*line)
             continue;
 
-          if (sc->line_thickness != 1)
+          if (sc->line_thickness != 1 && !textures_p)
             {
               int max_thick_lines = MAX_THICK_LINES;
               GLfloat thinnest_line = 1.0;
@@ -931,19 +1065,19 @@ draw_sws (ModeInfo *mi)
             }
 
           if (alignment >= 0)
-            xoff = 1.0 - (glutStrokeLength(GLUT_FONT,
-                                           (unsigned char *) line)
-                          * sc->font_scale);
+            {
+              int n = string_width (sc, line);
+              xoff = 1.0 - (n * sc->font_scale);
+            }
+
           if (alignment == 0)
             xoff /= 2;
 
-          if (fade_p)
-            {
-              double factor = 1.0 * i / sc->total_lines;
-              glColor3f (factor, factor, 0.5 * factor);
-            }
-
-          draw_string ((x + xoff) / sc->font_scale, y / sc->font_scale, line);
+          glColor3f (fade, fade, 0.5 * fade);
+          draw_string (sc, (x + xoff) / sc->font_scale, y / sc->font_scale,
+                       line);
+          if (textures_p)
+            sc->polygon_count += strlen (line);
         }
       glPopMatrix ();
       glEndList ();

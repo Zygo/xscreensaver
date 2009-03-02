@@ -112,7 +112,7 @@ prepare_screen(ModeInfo * mi, slipstruct * sp)
 #ifdef STANDALONE			  /* jwz -- sometimes hack the desktop image! */
 	if (halfrandom(sp, 2) == 0) {
       load_random_image (DefaultScreenOfDisplay(display),
-				  MI_WINDOW(mi), MI_WINDOW(mi), NULL);
+				  MI_WINDOW(mi), MI_WINDOW(mi), NULL, NULL);
 	}
 #endif
 

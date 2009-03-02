@@ -1,5 +1,5 @@
 /* test-randr.c --- playing with the Resize And Rotate extension.
- * xscreensaver, Copyright (c) 2004 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2004, 2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -134,6 +134,9 @@ main (int argc, char **argv)
             XRRConfigCurrentConfiguration (rrc, &current_rotation);
 
           /* Times */
+# if 0    /* #### This is wrong -- I don't understand what these two
+                  timestamp numbers represent, or how they correlate
+                  to the wall clock or to each other. */
           {
             Time server_time, config_time;
             server_time = XRRConfigTimes (rrc, &config_time);
@@ -144,6 +147,7 @@ main (int argc, char **argv)
               fprintf (stderr, "%s:   config changed %lu seconds ago\n",
                        blurb(), (unsigned long) (server_time - config_time));
           }
+# endif
 
           /* Rotations */
           {

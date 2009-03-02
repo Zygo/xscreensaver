@@ -4,8 +4,8 @@
             a screen saver and locker for the X window system
                             by Jamie Zawinski
 
-                              version 4.19
-                               16-Dec-2004
+                              version 4.20
+                               23-Feb-2005
 
                      http://www.jwz.org/xscreensaver/
 
@@ -131,10 +131,9 @@ The tags and parameters used here are:
 
         This creates a selection popup menu.
 
-        Options should have _arg-set, and never _arg-unset.
+        Options should have _arg-set (_arg-unset is not used here.)
 
-        One of the menu items (the default) should have no
-        _arg-set.
+        One of the menu items (the default) should have no _arg-set.
 
 -----------------------------------------------------------------------
 
@@ -143,7 +142,7 @@ The tags and parameters used here are:
            arg="-SWITCH %"
            />
 
-        This creates a text entry field.  Options should be obvious.
+        This creates a text entry field.
 
 -----------------------------------------------------------------------
 

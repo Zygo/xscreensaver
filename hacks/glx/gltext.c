@@ -1,4 +1,4 @@
-/* gltext, Copyright (c) 2001, 2002, 2003, 2004 Jamie Zawinski <jwz@jwz.org>
+/* gltext, Copyright (c) 2001-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -252,7 +252,7 @@ text_handle_event (ModeInfo *mi, XEvent *event)
   text_configuration *tp = &tps[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       tp->button_down_p = True;
       gltrackball_start (tp->trackball,
@@ -261,9 +261,17 @@ text_handle_event (ModeInfo *mi, XEvent *event)
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       tp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (tp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
       return True;
     }
   else if (event->xany.type == MotionNotify &&
@@ -396,7 +404,7 @@ fill_character (GLUTstrokeFont font, int c, Bool wire)
             ly = coord->y;
           }
       }
-      return (int) (ch->right + tube_width/2);
+      return (int) (ch->right + tube_width);
     }
   return 0;
 }

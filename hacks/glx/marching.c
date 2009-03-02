@@ -17,16 +17,14 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <GL/gl.h>
 #include "marching.h"
+#include "normals.h"
 
 extern char *progname;
 
 #undef ABS
 #define ABS(x) ((x)<0?(-(x)):(x))
-
-typedef struct {
-   double x,y,z;
-} XYZ;
 
 typedef struct {
    XYZ p[3];
@@ -463,47 +461,6 @@ march_one_cube (GRIDCELL grid, double isolevel, TRIANGLE *triangles)
 /* Walking the grid.  By jwz.
  */
 
-#include <GL/gl.h>
-
-/* Normalise a vector */
-static void
-normalize (XYZ *p)
-{
-  double length;
-  length = sqrt(p->x * p->x + p->y * p->y + p->z * p->z);
-  if (length != 0) {
-    p->x /= length;
-    p->y /= length;
-    p->z /= length;
-  } else {
-    p->x = 0;
-    p->y = 0;
-    p->z = 0;
-  }       
-}
-
-
-/* Calculate the unit normal at p given two other points 
-   p1,p2 on the surface. The normal points in the direction 
-   of p1 crossproduct p2
- */
-static void
-do_plane_normal (XYZ p, XYZ p1, XYZ p2)
-{
-  XYZ n, pa, pb;
-  pa.x = p1.x - p.x;
-  pa.y = p1.y - p.y;
-  pa.z = p1.z - p.z;
-  pb.x = p2.x - p.x;
-  pb.y = p2.y - p.y;
-  pb.z = p2.z - p.z;
-  n.x = pa.y * pb.z - pa.z * pb.y;
-  n.y = pa.z * pb.x - pa.x * pb.z;
-  n.z = pa.x * pb.y - pa.y * pb.x;
-  normalize (&n);
-  glNormal3f (n.x, n.y, n.z);
-}
-
 
 /* Computes the normal of the scalar field at the given point,
    for vertex normals (as opposed to face normals.)
@@ -519,7 +476,7 @@ do_function_normal (double x, double y, double z,
   n.x = compute_fn (x-off, y, z, c) - compute_fn (x+off, y, z, c);
   n.y = compute_fn (x, y-off, z, c) - compute_fn (x, y+off, z, c);
   n.z = compute_fn (x, y, z-off, c) - compute_fn (x, y, z+off, c);
-  normalize (&n);
+  /* normalize (&n); */
   glNormal3f (n.x, n.y, n.z);
 }
 
@@ -642,7 +599,9 @@ marching_cubes (int grid_size,     /* density of the mesh */
                    this triangle.
                  */
                 if (!smooth_p)
-                  do_plane_normal (tri[i].p[0], tri[i].p[1], tri[i].p[2]);
+                  do_normal (tri[i].p[0].x, tri[i].p[0].y, tri[i].p[0].z,
+                             tri[i].p[1].x, tri[i].p[1].y, tri[i].p[1].z,
+                             tri[i].p[2].x, tri[i].p[2].y, tri[i].p[2].z);
 
 # define VERT(X,Y,Z) \
                 if (smooth_p) \

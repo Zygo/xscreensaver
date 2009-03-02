@@ -44,7 +44,9 @@ extern XtAppContext app;
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 
 #include "xlockmore.h"
+#include "normals.h"
 #include "gltrackball.h"
+#include "glxfonts.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -81,6 +83,7 @@ typedef struct {
   int coax_p;                /* whether this is one of a pair of bound gears.
                                 1 for first, 2 for second. */
   double coax_thickness;     /* thickness of the other gear in the pair */
+  enum { SMALL, MEDIUM, LARGE } size;	/* Controls complexity of mesh. */
   GLfloat color[4];
   GLfloat color2[4];
 
@@ -147,179 +150,19 @@ static argtype vars[] = {
 ModeSpecOpt sws_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 
-/* Computing normal vectors
- */
-
-typedef struct {
-  double x,y,z;
-} XYZ;
-
-/* Calculate the unit normal at p given two other points p1,p2 on the
-   surface. The normal points in the direction of p1 crossproduct p2
- */
-static XYZ
-calc_normal (XYZ p, XYZ p1, XYZ p2)
-{
-  XYZ n, pa, pb;
-  pa.x = p1.x - p.x;
-  pa.y = p1.y - p.y;
-  pa.z = p1.z - p.z;
-  pb.x = p2.x - p.x;
-  pb.y = p2.y - p.y;
-  pb.z = p2.z - p.z;
-  n.x = pa.y * pb.z - pa.z * pb.y;
-  n.y = pa.z * pb.x - pa.x * pb.z;
-  n.z = pa.x * pb.y - pa.y * pb.x;
-  return (n);
-}
-
-static void
-do_normal(GLfloat x1, GLfloat y1, GLfloat z1,
-          GLfloat x2, GLfloat y2, GLfloat z2,
-          GLfloat x3, GLfloat y3, GLfloat z3)
-{
-  XYZ p1, p2, p3, p;
-  p1.x = x1; p1.y = y1; p1.z = z1;
-  p2.x = x2; p2.y = y2; p2.z = z2;
-  p3.x = x3; p3.y = y3; p3.z = z3;
-  p = calc_normal (p1, p2, p3);
-  glNormal3f (p.x, p.y, p.z);
-}
-
-
 /* Font stuff
  */
-
-static void
-load_font (ModeInfo *mi, char *res, XFontStruct **fontP, GLuint *dlistP)
-{
-  const char *font = get_string_resource (res, "Font");
-  XFontStruct *f;
-  Font id;
-  int first, last;
-
-  if (!font) font = "-*-times-bold-r-normal-*-180-*";
-
-  f = XLoadQueryFont(mi->dpy, font);
-  if (!f) f = XLoadQueryFont(mi->dpy, "fixed");
-
-  id = f->fid;
-  first = f->min_char_or_byte2;
-  last = f->max_char_or_byte2;
-  
-  clear_gl_error ();
-  *dlistP = glGenLists ((GLuint) last+1);
-  check_gl_error ("glGenLists");
-  glXUseXFont(id, first, last-first+1, *dlistP + first);
-  check_gl_error ("glXUseXFont");
-
-  *fontP = f;
-}
-
 
 static void
 load_fonts (ModeInfo *mi)
 {
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
-  load_font (mi, "titleFont",  &pp->xfont1, &pp->font1_dlist);
-  load_font (mi, "titleFont2", &pp->xfont2, &pp->font2_dlist);
-  load_font (mi, "titleFont3", &pp->xfont3, &pp->font3_dlist);
+  load_font (mi->dpy, "titleFont",  &pp->xfont1, &pp->font1_dlist);
+  load_font (mi->dpy, "titleFont2", &pp->xfont2, &pp->font2_dlist);
+  load_font (mi->dpy, "titleFont3", &pp->xfont3, &pp->font3_dlist);
 }
 
 
-static int
-string_width (XFontStruct *f, const char *c)
-{
-  int w = 0;
-  while (*c)
-    {
-      int cc = *((unsigned char *) c);
-      w += (f->per_char
-            ? f->per_char[cc-f->min_char_or_byte2].rbearing
-            : f->min_bounds.rbearing);
-      c++;
-    }
-  return w;
-}
-
-static void
-print_title_string (ModeInfo *mi, const char *string,
-                    GLfloat x, GLfloat y,
-                    XFontStruct *font, int font_dlist)
-{
-  GLfloat line_height = font->ascent + font->descent;
-  GLfloat sub_shift = (line_height * 0.3);
-  int cw = string_width (font, "m");
-  int tabs = cw * 7;
-
-  y -= line_height;
-
-  glPushAttrib (GL_TRANSFORM_BIT |  /* for matrix contents */
-                GL_ENABLE_BIT);     /* for various glDisable calls */
-  glDisable (GL_LIGHTING);
-  glDisable (GL_DEPTH_TEST);
-  {
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    {
-      glLoadIdentity();
-
-      glMatrixMode(GL_MODELVIEW);
-      glPushMatrix();
-      {
-        int i;
-        int x2 = x;
-        Bool sub_p = False;
-        glLoadIdentity();
-
-        gluOrtho2D (0, mi->xgwa.width, 0, mi->xgwa.height);
-
-        glColor3f (0.8, 0.8, 0);
-
-        glRasterPos2f (x, y);
-        for (i = 0; i < strlen(string); i++)
-          {
-            char c = string[i];
-            if (c == '\n')
-              {
-                glRasterPos2f (x, (y -= line_height));
-                x2 = x;
-              }
-            else if (c == '\t')
-              {
-                x2 -= x;
-                x2 = ((x2 + tabs) / tabs) * tabs;  /* tab to tab stop */
-                x2 += x;
-                glRasterPos2f (x2, y);
-              }
-            else if (c == '[' && (isdigit (string[i+1])))
-              {
-                sub_p = True;
-                glRasterPos2f (x2, (y -= sub_shift));
-              }
-            else if (c == ']' && sub_p)
-              {
-                sub_p = False;
-                glRasterPos2f (x2, (y += sub_shift));
-              }
-            else
-              {
-                glCallList (font_dlist + (int)(c));
-                x2 += (font->per_char
-                       ? font->per_char[c - font->min_char_or_byte2].width
-                       : font->min_bounds.width);
-              }
-          }
-      }
-      glPopMatrix();
-    }
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-  }
-  glPopAttrib();
-
-  glMatrixMode(GL_MODELVIEW);
-}
 
 static void rpm_string (double rpm, char *s);
 
@@ -345,6 +188,12 @@ new_label (ModeInfo *mi)
     {
       sprintf (label, "%d teeth\n", g->nteeth);
       rpm_string (g->rpm, label + strlen(label));
+      if (debug_p)
+        sprintf (label + strlen (label), "\nPolys:  %d\nModel:  %s  (%.2f)\n",
+                 g->polygons,
+                 (g->size == SMALL ? "small" : g->size == MEDIUM ? "medium"
+                  : "large"),
+                 g->tooth_h * MI_HEIGHT(mi));
     }
 
   glNewList (pp->title_list, GL_COMPILE);
@@ -359,9 +208,11 @@ new_label (ModeInfo *mi)
       else
         f = pp->xfont3, fl = pp->font3_dlist;                  /* tiny font */
 
-      print_title_string (mi, label,
-                          10, mi->xgwa.height - 10,
-                          f, fl);
+      glColor3f (0.8, 0.8, 0);
+      print_gl_string (mi->dpy, f, fl,
+                       mi->xgwa.width, mi->xgwa.height,
+                       10, mi->xgwa.height - 10,
+                       label);
     }
   glEndList ();
 }
@@ -483,7 +334,6 @@ biggest_ring (gear *g, double *posP, double *sizeP, double *heightP)
 static gear *
 new_gear (ModeInfo *mi, gear *parent, Bool coaxial_p)
 {
-  /* pinion_configuration *pp = &pps[MI_SCREEN(mi)]; */
   gear *g = (gear *) calloc (1, sizeof (*g));
   int loop_count = 0;
   static unsigned long id = 0;
@@ -639,6 +489,15 @@ new_gear (ModeInfo *mi, gear *parent, Bool coaxial_p)
   if (g->inner_r3 > g->inner_r2) abort();
   if (g->inner_r2 > g->inner_r) abort();
   if (g->inner_r  > g->r) abort();
+
+  /* Decide how complex the polygon model should be.
+   */
+  {
+    double pix = g->tooth_h * MI_HEIGHT(mi); /* approx. tooth size in pixels */
+    if (pix <= 2.5)      g->size = SMALL;
+    else if (pix <= 3.5) g->size = MEDIUM;
+    else                 g->size = LARGE;
+  }
 
   g->base_p = !parent;
 
@@ -1212,6 +1071,7 @@ scroll_gears (ModeInfo *mi)
       else
         break;
       i++;
+      if (debug_one_gear_p) break;
     }
 
   /*
@@ -1250,6 +1110,7 @@ static void
 ffwd (ModeInfo *mi)
 {
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
+  if (debug_one_gear_p) return;
   while (1)
     {
       gear *g = farthest_gear (mi, True);
@@ -1358,8 +1219,8 @@ draw_disc (ModeInfo *mi, int segments,
       if (wire_p || ra != 0)
         glVertex3f (cth * ra, sth * ra, z);
       glVertex3f (cth * rb, sth * rb, z);
-      polys++;
     }
+  polys += segments;
   glEnd();
   return polys;
 }
@@ -1489,7 +1350,7 @@ draw_gear_nubs (ModeInfo *mi, gear *g)
   Bool wire_p = MI_IS_WIREFRAME(mi);
   int polys = 0;
   int i;
-  int steps = 20;
+  int steps = (g->size != LARGE ? 5 : 20);
   double r, size, height;
   GLfloat *cc;
   int which;
@@ -1514,7 +1375,8 @@ draw_gear_nubs (ModeInfo *mi, gear *g)
       glTranslatef (cos(th) * r, sin(th) * r, 0);
 
       if (wire_p && !wire_all_p)
-        polys += draw_ring (mi, steps/2, size, 0, 0, False);
+        polys += draw_ring (mi, (g->size == LARGE ? steps/2 : steps),
+                            size, 0, 0, False);
       else
         {
           polys += draw_disc (mi, steps, 0, size, -height, True);
@@ -1576,7 +1438,8 @@ draw_gear_interior (ModeInfo *mi, gear *g)
 
   int steps = g->nteeth * 2;
   if (steps < 10) steps = 10;
-  if (wire_p && !wire_all_p) steps /= 2;
+  if ((wire_p && !wire_all_p) || g->size != LARGE) steps /= 2;
+  if (g->size != LARGE && steps > 16) steps = 16;
 
   /* ring 1 (facing in) is done in draw_gear_teeth */
 
@@ -1584,8 +1447,8 @@ draw_gear_interior (ModeInfo *mi, gear *g)
    */
   if (g->inner_r2)
     {
-      GLfloat ra = g->inner_r;
-      GLfloat rb = g->inner_r2;
+      GLfloat ra = g->inner_r * 1.04;  /* slightly larger than inner_r */
+      GLfloat rb = g->inner_r2;        /*  since the points don't line up */
       GLfloat za = -g->thickness2/2;
       GLfloat zb =  g->thickness2/2;
 
@@ -1659,10 +1522,10 @@ draw_gear_interior (ModeInfo *mi, gear *g)
 }
 
 
-/* Computes the vertices and normals of the teeth of a gear.
-   This is the heavy lifting: there are a ton of polygons around the
-   perimiter of a gear, and the normals are difficult (not radial
-   or right angles.)
+/* gear_teeth_geometry computes the vertices and normals of the teeth
+   of a gear.  This is the heavy lifting: there are a ton of polygons
+   around the perimiter of a gear, and the normals are difficult (not
+   radial or right angles.)
 
    It would be nice if we could cache this, but the numbers are
    different for essentially every gear:
@@ -1679,26 +1542,59 @@ draw_gear_interior (ModeInfo *mi, gear *g)
    us -- we only compute all these normals once per gear, instead of
    once per gear per frame.
  */
+
+typedef struct {
+  int npoints;
+  XYZ *points;
+  XYZ *fnormals;  /* face normals */
+  XYZ *pnormals;  /* point normals */
+} tooth_face;
+
+
 static void
-gear_teeth_geometry (ModeInfo *mi, gear *g,
-                     int *points_per_tooth_ret,
-                     XYZ **points_ret,
-                     XYZ **normals_ret)
+tooth_normals (tooth_face *f)
 {
   int i;
 
-  int ppt = 15; /* points per tooth */
+  /* Compute the face normals for each facet. */
+  for (i = 0; i < f->npoints; i++)
+    {
+      XYZ p1, p2, p3;
+      int a = i;
+      int b = (i == f->npoints-1 ? 0 : i+1);
+      p1 = f->points[a];
+      p2 = f->points[b];
+      p3 = p1;
+      p3.z++;
+      f->fnormals[i] = calc_normal (p1, p2, p3);
+    }
 
+  /* From the face normals, compute the vertex normals
+     (by averaging the normals of adjascent faces.)
+   */
+  for (i = 0; i < f->npoints; i++)
+    {
+      int a = (i == 0 ? f->npoints-1 : i-1);
+      int b = i;
+      XYZ n1 = f->fnormals[a];   /* normal of [i-1 - i] face */
+      XYZ n2 = f->fnormals[b];   /* normal of [i - i+1] face */
+      f->pnormals[i].x = (n1.x + n2.x) / 2;
+      f->pnormals[i].y = (n1.y + n2.y) / 2;
+      f->pnormals[i].z = (n1.z + n2.z) / 2;
+    }
+}
+
+
+static void
+gear_teeth_geometry (ModeInfo *mi, gear *g,
+                     tooth_face *orim,      /* outer rim (the teeth) */
+                     tooth_face *irim)      /* inner rim (the hole)  */
+{
+  int i;
+  int ppt = 9;   /* max points per tooth */
   GLfloat width = M_PI * 2 / g->nteeth;
-
   GLfloat rh = g->tooth_h;
   GLfloat tw = width;
-  GLfloat fudge = (g->nteeth >= 5 ? 0 : 0.04);   /* reshape small ones a bit */
-
-  XYZ *points   = (XYZ *) calloc (ppt * g->nteeth + 1, sizeof(*points));
-  XYZ *fnormals = (XYZ *) calloc (ppt * g->nteeth + 1, sizeof(*points));
-  XYZ *pnormals = (XYZ *) calloc (ppt * g->nteeth + 1, sizeof(*points));
-  int npoints = 0;
 
   /* Approximate shape of an "involute" gear tooth.
 
@@ -1725,36 +1621,44 @@ gear_teeth_geometry (ModeInfo *mi, gear *g,
         r4 ......__:_____________________________:________________
    */
 
-  GLfloat R = g->r;
-
   GLfloat r[20];
   GLfloat th[20];
+  GLfloat R = g->r;
 
   r[0] = R + (rh * 0.5);
   r[1] = R + (rh * 0.25);
-  r[2] = R - (rh * 0.25);
-  r[3] = R - (rh * 0.5);
+  r[2] = R - (r[1]-R);
+  r[3] = R - (r[0]-R);
   r[4] = g->inner_r;
 
-  th[0] = -tw * 0.45;
+  th[0] = -tw * (g->size == SMALL ? 0.5 : g->size == MEDIUM ? 0.41 : 0.45);
   th[1] = -tw * 0.30;
-  th[2] = -tw *(0.16 - fudge);
-  th[3] = -tw * 0.04;
+  th[2] = -tw * (g->nteeth >= 5 ? 0.16 : 0.12);
+  th[3] = -tw * (g->size == MEDIUM ? 0.1 : 0.04);
   th[4] =  0;
-  th[5] =  tw * 0.04;
-  th[6] =  tw *(0.16 - fudge);
-  th[7] =  tw * 0.30;
-  th[8] =  tw * 0.45;
+  th[5] =  -th[3];
+  th[6] =  -th[2];
+  th[7] =  -th[1];
+  th[8] =  -th[0];
   th[9] =  width / 2;
   th[10]=  th[0] + width;
 
-  if (!points || !fnormals || !pnormals)
+  orim->npoints  = 0;
+  orim->points   = (XYZ *) calloc(ppt * g->nteeth+1, sizeof(*orim->points));
+  orim->fnormals = (XYZ *) calloc(ppt * g->nteeth+1, sizeof(*orim->fnormals));
+  orim->pnormals = (XYZ *) calloc(ppt * g->nteeth+1, sizeof(*orim->pnormals));
+
+  irim->npoints  = 0;
+  irim->points   = (XYZ *) calloc(ppt * g->nteeth+1, sizeof(*irim->points));
+  irim->fnormals = (XYZ *) calloc(ppt * g->nteeth+1, sizeof(*irim->fnormals));
+  irim->pnormals = (XYZ *) calloc(ppt * g->nteeth+1, sizeof(*irim->pnormals));
+
+  if (!orim->points || !orim->pnormals || !orim->fnormals ||
+      !irim->points || !irim->pnormals || !irim->fnormals)
     {
       fprintf (stderr, "%s: out of memory\n", progname);
       exit (1);
     }
-
-  npoints = 0;
 
   /* First, compute the coordinates of every point used for every tooth.
    */
@@ -1763,97 +1667,47 @@ gear_teeth_geometry (ModeInfo *mi, gear *g,
       GLfloat TH = (i * width) + (width/4);
 
 #     undef PUSH
-#     define PUSH(PR,PTH) \
-        points[npoints].x = cos(TH+th[(PTH)]) * r[(PR)]; \
-        points[npoints].y = sin(TH+th[(PTH)]) * r[(PR)]; \
-        npoints++
+#     define PUSH(OPR,IPR,PTH) \
+        orim->points[orim->npoints].x = cos(TH+th[(PTH)]) * r[(OPR)]; \
+        orim->points[orim->npoints].y = sin(TH+th[(PTH)]) * r[(OPR)]; \
+        orim->npoints++; \
+        irim->points[irim->npoints].x = cos(TH+th[(PTH)]) * r[(IPR)]; \
+        irim->points[irim->npoints].y = sin(TH+th[(PTH)]) * r[(IPR)]; \
+        irim->npoints++
 
-      /* start1 = npoints; */
-
-      PUSH(3, 0);       /* tooth left 1 */
-      PUSH(2, 1);       /* tooth left 2 */
-      PUSH(1, 2);       /* tooth left 3 */
-      PUSH(0, 3);       /* tooth top 1 */
-      PUSH(0, 5);       /* tooth top 2 */
-      PUSH(1, 6);       /* tooth right 1 */
-      PUSH(2, 7);       /* tooth right 2 */
-      PUSH(3, 8);       /* tooth right 3 */
-      PUSH(3, 10);      /* gap top */
-
-      /* end1   = npoints; */
-
-      PUSH(4, 8);       /* gap interior */
-
-      /* start2 = npoints; */
-
-      PUSH(4, 10);      /* tooth interior 1 */
-      PUSH(4, 8);       /* tooth interior 2 */
-      PUSH(4, 4);       /* tooth bottom 1 */
-      PUSH(4, 0);       /* tooth bottom 2 */
-
-      /* end2 = npoints; */
-
-      PUSH(3, 4);       /* midpoint */
-
-      /* mid = npoints-1; */
-
-      if (i == 0 && npoints != ppt) abort();  /* go update "ppt"! */
+      if (g->size == SMALL)
+        {
+          PUSH(3, 4, 0);       /* tooth left 1 */
+          PUSH(0, 4, 4);       /* tooth top middle */
+        }
+      else if (g->size == MEDIUM)
+        {
+          PUSH(3, 4, 0);       /* tooth left 1 */
+          PUSH(0, 4, 3);       /* tooth top left */
+          PUSH(0, 4, 5);       /* tooth top right */
+          PUSH(3, 4, 8);       /* tooth right 3 */
+        }
+      else if (g->size == LARGE)
+        {
+          PUSH(3, 4, 0);       /* tooth left 1 */
+          PUSH(2, 4, 1);       /* tooth left 2 */
+          PUSH(1, 4, 2);       /* tooth left 3 */
+          PUSH(0, 4, 3);       /* tooth top left */
+          PUSH(0, 4, 5);       /* tooth top right */
+          PUSH(1, 4, 6);       /* tooth right 1 */
+          PUSH(2, 4, 7);       /* tooth right 2 */
+          PUSH(3, 4, 8);       /* tooth right 3 */
+          PUSH(3, 4, 9);       /* gap top */
+        }
+      else
+        abort();
 #     undef PUSH
+
+      if (i == 0 && orim->npoints > ppt) abort();  /* go update "ppt"! */
     }
 
-
-  /* Now compute the face normals for each facet on the tooth rim.
-   */
-  for (i = 0; i < npoints; i++)
-    {
-      XYZ p1, p2, p3;
-      p1 = points[i];
-      p2 = points[i+1];
-      p3 = p1;
-      p3.z++;
-      fnormals[i] = calc_normal (p1, p2, p3);
-    }
-
-
-  /* From the face normals, compute the vertex normals (by averaging
-     the normals of adjascent faces.)
-   */
-  for (i = 0; i < npoints; i++)
-    {
-      int a = (i == 0 ? npoints-1 : i-1);
-      int b = i;
-
-      /* Kludge to fix the normal on the last top point: since the
-         faces go all the way around, this normal pointed clockwise
-         instead of radially out. */
-      int start1 = (i / ppt) * ppt;
-      int end1   = start1 + 9;
-      XYZ n1, n2;
-
-      if (b == end1-1)
-        b = (start1 + ppt == npoints ? 0 : start1 + ppt);
-
-      n1 = fnormals[a];   /* normal of [i-1 - i] face */
-      n2 = fnormals[b];   /* normal of [i - i+1] face */
-      pnormals[i].x = (n1.x + n2.x) / 2;
-      pnormals[i].y = (n1.y + n2.y) / 2;
-      pnormals[i].z = (n1.z + n2.z) / 2;
-    }
-
-  free (fnormals);
-
-  if (points_ret)
-    *points_ret = points;
-  else
-    free (points);
-
-  if (normals_ret)
-    *normals_ret = pnormals;
-  else
-    free (pnormals);
-
-  if (points_per_tooth_ret)
-    *points_per_tooth_ret = ppt;
+  tooth_normals (orim);
+  tooth_normals (irim);
 }
 
 
@@ -1863,147 +1717,171 @@ static int
 draw_gear_teeth (ModeInfo *mi, gear *g)
 {
   Bool wire_p = MI_IS_WIREFRAME(mi);
+  Bool show_normals_p = False;
   int polys = 0;
   int i;
 
   GLfloat z1 = -g->thickness/2;
   GLfloat z2 =  g->thickness/2;
 
-  int ppt;
-  XYZ *points, *pnormals;
-
-  gear_teeth_geometry (mi, g, &ppt, &points, &pnormals);
+  tooth_face orim, irim;
+  gear_teeth_geometry (mi, g, &orim, &irim);
 
   glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, g->color);
 
-  for (i = 0; i < g->nteeth; i++)
+  /* Draw the outer rim (the teeth)
+     (In wire mode, this draws just the upright lines.)
+   */
+  glFrontFace (GL_CW);
+  glBegin (wire_p ? GL_LINES : GL_QUAD_STRIP);
+  for (i = 0; i < orim.npoints; i++)
     {
-      int j;
-      GLfloat z;
+      glNormal3f (orim.pnormals[i].x, orim.pnormals[i].y, orim.pnormals[i].z);
+      glVertex3f (orim.points[i].x, orim.points[i].y, z1);
+      glVertex3f (orim.points[i].x, orim.points[i].y, z2);
 
-      int start1 = i * ppt;
-      int end1   = start1 + 9;
-      int start2 = end1   + 1;
-      int end2   = start2 + 4;
-      int mid    = end2;
-
-      /* Outside rim of the tooth
-       */
-      glFrontFace (GL_CW);
-      glBegin (wire_p ? GL_LINES : GL_QUAD_STRIP);
-      for (j = start1; j < end1; j++)
+      /* Show the face normal vectors */
+      if (wire_p && show_normals_p)
         {
-          glNormal3f (pnormals[j].x, pnormals[j].y, pnormals[j].z);
-          glVertex3f (points[j].x, points[j].y, z1);
-          glVertex3f (points[j].x, points[j].y, z2);
-          polys++;
-
-# if 0
-          /* Show the face normal vectors */
-          if (wire_p)
-            {
-              XYZ n = fnormals[j];
-              GLfloat x = (points[j].x + points[j+1].x) / 2;
-              GLfloat y = (points[j].y + points[j+1].y) / 2;
-              GLfloat z  = (z1 + z2) / 2;
-              glVertex3f (x, y, z);
-              glVertex3f (x + n.x, y + n.y, z);
-            }
-
-          /* Show the vertex normal vectors */
-          if (wire_p)
-            {
-              XYZ n = pnormals[j];
-              GLfloat x = points[j].x;
-              GLfloat y = points[j].y;
-              GLfloat z  = (z1 + z2) / 2;
-              glVertex3f (x, y, z);
-              glVertex3f (x + n.x, y + n.y, z);
-            }
-# endif /* 0 */
-        }
-      glEnd();
-
-      /* Some more lines for the outside rim of the tooth...
-       */
-      if (wire_p)
-        {
-          glBegin (GL_LINE_STRIP);
-          for (j = start1; j < end1; j++)
-            glVertex3f (points[j].x, points[j].y, z1);
-          glEnd();
-          glBegin (GL_LINE_STRIP);
-          for (j = start1; j < end1; j++)
-            glVertex3f (points[j].x, points[j].y, z2);
-          glEnd();
+          XYZ n = orim.fnormals[i];
+          int a = i;
+          int b = (i == orim.npoints-1 ? 0 : i+1);
+          GLfloat x = (orim.points[a].x + orim.points[b].x) / 2;
+          GLfloat y = (orim.points[a].y + orim.points[b].y) / 2;
+          GLfloat z  = (z1 + z2) / 2;
+          glVertex3f (x, y, z);
+          glVertex3f (x + n.x, y + n.y, z);
         }
 
-      /* Inside rim behind the tooth
-       */
-      glFrontFace (GL_CW);
-      glBegin (wire_p ? GL_LINES : GL_QUAD_STRIP);
-      for (j = start2; j < end2; j++)
+      /* Show the vertex normal vectors */
+      if (wire_p && show_normals_p)
         {
-          glNormal3f (-points[j].x, -points[j].y, 0);
-          glVertex3f ( points[j].x,  points[j].y, z1);
-          glVertex3f ( points[j].x,  points[j].y, z2);
-          polys++;
+          XYZ n = orim.pnormals[i];
+          GLfloat x = orim.points[i].x;
+          GLfloat y = orim.points[i].y;
+          GLfloat z  = (z1 + z2) / 2;
+          glVertex3f (x, y, z);
+          glVertex3f (x + n.x, y + n.y, z);
         }
-      glEnd();
-
-      /* Some more lines for the inside rim...
-       */
-      if (wire_p)
-        {
-          glBegin (GL_LINE_STRIP);
-          for (j = start2; j < end2; j++)
-            glVertex3f (points[j].x, points[j].y, z1);
-          glEnd();
-          glBegin (GL_LINE_STRIP);
-          for (j = start2; j < end2; j++)
-            glVertex3f (points[j].x, points[j].y, z2);
-          glEnd();
-        }
-
-      /* All top and bottom facets.  We can skip all of these in wire mode.
-       */
-      if (!wire_p || wire_all_p)
-        for (z = z1; z <= z2; z += z2-z1)
-          {
-            /* Flat edge of the tooth
-             */
-            glFrontFace (z == z1 ? GL_CW : GL_CCW);
-            glBegin (wire_p ? GL_LINES : GL_TRIANGLE_FAN);
-            glNormal3f (0, 0, z);
-            for (j = start1; j < end2; j++)
-              {
-                if (j == end1-1 || j == end1 || j == start2)
-                  continue;  /* kludge... skip these... */
-
-                if (wire_p || j == start1)
-                  glVertex3f (points[mid].x, points[mid].y, z);
-                glVertex3f (points[j].x, points[j].y, z);
-                polys++;
-              }
-            glVertex3f (points[start1].x, points[start1].y, z);
-            glEnd();
-
-            /* Flat edge between teeth
-             */
-            glFrontFace (z == z1 ? GL_CW : GL_CCW);
-            glBegin (wire_p ? GL_LINES : GL_QUADS);
-            glNormal3f (0, 0, z);
-            glVertex3f (points[end1-1  ].x, points[end1-1  ].y, z);
-            glVertex3f (points[start2  ].x, points[start2  ].y, z);
-            glVertex3f (points[start2+1].x, points[start2+1].y, z);
-            glVertex3f (points[end1-2  ].x, points[end1-2  ].y, z);
-            polys++;
-            glEnd();
-          }
     }
 
-  free (points);
-  free (pnormals);
+  if (!wire_p)  /* close the quad loop */
+    {
+      glNormal3f (orim.pnormals[0].x, orim.pnormals[0].y, orim.pnormals[0].z);
+      glVertex3f (orim.points[0].x, orim.points[0].y, z1);
+      glVertex3f (orim.points[0].x, orim.points[0].y, z2);
+    }
+  polys += orim.npoints;
+  glEnd();
+
+  /* Draw the outer rim circles, in wire mode */
+  if (wire_p)
+    {
+      glBegin (GL_LINE_LOOP);
+      for (i = 0; i < orim.npoints; i++)
+        glVertex3f (orim.points[i].x, orim.points[i].y, z1);
+      glEnd();
+      glBegin (GL_LINE_LOOP);
+      for (i = 0; i < orim.npoints; i++)
+        glVertex3f (orim.points[i].x, orim.points[i].y, z2);
+      glEnd();
+    }
+
+
+  /* Draw the inner rim (the hole)
+     (In wire mode, this draws just the upright lines.)
+   */
+  glFrontFace (GL_CCW);
+  glBegin (wire_p ? GL_LINES : GL_QUAD_STRIP);
+  for (i = 0; i < irim.npoints; i++)
+    {
+      glNormal3f(-irim.pnormals[i].x, -irim.pnormals[i].y,-irim.pnormals[i].z);
+      glVertex3f (irim.points[i].x, irim.points[i].y, z1);
+      glVertex3f (irim.points[i].x, irim.points[i].y, z2);
+
+      /* Show the face normal vectors */
+      if (wire_p && show_normals_p)
+        {
+          XYZ n = irim.fnormals[i];
+          int a = i;
+          int b = (i == irim.npoints-1 ? 0 : i+1);
+          GLfloat x = (irim.points[a].x + irim.points[b].x) / 2;
+          GLfloat y = (irim.points[a].y + irim.points[b].y) / 2;
+          GLfloat z  = (z1 + z2) / 2;
+          glVertex3f (x, y, z);
+          glVertex3f (x - n.x, y - n.y, z);
+        }
+
+      /* Show the vertex normal vectors */
+      if (wire_p && show_normals_p)
+        {
+          XYZ n = irim.pnormals[i];
+          GLfloat x = irim.points[i].x;
+          GLfloat y = irim.points[i].y;
+          GLfloat z  = (z1 + z2) / 2;
+          glVertex3f (x, y, z);
+          glVertex3f (x - n.x, y - n.y, z);
+        }
+    }
+
+  if (!wire_p)  /* close the quad loop */
+    {
+      glNormal3f (-irim.pnormals[0].x,-irim.pnormals[0].y,-irim.pnormals[0].z);
+      glVertex3f (irim.points[0].x, irim.points[0].y, z1);
+      glVertex3f (irim.points[0].x, irim.points[0].y, z2);
+    }
+  polys += irim.npoints;
+  glEnd();
+
+  /* Draw the inner rim circles, in wire mode
+   */
+  if (wire_p)
+    {
+      glBegin (GL_LINE_LOOP);
+      for (i = 0; i < irim.npoints; i++)
+        glVertex3f (irim.points[i].x, irim.points[i].y, z1);
+      glEnd();
+      glBegin (GL_LINE_LOOP);
+      for (i = 0; i < irim.npoints; i++)
+        glVertex3f (irim.points[i].x, irim.points[i].y, z2);
+      glEnd();
+    }
+
+
+  /* Draw the side (the flat bit)
+   */
+  if (!wire_p || wire_all_p)
+    {
+      GLfloat z;
+      if (irim.npoints != orim.npoints) abort();
+      for (z = z1; z <= z2; z += z2-z1)
+        {
+          glFrontFace (z == z1 ? GL_CCW : GL_CW);
+          glNormal3f (0, 0, z);
+          glBegin (wire_p ? GL_LINES : GL_QUAD_STRIP);
+          for (i = 0; i < orim.npoints; i++)
+            {
+              glVertex3f (orim.points[i].x, orim.points[i].y, z);
+              glVertex3f (irim.points[i].x, irim.points[i].y, z);
+            }
+          if (!wire_p)  /* close the quad loop */
+            {
+              glVertex3f (orim.points[0].x, orim.points[0].y, z);
+              glVertex3f (irim.points[0].x, irim.points[0].y, z);
+            }
+          polys += orim.npoints;
+          glEnd();
+        }
+    }
+
+  free (irim.points);
+  free (irim.fnormals);
+  free (irim.pnormals);
+
+  free (orim.points);
+  free (orim.fnormals);
+  free (orim.pnormals);
+
   return polys;
 }
 
@@ -2279,7 +2157,7 @@ pinion_handle_event (ModeInfo *mi, XEvent *event)
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       pp->button_down_p = True;
       gltrackball_start (pp->trackball,
@@ -2288,9 +2166,17 @@ pinion_handle_event (ModeInfo *mi, XEvent *event)
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       pp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (pp->trackball, event->xbutton.button, 5,
+                              !!event->xbutton.state);
       return True;
     }
   else if (event->xany.type == MotionNotify &&

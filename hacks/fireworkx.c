@@ -17,6 +17,9 @@
  * Support for different display color modes: 
  * Jean-Pierre Demailly <Jean-Pierre.Demailly@ujf-grenoble.fr>
  *
+ * Fixed array access problems by beating on it with a large hammer.
+ * Nicholas Miell <nmiell@gmail.com>
+ *
  */
 
 #include <math.h>
@@ -48,6 +51,8 @@ static int fsc_height= 0;
 static int rndlife = RNDLIFE1;
 static int minlife = MINLIFE1;
 static float light_fade = 0.99;
+static unsigned char *real_palaka1 = NULL;
+static unsigned char *real_palaka2 = NULL;
 static unsigned char *palaka1=NULL;
 static unsigned char *palaka2=NULL;
 static XImage *xim=NULL;
@@ -147,7 +152,7 @@ void recycle(fireshell *fs,int x,int y)
 
 void blur_best(void)
 {
-  unsigned int n;
+  int n;
   unsigned int w = fsc_width;
   unsigned int h = fsc_height;
   unsigned char *pa, *pb, *pm;
@@ -232,18 +237,21 @@ void resize(Display *display, Window win)
   if (xim) {
   if (xim->data==(char *)palaka2) xim->data=NULL;  
   XDestroyImage(xim);
-  if (palaka2!=palaka1) free(palaka2);
-  free(palaka1); 
+  if (palaka2!=palaka1) free(real_palaka2);
+  free(real_palaka1); 
   }
   palaka1 = NULL;     
   palaka2 = NULL; 
   xim = XCreateImage(display, xwa.visual, xwa.depth, ZPixmap, 0, 0,
 		     fsc_width, fsc_height, 32, 0);
-  palaka1 = calloc(xim->height,xim->width*4);
-  if(light_on)
-  palaka2 = calloc(xim->height,xim->width*4);
-  else
-  palaka2 = palaka1;
+  real_palaka1 = calloc(xim->height + 4,xim->width*4);
+  palaka1 = real_palaka1 + xim->width * 4 * 2;
+  if(light_on) {
+       real_palaka2 = calloc(xim->height + 4,xim->width*4);
+       palaka2 = real_palaka2 + xim->width * 4 * 2;
+  } else {
+       palaka2 = palaka1;
+  }
   if (depth>=24)
   xim->data = (char *)palaka2;
   else

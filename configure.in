@@ -1,4 +1,4 @@
-# configure.in --- xscreensaver, Copyright (c) 1997-2004 Jamie Zawinski.
+# configure.in --- xscreensaver, Copyright (c) 1997-2005 Jamie Zawinski.
 #
 
 AC_PREREQ(2.52)
@@ -2104,7 +2104,7 @@ if test "$with_gtk" = yes; then
   pkg_check_version            gtk+-2.0  2.0.1  ; ac_gtk_version_string="$vers"
   pkg_check_version         gmodule-2.0  2.0.0
   pkg_check_version          libxml-2.0  2.4.6
-  pkg_check_version        libglade-2.0  2.0.0
+  pkg_check_version        libglade-2.0  1.99.0
   pkg_check_version      gdk-pixbuf-2.0  2.0.0
   pkg_check_version gdk-pixbuf-xlib-2.0  2.0.0
   have_gtk="$ok"
@@ -2149,13 +2149,11 @@ if test "$with_gtk" = yes; then
 fi
 
 
-# Check for the Gnome Help Browser.
+# Check for the various Gnome help and URL loading programs.
 #
 if test "$have_gtk" = yes; then
-  AC_CHECK_PROGS(have_gnome_help, yelp gnome-help-browser, no)
-  if test "$have_gnome_help" != no; then
-    have_gnome_help=yes
-  fi
+  AC_CHECK_PROGS(gnome_open_program,     gnome-open)
+  AC_CHECK_PROGS(gnome_url_show_program, gnome-url-show)
 fi
 
 
@@ -3162,12 +3160,18 @@ fi
 
 # Another substitution in the XScreenSaver.ad.in file:
 #
-if test "$have_gnome_help" = yes; then
-  GNOMEHELP_Y=''
-  GNOMEHELP_N='!    '
+if test "$gnome_open_program" != ''; then
+  GNOME24=''
+  GNOME22='!	'
+  NOGNOME='!	'
+elif test "$gnome_url_show_program" != ''; then
+  GNOME24='!	'
+  GNOME22=''
+  NOGNOME='!	'
 else
-  GNOMEHELP_Y='!    '
-  GNOMEHELP_N=''
+  GNOME24='!	'
+  GNOME22='!	'
+  NOGNOME=''
 fi
 
 
@@ -3294,8 +3298,9 @@ AC_SUBST(GL_MEN)
 AC_SUBST(GL_KLUDGE)
 AC_SUBST(GLE_EXES)
 AC_SUBST(GLE_KLUDGE)
-AC_SUBST(GNOMEHELP_Y)
-AC_SUBST(GNOMEHELP_N)
+AC_SUBST(GNOME24)
+AC_SUBST(GNOME22)
+AC_SUBST(NOGNOME)
 AC_SUBST(HACKDIR)
 AC_SUBST(GNOME_DATADIR)
 AC_SUBST(GLADE_DATADIR)
@@ -3318,8 +3323,7 @@ AC_OUTPUT(Makefile
           hacks/Makefile
           hacks/glx/Makefile
           po/Makefile.in
-          driver/XScreenSaver.ad
-          driver/xscreensaver.kss)
+          driver/XScreenSaver.ad)
 
 ###############################################################################
 #
@@ -3421,6 +3425,19 @@ if test "$with_proc_interrupts_req" = yes -a "$have_proc_interrupts" = no; then
   warn "Checking of /proc/interrupts was requested, but it's bogus."
 fi
 
+if test "$pkg_config" = false ; then
+  warnL 'The "pkg-config" program was not found.  Without that,'
+  warn2 "detection of the various GTK libraries won't work."
+else
+  pkgerr=`$pkg_config --list-all 2>&1 >/dev/null`
+  if test "x$pkgerr" != "x" ; then
+    warnL 'The "pkg-config" program produces errors.  This often causes'
+    warn2 "detection of the various GTK libraries to malfunction."
+    warn2 "The errors are:"
+    echo ''
+    echo "$pkgerr" | sed 's/^/             > /g'
+  fi
+fi
 
 if test "$gtk_halfassed" != no ; then
   warnL "GTK version $gtk_halfassed was found, but at least one supporting"
@@ -3768,12 +3785,11 @@ if test \! -z "$rpmv" ; then
 
   if test "$rpmbdir" = "$rpmhdir" ; then
     warn2 "The RPM version was installed in $rpmbdir/."
+    do_dir_warning=yes
   else
     warn2 "The RPM version was installed in $rpmbdir/,"
     warn2 "with demos in $rpmhdir/."
   fi
-
-  do_dir_warning=yes
 fi
 
 
@@ -3789,7 +3805,7 @@ if test "$do_dir_warning" = yes; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}/."
   echo ""
-  echo "      The various graphics demos (180+ different executables) will"
+  echo "      The various graphics demos (190+ different executables) will"
   echo "      be installed in ${HACKDIR}/."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere,"

@@ -282,7 +282,7 @@ inline void moverender_rider(Display *dpy, Window window, GC fgc, struct field *
     double cs, cv;
 
     /* add velocity to theta */
-    rid->t = fmodf((rid->t + rid->vt + M_PI), (2 * M_PI)) - M_PI;
+    rid->t = fmod((rid->t + rid->vt + M_PI), (2 * M_PI)) - M_PI;
     
     rid->vt += frand(0.002) - 0.001;
 

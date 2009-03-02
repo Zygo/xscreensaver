@@ -1,5 +1,5 @@
 /* grab-ximage.c --- grab the screen to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 2001, 2003, 2004 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,22 +13,78 @@
 #ifndef __GRAB_XIMAGE_H__
 #define __GRAB_XIMAGE_H__
 
-/* Returns an XImage structure containing an image of the desktop.
-   (As a side-effect, that image *may* be painted onto the given Window.)
-   This XImage will be 32 bits per pixel, 8 each per R, G, and B, with the
-   extra byte set to 0xFF.
- */
-XImage * screen_to_ximage (Screen *screen, Window window,
-                           char **filename_return);
+/* Grabs an image of the desktop (or another random image file) and
+   loads tht image into GL's texture memory.
 
-/* Like the above, but loads the image in the background and runs the
-   given callback once it has been loaded.
+   As a side-effect, that image *may* be painted onto the given Window.
+
+   If mipmap_p is true, then make mipmaps instead of just a single texture.
+
+   If desired_width/height are non-zero, then (if possible) the image
+   will be scaled to fit in that rectangle.  If they are 0, then the size
+   of the window is used.  These parameters are so that you can hint to
+   the image loader that smaller images are acceptable (if you will never
+   be displaying the texture at 100% magnification, you can get away with
+   smaller textures.)
+
+   Returns the sizes of various things:
+
+      texture_width/height: The size of the texture itself, in pixels.
+                            This will often be larger than the grabbed
+                            image, since OpenGL sometimes requires texture
+                            dimensions to be a power of 2.
+
+      image_width/height:   The size of the image: this will usually be the
+                            same as the desired_width/height you passed in
+                            (but may be the size of the Window instead.)
+
+      geometry:             The position in the texture of the image bits.
+                            When image files are loaded, they are scaled up
+                            to the size of the window, but if the image does
+                            not have the same aspect ratio as the window,
+                            there will be black bars on the top/bottom or
+                            left/right.  This geometry specification tells
+                            you where the "real" image bits are.
+
+   So, don't use texture coordinates from 0.0 to 1.0.  Instead use:
+
+      [0.0 - iw/tw]         If you want to display a quad that is the same
+      [0.0 - ih/th]         size as the window; or
+
+      [gx/tw - (gx+gw)/tw]  If you want to display a quad that is the same
+      [gy/th - (gy+gh)/th]  size as the loaded image file.
+
+   Writes to stderr and returns False on error.
  */
-void fork_screen_to_ximage (Screen *screen, Window window,
-                            void (*callback) (Screen *, Window, XImage *,
-                                              const char *filename,
-                                              void *closure,
-                                              double cvt_time),
-                            void *closure);
+Bool screen_to_texture (Screen *screen, Window window,
+                        int desired_width, int desired_height,
+                        Bool mipmap_p,
+                        char **filename_return,
+                        XRectangle *geometry_return,
+                        int *image_width_return,
+                        int *image_height_return,
+                        int *texture_width_return,
+                        int *texture_height_return);
+
+
+/* Like the above, but the image is loaded in a background process,
+   and a callback is run when the loading is complete.
+   When the callback is called, the image data will have been loaded
+   into texture number `texid' (via glBindTexture.)
+
+   If an error occurred, width/height will be 0.
+ */
+void screen_to_texture_async (Screen *screen, Window window,
+                              int desired_width, int desired_height,
+                              Bool mipmap_p,
+                              GLuint texid,
+                              void (*callback) (const char *filename,
+                                                XRectangle *geometry,
+                                                int image_width,
+                                                int image_height,
+                                                int texture_width,
+                                                int texture_height,
+                                                void *closure),
+                              void *closure);
 
 #endif /* __GRAB_XIMAGE_H__ */

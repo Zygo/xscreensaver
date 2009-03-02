@@ -626,13 +626,13 @@ matrix_handle_event (ModeInfo *mi, XEvent *event)
   matrix_configuration *mp = &mps[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       mp->button_down_p = True;
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       mp->button_down_p = False;
       return True;
@@ -831,7 +831,6 @@ load_textures (ModeInfo *mi, Bool flip_p)
   glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
   check_gl_error ("texture param");
 
-  xi->data = 0;  /* don't free the texture data */
   XDestroyImage (xi);
 }
 

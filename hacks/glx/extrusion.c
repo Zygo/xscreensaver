@@ -34,7 +34,7 @@
 # define HACK_HANDLE_EVENT				screensaver_handle_event
 # define EVENT_MASK						PointerMotionMask
 # define screensaver_opts				xlockmore_opts
-#define	DEFAULTS                        "*delay:			10000	\n" \
+#define	DEFAULTS                        "*delay:			20000	\n" \
 										"*showFPS:      	False	\n" \
 										"*light:			True	\n" \
                                         "*wire:				False	\n" \
@@ -75,6 +75,7 @@
 
 #include "xpm-ximage.h"
 #include "rotator.h"
+#include "gltrackball.h"
 
 #define checkImageWidth 64
 #define checkImageHeight 64
@@ -103,7 +104,7 @@ extern void DrawStuff_twistoid(void);
 #define DEF_LIGHT	  	"True"
 #define DEF_WIRE   		"False"
 #define DEF_TEXTURE		"False"
-#define DEF_TEXTURE_QUALITY   "False"
+#define DEF_TEX_QUAL   "False"
 #define DEF_MIPMAP   	"False"
 #define DEF_NAME        "RANDOM"
 #define DEF_IMAGE   	"BUILTIN"
@@ -111,36 +112,36 @@ extern void DrawStuff_twistoid(void);
 static int do_light;
 static int do_wire;
 static int do_texture;
-static int do_texture_quality;
+static int do_tex_qual;
 static int do_mipmap;
 static char *which_name;
 static char *which_image;
 
 static XrmOptionDescRec opts[] = {
-  {"-light",   ".extrusion.light",     XrmoptionNoArg, "true" },
-  {"+light",   ".extrusion.light",     XrmoptionNoArg, "false" },
-  {"-wire",    ".extrusion.wire",      XrmoptionNoArg, "true" },
-  {"+wire",    ".extrusion.wire",      XrmoptionNoArg, "false" },
-  {"-texture", ".extrusion.texture",   XrmoptionNoArg, "true" },
-  {"+texture", ".extrusion.texture",   XrmoptionNoArg, "false" },
-  {"-texture", ".extrusion.texture",   XrmoptionNoArg, "true" },
-  {"+texture_quality", ".extrusion.texture",   XrmoptionNoArg, "false" },
-  {"-texture_quality", ".extrusion.texture",   XrmoptionNoArg, "true" },
-  {"+mipmap", ".extrusion.mipmap",   XrmoptionNoArg, "false" },
-  {"-mipmap", ".extrusion.mipmap",   XrmoptionNoArg, "true" },
-  {"-name",   ".extrusion.name",  XrmoptionSepArg, 0 },
-  {"-image",   ".extrusion.image",  XrmoptionSepArg, 0 },
+  {"-light",           ".extrusion.light",   XrmoptionNoArg, "true" },
+  {"+light",           ".extrusion.light",   XrmoptionNoArg, "false" },
+  {"-wire",            ".extrusion.wire",    XrmoptionNoArg, "true" },
+  {"+wire",            ".extrusion.wire",    XrmoptionNoArg, "false" },
+  {"-texture",         ".extrusion.texture", XrmoptionNoArg, "true" },
+  {"+texture",         ".extrusion.texture", XrmoptionNoArg, "false" },
+  {"-texture",         ".extrusion.texture", XrmoptionNoArg, "true" },
+  {"+texture_quality", ".extrusion.texture", XrmoptionNoArg, "false" },
+  {"-texture_quality", ".extrusion.texture", XrmoptionNoArg, "true" },
+  {"+mipmap",          ".extrusion.mipmap",  XrmoptionNoArg, "false" },
+  {"-mipmap",          ".extrusion.mipmap",  XrmoptionNoArg, "true" },
+  {"-name",            ".extrusion.name",    XrmoptionSepArg, 0 },
+  {"-image",           ".extrusion.image",   XrmoptionSepArg, 0 },
 };
 
 
 static argtype vars[] = {
-  {&do_light,    "light",   "Light",   DEF_LIGHT,   t_Bool},
-  {&do_wire,    "wire",   "Wire",   DEF_WIRE,   t_Bool},
-  {&do_texture,    "texture",   "Texture",   DEF_TEXTURE,   t_Bool},
-  {&do_texture_quality,    "texture_quality",   "Texture_Quality",   DEF_TEXTURE_QUALITY,   t_Bool},
-  {&do_mipmap,    "mipmap",   "Mipmap",   DEF_MIPMAP,   t_Bool},
-  {&which_name, "name",   "Name",   DEF_NAME,   t_String},
-  {&which_image, "image",   "Image",   DEF_IMAGE,   t_String},
+  {&do_light,	 "light",           "Light",           DEF_LIGHT,    t_Bool},
+  {&do_wire,	 "wire",            "Wire",            DEF_WIRE,     t_Bool},
+  {&do_texture,	 "texture",         "Texture",         DEF_TEXTURE,  t_Bool},
+  {&do_tex_qual, "texture_quality", "Texture_Quality", DEF_TEX_QUAL, t_Bool},
+  {&do_mipmap,   "mipmap",          "Mipmap",          DEF_MIPMAP,   t_Bool},
+  {&which_name,  "name",            "Name",            DEF_NAME,     t_String},
+  {&which_image, "image",           "Image",           DEF_IMAGE,    t_String},
 };
 
 
@@ -171,30 +172,31 @@ typedef struct {
   int screen_width, screen_height;
   GLXContext *glx_context;
   rotator *rot;
+  trackball_state *trackball;
   Bool button_down_p;
+  Bool button2_down_p;
+  int mouse_start_x, mouse_start_y;
   int mouse_x, mouse_y;
+  int mouse_dx, mouse_dy;
   Window window;
   XColor fg, bg;
 } screensaverstruct;
+
 static screensaverstruct *Screensaver = NULL;
 
 
 
-
-/* convenient access to the screen width */
-static int global_width=640, global_height=480;
-
 /* set up a light */
 static GLfloat lightOnePosition[] = {40.0, 40, 100.0, 0.0};
-static GLfloat lightOneColor[] = {0.99, 0.99, 0.99, 1.0}; 
+static GLfloat lightOneColor[] = {0.99, 0.99, 0.00, 1.0}; 
 
 static GLfloat lightTwoPosition[] = {-40.0, 40, 100.0, 0.0};
-static GLfloat lightTwoColor[] = {0.99, 0.99, 0.99, 1.0}; 
+static GLfloat lightTwoColor[] = {0.00, 0.99, 0.99, 1.0}; 
 
 float rot_x=0, rot_y=0, rot_z=0;
 float lastx=0, lasty=0;
 
-static float max_lastx=300, max_lasty=400;
+static float max_lastx=400,  max_lasty=400;
 static float min_lastx=-400, min_lasty=-400;
 
 static int screensaver_number;
@@ -280,7 +282,7 @@ void Create_Texture(ModeInfo *mi, const char *filename)
   /* perhaps we can edge a bit more speed at the expense of quality */
   glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_FASTEST);
 
-  if (do_texture_quality) {
+  if (do_tex_qual) {
 	/* with texture_quality, the min and mag filters look *much* nice but are *much* slower */
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
@@ -323,8 +325,12 @@ static void
 init_rotation (ModeInfo *mi)
 {
   screensaverstruct *gp = &Screensaver[MI_SCREEN(mi)];
-  double spin_speed = 1.0;
-  gp->rot = make_rotator (spin_speed, spin_speed, spin_speed, 1.0, 0.0, True);
+  double spin_speed = 0.5;
+  gp->rot = make_rotator (spin_speed, spin_speed, spin_speed,
+                          0.2,
+                          0.005,
+                          True);
+  gp->trackball = gltrackball_init ();
 
   lastx = (random() % (int) (max_lastx - min_lastx)) + min_lastx;
   lasty = (random() % (int) (max_lasty - min_lasty)) + min_lasty;
@@ -332,36 +338,60 @@ init_rotation (ModeInfo *mi)
 
 
 /* draw the screensaver once */
-void draw_screensaver(ModeInfo * mi)
+void
+draw_screensaver(ModeInfo * mi)
 {
   screensaverstruct *gp = &Screensaver[MI_SCREEN(mi)];
   Display    *display = MI_DISPLAY(mi);
   Window      window = MI_WINDOW(mi);
 
+  static GLfloat color[4] = {0.6, 0.6, 0.4, 1.0};
+  /* static GLfloat spec[4]  = {0.6, 0.6, 0.6, 1.0}; */
+  /* static GLfloat shiny    = 40.0; */
+
+  double x, y, z;
+
   if (!gp->glx_context)
 	return;
 
-  glXMakeCurrent(display, window, *(gp->glx_context));
+  glPushMatrix();
+
+  gltrackball_rotate (gp->trackball);
+
+  get_rotation (gp->rot, &x, &y, &z,
+                !(gp->button_down_p || gp->button2_down_p));
+  glRotatef (x * 360, 1.0, 0.0, 0.0);
+  glRotatef (y * 360, 0.0, 1.0, 0.0);
+  glRotatef (z * 360, 0.0, 0.0, 1.0);
+
+  /* track the mouse only if a button is down. */
+  if (gp->button2_down_p)
+    {
+      gp->mouse_dx += gp->mouse_x - gp->mouse_start_x;
+      gp->mouse_dy += gp->mouse_y - gp->mouse_start_y;
+      gp->mouse_start_x = gp->mouse_x;
+      gp->mouse_start_y = gp->mouse_y;
+    }
+
+  {
+    float scale = (max_lastx - min_lastx);
+    get_position (gp->rot, &x, &y, &z,
+                  !(gp->button_down_p || gp->button2_down_p));
+    lastx = x * scale + min_lastx + gp->mouse_dx;
+    lasty = y * scale + min_lasty + gp->mouse_dy;
+  }
+
+  glScalef(0.5, 0.5, 0.5);
+
+  /* glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR,            spec); */
+  /* glMateriali  (GL_FRONT_AND_BACK, GL_SHININESS,           shiny); */
+
+  glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
+  glFrontFace(GL_CCW);
 
   funcs_ptr[screensaver_number].DrawStuff();
 	  
-  /* track the mouse only if a button is down. */
-  if (gp->button_down_p)
-    {
-      lastx = gp->mouse_x;
-      lasty = gp->mouse_y;
-    }
-  else
-    {
-      float scale = (max_lastx - min_lastx);
-      double x, y, z;
-      get_rotation (gp->rot, &x, &y, &z, True);
-      rot_x = x * 360;
-      rot_y = y * 360;
-      rot_z = z * 360;
-      lastx = x * scale + min_lastx;
-      lasty = y * scale + min_lasty;
-    }
+  glPopMatrix();
 
   if (mi->fps_p) do_fps (mi);
   glXSwapBuffers(display, window);
@@ -369,7 +399,8 @@ void draw_screensaver(ModeInfo * mi)
 
 
 /* set up lighting conditions */
-static void SetupLight(void)
+static void
+SetupLight(void)
 {
   glLightfv (GL_LIGHT0, GL_POSITION, lightOnePosition);
   glLightfv (GL_LIGHT0, GL_DIFFUSE, lightOneColor);
@@ -385,28 +416,31 @@ static void SetupLight(void)
   glEnable (GL_COLOR_MATERIAL);
 }
 
-/* reset the projection matrix */
-static void resetProjection(void) {
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glFrustum (-9, 9, -9, 9, 50, 150.0);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-}
-
 /* Standard reshape function */
 void
-reshape_screensaver(ModeInfo *mi, int width, int height)
+reshape_screensaver (ModeInfo *mi, int width, int height)
 {
-  global_width=width;
-  global_height=height;
-  glViewport( 0, 0, global_width, global_height );
-  resetProjection();
+  GLfloat h = (GLfloat) height / (GLfloat) width;
+
+  glViewport (0, 0, (GLint) width, (GLint) height);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective (30.0, 1/h, 1.0, 100.0);
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  gluLookAt( 0.0, 0.0, 30.0,
+             0.0, 0.0, 0.0,
+             0.0, 1.0, 0.0);
+
+  glClear(GL_COLOR_BUFFER_BIT);
 }
 
 
 /* decide which screensaver example to run */
-static void chooseScreensaverExample(ModeInfo *mi)
+static void
+chooseScreensaverExample (ModeInfo *mi)
 {
   int i;
   /* call the extrusion init routine */
@@ -434,6 +468,7 @@ static void chooseScreensaverExample(ModeInfo *mi)
   funcs_ptr[screensaver_number].InitStuff();
 }
 
+
 /* main OpenGL initialization routine */
 static void
 initializeGL(ModeInfo *mi, GLsizei width, GLsizei height) 
@@ -446,8 +481,7 @@ initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
 
   glEnable(GL_DEPTH_TEST);
   glClearColor(0,0,0,0);
-/*    glCullFace(GL_BACK); */
-/*    glEnable(GL_CULL_FACE); */
+  glDisable (GL_CULL_FACE);
   glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, True);
   glShadeModel(GL_SMOOTH);
 
@@ -484,23 +518,53 @@ screensaver_handle_event (ModeInfo *mi, XEvent *event)
   screensaverstruct *gp = &Screensaver[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       gp->button_down_p = True;
-      gp->mouse_x = event->xbutton.x;
-      gp->mouse_y = event->xbutton.y;
+      gltrackball_start (gp->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       gp->button_down_p = False;
       return True;
     }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (gp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           event->xbutton.button != Button1)
+    {
+      gp->button2_down_p = True;
+      gp->mouse_start_x = gp->mouse_x = event->xbutton.x;
+      gp->mouse_start_y = gp->mouse_y = event->xbutton.y;
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button != Button1)
+    {
+      gp->button2_down_p = False;
+      return True;
+    }
   else if (event->xany.type == MotionNotify)
     {
-      gp->mouse_x = event->xmotion.x;
-      gp->mouse_y = event->xmotion.y;
+      if (gp->button_down_p)
+        gltrackball_track (gp->trackball,
+                           event->xmotion.x, event->xmotion.y,
+                           MI_WIDTH (mi), MI_HEIGHT (mi));
+      if (gp->button2_down_p)
+        {
+          gp->mouse_x = event->xmotion.x;
+          gp->mouse_y = event->xmotion.y;
+        }
       return True;
     }
 
@@ -508,15 +572,18 @@ screensaver_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-
 /* xscreensaver initialization routine */
-void init_screensaver(ModeInfo * mi)
+void
+init_screensaver (ModeInfo * mi)
 {
   int screen = MI_SCREEN(mi);
   screensaverstruct *gp;
 
+  if (do_wire) do_light = 0;
+
   if (Screensaver == NULL) {
-	if ((Screensaver = (screensaverstruct *) calloc(MI_NUM_SCREENS(mi), sizeof (screensaverstruct))) == NULL)
+	if ((Screensaver = (screensaverstruct *)
+         calloc(MI_NUM_SCREENS(mi), sizeof (screensaverstruct))) == NULL)
 	  return;
   }
   gp = &Screensaver[screen];
@@ -532,18 +599,4 @@ void init_screensaver(ModeInfo * mi)
 
 }
 
-/* all sorts of nice cleanup code should go here! */
-void release_screensaver(ModeInfo * mi)
-{
-  int screen;
-  if (Screensaver != NULL) {
-	for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
-	  /*	  screensaverstruct *gp = &Screensaver[screen];*/
-	}
-	(void) free((void *) Screensaver);
-	Screensaver = NULL;
-  }
-  FreeAllGL(mi);
-}
-#endif
-
+#endif  /* USE_GL */

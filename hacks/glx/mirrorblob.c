@@ -19,7 +19,7 @@
  * 10-Feb-2004:  jon.dowdall@bigpond.com  Added motion blur
  *
  * The mirrorblob screensaver draws a pulsing blob on the screen.  Options
- * include adding a background (via screen_to_ximage), texturing the blob,
+ * include adding a background (via screen_to_texture), texturing the blob,
  * making the blob semi-transparent and varying the resolution of the blob
  * tessellation.
  *
@@ -80,7 +80,8 @@
     "*motion_blur:       " DEF_MOTION_BLUR          "\n" \
     "*incremental:       " DEF_INCREMENTAL          "\n" \
     "*hold_time:         " DEF_HOLD_TIME            "\n" \
-    "*fade_time:         " DEF_FADE_TIME            "\n"
+    "*fade_time:         " DEF_FADE_TIME            "\n" \
+    "*useSHM:              True                      \n"
 
 # include "xlockmore.h"    /* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -336,35 +337,30 @@ reset_projection(int width, int height)
 
 /****************************************************************************
  *
- * Load a texture using the screen_to_ximage function.
+ * Load a texture using the screen_to_texture function.
  */
 void
 grab_texture(ModeInfo *mi, int texture_index)
 {
-    XImage *ximage;
-
-    ximage = screen_to_ximage (mi->xgwa.screen, mi->window, 0);
+    Bool mipmap_p = True;
+    int iw, ih, tw, th;
 
     glBindTexture (GL_TEXTURE_2D, textures[texture_index]);
-    glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
 
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, ximage->width, ximage->height,
-                 0, GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
+    if (! screen_to_texture (mi->xgwa.screen, mi->window, 0, 0, mipmap_p,
+                             NULL, NULL, &iw, &ih, &tw, &th))
+      exit(1);
 
-    tex_width[texture_index] = (mi->xgwa.width - 1) / (GLfloat)ximage->width;
-    tex_height[texture_index] = (mi->xgwa.height - 1)  / (GLfloat)ximage->height;
+    tex_width [texture_index] =  (GLfloat) iw / tw;
+    tex_height[texture_index] = -(GLfloat) ih / th;
 
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                     (mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
 
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-    free(ximage->data);
-    ximage->data = 0;
-    XDestroyImage (ximage);
+    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 }
 
 /******************************************************************************
@@ -1109,16 +1105,16 @@ draw_background (ModeInfo *mi)
 
     glBegin (GL_QUADS);
     
-    glTexCoord2f (0.0, tex_height[current_texture]);
+    glTexCoord2f (0.0, 0.0);
     glVertex2i (0, 0);
     
-    glTexCoord2f (0.0, 0.0);
+    glTexCoord2f (0.0, -tex_height[current_texture]);
     glVertex2i (0, MI_HEIGHT(mi));
 
-    glTexCoord2f (tex_width[current_texture], 0.0);
+    glTexCoord2f (tex_width[current_texture], -tex_height[current_texture]);
     glVertex2i (MI_WIDTH(mi), MI_HEIGHT(mi));
 
-    glTexCoord2f (tex_width[current_texture], tex_height[current_texture]);
+    glTexCoord2f (tex_width[current_texture], 0.0);
     glVertex2i (MI_WIDTH(mi), 0);
     glEnd();
 

@@ -1,5 +1,5 @@
 /* webcollage-helper --- scales and pastes one image into another
- * xscreensaver, Copyright (c) 2002, 2003, 2004 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2002-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -66,10 +66,14 @@ bevel_image (GdkPixbuf **pbP, int bevel_pct,
              int x, int y, int w, int h)
 {
   GdkPixbuf *pb = *pbP;
+  int small_size = (w > h ? h : w);
 
-  int bevel_size = (w > h ? h : w) * (bevel_pct / 100.0);
+  int bevel_size = small_size * (bevel_pct / 100.0);
 
-  if (bevel_size < 10)    /* too small to bother */
+  /* Use a proportionally larger bevel size for especially small images. */
+  if      (bevel_size < 20 && small_size > 40) bevel_size = 20;
+  else if (bevel_size < 10 && small_size > 20) bevel_size = 10;
+  else if (bevel_size < 5)    /* too small to bother bevelling */
     return;
 
   /* Ensure the pixbuf has an alpha channel. */
@@ -127,25 +131,24 @@ bevel_image (GdkPixbuf **pbP, int bevel_pct,
             if (r != 1)
               p[ch-1] *= r;
 
-            /* p[0]=p[1]=p[2]=0; / * #### */
-
             p += ch;
           }
         line += rs;
       }
 
 #if 0  /* show the ramp */
-    for (xx = 0; xx < bevel_size * 2; xx++)
+    line = data + (rs * y);
+    for (yy = 0; yy < h; yy++)
       {
-        int ii = (256 * (xx >= bevel_size ? 1 : ramp[xx]));
-        int yy;
-        for (yy = 0; yy < ii; yy++)
+        guchar *p = line + (x * ch);
+        for (xx = 0; xx < w; xx++)
           {
-            data [((y + (256-yy)) * rs) + ((x + xx) * ch) + 0] = 0;
-            data [((y + (256-yy)) * rs) + ((x + xx) * ch) + 1] = 0;
-            data [((y + (256-yy)) * rs) + ((x + xx) * ch) + 2] = 0;
-            data [((y + (256-yy)) * rs) + ((x + xx) * ch) + 3] = 255;
+            int cc = 0;
+            for (cc = 0; cc < ch-1; cc++)
+              p[cc] = 255;
+            p += ch;
           }
+        line += rs;
       }
 #endif
 
@@ -294,12 +297,22 @@ paste (const char *paste_file,
                           base_pb,
                           to_x, to_y);
   else
-    gdk_pixbuf_composite (paste_pb, base_pb,
-                          to_x, to_y, w, h,
-                          to_x - from_x, to_y - from_y,
-                          1.0, 1.0,
-                          GDK_INTERP_HYPER,
-                          opacity * 255);
+    {
+      from_x++;  /* gdk_pixbuf_composite gets confused about the bevel: */
+      from_y++;  /* it leaves a stripe on the top and left if we try to */
+      to_x++;    /* start at 0,0, so pull it right and down by 1 pixel. */
+      to_y++;    /* (problem seen in gtk2-2.4.14-2.fc3) */
+      w--;
+      h--;
+
+      if (w > 0 && h > 0)
+        gdk_pixbuf_composite (paste_pb, base_pb,
+                              to_x, to_y, w, h,
+                              to_x - from_x, to_y - from_y,
+                              1.0, 1.0,
+                              GDK_INTERP_HYPER,
+                              opacity * 255);
+    }
 
   if (verbose_p)
     fprintf (stderr, "%s: pasted %dx%d from %d,%d to %d,%d\n",

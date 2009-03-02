@@ -244,6 +244,37 @@ getticks(void)
           (tv.tv_usec - basetime.tv_usec)/1000);
 }
 
+
+/* The first time we grab an image, do it the default way.
+   The second and subsequent times, add "-no-desktop" to the command.
+   That way we don't have to watch the window un-map 5+ times in a row.
+   Also, we end up with the desktop on only one channel, and pictures
+   on all the others (or colorbars, if no imageDirectory is set.)
+ */
+static void
+hack_resources (void)
+{
+  static int count = -1;
+  count++;
+
+  if (count == 0)
+    return;
+  else if (count == 1)
+    {
+      char *res = "desktopGrabber";
+      char *val = get_string_resource (res, "DesktopGrabber");
+      char buf1[255];
+      char buf2[255];
+      XrmValue value;
+      sprintf (buf1, "%.100s.%.100s", progclass, res);
+      sprintf (buf2, "%.200s -no-desktop", val);
+      value.addr = buf2;
+      value.size = strlen(buf2);
+      XrmPutResource (&db, buf1, "String", &value);
+    }
+}
+
+
 int
 analogtv_load_random_image(analogtv *it, analogtv_input *input)
 {
@@ -255,7 +286,8 @@ analogtv_load_random_image(analogtv *it, analogtv_input *input)
 
   pixmap=XCreatePixmap(it->dpy, it->window, width, height, it->visdepth);
   XSync(it->dpy, False);
-  load_random_image(it->screen, it->window, pixmap, NULL);
+  hack_resources();
+  load_random_image(it->screen, it->window, pixmap, NULL, NULL);
   image = XGetImage(it->dpy, pixmap, 0, 0, width, height, ~0L, ZPixmap);
   XFreePixmap(it->dpy, pixmap);
 
@@ -320,6 +352,7 @@ void add_stations(void)
     }
   }
 }
+
 
 void
 screenhack (Display *dpy, Window window)

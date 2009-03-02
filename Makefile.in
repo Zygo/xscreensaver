@@ -1,4 +1,4 @@
-# Makefile.in --- xscreensaver, Copyright (c) 1999-2004 Jamie Zawinski.
+# Makefile.in --- xscreensaver, Copyright (c) 1999-2005 Jamie Zawinski.
 # the `../configure' script generates `Makefile' from this file.
 
 @SET_MAKE@
@@ -7,12 +7,12 @@ VPATH		= @srcdir@
 
 SHELL		= /bin/sh
 SUBDIRS		= utils driver hacks hacks/glx po
-TARFILES	= README README.VMS README.debugging INSTALL xscreensaver.lsm \
+TARFILES	= README README.VMS README.debugging INSTALL \
 		  configure configure.in Makefile.in config.h.in \
 		  config.h-vms install-sh setup.com config.guess aclocal.m4 \
 		  config.sub makevms.com \
 		  intltool-merge.in intltool-extract.in intltool-update.in \
-		  xscreensaver.lsm.sh xscreensaver.spec \
+		  xscreensaver.spec \
 
 TAR		= tar
 
@@ -59,8 +59,6 @@ tar::
   rm -f configure ;							    \
   $(MAKE) configure ;							    \
   $(MAKE) distdepend ;							    \
-  sh xscreensaver.lsm.sh > xscreensaver.lsm.$$$$ ;			    \
-  mv xscreensaver.lsm.$$$$ xscreensaver.lsm ;				    \
   NAME=`sed -n								    \
   's/[^0-9]*\([0-9]\.[0-9][0-9]*b\?[0-9]*\).*/xscreensaver-\1/p' 	    \
 	utils/version.h` ;						    \

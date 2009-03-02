@@ -28,7 +28,8 @@
   <string id="aname" _label="Team A Name" arg="-team-a-name %"/>
   <string id="bname" _label="Team B Name" arg="-team-b-name %"/>
 
-  <boolean id="dns" _label="Resolve Host Names" arg-unset="-no-dns"/>
+  <boolean id="dns"   _label="Resolve Host Names" arg-unset="-no-dns"/>
+  <boolean id="times" _label="Show Ping Times"    arg-unset="-no-times"/>
 
   <!-- #### -ping-timeout [3000] -->
   <!-- #### -ttl [90] -->

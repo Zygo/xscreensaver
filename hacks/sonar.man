@@ -31,6 +31,7 @@ sonar - display a sonar scope
 [\-team-a-count \fIint\fP]
 [\-team-b-count \fIint\fP]
 [\-no\-dns] 
+[\-no\-times] 
 [\-debug] 
 .SH DESCRIPTION
 The \fIsonar\fP program displays a sonar scope on the computer's screen.
@@ -107,6 +108,9 @@ names as the first element on each line.  If you use ssh, try this:
 .B \-no\-dns
 Do not attempt to resolve IP addresses to hostnames.
 .TP 8
+.B \-no\-times
+Do not display ping times beneath the host names.
+.TP 8
 .B \-team-a-name \fIstring\fP
 In simulation mode, the name of team A.
 .TP 8
@@ -173,6 +177,14 @@ have as few setuid programs around as possible, on general principles.
 chown root.root sonar
 chmod u+s sonar
 .EE
+In ping-mode, the display is a logarithmic scale, calibrated so that the
+three rings represent ping times of approximately 2.5, 70 and 2,000
+milliseconds respectively.  
+
+This means that if any the hosts you are pinging take longer than 2
+seconds to respond, they won't show up; and if you are pinging several
+hosts with very fast response times, they will all appear close to the
+center of the screen (making their names hard to read.)
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

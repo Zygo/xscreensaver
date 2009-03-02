@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS pkg_config have_gnome_help fortune_tmp INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOMEHELP_Y GNOMEHELP_N HACKDIR GNOME_DATADIR GLADE_DATADIR PO_DATADIR GNOME_PANELDIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS build build_cpu build_vendor build_os host host_cpu host_vendor host_os CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP INSTALL_PROGRAM INSTALL_SCRIPT INSTALL_DATA SET_MAKE EGREP PERL X_CFLAGS X_PRE_LIBS X_LIBS X_EXTRA_LIBS INTLTOOL_DESKTOP_RULE INTLTOOL_DIRECTORY_RULE INTLTOOL_KEYS_RULE INTLTOOL_OAF_RULE INTLTOOL_PONG_RULE INTLTOOL_SERVER_RULE INTLTOOL_SHEET_RULE INTLTOOL_SOUNDLIST_RULE INTLTOOL_UI_RULE INTLTOOL_XML_RULE INTLTOOL_CAVES_RULE INTLTOOL_EXTRACT INTLTOOL_MERGE INTLTOOL_UPDATE INTLTOOL_PERL GETTEXT_PACKAGE RANLIB ac_ct_RANLIB ALLOCA USE_NLS MSGFMT GMSGFMT XGETTEXT CATALOGS CATOBJEXT DATADIRNAME GMOFILES INSTOBJEXT INTLDEPS INTLLIBS INTLOBJS POFILES POSUB MKINSTALLDIRS pkg_config gnome_open_program gnome_url_show_program fortune_tmp INCLUDES PREFERRED_DEMO_PROGRAM ALL_DEMO_PROGRAMS SAVER_LIBS MOTIF_LIBS GTK_LIBS XML_LIBS JPEG_LIBS HACK_LIBS XPM_LIBS PTY_LIBS GL_LIBS GLE_LIBS XDPMS_LIBS PASSWD_LIBS INSTALL_SETUID SETUID_HACKS INSTALL_DIRS NEED_SETUID INSTALL_PAM OBJCC EXES_OSX SCRIPTS_OSX MEN_OSX PASSWD_SRCS PASSWD_OBJS XMU_SRCS XMU_OBJS XMU_LIBS SAVER_GL_SRCS SAVER_GL_OBJS SAVER_GL_LIBS LOCK_SRCS LOCK_OBJS JPEG_EXES GL_EXES GL_UTIL_EXES GL_MEN GL_KLUDGE GLE_EXES GLE_KLUDGE GNOME24 GNOME22 NOGNOME HACKDIR GNOME_DATADIR GLADE_DATADIR PO_DATADIR GNOME_PANELDIR HACK_CONF_DIR GTK_EXTRA_OBJS APPDEFAULTS DEPEND DEPEND_FLAGS DEPEND_DEFINES LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -14796,7 +14796,7 @@ if test "$with_gtk" = yes; then
   pkg_check_version            gtk+-2.0  2.0.1  ; ac_gtk_version_string="$vers"
   pkg_check_version         gmodule-2.0  2.0.0
   pkg_check_version          libxml-2.0  2.4.6
-  pkg_check_version        libglade-2.0  2.0.0
+  pkg_check_version        libglade-2.0  1.99.0
   pkg_check_version      gdk-pixbuf-2.0  2.0.0
   pkg_check_version gdk-pixbuf-xlib-2.0  2.0.0
   have_gtk="$ok"
@@ -14864,20 +14864,20 @@ _ACEOF
 fi
 
 
-# Check for the Gnome Help Browser.
+# Check for the various Gnome help and URL loading programs.
 #
 if test "$have_gtk" = yes; then
-  for ac_prog in yelp gnome-help-browser
+  for ac_prog in gnome-open
 do
   # Extract the first word of "$ac_prog", so it can be a program name with args.
 set dummy $ac_prog; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
 echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
-if test "${ac_cv_prog_have_gnome_help+set}" = set; then
+if test "${ac_cv_prog_gnome_open_program+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
-  if test -n "$have_gnome_help"; then
-  ac_cv_prog_have_gnome_help="$have_gnome_help" # Let the user override the test.
+  if test -n "$gnome_open_program"; then
+  ac_cv_prog_gnome_open_program="$gnome_open_program" # Let the user override the test.
 else
 as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
 for as_dir in $PATH
@@ -14886,7 +14886,7 @@ do
   test -z "$as_dir" && as_dir=.
   for ac_exec_ext in '' $ac_executable_extensions; do
   if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
-    ac_cv_prog_have_gnome_help="$ac_prog"
+    ac_cv_prog_gnome_open_program="$ac_prog"
     echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
     break 2
   fi
@@ -14895,22 +14895,58 @@ done
 
 fi
 fi
-have_gnome_help=$ac_cv_prog_have_gnome_help
-if test -n "$have_gnome_help"; then
-  echo "$as_me:$LINENO: result: $have_gnome_help" >&5
-echo "${ECHO_T}$have_gnome_help" >&6
+gnome_open_program=$ac_cv_prog_gnome_open_program
+if test -n "$gnome_open_program"; then
+  echo "$as_me:$LINENO: result: $gnome_open_program" >&5
+echo "${ECHO_T}$gnome_open_program" >&6
 else
   echo "$as_me:$LINENO: result: no" >&5
 echo "${ECHO_T}no" >&6
 fi
 
-  test -n "$have_gnome_help" && break
+  test -n "$gnome_open_program" && break
 done
-test -n "$have_gnome_help" || have_gnome_help="no"
 
-  if test "$have_gnome_help" != no; then
-    have_gnome_help=yes
+  for ac_prog in gnome-url-show
+do
+  # Extract the first word of "$ac_prog", so it can be a program name with args.
+set dummy $ac_prog; ac_word=$2
+echo "$as_me:$LINENO: checking for $ac_word" >&5
+echo $ECHO_N "checking for $ac_word... $ECHO_C" >&6
+if test "${ac_cv_prog_gnome_url_show_program+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  if test -n "$gnome_url_show_program"; then
+  ac_cv_prog_gnome_url_show_program="$gnome_url_show_program" # Let the user override the test.
+else
+as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+  for ac_exec_ext in '' $ac_executable_extensions; do
+  if $as_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_prog_gnome_url_show_program="$ac_prog"
+    echo "$as_me:$LINENO: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
   fi
+done
+done
+
+fi
+fi
+gnome_url_show_program=$ac_cv_prog_gnome_url_show_program
+if test -n "$gnome_url_show_program"; then
+  echo "$as_me:$LINENO: result: $gnome_url_show_program" >&5
+echo "${ECHO_T}$gnome_url_show_program" >&6
+else
+  echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
+fi
+
+  test -n "$gnome_url_show_program" && break
+done
+
 fi
 
 
@@ -16215,7 +16251,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 16224 "configure"
+#line 16260 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -19722,12 +19758,18 @@ fi
 
 # Another substitution in the XScreenSaver.ad.in file:
 #
-if test "$have_gnome_help" = yes; then
-  GNOMEHELP_Y=''
-  GNOMEHELP_N='!    '
+if test "$gnome_open_program" != ''; then
+  GNOME24=''
+  GNOME22='!	'
+  NOGNOME='!	'
+elif test "$gnome_url_show_program" != ''; then
+  GNOME24='!	'
+  GNOME22=''
+  NOGNOME='!	'
 else
-  GNOMEHELP_Y='!    '
-  GNOMEHELP_N=''
+  GNOME24='!	'
+  GNOME22='!	'
+  NOGNOME=''
 fi
 
 
@@ -19866,6 +19908,7 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 
 
 
+
 APPDEFAULTS=$ac_x_app_defaults
 
 
@@ -19874,7 +19917,7 @@ APPDEFAULTS=$ac_x_app_defaults
 
 
 
-                                                                                ac_config_files="$ac_config_files Makefile utils/Makefile driver/Makefile hacks/Makefile hacks/glx/Makefile po/Makefile.in driver/XScreenSaver.ad driver/xscreensaver.kss"
+                                                                      ac_config_files="$ac_config_files Makefile utils/Makefile driver/Makefile hacks/Makefile hacks/glx/Makefile po/Makefile.in driver/XScreenSaver.ad"
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
 # tests run on this system so they can be shared between configure
@@ -20425,7 +20468,6 @@ do
   "hacks/glx/Makefile" ) CONFIG_FILES="$CONFIG_FILES hacks/glx/Makefile" ;;
   "po/Makefile.in" ) CONFIG_FILES="$CONFIG_FILES po/Makefile.in" ;;
   "driver/XScreenSaver.ad" ) CONFIG_FILES="$CONFIG_FILES driver/XScreenSaver.ad" ;;
-  "driver/xscreensaver.kss" ) CONFIG_FILES="$CONFIG_FILES driver/xscreensaver.kss" ;;
   "default-1" ) CONFIG_COMMANDS="$CONFIG_COMMANDS default-1" ;;
   "default-2" ) CONFIG_COMMANDS="$CONFIG_COMMANDS default-2" ;;
   "config.h" ) CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
@@ -20575,7 +20617,8 @@ s,@POFILES@,$POFILES,;t t
 s,@POSUB@,$POSUB,;t t
 s,@MKINSTALLDIRS@,$MKINSTALLDIRS,;t t
 s,@pkg_config@,$pkg_config,;t t
-s,@have_gnome_help@,$have_gnome_help,;t t
+s,@gnome_open_program@,$gnome_open_program,;t t
+s,@gnome_url_show_program@,$gnome_url_show_program,;t t
 s,@fortune_tmp@,$fortune_tmp,;t t
 s,@INCLUDES@,$INCLUDES,;t t
 s,@PREFERRED_DEMO_PROGRAM@,$PREFERRED_DEMO_PROGRAM,;t t
@@ -20618,8 +20661,9 @@ s,@GL_MEN@,$GL_MEN,;t t
 s,@GL_KLUDGE@,$GL_KLUDGE,;t t
 s,@GLE_EXES@,$GLE_EXES,;t t
 s,@GLE_KLUDGE@,$GLE_KLUDGE,;t t
-s,@GNOMEHELP_Y@,$GNOMEHELP_Y,;t t
-s,@GNOMEHELP_N@,$GNOMEHELP_N,;t t
+s,@GNOME24@,$GNOME24,;t t
+s,@GNOME22@,$GNOME22,;t t
+s,@NOGNOME@,$NOGNOME,;t t
 s,@HACKDIR@,$HACKDIR,;t t
 s,@GNOME_DATADIR@,$GNOME_DATADIR,;t t
 s,@GLADE_DATADIR@,$GLADE_DATADIR,;t t
@@ -21375,6 +21419,19 @@ if test "$with_proc_interrupts_req" = yes -a "$have_proc_interrupts" = no; then
   warn "Checking of /proc/interrupts was requested, but it's bogus."
 fi
 
+if test "$pkg_config" = false ; then
+  warnL 'The "pkg-config" program was not found.  Without that,'
+  warn2 "detection of the various GTK libraries won't work."
+else
+  pkgerr=`$pkg_config --list-all 2>&1 >/dev/null`
+  if test "x$pkgerr" != "x" ; then
+    warnL 'The "pkg-config" program produces errors.  This often causes'
+    warn2 "detection of the various GTK libraries to malfunction."
+    warn2 "The errors are:"
+    echo ''
+    echo "$pkgerr" | sed 's/^/             > /g'
+  fi
+fi
 
 if test "$gtk_halfassed" != no ; then
   warnL "GTK version $gtk_halfassed was found, but at least one supporting"
@@ -21727,12 +21784,11 @@ if test \! -z "$rpmv" ; then
 
   if test "$rpmbdir" = "$rpmhdir" ; then
     warn2 "The RPM version was installed in $rpmbdir/."
+    do_dir_warning=yes
   else
     warn2 "The RPM version was installed in $rpmbdir/,"
     warn2 "with demos in $rpmhdir/."
   fi
-
-  do_dir_warning=yes
 fi
 
 
@@ -21748,7 +21804,7 @@ if test "$do_dir_warning" = yes; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}/."
   echo ""
-  echo "      The various graphics demos (180+ different executables) will"
+  echo "      The various graphics demos (190+ different executables) will"
   echo "      be installed in ${HACKDIR}/."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere,"

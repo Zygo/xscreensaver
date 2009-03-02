@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2004 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1506,7 +1506,7 @@ blitdamage (Display *dpy, Window window, int delay)
   
   XGetWindowAttributes(dpy, window, &xwa);
 
-  load_random_image (xwa.screen, window, window, NULL);
+  load_random_image (xwa.screen, window, window, NULL, NULL);
 
   w = xwa.width;
   h = xwa.height;
@@ -1554,6 +1554,177 @@ blitdamage (Display *dpy, Window window, int delay)
 
  DONE:
   XFreeGC(dpy, gc0);
+}
+
+
+/* nvidia, by jwz.
+ *
+ * This is what happens if an Nvidia card goes into some crazy text mode.
+ * Most often seen on the second screen of a dual-head system when the
+ * proper driver isn't loaded.
+ */
+typedef struct { int fg; int bg; int bit; Bool blink; } nvcell;
+
+static void
+nvspatter (nvcell *grid, int rows, int cols, int ncolors, int nbits,
+           Bool fill_p)
+{
+  int max = rows * cols;
+  int from = fill_p ?   0 : random() % (max - 1);
+  int len  = fill_p ? max : random() % (cols * 4);
+  int to = from + len;
+  int i;
+  Bool noisy = ((random() % 4) == 0);
+  Bool diag = (noisy || fill_p) ? 0 : ((random() % 4) == 0);
+
+  int fg = random() % ncolors;
+  int bg = random() % ncolors;
+  int blink = ((random() % 4) == 0);
+  int bit = (random() % nbits);
+
+  if (to > max) to = max;
+
+  if (diag)
+    {
+      int src = random() % (rows * cols);
+      int len2 = (cols / 2) - (random() % 5);
+      int j = src;
+      for (i = from; i < to; i++, j++)
+        {
+          if (j > src + len2 || j >= max)
+            j = src;
+          if (i >= max) abort();
+          if (j >= max) abort();
+          grid[j] = grid[i];
+        }
+    }
+  else
+    for (i = from; i < to; i++)
+      {
+        nvcell *cell = &grid[i];
+        cell->fg = fg;
+        cell->bg = bg;
+        cell->bit = bit;
+        cell->blink = blink;
+
+        if (noisy)
+          {
+            fg = random() % ncolors;
+            bg = random() % ncolors;
+            blink = ((random() % 8) == 0);
+          }
+      }
+}
+
+
+static void
+nvidia (Display *dpy, Window window, int delay)
+{
+  XGCValues gcv;
+  XWindowAttributes xgwa;
+  int cols, rows;
+  int cellw, cellh;
+  unsigned long colors[256];
+  int ncolors;
+  GC gc, gc1 = 0;
+  int x, y, i;
+  int tick = 0;
+  nvcell *grid;
+  Pixmap bits[5];
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+
+  cols = 80;
+  rows = 25;
+  cellw = xgwa.width  / cols;
+  cellh = xgwa.height / rows;
+  if (cellw < 8 || cellh < 18)
+    cellw = 8, cellh = 18;
+  cols = (xgwa.width  / cellw) + 1;
+  rows = (xgwa.height / cellh) + 1;
+
+  grid = (nvcell *) calloc (sizeof(*grid), rows * cols);
+  gc = XCreateGC (dpy, window, 0, &gcv);
+
+  /* Allocate colors
+   */
+  ncolors = 16;
+  for (i = 0; i < ncolors; i++)
+    {
+      XColor c;
+      c.red   = random() & 0xFFFF;
+      c.green = random() & 0xFFFF;
+      c.blue  = random() & 0xFFFF;
+      c.flags = DoRed|DoGreen|DoBlue;
+      XAllocColor (dpy, xgwa.colormap, &c);
+      colors[i] = c.pixel;
+    }
+
+  /* Construct corrupted character bitmaps
+   */
+  for (i = 0; i < countof(bits); i++)
+    {
+      int j;
+
+      bits[i] = XCreatePixmap (dpy, window, cellw, cellh, 1);
+      if (!gc1) gc1 = XCreateGC (dpy, bits[i], 0, &gcv);
+
+      XSetForeground (dpy, gc1, 0);
+      XFillRectangle (dpy, bits[i], gc1, 0, 0, cellw, cellh);
+      XSetForeground (dpy, gc1, ~0L);
+
+      if ((random() % 40) != 0)
+        for (j = 0; j < ((cellw * cellh) / 16); j++)
+          XFillRectangle (dpy, bits[i], gc1,
+                          (random() % (cellw-2)) & ~1,
+                          (random() % (cellh-2)) & ~1,
+                          2, 2);
+    }
+
+  /* Randomize the grid
+   */
+  nvspatter (grid, rows, cols, ncolors, countof(bits), True);
+  for (i = 0; i < 20; i++)
+    nvspatter (grid, rows, cols, ncolors, countof(bits), False);
+
+
+  /* Redisplay loop: blink 3x/second
+   */
+  while (1)
+    {
+      for (y = 0; y < rows; y++)
+        for (x = 0; x < cols; x++)
+          {
+            nvcell *cell = &grid[y * cols + x];
+            unsigned long fg = colors[cell->fg];
+            unsigned long bg = colors[cell->bg];
+            Bool flip = cell->blink && (tick & 1);
+            XSetForeground (dpy, gc, flip ? fg : bg);
+            XSetBackground (dpy, gc, flip ? bg : fg);
+            XCopyPlane (dpy, bits[cell->bit], window, gc,
+                        0, 0, cellw, cellh,
+                        x * cellw, y * cellh, 1L);
+          }
+
+      if ((random() % 5) == 0)    /* change the display */
+        nvspatter (grid, rows, cols, ncolors, countof(bits), False);
+
+      XSync (dpy, False);
+      usleep (333333);
+      if (bsod_sleep(dpy, 0))
+        goto DONE;
+      if (tick / 3 >= delay)
+        goto DONE;
+      tick++;
+    }
+
+ DONE:
+  XFreeColors (dpy, xgwa.colormap, colors, ncolors, 0);
+  for (i = 0; i < countof(bits); i++)
+    XFreePixmap (dpy, bits[i]);
+  XFreeGC (dpy, gc);
+  XFreeGC (dpy, gc1);
+  free (grid);
 }
 
 
@@ -1640,7 +1811,7 @@ make_scrolling_window (Display *dpy, Window window,
   if (!grab_screen_p) ts->sub_height += ts->sub_y, ts->sub_y = 0;
 
   if (grab_screen_p)
-    load_random_image (xgwa.screen, window, window, NULL);
+    load_random_image (xgwa.screen, window, window, NULL, NULL);
 
   sprintf (buf1, "%.50s.background", name);
   sprintf (buf2, "%.50s.Background", name);
@@ -2189,6 +2360,208 @@ linux_fsck (Display *dpy, Window window, int delay)
   XClearWindow(dpy, window);
 }
 
+
+
+/*
+ * Linux (hppa) panic, by Stuart Brady <sdbrady@ntlworld.com>
+ * Output courtesy of M. Grabert
+ */
+static void
+hppa_linux (Display *dpy, Window window, int delay)
+{
+  XWindowAttributes xgwa;
+  scrolling_window *ts;
+  int i=0;
+  const char *sysname;
+  long int linedelay=0;
+
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
+
+  struct { long int delay; const char *string; } linux_panic[] =
+    {{ 0, "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
+          "\n\n\n\n\n\n\n\n\n\n\n\n\n" },
+     { 0, "Linux version 2.6.0-test11-pa2 (root@%s) "
+          "(gcc version 3.3.2 (Debian)) #2 Mon Dec 8 06:09:27 GMT 2003\n" },
+     { 4000, "FP[0] enabled: Rev 1 Model 16\n" },
+     { 10, "The 32-bit Kernel has started...\n" },
+     { -1, "Determining PDC firmware type: System Map.\n" },
+     { -1, "model 00005bb0 00000481 00000000 00000002 7778df9f 100000f0 "
+           "00000008 000000b2 000000b2\n" },
+     { -1, "vers  00000203\n" },
+     { -1, "CPUID vers 17 rev 7 (0x00000227)\n" },
+     { -1, "capabilities 0x3\n" },
+     { -1, "model 9000/785/C3000\n" },
+     { -1, "Total Memory: 1024 Mb\n" },
+     { -1, "On node 0 totalpages: 262144\n" },
+     { -1, "  DMA zone: 262144 pages, LIFO batch:16\n" },
+     { -1, "  Normal zone: 0 pages, LIFO batch:1\n" },
+     { -1, "  HighMem zone: 0 pages, LIFO batch:1\n" },
+     { -1, "LCD display at f05d0008,f05d0000 registered\n" },
+     { -1, "Building zonelist for node : 0\n" },
+     { -1, "Kernel command line: ide=nodma root=/dev/sda3 HOME=/ ip=off "
+           "console=ttyS0 TERM=vt102 palo_kernel=2/vmlinux-2.6\n" },
+     { -1, "ide_setup: ide=nodmaIDE: Prevented DMA\n" },
+     { -1, "PID hash table entries: 16 (order 4: 128 bytes)\n" },
+     {500, "Console: colour dummy device 160x64\n" },
+     { 10, "Memory: 1034036k available\n" },
+     { -1, "Calibrating delay loop... 796.67 BogoMIPS\n" },
+     { -1, "Dentry cache hash table entries: 131072 (order: 7, 524288 "
+           "bytes)\n" },
+     { -1, "Inode-cache hash table entries: 65536 (order: 6, 262144 "
+           "bytes)\n" },
+     { -1, "Mount-cache hash table entries: 512 (order: 0, 4096 bytes)\n" },
+     { -1, "POSIX conformance testing by UNIFIX\n" },
+     { -1, "NET: Registered protocol family 16\n" },
+     { 100, "Searching for devices...\n" },
+     { 25, "Found devices:\n" },
+     { 10, "1. Astro BC Runway Port at 0xfed00000 [10] "
+           "{ 12, 0x0, 0x582, 0x0000b }\n" },
+     { -1, "2. Elroy PCI Bridge at 0xfed30000 [10/0] "
+           "{ 13, 0x0, 0x782, 0x0000a }\n" },
+     { -1, "3. Elroy PCI Bridge at 0xfed32000 [10/1] "
+           "{ 13, 0x0, 0x782, 0x0000a }\n" },
+     { -1, "4. Elroy PCI Bridge at 0xfed38000 [10/4] "
+           "{ 13, 0x0, 0x782, 0x0000a }\n" },
+     { -1, "5. Elroy PCI Bridge at 0xfed3c000 [10/6] "
+           "{ 13, 0x0, 0x782, 0x0000a }\n" },
+     { -1, "6. AllegroHigh W at 0xfffa0000 [32] "
+           "{ 0, 0x0, 0x5bb, 0x00004 }\n" },
+     { -1, "7. Memory at 0xfed10200 [49] { 1, 0x0, 0x086, 0x00009 }\n" },
+     { -1, "CPU(s): 1 x PA8500 (PCX-W) at 400.000000 MHz\n" },
+     { -1, "SBA found Astro 2.1 at 0xfed00000\n" },
+     { -1, "lba version TR2.1 (0x2) found at 0xfed30000\n" },
+     { -1, "lba version TR2.1 (0x2) found at 0xfed32000\n" },
+     { -1, "lba version TR2.1 (0x2) found at 0xfed38000\n" },
+     { -1, "lba version TR2.1 (0x2) found at 0xfed3c000\n" },
+     { 100, "SCSI subsystem initialized\n" },
+     { 10, "drivers/usb/core/usb.c: registered new driver usbfs\n" },
+     { -1, "drivers/usb/core/usb.c: registered new driver hub\n" },
+     { -1, "ikconfig 0.7 with /proc/config*\n" },
+     { -1, "Initializing Cryptographic API\n" },
+     { 250, "SuperIO: probe of 0000:00:0e.0 failed with error -1\n" },
+     { 20, "SuperIO: Found NS87560 Legacy I/O device at 0000:00:0e.1 "
+           "(IRQ 64)\n" },
+     { -1, "SuperIO: Serial port 1 at 0x3f8\n" },
+     { -1, "SuperIO: Serial port 2 at 0x2f8\n" },
+     { -1, "SuperIO: Parallel port at 0x378\n" },
+     { -1, "SuperIO: Floppy controller at 0x3f0\n" },
+     { -1, "SuperIO: ACPI at 0x7e0\n" },
+     { -1, "SuperIO: USB regulator enabled\n" },
+     { -1, "SuperIO: probe of 0000:00:0e.2 failed with error -1\n" },
+     { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
+     { -1, "pty: 256 Unix98 ptys configured\n" },
+     { -1, "Generic RTC Driver v1.07\n" },
+     { -1, "Serial: 8250/16550 driver $Revision: 1.63 $ 13 ports, "
+           "IRQ sharing disabled\n" },
+     { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
+     { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },
+     { -1, "Linux Tulip driver version 1.1.13 (May 11, 2002)\n" },
+     { 150, "tulip0: no phy info, aborting mtable build\n" },
+     { 10, "tulip0:  MII transceiver #1 config 1000 status 782d "
+           "advertising 01e1.\n" },
+     { -1, "eth0: Digital DS21143 Tulip rev 65 at 0xf4008000, "
+           "00:10:83:F9:B4:34, IRQ 66.\n" },
+     { -1, "Uniform Multi-Platform E-IDE driver Revision: 7.00alpha2\n" },
+     { -1, "ide: Assuming 33MHz system bus speed for PIO modes; "
+           "override with idebus=xx\n" },
+     { 100, "SiI680: IDE controller at PCI slot 0000:01:06.0\n" },
+     { 10, "SiI680: chipset revision 2\n" },
+     { -1, "SiI680: BASE CLOCK == 133\n" },
+     { -1, "SiI680: 100% native mode on irq 128\n" },
+     { -1, "    ide0: MMIO-DMA at 0xf4800000-0xf4800007 -- "
+           "Error, MMIO ports already in use.\n" },
+     { -1, "    ide1: MMIO-DMA at 0xf4800008-0xf480000f -- "
+           "Error, MMIO ports already in use.\n" },
+     { 5, "hda: TS130220A2, ATA DISK drive\n" },
+     { -1, "      _______________________________\n" },
+     { -1, "     < Your System ate a SPARC! Gah! >\n" },
+     { -1, "      -------------------------------\n" },
+     { -1, "             \\   ^__^\n" },
+     { -1, "              \\  (xx)\\_______\n" },
+     { -1, "                 (__)\\       )\\/\\\n" },
+     { -1, "                  U  ||----w |\n" },
+     { -1, "                     ||     ||\n" },
+     { -1, "swapper (pid 1): Breakpoint (code 0)\n" },
+     { -1, "\n" },
+     { -1, "     YZrvWESTHLNXBCVMcbcbcbcbOGFRQPDI\n" },
+     { -1, "PSW: 00000000000001001111111100001111 Not tainted\n" },
+     { -1, "r00-03  4d6f6f21 1032f010 10208f34 103fc2e0\n" },
+     { -1, "r04-07  103fc230 00000001 00000001 0000000f\n" },
+     { -1, "r08-11  103454f8 000f41fa 372d3980 103ee404\n" },
+     { -1, "r12-15  3ccbf700 10344810 103ee010 f0400004\n" },
+     { -1, "r16-19  f00008c4 f000017c f0000174 00000000\n" },
+     { -1, "r20-23  fed32840 fed32800 00000000 0000000a\n" },
+     { -1, "r24-27  0000ffa0 000000ff 103fc2e0 10326010\n" },
+     { -1, "r28-31  00000000 00061a80 4ff98340 10208f34\n" },
+     { -1, "sr0-3   00000000 00000000 00000000 00000000\n" },
+     { -1, "sr4-7   00000000 00000000 00000000 00000000\n" },
+     { -1, "\n" },
+     { -1, "IASQ: 00000000 00000000 IAOQ: 00000000 00000004\n" },
+     { -1, " IIR: 00000000    ISR: 00000000  IOR: 00000000\n" },
+     { -1, " CPU:        0   CR30: 4ff98000 CR31: 1037c000\n" },
+     { -1, " ORIG_R28: 55555555\n" },
+     { -1, " IAOQ[0]: 0x0\n" },
+     { -1, " IAOQ[1]: 0x4\n" },
+     { -1, " RP(r2): probe_hwif+0x218/0x44c\n" },
+     { -1, "Kernel panic: Attempted to kill init!\n" },
+     { 0, NULL }};
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  XSetWindowBackground (dpy, window, 
+                        get_pixel_resource("HPPALinux.background",
+                                           "HPPALinux.Background",
+                                           dpy, xgwa.colormap));
+  XClearWindow(dpy, window);
+
+  sysname = "hppa";
+# ifdef HAVE_UNAME
+  {
+    struct utsname uts;
+    char *s;
+    if (uname (&uts) >= 0)
+      sysname = uts.nodename;
+    s = strchr (sysname, '.');
+    if (s) *s = 0;
+  }
+# endif	/* !HAVE_UNAME */
+
+  /* Insert current host name into banner on line 2 */
+  {
+    static char ss[1024];
+    sprintf (ss, linux_panic[1].string, sysname);
+    linux_panic[1].string = ss;
+  }
+
+  ts = make_scrolling_window (dpy, window, "HPPALinux", False);
+
+  usleep (100000);
+  while (linux_panic[i].string)
+    {
+      if (linux_panic[i].delay != -1)
+        linedelay = linux_panic[i].delay * 1000;
+      usleep (linedelay);
+      scrolling_puts (ts, linux_panic[i].string, 0);
+      XSync(dpy, False);
+      if (bsod_sleep (dpy, 0))
+        goto DONE;
+      i++;
+    }
+
+  if (bsod_sleep (dpy, 4))
+    goto DONE;
+
+  XSync(dpy, False);
+  bsod_sleep(dpy, delay);
+
+ DONE:
+  free_scrolling_window (ts);
+  XClearWindow(dpy, window);
+}
+
 /* VMS by jwz (text sent by Roland Barmettler <roli@barmettler.net>)
  */
 static void
@@ -2679,6 +3052,125 @@ DONE:
 
 
 
+
+/* Compaq Tru64 Unix panic, by jwz as described by
+   Tobias Klausmann <klausman@schwarzvogel.de>
+ */
+
+static void
+tru64 (Display* dpy, Window window, int delay)
+{
+  XWindowAttributes xgwa;
+  scrolling_window *ts;
+  const char *sysname;
+  char buf[2048];
+
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
+
+  const char *msg1 =
+   ("panic (cpu 0): trap: illegal instruction\n"
+    "kernel inst fault=gentrap, ps=0x5, pc=0xfffffc0000593878, inst=0xaa\n"
+    "kernel inst fault=gentrap, ps=0x5, pc=0xfffffc0000593878, inst=0xaa\n"
+    "                                                                   \n"
+    "DUMP: blocks available:  1571600\n"
+    "DUMP: blocks wanted:      100802 (partial compressed dump) [OKAY]\n"
+    "DUMP: Device     Disk Blocks Available\n"
+    "DUMP: ------     ---------------------\n"
+    "DUMP: 0x1300023  1182795 - 1571597 (of 1571598) [primary swap]\n"
+    "DUMP.prom: Open: dev 0x5100041, block 2102016: SCSI 0 11 0 2 200 0 0\n"
+    "DUMP: Writing header... [1024 bytes at dev 0x1300023, block 1571598]\n"
+    "DUMP: Writing data");
+  const char *msg2 =
+   ("DUMP: Writing header... [1024 bytes at dev 0x1300023, block 1571598]\n"
+    "DUMP: crash dump complete.\n"
+    "kernel inst fault=gentrap, ps=0x5, pc=0xfffffc0000593878, inst=0xaa\n"
+    "                                                                   \n"
+    "DUMP: second crash dump skipped: 'dump_savecnt' enforced.\n");
+  const char *msg3 =
+   ("\n"
+    "halted CPU 0\n"
+    "\n"
+    "halt code = 5\n"
+    "HALT instruction executed\n"
+    "PC = fffffc00005863b0\n");
+  const char *msg4 =
+   ("\n"   
+    "CPU 0 booting\n"
+    "\n"
+    "\n"
+    "\n");
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  ts = make_scrolling_window (dpy, window, "Tru64", False);
+  XClearWindow(dpy,window);
+  ts->columns = 10000;  /* never wrap */
+  ts->sub_x = 0;
+  ts->sub_y = 0;
+  ts->sub_width = xgwa.width;
+  ts->sub_height = xgwa.height;
+
+  sysname = "127.0.0.1";
+# ifdef HAVE_UNAME
+  {
+    struct utsname uts;
+    if (uname (&uts) >= 0)
+      sysname = uts.nodename;
+  }
+# endif	/* !HAVE_UNAME */
+
+  if (bsod_sleep (dpy, 1))
+    goto DONE;
+  
+      
+
+  sprintf (buf,
+           "Compaq Tru64 UNIX V5.1B (Rev. 2650) (%.100s) console\n"
+           "\n"
+           "login: ",
+           sysname);
+  scrolling_puts (ts, buf, 0);
+  if (bsod_sleep (dpy, 6))
+    goto DONE;
+
+  scrolling_puts (ts, msg1, 0);
+  {
+    int i;
+    int steps = 4 + (random() % 8);
+    for (i = 0; i < steps; i++)
+      {
+        scrolling_puts (ts, ".", 0);
+        XSync (dpy, False);
+        if (bsod_sleep (dpy, 1))
+          goto DONE;
+      }
+    sprintf (buf, "[%dMB]\n", steps);
+    scrolling_puts (ts, buf, 0);
+  }
+
+  scrolling_puts (ts, msg2, 0);
+  XSync(dpy, False);
+  if (bsod_sleep (dpy, 4))
+    goto DONE;
+
+  scrolling_puts (ts, msg3, 0);
+  XSync(dpy, False);
+  if (bsod_sleep (dpy, 3))
+    goto DONE;
+
+  scrolling_puts (ts, msg4, 0);
+  XSync(dpy, False);
+  bsod_sleep(dpy, delay);
+
+ DONE:
+  free_scrolling_window (ts);
+}
+
+
+
 /*
  * Simulate various Apple ][ crashes. The memory map encouraged many programs
  * to use the primary hi-res video page for various storage, and the secondary
@@ -3025,9 +3517,11 @@ char *defaults [] = {
   "*doBSD:		   False",	/* boring */
   "*doLinux:		   True",
   "*doSparcLinux:	   False",	/* boring */
+  "*doHPPALinux:	   True",
   "*doBlitDamage:          True",
   "*doSolaris:             True",
   "*doHPUX:                True",
+  "*doTru64:               True",
   "*doApple2:              True",
   "*doOS390:               True",
   "*doVMS:		   True",
@@ -3083,6 +3577,11 @@ char *defaults [] = {
   ".Linux.foreground:      White",
   ".Linux.background:      Black",
 
+  ".HPPALinux.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".HPPALinux.font2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".HPPALinux.foreground:  White",
+  ".HPPALinux.background:  Black",
+
   ".SparcLinux.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".SparcLinux.font2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".SparcLinux.foreground: White",
@@ -3110,6 +3609,11 @@ char *defaults [] = {
   ".OS390.font2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".OS390.background:	   Black",
   ".OS390.foreground:	   Red",
+
+  ".Tru64.font:		   9x15bold",
+  ".Tru64.font2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".Tru64.foreground:	   White",
+  ".Tru64.background:	   #0000AA",    /* EGA color 0x01. */
 
   "*apple2TVColor:         50",
   "*apple2TVTint:          5",
@@ -3166,16 +3670,22 @@ XrmOptionDescRec options [] = {
   { "-no-bsd",		".doBSD",		XrmoptionNoArg,  "False" },
   { "-linux",		".doLinux",		XrmoptionNoArg,  "True"  },
   { "-no-linux",	".doLinux",		XrmoptionNoArg,  "False" },
+  { "-hppalinux",	".doHPPALinux",		XrmoptionNoArg,  "True"  },
+  { "-no-hppalinux",	".doHPPALinux",		XrmoptionNoArg,  "False" },
   { "-sparclinux",	".doSparcLinux",	XrmoptionNoArg,  "True"  },
   { "-no-sparclinux",	".doSparcLinux",	XrmoptionNoArg,  "False" },
   { "-blitdamage",	".doBlitDamage",	XrmoptionNoArg,  "True"  },
   { "-no-blitdamage",	".doBlitDamage",	XrmoptionNoArg,  "False" },
+  { "-nvidia",		".doNvidia",		XrmoptionNoArg,  "True"  },
+  { "-no-nvidia",	".doNvidia",		XrmoptionNoArg,  "False" },
   { "-solaris",		".doSolaris",		XrmoptionNoArg,  "True"  },
   { "-no-solaris",	".doSolaris",		XrmoptionNoArg,  "False" },
   { "-hpux",		".doHPUX",		XrmoptionNoArg,  "True"  },
   { "-no-hpux",		".doHPUX",		XrmoptionNoArg,  "False" },
   { "-os390",		".doOS390",		XrmoptionNoArg,  "True"  },
   { "-no-os390",	".doOS390",		XrmoptionNoArg,  "False" },
+  { "-tru64",		".doHPUX",		XrmoptionNoArg,  "True"  },
+  { "-no-tru64",	".doTru64",		XrmoptionNoArg,  "False" },
   { "-vms",		".doVMS",		XrmoptionNoArg,  "True"  },
   { "-no-vms",		".doVMS",		XrmoptionNoArg,  "False" },
   { "-msdos",		".doMSDOS",		XrmoptionNoArg,  "True"  },
@@ -3199,14 +3709,17 @@ static struct {
   { "MacX",		macx },
   { "SCO",		sco },
   { "HVX",		hvx },
+  { "HPPALinux",	hppa_linux },
   { "SparcLinux",	sparc_linux },
   { "BSD",		bsd },
   { "Atari",		atari },
   { "BlitDamage",	blitdamage },
+  { "Nvidia",		nvidia },
   { "Solaris",		sparc_solaris },
   { "Linux",		linux_fsck },
   { "HPUX",		hpux },
   { "OS390",		os390 },
+  { "Tru64",		tru64 },
   { "Apple2",		apple2crash },
   { "VMS",		vms },
   { "MSDOS",		msdos },

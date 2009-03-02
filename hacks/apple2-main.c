@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2004 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2005 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -539,7 +539,7 @@ load_image (Display *dpy, Window window, char **image_filename_r)
 
   XGetWindowAttributes (dpy, window, &xgwa);
   p = XCreatePixmap (dpy, window, xgwa.width, xgwa.height, xgwa.depth);
-  load_random_image (xgwa.screen, window, p, image_filename_r);
+  load_random_image (xgwa.screen, window, p, image_filename_r, NULL);
   image = XGetImage (dpy, p, 0, 0, xgwa.width, xgwa.height, ~0, ZPixmap);
   XFreePixmap (dpy, p);
   p = 0;

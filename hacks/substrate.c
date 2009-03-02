@@ -10,6 +10,10 @@
  *
  *  CHANGES
  *
+ *  1.1  dragorn  Jan 04 2005    Fixed some indenting, typo in errors for parsing
+ *                                cmdline args
+ *  1.1  dagraz   Jan 04 2005    Added option for circular cracks (David Agraz)
+ *                               Cleaned up issues with timeouts in start_crack (DA)
  *  1.0  dragorn  Oct 10 2004    First port done
  *
  * Directly based the hacks of: 
@@ -47,6 +51,8 @@
 #undef inline
 #define inline			/* */
 #endif
+
+#define STEP 0.42
 
 /* Raw colormap extracted from pollockEFF.gif */
 char *rgb_colormap[] = {
@@ -87,9 +93,17 @@ typedef struct {
     /* Synthesis of data from Crack:: and SandPainter:: */
     float x, y;
     float t;
+    float ys, xs, t_inc; /* for curvature calculations */
+
+    int curved;
 
     unsigned long sandcolor;
     float sandp, sandg;
+
+    float degrees_drawn;
+
+    int crack_num;
+
 } crack;
 
 struct field {
@@ -102,6 +116,8 @@ struct field {
     unsigned int max_num;
 
     int grains; /* number of grains in the sand painting */
+
+    int circle_percent;
 
     crack *cracks; /* grid of cracks */
     int *cgrid; /* grid of actual crack placement */
@@ -152,6 +168,7 @@ struct field
     f->bgcolor = 0;
     f->visdepth = 0;
     f->grains = 0;
+    f->circle_percent = 0;
     return f;
 }
 
@@ -168,7 +185,7 @@ inline void start_crack(struct field *f, crack *cr) {
     float a;
 
     /* shift until crack is found */
-    while ((!found) || (timeout++ > 10000)) {
+    while ((!found) && (timeout++ < 10000)) {
         px = (int) (random() % f->width);
         py = (int) (random() % f->height);
 
@@ -176,24 +193,53 @@ inline void start_crack(struct field *f, crack *cr) {
             found = 1;
     }
 
-    if (found) {
-        /* start a crack */
-        a = ref_cgrid(f, px, py);
+    if ( !found ) {
+        /* We timed out.  Use our default values */
+        px = cr->x;
+        py = cr->y;
+        ref_cgrid(f, px, py) = cr->t;
+    }
+
+    /* start a crack */
+    a = ref_cgrid(f, px, py);
+
+    if ((random() % 100) < 50) {
+        /* conversion of the java int(random(-2, 2.1)) */
+        a -= 90 + (frand(4.1) - 2.0);
+    } else {
+        a += 90 + (frand(4.1) - 2.0);
+    }
+
+    if ((random() % 100) < f->circle_percent) {
+        float r; /* radius */
+        float radian_inc;
+
+        cr->curved = 1;
+        cr->degrees_drawn = 0;
+
+        r = 10 + (random() % ((f->width + f->height) / 2));
 
         if ((random() % 100) < 50) {
-            /* conversion of the java int(random(-2, 2.1)) */
-            a -= 90 + (frand(4.1) - 2.0);
-        } else {
-            a += 90 + (frand(4.1) - 2.0);
+            r *= -1;
         }
 
-        /* Condensed from Crack::startCrack */
-        cr->x = px + ((float) 0.61 * cos(a * M_PI / 180));
-        cr->y = py + ((float) 0.61 * sin(a * M_PI / 180));
-        cr->t = a;
-    } else {
-        /* timeout */
+        /* arc length = r * theta => theta = arc length / r */
+        radian_inc = STEP / r;
+        cr->t_inc = radian_inc * 360 / 2 / M_PI;
+
+        cr->ys = r * sin(radian_inc);
+        cr->xs = r * ( 1 - cos(radian_inc));
+
     }
+    else {
+        cr->curved = 0;
+    }
+
+    /* Condensed from Crack::startCrack */
+    cr->x = px + ((float) 0.61 * cos(a * M_PI / 180));
+    cr->y = py + ((float) 0.61 * sin(a * M_PI / 180));
+    cr->t = a;
+
 }
 
 inline void make_crack(struct field *f) {
@@ -208,6 +254,15 @@ inline void make_crack(struct field *f) {
         cr->sandp = 0;
         cr->sandg = (frand(0.2) - 0.01);
         cr->sandcolor = f->parsedcolors[random() % f->numcolors];
+        cr->crack_num = f->num;
+        cr->curved = 0;
+        cr->degrees_drawn = 0;
+
+        /* We could use these values in the timeout case of start_crack */
+
+        cr->x = random() % f->width;
+        cr->y = random() % f->height;
+        cr->t = random() % 360;
 
         /* start it */
         start_crack(f, cr);
@@ -257,8 +312,10 @@ inline unsigned long rgb2point(int depth, int r, int g, int b) {
     return ret;
 }
 
-/* alpha blended point drawing */
-inline unsigned long trans_point(int x1, int y1, unsigned long myc, float a, struct field *f) {
+/* alpha blended point drawing -- this is Not Right and will likely fail on 
+ * non-intel platforms as it is now, needs fixing */
+inline unsigned long trans_point(int x1, int y1, unsigned long myc, float a, 
+                                 struct field *f) {
     if ((x1 >= 0) && (x1 < f->width) && (y1 >= 0) && (y1 < f->height)) {
         if (a >= 1.0) {
             ref_pixel(f, x1, y1) = myc;
@@ -288,7 +345,8 @@ inline unsigned long trans_point(int x1, int y1, unsigned long myc, float a, str
     return 0;
 }
 
-inline void region_color(Display *dpy, Window window, GC fgc, struct field *f, crack *cr) {
+inline void region_color(Display *dpy, Window window, GC fgc, struct field *f, 
+                         crack *cr) {
     /* synthesis of Crack::regionColor() and SandPainter::render() */
 
     float rx = cr->x;
@@ -352,7 +410,8 @@ inline void region_color(Display *dpy, Window window, GC fgc, struct field *f, c
 }
 
 void build_substrate(struct field *f) {
-    int tx, ty;
+    int tx;
+    /* int ty; */
 
     f->cycles = 0;
 
@@ -372,32 +431,54 @@ void build_substrate(struct field *f) {
     f->cgrid = (int *) xrealloc(f->cgrid, sizeof(int) * f->height * f->width);
     memset(f->cgrid, 10001, f->height * f->width * sizeof(int));
 
-    /* make random crack seeds */
+    /* Not necessary now that make_crack ensures we have usable default
+     *  values in start_crack's timeout case 
+    * make random crack seeds *
     for (tx = 0; tx < 16; tx++) {
         ty = (int) (random() % (f->width * f->height - 1));
         f->cgrid[ty] = (int) random() % 360;
     }
-    
+    */
+
     /* make the initial cracks */
     for (tx = 0; tx < f->initial_cracks; tx++)
         make_crack(f);
 }
 
 
-inline void movedrawcrack(Display *dpy, Window window, GC fgc, struct field *f, int cracknum) {
+inline void movedrawcrack(Display *dpy, Window window, GC fgc, struct field *f, 
+                          int cracknum) {
     /* Basically Crack::move() */
 
     int cx, cy;
     crack *cr = &(f->cracks[cracknum]);
 
     /* continue cracking */
-    cr->x += ((float) 0.42 * cos(cr->t * M_PI/180));
-    cr->y += ((float) 0.42 * sin(cr->t * M_PI/180));
+    if ( !cr->curved ) {
+        cr->x += ((float) STEP * cos(cr->t * M_PI/180));
+        cr->y += ((float) STEP * sin(cr->t * M_PI/180));
+    }
+    else {
+        float oldx, oldy;
+
+        oldx = cr->x;
+        oldy = cr->y;
+
+        cr->x += ((float) cr->ys * cos(cr->t * M_PI/180));
+        cr->y += ((float) cr->ys * sin(cr->t * M_PI/180));
+
+        cr->x += ((float) cr->xs * cos(cr->t * M_PI/180 - M_PI / 2));
+        cr->x += ((float) cr->xs * sin(cr->t * M_PI/180 - M_PI / 2));
+
+        cr->t += cr->t_inc;
+        cr->degrees_drawn += abs(cr->t_inc);
+    }
 
     /* bounds check */
     /* modification of random(-0.33,0.33) */
     cx = (int) (cr->x + (frand(0.66) - 0.33));
     cy = (int) (cr->y + (frand(0.66) - 0.33));
+
 
     if ((cx >= 0) && (cx < f->width) && (cy >= 0) && (cy < f->height)) {
         /* draw sand painter if we're not wireframe */
@@ -408,9 +489,14 @@ inline void movedrawcrack(Display *dpy, Window window, GC fgc, struct field *f, 
         ref_pixel(f, cx, cy) = f->fgcolor;
         XDrawPoint(dpy, window, fgc, cx, cy);
 
+        if ( cr->curved && (cr->degrees_drawn > 360) ) {
+            /* completed the circle, stop cracking */
+            start_crack(f, cr); /* restart ourselves */
+            make_crack(f); /* generate a new crack */
+        }
         /* safe to check */
-        if ((f->cgrid[cy * f->width + cx] > 10000) ||
-            (abs(f->cgrid[cy * f->width + cx] - cr->t) < 5)) {
+        else if ((f->cgrid[cy * f->width + cx] > 10000) ||
+                 (abs(f->cgrid[cy * f->width + cx] - cr->t) < 5)) {
             /* continue cracking */
             f->cgrid[cy * f->width + cx] = (int) cr->t;
         } else if (abs(f->cgrid[cy * f->width + cx] - cr->t) > 2) {
@@ -419,7 +505,13 @@ inline void movedrawcrack(Display *dpy, Window window, GC fgc, struct field *f, 
             make_crack(f); /* generate a new crack */
         }
     } else {
-        /* out of bounds, top cracking */
+        /* out of bounds, stop cracking */
+
+	/* need these in case of timeout in start_crack */
+        cr->x = random() % f->width;
+        cr->y = random() % f->height;
+        cr->t = random() % 360;
+
         start_crack(f, cr); /* restart ourselves */
         make_crack(f); /* generate a new crack */
     }
@@ -437,6 +529,7 @@ char *defaults[] = {
     "*initialCracks: 3",
     "*maxCracks: 100",
     "*sandGrains: 64",
+    "*circlePercent: 0",
     0
 };
 
@@ -449,10 +542,12 @@ XrmOptionDescRec options[] = {
     {"-initial-cracks", ".initialCracks", XrmoptionSepArg, 0},
     {"-max-cracks", ".maxCracks", XrmoptionSepArg, 0},
     {"-sand-grains", ".sandGrains", XrmoptionSepArg, 0},
+    {"-circle-percent", ".circlePercent", XrmoptionSepArg, 0},
     {0, 0, 0, 0}
 };
 
-void build_img(Display *dpy, Window window, XWindowAttributes xgwa, GC fgc, struct field *f) {
+void build_img(Display *dpy, Window window, XWindowAttributes xgwa, GC fgc, 
+               struct field *f) {
     if (f->off_img) {
         free(f->off_img);
         f->off_img = NULL;
@@ -483,6 +578,7 @@ void screenhack(Display * dpy, Window window)
     f->max_num = (get_integer_resource("maxCracks", "Integer"));
     f->wireframe = (get_boolean_resource("wireFrame", "Boolean"));
     f->grains = (get_integer_resource("sandGrains", "Integer"));
+    f->circle_percent = (get_integer_resource("circlePercent", "Integer"));
 
     if (f->initial_cracks <= 2) {
         fprintf(stderr, "%s: Initial cracks must be greater than 2\n", progname);
@@ -490,7 +586,18 @@ void screenhack(Display * dpy, Window window)
     }
 
     if (f->max_num <= 10) {
-        fprintf(stderr, "%s: Maximum number of cracks must be greater than 2\n", progname);
+        fprintf(stderr, "%s: Maximum number of cracks must be less than 10\n", 
+                progname);
+        return;
+    }
+
+    if (f->circle_percent < 0) {
+        fprintf(stderr, "%s: circle percent must be at least 0\n", progname);
+        return;
+    }
+
+    if (f->circle_percent > 100) {
+        fprintf(stderr, "%s: circle percent must be less than 100\n", progname);
         return;
     }
     
@@ -504,7 +611,8 @@ void screenhack(Display * dpy, Window window)
      * manner but it only happens once */
     while (rgb_colormap[f->numcolors] != NULL) {
         f->parsedcolors = (unsigned long *) xrealloc(f->parsedcolors, 
-                                                     sizeof(unsigned long) * (f->numcolors + 1));
+                                                     sizeof(unsigned long) * 
+                                                     (f->numcolors + 1));
         if (!XParseColor(dpy, xgwa.colormap, rgb_colormap[f->numcolors], &tmpcolor)) {
             fprintf(stderr, "%s: couldn't parse color %s\n", progname,
                     rgb_colormap[f->numcolors]);
@@ -575,3 +683,4 @@ void screenhack(Display * dpy, Window window)
             usleep(growth_delay);
     }
 }
+

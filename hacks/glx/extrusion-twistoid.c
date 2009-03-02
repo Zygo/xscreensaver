@@ -31,11 +31,9 @@
 #define M_PI 3.14159265358979323846
 #endif
 
+/* controls shape of object */
 extern float lastx;
 extern float lasty;
-extern float rot_x;
-extern float rot_y;
-extern float rot_z;
 
 #define OPENGL_10
 /* =========================================================== */
@@ -184,14 +182,13 @@ void DrawStuff_twistoid (void) {
 #ifdef OPENGL_10
    glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  glFrontFace(GL_CW);  /* jwz */
+
    /* set up some matrices so that the object spins with the mouse */
    glPushMatrix ();
-   glTranslatef (0.0, 0.0, -80.0);
-   glRotatef(rot_x, 1, 0, 0);
-   glRotatef(rot_y, 0, 1, 0);
-   glRotatef(rot_z, 0, 0, 1);
-/*     glRotated (43.0, 1.0, 0.0, 0.0); */
-/*     glRotated (43.0, 0.0, 1.0, 0.0); */
+/* glTranslatef (0.0, 0.0, -80.0); */
+/* glRotated (43.0, 1.0, 0.0, 0.0); */
+/* glRotated (43.0, 0.0, 1.0, 0.0); */
    glScaled (1.8, 1.8, 1.8);
    gleTwistExtrusion (NUM_TWIS_PTS, twistation, twist_normal, 
               NULL, NUM_TOID1_PTS, toid1_points, NULL, toid1_twists);

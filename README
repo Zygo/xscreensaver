@@ -65,7 +65,7 @@ there's no need to recompile or reinstall anything.
 Along with the xscreensaver daemon itself, this package also includes
 numerous graphics hacks for use as screensavers.  There is nothing
 magic about these: they are just programs that draw on the root window.
-More than 180 such programs are included.  For details, see the
+More than 190 such programs are included.  For details, see the
 xscreensaver web page, or the enclosed manual pages.
 
 The latest version of xscreensaver is always available on the web at
@@ -76,6 +76,15 @@ the XScreenSaver FAQ about that: http://www.jwz.org/xscreensaver/faq.html
 
                               ============
 
+Changes since 4.19:   * New hacks, `fiberlamp', `boing', `boxfit', and
+                        `carousel'.
+                      * Rewrote `glslideshow' again: should be faster now.
+                      * Sped up loading of images in GL programs.
+                      * `starwars' uses texture-mapped fonts now.
+                      * New `bsod' modes: tru64, hppa, and nvidia.
+                      * Updates to `webcollage', `juggle', `pinion',
+                        `fireworkx', `sonar', `extrusion', `substrate', and
+                        `pong'.
 Changes since 4.18:   * New hacks, `substrate', `intermomentary', `fireworkx',
                         and `pinion'.
                       * New version of `flow'.

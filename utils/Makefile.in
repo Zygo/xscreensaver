@@ -1,4 +1,4 @@
-# utils/Makefile.in --- xscreensaver, Copyright (c) 1997-2004 Jamie Zawinski.
+# utils/Makefile.in --- xscreensaver, Copyright (c) 1997-2005 Jamie Zawinski.
 # the `../configure' script generates `utils/Makefile' from this file.
 
 

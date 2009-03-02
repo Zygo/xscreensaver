@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)gleidescope.c	1.0 03/06/27 xlockmore";
+/*static const char sccsid[] = "@(#)gleidescope.c	1.0 03/06/27 xlockmore";*/
 #endif
 
 /* enable -grab switch */
@@ -70,6 +70,7 @@ static const char sccsid[] = "@(#)gleidescope.c	1.0 03/06/27 xlockmore";
 		"*image:		DEFAULT		\n"	\
 		"*size:			-1			\n"	\
 		"*duration:		30			\n" \
+		"*useSHM:		True		\n"
 
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -417,7 +418,8 @@ gleidescope_handle_event(ModeInfo *mi, XEvent *event)
 	{
 		case ButtonPress:
 
-			if (event->xbutton.button == Button1 || event->xbutton.button == Button3)
+			if (event->xbutton.button == Button1 ||
+                event->xbutton.button == Button3)
 			{
 				/* store initial values of mouse */
 				xstart = event->xbutton.x;
@@ -443,7 +445,8 @@ gleidescope_handle_event(ModeInfo *mi, XEvent *event)
 
 		case ButtonRelease:
 
-			if (event->xbutton.button == Button1 || event->xbutton.button == Button3)
+			if (event->xbutton.button == Button1 ||
+                event->xbutton.button == Button3)
 			{
 				/* button is up */
 				gp->button_down_p = False;
@@ -474,59 +477,24 @@ gleidescope_handle_event(ModeInfo *mi, XEvent *event)
 static void
 getSnapshot(ModeInfo *mi, GLuint name)
 {
-	XImage  *ximage;
-	int     status;
-	int     tw, th;
+    Bool mipmap_p = True;
+	int     iw, ih, tw, th;
 	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
 
 	if (MI_IS_WIREFRAME(mi))
 		return;
 
-	ximage = screen_to_ximage(mi->xgwa.screen, mi->window, 0);
-
-	tw = mi->xgwa.width;
-	th = mi->xgwa.height;
-
-	gp->max_tx = (GLfloat) tw / (GLfloat) ximage->width;
-	gp->max_ty = (GLfloat) th / (GLfloat) ximage->height;
-
 	glBindTexture (GL_TEXTURE_2D, name);
+    if (! screen_to_texture (mi->xgwa.screen, mi->window, 0, 0,
+                             mipmap_p, NULL, NULL, &iw, &ih, &tw, &th))
+      exit (1);
 
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-			GL_LINEAR_MIPMAP_LINEAR);
+    gp->max_tx = (GLfloat) iw / tw;
+    gp->max_ty = (GLfloat) ih / th;
 
-	clear_gl_error();
-	status = gluBuild2DMipmaps(GL_TEXTURE_2D, 3,
-			ximage->width, ximage->height,
-			GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
-
-	if (!status && glGetError())
-		/* Some implementations of gluBuild2DMipmaps(), but set a GL error anyway.
-		**            We could just call check_gl_error(), but that would exit. */
-		status = -1;
-
-	if (status)
-	{
-		const GLubyte *s = gluErrorString (status);
-		if (s)
-		{
-			fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
-					progname, ximage->width, ximage->height, s);
-		}
-		else
-		{
-			fprintf (stderr, "%s: error mipmapping %dx%d texture: (unknown)\n",
-					progname, ximage->width, ximage->height);
-		}
-		clear_gl_error();
-	}
-	check_gl_error("mipmapping");  /* should get a return code instead of a
-									  GL error, but just in case... */
-
-	free(ximage->data);
-	ximage->data = 0;
-	XDestroyImage (ximage);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                     (mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR));
 
 	/* remember time of last image change */
 	gp->start_time = time ((time_t *) 0);

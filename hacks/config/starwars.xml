@@ -43,8 +43,9 @@
     <boolean id="smooth" _label="Anti-aliased Lines" arg-unset="-no-smooth"/>
     <boolean id="fade"   _label="Thick Lines"        arg-unset="-no-thick"/>
   </hgroup>
-  <boolean id="fade"   _label="Fade Out"           arg-unset="-no-fade"/>
 
+  <boolean id="texture" _label="Texture-Mapped Font" arg-unset="-no-texture"/>
+  <boolean id="fade"   _label="Fade Out"           arg-unset="-no-fade"/>
   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
   <_description>

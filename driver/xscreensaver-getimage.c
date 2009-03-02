@@ -285,8 +285,8 @@ compute_image_scaling (int src_w, int src_h,
   *scaled_to_y_ret = desty;
 
   if (verbose_p)
-    fprintf (stderr, "%s: displaying %dx%d image at %d,%d.\n",
-             progname, src_w, src_h, destx, desty);
+    fprintf (stderr, "%s: displaying %dx%d image at %d,%d in %dx%d.\n",
+             progname, src_w, src_h, destx, desty, dest_w, dest_h);
 }
 
 
@@ -351,7 +351,8 @@ scale_ximage (Screen *screen, Visual *visual,
  */
 static Bool
 read_file_gdk (Screen *screen, Window window, Drawable drawable,
-               const char *filename, Bool verbose_p)
+               const char *filename, Bool verbose_p,
+               XRectangle *geom_ret)
 {
   GdkPixbuf *pb;
   Display *dpy = DisplayOfScreen (screen);
@@ -450,6 +451,14 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
         {
           XSetWindowBackgroundPixmap (dpy, window, drawable);
           XClearWindow (dpy, window);
+        }
+
+      if (geom_ret)
+        {
+          geom_ret->x = destx;
+          geom_ret->y = desty;
+          geom_ret->width  = w;
+          geom_ret->height = h;
         }
     }
 
@@ -951,7 +960,8 @@ read_jpeg_ximage (Screen *screen, Visual *visual, Drawable drawable,
  */
 static Bool
 read_file_jpeglib (Screen *screen, Window window, Drawable drawable,
-                   const char *filename, Bool verbose_p)
+                   const char *filename, Bool verbose_p,
+                   XRectangle *geom_ret)
 {
   Display *dpy = DisplayOfScreen (screen);
   XImage *ximage;
@@ -1042,6 +1052,14 @@ read_file_jpeglib (Screen *screen, Window window, Drawable drawable,
     XFreeGC (dpy, gc);
   }
 
+  if (geom_ret)
+    {
+      geom_ret->x = destx;
+      geom_ret->y = desty;
+      geom_ret->width  = ximage->width;
+      geom_ret->height = ximage->height;
+    }
+
   free (ximage->data);
   ximage->data = 0;
   XDestroyImage (ximage);
@@ -1057,16 +1075,18 @@ read_file_jpeglib (Screen *screen, Window window, Drawable drawable,
  */
 static Bool
 display_file (Screen *screen, Window window, Drawable drawable,
-              const char *filename, Bool verbose_p)
+              const char *filename, Bool verbose_p,
+              XRectangle *geom_ret)
 {
   if (verbose_p)
     fprintf (stderr, "%s: loading \"%s\"\n", progname, filename);
 
 # if defined(HAVE_GDK_PIXBUF)
-  if (read_file_gdk (screen, window, drawable, filename, verbose_p))
+  if (read_file_gdk (screen, window, drawable, filename, verbose_p, geom_ret))
     return True;
 # elif defined(HAVE_JPEGLIB)
-  if (read_file_jpeglib (screen, window, drawable, filename, verbose_p))
+  if (read_file_jpeglib (screen, window, drawable, filename, verbose_p,
+                         geom_ret))
     return True;
 # else  /* !(HAVE_GDK_PIXBUF || HAVE_JPEGLIB) */
   /* shouldn't get here if we have no image-loading methods available. */
@@ -1078,7 +1098,7 @@ display_file (Screen *screen, Window window, Drawable drawable,
 
 
 /* Invokes a sub-process and returns its output (presumably, a file to
-   load.)  Free the string when done.  video_p controls which program
+   load.)  Free the string when done.  'grab_type' controls which program
    to run.
  */
 static char *
@@ -1239,7 +1259,7 @@ get_desktop_filename (Screen *screen, Bool verbose_p)
  */
 static Bool
 display_video (Screen *screen, Window window, Drawable drawable,
-               Bool verbose_p)
+               Bool verbose_p, XRectangle *geom_ret)
 {
   char *filename = get_video_filename (screen, verbose_p);
   Bool status;
@@ -1251,7 +1271,8 @@ display_video (Screen *screen, Window window, Drawable drawable,
       return False;
     }
 
-  status = display_file (screen, window, drawable, filename, verbose_p);
+  status = display_file (screen, window, drawable, filename, verbose_p,
+                         geom_ret);
 
   if (unlink (filename))
     {
@@ -1274,7 +1295,7 @@ display_video (Screen *screen, Window window, Drawable drawable,
  */
 static Bool
 display_desktop (Screen *screen, Window window, Drawable drawable,
-                 Bool verbose_p)
+                 Bool verbose_p, XRectangle *geom_ret)
 {
 # ifdef USE_EXTERNAL_SCREEN_GRABBER
 
@@ -1310,7 +1331,8 @@ display_desktop (Screen *screen, Window window, Drawable drawable,
       return False;
     }
 
-  status = display_file (screen, window, drawable, filename, verbose_p);
+  status = display_file (screen, window, drawable, filename, verbose_p,
+                         geom_ret);
 
   if (unlink (filename))
     {
@@ -1398,6 +1420,14 @@ display_desktop (Screen *screen, Window window, Drawable drawable,
       XFreeGC (dpy, gc);
     }
 
+  if (geom_ret)
+    {
+      geom_ret->x = destx;
+      geom_ret->y = desty;
+      geom_ret->width  = w2;
+      geom_ret->height = h2;
+    }
+
   XSync (dpy, False);
   return True;
 
@@ -1424,6 +1454,7 @@ get_image (Screen *screen,
   int count = 0;
   struct stat st;
   const char *file_prop = 0;
+  XRectangle geom = { 0, 0, 0, 0 };
 
   if (! drawable_window_p (dpy, window))
     {
@@ -1567,19 +1598,19 @@ get_image (Screen *screen,
       break;
 
     case GRAB_DESK:
-      if (! display_desktop (screen, window, drawable, verbose_p))
+      if (! display_desktop (screen, window, drawable, verbose_p, &geom))
         goto COLORBARS;
       file_prop = "desktop";
       break;
 
     case GRAB_FILE:
-      if (! display_file (screen, window, drawable, file, verbose_p))
+      if (! display_file (screen, window, drawable, file, verbose_p, &geom))
         goto COLORBARS;
       file_prop = file;
       break;
 
     case GRAB_VIDEO:
-      if (! display_video (screen, window, drawable, verbose_p))
+      if (! display_video (screen, window, drawable, verbose_p, &geom))
         goto COLORBARS;
       file_prop = "video";
       break;
@@ -1594,6 +1625,17 @@ get_image (Screen *screen,
     if (file_prop && *file_prop)
       XChangeProperty (dpy, window, a, XA_STRING, 8, PropModeReplace, 
                        (unsigned char *) file_prop, strlen(file_prop));
+    else
+      XDeleteProperty (dpy, window, a);
+
+    a = XInternAtom (dpy, XA_XSCREENSAVER_IMAGE_GEOMETRY, False);
+    if (geom.width > 0)
+      {
+        char gstr[30];
+        sprintf (gstr, "%dx%d+%d+%d", geom.width, geom.height, geom.x, geom.y);
+        XChangeProperty (dpy, window, a, XA_STRING, 8, PropModeReplace, 
+                         (unsigned char *) gstr, strlen (gstr));
+      }
     else
       XDeleteProperty (dpy, window, a);
   }

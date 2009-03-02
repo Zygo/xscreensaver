@@ -1267,7 +1267,7 @@ lavalite_handle_event (ModeInfo *mi, XEvent *event)
   lavalite_configuration *bp = &bps[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       bp->button_down_p = True;
       gltrackball_start (bp->trackball,
@@ -1276,9 +1276,17 @@ lavalite_handle_event (ModeInfo *mi, XEvent *event)
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       bp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 5,
+                              !!event->xbutton.state);
       return True;
     }
   else if (event->xany.type == MotionNotify &&
@@ -1298,7 +1306,7 @@ static void
 parse_color (ModeInfo *mi, const char *name, const char *s, GLfloat *a)
 {
   XColor c;
-  a[4] = 1.0;  /* alpha */
+  a[3] = 1.0;  /* alpha */
 
   if (! XParseColor (MI_DISPLAY(mi), MI_COLORMAP(mi), s, &c))
     {

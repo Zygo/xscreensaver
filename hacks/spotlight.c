@@ -8,7 +8,7 @@
 /* modified from a module from the xscreensaver distribution */
 
 /*
- * xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 1998
+ * xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 1998, 2005
  * Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -115,7 +115,7 @@ init_hack (Display *dpy, Window window)
 
   /* grab screen to pixmap */
   pm = XCreatePixmap(dpy, window, sizex, sizey, xgwa.depth);
-  load_random_image (xgwa.screen, window, pm, NULL);
+  load_random_image (xgwa.screen, window, pm, NULL, NULL);
   XClearWindow(dpy, window);
   XFlush (dpy);
 

@@ -28,7 +28,7 @@ program is the finest in personal computer emulation.
 steps through a set of screens, each one a recreation of a different failure
 mode of an operating system.  Systems depicted include
 Windows 3.1, Windows 95, Windows NT, MS-DOS, AmigaDOS 1.3, Linux,
-SCO UNIX, BSD UNIX, HPUX, Solaris, VMS, HVX/GCOS6, IBM OS/390, 
+SCO UNIX, BSD UNIX, HPUX, Solaris, Tru64, VMS, HVX/GCOS6, IBM OS/390, 
 MacOS (MacsBug, Bomb, Sad Mac, and OSX), Atari ST, Apple ][+, and
 NCD X Terminals.
 .PP
@@ -82,19 +82,21 @@ hacks are displayed and which aren't.
 .BR doBSD ,
 .BR doLinux ,
 .BR doSparcLinux ,
+.BR doHPPALinux ,
 .BR doBlitDamage ,
 .BR doSolaris ,
 .BR doHPUX ,
 .BR doApple2 ,
 .BR doOS390 ,
+.BR doTru64 ,
 .BR doVMS ,
 .BR doMSDOS ,
 and
 .BR doHVX .
 Each of these is a Boolean resource, they all default to true, except
-for doAtari, doBSD, and doSparcLinux, which are turned off by default,
-because they're really not all that interesting looking unless you're a
-fan of those systems.  
+for doAtari, doBSD, doSparcLinux, and doHPPALinux, which are turned off
+by default, because they're really not all that interesting looking
+unless you're a fan of those systems.  
 
 There are command-line options for all of these:
 e.g., \fI\-bsd\fP, \fI\-no-bsd\fP.  (Also note the \fI\-only\fP option.)

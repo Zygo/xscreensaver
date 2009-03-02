@@ -52,6 +52,7 @@
 # include "xlock.h"                  /* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
+#include "glxfonts.h"
 #include "rotator.h"
 #include "gltrackball.h"
 
@@ -822,90 +823,6 @@ void makeshaft (void)
   glEndList();
 }
 
-static void
-load_font (ModeInfo *mi, char *res, XFontStruct **fontP, GLuint *dlistP)
-{
-  const char *font = get_string_resource (res, "Font");
-  XFontStruct *f;
-  Font id;
-  int first, last;
-
-  if (!font) font = "-*-times-bold-r-normal-*-180-*";
-
-  f = XLoadQueryFont(mi->dpy, font);
-  if (!f) f = XLoadQueryFont(mi->dpy, "fixed");
-
-  id = f->fid;
-  first = f->min_char_or_byte2;
-  last = f->max_char_or_byte2;
-  
-  clear_gl_error ();
-  *dlistP = glGenLists ((GLuint) last+1);
-  check_gl_error ("glGenLists");
-  glXUseXFont(id, first, last-first+1, *dlistP + first);
-  check_gl_error ("glXUseXFont");
-
-  *fontP = f;
-}
-
-
-static void
-print_title_string (ModeInfo *mi, const char *string, GLfloat x, GLfloat y)
-{
-  Engine *e = &engine[MI_SCREEN(mi)];
-  XFontStruct *font = e->xfont;
-  GLfloat line_height = font->ascent + font->descent;
-
-  y -= line_height;
-
-  glPushAttrib (GL_TRANSFORM_BIT |  /* for matrix contents */
-                GL_ENABLE_BIT);     /* for various glDisable calls */
-  glDisable (GL_LIGHTING);
-  glDisable (GL_DEPTH_TEST);
-  {
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    {
-      glLoadIdentity();
-
-      glMatrixMode(GL_MODELVIEW);
-      glPushMatrix();
-      {
-        unsigned int i;
-        int x2 = x;
-        glLoadIdentity();
-
-        gluOrtho2D (0, mi->xgwa.width, 0, mi->xgwa.height);
-
-        glRasterPos2f (x, y);
-        for (i = 0; i < strlen(string); i++)
-          {
-            char c = string[i];
-            if (c == '\n')
-              {
-                glRasterPos2f (x, (y -= line_height));
-                x2 = x;
-              }
-            else
-              {
-                glCallList (e->font_dlist + (int)(c));
-                x2 += (font->per_char
-                       ? font->per_char[c - font->min_char_or_byte2].width
-                       : font->min_bounds.width);
-              }
-          }
-      }
-      glPopMatrix();
-    }
-    glMatrixMode(GL_PROJECTION);
-    glPopMatrix();
-  }
-  glPopAttrib();
-
-  glMatrixMode(GL_MODELVIEW);
-}
-
-
 
 void reshape_engine(ModeInfo *mi, int width, int height)
 {
@@ -991,7 +908,7 @@ void init_engine(ModeInfo *mi)
 
  makeshaft();
  makepiston();
- load_font (mi, "titleFont", &e->xfont, &e->font_dlist);
+ load_font (mi->dpy, "titleFont", &e->xfont, &e->font_dlist);
 }
 
 Bool engine_handle_event (ModeInfo *mi, XEvent *event)
@@ -999,7 +916,7 @@ Bool engine_handle_event (ModeInfo *mi, XEvent *event)
    Engine *e = &engine[MI_SCREEN(mi)];
 
    if (event->xany.type == ButtonPress &&
-       event->xbutton.button & Button1)
+       event->xbutton.button == Button1)
    {
        e->button_down_p = True;
        gltrackball_start (e->trackball,
@@ -1009,11 +926,19 @@ Bool engine_handle_event (ModeInfo *mi, XEvent *event)
        return True;
    }
    else if (event->xany.type == ButtonRelease &&
-            event->xbutton.button & Button1) {
+            event->xbutton.button == Button1) {
        e->button_down_p = False;
        movepaused = 0;
        return True;
    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (e->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    }
    else if (event->xany.type == MotionNotify &&
             e->button_down_p) {
       gltrackball_track (e->trackball,
@@ -1039,8 +964,10 @@ void draw_engine(ModeInfo *mi)
   display(e);
 
   if (do_titles)
-    print_title_string (mi, e->engine_name,
-                        10, mi->xgwa.height - 10);
+      print_gl_string (mi->dpy, e->xfont, e->font_dlist,
+                       mi->xgwa.width, mi->xgwa.height,
+                       10, mi->xgwa.height - 10,
+                       e->engine_name);
 
   if(mi->fps_p) do_fps(mi);
   glFinish(); 

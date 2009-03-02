@@ -91,22 +91,23 @@ fps_print_string (ModeInfo *mi, GLfloat x, GLfloat y, const char *string)
      here, which would kind of defeat the purpose of centralizing this
      code in one file.
    */
-  glPushAttrib(GL_TRANSFORM_BIT |  /* for matrix contents */
-               GL_ENABLE_BIT |     /* for various glDisable calls */
-               GL_CURRENT_BIT |    /* for glColor3f() */
-               GL_LIST_BIT);       /* for glListBase() */
+  glPushAttrib (GL_TRANSFORM_BIT |  /* for matrix contents */
+                GL_ENABLE_BIT |     /* for various glDisable calls */
+                GL_CURRENT_BIT |    /* for glColor3f() */
+                GL_LIST_BIT);       /* for glListBase() */
   {
 # ifdef DEBUG
     check_gl_error ("glPushAttrib");
 # endif
 
     /* disable lighting and texturing when drawing bitmaps!
-       (glPopAttrib() restores these, I believe.)
+       (glPopAttrib() restores these.)
      */
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_BLEND);
-    glDisable(GL_DEPTH_TEST);
+    glDisable (GL_TEXTURE_2D);
+    glDisable (GL_LIGHTING);
+    glDisable (GL_BLEND);
+    glDisable (GL_DEPTH_TEST);
+    glDisable (GL_CULL_FACE);
 
     /* glPopAttrib() does not restore matrix changes, so we must
        push/pop the matrix stacks to be non-intrusive there.

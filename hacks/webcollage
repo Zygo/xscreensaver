@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright (c) 1999-2004 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright (c) 1999-2005 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -60,26 +60,41 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.118 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
-my $copyright = "WebCollage $version, Copyright (c) 1999-2004" .
+my $version = q{ $Revision: 1.123 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $copyright = "WebCollage $version, Copyright (c) 1999-2005" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
 
 
 
-my @search_methods = (  72, "altavista",   \&pick_from_alta_vista_random_link,
-                        12, "livejournal", \&pick_from_livejournal_images,
-                         9, "yahoorand",   \&pick_from_yahoo_random_link,
-                         7, "yahoonews",   \&pick_from_yahoo_news_text,
+my @search_methods = (  60, "altavista",    \&pick_from_alta_vista_random_link,
+                        12, "livejournal",  \&pick_from_livejournal_images,
+                         8, "yahoorand",    \&pick_from_yahoo_random_link,
+                        11, "googlephotos", \&pick_from_google_image_photos,
+                         6, "googleimgs",   \&pick_from_google_images,
+                         3, "googlenums",   \&pick_from_google_image_numbers,
 
-                     # The ircimages guy's server can't take the heat, so he
-                     # started banning the webcollage user agent.  I tried to
-                     # convince him to add a lighter-weight page to support
-                     # webcollage better, but he doesn't care.
+                     # In Apr 2002, Google asked me to stop searching them.
+                     # I asked them to add a "random link" url.  They said
+                     # "that would be easy, we'll think about it" and then
+                     # never wrote back.  Booo Google!  Booooo!  So, screw
+                     # those turkeys, I've turned Google searching back on.
+                     # I'm sure they can take it.  (Jan 2005.)
+
+                     # Jan 2005: Yahoo fucked up their search form so that
+                     # it's no longer possible to do "or" searches on news
+                     # images, so we rarely get any hits there any more.
+                     # 
+                     #  0, "yahoonews",   \&pick_from_yahoo_news_text,
+
+                     # Dec 2004: the ircimages guy's server can't take the
+                     # heat, so he started banning the webcollage user agent.
+                     # I tried to convince him to add a lighter-weight page to
+                     # support webcollage better, but he doesn't care.
                      #
                      #  0, "ircimages", \&pick_from_ircimages,
 
-                     # Alta Vista has a new "random link" URL now.
+                     # Dec 2002: Alta Vista has a new "random link" URL now.
                      # They added it specifically to better support webcollage!
                      # That was super cool of them.  This is how we used to do
                      # it, before:
@@ -87,21 +102,14 @@ my @search_methods = (  72, "altavista",   \&pick_from_alta_vista_random_link,
                      #  0, "avimages", \&pick_from_alta_vista_images,
                      #  0, "avtext",   \&pick_from_alta_vista_text,
 
-                     # Google asked (nicely) for me to stop searching them.
-                     # I asked them to add a "random link" url.  They said
-                     # "that would be easy, we'll think about it" and then
-                     # never wrote back.  Booo Google!  Booooo!
+                     # This broke in 2004.  Eh, Lycos sucks anyway.
                      #
-                     #   0, "googlenums", \&pick_from_google_image_numbers,
-                     #   0, "googleimgs", \&pick_from_google_images,
+                     #   0, "lycos",      \&pick_from_lycos_text,
 
-                     # I suspect Hotbot is actually the same search engine
-                     # data as Lycos.
+                     # This broke in 2003, I think.  I suspect Hotbot is
+                     # actually the same search engine data as Lycos.
                      #
                      #  0, "hotbot",     \&pick_from_hotbot_text,
-
-                     # Eh, Lycos sucks anyway.
-                     #   0, "lycos",      \&pick_from_lycos_text,
                       );
 
 # programs we can use to write to the root window (tried in ascending order.)
@@ -185,10 +193,17 @@ my %warningless_sites = (
   "www.geocities.com"       => 1,
   "www.angelfire.com"       => 1,
   "members.aol.com"         => 1,
+  "img.photobucket.com"     => 1,
+  "pics.livejournal.com"    => 1,
+  "tinypic.com"             => 1,
 
   "yimg.com"                => 1,  # This is where dailynews.yahoo.com stores
   "eimg.com"                => 1,  # its images, so pick_from_yahoo_news_text()
                                    # hits this every time.
+
+  "images.quizfarm.com"     => 1,  # damn those LJ quizzes...
+  "images.quizilla.com"     => 1,
+  "images.quizdiva.net"     => 1,
 
   "driftnet"                => 1,  # builtin...
 );
@@ -219,7 +234,7 @@ my $verbose_exec = 0;           # diagnostics about executing programs
 my $report_performance_interval = 60 * 15;  # print some stats every 15 minutes
 
 my $http_proxy = undef;
-my $http_timeout = 30;
+my $http_timeout = 20;
 my $cvt_timeout = 10;
 
 my $min_width = 50;
@@ -342,7 +357,8 @@ sub get_document_1 {
           $url =~ m@^http://random\.yahoo\.com/@ ||
           $url =~ m@^http://images\.google\.com/@) {
         # block this, you turkeys.
-        $user_agent = "Mozilla/4.76 [en] (X11; U; Linux 2.2.16-22 i686; Nav)";
+        $user_agent = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.7.5)" .
+          " Gecko/20041111 Firefox/1.0";
       }
 
       my $hdrs = "GET " . ($http_proxy ? $url : "/$path") . " HTTP/1.0\r\n" .
@@ -399,9 +415,16 @@ sub get_document_1 {
         return ();
       }
 
+      $SIG{ALRM} = 'DEFAULT';  # seem to be suffering a race?
       return ( $http, $head, $body );
     };
   die if ($@ && $@ ne "alarm\n");       # propagate errors
+
+  if ($@ && $@ ne "alarm\n") {
+    print STDERR blurb() . "DIE " . join(" ", $@) . "\n";
+    die;
+  }
+
   if ($@) {
     # timed out
     $head = undef;
@@ -687,6 +710,13 @@ sub pick_image_from_body {
         next;
       }
       
+      # skip images with a URL that indicates a Yahoo thumbnail.
+      if (m@\.yimg\.com/.*/t/@) {
+        if (!$width)  { $width  = "?"; }
+        if (!$height) { $height = "?"; }
+        LOG ($verbose_filter, "  skip yahoo thumb $_ (${width}x$height)");
+        next;
+      }
 
       my $url = $_;
 
@@ -763,39 +793,56 @@ sub pick_dictionary {
 # returns a random word from the dictionary
 #
 sub random_word {
-    my $word = 0;
-    if (open (IN, "<$wordlist")) {
-        my $size = (stat(IN))[7];
-        my $pos = rand $size;
-        if (seek (IN, $pos, 0)) {
-            $word = <IN>;   # toss partial line
-            $word = <IN>;   # keep next line
-        }
-        if (!$word) {
-          seek( IN, 0, 0 );
-          $word = <IN>;
-        }
-        close (IN);
+
+  local *IN;
+  if (! open (IN, "<$wordlist")) {
+    return undef;
+  }
+
+  my $size = (stat(IN))[7];
+  my $word = undef;
+  my $count = 0;
+
+  while (1) {
+    error ("looping ($count) while reading $wordlist")
+      if (++$count > 100);
+
+    my $pos = int (rand ($size));
+    if (seek (IN, $pos, 0)) {
+      $word = <IN>;   # toss partial line
+      $word = <IN>;   # keep next line
     }
 
-    return 0 if (!$word);
+    next unless ($word);
+    next if ($word =~ m/^[-\']/);
 
-    $word =~ s/^[ \t\n\r]+//;
-    $word =~ s/[ \t\n\r]+$//;
-    $word =~ s/ys$/y/;
-    $word =~ s/ally$//;
-    $word =~ s/ly$//;
-    $word =~ s/ies$/y/;
-    $word =~ s/ally$/al/;
-    $word =~ s/izes$/ize/;
-    $word =~ tr/A-Z/a-z/;
+    $word = lc($word);
+    $word =~ s/^.*-//s;
+    $word =~ s/^[^a-z]+//s;
+    $word =~ s/[^a-z]+$//s;
+    $word =~ s/\'s$//s;
+    $word =~ s/ys$/y/s;
+    $word =~ s/ally$//s;
+    $word =~ s/ly$//s;
+    $word =~ s/ies$/y/s;
+    $word =~ s/ally$/al/s;
+    $word =~ s/izes$/ize/s;
+    $word =~ s/esses$/ess/s;
+    $word =~ s/(.{5})ing$/$1/s;
 
-    if ( $word =~ s/[ \t\n\r]/\+/g ) {  # convert intra-word spaces to "+".
-      $word = "\%22$word\%22";          # And put quotes (%22) around it.
-    }
+    next if (length ($word) > 14);
+    last if ($word);
+  }
 
-    return $word;
+  close (IN);
+
+  if ( $word =~ s/\s/\+/gs ) {  # convert intra-word spaces to "+".
+    $word = "\%22$word\%22";    # And put quotes (%22) around it.
+  }
+
+  return $word;
 }
+
 
 sub random_words {
   my ($or_p) = @_;
@@ -985,8 +1032,7 @@ sub depoison {
 
 # given a list of URLs, picks one at random; loads it; and returns a
 # random image from it.
-# returns the url of the page loaded; the url of the image chosen;
-# and a debugging description string.
+# returns the url of the page loaded; the url of the image chosen.
 #
 sub pick_image_from_pages {
   my ($base, $total_hit_count, $unfiltered_link_count, $timeout, @pages) = @_;
@@ -1187,59 +1233,13 @@ my $google_images_url =     "http://images.google.com/images" .
 
 # googleimgs
 sub pick_from_google_images {
-  my ( $timeout ) = @_;
+  my ( $timeout, $words, $max_page ) = @_;
 
-  my $words = random_word;   # only one word for Google
+  if (!defined($words)) {
+    $words = random_word;   # only one word for Google
+  }
+
   my $page = (int(rand(9)) + 1);
-  my $num = 20;     # 20 images per page
-  my $search_url = $google_images_url . $words;
-
-  if ($page > 1) {
-    $search_url .= "&start=" . $page*$num;	# page number
-    $search_url .= "&num="   . $num;            #images per page
-  }
-
-  my ($search_hit_count, @subpages) =
-    pick_from_search_engine ($timeout, $search_url, $words);
-
-  my @candidates = ();
-  foreach my $u (@subpages) {
-    next unless ($u =~ m@imgres\?imgurl@i);    #  All pics start with this
-    next if ($u =~ m@[/.]google\.com\b@i);     # skip google builtins
-
-    if ($u =~ m@^/imgres\?imgurl=(.*?)\&imgrefurl=(.*?)\&@) {
-      my $urlf = $2;
-      LOG ($verbose_filter, "  candidate: $urlf");
-      push @candidates, $urlf;
-    }
-  }
-
-  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
-                                $timeout, @candidates);
-}
-
-
-
-############################################################################
-#
-# Pick images by feeding random *numbers* into Google Image Search.
-# By jwz, suggested by Ian O'Donnell.
-#
-############################################################################
-
-
-# googlenums
-sub pick_from_google_image_numbers {
-  my ( $timeout ) = @_;
-
-  my $max = 9999;
-  my $number = int(rand($max));
-
-  $number = sprintf("%04d", $number)
-    if (rand() < 0.3);
-
-  my $words = "$number";
-  my $page = (int(rand(40)) + 1);
   my $num = 20;     # 20 images per page
   my $search_url = $google_images_url . $words;
 
@@ -1276,6 +1276,97 @@ sub pick_from_google_image_numbers {
 
   LOG ($verbose_load, "picked image " . ($i+1) . ": $img (on $ref)");
   return ($ref, $img);
+}
+
+
+
+############################################################################
+#
+# Pick images by feeding random numbers into Google Image Search.
+# By jwz, suggested by Ian O'Donnell.
+#
+############################################################################
+
+
+# googlenums
+sub pick_from_google_image_numbers {
+  my ( $timeout ) = @_;
+
+  my $max = 9999;
+  my $number = int(rand($max));
+
+  $number = sprintf("%04d", $number)
+    if (rand() < 0.3);
+
+  pick_from_google_images ($timeout, "$number");
+}
+
+
+
+############################################################################
+#
+# Pick images by feeding random digital camera file names into 
+# Google Image Search.
+# By jwz, inspired by the excellent Random Personal Picture Finder
+# at http://www.diddly.com/random/
+#
+############################################################################
+
+my @photomakers = (
+  #
+  # Common digital camera file name formats, as described at
+  # http://www.diddly.com/random/about.html
+  #
+  sub { sprintf ("dcp%05d.jpg",  int(rand(4000))); },	# Kodak
+  sub { sprintf ("dsc%05d.jpg",  int(rand(4000))); },	# Nikon
+  sub { sprintf ("dscn%04d.jpg", int(rand(4000))); },	# Nikon
+  sub { sprintf ("mvc-%03d.jpg", int(rand(999)));  },	# Sony Mavica
+  sub { sprintf ("mvc%05d.jpg",  int(rand(9999))); },	# Sony Mavica
+  sub { sprintf ("P101%04d.jpg", int(rand(9999))); },	# Olympus w/ date=101
+  sub { sprintf ("P%x%02d%04d.jpg",			# Olympus
+                 int(rand(0xC)), int(rand(30))+1,
+                 rand(9999)); },
+  sub { sprintf ("IMG_%03d.jpg",  int(rand(999))); },	# ?
+  sub { sprintf ("IMAG%04d.jpg",  int(rand(9999))); },	# RCA and Samsung
+  sub { my $n = int(rand(9999));			# Canon
+          sprintf ("1%02d-%04d.jpg", int($n/100), $n); },
+  sub { my $n = int(rand(9999));			# Canon
+          sprintf ("1%02d-%04d_IMG.jpg",
+                   int($n/100), $n); },
+  sub { sprintf ("IMG_%04d.jpg", int(rand(9999))); },	# Canon
+  sub { sprintf ("dscf%04d.jpg", int(rand(9999))); },	# Fuji Finepix
+  sub { sprintf ("pdrm%04d.jpg", int(rand(9999))); },	# Toshiba PDR
+  sub { sprintf ("IM%06d.jpg", int(rand(9999))); },	# HP Photosmart
+  sub { sprintf ("EX%06d.jpg", int(rand(9999))); },	# HP Photosmart
+#  sub { my $n = int(rand(3));				# Kodak DC-40,50,120
+#        sprintf ("DC%04d%s.jpg", int(rand(9999)),
+#                 $n == 0 ? 'S' : $n == 1 ? 'M' : 'L'); },
+  sub { sprintf ("pict%04d.jpg", int(rand(9999))); },	# Minolta Dimage
+  sub { sprintf ("P%07d.jpg", int(rand(9999))); },	# Kodak DC290
+#  sub { sprintf ("%02d%02d%04d.jpg",			# Casio QV3000, QV4000
+#                 int(rand(12))+1, int(rand(31))+1,
+#                 int(rand(999))); },
+#  sub { sprintf ("%02d%x%02d%04d.jpg",			# Casio QV7000
+#                 int(rand(6)), # year
+#                 int(rand(12))+1, int(rand(31))+1,
+#                 int(rand(999))); },
+  sub { sprintf ("IMGP%04d.jpg", int(rand(9999))); },	# Pentax Optio S
+  sub { sprintf ("PANA%04d.jpg", int(rand(9999))); },	# Panasonic vid still
+  sub { sprintf ("HPIM%04d.jpg", int(rand(9999))); },	# HP Photosmart
+  sub { sprintf ("PCDV%04d.jpg", int(rand(9999))); },	# ?
+ );
+
+
+# googlephotos
+sub pick_from_google_image_photos {
+  my ( $timeout ) = @_;
+
+  my $i = int(rand($#photomakers + 1));
+  my $fn = $photomakers[$i];
+  my $file = &$fn;
+  my $words .= $file . "%20filetype:jpg";
+
+  pick_from_google_images ($timeout, $words);
 }
 
 
@@ -1456,14 +1547,8 @@ sub pick_from_lycos_text {
 #
 ############################################################################
 
-my $yahoo_news_url = "http://search.news.yahoo.com/search/news" .
-                     "?a=1" .
-                     "&c=news_photos" .
-                     "&s=-%24s%2C-date" .
-                     "&n=100" .
-                     "&o=o" .
-                     "&2=" .
-                     "&3=" .
+my $yahoo_news_url = "http://news.search.yahoo.com/search/news" .
+                     "?c=news_photos" .
                      "&p=";
 
 # yahoonews
@@ -1472,7 +1557,7 @@ sub pick_from_yahoo_news_text {
 
   $last_search = $yahoo_news_url;   # for warnings
 
-  my $words = random_words(0);
+  my $words = random_word();
   my $search_url = $yahoo_news_url . $words;
 
   my ($search_hit_count, @subpages) =
@@ -1480,9 +1565,14 @@ sub pick_from_yahoo_news_text {
 
   my @candidates = ();
   foreach my $u (@subpages) {
+
+    # de-redirectize the URLs
+    $u =~ s@^http://rds\.yahoo\.com/.*-http%3A@http:@s;
+
     # only accept URLs on Yahoo's news site
     next unless ($u =~ m@^http://dailynews\.yahoo\.com/@i ||
                  $u =~ m@^http://story\.news\.yahoo\.com/@i);
+    next unless ($u =~ m@&u=/@);
 
     LOG ($verbose_filter, "  candidate: $u");
     push @candidates, $u;
@@ -1502,6 +1592,15 @@ sub pick_from_yahoo_news_text {
 
 my $livejournal_img_url = "http://www.livejournal.com/stats/latest-img.bml";
 
+# With most of our image sources, we get a random page and then select
+# from the images on it.  However, in the case of LiveJournal, the page
+# of images tends to update slowly; so we'll remember the last N entries
+# on it and randomly select from those, to get a wider variety each time.
+
+my $lj_cache_size = 1000;
+my @lj_cache = (); # fifo, for ordering by age
+my %lj_cache = (); # hash, for detecting dups
+
 # livejournal
 sub pick_from_livejournal_images {
   my ( $timeout ) = @_;
@@ -1511,8 +1610,6 @@ sub pick_from_livejournal_images {
   my ( $base, $body ) = get_document ($livejournal_img_url, undef, $timeout);
   return () unless $body;
 
-  my @candidates = ();
-
   $body =~ s/\n/ /gs;
   $body =~ s/(<recent-image)\b/\n$1/gsi;
 
@@ -1520,20 +1617,38 @@ sub pick_from_livejournal_images {
     next unless (m/^<recent-image\b/);
     next unless (m/\bIMG=[\'\"]([^\'\"]+)[\'\"]/si);
     my $img = html_unquote ($1);
+
+    next if ($lj_cache{$img}); # already have it
+
     next unless (m/\bURL=[\'\"]([^\'\"]+)[\'\"]/si);
     my $page = html_unquote ($1);
     my @pair = ($img, $page);
     LOG ($verbose_filter, "  candidate: $img");
-    push @candidates, \@pair;
+    push @lj_cache, \@pair;
+    $lj_cache{$img} = \@pair;
   }
 
-  return () if ($#candidates == -1);
+  return () if ($#lj_cache == -1);
 
-  my $i = int(rand($#candidates+1));
-  my ($img, $page) = @{$candidates[$i]};
+  my $n = $#lj_cache+1;
+  my $i = int(rand($n));
+  my ($img, $page) = @{$lj_cache[$i]};
 
-  LOG ($verbose_load, "picked image " .($i+1) . "/" . ($#candidates+1) .
-       ": $img");
+  # delete this one from @lj_cache and from %lj_cache.
+  #
+  @lj_cache = ( @lj_cache[0 .. $i-1],
+                @lj_cache[$i+1 .. $#lj_cache] );
+  delete $lj_cache{$img};
+
+  # Keep the size of the cache under the limit by nuking older entries
+  #
+  while ($#lj_cache >= $lj_cache_size) {
+    my $pairP = shift @lj_cache;
+    my $img = $pairP->[0];
+    delete $lj_cache{$img};
+  }
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
 
   return ($page, $img);
 }
@@ -1766,6 +1881,17 @@ sub error {
   my ($err) = @_;
   print STDERR blurb() . "$err\n";
   exit 1;
+}
+
+sub stacktrace {
+  my $i = 1;
+  print STDERR "$progname: stack trace:\n";
+  while (1) {
+    my ($package, $filename, $line, $subroutine) = caller($i++);
+    last unless defined($package);
+    $filename =~ s@^.*/@@;
+    print STDERR "  $filename#$line, $subroutine\n";
+  }
 }
 
 
@@ -2112,6 +2238,7 @@ sub bellrand {
 
 sub exit_cleanup {
   x_cleanup();
+  print STDERR "$progname: exiting\n" if ($verbose_warnings);
   if (@pids_to_kill) {
     print STDERR blurb() . "killing: " . join(' ', @pids_to_kill) . "\n";
     kill ('TERM', @pids_to_kill);
@@ -2124,7 +2251,7 @@ sub signal_cleanup {
                           ? "caught signal $sig."
                           : "exiting.")
                        . "\n"
-    if ($verbose_exec);
+    if ($verbose_exec || $verbose_warnings);
   exit 1;
 }
 
@@ -2149,7 +2276,7 @@ sub url_only_output {
 
 ##############################################################################
 #
-# Running as an xscreensaver module
+# Running as an xscreensaver module, or as a web page imagemap
 #
 ##############################################################################
 
@@ -2800,7 +2927,6 @@ sub paste_image {
   $source .= "-" . stats_of($source);
   print STDOUT "image: ${iw}x${ih} @ $x,$y $base $source\n"
     if ($verbose_imgmap);
-
   if ($imagemap_base) {
     update_imagemap ($base, $x, $y, $iw, $ih,
                      $image_ppm, $img_width, $img_height);
@@ -2998,6 +3124,10 @@ sub main {
       $http_proxy = shift @ARGV;
     } elsif ($_ eq "-dictionary" || $_ eq "-dict") {
       $dict = shift @ARGV;
+    } elsif ($_ eq "-opacity") {
+      $opacity = shift @ARGV;
+      error ("opacity must be between 0.0 and 1.0")
+        if ($opacity <= 0 || $opacity > 1);
     } elsif ($_ eq "-driftnet" || $_ eq "--driftnet") {
       @search_methods = ( 100, "driftnet", \&pick_from_driftnet );
       if (! ($ARGV[0] =~ m/^-/)) {

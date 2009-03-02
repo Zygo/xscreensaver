@@ -101,6 +101,7 @@ void InitStuff_joinoffset (void)
 
 static double up_vector[3] = {1.0, 0.0, 0.0};
 
+/* controls shape of object */
 extern float lastx;
 extern float lasty;
 
@@ -122,8 +123,10 @@ void DrawStuff_joinoffset (void)
 
    /* set up some matrices so that the object spins with the mouse */
    glPushMatrix ();
-   glTranslatef (0.0, 4.0, -80.0);
-   glRotatef (0.5*lastx, 0.0, 1.0, 0.0);
+   glScalef (0.5, 0.5, 0.5);
+   glTranslatef (0, 4, 0);
+   /* glTranslatef (0.0, 4.0, -80.0); */
+   /* glRotatef (0.5*lastx, 0.0, 1.0, 0.0); */
 
    gleExtrusion (cidx, moved_contour, contour_points, up_vector, 
                  idx, points, colors);
@@ -134,8 +137,10 @@ void DrawStuff_joinoffset (void)
    /* draw a seond copy, this time with the raw style, to compare
     * things against */
    glPushMatrix ();
-   glTranslatef (0.0, -4.0, -80.0);
-   glRotatef (0.5*lastx, 0.0, 1.0, 0.0);
+   glScalef (0.5, 0.5, 0.5);
+   glTranslatef (0, -4, 0);
+   /* glTranslatef (0.0, -4.0, -80.0); */
+   /* glRotatef (0.5*lastx, 0.0, 1.0, 0.0); */
 
    save_style = gleGetJoinStyle ();
    style = save_style;

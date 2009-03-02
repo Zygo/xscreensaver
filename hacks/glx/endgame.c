@@ -206,7 +206,7 @@ double theta = 0.0;
 Bool chess_handle_event (ModeInfo *mi, XEvent *event) {
   Chesscreen *c = &qs[MI_SCREEN(mi)];
 
-  if(event->xany.type == ButtonPress && event->xbutton.button & Button1) {
+  if(event->xany.type == ButtonPress && event->xbutton.button == Button1) {
     c->button_down_p = True;
     gltrackball_start (c->trackball,
 		       event->xbutton.x, event->xbutton.y,
@@ -214,10 +214,18 @@ Bool chess_handle_event (ModeInfo *mi, XEvent *event) {
     return True;
   }
   else if(event->xany.type == ButtonRelease 
-	  && event->xbutton.button & Button1) {
+	  && event->xbutton.button == Button1) {
     c->button_down_p = False;
     return True;
   }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (c->trackball, event->xbutton.button, 5,
+                              !event->xbutton.state);
+      return True;
+    }
   else if(event->xany.type == MotionNotify && c->button_down_p) {
     gltrackball_track (c->trackball,
 		       event->xmotion.x, event->xmotion.y,

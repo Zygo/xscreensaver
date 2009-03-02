@@ -12,9 +12,10 @@ substrate - Grow crystal-like lines on a computational substrate
 [\-initial\-cracks \fInuminitial\fP]
 [\-max\-cracks \fInummax\fP]
 [\-sand\-grains \fInumgrains\fP]
+[\-circle\-percent \fIcirclepercent\fP]
 .SH DESCRIPTION
 Lines like crystals grow on a computational substrate.  A simple 
-perpendicular growth rule creates intricate city-like structures.
+perpendicular growth rule creates intricate city-like structures.  Optionally, cracks may also be circular, producing a cityscape more familiar to places for which city planning is a distant, theoretical concern.
 
 Ported from the code by j.tarbell at http://complexification.net
 .SH OPTIONS
@@ -42,6 +43,9 @@ Maximum number of cracks in the substrate at a single time
 .B \-sand\-grains \fInumgrains\fP (Default: \fI64\fP)
 Number of sand grains dropped during coloring.  More grains cause 
 a denser colour but use more cpu power.
+.TP 8
+.B \-circle-percent \fIcirclepercent\fP (Default: \fI33\fP)
+The percentage of the cracks will be circular.
 .SH ENVIRONMENT
 .PP
 .TP 8

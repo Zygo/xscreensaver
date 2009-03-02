@@ -103,6 +103,7 @@ static argtype vars[] = {
 
 ModeSpecOpt lament_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
+#include "normals.h"
 #include "xpm-ximage.h"
 #include "rotator.h"
 #include "gltrackball.h"
@@ -188,84 +189,6 @@ parse_image_data(ModeInfo *mi)
 			       mi->xgwa.visual,
 			       mi->xgwa.colormap,
 			       lament_faces);
-}
-
-
-typedef struct {
-  double x,y,z;
-} XYZ;
-
-static void
-normalize (XYZ *p)
-{
-  double length;
-  length = sqrt (p->x * p->x +
-                 p->y * p->y +
-                 p->z * p->z);
-  if (length != 0)
-    {
-      p->x /= length;
-      p->y /= length;
-      p->z /= length;
-    }
-  else
-    {
-      p->x = 0;
-      p->y = 0;
-      p->z = 0;
-    }
-}
-
-/* Calculate the unit normal at p given two other points p1,p2 on the
-   surface. The normal points in the direction of p1 crossproduct p2
- */
-static XYZ
-calc_normal (XYZ p, XYZ p1, XYZ p2)
-{
-  XYZ n, pa, pb;
-  pa.x = p1.x - p.x;
-  pa.y = p1.y - p.y;
-  pa.z = p1.z - p.z;
-  pb.x = p2.x - p.x;
-  pb.y = p2.y - p.y;
-  pb.z = p2.z - p.z;
-  n.x = pa.y * pb.z - pa.z * pb.y;
-  n.y = pa.z * pb.x - pa.x * pb.z;
-  n.z = pa.x * pb.y - pa.y * pb.x;
-  normalize (&n);
-  return (n);
-}
-
-
-static void
-do_normal(GLfloat x1, GLfloat y1, GLfloat z1,
-	  GLfloat x2, GLfloat y2, GLfloat z2,
-	  GLfloat x3, GLfloat y3, GLfloat z3)
-{
-  XYZ p1, p2, p3, p;
-  p1.x = x1; p1.y = y1; p1.z = z1;
-  p2.x = x2; p2.y = y2; p2.z = z2;
-  p3.x = x3; p3.y = y3; p3.z = z3;
-
-  p = calc_normal (p1, p2, p3);
-
-  glNormal3f (p.x, p.y, p.z);
-
-#ifdef DEBUG
-  /* Draw a line in the direction of this face's normal. */
-  {
-    glPushMatrix();
-    glTranslatef ((x1 + x2 + x3) / 3,
-                  (y1 + y2 + y3) / 3,
-                  (z1 + z2 + z3) / 3);
-    glScalef (0.5, 0.5, 0.5);
-    glBegin(GL_LINE_LOOP);
-    glVertex3f(0, 0, 0);
-    glVertex3f(p.x, p.y, p.z);
-    glEnd();
-    glPopMatrix();
-  }
-#endif /* DEBUG */
 }
 
 
@@ -1397,7 +1320,7 @@ lament_handle_event (ModeInfo *mi, XEvent *event)
   lament_configuration *lc = &lcs[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button & Button1)
+      event->xbutton.button == Button1)
     {
       lc->button_down_p = True;
       gltrackball_start (lc->trackball,
@@ -1406,9 +1329,17 @@ lament_handle_event (ModeInfo *mi, XEvent *event)
       return True;
     }
   else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button & Button1)
+           event->xbutton.button == Button1)
     {
       lc->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5))
+    {
+      gltrackball_mousewheel (lc->trackball, event->xbutton.button, 5,
+                              !!event->xbutton.state);
       return True;
     }
   else if (event->xany.type == MotionNotify &&

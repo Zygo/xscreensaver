@@ -6,7 +6,7 @@
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="10000"
+          low="0" high="40000" default="20000"
           convert="invert"/>
 
   <select id="mode">
