@@ -1,0 +1,49 @@
+.TH XScreenSaver 1 "18-Feb-2003 (4.08)" "X Version 11"
+.SH NAME
+xscreensaver-getimage-file - put a randomly-selected image on the root window
+.SH SYNOPSIS
+.B xscreensaver-getimage-file
+[\-display \fIhost:display.screen\fP] [\--verbose] [\--name] directory
+.SH DESCRIPTION
+The \fIxscreensaver\-getimage\-file\fP program is a helper program
+for the xscreensaver hacks that manipulate images.  Specifically, it
+is invoked by
+.BR xscreensaver\-getimage (1)
+as needed.  This is not a user-level command.
+
+This program selects a random image from disk, and loads it on the root
+window.  It does this by figuring out which image-loading programs are
+installed on the system, and invoking the first one it finds.
+.SH OPTIONS
+.I xscreensaver-getimage-file
+accepts the following options:
+.TP 4
+.B --verbose
+Print diagnostics.
+.TP 4
+.B --name
+Don't load an image: instead just print the file name to stdout.
+.TP 4
+.I directory
+The directory to search.   The directory will be searched recursively,
+and all files in it are assumed to be images.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-getimage (1),
+.BR xv (1),
+.BR xli (1),
+.BR xloadimage (1),
+.BR chbg (1)
+.SH COPYRIGHT
+Copyright \(co 2001 by Jamie Zawinski.  Permission to use, copy,
+modify, distribute, and sell this software and its documentation for
+any purpose is hereby granted without fee, provided that the above
+copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+No representations are made about the suitability of this software for
+any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 14-Apr-01
