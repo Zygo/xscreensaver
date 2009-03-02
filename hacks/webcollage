@@ -60,7 +60,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.133 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.135 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2005" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
@@ -400,6 +400,12 @@ sub get_document_1($$$) {
         # block this, you turkeys.
         $user_agent = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.7.5)" .
           " Gecko/20041111 Firefox/1.0";
+
+        # 28-Jun-2007: Google Images now emits the entire page in JS if
+        # you claim to be Gecko.  They also still block "webcollage".
+        # They serve non-JS for unrecognised agents, so let's try this...
+        $user_agent = "NoJavascriptPlease/1.0"
+          if ($url =~ m@^http://images\.google\.com/@);
       }
 
       my $hdrs = "GET " . ($http_proxy ? $url : "/$path") . " HTTP/1.0\r\n" .
@@ -1820,7 +1826,7 @@ sub pick_from_flickr_recent($) {
     $page = html_unquote ($page);
     $thumb = html_unquote ($thumb);
 
-    next unless ($thumb =~ m@^http://photos\d*\.flickr\.com/@);
+    next unless ($thumb =~ m@^http://farm\d*\.static\.flickr\.com/@);
 
     my $base = "http://www.flickr.com/";
     $page  =~ s@^/@$base@;
@@ -2765,7 +2771,9 @@ sub x_or_pbm_output($) {
 
   # find a root-window displayer program.
   #
-  $ppm_to_root_window_cmd = pick_root_displayer();
+  if (!$no_output_p) {
+    $ppm_to_root_window_cmd = pick_root_displayer();
+  }
 
   if (defined ($window_id)) {
     error ("-window-id only works if xscreensaver-getimage is installed")

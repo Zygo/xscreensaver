@@ -778,16 +778,16 @@ this is the way you disable it:
 .TP 3
 \fB1: Switch off KDE's screen saver.\fP
 Open the ``\fIControl Center\fP'' and
-select the ``\fILook and Feel / Screensaver\fP'' page.
-Turn off the ``\fIEnable Screensaver\fP'' checkbox.
+select the ``\fIAppearance & Themes -> Screensaver\fP'' page.
+Turn off the ``\fIStart Automatically\fP'' checkbox.
 .TP 3
 \fB2: Find your Autostart directory.\fP
-Open the ``\fILook and Feel / Desktop / Paths\fP'' page,
-and see what your ``Autostart'' directory is set to: it will
-probably be \fI~/.kde3/Autostart/\fP or something similar.
+Open the ``\fISystem Administration -> Paths\fP'' page,
+and see what your ``Autostart path'' is set to: it will
+probably be \fI~/.kde/Autostart/\fP or something similar.
 .TP 3
 \fB3: Make xscreensaver be an Autostart program.\fP
-Create a file in your autostart directory 
+Create a .desktop file in your autostart directory 
 called \fIxscreensaver.desktop\fP that contains the following five lines:
 .EX
 [Desktop Entry]
@@ -798,7 +798,9 @@ X-KDE-StartupNotify=false
 .EE
 .TP 3
 \fB4: Make the various "lock session" buttons call xscreensaver.\fP
-Replace the file \fI/usr/bin/kdesktop_lock\fP with these two lines:
+Replace the file \fI/usr/bin/kdesktop_lock\fP (or 
+possibly \fI/usr/kde/3.5/bin/kdesktop_lock\fP)
+with these two lines:
 .EX
 #!/bin/sh
 xscreensaver-command -lock

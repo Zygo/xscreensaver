@@ -116,8 +116,13 @@ createDrawLists(BBox *bbox, GLuint *bboxList, GLuint *goalList, GLuint *fishList
 
 	*fishList = glGenLists(1);
 	glNewList(*fishList, GL_COMPILE);
+#if 0
 	gluSphere(Quadratic, 2.0, 10, 5);
 	gluCylinder(Quadratic, 2.0, 0.0, 10.0, 10, 5);
+#else
+        gluSphere(Quadratic, 2.0, 3, 2);
+        gluCylinder(Quadratic, 2.0, 0.0, 10.0, 3, 2);
+#endif
 	glEndList();
 }
 

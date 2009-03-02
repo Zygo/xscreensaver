@@ -90,6 +90,10 @@ static Bool draw_ant(antspotlightstruct *mp,
   float sin2 = sin(ant_step + 2 * Pi / 3);
   float sin3 = sin(ant_step + 4 * Pi / 3);
   
+  glEnable(GL_POLYGON_SMOOTH);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
   glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, mp->mono ? MaterialGray5 : Material);
   glEnable(GL_CULL_FACE);
   glPushMatrix();
@@ -123,6 +127,10 @@ static Bool draw_ant(antspotlightstruct *mp,
   glDisable(GL_LIGHTING);
   
   /* ANTENNAS */
+  glEnable(GL_LINE_SMOOTH);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+   
   glBegin(GL_LINES);
   glColor3fv(mp->mono ? MaterialGray5 : Material);
   glVertex3f(0.00, 0.30, 0.00);
@@ -277,7 +285,7 @@ static void draw_board(antspotlightstruct *mp)
      i should be finding the intersection of the cone of light and
      the board-plane.
   */
-  for(i = -8; i < 8; ++i) {
+  for(i = -12; i < 12; ++i) {
 
     double theta1, theta2;
 
@@ -291,7 +299,7 @@ static void draw_board(antspotlightstruct *mp)
     theta1 = mp->ant->direction + i*(cutoff/8);
     theta2 = mp->ant->direction + (i+1)*(cutoff/8);
 
-    for(j = 1; j <= 40; ++j) {
+    for(j = 1; j <= 64; ++j) {
       double point[3], tex[2];
       /* double fj = pow(1.05, j) - 1.0;*/
       double fj = j / 6.0;
@@ -447,6 +455,11 @@ static void draw_antspotlight_strip(ModeInfo *mi)
     reset_ant(mp);
   }
 
+  if(random()%100 == 0) {
+    reset_ant(mp);
+  }
+
+
   /* move toward goal, correct ant direction if required */
   else {
     
@@ -526,7 +539,8 @@ static void pinit(void)
   glLightfv(GL_LIGHT1, GL_AMBIENT, ambient);
   glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
   glLightfv(GL_LIGHT1, GL_POSITION, position1);
-/*   glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient); */
+
+  glLightModelfv(GL_LIGHT_MODEL_AMBIENT, spotlight_ambient);
   glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
   glEnable(GL_LIGHTING);
   glEnable(GL_LIGHT0);

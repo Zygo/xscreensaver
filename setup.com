@@ -24,6 +24,7 @@ $ compass	:== $'mydir'compass
 $ coral		:== $'mydir'coral
 $ critical	:== $'mydir'critical
 $ crystal	:== $'mydir'crystal
+$ cwaves	:== $'mydir'cwaves
 $ cynosure	:== $'mydir'cynosure
 $ decayscreen	:== $'mydir'decayscreen
 $ deco		:== $'mydir'deco
@@ -71,6 +72,7 @@ $ lisa		:== $'mydir'lisa
 $ lissie	:== $'mydir'lissie
 $ lmorph	:== $'mydir'lmorph
 $ loop		:== $'mydir'loop
+$ m6502		:== $'mydir'm6502
 $ maze		:== $'mydir'maze
 $ memscroller	:== $'mydir'memscroller
 $ metaballs	:== $'mydir'metaballs

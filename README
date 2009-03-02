@@ -38,6 +38,11 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.02:   * New hacks, `cwaves', `glcells', `m6502', and `voronoi'.
+                      * Minor fixes to `bsod'.
+                      * Fixed possible crash with PAM USB-dongle auth.
+                      * Updated `webcollage' to track recent Google Images
+                        and Flickr changes.
 Changes since 5.01:   * Reworked PAM code to support fingerprint readers, etc.
                       * Ported 'webcollage' to OSX.
                       * Added OSX 10.2 and 10.3 kernel panics to `bsod'.

@@ -16608,7 +16608,7 @@ esac
 
 have_login_manager=no
 with_login_manager_req=unspecified
-default_login_manager='gdmflexiserver -l'
+default_login_manager='gdmflexiserver -ls'
 
 
 # Check whether --with-login-manager was given.

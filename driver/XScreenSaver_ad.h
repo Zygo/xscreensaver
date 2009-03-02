@@ -203,6 +203,8 @@
 				fiberlamp -root				    \\n\
 				boxfit -root				    \\n\
 				celtic -root				    \\n\
+				cwaves -root				    \\n\
+				m6502 -root				    \\n\
 - default-n:			webcollage -root			    \\n\
 - default-n:  \"WebCollage (whacked)\"					      \
 				webcollage -root -filter		      \
@@ -289,6 +291,8 @@
 	   GL:			juggler3d -root				    \\n\
 	   GL:			topblock -root				    \\n\
 	   GL:			glschool -root				    \\n\
+	   GL:			glcells -root				    \\n\
+	   GL:			voronoi -root				    \\n\
 									      \
 -				xdaliclock -root -font BUILTIN3		    \\n\
 -				xplanet -vroot -wait 1 -timewarp 90000        \
@@ -401,4 +405,5 @@
 "*hacks.glhanoi.name:        GLHanoi",
 "*hacks.topblock.name:       TopBlock",
 "*hacks.glschool.name:       GLSchool",
+"*hacks.glcells.name:        GLCells",
 "*hacks.documentation.isInstalled: True",

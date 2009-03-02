@@ -1,4 +1,4 @@
-# Auto-generated: Fri Apr 20 20:33:29 PDT 2007
+# Auto-generated: Tue Jul 17 02:03:02 PDT 2007
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -46,6 +46,7 @@ hacks/config/crystal.xml
 hacks/config/cube21.xml
 hacks/config/cubenetic.xml
 hacks/config/cubestorm.xml
+hacks/config/cwaves.xml
 hacks/config/cynosure.xml
 hacks/config/dangerball.xml
 hacks/config/decayscreen.xml
@@ -83,6 +84,7 @@ hacks/config/galaxy.xml
 hacks/config/gears.xml
 hacks/config/gflux.xml
 hacks/config/glblur.xml
+hacks/config/glcells.xml
 hacks/config/gleidescope.xml
 hacks/config/glforestfire.xml
 hacks/config/glhanoi.xml
@@ -125,6 +127,7 @@ hacks/config/lisa.xml
 hacks/config/lissie.xml
 hacks/config/lmorph.xml
 hacks/config/loop.xml
+hacks/config/m6502.xml
 hacks/config/maze.xml
 hacks/config/memscroller.xml
 hacks/config/menger.xml
@@ -202,6 +205,7 @@ hacks/config/twang.xml
 hacks/config/vermiculate.xml
 hacks/config/vidwhacker.xml
 hacks/config/vines.xml
+hacks/config/voronoi.xml
 hacks/config/wander.xml
 hacks/config/webcollage.xml
 hacks/config/whirlwindwarp.xml
