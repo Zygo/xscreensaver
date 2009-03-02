@@ -266,7 +266,19 @@ static void
 ensure_selected_item_visible (GtkWidget *widget)
 {
 #ifdef HAVE_GTK2
+  GtkTreePath *path;
+  GtkTreeSelection *selection;
+  GtkTreeIter iter;
+  GtkTreeModel *model;
+  
+  selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (widget));
+  if (!gtk_tree_selection_get_selected (selection, &model, &iter))
+    return;
 
+  path = gtk_tree_model_get_path (model, &iter);
+  
+  gtk_tree_view_scroll_to_cell (GTK_TREE_VIEW (widget),
+				path, NULL, FALSE, 0.0, 0.0);
 #else /* !HAVE_GTK2 */
 
   GtkScrolledWindow *scroller = 0;
@@ -1700,7 +1712,7 @@ list_checkbox_cb (
   GtkList *list = GTK_LIST (GTK_WIDGET (line)->parent);
   GtkViewport *vp = GTK_VIEWPORT (GTK_WIDGET (list)->parent);
   GtkScrolledWindow *scroller = GTK_SCROLLED_WINDOW (GTK_WIDGET (vp)->parent);
-#endif /* ~HAVE_GTK2 */
+#endif /* !HAVE_GTK2 */
   GtkAdjustment *adj;
   double scroll_top;
 

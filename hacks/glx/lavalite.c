@@ -244,8 +244,6 @@ typedef struct {
   GLuint bottle_list;
   GLuint ball_list;
 
-  Bool spin_x, spin_y, spin_z;	   /* spin of the scene overall */
-
   int bottle_poly_count;	   /* polygons in the bottle only */
 
 } lavalite_configuration;
@@ -1334,24 +1332,7 @@ init_lavalite (ModeInfo *mi)
   reshape_lavalite (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 
   {
-    char *s = do_spin;
-    while (*s)
-      {
-        if (*s == ' ' || *s == '\t') ;
-        else if (*s == 'x' || *s == 'X') bp->spin_x = 1;
-        else if (*s == 'y' || *s == 'Y') bp->spin_y = 1;
-        else if (*s == 'z' || *s == 'Z') bp->spin_z = 1;
-        else
-          {
-            fprintf (stderr,
-         "%s: spin must contain only the characters X, Y, or Z (not \"%s\")\n",
-                     progname, do_spin);
-            exit (1);
-          }
-        s++;
-      }
-
-    s = do_style;
+    char *s = do_style;
     if (!s || !*s || !strcasecmp (s, "classic")) bp->style = CLASSIC;
     else if (!strcasecmp (s, "giant"))  bp->style = GIANT;
     else if (!strcasecmp (s, "cone"))   bp->style = CONE;

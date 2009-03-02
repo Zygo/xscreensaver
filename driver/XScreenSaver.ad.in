@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 4.04
-!                              31-May-2002
+!                              version 4.05
+!                              11-Jun-2002
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -330,6 +330,7 @@
 @GL_KLUDGE@ GL:			spheremonics -root			    \n\
 @GL_KLUDGE@ GL:			lavalite -root				    \n\
 @GL_KLUDGE@ GL:			queens -root				    \n\
+@GL_KLUDGE@ GL:			endgame -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \

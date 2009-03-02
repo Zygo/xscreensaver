@@ -28,7 +28,7 @@
           convert="invert"/>
 
   <number id="density" type="slider" arg="-density %"
-          _label="Speed" _low-label="Sparse" _high-label="Full"
+          _label="Density" _low-label="Sparse" _high-label="Full"
           low="1" high="100" default="75"/>
 
   <boolean id="trace" _label="Run Trace Program" arg-set="-trace"/>

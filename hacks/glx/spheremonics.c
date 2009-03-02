@@ -851,11 +851,11 @@ init_spheremonics (ModeInfo *mi)
       }
 
     cc->rot = make_rotator (spinx ? spin_speed : 0,
-                            spiny ? spin_speed : 0,
                             spinz ? spin_speed : 0,
+                            spiny ? spin_speed : 0,
                             1.0,
                             do_wander ? wander_speed : 0,
-                            True);
+                            (spinx && spiny && spinz));
     cc->trackball = gltrackball_init ();
   }
 
