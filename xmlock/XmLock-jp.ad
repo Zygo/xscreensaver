@@ -1,0 +1,46 @@
+!!!!
+! XmLock-ja: Japanese class resource for xmlock
+!!!!
+! by YOKOTA Hiroshi <yokota@netlab.is.tsukuba.ac.jp>
+
+XmLock*international: true
+
+XmLock*fontList:	\
+-misc-fixed-medium-r-normal--12-*-*-*-*-*-iso8859-1;\
+-misc-fixed-medium-r-normal--12-*-*-*-*-*-jisx0208.1983-0;\
+-misc-fixed-medium-r-normal--12-*-*-*-*-*-jisx0201.1976-0;\
+-misc-fixed-medium-r-normal--12-*-*-*-*-*-jisx0212.1990-0:
+
+XmLock.Form.PushButtonRow.Exit.Background: red
+XmLock.Form.PushButtonRow.Exit.Armcolor: pink
+XmLock.Form.Row*ScrolledListModes.Background: light blue
+XmLock.Form.Row.TogglesRow.Background: white
+
+XmLock.Form.Modes.labelString: 動作モード
+XmLock.Form.Window.labelString: テストウィンドウ
+XmLock.Form.Switches.labelString: スイッチ
+
+XmLock.Form.PushButtonRow.Exit.labelString: 終了
+XmLock.Form.PushButtonRow.In Window.labelString: ウィンドウで実行
+XmLock.Form.PushButtonRow.In Root.labelString: ルートウィンドウで実行
+XmLock.Form.PushButtonRow.Launch.labelString: 実行
+
+XmLock.Form.PushButtonRow.MenuBar.Options.labelString: オプション
+XmLock.Form.PushButtonRow.MenuBar.popup_PopupOptions.PopupOptions.username.labelString: ユーザ名
+XmLock.Form.PushButtonRow.MenuBar.popup_PopupOptions.PopupOptions.password.labelString: パスワード
+XmLock.Form.PushButtonRow.MenuBar.popup_PopupOptions.PopupOptions.info.labelString: パスワード要求時のメッセージ
+XmLock.Form.PushButtonRow.MenuBar.popup_PopupOptions.PopupOptions.invalid.labelString: パスワード失敗時のメッセージ
+XmLock.Form.PushButtonRow.MenuBar.popup_PopupOptions.PopupOptions.validate.labelString: パスワードチェック時のメッセージ
+XmLock.Form.PushButtonRow.MenuBar.popup_PopupOptions.PopupOptions.geometry.labelString: 画面の大きさ
+XmLock.Form.PushButtonRow.MenuBar.popup_PopupOptions.PopupOptions.font.labelString: フォント名
+XmLock.Form.PushButtonRow.MenuBar.popup_PopupOptions.PopupOptions.program.labelString: メッセージ作成プログラム
+
+XmLock.Form.Row.TogglesRow.mono.labelString: モノクロ
+XmLock.Form.Row.TogglesRow.nolock.labelString: パスワード無し
+XmLock.Form.Row.TogglesRow.remote.labelString: 他端末からの停止可
+XmLock.Form.Row.TogglesRow.allowroot.labelString: rootのパスワード可
+XmLock.Form.Row.TogglesRow.enablesaver.labelString: X組込みセーバ有効
+XmLock.Form.Row.TogglesRow.allowaccess.labelString: アクセスリスト使用
+XmLock.Form.Row.TogglesRow.grabmouse.labelString: マウスを乗っ取る
+XmLock.Form.Row.TogglesRow.echokeys.labelString: '?' を表示
+XmLock.Form.Row.TogglesRow.usefirst.labelString: 最初のキーも使う

@@ -1,0 +1,314 @@
+# xlock/Makefile.in --- xscreensaver, Copyright (c) 1997 Jamie Zawinski.
+# the `../configure' script generates `xlock/Makefile' from this file.
+
+@SET_MAKE@
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+
+install_prefix	=
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+mandir		= @mandir@
+man1dir		= $(mandir)/man1
+mansuffix	= 1
+
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+DEFS		= -DSTANDALONE @DEFS@
+LIBS		= @LIBS@
+
+DEPEND		= @DEPEND@
+DEPEND_FLAGS	= @DEPEND_FLAGS@
+DEPEND_DEFINES	= @DEPEND_DEFINES@
+
+SHELL		= /bin/sh
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+HACKDIR		= @HACKDIR@
+
+X_CFLAGS	= @X_CFLAGS@
+X_LIBS		= @X_LIBS@
+X_PRE_LIBS	= @X_PRE_LIBS@
+X_EXTRA_LIBS	= @X_EXTRA_LIBS@
+
+HACK_PRE	= $(LIBS) $(X_LIBS) $(X_PRE_LIBS)
+HACK_POST	= -lXt -lX11 -lXext $(X_EXTRA_LIBS) -lm
+HACK_LIBS	= $(HACK_PRE)            @HACK_LIBS@ $(HACK_POST)
+XPM_LIBS	= $(HACK_PRE) @XPM_LIBS@ @HACK_LIBS@ $(HACK_POST)
+XLOCK_LIBS	= $(HACK_LIBS)
+SGI_VIDEO_OBJS  = @SGI_VIDEO_OBJS@
+SGI_VIDEO_LIBS  = @SGI_VIDEO_LIBS@
+
+XS	= $(srcdir)/../..
+XLOCK_SRC	= $(srcdir)
+XLOCK_BIN	= .
+HACKS_SRC	= $(XS)/hacks
+HACKS_BIN	= ../../hacks
+UTILS_SRC	= $(XS)/utils
+UTILS_BIN	= ../../utils
+
+INCLUDES	= -I$(srcdir) -I$(srcdir)/../.. -I$(UTILS_SRC) -I$(HACKS_SRC) -I../.. @INCLUDES@
+
+UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
+		  $(UTILS_SRC)/grabscreen.c $(UTILS_SRC)/hsv.c \
+		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/spline.c \
+		  $(UTILS_SRC)/usleep.c $(UTILS_SRC)/visual.c \
+		  $(UTILS_SRC)/xroger.c $(UTILS_SRC)/yarandom.c \
+	 	  $(UTILS_SRC)/erase.c $(UTILS_SRC)/sgivideo.c
+UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
+		  $(UTILS_BIN)/grabscreen.o $(UTILS_BIN)/hsv.o \
+		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/spline.o \
+		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/visual.o \
+		  $(UTILS_BIN)/xroger.o $(UTILS_BIN)/yarandom.o \
+		  $(UTILS_BIN)/erase.o $(UTILS_BIN)/sgivideo.o
+
+SRCS		= xlock.c automata.c iostuff.c spline.c xbm.c
+
+OBJS		= xlock.o automata.o iostuff.o spline.o xbm.o
+
+EXES		=
+
+HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
+		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
+HACK_OBJS	= screenhack.o $(HACK_OBJS_1)
+XLOCK_OBJS	= screenhack-xlock.o $(XLOCK_OBJS)/xlockmore.o $(COLOR_OBJS) $(HACK_OBJS_1)
+COLOR_OBJS	= $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o
+GRAB_OBJS_1	= $(UTILS_BIN)/grabscreen.o $(SGI_VIDEO_OBJS)
+GRAB_OBJS	= $(GRAB_OBJS_1) $(COLOR_OBJS)
+GRAB_LIBS	= $(SGI_VIDEO_LIBS)
+
+HDRS		= xlock.h mode.h
+MEN		=
+STAR		= *
+EXTRAS		= README Makefile.in xlock.h .gdbinit \
+		  vidwhacker \
+		  images/$(STAR).xbm \
+		  images/bubbles/$(STAR).pov \
+		  images/bubbles/$(STAR).xpm \
+		  images/noseguy/$(STAR).xbm \
+		  images/noseguy/$(STAR).xpm \
+		  images/puzzle/$(STAR).xbm  \
+
+VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
+		  vms_axp.opt vms_axp_12.opt vms_decc.opt vms_decc_12.opt
+
+TARFILES	= $(SRCS) $(HDRS) $(MEN) $(EXTRAS) $(VMSFILES)
+
+
+all: $(EXES)
+
+install:   install-program   install-man
+uninstall: uninstall-program uninstall-man
+
+install-strip:
+	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
+
+install-program:
+	@if [ ! -d $(HACKDIR) ]; then mkdir $(HACKDIR) ; fi ;		\
+	for program in $(EXES); do					\
+	  echo $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;	\
+	  $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;		\
+	done
+
+install-man:
+	@if [ ! -d $(mandir) ]; then mkdir $(mandir) ; fi ;		\
+	if [ ! -d $(man1dir) ]; then mkdir $(man1dir) ; fi ;		\
+	men="$(MEN)" ;							\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
+	  $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
+	done
+
+uninstall-program:
+	@for program in $(EXES); do					\
+	  echo rm -f $(HACKDIR)/$$program ;				\
+	  rm -f $(HACKDIR)/$$program ;					\
+	done
+
+uninstall-man:
+	@men="$(MEN)" ;							\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo rm -f $(man1dir)/$$instname ;				\
+	  rm -f $(man1dir)/$$instname ;					\
+	done
+
+clean:
+	-rm -f *.o a.out core $(EXES)
+
+distclean: clean
+	-rm -f Makefile *~ "#"*
+
+# Adds all current dependencies to Makefile
+depend:
+	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'		    \
+	$(DEPEND_FLAGS) --						    \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SRCS)
+
+# Adds some dependencies to Makefile.in -- not totally accurate, but pretty
+# close.  This excludes dependencies on files in /usr/include, etc.  It tries
+# to include only dependencies on files which are themselves a part of this
+# package.
+distdepend::
+	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
+	$(DEPEND) -w 0 -f - 						    \
+	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SRCS) | 							    \
+	(								    \
+	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
+	  sed -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
+	      -e 's@\.\./utils@$$(UTILS_SRC)@g'				    \
+	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
+	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g' ;			    \
+	  echo ''							    \
+	) > /tmp/distdepend.$$$$ &&					    \
+	mv Makefile.in Makefile.in.bak &&				    \
+	mv /tmp/distdepend.$$$$ Makefile.in
+
+TAGS: tags
+tags:
+	find $(srcdir) -name '*.[chly]' -print | xargs etags -a
+
+echo_tarfiles:
+	@echo $(TARFILES)
+
+
+# Rules for generating the VMS makefiles on Unix, so that it doesn't have to
+# be done by hand...
+#
+VMS_AXP_COMPILE_1=$$ CC/DECC/PREFIX=ALL/DEFINE=(VMS,HAVE_CONFIG_H,STANDALONE
+VMS_AXP_COMPILE_2=)/INCL=([],[-],[-.UTILS])
+
+compile_axp.com: Makefile.in
+	@echo generating $@ from $<...  ;				    \
+	( for c in $(SRCS) ; do						    \
+	   c=`echo $$c | tr a-z A-Z` ;					    \
+	   echo "$(VMS_AXP_COMPILE_1)$(VMS_AXP_COMPILE_2) $$c" ;	    \
+         done ;								    \
+	 foo="$(VMS_AXP_COMPILE_1),XLOCKMORE$(VMS_AXP_COMPILE_2)" ;	    \
+         echo $${foo}/OBJ=SCREENHACK-XLOCK.OBJ SCREENHACK.C ;		    \
+	) | sort > $@
+
+compile_decc.com: compile_axp.com
+	@echo generating $@ from $<...  ;				    \
+	sed 's/axp/decc/g' < $< > $@
+
+#### TODO: generating link_axp.com is kinda tricky...
+
+link_decc.com: link_axp.com
+	@echo generating $@ from $<...  ;				    \
+	sed 's/axp/decc/g' < $< > $@
+
+$(srcdir)/../setup.com: Makefile.in
+	@echo generating $@ from $<...  ;				    \
+	( echo '$$! Xscreensaver - definition of various DCL symbols' ;     \
+	  echo '$$ set NOON' ;						    \
+	  echo '$$ set def [.HACKS]' ;					    \
+	  echo '$$ mydisk = f$$trnlmn("SYS$$DISK")' ;			    \
+	  echo '$$ mydir  = mydisk+f$$directory()' ;			    \
+	  ( for c in $(EXES) ; do					    \
+	     c2="$${c}		" ;					    \
+	     c2=`echo "$${c2}" | sed 's/^\(........*\)	$$/\1/'` ;	    \
+	     echo '$$' "$${c2}:== $$'mydir'$${c}" ;			    \
+             done ;							    \
+	  ) | sort ;							    \
+          echo '$$ set def [-.DRIVER]' ;				    \
+          echo '$$ mydir  = mydisk+f$$directory()' ;			    \
+          echo "$$ xscreensaver :== $$'mydir'xscreensaver" ;		    \
+	  echo "$$ xscreen*command :== $$'mydir'xscreensaver-command" ;     \
+	  echo '$$ set def [-]' ;					    \
+	  echo '$$ exit' ; 						    \
+          ) > $@
+
+distdepend:: compile_axp.com compile_decc.com
+distdepend:: link_axp.com link_decc.com
+distdepend:: $(srcdir)/../setup.com
+
+
+# Rules for noticing when the objects from the utils directory are out of
+# date with respect to their sources, and going and building them according
+# to the rules in their own Makefile...
+#
+$(UTILS_BIN)/alpha.o:		$(UTILS_SRC)/alpha.c
+$(UTILS_BIN)/colors.o:		$(UTILS_SRC)/colors.c
+$(UTILS_BIN)/grabscreen.o:	$(UTILS_SRC)/grabscreen.c
+$(UTILS_BIN)/sgivideo.o:	$(UTILS_SRC)/sgivideo.c
+$(UTILS_BIN)/hsv.o:		$(UTILS_SRC)/hsv.c
+$(UTILS_BIN)/resources.o:	$(UTILS_SRC)/resources.c
+$(UTILS_BIN)/spline.o:		$(UTILS_SRC)/spline.c
+$(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
+$(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
+$(UTILS_BIN)/xmu.o:		$(UTILS_SRC)/xmu.c
+$(UTILS_BIN)/xroger.o:		$(UTILS_SRC)/xroger.c
+$(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
+$(UTILS_BIN)/erase.o:		$(UTILS_SRC)/erase.c
+
+$(UTIL_OBJS):
+	cd $(UTILS_BIN) ; \
+	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+# How we build object files in this directory.
+.c.o:
+	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+
+# Some hacks use a slightly-differently-compiled variant of this file.
+# This is how to make the the other .o file from it.
+#
+screenhack-xlock.o: screenhack.c
+	$(CC) -o $@ -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) \
+	-DXLOCKMORE $(srcdir)/screenhack.c
+
+# Some abbreviations to keep the lines short...
+ALP		= $(HSV) $(UTILS_BIN)/alpha.o
+HSV		= $(UTILS_BIN)/hsv.o
+SPL		= $(UTILS_BIN)/spline.o
+XROG		= $(UTILS_BIN)/xroger.o $(SPL)
+GRAB		= $(GRAB_OBJS)
+ERASE		= $(UTILS_BIN)/erase.o
+COL		= $(COLOR_OBJS)
+
+CC_HACK		= $(CC) $(LDFLAGS)
+
+##############################################################################
+#
+# DO NOT DELETE: updated by make distdepend
+
+xlock.o: $(srcdir)/../../hacks/screenhack.h
+xlock.o: ../../config.h
+xlock.o: $(srcdir)/$(UTILS_SRC)/yarandom.h
+xlock.o: $(srcdir)/$(UTILS_SRC)/usleep.h
+xlock.o: $(srcdir)/$(UTILS_SRC)/resources.h
+xlock.o: $(srcdir)/$(UTILS_SRC)/hsv.h
+xlock.o: $(srcdir)/$(UTILS_SRC)/colors.h
+xlock.o: $(srcdir)/$(UTILS_SRC)/grabscreen.h
+xlock.o: $(srcdir)/$(UTILS_SRC)/visual.h
+xlock.o: $(srcdir)/mode.h
+automata.o: $(srcdir)/$(UTILS_SRC)/utils.h
+automata.o: ../../config.h
+automata.o: $(srcdir)/automata.h
+iostuff.o: $(srcdir)/$(UTILS_SRC)/utils.h
+iostuff.o: ../../config.h
+iostuff.o: $(srcdir)/mode.h
+iostuff.o: $(srcdir)/../../hacks/screenhack.h
+iostuff.o: $(srcdir)/$(UTILS_SRC)/yarandom.h
+iostuff.o: $(srcdir)/$(UTILS_SRC)/usleep.h
+iostuff.o: $(srcdir)/$(UTILS_SRC)/resources.h
+iostuff.o: $(srcdir)/$(UTILS_SRC)/hsv.h
+iostuff.o: $(srcdir)/$(UTILS_SRC)/colors.h
+iostuff.o: $(srcdir)/$(UTILS_SRC)/grabscreen.h
+iostuff.o: $(srcdir)/$(UTILS_SRC)/visual.h
+iostuff.o: $(srcdir)/iostuff.h
+iostuff.o: $(srcdir)/ras.h
+spline.o: $(srcdir)/$(UTILS_SRC)/utils.h
+spline.o: ../../config.h
+spline.o: $(srcdir)/spline.h
+

@@ -1,0 +1,52 @@
+#ifndef XCOMM
+#define XCOMM /**/#
+#endif
+XCOMM @(#)Sub Imakefile	xlockmore
+XCOMM
+
+#include "../iconfig.h"
+top_srcdir = ..
+UTILSDIR = ./
+UTILOBJDIR = ./
+
+DU = $(UTILDIR)
+DOU = $(UTILOBJDIR)
+OU = $(O)$(S)$(DOU)
+CU = $(C) $(DU)
+
+XCOMM  List of object files
+XLOCKUTILOBJS = $(DOU)xlock$(OU)passwd$(OU)resource$(OU)parsecmd$(O)$(S)\
+$(DOU)util$(OU)logout$(OU)mode$(OU)xlockimage$(OU)ras$(OU)xbm$(O)$(S)\
+$(DOU)vis$(OU)visgl$(OU)color$(OU)random$(OU)iostuff$(OU)automata$(O)$(S)\
+$(DOU)spline$(OU)sound$(OU)erase$(OU)magick$(O)$(S)\
+$(DOU)vtlock$(OU)vtlock_proc$(O)
+#ifdef Check
+XLOCKCHECKOBJS = $(S)memcheck$(O)
+#endif
+
+XCOMM  List of source files
+XLOCKUTILHDRS = xlock.h mode.h vroot.h xlockimage.h ras.h \
+version.h config.h
+XLOCKUTILSRCS = $(DU)xlock$(CU)passwd$(CU)resource$(CU)parsecmd$(C) \
+$(DU)util$(CU)logout$(CU)mode$(CU)xlockimage$(CU)ras$(CU)xbm$(C) \
+$(DU)vis$(CU)visgl$(CU)color$(CU)random$(CU)iostuff$(CU)automata$(C) \
+$(DU)spline$(CU)sound$(CU)erase$(CU)magick$(C) \
+$(DU)vtlock$(CU)vtlock_proc$(C)
+XLOCKCHECKSRCS = $(DU)memcheck$(C)
+
+XCOMM default target
+
+all:: $(XLOCKUTILOBJS) $(XLOCKDEBUGOBJS)
+
+DependTarget()
+LintTarget()
+
+InstallProgram(xlock,$(BINDIR))
+InstallAppDefaults(XLock)
+InstallManPage(xlock,$(MANDIR))
+
+distclean::	clean
+	$(RM) Makefile config.status config.cache config.log config.h memdiag.xlock-*
+
+clean.all:: distclean
+
