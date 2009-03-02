@@ -1,0 +1,16 @@
+!!!!
+! XmLock: Class resource for xmlock
+!!!!
+!XmLock.Form.Boolean.Fontlist: -*-*-bold-i-*-*-16-*-*-*-*-*-*-*
+!XmLock.Form.Switches.Fontlist: -*-*-bold-i-*-*-16-*-*-*-*-*-*-*
+!XmLock.Form.PushButtonRow.Menubar.PopupOptions.Options.Font.Fontlist: -*-*-bold-i-*-*-*-*-*-*-*-*-*-*
+XmLock.Form.PushButtonRow.Exit.Background: red
+XmLock.Form.PushButtonRow.Exit.Armcolor: pink
+!XmLock.Form.PushButtonRow.Exit.Fontlist: -*-*-bold-i-*-*-*-*-*-*-*-*-*-*
+!XmLock.Form.Modes.Labelstring: Modes
+!XmLock.Form.Switches.Labelstring: Turn On/Off
+!XmLock.Form.Row*ScrolledListModes.BorderColor: black
+!XmLock.Form.Row*ScrolledListModes.Fontlist: -*-*-bold-*-*-*-16-*-*-*-*-*-*-*
+XmLock.Form.Row*ScrolledListModes.Background: light blue
+XmLock.Form.Row.TogglesRow.Background: white
+!XmLock.Form.Row.Xmrowcolumn*Fontlist: -*-*-*-*-*-*-14-*-*-*-*-*-*-*
