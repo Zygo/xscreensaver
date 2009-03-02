@@ -159,7 +159,7 @@ Installation options:
   --enable-subdir=DIR     Put the demo programs in a subdirectory of \`bindir',
                           instead of putting them in bindir itself.  You can
                           specify the name of the subdirectory.  For example,
-                          --exec-prefix=/usr/local/bin --enable-subdir=demos
+                          \`--exec-prefix=/usr/local --enable-subdir=demos'
                           would put xscreensaver in /usr/local/bin/, and would
                           put the demos in /usr/local/bin/demos/.  (If DIR
                           begins with /, then bindir will not be prepended.)
@@ -773,6 +773,31 @@ if test "$with_xshm" = yes; then
 
 elif test "$with_xshm" != no; then
   echo "error: must be yes or no: --with-xshm-ext=$with_xshm"
+  exit 1
+fi
+
+
+# Check for the DOUBLE-BUFFER server extension header.
+#
+have_xdbe=no
+with_xdbe_req=unspecified
+AC_ARG_WITH(xdbe-ext,
+[  --with-xdbe-ext         Include support for the DOUBLE-BUFFER server
+                          extension, if possible (this is the default).
+  --without-xdbe-ext      Do not compile in support for this extension.],
+  [with_xdbe="$withval"; with_xdbe_req="$withval"],[with_xdbe=yes])
+
+HANDLE_X_PATH_ARG(with_xdbe, --with-xdbe-ext, DOUBLE-BUFFER)
+
+if test "$with_xdbe" = yes; then
+
+  AC_CHECK_X_HEADER(X11/extensions/Xdbe.h, [have_xdbe=yes])
+  if test "$have_xdbe" = yes; then
+    AC_DEFINE(HAVE_DOUBLE_BUFFER_EXTENSION)    
+  fi
+
+elif test "$with_xdbe" != no; then
+  echo "error: must be yes or no: --with-xdbe-ext=$with_xshm"
   exit 1
 fi
 
@@ -1476,12 +1501,25 @@ if test ! -n "$ac_cv_zippy_program"; then
 	  dir_up=`echo "$dir" | sed 's@/[^/]*$@@'`
 	  changequote([,])
 
-          yow="yow -f $dir_up/etc/yow.lines"
-	  if $dir/$yow >&- 2>&- ; then
-	    ac_cv_zippy_program="$dir/$yow"
+	  yowlines="$dir_up/etc/yow.lines"
+	  if $dir/yow -f $yowlines >&- 2>&- ; then
+	    ac_cv_zippy_program="$dir/yow -f $yowlines"
 	    AC_MSG_RESULT($ac_cv_zippy_program)
 	  else
-	    AC_MSG_RESULT(no)
+            #
+            # In newer XEmacs releases, yow.lines is in a different place,
+            # and the easiest way to get it is by calling the new function
+            # `locate-data-file'.
+            #
+            yowlines=`$xemacs_exe $eargs \
+              '(princ (concat (locate-data-file "yow.lines") "\n"))' \
+              2>/dev/null | tail -1`
+            if $dir/yow -f $yowlines >&- 2>&- ; then
+              ac_cv_zippy_program="$dir/yow -f $yowlines"
+              AC_MSG_RESULT($ac_cv_zippy_program)
+            else
+              AC_MSG_RESULT(no)
+            fi
 	  fi
         fi
       fi
@@ -1975,6 +2013,10 @@ if test "$with_xshm_req" = yes -a "$have_xshm" = no ; then
   warn 'The XSHM extension was requested, but was not found.'
 fi
 
+if test "$with_xdbe_req" = yes -a "$have_xdbe" = no ; then
+  warn 'The DOUBLE-BUFFER extension was requested, but was not found.'
+fi
+
 if test "$with_sgivc_req" = yes -a "$have_sgivc" = no ; then
   warn 'The SGI-VIDEO-CONTROL extension was requested, but was not found.'
 fi
@@ -2146,7 +2188,7 @@ if test "${bindir}" = "${HACKDIR}" ; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}."
   echo ""
-  echo "      The various graphics demos (80+ different executables) will"
+  echo "      The various graphics demos (90+ different executables) will"
   echo "      also be installed in ${HACKDIR}."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere"

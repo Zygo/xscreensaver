@@ -270,10 +270,8 @@ extern void initialize_screensaver_window (saver_info *si);
 extern void raise_window (saver_info *si,
 			    Bool inhibit_fade, Bool between_hacks_p,
 			    Bool dont_clear);
-extern void blank_screen (saver_info *si);
+extern Bool blank_screen (saver_info *si);
 extern void unblank_screen (saver_info *si);
-extern Bool grab_keyboard_and_mouse (saver_info *si, Window, Cursor);
-extern void ungrab_keyboard_and_mouse (saver_info *si);
 
 /* =======================================================================
    locking

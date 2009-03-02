@@ -59,14 +59,14 @@ UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/usleep.c $(UTILS_SRC)/visual.c \
 		  $(UTILS_SRC)/xroger.c $(UTILS_SRC)/yarandom.c \
 	 	  $(UTILS_SRC)/erase.c $(UTILS_SRC)/sgivideo.c \
-		  $(UTILS_SRC)/xshm.c
+		  $(UTILS_SRC)/xshm.c $(UTILS_SRC)/xdbe.c
 UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/grabscreen.o $(UTILS_BIN)/hsv.o \
 		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/spline.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/xroger.o $(UTILS_BIN)/yarandom.o \
 		  $(UTILS_BIN)/erase.o $(UTILS_BIN)/sgivideo.o \
-		  $(UTILS_SRC)/xshm.o
+		  $(UTILS_SRC)/xshm.o $(UTILS_SRC)/xdbe.o
 
 SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  bubbles-default.c decayscreen.c deco.c drift.c flag.c \
@@ -81,7 +81,8 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  rotor.c ant.c xjack.c xlyap.c jigsaw.c xscreensaver-sgigl.c \
 		  cynosure.c moire2.c flow.c epicycle.c interference.c \
 		  truchet.c bsod.c crystal.c discrete.c distort.c kumppa.c \
-		  sonar.c demon.c loop.c t3d.c penetrate.c deluxe.c
+		  sonar.c demon.c loop.c t3d.c penetrate.c deluxe.c compass.c \
+		  squiral.c xflame.c wander.c spotlight.c critical.c
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  bubbles-default.o decayscreen.o deco.o drift.o flag.o \
@@ -96,7 +97,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  rotor.o ant.o xjack.o xlyap.o jigsaw.o xscreensaver-sgigl.o \
 		  cynosure.o moire2.o flow.o epicycle.o interference.o \
 		  truchet.o bsod.o crystal.o discrete.o distort.o kumppa.o \
-		  sonar.o demon.o loop.o t3d.o penetrate.o deluxe.o
+		  sonar.o demon.o loop.o t3d.o penetrate.o deluxe.o compass.o \
+		  squiral.o xflame.o wander.o spotlight.o critical.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -107,7 +109,8 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
 		  ant xjack xlyap jigsaw cynosure moire2 flow epicycle \
 		  interference truchet bsod crystal discrete distort kumppa \
-		  sonar demon loop t3d penetrate deluxe
+		  sonar demon loop t3d penetrate deluxe compass squiral \
+		  xflame wander spotlight critical
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -117,6 +120,7 @@ COLOR_OBJS	= $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o
 GRAB_OBJS_1	= $(UTILS_BIN)/grabscreen.o $(SGI_VIDEO_OBJS)
 GRAB_OBJS	= $(GRAB_OBJS_1) $(COLOR_OBJS)
 XSHM_OBJS	= $(UTILS_BIN)/xshm.o
+XDBE_OBJS	= $(UTILS_BIN)/xdbe.o
 GRAB_LIBS	= $(SGI_VIDEO_LIBS)
 
 HDRS		= bubbles.h screenhack.h xlockmore.h xlockmoreI.h automata.h
@@ -131,7 +135,7 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  slip.man sphere.man spiral.man strange.man swirl.man \
 		  xroger.man goop.man starfish.man munch.man rd-bomb.man \
 		  xjack.man xlyap.man jigsaw.man epicycle.man bsod.man \
-		  sonar.man t3d.man
+		  sonar.man t3d.man squiral.man spotlight.man critical.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  vidwhacker \
@@ -300,6 +304,7 @@ $(UTILS_BIN)/xroger.o:		$(UTILS_SRC)/xroger.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 $(UTILS_BIN)/erase.o:		$(UTILS_SRC)/erase.c
 $(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
+$(UTILS_BIN)/xdbe.o:		$(UTILS_SRC)/xdbe.c
 
 $(UTIL_OBJS):
 	cd $(UTILS_BIN) ; \
@@ -325,6 +330,7 @@ GRAB		= $(GRAB_OBJS)
 ERASE		= $(UTILS_BIN)/erase.o
 COL		= $(COLOR_OBJS)
 SHM		= $(XSHM_OBJS)
+DBE		= $(XDBE_OBJS)
 
 CC_HACK		= $(CC) $(LDFLAGS)
 
@@ -384,8 +390,8 @@ maze:		maze.o		$(HACK_OBJS) $(ERASE) $(XROG)
 moire:		moire.o		$(HACK_OBJS) $(COL) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS)
 
-moire2:		moire2.o	$(HACK_OBJS) $(COL)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+moire2:		moire2.o	$(HACK_OBJS) $(COL) $(DBE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
 
 noseguy:	noseguy.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM_LIBS)
@@ -441,8 +447,8 @@ cynosure:  	cynosure.o	$(HACK_OBJS) $(COL)
 epicycle:  	epicycle.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
 
-interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS)
+interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE) $(HACK_LIBS)
 
 truchet:	 truchet.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
@@ -453,8 +459,8 @@ bsod:	 	bsod.o		$(HACK_OBJS) $(COL)
 distort:	distort.o	$(HACK_OBJS) $(GRAB) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS) $(GRAB_LIBS)
 
-kumppa:		kumppa.o	$(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+kumppa:		kumppa.o	$(HACK_OBJS) $(DBE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(HACK_LIBS)
 
 sonar:		sonar.o		$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
@@ -465,8 +471,26 @@ t3d:		t3d.o		$(HACK_OBJS) $(COL)
 penetrate:	penetrate.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-deluxe:		deluxe.o	$(HACK_OBJS) $(COL)
+deluxe:		deluxe.o	$(HACK_OBJS) $(COL) $(DBE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
+
+compass:	compass.o	$(HACK_OBJS) $(DBE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(HACK_LIBS)
+
+squiral:	squiral.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
+xflame:		xflame.o	$(HACK_OBJS) $(SHM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SHM) $(HACK_LIBS) $(XPM_LIBS)
+
+wander:		wander.o	$(HACK_OBJS) $(COL) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
+
+spotlight:	spotlight.o	$(HACK_OBJS) $(GRAB)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
+
+critical:	critical.o	$(HACK_OBJS) $(COL) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -1348,6 +1372,7 @@ moire2.o: $(UTILS_SRC)/hsv.h
 moire2.o: $(UTILS_SRC)/colors.h
 moire2.o: $(UTILS_SRC)/grabscreen.h
 moire2.o: $(UTILS_SRC)/visual.h
+moire2.o: $(UTILS_SRC)/xdbe.h
 flow.o: $(srcdir)/xlockmore.h
 flow.o: ../config.h
 flow.o: $(srcdir)/xlockmoreI.h
@@ -1380,6 +1405,7 @@ interference.o: $(UTILS_SRC)/hsv.h
 interference.o: $(UTILS_SRC)/colors.h
 interference.o: $(UTILS_SRC)/grabscreen.h
 interference.o: $(UTILS_SRC)/visual.h
+interference.o: $(UTILS_SRC)/xdbe.h
 truchet.o: $(srcdir)/screenhack.h
 truchet.o: ../config.h
 truchet.o: $(UTILS_SRC)/yarandom.h
@@ -1445,6 +1471,7 @@ kumppa.o: $(UTILS_SRC)/hsv.h
 kumppa.o: $(UTILS_SRC)/colors.h
 kumppa.o: $(UTILS_SRC)/grabscreen.h
 kumppa.o: $(UTILS_SRC)/visual.h
+kumppa.o: $(UTILS_SRC)/xdbe.h
 sonar.o: $(srcdir)/screenhack.h
 sonar.o: ../config.h
 sonar.o: $(UTILS_SRC)/yarandom.h
@@ -1507,4 +1534,64 @@ deluxe.o: $(UTILS_SRC)/hsv.h
 deluxe.o: $(UTILS_SRC)/colors.h
 deluxe.o: $(UTILS_SRC)/grabscreen.h
 deluxe.o: $(UTILS_SRC)/visual.h
+deluxe.o: $(UTILS_SRC)/xdbe.h
+compass.o: $(srcdir)/screenhack.h
+compass.o: ../config.h
+compass.o: $(UTILS_SRC)/yarandom.h
+compass.o: $(UTILS_SRC)/usleep.h
+compass.o: $(UTILS_SRC)/resources.h
+compass.o: $(UTILS_SRC)/hsv.h
+compass.o: $(UTILS_SRC)/colors.h
+compass.o: $(UTILS_SRC)/grabscreen.h
+compass.o: $(UTILS_SRC)/visual.h
+compass.o: $(UTILS_SRC)/xdbe.h
+squiral.o: $(srcdir)/screenhack.h
+squiral.o: ../config.h
+squiral.o: $(UTILS_SRC)/yarandom.h
+squiral.o: $(UTILS_SRC)/usleep.h
+squiral.o: $(UTILS_SRC)/resources.h
+squiral.o: $(UTILS_SRC)/hsv.h
+squiral.o: $(UTILS_SRC)/colors.h
+squiral.o: $(UTILS_SRC)/grabscreen.h
+squiral.o: $(UTILS_SRC)/visual.h
+squiral.o: $(UTILS_SRC)/erase.h
+xflame.o: $(srcdir)/screenhack.h
+xflame.o: ../config.h
+xflame.o: $(UTILS_SRC)/yarandom.h
+xflame.o: $(UTILS_SRC)/usleep.h
+xflame.o: $(UTILS_SRC)/resources.h
+xflame.o: $(UTILS_SRC)/hsv.h
+xflame.o: $(UTILS_SRC)/colors.h
+xflame.o: $(UTILS_SRC)/grabscreen.h
+xflame.o: $(UTILS_SRC)/visual.h
+xflame.o: $(UTILS_SRC)/xshm.h
+wander.o: $(srcdir)/screenhack.h
+wander.o: ../config.h
+wander.o: $(UTILS_SRC)/yarandom.h
+wander.o: $(UTILS_SRC)/usleep.h
+wander.o: $(UTILS_SRC)/resources.h
+wander.o: $(UTILS_SRC)/hsv.h
+wander.o: $(UTILS_SRC)/colors.h
+wander.o: $(UTILS_SRC)/grabscreen.h
+wander.o: $(UTILS_SRC)/visual.h
+wander.o: $(UTILS_SRC)/erase.h
+spotlight.o: $(srcdir)/screenhack.h
+spotlight.o: ../config.h
+spotlight.o: $(UTILS_SRC)/yarandom.h
+spotlight.o: $(UTILS_SRC)/usleep.h
+spotlight.o: $(UTILS_SRC)/resources.h
+spotlight.o: $(UTILS_SRC)/hsv.h
+spotlight.o: $(UTILS_SRC)/colors.h
+spotlight.o: $(UTILS_SRC)/grabscreen.h
+spotlight.o: $(UTILS_SRC)/visual.h
+critical.o: $(srcdir)/screenhack.h
+critical.o: ../config.h
+critical.o: $(UTILS_SRC)/yarandom.h
+critical.o: $(UTILS_SRC)/usleep.h
+critical.o: $(UTILS_SRC)/resources.h
+critical.o: $(UTILS_SRC)/hsv.h
+critical.o: $(UTILS_SRC)/colors.h
+critical.o: $(UTILS_SRC)/grabscreen.h
+critical.o: $(UTILS_SRC)/visual.h
+critical.o: $(UTILS_SRC)/erase.h
 

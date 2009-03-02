@@ -95,6 +95,18 @@ grab() {
 
     qcam > $tmp_ppm1
 
+    # Friedrich Delgado Friedrichs says the following works with a
+    # Brooktree 848 or 878 tuner card:
+    #
+    #   bttvgrab -Q -d q -l 1 -F /dev/null -o gif -f ${tmp}.gif -N PAL
+    #   giftopnm ${tmp}.gif > $tmp_ppm1
+    #   rm ${tmp}.gif
+    #
+    # He notes that you might need to run a TV application (e.g., xawtv)
+    # before the first time you run vidwhacker in order to initialize the
+    # tuner card and kernel modules.
+
+
   else
     echo "$0: don't know how to grab video on this OS." >&2
     clean2

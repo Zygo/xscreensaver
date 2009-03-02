@@ -93,31 +93,6 @@ static void store_activate_time (saver_info *si, Bool use_last_p);
 	 Button4MotionMask | Button5MotionMask | ButtonMotionMask)
 
 
-static int
-grab_kbd(saver_info *si, Window w)
-{
-  saver_preferences *p = &si->prefs;
-  int status = XGrabKeyboard (si->dpy, w, True,
-			      /* I don't really understand Sync vs Async,
-				 but these seem to work... */
-			      GrabModeSync, GrabModeAsync,
-			      CurrentTime);
-  if (status == GrabSuccess)
-    si->keyboard_grab_window = w;
-
-  if (p->verbose_p)
-    fprintf(stderr, "%s: grabbing keyboard on 0x%x... %s.\n",
-	    blurb(), (unsigned long) w,
-	    (status == GrabSuccess ? "GrabSuccess" :
-	     status == AlreadyGrabbed ? "AlreadyGrabbed" :
-	     status == GrabInvalidTime ? "GrabInvalidTime" :
-	     status == GrabNotViewable ? "GrabNotViewable" :
-	     status == GrabFrozen ? "GrabFrozen" :
-	     "???"));
-
-  return status;
-}
-
 static const char *
 grab_string(int status)
 {
@@ -135,6 +110,24 @@ grab_string(int status)
 	return foo;
       }
     }
+}
+
+static int
+grab_kbd(saver_info *si, Window w)
+{
+  saver_preferences *p = &si->prefs;
+  int status = XGrabKeyboard (si->dpy, w, True,
+			      /* I don't really understand Sync vs Async,
+				 but these seem to work... */
+			      GrabModeSync, GrabModeAsync,
+			      CurrentTime);
+  if (status == GrabSuccess)
+    si->keyboard_grab_window = w;
+
+  if (p->verbose_p)
+    fprintf(stderr, "%s: grabbing keyboard on 0x%x... %s.\n",
+	    blurb(), (unsigned long) w, grab_string(status));
+  return status;
 }
 
 
@@ -179,7 +172,7 @@ ungrab_mouse(saver_info *si)
 }
 
 
-Bool
+static Bool
 grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor)
 {
   Status mstatus, kstatus;
@@ -209,7 +202,7 @@ grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor)
 	  mstatus == GrabSuccess);
 }
 
-void
+static void
 ungrab_keyboard_and_mouse (saver_info *si)
 {
   ungrab_mouse (si);
@@ -1069,21 +1062,33 @@ raise_window (saver_info *si,
     }
 }
 
-void
+Bool
 blank_screen (saver_info *si)
 {
   int i;
+  Bool ok;
 
   /* Note: we do our grabs on the root window, not on the screensaver window.
      If we grabbed on the saver window, then the demo mode and lock dialog
      boxes wouldn't get any events.
    */
-  grab_keyboard_and_mouse (si,
-			   /*si->screens[0].screensaver_window,*/
-			   RootWindowOfScreen(si->screens[0].screen),
-			   (si->demoing_p
-			    ? 0
-			    : si->screens[0].cursor));
+  ok = grab_keyboard_and_mouse (si,
+                                /*si->screens[0].screensaver_window,*/
+                                RootWindowOfScreen(si->screens[0].screen),
+                                (si->demoing_p
+                                 ? 0
+                                 : si->screens[0].cursor));
+
+
+  if (si->using_mit_saver_extension || si->using_sgi_saver_extension)
+    /* If we're using a server extension, then failure to get a grab is
+       not a big deal -- even without the grab, we will still be able
+       to un-blank when there is user activity, since the server will
+       tell us. */
+    ok = True;
+
+  if (!ok)
+    return False;
 
   for (i = 0; i < si->nscreens; i++)
     {
@@ -1111,6 +1116,8 @@ blank_screen (saver_info *si)
 #endif
 
   si->screen_blanked_p = True;
+
+  return True;
 }
 
 void

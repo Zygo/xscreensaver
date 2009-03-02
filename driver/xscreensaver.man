@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "15-Mar-99 (3.08)" "X Version 11"
+.TH XScreenSaver 1 "11-Apr-99 (3.09)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -442,6 +442,8 @@ The drawback to doing this is that perhaps you \fIreally do\fP want idleness
 on the X console to cause the X display to lock, even if there is activity
 on other virtual consoles.  If you want that, then set this option to False.
 (Or just lock the X console manually.)
+
+The default value for this resource is True, on systems where it works.
 .TP 8
 .B overlayStderr\fP (class \fBBoolean\fP)
 If \fBcaptureStderr\fP is True, and your server supports ``overlay'' visuals,
@@ -1179,6 +1181,14 @@ lower resolution, as well.  It's bizarre.
 If you find that GL programs only work properly when run as root, and not
 as normal users, then the problem is that your \fI/dev/3dfx\fP file is not
 configured properly.  Check the Linux 3Dfx FAQ.
+.TP 8
+.B Keyboard LEDs
+If \fIprocInterrupts\fP is on (which is the default on Linux systems) and
+you're using some program that toggles the state of your keyboard LEDs,
+xscreensaver won't work right: turning those LEDs on or off causes a 
+keyboard interrupt, which xscreensaver will interpret as user activity.
+So if you're using such a program, set the \fIprocInterrupts\fP resource
+to False.
 .TP 8
 .B Extensions
 If you are not making use of one of the server extensions (\fBXIDLE\fP,

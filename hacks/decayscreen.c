@@ -30,6 +30,10 @@
  *  5-AUG-1993
  *
  *  Hacked by jwz, 28-Nov-97 (sped up and added new motion directions)
+ 
+ *  R. Schultz
+ *  Added "melt" & "stretch" modes 28-Mar-1999
+ *
  */
 
 #include "screenhack.h"
@@ -38,6 +42,7 @@ static int sizex, sizey;
 static int delay;
 static GC gc;
 static int mode;
+static int iterations=100;
 
 #define SHUFFLE 0
 #define UP 1
@@ -50,7 +55,8 @@ static int mode;
 #define DOWNRIGHT 8
 #define IN 9
 #define OUT 10
-
+#define MELT 11
+#define STRETCH 12
 
 static void
 init_decay (Display *dpy, Window window)
@@ -58,6 +64,7 @@ init_decay (Display *dpy, Window window)
   XGCValues gcv;
   XWindowAttributes xgwa;
   long gcflags;
+  unsigned long bg;
 
   char *s = get_string_resource("mode", "Mode");
   if      (s && !strcmp(s, "shuffle")) mode = SHUFFLE;
@@ -71,10 +78,12 @@ init_decay (Display *dpy, Window window)
   else if (s && !strcmp(s, "downright")) mode = DOWNRIGHT;
   else if (s && !strcmp(s, "in")) mode = IN;
   else if (s && !strcmp(s, "out")) mode = OUT;
+  else if (s && !strcmp(s, "melt")) mode = MELT;
+  else if (s && !strcmp(s, "stretch")) mode = STRETCH;
   else {
     if (s && *s && !!strcmp(s, "random"))
       fprintf(stderr, "%s: unknown mode %s\n", progname, s);
-    mode = random() % (OUT+1);
+    mode = random() % (STRETCH+1);
   }
 
   delay = get_integer_resource ("delay", "Integer");
@@ -85,6 +94,12 @@ init_decay (Display *dpy, Window window)
 
   gcv.function = GXcopy;
   gcv.subwindow_mode = IncludeInferiors;
+
+  if (mode == MELT || mode == STRETCH) {
+    bg = get_pixel_resource ("background", "Background", dpy, xgwa.colormap);
+    gcv.foreground = bg;
+  }
+
   gcflags = GCForeground |GCFunction;
   if (use_subwindow_mode_p(xgwa.screen, window)) /* see grabscreen.c */
     gcflags |= GCSubwindowMode;
@@ -94,6 +109,15 @@ init_decay (Display *dpy, Window window)
   sizey = xgwa.height;
 
   grab_screen_image (xgwa.screen, window);
+  
+  if (mode == MELT || mode == STRETCH) {
+    /* make sure screen eventually turns background color */
+    XDrawLine(dpy, window, gc, 0, 0, sizex, 0); 
+
+    /* slow down for smoother melting*/
+    iterations = 1;
+  }
+
 }
 
 
@@ -133,47 +157,65 @@ decay1 (Display *dpy, Window window)
       case DOWNRIGHT:	bias = downright_bias; break;
       case IN:		bias = no_bias; break;
       case OUT:		bias = no_bias; break;
-      default: abort();
+      case MELT:	bias = no_bias; break;
+      case STRETCH:	bias = no_bias; break;
+     default: abort();
     }
 
 #define nrnd(x) (random() % (x))
 
-    left = nrnd(sizex - 1);
-    top = nrnd(sizey);
-    width = nrnd(sizex - left);
-    height = nrnd(sizey - top);
+    if (mode == MELT || mode == STRETCH) {
+      left = nrnd(sizex/2);
+      top = nrnd(sizey);
+      width = nrnd( sizex/2 ) + sizex/2 - left;
+      height = nrnd(sizey - top);
+      toleft = left;
+      totop = top+1;
 
-    toleft = left;
-    totop = top;
+    } else {
 
-    if (mode == IN || mode == OUT) {
-      int x = left+(width/2);
-      int y = top+(height/2);
-      int cx = sizex/2;
-      int cy = sizey/2;
-      if (mode == IN) {
-	if      (x > cx && y > cy)   bias = upleft_bias;
-	else if (x < cx && y > cy)   bias = upright_bias;
-	else if (x < cx && y < cy)   bias = downright_bias;
-	else /* (x > cx && y < cy)*/ bias = downleft_bias;
-      } else {
-	if      (x > cx && y > cy)   bias = downright_bias;
-	else if (x < cx && y > cy)   bias = downleft_bias;
-	else if (x < cx && y < cy)   bias = upleft_bias;
-	else /* (x > cx && y < cy)*/ bias = upright_bias;
+      left = nrnd(sizex - 1);
+      top = nrnd(sizey);
+      width = nrnd(sizex - left);
+      height = nrnd(sizey - top);
+      
+      toleft = left;
+      totop = top;
+      if (mode == IN || mode == OUT) {
+	int x = left+(width/2);
+	int y = top+(height/2);
+	int cx = sizex/2;
+	int cy = sizey/2;
+	if (mode == IN) {
+	  if      (x > cx && y > cy)   bias = upleft_bias;
+	  else if (x < cx && y > cy)   bias = upright_bias;
+	  else if (x < cx && y < cy)   bias = downright_bias;
+	  else /* (x > cx && y < cy)*/ bias = downleft_bias;
+	} else {
+	  if      (x > cx && y > cy)   bias = downright_bias;
+	  else if (x < cx && y > cy)   bias = downleft_bias;
+	  else if (x < cx && y < cy)   bias = upleft_bias;
+	  else /* (x > cx && y < cy)*/ bias = upright_bias;
+	}
       }
-    }
-
-    switch (bias[random() % (sizeof(no_bias)/sizeof(*no_bias))]) {
+      
+      switch (bias[random() % (sizeof(no_bias)/sizeof(*no_bias))]) {
       case L: toleft = left-1; break;
       case R: toleft = left+1; break;
       case U: totop = top-1; break;
       case D: totop = top+1; break;
       default: abort(); break;
+      }
+    }
+    
+    if (mode == STRETCH) {
+      XCopyArea (dpy, window, window, gc, 0, sizey-top-2, sizex, top+1, 
+		 0, sizey-top-1); 
+    } else {
+      XCopyArea (dpy, window, window, gc, left, top, width, height,
+		 toleft, totop);
     }
 
-    XCopyArea (dpy, window, window, gc, left, top, width, height,
-	       toleft, totop);
 #undef nrnd
 }
 
@@ -204,7 +246,7 @@ screenhack (Display *dpy, Window window)
     init_decay (dpy, window);
     while (1) {
       int i;
-      for (i = 0; i < 100; i++)
+      for (i = 0; i < iterations; i++)
 	decay1 (dpy, window);
       XSync(dpy, False);
       screenhack_handle_events (dpy);

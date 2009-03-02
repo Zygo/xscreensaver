@@ -1,7 +1,7 @@
 Name: xscreensaver
 Summary: X screen saver and locker
 Vendor: Jamie Zawinski <jwz@jwz.org>
-Version: 3.08
+Version: 3.09
 Release: 1
 URL: http://www.jwz.org/xscreensaver/
 Source: xscreensaver-%{version}.tar.gz
@@ -13,7 +13,7 @@ Buildroot: /var/tmp/xscreensaver-root
 A modular screen saver and locker for the X Window System.
 Highly customizable: allows the use of any program that
 can draw on the root window as a display mode.
-More than 80 display modes are included in this package.
+More than 90 display modes are included in this package.
 
 %prep
 

@@ -41,9 +41,9 @@ from the X Consortium.
 #include <math.h>
 #include "screenhack.h"
 
-#ifdef HAVE_XDBE_EXTENSION
-# include <X11/extensions/Xdbe.h>
-#endif /* HAVE_XDBE_EXTENSION */
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+# include "xdbe.h"
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
 char *progclass="Kumppa";
 
@@ -51,6 +51,10 @@ char *defaults [] ={
 	".background:		black",
 	"*speed:		0.1",
 	"*delay:		0",
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+        /* leave this off by default, since it slows things down.  -- jwz. */
+        "*useDBE:		False",
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 	0
 };
 
@@ -58,9 +62,9 @@ XrmOptionDescRec options [] = {
 	{"-delay",".delay",XrmoptionSepArg,0},
 	{"-speed",".speed",XrmoptionSepArg,0},
 	{"-random",".random",XrmoptionIsArg,0},
-#ifdef HAVE_XDBE_EXTENSION
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
 	{"-dbuf",".dbuf",XrmoptionIsArg,0},
-#endif /* HAVE_XDBE_EXTENSION */
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 	{0,0,0,0}
 };
 
@@ -88,9 +92,9 @@ static int sizx,sizy;
 static int midx,midy;
 static unsigned long delay;
 static Bool cosilines=True;
-#ifdef HAVE_XDBE_EXTENSION
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
 static Bool usedouble=False;
-#endif /* HAVE_XDBE_EXTENSION */
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
 static int *Xrotations;
 static int *Yrotations;
@@ -334,23 +338,6 @@ return (True);
 }
 
 
-#ifdef HAVE_XDBE_EXTENSION
-static XErrorHandler old_handler = 0;
-static Bool got_BadMatch = False;
-static int
-BadMatch_ehandler (Display *dpy, XErrorEvent *error)
-{
-  if (error->error_code == BadMatch) {
-    got_BadMatch = True;
-    return 0;
-  } else if (old_handler)
-    return old_handler(dpy, error);
-  else
-    exit(1);
-}
-#endif /* HAVE_XDBE_EXTENSION */
-
-
 Bool InitializeAll(void)
 {
 XGCValues xgcv;
@@ -394,56 +381,15 @@ XSetGraphicsExposures(dpy,cgc,False);
 
 if (get_string_resource("random","String")!=NULL && get_string_resource("random","String")[0]!=0) cosilines=False;
 
-#ifdef HAVE_XDBE_EXTENSION
-if (get_string_resource("dbuf","String")!=NULL && get_string_resource("dbuf","String")[0]!=0) usedouble=True;
-if (usedouble)
-	{
-	XdbeQueryExtension(dpy,&n,&i);
-	if (n==0 && i==0)
-		{
-		fprintf(stderr,"Double buffer extension not supported!\n");
-		usedouble=False;
-		}
-	}
-if (usedouble)
-  {
-    /* We need to trap an X error when calling XdbeAllocateBackBufferName,
-       because there is no way to know beforehand whether the call will
-       succeed!  This is a totally fucked design, but the man page says:
-
-       ERRORS
-	  BadMatch
-	       The specified window is not an InputOutput window or
-	       its visual does not support DBE.
-
-       With SGI's O2 X server, some visuals support double-buffering (the
-       12-bit pseudocolor visuals) and others yield a BadMatch error, as
-       documented.
-
-       However, it doesn't matter, because using the DBUF extension seems
-       to make it run *slower* instead of faster anyway.
-
-                                                        -- jwz, 1-Jul-98
-     */
-    XSync(dpy, False);
-    old_handler = XSetErrorHandler (BadMatch_ehandler);
-    got_BadMatch = False;
-    win[1] = 0;
-    win[1] = XdbeAllocateBackBufferName(dpy,win[0],XdbeUndefined);
-    XSync(dpy, False);
-    XSetErrorHandler (old_handler);
-    old_handler = 0;
-    XSync(dpy, False);
-    if (got_BadMatch || !win[1])
-      {
-	fprintf(stderr, "%s: visual 0x%x does not support double-buffering.\n",
-		progname, XVisualIDFromVisual(xgwa.visual));
-	usedouble = False;
-	win[1] = win[0];
-	got_BadMatch = False;
-      }
-  }
-#endif /* HAVE_XDBE_EXTENSION */
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+ usedouble = True;
+ win[1] = xdbe_get_backbuffer (dpy, win[0], XdbeUndefined);
+ if (!win[1])
+   {
+     usedouble = False;
+     win[1] = win[0];
+   }
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
 delay=get_integer_resource("delay","Integer");
 rspeed=get_float_resource("speed","Float");
@@ -471,9 +417,9 @@ return True;
 
 void screenhack(Display *d, Window w)
 {
-#ifdef HAVE_XDBE_EXTENSION
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
 XdbeSwapInfo xdswp;
-#endif /* HAVE_XDBE_EXTENSION */
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 int a,b,c=0,e;
 float f;
 
@@ -481,14 +427,14 @@ dpy=d;
 win[0]=w;
 if (!InitializeAll()) return;
 
-#ifdef HAVE_XDBE_EXTENSION
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
 if (usedouble)
 	{
 	xdswp.swap_action=XdbeUndefined;
 	xdswp.swap_window=win[0];
 	}
  else
-#endif /* HAVE_XDBE_EXTENSION */
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
    win[1]=win[0];
 
 while (0==0)
@@ -526,9 +472,9 @@ while (0==0)
 		}
 	XFillRectangle(dpy,win[0],fgc[32],midx-2,midy-2,4,4);
 	rotate();
-#ifdef HAVE_XDBE_EXTENSION
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
 	if (usedouble) XdbeSwapBuffers(dpy,&xdswp,1);
-#endif /* HAVE_XDBE_EXTENSION */
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 	XSync(dpy, False);
         screenhack_handle_events (dpy);
 	if (delay) usleep (delay);

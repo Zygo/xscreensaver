@@ -47,6 +47,7 @@
 		blitspin -root -grab					\\n\
 		slip -root						\\n\
 		distort -root						\\n\
+		spotlight -root						\\n\
 		hypercube -root						\\n\
 		halo -root						\\n\
 		maze -root						\\n\
@@ -108,6 +109,13 @@
 		t3d -root						\\n\
 		penetrate -root						\\n\
 		deluxe -root						\\n\
+		compass -root						\\n\
+		squiral -root						\\n\
+		xflame -root						\\n\
+		wander -root						\\n\
+		wander -root -advance 0 -size 10 -circles True		  \
+		  -length 10000 -reset 100000				\\n\
+		critical -root						\\n\
 									  \
 	mono:	rocks -root						\\n\
 	color:	rocks -root -fg darksalmon				\\n\

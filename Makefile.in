@@ -213,7 +213,8 @@ test-tar::
   ( cd BIN/motif ;							    \
     CC=cc ;								    \
     export CC ;								    \
-    ../../configure --without-xpm --with-motif=/usr/local/motif ;	    \
+    ../../configure --without-xpm --without-xdbe --without-xshm 	    \
+		    --with-motif=/usr/local/motif ;			    \
     echo --------------------------------------------------------------- ;  \
     gmake ;								    \
     ( cd driver; gmake xscreensaver-demo-Xaw ) ;			    \

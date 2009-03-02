@@ -38,6 +38,7 @@
 #include <X11/Shell.h>
 #include <X11/StringDefs.h>
 #include <X11/Xutil.h>
+#include <X11/keysym.h>
 
 #ifdef __sgi
 # include <X11/SGIScheme.h>	/* for SgiUseSchemes() */
@@ -188,7 +189,10 @@ screenhack_handle_event (Display *dpy, XEvent *event)
             c == 3 ||	/* ^C */
             c == 27)	/* ESC */
           exit (0);
+        else if (! (keysym >= XK_Shift_L && keysym <= XK_Hyper_R))
+          XBell (dpy, 0);  /* beep for non-chord keys */
       }
+      break;
     case ButtonPress:
       XBell (dpy, 0);
       break;

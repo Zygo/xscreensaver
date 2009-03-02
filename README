@@ -67,7 +67,7 @@ Along with the xscreensaver daemon itself, this package also includes
 numerous graphics hacks for use as screensavers.  There is nothing magic
 about these: they are just programs that draw on the root window.
 
-More than 80 such programs are included.  For details, see the xscreensaver
+More than 90 such programs are included.  For details, see the xscreensaver
 web page, or the enclosed manual pages.  There are also some helpful hints
 on customization in the xscreensaver app-defaults file (normally installed
 in /usr/lib/X11/app-defaults/XScreenSaver.)
@@ -77,6 +77,21 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.08:   * Added `compass', `squiral', `xflame', `wander',
+                        `spotlight', and `critical' hacks.
+                      * Added some new modes to `decayscreen'.
+                      * Made `deluxe' work in monochrome.
+                      * Generalized usage of the Double-Buffer server extension
+                        in several hacks (`compass', `deluxe', `interference',
+                        `kumppa', and `moire2'.)
+                      * Fixed another visual-depth problem in `rd-bomb'.
+                      * The screen saver will now defer blanking if neither
+                        the keyboard nor the mouse could be grabbed.  Instead,
+                        it will just try again in a few minutes.  This fixes
+                        a bad interaction between xscreensaver and programs
+                        like VMware that hold the mouse and keyboard grabbed
+                        for a long time.
+                      * Added a new erase mode (expanding spiral.)
 Changes since 3.07:   * Fixed some bugs in my port of `t3d'.
                       * Added `penetrate' and `deluxe' hacks.
                       * When linking against Motif 2.x, also link against XPM.

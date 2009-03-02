@@ -372,6 +372,68 @@ fizzle (Display *dpy, Window window, GC gc,
 }
 
 
+/* from Rick Campbell <rick@campbellcentral.org> */
+static void
+spiral (Display *display, Window window, GC context,
+        int width, int height, int delay, int granularity)
+{
+# define SPIRAL_ERASE_PI_2 (M_PI + M_PI)
+# define SPIRAL_ERASE_LOOP_COUNT (10)
+# define SPIRAL_ERASE_ARC_COUNT (360.0)
+# define SPIRAL_ERASE_ANGLE_INCREMENT (SPIRAL_ERASE_PI_2 /     \
+SPIRAL_ERASE_ARC_COUNT)
+# define SPIRAL_ERASE_DELAY (0)
+
+  double angle;
+  int arc_limit;
+  int arc_max_limit;
+  int length_step;
+  XPoint points [3];
+
+  angle = 0.0;
+  arc_limit = 1;
+  arc_max_limit = (int) (ceil (sqrt ((width * width) + (height * height)))
+                         / 2.0);
+  length_step = ((arc_max_limit + SPIRAL_ERASE_LOOP_COUNT - 1) /
+                 SPIRAL_ERASE_LOOP_COUNT);
+  arc_max_limit += length_step;
+  points [0].x = width / 2;
+  points [0].y = height / 2;
+  points [1].x = points [0].x + length_step;
+  points [1].y = points [0].y;
+  points [2].x = points [1].x;
+  points [2].y = points [1].y;
+
+  for (arc_limit = length_step;
+       arc_limit < arc_max_limit;
+       arc_limit += length_step)
+    {
+      int arc_length = length_step;
+      int length_base = arc_limit;
+      for (angle = 0.0; angle < SPIRAL_ERASE_PI_2;
+           angle += SPIRAL_ERASE_ANGLE_INCREMENT)
+        {
+          arc_length = length_base + ((length_step * angle) /
+                                      SPIRAL_ERASE_PI_2);
+          points [1].x = points [2].x;
+          points [1].y = points [2].y;
+          points [2].x = points [0].x + (int)(cos (angle) * arc_length);
+          points [2].y = points [0].y + (int)(sin (angle) * arc_length);
+          XFillPolygon (display, window, context, points, 3, Convex,
+                        CoordModeOrigin);
+# if (SPIRAL_ERASE_DELAY != 0)
+          usleep (SPIRAL_ERASE_DELAY);
+# endif /* (SPIRAL_ERASE_DELAY != 0) */
+        }
+    }
+# undef SPIRAL_ERASE_DELAY
+# undef SPIRAL_ERASE_ANGLE_INCREMENT
+# undef SPIRAL_ERASE_ARC_COUNT
+# undef SPIRAL_ERASE_LOOP_COUNT
+# undef SPIRAL_ERASE_PI_2
+}
+
+
 #undef MAX
 #undef MIN
 #define MAX(a,b) ((a)>(b)?(a):(b))
@@ -425,6 +487,7 @@ static Eraser erasers[] = {
   squaretate,
   fizzle,
   random_squares,
+  spiral,
 };
 
 

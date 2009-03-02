@@ -708,7 +708,8 @@ static void NewLevel(Display *dpy, Window window, Colormap cmap, int xlim, int y
 	 width = XTextWidth(font, buf, strlen(buf));
 	 XDrawString(dpy, window, level_gc, xlim / 2 - width / 2, ylim / 2 - font_height(font) / 2,
 					 buf, strlen(buf));
-	 XSync(dpy, True);
+	 XSync(dpy, False);
+         screenhack_handle_events(dpy);
 	 sleep(1);
   }
 
@@ -733,14 +734,17 @@ static void NewLevel(Display *dpy, Window window, Colormap cmap, int xlim, int y
 			 city[i].alive = 1;
 			 AddScore(dpy, window, cmap, xlim, ylim, 100 * level);
 			 DrawCities(dpy, window, cmap, xlim, ylim);
-			 XSync(dpy, True);
+			 XSync(dpy, False);
+                         screenhack_handle_events(dpy);
 			 usleep(kCityPause);
 		  }
 		}
 	 }
 	 else {
 		/* we're dead */
+                screenhack_handle_events(dpy);
 		sleep(3);
+                screenhack_handle_events(dpy);
 		/* start new */
 		gamez++;
 		Improve();
@@ -766,7 +770,8 @@ static void NewLevel(Display *dpy, Window window, Colormap cmap, int xlim, int y
 	 width = XTextWidth(font, buf, strlen(buf));
 	 XDrawString(dpy, window, level_gc, xlim / 2 - width / 2, ylim / 4, buf, strlen(buf));
 	 DrawCities(dpy, window, cmap, xlim, ylim);
-	 XSync(dpy, True);
+	 XSync(dpy, False);
+         screenhack_handle_events(dpy);
 	 sleep(1);
   }
 
@@ -794,7 +799,8 @@ static void NewLevel(Display *dpy, Window window, Colormap cmap, int xlim, int y
 		sprintf(buf, "Bonus Round");
 		width = XTextWidth(font, buf, strlen(buf));
 		XDrawString(dpy, window, level_gc, xlim / 2 - width / 2, ylim / 2 - font_height(font) / 2, buf, strlen(buf));
-		XSync(dpy, True);
+		XSync(dpy, False);
+                screenhack_handle_events(dpy);
 		sleep(1);
 		XFillRectangle(dpy, window, erase_gc,
 							0, 0, xlim, ylim - 100);
@@ -851,6 +857,7 @@ static void penetrate(Display *dpy, Window window, Colormap cmap)
 		if (laser[i].alive)
 		  goto END_CHECK;
 	 /* okay, nothing's alive, start end of level countdown */
+         screenhack_handle_events(dpy);
 	 sleep(kLevelPause);
 	 NewLevel(dpy, window, cmap, xlim, ylim);
 	 return;
@@ -866,7 +873,8 @@ static void penetrate(Display *dpy, Window window, Colormap cmap)
 		lastLaser = loop;
   }
 
-  XSync(dpy, True);
+  XSync(dpy, False);
+  screenhack_handle_events(dpy);
   if (kSleepTime)
 	 usleep(kSleepTime);
 

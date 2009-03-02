@@ -81,7 +81,7 @@ PAM_OBJS	= passwd-pam.o
 LOCK_SRCS_1	= lock.c passwd.c
 LOCK_OBJS_1	= lock.o passwd.o
 
-TEST_SRCS	= test-passwd.c test-uid.c test-xdpms.c
+TEST_SRCS	= test-passwd.c test-uid.c test-xdpms.c test-grab.c
 
 TOOLKIT_SRCS	= @TOOLKIT_SRCS@
 TOOLKIT_OBJS	= @TOOLKIT_OBJS@
@@ -401,6 +401,9 @@ test-uid: test-uid.o
 test-xdpms: test-xdpms.o
 	$(CC) $(LDFLAGS) -o $@ test-xdpms.o $(SAVER_LIBS)
 
+test-grab: test-grab.o
+	$(CC) $(LDFLAGS) -o $@ test-grab.o $(SAVER_LIBS)
+
 
 # This kludge is so that I can build/test the Athena version of the
 # xscreensaver-demo program without having to re-run configure.
@@ -499,4 +502,5 @@ test-passwd.o: $(UTILS_SRC)/visual.h
 test-passwd.o: XScreenSaver_ad.h
 test-uid.o: ../config.h
 test-xdpms.o: ../config.h
+test-grab.o: ../config.h
 

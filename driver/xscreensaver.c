@@ -879,7 +879,25 @@ main_loop (saver_info *si)
 
       maybe_reload_init_file (si);
 
-      blank_screen (si);
+      if (! blank_screen (si))
+        {
+          /* We were unable to grab either the keyboard or mouse.
+             This means we did not (and must not) blank the screen.
+             If we were to blank the screen while some other program
+             is holding both the mouse and keyboard grabbed, then
+             we would never be able to un-blank it!  We would never
+             see any events, and the display would be wedged.
+
+             So, just go around the loop again and wait for the
+             next bout of idleness.
+          */
+
+          fprintf (stderr,
+                  "%s: unable to grab keyboard or mouse!  Blanking aborted.\n",
+                   blurb(), timestring ());
+          continue;
+        }
+
       kill_screenhack (si);
       spawn_screenhack (si, True);
 

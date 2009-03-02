@@ -10,7 +10,9 @@ $ bouboule	:== $'mydir'bouboule
 $ braid		:== $'mydir'braid
 $ bsod		:== $'mydir'bsod
 $ bubbles	:== $'mydir'bubbles
+$ compass	:== $'mydir'compass
 $ coral		:== $'mydir'coral
+$ critical	:== $'mydir'critical
 $ crystal	:== $'mydir'crystal
 $ cynosure	:== $'mydir'cynosure
 $ decayscreen	:== $'mydir'decayscreen
@@ -68,6 +70,8 @@ $ slip		:== $'mydir'slip
 $ sonar		:== $'mydir'sonar
 $ sphere	:== $'mydir'sphere
 $ spiral	:== $'mydir'spiral
+$ spotlight	:== $'mydir'spotlight
+$ squiral	:== $'mydir'squiral
 $ starfish	:== $'mydir'starfish
 $ strange	:== $'mydir'strange
 $ swirl		:== $'mydir'swirl
@@ -75,7 +79,9 @@ $ t3d		:== $'mydir't3d
 $ triangle	:== $'mydir'triangle
 $ truchet	:== $'mydir'truchet
 $ vines		:== $'mydir'vines
+$ wander	:== $'mydir'wander
 $ worm		:== $'mydir'worm
+$ xflame	:== $'mydir'xflame
 $ xjack		:== $'mydir'xjack
 $ xlyap		:== $'mydir'xlyap
 $ xroger	:== $'mydir'xroger

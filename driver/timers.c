@@ -118,7 +118,16 @@ notice_events (saver_info *si, Window window, Bool top_p)
 
   /* Select for SubstructureNotify on all windows.
      Select for KeyPress on all windows that already have it selected.
-     Do we need to select for ButtonRelease?  I don't think so.
+
+     Note that we can't select for ButtonPress, because of X braindamage:
+     only one client at a time may select for ButtonPress on a given
+     window, though any number can select for KeyPress.  Someone explain
+     *that* to me.
+
+     So, if the user spends a while clicking the mouse without ever moving
+     the mouse or touching the keyboard, we won't know that they've been
+     active, and the screensaver will come on.  That sucks, but I don't
+     know how to get around it.
    */
   XSelectInput (si->dpy, window, SubstructureNotifyMask | events);
 

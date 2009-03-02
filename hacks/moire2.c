@@ -11,7 +11,10 @@
 
 #include "screenhack.h"
 #include <X11/Xutil.h>
-#include <stdio.h>
+
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+# include "xdbe.h"
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
 static int ncolors;
 static XColor *colors = 0;
@@ -23,6 +26,9 @@ static int x1, x2, y1, y2, x3, y3;
 static int dx1, dx2, dx3, dy1, dy2, dy3;
 static int othickness, thickness;
 static Bool do_three;
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+XdbeBackBuffer back_buf = 0;
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
 static void
 init_moire2 (Display *dpy, Window window)
@@ -54,6 +60,10 @@ init_moire2 (Display *dpy, Window window)
 				xgwa.colormap);
   fg_pixel = get_pixel_resource("foreground", "Foreground", dpy,
 				xgwa.colormap);
+
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  back_buf = xdbe_get_backbuffer (dpy, window, XdbeUndefined);
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 }
 
 
@@ -187,8 +197,19 @@ moire2 (Display *dpy, Window window)
   if (do_three)
     XCopyArea(dpy, p3, p0, copy_gc, x3, y3, width, height, 0, 0);
 
-  XSync(dpy, False);
-  XCopyPlane(dpy, p0, window, window_gc, 0, 0, width, height, 0, 0, 1L);
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  if (back_buf)
+    {
+      XdbeSwapInfo info[1];
+      info[0].swap_window = window;
+      info[0].swap_action = XdbeUndefined;
+      XCopyPlane (dpy, p0, back_buf, window_gc, 0, 0, width, height, 0, 0, 1L);
+      XdbeSwapBuffers (dpy, info, 1);
+    }
+  else
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+    XCopyPlane (dpy, p0, window, window_gc, 0, 0, width, height, 0, 0, 1L);
+
   XSync(dpy, False);
 
 #if 0
@@ -213,6 +234,16 @@ char *defaults [] = {
   "*thickness:		0",
   "*colors:		150",
   "*colorShift:		5",
+
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  /* Off by default, since it slows it down a lot, and the flicker isn't really
+     all that bad without it... Or rather, it flickers just as badly with it.
+     The XFree86 implementation of the XDBE extension totally blows!  There is
+     just *no* excuse for the "swap buffers" operation to flicker like it does.
+   */
+  "*useDBE:      	False",
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+
   0
 };
 

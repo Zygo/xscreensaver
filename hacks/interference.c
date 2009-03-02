@@ -52,13 +52,15 @@
 
 /* I thought it would be faster this way, but it turns out not to be... -jwz */
 #undef USE_XIMAGE
-#undef HAVE_XSHM_EXTENSION
-#undef HAVE_XDBE
+
+#ifndef USE_XIMAGE
+# undef HAVE_XSHM_EXTENSION  /* only applicable when using XImages */
+#endif /* USE_XIMAGE */
 
 
-#ifdef HAVE_XDBE
-# include <X11/extensions/Xdbe.h>
-#endif /* HAVE_XDBE */
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+# include "xdbe.h"
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
 #ifdef HAVE_XSHM_EXTENSION
 # include "xshm.h"
@@ -78,9 +80,10 @@ char *defaults [] = {
   "*gray:        false", /* color or grayscale */
   "*mono:        false", /* monochrome, not very much fun */
 
-#ifdef HAVE_XDBE
+  "*doubleBuffer: True",
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
   "*useDBE:      True", /* use double buffering extension */
-#endif /* HAVE_XDBE */
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
 
 #ifdef HAVE_XSHM_EXTENSION
   "*useSHM:      True", /* use shared memory extension */
@@ -98,10 +101,8 @@ XrmOptionDescRec options [] = {
   { "-radius",      ".radius",      XrmoptionSepArg, 0 },
   { "-gray",        ".gray",        XrmoptionNoArg,  "True" },
   { "-mono",        ".mono",        XrmoptionNoArg,  "True" },
-#ifdef HAVE_XDBE
-  { "-db",          ".useDBE",      XrmoptionNoArg,  "True" },
-  { "-no-db",       ".useDBE",      XrmoptionNoArg,  "False" },
-#endif /* HAVE_XDBE */
+  { "-db",	    ".doubleBuffer", XrmoptionNoArg,  "True" },
+  { "-no-db",	    ".doubleBuffer", XrmoptionNoArg,  "False" },
 #ifdef HAVE_XSHM_EXTENSION
   { "-shm",	".useSHM",	XrmoptionNoArg, "True" },
   { "-no-shm",	".useSHM",	XrmoptionNoArg, "False" },
@@ -125,15 +126,15 @@ struct inter_context {
   Display* dpy;
   Window   win;
 
-  Pixmap   dbuf;
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  XdbeBackBuffer back_buf;
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+  Pixmap   pix_buf;
+
   GC       copy_gc;
 #ifdef USE_XIMAGE
   XImage  *ximage;
 #endif /* USE_XIMAGE */
-
-#ifdef HAVE_XDBE
-  Status   has_dbe;
-#endif /* HAVE_XDBE */
 
 #ifdef HAVE_XSHM_EXTENSION
   Bool use_shm;
@@ -158,9 +159,6 @@ struct inter_context {
   int h;
   Colormap cmap;
   XColor* pal;
-#ifdef HAVE_XDBE
-  XdbeBackBuffer buf;
-#endif /* HAVE_XDBE */
   GC* gcs;
 
   /*
@@ -174,11 +172,12 @@ struct inter_context {
   struct inter_source* source;
 };
 
-#ifdef HAVE_XDBE
-# define TARGET(c) ((c)->has_dbe ? (c)->buf : (c)->dbuf)
-#else  /* HAVE_XDBE */
-# define TARGET(c) ((c)->dbuf)
-#endif /* !HAVE_XDBE */
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+# define TARGET(c) ((c)->back_buf ? (c)->back_buf : \
+                    (c)->pix_buf ? (c)->pix_buf : (c)->win)
+#else  /* HAVE_DOUBLE_BUFFER_EXTENSION */
+# define TARGET(c) ((c)->pix_buf ? (c)->pix_buf : (c)->win)
+#endif /* !HAVE_DOUBLE_BUFFER_EXTENSION */
 
 void inter_init(Display* dpy, Window win, struct inter_context* c) 
 {
@@ -187,13 +186,11 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
   int i;
   int mono;
   int gray;
-#ifdef HAVE_XDBE
-  int major, minor;
-  int use_dbe;
-#endif /* HAVE_XDBE */
-
   XGCValues val;
   unsigned long valmask = 0;
+  Bool dbuf = get_boolean_resource ("doubleBuffer", "Boolean");
+
+  memset (c, 0, sizeof(*c));
 
   c->dpy = dpy;
   c->win = win;
@@ -203,28 +200,25 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
   c->h = xgwa.height;
   c->cmap = xgwa.colormap;
 
-#ifdef HAVE_XDBE
-  use_dbe = get_boolean_resource("useDBE", "Boolean");
-  if(!use_dbe) {
-    c->has_dbe = False;
-  } else {
-    c->has_dbe = XdbeQueryExtension(dpy, &major, &minor);
-  }
-#endif /* HAVE_XDBE */
-
 #ifdef HAVE_XSHM_EXTENSION
   c->use_shm = get_boolean_resource("useSHM", "Boolean");
 #endif /*  HAVE_XSHM_EXTENSION */
 
-#ifdef HAVE_XDBE
-  if (!c->has_dbe)
-#endif /* HAVE_XDBE */
+  if (dbuf)
     {
-      c->dbuf = XCreatePixmap(dpy, win, xgwa.width, xgwa.height, xgwa.depth);
-      val.function = GXcopy;
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+      c->back_buf = xdbe_get_backbuffer (c->dpy, c->win, XdbeUndefined);
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+      if (!c->back_buf)
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+        c->pix_buf = XCreatePixmap (dpy, win, xgwa.width, xgwa.height,
+                                    xgwa.depth);
     }
 
-  c->copy_gc = XCreateGC(c->dpy, c->dbuf, GCFunction, &val);
+  val.function = GXcopy;
+  c->copy_gc = XCreateGC(c->dpy, TARGET(c), GCFunction, &val);
 
   c->count = get_integer_resource("count", "Integer");
   if(c->count < 1)
@@ -282,7 +276,7 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
 
     gray = get_boolean_resource("gray", "Boolean");
     if(!gray) {
-      H[0] = drand48()*360.0; 
+      H[0] = frand(360.0); 
       H[1] = H[0] + c->shift < 360.0 ? H[0]+c->shift : H[0] + c->shift-360.0; 
       H[2] = H[1] + c->shift < 360.0 ? H[1]+c->shift : H[1] + c->shift-360.0; 
       S[0] = S[1] = S[2] = 1.0;
@@ -312,11 +306,6 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
     c->pal[1].pixel = WhitePixel(c->dpy, DefaultScreen(c->dpy));
   }    
 
-#ifdef HAVE_XDBE
-  if(c->has_dbe)
-    c->buf = XdbeAllocateBackBufferName(c->dpy, c->win, XdbeUndefined);
-#endif /* HAVE_XDBE */
-
   valmask = GCForeground;
   c->gcs = calloc(c->colors, sizeof(GC));
   for(i = 0; i < c->colors; i++) {
@@ -337,8 +326,8 @@ void inter_init(Display* dpy, Window win, struct inter_context* c)
 
   c->source = calloc(c->count, sizeof(struct inter_source));
   for(i = 0; i < c->count; i++) {
-    c->source[i].x_theta = drand48()*2.0*3.14159;
-    c->source[i].y_theta = drand48()*2.0*3.14159;
+    c->source[i].x_theta = frand(2.0)*3.14159;
+    c->source[i].y_theta = frand(2.0)*3.14159;
   }
 
 }
@@ -360,9 +349,6 @@ void do_inter(struct inter_context* c)
   int i, j, k;
   int result;
   int dist;
-#ifdef HAVE_XDBE
-  XdbeSwapInfo info[1];
-#endif /* HAVE_XDBE */
   int g;
 
   int dx, dy;
@@ -424,19 +410,22 @@ void do_inter(struct inter_context* c)
 #endif /* USE_XIMAGE */
   }
 
-#ifdef HAVE_XDBE
-  if(c->has_dbe)
+#ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+  if (c->back_buf)
     {
+      XdbeSwapInfo info[1];
       info[0].swap_window = c->win;
       info[0].swap_action = XdbeUndefined;
       XdbeSwapBuffers(c->dpy, info, 1);
     }
   else
-#endif /* HAVE_XDBE */
-    {
-      XCopyArea (c->dpy, c->dbuf, c->win, c->copy_gc,
-		 0, 0, c->w, c->h, 0, 0);
-    }
+#endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+    if (c->pix_buf)
+      {
+        XCopyArea (c->dpy, c->pix_buf, c->win, c->copy_gc,
+                   0, 0, c->w, c->h, 0, 0);
+      }
+
   XSync(c->dpy, False);
 }
 

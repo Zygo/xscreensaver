@@ -448,6 +448,15 @@ screenhack (Display *dpy, Window win)
      depth 24 directly (or even better, arbitrary depths, but that
      would mean going through the XImage routines instead of messing
      with the XImage->data directly.)
+
+     jwz, 18-Mar-99: well, the X servers I have access to these days do
+     support 32-deep images on deep visuals, so I no longer have the
+     ability to test this code -- but it was causing problems on the
+     visuals that I do have, and I think that's because I mistakenly
+     wrote `pfv[i].depth' when I meant to write `pfv[i].bits_per_pixel'.
+     The symptom I was seeing was that the grid was 64x64, but the
+     images were being drawn 32x32 -- so there was a black stripe on
+     every other row.  Wow, this code sucks so much.
    */
   if (pdepth == 32)
     {
@@ -455,7 +464,7 @@ screenhack (Display *dpy, Window win)
       Bool ok = False;
       XPixmapFormatValues *pfv = XListPixmapFormats (dpy, &pfvc);
       for (i = 0; i < pfvc; i++)
-        if (pfv[i].depth == pdepth)
+        if (pfv[i].bits_per_pixel == pdepth)
           ok = True;
       if (!ok)
         pdepth = 16;

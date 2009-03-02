@@ -158,6 +158,11 @@ static Bool
 bsod_sleep(Display *dpy, int seconds)
 {
   int q = seconds * 4;
+  int quantum = 250000;
+
+  if (seconds == -1)
+    q = 1, quantum = 100000;
+
   do
     {
       XSync(dpy, False);
@@ -165,6 +170,8 @@ bsod_sleep(Display *dpy, int seconds)
         {
           XEvent event;
           XNextEvent (dpy, &event);
+          if (event.xany.type == ButtonPress)
+            return True;
           if (event.xany.type == KeyPress)
             {
               KeySym keysym;
@@ -179,7 +186,7 @@ bsod_sleep(Display *dpy, int seconds)
       if (q > 0)
 	{
 	  q--;
-	  usleep(250000);
+	  usleep(quantum);
 	}
     }
   while (q > 0);
@@ -317,10 +324,10 @@ sco (Display *dpy, Window window, int delay)
   const char *def_font = "fixed";
   XFontStruct *font;
   GC gc;
-  int lines = 1;
+  int lines_1 = 0, lines_2 = 0, lines_3 = 0, lines_4 = 0;
   const char *s;
 
-  const char *sco_panic =
+  const char *sco_panic_1 =
     ("Unexpected trap in kernel mode:\n"
      "\n"
      "cr0 0x80010013     cr2  0x00000014     cr3 0x00000000  tlb  0x00000000\n"
@@ -332,11 +339,17 @@ sco (Display *dpy, Window window, int delay)
      "\n"
      "PANIC: k_trap - kernel mode trap type 0x0000000E\n"
      "Trying to dump 5023 pages to dumpdev hd (1/41), 63 pages per '.'\n"
-     "...............................................................................\n"
-     "5023 pages dumped\n"
+    );
+  const char *sco_panic_2 =
+   ("...............................................................................\n"
+    );
+  const char *sco_panic_3 =
+    ("5023 pages dumped\n"
      "\n"
      "\n"
-     "**   Safe to Power Off   **\n"
+     );
+  const char *sco_panic_4 =
+    ("**   Safe to Power Off   **\n"
      "           - or -\n"
      "** Press Any Key to Reboot **\n"
     );
@@ -344,7 +357,10 @@ sco (Display *dpy, Window window, int delay)
   if (!get_boolean_resource("doSCO", "DoSCO"))
     return False;
 
-  for (s = sco_panic; *s; s++) if (*s == '\n') lines++;
+  for (s = sco_panic_1; *s; s++) if (*s == '\n') lines_1++;
+  for (s = sco_panic_2; *s; s++) if (*s == '\n') lines_2++;
+  for (s = sco_panic_3; *s; s++) if (*s == '\n') lines_3++;
+  for (s = sco_panic_4; *s; s++) if (*s == '\n') lines_4++;
 
   XGetWindowAttributes (dpy, window, &xgwa);
 
@@ -372,13 +388,45 @@ sco (Display *dpy, Window window, int delay)
   gc = XCreateGC(dpy, window, GCFont|GCForeground|GCBackground, &gcv);
 
   draw_string(dpy, window, gc, &gcv, font,
-	      10, xgwa.height - (lines * (font->ascent + font->descent + 1)),
+	      10, xgwa.height - ((lines_1 + lines_2 + lines_3 + lines_4 + 1) *
+                                 (font->ascent + font->descent + 1)),
 	      10, 10,
-	      sco_panic, 0);
-  XFreeGC(dpy, gc);
+	      sco_panic_1, 0);
   XSync(dpy, False);
+  for (s = sco_panic_2; *s; s++)
+    {
+      char *ss = strdup(sco_panic_2);
+      ss[s - sco_panic_2] = 0;
+      draw_string(dpy, window, gc, &gcv, font,
+                  10, xgwa.height - ((lines_2 + lines_3 + lines_4 + 1) *
+                                     (font->ascent + font->descent + 1)),
+                  10, 10,
+                  ss, 0);
+      XSync(dpy, False);
+      free(ss);
+      if (bsod_sleep (dpy, -1))
+        goto DONE;
+    }
+
+  draw_string(dpy, window, gc, &gcv, font,
+	      10, xgwa.height - ((lines_3 + lines_4 + 1) *
+                                 (font->ascent + font->descent + 1)),
+	      10, 10,
+	      sco_panic_3, 0);
+  XSync(dpy, False);
+  if (bsod_sleep(dpy, 1))
+    goto DONE;
+  draw_string(dpy, window, gc, &gcv, font,
+	      10, xgwa.height - ((lines_4 + 1) *
+                                 (font->ascent + font->descent + 1)),
+	      10, 10,
+	      sco_panic_4, 0);
+  XSync(dpy, False);
+
   bsod_sleep(dpy, delay);
+ DONE:
   XClearWindow(dpy, window);
+  XFreeGC(dpy, gc);
   XFreeFont(dpy, font);
   return True;
 }
@@ -661,15 +709,17 @@ atari (Display *dpy, Window window, int delay)
   }  
   
   for (i=7 ; i<10 ; i++) {
-    bsod_sleep(dpy, 1);
+    if (bsod_sleep(dpy, 1))
+      goto DONE;
     XCopyArea(dpy, pixmap, window, gc, 0, 0, pix_w, pix_h,
 	      (x + (i*offset)), y);
   }
 
+  bsod_sleep(dpy, delay);
+ DONE:
   XFreePixmap(dpy, pixmap);
   XFreeGC(dpy, gc);
   XSync(dpy, False);
-  bsod_sleep(dpy, delay);
   XClearWindow(dpy, window);
   XFreeFont(dpy, font);
   return True;
