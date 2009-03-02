@@ -1,0 +1,6695 @@
+# Spanish translation file
+# Copyright (C) 1999-2001 Free Software Foundation, Inc.
+# Pablo Saratxaga <srtxg@chanae.alphanet.ch>, 1998-2000
+# Carlos Perelló Marín <carlos@gnome-db.org>, 2001
+# Lucas Di Pentima <lucas@lunix.com.ar>, 2001
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: control-center 1.2.1\n"
+"POT-Creation-Date: 2002-02-13 00:37+0100\n"
+"PO-Revision-Date: 2001-09-19 23:30+0200\n"
+"Last-Translator: Lucas Di Pentima <lucas@lunix.com.ar>\n"
+"Language-Team: Spanish <traductores@es.gnome.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=iso-8859-1\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: driver/demo-Gtk-conf.c:697
+#, fuzzy
+msgid "Browse..."
+msgstr " Buscar... "
+
+#: driver/demo-Gtk-conf.c:989
+#, fuzzy
+msgid "Select file."
+msgstr "Seleccionar archivo de sonido"
+
+#: driver/demo-Gtk-widgets.c:155
+#, fuzzy
+msgid "XScreenSaver"
+msgstr "Salvapantalla"
+
+#: driver/demo-Gtk-widgets.c:176
+#, fuzzy
+msgid "_File"
+msgstr "Mosaico"
+
+#: driver/demo-Gtk-widgets.c:196
+msgid "_Blank Screen Now"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:205
+msgid ""
+"Activate the XScreenSaver daemon now (locking the screen if so configured.)"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:209
+msgid "_Lock Screen Now"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:218
+msgid "Lock the screen now (even if \"Lock Screen\" is unchecked.)"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:222
+msgid "_Kill Daemon"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:231
+msgid "Tell the running XScreenSaver daemon to exit."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:235
+msgid "_Restart Daemon"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:244
+msgid "Kill and re-launch the XScreenSaver daemon."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:257
+msgid "_Exit"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:266
+msgid ""
+"Exit the xscreensaver-demo program (but leave the XScreenSaver daemon "
+"running in the background.)"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:270
+#, fuzzy
+msgid "_Help"
+msgstr "Hélice"
+
+#: driver/demo-Gtk-widgets.c:290
+#, fuzzy
+msgid "_About..."
+msgstr "Acerca"
+
+#: driver/demo-Gtk-widgets.c:299
+#, fuzzy
+msgid "Display version information."
+msgstr "Cambiar a la visualización en monocromo."
+
+#: driver/demo-Gtk-widgets.c:303
+msgid "_Documentation..."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:312
+msgid "Go to the documentation on the XScreenSaver web page."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:342
+#, fuzzy
+msgid "Cycle After"
+msgstr "Ciclo"
+
+#: driver/demo-Gtk-widgets.c:366
+#, fuzzy
+msgid "Lock Screen After"
+msgstr "Ningún salvapantalla"
+
+#: driver/demo-Gtk-widgets.c:374
+#, fuzzy
+msgid "Blank After"
+msgstr "Activar después de "
+
+#: driver/demo-Gtk-widgets.c:397 driver/demo-Gtk-widgets.c:447
+#: driver/demo-Gtk-widgets.c:461 driver/demo-Gtk-widgets.c:1010
+msgid "How long before the monitor goes completely black."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:401 driver/demo-Gtk-widgets.c:413
+#: driver/demo-Gtk-widgets.c:425 driver/demo-Gtk-widgets.c:1014
+#: driver/demo-Gtk-widgets.c:1026 driver/demo-Gtk-widgets.c:1038
+#, fuzzy
+msgid "minutes"
+msgstr " minutos."
+
+#: driver/demo-Gtk-widgets.c:476
+msgid "Preview"
+msgstr "Previsualizar"
+
+#: driver/demo-Gtk-widgets.c:484
+msgid ""
+"Demo the selected screen saver in full-screen mode (click the mouse to "
+"return.)"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:486
+msgid "Settings..."
+msgstr "Propiedades..."
+
+#: driver/demo-Gtk-widgets.c:494
+msgid "Customization and explanation of the selected screen saver."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:515
+#, fuzzy
+msgid "Mode:"
+msgstr "Modo"
+
+#: driver/demo-Gtk-widgets.c:533
+#, fuzzy
+msgid "Disable Screen Saver"
+msgstr "Salvapantalla"
+
+#: driver/demo-Gtk-widgets.c:536
+msgid "Blank Screen Only"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:539
+#, fuzzy
+msgid "Only One Screen Saver"
+msgstr "Salvapantalla"
+
+#: driver/demo-Gtk-widgets.c:542
+#, fuzzy
+msgid "Random Screen Saver"
+msgstr "Salvapantalla al azar"
+
+#: driver/demo-Gtk-widgets.c:565
+msgid "Use"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:585
+msgid "Screen Saver"
+msgstr "Salvapantalla"
+
+#: driver/demo-Gtk-widgets.c:646
+msgid ""
+"Run the next screen saver in the list in full-screen mode (click the mouse "
+"to return.)"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:656
+msgid ""
+"Run the previous screen saver in the list in full-screen mode (click the "
+"mouse to return.)"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:658 driver/demo-Gtk-widgets.c:1601
+msgid "Description"
+msgstr "Descripción"
+
+#: driver/demo-Gtk-widgets.c:685
+#, fuzzy
+msgid "Display Modes"
+msgstr "Muestra gotas aceitosas."
+
+#: driver/demo-Gtk-widgets.c:701
+#, fuzzy
+msgid "Diagnostics"
+msgstr "Posición de las ventanas de diálogo"
+
+#: driver/demo-Gtk-widgets.c:745
+msgid "Whether the daemon should print lots of debugging information."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:747
+msgid "Verbose Diagnostics"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:762
+msgid ""
+"Whether any error output of the display modes should be redirected to the "
+"screen."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:764
+msgid "Display Subprocess Errors"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:779
+msgid ""
+"Whether the splash screen (with the version number and `Help' button) should "
+"be momentarily displayed when the daemon first starts up."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:781
+msgid "Display Splash Screen at Startup"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:790
+#, fuzzy
+msgid "Colormaps"
+msgstr "Colores"
+
+#: driver/demo-Gtk-widgets.c:834
+msgid ""
+"Whether to install a private colormap when running in 8-bit mode on the "
+"default Visual."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:836
+msgid "Install Colormap"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:859
+msgid ""
+"Whether the screen should slowly fade to black when the screen saver "
+"activates."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:861
+msgid "Fade To Black When Blanking"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:876
+msgid ""
+"Whether the screen should slowly fade in from black when the screen saver "
+"deactivates."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:878
+msgid "Fade From Black When Unblanking"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:904
+#, fuzzy
+msgid "Fade Duration"
+msgstr "Duración"
+
+#: driver/demo-Gtk-widgets.c:922
+msgid "How long it should take for the screen to fade in and out."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:926
+msgid "seconds"
+msgstr "segundos"
+
+#: driver/demo-Gtk-widgets.c:936
+#, fuzzy
+msgid "Display Power Management"
+msgstr "Usar gestión de energía."
+
+#: driver/demo-Gtk-widgets.c:980
+msgid "Whether the monitor should be powered down after a while."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:982
+#, fuzzy
+msgid "Power Management Enabled"
+msgstr "Usar gestión de energía."
+
+#: driver/demo-Gtk-widgets.c:1050
+msgid "Off After"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1063
+msgid "Suspend After"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1076
+#, fuzzy
+msgid "Standby After"
+msgstr "Activar después de "
+
+#: driver/demo-Gtk-widgets.c:1099
+msgid "How long until the monitor goes into power-saving mode."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1113
+msgid "How long until the monitor powers down."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1117
+msgid "Image Manipulation"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1161
+msgid ""
+"Whether the image-manipulating modes should be allowed to operate on an "
+"image of your desktop."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1163
+msgid "Grab Desktop Images"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1178
+msgid ""
+"Whether the image-manipulating modes should operate on images captured from "
+"the system's video input (if there is one)."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1180
+msgid "Grab Video Frames"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1195
+msgid ""
+"Whether the image-manipulating modes should operate on random images loaded "
+"from disk."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1197
+#, fuzzy
+msgid "Choose Random Image:"
+msgstr "Permite elegir un gestor de ventanas"
+
+#: driver/demo-Gtk-widgets.c:1230
+msgid "The directory from which images will be randomly chosen."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1232
+#, fuzzy
+msgid "Browse"
+msgstr " Buscar... "
+
+#: driver/demo-Gtk-widgets.c:1240 driver/demo-Gtk-widgets.c:1593
+msgid "Advanced"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1438
+#, fuzzy
+msgid "XScreenSaver: Mode-Specific Settings"
+msgstr "Configuración del salvapantalla"
+
+#: driver/demo-Gtk-widgets.c:1460
+msgid "Settings"
+msgstr "Parámetros"
+
+#: driver/demo-Gtk-widgets.c:1489
+#, fuzzy
+msgid "Standard"
+msgstr "Sonar"
+
+#: driver/demo-Gtk-widgets.c:1526
+msgid "Visual:"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1566
+msgid ""
+"The X visual type that this demo will require.  If that visual is available "
+"it will be used, otherwise, this demo will not be run."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1641
+#, fuzzy
+msgid "Documentation..."
+msgstr "Manejadores de Documentos"
+
+#: driver/demo-Gtk-widgets.c:1649
+msgid "Click here to read the manual for this display mode, if it has one."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1674
+msgid "Advanced >>"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1682
+msgid "Edit the command line directly."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1684
+msgid "Standard <<"
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1692
+msgid "Back to the graphical configuration options."
+msgstr ""
+
+#: driver/demo-Gtk-widgets.c:1703
+msgid "OK"
+msgstr "Aceptar"
+
+#: driver/demo-Gtk-widgets.c:1712
+#, fuzzy
+msgid "Cancel"
+msgstr "Células"
+
+#: hacks/config/ant.xml.h:1
+#, fuzzy
+msgid ""
+"A cellular automaton that is really a two-dimensional Turing machine: as the "
+"heads (``ants'') walk along the screen, they change pixel values in their "
+"path. Then, as they pass over changed pixels, their behavior is influenced. "
+"Written by David Bagley."
+msgstr ""
+"Un autómata celular que es en realidad una máquina de Türing de dos "
+"dimensiones: ya que las hormigas mientras caminan por la pantalla van "
+"cambiando el valor de los pixels sobre los cuales pasan. Luego, cuando pasan "
+"de vuelta sobre un pixel modificado su comportamiento cambia."
+
+#: hacks/config/ant.xml.h:2
+msgid "Ant"
+msgstr "Hormigas"
+
+#: hacks/config/ant.xml.h:3
+#, fuzzy
+msgid "Ant Size"
+msgstr "Tamaño"
+
+#: hacks/config/ant.xml.h:4
+#, fuzzy
+msgid "Ants Count"
+msgstr "Cantidad"
+
+#: hacks/config/ant.xml.h:5 hacks/config/atlantis.xml.h:4
+#: hacks/config/attraction.xml.h:8 hacks/config/blaster.xml.h:3
+#: hacks/config/blitspin.xml.h:4 hacks/config/bouboule.xml.h:3
+#: hacks/config/braid.xml.h:4 hacks/config/bubble3d.xml.h:3
+#: hacks/config/bubbles.xml.h:8 hacks/config/bumps.xml.h:3
+#: hacks/config/cage.xml.h:2 hacks/config/circuit.xml.h:4
+#: hacks/config/compass.xml.h:3 hacks/config/coral.xml.h:7
+#: hacks/config/critical.xml.h:3 hacks/config/crystal.xml.h:6
+#: hacks/config/cynosure.xml.h:4 hacks/config/dangerball.xml.h:3
+#: hacks/config/decayscreen.xml.h:2 hacks/config/deluxe.xml.h:4
+#: hacks/config/demon.xml.h:4 hacks/config/discrete.xml.h:2
+#: hacks/config/distort.xml.h:4 hacks/config/drift.xml.h:3
+#: hacks/config/engine.xml.h:3 hacks/config/epicycle.xml.h:5
+#: hacks/config/extrusion.xml.h:3 hacks/config/fadeplot.xml.h:4
+#: hacks/config/flag.xml.h:2 hacks/config/flame.xml.h:6
+#: hacks/config/flipscreen3d.xml.h:1 hacks/config/flow.xml.h:4
+#: hacks/config/forest.xml.h:1 hacks/config/galaxy.xml.h:3
+#: hacks/config/gears.xml.h:3 hacks/config/gflux.xml.h:6
+#: hacks/config/glplanet.xml.h:2 hacks/config/gltext.xml.h:3
+#: hacks/config/goop.xml.h:4 hacks/config/grav.xml.h:2
+#: hacks/config/greynetic.xml.h:1 hacks/config/halo.xml.h:2
+#: hacks/config/hopalong.xml.h:9 hacks/config/hyperball.xml.h:2
+#: hacks/config/hypercube.xml.h:2 hacks/config/ifs.xml.h:1
+#: hacks/config/interference.xml.h:5 hacks/config/jigsaw.xml.h:3
+#: hacks/config/julia.xml.h:2 hacks/config/kaleidescope.xml.h:2
+#: hacks/config/kumppa.xml.h:3 hacks/config/lament.xml.h:2
+#: hacks/config/laser.xml.h:3 hacks/config/lightning.xml.h:1
+#: hacks/config/lisa.xml.h:2 hacks/config/lissie.xml.h:3
+#: hacks/config/lmorph.xml.h:3 hacks/config/loop.xml.h:1
+#: hacks/config/maze.xml.h:4 hacks/config/menger.xml.h:3
+#: hacks/config/moebius.xml.h:3 hacks/config/moire2.xml.h:2
+#: hacks/config/molecule.xml.h:10 hacks/config/morph3d.xml.h:3
+#: hacks/config/mountain.xml.h:2 hacks/config/munch.xml.h:3
+#: hacks/config/nerverot.xml.h:9 hacks/config/penetrate.xml.h:3
+#: hacks/config/penrose.xml.h:6 hacks/config/petri.xml.h:5
+#: hacks/config/phosphor.xml.h:3 hacks/config/pipes.xml.h:4
+#: hacks/config/pulsar.xml.h:11 hacks/config/pyro.xml.h:4
+#: hacks/config/qix.xml.h:7 hacks/config/rd-bomb.xml.h:9
+#: hacks/config/ripples.xml.h:4 hacks/config/rocks.xml.h:4
+#: hacks/config/rotor.xml.h:3 hacks/config/rubik.xml.h:3
+#: hacks/config/shadebobs.xml.h:3 hacks/config/sierpinski.xml.h:2
+#: hacks/config/sierpinski3d.xml.h:2 hacks/config/slidescreen.xml.h:2
+#: hacks/config/slip.xml.h:2 hacks/config/speedmine.xml.h:3
+#: hacks/config/sphere.xml.h:2 hacks/config/spiral.xml.h:3
+#: hacks/config/spotlight.xml.h:2 hacks/config/sproingies.xml.h:2
+#: hacks/config/squiral.xml.h:4 hacks/config/stairs.xml.h:1
+#: hacks/config/starfish.xml.h:3 hacks/config/starwars.xml.h:6
+#: hacks/config/strange.xml.h:2 hacks/config/superquadrics.xml.h:3
+#: hacks/config/swirl.xml.h:2 hacks/config/t3d.xml.h:6
+#: hacks/config/triangle.xml.h:1 hacks/config/truchet.xml.h:1
+#: hacks/config/vines.xml.h:1 hacks/config/webcollage.xml.h:4
+#: hacks/config/worm.xml.h:3 hacks/config/xearth.xml.h:7
+#: hacks/config/xfishtank.xml.h:3 hacks/config/xflame.xml.h:4
+#: hacks/config/xjack.xml.h:1 hacks/config/xmatrix.xml.h:4
+#: hacks/config/xmountains.xml.h:1 hacks/config/xrayswarm.xml.h:2
+#: hacks/config/zoom.xml.h:2
+msgid "Fast"
+msgstr "Rápido"
+
+#: hacks/config/ant.xml.h:6
+msgid "Four Sided Cells"
+msgstr ""
+
+#: hacks/config/ant.xml.h:7 hacks/config/attraction.xml.h:13
+#: hacks/config/demon.xml.h:5 hacks/config/discrete.xml.h:3
+#: hacks/config/distort.xml.h:5 hacks/config/fadeplot.xml.h:5
+#: hacks/config/flag.xml.h:4 hacks/config/flow.xml.h:7
+#: hacks/config/hopalong.xml.h:13 hacks/config/interference.xml.h:8
+#: hacks/config/julia.xml.h:5 hacks/config/lissie.xml.h:4
+#: hacks/config/loop.xml.h:2 hacks/config/moire.xml.h:4
+#: hacks/config/rd-bomb.xml.h:11 hacks/config/rorschach.xml.h:5
+#: hacks/config/rubik.xml.h:4 hacks/config/sierpinski.xml.h:3
+#: hacks/config/slip.xml.h:3
+msgid "Large"
+msgstr "Grande"
+
+#: hacks/config/ant.xml.h:8 hacks/config/attraction.xml.h:18
+#: hacks/config/blaster.xml.h:6 hacks/config/bouboule.xml.h:5
+#: hacks/config/braid.xml.h:7 hacks/config/coral.xml.h:9
+#: hacks/config/critical.xml.h:4 hacks/config/crystal.xml.h:8
+#: hacks/config/cynosure.xml.h:6 hacks/config/deco.xml.h:5
+#: hacks/config/deluxe.xml.h:6 hacks/config/demon.xml.h:6
+#: hacks/config/discrete.xml.h:4 hacks/config/drift.xml.h:9
+#: hacks/config/epicycle.xml.h:8 hacks/config/fadeplot.xml.h:6
+#: hacks/config/flag.xml.h:5 hacks/config/flame.xml.h:10
+#: hacks/config/flow.xml.h:8 hacks/config/forest.xml.h:3
+#: hacks/config/galaxy.xml.h:6 hacks/config/grav.xml.h:4
+#: hacks/config/halo.xml.h:4 hacks/config/hopalong.xml.h:15
+#: hacks/config/ifs.xml.h:3 hacks/config/imsmap.xml.h:9
+#: hacks/config/interference.xml.h:11 hacks/config/julia.xml.h:6
+#: hacks/config/kaleidescope.xml.h:5 hacks/config/laser.xml.h:6
+#: hacks/config/lightning.xml.h:3 hacks/config/lisa.xml.h:5
+#: hacks/config/lissie.xml.h:6 hacks/config/loop.xml.h:4
+#: hacks/config/moire.xml.h:5 hacks/config/moire2.xml.h:3
+#: hacks/config/mountain.xml.h:4 hacks/config/nerverot.xml.h:15
+#: hacks/config/pedal.xml.h:6 hacks/config/penrose.xml.h:7
+#: hacks/config/petri.xml.h:11 hacks/config/qix.xml.h:14
+#: hacks/config/rd-bomb.xml.h:12 hacks/config/ripples.xml.h:7
+#: hacks/config/rocks.xml.h:5 hacks/config/rotor.xml.h:6
+#: hacks/config/shadebobs.xml.h:5 hacks/config/sierpinski.xml.h:4
+#: hacks/config/slip.xml.h:4 hacks/config/sphere.xml.h:3
+#: hacks/config/spiral.xml.h:6 hacks/config/squiral.xml.h:9
+#: hacks/config/starfish.xml.h:5 hacks/config/strange.xml.h:5
+#: hacks/config/swirl.xml.h:3 hacks/config/triangle.xml.h:3
+#: hacks/config/vines.xml.h:2 hacks/config/whirlwindwarp.xml.h:4
+#: hacks/config/worm.xml.h:4 hacks/config/xearth.xml.h:12
+#: hacks/config/xfishtank.xml.h:8
+msgid "Many"
+msgstr ""
+
+#: hacks/config/ant.xml.h:9
+msgid "Nine Sided Cells"
+msgstr ""
+
+#: hacks/config/ant.xml.h:10 hacks/config/attraction.xml.h:19
+#: hacks/config/bouboule.xml.h:6 hacks/config/braid.xml.h:9
+#: hacks/config/critical.xml.h:5 hacks/config/crystal.xml.h:10
+#: hacks/config/cynosure.xml.h:7 hacks/config/deco.xml.h:8
+#: hacks/config/deluxe.xml.h:7 hacks/config/demon.xml.h:7
+#: hacks/config/discrete.xml.h:6 hacks/config/drift.xml.h:10
+#: hacks/config/epicycle.xml.h:9 hacks/config/fadeplot.xml.h:7
+#: hacks/config/flag.xml.h:6 hacks/config/flame.xml.h:11
+#: hacks/config/flow.xml.h:9 hacks/config/forest.xml.h:4
+#: hacks/config/galaxy.xml.h:7 hacks/config/grav.xml.h:5
+#: hacks/config/halo.xml.h:6 hacks/config/hopalong.xml.h:17
+#: hacks/config/ifs.xml.h:4 hacks/config/imsmap.xml.h:10
+#: hacks/config/interference.xml.h:12 hacks/config/julia.xml.h:7
+#: hacks/config/laser.xml.h:8 hacks/config/lightning.xml.h:4
+#: hacks/config/lisa.xml.h:6 hacks/config/lissie.xml.h:7
+#: hacks/config/loop.xml.h:5 hacks/config/moire.xml.h:7
+#: hacks/config/moire2.xml.h:5 hacks/config/mountain.xml.h:6
+#: hacks/config/penrose.xml.h:8 hacks/config/rd-bomb.xml.h:13
+#: hacks/config/rocks.xml.h:6 hacks/config/rotor.xml.h:7
+#: hacks/config/shadebobs.xml.h:6 hacks/config/sierpinski.xml.h:5
+#: hacks/config/slip.xml.h:5 hacks/config/sphere.xml.h:4
+#: hacks/config/spiral.xml.h:8 hacks/config/squiral.xml.h:10
+#: hacks/config/starfish.xml.h:6 hacks/config/strange.xml.h:6
+#: hacks/config/swirl.xml.h:5 hacks/config/triangle.xml.h:4
+#: hacks/config/vines.xml.h:3 hacks/config/worm.xml.h:5
+#: hacks/config/xearth.xml.h:17 hacks/config/xfishtank.xml.h:9
+msgid "Number of Colors"
+msgstr "Cantidad de colores"
+
+#: hacks/config/ant.xml.h:11
+msgid "Random Cell Shape"
+msgstr ""
+
+#: hacks/config/ant.xml.h:12 hacks/config/speedmine.xml.h:11
+msgid "Sharp Turns"
+msgstr ""
+
+#: hacks/config/ant.xml.h:13
+msgid "Six Sided Cells"
+msgstr ""
+
+#: hacks/config/ant.xml.h:14 hacks/config/atlantis.xml.h:13
+#: hacks/config/attraction.xml.h:26 hacks/config/blaster.xml.h:8
+#: hacks/config/blitspin.xml.h:7 hacks/config/bouboule.xml.h:8
+#: hacks/config/braid.xml.h:11 hacks/config/bubble3d.xml.h:5
+#: hacks/config/bubbles.xml.h:10 hacks/config/bumps.xml.h:4
+#: hacks/config/cage.xml.h:4 hacks/config/circuit.xml.h:10
+#: hacks/config/compass.xml.h:4 hacks/config/coral.xml.h:12
+#: hacks/config/critical.xml.h:6 hacks/config/crystal.xml.h:11
+#: hacks/config/cynosure.xml.h:9 hacks/config/dangerball.xml.h:5
+#: hacks/config/decayscreen.xml.h:17 hacks/config/deluxe.xml.h:8
+#: hacks/config/demon.xml.h:8 hacks/config/discrete.xml.h:7
+#: hacks/config/distort.xml.h:11 hacks/config/drift.xml.h:12
+#: hacks/config/engine.xml.h:5 hacks/config/epicycle.xml.h:10
+#: hacks/config/extrusion.xml.h:11 hacks/config/fadeplot.xml.h:8
+#: hacks/config/flag.xml.h:7 hacks/config/flame.xml.h:13
+#: hacks/config/flipscreen3d.xml.h:5 hacks/config/flow.xml.h:13
+#: hacks/config/forest.xml.h:5 hacks/config/galaxy.xml.h:10
+#: hacks/config/gears.xml.h:8 hacks/config/gflux.xml.h:12
+#: hacks/config/glplanet.xml.h:6 hacks/config/gltext.xml.h:13
+#: hacks/config/goop.xml.h:10 hacks/config/grav.xml.h:8
+#: hacks/config/greynetic.xml.h:3 hacks/config/halo.xml.h:9
+#: hacks/config/hopalong.xml.h:21 hacks/config/hyperball.xml.h:8
+#: hacks/config/hypercube.xml.h:7 hacks/config/ifs.xml.h:5
+#: hacks/config/interference.xml.h:14 hacks/config/jigsaw.xml.h:5
+#: hacks/config/julia.xml.h:8 hacks/config/kaleidescope.xml.h:7
+#: hacks/config/kumppa.xml.h:8 hacks/config/lament.xml.h:6
+#: hacks/config/laser.xml.h:10 hacks/config/lightning.xml.h:5
+#: hacks/config/lisa.xml.h:8 hacks/config/lissie.xml.h:9
+#: hacks/config/lmorph.xml.h:11 hacks/config/loop.xml.h:7
+#: hacks/config/maze.xml.h:14 hacks/config/menger.xml.h:16
+#: hacks/config/moebius.xml.h:7 hacks/config/moire2.xml.h:6
+#: hacks/config/molecule.xml.h:22 hacks/config/morph3d.xml.h:6
+#: hacks/config/mountain.xml.h:7 hacks/config/munch.xml.h:7
+#: hacks/config/nerverot.xml.h:20 hacks/config/penetrate.xml.h:6
+#: hacks/config/penrose.xml.h:11 hacks/config/petri.xml.h:23
+#: hacks/config/phosphor.xml.h:6 hacks/config/pipes.xml.h:14
+#: hacks/config/pulsar.xml.h:15 hacks/config/pyro.xml.h:13
+#: hacks/config/qix.xml.h:19 hacks/config/rd-bomb.xml.h:17
+#: hacks/config/ripples.xml.h:11 hacks/config/rocks.xml.h:9
+#: hacks/config/rotor.xml.h:11 hacks/config/rubik.xml.h:9
+#: hacks/config/shadebobs.xml.h:9 hacks/config/sierpinski.xml.h:7
+#: hacks/config/sierpinski3d.xml.h:8 hacks/config/slidescreen.xml.h:6
+#: hacks/config/slip.xml.h:7 hacks/config/speedmine.xml.h:13
+#: hacks/config/sphere.xml.h:5 hacks/config/spiral.xml.h:9
+#: hacks/config/spotlight.xml.h:4 hacks/config/sproingies.xml.h:6
+#: hacks/config/squiral.xml.h:14 hacks/config/stairs.xml.h:3
+#: hacks/config/starfish.xml.h:8 hacks/config/starwars.xml.h:12
+#: hacks/config/strange.xml.h:7 hacks/config/superquadrics.xml.h:7
+#: hacks/config/swirl.xml.h:6 hacks/config/t3d.xml.h:11
+#: hacks/config/triangle.xml.h:5 hacks/config/truchet.xml.h:2
+#: hacks/config/vines.xml.h:4 hacks/config/webcollage.xml.h:7
+#: hacks/config/worm.xml.h:7 hacks/config/xearth.xml.h:22
+#: hacks/config/xfishtank.xml.h:10 hacks/config/xflame.xml.h:5
+#: hacks/config/xjack.xml.h:2 hacks/config/xmatrix.xml.h:13
+#: hacks/config/xmountains.xml.h:4 hacks/config/xrayswarm.xml.h:3
+#: hacks/config/zoom.xml.h:6
+msgid "Slow"
+msgstr "Lento"
+
+#: hacks/config/ant.xml.h:15 hacks/config/attraction.xml.h:27
+#: hacks/config/demon.xml.h:9 hacks/config/discrete.xml.h:8
+#: hacks/config/distort.xml.h:12 hacks/config/fadeplot.xml.h:9
+#: hacks/config/flag.xml.h:8 hacks/config/flow.xml.h:15
+#: hacks/config/hopalong.xml.h:22 hacks/config/interference.xml.h:15
+#: hacks/config/julia.xml.h:9 hacks/config/lissie.xml.h:10
+#: hacks/config/loop.xml.h:8 hacks/config/moire.xml.h:9
+#: hacks/config/rd-bomb.xml.h:18 hacks/config/rorschach.xml.h:8
+#: hacks/config/rubik.xml.h:10 hacks/config/sierpinski.xml.h:8
+#: hacks/config/slip.xml.h:8
+msgid "Small"
+msgstr "Pequeño"
+
+#: hacks/config/ant.xml.h:16 hacks/config/attraction.xml.h:28
+#: hacks/config/blaster.xml.h:9 hacks/config/bouboule.xml.h:9
+#: hacks/config/braid.xml.h:12 hacks/config/bubble3d.xml.h:6
+#: hacks/config/bubbles.xml.h:11 hacks/config/bumps.xml.h:5
+#: hacks/config/cage.xml.h:6 hacks/config/circuit.xml.h:11
+#: hacks/config/compass.xml.h:5 hacks/config/coral.xml.h:14
+#: hacks/config/critical.xml.h:7 hacks/config/crystal.xml.h:12
+#: hacks/config/cynosure.xml.h:10 hacks/config/dangerball.xml.h:6
+#: hacks/config/decayscreen.xml.h:18 hacks/config/deluxe.xml.h:9
+#: hacks/config/demon.xml.h:10 hacks/config/discrete.xml.h:9
+#: hacks/config/distort.xml.h:13 hacks/config/drift.xml.h:13
+#: hacks/config/engine.xml.h:6 hacks/config/epicycle.xml.h:11
+#: hacks/config/extrusion.xml.h:13 hacks/config/fadeplot.xml.h:10
+#: hacks/config/flag.xml.h:9 hacks/config/flame.xml.h:14
+#: hacks/config/flipscreen3d.xml.h:6 hacks/config/flow.xml.h:16
+#: hacks/config/forest.xml.h:6 hacks/config/galaxy.xml.h:11
+#: hacks/config/glplanet.xml.h:8 hacks/config/gltext.xml.h:15
+#: hacks/config/goop.xml.h:11 hacks/config/grav.xml.h:9
+#: hacks/config/greynetic.xml.h:4 hacks/config/halo.xml.h:10
+#: hacks/config/hopalong.xml.h:23 hacks/config/hyperball.xml.h:9
+#: hacks/config/hypercube.xml.h:8 hacks/config/ifs.xml.h:6
+#: hacks/config/jigsaw.xml.h:7 hacks/config/julia.xml.h:10
+#: hacks/config/kaleidescope.xml.h:8 hacks/config/kumppa.xml.h:9
+#: hacks/config/lament.xml.h:7 hacks/config/laser.xml.h:11
+#: hacks/config/lightning.xml.h:6 hacks/config/lisa.xml.h:9
+#: hacks/config/lissie.xml.h:11 hacks/config/lmorph.xml.h:12
+#: hacks/config/loop.xml.h:9 hacks/config/menger.xml.h:18
+#: hacks/config/moebius.xml.h:10 hacks/config/moire2.xml.h:7
+#: hacks/config/molecule.xml.h:24 hacks/config/morph3d.xml.h:7
+#: hacks/config/mountain.xml.h:8 hacks/config/munch.xml.h:9
+#: hacks/config/nerverot.xml.h:22 hacks/config/penrose.xml.h:12
+#: hacks/config/petri.xml.h:25 hacks/config/phosphor.xml.h:7
+#: hacks/config/pipes.xml.h:15 hacks/config/pulsar.xml.h:17
+#: hacks/config/qix.xml.h:22 hacks/config/rotor.xml.h:12
+#: hacks/config/rubik.xml.h:11 hacks/config/shadebobs.xml.h:10
+#: hacks/config/sierpinski.xml.h:9 hacks/config/sierpinski3d.xml.h:10
+#: hacks/config/slidescreen.xml.h:7 hacks/config/slip.xml.h:9
+#: hacks/config/speedmine.xml.h:15 hacks/config/sphere.xml.h:6
+#: hacks/config/spiral.xml.h:10 hacks/config/spotlight.xml.h:5
+#: hacks/config/sproingies.xml.h:8 hacks/config/squiral.xml.h:16
+#: hacks/config/stairs.xml.h:5 hacks/config/starfish.xml.h:9
+#: hacks/config/strange.xml.h:8 hacks/config/superquadrics.xml.h:9
+#: hacks/config/swirl.xml.h:7 hacks/config/t3d.xml.h:13
+#: hacks/config/triangle.xml.h:6 hacks/config/truchet.xml.h:3
+#: hacks/config/vines.xml.h:5 hacks/config/webcollage.xml.h:8
+#: hacks/config/whirlygig.xml.h:4 hacks/config/worm.xml.h:8
+#: hacks/config/xearth.xml.h:25 hacks/config/xflame.xml.h:6
+#: hacks/config/xjack.xml.h:3 hacks/config/xmatrix.xml.h:16
+#: hacks/config/xmountains.xml.h:5 hacks/config/xrayswarm.xml.h:4
+#: hacks/config/zoom.xml.h:7
+msgid "Speed"
+msgstr "Velocidad"
+
+#: hacks/config/ant.xml.h:17
+msgid "Three Sided Cells"
+msgstr ""
+
+#: hacks/config/ant.xml.h:18 hacks/config/demon.xml.h:12
+#: hacks/config/discrete.xml.h:10 hacks/config/fadeplot.xml.h:11
+#: hacks/config/flag.xml.h:12 hacks/config/flow.xml.h:17
+#: hacks/config/lissie.xml.h:12 hacks/config/loop.xml.h:11
+#: hacks/config/rubik.xml.h:12 hacks/config/sierpinski.xml.h:11
+#: hacks/config/slip.xml.h:11
+msgid "Timeout"
+msgstr ""
+
+#: hacks/config/ant.xml.h:19
+#, fuzzy
+msgid "Truchet Lines"
+msgstr "Truchet"
+
+#: hacks/config/ant.xml.h:20
+msgid "Twelve Sided Cells"
+msgstr ""
+
+#: hacks/config/ant.xml.h:21 hacks/config/attraction.xml.h:32
+#: hacks/config/bouboule.xml.h:11 hacks/config/braid.xml.h:13
+#: hacks/config/critical.xml.h:8 hacks/config/crystal.xml.h:13
+#: hacks/config/cynosure.xml.h:11 hacks/config/deco.xml.h:10
+#: hacks/config/deluxe.xml.h:14 hacks/config/demon.xml.h:13
+#: hacks/config/discrete.xml.h:11 hacks/config/drift.xml.h:14
+#: hacks/config/epicycle.xml.h:13 hacks/config/fadeplot.xml.h:12
+#: hacks/config/flag.xml.h:13 hacks/config/flame.xml.h:15
+#: hacks/config/flow.xml.h:18 hacks/config/forest.xml.h:8
+#: hacks/config/galaxy.xml.h:13 hacks/config/grav.xml.h:11
+#: hacks/config/halo.xml.h:12 hacks/config/hopalong.xml.h:25
+#: hacks/config/ifs.xml.h:8 hacks/config/imsmap.xml.h:15
+#: hacks/config/interference.xml.h:16 hacks/config/julia.xml.h:12
+#: hacks/config/laser.xml.h:12 hacks/config/lightning.xml.h:8
+#: hacks/config/lisa.xml.h:12 hacks/config/lissie.xml.h:13
+#: hacks/config/loop.xml.h:12 hacks/config/moire.xml.h:11
+#: hacks/config/moire2.xml.h:9 hacks/config/mountain.xml.h:9
+#: hacks/config/nerverot.xml.h:23 hacks/config/penrose.xml.h:13
+#: hacks/config/rd-bomb.xml.h:20 hacks/config/rocks.xml.h:12
+#: hacks/config/rotor.xml.h:13 hacks/config/shadebobs.xml.h:12
+#: hacks/config/sierpinski.xml.h:12 hacks/config/slip.xml.h:12
+#: hacks/config/sphere.xml.h:8 hacks/config/spiral.xml.h:12
+#: hacks/config/squiral.xml.h:18 hacks/config/starfish.xml.h:14
+#: hacks/config/strange.xml.h:11 hacks/config/swirl.xml.h:9
+#: hacks/config/triangle.xml.h:8 hacks/config/vines.xml.h:7
+#: hacks/config/worm.xml.h:9 hacks/config/xearth.xml.h:28
+#: hacks/config/xfishtank.xml.h:11
+msgid "Two"
+msgstr "Dos"
+
+#: hacks/config/atlantis.xml.h:1
+msgid "Agressive"
+msgstr ""
+
+#: hacks/config/atlantis.xml.h:2
+msgid "Atlantis"
+msgstr "Atlantis"
+
+#: hacks/config/atlantis.xml.h:3
+msgid "Clear Water"
+msgstr ""
+
+#: hacks/config/atlantis.xml.h:5
+#, fuzzy
+msgid "Flat Background"
+msgstr "Propiedades del tapiz"
+
+#: hacks/config/atlantis.xml.h:6
+#, fuzzy
+msgid "Gradient Background"
+msgstr "Propiedades del tapiz"
+
+#: hacks/config/atlantis.xml.h:7
+#, fuzzy
+msgid "Number of Sharks"
+msgstr "Cantidad de hormigas."
+
+#: hacks/config/atlantis.xml.h:8
+msgid "Shark Proximity"
+msgstr ""
+
+#: hacks/config/atlantis.xml.h:9
+#, fuzzy
+msgid "Shark Speed"
+msgstr "Velocidad"
+
+#: hacks/config/atlantis.xml.h:10
+msgid "Shimmering Water"
+msgstr ""
+
+#: hacks/config/atlantis.xml.h:11 hacks/config/bubble3d.xml.h:4
+#: hacks/config/cage.xml.h:3 hacks/config/circuit.xml.h:9
+#: hacks/config/dangerball.xml.h:4 hacks/config/engine.xml.h:4
+#: hacks/config/extrusion.xml.h:10 hacks/config/flipscreen3d.xml.h:4
+#: hacks/config/gears.xml.h:7 hacks/config/gflux.xml.h:11
+#: hacks/config/glplanet.xml.h:5 hacks/config/gltext.xml.h:12
+#: hacks/config/lament.xml.h:5 hacks/config/menger.xml.h:15
+#: hacks/config/moebius.xml.h:6 hacks/config/molecule.xml.h:21
+#: hacks/config/morph3d.xml.h:5 hacks/config/pipes.xml.h:13
+#: hacks/config/pulsar.xml.h:14 hacks/config/rubik.xml.h:6
+#: hacks/config/sierpinski3d.xml.h:6 hacks/config/sproingies.xml.h:4
+#: hacks/config/stairs.xml.h:2 hacks/config/starwars.xml.h:11
+#: hacks/config/superquadrics.xml.h:6
+msgid "Show Frames-per-Second"
+msgstr ""
+
+#: hacks/config/atlantis.xml.h:12
+msgid "Shy"
+msgstr ""
+
+#: hacks/config/atlantis.xml.h:14 hacks/config/cage.xml.h:5
+#: hacks/config/extrusion.xml.h:12 hacks/config/gears.xml.h:9
+#: hacks/config/glplanet.xml.h:7 hacks/config/gltext.xml.h:14
+#: hacks/config/menger.xml.h:17 hacks/config/molecule.xml.h:23
+#: hacks/config/munch.xml.h:8 hacks/config/sierpinski3d.xml.h:9
+#: hacks/config/speedmine.xml.h:14 hacks/config/sproingies.xml.h:7
+#: hacks/config/stairs.xml.h:4 hacks/config/stonerview.xml.h:2
+#: hacks/config/superquadrics.xml.h:8
+msgid "Solid"
+msgstr "Sólido"
+
+#: hacks/config/atlantis.xml.h:15
+msgid ""
+"This is xfishtank writ large: a GL animation of a number of sharks, "
+"dolphins, and whales. The swimming motions are great. Originally written by "
+"Mark Kilgard."
+msgstr ""
+
+#: hacks/config/atlantis.xml.h:16
+#, fuzzy
+msgid "Whale Speed"
+msgstr "Velocidad"
+
+#: hacks/config/atlantis.xml.h:17 hacks/config/cage.xml.h:8
+#: hacks/config/dangerball.xml.h:11 hacks/config/extrusion.xml.h:19
+#: hacks/config/gears.xml.h:12 hacks/config/glplanet.xml.h:11
+#: hacks/config/gltext.xml.h:18 hacks/config/lament.xml.h:9
+#: hacks/config/menger.xml.h:21 hacks/config/moebius.xml.h:11
+#: hacks/config/molecule.xml.h:26 hacks/config/pulsar.xml.h:20
+#: hacks/config/sierpinski3d.xml.h:12 hacks/config/speedmine.xml.h:18
+#: hacks/config/sproingies.xml.h:10 hacks/config/stairs.xml.h:7
+#: hacks/config/stonerview.xml.h:4 hacks/config/superquadrics.xml.h:11
+msgid "Wireframe"
+msgstr ""
+
+#: hacks/config/attraction.xml.h:1
+msgid "Attraction"
+msgstr "Atracción"
+
+#: hacks/config/attraction.xml.h:2
+#, fuzzy
+msgid "Ball Count"
+msgstr "Cantidad"
+
+#: hacks/config/attraction.xml.h:3
+msgid "Ball Mass"
+msgstr ""
+
+#: hacks/config/attraction.xml.h:4
+#, fuzzy
+msgid "Balls"
+msgstr "Barras"
+
+#: hacks/config/attraction.xml.h:5
+msgid "Bounce Off Walls"
+msgstr ""
+
+#: hacks/config/attraction.xml.h:6 hacks/config/hopalong.xml.h:1
+#: hacks/config/interference.xml.h:3 hacks/config/qix.xml.h:2
+#: hacks/config/wander.xml.h:3
+#, fuzzy
+msgid "Color Contrast"
+msgstr "Color del camino"
+
+#: hacks/config/attraction.xml.h:7
+msgid "Environmental Viscosity"
+msgstr ""
+
+#: hacks/config/attraction.xml.h:9
+#, fuzzy
+msgid "Filled Splines"
+msgstr "Muestra polilíneas coloreadas"
+
+#: hacks/config/attraction.xml.h:10 hacks/config/ccurve.xml.h:9
+#: hacks/config/flame.xml.h:9 hacks/config/goop.xml.h:6
+#: hacks/config/hopalong.xml.h:10 hacks/config/hyperball.xml.h:3
+#: hacks/config/hypercube.xml.h:3 hacks/config/interference.xml.h:6
+#: hacks/config/kumppa.xml.h:4 hacks/config/nerverot.xml.h:11
+#: hacks/config/petri.xml.h:8 hacks/config/pyro.xml.h:5
+#: hacks/config/qix.xml.h:10 hacks/config/speedmine.xml.h:5
+#: hacks/config/spiral.xml.h:4 hacks/config/squiral.xml.h:6
+#: hacks/config/strange.xml.h:3 hacks/config/superquadrics.xml.h:4
+#: hacks/config/t3d.xml.h:7 hacks/config/wander.xml.h:8
+msgid "High"
+msgstr "Alto"
+
+#: hacks/config/attraction.xml.h:11
+msgid "Ignore Screen Edges"
+msgstr ""
+
+#: hacks/config/attraction.xml.h:12
+msgid "Inward"
+msgstr ""
+
+#: hacks/config/attraction.xml.h:14
+msgid ""
+"Like qix, this uses a simple simple motion model to generate many different "
+"display modes. The control points attract each other up to a certain "
+"distance, and then begin to repel each other. The attraction/repulsion is "
+"proportional to the distance between any two particles, similar to the "
+"strong and weak nuclear forces. One of the most interesting ways to watch "
+"this hack is simply as bouncing balls, because their motions and "
+"interactions with each other are so odd. Sometimes two balls will get into a "
+"tight orbit around each other, to be interrupted later by a third, or by the "
+"edge of the screen. It looks quite chaotic. Written by Jamie Zawinski, based "
+"on Lisp code by John Pezaris."
+msgstr ""
+
+#: hacks/config/attraction.xml.h:15 hacks/config/deluxe.xml.h:5
+#: hacks/config/lmorph.xml.h:7 hacks/config/pedal.xml.h:5
+#: hacks/config/starfish.xml.h:4 hacks/config/whirlygig.xml.h:3
+#, fuzzy
+msgid "Lines"
+msgstr "Vines"
+
+#: hacks/config/attraction.xml.h:16 hacks/config/braid.xml.h:6
+#: hacks/config/cynosure.xml.h:5 hacks/config/drift.xml.h:8
+#: hacks/config/galaxy.xml.h:5 hacks/config/laser.xml.h:5
+#: hacks/config/menger.xml.h:4 hacks/config/munch.xml.h:4
+#: hacks/config/nerverot.xml.h:13 hacks/config/petri.xml.h:9
+#: hacks/config/rotor.xml.h:5 hacks/config/shadebobs.xml.h:4
+#: hacks/config/sierpinski3d.xml.h:3 hacks/config/wander.xml.h:10
+#: hacks/config/whirlwindwarp.xml.h:3
+#, fuzzy
+msgid "Long"
+msgstr "Más largo"
+
+#: hacks/config/attraction.xml.h:17 hacks/config/ccurve.xml.h:10
+#: hacks/config/goop.xml.h:7 hacks/config/hopalong.xml.h:14
+#: hacks/config/hyperball.xml.h:6 hacks/config/hypercube.xml.h:5
+#: hacks/config/interference.xml.h:9 hacks/config/kumppa.xml.h:6
+#: hacks/config/nerverot.xml.h:14 hacks/config/petri.xml.h:10
+#: hacks/config/pyro.xml.h:7 hacks/config/qix.xml.h:13
+#: hacks/config/speedmine.xml.h:6 hacks/config/spiral.xml.h:5
+#: hacks/config/squiral.xml.h:8 hacks/config/strange.xml.h:4
+#: hacks/config/superquadrics.xml.h:5 hacks/config/t3d.xml.h:8
+#: hacks/config/wander.xml.h:11
+msgid "Low"
+msgstr "Bajo"
+
+#: hacks/config/attraction.xml.h:20
+msgid "Orbital Mode"
+msgstr ""
+
+#: hacks/config/attraction.xml.h:21
+msgid "Outward"
+msgstr ""
+
+#: hacks/config/attraction.xml.h:22
+msgid "Polygons"
+msgstr ""
+
+#: hacks/config/attraction.xml.h:23 hacks/config/spotlight.xml.h:3
+msgid "Radius"
+msgstr "Radio"
+
+# una mejor traducción ?
+#: hacks/config/attraction.xml.h:24
+#, fuzzy
+msgid "Repulsion Threshold"
+msgstr "Punto de activación"
+
+#: hacks/config/attraction.xml.h:25 hacks/config/braid.xml.h:10
+#: hacks/config/cynosure.xml.h:8 hacks/config/drift.xml.h:11
+#: hacks/config/galaxy.xml.h:8 hacks/config/laser.xml.h:9
+#: hacks/config/menger.xml.h:14 hacks/config/munch.xml.h:6
+#: hacks/config/nerverot.xml.h:19 hacks/config/petri.xml.h:22
+#: hacks/config/rotor.xml.h:9 hacks/config/shadebobs.xml.h:8
+#: hacks/config/sierpinski3d.xml.h:5 hacks/config/wander.xml.h:12
+#: hacks/config/whirlwindwarp.xml.h:6
+#, fuzzy
+msgid "Short"
+msgstr "Más corto"
+
+#: hacks/config/attraction.xml.h:29
+#, fuzzy
+msgid "Splines"
+msgstr "Sproingies"
+
+#: hacks/config/attraction.xml.h:30
+#, fuzzy
+msgid "Tails"
+msgstr "Rastros"
+
+#: hacks/config/attraction.xml.h:31
+msgid "Trail Length"
+msgstr ""
+
+#: hacks/config/blaster.xml.h:1
+#, fuzzy
+msgid "Blaster"
+msgstr "Rápido"
+
+#: hacks/config/blaster.xml.h:2
+msgid ""
+"Draws a simulation of flying space-combat robots (cleverly disguised as "
+"colored circles) doing battle in front of a moving star field. Written by "
+"Jonathan Lin."
+msgstr ""
+
+#: hacks/config/blaster.xml.h:4 hacks/config/bouboule.xml.h:4
+#: hacks/config/coral.xml.h:8 hacks/config/flame.xml.h:7
+#: hacks/config/kaleidescope.xml.h:3 hacks/config/lisa.xml.h:3
+#: hacks/config/pedal.xml.h:4 hacks/config/petri.xml.h:7
+#: hacks/config/qix.xml.h:8 hacks/config/whirlwindwarp.xml.h:1
+#: hacks/config/xfishtank.xml.h:4
+msgid "Few"
+msgstr ""
+
+#: hacks/config/blaster.xml.h:5 hacks/config/penetrate.xml.h:4
+#, fuzzy
+msgid "Lasers"
+msgstr "Láser"
+
+#: hacks/config/blaster.xml.h:7
+msgid "Robots"
+msgstr ""
+
+#: hacks/config/blaster.xml.h:10
+#, fuzzy
+msgid "Stars"
+msgstr "Escaleras"
+
+#: hacks/config/blitspin.xml.h:1
+#, fuzzy
+msgid "90° Rotation Speed"
+msgstr "Rotación"
+
+#: hacks/config/blitspin.xml.h:2
+msgid "Bitmap to rotate"
+msgstr ""
+
+#: hacks/config/blitspin.xml.h:3
+#, fuzzy
+msgid "BlitSpin"
+msgstr "Blitspin"
+
+#: hacks/config/blitspin.xml.h:5
+msgid "Fuzzy Rotation Speed"
+msgstr ""
+
+#: hacks/config/blitspin.xml.h:6
+msgid "Grab Screen"
+msgstr ""
+
+#: hacks/config/blitspin.xml.h:8
+msgid ""
+"The ``blitspin'' hack repeatedly rotates a bitmap by 90 degrees by using "
+"logical operations: the bitmap is divided into quadrants, and the quadrants "
+"are shifted clockwise. Then the same thing is done again with progressively "
+"smaller quadrants, except that all sub-quadrants of a given size are rotated "
+"in parallel. Written by Jamie Zawinski based on some cool SmallTalk code "
+"seen in in Byte Magazine in 1981. As you watch it, the image appears to "
+"dissolve into static and then reconstitute itself, but rotated. You can "
+"provide the image to use, as an XBM or XPM file, or tell it to grab a screen "
+"image and rotate that."
+msgstr ""
+
+#: hacks/config/bouboule.xml.h:1
+msgid "Bouboule"
+msgstr "Bouboule"
+
+#: hacks/config/bouboule.xml.h:2 hacks/config/rocks.xml.h:3
+#, fuzzy
+msgid "Do Red/Blue 3D seperation"
+msgstr "Utilizar la separación rojo/azul para un efecto 3d."
+
+#: hacks/config/bouboule.xml.h:7
+#, fuzzy
+msgid "Number of Spots"
+msgstr "Cantidad de puntos."
+
+#: hacks/config/bouboule.xml.h:10
+msgid ""
+"This draws what looks like a spinning, deforming baloon with varying-sized "
+"spots painted on its invisible surface. Written by Jeremie Petit."
+msgstr ""
+
+#: hacks/config/braid.xml.h:1
+msgid "Braid"
+msgstr "Galones"
+
+#: hacks/config/braid.xml.h:2
+msgid ""
+"Draws random color-cycling inter-braided concentric circles. Written by John "
+"Neil."
+msgstr ""
+
+#: hacks/config/braid.xml.h:3 hacks/config/bsod.xml.h:8
+#: hacks/config/ccurve.xml.h:7 hacks/config/coral.xml.h:6
+#: hacks/config/cynosure.xml.h:3 hacks/config/deco.xml.h:4
+#: hacks/config/drift.xml.h:2 hacks/config/epicycle.xml.h:3
+#: hacks/config/flame.xml.h:5 hacks/config/galaxy.xml.h:2
+#: hacks/config/helix.xml.h:3 hacks/config/hopalong.xml.h:2
+#: hacks/config/imsmap.xml.h:6 hacks/config/laser.xml.h:2
+#: hacks/config/menger.xml.h:2 hacks/config/moire.xml.h:3
+#: hacks/config/molecule.xml.h:9 hacks/config/munch.xml.h:2
+#: hacks/config/nerverot.xml.h:8 hacks/config/pedal.xml.h:3
+#: hacks/config/penrose.xml.h:5 hacks/config/rorschach.xml.h:3
+#: hacks/config/rotzoomer.xml.h:5 hacks/config/shadebobs.xml.h:2
+#: hacks/config/sierpinski3d.xml.h:1 hacks/config/starfish.xml.h:2
+#: hacks/config/vidwhacker.xml.h:3 hacks/config/wander.xml.h:7
+#: hacks/config/xspirograph.xml.h:3
+msgid "Duration"
+msgstr "Duración"
+
+#: hacks/config/braid.xml.h:5 hacks/config/epicycle.xml.h:7
+#: hacks/config/nerverot.xml.h:12
+#, fuzzy
+msgid "Line Thickness"
+msgstr "Grosor"
+
+#: hacks/config/braid.xml.h:8
+#, fuzzy
+msgid "Max Rings"
+msgstr "Líneas máximas"
+
+#: hacks/config/bsod.xml.h:1 hacks/config/molecule.xml.h:1
+#: hacks/config/vidwhacker.xml.h:1 hacks/config/webcollage.xml.h:1
+#, fuzzy
+msgid "2 minutes"
+msgstr " minutos."
+
+#: hacks/config/bsod.xml.h:2 hacks/config/molecule.xml.h:2
+#, fuzzy
+msgid "5 seconds"
+msgstr "segundos"
+
+#: hacks/config/bsod.xml.h:3
+msgid "AmigaDOS"
+msgstr ""
+
+#: hacks/config/bsod.xml.h:4
+#, fuzzy
+msgid "Atari"
+msgstr "Atlantis"
+
+#: hacks/config/bsod.xml.h:5
+msgid "BSD"
+msgstr ""
+
+#: hacks/config/bsod.xml.h:6
+msgid "BSOD"
+msgstr ""
+
+#: hacks/config/bsod.xml.h:7
+msgid ""
+"BSOD stands for ``Blue Screen of Death.'' The finest in personal computer "
+"emulation, this hack simulates popular screen savers from a number of less "
+"robust operating systems. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/bsod.xml.h:9
+msgid "MacOS"
+msgstr ""
+
+#: hacks/config/bsod.xml.h:10
+msgid "MacsBug"
+msgstr ""
+
+#: hacks/config/bsod.xml.h:11
+#, fuzzy
+msgid "NCD X Terminal"
+msgstr "Lanzar en una terminal"
+
+#: hacks/config/bsod.xml.h:12
+msgid "SCO"
+msgstr ""
+
+#: hacks/config/bsod.xml.h:13
+#, fuzzy
+msgid "Solaris"
+msgstr "Estrella de mar"
+
+#: hacks/config/bsod.xml.h:14
+msgid "Sparc Linux"
+msgstr ""
+
+#: hacks/config/bsod.xml.h:15
+#, fuzzy
+msgid "Windows"
+msgstr "Window Maker"
+
+#: hacks/config/bsod.xml.h:16
+#, fuzzy
+msgid "Windows NT"
+msgstr "Window Maker"
+
+#: hacks/config/bubble3d.xml.h:1
+#, fuzzy
+msgid "Bubble3D"
+msgstr "Burbujas3d"
+
+#: hacks/config/bubble3d.xml.h:2
+msgid ""
+"Draws a stream of rising, undulating 3D bubbles, rising toward the top of "
+"the screen, with nice specular reflections. Written by Richard Jones."
+msgstr ""
+
+#: hacks/config/bubbles.xml.h:1 hacks/config/xfishtank.xml.h:2
+msgid "Bubbles"
+msgstr "Burbujas"
+
+#: hacks/config/bubbles.xml.h:2
+#, fuzzy
+msgid "Bubbles Fall"
+msgstr "Burbujas"
+
+#: hacks/config/bubbles.xml.h:3
+#, fuzzy
+msgid "Bubbles Float"
+msgstr "Burbujas"
+
+#: hacks/config/bubbles.xml.h:4
+#, fuzzy
+msgid "Bubbles Rise"
+msgstr "Burbujas"
+
+#: hacks/config/bubbles.xml.h:5
+#, fuzzy
+msgid "Bubbles exist in three dimensions"
+msgstr "Las burbujas existen en tres dimensiones."
+
+#: hacks/config/bubbles.xml.h:6
+#, fuzzy
+msgid "Don't hide bubbles when they pop"
+msgstr "Deja en la pantalla la imagen de las burbujas aunque hayan reventado."
+
+#: hacks/config/bubbles.xml.h:7
+#, fuzzy
+msgid "Draw circles instead of pixmap bubbles"
+msgstr "Dibujar círculos en vez de imágenes pixmap para las burbujas."
+
+#: hacks/config/bubbles.xml.h:9
+#, fuzzy
+msgid "Leave Trails"
+msgstr "Rastros"
+
+#: hacks/config/bubbles.xml.h:12
+msgid ""
+"This simulates the kind of bubble formation that happens when water boils:"
+"small bubbles appear, and as they get closer to each other, they combine to "
+"form larger bubbles, which eventually pop. Written by James Macnicol."
+msgstr ""
+
+#: hacks/config/bumps.xml.h:1
+msgid ""
+"A bit like `Spotlight', except that instead of merely exposing part of your "
+"desktop, it creates a bump map from it. Basically, it 3D-izes a roaming "
+"section of your desktop, based on color intensity. Written by Shane Smit."
+msgstr ""
+
+#: hacks/config/bumps.xml.h:2
+msgid "Bumps"
+msgstr "Bumps"
+
+#: hacks/config/cage.xml.h:1
+msgid "Cage"
+msgstr "Jaula"
+
+#: hacks/config/cage.xml.h:7
+msgid ""
+"This draws Escher's ``Impossible Cage,'' a 3d analog of a moebius strip, and "
+"rotates it in three dimensions. Written by Marcelo Vianna."
+msgstr ""
+
+#: hacks/config/ccurve.xml.h:1
+#, fuzzy
+msgid "0 seconds"
+msgstr "segundos"
+
+#: hacks/config/ccurve.xml.h:2 hacks/config/epicycle.xml.h:1
+#, fuzzy
+msgid "1 minute"
+msgstr " minutos."
+
+#: hacks/config/ccurve.xml.h:3 hacks/config/epicycle.xml.h:2
+#, fuzzy
+msgid "1 second"
+msgstr "segundos"
+
+#: hacks/config/ccurve.xml.h:4
+msgid "C Curve"
+msgstr ""
+
+#: hacks/config/ccurve.xml.h:5
+msgid "Delay"
+msgstr "Retardo"
+
+#: hacks/config/ccurve.xml.h:6 hacks/config/coral.xml.h:5
+#: hacks/config/imsmap.xml.h:5 hacks/config/kumppa.xml.h:1
+#: hacks/config/qix.xml.h:6 hacks/config/squiral.xml.h:2
+#: hacks/config/wander.xml.h:4
+msgid "Density"
+msgstr "Densidad"
+
+#: hacks/config/ccurve.xml.h:8
+msgid ""
+"Generates self-similar linear fractals, including the classic ``C Curve.'' "
+"Written by Rick Campbell."
+msgstr ""
+
+#: hacks/config/circuit.xml.h:1
+msgid "Animates a number of 3D electronic components. Written by Ben Buxton."
+msgstr ""
+
+#: hacks/config/circuit.xml.h:2
+msgid "Circuit"
+msgstr ""
+
+#: hacks/config/circuit.xml.h:3 hacks/config/gflux.xml.h:4
+#: hacks/config/pulsar.xml.h:2
+msgid "Directional Lighting"
+msgstr ""
+
+#: hacks/config/circuit.xml.h:5
+#, fuzzy
+msgid "Flat Coloring"
+msgstr "Color muerto"
+
+#: hacks/config/circuit.xml.h:6
+#, fuzzy
+msgid "Parts"
+msgstr "Barras"
+
+#: hacks/config/circuit.xml.h:7 hacks/config/flipscreen3d.xml.h:3
+#, fuzzy
+msgid "Rotate"
+msgstr "Rotación"
+
+#: hacks/config/circuit.xml.h:8
+#, fuzzy
+msgid "Rotation Speed"
+msgstr "Rotación"
+
+#: hacks/config/circuit.xml.h:12 hacks/config/dangerball.xml.h:9
+#: hacks/config/engine.xml.h:7
+#, fuzzy
+msgid "Spin"
+msgstr "Espiral"
+
+#: hacks/config/compass.xml.h:1
+msgid "Compass"
+msgstr "Compass"
+
+#: hacks/config/compass.xml.h:2 hacks/config/deluxe.xml.h:3
+#: hacks/config/interference.xml.h:4 hacks/config/kumppa.xml.h:2
+#: hacks/config/nerverot.xml.h:6
+msgid "Double Buffer"
+msgstr ""
+
+#: hacks/config/compass.xml.h:6
+msgid ""
+"This draws a compass, with all elements spinning about randomly, for that "
+"``lost and nauseous'' feeling. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/coral.xml.h:1 hacks/config/deco.xml.h:1
+#: hacks/config/helix.xml.h:1 hacks/config/imsmap.xml.h:1
+#: hacks/config/jigsaw.xml.h:2 hacks/config/moire.xml.h:1
+#: hacks/config/pedal.xml.h:1 hacks/config/rorschach.xml.h:1
+#: hacks/config/rotzoomer.xml.h:2 hacks/config/wander.xml.h:2
+#: hacks/config/xspirograph.xml.h:1
+#, fuzzy
+msgid "1 Minute"
+msgstr " minutos."
+
+#: hacks/config/coral.xml.h:2 hacks/config/deco.xml.h:2
+#: hacks/config/helix.xml.h:2 hacks/config/imsmap.xml.h:2
+#: hacks/config/moire.xml.h:2 hacks/config/pedal.xml.h:2
+#: hacks/config/penrose.xml.h:1 hacks/config/rorschach.xml.h:2
+#: hacks/config/xspirograph.xml.h:2
+#, fuzzy
+msgid "1 Second"
+msgstr "Segundos"
+
+#: hacks/config/coral.xml.h:3
+msgid "Coral"
+msgstr "Coral"
+
+#: hacks/config/coral.xml.h:4 hacks/config/gflux.xml.h:3
+#: hacks/config/imsmap.xml.h:4 hacks/config/pyro.xml.h:2
+#: hacks/config/qix.xml.h:5 hacks/config/squiral.xml.h:1
+#: hacks/config/xearth.xml.h:4
+#, fuzzy
+msgid "Dense"
+msgstr "Más denso"
+
+#: hacks/config/coral.xml.h:10 hacks/config/squiral.xml.h:13
+msgid "Seeds"
+msgstr "Semillas"
+
+#: hacks/config/coral.xml.h:11
+msgid ""
+"Simulates coral growth, albeit somewhat slowly. This image doesn't really do "
+"it justice. Written by Frederick Roeber."
+msgstr ""
+
+#: hacks/config/coral.xml.h:13 hacks/config/gflux.xml.h:13
+#: hacks/config/imsmap.xml.h:13 hacks/config/pyro.xml.h:14
+#: hacks/config/qix.xml.h:21 hacks/config/squiral.xml.h:15
+#: hacks/config/xearth.xml.h:24 hacks/config/xmatrix.xml.h:15
+#, fuzzy
+msgid "Sparse"
+msgstr "Escaleras"
+
+#: hacks/config/cosmos.xml.h:1
+#, fuzzy
+msgid "Cosmos"
+msgstr "Colores"
+
+#: hacks/config/cosmos.xml.h:2
+msgid ""
+"Draws fireworks and zooming, fading flares. By Tom Campbell. You can find it "
+"at <http://www.mindspring.com/~campbell/cosmos/>"
+msgstr ""
+
+#: hacks/config/critical.xml.h:1
+msgid "Critical"
+msgstr "Critical"
+
+#: hacks/config/critical.xml.h:2
+msgid ""
+"Draws a system of self-organizing lines. It starts out as random squiggles, "
+"but after a few iterations, order begins to appear. Written by Martin Pool."
+msgstr ""
+
+#: hacks/config/crystal.xml.h:1
+#, fuzzy
+msgid "Center on Screen"
+msgstr "Al centro de la pantalla"
+
+#: hacks/config/crystal.xml.h:2 hacks/config/deluxe.xml.h:1
+#: hacks/config/fadeplot.xml.h:1 hacks/config/flow.xml.h:3
+#: hacks/config/galaxy.xml.h:1 hacks/config/gears.xml.h:2
+#: hacks/config/grav.xml.h:1 hacks/config/julia.xml.h:1
+#: hacks/config/laser.xml.h:1 hacks/config/lisa.xml.h:1
+#: hacks/config/lissie.xml.h:2 hacks/config/morph3d.xml.h:2
+#: hacks/config/mountain.xml.h:1 hacks/config/qix.xml.h:4
+#: hacks/config/rocks.xml.h:2 hacks/config/rotor.xml.h:2
+#: hacks/config/rubik.xml.h:1 hacks/config/shadebobs.xml.h:1
+#: hacks/config/sierpinski.xml.h:1 hacks/config/slip.xml.h:1
+#: hacks/config/spiral.xml.h:1 hacks/config/sproingies.xml.h:1
+#: hacks/config/superquadrics.xml.h:1 hacks/config/swirl.xml.h:1
+#: hacks/config/worm.xml.h:2
+msgid "Count"
+msgstr "Cantidad"
+
+#: hacks/config/crystal.xml.h:3
+msgid "Crystal"
+msgstr "Cristal"
+
+#: hacks/config/crystal.xml.h:4
+#, fuzzy
+msgid "Draw Cell"
+msgstr "Células"
+
+#: hacks/config/crystal.xml.h:5 hacks/config/xearth.xml.h:6
+msgid "Draw Grid"
+msgstr ""
+
+#: hacks/config/crystal.xml.h:7
+#, fuzzy
+msgid "Horizontal Symmetries"
+msgstr "Degradado horizontal"
+
+#: hacks/config/crystal.xml.h:9
+msgid ""
+"Moving polygons, similar to a kaleidescope (more like a kaleidescope than "
+"the hack called `kaleid,' actually.) This one by Jouk Jansen."
+msgstr ""
+
+#: hacks/config/crystal.xml.h:14
+#, fuzzy
+msgid "Vertical Symmetries"
+msgstr "Degradado vertical"
+
+#: hacks/config/cynosure.xml.h:1
+msgid ""
+"A hack similar to `greynetic', but less frenetic. The first implementation "
+"was by Stephen Linhart; then Ozymandias G. Desiderata wrote a Java applet "
+"clone. That clone was discovered by Jamie Zawinski, and ported to C for "
+"inclusion here."
+msgstr ""
+
+#: hacks/config/cynosure.xml.h:2
+msgid "Cynosure"
+msgstr "Cynosure"
+
+#: hacks/config/dangerball.xml.h:1
+msgid "DangerBall"
+msgstr ""
+
+#: hacks/config/dangerball.xml.h:2
+msgid ""
+"Draws a ball that periodically extrudes many random spikes. Ouch! Written by "
+"Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/dangerball.xml.h:7
+#, fuzzy
+msgid "Spike Count"
+msgstr "Cantidad"
+
+#: hacks/config/dangerball.xml.h:8
+msgid "Spike Growth"
+msgstr ""
+
+#: hacks/config/dangerball.xml.h:10 hacks/config/engine.xml.h:8
+#: hacks/config/gltext.xml.h:17 hacks/config/menger.xml.h:20
+#: hacks/config/molecule.xml.h:25 hacks/config/wander.xml.h:15
+#, fuzzy
+msgid "Wander"
+msgstr "selector:"
+
+#: hacks/config/decayscreen.xml.h:1
+#, fuzzy
+msgid "DecayScreen"
+msgstr "Derretido"
+
+#: hacks/config/decayscreen.xml.h:3
+msgid "Fuzzy Melt"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:4
+msgid "Melt Away From Center"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:5
+msgid "Melt Down"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:6
+msgid "Melt Down, Left"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:7
+msgid "Melt Down, Right"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:8
+#, fuzzy
+msgid "Melt Left"
+msgstr "Izquierda"
+
+#: hacks/config/decayscreen.xml.h:9
+#, fuzzy
+msgid "Melt Right"
+msgstr "Derecha"
+
+#: hacks/config/decayscreen.xml.h:10
+msgid "Melt Towards Center"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:11
+msgid "Melt Up"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:12
+msgid "Melt Up, Left"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:13
+msgid "Melt Up, Right"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:14
+msgid "Melty Melt"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:15
+#, fuzzy
+msgid "Random Melt Style"
+msgstr "Parámetros al azar"
+
+#: hacks/config/decayscreen.xml.h:16
+msgid "Shuffle Melt"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:19
+msgid "Stretchy Melt"
+msgstr ""
+
+#: hacks/config/decayscreen.xml.h:20
+msgid ""
+"This takes an image and makes it melt. You've no doubt seen this effect "
+"before, but no screensaver would really be complete without it. It works "
+"best if there's something colorful visible. Warning, if the effect continues "
+"after the screen saver is off, seek medical attention. Written by David Wald "
+"and Vivek Khera."
+msgstr ""
+
+#: hacks/config/deco.xml.h:3
+msgid "Deco"
+msgstr "Deco"
+
+#: hacks/config/deco.xml.h:6 hacks/config/menger.xml.h:5
+#: hacks/config/sierpinski3d.xml.h:4
+msgid "Max Depth"
+msgstr ""
+
+#: hacks/config/deco.xml.h:7
+#, fuzzy
+msgid "Min Size"
+msgstr "Tamaño"
+
+#: hacks/config/deco.xml.h:9
+msgid ""
+"This one subdivides and colors rectangles randomly. It looks kind of like "
+"Brady-Bunch-era rec-room wall paneling. (Raven says: ``this screensaver is "
+"ugly enough to peel paint.'') Written by Jamie Zawinski, inspired by Java "
+"code by Michael Bayne."
+msgstr ""
+
+#: hacks/config/deco.xml.h:11 hacks/config/rd-bomb.xml.h:23
+#: hacks/config/whirlygig.xml.h:7 hacks/config/xearth.xml.h:33
+#: hacks/config/zoom.xml.h:10
+msgid "x"
+msgstr ""
+
+#: hacks/config/deluxe.xml.h:2
+msgid "Deluxe"
+msgstr "Deluxe"
+
+#: hacks/config/deluxe.xml.h:10 hacks/config/lmorph.xml.h:13
+#: hacks/config/starfish.xml.h:11
+#, fuzzy
+msgid "Thick"
+msgstr "Grosor"
+
+#: hacks/config/deluxe.xml.h:11 hacks/config/lmorph.xml.h:14
+#: hacks/config/starfish.xml.h:12
+#, fuzzy
+msgid "Thin"
+msgstr "Más fino"
+
+#: hacks/config/deluxe.xml.h:12
+msgid ""
+"This draws a pulsing sequence of stars, circles, and lines. It would look "
+"better if it was faster, but as far as I can tell, there is no way to make "
+"this be both: fast, and flicker-free. Yet another reason X sucks. Written by "
+"Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/deluxe.xml.h:13
+#, fuzzy
+msgid "Transparency"
+msgstr "Transparente"
+
+#: hacks/config/demon.xml.h:1
+#, fuzzy
+msgid ""
+"A cellular automaton that starts with a random field, and organizes it into "
+"stripes and spirals. Written by David Bagley."
+msgstr ""
+"Un autómata celular que comienza con un campo al azar, y lo organiza en\n"
+"espirales y tiras."
+
+#: hacks/config/demon.xml.h:2 hacks/config/petri.xml.h:1
+#, fuzzy
+msgid "Cell Size"
+msgstr "Tamaño"
+
+#: hacks/config/demon.xml.h:3
+msgid "Demon"
+msgstr "Demon"
+
+#: hacks/config/demon.xml.h:11
+#, fuzzy
+msgid "States"
+msgstr "Pasos"
+
+#: hacks/config/discrete.xml.h:1
+msgid "Discrete"
+msgstr "Discreto"
+
+#: hacks/config/discrete.xml.h:5
+msgid ""
+"More ``discrete map'' systems, including new variants of Hopalong and Julia, "
+"and a few others. Written by Tim Auckland."
+msgstr ""
+
+#: hacks/config/distort.xml.h:1
+#, fuzzy
+msgid "Black Hole"
+msgstr "Volumen del clic"
+
+#: hacks/config/distort.xml.h:2
+#, fuzzy
+msgid "Bounce"
+msgstr "Ninguno"
+
+#: hacks/config/distort.xml.h:3
+msgid "Distort"
+msgstr "Distorsión"
+
+#: hacks/config/distort.xml.h:6
+#, fuzzy
+msgid "Lens Count"
+msgstr "Cantidad"
+
+#: hacks/config/distort.xml.h:7
+#, fuzzy
+msgid "Lens Size"
+msgstr "Tamaño"
+
+#: hacks/config/distort.xml.h:8
+msgid "Magnify"
+msgstr ""
+
+#: hacks/config/distort.xml.h:9 hacks/config/lament.xml.h:4
+#, fuzzy
+msgid "Normal"
+msgstr " Normal"
+
+#: hacks/config/distort.xml.h:10
+#, fuzzy
+msgid "Reflect"
+msgstr "Borrar"
+
+#: hacks/config/distort.xml.h:14
+msgid "Swamp Thing"
+msgstr ""
+
+#: hacks/config/distort.xml.h:15
+msgid ""
+"This hack grabs an image of the screen, and then lets a transparent lens "
+"wander around the screen, magnifying whatever is underneath. Written by "
+"Jonas Munsin."
+msgstr ""
+
+#: hacks/config/distort.xml.h:16 hacks/config/moire.xml.h:12
+#: hacks/config/rd-bomb.xml.h:21 hacks/config/ripples.xml.h:15
+#: hacks/config/rotzoomer.xml.h:10 hacks/config/swirl.xml.h:10
+#: hacks/config/xflame.xml.h:7
+msgid "Use Shared Memory"
+msgstr ""
+
+#: hacks/config/distort.xml.h:17
+#, fuzzy
+msgid "Vortex"
+msgstr "Más corto"
+
+#: hacks/config/drift.xml.h:1
+msgid "Drift"
+msgstr "Deriva"
+
+#: hacks/config/drift.xml.h:4
+#, fuzzy
+msgid "Fractal Growth"
+msgstr "Las fractales deben crecer."
+
+#: hacks/config/drift.xml.h:5
+msgid "High Dimensional Sphere"
+msgstr ""
+
+#: hacks/config/drift.xml.h:6
+msgid ""
+"How could one possibly describe this except as ``drifting recursive fractal "
+"cosmic flames?'' Another fine hack from the Scott Draves collection of fine "
+"hacks."
+msgstr ""
+
+#: hacks/config/drift.xml.h:7
+#, fuzzy
+msgid "Lissojous Figures"
+msgstr "Lissajous"
+
+#: hacks/config/electricsheep.xml.h:1
+msgid "ElectricSheep"
+msgstr ""
+
+#: hacks/config/electricsheep.xml.h:2
+msgid ""
+"ElectricSheep is an xscreensaver module that displays mpeg video of an "
+"animated fractal flame. In the background, it contributes render cycles to "
+"the next animation. Periodically it uploades completed frames to the server, "
+"where they are compressed for distribution to all clients. This program is "
+"recommended only if you have a high bandwidth connection to the Internet. By "
+"Scott Draves. You can find it at <http://www.electricsheep.org/>. See that "
+"web site for configuration information."
+msgstr ""
+
+#: hacks/config/engine.xml.h:1
+msgid ""
+"Draws a simple four-stroke engine that floats around the screen. Written by "
+"Ben Buxton."
+msgstr ""
+
+#: hacks/config/engine.xml.h:2
+#, fuzzy
+msgid "Engine"
+msgstr "Erre"
+
+#: hacks/config/epicycle.xml.h:4
+msgid "Epicycle"
+msgstr "Epicycle"
+
+#: hacks/config/epicycle.xml.h:6
+msgid "Harmonics"
+msgstr ""
+
+#: hacks/config/epicycle.xml.h:12
+#, fuzzy
+msgid ""
+"This program draws the path traced out by a point on the edge of a circle. "
+"That circle rotates around a point on the rim of another circle, and so on, "
+"several times. These were the basis for the pre-heliocentric model of "
+"planetary motion. Written by James Youngman."
+msgstr ""
+"Este salvapantalla dibuja la trayectoria de un punto sobre un círculo en "
+"rotación que se desplaza sobre otro círculo"
+
+#: hacks/config/extrusion.xml.h:1
+msgid ""
+"Draws various rotating extruded shapes that twist around, lengthen, and turn "
+"inside out. Created by David Konerding from the samples that come with the "
+"GL Extrusion library by Linas Vepstas."
+msgstr ""
+
+#: hacks/config/extrusion.xml.h:2
+#, fuzzy
+msgid "Extrusion"
+msgstr "Extensión"
+
+#: hacks/config/extrusion.xml.h:4
+#, fuzzy
+msgid "Helix 2"
+msgstr "Hélice"
+
+#: hacks/config/extrusion.xml.h:5
+#, fuzzy
+msgid "Helix 3"
+msgstr "Hélice"
+
+#: hacks/config/extrusion.xml.h:6
+#, fuzzy
+msgid "Helix 4"
+msgstr "Hélice"
+
+#: hacks/config/extrusion.xml.h:7
+#, fuzzy
+msgid "Join Offset"
+msgstr "Desplazamiento"
+
+#: hacks/config/extrusion.xml.h:8
+#, fuzzy
+msgid "Random Object"
+msgstr "Parámetros al azar"
+
+#: hacks/config/extrusion.xml.h:9
+#, fuzzy
+msgid "Screw"
+msgstr "Scwm"
+
+#: hacks/config/extrusion.xml.h:14
+#, fuzzy
+msgid "Taper"
+msgstr "con"
+
+#: hacks/config/extrusion.xml.h:15
+#, fuzzy
+msgid "Texture Image"
+msgstr "Centrado"
+
+#: hacks/config/extrusion.xml.h:16
+#, fuzzy
+msgid "Twistoid"
+msgstr "Giro imprevisto"
+
+#: hacks/config/extrusion.xml.h:17 hacks/config/glplanet.xml.h:9
+#: hacks/config/pulsar.xml.h:19
+msgid "Use Flat Coloring"
+msgstr ""
+
+#: hacks/config/extrusion.xml.h:18 hacks/config/glplanet.xml.h:10
+#, fuzzy
+msgid "Use Lighting"
+msgstr "Rayos"
+
+#: hacks/config/fadeplot.xml.h:2
+#, fuzzy
+msgid ""
+"Draws what looks like a waving ribbon following a sinusoidal path. Written "
+"by Bas van Gaalen and Charles Vidal."
+msgstr ""
+"Dibuja lo que parece una cinta ondeante siguiendo un camino sinusoidal."
+
+#: hacks/config/fadeplot.xml.h:3
+#, fuzzy
+msgid "FadePlot"
+msgstr "Fadeplot"
+
+#: hacks/config/flag.xml.h:1
+msgid "Bitmap for Flag"
+msgstr ""
+
+#: hacks/config/flag.xml.h:3
+msgid "Flag"
+msgstr "Bandera"
+
+#: hacks/config/flag.xml.h:10
+msgid "Text for Flag"
+msgstr ""
+
+#: hacks/config/flag.xml.h:11
+msgid ""
+"This draws a waving colored flag, that undulates its way around the screen. "
+"The trick is the flag can contain arbitrary text and images. By default, it "
+"displays either the current system name and OS type, or a picture of "
+"``Bob,'' but you can replace the text or the image with a command-line "
+"option. Written by Charles Vidal and Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/flame.xml.h:1 hacks/config/jigsaw.xml.h:1
+#: hacks/config/maze.xml.h:1 hacks/config/rotzoomer.xml.h:1
+#: hacks/config/wander.xml.h:1
+#, fuzzy
+msgid "0 Seconds"
+msgstr "Segundos"
+
+#: hacks/config/flame.xml.h:2 hacks/config/maze.xml.h:2
+#, fuzzy
+msgid "10 Seconds"
+msgstr "Segundos"
+
+#: hacks/config/flame.xml.h:3
+msgid "Another iterative fractal generator. Written by Scott Draves."
+msgstr ""
+
+#: hacks/config/flame.xml.h:4
+msgid "Complexity"
+msgstr ""
+
+#: hacks/config/flame.xml.h:8
+#, fuzzy
+msgid "Flame"
+msgstr "Xflame"
+
+#: hacks/config/flame.xml.h:12
+#, fuzzy
+msgid "Number of Fractals"
+msgstr "Cantidad de rastros."
+
+#: hacks/config/flipscreen3d.xml.h:2
+#, fuzzy
+msgid "Flipscreen3d"
+msgstr "Slidescreen"
+
+#: hacks/config/flow.xml.h:1
+msgid "Allow 2D Attractors"
+msgstr ""
+
+#: hacks/config/flow.xml.h:2
+msgid ""
+"Another series of strange attractors: a flowing series of points, making "
+"strange rotational shapes. Written by Jeff Butterworth."
+msgstr ""
+
+#: hacks/config/flow.xml.h:5
+msgid "Flow"
+msgstr "Flujo"
+
+#: hacks/config/flow.xml.h:6
+msgid "Freeze Some Bees"
+msgstr ""
+
+#: hacks/config/flow.xml.h:10
+msgid "Ride a Trained Bee"
+msgstr ""
+
+#: hacks/config/flow.xml.h:11
+msgid "Rotate Around Attractor"
+msgstr ""
+
+#: hacks/config/flow.xml.h:12
+msgid "Show Bounding Box"
+msgstr ""
+
+#: hacks/config/flow.xml.h:14
+msgid "Slow Bees with Antifreeze"
+msgstr ""
+
+#: hacks/config/flow.xml.h:19
+msgid "Zoom In and Out"
+msgstr ""
+
+#: hacks/config/forest.xml.h:2
+msgid "Forest"
+msgstr "Bosque"
+
+#: hacks/config/forest.xml.h:7
+msgid ""
+"This draws fractal trees. Written by Peter Baumung. Everybody loves "
+"fractals, right?"
+msgstr ""
+
+#: hacks/config/galaxy.xml.h:4
+msgid "Galaxy"
+msgstr "Galaxia"
+
+#: hacks/config/galaxy.xml.h:9 hacks/config/lisa.xml.h:7
+#: hacks/config/lissie.xml.h:8 hacks/config/loop.xml.h:6
+#: hacks/config/penrose.xml.h:10 hacks/config/rotor.xml.h:10
+#: hacks/config/rubik.xml.h:8 hacks/config/sproingies.xml.h:5
+#: hacks/config/wander.xml.h:13 hacks/config/worm.xml.h:6
+msgid "Size"
+msgstr "Tamaño"
+
+#: hacks/config/galaxy.xml.h:12
+msgid ""
+"This draws spinning galaxies, which then collide and scatter their stars to "
+"the, uh, four winds or something. Originally an Amiga program by Uli "
+"Siegmund."
+msgstr ""
+
+#: hacks/config/gears.xml.h:1 hacks/config/gflux.xml.h:1
+#: hacks/config/pyro.xml.h:1 hacks/config/rd-bomb.xml.h:6
+#: hacks/config/rocks.xml.h:1 hacks/config/starwars.xml.h:1
+#: hacks/config/xfishtank.xml.h:1
+#, fuzzy
+msgid "Animation Speed"
+msgstr "Animar"
+
+#: hacks/config/gears.xml.h:4
+msgid "Gears"
+msgstr "Engranajes"
+
+#: hacks/config/gears.xml.h:5
+msgid "Planetary Gear System"
+msgstr ""
+
+#: hacks/config/gears.xml.h:6 hacks/config/goop.xml.h:9
+#, fuzzy
+msgid "Rotational Speed"
+msgstr "Rotación"
+
+#: hacks/config/gears.xml.h:10
+msgid ""
+"This draws sets of turning, interlocking gears, rotating in three "
+"dimensions. Another GL hack, by Danny Sung, Brian Paul, Ed Mackey, and Jamie "
+"Zawinski."
+msgstr ""
+
+#: hacks/config/gears.xml.h:11
+msgid "Three Gear System"
+msgstr ""
+
+#: hacks/config/gflux.xml.h:2
+#, fuzzy
+msgid "Checkerboard"
+msgstr "Propiedades del Teclado"
+
+#: hacks/config/gflux.xml.h:5
+msgid ""
+"Draws a rippling waves on a rotating wireframe grid, using GL. Written by "
+"Josiah Pease."
+msgstr ""
+
+#: hacks/config/gflux.xml.h:7
+#, fuzzy
+msgid "Flat Lighting"
+msgstr "Rayos"
+
+#: hacks/config/gflux.xml.h:8
+msgid "GFlux"
+msgstr ""
+
+#: hacks/config/gflux.xml.h:9
+#, fuzzy
+msgid "Mesh Density"
+msgstr "Densidad"
+
+#: hacks/config/gflux.xml.h:10
+#, fuzzy
+msgid "Screen Image"
+msgstr "Salvapantalla"
+
+#: hacks/config/gflux.xml.h:14 hacks/config/interference.xml.h:18
+#, fuzzy
+msgid "Wave Speed"
+msgstr "Velocidad"
+
+#: hacks/config/gflux.xml.h:15
+msgid "Waves"
+msgstr ""
+
+#: hacks/config/gflux.xml.h:16
+msgid "Wire Mesh"
+msgstr ""
+
+#: hacks/config/glplanet.xml.h:1
+msgid ""
+"Draws a planet bouncing around in space. Written by David Konerding. The "
+"built-in image is a map of the earth (extracted from `xearth'), but you can "
+"wrap any texture around the sphere, e.g., the planetary textures that come "
+"with `ssystem'."
+msgstr ""
+
+#: hacks/config/glplanet.xml.h:3
+msgid "GLPlanet"
+msgstr "Planeta GL"
+
+#: hacks/config/glplanet.xml.h:4
+msgid "Image File"
+msgstr ""
+
+#: hacks/config/gltext.xml.h:1
+msgid ""
+"Displays a few lines of text spinning around in a solid 3D font. Written by "
+"Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/gltext.xml.h:2 hacks/config/menger.xml.h:1
+#: hacks/config/molecule.xml.h:4
+msgid "Don't Rotate"
+msgstr ""
+
+#: hacks/config/gltext.xml.h:4
+#, fuzzy
+msgid "GLText"
+msgstr "Izquierda"
+
+#: hacks/config/gltext.xml.h:5 hacks/config/menger.xml.h:7
+#: hacks/config/molecule.xml.h:14
+msgid "Rotate around X and Y axes"
+msgstr ""
+
+#: hacks/config/gltext.xml.h:6 hacks/config/menger.xml.h:8
+#: hacks/config/molecule.xml.h:15
+msgid "Rotate around X and Z axes"
+msgstr ""
+
+#: hacks/config/gltext.xml.h:7 hacks/config/menger.xml.h:9
+#: hacks/config/molecule.xml.h:16
+msgid "Rotate around X axis"
+msgstr ""
+
+#: hacks/config/gltext.xml.h:8 hacks/config/menger.xml.h:10
+#: hacks/config/molecule.xml.h:17
+msgid "Rotate around Y and Z axes"
+msgstr ""
+
+#: hacks/config/gltext.xml.h:9 hacks/config/menger.xml.h:11
+#: hacks/config/molecule.xml.h:18
+msgid "Rotate around Y axis"
+msgstr ""
+
+#: hacks/config/gltext.xml.h:10 hacks/config/menger.xml.h:12
+#: hacks/config/molecule.xml.h:19
+msgid "Rotate around Z axis"
+msgstr ""
+
+#: hacks/config/gltext.xml.h:11 hacks/config/menger.xml.h:13
+#: hacks/config/molecule.xml.h:20
+msgid "Rotate around all three axes"
+msgstr ""
+
+#: hacks/config/gltext.xml.h:16 hacks/config/noseguy.xml.h:5
+#, fuzzy
+msgid "Text"
+msgstr "Prueba"
+
+#: hacks/config/goban.xml.h:1
+msgid "Goban"
+msgstr ""
+
+#: hacks/config/goban.xml.h:2
+msgid ""
+"Replays historical games of go (aka wei-chi and baduk) on the screen. By "
+"Scott Draves. You can find it at <http://www.draves.org/goban/>."
+msgstr ""
+
+#: hacks/config/goop.xml.h:1
+msgid "Additive Colors (reflected light)"
+msgstr ""
+
+#: hacks/config/goop.xml.h:2
+#, fuzzy
+msgid "Blob Count"
+msgstr "Cantidad"
+
+#: hacks/config/goop.xml.h:3
+msgid "Elasticity"
+msgstr ""
+
+#: hacks/config/goop.xml.h:5
+msgid "Goop"
+msgstr "Gotas"
+
+#: hacks/config/goop.xml.h:8
+msgid "Opaque Blobs"
+msgstr ""
+
+#: hacks/config/goop.xml.h:12
+#, fuzzy
+msgid "Speed Limit"
+msgstr "Velocidad"
+
+#: hacks/config/goop.xml.h:13
+msgid "Subtractive Colors (transmitted light)"
+msgstr ""
+
+#: hacks/config/goop.xml.h:14
+msgid ""
+"This draws set of animating, transparent, amoeba-like blobs. The blobs "
+"change shape as they wander around the screen, and they are translucent, so "
+"you can see the lower blobs through the higher ones, and when one passes "
+"over another, their colors merge. Written by Jamie Zawinski. I got the idea "
+"for this from a cool mouse pad I have, which achieves the same kind of "
+"effect in real life by having several layers plastic with colored oil "
+"between them. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/goop.xml.h:15
+#, fuzzy
+msgid "Transparent Blobs"
+msgstr "Transparente"
+
+#: hacks/config/goop.xml.h:16
+#, fuzzy
+msgid "XOR Blobs"
+msgstr "Burbuja"
+
+#: hacks/config/grav.xml.h:3
+msgid "Grav"
+msgstr "Gravedad"
+
+#: hacks/config/grav.xml.h:6
+#, fuzzy
+msgid "Object Trails"
+msgstr "Rastros"
+
+#: hacks/config/grav.xml.h:7
+#, fuzzy
+msgid "Orbital Decay"
+msgstr "La órbita debe decaer."
+
+#: hacks/config/grav.xml.h:10
+msgid ""
+"This program draws a simple orbital simulation. If you turn on trails, it "
+"looks kind of like a cloud-chamber photograph. Written by Greg Bowering."
+msgstr ""
+
+#: hacks/config/greynetic.xml.h:2
+msgid "Greynetic"
+msgstr "Grisnética"
+
+#: hacks/config/greynetic.xml.h:5
+msgid ""
+"This draws random colored and stippled rectangles. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/halo.xml.h:1
+#, fuzzy
+msgid "Animate Circles"
+msgstr "Círculos animados."
+
+#: hacks/config/halo.xml.h:3
+msgid "Halo"
+msgstr "Halo"
+
+#: hacks/config/halo.xml.h:5
+#, fuzzy
+msgid "Number of Circles"
+msgstr "Número de ciclos"
+
+#: hacks/config/halo.xml.h:7 hacks/config/imsmap.xml.h:11
+#, fuzzy
+msgid "Random Mode"
+msgstr "Aleatorio"
+
+#: hacks/config/halo.xml.h:8
+msgid "Seuss Mode"
+msgstr ""
+
+#: hacks/config/halo.xml.h:11
+msgid ""
+"This draws trippy psychedelic circular patterns that hurt to look at. It can "
+"also animate the control-points, but that takes a lot of CPU and bandwidth. "
+"Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/helix.xml.h:4
+msgid "Helix"
+msgstr "Hélice"
+
+#: hacks/config/helix.xml.h:5
+msgid ""
+"This repeatedly generates spirally string-art-ish patterns. Written by Jamie "
+"Zawinski."
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:3
+msgid "EJK1"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:4
+msgid "EJK2"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:5
+msgid "EJK3"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:6
+msgid "EJK4"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:7
+msgid "EJK5"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:8
+msgid "EJK6"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:11
+msgid "Hopalong"
+msgstr "Hopalong"
+
+#: hacks/config/hopalong.xml.h:12
+#, fuzzy
+msgid "Jong"
+msgstr "Más largo"
+
+#: hacks/config/hopalong.xml.h:16
+msgid "Martin"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:18
+#, fuzzy
+msgid "Popcorn"
+msgstr "Fósforo"
+
+#: hacks/config/hopalong.xml.h:19
+msgid "RR"
+msgstr ""
+
+#: hacks/config/hopalong.xml.h:20
+#, fuzzy
+msgid "Sine"
+msgstr "Tamaño"
+
+#: hacks/config/hopalong.xml.h:24
+msgid ""
+"This draws lacy fractal patterns, based on iteration in the imaginary plane, "
+"from a 1986 Scientific American article. Mostly written by Patrick Naughton."
+msgstr ""
+
+#: hacks/config/hyperball.xml.h:1 hacks/config/hypercube.xml.h:1
+#, fuzzy
+msgid "Far"
+msgstr "Rápido"
+
+#: hacks/config/hyperball.xml.h:4
+#, fuzzy
+msgid "Hyperball"
+msgstr "Hipercubo"
+
+#: hacks/config/hyperball.xml.h:5
+msgid ""
+"Hyperball is to hypercube as dodecahedron is to cube: this displays a 2D "
+"projection of the sequence of 3D objects which are the projections of the 4D "
+"analog to the dodecahedron. Written by Joe Keane."
+msgstr ""
+
+#: hacks/config/hyperball.xml.h:7 hacks/config/hypercube.xml.h:6
+#, fuzzy
+msgid "Near"
+msgstr "Engranajes"
+
+#: hacks/config/hyperball.xml.h:10 hacks/config/hypercube.xml.h:10
+#, fuzzy
+msgid "XW Rotation"
+msgstr "Rotación"
+
+#: hacks/config/hyperball.xml.h:11 hacks/config/hypercube.xml.h:11
+#, fuzzy
+msgid "XY Rotation"
+msgstr "Rotación"
+
+#: hacks/config/hyperball.xml.h:12 hacks/config/hypercube.xml.h:12
+#, fuzzy
+msgid "XZ Rotation"
+msgstr "Rotación"
+
+#: hacks/config/hyperball.xml.h:13 hacks/config/hypercube.xml.h:13
+#, fuzzy
+msgid "YW Rotation"
+msgstr "Rotación"
+
+#: hacks/config/hyperball.xml.h:14 hacks/config/hypercube.xml.h:14
+#, fuzzy
+msgid "YZ Rotation"
+msgstr "Rotación"
+
+#: hacks/config/hyperball.xml.h:15 hacks/config/hypercube.xml.h:15
+#, fuzzy
+msgid "ZW Rotation"
+msgstr "Rotación"
+
+#: hacks/config/hyperball.xml.h:16 hacks/config/hypercube.xml.h:16
+#: hacks/config/zoom.xml.h:8
+#, fuzzy
+msgid "Zoom"
+msgstr "Abajo"
+
+#: hacks/config/hypercube.xml.h:4
+msgid "Hypercube"
+msgstr "Hipercubo"
+
+#: hacks/config/hypercube.xml.h:9
+msgid ""
+"This displays 2D projections of the sequence of 3D objects which are the "
+"projections of the 4D analog to the cube: as a square is composed of four "
+"lines, each touching two others; and a cube is composed of six squares, each "
+"touching four others; a hypercube is composed of eight cubes, each touching "
+"six others. To make it easier to visualize the rotation, it uses a different "
+"color for the edges of each face. Don't think about it too long, or your "
+"brain will melt. Written by Joe Keane, Fritz Mueller, and Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/ifs.xml.h:2
+msgid "IFS"
+msgstr ""
+
+#: hacks/config/ifs.xml.h:7
+#, fuzzy
+msgid ""
+"This one draws spinning, colliding iterated-function-system images. Written "
+"by Massimino Pascal."
+msgstr ""
+"Ifs dibuja imágenes de sistemas de funciones iteradas, girando y "
+"colisionando."
+
+#: hacks/config/imsmap.xml.h:3
+#, fuzzy
+msgid "Brightness Gradients"
+msgstr "Degradado horizontal"
+
+#: hacks/config/imsmap.xml.h:7
+#, fuzzy
+msgid "Hue Gradients"
+msgstr "Degradado vertical"
+
+#: hacks/config/imsmap.xml.h:8
+#, fuzzy
+msgid "IMSmap"
+msgstr "Mapa IMS"
+
+#: hacks/config/imsmap.xml.h:12
+#, fuzzy
+msgid "Saturation Gradients"
+msgstr "Degradado horizontal"
+
+#: hacks/config/imsmap.xml.h:14
+msgid ""
+"This generates random cloud-like patterns. It looks quite different in "
+"monochrome and color. The basic idea is to take four points on the edge of "
+"the image, and assign each a random ``elevation''. Then find the point "
+"between them, and give it a value which is the average of the other four, "
+"plus some small random offset. Then coloration is done based on elevation. "
+"The color selection is done by binding the elevation to either hue, "
+"saturation, or brightness, and assigning random values to the others. The "
+"``brightness'' mode tends to yield cloudlike patterns, and the others tend "
+"to generate images that look like heat-maps or CAT-scans. Written by Juergen "
+"Nickelsen and Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/interference.xml.h:1
+#, fuzzy
+msgid "Anim Speed"
+msgstr "Velocidad"
+
+#: hacks/config/interference.xml.h:2
+msgid ""
+"Another color-field hack, this one works by computing decaying sinusoidal "
+"waves, and allowing them to interfere with each other as their origins move. "
+"Written by Hannu Mallat."
+msgstr ""
+
+#: hacks/config/interference.xml.h:7
+msgid "Interference"
+msgstr "Interferencias"
+
+#: hacks/config/interference.xml.h:10 hacks/config/t3d.xml.h:9
+#: hacks/config/xearth.xml.h:11 hacks/config/zoom.xml.h:5
+msgid "Magnification"
+msgstr ""
+
+#: hacks/config/interference.xml.h:13
+#, fuzzy
+msgid "Number of Waves"
+msgstr "Cantidad de hormigas."
+
+#: hacks/config/interference.xml.h:17
+#, fuzzy
+msgid "Wave Size"
+msgstr "Tamaño"
+
+#: hacks/config/jigsaw.xml.h:4
+msgid "Jigsaw"
+msgstr "Rompecabezas"
+
+#: hacks/config/jigsaw.xml.h:6
+#, fuzzy
+msgid "Solved Duration"
+msgstr "Duración"
+
+#: hacks/config/jigsaw.xml.h:8
+msgid ""
+"This grabs a screen image, carves it up into a jigsaw puzzle, shuffles it, "
+"and then solves the puzzle. This works especially well when you feed it an "
+"external video signal instead of letting it grab the screen image (actually, "
+"I guess this is generally true...) When it is grabbing a video image, it is "
+"sometimes pretty hard to guess what the image is going to look like once the "
+"puzzle is solved. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/julia.xml.h:3 hacks/config/rorschach.xml.h:4
+msgid "Iterations"
+msgstr "Iteraciones"
+
+#: hacks/config/julia.xml.h:4
+msgid "Julia"
+msgstr "Julia"
+
+#: hacks/config/julia.xml.h:11
+msgid ""
+"This one draws spinning, animating (are you detecting a pattern here yet?) "
+"explorations of the Julia set. You've probably seen static images of this "
+"fractal form before, but it's a lot of fun to watch in motion as well. One "
+"interesting thing is that there is a small swinging dot passing in front of "
+"the image, which indicates the control point from which the rest of the "
+"image was generated. Written by Sean McCullough."
+msgstr ""
+
+#: hacks/config/kaleidescope.xml.h:1
+msgid ""
+"Another clone of an ancient meme, consisting largely of frenetic rotational "
+"motion of colored lines. This one is by Ron Tapia. The motion is nice, but I "
+"think it needs more solids, or perhaps just brighter colors. More variations "
+"in the rotational speed might help, too."
+msgstr ""
+
+#: hacks/config/kaleidescope.xml.h:4
+msgid "Kaleidescope"
+msgstr "Caleidoscopio"
+
+#: hacks/config/kaleidescope.xml.h:6 hacks/config/qix.xml.h:18
+msgid "Segments"
+msgstr "Segmentos"
+
+#: hacks/config/kaleidescope.xml.h:9
+msgid "Symmetry"
+msgstr ""
+
+#: hacks/config/kaleidescope.xml.h:10
+msgid "Trails"
+msgstr "Rastros"
+
+#: hacks/config/kumppa.xml.h:5
+msgid "Kumppa"
+msgstr "Kumppa"
+
+#: hacks/config/kumppa.xml.h:7
+#, fuzzy
+msgid "Randomize"
+msgstr "Aleatorio"
+
+#: hacks/config/kumppa.xml.h:10
+msgid ""
+"Spiraling, spinning, and very, very fast splashes of color rush toward the "
+"screen. Written by Teemu Suutari."
+msgstr ""
+
+#: hacks/config/lament.xml.h:1
+msgid ""
+"Animates a simulation of Lemarchand's Box, repeatedly solving itself. "
+"Requires OpenGL, and a machine with fast hardware support for texture maps. "
+"Warning: occasionally opens doors. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/lament.xml.h:3
+msgid "Lament"
+msgstr "Lament"
+
+#: hacks/config/lament.xml.h:8
+#, fuzzy
+msgid "Untextured"
+msgstr "Centrado"
+
+#: hacks/config/laser.xml.h:4
+msgid "Laser"
+msgstr "Láser"
+
+#: hacks/config/laser.xml.h:7
+msgid ""
+"Moving radiating lines, that look vaguely like scanning laser beams. Written "
+"by Pascal Pensa. (Frankie say: relax.)"
+msgstr ""
+
+#: hacks/config/lightning.xml.h:2
+msgid "Lightning"
+msgstr "Rayos"
+
+#: hacks/config/lightning.xml.h:7
+msgid ""
+"This one draws crackling fractal lightning bolts. It's simple, direct, and "
+"to the point. If only it had sound... Written by Keith Romberg."
+msgstr ""
+
+#: hacks/config/lisa.xml.h:4
+msgid "Lisa"
+msgstr "Lisa"
+
+#: hacks/config/lisa.xml.h:10
+msgid "Steps"
+msgstr "Pasos"
+
+#: hacks/config/lisa.xml.h:11
+msgid ""
+"This draws Lisajous loops, by Caleb Cullen. Remember that device they had "
+"the Phantom Zone prisoners in during their trial in Superman? I think that "
+"was one of these."
+msgstr ""
+
+#: hacks/config/lissie.xml.h:1
+msgid ""
+"Another Lissajous figure. This one draws the progress of circular shapes "
+"along a path. Written by Alexander Jolk."
+msgstr ""
+
+#: hacks/config/lissie.xml.h:5
+msgid "Lissie"
+msgstr "Lissie"
+
+#: hacks/config/lmorph.xml.h:1
+#, fuzzy
+msgid "Closed Figures"
+msgstr "Cerca"
+
+#: hacks/config/lmorph.xml.h:2
+#, fuzzy
+msgid "Control Points"
+msgstr "Centro de control"
+
+#: hacks/config/lmorph.xml.h:4
+#, fuzzy
+msgid "Interpolation Steps"
+msgstr "Cantidad de pasos de interpolación."
+
+#: hacks/config/lmorph.xml.h:5
+#, fuzzy
+msgid "LMorph"
+msgstr "Lmorph"
+
+#: hacks/config/lmorph.xml.h:6
+msgid "Less"
+msgstr "Menos"
+
+#: hacks/config/lmorph.xml.h:8
+msgid "More"
+msgstr "Más"
+
+#: hacks/config/lmorph.xml.h:9
+#, fuzzy
+msgid "Open Figures"
+msgstr "Figuras abiertas."
+
+#: hacks/config/lmorph.xml.h:10
+#, fuzzy
+msgid "Open and Closed Figures"
+msgstr "Figuras abiertas."
+
+#: hacks/config/lmorph.xml.h:15
+msgid ""
+"This generates random spline-ish line drawings and morphs between them. "
+"Written by Sverre H. Huseby and Glenn T. Lines."
+msgstr ""
+
+#: hacks/config/loop.xml.h:3
+msgid "Loop"
+msgstr "Bucle"
+
+#: hacks/config/loop.xml.h:10
+#, fuzzy
+msgid ""
+"This one produces loop-shaped colonies that spawn, age, and eventually die. "
+"Written by David Bagley."
+msgstr ""
+"Este produce colonias con formas de ciclo que nacen, crecen y eventualmente "
+"mueren."
+
+#: hacks/config/maze.xml.h:3
+msgid "Backtracking Generator"
+msgstr ""
+
+#: hacks/config/maze.xml.h:5 hacks/config/slidescreen.xml.h:3
+#, fuzzy
+msgid "Grid Size"
+msgstr "Tamaño"
+
+#: hacks/config/maze.xml.h:6
+msgid "Head Toward Exit"
+msgstr ""
+
+#: hacks/config/maze.xml.h:7
+msgid "Ignorant of Exit Direction"
+msgstr ""
+
+#: hacks/config/maze.xml.h:8
+msgid "Joining Generator"
+msgstr ""
+
+#: hacks/config/maze.xml.h:9
+msgid "Maze"
+msgstr "Laberinto"
+
+#: hacks/config/maze.xml.h:10
+#, fuzzy
+msgid "Post-Solve Delay"
+msgstr "Retardo post-resolutorio"
+
+#: hacks/config/maze.xml.h:11
+#, fuzzy
+msgid "Pre-Solve Delay"
+msgstr "Retardo pre-resolutorio"
+
+#: hacks/config/maze.xml.h:12
+#, fuzzy
+msgid "Random Generator"
+msgstr "Salvapantalla al azar"
+
+#: hacks/config/maze.xml.h:13
+msgid "Seeding Generator"
+msgstr ""
+
+#: hacks/config/maze.xml.h:15
+#, fuzzy
+msgid "Solve Speed"
+msgstr "Velocidad"
+
+#: hacks/config/maze.xml.h:16
+msgid ""
+"This is the ancient X maze demo, modified to work with xscreensaver. It "
+"generates a random maze, then solves it with visual feedback. Originally by "
+"Jim Randell; modified by a cast of thousands."
+msgstr ""
+
+#: hacks/config/menger.xml.h:6
+#, fuzzy
+msgid "Menger"
+msgstr "Con"
+
+#: hacks/config/menger.xml.h:19
+msgid ""
+"This draws the three-dimensional variant of the recursive Menger Gasket, a "
+"cube-based fractal object analagous to the Sierpinski Tetrahedron. Written "
+"by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/moebius.xml.h:1
+msgid ""
+"Another M. C. Escher hack by Marcelo Vianna, this one draws ``Moebius Strip "
+"II,'' a GL image of ants walking along the surface of a moebius strip."
+msgstr ""
+
+#: hacks/config/moebius.xml.h:2
+msgid "Draw Ants"
+msgstr ""
+
+#: hacks/config/moebius.xml.h:4
+msgid "Mesh Floor"
+msgstr ""
+
+#: hacks/config/moebius.xml.h:5
+msgid "Moebius"
+msgstr "Moebius"
+
+#: hacks/config/moebius.xml.h:8
+#, fuzzy
+msgid "Solid Floor"
+msgstr "Sólido"
+
+#: hacks/config/moebius.xml.h:9 hacks/config/qix.xml.h:20
+msgid "Solid Objects"
+msgstr ""
+
+#: hacks/config/moire2.xml.h:1
+msgid ""
+"Another example of the fun you can have with moire interference patterns; "
+"this hack generates fields of concentric circles or ovals, and combines the "
+"planes with various operations. The planes are moving independently of one "
+"another, causing the interference lines to ``spray.'' Written by Jamie "
+"Zawinski."
+msgstr ""
+
+#: hacks/config/moire2.xml.h:4
+msgid "Moire2"
+msgstr "Moire2"
+
+#: hacks/config/moire2.xml.h:8
+msgid "Thickness"
+msgstr "Grosor"
+
+#: hacks/config/moire.xml.h:6
+msgid "Moire"
+msgstr "Moire"
+
+#: hacks/config/moire.xml.h:8 hacks/config/rorschach.xml.h:6
+msgid "Offset"
+msgstr "Desplazamiento"
+
+#: hacks/config/moire.xml.h:10
+msgid ""
+"This one draws cool circular interference patterns. Most of the circles you "
+"see aren't explicitly rendered, but show up as a result of interactions "
+"between the other pixels that were drawn. Written by Jamie Zawinski, "
+"inspired by Java code by Michael Bayne. As he pointed out, the beauty of "
+"this one is that the heart of the display algorithm can be expressed with "
+"just a pair of loops and a handful of arithmetic, giving it a high ``display "
+"hack metric''."
+msgstr ""
+
+#: hacks/config/molecule.xml.h:3
+msgid "Describe Molecule"
+msgstr ""
+
+#: hacks/config/molecule.xml.h:5
+msgid "Draw Atomic Bonds"
+msgstr ""
+
+#: hacks/config/molecule.xml.h:6
+#, fuzzy
+msgid "Draw Atoms"
+msgstr "Duración (ms)"
+
+#: hacks/config/molecule.xml.h:7
+msgid "Draw Bounding Box"
+msgstr ""
+
+#: hacks/config/molecule.xml.h:8
+msgid ""
+"Draws several different representations of molecules. Some common molecules "
+"are built in, and it can also read PDB (Protein Data Base) files as input. "
+"Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/molecule.xml.h:11
+msgid "Label Atoms"
+msgstr ""
+
+#: hacks/config/molecule.xml.h:12
+#, fuzzy
+msgid "Molecule"
+msgstr "Propiedades del ratón"
+
+#: hacks/config/molecule.xml.h:13
+msgid "PDB File"
+msgstr ""
+
+#: hacks/config/morph3d.xml.h:1
+msgid ""
+"Another 3d shape-changing GL hack, by Marcelo Vianna. It has the same shiny-"
+"plastic feel as Superquadrics, as many computer-generated objects do..."
+msgstr ""
+
+#: hacks/config/morph3d.xml.h:4
+#, fuzzy
+msgid "Morph3D"
+msgstr "Morph3d"
+
+#: hacks/config/mountain.xml.h:3
+msgid ""
+"Generates random 3d plots that look vaguely mountainous. Written by Pascal "
+"Pensa."
+msgstr ""
+
+#: hacks/config/mountain.xml.h:5
+msgid "Mountain"
+msgstr "Montaña"
+
+#: hacks/config/munch.xml.h:1
+msgid ""
+"DATAI 2 ADDB 1,2 ROTC 2,-22 XOR 1,2 JRST .-4 As reported by HAKMEM, in 1962, "
+"Jackson Wright wrote the above PDP-1 code. That code still lives on in this "
+"screenhack, some 35 years later. The number of lines of enclosing code has "
+"increased substantially, however. This version is by Tim Showalter."
+msgstr ""
+
+#: hacks/config/munch.xml.h:5
+msgid "Munch"
+msgstr "Munch"
+
+#: hacks/config/munch.xml.h:10 hacks/config/qix.xml.h:26
+msgid "XOR"
+msgstr "XOR"
+
+#: hacks/config/nerverot.xml.h:1
+#, fuzzy
+msgid "Blot Count"
+msgstr "Cantidad"
+
+#: hacks/config/nerverot.xml.h:2
+#, fuzzy
+msgid "Calm"
+msgstr "Coral"
+
+#: hacks/config/nerverot.xml.h:3
+#, fuzzy
+msgid "Changes"
+msgstr "Jaula"
+
+#: hacks/config/nerverot.xml.h:4
+msgid "Colors"
+msgstr "Colores"
+
+#: hacks/config/nerverot.xml.h:5
+#, fuzzy
+msgid "Crunchiness"
+msgstr "Grosor"
+
+#: hacks/config/nerverot.xml.h:7
+msgid ""
+"Draws different shapes composed of nervously vibrating squiggles, as if seen "
+"through a camera operated by a monkey on crack. By Dan Bornstein."
+msgstr ""
+
+#: hacks/config/nerverot.xml.h:10
+#, fuzzy
+msgid "Frequent"
+msgstr "Frecuencia"
+
+#: hacks/config/nerverot.xml.h:16
+msgid "NerveRot"
+msgstr ""
+
+#: hacks/config/nerverot.xml.h:17
+msgid "Nervousness"
+msgstr ""
+
+#: hacks/config/nerverot.xml.h:18 hacks/config/pyro.xml.h:12
+#, fuzzy
+msgid "Seldom"
+msgstr "Delgado "
+
+#: hacks/config/nerverot.xml.h:21
+#, fuzzy
+msgid "Spastic"
+msgstr "Estática"
+
+#: hacks/config/noseguy.xml.h:1
+msgid ""
+"A little man with a big nose wanders around your screen saying things. The "
+"things which he says can come from a file, or from an external program like "
+"`zippy' or `fortune'. This was extracted from `xnlock' by Dan Heller. "
+"Colorized by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/noseguy.xml.h:2
+msgid "Get Text from File"
+msgstr ""
+
+#: hacks/config/noseguy.xml.h:3
+msgid "Get Text from Program"
+msgstr ""
+
+#: hacks/config/noseguy.xml.h:4
+msgid "Noseguy"
+msgstr "Narigudo"
+
+#: hacks/config/noseguy.xml.h:6
+msgid "Text File"
+msgstr ""
+
+#: hacks/config/noseguy.xml.h:7 hacks/config/phosphor.xml.h:8
+#: hacks/config/starwars.xml.h:17
+msgid "Text Program"
+msgstr ""
+
+#: hacks/config/noseguy.xml.h:8
+msgid "Use Text Below"
+msgstr ""
+
+#: hacks/config/pedal.xml.h:7
+msgid "Pedal"
+msgstr "Pedal"
+
+#: hacks/config/pedal.xml.h:8
+msgid ""
+"This is sort of a combination spirograph/string-art. It generates a large, "
+"complex polygon, and lets the X server do the bulk of the work by giving it "
+"an even/odd winding rule. Written by Dale Moore, based on some ancient PDP-"
+"11 code."
+msgstr ""
+
+#: hacks/config/penetrate.xml.h:1
+msgid "Always play well"
+msgstr ""
+
+#: hacks/config/penetrate.xml.h:2
+#, fuzzy
+msgid "Explosions"
+msgstr "Extensión"
+
+#: hacks/config/penetrate.xml.h:5
+msgid "Penetrate"
+msgstr "Penetrar"
+
+#: hacks/config/penetrate.xml.h:7
+msgid "Start badly, but learn"
+msgstr ""
+
+#: hacks/config/penetrate.xml.h:8
+msgid ""
+"This hack simulates the classic arcade game Missile Command. Written by Adam "
+"Miller."
+msgstr ""
+
+#: hacks/config/penrose.xml.h:2
+#, fuzzy
+msgid "30 Seconds"
+msgstr "Segundos"
+
+#: hacks/config/penrose.xml.h:3
+msgid "Draw Ammann Lines"
+msgstr ""
+
+#: hacks/config/penrose.xml.h:4
+msgid ""
+"Draws quasiperiodic tilings; think of the implications on modern formica "
+"technology. Written by Timo Korvola. In April 1997, Sir Roger Penrose, a "
+"British math professor who has worked with Stephen Hawking on such topics as "
+"relativity, black holes, and whether time has a beginning, filed a copyright-"
+"infringement lawsuit against the Kimberly-Clark Corporation, which Penrose "
+"said copied a pattern he created (a pattern demonstrating that ``a "
+"nonrepeating pattern could exist in nature'') for its Kleenex quilted toilet "
+"paper. Penrose said he doesn't like litigation but, ``When it comes to the "
+"population of Great Britain being invited by a multinational to wipe their "
+"bottoms on what appears to be the work of a Knight of the Realm, then a last "
+"stand must be taken.'' As reported by News of the Weird #491, 4-jul-1997."
+msgstr ""
+
+#: hacks/config/penrose.xml.h:9
+msgid "Penrose"
+msgstr "Penrose"
+
+#: hacks/config/petri.xml.h:2
+msgid "Colony Shape"
+msgstr ""
+
+#: hacks/config/petri.xml.h:3
+msgid "Death Comes"
+msgstr ""
+
+#: hacks/config/petri.xml.h:4
+#, fuzzy
+msgid "Diamond"
+msgstr "Demon"
+
+#: hacks/config/petri.xml.h:6
+msgid "Fertility"
+msgstr ""
+
+#: hacks/config/petri.xml.h:12
+msgid "Maxium Lifespan"
+msgstr ""
+
+#: hacks/config/petri.xml.h:13
+#, fuzzy
+msgid "Maxium Rate of Death"
+msgstr "La pantalla azul de la muerte"
+
+#: hacks/config/petri.xml.h:14
+#, fuzzy
+msgid "Maxium Rate of Growth"
+msgstr "Simula el crecimiento del coral"
+
+#: hacks/config/petri.xml.h:15
+msgid "Minium Lifespan"
+msgstr ""
+
+#: hacks/config/petri.xml.h:16
+#, fuzzy
+msgid "Minium Rate of Death"
+msgstr "La pantalla azul de la muerte"
+
+#: hacks/config/petri.xml.h:17
+#, fuzzy
+msgid "Minium Rate of Growth"
+msgstr "Simula el crecimiento del coral"
+
+#: hacks/config/petri.xml.h:18
+#, fuzzy
+msgid "Mold Varieties"
+msgstr "Modifica las propiedades del ratón"
+
+#: hacks/config/petri.xml.h:19
+msgid "Offspring"
+msgstr ""
+
+#: hacks/config/petri.xml.h:20
+msgid "Petri"
+msgstr ""
+
+#: hacks/config/petri.xml.h:21
+msgid "Quickly"
+msgstr ""
+
+#: hacks/config/petri.xml.h:24
+#, fuzzy
+msgid "Slowly"
+msgstr "Lento"
+
+#: hacks/config/petri.xml.h:26
+#, fuzzy
+msgid "Square"
+msgstr "Squiral"
+
+#: hacks/config/petri.xml.h:27
+msgid ""
+"This simulates colonies of mold growing in a petri dish. Growing colored "
+"circles overlap and leave spiral interference in their wake. Written by Dan "
+"Bornstein."
+msgstr ""
+
+#: hacks/config/phosphor.xml.h:1
+#, fuzzy
+msgid ""
+"Draws a simulation of an old terminal, with large pixels and long-sustain "
+"phosphor. It can run any program as a source of the text it displays. "
+"Written by Jamie Zawinski."
+msgstr ""
+"Dibuja una simulación de un viejo terminal, con grandes pixels y fósforo de "
+"larga duración."
+
+#: hacks/config/phosphor.xml.h:2
+#, fuzzy
+msgid "Fade"
+msgstr "Fadeplot"
+
+#: hacks/config/phosphor.xml.h:4
+msgid "Phosphor"
+msgstr "Fósforo"
+
+#: hacks/config/phosphor.xml.h:5
+#, fuzzy
+msgid "Scale"
+msgstr "Redimensionado"
+
+#: hacks/config/pipes.xml.h:1
+msgid "Allow Tight Turns"
+msgstr ""
+
+#: hacks/config/pipes.xml.h:2
+#, fuzzy
+msgid "Ball Joints"
+msgstr "Tratamiento"
+
+#: hacks/config/pipes.xml.h:3
+msgid "Curved Pipes"
+msgstr ""
+
+#: hacks/config/pipes.xml.h:5
+msgid "Fisheye Lens"
+msgstr ""
+
+#: hacks/config/pipes.xml.h:6
+msgid "Gadgetry"
+msgstr ""
+
+#: hacks/config/pipes.xml.h:7
+msgid ""
+"If you've ever been in the same room with a Windows NT machine, you've "
+"probably seen this GL hack. This version is by Marcelo Vianna."
+msgstr ""
+
+#: hacks/config/pipes.xml.h:8
+#, fuzzy
+msgid "Lots"
+msgstr "Puntos"
+
+#: hacks/config/pipes.xml.h:9
+msgid "None"
+msgstr "Ninguno"
+
+#: hacks/config/pipes.xml.h:10
+#, fuzzy
+msgid "Number of Pipe Systems"
+msgstr "Cantidad de semillas"
+
+#: hacks/config/pipes.xml.h:11
+#, fuzzy
+msgid "Pipe Fittings"
+msgstr "Parámetros"
+
+#: hacks/config/pipes.xml.h:12
+msgid "Pipes"
+msgstr "Tuberías"
+
+#: hacks/config/pipes.xml.h:16
+msgid "System Length"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:1
+msgid "Anti-alias Lines"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:3
+msgid ""
+"Draws some intersecting planes, making use of alpha blending, fog, textures, "
+"and mipmaps, plus a ``frames per second'' meter so that you can tell how "
+"fast your graphics card is... Requires OpenGL. Written by David Konerding."
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:4
+msgid "Enable Blending"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:5
+msgid "Enable Depth Buffer"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:6
+msgid "Enable Fog"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:7
+#, fuzzy
+msgid "Enable Lighting"
+msgstr "Rayos"
+
+#: hacks/config/pulsar.xml.h:8
+msgid "Enable Texture Filtering"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:9
+#, fuzzy
+msgid "Enable Texture Mipmaps"
+msgstr "Activar auto-repetición"
+
+#: hacks/config/pulsar.xml.h:10
+msgid "Enable Texturing"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:12
+#, fuzzy
+msgid "Pulsar"
+msgstr "Reproducir"
+
+#: hacks/config/pulsar.xml.h:13
+#, fuzzy
+msgid "Quad Count"
+msgstr "Cantidad"
+
+#: hacks/config/pulsar.xml.h:16
+msgid "Solid Surface"
+msgstr ""
+
+#: hacks/config/pulsar.xml.h:18
+msgid "Texture PPM File"
+msgstr ""
+
+#: hacks/config/pyro.xml.h:3
+msgid "Explosive Yield"
+msgstr ""
+
+#: hacks/config/pyro.xml.h:6
+#, fuzzy
+msgid "Launch Frequency"
+msgstr "Frecuencia"
+
+#: hacks/config/pyro.xml.h:8
+msgid "Often"
+msgstr ""
+
+#: hacks/config/pyro.xml.h:9
+#, fuzzy
+msgid "Particle Density"
+msgstr "Partículas en pantalla"
+
+#: hacks/config/pyro.xml.h:10
+msgid "Pyro"
+msgstr "Pyro"
+
+#: hacks/config/pyro.xml.h:11
+msgid ""
+"Pyro draws exploding fireworks. Blah blah blah. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/qix.xml.h:1
+#, fuzzy
+msgid "Additive Colors"
+msgstr "Color vivo"
+
+#: hacks/config/qix.xml.h:3
+#, fuzzy
+msgid "Corners"
+msgstr "Cerca"
+
+#: hacks/config/qix.xml.h:9 hacks/config/speedmine.xml.h:4
+#, fuzzy
+msgid "Gravity"
+msgstr "Gravedad"
+
+#: hacks/config/qix.xml.h:11
+#, fuzzy
+msgid "Line Segments"
+msgstr "Segmentos"
+
+#: hacks/config/qix.xml.h:12
+msgid "Linear Motion"
+msgstr ""
+
+#: hacks/config/qix.xml.h:15
+#, fuzzy
+msgid "Max Size"
+msgstr "Tamaño máximo"
+
+#: hacks/config/qix.xml.h:16
+msgid "Qix"
+msgstr "Qix"
+
+#: hacks/config/qix.xml.h:17
+#, fuzzy
+msgid "Random Motion"
+msgstr "Parámetros al azar"
+
+#: hacks/config/qix.xml.h:23
+#, fuzzy
+msgid "Subtractive Colors"
+msgstr "Color vivo"
+
+#: hacks/config/qix.xml.h:24
+msgid ""
+"This is the swiss army chainsaw of qix programs. It bounces a series of line "
+"segments around the screen, and uses variations on this basic motion pattern "
+"to produce all sorts of different presentations: line segments, filled "
+"polygons, overlapping translucent areas... Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/qix.xml.h:25
+msgid "Transparent"
+msgstr "Transparente"
+
+#: hacks/config/rd-bomb.xml.h:1
+msgid "/"
+msgstr ""
+
+#: hacks/config/rd-bomb.xml.h:3
+#, no-c-format
+msgid "1%"
+msgstr ""
+
+#: hacks/config/rd-bomb.xml.h:5
+#, no-c-format
+msgid "100%"
+msgstr ""
+
+#: hacks/config/rd-bomb.xml.h:7
+msgid ""
+"Another variation of the `Bomb' program by Scott Draves. This draws a grid "
+"of growing square-like shapes that, once they overtake each other, react in "
+"unpredictable ways. ``RD'' stands for reaction-diffusion."
+msgstr ""
+
+#: hacks/config/rd-bomb.xml.h:8
+msgid "Epoch"
+msgstr ""
+
+#: hacks/config/rd-bomb.xml.h:10
+msgid "Fill Screen"
+msgstr ""
+
+#: hacks/config/rd-bomb.xml.h:14
+#, fuzzy
+msgid "RD-Bomb"
+msgstr "Rd-bomb"
+
+#: hacks/config/rd-bomb.xml.h:15
+msgid "Reaction/Difusion"
+msgstr ""
+
+#: hacks/config/rd-bomb.xml.h:16
+#, fuzzy
+msgid "Seed Radius"
+msgstr "Radio"
+
+#: hacks/config/rd-bomb.xml.h:19
+#, fuzzy
+msgid "Tile Size"
+msgstr "Tamaño"
+
+#: hacks/config/rd-bomb.xml.h:22
+msgid "Wander Speed"
+msgstr ""
+
+#: hacks/config/ripples.xml.h:1
+msgid "Big Drops"
+msgstr ""
+
+#: hacks/config/ripples.xml.h:2
+#, fuzzy
+msgid "Colors    Two"
+msgstr "Colores"
+
+#: hacks/config/ripples.xml.h:3
+msgid "Drizzle"
+msgstr ""
+
+#: hacks/config/ripples.xml.h:5
+#, fuzzy
+msgid "Grab Screen Image"
+msgstr "Salvapantalla"
+
+#: hacks/config/ripples.xml.h:6
+#, fuzzy
+msgid "Lighting Effect"
+msgstr "Rayos"
+
+#: hacks/config/ripples.xml.h:8
+#, fuzzy
+msgid "Moving Splashes"
+msgstr "Líneas de transformación."
+
+#: hacks/config/ripples.xml.h:9
+msgid "Psychedelic Colors"
+msgstr ""
+
+#: hacks/config/ripples.xml.h:10
+msgid "Ripples"
+msgstr "Ondas"
+
+#: hacks/config/ripples.xml.h:12
+#, fuzzy
+msgid "Small Drops"
+msgstr "Pequeño"
+
+#: hacks/config/ripples.xml.h:13
+#, fuzzy
+msgid "Storm"
+msgstr "Orugas"
+
+#: hacks/config/ripples.xml.h:14
+msgid ""
+"This draws rippling interference patterns like splashing water. With the -"
+"water option, it manipulates your desktop image to look like something is "
+"dripping into it. Written by Tom Hammersley."
+msgstr ""
+
+#: hacks/config/rocks.xml.h:7
+msgid "Rocks"
+msgstr "Rocas"
+
+#: hacks/config/rocks.xml.h:8
+msgid "Rotation"
+msgstr "Rotación"
+
+#: hacks/config/rocks.xml.h:10
+#, fuzzy
+msgid "Steering"
+msgstr "Extraño"
+
+#: hacks/config/rocks.xml.h:11
+msgid ""
+"This draws an animation of flight through an asteroid field, with changes in "
+"rotation and direction. It can also display 3D separations for red/blue "
+"glasses! Mostly written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/rocks.xml.h:13
+msgid "Velocity"
+msgstr ""
+
+#: hacks/config/rorschach.xml.h:7
+msgid "Rorschach"
+msgstr "Rorschach"
+
+#: hacks/config/rorschach.xml.h:9
+msgid ""
+"This generates random inkblot patterns. The algorithm is deceptively simple "
+"for how well it works; it merely walks a dot around the screen randomly, and "
+"then reflects the image horizontally, vertically, or both. Any deep-seated "
+"neurotic tendencies which this program reveals are your own problem. Written "
+"by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/rorschach.xml.h:10
+msgid "With X Symmetry"
+msgstr ""
+
+#: hacks/config/rorschach.xml.h:11
+msgid "With Y Symmetry"
+msgstr ""
+
+#: hacks/config/rotor.xml.h:1
+msgid ""
+"Another ancient xlock demo, this one by Tom Lawrence. It draws a line "
+"segment moving along a complex spiraling curve. I tweaked this to generate "
+"curvier lines, but still frames of it don't look like much."
+msgstr ""
+
+#: hacks/config/rotor.xml.h:4 hacks/config/wander.xml.h:9
+#, fuzzy
+msgid "Length"
+msgstr "Lament"
+
+#: hacks/config/rotor.xml.h:8
+msgid "Rotor"
+msgstr "Rotor"
+
+#: hacks/config/rotzoomer.xml.h:3
+msgid "Animate"
+msgstr "Animar"
+
+#: hacks/config/rotzoomer.xml.h:4
+msgid ""
+"Creates a collage of rotated and scaled portions of the screen. Written by "
+"Claudio Matsuoka."
+msgstr ""
+
+#: hacks/config/rotzoomer.xml.h:6
+msgid "Rectangle Count"
+msgstr ""
+
+#: hacks/config/rotzoomer.xml.h:7
+#, fuzzy
+msgid "RotZoomer"
+msgstr "Rotor"
+
+#: hacks/config/rotzoomer.xml.h:8
+msgid "Stationary Rectangles"
+msgstr ""
+
+#: hacks/config/rotzoomer.xml.h:9
+msgid "Sweeping Arcs"
+msgstr ""
+
+#: hacks/config/rotzoomer.xml.h:11
+msgid "Wandering Rectangles"
+msgstr ""
+
+#: hacks/config/rubik.xml.h:2
+msgid ""
+"Draws a Rubik's Cube that rotates in three dimensions and repeatedly "
+"shuffles and solves itself. Another fine GL hack by Marcelo Vianna."
+msgstr ""
+
+#: hacks/config/rubik.xml.h:5
+#, fuzzy
+msgid "Rubik"
+msgstr "Cubo de Rubik"
+
+#: hacks/config/rubik.xml.h:7
+msgid "Show Shuffling"
+msgstr ""
+
+#: hacks/config/shadebobs.xml.h:7
+#, fuzzy
+msgid "ShadeBobs"
+msgstr "Shadebobs"
+
+#: hacks/config/shadebobs.xml.h:11
+#, fuzzy
+msgid ""
+"This draws smoothly-shaded oscilating oval patterns, that look something "
+"like vapor trails or neon tubes. Written by Shane Smit."
+msgstr ""
+"Dibuja patrones oscilantes, sombreados y ovalados, que recuerdan a rastros "
+"de vapor."
+
+#: hacks/config/sierpinski3d.xml.h:7
+#, fuzzy
+msgid "Sierpinski3D"
+msgstr "Sierpinski"
+
+#: hacks/config/sierpinski3d.xml.h:11
+msgid ""
+"This draws the three-dimensional variant of the recursive Sierpinski "
+"triangle fractal, using GL. Written by Tim Robinson and Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/sierpinski.xml.h:6
+msgid "Sierpinski"
+msgstr "Sierpinski"
+
+#: hacks/config/sierpinski.xml.h:10
+msgid ""
+"This draws the two-dimensional variant of the recursive Sierpinski triangle "
+"fractal. Written by Desmond Daignault."
+msgstr ""
+
+#: hacks/config/slidescreen.xml.h:1 hacks/config/zoom.xml.h:1
+msgid "Border Width"
+msgstr ""
+
+#: hacks/config/slidescreen.xml.h:4
+#, fuzzy
+msgid "Slide Speed"
+msgstr "Slidescreen"
+
+#: hacks/config/slidescreen.xml.h:5
+#, fuzzy
+msgid "SlideScreen"
+msgstr "Slidescreen"
+
+#: hacks/config/slidescreen.xml.h:8
+msgid ""
+"This takes an image, divides it into a grid, and then randomly shuffles the "
+"squares around as if it was one of those annoying ``16-puzzle'' games, where "
+"there is a grid of squares, one of which is missing. I hate trying to solve "
+"those puzzles, but watching one permute itself is more amusing. Written by "
+"Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/slip.xml.h:6
+msgid "Slip"
+msgstr "Slip"
+
+#: hacks/config/slip.xml.h:10
+msgid ""
+"This program throws some random bits on the screen, then sucks them through "
+"a jet engine and spews them out the other side. To avoid turning the image "
+"completely to mush, every now and then it will and then it interjects some "
+"splashes of color into the scene, or go into a spin cycle, or stretch the "
+"image like taffy, or (this is my addition) grab an image of your current "
+"desktop to chew on. Originally written by Scott Draves; whacked on by Jamie "
+"Zawinski."
+msgstr ""
+
+#: hacks/config/sonar.xml.h:1
+msgid "Ping Subnet"
+msgstr ""
+
+#: hacks/config/sonar.xml.h:2
+msgid "Simulation Team Members"
+msgstr ""
+
+#: hacks/config/sonar.xml.h:3
+msgid "Sonar"
+msgstr "Sonar"
+
+#: hacks/config/sonar.xml.h:4
+msgid "Team A Name"
+msgstr ""
+
+#: hacks/config/sonar.xml.h:5
+msgid "Team B Name"
+msgstr ""
+
+#: hacks/config/sonar.xml.h:6
+msgid ""
+"This program draws a simulation of a sonar screen. Written by default, it "
+"displays a random assortment of ``bogies'' on the screen, but if compiled "
+"properly, it can ping (pun intended) your local network, and actually plot "
+"the proximity of the other hosts on your network to you. It would be easy to "
+"make it monitor other sources of data, too. (Processes? Active network "
+"connections? CPU usage per user?) Written by Stephen Martin."
+msgstr ""
+
+#: hacks/config/sonar.xml.h:7
+msgid "vs."
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:1
+msgid "Allow Wall Collisions"
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:2
+#, fuzzy
+msgid "Display Crosshair"
+msgstr "Muestra estática."
+
+#: hacks/config/speedmine.xml.h:7
+msgid "Max Velocity"
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:8
+msgid "Mine Shaft"
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:9
+msgid "Present Bonuses"
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:10
+#, fuzzy
+msgid "Rocky Walls"
+msgstr "Rocas"
+
+#: hacks/config/speedmine.xml.h:12
+msgid ""
+"Simulates speeding down a rocky mineshaft, or a funky dancing worm. Written "
+"by Conrad Parker."
+msgstr ""
+
+#: hacks/config/speedmine.xml.h:16
+#, fuzzy
+msgid "SpeedMine"
+msgstr "Velocidad"
+
+#: hacks/config/speedmine.xml.h:17
+#, fuzzy
+msgid "Thrust"
+msgstr "Truchet"
+
+#: hacks/config/speedmine.xml.h:19 hacks/config/worm.xml.h:10
+msgid "Worm"
+msgstr "Orugas"
+
+#: hacks/config/sphereEversion.xml.h:1
+#, fuzzy
+msgid "SphereEversion"
+msgstr "Esfera"
+
+#: hacks/config/sphereEversion.xml.h:2
+msgid ""
+"SphereEversion draws an animation of a sphere being turned inside out. A "
+"sphere can be turned inside out, without any tears, sharp creases or "
+"discontinuities, if the surface of the sphere is allowed to intersect "
+"itself. This program animates what is known as the Thurston Eversion. "
+"Written by Nathaniel Thurston and Michael McGuffin. This program is not "
+"included with the XScreenSaver package, but if you don't have it already, "
+"you can find it at <http://www.dgp.utoronto.ca/~mjmcguff/eversion/>."
+msgstr ""
+
+#: hacks/config/sphere.xml.h:1
+msgid ""
+"Another of the classic screenhacks of the distant past, this one draws "
+"shaded spheres in multiple colors. This hack traces its lineage back to Tom "
+"Duff in 1982."
+msgstr ""
+
+#: hacks/config/sphere.xml.h:7
+msgid "Sphere"
+msgstr "Esfera"
+
+#: hacks/config/spiral.xml.h:2
+msgid "Cycles"
+msgstr "Ciclos"
+
+#: hacks/config/spiral.xml.h:7
+msgid ""
+"Moving circular patterns, by Peter Schmitzberger. Moving circular patterns "
+"means moire; interference patterns, of course."
+msgstr ""
+
+#: hacks/config/spiral.xml.h:11
+msgid "Spiral"
+msgstr "Espiral"
+
+#: hacks/config/spotlight.xml.h:1
+msgid ""
+"Draws a spotlight scanning across a black screen, illumnating the underlying "
+"desktop when it passes. Written by Rick Schultz."
+msgstr ""
+
+#: hacks/config/spotlight.xml.h:6
+msgid "Spotlight"
+msgstr "Reflector"
+
+#: hacks/config/sproingies.xml.h:3
+msgid "Q-Bert meets Marble Madness! Written by Ed Mackey."
+msgstr ""
+
+#: hacks/config/sproingies.xml.h:9
+msgid "Sproingies"
+msgstr "Sproingies"
+
+#: hacks/config/squiral.xml.h:3
+msgid ""
+"Draws a set of interacting, square-spiral-producing automata. The spirals "
+"grow outward until they hit something, then they go around it. Written by "
+"Jeff Epler."
+msgstr ""
+
+#: hacks/config/squiral.xml.h:5
+msgid "Handedness"
+msgstr ""
+
+#: hacks/config/squiral.xml.h:7
+msgid "Left"
+msgstr "Izquierda"
+
+#: hacks/config/squiral.xml.h:11
+#, fuzzy
+msgid "Randomness"
+msgstr "Aleatorio"
+
+#: hacks/config/squiral.xml.h:12
+msgid "Right"
+msgstr "Derecha"
+
+#: hacks/config/squiral.xml.h:17
+msgid "Squiral"
+msgstr "Squiral"
+
+#: hacks/config/ssystem.xml.h:1
+msgid "SSystem"
+msgstr ""
+
+#: hacks/config/ssystem.xml.h:2
+msgid ""
+"SSystem is a GL Solar System simulator. It simulates flybys of Sun, the nine "
+"planets and a few major satellites, with four camera modes. Written by Raul "
+"Alonso. This is not included with the XScreenSaver package, but if you don't "
+"have it already, you can find it at <http://www1.las.es/~amil/ssystem/>. "
+"Note: this program doesn't work as a screen saver on all systems, because it "
+"doesn't communicate with xscreensaver properly. It happens to work with some "
+"window managers, but not with others, so your mileage may vary."
+msgstr ""
+
+#: hacks/config/stairs.xml.h:6
+msgid "Stairs"
+msgstr "Escaleras"
+
+#: hacks/config/stairs.xml.h:8
+msgid ""
+"by Marcelo Vianna's third Escher GL hack, this one draws an ``infinite'' "
+"staircase."
+msgstr ""
+
+#: hacks/config/starfish.xml.h:1
+#, fuzzy
+msgid "Color Gradients"
+msgstr "Degradado horizontal"
+
+#: hacks/config/starfish.xml.h:7
+msgid "Pulsating Blob"
+msgstr ""
+
+#: hacks/config/starfish.xml.h:10
+msgid "Starfish"
+msgstr "Estrella de mar"
+
+#: hacks/config/starfish.xml.h:13
+msgid ""
+"This generates a sequence of undulating, throbbing, star-like patterns which "
+"pulsate, rotate, and turn inside out. Another display mode uses these shapes "
+"to lay down a field of colors, which are then cycled. The motion is very "
+"organic. Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/starwars.xml.h:2
+msgid "Anti-aliased Lines"
+msgstr ""
+
+#: hacks/config/starwars.xml.h:3
+#, fuzzy
+msgid "Centered Text"
+msgstr "Centrado"
+
+#: hacks/config/starwars.xml.h:4
+msgid ""
+"Draws a stream of text slowly scrolling into the distance at an angle, over "
+"a star field, like at the beginning of the movie of the same name. Written "
+"by Jamie Zawinski and Claudio Matauoka."
+msgstr ""
+
+#: hacks/config/starwars.xml.h:5
+#, fuzzy
+msgid "Fade Out"
+msgstr "Fadeplot"
+
+#: hacks/config/starwars.xml.h:7
+msgid "Flush Left Text"
+msgstr ""
+
+#: hacks/config/starwars.xml.h:8
+msgid "Flush Right Text"
+msgstr ""
+
+#: hacks/config/starwars.xml.h:9
+msgid "Font Point Size"
+msgstr ""
+
+#: hacks/config/starwars.xml.h:10
+msgid "Scroll Speed"
+msgstr ""
+
+#: hacks/config/starwars.xml.h:13
+msgid "Star Rotation Speed"
+msgstr ""
+
+#: hacks/config/starwars.xml.h:14
+#, fuzzy
+msgid "StarWars"
+msgstr "Escaleras"
+
+#: hacks/config/starwars.xml.h:15
+msgid "Text Columns"
+msgstr ""
+
+#: hacks/config/starwars.xml.h:16
+#, fuzzy
+msgid "Text Lines"
+msgstr "Probar la configuración"
+
+#: hacks/config/starwars.xml.h:18
+#, fuzzy
+msgid "Thick Lines"
+msgstr "Grosor"
+
+#: hacks/config/starwars.xml.h:19
+#, fuzzy
+msgid "Wrap Long Lines"
+msgstr "Líneas de transformación."
+
+#: hacks/config/stonerview.xml.h:1
+msgid ""
+"Chains of colorful squares dance around each other in complex spiral "
+"patterns. Written by Andrew Plotkin, based on SGI's `electropaint' "
+"screensaver."
+msgstr ""
+
+#: hacks/config/stonerview.xml.h:3
+msgid "StonerView"
+msgstr ""
+
+#: hacks/config/strange.xml.h:1
+msgid "Curviness"
+msgstr ""
+
+#: hacks/config/strange.xml.h:9
+msgid "Strange"
+msgstr "Extraño"
+
+#: hacks/config/strange.xml.h:10
+msgid ""
+"This draws strange attractors: it's a colorful, unpredictably-animating "
+"field of dots that swoops and twists around. The motion is very nice. "
+"Written by Massimino Pascal."
+msgstr ""
+
+#: hacks/config/superquadrics.xml.h:2
+msgid ""
+"Ed Mackey reports that he wrote the first version of this program in BASIC "
+"on a Commodore 64 in 1987, as a 320x200 black and white wireframe. Now it is "
+"GL and has specular reflections."
+msgstr ""
+
+#: hacks/config/superquadrics.xml.h:10
+msgid "Superquadrics"
+msgstr "Superquadrics"
+
+#: hacks/config/swirl.xml.h:4
+msgid ""
+"More flowing, swirly patterns. This version is by M. Dobie and R. Taylor, "
+"but you might have seen a Mac program similar to this called FlowFazer. "
+"There is also a cool Java applet of a similar concept."
+msgstr ""
+
+#: hacks/config/swirl.xml.h:8
+msgid "Swirl"
+msgstr "Remolino"
+
+#: hacks/config/t3d.xml.h:1
+msgid "0°"
+msgstr ""
+
+#: hacks/config/t3d.xml.h:2
+msgid "5 Minute Tick Marks"
+msgstr ""
+
+#: hacks/config/t3d.xml.h:3
+msgid "90°"
+msgstr ""
+
+#: hacks/config/t3d.xml.h:4
+#, fuzzy
+msgid "Bigger"
+msgstr "con"
+
+#: hacks/config/t3d.xml.h:5
+#, fuzzy
+msgid "Cycle Seconds"
+msgstr "Modos de alternado."
+
+#: hacks/config/t3d.xml.h:10
+msgid "Minute Tick Marks"
+msgstr ""
+
+#: hacks/config/t3d.xml.h:12
+msgid "Smaller"
+msgstr "Pequeño"
+
+#: hacks/config/t3d.xml.h:14
+#, fuzzy
+msgid "T3D"
+msgstr "3D"
+
+#: hacks/config/t3d.xml.h:15
+#, fuzzy
+msgid ""
+"This draws a working analog clock composed of floating, throbbing bubbles. "
+"Written by Bernd Paysan."
+msgstr "Dibuja un reloj analógico compuesto de burbujas flotantes que laten."
+
+#: hacks/config/t3d.xml.h:16
+msgid "Turn Side-to-Side"
+msgstr ""
+
+#: hacks/config/t3d.xml.h:17
+#, fuzzy
+msgid "Wobbliness"
+msgstr "Burbujas"
+
+#: hacks/config/triangle.xml.h:2
+#, fuzzy
+msgid ""
+"Generates random mountain ranges using iterative subdivision of triangles. "
+"Written by Tobias Gloth."
+msgstr ""
+"Genera rangos montañosos aleatorios usando subdivisión iterativa de "
+"triángulos. "
+
+#: hacks/config/triangle.xml.h:7
+msgid "Triangle"
+msgstr "Triángulo"
+
+#: hacks/config/truchet.xml.h:4
+msgid ""
+"This draws line- and arc-based Truchet patterns that tile the screen. "
+"Written by Adrian Likins."
+msgstr ""
+
+#: hacks/config/truchet.xml.h:5
+msgid "Truchet"
+msgstr "Truchet"
+
+#: hacks/config/vermiculate.xml.h:1
+msgid "Draws squiggly worm-like paths. Written by Tyler Pierce."
+msgstr ""
+
+#: hacks/config/vermiculate.xml.h:2
+msgid "Vermiculate"
+msgstr ""
+
+#: hacks/config/vidwhacker.xml.h:2 hacks/config/webcollage.xml.h:2
+#, fuzzy
+msgid "2 seconds"
+msgstr "segundos"
+
+#: hacks/config/vidwhacker.xml.h:4
+msgid "Image Directory"
+msgstr ""
+
+#: hacks/config/vidwhacker.xml.h:5
+msgid ""
+"This is actually just a shell script that grabs a frame of video from the "
+"system's video input, and then uses some PBM filters (chosen at random) to "
+"manipulate and recombine the video frame in various ways (edge detection, "
+"subtracting the image from a rotated version of itself, etc.) Then it "
+"displays that image for a few seconds, and does it again. This works really "
+"well if you just feed broadcast television into it."
+msgstr ""
+
+#: hacks/config/vidwhacker.xml.h:6
+msgid "VidWhacker"
+msgstr ""
+
+#: hacks/config/vines.xml.h:6
+msgid ""
+"This one generates a continuous sequence of small, curvy geometric patterns. "
+"It scatters them around your screen until it fills up, then it clears the "
+"screen and starts over. Written by Tracy Camp and David Hansen."
+msgstr ""
+
+#: hacks/config/vines.xml.h:8
+msgid "Vines"
+msgstr "Vines"
+
+#: hacks/config/wander.xml.h:5
+msgid "Draw Spots"
+msgstr ""
+
+#: hacks/config/wander.xml.h:6
+msgid ""
+"Draws a colorful random-walk, in various forms. Written by Rick Campbell."
+msgstr ""
+
+#: hacks/config/wander.xml.h:14
+#, fuzzy
+msgid "Sustain"
+msgstr "Montaña"
+
+#: hacks/config/webcollage.xml.h:3
+msgid "Dictionary File"
+msgstr ""
+
+#: hacks/config/webcollage.xml.h:5
+msgid "Overall Filter Program"
+msgstr ""
+
+#: hacks/config/webcollage.xml.h:6
+msgid "Per-Image Filter Program"
+msgstr ""
+
+#: hacks/config/webcollage.xml.h:9
+msgid ""
+"This program makes collages out of random images pulled off of the World "
+"Wide Web. It finds these images by doing random web searches, and then "
+"extracting images from the returned pages. It can also be set up to filter "
+"the images through the `VidWhacker' program, above, which looks really "
+"great. (Note that most of the images it finds are text, and not pictures. "
+"This is because most of the web is pictures of text. Which is pretty sad.) "
+"Written by Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/webcollage.xml.h:10
+msgid "URL Timeout"
+msgstr ""
+
+#: hacks/config/webcollage.xml.h:11
+msgid "WebCollage"
+msgstr ""
+
+#: hacks/config/whirlwindwarp.xml.h:2
+msgid ""
+"Floating stars are acted upon by a mixture of simple 2D forcefields. The "
+"strength of each forcefield changes continuously, and it is also switched on "
+"and off at random. By Paul 'Joey' Clark."
+msgstr ""
+
+#: hacks/config/whirlwindwarp.xml.h:5
+#, fuzzy
+msgid "Particles"
+msgstr "Partículas en pantalla"
+
+#: hacks/config/whirlwindwarp.xml.h:7
+#, fuzzy
+msgid "Trail Size"
+msgstr "Rastro"
+
+#: hacks/config/whirlwindwarp.xml.h:8
+msgid "WhirlwindWarp"
+msgstr ""
+
+#: hacks/config/whirlygig.xml.h:1
+msgid "Amplitude"
+msgstr ""
+
+#: hacks/config/whirlygig.xml.h:2
+msgid "Draws zooming chains of sinusoidal spots. Written by Ashton Trey Belew."
+msgstr ""
+
+#: hacks/config/whirlygig.xml.h:5
+msgid "Whirlies"
+msgstr ""
+
+#: hacks/config/whirlygig.xml.h:6
+msgid "WhirlyGig"
+msgstr ""
+
+#: hacks/config/worm.xml.h:1
+msgid ""
+"An ancient xlock hack that draws multicolored worms that crawl around the "
+"screen. Written by Brad Taylor, Dave Lemke, Boris Putanec, and Henrik "
+"Theiling."
+msgstr ""
+
+#: hacks/config/xaos.xml.h:1
+msgid "XaoS"
+msgstr ""
+
+#: hacks/config/xaos.xml.h:2
+msgid ""
+"XaoS generates fast fly-through animations of the Mandelbrot and other "
+"fractal sets. Written by Thomas Marsh and Jan Hubicka. This is not included "
+"with the XScreenSaver package, but if you don't have it already, you can "
+"find it at <http://limax.paru.cas.cz/~hubicka/XaoS/>."
+msgstr ""
+
+#: hacks/config/xdaliclock.xml.h:1
+msgid "12-Hour Time"
+msgstr ""
+
+#: hacks/config/xdaliclock.xml.h:2
+msgid "24-Hour Time"
+msgstr ""
+
+#: hacks/config/xdaliclock.xml.h:3
+#, fuzzy
+msgid "Cycle Colors"
+msgstr "Modos de alternado."
+
+#: hacks/config/xdaliclock.xml.h:4
+#, fuzzy
+msgid "Display Seconds"
+msgstr "Muestra una pantalla de sonar."
+
+#: hacks/config/xdaliclock.xml.h:5
+#, fuzzy
+msgid "Huge Font"
+msgstr "Tipo de letra del Usuario"
+
+#: hacks/config/xdaliclock.xml.h:6 hacks/config/xmatrix.xml.h:8
+#, fuzzy
+msgid "Large Font"
+msgstr "Grande"
+
+#: hacks/config/xdaliclock.xml.h:7
+#, fuzzy
+msgid "Medium Font"
+msgstr "Tipo de letra del Usuario"
+
+#: hacks/config/xdaliclock.xml.h:8 hacks/config/xmatrix.xml.h:14
+#, fuzzy
+msgid "Small Font"
+msgstr "Pequeño"
+
+#: hacks/config/xdaliclock.xml.h:9
+#, fuzzy
+msgid "XDaliClock"
+msgstr "Reloj 3D"
+
+#: hacks/config/xdaliclock.xml.h:10
+msgid ""
+"XDaliClock draws a large digital clock, the numbers of which change by "
+"``melting'' into their new shapes. Written by Jamie Zawinski. This is not "
+"included with the XScreenSaver package, but if you don't have it already, "
+"you can find it at <http://www.jwz.org/xdaliclock/>."
+msgstr ""
+
+#: hacks/config/xearth.xml.h:1
+#, fuzzy
+msgid "Bright"
+msgstr "Derecha"
+
+#: hacks/config/xearth.xml.h:2
+msgid "Date/Time Stamp"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:3
+msgid "Day  Dim"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:5
+#, fuzzy
+msgid "Display Stars"
+msgstr "Muestra estática."
+
+#: hacks/config/xearth.xml.h:8
+msgid "Label Cities"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:9
+msgid "Lower Left"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:10
+#, fuzzy
+msgid "Lower Right"
+msgstr "Derecha"
+
+#: hacks/config/xearth.xml.h:13
+msgid "Mercator Projection"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:14
+msgid "Night   Dim"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:15
+#, fuzzy
+msgid "No Stars"
+msgstr "Escaleras"
+
+#: hacks/config/xearth.xml.h:16
+msgid "North/South Rotation"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:18
+msgid "Orthographic Projection"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:19
+msgid "Real Time"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:20
+msgid "Shaded Image"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:21
+#, fuzzy
+msgid "Sharp"
+msgstr "Sonar"
+
+#: hacks/config/xearth.xml.h:23
+msgid "Spacing"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:26
+msgid "Terminator   Blurry"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:27
+msgid "Time Warp"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:29
+msgid "Upper Left"
+msgstr ""
+
+#: hacks/config/xearth.xml.h:30
+#, fuzzy
+msgid "Upper Right"
+msgstr "Derecha"
+
+#: hacks/config/xearth.xml.h:31
+msgid ""
+"XEarth draws an image of the Earth, as seen from your favorite vantage point "
+"in space, correctly shaded for the current position of the Sun. Written by "
+"Kirk Johnson. This is not included with the XScreenSaver package, but if you "
+"don't have it already, you can find it at <http://www.cs.colorado.edu/~tuna/"
+"xearth/>."
+msgstr ""
+
+#: hacks/config/xearth.xml.h:32
+#, fuzzy
+msgid "Xearth"
+msgstr "Distante"
+
+#: hacks/config/xfishtank.xml.h:5
+msgid "Fish"
+msgstr ""
+
+#: hacks/config/xfishtank.xml.h:6
+#, fuzzy
+msgid "Fish Speed"
+msgstr "Velocidad"
+
+#: hacks/config/xfishtank.xml.h:7
+msgid ""
+"Fish! This is not included with the XScreenSaver package, but if you don't "
+"have it already, you can find it at <http://metalab.unc.edu/pub/Linux/X11/"
+"demos/>."
+msgstr ""
+
+#: hacks/config/xfishtank.xml.h:12
+msgid "XFishTank"
+msgstr ""
+
+#: hacks/config/xflame.xml.h:1
+msgid "Bitmap File"
+msgstr ""
+
+#: hacks/config/xflame.xml.h:2
+msgid ""
+"Draws a simulation of pulsing fire. It can also take an arbitrary image and "
+"set it on fire too. Written by Carsten Haitzler, hacked on by many others."
+msgstr ""
+
+#: hacks/config/xflame.xml.h:3
+msgid "Enable Blooming"
+msgstr ""
+
+#: hacks/config/xflame.xml.h:8
+msgid "Xflame"
+msgstr "Xflame"
+
+#: hacks/config/xjack.xml.h:4
+msgid ""
+"This program behaves schizophrenically and makes a lot of typos. Written by "
+"Jamie Zawinski. If you haven't seen Stanley Kubrick's masterpiece, ``The "
+"Shining,'' you won't get it. Those who have describe this hack as "
+"``inspired.''"
+msgstr ""
+
+#: hacks/config/xjack.xml.h:5
+msgid "Xjack"
+msgstr "Xjack"
+
+#: hacks/config/xlyap.xml.h:1
+msgid ""
+"This generates pretty fractal pictures by doing funky math involving the "
+"``Lyapunov exponent.'' It has a cool interactive mode, too. Written by Ron "
+"Record."
+msgstr ""
+
+#: hacks/config/xlyap.xml.h:2
+msgid "Xlyap"
+msgstr "Xlyap"
+
+#: hacks/config/xmatrix.xml.h:1
+msgid ""
+"A rendition of the text scrolls seen in the movie ``The Matrix.'' Written by "
+"Jamie Zawinski."
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:2
+msgid "Binary Encoding"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:3
+msgid "Expansion Algorithm"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:5
+msgid "Full"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:6
+msgid "Genetic Encoding"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:7
+msgid "Hexadecimal Encoding"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:9
+msgid "Matrix Encoding"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:10
+#, fuzzy
+msgid "Phone Number"
+msgstr "Número"
+
+#: hacks/config/xmatrix.xml.h:11
+msgid "Run Trace Program"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:12
+msgid "Slider Algorithm"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:17
+msgid "Synergistic Algorithm"
+msgstr ""
+
+#: hacks/config/xmatrix.xml.h:18
+msgid "Xmatrix"
+msgstr "Xmatrix"
+
+#: hacks/config/xmountains.xml.h:2
+#, fuzzy
+msgid "Reflections"
+msgstr "Acción predeterminada"
+
+#: hacks/config/xmountains.xml.h:3
+#, fuzzy
+msgid "Side View"
+msgstr "Utilizar visualizador"
+
+#: hacks/config/xmountains.xml.h:6
+msgid "Top View"
+msgstr ""
+
+#: hacks/config/xmountains.xml.h:7
+msgid ""
+"XMountains generates realistic-looking fractal terrains of snow-capped "
+"mountains near water, with either a top view or a side view. Written by "
+"Stephen Booth. This is not included with the XScreenSaver package, but if "
+"you don't have it already, you can find it at <http://www.epcc.ed.ac.uk/~spb/"
+"xmountains/>. Be sure to compile it with -DVROOT or it won't work right when "
+"launched by the xscreensaver daemon."
+msgstr ""
+
+#: hacks/config/xmountains.xml.h:8
+#, fuzzy
+msgid "Xmountains"
+msgstr "Montaña"
+
+#: hacks/config/xrayswarm.xml.h:1
+msgid ""
+"Draws a few swarms of critters flying around the screen, with nicely faded "
+"color trails behind them. Written by Chris Leger."
+msgstr ""
+
+#: hacks/config/xrayswarm.xml.h:5
+msgid "XRaySwarm"
+msgstr ""
+
+#: hacks/config/xsnow.xml.h:1
+msgid ""
+"Draws falling snow and the occasional tiny Santa. By Rick Jansen. You can "
+"find it at <http://www.euronet.nl/~rja/Xsnow/>."
+msgstr ""
+
+#: hacks/config/xsnow.xml.h:2
+msgid "Xsnow"
+msgstr ""
+
+#: hacks/config/xspirograph.xml.h:4
+#, fuzzy
+msgid "Layers"
+msgstr "Láser"
+
+#: hacks/config/xspirograph.xml.h:5
+msgid ""
+"Simulates that pen-in-nested-plastic-gears toy from your childhood. By Rohit "
+"Singh."
+msgstr ""
+
+#: hacks/config/xspirograph.xml.h:6
+msgid "XSpiroGraph"
+msgstr ""
+
+#: hacks/config/xteevee.xml.h:1
+msgid "Color Bars Enabled"
+msgstr ""
+
+#: hacks/config/xteevee.xml.h:2
+#, fuzzy
+msgid "Cycle Through Modes"
+msgstr "Ciclo de colores"
+
+#: hacks/config/xteevee.xml.h:3
+msgid "Rolling Enabled"
+msgstr ""
+
+#: hacks/config/xteevee.xml.h:4
+#, fuzzy
+msgid "Static Enabled"
+msgstr "Estática"
+
+#: hacks/config/xteevee.xml.h:5
+#, fuzzy
+msgid "XTeeVee"
+msgstr "Xtevé"
+
+#: hacks/config/xteevee.xml.h:6
+#, fuzzy
+msgid ""
+"XTeeVee simulates various television problems, including static, loss of "
+"vertical hold, and a test pattern. By Greg Knauss."
+msgstr ""
+"Simula varios de los problemas de la televisión, como ser estática, pérdida "
+"de sincronización vertical, y patrones de prueba."
+
+#: hacks/config/zoom.xml.h:3
+#, fuzzy
+msgid "Lens Offset"
+msgstr "Desplazamiento"
+
+#: hacks/config/zoom.xml.h:4
+#, fuzzy
+msgid "Lenses"
+msgstr "Menos"
+
+#: hacks/config/zoom.xml.h:9
+msgid ""
+"Zooms in on a part of the screen and then moves around. With the -lenses "
+"option the result is like looking through many overlapping lenses rather "
+"than just a simple zoom. Written by James Macnicol."
+msgstr ""
+
+#~ msgid "Set background image."
+#~ msgstr "Definir la imagen de fondo."
+
+#~ msgid "IMAGE-FILE"
+#~ msgstr "ARCHIVO-IMAGEN"
+
+#~ msgid ""
+#~ "an initialization error occurred while starting 'background-properties-"
+#~ "capplet'.\n"
+#~ "aborting...\n"
+#~ msgstr ""
+#~ "ocurrió un error de inicialización al lanzar 'background-properties-"
+#~ "capplet'.\n"
+#~ "abortando...\n"
+
+#~ msgid "Configuration of the desktop's background"
+#~ msgstr "Configuración del tapiz del escritorio"
+
+#~ msgid "Disabled"
+#~ msgstr "Desactivado"
+
+#~ msgid "Color"
+#~ msgstr "Color"
+
+#~ msgid "Primary Color"
+#~ msgstr "Color primario"
+
+#~ msgid "Secondary Color"
+#~ msgstr "Color secundario"
+
+#~ msgid "Wallpaper Selection"
+#~ msgstr "Selección del fondo"
+
+#~ msgid "Can't find an hbox, using a normal file selection"
+#~ msgstr "No puedo encontrar un hbox, usando un selector de archivos normal"
+
+#~ msgid "Wallpaper"
+#~ msgstr "Fondo"
+
+#~ msgid "none"
+#~ msgstr "ninguno"
+
+#~ msgid "Embossed Logo"
+#~ msgstr "Logotipo embutido"
+
+#~ msgid "Scaled (keep aspect)"
+#~ msgstr "Redimensionado (conserva aspecto)"
+
+#~ msgid "Use GNOME to set background"
+#~ msgstr "Usar GNOME para definir el fondo"
+
+#~ msgid "Set parameters from saved state and exit"
+#~ msgstr "Usa los parámetros que se tenían guardados y terminar"
+
+#~ msgid "IMAGE"
+#~ msgstr "IMAGEN"
+
+#~ msgid "Sets the wallpaper to the value specified"
+#~ msgstr "Ajusta el fondo al valor indicado"
+
+#~ msgid "COLOR"
+#~ msgstr "COLOR"
+
+#~ msgid "Specifies the background color"
+#~ msgstr "Indica el color de fondo"
+
+#~ msgid "Specifies end background color for gradient"
+#~ msgstr "Indica el color de fondo final para el degradado"
+
+#~ msgid "ORIENT"
+#~ msgstr "ORIENT"
+
+#~ msgid "Gradient orientation: vertical or horizontal"
+#~ msgstr "Orientación del degradado: vertical u horizontal"
+
+#~ msgid "Use a solid fill for the background"
+#~ msgstr "Usar un color sólido para el fondo"
+
+#~ msgid "Use a gradient fill for the background"
+#~ msgstr "Usar un degradado de colores para el fondo"
+
+#~ msgid "MODE"
+#~ msgstr "MODO"
+
+#~ msgid "Display wallpaper: tiled, centered, scaled or ratio"
+#~ msgstr "Imagen de fondo: mosaico, centrada, redimensionada o ratio"
+
+#~ msgid "Desktop"
+#~ msgstr "Escritorio"
+
+#~ msgid "Configure how document types are handled"
+#~ msgstr "Configura cómo manejar los tipos de documentos"
+
+#~ msgid "Control Center Menu"
+#~ msgstr "Menú del Centro de Control de Gnome"
+
+#~ msgid "Configure the settings of your Multimedia devices"
+#~ msgstr "Configurar los dispositivos multimedios"
+
+#~ msgid "Multimedia"
+#~ msgstr "Multimedios"
+
+#~ msgid "Configure your external devices"
+#~ msgstr "Configurar sus dispositivos externos."
+
+#~ msgid "Peripherals"
+#~ msgstr "Periféricos"
+
+#~ msgid "Session"
+#~ msgstr "Sesión"
+
+#~ msgid "Session Management Settings"
+#~ msgstr "Opciones de la gestión de sesiones"
+
+#~ msgid "Configure the global settings of your GNOME applications"
+#~ msgstr "Configurar las opciones globales de las aplicaciones Gnome."
+
+#~ msgid "User Interface"
+#~ msgstr "Opciones de la interfaz gráfica"
+
+#~ msgid "Edit Applications List"
+#~ msgstr "Editar la lista de aplicaciones"
+
+#~ msgid "Select applications to appear in menu for MIME type \"%s\""
+#~ msgstr ""
+#~ "Seleccionar las aplicaciones que aparecen en el menú para el tipo MIME \"%"
+#~ "s\""
+
+#~ msgid "Add Application..."
+#~ msgstr "Añadir aplicación..."
+
+#~ msgid "Edit Application..."
+#~ msgstr "Editar aplicación..."
+
+#~ msgid "Delete Application"
+#~ msgstr "Borrar aplicación"
+
+#~ msgid "Edit Components List"
+#~ msgstr "Editar lista de componentes"
+
+#~ msgid "Select views to appear in menu for MIME type \"%s\""
+#~ msgstr ""
+#~ "Seleccionar vistas que aparecerán en el menú para el tipo MIME \"%s\""
+
+#~ msgid ""
+#~ "The MIME type entered contained upper case characters. Upper case "
+#~ "characters were changed to lower case for you."
+#~ msgstr ""
+#~ "El tipo MIME que ha introducido contiene caracteres en mayúsculas. Esos "
+#~ "caracteres han sido cambiados a minúsculas."
+
+#~ msgid "Add New MIME Type"
+#~ msgstr "Añadir un tipo MIME nuevo"
+
+#~ msgid "Add MIME Type"
+#~ msgstr "Añadir un tipo MIME"
+
+#~ msgid "New MIME type (e.g. image/x-thumper):"
+#~ msgstr "Nuevo tipo MIME (p.e. image/x-thumper):"
+
+#~ msgid "Description (e.g. Thumper image):"
+#~ msgstr "Descripción (ej. imagen chocante):"
+
+#~ msgid "File Extensions "
+#~ msgstr "Extensiones de archivos "
+
+#~ msgid "Add..."
+#~ msgstr "Añadir..."
+
+#~ msgid "    Remove    "
+#~ msgstr "    Quitar    "
+
+#~ msgid "Add New Extension"
+#~ msgstr "Añadir una nueva extensión"
+
+#~ msgid ""
+#~ "Type in the extensions for this mime-type (without dot).\n"
+#~ "You can enter several extensions seperated by a space,\n"
+#~ "for example: html htm"
+#~ msgstr ""
+#~ "Teclee las extensiones para este tipo mime (sin punto).\n"
+#~ "Puede introducir varias extensiones separadas por un espacio,\n"
+#~ "por ejemplo: html htm"
+
+#~ msgid "Extension:"
+#~ msgstr "Extensión:"
+
+#~ msgid "You must enter a name."
+#~ msgstr "Debe introducir un nombre."
+
+#~ msgid "You must enter a command."
+#~ msgstr "Debe introducir un comando."
+
+#~ msgid ""
+#~ "\"%s\" does not exist or is not executable.\n"
+#~ "Check your spelling and make sure you have\n"
+#~ "the right permissions to execute this file."
+#~ msgstr ""
+#~ "\"%s\" no existe o no es ejecutable.\n"
+#~ "Compruebe lo que ha tecleado y asegúrese que tiene\n"
+#~ "los permisos adecuados para ejecutar este archivo."
+
+#~ msgid ""
+#~ "The command \"%s\" cannot be found.\n"
+#~ "You must use a command that can work from any command line."
+#~ msgstr ""
+#~ "El comando \"%s\" no se ha encontrado.\n"
+#~ "Debe emplear un comando que funcione desde cualquier línea de comandos."
+
+#~ msgid "Bad Application Name"
+#~ msgstr "El nombre de la aplicación es incorrecto"
+
+#~ msgid "Bad Application Command"
+#~ msgstr "El comando de la aplicación es incorrecto"
+
+#~ msgid "Add Application"
+#~ msgstr "Añadir aplicación"
+
+#~ msgid "Edit Application"
+#~ msgstr "Editar aplicación"
+
+#~ msgid "Application Name:"
+#~ msgstr "Nombre de la aplicación:"
+
+#~ msgid "Application Command:"
+#~ msgstr "Comando para la aplicación:"
+
+#~ msgid "Open Behavior"
+#~ msgstr "Comportamiento al abrir"
+
+#~ msgid "Can open multiple files"
+#~ msgstr "Puede abrir múltiples archivos"
+
+#~ msgid "Can open from URI"
+#~ msgstr "Puede abrir desde URI"
+
+#~ msgid "MIME Type"
+#~ msgstr "Tipo MIME"
+
+#~ msgid "Change Icon"
+#~ msgstr "Cambiar icono"
+
+#~ msgid "Change File Extensions"
+#~ msgstr "Cambiar extensiones de los archivos"
+
+#~ msgid "Default Action:"
+#~ msgstr "Acción predeterminada:"
+
+#~ msgid "Open With Application"
+#~ msgstr "Abrir con la aplicación"
+
+#~ msgid "Edit List"
+#~ msgstr "Editar lista"
+
+#~ msgid "Add New MIME Type..."
+#~ msgstr "Añadir un nuevo tipo MIME..."
+
+#~ msgid "Delete This MIME Type"
+#~ msgstr "Borrar este tipo MIME"
+
+#~ msgid "Revert to System Defaults"
+#~ msgstr "Revertir a los valores predeterminados del sistema"
+
+#~ msgid ""
+#~ "Reverting to system settings will lose any changes\n"
+#~ "you have ever made to File Types and Programs.\n"
+#~ "Revert anyway?"
+#~ msgstr ""
+#~ "Revertir a los valores predeterminados del sistema hará que\n"
+#~ "pierda cualquier cambio que hiciese, previamente, a los tipos\n"
+#~ "de archivos y programas.\n"
+#~ "¿Revertir de todas formas?"
+
+#~ msgid "View as %s"
+#~ msgstr "Ver como %s"
+
+#~ msgid "File Types and Programs"
+#~ msgstr "Tipos de archivos y programas"
+
+#~ msgid "Specify which programs are used to open or view each file type"
+#~ msgstr ""
+#~ "Especifica que programas se usan para abrir o ver cada tipo de archivo"
+
+#~ msgid "Select an icon"
+#~ msgstr "Seleccione un icono"
+
+#~ msgid "Gnome editor"
+#~ msgstr "Editor de Gnome"
+
+#~ msgid "Choose the editor that is invoked by gnome-edit"
+#~ msgstr "Elegir el editor invocado por gnome-edit."
+
+#~ msgid "Default Editor"
+#~ msgstr "Propiedades Gnome Edit"
+
+#~ msgid "Keyboard bell"
+#~ msgstr "Bip del teclado"
+
+#~ msgid "Volume"
+#~ msgstr "Volumen"
+
+#~ msgid "Pitch (Hz)"
+#~ msgstr "Tono (Hz)"
+
+#~ msgid "Keyboard repeat rate"
+#~ msgstr "Velocidad de repetición"
+
+#~ msgid "Repeat rate"
+#~ msgstr "Velocidad de repetición"
+
+#~ msgid "Repeat Delay"
+#~ msgstr "Tiempo antes de repetición"
+
+#~ msgid "Keyboard click"
+#~ msgstr "Clic del teclado"
+
+#~ msgid "Click on keypress"
+#~ msgstr "Clic al teclear"
+
+#~ msgid ""
+#~ "No help is available/installed for these settings. Please make sure you\n"
+#~ "have the GNOME User's Guide installed on your system."
+#~ msgstr ""
+#~ "No hay ayuda disponible/instalada para esas opciones. Asegúrese que\n"
+#~ "tiene instalada en sus sistema la Guía del Usuario de GNOME."
+
+#~ msgid "Close"
+#~ msgstr "Cerrar"
+
+#~ msgid ""
+#~ "an initialization error occurred while starting 'keyboard-properties-"
+#~ "capplet'.\n"
+#~ "aborting...\n"
+#~ msgstr ""
+#~ "ocurrió un error de inicialización al lanzar 'keyboard-properties-"
+#~ "capplet'.\n"
+#~ "abortando...\n"
+
+#~ msgid "Keyboard Properties"
+#~ msgstr "Modifica las propiedades del teclado"
+
+#~ msgid "Mouse buttons"
+#~ msgstr "Botones del ratón"
+
+#~ msgid "Left handed"
+#~ msgstr "Zurdo"
+
+#~ msgid "Right handed"
+#~ msgstr "Diestro"
+
+#~ msgid "Mouse motion"
+#~ msgstr "Movimiento del ratón"
+
+#~ msgid "Acceleration"
+#~ msgstr "Aceleración"
+
+#~ msgid ""
+#~ "an initialization error occurred while starting 'mouse-properties-"
+#~ "capplet'.\n"
+#~ "aborting...\n"
+#~ msgstr ""
+#~ "ocurrió un error de inicialización al lanzar 'mouse-properties-capplet'.\n"
+#~ "abortando...\n"
+
+#~ msgid "Require Password"
+#~ msgstr "Requiere Contraseña"
+
+#~ msgid "%s Settings..."
+#~ msgstr "Propiedades %s..."
+
+#~ msgid "Bernd Paysan"
+#~ msgstr "Bernd Paysan"
+
+#~ msgid "Changes the magnification of original picture."
+#~ msgstr "Cambia el aumento del dibujo original."
+
+#~ msgid "Modifies the direction move."
+#~ msgstr "Modifica la dirección del movimiento."
+
+#~ msgid "Modifies the wobbling."
+#~ msgstr "Modifica el burbujeo"
+
+#~ msgid "Sets the moving cycle time."
+#~ msgstr "Establece la periodicidad del movimiento"
+
+#~ msgid "Size:"
+#~ msgstr "Tamaño:"
+
+#~ msgid ""
+#~ "Time 3D is a clock.  It uses flying balls to display the time.  The balls "
+#~ "move and wobble around to give you the impression your graphic "
+#~ "workstation with its many XStone is doing something."
+#~ msgstr ""
+#~ "Hora en 3D es un reloj. Emplea bolas flotantes para mostrar la hora. Las "
+#~ "bolas se mueven y burbujea para darle la impresión que su estación "
+#~ "gráfica está haciendo algo con sus múltiples XStone."
+
+#~ msgid "Twist speed:"
+#~ msgstr "Velocidad del giro imprevisto:"
+
+#~ msgid "Twist:"
+#~ msgstr "Giro imprevisto:"
+
+#~ msgid "Wobble:"
+#~ msgstr "Burbujeo:"
+
+#~ msgid "Ants:"
+#~ msgstr "Hormigas:"
+
+#~ msgid "Changes the number of ants marching across the screen."
+#~ msgstr "Cambia la cantidad de hormigas que deambulan por la pantalla"
+
+#~ msgid "Changes the size of the ants."
+#~ msgstr "Cambia el tamaño de las hormigas"
+
+#~ msgid "David Bagely"
+#~ msgstr "David Bagely"
+
+#~ msgid ""
+#~ "Determines whether or not the ant leaves a truchet in the path it leaves "
+#~ "behind."
+#~ msgstr ""
+#~ "Determina si las hormigas van surcando un caminito por donde pasan o no."
+
+#~ msgid "Little Ants walk around, leaving colored trails."
+#~ msgstr ""
+#~ "Pequeñas hormigas paseándose por la pantalla y dejando huellas de colores."
+
+#~ msgid "Print the path that the ant took in the trail."
+#~ msgstr "Muestra las huellas dejadas por las hormigas."
+
+#~ msgid "Whales, dolphins and sharks swimming around, in 3D"
+#~ msgstr "Ballenas, delfines y tiburones nadando en 3D"
+
+#~ msgid ""
+#~ "A show of objects interacting through attractive and repulsive forces."
+#~ msgstr ""
+#~ "Varios objetos que interaccionan con fuerzas atractivas y repulsivas."
+
+#~ msgid ""
+#~ "Attraction is based on interactions of points which attract each other up "
+#~ "to a certain distance and then begin to repel each other."
+#~ msgstr ""
+#~ "Attraction está basado en las interacciones entre puntos que se atraen o "
+#~ "repelan mutuamente, en relación con la distancia."
+
+#~ msgid "Change distance at which attractive force becomes repulsive."
+#~ msgstr "Cambiar la distancia a partir de la cual las fuerzas se invierten."
+
+#~ msgid "Change size of points."
+#~ msgstr "Cambiar el tamaño de los puntos."
+
+#~ msgid "Change the delay in cycles."
+#~ msgstr "Cambiar la duración entre los ciclos."
+
+#~ msgid "Change the number of points to use."
+#~ msgstr "Cambiar la cantidad de puntos de la animación."
+
+#~ msgid "Change the spacing radius of the points."
+#~ msgstr "Cambiar el radio de distribución de los puntos."
+
+#~ msgid "Count:"
+#~ msgstr "Cantidad:"
+
+#~ msgid "Distance of attraction."
+#~ msgstr "Distancia de atracción."
+
+#~ msgid "Glow"
+#~ msgstr "Brillo"
+
+#~ msgid "Have initial forces on each point be tangential to original circle."
+#~ msgstr ""
+#~ "Hacer que las fuerzas sean inicialmente tangenciales al círculo original."
+
+#~ msgid "Have points glow vary with acceleration."
+#~ msgstr "Hacer que los puntos brillen con la aceleración."
+
+#~ msgid "Initial spacing radius of points."
+#~ msgstr "Tamaño inicial del radio entre los puntos."
+
+#~ msgid "Jamie Zawinski <jwz@netscape.com>"
+#~ msgstr "Jamie Zawinski <jwz@netscape.com>"
+
+#~ msgid "Larger"
+#~ msgstr "Grande"
+
+#~ msgid "Number of points to use."
+#~ msgstr "Cantidad de puntos a usar."
+
+#~ msgid "Orbit"
+#~ msgstr "Órbita"
+
+#~ msgid "Size of point."
+#~ msgstr "Tamaño de los puntos."
+
+#~ msgid "Slower"
+#~ msgstr "Lento"
+
+#~ msgid "Speed of Motion."
+#~ msgstr "Velocidad de la animación."
+
+#~ msgid ""
+#~ "Blitspin takes a bitmap and repeatedly rotates it by 90 degrees using "
+#~ "logical operations."
+#~ msgstr ""
+#~ "Blitspin hace repetidamente rotaciones de 90° con una imagen bitmap, "
+#~ "usando operaciones lógicas."
+
+#~ msgid "Change the delay between each 90 degree rotation."
+#~ msgstr "Cambiar la velocidad de las rotaciones de 90°."
+
+#~ msgid "Change the delay between steps of rotation process."
+#~ msgstr "Cambiar la velocidad entre las rotaciones."
+
+#~ msgid "Change to display in monochrome."
+#~ msgstr "Cambiar a la visualización en monocromo."
+
+#~ msgid "Delay2"
+#~ msgstr "Retraso2"
+
+#~ msgid "Monochrome"
+#~ msgstr "Monocromo"
+
+#~ msgid "Rotates a bitmap in an interesting way."
+#~ msgstr "Rotaciones interesantes de imágenes bitmap"
+
+#~ msgid "Speed of rotation"
+#~ msgstr "Velocidad de rotación"
+
+#~ msgid "Speed of the 90 degree rotation."
+#~ msgstr "Velocidad de la rotación de 90°"
+
+#~ msgid "A blob of bubbles spinning/moving around the screen."
+#~ msgstr "Un conjunto de burbujas girando y saltando por la pantalla. "
+
+#~ msgid "Bouboule changes shape and size in a blob like form."
+#~ msgstr ""
+#~ "Bouboule un conjunto de forma esférica de gotas que se desplazan y "
+#~ "deforman por la pantalla."
+
+#~ msgid "Change the number of bubbles to use."
+#~ msgstr "Cambiar la cantidad de burbujas a usar."
+
+#~ msgid "Change the number of colors to use."
+#~ msgstr "Cambie la cantidad de colores a usar."
+
+#~ msgid "Colors:"
+#~ msgstr "Colores:"
+
+#~ msgid "Jeremie Petit <jpetit@essi.fr>"
+#~ msgstr "Jeremie Petit <jpetit@essi.fr>"
+
+#~ msgid "Number of Colors."
+#~ msgstr "Cantidad de colores."
+
+#~ msgid "Number of bubbles to use."
+#~ msgstr "Cantidad de burbujas a usar."
+
+#~ msgid "John Neil <neil@math.idbsu.edu>"
+#~ msgstr "John Neil <neil@math.idbsu.edu>"
+
+#~ msgid "Random color-cycling braids in a circle."
+#~ msgstr "Galones trenzados en círculo que cambian de color cíclicamente."
+
+#~ msgid "The braid program draws random color-cycling braids around a circle."
+#~ msgstr ""
+#~ "Este salvapantalla dibuja unos galones trenzados en círculo con colores "
+#~ "que cambian al azar cíclicamente."
+
+#~ msgid "Bsod"
+#~ msgstr "BSoD"
+
+#~ msgid "Bsod simulates crash screens from other operating systems."
+#~ msgstr "BSoD simula las pantallas de fallo de varios sistemas operativos."
+
+#~ msgid "Change the delay."
+#~ msgstr "Cambiar la velocidad de la animación."
+
+#~ msgid "Lots of bubbles floating around, in 3d"
+#~ msgstr "Muchas burbujas flotando por todas partes, en 3d"
+
+#~ msgid "Broken"
+#~ msgstr "Romper"
+
+#~ msgid "Bubbles sprays tiny bubbles which grow until they go pop."
+#~ msgstr ""
+#~ "Este salvapantalla dibuja por la pantalla burbujas esféricas que van "
+#~ "creciendo hasta que revientan."
+
+#~ msgid "James Macnicol <J.Macnicol@student.anu.edu.au>"
+#~ msgstr "James Macnicol <J.Macnicol@student.anu.edu.au>"
+
+#~ msgid "Lots of random bubbles grow until they pop."
+#~ msgstr "Burbujas que crecen hasta que revientan."
+
+#~ msgid "Simple"
+#~ msgstr "Simple"
+
+#~ msgid "Shane Smit"
+#~ msgstr "Shane Smit"
+
+#~ msgid "Spotlights a bump map of your desktop."
+#~ msgstr "Ilumina un mapa del escritorio."
+
+#~ msgid "The famous, M.C. Escher, impossible cage"
+#~ msgstr "La famosa jaula imposible de M.C. Eschers"
+
+#~ msgid "Display a spinning compass "
+#~ msgstr "Muestra en pantalla un compás girando "
+
+#~ msgid "Change the density."
+#~ msgstr "Cambiar la densidad."
+
+#~ msgid "Change the number of seeds."
+#~ msgstr "Cambiar la cantidad de semillas."
+
+#~ msgid "Frederick Roeber"
+#~ msgstr "Frederick Roeber"
+
+#~ msgid "Simulates coral growth."
+#~ msgstr "Simula el crecimiento del coral."
+
+#~ msgid "Centre"
+#~ msgstr "Centro"
+
+#~ msgid "Change the number of polygons to use."
+#~ msgstr "Cambiar la cantidad de polígonos."
+
+#~ msgid "Have at maximum size"
+#~ msgstr "Rellenar la pantalla"
+
+#~ msgid "Jouk Jansen"
+#~ msgstr "Jouk Jansen"
+
+#~ msgid "Moving polygons, similar to a kaleidescope."
+#~ msgstr "Polígonos de colores en movimiento, similar a un caleidoscopio."
+
+#~ msgid "Number of polygons to use."
+#~ msgstr "Cantidad de polígonos a usar."
+
+#~ msgid "Change the number of iterations."
+#~ msgstr "Cambiar la cantidad de iteraciones"
+
+#~ msgid "Cynosure franticly displays colored rectangles."
+#~ msgstr "Cynosure dibuja rectángulos de colores de manera frenética."
+
+#~ msgid "Franticly displays colored rectangles."
+#~ msgstr "Muestra rectángulos de colores de manera frenética."
+
+#~ msgid "Number of iterations."
+#~ msgstr "Cantidad de iteraciones"
+
+#~ msgid "Stephen Linhart, Ozymandias Desiderata, Jamie Zawinski"
+#~ msgstr "Stephen Linhart, Ozymandias Desiderata, Jamie Zawinski"
+
+#~ msgid "Decayscreen makes a screen look like its melting down."
+#~ msgstr "El contenido de la pantalla se derrite y se escurre."
+
+#~ msgid "Makes a screen melt down"
+#~ msgstr "El contenido de la pantalla se derrite y se escurre."
+
+#~ msgid "Vivek Khera <khera@cs.duke.edu>"
+#~ msgstr "Vivek Khera <khera@cs.duke.edu>"
+
+#~ msgid "Changes the time between redrawing the screen."
+#~ msgstr "Cambia el tiempo de espera antes de re-dibujar la pantalla."
+
+#~ msgid "Deco draws tacky 70s basement wall panelling."
+#~ msgstr ""
+#~ "Dibuja motivos de colores similares a los que se usaban para el "
+#~ "empapelado en los años 70."
+
+#~ msgid ""
+#~ "Determines whether to draw the panels in color, or in black and white."
+#~ msgstr "Elije si se usarán los colores o en blanco y negro."
+
+#~ msgid "Draw tacky 70s basement wall panelling."
+#~ msgstr "Dibuja motivos murales de los años 70"
+
+#~ msgid ""
+#~ "Jamie Zawinski <jwz@jwz.org>\n"
+#~ "Michael D. Bayne <mdb@go2net.com>"
+#~ msgstr ""
+#~ "Jamie Zawinski <jwz@jwz.org>\n"
+#~ "Michael D. Bayne <mdb@go2net.com>"
+
+#~ msgid "This will cause the panes to flash."
+#~ msgstr "Esto dará un efecto de parpadeo."
+
+#~ msgid "Time between redraws:"
+#~ msgstr "Tiempo entre dos motivos:"
+
+#~ msgid "Use color when drawing."
+#~ msgstr "En colores"
+
+#~ msgid "color"
+#~ msgstr "color"
+
+#~ msgid "color-cycle"
+#~ msgstr "ciclo de color"
+
+#~ msgid "delay"
+#~ msgstr "retraso"
+
+#~ msgid "Display nice stuff "
+#~ msgstr "Muestra cosas lindas"
+
+#~ msgid "Change the number to use."
+#~ msgstr "Cambiar la cantidad de puntos a dibujar por ciclo."
+
+#~ msgid "Discrete map systems"
+#~ msgstr "Sistemas de mapas discretos"
+
+#~ msgid "Number to use."
+#~ msgstr "Cantidad de punto"
+
+#~ msgid "Tim Auckland"
+#~ msgstr "Tim Auckland"
+
+#~ msgid "Distort the screen"
+#~ msgstr "Crea distorsiones de la imagen en la pantalla"
+
+#~ msgid ""
+#~ "This screensaver does distortions of some areas of the screen, as if some "
+#~ "object was moving under the image"
+#~ msgstr ""
+#~ "Este salvapantalla crea distorsiones de ciertas partes de la pantalla, "
+#~ "como si se desplazara un objeto por debajo"
+
+#~ msgid "Change whether fractals should grow."
+#~ msgstr "Pide que las fractales crezcan."
+
+#~ msgid "Change whether to use lissajous figures to get points."
+#~ msgstr "Usar figuras de lissajous para obtener los puntos."
+
+#~ msgid "Drift draws drifting recursive fractal cosmic flames."
+#~ msgstr "Este salvapantalla dibuja fuegos cósmicos con fractales recursivas."
+
+#~ msgid "Drifting recursive fractal cosmic flames."
+#~ msgstr "Dibuja fuegos cósmicos con fractales recursivas."
+
+#~ msgid "Grow"
+#~ msgstr "Crecimiento"
+
+#~ msgid "Number of pixels to use."
+#~ msgstr "Cambiar la cantidad de pixels a usar."
+
+#~ msgid "Scot Draves <spot@cs.cmu.edu>"
+#~ msgstr "Scot Draves <spot@cs.cmu.edu>"
+
+#~ msgid "Use lissajous figures to get points."
+#~ msgstr "Usar figuras de lissajous para obtener los puntos."
+
+#~ msgid "Draws a point moving around a circle which moves around a circle."
+#~ msgstr "Dibuja la trayectoria de un punto que se desplaza sobre una rueda."
+
+#~ msgid "Holdtime"
+#~ msgstr "Tiempo de espera"
+
+#~ msgid "James Youngman <jay@gnu.org>"
+#~ msgstr "James Youngman <jay@gnu.org>"
+
+#~ msgid "Time finished product is shown."
+#~ msgstr "Tiempo de espera"
+
+#~ msgid "When the figure is complete, epicycle pauses this number of seconds."
+#~ msgstr ""
+#~ "Cuando la figura está completada, el salvapantalla espera por la cantidad "
+#~ "de segundos especificada."
+
+#~ msgid "A waving ribbon"
+#~ msgstr "Una cinta ondeante"
+
+#~ msgid "Bas van Gaalen and Charles Vidal"
+#~ msgstr "Bas van Gaalen y Charles Vidal"
+
+#~ msgid "Change the delay in movement."
+#~ msgstr "Cambiar el retraso en movimiento."
+
+#~ msgid "Change the number of cycles."
+#~ msgstr "Cambiar la cantidad de ciclos."
+
+#~ msgid "Changes the count."
+#~ msgstr "Cambia la cantidad."
+
+#~ msgid "Speed of Motion"
+#~ msgstr "Velocidad de la animación"
+
+#~ msgid "Change the delay between changing modes."
+#~ msgstr "Cambiar el tiempo en ciclos entre cambios."
+
+#~ msgid "Change the size of pixels in the flag."
+#~ msgstr "Cambiar el tamaño de los pixels de la bandera."
+
+#~ msgid "Charles Vidal <vidalc@univ-mlv.fr>"
+#~ msgstr "Charles Vidal <vidalc@univ-mlv.fr>"
+
+#~ msgid "Delay between switches."
+#~ msgstr "Tiempo en ciclos entre cambios."
+
+#~ msgid "Draws a waving flag."
+#~ msgstr "Dibuja una bandera de pixels flameando."
+
+#~ msgid "Flag draws a waving flab, containing text or an image."
+#~ msgstr ""
+#~ "Dibuja una bandera flameante, compuesta de pixels que forman un texto o "
+#~ "una imagen."
+
+#~ msgid "Size of pixels"
+#~ msgstr "Tamaño de los pixels"
+
+#~ msgid "Draws a flow of colored points"
+#~ msgstr "Dibuja con puntos de color un flujo "
+
+#~ msgid "Change the number of trees to use."
+#~ msgstr "Cambiar la cantidad de árboles a usar."
+
+#~ msgid "Delay between redraws."
+#~ msgstr "Demora al terminar el dibujo."
+
+#~ msgid "Draws a fractal forest."
+#~ msgstr "Dibuja un bosque fractal."
+
+#~ msgid "Fractal draws a fractal forest."
+#~ msgstr "Este salvapantalla dibuja un bosque con arboles fractales."
+
+#~ msgid "Number of trees to use."
+#~ msgstr "Cantidad de árboles."
+
+#~ msgid "Pascal Pensa <pensa@aurora.unice.fr>"
+#~ msgstr "Pascal Pensa <pensa@aurora.unice.fr>"
+
+#~ msgid "A 3d globe"
+#~ msgstr "Un globo en 3D"
+
+#~ msgid "The 3d mesa demo, of gears"
+#~ msgstr "La demo Mesa 3D, de engranajes"
+
+#~ msgid "Additive"
+#~ msgstr "Aditivo"
+
+#~ msgid "Causes the colors to mix when overlapped."
+#~ msgstr "Hace que los colores se mezclen cuando se superponen."
+
+#~ msgid "Goop draws a simulation of bubbles in layers."
+#~ msgstr ""
+#~ "Este salvapantalla simula gotas de aceite de colores en movimiento en "
+#~ "varios capas."
+
+#~ msgid "Have transparent bubbles."
+#~ msgstr "Gotas transparentes."
+
+#~ msgid "Jamie Zawinski <jwz@jwz.org>"
+#~ msgstr "Jamie Zawinski <jwz@jwz.org>"
+
+#~ msgid "Use additive color model."
+#~ msgstr "Usar modelo de colores aditivo."
+
+#~ msgid "squishy transparent oil and bubbles"
+#~ msgstr "Gotas de aceite en movimiento"
+
+#~ msgid "Change the number of planets to use."
+#~ msgstr "Cambiar la cantidad de planetas."
+
+#~ msgid "Change whether objects should leave a trail."
+#~ msgstr "Los objetos dejan una estela."
+
+#~ msgid "Change whether orbit should decay."
+#~ msgstr "La órbita debe decaer."
+
+#~ msgid "Decay"
+#~ msgstr "Descomposición"
+
+#~ msgid "Draws a simple orbital simulation."
+#~ msgstr "Dibuja una simulación orbital simple."
+
+#~ msgid "Grav draws a simple orbital simulation."
+#~ msgstr "Dibuja una simulación orbital simple."
+
+#~ msgid "Greg Bowering <greg@smug.student.adelaide.edu.au>"
+#~ msgstr "Greg Bowering <greg@smug.student.adelaide.edu.au>"
+
+#~ msgid "Number of planets to use."
+#~ msgstr "Cantidad de planetas."
+
+#~ msgid "Objects should leave trails behind them."
+#~ msgstr "Los objetos dejan cola."
+
+#~ msgid "Draws random color rectangles."
+#~ msgstr "Dibuja rectángulos de colores al azar"
+
+#~ msgid "Greynetic draws random rectangles."
+#~ msgstr "«Gisnética» dibuja rectángulos de colores al azar."
+
+#~ msgid "Change the number of circles to use."
+#~ msgstr "Cambiar la cantidad de círculos a usar."
+
+#~ msgid "Change to alternating striped curves."
+#~ msgstr "Usar un gradiente de colores entre los círculos."
+
+#~ msgid "Change to animated circles."
+#~ msgstr "Círculos animados."
+
+#~ msgid "Change to cycle through colormap."
+#~ msgstr "Colores cíclicos."
+
+#~ msgid "Cycle through colormap."
+#~ msgstr "Colores cíclicos."
+
+#~ msgid "Draw circular patterns."
+#~ msgstr "Dibuja motivos a base de círculos."
+
+#~ msgid "Halo draws patterns based on circles."
+#~ msgstr "Dibuja motivos a base de círculos."
+
+#~ msgid "Number of circles to use."
+#~ msgstr "Cantidad de círculos a usar."
+
+#~ msgid "Use a gradient of colors between circles."
+#~ msgstr "Usar un gradiente de colores entre los círculos."
+
+#~ msgid "Draws helical string-art patterns"
+#~ msgstr "Dibuja motivos a base de líneas"
+
+#~ msgid "Helix draws patterns composed of line segments."
+#~ msgstr "Dibuja motivos complejos a base de líneas."
+
+#~ msgid "Jamie  Zawinski  <jwz@jwz.org> "
+#~ msgstr "Jamie  Zawinski  <jwz@jwz.org> "
+
+#~ msgid "Time between redraws."
+#~ msgstr "Tiempo entre refrescos."
+
+#~ msgid "Change the number of pixels before a color change."
+#~ msgstr "Cambiar la cantidad de pixels a dibujar antes de cambiar de color."
+
+#~ msgid "Draws real plane fractals"
+#~ msgstr "Dibuja planos fractales"
+
+#~ msgid "Hopalong generates real plan fractals."
+#~ msgstr "Este salvapantalla genera verdaderas fractales planas."
+
+#~ msgid "Number of pixels before a color change."
+#~ msgstr "Cantidad de pixels antes de cambiar de color."
+
+#~ msgid "Patrick J. Naughton <naughton@eng.sun.com>"
+#~ msgstr "Patrick J. Naughton <naughton@eng.sun.com>"
+
+#~ msgid "2D projection of a hypercube"
+#~ msgstr "Proyección 2D de un hipercubo"
+
+#~ msgid "Change the distance from center of cube"
+#~ msgstr "Cambiar la distancia del centro del cubo"
+
+#~ msgid "Distance"
+#~ msgstr "Distancia"
+
+#~ msgid "Distance from center of cube"
+#~ msgstr "Distancia del centro del cubo"
+
+#~ msgid "Hypercube displays a wireframe projection of a hypercube."
+#~ msgstr "Proyección estilo alambre de un hipercubo."
+
+#~ msgid "Draws spinning, colliding, iterated-function-system images."
+#~ msgstr ""
+#~ "Dibuja imágenes de sistemas de funciones iteradas, girando y colisionando."
+
+#~ msgid "Ifs"
+#~ msgstr "Ifs"
+
+#~ msgid "Massimino Pascal <Pascal.Massimon@ens.fr>"
+#~ msgstr "Massimino Pascal <Pascal.Massimon@ens.fr>"
+
+#~ msgid ""
+#~ "Jigsaw takes an image of the screen, carves it up into jigsaw puzzle "
+#~ "pieces, shuffles it, and solves it."
+#~ msgstr ""
+#~ "Rompecabezas toma una imagen de la pantalla, la secciona en piezas de "
+#~ "rompecabezas, lo mezcla, y lo resuelve."
+
+#~ msgid "Permutes the screen image like a jigsaw puzzle."
+#~ msgstr "Mezcla la imagen de la pantalla como si fuera un rompecabezas."
+
+#~ msgid "Draws spinning, animating, julia-set fractals."
+#~ msgstr "Dibuja fractales tipo Julia, animados y giratorios."
+
+#~ msgid "Julia draws spinning, animating, julia-set fractals."
+#~ msgstr "Julia dibuja fractales tipo Julia, animados y giratorios."
+
+#~ msgid "Sean McCullough <bankshot@mailhost.nmt.edu>"
+#~ msgstr "Sean McCullough <bankshot@mailhost.nmt.edu"
+
+#~ msgid "Change number of segments."
+#~ msgstr "Cambiar la cantidad de segmentos."
+
+#~ msgid "Change number of trails."
+#~ msgstr "Cambia el número de rastros."
+
+#~ msgid "Draws rotating line segments."
+#~ msgstr "Dibuja segmentos de lineas rotando."
+
+#~ msgid "Kaleidescope draws line segments in a symmetric pattern."
+#~ msgstr "Kaleidescope dibuja segmentos de línea en un patrón simétrico."
+
+#~ msgid "Number of segments."
+#~ msgstr "Cantidad de segmentos."
+
+#~ msgid "Ron Tapia <tapia@nmia.com>"
+#~ msgstr "Ron Tapia <tapia@nmia.com>"
+
+#~ msgid "A 3d cube floats around"
+#~ msgstr "Un cubo 3D flotante"
+
+#~ msgid ""
+#~ "Draws laser-like lines moving around a central focal point in varying "
+#~ "numbers and colors."
+#~ msgstr ""
+#~ "Dibuja líneas como si fueran lásers que se mueven alrededor de un punto "
+#~ "central, \n"
+#~ "en diferentes números y colores."
+
+#~ msgid "Draws vaguely laser-like moving lines."
+#~ msgstr "Dibuja líneas en movimiento que vagamente se parecen a lásers."
+
+#~ msgid "Duration of laser burst."
+#~ msgstr "Duración del disparo láser."
+
+#~ msgid ""
+#~ "Duration of the laser burst.  After the burst has finished, It will move "
+#~ "to a new location on the screen."
+#~ msgstr ""
+#~ "Duración del disparo láser. Luego que el disparo termine, se moverá a un "
+#~ "nuevo \n"
+#~ "lugar en la pantalla."
+
+#~ msgid "Mono"
+#~ msgstr "Mono"
+
+#~ msgid "Number of segments per laser burst."
+#~ msgstr "Número de segmentos por disparo láser."
+
+#~ msgid "Pascal Pensa"
+#~ msgstr "Pascal Pensa"
+
+#~ msgid "Segments:"
+#~ msgstr "Segmentos:"
+
+#~ msgid "Size of burst."
+#~ msgstr "Tamaño del disparo."
+
+#~ msgid "Draws fractal lightning bolts."
+#~ msgstr "Dibuja rayos fractales."
+
+#~ msgid "Keith Romberg <kromberg@saxe.com>"
+#~ msgstr "Keith Romberg <kromberg@saxe.com>"
+
+#~ msgid "Lightning draws fractal lightning bolts."
+#~ msgstr "«Lightning» dibuja rayos fractales."
+
+#~ msgid "Caleb Cullen"
+#~ msgstr "Caleb Cullen"
+
+#~ msgid "Change the size of object."
+#~ msgstr "Cambia el tamaño del objeto"
+
+#~ msgid "Draws animated full-loop lisajous figures"
+#~ msgstr "Dibuja figuras de lisajous animadas"
+
+#~ msgid "Lisa draws animated full-loop lisajous figures."
+#~ msgstr "«Lisa» dibuja figuras de lisajous animadas."
+
+#~ msgid "Size of object."
+#~ msgstr "Tamaño del objeto"
+
+#~ msgid "Change from closed to open figures."
+#~ msgstr "Cambiar de figuras cerradas a figuras abiertas."
+
+#~ msgid "Change number of interpolation steps."
+#~ msgstr "Cambiar el número de pasos de interpolación."
+
+#~ msgid "Figtype"
+#~ msgstr "Tipo de figura"
+
+#~ msgid ""
+#~ "Lmorph morphs between simple linedrawings using bilinear interpolation."
+#~ msgstr ""
+#~ "«Lmorph» transforma dibujos simples de línea usando interpolación "
+#~ "bilineal."
+
+#~ msgid "Points:"
+#~ msgstr "Puntos:"
+
+#~ msgid ""
+#~ "Sverre  H.  Huseby <sverrehu@online.no> & Glenn T. Lines <gtl@si.sintef."
+#~ "no>"
+#~ msgstr ""
+#~ "Sverre H. Huseby <sverrehu@online.no> y Glenn T. Lines <gtl@si.sintef.no>"
+
+#~ msgid "Bridge"
+#~ msgstr "Puente"
+
+#~ msgid "Color for filling completely closed off areas."
+#~ msgstr "Color de las regiones completamente cerradas."
+
+#~ msgid "Color of a skipped path"
+#~ msgstr "Color de los caminos descartados"
+
+#~ msgid "Color of failed path"
+#~ msgstr "Color de los caminos fallidos"
+
+#~ msgid "Color of surrounded area"
+#~ msgstr "Color de las regiones cerradas"
+
+#~ msgid "Controls whether or not a 'bridge' will appear over the logo."
+#~ msgstr "Controla si se debe crear o no un puente por encima del logotipo."
+
+#~ msgid "Copyright (C) 1988 by Sun Microsystems, Inc."
+#~ msgstr "Copyright (C) 1988 de Sun Microsystems, Inc."
+
+#~ msgid "Delay between drawing the maze and starting the solution."
+#~ msgstr "Demora antes de la resolución"
+
+#~ msgid "Delay between each step in the maze."
+#~ msgstr "Demora entre dos pasos en el laberinto"
+
+#~ msgid "Delay between finishing the maze and starting a new one."
+#~ msgstr "Demora después de la resolución"
+
+#~ msgid ""
+#~ "If the solver can \"see\" the end of a corridor it will color it this "
+#~ "color."
+#~ msgstr ""
+#~ "Si se puede \"ver\" el final de un corredor va a colorearse en este color."
+
+#~ msgid "Less Delay"
+#~ msgstr "Menos tiempo"
+
+#~ msgid "More Delay"
+#~ msgstr "Más retardo"
+
+#~ msgid "Put a bridge over the logo?"
+#~ msgstr "¿Crear un puente por encima del logotipo?"
+
+#~ msgid "Repeatedly create and solve a maze"
+#~ msgstr "Crea y resuelve laberintos"
+
+#~ msgid "Skip Color"
+#~ msgstr "Saltar color"
+
+#~ msgid "Speed Delay"
+#~ msgstr "Retardo de la velocidad"
+
+#~ msgid "Surround Color"
+#~ msgstr "Color envolvente"
+
+#~ msgid "The color of a failed path (stippled with a 50% pattern)"
+#~ msgstr "Color de los caminos que no llevaron a ningún lado"
+
+#~ msgid "The color of the path."
+#~ msgstr "El color del camino activo."
+
+#~ msgid ""
+#~ "The delay (in microseconds) after solving a maze and before generating a "
+#~ "new one."
+#~ msgstr ""
+#~ "La demora (en microsegundos) entre el fin de la resolución y la creación "
+#~ "de un nuevo laberinto."
+
+#~ msgid "The delay (in microseconds) between each step of the solution path."
+#~ msgstr ""
+#~ "Demora (en microsegundos) entre los pasos dados para resolver el "
+#~ "laberinto."
+
+#~ msgid ""
+#~ "The delay (in microseconds) between generating a maze and starting to "
+#~ "solve it."
+#~ msgstr ""
+#~ "La demora (en microsegundos) entre la creación del laberinto y el "
+#~ "comienzo de la resolución gráfica."
+
+#~ msgid ""
+#~ "The maze program creates a random maze and then solves it with graphical "
+#~ "feedback."
+#~ msgstr ""
+#~ "Este salvapantalla crea y resuelve gráficamente laberintos creados al "
+#~ "azar."
+
+#~ msgid "M.C. Escher inspired ants.. in 3d"
+#~ msgstr "Hormigas inspiradas de M.C. EScher... en 3 dimensiones"
+
+#~ msgid "Draw circular interference patterns"
+#~ msgstr "Dibuja patrones circulares de interferencia"
+
+#~ msgid "Jamie  Zawinski <jwz@jwz.org>"
+#~ msgstr "Jamie  Zawinski <jwz@jwz.org>"
+
+#~ msgid "Maximum radius increment"
+#~ msgstr "Incremento máximo del radio"
+
+#~ msgid "Moire draws circular interference patterns."
+#~ msgstr "«Moire» dibuja patrones circulares de interferencia."
+
+#~ msgid "A 3d flower morphs into a sphear"
+#~ msgstr "Una flor 3D que se transforma en una esfera"
+
+#~ msgid "Change to draw square at weird starting points."
+#~ msgstr "Cambia para dibujar cuadrados en puntos iniciales extraños."
+
+#~ msgid "Change to use XOR drawing function."
+#~ msgstr "Cambia para usar la función de dibujo XOR."
+
+#~ msgid "Draw square at weird starting points."
+#~ msgstr "Dibuja cuadrados en puntos iniciales extraños."
+
+#~ msgid "Munch munches squares until killed."
+#~ msgstr "«Munch» mastica cuadrados hasta ser muerto."
+
+#~ msgid "Munching squares."
+#~ msgstr "Masticando cuadrados."
+
+#~ msgid "Shift"
+#~ msgstr "Corrimiento"
+
+#~ msgid "Tim  Showalter  <tjs@andrew.cmu.edu>"
+#~ msgstr "Tim  Showalter  <tjs@andrew.cmu.edu>"
+
+#~ msgid "Use XOR drawing function."
+#~ msgstr "Usar la función de dibujo XOR."
+
+#~ msgid "Change maximum number of lines."
+#~ msgstr "Cambiar la cantidad máxima de líneas"
+
+#~ msgid "Change the time each picture is shown."
+#~ msgstr "Cambia el tiempo durante el que se muestra cada imagen."
+
+#~ msgid "Change time to fade away."
+#~ msgstr "Cambia el tiempo que le toma desaparecer."
+
+#~ msgid "Dale Moore <Dale.Moore@cs.cmu.edu>"
+#~ msgstr "Dale Moore <Dale.Moore@cs.cmu.edu>"
+
+#~ msgid "Fadedelay"
+#~ msgstr "Retardo de desaparición"
+
+#~ msgid "Maximum number of lines."
+#~ msgstr "Cantidad máxima de líneas."
+
+#~ msgid "Pedal Displays pretty geometric pictures."
+#~ msgstr "«Pedal» muestra dibujos geométricos bonitos."
+
+#~ msgid "Pretty geometric picture program."
+#~ msgstr "Programa de dibujos geométricos bonitos."
+
+#~ msgid "Time to fade away."
+#~ msgstr "Tiempo para desaparecer."
+
+#~ msgid "Time to show each picture."
+#~ msgstr "Tiempo para mostrar cada dibujo."
+
+#~ msgid "Display an arcade game"
+#~ msgstr "Mostrar un juego de acción"
+
+#~ msgid "3d pipes flow around the screen"
+#~ msgstr "Tuberías 3D fluyen por la pantalla"
+
+#~ msgid "Changes frequency of missile launch."
+#~ msgstr "Cambia la frecuencia del lanzamiento de misiles."
+
+#~ msgid "Frequency of missile launch"
+#~ msgstr "Frecuencia del lanzamiento de misiles"
+
+#~ msgid "How many particles should appear when a missile explodes."
+#~ msgstr "Cuantas partículas deben aparecer cuando un misil explota"
+
+#~ msgid "How many particles should be allowed on the screen at once."
+#~ msgstr "Cuantas partículas deben se deben mostrar en pantalla a la vez."
+
+#~ msgid "Jamie Zawinski"
+#~ msgstr "Jamie Zawinski"
+
+#~ msgid "Number of particles"
+#~ msgstr "Cantidad de partículas"
+
+#~ msgid "Scatter"
+#~ msgstr "Esparcir"
+
+#~ msgid "The pyro program simulates fireworks."
+#~ msgstr "«Pyro» simula fuegos artificiales."
+
+#~ msgid "simulates fireworks"
+#~ msgstr "simula fuegos artificiales"
+
+#~ msgid "Bounce colored lines around a window."
+#~ msgstr "Rebota líneas de colores en una ventana"
+
+#~ msgid "Changes the speed at which the Qix moves."
+#~ msgstr "Cambia la velocidad a la que se mueve la estructura"
+
+#~ msgid ""
+#~ "Determines whether the lines move erraticly, or bounce off the walls "
+#~ "linearly."
+#~ msgstr ""
+#~ "Determina si las lineas se mueven de manera errática, o si tienen que "
+#~ "rebotar de manera lineal."
+
+#~ msgid "Determines whether to fill in the gaps between the lines."
+#~ msgstr "Determina si se debe o no dibujar un \"Qix\" sólido."
+
+#~ msgid "Draw solid Qix."
+#~ msgstr "Sólido"
+
+#~ msgid "Length of the Trail:"
+#~ msgstr "Dimensión de la cola:"
+
+#~ msgid "Number of Qix:"
+#~ msgstr "Cantidad de Qix:"
+
+#~ msgid ""
+#~ "Qix bounces a series of line segments around its window. This is truly "
+#~ "the swiss army chainsaw of qix programs."
+#~ msgstr ""
+#~ "Qix hace rebotar una seria de lineas de colores sobre los bordes de la "
+#~ "pantalla. Se trata del gran clásico de los protege pantallas."
+
+#~ msgid "Set random motion for the Qix."
+#~ msgstr "Movimiento aleatorio"
+
+#~ msgid "Sets the distance between each line segment."
+#~ msgstr "Distancia entre las lineas."
+
+#~ msgid "Sets the number of Qix you have running at once."
+#~ msgstr ""
+#~ "Define la cantidad de \"Qix\" que corren por la pantalla al mismo tiempo."
+
+#~ msgid "Sets the number of line segments to be drawn."
+#~ msgstr "Define la cantidad de lineas paralelas que se dibujarán."
+
+#~ msgid "Speed:"
+#~ msgstr "Velocidad:"
+
+#~ msgid "Spread"
+#~ msgstr "Extender"
+
+#~ msgid "Width of segment:"
+#~ msgstr "Ancho:"
+
+#~ msgid "Draws rippling interference patterns like splashing water."
+#~ msgstr "Dibuja patrones de interferencia ondulados como agua en movimiento."
+
+#~ msgid "Drip onto desktop."
+#~ msgstr "Gotear en el escritorio."
+
+#~ msgid "Oily"
+#~ msgstr "Aceitoso"
+
+#~ msgid "Stir"
+#~ msgstr "Revolver"
+
+#~ msgid "Stir it up."
+#~ msgstr "Revuelto."
+
+#~ msgid "Stir."
+#~ msgstr "Revolver."
+
+#~ msgid "Tom Hammersley"
+#~ msgstr "Tom Hammersley"
+
+#~ msgid "A 3d Rubiks cube floats and twists around"
+#~ msgstr "Un cubo de Rubik 3D que flota y gira por la pantalla"
+
+#~ msgid "Desmond  Daignault"
+#~ msgstr "Desmond Daignault"
+
+#~ msgid "The sierpinski program draws Sierpinski triangle fractals."
+#~ msgstr "«Sierpinski» dibuja fractales triangulares de Sierpinski."
+
+#~ msgid "Darrick Brown, Peter Schmitzberger, and Jamie Zawinski"
+#~ msgstr "Darrick Brown, Peter Schmitzberger, y Jamie Zawinski"
+
+#~ msgid "The spiral program draws moving circular spiral patterns."
+#~ msgstr "«Espiral» dibuja patrones en espiral moviéndose en círculo."
+
+#~ msgid "Display the desktop in a spotlight"
+#~ msgstr "Muestra el escritorio en un reflector"
+
+#~ msgid "Uhm.. *poing*"
+#~ msgstr "Uhm.. *poing*"
+
+#~ msgid "Display squared spirales"
+#~ msgstr "Muestra espirales cuadradas"
+
+#~ msgid "The famous, M.C. Escher, impossible stairs"
+#~ msgstr "Las famosas escaleras imposibles de M.C. Eschers"
+
+#~ msgid " Random)"
+#~ msgstr " Aleatorio)"
+
+#~ msgid "Change the animation step delay."
+#~ msgstr "Cambia el retardo en ciclos."
+
+#~ msgid "Change the number of colors to use in star."
+#~ msgstr "Cambiar la cantidad de colores usados en una estrella"
+
+#~ msgid "Change the quickness of rotation at each step."
+#~ msgstr "Cambia la velocidad de rotación en cada paso de progresión. "
+
+#~ msgid "Change the thickness of color bands."
+#~ msgstr "Cambia el espesor de las bandas de color."
+
+#~ msgid "Duration of current shape."
+#~ msgstr "Duración para una misma forma."
+
+#~ msgid "How long to run before choosing a new shape."
+#~ msgstr "Tiempo en segundos antes de cambiar de forma."
+
+#~ msgid "Make a star like formation using arcs."
+#~ msgstr "Hace una formación de tipo estrella usando arcos."
+
+#~ msgid "Speed of animation."
+#~ msgstr "Cantidad de retardo."
+
+#~ msgid ""
+#~ "Starfish bounces a series of arcs around its window in a star like "
+#~ "formation. It uses multiple colors and multiple patterns. "
+#~ msgstr ""
+#~ "La estrella de mar despide una serie de arcos alrededor de su ventana en "
+#~ "una formación en estrella. Utiliza colores múltiples y modelos múltiples."
+
+#~ msgid "Use raw shapes "
+#~ msgstr "Utilizar formas rústicas"
+
+#~ msgid "Wide"
+#~ msgstr "Gordo "
+
+#~ msgid "Random mountain ranges"
+#~ msgstr "Rangos aleatorios de montañas"
+
+#~ msgid "Tobias Gloth"
+#~ msgstr "Tobias Gloth"
+
+#~ msgid ""
+#~ "The vines program is yet another geometric pattern generator, this one's "
+#~ "claim to fame being a pseudo-fractal looking vine like pattern that "
+#~ "creates nifty whirls and loops."
+#~ msgstr ""
+#~ "«Vines» es otro generador de patrones geométricos, su característica es\n"
+#~ "ser una vid que parece un seudo fractal que crea interesantes ciclos y \n"
+#~ "remolinos."
+
+#~ msgid "Tracy Camp"
+#~ msgstr "Tracy Camp"
+
+#~ msgid "draws pseudo-fractal geometric patterns"
+#~ msgstr "dibuja patrones geométricos seudo fractales"
+
+#~ msgid "Display flames at the bottom of the screen"
+#~ msgstr "Muestra llamas en el fondo de la pantalla"
+
+#~ msgid "Screens from the movie The Matrix"
+#~ msgstr "Pantallas de la película «The Matrix»"
+
+#~ msgid ""
+#~ "The  xroger  program displays a replacement for the X logo with a more "
+#~ "accurate Look and Feel."
+#~ msgstr ""
+#~ "«Calavera X11» muestra un reemplazo del logotipo X con una vista mas "
+#~ "precisa."
+
+#~ msgid "The  xroger  program displays a replacement for the X logo."
+#~ msgstr "«Calavera X11» muestra un reemplazo del logotipo X."
+
+#~ msgid "Xroger"
+#~ msgstr "Calavera X11"
+
+#~ msgid "Cycle through all the available modes."
+#~ msgstr "Alterna entre todos los modos disponibles"
+
+#~ msgid "Display color bars."
+#~ msgstr "Muestra barras de colores."
+
+#~ msgid "Greg Knauss"
+#~ msgstr "Greg Knauss"
+
+#~ msgid "Roll"
+#~ msgstr "Rodar"
+
+#~ msgid "Static."
+#~ msgstr "Estática."
+
+#~ msgid "Vertical roll."
+#~ msgstr "Ruedo vertical."
+
+#~ msgid "About:"
+#~ msgstr "Acerca:"
+
+#~ msgid "Author:"
+#~ msgstr "Autor:"
+
+#~ msgid "Author: UNKNOWN"
+#~ msgstr "Autor: DESCONOCIDO"
+
+#~ msgid "RANDOM SCREENSAVER"
+#~ msgstr "SALVAPANTALLA AL AZAR"
+
+#~ msgid "Pressing this button will preview current screensaver."
+#~ msgstr "Con este botón se previsualizará el salvapantalla actual."
+
+#~ msgid ""
+#~ "Pressing this button will popup a dialogbox that will help you setup the "
+#~ "current screensaver."
+#~ msgstr ""
+#~ "Este botón abre una ventana de diálogo que le ayudará a configurar el "
+#~ "salvapantalla actual."
+
+#~ msgid "Priority:"
+#~ msgstr "Prioridad:"
+
+#~ msgid "Low "
+#~ msgstr "Baja "
+
+#~ msgid "Shutdown monitor "
+#~ msgstr "Apagar el monitor "
+
+#~ msgid " minutes after screen saver has started."
+#~ msgstr " minutos después de haberse iniciado el salvapantalla."
+
+#~ msgid "Screen Saver Demo"
+#~ msgstr "Demostración del salvapantalla"
+
+#~ msgid "Configure the settings of the screensaver"
+#~ msgstr "Configurar el salvapantalla"
+
+#~ msgid "Screensaver"
+#~ msgstr "Salvapantalla"
+
+#~ msgid ""
+#~ "an initialization error occurred while starting 'sound-properties-"
+#~ "capplet'."
+#~ msgstr ""
+#~ "ocurrió un error de inicialización al lanzar 'sound-properties-capplet'."
+
+#~ msgid "Event"
+#~ msgstr "Evento"
+
+#~ msgid "File to Play"
+#~ msgstr "Archivo a reproducir"
+
+#~ msgid "Sound server"
+#~ msgstr "Servidor de sonido"
+
+#~ msgid "Enable sound server startup"
+#~ msgstr "Activar el lanzamiento del servidor de sonido"
+
+#~ msgid "Sounds for events"
+#~ msgstr "Sonidos para los eventos"
+
+#~ msgid "Audio mixer"
+#~ msgstr "Mezclador de sonido"
+
+#~ msgid "Restore mixer levels of Gnome Mixer"
+#~ msgstr "Restaurar los niveles del Mezclador de Gnome"
+
+#~ msgid "General"
+#~ msgstr "General"
+
+#~ msgid "Sound Events"
+#~ msgstr "Eventos de sonido"
+
+#~ msgid ""
+#~ "This copy of the GNOME control center was not compiled with sound support"
+#~ msgstr ""
+#~ "Esta copia del centro de control de GNOME fue compilada sin soporte para "
+#~ "el sonido"
+
+#~ msgid "The sound file for this event does not exist."
+#~ msgstr "El archivo de sonido para este evento no existe."
+
+#~ msgid ""
+#~ "The sound file for this event does not exist.\n"
+#~ "You may want to install the gnome-audio package\n"
+#~ "for a set of default sounds."
+#~ msgstr ""
+#~ "El archivo de sonido para este evento no existe.\n"
+#~ "Quizás desee instalar el paquete gnome-audio para\n"
+#~ "un conjunto de sonidos de base."
+
+#~ msgid "Configure GNOME's use of sound"
+#~ msgstr "Configurar los sonidos de GNOME"
+
+#~ msgid "Sound"
+#~ msgstr "Sonido"
+
+#~ msgid "One"
+#~ msgstr "Uno"
+
+#~ msgid "Mynie"
+#~ msgstr "Erre"
+
+#~ msgid "Moe"
+#~ msgstr "Carril"
+
+#~ msgid "Catcha"
+#~ msgstr "Erre"
+
+#~ msgid "By Its"
+#~ msgstr "Erre"
+
+#~ msgid "Toe"
+#~ msgstr "Guitarra"
+
+#~ msgid "Selected themes from above will be tested by previewing here."
+#~ msgstr "Los temas seleccionados serán previsualizados aquí."
+
+#~ msgid "Sample Button"
+#~ msgstr "Botón de ejemplo"
+
+#~ msgid "Sample Check Button"
+#~ msgstr "Ejemplo de botón de opción"
+
+#~ msgid "Sample Text Entry Field"
+#~ msgstr "Ejemplo de campo de entrada de texto"
+
+#~ msgid "Submenu"
+#~ msgstr "Submenú"
+
+#~ msgid "Item 1"
+#~ msgstr "Elemento 1"
+
+#~ msgid "Another item"
+#~ msgstr "Otro elemento"
+
+#~ msgid "Radio Button 1"
+#~ msgstr "Botón de radio 1"
+
+#~ msgid "Radio Button 2"
+#~ msgstr "Botón de radio 2"
+
+#~ msgid ""
+#~ "Error installing theme:\n"
+#~ "'%s'\n"
+#~ "%s"
+#~ msgstr ""
+#~ "Error al instalar el tema:\n"
+#~ "'%s'\n"
+#~ "%s"
+
+#~ msgid "Select a theme to install"
+#~ msgstr "Seleccione un tema a instalar"
+
+#~ msgid "Available Themes"
+#~ msgstr "Temas disponibles"
+
+#~ msgid ""
+#~ "Auto\n"
+#~ "Preview"
+#~ msgstr ""
+#~ "Auto\n"
+#~ "Previsualización"
+
+#~ msgid ""
+#~ "Install new\n"
+#~ "theme..."
+#~ msgstr ""
+#~ "Instalar\n"
+#~ "nuevo tema..."
+
+#~ msgid "-adobe-helvetica-medium-r-normal--*-120-*-*-*-*-*-*"
+#~ msgstr "-adobe-helvetica-medium-r-normal--*-120-*-*-*-*-*-*"
+
+#~ msgid "Use custom font."
+#~ msgstr "Usar un tipo de letra personalizada."
+
+#~ msgid "Home directory doesn't exist!\n"
+#~ msgstr "¡El directorio personal no existe!\n"
+
+#~ msgid "Theme does not exist"
+#~ msgstr "El tema no existe"
+
+#~ msgid "Command '%s' failed"
+#~ msgstr "Falló el comando '%s'"
+
+#~ msgid "Unknown file format"
+#~ msgstr "Formato de archivo desconocido"
+
+#~ msgid "Select which desktop theme to use"
+#~ msgstr "Selecciona el tema deseado para el escritorio"
+
+#~ msgid "Theme Selector"
+#~ msgstr "Selector de temas"
+
+#~ msgid "Applications"
+#~ msgstr "Aplicaciones"
+
+#~ msgid "Sets the default feel of GNOME applications"
+#~ msgstr ""
+#~ "Establece el comportamiento predeterminado de las aplicaciones GNOME"
+
+#~ msgid "Dialogs"
+#~ msgstr "Diálogos"
+
+#~ msgid "MDI"
+#~ msgstr "MDI"
+
+#~ msgid "Can detach and move toolbars"
+#~ msgstr "Barras de iconos desprendibles y desplazables"
+
+#~ msgid "Toolbars have relieved border"
+#~ msgstr "Barras de iconos con bordes en relieve"
+
+#~ msgid "Toolbar buttons have relieved border"
+#~ msgstr "Botones de la barra de iconos con bordes en relieve"
+
+#~ msgid "Toolbars have line separators"
+#~ msgstr "Barras de iconos con líneas de separación"
+
+#~ msgid "Toolbars have text labels"
+#~ msgstr "Barras de iconos con textos"
+
+#~ msgid "Can detach and move menus"
+#~ msgstr "Menús desprendibles y desplazables"
+
+#~ msgid "Menus have relieved border"
+#~ msgstr "Menús con bordes en relieve"
+
+#~ msgid "Submenus can be torn off"
+#~ msgstr "Los submenús pueden desprenderse"
+
+#~ msgid "Menu items have icons"
+#~ msgstr "Menús con iconos"
+
+#~ msgid "Statusbar is interactive when possible"
+#~ msgstr "Barra de estado interactiva siempre que sea posible"
+
+#~ msgid "Statusbar progress meter is on the right"
+#~ msgstr "Barra de progresión a la derecha de la barra de estado"
+
+#~ msgid "Menu Options"
+#~ msgstr "Opciones de los menús"
+
+#~ msgid "Statusbar Options"
+#~ msgstr "Opciones de las barras de estado"
+
+#~ msgid "Toolbar Options"
+#~ msgstr "Opciones de las barras de herramientas"
+
+#~ msgid "Dialog buttons"
+#~ msgstr "Botones de diálogo"
+
+#~ msgid "Default value"
+#~ msgstr "Valor predeterminado"
+
+#~ msgid "Spread buttons out"
+#~ msgstr "Espaciar los botones"
+
+#~ msgid "Put buttons on edges"
+#~ msgstr "Poner los botones sobre los lados"
+
+#~ msgid "Left-justify buttons"
+#~ msgstr "Justificar los botones a la izquierda"
+
+#~ msgid "Right-justify buttons"
+#~ msgstr "Justificar los botones a la derecha"
+
+#~ msgid "Dialog buttons have icons"
+#~ msgstr "Botones de diálogo con iconos"
+
+#~ msgid "Use statusbar instead of dialog when possible"
+#~ msgstr "Usar barra de estado en vez del diálogo, siempre que sea posible"
+
+#~ msgid "Let window manager decide"
+#~ msgstr "Dejar que el gestor de ventanas decida"
+
+#~ msgid "At the mouse pointer"
+#~ msgstr "A la posición del ratón"
+
+#~ msgid "Dialogs are like other windows"
+#~ msgstr "Las ventanas de diálogo son como las demás ventanas"
+
+#~ msgid "Dialogs are treated specially by window manager"
+#~ msgstr ""
+#~ "Las ventanas de diálogo son tratadas de manera especial por el gestor de "
+#~ "ventanas"
+
+#~ msgid "Place dialogs over application window when possible"
+#~ msgstr ""
+#~ "Poner las ventanas de diálogo encima de las aplicaciones siempre que "
+#~ "posible"
+
+#~ msgid "Dialog Layout"
+#~ msgstr "Presentación de las ventanas de diálogo"
+
+#~ msgid "Dialog Behavior"
+#~ msgstr "Comportamiento de las ventanas de diálogo"
+
+#~ msgid "Default MDI Mode"
+#~ msgstr "Modo MDI predeterminado"
+
+#~ msgid "Notebook"
+#~ msgstr "Bloc de notas"
+
+#~ msgid "Toplevel"
+#~ msgstr "Primer plano"
+
+#~ msgid "Modal"
+#~ msgstr "Modal"
+
+#~ msgid "MDI notebook tab position"
+#~ msgstr "Posición de la etiqueta del bloc de notas MDI"
+
+#~ msgid "Top"
+#~ msgstr "Arriba"
+
+#~ msgid "GNOME MDI Options"
+#~ msgstr "Opciones MDI de GNOME"
+
+#~ msgid "Look and Feel"
+#~ msgstr "Propiedades de la Interfaz gráfica"
+
+#~ msgid "Look and Feel Properties"
+#~ msgstr "Modifica las propiedades de la interfaz con el usuario"
+
+#~ msgid "Error initializing the `url-properties' capplet."
+#~ msgstr "Error al inicializar el capplet 'url-properties'."
+
+#~ msgid "Protocol"
+#~ msgstr "Protocolo"
+
+#~ msgid "Command"
+#~ msgstr "Comando"
+
+#~ msgid "Netscape"
+#~ msgstr "Netscape"
+
+#~ msgid "Netscape (new window)"
+#~ msgstr "Netscape (nueva ventana)"
+
+#~ msgid "Help browser"
+#~ msgstr "Visualizador de ayuda"
+
+#~ msgid "Help browser (new window)"
+#~ msgstr "Visualizador de ayuda (nueva ventana)"
+
+#~ msgid "Set"
+#~ msgstr "Definir"
+
+#~ msgid "Remove"
+#~ msgstr "Quitar"
+
+#~ msgid "Configure which programs are used to display URLs"
+#~ msgstr "Configura que programas usar para navegar por las URLs"
+
+#~ msgid "URL Handlers"
+#~ msgstr "Navegador de URLs"
+
+#~ msgid "Enlightenment"
+#~ msgstr "Enlightenment"
+
+#~ msgid "Ice WM"
+#~ msgstr "Ice WM"
+
+#~ msgid "twm"
+#~ msgstr "twm"
+
+#~ msgid ""
+#~ "Starting %s\n"
+#~ "(%d seconds left before operation times out)"
+#~ msgstr ""
+#~ "Iniciando %s\n"
+#~ "(quedan %d segundos antes de la expiración de la operación)"
+
+#~ msgid "%s (Current)"
+#~ msgstr "%s (Actual)"
+
+#~ msgid "Run Configuration Tool for %s"
+#~ msgstr "Lanzar la herramienta de configuración de %s"
+
+#~ msgid " (Not found)"
+#~ msgstr " (No se encontró)"
+
+#~ msgid ""
+#~ "wm-properties-capplet: Unable to initialize window manager.\n"
+#~ "\tAnother window manager is already running and could not be killed\n"
+#~ msgstr ""
+#~ "wm-properties-capplet:Imposible de inicializar el gestor de ventanas.\n"
+#~ "\tOtro gestor de ventanas esta activo y no puede ser matado\n"
+
+#~ msgid ""
+#~ "wm-properties-capplet: Unable to initialize window manager.\n"
+#~ "\t'%s' didn't start\n"
+#~ msgstr ""
+#~ "wm-properties-capplet: Imposible de inicializar el gestor de ventanas.\n"
+#~ "\tNo se lanzó '%s'\n"
+
+#~ msgid "Previous window manager did not die\n"
+#~ msgstr "El gestor de ventanas anterior no murió\n"
+
+#~ msgid ""
+#~ "Could not start '%s'.\n"
+#~ "Falling back to previous window manager '%s'\n"
+#~ msgstr ""
+#~ "No pude iniciar '%s'.\n"
+#~ "Volviendo al anterior gestor de ventanas ('%s')\n"
+
+#~ msgid ""
+#~ "Could not start fallback window manager.\n"
+#~ "Please run a window manager manually. You can\n"
+#~ "do this by selecting \"Run Program\" in the\n"
+#~ "foot menu\n"
+#~ msgstr ""
+#~ "No pude iniciar el gestor de ventanas anterior.\n"
+#~ "Lance uno manualmente. Puede hacer eso\n"
+#~ "seleccionando \"Lanzar...\" en el menú con\n"
+#~ "el logotipo de Gnome en forma de pié\n"
+
+#~ msgid ""
+#~ "Your current window manager has been changed. In order for\n"
+#~ "this change to be saved, you will need to save your current\n"
+#~ "session. You can do so immediately by selecting the \"Save session\n"
+#~ "now\" below, or you can save your session later.  This can be\n"
+#~ "done either selecting \"Save Current Session\" under \"Settings\"\n"
+#~ "in the main menu, or by turning on \"Save Current Setup\" when\n"
+#~ "you log out.\n"
+#~ msgstr ""
+#~ "El gestor de ventanas fue cambiado. Para que este cambio\n"
+#~ "sea permanente, debe guardar su sesión actual. Puede hacerlo\n"
+#~ "inmediatamente seleccionando «Guardar la sesión ahora» abajo,\n"
+#~ "o puede guardar la sesión más tarde. Esto se puede hacer\n"
+#~ "seleccionando «Guardar sesión actual» del submenú\n"
+#~ "«Configuración» del menú principal de Gnome, o activando\n"
+#~ "«Guardar configuración actual» al quitar la sesión.\n"
+
+#~ msgid "Save Session Later"
+#~ msgstr "Guardar la sesión más tarde"
+
+#~ msgid "Save Session Now"
+#~ msgstr "Guardar la sesión ahora"
+
+#~ msgid ""
+#~ "Your current window manager has been changed. In order for\n"
+#~ "this change to be saved, you will need to save your current\n"
+#~ "session. This can be done by either selecting \"Save Current Session\"\n"
+#~ "under \"Settings\" in the main menu, or by turning on\n"
+#~ "\"Save Current Setup\" when you log out.\n"
+#~ msgstr ""
+#~ "El gestor de ventanas fue cambiado. Para que este cambio\n"
+#~ "sea permanente, debe guardar su sesión actual. Esto se puede\n"
+#~ "hacer seleccionando «Guardar sesión actual» del submenú\n"
+#~ "«Configuración» del menú principal de Gnome, o activando\n"
+#~ "«Guardar configuración actual» al quitar la sesión.\n"
+
+#~ msgid "Add New Window Manager"
+#~ msgstr "Añadir un nuevo gestor de ventanas"
+
+#~ msgid "Name:"
+#~ msgstr "Nombre:"
+
+#~ msgid "Command:"
+#~ msgstr "Comando:"
+
+#~ msgid "Configuration Command:"
+#~ msgstr "Comando para la configuración:"
+
+#~ msgid "Window manager is session managed"
+#~ msgstr "El gestor de ventanas es manejado por el gestor de sesiones"
+
+#~ msgid "Name cannot be empty"
+#~ msgstr "El nombre no puede quedar en blanco"
+
+#~ msgid "Command cannot be empty"
+#~ msgstr "El comando no puede quedar en blanco"
+
+#~ msgid "Edit Window Manager"
+#~ msgstr "Editar Gestor de Ventanas"
+
+#~ msgid "You cannot delete the current Window Manager"
+#~ msgstr "No puede borrar el gestor de ventanas en uso"
+
+#~ msgid "Edit..."
+#~ msgstr "Editar..."
+
+#~ msgid ""
+#~ "an initialization error occurred while starting 'wm-properties-capplet'.\n"
+#~ "aborting...\n"
+#~ msgstr ""
+#~ "ocurrió un error de inicialización al lanzar 'wm-properties-capplet'.\n"
+#~ "abortando...\n"
+
+#~ msgid "Window Manager"
+#~ msgstr "Gestor de ventanas"
+
+#~ msgid "GNOME Control Center"
+#~ msgstr "Centro de Control de GNOME"
+
+#~ msgid "Desktop Properties manager."
+#~ msgstr "Gestor de propiedades del escritorio."
+
+#~ msgid "Try"
+#~ msgstr "Probar"
+
+#~ msgid "Revert"
+#~ msgstr "Revertir"
+
+#~ msgid "Help with '%s' settings"
+#~ msgstr "Ayuda con la configuración de «%s»"
+
+#~ msgid "id of the capplet -- assigned by the control-center"
+#~ msgstr "id del capplet - asignado por el centro de control"
+
+#~ msgid "ID"
+#~ msgstr "ID"
+
+#~ msgid "Multi-capplet id."
+#~ msgstr "Id de capplet múltiple"
+
+#~ msgid "CAPID"
+#~ msgstr "CAPID"
+
+#~ msgid "X ID of the socket it's plugged into"
+#~ msgstr "ID X del zócalo al cual está conectado"
+
+#~ msgid "XID"
+#~ msgstr "XID"
+
+#~ msgid "IOR of the control-center"
+#~ msgstr "IOR del centro de control (control-center)"
+
+#~ msgid "IOR"
+#~ msgstr "IOR"
+
+#~ msgid "Initialize session settings"
+#~ msgstr "Inicializar la configuración de la sesión"
+
+#~ msgid "Ignore default action.  Used for custom init-session cases"
+#~ msgstr ""
+#~ "Ignorar la acción predeterminada. Usado para casos de inicialización de "
+#~ "sesión personalizados"
+
+#~ msgid "Sorry, no help is available for these settings."
+#~ msgstr "Disculpe, no existe ayuda sobre esas opciones."
+
+#~ msgid "capplet-command to be run."
+#~ msgstr "comando capplet a lanzar."
+
+#~ msgid "CAPPLET"
+#~ msgstr "CAPPLET"
+
+#~ msgid "The GNOME configuration tool"
+#~ msgstr "Herramienta de configuración del entorno GNOME"
+
+#~ msgid "Help on control-center"
+#~ msgstr "Ayuda con el centro de control"
+
+#~ msgid "Help with the GNOME control-center."
+#~ msgstr "Ayuda con centro de control de GNOME."
+
+#~ msgid "Help with the current configuration page."
+#~ msgstr "Ayuda con la página ce configuración actual."
+
+#~ msgid "About the GNOME control-center."
+#~ msgstr "Acerca del centro de control de GNOME."
+
+#~ msgid "Warning:"
+#~ msgstr "Advertencia:"
+
+#~ msgid "Discard all changes"
+#~ msgstr "Descartar todos los cambios"
+
+#~ msgid ""
+#~ "The following modules have had changes made, but not committed.  If you "
+#~ "would like to edit them, please double click on the appropriate entry."
+#~ msgstr ""
+#~ "Los módulos siguientes han hecho cambios, pero no fueron guardados. Si "
+#~ "desea editarlos por favor haga un doble-clic en la entrada apropiada."
+
+#~ msgid "Operating System:"
+#~ msgstr "Sistema operativo:"
+
+#~ msgid "Distribution Version:"
+#~ msgstr "Versión de la distribución:"
+
+#~ msgid "Processor Type:"
+#~ msgstr "Tipo de procesador:"
+
+#~ msgid "User Name:"
+#~ msgstr "Nombre de usuario:"
+
+#~ msgid "Host Name:"
+#~ msgstr "Nombre del ordenador:"
+
+#~ msgid "Unknown"
+#~ msgstr "Desconocido"
+
+#~ msgid "If the solver can "
+#~ msgstr "Si el resolutor puede "
+
+#: driver/screensaver-properties.desktop.in:3
+msgid "Screensaver"
+msgstr "Propiedades Salvapantallas"
+
+#: driver/screensaver-properties.desktop.in:4
+msgid "Configure the settings of the screensaver."
+msgstr "Configurar el salvapantalla"

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="truchet" _label="Truchet">
+
+  <command arg="-root"/>
+  <command arg="-randomize"/>
+
+  <number id="speed" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="1000"
+          convert="invert"/>
+
+  <!-- #### -min-width [40] -->
+  <!-- #### -max-height [150] -->
+  <!-- #### -max-width [150] -->
+  <!-- #### -min-height [40] -->
+  <!-- #### -max-linewidth [25] -->
+  <!-- #### -min-linewidth [2] -->
+  <!-- #### -no-erase -->
+  <!-- #### -erase-count [25] -->
+  <!-- #### -not-square -->
+  <!-- #### -no-angles -->
+  <!-- #### -no-curves -->
+  <!-- #### -scroll -->
+  <!-- #### -scroll-overlap [400] -->
+  <!-- #### -anim-delay [100] -->
+  <!-- #### -anim-step-size [3] -->
+
+  <_description>
+This draws line- and arc-based Truchet patterns that tile the screen.
+Written by Adrian Likins.
+  </_description>
+</screensaver>
