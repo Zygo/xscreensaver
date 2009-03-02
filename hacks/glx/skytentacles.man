@@ -1,0 +1,102 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+skytentacles - 3D tentacles from the sky!
+.SH SYNOPSIS
+.B skytentacles
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-delay \fIint\fP]
+[\-speed \fIratio\fP]
+[\-count \fIint\fP]
+[\-slices \fIint\fP]
+[\-length \fIfloat\fP]
+[\-wiggliness \fIratio\fP]
+[\-flexibility \fIratio\fP]
+[\-color \fIcolor\fP]
+[\-stripe\-color \fIcolor\fP]
+[\-sucker\-color \fIcolor\fP]
+[\-segments \fIint\fP]
+[\-thickness \fIratio\fP]
+[\-no\-smooth]
+[\-fps]
+.SH DESCRIPTION
+There is a tentacled abomination in the sky.  From above you it devours.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-delay \fIint\fP
+Delay between frames, in microseconds.  Default 30000.
+.TP 8
+.B \-speed \fIratio\fP
+Less than 1 for slower, greater than 1 for faster.  Default 1.
+.TP 8
+.B \-count \fIint\fP
+How many tentacles.  Default 8.
+.TP 8
+.B \-thickness \fIratio\fP
+Less than 1 for thinner tentacles, greater than 1 for thicker.  Default 1.
+.TP 8
+.B \-length \fIratio\fP
+Length of the tentacles.  Default 9.
+.TP 8
+.B \-wiggliness \fIratio\fP
+A measure of how bendy the tentacles are.  Smaller numbers result in
+smoother flexing; larger numbers make it "crinkly".  Default 0.35.
+.TP 8
+.B \-flexibility \fIratio\fP
+Another measure of how bendy the tentacles are.  Smaller numbers
+result in straighter tentacles; larger numbers result in more extreme
+curves.  Default 0.35.
+.TP 8
+.B \-color \fIcolor\fP
+.TP 8
+.B \-stripe\-color \fIcolor\fP
+.TP 8
+.B \-sucker\-color \fIcolor\fP
+The colors of the various parts of the tentacle.  Default green
+with a redish stripe.
+.TP 8
+.B \-slices \fIint\fP
+.TP 8
+.B \-segments \fIint\fP
+Larger numbers increase number of polygons in the object mesh.
+Default 32.
+.TP 8
+.B \-no\-smooth
+Make the tentacles appear faceted instead of smooth.
+.TP 8
+.B \-fps | \-no-fps
+Whether to show a frames-per-second display at the bottom of the screen.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2008 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski.

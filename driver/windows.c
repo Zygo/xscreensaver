@@ -226,6 +226,14 @@ nuke_focus (saver_info *si, int screen_no)
 }
 
 
+static void
+ungrab_keyboard_and_mouse (saver_info *si)
+{
+  ungrab_mouse (si);
+  ungrab_kbd (si);
+}
+
+
 static Bool
 grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor,
                          int screen_no)
@@ -291,16 +299,13 @@ grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor,
    */
 
   if (kstatus != GrabSuccess)	/* Do not blank without a kbd grab.   */
-    return False;
+    {
+      /* If we didn't get both grabs, release the one we did get. */
+      ungrab_keyboard_and_mouse (si);
+      return False;
+    }
 
   return True;			/* Grab is good, go ahead and blank.  */
-}
-
-static void
-ungrab_keyboard_and_mouse (saver_info *si)
-{
-  ungrab_mouse (si);
-  ungrab_kbd (si);
 }
 
 
@@ -393,6 +398,21 @@ ensure_no_screensaver_running (Display *dpy, Screen *screen)
                    (char *) id);
 	  status = True;
 	}
+
+      else if (XGetWindowProperty (dpy, kids[i], XA_WM_COMMAND, 0, 128,
+                                   False, XA_STRING, &type, &format, &nitems,
+                                   &bytesafter, &version)
+               == Success
+               && type != None
+               && !strcmp ((char *) version, "gnome-screensaver"))
+	{
+	  fprintf (stderr,
+                 "%s: \"%s\" is already running on display %s (window 0x%x)\n",
+		   blurb(), (char *) version,
+                   DisplayString (dpy), (int) kids [i]);
+	  status = True;
+          break;
+	}
     }
 
   if (kids) XFree ((char *) kids);
@@ -444,11 +464,6 @@ remove_vroot_property (Display *dpy, Window win)
 
 
 static Bool safe_XKillClient (Display *dpy, XID id);
-
-#ifdef HAVE_XF86VMODE
-static Bool safe_XF86VidModeGetViewPort (Display *, int, int *, int *);
-#endif /* HAVE_XF86VMODE */
-
 
 static void
 kill_xsetroot_data_1 (Display *dpy, Window window,
@@ -607,7 +622,8 @@ restore_real_vroot_1 (saver_screen_info *ssi)
     fprintf (stderr,
 	     "%s: restoring __SWM_VROOT property on the real vroot (0x%lx).\n",
 	     blurb(), (unsigned long) ssi->real_vroot);
-  remove_vroot_property (si->dpy, ssi->screensaver_window);
+  if (ssi->screensaver_window)
+    remove_vroot_property (si->dpy, ssi->screensaver_window);
   if (ssi->real_vroot)
     {
       store_vroot_property (si->dpy, ssi->real_vroot, ssi->real_vroot_value);
@@ -812,8 +828,10 @@ saver_sighup_handler (int sig)
 
   if (si->screen_blanked_p)
     {
+      int i;
+      for (i = 0; i < si->nscreens; i++)
+        kill_screenhack (&si->screens[i]);
       unblank_screen (si);
-      kill_screenhack (si);
       XSync (si->dpy, False);
     }
 
@@ -999,232 +1017,6 @@ store_saver_status (saver_info *si)
 }
 
 
-
-/* Returns the area of the screen which the xscreensaver window should cover.
-   Normally this is the whole screen, but if the X server's root window is
-   actually larger than the monitor's displayable area, then we want to
-   operate in the currently-visible portion of the desktop instead.
- */
-void
-get_screen_viewport (saver_screen_info *ssi,
-                     int *x_ret, int *y_ret,
-                     int *w_ret, int *h_ret,
-                     int target_x, int target_y,
-                     Bool verbose_p)
-{
-  int w = WidthOfScreen (ssi->screen);
-  int h = HeightOfScreen (ssi->screen);
-
-# ifdef HAVE_XF86VMODE
-  saver_info *si = ssi->global;
-  saver_preferences *p = &si->prefs;
-  int event, error;
-  int dot;
-  XF86VidModeModeLine ml;
-  int x, y;
-  Bool xinerama_p = si->xinerama_p;
-
-#  ifndef HAVE_XINERAMA
-  /* Even if we don't have the client-side Xinerama lib, check to see if
-     the server supports Xinerama, so that we know to ignore the VidMode
-     extension -- otherwise a server crash could result.  Yay. */
-  xinerama_p = XQueryExtension (si->dpy, "XINERAMA", &error, &event, &error);
-#  endif /* !HAVE_XINERAMA */
-
-#  ifdef HAVE_XINERAMA
-  if (xinerama_p)
-    {
-      int mouse_p = (target_x != -1 && target_y != -1);
-      int which = -1;
-      int i;
-
-      /* If a mouse position wasn't passed in, assume we're talking about
-         this screen. */
-      if (!mouse_p)
-        {
-          target_x = ssi->x;
-          target_y = ssi->y;
-          which = ssi->number;
-        }
-
-      /* Find the Xinerama rectangle that contains the mouse position. */
-      for (i = 0; i < si->nscreens; i++)
-        {
-          if (which == -1 &&
-              target_x >= si->screens[i].x &&
-              target_y >= si->screens[i].y &&
-              target_x <  si->screens[i].x + si->screens[i].width &&
-              target_y <  si->screens[i].y + si->screens[i].height)
-            which = i;
-        }
-      if (which == -1) which = 0;  /* didn't find it?  Use the first. */
-      *x_ret = si->screens[which].x;
-      *y_ret = si->screens[which].y;
-      *w_ret = si->screens[which].width;
-      *h_ret = si->screens[which].height;
-
-      if (verbose_p)
-        {
-          fprintf (stderr, "%s: %d: xinerama vp: %dx%d+%d+%d",
-                   blurb(), which,
-                   si->screens[which].width, si->screens[which].height,
-                   si->screens[which].x, si->screens[which].y);
-          if (mouse_p)
-            fprintf (stderr, "; mouse at %d,%d", target_x, target_y);
-          fprintf (stderr, ".\n");
-        }
-
-      return;
-    }
-#  endif /* HAVE_XINERAMA */
-
-  if (!xinerama_p &&  /* Xinerama + VidMode = broken. */
-      XF86VidModeQueryExtension (si->dpy, &event, &error) &&
-      safe_XF86VidModeGetViewPort (si->dpy, ssi->number, &x, &y) &&
-      XF86VidModeGetModeLine (si->dpy, ssi->number, &dot, &ml))
-    {
-      char msg[512];
-      *x_ret = x;
-      *y_ret = y;
-      *w_ret = ml.hdisplay;
-      *h_ret = ml.vdisplay;
-
-      if (*x_ret == 0 && *y_ret == 0 && *w_ret == w && *h_ret == h)
-        /* There is no viewport -- the screen does not scroll. */
-        return;
-
-
-      /* Apparently some versions of XFree86 return nonsense here!
-         I've had reports of 1024x768 viewports at -1936862040, -1953705044.
-         So, sanity-check the values and give up if they are out of range.
-       */
-      if (*x_ret <  0 || *x_ret >= w ||
-          *y_ret <  0 || *y_ret >= h ||
-          *w_ret <= 0 || *w_ret >  w ||
-          *h_ret <= 0 || *h_ret >  h)
-        {
-          static int warned_once = 0;
-          if (!warned_once)
-            {
-              fprintf (stderr, "\n"
-                  "%s: X SERVER BUG: %dx%d viewport at %d,%d is impossible.\n"
-                  "%s: The XVidMode server extension is returning nonsense.\n"
-                  "%s: Please report this bug to your X server vendor.\n\n",
-                       blurb(), *w_ret, *h_ret, *x_ret, *y_ret,
-                       blurb(), blurb());
-              warned_once = 1;
-            }
-          *x_ret = 0;
-          *y_ret = 0;
-          *w_ret = w;
-          *h_ret = h;
-          return;
-        }
-
-      sprintf (msg, "%s: %d: vp is %dx%d+%d+%d",
-               blurb(), ssi->number,
-               *w_ret, *h_ret, *x_ret, *y_ret);
-
-
-      if (p->getviewport_full_of_lies_p)
-        {
-          /* XF86VidModeGetViewPort() tends to be full of lies on laptops
-             that have a docking station or external monitor that runs in
-             a different resolution than the laptop's screen:
-
-                 http://bugzilla.redhat.com/bugzilla/show_bug.cgi?id=81593
-                 http://bugs.debian.org/cgi-bin/bugreport.cgi?bug=208417
-                 http://bugs.xfree86.org/show_bug.cgi?id=421
-
-             The XFree86 developers have closed the bug. As far as I can
-             tell, their reason for this was, "this is an X server bug,
-             but it's pretty hard to fix. Therefore, we are closing it."
-
-             So, now there's a preference item for those unfortunate users to
-             tell us not to trust a word that XF86VidModeGetViewPort() says.
-           */
-          static int warned_once = 0;
-          if (!warned_once && verbose_p)
-            {
-              warned_once = 1;
-              fprintf (stderr,
-                  "%s: %d: XF86VidModeGetViewPort() says vp is %dx%d+%d+%d;\n"
-                  "%s: %d:     assuming that is a pack of lies;\n"
-                  "%s: %d:     using %dx%d+0+0 instead.\n",
-                       blurb(), ssi->number,
-                       *w_ret, *h_ret, *x_ret, *y_ret,
-                       blurb(), ssi->number,
-                       blurb(), ssi->number, w, h);
-            }
-
-          *x_ret = 0;
-          *y_ret = 0;
-          *w_ret = w;
-          *h_ret = h;
-          return;
-        }
-
-
-      /* Apparently, though the server stores the X position in increments of
-         1 pixel, it will only make changes to the *display* in some other
-         increment.  With XF86_SVGA on a Thinkpad, the display only updates
-         in multiples of 8 pixels when in 8-bit mode, and in multiples of 4
-         pixels in 16-bit mode.  I don't know what it does in 24- and 32-bit
-         mode, because I don't have enough video memory to find out.
-
-         I consider it a bug that XF86VidModeGetViewPort() is telling me the
-         server's *target* scroll position rather than the server's *actual*
-         scroll position.  David Dawes agrees, and says they may fix this in
-         XFree86 4.0, but it's notrivial.
-
-         He also confirms that this behavior is server-dependent, so the
-         actual scroll position cannot be reliably determined by the client.
-         So... that means the only solution is to provide a ``sandbox''
-         around the blackout window -- we make the window be up to N pixels
-         larger than the viewport on both the left and right sides.  That
-         means some part of the outer edges of each hack might not be
-         visible, but screw it.
-
-         I'm going to guess that 16 pixels is enough, and that the Y dimension
-         doesn't have this problem.
-
-         The drawback of doing this, of course, is that some of the screenhacks
-         will still look pretty stupid -- for example, "slidescreen" will cut
-         off the left and right edges of the grid, etc.
-      */
-#  define FUDGE 16
-      if (x > 0 && x < w - ml.hdisplay)  /* not at left edge or right edge */
-        {
-          /* Round X position down to next lower multiple of FUDGE.
-             Increase width by 2*FUDGE in case some server rounds up.
-           */
-          *x_ret = ((x - 1) / FUDGE) * FUDGE;
-          *w_ret += (FUDGE * 2);
-        }
-#  undef FUDGE
-
-      if (*x_ret != x ||
-          *y_ret != y ||
-          *w_ret != ml.hdisplay ||
-          *h_ret != ml.vdisplay)
-        sprintf (msg + strlen(msg), "; fudged to %dx%d+%d+%d",
-                 *w_ret, *h_ret, *x_ret, *y_ret);
-
-      if (verbose_p)
-        fprintf (stderr, "%s.\n", msg);
-
-      return;
-    }
-
-# endif /* HAVE_XF86VMODE */
-
-  *x_ret = 0;
-  *y_ret = 0;
-  *w_ret = w;
-  *h_ret = h;
-}
-
-
 static Bool error_handler_hit_p = False;
 
 static int
@@ -1318,7 +1110,7 @@ safe_XKillClient (Display *dpy, XID id)
 
 
 #ifdef HAVE_XF86VMODE
-static Bool
+Bool
 safe_XF86VidModeGetViewPort (Display *dpy, int screen, int *xP, int *yP)
 {
   Bool result;
@@ -1362,12 +1154,8 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
   XColor black;
   XSetWindowAttributes attrs;
   unsigned long attrmask;
-  int x, y, width, height;
   static Bool printed_visual_info = False;  /* only print the message once. */
   Window horked_window = 0;
-
-  get_screen_viewport (ssi, &x, &y, &width, &height, -1, -1,
-                       (p->verbose_p && !si->screen_blanked_p));
 
   black.red = black.green = black.blue = 0;
 
@@ -1420,13 +1208,6 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
   attrs.background_pixel = ssi->black_pixel;
   attrs.backing_pixel = ssi->black_pixel;
   attrs.border_pixel = ssi->black_pixel;
-
-  if (p->debug_p
-# ifdef QUAD_MODE
-      && !p->quad_p
-# endif
-      )
-    width = width / 2;
 
   if (!p->verbose_p || printed_visual_info)
     ;
@@ -1503,10 +1284,10 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
     {
       XWindowChanges changes;
       unsigned int changesmask = CWX|CWY|CWWidth|CWHeight|CWBorderWidth;
-      changes.x = x;
-      changes.y = y;
-      changes.width = width;
-      changes.height = height;
+      changes.x = ssi->x;
+      changes.y = ssi->y;
+      changes.width = ssi->width;
+      changes.height = ssi->height;
       changes.border_width = 0;
 
       if (! (safe_XConfigureWindow (si->dpy, ssi->screensaver_window,
@@ -1523,10 +1304,9 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
     {
       ssi->screensaver_window =
 	XCreateWindow (si->dpy, RootWindowOfScreen (ssi->screen),
-                       x, y, width, height,
+                       ssi->x, ssi->y, ssi->width, ssi->height,
                        0, ssi->current_depth, InputOutput,
 		       ssi->current_visual, attrmask, &attrs);
-
       reset_stderr (ssi);
 
       if (horked_window)
@@ -1578,10 +1358,10 @@ initialize_screensaver_window (saver_info *si)
 }
 
 
-/* Called when the RANDR (Resize and Rotate) extension tells us that the
-   size of the screen has changed while the screen was blanked.  If we
-   don't do this, then the screen saver will no longer fully fill the
-   screen, and some of the underlying desktop may be visible.
+/* Called when the RANDR (Resize and Rotate) extension tells us that
+   the size of the screen has changed while the screen was blanked.
+   Call update_screen_layout() first, then call this to synchronize
+   the size of the saver windows to the new sizes of the screens.
  */
 void
 resize_screensaver_window (saver_info *si)
@@ -1589,132 +1369,97 @@ resize_screensaver_window (saver_info *si)
   saver_preferences *p = &si->prefs;
   int i;
 
-  /* First update the size info in the saver_screen_info structs.
-   */
-
-# ifdef HAVE_XINERAMA
-  if (si->xinerama_p)
-    {
-      /* As of XFree86 4.3.0, the RANDR and XINERAMA extensions cannot coexist.
-         However, maybe they will someday, so I'm guessing that the right thing
-         to do in that case will be to re-query the Xinerama rectangles after
-         a RANDR size change is received: presumably, if the resolution of one
-         or more of the monitors has changed, then the Xinerama rectangle
-         corresponding to that monitor will also have been updated.
-       */
-      int nscreens;
-      XineramaScreenInfo *xsi = XineramaQueryScreens (si->dpy, &nscreens);
-
-      if (nscreens != si->nscreens) {
-        /* Apparently some Xinerama implementations let you use a hot-key
-           to change the number of screens in use!  This is, of course,
-           documented nowhere.  Let's try to do something marginally less
-           bad than crashing.
-         */
-        fprintf (stderr, "%s: bad craziness: xinerama screen count changed "
-                 "from %d to %d!\n", blurb(), si->nscreens, nscreens);
-        if (nscreens > si->nscreens)
-          nscreens = si->nscreens;
-      }
-
-      if (!xsi) abort();
-      for (i = 0; i < nscreens; i++)
-        {
-          saver_screen_info *ssi = &si->screens[i];
-          if (p->verbose_p &&
-              (ssi->x      != xsi[i].x_org ||
-               ssi->y      != xsi[i].y_org ||
-               ssi->width  != xsi[i].width ||
-               ssi->height != xsi[i].height))
-            fprintf (stderr,
-                   "%s: %d: resize xinerama from %dx%d+%d+%d to %dx%d+%d+%d\n",
-                     blurb(), i,
-                     ssi->width,   ssi->height,   ssi->x,       ssi->y,
-                     xsi[i].width, xsi[i].height, xsi[i].x_org, xsi[i].y_org);
-
-          ssi->x      = xsi[i].x_org;
-          ssi->y      = xsi[i].y_org;
-          ssi->width  = xsi[i].width;
-          ssi->height = xsi[i].height;
-        }
-      XFree (xsi);
-    }
-  else
-# endif /* HAVE_XINERAMA */
-    {
-      /* Not Xinerama -- get the real sizes of the root windows. */
-      for (i = 0; i < si->nscreens; i++)
-        {
-          saver_screen_info *ssi = &si->screens[i];
-          XWindowAttributes xgwa;
-          XGetWindowAttributes (si->dpy, RootWindowOfScreen (ssi->screen),
-                                &xgwa);
-
-          if (p->verbose_p &&
-              (ssi->x      != xgwa.x ||
-               ssi->y      != xgwa.y ||
-               ssi->width  != xgwa.width ||
-               ssi->height != xgwa.height))
-            fprintf (stderr,
-                     "%s: %d: resize screen from %dx%d+%d+%d to %dx%d+%d+%d\n",
-                     blurb(), i,
-                     ssi->width, ssi->height, ssi->x, ssi->y,
-                     xgwa.width, xgwa.height, xgwa.x, xgwa.y);
-
-          ssi->x      = xgwa.x;
-          ssi->y      = xgwa.y;
-          ssi->width  = xgwa.width;
-          ssi->height = xgwa.height;
-        }
-    }
-
-  /* Next, ensure that the screensaver windows are the right size, taking
-     into account both the new size of the screen in question's root window,
-     and any viewport within that.
-   */
-
   for (i = 0; i < si->nscreens; i++)
     {
       saver_screen_info *ssi = &si->screens[i];
       XWindowAttributes xgwa;
-      XWindowChanges changes;
-      int x, y, width, height;
-      unsigned int changesmask = CWX|CWY|CWWidth|CWHeight|CWBorderWidth;
 
-      XGetWindowAttributes (si->dpy, ssi->screensaver_window, &xgwa);
-      get_screen_viewport (ssi, &x, &y, &width, &height, -1, -1,
-                           (p->verbose_p && !si->screen_blanked_p));
-      if (xgwa.x == x &&
-          xgwa.y == y &&
-          xgwa.width  == width &&
-          xgwa.height == height)
-        continue;  /* no change! */
-
-      changes.x = x;
-      changes.y = y;
-      changes.width  = width;
-      changes.height = height;
-      changes.border_width = 0;
-
-      if (p->debug_p
-# ifdef QUAD_MODE
-          && !p->quad_p
-# endif
-          ) 
-        changes.width = changes.width / 2;
-
-      if (p->verbose_p)
-        fprintf (stderr,
-                 "%s: %d: resize 0x%lx from %dx%d+%d+%d to %dx%d+%d+%d\n",
-                 blurb(), i, (unsigned long) ssi->screensaver_window,
-                 xgwa.width, xgwa.height, xgwa.x, xgwa.y,
-                 width, height, x, y);
-      if (! safe_XConfigureWindow (si->dpy, ssi->screensaver_window,
-                                   changesmask, &changes))
+      /* Make sure a window exists -- it might not if a monitor was just
+         added for the first time.
+       */
+      if (! ssi->screensaver_window)
         {
-          fprintf (stderr,
-    "%s: %d: someone horked our saver window (0x%lx)!  Unable to resize it!\n",
-                   blurb(), i, (unsigned long) ssi->screensaver_window);
+          initialize_screensaver_window_1 (ssi);
+          if (p->verbose_p)
+            fprintf (stderr,
+                     "%s: %d: newly added window 0x%lx %dx%d+%d+%d\n",
+                     blurb(), i, (unsigned long) ssi->screensaver_window,
+                     ssi->width, ssi->height, ssi->x, ssi->y);
+        }
+
+      /* Make sure the window is the right size -- it might not be if
+         the monitor changed resolution, or if a badly-behaved hack
+         screwed with it.
+       */
+      XGetWindowAttributes (si->dpy, ssi->screensaver_window, &xgwa);
+      if (xgwa.x      != ssi->x ||
+          xgwa.y      != ssi->y ||
+          xgwa.width  != ssi->width ||
+          xgwa.height != ssi->height)
+        {
+          XWindowChanges changes;
+          unsigned int changesmask = CWX|CWY|CWWidth|CWHeight|CWBorderWidth;
+          changes.x      = ssi->x;
+          changes.y      = ssi->y;
+          changes.width  = ssi->width;
+          changes.height = ssi->height;
+          changes.border_width = 0;
+
+          if (p->verbose_p)
+            fprintf (stderr,
+                     "%s: %d: resize 0x%lx from %dx%d+%d+%d to %dx%d+%d+%d\n",
+                     blurb(), i, (unsigned long) ssi->screensaver_window,
+                     xgwa.width, xgwa.height, xgwa.x, xgwa.y,
+                     ssi->width, ssi->height, ssi->x, ssi->y);
+
+          if (! safe_XConfigureWindow (si->dpy, ssi->screensaver_window,
+                                       changesmask, &changes))
+            fprintf (stderr, "%s: %d: someone horked our saver window"
+                     " (0x%lx)!  Unable to resize it!\n",
+                     blurb(), i, (unsigned long) ssi->screensaver_window);
+        }
+
+      /* Now (if blanked) make sure that it's mapped and running a hack --
+         it might not be if we just added it.  (We also might be re-using
+         an old window that existed for a previous monitor that was
+         removed and re-added.)
+
+         Note that spawn_screenhack() calls select_visual() which may destroy
+         and re-create the window via initialize_screensaver_window_1().
+       */
+      if (si->screen_blanked_p)
+        {
+          if (ssi->cmap)
+            XInstallColormap (si->dpy, ssi->cmap);
+          XMapRaised (si->dpy, ssi->screensaver_window);
+          if (! ssi->pid)
+            spawn_screenhack (ssi);
+
+          /* Make sure the act of adding a screen doesn't present as 
+             pointer motion (and thus cause an unblank). */
+          {
+            Window root, child;
+            int x, y;
+            unsigned int mask;
+            XQueryPointer (si->dpy, ssi->screensaver_window, &root, &child,
+                           &ssi->poll_mouse_last_root_x,
+                           &ssi->poll_mouse_last_root_y,
+                           &x, &y, &mask);
+          }
+        }
+    }
+
+  /* Kill off any savers running on no-longer-extant monitors.
+   */
+  for (; i < si->ssi_count; i++)
+    {
+      saver_screen_info *ssi = &si->screens[i];
+      if (ssi->pid)
+        kill_screenhack (ssi);
+      if (ssi->screensaver_window)
+        {
+          XUnmapWindow (si->dpy, ssi->screensaver_window);
+          restore_real_vroot_1 (ssi);
         }
     }
 }
@@ -2094,10 +1839,30 @@ maybe_transfer_grabs (saver_screen_info *ssi,
 }
 
 
+static Visual *
+get_screen_gl_visual (saver_info *si, int real_screen_number)
+{
+  int i;
+  int nscreens = ScreenCount (si->dpy);
+
+  if (! si->best_gl_visuals)
+    si->best_gl_visuals = (Visual **) 
+      calloc (nscreens + 1, sizeof (*si->best_gl_visuals));
+
+  for (i = 0; i < nscreens; i++)
+    if (! si->best_gl_visuals[i])
+      si->best_gl_visuals[i] = 
+        get_best_gl_visual (si, ScreenOfDisplay (si->dpy, i));
+
+  if (real_screen_number < 0 || real_screen_number >= nscreens) abort();
+  return si->best_gl_visuals[real_screen_number];
+}
+
 
 Bool
 select_visual (saver_screen_info *ssi, const char *visual_name)
 {
+  XWindowAttributes xgwa;
   saver_info *si = ssi->global;
   saver_preferences *p = &si->prefs;
   Bool install_cmap_p = p->install_cmap_p;
@@ -2111,6 +1876,17 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
      when changing hacks, instead of trying to reuse the old one?
    */
   Bool always_recreate_window_p = True;
+
+  get_screen_gl_visual (si, 0);   /* let's probe all the GL visuals early */
+
+  /* We make sure the existing window is actually on ssi->screen before
+     trying to use it, in case things moved around radically when monitors
+     were added or deleted.  If we don't do this we could get a BadMatch
+     even though the depths match.  I think.
+   */
+  memset (&xgwa, 0, sizeof(xgwa));
+  if (ssi->screensaver_window)
+    XGetWindowAttributes (si->dpy, ssi->screensaver_window, &xgwa);
 
   if (visual_name && *visual_name)
     {
@@ -2133,7 +1909,7 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
                !strcmp(visual_name, "Gl") ||
                !strcmp(visual_name, "GL"))
         {
-          new_v = ssi->best_gl_visual;
+          new_v = get_screen_gl_visual (si, ssi->real_screen_number);
           if (!new_v && p->verbose_p)
             fprintf (stderr, "%s: no GL visuals.\n", progname);
         }
@@ -2154,13 +1930,16 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
 
   ssi->install_cmap_p = install_cmap_p;
 
-  if (new_v &&
-      (always_recreate_window_p ||
-       (ssi->current_visual != new_v) ||
-       (install_cmap_p != was_installed_p)))
+  if ((ssi->screen != xgwa.screen) ||
+      (new_v &&
+       (always_recreate_window_p ||
+        (ssi->current_visual != new_v) ||
+        (install_cmap_p != was_installed_p))))
     {
       Colormap old_c = ssi->cmap;
       Window old_w = ssi->screensaver_window;
+      if (! new_v) 
+        new_v = ssi->current_visual;
 
       if (p->verbose_p)
 	{

@@ -11,6 +11,10 @@
           low="0" high="80000" default="50000"
           convert="invert"/>
 
+  <number id="duration" type="slider" arg="-duration %"
+          _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+          low="10" high="600" default="120"/>
+
   <number id="rate" type="slider" arg="-rate %"
           _low-label="Drizzle" _high-label="Storm"
           low="1" high="100" default="5"
@@ -24,13 +28,16 @@
   <number id="light" type="spinbutton" arg="-light %"
           _label="Lighting Effect" low="0" high="8" default="0"/>
 
-  <boolean id="grab" _label="Grab Screen Image" arg-set="-water"/>
-
-  <boolean id="stir" _label="Moving Splashes" arg-set="-stir"/>
-
-  <boolean id="oily" _label="Psychedelic Colors" arg-set="-oily"/>
-
-  <boolean id="gray" _label="Grayscale" arg-set="-grayscale"/>
+  <hgroup>
+   <vgroup>
+    <boolean id="grab" _label="Grab Screen Image" arg-set="-water"/>
+    <boolean id="stir" _label="Moving Splashes" arg-set="-stir"/>
+   </vgroup>
+   <vgroup>
+    <boolean id="oily" _label="Psychedelic Colors" arg-set="-oily"/>
+    <boolean id="gray" _label="Grayscale" arg-set="-grayscale"/>
+   </vgroup>
+  </hgroup>
 
   <number id="ncolors" type="slider" arg="-colors %"
             _low-label="Colors    Two" _high-label="Many"

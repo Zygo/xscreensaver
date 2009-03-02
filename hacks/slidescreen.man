@@ -10,6 +10,7 @@ slidescreen - permute the screen image like an 8-puzzle
 [\-increment \fIpixels\fP]
 [\-delay \fIusecs\fP]
 [\-delay2 \fIusecs\fP]
+[\-duration \fIsecs\fP]
 [\-window]
 [\-root]
 [\-install]
@@ -63,6 +64,9 @@ is closely related to the \fI\-increment\fP parameter.
 How much of a delay should be introduced between the end of the motion of
 one segment and the beginning of the motion of another.  Default 1000000,
 which is one second.
+.TP 8
+.B \-duration \fIseconds\fP
+How long to run before loading a new image.  Default 120 seconds.
 .SH ENVIRONMENT
 .PP
 .TP 8

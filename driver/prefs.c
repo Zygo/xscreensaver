@@ -1,5 +1,5 @@
 /* dotfile.c --- management of the ~/.xscreensaver file.
- * xscreensaver, Copyright (c) 1998-2006 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -272,6 +272,7 @@ static const char * const prefs[] = {
   "fadeTicks",
   "captureStderr",
   "captureStdout",		/* not saved -- obsolete */
+  "logFile",			/* not saved */
   "ignoreUninstalledPrograms",
   "font",
   "dpmsEnabled",
@@ -808,6 +809,7 @@ write_init_file (Display *dpy,
       CHECK("fadeTicks")	type = pref_int,  i = p->fade_ticks;
       CHECK("captureStderr")	type = pref_bool, b = p->capture_stderr_p;
       CHECK("captureStdout")	continue;  /* don't save */
+      CHECK("logFile")		continue;  /* don't save */
       CHECK("ignoreUninstalledPrograms")
                                 type = pref_bool, b = p->ignore_uninstalled_p;
 

@@ -17,7 +17,7 @@
 
    I don't understand how it works at all, but he says "look at Knuth,
    Vol. 2 (original edition), page 26, Algorithm A.  In this case n=55,
-   k=20 and m=2^32."
+   k=24 and m=2^32."
 
    So there you have it.
 
@@ -121,5 +121,5 @@ ya_rand_init(unsigned int seed)
     }
 
   i1 = a[0] % VectorSize;
-  i2 = (i1 + 024) % VectorSize;
+  i2 = (i1 + 24) % VectorSize;
 }

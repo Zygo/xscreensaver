@@ -3,7 +3,25 @@
 twang - pluck pieces of the screen
 .SH SYNOPSIS
 .B twang
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-shm] [\-no-shm] [\-delay \fImicroseconds\fP] [\-border-color \fIcolor\fP] [\-border-width \fIinteger\fP] [\-event-chance \fIfraction\fP] [\-friction \fIfraction\fP] [\-springiness \fIfraction\fP] [\-tile-size \fIinteger\fP] [\-transference \fIfraction\fP]
+[\-display \fIhost:display.screen\fP]
+[\-foreground \fIcolor\fP]
+[\-background \fIcolor\fP]
+[\-window]
+[\-root]
+[\-mono]
+[\-install]
+[\-visual \fIvisual\fP]
+[\-shm]
+[\-no-shm]
+[\-delay \fIusecs\fP]
+[\-duration \fIsecs\fP]
+[\-border-color \fIcolor\fP]
+[\-border-width \fIinteger\fP]
+[\-event-chance \fIfraction\fP]
+[\-friction \fIfraction\fP]
+[\-springiness \fIfraction\fP]
+[\-tile-size \fIinteger\fP]
+[\-transference \fIfraction\fP]
 .SH DESCRIPTION
 \fITwang\fP divides the screen into equal-sized tiles, and then plucks
 them in various ways. Tiles are affected by their neighbors, so waves
@@ -40,6 +58,9 @@ defaults to true, resource \fIuseSHM\fP.
 .B \-delay \fImicroseconds\fP
 The interframe delay, in microseconds. Defaults to 10000, resource
 \fIdelay\fP.
+.TP 8
+.B \-duration \fIseconds\fP
+How long to run before loading a new image.  Default 120 seconds.
 .TP 8
 .B \-border-color \fIcolor\fP
 Color of the border surrounding each tile. Defaults to blue, resource

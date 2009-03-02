@@ -38,6 +38,17 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.05:   * Xinerama/RANDR fixes: this time for sure.  It should
+                        now work to add/remove monitors or resize screens at
+                        any time.
+                      * New hack, `skytentacles'.
+                      * New version of `gleidescope'.
+                      * Added the `-log' option to the xscreensaver daemon,
+                        since a truly shocking number of Linux users seem to
+                        have no idea how to redirect output to a file.
+                      * Added `-duration' arg to most image-loading hacks,
+                        so that they pick a new image every few minutes.
+                      * Added an ATM crash to BSOD.
 Changes since 5.04:   * New hacks, `cubicgrid', `hypnowheel', and
                         `lcdscrub' (which isn't really a screen saver).
                       * Updates to `m6502' and `gears'.

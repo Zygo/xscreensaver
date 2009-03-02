@@ -48,6 +48,7 @@ struct state {
   Window window;
 
   int delay;			/* delay (usec) between iterations */
+  int duration;			/* time (sec) before loading new image */
   int maxColumns;		/* the maximum number of columns of tiles */
   int maxRows;			/* the maximum number of rows of tiles */
   int tileSize;			/* the size (width and height) of a tile */
@@ -76,6 +77,7 @@ struct state {
   Tile **sortedTiles; /* array of tile pointers, sorted by zoom */
   int tileCount;     /* total number of tiles */
 
+  time_t start_time;
   async_load_state *img_loader;
 
   Bool useShm;		/* whether or not to use xshm */
@@ -102,7 +104,8 @@ struct state {
  */
 
 /* grab the source image */
-static void grabImage_start (struct state *st, XWindowAttributes *xwa)
+static void
+grabImage_start (struct state *st, XWindowAttributes *xwa)
 {
     XFillRectangle (st->dpy, st->window, st->backgroundGC, 0, 0, 
 		    st->windowWidth, st->windowHeight);
@@ -110,20 +113,26 @@ static void grabImage_start (struct state *st, XWindowAttributes *xwa)
 	XGetImage (st->dpy, st->window, 0, 0, st->windowWidth, st->windowHeight,
 		   ~0L, ZPixmap);
 
+    st->start_time = time ((time_t) 0);
     st->img_loader = load_image_async_simple (0, xwa->screen, st->window,
                                               st->window, 0, 0);
 }
 
-static void grabImage_done (struct state *st)
+static void
+grabImage_done (struct state *st)
 {
-   XWindowAttributes xwa;
-   XGetWindowAttributes (st->dpy, st->window, &xwa);
+    XWindowAttributes xwa;
+    XGetWindowAttributes (st->dpy, st->window, &xwa);
 
+    st->start_time = time ((time_t) 0);
+    if (st->sourceImage) XDestroyImage (st->sourceImage);
     st->sourceImage = XGetImage (st->dpy, st->window, 0, 0, st->windowWidth, st->windowHeight,
 			     ~0L, ZPixmap);
 
-#ifdef HAVE_XSHM_EXTENSION
+    if (st->workImage) XDestroyImage (st->workImage);
     st->workImage = NULL;
+
+#ifdef HAVE_XSHM_EXTENSION
     if (st->useShm) 
     {
 	st->workImage = create_xshm_image (st->dpy, xwa.visual, xwa.depth,
@@ -605,6 +614,13 @@ twang_draw (Display *dpy, Window window, void *closure)
       return st->delay;
     }
 
+  if (!st->img_loader &&
+      st->start_time + st->duration < time ((time_t) 0)) {
+    XWindowAttributes xgwa;
+    XGetWindowAttributes (st->dpy, st->window, &xgwa);
+    grabImage_start (st, &xgwa);
+    return st->delay;
+  }
 
   modelEvents (st);
   updateModel (st);
@@ -654,6 +670,9 @@ static void initParams (struct state *st)
 	fprintf (stderr, "error: delay must be at least 0\n");
 	problems = 1;
     }
+
+    st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
+    if (st->duration < 1) st->duration = 1;
 
     st->eventChance = get_float_resource (st->dpy, "eventChance", "Double");
     if ((st->eventChance < 0.0) || (st->eventChance > 1.0))
@@ -735,6 +754,7 @@ static const char *twang_defaults [] = {
     "*borderColor:      blue",
     "*borderWidth:	3",
     "*delay:		10000",
+    "*duration:		120",
     "*eventChance:      0.01",
     "*friction:		0.05",
     "*maxColumns:       0",
@@ -754,6 +774,7 @@ static XrmOptionDescRec twang_options [] = {
   { "-border-color",     ".borderColor",    XrmoptionSepArg, 0 },
   { "-border-width",     ".borderWidth",    XrmoptionSepArg, 0 },
   { "-delay",            ".delay",          XrmoptionSepArg, 0 },
+  { "-duration",	 ".duration",	    XrmoptionSepArg, 0 },
   { "-event-chance",     ".eventChance",    XrmoptionSepArg, 0 },
   { "-friction",         ".friction",       XrmoptionSepArg, 0 },
   { "-max-columns",      ".maxColumns",     XrmoptionSepArg, 0 },

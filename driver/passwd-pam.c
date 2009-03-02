@@ -452,6 +452,14 @@ pam_conversation (int nmsgs,
 
   ret = si->unlock_cb(nmsgs, messages, &authresp, si);
 
+  /* #### If the user times out, or hits ESC or Cancel, we return PAM_CONV_ERR,
+          and PAM logs this as an authentication failure.  It would be nice if
+          there was some way to indicate that this was a "cancel" rather than
+          a "fail", so that it wouldn't show up in syslog, but I think the
+          only options are PAM_SUCCESS and PAM_CONV_ERR.  (I think that
+          PAM_ABORT means "internal error", not "cancel".)  Bleh.
+   */
+
   if (ret == 0)
     {
       for (i = 0; i < nmsgs; ++i)

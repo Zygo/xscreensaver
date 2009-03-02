@@ -116,10 +116,10 @@ NOLOCK_OBJS_1	= lock.o
 
 TEST_SRCS	= test-passwd.c test-uid.c  test-xdpms.c    test-grab.c \
 		  test-apm.c    test-fade.c test-xinerama.c test-vp.c   \
-	          test-randr.c  xdpyinfo.c  test-mlstring.c
+	          test-randr.c  xdpyinfo.c  test-mlstring.c test-screens.c
 TEST_EXES	= test-passwd   test-uid    test-xdpms      test-grab   \
 		  test-apm      test-fade   test-xinerama   test-vp     \
-		  test-randr    xdpyinfo    test-mlstring
+		  test-randr    xdpyinfo    test-mlstring   test-screens
 
 MOTIF_LIBS	= @MOTIF_LIBS@ @XPM_LIBS@ $(XMU_LIBS)
 GTK_LIBS	= @GTK_LIBS@ $(XMU_LIBS)
@@ -147,9 +147,9 @@ LOGO		= $(ICON_SRC)/logo-50.xpm
 GTK_ICONS	= $(ICON_SRC)/screensaver-*.png
 
 DEMO_UTIL_SRCS	= $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
-		  $(UTILS_SRC)/visual.c
+		  $(UTILS_SRC)/visual.c $(XMU_SRCS)
 DEMO_UTIL_OBJS	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/usleep.o \
-		  $(UTILS_BIN)/visual.o
+		  $(UTILS_BIN)/visual.o $(XMU_OBJS)
 
 SAVER_UTIL_SRCS	= $(UTILS_SRC)/fade.c $(UTILS_SRC)/overlay.c \
 		  $(UTILS_SRC)/logo.c $(UTILS_SRC)/yarandom.c \
@@ -179,24 +179,24 @@ GETIMG_OBJS	= $(GETIMG_OBJS_1) \
 		  $(UTILS_BIN)/logo.o $(UTILS_BIN)/minixpm.o prefs.o \
 		  $(XMU_OBJS)
 
-SAVER_SRCS_1	= xscreensaver.c windows.c timers.c subprocs.c exec.c \
-		  xset.c splash.c setuid.c stderr.c mlstring.c
-SAVER_OBJS_1	= xscreensaver.o windows.o timers.o subprocs.o exec.o \
-		  xset.o splash.o setuid.o stderr.o mlstring.o
+SAVER_SRCS_1	= xscreensaver.c windows.c screens.c timers.c subprocs.c \
+		  exec.c xset.c splash.c setuid.c stderr.c mlstring.c
+SAVER_OBJS_1	= xscreensaver.o windows.o screens.o timers.o subprocs.o \
+		  exec.o xset.o splash.o setuid.o stderr.o mlstring.o
 
 SAVER_SRCS	= $(SAVER_SRCS_1) prefs.c dpms.c $(LOCK_SRCS) \
-		  $(SAVER_UTIL_SRCS) $(GL_SRCS) $(XMU_SRCS)
+		  $(SAVER_UTIL_SRCS) $(GL_SRCS)
 SAVER_OBJS	= $(SAVER_OBJS_1) prefs.o dpms.o $(LOCK_OBJS) \
-		  $(SAVER_UTIL_OBJS) $(GL_OBJS) $(XMU_OBJS)
+		  $(SAVER_UTIL_OBJS) $(GL_OBJS)
 
 CMD_SRCS	= remote.c xscreensaver-command.c
 CMD_OBJS	= remote.o xscreensaver-command.o
 
-DEMO_SRCS_1	= prefs.c dpms.c $(XMU_SRCS)
-DEMO_OBJS_1	= prefs.o dpms.o $(XMU_OBJS)
+DEMO_SRCS_1	= prefs.c dpms.c
+DEMO_OBJS_1	= prefs.o dpms.o
 
-DEMO_SRCS	= prefs.c dpms.c remote.c exec.c $(DEMO_UTIL_SRCS)
-DEMO_OBJS	= prefs.o dpms.o remote.o exec.o $(DEMO_UTIL_OBJS)
+DEMO_SRCS	= $(DEMO_SRCS_1) remote.c exec.c $(DEMO_UTIL_SRCS)
+DEMO_OBJS	= $(DEMO_OBJS_1) remote.o exec.o $(DEMO_UTIL_OBJS)
 
 PDF2JPEG_SRCS	= pdf2jpeg.m
 PDF2JPEG_OBJS	= pdf2jpeg.o
@@ -453,7 +453,7 @@ install-pam:
  $$e "  ####################################################################";\
  $$e ""									     ;\
 	  fi ;								\
-	elif [ -f $$conf ]; then					\
+	elif [ -f $$conf -a "x$$dest" != "x" ]; then			\
 	  if ( grep $$dest $$conf >/dev/null ); then			\
 	   echo "$$conf unchanged: already has an entry for $$dest" ;   \
 	  else								\
@@ -498,7 +498,7 @@ install-gnome:: screensaver-properties.desktop
 	     echo $(INSTALL_DIRS) "$(install_prefix)$(GTK_APPDIR)"	     ;\
 		  $(INSTALL_DIRS) "$(install_prefix)$(GTK_APPDIR)"	     ;\
 	   fi								     ;\
-	   name2=gnome-screensaver-properties.desktop			     ;\
+	   name2=xscreensaver-properties.desktop			     ;\
 	   echo $(INSTALL_DATA) screensaver-properties.desktop		      \
 		  $(install_prefix)$(GTK_APPDIR)/$$name2		     ;\
 		$(INSTALL_DATA) screensaver-properties.desktop		      \
@@ -571,7 +571,7 @@ install-gnome:: xscreensaver-demo.glade2
 # into /usr/share/applications/
 uninstall-gnome::
 	@if [ "$(GTK_DATADIR)" != "" ]; then				      \
-          f=gnome-screensaver-properties.desktop                             ;\
+          f=xscreensaver-properties.desktop                                  ;\
           echo rm -f $(install_prefix)$(GTK_APPDIR)/$$f                      ;\
                rm -f $(install_prefix)$(GTK_APPDIR)/$$f                      ;\
         fi
@@ -846,6 +846,11 @@ TEST_FADE_OBJS = test-fade.o $(UTILS_SRC)/fade.o $(DEMO_UTIL_OBJS)
 test-fade: test-fade.o $(UTILS_BIN)/fade.o
 	$(CC) $(LDFLAGS) -o $@ $(TEST_FADE_OBJS) $(SAVER_LIBS)
 
+TEST_SCREENS_OBJS = test-screens.o $(DEMO_UTIL_OBJS)
+test-screens.o: screens.c
+test-screens: test-screens.o
+	$(CC) $(LDFLAGS) -o $@ $(TEST_SCREENS_OBJS) $(SAVER_LIBS)
+
 
 xdpyinfo.o: xdpyinfo.c
 	$(CC) -c $(INCLUDES) -DHAVE_GLX $(CFLAGS) $(X_CFLAGS) \
@@ -913,6 +918,11 @@ prefs.o: $(srcdir)/types.h
 prefs.o: $(UTILS_SRC)/resources.h
 remote.o: ../config.h
 remote.o: $(srcdir)/remote.h
+screens.o: ../config.h
+screens.o: $(srcdir)/prefs.h
+screens.o: $(srcdir)/types.h
+screens.o: $(UTILS_SRC)/visual.h
+screens.o: $(srcdir)/xscreensaver.h
 setuid.o: ../config.h
 setuid.o: $(srcdir)/prefs.h
 setuid.o: $(srcdir)/types.h
@@ -954,6 +964,12 @@ test-passwd.o: $(UTILS_SRC)/version.h
 test-passwd.o: $(UTILS_SRC)/visual.h
 test-passwd.o: $(srcdir)/xscreensaver.h
 test-randr.o: ../config.h
+test-screens.o: ../config.h
+test-screens.o: $(srcdir)/prefs.h
+test-screens.o: $(srcdir)/screens.c
+test-screens.o: $(srcdir)/types.h
+test-screens.o: $(UTILS_SRC)/visual.h
+test-screens.o: $(srcdir)/xscreensaver.h
 test-uid.o: ../config.h
 test-vp.o: ../config.h
 test-xdpms.o: ../config.h

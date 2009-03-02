@@ -3,8 +3,15 @@
 decayscreen - make a screen meltdown.
 .SH SYNOPSIS
 .B decayscreen
-[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-mono] [\-install]
-[\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-mode \fImode\fP]
+[\-display \fIhost:display.screen\fP]
+[\-window]
+[\-root]
+[\-mono]
+[\-install]
+[\-visual \fIvisual\fP]
+[\-delay \fIusecs\fP]
+[\-duration \fIsecs\fP]
+[\-mode \fImode\fP]
 .SH DESCRIPTION
 The \fIdecayscreen\fP program creates a melting effect by randomly
 shifting rectangles around the screen.
@@ -39,6 +46,9 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-delay \fImicroseconds\fP
 Slow it down.
+.TP 8
+.B \-duration \fIseconds\fP
+How long to run before loading a new image.  Default 120 seconds.
 .TP 8
 .B \-mode \fImode\fP
 The direction in which the image should tend to slide.  Legal values are

@@ -62,6 +62,7 @@
 #include "images/atari.xbm"
 #include "images/mac.xbm"
 #include "images/macbomb.xbm"
+#include "images/atm.xbm"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -919,7 +920,7 @@ windows_xp (Display *dpy, Window window)
       "Physical memory dump complete.\n"
       "Contact your system administrator or technical support group for "
       "further\n"
-      "assitance.\n");
+      "assistance.\n");
 
   XClearWindow (dpy, window);
   return bst;
@@ -2361,7 +2362,7 @@ hppa_linux (Display *dpy, Window window)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.88 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $Revision: 1.90 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },
@@ -3517,6 +3518,58 @@ apple2crash (Display *dpy, Window window)
 }
 
 
+static struct bsod_state *
+atm (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "atm", "ATM");
+
+  Pixmap pixmap = 0;
+  int pix_w = atm_width;
+  int pix_h = atm_height;
+  int x, y, i = 0;
+  float scale = 0.48;
+
+  XClearWindow (dpy, window);
+
+  pixmap = XCreatePixmapFromBitmapData (dpy, window, (char *) atm_bits,
+                                        atm_width, atm_height,
+                                        bst->fg, bst->bg, bst->xgwa.depth);
+
+  while (pix_w <= bst->xgwa.width  * scale && 
+         pix_h <= bst->xgwa.height * scale)
+    {
+      pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual, bst->xgwa.depth,
+                              pixmap, pix_w, pix_h);
+      pix_w *= 2;
+      pix_h *= 2;
+      i++;
+    }
+
+  x = (bst->xgwa.width  - pix_w) / 2;
+  y = (bst->xgwa.height - pix_h) / 2;
+  if (y < 0) y = 0;
+
+  if (i > 0)
+    {
+      int j;
+      XSetForeground (dpy, bst->gc,
+                      get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "atm.background",
+                                          "ATM.Background"));
+      for (j = -1; j < pix_w; j += i+1)
+        XDrawLine (bst->dpy, pixmap, bst->gc, j, 0, j, pix_h);
+      for (j = -1; j < pix_h; j += i+1)
+        XDrawLine (bst->dpy, pixmap, bst->gc, 0, j, pix_w, j);
+    }
+
+  XCopyArea (dpy, pixmap, window, bst->gc, 0, 0, pix_w, pix_h, x, y);
+
+  XFreePixmap (dpy, pixmap);
+
+  return bst;
+}
+
+
 /*****************************************************************************
  *****************************************************************************/
 
@@ -3552,6 +3605,7 @@ static const struct {
   { "MSDOS",		msdos },
   { "Nvidia",		nvidia },
   { "Apple2",		apple2crash },
+  { "ATM",		atm },
 };
 
 
@@ -3840,6 +3894,7 @@ static const char *bsod_defaults [] = {
   "*doMSDOS:		   True",
   "*doOS2:		   True",
   "*doNvidia:		   True",
+  "*doATM:		   True",
 
   "*font:		   9x15bold",
   "*font2:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
@@ -3932,6 +3987,9 @@ static const char *bsod_defaults [] = {
   ".os2.foreground:	   White",
   ".os2.background:	   Black",
 
+  ".atm.foreground:	   Black",
+  ".atm.background:	   #FF6600",
+
   "*dontClearRoot:         True",
 
   "*apple2TVColor:         50",
@@ -4002,6 +4060,8 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-msdos",	".doMSDOS",		XrmoptionNoArg,  "False" },
   { "-os2",		".doOS2",		XrmoptionNoArg,  "True"  },
   { "-no-os2",		".doOS2",		XrmoptionNoArg,  "False" },
+  { "-atm",		".doATM",		XrmoptionNoArg,  "True"  },
+  { "-no-atm",		".doATM",		XrmoptionNoArg,  "False" },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };

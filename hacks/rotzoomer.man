@@ -6,6 +6,7 @@ rotzoomer - animated rotations and scalings of portions of the screen
 [\-display \fIhost:display.screen\fP]
 [\-move | \-no\-move]
 [\-delay \fImillisecs\fP]
+[\-duration \fIsecs\fP]
 [\-n \fIcount\fP]
 [\-shm | \-no\-shm]
 [\-window] [\-root] [\-install] [\-visual \fIvisual\fP]
@@ -42,6 +43,9 @@ or the id number (decimal or hex) of a specific visual.
 .B \-delay \fImilliseconds\fP
 How much of a delay should be introduced between steps of the animation.
 Default 10, or about 1/100th second.
+.TP 8
+.B \-duration \fIseconds\fP
+How long to run before loading a new image.  Default 120 seconds.
 .TP 8
 .B \-move
 Make the rectangles should wander around the screen.

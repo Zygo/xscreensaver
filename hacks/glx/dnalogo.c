@@ -16,21 +16,27 @@
 			"*doGasket:	    True    \n" \
 			"*doHelix:	    True    \n" \
 			"*doLadder:	    True    \n" \
+			"*doFrame:	    True    \n" \
 			"*wallFacets:	    360	    \n" \
-			"*tubeFacets:	    90	    \n" \
+			"*barFacets:	    90	    \n" \
 			"*clockwise:	    False   \n" \
-			"*turns:	    0.8	    \n" \
-			"*turnSpacing:	    2.40    \n" \
-			"*barSpacing:	    0.30    \n" \
-			"*wallHeight:	    0.4	    \n" \
-			"*wallThickness:    0.1	    \n" \
-			"*tubeThickness:    0.075   \n" \
-			"*wallTaper:	    1.047   \n" \
-			"*gasketSize:	    2.15    \n" \
+			"*turns:	    0.69    \n" \
+			"*turnSpacing:	    2.2     \n" \
+			"*barSpacing:	    0.24    \n" \
+			"*wallHeight:	    0.45    \n" \
+			"*wallThickness:    0.12    \n" \
+			"*barThickness:     0.058   \n" \
+			"*wallTaper:	    0.95    \n" \
+			"*gasketSize:	    1.88    \n" \
 			"*gasketDepth:	    0.15    \n" \
 			"*gasketThickness:  0.4	    \n" \
+			"*frameSize:	    1.20    \n" \
+			"*frameDepth:	    0.01    \n" \
+			"*frameThickness:   0.03    \n" \
+			"*triangleSize:	    0.045   \n" \
 			"*speed:	    1.0	    \n" \
 			".foreground:	    #00AA00 \n" \
+			"*geometry:	    =640x640\n" \
 
 # define refresh_logo 0
 # define release_logo 0
@@ -57,9 +63,10 @@ typedef struct {
 
   GLuint helix_list,  helix_list_wire,  helix_list_facetted;
   GLuint gasket_list, gasket_list_wire;
+  GLuint frame_list,  frame_list_wire;
 
   int wall_facets;
-  int tube_facets;
+  int bar_facets;
   Bool clockwise;
   GLfloat color[4];
 
@@ -68,18 +75,24 @@ typedef struct {
   GLfloat bar_spacing;
   GLfloat wall_height;
   GLfloat wall_thickness;
-  GLfloat tube_thickness;
+  GLfloat bar_thickness;
   GLfloat wall_taper;
 
   GLfloat gasket_size;
   GLfloat gasket_depth;
   GLfloat gasket_thickness;
 
+  GLfloat frame_size;
+  GLfloat frame_depth;
+  GLfloat frame_thickness;
+  GLfloat triangle_size;
+
   GLfloat speed;
 
   spinner gasket_spinnerx, gasket_spinnery, gasket_spinnerz;
   spinner scene_spinnerx,  scene_spinnery;
   spinner helix_spinnerz;
+  spinner frame_spinner;
 
   trackball_state *trackball;
   Bool button_down_p;
@@ -136,7 +149,7 @@ vector_angle (double ax, double ay, double az,
 static void
 make_helix (logo_configuration *dc, int facetted, int wire)
 {
-  int wall_facets = dc->wall_facets / (facetted ? 15 : 1);
+  int wall_facets = dc->wall_facets / (facetted ? 10 : 1);
   GLfloat th;
   GLfloat max_th = M_PI * 2 * dc->turns;
   GLfloat th_inc = M_PI * 2 / wall_facets;
@@ -156,8 +169,8 @@ make_helix (logo_configuration *dc, int facetted, int wire)
 
   z1 = -(dc->turn_spacing * dc->turns / 2);
 
-  h1 = (dc->wall_taper > 0 ? 0 : dc->wall_height / 2);
-  h1off = (dc->wall_taper > 0 ? -dc->wall_height / 2 : 0);
+  h1    = (dc->wall_taper > 0 ? 0 : dc->wall_height / 2);
+  h1off = (dc->wall_taper > 0 ?    -dc->wall_height / 2 : 0);
 
   if (!dc->clockwise)
     z1 = -z1, z_inc = -z_inc, h1off = -h1off;
@@ -315,9 +328,13 @@ make_ladder (logo_configuration *dc, int facetted, int wire)
   GLfloat usable_th = max_th - dc->wall_taper;
   GLfloat usable_z  = max_z / (max_th / usable_th);
   int nbars = usable_z / dc->bar_spacing;
-  GLfloat used_z = (nbars - 1) * dc->bar_spacing;
-  GLfloat pad_z = max_z - used_z;
-  GLfloat pad_ratio = pad_z / max_z;
+  GLfloat used_z, pad_z, pad_ratio;
+
+  if (! (nbars & 1)) nbars--;  /* always an odd number of bars */
+
+  used_z = (nbars - 1) * dc->bar_spacing;
+  pad_z = max_z - used_z;
+  pad_ratio = pad_z / max_z;
 
   th = (max_th * pad_ratio/2);
   z  = -(max_z / 2) + (max_z * pad_ratio/2);
@@ -327,13 +344,13 @@ make_ladder (logo_configuration *dc, int facetted, int wire)
 
   for (i = 0; i < nbars; i++)
     {
-      int facets = dc->tube_facets / (facetted ? 14 : 1);
+      int facets = dc->bar_facets / (facetted ? 14 : 1);
       if (facets <= 3) facets = 3;
       x = cos (th) * (1 - dc->wall_thickness);
       y = sin (th) * (1 - dc->wall_thickness);
       tube ( x,  y, z,
             -x, -y, z,
-             dc->tube_thickness, 0, facets,
+             dc->bar_thickness, 0, facets,
              True, True, wire);
       z  += z_inc;
       th += th_inc;
@@ -360,15 +377,15 @@ make_gasket (logo_configuration *dc, int wire)
 
   GLfloat *pointsx0, *pointsy0, *pointsx1, *pointsy1, *normals;
 
-  GLfloat r0  = 0.780;  /* 395 */
-  GLfloat r1a = 0.855;                /* top of wall below upper left hole */
-  GLfloat r1b = 0.890;                /* center of upper left hole */
-  GLfloat r1c = 0.922;                /* bottom of wall above hole */
-  GLfloat r1  = 0.928;  /* 471 */
-  GLfloat r2  = 0.966;  /* 490 */
-  GLfloat r3  = 0.984;  /* 499 */
+  GLfloat r0  = 0.750;  /* 395 */
+  GLfloat r1a = 0.825;                /* bottom of wall below upper left hole */
+  GLfloat r1b = 0.867;                /* center of upper left hole */
+  GLfloat r1c = 0.909;                /* top of wall above hole */
+  GLfloat r1  = 0.916;  /* 471 */
+  GLfloat r2  = 0.963;  /* 490 */
+  GLfloat r3  = 0.960;  /* 499 */
   GLfloat r4  = 1.000;  /* 507 */
-  GLfloat r5  = 1.090;  /* 553 */
+  GLfloat r5  = 1.080;  /* 553 */
 
   GLfloat ctrl_r[100], ctrl_th[100];
 
@@ -388,46 +405,46 @@ make_gasket (logo_configuration *dc, int wire)
   POINT (0.872, 3.95);
 
   POINT (r4,    4.0);   /* moving clockwise... */
-  POINT (r4,   48.2);
-  POINT (r1,   48.2);
-  POINT (r1,   54.2);
-  POINT (r2,   55.8);
-  POINT (r2,   73.2);
-  POINT (r1,   74.8);
-  POINT (r1,  101.2);
-  POINT (r3,  103.4);
+  POINT (r4,   47.0);
+  POINT (r1,   47.0);
+  POINT (r1,   53.0);
+  POINT (r2,   55.5);
+  POINT (r2,   72.3);
+  POINT (r1,   74.0);
+  POINT (r1,  100.0);
+  POINT (r3,  102.5);
   POINT (r3,  132.0);
-  POINT (r1,  133.4);
+  POINT (r1,  133.0);
 
   POINT (r1,  180.7);
   POINT (r2,  183.6);
-  POINT (r2,  209.8);
-  POINT (r1,  211.0);
-  POINT (r1,  221.8);
-  POINT (r5,  221.8);
+  POINT (r2,  210.0);
+  POINT (r1,  212.0);
+  POINT (r1,  223.2);
   POINT (r5,  223.2);
-  POINT (r4,  223.2);
+  POINT (r5,  225.0);
+  POINT (r4,  225.0);
 
-  POINT (r4,  316.8);      /* upper left indentation */
-  POINT (0.990, 326.87);
-  POINT (0.880, 327.21);
-  POINT (0.872, 327.45);
-  POINT (0.869, 327.80);
-  POINT (0.867, 328.10);
+  POINT (r4,    316.8);      /* upper left indentation */
+  POINT (0.990, 316.87);
+  POINT (0.880, 317.21);
+  POINT (0.872, 317.45);
+  POINT (0.869, 317.80);
+  POINT (0.867, 318.10);
 
-  POINT (0.867, 328.85);
-  POINT (0.869, 329.15);
-  POINT (0.872, 329.50);
-  POINT (0.880, 329.74);
-  POINT (0.990, 330.08);
+  POINT (0.867, 318.85);
+  POINT (0.869, 319.15);
+  POINT (0.872, 319.50);
+  POINT (0.880, 319.74);
+  POINT (0.990, 320.08);
 
-  POINT (r4,  339.0);
+  POINT (r4,  338.5);
   if (! wire)
     {
-      POINT (r1a, 339.0);      /* cut-out disc */
-      POINT (r1a, 343.0);
+      POINT (r1a, 338.5);      /* cut-out disc */
+      POINT (r1a, 343.5);
     }
-  POINT (r4,  343.0);
+  POINT (r4,  343.5);
   POINT (r4,  356.0);
 
   POINT (0.872, 356.05);   /* top indentation, left half */
@@ -634,7 +651,7 @@ make_gasket (logo_configuration *dc, int wire)
     GLfloat th;
     npoints = 0;
 
-    th = 339.0 * d2r;
+    th = 338.5 * d2r;
     pointsx0[npoints] = r1c * cos(th) * dc->gasket_size;
     pointsy0[npoints] = r1c * sin(th) * dc->gasket_size;
     npoints++;
@@ -642,7 +659,7 @@ make_gasket (logo_configuration *dc, int wire)
     pointsy0[npoints] = r4 * sin(th) * dc->gasket_size;
     npoints++;
 
-    th = 343.0 * d2r;
+    th = 343.5 * d2r;
     pointsx0[npoints] = r1c * cos(th) * dc->gasket_size;
     pointsy0[npoints] = r1c * sin(th) * dc->gasket_size;
     npoints++;
@@ -690,7 +707,7 @@ make_gasket (logo_configuration *dc, int wire)
      */
     {
       int nsteps = 12;
-      GLfloat r0 = 0.026;
+      GLfloat r0 = 0.04;
       GLfloat r1 = 0.060;
       GLfloat th, cth, sth;
 
@@ -786,11 +803,11 @@ make_gasket (logo_configuration *dc, int wire)
   /* Attach the bottom-right dingus...
    */
   {
-    GLfloat w = 0.04;
-    GLfloat h = 0.17;
+    GLfloat w = 0.05;
+    GLfloat h = 0.19;
     GLfloat th;
 
-    glRotatef (50, 0, 0, 1);
+    glRotatef (49.5, 0, 0, 1);
     glScalef (dc->gasket_size, dc->gasket_size, 1);
     glTranslatef (0, (r0+r1)/2, 0);
 
@@ -888,6 +905,114 @@ make_gasket (logo_configuration *dc, int wire)
   glPopMatrix();
 }
 
+static void
+make_frame (logo_configuration *dc, int wire)
+{
+  int i, j;
+  GLfloat x[20], y[20];
+  GLfloat corner_cut = 0.5;
+
+  glPushMatrix();
+  glRotatef (90, 0, 1, 0);
+  glScalef (4 * dc->frame_size,
+            4 * dc->frame_size,
+            4 * dc->frame_size);
+
+  x[0] = -dc->frame_thickness;
+  x[1] = -dc->frame_thickness * corner_cut;
+  x[2] = 0;
+  x[3] = 0.5 - dc->triangle_size;
+  x[4] = 0.5;
+  x[5] = 0.5 + dc->triangle_size;
+  x[6] = 1;
+  x[7] = 1 + dc->frame_thickness * corner_cut;
+  x[8] = 1 + dc->frame_thickness;
+
+  y[0] = -dc->frame_thickness;
+  y[1] = -dc->frame_thickness * corner_cut;
+  y[2] = 0;
+  y[3] = dc->triangle_size;
+
+  /* front and back
+   */
+  glTranslatef (-0.5, -0.5, dc->frame_depth / 4);
+  if (! wire)
+    for (j = 0; j <= 1; j++)
+      {
+        if (j) glTranslatef (0, 0, -dc->frame_depth / 2);
+        glFrontFace (j ? GL_CCW : GL_CW);
+        for (i = 0; i < 4; i++)
+          {
+            glNormal3f (0, 0, (j ? -1 : 1));
+            glBegin (wire ? GL_LINES : GL_QUAD_STRIP);
+            glVertex3f (x[0], y[1], 0); glVertex3f (x[0], y[2], 0);
+            glVertex3f (x[1], y[0], 0); glVertex3f (x[1], y[2], 0);
+            glVertex3f (x[3], y[0], 0); glVertex3f (x[3], y[2], 0);
+            glVertex3f (x[4], y[0], 0); glVertex3f (x[4], y[3], 0);
+            glVertex3f (x[5], y[0], 0); glVertex3f (x[5], y[2], 0); 
+            glVertex3f (x[7], y[0], 0); glVertex3f (x[7], y[2], 0);
+            glVertex3f (x[8], y[1], 0); glVertex3f (x[8], y[2], 0);
+            glEnd ();
+            glTranslatef (0.5, 0.5, 0);
+            glRotatef (90, 0, 0, 1);
+            glTranslatef (-0.5, -0.5, 0);
+          }
+      }
+
+  /* ledges
+   */
+  glFrontFace (GL_CCW);
+  for (i = 0; i < 4; i++)
+    {
+      glNormal3f (0, 1, 0);
+      glBegin (wire ? GL_LINES : GL_QUAD_STRIP);
+      glVertex3f (x[2], y[2], 0); glVertex3f (x[2], y[2], dc->frame_depth/2); 
+      glVertex3f (x[3], y[2], 0); glVertex3f (x[3], y[2], dc->frame_depth/2); 
+      glVertex3f (x[4], y[3], 0); glVertex3f (x[4], y[3], dc->frame_depth/2); 
+      glVertex3f (x[5], y[2], 0); glVertex3f (x[5], y[2], dc->frame_depth/2); 
+      glVertex3f (x[6], y[2], 0); glVertex3f (x[6], y[2], dc->frame_depth/2); 
+      glEnd ();
+
+      glNormal3f (0, -1, 0);
+      glBegin (wire ? GL_LINE_LOOP : GL_QUADS);
+      glVertex3f (x[7], y[0], 0); 
+      glVertex3f (x[7], y[0], dc->frame_depth/2); 
+      glVertex3f (x[1], y[0], dc->frame_depth/2); 
+      glVertex3f (x[1], y[0], 0); 
+      glEnd ();
+
+      glNormal3f (1, -1, 0);
+      glBegin (wire ? GL_LINE_LOOP : GL_QUADS);
+      glVertex3f (x[8], y[1], 0); 
+      glVertex3f (x[8], y[1], dc->frame_depth/2); 
+      glVertex3f (x[7], y[0], dc->frame_depth/2); 
+      glVertex3f (x[7], y[0], 0); 
+      glEnd ();
+
+      if (wire) 
+        {
+          glNormal3f (0, 1, 0);
+          for (j = 0; j <= 1; j++)
+            {
+              glBegin (GL_LINE_STRIP);
+              glVertex3f (x[2], y[2], j*dc->frame_depth/2);
+              glVertex3f (x[3], y[2], j*dc->frame_depth/2);
+              glVertex3f (x[4], y[3], j*dc->frame_depth/2);
+              glVertex3f (x[5], y[2], j*dc->frame_depth/2);
+              glVertex3f (x[6], y[2], j*dc->frame_depth/2);
+              glEnd ();
+            }
+        }
+
+      glTranslatef (0.5, 0.5, 0);
+      glRotatef (90, 0, 0, 1);
+      glTranslatef (-0.5, -0.5, 0);
+    }
+
+  glPopMatrix();
+}
+
+
 
 /* Window management, etc
  */
@@ -945,7 +1070,10 @@ init_logo (ModeInfo *mi)
   logo_configuration *dc;
   int do_gasket = get_boolean_resource(mi->dpy, "doGasket", "Boolean");
   int do_helix = get_boolean_resource(mi->dpy, "doHelix", "Boolean");
-  int do_ladder = do_helix && get_boolean_resource(mi->dpy, "doLadder", "Boolean");
+  int do_ladder = (do_helix && 
+                   get_boolean_resource(mi->dpy, "doLadder", "Boolean"));
+  int do_frame = get_boolean_resource(mi->dpy, "doFrame", "Boolean");
+  GLfloat helix_rot = 147.0;
 
   if (!do_gasket && !do_helix)
     {
@@ -970,19 +1098,24 @@ init_logo (ModeInfo *mi)
   }
 
   dc->wall_facets    = get_integer_resource(mi->dpy, "wallFacets",  "Integer");
-  dc->tube_facets    = get_integer_resource(mi->dpy, "tubeFacets",  "Integer");
+  dc->bar_facets     = get_integer_resource(mi->dpy, "barFacets",   "Integer");
   dc->clockwise      = get_boolean_resource(mi->dpy, "clockwise",   "Boolean");
   dc->turns          = get_float_resource(mi->dpy, "turns",         "Float");
   dc->turn_spacing   = get_float_resource(mi->dpy, "turnSpacing",   "Float");
   dc->bar_spacing    = get_float_resource(mi->dpy, "barSpacing",    "Float");
   dc->wall_height    = get_float_resource(mi->dpy, "wallHeight",    "Float");
   dc->wall_thickness = get_float_resource(mi->dpy, "wallThickness", "Float");
-  dc->tube_thickness = get_float_resource(mi->dpy, "tubeThickness", "Float");
+  dc->bar_thickness  = get_float_resource(mi->dpy, "barThickness",  "Float");
   dc->wall_taper     = get_float_resource(mi->dpy, "wallTaper",     "Float");
 
-  dc->gasket_size      = get_float_resource(mi->dpy, "gasketSize",      "Float");
-  dc->gasket_depth     = get_float_resource(mi->dpy, "gasketDepth",     "Float");
-  dc->gasket_thickness = get_float_resource(mi->dpy, "gasketThickness", "Float");
+  dc->gasket_size      = get_float_resource(mi->dpy,"gasketSize",     "Float");
+  dc->gasket_depth     = get_float_resource(mi->dpy,"gasketDepth",    "Float");
+  dc->gasket_thickness = get_float_resource(mi->dpy,"gasketThickness","Float");
+
+  dc->frame_size      = get_float_resource(mi->dpy, "frameSize",      "Float");
+  dc->frame_depth     = get_float_resource(mi->dpy, "frameDepth",     "Float");
+  dc->frame_thickness = get_float_resource(mi->dpy, "frameThickness", "Float");
+  dc->triangle_size   = get_float_resource(mi->dpy, "triangleSize",   "Float");
 
   dc->speed          = get_float_resource(mi->dpy, "speed",         "Float");
 
@@ -1017,6 +1150,12 @@ init_logo (ModeInfo *mi)
   dc->helix_spinnerz.probability  = 0.6;
   dc->scene_spinnerx.probability  = 0.1;
   dc->scene_spinnery.probability  = 0.0;
+  dc->frame_spinner.probability   = 5.0;
+
+  /* start the frame off-screen */
+  dc->frame_spinner.spinning_p = True;
+  dc->frame_spinner.position = 0.3;
+  dc->frame_spinner.speed = 0.001;
 
   if (dc->speed > 0)    /* start off with the gasket in motion */
     {
@@ -1029,7 +1168,7 @@ init_logo (ModeInfo *mi)
   glPushMatrix();
   dc->helix_list = glGenLists (1);
   glNewList (dc->helix_list, GL_COMPILE);
-  glRotatef(126, 0, 0, 1);
+  glRotatef(helix_rot, 0, 0, 1);
   if (do_ladder) make_ladder (dc, 0, 0);
   if (do_helix)  make_helix  (dc, 0, 0);
   glRotatef(180, 0, 0, 1);
@@ -1040,7 +1179,7 @@ init_logo (ModeInfo *mi)
   glPushMatrix();
   dc->helix_list_wire = glGenLists (1);
   glNewList (dc->helix_list_wire, GL_COMPILE);
-  /* glRotatef(126, 0, 0, 1); wtf? */
+/*  glRotatef(helix_rot, 0, 0, 1); wtf? */
   if (do_ladder) make_ladder (dc, 1, 1);
   if (do_helix)  make_helix  (dc, 1, 1);
   glRotatef(180, 0, 0, 1);
@@ -1051,7 +1190,7 @@ init_logo (ModeInfo *mi)
   glPushMatrix();
   dc->helix_list_facetted = glGenLists (1);
   glNewList (dc->helix_list_facetted, GL_COMPILE);
-  glRotatef(126, 0, 0, 1);
+  glRotatef(helix_rot, 0, 0, 1);
   if (do_ladder) make_ladder (dc, 1, 0);
   if (do_helix)  make_helix  (dc, 1, 0);
   glRotatef(180, 0, 0, 1);
@@ -1067,6 +1206,16 @@ init_logo (ModeInfo *mi)
   dc->gasket_list_wire = glGenLists (1);
   glNewList (dc->gasket_list_wire, GL_COMPILE);
   if (do_gasket) make_gasket (dc, 1);
+  glEndList ();
+
+  dc->frame_list = glGenLists (1);
+  glNewList (dc->frame_list, GL_COMPILE);
+  if (do_frame) make_frame (dc, 0);
+  glEndList ();
+
+  dc->frame_list_wire = glGenLists (1);
+  glNewList (dc->frame_list_wire, GL_COMPILE);
+  if (do_frame) make_frame (dc, 1);
   glEndList ();
 
   /* When drawing both solid and wireframe objects,
@@ -1193,20 +1342,48 @@ draw_logo (ModeInfo *mi)
   tick_spinner (mi, &dc->helix_spinnerz);
   tick_spinner (mi, &dc->scene_spinnerx);
   tick_spinner (mi, &dc->scene_spinnery);
+  tick_spinner (mi, &dc->frame_spinner);
   link_spinners (mi, &dc->scene_spinnerx, &dc->scene_spinnery);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix ();
   {
-    glScalef(3.3, 3.3, 3.3);
+    glScalef(3, 3, 3);
+
+    glColor3f(dc->color[0], dc->color[1], dc->color[2]);
+
+    /* Draw frame before trackball rotation */
+    {
+      GLfloat p = (dc->frame_spinner.position >= 0
+                   ? dc->frame_spinner.position
+                   : -dc->frame_spinner.position);
+      GLfloat size = (p > 0.5 ? 1-p : p);
+      GLfloat scale = 1 + (size * 10);
+      glPushMatrix();
+      /* gltrackball_rotate (dc->trackball); */
+      glRotatef(90, 1, 0, 0);
+      glRotatef(90, 0, 0, 1);
+
+      glScalef (1, scale, scale);
+      if (wire)
+        glCallList (dc->frame_list_wire);
+      else if (dc->wire_overlay != 0)
+        {
+          glCallList (dc->frame_list);
+          glDisable (GL_LIGHTING);
+          glCallList (dc->frame_list_wire);
+          if (!wire) glEnable (GL_LIGHTING);
+        }
+      else
+        glCallList (dc->frame_list);
+      glPopMatrix();
+    }
 
     gltrackball_rotate (dc->trackball);
 
     glRotatef(90, 1, 0, 0);
     glRotatef(90, 0, 0, 1);
-
-    glColor3f(dc->color[0], dc->color[1], dc->color[2]);
 
     glRotatef (360 * sin (M_PI/2 * dc->scene_spinnerx.position), 0, 1, 0);
     glRotatef (360 * sin (M_PI/2 * dc->scene_spinnery.position), 0, 0, 1);

@@ -20,6 +20,8 @@
 #handle 13 pass nostop
 #handle 15 pass nostop
 #handle 19 pass nostop
+set env MallocGuardEdges 1
+set env MallocPreScribble 1
+set env MallocScribble 1
 b exit
 set args -debug
-#b purify_stop_here

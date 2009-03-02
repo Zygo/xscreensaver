@@ -106,6 +106,9 @@ AH_TEMPLATE([HAVE_RANDR],
 	    possibly elsewhere.  (It's available if the file
 	    /usr/include/X11/extensions/Xrandr.h exists.)])
 
+AH_TEMPLATE([HAVE_RANDR_12],
+	    [Define this if the RANDR library is version 1.2 or newer.])
+
 AH_TEMPLATE([HAVE_PROC_INTERRUPTS],
 	    [Define this if you have a Linux-like /proc/interrupts file which
 	    can be examined to determine when keyboard activity has
@@ -389,6 +392,7 @@ AC_DEFUN(AC_CHECK_GCC_ARG,
        ac_cv_gcc_accepts_[$1]=no
      else
        ac_cv_gcc_accepts_[$1]=yes
+       CC="$CC [$2]"
      fi])
    ac_gcc_accepts_[$1]="$ac_cv_gcc_accepts_[$1]"
   fi
@@ -400,6 +404,11 @@ AC_DEFUN(AC_NO_LONG_STRING_WARNINGS,
 AC_DEFUN(AC_NO_MISPLACED_DECLARATIONS,
          [AC_CHECK_GCC_ARG(no_decl_after, -Wdeclaration-after-statement)])
 
+# Need to disable Objective C extensions in ANSI C on MacOS X to work
+# around an Apple-specific gcc bug.
+#
+AC_DEFUN(AC_NO_OBJECTIVE_C,
+         [AC_CHECK_GCC_ARG(no_cpp_precomp, -no-cpp-precomp)])
 
 ###############################################################################
 #
@@ -447,31 +456,11 @@ AC_DEFUN(AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE,
      # before they were in the ANSI C 99 spec...  (gcc 2.96 permits //
      # with -std=gnu89 but not with -std=c89.)
      #
-     CC="$CC -std=c89 -U__STRICT_ANSI__"
+     # $CC already contains "-std=c89" via AC_GCC_ACCEPTS_STD
+     CC="$CC -U__STRICT_ANSI__"
    else
      # The old way:
      CC="$CC -Wp,-lang-c89"
-   fi
-  fi
-])
-
-
-###############################################################################
-#
-#       Function to figure out how to turn off Objective C on MacOS X.
-#       (We have to do this to work around an Apple-specific gcc bug.)
-#
-###############################################################################
-
-AC_DEFUN(AC_GCC_ACCEPTS_NO_CPP_PRECOMP,
-         [AC_CHECK_GCC_ARG(no_cpp_precomp, -no-cpp-precomp)])
-
-AC_DEFUN(AC_NO_OBJECTIVE_C,
- [if test -n "$GCC"; then
-   AC_GCC_ACCEPTS_NO_CPP_PRECOMP
-   if test "$ac_gcc_accepts_no_cpp_precomp" = yes ; then
-     AC_MSG_RESULT(Disabling Objective C extensions in ANSI C code.)
-     CC="$CC -no-cpp-precomp"
    fi
   fi
 ])
@@ -1667,7 +1656,7 @@ HANDLE_X_PATH_ARG(with_randr, --with-randr-ext, RANDR)
 
 if test "$with_randr" = yes; then
 
-  # first check for Randr.h
+  # first check for Xrandr.h
   AC_CHECK_X_HEADER(X11/extensions/Xrandr.h, [have_randr=yes],,
                     [#include <X11/Xlib.h>])
 
@@ -1696,7 +1685,12 @@ if test "$with_randr" = yes; then
   # if that succeeded, then we've really got it.
   if test "$have_randr" = yes; then
     AC_DEFINE(HAVE_RANDR)
+
+    # Now check for version 1.2 in the same libs.
+    AC_CHECK_X_LIB(c, XRRGetOutputInfo, [AC_DEFINE(HAVE_RANDR_12)],
+                   [true], $SAVER_LIBS)
   fi
+
 
 elif test "$with_randr" != no; then
   echo "error: must be yes or no: --with-randr-ext=$with_randr"
@@ -3414,9 +3408,11 @@ case "$with_textfile" in
 
     #### Could use some more defaults here...
     for f in \
-      "/usr/X11R6/lib/X11/doc/README"		\
-      "/usr/share/doc/xserver-common/copyright"	\
-      "/usr/X11R6/README"			\
+      "/usr/X11R6/lib/X11/doc/README"		   \
+      "/usr/share/doc/xserver-common/copyright"	   \
+      "/usr/share/doc/xserver-xorg-core/copyright" \
+      "/usr/X11R6/README"			   \
+      "/usr/share/doc/debian/debian-manifesto"     \
     ; do
       if test -z "$with_textfile"; then
         AC_MSG_CHECKING([for text file $f])
@@ -4035,8 +4031,9 @@ if test "$have_gl" = yes -a "$ac_have_mesa_gl" = yes ; then
   pgl="$preferred_mesagl"
 
   if test "$ac_mesagl_version" = unknown; then
-    warnL "Unable to determine the MesaGL version number!"
-    warn2 "Make sure you are using version $preferred_mesagl or newer."
+    true
+    # warnL "Unable to determine the MesaGL version number!"
+    # warn2 "Make sure you are using version $preferred_mesagl or newer."
 
   elif test \! "$ac_mesagl_version" -gt 2006; then
     warnL "MesaGL version number is $mgv --"
@@ -4182,7 +4179,7 @@ if test -z "$RPM_PACKAGE_VERSION" ; then
 
   if test \! -z "$rpmv" ; then
     rpmbdir=`rpm -ql $rpmnames | sed -n 's@^\(.*\)/xscreensaver-demo$@\1@p'`
-    rpmhdir=`rpm -ql $rpmnames | sed -n 's@^\(.*\)/attraction$@\1@p'`
+    rpmhdir=`rpm -ql $rpmnames | sed -n 's@^\(.*\)/popsquares$@\1@p'`
 
     warning=no
     warnL "There is already an installed RPM of xscreensaver $rpmv"
@@ -4204,6 +4201,33 @@ if test -z "$RPM_PACKAGE_VERSION" ; then
     fi
   fi
 fi
+
+# Also warn if there's a Debian package installed.
+#
+debnames="xscreensaver xscreensaver-data xscreensaver-data-extra"
+debv=''
+for dpkg in $debnames ; do
+  if test -z "$debv"; then
+    debv=`dpkg -s $dpkg 2>/dev/null | sed -n 's/^Version: \(.*\)$/\1/p'`
+  fi
+done
+
+if test \! -z "$debv" ; then
+  debbdir=`dpkg -L $debnames 2>/dev/null | \
+            sed -n 's@^\(.*/bin/\)xscreensaver$@\1@p'`
+  debhdir=`dpkg -L $debnames 2>/dev/null | \
+            sed -n 's@^\(.*/\)popsquares$@\1@p'`
+  if test -z "$debbdir" ; then debbdir='???'; fi
+  if test -z "$debhdir" ; then debhdir='???'; fi
+
+  warning=no
+  warnL "There is already an installed dpkg of xscreensaver"
+  warn2 "version \"$debv\" on this system."
+  echo ""
+  warn2 "The dpkg was installed in $debbdir,"
+  warn2 "with demos in $debhdir."
+fi
+
 
 if test "${bindir}" = "${HACKDIR}" ; then
   do_dir_warning=yes

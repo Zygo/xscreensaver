@@ -384,10 +384,11 @@ add_default_options (const XrmOptionDescRec *opts,
 
   // And finally:
   //
+  NSDisableScreenUpdates();
   unsigned long delay = xsft->draw_cb (xdpy, xwindow, xdata);
-  
   XSync (xdpy, 0);
-  
+  NSEnableScreenUpdates();
+
   gettimeofday (&tv, 0);
   now = tv.tv_sec + (tv.tv_usec / 1000000.0);
   next_frame_time = now + (delay / 1000000.0);

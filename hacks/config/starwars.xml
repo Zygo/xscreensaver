@@ -4,17 +4,24 @@
 
   <command arg="-root"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="80000" default="40000"
-          convert="invert"/>
-
-  <number id="steps" type="slider" arg="-steps %"
-          _label="Scroll Speed" _low-label="Slow" _high-label="Fast"
-          low="1" high="100" default="35"
-          convert="invert"/>
-
   <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Animation Speed" _low-label="Slow" _high-label="Fast"
+            low="0" high="80000" default="40000"
+            convert="invert"/>
+    <number id="steps" type="slider" arg="-steps %"
+            _label="Scroll Speed" _low-label="Slow" _high-label="Fast"
+            low="1" high="100" default="35"
+            convert="invert"/>
+    <number id="spin" type="slider" arg="-spin %"
+            _label="Star Rotation Speed" _low-label="Slow" _high-label="Fast"
+            low="0.0" high="0.2" default="0.03"/>
+    <number id="lines" type="spinbutton" arg="-lines %"
+             _label="Text Lines" low="4" high="1000" default="125"/>
+   </vgroup>
+
+   <vgroup>
     <select id="align">
       <option id="left"   _label="Flush Left Text"  arg-set="-alignment left"/>
       <option id="center" _label="Centered Text"/>
@@ -22,34 +29,22 @@
     </select>
 
     <boolean id="wrap"   _label="Wrap Long Lines" arg-unset="-no-wrap"/>
-  </hgroup>
+   <boolean id="texture" _label="Texture-Mapped Font" arg-unset="-no-textures"/>
+    <boolean id="smooth" _label="Anti-aliased Lines" arg-unset="-no-smooth"/>
+    <hgroup>
+     <boolean id="thick"  _label="Thick Lines"        arg-unset="-no-thick"/>
+     <boolean id="fade"   _label="Fade Out"           arg-unset="-no-fade"/>
+    </hgroup>
+    <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
 
-<!--  <file id="program" _label="Text Program" arg="-program %"/> -->
+   </vgroup>
+  </hgroup>
 
   <hgroup>
     <number id="size" type="spinbutton" arg="-size %"
              _label="Font Point Size" low="-1" high="10" default="-1"/>
-
     <number id="columns" type="spinbutton" arg="-columns %"
              _label="or, Text Columns" low="-1" high="200" default="-1"/>
-  </hgroup>
-
-  <number id="lines" type="spinbutton" arg="-lines %"
-           _label="Text Lines" low="4" high="1000" default="125"/>
-
-  <number id="spin" type="slider" arg="-spin %"
-          _label="Star Rotation Speed" _low-label="Slow" _high-label="Fast"
-          low="0.0" high="0.2" default="0.03"/>
-
-  <hgroup>
-    <boolean id="smooth" _label="Anti-aliased Lines" arg-unset="-no-smooth"/>
-    <boolean id="thick"  _label="Thick Lines"        arg-unset="-no-thick"/>
-    <boolean id="fade"   _label="Fade Out"           arg-unset="-no-fade"/>
-  </hgroup>
-
-  <hgroup>
-   <boolean id="texture" _label="Texture-Mapped Font" arg-unset="-no-textures"/>
-   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
   </hgroup>
 
   <xscreensaver-text />

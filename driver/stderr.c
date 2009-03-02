@@ -1,5 +1,5 @@
 /* stderr.c --- capturing stdout/stderr output onto the screensaver window.
- * xscreensaver, Copyright (c) 1991-2006 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -472,6 +472,47 @@ initialize_stderr (saver_info *si)
 }
 
 
+/* If the "-log file" command-line option has been specified,
+   open the file for append, and redirect stdout/stderr there.
+   This is called very early, before initialize_stderr().
+ */
+void
+stderr_log_file (saver_info *si)
+{
+  int stdout_fd = 1;
+  int stderr_fd = 2;
+  const char *filename = get_string_resource (si->dpy, "logFile", "LogFile");
+  int fd;
+
+  if (!filename || !*filename) return;
+
+  fd = open (filename, O_WRONLY | O_APPEND | O_CREAT, 0666);
+
+  if (fd < 0)
+    {
+      char buf[255];
+    FAIL:
+      sprintf (buf, "%.100s: %.100s", blurb(), filename);
+      perror (buf);
+      fflush (stderr);
+      fflush (stdout);
+      exit (1);
+    }
+
+  fprintf (stderr, "%s: logging to file %s\n", blurb(), filename);
+
+  if (dup2 (fd, stdout_fd) < 0) goto FAIL;
+  if (dup2 (fd, stderr_fd) < 0) goto FAIL;
+
+  fprintf (stderr, "\n\n"
+ "##########################################################################\n"
+           "%s: logging to \"%s\" at %s\n"
+ "##########################################################################\n"
+           "\n",
+           blurb(), filename, timestring());
+}
+
+
 /* If there is anything in the stderr buffer, flush it to the real stderr.
    This does no X operations.  Call this when exiting to make sure any
    last words actually show up.
@@ -487,8 +528,7 @@ shutdown_stderr (saver_info *si)
 
   stderr_callback ((XtPointer) si, &stderr_stdout_read_fd, 0);
 
-  if (stderr_buffer &&
-      stderr_tail &&
+  if (stderr_tail &&
       stderr_buffer < stderr_tail)
     {
       *stderr_tail = 0;

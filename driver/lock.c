@@ -1,5 +1,5 @@
 /* lock.c --- handling the password dialog for locking-mode.
- * xscreensaver, Copyright (c) 1993-2007 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -179,7 +179,7 @@ static void restore_background (saver_info *si);
 
 extern void xss_authenticate(saver_info *si, Bool verbose_p);
 
-static void
+static int
 new_passwd_window (saver_info *si)
 {
   passwd_dialog_data *pw;
@@ -190,7 +190,7 @@ new_passwd_window (saver_info *si)
 
   pw = (passwd_dialog_data *) calloc (1, sizeof(*pw));
   if (!pw)
-    return;
+    return -1;
 
   /* Display the button only if the "newLoginCommand" pref is non-null.
    */
@@ -406,13 +406,14 @@ new_passwd_window (saver_info *si)
   }
 
   si->pw_data = pw;
+  return 0;
 }
 
 
 /**
  * info_msg and prompt may be NULL.
  */
-static void
+static int
 make_passwd_window (saver_info *si,
 		    const char *info_msg,
 		    const char *prompt,
@@ -428,11 +429,15 @@ make_passwd_window (saver_info *si,
 
   cleanup_passwd_window (si);
 
+  if (! ssi)   /* WTF?  Trying to prompt while no screens connected? */
+    return -1;
+
   if (!si->pw_data)
-    new_passwd_window (si);
+    if (new_passwd_window (si) < 0)
+      return -1;
 
   if (!(pw = si->pw_data))
-    return;
+    return -1;
 
   pw->ratio = 1.0;
 
@@ -614,10 +619,11 @@ make_passwd_window (saver_info *si,
      actually be visible; this takes into account virtual viewports as
      well as Xinerama. */
   {
-    int x, y, w, h;
-    get_screen_viewport (pw->prompt_screen, &x, &y, &w, &h,
-                         pw->previous_mouse_x, pw->previous_mouse_y,
-                         si->prefs.verbose_p);
+    saver_screen_info *ssi = &si->screens [mouse_screen (si)];
+    int x = ssi->x;
+    int y = ssi->y;
+    int w = ssi->width;
+    int h = ssi->height;
     if (si->prefs.debug_p) w /= 2;
     pw->x = x + ((w + pw->width) / 2) - pw->width;
     pw->y = y + ((h + pw->height) / 2) - pw->height;
@@ -678,6 +684,8 @@ make_passwd_window (saver_info *si,
   if (cmap)
     XInstallColormap (si->dpy, cmap);
   draw_passwd_window (si);
+
+  return 0;
 }
 
 
@@ -1418,8 +1426,12 @@ xfree_lock_grab_smasher (saver_info *si, Bool lock_p)
 {
   saver_preferences *p = &si->prefs;
   int status;
-
+  int event, error;
   XErrorHandler old_handler;
+
+  if (!XF86MiscQueryExtension(si->dpy, &event, &error))
+    return;
+
   XSync (si->dpy, False);
   error_handler_hit_p = False;
   old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
@@ -1463,6 +1475,7 @@ xfree_lock_mode_switch (saver_info *si, Bool lock_p)
   static Bool any_mode_locked_p = False;
   saver_preferences *p = &si->prefs;
   int screen;
+  int real_nscreens = ScreenCount (si->dpy);
   int event, error;
   Bool status;
   XErrorHandler old_handler;
@@ -1472,7 +1485,7 @@ xfree_lock_mode_switch (saver_info *si, Bool lock_p)
   if (!XF86VidModeQueryExtension (si->dpy, &event, &error))
     return;
 
-  for (screen = 0; screen < (si->xinerama_p ? 1 : si->nscreens); screen++)
+  for (screen = 0; screen < real_nscreens; screen++)
     {
       XSync (si->dpy, False);
       old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
@@ -1509,12 +1522,13 @@ undo_vp_motion (saver_info *si)
 #ifdef HAVE_XF86VMODE
   saver_preferences *p = &si->prefs;
   int screen;
+  int real_nscreens = ScreenCount (si->dpy);
   int event, error;
 
   if (!XF86VidModeQueryExtension (si->dpy, &event, &error))
     return;
 
-  for (screen = 0; screen < si->nscreens; screen++)
+  for (screen = 0; screen < real_nscreens; screen++)
     {
       saver_screen_info *ssi = &si->screens[screen];
       int x, y;
@@ -1932,9 +1946,11 @@ gui_auth_conv(int num_msg,
 	info_msg_trimmed = remove_trailing_whitespace(info_msg);
 	prompt_trimmed = remove_trailing_whitespace(prompt);
 
-	make_passwd_window(si, info_msg_trimmed, prompt_trimmed,
-			   auth_msgs[i].type == AUTH_MSGTYPE_PROMPT_ECHO
-			   ? True : False);
+	if (make_passwd_window(si, info_msg_trimmed, prompt_trimmed,
+                               auth_msgs[i].type == AUTH_MSGTYPE_PROMPT_ECHO
+                               ? True : False)
+            < 0)
+          goto fail;
 
 	if (info_msg_trimmed)
 	  free(info_msg_trimmed);

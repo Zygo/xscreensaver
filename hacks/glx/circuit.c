@@ -104,7 +104,7 @@ ModStruct   circuit_description =
 
 #endif
 
-#define MAX_COMPONENTS 31
+#define MAX_COMPONENTS 400
 #define MOVE_MULT 0.02
 
 static float f_rand(void)

@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
- <boolean id="random" _label="Randomize Almost Everything" arg-unset="-no-random"/>
+ <boolean id="random" _label="Randomize almost everything" arg-unset="-no-random"/>
 
   <hgroup>
    <vgroup>
@@ -18,19 +18,19 @@
               low="50" high="1000" default="250"/>
 
       <number id="spherism" type="slider" arg="-spherism %"
-               _label="Sphere strength" _low-label="none" _high-label="strong"
+               _label="Sphere strength" _low-label="None" _high-label="Strong"
                low="0" high="1000" default="200"/>
 
       <number id="hold" type="slider" arg="-hold %"
-               _label="Vertex-vertex force" _low-label="none" _high-label="strong"
+               _label="Vertex-vertex force" _low-label="None" _high-label="Strong"
                low="0" high="1000" default="700"/>
 
     </vgroup>
     <vgroup>
 
       <number id="distance" type="slider" arg="-distance %"
-               _label="Vertex-vertex behavior" _low-label="expand"
-               _high-label="collapse" low="0" high="1000" default="300"/>
+               _label="Vertex-vertex behavior" _low-label="Expand"
+               _high-label="Collapse" low="0" high="1000" default="300"/>
 
       <number id="damping" type="slider" arg="-damping %"
                _label="Inertial damping" _low-label="Low" _high-label="High"
@@ -40,30 +40,30 @@
                _label="Spookiness" _low-label="None" _high-label="Spoooooky"
                low="0" high="12" default="0"/>
 
-    <hgroup>
-     <select id="color">
-      <option id="cycle"     _label="Cycle" />
-      <option id="flowerbox" _label="Flower box" arg-set="-color flowerbox"/>
-      <option id="clownbarf" _label="Clown barf" arg-set="-color clownbarf"/>
-      <option id="chrome" _label="Chrome" arg-set="-color chrome"/>
-     </select>
-
-     <select id="start">
-      <option id="sphere" _label="Sphere" />
-      <option id="tetrahedron" _label="Tetrahedron" arg-set="-tetra"/>
-     </select>
-    </hgroup>
-
-    <boolean id="wireframe" _label="Wireframe" arg-set="-wireframe"/>
-    <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
-
+      <number id="delay" type="slider" arg="-delay %"
+              _label="Animation Speed" _low-label="Slow" _high-label="Fast"
+              low="0" high="20000" default="20000"
+              convert="invert"/>
     </vgroup>
   </hgroup>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Animation Speed" _low-label="Slow" _high-label="Fast"
-          low="0" high="20000" default="20000"
-          convert="invert"/>
+  <hgroup>
+   <select id="color">
+    <option id="cycle"     _label="Cycle" />
+    <option id="flowerbox" _label="Flower box" arg-set="-color flowerbox"/>
+    <option id="clownbarf" _label="Clown barf" arg-set="-color clownbarf"/>
+    <option id="chrome" _label="Chrome" arg-set="-color chrome"/>
+   </select>
+
+   <select id="start">
+    <option id="sphere" _label="Sphere" />
+    <option id="tetrahedron" _label="Tetrahedron" arg-set="-tetra"/>
+   </select>
+
+   <boolean id="wireframe" _label="Wireframe" arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  </hgroup>
 
   <_description>
 This does bad things with quasi-spherical objects.

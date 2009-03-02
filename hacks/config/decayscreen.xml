@@ -9,6 +9,10 @@
           low="0" high="20000" default="10000"
           convert="invert"/>
 
+  <number id="duration" type="slider" arg="-duration %"
+          _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+          low="10" high="600" default="120"/>
+
   <select id="mode">
     <option id="random" _label="Random Melt Style"/>
     <option id="random" _label="Shuffle Melt" arg-set="-mode shuffle"/>

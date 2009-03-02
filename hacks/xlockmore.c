@@ -1,6 +1,5 @@
 /* xlockmore.c --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997, 1998, 2001, 2002, 2004, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -521,7 +520,7 @@ xlockmore_reshape (Display *dpy, Window window, void *closure,
                  unsigned int w, unsigned int h)
 {
   ModeInfo *mi = (ModeInfo *) closure;
-  if (mi->xlmft->hack_reshape)
+  if (mi && mi->xlmft->hack_reshape)
     {
       XGetWindowAttributes (dpy, window, &mi->xgwa);
       mi->xlmft->hack_reshape (mi, mi->xgwa.width, mi->xgwa.height);
@@ -532,7 +531,7 @@ static Bool
 xlockmore_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   ModeInfo *mi = (ModeInfo *) closure;
-  if (mi->xlmft->hack_handle_events)
+  if (mi && mi->xlmft->hack_handle_events)
     {
       mi->xlmft->hack_handle_events (mi, event);
       /* Since xlockmore hacks don't tell us whether they handled the

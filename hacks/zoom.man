@@ -5,7 +5,10 @@ zoom - wander around magnified desktop
 .B zoom
 [\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP]
 [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install]
-[\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-lenses]
+[\-visual \fIvisual\fP]
+[\-delay \fIusecs\fP]
+[\-duration \fIsecs\fP]
+[\-lenses]
 [\-pixwidth \fIpixels\fP] [\-pixheight \fIpixels\fP]
 [\-pixspacex \fIpixels\fP] [\-pixspacey \fIpixels\fP]
 [\-lensoffsetx \fIpixels\fP] [\-lensoffsety \fIpixels\fP]
@@ -43,6 +46,9 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-delay \fImicroseconds\fP
 Slow it down.
+.TP 8
+.B \-duration \fIseconds\fP
+How long to run before loading a new image.  Default 120 seconds.
 .TP 8
 .B \-lenses
 Instead of doing magnification we just copy an offset region from the original

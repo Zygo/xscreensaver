@@ -92,8 +92,9 @@ hacks are displayed and which aren't.
 .BR doVMS ,
 .BR doMSDOS ,
 .BR doOS2 ,
+.BR doHVX ,
 and
-.BR doHVX .
+.BR doATM .
 Each of these is a Boolean resource, they all default to true, except
 for doAtari, doBSD, doSparcLinux, and doHPPALinux, which are turned off
 by default, because they're really not all that interesting looking

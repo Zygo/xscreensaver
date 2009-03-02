@@ -1,7 +1,4 @@
-/* types.h
- *
- * This file is part of XScreenSaver,
- * Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -12,20 +9,19 @@
  * implied warranty.
  */
 
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef __XSCREENSAVER_TYPES_H__
+#define __XSCREENSAVER_TYPES_H__
 
 typedef struct saver_info saver_info;
 
-/* Unlock states. Old pw_* equivalents in square brackets:
- * ul_read - reading input (or ready to do so) [pw_read]
- * ul_success - auth success, unlock the screen [pw_ok]
- * ul_fail - authentication failed [pw_fail]
- * ul_cancel - user cancelled auth [pw_cancel or pw_null]
- * ul_time - timed out, user took too long [pw_time]
- * ul_finished - user pressed enter on the current prompt, process input
- */
-enum unlock_state { ul_read, ul_success, ul_fail, ul_cancel, ul_time, ul_finished };
+typedef enum {
+  ul_read,		/* reading input or ready to do so */
+  ul_success,		/* auth success, unlock */
+  ul_fail,		/* auth fail */
+  ul_cancel,		/* user cancelled auth (pw_cancel or pw_null) */
+  ul_time,		/* timed out */
+  ul_finished		/* user pressed enter */
+} unlock_state;
 
 typedef struct screenhack screenhack;
 struct screenhack {
@@ -56,6 +52,7 @@ typedef struct saver_preferences saver_preferences;
 typedef struct saver_screen_info saver_screen_info;
 typedef struct passwd_dialog_data passwd_dialog_data;
 typedef struct splash_dialog_data splash_dialog_data;
+typedef struct _monitor monitor;
 
 
 /* This structure holds all the user-specified parameters, read from the
@@ -158,9 +155,11 @@ struct saver_info {
   saver_preferences prefs;
 
   int nscreens;
+  int ssi_count;
   saver_screen_info *screens;
   saver_screen_info *default_screen;	/* ...on which dialogs will appear. */
-
+  monitor **monitor_layout;		/* private to screens.c */
+  Visual **best_gl_visuals;		/* visuals for GL hacks on screen N */
 
   /* =======================================================================
      global connection info
@@ -173,7 +172,6 @@ struct saver_info {
      server extension info
      ======================================================================= */
 
-  Bool xinerama_p;		   /* Whether Xinerama is in use.            */
   Bool using_xidle_extension;	   /* which extension is being used.         */
   Bool using_mit_saver_extension;  /* Note that `p->use_*' is the *request*, */
   Bool using_sgi_saver_extension;  /* and `si->using_*' is the *reality*.    */
@@ -247,7 +245,7 @@ struct saver_info {
   char *user;			/* The user whose session is locked. */
   char *cached_passwd;		/* Cached password, used to avoid multiple
 				   prompts for password-only auth mechanisms.*/
-  enum unlock_state unlock_state;
+  unlock_state unlock_state;
 
   auth_conv_cb_t unlock_cb;	/* The function used to prompt for creds. */
   void (*auth_finished_cb) (saver_info *si);
@@ -349,7 +347,6 @@ struct saver_screen_info {
   int current_depth;		/* How deep the visual (and the window) are. */
 
   Visual *default_visual;	/* visual to use when none other specified */
-  Visual *best_gl_visual;	/* visual to use for GL hacks */
 
   Window real_vroot;		/* The original virtual-root window. */
   Window real_vroot_value;	/* What was in the __SWM_VROOT property. */
@@ -407,4 +404,4 @@ struct saver_screen_info {
 };
 
 
-#endif
+#endif /* __XSCREENSAVER_TYPES_H__ */

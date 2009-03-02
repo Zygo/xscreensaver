@@ -34,7 +34,7 @@
   <string id="pattern" _label="Juggle This Pattern" arg="-pattern %" />
 
   <_description>
-Draws a juggling stick-man.  See also "Juggle3D".
+Draws a juggling stick-man.  See also "Juggler3D".
 
 Written by Tim Auckland; 2002.
   </_description>

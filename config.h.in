@@ -234,6 +234,9 @@
    available if the file /usr/include/X11/extensions/Xrandr.h exists.) */
 #undef HAVE_RANDR
 
+/* Define this if the RANDR library is version 1.2 or newer. */
+#undef HAVE_RANDR_12
+
 /* Define this if you have the XReadDisplay extension (I think this is an
    SGI-only thing; it's in <X11/extensions/readdisplay.h>.) A few of the
    screenhacks will take advantage of this if it's available. */

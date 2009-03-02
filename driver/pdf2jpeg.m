@@ -1,6 +1,6 @@
 /* pdf2jpeg -- converts a PDF file to a JPEG file, using Cocoa
  *
- * Copyright (c) 2003 by Jamie Zawinski <jwz@jwz.org>
+ * Copyright (c) 2003, 2008 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,6 +23,7 @@ main (int argc, char** argv)
   const char *progname = argv[0];
   const char *infile = 0, *outfile = 0;
   double compression = 0.85;
+  double scale = 1.0;
   int verbose = 0;
   int i;
 
@@ -45,6 +46,18 @@ main (int argc, char** argv)
             }
           compression = q / 100.0;
         }
+      else if (!strcmp (argv[i], "-scale"))
+        {
+          float s;
+          if (1 != sscanf (argv[++i], " %f %c", &s, &c) ||
+              s <= 0 || s > 50)
+            {
+              fprintf (stderr, "%s: scale must be 0.0 - 50.0 (%f)\n",
+                       progname, s);
+              goto USAGE;
+            }
+          scale = s;
+        }
       else if (!strcmp (argv[i], "-verbose"))
         verbose++;
       else if (!strcmp (argv[i], "-v") ||
@@ -64,7 +77,7 @@ main (int argc, char** argv)
         {
         USAGE:
           fprintf (stderr,
-                   "usage: %s [-verbose] [-quality NN] "
+                   "usage: %s [-verbose] [-scale N] [-quality NN] "
                    "infile.pdf outfile.jpg\n",
                    progname);
           exit (1);
@@ -93,11 +106,16 @@ main (int argc, char** argv)
   NSPDFImageRep *pdf_rep = [NSPDFImageRep imageRepWithData:pdf_data];
 
   // Create an NSImage instance
-  NSImage *image = [[NSImage alloc] initWithSize:[pdf_rep size]];
+  NSRect rect;
+  rect.size = [pdf_rep size];
+  rect.size.width  *= scale;
+  rect.size.height *= scale;
+  rect.origin.x = rect.origin.y = 0;
+  NSImage *image = [[NSImage alloc] initWithSize:rect.size];
 
   // Draw the PDFImageRep in the NSImage
   [image lockFocus];
-  [pdf_rep drawAtPoint:NSMakePoint(0.0,0.0)];
+  [pdf_rep drawInRect:rect];
   [image unlockFocus];
 
   // Load the NSImage's contents into an NSBitmapImageRep:

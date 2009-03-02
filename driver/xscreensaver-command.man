@@ -152,18 +152,9 @@ un-blanked.)
 .TP 8
 .B \-restart
 Causes the screensaver process to exit and then restart with the same command
-line arguments as last time.  Do this after you've changed the resource
-database, to cause xscreensaver to notice the changes.
-
-.B Warning:
-if you have a \fI.xscreensaver\fP file, this might not do what you 
-expect.  You're probably better off killing the existing 
-xscreensaver (with \fIxscreensaver\-command -exit\fP) and then
-launching it again.
-
-The important point is, you need to make sure that the xscreensaver 
-process is running as you.  If it's not, it won't be reading the 
-right \fI.xscreensaver\fP file.
+line arguments as last time.  You shouldn't really need to do this,
+since xscreensaver notices when the \fI.xscreensaver\fP file has
+changed and re-reads it as needed.
 .TP 8
 .B \-watch
 Prints a line each time the screensaver changes state: when the screen

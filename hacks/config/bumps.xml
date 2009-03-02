@@ -13,6 +13,10 @@
           low="0" high="100000" default="30000"
           convert="invert"/>
 
+  <number id="duration" type="slider" arg="-duration %"
+          _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+          low="10" high="600" default="120"/>
+
   <!-- #### -soften [1] -->
   <!-- #### -invert -->
 

@@ -12,6 +12,7 @@ bumps - move distorting spotlight around desktop
 [\-install]
 [\-visual \fIvisual\fP]
 [\-delay \fIusecs\fP]
+[\-duration \fIsecs\fP]
 .SH DESCRIPTION
 The \fIbumps\fP program takes an image and exposes small, distorted
 sections of it as if through an odd wandering spotlight beam.
@@ -46,6 +47,9 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-delay \fImicroseconds\fP
 Slow it down.
+.TP 8
+.B \-duration \fIseconds\fP
+How long to run before loading a new image.  Default 120 seconds.
 .SH ENVIRONMENT
 .PP
 .TP 8

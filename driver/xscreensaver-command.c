@@ -108,9 +108,9 @@ usage: %s -<option>\n\
                 (Note that one must *never* kill xscreensaver with -9!)\n\
 \n\
   -restart      Causes the screensaver process to exit and then restart with\n\
-                the same command line arguments as last time.  Do this after\n\
-                you've changed your X resource settings, to cause\n\
-                xscreensaver to notice the changes.\n\
+                the same command line arguments as last time.  You shouldn't\n\
+                really need to do this, since xscreensaver notices when the\n\
+                .xscreensaver file has changed and re-reads it as needed.\n\
 \n\
   -lock         Tells the running xscreensaver process to lock the screen\n\
                 immediately.  This is like -activate, but forces locking as\n\

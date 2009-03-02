@@ -15,7 +15,9 @@
 
   <_description>
 Animates a simulation of Lemarchand's Box, the Lament Configuration,
-repeatedly solving itself.  Warning: occasionally opens doors.
+repeatedly solving itself.  
+
+Warning: occasionally opens doors.
 
 Written by Jamie Zawinski; 1998.
   </_description>

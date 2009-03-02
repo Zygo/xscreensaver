@@ -161,6 +161,7 @@ static void CreateBumps( SBumps *pBumps, Display *dpy, Window NewWin )
 	pBumps->SpotLight.nAccelMax = pBumps->SpotLight.nVelocityMax / 10.0f;
 	pBumps->dpy = dpy;
 	pBumps->Win = NewWin;
+    pBumps->screen = XWinAttribs.screen;
 	pBumps->pXImage = NULL;
 	
 	iDiameter = ( ( pBumps->iWinWidth < pBumps->iWinHeight ) ? pBumps->iWinWidth : pBumps->iWinHeight ) / 2;
@@ -330,11 +331,13 @@ static void InitBumpMap_2(Display *dpy, SBumps *pBumps)
     XWindowAttributes XWinAttribs;
     XGetWindowAttributes( pBumps->dpy, pBumps->Win, &XWinAttribs );
 
+    pBumps->start_time = time ((time_t) 0);
+
 	pScreenImage = XGetImage( pBumps->dpy, pBumps->source, 0, 0, 
                               pBumps->iWinWidth, pBumps->iWinHeight,
                               ~0L, ZPixmap );
-    XFreePixmap (pBumps->dpy, pBumps->source);
-    pBumps->source = 0;
+/*    XFreePixmap (pBumps->dpy, pBumps->source);
+    pBumps->source = 0;*/
 
 	XSetWindowBackground( pBumps->dpy, pBumps->Win, pBumps->aColors[ 0 ] );
 	XClearWindow (pBumps->dpy, pBumps->Win);
@@ -389,8 +392,8 @@ static void InitBumpMap_2(Display *dpy, SBumps *pBumps)
 	while( nSoften-- )
 		SoftenBumpMap( pBumps );
 
-	free( pBumps->xColors );
-    pBumps->xColors = 0;
+/*	free( pBumps->xColors );
+    pBumps->xColors = 0;*/
 }
 
 /* Soften the bump map.  This is to avoid pixelated-looking ridges.
@@ -558,6 +561,10 @@ bumps_init (Display *dpy, Window Win)
 	
 	CreateBumps( Bumps, dpy, Win );
 	Bumps->delay = get_integer_resource(dpy,  "delay", "Integer" );
+    Bumps->duration = get_integer_resource (dpy, "duration", "Seconds");
+    if (Bumps->delay < 0) Bumps->delay = 0;
+    if (Bumps->duration < 1) Bumps->duration = 1;
+    Bumps->start_time = time ((time_t) 0);
     return Bumps;
 }
 
@@ -574,7 +581,12 @@ bumps_draw (Display *dpy, Window window, void *closure)
       return Bumps->delay;
     }
 
-
+  if (!Bumps->img_loader &&
+      Bumps->start_time + Bumps->duration < time ((time_t) 0)) {
+    Bumps->img_loader = load_image_async_simple (0, Bumps->screen,
+                                                 Bumps->Win, Bumps->source, 
+                                                 0, 0);
+  }
 
   Execute( Bumps );
 

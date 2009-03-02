@@ -882,6 +882,8 @@ main (int argc, char **argv)
       window = VirtualRootWindowOfScreen (XtScreen (toplevel));
       XtDestroyWidget (toplevel);
       XGetWindowAttributes (dpy, window, &xgwa);
+      /* With RANDR, the root window can resize! */
+      XSelectInput (dpy, window, xgwa.your_event_mask | StructureNotifyMask);
       visual_warning (xgwa.screen, window, xgwa.visual, xgwa.colormap, False);
     }
   else

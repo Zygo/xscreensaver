@@ -4,9 +4,20 @@ distort \- distort the content of the screen in interesting ways
 .SH SYNOPSIS
 .B distort
 [\-root] [\-window] [\-mono] [\-install] [\-noinstall] [\-visual \fIvisual\fP]
-[\-window\-id \fIwindow\-id\fP] [\-delay \fIusecs\fP] [\-radius \fIpixels\fP]
-[\-speed \fIint\fP] [\-number \fIint\fP] [\-swamp] [\-bounce] [\-reflect]
-[\-vortex] [\-magnify] [\-blackhole] [\-slow] [\-shm] [\-no\-shm]
+[\-window\-id \fIwindow\-id\fP]
+[\-delay \fIusecs\fP]
+[\-duration \fIsecs\fP]
+[\-radius \fIpixels\fP]
+[\-speed \fIint\fP]
+[\-number \fIint\fP]
+[\-swamp]
+[\-bounce]
+[\-reflect]
+[\-vortex]
+[\-magnify]
+[\-blackhole]
+[\-slow]
+[\-shm] [\-no\-shm]
 .SH DESCRIPTION
 The \fIdistort\fP program takes an image and lets circular zones of
 distortion wander randomly around it, distorting what is under them.
@@ -49,6 +60,9 @@ Specify which window id to use.
 .TP 8
 .B \-delay \fIusecs\fP
 Specify the delay between subsequent animation frames in microseconds.
+.TP 8
+.B \-duration \fIseconds\fP
+How long to run before loading a new image.  Default 120 seconds.
 .TP 8
 .B \-radius \fIpixels\fP
 Specify the radius of the distortion zone in pixels.
