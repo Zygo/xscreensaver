@@ -75,7 +75,8 @@ SRCS		= xscreensaver-gl-helper.c \
 		  extrusion-helix4.c extrusion-joinoffset.c extrusion-screw.c \
 		  extrusion-taper.c extrusion-twistoid.c sierpinski3d.c \
 		  gflux.c stonerview.c stonerview-move.c stonerview-osc.c \
-		  stonerview-view.c starwars.c glut_stroke.c glut_swidth.c
+		  stonerview-view.c starwars.c glut_stroke.c glut_swidth.c \
+		  gltext.c
 
 OBJS		= xscreensaver-gl-helper.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -88,11 +89,12 @@ OBJS		= xscreensaver-gl-helper.o \
 		  extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
 		  extrusion-taper.o extrusion-twistoid.o sierpinski3d.o \
 		  gflux.o stonerview.o stonerview-move.o stonerview-osc.o \
-		  stonerview-view.o starwars.o glut_stroke.o glut_swidth.o
+		  stonerview-view.o starwars.o glut_stroke.o glut_swidth.o \
+		  gltext.o
 
 GL_EXES_1	= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
-		  sierpinski3d gflux stonerview starwars
+		  sierpinski3d gflux stonerview starwars gltext
 UTIL_EXES	= xscreensaver-gl-helper
 GL_EXES		= $(UTIL_EXES) $(GL_EXES_1)
 GLE_EXES	= extrusion
@@ -107,7 +109,8 @@ HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
 
 HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  stonerview-move.h stonerview-osc.h glutstroke.h glut_roman.h
-GL_MEN		= gflux.man lament.man starwars.man xscreensaver-gl-helper.man
+GL_MEN		= gflux.man lament.man starwars.man gltext.man \
+		  xscreensaver-gl-helper.man
 MEN		= @GL_MEN@
 EXTRAS		= README Makefile.in
 
@@ -339,6 +342,9 @@ SW_OBJS=starwars.o glut_stroke.o glut_swidth.o
 starwars:	$(SW_OBJS) $(HACK_OBJS)
 	$(CC_HACK) -o $@ $(SW_OBJS) $(HACK_OBJS) $(HACK_LIBS)
 
+GLT_OBJS=gltext.o glut_stroke.o glut_swidth.o
+gltext:	$(GLT_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $(GLT_OBJS) $(HACK_OBJS) $(HACK_LIBS)
 
 # This one works differently (it's not xlock-like.)
 #
@@ -695,4 +701,18 @@ glut_stroke.o: ../../config.h
 glut_stroke.o: $(srcdir)/glutstroke.h
 glut_swidth.o: ../../config.h
 glut_swidth.o: $(srcdir)/glutstroke.h
+gltext.o: $(HACK_SRC)/xlockmore.h
+gltext.o: ../../config.h
+gltext.o: $(HACK_SRC)/xlockmoreI.h
+gltext.o: $(HACK_SRC)/screenhack.h
+gltext.o: $(UTILS_SRC)/yarandom.h
+gltext.o: $(UTILS_SRC)/usleep.h
+gltext.o: $(UTILS_SRC)/resources.h
+gltext.o: $(UTILS_SRC)/hsv.h
+gltext.o: $(UTILS_SRC)/colors.h
+gltext.o: $(UTILS_SRC)/grabscreen.h
+gltext.o: $(UTILS_SRC)/visual.h
+gltext.o: $(UTILS_SRC)/xshm.h
+gltext.o: $(srcdir)/glutstroke.h
+gltext.o: $(srcdir)/glut_roman.h
 

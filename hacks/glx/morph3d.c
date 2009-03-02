@@ -67,9 +67,11 @@ static const char sccsid[] = "@(#)morph3d.c	4.07 97/11/24 xlockmore";
 # define PROGCLASS		"Morph3d"
 # define HACK_INIT		init_morph3d
 # define HACK_DRAW		draw_morph3d
-# define morph3d_opts		xlockmore_opts
-# define DEFAULTS		"*delay: 40000 \n" \
-				"*count: 0 \n"
+# define HACK_RESHAPE	reshape_morph3d
+# define morph3d_opts	xlockmore_opts
+# define DEFAULTS		"*delay:		40000	\n"		\
+						"*showFPS:      False   \n"		\
+						"*count: 		0		\n"
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
@@ -650,8 +652,8 @@ draw_icosa(ModeInfo * mi)
 	glDeleteLists(list, 1);
 }
 
-static void
-reshape(ModeInfo * mi, int width, int height)
+void
+reshape_morph3d(ModeInfo * mi, int width, int height)
 {
 	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
 
@@ -791,7 +793,7 @@ init_morph3d(ModeInfo * mi)
 
 	if ((mp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+		reshape_morph3d(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		mp->object = MI_COUNT(mi);
 		if (mp->object <= 0 || mp->object > 5)
 			mp->object = NRAND(5) + 1;
@@ -855,6 +857,8 @@ draw_morph3d(ModeInfo * mi)
 	mp->draw_object(mi);
 
 	glPopMatrix();
+
+    if (mi->fps_p) do_fps (mi);
 
 	glFlush();
 

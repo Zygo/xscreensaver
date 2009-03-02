@@ -17,7 +17,7 @@ starwars - draws a perspective text crawl, like at the beginning of the movie
 .SH SYNOPSIS
 .B starwars
 [\-display \fIhost:display.screen\fP] [\-window] [\-root]
-[\-visual \fIvisual\fP] 
+[\-visual \fIvisual\fP] [\-delay \fImicroseconds\fP] [\-fps]
 [\-program \fIcommand\fP]
 [\-size \fIinteger\fP ]
 [\-columns \fIinteger\fP]
@@ -112,6 +112,11 @@ If the animation looks jerky to you, increase this number.
 .TP 8
 .B \-delay \fIusecs\fP
 The delay between steps of the animation; default is 40000 (1/25th second.)
+.TP 8
+.B \-fps
+Display a running tally of how many frames per second are being rendered.
+In conjunction with \fB\-delay 0\fP, this can be a useful benchmark of 
+your GL performance.
 .SH ENVIRONMENT
 .PP
 .TP 8

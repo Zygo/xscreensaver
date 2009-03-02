@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997, 1998, 2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -70,6 +70,8 @@ typedef struct ModeInfo {
   Bool wireframe_p;
   Bool is_drawn;
 
+  Bool fps_p;
+
 #ifdef HAVE_XSHM_EXTENSION
   Bool use_shm;
   XShmSegmentInfo shm_info;
@@ -107,6 +109,7 @@ extern void xlockmore_screenhack (Display *dpy, Window window,
 				  Bool want_bright_colors,
 				  void (*hack_init) (ModeInfo *),
 				  void (*hack_draw) (ModeInfo *),
+				  void (*hack_reshape) (ModeInfo *, int, int),
 				  void (*hack_free) (ModeInfo *));
 
 #endif /* __XLOCKMORE_INTERNAL_H__ */

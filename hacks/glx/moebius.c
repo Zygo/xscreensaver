@@ -82,9 +82,11 @@ static const char sccsid[] = "@(#)moebius.c	4.08 97/01/04 xlockmore";
 # define PROGCLASS			"Moebius"
 # define HACK_INIT			init_moebius
 # define HACK_DRAW			draw_moebius
-# define moebius_opts			xlockmore_opts
+# define HACK_RESHAPE		reshape_moebius
+# define moebius_opts		xlockmore_opts
 # define DEFAULTS			"*cycles:		1       \n"			\
 							"*delay:		20000   \n"			\
+							"*showFPS:      False   \n"			\
 							"*wireframe:	False	\n"
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -151,6 +153,12 @@ typedef struct {
 	GLfloat     ant_position;
 	int         AreObjectsDefined[2];
 	GLXContext *glx_context;
+
+  GLfloat rotx, roty, rotz;	   /* current object rotation */
+  GLfloat dx, dy, dz;		   /* current rotational velocity */
+  GLfloat ddx, ddy, ddz;	   /* current rotational acceleration */
+  GLfloat d_max;			   /* max velocity */
+
 } moebiusstruct;
 
 static float front_shininess[] =
@@ -550,8 +558,8 @@ draw_moebius_strip(ModeInfo * mi)
 #undef MoebiusDivisions
 #undef MoebiusTransversals
 
-static void
-reshape(ModeInfo * mi, int width, int height)
+void
+reshape_moebius(ModeInfo * mi, int width, int height)
 {
 	moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
 
@@ -614,6 +622,79 @@ pinit(void)
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
 }
 
+
+
+/* lifted from lament.c */
+#define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
+#define RANDSIGN() ((random() & 1) ? 1 : -1)
+
+static void
+rotate(GLfloat *pos, GLfloat *v, GLfloat *dv, GLfloat max_v)
+{
+  double ppos = *pos;
+
+  /* tick position */
+  if (ppos < 0)
+    ppos = -(ppos + *v);
+  else
+    ppos += *v;
+
+  if (ppos > 1.0)
+    ppos -= 1.0;
+  else if (ppos < 0)
+    ppos += 1.0;
+
+  if (ppos < 0) abort();
+  if (ppos > 1.0) abort();
+  *pos = (*pos > 0 ? ppos : -ppos);
+
+  /* accelerate */
+  *v += *dv;
+
+  /* clamp velocity */
+  if (*v > max_v || *v < -max_v)
+    {
+      *dv = -*dv;
+    }
+  /* If it stops, start it going in the other direction. */
+  else if (*v < 0)
+    {
+      if (random() % 4)
+	{
+	  *v = 0;
+
+	  /* keep going in the same direction */
+	  if (random() % 2)
+	    *dv = 0;
+	  else if (*dv < 0)
+	    *dv = -*dv;
+	}
+      else
+	{
+	  /* reverse gears */
+	  *v = -*v;
+	  *dv = -*dv;
+	  *pos = -*pos;
+	}
+    }
+
+  /* Alter direction of rotational acceleration randomly. */
+  if (! (random() % 120))
+    *dv = -*dv;
+
+  /* Change acceleration very occasionally. */
+  if (! (random() % 200))
+    {
+      if (*dv == 0)
+	*dv = 0.00001;
+      else if (random() & 1)
+	*dv *= 1.2;
+      else
+	*dv *= 0.8;
+    }
+}
+
+
 void
 init_moebius(ModeInfo * mi)
 {
@@ -629,9 +710,28 @@ init_moebius(ModeInfo * mi)
 	mp->step = NRAND(90);
 	mp->ant_position = NRAND(90);
 
+    mp->rotx = frand(1.0) * RANDSIGN();
+    mp->roty = frand(1.0) * RANDSIGN();
+    mp->rotz = frand(1.0) * RANDSIGN();
+
+    /* bell curve from 0-1.5 degrees, avg 0.75 */
+    mp->dx = (frand(1) + frand(1) + frand(1)) / (360*2);
+    mp->dy = (frand(1) + frand(1) + frand(1)) / (360*2);
+    mp->dz = (frand(1) + frand(1) + frand(1)) / (360*2);
+
+    mp->d_max = mp->dx * 2;
+
+    mp->ddx = 0.00006 + frand(0.00003);
+    mp->ddy = 0.00006 + frand(0.00003);
+    mp->ddz = 0.00006 + frand(0.00003);
+
+    mp->ddx = 0.00001;
+    mp->ddy = 0.00001;
+    mp->ddz = 0.00001;
+
 	if ((mp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+		reshape_moebius(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
 		if (!glIsList(objects))
 			objects = glGenLists(3);
@@ -666,14 +766,28 @@ draw_moebius(ModeInfo * mi)
 		glScalef(Scale4Iconic * mp->WindH / mp->WindW, Scale4Iconic, Scale4Iconic);
 	}
 
+    {
+      GLfloat x = mp->rotx;
+      GLfloat y = mp->roty;
+      GLfloat z = mp->rotz;
+      if (x < 0) x = 1 - (x + 1);
+      if (y < 0) y = 1 - (y + 1);
+      if (z < 0) z = 1 - (z + 1);
+      glRotatef(x * 360, 1.0, 0.0, 0.0);
+      glRotatef(y * 360, 0.0, 1.0, 0.0);
+      glRotatef(z * 360, 0.0, 0.0, 1.0);
+    }
+
 	/* moebius */
-	glRotatef(mp->step * 100, 1, 0, 0);
-	glRotatef(mp->step * 95, 0, 1, 0);
-	glRotatef(mp->step * 90, 0, 0, 1);
 	draw_moebius_strip(mi);
 
 	glPopMatrix();
 
+    rotate(&mp->rotx, &mp->dx, &mp->ddx, mp->d_max);
+    rotate(&mp->roty, &mp->dy, &mp->ddy, mp->d_max);
+    rotate(&mp->rotz, &mp->dz, &mp->ddz, mp->d_max);
+
+    if (mi->fps_p) do_fps (mi);
 	glFlush();
 
 	glXSwapBuffers(display, window);

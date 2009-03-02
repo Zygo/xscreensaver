@@ -49,9 +49,12 @@
 # define PROGCLASS						"gflux"
 # define HACK_INIT						init_gflux
 # define HACK_DRAW						draw_gflux
-# define gflux_opts				xlockmore_opts
-#define DEFAULTS                        "*squares:      19      \n" \
-                                        "*resolution:   0       \n" \
+# define HACK_RESHAPE					reshape_gflux
+# define gflux_opts						xlockmore_opts
+#define DEFAULTS                        "*delay:		20000   \n" \
+										"*showFPS:      False   \n" \
+                                        "*squares:      19      \n" \
+										"*resolution:   0       \n" \
                                         "*draw:         0       \n" \
                                         "*flat:         0       \n" \
                                         "*speed:        0.05    \n" \
@@ -194,7 +197,7 @@ typedef struct {
     int imageWidth;
     int imageHeight;
     GLubyte *image;
-    GLint texName;
+    GLuint texName;
     void (*drawFunc)(void);
 } gfluxstruct;
 static gfluxstruct *gflux = NULL;
@@ -237,6 +240,7 @@ void draw_gflux(ModeInfo * mi)
 
     calcGrid();
     gflux->drawFunc();
+    if (mi->fps_p) do_fps (mi);
     glXSwapBuffers(display, window);
 }
 
@@ -252,8 +256,8 @@ void resetProjection(void) {
 }
 
 /* Standard reshape function */
-static void
-reshape(int width, int height)
+void
+reshape_gflux(ModeInfo *mi, int width, int height)
 {
     glViewport( 0, 0, width, height );
     resetProjection();
@@ -261,9 +265,9 @@ reshape(int width, int height)
 
 
 /* main OpenGL initialization routine */
-void initializeGL(GLsizei width, GLsizei height) 
+void initializeGL(ModeInfo *mi, GLsizei width, GLsizei height) 
 {
-  reshape(width, height);
+  reshape_gflux(mi, width, height);
   glViewport( 0, 0, width, height ); 
   switch(_draw) {
     case solid :
@@ -317,8 +321,8 @@ void init_gflux(ModeInfo * mi)
 
     gp->window = MI_WINDOW(mi);
     if ((gp->glx_context = init_GL(mi)) != NULL) {
-        reshape(MI_WIDTH(mi), MI_HEIGHT(mi));
-        initializeGL(MI_WIDTH(mi), MI_HEIGHT(mi));
+        reshape_gflux(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+        initializeGL(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
     } else {
         MI_CLEARWINDOW(mi);
     }

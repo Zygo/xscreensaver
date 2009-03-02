@@ -102,9 +102,11 @@ static const char sccsid[] = "@(#)atlantis.c	1.3 98/06/18 xlockmore";
 # define PROGCLASS	"Atlantis"
 # define HACK_INIT	init_atlantis
 # define HACK_DRAW	draw_atlantis
+# define HACK_RESHAPE	reshape_atlantis
 # define atlantis_opts	xlockmore_opts
 # define DEFAULTS	"*delay:       40000 \n" \
 			 "*count:          4 \n" \
+			 "*showFPS:    False \n" \
 			 "*cycles:       100 \n" \
 			 "*size:        6000 \n" \
 			 "*whalespeed:   250 \n"
@@ -238,8 +240,8 @@ Init(atlantisstruct * ap)
 	glClearColor(0.0, fgreen, fblue, 0.0);
 }
 
-static void
-Reshape(ModeInfo * mi, int width, int height)
+void
+reshape_atlantis(ModeInfo * mi, int width, int height)
 {
 	atlantisstruct *ap = &atlantis[MI_SCREEN(mi)];
 
@@ -357,7 +359,7 @@ init_atlantis(ModeInfo * mi)
 	}
 	if ((ap->glx_context = init_GL(mi)) != NULL) {
 
-		Reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+		reshape_atlantis(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
 		Init(ap);
 		AllDisplay(ap);
@@ -397,6 +399,7 @@ draw_atlantis(ModeInfo * mi)
 
         glPopMatrix();
 
+        if (mi->fps_p) do_fps (mi);
 	glXSwapBuffers(display, window);
 }
 

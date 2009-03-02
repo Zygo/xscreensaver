@@ -71,10 +71,6 @@ static const char sccsid[] = "@(#)flag.c	4.02 97/04/01 xlockmore";
 #endif /* !STANDALONE */
 
 
-#if defined(VMS) && !defined(HAVE_UNAME) && (__VMS_VER >= 70000000)
-# define HAVE_UNAME 1
-#endif
-
 #ifdef HAVE_UNAME
 # include <sys/utsname.h>
 #endif /* HAVE_UNAME */

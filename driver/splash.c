@@ -125,8 +125,6 @@ struct splash_dialog_data {
   Pixel background;
   Pixel button_foreground;
   Pixel button_background;
-  Pixel logo_foreground;
-  Pixel logo_background;
   Pixel shadow_top;
   Pixel shadow_bottom;
 
@@ -139,6 +137,10 @@ struct splash_dialog_data {
   Dimension demo_button_x, demo_button_y;
   Dimension prefs_button_x, prefs_button_y;
   Dimension help_button_x, help_button_y;
+
+  Pixmap logo_pixmap;
+  int logo_npixels;
+  unsigned long *logo_pixels;
 
   int pressed;
 };
@@ -229,12 +231,6 @@ make_splash_dialog (saver_info *si)
   sp->button_background = get_pixel_resource ("splash.Button.background",
 					      "Dialog.Button.Background",
 					      si->dpy, cmap);
-  sp->logo_foreground = get_pixel_resource ("splash.logo.foreground",
-					    "Dialog.Logo.Foreground",
-					    si->dpy, cmap);
-  sp->logo_background = get_pixel_resource ("splash.logo.background",
-					    "Dialog.Logo.Background",
-					    si->dpy, cmap);
   sp->shadow_top = get_pixel_resource ("splash.topShadowColor",
 				       "Dialog.Foreground",
 				       si->dpy, cmap);
@@ -364,6 +360,11 @@ make_splash_dialog (saver_info *si)
 		   attrmask, &attrs);
   XSetWindowBackground (si->dpy, si->splash_dialog, sp->background);
 
+  sp->logo_pixmap = xscreensaver_logo (si->dpy, si->splash_dialog, cmap,
+                                       sp->background, 
+                                       &sp->logo_pixels, &sp->logo_npixels,
+                                       True);
+
   XMapRaised (si->dpy, si->splash_dialog);
   XSync (si->dpy, False);
 
@@ -374,21 +375,6 @@ make_splash_dialog (saver_info *si)
 
   draw_splash_window (si);
   XSync (si->dpy, False);
-}
-
-void
-draw_logo (saver_info *si, Window win, int x, int y, int w, int h,
-           Bool first_time_p)
-{
-  Colormap cmap = DefaultColormapOfScreen (si->default_screen->screen);
-  Pixmap logo_map = XCreatePixmap (si->dpy, win, w, h, 
-                                   si->default_screen->current_depth);
-  XGCValues gcv;
-  GC gc = XCreateGC (si->dpy, win, 0, &gcv);
-  xscreensaver_logo (si->dpy, logo_map, cmap, !first_time_p);
-  XCopyArea (si->dpy, logo_map, win, gc, 0, 0, w, h, x, y);
-  XFreeGC (si->dpy, gc);
-  XFreePixmap (si->dpy, logo_map);
 }
 
 
@@ -495,18 +481,37 @@ draw_splash_window (saver_info *si)
   sp->help_button_y = y1;
 
 
-  /* the logo
+  /* The logo
    */
-  XSetForeground (si->dpy, gc1, sp->logo_foreground);
-  XSetForeground (si->dpy, gc2, sp->logo_background);
-
   x1 = sp->shadow_width * 3;
   y1 = sp->shadow_width * 3;
   x2 = sp->logo_width - (sp->shadow_width * 6);
   y2 = sp->logo_height - (sp->shadow_width * 6);
 
-  draw_logo (si, si->splash_dialog, x1, y1, x2, y2, True);
+  if (sp->logo_pixmap)
+    {
+      Window root;
+      int x, y;
+      unsigned int w, h, bw, d;
+      XGetGeometry (si->dpy, sp->logo_pixmap, &root, &x, &y, &w, &h, &bw, &d);
+      XSetForeground (si->dpy, gc1, sp->foreground);
+      XSetBackground (si->dpy, gc1, sp->background);
+      if (d == 1)
+        XCopyPlane (si->dpy, sp->logo_pixmap, si->splash_dialog, gc1,
+                    0, 0, w, h,
+                    x1 + ((x2 - (int)w) / 2),
+                    y1 + ((y2 - (int)h) / 2),
+                    1);
+      else
+        XCopyArea (si->dpy, sp->logo_pixmap, si->splash_dialog, gc1,
+                   0, 0, w, h,
+                   x1 + ((x2 - (int)w) / 2),
+                   y1 + ((y2 - (int)h) / 2));
+    }
 
+  /* Solid border inside the logo box. */
+  XSetForeground (si->dpy, gc1, sp->foreground);
+  XDrawRectangle (si->dpy, si->splash_dialog, gc1, x1, y1, x2-1, y2-1);
 
   /* The shadow around the logo
    */
@@ -594,14 +599,17 @@ destroy_splash_window (saver_info *si)
     XFreeColors (si->dpy, cmap, &sp->button_foreground, 1, 0L);
   if (sp->button_background != black && sp->button_background != white)
     XFreeColors (si->dpy, cmap, &sp->button_background, 1, 0L);
-  if (sp->logo_foreground != black && sp->logo_foreground != white)
-    XFreeColors (si->dpy, cmap, &sp->logo_foreground, 1, 0L);
-  if (sp->logo_background != black && sp->logo_background != white)
-    XFreeColors (si->dpy, cmap, &sp->logo_background, 1, 0L);
   if (sp->shadow_top != black && sp->shadow_top != white)
     XFreeColors (si->dpy, cmap, &sp->shadow_top, 1, 0L);
   if (sp->shadow_bottom != black && sp->shadow_bottom != white)
     XFreeColors (si->dpy, cmap, &sp->shadow_bottom, 1, 0L);
+
+  if (sp->logo_pixmap)
+    XFreePixmap (si->dpy, sp->logo_pixmap);
+  if (sp->logo_npixels && sp->logo_pixels)
+    XFreeColors (si->dpy, cmap, sp->logo_pixels, sp->logo_npixels, 0L);
+  if (sp->logo_pixels)
+    free (sp->logo_pixels);
 
   memset (sp, 0, sizeof(*sp));
   free (sp);

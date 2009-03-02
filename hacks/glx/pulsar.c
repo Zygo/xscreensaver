@@ -51,8 +51,11 @@
 # define PROGCLASS						"Screensaver"
 # define HACK_INIT						init_screensaver
 # define HACK_DRAW						draw_screensaver
+# define HACK_RESHAPE					reshape_screensaver
 # define screensaver_opts				xlockmore_opts
-#define	DEFAULTS                        "*light:			False	\n" \
+#define	DEFAULTS                       	"*delay:			10000   \n" \
+										"*showFPS:          False   \n" \
+										"*light:			False	\n" \
                                         "*wire:				False	\n" \
                                         "*quads:			5   	\n" \
                                         "*blend:			True	\n" \
@@ -61,7 +64,6 @@
                                         "*texture:			False	\n" \
                                         "*texture_quality:	False	\n" \
                                         "*mipmap:			False	\n" \
-                                        "*fps:				False	\n" \
                                         "*doDepth:			False	\n" \
 										"*image:			BUILTIN	\n"
 
@@ -103,10 +105,6 @@
 /* Functions for handling the frames per second timer */
 #include "GL/glx.h"
 
-#ifndef SAMPLE_FRAMES
-#define SAMPLE_FRAMES 10
-#endif
-
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -123,7 +121,6 @@
 #define DEF_TEXTURE   	"False"
 #define DEF_TEXTURE_QUALITY   "False"
 #define DEF_MIPMAP   	"False"
-#define DEF_FPS   		"False"
 #define DEF_DO_DEPTH	"False"
 #define DEF_IMAGE   	"BUILTIN"
 
@@ -136,7 +133,6 @@ static int do_antialias;
 static int do_texture;
 static int do_texture_quality;
 static int do_mipmap;
-static int do_fps;
 static int do_depth;
 static char *which_image;
 
@@ -159,8 +155,6 @@ static XrmOptionDescRec opts[] = {
   {"+texture_quality",   ".pulsar.texture_quality",   XrmoptionNoArg, (caddr_t) "false" },
   {"-mipmap",   ".pulsar.mipmap",   XrmoptionNoArg, (caddr_t) "true" },
   {"+mipmap",   ".pulsar.mipmap",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-fps",   ".pulsar.fps",   XrmoptionNoArg, (caddr_t) "true" },
-  {"+fps",   ".pulsar.fps",   XrmoptionNoArg, (caddr_t) "false" },
   {"-do_depth",   ".pulsar.doDepth",   XrmoptionNoArg, (caddr_t) "true" },
   {"+do_depth",   ".pulsar.doDepth",   XrmoptionNoArg, (caddr_t) "false" },
   {"-image",   ".pulsar.image",  XrmoptionSepArg, (caddr_t) NULL },
@@ -177,7 +171,6 @@ static argtype vars[] = {
   {(caddr_t *) &do_texture,    "texture",   "Texture",   DEF_TEXTURE,   t_Bool},
   {(caddr_t *) &do_texture_quality,    "texture_quality",   "Texture_quality",   DEF_TEXTURE_QUALITY,   t_Bool},
   {(caddr_t *) &do_mipmap,    "mipmap",   "Mipmap",   DEF_MIPMAP,   t_Bool},
-  {(caddr_t *) &do_fps,    "fps",   "fps",   DEF_FPS,   t_Bool},
   {(caddr_t *) &do_depth,    "doDepth",   "DoDepth",   DEF_DO_DEPTH,   t_Bool},
   {(caddr_t *) &which_image, "image",   "Image",   DEF_IMAGE,   t_String},
 };
@@ -194,7 +187,6 @@ static OptionStruct desc[] =
 	{"-/+ texture", "whether to do enable texturing (much slower)"},
 	{"-/+ texture_quality", "whether to do enable linear/mipmap filtering (much much slower)"},
 	{"-/+ mipmap", "whether to do enable mipmaps (much slower)"},
-	{"-/+ fps", "whether to do enable frames per second meter (?)"},
 	{"-/+ depth", "whether to do enable depth buffer checking (slower)"},
 	{"-image <filename>", "texture image to load (PPM, PPM4, TIFF(?), XPM(?))"},
 };
@@ -230,127 +222,13 @@ struct quad
 
 };
 
-int global_width=WIDTH, global_height=HEIGHT;
 
-
-static GLint base;
-static int FrameCounter = 0;
-static double oldtime=-1., newtime=-1.;
-static char FPSstring[1024]="FPS: NONE"; 
-
-static float x_pos=0, y_pos=0;
-
-#define FONT "-*-courier-medium-r-normal-*-240-*"
 GLint quad_list;
 
 static float scale_x=1, scale_y=1, scale_z=1;
 static int frame = 0;
 
-static GLenum errCode;
-static const GLubyte *errString;
-
 struct quad *quads;
-
-int checkError(int line, char *file)
-{
-  if((errCode = glGetError()) != GL_NO_ERROR) {
-    errString = (GLubyte *)gluErrorString(errCode);
-    fprintf(stderr, "OpenGL error: %s detected at line %d in file %s\n", errString, line, file);
-    exit(1);
-  }
-  return 0;
-}
-
-
-void FPS_Setup(void)
-{
-  Display *Dpy;
-  XFontStruct *fontInfo;
-  Font id;
-  int first=0, last=255;
-
-  Dpy = XOpenDisplay(NULL);
-  fontInfo = XLoadQueryFont(Dpy, FONT);
-  if (fontInfo == NULL)
-    {
-      fprintf(stderr, "Failed to load font %s\n", FONT);
-      exit(1);
-    }
-
-  id = fontInfo->fid;
-  first = fontInfo->min_char_or_byte2;
-  last = fontInfo->max_char_or_byte2;
-  
-  base = glGenLists((GLuint) last+1);
-  if (base == 0) {
-    fprintf (stderr, "out of display lists\n");
-    exit(1);
-  }
-  glXUseXFont(id, first, last-first+1, base+first);
-
-}
-
-void PrintString(float x, float y, char *string)
-{
-  int len, i;
-
-  /* save the current state */
-  /* note: could be expensive! */
-  glPushAttrib(GL_ALL_ATTRIB_BITS);
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  gluOrtho2D(0, global_width, 0, global_height);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  /* disable lighting and texturing when drawing bitmaps! */
-  glDisable(GL_TEXTURE_2D);
-  glDisable(GL_LIGHTING);
-  glDisable(GL_BLEND);
-
-  /* draw a black background */
-
-  /* draw the text */
-  glColor3f(1,1,1);
-  glRasterPos2f( x, y);
-  len = (int) strlen(string);
-  for (i = 0; i < len; i++) {
-	if (glIsList(base+string[i]))
-	  glCallList(base+string[i]);
-	else
-	  fprintf(stderr, "%d+string[%d] is not a display list!\n", base, i);
-  }
-
-  /* clean up after our state changes */
-  glPopAttrib();
-}
-
-double gettime(void)
-{
-  struct timeval now;
-#ifdef GETTIMEOFDAY_TWO_ARGS
-  struct timezone tzp;
-  gettimeofday(&now, &tzp);
-#else
-  gettimeofday(&now);
-#endif
-  return (double) (now.tv_sec + (((double) now.tv_usec) * 0.000001));
-}
-
-void DoFPS(void)
-{
-  /* every SAMPLE_FRAMES frames, get the time and use it to get the 
-     frames per second */
-  if (!(FrameCounter % SAMPLE_FRAMES)) {
-    oldtime = newtime;
-    newtime = gettime();
-    sprintf(FPSstring, "FPS: %.02f", SAMPLE_FRAMES/(newtime-oldtime));
-  }
-
-  PrintString(x_pos,y_pos,FPSstring);
-
-  FrameCounter++;
-}
 
 GLubyte *Generate_Image(int *width, int *height, int *format)
 {
@@ -668,17 +546,11 @@ void initializeGL(GLsizei width, GLsizei height)
 {
   GLfloat fogColor[4] = { 0.1, 0.1, 0.1, 0.1 };
 
-  global_width=width;
-  global_height=height;
-
   glViewport( 0, 0, width, height ); 
   resetProjection();
 
   if (do_depth)
 	glEnable(GL_DEPTH_TEST);
-
-  if (do_fps)
-	FPS_Setup();
 
   if (do_antialias) {
 	do_blend = 1;
@@ -739,10 +611,9 @@ void drawQuads(void) {
     }
 }
 
-GLvoid drawScene(void) 
+GLvoid drawScene(ModeInfo * mi) 
 {
-
-  checkError(__LINE__, __FILE__);
+  check_gl_error ("drawScene");
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   /* we have to do this here because the FPS meter turns these 3 features off!! */
@@ -776,9 +647,7 @@ GLvoid drawScene(void)
   /* increment frame-counter */
   frame++;
 
-  if (do_fps)
-	DoFPS();
-  checkError(__LINE__, __FILE__);
+  check_gl_error ("drawScene");
 }
 
 
@@ -792,15 +661,16 @@ void draw_screensaver(ModeInfo * mi)
 	return;
 
   glXMakeCurrent(display, window, *(gp->glx_context));
-  drawScene();
+  drawScene(mi);
+  if (mi->fps_p) do_fps (mi);
   glXSwapBuffers(display, window);
 }
 
 /* Standard reshape function */
-static void
-reshape(int width, int height)
+void
+reshape_screensaver(ModeInfo *mi, int width, int height)
 {
-  glViewport( 0, 0, global_width, global_height );
+  glViewport( 0, 0, MI_WIDTH(mi), MI_HEIGHT(mi) );
   resetProjection();
 }
 
@@ -819,7 +689,7 @@ init_screensaver(ModeInfo * mi)
 
   gp->window = MI_WINDOW(mi);
   if ((gp->glx_context = init_GL(mi)) != NULL) {
-	reshape(MI_WIDTH(mi), MI_HEIGHT(mi));
+	reshape_screensaver(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 	initializeGL(MI_WIDTH(mi), MI_HEIGHT(mi));
   } else {
 	MI_CLEARWINDOW(mi);
@@ -842,4 +712,3 @@ void release_screensaver(ModeInfo * mi)
   FreeAllGL(mi);
 }
 #endif
-

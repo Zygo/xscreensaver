@@ -57,11 +57,14 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
 # define PROGCLASS					"Sproingies"
 # define HACK_INIT					init_sproingies
 # define HACK_DRAW					draw_sproingies
+# define HACK_RESHAPE				reshape_sproingies
 # define sproingies_opts			xlockmore_opts
 # define DEFAULTS	"*delay:		20000   \n"			\
 					"*count:		5       \n"			\
 					"*cycles:		0       \n"			\
 					"*size:			0       \n"			\
+					"*showFPS:      False   \n"			\
+					"*fpsTop:       True    \n"			\
 					"*wireframe:	False	\n"
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -90,11 +93,7 @@ ModStruct   sproingies_description =
 void        NextSproingie(int screen);
 void        NextSproingieDisplay(int screen,int pause);
 void        DisplaySproingies(int screen,int pause);
-
-#if 0
 void        ReshapeSproingies(int w, int h);
-
-#endif
 void        CleanupSproingies(int screen);
 void        InitSproingies(int wfmode, int grnd, int mspr, int screen, int numscreens, int mono);
 
@@ -114,9 +113,13 @@ static sproingiesstruct *sproingies = NULL;
 static Display *swap_display;
 static Window swap_window;
 
+static ModeInfo *global_mi_kludge;
+
 void
 SproingieSwap(void)
 {
+    ModeInfo *mi = global_mi_kludge;
+    if (mi->fps_p) do_fps (mi);
 	glFinish();
 	glXSwapBuffers(swap_display, swap_window);
 }
@@ -135,6 +138,8 @@ init_sproingies(ModeInfo * mi)
 
 	sproingiesstruct *sp;
 	int         wfmode = 0, grnd, mspr, w, h;
+
+    global_mi_kludge = mi;
 
 	if (sproingies == NULL) {
 		if ((sproingies = (sproingiesstruct *) calloc(MI_NUM_SCREENS(mi),
@@ -216,6 +221,13 @@ refresh_sproingies(ModeInfo * mi)
 	 * with DisplaySproingies(...).
 	 */
 }
+
+void
+reshape_sproingies (ModeInfo *mi, int w, int h)
+{
+  ReshapeSproingies(w, h);
+}
+
 
 void
 release_sproingies(ModeInfo * mi)

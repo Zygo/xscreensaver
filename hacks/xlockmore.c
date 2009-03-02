@@ -1,5 +1,5 @@
 /* xlockmore.c --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997, 1998, 2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -63,7 +63,8 @@ pre_merge_options (void)
   /* Add extra args, if they're mentioned in the defaults... */
   {
     char *args[] = { "-count", "-cycles", "-delay", "-ncolors",
-		     "-size", "-wireframe", "-use3d", "-useSHM" };
+		     "-size", "-wireframe", "-use3d", "-useSHM",
+                     "-showFPS" };
     for (j = 0; j < countof(args); j++)
       if (strstr(app_defaults, args[j]+1))
 	{
@@ -99,6 +100,17 @@ pre_merge_options (void)
 	      new->value = "True";
 	      new = &options[i++];
 	      new->option = "-no-shm";
+	      new->specifier = options[i-2].specifier;
+	      new->argKind = XrmoptionNoArg;
+	      new->value = "False";
+	    }
+	  else if (!strcmp(new->option, "-showFPS"))
+	    {
+	      new->option = "-fps";
+	      new->argKind = XrmoptionNoArg;
+	      new->value = "True";
+	      new = &options[i++];
+	      new->option = "-no-fps";
 	      new->specifier = options[i-2].specifier;
 	      new->argKind = XrmoptionNoArg;
 	      new->value = "False";
@@ -197,6 +209,26 @@ xlockmore_read_resources (void)
 }
 
 
+static void
+xlockmore_handle_events (ModeInfo *mi, 
+                         void (*reshape) (ModeInfo *, int, int))
+{
+  while (XPending (mi->dpy))
+    {
+      XEvent event;
+      XNextEvent (mi->dpy, &event);
+      if (reshape && event.xany.type == ConfigureNotify)
+        {
+          XGetWindowAttributes (mi->dpy, mi->window, &mi->xgwa);
+          reshape (mi, mi->xgwa.width, mi->xgwa.height);
+        }
+      else
+        {
+          screenhack_handle_event (mi->dpy, &event);
+        }
+    }
+}
+
 
 void 
 xlockmore_screenhack (Display *dpy, Window window,
@@ -206,6 +238,7 @@ xlockmore_screenhack (Display *dpy, Window window,
 		      Bool want_bright_colors,
 		      void (*hack_init) (ModeInfo *),
 		      void (*hack_draw) (ModeInfo *),
+		      void (*hack_reshape) (ModeInfo *, int, int),
 		      void (*hack_free) (ModeInfo *))
 {
   ModeInfo mi;
@@ -309,6 +342,7 @@ xlockmore_screenhack (Display *dpy, Window window,
 
   mi.wireframe_p = get_boolean_resource ("wireframe", "Boolean");
   mi.root_p = (window == RootWindowOfScreen (mi.xgwa.screen));
+  mi.fps_p = get_boolean_resource ("showFPS", "Boolean");
 #ifdef HAVE_XSHM_EXTENSION
   mi.use_shm = get_boolean_resource ("useSHM", "Boolean");
 #endif /* !HAVE_XSHM_EXTENSION */
@@ -330,7 +364,7 @@ xlockmore_screenhack (Display *dpy, Window window,
   do {
     hack_draw (&mi);
     XSync(dpy, False);
-    screenhack_handle_events (dpy);
+    xlockmore_handle_events (&mi, hack_reshape);
     if (mi.pause)
       usleep(mi.pause);
     mi.pause = orig_pause;

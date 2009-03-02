@@ -104,8 +104,8 @@ struct passwd_dialog_data {
   Pixel background;
   Pixel passwd_foreground;
   Pixel passwd_background;
-  Pixel logo_foreground;
-  Pixel logo_background;
+  Pixel thermo_foreground;
+  Pixel thermo_background;
   Pixel shadow_top;
   Pixel shadow_bottom;
 
@@ -120,6 +120,10 @@ struct passwd_dialog_data {
 
   Dimension thermo_field_x, thermo_field_y;
   Dimension thermo_field_height;
+
+  Pixmap logo_pixmap;
+  int logo_npixels;
+  unsigned long *logo_pixels;
 
   Pixmap save_under;
 };
@@ -218,12 +222,12 @@ make_passwd_window (saver_info *si)
   pw->passwd_background = get_pixel_resource ("passwd.text.background",
 					      "Dialog.Text.Background",
 					      si->dpy, cmap);
-  pw->logo_foreground = get_pixel_resource ("passwd.logo.foreground",
-					    "Dialog.Logo.Foreground",
-					    si->dpy, cmap);
-  pw->logo_background = get_pixel_resource ("passwd.logo.background",
-					    "Dialog.Logo.Background",
-					    si->dpy, cmap);
+  pw->thermo_foreground = get_pixel_resource ("passwd.thermometer.foreground",
+					      "Dialog.Thermometer.Foreground",
+					      si->dpy, cmap);
+  pw->thermo_background = get_pixel_resource ("passwd.thermometer.background",
+					      "Dialog.Thermometer.Background",
+					      si->dpy, cmap);
   pw->shadow_top = get_pixel_resource ("passwd.topShadowColor",
 				       "Dialog.Foreground",
 				       si->dpy, cmap);
@@ -353,6 +357,10 @@ make_passwd_window (saver_info *si)
 		   attrmask, &attrs);
   XSetWindowBackground (si->dpy, si->passwd_dialog, pw->background);
 
+  pw->logo_pixmap = xscreensaver_logo (si->dpy, si->passwd_dialog, cmap,
+                                       pw->background, 
+                                       &pw->logo_pixels, &pw->logo_npixels,
+                                       True);
 
   /* Before mapping the window, save the bits that are underneath the
      rectangle the window will occlude.  When we lower the window, we
@@ -536,17 +544,39 @@ draw_passwd_window (saver_info *si)
   }
 
 
-  /* the logo
+  /* The logo
    */
   x1 = pw->shadow_width * 3;
   y1 = pw->shadow_width * 3;
   x2 = pw->logo_width - (pw->shadow_width * 6);
   y2 = pw->logo_height - (pw->shadow_width * 6);
 
-  draw_logo (si, si->passwd_dialog, x1, y1, x2, y2, True);
+  if (pw->logo_pixmap)
+    {
+      Window root;
+      int x, y;
+      unsigned int w, h, bw, d;
+      XGetGeometry (si->dpy, pw->logo_pixmap, &root, &x, &y, &w, &h, &bw, &d);
+      XSetForeground (si->dpy, gc1, pw->foreground);
+      XSetBackground (si->dpy, gc1, pw->background);
+      if (d == 1)
+        XCopyPlane (si->dpy, pw->logo_pixmap, si->passwd_dialog, gc1,
+                    0, 0, w, h,
+                    x1 + ((x2 - (int)w) / 2),
+                    y1 + ((y2 - (int)h) / 2),
+                    1);
+      else
+        XCopyArea (si->dpy, pw->logo_pixmap, si->passwd_dialog, gc1,
+                   0, 0, w, h,
+                   x1 + ((x2 - (int)w) / 2),
+                   y1 + ((y2 - (int)h) / 2));
+    }
 
   /* The thermometer
    */
+  XSetForeground (si->dpy, gc1, pw->thermo_foreground);
+  XSetForeground (si->dpy, gc2, pw->thermo_background);
+
   pw->thermo_field_x = pw->logo_width + pw->shadow_width;
   pw->thermo_field_y = pw->shadow_width * 3;
   pw->thermo_field_height = pw->height - (pw->shadow_width * 6);
@@ -666,25 +696,13 @@ update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
 		      pw->thermo_field_y + 1,
 		      pw->thermo_width-2,
 		      y);
-      XSetForeground (si->dpy, gc1, pw->logo_foreground);
+      XSetForeground (si->dpy, gc1, pw->thermo_foreground);
       XFillRectangle (si->dpy, si->passwd_dialog, gc1,
 		      pw->thermo_field_x + 1,
 		      pw->thermo_field_y + 1 + y,
 		      pw->thermo_width-2,
 		      MAX (0, pw->thermo_field_height - y - 2));
     }
-
-  /* the logo
-   */
-  {
-    int x1, y1, x2, y2;
-    x1 = pw->shadow_width * 3;
-    y1 = pw->shadow_width * 3;
-    x2 = pw->logo_width - (pw->shadow_width * 6);
-    y2 = pw->logo_height - (pw->shadow_width * 6);
-
-    draw_logo (si, si->passwd_dialog, x1, y1, x2, y2, False);
-  }
 
   XFreeGC (si->dpy, gc1);
   XFreeGC (si->dpy, gc2);
@@ -749,14 +767,21 @@ destroy_passwd_window (saver_info *si)
     XFreeColors (si->dpy, cmap, &pw->passwd_foreground, 1, 0L);
   if (pw->passwd_background != black && pw->passwd_background != white)
     XFreeColors (si->dpy, cmap, &pw->passwd_background, 1, 0L);
-  if (pw->logo_foreground != black && pw->logo_foreground != white)
-    XFreeColors (si->dpy, cmap, &pw->logo_foreground, 1, 0L);
-  if (pw->logo_background != black && pw->logo_background != white)
-    XFreeColors (si->dpy, cmap, &pw->logo_background, 1, 0L);
+  if (pw->thermo_foreground != black && pw->thermo_foreground != white)
+    XFreeColors (si->dpy, cmap, &pw->thermo_foreground, 1, 0L);
+  if (pw->thermo_background != black && pw->thermo_background != white)
+    XFreeColors (si->dpy, cmap, &pw->thermo_background, 1, 0L);
   if (pw->shadow_top != black && pw->shadow_top != white)
     XFreeColors (si->dpy, cmap, &pw->shadow_top, 1, 0L);
   if (pw->shadow_bottom != black && pw->shadow_bottom != white)
     XFreeColors (si->dpy, cmap, &pw->shadow_bottom, 1, 0L);
+
+  if (pw->logo_pixmap)
+    XFreePixmap (si->dpy, pw->logo_pixmap);
+  if (pw->logo_npixels && pw->logo_pixels)
+    XFreeColors (si->dpy, cmap, pw->logo_pixels, pw->logo_npixels, 0L);
+  if (pw->logo_pixels)
+    free (pw->logo_pixels);
 
   memset (pw, 0, sizeof(*pw));
   free (pw);

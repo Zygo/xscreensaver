@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1997 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992, 1997, 2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -21,5 +21,10 @@ extern unsigned int get_minutes_resource (char*,char*);
 extern unsigned int get_seconds_resource (char*,char*);
 extern int parse_time (const char *string, Bool seconds_default_p,
                        Bool silent_p);
+extern Pixmap
+xscreensaver_logo (Display *dpy, Window window, Colormap cmap,
+                   unsigned long background_color,
+                   unsigned long **pixels_ret, int *npixels_ret,
+                   Bool big_p);
 
 #endif /* __XSCREENSAVER_RESOURCES_H__ */
