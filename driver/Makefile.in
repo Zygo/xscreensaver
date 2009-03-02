@@ -35,6 +35,7 @@ SHELL		= /bin/sh
 INSTALL		= @INSTALL@
 SUID_FLAGS      = -o root -m 4755
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SCRIPT  = @INSTALL_PROGRAM@
 INSTALL_SETUID  = @INSTALL_SETUID@
 INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_DIRS	= @INSTALL_DIRS@
@@ -323,23 +324,55 @@ install-pam:
 	fi
 
 install-gnome: screensaver-properties.desktop
-	@if [ "$(GNOME_DATADIR)" != "" ]; then				     \
-          echo $(INSTALL_DATA) $(srcdir)/screensaver-properties.desktop      \
-                          $(GNOME_CCDIR)/screensaver-properties.desktop    ; \
-               $(INSTALL_DATA) $(srcdir)/screensaver-properties.desktop      \
-                          $(GNOME_CCDIR)/screensaver-properties.desktop    ; \
-          echo $(INSTALL_DATA) $(srcdir)/screensaver-properties.desktop      \
-                       $(GNOME_PANELDIR)/screensaver-properties.desktop    ; \
-               $(INSTALL_DATA) $(srcdir)/screensaver-properties.desktop      \
-                       $(GNOME_PANELDIR)/screensaver-properties.desktop    ; \
-	fi
+	@lost1=""							     ;\
+         lost2=""                                                            ;\
+         if [ "$(install_prefix)$(GNOME_DATADIR)" != "" ]; then               \
+           echo    $(INSTALL_DATA) $(srcdir)/screensaver-properties.desktop   \
+             $(install_prefix)$(GNOME_CCDIR)/screensaver-properties.desktop  ;\
+           if      $(INSTALL_DATA) $(srcdir)/screensaver-properties.desktop   \
+             $(install_prefix)$(GNOME_CCDIR)/screensaver-properties.desktop  ;\
+             then true                                                       ;\
+           else                                                               \
+             lost1="$(install_prefix)$(GNOME_CCDIR)"                         ;\
+           fi                                                                ;\
+           echo $(INSTALL_DATA) $(srcdir)/screensaver-properties.desktop      \
+                        $(GNOME_PANELDIR)/screensaver-properties.desktop     ;\
+           if   $(INSTALL_DATA) $(srcdir)/screensaver-properties.desktop      \
+       $(install_prefix)$(GNOME_PANELDIR)/screensaver-properties.desktop     ;\
+             then true                                                       ;\
+           else                                                               \
+             lost2="$(install_prefix)$(GNOME_PANELDIR)"                      ;\
+           fi                                                                ;\
+           if [ "$$lost1" != "" -o "$$lost2" != "" ]; then                    \
+             e=echo ;                                                         \
+ $$e ""                                                                      ;\
+ $$e "  ####################################################################";\
+ $$e "  Warning: unable to install screensaver-properties.desktop into"      ;\
+                 plurality="this file"                                       ;\
+          if [ "$$lost1" != "" -a "$$lost2" != "" ]; then                     \
+ $$e "           $$lost1/ or into"                                           ;\
+ $$e "           $$lost2/."                                                  ;\
+                 plurality="these files"                                     ;\
+          elif [ "$$lost1" != "" ]; then                                      \
+ $$e "           $$lost1/."                                                  ;\
+          else                                                                \
+ $$e "           $$lost2/."                                                  ;\
+          fi                                                                 ;\
+ $$e "           Without $$plurality," 'the "Screen Saver" section of the'   ;\
+ $$e "           Gnome Control Center (gnomecc) will not work properly."     ;\
+ $$e "  ####################################################################";\
+ $$e ""                                                                      ;\
+             exit 1 ;                                                         \
+           fi                                                                ;\
+         fi
 
 uninstall-gnome:
-	@if [ "$(GNOME_DATADIR)" != "" ]; then				      \
-	  echo rm -f $(GNOME_CCDIR)/screensaver-properties.desktop          ; \
-	       rm -f $(GNOME_CCDIR)/screensaver-properties.desktop          ; \
-	  echo rm -f $(GNOME_PANELDIR)/screensaver-properties.desktop       ; \
-	       rm -f $(GNOME_PANELDIR)/screensaver-properties.desktop       ; \
+	@if [ "$(install_prefix)$(GNOME_DATADIR)" != "" ]; then		      \
+          f=screensaver-properties.desktop                                   ;\
+          echo rm -f $(install_prefix)$(GNOME_CCDIR)/$$f                     ;\
+               rm -f $(install_prefix)$(GNOME_CCDIR)/$$f                     ;\
+          echo rm -f $(install_prefix)$(GNOME_PANELDIR)/$$f                  ;\
+               rm -f $(install_prefix)$(GNOME_PANELDIR)/$$f                  ;\
         fi
 
 install-kde:
@@ -347,8 +380,8 @@ install-kde:
 	if [ "$$KDEDIR" != "" ]; then					      \
 	  dir="$(install_prefix)$$KDEDIR/bin" ;				      \
 	  dest="$$dir/xscreensaver.kss" ;				      \
-	  echo $(INSTALL_PROGRAM) $$src $$dest ;			      \
-	  if $(INSTALL_PROGRAM) $$src $$dest ; then			      \
+	  echo $(INSTALL_SCRIPT) $$src $$dest ;				      \
+	  if $(INSTALL_SCRIPT) $$src $$dest ; then			      \
 	    true ;							      \
 	  else								      \
 	    e=echo ;							      \
@@ -425,7 +458,7 @@ update_ad_version::
 	echo -n "Updating version number in $$S to $$V $$D... " ;	    \
 	T=/tmp/xs.$$$$ ;						    \
 	sed -e "s/\(.*version \)[0-9][0-9]*\.[0-9]*\(.*\)/\1$$V\2/"	    \
-	    -e "s/\([0-9][0-9]-[A-Z][a-z][a-z]-[0-9][0-9]\)/$$D/"	    \
+	    -e "s/\([0-9][0-9]-[A-Z][a-z][a-z]-[0-9][0-9][0-9]*\)/$$D/"	    \
 	  < $$S > $$T ;							    \
 	if cmp -s $$S $$T ; then					    \
 	  echo "unchanged." ;						    \

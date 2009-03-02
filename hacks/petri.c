@@ -1,4 +1,4 @@
-/* petri, simulate mold in a petri dish. v2.6
+/* petri, simulate mold in a petri dish. v2.7
  * by Dan Bornstein, danfuzz@milk.com
  * with help from Jamie Zawinski, jwz@jwz.org
  * Copyright (c) 1992-1999 Dan Bornstein.
@@ -603,33 +603,42 @@ static void update (void)
     
     for (a = head->next; a != tail; a = a->next) 
     {
-        static XPoint coords1[] = {{-1,  0}, { 1, 0}, {0, -1}, {0, 1}};
-        static XPoint coords2[] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1}};
+	static XPoint all_coords[] = {{-1, -1}, {-1, 1}, {1, -1}, {1, 1},
+				      {-1,  0}, { 1, 0}, {0, -1}, {0, 1},
+				      {99, 99}};
+
         XPoint *coords = 0;
-        int i;
 
         if (a->speed == 0) continue;
         a->growth += a->speed;
-        if (a->growth >= orthlim) 
-          coords = coords1;
 
 	if (a->growth >= diaglim) 
-          coords = coords2;
+	{
+	    coords = all_coords;
+	}
+        else if (a->growth >= orthlim)
+	{
+	    coords = &all_coords[4];
+	}
+	else
+	{
+	    continue;
+	}
 
-        if (coords)
-          for (i = 0; i < 4; i++)
-            {
-              int x = cell_x(a) + coords[i].x;
-              int y = cell_y(a) + coords[i].y;
-
-              if (x < 0) x = arr_width - 1;
-              else if (x >= arr_width) x = 0;
-
-              if (y < 0) y = arr_height - 1;
-              else if (y >= arr_height) y = 0;
-
-              newcell (&arr[y * arr_width + x], a->col, a->speed);
-            }
+	while (coords->x != 99)
+	{
+	    int x = cell_x(a) + coords->x;
+	    int y = cell_y(a) + coords->y;
+	    coords++;
+	    
+	    if (x < 0) x = arr_width - 1;
+	    else if (x >= arr_width) x = 0;
+	    
+	    if (y < 0) y = arr_height - 1;
+	    else if (y >= arr_height) y = 0;
+	    
+	    newcell (&arr[y * arr_width + x], a->col, a->speed);
+	}
 
 	if (a->growth >= diaglim) 
 	    killcell (a);

@@ -104,9 +104,10 @@ while [ -n "$1" ]; do
 done
 
 if [ -n "$Install" ] ; then
-  rm $HOME/.kss-preview*                                # Remove old preview files
   PID_FILE=$HOME/.kss-install.pid.`hostname`
-  kill `cat $PID_FILE`                                  # Kill old screensaver 
+  if [ -r "$PID_FILE" ] ; then
+    kill `cat $PID_FILE`                                # Kill old screensaver 
+  fi
   echo "$$" > $PID_FILE                                 # Write PID of this script
   /usr/X11R6/bin/xscreensaver -no-splash $timeout $lockmode $Nice &    # Start XScreenSaver daemon
   trap "kill $!" SIGTERM                                # Set these to kill the daemon

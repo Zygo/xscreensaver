@@ -57,6 +57,7 @@ $ moire		:== $'mydir'moire
 $ moire2	:== $'mydir'moire2
 $ mountain	:== $'mydir'mountain
 $ munch		:== $'mydir'munch
+$ nerverot	:== $'mydir'nerverot
 $ noseguy	:== $'mydir'noseguy
 $ pedal		:== $'mydir'pedal
 $ penetrate	:== $'mydir'penetrate

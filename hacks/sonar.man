@@ -16,6 +16,7 @@
 sonar - display a sonar scope
 .SH SYNOPSIS
 .B sonar
+[\-ping \fIhosts-or-subnets\fP]
 [\-background \fIcolor\fP]
 [\-sweep\-color \fIcolor\fP]
 [\-low\-color \fIcolor\fP] 
@@ -23,16 +24,13 @@ sonar - display a sonar scope
 [\-grid\-color \fIcolor\fP]
 [\-text\-color \fIcolor\fP]
 [\-ttl \fIinteger\fP]
-[\-mode ping]
 [\-font \fIfont\fP]
 [\-ping\-timeout \fIint\fP]
-[\-ping\-source list | file | subnet ] 
-[\-ping\-file \fIhosts-file\fP]
-[\-ping\-list \fIhost-name-list\fP]
 [\-team-a-name \fIstring\fP] 
 [\-team-b-name \fIstring\fP]
 [\-team-a-count \fIint\fP]
 [\-team-b-count \fIint\fP]
+[\-debug] 
 .SH DESCRIPTION
 The \fIsonar\fP program displays a sonar scope on the computer's screen.
 This scope polls a sensor as the sweep goes around the scope and displays
@@ -63,10 +61,6 @@ The color of the text identifying bogies on the scope.
 "Time to live": visible time of a Bogie. Try values between 10 (very short)
 and 100. 
 .TP 8
-.B \-mode \fIsimulation | ping\fP
-The sensor mode to use, the currently supported modes \fIsimulate\fP (the
-default) and \fIping\fP.
-.TP 8
 .B \-font \fIfont\fP
 The font used to display text on the scope.  Default "fixed".
 .TP 8
@@ -74,37 +68,52 @@ The font used to display text on the scope.  Default "fixed".
 The amount of time in milliseconds the program will wait for an answer
 to a ping.
 .TP 8
-.B \-ping\-source list | file | subnet
-Th source of the list of hosts to ping. Valid values are: \fIlist\fP,
-\fIfile\fP, \fIsubnet\fP.  The first two values are described below;
-and \fIsubnet\fP indicates that the sonar should ping all hosts in the
-same subnet as the current machine.  (All addresses are treated
-as class C nets, therefore this will at most ping 254 hosts.)
-.TP 8
-.B \-ping\-file \fIfilename\fP
-The path to a file listing the hosts to ping.  This file can be in the
+.B \-ping \fIhosts-or-subnets\fP
+The list of things to ping, separated by commas or spaces. 
+Elements of this list may be:
+.RS 8
+.TP 12
+.B simulation
+to run in simulation mode, instead of pinging real hosts (this is the default
+if the program is not installed setuid);
+.TP 12
+.I hostname
+to ping the given host;
+.TP 12
+.I A.B.C.D
+to ping the given IP address;
+.TP 12
+.B subnet
+to ping the local class C subnet (the nearest 255 addresses);
+.TP 12
+.B subnet/\fINN\fP
+to ping a different-sized local subnet: e.g., \fBsubnet/28\fP would ping
+a 4-bit subnet (the nearest 15 addresses);
+.TP 12
+.I A.B.C.D/NN
+to ping an arbitrary other subnet: the IP address specifies the base address,
+and the part after the slash is how wide the subnet is.  Typical values
+are /24 (for 255 addresses) and /28 (for 15 addresses.)
+.TP 12
+.I filename
+to ping the hosts listed in the given file.  This file can be in the
 format used by \fI/etc/hosts\fP, or it can be any file that has host
 names as the first element on each line.  If you use ssh, try this:
-.EX
-sonar -mode ping -ping-file $HOME/.ssh/known_hosts
-.EE
-This is used only used when \fIpingSource\fP is set to \fBfile\fP.
-.TP 8
-.B \-ping\-list \fIlist\fP
-A comma separated list of hostnames, eg \fI"pinky,brain,dot"\fP.
-Only used when \fIpingSource\fP is set to \fBlist\fP.
+
+  sonar -ping $HOME/.ssh/known_hosts
+.RE
 .TP 8
 .B \-team-a-name \fIstring\fP
-The name of team A, in simulation-mode.
+In simulation mode, the name of team A.
 .TP 8
 .B \-team-b-name \fIstring\fP
-The name of team B, in simulation-mode.
+In simulation mode, the name of team B.
 .TP 8
 .B \-team-a-count \fIint\fP
-The number of bogies on team A, in simulation-mode.
+In simulation mode, the number of bogies on team A.
 .TP 8
 .B \-team-b-count \fIint\fP
-The number of bogies on team B, in simulation-mode.
+In simulation mode, the number of bogies on team B.
 .SH RESOURCES
 Configuration of the targets to ping is best done by setting X Resources.
 .PP
@@ -127,24 +136,16 @@ See option \-text\-color, above; default value is \fI#ffff00\fP.
 .B ttl \fI(integer)\fP
 See option \-ttl, above; default value is \fI90\fP or one sweep.
 .TP 8
-.B mode \fI(ping)\fP
-See option \-mode, above.  If set to \fBdefault\fP, it will ping hosts if
-possible, otherwise, will run in simulation-mode.
+.B ping \fI(string)\fP
+See option \-ping, above.  If set to \fBdefault\fP, it will ping
+the contents of /etc/hosts if possible, otherwise, will run in
+simulation-mode.
 .TP 8
 .B font \fI(font)\fP
 See option \-font, above; default value is \fIfixed\fP.
 .TP 8
 .B pingTimeout \fI(Integer)\fP
 See option \-pingtimeout, above; default value is 3000.
-.TP 8
-.B pingSource \fIlist | file | subnet\fP
-See option \-ping\-source, above.  Default value is \fIfile\fP.
-.TP 8
-.B pingFile \fIpathname\fP
-See option \-ping\-file, above.  Default value is \fI/etc/hosts\fP.
-.TP 8
-.B pingList \fIhost,host,host...\fP
-See option \-ping\-list, above; default value is \fBlocalhost\fP.
 .TP 8
 .B teamAName \fIstring\fP
 See option \-team\-a\-name, above.  Default value is \fBF18\fP.
@@ -183,3 +184,4 @@ amoung other things.
 
 Thomas Bahls <thommy@cs.tu-berlin.de> hacked the "ttl" option, 12-jul-98.
 
+Better subnet support and command-line processing by Jamie Zawinski, 17-Jul-00.

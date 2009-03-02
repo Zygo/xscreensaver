@@ -1,6 +1,6 @@
 /* bubbles.h - definitions for bubbles screensaver */
 
-/* $Id: bubbles.h,v 1.2 1997/05/19 03:26:05 jwz Exp $ */
+/* $Id: bubbles.h,v 1.3 2000/07/19 06:38:42 jwz Exp $ */
 
 #ifndef _BUBBLES_H_
 #define _BUBBLES_H_
@@ -129,6 +129,9 @@
 /* Size increments for read_line() buffers */
 #define READ_LINE_BUF_SIZE 24
 
+/* Maximum amount to drop a bubble */
+#define MAX_DROPPAGE 20
+
 /****************************************************************************
  *                        End of options                                    *
  ****************************************************************************/
@@ -188,6 +191,7 @@ typedef struct bub Bubble;
 struct bub_step {
   int radius;
   long area;
+  int droppage;
   Pixmap ball, shape_mask;
   GC draw_gc, erase_gc;
   XpmAttributes xpmattrs;

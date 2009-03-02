@@ -29,7 +29,9 @@
 
 #include <X11/Intrinsic.h>
 
-
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
 
 #ifdef STANDALONE
 # define PROGCLASS						"Screensaver"
@@ -72,7 +74,11 @@
 #include <malloc.h>
 #include <GL/gl.h>
 #include <GL/glu.h>
+#ifdef HAVE_GLE3
+#include <GL/gle.h>
+#else
 #include <GL/tube.h>
+#endif
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))

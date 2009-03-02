@@ -554,8 +554,8 @@ pulsar.o: $(UTILS_SRC)/colors.h
 pulsar.o: $(UTILS_SRC)/grabscreen.h
 pulsar.o: $(UTILS_SRC)/visual.h
 pulsar.o: $(UTILS_SRC)/xshm.h
-extrusion.o: $(HACK_SRC)/xlockmore.h
 extrusion.o: ../../config.h
+extrusion.o: $(HACK_SRC)/xlockmore.h
 extrusion.o: $(HACK_SRC)/xlockmoreI.h
 extrusion.o: $(HACK_SRC)/screenhack.h
 extrusion.o: $(UTILS_SRC)/yarandom.h
@@ -566,6 +566,13 @@ extrusion.o: $(UTILS_SRC)/colors.h
 extrusion.o: $(UTILS_SRC)/grabscreen.h
 extrusion.o: $(UTILS_SRC)/visual.h
 extrusion.o: $(UTILS_SRC)/xshm.h
+extrusion-helix2.o: ../../config.h
+extrusion-helix3.o: ../../config.h
+extrusion-helix4.o: ../../config.h
+extrusion-joinoffset.o: ../../config.h
+extrusion-screw.o: ../../config.h
+extrusion-taper.o: ../../config.h
+extrusion-twistoid.o: ../../config.h
 sierpinski3d.o: $(HACK_SRC)/xlockmore.h
 sierpinski3d.o: ../../config.h
 sierpinski3d.o: $(HACK_SRC)/xlockmoreI.h

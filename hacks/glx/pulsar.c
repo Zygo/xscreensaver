@@ -735,7 +735,7 @@ void drawQuads(void) {
     }
 }
 
-GLvoid drawScene(GLvoid) 
+GLvoid drawScene(void) 
 {
 
   checkError(__LINE__, __FILE__);

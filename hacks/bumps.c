@@ -27,12 +27,12 @@
 #include "bumps.h"
 
 
-void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iWinWidth, uint16_ nColorCount )
+void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iDiameter, uint16_ nColorCount )
 {
 	double nDelta;
 	int16_ iHeight, iWidth;
 	
-	pSpotLight->nDiameter = iWinWidth / 3;
+	pSpotLight->nDiameter = iDiameter;
 #ifdef VERBOSE
 	printf( "%s: Light Diameter: %d\n", progclass, pSpotLight->nDiameter );
 #endif
@@ -126,7 +126,8 @@ void CreateBumps( SBumps *pBumps, Display *pNewDisplay, Window NewWin )
 	XGCValues GCValues;
 	int32_ nGCFlags;
 	uint16_ iWidth, iHeight;
-
+	uint16_ iDiameter;
+	
 	XGetWindowAttributes( pNewDisplay, NewWin, &XWinAttribs );
 	pBumps->iWinWidth = XWinAttribs.width;
 	pBumps->iWinHeight = XWinAttribs.height;
@@ -147,7 +148,8 @@ void CreateBumps( SBumps *pBumps, Display *pNewDisplay, Window NewWin )
 	pBumps->GraphicsContext = XCreateGC( pBumps->pDisplay, pBumps->Win, nGCFlags, &GCValues );
 	
 	SetPalette( pBumps, &XWinAttribs );
-	CreateSpotLight( &pBumps->SpotLight, pBumps->iWinWidth, pBumps->nColorCount );
+	iDiameter = ( ( pBumps->iWinWidth < pBumps->iWinHeight ) ? pBumps->iWinWidth : pBumps->iWinHeight ) / 3;
+	CreateSpotLight( &pBumps->SpotLight, iDiameter, pBumps->nColorCount );
 	InitBumpMap( pBumps, &XWinAttribs );
 
 	/* Clear the image. */

@@ -222,7 +222,7 @@ screenhack (Display *dpy, Window window)
 	      while (typo[i] && typo[i][0] != c)
 		i++;
 	      if (typo[i])
-		c = typo[i][0xFF & (random() % strlen(typo[i]+1))];
+                c = typo[i][0xFF & ((random() % strlen(typo[i]+1)) + 1)];
 	    }
 
 	  /* caps typo */

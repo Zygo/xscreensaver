@@ -1,6 +1,6 @@
 /* bubbles.c - frying pan / soft drink in a glass simulation */
 
-/*$Id: bubbles.c,v 1.16 1998/11/19 07:25:01 jwz Exp $*/
+/*$Id: bubbles.c,v 1.17 2000/07/19 06:38:42 jwz Exp $*/
 
 /*
  *  Copyright (C) 1995-1996 James Macnicol
@@ -36,7 +36,7 @@
  * and things are _much_ nicer.)
  *
  * Author:           James Macnicol 
- * Internet E-mail : J.Macnicol@student.anu.edu.au
+ * Internet E-mail : j-macnicol@adfa.edu.au
  */
 
 #include <math.h>
@@ -72,6 +72,7 @@
 extern void init_default_bubbles(void);
 extern int num_default_bubbles;
 extern char **default_bubbles[];
+static int drop_bubble( Bubble *bb );
 
 char *progclass = "Bubbles";
 
@@ -83,6 +84,8 @@ char *defaults [] = {
   "*delay:		800",
   "*quiet:		false", 
   "*nodelay:		false",
+  "*drop:		false",
+  "*trails:		false",
   "*3D:			false",
   0
 };
@@ -96,6 +99,9 @@ XrmOptionDescRec options [] = {
   { "-nodelay",         ".nodelay",     XrmoptionNoArg, "true" },
   { "-3D",          ".3D",      XrmoptionNoArg, "true" },
   { "-delay",           ".delay",       XrmoptionSepArg, 0 },
+  { "-drop",            ".drop",        XrmoptionNoArg, "true" },
+  { "-rise",            ".rise",        XrmoptionNoArg, "true" },
+  { "-trails",          ".trails",      XrmoptionNoArg, "true" },
   { 0, 0, 0, 0 }
 };
 
@@ -128,6 +134,7 @@ static Visual *defvisual;
 static int bubble_min_radius;
 static int bubble_max_radius;
 static long *bubble_areas;
+static int *bubble_droppages;
 static GC draw_gc, erase_gc;
 
 #ifdef HAVE_XPM
@@ -144,6 +151,9 @@ static Bool simple = True;
 static Bool broken = False;
 static Bool quiet = False;
 static Bool threed = False;
+static Bool drop = False;
+static Bool trails = False;
+static int drop_dir;
 static int delay;
 
 /* 
@@ -747,24 +757,36 @@ bubble_eat(Bubble *diner, Bubble *food)
   diner->area += food->area;
   delete_bubble_in_mesh(food, DELETE_BUBBLE);
 
-  if ((simple) && (diner->area > bubble_areas[bubble_max_radius])) {
-    delete_bubble_in_mesh(diner, DELETE_BUBBLE);
-    return 0;
-  }
+  if (drop) {
+	if ((simple) && (diner->area > bubble_areas[bubble_max_radius])) {
+	  diner->area = bubble_areas[bubble_max_radius];
+	}
 #ifdef HAVE_XPM
-  if ((! simple) && (diner->area > 
-		     step_pixmaps[num_bubble_pixmaps]->area)) {
-    delete_bubble_in_mesh(diner, DELETE_BUBBLE);
-    return 0;
-  }
+	if ((! simple) && (diner->area > step_pixmaps[num_bubble_pixmaps]->area)) {
+	  diner->area = step_pixmaps[num_bubble_pixmaps]->area;
+	}
 #endif /* HAVE_XPM */
+  }
+  else {
+	if ((simple) && (diner->area > bubble_areas[bubble_max_radius])) {
+	  delete_bubble_in_mesh(diner, DELETE_BUBBLE);
+	  return 0;
+	}
+#ifdef HAVE_XPM
+	if ((! simple) && (diner->area > 
+					   step_pixmaps[num_bubble_pixmaps]->area)) {
+	  delete_bubble_in_mesh(diner, DELETE_BUBBLE);
+	  return 0;
+	}
+#endif /* HAVE_XPM */
+  }
 
   if (simple) {
     if (diner->area > bubble_areas[diner->radius + 1]) {
       /* Move the bubble to a new radius */
       i = diner->radius;
-      while (diner->area > bubble_areas[i+1])
-	++i;
+      while ((i < bubble_max_radius - 1) && (diner->area > bubble_areas[i+1]))
+		++i;
       diner->radius = i;
     }
     show_bubble(diner);
@@ -772,8 +794,8 @@ bubble_eat(Bubble *diner, Bubble *food)
   } else {
     if (diner->area > step_pixmaps[diner->step+1]->area) {
       i = diner->step;
-      while (diner->area > step_pixmaps[i+1]->area)
-	++i;
+      while ((i < num_bubble_pixmaps - 1) && (diner->area > step_pixmaps[i+1]->area))
+		++i;
       diner->step = i;
       diner->radius = step_pixmaps[diner->step]->radius;
     }
@@ -883,32 +905,132 @@ insert_new_bubble(Bubble *tmp)
   
   nextbub = tmp;
   touch = get_closest_bubble(nextbub);
-  while (! null_bubble(touch)) {
-    switch (merge_bubbles(nextbub, touch)) {
-    case 2:
-      /* touch ate nextbub and survived */
-      nextbub = touch;
-      break;
-    case 1:
-      /* nextbub ate touch and survived */
-      break;
-    case 0:
-      /* somebody ate someone else but they exploded */
-      nextbub = (Bubble *)NULL;
-      break;
-    default:
-      /* something went wrong */
-      fprintf(stderr, "Error occurred in insert_new_bubble()\n");
-      exit(1);
-    }
-    /* Check to see if there are any other bubbles still in the area
-       and if we need to do this all over again for them. */
-    if (! null_bubble(nextbub))
-      touch = get_closest_bubble(nextbub);
-    else
-      touch = (Bubble *)NULL;
+  if (null_bubble(touch))
+	return;
+
+  while (1) {
+
+	/* Merge all touching bubbles */
+	while (! null_bubble(touch)) {
+	  switch (merge_bubbles(nextbub, touch)) {
+	  case 2:
+		/* touch ate nextbub and survived */
+		nextbub = touch;
+		break;
+	  case 1:
+		/* nextbub ate touch and survived */
+		break;
+	  case 0:
+		/* somebody ate someone else but they exploded */
+		nextbub = (Bubble *)NULL;
+		break;
+	  default:
+		/* something went wrong */
+		fprintf(stderr, "Error occurred in insert_new_bubble()\n");
+		exit(1);
+	  }
+	
+	  /* Check to see if any bubble survived. */
+	  if (null_bubble(nextbub))
+		break;
+
+	  /* Check to see if there are any other bubbles still in the area
+		 and if we need to do this all over again for them. */
+	  touch = get_closest_bubble(nextbub);
+	}
+	
+	if (null_bubble(nextbub))
+	  break;
+
+	/* Shift bubble down.  Break if we run off the screen. */
+	if (drop) {
+	  if (drop_bubble( nextbub ) == -1)
+		break;
+	}
+
+	/* Check to see if there are any other bubbles still in the area
+	   and if we need to do this all over again for them. */
+	touch = get_closest_bubble(nextbub);
+	if (null_bubble(touch)) {
+	  /* We also continue every so often if we're dropping and the bubble is at max size */
+	  if (drop) {
+		if (simple) {
+		  if ((nextbub->area >= bubble_areas[bubble_max_radius - 1]) && (random() % 2 == 0))
+			continue;
+		}
+#ifdef HAVE_XPM
+		else {
+		  if ((nextbub->step >= num_bubble_pixmaps - 1) && (random() % 2 == 0))
+			continue;
+		}
+#endif /* HAVE_XPM */
+      }
+	  break;
+	}
+
   }
 }
+
+
+static void
+leave_trail( Bubble *bb ) 
+{
+  Bubble *tmp;
+
+  tmp = new_bubble();
+  tmp->x = bb->x;
+  tmp->y = bb->y - ((bb->radius + 10) * drop_dir);
+  tmp->cell_index = pixel_to_mesh(tmp->x, tmp->y);
+  add_to_mesh(tmp);
+  insert_new_bubble(tmp);
+  show_bubble( tmp );	
+}
+
+
+static int
+drop_bubble( Bubble *bb )
+{
+  int newmi;
+
+  hide_bubble( bb );
+
+  if (simple)
+	(bb->y) += (bubble_droppages[bb->radius] * drop_dir);
+#ifdef HAVE_XPM
+  else
+	(bb->y) += (step_pixmaps[bb->step]->droppage * drop_dir);
+#endif /* HAVE_XPM */
+  if ((bb->y < 0) || (bb->y > screen_height)) {
+	delete_bubble_in_mesh( bb, DELETE_BUBBLE );
+	return -1;
+  }
+
+  show_bubble( bb );
+
+  /* Now adjust locations and cells if need be */
+  newmi = pixel_to_mesh(bb->x, bb->y);
+  if (newmi != bb->cell_index) {
+    delete_bubble_in_mesh(bb, KEEP_BUBBLE);
+    bb->cell_index = newmi;
+    add_to_mesh(bb);
+  }
+
+  if (trails) {
+	if (simple) {
+	  if ((bb->area >= bubble_areas[bubble_max_radius - 1]) && (random() % 2 == 0)) 
+		leave_trail( bb );
+	}
+#ifdef HAVE_XPM
+	else { 
+	  if ((bb->step >= num_bubble_pixmaps - 1) && (random() % 2 == 0))
+		leave_trail( bb );
+	}
+#endif /* HAVE_XPM */
+  }
+
+  return 0;
+}
+
 
 #ifdef DEBUG
 static int
@@ -1042,6 +1164,10 @@ make_pixmap_array(Bubble_Step *list)
     prevrad = step_pixmaps[ind]->radius;
   }
 #endif /* DEBUG */
+
+  /* Now populate the droppage values */
+  for (ind = 0; ind < num_bubble_pixmaps; ind++)
+	  step_pixmaps[ind]->droppage = MAX_DROPPAGE * ind / num_bubble_pixmaps;
 }
 
 static void
@@ -1165,7 +1291,7 @@ static void
 get_resources(Display *dpy, Window window)
 /* Get the appropriate X resources and warn about any inconsistencies. */
 {
-  Bool nodelay;
+  Bool nodelay, rise;
   XWindowAttributes xgwa;
   Colormap cmap;
   XGetWindowAttributes (dpy, window, &xgwa);
@@ -1187,6 +1313,17 @@ get_resources(Display *dpy, Window window)
     delay = 0;
   if (delay < 0)
     delay = 0;
+
+  drop = get_boolean_resource("drop", "Boolean");
+  rise = get_boolean_resource("rise", "Boolean");
+  trails = get_boolean_resource("trails", "Boolean");
+  if (drop && rise) {
+	fprintf( stderr, "Sorry, bubbles can't both drop and rise\n" );
+	exit(1);
+  }
+  drop_dir = (drop ? 1 : -1);
+  if (drop || rise)
+	drop = 1;
 
   default_fg_pixel = get_pixel_resource ("foreground", "Foreground", dpy,
 					 cmap);
@@ -1254,6 +1391,13 @@ init_bubbles (Display *dpy, Window window)
       bubble_areas[i] = 0;
     for (i = bubble_min_radius; i <= (bubble_max_radius+1); i++)
       bubble_areas[i] = calc_bubble_area(i);
+
+	/* Now populate the droppage values */
+    bubble_droppages = (int *)xmalloc((bubble_max_radius + 2) * sizeof(int));
+    for (i = 0; i < bubble_min_radius; i++)
+      bubble_droppages[i] = 0;
+    for (i = bubble_min_radius; i <= (bubble_max_radius+1); i++)
+      bubble_droppages[i] = MAX_DROPPAGE * (i - bubble_min_radius) / (bubble_max_radius - bubble_min_radius);
 
     mesh_length = (2 * bubble_max_radius) + 3;
   } else {

@@ -37,7 +37,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.14 $
+ * $Revision: 1.16 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -86,6 +86,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <sys/stat.h>
 
 #include "screenhack.h"
 #include "colors.h"
@@ -149,6 +150,7 @@ static u_short checksum(u_short *, int);
 #endif
 static long delta(struct timeval *, struct timeval *);
 
+
 /* Data Structures */
 
 /*
@@ -195,7 +197,12 @@ typedef struct {
     int sweepnum;               /* The current id of the sweep */
     int delay;			/* how long between each frame of the anim */
 
+    int TTL;			/* The number of ticks that bogies are visible
+                                   on the screen before they fade away. */
 } sonar_info;
+
+static Bool debug_p = False;
+
 
 /* 
  * Variables to support the differnt Sonar modes.
@@ -283,16 +290,15 @@ char *defaults [] = {
     "*textSteps:       80",	/* npixels */
     "*sweepSegments:   80",	/* npixels */
 
-#ifdef HAVE_PING
     "*pingTimeout:     3000",
-    "*pingSource:      file",
-    "*pingFile:        /etc/hosts",
-    "*pingList:        localhost",
-#endif /* HAVE_PING */
+
     "*teamAName:       F18",
     "*teamBName:       MIG",
     "*teamACount:      4",
     "*teamBCount:      4",
+
+    "*ping:	       default",
+    ".debug:	       false",
     0
 };
 
@@ -305,27 +311,19 @@ XrmOptionDescRec options [] = {
     {"-grid-color",   ".gridColor",    XrmoptionSepArg, 0 },
     {"-text-color",   ".textColor",    XrmoptionSepArg, 0 },
     {"-ttl",          ".ttl",          XrmoptionSepArg, 0 },
-    {"-mode",         ".mode",         XrmoptionSepArg, 0 },
     {"-font",         ".font",         XrmoptionSepArg, 0 },
 #ifdef HAVE_PING
     {"-ping-timeout", ".pingTimeout",  XrmoptionSepArg, 0 },
-    {"-ping-source",  ".pingSource",   XrmoptionSepArg, 0 },
-    {"-ping-file",    ".pingFile",     XrmoptionSepArg, 0 },
-    {"-ping-list",    ".pingList",     XrmoptionSepArg, 0 },
 #endif /* HAVE_PING */
     {"-team-a-name",   ".teamAName",   XrmoptionSepArg, 0 },
     {"-team-b-name",   ".teamBName",   XrmoptionSepArg, 0 },
     {"-team-a-count",  ".teamACount",  XrmoptionSepArg, 0 },
     {"-team-b-count",  ".teamBCount",  XrmoptionSepArg, 0 },
+
+    {"-ping",          ".ping",        XrmoptionSepArg, 0 },
+    {"-debug",         ".debug",       XrmoptionNoArg, "True" },
     { 0, 0, 0, 0 }
 };
-
-/*
- * The number of ticks that bogies are visable on the screen before they
- * fade away.
- */
-
-static int TTL;
 
 /*
  * Create a new Bogie and set some initial values.
@@ -369,6 +367,7 @@ newBogie(char *name, int distance, int tick, int ttl)
  * Args:
  *    b - The bogie to free.
  */
+
 
 static void
 freeBogie(Bogie *b) 
@@ -434,6 +433,8 @@ static int
 lookupHost(ping_target *target) 
 {
 
+  struct hostent *hent;
+
     /* Local Variables */
 
     struct sockaddr_in *iaddr;
@@ -443,19 +444,29 @@ lookupHost(ping_target *target)
 
     iaddr = (struct sockaddr_in *) &(target->address);
     iaddr->sin_family = AF_INET;
-    if ((iaddr->sin_addr.s_addr = inet_addr(target->name)) == -1) {
-
-	/* Conversion of IP address failed, try to look the host up by name */
-
-	struct hostent *hent = gethostbyname(target->name);
-	if (hent == NULL) {
-	    fprintf(stderr, "%s: could not resolve host %s\n",
-                    progname, target->name);
-	    return 0;
-	}
-	memcpy(&iaddr->sin_addr, hent->h_addr_list[0],
-	       sizeof(iaddr->sin_addr));
+    if ((iaddr->sin_addr.s_addr = inet_addr(target->name)) >= 0) {
+      char ip[4];
+      ip[3] = iaddr->sin_addr.s_addr >> 24 & 255;
+      ip[2] = iaddr->sin_addr.s_addr >> 16 & 255;
+      ip[1] = iaddr->sin_addr.s_addr >>  8 & 255;
+      ip[0] = iaddr->sin_addr.s_addr       & 255;
+      hent = gethostbyaddr (ip, 4, AF_INET);
+      if (hent && hent->h_name && *hent->h_name) {
+        target->name = strdup (hent->h_name);
+        return 1;
+      }
     }
+
+    /* Conversion of IP address failed, try to look the host up by name */
+
+    hent = gethostbyname(target->name);
+    if (hent == NULL) {
+      fprintf(stderr, "%s: could not resolve host %s\n",
+              progname, target->name);
+      return 0;
+    }
+    memcpy(&iaddr->sin_addr, hent->h_addr_list[0],
+           sizeof(iaddr->sin_addr));
 
     /* Done */
 
@@ -498,6 +509,15 @@ newHost(char *name)
 
     /* Done */
 
+    if (debug_p)
+      {
+        struct sockaddr_in *iaddr = (struct sockaddr_in *) &(target->address);
+        unsigned long ip = iaddr->sin_addr.s_addr;
+        fprintf (stderr, "%s:   added host %d.%d.%d.%d (%s)\n", progname,
+                 ip & 255, ip >> 8 & 255, ip >> 16 & 255, ip >> 24 & 255, 
+                 target->name);
+      }
+
     return target;
 
     /* Handle errors here */
@@ -522,7 +542,6 @@ target_init_error:
 static ping_target *
 readPingHostsFile(char *fname) 
 {
-
     /* Local Variables */
 
     FILE *fp;
@@ -547,6 +566,9 @@ readPingHostsFile(char *fname)
 	perror(msg);
 	return NULL;
     }
+
+    if (debug_p)
+      fprintf (stderr, "%s:  reading file %s\n", progname, fname);
 
     /* Read the file line by line */
 
@@ -610,47 +632,43 @@ readPingHostsFile(char *fname)
     return list;
 }
 
-/*
- * Generate a list of ping targets from the entries in a string.
- *
- * Args:
- *    list - A list of comma separated host names.
- *
- * Returns:
- *    A list of targets to ping or null if an error occured.
- */
 
 static ping_target *
-readPingHostsList(char *list) 
+delete_duplicate_hosts (ping_target *list)
 {
+  ping_target *head = list;
+  ping_target *rest;
 
-    /* Local Variables */
+  for (rest = head; rest; rest = rest->next)
+    {
+      struct sockaddr_in *i1 = (struct sockaddr_in *) &(rest->address);
+      unsigned long ip1 = i1->sin_addr.s_addr;
 
-    char *host;
-    ping_target *hostlist = NULL;
-    ping_target *new;
+      static ping_target *rest2;
+      for (rest2 = rest; rest2; rest2 = rest2->next)
+        {
+          if (rest2 && rest2->next)
+            {
+              struct sockaddr_in *i2 = (struct sockaddr_in *)
+                &(rest2->next->address);
+              unsigned long ip2 = i2->sin_addr.s_addr;
 
-    /* Check that there is a list */
-
-    if ((list == NULL) || (list[0] == '\0'))
-	return NULL;
-
-    /* Loop through the hosts and add them to the list to return */
-
-    host = strtok(list, ",");
-    while (host != NULL) {
-	new = newHost(host);
-	if (new != NULL) {
-	    new->next = hostlist;
-	    hostlist = new;
-	}
-	host = strtok(NULL, ",");
+              if (ip1 == ip2)
+                {
+                  if (debug_p)
+                    fprintf (stderr, "%s: deleted duplicate: %s\n",
+                             progname, rest2->next->name);
+                  rest2->next = rest2->next->next;
+                }
+            }
+        }
     }
 
-    /* Done */
-
-    return hostlist;
+  return head;
 }
+
+
+
 
 /*
  * Generate a list ping targets consisting of all of the entries on
@@ -661,8 +679,9 @@ readPingHostsList(char *list)
  */
 
 static ping_target *
-subnetHostsList(void) 
+subnetHostsList(int base, int subnet_width) 
 {
+    unsigned long mask;
 
     /* Local Variables */
 
@@ -673,6 +692,26 @@ subnetHostsList(void)
     int i;
     ping_target *new;
     ping_target *list = NULL;
+
+    if (subnet_width < 24)
+      {
+        fprintf (stderr,
+    "%s: pinging %u hosts is a bad idea; please use a subnet mask of 24 bits\n"
+                 "       or more (255 hosts max.)\n",
+                 progname, 1L << (32 - subnet_width));
+        exit (1);
+      }
+    else if (subnet_width > 30)
+      {
+        fprintf (stderr, "%s: a subnet of %d bits doesn't make sense:"
+                 " try \"subnet/24\" or \"subnet/29\".\n",
+                 progname, subnet_width);
+        exit (1);
+      }
+
+
+    if (debug_p)
+      fprintf (stderr, "%s:   adding %d-bit subnet\n", progname, subnet_width);
 
     /* Get our hostname */
 
@@ -689,29 +728,50 @@ subnetHostsList(void)
     }
     strcpy(address, inet_ntoa(*((struct in_addr *)hent->h_addr_list[0])));
 
-    /* Get a pointer to the last "." in the string */
-
-    if ((p = strrchr(address, '.')) == NULL) {
-	fprintf(stderr, "%s: can't parse IP address %s\n", progname, address);
-	return NULL;
-    }
-    p++;
-
     /* Construct targets for all addresses in this subnet */
 
-    /* #### jwz: actually, this is wrong, since it assumes a
-       netmask of 255.255.255.0.  But I'm not sure how to find
-       the local netmask.
-     */
-    for (i = 254; i > 0; i--) {
+    mask = 0;
+    for (i = 0; i < subnet_width; i++)
+      mask |= (1L << (31-i));
+
+    /* If no base IP specified, assume localhost. */
+    if (base == 0)
+      base = ((((unsigned char) hent->h_addr_list[0][0]) << 24) |
+              (((unsigned char) hent->h_addr_list[0][1]) << 16) |
+              (((unsigned char) hent->h_addr_list[0][2]) <<  8) |
+              (((unsigned char) hent->h_addr_list[0][3])));
+
+    for (i = 255; i >= 0; i--) {
+        int ip = (base & 0xFFFFFF00) | i;
+      
+        if ((ip & mask) != (base & mask))   /* not in the mask range at all */
+          continue;
+        if ((ip & ~mask) == 0)              /* broadcast address */
+          continue;
+        if ((ip & ~mask) == ~mask)          /* broadcast address */
+          continue;
+
+        sprintf (address, "%d.%d.%d.%d", 
+                 (ip>>24)&255, (ip>>16)&255, (ip>>8)&255, (ip)&255);
+
+        if (debug_p > 1)
+          fprintf(stderr, "%s:  subnet: %s (%d.%d.%d.%d & %d.%d.%d.%d / %d)\n",
+                  progname,
+                  address,
+                  (base>>24)&255, (base>>16)&255, (base>>8)&255, base&mask&255,
+                  (mask>>24)&255, (mask>>16)&255, (mask>>8)&255, mask&255,
+                  subnet_width);
+
+        p = address + strlen(address) + 1;
 	sprintf(p, "%d", i);
+
 	new = newHost(address);
 	if (new != NULL) {
 	    new->next = list;
 	    list = new;
 	}
     }
-  
+
     /* Done */
 
     return list;
@@ -724,14 +784,17 @@ subnetHostsList(void)
  *    A newly allocated ping_info structure or null if an error occured.
  */
 
+static ping_target *parse_mode (Bool ping_works_p);
+
 static ping_info *
 init_ping(void) 
 {
 
+  Bool socket_initted_p = False;
+
     /* Local Variables */
 
     ping_info *pi = NULL;		/* The new ping_info struct */
-    char *src;				/* The source of the ping hosts */
     ping_target *pt;			/* Used to count the targets */
 
     /* Create the ping info structure */
@@ -741,61 +804,31 @@ init_ping(void)
 	goto ping_init_error;
     }
 
-    /* Create the ICMP socket and turn off SUID */
+    /* Create the ICMP socket */
 
-    if ((pi->icmpsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) < 0) {
-	char msg[1024];
-	sprintf(msg, "%s: can't create ICMP socket", progname);
-	perror(msg);
-	fprintf(stderr,
-         "%s: this program must be setuid to root for `ping mode' to work.\n",
-                progname);
-	goto ping_init_error;
+    if ((pi->icmpsock = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) >= 0) {
+      socket_initted_p = True;
     }
+
+    /* Disavow privs */
+
     setuid(getuid());
+
+
     pi->pid = getpid() & 0xFFFF;
     pi->seq = 0;
     pi->timeout = get_integer_resource("pingTimeout", "PingTimeout");
 
     /* Generate a list of targets */
 
-    src = get_string_resource("pingSource", "PingSource");
-    if (strcmp(src, "file") == 0) {
+    pi->targets = parse_mode (socket_initted_p);
+    pi->targets = delete_duplicate_hosts (pi->targets);
 
-	/*
-         * The list of ping targets is to come from a file in
-	 * /etc/hosts format
-	 */
-
-	pi->targets = readPingHostsFile(get_string_resource("pingFile",
-							    "PingFile"));
-
-    } else if (strcmp(src, "list") == 0) {
-
-	/* The list of hosts is to come from the pinghostlist resource */
-
-	pi->targets = readPingHostsList(get_string_resource("pingList",
-							    "PingList"));
-
-    } else if (strcmp(src, "subnet") == 0) {
-
-	pi->targets = subnetHostsList();
-
-    } else {
-
-	/* Unknown source */
-
-	fprintf(stderr,
-               "%s: pingSource must be `file', `list', or `subnet', not: %s\n",
-                progname, src);
-        exit (1);
-    }
 
     /* Make sure there is something to ping */
 
     if (pi->targets == NULL) {
-	fprintf(stderr, "%s: nothing to ping", progname);
-	goto ping_init_error;
+      goto ping_init_error;
     }
 
     /* Count the targets */
@@ -818,6 +851,7 @@ ping_init_error:
 	free(pi);
     return NULL;
 }
+
 
 /*
  * Ping a host.
@@ -955,7 +989,7 @@ checksum(u_short *packet, int size)
  */
 
 static Bogie *
-getping(sonar_info *si, ping_info *pi, int ttl) 
+getping(sonar_info *si, ping_info *pi) 
 {
 
     /* Local Variables */
@@ -1061,7 +1095,7 @@ getping(sonar_info *si, ping_info *pi, int ttl)
 
 	/* Create the new Bogie and add it to the list we are building */
 
-	if ((new = newBogie(name, 0, si->current, ttl)) == NULL)
+	if ((new = newBogie(name, 0, si->current, si->TTL)) == NULL)
 	    return bl;
 	new->next = bl;
 	bl = new;
@@ -1125,7 +1159,7 @@ ping(sonar_info *si, void *vpi)
 
     /* Get the results */
 
-    return getping(si, pi, TTL);
+    return getping(si, pi);
 }
 
 #endif /* HAVE_PING */
@@ -1281,7 +1315,9 @@ init_sonar(Display *dpy, Window win)
     /* Get the delay between animation frames */
 
     si->delay = get_integer_resource ("delay", "Integer");
+
     if (si->delay < 0) si->delay = 0;
+    si->TTL = get_integer_resource("ttl", "TTL");
 
     /* Create the Graphics Contexts that will be used to draw things */
 
@@ -1395,7 +1431,7 @@ simulator(sonar_info *si, void *vinfo)
 	t = &info->teamA[i];
 	if ((t->movedonsweep != si->sweepnum) &&
 	    (t->nexttick == (si->current * -1))) {
-	    new = newBogie(strdup(t->name), t->nextdist, si->current, TTL);
+	    new = newBogie(strdup(t->name), t->nextdist, si->current, si->TTL);
 	    if (list != NULL)
 		new->next = list;
 	    list = new;
@@ -1410,7 +1446,7 @@ simulator(sonar_info *si, void *vinfo)
 	t = &info->teamB[i];
 	if ((t->movedonsweep != si->sweepnum) &&
 	    (t->nexttick == (si->current * -1))) {
-	    new = newBogie(strdup(t->name), t->nextdist, si->current, TTL);
+	    new = newBogie(strdup(t->name), t->nextdist, si->current, si->TTL);
 	    if (list != NULL)
 		new->next = list;
 	    list = new;
@@ -1670,6 +1706,118 @@ Sonar(sonar_info *si, Bogie *bl)
     drawGrid(si);
 }
 
+
+static ping_target *
+parse_mode (Bool ping_works_p)
+{
+  char *source = get_string_resource ("ping", "Ping");
+  char *token, *end;
+
+  ping_target *hostlist = 0;
+
+  if (!source) source = strdup("");
+
+  if (!*source || !strcmp (source, "default"))
+    {
+# ifdef HAVE_PING
+      if (ping_works_p)		/* if root or setuid, ping will work. */
+        source = strdup("subnet/29,/etc/hosts");
+      else
+# endif
+        source = strdup("simulation");
+    }
+
+  token = source;
+  end = source + strlen(source);
+  while (token < end)
+    {
+      char *next;
+      ping_target *new;
+      struct stat st;
+      unsigned int n0=0, n1=0, n2=0, n3=0, m=0;
+      char d;
+
+      for (next = token;
+           *next != ',' && *next != ' ' && *next != '\t' && *next != '\n';
+           next++)
+        ;
+      *next = 0;
+
+
+      if (debug_p)
+        fprintf (stderr, "%s: parsing %s\n", progname, token);
+
+      if (!strcmp (token, "simulation"))
+        return 0;
+
+      if (!ping_works_p)
+        {
+          fprintf(stderr,
+           "%s: this program must be setuid to root for `ping mode' to work.\n"
+             "       Running in `simulation mode' instead.\n",
+                  progname);
+          return 0;
+        }
+
+      if ((4 == sscanf (token, "%d.%d.%d/%d %c",    &n0,&n1,&n2,    &m,&d)) ||
+          (5 == sscanf (token, "%d.%d.%d.%d/%d %c", &n0,&n1,&n2,&n3,&m,&d)))
+        {
+          /* subnet: A.B.C.D/M
+             subnet: A.B.C/M
+           */
+          unsigned long ip = (n0 << 24) | (n1 << 16) | (n2 << 8) | n3;
+          new = subnetHostsList(ip, m);
+        }
+      else if (4 == sscanf (token, "%d.%d.%d.%d %c", &n0, &n1, &n2, &n3, &d))
+        {
+          /* IP: A.B.C.D
+           */
+          new = newHost (token);
+        }
+      else if (!strcmp (token, "subnet"))
+        {
+          new = subnetHostsList(0, 24);
+        }
+      else if (1 == sscanf (token, "subnet/%d %c", &m))
+        {
+          new = subnetHostsList(0, m);
+        }
+      else if (*token == '.' || *token == '/' || !stat (token, &st))
+        {
+          /* file name
+           */
+          new = readPingHostsFile (token);
+        }
+      else
+        {
+          /* not an existant file - must be a host name
+           */
+          new = newHost (token);
+        }
+
+      if (new)
+        {
+          ping_target *nn = new;
+          while (nn && nn->next)
+            nn = nn->next;
+          nn->next = hostlist;
+          hostlist = new;
+
+          sensor = ping;
+        }
+
+      token = next + 1;
+      while (token < end &&
+             (*token == ',' || *token == ' ' ||
+              *token == '\t' || *token == '\n'))
+        token++;
+    }
+
+  return hostlist;
+}
+
+
+
 /*
  * Main screen saver hack.
  *
@@ -1688,56 +1836,24 @@ screenhack(Display *dpy, Window win)
     struct timeval start, finish;
     Bogie *bl;
     long sleeptime;
-    char *mode;
 
-    /* 
-     * Initialize 
-     * Adding new sensors would involve supporting more modes other than
-     * ping and initiailizing the sensor in the same way.
-     */
+    debug_p = get_boolean_resource ("debug", "Debug");
 
-    mode = get_string_resource("mode", "Mode");
+    sensor = 0;
+    sensor_info = (void *) init_ping();
 
-    if (!mode || !*mode || !strcmp(mode, "default")) /* Pick a good default. */
+    if (sensor == 0)
       {
-#ifdef HAVE_PING
-        if (geteuid() == 0)	/* we're root or setuid -- ping will work. */
-          mode = "ping";
-        else
-#endif
-          mode = "simulation";
+        sensor = simulator;
+        if ((sensor_info = (void *) init_sim()) == NULL)
+          exit(1);
       }
 
-#ifdef HAVE_PING
-    if (strcmp(mode, "ping") == 0) {
-	sensor = ping;
-	if ((sensor_info = (void *) init_ping()) == (void *) 0)
-          {
-            fprintf (stderr, "%s: running in `simulation mode' instead.\n",
-                     progname);
-	    goto SIM;
-          }
-    } else
-#endif /* HAVE_PING */
-    if (strcmp(mode, "simulation") == 0) {
-#ifdef HAVE_PING
-    SIM:
-#endif
-	sensor = simulator;
-	if ((sensor_info = (void *) init_sim()) == NULL)
-	    exit(1);
-    } else {
-	fprintf(stderr, "%s: unsupported Sonar mode: %s\n", progname, mode);
-	fprintf(stderr,
-                "\tCurrently supported modes are `ping' and `simulation'\n");
-	exit(1);
-    }
     if ((si = init_sonar(dpy, win)) == (sonar_info *) 0)
 	exit(1);
-  
-    /* Sonar loop */
 
-    TTL = get_integer_resource("ttl", "TTL");
+
+    /* Sonar loop */
 
     while (1) {
 

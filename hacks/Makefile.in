@@ -86,7 +86,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  sonar.c demon.c loop.c t3d.c penetrate.c deluxe.c compass.c \
 		  squiral.c xflame.c wander.c spotlight.c critical.c \
 		  phosphor.c xmatrix.c petri.c shadebobs.c xsublim.c ccurve.c \
-		  blaster.c bumps.c ripples.c xteevee.c xspirograph.c
+		  blaster.c bumps.c ripples.c xteevee.c xspirograph.c nerverot.c
 SCRIPTS		= vidwhacker webcollage
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -105,7 +105,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  sonar.o demon.o loop.o t3d.o penetrate.o deluxe.o compass.o \
 		  squiral.o xflame.o wander.o spotlight.o critical.o \
 		  phosphor.o xmatrix.o petri.o shadebobs.o xsublim.o ccurve.o \
-		  blaster.o bumps.o ripples.o xteevee.o xspirograph.o
+		  blaster.o bumps.o ripples.o xteevee.o xspirograph.o nerverot.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -119,7 +119,7 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  sonar demon loop t3d penetrate deluxe compass squiral \
 		  xflame wander spotlight critical phosphor xmatrix petri \
 		  shadebobs xsublim ccurve blaster bumps ripples xteevee \
-		  xspirograph
+		  xspirograph nerverot
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -147,7 +147,8 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  xjack.man xlyap.man jigsaw.man epicycle.man bsod.man \
 		  sonar.man t3d.man squiral.man spotlight.man critical.man \
 		  vidwhacker.man webcollage.man xsublim.man distort.man \
-		  phosphor.man xmatrix.man xteevee.man xflame.man
+		  phosphor.man xmatrix.man xteevee.man xflame.man petri.man \
+		  nerverot.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  images/$(STAR).xbm \
@@ -567,6 +568,9 @@ xteevee:	xteevee.o	$(HACK_OBJS) $(GRAB)
 
 xspirograph:	xspirograph.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
+
+nerverot:	nerverot.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -1780,4 +1784,13 @@ xspirograph.o: $(UTILS_SRC)/colors.h
 xspirograph.o: $(UTILS_SRC)/grabscreen.h
 xspirograph.o: $(UTILS_SRC)/visual.h
 xspirograph.o: $(UTILS_SRC)/erase.h
+nerverot.o: $(srcdir)/screenhack.h
+nerverot.o: ../config.h
+nerverot.o: $(UTILS_SRC)/yarandom.h
+nerverot.o: $(UTILS_SRC)/usleep.h
+nerverot.o: $(UTILS_SRC)/resources.h
+nerverot.o: $(UTILS_SRC)/hsv.h
+nerverot.o: $(UTILS_SRC)/colors.h
+nerverot.o: $(UTILS_SRC)/grabscreen.h
+nerverot.o: $(UTILS_SRC)/visual.h
 

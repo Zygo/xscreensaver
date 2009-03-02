@@ -152,6 +152,9 @@
 				bumps -root				    \\n\
 				xteevee -root				    \\n\
 				xspirograph -root			    \\n\
+				nerverot -root				    \\n\
+-	    \"NerveRot (dense)\"	nerverot -root -count 1000		    \\n\
+-	    \"NerveRot (thick)\"	nerverot -root -count 64 -line-width 4	    \\n\
   color: 			bubbles -root				    \\n\
   default-n:			webcollage -root			    \\n\
   default-n:  \"WebCollage (whacked)\"					      \
@@ -789,6 +792,10 @@ loss of vertical hold, and a test pattern.  By Greg Knauss.",
 "*hacks.xspirograph.documentation:					\
 Simulates that pen-in-nested-plastic-gears toy from your childhood.     \
 By Rohit Singh.",
+"*hacks.nerverot.name: NerveRot",
+"*hacks.nerverot.documentation:                                          \
+Draws a rolling tube, composed of nervously vibrating squiggles.	\
+By Dan Bornstein.",
 "*hacks.webcollage.name: WebCollage",
 "*hacks.webcollage.documentation:					\
 This program makes collages out of random images pulled off of the	\

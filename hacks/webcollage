@@ -27,7 +27,7 @@ require POSIX;
 use Fcntl ':flock'; # import LOCK_* constants
 
 
-my $version = q{ $Revision: 1.44 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.54 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -56,6 +56,8 @@ my $image_randomizer_2 = "http://www.hotbot.com/?clickSrc=search" .
                          "&MT=";
 my $image_randomizer_3 = "http://www.altavista.com/cgi-bin/query?pg=q" .
                          "&text=yes&kl=XX&stype=stext&q=";
+my $image_randomizer_4 = "http://search.news.yahoo.com/search/news_photos?" .
+                         "&z=&n=100&o=o&2=&3=&p=";
 
 # I guess Photopoint got wise to me, because now they are doing error
 # checking on the user ("u=") and album ("a=") parameters.  Oh well.
@@ -608,7 +610,8 @@ sub pick_from_image_randomizer {
 
     my $search_url = ($which == 0 ? $image_randomizer_1 :
                       $which == 1 ? $image_randomizer_2 :
-                      $image_randomizer_3) .
+                      $which == 2 ? $image_randomizer_3 :
+                      $image_randomizer_4) .
         $words;
 
     # Pick a random search-result page instead of always taking the first.
@@ -659,8 +662,8 @@ sub pick_from_image_randomizer {
 
     $_ = $body;
 
-    s/Result [Pp]ages:.*$//s;            # trim off page footer
-    s/^.*?IMAGE RESULTS//s;              # trim off page header
+#    s/Result [Pp]ages:.*$//s;            # trim off page footer
+#    s/^.*?IMAGE RESULTS//s;              # trim off page header
 
     s/[\r\n\t ]+/ /g;
 
@@ -691,11 +694,23 @@ sub pick_from_image_randomizer {
         next if ($u =~ m@[/.]wildweb\.com@i);
         next if ($u =~ m@[/.]digital\.com@i);
         next if ($u =~ m@[/.]doubleclick\.net@i);
+        next if ($u =~ m@[/.]freeim\.org@i);
+        next if ($u =~ m@[/.]clicktomarket\.com@i);  # you cretins
 
         if ($which == 0 && $u =~ m@[/.]corbis\.com@) {
             $skipped = 1;
             if ( $verbose > 3 ) {
                 print STDERR "$progname: skipping corbis URL: $u\n";
+            }
+            next;
+
+        } elsif ($which == 3 &&
+                 ($u =~ m@^http://[^/]+$@ ||		  # no slashes
+                  $u =~ m@/$@ ||			  # ends in /
+                  ! ($u =~ m@dailynews\.yahoo\.com@))) {  # not dailynews
+#            $skipped = 1;
+            if ( $verbose > 3 ) {
+                print STDERR "$progname: skipping non-AP URL: $u\n";
             }
             next;
 
@@ -748,7 +763,9 @@ sub pick_from_image_randomizer {
     if ($img) {
         return ($base2, $img,
                 ($which == 0 ? "imagevista" :
-                 $which == 1 ? "hotbot" : "altavista") .
+                 $which == 1 ? "hotbot" :
+                 $which == 2 ? "altavista" :
+                 "ap") .
                 "/$search_count");
     } else {
         return ();
@@ -789,6 +806,7 @@ sub pick_image {
     my ( $timeout ) = @_;
 
     my $r = int(rand(100));
+
     my ($base, $img, $source, $total, $count);
 
     if ($r < 20) {
@@ -800,6 +818,11 @@ sub pick_image {
         ($base, $img, $source) = pick_from_image_randomizer ($timeout, 0);
         $total = ++$total_1;
         $count = ++$count_1 if $img;
+
+     } elsif ($r < 70) {
+         ($base, $img, $source) = pick_from_image_randomizer ($timeout, 3);
+         $total = ++$total_4;
+         $count = ++$count_4 if $img;
 
 #    } elsif ($r < 70) {
 #        ($base, $img, $source) = pick_from_photo_randomizer ($timeout);
@@ -1023,7 +1046,14 @@ sub image_to_pnm {
 
     $cmd2 = "exec $cmd";        # yes, this really is necessary.  if we don't
                                 # do this, the process doesn't die properly.
-    if ($verbose == 0) {
+    if ($verbose <= 1) {
+        #
+        # We get a "giftopnm: got a 'Application Extension' extension"
+        # warning any time it's an animgif.
+        #
+        # Note that "giftopnm: EOF / read error on image data" is not
+        # always a fatal error -- sometimes the image looks fine anyway.
+        #
         $cmd2 .= " 2>/dev/null";
     }
 

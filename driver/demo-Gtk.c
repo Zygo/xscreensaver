@@ -257,12 +257,16 @@ warning_dialog (GtkWidget *parent, const char *message,
       sprintf (name, "label%d", i++);
 
       {
+#if 0
         char buf[255];
+#endif
         label = gtk_label_new (head);
+#if 0
         sprintf (buf, "warning_dialog.%s.font", name);
         GTK_WIDGET (label)->style = gtk_style_copy (GTK_WIDGET (label)->style);
         GTK_WIDGET (label)->style->font =
           gdk_font_load (get_string_resource (buf, "Dialog.Label.Font"));
+#endif
         if (center <= 0)
           gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
         gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox),
@@ -1268,7 +1272,7 @@ static char *down_arrow_xpm[] = {
 };
 
 static void
-pixmapify_buttons (GtkWidget *toplevel)
+pixmapify_button (GtkWidget *toplevel, int down_p)
 {
   GdkPixmap *pixmap;
   GdkBitmap *mask;
@@ -1276,27 +1280,31 @@ pixmapify_buttons (GtkWidget *toplevel)
   GtkStyle *style;
   GtkWidget *w;
 
-  w = GTK_WIDGET (name_to_widget (GTK_WIDGET (toplevel), "next"));
+  w = GTK_WIDGET (name_to_widget (GTK_WIDGET (toplevel),
+                                  (down_p ? "next" : "prev")));
   style = gtk_widget_get_style (w);
   mask = 0;
   pixmap = gdk_pixmap_create_from_xpm_d (w->window, &mask,
                                          &style->bg[GTK_STATE_NORMAL],
-                                         (gchar **) down_arrow_xpm);
+                                         (down_p
+                                          ? (gchar **) down_arrow_xpm
+                                          : (gchar **) up_arrow_xpm));
   pixmapwid = gtk_pixmap_new (pixmap, mask);
   gtk_widget_show (pixmapwid);
   gtk_container_remove (GTK_CONTAINER (w), GTK_BIN (w)->child);
   gtk_container_add (GTK_CONTAINER (w), pixmapwid);
+}
 
-  w = GTK_WIDGET (name_to_widget (GTK_WIDGET (toplevel), "prev"));
-  style = gtk_widget_get_style (w);
-  mask = 0;
-  pixmap = gdk_pixmap_create_from_xpm_d (w->window, &mask,
-                                         &style->bg[GTK_STATE_NORMAL],
-                                         (gchar **) up_arrow_xpm);
-  pixmapwid = gtk_pixmap_new (pixmap, mask);
-  gtk_widget_show (pixmapwid);
-  gtk_container_remove (GTK_CONTAINER (w), GTK_BIN (w)->child);
-  gtk_container_add (GTK_CONTAINER (w), pixmapwid);
+static void
+map_next_button_cb (GtkWidget *w, gpointer user_data)
+{
+  pixmapify_button (w, 1);
+}
+
+static void
+map_prev_button_cb (GtkWidget *w, gpointer user_data)
+{
+  pixmapify_button (w, 0);
 }
 
 
@@ -1764,7 +1772,6 @@ map_window_cb (GtkWidget *w, gpointer user_data)
 {
   Boolean oi = initializing_p;
   initializing_p = True;
-  pixmapify_buttons (w);
   eschew_gtk_lossage (w);
   ensure_selected_item_visible (GTK_WIDGET(name_to_widget(w, "list")));
   initializing_p = oi;
@@ -1775,11 +1782,6 @@ int
 main (int argc, char **argv)
 {
   XtAppContext app;
-# ifdef HAVE_CRAPPLET
-  GnomeClient *client;
-  GnomeClientFlags flags;
-  int init_results;
-# endif /* HAVE_CRAPPLET */
   prefs_pair Pair, *pair;
   saver_preferences P, P2, *p, *p2;
   Bool prefs = False;
@@ -1858,9 +1860,21 @@ main (int argc, char **argv)
 # ifdef HAVE_CRAPPLET
   if (crapplet_p)
     {
-      init_results = gnome_capplet_init ("screensaver-properties",
-                                         short_version,
-                                         argc, argv, NULL, 0, NULL);
+      GnomeClient *client;
+      GnomeClientFlags flags = 0;
+
+      int init_results = gnome_capplet_init ("screensaver-properties",
+                                             short_version,
+                                             argc, argv, NULL, 0, NULL);
+      /* init_results is:
+         0 upon successful initialization;
+         1 if --init-session-settings was passed on the cmdline;
+         2 if --ignore was passed on the cmdline;
+        -1 on error.
+
+         So the 1 signifies just to init the settings, and quit, basically.
+         (Meaning launch the xscreensaver daemon.)
+       */
 
       if (init_results < 0)
         {
@@ -1878,14 +1892,38 @@ main (int argc, char **argv)
 
       if (client)
         flags = gnome_client_get_flags (client);
-      else
-        flags = 0;
 
       if (flags & GNOME_CLIENT_IS_CONNECTED)
         {
-          gnome_client_set_restart_style (client, GNOME_RESTART_NEVER);
+          int token =
+            gnome_startup_acquire_token ("GNOME_SCREENSAVER_PROPERTIES",
+                                         gnome_client_get_id (client));
+          if (token)
+            {
+              char *session_args[20];
+              int i = 0;
+              session_args[i++] = real_progname;
+              session_args[i++] = "--capplet";
+              session_args[i++] = "--init-session-settings";
+              session_args[i] = 0;
+              gnome_client_set_priority (client, 20);
+              gnome_client_set_restart_style (client, GNOME_RESTART_ANYWAY);
+              gnome_client_set_restart_command (client, i, session_args);
+            }
+          else
+            {
+              gnome_client_set_restart_style (client, GNOME_RESTART_NEVER);
+            }
+
           gnome_client_flush (client);
         }
+
+      if (init_results == 1)
+	{
+	  system ("xscreensaver -nosplash &");
+	  return 0;
+	}
+
     }
   else
 # endif /* HAVE_CRAPPLET */
@@ -2022,6 +2060,12 @@ main (int argc, char **argv)
   gtk_signal_connect (
               GTK_OBJECT (name_to_widget (GTK_WIDGET (gtk_window), "list")),
               "map", GTK_SIGNAL_FUNC(map_window_cb), 0);
+  gtk_signal_connect (
+              GTK_OBJECT (name_to_widget (GTK_WIDGET (gtk_window), "prev")),
+              "map", GTK_SIGNAL_FUNC(map_prev_button_cb), 0);
+  gtk_signal_connect (
+              GTK_OBJECT (name_to_widget (GTK_WIDGET (gtk_window), "next")),
+              "map", GTK_SIGNAL_FUNC(map_next_button_cb), 0);
 
 
   /* Handle the -prefs command-line argument. */
@@ -2045,10 +2089,6 @@ main (int argc, char **argv)
       gtk_widget_ref (top_vbox);
       gtk_container_remove (GTK_CONTAINER (gtk_window), top_vbox);
       GTK_OBJECT_SET_FLAGS (top_vbox, GTK_FLOATING);
-
-      /* This is a crock, but otherwise, the Control Center expands to
-         be as tall as the screen. */
-      gtk_window_set_default_size (GTK_WINDOW (top_vbox), 600, 400);
 
       /* In crapplet-mode, take off the menubar. */
       gtk_widget_hide (name_to_widget (gtk_window, "menubar"));

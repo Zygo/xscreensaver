@@ -162,6 +162,10 @@
  */
 #undef HAVE_GLE
 
+/*  Define this if you have the -lgle from GLE version 3
+ */
+#undef HAVE_GLE3
+
 /*  Define this if the `xscreensaver' process itself (the driver process)
     should be linked against GL.  Most systems won't want this (in particular,
     if you're using Linux and/or Mesa, you don't want this) but SGI systems

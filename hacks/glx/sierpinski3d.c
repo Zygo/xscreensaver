@@ -341,12 +341,10 @@ draw(ModeInfo *mi)
   static float position0[] = {-0.5,  1.2, 0.5, 0.0};
   static float ambient0[]  = {0.4, 0.6, 0.4, 1.0};
   static float spec[]      = {0.7, 0.7, 0.7, 1.0};
-  static float shine[]     = {70.0};
 
   glLightfv(GL_LIGHT0, GL_POSITION,  position0);
   glLightfv(GL_LIGHT0, GL_AMBIENT,   ambient0);
   glLightfv(GL_LIGHT0, GL_SPECULAR,  spec);
-  glLightfv(GL_LIGHT0, GL_SHININESS, shine);
   glLightfv(GL_LIGHT0, GL_DIFFUSE,   gp->light_colour);
 
   glShadeModel(GL_SMOOTH);

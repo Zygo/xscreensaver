@@ -1071,7 +1071,7 @@ main (int argc, char **argv)
   global_si_kludge = si;	/* I hate C so much... */
 
 # undef ya_rand_init
-  ya_rand_init ((int) time ((time_t *) 0));
+  ya_rand_init (0);
 
   save_argv (argc, argv);
   set_version_string (si, &argc, argv);

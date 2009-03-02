@@ -170,7 +170,7 @@ make_passwd_window (saver_info *si)
     pw->heading_label = s;
   }
 
-  pw->user_string = (p->pw_name ? p->pw_name : "???");
+  pw->user_string = (p && p->pw_name ? p->pw_name : "???");
   pw->passwd_string = strdup("");
 
   f = get_string_resource ("passwd.headingFont", "Dialog.Font");

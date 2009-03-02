@@ -77,6 +77,20 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.24:   * New hack, `nerverot'.
+                      * Added BSD kernel panic to `bsod'.
+                      * New version of `shadebobs'.
+                      * New version of `petri'.
+                      * Updated `webcollage' to handle recent Altavista URL
+                        format changes; made it search the AP photo gallery.
+                      * Revamped command-line options of `sonar' and made it
+                        properly handle subnets.
+                      * The `bubbles' hack can now trickle up or down the screen.
+                      * The `xsublim' hack can now read its text from programs.
+                      * Support for GLE version 3 in `extrusion'.
+                      * Fixed compilation problems in `maze'.
+                      * Fixed a rare crash in `flow'.
+                      * Fixes for minor installation problems.
 Changes since 3.23:   * Added `-ignorant' option to `maze' hack.
                       * Updates to `critical', `bsod', `xflame', and `flow'.
                       * Added support for Kerberos 5 (via its Kerberos 4

@@ -510,6 +510,150 @@ sparc_linux (Display *dpy, Window window, int delay)
   return True;
 }
 
+/* BSD Panic by greywolf@starwolf.com - modeled after the Linux panic above.
+   By Grey Wolf <greywolf@siteROCK.com>
+ */
+static Bool
+bsd (Display *dpy, Window window, int delay)
+{
+  XGCValues gcv;
+  XWindowAttributes xgwa;
+  char *fontname;
+  const char *def_font = "fixed";
+  XFontStruct *font;
+  GC gc;
+  int lines = 1;
+  int i, n, b;
+  const char *rbstr, *panicking;
+  char syncing[80], bbuf[5], *bp;
+
+  const char *panicstr[] =
+   {"panic: ifree: freeing free inode",
+    "panic: blkfree: freeing free block",
+    "panic: improbability coefficient below zero",
+    "panic: cgsixmmap",
+    "panic: crazy interrupts",
+    "panic: nmi",
+    "panic: attempted windows install",
+    "panic: don't",
+    "panic: free inode isn't",
+    "panic: cpu_fork: curproc",
+    "panic: malloc: out of space in kmem_map",
+    "panic: vogon starship detected",
+    "panic: teleport chamber: out of order",
+    "panic: Brain fried - core dumped"};
+     
+  if (!get_boolean_resource("doBSD", "DoBSD"))
+    return False;
+
+  for (i = 0; i < sizeof(syncing); i++)
+    syncing[i] = 0;
+
+  i = (random() & 0xffff) % (sizeof(panicstr) / sizeof(*panicstr));
+
+  panicking = panicstr[i];
+  strcpy(syncing, "Syncing disks: ");
+
+  b = (random() & 0xff) % 40;
+  for (n = 0; (n < 20) && (b > 0); n++)
+    {
+      if (i)
+        {
+          i = (random() & 0x7);
+          b -= (random() & 0xff) % 20;
+          if (b < 0)
+            b = 0;
+        }
+      sprintf (bbuf, "%d ", b);
+      strcat (syncing, bbuf);
+    }
+
+  if (b)
+    rbstr = "damn!";
+  else
+    rbstr = "sunk!";
+
+  lines = 5;
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+
+  fontname = get_string_resource ((xgwa.height > 600
+				   ? "bsd.font2"
+				   : "bsd.font"),
+				  "BSD.Font");
+  if (!fontname || !*fontname) fontname = (char *)def_font;
+  font = XLoadQueryFont (dpy, fontname);
+  if (!font) font = XLoadQueryFont (dpy, def_font);
+  if (!font) exit(-1);
+  if (fontname && fontname != def_font)
+    free (fontname);
+
+  gcv.font = font->fid;
+  gcv.foreground = get_pixel_resource(("bsd.foreground"),
+				      "BSD.Foreground",
+				      dpy, xgwa.colormap);
+  gcv.background = get_pixel_resource(("bsd.background"),
+				      "BSD.Background",
+				      dpy, xgwa.colormap);
+  XSetWindowBackground(dpy, window, gcv.background);
+  XClearWindow(dpy, window);
+
+  gc = XCreateGC(dpy, window, GCFont|GCForeground|GCBackground, &gcv);
+
+  draw_string(dpy, window, gc, &gcv, font,
+	      10, xgwa.height - (lines * (font->ascent + font->descent + 1)),
+	      10, 10,
+	      panicking, 0);
+  XSync(dpy, False);
+  lines--;
+
+  for (bp = syncing; *bp;)
+    {
+      char *bsd_bufs, oc;
+      for (;*bp && (*bp != ' '); bp++)
+        ;
+      if (*bp == ' ')
+        {
+          oc = *bp;
+          *bp = 0;
+        }
+      bsd_bufs = strdup(syncing);
+      draw_string(dpy, window, gc, &gcv, font,
+                  10,
+                  xgwa.height - (lines * (font->ascent + font->descent + 1)),
+                  10, 10,
+                  bsd_bufs, 0);
+      XSync(dpy, False);
+      free(bsd_bufs);
+      if (oc)
+	*bp = oc;
+      if (bsod_sleep(dpy, -1))
+        goto DONE;
+      bp++;
+    }
+
+  lines--;
+  
+  draw_string(dpy, window, gc, &gcv, font,
+	      10, xgwa.height - (lines * (font->ascent + font->descent + 1)),
+	      10, 10,
+	      rbstr, 0);
+  lines--;
+  draw_string(dpy, window, gc, &gcv, font,
+	      10, xgwa.height - (lines * (font->ascent + font->descent + 1)),
+	      10, 10,
+	      "Rebooting", 0);
+
+  XFreeGC(dpy, gc);
+  XSync(dpy, False);
+  bsod_sleep(dpy, delay);
+
+DONE:
+  XClearWindow(dpy, window);
+  XFreeFont(dpy, font);
+  return True;
+}
+
 static Bool
 amiga (Display *dpy, Window window, int delay)
 {
@@ -1112,6 +1256,7 @@ char *defaults [] = {
   "*doAtari:		   False",	/* boring */
   "*doMacsBug:		   True",
   "*doSCO:		   True",
+  "*doBSD:		   False",	/* boring */
   "*doSparcLinux:	   False",	/* boring */
   "*doBlitDamage:          True",
 
@@ -1149,6 +1294,13 @@ char *defaults [] = {
   ".SparcLinux.font2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".SparcLinux.foreground: White",
   ".SparcLinux.background: Black",
+
+  ".BSD.font:		    vga",
+  ".BSD.font:		    -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  ".BSD.font2:		    -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+/* ".BSD.font2:		    -sun-console-medium-r-*-*-22-*-*-*-m-*-*-*", */
+  ".BSD.foreground:	    #c0c0c0",
+  ".BSD.background:	    Black",
   0
 };
 
@@ -1178,7 +1330,7 @@ screenhack (Display *dpy, Window window)
   while (1)
     {
       Bool did;
-      do {  i = (random() & 0xFF) % 9; } while (i == j);
+      do {  i = (random() & 0xFF) % 10; } while (i == j);
       switch (i)
 	{
 	case 0: did = windows(dpy, window, delay, True); break;
@@ -1188,8 +1340,9 @@ screenhack (Display *dpy, Window window)
 	case 4: did = macsbug(dpy, window, delay); break;
 	case 5: did = sco(dpy, window, delay); break;
 	case 6: did = sparc_linux(dpy, window, delay); break;
-	case 7: did = atari(dpy, window, delay); break;
-	case 8: did = blitdamage(dpy, window, delay); break;
+ 	case 7: did = bsd(dpy, window, delay); break;
+	case 8: did = atari(dpy, window, delay); break;
+	case 9: did = blitdamage(dpy, window, delay); break;
 	default: abort(); break;
 	}
       loop++;

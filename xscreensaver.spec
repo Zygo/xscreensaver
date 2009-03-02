@@ -1,5 +1,5 @@
 %define	name	xscreensaver
-%define	version	3.24
+%define	version	3.25
 %define	release	1
 %define	serial	1
 %define	prefix	/usr/X11R6
@@ -84,6 +84,11 @@ mkdir -p $RPM_BUILD_ROOT/etc/pam.d
 if [ -z "$KDEDIR" ]; then export KDEDIR=/usr; fi
 mkdir -p $RPM_BUILD_ROOT$KDEDIR/bin
 
+# And two more for Gnome (same reason...)
+#
+mkdir -p $RPM_BUILD_ROOT/usr/share/control-center/Desktop
+mkdir -p $RPM_BUILD_ROOT/usr/share/gnome/apps/Settings/Desktop
+
 make  install_prefix=$RPM_BUILD_ROOT \
       AD_DIR=%{prefix}/lib/X11/app-defaults \
       install-strip
@@ -117,26 +122,6 @@ install -m 4755 driver/xscreensaver $RPM_BUILD_ROOT%{prefix}/bin
 ( cd driver ;
   make install_prefix=$RPM_BUILD_ROOT PAM_DIR=/etc/pam.d install-pam )
 
-# This is for wmconfig, a tool that generates init files for window managers.
-#
-mkdir -p $RPM_BUILD_ROOT/etc/X11/wmconfig
-cat > $RPM_BUILD_ROOT/etc/X11/wmconfig/xscreensaver <<EOF
-xscreensaver name "xscreensaver (1min timeout)"
-xscreensaver description "xscreensaver"
-xscreensaver group "Amusements/Screen Savers"
-xscreensaver exec "xscreensaver -timeout 1 -cycle 1 &"
-EOF
-
-# This is for the GNOME desktop:
-#
-mkdir -p "$RPM_BUILD_ROOT/usr/share/apps/Amusements/Screen Savers"
-cat > "$RPM_BUILD_ROOT/usr/share/apps/Amusements/Screen Savers/xscreensaver.desktop" <<EOF
-[Desktop Entry]
-Name=xscreensaver (1min timeout)
-Description=xscreensaver
-Exec=xscreensaver -timeout 1 -cycle 1
-EOF
-
 # Make sure all files are readable by all, and writable only by owner.
 #
 chmod -R a+r,u+w,og-w $RPM_BUILD_ROOT
@@ -157,8 +142,8 @@ if [ -d $RPM_BUILD_ROOT-gl ]; then rm -r $RPM_BUILD_ROOT-gl ; fi
                     %{prefix}/man/man1/xscreensaver*
                     /etc/pam.d/*
 %config(missingok)  /usr/bin/*.kss
-%config(missingok)  /etc/X11/wmconfig/*
-%config(missingok)  "/usr/share/apps/Amusements/Screen Savers/*"
+%config(missingok)  "/usr/share/control-center/Desktop/screensaver-properties.desktop"
+%config(missingok)  "/usr/share/gnome/apps/Settings/Desktop/screensaver-properties.desktop"
 
 # Files for the "xscreensaver-gl" package:
 #

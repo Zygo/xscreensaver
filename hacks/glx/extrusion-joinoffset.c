@@ -3,9 +3,17 @@
 /* this demo demonstrates the various join styles */
 
 /* required include files */
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 #include <GL/gl.h>
 #include <GL/glut.h>
+#ifdef HAVE_GLE3
+#include <GL/gle.h>
+#else
 #include <GL/tube.h>
+#endif
 
 /* ------------------------------------------------------- */
 

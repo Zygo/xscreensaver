@@ -472,7 +472,7 @@ static double box_orig[][3] = {
 static double box[BOX_P][3];
 
 /* Lines connecting the box dots */
-static double lines[0][2] = {
+static double lines[][2] = {
 	{0,1}, {1,2}, {2,3}, {3,0}, /* box */
 	{4,5}, {5,6}, {6,7}, {7,4},
 	{0,4}, {1,5}, {2,6}, {3,7},
@@ -496,8 +496,17 @@ void init_clip(flowstruct *sp)
 	/* Scale the planes to the screen. I had to invert the projection
 	 * algorithms so that when projected they would be right at the edge of the
 	 * screen. */
-	double width = sp->size/sp->view.depth/2;
-	double height = sp->size/sp->view.depth/2*sp->view.height/sp->view.height;
+
+    /* #### jwz: I'm not really sure what it means when sp->view.depth is 0
+       in here -- what's the right thing to do? */
+
+	double width = (sp->view.depth
+                    ? sp->size/sp->view.depth/2
+                    : 1);
+	double height = (sp->view.depth
+                     ? (sp->size/sp->view.depth/2*
+                        sp->view.height/sp->view.height)
+                     : 1);
 	for (i = 0; i < PLANES; i++) {
 		/* Copy orig planes into planes, expanding <-> clippings */
 		plane[i][0][0] = plane_orig[i][0][0];

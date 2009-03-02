@@ -1,8 +1,8 @@
-/*****************************************************************************
+/****************************************************************************
  *                                                                           *
  * xsublim -- Submit.  Conform.  Obey.                                       *
  *                                                                           *
- * Copyright (c) 1999 Greg Knauss (greg@eod.com)                             *
+ * Copyright (c) 1999 - 2000 Greg Knauss (greg@eod.com)                      *
  *                                                                           *
  * Thanks to Jamie Zawinski, whose suggestions and advice made what was a    *
  * boring little program into a less boring (and a _lot_ less little)        *
@@ -32,6 +32,7 @@
 
 	-font font           Font to use
 	-file filename       New-line delimited phrase file
+	-program executable  New-line delimited phrase-producing executable
 	-delayShow ms        Microsecs for display of each word
 	-delayWord ms        Microsecs for blank between words
 	-delayPhraseMin ms   Microsecs for min blank between phrases
@@ -49,6 +50,7 @@
 
 /* Changelog ******************************************************************
 
+	1.1.1  20000407  Added -program
 	1.1.0  19991221  Added -file
 	1.0.1  19990716  Assume that XGetImage()/XDestroyImage() don't leak,
 	                  which they apparently don't.  I have no idea how I
@@ -62,12 +64,14 @@
 #define XSUBLIM_TEXT_COUNT         1000
 #define XSUBLIM_TEXT_LENGTH        128
 #define XSUBLIM_TEXT_OUTLINE       1
+#define XSUBLIM_PROGRAM_SIZE       1024*10
 #define XSUBLIM_ARG_DELAYSHOW      "delayShow"
 #define XSUBLIM_ARG_DELAYWORD      "delayWord"
 #define XSUBLIM_ARG_DELAYPHRASEMIN "delayPhraseMin"
 #define XSUBLIM_ARG_DELAYPHRASEMAX "delayPhraseMax"
 #define XSUBLIM_ARG_RANDOM         "random"
 #define XSUBLIM_ARG_FILE           "file"
+#define XSUBLIM_ARG_PROGRAM        "program"
 #define XSUBLIM_ARG_SCREENSAVER    "screensaver"
 #define XSUBLIM_ARG_OUTLINE        "outline"
 #define XSUBLIM_ARG_CENTER         "center"
@@ -186,6 +190,10 @@ XrmOptionDescRec options[] =
 	 XrmoptionNoArg,"false"},
 	{"-" XSUBLIM_ARG_FILE,          "." XSUBLIM_ARG_FILE,
 	 XrmoptionSepArg,0 },
+#if !defined(VMS)
+	{"-" XSUBLIM_ARG_PROGRAM,       "." XSUBLIM_ARG_PROGRAM,
+	 XrmoptionSepArg,0 },
+#endif
 	{"-" XSUBLIM_ARG_SCREENSAVER,   "." XSUBLIM_ARG_SCREENSAVER,
 	 XrmoptionNoArg,"true"},
 	{"-no-" XSUBLIM_ARG_SCREENSAVER,"." XSUBLIM_ARG_SCREENSAVER,
@@ -450,6 +458,7 @@ int main(int argc,char* argv[])
 	int               arg_DelayPhraseMin;
 	int               arg_DelayPhraseMax;
 	char*             arg_Text;
+	char*             arg_Source;
 
 	/* Set-up ---------------------------------------------------------- */
 
@@ -463,7 +472,7 @@ int main(int argc,char* argv[])
 	/* Randomize -- only need to do this here because this program
            doesn't use the `screenhack.h' or `lockmore.h' APIs. */
 # undef ya_rand_init
-        ya_rand_init ((int) time ((time_t *) 0));
+        ya_rand_init (0);
 
 	/* Handle all the X nonsense */
 #if defined(__sgi)
@@ -532,23 +541,23 @@ int main(int argc,char* argv[])
 	text_Item = 0;
 	text_Count = 0;
 	memset(text_Used,0,sizeof(text_Used));
-	arg_Text = get_string_resource(XSUBLIM_ARG_FILE,"Filename");
-	if (arg_Text != NULL)
+	arg_Source = get_string_resource(XSUBLIM_ARG_FILE,"Filename");
+	if (arg_Source != NULL)
 	{
 		FILE*       file_Fs;
 		struct stat file_Stat;
 
-		file_Fs = fopen(arg_Text,"rb");
+		file_Fs = fopen(arg_Source,"rb");
 		if (file_Fs == NULL)
 		{
 			fprintf(stderr,"%s: Could not open '%s'\n",progname,
-			 arg_Text);
+			 arg_Source);
 			exit(-1);
 		}
 		if (fstat(fileno(file_Fs),&file_Stat) != 0)
 		{
 			fprintf(stderr,"%s: Could not stat '%s'\n",progname,
-			 arg_Text);
+			 arg_Source);
 			exit(-1);
 		}
 		arg_Text = calloc(1,file_Stat.st_size+1);
@@ -557,7 +566,7 @@ int main(int argc,char* argv[])
 			if (fread(arg_Text,file_Stat.st_size,1,file_Fs) != 1)
 			{
 				fprintf(stderr,"%s: Could not read '%s'\n",
-				 progname,arg_Text);
+				 progname,arg_Source);
 				exit(-1);
 			}
 		}
@@ -565,10 +574,62 @@ int main(int argc,char* argv[])
 	}
 	else
 	{
-		arg_Text = get_string_resource(XSUBLIM_ARG_PHRASES,"Phrases");
-		if (arg_Text != NULL)
+		arg_Source = get_string_resource(XSUBLIM_ARG_PROGRAM,
+		 "Executable");
+		if (arg_Source != NULL)
 		{
-			arg_Text = strdup(arg_Text);
+			char* exe_Command = calloc(1,strlen(arg_Source)+10);
+			FILE* exe_Fs;
+
+			if (exe_Command == NULL)
+			{
+				fprintf(stderr,
+				 "%s: Could not allocate space for '%s'\n",
+				 progname,arg_Source);
+				exit(-1);
+			}
+			sprintf(exe_Command,"( %s ) 2>&1",arg_Source);
+
+			exe_Fs = popen(exe_Command,"r");
+			if (exe_Fs == NULL)
+			{
+				fprintf(stderr,"%s: Could not run '%s'\n",
+				 progname,arg_Source);
+				exit(-1);
+			}
+			arg_Text = calloc(1,XSUBLIM_PROGRAM_SIZE);
+			if (arg_Text != NULL)
+			{
+				if (fread(arg_Text,1,XSUBLIM_PROGRAM_SIZE,
+				 exe_Fs) <= 0)
+				{
+					fprintf(stderr,
+					 "%s: Could not read output of '%s'\n",
+					 progname,arg_Source);
+					exit(-1);
+				}
+				if (
+				 strstr(arg_Text,": not found") ||
+				 strstr(arg_Text,": Not found") ||
+				 strstr(arg_Text,": command not found") ||
+				 strstr(arg_Text,": Command not found"))
+				{
+					fprintf(stderr,
+					 "%s: Could not find '%s'\n",
+					 progname,arg_Source);
+					exit(-1);
+				}
+			}
+			fclose(exe_Fs);
+		}
+		else
+		{
+			arg_Text =
+			 get_string_resource(XSUBLIM_ARG_PHRASES,"Phrases");
+			if (arg_Text != NULL)
+			{
+				arg_Text = strdup(arg_Text);
+			}
 		}
 	}
 	if (arg_Text != NULL)

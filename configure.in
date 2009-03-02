@@ -2066,9 +2066,14 @@ GLE_LIBS=""
 
 if test "$with_gle" = yes; then
 
-  AC_CHECK_X_HEADER(GL/gutil.h, have_gle=yes, have_gle=no)
-  if test "$have_gle" = yes ; then
-    AC_CHECK_X_HEADER(GL/tube.h, have_gle=yes, have_gle=no)
+  AC_CHECK_X_HEADER(GL/gle.h, have_gle3=yes, have_gle3=no)
+  if test "$have_gle3" = yes ; then
+    have_gle=yes;
+  else
+    AC_CHECK_X_HEADER(GL/gutil.h, have_gle=yes, have_gle=no)
+    if test "$have_gle" = yes ; then
+      AC_CHECK_X_HEADER(GL/tube.h, have_gle=yes, have_gle=no)
+    fi
   fi
 
   if test "$have_gle" = yes ; then
@@ -2092,6 +2097,13 @@ if test "$with_gle" = yes; then
 #                   [have_gle=yes; gle_halfassed=no],
 #                   [], $GL_LIBS -lX11 -lXext -lm)
 
+    # As of GLE 3 this is in libgle, and has changed name to uview_direction!
+    # *sigh*
+    if test "$have_gle3" = yes ; then
+      AC_CHECK_X_LIB(gle, uview_direction, 
+                     [have_gle=yes; gle_halfassed=no],
+                    [], $GL_LIBS -lX11 -lXext -lm)
+    fi
     # if it wasn't in libgle, then look in libmatrix.
     if test "$have_gle" = no ; then
       AC_CHECK_X_LIB(matrix, uview_direction_d, 
@@ -2103,6 +2115,9 @@ if test "$with_gle" = yes; then
 
   if test "$have_gle" = yes ; then
     AC_DEFINE(HAVE_GLE)
+    if test "$have_gle3" = yes ; then
+      AC_DEFINE(HAVE_GLE3)
+    fi
   fi
 
 elif test "$with_gle" != no; then

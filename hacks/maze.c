@@ -1477,7 +1477,7 @@ solve_maze (void)                     /* solve it with graphical feedback */
 	    if(!dir)
 	      goto backtrack;
 	    
-	  found:
+	  found: ;
 	  }
 	else
 	  {

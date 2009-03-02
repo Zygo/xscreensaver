@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 3.24
-!                              03-Apr-200000
+!                              version 3.25
+!                              19-Jul-2000
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -248,6 +248,9 @@
 				bumps -root				    \n\
 				xteevee -root				    \n\
 				xspirograph -root			    \n\
+				nerverot -root				    \n\
+-	    "NerveRot (dense)"	nerverot -root -count 1000		    \n\
+-	    "NerveRot (thick)"	nerverot -root -count 64 -line-width 4	    \n\
   color: 			bubbles -root				    \n\
   default-n:			webcollage -root			    \n\
   default-n:  "WebCollage (whacked)"					      \
@@ -1071,6 +1074,11 @@ loss of vertical hold, and a test pattern.  By Greg Knauss.
 Simulates that pen-in-nested-plastic-gears toy from your childhood.     \
 By Rohit Singh.
 
+*hacks.nerverot.name: NerveRot
+*hacks.nerverot.documentation:                                          \
+Draws a rolling tube, composed of nervously vibrating squiggles.	\
+By Dan Bornstein.
+
 *hacks.webcollage.name: WebCollage
 *hacks.webcollage.documentation:					\
 This program makes collages out of random images pulled off of the	\
@@ -1268,6 +1276,5 @@ connection to the Internet.						\
 								    \n\n\
 By Scott Draves.  You can find it at <http://www.electricsheep.org/>.   \
 See that web site for configuration information.
-
 
 ! (xrdb prevention kludge: whole file) */
