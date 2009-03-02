@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1996 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992, 1996, 1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -92,7 +92,8 @@ hurm (Display *dpy, Window window)
 	  j++;
 	}
       XDrawPoints (dpy, window, draw_gc, points, j, CoordModeOrigin);
-      XSync (dpy, True);
+      XSync (dpy, False);
+      screenhack_handle_events (dpy);
     }
   sleep ( sleep_time );
 
@@ -100,7 +101,8 @@ hurm (Display *dpy, Window window)
 
   XClearWindow (dpy, window);
   if (got_color) XFreeColors (dpy, cmap, &color.pixel, 1, 0);
-  XSync (dpy, True);
+  XSync (dpy, False);
+  screenhack_handle_events (dpy);
   sleep (1);
 }
 

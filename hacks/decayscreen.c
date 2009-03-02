@@ -207,6 +207,7 @@ screenhack (Display *dpy, Window window)
       for (i = 0; i < 100; i++)
 	decay1 (dpy, window);
       XSync(dpy, False);
+      screenhack_handle_events (dpy);
       if (delay) usleep (delay);
     }
 }

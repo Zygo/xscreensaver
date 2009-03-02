@@ -157,18 +157,25 @@ double_pixmap(Display *dpy, GC gc, Visual *visual, int depth, Pixmap pixmap,
 static Bool
 bsod_sleep(Display *dpy, int seconds)
 {
-  XEvent event;
   int q = seconds * 4;
-  int mask = KeyPressMask|ButtonPressMask;
   do
     {
       XSync(dpy, False);
-      if (XCheckMaskEvent(dpy, mask, &event))
-	{
-	  while (XCheckMaskEvent(dpy, mask, &event))
-	    ;
-	  return True;
-	}
+      while (XPending (dpy))
+        {
+          XEvent event;
+          XNextEvent (dpy, &event);
+          if (event.xany.type == KeyPress)
+            {
+              KeySym keysym;
+              char c = 0;
+              XLookupString (&event.xkey, &c, 1, &keysym, 0);
+              if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+                return True;
+            }
+          screenhack_handle_event (dpy, &event);
+        }
+
       if (q > 0)
 	{
 	  q--;
@@ -1031,7 +1038,12 @@ screenhack (Display *dpy, Window window)
   if (delay < 3) delay = 3;
 
   if (!get_boolean_resource ("root", "Boolean"))
-    XSelectInput(dpy, window, KeyPressMask|ButtonPressMask);
+    {
+      XWindowAttributes xgwa;
+      XGetWindowAttributes (dpy, window, &xgwa);
+      XSelectInput (dpy, window,
+                    xgwa.your_event_mask | KeyPressMask | ButtonPressMask);
+    }
 
   while (1)
     {
@@ -1053,7 +1065,7 @@ screenhack (Display *dpy, Window window)
       if (loop > 100) j = -1;
       if (loop > 200) exit(-1);
       if (!did) continue;
-      XSync (dpy, True);
+      XSync (dpy, False);
       j = i;
       loop = 0;
     }

@@ -432,8 +432,8 @@ void reflect_draw(int k)
 			else {
 				int	x = xy_coo[k].x + cx + (lx * rsq / dist);
 				int	y = xy_coo[k].y + cy + (ly * rsq / dist);
-				if (x < 0 || x > xgwa.width ||
-					y < 0 || y > xgwa.height)
+				if (x < 0 || x >= xgwa.width ||
+					y < 0 || y >= xgwa.height)
 					XPutPixel( buffer_map, j, i, black_pixel );
 				else
 					XPutPixel( buffer_map, j, i,
@@ -592,7 +592,8 @@ void screenhack(Display *dpy, Window window)
 			draw(k);
 		}
 
-		XSync(dpy, True);
+		XSync(dpy, False);
+        screenhack_handle_events (dpy);
 		if (delay) usleep(delay);
 	}
 

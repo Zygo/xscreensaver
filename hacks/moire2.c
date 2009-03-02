@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -270,6 +270,7 @@ screenhack (Display *dpy, Window window)
 	  for (i = 0; i < color_shift; i++)
 	    {
 	      moire2 (dpy, window);
+              screenhack_handle_events (dpy);
 	      if (delay)
 		usleep(delay);
 	    }

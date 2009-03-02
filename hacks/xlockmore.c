@@ -328,6 +328,7 @@ xlockmore_screenhack (Display *dpy, Window window,
   do {
     hack_draw (&mi);
     XSync(dpy, False);
+    screenhack_handle_events (dpy);
     if (mi.pause)
       usleep(mi.pause);
     mi.pause = orig_pause;

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997
+/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -504,7 +504,8 @@ screenhack (Display *dpy, Window window)
     for (qn = q1; *qn; qn++)
       {
 	qix1 (dpy, window, *qn);
-	XSync (dpy, True);
+	XSync (dpy, False);
+        screenhack_handle_events (dpy);
 	if (delay) usleep (delay);
       }
 }

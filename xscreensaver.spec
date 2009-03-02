@@ -1,7 +1,7 @@
 Name: xscreensaver
 Summary: X screen saver and locker
-Vendor: Jamie Zawinski
-Version: 3.04
+Vendor: Jamie Zawinski <jwz@jwz.org>
+Version: 3.06
 Release: 1
 URL: http://www.jwz.org/xscreensaver/
 Source: xscreensaver-%{version}.tar.gz

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1995, 1996, 1997
+/* xscreensaver, Copyright (c) 1993, 1995, 1996, 1997, 1998
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -365,7 +365,7 @@ run_circles (Display *dpy, Window window)
 		 : (iterations & 1)))
     {
       XCopyPlane (dpy, buffer, window, copy_gc, 0, 0, width, height, 0, 0, 1);
-      XSync (dpy, True);
+      XSync (dpy, False);
       if (anim_p && done)
 	XFillRectangle (dpy, buffer, erase_gc, 0, 0, width, height);
     }
@@ -374,7 +374,7 @@ run_circles (Display *dpy, Window window)
   XCopyPlane (dpy, pixmap, window, copy_gc, 0,0,width,height,width,height, 1);
   if (buffer)
     XCopyPlane (dpy, buffer, window, copy_gc, 0,0,width,height,0,height, 1);
-  XSync (dpy, True);
+  XSync (dpy, False);
 #endif
 
   if (done)
@@ -446,5 +446,8 @@ screenhack (Display *dpy, Window window)
 {
   init_circles (dpy, window);
   while (1)
-    run_circles (dpy, window);
+    {
+      run_circles (dpy, window);
+      screenhack_handle_events (dpy);
+    }
 }

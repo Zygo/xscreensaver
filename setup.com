@@ -61,6 +61,7 @@ $ rotor		:== $'mydir'rotor
 $ sierpinski	:== $'mydir'sierpinski
 $ slidescreen	:== $'mydir'slidescreen
 $ slip		:== $'mydir'slip
+$ sonar		:== $'mydir'sonar
 $ sphere	:== $'mydir'sphere
 $ spiral	:== $'mydir'spiral
 $ starfish	:== $'mydir'starfish

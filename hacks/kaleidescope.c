@@ -444,9 +444,10 @@ screenhack (Display *dpy, Window window)
   while (1)
     {
      draw_objects ();
-     XSync (dpy, True);
+     XSync (dpy, False);
      if(g.delay) {
-       screenhack_usleep(g.delay);
+       screenhack_handle_events (dpy);
+       usleep(g.delay);
      }
      propogate_objects(); 
    }

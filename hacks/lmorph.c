@@ -507,6 +507,7 @@ screenhack(Display *disp, Window win)
     initLMorph();
     for (;;) {
 	animateLMorph();
-	screenhack_usleep(delay);
+        screenhack_handle_events (dpy);
+	usleep(delay);
     }
 }

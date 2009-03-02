@@ -214,6 +214,7 @@ void screenhack(Display *d, Window w)
 	}
       paint();
       XSync(dpy, False);
+      screenhack_handle_events (dpy);
       if (delay)
 	usleep(delay);
     }

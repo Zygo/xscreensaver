@@ -37,6 +37,7 @@
 #include <X11/CoreP.h>
 #include <X11/Shell.h>
 #include <X11/StringDefs.h>
+#include <X11/Xutil.h>
 
 #ifdef __sgi
 # include <X11/SGIScheme.h>	/* for SgiUseSchemes() */
@@ -167,6 +168,70 @@ extern void pre_merge_options (void);
 #endif
 
 
+static Atom XA_WM_PROTOCOLS, XA_WM_DELETE_WINDOW;
+
+/* Dead-trivial event handling: exits if "q" or "ESC" are typed.
+   Exit if the WM_PROTOCOLS WM_DELETE_WINDOW ClientMessage is received.
+ */
+void
+screenhack_handle_event (Display *dpy, XEvent *event)
+{
+  switch (event->xany.type)
+    {
+    case KeyPress:
+      {
+        KeySym keysym;
+        char c = 0;
+        XLookupString (&event->xkey, &c, 1, &keysym, 0);
+        if (c == 'q' ||
+            c == 'Q' ||
+            c == 3 ||	/* ^C */
+            c == 27)	/* ESC */
+          exit (0);
+      }
+    case ButtonPress:
+      XBell (dpy, 0);
+      break;
+    case ClientMessage:
+      {
+        if (event->xclient.message_type != XA_WM_PROTOCOLS)
+          {
+            char *s = XGetAtomName(dpy, event->xclient.message_type);
+            if (!s) s = "(null)";
+            fprintf (stderr, "%s: unknown ClientMessage %s received!\n",
+                     progname, s);
+          }
+        else if (event->xclient.data.l[0] != XA_WM_DELETE_WINDOW)
+          {
+            char *s1 = XGetAtomName(dpy, event->xclient.message_type);
+            char *s2 = XGetAtomName(dpy, event->xclient.data.l[0]);
+            if (!s1) s1 = "(null)";
+            if (!s2) s2 = "(null)";
+            fprintf (stderr, "%s: unknown ClientMessage %s[%s] received!\n",
+                     progname, s1, s2);
+          }
+        else
+          {
+            exit (0);
+          }
+      }
+      break;
+    }
+}
+
+
+void
+screenhack_handle_events (Display *dpy)
+{
+  while (XPending (dpy))
+    {
+      XEvent event;
+      XNextEvent (dpy, &event);
+      screenhack_handle_event (dpy, &event);
+    }
+}
+
+
 
 int
 main (int argc, char **argv)
@@ -208,12 +273,20 @@ main (int argc, char **argv)
   XtGetApplicationNameAndClass (dpy, &progname, &progclass);
   XSetErrorHandler (screenhack_ehandler);
 
+  XA_WM_PROTOCOLS = XInternAtom (dpy, "WM_PROTOCOLS", False);
+  XA_WM_DELETE_WINDOW = XInternAtom (dpy, "WM_DELETE_WINDOW", False);
+
   {
     char *v = (char *) strdup(strchr(screensaver_id, ' '));
-    char *s = (char *) strchr(v, ',');
-    *s = 0;
-    sprintf (version, "%s: from the XScreenSaver%s distribution.",
-	     progclass, v);
+    char *s1, *s2, *s3, *s4;
+    s1 = (char *) strchr(v,  ' '); s1++;
+    s2 = (char *) strchr(s1, ' ');
+    s3 = (char *) strchr(v,  '('); s3++;
+    s4 = (char *) strchr(s3, ')');
+    *s2 = 0;
+    *s4 = 0;
+    sprintf (version, "%s: from the XScreenSaver %s distribution (%s.)",
+	     progclass, s1, s3);
     free(v);
   }
 
@@ -359,6 +432,18 @@ main (int argc, char **argv)
 	}
 
       XtVaSetValues(toplevel, XtNtitle, version, 0);
+
+      /* For screenhack_handle_events(): select KeyPress, and
+         announce that we accept WM_DELETE_WINDOW. */
+      {
+        XWindowAttributes xgwa;
+        XGetWindowAttributes (dpy, window, &xgwa);
+        XSelectInput (dpy, window,
+                      xgwa.your_event_mask | KeyPressMask | ButtonPressMask);
+        XChangeProperty (dpy, window, XA_WM_PROTOCOLS, XA_ATOM, 32,
+                         PropModeReplace,
+                         (unsigned char *) &XA_WM_DELETE_WINDOW, 1);
+      }
     }
 
   if (!dont_clear)

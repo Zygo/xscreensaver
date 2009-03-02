@@ -458,8 +458,10 @@ void screenhack(Display *disp, Window win)
 	  delay = 0;
 	}
       else
-	XSync(disp,True);
+	XSync(disp, False);
       
+      screenhack_handle_events (disp);
+
       /* the delay to try to minimize seizures */
       usleep((delay*1000)); 
       count++;
@@ -488,7 +490,7 @@ static void scroll_area(Display *disp, Window win, int delay, int step_size)
   while(scrollcount_x <= scroll)
     {
       XCopyArea(disp, frame, win, agc,scrollcount_x+offset,scrollcount_y+offset, xgwa.width, xgwa.height, 0,0);
-      XSync(disp,True);
+      XSync(disp, False);
       scrollcount_x=scrollcount_x+step_size;
       scrollcount_y=scrollcount_y+step_size;
       usleep(1000*delay); 
@@ -496,7 +498,7 @@ static void scroll_area(Display *disp, Window win, int delay, int step_size)
   while(scrollcount_x >= 0)
     {
       XCopyArea(disp, frame, win, agc,scrollcount_x+offset,scrollcount_y+offset, xgwa.width, xgwa.height, 0,0);
-      XSync(disp,True);
+      XSync(disp, False);
       scrollcount_y=scrollcount_y+step_size;
       scrollcount_x=scrollcount_x-step_size;
       usleep(1000*delay); 
@@ -504,7 +506,7 @@ static void scroll_area(Display *disp, Window win, int delay, int step_size)
   while(scrollcount_y >= scroll)
     {
       XCopyArea(disp, frame, win, agc,scrollcount_x+offset,scrollcount_y+offset, xgwa.width, xgwa.height, 0,0);
-      XSync(disp,True);
+      XSync(disp, False);
       scrollcount_x=scrollcount_x-step_size;
       scrollcount_y=scrollcount_y-step_size;
       usleep(1000*delay); 
@@ -512,13 +514,13 @@ static void scroll_area(Display *disp, Window win, int delay, int step_size)
   while(scrollcount_y > 0)
     {
       XCopyArea(disp, frame, win, agc,scrollcount_x+offset,scrollcount_y+offset, xgwa.width, xgwa.height, 0,0);
-      XSync(disp,True);
+      XSync(disp, False);
       scrollcount_y=scrollcount_y-step_size;
       scrollcount_x=scrollcount_x+step_size;
       usleep(1000*delay); 
     }
   
-  XSync(disp,True);
+  XSync(disp, False);
   scrollcount_x=0;
   scrollcount_y=0;
   

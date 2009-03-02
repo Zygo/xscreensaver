@@ -77,6 +77,23 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.05:   * Oops, the "default-n" visual descriptor was broken;
+                        it was always installing a colormap if the
+                        `installColormap' preference was set, meaning that
+                        `xearth', `xv' and friends were using the wrong
+                        colors on 8-bit systems.
+                      * Turned off HAVE_PING in `sonar', since it compiles
+                        on some Linux systems, but not others of similar
+                        vintage...
+Changes since 3.04:   * Fixed an off-by-1 in `distort'.
+                      * Added `sonar' hack.
+                      * New version of `glplanet' (with stars.)
+                      * Made all hacks exit when you type `q' or `ESC' at them,
+                        and made them obey the WM_DELETE_WINDOW ClientMessage.
+                      * Fixed a nonfatal buffer overrun in lament (note:
+                        lament still doesn't work with MesaGL 3.0: it dies in
+                        lambda_textured_triangle1(), which is Mesa's bug, not
+                        mine.)
 Changes since 3.03:   * Added an `xscreensaver.spec' file, to make it easier
                         for other folks to generate RPMs.
                       * Made the password code work on HPUX in the situation

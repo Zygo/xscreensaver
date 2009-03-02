@@ -133,6 +133,7 @@ static void munchOnce (Display* dpy, Window w,
 	   same time (one for each value of x, surprisingly enough)
 	   */
 	XSync(dpy, False);
+        screenhack_handle_events (dpy);
 	if (delay) usleep(delay);
     }
 }
@@ -246,6 +247,7 @@ screenhack (dpy, w) Display *dpy; Window w;
 		  (randflags & GRAV)
 		  );
 	
+        screenhack_handle_events (dpy);
 	if (hold) usleep(hold);
 	
 	if (clear && ++n >= clear) {

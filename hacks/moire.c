@@ -230,7 +230,8 @@ screenhack (Display *dpy, Window window)
     {
       init_moire (dpy, window);
       moire (dpy, window, offset, colors, ncolors);
-      XSync (dpy, True);
+      XSync (dpy, False);
+      screenhack_handle_events (dpy);
       if (delay)
 	sleep(delay);
     }

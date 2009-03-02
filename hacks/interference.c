@@ -450,7 +450,7 @@ void screenhack(Display *dpy, Window win)
   inter_init(dpy, win, &c);
   while(1) {
     do_inter(&c); 
-    if(delay) 
-      usleep(delay);
+    screenhack_handle_events (dpy);
+    if(delay) usleep(delay);
   }
 }

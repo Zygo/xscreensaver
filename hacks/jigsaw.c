@@ -567,10 +567,12 @@ screenhack (Display *dpy, Window window)
       while (!done())
 	{
 	  unshuffle(dpy, window);
-	  XSync (dpy, True);
+	  XSync (dpy, False);
+          screenhack_handle_events (dpy);
 	  if (delay) usleep (delay);
 	}
 
+      screenhack_handle_events (dpy);
       if (delay2)
 	usleep (delay2 * 1000000);
 

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997 
+/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1996, 1997, 1998 
  * Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -197,7 +197,7 @@ init_slide (Display *dpy, Window window)
       XFillRectangle (dpy, d, gc, 0, bitmap_h - yoff, bitmap_w, yoff);
     }
 
-  XSync (dpy, True);
+  XSync (dpy, False);
   if (delay2) usleep (delay2 * 2);
  for (i = 0; i < grid_size; i += pix_inc)
    {
@@ -228,7 +228,7 @@ init_slide (Display *dpy, Window window)
      points[2].y = points[1].y;
      XFillPolygon (dpy, window, gc, points, 3, Convex, CoordModeOrigin);
 
-     XSync (dpy, True);
+     XSync (dpy, False);
      if (delay) usleep (delay);
    }
 
@@ -309,7 +309,7 @@ slide1 (Display *dpy, Window window)
 	 break;
        }
 
-     XSync (dpy, True);
+     XSync (dpy, False);
      if (delay) usleep (delay);
    }
  switch (dir)
@@ -357,6 +357,7 @@ screenhack (Display *dpy, Window window)
   while (1)
     {
       slide1 (dpy, window);
+      screenhack_handle_events (dpy);
       if (delay2) usleep (delay2);
     }
 }

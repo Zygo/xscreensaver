@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "16-Nov-98 (3.04)" "X Version 11"
+.TH XScreenSaver 1 "22-Nov-98 (3.06)" "X Version 11"
 .SH NAME
 xscreensaver-command - control a running xscreensaver process
 .SH SYNOPSIS

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1995, 1996
+/* xscreensaver, Copyright (c) 1993, 1995, 1996, 1998
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -167,7 +167,7 @@ recurse (double x, double y, int l, Display *dpy, Window win)
 	      XDrawPoints (dpy, win, gc, points, num_points, CoordModeOrigin);
 	      num_points = 0;
 	      /* if (delay) usleep (delay); */
-	      /* XSync (dpy, True); */
+	      /* XSync (dpy, False); */
 	    }
 	}
     }
@@ -356,7 +356,7 @@ flame (Display *dpy, Window window)
   total_points = 0;
   (void) recurse (0.0, 0.0, 0, dpy, window);
   XDrawPoints (dpy, window, gc, points, num_points, CoordModeOrigin);
-  XSync (dpy, True);
+  XSync (dpy, False);
   if (delay) usleep (delay);
 }
 
@@ -405,5 +405,8 @@ screenhack (Display *dpy, Window window)
 {
   init_flame (dpy, window);
   while (1)
-    flame (dpy, window);
+    {
+      flame (dpy, window);
+      screenhack_handle_events (dpy);
+    }
 }

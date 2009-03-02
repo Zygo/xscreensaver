@@ -20,6 +20,8 @@ static const char sccsid[] = "@(#)plate.c	4.07 97/11/24 xlockmore";
  * other special, indirect and consequential damages.
  *
  * Revision History:
+ * 9-Oct-98:  dek@cgl.ucsf.edu  Added stars.
+ *
  * 8-Oct-98:  jwz@jwz.org   Made the 512x512x1 xearth image be built in.
  *                          Made it possible to load XPM or XBM files.
  *                          Made the planet bounce and roll around.
@@ -27,13 +29,9 @@ static const char sccsid[] = "@(#)plate.c	4.07 97/11/24 xlockmore";
  * 8-Oct-98: Released initial version of "glplanet"
  * (David Konerding, dek@cgl.ucsf.edu)
  *
- * TODO:
- * 1) stars
- * 3) better earth image
- * 4) "exploding" planet mode-- the surface will expand and explode
- * 5) Fix bug with annoying triangles moving on surface
- *
- *
+ * BUGS:
+ * -bounce is broken
+ * 
  *   For even more spectacular results, grab the images from the "SSysten"
  *   package (http://www.msu.edu/user/kamelkev/) and do this:
  *
@@ -68,7 +66,7 @@ static const char sccsid[] = "@(#)plate.c	4.07 97/11/24 xlockmore";
 					"*wireframe:		False	\n"	\
 					"*light:			True	\n"	\
 					"*texture:			True	\n" \
-					"*stipple:			False	\n" \
+					"*stars:			True	\n" \
 					"*image:			BUILTIN	\n" \
 					"*imageForeground:	Green	\n" \
 					"*imageBackground:	Blue	\n"
@@ -102,8 +100,8 @@ static const char sccsid[] = "@(#)plate.c	4.07 97/11/24 xlockmore";
 #define DEF_ROLL    "True"
 #define DEF_BOUNCE  "True"
 #define DEF_TEXTURE "True"
+#define DEF_STARS "True"
 #define DEF_LIGHT   "True"
-#define DEF_STIPPLE "False"
 #define DEF_IMAGE   "BUILTIN"
 
 #undef countof
@@ -113,8 +111,8 @@ static int do_rotate;
 static int do_roll;
 static int do_bounce;
 static int do_texture;
+static int do_stars;
 static int do_light;
-static int do_stipple;
 static char *which_image;
 static XrmOptionDescRec opts[] = {
   {"-rotate",  ".glplanet.rotate",  XrmoptionNoArg, (caddr_t) "true" },
@@ -125,10 +123,10 @@ static XrmOptionDescRec opts[] = {
   {"+bounce",  ".glplanet.bounce",  XrmoptionNoArg, (caddr_t) "false" },
   {"-texture", ".glplanet.texture", XrmoptionNoArg, (caddr_t) "true" },
   {"+texture", ".glplanet.texture", XrmoptionNoArg, (caddr_t) "false" },
+  {"-stars",   ".glplanet.stars",   XrmoptionNoArg, (caddr_t) "true" },
+  {"+stars",   ".glplanet.stars",   XrmoptionNoArg, (caddr_t) "false" },
   {"-light",   ".glplanet.light",   XrmoptionNoArg, (caddr_t) "true" },
   {"+light",   ".glplanet.light",   XrmoptionNoArg, (caddr_t) "false" },
-  {"-stipple", ".glplanet.stipple", XrmoptionNoArg, (caddr_t) "true" },
-  {"+stipple", ".glplanet.stipple", XrmoptionNoArg, (caddr_t) "false" },
   {"-image",   ".glplanet.image",  XrmoptionSepArg, (caddr_t) 0 },
 };
 
@@ -137,8 +135,8 @@ static argtype vars[] = {
   {(caddr_t *) &do_roll,     "roll",    "Roll",    DEF_ROLL,    t_Bool},
   {(caddr_t *) &do_bounce,   "bounce",  "Bounce",  DEF_BOUNCE,  t_Bool},
   {(caddr_t *) &do_texture,  "texture", "Texture", DEF_TEXTURE, t_Bool},
+  {(caddr_t *) &do_stars,  "stars", "Stars", DEF_STARS, t_Bool},
   {(caddr_t *) &do_light,    "light",   "Light",   DEF_LIGHT,   t_Bool},
-  {(caddr_t *) &do_stipple,  "stipple", "Stipple", DEF_STIPPLE, t_Bool},
   {(caddr_t *) &which_image, "image",   "Image",   DEF_IMAGE,   t_String},
 };
 
@@ -162,32 +160,23 @@ ModStruct   planet_description =
  * at the expense of rendering speed
  */
 
-#define SLICES 25
-#define STACKS 25
-#define NUM_PLATES (STACKS * (SLICES+1))
+#define NUM_STARS 1000
+#define SLICES 15
+#define STACKS 15
 
 /* radius of the sphere- fairly arbitrary */
-#define RADIUS 5.
+#define RADIUS 4
+
+/* distance away from the sphere model */
+#define DIST 40
 
 
-
-/*-
- * structure for holding the data for an individual plate.
- * RotationRate, Angle, Vector, Translation and Color
- * are not currently used, but may be used in the future
- */
-typedef struct {
-  GLfloat RotationRate;
-  GLfloat Angle[4];
-  GLfloat Vector[3];
-  GLfloat Translation[3];
-  GLfloat Color[3];
-  GLuint platelist;
-} plate;
 
 /* structure for holding the planet data */
 typedef struct {
-  plate plates[NUM_PLATES];
+  GLuint platelist;
+  GLuint starlist;
+  int screen_width, screen_height;
   GLXContext *glx_context;
   Window window;
 
@@ -203,6 +192,21 @@ typedef struct {
 
 
 static planetstruct *planets = NULL;
+
+
+static inline void
+normalize(GLfloat v[3])
+{
+	GLfloat     d = (GLfloat) sqrt((double) (v[0] * v[0] + v[1] * v[1] + v[2] * v[2]));
+
+	if (d != 0) {
+		v[0] /= d;
+		v[1] /= d;
+		v[2] /= d;
+	} else {
+		v[0] = v[1] = v[2] = 0;
+	}
+}
 
 
 /* Set up and enable texturing on our object */
@@ -233,7 +237,6 @@ setup_xbm_texture (char *bits, int width, int height,
 		*out++ = (word & 0x0000FF);
 	  }
 
-  glEnable(GL_TEXTURE_2D);
   glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0,
 			   GL_RGB, GL_UNSIGNED_BYTE, data);
 
@@ -242,8 +245,8 @@ setup_xbm_texture (char *bits, int width, int height,
   glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
 
@@ -263,7 +266,6 @@ setup_file_texture (ModeInfo *mi, char *filename)
 	  {
 		XImage *image = xpm_to_ximage (dpy, visual, cmap, xpm_data);
 
-		glEnable(GL_TEXTURE_2D);
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 					 image->width, image->height, 0,
 					 GL_RGBA, GL_UNSIGNED_BYTE, image->data);
@@ -275,8 +277,8 @@ setup_file_texture (ModeInfo *mi, char *filename)
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 		return;
 	  }
 	  break;
@@ -354,52 +356,10 @@ setup_texture(ModeInfo * mi)
 static void
 setup_light(void)
 {
-
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_AUTO_NORMAL);
-  glEnable(GL_NORMALIZE);
-  glShadeModel(GL_SMOOTH);
-
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-  glEnable(GL_LINE_SMOOTH);
+  /* set a number of parameters which make the scene look much nicer */
   glEnable(GL_BLEND);
-
-  glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
-
-  glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-  glEnable(GL_COLOR_MATERIAL);
-
-}
-
-
-/* a stipple pattern */
-static GLubyte halftone[] =
-{
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-  0xAA, 0xAA, 0xAA, 0xAA, 0x55, 0x55, 0x55, 0x55,
-};
-
-/* Set up and enable stippling */
-static void
-setup_stipple(void)
-{
-  glEnable(GL_POLYGON_STIPPLE);
-  glPolygonStipple(halftone);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  glShadeModel(GL_SMOOTH);
 }
 
 
@@ -413,14 +373,72 @@ setup_face(void)
 
 
 /* Function for determining points on the surface of the sphere */
-void ParametricSphere(float theta, float rho, float *vector)
+static void inline ParametricSphere(float theta, float rho, GLfloat *vector)
 {
-    vector[0] = -sin(theta) * sin(rho);
-    vector[1] = cos(theta) * sin(rho);
-    vector[2] = cos(rho);
+  vector[0] = -sin(theta) * sin(rho);
+  vector[1] = cos(theta) * sin(rho);
+  vector[2] = cos(rho);
+
+#if DO_HELIX
+  vector[0] = -(1- cos(theta)) * cos(rho); 
+  vector[1] = -(1- cos(theta)) * sin(rho); 
+  vector[2] = -(sin(theta) + rho); 
+#endif /* DO_HELIX */
+
 	return;
 }
 
+
+/* lame way to generate some random stars */
+void generate_stars(int width, int height)
+{
+  int i;
+/*  GLfloat size_range[2], size;*/
+  GLfloat x, y;
+
+  planetstruct *gp = &planets[MI_SCREEN(mi)];
+  
+/*    glGetFloatv(GL_POINT_SIZE_RANGE, size_range); */
+  
+/*    printf("size range: %f\t%f\n", size_range[0], size_range[1]); */
+  gp->starlist = glGenLists(1);
+  glNewList(gp->starlist, GL_COMPILE);
+
+  /* this hackery makes the viewport map one-to-one with Vertex arguments */
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluOrtho2D(0, width, 0, height);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  /* disable depth testing for the stars, so they don't obscure the planet */
+  glDisable(GL_DEPTH_TEST);
+  glEnable(GL_POINT_SMOOTH);
+  glEnable(GL_BLEND);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  
+  glBegin(GL_POINTS);
+  for(i = 0 ; i < NUM_STARS ; i++)
+	{
+/*   	  size = (drand48()+size_range[0]) * size_range[1]/2.; */
+/*    glPointSize(size); */
+	  x = drand48()*width;
+	  y = drand48()*height;
+	  glVertex2f(x,y);
+	}
+  glEnd();
+
+  /* return to original PROJECT and MODELVIEW */
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+  glMatrixMode(GL_MODELVIEW);
+
+
+  glEndList();
+
+}
 
 /* Initialization function for screen saver */
 static void
@@ -428,133 +446,121 @@ pinit(ModeInfo * mi)
 {
   Bool wire = MI_IS_WIREFRAME(mi);
   planetstruct *gp = &planets[MI_SCREEN(mi)];
-  int i, j, list, dllist;
+  int i, j;
   int stacks=STACKS, slices=SLICES;
   float radius=RADIUS;
 
   float drho, dtheta;
   float rho, theta;
-  float vector[3];
-  float ds, dt, t, s;;
+  GLfloat vector[3];
+  GLfloat ds, dt, t, s;;
 
-  if (wire)
+  if (wire) {
+	glEnable(GL_LINE_SMOOTH);
 	do_texture = False;
+  }
 
   /* turn on various options we like */
   if (do_texture)
 	setup_texture(mi);
   if (do_light)
 	setup_light();
-  if (do_stipple)
-	setup_stipple();
 
   setup_face();
 
-  dllist=glGenLists(NUM_PLATES);
+  if (do_stars) {
+	glEnable(GL_POINT_SMOOTH);
+	generate_stars(MI_WIDTH(mi), MI_HEIGHT(mi));
+  }
 
-  drho = M_PI / stacks;
-  dtheta = 2.0 * M_PI / slices;
-  ds = 1.0 / slices;
-  dt = 1.0 / stacks;
-  t = 0.0 ;
-  
 
   /*-
-   * Generate a huge sphere with quadrilaterals.
-   * Each quad is stored in its own display list; this is so we can
-   * move the quads around later (not yet done).
+   * Generate a sphere with quadrilaterals.
    * Quad vertices are determined using a parametric sphere function.
    * For fun, you could generate practically any parameteric surface and
    * map an image onto it. 
    */
 
-  list = 0;
+  drho = M_PI / stacks;
+  dtheta = 2.0 * M_PI / slices;
+  ds = 1.0 / slices;
+  dt = 1.0 / stacks;
+  
+
+  gp->platelist=glGenLists(1);
+  glNewList(gp->platelist, GL_COMPILE);
+
+  glColor3f(1,1,1);
+  glBegin( wire ? GL_LINE_LOOP : GL_QUADS );
+
+  t = 0.0;
   for(i=0; i<stacks; i++) {
 	rho = i * drho;
 	s = 0.0;
-	for(j=0; j<slices+1; j++) {
+	for(j=0; j<slices; j++) {
 	  theta = j * dtheta;
 
-	  gp->plates[i].Translation[0] = 0.;
-	  gp->plates[i].Translation[1] = 0.;
-	  gp->plates[i].Translation[2] = 0.;
-
-	  gp->plates[i].RotationRate = 0.;
-	  gp->plates[i].Angle[0] = 0.;
-	  gp->plates[i].Angle[1] = 0.;
-	  gp->plates[i].Angle[2] = 0.;
-	  gp->plates[i].Angle[3] = 0.;
-
-	  gp->plates[i].Color[0] = 1.;
-	  gp->plates[i].Color[1] = 1.;
-	  gp->plates[i].Color[2] = 1.;
-
-	  gp->plates[list].platelist = dllist+list;
-	  glNewList(gp->plates[list].platelist, GL_COMPILE);
-	  glBegin( wire ? GL_LINE_LOOP : GL_QUADS );
-
-	  glColor3f(gp->plates[i].Color[0], gp->plates[i].Color[1], gp->plates[i].Color[2]);
 
 	  glTexCoord2f(s,t);
 	  ParametricSphere(theta, rho, vector);
+	  normalize(vector);
 	  glNormal3fv(vector);
+	  ParametricSphere(theta, rho, vector);
 	  glVertex3f( vector[0]*radius, vector[1]*radius, vector[2]*radius );
 
 	  glTexCoord2f(s,t+dt);
 	  ParametricSphere(theta, rho+drho, vector);
+	  normalize(vector);
 	  glNormal3fv(vector);
+	  ParametricSphere(theta, rho+drho, vector);
 	  glVertex3f( vector[0]*radius, vector[1]*radius, vector[2]*radius );
 
 	  glTexCoord2f(s+ds,t+dt);
 	  ParametricSphere(theta + dtheta, rho+drho, vector);
+	  normalize(vector);
 	  glNormal3fv(vector);
+	  ParametricSphere(theta + dtheta, rho+drho, vector);
 	  glVertex3f( vector[0]*radius, vector[1]*radius, vector[2]*radius );
 
 	  glTexCoord2f(s+ds, t);
 	  ParametricSphere(theta + dtheta, rho, vector);
+	  normalize(vector);
 	  glNormal3fv(vector);
+	  ParametricSphere(theta + dtheta, rho, vector);
 	  glVertex3f( vector[0]*radius, vector[1]*radius, vector[2]*radius );
 
-	  glEnd();
 	  s = s + ds;
 
-	  glEndList();
-
-	  list++;
 	}
 	t = t + dt;
   }
+  glEnd();
+  glEndList();
 
 
  }
 
 static void
-draw(ModeInfo * mi)
+draw_sphere(ModeInfo * mi)
 {
-  int i;
   planetstruct *gp = &planets[MI_SCREEN(mi)];
 
-  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  glEnable(GL_DEPTH_TEST);
 
-  for (i=0; i < NUM_PLATES; i++) {
-	glPushMatrix();
-	/* currently, the angle and translation are 0, but later this can
-	 * help us move the surface around */
-#if 0
-	glRotatef(gp->plates[i].Angle[0],
-			  gp->plates[i].Angle[1],
-			  gp->plates[i].Angle[2],
-			  gp->plates[i].Angle[3]); 
-	glTranslatef(gp->plates[i].Translation[0],
-				 gp->plates[i].Translation[1],
-				 gp->plates[i].Translation[2]);
-#endif
-	glCallList(gp->plates[i].platelist);
-	glPopMatrix();
-#if 0
-	gp->plates[i].Angle[0] += gp->plates[i].RotationRate;
-#endif
-  }
+  /* turn on the various attributes for making the sphere look nice */
+  if (do_texture)
+	glEnable(GL_TEXTURE_2D);
+
+  if (do_light)
+	{
+	  glEnable(GL_LIGHTING);
+	  glEnable(GL_LIGHT0);
+	  glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+	  glEnable(GL_COLOR_MATERIAL);
+	}
+
+  glCallList(gp->platelist);
+
 }
 
 
@@ -567,7 +573,7 @@ pick_velocity (ModeInfo * mi)
 
   gp->box_width =  15.0;
   gp->box_height = 15.0;
-  gp->box_depth =  60.0;
+  gp->box_depth =  5.0;
 
   gp->tx = 0.0;
   gp->ty = 0.0;
@@ -633,7 +639,6 @@ rotate_and_move (ModeInfo * mi)
 
 
 /* Standard reshape function */
-#define DIST 40
 static void
 reshape(int width, int height)
 {
@@ -652,9 +657,6 @@ reshape(int width, int height)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glTranslatef(0.0, 0.0, -DIST);
-  /* some messiness for orienting the earth normally */
-  glRotatef(90,0,0,1);
-  glRotatef(90,0,1,0);
   glLightfv(GL_LIGHT0, GL_POSITION, light);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -727,18 +729,44 @@ draw_planet(ModeInfo * mi)
 	return;
 
   glDrawBuffer(GL_BACK);
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glXMakeCurrent(display, window, *(gp->glx_context));
 
+
+  if (do_stars) {
+	/* protect our modelview matrix and attributes */
+	glPushMatrix();
+	glPushAttrib(GL_ALL_ATTRIB_BITS);
+	{
+	  glColor3f(1,1,1);
+	  /* draw the star field. */
+	  glCallList(gp->starlist);
+
+	}
+	glPopMatrix();
+	glPopAttrib();
+  }
+
+  /* protect our modelview matrix and attributes */
   glPushMatrix();
+  glPushAttrib(GL_ALL_ATTRIB_BITS);
   {
+	/* this pair of rotations seem to be necessary to orient the earth correctly */
+	glRotatef(90,0,0,1);
+	glRotatef(90,0,1,0);
+
 	glTranslatef(gp->xpos, gp->ypos, gp->zpos);
 	glRotatef(gp->tx, 1, 0, 0);
 	glRotatef(gp->ty, 0, 1, 0);
 	glRotatef(gp->tz, 0, 0, 1);
-	draw(mi);
+	/* draw the sphere */
+	draw_sphere(mi);
   }
   glPopMatrix();
+  glPopAttrib();
+
+
 
   glFinish();
   glXSwapBuffers(display, window);
@@ -749,7 +777,6 @@ draw_planet(ModeInfo * mi)
 void
 release_planet(ModeInfo * mi)
 {
-  int i;
   if (planets != NULL) {
 	int         screen;
 
@@ -760,10 +787,10 @@ release_planet(ModeInfo * mi)
 		/* Display lists MUST be freed while their glXContext is current. */
 		glXMakeCurrent(MI_DISPLAY(mi), gp->window, *(gp->glx_context));
 
-		for (i=0; i < NUM_PLATES; i++) {
-		  if (glIsList(gp->plates[i].platelist))
-			glDeleteLists(gp->plates[i].platelist, 1);
-		}
+		if (glIsList(gp->platelist))
+		  glDeleteLists(gp->platelist, 1);
+		if (glIsList(gp->starlist))
+		  glDeleteLists(gp->starlist, 1);
 	  }
 	}
 	(void) free((void *) planets);

@@ -171,7 +171,7 @@ screenhack (Display *dpy, Window window)
 			      hspace, xgwa.height, False);
 		  y--;
 		  lines--;
-		  XSync (dpy, True);
+		  XSync (dpy, False);
 		  if (delay) usleep (delay * 10);
 		}
 	      if (y < 0) y = 0;
@@ -238,7 +238,7 @@ screenhack (Display *dpy, Window window)
 	    {
 	      x--;
 	      s--;
-	      XSync (dpy, True);
+	      XSync (dpy, False);
 	      if (delay) usleep (0xFFFF & (delay + (random() % (delay * 10))));
 	    }
 	}
@@ -306,7 +306,7 @@ screenhack (Display *dpy, Window window)
 	  s = source;
 	}
 
-      XSync (dpy, True);
+      XSync (dpy, False);
       if (delay)
 	{
 	  usleep (delay);
@@ -340,7 +340,7 @@ screenhack (Display *dpy, Window window)
 		  if (x >= columns) x = 0, y++;
 		  n1++;
 		}
-	      XSync (dpy, True);
+	      XSync (dpy, False);
 	      usleep (5000000);
 	      while (*n2)
 		{
@@ -353,9 +353,10 @@ screenhack (Display *dpy, Window window)
 		  n2++;
 		}
 	      y++;
-	      XSync (dpy, True);
+	      XSync (dpy, False);
 	      usleep (500000);
 	    }
 	}
+      screenhack_handle_events (dpy);
     }
 }

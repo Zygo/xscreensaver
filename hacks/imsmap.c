@@ -439,14 +439,15 @@ draw_map (Display *dpy, Window window)
       xstep = xnextStep;
       ystep = ynextStep;
       if (!mono_p)
-	XSync (dpy, True);
+	XSync (dpy, False);
+      screenhack_handle_events (dpy);
     }
   if (mono_p)
     /* in mono-mode, we do all the drawing at the end */
     floyd_steinberg (dpy, window);
   
   free (cell);
-  XSync (dpy, True);
+  XSync (dpy, False);
 }
 
 
@@ -493,10 +494,14 @@ screenhack (Display *dpy, Window window)
 		    rotate_colors (dpy, cmap, colors, ncolors,
 				   cycle_direction);
 		    if (cycle_delay) usleep(cycle_delay);
+                    screenhack_handle_events (dpy);
 		  }
 	      }
 	    else
-	      sleep (delay);
+              {
+                screenhack_handle_events (dpy);
+                sleep (delay);
+              }
 	  }
       }
 }

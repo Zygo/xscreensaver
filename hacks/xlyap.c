@@ -583,6 +583,9 @@ main_event(void)
 	    case ButtonRelease:
     EndRubberBand(canvas, &rubber_data, &event);
 	  break;
+            default: 
+    screenhack_handle_event (dpy, &event);
+	  break;
 	    }
 	}
 }

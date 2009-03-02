@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -133,7 +133,8 @@ screenhack (Display *dpy, Window window)
       XFillRectangle(dpy, window, bgc, 0, 0, xgwa.width, xgwa.height);
       deco (dpy, window, xgwa.colormap, fgc, bgc,
 	    0, 0, xgwa.width, xgwa.height, 0);
-      XSync (dpy, True);
+      XSync (dpy, False);
+      screenhack_handle_events (dpy);
 
       if (!delay) continue;
       if (!writable)
@@ -144,6 +145,8 @@ screenhack (Display *dpy, Window window)
 	  while (start - delay < time((time_t) 0))
 	    {
 	      rotate_colors (dpy, xgwa.colormap, colors, ncolors, 1);
+              XSync (dpy, False);
+              screenhack_handle_events (dpy);
 	      if (cycle_delay)
 		usleep (cycle_delay);
 	    }

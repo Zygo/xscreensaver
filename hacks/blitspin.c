@@ -299,6 +299,7 @@ init (void)
 
   display (self);
   XSync(dpy, False);
+  screenhack_handle_events (dpy);
 }
 
 static void
@@ -326,7 +327,8 @@ display (Pixmap pixmap)
 		  ((xgwa.width-size)>>1)-1, ((xgwa.height-size)>>1)-1,
 		  size+2, size+2);
 */
-  XSync (dpy, True);
+  XSync (dpy, False);
+  screenhack_handle_events (dpy);
 }
 
 
@@ -360,6 +362,7 @@ screenhack (Display *d, Window w)
   while (1)
     {
       rotate ();
+      screenhack_handle_events (d);
       if (delay2) usleep (delay2);
     }
 }

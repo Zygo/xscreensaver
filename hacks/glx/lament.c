@@ -565,7 +565,7 @@ star(ModeInfo *mi, Bool top, Bool wire)
 #endif /* HAVE_GLBINDTEXTURE */
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, interior_color);
 
-  i = countof(points) - 3;
+  i = countof(points) - 9;
   do_normal(points[i+0][0], points[i+0][1], 0,
 	    points[i+4][0], points[i+4][1], 0,
 	    points[i+8][0], points[i+8][1], 0);

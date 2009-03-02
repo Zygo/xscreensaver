@@ -713,7 +713,8 @@ screenhack (Display *d, Window w)
   while (1)
     {
       next_fn();
-      XSync (dpy, True);
+      XSync (dpy, False);
+      screenhack_handle_events (dpy);
       usleep (interval * 1000);
     }
 }

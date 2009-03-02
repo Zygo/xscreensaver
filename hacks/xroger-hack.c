@@ -73,7 +73,8 @@ screenhack (dpy, window)
 
 
       skull (dpy, window, draw_gc, erase_gc, x, y, ww, hh);
-      XSync (dpy, True);
+      XSync (dpy, False);
+      screenhack_handle_events (dpy);
       start_time = time ((time_t *) 0);
       if (mono_p)
 	sleep (delay);

@@ -276,7 +276,8 @@ fade_foreground (Display *dpy, Colormap cmap,
       inbetween.blue  = from.blue  + (to.blue  - from.blue)  * i / steps ;
       XStoreColor (dpy, cmap, &inbetween);
       /* If we don't sync, these can bunch up */
-      XSync(dpy, 0);
+      XSync(dpy, False);
+      screenhack_handle_events (dpy);
       usleep(udelay);
     }
 }
@@ -317,7 +318,7 @@ pedal (Display *dpy, Window window)
        XColor color;
        hsv_to_rgb (random()%360, 1.0, 1.0,
 		   &color.red, &color.green, &color.blue);
-       XSync(dpy, 0);
+       XSync(dpy, False);
        if (fade_p)
 	 {
 	   foreground.red = color.red;
@@ -335,7 +336,7 @@ pedal (Display *dpy, Window window)
 	   foreground.blue = color.blue;
 	   foreground.pixel = color.pixel;
 	 }
-       XSync(dpy, 0);
+       XSync(dpy, False);
      }
 
     /* Fade in by bringing the foreground back from background */
@@ -374,7 +375,8 @@ screenhack (Display *dpy, Window window)
     init_pedal (dpy, window);
     for (;;) {
 	pedal (dpy, window);
-	XSync(dpy, 0);
+	XSync(dpy, False);
+        screenhack_handle_events (dpy);
 	if (delay) sleep (delay);
     }
 }

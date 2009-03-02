@@ -528,7 +528,8 @@ screenhack (Display *dpy, Window window)
   while (1)
     {
       run_goop (dpy, window, g);
-      XSync (dpy, True);
+      XSync (dpy, False);
+      screenhack_handle_events (dpy);
       if (delay) usleep (delay);
     }
 }

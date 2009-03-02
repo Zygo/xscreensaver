@@ -94,5 +94,7 @@ extern XrmOptionDescRec options [];
 extern char *defaults [];
 
 extern void screenhack (Display*,Window);
+extern void screenhack_handle_event (Display*, XEvent*);
+extern void screenhack_handle_events (Display*);
 
 #endif /* __SCREENHACK_H__ */

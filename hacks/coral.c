@@ -170,7 +170,7 @@ coral(Display *dpy, Window window)
 		  XDrawPoints(dpy, window, draw_gc, pointbuf, npoints,
 			      CoordModeOrigin);
 		  npoints = 0;
-		  XSync(dpy, True);
+		  XSync(dpy, False);
 		}
 
 		if (color) {
@@ -181,7 +181,7 @@ coral(Display *dpy, Window window)
                 }
 
                 if( 0 == nwalkers ) {
-                    XSync(dpy, True);
+                    XSync(dpy, False);
 		    free(pointbuf);
                     return;
                 }
@@ -217,8 +217,9 @@ coral(Display *dpy, Window window)
 	    XDrawPoints(dpy, window, draw_gc, pointbuf, npoints,
 			CoordModeOrigin);
 	    npoints = 0;
-	    XSync(dpy, True);
+	    XSync(dpy, False);
 	  }
+          screenhack_handle_events (dpy);
 	  usleep(delay2);
 	}
     }
@@ -253,6 +254,7 @@ Window window;
     while( 1 ) {
         init_coral(dpy, window);
         coral(dpy, window);
+        screenhack_handle_events (dpy);
         if( delay ) sleep(delay);
 	erase_full_window(dpy, window);
     }

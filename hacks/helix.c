@@ -268,13 +268,16 @@ random_helix_or_trig (Display *dpy, Window window)
   else
     random_trig(dpy, window, &color, &free_color);
 
-  XSync (dpy, True);
+  XSync (dpy, False);
+  screenhack_handle_events (dpy);
   sleep ( sleep_time );
 
+  screenhack_handle_events (dpy);
   erase_full_window(dpy, window);
 
   if (free_color) XFreeColors (dpy, cmap, &color.pixel, 1, 0);
-  XSync (dpy, True);
+  XSync (dpy, False);
+  screenhack_handle_events (dpy);
   sleep (1);
 }
 

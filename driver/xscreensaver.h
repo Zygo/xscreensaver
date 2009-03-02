@@ -176,9 +176,11 @@ struct saver_screen_info {
 				   destroy and recreate it on different
 				   visuals. */
   Colormap cmap;		/* The colormap that goes with the window. */
-  Bool install_cmap_p;		/* whether we should use our own colormap.
-				   This can be overridden on a per-hack basis.
-				 */
+  Bool install_cmap_p;		/* Whether this screen should have its own
+                                   colormap installed, for whichever of several
+                                   reasons.  This is definitive (even a false
+                                   value here overrides prefs->install_cmap_p.)
+                                 */
   Visual *current_visual;	/* The visual of the window. */
   Visual *default_visual;	/* visual to use when none other specified */
   int current_depth;		/* How deep the visual (and the window) are. */

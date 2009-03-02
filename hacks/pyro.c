@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1994, 1996
+/* xscreensaver, Copyright (c) 1992, 1994, 1996, 1998
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -164,7 +164,8 @@ pyro (Display *dpy, Window window, Colormap cmap)
       launch (xlim, ylim, g, dpy, cmap);
     }
 
-  XSync (dpy, True);
+  XSync (dpy, False);
+  screenhack_handle_events (dpy);
   usleep (10000);
 
   for (i = 0; i < how_many; i++)

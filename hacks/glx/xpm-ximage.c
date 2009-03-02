@@ -63,6 +63,8 @@ xpm_to_ximage (Display *dpy, Visual *visual, Colormap cmap, char **xpm_data)
   int bpl, wpl;
   XColor colors[255];
 
+  memset (&xpm_image, 0, sizeof(xpm_image));
+  memset (&xpm_info, 0, sizeof(xpm_info));
   result = XpmCreateXpmImageFromData (xpm_data, &xpm_image, &xpm_info);
   if (result != XpmSuccess)
     {

@@ -541,6 +541,7 @@ screenhack (Display *dpy, Window win)
     frame++;
 
     XSync(dpy, False);
+    screenhack_handle_events (dpy);
     if (delay > 0)
       usleep(1000 * delay);
   }

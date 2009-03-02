@@ -80,7 +80,8 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  rd-bomb.c coral.c mountain.c triangle.c lissie.c worm.c \
 		  rotor.c ant.c xjack.c xlyap.c jigsaw.c xscreensaver-sgigl.c \
 		  cynosure.c moire2.c flow.c epicycle.c interference.c \
-		  truchet.c bsod.c crystal.c discrete.c distort.c kumppa.c
+		  truchet.c bsod.c crystal.c discrete.c distort.c kumppa.c \
+		  sonar.c
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  bubbles-default.o decayscreen.o deco.o drift.o flag.o \
@@ -94,7 +95,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  rd-bomb.o coral.o mountain.o triangle.o lissie.o worm.o \
 		  rotor.o ant.o xjack.o xlyap.o jigsaw.o xscreensaver-sgigl.o \
 		  cynosure.o moire2.o flow.o epicycle.o interference.o \
-		  truchet.o bsod.o crystal.o discrete.o distort.o kumppa.o
+		  truchet.o bsod.o crystal.o discrete.o distort.o kumppa.o \
+		  sonar.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -104,7 +106,8 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  slip sphere spiral strange swirl xroger goop starfish munch \
 		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
 		  ant xjack xlyap jigsaw cynosure moire2 flow epicycle \
-		  interference truchet bsod crystal discrete distort kumppa
+		  interference truchet bsod crystal discrete distort kumppa \
+		  sonar
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -127,7 +130,8 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  rocks.man rorschach.man sierpinski.man slidescreen.man \
 		  slip.man sphere.man spiral.man strange.man swirl.man \
 		  xroger.man goop.man starfish.man munch.man rd-bomb.man \
-		  xjack.man xlyap.man jigsaw.man epicycle.man bsod.man
+		  xjack.man xlyap.man jigsaw.man epicycle.man bsod.man \
+		  sonar.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  vidwhacker \
@@ -451,6 +455,9 @@ distort:		 $(HACK_OBJS) distort.o $(GRAB) $(SHM)
 
 kumppa:		 $(HACK_OBJS) kumppa.o
 	$(CC_HACK) -o $@ $(HACK_OBJS) kumppa.o $(HACK_LIBS)
+
+sonar:		 $(HACK_OBJS) sonar.o $(COL)
+	$(CC_HACK) -o $@ $(HACK_OBJS) sonar.o $(COL) $(HACK_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -1422,4 +1429,13 @@ kumppa.o: $(UTILS_SRC)/hsv.h
 kumppa.o: $(UTILS_SRC)/colors.h
 kumppa.o: $(UTILS_SRC)/grabscreen.h
 kumppa.o: $(UTILS_SRC)/visual.h
+sonar.o: $(srcdir)/screenhack.h
+sonar.o: ../config.h
+sonar.o: $(UTILS_SRC)/yarandom.h
+sonar.o: $(UTILS_SRC)/usleep.h
+sonar.o: $(UTILS_SRC)/resources.h
+sonar.o: $(UTILS_SRC)/hsv.h
+sonar.o: $(UTILS_SRC)/colors.h
+sonar.o: $(UTILS_SRC)/grabscreen.h
+sonar.o: $(UTILS_SRC)/visual.h
 

@@ -529,7 +529,8 @@ while (0==0)
 #ifdef HAVE_XDBE_EXTENSION
 	if (usedouble) XdbeSwapBuffers(dpy,&xdswp,1);
 #endif /* HAVE_XDBE_EXTENSION */
-	XSync(dpy,True);
+	XSync(dpy, False);
+        screenhack_handle_events (dpy);
 	if (delay) usleep (delay);
 	}
 }

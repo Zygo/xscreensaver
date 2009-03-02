@@ -98,6 +98,7 @@
 		kumppa -root						\\n\
 		rd-bomb -root						\\n\
 		rd-bomb -root -speed 1 -size 0.1			\\n\
+		sonar -root						\\n\
 									  \
 	mono:	rocks -root						\\n\
 	color:	rocks -root -fg darksalmon				\\n\

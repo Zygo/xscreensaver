@@ -769,7 +769,7 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
 {
   saver_info *si = ssi->global;
   saver_preferences *p = &si->prefs;
-  Bool install_cmap_p = (ssi->install_cmap_p || p->install_cmap_p);
+  Bool install_cmap_p = ssi->install_cmap_p;   /* not p->install_cmap_p */
 
   /* This resets the screensaver window as fully as possible, since there's
      no way of knowing what some random client may have done to us in the
@@ -789,6 +789,7 @@ initialize_screensaver_window_1 (saver_screen_info *ssi)
     ssi->cmap = 0;
 
   if (ssi->current_visual != DefaultVisualOfScreen (ssi->screen))
+    /* It's not the default visual, so we have no choice but to install. */
     install_cmap_p = True;
 
   if (install_cmap_p)
@@ -1295,6 +1296,7 @@ select_visual (saver_screen_info *ssi, const char *visual_name)
   got_it = !!new_v;
 
   if (new_v && new_v != DefaultVisualOfScreen(ssi->screen))
+    /* It's not the default visual, so we have no choice but to install. */
     install_cmap_p = True;
 
   ssi->install_cmap_p = install_cmap_p;

@@ -201,6 +201,9 @@ check_events (void)                        /* X event handler [ rhess ] */
     case Expose:
       restart = 1;
       break;
+    default:
+      screenhack_handle_event(dpy, &e);
+      break;
     }
     return(1);
   }
@@ -1367,7 +1370,7 @@ find_dead_regions(void)
 	  }
 	}
       }
-    XSync(dpy, 0);
+    XSync(dpy, False);
 }
 
 static void
@@ -1612,7 +1615,13 @@ screenhack(Display *display, Window window)
   set_maze_sizes (xgwa.width, xgwa.height);
 
   if (! root)
-    XSelectInput (dpy, win, ExposureMask|ButtonPressMask|StructureNotifyMask);
+    {
+      XWindowAttributes xgwa;
+      XGetWindowAttributes (dpy, window, &xgwa);
+      XSelectInput (dpy, win,
+                    xgwa.your_event_mask | ExposureMask |
+                    ButtonPressMask |StructureNotifyMask);
+    }
   
   gc  = XCreateGC(dpy, win, 0, 0);
   cgc = XCreateGC(dpy, win, 0, 0);

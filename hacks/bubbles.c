@@ -1,6 +1,6 @@
 /* bubbles.c - frying pan / soft drink in a glass simulation */
 
-/*$Id: bubbles.c,v 1.15 1998/06/21 23:49:25 jwz Exp $*/
+/*$Id: bubbles.c,v 1.16 1998/11/19 07:25:01 jwz Exp $*/
 
 /*
  *  Copyright (C) 1995-1996 James Macnicol
@@ -1302,7 +1302,7 @@ bubbles (Display *dpy, Window window)
   add_to_mesh(tmp);
   insert_new_bubble(tmp);
 
-  XSync (dpy, True);
+  XSync (dpy, False);
 }
 
 
@@ -1312,6 +1312,7 @@ screenhack (Display *dpy, Window window)
   init_bubbles (dpy, window);
   while (1) {
     bubbles (dpy, window);
+    screenhack_handle_events (dpy);
     if (delay)
       usleep(delay);
   }

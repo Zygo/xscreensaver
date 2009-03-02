@@ -534,6 +534,10 @@ check_events (void)                        /* X event handler [ rhess ] */
 	    printf("re-mapped!\n");
 	  unmapped = 0;
 	  break;
+
+        default:
+          screenhack_handle_event(dpy, &e);
+          break;
 	}
 		
       /* If we're unmapped, don't return to the caller.  This
@@ -580,8 +584,11 @@ setup(void)
     }
   else
     {
-      XSelectInput(dpy, window,
-		   ExposureMask|ButtonPressMask|StructureNotifyMask);
+      XWindowAttributes xgwa;
+      XGetWindowAttributes (dpy, window, &xgwa);
+      XSelectInput (dpy, window,
+                    xgwa.your_event_mask | ExposureMask |
+                    ButtonPressMask |StructureNotifyMask);
     }
   
 }
@@ -814,6 +821,7 @@ screenhack(Display *disp, Window win)
 	    {
 	      XSync (dpy, False);
 
+              check_events();
 	      if (holdtime)
 		sleep(holdtime); /* show complete figure for a bit. */
 
@@ -821,6 +829,7 @@ screenhack(Display *disp, Window win)
 	    }
 	  
 	  
+	  check_events();
 	  if (delay)
 	    usleep (delay);
 	  
