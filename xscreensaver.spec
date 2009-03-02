@@ -1,5 +1,5 @@
 %define	name	xscreensaver
-%define	version	3.29
+%define	version	3.30
 %define	release	1
 %define	serial	1
 %define	prefix	/usr/X11R6
@@ -24,7 +24,7 @@ Buildroot:	/var/tmp/%{name}-%{version}-root
 A modular screen saver and locker for the X Window System.
 Highly customizable: allows the use of any program that
 can draw on the root window as a display mode.
-More than 100 display modes are included in this package.
+More than 120 display modes are included in this package.
 %{?USE_GL:See also the xscreensaver-gl package, which}
 %{?USE_GL:includes optional OpenGL display modes.}
 

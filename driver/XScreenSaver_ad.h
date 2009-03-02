@@ -159,6 +159,8 @@
 				xrayswarm -root				    \\n\
 -	       \"Zoom (Fatbits)\"	zoom -root				    \\n\
 	       \"Zoom (Lenses)\"	zoom -root -lenses			    \\n\
+				rotzoomer -root				    \\n\
+-	   \"RotZoomer (mobile)\" rotzoomer -root -move			    \\n\
 				whirlwindwarp -root			    \\n\
   color: 			bubbles -root				    \\n\
   default-n:			webcollage -root			    \\n\
@@ -191,6 +193,10 @@
 	   GL:			stonerview -root			    \\n\
 	   GL:			starwars -root				    \\n\
 	   GL:			gltext -root				    \\n\
+	   GL:	\"GLText (clock)\" gltext -text \"%A%n%d %b %Y%n%r\" -root	    \\n\
+	   GL:	 \"Molecule\"		molecule -root			    \\n\
+	   GL:	 \"Molecule (lumpy)\"	molecule -root -no-bonds -no-labels \\n\
+	   GL:			dangerball -root			    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -928,6 +934,10 @@ Floating stars are acted upon by a mixture of simple 2D              \
 forcefields.  The strength of each forcefield changes                \
 continuously, and it is also switched on and off at random.          \
 By Paul 'Joey' Clark.",
+"*hacks.rotzoomer.name: RotZoomer",
+"*hacks.rotzoomer.documentation:                                      \
+Creates a collage of rotated and scaled portions of the              \
+screen. Written by Claudio Matsuoka.",
 "*hacks.stonerview.name: StonerView",
 "*hacks.stonerview.documentation:                                     \
 Chains of colorful squares dance around each other in complex spiral \
@@ -941,6 +951,14 @@ same name.  Written by Jamie Zawinski and Claudio Matauoka.",
 "*hacks.gltext.name: GLText",
 "*hacks.gltext.documentation:                                         \
 Displays a few lines of text spinning around in a solid 3D font.     \
+Written by Jamie Zawinski.",
+"*hacks.molecule.documentation:                                       \
+Draws several different representations of molecules.  Some common   \
+molecules are built in, and it can also read PDB (Protein Data Base) \
+files as input.  Written by Jamie Zawinski.",
+"*hacks.dangerball.name: DangerBall",
+"*hacks.dangerball.documentation:                                     \
+Draws a ball that periodically extrudes many random spikes.  Ouch!   \
 Written by Jamie Zawinski.",
 "*hacks.xdaliclock.name: XDaliClock",
 "*hacks.xdaliclock.documentation:					\

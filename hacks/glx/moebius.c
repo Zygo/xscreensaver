@@ -725,10 +725,6 @@ init_moebius(ModeInfo * mi)
     mp->ddy = 0.00006 + frand(0.00003);
     mp->ddz = 0.00006 + frand(0.00003);
 
-    mp->ddx = 0.00001;
-    mp->ddy = 0.00001;
-    mp->ddz = 0.00001;
-
 	if ((mp->glx_context = init_GL(mi)) != NULL) {
 
 		reshape_moebius(mi, MI_WIDTH(mi), MI_HEIGHT(mi));

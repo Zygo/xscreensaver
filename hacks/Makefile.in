@@ -87,7 +87,8 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  squiral.c xflame.c wander.c spotlight.c critical.c \
 		  phosphor.c xmatrix.c petri.c shadebobs.c xsublim.c ccurve.c \
 		  blaster.c bumps.c ripples.c xteevee.c xspirograph.c \
-		  nerverot.c xrayswarm.c hyperball.c zoom.c whirlwindwarp.c
+		  nerverot.c xrayswarm.c hyperball.c zoom.c whirlwindwarp.c \
+		  rotzoomer.c
 SCRIPTS		= vidwhacker webcollage
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -107,7 +108,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  squiral.o xflame.o wander.o spotlight.o critical.o \
 		  phosphor.o xmatrix.o petri.o shadebobs.o xsublim.o ccurve.o \
 		  blaster.o bumps.o ripples.o xteevee.o xspirograph.o \
-		  nerverot.o xrayswarm.o hyperball.o zoom.o whirlwindwarp.o
+		  nerverot.o xrayswarm.o hyperball.o zoom.o whirlwindwarp.o \
+		  rotzoomer.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
@@ -121,7 +123,8 @@ EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  sonar demon loop t3d penetrate deluxe compass squiral \
 		  xflame wander spotlight critical phosphor xmatrix petri \
 		  shadebobs xsublim ccurve blaster bumps ripples xteevee \
-		  xspirograph nerverot xrayswarm hyperball zoom whirlwindwarp
+		  xspirograph nerverot xrayswarm hyperball zoom whirlwindwarp \
+		  rotzoomer
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -150,7 +153,8 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  sonar.man t3d.man squiral.man spotlight.man critical.man \
 		  vidwhacker.man webcollage.man xsublim.man distort.man \
 		  phosphor.man xmatrix.man xteevee.man xflame.man petri.man \
-		  nerverot.man zoom.man whirlwindwarp.man hyperball.man
+		  nerverot.man zoom.man whirlwindwarp.man hyperball.man \
+		  rotzoomer.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  images/$(STAR).xbm \
@@ -160,6 +164,7 @@ EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  images/noseguy/$(STAR).xbm \
 		  images/noseguy/$(STAR).xpm \
 		  images/jigsaw/$(STAR).xbm  \
+		  images/molecules/$(STAR).pdb
 
 VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 		  vms_axp.opt vms_axp_12.opt vms_decc.opt vms_decc_12.opt
@@ -582,6 +587,9 @@ zoom:	zoom.o	$(HACK_OBJS) $(GRAB)
 
 whirlwindwarp:	whirlwindwarp.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
+rotzoomer:	rotzoomer.o	$(HACK_OBJS) $(GRAB) $(SHM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS) $(GRAB_LIBS)
 
 
 # The rules for those hacks which follow the `xlockmore' API.
@@ -1832,4 +1840,14 @@ whirlwindwarp.o: $(UTILS_SRC)/colors.h
 whirlwindwarp.o: $(UTILS_SRC)/grabscreen.h
 whirlwindwarp.o: $(UTILS_SRC)/visual.h
 whirlwindwarp.o: $(UTILS_SRC)/erase.h
+rotzoomer.o: $(srcdir)/screenhack.h
+rotzoomer.o: ../config.h
+rotzoomer.o: $(UTILS_SRC)/yarandom.h
+rotzoomer.o: $(UTILS_SRC)/usleep.h
+rotzoomer.o: $(UTILS_SRC)/resources.h
+rotzoomer.o: $(UTILS_SRC)/hsv.h
+rotzoomer.o: $(UTILS_SRC)/colors.h
+rotzoomer.o: $(UTILS_SRC)/grabscreen.h
+rotzoomer.o: $(UTILS_SRC)/visual.h
+rotzoomer.o: $(UTILS_SRC)/xshm.h
 

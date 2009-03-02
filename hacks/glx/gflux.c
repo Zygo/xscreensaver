@@ -1,5 +1,4 @@
 /* -*- Mode: C; tab-width: 4 -*- emacs friendly */
-
 /* gflux - creates a fluctuating 3D grid 
  * requires OpenGL or MesaGL
  * 
@@ -34,6 +33,8 @@
  * 04 July 2000 : majour bug hunt, xscreensaver code rewritten
  * 08 July 2000 : texture mapping, rotation and zoom added
  * 21 July 2000 : cleaned up code from bug hunts, manpage written
+ * 24 November 2000 : fixed x co-ord calculation in solid - textured
+ * 05 March 2001 : put back non pnmlib code with #ifdefs
  */
 
 
@@ -55,7 +56,7 @@
 										"*showFPS:      False   \n" \
                                         "*squares:      19      \n" \
 										"*resolution:   0       \n" \
-                                        "*draw:         0       \n" \
+                                        "*draw:         2       \n" \
                                         "*flat:         0       \n" \
                                         "*speed:        0.05    \n" \
                                         "*rotationx:    0.01    \n" \
@@ -88,6 +89,10 @@
 #else  /* VMS */
 #  include <Xmu/Drawing.h>
 # endif /* VMS */
+#endif
+
+#ifdef HAVE_PPM
+#include <ppm.h>
 #endif
 
 #undef countof
@@ -141,7 +146,7 @@ static XrmOptionDescRec opts[] = {
 static argtype vars[] = {
     {(caddr_t *) & _squares, "squares", "Squares", "19", t_Int},
     {(caddr_t *) & _resolution, "resolution", "Resolution", "4", t_Int},
-    {(caddr_t *) & _draw, "draw", "Draw", "0", t_Int},
+    {(caddr_t *) & _draw, "draw", "Draw", "2", t_Int},
     {(caddr_t *) & _flat, "flat", "Flat", "0", t_Int},
     {(caddr_t *) & _speed, "speed", "Speed", "0.05", t_Float},
     {(caddr_t *) & _rotationx, "rotationx", "Rotationx", "0.01", t_Float},
@@ -196,8 +201,14 @@ typedef struct {
     GLfloat colour[3];
     int imageWidth;
     int imageHeight;
-    GLubyte *image;
-    GLuint texName;
+#ifdef HAVE_PPM
+	pixval imageMax;
+    pixel **image;
+#else
+	int imageMax;
+	GLubyte *image;
+#endif
+    GLint texName;
     void (*drawFunc)(void);
 } gfluxstruct;
 static gfluxstruct *gflux = NULL;
@@ -340,7 +351,51 @@ void release_gflux(ModeInfo * mi)
     FreeAllGL(mi);
 }
 
-/* loads several different types of PNM image from stdin */
+#ifdef HAVE_PPM
+
+/* load pnm from stdin using pnm libs */
+void loadTexture(void)
+{
+    FILE *file = stdin;
+	gflux->image = ppm_readppm( file, 
+			&(gflux->imageHeight), &(gflux->imageWidth), &(gflux->imageMax) );
+}
+
+/* creates an image for texture mapping */
+void createTexture(void)
+{
+    int i,j,c;
+    pixel **result;
+
+	gflux->imageHeight = gflux->imageWidth = 8;
+
+	result = ppm_allocarray(gflux->imageHeight,gflux->imageWidth);
+    for(i=0;i<gflux->imageHeight;i++) {
+        for(j=0;j<gflux->imageWidth;j++) {
+            c = (((i)%2 ^ (j)%2) ? 100 : 200 );
+			PPM_ASSIGN( result[i][j] , c, c, c );
+        }
+    }
+	gflux->image = result;
+}
+
+/* specifies image as texture */    
+void initTexture(void)
+{
+	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+	glGenTextures(1, &gflux->texName);
+	glBindTexture(GL_TEXTURE_2D, gflux->texName);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, gflux->imageWidth,
+			gflux->imageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, *(gflux->image));
+	
+}
+
+#else /* HAVE_PPM FALSE */
+
 #define presult(A,B,C) (*(result+(A)*(gflux->imageWidth)*4+(B)*4+(C)))
 void loadTexture(void)
 {
@@ -369,7 +424,7 @@ void loadTexture(void)
 
     result = malloc(sizeof(GLubyte)*4*width*height);
     gflux->imageWidth = width;
-	gflux->imageHeight = height;
+    gflux->imageHeight = height;
 
     switch(ppmType) {
         case 2 :    /* ASCII grey */
@@ -385,7 +440,7 @@ void loadTexture(void)
         case 3 :    /* ASCII rgb */
             for(i=0;i<height;i++) {
                 for(j=0;j<width;j++) {
-                    fscanf(file,"%d %d %d",&red,&green,&blue);
+                   fscanf(file,"%d %d %d",&red,&green,&blue);
                     presult(j,i,0) = red;
                     presult(j,i,1) = green;
                     presult(j,i,2) = blue;
@@ -417,18 +472,17 @@ void loadTexture(void)
             }
         break;
     }
-	gflux->image = result;
+    gflux->image = result;
 }
 
-/* creates an image for texture mapping */
 void createTexture(void)
 {
     int i,j,c;
     GLubyte *result;
 
-	gflux->imageHeight = gflux->imageWidth = 8;
+    gflux->imageHeight = gflux->imageWidth = 8;
 
-	result = malloc(sizeof(GLubyte)*4*gflux->imageHeight*gflux->imageWidth);
+    result = malloc(sizeof(GLubyte)*4*gflux->imageHeight*gflux->imageWidth);
     for(i=0;i<gflux->imageHeight;i++) {
         for(j=0;j<gflux->imageWidth;j++) {
             c = (((i)%2 ^ (j)%2) ? 100 : 200 );
@@ -438,25 +492,26 @@ void createTexture(void)
             presult(i,j,3) = (GLubyte) 255;
         }
     }
-	gflux->image = result;
+    gflux->image = result;
 }
-#undef presult
 
-/* specifies image as texture */    
+/* specifies image as texture */
 void initTexture(void)
 {
-	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-	glGenTextures(1, &gflux->texName);
-	glBindTexture(GL_TEXTURE_2D, gflux->texName);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-    clear_gl_error();
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gflux->imageWidth,
-			gflux->imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, gflux->image);
-    check_gl_error("texture");
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    glGenTextures(1, &gflux->texName);
+    glBindTexture(GL_TEXTURE_2D, gflux->texName);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, gflux->imageWidth,
+            gflux->imageHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, gflux->image);
+
 }
+
+#undef presult
+#endif
 
 void initLighting(void)
 {
@@ -506,6 +561,9 @@ void displayTexture(void)
     double dx = 2.0/((double)_squares);
     double dy = 2.0/((double)_squares);
 
+    double du = 2.0/((double)_squares);
+    double dv = 2.0/((double)_squares);
+
 	glMatrixMode (GL_TEXTURE);
 	glLoadIdentity ();
 	glTranslatef(-1,-1,0);
@@ -522,10 +580,10 @@ void displayTexture(void)
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glBindTexture(GL_TEXTURE_2D, gflux->texName);
 	glColor3f(0.5,0.5,0.5);
-
-    for(x=-1,u=0;x<=1;x+=dx,u+=dx) {
+ 
+    for(x=-1,u= 0;x<0.9999;x+=dx,u+=du) {
         glBegin(GL_QUAD_STRIP);
-        for(y=-1,v=0;y<=1;y+=dy,v+=dx) {
+        for(y=-1,v= 0;y<=1;y+=dy,v+=dv) {
             z = getGrid(x,y,time);
         /*  genColour(z);
             glColor3fv(gflux->colour);
@@ -540,7 +598,7 @@ void displayTexture(void)
             z = getGrid(x+dx,y,time);
         /*  genColour(z);
             glColor3fv(gflux->colour);
-        */  glTexCoord2f(u+dx,v);
+        */  glTexCoord2f(u+du,v);
             glNormal3f(
                 getGrid(x+dx+dx,y,time)-getGrid(x,y,time),
                 getGrid(x+dx,y+dy,time)-getGrid(x+dx,y-dy,time),
@@ -575,7 +633,7 @@ void displaySolid(void)
     glScalef(1,1,(GLfloat)_waveHeight);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-    for(x=-1;x<=1;x+=dx) {
+    for(x=-1;x<0.9999;x+=dx) {
         glBegin(GL_QUAD_STRIP);
         for(y=-1;y<=1;y+=dy) {
             z = getGrid(x,y,time);
@@ -617,7 +675,7 @@ void displayLight(void)
     glScalef(1,1,(GLfloat)_waveHeight);
     glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
 
-    for(x=-1;x<=1;x+=dx) {
+    for(x=-1;x<0.9999;x+=dx) {
         glBegin(GL_QUAD_STRIP);
         for(y=-1;y<=1;y+=dy) {
             z = getGrid(x,y,time);

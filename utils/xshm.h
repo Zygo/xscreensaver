@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998
+/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 2001
  *  by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -29,6 +29,8 @@ extern XImage *create_xshm_image (Display *dpy, Visual *visual,
 				  int format, char *data,
 				  XShmSegmentInfo *shm_info,
 				  unsigned int width, unsigned int height);
+extern void destroy_xshm_image (Display *dpy, XImage *image,
+                                XShmSegmentInfo *shm_info);
 
 #endif /* HAVE_XSHM_EXTENSION */
 

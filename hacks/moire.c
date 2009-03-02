@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997, 1998 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997, 1998, 2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -191,7 +191,12 @@ moire (Display *dpy, Window window, int offset, XColor *colors, int ncolors)
 	image->data = 0;
       }
 
-  XDestroyImage (image);
+# ifdef HAVE_XSHM_EXTENSION
+  if (use_shm)
+    destroy_xshm_image (dpy, image, &shm_info);
+  else
+# endif /*  HAVE_XSHM_EXTENSION */
+    XDestroyImage (image);
 }
 
 
