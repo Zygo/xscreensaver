@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="glplanet" _label="GLPlanet">
+
+  <command arg="-root"/>
+
+  <!-- #### -no-rotate -->
+  <!-- #### -no-roll -->
+  <!-- #### -no-wander -->
+  <!-- #### -no-texture -->
+  <!-- #### -no-stars -->
+
+  <select id="render">
+    <option id="flat"  _label="Use Flat Coloring" arg-set="-no-light"/>
+    <option id="light" _label="Use Lighting"/>
+  </select>
+
+  <file id="bitmap" _label="Image File" arg="-image %"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="20000" default="15000"
+          convert="invert"/>
+
+  <select id="render">
+    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
+    <option id="solid" _label="Solid"/>
+  </select>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+Draws a planet bouncing around in space.  Written by David Konerding.
+The built-in image is a map of the earth (extracted from `xearth'),
+but you can wrap any texture around the sphere, e.g., the planetary
+textures that come with `ssystem'.
+  </_description>
+</screensaver>

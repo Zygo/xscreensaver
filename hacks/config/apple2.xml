@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="apple2" _label="Apple ][">
+
+ <command arg="-root"/>
+
+ <select id="mode">
+  <option id="random"    _label="Random Mode"/>
+  <option id="text"      _label="Text Mode"              arg-set="-text"/>
+  <option id="slideshow" _label="Slideshow Mode"         arg-set="-slideshow"/>
+  <option id="basic"     _label="Basic Programming Mode" arg-set="-basic"/>
+ </select>
+
+ <file id="program" _label="Text Program" arg="-program %"/>
+
+ <_description>
+
+Simulates an original Apple ][ Plus computer in all its 1979 glory.  It
+also reproduces the appearance of display on a color television set of
+the period.
+
+In "Text Mode", it displays the output of a command (e.g., "fortune".)
+
+In "Slideshow Mode", it chooses a number of images from the image
+source you configured into XScreenSaver and displays them within the
+limitations of the Apple ][ display hardware.  (Six available colors
+in hi-res mode!)
+
+In "Basic Programming Mode", a simulated user types in a BASIC program
+and runs it.
+
+By Trevor Blackwell.
+  </_description>
+</screensaver>
