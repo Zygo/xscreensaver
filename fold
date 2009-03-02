@@ -90,9 +90,12 @@ git reset --hard genesis || exit 1
 		xscreensaver-4.18 \
 		xscreensaver-4.18-packetstormsecurity.org \
 		xscreensaver-4.19 \
+		xscreensaver-4.20 \
 		xscreensaver-4.21 \
 		xscreensaver_4.21.orig \
 		xscreensaver-4.22 \
+		xscreensaver-4.23 \
+		xscreensaver-4.24 \
 		xscreensaver_4.24.orig \
 		xscreensaver_5.05.orig \
 		xscreensaver-5.07 \
