@@ -1,0 +1,161 @@
+#!/usr/bin/perl -w
+# Copyright © 2001 Jamie Zawinski <jwz@jwz.org>, all rights reserved.
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+#
+# This program attempts to grab a single frame of video from the system's
+# video capture card, and then load it on to the root window using the
+# "xscreensaver-getimage-file" program.  Various frame-grabbing programs
+# are known, and the first one found is used.
+#
+# The various xscreensaver hacks that manipulate images ("slidescreen",
+# "jigsaw", etc.) get the image to manipulate by running the
+# "xscreensaver-getimage" program.
+#
+# "xscreensaver-getimage" will invoke this program, depending on the
+# value of the "grabVideoFrames" setting in the ~/.xscreensaver file
+# (or in /usr/lib/X11/app-defaults/XScreenSaver).
+#
+# Created: 13-Apr-01.
+
+require 5;
+use diagnostics;
+use strict;
+
+my $progname = $0; $progname =~ s@.*/@@g;
+my $version = q{ $Revision: 1.5 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+
+my $verbose = 0;
+
+# These are programs that can be used to grab a video frame.  The first one
+# of these programs that exists on $PATH will be used, and the image file
+# is assumed to be written to stdout (in some image format acceptable to
+# "xscreensaver-getimage-file", e.g., PPM or JPEG.)
+#
+# If you add other programs to this list, please let me know!
+#
+
+my $tmpdir = $ENV{TMPDIR};
+$tmpdir = "/tmp" unless $tmpdir;
+
+my $tmpfile = "$tmpdir/xssgv.$$.ppm";
+
+# this crap is because "vidtomem" can only write to a file, and uses
+# a stupid, non-overridable file name format.
+my $sgi_bogosity = "$tmpfile-00000.rgb";
+
+my @programs = (
+
+  "bttvgrab -d q -Q -l 1 -o jpg -f $tmpfile",	# BTTV
+  "qcam > $tmpfile",				# Connectix Qcam
+  "streamer -s 768x576 -o $tmpfile",		# XawTV
+  "atitv snap $tmpfile",			# ATI video capture card
+
+  "vidtomem -f $tmpfile 2>- && mv $sgi_bogosity $tmpfile",  # Silicon Graphics
+);
+
+
+sub error {
+  ($_) = @_;
+  print STDERR "$progname: $_\n";
+  exit 1;
+}
+
+my $displayer = undef;
+
+sub pick_grabber {
+  my @names = ();
+
+  foreach my $cmd (@programs) {
+    $_ = $cmd;
+    my ($name) = m/^([^ ]+)/;
+    push @names, "\"$name\"";
+    print STDERR "$progname: looking for $name...\n" if ($verbose > 2);
+    foreach my $dir (split (/:/, $ENV{PATH})) {
+      print STDERR "$progname:   checking $dir/$name\n" if ($verbose > 3);
+      if (-x "$dir/$name") {
+        $displayer = $name;
+        return $cmd;
+      }
+    }
+  }
+
+  $names[$#names] = "or " . $names[$#names];
+  error "none of: " . join (", ", @names) . " were found on \$PATH.";
+}
+
+
+my $use_stdout = 0;
+
+sub grab_image {
+  my $cmd = pick_grabber();
+  unlink $tmpfile;
+
+  print STDERR "$progname: executing \"$cmd\"\n" if ($verbose);
+  system ($cmd);
+
+  if (-z $tmpfile)
+    {
+      unlink $tmpfile;
+      error "\"$cmd\" produced no data.";
+    }
+
+  if ($use_stdout) {
+    local *IN;
+    my $ppm = "";
+    my $reader  = "<$tmpfile";
+
+    # horrid kludge for SGIs, since they don't use PPM...
+    if ($displayer eq "vidtomem") {
+      $reader = "sgitopnm $tmpfile";
+      $reader .= " 2>/dev/null" if ($verbose <= 1);
+      $reader .= " |";
+    }
+
+    open(IN, $reader) || error "reading $tmpfile: $!";
+    print STDERR "$progname: reading $tmpfile\n" if ($verbose > 1);
+    while (<IN>) { $ppm .= $_; }
+    close IN;
+    unlink $tmpfile;
+    print STDOUT $ppm;
+
+  } else {
+
+    $cmd = "xscreensaver-getimage-file";
+    $cmd .= " --verbose" if ($verbose);
+    $cmd .= " $tmpfile";
+
+    print STDERR "$progname: executing \"$cmd\"\n" if ($verbose);
+    system ($cmd);
+
+    unlink $tmpfile;
+  }
+}
+
+
+sub usage {
+  print STDERR "usage: $progname [--verbose] [--stdout]\n";
+  exit 1;
+}
+
+sub main {
+  while ($_ = $ARGV[0]) {
+    shift @ARGV;
+    if ($_ eq "--verbose") { $verbose++; }
+    elsif (m/^-v+$/) { $verbose += length($_)-1; }
+    elsif (m/^--?stdout$/) { $use_stdout = 1; }
+    elsif (m/^-./) { usage; }
+    else { usage; }
+  }
+
+  grab_image();
+}
+
+main;
+exit 0;

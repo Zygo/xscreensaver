@@ -1,0 +1,140 @@
+#!/bin/bash -
+
+# script - "xscreensaver.kss"
+#
+# Author: Shane Smit <shane_smit@calderasystems.com>
+#
+# Modification History:
+#  [08/23/1999] - Shane Smit: Creation
+#
+# Description:
+#  This script file enables users to use XScreenSaver via the
+#  KDE Display Properties. 
+
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+
+
+# Locking is turned off by default.
+lockmode="-no-lock-mode"
+
+while [ -n "$1" ]; do
+  case "$1" in
+
+    -desc) 
+      # This is the name in the list box.
+      echo "XScreenSaver"
+      exit
+      ;;
+
+    -preview)
+      # This simply runs xflame in the preview window.  For this to be "real",
+      # it needs to run xscreensaver with a -window-id parameter for each hack.
+      # There are two ways to do this:
+      # 1) Hack xscreensaver to allow global parameters.
+      # 2) Hack xscreensaver to accept alternate setup files, and create one on
+      #    the fly here.
+      shift
+      /usr/X11R6/lib/xscreensaver/xflame -delay 1 -window-id $1 &    # Start new preview 
+      echo "$!" > $HOME/.kss-preview$1.pid.`hostname`                # Write PID 
+      wait $!						             # Wait for it to get killed
+      exit
+      ;;
+
+    -setup)
+      /usr/X11R6/bin/xscreensaver -no-splash &     # daemon must be started
+      /usr/X11R6/bin/xscreensaver-demo             # or the setup will produce
+      kill $!                                      # a warning.
+      exit
+      ;;
+
+    -test)
+      # I was unable to grep stdout because xscreensaver nabs it. But I was able
+      # to output it to a file, and grep the file.
+      TEMP_FILE=/tmp/xsc.$RANDOM
+      /usr/X11R6/bin/xscreensaver -no-splash -verbose -no-capture-stderr 2> $TEMP_FILE &
+      /usr/X11R6/bin/xscreensaver-command -activate
+      while true; do
+        ExitNow=$(grep -E -c unblanking\|already $TEMP_FILE)
+        if [ $ExitNow != 0 ]; then
+          kill $!
+          rm $TEMP_FILE
+          exit
+        fi
+        sleep 1
+      done
+      exit	# It should never get this far.
+      ;;
+
+#    -corners)
+#      echo "Not yet supported"
+#      ;;
+    -delay)
+      shift
+      timeout="-timeout $1"
+      ;;
+    -install)
+      Install="TRUE"
+      ;;
+    -lock)
+      if [ ! -f "/etc/shadow" ]; then      
+        lockmode="-lock-mode"
+      fi
+      ;;
+#    -allow-root)
+#      echo "Not yet supported"
+#      ;;
+    -nice)
+      shift
+      Nice="-nice $1"
+      ;;
+#    -inroot)
+#      echo "Not yet supported"
+#      ;;
+    *)
+      echo "Unknown parameter: $1"
+      ;;
+  esac
+  shift
+done
+
+if [ -n "$Install" ] ; then
+  PID_FILE=$HOME/.kss-install.pid.`hostname`
+  if [ -r "$PID_FILE" ] ; then
+    kill `cat $PID_FILE`                                # Kill old screensaver 
+  fi
+  echo "$$" > $PID_FILE                                 # Write PID of this script
+  /usr/X11R6/bin/xscreensaver -no-splash $timeout $lockmode $Nice &    # Start XScreenSaver daemon
+  trap "kill $!" SIGTERM                                # Set these to kill the daemon
+  trap "kill $!" SIGKILL
+
+# KDE sends SIGUSER1 to indicate the user has hit the "lock" button.
+  trap "/usr/X11R6/bin/xscreensaver-command -lock" SIGUSR1
+
+  wait $!                                               # Do not exit, just wait for signals.
+
+else
+  echo "Usage: ./xscreensaver.kss -install|-setup|-test|-desc [-delay num] [-lock] [-nice num]"
+#  echo "  -corners xxxx     Placing cursor in corner performs action:"
+#  echo "                     x = i  no action (ignore)"
+#  echo "                     x = s  save screen"
+#  echo "                     x = l  lock screen"
+#  echo "                    order: top-left, top-right, bottom-left, bottom-right"
+  echo "  -delay num        Amount of idle time before screen saver starts  (default 10min)"
+  echo "  -desc             Print the screen saver's description to stdout"
+  echo "  -install          Install screen saver"
+  echo "  -lock             Require password to stop screen saver"
+#  echo "  -allow-root       Accept root password to unlock"
+  echo "  -nice num         Run with specified nice value"
+  echo "  -preview wid      Run in the specified XWindow"
+#  echo "  -inroot           Run in the root window"
+  echo "  -setup            Setup screen saver"
+  echo "  -test             Invoke the screen saver immediately"
+fi
+
+# End of script - "xscreensaver.kss"
