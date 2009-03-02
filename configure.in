@@ -65,7 +65,9 @@ AC_DEFUN(AC_PROG_CC_ANSI,
 
   if test -n "$GCC"; then
     AC_MSG_RESULT(Turning on gcc compiler warnings.)
-    CC="$CC -Wall -Wstrict-prototypes -Wnested-externs"
+    CC="$CC -pedantic -Wall -Wstrict-prototypes -Wnested-externs"
+    # supposedly gcc 3.4 will have "-Wdeclaration-after-statement"
+    # and then perhaps we can do without -pedantic?
   else
     case "$host" in
       *-irix5* |*-irix6.[0-3]* )
@@ -91,6 +93,15 @@ AC_DEFUN(AC_PROG_CC_ANSI,
 #       is done by passing "-lang-c89" to cpp, by passing "-Wp,-lang-c89" to
 #       gcc.  Old gcc doesn't support -std, and new gcc doesn't support -lang.
 #       so much for compatibility!)
+#
+#       UPDATE: apparently there is NO WAY to tell gcc 3.2.2 to require that
+#       declarations preceed statements, without resorting to "-pedantic".
+#       This means that there is no way to get gcc3 to issue warnings that
+#       ensure that your code complies with the ANSI/ISO C89 standard, without
+#       also drowning in totally useless warnings.  Thank you master may I
+#       have another.
+#
+#       So, I give up, let's just use -pedantic.
 #
 ###############################################################################
 

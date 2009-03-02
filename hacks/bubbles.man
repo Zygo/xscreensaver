@@ -16,7 +16,7 @@
 bubbles - frying pan / soft drink simulation
 .SH SYNOPSIS
 .B bubbles
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-simple] [\-broken] [\-3D] [\-file filename] [\-directory directoryname]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-simple] [\-broken] [\-3D]
 .SH DESCRIPTION
 \fIBubbles\fP sprays lots of little random bubbles all over the window which
 then grow until they reach their maximum size and go pop.  The inspiration
@@ -67,9 +67,7 @@ this sort of thing.
 .TP 8
 .B \-broken
 Don't hide bubbles when they pop.  This was a bug during development
-but the results were actually quite attractive.  (This option is only
-available if you have the XPM library available and the imake generated
-Makefile has defined HAVE_XPM).
+but the results were actually quite attractive.
 .TP 8
 .B \-3D
 Normally, the simulation is done completely in two dimensions.  When a
@@ -79,19 +77,6 @@ to instead add volume (imagining each to be a sphere in 3D space).  The
 whole thing looks more realistic but I find it attracts attention to
 the flickering of each bubble as they are move and are redrawn.  Your
 mileage may vary.
-.TP 8
-.B \-file filename
-Use the pixmap definitions in the given file, instead of the default (if
-one is compiled in).  This is ignored if \fI\-simple\fP is specified.  If
-the file is compressed (either with compress or gzip), it is decompressed
-before use.  (This option only works if you have XPM compiled into your
-binary and you have compiled with BUBBLES_IO set in bubbles.h.  This is
-\fBnot\fP the default).
-.TP 8
-.B \-directory directoryname
-Similar to \fI-file\fP except the file is taken randomly from the
-contents of the specified directory.  (Again, this option is only available
-if you have XPM and BUBBLES_IO was set when compiling.  See above).
 .TP 8
 .B \-quiet
 Don't print messages explaining why one or several command line options

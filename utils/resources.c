@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1997, 1998, 2001
+/* xscreensaver, Copyright (c) 1992, 1997, 1998, 2001, 2003
  *  Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -91,7 +91,7 @@ get_integer_resource (char *res_name, char *res_class)
 
   if (ss[0] == '0' && (ss[1] == 'x' || ss[1] == 'X'))	/* 0x: parse as hex */
     {
-      if (1 == sscanf (ss+2, "%x %c", &val, &c))
+      if (1 == sscanf (ss+2, "%x %c", (unsigned int *) &val, &c))
 	{
 	  free (s);
 	  return val;

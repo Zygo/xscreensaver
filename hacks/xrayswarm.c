@@ -65,7 +65,7 @@ XrmOptionDescRec options [] = {
 	{0,0,0,0}
 };
 
-static char colors[768];
+static unsigned char colors[768];
 
 static Display *dpy;
 static Window win;

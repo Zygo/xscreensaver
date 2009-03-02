@@ -24,6 +24,13 @@
 # include <unistd.h>
 #endif
 
+# ifdef __GNUC__
+#  define STFU __extension__  /* ignore gcc -pendantic warnings in next sexp */
+# else
+#  define STFU /* */
+# endif
+
+
 #ifdef ENABLE_NLS
 # include <locale.h>
 #endif /* ENABLE_NLS */
@@ -515,13 +522,13 @@ warning_dialog (GtkWidget *parent, const char *message,
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
   gtk_window_set_title (GTK_WINDOW (dialog), progclass);
-  GTK_WIDGET_SET_FLAGS (ok, GTK_CAN_DEFAULT);
+  STFU GTK_WIDGET_SET_FLAGS (ok, GTK_CAN_DEFAULT);
   gtk_widget_show (ok);
   gtk_widget_grab_focus (ok);
 
   if (cancel)
     {
-      GTK_WIDGET_SET_FLAGS (cancel, GTK_CAN_DEFAULT); 
+      STFU GTK_WIDGET_SET_FLAGS (cancel, GTK_CAN_DEFAULT); 
       gtk_widget_show (cancel);
     }
   gtk_widget_show (label);
@@ -850,6 +857,12 @@ await_xscreensaver (state *s)
 		"\n"));
 
       if (root_p)
+
+# ifdef __GNUC__
+        __extension__     /* don't warn about "string length is greater than
+                             the length ISO C89 compilers are required to
+                             support" in the following expression... */
+# endif
         strcat (buf,
 	  _("You are running as root.  This usually means that xscreensaver\n"
             "was unable to contact your X server because access control is\n"
@@ -988,7 +1001,7 @@ force_list_select_item (state *s, GtkWidget *list, int list_elt, Bool scroll_p)
   if (!was) gtk_widget_set_sensitive (parent, True);
 #ifdef HAVE_GTK2
   model = gtk_tree_view_get_model (GTK_TREE_VIEW (list));
-  g_assert (model);
+  STFU g_assert (model);
   gtk_tree_model_iter_nth_child (model, &iter, NULL, list_elt);
   selection = gtk_tree_view_get_selection (GTK_TREE_VIEW (list));
   gtk_tree_selection_select_iter (selection, &iter);
@@ -1136,7 +1149,7 @@ hack_time_text (state *s, const char *line, Time *store, Bool sec_p)
       else
         {
           char c;
-          if (sscanf (line, "%u%c", &value, &c) != 1)
+          if (sscanf (line, "%d%c", &value, &c) != 1)
             value = -1;
           if (!sec_p)
             value *= 60;
@@ -1506,7 +1519,7 @@ flush_popup_changes_and_save (state *s)
   else if (!strcasecmp (visual, "greyscale"))          visual = "GrayScale";
   else if (!strcasecmp (visual, "pseudocolor"))        visual = "PseudoColor";
   else if (!strcasecmp (visual, "directcolor"))        visual = "DirectColor";
-  else if (1 == sscanf (visual, " %ld %c", &id, &c))   ;
+  else if (1 == sscanf (visual, " %lu %c", &id, &c))   ;
   else if (1 == sscanf (visual, " 0x%lx %c", &id, &c)) ;
   else
     {
@@ -1630,7 +1643,7 @@ list_activated_cb (GtkTreeView       *list,
   char *str;
   int list_elt;
 
-  g_return_if_fail (!gdk_pointer_is_grabbed ());
+  STFU g_return_if_fail (!gdk_pointer_is_grabbed ());
 
   str = gtk_tree_path_to_string (path);
   list_elt = strtol (str, NULL, 10);
@@ -3899,6 +3912,12 @@ g_log_handler (const gchar *log_domain, GLogLevelFlags log_level,
 }
 
 
+#ifdef __GNUC__
+ __extension__     /* shut up about "string length is greater than the length
+                      ISO C89 compilers are required to support" when including
+                      the .ad file... */
+#endif
+
 static char *defaults[] = {
 #include "XScreenSaver_ad.h"
  0
@@ -4442,7 +4461,7 @@ main (int argc, char **argv)
       gtk_widget_ref (outer_vbox);
       gtk_container_remove (GTK_CONTAINER (s->toplevel_widget),
                             outer_vbox);
-      GTK_OBJECT_SET_FLAGS (outer_vbox, GTK_FLOATING);
+      STFU GTK_OBJECT_SET_FLAGS (outer_vbox, GTK_FLOATING);
       gtk_container_add (GTK_CONTAINER (capplet), outer_vbox);
 
       /* Find the window above us, and set the title and close handler. */

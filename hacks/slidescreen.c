@@ -98,7 +98,7 @@ init_slide (Display *dpy, Window window)
 	for(i = 0; i < max; i++)
 	  {
 	    long rd, gd, bd;
-	    unsigned long d;
+	    unsigned long dd;
 	    if (!fg_ok)
 	      {
 		rd = (all[i].red   >> 8) - (fgc.red   >> 8);
@@ -107,12 +107,12 @@ init_slide (Display *dpy, Window window)
 		if (rd < 0) rd = -rd;
 		if (gd < 0) gd = -gd;
 		if (bd < 0) bd = -bd;
-		d = (rd << 1) + (gd << 2) + bd;
-		if (d < fgd)
+		dd = (rd << 1) + (gd << 2) + bd;
+		if (dd < fgd)
 		  {
-		    fgd = d;
+		    fgd = dd;
 		    fg = all[i].pixel;
-		    if (d == 0)
+		    if (dd == 0)
 		      fg_ok = True;
 		  }
 	      }
@@ -125,12 +125,12 @@ init_slide (Display *dpy, Window window)
 		if (rd < 0) rd = -rd;
 		if (gd < 0) gd = -gd;
 		if (bd < 0) bd = -bd;
-		d = (rd << 1) + (gd << 2) + bd;
-		if (d < bgd)
+		dd = (rd << 1) + (gd << 2) + bd;
+		if (dd < bgd)
 		  {
-		    bgd = d;
+		    bgd = dd;
 		    bg = all[i].pixel;
-		    if (d == 0)
+		    if (dd == 0)
 		      bg_ok = True;
 		  }
 	      }

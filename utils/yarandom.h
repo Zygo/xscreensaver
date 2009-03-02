@@ -47,6 +47,7 @@ extern void ya_rand_init (unsigned int);
  /* Implement frand using GCC's statement-expression extension. */
 
 # define frand(f)							\
+  __extension__								\
   ({ double tmp = ((((double) random()) * ((double) (f))) /		\
 		   ((double) ((unsigned int)~0)));			\
      tmp < 0 ? (-tmp) : tmp; })

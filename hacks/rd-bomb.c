@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998, 1999
+/* xscreensaver, Copyright (c) 1992, 1995, 1997, 1998, 1999, 2003
  *  Jamie Zawinski <jwz@jwz.org>
  *
  *  reaction/diffusion textures
@@ -139,10 +139,10 @@ pixack_frame(char *pix_buf)
   if (!(frame%epoch_time)) {
     int s;
     if (0 != frame) {
-      int t = epoch_time / 500;
-      if (t > 15)
-	t = 15;
-      sleep(t);
+      int tt = epoch_time / 500;
+      if (tt > 15)
+	tt = 15;
+      sleep(tt);
     }
 	  
     for (i = 0; i < npix; i++) {
@@ -379,7 +379,7 @@ screenhack (Display *dpy, Window win)
   double array_x, array_y;
   double array_dx, array_dy;
   int w2;
-  char *p;
+  char *pd;
   int vdepth;
   int npix;
 #ifdef HAVE_XSHM_EXTENSION
@@ -497,8 +497,8 @@ screenhack (Display *dpy, Window win)
     }
   }
 
-  p = malloc(npix * (pdepth == 1 ? 1 : (pdepth / 8)));
-  if (!p) {
+  pd = malloc(npix * (pdepth == 1 ? 1 : (pdepth / 8)));
+  if (!pd) {
     fprintf(stderr, "not enough memory for %d pixels.\n", npix);
     exit(1);
   }
@@ -514,8 +514,8 @@ screenhack (Display *dpy, Window win)
 	use_shm = False;
       else
 	{
-	  free(p);
-	  p = image->data;
+	  free(pd);
+	  pd = image->data;
 	}
     }
 #endif /* HAVE_XSHM_EXTENSION */
@@ -523,7 +523,7 @@ screenhack (Display *dpy, Window win)
   if (!image)
     {
       image = XCreateImage(dpy, xgwa.visual, vdepth,
-			   ZPixmap, 0, p,
+			   ZPixmap, 0, pd,
 			   width, height, 8, 0);
     }
 
@@ -531,7 +531,7 @@ screenhack (Display *dpy, Window win)
     Bool bump = False;
 
     int i, j;
-    pixack_frame(p);
+    pixack_frame(pd);
     for (i = 0; i < array_width; i += width)
       for (j = 0; j < array_height; j += height)
 #ifdef HAVE_XSHM_EXTENSION

@@ -32,6 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* Smoke.cpp: implementation of the Smoke class. */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include "flurry.h"
 
 #define MAXANGLES 16384

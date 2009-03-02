@@ -898,7 +898,9 @@ draw_sws (ModeInfo *mi)
             }
 
           if (alignment >= 0)
-            xoff = 1.0 - (glutStrokeLength(GLUT_FONT, line) * sc->font_scale);
+            xoff = 1.0 - (glutStrokeLength(GLUT_FONT,
+                                           (unsigned char *) line)
+                          * sc->font_scale);
           if (alignment == 0)
             xoff /= 2;
 

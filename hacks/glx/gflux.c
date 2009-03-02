@@ -2,7 +2,7 @@
 /* gflux - creates a fluctuating 3D grid 
  * requires OpenGL or MesaGL
  * 
- * Copyright (c) Josiah Pease, 2000
+ * Copyright (c) Josiah Pease, 2000, 2003
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
@@ -213,7 +213,7 @@ typedef struct {
 	int imageMax;
 	GLubyte *image;
 #endif
-    GLint texName;
+    GLuint texName;
     GLfloat tex_xscale;
     GLfloat tex_yscale;
     void (*drawFunc)(void);
@@ -680,7 +680,7 @@ grabTexture(void)
 
   gflux->imageWidth  = ximage->width;
   gflux->imageHeight = ximage->height;
-  gflux->image = ximage->data;
+  gflux->image = (GLubyte *) ximage->data;
 
   if (bigimage)  /* don't scale really large images */
     {

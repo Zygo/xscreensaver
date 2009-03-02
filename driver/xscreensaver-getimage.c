@@ -61,6 +61,12 @@
 #endif
 
 
+#ifdef __GNUC__
+ __extension__     /* shut up about "string length is greater than the length
+                      ISO C89 compilers are required to support" when including
+                      the .ad file... */
+#endif
+
 static char *defaults[] = {
 #include "../driver/XScreenSaver_ad.h"
  0
@@ -184,7 +190,10 @@ compute_image_scaling (int src_w, int src_h,
       int th = src_h * r;
       int pct = (r * 100);
 
+#if 0
+      /* this optimization breaks things */
       if (pct < 95 || pct > 105)  /* don't scale if it's close */
+#endif
         {
           if (verbose_p)
             fprintf (stderr, "%s: scaling image by %d%% (%dx%d -> %dx%d)\n",
@@ -575,8 +584,7 @@ maybe_read_ppm (Screen *screen, Visual *visual,
   ximage = XCreateImage (dpy, visual, depth, ZPixmap, 0, 0,
                          w, h, 8, 0);
   if (ximage)
-    ximage->data = (unsigned char *)
-      calloc (ximage->height, ximage->bytes_per_line);
+    ximage->data = (char *) calloc (ximage->height, ximage->bytes_per_line);
   if (!ximage || !ximage->data)
     {
       fprintf (stderr, "%s: out of memory loading %dx%d PPM file %s\n",
@@ -722,8 +730,7 @@ read_jpeg_ximage (Screen *screen, Visual *visual, Drawable drawable,
                          cinfo.output_width, cinfo.output_height,
                          8, 0);
   if (ximage)
-    ximage->data = (unsigned char *)
-      calloc (ximage->height, ximage->bytes_per_line);
+    ximage->data = (char *) calloc (ximage->height, ximage->bytes_per_line);
 
   if (ximage && ximage->data)
     scanbuf = (*cinfo.mem->alloc_sarray) ((j_common_ptr) &cinfo, JPOOL_IMAGE,
@@ -814,8 +821,7 @@ scale_ximage (Screen *screen, Visual *visual,
   XImage *ximage2 = XCreateImage (dpy, visual, depth,
                                   ZPixmap, 0, 0,
                                   new_width, new_height, 8, 0);
-  ximage2->data = (unsigned char *)
-    calloc (ximage2->height, ximage2->bytes_per_line);
+  ximage2->data = (char *) calloc (ximage2->height, ximage2->bytes_per_line);
 
   if (!ximage2->data)
     {
@@ -1462,7 +1468,7 @@ main (int argc, char **argv)
           window = (Window) RootWindowOfScreen (screen);
         }
       else if ((1 == sscanf (argv[i], " 0x%lx %c", &w, &dummy) ||
-                1 == sscanf (argv[i], " %ld %c",   &w, &dummy)) &&
+                1 == sscanf (argv[i], " %lu %c",   &w, &dummy)) &&
                w != 0)
         {
           if (drawable)
@@ -1491,6 +1497,11 @@ main (int argc, char **argv)
             fprintf (stderr, "\n%s: unparsable window/pixmap ID: \"%s\"\n",
                      progname, argv[i]);
         LOSE:
+# ifdef __GNUC__
+          __extension__   /* don't warn about "string length is greater than
+                             the length ISO C89 compilers are required to
+                             support" in the usage string... */
+# endif
           fprintf (stderr, USAGE, progname, version, progname);
           exit (1);
         }

@@ -13,15 +13,16 @@
 
   <select id="engine">
    <option id="random" _label="Random Engine"/>
-   <option id="1" _label="BMW M3 (4 cylinders)" arg-set="-engine 'BMW M3'"/>
-   <option id="2" _label="VW Beetle (4 cylinders, flat)" arg-set="-engine 'VW Beetle'"/>
-   <option id="3" _label="Audi Quattro (5 cylinders)" arg-set="-engine 'Audi Quattro'"/>
-   <option id="4" _label="BMW M5 (6 cylinders)" arg-set="-engine 'BMW M5'"/>
-   <option id="5" _label="Subaru XT (6 cylinders, V)" arg-set="-engine 'Subaru XT'"/>
-   <option id="6" _label="Porsche 911 (6 cylinders, flat)" arg-set="-engine 'Porsche 911'"/>
-   <option id="7" _label="Corvette Z06 (8 cylinders, V)" arg-set="-engine 'Corvette Z06'"/>
-   <option id="8" _label="Dodge Viper (10 cylinders, V)" arg-set="-engine 'Dodge Viper'"/>
-   <option id="9" _label="Jaguar XKE (12 cylinders, V)" arg-set="-engine 'Jaguar XKE'"/>
+   <option id="1" _label="Honda Insight (3 cylinders)" arg-set="-engine 'Honda Insight'"/>
+   <option id="2" _label="BMW M3 (4 cylinders)" arg-set="-engine 'BMW M3'"/>
+   <option id="3" _label="VW Beetle (4 cylinders, flat)" arg-set="-engine 'VW Beetle'"/>
+   <option id="4" _label="Audi Quattro (5 cylinders)" arg-set="-engine 'Audi Quattro'"/>
+   <option id="5" _label="BMW M5 (6 cylinders)" arg-set="-engine 'BMW M5'"/>
+   <option id="6" _label="Subaru XT (6 cylinders, V)" arg-set="-engine 'Subaru XT'"/>
+   <option id="7" _label="Porsche 911 (6 cylinders, flat)" arg-set="-engine 'Porsche 911'"/>
+   <option id="8" _label="Corvette Z06 (8 cylinders, V)" arg-set="-engine 'Corvette Z06'"/>
+   <option id="9" _label="Dodge Viper (10 cylinders, V)" arg-set="-engine 'Dodge Viper'"/>
+   <option id="10" _label="Jaguar XKE (12 cylinders, V)" arg-set="-engine 'Jaguar XKE'"/>
   </select>
 
   <boolean id="titles" _label="Show Engine Name" arg-set="-titles"/>

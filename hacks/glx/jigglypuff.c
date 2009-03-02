@@ -195,6 +195,8 @@ static GLfloat flowerbox_colors[4][4] = {
     {0.0, 0.0, 0.9, 1.0},
 };
 
+# if 0 /* I am not even going to *try* and make this bullshit compile
+          without warning under gcc -std=c89 -pedantic.  -jwz. */
 #ifdef DEBUG
 # ifdef __GNUC__ /* GCC style */
 #define _DEBUG(msg, args...) do { \
@@ -212,6 +214,7 @@ static GLfloat flowerbox_colors[4][4] = {
 #define _DEBUG(msg, ...)
 # endif
 #endif
+#endif /* 0 */
 
 /* This is all the half-edge b-rep code (as well as basic geometry) */
 typedef struct face face;
@@ -356,7 +359,7 @@ static inline hedge *partner(hedge *h) {
 	return h->e->left;
     }
     else {
-	_DEBUG("Inconsistent edge detected. Presumably, this is a bug. Exiting.\n", NULL);
+/*	_DEBUG("Inconsistent edge detected. Presumably, this is a bug. Exiting.\n", NULL); */
 	exit(-1);
     }
 }
@@ -385,7 +388,7 @@ hedge *hedge_new(hedge *hafter, vertex *vtx)
     hedge *h = (hedge*)malloc(sizeof(hedge));
     
     if(!h) {
-	_DEBUG("Out of memory in hedge_new()\n",NULL);
+/*	_DEBUG("Out of memory in hedge_new()\n",NULL); */
 	return NULL;
     }
     h->f = hafter->f;
@@ -402,7 +405,7 @@ edge *edge_new(solid *s)
 {
     edge *e = (edge*)malloc(sizeof(edge));
     if(!e) {
-	_DEBUG("Out of memory in edge_new()\n",NULL);
+/*	_DEBUG("Out of memory in edge_new()\n",NULL);*/
 	exit(-1);
     }
     e->next = s->edges;
@@ -416,7 +419,7 @@ face *face_new(solid *s, hedge *h)
 {
     face *f = (face*)malloc(sizeof(face));
     if(!f) {
-	_DEBUG("Out of memory in face_new()",NULL);
+/*	_DEBUG("Out of memory in face_new()",NULL);*/
 	exit(-1);
     }
     f->s = s;
@@ -477,11 +480,11 @@ face *face_split(face *f, hedge *h1, hedge *h2)
     face *fn;
 
     if(h1->f != f || h2->f != f) {
-	_DEBUG("Whoah, cap'n, yer usin' a bad halfedge!\n",NULL);
+/*	_DEBUG("Whoah, cap'n, yer usin' a bad halfedge!\n",NULL);*/
 	exit(-1);
     }
     if(h1 == h2) {
-	_DEBUG("Trying to split a face at a single vertex\n",NULL);
+/*	_DEBUG("Trying to split a face at a single vertex\n",NULL);*/
 	exit(-1);
     }
     /* close the loops */
@@ -837,7 +840,7 @@ void setup_opengl(ModeInfo *mi, jigglystruct *js)
 
 int parse_color(jigglystruct *js)
 {
-    int r, g, b;
+    unsigned int r, g, b;
     if(!strcmp(color, "clownbarf")) {
 	js->color_style = COLOR_STYLE_CLOWNBARF;
 	return 1;
@@ -1055,11 +1058,11 @@ void init_jigglypuff(ModeInfo *mi)
 	MI_CLEARWINDOW(mi);
     }
     js->trackball = gltrackball_init();
-    _DEBUG("distance : %f\nhold : %f\nspherify : %f\ndamping : %f\ndfact : %f\n",
+/*    _DEBUG("distance : %f\nhold : %f\nspherify : %f\ndamping : %f\ndfact : %f\n",
 	   js->stable_distance, js->hold_strength, js->spherify_strength,
 	   js->damping_velocity, js->damping_factor);
     _DEBUG("wire : %d\nspooky : %d\nstyle : %d\nshininess : %d\n",
-	   js->do_wireframe, js->spooky, js->color_style, js->shininess);
+	   js->do_wireframe, js->spooky, js->color_style, js->shininess);*/
 }
 
 /* This is the end of the file */

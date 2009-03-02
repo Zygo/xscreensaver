@@ -216,6 +216,12 @@ static XrmOptionDescRec options [] = {
 #endif /* 0 */
 };
 
+#ifdef __GNUC__
+ __extension__     /* shut up about "string length is greater than the length
+                      ISO C89 compilers are required to support" when including
+                      the .ad file... */
+#endif
+
 static char *defaults[] = {
 #include "XScreenSaver_ad.h"
  0
@@ -237,7 +243,9 @@ xscreensaver %s, copyright (c) 1991-2003 by Jamie Zawinski <jwz@jwz.org>\n\
   Rather than editing that file by hand, just run `xscreensaver-demo':\n\
   that program lets you configure the screen saver graphically,\n\
   including timeouts, locking, and display modes.\n\
-\n\
+\n",
+	  si->version);
+  fprintf (stdout, "\
   Just getting started?  Try this:\n\
 \n\
         xscreensaver &\n\
@@ -246,8 +254,8 @@ xscreensaver %s, copyright (c) 1991-2003 by Jamie Zawinski <jwz@jwz.org>\n\
   For updates, online manual, and FAQ, please see the web page:\n\
 \n\
        http://www.jwz.org/xscreensaver/\n\
-\n",
-	  si->version);
+\n");
+
   fflush (stdout);
   fflush (stderr);
   exit (1);
@@ -341,7 +349,8 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
    "    bug.  That will cause xscreensaver to dump a `core' file to the\n"
    "    current directory.  Please include the stack trace from that core\n"
    "    file in your bug report.  *DO NOT* mail the core file itself!\n"
-   "    That won't work.\n"
+   "    That won't work.\n");
+          fprintf (real_stderr,
    "\n"
    "    http://www.jwz.org/xscreensaver/bugs.html explains how to create\n"
    "    the most useful bug reports, and how to examine core files.\n"

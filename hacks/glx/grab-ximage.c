@@ -85,6 +85,15 @@ spread_bits (unsigned char value, unsigned char width)
 }
 
 
+static Bool
+bigendian (void)
+{
+  union { int i; char c[sizeof(int)]; } u;
+  u.i = 1;
+  return !u.c[0];
+}
+
+
 /* Returns an XImage structure containing an image of the desktop.
    (As a side-effect, that image *may* be painted onto the given Window.)
    This XImage will be 32 bits per pixel, 8 each per R, G, and B, with the
@@ -146,10 +155,10 @@ screen_to_ximage (Screen *screen, Window window)
      */
     {
       int x, y;
-      int crpos, cgpos, cbpos, capos;  /* bitfield positions */
-      int srpos, sgpos, sbpos;
-      int srmsk, sgmsk, sbmsk;
-      int srsiz, sgsiz, sbsiz;
+      unsigned int crpos=0, cgpos=0, cbpos=0, capos=0; /* bitfield positions */
+      unsigned int srpos=0, sgpos=0, sbpos=0;
+      unsigned int srmsk=0, sgmsk=0, sbmsk=0;
+      unsigned int srsiz=0, sgsiz=0, sbsiz=0;
       int i;
 
       unsigned char spread_map[3][256];
@@ -171,7 +180,10 @@ screen_to_ximage (Screen *screen, Window window)
          we need to pack things in "RGBA" order on the client machine,
          regardless of its endianness.
        */
-      crpos =  0, cgpos =  8, cbpos = 16, capos = 24;
+      if (bigendian())
+        crpos = 24, cgpos = 16, cbpos =  8, capos =  0;
+      else
+        crpos =  0, cgpos =  8, cbpos = 16, capos = 24;
 
       if (colors == 0)  /* truecolor */
         {

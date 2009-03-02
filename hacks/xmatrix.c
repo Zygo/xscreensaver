@@ -259,8 +259,8 @@ init_trace (m_state *state)
   if (!s)
     goto FAIL;
 
-  state->tracing = (char *) malloc (strlen (s) + 1);
-  s3 = state->tracing;
+  state->tracing = (signed char *) malloc (strlen (s) + 1);
+  s3 = (char *) state->tracing;
 
   for (s2 = s; *s2; s2++)
     if (*s2 >= '0' && *s2 <= '9')
@@ -270,7 +270,7 @@ init_trace (m_state *state)
   if (s3 == (char *) state->tracing)
     goto FAIL;
 
-  for (i = 0; i < strlen(state->tracing); i++)
+  for (i = 0; i < strlen((char *) state->tracing); i++)
     state->tracing[i] = -state->tracing[i];
 
   state->glyph_map = decimal_encoding;
@@ -556,7 +556,7 @@ redraw_cells (m_state *state, Bool active)
 
         if ((state->mode == TRACEA2 || state->mode == TRACEB2) && active)
           {
-            int xx = x % strlen(state->tracing);
+            int xx = x % strlen((char *) state->tracing);
             Bool dead_p = state->tracing[xx] > 0;
 
             if (y == 0 && x == xx)
@@ -1110,9 +1110,9 @@ hack_text (m_state *state)
           "\n"
           "RRF-CONTROL> ",
 
-          "\001disable grid nodes 21 - 40\n",
+          "\001disable grid nodes 21 - 48\n",
 
-          "\002Warning: Disabling nodes 21-40 will disconnect sector 11 "
+          "\002Warning: Disabling nodes 21-48 will disconnect sector 11 "
           "(27 nodes)\n"
           "\n"
           "\002         ARE YOU SURE? (y/n) ",
@@ -1142,7 +1142,7 @@ hack_text (m_state *state)
 
         typing_delay = False;
         long_delay = False;
-        for (j = 21; j <= 40; j++)
+        for (j = 21; j <= 48; j++)
           {
             char buf[100];
             sprintf (buf, "\002Grid Node %d offline...\n", j);
@@ -1236,7 +1236,7 @@ roll_state (m_state *state)
       {
         Bool any = False;
         int i;
-        for (i = 0; i < strlen(state->tracing); i++)
+        for (i = 0; i < strlen((char *) state->tracing); i++)
           if (state->tracing[i] < 0) any = True;
 
         if (!any)
@@ -1252,7 +1252,7 @@ roll_state (m_state *state)
           }
         else if ((random() % 20) == 0)  /* how fast numbers are discovered */
           {
-            int x = random() % strlen(state->tracing);
+            int x = random() % strlen((char *) state->tracing);
             if (state->tracing[x] < 0)
               state->tracing[x] = -state->tracing[x];
           }
@@ -1264,7 +1264,7 @@ roll_state (m_state *state)
         /* reversed logic from TRACEA2 */
         Bool any = False;
         int i;
-        for (i = 0; i < strlen(state->tracing); i++)
+        for (i = 0; i < strlen((char *) state->tracing); i++)
           if (state->tracing[i] > 0) any = True;
 
         if ((random() % 15) == 0) {
@@ -1272,7 +1272,7 @@ roll_state (m_state *state)
             state->mode = SYSTEMFAILURE;
           else
             {
-              int x = random() % strlen(state->tracing);
+              int x = random() % strlen((char *) state->tracing);
               if (state->tracing[x] < 0)
                 state->tracing[x] = -state->tracing[x];
             }
@@ -1353,9 +1353,9 @@ hack_matrix (m_state *state)
       int i = random() % (state->grid_width / 2);
       while (--i > 0)
         {
-          int x = random() % state->grid_width;
-          int y = random() % state->grid_height;
-          m_cell *cell = &state->cells[state->grid_width * y + x];
+          int yy = random() % state->grid_height;
+          int xx = random() % state->grid_width;
+          m_cell *cell = &state->cells[state->grid_width * yy + xx];
           if (cell->glyph && cell->glow == 0)
             {
               cell->glow = random() % 10;

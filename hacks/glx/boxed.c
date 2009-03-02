@@ -1092,7 +1092,7 @@ pinit(ModeInfo * mi)
                          GL_RGB, GL_UNSIGNED_BYTE, gp->tex1);
    if (i)
      {
-       const char *s = gluErrorString (i);
+       const char *s = (char *) gluErrorString (i);
        fprintf (stderr, "%s: error mipmapping texture: %s\n",
                 progname, (s ? s : "(unknown)"));
        exit (1);

@@ -79,7 +79,7 @@
 	      \"Ripples (stir)\"	ripples -root -oily -light 2 -stir	    \\n\
 	   \"Ripples (desktop)\"	ripples -root -water -light 6		    \\n\
 				hypercube -root				    \\n\
-				hyperball -root				    \\n\
+-				hyperball -root				    \\n\
 				halo -root				    \\n\
 				maze -root				    \\n\
 				noseguy -root				    \\n\
@@ -256,6 +256,9 @@
 	   GL:			cubestorm -root				    \\n\
 	   GL:			glknots -root				    \\n\
 	   GL:			blocktube -root				    \\n\
+	   GL:			flipflop -root				    \\n\
+	   GL:			antspotlight -root			    \\n\
+	   GL:			polytopes -root				    \\n\
 -	   GL:			glslideshow -root			    \\n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \\n\
@@ -274,7 +277,8 @@
 -				goban -root                                 \\n\
 -				electricsheep                               \\n\
 -				cosmos -root                                \\n\
--	   GL:                  sphereEversion --root                       \\n",
+-	   GL:                  sphereEversion --root                       \\n\
+-	   GL:                  fireflies -root                             \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.initialDelay:		0:00:00",
 "XScreenSaver.windowCreationTimeout:	0:00:30",
@@ -462,4 +466,6 @@
 "*hacks.hypertorus.name:     HyperTorus",
 "*hacks.cubestorm.name:      CubeStorm",
 "*hacks.blocktube.name:      BlockTube",
+"*hacks.flipflop.name:       FlipFlop",
+"*hacks.antspotlight.name:   AntSpotlight",
 "*hacks.documentation.isInstalled: True",

@@ -53,7 +53,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.103 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.104 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2002" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -337,6 +337,11 @@ sub get_document_1 {
       print S $hdrs;
       my $http = <S> || "";
 
+      # Kludge: the Yahoo Random Link is now returning as its first
+      # line "Status: 301" instead of "HTTP/1.0 301 Found".  Fix it...
+      #
+      $http =~ s@^Status:\s+(\d+)\b@HTTP/1.0 $1@i;
+
       $_  = $http;
       s/[\r\n]+$//s;
       LOG ($verbose_http, "  <== $_");
@@ -422,6 +427,7 @@ sub get_document {
 
     if ( $http =~ m@^HTTP/[0-9.]+ 30[123]@ ) {
       $_ = $head;
+
       my ( $location ) = m@^location:[ \t]*(.*)$@im;
       if ( $location ) {
         $location =~ s/[\r\n]$//;
@@ -982,7 +988,7 @@ sub pick_image_from_pages {
 ############################################################################
 
 # yahoorand
-my $yahoo_random_link = "http://random.yahoo.com/bin/ryl";
+my $yahoo_random_link = "http://random.yahoo.com/fast/ryl";
 
 
 # Picks a random page; picks a random image on that page;

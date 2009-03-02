@@ -1,5 +1,5 @@
 /* XPM */
-static char * envImage_xpm[] = {
+static char * blocktube_xpm[] = {
 "256 256 61 1",
 " 	c None",
 ".	c #060606",

@@ -91,30 +91,30 @@ typedef struct {
 
   parameter_type type;
 
-  char *id;		/* widget name */
-  char *label;		/* heading label, or null */
+  xmlChar *id;		/* widget name */
+  xmlChar *label;	/* heading label, or null */
 
   /* command, fake, description, fakepreview, string, file
    */
-  char *string;		/* file name, description, whatever. */
+  xmlChar *string;	/* file name, description, whatever. */
 
   /* slider, spinbutton
    */
-  char *low_label;	/* label for the left side */
-  char *high_label;	/* label for the right side */
+  xmlChar *low_label;	/* label for the left side */
+  xmlChar *high_label;	/* label for the right side */
   float low;		/* minimum value */
   float high;		/* maximum value */
   float value;		/* default value */
   gboolean integer_p;	/* whether the range is integral, or real */
-  char *arg;		/* command-line option to set (substitute "%") */
+  xmlChar *arg;		/* command-line option to set (substitute "%") */
   gboolean invert_p;	/* whether to flip the value and pretend the
                            range goes from hi-low instead of low-hi. */
 
   /* boolean, select-option
    */
-  char *arg_set;	/* command-line option to set for "yes", or null */
-  char *arg_unset;	/* command-line option to set for "no", or null */
-  char *test;		/* #### no idea - enablement? */
+  xmlChar *arg_set;	/* command-line option to set for "yes", or null */
+  xmlChar *arg_unset;	/* command-line option to set for "no", or null */
+  xmlChar *test;	/* #### no idea - enablement? */
 
   /* select
    */
@@ -246,9 +246,9 @@ describe_parameter (FILE *out, parameter *p)
    `floatp' is set to TRUE.  Otherwise, it is unchanged.
  */
 static float
-xml_get_float (xmlNodePtr node, const char *name, gboolean *floatpP)
+xml_get_float (xmlNodePtr node, const xmlChar *name, gboolean *floatpP)
 {
-  const char *s = xmlGetProp (node, name);
+  const char *s = (char *) xmlGetProp (node, name);
   float f;
   char c;
   if (!s || 1 != sscanf (s, "%f %c", &f, &c))
@@ -262,7 +262,7 @@ xml_get_float (xmlNodePtr node, const char *name, gboolean *floatpP)
 
 
 static void sanity_check_parameter (const char *filename,
-                                    const char *node_name,
+                                    const xmlChar *node_name,
                                     parameter *p);
 
 /* Allocates and returns a new `parameter' object based on the
@@ -273,7 +273,7 @@ static parameter *
 make_parameter (const char *filename, xmlNodePtr node)
 {
   parameter *p;
-  const char *name = node->name;
+  const char *name = (char *) node->name;
   const char *convert;
   gboolean floatp = FALSE;
 
@@ -304,7 +304,7 @@ make_parameter (const char *filename, xmlNodePtr node)
 
   if (p->type == SPINBUTTON)
     {
-      const char *type = xmlGetProp (node, "type");
+      const char *type = (char *) xmlGetProp (node, (xmlChar *) "type");
       if (!type || !strcmp (type, "spinbutton")) p->type = SPINBUTTON;
       else if (!strcmp (type, "slider"))         p->type = SLIDER;
       else
@@ -321,23 +321,24 @@ make_parameter (const char *filename, xmlNodePtr node)
       if (node->xmlChildrenNode &&
           node->xmlChildrenNode->type == XML_TEXT_NODE &&
           !node->xmlChildrenNode->next)
-        p->string = strdup (node->xmlChildrenNode->content);
+        p->string = (xmlChar *)
+          strdup ((char *) node->xmlChildrenNode->content);
     }
 
-  p->id         = xmlGetProp (node, "id");
-  p->label      = xmlGetProp (node, "_label");
-  p->low_label  = xmlGetProp (node, "_low-label");
-  p->high_label = xmlGetProp (node, "_high-label");
-  p->low        = xml_get_float (node, "low",     &floatp);
-  p->high       = xml_get_float (node, "high",    &floatp);
-  p->value      = xml_get_float (node, "default", &floatp);
+  p->id         = xmlGetProp (node, (xmlChar *) "id");
+  p->label      = xmlGetProp (node, (xmlChar *) "_label");
+  p->low_label  = xmlGetProp (node, (xmlChar *) "_low-label");
+  p->high_label = xmlGetProp (node, (xmlChar *) "_high-label");
+  p->low        = xml_get_float (node, (xmlChar *) "low",     &floatp);
+  p->high       = xml_get_float (node, (xmlChar *) "high",    &floatp);
+  p->value      = xml_get_float (node, (xmlChar *) "default", &floatp);
   p->integer_p  = !floatp;
-  convert       = xmlGetProp (node, "convert");
+  convert       = (char *) xmlGetProp (node, (xmlChar *) "convert");
   p->invert_p   = (convert && !strcmp (convert, "invert"));
-  p->arg        = xmlGetProp (node, "arg");
-  p->arg_set    = xmlGetProp (node, "arg-set");
-  p->arg_unset  = xmlGetProp (node, "arg-unset");
-  p->test       = xmlGetProp (node, "test");
+  p->arg        = xmlGetProp (node, (xmlChar *) "arg");
+  p->arg_set    = xmlGetProp (node, (xmlChar *) "arg-set");
+  p->arg_unset  = xmlGetProp (node, (xmlChar *) "arg-unset");
+  p->test       = xmlGetProp (node, (xmlChar *) "test");
 
   /* Check for missing decimal point */
   if (debug_p &&
@@ -360,7 +361,7 @@ make_parameter (const char *filename, xmlNodePtr node)
         }
     }
 
-  sanity_check_parameter (filename, name, p);
+  sanity_check_parameter (filename, (const xmlChar *) name, p);
 
   return p;
 }
@@ -383,7 +384,7 @@ make_select_option (const char *filename, xmlNodePtr node)
                  blurb(), filename, node->name, (int)node->type);
       return 0;
     }
-  else if (strcmp (node->name, "option"))
+  else if (strcmp ((char *) node->name, "option"))
     {
       if (debug_p)
         fprintf (stderr,
@@ -397,12 +398,12 @@ make_select_option (const char *filename, xmlNodePtr node)
       char *enable, *e;
 
       s->type       = SELECT_OPTION;
-      s->id         = xmlGetProp (node, "id");
-      s->label      = xmlGetProp (node, "_label");
-      s->arg_set    = xmlGetProp (node, "arg-set");
-      s->arg_unset  = xmlGetProp (node, "arg-unset");
-      s->test       = xmlGetProp (node, "test");
-      enable        = xmlGetProp (node, "enable");
+      s->id         = xmlGetProp (node, (xmlChar *) "id");
+      s->label      = xmlGetProp (node, (xmlChar *) "_label");
+      s->arg_set    = xmlGetProp (node, (xmlChar *) "arg-set");
+      s->arg_unset  = xmlGetProp (node, (xmlChar *) "arg-unset");
+      s->test       = xmlGetProp (node, (xmlChar *) "test");
+      enable = (char*)xmlGetProp (node, (xmlChar *) "enable");
 
       if (enable)
         {
@@ -426,7 +427,7 @@ make_select_option (const char *filename, xmlNodePtr node)
    when they should have typed "arg=", etc.
  */
 static void
-sanity_check_parameter (const char *filename, const char *node_name,
+sanity_check_parameter (const char *filename, const xmlChar *node_name,
                         parameter *p)
 {
   struct {
@@ -530,10 +531,10 @@ sanity_check_parameter (const char *filename, const char *node_name,
 # define WARN(STR) \
    fprintf (stderr, "%s: %s: " STR " in <%s%s id=\"%s\">\n", \
               blurb(), filename, node_name, \
-              (!strcmp(node_name, "number") \
+              (!strcmp((char *) node_name, "number") \
                ? (p->type == SPINBUTTON ? " type=spinbutton" : " type=slider")\
                : ""), \
-              (p->id ? p->id : ""))
+              (p->id ? (char *) p->id : ""))
 # define CHECK(SLOT,NAME) \
    if (p->SLOT && !allowed.SLOT) \
      WARN ("\"" NAME "\" is not a valid option"); \
@@ -568,7 +569,7 @@ make_parameters_1 (const char *filename, xmlNodePtr node,
 
   for (; node; node = node->next)
     {
-      const char *name = node->name;
+      const char *name = (char *) node->name;
       if (!strcmp (name, "hgroup") ||
           !strcmp (name, "vgroup"))
         {
@@ -616,7 +617,7 @@ make_parameters (const char *filename, xmlNodePtr node, GtkWidget *parent)
   for (; node; node = node->next)
     {
       if (node->type == XML_ELEMENT_NODE &&
-          !strcmp (node->name, "screensaver"))
+          !strcmp ((char *) node->name, "screensaver"))
         return make_parameters_1 (filename, node->xmlChildrenNode, parent, &row);
     }
   return 0;
@@ -693,7 +694,7 @@ static void
 make_parameter_widget (const char *filename,
                        parameter *p, GtkWidget *parent, int *row)
 {
-  const char *label = p->label;
+  const char *label = (char *) p->label;
   if (p->widget) return;
 
   switch (p->type)
@@ -715,7 +716,7 @@ make_parameter_widget (const char *filename,
 
         p->widget = gtk_entry_new ();
         if (p->string)
-          gtk_entry_set_text (GTK_ENTRY (p->widget), p->string);
+          gtk_entry_set_text (GTK_ENTRY (p->widget), (char *) p->string);
         if (row)
           gtk_table_attach (GTK_TABLE (parent), p->widget, 1, 3,
                             *row, *row + 1,
@@ -742,7 +743,7 @@ make_parameter_widget (const char *filename,
         gtk_widget_show (L);
 
         if (p->string)
-          gtk_entry_set_text (GTK_ENTRY (entry), p->string);
+          gtk_entry_set_text (GTK_ENTRY (entry), (char *) p->string);
 
         if (row)
           {
@@ -828,7 +829,7 @@ make_parameter_widget (const char *filename,
 
         if (p->low_label)
           {
-            GtkWidget *w = gtk_label_new (_(p->low_label));
+            GtkWidget *w = gtk_label_new (_((char *) p->low_label));
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
             gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
             gtk_widget_show (w);
@@ -853,7 +854,7 @@ make_parameter_widget (const char *filename,
 
         if (p->high_label)
           {
-            GtkWidget *w = gtk_label_new (_(p->high_label));
+            GtkWidget *w = gtk_label_new (_((char *) p->high_label));
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_LEFT);
             gtk_misc_set_alignment (GTK_MISC (w), 0.0, 0.5);
             gtk_widget_show (w);
@@ -935,7 +936,7 @@ make_parameter_widget (const char *filename,
         for (opts = p->options; opts; opts = opts->next)
           {
             parameter *s = (parameter *) opts->data;
-            GtkWidget *i = gtk_menu_item_new_with_label (_(s->label));
+            GtkWidget *i = gtk_menu_item_new_with_label (_((char *) s->label));
             gtk_widget_show (i);
             gtk_menu_append (GTK_MENU (menu), i);
           }
@@ -962,7 +963,7 @@ make_parameter_widget (const char *filename,
 
   if (p->widget)
     {
-      gtk_widget_set_name (p->widget, p->id);
+      gtk_widget_set_name (p->widget, (char *) p->id);
       gtk_widget_show (p->widget);
       if (row)
         (*row)++;
@@ -1124,7 +1125,7 @@ de_stringify (char *s)
 static char *
 format_switch (parameter *p, const char *value)
 {
-  char *fmt = p->arg;
+  char *fmt = (char *) p->arg;
   char *v2;
   char *result, *s;
   if (!fmt || !value) return 0;
@@ -1156,7 +1157,7 @@ parameter_to_switch (parameter *p)
     {
     case COMMAND:
       if (p->arg)
-        return strdup (p->arg);
+        return strdup ((char *) p->arg);
       else
         return 0;
       break;
@@ -1167,7 +1168,7 @@ parameter_to_switch (parameter *p)
         const char *s = gtk_entry_get_text (GTK_ENTRY (p->widget));
         char *v;
         if (!strcmp ((s ? s : ""),
-                     (p->string ? p->string : "")))
+                     (p->string ? (char *) p->string : "")))
           v = 0;  /* same as default */
         else
           v = format_switch (p, s);
@@ -1213,8 +1214,8 @@ parameter_to_switch (parameter *p)
       {
         GtkToggleButton *b = GTK_TOGGLE_BUTTON (p->widget);
         const char *s = (gtk_toggle_button_get_active (b)
-                         ? p->arg_set
-                         : p->arg_unset);
+                         ? (char *) p->arg_set
+                         : (char *) p->arg_unset);
         if (s)
           return strdup (s);
         else
@@ -1233,7 +1234,7 @@ parameter_to_switch (parameter *p)
         const char *s;
         if (!o) abort();
         if (o->type != SELECT_OPTION) abort();
-        s = o->arg_set;
+        s = (char *) o->arg_set;
         if (s)
           return strdup (s);
         else
@@ -1453,7 +1454,7 @@ parse_command_line_into_parameters_1 (const char *filename,
         }
       else if (pp->arg)
         {
-          if (compare_opts (option, value, pp->arg))
+          if (compare_opts (option, value, (char *) pp->arg))
             {
               which = -1;
               match = pp;
@@ -1461,7 +1462,7 @@ parse_command_line_into_parameters_1 (const char *filename,
         }
       else if (pp->arg_set)
         {
-          if (compare_opts (option, value, pp->arg_set))
+          if (compare_opts (option, value, (char *) pp->arg_set))
             {
               which = 1;
               match = pp;
@@ -1469,7 +1470,7 @@ parse_command_line_into_parameters_1 (const char *filename,
         }
       else if (pp->arg_unset)
         {
-          if (compare_opts (option, value, pp->arg_unset))
+          if (compare_opts (option, value, (char *) pp->arg_unset))
             {
               which = 0;
               match = pp;
@@ -1580,7 +1581,7 @@ restore_defaults (const char *progname, GList *parms)
         case FILENAME:
           {
             gtk_entry_set_text (GTK_ENTRY (p->widget),
-                                (p->string ? p->string : ""));
+                                (p->string ? (char *) p->string : ""));
             break;
           }
         case SLIDER:
@@ -1658,7 +1659,7 @@ get_description (GList *parms)
     return 0;
   else
     {
-      char *d = strdup (doc->string);
+      char *d = strdup ((char *) doc->string);
       char *s;
       for (s = d; *s; s++)
         if (s[0] == '\n')
@@ -1781,7 +1782,7 @@ load_configurator_1 (const char *program, const char *arguments,
 
       p = calloc (1, sizeof(*p));
       p->type = COMMAND;
-      p->arg = strdup (arguments);
+      p->arg = (xmlChar *) strdup (arguments);
 
       data->parameters = g_list_append (0, (gpointer) p);
     }

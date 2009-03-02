@@ -246,6 +246,7 @@ pam_passwd_valid_p (const char *typed_passwd, Bool verbose_p)
 
   PAM_NO_DELAY(pamh);
 
+  timeout.tv_sec = 0;
   timeout.tv_nsec = 1;
   set = block_sigchld();
   status = pam_authenticate (pamh, 0);

@@ -38,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.24 $
+ * $Revision: 1.25 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -1117,7 +1117,7 @@ getping(sonar_info *si, ping_info *pi)
     /* Local Variables */
 
     struct sockaddr from;
-    int fromlen;
+    unsigned int fromlen;
     int result;
     u_char packet[1024];
     struct timeval now;
@@ -1926,8 +1926,8 @@ parse_mode (Bool ping_works_p)
         }
 
 #ifdef HAVE_PING
-      if ((4 == sscanf (token, "%d.%d.%d/%d %c",    &n0,&n1,&n2,    &m,&d)) ||
-          (5 == sscanf (token, "%d.%d.%d.%d/%d %c", &n0,&n1,&n2,&n3,&m,&d)))
+      if ((4 == sscanf (token, "%u.%u.%u/%u %c",    &n0,&n1,&n2,    &m,&d)) ||
+          (5 == sscanf (token, "%u.%u.%u.%u/%u %c", &n0,&n1,&n2,&n3,&m,&d)))
         {
           /* subnet: A.B.C.D/M
              subnet: A.B.C/M
@@ -1935,7 +1935,7 @@ parse_mode (Bool ping_works_p)
           unsigned long ip = (n0 << 24) | (n1 << 16) | (n2 << 8) | n3;
           new = subnetHostsList(ip, m);
         }
-      else if (4 == sscanf (token, "%d.%d.%d.%d %c", &n0, &n1, &n2, &n3, &d))
+      else if (4 == sscanf (token, "%u.%u.%u.%u %c", &n0, &n1, &n2, &n3, &d))
         {
           /* IP: A.B.C.D
            */
@@ -1945,7 +1945,7 @@ parse_mode (Bool ping_works_p)
         {
           new = subnetHostsList(0, 24);
         }
-      else if (1 == sscanf (token, "subnet/%d %c", &m, &dummy))
+      else if (1 == sscanf (token, "subnet/%u %c", &m, &dummy))
         {
           new = subnetHostsList(0, m);
         }

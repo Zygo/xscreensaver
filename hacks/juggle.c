@@ -1132,7 +1132,6 @@ init_juggle(ModeInfo * mi)
 	}
 	if (pattern == NULL && patternindex == NULL) {
 	  /* pattern list needs indexing */
-	  int i;
 	  int nelements = sizeof(portfolio)/sizeof(patternstruct);
 	  int maxballs;
 	  int numpat = 0;

@@ -20,7 +20,7 @@
   <boolean id="3d" _label="Do Red/Blue 3D seperation" arg-set="-3d"/>
 
   <_description>
-This draws what looks like a spinning, deforming baloon with
+This draws what looks like a spinning, deforming balloon with
 varying-sized spots painted on its invisible surface.  Written by
 Jeremie Petit.
   </_description>

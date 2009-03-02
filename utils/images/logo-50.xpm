@@ -7,7 +7,7 @@
    http://www.jwz.org/xscreensaver/
  */
 
-static unsigned const char * const logo_50_xpm[] = {
+static const char * const logo_50_xpm[] = {
 "50 50 16 1",
 " 	c None    m None",
 "&	c #FF0000 m #FFFFFF",

@@ -114,6 +114,13 @@ char*        progname;
 XtAppContext app;
 XrmDatabase  db;
 char*        progclass = XSUBLIM_NAME;
+
+# ifdef __GNUC__
+  __extension__   /* don't warn about "string length is greater than the
+                     length ISO C89 compilers are required to support"
+                     in the following string constant... */
+# endif
+
 char*        defaults[] =
 {
 	".background:                     #000000",
@@ -250,7 +257,7 @@ static Window xsublim_Ss_GetWindow(Display* ss_Display)
 	Window        win_Parent;
 	Window*       win_Child;
 	Window        win_Win;
-	int           child_Count;
+	unsigned int  child_Count;
 	int           child_Index;
 	Atom          prop_Type;
 	int           prop_Format;

@@ -70,7 +70,10 @@ draw_colorbars (Screen *screen, Visual *visual,
       int xx, yy;
       unsigned int bw, d;
       XGetGeometry (dpy, drawable,
-                    &root, &xx, &yy, &width, &height, &bw, &d);
+                    &root, &xx, &yy,
+                    (unsigned int *) &width,
+                    (unsigned int *) &height,
+                    &bw, &d);
     }
 
   for (j = 0; j < sizeof(colors) / sizeof(*colors); j++)
@@ -115,10 +118,11 @@ draw_colorbars (Screen *screen, Visual *visual,
     if (logo_map)
       {
         Window root;
-        int logo_width, logo_height;
-        int w = width;
-        int h = height * heights[0] / 100;
-        int x1, y1, bw, d;
+        unsigned int logo_width, logo_height;
+        unsigned int w = width;
+        unsigned int h = height * heights[0] / 100;
+        int x1, y1;
+        unsigned int bw, d;
         XGetGeometry (dpy, logo_map, &root, &x1, &y1,
                       &logo_width, &logo_height, &bw, &d);
         x1 = x + (w - logo_width) / 2;

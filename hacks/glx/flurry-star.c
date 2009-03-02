@@ -32,6 +32,10 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 /* Star.c: implementation of the Star class. */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
 #include "flurry.h"
 
 /* Construction/Destruction */

@@ -1861,7 +1861,7 @@ reshape_lament(ModeInfo *mi, int width, int height)
      Note that the image-map bits we have are 128x128.  Therefore, if the
      image is magnified a lot, it looks pretty blocky.  So it's better to
      have a 128x128 animation on a 1280x1024 screen that looks good, than
-     a 1024x1024 animation that looks really pixellated.
+     a 1024x1024 animation that looks really pixelated.
    */
   if (win_size > target_size * 1.5)
     {

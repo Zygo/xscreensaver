@@ -329,7 +329,6 @@ xlockmore_screenhack (Display *dpy, Window window,
 	goto MONO;
       else
 	{
-	  int i;
 	  mi.pixels = (unsigned long *)
 	    calloc (mi.npixels, sizeof (*mi.pixels));
 	  for (i = 0; i < mi.npixels; i++)

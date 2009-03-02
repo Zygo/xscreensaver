@@ -1,7 +1,7 @@
 /* atlantis --- Shows moving 3D sea animals */
 
 #if !defined( lint ) && !defined( SABER )
-static const char sccsid[] = "@(#)atlantis.c	1.3 98/06/18 xlockmore";
+static const char sccsid[] = "@(#)atlantis.c	5.08 2003/04/09 xlockmore";
 
 #endif
 
@@ -30,7 +30,7 @@ static const char sccsid[] = "@(#)atlantis.c	1.3 98/06/18 xlockmore";
  * Thanks goes also to Brian Paul for making it possible and inexpensive
  * to use OpenGL at home.
  *
- * My e-mail address is lassauge@sagem.fr
+ * My e-mail address is lassauge@mail.dotcom.fr
  *
  * Eric Lassauge  (May-13-1998)
  *
@@ -201,7 +201,7 @@ InitFishs(atlantisstruct * ap)
 		ap->sharks[i].v = 1.0;
 	}
 
-	/* Random whae direction */
+	/* Random whale direction */
 	ap->whaledir = LRAND() & 1;
 
 	ap->dolph.x = 30000.0;
@@ -249,6 +249,7 @@ Init(ModeInfo *mi)
 	{0.4, 0.4, 0.4, 1.0};
 	static float lmodel_localviewer[] =
 	{0.0};
+	float        fblue = 0.0, fgreen;
 
 	glFrontFace(GL_CCW);
 
@@ -325,7 +326,10 @@ Init(ModeInfo *mi)
 
 	InitFishs(ap);
 
-	glClearColor(0.0, 0.39, 0.7, 0.0);
+	/* Add a little randomness */
+	fblue = ((float) (NRAND(30)) / 100.0) + 0.70;
+	fgreen = fblue * 0.56;
+	glClearColor(0.0, fgreen, fblue, 0.0);
 }
 
 void
@@ -360,10 +364,10 @@ clear_tank (atlantisstruct * ap)
 
   if (do_gradient && !ap->wire)
     {
-      static GLint gradient_list = -1;
-      static GLint gradient_tex = -1;
+      static GLuint gradient_list = 0;
+      static GLuint gradient_tex = 0;
 
-      if (gradient_list == -1)
+      if (gradient_list == 0)
         {
           unsigned char *pixels = 0;
           int start = 64;

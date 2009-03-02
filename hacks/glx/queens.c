@@ -92,14 +92,16 @@ static Queenscreen *qs = NULL;
 #define QUEEN 1
 #define MINBOARD 5
 #define MAXBOARD 10
-#define COLORSETS 3
+#define COLORSETS 5
 
 /* definition of white/black colors */
 GLfloat colors[COLORSETS][2][3] = 
   { 
+    {{0.43, 0.54, 0.76}, {0.8, 0.8, 0.8}},
     {{0.5, 0.7, 0.9}, {0.2, 0.3, 0.6}},
     {{0.53725490196, 0.360784313725, 0.521568627451}, {0.6, 0.6, 0.6}},
-    {{1.0, 0.5, 0.0}, {0.5, 0.5, 0.5}},
+    {{0.15, 0.77, 0.54}, {0.5, 0.5, 0.5}},
+    {{0.9, 0.45, 0.0}, {0.5, 0.5, 0.5}},
   };
 
 int board[MAXBOARD][MAXBOARD];
@@ -207,13 +209,36 @@ int findSolution(int row, int col) {
 /** driver for finding solution */
 void go(void) { while(!findSolution(0, random()%BOARDSIZE)); }
 
+/* lighting variables */
+GLfloat front_shininess[] = {80.0};
+GLfloat front_specular[] = {0.5, 0.5, 0.5, 1.0};
+GLfloat ambient[] = {0.5, 0.5, 0.5, 1.0};
+GLfloat ambient2[] = {0.1, 0.1, 0.1, 1.0};
+GLfloat diffuse[] = {0.7, 0.7, 0.7, 1.0};
+GLfloat position0[] = {0.0, 7.0, 0.0, 1.0};
+GLfloat position1[] = {8.0, 7.0, 8.0, 1.0};
+GLfloat lmodel_ambient[] = {0.6, 0.6, 0.6, 1.0};
+GLfloat lmodel_twoside[] = {GL_TRUE};
+
 /* configure lighting */
 void setup_lights(void) {
-  GLfloat position[] = { 4.0, 8.0, 4.0, 1.0 };
 
+  /* setup twoside lighting */
+  glLightfv(GL_LIGHT0, GL_AMBIENT, ambient2);
+  glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+  glLightfv(GL_LIGHT0, GL_POSITION, position0);
+  glLightfv(GL_LIGHT1, GL_AMBIENT, ambient2);
+  glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse);
+  glLightfv(GL_LIGHT1, GL_POSITION, position1);
   glEnable(GL_LIGHTING);
-  glLightfv(GL_LIGHT0, GL_POSITION, position);
   glEnable(GL_LIGHT0);
+  glEnable(GL_LIGHT1);
+
+  /* setup material properties */
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, front_shininess);
+  glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
+
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 }
 
 /* return alpha value for fading */
@@ -228,7 +253,7 @@ void drawPieces(void) {
   for(i = 0; i < BOARDSIZE; ++i) {
     for(j = 0; j < BOARDSIZE; ++j) {
       if(board[i][j]) {
-	glColor3fv(colors[colorset][i%2]);
+    	glColor3fv(colors[colorset][i%2]);	
 	glCallList(QUEEN);
       }
       
@@ -237,6 +262,53 @@ void drawPieces(void) {
     
     glTranslatef(-1.0*BOARDSIZE, 0.0, 1.0);
   }
+}
+
+/** reflectionboard */
+void draw_reflections(void) {
+  int i, j;
+
+  glEnable(GL_STENCIL_TEST);
+  glStencilFunc(GL_ALWAYS, 1, 1);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_REPLACE);
+  glColorMask(0,0,0,0);
+  glDisable(GL_CULL_FACE);
+
+  glDisable(GL_DEPTH_TEST);
+  glBegin(GL_QUADS);
+
+  /* only draw white squares */
+  for(i = 0; i < BOARDSIZE; ++i) {
+    for(j = (BOARDSIZE+i) % 2; j < BOARDSIZE; j += 2) {
+      glVertex3f(i, 0.0, j + 1.0);
+      glVertex3f(i + 1.0, 0.0, j + 1.0);
+      glVertex3f(i + 1.0, 0.0, j);
+      glVertex3f(i, 0.0, j);
+    }
+  }
+  glEnd();
+  glEnable(GL_DEPTH_TEST);
+
+  glColorMask(1, 1, 1, 1);
+  glStencilFunc(GL_EQUAL, 1, 1);
+  glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+  
+  glPushMatrix(); 
+  glScalef(1.0, -1.0, 1.0);
+  glTranslatef(0.5, 0.001, 0.5);
+  glLightfv(GL_LIGHT0, GL_POSITION, position0);
+  glLightfv(GL_LIGHT1, GL_POSITION, position1);
+  drawPieces();
+  glPopMatrix();
+  glDisable(GL_STENCIL_TEST);
+
+  /* replace lights */
+  glLightfv(GL_LIGHT0, GL_POSITION, position0);
+  glLightfv(GL_LIGHT1, GL_POSITION, position1);
+
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  glColorMask(1,1,1,1);
 }
 
 /* draw board */
@@ -248,19 +320,15 @@ void drawBoard(void) {
   for(i = 0; i < BOARDSIZE; ++i)
     for(j = 0; j < BOARDSIZE; ++j) {
       int par = (i-j+BOARDSIZE)%2;
-      glColor3fv(colors[colorset][par]);
+      glColor4f(colors[colorset][par][0],
+		colors[colorset][par][1],
+		colors[colorset][par][2],
+		0.60);
       glNormal3f(0.0, 1.0, 0.0);
       glVertex3f(i, 0.0, j + 1.0);
       glVertex3f(i + 1.0, 0.0, j + 1.0);
       glVertex3f(i + 1.0, 0.0, j);
       glVertex3f(i, 0.0, j);
-
-      /* draw the bottom, too */
-      glNormal3f(0.0, -1.0, 0.0);
-      glVertex3f(i, 0.0, j);
-      glVertex3f(i + 1.0, 0.0, j);
-      glVertex3f(i + 1.0, 0.0, j + 1.0);
-      glVertex3f(i, 0.0, j + 1.0);
     }
 
   glEnd();
@@ -274,7 +342,12 @@ void display(Queenscreen *c) {
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
-  glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0.8/(0.01+findAlpha()));
+  glEnable(GL_LIGHTING);
+  glEnable(GL_COLOR_MATERIAL);
+  glLightfv(GL_LIGHT0, GL_POSITION, position0);
+  glLightfv(GL_LIGHT1, GL_POSITION, position1);
+  glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1.0/(0.01+findAlpha()));
+  glLightf(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 1.0/(0.01+findAlpha()));
 
   /** setup perspectif */
   glTranslatef(0.0, 0.0, -1.5*BOARDSIZE);
@@ -283,11 +356,22 @@ void display(Queenscreen *c) {
   glRotatef(theta*100, 0.0, 1.0, 0.0);
   glTranslatef(-0.5*BOARDSIZE, 0.0, -0.5*BOARDSIZE);
 
+  /* draw reflections */
+  draw_reflections();
+  glEnable(GL_BLEND);
   drawBoard();
-  glTranslatef(0.5, 0.01, 0.5);  
+  glDisable(GL_BLEND);
+
+  position1[0] = BOARDSIZE+2.0;
+  position1[2] = BOARDSIZE+2.0;
+  glLightfv(GL_LIGHT0, GL_POSITION, position0);
+  glLightfv(GL_LIGHT1, GL_POSITION, position1);
+
+  glTranslatef(0.5, 0.0, 0.5);
   drawPieces();
 
-  if (!c->button_down_p)
+  /* rotate camera */
+  if(!c->button_down_p)
     theta += .002;
 
   /* zero out board, find new solution of size MINBOARD <= i <= MAXBOARD */
@@ -366,7 +450,7 @@ void init_queens(ModeInfo *mi) {
     MI_CLEARWINDOW(mi);
 
   glClearColor(0.0, 0.0, 0.0, 0.0);
-  glNewList(1, GL_COMPILE);
+  glNewList(QUEEN, GL_COMPILE);
   draw_model(schunks, spidermodel, 24);
   glEndList();
   
@@ -379,6 +463,7 @@ void init_queens(ModeInfo *mi) {
     setup_lights();
     glEnable(GL_DEPTH_TEST);
     clearbits |= GL_DEPTH_BUFFER_BIT;
+    clearbits |= GL_STENCIL_BUFFER_BIT;
     glEnable(GL_CULL_FACE);
     glCullFace(GL_BACK);
   }

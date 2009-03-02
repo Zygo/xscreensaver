@@ -1,5 +1,5 @@
 /* webcollage-helper --- scales and pastes one image into another
- * xscreensaver, Copyright (c) 2002 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2002, 2003 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -302,7 +302,9 @@ add_jpeg_comment (struct jpeg_compress_struct *cinfo)
     "\r\n";
   char comment[sizeof(fmt) + 100];
   strftime (comment, sizeof(comment)-1, fmt, tm);
-  jpeg_write_marker (cinfo, JPEG_COM, comment, strlen (comment));
+  jpeg_write_marker (cinfo, JPEG_COM,
+                     (unsigned char *) comment,
+                     strlen (comment));
 }
 
 

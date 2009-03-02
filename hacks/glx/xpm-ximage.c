@@ -165,6 +165,7 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
+#if 0
 static Bool
 bigendian (void)
 {
@@ -172,6 +173,7 @@ bigendian (void)
   u.i = 1;
   return !u.c[0];
 }
+#endif
 
 
 /* The libxpm version of this function...
@@ -267,9 +269,15 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
        things as necessary) OpenGL pretends everything is client-side, so
        we need to pack things in the right order for the client machine.
      */
+#if 0
+    /* #### Cherub says that the little-endian case must be taken on MacOSX,
+            or else the colors/alpha are the wrong way around.  How can
+            that be the case?
+     */
     if (bigendian())
       rpos = 24, gpos = 16, bpos =  8, apos =  0;
     else
+#endif
       rpos =  0, gpos =  8, bpos = 16, apos = 24;
 
     for (y = 0; y < xpm_image.height; y++)

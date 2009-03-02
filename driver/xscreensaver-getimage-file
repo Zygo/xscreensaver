@@ -51,9 +51,17 @@ BEGIN {
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.12 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.13 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
+
+# This matches files that we are allowed to use as images (case-insensitive.)
+# Anything not matching this is ignored.  This is so you can point your
+# imageDirectory at directory trees that have things other than images in
+# them, but it assumes that you gave your images sensible file extensions.
+#
+my $good_file_re = '\.(gif|p?jpe?g|png|tiff?|xbm|xpm)$';
+
 
 # These are programs that can be used to put an image file on the root
 # window (including virtual root windows.)  The first one of these programs
@@ -71,6 +79,7 @@ my @programs = (
 # this lame program wasn't built with vroot.h:
 # "xsri       -scale -keep-aspect -center-horizontal -center-vertical",
 );
+
 
 sub pick_displayer {
   my @names = ();
@@ -95,6 +104,8 @@ sub pick_displayer {
 
 my @all_files = ();
 my %seen_inodes;
+my $skip_count = 0;
+my $dir_count = 1;
 
 sub find_all_files {
   my ($dir) = @_;
@@ -112,10 +123,7 @@ sub find_all_files {
   my @dirs = ();
 
   foreach my $file (@files) {
-    next if ($file =~ m/^\./);      # ignore dot files
-    next if ($file =~ m/[~%\#]$/);  # ignore backup files
-    next if ($file =~ m/\.(BAK|bak|tmp|orig|rej|rpmsave)$/);
-    next if ($file eq "core");
+    next if ($file =~ m/^\./);      # ignore dot files/dirs
 
     $file = "$dir/$file";
     my @st = stat($file);
@@ -139,10 +147,18 @@ sub find_all_files {
 
     if (S_ISDIR($mode)) {
       push @dirs, $file;
+      $dir_count++;
       print STDERR "$progname:   found dir  $file\n" if ($verbose > 2);
     } elsif (S_ISREG($mode) || S_ISLNK($mode)) {
-      push @all_files, $file;
-      print STDERR "$progname:   found file $file\n" if ($verbose > 2);
+
+      if ($file =~ m/[~%\#]$/ ||               # backup file, or
+          ! ($file =~ m/$good_file_re/io)) {   # no image extension
+        $skip_count++;
+        print STDERR "$progname:   skip file $file\n" if ($verbose > 2);
+      } else {
+        push @all_files, $file;
+        print STDERR "$progname:   found file $file\n" if ($verbose > 2);
+      }
     } elsif ($verbose > 2) {
       print STDERR "$progname:   nonreg $file\n";
     }
@@ -161,7 +177,11 @@ sub find_random_file {
 
   print STDERR "$progname: recursively reading $dir...\n" if ($verbose > 1);
   find_all_files ($dir);
-  print STDERR "$progname: found " . ($#all_files+1) . " files\n"
+  print STDERR "$progname: found " . ($#all_files+1) .
+               " file" . ($#all_files == 0 ? "" : "s") .
+               " in $dir_count dir" . ($dir_count == 1 ? "" : "s") .
+               "; skipped $skip_count file" . ($skip_count == 1 ? "" : "s") .
+               ".\n"
     if ($verbose > 1);
 
   @all_files = sort(@all_files);

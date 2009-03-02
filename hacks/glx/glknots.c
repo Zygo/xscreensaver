@@ -115,7 +115,7 @@ make_knot (ModeInfo *mi)
   int faces = (wire ? 3 : 6);
 
   int i;
-  double x, y, z, ox, oy, oz;
+  double x, y, z, ox=0, oy=0, oz=0;
   double mu;
 
   double p[9];
