@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="atlantis" _label="Atlantis">
+
+  <command arg="-root"/>
+
+  <number id="whalespeed" type="slider" arg="-whalespeed %"
+           _label="Whale Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="1000" default="250"/>
+
+  <number id="sharkspeed" type="slider" arg="-delay %"
+          _label="Shark Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="500000" default="25000"
+          convert="invert"/>
+
+  <number id="sharkproximity" type="slider" arg="-size %"
+          _label="Shark Proximity" _low-label="Shy" _high-label="Agressive"
+          low="100" high="10000" default="6000"/>
+
+  <number id="sharkcount" type="spinbutton" arg="-count %"
+          _label="Number of Sharks" low="0" high="20" default="4"/>
+
+  <select id="water">
+    <option id="shimmer" _label="Shimmering Water"/>
+    <option id="clear"   _label="Clear Water" arg-set="-no-texture"/>
+  </select>
+
+  <select id="bg">
+    <option id="flat"     _label="Flat Background"/>
+    <option id="gradient" _label="Gradient Background" arg-set="-gradient"/>
+  </select>
+
+  <select id="render">
+    <option id="wire"  _label="Wireframe" arg-set="-wireframe"/>
+    <option id="solid" _label="Solid"/>
+  </select>
+
+  <boolean id="showfps" _label="Show Frames-per-Second" arg-set="-fps"/>
+
+  <_description>
+This is xfishtank writ large: a GL animation of a number of sharks,
+dolphins, and whales.  The swimming motions are great. Originally
+written by Mark Kilgard.
+  </_description>
+</screensaver>

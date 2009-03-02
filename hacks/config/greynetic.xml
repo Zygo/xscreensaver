@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="greynetic" _label="Greynetic">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0" high="250000" default="10000"
+          convert="invert"/>
+
+  <_description>
+This draws random colored and stippled rectangles.  Written by Jamie
+Zawinski.
+  </_description>
+</screensaver>

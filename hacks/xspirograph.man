@@ -1,0 +1,70 @@
+.TH XScreenSaver 1 "9-Dec-2001" "X Version 11"
+.SH NAME
+xspirograph - simulates the rotation of a disk inside a circular rim
+.SH SYNOPSIS
+.B xspirograph
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
+[\-visual \fIvisual\fP] 
+[\-delay \fIseconds\fP] 
+[\-subdelay \fIuseconds\fP] 
+[\-layers \fIinteger\fP]
+[\-alwaysfinish] [\-noalwaysfinish]
+.SH DESCRIPTION
+\fIxspirograph\fP draws patterns such as those made by a
+spirograph, that is, the curve traced by a point on a circular
+disk rotating on the inside of a hollow circular rim.
+.SH OPTIONS
+.I xspirograph
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fIsecs\fP
+The delay between finishing one draw and starting the next. Default:
+5 seconds.
+.TP 8
+.B \-subdelay \fIusec\fP
+The time to delay between each hundred line draws.  Use this if you
+want to see the pattern form.  Default: 0.
+.TP 8
+.B \-alwaysfinish\fP  \fB\-noalwaysfinish\fP
+If you want each pattern to draw until it is done, specify the first.
+Otherwise, they will stop after a set number of iterations.  Default: 
+no.
+.TP 8
+.B \-layers \fIinteger\fP
+Number of pairs of patterns to draw between each erase.
+
+.SH ENVIRONMENT
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2000 by Rohit Singh
+<rohit_singh@hotmail.com> Permission to use, copy, modify, distribute,
+and sell this software and its documentation for any purpose is hereby
+granted without fee, provided that the above copyright notice appear in
+all copies and that both that copyright notice and this permission
+notice appear in supporting documentation.  No representations are made
+about the suitability of this software for any purpose.  It is provided
+"as is" without express or implied warranty.
+.P
+Modified by Matthew Strait <straitm@mathcs.carleton.edu> Dec 2001.
