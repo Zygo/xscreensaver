@@ -48,7 +48,7 @@ static const char sccsid[] = "@(#)gears.c	4.07 97/11/24 xlockmore";
 # define gears_opts					xlockmore_opts
 # define DEFAULTS	"*count:		1       \n"			\
 					"*cycles:		2       \n"			\
-					"*delay:		100     \n"			\
+					"*delay:		20000   \n"			\
 					"*wireframe:	False	\n"
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */

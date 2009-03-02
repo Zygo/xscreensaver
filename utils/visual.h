@@ -25,6 +25,8 @@ extern Visual *get_overlay_visual (Screen *, unsigned long *pixel_return);
 extern Bool has_writable_cells (Screen *screen, Visual *visual);
 extern Visual *id_to_visual (Screen *screen, int id);
 
-Visual *get_gl_visual (Screen *screen);
+extern Visual *get_gl_visual (Screen *);
+extern void describe_gl_visual (FILE *, Screen *, Visual *, Bool priv_cmap_p);
+extern Bool validate_gl_visual (FILE *, Screen *, const char *, Visual *);
 
 #endif /* __VISUAL_H__ */

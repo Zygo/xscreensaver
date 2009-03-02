@@ -68,7 +68,7 @@ provided that the above copyright notice appear in all copies and that
 both that copyright notice and this permission notice appear in
 supporting documentation. 
 .SH AUTHOR
-Greg Bowering <greg@smug.student.adelaide.edu.au>, 1993.
+Greg Bowering <gb@pobox.com>, 1993.
 
 Ability to run standalone or with \fIxscreensaver\fP added by 
 Jamie Zawinski <jwz@jwz.org>, 10-May-97.

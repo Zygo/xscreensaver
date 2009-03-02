@@ -97,3 +97,42 @@ init_GL(ModeInfo * mi)
     return ptr;
   }
 }
+
+
+
+
+/* clear away any lingering error codes */
+void
+clear_gl_error (void)
+{
+  while (glGetError() != GL_NO_ERROR)
+    ;
+}
+
+/* report a GL error. */
+void
+check_gl_error (const char *type)
+{
+  char buf[100];
+  GLenum i;
+  const char *e;
+  switch ((i = glGetError())) {
+  case GL_NO_ERROR: return;
+  case GL_INVALID_ENUM:          e = "invalid enum";      break;
+  case GL_INVALID_VALUE:         e = "invalid value";     break;
+  case GL_INVALID_OPERATION:     e = "invalid operation"; break;
+  case GL_STACK_OVERFLOW:        e = "stack overflow";    break;
+  case GL_STACK_UNDERFLOW:       e = "stack underflow";   break;
+  case GL_OUT_OF_MEMORY:         e = "out of memory";     break;
+#ifdef GL_TABLE_TOO_LARGE_EXT
+  case GL_TABLE_TOO_LARGE_EXT:   e = "table too large";   break;
+#endif
+#ifdef GL_TEXTURE_TOO_LARGE_EXT
+  case GL_TEXTURE_TOO_LARGE_EXT: e = "texture too large"; break;
+#endif
+  default:
+    e = buf; sprintf (buf, "unknown error %d", (int) i); break;
+  }
+  fprintf (stderr, "%s: %s error: %s\n", progname, type, e);
+  exit (1);
+}

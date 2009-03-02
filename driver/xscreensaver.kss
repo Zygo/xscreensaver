@@ -33,14 +33,14 @@ while [ -n "$1" ]; do
       ;;
 
     -preview)
-      # This simply runs xroger in the preview window.  For this to be "real",
+      # This simply runs xflame in the preview window.  For this to be "real",
       # it needs to run xscreensaver with a -window-id parameter for each hack.
       # There are two ways to do this:
       # 1) Hack xscreensaver to allow global parameters.
       # 2) Hack xscreensaver to accept alternate setup files, and create one on
       #    the fly here.
       shift
-      /usr/X11R6/lib/xscreensaver/xroger -delay 1 -window-id $1 &    # Start new preview 
+      /usr/X11R6/lib/xscreensaver/xflame -delay 1 -window-id $1 &    # Start new preview 
       echo "$!" > $HOME/.kss-preview$1.pid.`hostname`                # Write PID 
       wait $!						             # Wait for it to get killed
       exit

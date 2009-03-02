@@ -1,5 +1,5 @@
 /* demo-Xm.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-1999 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -118,6 +118,7 @@ static void populate_demo_window (Widget toplevel,
 static void populate_prefs_page (Widget top, prefs_pair *pair);
 static int apply_changes_and_save (Widget widget);
 static int maybe_reload_init_file (Widget widget, prefs_pair *pair);
+static void await_xscreensaver (Widget widget);
 
 
 /* Some random utility functions
@@ -419,6 +420,66 @@ restart_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
   sleep (1);
   system ("xscreensaver -nosplash &");
 #endif
+
+  await_xscreensaver (button);
+}
+
+static void
+await_xscreensaver (Widget widget)
+{
+  int countdown = 5;
+
+  Display *dpy = XtDisplay (widget);
+  char *rversion = 0;
+
+  while (!rversion && (--countdown > 0))
+    {
+      /* Check for the version of the running xscreensaver... */
+      server_xscreensaver_version (dpy, &rversion, 0, 0);
+
+      /* If it's not there yet, wait a second... */
+      sleep (1);
+    }
+
+  if (rversion)
+    {
+      /* Got it. */
+      free (rversion);
+    }
+  else
+    {
+      /* Timed out, no screensaver running. */
+
+      char buf [1024];
+      Bool root_p = (geteuid () == 0);
+      
+      strcpy (buf, 
+              "Error:\n\n"
+              "The xscreensaver daemon did not start up properly.\n"
+              "\n");
+
+      if (root_p)
+        strcat (buf,
+            "You are running as root.  This usually means that xscreensaver\n"
+            "was unable to contact your X server because access control is\n"
+            "turned on.  Try running this command:\n"
+            "\n"
+            "                        xhost +localhost\n"
+            "\n"
+            "and then selecting `File / Restart Daemon'.\n"
+            "\n"
+            "Note that turning off access control will allow anyone logged\n"
+            "on to this machine to access your screen, which might be\n"
+            "considered a security problem.  Please read the xscreensaver\n"
+            "manual and FAQ for more information.\n"
+            "\n"
+            "You shouldn't run X as root. Instead, you should log in as a\n"
+            "normal user, and `su' as necessary.");
+      else
+        strcat (buf, "Please check your $PATH and permissions.");
+
+      warning_dialog (XtParent (widget), buf, 1);
+    }
 }
 
 
@@ -839,48 +900,6 @@ format_time (char *buf, Time time)
 }
 
 
-static char *
-make_pretty_name (const char *shell_command)
-{
-  char *s = strdup (shell_command);
-  char *s2;
-  char res_name[255];
-
-  for (s2 = s; *s2; s2++)	/* truncate at first whitespace */
-    if (isspace (*s2))
-      {
-        *s2 = 0;
-        break;
-      }
-
-  s2 = strrchr (s, '/');	/* if pathname, take last component */
-  if (s2)
-    {
-      s2 = strdup (s2+1);
-      free (s);
-      s = s2;
-    }
-
-  if (strlen (s) > 50)		/* 51 is hereby defined as "unreasonable" */
-    s[50] = 0;
-
-  sprintf (res_name, "hacks.%s.name", s);		/* resource? */
-  s2 = get_string_resource (res_name, res_name);
-  if (s2)
-    return s2;
-
-  for (s2 = s; *s2; s2++)	/* if it has any capitals, return it */
-    if (*s2 >= 'A' && *s2 <= 'Z')
-      return s;
-
-  if (s[0] >= 'a' && s[0] <= 'z')			/* else cap it */
-    s[0] -= 'a'-'A';
-  if (s[0] == 'X' && s[1] >= 'a' && s[1] <= 'z')	/* (magic leading X) */
-    s[1] -= 'a'-'A';
-  return s;
-}
-
-
 /* Finds the number of the last hack to run, and makes that item be
    selected by default.
  */
@@ -935,7 +954,7 @@ populate_hack_list (Widget toplevel, prefs_pair *pair)
     {
       char *pretty_name = (h[0]->name
                            ? strdup (h[0]->name)
-                           : make_pretty_name (h[0]->command));
+                           : make_hack_name (h[0]->command));
 
       XmString xmstr = XmStringCreate (pretty_name, XmSTRING_DEFAULT_CHARSET);
       XmListAddItem (list, xmstr, 0);
@@ -1178,7 +1197,7 @@ get_hack_blurb (screenhack *hack)
   char *prog_name = strdup (hack->command);
   char *pretty_name = (hack->name
                        ? strdup (hack->name)
-                       : make_pretty_name (hack->command));
+                       : make_hack_name (hack->command));
   char doc_name[255], doc_class[255];
   char *s, *s2;
 
@@ -1282,7 +1301,7 @@ populate_demo_window (Widget toplevel, int which, prefs_pair *pair)
   char *pretty_name = (hack
                        ? (hack->name
                           ? strdup (hack->name)
-                          : make_pretty_name (hack->command))
+                          : make_hack_name (hack->command))
                        : 0);
   char *doc_string = hack ? get_hack_blurb (hack) : 0;
 

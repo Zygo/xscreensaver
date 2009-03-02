@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998, 2000 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,8 +15,6 @@
  *   TODO:
  *      -  Should simulate a Unix kernel panic and reboot.
  *      -  Making various boot noises would be fun, too.
- *      -  Maybe scatter some random bits across the screen,
- *         to simulate corruption of video ram?
  *      -  Should randomize the various hex numbers printed.
  */
 
@@ -1242,6 +1240,264 @@ blitdamage (Display *dpy, Window window, int delay)
   return True;
 }
 
+
+/*
+ * SPARC Solaris panic. Should look pretty authentic on Solaris boxes.
+ * Anton Solovyev <solovam@earthlink.net>
+ */ 
+
+static int solaris_max_scroll = 10;
+
+typedef struct
+{
+  Display *dpy;
+  Window window;
+  GC gc;
+  Pixmap subwindow;             /* The text subwindow */
+  XFontStruct *xfs;
+  int width;                    /* Window width in pixels */
+  int height;                   /* Window height in pixels */
+  int sub_width;                /* Text subwindow width in pixels */
+  int sub_height;               /* Text subwindow height in pixels */
+  int sub_x;                    /* upper left corner of the text subwindow */
+  int sub_y;                    /* upper left corner of the text subwindow */
+  int char_width;               /* Char width in pixels */
+  int line_height;              /* Line height in pixels */
+  int columns;                  /* Number of columns in the text screen */
+  int lines;                    /* Number of lines in the text screen */
+  int x;                        /* position of the cursor */
+  int y;                        /* position of the cursor */
+} solaris_console;
+
+
+static solaris_console *
+make_solaris_console (Display *dpy, Window window)
+{
+  const char *def_font = "fixed";
+  solaris_console* ts;
+
+  XWindowAttributes xgwa;
+  XGCValues gcv;
+  char* fontname;
+
+  ts = malloc(sizeof(solaris_console));
+
+  ts->window = window;
+  ts->dpy = dpy;
+
+  ts->x = 0;
+  ts->y = 0;
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  ts->width = xgwa.width;
+  ts->height = xgwa.height;
+  ts->sub_width = ts->width * 0.8;
+  ts->sub_height = ts->height * 0.8;
+
+  fontname = get_string_resource ("solaris.font", "Solaris.Font");
+  ts->xfs = XLoadQueryFont (dpy, fontname);
+  if (!ts->xfs)
+    {
+      fontname = get_string_resource("solaris.font2", "Solaris.Font");
+      ts->xfs = XLoadQueryFont(dpy, fontname);
+    }
+  if (!ts->xfs)
+    ts->xfs = XLoadQueryFont(dpy, def_font);
+  if (!ts->xfs)
+    {
+      fprintf (stderr, "Can't load font\n");
+      XFreeFont (dpy, ts->xfs);
+      free (ts);
+      exit (1);
+    }
+  gcv.font = ts->xfs->fid;
+  ts->char_width = (ts->xfs->per_char
+                    ? ts->xfs->per_char[ts->xfs->min_char_or_byte2 +
+                                       ts->xfs->default_char].width
+                    : ts->xfs->max_bounds.width);
+  ts->line_height = ts->xfs->ascent + ts->xfs->descent + 1;
+
+  ts->columns = ts->sub_width / ts->char_width;
+  ts->lines = ts->sub_height / ts->line_height;
+
+  ts->sub_x = (ts->width - ts->sub_width) / 2;
+  ts->sub_y = (ts->height - ts->sub_height) / 2;
+
+  ts->subwindow = XCreatePixmap (dpy, window, ts->sub_width,
+                                 ts->sub_height * (solaris_max_scroll + 1),
+                                 xgwa.depth);
+  grab_screen_image (xgwa.screen, window);
+  gcv.function = GXcopy;
+  gcv.background = XBlackPixel (dpy, XDefaultScreen(dpy));
+  gcv.foreground = XWhitePixel (dpy, XDefaultScreen(dpy));
+  ts->gc = XCreateGC (dpy, window,
+                      GCFunction | GCBackground | GCForeground | GCFont,
+                      &gcv);
+  XCopyArea (dpy, window, ts->subwindow, ts->gc,
+             ts->sub_x, ts->sub_y, ts->sub_width, ts->sub_height,
+             0, 0);
+  XFillRectangle (dpy, ts->subwindow, ts->gc, 0, ts->sub_height,
+                  ts->sub_width, ts->sub_height * solaris_max_scroll);
+
+  gcv.background = XWhitePixel (dpy, XDefaultScreen (dpy));
+  gcv.foreground = XBlackPixel (dpy, XDefaultScreen (dpy));
+  XChangeGC (dpy, ts->gc, GCBackground | GCForeground, &gcv);
+
+  return(ts);
+}
+
+static void
+free_solaris_console (solaris_console* ts)
+{
+  XFreePixmap (ts->dpy, ts->subwindow);
+  XFreeGC (ts->dpy, ts->gc);
+  XFreeFont (ts->dpy, ts->xfs);
+  free (ts);
+}
+
+static void
+solaris_draw (solaris_console* ts)
+{
+  XCopyArea (ts->dpy, ts->subwindow, ts->window, ts->gc, 0,
+             (ts->y + 1) * ts->line_height, ts->sub_width,
+             ts->sub_height, ts->sub_x, ts->sub_y);
+}
+
+static void
+solaris_putc (solaris_console* ts, const char aChar)
+{
+  if (ts->y >= solaris_max_scroll * ts->lines)
+    return;
+
+  if (!ts->y && !ts->x)
+    solaris_draw (ts);
+
+  switch (aChar)
+    {
+    case '\n':
+      ts->y++;
+      ts->x = 0;
+      solaris_draw (ts);
+      break;
+    case '\b':
+      if(ts->x > 0)
+        ts->x--;
+      break;
+    default:
+      XDrawImageString (ts->dpy, ts->subwindow, ts->gc,
+                        (ts->x * ts->char_width -
+                         ts->xfs->min_bounds.lbearing),
+                        (ts->sub_height + (ts->y + 1) *
+                         ts->line_height - ts->xfs->descent),
+                        &aChar, 1);
+      XCopyArea (ts->dpy, ts->subwindow, ts->window, ts->gc,
+                 ts->x * ts->char_width,
+                 ts->y * ts->line_height + ts->sub_height,
+                 ts->xfs->max_bounds.rbearing - ts->xfs->min_bounds.lbearing,
+                 ts->line_height, ts->sub_x + ts->x * ts->char_width,
+                 ts->sub_y + ts->sub_height - ts->line_height);
+      ts->x++;
+      if (ts->x >= ts->columns)
+        {
+          ts->x = 0;
+          solaris_putc(ts, '\n');
+        }
+      break;
+    }
+}
+
+static void
+solaris_puts (solaris_console* ts, const char* aString, int delay)
+{
+  const char *c;
+  for (c = aString; *c; ++c)
+    {
+      solaris_putc (ts, *c);
+      if (delay)
+        {
+          XSync(ts->dpy, 0);
+          usleep(delay);
+        }
+    }
+  XSync (ts->dpy, 0);
+}
+
+static Bool
+sparc_solaris (Display* dpy, Window window, int delay)
+{
+  const char *msg1 =
+    "BAD TRAP: cpu=0 type=0x31 rp=0x2a10043b5e0 addr=0xf3880 mmu_fsr=0x0\n"
+    "BAD TRAP occurred in module \"unix\" due to an illegal access to a"
+    " user address.\n"
+    "adb: trap type = 0x31\n"
+    "addr=0xf3880\n"
+    "pid=307, pc=0x100306e4, sp=0x2a10043ae81, tstate=0x4480001602,"
+    " context=0x87f\n"
+    "g1-g7: 1045b000, 32f, 10079440, 180, 300000ebde8, 0, 30000953a20\n"
+    "Begin traceback... sp = 2a10043ae81\n"
+    "Called from 100bd060, fp=2a10043af31, args=f3700 300008cc988 f3880 0"
+    " 1 300000ebde0.\n"
+    "Called from 101fe1bc, fp=2a10043b011, args=3000045a240 104465a0"
+    " 300008e47d0 300008e48fa 300008ae350 300008ae410\n"
+    "Called from 1007c520, fp=2a10043b0c1, args=300008e4878 300003596e8 0"
+    " 3000045a320 0 3000045a220\n"
+    "Called from 1007c498, fp=2a10043b171, args=1045a000 300007847f0 20"
+    " 3000045a240 1 0\n"
+    "Called from 1007972c, fp=2a10043b221, args=1 300009517c0 30000951e58 1"
+    " 300007847f0 0\n"
+    "Called from 10031e10, fp=2a10043b2d1, args=3000095b0c8 0 300009396a8"
+    " 30000953a20 0 1\n"
+    "Called from 10000bdd8, fp=ffffffff7ffff1c1, args=0 57 100131480"
+    " 100131480 10012a6e0 0\n"
+    "End traceback...\n"
+    "panic[cpu0]/thread=30000953a20: trap\n"
+    "syncing file systems...";
+  const char *msg2 =
+    " 1 done\n"
+    "dumping to /dev/dsk/c0t0d0s3, offset 26935296\n";
+  const char *msg3 =
+    ": 2803 pages dumped, compression ratio 2.88, dump succeeded\n";
+  const char *msg4 =
+    "rebooting...\n"
+    "Resetting ...";
+
+  solaris_console* ts;
+  int i;
+  char buf[256];
+
+  if (!get_boolean_resource("doSolaris", "DoSolaris"))
+    return False;
+
+  ts = make_solaris_console (dpy, window);
+
+  solaris_puts (ts, msg1, 0);
+  bsod_sleep (dpy, 3);
+
+  solaris_puts (ts, msg2, 0);
+  bsod_sleep (dpy, 2);
+
+  for (i = 1; i <= 100; ++i)
+    {
+      sprintf(buf, "\b\b\b\b\b\b\b\b\b\b\b%3d%% done", i);
+      solaris_puts(ts, buf, 0);
+      usleep(100000);
+    }
+
+  solaris_puts (ts, msg3, 0);
+  bsod_sleep (dpy, 2);
+
+  solaris_puts (ts, msg4, 0);
+  bsod_sleep(dpy, 3);
+
+  XFillRectangle (ts->dpy, ts->window, ts->gc, 0, 0,
+                  ts->width, ts->height);
+
+  bsod_sleep (dpy, 3);
+
+  free_solaris_console (ts);
+
+  return True;
+}
 
 
 char *progclass = "BSOD";
@@ -1259,6 +1515,7 @@ char *defaults [] = {
   "*doBSD:		   False",	/* boring */
   "*doSparcLinux:	   False",	/* boring */
   "*doBlitDamage:          True",
+  "*doSolaris:             True",
 
   ".Windows.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".Windows.font2:	   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
@@ -1284,12 +1541,12 @@ char *defaults [] = {
   ".MacsBug.foreground:	   Black",
   ".MacsBug.background:	   White",
   ".MacsBug.borderColor:   #AAAAAA",
-  
+
   ".SCO.font:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".SCO.font2:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".SCO.foreground:	   White",
   ".SCO.background:	   Black",
-  
+
   ".SparcLinux.font:	   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
   ".SparcLinux.font2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".SparcLinux.foreground: White",
@@ -1301,6 +1558,10 @@ char *defaults [] = {
 /* ".BSD.font2:		    -sun-console-medium-r-*-*-22-*-*-*-m-*-*-*", */
   ".BSD.foreground:	    #c0c0c0",
   ".BSD.background:	    Black",
+
+  ".Solaris.font:           -sun-gallant-*-*-*-*-19-*-*-*-*-120-*-*",
+  ".Solaris.font2:          -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  "*dontClearRoot:          True",
   0
 };
 
@@ -1330,7 +1591,7 @@ screenhack (Display *dpy, Window window)
   while (1)
     {
       Bool did;
-      do {  i = (random() & 0xFF) % 10; } while (i == j);
+      do {  i = (random() & 0xFF) % 11; } while (i == j);
       switch (i)
 	{
 	case 0: did = windows(dpy, window, delay, True); break;
@@ -1343,6 +1604,7 @@ screenhack (Display *dpy, Window window)
  	case 7: did = bsd(dpy, window, delay); break;
 	case 8: did = atari(dpy, window, delay); break;
 	case 9: did = blitdamage(dpy, window, delay); break;
+	case 10: did = sparc_solaris(dpy, window, delay); break;
 	default: abort(); break;
 	}
       loop++;

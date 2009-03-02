@@ -103,7 +103,7 @@ static const char sccsid[] = "@(#)atlantis.c	1.3 98/06/18 xlockmore";
 # define HACK_INIT	init_atlantis
 # define HACK_DRAW	draw_atlantis
 # define atlantis_opts	xlockmore_opts
-# define DEFAULTS	"*delay:	1000 \n" \
+# define DEFAULTS	"*delay:       40000 \n" \
 			 "*count:          4 \n" \
 			 "*cycles:       100 \n" \
 			 "*size:        6000 \n" \
@@ -394,6 +394,8 @@ draw_atlantis(ModeInfo * mi)
 
 	AllDisplay(ap);
 	Animate(ap);
+
+        glPopMatrix();
 
 	glXSwapBuffers(display, window);
 }

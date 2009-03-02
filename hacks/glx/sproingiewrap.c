@@ -58,7 +58,7 @@ static const char sccsid[] = "@(#)sproingiewrap.c	4.07 97/11/24 xlockmore";
 # define HACK_INIT					init_sproingies
 # define HACK_DRAW					draw_sproingies
 # define sproingies_opts			xlockmore_opts
-# define DEFAULTS	"*delay:		0     \n"			\
+# define DEFAULTS	"*delay:		20000   \n"			\
 					"*count:		5       \n"			\
 					"*cycles:		0       \n"			\
 					"*size:			0       \n"			\

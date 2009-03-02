@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 3.26
-!                              10-Nov-2000
+!                              version 3.28
+!                              02-Feb-2001
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -154,7 +154,6 @@
 				rorschach -root -offset 7		    \n\
 				hopalong -root				    \n\
 				greynetic -root				    \n\
-				xroger -root				    \n\
 				imsmap -root				    \n\
 				slidescreen -root			    \n\
 				decayscreen -root			    \n\
@@ -254,6 +253,9 @@
 -	    "NerveRot (thick)"	nerverot -root -count 100 -line-width 4       \
 			        -max-nerve-radius 0.8 -nervousness 0.5 -db  \n\
 				xrayswarm -root				    \n\
+-	       "Zoom (Fatbits)"	zoom -root				    \n\
+	       "Zoom (Lenses)"	zoom -root -lenses			    \n\
+				whirlwindwarp -root			    \n\
   color: 			bubbles -root				    \n\
   default-n:			webcollage -root			    \n\
   default-n:  "WebCollage (whacked)"					      \
@@ -281,6 +283,8 @@
 @GLE_KLUDGE@GL:			extrusion -root				    \n\
 @GL_KLUDGE@ GL:			sierpinski3d -root			    \n\
 @GL_KLUDGE@ GL:			gflux -root				    \n\
+@GL_KLUDGE@ GL:			stonerview -root			    \n\
+@GL_KLUDGE@ GL:			starwars -root				    \n\
 									      \
 -				xdaliclock -root -builtin3 -cycle	    \n\
 - default-n:			xearth -nofork -nostars -ncolors 50	      \
@@ -294,7 +298,8 @@
 -				xfishtank -d -s                             \n\
 -				xsnow                                       \n\
 -				goban -root                                 \n\
--				electricsheep                               \n
+-				electricsheep                               \n\
+-				cosmos -root                                \n
 
 
 ! To display a randomized slideshow of images, you can do something like this:
@@ -338,6 +343,9 @@
 ! On Irix 6.3, things have moved, so you need to do it like this:
 !
 !     xscreensaver-sgigl /usr/sbin/ep -S
+!
+! (But note that, on non-SGIs, the bundled "stonerview" hack is a decent
+! clone of "ep".  Yay!)
 !
 ! You can also use the "ant" demo, but first you need to wrap a shell script
 ! around it that cds to its home directory, so that it can find its files;
@@ -391,7 +399,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *passwd.thermometer.width:	8
 
 *splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright © 1991-2000 by
+*splash.body.label:		Copyright © 1991-2001 by
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Demo
 *splash.prefs.label:		Prefs
@@ -589,11 +597,6 @@ Patrick Naughton.
 This draws random colored and stippled rectangles.  Written by Jamie	\
 Zawinski.
 
-*hacks.xroger.documentation:						\
-The XScreenSaver logo. Don't you hate it?  So do I.  Would you like	\
-to design a new logo for XScreenSaver?	If so, send jwz your		\
-submissions.
-
 *hacks.imsmap.name: IMSmap
 *hacks.imsmap.documentation:						\
 This generates random cloud-like patterns.  It looks quite different	\
@@ -686,9 +689,9 @@ each face.  Don't think about it too long, or your brain will melt.	\
 Written by Joe Keane, Fritz Mueller, and Jamie Zawinski.
 
 *hacks.hyperball.documentation:						\
-Hyperball is to hypercube as icosahedron is to cube: this displays	\
+Hyperball is to hypercube as dodecahedron is to cube: this displays	\
 a 2D projection of the sequence of 3D objects which are the projections	\
-of the 4D analog to the icosahedron.  Written by Joe Keane.
+of the 4D analog to the dodecahedron.  Written by Joe Keane.
 
 *hacks.halo.documentation:						\
 This draws trippy psychedelic circular patterns that hurt to look at.	\
@@ -1221,6 +1224,30 @@ Written by Josiah Pease.
 Draws a few swarms of critters flying around the screen, with nicely	\
 faded color trails behind them.  Written by Chris Leger.
 
+*hacks.zoom.documentation:                                              \
+Zooms in on a part of the screen and then moves around.  With the       \
+-lenses option the result is like looking through many overlapping      \
+lenses rather than just a simple zoom.  Written by James Macnicol.
+
+*hacks.whirlwindwarp.name: WhirlwindWarp
+*hacks.whirlwindwarp.documentation:                                  \
+Floating stars are acted upon by a mixture of simple 2D              \
+forcefields.  The strength of each forcefield changes                \
+continuously, and it is also switched on and off at random.          \
+By Paul 'Joey' Clark.
+
+*hacks.stonerview.name: StonerView
+*hacks.stonerview.documentation:                                     \
+Chains of colorful squares dance around each other in complex spiral \
+patterns.  Written by Andrew Plotkin, based on SGI's `electropaint'  \
+screensaver.
+
+*hacks.starwars.name: StarWars
+*hacks.starwars.documentation:                                       \
+Draws a stream of text slowly scrolling into the distance at an      \
+angle, over a star field, like at the beginning of the movie of the  \
+same name.  Written by Jamie Zawinski and Claudio Matauoka.
+
 
 !=============================================================================
 !
@@ -1294,5 +1321,9 @@ connection to the Internet.						\
 								    \n\n\
 By Scott Draves.  You can find it at <http://www.electricsheep.org/>.   \
 See that web site for configuration information.
+
+*hacks.cosmos.documentation:						\
+Draws fireworks and zooming, fading flares.  By Tom Campbell.           \
+You can find it at <http://www.mindspring.com/~campbell/cosmos/>.
 
 ! (xrdb prevention kludge: whole file) */

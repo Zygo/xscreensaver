@@ -59,14 +59,14 @@ UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/grabscreen.c $(UTILS_SRC)/hsv.c \
 		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/spline.c \
 		  $(UTILS_SRC)/usleep.c $(UTILS_SRC)/visual.c \
-		  $(UTILS_SRC)/xroger.c $(UTILS_SRC)/yarandom.c \
+		  $(UTILS_SRC)/logo.c $(UTILS_SRC)/yarandom.c \
 	 	  $(UTILS_SRC)/erase.c $(UTILS_SRC)/sgivideo.c \
 		  $(UTILS_SRC)/xshm.c $(UTILS_SRC)/xdbe.c
 UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/grabscreen.o $(UTILS_BIN)/hsv.o \
 		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/spline.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/visual.o \
-		  $(UTILS_BIN)/xroger.o $(UTILS_BIN)/yarandom.o \
+		  $(UTILS_BIN)/logo.o $(UTILS_BIN)/yarandom.o \
 		  $(UTILS_BIN)/erase.o $(UTILS_BIN)/sgivideo.o \
 		  $(UTILS_SRC)/xshm.o $(UTILS_SRC)/xdbe.o
 
@@ -78,7 +78,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  maze.c moire.c noseguy.c pedal.c penrose.c pyro.c qix.c \
 		  rocks.c rorschach.c screenhack.c sierpinski.c slidescreen.c \
 		  slip.c sphere.c spiral.c strange.c swirl.c xlockmore.c \
-		  xroger-hack.c goop.c starfish.c munch.c fadeplot.c \
+		  goop.c starfish.c munch.c fadeplot.c \
 		  rd-bomb.c coral.c mountain.c triangle.c lissie.c worm.c \
 		  rotor.c ant.c xjack.c xlyap.c jigsaw.c xscreensaver-sgigl.c \
 		  cynosure.c moire2.c flow.c epicycle.c interference.c \
@@ -87,7 +87,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  squiral.c xflame.c wander.c spotlight.c critical.c \
 		  phosphor.c xmatrix.c petri.c shadebobs.c xsublim.c ccurve.c \
 		  blaster.c bumps.c ripples.c xteevee.c xspirograph.c \
-		  nerverot.c xrayswarm.c hyperball.c
+		  nerverot.c xrayswarm.c hyperball.c zoom.c whirlwindwarp.c
 SCRIPTS		= vidwhacker webcollage
 
 OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
@@ -98,7 +98,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  maze.o moire.o noseguy.o pedal.o penrose.o pyro.o qix.o \
 		  rocks.o rorschach.o screenhack.o sierpinski.o slidescreen.o \
 		  slip.o sphere.o spiral.o strange.o swirl.o xlockmore.o \
-		  xroger-hack.o goop.o starfish.o munch.o fadeplot.o \
+		  goop.o starfish.o munch.o fadeplot.o \
 		  rd-bomb.o coral.o mountain.o triangle.o lissie.o worm.o \
 		  rotor.o ant.o xjack.o xlyap.o jigsaw.o xscreensaver-sgigl.o \
 		  cynosure.o moire2.o flow.o epicycle.o interference.o \
@@ -107,21 +107,21 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  squiral.o xflame.o wander.o spotlight.o critical.o \
 		  phosphor.o xmatrix.o petri.o shadebobs.o xsublim.o ccurve.o \
 		  blaster.o bumps.o ripples.o xteevee.o xspirograph.o \
-		  nerverot.o xrayswarm.o hyperball.o
+		  nerverot.o xrayswarm.o hyperball.o zoom.o whirlwindwarp.o
 
 EXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
 		  drift flag flame forest vines galaxy grav greynetic halo \
 		  helix hopalong hypercube ifs imsmap julia kaleidescope \
 		  laser lightning lisa lmorph maze moire noseguy pedal \
 		  penrose pyro qix rocks rorschach sierpinski slidescreen \
-		  slip sphere spiral strange swirl xroger goop starfish munch \
+		  slip sphere spiral strange swirl goop starfish munch \
 		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
 		  ant xjack xlyap jigsaw cynosure moire2 flow epicycle \
 		  interference truchet bsod crystal discrete distort kumppa \
 		  sonar demon loop t3d penetrate deluxe compass squiral \
 		  xflame wander spotlight critical phosphor xmatrix petri \
 		  shadebobs xsublim ccurve blaster bumps ripples xteevee \
-		  xspirograph nerverot xrayswarm hyperball
+		  xspirograph nerverot xrayswarm hyperball zoom whirlwindwarp
 
 HACK_OBJS_1	= $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -145,12 +145,12 @@ MEN		= attraction.man blitspin.man bouboule.man braid.man \
 		  noseguy.man pedal.man penrose.man pyro.man qix.man \
 		  rocks.man rorschach.man sierpinski.man slidescreen.man \
 		  slip.man sphere.man spiral.man strange.man swirl.man \
-		  xroger.man goop.man starfish.man munch.man rd-bomb.man \
+		  goop.man starfish.man munch.man rd-bomb.man \
 		  xjack.man xlyap.man jigsaw.man epicycle.man bsod.man \
 		  sonar.man t3d.man squiral.man spotlight.man critical.man \
 		  vidwhacker.man webcollage.man xsublim.man distort.man \
 		  phosphor.man xmatrix.man xteevee.man xflame.man petri.man \
-		  nerverot.man
+		  nerverot.man zoom.man whirlwindwarp.man hyperball.man
 STAR		= *
 EXTRAS		= README Makefile.in xlock_23.h .gdbinit \
 		  images/$(STAR).xbm \
@@ -349,7 +349,7 @@ $(UTILS_BIN)/spline.o:		$(UTILS_SRC)/spline.c
 $(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
 $(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
 $(UTILS_BIN)/xmu.o:		$(UTILS_SRC)/xmu.c
-$(UTILS_BIN)/xroger.o:		$(UTILS_SRC)/xroger.c
+$(UTILS_BIN)/logo.o:		$(UTILS_SRC)/logo.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 $(UTILS_BIN)/erase.o:		$(UTILS_SRC)/erase.c
 $(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
@@ -374,7 +374,7 @@ screenhack-xlock.o: screenhack.c
 ALP		= $(UTILS_BIN)/alpha.o
 HSV		= $(UTILS_BIN)/hsv.o
 SPL		= $(UTILS_BIN)/spline.o
-XROG		= $(UTILS_BIN)/xroger.o $(SPL)
+LOGO		= $(UTILS_BIN)/logo.o $(SPL)
 GRAB		= $(GRAB_OBJS)
 ERASE		= $(UTILS_BIN)/erase.o
 COL		= $(COLOR_OBJS)
@@ -433,8 +433,8 @@ kaleidescope:	kaleidescope.o	$(HACK_OBJS)
 lmorph:		lmorph.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
 
-maze:		maze.o		$(HACK_OBJS) $(ERASE) $(XROG)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ERASE) $(XROG) $(HACK_LIBS)
+maze:		maze.o		$(HACK_OBJS) $(ERASE) $(LOGO)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ERASE) $(LOGO) $(HACK_LIBS)
 
 moire:		moire.o		$(HACK_OBJS) $(COL) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(HACK_LIBS)
@@ -462,9 +462,6 @@ rorschach:	rorschach.o	$(HACK_OBJS) $(HSV) $(ERASE)
 
 slidescreen:	slidescreen.o	$(HACK_OBJS) $(GRAB)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
-
-xroger:		xroger-hack.o	$(HACK_OBJS) $(HSV) $(XROG)
-	$(CC_HACK) -o $@ xroger-hack.o	$(HACK_OBJS) $(HSV) $(XROG) $(HACK_LIBS)
 
 goop:		goop.o		$(HACK_OBJS) $(HSV) $(ALP) $(SPL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(ALP) $(SPL) $(HACK_LIBS)
@@ -579,6 +576,13 @@ xrayswarm:	xrayswarm.o	$(HACK_OBJS)
 
 hyperball:	hyperball.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+zoom:	zoom.o	$(HACK_OBJS) $(GRAB)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(HACK_LIBS) $(GRAB_LIBS)
+
+whirlwindwarp:	whirlwindwarp.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -1237,15 +1241,6 @@ xlockmore.o: $(UTILS_SRC)/grabscreen.h
 xlockmore.o: $(UTILS_SRC)/visual.h
 xlockmore.o: $(srcdir)/xlockmoreI.h
 xlockmore.o: $(UTILS_SRC)/xshm.h
-xroger-hack.o: $(srcdir)/screenhack.h
-xroger-hack.o: ../config.h
-xroger-hack.o: $(UTILS_SRC)/yarandom.h
-xroger-hack.o: $(UTILS_SRC)/usleep.h
-xroger-hack.o: $(UTILS_SRC)/resources.h
-xroger-hack.o: $(UTILS_SRC)/hsv.h
-xroger-hack.o: $(UTILS_SRC)/colors.h
-xroger-hack.o: $(UTILS_SRC)/grabscreen.h
-xroger-hack.o: $(UTILS_SRC)/visual.h
 goop.o: $(srcdir)/screenhack.h
 goop.o: ../config.h
 goop.o: $(UTILS_SRC)/yarandom.h
@@ -1818,4 +1813,23 @@ hyperball.o: $(UTILS_SRC)/hsv.h
 hyperball.o: $(UTILS_SRC)/colors.h
 hyperball.o: $(UTILS_SRC)/grabscreen.h
 hyperball.o: $(UTILS_SRC)/visual.h
+zoom.o: $(srcdir)/screenhack.h
+zoom.o: ../config.h
+zoom.o: $(UTILS_SRC)/yarandom.h
+zoom.o: $(UTILS_SRC)/usleep.h
+zoom.o: $(UTILS_SRC)/resources.h
+zoom.o: $(UTILS_SRC)/hsv.h
+zoom.o: $(UTILS_SRC)/colors.h
+zoom.o: $(UTILS_SRC)/grabscreen.h
+zoom.o: $(UTILS_SRC)/visual.h
+whirlwindwarp.o: $(srcdir)/screenhack.h
+whirlwindwarp.o: ../config.h
+whirlwindwarp.o: $(UTILS_SRC)/yarandom.h
+whirlwindwarp.o: $(UTILS_SRC)/usleep.h
+whirlwindwarp.o: $(UTILS_SRC)/resources.h
+whirlwindwarp.o: $(UTILS_SRC)/hsv.h
+whirlwindwarp.o: $(UTILS_SRC)/colors.h
+whirlwindwarp.o: $(UTILS_SRC)/grabscreen.h
+whirlwindwarp.o: $(UTILS_SRC)/visual.h
+whirlwindwarp.o: $(UTILS_SRC)/erase.h
 

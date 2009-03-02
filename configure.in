@@ -66,8 +66,6 @@ AC_DEFUN(AC_PROG_CC_ANSI,
   if test -n "$GCC"; then
     AC_MSG_RESULT(Turning on gcc compiler warnings.)
     CC="$CC -Wall -Wstrict-prototypes -Wnested-externs -Wno-format"
-    AC_MSG_RESULT(Disabling C++ comments in ANSI C code.)
-    CC="$CC -Wp,-lang-c89"
   else
     case "$host" in
       *-irix5* |*-irix6.[0-3]* )
@@ -81,6 +79,53 @@ AC_DEFUN(AC_PROG_CC_ANSI,
 #       fi
 #     ;;
     esac
+  fi
+])
+
+
+###############################################################################
+#
+#       Functions to figure out how to disable // comments in ANSI C code.
+#
+#       (With recent gcc, this is done with "-std=c89".  With older gcc, this
+#       is done by passing "-lang-c89" to cpp, by passing "-Wp,-lang-c89" to
+#       gcc.  Old gcc doesn't support -std, and new gcc doesn't support -lang.
+#       so much for compatibility!)
+#
+###############################################################################
+
+AC_DEFUN(AC_GCC_ACCEPTS_STD,
+ [if test -n "$GCC"; then
+   AC_CACHE_CHECK([whether gcc accepts -std],
+     ac_cv_gcc_accepts_std,
+    [if ( gcc -E -std=c89 - </dev/null 2>&1 >/dev/null | \
+          grep unrecognized >/dev/null ); then
+       ac_cv_gcc_accepts_std=no
+     else
+       ac_cv_gcc_accepts_std=yes
+     fi])
+   ac_gcc_accepts_std="$ac_cv_gcc_accepts_std"
+  fi
+])
+
+AC_DEFUN(AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE,
+ [if test -n "$GCC"; then
+   AC_GCC_ACCEPTS_STD
+   AC_MSG_RESULT(Disabling C++ comments in ANSI C code.)
+   if test "$ac_gcc_accepts_std" = yes ; then
+     #
+     # -std=c89 defines __STRICT_ANSI__, which we don't want.
+     # (That appears to be the only additional preprocessor symbol
+     # it defines, in addition to the syntax changes it makes.)
+     #
+     # -std=gnu89 is no good, because // comments were a GNU
+     # extension before they were in the ANSI C 99 spec...
+     #
+     CC="$CC -std=c89 -U__STRICT_ANSI__"
+   else
+     # The old way:
+     CC="$CC -Wp,-lang-c89"
+   fi
   fi
 ])
 
@@ -674,6 +719,7 @@ AC_DEFUN(HANDLE_X_PATH_ARG, [
 # random compiler setup
 AC_CANONICAL_HOST
 AC_PROG_CC_ANSI
+AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE
 AC_PROG_CPP
 AC_C_CONST
 AC_C_INLINE
@@ -1007,7 +1053,7 @@ if test "$with_dpms" = yes; then
     # if that failed, look in -lXdpms (this is where it was in XFree86 3.x)
     if test "$have_dpms" = no; then
       AC_CHECK_X_LIB(Xdpms, DPMSInfo,
-                    [have_dpms=yes; SAVER_LIBS="$SAVER_LIBS -lXdpms"], [true],
+                    [have_dpms=yes; XDPMS_LIBS="-lXdpms"], [true],
                     -lXext -lX11)
     fi
   fi
@@ -1914,7 +1960,7 @@ if test "$with_gl" = yes; then
     #
     AC_CACHE_CHECK([whether GL is really MesaGL], ac_cv_have_mesa_gl,
       [ac_cv_have_mesa_gl=no
-       AC_EGREP_X_HEADER(Mesa, GL/glx.h, [ac_cv_have_mesa_gl=yes])
+       AC_EGREP_X_HEADER(Mesa|MESA, GL/glx.h, [ac_cv_have_mesa_gl=yes])
       ])
     ac_have_mesa_gl=$ac_cv_have_mesa_gl
  
@@ -1980,6 +2026,11 @@ if test "$with_gl" = yes; then
 #line __oline__ "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
+#ifndef MESA_MAJOR_VERSION
+# include <GL/xmesa.h>
+# define MESA_MAJOR_VERSION XMESA_MAJOR_VERSION
+# define MESA_MINOR_VERSION XMESA_MINOR_VERSION
+#endif
 configure: MESA_MAJOR_VERSION MESA_MINOR_VERSION
 EOF
 
@@ -2550,6 +2601,7 @@ AC_SUBST(HACK_LIBS)
 AC_SUBST(XPM_LIBS)
 AC_SUBST(GL_LIBS)
 AC_SUBST(GLE_LIBS)
+AC_SUBST(XDPMS_LIBS)
 AC_SUBST(PASSWD_LIBS)
 AC_SUBST(INSTALL_SETUID)
 AC_SUBST(INSTALL_DIRS)
@@ -2615,7 +2667,8 @@ warn() {
   warnpre
   if test "$warning" = long ; then echo '' ; fi
   warning=yes
-  echo "$warn_prefix $@"
+  rest="$@"
+  echo "$warn_prefix $rest"
 }
 
 warnL() {
@@ -2623,11 +2676,13 @@ warnL() {
   warnpre
   warning=yes
   if test "$was" != no ; then echo '' ; fi
-  echo "$warn_prefix $@"
+  rest="$@"
+  echo "$warn_prefix $rest"
 }
 
 warn2() {
-  echo "             $@"
+  rest="$@"
+  echo "             $rest"
   warning=long
 }
 

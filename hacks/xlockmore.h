@@ -35,6 +35,8 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #ifdef USE_GL
 # include <GL/glx.h>
   extern GLXContext *init_GL (ModeInfo *);
+  extern void clear_gl_error (void);
+  extern void check_gl_error (const char *type);
 # define FreeAllGL(dpy) /* */
 #endif
 

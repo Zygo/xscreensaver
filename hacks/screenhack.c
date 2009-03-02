@@ -329,6 +329,11 @@ visual_warning (Screen *screen, Window window, Visual *visual, Colormap cmap,
       fprintf (stderr, "%s: using %s's colormap 0x%x.\n",
                progname, win, (unsigned long) cmap);
     }
+
+# ifdef USE_GL
+  if (!validate_gl_visual (stderr, screen, win, visual))
+    exit (1);
+# endif /* USE_GL */
 }
 
 
@@ -467,6 +472,11 @@ main (int argc, char **argv)
     {
       Boolean def_visual_p;
       visual = pick_visual (screen);
+
+# ifdef USE_GL
+      if (!validate_gl_visual (stderr, screen, "window", visual))
+        exit (1);
+# endif /* USE_GL */
 
       if (toplevel->core.width <= 0)
 	toplevel->core.width = 600;

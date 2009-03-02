@@ -73,8 +73,9 @@ hacks are displayed and which aren't.
 .BR doSCO ,
 .BR doAtari ,
 .BR doBlitDamage ,
+.BR doSparcLinux ,
 and
-.BR doSparcLinux .
+.BR doSSolaris .
 Each of these is a Boolean resource, they all default to true, except for
 doSparcLinux and doAtari, which are turned off by default, because they're
 really not all that interesting looking unless you're a fan of those systems.

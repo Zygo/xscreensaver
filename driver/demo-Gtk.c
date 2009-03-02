@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-1999 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -109,6 +109,7 @@ static void populate_demo_window (GtkWidget *toplevel,
 static void populate_prefs_page (GtkWidget *top, prefs_pair *pair);
 static int apply_changes_and_save (GtkWidget *widget);
 static int maybe_reload_init_file (GtkWidget *widget, prefs_pair *pair);
+static void await_xscreensaver (GtkWidget *widget);
 
 
 /* Some random utility functions
@@ -501,6 +502,69 @@ restart_menu_cb (GtkWidget *widget, gpointer user_data)
   sleep (1);
   system ("xscreensaver -nosplash &");
 #endif
+
+  await_xscreensaver (GTK_WIDGET (widget));
+}
+
+static void
+await_xscreensaver (GtkWidget *widget)
+{
+  int countdown = 5;
+
+  Display *dpy = gdk_display;
+  /*  GtkWidget *dialog = 0;*/
+  char *rversion = 0;
+
+  while (!rversion && (--countdown > 0))
+    {
+      /* Check for the version of the running xscreensaver... */
+      server_xscreensaver_version (dpy, &rversion, 0, 0);
+
+      /* If it's not there yet, wait a second... */
+      sleep (1);
+    }
+
+/*  if (dialog) gtk_widget_destroy (dialog);*/
+
+  if (rversion)
+    {
+      /* Got it. */
+      free (rversion);
+    }
+  else
+    {
+      /* Timed out, no screensaver running. */
+
+      char buf [1024];
+      Bool root_p = (geteuid () == 0);
+      
+      strcpy (buf, 
+              "Error:\n\n"
+              "The xscreensaver daemon did not start up properly.\n"
+              "\n");
+
+      if (root_p)
+        strcat (buf,
+            "You are running as root.  This usually means that xscreensaver\n"
+            "was unable to contact your X server because access control is\n"
+            "turned on.  Try running this command:\n"
+            "\n"
+            "                        xhost +localhost\n"
+            "\n"
+            "and then selecting `File / Restart Daemon'.\n"
+            "\n"
+            "Note that turning off access control will allow anyone logged\n"
+            "on to this machine to access your screen, which might be\n"
+            "considered a security problem.  Please read the xscreensaver\n"
+            "manual and FAQ for more information.\n"
+            "\n"
+            "You shouldn't run X as root. Instead, you should log in as a\n"
+            "normal user, and `su' as necessary.");
+      else
+        strcat (buf, "Please check your $PATH and permissions.");
+
+      warning_dialog (widget, buf, False, 1);
+    }
 }
 
 
@@ -821,17 +885,24 @@ prefs_ok_cb (GtkButton *button, gpointer user_data)
   field = gtk_toggle_button_get_active (\
              GTK_TOGGLE_BUTTON (name_to_widget (GTK_WIDGET(button), (name))))
 
-  MINUTES (&p2->timeout,        "timeout_text");
-  MINUTES (&p2->cycle,          "cycle_text");
-  SECONDS (&p2->fade_seconds,   "fade_text");
-  INTEGER (&p2->fade_ticks,     "ticks_text");
-  MINUTES (&p2->lock_timeout,   "lock_text");
-  SECONDS (&p2->passwd_timeout, "pass_text");
-  CHECKBOX (p2->verbose_p,      "verbose_button");
-  CHECKBOX (p2->install_cmap_p, "install_button");
-  CHECKBOX (p2->fade_p,         "fade_button");
-  CHECKBOX (p2->unfade_p,       "unfade_button");
-  CHECKBOX (p2->lock_p,         "lock_button");
+  MINUTES (&p2->timeout,          "timeout_text");
+  MINUTES (&p2->cycle,            "cycle_text");
+  CHECKBOX (p2->lock_p,           "lock_button");
+  MINUTES (&p2->lock_timeout,     "lock_text");
+
+  CHECKBOX (p2->dpms_enabled_p,   "dpms_button");
+  MINUTES (&p2->dpms_standby,     "dpms_standby_text");
+  MINUTES (&p2->dpms_suspend,     "dpms_suspend_text");
+  MINUTES (&p2->dpms_off,         "dpms_off_text");
+
+  CHECKBOX (p2->verbose_p,        "verbose_button");
+  CHECKBOX (p2->capture_stderr_p, "capture_button");
+  CHECKBOX (p2->splash_p,         "splash_button");
+
+  CHECKBOX (p2->install_cmap_p,   "install_button");
+  CHECKBOX (p2->fade_p,           "fade_button");
+  CHECKBOX (p2->unfade_p,         "unfade_button");
+  SECONDS (&p2->fade_seconds,     "fade_text");
 
 # undef SECONDS
 # undef MINUTES
@@ -844,21 +915,37 @@ prefs_ok_cb (GtkButton *button, gpointer user_data)
 
   COPY(timeout);
   COPY(cycle);
+  COPY(lock_p);
   COPY(lock_timeout);
-  COPY(passwd_timeout);
-  COPY(fade_seconds);
-  COPY(fade_ticks);
+
+  COPY(dpms_enabled_p);
+  COPY(dpms_standby);
+  COPY(dpms_suspend);
+  COPY(dpms_off);
+
   COPY(verbose_p);
+  COPY(capture_stderr_p);
+  COPY(splash_p);
+
   COPY(install_cmap_p);
   COPY(fade_p);
   COPY(unfade_p);
-  COPY(lock_p);
+  COPY(fade_seconds);
 # undef COPY
 
   populate_prefs_page (GTK_WIDGET (button), pair);
 
   if (changed)
-    demo_write_init_file (GTK_WIDGET (button), p);
+    {
+      Display *dpy = gdk_display;
+      sync_server_dpms_settings (dpy, p->dpms_enabled_p,
+                                 p->dpms_standby / 1000,
+                                 p->dpms_suspend / 1000,
+                                 p->dpms_off / 1000,
+                                 False);
+
+      demo_write_init_file (GTK_WIDGET (button), p);
+    }
 }
 
 
@@ -1019,48 +1106,6 @@ format_time (char *buf, Time time)
 }
 
 
-static char *
-make_pretty_name (const char *shell_command)
-{
-  char *s = strdup (shell_command);
-  char *s2;
-  char res_name[255];
-
-  for (s2 = s; *s2; s2++)	/* truncate at first whitespace */
-    if (isspace (*s2))
-      {
-        *s2 = 0;
-        break;
-      }
-
-  s2 = strrchr (s, '/');	/* if pathname, take last component */
-  if (s2)
-    {
-      s2 = strdup (s2+1);
-      free (s);
-      s = s2;
-    }
-
-  if (strlen (s) > 50)		/* 51 is hereby defined as "unreasonable" */
-    s[50] = 0;
-
-  sprintf (res_name, "hacks.%s.name", s);		/* resource? */
-  s2 = get_string_resource (res_name, res_name);
-  if (s2)
-    return s2;
-
-  for (s2 = s; *s2; s2++)	/* if it has any capitals, return it */
-    if (*s2 >= 'A' && *s2 <= 'Z')
-      return s;
-
-  if (s[0] >= 'a' && s[0] <= 'z')			/* else cap it */
-    s[0] -= 'a'-'A';
-  if (s[0] == 'X' && s[1] >= 'a' && s[1] <= 'z')	/* (magic leading X) */
-    s[1] -= 'a'-'A';
-  return s;
-}
-
-
 /* Finds the number of the last hack to run, and makes that item be
    selected by default.
  */
@@ -1127,7 +1172,7 @@ populate_hack_list (GtkWidget *toplevel, prefs_pair *pair)
 
       char *pretty_name = (h[0]->name
                            ? strdup (h[0]->name)
-                           : make_pretty_name (h[0]->command));
+                           : make_hack_name (h[0]->command));
 
       line = gtk_list_item_new ();
       line_hbox = gtk_hbox_new (FALSE, 0);
@@ -1186,16 +1231,31 @@ populate_prefs_page (GtkWidget *top, prefs_pair *pair)
   gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "cycle_text")), s);
   format_time (s, p->lock_timeout);
   gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "lock_text")), s);
-  format_time (s, p->passwd_timeout);
-  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "pass_text")), s);
+
+  format_time (s, p->dpms_standby);
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "dpms_standby_text")),s);
+  format_time (s, p->dpms_suspend);
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "dpms_suspend_text")),s);
+  format_time (s, p->dpms_off);
+  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "dpms_off_text")), s);
+
   format_time (s, p->fade_seconds);
   gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "fade_text")), s);
-  sprintf (s, "%u", p->fade_ticks);
-  gtk_entry_set_text (GTK_ENTRY (name_to_widget (top, "ticks_text")), s);
 
+  gtk_toggle_button_set_active (
+                   GTK_TOGGLE_BUTTON (name_to_widget (top, "lock_button")),
+                   p->lock_p);
   gtk_toggle_button_set_active (
                    GTK_TOGGLE_BUTTON (name_to_widget (top, "verbose_button")),
                    p->verbose_p);
+  gtk_toggle_button_set_active (
+                   GTK_TOGGLE_BUTTON (name_to_widget (top, "capture_button")),
+                   p->capture_stderr_p);
+
+  gtk_toggle_button_set_active (
+                   GTK_TOGGLE_BUTTON (name_to_widget (top, "dpms_button")),
+                   p->dpms_enabled_p);
+
   gtk_toggle_button_set_active (
                    GTK_TOGGLE_BUTTON (name_to_widget (top, "install_button")),
                    p->install_cmap_p);
@@ -1205,13 +1265,12 @@ populate_prefs_page (GtkWidget *top, prefs_pair *pair)
   gtk_toggle_button_set_active (
                    GTK_TOGGLE_BUTTON (name_to_widget (top, "unfade_button")),
                    p->unfade_p);
-  gtk_toggle_button_set_active (
-                   GTK_TOGGLE_BUTTON (name_to_widget (top, "lock_button")),
-                   p->lock_p);
 
 
   {
     Bool found_any_writable_cells = False;
+    Bool dpms_supported = False;
+
     Display *dpy = gdk_display;
     int nscreens = ScreenCount(dpy);
     int i;
@@ -1225,17 +1284,55 @@ populate_prefs_page (GtkWidget *top, prefs_pair *pair)
 	  }
       }
 
+#ifdef HAVE_DPMS_EXTENSION
+    {
+      int op = 0, event = 0, error = 0;
+      if (XQueryExtension (dpy, "DPMS", &op, &event, &error))
+        dpms_supported = True;
+    }
+#endif /* HAVE_DPMS_EXTENSION */
+
+
+    /* Blanking and Locking
+     */
     gtk_widget_set_sensitive (
-                           GTK_WIDGET (name_to_widget (top, "fade_label")),
-                           found_any_writable_cells);
+                           GTK_WIDGET (name_to_widget (top, "lock_label")),
+                           p->lock_p);
     gtk_widget_set_sensitive (
-                           GTK_WIDGET (name_to_widget (top, "ticks_label")),
-                           found_any_writable_cells);
+                           GTK_WIDGET (name_to_widget (top, "lock_text")),
+                           p->lock_p);
+
+    /* DPMS
+     */
     gtk_widget_set_sensitive (
-                           GTK_WIDGET (name_to_widget (top, "fade_text")),
-                           found_any_writable_cells);
+                      GTK_WIDGET (name_to_widget (top, "dpms_frame")),
+                      dpms_supported);
     gtk_widget_set_sensitive (
-                           GTK_WIDGET (name_to_widget (top, "ticks_text")),
+                      GTK_WIDGET (name_to_widget (top, "dpms_button")),
+                      dpms_supported);
+    gtk_widget_set_sensitive (
+                       GTK_WIDGET (name_to_widget (top, "dpms_standby_label")),
+                       dpms_supported && p->dpms_enabled_p);
+    gtk_widget_set_sensitive (
+                       GTK_WIDGET (name_to_widget (top, "dpms_standby_text")),
+                       dpms_supported && p->dpms_enabled_p);
+    gtk_widget_set_sensitive (
+                       GTK_WIDGET (name_to_widget (top, "dpms_suspend_label")),
+                       dpms_supported && p->dpms_enabled_p);
+    gtk_widget_set_sensitive (
+                       GTK_WIDGET (name_to_widget (top, "dpms_suspend_text")),
+                       dpms_supported && p->dpms_enabled_p);
+    gtk_widget_set_sensitive (
+                       GTK_WIDGET (name_to_widget (top, "dpms_off_label")),
+                       dpms_supported && p->dpms_enabled_p);
+    gtk_widget_set_sensitive (
+                       GTK_WIDGET (name_to_widget (top, "dpms_off_text")),
+                       dpms_supported && p->dpms_enabled_p);
+
+    /* Colormaps
+     */
+    gtk_widget_set_sensitive (
+                           GTK_WIDGET (name_to_widget (top, "cmap_frame")),
                            found_any_writable_cells);
     gtk_widget_set_sensitive (
                            GTK_WIDGET (name_to_widget (top, "install_button")),
@@ -1246,6 +1343,15 @@ populate_prefs_page (GtkWidget *top, prefs_pair *pair)
     gtk_widget_set_sensitive (
                            GTK_WIDGET (name_to_widget (top, "unfade_button")),
                            found_any_writable_cells);
+
+    gtk_widget_set_sensitive (
+                           GTK_WIDGET (name_to_widget (top, "fade_label")),
+                           (found_any_writable_cells &&
+                            (p->fade_p || p->unfade_p)));
+    gtk_widget_set_sensitive (
+                           GTK_WIDGET (name_to_widget (top, "fade_text")),
+                           (found_any_writable_cells &&
+                            (p->fade_p || p->unfade_p)));
   }
 
 }
@@ -1283,8 +1389,9 @@ sensitize_demo_widgets (GtkWidget *toplevel, Bool sensitive_p)
 static void
 fix_text_entry_sizes (GtkWidget *toplevel)
 {
-  const char *names[] = { "timeout_text", "cycle_text", "fade_text",
-                          "ticks_text", "lock_text", "pass_text" };
+  const char *names[] = { "timeout_text", "cycle_text", "lock_text",
+                          "dpms_standby_text", "dpms_suspend_text",
+                          "dpms_off_text", "fade_text" };
   int i;
   int width = 0;
   GtkWidget *w;
@@ -1467,7 +1574,7 @@ get_hack_blurb (screenhack *hack)
   char *prog_name = strdup (hack->command);
   char *pretty_name = (hack->name
                        ? strdup (hack->name)
-                       : make_pretty_name (hack->command));
+                       : make_hack_name (hack->command));
   char doc_name[255], doc_class[255];
   char *s, *s2;
 
@@ -1572,7 +1679,7 @@ populate_demo_window (GtkWidget *toplevel, int which, prefs_pair *pair)
   char *pretty_name = (hack
                        ? (hack->name
                           ? strdup (hack->name)
-                          : make_pretty_name (hack->command))
+                          : make_hack_name (hack->command))
                        : 0);
   char *doc_string = hack ? get_hack_blurb (hack) : 0;
 
@@ -1666,6 +1773,23 @@ maybe_reload_init_file (GtkWidget *widget, prefs_pair *pair)
   return status;
 }
 
+
+
+/* Setting window manager icon
+ */
+
+#include "logo.xpm"
+
+static void
+init_icon (GdkWindow *window)
+{
+  GdkBitmap *mask = 0;
+  GdkColor transp;
+  GdkPixmap *pixmap =
+    gdk_pixmap_create_from_xpm_d (window, &mask, &transp, logo_xpm);
+  if (pixmap)
+    gdk_window_set_icon (window, 0, pixmap, mask);
+}
 
 
 /* The main demo-mode command loop.
@@ -2218,6 +2342,7 @@ main (int argc, char **argv)
 # endif /* HAVE_CRAPPLET */
     {
       gtk_widget_show (gtk_window);
+      init_icon (GTK_WIDGET(gtk_window)->window);
 
       /* Issue any warnings about the running xscreensaver daemon. */
       the_network_is_not_the_computer (gtk_window);

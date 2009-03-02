@@ -1071,8 +1071,17 @@ static void
 watchdog_timer (XtPointer closure, XtIntervalId *id)
 {
   saver_info *si = (saver_info *) closure;
+  saver_preferences *p = &si->prefs;
 
   disable_builtin_screensaver (si, False);
+
+  /* If the DPMS settings on the server have changed, change them back to
+     what ~/.xscreensaver says they should be. */
+  sync_server_dpms_settings (si->dpy, p->dpms_enabled_p,
+                             p->dpms_standby / 1000,
+                             p->dpms_suspend / 1000,
+                             p->dpms_off / 1000,
+                             False);
 
   if (si->screen_blanked_p)
     {

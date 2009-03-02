@@ -38,14 +38,11 @@ Getting Started:
 You can try out xscreensaver like so:
 
 	xscreensaver &
-	xscreensaver-command -demo
-
-After a few seconds, the screen should go black, and a dialog box should
-appear in the upper right corner.  This is "Demo Mode".
+	xscreensaver-demo
 
 Note: unlike `xlock', xscreensaver has a client-server model: the
 `xscreensaver' process is a daemon that runs in the background; it is
-controlled by the foreground `xscreensaver-command' program.
+controlled by the foreground `xscreensaver-demo' program.
 
 xscreensaver has an extensive manual -- please read it!
 
@@ -77,6 +74,40 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.27:   * New logo for xscreensaver!
+                      * New hacks, `starwars' and `stonerview'.
+                      * Made the motion of the bouncing ball in `stairs' be a
+                        little less jerky.
+                      * Made newly-added screenhacks be added to .xscreensaver
+                        automatically: if there are hacks in the app-defaults
+                        file that are not also in ~/.xscreensaver, they will
+                        be added to the end of the list.
+                      * Redid the `Screensaver Options' part of the control
+                        panel; xscreensaver now lets you configure your DPMS
+                        settings.
+                      * Fixed some Makefile problems with non-GL builds.
+                      * Fixed detection of MesaGL for version 3.3.
+                      * Better workaround to Red Hat 7.0's broken gcc.
+                      * Added Sparc Solaris kernel panic to `bsod'.
+Changes since 3.26:   * New hacks: `zoom' and `whirlwindwarp'.
+                      * Fixed a free-memory-reference bug in `sonar'.
+                      * Better error handling when there are no suitable GL
+                        visuals.
+                      * Added diagnostic dialog when xscreensaver-demo is
+                        unable to launch xscreensaver (e.g., when running as
+                        root.)
+                      * Fixed a bug that caused screenhack argument changes
+                        to be ignored when xscreensaver-demo was running as
+                        root (if "root" and "nobody" have different home
+                        directories.)
+                      * Made the programs default to ":0" if $DISPLAY is unset.
+                      * Made the `-verbose' output include information about
+                        which server extensions were supported at compile time.
+                      * Worked around Red Hat 7.0's broken gcc 2.96.
+                      * Updated default delays on the GL hacks to look better
+                        on machines with super-fast 3D hardware.
+                      * Install `screensaver-properties-capplet' to work around
+                        the usual egregious GNOME lossage.
 Changes since 3.25:   * Added "enabled" checkboxes in the list of hacks in
                         xscreensaver-demo (Gtk version only.)
                       * New hacks `hyperball', `xrayswarm', and `gflux'.

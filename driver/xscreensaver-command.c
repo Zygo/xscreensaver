@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-2000
+/* xscreensaver-command, Copyright (c) 1991-2001
  *  by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -52,7 +52,7 @@ static char *usage = "\n\
 usage: %s -<option>\n\
 \n\
   This program provides external control of a running xscreensaver process.\n\
-  Version %s, copyright (c) 1991-2000 Jamie Zawinski <jwz@jwz.org>.\n\
+  Version %s, copyright (c) 1991-2001 Jamie Zawinski <jwz@jwz.org>.\n\
 \n\
   The xscreensaver program is a daemon that runs in the background.\n\
   You control a running xscreensaver process by sending it messages\n\
@@ -147,8 +147,12 @@ main (int argc, char **argv)
   char *dpyname = 0;
   Atom *cmd = 0;
   long arg = 0L;
+  char *s;
 
   progname = argv[0];
+  s = strrchr (progname, '/');
+  if (s) progname = s+1;
+
   screensaver_version = (char *) malloc (5);
   memcpy (screensaver_version, screensaver_id + 17, 4);
   screensaver_version [4] = 0;
@@ -252,6 +256,15 @@ main (int argc, char **argv)
 
 
   if (!dpyname) dpyname = (char *) getenv ("DISPLAY");
+
+  if (!dpyname)
+    {
+      dpyname = ":0.0";
+      fprintf (stderr,
+               "%s: warning: $DISPLAY is not set: defaulting to \"%s\".\n",
+               progname, dpyname);
+    }
+
   dpy = XOpenDisplay (dpyname);
   if (!dpy)
     {

@@ -25,9 +25,10 @@ use Socket;
 require Time::Local;
 require POSIX;
 use Fcntl ':flock'; # import LOCK_* constants
+use POSIX qw(strftime);
 
 
-my $version = q{ $Revision: 1.60 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.61 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/xscreensaver/\n";
@@ -118,6 +119,9 @@ my @tripwire_words = ("aberrate", "abode", "amorphous", "antioch",
                       "eggplant");
 
 
+sub blurb {
+    return "$progname: " . strftime ("%H:%M:%S: ", localtime);
+}
 
 
 ##############################################################################
@@ -137,13 +141,13 @@ sub get_document_1 {
     if ($timeout > $http_timeout) { $timeout = $http_timeout; }
 
     if ( $verbose > 3 ) {
-	print STDERR "$progname: get_document_1 $url " .
+	print STDERR blurb() . "get_document_1 $url " .
             ($referer ? $referer : "") . "\n";
     }
 
     my($url_proto, $dummy, $serverstring, $path) = split(/\//, $url, 4);
     if (! ($url_proto && $url_proto =~ m/^http:$/i)) {
-        if ($verbose) { print STDERR "$progname: not an HTTP URL: $url\n"; }
+        if ($verbose) { print STDERR blurb() . "not an HTTP URL: $url\n"; }
         return ();
     }
 
@@ -175,7 +179,7 @@ sub get_document_1 {
     eval {
         local $SIG{ALRM}  = sub {
             if ($verbose > 0) {
-                print STDERR "$progname: timed out ($timeout) for $url\n";
+                print STDERR blurb() . "timed out ($timeout) for $url\n";
             }
             die "alarm\n"
             };
@@ -183,11 +187,11 @@ sub get_document_1 {
 
         $proto   = getprotobyname('tcp');
         if (!socket(S, PF_INET, SOCK_STREAM, $proto)) {
-            print STDERR "$progname: socket: $!\n" if ($verbose);
+            print STDERR blurb() . "socket: $!\n" if ($verbose);
             return;
         }
         if (!connect(S, $paddr)) {
-            print STDERR "$progname: connect($serverstring): $!\n"
+            print STDERR blurb() . "connect($serverstring): $!\n"
                 if ($verbose);
             return;
         }
@@ -219,7 +223,7 @@ sub get_document_1 {
         close S;
 
         if ( $verbose > 3 ) {
-            print STDERR "$progname:    ==> $http\n";
+            print STDERR blurb() . "   ==> $http\n";
         }
 
         return ( $http, $head, $body );
@@ -270,7 +274,7 @@ sub get_document {
                 $location =~ s/[\r\n]$//;
 
 		if ( $verbose > 3 ) {
-		    print STDERR "$progname: redirect from " .
+		    print STDERR blurb() . "redirect from " .
                         "$url to $location\n";
 		}
                 $referer = $url;
@@ -292,7 +296,7 @@ sub get_document {
 
             if ($loop_count++ > $max_loop_count) {
 		if ( $verbose > 1 ) {
-		    print STDERR "$progname: too many redirects " .
+		    print STDERR blurb() . "too many redirects " .
                         "($max_loop_count) from $orig_url\n";
 		}
                 $body = undef;
@@ -334,7 +338,7 @@ sub pick_image_from_body {
     }
 
     if ( $verbose > 3 ) {
-	print STDERR "$progname: base is $base\n";
+	print STDERR blurb() . "base is $base\n";
     }
 
 
@@ -380,7 +384,7 @@ sub pick_image_from_body {
     }
     if ($trip_count >= $#tripwire_words - 2) {
         if ($verbose > 1) {
-            print STDERR "$progname: there is probably a dictionary in" .
+            print STDERR blurb() . "there is probably a dictionary in" .
                 " \"$url\": rejecting.\n";
         }
         $rejected_urls{$url} = -1;
@@ -404,7 +408,7 @@ sub pick_image_from_body {
                 my $L = length($1);
                 if ($L > 1000) {
                     if ($verbose > 1) {
-                        print STDERR "$progname: keywords of" .
+                        print STDERR blurb() . "keywords of" .
                             " length $L in $url: rejecting.\n";
                     }
                     $rejected_urls{$url} = $L;
@@ -412,7 +416,7 @@ sub pick_image_from_body {
                     $_ = undef;
                     return ();
                 } elsif ( $verbose > 2 ) {
-                    print STDERR "$progname: keywords of length $L" .
+                    print STDERR blurb() . "keywords of length $L" .
                         " in $url (ok.)\n";
                 }
             }
@@ -450,7 +454,7 @@ sub pick_image_from_body {
 	    if ( $width && $width < $min_width) {
 		if ( $verbose > 2 ) {
                     if (!$height) { $height = "?"; }
-		    print STDERR "$progname: skip narrow image " .
+		    print STDERR blurb() . "skip narrow image " .
                         "$_ (${width}x$height)\n";
 		}
 		next;
@@ -459,7 +463,7 @@ sub pick_image_from_body {
 	    if ( $height && $height < $min_height) {
 		if ( $verbose > 2 ) {
                     if (!$width) { $width = "?"; }
-		    print STDERR "$progname: skip short image " .
+		    print STDERR blurb() . "skip short image " .
                         "$_ (${width}x$height)\n";
 		}
 		next;
@@ -470,7 +474,7 @@ sub pick_image_from_body {
                 ($width * $min_ratio ) > $height ) {
 		if ( $verbose > 2 ) {
                     if (!$height) { $height = "?"; }
-		    print STDERR "$progname: skip bad ratio " .
+		    print STDERR blurb() . "skip bad ratio " .
                         "$_ (${width}x$height)\n";
 		}
 		next;
@@ -480,13 +484,13 @@ sub pick_image_from_body {
 
 	    if ( $unique_urls{$url} ) {
 		if ( $verbose > 2 ) {
-                    print STDERR "$progname: skip duplicate image $_\n";
+                    print STDERR blurb() . "skip duplicate image $_\n";
                 }
 		next;
 	    }
 
 	    if ( $verbose > 2 ) {
-		print STDERR "$progname: got $url" . 
+		print STDERR blurb() . "got $url" . 
 		    ($width && $height ? " (${width}x${height})" : "") .
 		    ($was_inline ? " (inline)" : "") . "\n";
 	    }
@@ -513,7 +517,7 @@ sub pick_image_from_body {
 
     if ( $#urls == 0 ) {
 	if ( $verbose > 2 ) {
-	    print STDERR "$progname: no images on $base\n";
+	    print STDERR blurb() . "no images on $base\n";
 	}
 	return ();
     }
@@ -525,7 +529,7 @@ sub pick_image_from_body {
     $url = $urls[$i];
 
     if ( $verbose > 2 ) {
-	print STDERR "$progname: picked $url\n";
+	print STDERR blurb() . "picked $url\n";
     }
 
     return $url;
@@ -626,7 +630,7 @@ sub pick_from_image_randomizer {
     }
 
     if ( $verbose > 3 ) {
-        $_ = $words; s/%20/ /g; print STDERR "$progname: search words: $_\n";
+        $_ = $words; s/%20/ /g; print STDERR blurb() . "search words: $_\n";
     }
 
     if ( $verbose > 3 ) {
@@ -712,7 +716,7 @@ sub pick_from_image_randomizer {
         if ($which == 0 && $u =~ m@[/.]corbis\.com@) {
            $skipped = 1;
             if ( $verbose > 3 ) {
-                print STDERR "$progname: skipping corbis URL: $u\n";
+                print STDERR blurb() . "skipping corbis URL: $u\n";
             }
             next;
 
@@ -722,19 +726,19 @@ sub pick_from_image_randomizer {
                   ! ($u =~ m@dailynews\.yahoo\.com@))) {  # not dailynews
 #            $skipped = 1;
             if ( $verbose > 3 ) {
-                print STDERR "$progname: skipping non-AP URL: $u\n";
+                print STDERR blurb() . "skipping non-AP URL: $u\n";
             }
             next;
 
         } elsif ( $rejected_urls{$u} ) {
             if ( $verbose > 3 ) {
                 my $L = $rejected_urls{$u};
-                print STDERR "$progname: pre-rejecting sub-page: $u\n";
+                print STDERR blurb() . "pre-rejecting sub-page: $u\n";
             }
             next;
 
         } elsif ( $verbose > 3 ) {
-            print STDERR "$progname: sub-page: $u\n";
+            print STDERR blurb() . "sub-page: $u\n";
         }
 
         $subpages[++$#subpages] = $u;
@@ -742,7 +746,7 @@ sub pick_from_image_randomizer {
 
     if ( $#subpages < 0 ) {
         if (!$skipped && $verbose > 1) {
-            print STDERR "$progname: found nothing on $base " .
+            print STDERR blurb() . "found nothing on $base " .
                 "($length bytes, $href_count links).\n";
         }
         $body = undef;
@@ -755,7 +759,7 @@ sub pick_from_image_randomizer {
     my $subpage = $subpages[$i];
 
     if ( $verbose > 3 ) {
-	print STDERR "$progname: picked page $subpage\n";
+	print STDERR blurb() . "picked page $subpage\n";
     }
 
 
@@ -990,7 +994,7 @@ sub url_only_output {
 
 sub x_cleanup {
     my ($sig) = @_;
-    if ($verbose > 0) { print STDERR "$progname: caught signal $sig.\n"; }
+    if ($verbose > 0) { print STDERR blurb() . "caught signal $sig.\n"; }
     unlink $image_ppm, $image_tmp1, $image_tmp2;
     exit 1;
 }
@@ -1005,29 +1009,29 @@ sub nontrapping_system {
     if ($verbose > 1) {
         $_ = join(" ", @_);
         s/\"[^\"]+\"/\"...\"/g;
-        print STDERR "$progname: executing \"$_\"\n";
+        print STDERR blurb() . "executing \"$_\"\n";
     }
 
     my $rc = system @_;
 
     if ($rc == 0) {
         if ($verbose > 1) {
-            print STDERR "$progname: subproc exited normally.\n";
+            print STDERR blurb() . "subproc exited normally.\n";
         }
     } elsif (($rc & 0xff) == 0) {
         $rc >>= 8;
         if ($verbose) {
-            print "$progname: subproc exited with status $rc.\n";
+            print blurb() . "subproc exited with status $rc.\n";
         }
     } else {
         if ($rc & 0x80) {
             if ($verbose) {
-                print "$progname: subproc dumped core.\n";
+                print blurb() . "subproc dumped core.\n";
             }
             $rc &= ~0x80;
         }
         if ($verbose) {
-            print "$progname: subproc died with signal $rc.\n";
+            print blurb() . "subproc died with signal $rc.\n";
         }
         # die that way ourselves.
         kill $rc, $$;
@@ -1078,7 +1082,7 @@ sub image_to_pnm {
 
         local $SIG{ALRM}  = sub {
             if ($verbose > 0) {
-                print STDERR "$progname: timed out ($cvt_timeout) for " .
+                print STDERR blurb() . "timed out ($cvt_timeout) for " .
                     "$cmd on \"$url\" in pid $pid\n";
             }
             kill ('TERM', $pid) if ($pid);
@@ -1093,26 +1097,26 @@ sub image_to_pnm {
             $body = undef;
             close PIPE;
 
-            if ($verbose > 3) { print STDERR "$progname: awaiting $pid\n"; }
+            if ($verbose > 3) { print STDERR blurb() . "awaiting $pid\n"; }
             waitpid ($pid, 0);
-            if ($verbose > 3) { print STDERR "$progname: $pid completed\n"; }
+            if ($verbose > 3) { print STDERR blurb() . "$pid completed\n"; }
 
 
             my $size = (stat($output))[7];
             if ($size < 5) {
                 if ($verbose) {
-                    print STDERR "$progname: $cmd on ${w}x$h \"$url\" failed" .
+                    print STDERR blurb() . "$cmd on ${w}x$h \"$url\" failed" .
                         " ($size bytes)\n";
                 }
                 return ();
             }
 
             if ($verbose > 1) {
-                print STDERR "$progname: created ${w}x$h $output ($cmd)\n";
+                print STDERR blurb() . "created ${w}x$h $output ($cmd)\n";
             }
             return ($w, $h);
         } else {
-            print STDERR "$progname: $cmd failed: $!\n";
+            print STDERR blurb() . "$cmd failed: $!\n";
             return ();
         }
     };
@@ -1141,7 +1145,7 @@ sub x_output {
     # make sure the various programs we execute exist, right up front.
     foreach ("ppmmake", "giftopnm", "djpeg", "pnmpaste", "pnmscale",
              "pnmcut") {
-        which ($_) || die "$progname: $_ not found on \$PATH.\n";
+        which ($_) || die blurb() . "$_ not found on \$PATH.\n";
     }
 
     if (which($win_cmd_1)) {
@@ -1151,7 +1155,7 @@ sub x_output {
     } elsif (which($win_cmd_3)) {
         $ppm_to_root_window_cmd = $ppm_to_root_window_cmd_3;
      } else {
-        die "$progname: didn't find $win_cmd_1, $win_cmd_2, or $win_cmd_3 on \$PATH.\n";
+        die blurb() . "didn't find $win_cmd_1, $win_cmd_2, or $win_cmd_3 on \$PATH.\n";
     }
 
     $SIG{HUP}  = \&x_cleanup;
@@ -1166,11 +1170,11 @@ sub x_output {
 
     if (!$img_width || !$img_height) {
         $_ = "xdpyinfo";
-        which ($_) || die "$progname: $_ not found on \$PATH.\n";
+        which ($_) || die blurb() . "$_ not found on \$PATH.\n";
         $_ = `$_`;
         ($img_width, $img_height) = m/dimensions: *(\d+)x(\d+) /;
         if (!defined($img_height)) {
-            die "$progname: xdpyinfo failed.\n";
+            die blurb() . "xdpyinfo failed.\n";
         }
     }
 
@@ -1184,7 +1188,7 @@ sub x_output {
             $bgimage = $background;
             
         } elsif (! $background =~ m@^[-a-z0-9 ]+$@i) {
-            print STDERR "$progname: not a color or readable file: " .
+            print STDERR blurb() . "not a color or readable file: " .
                 "$background\n";
             exit 1;
         } else {
@@ -1197,7 +1201,7 @@ sub x_output {
     #
     $_ = "ppmmake '$bgcolor' $img_width $img_height";
     if ($verbose > 1) {
-        print STDERR "$progname: creating base image: $_\n";
+        print STDERR blurb() . "creating base image: $_\n";
     }
     nontrapping_system "$_ > $image_ppm";
 
@@ -1223,13 +1227,13 @@ sub x_output {
             $ih = $2;
             $cmd = "";
         } else {
-            die "$progname: $bgimage is not a GIF, JPEG, or PPM.\n";
+            die blurb() . "$bgimage is not a GIF, JPEG, or PPM.\n";
         }
 
         my $x = int (($img_width  - $iw) / 2);
         my $y = int (($img_height - $ih) / 2);
         if ($verbose > 1) {
-            print STDERR "$progname: pasting $bgimage (${iw}x$ih) into base ".
+            print STDERR blurb() . "pasting $bgimage (${iw}x$ih) into base ".
                 "image at $x,$y\n";
         }
 
@@ -1239,7 +1243,7 @@ sub x_output {
         $body = undef;
         close (IMG);
         if ($verbose > 1) {
-            print STDERR "$progname: subproc exited normally.\n";
+            print STDERR blurb() . "subproc exited normally.\n";
         }
         rename ($image_tmp1, $image_ppm) ||
             die ("renaming $image_tmp1 to $image_ppm: $!\n");
@@ -1263,7 +1267,7 @@ sub handle_image {
     my ($base, $img, $body, $source) = @_;
 
     if ($verbose > 1) {
-        print STDERR "$progname: got $img (" . length($body) . ")\n";
+        print STDERR blurb() . "got $img (" . length($body) . ")\n";
     }
 
     my ($iw, $ih) = image_to_pnm ($img, $body, $image_tmp1);
@@ -1278,14 +1282,14 @@ sub handle_image {
     #
     if ($filter_cmd) {
         if ($verbose > 1) {
-            print STDERR "$progname: running $filter_cmd\n";
+            print STDERR blurb() . "running $filter_cmd\n";
         }
 
         my $rc = nontrapping_system "($filter_cmd) < $image_tmp1 >$image_tmp2";
         if ($rc != 0) {
             if ($verbose) {
-                print STDERR "$progname: failed command: \"$filter_cmd\"\n";
-                print STDERR "$progname: failed url: \"$img\" (${ow}x$oh)\n";
+                print STDERR blurb() . "failed command: \"$filter_cmd\"\n";
+                print STDERR blurb() . "failed url: \"$img\" (${ow}x$oh)\n";
             }
             return;
         }
@@ -1323,14 +1327,14 @@ sub handle_image {
         }
         if ($iw <= 10 || $ih <= 10) {
             if ($verbose > 1) {
-                print STDERR "$progname: scaling to ${iw}x$ih would " .
+                print STDERR blurb() . "scaling to ${iw}x$ih would " .
                     "have been bogus.\n";
             }
             return 0;
         }
 
         if ($verbose > 1) {
-            print STDERR "$progname: scaling to ${iw}x$ih\n";
+            print STDERR blurb() . "scaling to ${iw}x$ih\n";
         }
 
         $cmd .= " | pnmscale -xsize $iw -ysize $ih";
@@ -1362,7 +1366,7 @@ sub handle_image {
     }
 
     if ($verbose > 2 && $crop_chance > 0.1) {
-        print STDERR "$progname: crop chance: $crop_chance\n";
+        print STDERR blurb() . "crop chance: $crop_chance\n";
     }
 
     if (rand() < $crop_chance) {
@@ -1388,7 +1392,7 @@ sub handle_image {
         if ($verbose > 1 &&
             ($crop_x != 0   || $crop_y != 0 ||
              $crop_w != $iw || $crop_h != $ih)) {
-            print STDERR "$progname: randomly cropping to " .
+            print STDERR blurb() . "randomly cropping to " .
                 "${crop_w}x$crop_h \@ $crop_x,$crop_y\n";
         }
     }
@@ -1407,7 +1411,7 @@ sub handle_image {
         $y + $crop_h > $img_height) {
 
         if ($verbose > 1) {
-            print STDERR "$progname: cropping for effective paste of " .
+            print STDERR blurb() . "cropping for effective paste of " .
                 "${crop_w}x$crop_h \@ $x,$y\n";
         }
 
@@ -1426,13 +1430,13 @@ sub handle_image {
         $ih = $crop_h;
         $cmd .= " | pnmcut $crop_x $crop_y $iw $ih";
         if ($verbose > 1) {
-            print STDERR "$progname: cropping to ${crop_w}x$crop_h \@ " .
+            print STDERR blurb() . "cropping to ${crop_w}x$crop_h \@ " .
                 "$crop_x,$crop_y\n";
         }
     }
 
     if ($verbose > 1) {
-        print STDERR "$progname: pasting ${iw}x$ih \@ $x,$y in $image_ppm\n";
+        print STDERR blurb() . "pasting ${iw}x$ih \@ $x,$y in $image_ppm\n";
     }
 
     $cmd .= " | pnmpaste - $x $y $image_ppm";
@@ -1442,8 +1446,8 @@ sub handle_image {
 
     if ($rc != 0) {
         if ($verbose) {
-            print STDERR "$progname: failed command: \"$cmd\"\n";
-            print STDERR "$progname: failed url: \"$img\" (${ow}x$oh)\n";
+            print STDERR blurb() . "failed command: \"$cmd\"\n";
+            print STDERR blurb() . "failed url: \"$img\" (${ow}x$oh)\n";
         }
         return;
     }
@@ -1461,7 +1465,7 @@ sub handle_image {
         $rc = nontrapping_system "($post_filter_cmd) < $image_ppm > $target";
         if ($rc != 0) {
             if ($verbose) {
-                print STDERR "$progname: filter failed: " .
+                print STDERR blurb() . "filter failed: " .
                     "\"$post_filter_cmd\"\n";
             }
             return;
@@ -1490,13 +1494,13 @@ sub handle_image {
 
             if ($rc != 0) {
                 if ($verbose) {
-                    print STDERR "$progname: display failed: \"$cmd\"\n";
+                    print STDERR blurb() . "display failed: \"$cmd\"\n";
                 }
                 return;
             }
 
         } elsif ($verbose > 1) {
-            print STDERR "$progname: $target size is $tsize\n";
+            print STDERR blurb() . "$target size is $tsize\n";
         }
     }
 
@@ -1553,7 +1557,7 @@ sub main {
                 $img_width = $1;
                 $img_height = $2;
             } else {
-                die "$progname: argument to \"-size\" must be" .
+                die blurb() . "argument to \"-size\" must be" .
                     " of the form \"640x400\"\n";
             }
         } elsif ($_ eq "-proxy" || $_ eq "-http-proxy") {
@@ -1576,11 +1580,11 @@ sub main {
 
     if (!$root_p && !$no_output_p) {
         die "$copyright" .
-            "$progname: the -root argument is mandatory (for now.)\n";
+            blurb() . "the -root argument is mandatory (for now.)\n";
     }
 
     if (!$no_output_p && !$ENV{DISPLAY}) {
-        die "$progname: \$DISPLAY is not set.\n";
+        die blurb() . "\$DISPLAY is not set.\n";
     }
 
     if ($urls_only_p) {

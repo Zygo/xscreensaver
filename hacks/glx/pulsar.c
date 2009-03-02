@@ -606,9 +606,13 @@ void Create_Texture(char *filename)
   /* mipmaps make the image look much nicer */
   if (do_mipmap)
 	a=gluBuild2DMipmaps(GL_TEXTURE_2D, format, width, height, format, GL_UNSIGNED_BYTE, image);
-  else 
-	glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
-				 format, GL_UNSIGNED_BYTE, image);
+  else
+    {
+      clear_gl_error();
+      glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
+                   format, GL_UNSIGNED_BYTE, image);
+      check_gl_error("texture");
+    }
 
   free(image);
 }

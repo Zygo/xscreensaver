@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-2000 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -159,27 +159,38 @@ static Bool
 grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor)
 {
   Status mstatus, kstatus;
-  XSync (si->dpy, False);
+  int i;
+  int retries = 4;
 
-  kstatus = grab_kbd (si, window);
-  if (kstatus != GrabSuccess)
-    {	/* try again in a second */
-      sleep (1);
+  for (i = 0; i < retries; i++)
+    {
+      XSync (si->dpy, False);
       kstatus = grab_kbd (si, window);
-      if (kstatus != GrabSuccess)
-	fprintf (stderr, "%s: couldn't grab keyboard!  (%s)\n",
-		 blurb(), grab_string(kstatus));
+      if (kstatus == GrabSuccess)
+        break;
+
+      /* else, wait a second and try to grab again. */
+      sleep (1);
     }
 
-  mstatus = grab_mouse (si, window, cursor);
-  if (mstatus != GrabSuccess)
-    {	/* try again in a second */
-      sleep (1);
+  if (kstatus != GrabSuccess)
+    fprintf (stderr, "%s: couldn't grab keyboard!  (%s)\n",
+             blurb(), grab_string(kstatus));
+
+  for (i = 0; i < retries; i++)
+    {
+      XSync (si->dpy, False);
       mstatus = grab_mouse (si, window, cursor);
-      if (mstatus != GrabSuccess)
-	fprintf (stderr, "%s: couldn't grab pointer!  (%s)\n",
-		 blurb(), grab_string(mstatus));
+      if (mstatus == GrabSuccess)
+        break;
+
+      /* else, wait a second and try to grab again. */
+      sleep (1);
     }
+
+  if (mstatus != GrabSuccess)
+    fprintf (stderr, "%s: couldn't grab pointer!  (%s)\n",
+             blurb(), grab_string(mstatus));
 
   return (kstatus == GrabSuccess ||
 	  mstatus == GrabSuccess);
