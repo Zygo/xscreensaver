@@ -99,7 +99,7 @@
  *      monitors, xscreensaver just ignores them (which allows them to
  *      display duplicates or overlaps).
  *
- *   5a) Nvidia fucks it up:
+ *  5a) Nvidia fucks it up:
  *
  *      Nvidia drivers as of Aug 2008 running in "TwinView" mode
  *      apparently report correct screen geometry via Xinerama, but
@@ -108,6 +108,10 @@
  *      instead."  Which is a seriously lame answer.  So, xscreensaver
  *      has to query *both* extensions, and make a guess as to which
  *      is to be believed.
+ *
+ *  5b) Also sometimes RANDR says stupid shit like, "You have one
+ *      screen, and it has no available orientations or sizes."
+ *
  */
 
 #ifdef HAVE_CONFIG_H
@@ -151,6 +155,8 @@ struct _monitor {
   int x, y, width, height;
   monitor_sanity sanity;	/* I'm not crazy you're the one who's crazy */
   int enemy;			/* which monitor it overlaps or duplicates */
+  char *err;			/* msg to print at appropriate later time;
+                                   exists only on monitor #0. */
 };
 
 static Bool layouts_differ_p (monitor **a, monitor **b);
@@ -164,6 +170,7 @@ free_monitors (monitor **monitors)
   while (*m2) 
     {
       if ((*m2)->desc) free ((*m2)->desc);
+      if ((*m2)->err) free ((*m2)->err);
       free (*m2);
       m2++;
     }
@@ -171,10 +178,24 @@ free_monitors (monitor **monitors)
 }
 
 
+static char *
+append (char *s1, const char *s2)
+{
+  char *s = (char *) malloc ((s1 ? strlen(s1) : 0) +
+                             (s2 ? strlen(s2) : 0) + 3);
+  *s = 0;
+  if (s1) strcat (s, s1);
+  if (s1 && s2) strcat (s, "\n");
+  if (s2) strcat (s, s2);
+  if (s1) free (s1);
+  return s;
+}
+
+
 #ifdef HAVE_XINERAMA
 
 static monitor **
-xinerama_scan_monitors (Display *dpy)
+xinerama_scan_monitors (Display *dpy, char **errP)
 {
   Screen *screen = DefaultScreenOfDisplay (dpy);
   int event, error, nscreens, i;
@@ -213,7 +234,7 @@ xinerama_scan_monitors (Display *dpy)
 #ifdef HAVE_XF86VMODE
 
 static monitor **
-vidmode_scan_monitors (Display *dpy)
+vidmode_scan_monitors (Display *dpy, char **errP)
 {
   int event, error, nscreens, i;
   monitor **monitors;
@@ -312,7 +333,7 @@ vidmode_scan_monitors (Display *dpy)
 #ifdef HAVE_RANDR
 
 static monitor **
-randr_scan_monitors (Display *dpy)
+randr_scan_monitors (Display *dpy, char **errP)
 {
   int event, error, major, minor, nscreens, i, j;
   monitor **monitors;
@@ -348,6 +369,13 @@ randr_scan_monitors (Display *dpy)
           XRRFreeScreenResources (res);
         }
 # endif /* HAVE_RANDR_12 */
+    }
+
+  if (nscreens <= 0)
+    {
+      *errP = append (*errP,
+                      "WARNING: RANDR reported no screens!  Ignoring it.");
+      return 0;
     }
 
   monitors = (monitor **) calloc (nscreens + 1, sizeof(*monitors));
@@ -402,45 +430,62 @@ randr_scan_monitors (Display *dpy)
           int k;
           XRRScreenResources *res = 
             XRRGetScreenResources (dpy, RootWindowOfScreen (screen));
-          for (k = 0; k < res->noutput; k++)
+          for (k = 0; k < res->noutput; k++, j++)
             {
               monitor *m = (monitor *) calloc (1, sizeof (monitor));
               XRROutputInfo *rroi = XRRGetOutputInfo (dpy, res, 
                                                       res->outputs[k]);
-              RRCrtc crtc = (rroi->crtc ? rroi->crtc : rroi->crtcs[0]);
-              XRRCrtcInfo *crtci = XRRGetCrtcInfo (dpy, res, crtc);
+              RRCrtc crtc = (rroi->crtc  ? rroi->crtc :
+                             rroi->crtcs ? rroi->crtcs[0] : 0);
+              XRRCrtcInfo *crtci = (crtc ? XRRGetCrtcInfo(dpy, res, crtc) : 0);
 
               monitors[j] = m;
               m->screen   = screen;
               m->id       = (i * 1000) + j;
               m->desc     = (rroi->name ? strdup (rroi->name) : 0);
-              m->x        = crtci->x;
-              m->y        = crtci->y;
 
-              if (crtci->rotation & (RR_Rotate_90|RR_Rotate_270))
+              if (crtci)
                 {
-                  m->width  = crtci->height;
-                  m->height = crtci->width;
-                }
-              else
-                {
+                  /* Note: if the screen is rotated, XRRConfigSizes contains
+                     the unrotated WxH, but XRRCrtcInfo contains rotated HxW.
+                   */
+                  m->x      = crtci->x;
+                  m->y      = crtci->y;
                   m->width  = crtci->width;
                   m->height = crtci->height;
                 }
-
-              j++;
 
               if (rroi->connection == RR_Disconnected)
                 m->sanity = S_DISABLED;
               /* #### do the same for RR_UnknownConnection? */
 
-              XRRFreeCrtcInfo (crtci);
+              if (crtci) 
+                XRRFreeCrtcInfo (crtci);
               XRRFreeOutputInfo (rroi);
             }
           XRRFreeScreenResources (res);
 # endif /* HAVE_RANDR_12 */
         }
     }
+
+  /* Work around more fucking brain damage. */
+  {
+    int ok = 0;
+    int i = 0;
+    while (monitors[i]) 
+      {
+        if (monitors[i]->width != 0 && monitors[i]->height != 0)
+          ok++;
+        i++;
+      }
+    if (! ok)
+      {
+        *errP = append (*errP,
+              "WARNING: RANDR says all screens are 0x0!  Ignoring it.");
+        free_monitors (monitors);
+        monitors = 0;
+      }
+  }
 
   return monitors;
 }
@@ -449,7 +494,7 @@ randr_scan_monitors (Display *dpy)
 
 
 static monitor **
-basic_scan_monitors (Display *dpy)
+basic_scan_monitors (Display *dpy, char **errP)
 {
   int nscreens = ScreenCount (dpy);
   int i;
@@ -492,14 +537,15 @@ basic_scan_monitors (Display *dpy)
      modifying xscreensaver to try to get this information from RandR.
  */
 static monitor **
-randr_versus_xinerama_fight (Display *dpy, monitor **randr_monitors)
+randr_versus_xinerama_fight (Display *dpy, monitor **randr_monitors, 
+                             char **errP)
 {
   monitor **xinerama_monitors;
 
   if (!randr_monitors) 
     return 0;
 
-  xinerama_monitors = xinerama_scan_monitors (dpy);
+  xinerama_monitors = xinerama_scan_monitors (dpy, errP);
   if (!xinerama_monitors)
     return randr_monitors;
 
@@ -511,19 +557,17 @@ randr_versus_xinerama_fight (Display *dpy, monitor **randr_monitors)
   else if (   randr_monitors[0] &&   !randr_monitors[1] &&  /* 1 monitor */
            xinerama_monitors[0] && xinerama_monitors[1])    /* >1 monitor */
     {
-      fprintf (stderr,
-               "%s: WARNING: RANDR reports 1 screen but Xinerama\n"
-               "%s:          reports multiple.  Believing Xinerama.\n",
-               blurb(), blurb());
+      *errP = append (*errP,
+                      "WARNING: RANDR reports 1 screen but Xinerama\n"
+                      "\t\treports multiple.  Believing Xinerama.");
       free_monitors (randr_monitors);
       return xinerama_monitors;
     }
   else
     {
-      fprintf (stderr,
-               "%s: WARNING: RANDR and Xinerama report different\n"
-               "%s:          screen layouts!  Believing RANDR.\n",
-               blurb(), blurb());
+      *errP = append (*errP,
+                      "WARNING: RANDR and Xinerama report different\n"
+                      "\t\tscreen layouts!  Believing RANDR.");
       free_monitors (xinerama_monitors);
       return randr_monitors;
     }
@@ -540,7 +584,7 @@ randr_versus_xinerama_fight (Display *dpy, monitor **randr_monitors)
    for stress-testing purposes.
  */
 static monitor **
-debug_scan_monitors (Display *dpy)
+debug_scan_monitors (Display *dpy, char **errP)
 {
   static const char * const geoms[] = {
     "1600x1028+0+22",
@@ -587,7 +631,7 @@ debug_scan_monitors (Display *dpy)
 
 #ifdef QUAD_MODE
 static monitor **
-quadruple (monitor **monitors, Bool debug_p)
+quadruple (monitor **monitors, Bool debug_p, char **errP)
 {
   int i, j, count = 0;
   monitor **monitors2;
@@ -627,34 +671,37 @@ scan_monitors (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
   monitor **monitors = 0;
+  char *err = 0;
 
 # ifdef DEBUG_MULTISCREEN
-    if (! monitors) monitors = debug_scan_monitors (si->dpy);
+    if (! monitors) monitors = debug_scan_monitors (si->dpy, &err);
 # endif
 
 # ifdef HAVE_RANDR
   if (! p->getviewport_full_of_lies_p)
-    if (! monitors) monitors = randr_scan_monitors (si->dpy);
+    if (! monitors) monitors = randr_scan_monitors (si->dpy, &err);
 
 #  ifdef HAVE_XINERAMA
-   monitors = randr_versus_xinerama_fight (si->dpy, monitors);
+   monitors = randr_versus_xinerama_fight (si->dpy, monitors, &err);
 #  endif
 # endif /* HAVE_RANDR */
 
 # ifdef HAVE_XF86VMODE
-  if (! monitors) monitors = vidmode_scan_monitors (si->dpy);
+  if (! monitors) monitors = vidmode_scan_monitors (si->dpy, &err);
 # endif
 
 # ifdef HAVE_XINERAMA
-  if (! monitors) monitors = xinerama_scan_monitors (si->dpy);
+  if (! monitors) monitors = xinerama_scan_monitors (si->dpy, &err);
 # endif
 
-  if (! monitors) monitors = basic_scan_monitors (si->dpy);
+  if (! monitors) monitors = basic_scan_monitors (si->dpy, &err);
 
 # ifdef QUAD_MODE
   if (p->quad_p)
-    monitors = quadruple (monitors, p->debug_p);
+    monitors = quadruple (monitors, p->debug_p, &err);
 # endif
+
+  if (monitors && err) monitors[0]->err = err;
 
   return monitors;
 }
@@ -838,6 +885,18 @@ describe_monitor_layout (saver_info *si)
       else
         bad_count++;
       count++;
+    }
+
+  if (monitors[0]->err)		/* deferred error msg */
+    {
+      char *token = strtok (monitors[0]->err, "\n");
+      while (token)
+        {
+          fprintf (stderr, "%s: %s\n", blurb(), token);
+          token = strtok (0, "\n");
+        }
+      free (monitors[0]->err);
+      monitors[0]->err = 0;
     }
 
   if (count == 0)

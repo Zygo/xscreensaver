@@ -145,6 +145,10 @@ AH_TEMPLATE([HAVE_GDK_PIXBUF],
 	    [Define this if you have the GDK_Pixbuf library installed.  Some
 	    of the demos can make use of this if it is available.])
 
+AH_TEMPLATE([HAVE_GDK_PIXBUF_APPLY_EMBEDDED_ORIENTATION],
+	    [Define this if you have the gdk_pixbuf_apply_embedded_orientation
+	    function (gdk-pixbuf 2.12).])
+
 AH_TEMPLATE([HAVE_JPEGLIB],
 	    [Define this if you have the Independent JPEG Group's JPEG
 	    library installed.  Some of the demos can make use of this if it
@@ -1181,7 +1185,7 @@ AC_DEFINE_UNQUOTED(PACKAGE, "$GETTEXT_PACKAGE",
 		   generated code.])
 AC_SUBST(GETTEXT_PACKAGE)
 
-ALL_LINGUAS="ca da de es et fi fr hu it ja ko nb nl no pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
+ALL_LINGUAS="ca da de es et fi fr hu it ja ko nb nl pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
 AM_GLIB_GNU_GETTEXT
 MKINSTALLDIRS="$INSTALL_DIRS"
 
@@ -3087,6 +3091,12 @@ if test "$with_gdk_pixbuf" = yes; then
   else
     AC_MSG_RESULT(checking for gdk_pixbuf usability... no)
   fi
+
+  if test "$have_gdk_pixbuf" = yes; then
+    AC_CHECK_X_LIB(c, gdk_pixbuf_apply_embedded_orientation,
+                     [AC_DEFINE(HAVE_GDK_PIXBUF_APPLY_EMBEDDED_ORIENTATION)],,
+                     $ac_gdk_pixbuf_config_libs -lX11 -lXext -lm)
+  fi
 fi
 
 
@@ -3590,6 +3600,8 @@ fi
 tab='	'
 if test "$have_gl" = yes; then
   GL_EXES='$(GL_EXES)'
+  SUID_EXES='$(SUID_EXES)'
+  RETIRED_GL_EXES='$(RETIRED_EXES)'
   GL_UTIL_EXES='$(GL_UTIL_EXES)'
   GL_MEN='$(GL_MEN)'
   GL_KLUDGE=" "
@@ -3716,6 +3728,7 @@ AC_SUBST(LOCK_SRCS)
 AC_SUBST(LOCK_OBJS)
 AC_SUBST(JPEG_EXES)
 AC_SUBST(GL_EXES)
+AC_SUBST(SUID_EXES)
 AC_SUBST(GL_UTIL_EXES)
 AC_SUBST(GL_MEN)
 AC_SUBST(GL_KLUDGE)

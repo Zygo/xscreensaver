@@ -1413,7 +1413,7 @@ init_lavalite (ModeInfo *mi)
     gltrackball_track (bp->trackball, 50,  5, 100, 100);
 
     /* Oh, but if it's the "Giant" model, tilt the scene away: make it
-       look like we're looking up at it instead of odwn at it! */
+       look like we're looking up at it instead of down at it! */
     if (bp->style == GIANT)
       gltrackball_track (bp->trackball, 50, -12, 100, 100);
     else if (bp->style == ROCKET)  /* same for rocket, but not as much */

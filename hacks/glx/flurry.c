@@ -403,7 +403,7 @@ init_flurry(ModeInfo * mi)
     case PRESET_FIRE: {
 	flurry_info_t *flurry;
 
-	flurry = new_flurry_info(global, 12, slowCyclicColorMode, 10000.0, 0.0, 1.0);
+	flurry = new_flurry_info(global, 12, slowCyclicColorMode, 10000.0, 0.2, 1.0);
 	flurry->next = global->flurry;
 	global->flurry = flurry;	
         break;

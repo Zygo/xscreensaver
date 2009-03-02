@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.07
-!                              10-Aug-2008
+!                              version 5.08
+!                              27-Dec-2008
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -61,6 +61,7 @@
 *textFile:		@DEFAULT_TEXT_FILE@
 *textProgram:		fortune
 *textURL:		http://www.livejournal.com/stats/latest-rss.bml
+!*textURL:		http://twitter.com/statuses/public_timeline.atom
 
 *overlayTextForeground:	#FFFF00
 *overlayTextBackground:	#000000
@@ -150,47 +151,38 @@ GetViewPortIsFullOfLies: False
 ! screen savers interactively.
 !
 *programs:								      \
--				sphere -root				    \n\
+				maze -root				    \n\
 @GL_KLUDGE@ GL: 				superquadrics -root			    \n\
--				worm -root				    \n\
 				attraction -root			    \n\
 				blitspin -root				    \n\
 				greynetic -root				    \n\
 				helix -root				    \n\
 				hopalong -root				    \n\
-				hypercube -root				    \n\
+-				hypercube -root				    \n\
 				imsmap -root				    \n\
-				maze -root				    \n\
-				noseguy -root				    \n\
-				pyro -root				    \n\
+-				noseguy -root				    \n\
+-				pyro -root				    \n\
 				qix -root				    \n\
-				rocks -root				    \n\
+-				rocks -root				    \n\
 				rorschach -root				    \n\
 				decayscreen -root			    \n\
 				flame -root				    \n\
 				halo -root				    \n\
 				slidescreen -root			    \n\
--				lmorph -root				    \n\
 				pedal -root				    \n\
-				bubbles -root				    \n\
 				bouboule -root				    \n\
-				braid -root				    \n\
+-				braid -root				    \n\
 				coral -root				    \n\
 				deco -root				    \n\
 				drift -root				    \n\
-				fadeplot -root				    \n\
-				flag -root				    \n\
-				forest -root				    \n\
+-				fadeplot -root				    \n\
 				galaxy -root				    \n\
 				goop -root				    \n\
 				grav -root				    \n\
 				ifs -root				    \n\
+@GL_KLUDGE@ GL: 				jigsaw -root				    \n\
 				julia -root				    \n\
-				kaleidescope -root			    \n\
--				laser -root				    \n\
--				lightning -root				    \n\
--				lisa -root				    \n\
--				lissie -root				    \n\
+-				kaleidescope -root			    \n\
 @GL_KLUDGE@ GL: 				moebius -root				    \n\
 				moire -root				    \n\
 @GL_KLUDGE@ GL: 				morph3d -root				    \n\
@@ -199,36 +191,32 @@ GetViewPortIsFullOfLies: False
 				penrose -root				    \n\
 @GL_KLUDGE@ GL: 				pipes -root				    \n\
 				rd-bomb -root				    \n\
--				rotor -root				    \n\
 @GL_KLUDGE@ GL: 				rubik -root				    \n\
 -				sierpinski -root			    \n\
 				slip -root				    \n\
--				spiral -root				    \n\
 @GL_KLUDGE@ GL: 				sproingies -root			    \n\
 				starfish -root				    \n\
 				strange -root				    \n\
 				swirl -root				    \n\
 				triangle -root				    \n\
--				vines -root				    \n\
 				xjack -root				    \n\
 				xlyap -root				    \n\
 @GL_KLUDGE@ GL: 				atlantis -root				    \n\
 				bsod -root				    \n\
 @GL_KLUDGE@ GL: 				bubble3d -root				    \n\
 @GL_KLUDGE@ GL: 				cage -root				    \n\
-				crystal -root				    \n\
+-				crystal -root				    \n\
 				cynosure -root				    \n\
 				discrete -root				    \n\
 				distort -root				    \n\
 				epicycle -root				    \n\
 				flow -root				    \n\
-@GL_KLUDGE@ GL: 				glplanet -root				    \n\
+- GL: 				glplanet -root				    \n\
 				interference -root			    \n\
-				jigsaw -root				    \n\
 				kumppa -root				    \n\
 @GL_KLUDGE@ GL: 				lament -root				    \n\
 				moire2 -root				    \n\
-				sonar -root				    \n\
+@GL_KLUDGE@ GL: 				sonar -root				    \n\
 @GL_KLUDGE@ GL: 				stairs -root				    \n\
 				truchet -root				    \n\
 -				vidwhacker -root			    \n\
@@ -236,7 +224,6 @@ GetViewPortIsFullOfLies: False
 				bumps -root				    \n\
 				ccurve -root				    \n\
 				compass -root				    \n\
--				critical -root				    \n\
 				deluxe -root				    \n\
 -				demon -root				    \n\
 @GLE_KLUDGE@ GL: 				extrusion -root				    \n\
@@ -250,14 +237,13 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				sierpinski3d -root			    \n\
 				spotlight -root				    \n\
 				squiral -root				    \n\
-				t3d -root				    \n\
 				wander -root				    \n\
 -				webcollage -root			    \n\
 				xflame -root				    \n\
 				xmatrix -root				    \n\
 @GL_KLUDGE@ GL: 				gflux -root				    \n\
 -				hyperball -root				    \n\
-				nerverot -root				    \n\
+-				nerverot -root				    \n\
 				xrayswarm -root				    \n\
 				xspirograph -root			    \n\
 @GL_KLUDGE@ GL: 				circuit -root				    \n\
@@ -274,7 +260,6 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				stonerview -root			    \n\
 				vermiculate -root			    \n\
 				whirlwindwarp -root			    \n\
-				whirlygig -root				    \n\
 				zoom -root				    \n\
 				anemone -root				    \n\
 				apollonian -root			    \n\
@@ -285,18 +270,17 @@ GetViewPortIsFullOfLies: False
 				fluidballs -root			    \n\
 @GL_KLUDGE@ GL: 				flurry -root				    \n\
 - GL: 				glblur -root				    \n\
-- GL: 				glforestfire -root			    \n\
 @GL_KLUDGE@ GL: 				glsnake -root				    \n\
 				halftone -root				    \n\
 -				juggle -root				    \n\
 @GL_KLUDGE@ GL: 				lavalite -root				    \n\
-				polyominoes -root			    \n\
+-				polyominoes -root			    \n\
 @GL_KLUDGE@ GL: 				queens -root				    \n\
 - GL: 				sballs -root				    \n\
 @GL_KLUDGE@ GL: 				spheremonics -root			    \n\
 -				thornbird -root				    \n\
 				twang -root				    \n\
-@GL_KLUDGE@ GL: 				antspotlight -root			    \n\
+- GL: 				antspotlight -root			    \n\
 				apple2 -root				    \n\
 @GL_KLUDGE@ GL: 				atunnel -root				    \n\
 				barcode -root				    \n\
@@ -314,7 +298,7 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				glmatrix -root				    \n\
 - GL: 				glslideshow -root			    \n\
 @GL_KLUDGE@ GL: 				hypertorus -root			    \n\
-@GL_KLUDGE@ GL: 				jigglypuff -root			    \n\
+- GL: 				jigglypuff -root			    \n\
 @GL_KLUDGE@ GL: 				klein -root				    \n\
 				metaballs -root				    \n\
 @GL_KLUDGE@ GL: 				mirrorblob -root			    \n\
@@ -331,18 +315,17 @@ GetViewPortIsFullOfLies: False
 				interaggregate -root			    \n\
 				intermomentary -root			    \n\
 				memscroller -root			    \n\
-				mismunch -root				    \n\
 @GL_KLUDGE@ GL: 				noof -root				    \n\
 				pacman -root				    \n\
 @GL_KLUDGE@ GL: 				pinion -root				    \n\
 @GL_KLUDGE@ GL: 				polyhedra -root				    \n\
-@GL_KLUDGE@ GL: 				providence -root			    \n\
+- GL: 				providence -root			    \n\
 				substrate -root				    \n\
 				wormhole -root				    \n\
 - GL: 				antmaze -root				    \n\
 @GL_KLUDGE@ GL: 				boing -root				    \n\
 				boxfit -root				    \n\
-- GL: 				carousel -root				    \n\
+@GL_KLUDGE@ GL: 				carousel -root				    \n\
 				celtic -root				    \n\
 @GL_KLUDGE@ GL: 				crackberg -root				    \n\
 @GL_KLUDGE@ GL: 				cube21 -root				    \n\
@@ -364,6 +347,7 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				voronoi -root				    \n\
 @GL_KLUDGE@ GL: 				hypnowheel -root			    \n\
 -				lcdscrub -root				    \n\
+@GL_KLUDGE@ GL: 				photopile -root				    \n\
 @GL_KLUDGE@ GL: 				skytentacles -root			    \n
 
 

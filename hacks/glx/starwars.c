@@ -36,10 +36,6 @@
 # include <unistd.h>
 #endif
 
-#ifdef HAVE_UNAME
-# include <sys/utsname.h>
-#endif /* HAVE_UNAME */
-
 #ifndef HAVE_COCOA
 # include <X11/Intrinsic.h>
 #endif

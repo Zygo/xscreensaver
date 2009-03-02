@@ -759,6 +759,7 @@ LOCK_SRCS
 LOCK_OBJS
 JPEG_EXES
 GL_EXES
+SUID_EXES
 GL_UTIL_EXES
 GL_MEN
 GL_KLUDGE
@@ -1892,6 +1893,9 @@ echo "command line was: $0 $@"
 #       Autoheader stuff
 #
 ###############################################################################
+
+
+
 
 
 
@@ -7921,7 +7925,7 @@ _ACEOF
 
 
 
-ALL_LINGUAS="ca da de es et fi fr hu it ja ko nb nl no pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
+ALL_LINGUAS="ca da de es et fi fr hu it ja ko nb nl pl pt pt_BR ru sk sv vi wa zh_CN zh_TW"
 if test -n "$ac_tool_prefix"; then
   # Extract the first word of "${ac_tool_prefix}ranlib", so it can be a program name with args.
 set dummy ${ac_tool_prefix}ranlib; ac_word=$2
@@ -16761,7 +16765,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 16768 "configure"
+#line 16772 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -18268,6 +18272,100 @@ _ACEOF
   else
     { echo "$as_me:$LINENO: result: checking for gdk_pixbuf usability... no" >&5
 echo "${ECHO_T}checking for gdk_pixbuf usability... no" >&6; }
+  fi
+
+  if test "$have_gdk_pixbuf" = yes; then
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
+  { echo "$as_me:$LINENO: checking for gdk_pixbuf_apply_embedded_orientation in -lc" >&5
+echo $ECHO_N "checking for gdk_pixbuf_apply_embedded_orientation in -lc... $ECHO_C" >&6; }
+if test "${ac_cv_lib_c_gdk_pixbuf_apply_embedded_orientation+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lc $ac_gdk_pixbuf_config_libs -lX11 -lXext -lm $LIBS"
+cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char gdk_pixbuf_apply_embedded_orientation ();
+int
+main ()
+{
+return gdk_pixbuf_apply_embedded_orientation ();
+  ;
+  return 0;
+}
+_ACEOF
+rm -rf conftest.$ac_objext conftest$ac_exeext
+if { (ac_try="$ac_link"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval "echo \"\$as_me:$LINENO: $ac_try_echo\"") >&5
+  (eval "$ac_link") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -rf conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest$ac_exeext &&
+       $as_test_x conftest$ac_exeext; then
+  ac_cv_lib_c_gdk_pixbuf_apply_embedded_orientation=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_lib_c_gdk_pixbuf_apply_embedded_orientation=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
+      conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ echo "$as_me:$LINENO: result: $ac_cv_lib_c_gdk_pixbuf_apply_embedded_orientation" >&5
+echo "${ECHO_T}$ac_cv_lib_c_gdk_pixbuf_apply_embedded_orientation" >&6; }
+if test $ac_cv_lib_c_gdk_pixbuf_apply_embedded_orientation = yes; then
+  cat >>confdefs.h <<\_ACEOF
+#define HAVE_GDK_PIXBUF_APPLY_EMBEDDED_ORIENTATION 1
+_ACEOF
+
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
   fi
 fi
 
@@ -20216,6 +20314,8 @@ fi
 tab='	'
 if test "$have_gl" = yes; then
   GL_EXES='$(GL_EXES)'
+  SUID_EXES='$(SUID_EXES)'
+  RETIRED_GL_EXES='$(RETIRED_EXES)'
   GL_UTIL_EXES='$(GL_UTIL_EXES)'
   GL_MEN='$(GL_MEN)'
   GL_KLUDGE=" "
@@ -20296,6 +20396,7 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 #       Perform substitutions and write Makefiles.
 #
 ###############################################################################
+
 
 
 
@@ -21198,6 +21299,7 @@ LOCK_SRCS!$LOCK_SRCS$ac_delim
 LOCK_OBJS!$LOCK_OBJS$ac_delim
 JPEG_EXES!$JPEG_EXES$ac_delim
 GL_EXES!$GL_EXES$ac_delim
+SUID_EXES!$SUID_EXES$ac_delim
 GL_UTIL_EXES!$GL_UTIL_EXES$ac_delim
 GL_MEN!$GL_MEN$ac_delim
 GL_KLUDGE!$GL_KLUDGE$ac_delim
@@ -21220,7 +21322,7 @@ LIBOBJS!$LIBOBJS$ac_delim
 LTLIBOBJS!$LTLIBOBJS$ac_delim
 _ACEOF
 
-  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 69; then
+  if test `sed -n "s/.*$ac_delim\$/X/p" conf$$subs.sed | grep -c X` = 70; then
     break
   elif $ac_last_try; then
     { { echo "$as_me:$LINENO: error: could not make $CONFIG_STATUS" >&5

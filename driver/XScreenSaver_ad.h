@@ -50,47 +50,38 @@
 "*dateFormat:		%d-%b-%y (%a); %I:%M %p",
 "*installColormap:	True",
 "*programs:								      \
--				sphere -root				    \\n\
+				maze -root				    \\n\
   GL: 				superquadrics -root			    \\n\
--				worm -root				    \\n\
 				attraction -root			    \\n\
 				blitspin -root				    \\n\
 				greynetic -root				    \\n\
 				helix -root				    \\n\
 				hopalong -root				    \\n\
-				hypercube -root				    \\n\
+-				hypercube -root				    \\n\
 				imsmap -root				    \\n\
-				maze -root				    \\n\
-				noseguy -root				    \\n\
-				pyro -root				    \\n\
+-				noseguy -root				    \\n\
+-				pyro -root				    \\n\
 				qix -root				    \\n\
-				rocks -root				    \\n\
+-				rocks -root				    \\n\
 				rorschach -root				    \\n\
 				decayscreen -root			    \\n\
 				flame -root				    \\n\
 				halo -root				    \\n\
 				slidescreen -root			    \\n\
--				lmorph -root				    \\n\
 				pedal -root				    \\n\
-				bubbles -root				    \\n\
 				bouboule -root				    \\n\
-				braid -root				    \\n\
+-				braid -root				    \\n\
 				coral -root				    \\n\
 				deco -root				    \\n\
 				drift -root				    \\n\
-				fadeplot -root				    \\n\
-				flag -root				    \\n\
-				forest -root				    \\n\
+-				fadeplot -root				    \\n\
 				galaxy -root				    \\n\
 				goop -root				    \\n\
 				grav -root				    \\n\
 				ifs -root				    \\n\
+  GL: 				jigsaw -root				    \\n\
 				julia -root				    \\n\
-				kaleidescope -root			    \\n\
--				laser -root				    \\n\
--				lightning -root				    \\n\
--				lisa -root				    \\n\
--				lissie -root				    \\n\
+-				kaleidescope -root			    \\n\
   GL: 				moebius -root				    \\n\
 				moire -root				    \\n\
   GL: 				morph3d -root				    \\n\
@@ -99,36 +90,32 @@
 				penrose -root				    \\n\
   GL: 				pipes -root				    \\n\
 				rd-bomb -root				    \\n\
--				rotor -root				    \\n\
   GL: 				rubik -root				    \\n\
 -				sierpinski -root			    \\n\
 				slip -root				    \\n\
--				spiral -root				    \\n\
   GL: 				sproingies -root			    \\n\
 				starfish -root				    \\n\
 				strange -root				    \\n\
 				swirl -root				    \\n\
 				triangle -root				    \\n\
--				vines -root				    \\n\
 				xjack -root				    \\n\
 				xlyap -root				    \\n\
   GL: 				atlantis -root				    \\n\
 				bsod -root				    \\n\
   GL: 				bubble3d -root				    \\n\
   GL: 				cage -root				    \\n\
-				crystal -root				    \\n\
+-				crystal -root				    \\n\
 				cynosure -root				    \\n\
 				discrete -root				    \\n\
 				distort -root				    \\n\
 				epicycle -root				    \\n\
 				flow -root				    \\n\
-  GL: 				glplanet -root				    \\n\
+- GL: 				glplanet -root				    \\n\
 				interference -root			    \\n\
-				jigsaw -root				    \\n\
 				kumppa -root				    \\n\
   GL: 				lament -root				    \\n\
 				moire2 -root				    \\n\
-				sonar -root				    \\n\
+  GL: 				sonar -root				    \\n\
   GL: 				stairs -root				    \\n\
 				truchet -root				    \\n\
 -				vidwhacker -root			    \\n\
@@ -136,7 +123,6 @@
 				bumps -root				    \\n\
 				ccurve -root				    \\n\
 				compass -root				    \\n\
--				critical -root				    \\n\
 				deluxe -root				    \\n\
 -				demon -root				    \\n\
 - GL: 				extrusion -root				    \\n\
@@ -150,14 +136,13 @@
   GL: 				sierpinski3d -root			    \\n\
 				spotlight -root				    \\n\
 				squiral -root				    \\n\
-				t3d -root				    \\n\
 				wander -root				    \\n\
 -				webcollage -root			    \\n\
 				xflame -root				    \\n\
 				xmatrix -root				    \\n\
   GL: 				gflux -root				    \\n\
 -				hyperball -root				    \\n\
-				nerverot -root				    \\n\
+-				nerverot -root				    \\n\
 				xrayswarm -root				    \\n\
 				xspirograph -root			    \\n\
   GL: 				circuit -root				    \\n\
@@ -174,7 +159,6 @@
   GL: 				stonerview -root			    \\n\
 				vermiculate -root			    \\n\
 				whirlwindwarp -root			    \\n\
-				whirlygig -root				    \\n\
 				zoom -root				    \\n\
 				anemone -root				    \\n\
 				apollonian -root			    \\n\
@@ -185,18 +169,17 @@
 				fluidballs -root			    \\n\
   GL: 				flurry -root				    \\n\
 - GL: 				glblur -root				    \\n\
-- GL: 				glforestfire -root			    \\n\
   GL: 				glsnake -root				    \\n\
 				halftone -root				    \\n\
 -				juggle -root				    \\n\
   GL: 				lavalite -root				    \\n\
-				polyominoes -root			    \\n\
+-				polyominoes -root			    \\n\
   GL: 				queens -root				    \\n\
 - GL: 				sballs -root				    \\n\
   GL: 				spheremonics -root			    \\n\
 -				thornbird -root				    \\n\
 				twang -root				    \\n\
-  GL: 				antspotlight -root			    \\n\
+- GL: 				antspotlight -root			    \\n\
 				apple2 -root				    \\n\
   GL: 				atunnel -root				    \\n\
 				barcode -root				    \\n\
@@ -214,7 +197,7 @@
   GL: 				glmatrix -root				    \\n\
 - GL: 				glslideshow -root			    \\n\
   GL: 				hypertorus -root			    \\n\
-  GL: 				jigglypuff -root			    \\n\
+- GL: 				jigglypuff -root			    \\n\
   GL: 				klein -root				    \\n\
 				metaballs -root				    \\n\
   GL: 				mirrorblob -root			    \\n\
@@ -231,18 +214,17 @@
 				interaggregate -root			    \\n\
 				intermomentary -root			    \\n\
 				memscroller -root			    \\n\
-				mismunch -root				    \\n\
   GL: 				noof -root				    \\n\
 				pacman -root				    \\n\
   GL: 				pinion -root				    \\n\
   GL: 				polyhedra -root				    \\n\
-  GL: 				providence -root			    \\n\
+- GL: 				providence -root			    \\n\
 				substrate -root				    \\n\
 				wormhole -root				    \\n\
 - GL: 				antmaze -root				    \\n\
   GL: 				boing -root				    \\n\
 				boxfit -root				    \\n\
-- GL: 				carousel -root				    \\n\
+  GL: 				carousel -root				    \\n\
 				celtic -root				    \\n\
   GL: 				crackberg -root				    \\n\
   GL: 				cube21 -root				    \\n\
@@ -264,6 +246,7 @@
   GL: 				voronoi -root				    \\n\
   GL: 				hypnowheel -root			    \\n\
 -				lcdscrub -root				    \\n\
+  GL: 				photopile -root				    \\n\
   GL: 				skytentacles -root			    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",

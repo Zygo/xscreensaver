@@ -12,6 +12,7 @@
 
 
 /* Documentation on the PDB file format:
+   http://en.wikipedia.org/wiki/Protein_Data_Bank_%28file_format%29
    http://www.wwpdb.org/docs.html
    http://www.rcsb.org/pdb/file_formats/pdb/pdbguide2.2/guide2.2_frame.html
 

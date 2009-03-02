@@ -83,11 +83,9 @@ ModStruct   gasket_description =
 
 #endif
 
-typedef struct{
-  GLfloat x;
-  GLfloat y;
-  GLfloat z;
-} GL_VECTOR;
+typedef struct {
+  double x,y,z;
+} XYZ;
 
 typedef struct {
   GLuint      gasket0, gasket1, gasket2, gasket3;
@@ -107,8 +105,6 @@ typedef struct {
   int ccolor3;
 
   int tick;
-
-  GLfloat normals[4][3];
 
 } gasketstruct;
 
@@ -133,7 +129,8 @@ triangle (GLfloat x1, GLfloat y1, GLfloat z1,
 
 static void
 four_tetras (gasketstruct *gp, 
-             GL_VECTOR *outer, Bool wireframe_p, int countdown, int which,
+             XYZ *outer, XYZ *normals,
+             Bool wireframe_p, int countdown, int which,
              int *countP)
 {
   if (countdown <= 0)
@@ -141,7 +138,7 @@ four_tetras (gasketstruct *gp,
       (*countP)++;
       if (which == 0)
         {
-          glNormal3f (gp->normals[0][0], gp->normals[0][1], gp->normals[0][2]);
+          glNormal3f (normals[0].x, normals[0].y, normals[0].z);
           triangle (outer[0].x, outer[0].y, outer[0].z,
                     outer[1].x, outer[1].y, outer[1].z,
                     outer[2].x, outer[2].y, outer[2].z,
@@ -149,7 +146,7 @@ four_tetras (gasketstruct *gp,
         }
       else if (which == 1)
         {
-          glNormal3f (gp->normals[1][0], gp->normals[1][1], gp->normals[1][2]);
+          glNormal3f (normals[1].x, normals[1].y, normals[1].z);
           triangle (outer[0].x, outer[0].y, outer[0].z,
                     outer[3].x, outer[3].y, outer[3].z,
                     outer[1].x, outer[1].y, outer[1].z,
@@ -157,7 +154,7 @@ four_tetras (gasketstruct *gp,
         }
       else if (which == 2)
         {
-          glNormal3f (gp->normals[2][0], gp->normals[2][1], gp->normals[2][2]);
+          glNormal3f (normals[2].x, normals[2].y, normals[2].z);
           triangle (outer[0].x, outer[0].y, outer[0].z,
                     outer[2].x, outer[2].y, outer[2].z,
                     outer[3].x, outer[3].y, outer[3].z,
@@ -165,7 +162,7 @@ four_tetras (gasketstruct *gp,
         }
       else
         {
-          glNormal3f (gp->normals[3][0], gp->normals[3][1], gp->normals[3][2]);
+          glNormal3f (normals[3].x, normals[3].y, normals[3].z);
           triangle (outer[1].x, outer[1].y, outer[1].z,
                     outer[3].x, outer[3].y, outer[3].z,
                     outer[2].x, outer[2].y, outer[2].z,
@@ -180,8 +177,8 @@ four_tetras (gasketstruct *gp,
 #     define M12 3
 #     define M13 4
 #     define M23 5
-      GL_VECTOR inner[M23+1];
-      GL_VECTOR corner[4];
+      XYZ inner[M23+1];
+      XYZ corner[4];
 
       inner[M01].x = (outer[0].x + outer[1].x) / 2.0;
       inner[M01].y = (outer[0].y + outer[1].y) / 2.0;
@@ -213,25 +210,25 @@ four_tetras (gasketstruct *gp,
       corner[1] = inner[M01];
       corner[2] = inner[M02];
       corner[3] = inner[M03];
-      four_tetras (gp, corner, wireframe_p, countdown, which, countP);
+      four_tetras (gp, corner, normals, wireframe_p, countdown, which, countP);
 
       corner[0] = inner[M01];
       corner[1] = outer[1];
       corner[2] = inner[M12];
       corner[3] = inner[M13];
-      four_tetras (gp, corner, wireframe_p, countdown, which, countP);
+      four_tetras (gp, corner, normals, wireframe_p, countdown, which, countP);
 
       corner[0] = inner[M02];
       corner[1] = inner[M12];
       corner[2] = outer[2];
       corner[3] = inner[M23];
-      four_tetras (gp, corner, wireframe_p, countdown, which, countP);
+      four_tetras (gp, corner, normals, wireframe_p, countdown, which, countP);
 
       corner[0] = inner[M03];
       corner[1] = inner[M13];
       corner[2] = inner[M23];
       corner[3] = outer[3];
-      four_tetras (gp, corner, wireframe_p, countdown, which, countP);
+      four_tetras (gp, corner, normals, wireframe_p, countdown, which, countP);
     }
 }
 
@@ -241,55 +238,27 @@ compile_gasket(ModeInfo *mi, int which)
 {
   Bool wireframe_p = MI_IS_WIREFRAME(mi);
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
-  int count;
+  int count = 0;
+  XYZ vertex[5];
+  XYZ normal[4];
 
-  GL_VECTOR   vertex[5];
+  vertex[0].x = -1; vertex[0].y = -1; vertex[0].z = -1;
+  vertex[1].x =  1; vertex[1].y =  1; vertex[1].z = -1;
+  vertex[2].x =  1; vertex[2].y = -1; vertex[2].z =  1;
+  vertex[3].x = -1; vertex[3].y =  1; vertex[3].z =  1;
+  vertex[4].x =  0; vertex[4].y =  0; vertex[4].z =  0;  /* center */
 
-  gp->normals[0][0] =  0;
-  gp->normals[0][1] =  0;
-  gp->normals[0][2] = -sqrt(2.0 / 3.0);
+  normal[0].x =  1; normal[0].y = -1; normal[0].z = -1;
+  normal[1].x = -1; normal[1].y =  1; normal[1].z = -1;
+  normal[2].x = -1; normal[2].y = -1; normal[2].z =  1;
+  normal[3].x =  1; normal[3].y =  1; normal[3].z =  1;
 
-  gp->normals[1][0] =  0;
-  gp->normals[1][1] = -sqrt(0.75);
-  gp->normals[1][2] =  sqrt(2.0 / 3.0) / 3.0;
-
-  gp->normals[2][0] =  sqrt (0.5);
-  gp->normals[2][1] =  sqrt(0.75) / 2.0;
-  gp->normals[2][2] =  gp->normals[1][2];
-
-  gp->normals[3][0] = -gp->normals[2][0];
-  gp->normals[3][1] =  gp->normals[2][1];
-  gp->normals[3][2] =  gp->normals[1][2];
-
-
-  /* define verticies */
-  vertex[0].x =  0.5; 
-  vertex[0].y = -(1.0/3.0)*sqrt((2.0/3.0));
-  vertex[0].z = -sqrt(3.0)/6.0;
-
-  vertex[1].x = -0.5; 
-  vertex[1].y = -(1.0/3.0)*sqrt((2.0/3.0)); 
-  vertex[1].z = -sqrt(3.0)/6.0; 
-
-  vertex[2].x = 0.0; 
-  vertex[2].y = (2.0/3.0)*sqrt((2.0/3.0));
-  vertex[2].z = -sqrt(3.0)/6.0; 
-
-  vertex[3].x = 0.0; 
-  vertex[3].y = 0.0; 
-  vertex[3].z = sqrt(3.0)/3.0; 
-
-  vertex[4].x = 0.0;
-  vertex[4].y = 0.0; 
-  vertex[4].z = 0.0;
-  
-  count = 0;
-  four_tetras (gp, vertex, wireframe_p,
+  four_tetras (gp, vertex, normal, wireframe_p,
                (gp->current_depth < 0
                 ? -gp->current_depth : gp->current_depth),
                which,
                &count);
-  mi->polygon_count = count;
+  mi->polygon_count += count;
 }
 
 static void
@@ -366,7 +335,7 @@ draw(ModeInfo *mi)
     glRotatef (z * 360, 0.0, 0.0, 1.0);
   }
 
-  glScalef( 8.0, 8.0, 8.0 );
+  glScalef (4, 4, 4);
 
   glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color0);
   glCallList(gp->gasket0);
@@ -545,6 +514,24 @@ draw_gasket(ModeInfo * mi)
 
   glDrawBuffer(GL_BACK);
 
+  /*  0 =              4 polygons
+      1 =             16 polygons
+      2 =             64 polygons
+      3 =            256 polygons
+      4 =          1,024 polygons
+      5 =          4,096 polygons
+      6 =         16,384 polygons
+      7 =         65,536 polygons,  30 fps (3GHz Core 2 Duo, GeForce 8800 GS)
+      8 =        262,144 polygons,  12 fps
+      9 =      1,048,576 polygons,   4 fps
+     10 =      4,194,304 polygons,   1 fps
+     11 =     16,777,216 polygons, 0.3 fps
+     12 =     67,108,864 polygons,    OOM!
+     13 =    268,435,456 polygons
+     14 =  1,073,741,824 polygons, 31 bits
+     15 =  4,294,967,296 polygons, 33 bits
+     16 = 17,179,869,184 polygons, 35 bits
+   */
   if (max_depth > 10)
     max_depth = 10;
 

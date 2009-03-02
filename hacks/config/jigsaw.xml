@@ -4,28 +4,45 @@
 
   <command arg="-root"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Frame rate" _low-label="Low" _high-label="High"
-          low="0" high="100000" default="70000"
-          convert="invert"/>
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
 
-  <number id="delay2" type="slider" arg="-delay2 %"
-          _label="Linger"
-          _low-label="0 seconds" _high-label="1 minute"
-          low="0" high="60" default="5"/>
+    <number id="speed" type="slider" arg="-speed %"
+             _label="Speed" _low-label="Slow" _high-label="Fast"
+             low="0.1" high="8.0" default="1.0"/>
+   </vgroup>
+   <vgroup>
+    <number id="density" type="slider" arg="-complexity %"
+             _label="Puzzle pieces" _low-label="Few" _high-label="Many"
+             low="1.0" high="4.0" default="1.0"/>
 
-  <xscreensaver-image />
+    <number id="resolution" type="slider" arg="-resolution %"
+             _label="Resolution" _low-label="Chunky" _high-label="Smooth"
+             low="25" high="200" default="100"/>
+   </vgroup>
+  </hgroup>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <hgroup>
+   <vgroup>
+    <xscreensaver-image />
+   </vgroup>
+   <vgroup>
+    <boolean id="wobble"  _label="Tilt"  arg-unset="-no-wobble"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+  </hgroup>
 
   <_description>
 This grabs a screen image, carves it up into a jigsaw puzzle,
-shuffles it, and then solves the puzzle.  This works especially well
-when you feed it an external video signal instead of letting it grab
-the screen image (actually, I guess this is generally true...)  When
-it is grabbing a video image, it is sometimes pretty hard to guess
-what the image is going to look like once the puzzle is solved.
+shuffles it, and then solves the puzzle.
 
-Written by Jamie Zawinski; 1998.
+http://en.wikipedia.org/wiki/Jigsaw_puzzle
+http://en.wikipedia.org/wiki/Tessellation
+
+Written by Jamie Zawinski; 1997.
   </_description>
 </screensaver>

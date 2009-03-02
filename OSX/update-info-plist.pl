@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.9 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.10 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 1;
 
@@ -75,14 +75,15 @@ sub update_saver_xml($$) {
   $desc =~ s/^.* version \d[^\n]*\n//s;
   $desc =~ s/^From the XScreenSaver.*\n//m;
   $desc =~ s@^http://www\.jwz\.org/xscreensaver.*\n@@m;
-  $desc =~ s/^Copyright [^ \r\n\t]+ (\d{4})(-\d{4})? (.*)\.$/Written $3; $1./m;
+  $desc =~
+       s/\nCopyright [^ \r\n\t]+ (\d{4})(-\d{4})? (.*)\.$/\nWritten $3; $1./s;
   $desc =~ s/^\n+//s;
 
   error ("$filename: description contains bad characters")
     if ($desc =~ m/([^\t\n -~]|[<>])/);
 
   error ("$filename: can't extract authors")
-    unless ($desc =~ m@^(.*)\nWritten by[ \t]+([^\n]+)$@s);
+    unless ($desc =~ m@^(.*)\nWritten by[ \t]+(.+)$@s);
   $desc = $1;
   my $authors = $2;
   $desc =~ s/\s*$//s;
@@ -93,6 +94,7 @@ sub update_saver_xml($$) {
     $year = $2;
   }
 
+  error ("$filename: can't extract year") unless $year;
   my $cyear = 1900 + ((localtime())[5]);
   $year = "$cyear" unless $year;
   if ($year && ! ($year =~ m/$cyear/)) {

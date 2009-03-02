@@ -63,7 +63,7 @@ static hypnowheel_configuration *bps = NULL;
 
 static GLfloat speed;
 static GLfloat twistiness;
-static GLfloat nlayers;
+static GLint nlayers;
 static Bool do_wander;
 static Bool do_symmetric;
 
@@ -82,7 +82,7 @@ static argtype vars[] = {
   {&do_symmetric, "symmetric",  "Symmetric",  DEF_SYMMETRIC,  t_Bool},
   {&speed,	  "speed",      "Speed",      DEF_SPEED,      t_Float},
   {&twistiness,	  "twistiness", "Twistiness", DEF_TWISTINESS, t_Float},
-  {&nlayers,	  "layers",     "Layers",     DEF_LAYERS,     t_Float},
+  {&nlayers,	  "layers",     "Layers",     DEF_LAYERS,     t_Int},
 };
 
 ENTRYPOINT ModeSpecOpt hypnowheel_opts = {

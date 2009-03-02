@@ -100,8 +100,25 @@ dmg:: distdepend check_versions
   rm -rf "$$STAGE" ;							      \
   echo + mkdir "$$STAGE" ;						      \
          mkdir "$$STAGE" ;						      \
-  echo + cp -pr "$$SRC/"\*.saver "$$STAGE" ;				      \
-         cp -pr "$$SRC/"*.saver  "$$STAGE" ;				      \
+									      \
+  retired=`perl -0 -ne							      \
+     's/\\\\\\n//g; m/^RETIRED_EXES\s*=\s*(.*)$$/m && print "$$1\n"'	      \
+      ../hacks/Makefile.in						      \
+      ../hacks/glx/Makefile.in` ;					      \
+									      \
+  for f in $$SRC/*.saver ; do						      \
+   ok=yes ;								      \
+   ff=`echo $$f | perl -e '$$_=<>; s@^.*/(.*)\..*$$@\L$$1@; print'`;	      \
+   for r in $$retired ; do						      \
+    if [ "$$ff" = "$$r" ]; then ok=no ; fi ;				      \
+   done ;								      \
+   if [ "$$ok" = yes ]; then						      \
+    echo + cp -pr "$$f" "$$STAGE/" ;					      \
+           cp -pr "$$f" "$$STAGE/" ;					      \
+   else									      \
+    echo skipping "$$f" ;						      \
+   fi ;									      \
+  done ;								      \
   set -x ;								      \
   cp -p bindist.rtf "$$STAGE/ READ ME.rtf" ;				      \
   cp -p bindist-DS_Store "$$STAGE/.DS_Store" ;				      \

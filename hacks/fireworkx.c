@@ -462,7 +462,7 @@ fireworkx_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   struct state *st = (struct state *) closure;
   if (event->type == ButtonPress) {
-    recycle(st, st->fshell, event->xbutton.x, event->xbutton.y);
+    recycle(st, st->ffshell, event->xbutton.x, event->xbutton.y);
     return True;
   }
   return False;

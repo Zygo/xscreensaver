@@ -37,10 +37,8 @@ DEPEND_DEFINES	= @DEPEND_DEFINES@
 
 SHELL		= /bin/sh
 INSTALL		= @INSTALL@
-SUID_FLAGS      = -o root -m 4755
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
 INSTALL_SCRIPT  = @INSTALL_SCRIPT@
-INSTALL_SETUID  = @INSTALL_SETUID@
 INSTALL_DATA	= @INSTALL_DATA@
 INSTALL_DIRS	= @INSTALL_DIRS@
 
@@ -94,10 +92,10 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  slip.c sphere.c spiral.c strange.c swirl.c xlockmore.c \
 		  fps.c goop.c starfish.c munch.c fadeplot.c \
 		  rd-bomb.c coral.c mountain.c triangle.c lissie.c worm.c \
-		  rotor.c ant.c xjack.c xlyap.c jigsaw.c xscreensaver-sgigl.c \
+		  rotor.c ant.c xjack.c xlyap.c xscreensaver-sgigl.c \
 		  cynosure.c moire2.c flow.c epicycle.c interference.c \
 		  truchet.c bsod.c crystal.c discrete.c distort.c kumppa.c \
-		  sonar.c demon.c loop.c t3d.c penetrate.c deluxe.c compass.c \
+		  demon.c loop.c t3d.c penetrate.c deluxe.c compass.c \
 		  squiral.c xflame.c wander.c spotlight.c critical.c \
 		  phosphor.c xmatrix.c petri.c shadebobs.c xsublim.c ccurve.c \
 		  blaster.c bumps.c ripples.c xspirograph.c \
@@ -108,7 +106,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  anemone.c halftone.c metaballs.c eruption.c popsquares.c \
 		  barcode.c piecewise.c cloudlife.c fontglide.c apple2.c \
 		  apple2-main.c analogtv.c xanalogtv.c pong.c wormhole.c \
-		  mismunch.c pacman.c pacman_ai.c pacman_level.c \
+		  pacman.c pacman_ai.c pacman_level.c \
 		  fuzzyflakes.c anemotaxis.c memscroller.c substrate.c \
 		  intermomentary.c fireworkx.c fireworkx_mmx.S fiberlamp.c \
 		  boxfit.c interaggregate.c celtic.c cwaves.c m6502.c \
@@ -133,10 +131,10 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  slip.o sphere.o spiral.o strange.o swirl.o xlockmore.o \
 		  fps.o goop.o starfish.o munch.o fadeplot.o \
 		  rd-bomb.o coral.o mountain.o triangle.o lissie.o worm.o \
-		  rotor.o ant.o xjack.o xlyap.o jigsaw.o xscreensaver-sgigl.o \
+		  rotor.o ant.o xjack.o xlyap.o xscreensaver-sgigl.o \
 		  cynosure.o moire2.o flow.o epicycle.o interference.o \
 		  truchet.o bsod.o crystal.o discrete.o distort.o kumppa.o \
-		  sonar.o demon.o loop.o t3d.o penetrate.o deluxe.o compass.o \
+		  demon.o loop.o t3d.o penetrate.o deluxe.o compass.o \
 		  squiral.o xflame.o wander.o spotlight.o critical.o \
 		  phosphor.o xmatrix.o petri.o shadebobs.o xsublim.o ccurve.o \
 		  blaster.o bumps.o ripples.o xspirograph.o \
@@ -147,37 +145,39 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  anemone.o halftone.o metaballs.o eruption.o popsquares.o \
 		  barcode.o piecewise.o cloudlife.o fontglide.o apple2.o \
 		  apple2-main.o analogtv.o xanalogtv.o pong.o wormhole.o \
-		  mismunch.o pacman.o pacman_ai.o pacman_level.o \
+		  pacman.o pacman_ai.o pacman_level.o \
 		  fuzzyflakes.o anemotaxis.o memscroller.o substrate.o \
 		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o \
 		  interaggregate.o celtic.o cwaves.o webcollage-cocoa.o \
-		  webcollage-helper-cocoa.o m6502.0 asm6502.o abstractile.o \
+		  webcollage-helper-cocoa.o m6502.o asm6502.o abstractile.o \
 		  lcdscrub.o
 
-NEXES		= attraction blitspin bouboule braid bubbles decayscreen deco \
-		  drift flag flame forest vines galaxy grav greynetic halo \
+EXES		= attraction blitspin bouboule braid decayscreen deco \
+		  drift flame galaxy grav greynetic halo \
 		  helix hopalong hypercube ifs imsmap julia kaleidescope \
-		  laser lightning lisa lmorph maze moire noseguy pedal \
+		  maze moire noseguy pedal \
 		  penrose pyro qix rocks rorschach sierpinski slidescreen \
-		  slip sphere spiral strange swirl goop starfish munch \
-		  fadeplot rd-bomb coral mountain triangle lissie worm rotor \
-		  xjack xlyap jigsaw cynosure moire2 flow epicycle \
+		  slip strange swirl goop starfish munch \
+		  fadeplot rd-bomb coral mountain triangle \
+		  xjack xlyap cynosure moire2 flow epicycle \
 		  interference truchet bsod crystal discrete distort kumppa \
-		  demon loop t3d penetrate deluxe compass squiral xflame \
-		  wander spotlight critical phosphor xmatrix petri shadebobs \
+		  demon loop penetrate deluxe compass squiral xflame \
+		  wander spotlight phosphor xmatrix petri shadebobs \
 		  ccurve blaster bumps ripples xspirograph \
 		  nerverot xrayswarm hyperball zoom whirlwindwarp rotzoomer \
-		  whirlygig speedmine vermiculate twang apollonian euler2d \
+		  speedmine vermiculate twang apollonian euler2d \
 		  juggle polyominoes thornbird  fluidballs anemone halftone \
 		  metaballs eruption popsquares barcode piecewise cloudlife \
-		  fontglide apple2 xanalogtv pong  wormhole mismunch \
+		  fontglide apple2 xanalogtv pong  wormhole \
 		  pacman fuzzyflakes anemotaxis memscroller substrate \
 		  intermomentary fireworkx fiberlamp boxfit interaggregate \
 		  celtic cwaves m6502 abstractile lcdscrub \
 		  @JPEG_EXES@
-SEXES		= sonar
 JPEG_EXES	= webcollage-helper
-EXES		= $(NEXES) $(SEXES)
+
+RETIRED_EXES	= ant bubbles critical flag forest laser lightning lisa \
+		  lissie lmorph rotor sphere spiral t3d vines whirlygig \
+		  worm xsublim
 
 HACK_OBJS_1	= fps.o $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -194,36 +194,42 @@ HDRS		= screenhack.h screenhackI.h fps.h fpsI.h xlockmore.h \
 		  asm6502.h
 MEN		= anemone.man apollonian.man attraction.man \
 	          blaster.man blitspin.man bouboule.man braid.man bsod.man \
-	          bubbles.man bumps.man ccurve.man compass.man coral.man \
-	          critical.man crystal.man cynosure.man decayscreen.man \
+	          bumps.man ccurve.man compass.man coral.man \
+	          crystal.man cynosure.man decayscreen.man \
 	          deco.man deluxe.man demon.man discrete.man distort.man \
-	          drift.man epicycle.man euler2d.man fadeplot.man flag.man \
-	          flame.man flow.man fluidballs.man forest.man galaxy.man \
+	          drift.man epicycle.man euler2d.man fadeplot.man \
+	          flame.man flow.man fluidballs.man galaxy.man \
 	          goop.man grav.man greynetic.man halo.man helix.man \
 	          hopalong.man hyperball.man hypercube.man ifs.man imsmap.man \
-	          interference.man jigsaw.man juggle.man julia.man \
-	          kaleidescope.man kumppa.man laser.man lightning.man \
-	          lisa.man lissie.man lmorph.man loop.man maze.man moire.man \
+	          interference.man juggle.man julia.man \
+	          kaleidescope.man kumppa.man \
+	          loop.man maze.man moire.man \
 	          moire2.man mountain.man munch.man nerverot.man noseguy.man \
 	          pedal.man penetrate.man penrose.man petri.man phosphor.man \
 	          polyominoes.man pyro.man qix.man rd-bomb.man ripples.man \
-	          rocks.man rorschach.man rotor.man rotzoomer.man \
+	          rocks.man rorschach.man rotzoomer.man \
 	          shadebobs.man sierpinski.man slidescreen.man slip.man \
-	          sonar.man speedmine.man sphere.man spiral.man \
+	          speedmine.man \
 	          spotlight.man squiral.man starfish.man strange.man \
-	          swirl.man t3d.man thornbird.man triangle.man truchet.man \
-	          twang.man vermiculate.man vidwhacker.man vines.man \
-	          wander.man webcollage.man whirlwindwarp.man whirlygig.man \
-	          worm.man xflame.man xjack.man xlyap.man xmatrix.man \
-	          xrayswarm.man xspirograph.man xsublim.man \
+	          swirl.man thornbird.man triangle.man truchet.man \
+	          twang.man vermiculate.man vidwhacker.man \
+	          wander.man webcollage.man whirlwindwarp.man \
+	          xflame.man xjack.man xlyap.man xmatrix.man \
+	          xrayswarm.man xspirograph.man \
 	          zoom.man halftone.man eruption.man metaballs.man \
 		  barcode.man piecewise.man cloudlife.man ljlatest.man \
 		  fontglide.man apple2.man xanalogtv.man pong.man \
-		  wormhole.man mismunch.man pacman.man fuzzyflakes.man \
+		  wormhole.man pacman.man fuzzyflakes.man \
 		  anemotaxis.man memscroller.man substrate.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
 		  interaggregate.man celtic.man cwaves.man abstractile.man \
 		  lcdscrub.man
+
+RETIRED_MEN	= ant.man bubbles.man critical.man flag.man forest.man \
+		  laser.man lightning.man lisa.man lissie.man lmorph.man \
+		  rotor.man sphere.man spiral.man t3d.man vines.man \
+		  whirlygig.man worm.man xsublim.man
+
 STAR		= *
 EXTRAS		= README Makefile.in xml2man.pl m6502.sh .gdbinit \
 		  euler2d.tex check-configs.pl munge-ad.pl \
@@ -248,7 +254,7 @@ TARFILES	= $(SRCS) $(HDRS) $(SCRIPTS) $(MEN) $(EXTRAS) $(VMSFILES)
 
 
 default: all
-all: $(EXES)
+all: $(EXES) $(RETIRED_EXES)
 
 install:   install-program   install-scripts install-xml install-man
 uninstall: uninstall-program uninstall-xml uninstall-man
@@ -262,36 +268,12 @@ install-program:: $(EXES)
 	@if [ ! -d $(install_prefix)$(HACKDIR) ]; then			\
 	  $(INSTALL_DIRS) $(install_prefix)$(HACKDIR) ;			\
 	 fi ;								\
-	for program in $(NEXES); do					\
+	for program in $(EXES); do					\
 	  echo $(INSTALL_PROGRAM) $$program				\
 	    $(install_prefix)$(HACKDIR)/$$program ;			\
 	  $(INSTALL_PROGRAM) $$program					\
 	    $(install_prefix)$(HACKDIR)/$$program ;			\
 	done ;								\
-	if [ @SETUID_HACKS@ = yes ]; then				\
-	  sinst="$(INSTALL_SETUID)" ;					\
-	else								\
-	  sinst="$(INSTALL_PROGRAM)" ;					\
-	fi ;								\
-	for program in $(SEXES); do					\
-	  instargs="$$program $(install_prefix)$(HACKDIR)/$$program" ;	\
-	  echo $$sinst $$instargs ;					\
-	  if   $$sinst $$instargs ; then				\
-	      true ;							\
-	  elif [ @SETUID_HACKS@ = yes ]; then				\
-	    echo $(INSTALL_PROGRAM) $$instargs ;			\
-	    if   $(INSTALL_PROGRAM) $$instargs ; then			\
-	      echo "" ;							\
-	      echo "WARNING: unable to install $$program setuid:"	\
-	           "installed non-setuid instead." ;			\
-	      echo "" ;							\
-	    else							\
-	      exit 1 ;							\
-	    fi ;							\
-	  else								\
-	    exit 1 ;							\
-	  fi ;								\
-	done
 
 install-scripts: $(SCRIPTS) munge-scripts
 	@for program in $(SCRIPTS); do					\
@@ -658,9 +640,6 @@ xjack:	 	xjack.o		$(HACK_OBJS)
 xlyap:	 	xlyap.o		$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
-jigsaw:	 	jigsaw.o	$(HACK_OBJS) $(SPL) $(GRAB)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SPL) $(GRAB) $(HACK_LIBS)
-
 cynosure:  	cynosure.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
@@ -687,9 +666,6 @@ distort:	distort.o	$(HACK_OBJS) $(GRAB) $(SHM)
 
 kumppa:		kumppa.o	$(HACK_OBJS) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(HACK_LIBS)
-
-sonar:		sonar.o		$(HACK_OBJS) $(COL)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 t3d:		t3d.o		$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
@@ -810,9 +786,6 @@ pong: 	pong.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM)
 
 wormhole: 	wormhole.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
-
-mismunch:	mismunch.o	$(HACK_OBJS) $(COL) $(SPL)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
 
 fuzzyflakes:	fuzzyflakes.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
@@ -1818,18 +1791,6 @@ intermomentary.o: $(UTILS_SRC)/resources.h
 intermomentary.o: $(UTILS_SRC)/usleep.h
 intermomentary.o: $(UTILS_SRC)/visual.h
 intermomentary.o: $(UTILS_SRC)/yarandom.h
-jigsaw.o: ../config.h
-jigsaw.o: $(srcdir)/fps.h
-jigsaw.o: $(srcdir)/screenhackI.h
-jigsaw.o: $(srcdir)/screenhack.h
-jigsaw.o: $(UTILS_SRC)/colors.h
-jigsaw.o: $(UTILS_SRC)/grabscreen.h
-jigsaw.o: $(UTILS_SRC)/hsv.h
-jigsaw.o: $(UTILS_SRC)/resources.h
-jigsaw.o: $(UTILS_SRC)/spline.h
-jigsaw.o: $(UTILS_SRC)/usleep.h
-jigsaw.o: $(UTILS_SRC)/visual.h
-jigsaw.o: $(UTILS_SRC)/yarandom.h
 juggle.o: ../config.h
 juggle.o: $(srcdir)/fps.h
 juggle.o: $(srcdir)/screenhackI.h
@@ -2017,17 +1978,6 @@ metaballs.o: $(UTILS_SRC)/resources.h
 metaballs.o: $(UTILS_SRC)/usleep.h
 metaballs.o: $(UTILS_SRC)/visual.h
 metaballs.o: $(UTILS_SRC)/yarandom.h
-mismunch.o: ../config.h
-mismunch.o: $(srcdir)/fps.h
-mismunch.o: $(srcdir)/screenhackI.h
-mismunch.o: $(srcdir)/screenhack.h
-mismunch.o: $(UTILS_SRC)/colors.h
-mismunch.o: $(UTILS_SRC)/grabscreen.h
-mismunch.o: $(UTILS_SRC)/hsv.h
-mismunch.o: $(UTILS_SRC)/resources.h
-mismunch.o: $(UTILS_SRC)/usleep.h
-mismunch.o: $(UTILS_SRC)/visual.h
-mismunch.o: $(UTILS_SRC)/yarandom.h
 moire2.o: ../config.h
 moire2.o: $(srcdir)/fps.h
 moire2.o: $(srcdir)/screenhackI.h
@@ -2452,17 +2402,6 @@ slip.o: $(UTILS_SRC)/xshm.h
 slip.o: $(UTILS_SRC)/yarandom.h
 slip.o: $(srcdir)/xlockmoreI.h
 slip.o: $(srcdir)/xlockmore.h
-sonar.o: ../config.h
-sonar.o: $(srcdir)/fps.h
-sonar.o: $(srcdir)/screenhackI.h
-sonar.o: $(srcdir)/screenhack.h
-sonar.o: $(UTILS_SRC)/colors.h
-sonar.o: $(UTILS_SRC)/grabscreen.h
-sonar.o: $(UTILS_SRC)/hsv.h
-sonar.o: $(UTILS_SRC)/resources.h
-sonar.o: $(UTILS_SRC)/usleep.h
-sonar.o: $(UTILS_SRC)/visual.h
-sonar.o: $(UTILS_SRC)/yarandom.h
 speedmine.o: ../config.h
 speedmine.o: $(srcdir)/fps.h
 speedmine.o: $(srcdir)/screenhackI.h

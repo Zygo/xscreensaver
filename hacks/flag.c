@@ -265,13 +265,42 @@ make_flag_bits(ModeInfo *mi)
 									 strlen(uts.sysname) +
 									 strlen(uts.version) +
 									 strlen(uts.release) + 10);
-# ifdef _AIX
+# if defined(_AIX)
 			  sprintf(text, "%s\n%s %s.%s",
 					  uts.nodename, uts.sysname, uts.version, uts.release);
-# else  /* !_AIX */
+#  elif defined(__APPLE__)  /* MacOS X + XDarwin */
+              {
+                const char *file = 
+                  "/System/Library/CoreServices/SystemVersion.plist";
+                FILE *f = fopen (file, "r");
+                char *pbv = 0, *pn = 0, *puvv = 0;
+                if (f) {
+                  char *s, buf[255];
+
+                  while (fgets (buf, sizeof(buf)-1, f)) {
+#                   define GRAB(S,V)					\
+                    if (strstr(buf, S)) {					\
+                      fgets (buf, sizeof(buf)-1, f);			\
+                      if ((s = strchr (buf, '>'))) V = strdup(s+1); 	\
+                      if ((s = strchr (V, '<'))) *s = 0;		 	\
+                    }
+                    GRAB ("ProductName", pn)
+                    GRAB ("ProductBuildVersion", pbv)
+                    GRAB ("ProductUserVisibleVersion", puvv)
+#                   undef GRAB
+                  }
+                }
+                if (pbv)
+                  sprintf (text, "%s\n%s\n%s", 
+                           uts.nodename, pn, puvv /*, uts.machine*/);
+                else
+                  sprintf(text, "%s\n%s %s",
+                          uts.nodename, uts.sysname, uts.release);
+              }
+# else
 			  sprintf(text, "%s\n%s %s",
 					  uts.nodename, uts.sysname, uts.release);
-# endif /* !_AIX */
+# endif /* special system types */
 			}
 #else	/* !HAVE_UNAME */
 # ifdef VMS

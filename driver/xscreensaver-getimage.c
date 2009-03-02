@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001-2006 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2008 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -404,6 +404,20 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
       int h = gdk_pixbuf_get_height (pb);
       int srcx, srcy, destx, desty, w2, h2;
       Bool bg_p = False;
+
+# ifdef HAVE_GDK_PIXBUF_APPLY_EMBEDDED_ORIENTATION
+      {
+        int ow = w, oh = h;
+        GdkPixbuf *opb = pb;
+        pb = gdk_pixbuf_apply_embedded_orientation (opb);
+        gdk_pixbuf_unref (opb);
+        w = gdk_pixbuf_get_width (pb);
+        h = gdk_pixbuf_get_height (pb);
+        if (verbose_p && (w != ow || h != oh))
+          fprintf (stderr, "%s: rotated %dx%d to %dx%d\n",
+                   progname, ow, oh, w, h);
+      }
+# endif
 
       compute_image_scaling (w, h, win_width, win_height, verbose_p,
                              &srcx, &srcy, &destx, &desty, &w2, &h2);

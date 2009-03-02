@@ -612,6 +612,7 @@ swallow_unlock_typeahead_events (saver_info *si, XEvent *e)
               break;
             case '\025': case '\030':			/* Erase line */
             case '\012': case '\015':			/* Enter */
+            case '\033':				/* ESC */
               i = 0;
               break;
             case '\040':				/* Space */
@@ -817,9 +818,12 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	break;
 
       case KeyPress:
-      case KeyRelease:
       case ButtonPress:
-      case ButtonRelease:
+      /* Ignore release events so that hitting ESC at the password dialog
+         doesn't result in the password dialog coming right back again when
+         the fucking release key is seen! */
+      /* case KeyRelease:*/
+      /* case ButtonRelease:*/
       case MotionNotify:
 
 	if (p->debug_p)
@@ -1083,8 +1087,6 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 
   if (until_idle_p && si->cycle_id)	/* no cycle timer when inactive */
     abort ();
-
-  return;
 }
 
 

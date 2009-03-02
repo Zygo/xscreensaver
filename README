@@ -38,9 +38,32 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.07:   * New hack, `photopile'.
+                      * Rewrote `sonar' and `jigsaw' as OpenGL programs.
+                      * Minor tweaks to `maze', `m6502', `hypnowheel', and
+                        `timetunnel'.
+                      * Savers that load images now obey EXIF rotation tags.
+                      * Arrgh, more RANDR noise!  Fixes this time for rotated
+                        screens, and for systems where RANDR lies and says the
+                        screen size is 0x0.
+                      * When the password dialog has timed out or been
+                        cancelled, don't pop it right back up a second time.
+                      * Password timeouts/cancels don't count as
+                        "failed logins".
+                      * Retired some of the older, less interesting savers:
+                        say goodbye to `bubbles', `critical', `flag', `forest',
+                        `glforestfire', `lmorph', `laser', `lightning', `lisa',
+                        `lissie', `rotor', `sphere', `spiral', `t3d', `vines',
+                        `whirlygig', and `worm'.
+                      * Merged `munch' and `mismunch'.
+                      * Updated `webcollage' to use twitpics.com as well.
 Changes since 5.06:   * Xinerama/RANDR tweaks for old-style multi-screen.
-                      * Fixed the bouncing ball in `stairs'.
+                      * Added bumpy skin and cel shading to `skytentacles'.
                       * `flipflop' can load images onto the tiles.
+                      * Fixed the bouncing ball in `stairs'.
+                      * Added the missing Utah Teapotahedron to `polyhedra'.
+                      * `blitspin' works with color images on OSX now.
+                      * Added transparency to `stonerview'.
                       * Improved layout of the preferences dialogs: they
                         should all now be usable even on ridiculously tiny
                         laptop screens.
@@ -51,10 +74,6 @@ Changes since 5.06:   * Xinerama/RANDR tweaks for old-style multi-screen.
                         saver descriptions.
                       * All hacks support the `-fps' option, not just GL ones.
                       * The `-fps' option now shows CPU load.
-                      * Added bumpy skin and cel shading to `skytentacles'.
-                      * Added the missing Utah Teapotahedron to `polyhedra'.
-                      * `blitspin' works with color images on OSX now.
-                      * Added transparency to `stonerview'.
 Changes since 5.05:   * Xinerama/RANDR fixes: this time for sure.  It should
                         now work to add/remove monitors or resize screens at
                         any time.

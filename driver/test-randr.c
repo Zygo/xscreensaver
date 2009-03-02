@@ -285,7 +285,11 @@ main (int argc, char **argv)
         }
 
       XSync (dpy, False);
-      fprintf (stderr, "\n%s: awaiting events...\n", progname);
+
+      fprintf (stderr, "\n%s: awaiting events...\n\n"
+          "\t(If you resize the screen or add/remove monitors, this should\n"
+          "\tnotice that and print stuff.  Otherwise, hit ^C.)\n\n",
+               progname);
       while (1)
         {
 	  XEvent event;

@@ -10,12 +10,18 @@ timetunnel - Plasma tunnels fade in and out
 [\-start \fInumber\fP]
 [\-end \fInumber\fP]
 [\-dilate \fInumber\fP]
-[\-tunonly]
+[\-no-logo]
 [\-reverse]
-[\-fog]
+[\-no-fog]
 [\-no-texture]
 [\-wireframe]
 [\-fps]
+[\-tardis \fItexture\fP]
+[\-head \fItexture\fP]
+[\-marquee \fItexture\fP]
+[\-tun1 \fItexture\fP]
+[\-tun2 \fItexture\fP]
+[\-tun3 \fItexture\fP]
 .SH DESCRIPTION
 Draws an animation similar to the opening and closing effects on the
 Dr. Who television show.
@@ -40,23 +46,41 @@ End time of loop, 0.0 - 30.00. Default 27.79.  May be identical to start time.
 .B \-dilate \fInumber\fP
 Scale time to speed or slow simulation.  Numbers less than one slow it down.
 .TP 8
-.B \-tunonly
+.B \-no-logo
 Show only tunnels, no logos, etc.
 .TP 8
 .B \-reverse
 Play in reverse, including tunnels.
 .TP 8
-.B \-fog
+.B \-no-fog
 Turn off fog.
 .TP 8
 .B \-no-texture
 Turn off textures.
 .TP 8
 .B \-wireframe
-Show as wire frame
+Show as wire frame.
 .TP 8
-.B \-fps
-Display the current frame rate, CPU load, and polygon count.
+.B \-fps | \-no-fps
+Whether to show a frames-per-second display at the bottom of the screen.
+.TP 8
+.B \-tardis \fItexture\fP
+Specify an xpm file to override default tardis texture.
+.TP 8
+.B \-head \fItexture\fP
+Specify an xpm file to override default Dr. Who head texture.
+.TP 8
+.B \-marquee \fItexture\fP
+Specify an xpm file to override default show marquee texture.
+.TP 8
+.B \-tun1 \fItexture\fP
+Specify an xpm file to override default tardis tunnel texture.
+.TP 8
+.B \-tun2 \fItexture\fP
+Specify an xpm file to override default middle tunnel texture.
+.TP 8
+.B \-tun3 \fItexture\fP
+Specify an xpm file to override default final tunnel texture.
 .SH ENVIRONMENT
 .PP
 .TP 8

@@ -1,5 +1,5 @@
 /* xpm-ximage.c --- converts XPM data to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 1998-2006 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -224,7 +224,7 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
   if (filename)
     {
       xpm_data = 0;
-      if (! XpmReadFileToData ((char *) filename, &xpm_data))
+      if (XpmSuccess != XpmReadFileToData ((char *) filename, &xpm_data))
         {
           fprintf (stderr, "%s: unable to read XPM file %s\n",
                    progname, filename);

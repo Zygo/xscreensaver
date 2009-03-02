@@ -321,7 +321,7 @@ www::
   cd $$DEST ;								    \
 									    \
   TMP=/tmp/xd.$$$$ ;							    \
-  sed "s/xscreensaver-5\.[0-9][0-9ab]*/$$HEAD/g" download.html > $$TMP ;  \
+  sed "s/xscreensaver-5\.[0-9][0-9ab]*/$$HEAD/g" download.html > $$TMP ;    \
   echo '' ;								    \
   diff -U0 download.html $$TMP ;					    \
   echo '' ;								    \
@@ -334,10 +334,10 @@ www::
       set -x ;								    \
       rm $$OLDEST ;							    \
       cvs remove $$OLDEST ;						    \
-    else								    \
-      set -x ;								    \
+      set +x ;								    \
     fi ;								    \
   done ;								    \
+  set -x ;								    \
   cvs add -kb $$BNAME $$BNAME2 ;					    \
   cat $$TMP > download.html ;						    \
   rm -f $$TMP ;								    \

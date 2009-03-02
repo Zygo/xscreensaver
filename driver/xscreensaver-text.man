@@ -65,7 +65,11 @@ URLs should be cached, use "If-Modified-Since", and obey "Expires".
 .BR fontglide (MANSUFFIX),
 .BR dadadodo (1),
 .BR webcollage (MANSUFFIX),
+.RS 0
 .I http://www.livejournal.com/stats/latest-rss.bml,
+.RS 0
+.I http://twitter.com/statuses/public_timeline.atom,
+.RS 0
 .BR driftnet (1),
 .BR EtherPEG ,
 .BR EtherPeek
