@@ -1,0 +1,23 @@
+xscreensaver 2.16 from jwz@netscape.com
+
+Read the README for information on where to get it, what it does, etc.
+
+The copyright notices are in the individual .c files
+
+I have made no changes to this.  The script configure-skunkware
+was run to call configure with appropriate parameters.
+
+Configuration notes:
+	- This is configured as a screensaver, not as a screen locker.
+	- It assumes that XScreenSaver.ad has been installed in
+	  an appropriate app-defaults directory
+	- The OpenGL 3D hacks are compiled, the libraries must be
+	  in a directory on LD_LIBRARY_PATH
+
+Also note that at least on OpenServer 5.0.0, the hack "moire2" causes
+the X server to dump core (after running out of memory).  You might
+want to disable that one.
+
+Tom Kelly
+tom@ancilla.toronto.on.ca
+

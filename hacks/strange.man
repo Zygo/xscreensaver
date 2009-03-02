@@ -1,0 +1,58 @@
+.TH XScreenSaver 1 "10-May-97" "X Version 11"
+.SH NAME
+strange - draws strange attractors
+.SH SYNOPSIS
+.B strange
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-ncolors \fIinteger\fP] [\-delay \fImicroseconds\fP]
+
+.SH DESCRIPTION
+The \fIstrange\fP program draws strange attractors
+.SH OPTIONS
+.I strange
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-ncolors \fIinteger\fP
+How many colors should be used (if possible).  Default 64.
+The colors are chosen randomly.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR xlock (1)
+.SH COPYRIGHT
+Copyright \(co 1997 by Massimino Pascal.
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation. 
+.SH AUTHOR
+Massimino Pascal <Pascal.Massimon@ens.fr>, 1997.
+
+Ability to run standalone or with \fIxscreensaver\fP added by 
+Jamie Zawinski <jwz@netscape.com>, 10-May-97.

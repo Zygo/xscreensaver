@@ -1,0 +1,51 @@
+.TH XScreenSaver 1 "18-sep-97" "X Version 11"
+.SH NAME
+xjack - all work and no play makes jack a dull boy
+.SH SYNOPSIS
+.B xjack
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-delay \fIusecs\fP]
+.SH DESCRIPTION
+All work and no play makes jack a dull boy.  All work and no play makes jack
+a dull boy.  All work and no play makes jack a dull boy.  All work and no
+play makes jack a dull boy.  All work and no play makes jack a dull boy.
+All work and no play makes jack a dull boy.  
+.PP
+.RS 8
+All work and no play makes jack a dull boy.  All work and no play makes jack
+a dull boy.  All work and no play makes jack a dull boy.  All work and no
+play makes jack a dull boy.  All work and no play makes jack a dull boy.
+All work and no play makes jack a dull boy.  
+.PP
+All work and no play makes jack a dull boy.  All work and no play makes jack
+a dull boy.  All work and no play makes jack a dull boy.  All work and no
+play makes jack a dull boy.  All work and no play makes jack a dull boy.  All
+work and no play makes jack a dull boy.  All work and no play makes jack a
+dull boy.  All work and no play makes jack a dull boy.
+.PP
+.RE
+All work and no play makes jack a dull boy.
+All work and no play makes jack a dull boy.  All work and no play makes jack
+a dull boy.  All work and no play makes jack a dull boy.  All work and no
+play makes jack a dull boy.  All work and no play makes jack a dull boy.
+All work and no play makes jack a dull boy.  All work and no play makes jack 
+a dull boy.  
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+All work and no play makes jack a dull boy.  
+.TP 8
+.B XENVIRONMENT
+All work and no play makes jack a dull boy.  All work and no play makes jack
+a dull boy.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1997 by Jamie Zawinski.  All work and no play makes jack a
+dull boy.  All work and no play makes jack a dull boy.  All work and no play
+makes jack a dull boy.  All work and no play makes jack a dull boy.  All work
+and no play makes jack a fnord dull boy.  All work and no play makes jack a
+dull boy.
+.SH AUTHOR
+Jamie Zawinski <jwz@netscape.com>, 15-Nov-97.

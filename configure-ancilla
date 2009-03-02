@@ -1,0 +1,14 @@
+#!/bin/ksh
+#x=`whence gcc`
+#if [ -z "$x" ]; then
+#	echo "MUST USE gcc"
+#	exit 1
+#fi
+#CFLAGS="-b elf -I/u/include -DDEBUG -DUSE_SIGACTION -g"
+#CFLAGS="-b elf -I/u/include -DUSE_SIGACTION"
+CFLAGS="-b elf -I/u/include"
+#LDFLAGS="-b elf -L/u/lib -g"
+LDFLAGS="-b elf -L/u/lib"
+CPPFLAGS="-I/u/include"
+export CFLAGS LDFLAGS CPPFLAGS
+./configure --exec-prefix=/u --without-sgi-ext -without-mit-ext --with-motif --with-xpm --disable-locking --without-shadow --without-kerberos

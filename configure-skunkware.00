@@ -1,0 +1,5 @@
+CFLAGS="-b elf -I/usr/local/include"
+LDFLAGS="-b elf -L/usr/local/lib"
+CPPFLAGS="-I/usr/local/include"
+export CFLAGS LDFLAGS CPPFLAGS
+./configure --prefix=/usr/local --exec-prefix=/usr/local --without-sgi-ext -without-mit-ext --with-motif --with-xpm --disable-locking --without-shadow --without-kerberos
