@@ -1,0 +1,43 @@
+#/bin/sh
+if test -f xlockgen 
+then
+  echo "xlockgen is present ok"
+  echo " Make the xlock.tcl in two passes "
+  if test -f ../xlock.tcl 
+  then
+    cat etc.xlock.tcl | ./xlockgen > /tmp/xlock.tcl
+    echo " first pass "
+    cp  ../xlock.tcl /tmp/etc.xlock.tcl.old
+    cp  /tmp/xlock.tcl ../xlock.tcl
+    echo " two pass ok"
+  else 
+    echo etc.xlock.tcl missing error ?
+  fi
+  echo " Make the modes of xmlock.c in two passes "
+  #if test -f ../../xmlock/modes.h
+  if test -f xmlock.modes.tpl
+  then
+   # cat ../../xmlock/modes.h | ./xlockgen > /tmp/modes
+   cat xmlock.modes.tpl | ./xlockgen > /tmp/modes
+    echo " first pass "
+    #cp  ../../xmlock/modes.h /tmp/xmlock.modes.h.old
+    cp  xmlock.modes.tpl /tmp/xmlock.modes.h.old
+    cp  /tmp/modes ../../xmlock/modes.h
+    echo " two pass ok you could build xmlock"
+  else 
+  	echo xmlock.modes.tpl missing error ?
+  fi
+  echo " Make the modes of xalock.c in two pass "
+  if test -f xalock.modes.tpl
+  then
+    cat xalock.modes.tpl | ./xlockgen > /tmp/modes
+    echo " first pass "
+# 	cp  ../../xalock/modes.h /tmp/xalock.modes.h.old
+    cp  /tmp/modes ../../xalock/modes.h
+    echo " two pass ok you could build xalock"
+  else
+   	echo xalock.modes.tpl missing error ?
+  fi
+else
+  echo "xlockgen is not present, please compile it"
+fi

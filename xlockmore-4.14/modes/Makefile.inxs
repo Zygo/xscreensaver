@@ -1,0 +1,1721 @@
+# xlockmore/modes/Makefile.in --- xscreensaver, Copyright (c) 1997 Jamie Zawinski.
+# the `../../configure' script generates `xlockmore/modes/Makefile' from this file.
+
+@SET_MAKE@
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+srcdir		= @srcdir@
+top_srcdir = @top_srcdir@
+VPATH		= @srcdir@
+
+install_prefix	=
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+mandir		= @mandir@
+man1dir		= $(mandir)/man1
+mansuffix	= 1
+
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+DEFS		= -DSTANDALONE @DEFS@
+LIBS		= @LIBS@
+
+DEPEND		= @DEPEND@
+DEPEND_FLAGS	= @DEPEND_FLAGS@
+DEPEND_DEFINES	= @DEPEND_DEFINES@
+
+SHELL		= /bin/sh
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+HACKDIR		= @HACKDIR@
+
+X_CFLAGS	= @X_CFLAGS@
+X_LIBS		= @X_LIBS@
+X_PRE_LIBS	= @X_PRE_LIBS@
+X_EXTRA_LIBS	= @X_EXTRA_LIBS@
+
+HACK_PRE  = $(LIBS) $(X_LIBS) $(X_PRE_LIBS)
+HACK_POST = -lXt -lX11 -lXext $(X_EXTRA_LIBS) -lm
+HACK_LIBS = $(HACK_PRE)            @HACK_LIBS@ $(HACK_POST)
+XPM_LIBS  = $(HACK_PRE) @XPM_LIBS@ @HACK_LIBS@ $(HACK_POST)
+XLOCK_LIBS  = $(HACK_LIBS)
+
+#XS	= $(topdir)
+XS	= $(srcdir)/../..
+HACK_SRC	= $(XS)/hacks
+HACK_BIN	= ../../hacks
+UTILS_SRC	= $(XS)/utils
+UTILS_BIN	= ../../utils
+XLOCK_SRC	= $(XS)/xlockmore/xlock
+XLOCK_BIN	= ../xlock
+
+INCLUDES	= -I$(srcdir) -I$(XLOCK_SRC) -I$(UTILS_SRC) -I$(HACK_SRC) \
+		  -I$(HACK_SRC)/.. -I.. @INCLUDES@
+
+UTIL_SRCS = $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
+      $(UTILS_SRC)/grabscreen.c $(UTILS_SRC)/hsv.c \
+      $(UTILS_SRC)/resources.c $(UTILS_SRC)/spline.c \
+      $(UTILS_SRC)/usleep.c $(UTILS_SRC)/visual.c \
+      $(UTILS_SRC)/xroger.c $(UTILS_SRC)/yarandom.c \
+      $(UTILS_SRC)/erase.c $(UTILS_SRC)/sgivideo.c
+
+XLOCKMORE_SRCS = $(XLOCK_SRC)/automata.c $(XLOCK_SRC)/iostuff.c $(XLOCK_SRC)/spline.c $(XLOCK_SRC)/xbm.c
+
+UTIL_OBJS = $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
+      $(UTILS_BIN)/grabscreen.o $(UTILS_BIN)/hsv.o \
+      $(UTILS_BIN)/resources.o $(UTILS_BIN)/spline.o \
+      $(UTILS_BIN)/usleep.o $(UTILS_BIN)/visual.o \
+      $(UTILS_BIN)/xroger.o $(UTILS_BIN)/yarandom.o \
+      $(UTILS_BIN)/erase.o $(UTILS_BIN)/sgivideo.o
+
+XLOCKMORE_OBJS = $(XLOCK_BIN)/automata.o $(XLOCK_BIN)/iostuff.o $(XLOCK_BIN)/spline.o $(XLOCK_BIN)/xbm.o
+
+#
+
+XLOCKMODEOBJS = ant.o ball.o bat.o blot.o \
+bouboule.o bounce.o braid.o bubble.o bug.o \
+clock.o coral.o crystal.o \
+daisy.o deco.o dclock.o demon.o dilemma.o discrete.o drift.o \
+eyes.o fadeplot.o flag.o flame.o flow.o forest.o \
+galaxy.o goop.o grav.o \
+helix.o hop.o hyper.o \
+ico.o ifs.o image.o julia.o kaleid.o \
+laser.o life.o life1d.o life3d.o \
+lightning.o lisa.o lissie.o loop.o \
+mandelbrot.o marquee.o maze.o mountain.o munch.o nose.o \
+pacman.o penrose.o petal.o puzzle.o pyro.o \
+qix.o roll.o rotor.o \
+shape.o sierpinski.o slip.o \
+sphere.o spiral.o spline.o \
+star.o strange.o swarm.o swirl.o \
+thornbird.o triangle.o tube.o turtle.o \
+vines.o voters.o \
+wator.o wire.o world.o worm.o \
+cartoon.o blank.o bomb.o
+# @XPM@XLOCKXPMOBJS = cartoon.o
+# @BOMB@XLOCKBOMBOBJS = $(DOM)bomb.o
+# XLOCKUTILMODEOBJS = $(XLOCKBOMBOBJS)$(S)$(DOM)blank.o random.o
+XLOCKALLMODEOBJS = $(XLOCKMODEOBJS)$(S)\
+$(XLOCKXPMOBJS)$(S)$(XLOCKGLOBJS)$(S)$(XLOCKUTILMODEOBJS)
+XLOCKALLUTILOBJS = $(XLOCKUTILOBJS)$(XLOCKDEBUGOBJS)
+OBJS = $(XLOCKALLUTILOBJS)$(S)$(XLOCKALLMODEOBJS)
+
+# List of source files
+BITMAPS = eyes.xbm flag.xbm ghost.xbm image.xbm life.xbm life1d.xbm \
+maze.xbm puzzle.xbm
+PIXMAPS = flag.xpm image.xpm maze.xpm puzzle.xpm
+
+XLOCKMODESRCS = ant.c ball.c bat.c blot.c \
+bouboule.c bounce.c braid.c bubble.c bug.c \
+clock.c coral.c crystal.c \
+daisy.c dclock.c deco.c demon.c dilemma.c discrete.c drift.c \
+eyes.c fadeplot.c flag.c flame.c flow.c forest.c \
+galaxy.c goop.c grav.c \
+helix.c hop.c hyper.c \
+ico.c ifs.c image.c julia.c kaleid.c \
+laser.c life.c life1d.c life3d.c \
+lightning.c lisa.c lissie.c loop.c \
+mandelbrot.c marquee.c maze.c mountain.c munch.c nose.c \
+pacman.c penrose.c petal.c puzzle.c pyro.c \
+qix.c roll.c rotor.c \
+shape.c sierpinski.c slip.c \
+sphere.c spiral.c spline.c \
+star.c strange.c swarm.c swirl.c \
+thornbird.c triangle.c tube.c turtle.c \
+vines.c voters.c \
+wator.c wire.c world.c worm.c \
+cartoon.c blank.c bomb.c
+# @XPM@XLOCKXPMSRCS = cartoon.c
+# @BOMB@XLOCKBOMBSRCS = bomb.c
+# XLOCKUTILMODESRCS = $(XLOCKBOMBSRCS) blank.c random.c
+SRCS = $(XLOCKUTILSRCS) $(XLOCKXPMSRCS) $(XLOCKGLSRCS) \
+$(XLOCKMODESRCS) $(XLOCKUTILMODESRCS)
+
+XLOCKMODEEXES	= ant ball bat blot \
+bouboule bounce braid bubble bug \
+clock coral crystal \
+daisy dclock deco demon dilemma discrete drift \
+eyes fadeplot flame flag flow forest \
+galaxy goop grav \
+helix hop hyper \
+ico ifs image julia kaleid \
+laser life life1d life3d \
+lightning lisa lissie loop \
+mandelbrot marquee maze mountain munch nose \
+pacman penrose petal puzzle pyro \
+qix roll rotor \
+shape sierpinski slip \
+sphere spiral spline \
+star strange swarm swirl \
+thornbird triangle tube turtle \
+vines voters \
+wator wire world worm \
+cartoon blank bomb
+# @XPM@XLOCKXPMEXES = cartoon
+# @BOMB@XLOCKBOMBEXES = bomb
+# XLOCKUTILMODEEXES = $(XLOCKBOMBEXES) blank random
+EXES = $(XLOCKUTILEXES) $(XLOCKXPMEXES) $(XLOCKGLEXES) \
+$(XLOCKMODEEXES) $(XLOCKUTILMODEEXES)
+
+HACK_OBJS_1 = $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
+ $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
+HACK_OBJS = $(HACK_BIN)/screenhack.o $(HACK_OBJS_1)
+XLOCK_OBJS  = $(HACK_BIN)/screenhack-xlock.o $(XLOCK_BIN)/xlock.o $(COLOR_OBJS) $(HACK_OBJS_1)
+COLOR_OBJS  = $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o
+GRAB_OBJS_1 = $(UTILS_BIN)/grabscreen.o $(SGI_VIDEO_OBJS)
+GRAB_OBJS = $(GRAB_OBJS_1) $(COLOR_OBJS)
+GRAB_LIBS = $(SGI_VIDEO_LIBS)
+
+HDRS		=
+MEN		= 
+EXTRAS		= README Makefile.in
+
+TARFILES	= $(SRCS) $(HDRS) $(MEN) $(EXTRAS)
+
+
+all: $(EXES)
+
+install:   install-program   install-man
+uninstall: uninstall-program uninstall-man
+
+install-strip:
+	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
+
+install-program:
+	@exes="$(EXES)" ;						\
+	for program in $$exes; do					\
+	  echo $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;	\
+	  $(INSTALL_PROGRAM) $$program $(HACKDIR)/$$program ;		\
+	done
+
+install-man:
+	@men="$(MEN)" ;							\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
+	  $(INSTALL_DATA) $(srcdir)/$$man $(man1dir)/$$instname ;	\
+	done
+
+uninstall-program:
+	@for program in $(EXES); do					\
+	  echo rm -f $(HACKDIR)/$$program ;				\
+	  rm -f $(HACKDIR)/$$program ;					\
+	done
+
+uninstall-man:
+	@men="$(MEN)" ;							\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo rm -f $(man1dir)/$$instname ;				\
+	  rm -f $(man1dir)/$$instname ;					\
+	done
+
+clean:
+	-rm -f *.o a.out core $(EXES)
+
+distclean: clean
+	-rm -f Makefile *~ "#"*
+
+# Adds all current dependencies to Makefile
+depend:
+	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'		    \
+	$(DEPEND_FLAGS) --						    \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SRCS)
+
+# Adds some dependencies to Makefile.in -- not totally accurate, but pretty
+# close.  This excludes dependencies on files in /usr/include, etc.  It tries
+# to include only dependencies on files which are themselves a part of this
+# package.
+distdepend:
+	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
+	$(DEPEND) -w 0 -f - 						    \
+	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SRCS) | 							    \
+	(								    \
+	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
+	  sed -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
+	      -e 's@\.\./\.\./utils@$$(UTILS_SRC)@g'			    \
+	      -e 's@\.\./glx/@@g'					    \
+	      -e 's@ \.\./@ $$(HACK_SRC)/@g'				    \
+	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
+	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g' ;			    \
+	  echo ''							    \
+	) > /tmp/distdepend.$$$$ &&					    \
+	mv Makefile.in Makefile.in.bak &&				    \
+	mv /tmp/distdepend.$$$$ Makefile.in
+
+TAGS: tags
+tags:
+	find $(srcdir) -name '*.[chly]' -print | xargs etags -a
+
+echo_tarfiles:
+	@echo $(TARFILES)
+
+BITMAPTYPE = x11
+PIXMAPTYPE = x11
+#BITMAPTYPE = @BITMAPTYPE@
+#PIXMAPTYPE = @PIXMAPTYPE@
+
+# Here is your chance to override the default icon:
+TINYBITMAP = $(BITMAPTYPE)
+TINYBITMAP = t-x11
+SMALLBITMAP = s-$(BITMAPTYPE)
+MEDIUMBITMAP = m-$(BITMAPTYPE)
+LARGEBITMAP = l-$(BITMAPTYPE)
+MEDIUMPIXMAP = m-$(PIXMAPTYPE)
+LARGEPIXMAP = l-$(PIXMAPTYPE)
+
+#EYESBITMAP = $(MEDIUMBITMAP)
+EYESBITMAP = m-grelb
+FLAGBITMAP = $(MEDIUMBITMAP)
+IMAGEBITMAP = $(MEDIUMBITMAP)
+#IMAGEBITMAP = l-bob #Slackware icon
+#IMAGEBITMAP = m-xlock #XLock icon
+LIFEBITMAP = $(TINYBITMAP)
+#LIFEBITMAP = $(SMALLBITMAP)
+#LIFEBITMAP = s-grelb
+LIFE1DBITMAP = $(TINYBITMAP)
+MAZEBITMAP = $(LARGEBITMAP)
+#MAZEBITMAP = m-xlock
+#PACMANBITMAP = $(MEDIUMBITMAP)
+PACMANBITMAP = m-ghost
+#PUZZLEBITMAP = $(LARGEBITMAP)
+PUZZLEBITMAP = l-xlock
+#PUZZLEBITMAP = l-linux
+FLAGPIXMAP = $(MEDIUMPIXMAP)
+#FLAGPIXMAP = m-xlock
+IMAGEPIXMAP = $(MEDIUMPIXMAP)
+#IMAGEPIXMAP = m-xlock
+MAZEPIXMAP = $(MEDIUMPIXMAP)
+#MAZEPIXMAP = m-xlock
+#PUZZLEPIXMAP = $(LARGEPIXMAP)
+PUZZLEPIXMAP = l-xlock
+#PUZZLEPIXMAP = l-linux
+
+eyes.o: eyes.c eyes.xbm
+life.o : life.c life.xbm
+life1d.o : life1d.c life1d.xbm
+pacman.o : pacman.c ghost.xbm
+# Do not need xpm files if not using them but not worth figuring out
+flag.o : flag.c flag.xbm flag.xpm
+image.o : image.c image.xbm image.xpm
+maze.o : maze.c maze.xbm maze.xpm
+puzzle.o : puzzle.c puzzle.xbm puzzle.xpm
+
+BITMAPDIR = $(HACK_SRC)/../xlockmore/bitmaps/
+PIXMAPDIR = $(HACK_SRC)/../xlockmore/pixmaps/
+LN_S = ln -s
+
+eyes.xbm : $(BITMAPDIR)$(EYESBITMAP).xbm
+	$(RM) eyes.xbm ; $(LN_S) $(BITMAPDIR)$(EYESBITMAP).xbm eyes.xbm
+
+flag.xbm : $(BITMAPDIR)$(FLAGBITMAP).xbm
+	$(RM) flag.xbm ; $(LN_S) $(BITMAPDIR)$(FLAGBITMAP).xbm flag.xbm
+
+image.xbm : $(BITMAPDIR)$(IMAGEBITMAP).xbm
+	$(RM) image.xbm ; $(LN_S) $(BITMAPDIR)$(IMAGEBITMAP).xbm image.xbm
+
+ghost.xbm : $(BITMAPDIR)$(PACMANBITMAP).xbm
+	$(RM) ghost.xbm ; $(LN_S) $(BITMAPDIR)$(PACMANBITMAP).xbm ghost.xbm
+
+life.xbm : $(BITMAPDIR)$(LIFEBITMAP).xbm
+	$(RM) life.xbm ; $(LN_S) $(BITMAPDIR)$(LIFEBITMAP).xbm life.xbm
+
+life1d.xbm : $(BITMAPDIR)$(LIFE1DBITMAP).xbm
+	$(RM) life1d.xbm ; $(LN_S) $(BITMAPDIR)$(LIFE1DBITMAP).xbm life1d.xbm
+
+maze.xbm : $(BITMAPDIR)$(MAZEBITMAP).xbm
+	$(RM) maze.xbm ; $(LN_S) $(BITMAPDIR)$(MAZEBITMAP).xbm maze.xbm
+
+puzzle.xbm : $(BITMAPDIR)$(PUZZLEBITMAP).xbm
+	$(RM) puzzle.xbm ; $(LN_S) $(BITMAPDIR)$(PUZZLEBITMAP).xbm puzzle.xbm
+
+flag.xpm : $(PIXMAPDIR)$(FLAGPIXMAP).xpm
+	$(RM) flag.xpm ; $(LN_S) $(PIXMAPDIR)$(FLAGPIXMAP).xpm flag.xpm
+
+image.xpm : $(PIXMAPDIR)$(IMAGEPIXMAP).xpm
+	$(RM) image.xpm ; $(LN_S) $(PIXMAPDIR)$(IMAGEPIXMAP).xpm image.xpm
+
+maze.xpm : $(PIXMAPDIR)$(MAZEPIXMAP).xpm
+	$(RM) maze.xpm ; $(LN_S) $(PIXMAPDIR)$(MAZEPIXMAP).xpm maze.xpm
+
+puzzle.xpm : $(PIXMAPDIR)$(PUZZLEPIXMAP).xpm
+	$(RM) puzzle.xpm ; $(LN_S) $(PIXMAPDIR)$(PUZZLEPIXMAP).xpm puzzle.xpm
+
+# Rules for noticing when the objects from the utils directory are out of
+# date with respect to their sources, and going and building them according
+# to the rules in their own Makefile...
+#
+$(UTILS_BIN)/alpha.o:   $(UTILS_SRC)/alpha.c
+$(UTILS_BIN)/colors.o:    $(UTILS_SRC)/colors.c
+$(UTILS_BIN)/grabscreen.o:  $(UTILS_SRC)/grabscreen.c
+$(UTILS_BIN)/sgivideo.o:  $(UTILS_SRC)/sgivideo.c
+$(UTILS_BIN)/hsv.o:   $(UTILS_SRC)/hsv.c
+$(UTILS_BIN)/resources.o: $(UTILS_SRC)/resources.c
+$(UTILS_BIN)/spline.o:    $(UTILS_SRC)/spline.c
+$(UTILS_BIN)/usleep.o:    $(UTILS_SRC)/usleep.c
+$(UTILS_BIN)/visual.o:    $(UTILS_SRC)/visual.c
+$(UTILS_BIN)/xmu.o:   $(UTILS_SRC)/xmu.c
+$(UTILS_BIN)/xroger.o:    $(UTILS_SRC)/xroger.c
+$(UTILS_BIN)/yarandom.o:  $(UTILS_SRC)/yarandom.c
+$(UTILS_BIN)/erase.o:   $(UTILS_SRC)/erase.c
+
+$(XLOCK_BIN)/automata.o:   $(XLOCK_SRC)/automata.c
+$(XLOCK_BIN)/iostuff.o:   $(XLOCK_SRC)/iostuff.c
+$(XLOCK_BIN)/xbm.o:   $(XLOCK_SRC)/xbm.c
+$(XLOCK_BIN)/spline.o:   $(XLOCK_SRC)/spline.c
+
+$(UTIL_OBJS):
+	cd $(UTILS_BIN) ; \
+	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+$(XLOCKMORE_OBJS):
+	cd $(XLOCK_BIN) ; \
+	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+# How we build object files in this directory.
+.c.o:
+	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+
+# Some hacks use a slightly-differently-compiled variant of this file.
+# This is how to make the the other .o file from it.
+#
+$(HACK_BIN)/screenhack-xlock.o: $(HACK_SRC)/screenhack.c
+	$(CC) -o $@ -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) \
+ -DXLOCKMORE $(HACK_SRC)/screenhack.c
+
+# Some abbreviations to keep the lines short...
+ALP   = $(HSV) $(UTILS_BIN)/alpha.o
+HSV   = $(UTILS_BIN)/hsv.o
+#SPL   = $(UTILS_BIN)/spline.o
+XROG    = $(UTILS_BIN)/xroger.o $(SPL)
+GRAB    = $(GRAB_OBJS)
+ERASE   = $(UTILS_BIN)/erase.o
+AUTOMATA   = $(XLOCK_BIN)/automata.o
+IOSTUFF   = $(XLOCK_BIN)/iostuff.o $(XLOCK_BIN)/xbm.o
+SPLINE   = $(XLOCK_BIN)/spline.o
+COL   = $(COLOR_OBJS)
+
+$(XLOCK_BIN)/xlock.o: $(XLOCK_SRC)/xlock.c
+	cd $(XLOCK_BIN)  ; $(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
+
+
+CC_HACK		= $(CC) $(LDFLAGS)
+
+ant:		ant.o	$(XLOCK_OBJS) $(AUTOMATA) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(AUTOMATA) $(ERASE) $(HACK_LIBS)
+
+ball:		ball.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+bat:		bat.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(XPM_LIBS)
+
+blank:		blank.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+blot:		blot.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+bomb:		bomb.o		$(XLOCK_OBJS) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(IOSTUFF) $(HACK_LIBS)
+
+bouboule:		bouboule.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+bounce:		bounce.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+braid:		braid.o		$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+bubble:		bubble.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+bug:		bug.o		$(XLOCK_OBJS) $(AUTOMATA)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(AUTOMATA) $(HACK_LIBS)
+
+cartoon:		cartoon.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(XPM_LIBS)
+
+clock:		clock.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+coral:		coral.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+crystal:		crystal.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+daisy:		daisy.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+dclock:		dclock.o		$(XLOCK_OBJS) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(IOSTUFF) $(HACK_LIBS)
+
+deco:		deco.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+demon:		demon.o		$(XLOCK_OBJS) $(AUTOMATA)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(AUTOMATA) $(HACK_LIBS)
+
+dilemma:		dilemma.o		$(XLOCK_OBJS) $(AUTOMATA)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(AUTOMATA) $(HACK_LIBS)
+
+discrete:		discrete.o		$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+drift:		drift.o		$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+eyes:		eyes.o		$(XLOCK_OBJS) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(IOSTUFF) $(HACK_LIBS)
+
+fadeplot:		fadeplot.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+flag:		flag.o		$(XLOCK_OBJS) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(IOSTUFF) $(XPM_LIBS)
+
+flame:		flame.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+flow:		flow.o		$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+forest:		forest.o		$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+galaxy:		galaxy.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+goop:		goop.o		$(XLOCK_OBJS) $(SPLINE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(SPLINE) $(HACK_LIBS)
+
+grav:		grav.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+helix:		helix.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+hop:		hop.o		$(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+hyper:		hyper.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+ico:		ico.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+ifs:		ifs.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+image:		image.o		$(XLOCK_OBJS) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(IOSTUFF) $(XPM_LIBS)
+
+julia:		julia.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+kaleid:		kaleid.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+laser:		laser.o		$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+life:		life.o		$(XLOCK_OBJS) $(AUTOMATA) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(AUTOMATA) $(IOSTUFF) $(HACK_LIBS)
+
+life1d:		life1d.o	$(XLOCK_OBJS) $(AUTOMATA) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(AUTOMATA) $(IOSTUFF) $(HACK_LIBS)
+
+life3d:		life3d.o	$(XLOCK_OBJS) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(IOSTUFF) $(HACK_LIBS)
+
+lightning:  lightning.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+lisa:   lisa.o	   $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+lissie:   lissie.o	 $(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+loop:   loop.o	 $(XLOCK_OBJS) $(AUTOMATA)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(AUTOMATA) $(HACK_LIBS)
+
+mandelbrot:   mandelbrot.o	 $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+marquee:   marquee.o	 $(XLOCK_OBJS) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(IOSTUFF) $(HACK_LIBS)
+
+maze:   maze.o	 $(XLOCK_OBJS) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(IOSTUFF) $(XPM_LIBS)
+
+mountain: mountain.o	 $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+munch: munch.o	 $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+nose:  nose.o	$(XLOCK_OBJS) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(IOSTUFF) $(HACK_LIBS)
+
+pacman:  pacman.o	$(XLOCK_OBJS) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(IOSTUFF) $(HACK_LIBS)
+
+penrose:  penrose.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+petal:  petal.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+puzzle:  puzzle.o	$(XLOCK_OBJS) $(IOSTUFF)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(IOSTUFF) $(XPM_LIBS)
+
+pyro:  pyro.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+qix:  qix.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+random:		random.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+roll:  roll.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+rotor:    rotor.o	  $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+shape: shape.o	 $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+sierpinski: sierpinski.o	 $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+slip:   slip.o	   $(XLOCK_OBJS) $(GRAB)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(GRAB_OBJS_1) $(HACK_LIBS) $(GRAB_LIBS)
+
+sphere:   sphere.o	 $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+spiral:   spiral.o	 $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+spline:  spline.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+star:  star.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+strange:  strange.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+swarm:    swarm.o	  $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+swirl:    swirl.o	  $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+thornbird:		thornbird.o	$(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+triangle: triangle.o	 $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+tube: tube.o	 $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+turtle: turtle.o	 $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+vines:    vines.o	    $(XLOCK_OBJS) $(ERASE)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(ERASE) $(HACK_LIBS)
+
+voters:    voters.o	    $(XLOCK_OBJS) $(AUTOMATA)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(AUTOMATA) $(HACK_LIBS)
+
+wator:   wator.o	   $(XLOCK_OBJS) $(AUTOMATA)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(AUTOMATA) $(HACK_LIBS)
+
+wire:   wire.o	   $(XLOCK_OBJS) $(AUTOMATA)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(AUTOMATA) $(HACK_LIBS)
+
+world:   world.o	   $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+worm:   worm.o	   $(XLOCK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(XLOCK_OBJS) $(HACK_LIBS)
+
+##############################################################################
+#
+# DO NOT DELETE: updated by make distdepend
+
+ant.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+ant.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+ant.o: $(HACK_SRC)/../config.h
+ant.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+ant.o: $(HACK_SRC)/../hacks/screenhack.h
+ant.o: $(UTILS_SRC)/yarandom.h
+ant.o: $(UTILS_SRC)/usleep.h
+ant.o: $(UTILS_SRC)/resources.h
+ant.o: $(UTILS_SRC)/hsv.h
+ant.o: $(UTILS_SRC)/colors.h
+ant.o: $(UTILS_SRC)/grabscreen.h
+ant.o: $(UTILS_SRC)/visual.h
+ant.o: $(UTILS_SRC)/erase.h
+ant.o: $(HACK_SRC)/../xlockmore/xlock/automata.h
+ball.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+ball.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+ball.o: $(HACK_SRC)/../config.h
+ball.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+ball.o: $(HACK_SRC)/../hacks/screenhack.h
+ball.o: $(UTILS_SRC)/yarandom.h
+ball.o: $(UTILS_SRC)/usleep.h
+ball.o: $(UTILS_SRC)/resources.h
+ball.o: $(UTILS_SRC)/hsv.h
+ball.o: $(UTILS_SRC)/colors.h
+ball.o: $(UTILS_SRC)/grabscreen.h
+ball.o: $(UTILS_SRC)/visual.h
+bat.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+bat.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+bat.o: $(HACK_SRC)/../config.h
+bat.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+bat.o: $(HACK_SRC)/../hacks/screenhack.h
+bat.o: $(UTILS_SRC)/yarandom.h
+bat.o: $(UTILS_SRC)/usleep.h
+bat.o: $(UTILS_SRC)/resources.h
+bat.o: $(UTILS_SRC)/hsv.h
+bat.o: $(UTILS_SRC)/colors.h
+bat.o: $(UTILS_SRC)/grabscreen.h
+bat.o: $(UTILS_SRC)/visual.h
+bat.o: $(HACK_SRC)/../xlockmore/bitmaps/bat-0.xbm
+bat.o: $(HACK_SRC)/../xlockmore/bitmaps/bat-1.xbm
+bat.o: $(HACK_SRC)/../xlockmore/bitmaps/bat-2.xbm
+bat.o: $(HACK_SRC)/../xlockmore/bitmaps/bat-3.xbm
+bat.o: $(HACK_SRC)/../xlockmore/bitmaps/bat-4.xbm
+blot.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+blot.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+blot.o: $(HACK_SRC)/../config.h
+blot.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+blot.o: $(HACK_SRC)/../hacks/screenhack.h
+blot.o: $(UTILS_SRC)/yarandom.h
+blot.o: $(UTILS_SRC)/usleep.h
+blot.o: $(UTILS_SRC)/resources.h
+blot.o: $(UTILS_SRC)/hsv.h
+blot.o: $(UTILS_SRC)/colors.h
+blot.o: $(UTILS_SRC)/grabscreen.h
+blot.o: $(UTILS_SRC)/visual.h
+bouboule.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+bouboule.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+bouboule.o: $(HACK_SRC)/../config.h
+bouboule.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+bouboule.o: $(HACK_SRC)/../hacks/screenhack.h
+bouboule.o: $(UTILS_SRC)/yarandom.h
+bouboule.o: $(UTILS_SRC)/usleep.h
+bouboule.o: $(UTILS_SRC)/resources.h
+bouboule.o: $(UTILS_SRC)/hsv.h
+bouboule.o: $(UTILS_SRC)/colors.h
+bouboule.o: $(UTILS_SRC)/grabscreen.h
+bouboule.o: $(UTILS_SRC)/visual.h
+bounce.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+bounce.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+bounce.o: $(HACK_SRC)/../config.h
+bounce.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+bounce.o: $(HACK_SRC)/../hacks/screenhack.h
+bounce.o: $(UTILS_SRC)/yarandom.h
+bounce.o: $(UTILS_SRC)/usleep.h
+bounce.o: $(UTILS_SRC)/resources.h
+bounce.o: $(UTILS_SRC)/hsv.h
+bounce.o: $(UTILS_SRC)/colors.h
+bounce.o: $(UTILS_SRC)/grabscreen.h
+bounce.o: $(UTILS_SRC)/visual.h
+bounce.o: $(HACK_SRC)/../xlockmore/bitmaps/bounce-0.xbm
+bounce.o: $(HACK_SRC)/../xlockmore/bitmaps/bounce-1.xbm
+bounce.o: $(HACK_SRC)/../xlockmore/bitmaps/bounce-2.xbm
+bounce.o: $(HACK_SRC)/../xlockmore/bitmaps/bounce-3.xbm
+bounce.o: $(HACK_SRC)/../xlockmore/bitmaps/bounce-mask.xbm
+braid.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+braid.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+braid.o: $(HACK_SRC)/../config.h
+braid.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+braid.o: $(HACK_SRC)/../hacks/screenhack.h
+braid.o: $(UTILS_SRC)/yarandom.h
+braid.o: $(UTILS_SRC)/usleep.h
+braid.o: $(UTILS_SRC)/resources.h
+braid.o: $(UTILS_SRC)/hsv.h
+braid.o: $(UTILS_SRC)/colors.h
+braid.o: $(UTILS_SRC)/grabscreen.h
+braid.o: $(UTILS_SRC)/visual.h
+braid.o: $(UTILS_SRC)/erase.h
+bubble.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+bubble.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+bubble.o: $(HACK_SRC)/../config.h
+bubble.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+bubble.o: $(HACK_SRC)/../hacks/screenhack.h
+bubble.o: $(UTILS_SRC)/yarandom.h
+bubble.o: $(UTILS_SRC)/usleep.h
+bubble.o: $(UTILS_SRC)/resources.h
+bubble.o: $(UTILS_SRC)/hsv.h
+bubble.o: $(UTILS_SRC)/colors.h
+bubble.o: $(UTILS_SRC)/grabscreen.h
+bubble.o: $(UTILS_SRC)/visual.h
+bug.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+bug.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+bug.o: $(HACK_SRC)/../config.h
+bug.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+bug.o: $(HACK_SRC)/../hacks/screenhack.h
+bug.o: $(UTILS_SRC)/yarandom.h
+bug.o: $(UTILS_SRC)/usleep.h
+bug.o: $(UTILS_SRC)/resources.h
+bug.o: $(UTILS_SRC)/hsv.h
+bug.o: $(UTILS_SRC)/colors.h
+bug.o: $(UTILS_SRC)/grabscreen.h
+bug.o: $(UTILS_SRC)/visual.h
+bug.o: $(HACK_SRC)/../xlockmore/xlock/automata.h
+clock.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+clock.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+clock.o: $(HACK_SRC)/../config.h
+clock.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+clock.o: $(HACK_SRC)/../hacks/screenhack.h
+clock.o: $(UTILS_SRC)/yarandom.h
+clock.o: $(UTILS_SRC)/usleep.h
+clock.o: $(UTILS_SRC)/resources.h
+clock.o: $(UTILS_SRC)/hsv.h
+clock.o: $(UTILS_SRC)/colors.h
+clock.o: $(UTILS_SRC)/grabscreen.h
+clock.o: $(UTILS_SRC)/visual.h
+coral.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+coral.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+coral.o: $(HACK_SRC)/../config.h
+coral.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+coral.o: $(HACK_SRC)/../hacks/screenhack.h
+coral.o: $(UTILS_SRC)/yarandom.h
+coral.o: $(UTILS_SRC)/usleep.h
+coral.o: $(UTILS_SRC)/resources.h
+coral.o: $(UTILS_SRC)/hsv.h
+coral.o: $(UTILS_SRC)/colors.h
+coral.o: $(UTILS_SRC)/grabscreen.h
+coral.o: $(UTILS_SRC)/visual.h
+crystal.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+crystal.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+crystal.o: $(HACK_SRC)/../config.h
+crystal.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+crystal.o: $(HACK_SRC)/../hacks/screenhack.h
+crystal.o: $(UTILS_SRC)/yarandom.h
+crystal.o: $(UTILS_SRC)/usleep.h
+crystal.o: $(UTILS_SRC)/resources.h
+crystal.o: $(UTILS_SRC)/hsv.h
+crystal.o: $(UTILS_SRC)/colors.h
+crystal.o: $(UTILS_SRC)/grabscreen.h
+crystal.o: $(UTILS_SRC)/visual.h
+daisy.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+daisy.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+daisy.o: $(HACK_SRC)/../config.h
+daisy.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+daisy.o: $(HACK_SRC)/../hacks/screenhack.h
+daisy.o: $(UTILS_SRC)/yarandom.h
+daisy.o: $(UTILS_SRC)/usleep.h
+daisy.o: $(UTILS_SRC)/resources.h
+daisy.o: $(UTILS_SRC)/hsv.h
+daisy.o: $(UTILS_SRC)/colors.h
+daisy.o: $(UTILS_SRC)/grabscreen.h
+daisy.o: $(UTILS_SRC)/visual.h
+dclock.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+dclock.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+dclock.o: $(HACK_SRC)/../config.h
+dclock.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+dclock.o: $(HACK_SRC)/../hacks/screenhack.h
+dclock.o: $(UTILS_SRC)/yarandom.h
+dclock.o: $(UTILS_SRC)/usleep.h
+dclock.o: $(UTILS_SRC)/resources.h
+dclock.o: $(UTILS_SRC)/hsv.h
+dclock.o: $(UTILS_SRC)/colors.h
+dclock.o: $(UTILS_SRC)/grabscreen.h
+dclock.o: $(UTILS_SRC)/visual.h
+dclock.o: $(HACK_SRC)/../xlockmore/xlock/iostuff.h
+deco.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+deco.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+deco.o: $(HACK_SRC)/../config.h
+deco.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+deco.o: $(HACK_SRC)/../hacks/screenhack.h
+deco.o: $(UTILS_SRC)/yarandom.h
+deco.o: $(UTILS_SRC)/usleep.h
+deco.o: $(UTILS_SRC)/resources.h
+deco.o: $(UTILS_SRC)/hsv.h
+deco.o: $(UTILS_SRC)/colors.h
+deco.o: $(UTILS_SRC)/grabscreen.h
+deco.o: $(UTILS_SRC)/visual.h
+demon.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+demon.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+demon.o: $(HACK_SRC)/../config.h
+demon.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+demon.o: $(HACK_SRC)/../hacks/screenhack.h
+demon.o: $(UTILS_SRC)/yarandom.h
+demon.o: $(UTILS_SRC)/usleep.h
+demon.o: $(UTILS_SRC)/resources.h
+demon.o: $(UTILS_SRC)/hsv.h
+demon.o: $(UTILS_SRC)/colors.h
+demon.o: $(UTILS_SRC)/grabscreen.h
+demon.o: $(UTILS_SRC)/visual.h
+demon.o: $(HACK_SRC)/../xlockmore/xlock/automata.h
+dilemma.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+dilemma.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+dilemma.o: $(HACK_SRC)/../config.h
+dilemma.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+dilemma.o: $(HACK_SRC)/../hacks/screenhack.h
+dilemma.o: $(UTILS_SRC)/yarandom.h
+dilemma.o: $(UTILS_SRC)/usleep.h
+dilemma.o: $(UTILS_SRC)/resources.h
+dilemma.o: $(UTILS_SRC)/hsv.h
+dilemma.o: $(UTILS_SRC)/colors.h
+dilemma.o: $(UTILS_SRC)/grabscreen.h
+dilemma.o: $(UTILS_SRC)/visual.h
+dilemma.o: $(HACK_SRC)/../xlockmore/xlock/automata.h
+dilemma.o: $(HACK_SRC)/../xlockmore/bitmaps/cooperat.xbm
+dilemma.o: $(HACK_SRC)/../xlockmore/bitmaps/defect.xbm
+discrete.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+discrete.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+discrete.o: $(HACK_SRC)/../config.h
+discrete.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+discrete.o: $(HACK_SRC)/../hacks/screenhack.h
+discrete.o: $(UTILS_SRC)/yarandom.h
+discrete.o: $(UTILS_SRC)/usleep.h
+discrete.o: $(UTILS_SRC)/resources.h
+discrete.o: $(UTILS_SRC)/hsv.h
+discrete.o: $(UTILS_SRC)/colors.h
+discrete.o: $(UTILS_SRC)/grabscreen.h
+discrete.o: $(UTILS_SRC)/visual.h
+discrete.o: $(UTILS_SRC)/erase.h
+drift.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+drift.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+drift.o: $(HACK_SRC)/../config.h
+drift.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+drift.o: $(HACK_SRC)/../hacks/screenhack.h
+drift.o: $(UTILS_SRC)/yarandom.h
+drift.o: $(UTILS_SRC)/usleep.h
+drift.o: $(UTILS_SRC)/resources.h
+drift.o: $(UTILS_SRC)/hsv.h
+drift.o: $(UTILS_SRC)/colors.h
+drift.o: $(UTILS_SRC)/grabscreen.h
+drift.o: $(UTILS_SRC)/visual.h
+drift.o: $(UTILS_SRC)/erase.h
+eyes.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+eyes.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+eyes.o: $(HACK_SRC)/../config.h
+eyes.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+eyes.o: $(HACK_SRC)/../hacks/screenhack.h
+eyes.o: $(UTILS_SRC)/yarandom.h
+eyes.o: $(UTILS_SRC)/usleep.h
+eyes.o: $(UTILS_SRC)/resources.h
+eyes.o: $(UTILS_SRC)/hsv.h
+eyes.o: $(UTILS_SRC)/colors.h
+eyes.o: $(UTILS_SRC)/grabscreen.h
+eyes.o: $(UTILS_SRC)/visual.h
+eyes.o: $(srcdir)/eyes.xbm
+fadeplot.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+fadeplot.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+fadeplot.o: $(HACK_SRC)/../config.h
+fadeplot.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+fadeplot.o: $(HACK_SRC)/../hacks/screenhack.h
+fadeplot.o: $(UTILS_SRC)/yarandom.h
+fadeplot.o: $(UTILS_SRC)/usleep.h
+fadeplot.o: $(UTILS_SRC)/resources.h
+fadeplot.o: $(UTILS_SRC)/hsv.h
+fadeplot.o: $(UTILS_SRC)/colors.h
+fadeplot.o: $(UTILS_SRC)/grabscreen.h
+fadeplot.o: $(UTILS_SRC)/visual.h
+flag.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+flag.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+flag.o: $(HACK_SRC)/../config.h
+flag.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+flag.o: $(HACK_SRC)/../hacks/screenhack.h
+flag.o: $(UTILS_SRC)/yarandom.h
+flag.o: $(UTILS_SRC)/usleep.h
+flag.o: $(UTILS_SRC)/resources.h
+flag.o: $(UTILS_SRC)/hsv.h
+flag.o: $(UTILS_SRC)/colors.h
+flag.o: $(UTILS_SRC)/grabscreen.h
+flag.o: $(UTILS_SRC)/visual.h
+flag.o: $(HACK_SRC)/../hacks/images/bob.xbm
+flame.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+flame.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+flame.o: $(HACK_SRC)/../config.h
+flame.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+flame.o: $(HACK_SRC)/../hacks/screenhack.h
+flame.o: $(UTILS_SRC)/yarandom.h
+flame.o: $(UTILS_SRC)/usleep.h
+flame.o: $(UTILS_SRC)/resources.h
+flame.o: $(UTILS_SRC)/hsv.h
+flame.o: $(UTILS_SRC)/colors.h
+flame.o: $(UTILS_SRC)/grabscreen.h
+flame.o: $(UTILS_SRC)/visual.h
+flow.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+flow.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+flow.o: $(HACK_SRC)/../config.h
+flow.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+flow.o: $(HACK_SRC)/../hacks/screenhack.h
+flow.o: $(UTILS_SRC)/yarandom.h
+flow.o: $(UTILS_SRC)/usleep.h
+flow.o: $(UTILS_SRC)/resources.h
+flow.o: $(UTILS_SRC)/hsv.h
+flow.o: $(UTILS_SRC)/colors.h
+flow.o: $(UTILS_SRC)/grabscreen.h
+flow.o: $(UTILS_SRC)/visual.h
+flow.o: $(UTILS_SRC)/erase.h
+forest.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+forest.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+forest.o: $(HACK_SRC)/../config.h
+forest.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+forest.o: $(HACK_SRC)/../hacks/screenhack.h
+forest.o: $(UTILS_SRC)/yarandom.h
+forest.o: $(UTILS_SRC)/usleep.h
+forest.o: $(UTILS_SRC)/resources.h
+forest.o: $(UTILS_SRC)/hsv.h
+forest.o: $(UTILS_SRC)/colors.h
+forest.o: $(UTILS_SRC)/grabscreen.h
+forest.o: $(UTILS_SRC)/visual.h
+forest.o: $(UTILS_SRC)/erase.h
+galaxy.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+galaxy.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+galaxy.o: $(HACK_SRC)/../config.h
+galaxy.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+galaxy.o: $(HACK_SRC)/../hacks/screenhack.h
+galaxy.o: $(UTILS_SRC)/yarandom.h
+galaxy.o: $(UTILS_SRC)/usleep.h
+galaxy.o: $(UTILS_SRC)/resources.h
+galaxy.o: $(UTILS_SRC)/hsv.h
+galaxy.o: $(UTILS_SRC)/colors.h
+galaxy.o: $(UTILS_SRC)/grabscreen.h
+galaxy.o: $(UTILS_SRC)/visual.h
+goop.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+goop.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+goop.o: $(HACK_SRC)/../config.h
+goop.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+goop.o: $(HACK_SRC)/../hacks/screenhack.h
+goop.o: $(UTILS_SRC)/yarandom.h
+goop.o: $(UTILS_SRC)/usleep.h
+goop.o: $(UTILS_SRC)/resources.h
+goop.o: $(UTILS_SRC)/hsv.h
+goop.o: $(UTILS_SRC)/colors.h
+goop.o: $(UTILS_SRC)/grabscreen.h
+goop.o: $(UTILS_SRC)/visual.h
+goop.o: $(HACK_SRC)/../xlockmore/xlock/spline.h
+grav.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+grav.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+grav.o: $(HACK_SRC)/../config.h
+grav.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+grav.o: $(HACK_SRC)/../hacks/screenhack.h
+grav.o: $(UTILS_SRC)/yarandom.h
+grav.o: $(UTILS_SRC)/usleep.h
+grav.o: $(UTILS_SRC)/resources.h
+grav.o: $(UTILS_SRC)/hsv.h
+grav.o: $(UTILS_SRC)/colors.h
+grav.o: $(UTILS_SRC)/grabscreen.h
+grav.o: $(UTILS_SRC)/visual.h
+helix.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+helix.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+helix.o: $(HACK_SRC)/../config.h
+helix.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+helix.o: $(HACK_SRC)/../hacks/screenhack.h
+helix.o: $(UTILS_SRC)/yarandom.h
+helix.o: $(UTILS_SRC)/usleep.h
+helix.o: $(UTILS_SRC)/resources.h
+helix.o: $(UTILS_SRC)/hsv.h
+helix.o: $(UTILS_SRC)/colors.h
+helix.o: $(UTILS_SRC)/grabscreen.h
+helix.o: $(UTILS_SRC)/visual.h
+hop.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+hop.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+hop.o: $(HACK_SRC)/../config.h
+hop.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+hop.o: $(HACK_SRC)/../hacks/screenhack.h
+hop.o: $(UTILS_SRC)/yarandom.h
+hop.o: $(UTILS_SRC)/usleep.h
+hop.o: $(UTILS_SRC)/resources.h
+hop.o: $(UTILS_SRC)/hsv.h
+hop.o: $(UTILS_SRC)/colors.h
+hop.o: $(UTILS_SRC)/grabscreen.h
+hop.o: $(UTILS_SRC)/visual.h
+hop.o: $(UTILS_SRC)/erase.h
+hyper.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+hyper.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+hyper.o: $(HACK_SRC)/../config.h
+hyper.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+hyper.o: $(HACK_SRC)/../hacks/screenhack.h
+hyper.o: $(UTILS_SRC)/yarandom.h
+hyper.o: $(UTILS_SRC)/usleep.h
+hyper.o: $(UTILS_SRC)/resources.h
+hyper.o: $(UTILS_SRC)/hsv.h
+hyper.o: $(UTILS_SRC)/colors.h
+hyper.o: $(UTILS_SRC)/grabscreen.h
+hyper.o: $(UTILS_SRC)/visual.h
+ico.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+ico.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+ico.o: $(HACK_SRC)/../config.h
+ico.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+ico.o: $(HACK_SRC)/../hacks/screenhack.h
+ico.o: $(UTILS_SRC)/yarandom.h
+ico.o: $(UTILS_SRC)/usleep.h
+ico.o: $(UTILS_SRC)/resources.h
+ico.o: $(UTILS_SRC)/hsv.h
+ico.o: $(UTILS_SRC)/colors.h
+ico.o: $(UTILS_SRC)/grabscreen.h
+ico.o: $(UTILS_SRC)/visual.h
+ifs.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+ifs.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+ifs.o: $(HACK_SRC)/../config.h
+ifs.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+ifs.o: $(HACK_SRC)/../hacks/screenhack.h
+ifs.o: $(UTILS_SRC)/yarandom.h
+ifs.o: $(UTILS_SRC)/usleep.h
+ifs.o: $(UTILS_SRC)/resources.h
+ifs.o: $(UTILS_SRC)/hsv.h
+ifs.o: $(UTILS_SRC)/colors.h
+ifs.o: $(UTILS_SRC)/grabscreen.h
+ifs.o: $(UTILS_SRC)/visual.h
+image.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+image.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+image.o: $(HACK_SRC)/../config.h
+image.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+image.o: $(HACK_SRC)/../hacks/screenhack.h
+image.o: $(UTILS_SRC)/yarandom.h
+image.o: $(UTILS_SRC)/usleep.h
+image.o: $(UTILS_SRC)/resources.h
+image.o: $(UTILS_SRC)/hsv.h
+image.o: $(UTILS_SRC)/colors.h
+image.o: $(UTILS_SRC)/grabscreen.h
+image.o: $(UTILS_SRC)/visual.h
+image.o: $(HACK_SRC)/../xlockmore/xlock/iostuff.h
+image.o: $(srcdir)/image.xbm
+julia.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+julia.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+julia.o: $(HACK_SRC)/../config.h
+julia.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+julia.o: $(HACK_SRC)/../hacks/screenhack.h
+julia.o: $(UTILS_SRC)/yarandom.h
+julia.o: $(UTILS_SRC)/usleep.h
+julia.o: $(UTILS_SRC)/resources.h
+julia.o: $(UTILS_SRC)/hsv.h
+julia.o: $(UTILS_SRC)/colors.h
+julia.o: $(UTILS_SRC)/grabscreen.h
+julia.o: $(UTILS_SRC)/visual.h
+kaleid.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+kaleid.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+kaleid.o: $(HACK_SRC)/../config.h
+kaleid.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+kaleid.o: $(HACK_SRC)/../hacks/screenhack.h
+kaleid.o: $(UTILS_SRC)/yarandom.h
+kaleid.o: $(UTILS_SRC)/usleep.h
+kaleid.o: $(UTILS_SRC)/resources.h
+kaleid.o: $(UTILS_SRC)/hsv.h
+kaleid.o: $(UTILS_SRC)/colors.h
+kaleid.o: $(UTILS_SRC)/grabscreen.h
+kaleid.o: $(UTILS_SRC)/visual.h
+laser.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+laser.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+laser.o: $(HACK_SRC)/../config.h
+laser.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+laser.o: $(HACK_SRC)/../hacks/screenhack.h
+laser.o: $(UTILS_SRC)/yarandom.h
+laser.o: $(UTILS_SRC)/usleep.h
+laser.o: $(UTILS_SRC)/resources.h
+laser.o: $(UTILS_SRC)/hsv.h
+laser.o: $(UTILS_SRC)/colors.h
+laser.o: $(UTILS_SRC)/grabscreen.h
+laser.o: $(UTILS_SRC)/visual.h
+life.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+life.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+life.o: $(HACK_SRC)/../config.h
+life.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+life.o: $(HACK_SRC)/../hacks/screenhack.h
+life.o: $(UTILS_SRC)/yarandom.h
+life.o: $(UTILS_SRC)/usleep.h
+life.o: $(UTILS_SRC)/resources.h
+life.o: $(UTILS_SRC)/hsv.h
+life.o: $(UTILS_SRC)/colors.h
+life.o: $(UTILS_SRC)/grabscreen.h
+life.o: $(UTILS_SRC)/visual.h
+life.o: $(HACK_SRC)/../xlockmore/xlock/automata.h
+life.o: $(HACK_SRC)/../xlockmore/xlock/iostuff.h
+life.o: $(srcdir)/life.xbm
+life1d.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+life1d.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+life1d.o: $(HACK_SRC)/../config.h
+life1d.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+life1d.o: $(HACK_SRC)/../hacks/screenhack.h
+life1d.o: $(UTILS_SRC)/yarandom.h
+life1d.o: $(UTILS_SRC)/usleep.h
+life1d.o: $(UTILS_SRC)/resources.h
+life1d.o: $(UTILS_SRC)/hsv.h
+life1d.o: $(UTILS_SRC)/colors.h
+life1d.o: $(UTILS_SRC)/grabscreen.h
+life1d.o: $(UTILS_SRC)/visual.h
+life1d.o: $(HACK_SRC)/../xlockmore/xlock/automata.h
+life1d.o: $(HACK_SRC)/../xlockmore/xlock/iostuff.h
+life1d.o: $(srcdir)/life1d.xbm
+life3d.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+life3d.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+life3d.o: $(HACK_SRC)/../config.h
+life3d.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+life3d.o: $(HACK_SRC)/../hacks/screenhack.h
+life3d.o: $(UTILS_SRC)/yarandom.h
+life3d.o: $(UTILS_SRC)/usleep.h
+life3d.o: $(UTILS_SRC)/resources.h
+life3d.o: $(UTILS_SRC)/hsv.h
+life3d.o: $(UTILS_SRC)/colors.h
+life3d.o: $(UTILS_SRC)/grabscreen.h
+life3d.o: $(UTILS_SRC)/visual.h
+life3d.o: $(HACK_SRC)/../xlockmore/xlock/iostuff.h
+lightning.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+lightning.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+lightning.o: $(HACK_SRC)/../config.h
+lightning.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+lightning.o: $(HACK_SRC)/../hacks/screenhack.h
+lightning.o: $(UTILS_SRC)/yarandom.h
+lightning.o: $(UTILS_SRC)/usleep.h
+lightning.o: $(UTILS_SRC)/resources.h
+lightning.o: $(UTILS_SRC)/hsv.h
+lightning.o: $(UTILS_SRC)/colors.h
+lightning.o: $(UTILS_SRC)/grabscreen.h
+lightning.o: $(UTILS_SRC)/visual.h
+lisa.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+lisa.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+lisa.o: $(HACK_SRC)/../config.h
+lisa.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+lisa.o: $(HACK_SRC)/../hacks/screenhack.h
+lisa.o: $(UTILS_SRC)/yarandom.h
+lisa.o: $(UTILS_SRC)/usleep.h
+lisa.o: $(UTILS_SRC)/resources.h
+lisa.o: $(UTILS_SRC)/hsv.h
+lisa.o: $(UTILS_SRC)/colors.h
+lisa.o: $(UTILS_SRC)/grabscreen.h
+lisa.o: $(UTILS_SRC)/visual.h
+lissie.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+lissie.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+lissie.o: $(HACK_SRC)/../config.h
+lissie.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+lissie.o: $(HACK_SRC)/../hacks/screenhack.h
+lissie.o: $(UTILS_SRC)/yarandom.h
+lissie.o: $(UTILS_SRC)/usleep.h
+lissie.o: $(UTILS_SRC)/resources.h
+lissie.o: $(UTILS_SRC)/hsv.h
+lissie.o: $(UTILS_SRC)/colors.h
+lissie.o: $(UTILS_SRC)/grabscreen.h
+lissie.o: $(UTILS_SRC)/visual.h
+loop.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+loop.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+loop.o: $(HACK_SRC)/../config.h
+loop.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+loop.o: $(HACK_SRC)/../hacks/screenhack.h
+loop.o: $(UTILS_SRC)/yarandom.h
+loop.o: $(UTILS_SRC)/usleep.h
+loop.o: $(UTILS_SRC)/resources.h
+loop.o: $(UTILS_SRC)/hsv.h
+loop.o: $(UTILS_SRC)/colors.h
+loop.o: $(UTILS_SRC)/grabscreen.h
+loop.o: $(UTILS_SRC)/visual.h
+loop.o: $(HACK_SRC)/../xlockmore/xlock/automata.h
+mandelbrot.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+mandelbrot.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+mandelbrot.o: $(HACK_SRC)/../config.h
+mandelbrot.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+mandelbrot.o: $(HACK_SRC)/../hacks/screenhack.h
+mandelbrot.o: $(UTILS_SRC)/yarandom.h
+mandelbrot.o: $(UTILS_SRC)/usleep.h
+mandelbrot.o: $(UTILS_SRC)/resources.h
+mandelbrot.o: $(UTILS_SRC)/hsv.h
+mandelbrot.o: $(UTILS_SRC)/colors.h
+mandelbrot.o: $(UTILS_SRC)/grabscreen.h
+mandelbrot.o: $(UTILS_SRC)/visual.h
+marquee.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+marquee.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+marquee.o: $(HACK_SRC)/../config.h
+marquee.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+marquee.o: $(HACK_SRC)/../hacks/screenhack.h
+marquee.o: $(UTILS_SRC)/yarandom.h
+marquee.o: $(UTILS_SRC)/usleep.h
+marquee.o: $(UTILS_SRC)/resources.h
+marquee.o: $(UTILS_SRC)/hsv.h
+marquee.o: $(UTILS_SRC)/colors.h
+marquee.o: $(UTILS_SRC)/grabscreen.h
+marquee.o: $(UTILS_SRC)/visual.h
+marquee.o: $(HACK_SRC)/../xlockmore/xlock/iostuff.h
+maze.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+maze.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+maze.o: $(HACK_SRC)/../config.h
+maze.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+maze.o: $(HACK_SRC)/../hacks/screenhack.h
+maze.o: $(UTILS_SRC)/yarandom.h
+maze.o: $(UTILS_SRC)/usleep.h
+maze.o: $(UTILS_SRC)/resources.h
+maze.o: $(UTILS_SRC)/hsv.h
+maze.o: $(UTILS_SRC)/colors.h
+maze.o: $(UTILS_SRC)/grabscreen.h
+maze.o: $(UTILS_SRC)/visual.h
+maze.o: $(HACK_SRC)/../xlockmore/xlock/iostuff.h
+maze.o: $(HACK_SRC)/../xlockmore/bitmaps/gray1.xbm
+maze.o: $(srcdir)/maze.xbm
+mountain.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+mountain.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+mountain.o: $(HACK_SRC)/../config.h
+mountain.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+mountain.o: $(HACK_SRC)/../hacks/screenhack.h
+mountain.o: $(UTILS_SRC)/yarandom.h
+mountain.o: $(UTILS_SRC)/usleep.h
+mountain.o: $(UTILS_SRC)/resources.h
+mountain.o: $(UTILS_SRC)/hsv.h
+mountain.o: $(UTILS_SRC)/colors.h
+mountain.o: $(UTILS_SRC)/grabscreen.h
+mountain.o: $(UTILS_SRC)/visual.h
+munch.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+munch.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+munch.o: $(HACK_SRC)/../config.h
+munch.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+munch.o: $(HACK_SRC)/../hacks/screenhack.h
+munch.o: $(UTILS_SRC)/yarandom.h
+munch.o: $(UTILS_SRC)/usleep.h
+munch.o: $(UTILS_SRC)/resources.h
+munch.o: $(UTILS_SRC)/hsv.h
+munch.o: $(UTILS_SRC)/colors.h
+munch.o: $(UTILS_SRC)/grabscreen.h
+munch.o: $(UTILS_SRC)/visual.h
+nose.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+nose.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+nose.o: $(HACK_SRC)/../config.h
+nose.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+nose.o: $(HACK_SRC)/../hacks/screenhack.h
+nose.o: $(UTILS_SRC)/yarandom.h
+nose.o: $(UTILS_SRC)/usleep.h
+nose.o: $(UTILS_SRC)/resources.h
+nose.o: $(UTILS_SRC)/hsv.h
+nose.o: $(UTILS_SRC)/colors.h
+nose.o: $(UTILS_SRC)/grabscreen.h
+nose.o: $(UTILS_SRC)/visual.h
+nose.o: $(HACK_SRC)/../xlockmore/xlock/iostuff.h
+nose.o: $(HACK_SRC)/../xlockmore/bitmaps/nose-hat.xbm
+nose.o: $(HACK_SRC)/../xlockmore/bitmaps/nose-hatd.xbm
+nose.o: $(HACK_SRC)/../xlockmore/bitmaps/nose-facef.xbm
+nose.o: $(HACK_SRC)/../xlockmore/bitmaps/nose-faced.xbm
+nose.o: $(HACK_SRC)/../xlockmore/bitmaps/nose-facel.xbm
+nose.o: $(HACK_SRC)/../xlockmore/bitmaps/nose-facer.xbm
+nose.o: $(HACK_SRC)/../xlockmore/bitmaps/nose-shoef.xbm
+nose.o: $(HACK_SRC)/../xlockmore/bitmaps/nose-shoel.xbm
+nose.o: $(HACK_SRC)/../xlockmore/bitmaps/nose-shoer.xbm
+nose.o: $(HACK_SRC)/../xlockmore/bitmaps/nose-stepl.xbm
+nose.o: $(HACK_SRC)/../xlockmore/bitmaps/nose-stepr.xbm
+pacman.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+pacman.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+pacman.o: $(HACK_SRC)/../config.h
+pacman.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+pacman.o: $(HACK_SRC)/../hacks/screenhack.h
+pacman.o: $(UTILS_SRC)/yarandom.h
+pacman.o: $(UTILS_SRC)/usleep.h
+pacman.o: $(UTILS_SRC)/resources.h
+pacman.o: $(UTILS_SRC)/hsv.h
+pacman.o: $(UTILS_SRC)/colors.h
+pacman.o: $(UTILS_SRC)/grabscreen.h
+pacman.o: $(UTILS_SRC)/visual.h
+pacman.o: $(HACK_SRC)/../xlockmore/xlock/iostuff.h
+pacman.o: $(srcdir)/ghost.xbm
+penrose.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+penrose.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+penrose.o: $(HACK_SRC)/../config.h
+penrose.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+penrose.o: $(HACK_SRC)/../hacks/screenhack.h
+penrose.o: $(UTILS_SRC)/yarandom.h
+penrose.o: $(UTILS_SRC)/usleep.h
+penrose.o: $(UTILS_SRC)/resources.h
+penrose.o: $(UTILS_SRC)/hsv.h
+penrose.o: $(UTILS_SRC)/colors.h
+penrose.o: $(UTILS_SRC)/grabscreen.h
+penrose.o: $(UTILS_SRC)/visual.h
+petal.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+petal.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+petal.o: $(HACK_SRC)/../config.h
+petal.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+petal.o: $(HACK_SRC)/../hacks/screenhack.h
+petal.o: $(UTILS_SRC)/yarandom.h
+petal.o: $(UTILS_SRC)/usleep.h
+petal.o: $(UTILS_SRC)/resources.h
+petal.o: $(UTILS_SRC)/hsv.h
+petal.o: $(UTILS_SRC)/colors.h
+petal.o: $(UTILS_SRC)/grabscreen.h
+petal.o: $(UTILS_SRC)/visual.h
+puzzle.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+puzzle.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+puzzle.o: $(HACK_SRC)/../config.h
+puzzle.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+puzzle.o: $(HACK_SRC)/../hacks/screenhack.h
+puzzle.o: $(UTILS_SRC)/yarandom.h
+puzzle.o: $(UTILS_SRC)/usleep.h
+puzzle.o: $(UTILS_SRC)/resources.h
+puzzle.o: $(UTILS_SRC)/hsv.h
+puzzle.o: $(UTILS_SRC)/colors.h
+puzzle.o: $(UTILS_SRC)/grabscreen.h
+puzzle.o: $(UTILS_SRC)/visual.h
+puzzle.o: $(HACK_SRC)/../xlockmore/xlock/iostuff.h
+puzzle.o: $(srcdir)/puzzle.xbm
+pyro.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+pyro.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+pyro.o: $(HACK_SRC)/../config.h
+pyro.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+pyro.o: $(HACK_SRC)/../hacks/screenhack.h
+pyro.o: $(UTILS_SRC)/yarandom.h
+pyro.o: $(UTILS_SRC)/usleep.h
+pyro.o: $(UTILS_SRC)/resources.h
+pyro.o: $(UTILS_SRC)/hsv.h
+pyro.o: $(UTILS_SRC)/colors.h
+pyro.o: $(UTILS_SRC)/grabscreen.h
+pyro.o: $(UTILS_SRC)/visual.h
+qix.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+qix.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+qix.o: $(HACK_SRC)/../config.h
+qix.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+qix.o: $(HACK_SRC)/../hacks/screenhack.h
+qix.o: $(UTILS_SRC)/yarandom.h
+qix.o: $(UTILS_SRC)/usleep.h
+qix.o: $(UTILS_SRC)/resources.h
+qix.o: $(UTILS_SRC)/hsv.h
+qix.o: $(UTILS_SRC)/colors.h
+qix.o: $(UTILS_SRC)/grabscreen.h
+qix.o: $(UTILS_SRC)/visual.h
+roll.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+roll.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+roll.o: $(HACK_SRC)/../config.h
+roll.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+roll.o: $(HACK_SRC)/../hacks/screenhack.h
+roll.o: $(UTILS_SRC)/yarandom.h
+roll.o: $(UTILS_SRC)/usleep.h
+roll.o: $(UTILS_SRC)/resources.h
+roll.o: $(UTILS_SRC)/hsv.h
+roll.o: $(UTILS_SRC)/colors.h
+roll.o: $(UTILS_SRC)/grabscreen.h
+roll.o: $(UTILS_SRC)/visual.h
+rotor.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+rotor.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+rotor.o: $(HACK_SRC)/../config.h
+rotor.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+rotor.o: $(HACK_SRC)/../hacks/screenhack.h
+rotor.o: $(UTILS_SRC)/yarandom.h
+rotor.o: $(UTILS_SRC)/usleep.h
+rotor.o: $(UTILS_SRC)/resources.h
+rotor.o: $(UTILS_SRC)/hsv.h
+rotor.o: $(UTILS_SRC)/colors.h
+rotor.o: $(UTILS_SRC)/grabscreen.h
+rotor.o: $(UTILS_SRC)/visual.h
+shape.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+shape.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+shape.o: $(HACK_SRC)/../config.h
+shape.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+shape.o: $(HACK_SRC)/../hacks/screenhack.h
+shape.o: $(UTILS_SRC)/yarandom.h
+shape.o: $(UTILS_SRC)/usleep.h
+shape.o: $(UTILS_SRC)/resources.h
+shape.o: $(UTILS_SRC)/hsv.h
+shape.o: $(UTILS_SRC)/colors.h
+shape.o: $(UTILS_SRC)/grabscreen.h
+shape.o: $(UTILS_SRC)/visual.h
+shape.o: $(HACK_SRC)/../xlockmore/bitmaps/gray1.xbm
+shape.o: $(HACK_SRC)/../xlockmore/bitmaps/gray3.xbm
+shape.o: $(HACK_SRC)/../xlockmore/bitmaps/stipple.xbm
+shape.o: $(HACK_SRC)/../xlockmore/bitmaps/cross_weave.xbm
+shape.o: $(HACK_SRC)/../xlockmore/bitmaps/dimple1.xbm
+shape.o: $(HACK_SRC)/../xlockmore/bitmaps/dimple3.xbm
+shape.o: $(HACK_SRC)/../xlockmore/bitmaps/flipped_gray.xbm
+shape.o: $(HACK_SRC)/../xlockmore/bitmaps/hlines2.xbm
+shape.o: $(HACK_SRC)/../xlockmore/bitmaps/light_gray.xbm
+shape.o: $(HACK_SRC)/../xlockmore/bitmaps/root_weave.xbm
+shape.o: $(HACK_SRC)/../xlockmore/bitmaps/vlines2.xbm
+shape.o: $(HACK_SRC)/../xlockmore/bitmaps/vlines3.xbm
+sierpinski.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+sierpinski.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+sierpinski.o: $(HACK_SRC)/../config.h
+sierpinski.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+sierpinski.o: $(HACK_SRC)/../hacks/screenhack.h
+sierpinski.o: $(UTILS_SRC)/yarandom.h
+sierpinski.o: $(UTILS_SRC)/usleep.h
+sierpinski.o: $(UTILS_SRC)/resources.h
+sierpinski.o: $(UTILS_SRC)/hsv.h
+sierpinski.o: $(UTILS_SRC)/colors.h
+sierpinski.o: $(UTILS_SRC)/grabscreen.h
+sierpinski.o: $(UTILS_SRC)/visual.h
+slip.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+slip.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+slip.o: $(HACK_SRC)/../config.h
+slip.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+slip.o: $(HACK_SRC)/../hacks/screenhack.h
+slip.o: $(UTILS_SRC)/yarandom.h
+slip.o: $(UTILS_SRC)/usleep.h
+slip.o: $(UTILS_SRC)/resources.h
+slip.o: $(UTILS_SRC)/hsv.h
+slip.o: $(UTILS_SRC)/colors.h
+slip.o: $(UTILS_SRC)/grabscreen.h
+slip.o: $(UTILS_SRC)/visual.h
+sphere.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+sphere.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+sphere.o: $(HACK_SRC)/../config.h
+sphere.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+sphere.o: $(HACK_SRC)/../hacks/screenhack.h
+sphere.o: $(UTILS_SRC)/yarandom.h
+sphere.o: $(UTILS_SRC)/usleep.h
+sphere.o: $(UTILS_SRC)/resources.h
+sphere.o: $(UTILS_SRC)/hsv.h
+sphere.o: $(UTILS_SRC)/colors.h
+sphere.o: $(UTILS_SRC)/grabscreen.h
+sphere.o: $(UTILS_SRC)/visual.h
+spiral.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+spiral.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+spiral.o: $(HACK_SRC)/../config.h
+spiral.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+spiral.o: $(HACK_SRC)/../hacks/screenhack.h
+spiral.o: $(UTILS_SRC)/yarandom.h
+spiral.o: $(UTILS_SRC)/usleep.h
+spiral.o: $(UTILS_SRC)/resources.h
+spiral.o: $(UTILS_SRC)/hsv.h
+spiral.o: $(UTILS_SRC)/colors.h
+spiral.o: $(UTILS_SRC)/grabscreen.h
+spiral.o: $(UTILS_SRC)/visual.h
+spline.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+spline.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+spline.o: $(HACK_SRC)/../config.h
+spline.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+spline.o: $(HACK_SRC)/../hacks/screenhack.h
+spline.o: $(UTILS_SRC)/yarandom.h
+spline.o: $(UTILS_SRC)/usleep.h
+spline.o: $(UTILS_SRC)/resources.h
+spline.o: $(UTILS_SRC)/hsv.h
+spline.o: $(UTILS_SRC)/colors.h
+spline.o: $(UTILS_SRC)/grabscreen.h
+spline.o: $(UTILS_SRC)/visual.h
+star.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+star.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+star.o: $(HACK_SRC)/../config.h
+star.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+star.o: $(HACK_SRC)/../hacks/screenhack.h
+star.o: $(UTILS_SRC)/yarandom.h
+star.o: $(UTILS_SRC)/usleep.h
+star.o: $(UTILS_SRC)/resources.h
+star.o: $(UTILS_SRC)/hsv.h
+star.o: $(UTILS_SRC)/colors.h
+star.o: $(UTILS_SRC)/grabscreen.h
+star.o: $(UTILS_SRC)/visual.h
+star.o: $(HACK_SRC)/../xlockmore/bitmaps/trek-0.xbm
+star.o: $(HACK_SRC)/../xlockmore/bitmaps/trek-1.xbm
+strange.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+strange.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+strange.o: $(HACK_SRC)/../config.h
+strange.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+strange.o: $(HACK_SRC)/../hacks/screenhack.h
+strange.o: $(UTILS_SRC)/yarandom.h
+strange.o: $(UTILS_SRC)/usleep.h
+strange.o: $(UTILS_SRC)/resources.h
+strange.o: $(UTILS_SRC)/hsv.h
+strange.o: $(UTILS_SRC)/colors.h
+strange.o: $(UTILS_SRC)/grabscreen.h
+strange.o: $(UTILS_SRC)/visual.h
+swarm.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+swarm.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+swarm.o: $(HACK_SRC)/../config.h
+swarm.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+swarm.o: $(HACK_SRC)/../hacks/screenhack.h
+swarm.o: $(UTILS_SRC)/yarandom.h
+swarm.o: $(UTILS_SRC)/usleep.h
+swarm.o: $(UTILS_SRC)/resources.h
+swarm.o: $(UTILS_SRC)/hsv.h
+swarm.o: $(UTILS_SRC)/colors.h
+swarm.o: $(UTILS_SRC)/grabscreen.h
+swarm.o: $(UTILS_SRC)/visual.h
+swirl.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+swirl.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+swirl.o: $(HACK_SRC)/../config.h
+swirl.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+swirl.o: $(HACK_SRC)/../hacks/screenhack.h
+swirl.o: $(UTILS_SRC)/yarandom.h
+swirl.o: $(UTILS_SRC)/usleep.h
+swirl.o: $(UTILS_SRC)/resources.h
+swirl.o: $(UTILS_SRC)/hsv.h
+swirl.o: $(UTILS_SRC)/colors.h
+swirl.o: $(UTILS_SRC)/grabscreen.h
+swirl.o: $(UTILS_SRC)/visual.h
+thornbird.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+thornbird.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+thornbird.o: $(HACK_SRC)/../config.h
+thornbird.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+thornbird.o: $(HACK_SRC)/../hacks/screenhack.h
+thornbird.o: $(UTILS_SRC)/yarandom.h
+thornbird.o: $(UTILS_SRC)/usleep.h
+thornbird.o: $(UTILS_SRC)/resources.h
+thornbird.o: $(UTILS_SRC)/hsv.h
+thornbird.o: $(UTILS_SRC)/colors.h
+thornbird.o: $(UTILS_SRC)/grabscreen.h
+thornbird.o: $(UTILS_SRC)/visual.h
+triangle.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+triangle.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+triangle.o: $(HACK_SRC)/../config.h
+triangle.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+triangle.o: $(HACK_SRC)/../hacks/screenhack.h
+triangle.o: $(UTILS_SRC)/yarandom.h
+triangle.o: $(UTILS_SRC)/usleep.h
+triangle.o: $(UTILS_SRC)/resources.h
+triangle.o: $(UTILS_SRC)/hsv.h
+triangle.o: $(UTILS_SRC)/colors.h
+triangle.o: $(UTILS_SRC)/grabscreen.h
+triangle.o: $(UTILS_SRC)/visual.h
+tube.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+tube.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+tube.o: $(HACK_SRC)/../config.h
+tube.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+tube.o: $(HACK_SRC)/../hacks/screenhack.h
+tube.o: $(UTILS_SRC)/yarandom.h
+tube.o: $(UTILS_SRC)/usleep.h
+tube.o: $(UTILS_SRC)/resources.h
+tube.o: $(UTILS_SRC)/hsv.h
+tube.o: $(UTILS_SRC)/colors.h
+tube.o: $(UTILS_SRC)/grabscreen.h
+tube.o: $(UTILS_SRC)/visual.h
+turtle.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+turtle.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+turtle.o: $(HACK_SRC)/../config.h
+turtle.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+turtle.o: $(HACK_SRC)/../hacks/screenhack.h
+turtle.o: $(UTILS_SRC)/yarandom.h
+turtle.o: $(UTILS_SRC)/usleep.h
+turtle.o: $(UTILS_SRC)/resources.h
+turtle.o: $(UTILS_SRC)/hsv.h
+turtle.o: $(UTILS_SRC)/colors.h
+turtle.o: $(UTILS_SRC)/grabscreen.h
+turtle.o: $(UTILS_SRC)/visual.h
+vines.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+vines.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+vines.o: $(HACK_SRC)/../config.h
+vines.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+vines.o: $(HACK_SRC)/../hacks/screenhack.h
+vines.o: $(UTILS_SRC)/yarandom.h
+vines.o: $(UTILS_SRC)/usleep.h
+vines.o: $(UTILS_SRC)/resources.h
+vines.o: $(UTILS_SRC)/hsv.h
+vines.o: $(UTILS_SRC)/colors.h
+vines.o: $(UTILS_SRC)/grabscreen.h
+vines.o: $(UTILS_SRC)/visual.h
+vines.o: $(UTILS_SRC)/erase.h
+voters.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+voters.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+voters.o: $(HACK_SRC)/../config.h
+voters.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+voters.o: $(HACK_SRC)/../hacks/screenhack.h
+voters.o: $(UTILS_SRC)/yarandom.h
+voters.o: $(UTILS_SRC)/usleep.h
+voters.o: $(UTILS_SRC)/resources.h
+voters.o: $(UTILS_SRC)/hsv.h
+voters.o: $(UTILS_SRC)/colors.h
+voters.o: $(UTILS_SRC)/grabscreen.h
+voters.o: $(UTILS_SRC)/visual.h
+voters.o: $(HACK_SRC)/../xlockmore/xlock/automata.h
+voters.o: $(HACK_SRC)/../xlockmore/bitmaps/sickle.xbm
+voters.o: $(HACK_SRC)/../xlockmore/bitmaps/donkey.xbm
+voters.o: $(HACK_SRC)/../xlockmore/bitmaps/elephant.xbm
+wator.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+wator.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+wator.o: $(HACK_SRC)/../config.h
+wator.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+wator.o: $(HACK_SRC)/../hacks/screenhack.h
+wator.o: $(UTILS_SRC)/yarandom.h
+wator.o: $(UTILS_SRC)/usleep.h
+wator.o: $(UTILS_SRC)/resources.h
+wator.o: $(UTILS_SRC)/hsv.h
+wator.o: $(UTILS_SRC)/colors.h
+wator.o: $(UTILS_SRC)/grabscreen.h
+wator.o: $(UTILS_SRC)/visual.h
+wator.o: $(HACK_SRC)/../xlockmore/xlock/automata.h
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/fish-0.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/fish-1.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/fish-2.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/fish-3.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/fish-4.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/fish-5.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/fish-6.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/fish-7.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/shark-0.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/shark-1.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/shark-2.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/shark-3.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/shark-4.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/shark-5.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/shark-6.xbm
+wator.o: $(HACK_SRC)/../xlockmore/bitmaps/shark-7.xbm
+wire.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+wire.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+wire.o: $(HACK_SRC)/../config.h
+wire.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+wire.o: $(HACK_SRC)/../hacks/screenhack.h
+wire.o: $(UTILS_SRC)/yarandom.h
+wire.o: $(UTILS_SRC)/usleep.h
+wire.o: $(UTILS_SRC)/resources.h
+wire.o: $(UTILS_SRC)/hsv.h
+wire.o: $(UTILS_SRC)/colors.h
+wire.o: $(UTILS_SRC)/grabscreen.h
+wire.o: $(UTILS_SRC)/visual.h
+wire.o: $(HACK_SRC)/../xlockmore/xlock/automata.h
+world.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+world.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+world.o: $(HACK_SRC)/../config.h
+world.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+world.o: $(HACK_SRC)/../hacks/screenhack.h
+world.o: $(UTILS_SRC)/yarandom.h
+world.o: $(UTILS_SRC)/usleep.h
+world.o: $(UTILS_SRC)/resources.h
+world.o: $(UTILS_SRC)/hsv.h
+world.o: $(UTILS_SRC)/colors.h
+world.o: $(UTILS_SRC)/grabscreen.h
+world.o: $(UTILS_SRC)/visual.h
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-00.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-01.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-02.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-03.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-04.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-05.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-06.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-07.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-08.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-09.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-10.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-11.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-12.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-13.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-14.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-15.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-16.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-17.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-18.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-19.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-20.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-21.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-22.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-23.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-24.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-25.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-26.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-27.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-28.xbm
+world.o: $(HACK_SRC)/../xlockmore/bitmaps/terra-29.xbm
+worm.o: $(HACK_SRC)/../xlockmore/xlock/xlockmore.h
+worm.o: $(HACK_SRC)/../xlockmore/xlock/xlock.h
+worm.o: $(HACK_SRC)/../config.h
+worm.o: $(HACK_SRC)/../xlockmore/xlock/mode.h
+worm.o: $(HACK_SRC)/../hacks/screenhack.h
+worm.o: $(UTILS_SRC)/yarandom.h
+worm.o: $(UTILS_SRC)/usleep.h
+worm.o: $(UTILS_SRC)/resources.h
+worm.o: $(UTILS_SRC)/hsv.h
+worm.o: $(UTILS_SRC)/colors.h
+worm.o: $(UTILS_SRC)/grabscreen.h
+worm.o: $(UTILS_SRC)/visual.h
+
