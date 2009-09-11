@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="lmorph" _label="LMorph">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+        _label="Frame rate" _low-label="Low" _high-label="High"
+        low="0" high="100000" default="70000"
+        convert="invert"/>
+
+  <number id="points" type="slider" arg="-points %"
+          _label="Control points" _low-label="Few" _high-label="Many"
+          low="10" high="1000" default="200"/>
+
+  <number id="steps" type="slider" arg="-steps %"
+          _label="Interpolation steps" _low-label="Less" _high-label="More"
+          low="100" high="500" default="150"/>
+
+  <number id="thickness" type="slider" arg="-linewidth %"
+          _label="Lines" _low-label="Thin" _high-label="Thick"
+          low="1" high="50" default="5"/>
+
+  <select id="type">
+    <option id="random" _label="Open and closed figures"/>
+    <option id="open" _label="Open figures" arg-set="-figtype open"/>
+    <option id="closed" _label="Closed figures" arg-set="-figtype closed"/>
+  </select>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <_description>
+This generates random spline-ish line drawings and morphs between
+them.  
+
+Written by Sverre H. Huseby and Glenn T. Lines; 1995.
+  </_description>
+</screensaver>

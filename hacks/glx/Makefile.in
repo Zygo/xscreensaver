@@ -1,0 +1,783 @@
+# hacks/glx/Makefile.in --- xscreensaver, Copyright (c) 1999-2005
+#  by Jamie Zawinski.
+# the `../../configure' script generates `hacks/glx/Makefile' from this file.
+
+@SET_MAKE@
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+top_srcdir	= @top_srcdir@
+top_builddir	= ..
+
+install_prefix	=
+prefix		= @prefix@
+exec_prefix	= @exec_prefix@
+bindir		= @bindir@
+datarootdir	= @datarootdir@
+datadir		= @datadir@
+mandir		= @mandir@
+libexecdir	= @libexecdir@
+mansuffix	= 6
+manNdir		= $(mandir)/man$(mansuffix)
+
+HACKDIR		= @HACKDIR@
+HACK_CONF_DIR	= @HACK_CONF_DIR@
+
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+LDFLAGS		= @LDFLAGS@
+DEFS		= -DSTANDALONE -DUSE_GL @DEFS@
+LIBS		= @LIBS@
+
+DEPEND		= @DEPEND@
+DEPEND_FLAGS	= @DEPEND_FLAGS@
+DEPEND_DEFINES	= @DEPEND_DEFINES@
+
+SHELL		= /bin/sh
+INSTALL		= @INSTALL@
+SUID_FLAGS      = -o root -m 4755
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_SETUID  = @INSTALL_SETUID@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_DIRS	= @INSTALL_DIRS@
+
+X_CFLAGS	= @X_CFLAGS@
+X_LIBS		= @X_LIBS@
+X_PRE_LIBS	= @X_PRE_LIBS@
+X_EXTRA_LIBS	= @X_EXTRA_LIBS@
+XMU_LIBS	= @XMU_LIBS@
+
+# Note: see comment in ../../driver/Makefile.in for explanation of X_LIBS, etc.
+#
+HACK_PRE	= $(LIBS) $(X_LIBS)
+HACK_POST     = $(X_PRE_LIBS) -lXt -lX11 $(XMU_LIBS) -lXext $(X_EXTRA_LIBS) -lm
+HACK_POST2	= @GL_LIBS@ @HACK_LIBS@ $(HACK_POST)
+HACK_LIBS	= $(HACK_PRE)                       $(HACK_POST2)
+XPM_LIBS	= $(HACK_PRE)            @XPM_LIBS@ $(HACK_POST2)
+GLE_LIBS	= $(HACK_PRE) @GLE_LIBS@ @XPM_LIBS@ $(HACK_POST2)
+MINIXPM		= $(UTILS_BIN)/minixpm.o
+
+HACK_SRC	= $(srcdir)/..
+HACK_BIN	= ..
+UTILS_SRC	= $(HACK_SRC)/../utils
+UTILS_BIN	= $(HACK_BIN)/../utils
+
+INCLUDES	= -I. -I$(srcdir) -I$(UTILS_SRC) -I$(HACK_SRC) -I../.. @INCLUDES@
+
+UTIL_SRCS	= $(UTILS_SRC)/colors.c $(UTILS_SRC)/hsv.c \
+		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
+		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/visual-gl.c \
+		  $(UTILS_SRC)/yarandom.c $(UTILS_SRC)/xshm.c
+UTIL_OBJS	= $(UTILS_SRC)/colors.o $(UTILS_SRC)/hsv.o \
+		  $(UTILS_SRC)/resources.o $(UTILS_SRC)/usleep.o \
+		  $(UTILS_SRC)/visual.o $(UTILS_SRC)/visual-gl.o \
+		   $(UTILS_SRC)/yarandom.o $(UTILS_SRC)/xshm.o
+
+SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c fps-gl.c \
+		  atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
+		  buildlwo.c cage.c dolphin.c gears.c lament.c moebius.c \
+		  morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c s1_3.c \
+		  s1_4.c s1_5.c s1_6.c s1_b.c shark.c sproingies.c \
+		  sproingiewrap.c stairs.c superquadrics.c swim.c whale.c \
+		  xlock-gl-utils.c xpm-ximage.c glplanet.c pulsar.c \
+		  extrusion.c extrusion-helix2.c extrusion-helix3.c \
+		  extrusion-helix4.c extrusion-joinoffset.c extrusion-screw.c \
+		  extrusion-taper.c extrusion-twistoid.c sierpinski3d.c \
+		  gflux.c stonerview.c stonerview-move.c stonerview-osc.c \
+		  stonerview-view.c starwars.c glut_stroke.c glut_swidth.c \
+		  gltext.c molecule.c dangerball.c sphere.c tube.c circuit.c \
+		  menger.c engine.c flipscreen3d.c font-ximage.c dnalogo.c \
+		  grab-ximage.c glsnake.c boxed.c glforestfire.c sballs.c \
+		  cubenetic.c spheremonics.c marching.c lavalite.c rotator.c \
+		  trackball.c gltrackball.c queens.c endgame.c chessmodels.c \
+		  glblur.c gllist.c flurry.c flurry-smoke.c flurry-spark.c \
+		  flurry-star.c flurry-texture.c atunnel.c tunnel_draw.c \
+		  flyingtoasters.c toaster.c toaster_base.c toaster_handle.c \
+		  toaster_handle2.c toaster_jet.c toaster_knob.c \
+		  toaster_slots.c toaster_wing.c toast.c toast2.c \
+		  bouncingcow.c cow_face.c cow_hide.c cow_hoofs.c cow_horns.c \
+		  cow_tail.c cow_udder.c glslideshow.c jigglypuff.c klein.c \
+		  hypertorus.c glmatrix.c cubestorm.c glknots.c blocktube.c \
+		  flipflop.c antspotlight.c polytopes.c gleidescope.c \
+		  mirrorblob.c blinkbox.c noof.c polyhedra.c polyhedra-gl.c \
+		  antinspect.c providence.c pinion.c involute.c boing.c \
+		  texfont.c carousel.c fliptext.c antmaze.c tangram.c \
+		  tangram_shapes.c crackberg.c glhanoi.c cube21.c \
+		  timetunnel.c juggler3d.c topblock.c glschool.c \
+		  glschool_gl.c glschool_alg.c glcells.c voronoi.c \
+		  moebiusgears.c lockward.c cubicgrid.c hypnowheel.c \
+		  skytentacles.c teapot.c sonar.c sonar-sim.c sonar-icmp.c \
+		  jigsaw.c photopile.c rubikblocks.c surfaces.c
+
+OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
+		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
+		  buildlwo.o cage.o dolphin.o gears.o lament.o moebius.o \
+		  morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o s1_3.o \
+		  s1_4.o s1_5.o s1_6.o s1_b.o shark.o sproingies.o \
+		  sproingiewrap.o stairs.o superquadrics.o swim.o whale.o \
+		  xlock-gl-utils.o xpm-ximage.o glplanet.o pulsar.o \
+		  extrusion.o extrusion-helix2.o extrusion-helix3.o \
+		  extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
+		  extrusion-taper.o extrusion-twistoid.o sierpinski3d.o \
+		  gflux.o stonerview.o stonerview-move.o stonerview-osc.o \
+		  stonerview-view.o starwars.o glut_stroke.o glut_swidth.o \
+		  gltext.o molecule.o dangerball.o sphere.o tube.o circuit.o \
+		  menger.o engine.o flipscreen3d.o font-ximage.o dnalogo.o \
+	          grab-ximage.o glsnake.o boxed.o glforestfire.o sballs.o \
+		  cubenetic.o spheremonics.o marching.o lavalite.o rotator.o \
+		  trackball.o gltrackball.o queens.o endgame.o chessmodels.o \
+		  glblur.o gllist.o flurry.o flurry-smoke.o flurry-spark.o \
+		  flurry-star.o flurry-texture.o atunnel.o tunnel_draw.o \
+		  flyingtoasters.o toaster.o toaster_base.o toaster_handle.o \
+		  toaster_handle2.o toaster_jet.o toaster_knob.o \
+		  toaster_slots.o toaster_wing.o toast.o toast2.o \
+		  bouncingcow.o cow_face.o cow_hide.o cow_hoofs.o cow_horns.o \
+		  cow_tail.o cow_udder.o glslideshow.o jigglypuff.o klein.o \
+		  hypertorus.o glmatrix.o cubestorm.o glknots.o blocktube.o \
+		  flipflop.o antspotlight.o polytopes.o gleidescope.o \
+		  mirrorblob.o blinkbox.o noof.o polyhedra.o polyhedra-gl.o \
+		  antinspect.o providence.o pinion.o involute.o boing.o \
+		  texfont.o carousel.o fliptext.o antmaze.o tangram.o \
+		  tangram_shapes.o crackberg.o glhanoi.o cube21.o \
+		  timetunnel.o juggler3d.o topblock.o glschool.o \
+		  glschool_gl.o glschool_alg.o glcells.o voronoi.o \
+		  moebiusgears.o lockward.o cubicgrid.o hypnowheel.o \
+		  skytentacles.o teapot.o sonar.o sonar-sim.o sonar-icmp.o \
+		  jigsaw.o photopile.o rubikblocks.o surfaces.o
+
+GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
+		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
+		  sierpinski3d gflux stonerview starwars gltext molecule \
+		  dangerball circuit menger engine flipscreen3d glsnake boxed \
+		  sballs cubenetic spheremonics lavalite queens \
+		  endgame glblur flurry atunnel flyingtoasters bouncingcow \
+		  glslideshow jigglypuff klein hypertorus glmatrix cubestorm \
+		  glknots blocktube flipflop antspotlight polytopes \
+		  gleidescope mirrorblob blinkbox noof polyhedra \
+		  antinspect providence pinion boing carousel fliptext \
+		  antmaze tangram crackberg glhanoi cube21 timetunnel \
+		  juggler3d topblock glschool glcells voronoi moebiusgears \
+		  lockward cubicgrid hypnowheel skytentacles jigsaw photopile \
+		  rubikblocks surfaces
+GLE_EXES	= extrusion
+SUID_EXES	= sonar
+GL_UTIL_EXES	= xscreensaver-gl-helper
+HACK_EXES_1	= @GL_EXES@ @GLE_EXES@
+HACK_EXES	= $(HACK_EXES_1) @SUID_EXES@
+XSHM_OBJS	= $(UTILS_BIN)/xshm.o
+GRAB_OBJS	= $(UTILS_BIN)/grabclient.o grab-ximage.o $(XSHM_OBJS)
+EXES		= @GL_UTIL_EXES@ $(HACK_EXES)
+
+RETIRED_EXES	= @RETIRED_GL_EXES@
+RETIRED_GL_EXES	= glforestfire
+
+HACK_OBJS	= $(HACK_BIN)/screenhack.o $(HACK_BIN)/fps.o \
+		  xlockmore-gl.o xlock-gl-utils.o glxfonts.o fps-gl.o \
+		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
+		  $(UTILS_BIN)/visual-gl.o $(UTILS_BIN)/usleep.o \
+		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/hsv.o \
+		  $(UTILS_BIN)/colors.o
+
+HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
+		  grab-ximage.h font-ximage.h tube.h sphere.h boxed.h \
+		  stonerview.h stonerview-move.h stonerview-osc.h \
+		  glutstroke.h glut_roman.h marching.h rotator.h trackball.h \
+		  gltrackball.h chessmodels.h chessgames.h gllist.h flurry.h \
+		  tunnel_draw.h ants.h polyhedra.h normals.h glxfonts.h \
+		  texfont.h tangram_shapes.h sproingies.h extrusion.h \
+		  glschool.h glschool_gl.h glschool_alg.h topblock.h \
+		  involute.h teapot.h sonar.h
+GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
+		  cubenetic.man dangerball.man engine.man extrusion.man \
+		  flipscreen3d.man gears.man gflux.man \
+		  glplanet.man glsnake.man gltext.man lament.man lavalite.man \
+		  menger.man moebius.man molecule.man morph3d.man pipes.man \
+		  pulsar.man queens.man rubik.man sballs.man sierpinski3d.man \
+		  spheremonics.man sproingies.man stairs.man starwars.man \
+		  stonerview.man superquadrics.man xscreensaver-gl-helper.man \
+		  endgame.man flurry.man glblur.man atunnel.man \
+		  flyingtoasters.man bouncingcow.man glslideshow.man \
+		  jigglypuff.man klein.man hypertorus.man glmatrix.man \
+		  cubestorm.man glknots.man blocktube.man flipflop.man \
+		  antspotlight.man polytopes.man gleidescope.man \
+		  mirrorblob.man blinkbox.man noof.man polyhedra.man \
+		  antinspect.man providence.man pinion.man boing.man \
+		  carousel.man fliptext.man antmaze.man tangram.man \
+		  crackberg.man glhanoi.man cube21.man timetunnel.man \
+		  juggler3d.man topblock.man glschool.man glcells.man \
+		  voronoi.man moebiusgears.man lockward.man cubicgrid.man \
+		  hypnowheel.man skytentacles.man sonar.man jigsaw.man \
+		  photopile.man rubikblocks.man surfaces.man
+MEN		= @GL_MEN@
+RETIRED_MEN	= glforestfire.man
+EXTRAS		= README Makefile.in dxf2gl.pl molecules.sh starwars.txt
+
+TARFILES	= $(SRCS) $(HDRS) $(MEN) $(EXTRAS)
+
+
+default: all
+all: $(EXES) $(RETIRED_EXES)
+
+install:   install-program    install-xml   install-man
+uninstall: uninstall-program  uninstall-xml uninstall-man
+
+install-strip:
+	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
+
+# the hacks, in $HACKDIR
+install-program:: $(EXES)
+	@exes="$(HACK_EXES_1)" ;					\
+	 idir="$(install_prefix)$(HACKDIR)" ;				\
+	 if [ "$$exes" != "" ]; then					\
+	   if [ ! -d $$idir ]; then					\
+	     $(INSTALL_DIRS) $$idir ;					\
+	   fi ;								\
+	   for program in $$exes; do					\
+	     echo $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
+		  $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
+	   done ;							\
+									\
+	   exes="$(SUID_EXES)" ;					\
+	   if [ @SETUID_HACKS@ = yes ]; then				\
+	     sinst="$(INSTALL_SETUID)" ;				\
+	   else								\
+	     sinst="$(INSTALL_PROGRAM)" ;				\
+	   fi ;								\
+	   for program in $$exes; do					\
+	     echo $$sinst $$program $$idir/$$program ;			\
+	     if   $$sinst $$program $$idir/$$program ; then		\
+	        true ;							\
+	     elif [ @SETUID_HACKS@ = yes ]; then			\
+	       echo $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
+	       if   $(INSTALL_PROGRAM) $$program $$idir/$$program ; then\
+	         echo "" ;						\
+	         echo "WARNING: unable to install $$program setuid:"	\
+	              "installed non-setuid instead." ;			\
+	         echo "" ;						\
+	       else							\
+	         exit 1 ;						\
+	       fi ;							\
+	     else							\
+	       exit 1 ;							\
+	     fi ;							\
+	   done ;							\
+	 fi
+
+
+# the xscreensaver-gl-helper program, in $bindir
+install-program:: $(EXES)
+	@exes="@GL_UTIL_EXES@" ;					\
+	 idir="$(install_prefix)$(bindir)" ;				\
+	 if [ "$$exes" != "" ]; then					\
+	   if [ ! -d $$idir ]; then					\
+	     $(INSTALL_DIRS) $$idir ;					\
+	   fi ;								\
+	   for program in $$exes; do					\
+	     echo $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
+		  $(INSTALL_PROGRAM) $$program $$idir/$$program ;	\
+	   done ;							\
+	 fi
+
+# When installing man pages, we install "foo.man" as "foo.N" and update
+# the .TH line in the installed file with one like
+#
+#     .TH XScreenSaver N "V.VV (DD-MMM-YYYY)" "X Version 11"
+#
+# where N is the manual section suffix.
+#
+install-man: $(MEN)
+	@men="$(MEN)" ;							\
+	U=$(UTILS_SRC)/version.h ;					\
+	V=`sed -n 's/.*xscreensaver \([0-9]\.[^)]*)\).*/\1/p' < $$U` ;		\
+	T=/tmp/xs$$$$.$(mansuffix) ;					\
+	TH=".TH XScreenSaver $(mansuffix) \"$$V\" \"X Version 11\"" ;	\
+	echo "installing man pages: $$TH" ;				\
+									\
+	if [ ! -d $(install_prefix)$(manNdir) ]; then			\
+	  $(INSTALL_DIRS) $(install_prefix)$(manNdir) ;			\
+	 fi ;								\
+									\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  manbase=`echo $$man | sed 's/\.man$$//'` ;    \
+	  TH=".TH $$manbase $(mansuffix) \"$$V\" \"X Version 11\" \"XScreenSaver manual\"" ;   \
+	  sed -e "s/^\.TH.*/$$TH/"					\
+	      -e 's@(MANSUFFIX)@($(mansuffix))@g'			\
+	    < $(srcdir)/$$man > $$T ;					\
+	  echo $(INSTALL_DATA) $(srcdir)/$$man				\
+	   $(install_prefix)$(manNdir)/$$instname ;			\
+	  $(INSTALL_DATA) $$T						\
+	    $(install_prefix)$(manNdir)/$$instname ;			\
+	done ;								\
+	rm -f $$T
+
+install-xml:
+	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
+	 if [ ! -d $$dest ]; then					\
+	   $(INSTALL_DIRS) $$dest ;					\
+	 fi ;								\
+	 src=$(srcdir)/../config ;					\
+	 for file in $(EXES) $(SCRIPTS) ; do				\
+	   if [ -f $$src/$$file.xml ]; then				\
+	     echo $(INSTALL_DATA) $$src/$$file.xml $$dest/$$file.xml ;	\
+	          $(INSTALL_DATA) $$src/$$file.xml $$dest/$$file.xml ;	\
+	   fi ;								\
+	done
+
+# the hacks, in $HACKDIR
+uninstall-program::
+	@exes="$(HACK_EXES) $(RETIRED_EXES)" ;				\
+	 idir="$(install_prefix)$(HACKDIR)" ;				\
+	 for program in $$exes; do					\
+	   echo rm -f $$idir/$$program ;				\
+		rm -f $$idir/$$program ;				\
+	 done
+
+# the xscreensaver-gl-helper program, in $bindir
+uninstall-program::
+	@exes="$(GL_UTIL_EXES)" ;					\
+	 idir="$(install_prefix)$(bindir)" ;				\
+	 for program in $$exes; do					\
+	   echo rm -f $$idir/$$program ;				\
+		rm -f $$idir/$$program ;				\
+	done
+
+uninstall-man:
+	@men="$(MEN) $(RETIRED_MEN)" ;					\
+	for man in $$men; do						\
+	  instname=`echo $$man | sed 's/\.man$$/\.$(mansuffix)/'` ;	\
+	  echo rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
+	       rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
+	done
+
+uninstall-xml:
+	@dest=$(install_prefix)$(HACK_CONF_DIR) ;			\
+	 for file in $(EXES) $(RETIRED_EXES) $(SCRIPTS) ; do		\
+	     echo rm -f $$dest/$$file.xml ;				\
+	          rm -f $$dest/$$file.xml ;				\
+	done
+
+clean:
+	-rm -f *.o a.out core $(EXES) $(RETIRED_EXES) molecules.h
+
+distclean: clean
+	-rm -f Makefile TAGS *~ "#"*
+
+# Adds all current dependencies to Makefile
+depend:
+	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'		    \
+	$(DEPEND_FLAGS) --						    \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SRCS)
+
+# Adds some dependencies to Makefile.in -- not totally accurate, but pretty
+# close.  This excludes dependencies on files in /usr/include, etc.  It tries
+# to include only dependencies on files which are themselves a part of this
+# package.
+distdepend:: molecules.h
+	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
+	$(DEPEND) -w 0 -f - 						    \
+	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SRCS) 2>/dev/null |						    \
+	sort -d |							    \
+	(								    \
+	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
+	  sed -e '/^#.*/d'						    \
+	      -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
+	      -e 's@\.\./\.\./utils@$$(UTILS_SRC)@g'			    \
+	      -e 's@\.\./glx/@@g'					    \
+	      -e 's@ \.\./@ $$(HACK_SRC)/@g'				    \
+	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
+	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g'			    \
+	      -e 's@ $$(HACK_SRC)/\(.*config.h\)@ ../\1@g'		    \
+	      -e 's@ $$(srcdir)/\(.*molecules.h\)@ \1@g' ;		    \
+	  echo ''							    \
+	) > /tmp/distdepend.$$$$ &&					    \
+	mv Makefile.in Makefile.in.bak &&				    \
+	mv /tmp/distdepend.$$$$ Makefile.in
+
+
+TAGS: tags
+tags:
+	find $(srcdir) -name '*.[chly]' -print | xargs etags -a
+
+echo_tarfiles:
+	@echo $(TARFILES)
+
+check_men:
+	@badmen="" ;							\
+	 for exe in $(EXES); do						\
+	   if ! [ -f $(srcdir)/$$exe.man ]; then			\
+	     badmen="$$badmen $$exe" ;					\
+	   fi ;								\
+	 done ;								\
+	 if [ -n "$$badmen" ]; then					\
+	   echo "" ;							\
+	   echo "Warning: The following programs have no manuals:" ;	\
+	   echo "" ;							\
+	   for m in $$badmen ; do					\
+	     echo "    $$m" ;						\
+	   done ;							\
+	 fi
+
+validate_xml:
+	@echo "Validating XML..." ; \
+	cd $(HACK_SRC) ; ./check-configs.pl $(EXES)
+
+distdepend:: check_men validate_xml
+
+
+
+# Rules for noticing when the objects from the utils directory are out of
+# date with respect to their sources, and going and building them according
+# to the rules in their own Makefile...
+#
+$(UTILS_BIN)/colors.o:		$(UTILS_SRC)/colors.c
+$(UTILS_BIN)/grabclient.o:	$(UTILS_SRC)/grabclient.c
+$(UTILS_BIN)/hsv.o:		$(UTILS_SRC)/hsv.c
+$(UTILS_BIN)/resources.o:	$(UTILS_SRC)/resources.c
+$(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
+$(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
+$(UTILS_BIN)/visual-gl.o:	$(UTILS_SRC)/visual-gl.c
+$(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
+$(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
+
+$(UTIL_OBJS):
+	cd $(UTILS_BIN) ; \
+	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+
+$(HACK_BIN)/xlockmore.o: $(HACK_SRC)/xlockmore.c
+	cd $(HACK_BIN)  ; $(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
+
+
+# How we build object files in this directory.
+.c.o:
+	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+
+
+# How to build the "xscreensaver-gl-helper" program, that lets the daemon
+# know which visual is the right one for GL programs.
+#
+HELPER_OBJS = xscreensaver-gl-helper.o $(UTILS_BIN)/visual-gl.o \
+	      $(UTILS_BIN)/visual.o $(UTILS_BIN)/resources.o
+xscreensaver-gl-helper: $(HELPER_OBJS)
+	$(CC) $(LDFLAGS) -o $@ $(HELPER_OBJS) $(LIBS) $(X_LIBS) $(HACK_POST2)
+
+
+# These hacks use a slightly-differently-compiled variant of xlockmore.c.
+# This is how to make the the other .o file from it.
+#
+XLM_CFLAGS=-DUSE_GL $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS)
+xlockmore-gl.o: $(HACK_SRC)/xlockmore.c
+	$(CC) -o $@ -c $(XLM_CFLAGS) $(HACK_SRC)/xlockmore.c
+
+CC_HACK		= $(CC) $(LDFLAGS)
+
+TRACK_OBJS=rotator.o trackball.o gltrackball.o
+HACK_TRACK_OBJS=$(HACK_OBJS) $(TRACK_OBJS)
+HACK_GRAB_OBJS=$(HACK_OBJS) $(GRAB_OBJS)
+HACK_TRACK_GRAB_OBJS=$(HACK_TRACK_OBJS) $(GRAB_OBJS)
+
+ATLANTIS_OBJS = $(HACK_OBJS) dolphin.o shark.o swim.o whale.o xpm-ximage.o
+atlantis:	atlantis.o	$(ATLANTIS_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(ATLANTIS_OBJS) $(XPM_LIBS)
+
+ATUNNEL_OBJS = $(HACK_OBJS) tunnel_draw.o xpm-ximage.o
+atunnel:	atunnel.o	$(ATUNNEL_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(ATUNNEL_OBJS) $(XPM_LIBS)
+
+cage:		cage.o		$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+FLURRY_OBJS_1 = flurry-smoke.o flurry-spark.o flurry-star.o flurry-texture.o
+FLURRY_OBJS = $(FLURRY_OBJS_1) $(HACK_OBJS)
+
+flurry:		flurry.o	$(FLURRY_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(FLURRY_OBJS) $(HACK_LIBS) -lm
+
+GEARS_OBJS=normals.o involute.o $(HACK_TRACK_OBJS)
+gears:		gears.o		tube.o $(GEARS_OBJS)
+	$(CC_HACK) -o $@ $@.o	tube.o $(GEARS_OBJS) $(HACK_LIBS)
+
+moebius:	moebius.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+PIPE_OBJS=pipeobjs.o buildlwo.o teapot.o
+pipes:		pipes.o		$(PIPE_OBJS) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(PIPE_OBJS) $(HACK_OBJS) $(HACK_LIBS)
+
+superquadrics:	superquadrics.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+morph3d:	morph3d.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+rubik:		rubik.o		$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+stairs:		stairs.o	sphere.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	sphere.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+SPROINGIES = sproingiewrap.o gllist.o \
+	     s1_1.o s1_2.o s1_3.o s1_4.o s1_5.o s1_6.o s1_b.o
+sproingies: sproingies.o	$(HACK_OBJS) $(SPROINGIES)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SPROINGIES) $(HACK_LIBS)
+
+LAMENTOBJS = $(HACK_TRACK_OBJS) xpm-ximage.o normals.o
+lament:		lament.o	$(LAMENTOBJS)
+	$(CC_HACK) -o $@ $@.o	$(LAMENTOBJS) $(XPM_LIBS)
+
+B3D_OBJS = b_sphere.o b_draw.o b_lockglue.o $(HACK_OBJS)
+bubble3d:	bubble3d.o	$(B3D_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(B3D_OBJS) $(HACK_LIBS)
+
+PLANET_OBJS=sphere.o xpm-ximage.o $(HACK_TRACK_OBJS)
+glplanet:	glplanet.o	$(PLANET_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(PLANET_OBJS) $(XPM_LIBS)
+
+pulsar:		pulsar.o	$(HACK_OBJS) xpm-ximage.o
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) xpm-ximage.o $(XPM_LIBS)
+
+EXTRUSION_OBJS=extrusion.o extrusion-helix2.o extrusion-helix3.o    \
+	extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
+	extrusion-taper.o extrusion-twistoid.o xpm-ximage.o \
+	$(HACK_TRACK_OBJS)
+extrusion:			$(EXTRUSION_OBJS)
+	$(CC_HACK) -o $@	$(EXTRUSION_OBJS) $(XPM_LIBS) $(GLE_LIBS)
+
+sierpinski3d:	sierpinski3d.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+gflux:		gflux.o		$(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
+
+SW_OBJS=starwars.o glut_stroke.o glut_swidth.o texfont.o $(HACK_OBJS)
+starwars:			$(SW_OBJS)
+	$(CC_HACK) -o $@	$(SW_OBJS) $(HACK_LIBS)
+
+GLT_OBJS=gltext.o glut_stroke.o glut_swidth.o tube.o $(HACK_TRACK_OBJS)
+gltext:				$(GLT_OBJS)
+	$(CC_HACK) -o $@	$(GLT_OBJS) $(HACK_LIBS)
+
+DB_OBJS=sphere.o tube.o $(HACK_TRACK_OBJS)
+dangerball:	dangerball.o	$(DB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(DB_OBJS) $(HACK_LIBS)
+
+circuit:	circuit.o	font-ximage.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   font-ximage.o $(HACK_OBJS) $(HACK_LIBS)
+
+menger:		menger.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+engine:		engine.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+flipscreen3d:	flipscreen3d.o	$(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
+
+glsnake:	glsnake.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+boxed:		boxed.o		$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+glforestfire:	glforestfire.o	xpm-ximage.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_TRACK_OBJS) $(XPM_LIBS)
+
+sballs:		sballs.o	xpm-ximage.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_TRACK_OBJS) $(XPM_LIBS)
+
+cubenetic:	cubenetic.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+spheremonics:	spheremonics.o	normals.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+LL_OBJS=marching.o xpm-ximage.o normals.o $(HACK_TRACK_OBJS)
+lavalite:	lavalite.o	$(LL_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(LL_OBJS) $(XPM_LIBS)
+
+queens:		queens.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+endgame:	endgame.o	chessmodels.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   chessmodels.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+glblur:	glblur.o		$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+TOAST_OBJS=\
+  toaster.o toaster_base.o toaster_handle.o toaster_handle2.o \
+  toaster_jet.o toaster_knob.o toaster_slots.o toaster_wing.o \
+  toast.o toast2.o \
+  flyingtoasters.o gllist.o xpm-ximage.o $(HACK_TRACK_OBJS)
+flyingtoasters:			$(TOAST_OBJS)
+	$(CC_HACK) -o $@	$(TOAST_OBJS) $(XPM_LIBS)
+
+COW_OBJS=\
+  cow_face.o cow_hide.o cow_hoofs.o cow_horns.o cow_tail.o cow_udder.o \
+  bouncingcow.o gllist.o xpm-ximage.o $(HACK_TRACK_OBJS)
+bouncingcow:			$(COW_OBJS)	    
+	$(CC_HACK) -o $@	$(COW_OBJS) $(XPM_LIBS)
+
+glslideshow:	glslideshow.o	$(HACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_GRAB_OBJS) $(HACK_LIBS)
+
+jigglypuff:	jigglypuff.o	xpm-ximage.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_TRACK_OBJS) $(XPM_LIBS)
+
+klein:		klein.o		$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+surfaces:	surfaces.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+hypertorus:	hypertorus.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+glmatrix:	glmatrix.o	xpm-ximage.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_OBJS) $(XPM_LIBS)
+
+cubestorm:	cubestorm.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+glknots:	glknots.o	tube.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	tube.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+blocktube:	blocktube.o	xpm-ximage.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_OBJS) $(XPM_LIBS)
+
+flipflop:	flipflop.o	$(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
+
+antspotlight:	antspotlight.o	$(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
+
+polytopes:	polytopes.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+STONER_OBJS=stonerview-move.o stonerview-osc.o stonerview-view.o
+stonerview:	stonerview.o	$(STONER_OBJS) $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(STONER_OBJS) $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+
+molecules.h:
+	@echo "building molecules.h from $(HACK_SRC)/images/molecules/*.pdb"; \
+	UTILS_SRC="$(UTILS_SRC)" \
+	$(srcdir)/molecules.sh molecules.h $(HACK_SRC)/images/molecules/*.pdb
+
+MOLECULE_OBJS=sphere.o tube.o $(HACK_TRACK_OBJS)
+molecule:	molecule.o	$(MOLECULE_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(MOLECULE_OBJS) $(HACK_LIBS)
+
+gleidescope:	gleidescope.o	xpm-ximage.o $(HACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_GRAB_OBJS) $(XPM_LIBS)
+
+mirrorblob:	mirrorblob.o	$(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_GRAB_OBJS) $(XPM_LIBS)
+
+blinkbox:	blinkbox.o	sphere.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	sphere.o $(HACK_OBJS) $(HACK_LIBS)
+
+noof:	noof.o			$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+PH_OBJS=polyhedra-gl.o normals.o teapot.o $(HACK_TRACK_OBJS)
+polyhedra:	polyhedra.o 	$(PH_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(PH_OBJS) $(HACK_LIBS)
+
+antinspect:	antinspect.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+providence:	providence.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+pinion:		pinion.o	$(GEARS_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(GEARS_OBJS) $(HACK_LIBS)
+
+moebiusgears:	moebiusgears.o	$(GEARS_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(GEARS_OBJS) $(HACK_LIBS)
+
+boing:		boing.o		normals.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+carousel:	carousel.o	texfont.o $(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	texfont.o $(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
+
+fliptext:	fliptext.o	texfont.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	texfont.o $(HACK_OBJS) $(HACK_LIBS)
+
+antmaze:	antmaze.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+TANGRAM_OBJS=tangram_shapes.o $(HACK_OBJS)
+tangram:	tangram.o	$(TANGRAM_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(TANGRAM_OBJS) $(HACK_LIBS)
+
+crackberg:	crackberg.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+glhanoi:	glhanoi.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+cube21:		cube21.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+TIMETUNNEL_OBJS = xpm-ximage.o  $(HACK_TRACK_OBJS)
+timetunnel:	timetunnel.o	$(TIMETUNNEL_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(TIMETUNNEL_OBJS) $(XPM_LIBS)
+
+JUGG_OBJS=sphere.o tube.o $(HACK_TRACK_OBJS)
+juggler3d:	juggler3d.o	$(JUGG_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(JUGG_OBJS) $(HACK_LIBS)
+
+dnalogo:	dnalogo.o      tube.o normals.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o  tube.o normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+topblock:	topblock.o	sphere.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	sphere.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+SCHOOL_OBJS=glschool.o glschool_alg.o glschool_gl.o sphere.o tube.o $(HACK_OBJS)
+glschool: $(SCHOOL_OBJS)
+	$(CC_HACK) -o $@ $(SCHOOL_OBJS) $(HACK_LIBS)
+
+glcells:	glcells.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+voronoi:	voronoi.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+lockward:	lockward.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+cubicgrid:	cubicgrid.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+hypnowheel:	hypnowheel.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+TENTACLE_OBJS=normals.o xpm-ximage.o $(HACK_TRACK_OBJS)
+skytentacles:	skytentacles.o	$(TENTACLE_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(TENTACLE_OBJS) $(XPM_LIBS)
+
+SONAR_OBJS=sonar-sim.o sonar-icmp.o texfont.o $(HACK_TRACK_OBJS)
+sonar:		sonar.o		$(SONAR_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(SONAR_OBJS) $(XPM_LIBS)
+
+JIGSAW_OBJS=normals.o $(UTILS_BIN)/spline.o $(HACK_TRACK_GRAB_OBJS)
+jigsaw:		jigsaw.o	$(JIGSAW_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(JIGSAW_OBJS) $(HACK_LIBS)
+
+photopile:	photopile.o	texfont.o $(HACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	texfont.o $(HACK_GRAB_OBJS) $(HACK_LIBS)
+
+rubikblocks:	rubikblocks.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+##############################################################################
+#
+# DO NOT DELETE: updated by make distdepend
+

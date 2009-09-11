@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="glcells" _label="GLCells">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+    <number id="pause" type="slider" arg="-pause %"
+            _label="Linger" _low-label="Short" _high-label="Long"
+            low="0" high="400" default="50"/>
+    <number id="maxcells" type="slider" arg="-maxcells %"
+            _label="Max cells" _low-label="Few" _high-label="Many"
+            low="50" high="5000" default="800"/>
+    <number id="radius" type="slider" arg="-radius %"
+            _label="Cell radius" _low-label="Small" _high-label="Huge"
+            low="5" high="80" default="40"/>
+    <select id="quality">
+      <option id="q0" _label="Lowest sphere detail"  arg-set="-quality 0"/>
+      <option id="q1" _label="Medium sphere detail"  arg-set="-quality 1"/>
+      <option id="q2" _label="Normal sphere detail"  arg-set="-quality 2"/>
+      <option id="q3" _label="More sphere detail"/>
+      <option id="q4" _label="Highest sphere detail" arg-set="-quality 4"/>
+    </select>
+   </vgroup>
+   <vgroup>
+    <number id="minfood" type="slider" arg="-minfood %"
+            _label="Min food" _low-label="Starve" _high-label="Gorge"
+            low="0" high="100" default="5"/>
+    <number id="maxfood" type="slider" arg="-maxfood %"
+            _label="Max food" _low-label="Starve" _high-label="Gorge"
+            low="10" high="100" default="20"/>
+    <number id="divideage" type="slider" arg="-divideage %"
+            _label="Cell division" _low-label="Quick" _high-label="Slow"
+            low="1" high="100" default="20"/>
+    <number id="mindist" type="slider" arg="-mindist %"
+            _label="Min distance" _low-label="Small" _high-label="Large"
+            low="1.0" high="3.0" default="1.4"/>
+    <number id="seeds" type="slider" arg="-seeds %"
+            _label="Seeds" _low-label="1" _high-label="15"
+           low="1" high="15" default="1"/>
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="keepold" _label="Keep dead cells" arg-set="-keepold"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="wireframe" _label="Wireframe" arg-set="-wireframe"/>
+  </hgroup>
+
+  <_description>
+Cells growing, dividing and dying on your screen.
+
+Written by Matthias Toussaint; 2007.
+  </_description>
+</screensaver>
