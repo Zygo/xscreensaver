@@ -68,16 +68,20 @@ typedef struct _flurry_info_t flurry_info_t;
 
 typedef union {
     float		f[4];
+#if 0
 #if __VEC__
     vector float	v;
 #endif
+#endif /* 0 */
 } floatToVector;
 
 typedef union {
     unsigned int	i[4];
+#if 0
 #if __VEC__
     vector unsigned int	v;
 #endif
+#endif /* 0 */
 } intToVector;
 
 typedef struct SmokeParticleV  
@@ -110,6 +114,7 @@ typedef struct SmokeV
 void InitSmoke(SmokeV *s);
 
 void UpdateSmoke_ScalarBase(global_info_t *global, flurry_info_t *flurry, SmokeV *s);
+#if 0
 #ifdef __ppc__
 void UpdateSmoke_ScalarFrsqrte(global_info_t *global, flurry_info_t *flurry, SmokeV *s);
 #endif
@@ -117,6 +122,7 @@ void UpdateSmoke_ScalarFrsqrte(global_info_t *global, flurry_info_t *flurry, Smo
 void UpdateSmoke_VectorBase(global_info_t *global, flurry_info_t *flurry, SmokeV *s);
 void UpdateSmoke_VectorUnrolled(global_info_t *global, flurry_info_t *flurry, SmokeV *s);
 #endif
+#endif /* 0 */
 
 void DrawSmoke_Scalar(global_info_t *global, flurry_info_t *flurry, SmokeV *s, float);
 void DrawSmoke_Vector(global_info_t *global, flurry_info_t *flurry, SmokeV *s, float);
@@ -171,6 +177,7 @@ static inline float FastDistance2D(float x, float y)
 	return(x+y-(mn*0.5f)-(mn*0.25f)+(mn*0.0625f));
 }
 
+#if 0
 #ifdef __VEC__
 
 static vector float FastDistance2DV(vector float x, vector float y) {
@@ -185,6 +192,7 @@ static vector float FastDistance2DV(vector float x, vector float y) {
 }
 
 #endif
+#endif /* 0 */
 
 #define RandFlt(min, max) ((min) + frand((max) - (min)))
 
@@ -196,6 +204,7 @@ void MakeTexture(void);
 
 #define OPT_MODE_SCALAR_BASE		0x0
 
+#if 0
 #ifdef __ppc__
 #define OPT_MODE_SCALAR_FRSQRTE		0x1
 #endif
@@ -204,6 +213,7 @@ void MakeTexture(void);
 #define OPT_MODE_VECTOR_SIMPLE		0x2
 #define OPT_MODE_VECTOR_UNROLLED	0x3
 #endif
+#endif /* 0 */
 
 typedef enum _ColorModes
 {

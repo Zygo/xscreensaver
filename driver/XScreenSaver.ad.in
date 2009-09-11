@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.08
-!                              27-Dec-2008
+!                              version 5.09
+!                              03-Sep-2009
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -272,7 +272,7 @@ GetViewPortIsFullOfLies: False
 - GL: 				glblur -root				    \n\
 @GL_KLUDGE@ GL: 				glsnake -root				    \n\
 				halftone -root				    \n\
--				juggle -root				    \n\
+@GL_KLUDGE@ GL: 				juggler3d -root				    \n\
 @GL_KLUDGE@ GL: 				lavalite -root				    \n\
 -				polyominoes -root			    \n\
 @GL_KLUDGE@ GL: 				queens -root				    \n\
@@ -299,13 +299,13 @@ GetViewPortIsFullOfLies: False
 - GL: 				glslideshow -root			    \n\
 @GL_KLUDGE@ GL: 				hypertorus -root			    \n\
 - GL: 				jigglypuff -root			    \n\
-@GL_KLUDGE@ GL: 				klein -root				    \n\
 				metaballs -root				    \n\
 @GL_KLUDGE@ GL: 				mirrorblob -root			    \n\
 				piecewise -root				    \n\
 @GL_KLUDGE@ GL: 				polytopes -root				    \n\
 				pong -root				    \n\
 				popsquares -root			    \n\
+@GL_KLUDGE@ GL: 				surfaces -root				    \n\
 				xanalogtv -root				    \n\
 -				abstractile -root			    \n\
 				anemotaxis -root			    \n\
@@ -332,7 +332,6 @@ GetViewPortIsFullOfLies: False
 				fiberlamp -root				    \n\
 @GL_KLUDGE@ GL: 				fliptext -root				    \n\
 @GL_KLUDGE@ GL: 				glhanoi -root				    \n\
-@GL_KLUDGE@ GL: 				juggler3d -root				    \n\
 @GL_KLUDGE@ GL: 				tangram -root				    \n\
 @GL_KLUDGE@ GL: 				timetunnel -root			    \n\
 @GL_KLUDGE@ GL: 				glschool -root				    \n\
@@ -346,9 +345,11 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				moebiusgears -root			    \n\
 @GL_KLUDGE@ GL: 				voronoi -root				    \n\
 @GL_KLUDGE@ GL: 				hypnowheel -root			    \n\
+@GL_KLUDGE@ GL: 				klein -root				    \n\
 -				lcdscrub -root				    \n\
 @GL_KLUDGE@ GL: 				photopile -root				    \n\
-@GL_KLUDGE@ GL: 				skytentacles -root			    \n
+@GL_KLUDGE@ GL: 				skytentacles -root			    \n\
+@GL_KLUDGE@ GL: 				rubikblocks -root			    \n
 
 
 
@@ -469,6 +470,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.rd-bomb.name:        RDbomb
 *hacks.rdbomb.name:         RDbomb
 *hacks.rotzoomer.name:      RotZoomer
+*hacks.rubikblocks.name:    RubikBlocks
 *hacks.sballs.name:         SBalls
 *hacks.shadebobs.name:      ShadeBobs
 *hacks.sierpinski3d.name:   Sierpinski3D

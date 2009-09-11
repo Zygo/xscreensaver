@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2009 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -208,6 +208,15 @@
   if (result[0] == '\'' && result[strlen(result)-1] == '\'') {
     result[strlen(result)-1] = 0;
     strcpy (result, result+1);
+  }
+
+  // Kludge: assume that any string that begins with "~" and has a "/"
+  // anywhere in it should be expanded as if it is a pathname.
+  if (result[0] == '~' && strchr (result, '/')) {
+    os = [NSString stringWithCString:result encoding:NSUTF8StringEncoding];
+    free (result);
+    result = strdup ([[os stringByExpandingTildeInPath]
+                       cStringUsingEncoding:NSUTF8StringEncoding]);
   }
 
   return result;

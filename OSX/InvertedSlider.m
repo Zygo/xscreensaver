@@ -70,7 +70,7 @@
 /* Implment all setter methods in terms of "setDoubleValue", above.
  */
 
--(void) setFloatValue:(double)v
+-(void) setFloatValue:(float)v
 {
   [self setDoubleValue:(double)v];
 }

@@ -38,11 +38,11 @@
 
     <number id="spinspeed" type="slider" arg="-spinspeed %"
       _label="Spin" _low-label="Slow" _high-label="Fast"
-      low="0.5" high="4.0" default="1.0"/>  
+      low="0.01" high="4.0" default="1.0"/>
 
     <number id="wanderspeed" type="slider" arg="-wanderspeed %"
       _label="Wander" _low-label="Slow" _high-label="Fast"
-      low="0.3" high="3.0" default="1.0"/>  
+      low="0.001" high="0.1" default="0.02"/>
 
     <number id="wait" type="slider" arg="-wait %"
       _label="Linger" _low-label="Short" _high-label="Long"
@@ -63,8 +63,8 @@
 
   <_description>
 Animates a Rubik-like puzzle known as Cube 21 or Square-1.
-The rotations are chosen randomly.  See also the "Rubik" and
-"GLSnake" screen savers.
+The rotations are chosen randomly.  See also the "Rubik",
+"RubikBlocks" and "GLSnake" screen savers.
 
 http://en.wikipedia.org/wiki/Square_One_%28puzzle%29
 

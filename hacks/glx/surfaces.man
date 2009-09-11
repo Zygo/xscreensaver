@@ -1,0 +1,127 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+surfaces - Draws some interesting 3d parametric surfaces.
+.SH SYNOPSIS
+.B surfaces
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-speed \fInumber\fP]
+[\-rand]
+[\-spin]
+[\-wander]
+[\-fps]
+[\-surface \fIsurface-name\fP]
+[\-random-surface]
+[\-dini]
+[\-enneper]
+[\-kuen]
+[\-moebius]
+[\-seashell]
+[\-swallowtail]
+[\-bohemian]
+[\-whitney]
+[\-pluecker]
+[\-henneberg]
+[\-catalan]
+[\-corkscrew]
+[\-mode \fIdisplay-mode\fP]
+[\-random-mode]
+[\-points]
+[\-lines]
+[\-line-loops]
+.SH DESCRIPTION
+This draws one of several three dimensional parametric surfaces.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual
+class, or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
+.TP 8
+.B \-speed \fInumber\fP
+Number of frames before changing shape.  Default: 1000.
+.TP 8
+.B \-surface random \fP(Shortcut: \fB\-random-surface\fP)
+Display a random surface.  This is the default.
+.TP 8
+.B \-surface dini \fP(Shortcut: \fB\-dini\fP)
+Display Dini's surface.
+.TP 8
+.B \-surface enneper \fP(Shortcut: \fB\-enneper\fP)
+Display Enneper's minimal surface.
+.TP 8
+.B \-surface kuen \fP(Shortcut: \fB\-kuen\fP)
+Display the Kuen surface.
+.TP 8
+.B \-surface moebius \fP(Shortcut: \fB\-moebius\fP)
+Display the Moebius strip.
+.TP 8
+.B \-surface seashell \fP(Shortcut: \fB\-seashell\fP)
+Display the seashell surface.
+.TP 8
+.B \-surface swallowtail \fP(Shortcut: \fB\-swallowtail\fP)
+Display the swallowtail catastrophe.
+.TP 8
+.B \-surface bohemian \fP(Shortcut: \fB\-bohemian\fP)
+Display the Bohemian dome.
+.TP 8
+.B \-surface whitney \fP(Shortcut: \fB\-whitney\fP)
+Display the Whitney umbrella.
+.TP 8
+.B \-surface pluecker \fP(Shortcut: \fB\-pluecker\fP)
+Display Pluecker's conoid.
+.TP 8
+.B \-surface henneberg \fP(Shortcut: \fB\-henneberg\fP)
+Display Henneberg's minimal surface.
+.TP 8
+.B \-surface catalan \fP(Shortcut: \fB\-catalan\fP)
+Display Catalan's minimal surface.
+.TP 8
+.B \-surface corkscrew \fP(Shortcut: \fB\-corkscrew\fP)
+Display the corkscrew surface.
+.TP 8
+.B \-mode random \fP(Shortcut: \fB\-random-mode\fP)
+Use random OpenGL primitives to display the surface.  This is the
+default.
+.TP 8
+.B \-mode points \fP(Shortcut: \fB\-points\fP)
+Use OpenGL points to display the surface.
+.TP 8
+.B \-mode lines \fP(Shortcut: \fB\-lines\fP)
+Use OpenGL lines to display the surface.
+.TP 8
+.B \-mode line-loops \fP(Shortcut: \fB\-line-loops\fP)
+Use OpenGL line loops to display the surface.
+.TP 8
+.B \-wander | \-no-wander
+Whether to wander around the screen.
+.TP 8
+.B \-spin | \-no-spin
+Whether to rotate around the center of the figure.
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH AUTHORS
+Andrey Mirtchovski, Carsten Steger

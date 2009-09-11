@@ -2,7 +2,7 @@
  * (c) 2007, Quest Software, Inc. All rights reserved.
  *
  * This file is part of XScreenSaver,
- * Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
+ * Copyright (c) 1993-2009 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -153,6 +153,8 @@ mlstring_wrap(mlstring *mstring, XFontStruct *font, Dimension width)
 	  
 	  if (wrap_at == -1) /* No space found, hard wrap */
 	    wrap_at = line_length;
+	  else
+	    wrap_at++; /* Leave the space at the end of the line. */
 
 	  newml = calloc(1, sizeof(*newml));
 	  if (!newml) /* OOM, don't bother trying to wrap */

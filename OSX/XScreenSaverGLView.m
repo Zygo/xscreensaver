@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2009 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -33,12 +33,13 @@ extern void check_gl_error (const char *type);
 
 @implementation XScreenSaverGLView
 
+#if 0
 - (void) dealloc
 {
-  if (agl_ctx)
-    aglDestroyContext (agl_ctx);
+  /* #### Do we have to destroy ogl_ctx? */
   [super dealloc];
 }
+#endif
 
 
 - (void)stopAnimation
@@ -48,69 +49,49 @@ extern void check_gl_error (const char *type);
   // Without this, the GL frame stays on screen when switching tabs
   // in System Preferences.
   //
-  if (agl_ctx) {
-    aglSetCurrentContext (NULL);
-    aglDestroyContext (agl_ctx);
-    agl_ctx = 0;
-  }
+  [NSOpenGLContext clearCurrentContext];
 }
 
 
 // #### maybe this could/should just be on 'lockFocus' instead?
 - (void) prepareContext
 {
-  if (agl_ctx)
-    if (!aglSetCurrentContext (agl_ctx)) {
-      check_gl_error ("aglSetCurrentContext");
-      abort();
-    }
+  if (ogl_ctx) {
+    [ogl_ctx makeCurrentContext];
+//    check_gl_error ("makeCurrentContext");
+    [ogl_ctx update];
+  }
 }
-      
+
+
 - (void) resizeContext
 {
-  if (! agl_ctx) 
-    return;
-
-  /* Constrain the AGL context to the rectangle of this view
-     (not of our parent window).
-   */
-  GLint aglrect[4];
-  NSRect rect = [[[self window] contentView] convertRect:[self frame]
-                                                fromView:self];
-  aglrect[0] = rect.origin.x;
-  aglrect[1] = rect.origin.y;
-  aglrect[2] = rect.size.width;
-  aglrect[3] = rect.size.height;
-  aglEnable (agl_ctx, AGL_BUFFER_RECT);
-  aglSetInteger (agl_ctx, AGL_BUFFER_RECT, aglrect);
-  aglUpdateContext (agl_ctx);
+  if (ogl_ctx) 
+    [ogl_ctx setView:self];
 }
 
 
 - (void)drawRect:(NSRect)rect
 {
-  if (! agl_ctx)
+  if (! ogl_ctx)
     [super drawRect:rect];
 }
 
 
-- (AGLContext) aglContext
+- (NSOpenGLContext *) oglContext
 {
-  return agl_ctx;
+  return ogl_ctx;
 }
 
-- (void) setAglContext: (AGLContext) ctx
+
+- (void) setOglContext: (NSOpenGLContext *) ctx
 {
-  if (agl_ctx)
-    if (! aglDestroyContext (agl_ctx)) {
-      check_gl_error("aglDestroyContext");
-      abort();
-    }
-  agl_ctx = ctx;
+  ogl_ctx = ctx;
   [self resizeContext];
 }
 
 @end
+
 
 /* Utility functions...
  */
@@ -123,35 +104,38 @@ init_GL (ModeInfo *mi)
 {
   Window win = mi->window;
   XScreenSaverGLView *view = (XScreenSaverGLView *) jwxyz_window_view (win);
-  
-  GLint agl_attrs[] = {
-    AGL_RGBA,
-    AGL_DOUBLEBUFFER,
-    AGL_DEPTH_SIZE, 16,
-    0 };
-  AGLPixelFormat aglpixf = aglChoosePixelFormat (NULL, 0, agl_attrs);
-  AGLContext ctx = aglCreateContext (aglpixf, NULL);
-  aglDestroyPixelFormat (aglpixf);
-  if (! ctx) {
-    check_gl_error("aglCreateContext");
-    abort();
-  }
-  
-  if (! aglSetDrawable (ctx, GetWindowPort ([[view window] windowRef]))) {
-    check_gl_error("aglSetDrawable");
-    abort();
-  }
+  NSOpenGLContext *ctx = [view oglContext];
 
-  if (! aglSetCurrentContext (ctx)) {
-    check_gl_error("aglSetCurrentContext");
-    abort();
-  }
+  if (!ctx) {
 
-  [view setAglContext:ctx];
+    NSOpenGLPixelFormatAttribute attrs[] = {
+      NSOpenGLPFADoubleBuffer,
+      NSOpenGLPFAColorSize, 24,
+      NSOpenGLPFAAlphaSize, 8,
+      NSOpenGLPFADepthSize, 16,
+      0 };
+    NSOpenGLPixelFormat *pixfmt = [[NSOpenGLPixelFormat alloc] 
+                                    initWithAttributes:attrs];
+
+    ctx = [[NSOpenGLContext alloc] 
+            initWithFormat:pixfmt
+              shareContext:nil];
+  }
 
   // Sync refreshes to the vertical blanking interval
   GLint r = 1;
-  aglSetInteger (ctx, AGL_SWAP_INTERVAL, &r);
+  [ctx setValues:&r forParameter:NSOpenGLCPSwapInterval];
+
+  [ctx makeCurrentContext];
+  check_gl_error ("makeCurrentContext");
+
+  [view setOglContext:ctx];
+
+  // Clear frame buffer ASAP, else there are bits left over from other apps.
+  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//  glFinish ();
+//  glXSwapBuffers (mi->dpy, mi->window);
+
 
   // Enable multi-threading, if possible.  This runs most OpenGL commands
   // and GPU management on a second CPU.
@@ -166,6 +150,7 @@ init_GL (ModeInfo *mi)
     }
   }
 
+
   // Caller expects a pointer to an opaque struct...  which it dereferences.
   // Don't ask me, it's historical...
   static int blort = -1;
@@ -179,11 +164,11 @@ void
 glXSwapBuffers (Display *dpy, Window window)
 {
   XScreenSaverGLView *view = (XScreenSaverGLView *) jwxyz_window_view (window);
-  AGLContext ctx = [view aglContext];
-  if (ctx) aglSwapBuffers (ctx);
+  NSOpenGLContext *ctx = [view oglContext];
+  if (ctx) [ctx flushBuffer]; // despite name, this actually swaps
 }
 
-/* Does nothing. 
+/* Does nothing - prepareContext already did the work.
  */
 void
 glXMakeCurrent (Display *dpy, Window window, GLXContext context)
@@ -197,41 +182,6 @@ clear_gl_error (void)
 {
   while (glGetError() != GL_NO_ERROR)
     ;
-  while (aglGetError() != AGL_NO_ERROR)
-    ;
-}
-
-static void
-check_agl_error (const char *type)
-{
-  char buf[100];
-  GLenum i;
-  const char *e;
-  switch ((i = aglGetError())) {
-    case AGL_NO_ERROR: return;
-    case AGL_BAD_ATTRIBUTE:        e = "bad attribute";	break;
-    case AGL_BAD_PROPERTY:         e = "bad propery";	break;
-    case AGL_BAD_PIXELFMT:         e = "bad pixelfmt";	break;
-    case AGL_BAD_RENDINFO:         e = "bad rendinfo";	break;
-    case AGL_BAD_CONTEXT:          e = "bad context";	break;
-    case AGL_BAD_DRAWABLE:         e = "bad drawable";	break;
-    case AGL_BAD_GDEV:             e = "bad gdev";	break;
-    case AGL_BAD_STATE:            e = "bad state";	break;
-    case AGL_BAD_VALUE:            e = "bad value";	break;
-    case AGL_BAD_MATCH:            e = "bad match";	break;
-    case AGL_BAD_ENUM:             e = "bad enum";	break;
-    case AGL_BAD_OFFSCREEN:        e = "bad offscreen";	break;
-    case AGL_BAD_FULLSCREEN:       e = "bad fullscreen";break;
-    case AGL_BAD_WINDOW:           e = "bad window";	break;
-    case AGL_BAD_POINTER:          e = "bad pointer";	break;
-    case AGL_BAD_MODULE:           e = "bad module";	break;
-    case AGL_BAD_ALLOC:            e = "bad alloc";	break;
-    case AGL_BAD_CONNECTION:       e = "bad connection";break;
-    default:
-      e = buf; sprintf (buf, "unknown AGL error %d", (int) i); break;
-  }
-  NSLog (@"%s AGL error: %s", type, e);
-  exit (1);
 }
 
 
@@ -239,8 +189,6 @@ check_agl_error (const char *type)
 void
 check_gl_error (const char *type)
 {
-  check_agl_error (type);
-  
   char buf[100];
   GLenum i;
   const char *e;

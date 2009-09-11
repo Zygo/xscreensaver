@@ -1,4 +1,4 @@
-/* fps, Copyright (c) 2001-2008 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright (c) 2001-2009 Jamie Zawinski <jwz@jwz.org>
  * Draw a frames-per-second display (Xlib and OpenGL).
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -44,24 +44,9 @@ xlockmore_gl_fps_init (fps_state *st)
   st->font_dlist = glGenLists ((GLuint) last+1);
   check_gl_error ("glGenLists");
 
-# ifndef HAVE_COCOA
-
-  glXUseXFont (f->fid, first, last-first+1, st->font_dlist + first);
-  check_gl_error ("glXUseXFont");
-
-# else  /* HAVE_COCOA */
-  {
-    AGLContext ctx = aglGetCurrentContext();
-    int afid, face, size;
-    afid = jwxyz_font_info (f->fid, &size, &face);
-
-    if (! aglUseFont (ctx, afid, face, size, 
-                      first, last-first+1, st->font_dlist + first)) {
-      check_gl_error ("aglUseFont");
-      abort();
-    }
-  }
-# endif  /* HAVE_COCOA */
+  xscreensaver_glXUseXFont (st->dpy, f->fid,
+                            first, last-first+1, st->font_dlist + first);
+  check_gl_error ("xscreensaver_glXUseXFont");
 }
 
 

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001-2008 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001-2009 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -35,14 +35,16 @@ use Fcntl;
 use Fcntl ':flock'; # import LOCK_* constants
 
 use POSIX ':fcntl_h';				# S_ISDIR was here in Perl 5.6
-import Fcntl ':mode' unless defined &S_ISDIR;	# but it is here in Perl 5.8
+import Fcntl ':mode' unless defined &S_ISUID;	# but it is here in Perl 5.8
+	# but in Perl 5.10, both of these load, and cause errors!
+	# So we have to check for S_ISUID instead of S_ISDIR?  WTF?
 
 use bytes;  # Larry can take Unicode and shove it up his ass sideways.
             # Perl 5.8.0 causes us to start getting incomprehensible
             # errors about UTF-8 all over the place without this.
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.26 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.27 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -236,13 +238,13 @@ sub read_cache($) {
     $cache_file_name = "$ENV{HOME}/.xscreensaver-getimage.cache";
   }
 
+  print STDERR "$progname: awaiting lock: $cache_file_name\n"
+    if ($verbose > 1);
+
   my $file = $cache_file_name;
   open (CACHE_FILE, "+>>$file") || error ("unable to write $file: $!");
   flock (CACHE_FILE, LOCK_EX)   || error ("unable to lock $file: $!");
   seek (CACHE_FILE, 0, 0)       || error ("unable to rewind $file: $!");
-
-  print STDERR "$progname: reading cache $cache_file_name\n"
-    if ($verbose > 1);
 
   my $mtime = (stat(CACHE_FILE))[9];
 

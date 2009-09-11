@@ -171,7 +171,7 @@
 - GL: 				glblur -root				    \\n\
   GL: 				glsnake -root				    \\n\
 				halftone -root				    \\n\
--				juggle -root				    \\n\
+  GL: 				juggler3d -root				    \\n\
   GL: 				lavalite -root				    \\n\
 -				polyominoes -root			    \\n\
   GL: 				queens -root				    \\n\
@@ -198,13 +198,13 @@
 - GL: 				glslideshow -root			    \\n\
   GL: 				hypertorus -root			    \\n\
 - GL: 				jigglypuff -root			    \\n\
-  GL: 				klein -root				    \\n\
 				metaballs -root				    \\n\
   GL: 				mirrorblob -root			    \\n\
 				piecewise -root				    \\n\
   GL: 				polytopes -root				    \\n\
 				pong -root				    \\n\
 				popsquares -root			    \\n\
+  GL: 				surfaces -root				    \\n\
 				xanalogtv -root				    \\n\
 -				abstractile -root			    \\n\
 				anemotaxis -root			    \\n\
@@ -231,7 +231,6 @@
 				fiberlamp -root				    \\n\
   GL: 				fliptext -root				    \\n\
   GL: 				glhanoi -root				    \\n\
-  GL: 				juggler3d -root				    \\n\
   GL: 				tangram -root				    \\n\
   GL: 				timetunnel -root			    \\n\
   GL: 				glschool -root				    \\n\
@@ -245,9 +244,11 @@
   GL: 				moebiusgears -root			    \\n\
   GL: 				voronoi -root				    \\n\
   GL: 				hypnowheel -root			    \\n\
+  GL: 				klein -root				    \\n\
 -				lcdscrub -root				    \\n\
   GL: 				photopile -root				    \\n\
-  GL: 				skytentacles -root			    \\n",
+  GL: 				skytentacles -root			    \\n\
+  GL: 				rubikblocks -root			    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
 "XScreenSaver.initialDelay:		0:00:00",
@@ -338,6 +339,7 @@
 "*hacks.rd-bomb.name:        RDbomb",
 "*hacks.rdbomb.name:         RDbomb",
 "*hacks.rotzoomer.name:      RotZoomer",
+"*hacks.rubikblocks.name:    RubikBlocks",
 "*hacks.sballs.name:         SBalls",
 "*hacks.shadebobs.name:      ShadeBobs",
 "*hacks.sierpinski3d.name:   Sierpinski3D",

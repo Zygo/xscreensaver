@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-blinkbox 
+blinkbox \- shows a ball inside a box.
 .SH SYNOPSIS
 .B blinkbox
 [\-display \fIhost:display.screen\fP]

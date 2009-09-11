@@ -18,6 +18,7 @@
  * 21-Oct-2003:                           Renamed to mirrorblob
  * 10-Feb-2004:  jon.dowdall@bigpond.com  Added motion blur
  * 28-Jan-2006:  jon.dowdall@bigpond.com  Big clean up and bug fixes
+ * 13-Apr-2009:  jon.dowdall@gmail.com    Fixed Mac version
  *
  * The mirrorblob screensaver draws a pulsing blob on the screen.  Options
  * include adding a background (via screen_to_texture), texturing the blob,
@@ -35,16 +36,18 @@
 #include <math.h>
 
 #ifdef STANDALONE
-#define DEFAULTS \
-    "*delay:             " DEF_DELAY "\n" \
-    "*showFPS:           " DEF_FPS   "\n" \
-    "*useSHM:              True      \n"
+#define DEFAULTS "*delay:             " DEF_DELAY "\n"                      \
+                 "*showFPS:           " DEF_FPS   "\n"                      \
+                 "*useSHM:              True       \n"                      \
+                 "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n" \
+                 "*grabDesktopImages:   True  \n"                           \
+                 "*chooseRandomImages:  True  \n"
 
 # define refresh_mirrorblob 0
 /*
 # define mirrorblob_handle_event 0
 */
-# include "xlockmore.h"    /* from the xmirrorblob distribution */
+# include "xlockmore.h"
 #else /* !STANDALONE */
 # include "xlock.h"        /* from the xlockmore distribution */
 #endif /* !STANDALONE */
@@ -123,10 +126,10 @@ static XrmOptionDescRec opts[] = {
     {"+texture",          ".blob.texture",          XrmoptionNoArg, "false" },
     {"-colour",           ".blob.colour",           XrmoptionNoArg, "true" },
     {"+colour",           ".blob.colour",           XrmoptionNoArg, "false" },
-    {"-offset-texture",   ".blob.offsetTexture",   XrmoptionNoArg, "true" },
-    {"+offset-texture",   ".blob.offsetTexture",   XrmoptionNoArg, "false" },
-    {"-paint-background", ".blob.paintBackground", XrmoptionNoArg, "true" },
-    {"+paint-background", ".blob.paintBackground", XrmoptionNoArg, "false" },
+    {"-offset-texture",   ".blob.offsetTexture",    XrmoptionNoArg, "true" },
+    {"+offset-texture",   ".blob.offsetTexture",    XrmoptionNoArg, "false" },
+    {"-paint-background", ".blob.paintBackground",  XrmoptionNoArg, "true" },
+    {"+paint-background", ".blob.paintBackground",  XrmoptionNoArg, "false" },
     {"-resolution",       ".blob.resolution",       XrmoptionSepArg, NULL },
     {"-bumps",            ".blob.bumps",            XrmoptionSepArg, NULL },
     {"-motion-blur",      ".blob.motionBlur",       XrmoptionSepArg, 0 },
@@ -182,56 +185,55 @@ ModStruct   mirrorblob_description =
  "OpenGL mirrorblob", 0, NULL};
 #endif
 
-
 /*****************************************************************************
  * Types used in blob code
  *****************************************************************************/
 
 typedef struct
 {
-    GLdouble x, y;
+  GLdouble x, y;
 } Vector2D;
 
 typedef struct
 {
-    GLdouble x, y, z;
+  GLdouble x, y, z;
 } Vector3D;
 
 typedef struct
 {
-    GLdouble w;
-    GLdouble x;
-    GLdouble y;
-    GLdouble z;
+  GLdouble w;
+  GLdouble x;
+  GLdouble y;
+  GLdouble z;
 } Quaternion;
 
 typedef struct
 {
-    GLubyte red, green, blue, alpha;
+  GLubyte red, green, blue, alpha;
 } Colour;
 
 typedef struct
 {
-    Vector3D initial_position;
-    Vector3D position;
-    Vector3D normal;
+  Vector3D initial_position;
+  Vector3D position;
+  Vector3D normal;
 } Node_Data;
 
 typedef struct
 {
-    int node1, node2, node3;
-    Vector3D normal;
-    double length1, length2, length3;
+  int node1, node2, node3;
+  Vector3D normal;
+  double length1, length2, length3;
 } Face_Data;
 
 /* Structure to hold data about bumps used to distortion sphere */
 typedef struct
 {
-    double cx, cy, cpower, csize;
-    double ax, ay, power, size;
-    double mx, my, mpower, msize;
-    double vx, vy, vpower, vsize;
-    Vector3D pos;
+  double cx, cy, cpower, csize;
+  double ax, ay, power, size;
+  double mx, my, mpower, msize;
+  double vx, vy, vpower, vsize;
+  Vector3D pos;
 } Bump_Data;
 
 /* Vertices of a tetrahedron */
@@ -263,6 +265,7 @@ const Vector3D zero_vector = { 0.0, 0.0, 0.0 };
 
 typedef enum
 {
+  INITIALISING,
   HOLDING,
   LOADING,
   TRANSITIONING
@@ -349,11 +352,11 @@ double_time (void)
 static void
 reset_projection(int width, int height)
 {
-    glMatrixMode (GL_PROJECTION);
-    glLoadIdentity ();
-    gluPerspective (60.0, 1.0, 1.0, 1024.0 );
-    glMatrixMode (GL_MODELVIEW);
-    glLoadIdentity ();
+  glMatrixMode (GL_PROJECTION);
+  glLoadIdentity ();
+  gluPerspective (60.0, 1.0, 1.0, 1024.0 );
+  glMatrixMode (GL_MODELVIEW);
+  glLoadIdentity ();
 }
 
 /******************************************************************************
@@ -365,7 +368,7 @@ reset_projection(int width, int height)
 static inline double
 dot (const Vector3D u, const Vector3D v)
 {
-    return (u.x * v.x) + (u.y * v.y) + (u.z * v.z);
+  return (u.x * v.x) + (u.y * v.y) + (u.z * v.z);
 }
 
 /******************************************************************************
@@ -377,13 +380,13 @@ dot (const Vector3D u, const Vector3D v)
 static inline Vector3D
 cross (const Vector3D u, const Vector3D v)
 {
-    Vector3D result;
+  Vector3D result;
 
-    result.x = (u.y * v.z - u.z * v.y);
-    result.y = (u.z * v.x - u.x * v.z);
-    result.z = (u.x * v.y - u.y * v.x);
+  result.x = (u.y * v.z - u.z * v.y);
+  result.y = (u.z * v.x - u.x * v.z);
+  result.z = (u.x * v.y - u.y * v.x);
 
-    return result;
+  return result;
 }
 
 /******************************************************************************
@@ -393,9 +396,9 @@ cross (const Vector3D u, const Vector3D v)
 static inline void
 add (Vector3D *u, const Vector3D v)
 {
-    u->x = u->x + v.x;
-    u->y = u->y + v.y;
-    u->z = u->z + v.z;
+  u->x = u->x + v.x;
+  u->y = u->y + v.y;
+  u->z = u->z + v.z;
 }
 
 /******************************************************************************
@@ -405,13 +408,13 @@ add (Vector3D *u, const Vector3D v)
 static inline Vector3D
 subtract (const Vector3D u, const Vector3D v)
 {
-    Vector3D result;
+  Vector3D result;
 
-    result.x = u.x - v.x;
-    result.y = u.y - v.y;
-    result.z = u.z - v.z;
+  result.x = u.x - v.x;
+  result.y = u.y - v.y;
+  result.z = u.z - v.z;
 
-    return result;
+  return result;
 }
 
 /******************************************************************************
@@ -421,12 +424,12 @@ subtract (const Vector3D u, const Vector3D v)
 static inline Vector3D
 scale (const Vector3D v, const double s)
 {
-    Vector3D result;
+  Vector3D result;
     
-    result.x = v.x * s;
-    result.y = v.y * s;
-    result.z = v.z * s;
-    return result;
+  result.x = v.x * s;
+  result.y = v.y * s;
+  result.z = v.z * s;
+  return result;
 }
 
 /******************************************************************************
@@ -436,21 +439,21 @@ scale (const Vector3D v, const double s)
 static inline Vector3D
 normalise (const Vector3D v)
 {
-    Vector3D result;
-    double magnitude;
+  Vector3D result;
+  double magnitude;
 
-    magnitude = sqrt (dot(v, v));
+  magnitude = sqrt (dot(v, v));
 
-    if (magnitude > 1e-300)
+  if (magnitude > 1e-300)
     {
-        result = scale (v, 1.0 / magnitude);
+      result = scale (v, 1.0 / magnitude);
     }
-    else
+  else
     {
-        printf("zero\n");
-        result = zero_vector;
+      printf("zero\n");
+      result = zero_vector;
     }
-    return result;
+  return result;
 }
 
 /******************************************************************************
@@ -460,31 +463,31 @@ normalise (const Vector3D v)
 static void
 quaternion_transform (Quaternion q, GLdouble * transform)
 {
-    GLdouble x, y, z, w;
-    x = q.x;
-    y = q.y;
-    z = q.z;
-    w = q.w;
+  GLdouble x, y, z, w;
+  x = q.x;
+  y = q.y;
+  z = q.z;
+  w = q.w;
 
-    transform[0] = (w * w) + (x * x) - (y * y) - (z * z);
-    transform[1] = (2.0 * x * y) + (2.0 * w * z);
-    transform[2] = (2.0 * x * z) - (2.0 * w * y);
-    transform[3] = 0.0;
+  transform[0] = (w * w) + (x * x) - (y * y) - (z * z);
+  transform[1] = (2.0 * x * y) + (2.0 * w * z);
+  transform[2] = (2.0 * x * z) - (2.0 * w * y);
+  transform[3] = 0.0;
 
-    transform[4] = (2.0 * x * y) - (2.0 * w * z);
-    transform[5] = (w * w) - (x * x) + (y * y) - (z * z);
-    transform[6] = (2.0 * y * z) + (2.0 * w * x);
-    transform[7] = 0.0;
+  transform[4] = (2.0 * x * y) - (2.0 * w * z);
+  transform[5] = (w * w) - (x * x) + (y * y) - (z * z);
+  transform[6] = (2.0 * y * z) + (2.0 * w * x);
+  transform[7] = 0.0;
 
-    transform[8] = (2.0 * x * z) + (2.0 * w * y);
-    transform[9] = (2.0 * y * z) - (2.0 * w * x);
-    transform[10] = (w * w) - (x * x) - (y * y) + (z * z);
-    transform[11] = 0.0;
+  transform[8] = (2.0 * x * z) + (2.0 * w * y);
+  transform[9] = (2.0 * y * z) - (2.0 * w * x);
+  transform[10] = (w * w) - (x * x) - (y * y) + (z * z);
+  transform[11] = 0.0;
 
-    transform[12] = 0.0;
-    transform[13] = 0.0;
-    transform[14] = 0.0;
-    transform[15] = (w * w) + (x * x) + (y * y) + (z * z);
+  transform[12] = 0.0;
+  transform[13] = 0.0;
+  transform[14] = 0.0;
+  transform[15] = (w * w) + (x * x) + (y * y) + (z * z);
 }
 
 /******************************************************************************
@@ -494,13 +497,13 @@ quaternion_transform (Quaternion q, GLdouble * transform)
 static inline Vector3D
 vector_transform (Vector3D u, GLdouble * t)
 {
-    Vector3D result;
+  Vector3D result;
 
-    result.x = (u.x * t[0] + u.y * t[4] + u.z * t[8] + 1.0 * t[12]);
-    result.y = (u.x * t[1] + u.y * t[5] + u.z * t[9] + 1.0 * t[13]);
-    result.z = (u.x * t[2] + u.y * t[6] + u.z * t[10] + 1.0 * t[14]);
+  result.x = (u.x * t[0] + u.y * t[4] + u.z * t[8] + 1.0 * t[12]);
+  result.y = (u.x * t[1] + u.y * t[5] + u.z * t[9] + 1.0 * t[13]);
+  result.z = (u.x * t[2] + u.y * t[6] + u.z * t[10] + 1.0 * t[14]);
 
-    return result;
+  return result;
 }
 
 /******************************************************************************
@@ -511,32 +514,31 @@ vector_transform (Vector3D u, GLdouble * t)
 static Vector3D
 partial (Vector3D node1, Vector3D node2, double distance)
 {
-    Vector3D result;
-    Vector3D rotation_axis;
-    GLdouble transformation[16];
-    double angle;
-    Quaternion rotation;
+  Vector3D result;
+  Vector3D rotation_axis;
+  GLdouble transformation[16];
+  double angle;
+  Quaternion rotation;
 
-    rotation_axis = normalise (cross (node1, node2));
-    angle = acos (dot (node1, node2)) * distance;
+  rotation_axis = normalise (cross (node1, node2));
+  angle = acos (dot (node1, node2)) * distance;
 
-    rotation.x = rotation_axis.x * sin (angle / 2.0);
-    rotation.y = rotation_axis.y * sin (angle / 2.0);
-    rotation.z = rotation_axis.z * sin (angle / 2.0);
-    rotation.w = cos (angle / 2.0);
+  rotation.x = rotation_axis.x * sin (angle / 2.0);
+  rotation.y = rotation_axis.y * sin (angle / 2.0);
+  rotation.z = rotation_axis.z * sin (angle / 2.0);
+  rotation.w = cos (angle / 2.0);
 
-    quaternion_transform (rotation, transformation);
+  quaternion_transform (rotation, transformation);
 
-    result = vector_transform (node1, transformation);
+  result = vector_transform (node1, transformation);
 
-    return result;
+  return result;
 }
 
 /****************************************************************************
  *
- * Load a texture.
+ * Callback indicating a texture has loaded
  */
-
 static void
 image_loaded_cb (const char *filename, XRectangle *geometry,
                  int image_width, int image_height, 
@@ -573,18 +575,26 @@ image_loaded_cb (const char *filename, XRectangle *geometry,
   mp->first_image_p = True;
 }
 
-
+/* Load a new file into a texture
+ */
 static void
 grab_texture(ModeInfo *mi, int texture_index)
 {
   mirrorblobstruct *mp = &Mirrorblob[MI_SCREEN(mi)];
-
-  mp->waiting_for_image_p = True;
-  mp->mipmap_p = True;
-  load_texture_async (mi->xgwa.screen, mi->window,
-                      *mp->glx_context, 0, 0, mp->mipmap_p, 
-                      mp->textures[texture_index],
-                      image_loaded_cb, mp);
+	
+  {
+    int w = (MI_WIDTH(mi)  / 2) - 1;
+    int h = (MI_HEIGHT(mi) / 2) - 1;
+    if (w <= 10) w = 10;
+    if (h <= 10) h = 10;
+	
+    mp->waiting_for_image_p = True;
+    mp->mipmap_p = True;
+    load_texture_async (mi->xgwa.screen, mi->window,
+                        *mp->glx_context, w, h, mp->mipmap_p, 
+                        mp->textures[texture_index],
+                        image_loaded_cb, mp);
+  }
 }
 
 /******************************************************************************
@@ -595,30 +605,30 @@ grab_texture(ModeInfo *mi, int texture_index)
 static void
 set_parameters(void)
 {
-    /* In wire frame mode do not draw a texture */
-    if (wireframe)
+  /* In wire frame mode do not draw a texture */
+  if (wireframe)
     {
-        do_texture = False;
-        blend = 1.0;
+      do_texture = False;
+      blend = 1.0;
     }
     
-    /* Need to load textures if either the blob or the backgound has an image */
-    if (do_texture || do_paint_background)
+  /* Need to load textures if either the blob or the backgound has an image */
+  if (do_texture || do_paint_background)
     {
-        load_textures = True;
+      load_textures = True;
     }
-    else
+  else
     {
-        load_textures = False;
-    }
-    
-    /* If theres no texture don't calculate co-ordinates. */
-    if (!do_texture)
-    {
-        offset_texture = False;
+      load_textures = False;
     }
     
-    culling = True;
+  /* If theres no texture don't calculate co-ordinates. */
+  if (!do_texture)
+    {
+      offset_texture = False;
+    }
+    
+  culling = True;
 }
 
 /******************************************************************************
@@ -628,112 +638,101 @@ set_parameters(void)
 static void
 initialize_gl(ModeInfo *mi, GLsizei width, GLsizei height)
 {
-    mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
+  mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
     
-    /* Lighting values */
-    GLfloat ambientLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
+  /* Lighting values */
+  GLfloat ambientLight[] = { 0.2f, 0.2f, 0.2f, 1.0f };
 
-    GLfloat lightPos0[] = {500.0f, 100.0f, 200.0f, 1.0f };
-    GLfloat whiteLight0[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    GLfloat sourceLight0[] = { 0.6f, 0.6f, 0.6f, 1.0f };
-    GLfloat specularLight0[] = { 0.8f, 0.8f, 0.9f, 1.0f };
+  GLfloat lightPos0[] = {500.0f, 100.0f, 200.0f, 1.0f };
+  GLfloat whiteLight0[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+  GLfloat sourceLight0[] = { 0.6f, 0.6f, 0.6f, 1.0f };
+  GLfloat specularLight0[] = { 0.8f, 0.8f, 0.9f, 1.0f };
 
-    GLfloat lightPos1[] = {0.0f, -500.0f, 500.0f, 1.0f };
-    GLfloat whiteLight1[] = { 0.0f, 0.0f, 0.0f, 1.0f };
-    GLfloat sourceLight1[] = { 0.6f, 0.6f, 0.6f, 1.0f };
-    GLfloat specularLight1[] = { 0.7f, 0.7f, 0.7f, 1.0f };
+  GLfloat lightPos1[] = {-50.0f, -100.0f, 2500.0f, 1.0f };
+  GLfloat whiteLight1[] = { 0.0f, 0.0f, 0.0f, 1.0f };
+  GLfloat sourceLight1[] = { 0.6f, 0.6f, 0.6f, 1.0f };
+  GLfloat specularLight1[] = { 0.7f, 0.7f, 0.7f, 1.0f };
 
-    GLfloat specref[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+  GLfloat specref[] = { 1.0f, 1.0f, 1.0f, 1.0f };
 
-    GLfloat fogColor[4] = { 0.4, 0.4, 0.5, 0.1 };
+  GLfloat fogColor[4] = { 0.4, 0.4, 0.5, 0.1 };
 
-    /* Set the internal parameters based on the configuration settings */
-    set_parameters();
+  /* Set the internal parameters based on the configuration settings */
+  set_parameters();
 
-    /* Set the viewport to the width and heigh of the window */
-    glViewport (0, 0, width, height ); 
+  /* Set the viewport to the width and heigh of the window */
+  glViewport (0, 0, width, height ); 
 
-    if (do_antialias)
+  if (do_antialias)
     {
-        blend = 1.0;
-        glEnable(GL_LINE_SMOOTH);
-        glEnable(GL_POLYGON_SMOOTH);
+      blend = 1.0;
+      glEnable(GL_LINE_SMOOTH);
+      glEnable(GL_POLYGON_SMOOTH);
     }
 
-    /* The blend function is used for trasitioning between two images even when
-     * blend is not selected.
-     */
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  /* The blend function is used for trasitioning between two images even when
+   * blend is not selected.
+   */
+  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
  
-    if (do_fog)
+  if (do_fog)
     {
-        glEnable(GL_FOG);
-        glFogfv(GL_FOG_COLOR, fogColor);
-        glFogf(GL_FOG_DENSITY, 0.50);
-        glFogf(GL_FOG_START, 15.0);
-        glFogf(GL_FOG_END, 30.0);
+      glEnable(GL_FOG);
+      glFogfv(GL_FOG_COLOR, fogColor);
+      glFogf(GL_FOG_DENSITY, 0.50);
+      glFogf(GL_FOG_START, 15.0);
+      glFogf(GL_FOG_END, 30.0);
     }
 
-    /* Set the shading model to smooth (Gouraud shading). */
-    glShadeModel (GL_SMOOTH);
+  /* Set the shading model to smooth (Gouraud shading). */
+  glShadeModel (GL_SMOOTH);
 
-    /* Set the clear color. */
-    glClearColor( 0, 0, 0, 0 );
+  /* Set the clear color. */
+  glClearColor( 0, 0, 0, 0 );
 
-    glLightModelfv (GL_LIGHT_MODEL_AMBIENT, ambientLight);
-    glLightfv (GL_LIGHT0, GL_AMBIENT, whiteLight0);
-    glLightfv (GL_LIGHT0, GL_DIFFUSE, sourceLight0);
-    glLightfv (GL_LIGHT0, GL_SPECULAR, specularLight0);
-    glLightfv (GL_LIGHT0, GL_POSITION, lightPos0);
-    glEnable (GL_LIGHT0);
-    glLightfv (GL_LIGHT1, GL_AMBIENT, whiteLight1);
-    glLightfv (GL_LIGHT1, GL_DIFFUSE, sourceLight1);
-    glLightfv (GL_LIGHT1, GL_SPECULAR, specularLight1);
-    glLightfv (GL_LIGHT1, GL_POSITION, lightPos1);
-    glEnable (GL_LIGHT1);
-    glEnable (GL_LIGHTING);
+  glLightModelfv (GL_LIGHT_MODEL_AMBIENT, ambientLight);
+  glLightfv (GL_LIGHT0, GL_AMBIENT, whiteLight0);
+  glLightfv (GL_LIGHT0, GL_DIFFUSE, sourceLight0);
+  glLightfv (GL_LIGHT0, GL_SPECULAR, specularLight0);
+  glLightfv (GL_LIGHT0, GL_POSITION, lightPos0);
+  glEnable (GL_LIGHT0);
+  glLightfv (GL_LIGHT1, GL_AMBIENT, whiteLight1);
+  glLightfv (GL_LIGHT1, GL_DIFFUSE, sourceLight1);
+  glLightfv (GL_LIGHT1, GL_SPECULAR, specularLight1);
+  glLightfv (GL_LIGHT1, GL_POSITION, lightPos1);
+  glEnable (GL_LIGHT1);
+  glEnable (GL_LIGHTING);
 
-    /* Enable color tracking */
-    glEnable (GL_COLOR_MATERIAL);
+  /* Enable color tracking */
+  glEnable (GL_COLOR_MATERIAL);
 
-    /* Set Material properties to follow glColor values */
-    glColorMaterial (GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+  /* Set Material properties to follow glColor values */
+  glColorMaterial (GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
 
-    /* Set all materials to have specular reflectivity */
-    glMaterialfv (GL_FRONT, GL_SPECULAR, specref);
-    glMateriali (GL_FRONT, GL_SHININESS, 32);
+  /* Set all materials to have specular reflectivity */
+  glMaterialfv (GL_FRONT, GL_SPECULAR, specref);
+  glMateriali (GL_FRONT, GL_SHININESS, 32);
 
-    /* Let GL implementation scale normal vectors. */
-    glEnable (GL_NORMALIZE);
+  /* Let GL implementation scale normal vectors. */
+  glEnable (GL_NORMALIZE);
 
-    /* Enable Arrays */
-    if (load_textures)
+  /* Enable Arrays */
+  if (load_textures)
     {
-        glLightModeli (GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
-        glEnable (GL_TEXTURE_2D);
+      glLightModeli (GL_LIGHT_MODEL_COLOR_CONTROL, GL_SEPARATE_SPECULAR_COLOR);
+      glEnable (GL_TEXTURE_2D);
 
-        gp->current_texture = 0;
-        glGenTextures (NUM_TEXTURES, gp->textures);
-        grab_texture (mi, gp->current_texture);
+      gp->current_texture = 0;
+      glGenTextures(NUM_TEXTURES, gp->textures);
+      grab_texture(mi, gp->current_texture);
 
-        if (do_texture)
-        {
-            glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-        }
-        glMatrixMode (GL_TEXTURE);
-        glRotated (180.0, 1.0, 0.0, 0.0);
-        glMatrixMode (GL_MODELVIEW);
+      glMatrixMode (GL_TEXTURE);
+      glRotated (180.0, 1.0, 0.0, 0.0);
+      glMatrixMode (GL_MODELVIEW);
     }
 
-    if (do_colour)
-    {
-        glEnableClientState (GL_COLOR_ARRAY);
-    }
-    glEnableClientState (GL_NORMAL_ARRAY);
-    glEnableClientState (GL_VERTEX_ARRAY);
-
-    /* Clear the buffer since this is not done during a draw with motion blur */
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+  /* Clear the buffer since this is not done during a draw with motion blur */
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 /******************************************************************************
@@ -743,53 +742,53 @@ initialize_gl(ModeInfo *mi, GLsizei width, GLsizei height)
 static void
 set_blob_gl_state(GLdouble alpha)
 {
-    if (do_antialias)
+  if (do_antialias)
     {
-        glEnable(GL_LINE_SMOOTH);
-        glEnable(GL_POLYGON_SMOOTH);
+      glEnable(GL_LINE_SMOOTH);
+      glEnable(GL_POLYGON_SMOOTH);
     }
 
-    if (wireframe)
+  if (wireframe)
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
-    else
+  else
     {
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 
-    /* The blend function is used for trasitioning between two images even when
-     * blend is not selected.
-     */
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  /* The blend function is used for trasitioning between two images even when
+   * blend is not selected.
+   */
+  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
  
-    /* Culling. */
-    if (culling)
+  /* Culling. */
+  if (culling)
     {
-        glCullFace (GL_BACK);
-        glEnable (GL_CULL_FACE);
-        glFrontFace (GL_CCW);
+      glCullFace (GL_BACK);
+      glEnable (GL_CULL_FACE);
+      glFrontFace (GL_CCW);
     }
-    else
+  else
     {
-        glDisable (GL_CULL_FACE);
-    }
-    
-    if (blend < 1.0)
-    {
-        glEnable (GL_BLEND);
-        glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        /* Set the default blob colour to off-white. */
-        glColor4d (0.9, 0.9, 1.0, alpha);
-    }
-    else
-    {
-        glDisable(GL_BLEND);
-        glColor4d (0.9, 0.9, 1.0, 1.0);
+      glDisable (GL_CULL_FACE);
     }
     
-    glEnable(GL_DEPTH_TEST);
-    glEnable(GL_LIGHTING);
+  if (blend < 1.0)
+    {
+      glEnable (GL_BLEND);
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      /* Set the default blob colour to off-white. */
+      glColor4d (0.9, 0.9, 1.0, alpha);
+    }
+  else
+    {
+      glDisable(GL_BLEND);
+      glColor4d (0.9, 0.9, 1.0, 1.0);
+    }
+    
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_LIGHTING);
 }
 
 /******************************************************************************
@@ -805,326 +804,318 @@ initialise_blob(mirrorblobstruct *gp,
                 int height,
                 int bump_array_size)
 {
-     /* Loop variables */    
-    int i, u, v, node, side, face, base, base2 = 0;
-    int nodes_on_edge = resolution;
-    Vector3D node1, node2, result;
+  /* Loop variables */    
+  int i, u, v, node, side, face, base, base2 = 0;
+  int nodes_on_edge = resolution;
+  Vector3D node1, node2, result;
 
-    if (nodes_on_edge < 2)
-        return -1;
+  if (nodes_on_edge < 2)
+    return -1;
 
-    gp->num_nodes = 2 * nodes_on_edge * nodes_on_edge - 4 * nodes_on_edge + 4;
-    gp->num_faces = 4 * (nodes_on_edge - 1) * (nodes_on_edge - 1);
+  gp->num_nodes = 2 * nodes_on_edge * nodes_on_edge - 4 * nodes_on_edge + 4;
+  gp->num_faces = 4 * (nodes_on_edge - 1) * (nodes_on_edge - 1);
  
-    gp->nodes = (Node_Data *) malloc (gp->num_nodes * sizeof (Node_Data));
-    if (!gp->nodes)
+  gp->nodes = (Node_Data *) malloc (gp->num_nodes * sizeof (Node_Data));
+  if (!gp->nodes)
     {
-        fprintf (stderr, "Couldn't allocate gp->nodes buffer\n");
-        return -1;
+      fprintf (stderr, "Couldn't allocate gp->nodes buffer\n");
+      return -1;
     }
 
-    gp->faces = (Face_Data *) malloc (gp->num_faces * sizeof (Face_Data));
-    if (!gp->faces)
+  gp->faces = (Face_Data *) malloc (gp->num_faces * sizeof (Face_Data));
+  if (!gp->faces)
     {
-        fprintf (stderr, "Couldn't allocate faces data buffer\n");
-        return -1;
+      fprintf (stderr, "Couldn't allocate faces data buffer\n");
+      return -1;
     }
 
-    gp->bump_data = (Bump_Data *) malloc (bumps * sizeof (Bump_Data));
-    if (!gp->bump_data)
+  gp->bump_data = (Bump_Data *) malloc (bumps * sizeof (Bump_Data));
+  if (!gp->bump_data)
     {
-        fprintf(stderr, "Couldn't allocate bump data buffer\n");
-        return -1;
+      fprintf(stderr, "Couldn't allocate bump data buffer\n");
+      return -1;
     }
 
-    gp->bump_shape = (double *)malloc(bump_array_size * sizeof(double));
-    if (!gp->bump_shape)
+  gp->bump_shape = (double *)malloc(bump_array_size * sizeof(double));
+  if (!gp->bump_shape)
     {
-        fprintf(stderr, "Couldn't allocate bump buffer\n");
-        return -1;
+      fprintf(stderr, "Couldn't allocate bump buffer\n");
+      return -1;
     }
 
-    gp->wall_shape = (double *)malloc(bump_array_size * sizeof(double));
-    if (!gp->wall_shape)
+  gp->wall_shape = (double *)malloc(bump_array_size * sizeof(double));
+  if (!gp->wall_shape)
     {
-        fprintf(stderr, "Couldn't allocate wall bump buffer\n");
-        return -1;
+      fprintf(stderr, "Couldn't allocate wall bump buffer\n");
+      return -1;
     }
 
-    gp->dots = (Vector3D *)malloc(gp->num_nodes * sizeof(Vector3D));
-    if (!gp->dots)
+	
+  gp->dots = (Vector3D *)malloc(gp->num_nodes * sizeof(Vector3D));
+  if (!gp->dots)
     {
-        fprintf(stderr, "Couldn't allocate nodes buffer\n");
-        return -1;
+      fprintf(stderr, "Couldn't allocate nodes buffer\n");
+      return -1;
     }
-    glVertexPointer (3, GL_DOUBLE, 0, (GLvoid *) gp->dots);
 
-    gp->normals = (Vector3D *)malloc(gp->num_nodes * sizeof(Vector3D));
-    if (!gp->normals)
+  gp->normals = (Vector3D *)malloc(gp->num_nodes * sizeof(Vector3D));
+  if (!gp->normals)
     {
-        fprintf(stderr, "Couldn't allocate normals buffer\n");
-        return -1;
+      fprintf(stderr, "Couldn't allocate normals buffer\n");
+      return -1;
     }
-    glNormalPointer (GL_DOUBLE, 0, (GLvoid *) gp->normals);
 
-    if (do_colour)
+  gp->colours = (Colour *)malloc(gp->num_nodes * sizeof(Colour));
+  if (!gp->colours)
     {
-        gp->colours = (Colour *)malloc(gp->num_nodes * sizeof(Colour));
-        if (!gp->colours)
+      fprintf(stderr, "Couldn't allocate colours buffer\n");
+      return -1;
+    }
+
+  gp->tex_coords = (Vector2D *)malloc(gp->num_nodes * sizeof(Vector2D));
+  if (!gp->tex_coords)
+    {
+      fprintf(stderr, "Couldn't allocate gp->tex_coords buffer\n");
+      return -1;
+    }
+
+	
+  /* Initialise bump data */
+  for (i = 0; i < bumps; i++)
+    {
+      gp->bump_data[i].ax = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
+      gp->bump_data[i].ay = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
+      gp->bump_data[i].power = (5.0 / pow(bumps, 0.75)) * (((double)random() / (double)RAND_MAX) - 0.5);
+      gp->bump_data[i].size = 0.1 + 0.5 * (((double)random() / (double)RAND_MAX));
+
+      gp->bump_data[i].pos.x = 1.5 * sin(PI * gp->bump_data[i].ay)
+        * cos(PI *  gp->bump_data[i].ax);
+      gp->bump_data[i].pos.y = 1.5 * cos(PI * gp->bump_data[i].ay);
+      gp->bump_data[i].pos.z = 1.5 * sin(PI * gp->bump_data[i].ay)
+        * sin(PI *  gp->bump_data[i].ax);
+
+      gp->bump_data[i].cx = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
+      gp->bump_data[i].cy = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
+      gp->bump_data[i].cpower = (5.0 / pow(bumps, 0.75)) * (((double)random() / (double)RAND_MAX) - 0.5);
+      gp->bump_data[i].csize = 0.35; /*0.1 + 0.25 * (((double)random() / (double)RAND_MAX));*/
+
+      gp->bump_data[i].vx = 0.0;
+      gp->bump_data[i].vy = 0.0;
+      gp->bump_data[i].vpower = 0.0;
+      gp->bump_data[i].vsize = 0.0;
+
+      gp->bump_data[i].mx = 0.003 * ((double)random() / (double)RAND_MAX);
+      gp->bump_data[i].my = 0.003 * ((double)random() / (double)RAND_MAX);
+      gp->bump_data[i].mpower = 0.003 * ((double)random() / (double)RAND_MAX);
+      gp->bump_data[i].msize = 0.003 * ((double)random() / (double)RAND_MAX);
+    }
+
+  /* Initialise lookup table of bump strength */
+  for (i = 0; i < bump_array_size; i++)
+    {
+      double xd, xd2;
+      xd = i / (double)bump_array_size;
+
+      xd2 = 48.0 * xd * xd;
+      gp->bump_shape[i] = 0.1 / (xd2 + 0.1);
+
+      xd2 = 40.0 * xd * xd * xd * xd;
+      gp->wall_shape[i] = 0.4 / (xd2 + 0.1);
+    }
+
+  node = 0;
+  face = 0;
+  for (side = 0; side < 4; side++)
+    {
+      base = node;
+      if (side == 2) 
         {
-            fprintf(stderr, "Couldn't allocate colours buffer\n");
-            return -1;
+          base2 = node;
         }
-        glColorPointer (4, GL_UNSIGNED_BYTE, 0, (GLvoid *) gp->colours);
-    }
-
-    if (do_texture)
-    {
-        gp->tex_coords = (Vector2D *)malloc(gp->num_nodes * sizeof(Vector2D));
-        if (!gp->tex_coords)
+      /*
+       * The start and end of the for loops below are modified based on the 
+       * side of the tetrahedron that is being calculated to avoid duplication
+       * of the gp->nodes that are on the edges of the tetrahedron. 
+       */
+      for (u = (side > 1); u < (nodes_on_edge - (side > 0)); u++)
         {
-            fprintf(stderr, "Couldn't allocate gp->tex_coords buffer\n");
-            return -1;
-        }
-        glTexCoordPointer (2, GL_DOUBLE, 0, (GLvoid *) gp->tex_coords);
-    }
+          node1 = partial (normalise (tetrahedron[side][0]),
+                           normalise (tetrahedron[side][1]),
+                           u / (double) (nodes_on_edge - 1));
+          node2 = partial (normalise (tetrahedron[side][0]),
+                           normalise (tetrahedron[side][2]),
+                           u / (double) (nodes_on_edge - 1));
 
-    /* Initialise bump data */
-    for (i = 0; i < bumps; i++)
-    {
-        gp->bump_data[i].ax = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
-        gp->bump_data[i].ay = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
-        gp->bump_data[i].power = (5.0 / pow(bumps, 0.75)) * (((double)random() / (double)RAND_MAX) - 0.5);
-        gp->bump_data[i].size = 0.1 + 0.5 * (((double)random() / (double)RAND_MAX));
-
-        gp->bump_data[i].pos.x = 1.5 * sin(PI * gp->bump_data[i].ay)
-            * cos(PI *  gp->bump_data[i].ax);
-        gp->bump_data[i].pos.y = 1.5 * cos(PI * gp->bump_data[i].ay);
-        gp->bump_data[i].pos.z = 1.5 * sin(PI * gp->bump_data[i].ay)
-            * sin(PI *  gp->bump_data[i].ax);
-
-        gp->bump_data[i].cx = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
-        gp->bump_data[i].cy = 2.0 * (((double)random() / (double)RAND_MAX) - 0.5);
-        gp->bump_data[i].cpower = (5.0 / pow(bumps, 0.75)) * (((double)random() / (double)RAND_MAX) - 0.5);
-        gp->bump_data[i].csize = 0.35; /*0.1 + 0.25 * (((double)random() / (double)RAND_MAX));*/
-
-        gp->bump_data[i].vx = 0.0;
-        gp->bump_data[i].vy = 0.0;
-        gp->bump_data[i].vpower = 0.0;
-        gp->bump_data[i].vsize = 0.0;
-
-        gp->bump_data[i].mx = 0.003 * ((double)random() / (double)RAND_MAX);
-        gp->bump_data[i].my = 0.003 * ((double)random() / (double)RAND_MAX);
-        gp->bump_data[i].mpower = 0.003 * ((double)random() / (double)RAND_MAX);
-        gp->bump_data[i].msize = 0.003 * ((double)random() / (double)RAND_MAX);
-    }
-
-    /* Initialise lookup table of bump strength */
-    for (i = 0; i < bump_array_size; i++)
-    {
-        double xd, xd2;
-        xd = i / (double)bump_array_size;
-
-        xd2 = 48.0 * xd * xd;
-        gp->bump_shape[i] = 0.1 / (xd2 + 0.1);
-
-        xd2 = 40.0 * xd * xd * xd * xd;
-        gp->wall_shape[i] = 0.4 / (xd2 + 0.1);
-    }
-
-    node = 0;
-    face = 0;
-    for (side = 0; side < 4; side++)
-    {
-        base = node;
-        if (side == 2) 
-        {
-            base2 = node;
-        }
-        /*
-         * The start and end of the for loops below are modified based on the 
-         * side of the tetrahedron that is being calculated to avoid duplication
-         * of the gp->nodes that are on the edges of the tetrahedron. 
-         */
-        for (u = (side > 1); u < (nodes_on_edge - (side > 0)); u++)
-        {
-            node1 = partial (normalise (tetrahedron[side][0]),
-                              normalise (tetrahedron[side][1]),
-                              u / (double) (nodes_on_edge - 1));
-            node2 = partial (normalise (tetrahedron[side][0]),
-                              normalise (tetrahedron[side][2]),
-                              u / (double) (nodes_on_edge - 1));
-
-            for (v = (side > 1); v <= (u - (side > 2)); v++)
+          for (v = (side > 1); v <= (u - (side > 2)); v++)
             {
-                if (u > 0)
-                    result = partial (node1, node2, v / (double) u);
+              if (u > 0)
+                result = partial (node1, node2, v / (double) u);
+              else
+                result = node1;
+
+              gp->nodes[node].position = normalise (result);
+              gp->nodes[node].initial_position = gp->nodes[node].position;
+              gp->nodes[node].normal = zero_vector;
+              node++;
+            }
+        }
+ 
+      /*
+       * Determine which nodes make up each face.  The complexity is caused 
+       * by having to determine the correct nodes for the edges of the
+       * tetrahedron since the common nodes on the edges are only calculated
+       * once (see above).
+       */
+      for (u = 0; u < (nodes_on_edge - 1); u++)
+        {
+          for (v = 0; v <= u; v++)
+            {
+              {
+                if (side < 2)
+                  {
+                    gp->faces[face].node1 = base + ((u * (u + 1)) / 2) + v;
+                    gp->faces[face].node2 =
+                      base + ((u + 1) * (u + 2)) / 2 + v + 1;
+                    gp->faces[face].node3 =
+                      base + ((u + 1) * (u + 2)) / 2 + v;
+
+                    if ((side == 1) && (u == (nodes_on_edge - 2)))
+                      {
+                        gp->faces[face].node3 =
+                          ((u + 1) * (u + 2)) / 2 +
+                          nodes_on_edge - v - 1;
+                        gp->faces[face].node2 =
+                          ((u + 1) * (u + 2)) / 2 +
+                          nodes_on_edge - v - 2;
+                      }
+                  }
+                else if (side < 3)
+                  {
+                    gp->faces[face].node1 =
+                      base + (((u - 1) * u) / 2) + v - 1;
+                    gp->faces[face].node2 = base + ((u) * (u + 1)) / 2 + v;
+                    gp->faces[face].node3 =
+                      base + ((u) * (u + 1)) / 2 + v - 1;
+
+                    if (u == (nodes_on_edge - 2))
+                      {
+                        int n = nodes_on_edge - v - 1;
+                        gp->faces[face].node2 =
+                          ((nodes_on_edge *
+                            (nodes_on_edge + 1)) / 2) +
+                          ((n - 1) * (n + 0)) / 2;
+                        gp->faces[face].node3 =
+                          ((nodes_on_edge *
+                            (nodes_on_edge + 1)) / 2) +
+                          ((n + 0) * (n + 1)) / 2;
+                      }
+                    if (v == 0)
+                      {
+                        gp->faces[face].node1 = (((u + 1) * (u + 2)) / 2) - 1;
+                        gp->faces[face].node3 = (((u + 2) * (u + 3)) / 2) - 1;
+                      }
+                  }
                 else
-                    result = node1;
+                  {
+                    gp->faces[face].node1 =
+                      base + (((u - 2) * (u - 1)) / 2) + v - 1;
+                    gp->faces[face].node2 = base + ((u - 1) * u) / 2 + v;
+                    gp->faces[face].node3 = base + ((u - 1) * u) / 2 + v - 1;
 
-                gp->nodes[node].position = normalise (result);
-                gp->nodes[node].initial_position = gp->nodes[node].position;
-                gp->nodes[node].normal = zero_vector;
-                node++;
-            }
-        }
- 
-        /*
-         * Determine which nodes make up each face.  The complexity is caused 
-         * by having to determine the correct nodes for the edges of the
-         * tetrahedron since the common nodes on the edges are only calculated
-         * once (see above).
-         */
-        for (u = 0; u < (nodes_on_edge - 1); u++)
-        {
-            for (v = 0; v <= u; v++)
-            {
+                    if (v == 0)
+                      {
+                        gp->faces[face].node1 =
+                          base2 + ((u * (u + 1)) / 2) - 1;
+                        gp->faces[face].node3 =
+                          base2 + ((u + 1) * (u + 2)) / 2 - 1;
+                      }
+                    if (u == (nodes_on_edge - 2))
+                      {
+                        gp->faces[face].node3 =
+                          ((nodes_on_edge *
+                            (nodes_on_edge + 1)) / 2) +
+                          ((v + 1) * (v + 2)) / 2 - 1;
+                        gp->faces[face].node2 =
+                          ((nodes_on_edge *
+                            (nodes_on_edge + 1)) / 2) +
+                          ((v + 2) * (v + 3)) / 2 - 1;
+                      }
+                    if (v == u)
+                      {
+                        gp->faces[face].node1 = (u * (u + 1)) / 2;
+                        gp->faces[face].node2 = ((u + 1) * (u + 2)) / 2;
+                      }
+                  }
+                face++;
+              }
+
+              if (v < u)
                 {
-                    if (side < 2)
+                  if (side < 2)
                     {
-                        gp->faces[face].node1 = base + ((u * (u + 1)) / 2) + v;
-                        gp->faces[face].node2 =
-                            base + ((u + 1) * (u + 2)) / 2 + v + 1;
-                        gp->faces[face].node3 =
-                            base + ((u + 1) * (u + 2)) / 2 + v;
+                      gp->faces[face].node1 = base + ((u * (u + 1)) / 2) + v;
+                      gp->faces[face].node2 =
+                        base + ((u * (u + 1)) / 2) + v + 1;
+                      gp->faces[face].node3 =
+                        base + (((u + 1) * (u + 2)) / 2) + v + 1;
 
-                        if ((side == 1) && (u == (nodes_on_edge - 2)))
+                      if ((side == 1) && (u == (nodes_on_edge - 2)))
                         {
-                            gp->faces[face].node3 =
-                                ((u + 1) * (u + 2)) / 2 +
-                                nodes_on_edge - v - 1;
-                            gp->faces[face].node2 =
-                                ((u + 1) * (u + 2)) / 2 +
-                                nodes_on_edge - v - 2;
+                          gp->faces[face].node3 =
+                            ((u + 1) * (u + 2)) / 2 +
+                            nodes_on_edge - v - 2;
                         }
                     }
-                    else if (side < 3)
+                  else if (side < 3)
                     {
-                        gp->faces[face].node1 =
-                            base + (((u - 1) * u) / 2) + v - 1;
-                        gp->faces[face].node2 = base + ((u) * (u + 1)) / 2 + v;
-                        gp->faces[face].node3 =
-                            base + ((u) * (u + 1)) / 2 + v - 1;
+                      gp->faces[face].node1 =
+                        base + ((u * (u - 1)) / 2) + v - 1;
+                      gp->faces[face].node2 = base + ((u * (u - 1)) / 2) + v;
+                      gp->faces[face].node3 = base + ((u * (u + 1)) / 2) + v;
 
-                        if (u == (nodes_on_edge - 2))
+                      if (u == (nodes_on_edge - 2))
                         {
-                            int n = nodes_on_edge - v - 1;
-                            gp->faces[face].node2 =
-                                ((nodes_on_edge *
-                                  (nodes_on_edge + 1)) / 2) +
-                                ((n - 1) * (n + 0)) / 2;
-                            gp->faces[face].node3 =
-                                ((nodes_on_edge *
-                                  (nodes_on_edge + 1)) / 2) +
-                                ((n + 0) * (n + 1)) / 2;
+                          int n = nodes_on_edge - v - 1;
+                          gp->faces[face].node3 =
+                            ((nodes_on_edge *
+                              (nodes_on_edge + 1)) / 2) +
+                            ((n + 0) * (n - 1)) / 2;
                         }
-                        if (v == 0)
+                      if (v == 0)
                         {
-                            gp->faces[face].node1 = (((u + 1) * (u + 2)) / 2) - 1;
-                            gp->faces[face].node3 = (((u + 2) * (u + 3)) / 2) - 1;
+                          gp->faces[face].node1 = (((u + 1) * (u + 2)) / 2) - 1;
                         }
                     }
-                    else
+                  else
                     {
-                        gp->faces[face].node1 =
-                            base + (((u - 2) * (u - 1)) / 2) + v - 1;
-                        gp->faces[face].node2 = base + ((u - 1) * u) / 2 + v;
-                        gp->faces[face].node3 = base + ((u - 1) * u) / 2 + v - 1;
+                      gp->faces[face].node1 =
+                        base + (((u - 2) * (u - 1)) / 2) + v - 1;
+                      gp->faces[face].node2 =
+                        base + (((u - 2) * (u - 1)) / 2) + v;
+                      gp->faces[face].node3 = base + (((u - 1) * u) / 2) + v;
 
-                        if (v == 0)
+                      if (v == 0)
                         {
-                            gp->faces[face].node1 =
-                                base2 + ((u * (u + 1)) / 2) - 1;
-                            gp->faces[face].node3 =
-                                base2 + ((u + 1) * (u + 2)) / 2 - 1;
+                          gp->faces[face].node1 = base2 + (u * (u + 1)) / 2 - 1;
                         }
-                        if (u == (nodes_on_edge - 2))
+                      if (u == (nodes_on_edge - 2))
                         {
-                            gp->faces[face].node3 =
-                                ((nodes_on_edge *
-                                  (nodes_on_edge + 1)) / 2) +
-                                ((v + 1) * (v + 2)) / 2 - 1;
-                            gp->faces[face].node2 =
-                                ((nodes_on_edge *
-                                  (nodes_on_edge + 1)) / 2) +
-                                ((v + 2) * (v + 3)) / 2 - 1;
+                          gp->faces[face].node3 =
+                            ((nodes_on_edge * (nodes_on_edge + 1)) / 2) +
+                            ((v + 2) * (v + 3)) / 2 - 1;
                         }
-                        if (v == u)
+                      if (v == (u - 1))
                         {
-                            gp->faces[face].node1 = (u * (u + 1)) / 2;
-                            gp->faces[face].node2 = ((u + 1) * (u + 2)) / 2;
+                          gp->faces[face].node2 = (u * (u + 1)) / 2;
                         }
                     }
-                    face++;
-                }
-
-                if (v < u)
-                {
-                    if (side < 2)
-                    {
-                        gp->faces[face].node1 = base + ((u * (u + 1)) / 2) + v;
-                        gp->faces[face].node2 =
-                            base + ((u * (u + 1)) / 2) + v + 1;
-                        gp->faces[face].node3 =
-                            base + (((u + 1) * (u + 2)) / 2) + v + 1;
-
-                        if ((side == 1) && (u == (nodes_on_edge - 2)))
-                        {
-                            gp->faces[face].node3 =
-                                ((u + 1) * (u + 2)) / 2 +
-                                nodes_on_edge - v - 2;
-                        }
-                    }
-                    else if (side < 3)
-                    {
-                        gp->faces[face].node1 =
-                            base + ((u * (u - 1)) / 2) + v - 1;
-                        gp->faces[face].node2 = base + ((u * (u - 1)) / 2) + v;
-                        gp->faces[face].node3 = base + ((u * (u + 1)) / 2) + v;
-
-                        if (u == (nodes_on_edge - 2))
-                        {
-                            int n = nodes_on_edge - v - 1;
-                            gp->faces[face].node3 =
-                                ((nodes_on_edge *
-                                  (nodes_on_edge + 1)) / 2) +
-                                ((n + 0) * (n - 1)) / 2;
-                        }
-                        if (v == 0)
-                        {
-                            gp->faces[face].node1 = (((u + 1) * (u + 2)) / 2) - 1;
-                        }
-                    }
-                    else
-                    {
-                        gp->faces[face].node1 =
-                            base + (((u - 2) * (u - 1)) / 2) + v - 1;
-                        gp->faces[face].node2 =
-                            base + (((u - 2) * (u - 1)) / 2) + v;
-                        gp->faces[face].node3 = base + (((u - 1) * u) / 2) + v;
-
-                        if (v == 0)
-                        {
-                            gp->faces[face].node1 = base2 + (u * (u + 1)) / 2 - 1;
-                        }
-                        if (u == (nodes_on_edge - 2))
-                        {
-                            gp->faces[face].node3 =
-                                ((nodes_on_edge * (nodes_on_edge + 1)) / 2) +
-                                ((v + 2) * (v + 3)) / 2 - 1;
-                        }
-                        if (v == (u - 1))
-                        {
-                            gp->faces[face].node2 = (u * (u + 1)) / 2;
-                        }
-                    }
-                    face++;
+                  face++;
                 }
             }
         }
     }
 
-    return 0;
+  return 0;
 }
 
 /******************************************************************************
@@ -1134,7 +1125,7 @@ initialise_blob(mirrorblobstruct *gp,
 static inline double
 length (Vector3D u)
 {
-    return sqrt (u.x * u.x + u.y * u.y + u.z * u.z);
+  return sqrt (u.x * u.x + u.y * u.y + u.z * u.z);
 }
 
 /******************************************************************************
@@ -1149,198 +1140,267 @@ calc_blob(mirrorblobstruct *gp,
           float limit,
           double fade)
 {
-    /* Loop variables */
-    int i, index, face;
-    /* position of a node */
-    Vector3D node;
-    Vector3D offset;
-    Vector3D bump_vector;
-    int dist;
+  /* Loop variables */
+  int i, index, face;
+  /* position of a node */
+  Vector3D node;
+  Vector3D offset;
+  Vector3D bump_vector;
+  int dist;
 
-    /* Update position and strength of bumps used to distort the blob */
-    for (i = 0; i < bumps; i++)
+  /* Update position and strength of bumps used to distort the blob */
+  for (i = 0; i < bumps; i++)
     {
-        gp->bump_data[i].vx += gp->bump_data[i].mx*(gp->bump_data[i].cx - gp->bump_data[i].ax);
-        gp->bump_data[i].vy += gp->bump_data[i].my*(gp->bump_data[i].cy - gp->bump_data[i].ay);
-        gp->bump_data[i].vpower += gp->bump_data[i].mpower
-            * (gp->bump_data[i].cpower - gp->bump_data[i].power);
-        gp->bump_data[i].vsize += gp->bump_data[i].msize
-            * (gp->bump_data[i].csize - gp->bump_data[i].size);
+      gp->bump_data[i].vx += gp->bump_data[i].mx*(gp->bump_data[i].cx - gp->bump_data[i].ax);
+      gp->bump_data[i].vy += gp->bump_data[i].my*(gp->bump_data[i].cy - gp->bump_data[i].ay);
+      gp->bump_data[i].vpower += gp->bump_data[i].mpower
+        * (gp->bump_data[i].cpower - gp->bump_data[i].power);
+      gp->bump_data[i].vsize += gp->bump_data[i].msize
+        * (gp->bump_data[i].csize - gp->bump_data[i].size);
 
-        gp->bump_data[i].ax += 0.1 * gp->bump_data[i].vx;
-        gp->bump_data[i].ay += 0.1 * gp->bump_data[i].vy;
-        gp->bump_data[i].power += 0.1 * gp->bump_data[i].vpower;
-        gp->bump_data[i].size += 0.1 * gp->bump_data[i].vsize;
+      gp->bump_data[i].ax += 0.1 * gp->bump_data[i].vx;
+      gp->bump_data[i].ay += 0.1 * gp->bump_data[i].vy;
+      gp->bump_data[i].power += 0.1 * gp->bump_data[i].vpower;
+      gp->bump_data[i].size += 0.1 * gp->bump_data[i].vsize;
 
-        gp->bump_data[i].pos.x = 1.0 * sin(PI * gp->bump_data[i].ay)
-            * cos(PI * gp->bump_data[i].ax);
-        gp->bump_data[i].pos.y = 1.0 * cos(PI * gp->bump_data[i].ay);
-        gp->bump_data[i].pos.z = 1.0 * sin(PI * gp->bump_data[i].ay)
-            * sin(PI * gp->bump_data[i].ax);
+      gp->bump_data[i].pos.x = 1.0 * sin(PI * gp->bump_data[i].ay)
+        * cos(PI * gp->bump_data[i].ax);
+      gp->bump_data[i].pos.y = 1.0 * cos(PI * gp->bump_data[i].ay);
+      gp->bump_data[i].pos.z = 1.0 * sin(PI * gp->bump_data[i].ay)
+        * sin(PI * gp->bump_data[i].ax);
     }
 
-    /* Update calculate new position for each vertex based on an offset from
-     * the initial position
-     */
-    gp->blob_force = zero_vector;
-    for (index = 0; index < gp->num_nodes; ++index)
+  /* Update calculate new position for each vertex based on an offset from
+   * the initial position
+   */
+  gp->blob_force = zero_vector;
+  for (index = 0; index < gp->num_nodes; ++index)
     {
-        node = gp->nodes[index].initial_position;
-        gp->nodes[index].normal = zero_vector;
+      node = gp->nodes[index].initial_position;
+      gp->nodes[index].normal = node;
 
-        offset = zero_vector;
-        for ( i = 0; i < bumps; i++)
+      offset = zero_vector;
+      for ( i = 0; i < bumps; i++)
         {
-            bump_vector = subtract(gp->bump_data[i].pos, node);
+          bump_vector = subtract(gp->bump_data[i].pos, node);
 
-            dist = bump_array_size * dot(bump_vector, bump_vector) * gp->bump_data[i].size;
+          dist = bump_array_size * dot(bump_vector, bump_vector) * gp->bump_data[i].size;
 
-            if (dist < bump_array_size)
+          if (dist < bump_array_size)
             {
-                add(&offset, scale(node, gp->bump_data[i].power * gp->bump_shape[dist]));
-                add(&gp->blob_force, scale(node, gp->bump_data[i].power * gp->bump_shape[dist]));
+              add(&offset, scale(node, gp->bump_data[i].power * gp->bump_shape[dist]));
+              add(&gp->blob_force, scale(node, gp->bump_data[i].power * gp->bump_shape[dist]));
             }
         }
 
-        add(&node, offset);
-        node = scale(node, zoom);
-        add(&node, gp->blob_center);
+      add(&node, offset);
+      node = scale(node, zoom);
+      add(&node, gp->blob_center);
 
-        if (do_walls)
+      if (do_walls)
         {
-            if (node.z < -limit) node.z = -limit;
-            if (node.z > limit) node.z = limit;
+          if (node.z < -limit) node.z = -limit;
+          if (node.z > limit) node.z = limit;
 
-            dist = bump_array_size * (node.z + limit) * (node.z + limit) * 0.5;
-            if (dist < bump_array_size)
+          dist = bump_array_size * (node.z + limit) * (node.z + limit) * 0.5;
+          if (dist < bump_array_size)
             {
-                node.x += (node.x - gp->blob_center.x) * gp->wall_shape[dist];
-                node.y += (node.y - gp->blob_center.y) * gp->wall_shape[dist];
-                gp->blob_force.z += (node.z + limit);
+              node.x += (node.x - gp->blob_center.x) * gp->wall_shape[dist];
+              node.y += (node.y - gp->blob_center.y) * gp->wall_shape[dist];
+              gp->blob_force.z += (node.z + limit);
             }
-            else
+          else
             {
-                dist = bump_array_size * (node.z - limit) * (node.z - limit) * 0.5;
-                if (dist < bump_array_size)
+              dist = bump_array_size * (node.z - limit) * (node.z - limit) * 0.5;
+              if (dist < bump_array_size)
                 {
-                    node.x += (node.x - gp->blob_center.x) * gp->wall_shape[dist];
-                    node.y += (node.y - gp->blob_center.y) * gp->wall_shape[dist];
-                    gp->blob_force.z -= (node.z - limit);
+                  node.x += (node.x - gp->blob_center.x) * gp->wall_shape[dist];
+                  node.y += (node.y - gp->blob_center.y) * gp->wall_shape[dist];
+                  gp->blob_force.z -= (node.z - limit);
                 }
 
-                if (node.y < -limit) node.y = -limit;
-                if (node.y > limit) node.y = limit;
+              if (node.y < -limit) node.y = -limit;
+              if (node.y > limit) node.y = limit;
 
-                dist = bump_array_size * (node.y + limit) * (node.y + limit) * 0.5;
-                if (dist < bump_array_size)
+              dist = bump_array_size * (node.y + limit) * (node.y + limit) * 0.5;
+              if (dist < bump_array_size)
                 {
-                    node.x += (node.x - gp->blob_center.x) * gp->wall_shape[dist];
-                    node.z += (node.z - gp->blob_center.z) * gp->wall_shape[dist];
-                    gp->blob_force.y += (node.y + limit);
+                  node.x += (node.x - gp->blob_center.x) * gp->wall_shape[dist];
+                  node.z += (node.z - gp->blob_center.z) * gp->wall_shape[dist];
+                  gp->blob_force.y += (node.y + limit);
                 }
-                else
+              else
                 {
-                    dist = bump_array_size * (node.y - limit) * (node.y - limit) * 0.5;
-                    if (dist < bump_array_size)
+                  dist = bump_array_size * (node.y - limit) * (node.y - limit) * 0.5;
+                  if (dist < bump_array_size)
                     {
-                        node.x += (node.x - gp->blob_center.x) * gp->wall_shape[dist];
-                        node.z += (node.z - gp->blob_center.z) * gp->wall_shape[dist];
-                        gp->blob_force.y -= (node.y - limit);
+                      node.x += (node.x - gp->blob_center.x) * gp->wall_shape[dist];
+                      node.z += (node.z - gp->blob_center.z) * gp->wall_shape[dist];
+                      gp->blob_force.y -= (node.y - limit);
                     }
                 }
 
-                if (node.x < -limit) node.x = -limit;
-                if (node.x > limit) node.x = limit;
+              if (node.x < -limit) node.x = -limit;
+              if (node.x > limit) node.x = limit;
 
-                dist = bump_array_size * (node.x + limit) * (node.x + limit) * 0.5;
-                if (dist < bump_array_size)
+              dist = bump_array_size * (node.x + limit) * (node.x + limit) * 0.5;
+              if (dist < bump_array_size)
                 {
-                    node.y += (node.y - gp->blob_center.y) * gp->wall_shape[dist];
-                    node.z += (node.z - gp->blob_center.z) * gp->wall_shape[dist];
-                    gp->blob_force.x += (node.x + limit);
+                  node.y += (node.y - gp->blob_center.y) * gp->wall_shape[dist];
+                  node.z += (node.z - gp->blob_center.z) * gp->wall_shape[dist];
+                  gp->blob_force.x += (node.x + limit);
                 }
-                else
+              else
                 {
-                    dist = bump_array_size * (node.x - limit) * (node.x - limit) * 0.5;
-                    if (dist < bump_array_size)
+                  dist = bump_array_size * (node.x - limit) * (node.x - limit) * 0.5;
+                  if (dist < bump_array_size)
                     {
-                        node.y += (node.y - gp->blob_center.y) * gp->wall_shape[dist];
-                        node.z += (node.z - gp->blob_center.z) * gp->wall_shape[dist];
-                        gp->blob_force.x -= (node.x - limit);
+                      node.y += (node.y - gp->blob_center.y) * gp->wall_shape[dist];
+                      node.z += (node.z - gp->blob_center.z) * gp->wall_shape[dist];
+                      gp->blob_force.x -= (node.x - limit);
                     }
                 }
 
-                if (node.y < -limit) node.y = -limit;
-                if (node.y > limit) node.y = limit;
+              if (node.y < -limit) node.y = -limit;
+              if (node.y > limit) node.y = limit;
             }
         }
-        gp->dots[index] = node;
+      gp->dots[index] = node;
     }
 
-    /* Determine the normal for each face */
-    for (face = 0; face < gp->num_faces; face++)
+  /* Determine the normal for each face */
+  for (face = 0; face < gp->num_faces; face++)
     {
-        /* Use nodeers to indexed nodes to help readability */
-        Node_Data *node1 = &gp->nodes[gp->faces[face].node1];
-        Node_Data *node2 = &gp->nodes[gp->faces[face].node2];
-        Node_Data *node3 = &gp->nodes[gp->faces[face].node3];
+      /* Use pointers to indexed nodes to help readability */
+      int index1 = gp->faces[face].node1;
+      int index2 = gp->faces[face].node2;
+      int index3 = gp->faces[face].node3;
 
-        gp->faces[face].normal = cross(subtract(node2->position, node1->position),
-                                       subtract(node3->position, node1->position));
+      gp->faces[face].normal = cross(subtract(gp->dots[index2], gp->dots[index1]),
+                                     subtract(gp->dots[index3], gp->dots[index1]));
             
-        /* Add the normal for the face onto the normal for the verticies of
-           the face */
-        add(&node1->normal, gp->faces[face].normal);
-        add(&node2->normal, gp->faces[face].normal);
-        add(&node3->normal, gp->faces[face].normal);
+      /* Add the normal for the face onto the normal for the verticies of
+         the face */
+      add(&gp->nodes[index1].normal, gp->faces[face].normal);
+      add(&gp->nodes[index2].normal, gp->faces[face].normal);
+      add(&gp->nodes[index3].normal, gp->faces[face].normal);
     }
 
-    /* Use the normal to set the colour and texture */
-    if (do_colour || do_texture)
+  /* Use the normal to set the colour and texture */
+  if (do_colour || do_texture)
     {
-        for (index = 0; index < gp->num_nodes; ++index)
+      for (index = 0; index < gp->num_nodes; ++index)
         {
-            gp->normals[index] = normalise(gp->nodes[index].normal);
+          gp->normals[index] = normalise(gp->nodes[index].normal);
    
-            if (do_colour)
+          if (do_colour)
             {
-                gp->colours[index].red = (int)(255.0 * fabs(gp->normals[index].x));
-                gp->colours[index].green = (int)(255.0 * fabs(gp->normals[index].y));
-                gp->colours[index].blue = (int)(255.0 * fabs(gp->normals[index].z));
-                gp->colours[index].alpha = (int)(255.0 * fade);
+              gp->colours[index].red = (int)(255.0 * fabs(gp->normals[index].x));
+              gp->colours[index].green = (int)(255.0 * fabs(gp->normals[index].y));
+              gp->colours[index].blue = (int)(255.0 * fabs(gp->normals[index].z));
+              gp->colours[index].alpha = (int)(255.0 * fade);
             }
-            if (do_texture)
+          if (do_texture)
             {
-                if (offset_texture)
+              if (offset_texture)
                 {
-                    gp->tex_coords[index].x = gp->dots[index].x * 0.125 + 0.5
-                        * (1.0 + 0.25 * asin(gp->normals[index].x) / (0.5 * PI));
-                    gp->tex_coords[index].y = -gp->dots[index].y * 0.125 - 0.5
-                        * (1.0 + 0.25 * asin(gp->normals[index].y) / (0.5 * PI));
+                  const float cube_size = 100.0;
+                  Vector3D eye = {0.0, 0.0, 50.0};
+                  Vector3D eye_r = normalise(subtract(gp->dots[index], eye));
+                  Vector3D reference = subtract(eye_r, scale(gp->normals[index], 2.0 * dot(eye_r, gp->normals[index])));
+                  double x = 0.0;
+                  double y = 0.0;
+                  double n, n_min = 10000.0, sign = 1.0;
+                  if (fabs(reference.z) > 1e-9)
+                    {
+                      n = (cube_size - gp->dots[index].z) / reference.z;
+                      if (n < 0.0)
+                        {
+                          n = (-cube_size - gp->dots[index].z) / reference.z;
+                          sign = 3.0;
+                        }
+                      if (n > 0.0)
+                        {
+                          x = sign * (gp->dots[index].x + n * reference.x);
+                          y = sign * (gp->dots[index].y + n * reference.y);
+                          n_min = n;
+                        }
+                    }
+                  if (fabs(reference.x) > 1e-9)
+                    {
+                      n = (cube_size - gp->dots[index].x) / reference.x;
+                      sign = 1.0;
+                      if (n < 0.0)
+                        {
+                          n = (-cube_size - gp->dots[index].x) / reference.x;
+                          sign = -1.0;
+                        }
+                      if ((n > 0.0) && (n < n_min))
+                        {
+                          x = sign * (2.0 * cube_size - (gp->dots[index].z + n * reference.z));
+                          y = sign * x * (gp->dots[index].y + n * reference.y) / cube_size;
+                          n_min = n;
+                        }
+                    }
+                  if (fabs(reference.y) > 1e-9)
+                    {
+                      n = (cube_size - gp->dots[index].y) / reference.y;
+                      sign = 1.0;
+                      if (n < 0.0)
+                        {
+                          n = (-cube_size - gp->dots[index].y) / reference.y;
+                          sign = -1.0;
+                        }
+                      if ((n > 0.0) && (n < n_min))
+                        {
+                          y = sign * (2.0 * cube_size -( gp->dots[index].z + n * reference.z));
+                          x = sign * y * (gp->dots[index].x + n * reference.x) / cube_size;
+                        }
+                    }
+					
+                  gp->tex_coords[index].x = 0.5 + x / (cube_size * 6.0);
+                  gp->tex_coords[index].y = 0.5 - y / (cube_size * 6.0);
                 }
-                else
+              else
                 {
-                    gp->tex_coords[index].x = 0.5
-                        * (1.0 + asin(gp->normals[index].x) / (0.5 * PI));
-                    gp->tex_coords[index].y = -0.5
-                        * (1.0 + asin(gp->normals[index].y) / (0.5 * PI));
+                  gp->tex_coords[index].x = 0.5
+                    * (1.0 + asin(gp->normals[index].x) / (0.5 * PI));
+                  gp->tex_coords[index].y = -0.5
+                    * (1.0 + asin(gp->normals[index].y) / (0.5 * PI));
                 }
-                /* Adjust the texture co-ordinates to from range 0..1 to
-                 * 0..width or 0..height as appropriate
-                 */
-                gp->tex_coords[index].x *= gp->tex_width[gp->current_texture];
-                gp->tex_coords[index].y *= gp->tex_height[gp->current_texture];
+              /* Adjust the texture co-ordinates to from range 0..1 to
+               * 0..width or 0..height as appropriate
+               */
+              gp->tex_coords[index].x *= gp->tex_width[gp->current_texture];
+              gp->tex_coords[index].y *= gp->tex_height[gp->current_texture];
             }
         }
     }
     
-    /* Update the center of the whole blob */
-    add(&gp->blob_velocity, scale (subtract (gp->blob_anchor, gp->blob_center), 1.0 / 80.0));
-    add(&gp->blob_velocity, scale (gp->blob_force, 0.01 / gp->num_nodes));
+  /* Update the center of the whole blob */
+  add(&gp->blob_velocity, scale (subtract (gp->blob_anchor, gp->blob_center), 1.0 / 80.0));
+  add(&gp->blob_velocity, scale (gp->blob_force, 0.01 / gp->num_nodes));
 
-    add(&gp->blob_center, scale(gp->blob_velocity, 0.5));
+  add(&gp->blob_center, scale(gp->blob_velocity, 0.5));
 
-    gp->blob_velocity = scale(gp->blob_velocity, 0.999);
+  gp->blob_velocity = scale(gp->blob_velocity, 0.999);
+}
+
+static void
+draw_vertex(mirrorblobstruct *gp, int index)
+{
+  if (do_colour)
+    {
+      glColor3ub(gp->colours[index].red,
+                 gp->colours[index].green,
+                 gp->colours[index].blue);
+    }
+  if (load_textures)
+    {
+      glTexCoord3dv((GLdouble *) &gp->tex_coords[index]);
+    }
+  glNormal3dv((GLdouble *) &gp->normals[index]);
+  glVertex3dv((GLdouble *) &gp->dots[index]);
 }
 
 /******************************************************************************
@@ -1351,26 +1411,42 @@ calc_blob(mirrorblobstruct *gp,
 static void
 draw_blob (mirrorblobstruct *gp)
 {
-    int face;
+  int face;
 
-    glMatrixMode (GL_MODELVIEW);
-    glLoadIdentity ();
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
 
-    /* Move down the z-axis. */
-    glTranslatef (0.0, 0.0, -4.0);
+  /* Move down the z-axis. */
+  glTranslatef (0.0, 0.0, -4.0);
 
-    gltrackball_rotate (gp->trackball);
+  gltrackball_rotate (gp->trackball);
 
-    /* glColor4ub (255, 0, 0, 128); */
-    glBegin (GL_TRIANGLES);
-    for (face = 0; face < gp->num_faces; face++)
+  /* glColor4ub (255, 0, 0, 128); */
+  glBegin(GL_TRIANGLES);
+  for (face = 0; face < gp->num_faces; face++)
     {
-        glArrayElement (gp->faces[face].node1);
-        glArrayElement (gp->faces[face].node2);
-        glArrayElement (gp->faces[face].node3);
+      draw_vertex(gp, gp->faces[face].node1);
+      draw_vertex(gp, gp->faces[face].node2);
+      draw_vertex(gp, gp->faces[face].node3);
     }
-    glEnd ();
-    glLoadIdentity ();
+  glEnd();
+
+#if 0
+  glBegin(GL_LINES);
+  for (face = 0; face < gp->num_faces; face++)
+    {
+      if (gp->normals[gp->faces[face].node1].z > 0.0)
+        {
+          Vector3D end = gp->dots[gp->faces[face].node1];
+          glVertex3dv((GLdouble *) &end);
+          add(&end, scale(gp->normals[gp->faces[face].node1], 0.25));
+          glVertex3dv((GLdouble *) &end);
+        }
+    }
+  glEnd();
+#endif
+	
+  glLoadIdentity();
 }
 
 /******************************************************************************
@@ -1380,40 +1456,40 @@ draw_blob (mirrorblobstruct *gp)
 static void
 draw_background (ModeInfo *mi)
 {
-    mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
+  mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
     
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
-    glEnable (GL_TEXTURE_2D);
-    glDisable(GL_LIGHTING);
-    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+  glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
+  glEnable (GL_TEXTURE_2D);
+  glDisable(GL_LIGHTING);
+  glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-    /* Reset the projection matrix to make it easier to get the size of the quad
-     * correct
-     */
-    glMatrixMode(GL_PROJECTION);
-    glPushMatrix();
-    glLoadIdentity();
+  /* Reset the projection matrix to make it easier to get the size of the quad
+   * correct
+   */
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
 
-    glOrtho(0.0, MI_WIDTH(mi), MI_HEIGHT(mi), 0.0, -1000.0, 1000.0);
+  glOrtho(0.0, MI_WIDTH(mi), MI_HEIGHT(mi), 0.0, -1000.0, 1000.0);
 
-    glBegin (GL_QUADS);
+  glBegin (GL_QUADS);
     
-    glTexCoord2f (0.0, 0.0);
-    glVertex2i (0, 0);
+  glTexCoord2f (0.0, 0.0);
+  glVertex2i (0, 0);
     
-    glTexCoord2f (0.0, gp->tex_height[gp->current_texture]);
-    glVertex2i (0, MI_HEIGHT(mi));
+  glTexCoord2f (0.0, gp->tex_height[gp->current_texture]);
+  glVertex2i (0, MI_HEIGHT(mi));
 
-    glTexCoord2f (gp->tex_width[gp->current_texture], gp->tex_height[gp->current_texture]);
-    glVertex2i (MI_WIDTH(mi), MI_HEIGHT(mi));
+  glTexCoord2f (gp->tex_width[gp->current_texture], gp->tex_height[gp->current_texture]);
+  glVertex2i (MI_WIDTH(mi), MI_HEIGHT(mi));
 
-    glTexCoord2f (gp->tex_width[gp->current_texture], 0.0);
-    glVertex2i (MI_WIDTH(mi), 0);
-    glEnd();
+  glTexCoord2f (gp->tex_width[gp->current_texture], 0.0);
+  glVertex2i (MI_WIDTH(mi), 0);
+  glEnd();
 
-    glPopMatrix ();
-    glMatrixMode (GL_MODELVIEW);
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+  glPopMatrix ();
+  glMatrixMode (GL_MODELVIEW);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 }
 
 /******************************************************************************
@@ -1423,187 +1499,199 @@ draw_background (ModeInfo *mi)
 static GLvoid
 draw_scene(ModeInfo * mi)
 {
-    mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
+  mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
     
-    double fade = 0.0;
-    double current_time;
-    check_gl_error ("draw_scene");
+  double fade = 0.0;
+  double current_time;
+  check_gl_error ("draw_scene");
 
-    mi->polygon_count = 0;
-    glColor4d(1.0, 1.0, 1.0, 1.0);
+  mi->polygon_count = 0;
+  glColor4d(1.0, 1.0, 1.0, 1.0);
 
-    current_time = double_time();
-    switch (gp->state)
+  current_time = double_time();
+  switch (gp->state)
     {
+    case INITIALISING:
+      glColor4d(0.0, 0.0, 0.0, 1.0);
+      fade = 1.0;
+      break;
+
     case TRANSITIONING:
-        fade = 1.0 - (current_time - gp->state_start_time) / fade_time;
-        break;
+      fade = 1.0 - (current_time - gp->state_start_time) / fade_time;
+      break;
 
     case LOADING: /* FALL-THROUGH */
     case HOLDING:
-        fade = 1.0;
-        break;
+      fade = 1.0;
+      break;
     }
 
-    /* Set the correct texture, when transitioning this ensures that the first draw
-     * is the original texture (which has the new texture drawn over it with decreasing
-     * transparency)
-     */
-    if (load_textures)
+  /* Set the correct texture, when transitioning this ensures that the first draw
+   * is the original texture (which has the new texture drawn over it with decreasing
+   * transparency)
+   */
+  if (load_textures)
     {
-        glBindTexture (GL_TEXTURE_2D, gp->textures[gp->current_texture]);
+      glBindTexture(GL_TEXTURE_2D, gp->textures[gp->current_texture]);
     }
 
-    glDisable (GL_DEPTH_TEST);
-    if (do_paint_background)
+  glDisable (GL_DEPTH_TEST);
+  if (do_paint_background)
     {
-        glEnable (GL_TEXTURE_2D);
-        if (motion_blur > 0.0)
+      glEnable (GL_TEXTURE_2D);
+      if (motion_blur > 0.0)
         {
-            glClear(GL_DEPTH_BUFFER_BIT);
-            glEnable (GL_BLEND);
-            glColor4d (1.0, 1.0, 1.0, motion_blur);
+          glClear(GL_DEPTH_BUFFER_BIT);
+          glEnable (GL_BLEND);
+          glColor4d (1.0, 1.0, 1.0, motion_blur);
         }
-        else
+      else
         {
-            glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+          glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
         }
-        draw_background (mi);
-        mi->polygon_count++;
+      draw_background (mi);
+      mi->polygon_count++;
 
-        /* When transitioning between two images paint the new image over the old
-         * image with a varying alpha value to get a smooth fade.
-         */
-        if (gp->state == TRANSITIONING)
+      /* When transitioning between two images paint the new image over the old
+       * image with a varying alpha value to get a smooth fade.
+       */
+      if (gp->state == TRANSITIONING)
         {
-            glEnable (GL_BLEND);
-            /* Select the texture to transition to */
-            glBindTexture (GL_TEXTURE_2D, gp->textures[1 - gp->current_texture]);
-            glColor4d (1.0, 1.0, 1.0, 1.0 - fade);
+          glEnable (GL_BLEND);
+          /* Select the texture to transition to */
+          glBindTexture (GL_TEXTURE_2D, gp->textures[1 - gp->current_texture]);
+          glColor4d (1.0, 1.0, 1.0, 1.0 - fade);
 
-            draw_background (mi);
-            mi->polygon_count++;
+          draw_background (mi);
+          mi->polygon_count++;
 
-            /* Select the original texture to draw the blob */
-            glBindTexture (GL_TEXTURE_2D, gp->textures[gp->current_texture]);
+          /* Select the original texture to draw the blob */
+          glBindTexture (GL_TEXTURE_2D, gp->textures[gp->current_texture]);
         }
-        /* Clear the depth buffer bit so the backgound is behind the blob */
-        glClear(GL_DEPTH_BUFFER_BIT);
+      /* Clear the depth buffer bit so the backgound is behind the blob */
+      glClear(GL_DEPTH_BUFFER_BIT);
     }
-    else if (motion_blur > 0.0)
+  else if (motion_blur > 0.0)
     {
-        glEnable (GL_BLEND);
-        glColor4d (0.0, 0.0, 0.0, motion_blur);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-        glTranslatef (0.0, 0.0, -4.0);
-        glRectd (-10.0, -10.0, 10.0, 10.0);
-        if (wireframe)
+      glEnable (GL_BLEND);
+      glColor4d (0.0, 0.0, 0.0, motion_blur);
+      glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+      glTranslatef (0.0, 0.0, -4.0);
+      glRectd (-10.0, -10.0, 10.0, 10.0);
+      if (wireframe)
         {
-            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+          glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         }
-        glClear (GL_DEPTH_BUFFER_BIT);
+      glClear(GL_DEPTH_BUFFER_BIT);
     }
-    else
+  else
     {
-        glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    }
-
-    if (!do_texture)
-    {
-        fade = 1.0;
-        glDisable (GL_TEXTURE_2D);
+      glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    calc_blob(gp, MI_WIDTH(mi), MI_HEIGHT(mi), BUMP_ARRAY_SIZE, 2.5, fade * blend);
-
-    set_blob_gl_state(fade * blend);
-
-    if (blend < 1.0)
+  if (!do_texture)
     {
-        /* Disable the three colour chanels so that only the depth buffer is updated */
-        glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
-        draw_blob(gp);
-        mi->polygon_count += gp->num_faces;
-        glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
-        glDepthFunc(GL_LEQUAL);
+      fade = 1.0;
+      glDisable (GL_TEXTURE_2D);
     }
-    glDepthFunc(GL_LEQUAL);
-    draw_blob(gp);
-    mi->polygon_count += gp->num_faces;
 
-    /* While transitioning between images draw a second blob with a modified
-     * alpha value.
-     */
-    if (load_textures && (hold_time > 0))
+  calc_blob(gp, MI_WIDTH(mi), MI_HEIGHT(mi), BUMP_ARRAY_SIZE, 2.5, fade * blend);
+
+  set_blob_gl_state(fade * blend);
+
+  if (blend < 1.0)
     {
-        switch (gp->state)
+      /* Disable the colour chanels so that only the depth buffer is updated */
+      glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+      draw_blob(gp);
+      mi->polygon_count += gp->num_faces;
+      glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+    }
+	
+  glDepthFunc(GL_LEQUAL);
+  draw_blob(gp);
+  mi->polygon_count += gp->num_faces;
+
+  /* While transitioning between images draw a second blob with a modified
+   * alpha value.
+   */
+  if (load_textures && (hold_time > 0))
+    {
+      switch (gp->state)
         {
-        case HOLDING:
-            if ((current_time - gp->state_start_time) > hold_time)
+        case INITIALISING:
+          if (!gp->waiting_for_image_p)
             {
-                grab_texture(mi, 1 - gp->current_texture);
-                gp->state = LOADING;
+              gp->state = HOLDING;
             }
-            break;
+          break;
+		
+        case HOLDING:
+          if ((current_time - gp->state_start_time) > hold_time)
+            {
+              grab_texture(mi, 1 - gp->current_texture);
+              gp->state = LOADING;
+            }
+          break;
 
         case LOADING:
-            /* Once the image has loaded move to the TRANSITIONING STATE */
-            if (!gp->waiting_for_image_p)
+          /* Once the image has loaded move to the TRANSITIONING STATE */
+          if (!gp->waiting_for_image_p)
             {
-                gp->state = TRANSITIONING;
-                /* Get the time again rather than using the current time so
-                 * that the time taken by the grab_texture function is not part
-                 * of the fade time
-                 */
-                gp->state_start_time = double_time();
+              gp->state = TRANSITIONING;
+              /* Get the time again rather than using the current time so
+               * that the time taken by the grab_texture function is not part
+               * of the fade time
+               */
+              gp->state_start_time = double_time();
             }
-            break;        
+          break;        
 
         case TRANSITIONING:
 
-            /* If the blob is textured draw over existing blob to fade between
-             * images
-             */
-            if (do_texture)
+          /* If the blob is textured draw over existing blob to fade between
+           * images
+           */
+          if (do_texture)
             {
-                /* Select the texture to transition to */
-                glBindTexture (GL_TEXTURE_2D, gp->textures[1 - gp->current_texture]);
-                glEnable (GL_BLEND);
+              /* Select the texture to transition to */
+              glBindTexture (GL_TEXTURE_2D, gp->textures[1 - gp->current_texture]);
+              glEnable (GL_BLEND);
                 
-                /* If colour is enabled update the alpha data in the buffer and
-                 * use that in the blending since the alpha of the incomming
-                 * verticies will not be correct
-                 */
-                if (do_colour)
+              /* If colour is enabled update the alpha data in the buffer and
+               * use that in the blending since the alpha of the incomming
+               * verticies will not be correct
+               */
+              if (do_colour)
                 {
-                    glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
-                    glClearColor(0.0, 0.0, 0.0, (1.0 - fade) * blend);
-                    glClear(GL_COLOR_BUFFER_BIT);
-                    glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);                    
-                    glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
+                  glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_TRUE);
+                  glClearColor(0.0, 0.0, 0.0, (1.0 - fade) * blend);
+                  glClear(GL_COLOR_BUFFER_BIT);
+                  glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);                    
+                  glBlendFunc(GL_DST_ALPHA, GL_ONE_MINUS_DST_ALPHA);
                 }
-                else
+              else
                 {
-                    glColor4d(0.9, 0.9, 1.0, (1.0 - fade) * blend);
+                  glColor4d(0.9, 0.9, 1.0, (1.0 - fade) * blend);
                 }
 
-                draw_blob (gp);
-                mi->polygon_count += gp->num_faces;
+              draw_blob (gp);
+              mi->polygon_count += gp->num_faces;
 
-                if (do_colour)
+              if (do_colour)
                 {
-                    /* Restore the 'standard' blend functions. */
-                    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+                  /* Restore the 'standard' blend functions. */
+                  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
                 }
             }
             
-            if ((current_time - gp->state_start_time) > fade_time)
+          if ((current_time - gp->state_start_time) > fade_time)
             {
-                gp->state = HOLDING;
-                gp->state_start_time = current_time;
-                gp->current_texture = 1 - gp->current_texture;
+              gp->state = HOLDING;
+              gp->state_start_time = current_time;
+              gp->current_texture = 1 - gp->current_texture;
             }
-            break;
+          break;
 
         }
     }
@@ -1616,22 +1704,23 @@ draw_scene(ModeInfo * mi)
 ENTRYPOINT void
 draw_mirrorblob(ModeInfo * mi)
 {
-    mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
-    Display    *display = MI_DISPLAY(mi);
-    Window      window = MI_WINDOW(mi);
+  mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
+  Display    *display = MI_DISPLAY(mi);
+  Window      window = MI_WINDOW(mi);
 
-    if (!gp->glx_context)
-        return;
+  if (!gp->glx_context)
+    return;
 
-    /* Wait for the first image; for subsequent images, load them in the
-       background while animating. */
-    if (gp->waiting_for_image_p && gp->first_image_p)
-      return;
+  /* Wait for the first image; for subsequent images, load them in the
+     background while animating. */
+  if (gp->waiting_for_image_p && gp->first_image_p)
+    return;
 
-    glXMakeCurrent(display, window, *(gp->glx_context));
-    draw_scene(mi);
-    if (mi->fps_p) do_fps (mi);
-    glXSwapBuffers(display, window);
+  glXMakeCurrent(display, window, *(gp->glx_context));
+  draw_scene(mi);
+  if (mi->fps_p) do_fps (mi);
+  glFinish();
+  glXSwapBuffers(display, window);
 }
 
 /******************************************************************************
@@ -1641,8 +1730,8 @@ draw_mirrorblob(ModeInfo * mi)
 ENTRYPOINT void
 reshape_mirrorblob(ModeInfo *mi, int width, int height)
 {
-    glViewport( 0, 0, MI_WIDTH(mi), MI_HEIGHT(mi) );
-    reset_projection(width, height);
+  glViewport( 0, 0, MI_WIDTH(mi), MI_HEIGHT(mi) );
+  reset_projection(width, height);
 }
 
 /****************************************************************************
@@ -1652,42 +1741,42 @@ reshape_mirrorblob(ModeInfo *mi, int width, int height)
 ENTRYPOINT Bool
 mirrorblob_handle_event (ModeInfo * mi, XEvent * event)
 {
-    mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN (mi)];
+  mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN (mi)];
 
-    if (event->xany.type == ButtonPress &&
-        event->xbutton.button == Button1)
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
     {
-        gp->button_down = 1;
-        gltrackball_start (gp->trackball, event->xbutton.x,
-                           event->xbutton.y, MI_WIDTH (mi), MI_HEIGHT (mi));
-        return True;
+      gp->button_down = 1;
+      gltrackball_start (gp->trackball, event->xbutton.x,
+                         event->xbutton.y, MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
     }
-    else if (event->xany.type == ButtonRelease &&
-             event->xbutton.button == Button1)
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
     {
-        gp->button_down = 0;
-        return True;
+      gp->button_down = 0;
+      return True;
     }
-    else if (event->xany.type == ButtonPress &&
-             event->xbutton.button == Button4)
+  else if (event->xany.type == ButtonPress &&
+           event->xbutton.button == Button4)
     {
-        zoom *= 1.1;
-        return True;
+      zoom *= 1.1;
+      return True;
     }
-    else if (event->xany.type == ButtonPress &&
-             event->xbutton.button == Button5)
+  else if (event->xany.type == ButtonPress &&
+           event->xbutton.button == Button5)
     {
 
-        zoom *= 0.9;
-        return True;
+      zoom *= 0.9;
+      return True;
     }
-    else if (event->xany.type == MotionNotify && gp->button_down)
+  else if (event->xany.type == MotionNotify && gp->button_down)
     {
-        gltrackball_track (gp->trackball, event->xmotion.x,
-                           event->xmotion.y, MI_WIDTH (mi), MI_HEIGHT (mi));
-        return True;
+      gltrackball_track (gp->trackball, event->xmotion.x,
+                         event->xmotion.y, MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
     }
-    return False;
+  return False;
 }
 
 /******************************************************************************
@@ -1697,36 +1786,37 @@ mirrorblob_handle_event (ModeInfo * mi, XEvent * event)
 ENTRYPOINT void
 init_mirrorblob(ModeInfo * mi)
 {
-    int screen = MI_SCREEN(mi);
+  int screen = MI_SCREEN(mi);
 
-    mirrorblobstruct *gp;
+  mirrorblobstruct *gp;
 
-    if (Mirrorblob == NULL)
+  if (Mirrorblob == NULL)
     {
-        if ((Mirrorblob = (mirrorblobstruct *)
-             calloc(MI_NUM_SCREENS(mi), sizeof (mirrorblobstruct))) == NULL)
+      if ((Mirrorblob = (mirrorblobstruct *)
+           calloc(MI_NUM_SCREENS(mi), sizeof (mirrorblobstruct))) == NULL)
         {
-            return;
+          return;
         }
     }
-    gp = &Mirrorblob[screen];
+  gp = &Mirrorblob[screen];
 
-    gp->window = MI_WINDOW(mi);
-    if ((gp->glx_context = init_GL(mi)) != NULL)
+  gp->window = MI_WINDOW(mi);
+  if ((gp->glx_context = init_GL(mi)) != NULL)
     {
-        reshape_mirrorblob(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-        initialize_gl(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+      reshape_mirrorblob(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+      initialize_gl(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
     }
-    else
+  else
     {
-        MI_CLEARWINDOW(mi);
+      MI_CLEARWINDOW(mi);
     }
-    gp->trackball = gltrackball_init ();
+  gp->trackball = gltrackball_init();
     
-    initialise_blob(gp, MI_WIDTH(mi), MI_HEIGHT(mi), BUMP_ARRAY_SIZE);
-    gp->state_start_time = double_time();
+  initialise_blob(gp, MI_WIDTH(mi), MI_HEIGHT(mi), BUMP_ARRAY_SIZE);
+  gp->state = INITIALISING;
+  gp->state_start_time = double_time();
 
-    gp->first_image_p = True;
+  gp->first_image_p = True;
 }
 
 /******************************************************************************

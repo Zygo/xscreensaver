@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2008 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2009 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.10 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.13 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 1;
 
@@ -72,6 +72,7 @@ sub update_saver_xml($$) {
   $desc =~ s/\s*$//s;
 
   # in case it's done already...
+  $desc =~ s@<!--.*?-->@@gs;
   $desc =~ s/^.* version \d[^\n]*\n//s;
   $desc =~ s/^From the XScreenSaver.*\n//m;
   $desc =~ s@^http://www\.jwz\.org/xscreensaver.*\n@@m;
@@ -108,7 +109,7 @@ sub update_saver_xml($$) {
   #
   my $curator = "Jamie Zawinski";
   if (! ($authors =~ m/$curator/si)) {
-    if ($authors =~ m@^(.*),? and (.*)$@s) {
+    if ($authors =~ m@^(.*?),? and (.*)$@s) {
       $authors = "$1, $2, and $curator";
     } else {
       $authors .= " and $curator";
@@ -217,7 +218,7 @@ sub update($) {
   $copyright =~ s/\b\d{4}-(\d{4})\b/$1/;
 
   # Lose the Wikipedia URLs.
-  $info_str =~ s@http:.*\bwikipedia\b[^\s]+[ \t]*\n?@@gm;
+  $info_str =~ s@http:.*?\b(wikipedia|mathworld)\b[^\s]+[ \t]*\n?@@gm;
 
   $info_str =~ s/(\n\n)\n+/$1/gs;
   $info_str =~ s/(^\s+|\s+$)//gs;

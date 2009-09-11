@@ -57,7 +57,7 @@
 #define DEF_RANDOMIZE   "True"
 #define DEF_SPINSPEED   "1.0"
 #define DEF_ROTSPEED    "3.0"
-#define DEF_WANDERSPEED "1.0"
+#define DEF_WANDERSPEED "0.02"
 #define DEF_WAIT        "40.0"
 #define DEF_CUBESIZE    "0.7"
 #define DEF_COLORMODE   "six"

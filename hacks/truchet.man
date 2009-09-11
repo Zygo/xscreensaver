@@ -15,7 +15,7 @@ truchet - draws curved or angular Truchet patterns
 .SH DESCRIPTION
 The \fItruchet\fP program draws arc and line based Truchet patterns.
 .SH OPTIONS
-.l truchet
+.I truchet
 accepts the following options:
 .TP 8
 .B  \-window

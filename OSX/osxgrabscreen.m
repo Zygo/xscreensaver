@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2009 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -13,6 +13,7 @@
  */
 
 #import <stdlib.h>
+#import <stdint.h>
 #import <Cocoa/Cocoa.h>
 #import "jwxyz.h"
 #import "grabscreen.h"
@@ -36,7 +37,7 @@ copy_framebuffer_to_ximage (CGDirectDisplayID cgdpy, XImage *xim,
   int ximw = xim->width;
   int ximh = xim->height;
 
-  unsigned long *odata = (unsigned long *) xim->data;
+  uint32_t *odata = (uint32_t *) xim->data;
 
   switch (bpp) {
   case 32:
@@ -56,10 +57,10 @@ copy_framebuffer_to_ximage (CGDirectDisplayID cgdpy, XImage *xim,
     if (spp != 3) abort();
     if (bps != 5) abort();
     for (y = 0; y < ximh; y++) {
-      unsigned short *ip = (unsigned short *) data;
+      uint16_t *ip = (uint16_t *) data;
       int x;
       for (x = 0; x < ximw; x++) {
-        unsigned short p = *ip++;
+        uint16_t p = *ip++;
         // This should be ok on both PPC and Intel (ARGB, word order)
         unsigned char r = (p >> 10) & 0x1F;
         unsigned char g = (p >>  5) & 0x1F;
@@ -67,7 +68,7 @@ copy_framebuffer_to_ximage (CGDirectDisplayID cgdpy, XImage *xim,
         r = (r << 3) | (r >> 2);
         g = (g << 3) | (g >> 2);
         b = (b << 3) | (b >> 2);
-        unsigned long pixel = 0xFF000000 | (r << 16) | (g << 8) | b;
+        uint32_t pixel = 0xFF000000 | (r << 16) | (g << 8) | b;
         // XPutPixel (xim, x, y, pixel);
         *odata++ = pixel;
       }
@@ -81,13 +82,13 @@ copy_framebuffer_to_ximage (CGDirectDisplayID cgdpy, XImage *xim,
       CGDirectPaletteRef pal = CGPaletteCreateWithDisplay (cgdpy);
 
       /* Map it to 32bpp pixels */
-      unsigned long map[256];
+      uint32_t map[256];
       for (y = 0; y < 256; y++) {
         CGDeviceColor c = CGPaletteGetColorAtIndex (pal, y);
         unsigned char r = c.red   * 255.0;
         unsigned char g = c.green * 255.0;
         unsigned char b = c.blue  * 255.0;
-        unsigned long pixel = 0xFF000000 | (r << 16) | (g << 8) | b;
+        uint32_t pixel = 0xFF000000 | (r << 16) | (g << 8) | b;
         map[y] = pixel;
       }
 
@@ -254,3 +255,4 @@ osx_load_image_file (Screen *screen, Window xwindow, Drawable drawable,
   [img release];
   return True;
 }
+

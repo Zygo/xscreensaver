@@ -190,7 +190,7 @@ default: all
 all-yes: $(CATALOGS)
 all-no:
 
-$(srcdir)/$(GETTEXT_PACKAGE).pot: $(POTFILES)
+$(GETTEXT_PACKAGE).pot: $(POTFILES)
 	@INTLTOOL_EXTRACT=$(INTLTOOL_EXTRACT) ; \
 	export INTLTOOL_EXTRACT ; \
 	echo top_srcdir=$(top_srcdir) $(GENPOT) ; \
@@ -274,6 +274,7 @@ clean: mostlyclean
 
 distclean: clean
 	rm -f Makefile Makefile.in POTFILES *.mo *.msg *.cat *.cat.m *.gmo *.pot
+	rm -f stamp-it
 
 maintainer-clean: distclean
 	@echo "This command is intended for maintainers to use;"
@@ -281,9 +282,7 @@ maintainer-clean: distclean
 	rm -f $(GMOFILES)
 
 depend:
-# fuck off.  love, jwz.
-#distdepend: generate_potfiles_in update-po $(DISTFILES)
-distdepend::
+distdepend: generate_potfiles_in update-po $(DISTFILES)
 
 
 # jwz: Generates po/POTFILES.in by examining the source tree:
@@ -292,6 +291,8 @@ distdepend::
 generate_potfiles_in:
 	@tmp=po.$$$$ ;				\
 	 file=POTFILES.in ;			\
+	 echo "sleeping 3 seconds..." ;\
+	 sleep 3; \
 	 ( cd $(top_srcdir);			\
 	   echo "# Auto-generated: `LANG=C date`" ;	\
 	   ( grep -l '_("' driver/*.[ch] ;	\
@@ -362,16 +363,21 @@ POTFILES: POTFILES.in
 	    && (sed -e '/^#/d' 						\
 		    -e "s/^\[.*\] +//" 					\
 		    -e '/^[ 	]*$$/d' 				\
-		    -e "s@.*@	$$posrcprefix& \\\\@" < $(srcdir)/$@.in	\
+		    -e "s@.*@	$$posrcprefix& \\\\@" < $@.in		\
 		| sed -e '$$s/\\$$//') > $@-t \
 	    && chmod a-w $@-t \
 	    && mv $@-t $@ )
 
-# Please to be fucking the hell off.   This breaks "make distdepend". -jwz
-#Makefile: Makefile.in.in ../config.status POTFILES
-#	cd .. \
-#	  && CONFIG_FILES=$(subdir)/$@.in CONFIG_HEADERS= \
-#	       $(SHELL) ./config.status
+Makefile: stamp-it
+	@if test ! -f $@; then \
+		rm -f stamp-it; \
+		$(MAKE) stamp-it; \
+	fi
+
+stamp-it: Makefile.in.in ../config.status POTFILES
+	cd .. \
+	  && CONFIG_FILES=$(subdir)/Makefile.in CONFIG_HEADERS= \
+	       $(SHELL) ./config.status
 
 # Tell versions [3.59,3.63) of GNU make not to export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

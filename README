@@ -38,6 +38,18 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.08:   * Ported to MacOS 10.6, including various 64-bit fixes.
+                      * New hack, `rubikblocks'.
+                      * Fixed another potential RANDR crash.
+                      * Use correct proxy server on MacOS.
+                      * `molecule' now correctly displays PDB 3.2 files.
+                      * Updates to `mirrorblob', `glhanoi', and `sonar'.
+                      * Rewritten version of `klein' hack.
+                      * New hack, `surfaces', incorporating objects from old
+                        `klein' hack, plus new ones.
+                      * Merged `juggle' and `juggler3d' hacks.
+                      * Fixed compilation under gcc 4.4.0 (strict aliasing).
+                      * Fixed intermittent failure in `xscreensaver-command'.
 Changes since 5.07:   * New hack, `photopile'.
                       * Rewrote `sonar' and `jigsaw' as OpenGL programs.
                       * Minor tweaks to `maze', `m6502', `hypnowheel', and
@@ -56,7 +68,7 @@ Changes since 5.07:   * New hack, `photopile'.
                         `lissie', `rotor', `sphere', `spiral', `t3d', `vines',
                         `whirlygig', and `worm'.
                       * Merged `munch' and `mismunch'.
-                      * Updated `webcollage' to use twitpics.com as well.
+                      * Updated `webcollage' to use twitpic.com as well.
 Changes since 5.06:   * Xinerama/RANDR tweaks for old-style multi-screen.
                       * Added bumpy skin and cel shading to `skytentacles'.
                       * `flipflop' can load images onto the tiles.

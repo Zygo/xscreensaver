@@ -386,8 +386,6 @@ init_ball (ModeInfo *mi)
     bp->des_amt = bp->bscale.wh / MAX_COUNT;
   }
 
-  bp->glx_context = init_GL(mi);
-
   reshape_ball(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   bp->ballList = glGenLists(1);
   glNewList(bp->ballList, GL_COMPILE);

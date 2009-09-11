@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2009 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -408,10 +408,6 @@ extern int visual_class (Screen *, Visual *);
 
 // also declared in utils/grabclient.h
 extern Bool use_subwindow_mode_p (Screen *, Window);
-
-// for aglUseFont
-extern int jwxyz_font_info (Font, int *size_ret, int *face_ret);
-
 
 struct jwxyz_Visual {
   VisualID visualid;	/* visual id of this visual */

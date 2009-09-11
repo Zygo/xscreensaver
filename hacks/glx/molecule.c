@@ -14,6 +14,8 @@
 /* Documentation on the PDB file format:
    http://en.wikipedia.org/wiki/Protein_Data_Bank_%28file_format%29
    http://www.wwpdb.org/docs.html
+   http://www.wwpdb.org/documentation/format32/v3.2.html
+   http://www.wwpdb.org/documentation/format32/sect9.html
    http://www.rcsb.org/pdb/file_formats/pdb/pdbguide2.2/guide2.2_frame.html
 
    Good source of PDB files:
@@ -752,13 +754,26 @@ parse_pdb_data (molecule *m, const char *data, const char *filename, int line)
       else if (!strncmp (s, "ATOM   ", 7))
         {
           int id;
+          const char *end = strchr (s, '\n');
+          int L = end - s;
           char *name = (char *) calloc (1, 4);
           GLfloat x = -999, y = -999, z = -999;
 
           if (1 != sscanf (s+7, " %d ", &id))
             parse_error (filename, line, s);
 
+          /* Use the "atom name" field if that is all that is available. */
           strncpy (name, s+12, 3);
+
+          /* But prefer the "element" field. */
+          if (L > 77 && !isspace(s[77])) {
+            /* fprintf(stderr, "  \"%s\" -> ", name); */
+            name[0] = s[76];
+            name[1] = s[77];
+            name[2] = 0;
+            /* fprintf(stderr, "\"%s\"\n", name); */
+          }
+
           while (isspace(*name)) name++;
           ss = name + strlen(name)-1;
           while (isspace(*ss) && ss > name)

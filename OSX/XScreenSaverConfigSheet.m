@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2009 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -483,7 +483,7 @@ do_file_selector (NSTextField *txt, BOOL dirs_p)
                                      types:nil];
   if (result == NSOKButton) {
     NSArray *files = [panel filenames];
-    NSString *file = ([files count] > 0 ? [files objectAtIndex:0] : @"");
+    file = ([files count] > 0 ? [files objectAtIndex:0] : @"");
     file = [file stringByAbbreviatingWithTildeInPath];
     [txt setStringValue:file];
 
@@ -1047,6 +1047,7 @@ static char *
 anchorize (const char *url)
 {
   const char *wiki = "http://en.wikipedia.org/wiki/";
+  const char *math = "http://mathworld.wolfram.com/";
   if (!strncmp (wiki, url, strlen(wiki))) {
     char *anchor = (char *) malloc (strlen(url) * 3 + 10);
     strcpy (anchor, "Wikipedia: \"");
@@ -1067,6 +1068,29 @@ anchorize (const char *url)
         sscanf (hex, "%x", &n);
         *out++ = (char) n;
         in += 2;
+      } else {
+        *out++ = *in;
+      }
+      in++;
+    }
+    *out++ = '"';
+    *out = 0;
+    return anchor;
+
+  } else if (!strncmp (math, url, strlen(math))) {
+    char *anchor = (char *) malloc (strlen(url) * 3 + 10);
+    strcpy (anchor, "MathWorld: \"");
+    const char *start = url + strlen(wiki);
+    const char *in = start;
+    char *out = anchor + strlen(anchor);
+    while (*in) {
+      if (*in == '_') {
+        *out++ = ' ';
+      } else if (in != start && *in >= 'A' && *in <= 'Z') {
+        *out++ = ' ';
+        *out++ = *in;
+      } else if (!strncmp (in, ".htm", 4)) {
+        break;
       } else {
         *out++ = *in;
       }
@@ -1606,6 +1630,10 @@ fix_contentview_size (NSView *parent)
   f = [text frame];
   float dh = f.size.height - oh;
   f.origin.y += dh;
+
+  // #### This is needed in OSX 10.5, but is wrong in OSX 10.6.  WTF??
+  //      If we do this in 10.6, the text field moves down, off the window.
+  //      So instead we repair it at the end, at the "WTF2" comment.
   [text setFrame:f];
 
   // Also adjust the parent height by the change in height of the text field.
@@ -1643,6 +1671,25 @@ fix_contentview_size (NSView *parent)
 //          f.origin.y + f.size.height, [kid class]);
   }
   
+/*
+Bad:
+ parent: 420 x 541 @   0   0
+ text:   380 x 100 @  20  22  miny=-501
+
+Good:
+ parent: 420 x 541 @   0   0
+ text:   380 x 100 @  20  50  miny=-501
+*/
+
+  // #### WTF2: See "WTF" above.  If the text field is off the screen,
+  //      move it up.  We need this on 10.6 but not on 10.5.  Auugh.
+  //
+  f = [text frame];
+  if (f.origin.y < 50) {    // magic numbers, yay
+    f.origin.y = 50;
+    [text setFrame:f];
+  }
+
   /* Set the kids to track the top left corner of the window when resized.
      Set the NSText to track the bottom right corner as well.
    */

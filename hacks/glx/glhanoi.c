@@ -1,5 +1,5 @@
 /* -*- Mode: C; tab-width: 4 -*- */
-/* glhanoi, Copyright (c) 2005 Dave Atkinson <dave.atkinson@uwe.ac.uk>
+/* glhanoi, Copyright (c) 2005, 2009 Dave Atkinson <da@davea.org.uk>
  * except noise function code Copyright (c) 2002 Ken Perlin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -146,8 +146,7 @@ typedef struct {
 	int drag_x;
 	int drag_y;
 	int noise_initted;
-
-        int p[512];
+	int p[512];
 
 } glhcfg;
 
@@ -275,10 +274,18 @@ static void moveSetup(glhcfg *glhanoi, Disk * disk)
 	int dst = glhanoi->dst;
 	GLfloat theta;
 	GLfloat sintheta, costheta;
+	double absx;
 
-	if(glhanoi->state != FINISHED && random() % 6 == 0) {
-		disk->rotAngle =
-			-180.0 * (2 - 2 * random() % 2) * (random() % 3 + 1);
+	if(glhanoi->state != FINISHED) {
+		double xxx = -180.0 * (dst - src >= 0 ? 1.0 : -1.0);
+		if(random() % 6 == 0) {
+			disk->rotAngle = xxx * (2 - 2 * random() % 2) * (random() % 3 + 1);
+		} else {
+			disk->rotAngle = xxx;
+		}
+		if(random() % 4 == 0) {
+			disk->rotAngle = -disk->rotAngle;
+		}
 	} else {
 		disk->rotAngle = -180.0;
 	}
@@ -292,16 +299,12 @@ static void moveSetup(glhcfg *glhanoi, Disk * disk)
 	disk->xmin = glhanoi->poleOffset * (src - 1);
 	disk->xmax = glhanoi->poleOffset * (dst - 1);
 	disk->ymin = glhanoi->poleHeight;
-	ymax =
-		glhanoi->poleHeight + fabs(disk->xmax -
-								   disk->xmin) * (glhanoi->state ==
-												  FINISHED ? 1.0 +
-												  (double)(glhanoi->
-														   numberOfDisks -
-														   disk->id) /
-												  (double)glhanoi->
-												  numberOfDisks : 1.0);
 
+	absx = fabs(disk->xmax - disk->xmin);
+	ymax = glhanoi->poleHeight + absx;
+	if(glhanoi->state == FINISHED) {
+		ymax += absx * (double)(glhanoi->numberOfDisks - disk->id);
+	}
 	h = ymax - disk->ymin;
 	theta = atan((disk->xmin - disk->xmax) * A(disk->xmin, disk->xmax, h));
 	if(theta < 0.0)
@@ -359,7 +362,7 @@ static void parafunc(GLdouble t, Disk * d)
 	d->position[1] = d->ymin + (d->usintheta - 0.5 * g * t) * t;
 
 	d->rotation[1] =
-		d->rotAngle * (d->position[0] - d->xmin) / (d->xmax - d->xmin);
+	d->rotAngle * (d->position[0] - d->xmin) / (d->xmax - d->xmin);
 }
 
 static void downfunc(GLdouble t, Disk * d)
@@ -944,15 +947,19 @@ static double improved_noise(glhcfg *glhanoi, double x, double y, double z)
 	x -= floor(x);				/* FIND RELATIVE X,Y,Z */
 	y -= floor(y);				/* OF POINT IN CUBE. */
 	z -= floor(z);
-	u = fade(x),				/* COMPUTE FADE CURVES */
-		v = fade(y),			/* FOR EACH OF X,Y,Z. */
-		w = fade(z);
-	A = glhanoi->p[X] + Y, AA = glhanoi->p[A] + Z, AB = glhanoi->p[A + 1] + Z,	/* HASH COORDINATES OF */
-		B = glhanoi->p[X + 1] + Y, BA = glhanoi->p[B] + Z, BB = glhanoi->p[B + 1] + Z;	/* THE 8 CUBE CORNERS, */
-	return lerp(w, lerp(v, lerp(u, grad(glhanoi->p[AA], x, y, z),	/* AND ADD */
-								grad(glhanoi->p[BA], x - 1, y, z)),	/* BLENDED */
-						lerp(u, grad(glhanoi->p[AB], x, y - 1, z),	/* RESULTS */
-							 grad(glhanoi->p[BB], x - 1, y - 1, z))),	/* FROM 8 CORNERS */
+	u  = fade(x),				/* COMPUTE FADE CURVES */
+	v  = fade(y),				/* FOR EACH OF X,Y,Z. */
+	w  = fade(z);
+	A  = glhanoi->p[X] + Y;
+	AA = glhanoi->p[A] + Z;
+	AB = glhanoi->p[A + 1] + Z,	/* HASH COORDINATES OF */
+	B  = glhanoi->p[X + 1] + Y;
+	BA = glhanoi->p[B] + Z;
+	BB = glhanoi->p[B + 1] + Z;	/* THE 8 CUBE CORNERS, */
+	return lerp(w, lerp(v, lerp(u, grad(glhanoi->p[AA], x, y, z),/* AND ADD */
+								grad(glhanoi->p[BA], x - 1, y, z)),/* BLENDED */
+						lerp(u, grad(glhanoi->p[AB], x, y - 1, z),/* RESULTS */
+							 grad(glhanoi->p[BB], x - 1, y - 1, z))),/* FROM 8 CORNERS */
 				lerp(v, lerp(u, grad(glhanoi->p[AA + 1], x, y, z - 1), grad(glhanoi->p[BA + 1], x - 1, y, z - 1)),	/* OF CUBE */
 					 lerp(u, grad(glhanoi->p[AB + 1], x, y - 1, z - 1),
 						  grad(glhanoi->p[BB + 1], x - 1, y - 1, z - 1))));
@@ -1003,16 +1010,25 @@ static GLubyte *makeTexture(glhcfg *glhanoi, int x_size, int y_size, int z_size,
 	return textureData;
 }
 
-static tex_col_t makeMarbleColours(void)
+static void freeTexCols(tex_col_t*p)
 {
-	tex_col_t marbleColours;
+	free(p->colours);
+	free(p);
+}
+
+static tex_col_t *makeMarbleColours(void)
+{
+	tex_col_t *marbleColours;
 	int ncols = 2;
 
-	marbleColours.colours = calloc(sizeof(GLuint), ncols);
-	marbleColours.ncols = ncols;
+	marbleColours = malloc(sizeof(tex_col_t));
+	if(marbleColours == NULL) return NULL;
+	marbleColours->colours = calloc(sizeof(GLuint), ncols);
+	if(marbleColours->colours == NULL) return NULL;
+	marbleColours->ncols = ncols;
 
-	marbleColours.colours[0] = 0x3f3f3f3f;
-	marbleColours.colours[1] = 0xffffffff;
+	marbleColours->colours[0] = 0x3f3f3f3f;
+	marbleColours->colours[1] = 0xffffffff;
 
 	return marbleColours;
 }
@@ -1079,14 +1095,16 @@ static void setTexture(glhcfg *glhanoi, int n)
 static int makeTextures(glhcfg *glhanoi)
 {
 	GLubyte *marbleTexture;
-	tex_col_t marbleColours;
+	tex_col_t *marbleColours;
 
 	glGenTextures(N_TEXTURES, glhanoi->textureNames);
 
-	marbleColours = makeMarbleColours();
+	if((marbleColours = makeMarbleColours()) == NULL) {
+		return 1;
+	}
 	if((marbleTexture =
 		makeTexture(glhanoi, MARBLE_TEXTURE_SIZE, MARBLE_TEXTURE_SIZE, 1,
-					makeMarbleTexture, &marbleColours)) == NULL) {
+					makeMarbleTexture, marbleColours)) == NULL) {
 		return 1;
 	}
 
@@ -1099,6 +1117,7 @@ static int makeTextures(glhcfg *glhanoi)
 				 MARBLE_TEXTURE_SIZE, MARBLE_TEXTURE_SIZE, 0,
 				 GL_RGBA, GL_UNSIGNED_BYTE, marbleTexture);
 	free(marbleTexture);
+	freeTexCols(marbleColours);
 
 	return 0;
 }
@@ -1172,7 +1191,6 @@ static void initTowers(glhcfg *glhanoi)
     glhanoi->basepolys = drawCuboid(glhanoi->baseLength, glhanoi->baseWidth,
                                     glhanoi->baseHeight);
 	glEndList();
-
 
 	if((glhanoi->poleList = glGenLists(1)) == 0) {
 		fprintf(stderr, "can't allocate memory for towers display list\n");
@@ -1332,10 +1350,10 @@ ENTRYPOINT void init_glhanoi(ModeInfo * mi)
     if (glhanoi->numberOfDisks <= 1)
       glhanoi->numberOfDisks = 3 + (int) BELLRAND(9);
 
-    /* magicnumber is a bitfield, so we can't have more than 31 discs
-       on a system with 4-byte ints. */
-    if (glhanoi->numberOfDisks >= 8 * sizeof(int))
-      glhanoi->numberOfDisks = (8 * sizeof(int)) - 1;
+	/* magicnumber is a bitfield, so we can't have more than 31 discs
+	   on a system with 4-byte ints. */
+	if (glhanoi->numberOfDisks >= 8 * sizeof(int))
+		glhanoi->numberOfDisks = (8 * sizeof(int)) - 1;
 
 	glhanoi->maxDiskIdx = glhanoi->numberOfDisks - 1;
 	glhanoi->wire = MI_IS_WIREFRAME(mi);
@@ -1385,7 +1403,7 @@ ENTRYPOINT void init_glhanoi(ModeInfo * mi)
 
 ENTRYPOINT void draw_glhanoi(ModeInfo * mi)
 {
-        glhcfg *glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
+	glhcfg *glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
 	Display *dpy = MI_DISPLAY(mi);
 	Window window = MI_WINDOW(mi);
 

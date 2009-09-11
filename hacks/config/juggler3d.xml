@@ -7,48 +7,44 @@
    <vgroup>
     <number id="delay" type="slider" arg="-delay %"
             _label="Frame rate" _low-label="Low" _high-label="High"
-            low="0" high="100000" default="20000"
+            low="0" high="100000" default="10000"
             convert="invert"/>
 
-    <number id="speed" type="slider" arg="-speed %" _label="Juggling speed"
-            _low-label="Slow" _high-label="Fast" low="0.5" high="5.0" default="2.2"/>
+    <number id="count" type="slider" arg="-count %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+            low="50" high="1000" default="200"
+            convert="invert"/>
    </vgroup>
-
    <vgroup>
-    <number id="trans" type="slider" arg="-trans %" _label="Juggler horizontal speed"
-            _low-label="Slow" _high-label="Fast" low="0.05" high="2.0" default="0.1"/>
+    <number id="cycles" type="slider" arg="-cycles %"
+            _label="Performance length" _low-label="Short" _high-label="Long"
+            low="50" high="1000" default="1000"/>
 
-    <number id="spin" type="slider" arg="-spin %" _label="Juggler spin speed"
-            _low-label="Slow" _high-label="Fast" low="3.0" high="50.0" default="20.0"/>
+    <number id="tail" type="slider" arg="-tail %"
+            _label="Trail length" _low-label="None" _high-label="Long"
+            low="0" high="100" default="1"/>
    </vgroup>
   </hgroup>
 
   <hgroup>
-   <vgroup>
-    <number id="minobjs" type="spinbutton" arg="-minobjs %" _label="Min objects"
-      low="3" high="35" default="3"/>
-
-    <number id="maxobjs" type="spinbutton" arg="-maxobjs %" _label="Max objects"
-      low="3" high="35" default="8"/>		  
-   </vgroup>
-   <vgroup>
-    <number id="minhinc" type="spinbutton" arg="-minhinc %" _label="Min height"
-      low="1" high="31" default="2"/>
-
-    <number id="maxhinc" type="spinbutton" arg="-maxhinc %" _label="Max height"
-      low="1" high="31" default="6"/>		  
-   </vgroup>
-   <vgroup>
-    <boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
-    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
-   </vgroup>
+    <boolean id="balls" _label="Balls" arg-unset="-no-balls"/>
+    <boolean id="clubs" _label="Clubs" arg-unset="-no-clubs"/>
+    <boolean id="rings" _label="Rings" arg-unset="-no-rings"/>
+    <boolean id="knives" _label="Knives" arg-unset="-no-knives"/>
+<!--<boolean id="torches" _label="Flaming torches" arg-unset="-no-torches"/>-->
+    <boolean id="bballs" _label="Bowling balls" arg-unset="-no-bballs"/>
   </hgroup>
 
+  <boolean id="describe" _label="Print Cambridge juggling pattern descriptions" arg-unset="-no-describe"/>
+  <string id="pattern" _label="Juggle this pattern" arg="-pattern %" />
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
   <_description>
-3D simulation of a juggler performing with balls, clubs and rings.  
+Draws a 3D juggling stick-man.
 
 http://en.wikipedia.org/wiki/Siteswap
 
-Written by Brian Apps; 2005.
+Written by Tim Auckland and Jamie Zawinski; 2002.
   </_description>
 </screensaver>

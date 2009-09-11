@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-2005 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright (c) 1991-2009 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -357,135 +357,121 @@ send_xscreensaver_command (Display *dpy, Atom command, long arg,
 }
 
 
+static Bool
+xscreensaver_command_event_p (Display *dpy, XEvent *event, XPointer arg)
+{
+  return (event->xany.type == PropertyNotify &&
+          event->xproperty.state == PropertyNewValue &&
+          event->xproperty.atom == XA_SCREENSAVER_RESPONSE);
+}
+
+
 static int
 xscreensaver_command_response (Display *dpy, Window window,
                                Bool verbose_p, Bool exiting_p,
                                char **error_ret)
 {
-  int fd = ConnectionNumber (dpy);
-  int timeout = 10;
-  int status;
-  fd_set fds;
-  struct timeval tv;
+  int sleep_count = 0;
   char err[2048];
+  XEvent event;
+  Bool got_event = False;
 
-  while (1)
+  while (!(got_event = XCheckIfEvent(dpy, &event,
+				     &xscreensaver_command_event_p, 0)) &&
+	 sleep_count++ < 10)
     {
-      FD_ZERO(&fds);
-      FD_SET(fd, &fds);
-      memset(&tv, 0, sizeof(tv));
-      tv.tv_sec = timeout;
-      status = select (fd+1, &fds, 0, &fds, &tv);
+      sleep(1);
+    }
 
-      if (status < 0)
+  if (!got_event)
+    {
+      sprintf (err, "no response to command.");
+      if (error_ret)
+	*error_ret = strdup (err);
+      else
+	fprintf (stderr, "%s: %s\n", progname, err);
+
+      return -1;
+    }
+  else
+    {
+      Status st2;
+      Atom type;
+      int format;
+      unsigned long nitems, bytesafter;
+      unsigned char *msg = 0;
+
+      XSync (dpy, False);
+      if (old_handler) abort();
+      old_handler = XSetErrorHandler (BadWindow_ehandler);
+      st2 = XGetWindowProperty (dpy, window,
+				XA_SCREENSAVER_RESPONSE,
+				0, 1024, True,
+				AnyPropertyType,
+				&type, &format, &nitems, &bytesafter,
+				&msg);
+      XSync (dpy, False);
+      XSetErrorHandler (old_handler);
+      old_handler = 0;
+
+      if (got_badwindow)
 	{
-	  char buf[1024];
-          if (error_ret)
-            {
-              sprintf (buf, "error waiting for reply");
-              *error_ret = strdup (buf);
-            }
-          else
-            {
-              sprintf (buf, "%s: error waiting for reply", progname);
-              perror (buf);
-            }
-	  return status;
-	}
-      else if (status == 0)
-	{
-	  sprintf (err, "no response to command.");
-          if (error_ret)
-            *error_ret = strdup (err);
-          else
-            fprintf (stderr, "%s: %s\n", progname, err);
+	  if (exiting_p)
+	    return 0;
+
+	  sprintf (err, "xscreensaver window unexpectedly deleted.");
+
+	  if (error_ret)
+	    *error_ret = strdup (err);
+	  else
+	    fprintf (stderr, "%s: %s\n", progname, err);
+
 	  return -1;
 	}
-      else
+
+      if (st2 == Success && type != None)
 	{
-	  XEvent event;
-	  XNextEvent (dpy, &event);
-	  if (event.xany.type == PropertyNotify &&
-	      event.xproperty.state == PropertyNewValue &&
-	      event.xproperty.atom == XA_SCREENSAVER_RESPONSE)
+	  if (type != XA_STRING || format != 8)
 	    {
-	      Status st2;
-	      Atom type;
-	      int format;
-	      unsigned long nitems, bytesafter;
-	      unsigned char *msg = 0;
+	      sprintf (err, "unrecognized response property.");
 
-	      XSync (dpy, False);
-              if (old_handler) abort();
-	      old_handler = XSetErrorHandler (BadWindow_ehandler);
-	      st2 = XGetWindowProperty (dpy, window,
-					XA_SCREENSAVER_RESPONSE,
-					0, 1024, True,
-					AnyPropertyType,
-					&type, &format, &nitems, &bytesafter,
-					&msg);
-	      XSync (dpy, False);
-              XSetErrorHandler (old_handler);
-              old_handler = 0;
+	      if (error_ret)
+		*error_ret = strdup (err);
+	      else
+		fprintf (stderr, "%s: %s\n", progname, err);
 
-	      if (got_badwindow)
-		{
-                  if (exiting_p)
-                    return 0;
+	      if (msg) XFree (msg);
+	      return -1;
+	    }
+	  else if (!msg || (msg[0] != '+' && msg[0] != '-'))
+	    {
+	      sprintf (err, "unrecognized response message.");
 
-                  sprintf (err, "xscreensaver window unexpectedly deleted.");
+	      if (error_ret)
+		*error_ret = strdup (err);
+	      else  
+		fprintf (stderr, "%s: %s\n", progname, err);
 
-                  if (error_ret)
-                    *error_ret = strdup (err);
-                  else
-                    fprintf (stderr, "%s: %s\n", progname, err);
+	      if (msg) XFree (msg);
+	      return -1;
+	    }
+	  else
+	    {
+	      int ret = (msg[0] == '+' ? 0 : -1);
+	      sprintf (err, "%s: %s\n", progname, (char *) msg+1);
 
-		  return -1;
-		}
+	      if (error_ret)
+		*error_ret = strdup (err);
+	      else if (verbose_p || ret != 0)
+		fprintf ((ret < 0 ? stderr : stdout), "%s\n", err);
 
-	      if (st2 == Success && type != None)
-		{
-		  if (type != XA_STRING || format != 8)
-		    {
-		      sprintf (err, "unrecognized response property.");
-
-                      if (error_ret)
-                        *error_ret = strdup (err);
-                      else
-                        fprintf (stderr, "%s: %s\n", progname, err);
-
-		      if (msg) XFree (msg);
-		      return -1;
-		    }
-		  else if (!msg || (msg[0] != '+' && msg[0] != '-'))
-		    {
-		      sprintf (err, "unrecognized response message.");
-
-                      if (error_ret)
-                        *error_ret = strdup (err);
-                      else  
-                        fprintf (stderr, "%s: %s\n", progname, err);
-
-		      if (msg) XFree (msg);
-		      return -1;
-		    }
-		  else
-		    {
-		      int ret = (msg[0] == '+' ? 0 : -1);
-                      sprintf (err, "%s: %s\n", progname, (char *) msg+1);
-
-                      if (error_ret)
-                        *error_ret = strdup (err);
-                      else if (verbose_p || ret != 0)
-			fprintf ((ret < 0 ? stderr : stdout), "%s\n", err);
-
-		      XFree (msg);
-		      return ret;
-		    }
-		}
+	      XFree (msg);
+	      return ret;
 	    }
 	}
     }
+
+  return -1;  /* warning suppression: not actually reached */
 }
 
 

@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2008 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2009 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -205,11 +205,30 @@ resolve_bogie_hostname (ping_data *pd, sonar_bogie *sb, Bool resolve_p)
           strlen (sb->name) >= 80)
         return 0;
 
+      /* .ssh/known_hosts sometimes contains weirdness like "[host]:port".
+         Ignore it. */
+      if (strchr (sb->name, '['))
+        {
+          if (pd->debug_p)
+            fprintf (stderr, "%s:   ignoring bogus address \"%s\"\n", 
+                     progname, sb->name);
+          return 0;
+        }
+
+      /* If the name contains a colon, it's probably IPv6. */
+      if (strchr (sb->name, ':'))
+        {
+          if (pd->debug_p)
+            fprintf (stderr, "%s:   ignoring ipv6 address \"%s\"\n", 
+                     progname, sb->name);
+          return 0;
+        }
+
       hent = gethostbyname (sb->name);
       if (!hent)
         {
           if (pd->debug_p)
-            fprintf (stderr, "%s: could not resolve host:  %s\n",
+            fprintf (stderr, "%s:   could not resolve host:  %s\n",
                      progname, sb->name);
           return 0;
         }
@@ -327,7 +346,7 @@ read_hosts_file (sonar_sensor_data *ssd, const char *filename)
   if (!fp)
     {
       char buf[1024];
-      sprintf(buf, "%s: %s", progname, filename);
+      sprintf(buf, "%s:  %s", progname, filename);
 #ifdef HAVE_COCOA
       if (pd->debug_p)  /* on OSX don't syslog this */
 #endif
