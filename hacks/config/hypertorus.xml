@@ -14,32 +14,34 @@
 
   <hgroup>
     <select id="display-mode">
-      <option id="wire"        _label="Wireframe mesh" arg-set="-mode 0"/>
-      <option id="surface"     _label="Solid surface"  arg-set="-mode 1"/>
-      <option id="transparent" _label="Transparent surface"/>
+      <option id="wire"        _label="Wireframe mesh"
+              arg-set="-mode wireframe"/>
+      <option id="surface"     _label="Solid surface"/>
+      <option id="transparent" _label="Transparent surface"
+              arg-set="-mode transparent"/>
     </select>
 
     <select id="appearance">
       <option id="solid" _label="Solid object"
-              arg-set="-appearance 0"/>
+              arg-set="-appearance solid"/>
       <option id="bands" _label="See-through bands"/>
       <option id="bands" _label="See-through spirals (1 spiral)"
-              arg-set="-appearance 3"/>
+              arg-set="-appearance spirals-1"/>
       <option id="bands" _label="See-through spirals (2 spirals)"
-              arg-set="-appearance 4"/>
+              arg-set="-appearance spirals-2"/>
       <option id="bands" _label="See-through spirals (4 spirals)"
-              arg-set="-appearance 5"/>
+              arg-set="-appearance spirals-4"/>
       <option id="bands" _label="See-through spirals (8 spirals)"
-              arg-set="-appearance 6"/>
+              arg-set="-appearance spirals-8"/>
       <option id="bands" _label="See-through spirals (16 spirals)"
-              arg-set="-appearance 7"/>
+              arg-set="-appearance spirals-16"/>
     </select>
   </hgroup>
 
   <hgroup>
     <select id="colors">
-      <option id="twosided" _label="Two-sided"/>
-      <option id="colorwheel" _label="Color wheel" arg-set="-colorwheel"/>
+      <option id="twosided" _label="Two-sided" arg-set="-twosided"/>
+      <option id="colorwheel" _label="Color wheel"/>
     </select>
 
     <select id="projection3d">
@@ -98,7 +100,6 @@
   </hgroup>
 
   <_description>
-
 This shows a rotating Clifford Torus: a torus lying on the
 "surface" of a 4D hypersphere.  Inspired by Thomas Banchoff's book
 "Beyond the Third Dimension: Geometry, Computer Graphics, and Higher

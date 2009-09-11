@@ -23,6 +23,9 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.08.
+
 Moving radiating lines, that look vaguely like scanning laser beams.
 (Frankie say relax.)
 

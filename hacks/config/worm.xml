@@ -25,6 +25,9 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.08.
+
 Draws multicolored worms that crawl around the screen.
 
 Written by Brad Taylor, Dave Lemke, Boris Putanec, and Henrik Theiling; 1991.

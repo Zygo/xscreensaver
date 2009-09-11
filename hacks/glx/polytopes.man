@@ -116,7 +116,7 @@ Display the polytope as a wireframe mesh.
 Display the polytope as a solid object.
 .TP 8
 .B \-transparent
-Display the polytope as a transparent object.  Default.
+Display the polytope as a transparent object (default).
 .PP
 The following two options are mutually exclusive.  They determine how
 to color the polytope.

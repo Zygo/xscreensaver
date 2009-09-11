@@ -113,6 +113,7 @@ jwxyz_make_display (void *nsview_arg)
   // w->cgc = [[[view window] graphicsContext] graphicsPort];
   w->cgc = 0;
   w->window.view = view;
+  CFRetain (w->window.view);   // needed for garbage collection?
   w->window.background = BlackPixel(0,0);
 
   d->main_window = w;
@@ -1629,6 +1630,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
 
   if (d->type == PIXMAP) {
     depth = d->pixmap.depth;
+    alpha_first_p = 1; // we created it with kCGImageAlphaNoneSkipFirst.
     ibpp = CGBitmapContextGetBitsPerPixel (d->cgc);
     ibpl = CGBitmapContextGetBytesPerRow (d->cgc);
     data = CGBitmapContextGetData (d->cgc);
@@ -1785,22 +1787,35 @@ exif_rotate (int rot, CGSize rect)
 
 
 void
-jwxyz_draw_NSImage (Display *dpy, Drawable d, void *nsimg_arg,
-                    XRectangle *geom_ret, int exif_rotation)
+jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d, 
+                                Bool nsimg_p, void *img_arg,
+                               XRectangle *geom_ret, int exif_rotation)
 {
-  NSImage *nsimg = (NSImage *) nsimg_arg;
+  CGImageRef cgi;
+  CGImageSourceRef cgsrc;
+  NSSize imgr;
 
-  // convert the NSImage to a CGImage via the toll-free-bridging 
-  // of NSData and CFData...
-  //
-  NSData *nsdata = [NSBitmapImageRep
-                        TIFFRepresentationOfImageRepsInArray:
-                          [nsimg representations]];
-  CFDataRef cfdata = (CFDataRef) nsdata;
-  CGImageSourceRef cgsrc = CGImageSourceCreateWithData (cfdata, NULL);
-  CGImageRef cgi = CGImageSourceCreateImageAtIndex (cgsrc, 0, NULL);
+  if (nsimg_p) {
 
-  NSSize imgr = [nsimg size];
+    NSImage *nsimg = (NSImage *) img_arg;
+    imgr = [nsimg size];
+
+    // convert the NSImage to a CGImage via the toll-free-bridging 
+    // of NSData and CFData...
+    //
+    NSData *nsdata = [NSBitmapImageRep
+                       TIFFRepresentationOfImageRepsInArray:
+                         [nsimg representations]];
+    CFDataRef cfdata = (CFDataRef) nsdata;
+    cgsrc = CGImageSourceCreateWithData (cfdata, NULL);
+    cgi = CGImageSourceCreateImageAtIndex (cgsrc, 0, NULL);
+
+  } else {
+    cgi = (CGImageRef) img_arg;
+    imgr.width  = CGImageGetWidth (cgi);
+    imgr.height = CGImageGetHeight (cgi);
+  }
+
   Bool rot_p = (exif_rotation >= 5);
 
   if (rot_p)
@@ -1846,8 +1861,10 @@ jwxyz_draw_NSImage (Display *dpy, Drawable d, void *nsimg_arg,
   CGContextDrawImage (d->cgc, dst2, cgi);
   CGContextRestoreGState (d->cgc);
 
-  CFRelease (cgsrc);
-  CGImageRelease (cgi);
+  if (nsimg_p) {
+    CFRelease (cgsrc);
+    CGImageRelease (cgi);
+  }
 
   if (geom_ret) {
     geom_ret->x = dst.origin.x;
@@ -2013,6 +2030,14 @@ query_font (Font fid)
       NSTextStorage *ts = [[NSTextStorage alloc] initWithString:nsstr];
       [ts setFont:fid->nsfont];
       NSLayoutManager *lm = [[NSLayoutManager alloc] init];
+
+      /* Without this, the layout manager ends up on a queue somewhere and is
+         referenced again after we return to the command loop.  Since we don't
+         use this layout manager again, by that time it may have been garbage
+         collected, and we crash.  Setting this seems to cause `lm' to no 
+         longer be referenced once we exit this block. */
+      [lm setBackgroundLayoutEnabled:NO];
+
       NSTextContainer *tc = [[NSTextContainer alloc] init];
       [lm addTextContainer:tc];
       [tc release];	// lm retains tc
@@ -2341,6 +2366,7 @@ XLoadFont (Display *dpy, const char *name)
     NSLog(@"no NSFont for \"%s\"", name);
     abort();
   }
+  CFRetain (fid->nsfont);   // needed for garbage collection?
 
   //NSLog(@"parsed \"%s\" to %s %.1f", name, fid->ps_name, fid->size);
 
@@ -2369,6 +2395,7 @@ XUnloadFont (Display *dpy, Font fid)
   //      They're probably not very big...
   //
   //  [fid->nsfont release];
+  //  CFRelease (fid->nsfont);
 
   free (fid);
   return 0;
@@ -2409,6 +2436,7 @@ XSetFont (Display *dpy, GC gc, Font fid)
     XUnloadFont (dpy, gc->gcv.font);
   gc->gcv.font = copy_font (fid);
   [gc->gcv.font->nsfont retain];
+  CFRetain (gc->gcv.font->nsfont);   // needed for garbage collection?
   return 0;
 }
 
@@ -2458,6 +2486,7 @@ set_font (CGContextRef cgc, GC gc)
     font = XLoadFont (0, 0);
     gc->gcv.font = font;
     [gc->gcv.font->nsfont retain];
+    CFRetain (gc->gcv.font->nsfont);   // needed for garbage collection?
   }
   CGContextSelectFont (cgc, font->ps_name, font->size, kCGEncodingMacRoman);
   CGContextSetTextMatrix (cgc, CGAffineTransformIdentity);

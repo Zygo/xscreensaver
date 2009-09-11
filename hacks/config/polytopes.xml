@@ -6,32 +6,33 @@
 
  <hgroup>
   <select id="display-mode">
-   <option id="wire" _label="Wireframe mesh"   arg-set="-mode 0"/>
-   <option id="surface" _label="Solid surface" arg-set="-mode 1"/>
+   <option id="wire" _label="Wireframe mesh"
+           arg-set="-mode wireframe"/>
+   <option id="surface" _label="Solid surface"
+           arg-set="-mode surface"/>
    <option id="transparent" _label="Transparent surface"/>
   </select>
 
   <select id="polytope">
    <option id="random" _label="Random object"/>
    <option id="cell-5" _label="5-cell (hyper-tetrahedron)"
-           arg-set="-polytope 0"/>
+           arg-set="-polytope 5-cell"/>
    <option id="cell-8" _label="8-cell (hypercube / tesseract)"
-           arg-set="-polytope 1"/>
+           arg-set="-polytope 8-cell"/>
    <option id="cell-16" _label="16-cell (hyper-octahedron)"
-           arg-set="-polytope 2"/>
+           arg-set="-polytope 16-cell"/>
    <option id="cell-24" _label="24-cell"
-           arg-set="-polytope 3"/>
+           arg-set="-polytope 24-cell"/>
    <option id="cell-120" _label="120-cell"
-           arg-set="-polytope 4"/>
+           arg-set="-polytope 120-cell"/>
    <option id="cell-600" _label="600-cell"
-           arg-set="-polytope 5"/>
+           arg-set="-polytope 600-cell"/>
   </select>
 </hgroup>
 
 <hgroup>
   <select id="colors">
-   <option id="single" _label="Single color"
-           arg-set="-single-color"/>
+   <option id="single" _label="Single color" arg-set="-single-color"/>
    <option id="depth" _label="Colors By 4D Depth"/>
   </select>
 

@@ -2318,11 +2318,12 @@ show_ring(ModeInfo *mi, unsigned long color, Trace *s)
       glNormal3f (0, 0, j*1);
       glBegin (wire_p ? GL_LINES : GL_QUAD_STRIP);
       for (i = 0; i < slices + (wire_p ? 0 : 1); i++) {
+        GLfloat th, cth, sth;
         glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE,
                       (i % (slices/3) ? gcolor1 : gcolor2));
-        GLfloat th = i * width;
-        GLfloat cth = cos(th);
-        GLfloat sth = sin(th);
+        th = i * width;
+        cth = cos(th);
+        sth = sin(th);
         glVertex3f (cth * ra, sth * ra, z);
         glVertex3f (cth * rb, sth * rb, z);
         polys++;

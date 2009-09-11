@@ -28,6 +28,9 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.08.
+
 Lissajous loops.
 
 http://en.wikipedia.org/wiki/Lissajous_curve

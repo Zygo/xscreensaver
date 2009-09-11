@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006, 2007 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2009 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -81,7 +81,8 @@ int mono_p = 0;
     perror ("putenv");
     abort();
   }
-//  free (npath);   // Oops, don't free this! putenv() does not copy it!
+
+  /* Don't free (npath) -- MacOS's putenv() does not copy it. */
 }
 
 
@@ -101,7 +102,7 @@ int mono_p = 0;
     perror ("putenv");
     abort();
   }
-  free (env);
+  /* Don't free (env) -- MacOS's putenv() does not copy it. */
 }
 
 

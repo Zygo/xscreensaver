@@ -43,12 +43,15 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.10.  It has been replaced by the more general "Polytopes"
+screen saver, which can display this object as well as others.  The
+Polytopes "120-cell" object corresponds to this one.
+
 Hyperball is to hypercube as dodecahedron is to cube: this displays
 a 2D projection of the sequence of 3D objects which are the projections
 of the 4D analog to the dodecahedron.  Technically, it is a "120 cell
 polytope".
-
-See also "polytopes" for a more general version of this using OpenGL.
 
 http://en.wikipedia.org/wiki/Hypercube
 http://en.wikipedia.org/wiki/Regular_polytope

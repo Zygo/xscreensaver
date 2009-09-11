@@ -4,7 +4,7 @@
 static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
 #endif
 
-/* Copyright (c) 2003-2007 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2003-2009 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -23,6 +23,7 @@ static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
  * C. Steger - 03/08/10: Initial version
  * C. Steger - 05/09/28: Added trackball support
  * C. Steger - 07/01/23: Improved 4d trackball support
+ * C. Steger - 09/08/23: Removed check-config.pl warnings
  */
 
 /*
@@ -52,67 +53,40 @@ static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
 #define GOLDENINV22 0.27009075673772645360 /* (((sqrt(5)-1)/2)^2)/sqrt(2) */
 
 #define DISP_WIREFRAME            0
-#define DISP_WIREFRAME_STR       "0"
 #define DISP_SURFACE              1
-#define DISP_SURFACE_STR         "1"
 #define DISP_TRANSPARENT          2
-#define DISP_TRANSPARENT_STR     "2"
 
 #define POLYTOPE_RANDOM          -1
-#define POLYTOPE_RANDOM_STR      "-1"
 #define POLYTOPE_5_CELL           0
-#define POLYTOPE_5_CELL_STR      "0"
 #define POLYTOPE_8_CELL           1
-#define POLYTOPE_8_CELL_STR      "1"
 #define POLYTOPE_16_CELL          2
-#define POLYTOPE_16_CELL_STR     "2"
 #define POLYTOPE_24_CELL          3
-#define POLYTOPE_24_CELL_STR     "3"
 #define POLYTOPE_120_CELL         4
-#define POLYTOPE_120_CELL_STR    "4"
 #define POLYTOPE_600_CELL         5
-#define POLYTOPE_600_CELL_STR    "5"
 #define POLYTOPE_LAST_CELL        POLYTOPE_600_CELL
 
 #define COLORS_SINGLE             0
-#define COLORS_SINGLE_STR        "0"
 #define COLORS_DEPTH              1
-#define COLORS_DEPTH_STR         "1"
 
 #define DISP_3D_PERSPECTIVE       0
-#define DISP_3D_PERSPECTIVE_STR  "0"
 #define DISP_3D_ORTHOGRAPHIC      1
-#define DISP_3D_ORTHOGRAPHIC_STR "1"
 
 #define DISP_4D_PERSPECTIVE       0
 #define DISP_4D_PERSPECTIVE_STR  "0"
 #define DISP_4D_ORTHOGRAPHIC      1
 #define DISP_4D_ORTHOGRAPHIC_STR "1"
 
-#define DALPHA                    1.1
-#define DALPHA_STR               "1.1"
-#define DBETA                     1.3
-#define DBETA_STR                "1.3"
-#define DDELTA                    1.5
-#define DDELTA_STR               "1.5"
-#define DZETA                     1.7
-#define DZETA_STR                "1.7"
-#define DETA                      1.9
-#define DETA_STR                 "1.9"
-#define DTHETA                    2.1
-#define DTHETA_STR               "2.1"
-
-#define DEF_DISPLAY_MODE          DISP_TRANSPARENT_STR   
-#define DEF_POLYTOPE              POLYTOPE_RANDOM_STR
-#define DEF_COLORS                COLORS_DEPTH_STR
-#define DEF_3D_PROJECTION         DISP_3D_PERSPECTIVE_STR
-#define DEF_4D_PROJECTION         DISP_4D_PERSPECTIVE_STR
-#define DEF_DALPHA                DALPHA_STR
-#define DEF_DBETA                 DBETA_STR
-#define DEF_DDELTA                DDELTA_STR
-#define DEF_DZETA                 DZETA_STR
-#define DEF_DETA                  DETA_STR
-#define DEF_DTHETA                DTHETA_STR
+#define DEF_DISPLAY_MODE          "transparent"
+#define DEF_POLYTOPE              "random"
+#define DEF_COLORS                "depth"
+#define DEF_PROJECTION_3D         "perspective"
+#define DEF_PROJECTION_4D         "perspective"
+#define DEF_SPEEDWX               "1.1"
+#define DEF_SPEEDWY               "1.3"
+#define DEF_SPEEDWZ               "1.5"
+#define DEF_SPEEDXY               "1.7"
+#define DEF_SPEEDXZ               "1.9"
+#define DEF_SPEEDYZ               "2.1"
 
 #ifdef STANDALONE
 # define DEFAULTS           "*delay:      25000 \n" \
@@ -140,10 +114,15 @@ ModStruct   polytopes_description =
 #endif
 
 
+static char *mode;
 static int display_mode;
+static char *poly_str;
 static int polytope;
+static char *color_str;
 static int color_mode;
+static char *proj_3d;
 static int projection_3d;
+static char *proj_4d;
 static int projection_4d;
 static float speed_wx;
 static float speed_wy;
@@ -158,62 +137,45 @@ static const float offset3d[4] = {  0.0,  0.0, -2.0,  0.0 };
 
 static XrmOptionDescRec opts[] =
 {
-  {"-mode",            ".polytopes.displayMode",  XrmoptionSepArg, 0 },
-  {"-wireframe",       ".polytopes.displayMode",  XrmoptionNoArg,
-                       DISP_WIREFRAME_STR },
-  {"-surface",         ".polytopes.displayMode",  XrmoptionNoArg,
-                       DISP_SURFACE_STR },
-  {"-transparent",     ".polytopes.displayMode",  XrmoptionNoArg,
-                       DISP_TRANSPARENT_STR },
-  {"-random",          ".polytopes.polytope",     XrmoptionNoArg,
-                       POLYTOPE_RANDOM_STR },
-
-  {"-polytope",        ".polytopes.polytope",     XrmoptionSepArg, 0 },
-  {"-5-cell",          ".polytopes.polytope",     XrmoptionNoArg,
-                       POLYTOPE_5_CELL_STR },
-  {"-8-cell",          ".polytopes.polytope",     XrmoptionNoArg,
-                       POLYTOPE_8_CELL_STR },
-  {"-16-cell",         ".polytopes.polytope",     XrmoptionNoArg,
-                       POLYTOPE_16_CELL_STR },
-  {"-24-cell",         ".polytopes.polytope",     XrmoptionNoArg,
-                       POLYTOPE_24_CELL_STR },
-  {"-120-cell",        ".polytopes.polytope",     XrmoptionNoArg,
-                       POLYTOPE_120_CELL_STR },
-  {"-600-cell",        ".polytopes.polytope",     XrmoptionNoArg,
-                       POLYTOPE_600_CELL_STR },
-  {"-single-color",    ".polytopes.colors",       XrmoptionNoArg,
-                       COLORS_SINGLE_STR },
-  {"-depth-colors",    ".polytopes.colors",       XrmoptionNoArg,
-                       COLORS_DEPTH_STR },
-  {"-perspective-3d",  ".polytopes.projection3d", XrmoptionNoArg,
-                       DISP_3D_PERSPECTIVE_STR },
-  {"-orthographic-3d", ".polytopes.projection3d", XrmoptionNoArg,
-                       DISP_3D_ORTHOGRAPHIC_STR },
-  {"-perspective-4d",  ".polytopes.projection4d", XrmoptionNoArg,
-                       DISP_4D_PERSPECTIVE_STR },
-  {"-orthographic-4d", ".polytopes.projection4d", XrmoptionNoArg,
-                       DISP_4D_ORTHOGRAPHIC_STR },
-  {"-speed-wx",        ".polytopes.speedwx",      XrmoptionSepArg, 0 },
-  {"-speed-wy",        ".polytopes.speedwy",      XrmoptionSepArg, 0 },
-  {"-speed-wz",        ".polytopes.speedwz",      XrmoptionSepArg, 0 },
-  {"-speed-xy",        ".polytopes.speedxy",      XrmoptionSepArg, 0 },
-  {"-speed-xz",        ".polytopes.speedxz",      XrmoptionSepArg, 0 },
-  {"-speed-yz",        ".polytopes.speedyz",      XrmoptionSepArg, 0 }
+  {"-mode",            ".displayMode",  XrmoptionSepArg, 0 },
+  {"-wireframe",       ".displayMode",  XrmoptionNoArg,  "wireframe" },
+  {"-surface",         ".displayMode",  XrmoptionNoArg,  "surface" },
+  {"-transparent",     ".displayMode",  XrmoptionNoArg,  "transparent" },
+  {"-polytope",        ".polytope",     XrmoptionSepArg, 0 },
+  {"-random",          ".polytope",     XrmoptionNoArg,  "random" },
+  {"-5-cell",          ".polytope",     XrmoptionNoArg,  "5-cell" },
+  {"-8-cell",          ".polytope",     XrmoptionNoArg,  "8-cell" },
+  {"-16-cell",         ".polytope",     XrmoptionNoArg,  "16-cell" },
+  {"-24-cell",         ".polytope",     XrmoptionNoArg,  "24-cell" },
+  {"-120-cell",        ".polytope",     XrmoptionNoArg,  "120-cell" },
+  {"-600-cell",        ".polytope",     XrmoptionNoArg,  "600-cell" },
+  {"-single-color",    ".colors",       XrmoptionNoArg,  "single" },
+  {"-depth-colors",    ".colors",       XrmoptionNoArg,  "depth" },
+  {"-perspective-3d",  ".projection3d", XrmoptionNoArg,  "perspective" },
+  {"-orthographic-3d", ".projection3d", XrmoptionNoArg,  "orthographic" },
+  {"-perspective-4d",  ".projection4d", XrmoptionNoArg,  "perspective" },
+  {"-orthographic-4d", ".projection4d", XrmoptionNoArg,  "orthographic" },
+  {"-speed-wx",        ".speedwx",      XrmoptionSepArg, 0 },
+  {"-speed-wy",        ".speedwy",      XrmoptionSepArg, 0 },
+  {"-speed-wz",        ".speedwz",      XrmoptionSepArg, 0 },
+  {"-speed-xy",        ".speedxy",      XrmoptionSepArg, 0 },
+  {"-speed-xz",        ".speedxz",      XrmoptionSepArg, 0 },
+  {"-speed-yz",        ".speedyz",      XrmoptionSepArg, 0 }
 };
 
 static argtype vars[] =
 {
-  { &display_mode,  "displayMode",  "DisplayMode", DEF_DISPLAY_MODE,  t_Int },
-  { &polytope,      "polytope",     "Polytope",    DEF_POLYTOPE,      t_Int },
-  { &color_mode,    "colors",       "Colors",      DEF_COLORS,        t_Int },
-  { &projection_3d, "projection3d", "Projection3d",DEF_3D_PROJECTION, t_Int },
-  { &projection_4d, "projection4d", "Projection4d",DEF_4D_PROJECTION, t_Int },
-  { &speed_wx,      "speedwx",      "Speedwx",     DEF_DALPHA,        t_Float},
-  { &speed_wy,      "speedwy",      "Speedwy",     DEF_DBETA,         t_Float},
-  { &speed_wz,      "speedwz",      "Speedwz",     DEF_DDELTA,        t_Float},
-  { &speed_xy,      "speedxy",      "Speedxy",     DEF_DZETA,         t_Float},
-  { &speed_xz,      "speedxz",      "Speedxz",     DEF_DETA,          t_Float},
-  { &speed_yz,      "speedyz",      "Speedyz",     DEF_DTHETA,        t_Float}
+  { &mode,      "displayMode",  "DisplayMode", DEF_DISPLAY_MODE,  t_String },
+  { &poly_str,  "polytope",     "Polytope",    DEF_POLYTOPE,      t_String },
+  { &color_str, "colors",       "Colors",      DEF_COLORS,        t_String },
+  { &proj_3d,   "projection3d", "Projection3d",DEF_PROJECTION_3D, t_String },
+  { &proj_4d,   "projection4d", "Projection4d",DEF_PROJECTION_4D, t_String },
+  { &speed_wx,  "speedwx",      "Speedwx",     DEF_SPEEDWX,       t_Float},
+  { &speed_wy,  "speedwy",      "Speedwy",     DEF_SPEEDWY,       t_Float},
+  { &speed_wz,  "speedwz",      "Speedwz",     DEF_SPEEDWZ,       t_Float},
+  { &speed_xy,  "speedxy",      "Speedxy",     DEF_SPEEDXY,       t_Float},
+  { &speed_xz,  "speedxz",      "Speedxz",     DEF_SPEEDXZ,       t_Float},
+  { &speed_yz,  "speedyz",      "Speedyz",     DEF_SPEEDYZ,       t_Float}
 };
 
 static OptionStruct desc[] =
@@ -3055,6 +3017,100 @@ ENTRYPOINT void init_polytopes(ModeInfo *mi)
   pp->trackballs[1] = gltrackball_init();
   pp->current_trackball = 0;
   pp->button_pressed = False;
+
+  /* Set the display mode. */
+  if (!strcasecmp(mode,"wireframe") || !strcasecmp(mode,"0"))
+  {
+    display_mode = DISP_WIREFRAME;
+  }
+  else if (!strcasecmp(mode,"surface") || !strcasecmp(mode,"1"))
+  {
+    display_mode = DISP_SURFACE;
+  }
+  else if (!strcasecmp(mode,"transparent") || !strcasecmp(mode,"2"))
+  {
+    display_mode = DISP_TRANSPARENT;
+  }
+  else
+  {
+    display_mode = DISP_TRANSPARENT;
+  }
+
+  /* Set the Klein bottle. */
+  if (!strcasecmp(poly_str,"random") || !strcasecmp(poly_str,"-1"))
+  {
+    polytope = POLYTOPE_RANDOM;
+  }
+  else if (!strcasecmp(poly_str,"5-cell") || !strcasecmp(poly_str,"0"))
+  {
+    polytope = POLYTOPE_5_CELL;
+  }
+  else if (!strcasecmp(poly_str,"8-cell") || !strcasecmp(poly_str,"1"))
+  {
+    polytope = POLYTOPE_8_CELL;
+  }
+  else if (!strcasecmp(poly_str,"16-cell") || !strcasecmp(poly_str,"2"))
+  {
+    polytope = POLYTOPE_16_CELL;
+  }
+  else if (!strcasecmp(poly_str,"24-cell") || !strcasecmp(poly_str,"3"))
+  {
+    polytope = POLYTOPE_24_CELL;
+  }
+  else if (!strcasecmp(poly_str,"120-cell") || !strcasecmp(poly_str,"4"))
+  {
+    polytope = POLYTOPE_120_CELL;
+  }
+  else if (!strcasecmp(poly_str,"600-cell") || !strcasecmp(poly_str,"5"))
+  {
+    polytope = POLYTOPE_600_CELL;
+  }
+  else
+  {
+    polytope = POLYTOPE_RANDOM;
+  }
+
+  /* Set the color mode. */
+  if (!strcasecmp(color_str,"single") || !strcasecmp(color_str,"0"))
+  {
+    color_mode = COLORS_SINGLE;
+  }
+  else if (!strcasecmp(color_str,"depth") || !strcasecmp(color_str,"1"))
+  {
+    color_mode = COLORS_DEPTH;
+  }
+  else
+  {
+    color_mode = COLORS_DEPTH;
+  }
+
+  /* Set the 3d projection mode. */
+  if (!strcasecmp(proj_3d,"perspective") || !strcasecmp(proj_3d,"0"))
+  {
+    projection_3d = DISP_3D_PERSPECTIVE;
+  }
+  else if (!strcasecmp(proj_3d,"orthographic") || !strcasecmp(proj_3d,"1"))
+  {
+    projection_3d = DISP_3D_ORTHOGRAPHIC;
+  }
+  else
+  {
+    projection_3d = DISP_3D_PERSPECTIVE;
+  }
+
+  /* Set the 4d projection mode. */
+  if (!strcasecmp(proj_4d,"perspective") || !strcasecmp(proj_4d,"0"))
+  {
+    projection_4d = DISP_4D_PERSPECTIVE;
+  }
+  else if (!strcasecmp(proj_4d,"orthographic") || !strcasecmp(proj_4d,"1"))
+  {
+    projection_4d = DISP_4D_ORTHOGRAPHIC;
+  }
+  else
+  {
+    projection_4d = DISP_4D_PERSPECTIVE;
+  }
 
   /* make multiple screens rotate at slightly different rates. */
   pp->speed_scale = 0.9 + frand(0.3);

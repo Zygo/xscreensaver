@@ -3,7 +3,7 @@
 	archiveVersion = 1;
 	classes = {
 	};
-	objectVersion = 44;
+	objectVersion = 45;
 	objects = {
 
 /* Begin PBXAggregateTarget section */
@@ -13,17 +13,20 @@
 			buildPhases = (
 			);
 			dependencies = (
+				AF714E51105613580046AB1D /* PBXTargetDependency */,
 				AF137D690F075E5C004DE3B2 /* PBXTargetDependency */,
 				AF137D670F075E5C004DE3B2 /* PBXTargetDependency */,
 				AF137D650F075E5C004DE3B2 /* PBXTargetDependency */,
 				AF137D630F075E5C004DE3B2 /* PBXTargetDependency */,
 				AF137D610F075E5C004DE3B2 /* PBXTargetDependency */,
+				AFA160941052FF87009B93AA /* PBXTargetDependency */,
+				AFA160921052FF87009B93AA /* PBXTargetDependency */,
 				AFB581B0102F363300342B11 /* PBXTargetDependency */,
-				AF137D5F0F075E5C004DE3B2 /* PBXTargetDependency */,
 				AF137D5D0F075E5C004DE3B2 /* PBXTargetDependency */,
 				AF137D5B0F075E5C004DE3B2 /* PBXTargetDependency */,
 				AF137D590F075E5C004DE3B2 /* PBXTargetDependency */,
 				AF137D570F075E5C004DE3B2 /* PBXTargetDependency */,
+				AF714E4F105613410046AB1D /* PBXTargetDependency */,
 				AF137D550F075E5C004DE3B2 /* PBXTargetDependency */,
 				AF137D530F075E5C004DE3B2 /* PBXTargetDependency */,
 				AF137D510F075E5C004DE3B2 /* PBXTargetDependency */,
@@ -75,8 +78,6 @@
 				AF77795109B6604900EA3033 /* PBXTargetDependency */,
 				AF77794F09B6604900EA3033 /* PBXTargetDependency */,
 				AF77794D09B6604900EA3033 /* PBXTargetDependency */,
-				AF77794B09B6604900EA3033 /* PBXTargetDependency */,
-				AF77794909B6604900EA3033 /* PBXTargetDependency */,
 				AF77794709B6604900EA3033 /* PBXTargetDependency */,
 				AF77794509B6604900EA3033 /* PBXTargetDependency */,
 				AF77794309B6604900EA3033 /* PBXTargetDependency */,
@@ -142,7 +143,6 @@
 			buildPhases = (
 			);
 			dependencies = (
-				AF7779DB09B6608200EA3033 /* PBXTargetDependency */,
 				AF7779D909B6608200EA3033 /* PBXTargetDependency */,
 				AF7779D709B6608200EA3033 /* PBXTargetDependency */,
 				AF7779D509B6608200EA3033 /* PBXTargetDependency */,
@@ -492,7 +492,6 @@
 		AF4773A5099D6648001F091E /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		AF4773AC099D6762001F091E /* fuzzyflakes.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258B00988A468000655EE /* fuzzyflakes.xml */; };
 		AF4773B5099D6778001F091E /* fuzzyflakes.c in Sources */ = {isa = PBXBuildFile; fileRef = AF4773B4099D6778001F091E /* fuzzyflakes.c */; };
-		AF4773C5099D67B9001F091E /* fuzzyflakes.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258B00988A468000655EE /* fuzzyflakes.xml */; };
 		AF4773C7099D67B9001F091E /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF4773CA099D67B9001F091E /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AF4773CB099D67B9001F091E /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -2136,13 +2135,6 @@
 			remoteGlobalIDString = AFD56F8C0996B09400BA26F7;
 			remoteInfo = Laser;
 		};
-		AF137D5E0F075E5C004DE3B2 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AF4774B4099D8B5F001F091E;
-			remoteInfo = LMorph;
-		};
 		AF137D600F075E5C004DE3B2 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -2787,6 +2779,20 @@
 			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
 			remoteInfo = jwxyz;
 		};
+		AF714E4E105613410046AB1D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4774B4099D8B5F001F091E /* LMorph */;
+			remoteInfo = LMorph;
+		};
+		AF714E50105613580046AB1D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFD570C90996B9F800BA26F7 /* Ant */;
+			remoteInfo = Ant;
+		};
 		AF7776E609B63ABF00EA3033 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -3235,20 +3241,6 @@
 			remoteGlobalIDString = AF477426099D7C70001F091E;
 			remoteInfo = IFS;
 		};
-		AF77794809B6604900EA3033 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AF6425CC09A18855000F4CD4;
-			remoteInfo = HyperCube;
-		};
-		AF77794A09B6604900EA3033 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AF64260F09A18D6C000F4CD4;
-			remoteInfo = HyperBall;
-		};
 		AF77794C09B6604900EA3033 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -3647,13 +3639,6 @@
 			proxyType = 1;
 			remoteGlobalIDString = AFD5712C0996BF2E00BA26F7;
 			remoteInfo = Apollonian;
-		};
-		AF7779DA09B6608200EA3033 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = AFD570C90996B9F800BA26F7;
-			remoteInfo = Ant;
 		};
 		AF7779DC09B660AF00EA3033 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -4361,6 +4346,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
 			remoteInfo = jwxyz;
+		};
+		AFA160911052FF87009B93AA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF6425CC09A18855000F4CD4;
+			remoteInfo = HyperCube;
+		};
+		AFA160931052FF87009B93AA /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF64260F09A18D6C000F4CD4;
+			remoteInfo = HyperBall;
 		};
 		AFA339300B058505002B0E7D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -5579,7 +5578,7 @@
 		AFA55F210993620200F3E977 /* jigglypuff.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = jigglypuff.c; path = hacks/glx/jigglypuff.c; sourceTree = "<group>"; };
 		AFA55F3C0993622F00F3E977 /* Klein.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Klein.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFA55F3F0993626E00F3E977 /* klein.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = klein.c; path = hacks/glx/klein.c; sourceTree = "<group>"; };
-		AFA55F540993629000F3E977 /* HyperTorus.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = HyperTorus.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFA55F540993629000F3E977 /* Hypertorus.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Hypertorus.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFA55F59099362DF00F3E977 /* hypertorus.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = hypertorus.c; path = hacks/glx/hypertorus.c; sourceTree = "<group>"; };
 		AFA55F840993643600F3E977 /* GLMatrix.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GLMatrix.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFA55F870993648500F3E977 /* glmatrix.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = glmatrix.c; path = hacks/glx/glmatrix.c; sourceTree = "<group>"; };
@@ -8478,7 +8477,7 @@
 				AFA55EE3099360E300F3E977 /* BouncingCow.saver */,
 				AFA55F1E099361B700F3E977 /* JigglyPuff.saver */,
 				AFA55F3C0993622F00F3E977 /* Klein.saver */,
-				AFA55F540993629000F3E977 /* HyperTorus.saver */,
+				AFA55F540993629000F3E977 /* Hypertorus.saver */,
 				AFA55F840993643600F3E977 /* GLMatrix.saver */,
 				AFA55FE509936BFA00F3E977 /* CubeStorm.saver */,
 				AFA5600B09936C6D00F3E977 /* GLKnots.saver */,
@@ -12527,9 +12526,9 @@
 			productReference = AFA55F3C0993622F00F3E977 /* Klein.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
-		AFA55F420993629000F3E977 /* HyperTorus */ = {
+		AFA55F420993629000F3E977 /* Hypertorus */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AFA55F510993629000F3E977 /* Build configuration list for PBXNativeTarget "HyperTorus" */;
+			buildConfigurationList = AFA55F510993629000F3E977 /* Build configuration list for PBXNativeTarget "Hypertorus" */;
 			buildPhases = (
 				AFA55F450993629000F3E977 /* Resources */,
 				AFA55F470993629000F3E977 /* Sources */,
@@ -12542,9 +12541,9 @@
 			dependencies = (
 				AFA55F430993629000F3E977 /* PBXTargetDependency */,
 			);
-			name = HyperTorus;
+			name = Hypertorus;
 			productName = HyperTorus;
-			productReference = AFA55F540993629000F3E977 /* HyperTorus.saver */;
+			productReference = AFA55F540993629000F3E977 /* Hypertorus.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
 		AFA55F720993643600F3E977 /* GLMatrix */ = {
@@ -13794,7 +13793,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "xscreensaver" */;
-			compatibilityVersion = "Xcode 3.0";
+			compatibilityVersion = "Xcode 3.1";
 			hasScannedForEncodings = 1;
 			mainGroup = 29B97314FDCFA39411CA2CEA /* xscreensaver */;
 			projectDirPath = "";
@@ -13837,8 +13836,6 @@
 				AF477253099D5717001F091E /* Halftone */,
 				AF975C12099C8C1500B05160 /* Halo */,
 				AF480C49098E301400FB32B8 /* Helix */,
-				AF64260F09A18D6C000F4CD4 /* HyperBall */,
-				AF6425CC09A18855000F4CD4 /* HyperCube */,
 				AF477426099D7C70001F091E /* IFS */,
 				AF97572D099C317000B05160 /* IMSMap */,
 				AF477752099DB61E001F091E /* Interaggregate */,
@@ -13897,7 +13894,6 @@
 				AF4776AA099DABDD001F091E /* XSpirograph */,
 				AF9D475F09B53166006E59CF /* Zoom */,
 				AF480D58098EED3D00FB32B8 /* All Savers (XLockmore) */,
-				AFD570C90996B9F800BA26F7 /* Ant */,
 				AFD5712C0996BF2E00BA26F7 /* Apollonian */,
 				AFD572A50996F99600BA26F7 /* Bouboule */,
 				AFD56EAE0996A72600BA26F7 /* Braid */,
@@ -13965,7 +13961,7 @@
 				AF7777D009B64C6B00EA3033 /* GLSlideshow */,
 				AFA55C77099349A600F3E977 /* GLSnake */,
 				AFD56DF10996A03800BA26F7 /* GLText */,
-				AFA55F420993629000F3E977 /* HyperTorus */,
+				AFA55F420993629000F3E977 /* Hypertorus */,
 				AF3C71450D624BF50030CC0D /* Hypnowheel */,
 				AFA55F06099361B700F3E977 /* JigglyPuff */,
 				AF35E88A0E63823600691F2F /* Jigsaw */,
@@ -14007,17 +14003,21 @@
 				AFA56379099397B300F3E977 /* TimeTunnel */,
 				AF998EDA0A083DB30051049D /* TopBlock */,
 				AF0DCA420C4CBB0D00D76972 /* Voronoi */,
+				AF137D410F075C9B004DE3B2 /* Obsolete */,
+				AFD570C90996B9F800BA26F7 /* Ant */,
 				AF6427A809A2DE36000F4CD4 /* Bubbles */,
 				AF47765A099DA78E001F091E /* Critical */,
 				AF477909099DE379001F091E /* Flag */,
 				AFD56EDA0996A95700BA26F7 /* Forest */,
 				AFA55CCC09934CE400F3E977 /* GLForestFire */,
+				AF64260F09A18D6C000F4CD4 /* HyperBall */,
+				AF6425CC09A18855000F4CD4 /* HyperCube */,
 				AFD571B50996D9DC00BA26F7 /* Juggle */,
-				AF4774B4099D8B5F001F091E /* LMorph */,
 				AFD56F8C0996B09400BA26F7 /* Laser */,
 				AFD56FA30996B10F00BA26F7 /* Lightning */,
 				AFD56FB90996B18F00BA26F7 /* Lisa */,
 				AFD56FCF0996B20900BA26F7 /* Lissie */,
+				AF4774B4099D8B5F001F091E /* LMorph */,
 				AFD570B10996B93000BA26F7 /* Rotor */,
 				AFD570260996B56D00BA26F7 /* Sphere */,
 				AFD570430996B61600BA26F7 /* Spiral */,
@@ -14025,7 +14025,6 @@
 				AFD56F0B0996AAFA00BA26F7 /* Vines */,
 				AF477208099D4EE8001F091E /* Whirlygig */,
 				AFD5709B0996B88E00BA26F7 /* Worm */,
-				AF137D410F075C9B004DE3B2 /* Obsolete */,
 				AF9771D60989DC4A001F8B92 /* SaverTester */,
 			);
 		};
@@ -14221,7 +14220,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AF4773C5099D67B9001F091E /* fuzzyflakes.xml in Resources */,
 				AF4773D3099D6804001F091E /* anemotaxis.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -22537,11 +22535,6 @@
 			target = AFD56F8C0996B09400BA26F7 /* Laser */;
 			targetProxy = AF137D5C0F075E5C004DE3B2 /* PBXContainerItemProxy */;
 		};
-		AF137D5F0F075E5C004DE3B2 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AF4774B4099D8B5F001F091E /* LMorph */;
-			targetProxy = AF137D5E0F075E5C004DE3B2 /* PBXContainerItemProxy */;
-		};
 		AF137D610F075E5C004DE3B2 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AFA55CCC09934CE400F3E977 /* GLForestFire */;
@@ -23002,6 +22995,16 @@
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
 			targetProxy = AF6427AA09A2DE36000F4CD4 /* PBXContainerItemProxy */;
 		};
+		AF714E4F105613410046AB1D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4774B4099D8B5F001F091E /* LMorph */;
+			targetProxy = AF714E4E105613410046AB1D /* PBXContainerItemProxy */;
+		};
+		AF714E51105613580046AB1D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFD570C90996B9F800BA26F7 /* Ant */;
+			targetProxy = AF714E50105613580046AB1D /* PBXContainerItemProxy */;
+		};
 		AF7776E509B63ABF00EA3033 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
@@ -23322,16 +23325,6 @@
 			target = AF477426099D7C70001F091E /* IFS */;
 			targetProxy = AF77794609B6604900EA3033 /* PBXContainerItemProxy */;
 		};
-		AF77794909B6604900EA3033 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AF6425CC09A18855000F4CD4 /* HyperCube */;
-			targetProxy = AF77794809B6604900EA3033 /* PBXContainerItemProxy */;
-		};
-		AF77794B09B6604900EA3033 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AF64260F09A18D6C000F4CD4 /* HyperBall */;
-			targetProxy = AF77794A09B6604900EA3033 /* PBXContainerItemProxy */;
-		};
 		AF77794D09B6604900EA3033 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF480C49098E301400FB32B8 /* Helix */;
@@ -23617,11 +23610,6 @@
 			target = AFD5712C0996BF2E00BA26F7 /* Apollonian */;
 			targetProxy = AF7779D809B6608200EA3033 /* PBXContainerItemProxy */;
 		};
-		AF7779DB09B6608200EA3033 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = AFD570C90996B9F800BA26F7 /* Ant */;
-			targetProxy = AF7779DA09B6608200EA3033 /* PBXContainerItemProxy */;
-		};
 		AF7779DD09B660AF00EA3033 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AFA56379099397B300F3E977 /* TimeTunnel */;
@@ -23769,7 +23757,7 @@
 		};
 		AF777A1709B660B300EA3033 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = AFA55F420993629000F3E977 /* HyperTorus */;
+			target = AFA55F420993629000F3E977 /* Hypertorus */;
 			targetProxy = AF777A1609B660B300EA3033 /* PBXContainerItemProxy */;
 		};
 		AF777A1909B660B300EA3033 /* PBXTargetDependency */ = {
@@ -24126,6 +24114,16 @@
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
 			targetProxy = AF9D4DEE09B5BB19006E59CF /* PBXContainerItemProxy */;
+		};
+		AFA160921052FF87009B93AA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF6425CC09A18855000F4CD4 /* HyperCube */;
+			targetProxy = AFA160911052FF87009B93AA /* PBXContainerItemProxy */;
+		};
+		AFA160941052FF87009B93AA /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF64260F09A18D6C000F4CD4 /* HyperBall */;
+			targetProxy = AFA160931052FF87009B93AA /* PBXContainerItemProxy */;
 		};
 		AFA3392F0B058505002B0E7D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -28224,7 +28222,7 @@
 					"CLASS=XScreenSaver${EXECUTABLE_NAME}View",
 					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
 				);
-				GCC_VERSION = 4.0;
+				"GCC_VERSION[sdk=macosx10.4][arch=*]" = 4.0;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -28252,7 +28250,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.4u.sdk";
+				SDKROOT = macosx10.4;
 				"SDKROOT[arch=x86_64]" = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
 				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR) $(USER_HEADER_SEARCH_PATHS)";
 				WARNING_CFLAGS = "-Wimplicit";
@@ -28264,8 +28262,7 @@
 		C01FCF5008A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1)";
-				ARCHS_STANDARD_32_64_BIT_PRE_XCODE_3_1 = "x86_64 i386 ppc";
+				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -28286,7 +28283,7 @@
 					"CLASS=XScreenSaver${EXECUTABLE_NAME}View",
 					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
 				);
-				GCC_VERSION = 4.0;
+				"GCC_VERSION[sdk=macosx10.4][arch=*]" = 4.0;
 				GCC_WARN_ABOUT_MISSING_NEWLINE = YES;
 				GCC_WARN_ABOUT_MISSING_PROTOTYPES = YES;
 				GCC_WARN_ABOUT_RETURN_TYPE = YES;
@@ -28314,7 +28311,7 @@
 				);
 				PREBINDING = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = "$(DEVELOPER_SDK_DIR)/MacOSX10.4u.sdk";
+				SDKROOT = macosx10.4;
 				"SDKROOT[arch=x86_64]" = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
 				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR) $(USER_HEADER_SEARCH_PATHS)";
 				WARNING_CFLAGS = "-Wimplicit";
@@ -29792,7 +29789,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		AFA55F510993629000F3E977 /* Build configuration list for PBXNativeTarget "HyperTorus" */ = {
+		AFA55F510993629000F3E977 /* Build configuration list for PBXNativeTarget "Hypertorus" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AFA55F520993629000F3E977 /* Debug */,

@@ -50,6 +50,10 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.10.  It has been replaced by the more general "Polytopes"
+screen saver, which can display this object as well as others.
+
 This displays 2D projections of the sequence of 3D objects which are
 the projections of the 4D analog to the cube: as a square is composed
 of four lines, each touching two others; and a cube is composed of
@@ -57,8 +61,6 @@ six squares, each touching four others; a hypercube is composed of
 eight cubes, each touching six others.  To make it easier to
 visualize the rotation, it uses a different color for the edges of
 each face.  Don't think about it too long, or your brain will melt.
-
-See also "polytopes" for a more general version of this using OpenGL.
 
 http://en.wikipedia.org/wiki/Hypercube
 http://en.wikipedia.org/wiki/Regular_polytope

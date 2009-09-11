@@ -797,6 +797,8 @@ xscreensaver-demo-Gtk: $(DEMO_OBJS) $(GTK_OBJS)
 
 demo-Gtk.o: XScreenSaver_ad.h
 demo-Xm.o:  XScreenSaver_Xm_ad.h
+xscreensaver.o: XScreenSaver_ad.h
+xscreensaver-getimage.o: XScreenSaver_ad.h
 
 xscreensaver-getimage: $(GETIMG_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(GETIMG_OBJS) $(GETIMG_LIBS) -lm

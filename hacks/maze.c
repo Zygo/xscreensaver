@@ -210,11 +210,16 @@ set_maze_sizes (struct state *st, int width, int height)
 static void
 initialize_maze (struct state *st)
 {
+  int retry_count = 0;
   int i, j, wall;
   int logow = 1 + st->logo_width / st->grid_width;
   int logoh = 1 + st->logo_height / st->grid_height;
   
  AGAIN:
+
+  /* This can happen if the window is really small. Let's not sweat it. */
+  if (++retry_count > 100) return;
+
 
   /* initialize all squares */
   for ( i=0; i<st->maze_size_x; i++) {

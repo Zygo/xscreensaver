@@ -26,6 +26,9 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.08.
+
 Draws a line segment moving along a complex spiraling curve.
 
 Written by Tom Lawrence; 1997.
