@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="photopile" _label="Photopile">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <vgroup>
+
+    <number id="duration" type="slider" arg="-duration %"
+            _label="Time until loading a new image"
+            _low-label="5 seconds" _high-label="1 minute"
+            low="5" high="60" default="5"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Animation speed" _low-label="Slow" _high-label="Fast"
+            low="0.1" high="8.0" default="1.0"/>
+
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+   </vgroup>
+   <vgroup>
+
+    <number id="count" type="spinbutton" arg="-count %"
+            _label="Number of images" low="1" high="20" default="7"/>
+
+    <number id="scale" type="slider" arg="-scale %"
+            _label="Image size"
+            _low-label="Small" _high-label="Large"
+            low="0.1" high="0.9" default="0.4"/>
+
+    <number id="tilt" type="slider" arg="-maxTilt %"
+            _label="Maximum angle from vertical"
+            _low-label="0 degrees" _high-label="90 degrees"
+            low="0" high="90" default="50"/>
+
+    <boolean id="titles" _label="Show file names" arg-set="-titles"/>
+
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-image />
+
+  <_description>
+Loads several random images, and displays them as if lying in a random pile.
+The pile is periodically reshuffled, with new images coming in and old ones
+being thrown out.
+
+Written by Jens Kilian; 2008.
+  </_description>
+</screensaver>
