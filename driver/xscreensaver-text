@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2008 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005-2009 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -30,7 +30,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.17 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.18 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -751,16 +751,41 @@ sub reformat_text($) {
 }
 
 
-sub get_url_text($) {
-  my ($url) = @_;
+# Figure out what the proxy server should be, either from environment
+# variables or by parsing the output of the (MacOS) program "scutil",
+# which tells us what the system-wide proxy settings are.
+#
+sub set_proxy() {
 
   # historical suckage: the environment variable name is lower case.
   $http_proxy = $ENV{http_proxy} || $ENV{HTTP_PROXY};
 
-  if ($http_proxy && $http_proxy =~ m@^http://([^/]*)/?$@ ) {
-    # historical suckage: allow "http://host:port" as well as "host:port".
-    $http_proxy = $1;
+  if (defined ($http_proxy)) {
+    if ($http_proxy && $http_proxy =~ m@^http://([^/]*)/?$@ ) {
+      # historical suckage: allow "http://host:port" as well as "host:port".
+      $http_proxy = $1;
+    }
+
+  } else {
+    my $proxy_data = `scutil --proxy 2>/dev/null`;
+    my ($server) = ($proxy_data =~ m/\bHTTPProxy\s*:\s*([^\s]+)/s);
+    my ($port)   = ($proxy_data =~ m/\bHTTPPort\s*:\s*([^\s]+)/s);
+    # Note: this ignores the "ExceptionsList".
+    if ($server) {
+      $http_proxy = $server;
+      $http_proxy .= ":$port" if $port;
+    }
   }
+
+  print STDERR "$progname: proxy server: $http_proxy\n" 
+    if ($verbose > 2 && $http_proxy);
+}
+
+
+sub get_url_text($) {
+  my ($url) = @_;
+
+  set_proxy();
 
   my ($ct, $body) = get_url ($url);
 
@@ -827,16 +852,16 @@ sub main() {
     elsif (m/^--?date$/)    { $text_mode = 'date';
                               $load_p = 0; }
     elsif (m/^--?text$/)    { $text_mode = 'literal';
-                              $text_literal = shift @ARGV;
+                              $text_literal = shift @ARGV || '';
                               $load_p = 0; }
     elsif (m/^--?file$/)    { $text_mode = 'file';
-                              $text_file = shift @ARGV;
+                              $text_file = shift @ARGV || '';
                               $load_p = 0; }
     elsif (m/^--?program$/) { $text_mode = 'program';
-                              $text_program = shift @ARGV;
+                              $text_program = shift @ARGV || '';
                               $load_p = 0; }
     elsif (m/^--?url$/)     { $text_mode = 'url';
-                              $text_url = shift @ARGV;
+                              $text_url = shift @ARGV || '';
                               $load_p = 0; }
     elsif (m/^--?col(umn)?s?$/) { $wrap_columns = 0 + shift @ARGV; }
     elsif (m/^--?cocoa$/)   { $cocoa_id = shift @ARGV; }

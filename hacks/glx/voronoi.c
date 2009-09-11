@@ -1,4 +1,4 @@
-/* voronoi, Copyright (c) 2007 Jamie Zawinski <jwz@jwz.org>
+/* voronoi, Copyright (c) 2007, 2008 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -142,31 +142,20 @@ cone (void)
   int i;
   int faces = 64;
   GLfloat step = M_PI * 2 / faces;
-  GLfloat s2 = step/2;
-  GLfloat th;
-  GLfloat x, y, x0, y0;
+  GLfloat th = 0;
+  GLfloat x = 1;
+  GLfloat y = 0;
 
-  glBegin(GL_TRIANGLES);
-
-  th = 0;
-  x = 1;
-  y = 0;
-  x0 = cos (s2);
-  y0 = sin (s2);
-
+  glBegin(GL_TRIANGLE_FAN);
+  glVertex3f (0, 0, 1);
   for (i = 0; i < faces; i++)
     {
-      glVertex3f(0,  0, 1);
-      glVertex3f(x, y, 0);
-
+      glVertex3f (x, y, 0);
       th += step;
-      x0 = cos (th + s2);
-      y0 = sin (th + s2);
-      x  = cos (th);
-      y  = sin (th);
-
-      glVertex3f(x, y, 0);
+      x = cos (th);
+      y = sin (th);
     }
+  glVertex3f (1, 0, 0);
   glEnd();
   return faces;
 }

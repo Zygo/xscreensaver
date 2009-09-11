@@ -81,7 +81,7 @@ int mono_p = 0;
     perror ("putenv");
     abort();
   }
-  free (npath);
+//  free (npath);   // Oops, don't free this! putenv() does not copy it!
 }
 
 

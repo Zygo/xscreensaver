@@ -1,5 +1,5 @@
 /* webcollage-helper-cocoa --- scales and pastes one image into another
- * xscreensaver, Copyright (c) 2002-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2002-2009 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,6 +19,13 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <sys/stat.h>
+
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED <= MAC_OS_X_VERSION_10_4
+ typedef int          NSInteger;
+ typedef unsigned int NSUInteger;
+#endif
+
 
 char *progname;
 static int verbose_p = 0;
@@ -142,7 +149,7 @@ bevel_image (NSImage *img, int bevel_pct,
                    bytesPerRow: 0
                   bitsPerPixel: 0];
 
-  int xx, yy;
+  NSInteger xx, yy;
   double *ramp = (double *) malloc (sizeof(*ramp) * (bevel_size + 1));
 
   if (!ramp)
@@ -183,7 +190,7 @@ bevel_image (NSImage *img, int bevel_pct,
           r = rx * ry;
           if (r != 1)
             {
-              unsigned int p[4];
+              NSUInteger p[4];
               p[0] = 0xFF * r;
               p[1] = p[2] = p[3] = 0xFF;
               [rep setPixel:p atX:xx y:yy];
@@ -296,7 +303,8 @@ write_image (NSImage *img, const char *file)
                                properties:props];
 
   [jpeg_data writeToFile:
-               [NSString stringWithCString:file]
+               [NSString stringWithCString:file
+                                  encoding:NSISOLatin1StringEncoding]
              atomically:YES];
 
   if (verbose_p)

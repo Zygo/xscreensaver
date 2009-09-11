@@ -18,7 +18,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.3 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my $version = q{ $Revision: 1.4 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
 
 my $verbose = 0;
 
@@ -85,8 +85,10 @@ sub parse_makefiles() {
     close IN;
 
     $body =~ s/\\\n//gs;
-    my ($var) = ($body =~ m/^RETIRED_EXES\s*=\s*(.*)$/mi);
+    my ($var)  = ($body =~ m/^RETIRED_EXES\s*=\s*(.*)$/mi);
+    my ($var2) = ($body =~ m/^RETIRED_GL_EXES\s*=\s*(.*)$/mi);
     error ("no RETIRED_EXES in $mf") unless $var;
+    $var .= " $var2" if $var2;
     foreach my $hack (split (/\s+/, $var)) {
       $disable{$hack} = 2;
     }

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2009 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1354,6 +1354,7 @@ drain_input (p_state *state)
 	    {
 	      waitpid(state->pid, NULL, 0);
 	      fclose (state->pipe);
+              state->pid = 0;
 	    }
 	  else
 	    {
@@ -1436,7 +1437,7 @@ phosphor_reshape (Display *dpy, Window window, void *closure,
   resize_grid (state);
 
 # if defined(HAVE_FORKPTY) && defined(TIOCSWINSZ)
-  if (state->pid)
+  if (state->pid && state->pipe)
     {
       /* Tell the sub-process that the screen size has changed. */
       struct winsize ws;

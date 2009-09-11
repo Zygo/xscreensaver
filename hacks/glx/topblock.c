@@ -1,4 +1,4 @@
-/* topblock, Copyright (c) 2006-2008
+/* topblock, Copyright (c) 2006-2009
  *  rednuht <topblock.xscreensaver@jumpstation.co.uk>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -230,8 +230,6 @@ init_topBlock (ModeInfo *mi)
   
 	dropSpeed = 80/dropSpeed;
 	dropSpeed = (blockHeight/dropSpeed); 
-
-  tb->glx_context = init_GL(mi);
 
   reshape_topBlock (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   if (0==1) {

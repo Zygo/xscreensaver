@@ -70,13 +70,7 @@ static void talk_1 (struct state *);
 static int think (struct state *);
 static unsigned long look (struct state *); 
 
-#define FROM_ARGV    1
-#define FROM_PROGRAM 2
-#define FROM_FILE    3
-#define FROM_RESRC   4
-
 #define IS_MOVING  1
-#define GET_PASSWD 2
 
 #if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
 # include "images/noseguy/nose-f1.xpm"

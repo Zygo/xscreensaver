@@ -118,6 +118,8 @@ init_GL(ModeInfo * mi)
       glDrawBuffer (GL_FRONT);
   }
 
+  /* Sometimes glDrawBuffer() throws "invalid op". Dunno why. Ignore. */
+  clear_gl_error ();
 
   /* GLXContext is already a pointer type.
      Why this function returns a pointer to a pointer, I have no idea...

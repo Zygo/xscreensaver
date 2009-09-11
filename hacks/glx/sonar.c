@@ -236,6 +236,9 @@ draw_screen (ModeInfo *mi, Bool mesh_p, Bool sweep_p)
 
       r0 = i     / (GLfloat) r_steps;
       r1 = (i+1) / (GLfloat) r_steps;
+
+      if (r1 > 1) r1 = 1; /* avoid asin lossage */
+
       z0 = cos (curvature/2 * asin (r0)) / 2 - zoff;
       z1 = cos (curvature/2 * asin (r1)) / 2 - zoff;
 

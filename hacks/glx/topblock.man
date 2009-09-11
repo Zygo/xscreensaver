@@ -117,9 +117,7 @@ Increases viewing Z coordinate.
 .TP 8
 .B c
 Decreases viewing Z coordinate.
-..UR <address>
-.UE
-TP 8
+.TP 8
 .B f
 Increases camera location X coordinate.
 .TP 8

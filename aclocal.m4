@@ -252,7 +252,10 @@ AC_DEFUN(AM_GLIB_WITH_NLS,
 
     AC_OUTPUT_COMMANDS(
       [case "$CONFIG_FILES" in *po/Makefile.in*)
+        rm -f po/stamp-it po/stamp-it.tmp
+        > po/stamp-it.tmp
         sed -e "/POTFILES =/r po/POTFILES" po/Makefile.in > po/Makefile
+        mv po/stamp-it.tmp po/stamp-it
       esac])
 
     dnl These rules are solely for the distribution goal.  While doing this

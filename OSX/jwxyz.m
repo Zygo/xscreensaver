@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2009 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -17,6 +17,7 @@
  */
 
 #import <stdlib.h>
+#import <stdint.h>
 #import <Cocoa/Cocoa.h>
 #import "jwxyz.h"
 #import "jwxyz-timers.h"
@@ -1175,7 +1176,9 @@ Status
 XAllocColor (Display *dpy, Colormap cmap, XColor *color)
 {
   // store 32 bit ARGB in the pixel field.
-  color->pixel = ((                       0xFF  << 24) |
+  // (The uint32_t is so that 0xFF000000 doesn't become 0xFFFFFFFFFF000000)
+  color->pixel = (uint32_t)
+                 ((                       0xFF  << 24) |
                   (((color->red   >> 8) & 0xFF) << 16) |
                   (((color->green >> 8) & 0xFF) <<  8) |
                   (((color->blue  >> 8) & 0xFF)      ));
@@ -1309,17 +1312,18 @@ ximage_putpixel_1 (XImage *ximage, int x, int y, unsigned long pixel)
 static unsigned long
 ximage_getpixel_32 (XImage *ximage, int x, int y)
 {
-  return *((unsigned long *) ximage->data +
-           (y * (ximage->bytes_per_line >> 2)) +
-           x);
+  return ((unsigned long)
+          *((uint32_t *) ximage->data +
+            (y * (ximage->bytes_per_line >> 2)) +
+            x));
 }
 
 static int
 ximage_putpixel_32 (XImage *ximage, int x, int y, unsigned long pixel)
 {
-  *((unsigned long *) ximage->data +
+  *((uint32_t *) ximage->data +
     (y * (ximage->bytes_per_line >> 2)) +
-    x) = pixel;
+    x) = (uint32_t) pixel;
   return 0;
 }
 
@@ -1615,7 +1619,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
            unsigned long plane_mask, int format)
 {
   const unsigned char *data = 0;
-  int depth, ibpp, ibpl;
+  int depth, ibpp, ibpl, alpha_first_p;
   NSBitmapImageRep *bm = 0;
   
   Assert ((width  < 65535), "improbably large width");
@@ -1639,6 +1643,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     nsfrom.size.height = height;
     [bm initWithFocusedViewRect:nsfrom];
     depth = 32;
+    alpha_first_p = ([bm bitmapFormat] & NSAlphaFirstBitmapFormat);
     ibpp = [bm bitsPerPixel];
     ibpl = [bm bytesPerRow];
     data = [bm bitmapData];
@@ -1658,6 +1663,10 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
   /* both PPC and Intel use word-ordered ARGB frame buffers, which
      means that on Intel it is BGRA when viewed by bytes (And BGR
      when using 24bpp packing).
+
+     BUT! Intel-64 stores alpha at the other end! 32bit=RGBA, 64bit=ARGB.
+     The NSAlphaFirstBitmapFormat bit in bitmapFormat seems to be the
+     indicator of this latest kink.
    */
   int xx, yy;
   if (depth == 1) {
@@ -1667,10 +1676,10 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
       const unsigned char *iline2 = iline;
       for (xx = 0; xx < width; xx++) {
 
-        iline2++;                     // ignore b or a
-        iline2++;                     // ignore g or r
-        unsigned char r = *iline2++;  //        r or g
-        if (ibpp == 32) iline2++;     // ignore a or b
+        iline2++;                     // ignore R  or  A  or  A  or  B
+        iline2++;                     // ignore G  or  B  or  R  or  G
+        unsigned char r = *iline2++;  // use    B  or  G  or  G  or  R
+        if (ibpp == 32) iline2++;     // ignore A  or  R  or  B  or  A
 
         XPutPixel (image, xx, yy, (r ? 1 : 0));
       }
@@ -1684,19 +1693,34 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
 
       const unsigned char *iline2 = iline;
       unsigned char *oline2 = oline;
-      for (xx = 0; xx < width; xx++) {
 
-        unsigned char a = (ibpp == 32 ? (*iline2++) : 0xFF);
-        unsigned char r = *iline2++;
-        unsigned char g = *iline2++;
-        unsigned char b = *iline2++;
-        unsigned long pixel = ((a << 24) |
-                               (r << 16) |
-                               (g <<  8) |
-                               (b <<  0));
-        *((unsigned int *) oline2) = pixel;
-        oline2 += 4;
-      }
+      if (alpha_first_p)			// ARGB
+        for (xx = 0; xx < width; xx++) {
+          unsigned char a = (ibpp == 32 ? (*iline2++) : 0xFF);
+          unsigned char r = *iline2++;
+          unsigned char g = *iline2++;
+          unsigned char b = *iline2++;
+          uint32_t pixel = ((a << 24) |
+                            (r << 16) |
+                            (g <<  8) |
+                            (b <<  0));
+          *((uint32_t *) oline2) = pixel;
+          oline2 += 4;
+        }
+      else					// RGBA
+        for (xx = 0; xx < width; xx++) {
+          unsigned char r = *iline2++;
+          unsigned char g = *iline2++;
+          unsigned char b = *iline2++;
+          unsigned char a = (ibpp == 32 ? (*iline2++) : 0xFF);
+          uint32_t pixel = ((a << 24) |
+                            (r << 16) |
+                            (g <<  8) |
+                            (b <<  0));
+          *((uint32_t *) oline2) = pixel;
+          oline2 += 4;
+        }
+
       oline += obpl;
       iline += ibpl;
     }
@@ -2326,40 +2350,6 @@ XLoadFont (Display *dpy, const char *name)
 }
 
 
-/* This translates the NSFont into the numbers that aglUseFont() wants.
- */
-int
-jwxyz_font_info (Font f, int *size_ret, int *face_ret)
-{
-  char *name = strdup (f->ps_name);
-  char *dash = strchr (name, '-');
-  int flags = 0;
-  int size = f->size;
-  if (dash) {
-    // 0 = plain; 1=B; 2=I; 3=BI; 4=U; 5=UB; etc.
-    if (strcasestr (dash, "bold"))    flags |= 1;
-    if (strcasestr (dash, "italic"))  flags |= 2;
-    if (strcasestr (dash, "oblique")) flags |= 2;
-    *dash = 0;
-  }
-  NSString *nname = [NSString stringWithCString:name
-                                       encoding:NSUTF8StringEncoding];
-  ATSFontFamilyRef id =
-    ATSFontFamilyFindFromName ((CFStringRef) nname, kATSOptionFlagsDefault);
-
-
-  // WTF?  aglUseFont gets a BadValue if size is small!!
-  if (size < 9) size = 9;
-
-  //NSLog (@"font %s %.1f => %d %d %d", f->ps_name, f->size, id, flags, size);
-  Assert (id >= 0, "no ATS font family");
-
-  *size_ret = size;
-  *face_ret = flags;
-  return id;
-}
-
-
 XFontStruct *
 XLoadQueryFont (Display *dpy, const char *name)
 {
@@ -2504,8 +2494,8 @@ draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
   set_font (d->cgc, gc);
 
   CGContextSetTextDrawingMode (d->cgc, kCGTextFill);
-  if (! gc->gcv.antialias_p)
-    CGContextSetShouldAntialias (d->cgc, YES);  // always antialias text
+  if (gc->gcv.antialias_p)
+    CGContextSetShouldAntialias (d->cgc, YES);
   CGContextShowTextAtPoint (d->cgc,
                             wr.origin.x + x,
                             wr.origin.y + wr.size.height - y,

@@ -103,7 +103,9 @@ dmg:: distdepend check_versions
 									      \
   retired=`perl -0 -ne							      \
      's/\\\\\\n//g; m/^RETIRED_EXES\s*=\s*(.*)$$/m && print "$$1\n"'	      \
-      ../hacks/Makefile.in						      \
+      ../hacks/Makefile.in ;						      \
+      perl -0 -ne							      \
+     's/\\\\\\n//g; m/^RETIRED_GL_EXES\s*=\s*(.*)$$/m && print "$$1\n"'	      \
       ../hacks/glx/Makefile.in` ;					      \
 									      \
   for f in $$SRC/*.saver ; do						      \

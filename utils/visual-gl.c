@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2007 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2009 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -141,6 +141,18 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
         glXGetConfig (dpy, vi_out, GLX_BUFFER_SIZE, &value);
         printf ("    GLX type:          indexed (%d)\n", value);
       }
+
+# ifndef  GLX_NONE_EXT       /* Hooray for gratuitious name changes. */
+#  define GLX_NONE_EXT                    GLX_NONE
+#  define GLX_TRANSPARENT_TYPE_EXT        GLX_TRANSPARENT_TYPE
+#  define GLX_TRANSPARENT_INDEX_EXT       GLX_TRANSPARENT_INDEX
+#  define GLX_TRANSPARENT_INDEX_VALUE_EXT GLX_TRANSPARENT_INDEX_VALUE
+#  define GLX_TRANSPARENT_RGB_EXT         GLX_TRANSPARENT_RGB
+#  define GLX_TRANSPARENT_RED_VALUE_EXT   GLX_TRANSPARENT_RED_VALUE
+#  define GLX_TRANSPARENT_GREEN_VALUE_EXT GLX_TRANSPARENT_GREEN_VALUE
+#  define GLX_TRANSPARENT_BLUE_VALUE_EXT  GLX_TRANSPARENT_BLUE_VALUE
+#  define GLX_TRANSPARENT_ALPHA_VALUE_EXT GLX_TRANSPARENT_ALPHA_VALUE
+# endif
 
 # ifdef GLX_VISUAL_CAVEAT_EXT
     if (!glXGetConfig (dpy, vi_out, GLX_VISUAL_CAVEAT_EXT, &value) &&

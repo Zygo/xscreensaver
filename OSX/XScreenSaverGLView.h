@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2009 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -16,11 +16,11 @@
  */
 
 #import "XScreenSaverView.h"
-#import <AGL/agl.h>
+#import <AppKit/NSOpenGL.h>
 
 @interface XScreenSaverGLView : XScreenSaverView
 {
-  AGLContext agl_ctx;      // OpenGL rendering context
+  NSOpenGLContext *ogl_ctx;      // OpenGL rendering context
 }
 
 @end

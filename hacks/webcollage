@@ -60,7 +60,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.148 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.149 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2008" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
@@ -3512,6 +3512,40 @@ sub update_imagemap($$$$$$$$) {
 }
 
 
+# Figure out what the proxy server should be, either from environment
+# variables or by parsing the output of the (MacOS) program "scutil",
+# which tells us what the system-wide proxy settings are.
+#
+sub set_proxy() {
+
+  if (! $http_proxy) {
+    # historical suckage: the environment variable name is lower case.
+    $http_proxy = $ENV{http_proxy} || $ENV{HTTP_PROXY};
+  }
+
+  if (defined ($http_proxy)) {
+    if ($http_proxy && $http_proxy =~ m@^http://([^/]*)/?$@ ) {
+      # historical suckage: allow "http://host:port" as well as "host:port".
+      $http_proxy = $1;
+    }
+
+  } else {
+    my $proxy_data = `scutil --proxy 2>/dev/null`;
+    my ($server) = ($proxy_data =~ m/\bHTTPProxy\s*:\s*([^\s]+)/s);
+    my ($port)   = ($proxy_data =~ m/\bHTTPPort\s*:\s*([^\s]+)/s);
+    # Note: this ignores the "ExceptionsList".
+    if ($server) {
+      $http_proxy = $server;
+      $http_proxy .= ":$port" if $port;
+    }
+  }
+
+  if ($http_proxy) {
+    LOG ($verbose_net, "proxy server: $http_proxy");
+  }
+}
+
+
 sub init_signals() {
 
   $SIG{HUP}  = \&signal_cleanup;
@@ -3541,9 +3575,6 @@ sub main() {
 
   my $root_p = 0;
   my $window_id = undef;
-
-  # historical suckage: the environment variable name is lower case.
-  $http_proxy = $ENV{http_proxy} || $ENV{HTTP_PROXY};
 
   while ($_ = $ARGV[0]) {
     shift @ARGV;
@@ -3645,14 +3676,6 @@ sub main() {
     }
   }
 
-  if ($http_proxy && $http_proxy eq "") {
-    $http_proxy = undef;
-  }
-  if ($http_proxy && $http_proxy =~ m@^http://([^/]*)/?$@ ) {
-    # historical suckage: allow "http://host:port" as well as "host:port".
-    $http_proxy = $1;
-  }
-
   if (!$root_p && !$no_output_p && !$cocoa_p) {
     print STDERR $copyright;
     error "the -root argument is mandatory (for now.)";
@@ -3730,6 +3753,7 @@ sub main() {
   }
 
   init_signals();
+  set_proxy();
 
   spawn_driftnet ($driftnet_cmd) if ($driftnet_cmd);
 

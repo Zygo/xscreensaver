@@ -434,8 +434,17 @@ AC_DEFUN(AC_NO_OBJECTIVE_C,
 #
 ###############################################################################
 
-AC_DEFUN(AC_GCC_ACCEPTS_STD,
-         [AC_CHECK_GCC_ARG(std, -std=c89)])
+AC_DEFUN(AC_GCC_ACCEPTS_STD, [
+  case "$host" in
+    *-darwin* )
+      # Fucking Apple let // comments sneak into OpenGL headers, so
+      # we *must* allow // comments when compiling on Mac OS 10.6!  FUCK!
+    ;;
+   *)
+     AC_CHECK_GCC_ARG(std, -std=c89)
+   ;;
+  esac
+])
 
 AC_DEFUN(AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE,
  [if test -n "$GCC"; then
@@ -1691,8 +1700,21 @@ if test "$with_randr" = yes; then
     AC_DEFINE(HAVE_RANDR)
 
     # Now check for version 1.2 in the same libs.
-    AC_CHECK_X_LIB(c, XRRGetOutputInfo, [AC_DEFINE(HAVE_RANDR_12)],
-                   [true], $SAVER_LIBS)
+    # Try to compile, since on MacOS 10.5.7, headers are older than libs!
+    AC_CACHE_CHECK([for XRRGetScreenResources], ac_cv_randr_12,
+      [ac_cv_randr_12=no
+       AC_TRY_X_COMPILE([#include <stdlib.h>
+                         #include <X11/Xlib.h>
+                         #include <X11/extensions/Xrandr.h>],
+                        [XRRScreenResources *res = 
+                           XRRGetScreenResources (0, 0);],
+                        [ac_cv_randr_12=yes],
+                        [ac_cv_randr_12=no])])
+    if test "$ac_cv_randr_12" = yes ; then
+      AC_DEFINE(HAVE_RANDR_12)
+    fi
+#   AC_CHECK_X_LIB(c, XRRGetOutputInfo, [AC_DEFINE(HAVE_RANDR_12)],
+#                  [true], $SAVER_LIBS)
   fi
 
 
@@ -3601,7 +3623,7 @@ tab='	'
 if test "$have_gl" = yes; then
   GL_EXES='$(GL_EXES)'
   SUID_EXES='$(SUID_EXES)'
-  RETIRED_GL_EXES='$(RETIRED_EXES)'
+  RETIRED_GL_EXES='$(RETIRED_GL_EXES)'
   GL_UTIL_EXES='$(GL_UTIL_EXES)'
   GL_MEN='$(GL_MEN)'
   GL_KLUDGE=" "
@@ -3728,6 +3750,7 @@ AC_SUBST(LOCK_SRCS)
 AC_SUBST(LOCK_OBJS)
 AC_SUBST(JPEG_EXES)
 AC_SUBST(GL_EXES)
+AC_SUBST(RETIRED_GL_EXES)
 AC_SUBST(SUID_EXES)
 AC_SUBST(GL_UTIL_EXES)
 AC_SUBST(GL_MEN)

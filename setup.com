@@ -58,7 +58,6 @@ $ imsmap	:== $'mydir'imsmap
 $ interaggregate	:== $'mydir'interaggregate
 $ interference	:== $'mydir'interference
 $ intermomentary	:== $'mydir'intermomentary
-$ juggle	:== $'mydir'juggle
 $ julia		:== $'mydir'julia
 $ kaleidescope	:== $'mydir'kaleidescope
 $ kumppa	:== $'mydir'kumppa

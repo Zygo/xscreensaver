@@ -436,7 +436,7 @@ randr_scan_monitors (Display *dpy, char **errP)
               XRROutputInfo *rroi = XRRGetOutputInfo (dpy, res, 
                                                       res->outputs[k]);
               RRCrtc crtc = (rroi->crtc  ? rroi->crtc :
-                             rroi->crtcs ? rroi->crtcs[0] : 0);
+                             rroi->ncrtc ? rroi->crtcs[0] : 0);
               XRRCrtcInfo *crtci = (crtc ? XRRGetCrtcInfo(dpy, res, crtc) : 0);
 
               monitors[j] = m;

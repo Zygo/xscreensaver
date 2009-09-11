@@ -184,7 +184,7 @@ find_saverView (NSView *v)
     [NSUserDefaultsController sharedUserDefaultsController];
   [prefs addObserver:self
          forKeyPath:key
-            options:nil
+            options:0
             context:@selector(selectedSaverDidChange:)];
   [popup   bind:@"selectedObject"
        toObject:prefs

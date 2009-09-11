@@ -141,7 +141,6 @@ convert_ximage_to_rgba32 (Screen *screen, XImage *image)
   unsigned int srpos=0, sgpos=0, sbpos=0;
   unsigned int srmsk=0, sgmsk=0, sbmsk=0;
   unsigned int srsiz=0, sgsiz=0, sbsiz=0;
-  int i;
   XColor *colors = 0;
   unsigned char spread_map[3][256];
 
@@ -193,6 +192,7 @@ convert_ximage_to_rgba32 (Screen *screen, XImage *image)
 
   if (colors == 0)  /* truecolor */
     {
+      int i;
       for (i = 0; i < 256; i++)
         {
           spread_map[0][i] = spread_bits (i, srsiz);

@@ -47,7 +47,6 @@
 #define SCALE       10000  /* fixed-point math, for sub-pixel motion */
 #define DEF_COUNT   12	   /* When planes and count are 0, how many blobs. */
 
-
 #define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
 
@@ -126,7 +125,7 @@ make_blob (Display *dpy, int maxx, int maxy, int size)
   b->spline = make_spline (b->npoints);
   b->r = (long *) malloc (sizeof(*b->r) * b->npoints);
   for (i = 0; i < b->npoints; i++)
-    b->r[i] = ((random() % mid) + (mid/2)) * RANDSIGN();
+    b->r[i] = (long) ((random() % mid) + (mid/2)) * RANDSIGN();
   return b;
 }
 

@@ -669,7 +669,20 @@ void
 sleep_until_idle (saver_info *si, Bool until_idle_p)
 {
   saver_preferences *p = &si->prefs;
-  XEvent event;
+
+  /* We have to go through this union bullshit because gcc-4.4.0 has
+     stricter struct-aliasing rules.  Without this, the optimizer
+     can fuck things up.
+   */
+  union {
+    XEvent x_event;
+# ifdef HAVE_RANDR
+    XRRScreenChangeNotifyEvent xrr_event;
+# endif /* HAVE_RANDR */
+# ifdef HAVE_MIT_SAVER_EXTENSION
+    XScreenSaverNotifyEvent sevent;
+# endif /* HAVE_MIT_SAVER_EXTENSION */
+  } event;
 
   /* We need to select events on all windows if we're not using any extensions.
      Otherwise, we don't need to. */
@@ -713,9 +726,9 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 
   while (1)
     {
-      XtAppNextEvent (si->app, &event);
+      XtAppNextEvent (si->app, &event.x_event);
 
-      switch (event.xany.type) {
+      switch (event.x_event.xany.type) {
       case 0:		/* our synthetic "timeout" event has been signalled */
 	if (until_idle_p)
 	  {
@@ -803,7 +816,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	break;
 
       case ClientMessage:
-	if (handle_clientmessage (si, &event, until_idle_p))
+	if (handle_clientmessage (si, &event.x_event, until_idle_p))
 	  goto DONE;
 	break;
 
@@ -812,7 +825,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
            supposed to scan all windows for events, prepare this window. */
 	if (scanning_all_windows)
 	  {
-            Window w = event.xcreatewindow.window;
+            Window w = event.x_event.xcreatewindow.window;
 	    start_notice_events_timer (si, w, p->debug_p);
 	  }
 	break;
@@ -831,28 +844,28 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
             Window root=0, window=0;
             int x=-1, y=-1;
             const char *type = 0;
-	    if (event.xany.type == MotionNotify)
+	    if (event.x_event.xany.type == MotionNotify)
               {
                 /*type = "MotionNotify";*/
-                root = event.xmotion.root;
-                window = event.xmotion.window;
-                x = event.xmotion.x_root;
-                y = event.xmotion.y_root;
+                root = event.x_event.xmotion.root;
+                window = event.x_event.xmotion.window;
+                x = event.x_event.xmotion.x_root;
+                y = event.x_event.xmotion.y_root;
               }
-	    else if (event.xany.type == KeyPress)
+	    else if (event.x_event.xany.type == KeyPress)
               {
                 type = "KeyPress";
-                root = event.xkey.root;
-                window = event.xkey.window;
+                root = event.x_event.xkey.root;
+                window = event.x_event.xkey.window;
                 x = y = -1;
               }
-	    else if (event.xany.type == ButtonPress)
+	    else if (event.x_event.xany.type == ButtonPress)
               {
                 type = "ButtonPress";
-                root = event.xkey.root;
-                window = event.xkey.window;
-                x = event.xmotion.x_root;
-                y = event.xmotion.y_root;
+                root = event.x_event.xkey.root;
+                window = event.x_event.xkey.window;
+                x = event.x_event.xmotion.x_root;
+                y = event.x_event.xmotion.y_root;
               }
 
             if (type)
@@ -866,13 +879,13 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 
                 /* Be careful never to do this unless in -debug mode, as
                    this could expose characters from the unlock password. */
-                if (p->debug_p && event.xany.type == KeyPress)
+                if (p->debug_p && event.x_event.xany.type == KeyPress)
                   {
                     KeySym keysym;
                     char c = 0;
-                    XLookupString (&event.xkey, &c, 1, &keysym, 0);
+                    XLookupString (&event.x_event.xkey, &c, 1, &keysym, 0);
                     fprintf (stderr, " (%s%s)",
-                             (event.xkey.send_event ? "synthetic " : ""),
+                             (event.x_event.xkey.send_event ? "synthetic " : ""),
                              XKeysymToString (keysym));
                   }
 
@@ -884,7 +897,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	  }
 
 	/* If any widgets want to handle this event, let them. */
-	dispatch_event (si, &event);
+	dispatch_event (si, &event.x_event);
 
         
         /* If we got a MotionNotify event, figure out what screen it
@@ -892,11 +905,11 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
            far enough to count as "real" motion, then ignore this
            event.
          */
-        if (event.xany.type == MotionNotify)
+        if (event.x_event.xany.type == MotionNotify)
           {
             int i;
             for (i = 0; i < si->nscreens; i++)
-              if (event.xmotion.root ==
+              if (event.x_event.xmotion.root ==
                   RootWindowOfScreen (si->screens[i].screen))
                 break;
             if (i < si->nscreens)
@@ -915,8 +928,8 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	if (!until_idle_p)
 	  {
 	    if (si->demoing_p &&
-		(event.xany.type == MotionNotify ||
-		 event.xany.type == KeyRelease))
+		(event.x_event.xany.type == MotionNotify ||
+		 event.x_event.xany.type == KeyRelease))
 	      /* When we're demoing a single hack, mouse motion doesn't
 		 cause deactivation.  Only clicks and keypresses do. */
 	      ;
@@ -933,16 +946,14 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
       default:
 
 #ifdef HAVE_MIT_SAVER_EXTENSION
-	if (event.type == si->mit_saver_ext_event_number)
+	if (event.x_event.type == si->mit_saver_ext_event_number)
 	  {
             /* This event's number is that of the MIT-SCREEN-SAVER server
                extension.  This extension has one event number, and the event
                itself contains sub-codes that say what kind of event it was
                (an "idle" or "not-idle" event.)
              */
-	    XScreenSaverNotifyEvent *sevent =
-	      (XScreenSaverNotifyEvent *) &event;
-	    if (sevent->state == ScreenSaverOn)
+	    if (event.sevent.state == ScreenSaverOn)
 	      {
 		int i = 0;
 		if (p->verbose_p)
@@ -960,7 +971,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 		      XUnmapWindow (si->dpy, ssi->server_mit_saver_window);
 		  }
 
-		if (sevent->kind != ScreenSaverExternal)
+		if (event.sevent.kind != ScreenSaverExternal)
 		  {
 		    fprintf (stderr,
 			 "%s: ScreenSaverOn event wasn't of type External!\n",
@@ -970,7 +981,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 		if (until_idle_p)
 		  goto DONE;
 	      }
-	    else if (sevent->state == ScreenSaverOff)
+	    else if (event.sevent.state == ScreenSaverOff)
 	      {
 		if (p->verbose_p)
 		  fprintf (stderr, "%s: MIT ScreenSaverOff event received.\n",
@@ -981,7 +992,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	    else
 	      fprintf (stderr,
 		       "%s: unknown MIT-SCREEN-SAVER event %d received!\n",
-		       blurb(), sevent->state);
+		       blurb(), event.sevent.state);
 	  }
 	else
 
@@ -989,7 +1000,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 
 
 #ifdef HAVE_SGI_SAVER_EXTENSION
-	if (event.type == (si->sgi_saver_ext_event_number + ScreenSaverStart))
+	if (event.x_event.type == (si->sgi_saver_ext_event_number + ScreenSaverStart))
 	  {
             /* The SGI SCREEN_SAVER server extension has two event numbers,
                and this event matches the "idle" event. */
@@ -1000,7 +1011,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	    if (until_idle_p)
 	      goto DONE;
 	  }
-	else if (event.type == (si->sgi_saver_ext_event_number +
+	else if (event.x_event.type == (si->sgi_saver_ext_event_number +
 				ScreenSaverEnd))
 	  {
             /* The SGI SCREEN_SAVER server extension has two event numbers,
@@ -1015,25 +1026,22 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 #endif /* HAVE_SGI_SAVER_EXTENSION */
 
 #ifdef HAVE_RANDR
-        if (event.type == (si->randr_event_number + RRScreenChangeNotify))
+        if (event.x_event.type == (si->randr_event_number + RRScreenChangeNotify))
           {
             /* The Resize and Rotate extension sends an event when the
                size, rotation, or refresh rate of any screen has changed.
              */
-            XRRScreenChangeNotifyEvent *xrr_event =
-              (XRRScreenChangeNotifyEvent *) &event;
-
             if (p->verbose_p)
               {
                 /* XRRRootToScreen is in Xrandr.h 1.4, 2001/06/07 */
-                int screen = XRRRootToScreen (si->dpy, xrr_event->window);
+                int screen = XRRRootToScreen (si->dpy, event.xrr_event.window);
                 fprintf (stderr, "%s: %d: screen change event received\n",
                          blurb(), screen);
               }
 
 # ifdef RRScreenChangeNotifyMask
             /* Inform Xlib that it's ok to update its data structures. */
-            XRRUpdateConfiguration (&event); /* Xrandr.h 1.9, 2002/09/29 */
+            XRRUpdateConfiguration (&event.x_event); /* Xrandr.h 1.9, 2002/09/29 */
 # endif /* RRScreenChangeNotifyMask */
 
             /* Resize the existing xscreensaver windows and cached ssi data. */
@@ -1051,7 +1059,7 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 #endif /* HAVE_RANDR */
 
           /* Just some random event.  Let the Widgets handle it, if desired. */
-	  dispatch_event (si, &event);
+	  dispatch_event (si, &event.x_event);
       }
     }
  DONE:
@@ -1066,11 +1074,11 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
      there's only one event generated by user activity, not two.)
    */
   if (!until_idle_p && si->locked_p)
-    swallow_unlock_typeahead_events (si, &event);
+    swallow_unlock_typeahead_events (si, &event.x_event);
   else
     while (XCheckMaskEvent (si->dpy,
                             (KeyPressMask|ButtonPressMask|PointerMotionMask),
-                     &event))
+                     &event.x_event))
       ;
 
 

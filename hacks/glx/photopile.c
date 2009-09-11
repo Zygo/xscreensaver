@@ -296,11 +296,12 @@ load_image (ModeInfo *mi)
     image_loaded_cb (0, 0, 0, 0, 0, 0, ss);
   else
     {
-      int w = (int)(MI_WIDTH(mi)  * scale) - 1;
-      int h = (int)(MI_HEIGHT(mi) * scale) - 1;
-      if (w <= 10) w = 10;
-      if (h <= 10) h = 10;
-      load_texture_async (mi->xgwa.screen, mi->window, *ss->glx_context, w, h,
+      int w = MI_WIDTH(mi);
+      int h = MI_HEIGHT(mi);
+      int size = (int)((w > h ? w : h) * scale);
+      if (size <= 10) size = 10;
+      load_texture_async (mi->xgwa.screen, mi->window, *ss->glx_context,
+                          size, size,
                           mipmap_p, frame->texid, 
                           image_loaded_cb, ss);
     }

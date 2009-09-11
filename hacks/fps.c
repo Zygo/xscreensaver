@@ -219,7 +219,6 @@ fps_draw (fps_state *st)
   if (st->clear_p)
     {
       int w, h;
-      int lh = st->font->ascent + st->font->descent;
       w = string_width (st->font, string, &h);
       XFillRectangle (st->dpy, st->window, st->erase_gc,
                       x - st->font->descent,
