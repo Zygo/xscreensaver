@@ -76,6 +76,9 @@
   </hgroup>
 
   <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.08.
+
 Draws zooming chains of sinusoidal spots.
 
 Written by Ashton Trey Belew; 2001.

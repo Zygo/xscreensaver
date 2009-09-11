@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008, 2009 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -18,7 +18,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.4 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my $version = q{ $Revision: 1.6 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
 
 my $verbose = 0;
 
@@ -27,32 +27,23 @@ my $verbose = 0;
 #
 my %disable = ( 
    'abstractile'	=> 1,
-   'ant'		=> 1,
    'antinspect'		=> 1,
    'antmaze'		=> 1,
    'antspotlight'	=> 1,
    'braid'		=> 1,
-   'critical'		=> 1,
    'crystal'		=> 1,
    'demon'		=> 1,
    'dnalogo'		=> 1,
    'fadeplot'		=> 1,
    'glblur'		=> 1,
-   'glforestfire'	=> 1,
    'glplanet'		=> 1,
    'glslideshow'	=> 1,
-   'hyperball'		=> 1,
-   'hypercube'		=> 1,
    'jigglypuff'		=> 1,
-   'juggle'		=> 1,
+   'juggle'		=> 2,
    'kaleidescope'	=> 1,
-   'laser'		=> 1,
    'lcdscrub'		=> 1,
-   'lightning'		=> 1,
-   'lisa'		=> 1,
-   'lissie'		=> 1,
-   'lmorph'		=> 1,
    'loop'		=> 1,
+   'mismunch'		=> 2,
    'nerverot'		=> 1,
    'noseguy'		=> 1,
    'polyominoes'	=> 1,
@@ -60,16 +51,11 @@ my %disable = (
    'pyro'		=> 1,
    'rdbomb'		=> 2,  # alternate name
    'rocks'		=> 1,
-   'rotor'		=> 1,
    'sballs'		=> 1,
    'sierpinski'		=> 1,
-   'sphere'		=> 1,
-   'spiral'		=> 1,
    'thornbird'		=> 1,
    'vidwhacker'		=> 1,
-   'vines'		=> 1,
    'webcollage'		=> 1,
-   'worm'		=> 1,
    'xsublim'		=> 2,
   );
 

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008, 2009 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -19,7 +19,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my $version = q{ $Revision: 1.3 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
 
 my $verbose = 0;
 
@@ -265,7 +265,7 @@ sub check_config($) {
   my ($saver) = @_;
 
   # kludge
-  return 0 if ($saver =~ m/(-helper|hypertorus|polytopes)$/);
+  return 0 if ($saver =~ m/(-helper)$/);
 
   my ($src_opts, $switchmap) = parse_src ($saver);
   my (@xml_opts) = parse_xml ($saver, $switchmap);

@@ -47,6 +47,9 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 4.22.
+
 A cellular automaton that is really a two-dimensional Turing machine:
 as the heads ("ants") walk along the screen, they change pixel
 values in their path.  Then, as they pass over changed pixels, their

@@ -22,6 +22,16 @@
 #import "usleep.h"
 
 
+#if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_5
+
+     /* 10.4 code.
+
+        This version of the code works on 10.4, but is flaky.  There is
+        a better way to do it on 10.5 and newer, but taking this path,
+        then we are being compiled against the 10.4 SDK instead of the
+        10.5 SDK, and the newer API is not available to us.
+      */
+
 static void
 copy_framebuffer_to_ximage (CGDirectDisplayID cgdpy, XImage *xim,
                             int window_x, int window_y)
@@ -117,18 +127,18 @@ void
 osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
 {
   Display *dpy = DisplayOfScreen (screen);
-  XWindowAttributes xgwa;
   NSView *nsview = jwxyz_window_view (xwindow);
   NSWindow *nswindow = [nsview window];
+  XWindowAttributes xgwa;
   int window_x, window_y;
   Window unused;
 
-  // figure out where this window is on the screen
+  // Figure out where this window is on the screen.
   //
   XGetWindowAttributes (dpy, xwindow, &xgwa);
   XTranslateCoordinates (dpy, xwindow, RootWindowOfScreen (screen), 0, 0, 
                          &window_x, &window_y, &unused);
-  
+
   // Use the size of the Drawable, not the Window.
   {
     Window r;
@@ -208,6 +218,60 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
 }
 
 
+#else /* MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_5
+
+         10.5+ code.
+
+         This version of the code is simpler and more reliable, but
+         uses an API that only exist on 10.5 and newer, so we can only
+         use it if when being compiled against the 10.5 SDK or later.
+       */
+
+/* Loads an image into the Drawable, returning once the image is loaded.
+ */
+void
+osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  NSView *nsview = jwxyz_window_view (xwindow);
+  XWindowAttributes xgwa;
+  int window_x, window_y;
+  Window unused;
+
+  // Figure out where this window is on the screen.
+  //
+  XGetWindowAttributes (dpy, xwindow, &xgwa);
+  XTranslateCoordinates (dpy, xwindow, RootWindowOfScreen (screen), 0, 0, 
+                         &window_x, &window_y, &unused);
+
+  // Grab only the rectangle of the screen underlying this window.
+  //
+  CGRect cgrect;
+  cgrect.origin.x    = window_x;
+  cgrect.origin.y    = window_y;
+  cgrect.size.width  = xgwa.width;
+  cgrect.size.height = xgwa.height;
+
+  // Grab a screen shot of those windows below this one
+  // (hey, X11 can't do that!)
+  //
+  CGImageRef img = 
+    CGWindowListCreateImage (cgrect,
+                             kCGWindowListOptionOnScreenBelowWindow,
+                             [[nsview window] windowNumber],
+                             kCGWindowImageDefault);
+
+  // Render the grabbed CGImage into the Drawable.
+  if (img) {
+    jwxyz_draw_NSImage_or_CGImage (DisplayOfScreen (screen), drawable, 
+                                   False, img, NULL, 0);
+    CGImageRelease (img);
+  }
+}
+
+#endif /* 10.5+ code */
+
+
 /* Returns the EXIF rotation property of the image, if any.
  */
 static int
@@ -250,8 +314,9 @@ osx_load_image_file (Screen *screen, Window xwindow, Drawable drawable,
   if (!img)
     return False;
 
-  jwxyz_draw_NSImage (DisplayOfScreen (screen), drawable, img, geom_ret,
-                      exif_rotation (filename));
+  jwxyz_draw_NSImage_or_CGImage (DisplayOfScreen (screen), drawable, 
+                                 True, img, geom_ret, 
+                                 exif_rotation (filename));
   [img release];
   return True;
 }

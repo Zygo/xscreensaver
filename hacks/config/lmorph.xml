@@ -30,6 +30,9 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.08.
+
 This generates random spline-ish line drawings and morphs between
 them.  
 

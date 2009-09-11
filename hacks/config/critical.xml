@@ -16,6 +16,9 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.08.
+
 Draws a system of self-organizing lines.  It starts out as random
 squiggles, but after a few iterations, order begins to appear.
 

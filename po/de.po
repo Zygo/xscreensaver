@@ -68,7 +68,7 @@ msgstr ""
 
 #: driver/demo-Gtk-widgets.c:228 driver/xscreensaver-demo.glade2.h:87
 msgid "_Kill Daemon"
-msgstr "Dämon _abwügen"
+msgstr "Dämon _abwürgen"
 
 #: driver/demo-Gtk-widgets.c:237
 msgid "Tell the running XScreenSaver daemon to exit."

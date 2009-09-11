@@ -1,4 +1,4 @@
-# Auto-generated: Thu Sep  3 02:08:38 PDT 2009
+# Auto-generated: Mon Sep  7 21:54:48 PDT 2009
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -134,6 +134,7 @@ hacks/config/memscroller.xml
 hacks/config/menger.xml
 hacks/config/metaballs.xml
 hacks/config/mirrorblob.xml
+hacks/config/mismunch.xml
 hacks/config/moebius.xml
 hacks/config/moebiusgears.xml
 hacks/config/moire.xml

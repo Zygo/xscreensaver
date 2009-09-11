@@ -57,7 +57,6 @@
 				greynetic -root				    \\n\
 				helix -root				    \\n\
 				hopalong -root				    \\n\
--				hypercube -root				    \\n\
 				imsmap -root				    \\n\
 -				noseguy -root				    \\n\
 -				pyro -root				    \\n\
@@ -141,7 +140,6 @@
 				xflame -root				    \\n\
 				xmatrix -root				    \\n\
   GL: 				gflux -root				    \\n\
--				hyperball -root				    \\n\
 -				nerverot -root				    \\n\
 				xrayswarm -root				    \\n\
 				xspirograph -root			    \\n\

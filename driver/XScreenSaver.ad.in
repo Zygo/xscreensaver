@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.09
-!                              03-Sep-2009
+!                              version 5.10
+!                              07-Sep-2009
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -158,7 +158,6 @@ GetViewPortIsFullOfLies: False
 				greynetic -root				    \n\
 				helix -root				    \n\
 				hopalong -root				    \n\
--				hypercube -root				    \n\
 				imsmap -root				    \n\
 -				noseguy -root				    \n\
 -				pyro -root				    \n\
@@ -242,7 +241,6 @@ GetViewPortIsFullOfLies: False
 				xflame -root				    \n\
 				xmatrix -root				    \n\
 @GL_KLUDGE@ GL: 				gflux -root				    \n\
--				hyperball -root				    \n\
 -				nerverot -root				    \n\
 				xrayswarm -root				    \n\
 				xspirograph -root			    \n\

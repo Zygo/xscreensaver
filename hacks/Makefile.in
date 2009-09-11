@@ -154,7 +154,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 
 EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  drift flame galaxy grav greynetic halo \
-		  helix hopalong hypercube ifs imsmap julia kaleidescope \
+		  helix hopalong ifs imsmap julia kaleidescope \
 		  maze moire noseguy pedal \
 		  penrose pyro qix rocks rorschach sierpinski slidescreen \
 		  slip strange swirl goop starfish munch \
@@ -164,7 +164,7 @@ EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  demon loop penetrate deluxe compass squiral xflame \
 		  wander spotlight phosphor xmatrix petri shadebobs \
 		  ccurve blaster bumps ripples xspirograph \
-		  nerverot xrayswarm hyperball zoom whirlwindwarp rotzoomer \
+		  nerverot xrayswarm zoom whirlwindwarp rotzoomer \
 		  speedmine vermiculate twang apollonian euler2d \
 		  polyominoes thornbird  fluidballs anemone halftone \
 		  metaballs eruption popsquares barcode piecewise cloudlife \
@@ -175,9 +175,9 @@ EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  @JPEG_EXES@
 JPEG_EXES	= webcollage-helper
 
-RETIRED_EXES	= ant bubbles critical flag forest laser lightning lisa \
-		  lissie lmorph rotor sphere spiral t3d vines whirlygig \
-		  worm xsublim juggle
+RETIRED_EXES	= ant bubbles critical flag forest hyperball hypercube laser \
+		  lightning lisa lissie lmorph rotor sphere spiral t3d vines \
+		  whirlygig worm xsublim juggle
 
 HACK_OBJS_1	= fps.o $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
@@ -200,7 +200,7 @@ MEN		= anemone.man apollonian.man attraction.man \
 	          drift.man epicycle.man euler2d.man fadeplot.man \
 	          flame.man flow.man fluidballs.man galaxy.man \
 	          goop.man grav.man greynetic.man halo.man helix.man \
-	          hopalong.man hyperball.man hypercube.man ifs.man imsmap.man \
+	          hopalong.man ifs.man imsmap.man \
 	          interference.man julia.man \
 	          kaleidescope.man kumppa.man \
 	          loop.man maze.man moire.man \
@@ -228,7 +228,8 @@ MEN		= anemone.man apollonian.man attraction.man \
 RETIRED_MEN	= ant.man bubbles.man critical.man flag.man forest.man \
 		  laser.man lightning.man lisa.man lissie.man lmorph.man \
 		  rotor.man sphere.man spiral.man t3d.man vines.man \
-		  whirlygig.man worm.man xsublim.man juggle.man
+		  whirlygig.man worm.man xsublim.man juggle.man \
+		  hypercube.man hyperball.man
 
 STAR		= *
 EXTRAS		= README Makefile.in xml2man.pl m6502.sh .gdbinit \
@@ -250,7 +251,8 @@ EXTRAS		= README Makefile.in xml2man.pl m6502.sh .gdbinit \
 VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \
 		  vms_axp.opt vms_axp_12.opt vms_decc.opt vms_decc_12.opt
 
-TARFILES	= $(SRCS) $(HDRS) $(SCRIPTS) $(MEN) $(EXTRAS) $(VMSFILES)
+TARFILES	= $(SRCS) $(HDRS) $(SCRIPTS) $(MEN) $(RETIRED_MEN) \
+		  $(EXTRAS) $(VMSFILES)
 
 
 default: all
@@ -825,6 +827,7 @@ m6502.h:
 	UTILS_SRC="$(UTILS_SRC)" \
 	$(srcdir)/m6502.sh m6502.h $(srcdir)/images/m6502/*.asm
 
+m6502.o:	m6502.h
 m6502:		m6502.o		asm6502.o $(HACK_OBJS) $(ATV)
 	$(CC_HACK) -o $@ $@.o	asm6502.o $(HACK_OBJS) $(ATV) $(HACK_LIBS)
 

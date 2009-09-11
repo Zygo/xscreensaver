@@ -51,8 +51,6 @@ $ halftone	:== $'mydir'halftone
 $ halo		:== $'mydir'halo
 $ helix		:== $'mydir'helix
 $ hopalong	:== $'mydir'hopalong
-$ hyperball	:== $'mydir'hyperball
-$ hypercube	:== $'mydir'hypercube
 $ ifs		:== $'mydir'ifs
 $ imsmap	:== $'mydir'imsmap
 $ interaggregate	:== $'mydir'interaggregate

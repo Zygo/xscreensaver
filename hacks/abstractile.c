@@ -1,5 +1,5 @@
 /* 
- * Copyright (c) 2004, 2007 Steve Sundstrom
+ * Copyright (c) 2004-2009 Steve Sundstrom
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1104,6 +1104,7 @@ _create_screen(struct state *st)
   values tuned for it draw the screen in a blink on Linux.  Therefore we
   draw 1/200th of the screen with each update and sleep, if necessary */
   st->lpu = (st->dialog) ? st->li/50 : st->li/200;   
+  if (!st->lpu) st->lpu = 1;
   st->bi=1;
   st->mode=MODE_ERASE;
 }
@@ -1521,7 +1522,10 @@ abstractile_draw (Display *dpy, Window window, void *closure)
   int mse, usleep;
  
   gettimeofday(&st->time, NULL);
-  switch (st->mode) {
+
+  /* If the window is too small, do nothing, sorry! */
+  if (st->xgwa.width > 20 && st->xgwa.height > 20) {
+    switch (st->mode) {
     case MODE_CREATE:
       _init_screen(st);
       _create_screen(st);
@@ -1532,6 +1536,7 @@ abstractile_draw (Display *dpy, Window window, void *closure)
     case MODE_DRAW:
       _draw_lines(st);
       break;
+    }
   }
   mse=_mselapsed(st);
   usleep = ((!st->ii) && (st->mode==MODE_CREATE)) ?  0 :

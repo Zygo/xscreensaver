@@ -4,7 +4,7 @@
 static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #endif
 
-/* Copyright (c) 2003-2007 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2003-2009 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -24,6 +24,7 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
  * C. Steger - 05/09/28: Added the spirals appearance mode
  *                       and trackball support
  * C. Steger - 07/01/23: Improved 4d trackball support
+ * C. Steger - 09/08/22: Removed check-config.pl warnings
  */
 
 /*
@@ -55,68 +56,33 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #endif
 
 #define DISP_WIREFRAME             0
-#define DISP_WIREFRAME_STR        "0"
 #define DISP_SURFACE               1
-#define DISP_SURFACE_STR          "1"
 #define DISP_TRANSPARENT           2
-#define DISP_TRANSPARENT_STR      "2"
 
 #define APPEARANCE_SOLID           0
-#define APPEARANCE_SOLID_STR      "0"
 #define APPEARANCE_BANDS           1
-#define APPEARANCE_BANDS_STR      "1"
 #define APPEARANCE_SPIRALS         2
-#define APPEARANCE_SPIRALS_STR    "2"
-#define APPEARANCE_SPIRALS_1       3
-#define APPEARANCE_SPIRALS_1_STR  "3"
-#define APPEARANCE_SPIRALS_2       4
-#define APPEARANCE_SPIRALS_2_STR  "4"
-#define APPEARANCE_SPIRALS_4       5
-#define APPEARANCE_SPIRALS_4_STR  "5"
-#define APPEARANCE_SPIRALS_8       6
-#define APPEARANCE_SPIRALS_8_STR  "6"
-#define APPEARANCE_SPIRALS_16      7
-#define APPEARANCE_SPIRALS_16_STR "7"
 
 #define COLORS_TWOSIDED            0
-#define COLORS_TWOSIDED_STR       "0"
 #define COLORS_COLORWHEEL          1
-#define COLORS_COLORWHEEL_STR     "1"
 
 #define DISP_3D_PERSPECTIVE        0
-#define DISP_3D_PERSPECTIVE_STR   "0"
 #define DISP_3D_ORTHOGRAPHIC       1
-#define DISP_3D_ORTHOGRAPHIC_STR  "1"
 
 #define DISP_4D_PERSPECTIVE        0
-#define DISP_4D_PERSPECTIVE_STR   "0"
 #define DISP_4D_ORTHOGRAPHIC       1
-#define DISP_4D_ORTHOGRAPHIC_STR  "1"
 
-#define DALPHA                     1.1
-#define DALPHA_STR                "1.1"
-#define DBETA                      1.3
-#define DBETA_STR                 "1.3"
-#define DDELTA                     1.5
-#define DDELTA_STR                "1.5"
-#define DZETA                      1.7
-#define DZETA_STR                 "1.7"
-#define DETA                       1.9
-#define DETA_STR                  "1.9"
-#define DTHETA                     2.1
-#define DTHETA_STR                "2.1"
-
-#define DEF_DISPLAY_MODE           DISP_TRANSPARENT_STR
-#define DEF_APPEARANCE             APPEARANCE_BANDS_STR
-#define DEF_COLORS                 COLORS_COLORWHEEL_STR
-#define DEF_3D_PROJECTION          DISP_3D_PERSPECTIVE_STR
-#define DEF_4D_PROJECTION          DISP_4D_PERSPECTIVE_STR
-#define DEF_DALPHA                 DALPHA_STR
-#define DEF_DBETA                  DBETA_STR
-#define DEF_DDELTA                 DDELTA_STR
-#define DEF_DZETA                  DZETA_STR
-#define DEF_DETA                   DETA_STR
-#define DEF_DTHETA                 DTHETA_STR
+#define DEF_DISPLAY_MODE           "surface"
+#define DEF_APPEARANCE             "bands"
+#define DEF_COLORS                 "colorwheel"
+#define DEF_PROJECTION_3D          "perspective"
+#define DEF_PROJECTION_4D          "perspective"
+#define DEF_SPEEDWX                "1.1"
+#define DEF_SPEEDWY                "1.3"
+#define DEF_SPEEDWZ                "1.5"
+#define DEF_SPEEDXY                "1.7"
+#define DEF_SPEEDXZ                "1.9"
+#define DEF_SPEEDYZ                "2.1"
 
 #ifdef STANDALONE
 # define DEFAULTS           "*delay:      25000 \n" \
@@ -145,11 +111,16 @@ ModStruct   hypertorus_description =
 #endif
 
 
+static char *mode;
 static int display_mode;
+static char *appear;
 static int appearance;
 static int num_spirals;
+static char *color_mode;
 static int colors;
+static char *proj_3d;
 static int projection_3d;
+static char *proj_4d;
 static int projection_4d;
 static float speed_wx;
 static float speed_wy;
@@ -164,73 +135,45 @@ static const float offset3d[4] = {  0.0,  0.0, -2.0,  0.0 };
 
 static XrmOptionDescRec opts[] =
 {
-  {"-mode",            ".hypertorus.displayMode",  XrmoptionSepArg, 0 },
-  {"-wireframe",       ".hypertorus.displayMode",  XrmoptionNoArg,
-                       DISP_WIREFRAME_STR },
-  {"-surface",         ".hypertorus.displayMode",  XrmoptionNoArg,
-                       DISP_SURFACE_STR },
-  {"-transparent",     ".hypertorus.displayMode",  XrmoptionNoArg,
-                       DISP_TRANSPARENT_STR },
-
-  {"-appearance",      ".hypertorus.appearance",   XrmoptionSepArg, 0 },
-  {"-solid",           ".hypertorus.appearance",   XrmoptionNoArg,
-                       APPEARANCE_SOLID_STR },
-  {"-bands",           ".hypertorus.appearance",   XrmoptionNoArg,
-                       APPEARANCE_BANDS_STR },
-  {"-spirals-1",       ".hypertorus.appearance",   XrmoptionNoArg,
-                       APPEARANCE_SPIRALS_1_STR },
-  {"-spirals-2",       ".hypertorus.appearance",   XrmoptionNoArg,
-                       APPEARANCE_SPIRALS_2_STR },
-  {"-spirals-4",       ".hypertorus.appearance",   XrmoptionNoArg,
-                       APPEARANCE_SPIRALS_4_STR },
-  {"-spirals-8",       ".hypertorus.appearance",   XrmoptionNoArg,
-                       APPEARANCE_SPIRALS_8_STR },
-  {"-spirals-16",      ".hypertorus.appearance",   XrmoptionNoArg,
-                       APPEARANCE_SPIRALS_16_STR },
-  {"-twosided",        ".hypertorus.colors",       XrmoptionNoArg,
-                       COLORS_TWOSIDED_STR },
-  {"-colorwheel",      ".hypertorus.colors",       XrmoptionNoArg,
-                       COLORS_COLORWHEEL_STR },
-  {"-perspective-3d",  ".hypertorus.projection3d", XrmoptionNoArg,
-                       DISP_3D_PERSPECTIVE_STR },
-  {"-orthographic-3d", ".hypertorus.projection3d", XrmoptionNoArg,
-                       DISP_3D_ORTHOGRAPHIC_STR },
-  {"-perspective-4d",  ".hypertorus.projection4d", XrmoptionNoArg,
-                       DISP_4D_PERSPECTIVE_STR },
-  {"-orthographic-4d", ".hypertorus.projection4d", XrmoptionNoArg,
-                       DISP_4D_ORTHOGRAPHIC_STR },
-  {"-speed-wx",        ".hypertorus.speedwx",      XrmoptionSepArg, 0 },
-  {"-speed-wy",        ".hypertorus.speedwy",      XrmoptionSepArg, 0 },
-  {"-speed-wz",        ".hypertorus.speedwz",      XrmoptionSepArg, 0 },
-  {"-speed-xy",        ".hypertorus.speedxy",      XrmoptionSepArg, 0 },
-  {"-speed-xz",        ".hypertorus.speedxz",      XrmoptionSepArg, 0 },
-  {"-speed-yz",        ".hypertorus.speedyz",      XrmoptionSepArg, 0 }
+  {"-mode",            ".displayMode",  XrmoptionSepArg, 0 },
+  {"-wireframe",       ".displayMode",  XrmoptionNoArg,  "wireframe" },
+  {"-surface",         ".displayMode",  XrmoptionNoArg,  "surface" },
+  {"-transparent",     ".displayMode",  XrmoptionNoArg,  "transparent" },
+  {"-appearance",      ".appearance",   XrmoptionSepArg, 0 },
+  {"-solid",           ".appearance",   XrmoptionNoArg,  "solid" },
+  {"-bands",           ".appearance",   XrmoptionNoArg,  "bands" },
+  {"-spirals-1",       ".appearance",   XrmoptionNoArg,  "spirals-1" },
+  {"-spirals-2",       ".appearance",   XrmoptionNoArg,  "spirals-2" },
+  {"-spirals-4",       ".appearance",   XrmoptionNoArg,  "spirals-4" },
+  {"-spirals-8",       ".appearance",   XrmoptionNoArg,  "spirals-8" },
+  {"-spirals-16",      ".appearance",   XrmoptionNoArg,  "spirals-16" },
+  {"-twosided",        ".colors",       XrmoptionNoArg,  "twosided" },
+  {"-colorwheel",      ".colors",       XrmoptionNoArg,  "colorwheel" },
+  {"-perspective-3d",  ".projection3d", XrmoptionNoArg,  "perspective" },
+  {"-orthographic-3d", ".projection3d", XrmoptionNoArg,  "orthographic" },
+  {"-perspective-4d",  ".projection4d", XrmoptionNoArg,  "perspective" },
+  {"-orthographic-4d", ".projection4d", XrmoptionNoArg,  "orthographic" },
+  {"-speed-wx",        ".speedwx",      XrmoptionSepArg, 0 },
+  {"-speed-wy",        ".speedwy",      XrmoptionSepArg, 0 },
+  {"-speed-wz",        ".speedwz",      XrmoptionSepArg, 0 },
+  {"-speed-xy",        ".speedxy",      XrmoptionSepArg, 0 },
+  {"-speed-xz",        ".speedxz",      XrmoptionSepArg, 0 },
+  {"-speed-yz",        ".speedyz",      XrmoptionSepArg, 0 }
 };
 
 static argtype vars[] =
 {
-  { &display_mode,  "displayMode",  "DisplayMode",
-    DEF_DISPLAY_MODE,  t_Int },
-  { &appearance,    "appearance",   "Appearance",
-    DEF_APPEARANCE,    t_Int },
-  { &colors,        "colors",       "Colors",
-    DEF_COLORS,        t_Int },
-  { &projection_3d, "projection3d", "Projection3d",
-    DEF_3D_PROJECTION, t_Int },
-  { &projection_4d, "projection4d", "Projection4d",
-    DEF_4D_PROJECTION, t_Int },
-  { &speed_wx,      "speedwx",      "Speedwx",
-    DEF_DALPHA,        t_Float},
-  { &speed_wy,      "speedwy",      "Speedwy",
-    DEF_DBETA,         t_Float},
-  { &speed_wz,      "speedwz",      "Speedwz",
-    DEF_DDELTA,        t_Float},
-  { &speed_xy,      "speedxy",      "Speedxy",
-    DEF_DZETA,         t_Float},
-  { &speed_xz,      "speedxz",      "Speedxz",
-    DEF_DETA,          t_Float},
-  { &speed_yz,      "speedyz",      "Speedyz",
-    DEF_DTHETA,        t_Float}
+  { &mode,       "displayMode",  "DisplayMode",  DEF_DISPLAY_MODE,  t_String },
+  { &appear,     "appearance",   "Appearance",   DEF_APPEARANCE,    t_String },
+  { &color_mode, "colors",       "Colors",       DEF_COLORS,        t_String },
+  { &proj_3d,    "projection3d", "Projection3d", DEF_PROJECTION_3D, t_String },
+  { &proj_4d,    "projection4d", "Projection4d", DEF_PROJECTION_4D, t_String },
+  { &speed_wx,   "speedwx",      "Speedwx",      DEF_SPEEDWX,       t_Float},
+  { &speed_wy,   "speedwy",      "Speedwy",      DEF_SPEEDWY,       t_Float},
+  { &speed_wz,   "speedwz",      "Speedwz",      DEF_SPEEDWZ,       t_Float},
+  { &speed_xy,   "speedxy",      "Speedxy",      DEF_SPEEDXY,       t_Float},
+  { &speed_xz,   "speedxz",      "Speedxz",      DEF_SPEEDXZ,       t_Float},
+  { &speed_yz,   "speedyz",      "Speedyz",      DEF_SPEEDYZ,       t_Float}
 };
 
 static OptionStruct desc[] =
@@ -671,16 +614,6 @@ static void init(ModeInfo *mi)
   static const GLfloat mat_specular[]   = { 1.0, 1.0, 1.0, 1.0 };
   hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
 
-  if (appearance >= APPEARANCE_SPIRALS_1)
-  {
-    num_spirals = 1<<(appearance-APPEARANCE_SPIRALS_1);
-    appearance = APPEARANCE_SPIRALS;
-  }
-  else
-  {
-    num_spirals = 0;
-  }
-
   hp->alpha = 0.0;
   hp->beta = 0.0;
   hp->delta = 0.0;
@@ -903,6 +836,107 @@ ENTRYPOINT void init_hypertorus(ModeInfo *mi)
   hp->trackballs[1] = gltrackball_init();
   hp->current_trackball = 0;
   hp->button_pressed = False;
+
+  /* Set the display mode. */
+  if (!strcasecmp(mode,"wireframe") || !strcasecmp(mode,"0"))
+  {
+    display_mode = DISP_WIREFRAME;
+  }
+  else if (!strcasecmp(mode,"surface") || !strcasecmp(mode,"1"))
+  {
+    display_mode = DISP_SURFACE;
+  }
+  else if (!strcasecmp(mode,"transparent") || !strcasecmp(mode,"2"))
+  {
+    display_mode = DISP_TRANSPARENT;
+  }
+  else
+  {
+    display_mode = DISP_SURFACE;
+  }
+
+  /* Set the appearance. */
+  if (!strcasecmp(appear,"solid") || !strcasecmp(appear,"0"))
+  {
+    appearance = APPEARANCE_SOLID;
+  }
+  else if (!strcasecmp(appear,"bands") || !strcasecmp(appear,"1"))
+  {
+    appearance = APPEARANCE_BANDS;
+    num_spirals = 0;
+  }
+  else if (!strcasecmp(appear,"spirals-1") || !strcasecmp(appear,"3"))
+  {
+    appearance = APPEARANCE_SPIRALS;
+    num_spirals = 1;
+  }
+  else if (!strcasecmp(appear,"spirals-2") || !strcasecmp(appear,"4"))
+  {
+    appearance = APPEARANCE_SPIRALS;
+    num_spirals = 2;
+  }
+  else if (!strcasecmp(appear,"spirals-4") || !strcasecmp(appear,"5"))
+  {
+    appearance = APPEARANCE_SPIRALS;
+    num_spirals = 4;
+  }
+  else if (!strcasecmp(appear,"spirals-8") || !strcasecmp(appear,"6"))
+  {
+    appearance = APPEARANCE_SPIRALS;
+    num_spirals = 8;
+  }
+  else if (!strcasecmp(appear,"spirals-16") || !strcasecmp(appear,"7"))
+  {
+    appearance = APPEARANCE_SPIRALS;
+    num_spirals = 16;
+  }
+  else
+  {
+    appearance = APPEARANCE_BANDS;
+    num_spirals = 0;
+  }
+
+  /* Set the color mode. */
+  if (!strcasecmp(color_mode,"twosided"))
+  {
+    colors = COLORS_TWOSIDED;
+  }
+  else if (!strcasecmp(color_mode,"colorwheel"))
+  {
+    colors = COLORS_COLORWHEEL;
+  }
+  else
+  {
+    colors = COLORS_COLORWHEEL;
+  }
+
+  /* Set the 3d projection mode. */
+  if (!strcasecmp(proj_3d,"perspective") || !strcasecmp(proj_3d,"0"))
+  {
+    projection_3d = DISP_3D_PERSPECTIVE;
+  }
+  else if (!strcasecmp(proj_3d,"orthographic") || !strcasecmp(proj_3d,"1"))
+  {
+    projection_3d = DISP_3D_ORTHOGRAPHIC;
+  }
+  else
+  {
+    projection_3d = DISP_3D_PERSPECTIVE;
+  }
+
+  /* Set the 4d projection mode. */
+  if (!strcasecmp(proj_4d,"perspective") || !strcasecmp(proj_4d,"0"))
+  {
+    projection_4d = DISP_4D_PERSPECTIVE;
+  }
+  else if (!strcasecmp(proj_4d,"orthographic") || !strcasecmp(proj_4d,"1"))
+  {
+    projection_4d = DISP_4D_ORTHOGRAPHIC;
+  }
+  else
+  {
+    projection_4d = DISP_4D_PERSPECTIVE;
+  }
 
   /* make multiple screens rotate at slightly different rates. */
   hp->speed_scale = 0.9 + frand(0.3);

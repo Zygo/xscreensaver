@@ -214,7 +214,7 @@ MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl molecules.sh starwars.txt
 
-TARFILES	= $(SRCS) $(HDRS) $(MEN) $(EXTRAS)
+TARFILES	= $(SRCS) $(HDRS) $(MEN) $(RETIRED_MEN) $(EXTRAS)
 
 
 default: all
@@ -670,6 +670,7 @@ molecules.h:
 	$(srcdir)/molecules.sh molecules.h $(HACK_SRC)/images/molecules/*.pdb
 
 MOLECULE_OBJS=sphere.o tube.o $(HACK_TRACK_OBJS)
+molecule.o:	molecules.h
 molecule:	molecule.o	$(MOLECULE_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(MOLECULE_OBJS) $(HACK_LIBS)
 

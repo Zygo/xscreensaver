@@ -17,11 +17,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>5.09</string>
+	<string>5.10</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>5.09</string>
+	<string>5.10</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.4</string>
 	<key>NSMainNibFile</key>
