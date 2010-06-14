@@ -244,8 +244,11 @@ X-KDE-StartupNotify=false
 .TP 3
 \fB4: Make the various "lock session" buttons call xscreensaver.\fP
 Replace the file \fIkdesktop_lock\fP or \fIkrunner_lock\fP
-in \fI/usr/bin/\fP (or possibly \fI/usr/kde/3.5/bin/\fP
-or \fI/usr/lib/kde4/libexec/\fP) with these two lines:
+or \fIkscreenlocker\fP
+in \fI/usr/bin/\fP (or possibly in \fI/usr/kde/3.5/bin/\fP
+or possibly in \fI/usr/lib/kde4/libexec/\fP
+or \fI/usr/libexec/kde4/\fP, depending on the distro and
+phase of the moon) with these two lines:
 .EX
 #!/bin/sh
 xscreensaver-command -lock
@@ -913,7 +916,7 @@ and a FAQ can always be found at http://www.jwz.org/xscreensaver/
 .BR xscreensaver\-text (1).
 .SH COPYRIGHT
 Copyright \(co 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008 by Jamie Zawinski.
+2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

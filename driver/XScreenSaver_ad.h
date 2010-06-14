@@ -283,7 +283,7 @@
 "*passwd.asterisks:              True",
 "*passwd.uname:                  True",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright © 1991-2008 by",
+"*splash.body.label:		Copyright © 1991-2010 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",

@@ -9,6 +9,10 @@
           low="0" high="100000" default="10000"
           convert="invert"/>
 
+  <number id="points" type="slider" arg="-points %"
+            _label="Number of points" _low-label="1k" _high-label="100k"
+            low="1000" high="100000" default="5500"/>
+
   <number id="ncolors" type="slider" arg="-ncolors %"
             _label="Number of colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="100"/>

@@ -494,6 +494,7 @@ analogtv_release(analogtv *it)
   it->gc=NULL;
   if (it->n_colors) XFreeColors(it->dpy, it->colormap, it->colors, it->n_colors, 0L);
   it->n_colors=0;
+  free(it);
 }
 
 
@@ -1030,11 +1031,11 @@ analogtv_setup_levels(analogtv *it, double avgheight)
       it->leveltable[height][0].index=0;
     }
     if (avgheight>=5) {
-      it->leveltable[height][height-1].index=0;
+      if (height >= 1) it->leveltable[height][height-1].index=0;
     }
     if (avgheight>=7) {
       it->leveltable[height][1].index=1;
-      it->leveltable[height][height-2].index=1;
+      if (height >= 2) it->leveltable[height][height-2].index=1;
     }
 
     for (i=0; i<height; i++) {

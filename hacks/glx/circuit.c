@@ -1859,7 +1859,7 @@ static void makebandlist(Circuit *ci)
   GLfloat shine = 40;
 
    for (i = 0 ; i < 12 ; i++) {
-     ci->band_list[i] = glGenLists(i);
+     ci->band_list[i] = glGenLists(1);
      glNewList(ci->band_list[i], GL_COMPILE);
      col[0] = colorcodes[i][0];
      col[1] = colorcodes[i][1];

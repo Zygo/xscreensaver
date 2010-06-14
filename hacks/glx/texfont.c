@@ -1,4 +1,4 @@
-/* texfonts, Copyright (c) 2005-2007 Jamie Zawinski <jwz@jwz.org>
+/* texfonts, Copyright (c) 2005-2010 Jamie Zawinski <jwz@jwz.org>
  * Loads X11 fonts into textures for use with OpenGL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -446,7 +446,7 @@ print_texture_string (texture_font_data *data, const char *string)
                           ? f->per_char[c - f->min_char_or_byte2].width
                           : f->max_bounds.width);
 
-          char cc = c % (256 / data->ntextures);
+          unsigned char cc = c % (256 / data->ntextures);
 
           int gs = (16 / data->grid_mag);		  /* grid size */
 

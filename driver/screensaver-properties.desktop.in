@@ -5,4 +5,4 @@ Terminal=false
 _Name=Screensaver
 _Comment=Change screensaver properties
 Type=Application
-Categories=Settings;DesktopSettings;Security;
+Categories=Settings;DesktopSettings;Security;X-XFCE;

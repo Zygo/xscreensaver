@@ -1,4 +1,4 @@
-/* photopile, Copyright (c) 2008 Jens Kilian <jjk@acm.org>
+/* photopile, Copyright (c) 2008-2009 Jens Kilian <jjk@acm.org>
  * Based on carousel, Copyright (c) 2005-2008 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and shuffles them into a pile.
  *
@@ -38,6 +38,7 @@
 #include "xlockmore.h"
 #include "grab-ximage.h"
 #include "texfont.h"
+#include "dropshadow.h"
 
 #ifdef USE_GL
 
@@ -45,8 +46,11 @@
 # define DEF_MAX_TILT       "50"
 # define DEF_SPEED          "1.0"
 # define DEF_DURATION       "5"
-# define DEF_TITLES         "False"
 # define DEF_MIPMAP         "True"
+# define DEF_TITLES         "False"
+# define DEF_POLAROID       "True"
+# define DEF_CLIP           "True"
+# define DEF_SHADOWS        "True"
 # define DEF_DEBUG          "False"
 
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
@@ -82,6 +86,7 @@ typedef struct {
   image *frames;                /* pointer to array of images */
   int nframe;                   /* image being (resp. next to be) loaded */
 
+  GLuint shadow;
   texture_font_data *texfont;
   int loading_sw, loading_sh;
 
@@ -103,30 +108,41 @@ static GLfloat speed;        /* Animation speed scale factor. */
 static int duration;         /* Reload images after this long. */
 static Bool mipmap_p;        /* Use mipmaps instead of single textures. */
 static Bool titles_p;        /* Display image titles. */
+static Bool polaroid_p;      /* Use instant-film look for images. */
+static Bool clip_p;          /* Clip images instead of scaling for -polaroid. */static Bool shadows_p;       /* Draw drop shadows. */
 static Bool debug_p;         /* Be loud and do weird things. */
 
 
 static XrmOptionDescRec opts[] = {
   {"-scale",        ".scale",         XrmoptionSepArg, 0 },
   {"-maxTilt",      ".maxTilt",       XrmoptionSepArg, 0 },
-  {"-titles",       ".titles",        XrmoptionNoArg, "True"  },
-  {"-no-titles",    ".titles",        XrmoptionNoArg, "False" },
+  {"-speed",        ".speed",         XrmoptionSepArg, 0 },
+  {"-duration",     ".duration",      XrmoptionSepArg, 0 },
   {"-mipmaps",      ".mipmap",        XrmoptionNoArg, "True"  },
   {"-no-mipmaps",   ".mipmap",        XrmoptionNoArg, "False" },
-  {"-duration",     ".duration",      XrmoptionSepArg, 0 },
+  {"-titles",       ".titles",        XrmoptionNoArg, "True"  },
+  {"-no-titles",    ".titles",        XrmoptionNoArg, "False" },
+  {"-polaroid",     ".polaroid",      XrmoptionNoArg, "True"  },
+  {"-no-polaroid",  ".polaroid",      XrmoptionNoArg, "False" },
+  {"-clip",         ".clip",          XrmoptionNoArg, "True"  },
+  {"-no-clip",      ".clip",          XrmoptionNoArg, "False" },
+  {"-shadows",      ".shadows",       XrmoptionNoArg, "True"  },
+  {"-no-shadows",   ".shadows",       XrmoptionNoArg, "False" },
   {"-debug",        ".debug",         XrmoptionNoArg, "True"  },
   {"-font",         ".font",          XrmoptionSepArg, 0 },
-  {"-speed",        ".speed",         XrmoptionSepArg, 0 },
 };
 
 static argtype vars[] = {
   { &scale,         "scale",        "Scale",        DEF_SCALE,       t_Float},
   { &max_tilt,      "maxTilt",      "MaxTilt",      DEF_MAX_TILT,    t_Float},
-  { &mipmap_p,      "mipmap",       "Mipmap",       DEF_MIPMAP,      t_Bool},
-  { &debug_p,       "debug",        "Debug",        DEF_DEBUG,       t_Bool},
-  { &titles_p,      "titles",       "Titles",       DEF_TITLES,      t_Bool},
   { &speed,         "speed",        "Speed",        DEF_SPEED,       t_Float},
   { &duration,      "duration",     "Duration",     DEF_DURATION,    t_Int},
+  { &mipmap_p,      "mipmap",       "Mipmap",       DEF_MIPMAP,      t_Bool},
+  { &titles_p,      "titles",       "Titles",       DEF_TITLES,      t_Bool},
+  { &polaroid_p,    "polaroid",     "Polaroid",     DEF_POLAROID,    t_Bool},
+  { &clip_p,        "clip",         "Clip",         DEF_CLIP,        t_Bool},
+  { &shadows_p,     "shadows",      "Shadows",      DEF_SHADOWS,     t_Bool},
+  { &debug_p,       "debug",        "Debug",        DEF_DEBUG,       t_Bool},
 };
 
 ENTRYPOINT ModeSpecOpt photopile_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -225,8 +241,16 @@ image_loaded_cb (const char *filename, XRectangle *geom,
 
   if (wire)
     {
-      frame->w = (int)(MI_WIDTH(mi)  * scale) - 1;
-      frame->h = (int)(MI_HEIGHT(mi) * scale) - 1;
+      if (random() % 2)
+        {
+          frame->w = (int)(MI_WIDTH(mi)  * scale) - 1;
+          frame->h = (int)(MI_HEIGHT(mi) * scale) - 1;
+        }
+      else
+        {
+          frame->w = (int)(MI_HEIGHT(mi) * scale) - 1;
+          frame->h = (int)(MI_WIDTH(mi)  * scale) - 1;
+        }
       if (frame->w <= 10) frame->w = 10;
       if (frame->h <= 10) frame->h = 10;
       frame->geom.width  = frame->w;
@@ -309,25 +333,16 @@ load_image (ModeInfo *mi)
 
 
 static void
-loading_msg (ModeInfo *mi, int n)
+loading_msg (ModeInfo *mi)
 {
   photopile_state *ss = &sss[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
-  char text[100];
-  GLfloat scale;
+  const char text[] = "Loading...";
 
   if (wire) return;
 
-  if (n == 0)
-    sprintf (text, "Loading images...");
-  else
-    sprintf (text, "Loading images...  (%d%%)",
-             (int) (n * 100 / MI_COUNT(mi)));
-
-  if (ss->loading_sw == 0)    /* only do this once, so that the string doesn't move. */
+  if (ss->loading_sw == 0)    /* only do this once */
     ss->loading_sw = texture_string_width (ss->texfont, text, &ss->loading_sh);
-
-  scale = ss->loading_sh / (GLfloat) MI_HEIGHT(mi);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -361,40 +376,32 @@ loading_msg (ModeInfo *mi, int n)
 
 
 static Bool
-load_initial_images (ModeInfo *mi)
+loading_initial_image (ModeInfo *mi)
 {
   photopile_state *ss = &sss[MI_SCREEN(mi)];
 
   if (ss->frames[ss->nframe].loaded_p)
     {
-      /* The current image has been fully loaded. */
-      if (++ss->nframe < MI_COUNT(mi))
-        {
-          /* Start the next one loading.  (We run the image loader
-           * asynchronously, but we load them one at a time.)
-           */
-          load_image(mi);
-        }
-      else
-        {
-          /* loaded all initial images, start fading them in */
-          int i;
+      /* The initial image has been fully loaded, start fading it in. */
+      int i;
 
-          for (i = 0; i < ss->nframe; ++i)
-            {
-              ss->frames[i].pos[3].x = MI_WIDTH(mi) * 0.5;
-              ss->frames[i].pos[3].y = MI_HEIGHT(mi) * 0.5;
-              ss->frames[i].pos[3].angle = 0.0;
-            }
-          set_new_positions(ss);
-
-          ss->mode = IN;
-          ss->mode_tick = fade_ticks / speed;
+      for (i = 0; i < ss->nframe; ++i)
+        {
+          ss->frames[i].pos[3].x = MI_WIDTH(mi) * 0.5;
+          ss->frames[i].pos[3].y = MI_HEIGHT(mi) * 0.5;
+          ss->frames[i].pos[3].angle = 0.0;
         }
+      set_new_positions(ss);
+
+      ss->mode = SHUFFLE;
+      ss->mode_tick = fade_ticks / speed;
+    }
+  else
+    {
+      loading_msg(mi);
     }
 
-  loading_msg(mi, ss->nframe);
-  return (ss->mode != EARLY);
+  return (ss->mode == EARLY);
 }
 
 
@@ -464,16 +471,12 @@ init_photopile (ModeInfo *mi)
     {
       glShadeModel (GL_SMOOTH);
       glEnable (GL_LINE_SMOOTH);
-      /* This gives us a transparent diagonal slice through each image! */
-      /* glEnable (GL_POLYGON_SMOOTH); */
       glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
       glEnable (GL_BLEND);
       glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-      glEnable (GL_POLYGON_OFFSET_FILL);
-      glPolygonOffset (1.0, 1.0);
     }
 
+  ss->shadow = init_drop_shadow();
   ss->texfont = load_texture_font (MI_DISPLAY(mi), "font");
 
   if (debug_p)
@@ -486,7 +489,7 @@ init_photopile (ModeInfo *mi)
       int i;
       for (i = 0; i < MI_COUNT(mi) + 1; ++i)
         {
-          glGenTextures(1, &(ss->frames[i].texid));
+          glGenTextures (1, &(ss->frames[i].texid));
           if (ss->frames[i].texid <= 0) abort();
         }
     }
@@ -503,18 +506,38 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
   photopile_state *ss = &sss[MI_SCREEN(mi)];
   image *frame = ss->frames + i;
 
-  GLfloat texw  = frame->geom.width  / (GLfloat) frame->tw;
-  GLfloat texh  = frame->geom.height / (GLfloat) frame->th;
-  GLfloat texx1 = frame->geom.x / (GLfloat) frame->tw;
-  GLfloat texy1 = frame->geom.y / (GLfloat) frame->th;
-  GLfloat texx2 = texx1 + texw;
-  GLfloat texy2 = texy1 + texh;
-
   position pos = interpolate(t, frame->pos);
   GLfloat w = frame->geom.width * 0.5;
   GLfloat h = frame->geom.height * 0.5;
+  GLfloat z1 = z - 0.25 / (MI_COUNT(mi) + 1);
+  GLfloat z2 = z - 0.5  / (MI_COUNT(mi) + 1); 
+  GLfloat w1 = w;
+  GLfloat h1 = h;
+  GLfloat h2 = h;
 
-  glBindTexture (GL_TEXTURE_2D, frame->texid);
+  if (polaroid_p)
+    {
+      GLfloat minSize = MIN(w, h);
+      GLfloat maxSize = MAX(w, h);
+
+      /* Clip or scale image to fit in the frame.
+       */
+      if (clip_p)
+        {
+          w = h = minSize;
+        }
+      else
+        {
+          GLfloat scale = minSize / maxSize;
+          w *= scale;
+          h *= scale;
+        }
+
+      w1 = minSize * 1.16;      /* enlarge frame border */
+      h1 = minSize * 1.5;
+      h2 = w1;
+      s /= 1.5;                 /* compensate for border size */
+    }
 
   glPushMatrix();
 
@@ -524,24 +547,63 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
   glRotatef (pos.angle, 0, 0, 1);
   glScalef (s, s, 1);
 
-  /* Draw the image quad. */
+  /* Draw the drop shadow. */
+  if (shadows_p && !wire)
+    {
+      glColor3f (0, 0, 0);
+      draw_drop_shadow(ss->shadow, -w1, -h1, z2, 2.0 * w1, h1 + h2, 20.0);
+    }
+
+  /* Draw the retro instant-film frame.
+   */
+  if (polaroid_p)
+    {
+      if (! wire)
+        {
+          glColor3f (1, 1, 1);
+          glBegin (GL_QUADS);
+          glVertex3f (-w1, -h1, z2);
+          glVertex3f ( w1, -h1, z2);
+          glVertex3f ( w1,  h2, z2);
+          glVertex3f (-w1,  h2, z2);
+          glEnd();
+        }
+
+      glLineWidth (2.0);
+      glColor3f (0.5, 0.5, 0.5);
+      glBegin (GL_LINE_LOOP);
+      glVertex3f (-w1, -h1, z);
+      glVertex3f ( w1, -h1, z);
+      glVertex3f ( w1,  h2, z);
+      glVertex3f (-w1,  h2, z);
+      glEnd();
+    }
+
+  /* Draw the image quad.
+   */
   if (! wire)
     {
-      glColor3f (1, 1, 1);
+      GLfloat texw = w / frame->tw;
+      GLfloat texh = h / frame->th;
+      GLfloat texx = (frame->geom.x + 0.5 * frame->geom.width)  / frame->tw;
+      GLfloat texy = (frame->geom.y + 0.5 * frame->geom.height) / frame->th;
+
+      glBindTexture (GL_TEXTURE_2D, frame->texid);
       glEnable (GL_TEXTURE_2D);
+      glColor3f (1, 1, 1);
       glBegin (GL_QUADS);
-      glTexCoord2f (texx1, texy2); glVertex3f (-w, -h, z);
-      glTexCoord2f (texx2, texy2); glVertex3f ( w, -h, z);
-      glTexCoord2f (texx2, texy1); glVertex3f ( w,  h, z);
-      glTexCoord2f (texx1, texy1); glVertex3f (-w,  h, z);
+      glTexCoord2f (texx - texw, texy + texh); glVertex3f (-w, -h, z1);
+      glTexCoord2f (texx + texw, texy + texh); glVertex3f ( w, -h, z1);
+      glTexCoord2f (texx + texw, texy - texh); glVertex3f ( w,  h, z1);
+      glTexCoord2f (texx - texw, texy - texh); glVertex3f (-w,  h, z1);
       glEnd();
+      glDisable (GL_TEXTURE_2D);
     }
 
   /* Draw a box around it.
    */
   glLineWidth (2.0);
   glColor3f (0.5, 0.5, 0.5);
-  glDisable (GL_TEXTURE_2D);
   glBegin (GL_LINE_LOOP);
   glVertex3f (-w, -h, z);
   glVertex3f ( w, -h, z);
@@ -554,19 +616,27 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
   if (titles_p)
     {
       int sw, sh;
-      GLfloat scale = 0.5;
+      GLfloat scale = 0.6;
       char *title = frame->title ? frame->title : "(untitled)";
       sw = texture_string_width (ss->texfont, title, &sh);
 
       glTranslatef (-sw*scale*0.5, -h - sh*scale, z);
       glScalef (scale, scale, 1);
 
-      glColor3f (1, 1, 1);
+      if (wire || !polaroid_p)
+        {
+          glColor3f (1, 1, 1);
+        }
+      else
+        {
+          glColor3f (0, 0, 0);
+        }
 
       if (!wire)
         {
           glEnable (GL_TEXTURE_2D);
           print_texture_string (ss->texfont, title);
+          glDisable (GL_TEXTURE_2D);
         }
       else
         {
@@ -595,7 +665,7 @@ draw_photopile (ModeInfo *mi)
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(ss->glx_context));
 
   if (ss->mode == EARLY)
-    if (!load_initial_images (mi))
+    if (loading_initial_image (mi))
       return;
 
   /* Only check the wall clock every 10 frames */
@@ -655,33 +725,37 @@ draw_photopile (ModeInfo *mi)
     for (i = 0; i < MI_COUNT(mi) + (ss->mode == SHUFFLE); ++i)
       {
         int j = (ss->nframe + i + 1) % (MI_COUNT(mi) + 1);
-        GLfloat s = 1.0;
-        GLfloat z = (GLfloat)i / (MI_COUNT(mi) + 1);
 
-        switch (ss->mode)
+        if (ss->frames[j].loaded_p)
           {
-          case IN:
-            s *= t;
-            break;
-          case NORMAL:
-          case LOADING:
-            t = 1.0;
-            break;
-          case SHUFFLE:
-            if (i == MI_COUNT(mi))
-              {
-                s *= t;
-              }
-            else if (i == 0)
-              {
-                s *= 1.0 - t;
-              }
-            break;
-          default:
-            abort();
-          }
+            GLfloat s = 1.0;
+            GLfloat z = (GLfloat)i / (MI_COUNT(mi) + 1);
 
-        draw_image(mi, j, t, s, z);
+            switch (ss->mode)
+              {
+              case IN:
+                s *= t;
+                break;
+              case NORMAL:
+              case LOADING:
+                t = 1.0;
+                break;
+              case SHUFFLE:
+                if (i == MI_COUNT(mi))
+                  {
+                    s *= t;
+                  }
+                else if (i == 0)
+                  {
+                    s *= 1.0 - t;
+                  }
+                break;
+              default:
+                abort();
+              }
+
+            draw_image(mi, j, t, s, z);
+          }
       }
   }
 

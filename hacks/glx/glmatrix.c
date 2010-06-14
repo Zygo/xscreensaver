@@ -401,15 +401,17 @@ draw_glyph (ModeInfo *mi, int glyph, Bool highlight,
     }
 
   {
-    GLfloat r, g, b, a = 1;
+    GLfloat r, g, b, a;
 
     if (highlight)
       brightness *= 2;
 
     if (!do_texture && !spinner_p)
-      r = b = 0, g = brightness;
+      r = b = 0, g = 1;
     else
-      r = g = b = brightness;
+      r = g = b = 1;
+
+    a = brightness;
 
     /* If the glyph is very close to the screen (meaning it is very large,
        and is about to splash into the screen and vanish) then start fading
@@ -424,23 +426,7 @@ draw_glyph (ModeInfo *mi, int glyph, Bool highlight,
         if (i < 0) i = 0;
         else if (i >= WAVE_SIZE) i = WAVE_SIZE-1; 
 
-        a = mp->brightness_ramp[i];
-#if 1
-        /* I don't understand this -- if I change the alpha on the color of
-           the quad, I'd expect that to make the quad more transparent.
-           But instead, it seems to be making the transparent parts of the
-           texture on the quad be *less* transparent!  So as we fade out,
-           we fade towards a completely solid rectangle.  WTF?
-
-           So, for now, instead of changing the alpha, just make the colors
-           be darker.  This works out ok so long as we use GL_ONE in
-           glBlendFunc, so that stacked glyph colors are added together.
-         */
-        r *= a;
-        g *= a;
-        b *= a;
-        a = 1;
-#endif
+        a *= mp->brightness_ramp[i];
       }
 
     glColor4f (r,g,b,a);
@@ -781,7 +767,7 @@ load_textures (ModeInfo *mi, Bool flip_p)
           unsigned char r = (p >> rpos) & 0xFF;
           unsigned char g = (p >> gpos) & 0xFF;
           unsigned char b = (p >> bpos) & 0xFF;
-          unsigned char a = ~g;
+          unsigned char a = g;
           g = 0xFF;
           p = (r << rpos) | (g << gpos) | (b << bpos) | (a << apos);
           XPutPixel (xi, x, y, p);
@@ -901,11 +887,11 @@ init_matrix (ModeInfo *mi)
       glEnable(GL_BLEND);
 
       /* Jeff Epler points out:
-         By using GL_ONE instead of GL_SRC_ALPHA, glyphs are added to
-         each other, so that a bright glyph with a darker one in front
-         is a little brighter than the bright glyph alone.
+         By using GL_ONE instead of GL_SRC_ONE_MINUS_ALPHA, glyphs are
+         added to each other, so that a bright glyph with a darker one
+         in front is a little brighter than the bright glyph alone.
        */
-      glBlendFunc (GL_ONE_MINUS_SRC_ALPHA, /* GL_SRC_ALPHA */ GL_ONE);
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE);
     }
 
   /* to scale coverage-percent to strips, this number looks about right... */

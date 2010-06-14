@@ -1,6 +1,6 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-flurry
+flurry - a colorful particle system
 .SH SYNOPSIS
 .B flurry
 [\-display \fIhost:display.screen\fP]

@@ -38,6 +38,16 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.10:   * New versions of `photopile', `strange'.
+                      * Worked around MacOS 10.6 garbage collector bug that
+                        caused the screen saver process to become enormous.
+                      * Fixed flicker in `pipes', `cubestorm', and `noof'.
+                      * Fixed EXIF rotation on MacOS 10.6.
+                      * Fixed desktop-grabbing when screen locked on MacOS.
+                      * Minor fixes to `circuit', `polyhedra', `tangram',
+                        `gears', `pinion', `substrate', `xanalogtv'.
+                      * Fixed some leaks in `xanalogtv' and `apple2'.
+                      * Better seeding of the RNG.
 Changes since 5.09:   * Fixed some crashes and color problems on MacOS 10.6.
                       * Retired `hypercube' and `hyperball', which are
                         redundant with `polytopes'.
@@ -77,7 +87,7 @@ Changes since 5.06:   * Xinerama/RANDR tweaks for old-style multi-screen.
                       * `flipflop' can load images onto the tiles.
                       * Fixed the bouncing ball in `stairs'.
                       * Added the missing Utah Teapotahedron to `polyhedra'.
-                      * `blitspin' works with color images on OSX now.
+                      * `blitspin' works with color images on MacOS now.
                       * Added transparency to `stonerview'.
                       * Improved layout of the preferences dialogs: they
                         should all now be usable even on ridiculously tiny
@@ -135,14 +145,14 @@ Changes since 5.02:   * New hacks, `cwaves', `glcells', `m6502', and `voronoi'.
                       * Updated `webcollage' to track recent Google Images
                         and Flickr changes.
 Changes since 5.01:   * Reworked PAM code to support fingerprint readers, etc.
-                      * Ported 'webcollage' to OSX.
-                      * Added OSX 10.2 and 10.3 kernel panics to `bsod'.
+                      * Ported 'webcollage' to MacOS.
+                      * Added MacOS 10.2 and 10.3 kernel panics to `bsod'.
                       * Fixed a Xinerama crash when changing the screen count.
                       * New blobbier `mirrorblob'.
                       * Minor updates to `lisa', `bsod', `ifs', `hypertorus',
                         `polytopes', `circuit', `endgame', `crackberg',
                         `flipflop', `flipscreen3d', `fliptext', and `carousel'.
-                      * Enabled multi-threaded OpenGL on OSX.
+                      * Enabled multi-threaded OpenGL on MacOS.
 Changes since 5.00:   * Backed out recent locale-related changes, since they
                         broke far more things than they fixed.
                       * Fail gracefully with ridiculously small window sizes.
@@ -169,7 +179,7 @@ Changes since 4.24:   * Ported to MacOS X! (10.4.0 or newer)
                       * Changes to the defaults and command-line options of
                         many hacks to make the .xml files more consistent.
                       * Reap zombies in `glslideshow' and `carousel'.
-                      * `sonar' works without setuid on OSX (dgram icmp).
+                      * `sonar' works without setuid on MacOS (dgram icmp).
                       * `xmatrix -mode pipe' displays the text of a subprocess.
                       * `endgame' has higher resolution chess-piece models.
                       * `webcollage' takes a -directory option to get images
