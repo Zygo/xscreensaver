@@ -1,0 +1,552 @@
+#!/usr/bin/perl -w
+# Copyright © 2001-2009 Jamie Zawinski <jwz@jwz.org>.
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or 
+# implied warranty.
+#
+# This program chooses a random file from under the given directory, and
+# prints its name.  The file will be an image file whose dimensions are
+# larger than a certain minimum size.
+#
+# The various xscreensaver hacks that manipulate images ("jigsaw", etc.) get
+# the image to manipulate by running the "xscreensaver-getimage" program.
+#
+# Under X11, the "xscreensaver-getimage" program invokes this script,
+# depending on the value of the "chooseRandomImages" and "imageDirectory"
+# settings in the ~/.xscreensaver file (or .../app-defaults/XScreenSaver).
+#
+# Under Cocoa, this script lives inside the .saver bundle, and is invoked
+# directly from utils/grabclient.c.
+#
+# Created: 12-Apr-01.
+
+require 5;
+#use diagnostics;	# Fails on some MacOS 10.5 systems
+use strict;
+
+use POSIX;
+use Fcntl;
+
+use Fcntl ':flock'; # import LOCK_* constants
+
+use POSIX ':fcntl_h';				# S_ISDIR was here in Perl 5.6
+import Fcntl ':mode' unless defined &S_ISUID;	# but it is here in Perl 5.8
+	# but in Perl 5.10, both of these load, and cause errors!
+	# So we have to check for S_ISUID instead of S_ISDIR?  WTF?
+
+use bytes;  # Larry can take Unicode and shove it up his ass sideways.
+            # Perl 5.8.0 causes us to start getting incomprehensible
+            # errors about UTF-8 all over the place without this.
+
+my $progname = $0; $progname =~ s@.*/@@g;
+my $version = q{ $Revision: 1.27 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+
+my $verbose = 0;
+
+# Whether to use MacOS X's Spotlight to generate the list of files.
+# When set to -1, uses Spotlight if "mdfind" exists.
+#
+# (In my experience, this isn't actually any faster, and might not find
+# everything if your Spotlight index is out of date, which happens often.)
+#
+my $use_spotlight_p = 0;
+
+# Whether to cache the results of the last run.
+#
+my $cache_p = 1;
+
+# Regenerate the cache if it is older than this many seconds.
+#
+my $cache_max_age = 60 * 60 * 3;   # 3 hours
+
+
+# This matches files that we are allowed to use as images (case-insensitive.)
+# Anything not matching this is ignored.  This is so you can point your
+# imageDirectory at directory trees that have things other than images in
+# them, but it assumes that you gave your images sensible file extensions.
+#
+my @good_extensions = ('jpg', 'jpeg', 'pjpeg', 'pjpg', 'png', 'gif',
+                       'tif', 'tiff', 'xbm', 'xpm');
+my $good_file_re = '\.(' . join("|", @good_extensions) . ')$';
+
+# This matches file extensions that might occur in an image directory,
+# and that are never used in the name of a subdirectory.  This is an
+# optimization that prevents us from having to stat() those files to
+# tell whether they are directories or not.  (It speeds things up a
+# lot.  Don't give your directories stupid names.)
+#
+my @nondir_extensions = ('ai', 'bmp', 'bz2', 'cr2', 'crw', 'db',
+   'dmg', 'eps', 'gz', 'hqx', 'htm', 'html', 'icns', 'ilbm', 'mov',
+   'nef', 'pbm', 'pdf', 'pl', 'ppm', 'ps', 'psd', 'sea', 'sh', 'shtml',
+   'tar', 'tgz', 'thb', 'txt', 'xcf', 'xmp', 'Z', 'zip' );
+my $nondir_re = '\.(' . join("|", @nondir_extensions) . ')$';
+
+
+# JPEG, GIF, and PNG files that are are smaller than this are rejected:
+# this is so that you can use an image directory that contains both big
+# images and thumbnails, and have it only select the big versions.
+#
+my $min_image_width  = 255;
+my $min_image_height = 255;
+
+my @all_files = ();         # list of "good" files we've collected
+my %seen_inodes;            # for breaking recursive symlink loops
+
+# For diagnostic messages:
+#
+my $dir_count = 1;          # number of directories seen
+my $stat_count = 0;	    # number of files/dirs stat'ed
+my $skip_count_unstat = 0;  # number of files skipped without stat'ing
+my $skip_count_stat = 0;    # number of files skipped after stat
+
+sub find_all_files {
+  my ($dir) = @_;
+
+  print STDERR "$progname:  + reading dir $dir/...\n" if ($verbose > 1);
+
+  local *DIR;
+  if (! opendir (DIR, $dir)) {
+    print STDERR "$progname: couldn't open $dir: $!\n" if ($verbose);
+    return;
+  }
+  my @files = readdir (DIR);
+  closedir (DIR);
+
+  my @dirs = ();
+
+  foreach my $file (@files) {
+    next if ($file =~ m/^\./);      # silently ignore dot files/dirs
+
+    if ($file =~ m/[~%\#]$/) {      # ignore backup files (and dirs...)
+      $skip_count_unstat++;
+      print STDERR "$progname:  - skip file  $file\n" if ($verbose > 1);
+    }
+
+    $file = "$dir/$file";
+
+    if ($file =~ m/$good_file_re/io) {
+      #
+      # Assume that files ending in .jpg exist and are not directories.
+      #
+      push @all_files, $file;
+      print STDERR "$progname:  - found file $file\n" if ($verbose > 1);
+
+    } elsif ($file =~ m/$nondir_re/io) {
+      #
+      # Assume that files ending in .html are not directories.
+      #
+      $skip_count_unstat++;
+      print STDERR "$progname: -- skip file  $file\n" if ($verbose > 1);
+
+    } else {
+      #
+      # Now we need to stat the file to see if it's a subdirectory.
+      #
+      # Note: we could use the trick of checking "nlinks" on the parent
+      # directory to see if this directory contains any subdirectories,
+      # but that would exclude any symlinks to directories.
+      #
+      my @st = stat($file);
+      my ($dev,$ino,$mode,$nlink,$uid,$gid,$rdev,$size,
+          $atime,$mtime,$ctime,$blksize,$blocks) = @st;
+
+      $stat_count++;
+
+      if ($#st == -1) {
+        if ($verbose) {
+          my $ll = readlink $file;
+          if (defined ($ll)) {
+            print STDERR "$progname: + dangling symlink: $file -> $ll\n";
+          } else {
+            print STDERR "$progname: + unreadable: $file\n";
+          }
+        }
+        next;
+      }
+
+      next if ($seen_inodes{"$dev:$ino"}); # break symlink loops
+      $seen_inodes{"$dev:$ino"} = 1;
+
+      if (S_ISDIR($mode)) {
+        push @dirs, $file;
+        $dir_count++;
+        print STDERR "$progname:  + found dir  $file\n" if ($verbose > 1);
+
+      } else {
+        $skip_count_stat++;
+        print STDERR "$progname:  + skip file  $file\n" if ($verbose > 1);
+      }
+    }
+  }
+
+  foreach (@dirs) {
+    find_all_files ($_);
+  }
+}
+
+
+sub spotlight_all_files {
+  my ($dir) = @_;
+
+  my @terms = ();
+  # "public.image" matches all (indexed) images, including Photoshop, etc.
+#  push @terms, "kMDItemContentTypeTree == 'public.image'";
+  foreach (@good_extensions) {
+
+    # kMDItemFSName hits the file system every time: much worse than "find".
+#    push @terms, "kMDItemFSName == '*.$_'";
+
+    # kMDItemDisplayName matches against the name in the Spotlight index,
+    # but won't find files that (for whatever reason) didn't get indexed.
+    push @terms, "kMDItemDisplayName == '*.$_'";
+  }
+
+  $dir =~ s@([^-_/a-z\d.,])@\\$1@gsi;  # quote for sh
+  my $cmd = "mdfind -onlyin $dir \"" . join (' || ', @terms) . "\"";
+
+  print STDERR "$progname: executing: $cmd\n" if ($verbose > 1);
+  @all_files = split (/[\r\n]+/, `$cmd`);
+}
+
+
+# If we're using cacheing, read the cache file and return its contents,
+# if any.  This also holds an exclusive lock on the cache file, which 
+# has the additional benefit that if two copies of this program are
+# running at once, one will wait for the other, instead of both of
+# them spanking the same file system at the same time.
+#
+local *CACHE_FILE;
+my $cache_file_name = undef;
+my $read_cache_p = 0;
+
+sub read_cache($) {
+  my ($dir) = @_;
+
+  return () unless ($cache_p);
+
+  my $dd = "$ENV{HOME}/Library/Caches";    # MacOS location
+  if (-d $dd) {
+    $cache_file_name = "$dd/org.jwz.xscreensaver.getimage.cache";
+  } elsif (-d "$ENV{HOME}/tmp") {
+    $cache_file_name = "$ENV{HOME}/tmp/.xscreensaver-getimage.cache";
+  } else {
+    $cache_file_name = "$ENV{HOME}/.xscreensaver-getimage.cache";
+  }
+
+  print STDERR "$progname: awaiting lock: $cache_file_name\n"
+    if ($verbose > 1);
+
+  my $file = $cache_file_name;
+  open (CACHE_FILE, "+>>$file") || error ("unable to write $file: $!");
+  flock (CACHE_FILE, LOCK_EX)   || error ("unable to lock $file: $!");
+  seek (CACHE_FILE, 0, 0)       || error ("unable to rewind $file: $!");
+
+  my $mtime = (stat(CACHE_FILE))[9];
+
+  if ($mtime + $cache_max_age < time) {
+    print STDERR "$progname: cache is too old\n" if ($verbose);
+    return ();
+  }
+
+  my $odir = <CACHE_FILE>;
+  $odir =~ s/[\r\n]+$//s if defined ($odir);
+  if (!defined ($odir) || ($dir ne $odir)) {
+    print STDERR "$progname: cache is for $odir, not $dir\n"
+      if ($verbose && $odir);
+    return ();
+  }
+
+  my @files = ();
+  while (<CACHE_FILE>) { 
+    s/[\r\n]+$//s;
+    push @files, "$odir/$_";
+  }
+
+  print STDERR "$progname: " . ($#files+1) . " files in cache\n"
+    if ($verbose);
+
+  $read_cache_p = 1;
+  return @files;
+}
+
+
+sub write_cache($) {
+  my ($dir) = @_;
+
+  return unless ($cache_p);
+
+  # If we read the cache, just close it without rewriting it.
+  # If we didn't read it, then write it now.
+
+  if (! $read_cache_p) {
+
+    truncate (CACHE_FILE, 0) ||
+      error ("unable to truncate $cache_file_name: $!");
+    seek (CACHE_FILE, 0, 0) ||
+      error ("unable to rewind $cache_file_name: $!");
+
+    if ($#all_files >= 0) {
+      print CACHE_FILE "$dir\n";
+      my $re = qr/$dir/;
+      foreach (@all_files) {
+        my $f = $_; # stupid Perl. do this to avoid modifying @all_files!
+        $f =~ s@^$re/@@so || die;
+        print CACHE_FILE "$f\n";
+      }
+    }
+
+    print STDERR "$progname: cached " . ($#all_files+1) . " files\n"
+      if ($verbose);
+  }
+
+  flock (CACHE_FILE, LOCK_UN) ||
+    error ("unable to unlock $cache_file_name: $!");
+  close (CACHE_FILE);
+}
+
+
+sub find_random_file($) {
+  my ($dir) = @_;
+
+  $dir =~ s@/+$@@g;
+
+  if ($use_spotlight_p == -1) {
+    $use_spotlight_p = 0;
+    if (-x '/usr/bin/mdfind') {
+      $use_spotlight_p = 1;
+    }
+  }
+
+  @all_files = read_cache ($dir);
+
+  if ($#all_files >= 0) {
+    # got it from the cache...
+
+  } elsif ($use_spotlight_p) {
+    print STDERR "$progname: spotlighting $dir...\n" if ($verbose);
+    spotlight_all_files ($dir);
+    print STDERR "$progname: found " . ($#all_files+1) .
+                 " file" . ($#all_files == 0 ? "" : "s") .
+                 " via Spotlight\n"
+      if ($verbose);
+  } else {
+    print STDERR "$progname: recursively reading $dir...\n" if ($verbose);
+    find_all_files ($dir);
+    print STDERR "$progname: " .
+                 "f=" . ($#all_files+1) . "; " .
+                 "d=$dir_count; " .
+                 "s=$stat_count; " .
+                 "skip=${skip_count_unstat}+$skip_count_stat=" .
+                  ($skip_count_unstat + $skip_count_stat) .
+                 ".\n"
+      if ($verbose);
+  }
+
+  write_cache ($dir);
+
+  @all_files = sort(@all_files);
+
+  if ($#all_files < 0) {
+    print STDERR "$progname: no files in $dir\n";
+    exit 1;
+  }
+
+  my $max_tries = 50;
+  for (my $i = 0; $i < $max_tries; $i++) {
+
+    my $n = int (rand ($#all_files + 1));
+    my $file = $all_files[$n];
+    if (large_enough_p ($file)) {
+      return $file;
+    }
+  }
+
+  print STDERR "$progname: no suitable images in $dir " .
+               "(after $max_tries tries)\n";
+  exit 1;
+}
+
+
+sub large_enough_p {
+  my ($file) = @_;
+
+  my ($w, $h) = image_file_size ($file);
+
+  if (!defined ($h)) {
+    print STDERR "$progname: $file: unable to determine image size\n"
+      if ($verbose);
+    # Assume that unknown files are of good sizes: this will happen if
+    # they matched $good_file_re, but we don't have code to parse them.
+    # (This will also happen if the file is junk...)
+    return 1;
+  }
+
+  if ($w < $min_image_width || $h < $min_image_height) {
+    print STDERR "$progname: $file: too small ($w x $h)\n" if ($verbose);
+    return 0;
+  }
+
+  print STDERR "$progname: $file: $w x $h\n" if ($verbose);
+  return 1;
+}
+
+
+
+# Given the raw body of a GIF document, returns the dimensions of the image.
+#
+sub gif_size {
+  my ($body) = @_;
+  my $type = substr($body, 0, 6);
+  my $s;
+  return () unless ($type =~ /GIF8[7,9]a/);
+  $s = substr ($body, 6, 10);
+  my ($a,$b,$c,$d) = unpack ("C"x4, $s);
+  return (($b<<8|$a), ($d<<8|$c));
+}
+
+# Given the raw body of a JPEG document, returns the dimensions of the image.
+#
+sub jpeg_size {
+  my ($body) = @_;
+  my $i = 0;
+  my $L = length($body);
+
+  my $c1 = substr($body, $i, 1); $i++;
+  my $c2 = substr($body, $i, 1); $i++;
+  return () unless (ord($c1) == 0xFF && ord($c2) == 0xD8);
+
+  my $ch = "0";
+  while (ord($ch) != 0xDA && $i < $L) {
+    # Find next marker, beginning with 0xFF.
+    while (ord($ch) != 0xFF) {
+      return () if (length($body) <= $i);
+      $ch = substr($body, $i, 1); $i++;
+    }
+    # markers can be padded with any number of 0xFF.
+    while (ord($ch) == 0xFF) {
+      return () if (length($body) <= $i);
+      $ch = substr($body, $i, 1); $i++;
+    }
+
+    # $ch contains the value of the marker.
+    my $marker = ord($ch);
+
+    if (($marker >= 0xC0) &&
+        ($marker <= 0xCF) &&
+        ($marker != 0xC4) &&
+        ($marker != 0xCC)) {  # it's a SOFn marker
+      $i += 3;
+      return () if (length($body) <= $i);
+      my $s = substr($body, $i, 4); $i += 4;
+      my ($a,$b,$c,$d) = unpack("C"x4, $s);
+      return (($c<<8|$d), ($a<<8|$b));
+
+    } else {
+      # We must skip variables, since FFs in variable names aren't
+      # valid JPEG markers.
+      return () if (length($body) <= $i);
+      my $s = substr($body, $i, 2); $i += 2;
+      my ($c1, $c2) = unpack ("C"x2, $s);
+      my $length = ($c1 << 8) | $c2;
+      return () if ($length < 2);
+      $i += $length-2;
+    }
+  }
+  return ();
+}
+
+# Given the raw body of a PNG document, returns the dimensions of the image.
+#
+sub png_size {
+  my ($body) = @_;
+  return () unless ($body =~ m/^\211PNG\r/s);
+  my ($bits) = ($body =~ m/^.{12}(.{12})/s);
+  return () unless defined ($bits);
+  return () unless ($bits =~ /^IHDR/);
+  my ($ign, $w, $h) = unpack("a4N2", $bits);
+  return ($w, $h);
+}
+
+
+# Given the raw body of a GIF, JPEG, or PNG document, returns the dimensions
+# of the image.
+#
+sub image_size {
+  my ($body) = @_;
+  return () if (length($body) < 10);
+  my ($w, $h) = gif_size ($body);
+  if ($w && $h) { return ($w, $h); }
+  ($w, $h) = jpeg_size ($body);
+  if ($w && $h) { return ($w, $h); }
+  # #### TODO: need image parsers for TIFF, XPM, XBM.
+  return png_size ($body);
+}
+
+# Returns the dimensions of the image file.
+#
+sub image_file_size {
+  my ($file) = @_;
+  local *IN;
+  if (! open (IN, "<$file")) {
+    print STDERR "$progname: $file: $!\n" if ($verbose);
+    return undef;
+  }
+  binmode (IN);  # Larry can take Unicode and shove it up his ass sideways.
+  my $body = '';
+  sysread (IN, $body, 1024 * 50);   # The first 50k should be enough.
+  close IN;			    # (It's not for certain huge jpegs...
+  return image_size ($body);	    # but we know they're huge!)
+}
+
+
+sub error($) {
+  my ($err) = @_;
+  print STDERR "$progname: $err\n";
+  exit 1;
+}
+
+sub usage {
+  print STDERR "usage: $progname [--verbose] directory\n" .
+  "       Prints the name of a randomly-selected image file.  The directory\n" .
+  "       is searched recursively.  Images smaller than " .
+         "${min_image_width}x${min_image_height} are excluded.\n";
+  exit 1;
+}
+
+sub main {
+  my $dir = undef;
+
+  while ($_ = $ARGV[0]) {
+    shift @ARGV;
+    if ($_ eq "--verbose") { $verbose++; }
+    elsif (m/^-v+$/) { $verbose += length($_)-1; }
+    elsif ($_ eq "--name") { }     # ignored, for compatibility
+    elsif ($_ eq "--spotlight")    { $use_spotlight_p = 1; }
+    elsif ($_ eq "--no-spotlight") { $use_spotlight_p = 0; }
+    elsif ($_ eq "--cache")        { $cache_p = 1; }
+    elsif ($_ eq "--no-cache")     { $cache_p = 0; }
+    elsif (m/^-./) { usage; }
+    elsif (!defined($dir)) { $dir = $_; }
+    else { usage; }
+  }
+
+  usage unless (defined($dir));
+
+  $dir =~ s@^~/@$ENV{HOME}/@s;     # allow literal "~/"
+
+  if (! -d $dir) {
+    print STDERR "$progname: $dir: not a directory\n";
+    usage;
+  }
+
+  my $file = find_random_file ($dir);
+  print STDOUT "$file\n";
+}
+
+main;
+exit 0;

@@ -1,0 +1,204 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH XScreenSaver 1 "27-Apr-97" "X Version 11"
+.SH NAME
+epicycle - draws a point moving around a circle which moves around a cicle which...
+.SH SYNOPSIS
+.B epicycle 
+[\-display \fIhost:display.screen\fP] [\-root] [\-window] [\-mono] [\-install] [\-noinstall] [\-visual \fIviz\fP] [\-colors \fIN\fP] [\-foreground \fIname\fP] [\-color\-shift \fIN\fP] [\-delay \fImicroseconds\fP] [\-holdtime \fIseconds\fP] [\-linewidth \fIN\fP] [\-min_circles \fIN\fP] [\-max_circles \fIN\fP] [\-min_speed \fInumber\fP] [\-max_speed \fInumber\fP] [\-harmonics \fIN\fP] [\-timestep \fInumber\fP] [\-divisor_poisson \fIprobability\fP] [\-size_factor_min \fInumber\fP] [\-size_factor_max \fInumber\fP]
+[\-fps]
+.SH DESCRIPTION
+The epicycle program draws the path traced out by a point on the edge
+of a circle.  That circle rotates around a point on the rim of another
+circle, and so on, several times.  The random curves produced can be
+simple or complex, convex or concave, but they are always closed
+curves (they never go in indefinitely).
+
+You can configure both the way the curves are drawn and the way in
+which the random sequence of circles is generated, either with
+command-line options or X resources.
+.SH OPTIONS
+.TP 8
+.B \-display \fIhost:display.screen\fP
+Specifies which X display we should use (see the section DISPLAY NAMES in
+.BR X (1)
+for more information about this option).
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-mono
+If on a color display, pretend we're on a monochrome display.
+If we're on a mono display, we have no choice.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-noinstall
+Don't install a private colormap for the window.
+.TP 8
+.B \-visual \fIviz\fP
+Specify which visual to use.  Legal values are the name of a visual
+class, or the id number (decimal or hex) of a specific visual.
+Possible choices include
+
+.RS
+default, best, mono, monochrome, gray, grey, color, staticgray, staticcolor, 
+truecolor, grayscale, greyscale, pseudocolor, directcolor, \fInumber\fP
+
+If a decimal or hexadecimal number is used, 
+.BR XGetVisualInfo (3X)
+is consulted to obtain the required visual.
+.RE
+.TP 8
+.B \-colors \fIN\fP
+How many colors should be used (if possible).  The colors are chosen
+randomly.
+.TP 8
+.B \-foreground \fIname\fP
+With 
+.BR \-mono ,
+this option selects the foreground colour.   
+.TP 8
+.B \-delay \fImicroseconds\fP
+Specifies the delay between drawing successive line segments of the
+path.   If you do not specify 
+.BR -sync ,
+some X servers may batch up several drawing operations together,
+producing a less smooth effect.   This is more likely to happen 
+in monochrome mode (on monochrome servers or when 
+.B \-mono 
+is specified).
+.TP 8
+.B \-holdtime \fIseconds\fP
+When the figure is complete, 
+.I epicycle
+pauses this number of seconds.
+.TP 8
+.B \-linewidth \fIN\fP
+Width in pixels of the body's track.   Specifying values greater than
+one may cause slower drawing.   The fastest value is usually zero,
+meaning one pixel.   
+.TP 8
+.B \-min_circles \fIN\fP
+Smallest number of epicycles in the figure.
+.TP 8
+.B \-max_circles \fIN\fP
+Largest number of epicycles in the figure.
+.TP 8
+.B \-min_speed \fInumber\fP
+Smallest possible value for the base speed of revolution of the
+epicycles.  The actual speeds of the epicycles vary from this down
+to
+.IB "min_speed / harmonics" .
+.TP 8
+.B \-max_speed \fInumber\fP
+Smallest possible value for the base speed of revolution of the 
+epicycles.
+.TP 8
+.B \-harmonics \fIN\fP
+Number of possible harmonics; the larger this value is, the greater
+the possible variety of possible speeds of epicycle.
+.TP 8
+.B \-timestep \fInumber\fP
+Decreasing this value will reduce the distance the body moves for
+each line segment, possibly producing a smoother figure.  Increasing
+it may produce faster results.  
+.TP 8
+.B \-divisor_poisson \fIprobability\fP
+Each epicycle rotates at a rate which is a factor of the base speed.
+The speed of each epicycle is the base speed divided by some integer
+between 1 and the value of the 
+.B \-harmonics 
+option.  This integer is decided by starting at 1 and tossing 
+a biased coin.  For each consecutive head, the value is incremented by
+one.  The integer will not be incremented above the value of the 
+.B \-harmonics
+option.  The argument of this option decides the bias of the coin; it
+is the probability that that coin will produce a head at any given toss.
+.TP 8
+.B \-size_factor_min \fInumber\fP
+Epicycles are always at least this factor smaller than their
+parents.  
+.TP 8
+.B \-size_factor_max \fInumber\fP
+Epicycles are never more than this factor smaller than their parents.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH RESOURCES
+.EX
+Option            Resource               Default Value
+------            --------               -------------
+-colors           .colors                100
+-delay            .delay                 1000
+-holdtime         .holdtime              2
+-linewidth        .lineWidth             4
+-min_circles      .minCircles            2
+-max_circles      .maxCircles            10
+-min_speed        .minSpeed              0.003
+-max_speed        .maxSpeed              0.005
+-harmonics        .harmonics             8
+-timestep         .timestep              1.0
+-divisor_poisson  .divisorPoisson        0.4
+-size_factor_min  .sizeFactorMin         1.05
+-size_factor_max  .sizeFactorMax         2.05
+                  .timestepCoarseFactor  1.0
+.EE
+Before the drawing of the figure is begun, a preliminary calculation
+of the path is done in order to scale the radii of the epicycles so
+as to fit the figure on the screen or window.  For the sake of speed,
+This calculation is done with a larger timestep than the actual
+drawing.  The time-step used is the value of the
+.B \-timestep 
+option multiplied by the timestepCoarseFactor resource.  The default
+value of 1 will almost always work fast enough and so this resource
+is not available as a command-line option.
+.SH USER INTERFACE
+The program runs mostly without user interaction.  When running on the
+root window, no input is accepted.  When running in its own window,
+the program will exit if mouse button 3 is pressed.  If any other
+mouse button is pressed, the current figure will be abandoned and
+another will be started.
+.SH HISTORY
+The geometry of epicycles was perfected by Hipparchus of Rhodes at
+some time around 125 B.C., 185 years after the birth of Aristarchus of
+Samos, the inventor of the heliocentric universe model.  Hipparchus
+applied epicycles to the Sun and the Moon.  Ptolemy of Alexandria went
+on to apply them to what was then the known universe, at around 150
+A.D.  Copernicus went on to apply them to the heliocentric model at
+the beginning of the sixteenth century.  Johannes Kepler discovered
+that the planets actually move in elliptical orbits in about 1602.
+The inverse-square law of gravity was suggested by Boulliau in 1645.
+Isaac Newton's 
+.I Principia Mathematica
+was published in 1687, and proved that Kepler's laws derived from
+Newtonian gravitation.
+.SH BUGS
+The colour selection is re-done for every figure.  This may 
+generate too much network traffic for this program to work well 
+over slow or long links.   
+.SH COPYRIGHT
+Copyright \(co 1998, James Youngman.  Permission to use, copy, modify,
+distribute, and sell this software and its documentation for any purpose is
+hereby granted without fee, provided that the above copyright notice appear
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+James Youngman <jay@gnu.org>, April 1998.
