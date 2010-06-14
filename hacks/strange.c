@@ -6,34 +6,39 @@ static const char sccsid[] = "@(#)strange.c	5.00 2000/11/01 xlockmore";
 #endif
 
 /*-
- * Copyright (c) 1997 by Massimino Pascal <Pascal.Massimon@ens.fr>
- *
- * Permission to use, copy, modify, and distribute this software and its
- * documentation for any purpose and without fee is hereby granted,
- * provided that the above copyright notice appear in all copies and that
- * both that copyright notice and this permission notice appear in
- * supporting documentation.
- *
- * This file is provided AS IS with no warranties of any kind.  The author
- * shall have no liability with respect to the infringement of copyrights,
- * trade secrets or any patents by this file or any part thereof.  In no
- * event will the author be liable for any lost revenue or profits or
- * other special, indirect and consequential damages.
- *
- * Revision History:
- * 01-Nov-2000: Allocation checks
- * 10-May-1997: jwz@jwz.org: turned into a standalone program.
- *              Made it render into an offscreen bitmap and then copy
- *              that onto the screen, to reduce flicker.
- *
- * strange attractors are not so hard to find...
- */
+* Copyright (c) 1997 by Massimino Pascal <Pascal.Massimon@ens.fr>
+*
+* Permission to use, copy, modify, and distribute this software and its
+* documentation for any purpose and without fee is hereby granted,
+* provided that the above copyright notice appear in all copies and that
+* both that copyright notice and this permission notice appear in
+* supporting documentation.
+*
+* This file is provided AS IS with no warranties of any kind.  The author
+* shall have no liability with respect to the infringement of copyrights,
+* trade secrets or any patents by this file or any part thereof.  In no
+* event will the author be liable for any lost revenue or profits or
+* other special, indirect and consequential damages.
+*
+* Revision History:
+* 01-Nov-2000: Allocation checks
+* 10-May-1997: jwz@jwz.org: turned into a standalone program.
+*              Made it render into an offscreen bitmap and then copy
+*              that onto the screen, to reduce flicker.
+*
+* strange attractors are not so hard to find...
+*/
+
+/* TODO: Bring over tweaks from 3.x version.
+* For a good idea of what's missing, diff strange.c.20081107-good2 against strange.c-3.29
+* We forked from the 3.29 series at 20081107, so anything added since then may be missing.
+*/
 
 #ifdef STANDALONE
 # define MODE_strange
 # define DEFAULTS	"*delay: 10000 \n" \
 					"*ncolors: 100 \n" \
-					"*fpsClear: True \n"
+					"*fpsSolid: True \n"
 
 # define SMOOTH_COLORS
 # define refresh_strange 0
@@ -45,17 +50,37 @@ static const char sccsid[] = "@(#)strange.c	5.00 2000/11/01 xlockmore";
 #endif /* !STANDALONE */
 
 #ifdef MODE_strange
+#define DEF_CURVE  "10"
+#define DEF_POINTS "5500"
 
+/*static int curve;*/
+static int points;
+
+static XrmOptionDescRec opts[] =
+{
+/*		{"-curve",  ".strange.curve",  XrmoptionSepArg, 0}, */
+		{"-points", ".strange.points", XrmoptionSepArg, 0},
+};
+static argtype vars[] =
+{
+/*		{&curve,  "curve",  "Curve",  DEF_CURVE,  t_Int},*/
+		{&points, "points", "Points", DEF_POINTS, t_Int},
+};
+static OptionStruct desc[] =
+{
+/*		{"-curve", "set the curve factor of the attractors"},*/
+		{"-points", "change the number of points/iterations each frame"},
+};
 ENTRYPOINT ModeSpecOpt strange_opts =
-{0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
+{sizeof opts / sizeof opts[0], opts,
+sizeof vars / sizeof vars[0], vars, desc};
 
 #ifdef USE_MODULES
 ModStruct   strange_description =
 {"strange", "init_strange", "draw_strange", "release_strange",
- "init_strange", "init_strange", (char *) NULL, &strange_opts,
- 1000, 1, 1, 1, 64, 1.0, "",
- "Shows strange attractors", 0, NULL};
-
+"init_strange", "init_strange", (char *) NULL, &strange_opts,
+1000, 1, 1, 1, 64, 1.0, "",
+"Shows strange attractors", 0, NULL};
 #endif
 
 #ifdef HAVE_COCOA
@@ -70,7 +95,6 @@ typedef int PRM;
 /* #define UNIT2 (3140*UNIT/1000) */
 
 #define SKIP_FIRST      100
-#define MAX_POINTS      5500
 #define DBL_To_PRM(x)  (PRM)( (DBL)(UNIT)*(x) )
 
 
@@ -83,6 +107,18 @@ typedef int PRM;
 #define DO_FOLD(a) (a)<0 ? DBL_To_PRM( exp( 16.0*(a)/UNIT2 ) )-1.0 : \
 DBL_To_PRM( 1.0-exp( -16.0*(a)/UNIT2 ) )
 #endif
+
+/* useAccumulator performs two functions:
+* If it is defined, then support for the accumulator will be compiled.
+* It is also the condition for which the accumulator renderer will engage.
+*/
+#define useAccumulator (Root->Max_Pt > 6000)
+#define ACC_GAMMA 10.0
+#define NUM_COLS 150
+/* Extra options: */
+#define VARY_SPEED_TO_AVOID_BOREDOM
+#define POINTS_HISTORY
+#define MERGE_FRAMES 3
 
 /******************************************************************/
 
@@ -98,9 +134,24 @@ typedef struct _ATTRACTOR {
 	int         Width, Height;
 	Pixmap      dbuf;	/* jwz */
 	GC          dbuf_gc;
+	#ifdef useAccumulator
+		int **accMap;
+	#endif
 } ATTRACTOR;
 
 static ATTRACTOR *Root = (ATTRACTOR *) NULL; 
+
+#ifdef useAccumulator
+XColor* cols;
+#endif
+
+#ifdef POINTS_HISTORY
+static int numOldPoints;
+static int* oldPointsX;
+static int* oldPointsY;
+static int oldPointsIndex;
+static int startedClearing;
+#endif
 
 static DBL  Amp_Prm[MAX_PRM] =
 {
@@ -139,7 +190,7 @@ Random_Prm(DBL * Prm)
 
 /***************************************************************/
 
-   /* 2 examples of non-linear map */
+  /* 2 examples of non-linear map */
 
 static void
 Iterate_X2(ATTRACTOR * A, PRM x, PRM y, PRM * xo, PRM * yo)
@@ -243,9 +294,23 @@ draw_strange(ModeInfo * mi)
 	Cur_Pt = A->Cur_Pt;
 	Iterate = A->Iterate;
 
-	u = (DBL) (A->Count) / 1000.0;
+	u = (DBL) (A->Count) / 40000.0;
 	for (j = MAX_PRM - 1; j >= 0; --j)
 		A->Prm[j] = DBL_To_PRM((1.0 - u) * A->Prm1[j] + u * A->Prm2[j]);
+
+	/* We collect the accumulation of the orbits in the 2d int array field. */
+#ifndef POINTS_HISTORY
+	#ifdef useAccumulator
+		if (useAccumulator) {
+			for (i=0;i<A->Width;i++) {
+				for (j=0;j<A->Height;j++) {
+					A->accMap[i][j] = 0;
+
+				}
+			}
+		}
+	#endif
+#endif
 
 	x = y = DBL_To_PRM(.0);
 	for (n = SKIP_FIRST; n; --n) {
@@ -264,11 +329,40 @@ draw_strange(ModeInfo * mi)
 	Ly = (DBL) A->Height / UNIT / 2.2;
 	for (n = A->Max_Pt; n; --n) {
 		(*Iterate) (A, x, y, &xo, &yo);
-		Buf->x = (int) (Lx * (x + DBL_To_PRM(1.1)));
-		Buf->y = (int) (Ly * (DBL_To_PRM(1.1) - y));
+		#ifdef useAccumulator
+		if (useAccumulator) {
+			int mx,my;
+			mx = (short) ( A->Width*0.1 + A->Width*0.8 * (xo - xmin) / (xmax - xmin) );
+			my = (short) ( A->Width*0.1 + (A->Height - A->Width*0.2) * (yo - ymin) / (ymax - ymin) );
+			if (mx>=0 && my>=0 && mx<A->Width && my<A->Height) {
+				A->accMap[mx][my]++;
+			}
+#ifdef POINTS_HISTORY
+		/* #define clearOldPoint(i) { if (startedClearing) { field[oldPoints[i].x][oldPoints[i].y]--; } }
+		#define saveUnplot(X,Y) { clearOldPoint(oldPointsIndex) oldPoints[oldPointsIndex].x = X; oldPoints[oldPointsIndex].y = Y; oldPointsIndex = (oldPointsIndex + 1) % numOldPoints; if (oldPointsIndex==0) { startedClearing=1; } }
+		saveUnplot(mx,my) */
+		if (startedClearing) {
+			int oldX = oldPointsX[oldPointsIndex];
+			int oldY = oldPointsY[oldPointsIndex];
+			if (oldX>=0 && oldY>=0 && oldX<A->Width && oldY<A->Height) {
+				A->accMap[oldX][oldY]--;
+			}
+		}
+		oldPointsX[oldPointsIndex] = mx;
+		oldPointsY[oldPointsIndex] = my;
+		oldPointsIndex = (oldPointsIndex + 1) % numOldPoints;
+		if (oldPointsIndex==0) { startedClearing=1; }
+#endif
+		} else {
+		#endif
+			Buf->x = (int) (Lx * (x + DBL_To_PRM(1.1)));
+			Buf->y = (int) (Ly * (DBL_To_PRM(1.1) - y));
+			Buf++;
+			A->Cur_Pt++;
+		#ifdef useAccumulator
+		}
+		#endif
 		/* (void) fprintf( stderr, "X,Y: %d %d    ", Buf->x, Buf->y ); */
-		Buf++;
-		A->Cur_Pt++;
 		if (xo > xmax)
 			xmax = xo;
 		else if (xo < xmin)
@@ -285,10 +379,78 @@ draw_strange(ModeInfo * mi)
 
 	XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
 
+	#ifdef useAccumulator
+	if (useAccumulator) {
+		float colorScale;
+		int col;
+		#ifdef VARY_SPEED_TO_AVOID_BOREDOM
+		int pixelCount = 0;
+		#endif
+		colorScale = (A->Width*A->Height/640.0/480.0*800000.0/(float)A->Max_Pt*(float)NUM_COLS/256);
+		if (A->dbuf != None) {
+			XSetForeground(display, A->dbuf_gc, 0);
+			XFillRectangle(display, A->dbuf, A->dbuf_gc, 0, 0, A->Width, A->Height);
+		} else {
+			XSetForeground(display, gc, MI_BLACK_PIXEL(mi));
+			XFillRectangle(display, window, gc, 0, 0, A->Width, A->Height);
+		}
+		for (i=0;i<A->Width;i++) {
+			for (j=0;j<A->Height;j++) {
+				if (A->accMap[i][j]>0) {
+					col = (float)A->accMap[i][j] * colorScale;
+					if (col>NUM_COLS-1) {
+						col = NUM_COLS-1;
+					}
+					#ifdef VARY_SPEED_TO_AVOID_BOREDOM
+					if (col>0) {
+						if (col<NUM_COLS-1)  /* we don't count maxxed out pixels */
+							pixelCount++;
+					}
+					#endif
+					if (MI_NPIXELS(mi) < 2)
+						XSetForeground(display, gc, MI_WHITE_PIXEL(mi));
+					else
+						/*XSetForeground(display, gc, MI_PIXEL(mi, A->Col % MI_NPIXELS(mi)));*/
+						XSetForeground(display, gc, cols[col].pixel);
+					if (A->dbuf != None) {
+						XSetForeground(display, A->dbuf_gc, cols[col].pixel);
+						XDrawPoint(display, A->dbuf, A->dbuf_gc, i, j);
+					} else {
+						XSetForeground(display, gc, cols[col].pixel);
+						XDrawPoint(display, window, gc, i, j);
+					}
+				}
+			}
+		}
+		if (A->dbuf != None) {
+			XCopyArea(display, A->dbuf, window, gc, 0, 0, A->Width, A->Height, 0, 0);
+		}
+		#ifdef VARY_SPEED_TO_AVOID_BOREDOM
+			/* Increaase the rate of change of the parameters if the attractor has become visually boring. */
+			if ((xmax - xmin < DBL_To_PRM(.2)) && (ymax - ymin < DBL_To_PRM(.2))) {
+				A->Speed *= 1.25;
+			} else if (pixelCount>0 && pixelCount<A->Width*A->Height/1000) {
+				A->Speed *= 1.25;  /* A->Count = 1000; */
+			} else {
+				A->Speed = 4; /* reset to normal/default */
+			}
+			if (A->Speed > 32)
+				A->Speed = 32;
+			A->Count += A->Speed;
+			if (A->Count >= 1000) {
+				for (i = MAX_PRM - 1; i >= 0; --i)
+					A->Prm1[i] = A->Prm2[i];
+				Random_Prm(A->Prm2);
+				A->Count = 0;
+			}
+		#endif
+	} else {
+	#endif
+
 	if (A->dbuf != None) {		/* jwz */
 		XSetForeground(display, A->dbuf_gc, 0);
 /* XDrawPoints(display, A->dbuf, A->dbuf_gc, A->Buffer1,
-   Cur_Pt,CoordModeOrigin); */
+  Cur_Pt,CoordModeOrigin); */
 		XFillRectangle(display, A->dbuf, A->dbuf_gc, 0, 0, A->Width, A->Height);
 	} else
 		XDrawPoints(display, window, gc, A->Buffer1, Cur_Pt, CoordModeOrigin);
@@ -305,6 +467,10 @@ draw_strange(ModeInfo * mi)
 		XCopyPlane(display, A->dbuf, window, gc, 0, 0, A->Width, A->Height, 0, 0, 1);
 	} else
 		XDrawPoints(display, window, gc, A->Buffer2, A->Cur_Pt, CoordModeOrigin);
+
+	#ifdef useAccumulator
+	}
+	#endif
 
 	Buf = A->Buffer1;
 	A->Buffer1 = A->Buffer2;
@@ -330,11 +496,16 @@ ENTRYPOINT void
 init_strange(ModeInfo * mi)
 {
 	Display    *display = MI_DISPLAY(mi);
-#ifndef NO_DBUF
 	Window      window = MI_WINDOW(mi);
+#ifndef NO_DBUF
 	GC          gc = MI_GC(mi);
 #endif
 	ATTRACTOR  *Attractor;
+
+#ifdef POINTS_HISTORY
+	startedClearing=0;
+	oldPointsIndex=0;
+#endif
 
 	if (Root == NULL) {
 		if ((Root = (ATTRACTOR *) calloc(MI_NUM_SCREENS(mi),
@@ -364,19 +535,21 @@ init_strange(ModeInfo * mi)
 			Attractor->Fold[i] = DBL_To_PRM(x);
 		}
 	}
+
+	Attractor->Max_Pt = points;
+
 	if (Attractor->Buffer1 == NULL)
-		if ((Attractor->Buffer1 = (XPoint *) calloc(MAX_POINTS,
+		if ((Attractor->Buffer1 = (XPoint *) calloc(Attractor->Max_Pt,
 				sizeof (XPoint))) == NULL) {
 			free_strange(display, Attractor);
 			return;
 		}
 	if (Attractor->Buffer2 == NULL)
-		if ((Attractor->Buffer2 = (XPoint *) calloc(MAX_POINTS,
+		if ((Attractor->Buffer2 = (XPoint *) calloc(Attractor->Max_Pt,
 				sizeof (XPoint))) == NULL) {
 			free_strange(display, Attractor);
 			return;
 		}
-	Attractor->Max_Pt = MAX_POINTS;
 
 	Attractor->Width = MI_WIDTH(mi);
 	Attractor->Height = MI_HEIGHT(mi);
@@ -391,8 +564,13 @@ init_strange(ModeInfo * mi)
 #ifndef NO_DBUF
 	if (Attractor->dbuf != None)
 		XFreePixmap(display, Attractor->dbuf);
+#ifdef useAccumulator
+#define colorDepth ( useAccumulator ? MI_DEPTH(mi) : 1 )
+#else
+#define colorDepth 1
+#endif
 	Attractor->dbuf = XCreatePixmap(display, window,
-	     Attractor->Width, Attractor->Height, 1);
+	     Attractor->Width, Attractor->Height, colorDepth);
 	/* Allocation checked */
 	if (Attractor->dbuf != None) {
 		XGCValues   gcv;
@@ -411,7 +589,7 @@ init_strange(ModeInfo * mi)
 #ifndef HAVE_COCOA
 				GCGraphicsExposures |
 #endif /* HAVE_COCOA */
-                                GCFunction | GCForeground | GCBackground,
+                               GCFunction | GCForeground | GCBackground,
 				&gcv)) == None) {
 			XFreePixmap(display, Attractor->dbuf);
 			Attractor->dbuf = None;
@@ -424,6 +602,60 @@ init_strange(ModeInfo * mi)
 	}
 #endif
 
+
+#ifdef useAccumulator
+	#define A Attractor
+	if (useAccumulator) {
+		XWindowAttributes xgwa;
+		int i,j,got_color;
+		XGetWindowAttributes (display, window, &xgwa);
+		/* cmap = xgwa.colormap; */
+		/* cmap = XCreateColormap(display, window, MI_VISUAL(mi), AllocAll); */
+		Attractor->accMap = (int**)calloc(Attractor->Width,sizeof(int*));
+		for (i=0;i<Attractor->Width;i++) {
+			Attractor->accMap[i] = (int*)calloc(Attractor->Height,sizeof(int));
+			for (j=0;j<Attractor->Height;j++) {
+				Attractor->accMap[i][j] = 0;
+			}
+		}
+#ifdef POINTS_HISTORY
+		numOldPoints = A->Max_Pt * MERGE_FRAMES;
+		oldPointsX = (int*)calloc(numOldPoints,sizeof(int));
+		oldPointsY = (int*)calloc(numOldPoints,sizeof(int));
+#endif
+		cols = (XColor*)calloc(NUM_COLS,sizeof(XColor));
+		for (i=0;i<NUM_COLS;i++) {
+			float li;
+			#define MINBLUE 1
+			#define FULLBLUE 128
+			li = MINBLUE + (255.0-MINBLUE) * log(1.0 + ACC_GAMMA*(float)i/NUM_COLS) / log(1.0 + ACC_GAMMA);
+			if (li<FULLBLUE) {
+				cols[i].red = 0;
+				cols[i].green = 0;
+				cols[i].blue = 65536*li/FULLBLUE;
+			} else {
+				cols[i].red = 65536*(li-FULLBLUE)/(256-FULLBLUE);
+				cols[i].green = 65536*(li-FULLBLUE)/(256-FULLBLUE);
+				cols[i].blue = 65535;
+			}
+			got_color = XAllocColor (display, xgwa.colormap, &cols[i]);
+			/*
+			if (!XAllocColor(MI_DISPLAY(mi), cmap, &cols[i])) {
+			if (!XAllocColor(display, cmap, &cols[i])) {
+				cols[i].pixel = WhitePixel (display, DefaultScreen (display));
+				cols[i].red = cols[i].green = cols[i].blue = 0xFFFF;
+			}
+			*/
+		}
+		/*
+		XSetWindowColormap(display, window, cmap);
+		(void) XSetWMColormapWindows(display, window, &window, 1);
+		XInstallColormap(display, cmap);
+		XStoreColors(display, cmap, cols, 256);
+		*/
+	}
+	#undef A
+#endif
 	MI_CLEARWINDOW(mi);
 
 	/* Do not want any exposure events from XCopyPlane */
@@ -438,6 +670,18 @@ release_strange(ModeInfo * mi)
 	if (Root != NULL) {
 		int         screen;
 
+#ifdef useAccumulator
+		int i;
+		(void) free((void *) cols);
+		for (i=0;i<Root->Width;i++) {
+			(void) free((void *) Root->accMap[i]);
+		}
+		(void) free((void *) Root->accMap);
+#endif
+#ifdef POINTS_HISTORY
+		free(oldPointsX);
+		free(oldPointsY);
+#endif
 		for (screen = 0; screen < MI_NUM_SCREENS(mi); ++screen)
 			free_strange(MI_DISPLAY(mi), &Root[screen]);
 		(void) free((void *) Root);

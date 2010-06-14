@@ -100,7 +100,8 @@ main (int argc, char** argv)
 
   // Load the PDF file into an NSData object:
   NSData *pdf_data = [NSData dataWithContentsOfFile:
-                               [NSString stringWithCString:infile]];
+                               [NSString stringWithCString:infile
+                                         encoding:NSUTF8StringEncoding]];
 
   // Create an NSPDFImageRep from the data:
   NSPDFImageRep *pdf_rep = [NSPDFImageRep imageRepWithData:pdf_data];
@@ -141,7 +142,8 @@ main (int argc, char** argv)
                                properties:props];
 
   [jpeg_data writeToFile:
-               [NSString stringWithCString:outfile]
+               [NSString stringWithCString:outfile
+                         encoding:NSUTF8StringEncoding]
              atomically:YES];
   [image release];
 

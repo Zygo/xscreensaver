@@ -602,8 +602,10 @@ noseguy_init (Display *d, Window w)
   if (!fontname || !*fontname)
     fprintf (stderr, "%s: no font specified.\n", progname);
   st->font = XLoadQueryFont(st->dpy, fontname);
-  if (!st->font)
+  if (!st->font) {
     fprintf (stderr, "%s: could not load font %s.\n", progname, fontname);
+    exit(1);
+  }
 
   fg = get_pixel_resource (st->dpy, cmap, "foreground", "Foreground");
   bg = get_pixel_resource (st->dpy, cmap, "background", "Background");

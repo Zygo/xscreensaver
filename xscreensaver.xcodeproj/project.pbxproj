@@ -372,6 +372,7 @@
 		AF1A177F0D6D6F3E008AF328 /* lcdscrub.c in Sources */ = {isa = PBXBuildFile; fileRef = AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */; };
 		AF1A17810D6D6F62008AF328 /* lcdscrub.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF1A17800D6D6F62008AF328 /* lcdscrub.xml */; };
 		AF1A26760990E77C00147B80 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF241F83107C38DF00046A84 /* dropshadow.c in Sources */ = {isa = PBXBuildFile; fileRef = AF241F81107C38DF00046A84 /* dropshadow.c */; };
 		AF32D9E70F3AD0B40080F535 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF32D9E90F3AD0B40080F535 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AF32D9EA0F3AD0B40080F535 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -770,6 +771,7 @@
 		AF4A3457102A593600A81B2A /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
 		AF4A3462102A59EB00A81B2A /* surfaces.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF4A3461102A59EB00A81B2A /* surfaces.xml */; };
 		AF4A3464102A5A0E00A81B2A /* surfaces.c in Sources */ = {isa = PBXBuildFile; fileRef = AF4A3463102A5A0E00A81B2A /* surfaces.c */; };
+		AF4A8CA010B609B50074B062 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF4FD6EC0CE7A486005EE58E /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF4FD6EF0CE7A486005EE58E /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AF4FD6F00CE7A486005EE58E /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -2783,14 +2785,14 @@
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = AF4774B4099D8B5F001F091E /* LMorph */;
+			remoteGlobalIDString = AF4774B4099D8B5F001F091E;
 			remoteInfo = LMorph;
 		};
 		AF714E50105613580046AB1D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
 			proxyType = 1;
-			remoteGlobalIDString = AFD570C90996B9F800BA26F7 /* Ant */;
+			remoteGlobalIDString = AFD570C90996B9F800BA26F7;
 			remoteInfo = Ant;
 		};
 		AF7776E609B63ABF00EA3033 /* PBXContainerItemProxy */ = {
@@ -5145,6 +5147,8 @@
 		AF1A17730D6D6EE3008AF328 /* LCDscrub.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LCDscrub.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = lcdscrub.c; path = hacks/lcdscrub.c; sourceTree = "<group>"; };
 		AF1A17800D6D6F62008AF328 /* lcdscrub.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = lcdscrub.xml; sourceTree = "<group>"; };
+		AF241F81107C38DF00046A84 /* dropshadow.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = dropshadow.c; path = hacks/glx/dropshadow.c; sourceTree = "<group>"; };
+		AF241F82107C38DF00046A84 /* dropshadow.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = dropshadow.h; path = hacks/glx/dropshadow.h; sourceTree = "<group>"; };
 		AF32D9F40F3AD0B40080F535 /* RubikBlocks.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = RubikBlocks.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF32D9FA0F3AD1200080F535 /* rubikblocks.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = rubikblocks.c; path = hacks/glx/rubikblocks.c; sourceTree = "<group>"; };
 		AF32D9FC0F3AD1330080F535 /* rubikblocks.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = rubikblocks.xml; sourceTree = "<group>"; };
@@ -8880,6 +8884,8 @@
 		AF480DD0098F4F2000FB32B8 /* OpenGL */ = {
 			isa = PBXGroup;
 			children = (
+				AF241F81107C38DF00046A84 /* dropshadow.c */,
+				AF241F82107C38DF00046A84 /* dropshadow.h */,
 				AF32D9FA0F3AD1200080F535 /* rubikblocks.c */,
 				AFE6A40B0CDD7BC3002805BF /* moebiusgears.c */,
 				AF642409099FFAF0000F4CD4 /* extrusion-helix2.c */,
@@ -14085,6 +14091,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF35EB240E63829600691F2F /* jigsaw.xml in Resources */,
+				AF4A8CA010B609B50074B062 /* xscreensaver-getimage-file in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -22085,6 +22092,7 @@
 			files = (
 				AFD51B220F063B4A00471C02 /* XScreenSaverSubclass.m in Sources */,
 				AFD51DB70F063BCE00471C02 /* photopile.c in Sources */,
+				AF241F83107C38DF00046A84 /* dropshadow.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -26298,6 +26306,7 @@
 		AF9771DB0989DC4B001F8B92 /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_ENABLE_OBJC_GC = required;
 				INFOPLIST_FILE = OSX/SaverTester.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				OTHER_LDFLAGS = (
@@ -26313,6 +26322,7 @@
 		AF9771DC0989DC4B001F8B92 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_ENABLE_OBJC_GC = required;
 				INFOPLIST_FILE = OSX/SaverTester.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				OTHER_LDFLAGS = (

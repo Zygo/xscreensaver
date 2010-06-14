@@ -1,4 +1,4 @@
-# Makefile.in --- xscreensaver, Copyright (c) 1999-2008 Jamie Zawinski.
+# Makefile.in --- xscreensaver, Copyright (c) 1999-2010 Jamie Zawinski.
 # the `../configure' script generates `Makefile' from this file.
 
 @SET_MAKE@
@@ -6,7 +6,8 @@ srcdir		= @srcdir@
 VPATH		= @srcdir@
 
 SHELL		= /bin/sh
-SUBDIRS		= utils driver hacks hacks/glx po
+SUBDIRS 	= utils driver hacks hacks/glx po
+#SUBDIRS 	= utils driver hacks hacks/glx
 SUBDIRS2	= $(SUBDIRS) OSX
 TARFILES	= README README.hacking README.VMS INSTALL \
 		  configure configure.in Makefile.in config.h.in \
@@ -92,9 +93,14 @@ tar::
 # out options we don't use.  Odds are good that this will fail with any version
 # of autoconf other than the ones I've tried (2.12 and 2.13.)
 #
+# NOTE: we now require autoconf 2.63 or earlier, because later versions have
+# the "Expanded-Before-Required" change and I can't make any sense of it.
+# If someone wants to send me a patch to make configure.in work with 2.64
+# or later, feel free.  Personally, I can't be bothered.
+#
 configure::
-	autoconf
-	autoheader
+	autoconf263
+	autoheader263
 	@TMP=configure.$$$$ ;						     \
 	echo "munging configure's --help message..." ;			     \
 	( perl -e '							     \

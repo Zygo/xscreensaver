@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2010 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -286,16 +286,27 @@ grab_keyboard_and_mouse (saver_info *si, Window window, Cursor cursor,
 
 
   /* When should we allow blanking to proceed?  The current theory
-     is that a keyboard grab is manditory; a mouse grab is optional.
+     is that a keyboard grab is mandatory; a mouse grab is optional.
 
      - If we don't have a keyboard grab, then we won't be able to
-       read a password to unlock, so the kbd grab is manditory.
+       read a password to unlock, so the kbd grab is mandatory.
        (We can't conditionalize this on locked_p, because someone
        might run "xscreensaver-command -lock" at any time.)
 
      - If we don't have a mouse grab, then we might not see mouse
        clicks as a signal to unblank -- but we will still see kbd
        activity, so that's not a disaster.
+
+     It has been suggested that we should allow blanking if locking
+     is disabled, and we have a mouse grab but no keyboard grab
+     (that is: kstatus != GrabSuccess &&
+               mstatus == GrabSuccess && 
+               si->locking_disabled_p)
+     That would allow screen blanking (but not locking) while the gdm
+     login screen had the keyboard grabbed, but one would have to use
+     the mouse to unblank.  Keyboard characters would go to the gdm
+     login field without unblanking.  I have not made this change
+     because I'm not completely convinced it is a safe thing to do.
    */
 
   if (kstatus != GrabSuccess)	/* Do not blank without a kbd grab.   */

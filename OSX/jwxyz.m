@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2009 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2010 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -488,6 +488,7 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
            unsigned int width, unsigned int height, 
            int dst_x, int dst_y)
 {
+  Assert (gc, "no GC");
   Assert ((width  < 65535), "improbably large width");
   Assert ((height < 65535), "improbably large height");
   Assert ((src_x  < 65535 && src_x  > -65535), "improbably large src_x");
@@ -498,8 +499,8 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
   if (width == 0 || height == 0)
     return 0;
 
-  if (gc && (gc->gcv.function == GXset ||
-             gc->gcv.function == GXclear)) {
+  if (gc->gcv.function == GXset ||
+      gc->gcv.function == GXclear) {
     // "set" and "clear" are dumb drawing modes that ignore the source
     // bits and just draw solid rectangles.
     set_color (dst->cgc, (gc->gcv.function == GXset
@@ -598,7 +599,6 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
                            src_rect.size.height - src_rect.origin.y);
       // This does not copy image data, so it should be fast.
       CGImageRef cgi2 = CGImageCreateWithImageInRect (cgi, src_rect);
-      CGImageRelease (cgi);
       cgi = cgi2;
     }
 
@@ -616,8 +616,8 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
 #if 1
     // get the bits (desired sub-rectangle) out of the NSView via Cocoa.
     //
-    NSBitmapImageRep *bm = [NSBitmapImageRep alloc];
-    [bm initWithFocusedViewRect:nsfrom];
+    NSBitmapImageRep *bm = [[NSBitmapImageRep alloc]
+                             initWithFocusedViewRect:nsfrom];
     unsigned char *data = [bm bitmapData];
     int bps = [bm bitsPerSample];
     int bpp = [bm bitsPerPixel];
@@ -1487,6 +1487,7 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
 {
   CGRect wr = d->frame;
 
+  Assert (gc, "no GC");
   Assert ((w < 65535), "improbably large width");
   Assert ((h < 65535), "improbably large height");
   Assert ((src_x  < 65535 && src_x  > -65535), "improbably large src_x");
@@ -1524,8 +1525,8 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
   if (w <= 0 || h <= 0)
     return 0;
 
-  if (gc && (gc->gcv.function == GXset ||
-             gc->gcv.function == GXclear)) {
+  if (gc->gcv.function == GXset ||
+      gc->gcv.function == GXclear) {
     // "set" and "clear" are dumb drawing modes that ignore the source
     // bits and just draw solid rectangles.
     set_color (d->cgc, (gc->gcv.function == GXset
@@ -1637,13 +1638,12 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     Assert (data, "CGBitmapContextGetData failed");
   } else {
     // get the bits (desired sub-rectangle) out of the NSView
-    bm = [NSBitmapImageRep alloc];
     NSRect nsfrom;
     nsfrom.origin.x = x;
     nsfrom.origin.y = y;
     nsfrom.size.width = width;
     nsfrom.size.height = height;
-    [bm initWithFocusedViewRect:nsfrom];
+    bm = [[NSBitmapImageRep alloc] initWithFocusedViewRect:nsfrom];
     depth = 32;
     alpha_first_p = ([bm bitmapFormat] & NSAlphaFirstBitmapFormat);
     ibpp = [bm bitsPerPixel];

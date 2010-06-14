@@ -1,6 +1,6 @@
 /*
  * spotlight - an xscreensaver module
- * Copyright (c) 1999, 2001 Rick Schultz <rick@skapunx.net>
+ * Copyright (c) 1999, 2001 Rick Schultz <rick.schultz@gmail.com>
  *
  * loosely based on the BackSpace module "StefView" by Darcy Brockbank
  */

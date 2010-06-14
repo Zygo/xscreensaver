@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2010 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -221,6 +221,8 @@ merge_options (void)
 	  strcat (newr, oldr);
 	  *s = newr;
 	}
+      else
+        *s = strdup (*s);
   }
 }
 
@@ -805,6 +807,12 @@ main (int argc, char **argv)
 
       exit (help_p ? 0 : 1);
     }
+
+  {
+    char **s;
+    for (s = merged_defaults; *s; s++)
+      free(*s);
+  }
 
   free (merged_options);
   free (merged_defaults);

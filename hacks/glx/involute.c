@@ -248,7 +248,6 @@ draw_spokes (int n, GLfloat thickness, int segments,
 
       rb = orb;
     }
-  glEnd();
   return polys;
 }
 

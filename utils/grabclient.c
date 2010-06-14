@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2010 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -30,6 +30,8 @@
 # include <X11/Xatom.h>
 # include <X11/Intrinsic.h>   /* for XtInputId, etc */
 #endif /* !HAVE_COCOA */
+
+#include <sys/stat.h>
 
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
@@ -247,6 +249,11 @@ hack_subproc_environment (Display *dpy)
   if (putenv (ndpy))
     abort ();
 #endif /* HAVE_PUTENV */
+
+  /* don't free (ndpy) -- some implementations of putenv (BSD 4.4,
+     glibc 2.0) copy the argument, but some (libc4,5, glibc 2.1.2, MacOS)
+     do not.  So we must leak it (and/or the previous setting). Yay.
+   */
 }
 
 
@@ -575,6 +582,21 @@ pipe_cb (XtPointer closure, int *source, XtInputId *id)
     Window r;
     int x, y;
     unsigned int w, h, bbw, d;
+    struct stat *st;
+
+    /* Log something to syslog so we can tell the difference between
+       corrupted images and broken symlinks. */
+    if (!*buf)
+      fprintf (stderr, "%s: no image filename found\n", progname);
+    else if (! stat (buf, st))
+      fprintf (stderr, "%s: %s: unparsable\n", progname, buf);
+    else
+      {
+        char buf2[2048];
+        sprintf (buf2, "%.255s: %.1024s", progname, buf);
+        perror (buf2);
+      }
+
     XGetGeometry (dpy, clo2->drawable, &r, &x, &y, &w, &h, &bbw, &d);
     draw_colorbars (clo2->screen, xgwa.visual, clo2->drawable, xgwa.colormap,
                     0, 0, w, h);

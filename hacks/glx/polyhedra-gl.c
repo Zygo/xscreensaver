@@ -470,8 +470,6 @@ init_polyhedra (ModeInfo *mi)
   load_fonts (mi);
   startup_blurb (mi);
 
-  reshape_polyhedra (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-
   if (!wire)
     {
       GLfloat pos[4] = {1.0, 1.0, 1.0, 0.0};
@@ -556,6 +554,8 @@ init_polyhedra (ModeInfo *mi)
   }
 
   new_polyhedron (mi);
+  reshape_polyhedra (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+
 }
 
 

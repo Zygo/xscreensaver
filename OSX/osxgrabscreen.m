@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2009 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2010 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -21,6 +21,10 @@
 #import "resources.h"
 #import "usleep.h"
 
+
+#ifndef  MAC_OS_X_VERSION_10_6
+# define MAC_OS_X_VERSION_10_6 1060  /* undefined in 10.4 SDK, grr */
+#endif
 
 #if MAC_OS_X_VERSION_MAX_ALLOWED < MAC_OS_X_VERSION_10_5
 
@@ -252,6 +256,19 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
   cgrect.size.width  = xgwa.width;
   cgrect.size.height = xgwa.height;
 
+  /* If a password is required to unlock the screen, a large black
+     window will be on top of all of the desktop windows by the time
+     we reach here, making the screen-grab rather uninteresting.  If
+     we move ourselves temporarily below the login-window windows
+     before capturing the image, we capture the real desktop as
+     intended.
+   */
+
+  // save our current level so we can restore it later
+  int oldLevel = [[nsview window] level]; 
+
+  [[nsview window] setLevel:CGWindowLevelForKey(kCGPopUpMenuWindowLevelKey)];
+
   // Grab a screen shot of those windows below this one
   // (hey, X11 can't do that!)
   //
@@ -260,6 +277,9 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
                              kCGWindowListOptionOnScreenBelowWindow,
                              [[nsview window] windowNumber],
                              kCGWindowImageDefault);
+
+  // put us back above the login windows so the screensaver is visible.
+  [[nsview window] setLevel:oldLevel];
 
   // Render the grabbed CGImage into the Drawable.
   if (img) {
@@ -277,6 +297,36 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
 static int
 exif_rotation (const char *filename)
 {
+  /* As of 10.6, NSImage rotates according to EXIF by default:
+     http://developer.apple.com/mac/library/releasenotes/cocoa/appkit.html
+     So this function should return -1 when *running* on 10.6 systems.
+     But when running against older systems, we need to examine the image
+     to figure out its rotation.
+   */
+
+# if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6  /* 10.6 SDK */
+
+  /* When we have compiled against the 10.6 SDK, we know that we are 
+     running on a 10.6 or later system.
+   */
+  return -1;
+
+# else /* Compiled against 10.5 SDK or earlier */
+
+  /* If this selector exists, then we are running against a 10.6 runtime
+     that does automatic EXIF rotation (despite the fact that we were
+     compiled against the 10.5 or earlier SDK).  So in that case, this
+     function should no-op.
+   */
+  if ([NSImage instancesRespondToSelector:
+                 @selector(initWithDataIgnoringOrientation:)])
+    return -1;
+
+  /* Otherwise, go ahead and figure out what the rotational characteristics
+     of this image are. */
+
+
+
   /* This is a ridiculous amount of rigamarole to go through, but for some
      reason the "Orientation" tag does not exist in the "NSImageEXIFData"
      dictionary inside the NSBitmapImageRep of the NSImage.  Several other
@@ -296,6 +346,8 @@ exif_rotation (const char *filename)
   CFRelease (url);
   CFRelease (s);
   return rot;
+
+# endif /* 10.5 */
 }
 
 

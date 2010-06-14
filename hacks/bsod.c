@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2010 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -2362,7 +2362,7 @@ hppa_linux (Display *dpy, Window window)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.90 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $Revision: 1.93 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },
@@ -3476,6 +3476,7 @@ static void a2controller_crash(apple2_sim_t *sim, int *stepno,
 
   case A2CONTROLLER_FREE:
     free(mine);
+    mine = 0;
     break;
   }
 }
@@ -3518,6 +3519,9 @@ apple2crash (Display *dpy, Window window)
 }
 
 
+/* A crash spotted on a cash machine circa 2006, by jwz.  I didn't note
+   what model it was; probably a Tranax Mini-Bank 1000 or similar vintage.
+ */
 static struct bsod_state *
 atm (Display *dpy, Window window)
 {

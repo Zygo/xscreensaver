@@ -892,6 +892,8 @@ ENTRYPOINT void init_tangram(ModeInfo * mi)
 
     wire = MI_IS_WIREFRAME(mi);
 
+    tp->name_list = glGenLists(1);
+
     load_fonts(mi);
     init_shapes(mi);
 

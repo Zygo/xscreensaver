@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2010 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -702,7 +702,18 @@ apple2_one_frame (apple2_sim_t *sim)
 
           XClearWindow(sim->dpy, sim->window);
 
-          /* #### free sim? */
+          /* free sim */
+          /* This is from a2_make_font */
+          free(sim->text_im->data);
+          sim->text_im->data = 0;
+          XDestroyImage(sim->text_im);
+
+          /* And free else */
+          analogtv_release(sim->dec);
+          free(sim->st);
+          free(sim->inp);
+          free(sim);
+
           return 0;
         }
 

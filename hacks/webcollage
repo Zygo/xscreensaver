@@ -60,7 +60,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.149 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.150 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2008" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
@@ -3644,6 +3644,9 @@ sub main() {
       } else {
         error ("local directory path must be set")
       }
+    } elsif ($_ eq "-fps") {
+      # -fps only works on MacOS, via "webcollage-cocoa.m".
+      # Ignore it if passed to this script in an X11 context.
     } elsif ($_ eq "-debug" || $_ eq "--debug") {
       my $which = shift @ARGV;
       my @rest = @search_methods;
@@ -3667,7 +3670,8 @@ sub main() {
               "[-root] [-display dpy] [-verbose] [-debug which]\n" .
         "\t\t  [-timeout secs] [-delay secs] [-size WxH]\n" .
         "\t\t  [-no-output] [-urls-only] [-imagemap filename]\n" .
-        "\t\t  [-filter cmd] [-filter2 cmd] [-background color]\n" .
+        "\t\t  [-background color] [-opacity f]\n" .
+        "\t\t  [-filter cmd] [-filter2 cmd]\n" .
         "\t\t  [-dictionary dictionary-file] [-http-proxy host[:port]]\n" .
         "\t\t  [-driftnet [driftnet-program-and-args]]\n" .
         "\t\t  [-directory local-image-directory]\n" .

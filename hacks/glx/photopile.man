@@ -11,6 +11,8 @@ photopile - displays multiple images in a periodically shuffled pile
 [\-scale \fIfactor\fP]
 [\-maxTilt \fIdegrees\fP]
 [\-titles | \-no\-titles]
+[\-polaroid | \-no\-polaroid]
+[\-shadows | \-no\-shadows]
 [\-font \fIfont\fP]
 [\-speed \fIratio\fP]
 [\-duration \fIseconds\fP]
@@ -62,6 +64,12 @@ Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
 .TP 8
 .B \-titles \fB| \-no\-titles\fP
 Whether to display the file names of the images beneath them.  Default: no.
+.TP 8
+.B \-polaroid \fB| \-no\-polaroid\fP
+Whether to simulate images taken by an instant camera.  Default: no.
+.TP 8
+.B \-shadows \fB| \-no\-shadows\fP
+Whether to draw images with drop shadows.  Default: no.
 .TP 8
 .B \-font \fIfont-name\fP
 The font to use for the initial loading screen.

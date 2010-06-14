@@ -16,6 +16,7 @@
 #define DEFAULTS	"*delay:	10000       \n" \
 			"*showFPS:      False       \n" \
 			"*fpsSolid:     True        \n" \
+			"*doubleBuffer: False       \n" \
 
 # define refresh_noof 0
 # define release_noof 0

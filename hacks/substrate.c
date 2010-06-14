@@ -198,6 +198,13 @@ static inline void start_crack(struct field *f, crack *cr)
         /* We timed out.  Use our default values */
         px = cr->x;
         py = cr->y;
+
+        /* Sanity check needed */
+        if (px < 0) px = 0;
+        if (px >= f->width) px = f->width - 1;
+        if (py < 0) py = 0;
+        if (py >= f->height) py = f->height - 1;
+
         ref_cgrid(f, px, py) = cr->t;
     }
 
