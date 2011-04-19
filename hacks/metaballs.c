@@ -200,7 +200,7 @@ static void Initialize( struct state *st )
 {
 	XGCValues gcValues;
 	XWindowAttributes XWinAttribs;
-	int iBitsPerPixel, i, j;
+	int /*iBitsPerPixel,*/ i, j;
 	unsigned int distance_squared;
 	float fraction;
 
@@ -208,6 +208,7 @@ static void Initialize( struct state *st )
 	XGetWindowAttributes( st->dpy, st->window, &XWinAttribs );
 
 	/* Find the preferred bits-per-pixel. (jwz) */
+#if 0
 	{
 		int pfvc = 0;
 		XPixmapFormatValues *pfv = XListPixmapFormats( st->dpy, &pfvc );
@@ -220,6 +221,7 @@ static void Initialize( struct state *st )
 		if( pfv )
 			XFree (pfv);
 	}
+#endif
 
 	/*  Create the GC. */
 	st->gc = XCreateGC( st->dpy, st->window, 0, &gcValues );

@@ -189,10 +189,7 @@ init_topBlock (ModeInfo *mi)
   if (!tbs) {
     tbs = (topBlockSTATE *)
       calloc (MI_NUM_SCREENS(mi), sizeof (topBlockSTATE));
-    if (!tbs) {
-      fprintf(stderr, "%s: out of memory\n", progname);
-      exit(1);
-    }
+    if (!tbs) abort();
   }
 
   tb = &tbs[MI_SCREEN(mi)];
@@ -576,16 +573,18 @@ static void generateNewBlock(ModeInfo *mi)
 		tb->numFallingBlocks++;
 		llTail = tb->blockNodeRoot; 
 		if (llTail == NULL) {
-			if ((llCurrent = ((NODE*) malloc(sizeof(NODE)))) == NULL) {	fprintf(stderr, "%s: out of memory.\n", progname); }
-			llTail = llCurrent;
-			tb->blockNodeRoot = llCurrent; 
+                  llCurrent = ((NODE*) malloc(sizeof(NODE)));
+                  if (!llCurrent) abort();
+                  llTail = llCurrent;
+                  tb->blockNodeRoot = llCurrent; 
 		} else {
 			if (tb->numFallingBlocks>=maxFalling) {
 				/* recycle */
 				llCurrent=llTail->next;
 				tb->blockNodeRoot=llCurrent->next;
 			} else {
-				if ((llCurrent = ((NODE*) malloc(sizeof(NODE)))) == NULL) {	fprintf(stderr, "%s: out of memory..\n", progname); }
+                          llCurrent = ((NODE*) malloc(sizeof(NODE)));
+                          if (!llCurrent) abort();
 			}
 			while (llTail->next != NULL) { llTail = llTail->next; } /* find last item in list */
 		}

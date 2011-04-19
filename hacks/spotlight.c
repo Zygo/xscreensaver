@@ -91,7 +91,7 @@ spotlight_init (Display *dpy, Window window)
   XWindowAttributes xgwa;
   long gcflags;
   Colormap cmap;
-  unsigned long fg, bg;
+  unsigned long bg;
   GC clip_gc;
   Pixmap clip_pm;
 
@@ -104,7 +104,6 @@ spotlight_init (Display *dpy, Window window)
   st->sizex = xgwa.width;
   st->sizey = xgwa.height;
   cmap = xgwa.colormap;
-  fg = get_pixel_resource (st->dpy, cmap, "foreground", "Foreground");
   bg = get_pixel_resource (st->dpy, cmap, "background", "Background");
 
   /* read parameters, keep em sane */

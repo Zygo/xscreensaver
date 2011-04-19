@@ -264,7 +264,7 @@ bordupdate (struct state *st)
     for (x = xmin; x <= xmax; x++)
       sp (st, x, ybord, st->bordcol);
     for (y = ymin; y <= ymax; y++)
-      sp (st, ybord, y, st->bordcol);
+      sp (st, xbord, y, st->bordcol);
   }
 }
 

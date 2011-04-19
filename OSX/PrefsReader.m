@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2009 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2010 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -117,11 +117,11 @@
     opts++;
   }
 
+#if 0
   // make sure there's no resource mentioned in defaults and not options.
   NSEnumerator *enumerator = [defsdict keyEnumerator];
   NSString *key;
   while ((key = [enumerator nextObject])) {
-#if 0
     if (! [optsdict objectForKey:key])
       if (! ([key isEqualToString:@"foreground"] || // don't warn about these
              [key isEqualToString:@"background"] ||
@@ -142,8 +142,8 @@
              [key isEqualToString:@"TVTint"]
              ))
       NSLog (@"warning: \"%@\" is in defaults but not options", key);
-#endif /* 0 */
   }
+#endif /* 0 */
 
 }
 

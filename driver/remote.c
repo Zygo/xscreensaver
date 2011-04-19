@@ -380,7 +380,22 @@ xscreensaver_command_response (Display *dpy, Window window,
 				     &xscreensaver_command_event_p, 0)) &&
 	 sleep_count++ < 10)
     {
+# if defined(HAVE_SELECT)
+      /* Wait for an event, but don't wait longer than 1 sec.  Note that we
+         might do this multiple times if an event comes in, but it wasn't
+         the event we're waiting for.
+       */
+      int fd = XConnectionNumber(dpy);
+      fd_set rset;
+      struct timeval tv;
+      tv.tv_sec  = 1;
+      tv.tv_usec = 0;
+      FD_ZERO (&rset);
+      FD_SET (fd, &rset);
+      select (fd+1, &rset, 0, 0, &tv);
+# else  /* !HAVE_SELECT */
       sleep(1);
+# endif /* !HAVE_SELECT */
     }
 
   if (!got_event)

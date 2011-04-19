@@ -282,7 +282,6 @@ xlockmore_init (Display *dpy, Window window,
   XGCValues gcv;
   XColor color;
   int i;
-  int orig_pause;
   Bool root_p;
 
   if (! xlmft)
@@ -449,7 +448,6 @@ xlockmore_init (Display *dpy, Window window,
     mi->pause = 0;
   else if (mi->pause > 100000000)
     mi->pause = 100000000;
-  orig_pause = mi->pause;
 
   /* If this hack uses fonts (meaning, mentioned "font" in DEFAULTS)
      then load it. */

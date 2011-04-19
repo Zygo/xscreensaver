@@ -1947,9 +1947,9 @@ DrawDolphin(fishRec * fish, int wire)
 
 	pitch = fish->v * sin((fish->htail + 180) * RRAD);
 
-	if (fish->v > 2) {
+/*	if (fish->v > 2) {
 		chomp = -(fish->v - 2) * 200;
-	}
+	}*/
 	chomp = 100;
 
 	P012[1] = iP012[1] + seg5;

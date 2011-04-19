@@ -152,8 +152,6 @@ initAppendages(struct state *st)
     st->aCurr->growth = st->finpoints / 2 + RND(st->finpoints / 2);
     st->aCurr->rate = RND(11) * RND(11);
 
-    dist = 1.;
-
     do {
       x = (1 - RND(1001) / 500);
       y = (1 - RND(1001) / 500);

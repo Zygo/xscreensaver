@@ -729,12 +729,10 @@ randsheet_new_move( randsheet* rs )
 static void
 randsheet_move( randsheet *rs, float rot )
 {
-    int i, j, index;
+    int index;
     float tmp;
     for( index = 0 ; index < numsquares; index++ )
         {
-            i = rs->xpos[ index ];
-            j = rs->ypos[ index ];
             switch( rs->direction[ index ] )
                 {
                 case 0:

@@ -40,6 +40,7 @@
 "*sgiSaverExtension:	True",
 "*xidleExtension:	True",
 "*procInterrupts:	True",
+"*xinputExtensionDev:	True",
 "GetViewPortIsFullOfLies: False",
 "*demoCommand: xscreensaver-demo",
 "*prefsCommand: xscreensaver-demo -prefs",

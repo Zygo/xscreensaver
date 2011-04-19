@@ -86,6 +86,180 @@ init_mit_saver_extension (saver_info *si)
 #endif /* HAVE_MIT_SAVER_EXTENSION */
 
 
+#ifdef HAVE_XINPUT
+/* XInputExtension device support */
+#include <X11/extensions/XInput.h>
+
+struct xinput_dev_info {
+  XDevice	*device;
+  XEventClass	press, release, valuator;
+};
+
+Bool
+query_xinput_extension (saver_info *si)
+{
+  XExtCodes codes;
+
+  if (!XQueryExtension (si->dpy, INAME, &codes.major_opcode,
+			&codes.first_event, &codes.first_error))
+    {
+      if (si->prefs.verbose_p)
+	fprintf (stderr, "\t XInputExtension is not present!\n");
+      return False;
+    }
+  else
+    {
+      if (si->prefs.verbose_p)
+	fprintf (stderr, "\t XInputExtension is present!\n");
+      return True;
+    }
+}
+
+void
+init_xinput_extension (saver_info *si)
+{
+  int i, ndevices;
+  int class;
+  XDeviceInfo *list;
+  XDevice *dev;
+  XAnyClassPtr pClass;
+  XEventClass *event_list;
+  int nevents = 0;
+
+  /* skip if already initialized */
+  if (si->num_xinput_devices && si->xinput_devices)
+    return;
+
+  si->num_xinput_devices = 0;
+
+  list = XListInputDevices (si->dpy, &ndevices);
+  if (list == NULL)
+    {
+      si->xinput_devices = NULL;
+      return;
+    }
+
+  /* We only care about 3 event types per device (DeviceButtonPress,
+     DeviceButtonRelease, and DeviceMotionNotify), hence the "* 3"
+     for the event count. */
+  event_list = calloc(ndevices * 3, sizeof(XEventClass));
+  if (event_list == NULL)
+    return;
+
+  si->xinput_devices = calloc(ndevices, sizeof(struct xinput_dev_info));
+  if (si->xinput_devices == NULL)
+    {
+      free(event_list);
+      return;
+    }
+
+  for (i = 0; i < ndevices; i++)
+    {
+      if ((list[i].use == IsXExtensionDevice)
+#ifdef IsXExtensionPointer
+          || (list[i].use == IsXExtensionPointer)
+#endif
+         )
+        {
+          struct xinput_dev_info *dev_info =
+            &si->xinput_devices[si->num_xinput_devices];
+          Bool device_we_want = False;
+
+          if (si->prefs.debug_p)
+            fprintf(stderr,
+                    "Extension device #%2d: XID=%2d  type=%3d  name=\"%s\"\n",
+                    i, (int) list[i].id, (int) list[i].type, list[i].name);
+
+          dev = XOpenDevice (si->dpy, list[i].id);
+          if (!dev)
+            continue;
+          dev_info->device = dev;
+
+          pClass = list[i].inputclassinfo;
+          for (class = 0; class < list[i].num_classes; class++)
+            {
+              switch (pClass->class)
+                {
+                case ButtonClass:
+                  if (((XButtonInfo *) pClass)->num_buttons > 0)
+                    {
+                      /* Macros set values in the second & third arguments */
+                      DeviceButtonPress (dev, si->xinput_DeviceButtonPress,
+                                         dev_info->press);
+                      event_list[nevents++] = dev_info->press;
+
+                      DeviceButtonRelease (dev, si->xinput_DeviceButtonRelease,
+                                           dev_info->release);
+                      event_list[nevents++] = dev_info->release;
+                      device_we_want = True;
+                    }
+                  break;
+
+                case ValuatorClass:
+                  if (((XValuatorInfo *) pClass)->num_axes > 0)
+                    {
+                      DeviceMotionNotify (dev, si->xinput_DeviceMotionNotify,
+                                          dev_info->valuator);
+                      event_list[nevents++] = dev_info->valuator;
+                      device_we_want = True;
+                    }
+                  break;
+
+                default:
+                  /* ignore other classes of devices/events */
+                  break;
+                }
+
+              pClass = (XAnyClassPtr) & ((char *) pClass)[pClass->length];
+            }
+
+          if (device_we_want)
+            si->num_xinput_devices++;
+          else
+            XCloseDevice (si->dpy, dev);
+        }
+    }
+
+  if (list)
+    XFreeDeviceList (list);
+
+  if ((nevents == 0) || (si->num_xinput_devices == 0))
+    {
+      free(event_list);
+      free(si->xinput_devices);
+      si->xinput_devices = NULL;
+      si->num_xinput_devices = 0;
+      return;
+    }
+
+  for (i = 0; i < si->nscreens; i++)
+    {
+      saver_screen_info *ssi = &si->screens[i];
+      Window root = RootWindowOfScreen (ssi->screen);
+      XSelectExtensionEvent (si->dpy, root, event_list, nevents);
+    }
+
+  free(event_list);
+}
+
+#if 0
+/* not used */
+static void
+close_xinput_extension (saver_info *si)
+{
+  int i;
+
+  for (i = 0; i < si->num_xinput_devices; i++)
+    XCloseDevice (si->dpy, si->xinput_devices[i].device);
+
+  free(si->xinput_devices);
+  si->xinput_devices = NULL;
+  si->num_xinput_devices = 0;
+}
+#endif
+#endif /* HAVE_XINPUT */
+
+
 /* SGI SCREEN_SAVER server extension hackery.
  */
 

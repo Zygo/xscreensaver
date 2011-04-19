@@ -6,11 +6,16 @@ glmatrix - simulates the title sequence effect of the movie
 [\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
 [\-visual \fIvisual\fP] 
 [\-delay \fIusecs\fP] 
-[\-density \fIpercentage\fP]
-[\-top | \-bottom | \-both]
-[\-small | \-large]
-[\-trace]
-[\-phone \fInumber\fP]
+[\-speed \fIratio\fP]
+[\-density \fIpct\fP]
+[\-no\-fog]
+[\-no\-waves]
+[\-no\-rotate]
+[\-binary]
+[\-hexadecimal]
+[\-dna]
+[\-clock]
+[\-timefmt \fIfmt\fP]
 [\-wireframe]
 [\-fps]
 .SH DESCRIPTION
@@ -58,6 +63,10 @@ argument disables that.
 By default, waves of color roll down the columns of glyphs.  This
 argument disables that.
 .TP 8
+.B \-no-rotate\fP
+By default, the scene slowly tilts and rotates.  This
+argument disables that.
+.TP 8
 .B \-binary\fP
 Instead of displaying Matrix glyphs, only display ones and zeros.
 .TP 8
@@ -67,6 +76,16 @@ Instead of displaying Matrix glyphs, display hexadecimal digits.
 .B \-dna\fP
 Instead of displaying Matrix glyphs, display genetic code
 (guanine, adenine, thymine, and cytosine.)
+.TP 8
+.B \-clock\fP
+Hide a clock displaying the current time somewhere in the glyphs.
+.TP 8
+.B \-timefmt\fP \fIstrftime-string\fP
+How to format the clock when \fI\-clock\fP is specified.
+Default "\ %l%M%p\ ".
+.TP 8
+.B \-speed \fIratio\fP
+Less than 1 for slower, greater than 1 for faster.  Default 1.
 .TP 8
 .B \-wireframe
 Just draw boxes instead of textured characters.

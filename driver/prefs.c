@@ -302,6 +302,7 @@ static const char * const prefs[] = {
   "xidleExtension",
   "GetViewPortIsFullOfLies",
   "procInterrupts",
+  "xinputExtensionDev",
   "overlayStderr",
   "overlayTextBackground",	/* not saved -- X resources only */
   "overlayTextForeground",	/* not saved -- X resources only */
@@ -854,6 +855,7 @@ write_init_file (Display *dpy,
       CHECK("mitSaverExtension") continue;  /* don't save */
       CHECK("xidleExtension")	type = pref_bool, b = p->use_xidle_extension;
       CHECK("procInterrupts")	type = pref_bool, b = p->use_proc_interrupts;
+      CHECK("xinputExtensionDev") type = pref_bool, b = p->use_xinput_extension;
       CHECK("GetViewPortIsFullOfLies")  type = pref_bool,
 					b = p->getviewport_full_of_lies_p;
       CHECK("overlayStderr")	type = pref_bool, b = overlay_stderr_p;
@@ -1124,6 +1126,10 @@ load_init_file (Display *dpy, saver_preferences *p)
   p->use_sgi_saver_extension = get_boolean_resource (dpy,
                                                      "sgiSaverExtension",
 						     "Boolean");
+
+  p->use_xinput_extension = get_boolean_resource (dpy, "xinputExtensionDev",
+                                                  "Boolean");
+
   p->use_proc_interrupts = get_boolean_resource (dpy,
                                                  "procInterrupts", "Boolean");
 

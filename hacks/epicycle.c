@@ -225,14 +225,6 @@ random_divisor(struct state *st)
 }
 
 
-static void
-oom(struct state *st)
-{
-  fprintf(stderr, "Failed to allocate memory!\n");
-  exit(-1);
-}
-
-
 /* Construct a circle or die.
  */
 static Circle *
@@ -311,8 +303,7 @@ static Body *
 new_body(struct state *st)
 {
   Body *p = malloc(sizeof(Body));
-  if (NULL == p)
-    oom(st);
+  if (!p) abort();
   p->epicycles = new_circle_chain(st);
   p->current_color = 0;		/* ?? start them all on different colors? */
   p->next = NULL;
@@ -428,8 +419,7 @@ colour_init(struct state *st, XWindowAttributes *pxgwa)
   if (!mono_p)
     {
       st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
-      if (!st->colors)
-	oom(st);
+      if (!st->colors) abort();
 	  
       make_smooth_colormap (st->dpy, pxgwa->visual, st->cmap, st->colors, &st->ncolors,
 			    True, /* allocate */

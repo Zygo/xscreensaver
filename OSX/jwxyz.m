@@ -38,6 +38,7 @@
 struct jwxyz_Drawable {
   enum { WINDOW, PIXMAP } type;
   CGContextRef cgc;
+  CGImageRef cgi;
   CGRect frame;
   union {
     struct {
@@ -46,6 +47,7 @@ struct jwxyz_Drawable {
     } window;
     struct {
       int depth;
+      void *cgc_buffer;		// the bits to which CGContextRef renders
     } pixmap;
   };
 };
@@ -147,6 +149,21 @@ jwxyz_window_view (Window w)
   return w->window.view;
 }
 
+
+/* Call this after any modification to the bits on a Pixmap or Window.
+   Most Pixmaps are used frequently as sources and infrequently as
+   destinations, so it pays to cache the data as a CGImage as needed.
+ */
+static void
+invalidate_drawable_cache (Drawable d)
+{
+  if (d && d->cgi) {
+    CGImageRelease (d->cgi);
+    d->cgi = 0;
+  }
+}
+
+
 /* Call this when the View changes size or position.
  */
 void
@@ -188,6 +205,8 @@ jwxyz_window_resized (Display *dpy, Window w)
   //
   dpy->colorspace = CGColorSpaceCreateDeviceRGB();
 # endif
+
+  invalidate_drawable_cache (w);
 }
 
 
@@ -245,7 +264,6 @@ XDisplayHeight (Display *dpy, int screen)
 {
   return (int) dpy->main_window->frame.size.height;
 }
-
 
 static void
 validate_pixel (unsigned long pixel, unsigned int depth, BOOL alpha_allowed_p)
@@ -384,7 +402,7 @@ push_bg_gc (Drawable d, GC gc, Bool fill_p)
 
    It is *way* faster to draw points by creating and drawing a 1x1 CGImage
    with repeated calls to CGContextDrawImage than it is to make a single
-   call to CGContextFillRects()!
+   call to CGContextFillRects() with a list of 1x1 rectangles!
 
    I still wouldn't call it *fast*, however...
  */
@@ -463,6 +481,7 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
 # endif /* ! XDRAWPOINTS_IMAGES */
 
   pop_gc (d, gc);
+  invalidate_drawable_cache (d);
 
   return 0;
 }
@@ -565,29 +584,33 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
   CLIP (src, dst, y, height);
 # undef CLIP
 
-#if 0
-  Assert (src_rect.size.width  == dst_rect.size.width, "width out of sync");
-  Assert (src_rect.size.height == dst_rect.size.height, "height out of sync");
-  Assert (src_rect.origin.x >= 0 && src_rect.origin.y >= 0, "clip failed src_x");
-  Assert (dst_rect.origin.x >= 0 && dst_rect.origin.y >= 0, "clip failed dst_x");
-  Assert (src_rect.origin.y >= 0 && src_rect.origin.y >= 0, "clip failed src_y");
-  Assert (dst_rect.origin.y >= 0 && dst_rect.origin.y >= 0, "clip failed dst_y");
-  Assert (src_rect.origin.x  + src_rect.size.width <=
-          src_frame.origin.x + src_frame.size.width, "clip failed src_width");
-#endif
-  
   if (src_rect.size.width <= 0 || src_rect.size.height <= 0)
     return 0;
   
   NSObject *releaseme = 0;
   CGImageRef cgi;
   BOOL mask_p = NO;
+  BOOL free_cgi_p = NO;
 
   if (src->type == PIXMAP) {
 
-    // get a CGImage out of the pixmap CGContext -- it's the whole pixmap,
-    // but it presumably shares the data pointer instead of copying it.
-    cgi = CGBitmapContextCreateImage (src->cgc);
+    // If we are copying from a Pixmap to a Pixmap or Window, we must first
+    // copy the bits to an intermediary CGImage object, then copy that to the
+    // destination drawable's CGContext.
+    //
+    // (It doesn't seem to be possible to use NSCopyBits() to optimize the
+    // case of copying from a Pixmap back to itself, but I don't think that
+    // happens very often anyway.)
+    //
+    // First we get a CGImage out of the pixmap CGContext -- it's the whole
+    // pixmap, but it presumably shares the data pointer instead of copying
+    // it.  We then cache that CGImage it inside the Pixmap object.  Note:
+    // invalidate_drawable_cache() must be called to discard this any time a
+    // modification is made to the pixmap, or we'll end up re-using old bits.
+    //
+    if (!src->cgi)
+      src->cgi = CGBitmapContextCreateImage (src->cgc);
+    cgi = src->cgi;
 
     // if doing a sub-rect, trim it down.
     if (src_rect.origin.x    != src_frame.origin.x   ||
@@ -598,8 +621,8 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
       src_rect.origin.y = (src_frame.size.height -
                            src_rect.size.height - src_rect.origin.y);
       // This does not copy image data, so it should be fast.
-      CGImageRef cgi2 = CGImageCreateWithImageInRect (cgi, src_rect);
-      cgi = cgi2;
+      cgi = CGImageCreateWithImageInRect (cgi, src_rect);
+      free_cgi_p = YES;
     }
 
     if (src->pixmap.depth == 1)
@@ -607,72 +630,60 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
 
   } else { /* (src->type == WINDOW) */
     
-    NSRect nsfrom;
+    NSRect nsfrom;    // NSRect != CGRect on 10.4
     nsfrom.origin.x    = src_rect.origin.x;
     nsfrom.origin.y    = src_rect.origin.y;
     nsfrom.size.width  = src_rect.size.width;
     nsfrom.size.height = src_rect.size.height;
 
-#if 1
-    // get the bits (desired sub-rectangle) out of the NSView via Cocoa.
-    //
-    NSBitmapImageRep *bm = [[NSBitmapImageRep alloc]
-                             initWithFocusedViewRect:nsfrom];
-    unsigned char *data = [bm bitmapData];
-    int bps = [bm bitsPerSample];
-    int bpp = [bm bitsPerPixel];
-    int bpl = [bm bytesPerRow];
-    releaseme = bm;
-#endif
+    if (src == dst) {
 
-#if 0
-    // QuickDraw way (doesn't work, need NSQuickDrawView)
-    PixMapHandle pix = GetPortPixMap([src->window.view qdPort]);
-    char **data = GetPortPixMap (pix);
-    int bps = 8;
-    int bpp = 32;
-    int bpl = GetPixRowBytes (pix) & 0x3FFF;
-#endif
+      // If we are copying from a window to itself, we can use NSCopyBits()
+      // without first copying the rectangle to an intermediary CGImage.
+      // This is ~28% faster (but I *expected* it to be twice as fast...)
+      // (kumppa, bsod, decayscreen, memscroller, slidescreen, slip, xjack)
+      //
+      cgi = 0;
 
-#if 0
-    // get the bits (desired sub-rectangle) out of the raw frame buffer.
-    // (This renders wrong, and appears to be even slower anyway.)
-    //
-    int window_x, window_y;
-    XTranslateCoordinates (dpy, src, NULL, 0, 0, &window_x, &window_y, NULL);
-    window_x += nsfrom.origin.x;
-    window_y += (dst->frame.size.height
-                 - (nsfrom.origin.y + nsfrom.size.height));
+    } else {
 
-    unsigned char *data = (unsigned char *) 
-      CGDisplayAddressForPosition (dpy->cgdpy, window_x, window_y);
-    int bps = CGDisplayBitsPerSample (dpy->cgdpy);
-    int bpp = CGDisplayBitsPerPixel (dpy->cgdpy);
-    int bpl = CGDisplayBytesPerRow (dpy->cgdpy);
+      // If we are copying from a Window to a Pixmap, we must first copy
+      // the bits to an intermediary CGImage object, then copy that to the
+      // Pixmap's CGContext.
+      //
+      NSBitmapImageRep *bm = [[NSBitmapImageRep alloc]
+                               initWithFocusedViewRect:nsfrom];
+      unsigned char *data = [bm bitmapData];
+      int bps = [bm bitsPerSample];
+      int bpp = [bm bitsPerPixel];
+      int bpl = [bm bytesPerRow];
+      releaseme = bm;
 
-#endif
+      // create a CGImage from those bits.
+      // (As of 10.5, we could just do cgi = [bm CGImage] (it is autoreleased)
+      // but that method didn't exist in 10.4.)
 
-    // create a CGImage from those bits
-
-    CGDataProviderRef prov =
-      CGDataProviderCreateWithData (NULL, data, bpl * nsfrom.size.height,
-                                    NULL);
-    cgi = CGImageCreate (src_rect.size.width, src_rect.size.height,
-                         bps, bpp, bpl,
-                         dpy->colorspace, 
-                         /* Use whatever default bit ordering we got from
-                            initWithFocusedViewRect.  I would have assumed
-                            that it was (kCGImageAlphaNoneSkipFirst |
-                            kCGBitmapByteOrder32Host), but on Intel,
-                            it's not!
-                          */
-                         0,
-                         prov, 
-                         NULL,  /* decode[] */
-                         NO, /* interpolate */
-                         kCGRenderingIntentDefault);
-    //Assert (CGImageGetColorSpace (cgi) == dpy->colorspace, "bad colorspace");
-    CGDataProviderRelease (prov);
+      CGDataProviderRef prov =
+        CGDataProviderCreateWithData (NULL, data, bpl * nsfrom.size.height,
+                                      NULL);
+      cgi = CGImageCreate (src_rect.size.width, src_rect.size.height,
+                           bps, bpp, bpl,
+                           dpy->colorspace, 
+                           /* Use whatever default bit ordering we got from
+                              initWithFocusedViewRect.  I would have assumed
+                              that it was (kCGImageAlphaNoneSkipFirst |
+                              kCGBitmapByteOrder32Host), but on Intel,
+                              it's not!
+                           */
+                           0,
+                           prov, 
+                           NULL,  /* decode[] */
+                           NO, /* interpolate */
+                           kCGRenderingIntentDefault);
+      free_cgi_p = YES;
+      //Assert(CGImageGetColorSpace(cgi) == dpy->colorspace,"bad colorspace");
+      CGDataProviderRelease (prov);
+    }
   }
 
   if (mask_p) {		// src depth == 1
@@ -707,15 +718,29 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
       CGContextFillRect (dst->cgc, orig_dst_rect);
     }
 
-    // copy the CGImage onto the destination CGContext
-    //Assert (CGImageGetColorSpace (cgi) == dpy->colorspace, "bad colorspace");
-    CGContextDrawImage (dst->cgc, dst_rect, cgi);
+    if (cgi) {
+      // copy the CGImage onto the destination CGContext
+      //Assert(CGImageGetColorSpace(cgi) == dpy->colorspace, "bad colorspace");
+      CGContextDrawImage (dst->cgc, dst_rect, cgi);
+    } else {
+      // No cgi means src == dst, and both are Windows.
+      NSRect nsfrom;
+      nsfrom.origin.x    = src_rect.origin.x;    // NSRect != CGRect on 10.4
+      nsfrom.origin.y    = src_rect.origin.y;
+      nsfrom.size.width  = src_rect.size.width;
+      nsfrom.size.height = src_rect.size.height;
+      NSPoint nsto;
+      nsto.x             = dst_rect.origin.x;
+      nsto.y             = dst_rect.origin.y;
+      NSCopyBits (0, nsfrom, nsto);
+    }
 
     pop_gc (dst, gc);
   }
-  
-  CGImageRelease (cgi);
+
+  if (free_cgi_p) CGImageRelease (cgi);
   if (releaseme) [releaseme release];
+  invalidate_drawable_cache (dst);
   return 0;
 }
 
@@ -764,6 +789,7 @@ XDrawLine (Display *dpy, Drawable d, GC gc, int x1, int y1, int x2, int y2)
   CGContextAddLineToPoint (d->cgc, p.x, p.y);
   CGContextStrokePath (d->cgc);
   pop_gc (d, gc);
+  invalidate_drawable_cache (d);
   return 0;
 }
 
@@ -802,6 +828,7 @@ XDrawLines (Display *dpy, Drawable d, GC gc, XPoint *points, int count,
   if (closed_p) CGContextClosePath (d->cgc);
   CGContextStrokePath (d->cgc);
   pop_gc (d, gc);
+  invalidate_drawable_cache (d);
   return 0;
 }
 
@@ -826,6 +853,7 @@ XDrawSegments (Display *dpy, Drawable d, GC gc, XSegment *segments, int count)
   }
   CGContextStrokePath (d->cgc);
   pop_gc (d, gc);
+  invalidate_drawable_cache (d);
   return 0;
 }
 
@@ -876,6 +904,7 @@ draw_rect (Display *dpy, Drawable d, GC gc,
 
   if (gc)
     pop_gc (d, gc);
+  invalidate_drawable_cache (d);
 }
 
 
@@ -911,6 +940,7 @@ XFillRectangles (Display *dpy, Drawable d, GC gc, XRectangle *rects, int n)
     rects++;
   }
   pop_gc (d, gc);
+  invalidate_drawable_cache (d);
   return 0;
 }
 
@@ -954,6 +984,7 @@ XFillPolygon (Display *dpy, Drawable d, GC gc,
   else
     CGContextFillPath (d->cgc);
   pop_gc (d, gc);
+  invalidate_drawable_cache (d);
   return 0;
 }
 
@@ -1005,6 +1036,7 @@ draw_arc (Display *dpy, Drawable d, GC gc, int x, int y,
   }
 
   pop_gc (d, gc);
+  invalidate_drawable_cache (d);
   return 0;
 }
 
@@ -1611,6 +1643,8 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
     CGImageRelease (mask);
   }
 
+  invalidate_drawable_cache (d);
+
   return 0;
 }
 
@@ -1872,6 +1906,8 @@ jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d,
     geom_ret->width  = dst.size.width;
     geom_ret->height = dst.size.height;
   }
+
+  invalidate_drawable_cache (d);
 }
 
 
@@ -1908,9 +1944,10 @@ XCreatePixmap (Display *dpy, Drawable d,
   p->frame.size.width  = width;
   p->frame.size.height = height;
   p->pixmap.depth      = depth;
+  p->pixmap.cgc_buffer = data;
   
   /* Quartz doesn't have a 1bpp image type.
-     We used to use 8bpp gray images instead of 1bpp, but some Mac video
+     Used to use 8bpp gray images instead of 1bpp, but some Mac video cards
      don't support that!  So we always use 32bpp, regardless of depth. */
 
   p->cgc = CGBitmapContextCreate (data, width, height,
@@ -1929,20 +1966,41 @@ int
 XFreePixmap (Display *d, Pixmap p)
 {
   Assert (p->type == PIXMAP, "not a pixmap");
+  invalidate_drawable_cache (p);
   CGContextRelease (p->cgc);
+  if (p->pixmap.cgc_buffer)
+    free (p->pixmap.cgc_buffer);
   free (p);
   return 0;
 }
 
 
 static Pixmap
-copy_pixmap (Pixmap p)
+copy_pixmap (Display *dpy, Pixmap p)
 {
   if (!p) return 0;
   Assert (p->type == PIXMAP, "not a pixmap");
+
+  int width  = p->frame.size.width;
+  int height = p->frame.size.height;
+  char *data = (char *) malloc (width * height * 4);
+  if (! data) return 0;
+
+  memcpy (data, p->pixmap.cgc_buffer, width * height * 4);
+
   Pixmap p2 = (Pixmap) malloc (sizeof (*p2));
   *p2 = *p;
-  CGContextRetain (p2->cgc);   // #### is this ok? need to copy it instead?
+  p2->cgi = 0;
+  p2->pixmap.cgc_buffer = data;
+  p2->cgc = CGBitmapContextCreate (data, width, height,
+                                   8, /* bits per component */
+                                   width * 4, /* bpl */
+                                   dpy->colorspace,
+                                   // Without this, it returns 0...
+                                   kCGImageAlphaNoneSkipFirst
+                                   );
+  Assert (p2->cgc, "could not create CGBitmapContext");
+
   return p2;
 }
 
@@ -2531,7 +2589,7 @@ draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
                             str, len);
   pop_gc (d, gc);
 
-#else /* !0 */
+# else /* !0 */
 
   /* The Cocoa way...
    */
@@ -2559,8 +2617,9 @@ draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
   pos.y = wr.origin.y + wr.size.height - y - gc->gcv.font->metrics.descent;
   [nsstr drawAtPoint:pos withAttributes:attr];
 
-#endif  /* 0 */
+# endif  /* 0 */
 
+  invalidate_drawable_cache (d);
   return 0;
 }
 
@@ -2654,7 +2713,7 @@ XSetClipMask (Display *dpy, GC gc, Pixmap m)
     CGImageRelease (gc->clip_mask);
   }
 
-  gc->gcv.clip_mask = copy_pixmap (m);
+  gc->gcv.clip_mask = copy_pixmap (dpy, m);
   if (gc->gcv.clip_mask)
     gc->clip_mask = CGBitmapContextCreateImage (gc->gcv.clip_mask->cgc);
   else

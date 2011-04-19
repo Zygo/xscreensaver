@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2009 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2010 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.13 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.14 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 1;
 
@@ -261,12 +261,12 @@ sub usage() {
 
 sub main() {
   my @files = ();
-  while ($#ARGV >= 0) {
-    $_ = shift @ARGV;
-    if ($_ eq "--verbose") { $verbose++; }
-    elsif (m/^-v+$/) { $verbose += length($_)-1; }
-    elsif (m/^-./) { usage; }
-    else { push @files, $_; }
+  while ($_ = $ARGV[0]) {
+    shift @ARGV;
+    if    (m/^--?verbose$/s)  { $verbose++; }
+    elsif (m/^-v+$/)          { $verbose += length($_)-1; }
+    elsif (m/^--?q(uiet)?$/s) { $verbose = 0; }
+    else                      { push @files, $_; }
   }
   usage() unless ($#files >= 0);
   foreach (@files) {

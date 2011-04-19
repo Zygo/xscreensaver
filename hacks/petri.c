@@ -243,7 +243,6 @@ static void
 setup_display (struct state *st)
 {
     XWindowAttributes xgwa;
-    Colormap cmap;
 
     int cell_size = get_integer_resource (st->dpy, "size", "Integer");
     int osize, alloc_size, oalloc;
@@ -398,8 +397,6 @@ setup_display (struct state *st)
     st->mindeathspeed *= st->diaglim;
     st->maxdeathspeed *= st->diaglim;
 
-    cmap = xgwa.colormap;
-    
     st->windowWidth = xgwa.width;
     st->windowHeight = xgwa.height;
     

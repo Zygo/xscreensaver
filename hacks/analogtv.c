@@ -839,7 +839,7 @@ analogtv_setup_frame(analogtv *it)
       }
       hnc += hni + (int)(random()%65536)-32768;
     }
-    hnc -= (ANALOGTV_V * ANALOGTV_H)<<8;
+/*    hnc -= (ANALOGTV_V * ANALOGTV_H)<<8;*/
   }
 
   if (it->rx_signal_level != 0.0)
@@ -900,7 +900,7 @@ analogtv_sync(analogtv *it)
   double *sp;
   double cbfc=1.0/128.0;
 
-  sp = it->rx_signal + lineno*ANALOGTV_H + cur_hsync;
+/*  sp = it->rx_signal + lineno*ANALOGTV_H + cur_hsync;*/
   for (i=-32; i<32; i++) {
     lineno = (cur_vsync + i + ANALOGTV_V) % ANALOGTV_V;
     sp = it->rx_signal + lineno*ANALOGTV_H;
@@ -1182,7 +1182,7 @@ analogtv_draw(analogtv *it)
   float *rgb_start, *rgb_end;
   double pixbright;
   int pixmultinc;
-  int bigloadchange,drawcount;
+  int /*bigloadchange,*/drawcount;
   double baseload;
   double puheight;
   int overall_top, overall_bot;
@@ -1207,7 +1207,7 @@ analogtv_draw(analogtv *it)
   baseload=0.5;
   /* if (it->hashnoise_on) baseload=0.5; */
 
-  bigloadchange=1;
+  /*bigloadchange=1;*/
   drawcount=0;
   it->crtload[ANALOGTV_TOP-1]=baseload;
   puheight = puramp(it, 2.0, 1.0, 1.3) * it->height_control *
@@ -1244,7 +1244,7 @@ analogtv_draw(analogtv *it)
 
     if (lineno==it->shrinkpulse) {
       baseload += 0.4;
-      bigloadchange=1;
+      /*bigloadchange=1;*/
       it->shrinkpulse=-1;
     }
 
@@ -1297,7 +1297,7 @@ analogtv_draw(analogtv *it)
 
     {
       int totsignal=0;
-      double ncl,diff;
+      double ncl/*,diff*/;
 
       for (i=0; i<ANALOGTV_PIC_LEN; i++) {
         totsignal += signal[i];
@@ -1308,8 +1308,8 @@ analogtv_draw(analogtv *it)
               (totsignal-30000)/100000.0 +
               (slineno>184 ? (slineno-184)*(lineno-184)*0.001 * it->squeezebottom
                : 0.0));
-      diff=ncl - it->crtload[lineno];
-      bigloadchange = (diff>0.01 || diff<-0.01);
+      /*diff=ncl - it->crtload[lineno];*/
+      /*bigloadchange = (diff>0.01 || diff<-0.01);*/
       it->crtload[lineno]=ncl;
     }
 

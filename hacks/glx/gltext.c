@@ -356,8 +356,6 @@ init_text (ModeInfo *mi)
       fprintf(stderr, "%s: out of memory\n", progname);
       exit(1);
     }
-
-    tp = &tps[MI_SCREEN(mi)];
   }
 
   tp = &tps[MI_SCREEN(mi)];
@@ -508,10 +506,9 @@ fill_string (const char *string, Bool wire)
   int line_height = GLUT_FONT->top - GLUT_FONT->bottom;
   int off;
   GLfloat x = 0, y = 0;
-  int lines;
 
   int ow, oh;
-  lines = text_extents (string, &ow, &oh);
+  text_extents (string, &ow, &oh);
 
   y = oh / 2 - line_height;
 

@@ -276,11 +276,9 @@ check_death (ModeInfo * mi, pacmangamestruct * pp)
     Display *display = MI_DISPLAY (mi);
     Window window = MI_WINDOW (mi);
     unsigned int ghost;
-    int alldead;
 
     if (pp->pacman.aistate == ps_dieing) return;
 
-    alldead = 1;
     for (ghost = 0; ghost < pp->nghosts; ghost++) {
 
         /* The ghost have to be scared before you can kill them */
@@ -306,11 +304,7 @@ check_death (ModeInfo * mi, pacmangamestruct * pp)
             }
             continue;
         }
-        
-        alldead = 0;
     }
-    
-
 }
 
 /* Resets state of ghosts + pacman.  Creates a new level, draws that level. */
@@ -831,8 +825,6 @@ draw_pacman_sprite (ModeInfo * mi)
         pp->pacman.oldcf = pp->pacman.cf;
         pp->pacman.oldrf = pp->pacman.rf;
     }
-    old_mask_dir = dir;
-    old_mask_mouth = pp->pm_mouth;
 }
 
 #if 0

@@ -126,14 +126,11 @@ static XrmOptionDescRec kaleidescope_options [] = {
 static void
 krandom_color(GLOBAL *g, XColor *color)
 {
-  int r;
-  r = random() % 3;
-
   if((g->color_mode == 0) || (g->color_mode == 1)) {
 
-    color->blue  = ((r = random()) % g->bluerange) + g->bluemin;
-    color->green = ((r = random()) % g->greenrange) + g->greenmin;
-    color->red   = ((r = random()) % g->redrange) + g->redmin;
+    color->blue  = (random() % g->bluerange)  + g->bluemin;
+    color->green = (random() % g->greenrange) + g->greenmin;
+    color->red   = (random() % g->redrange)   + g->redmin;
 
     if(!XAllocColor(g->dpy, g->cmap, color)) {
       color->pixel = g->default_fg_pixel;

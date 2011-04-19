@@ -742,7 +742,7 @@ dnalogo:	dnalogo.o      tube.o normals.o $(HACK_TRACK_OBJS)
 topblock:	topblock.o	sphere.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	sphere.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-SCHOOL_OBJS=glschool.o glschool_alg.o glschool_gl.o sphere.o tube.o $(HACK_OBJS)
+SCHOOL_OBJS=glschool.o glschool_alg.o glschool_gl.o $(HACK_OBJS)
 glschool: $(SCHOOL_OBJS)
 	$(CC_HACK) -o $@ $(SCHOOL_OBJS) $(HACK_LIBS)
 

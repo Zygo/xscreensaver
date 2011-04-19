@@ -423,7 +423,6 @@ static int createCylinder (Circuit *ci,
   int a; /* current angle around cylinder */
   int angle, norm;
   float z1, y1, z2, y2,ex;
-  int step;
   int nsegs;
 
   glPushMatrix();
@@ -432,7 +431,6 @@ static int createCylinder (Circuit *ci,
   if (nsegs % 2)
      nsegs += 1;
   angle = (half) ? (180 - 90/nsegs) : 374;
-  step = angle/nsegs;
   z1 = radius; y1 = 0;
   glBegin(GL_QUADS);
   for (a = 0 ; a <= angle ; a+= angle/nsegs) {
@@ -1880,7 +1878,6 @@ static int bandedCylinder(Circuit *ci,
 {
   int polys = 0;
   int n; /* band number */
-  int p = 0; /* prev number + 1; */
   GLfloat col[] = {0,0,0,0};
 
    col[0] = r; col[1] = g; col[2] = bl;
@@ -1893,7 +1890,6 @@ static int bandedCylinder(Circuit *ci,
      glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
      polys += createCylinder(ci, b[n]->len*l, radius*1.05, 0, 0); /* band */
      glPopMatrix();
-     p = n+1;
    }
    return polys;
 }

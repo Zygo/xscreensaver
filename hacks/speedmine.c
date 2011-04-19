@@ -1105,7 +1105,7 @@ render_speedmine (struct state *st, Drawable d)
 	} else {
 		t = MAX(begin_at(st), TERRAIN_LENGTH/4);
 		/*t = TERRAIN_LENGTH/4; dt = 2; */
-		dt = (t >= 3*TERRAIN_LENGTH/4 ? 1 : 2);
+		/*dt = (t >= 3*TERRAIN_LENGTH/4 ? 1 : 2);*/
 		i = (st->nearest -t + TERRAIN_LENGTH) % TERRAIN_LENGTH;
 		render_block (st, d, st->tunnelend_gc, t);
 	}

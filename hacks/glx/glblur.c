@@ -278,7 +278,7 @@ overlay_blur_texture (ModeInfo *mi)
   GLfloat inc = 0.02 * (25.0 / times);
 
   GLfloat spost = 0;		    /* starting texture coordinate offset */
-  GLfloat alpha_inc = 0.9 / times;  /* transparency fade factor */
+  GLfloat alpha_inc;		    /* transparency fade factor */
   GLfloat alpha = 0.2;		    /* initial transparency */
 
   glDisable (GL_TEXTURE_GEN_S);

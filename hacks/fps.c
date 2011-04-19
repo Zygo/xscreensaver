@@ -23,7 +23,6 @@ fps_init (Display *dpy, Window window)
   fps_state *st;
   const char *font;
   XFontStruct *f;
-  int first, last;
 
   if (! get_boolean_resource (dpy, "doFPS", "DoFPS"))
     return 0;
@@ -39,9 +38,6 @@ fps_init (Display *dpy, Window window)
   if (!font) font = "-*-courier-bold-r-normal-*-180-*";
   f = XLoadQueryFont (dpy, font);
   if (!f) f = XLoadQueryFont (dpy, "fixed");
-
-  first = f->min_char_or_byte2;
-  last = f->max_char_or_byte2;
 
   {
     XWindowAttributes xgwa;

@@ -60,6 +60,9 @@ int move_mouse_grab (saver_info *si, Window to, Cursor c, int ts) { return 0; }
 int mouse_screen (saver_info *si) { return 0; }
 void check_for_leaks (const char *where) { }
 void shutdown_stderr (saver_info *si) { }
+void resize_screensaver_window (saver_info *si) { }
+void describe_monitor_layout (saver_info *si) { }
+Bool update_screen_layout (saver_info *si) { return 0; }
 
 const char *blurb(void) { return progname; }
 Atom XA_SCREENSAVER, XA_DEMO, XA_PREFS;

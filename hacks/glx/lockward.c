@@ -290,7 +290,6 @@ gen_blade_arcs (lockward_context *ctx)
 	there = M_PI * 2.0 / g_blades;
 	step = there / SUBDIV;
 	here -= SUBDIV * step / 2.0;
-	there -= SUBDIV * step / 2.0;
 
 	/*
 	 * Build outer blade arcs.

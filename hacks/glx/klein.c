@@ -1032,7 +1032,7 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
     sv = sin(v);
     cv2 = cos(0.5*v);
     sv2 = sin(0.5*v);
-    c2u = cos(2.0*u);
+    /*c2u = cos(2.0*u);*/
     s2u = sin(2.0*u);
     xx[0] = (su*cv2-s2u*sv2+FIGURE_8_RADIUS)*cv;
     xx[1] = (su*cv2-s2u*sv2+FIGURE_8_RADIUS)*sv;

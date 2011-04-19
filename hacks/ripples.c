@@ -703,6 +703,7 @@ sinc(struct state *st, double x)
   int i;
   i = (int)(x * TABLE + 0.5);
   if (i >= TABLE) i = (TABLE-1) - (i-(TABLE-1));
+  if (i < 0) return 0.;
   return st->cos_tab[i];
 #elif 0
   return cos(x * M_PI/2);
@@ -732,7 +733,7 @@ add_circle_drop(struct state *st, int x, int y, int radius, int dheight)
       r = cx*cx + cy*cy;
       if (r > r2) break;
       buf[xx + yy*st->width] =
-        (short)(dheight * sinc(st, sqrt(r)/radius));
+        (short)(dheight * sinc(st, (radius > 0) ? sqrt(r)/radius : 0));
     }
 }
 

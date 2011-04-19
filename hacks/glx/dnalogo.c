@@ -1,4 +1,4 @@
-/* DNA Logo, Copyright (c) 2001, 2002, 2003 Jamie Zawinski <jwz@jwz.org>
+/* DNA Logo, Copyright (c) 2001-2010 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -111,6 +111,206 @@ static XrmOptionDescRec opts[] = {
 ENTRYPOINT ModeSpecOpt logo_opts = {countof(opts), opts, 0, NULL, NULL};
 
 #define PROBABILITY_SCALE 600
+
+
+#ifdef DXF_OUTPUT_HACK   /* When this is defined, instead of rendering
+                            to the screen, we write a DXF CAD file to stdout.
+                            This is a kludge of shocking magnitude...
+                            Maybe there's some other way to intercept all
+                            glVertex3f calls than with a #define?
+                          */
+
+# define glBegin    dxf_glBegin
+# define glVertex3f dxf_glVertex3f
+# define glEnd      dxf_glEnd
+
+static int dxf_type, dxf_point, dxf_point_total, dxf_layer, dxf_color;
+static GLfloat dxf_quads[4*4];
+
+static void
+dxf_glBegin (int type)
+{
+  dxf_type = type; 
+  dxf_point = 0;
+  dxf_point_total = 0;
+}
+
+static void
+dxf_glVertex3f (GLfloat ox, GLfloat oy, GLfloat oz)
+{
+  int i = 0;
+  GLfloat m[4*4];
+  GLfloat x, y, z;
+
+  /* Transform the point into modelview space. */
+  glGetFloatv (GL_MODELVIEW_MATRIX, m);
+  x = ox * m[0] + oy * m[4] + oz * m[8]  + m[12];
+  y = ox * m[1] + oy * m[5] + oz * m[9]  + m[13];
+  z = ox * m[2] + oy * m[6] + oz * m[10] + m[14];
+
+  dxf_quads[dxf_point*3+0] = x;
+  dxf_quads[dxf_point*3+1] = y;
+  dxf_quads[dxf_point*3+2] = z;
+  dxf_point++;
+  dxf_point_total++;
+
+  switch (dxf_type) {
+  case GL_QUADS:
+    if (dxf_point < 4) return;
+
+    fprintf (stdout, "0\n3DFACE\n8\n%d\n62\n%d\n", dxf_layer, dxf_color);
+    fprintf (stdout, "10\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "20\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "30\n%.6f\n", dxf_quads[i++]);
+
+    fprintf (stdout, "11\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "21\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "31\n%.6f\n", dxf_quads[i++]);
+
+    fprintf (stdout, "12\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "22\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "32\n%.6f\n", dxf_quads[i++]);
+
+    fprintf (stdout, "13\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "23\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "33\n%.6f\n", dxf_quads[i++]);
+    dxf_point = 0;
+    break;
+
+  case GL_QUAD_STRIP:
+    if (dxf_point < 4) return;
+
+    fprintf (stdout, "0\n3DFACE\n8\n%d\n62\n%d\n", dxf_layer, dxf_color);
+    fprintf (stdout, "10\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "20\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "30\n%.6f\n", dxf_quads[i++]);
+
+    fprintf (stdout, "11\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "21\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "31\n%.6f\n", dxf_quads[i++]);
+
+    fprintf (stdout, "12\n%.6f\n", dxf_quads[i+3]);  /* funky quad strip */
+    fprintf (stdout, "22\n%.6f\n", dxf_quads[i+4]);  /* vert order: 1243. */
+    fprintf (stdout, "32\n%.6f\n", dxf_quads[i+5]);
+
+    fprintf (stdout, "13\n%.6f\n", dxf_quads[i]);
+    fprintf (stdout, "23\n%.6f\n", dxf_quads[i+1]);
+    fprintf (stdout, "33\n%.6f\n", dxf_quads[i+2]);
+    i += 6;
+
+    dxf_quads[0] = dxf_quads[6];
+    dxf_quads[1] = dxf_quads[7];
+    dxf_quads[2] = dxf_quads[8];
+    dxf_quads[3] = dxf_quads[9];
+    dxf_quads[4] = dxf_quads[10];
+    dxf_quads[5] = dxf_quads[11];
+    dxf_point = 2;
+    break;
+
+  case GL_TRIANGLES:
+  case GL_TRIANGLE_FAN:
+    if (dxf_point < 3) return;
+
+    fprintf (stdout, "0\n3DFACE\n8\n%d\n62\n%d\n", dxf_layer, dxf_color);
+    fprintf (stdout, "10\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "20\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "30\n%.6f\n", dxf_quads[i++]);
+
+    fprintf (stdout, "11\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "21\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "31\n%.6f\n", dxf_quads[i++]);
+
+    fprintf (stdout, "12\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "22\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "32\n%.6f\n", dxf_quads[i++]);
+
+    i -= 3;
+    fprintf (stdout, "13\n%.6f\n", dxf_quads[i++]);  /* dup pt 4 as pt 3. */
+    fprintf (stdout, "23\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "33\n%.6f\n", dxf_quads[i++]);
+
+    dxf_point = 0;
+    if (dxf_type == GL_TRIANGLE_FAN)
+      {
+        dxf_quads[3] = dxf_quads[6];
+        dxf_quads[4] = dxf_quads[7];
+        dxf_quads[5] = dxf_quads[8];
+        dxf_point = 2;
+      }
+    break;
+
+  case GL_LINES:
+  case GL_LINE_STRIP:
+  case GL_LINE_LOOP:
+
+    if (dxf_point_total == 1)
+      {
+        dxf_quads[6] = ox;
+        dxf_quads[7] = oy;
+        dxf_quads[8] = oz;
+      }
+
+    if (dxf_point < 2) return;
+
+    fprintf (stdout, "0\nLINE\n8\n%d\n62\n%d\n", dxf_layer, dxf_color);
+
+    fprintf (stdout, "10\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "20\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "30\n%.6f\n", dxf_quads[i++]);
+
+    fprintf (stdout, "11\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "21\n%.6f\n", dxf_quads[i++]);
+    fprintf (stdout, "31\n%.6f\n", dxf_quads[i++]);
+
+    dxf_point = 0;
+    if (dxf_type != GL_LINES)
+      {
+        dxf_quads[0] = dxf_quads[3];
+        dxf_quads[1] = dxf_quads[4];
+        dxf_quads[2] = dxf_quads[5];
+        dxf_point = 1;
+      }
+    break;
+
+  default:
+    abort();
+    break;
+  }
+}
+
+static void
+dxf_glEnd(void)
+{
+  if (dxf_type == GL_LINE_LOOP)  /* close loop */
+    glVertex3f (dxf_quads[6], dxf_quads[7], dxf_quads[8]);
+  dxf_type = -1;
+  dxf_point = 0;
+  dxf_point_total = 0;
+}
+
+
+static void
+dxf_start (void)
+{
+  fprintf (stdout, "0\nSECTION\n2\nHEADER\n0\nENDSEC\n");
+  fprintf (stdout, "0\nSECTION\n2\nENTITIES\n");
+}
+
+static void
+dxf_end (void)
+{
+  fprintf (stdout, "0\nENDSEC\n0\nEOF\n");
+  exit (0);
+}
+
+# define unit_tube dxf_unit_tube
+# define unit_cone dxf_unit_cone
+# define tube_1    dxf_tube_1
+# define tube      dxf_tube
+# define cone      dxf_cone
+# include "tube.c"
+
+#endif /* DXF_OUTPUT_HACK */
 
 
 
@@ -351,6 +551,7 @@ make_ladder (logo_configuration *dc, int facetted, int wire)
   if (!dc->clockwise)
     z = -z, z_inc = -z_inc;
 
+  glFrontFace(GL_CCW);
   for (i = 0; i < nbars; i++)
     {
       int facets = dc->bar_facets / (facetted ? 14 : 1);
@@ -402,6 +603,10 @@ make_gasket (logo_configuration *dc, int wire)
 
   glPushMatrix();
 
+# ifdef DXF_OUTPUT_HACK
+  if (! wire) res *= 8;
+# endif
+
 # define POINT(r,th) \
     ctrl_r [nctrls] = r, \
     ctrl_th[nctrls] = (th * d2r), \
@@ -449,13 +654,13 @@ make_gasket (logo_configuration *dc, int wire)
   POINT (0.880, 319.74);
   POINT (0.990, 320.08);
 
-  POINT (r4,  338.5);
+  POINT (r4,  338.0);
   if (! wire)
     {
-      POINT (r1a, 338.5);      /* cut-out disc */
-      POINT (r1a, 343.5);
+      POINT (r1a, 338.0);      /* cut-out disc */
+      POINT (r1a, 344.0);
     }
-  POINT (r4,  343.5);
+  POINT (r4,  344.0);
   POINT (r4,  356.0);
 
   POINT (0.872, 356.05);   /* top indentation, left half */
@@ -670,7 +875,7 @@ make_gasket (logo_configuration *dc, int wire)
     GLfloat th;
     npoints = 0;
 
-    th = 338.5 * d2r;
+    th = 338.0 * d2r;
     pointsx0[npoints] = r1c * cos(th) * dc->gasket_size;
     pointsy0[npoints] = r1c * sin(th) * dc->gasket_size;
     npoints++;
@@ -678,13 +883,12 @@ make_gasket (logo_configuration *dc, int wire)
     pointsy0[npoints] = r4 * sin(th) * dc->gasket_size;
     npoints++;
 
-    th = 343.5 * d2r;
+    th = 344.0 * d2r;
     pointsx0[npoints] = r1c * cos(th) * dc->gasket_size;
     pointsy0[npoints] = r1c * sin(th) * dc->gasket_size;
     npoints++;
     pointsx0[npoints] = r4 * cos(th) * dc->gasket_size;
     pointsy0[npoints] = r4 * sin(th) * dc->gasket_size;
-    npoints++;
 
     if (! wire)
       {
@@ -728,9 +932,9 @@ make_gasket (logo_configuration *dc, int wire)
     /* Now make a donut.
      */
     {
-      int nsteps = 12;
+      int nsteps = (wire ? 12 : 64);
       GLfloat r0 = 0.04;
-      GLfloat r1 = 0.060;
+      GLfloat r1 = 0.070;
       GLfloat th, cth, sth;
 
       glPushMatrix ();
@@ -863,7 +1067,9 @@ make_gasket (logo_configuration *dc, int wire)
       }
 
     npoints = 0;
-    for (th = 0; th < M_PI; th += (M_PI / 6))
+    for (th = (wire ? 0 : -0.1);
+         th <= M_PI + 0.1;
+         th += (M_PI / (wire ? 5 : 32)))
       {
         pointsx0[npoints] = w/2 * cos(th);
         pointsy0[npoints] = w/2 * sin(th);
@@ -1210,6 +1416,31 @@ init_logo (ModeInfo *mi)
                                    * ((random() & 1) ? 1 : -1)
                                    * dc->speed);
     }
+
+# ifdef DXF_OUTPUT_HACK
+  {
+    dc->frame_depth = dc->gasket_depth;
+    dxf_layer = 1;
+    dxf_color = 3;
+    dxf_start();
+    glPushMatrix();
+    glRotatef(90, 1, 0, 0);
+    glRotatef(90, 0, 0, 1);
+    glPushMatrix();
+    glRotatef(helix_rot, 0, 0, 1);
+    make_ladder (dc, 0, 0);
+    make_helix  (dc, 0, 0);
+    glRotatef (180, 0, 0, 1);
+    make_helix  (dc, 0, 0);
+    glPopMatrix();
+    dxf_layer++;
+    make_gasket (dc, 0);
+    dxf_layer++;
+    make_frame (dc, 0);
+    glPopMatrix();
+    dxf_end();
+  }
+# endif
 
   glPushMatrix();
   dc->helix_list = glGenLists (1);

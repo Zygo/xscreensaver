@@ -585,7 +585,7 @@ l|      |r
 		tr0, tr1,
 		tl0, tl1,
 		l0 , l1 ,
-		bl0, depth=0.3, zdepth=15.0;
+		depth=0.3, zdepth=15.0;
 	/* zdepth is how far back tunnel goes */
 	/* depth is tex coord scale.  low number = fast texture shifting */
 
@@ -601,7 +601,6 @@ l|      |r
 	tl1 = tl0 + half_floor;
 	l0 = tr1;
 	l1 = l0 + full_wall;
-	bl0 = l1;
 
   	glMatrixMode(GL_TEXTURE);
   	glLoadIdentity();
@@ -965,7 +964,6 @@ static void LoadTexture(ModeInfo * mi, char **fn, const char *filename, GLuint t
 						tmpa =  teximage->data[dtaidx + cchan];
 						tmpfa = (float) tmpa * boxdiv;
 						/* box filter */
-						blursum = 0.0;
 						for (by = -boxsize ; by <= boxsize; by++) {
 							for (bx = -boxsize ; bx <= boxsize; bx++) {
 								indx = wrapVal(ix + bx, 0, teximage->width);
@@ -1057,8 +1055,6 @@ init_tunnel (ModeInfo *mi)
       fprintf(stderr, "%s: out of memory\n", progname);
       exit(1);
     }
-
-    tc = &tconf[MI_SCREEN(mi)];
   }
 
   tc = &tconf[MI_SCREEN(mi)];

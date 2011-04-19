@@ -290,7 +290,6 @@ static inline unsigned long rgb2point(int depth, int r, int g, int b)
     switch(depth) 
     {
     case 32:
-	ret = 0xff000000;
     case 24:
 #ifdef HAVE_COCOA
         /* This program idiotically does not go through a color map, so

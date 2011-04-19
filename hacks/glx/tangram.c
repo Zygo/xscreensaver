@@ -880,8 +880,6 @@ ENTRYPOINT void init_tangram(ModeInfo * mi)
             fprintf(stderr, "%s: out of memory\n", progname);
             exit(1);
         }
-
-        tp = &tps[MI_SCREEN(mi)];
     }
 
     tp = &tps[MI_SCREEN(mi)];

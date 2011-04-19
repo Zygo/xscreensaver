@@ -45,6 +45,9 @@
   static void xfree_lock_grab_smasher (saver_info *si, Bool lock_p);
 #endif /* HAVE_XF86MISCSETGRABKEYSSTATE */
 
+#ifdef HAVE_RANDR
+# include <X11/extensions/Xrandr.h>
+#endif /* HAVE_RANDR */
 
 #ifdef _VROOT_H_
 ERROR!  You must not include vroot.h in this file.
@@ -1285,10 +1288,19 @@ destroy_passwd_window (saver_info *si)
   XWarpPointer (si->dpy, None, RootWindowOfScreen (ssi->screen),
                 0, 0, 0, 0,
                 pw->previous_mouse_x, pw->previous_mouse_y);
+  XSync (si->dpy, False);
 
   while (XCheckMaskEvent (si->dpy, PointerMotionMask, &event))
     if (p->verbose_p)
       fprintf (stderr, "%s: discarding MotionNotify event.\n", blurb());
+
+#ifdef HAVE_XINPUT
+  if (si->using_xinput_extension && si->xinput_DeviceMotionNotify)
+    while (XCheckTypedEvent (si->dpy, si->xinput_DeviceMotionNotify, &event))
+      if (p->verbose_p)
+	fprintf (stderr, "%s: discarding DeviceMotionNotify event.\n",
+                 blurb());
+#endif
 
   if (si->passwd_dialog)
     {
@@ -1775,30 +1787,77 @@ passwd_event_loop (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
   char *msg = 0;
-  XEvent event;
+
+  /* We have to go through this union bullshit because gcc-4.4.0 has
+     stricter struct-aliasing rules.  Without this, the optimizer
+     can fuck things up.
+   */
+  union {
+    XEvent x_event;
+# ifdef HAVE_RANDR
+    XRRScreenChangeNotifyEvent xrr_event;
+# endif /* HAVE_RANDR */
+  } event;
 
   passwd_animate_timer ((XtPointer) si, 0);
 
   while (si->unlock_state == ul_read)
     {
-      XtAppNextEvent (si->app, &event);
-      if (event.xany.window == si->passwd_dialog && event.xany.type == Expose)
-	draw_passwd_window (si);
-      else if (event.xany.type == KeyPress)
+      XtAppNextEvent (si->app, &event.x_event);
+
+#ifdef HAVE_RANDR
+      if (si->using_randr_extension &&
+          (event.x_event.type == 
+           (si->randr_event_number + RRScreenChangeNotify)))
         {
-          handle_passwd_key (si, &event.xkey);
-          si->pw_data->caps_p = (event.xkey.state & LockMask);
+          /* The Resize and Rotate extension sends an event when the
+             size, rotation, or refresh rate of any screen has changed. */
+
+          if (p->verbose_p)
+            {
+              /* XRRRootToScreen is in Xrandr.h 1.4, 2001/06/07 */
+              int screen = XRRRootToScreen(si->dpy, event.xrr_event.window);
+                fprintf (stderr, "%s: %d: screen change event received\n",
+                         blurb(), screen);
+            }
+
+#ifdef RRScreenChangeNotifyMask
+          /* Inform Xlib that it's ok to update its data structures. */
+          XRRUpdateConfiguration(&event.x_event); /* Xrandr.h 1.9, 2002/09/29 */
+#endif /* RRScreenChangeNotifyMask */
+
+          /* Resize the existing xscreensaver windows and cached ssi data. */
+          if (update_screen_layout (si))
+            {
+              if (p->verbose_p)
+                {
+                  fprintf (stderr, "%s: new layout:\n", blurb());
+                  describe_monitor_layout (si);
+                }
+              resize_screensaver_window (si);
+            }
         }
-      else if (event.xany.type == ButtonPress || 
-               event.xany.type == ButtonRelease)
+      else
+#endif /* HAVE_RANDR */
+
+      if (event.x_event.xany.window == si->passwd_dialog && 
+          event.x_event.xany.type == Expose)
+	draw_passwd_window (si);
+      else if (event.x_event.xany.type == KeyPress)
+        {
+          handle_passwd_key (si, &event.x_event.xkey);
+          si->pw_data->caps_p = (event.x_event.xkey.state & LockMask);
+        }
+      else if (event.x_event.xany.type == ButtonPress || 
+               event.x_event.xany.type == ButtonRelease)
 	{
 	  si->pw_data->button_state_changed_p = True;
-	  handle_unlock_button (si, &event);
+	  handle_unlock_button (si, &event.x_event);
 	  if (si->pw_data->login_button_p)
-	    handle_login_button (si, &event);
+	    handle_login_button (si, &event.x_event);
 	}
       else
-	XtDispatchEvent (&event);
+	XtDispatchEvent (&event.x_event);
     }
 
   switch (si->unlock_state)
@@ -1880,11 +1939,10 @@ remove_trailing_whitespace(const char *str)
   len = strlen(str);
 
   newstr = malloc(len + 1);
-  (void) strcpy(newstr, str);
-
   if (!newstr)
     return NULL;
 
+  (void) strcpy(newstr, str);
   chr = newstr + len;
   while (isspace(*--chr) && chr >= newstr)
     *chr = '\0';

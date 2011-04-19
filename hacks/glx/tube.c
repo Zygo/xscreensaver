@@ -1,4 +1,4 @@
-/* tube, Copyright (c) 2001, 2003, 2007 Jamie Zawinski <jwz@jwz.org>
+/* tube, Copyright (c) 2001-2010 Jamie Zawinski <jwz@jwz.org>
  * Utility functions to create tubes and cones in GL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -26,6 +26,8 @@
 
 #include "tube.h"
 
+typedef struct { GLfloat x, y, z; } XYZ;
+
 static int
 unit_tube (int faces, int smooth, int caps_p, int wire_p)
 {
@@ -37,11 +39,20 @@ unit_tube (int faces, int smooth, int caps_p, int wire_p)
   GLfloat x, y, x0=0, y0=0;
   int z = 0;
 
+  int arraysize, out;
+  struct { XYZ p; XYZ n; GLfloat s, t; } *array;
+
+  arraysize = (faces+1) * 6;
+  array = (void *) calloc (arraysize, sizeof(*array));
+  if (! array) abort();
+  out = 0;
+
+
+  /* #### texture coords are currently not being computed */
+
+
   /* side walls
    */
-  glFrontFace(GL_CCW);
-  glBegin (wire_p ? GL_LINES : (smooth ? GL_QUAD_STRIP : GL_QUADS));
-
   th = 0;
   x = 1;
   y = 0;
@@ -56,13 +67,27 @@ unit_tube (int faces, int smooth, int caps_p, int wire_p)
 
   for (i = 0; i < faces; i++)
     {
-      if (smooth)
-        glNormal3f(x, 0, y);
-      else
-        glNormal3f(x0, 0, y0);
+      array[out].p.x = x;			/* bottom point A */
+      array[out].p.y = 0;
+      array[out].p.z = y;
 
-      glVertex3f(x, 0, y);
-      glVertex3f(x, 1, y);
+      if (smooth)
+        array[out].n = array[out].p;		/* its own normal */
+      else
+        {
+          array[out].n.x = x0;			/* mid-plane normal */
+          array[out].n.y = 0;
+          array[out].n.z = y0;
+        }
+      out++;
+
+
+      array[out].p.x = x;			/* top point A */
+      array[out].p.y = 1;
+      array[out].p.z = y;
+      array[out].n = array[out-1].n;		/* same normal */
+      out++;
+
 
       th += step;
       x  = cos (th);
@@ -73,32 +98,89 @@ unit_tube (int faces, int smooth, int caps_p, int wire_p)
           x0 = cos (th + s2);
           y0 = sin (th + s2);
 
-          glVertex3f(x, 1, y);
-          glVertex3f(x, 0, y);
+          array[out].p.x = x;			/* top point B */
+          array[out].p.y = 1;
+          array[out].p.z = y;
+          array[out].n = array[out-1].n;	/* same normal */
+          out++;
+
+
+          array[out] = array[out-3];		/* bottom point A */
+          out++;
+
+          array[out] = array[out-2];		/* top point B */
+          out++;
+
+          array[out].p.x = x;			/* bottom point B */
+          array[out].p.y = 0;
+          array[out].p.z = y;
+          array[out].n = array[out-1].n;	/* same normal */
+          out++;
+
+          polys++;
         }
+
       polys++;
+      if (out >= arraysize) abort();
     }
-  glEnd();
+
+  glEnableClientState (GL_VERTEX_ARRAY);
+  glEnableClientState (GL_NORMAL_ARRAY);
+  glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+
+  glVertexPointer   (3, GL_FLOAT, sizeof(*array), &array[0].p);
+  glNormalPointer   (   GL_FLOAT, sizeof(*array), &array[0].n);
+  glTexCoordPointer (2, GL_FLOAT, sizeof(*array), &array[0].s);
+
+  glDrawArrays ((wire_p ? GL_LINES :
+                 (smooth ? GL_TRIANGLE_STRIP : GL_TRIANGLES)),
+                0, out);
+
 
   /* End caps
    */
   if (caps_p)
     for (z = 0; z <= 1; z++)
       {
-        glFrontFace(z == 0 ? GL_CCW : GL_CW);
-        glNormal3f(0, (z == 0 ? -1 : 1), 0);
-        glBegin(wire_p ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
-        if (! wire_p) glVertex3f(0, z, 0);
-        for (i = 0, th = 0; i <= faces; i++)
+        out = 0;
+        if (! wire_p)
           {
+            array[out].p.x = 0;
+            array[out].p.y = z;
+            array[out].p.z = 0;
+
+            array[out].n.x = 0;
+            array[out].n.y = (z == 0 ? -1 : 1);
+            array[out].n.z = 0;
+            out++;
+          }
+
+        th = 0;
+        for (i = (z == 0 ? 0 : faces);
+             (z == 0 ? i <= faces : i >= 0);
+             i += (z == 0 ? 1 : -1)) {
             GLfloat x = cos (th);
             GLfloat y = sin (th);
-            glVertex3f(x, z, y);
-            th += step;
+
+            array[out] = array[0];  /* same normal and texture */
+            array[out].p.x = x;
+            array[out].p.y = z;
+            array[out].p.z = y;
+            out++;
+
+            th += (z == 0 ? step : -step);
+
             polys++;
+            if (out >= arraysize) abort();
           }
-        glEnd();
+
+        glVertexPointer   (3, GL_FLOAT, sizeof(*array), &array[0].p);
+        glNormalPointer   (   GL_FLOAT, sizeof(*array), &array[0].n);
+        glTexCoordPointer (2, GL_FLOAT, sizeof(*array), &array[0].s);
+
+        glDrawArrays ((wire_p ? GL_LINE_LOOP : GL_TRIANGLE_FAN), 0, out);
       }
+
   return polys;
 }
 
@@ -113,10 +195,20 @@ unit_cone (int faces, int smooth, int cap_p, int wire_p)
   GLfloat th;
   GLfloat x, y, x0, y0;
 
+  int arraysize, out;
+  struct { XYZ p; XYZ n; GLfloat s, t; } *array;
+
+  arraysize = (faces+1) * 3;
+  array = (void *) calloc (arraysize, sizeof(*array));
+  if (! array) abort();
+  out = 0;
+
+
+  /* #### texture coords are currently not being computed */
+
+
   /* side walls
    */
-  glFrontFace(GL_CW);
-  glBegin(wire_p ? GL_LINES : GL_TRIANGLES);
 
   th = 0;
   x = 1;
@@ -126,11 +218,30 @@ unit_cone (int faces, int smooth, int cap_p, int wire_p)
 
   for (i = 0; i < faces; i++)
     {
-      glNormal3f(x0, 0, y0);
-      glVertex3f(0,  1, 0);
+      array[out].p.x = x;		/* bottom point A */
+      array[out].p.y = 0;
+      array[out].p.z = y;
 
-      if (smooth) glNormal3f(x, 0, y);
-      glVertex3f(x, 0, y);
+      if (smooth)
+        array[out].n = array[out].p;	/* its own normal */
+      else
+        {
+          array[out].n.x = x0;		/* mid-plane normal */
+          array[out].n.y = 0;
+          array[out].n.z = y0;
+        }
+      out++;
+
+
+      array[out].p.x = 0;		/* tip point */
+      array[out].p.y = 1;
+      array[out].p.z = 0;
+
+      array[out].n.x = x0;		/* mid-plane normal */
+      array[out].n.y = 0;
+      array[out].n.z = y0;
+      out++;
+
 
       th += step;
       x0 = cos (th + s2);
@@ -138,30 +249,74 @@ unit_cone (int faces, int smooth, int cap_p, int wire_p)
       x  = cos (th);
       y  = sin (th);
 
-      if (smooth) glNormal3f(x, 0, y);
-      glVertex3f(x, 0, y);
+      array[out].p.x = x;		/* bottom point B */
+      array[out].p.y = 0;
+      array[out].p.z = y;
+
+      if (smooth)
+        array[out].n = array[out].p;	/* its own normal */
+      else
+        array[out].n = array[out-1].n;  /* same normal as other two */
+      out++;
+
+
+      if (out >= arraysize) abort();
       polys++;
     }
-  glEnd();
+
+  glEnableClientState (GL_VERTEX_ARRAY);
+  glEnableClientState (GL_NORMAL_ARRAY);
+  glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+
+  glVertexPointer   (3, GL_FLOAT, sizeof(*array), &array[0].p);
+  glNormalPointer   (   GL_FLOAT, sizeof(*array), &array[0].n);
+  glTexCoordPointer (2, GL_FLOAT, sizeof(*array), &array[0].s);
+
+  glDrawArrays ((wire_p ? GL_LINES : GL_TRIANGLES), 0, out);
+
 
   /* End cap
    */
   if (cap_p)
     {
-      glFrontFace(GL_CCW);
-      glNormal3f(0, -1, 0);
-      glBegin(wire_p ? GL_LINE_LOOP : GL_TRIANGLE_FAN);
-      if (! wire_p) glVertex3f(0, 0, 0);
+      out = 0;
+
+      if (! wire_p)
+        {
+          array[out].p.x = 0;
+          array[out].p.y = 0;
+          array[out].p.z = 0;
+
+          array[out].n.x = 0;
+          array[out].n.y = -1;
+          array[out].n.z = 0;
+          out++;
+        }
+
       for (i = 0, th = 0; i <= faces; i++)
         {
           GLfloat x = cos (th);
           GLfloat y = sin (th);
-          glVertex3f(x, 0, y);
+
+          array[out] = array[0];  /* same normal and texture */
+          array[out].p.x = x;
+          array[out].p.y = 0;
+          array[out].p.z = y;
+          out++;
           th += step;
           polys++;
+          if (out >= arraysize) abort();
         }
-      glEnd();
+
+      glVertexPointer   (3, GL_FLOAT, sizeof(*array), &array[0].p);
+      glNormalPointer   (   GL_FLOAT, sizeof(*array), &array[0].n);
+      glTexCoordPointer (2, GL_FLOAT, sizeof(*array), &array[0].s);
+
+      glDrawArrays ((wire_p ? GL_LINE_LOOP : GL_TRIANGLE_FAN), 0, out);
     }
+
+  free (array);
+
   return polys;
 }
 

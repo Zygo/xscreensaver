@@ -94,45 +94,16 @@ typedef struct {
   Bit16 value;
 } Pointer;
 
-/* eprintf - Taken from "Practice of Programming" by Kernighan and Pike */
-static void eprintf(char *fmt, ...){
-  va_list args;
-  
-  char *progname = "Assembler";
 
-  fflush(stdout);
-  if (progname != NULL)
-    fprintf(stderr, "%s: ", progname);
-
-  va_start(args, fmt);
-  vfprintf(stderr, fmt, args);
-  va_end(args);
-  
-  if (fmt[0] != '\0' && fmt[strlen(fmt) -1] == ':')
-    fprintf(stderr, " %s", strerror(errno));
-  fprintf(stderr, "\n");
-  exit(2); /* conventional value for failed execution */
-}
-
-/* emalloc - Taken from "Practice of Programming" by Kernighan and
-   Pike.  If memory allocatiion fails the program will print a message
-   an exit. */
 static void *emalloc(size_t n) {
-  void *p;
-  
-  p = malloc(n);
-  if (p == NULL)
-    eprintf("malloc of %u bytes failed:", n);
+  void *p = malloc(n);
+  if (! p) abort();
   return p;
 }
 
-/* ecalloc - Dose the same thing as emalloc just calls calloc instead. */
 static void *ecalloc(uint32_t nelm, size_t nsize){
-  void *p;
- 
-  p = calloc(nelm, nsize);
-  if (p == NULL)
-    eprintf("calloc of %u bytes failed:", nelm * nsize);
+  void *p = calloc(nelm, nsize);
+  if (!p) abort();
   return p;
 }
 
@@ -419,7 +390,7 @@ static void dismem(machine_6502 *machine, AddrMode adm, char *output){
   Bit16 n;
   switch(adm){
   case SINGLE:
-    output = "";
+    *output = 0;
     break;
   case IMMEDIATE_LESS:
   case IMMEDIATE_GREAT:
@@ -467,7 +438,7 @@ static void dismem(machine_6502 *machine, AddrMode adm, char *output){
     sprintf(output,"$%x,x",n);
     break;
   case DCB_PARAM:
-    output = "";
+    *output = 0;
     break;
   }
 }
@@ -919,13 +890,13 @@ static void jmpRTS(machine_6502 *machine, AddrMode adm){
 
 static void jmpSBC(machine_6502 *machine, AddrMode adm){
   Pointer ptr;
-  Bit8 vflag;
+  /*Bit8 vflag;*/
   Bit8 c = bitOn(machine->regP, CARRY_FL);
   Bit16 tmp, w;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
-  vflag = (bitOn(machine->regA,NEGATIVE_FL) &&
-	   bitOn(ptr.value, NEGATIVE_FL));
+  /*vflag = (bitOn(machine->regA,NEGATIVE_FL) &&
+	   bitOn(ptr.value, NEGATIVE_FL));*/
 
   if (bitOn(machine->regP, DECIMAL_FL)) {
     Bit8 ar = nibble(machine->regA, RIGHT);
@@ -1700,12 +1671,10 @@ static char *fileToBuffer(const char *filename){
   int i = 0;
   char *buffer = ecalloc(defaultSize,sizeof(char));
 
-  if (buffer == NULL) 
-    eprintf("Could not allocate memory for buffer.");
+  if (!buffer) abort();
 
   ifp = fopen(filename, "rb");
-  if (ifp == NULL)
-    eprintf("Could not open file.");
+  if (!ifp) return 0;
 
   while((c = getc(ifp)) != EOF){
     buffer[i++] = c;
@@ -1713,15 +1682,13 @@ static char *fileToBuffer(const char *filename){
       size += defaultSize;
       buffer = realloc(buffer, size);
       if (buffer == NULL) {
-	fclose(ifp);
-	eprintf("Could not resize buffer.");
+        abort();
       }
     }
   }
   fclose(ifp);
   buffer = realloc(buffer, i+2);
-  if (buffer == NULL) 
-    eprintf("Could not resize buffer.");
+  if (!buffer) abort();
   /* Make sure we have a line feed at the end */
   buffer[i] = '\n';
   buffer[i+1] = '\0';
@@ -1776,8 +1743,7 @@ void hexDump(machine_6502 *machine, Bit16 start, Bit16 numbytes, FILE *output){
 /*   Bit16 end = pc + machine->codeLen; */
 /*   Bit16 n; */
 /*   ofp = fopen(filename, "w"); */
-/*   if (ofp == NULL) */
-/*     eprintf("Could not open file."); */
+/*   if (!ofp) abort(); */
   
 /*   fprintf(ofp,"Bit8 prog[%d] =\n{",machine->codeLen); */
 /*   n = 1; */
@@ -2011,7 +1977,7 @@ static BOOL indexLabels(AsmLine *asmline, void *arg){
   }
   else {
     machine->regPC = machine->defaultCodePC;
-    oldDefault = machine->defaultCodePC;
+    /*oldDefault = machine->defaultCodePC;*/
   }
 
   if (asmline->labelDecl) {
@@ -2204,9 +2170,7 @@ void eval_file(machine_6502 *machine, const char *filename, Plotter plot, void *
 
   code = fileToBuffer(filename);
   
-  if (! compileCode(machine, code) ){
-    eprintf("Could not compile code.\n");
-  }
+  if (! compileCode(machine, code) ) abort();
 
   free(code);
 
@@ -2230,9 +2194,7 @@ void start_eval_file(machine_6502 *machine, const char *filename, Plotter plot, 
 
   code = fileToBuffer(filename);
   
-  if (! compileCode(machine, code) ){
-    eprintf("Could not compile code.\n");
-  }
+  if (! compileCode(machine, code) ) abort();
 
   free(code);
 

@@ -555,6 +555,7 @@ init_planet (ModeInfo * mi)
   glPushMatrix ();
   glScalef (RADIUS, RADIUS, RADIUS);
   glRotatef (90, 1, 0, 0);
+  glFrontFace(GL_CW);
   unit_sphere (resolution, resolution, wire);
   mi->polygon_count += resolution*resolution;
   glPopMatrix ();

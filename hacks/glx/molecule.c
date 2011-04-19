@@ -27,7 +27,8 @@
 #define DEFAULTS	"*delay:	10000         \n" \
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
-			"*atomFont:   -*-helvetica-medium-r-normal-*-240-*\n" \
+			"*atomFont:   -*-helvetica-medium-r-normal-*-180-*\n" \
+			"*atomFont2:  -*-helvetica-bold-r-normal-*-80-*\n" \
 			"*titleFont:  -*-helvetica-medium-r-normal-*-180-*\n" \
 			"*noLabelThreshold:    30     \n" \
 			"*wireframeThreshold:  150    \n" \
@@ -65,8 +66,8 @@
 #define DEF_MOLECULE    "(default)"
 #define DEF_VERBOSE     "False"
 
-#define SPHERE_SLICES 24  /* how densely to render spheres */
-#define SPHERE_STACKS 12
+#define SPHERE_SLICES 48  /* how densely to render spheres */
+#define SPHERE_STACKS 24
 
 #define SMOOTH_TUBE       /* whether to have smooth or faceted tubes */
 
@@ -76,9 +77,9 @@
 # define TUBE_FACES  8
 #endif
 
-#define SPHERE_SLICES_2  7
-#define SPHERE_STACKS_2  4
-#define TUBE_FACES_2     3
+#define SPHERE_SLICES_2  14
+#define SPHERE_STACKS_2  8
+#define TUBE_FACES_2     6
 
 
 # ifdef __GNUC__
@@ -104,10 +105,10 @@ typedef struct {
    and their approximate size in angstroms.
  */
 static const atom_data all_atom_data[] = {
-  { "H",    1.17,  0.40, "#FFFFFF", "#B3B3B3", { 0, }},
+  { "H",    1.17,  0.40, "#FFFFFF", "#000000", { 0, }},
   { "C",    1.75,  0.58, "#999999", "#FFFFFF", { 0, }},
   { "CA",   1.80,  0.60, "#0000FF", "#ADD8E6", { 0, }},
-  { "N",    1.55,  0.52, "#A2B5CD", "#836FFF", { 0, }},
+  { "N",    1.55,  0.52, "#A2B5CD", "#EE99FF", { 0, }},
   { "O",    1.40,  0.47, "#FF0000", "#FFB6C1", { 0, }},
   { "P",    1.28,  0.43, "#9370DB", "#DB7093", { 0, }},
   { "S",    1.80,  0.60, "#8B8B00", "#FFFF00", { 0, }},
@@ -159,8 +160,8 @@ typedef struct {
   GLuint molecule_dlist;
   GLuint shell_dlist;
 
-  XFontStruct *xfont1, *xfont2;
-  GLuint font1_dlist, font2_dlist;
+  XFontStruct *xfont1, *xfont2, *xfont3;
+  GLuint font1_dlist, font2_dlist, font3_dlist;
   int polygon_count;
 
   time_t draw_time;
@@ -258,7 +259,8 @@ load_fonts (ModeInfo *mi)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
   load_font (mi->dpy, "atomFont",  &mc->xfont1, &mc->font1_dlist);
-  load_font (mi->dpy, "titleFont", &mc->xfont2, &mc->font2_dlist);
+  load_font (mi->dpy, "atomFont2", &mc->xfont2, &mc->font2_dlist);
+  load_font (mi->dpy, "titleFont", &mc->xfont3, &mc->font3_dlist);
 }
 
 
@@ -332,6 +334,16 @@ set_atom_color (ModeInfo *mi, const molecule_atom *a,
     }
   
   gl_color[3] = alpha;
+
+  /* If we're not drawing atoms, and the color is black, use white instead.
+     This is a kludge so that H can have black text over its white ball,
+     but the text still shows up if balls are off.
+   */
+  if (font_p && !do_atoms &&
+      gl_color[0] == 0 && gl_color[1] == 0 && gl_color[2] == 0)
+    {
+      gl_color[0] = gl_color[1] = gl_color[2] = 1;
+    }
 
   if (font_p)
     glColor4f (gl_color[0], gl_color[1], gl_color[2], gl_color[3]);
@@ -1195,7 +1207,7 @@ startup_blurb (ModeInfo *mi)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
   const char *s = "Constructing molecules...";
-  print_gl_string (mi->dpy, mc->xfont2, mc->font2_dlist,
+  print_gl_string (mi->dpy, mc->xfont3, mc->font3_dlist,
                    mi->xgwa.width, mi->xgwa.height,
                    10, mi->xgwa.height - 10,
                    s, False);
@@ -1353,6 +1365,8 @@ draw_labels (ModeInfo *mi)
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
   molecule *m = &mc->molecules[mc->which];
+  XFontStruct *xfont = (mc->scale_down ? mc->xfont2 : mc->xfont1);
+  GLuint font_dlist  = (mc->scale_down ? mc->font2_dlist : mc->font1_dlist);
   int i, j;
 
   if (!do_labels)
@@ -1412,13 +1426,13 @@ draw_labels (ModeInfo *mi)
       /* Before drawing the string, shift the origin to center
          the text over the origin of the sphere. */
       glBitmap (0, 0, 0, 0,
-                -string_width (mc->xfont1, a->label, 0) / 2,
-                -mc->xfont1->descent,
+                -string_width (xfont, a->label, 0) / 2,
+                -xfont->descent,
                 NULL);
 
       for (j = 0; j < strlen(a->label); j++)
 
-        glCallList (mc->font1_dlist + (int)(a->label[j]));
+        glCallList (font_dlist + (int)(a->label[j]));
 
       glPopMatrix();
     }
@@ -1613,7 +1627,7 @@ draw_molecule (ModeInfo *mi)
       if (do_titles && m->label && *m->label)
         {
           set_atom_color (mi, 0, True, 1);
-          print_gl_string (mi->dpy, mc->xfont2, mc->font2_dlist,
+          print_gl_string (mi->dpy, mc->xfont3, mc->font3_dlist,
                            mi->xgwa.width, mi->xgwa.height,
                            10, mi->xgwa.height - 10,
                            m->label, False);

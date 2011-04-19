@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.11
-!                              13-Apr-2010
+!                              version 5.12
+!                              15-Sep-2010
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -72,6 +72,7 @@
 *sgiSaverExtension:	True
 *xidleExtension:	True
 *procInterrupts:	True
+*xinputExtensionDev:	True
 
 ! Set this to True if you are experiencing longstanding XFree86 bug #421
 ! (xscreensaver not covering the whole screen)

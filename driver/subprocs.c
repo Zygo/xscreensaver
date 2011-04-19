@@ -1179,6 +1179,8 @@ get_best_gl_visual (saver_info *si, Screen *screen)
   pid_t forked;
   int fds [2];
   int in, out;
+  int errfds[2];
+  int errin = -1, errout = -1;
   char buf[1024];
 
   char *av[10];
@@ -1196,6 +1198,18 @@ get_best_gl_visual (saver_info *si, Screen *screen)
   in = fds [0];
   out = fds [1];
 
+  if (!si->prefs.verbose_p)
+    {
+      if (pipe (errfds))
+        {
+          perror ("error creating pipe:");
+          return 0;
+        }
+
+      errin = errfds [0];
+      errout = errfds [1];
+    }
+
   block_sigchld();   /* This blocks it in the parent and child, to avoid
                         racing.  It is never unblocked in the child before
                         the child exits, but that doesn't matter.
@@ -1211,16 +1225,25 @@ get_best_gl_visual (saver_info *si, Screen *screen)
       }
     case 0:
       {
-        int stdout_fd = 1;
-
         close (in);  /* don't need this one */
         close (ConnectionNumber (si->dpy));	/* close display fd */
 
-        if (dup2 (out, stdout_fd) < 0)		/* pipe stdout */
+        if (dup2 (out, STDOUT_FILENO) < 0)	/* pipe stdout */
           {
             perror ("could not dup() a new stdout:");
             return 0;
           }
+
+        if (! si->prefs.verbose_p)
+          {
+            close(errin);
+            if (dup2 (errout, STDERR_FILENO) < 0)
+              {
+                perror ("could not dup() a new stderr:");
+                return 0;
+              }
+          }
+
         hack_subproc_environment (screen, 0);	/* set $DISPLAY */
 
         execvp (av[0], av);			/* shouldn't return. */
@@ -1250,6 +1273,12 @@ get_best_gl_visual (saver_info *si, Screen *screen)
         if (! fgets (buf, sizeof(buf)-1, f))
           *buf = 0;
         fclose (f);
+
+        if (! si->prefs.verbose_p)
+          {
+            close (errout);
+            close (errin);
+          }
 
         /* Wait for the child to die. */
         waitpid (-1, &wait_status, 0);

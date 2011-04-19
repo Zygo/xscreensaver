@@ -445,8 +445,6 @@ init_voronoi (ModeInfo *mi)
       fprintf(stderr, "%s: out of memory\n", progname);
       exit(1);
     }
-
-    vp = &vps[MI_SCREEN(mi)];
   }
 
   vp = &vps[MI_SCREEN(mi)];

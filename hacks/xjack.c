@@ -62,6 +62,10 @@ xjack_reshape (Display *dpy, Window window, void *closure,
   st->rows--;
   st->columns--;
 
+  /* If the window is stupidly small, just truncate. */
+  if (st->rows < 4)     st->rows = 4;
+  if (st->columns < 12) st->columns = 12;
+
   if (st->y > st->rows)    st->y = st->rows-1;
   if (st->x > st->columns) st->x = st->columns-2;
 
@@ -116,9 +120,12 @@ xjack_init (Display *dpy, Window window)
 
   xjack_reshape (dpy, window, st, st->xgwa.width, st->xgwa.height);
 
-  st->left = 0xFF & (random() % ((st->columns / 2)+1));
-  st->right = st->left + (0xFF & (random() % (st->columns - st->left - 10)
-                                  + 10));
+  if (st->columns >= 21)
+    {
+      st->left = 0xFF & (random() % ((st->columns / 2)+1));
+      st->right = st->left + (0xFF & (random() % (st->columns - st->left - 10)
+                                      + 10));
+    }
   st->x = 0;
   st->y = 0;
 

@@ -314,10 +314,8 @@ FuzzyFlakesInit(Flake *flake)
 {
    int                 i, j;
    XWindowAttributes   xgwa;
-   Colormap            cmap;
 
    XGetWindowAttributes(flake->dpy, flake->window, &xgwa);
-   cmap = xgwa.colormap;
    flake->XGWA = xgwa;
    flake->DB.b = flake->DB.ba = flake->DB.bb = 0;
    flake->DB.dbuf = get_boolean_resource(flake->dpy, "doubleBuffer", "Boolean");

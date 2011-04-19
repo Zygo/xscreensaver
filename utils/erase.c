@@ -574,12 +574,7 @@ losira (eraser_state *st)
   else if (st->ratio < mode2)		/* squeeze from the top/bottom */
     {
       double ratio = (st->ratio - mode1) / (mode2 - mode1);
-      double prev_ratio = (st->prev_ratio - mode1) / (mode2 - mode1);
       int max = st->height / 2;
-      int step = (max * ratio) - (max * prev_ratio);
-
-      if (step <= 0)
-        step = 1;
 
       /* fill middle */
       XFillRectangle (st->dpy, st->window, st->fg_gc,

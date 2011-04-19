@@ -709,7 +709,8 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
   Bool polling_mouse_position = (si->using_proc_interrupts ||
                                  !(si->using_xidle_extension ||
                                    si->using_mit_saver_extension ||
-                                   si->using_sgi_saver_extension));
+                                   si->using_sgi_saver_extension) ||
+				   si->using_xinput_extension);
 
   if (until_idle_p)
     {
@@ -1025,8 +1026,32 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	else
 #endif /* HAVE_SGI_SAVER_EXTENSION */
 
+#ifdef HAVE_XINPUT
+        if ((!until_idle_p) && (si->num_xinput_devices > 0) &&
+	    (event.x_event.type == si->xinput_DeviceMotionNotify ||
+	     event.x_event.type == si->xinput_DeviceButtonPress ||
+	     event.x_event.type == si->xinput_DeviceButtonRelease ))
+	  {
+
+	    dispatch_event (si, &event.x_event);
+	    if (si->demoing_p &&
+		(event.x_event.type == si->xinput_DeviceMotionNotify ||
+		 event.x_event.type == si->xinput_DeviceButtonRelease) )
+              /* When we're demoing a single hack, mouse motion doesn't
+                 cause deactivation.  Only clicks and keypresses do. */
+	      ;
+	    else
+              /* If we're not demoing, then any activity causes deactivation.
+               */
+	      goto DONE;
+	  }
+	else
+#endif /* HAVE_XINPUT */
+
 #ifdef HAVE_RANDR
-        if (event.x_event.type == (si->randr_event_number + RRScreenChangeNotify))
+        if (si->using_randr_extension &&
+            (event.x_event.type == 
+             (si->randr_event_number + RRScreenChangeNotify)))
           {
             /* The Resize and Rotate extension sends an event when the
                size, rotation, or refresh rate of any screen has changed.

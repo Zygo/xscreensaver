@@ -202,11 +202,11 @@ draw_fadeplot (ModeInfo * mi)
 	if ((fp->temps % (fp->angles / 2)) == 0) {
 		fp->temps = fp->temps % fp->angles * 5;
 		if ((fp->temps % (fp->angles)) == 0)
-			fp->speed.y = (fp->speed.y++) % 30 + 1;
+			fp->speed.y = (fp->speed.y + 1) % 30 + 1;
 		if ((fp->temps % (fp->angles * 2)) == 0)
 			fp->speed.x = (fp->speed.x) % 20;
 		if ((fp->temps % (fp->angles * 3)) == 0)
-			fp->step.y = (fp->step.y++) % 2 + 1;
+			fp->step.y = (fp->step.y + 1) % 2 + 1;
 
 		MI_CLEARWINDOW(mi);
 	}

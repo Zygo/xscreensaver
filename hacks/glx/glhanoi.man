@@ -9,6 +9,8 @@ glhanoi - OpenGL Towers of Hanoi
 [\-root]
 [\-delay \fInumber\fP]
 [\-count \fInumber\fP]
+[\-poles \fInumber\fP]
+[\-speed \fInumber\fP]
 [\-wireframe]
 [\-light]
 [\-texture]
@@ -33,6 +35,12 @@ Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds.).
 .TP 8
 .B \-count \fInumber\fP
 Number of disks.  Default: 7.
+.TP 8
+.B \-poles \fInumber\fP
+Number of poles.  Default: random from 3 to disks+1.
+.TP 8
+.B \-speed \fInumber\fP
+Speed multiplier (for smallest disks).  Default: 1.
 .TP 8
 .B \-wireframe | \-no-wireframe
 Render in wireframe instead of solid.

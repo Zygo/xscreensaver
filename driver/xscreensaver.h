@@ -46,6 +46,11 @@ extern Bool ensure_no_screensaver_running (Display *, Screen *);
 extern Bool query_proc_interrupts_available (saver_info *, const char **why);
 #endif
 
+#ifdef HAVE_XINPUT
+extern Bool query_xinput_extension (saver_info *);
+extern void init_xinput_extension (saver_info *si);
+#endif
+
 /* Display Power Management System (DPMS) interface. */
 extern Bool monitor_powered_on_p (saver_info *si);
 extern void monitor_power_on (saver_info *si);

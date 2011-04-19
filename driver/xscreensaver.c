@@ -144,6 +144,11 @@
 #include <ctype.h>
 #include <X11/Xlib.h>
 
+#ifdef ENABLE_NLS
+# include <locale.h>
+# include <libintl.h>
+#endif /* ENABLE_NLS */
+
 #include <X11/Xlibint.h>
 
 #include <X11/Xatom.h>
@@ -860,12 +865,14 @@ initialize_server_extensions (saver_info *si)
   Bool server_has_sgi_saver_extension_p = False;
   Bool server_has_mit_saver_extension_p = False;
   Bool system_has_proc_interrupts_p = False;
+  Bool server_has_xinput_extension_p = False;
   const char *piwhy = 0;
 
   si->using_xidle_extension = p->use_xidle_extension;
   si->using_sgi_saver_extension = p->use_sgi_saver_extension;
   si->using_mit_saver_extension = p->use_mit_saver_extension;
   si->using_proc_interrupts = p->use_proc_interrupts;
+  si->using_xinput_extension = p->use_xinput_extension;
 
 #ifdef HAVE_XIDLE_EXTENSION
   {
@@ -887,6 +894,10 @@ initialize_server_extensions (saver_info *si)
 #endif
 #ifdef HAVE_PROC_INTERRUPTS
   system_has_proc_interrupts_p = query_proc_interrupts_available (si, &piwhy);
+#endif
+
+#ifdef HAVE_XINPUT
+  server_has_xinput_extension_p = query_xinput_extension (si);
 #endif
 
   if (!server_has_xidle_extension_p)
@@ -931,6 +942,8 @@ initialize_server_extensions (saver_info *si)
       int nscreens = ScreenCount (si->dpy);  /* number of *real* screens */
       int i;
 
+      si->using_randr_extension = TRUE;
+
       if (p->verbose_p)
 	fprintf (stderr, "%s: selecting RANDR events\n", blurb());
       for (i = 0; i < nscreens; i++)
@@ -942,6 +955,28 @@ initialize_server_extensions (saver_info *si)
 #  endif /* !RRScreenChangeNotifyMask */
     }
 # endif /* HAVE_RANDR */
+
+#ifdef HAVE_XINPUT
+  if (!server_has_xinput_extension_p)
+    si->using_xinput_extension = False;
+  else
+    {
+      if (si->using_xinput_extension)
+        init_xinput_extension(si);
+
+      if (p->verbose_p)
+        {
+          if (si->using_xinput_extension)
+            fprintf (stderr,
+                     "%s: selecting events from %d XInputExtension devices.\n",
+                     blurb(), si->num_xinput_devices);
+          else
+            fprintf (stderr,
+                     "%s: not using XInputExtension.\n",
+                     blurb());
+        }
+    }
+#endif
 
   if (!system_has_proc_interrupts_p)
     {
@@ -1346,6 +1381,14 @@ main (int argc, char **argv)
   saver_preferences *p = &si->prefs;
   struct passwd *spasswd;
   int i;
+
+#ifdef ENABLE_NLS
+  if (!setlocale (LC_ALL, ""))
+    fprintf (stderr, "locale not supported by C library\n");
+
+  bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
+  textdomain (GETTEXT_PACKAGE);
+#endif /* ENABLE_NLS */
 
   memset(si, 0, sizeof(*si));
   global_si_kludge = si;	/* I hate C so much... */
@@ -2132,6 +2175,8 @@ analyze_display (saver_info *si)
    }, { "NV-GLX",                               "NVidia GLX",
         True,  0
    }, { "Apple-DRI",                            "Apple-DRI (XDarwin)",
+        True,  0
+   }, { "XInputExtension",                      "XInput",
         True,  0
    },
   };

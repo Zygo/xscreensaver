@@ -33,8 +33,8 @@
 
 
 /* For debugging: if true then in wireframe, do not abbreviate. */
-static Bool wire_all_p = False+1;
-static Bool show_normals_p = False+1;
+static Bool wire_all_p = False;
+static Bool show_normals_p = False;
 
 
 /* Draws an uncapped tube of the given radius extending from top to bottom,
