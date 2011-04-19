@@ -1,4 +1,4 @@
-/* pinion, Copyright (c) 2004-2008 Jamie Zawinski <jwz@jwz.org>
+/* pinion, Copyright (c) 2004-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1349,6 +1349,7 @@ init_pinion (ModeInfo *mi)
 
   load_fonts (mi);
   reshape_pinion (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+  clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
 
   pp->title_list  = glGenLists (1);
 

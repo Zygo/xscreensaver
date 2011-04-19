@@ -784,8 +784,6 @@ ENTRYPOINT void init_chess(ModeInfo *mi)
   else
     MI_CLEARWINDOW(mi);
 
-  glClearColor(0.0, 0.0, 0.0, 0.0);
-
   if (!cs->wire) {
     glDepthFunc(GL_LEQUAL);
     glClearStencil(0);

@@ -281,6 +281,7 @@ spline.o: $(srcdir)/spline.h
 spline.o: $(srcdir)/utils.h
 usleep.o: ../config.h
 visual-gl.o: ../config.h
+visual-gl.o: $(srcdir)/resources.h
 visual-gl.o: $(srcdir)/utils.h
 visual-gl.o: $(srcdir)/visual.h
 visual.o: ../config.h

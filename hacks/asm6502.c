@@ -95,11 +95,11 @@ typedef struct {
 } Pointer;
 
 
-static void *emalloc(size_t n) {
+/*static void *emalloc(size_t n) {
   void *p = malloc(n);
   if (! p) abort();
   return p;
-}
+}*/
 
 static void *ecalloc(uint32_t nelm, size_t nsize){
   void *p = calloc(nelm, nsize);
@@ -1130,7 +1130,7 @@ static Param *newParam(void){
   Param *newp;
   int i = 0;
 
-  newp = (Param *) emalloc(sizeof(Param));
+  newp = (Param *) ecalloc(1, sizeof(Param));
   newp->type = SINGLE;
   for (i = 0; i < MAX_PARAM_VALUE; i++)
     newp->value[i] = 0;
@@ -1153,7 +1153,7 @@ static void copyParam(Param *p1, Param *p2){
 static Label *newLabel(void){
   Label *newp; 
 
-  newp = (Label *) emalloc(sizeof(Label));
+  newp = (Label *) ecalloc(1, sizeof(Label));
   newp->addr = 0;
   newp->label = ecalloc(MAX_LABEL_LEN,sizeof(char));
   
@@ -1164,7 +1164,7 @@ static AsmLine *newAsmLine(char *cmd, char *label, BOOL decl, Param *param, int 
 {
     AsmLine *newp;
 
-    newp =  (AsmLine *) emalloc(sizeof(AsmLine));
+    newp =  (AsmLine *) ecalloc(1, sizeof(AsmLine));
     newp->labelDecl = decl;
     newp->label = newLabel();
     strncpy(newp->label->label,label,MAX_LABEL_LEN);
@@ -2091,7 +2091,7 @@ static void execute(machine_6502 *machine){
 
 machine_6502 *build6502(){
   machine_6502 *machine;
-  machine = emalloc(sizeof(machine_6502));
+  machine = ecalloc(1, sizeof(machine_6502));
   assignOpCodes(machine->opcodes);
   buildIndexCache(machine);
   reset(machine);

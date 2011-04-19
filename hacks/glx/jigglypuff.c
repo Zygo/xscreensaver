@@ -784,7 +784,6 @@ static void setup_opengl(ModeInfo *mi, jigglystruct *js)
     const GLfloat scolor[4]= {0.9f, 0.9f, 0.9f, 0.5f};
 
     glDrawBuffer(GL_BACK);
-    glClearColor(0, 0, 0, 0);
     glShadeModel(GL_SMOOTH);
     glEnable(GL_DEPTH_TEST);
 

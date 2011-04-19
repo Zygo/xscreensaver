@@ -34,16 +34,7 @@ struct glb_config glb_config =
 	1.5,			/* scale_factor */
 	-4,			/* screen_bottom */
 	4,			/* screen_top */
-#if 0
-	{0.1, 0.0, 0.4, 0.0},	/* bg_colour */
-#else
-	{0.0, 0.0, 0.0, 0.0},	/* bg_colour */
-#endif
-#if 0
-	{0.7, 0.7, 0.0, 0.3}	/* bubble_colour */
-#else
 	{0.0, 0.0, 0.7, 0.3}	/* bubble_colour */
-#endif
 };
 
 #ifdef STANDALONE

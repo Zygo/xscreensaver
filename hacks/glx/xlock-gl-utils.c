@@ -121,6 +121,19 @@ init_GL(ModeInfo * mi)
   /* Sometimes glDrawBuffer() throws "invalid op". Dunno why. Ignore. */
   clear_gl_error ();
 
+  /* Process the -background argument. */
+  {
+    char *s = get_string_resource(mi->dpy, "background", "Background");
+    XColor c = { 0, };
+    if (! XParseColor (dpy, mi->xgwa.colormap, s, &c))
+      fprintf (stderr, "%s: can't parse color %s; using black.\n", 
+               progname, s);
+    glClearColor (c.red   / 65535.0,
+                  c.green / 65535.0,
+                  c.blue  / 65535.0,
+                  1.0);
+  }
+
   /* GLXContext is already a pointer type.
      Why this function returns a pointer to a pointer, I have no idea...
    */

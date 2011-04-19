@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2010 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -10,6 +10,11 @@
  */
 
 /* This is the OSX implementation of desktop-grabbing and image-loading.
+   This code is invoked by "utils/grabclient.c", which is linked directly
+   in to each screen saver bundle.
+
+   X11-based builds of the savers do not use this code (even on MacOS).
+   This is used only by the Cocoa build of the savers.
  */
 
 #import <stdlib.h>
@@ -216,8 +221,10 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
   // Splat the XImage onto the target drawable (probably the window)
   // and free the bits.
   //
-  GC gc = 0;
+  XGCValues gcv;
+  GC gc = XCreateGC (dpy, drawable, 0, &gcv);
   XPutImage (dpy, drawable, gc, xim, 0, 0, 0, 0, xim->width, xim->height);
+  XFreeGC (dpy, gc);
   XDestroyImage (xim);
 }
 

@@ -78,7 +78,7 @@
 <option _label="Triakisicosahedron" arg-set="-which triakisicosahedron"/>
 <option _label="Rhombicosidodecahedron" arg-set="-which rhombicosidodecahedron"/>
 <option _label="Deltoidal hexecontahedron" arg-set="-which deltoidal_hexecontahedron"/>
-<option _label="Truncated icosidodechedon" arg-set="-which truncated_icosidodechedon"/>
+<option _label="Truncated icosidodecahedron" arg-set="-which truncated_icosidodecahedron"/>
 <option _label="Disdyakistriacontahedron" arg-set="-which disdyakistriacontahedron"/>
 <option _label="Snub dodecahedron" arg-set="-which snub_dodecahedron"/>
 <option _label="Pentagonal hexecontahedron" arg-set="-which pentagonal_hexecontahedron"/>

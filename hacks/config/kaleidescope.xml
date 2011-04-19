@@ -19,8 +19,7 @@
 
   <number id="ntrails" type="slider" arg="-ntrails %"
           _label="Trails" _low-label="Few" _high-label="Many"
-          low="1" high="1000" default="100"
-          convert="invert"/>
+          low="1" high="1000" default="100"/>
 
   <!-- #### -local_rotation [-59] -->
   <!-- #### -global_rotation [1] -->

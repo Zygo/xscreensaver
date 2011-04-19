@@ -382,6 +382,12 @@ main (int argc, char **argv)
   if (w < 0) usage();
   if (h < 0) usage();
 
+  if (w == 0 || h == 0 || 
+      w > 10240 || h > 10240) {
+    fprintf (stderr, "%s: absurd size: %d x %d\n", progname, w, h);
+    exit (1);
+  }
+
 
   // Much of Cocoa needs one of these to be available.
   NSAutoreleasePool *pool = [[NSAutoreleasePool alloc] init];

@@ -1,4 +1,4 @@
-/* tube, Copyright (c) 2001-2010 Jamie Zawinski <jwz@jwz.org>
+/* tube, Copyright (c) 2001-2011 Jamie Zawinski <jwz@jwz.org>
  * Utility functions to create tubes and cones in GL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -27,6 +27,7 @@
 #include "tube.h"
 
 typedef struct { GLfloat x, y, z; } XYZ;
+
 
 static int
 unit_tube (int faces, int smooth, int caps_p, int wire_p)
@@ -180,6 +181,8 @@ unit_tube (int faces, int smooth, int caps_p, int wire_p)
 
         glDrawArrays ((wire_p ? GL_LINE_LOOP : GL_TRIANGLE_FAN), 0, out);
       }
+
+  free(array);
 
   return polys;
 }

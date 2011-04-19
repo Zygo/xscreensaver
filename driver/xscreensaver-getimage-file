@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001-2009 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001-2011 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -19,6 +19,8 @@
 # Under X11, the "xscreensaver-getimage" program invokes this script,
 # depending on the value of the "chooseRandomImages" and "imageDirectory"
 # settings in the ~/.xscreensaver file (or .../app-defaults/XScreenSaver).
+# The screen savers invoke "xscreensaver-getimage" via utils/grabclient.c,
+# which then invokes this script.
 #
 # Under Cocoa, this script lives inside the .saver bundle, and is invoked
 # directly from utils/grabclient.c.
@@ -44,7 +46,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
             # errors about UTF-8 all over the place without this.
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.27 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.29 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -104,18 +106,19 @@ my $stat_count = 0;	    # number of files/dirs stat'ed
 my $skip_count_unstat = 0;  # number of files skipped without stat'ing
 my $skip_count_stat = 0;    # number of files skipped after stat
 
-sub find_all_files {
+sub find_all_files($);
+sub find_all_files($) {
   my ($dir) = @_;
 
   print STDERR "$progname:  + reading dir $dir/...\n" if ($verbose > 1);
 
-  local *DIR;
-  if (! opendir (DIR, $dir)) {
+  my $dd;
+  if (! opendir ($dd, $dir)) {
     print STDERR "$progname: couldn't open $dir: $!\n" if ($verbose);
     return;
   }
-  my @files = readdir (DIR);
-  closedir (DIR);
+  my @files = readdir ($dd);
+  closedir ($dd);
 
   my @dirs = ();
 
@@ -190,7 +193,7 @@ sub find_all_files {
 }
 
 
-sub spotlight_all_files {
+sub spotlight_all_files($) {
   my ($dir) = @_;
 
   my @terms = ();
@@ -220,7 +223,7 @@ sub spotlight_all_files {
 # running at once, one will wait for the other, instead of both of
 # them spanking the same file system at the same time.
 #
-local *CACHE_FILE;
+my $cache_fd = undef;
 my $cache_file_name = undef;
 my $read_cache_p = 0;
 
@@ -242,18 +245,18 @@ sub read_cache($) {
     if ($verbose > 1);
 
   my $file = $cache_file_name;
-  open (CACHE_FILE, "+>>$file") || error ("unable to write $file: $!");
-  flock (CACHE_FILE, LOCK_EX)   || error ("unable to lock $file: $!");
-  seek (CACHE_FILE, 0, 0)       || error ("unable to rewind $file: $!");
+  open ($cache_fd, '+>>', $file) || error ("unable to write $file: $!");
+  flock ($cache_fd, LOCK_EX)     || error ("unable to lock $file: $!");
+  seek ($cache_fd, 0, 0)         || error ("unable to rewind $file: $!");
 
-  my $mtime = (stat(CACHE_FILE))[9];
+  my $mtime = (stat($cache_fd))[9];
 
   if ($mtime + $cache_max_age < time) {
     print STDERR "$progname: cache is too old\n" if ($verbose);
     return ();
   }
 
-  my $odir = <CACHE_FILE>;
+  my $odir = <$cache_fd>;
   $odir =~ s/[\r\n]+$//s if defined ($odir);
   if (!defined ($odir) || ($dir ne $odir)) {
     print STDERR "$progname: cache is for $odir, not $dir\n"
@@ -262,7 +265,7 @@ sub read_cache($) {
   }
 
   my @files = ();
-  while (<CACHE_FILE>) { 
+  while (<$cache_fd>) { 
     s/[\r\n]+$//s;
     push @files, "$odir/$_";
   }
@@ -285,18 +288,17 @@ sub write_cache($) {
 
   if (! $read_cache_p) {
 
-    truncate (CACHE_FILE, 0) ||
+    truncate ($cache_fd, 0) ||
       error ("unable to truncate $cache_file_name: $!");
-    seek (CACHE_FILE, 0, 0) ||
+    seek ($cache_fd, 0, 0) ||
       error ("unable to rewind $cache_file_name: $!");
 
     if ($#all_files >= 0) {
-      print CACHE_FILE "$dir\n";
-      my $re = qr/$dir/;
+      print $cache_fd "$dir\n";
       foreach (@all_files) {
         my $f = $_; # stupid Perl. do this to avoid modifying @all_files!
-        $f =~ s@^$re/@@so || die;
-        print CACHE_FILE "$f\n";
+        $f =~ s@^\Q$dir\L/@@so || die;  # remove $dir from front
+        print $cache_fd "$f\n";
       }
     }
 
@@ -304,16 +306,15 @@ sub write_cache($) {
       if ($verbose);
   }
 
-  flock (CACHE_FILE, LOCK_UN) ||
+  flock ($cache_fd, LOCK_UN) ||
     error ("unable to unlock $cache_file_name: $!");
-  close (CACHE_FILE);
+  close ($cache_fd);
+  $cache_fd = undef;
 }
 
 
 sub find_random_file($) {
   my ($dir) = @_;
-
-  $dir =~ s@/+$@@g;
 
   if ($use_spotlight_p == -1) {
     $use_spotlight_p = 0;
@@ -349,7 +350,7 @@ sub find_random_file($) {
 
   write_cache ($dir);
 
-  @all_files = sort(@all_files);
+#  @all_files = sort(@all_files);
 
   if ($#all_files < 0) {
     print STDERR "$progname: no files in $dir\n";
@@ -362,6 +363,7 @@ sub find_random_file($) {
     my $n = int (rand ($#all_files + 1));
     my $file = $all_files[$n];
     if (large_enough_p ($file)) {
+      $file =~ s@^\Q$dir\L/@@so || die;  # remove $dir from front
       return $file;
     }
   }
@@ -372,7 +374,7 @@ sub find_random_file($) {
 }
 
 
-sub large_enough_p {
+sub large_enough_p($) {
   my ($file) = @_;
 
   my ($w, $h) = image_file_size ($file);
@@ -399,7 +401,7 @@ sub large_enough_p {
 
 # Given the raw body of a GIF document, returns the dimensions of the image.
 #
-sub gif_size {
+sub gif_size($) {
   my ($body) = @_;
   my $type = substr($body, 0, 6);
   my $s;
@@ -411,7 +413,7 @@ sub gif_size {
 
 # Given the raw body of a JPEG document, returns the dimensions of the image.
 #
-sub jpeg_size {
+sub jpeg_size($) {
   my ($body) = @_;
   my $i = 0;
   my $L = length($body);
@@ -462,7 +464,7 @@ sub jpeg_size {
 
 # Given the raw body of a PNG document, returns the dimensions of the image.
 #
-sub png_size {
+sub png_size($) {
   my ($body) = @_;
   return () unless ($body =~ m/^\211PNG\r/s);
   my ($bits) = ($body =~ m/^.{12}(.{12})/s);
@@ -476,7 +478,7 @@ sub png_size {
 # Given the raw body of a GIF, JPEG, or PNG document, returns the dimensions
 # of the image.
 #
-sub image_size {
+sub image_size($) {
   my ($body) = @_;
   return () if (length($body) < 10);
   my ($w, $h) = gif_size ($body);
@@ -489,17 +491,17 @@ sub image_size {
 
 # Returns the dimensions of the image file.
 #
-sub image_file_size {
+sub image_file_size($) {
   my ($file) = @_;
-  local *IN;
-  if (! open (IN, "<$file")) {
+  my $in;
+  if (! open ($in, '<', $file)) {
     print STDERR "$progname: $file: $!\n" if ($verbose);
     return undef;
   }
-  binmode (IN);  # Larry can take Unicode and shove it up his ass sideways.
+  binmode ($in);  # Larry can take Unicode and shove it up his ass sideways.
   my $body = '';
-  sysread (IN, $body, 1024 * 50);   # The first 50k should be enough.
-  close IN;			    # (It's not for certain huge jpegs...
+  sysread ($in, $body, 1024 * 50);  # The first 50k should be enough.
+  close $in;			    # (It's not for certain huge jpegs...
   return image_size ($body);	    # but we know they're huge!)
 }
 
@@ -510,7 +512,7 @@ sub error($) {
   exit 1;
 }
 
-sub usage {
+sub usage() {
   print STDERR "usage: $progname [--verbose] directory\n" .
   "       Prints the name of a randomly-selected image file.  The directory\n" .
   "       is searched recursively.  Images smaller than " .
@@ -518,7 +520,7 @@ sub usage {
   exit 1;
 }
 
-sub main {
+sub main() {
   my $dir = undef;
 
   while ($_ = $ARGV[0]) {
@@ -538,6 +540,7 @@ sub main {
   usage unless (defined($dir));
 
   $dir =~ s@^~/@$ENV{HOME}/@s;     # allow literal "~/"
+  $dir =~ s@/+$@@s;		   # omit trailing /
 
   if (! -d $dir) {
     print STDERR "$progname: $dir: not a directory\n";

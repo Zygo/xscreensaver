@@ -470,8 +470,6 @@ ENTRYPOINT void init_screenflip(ModeInfo *mi)
  c->show_colors[0] = c->show_colors[1] = 
    c->show_colors[2] = c->show_colors[3] = 1;
 
- glClearColor(0.0,0.0,0.0,0.0);
-
  if (! MI_IS_WIREFRAME(mi))
    {
      glShadeModel(GL_SMOOTH);

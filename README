@@ -38,6 +38,16 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.12:   * Optionally enabled full-scene OpenGL antialiasing.
+                        Set the resource `*multiSample' to true if doing so
+                        doesn't kill performance with your video hardware.
+                      * New version of `glhanoi'.
+                      * Image-loading hacks that display the file name now also
+                        display the sub-directory (xscreensaver-getimage now
+                        returns relative paths under imageDirectory).
+                      * Passwords that contain UTF-8 non-Latin1 chars are now
+                        typeable.
+                      * Numerous minor stability fixes.
 Changes since 5.11:   * Big speed improvement on OSX for heavy XCopyArea
                         users (`xmatrix', `moire2', `phosphor', etc.)
                       * Plugged a bad OSX-only Pixmap leak.

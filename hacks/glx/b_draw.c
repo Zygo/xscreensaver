@@ -61,11 +61,6 @@ glb_draw_init(void)
 	c->bubble_count = glb_config.create_bubbles_every;
 
 	/* Do some GL initialization. */
-	glClearColor(glb_config.bg_colour[0],
-		     glb_config.bg_colour[1],
-		     glb_config.bg_colour[2],
-		     glb_config.bg_colour[3]);
-
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, glb_config.bubble_colour);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, mat_specular);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, mat_emission);

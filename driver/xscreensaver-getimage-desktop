@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2003, 2005 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2003-2005 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -9,32 +9,32 @@
 # software for any purpose.  It is provided "as is" without express or 
 # implied warranty.
 #
-# This program attempts to grab an image of the desktop, and then load
-# it on to the root window using the "xscreensaver-getimage-file"
-# program.  Various frame-grabbing programs are known, and the first
-# one found is used.
 #
-# NOTE:  This script is only used on MacOS X / XDarwin systems, because
-#        on those systems, it's necessary to use the "screencapture"
-#        program to get an image of the desktop -- the usual X11
-#        mechanism for grabbing the screen doesn't work on OSX.
+# This script is invoked by "xscreensaver-getimage" on X11 MacOS systems
+# to grab an image of the desktop, and then load it on to the given X11
+# Drawable using the "xscreensaver-getimage-file" program.
 #
-# The various xscreensaver hacks that manipulate images ("slidescreen",
-# "jigsaw", etc.) get the image to manipulate by running the
-# "xscreensaver-getimage" program.
+# This script is only used in an *X11* build on MacOS systems.
 #
-# "xscreensaver-getimage" will invoke this program, depending on the
-# value of the "grabDesktopImages" setting in the ~/.xscreensaver file
-# (or in /usr/lib/X11/app-defaults/XScreenSaver).
+# When running on non-Mac X11 systems, utils/grabscreen.c is used.
+#
+# However, when running under X11 on MacOS, that usual X11-based
+# screen-grabbing mechanism doesn't work, so we need to invoke the
+# "/usr/bin/screencapture" program to do it instead.  (This script).
+#
+# However again, for the MacOS-native (Cocoa) build of the screen savers,
+# "utils/grabclient.c" instead links against "OSX/osxgrabscreen.m", which
+# grabs screen images directly without invoking a sub-process to do it.
 #
 # Created: 20-Oct-2003.
+
 
 require 5;
 #use diagnostics;	# Fails on some MacOS 10.5 systems
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.4 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.5 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my @grabber   = ("screencapture", "-x");
 my @converter = ("pdf2jpeg");

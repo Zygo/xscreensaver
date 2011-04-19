@@ -447,7 +447,7 @@ static const struct {
 				"Catalan Solid",
 				30, 14},
 
-  /* 33 */	{"2 3 5|",	"Truncated Icosidodechedon",
+  /* 33 */	{"2 3 5|",	"Truncated Icosidodecahedron",
 				"Disdyakistriacontahedron",
 				"Icosahedral (I[1])",
 				"Archimedian Solid",

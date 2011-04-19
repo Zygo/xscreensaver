@@ -109,6 +109,8 @@ static XrmOptionDescRec opts[] = {
   { "-ball-color2",".ballColor2",XrmoptionSepArg, 0 },
   { "-grid-color", ".gridColor", XrmoptionSepArg, 0 },
   { "-shadow-color",".shadowColor",XrmoptionSepArg, 0 },
+  { "-background",  ".boingBackground",XrmoptionSepArg, 0 },
+  { "-bg",          ".boingBackground",XrmoptionSepArg, 0 },
 };
 
 static argtype vars[] = {

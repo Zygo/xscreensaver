@@ -1,13 +1,14 @@
 # XScreenSaver for MacOS X, Copyright (c) 2006 by Jamie Zawinski.
 
 XCODE_TARGET = "All Savers"
+XCODEBUILD=xcodebuild
 
 default: release
 all: debug release
 
 clean:
 	-rm -rf build
-#	cd ..; xcodebuild -target $(XCODE_TARGET) clean
+#	cd ..; $(XCODEBUILD) -target $(XCODE_TARGET) clean
 
 distclean:
 	-rm -f config.status config.cache config.log \
@@ -18,10 +19,10 @@ distclean:
 distdepend:: update_plist_version
 
 debug: distdepend
-	cd ..; xcodebuild -target $(XCODE_TARGET) -configuration Debug   build
+	cd ..; $(XCODEBUILD) -target $(XCODE_TARGET) -configuration Debug   build
 
 release:: distdepend
-	cd ..; xcodebuild -target $(XCODE_TARGET) -configuration Release build
+	cd ..; $(XCODEBUILD) -target $(XCODE_TARGET) -configuration Release build
 
 release:: check_versions
 

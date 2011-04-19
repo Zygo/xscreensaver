@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# vidwhacker, for xscreensaver.  Copyright (c) 1998-2006 Jamie Zawinski.
+# vidwhacker, for xscreensaver.  Copyright (c) 1998-2011 Jamie Zawinski.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.29 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.30 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $use_stdin = 0;
@@ -378,7 +378,7 @@ sub dispose_ppm($) {
   } else {
     my $tmpdir = $ENV{TMPDIR};
     $tmpdir = "/tmp" unless $tmpdir;
-    my $fn =  sprintf ("%s/vidwhacker-%08x", $tmpdir, rand(0xFFFFFFFF));
+    my $fn =  sprintf ("%s/vidwhacker-%08x.ppm", $tmpdir, rand(0xFFFFFFFF));
     local *OUT;
     unlink $fn;
     push @all_tmpfiles, $fn;

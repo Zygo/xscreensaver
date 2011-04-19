@@ -60,7 +60,7 @@ typedef struct chansetting_s {
   analogtv_reception recs[MAX_MULTICHAN];
   double noise_level;
   Bool image_loaded_p;
-  char *filename;  /* mostly unused */
+/*  char *filename;     was only used for diagnostics */
   int dur;
 } chansetting;
 

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -247,7 +247,7 @@ webcollage_init (Display *dpy, Window window)
     for (i = 0; i < sizeof(sigs)/sizeof(*sigs); i++) {
       if (signal (sigs[i], signal_handler)) {
         perror ("webcollage: signal");
-        exit (1);
+        //exit (1);
       }
     }
   }

@@ -253,7 +253,7 @@
 			  <property name="update_policy">GTK_UPDATE_ALWAYS</property>
 			  <property name="snap_to_ticks">True</property>
 			  <property name="wrap">False</property>
-			  <property name="adjustment">1 1 720 1 15 15</property>
+			  <property name="adjustment">1 1 720 1 15 0</property>
 			  <accessibility>
 			    <atkrelation target="timeout_label" type="labelled-by"/>
 			    <atkrelation target="timeout_mlabel" type="labelled-by"/>
@@ -285,7 +285,7 @@
 			  <property name="update_policy">GTK_UPDATE_ALWAYS</property>
 			  <property name="snap_to_ticks">True</property>
 			  <property name="wrap">False</property>
-			  <property name="adjustment">0 0 720 1 15 15</property>
+			  <property name="adjustment">0 0 720 1 15 0</property>
 			  <accessibility>
 			    <atkproperty name="AtkObject::accessible_name" translatable="yes">Lock Screen After</atkproperty>
 			    <atkrelation target="lock_button" type="controlled-by"/>
@@ -320,7 +320,7 @@
 			  <property name="update_policy">GTK_UPDATE_ALWAYS</property>
 			  <property name="snap_to_ticks">True</property>
 			  <property name="wrap">False</property>
-			  <property name="adjustment">0 0 720 1 15 15</property>
+			  <property name="adjustment">0 0 720 1 15 0</property>
 			  <accessibility>
 			    <atkrelation target="cycle_label" type="labelled-by"/>
 			    <atkrelation target="cycle_mlabel" type="labelled-by"/>
@@ -1944,7 +1944,7 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="update_policy">GTK_UPDATE_ALWAYS</property>
 				      <property name="snap_to_ticks">True</property>
 				      <property name="wrap">False</property>
-				      <property name="adjustment">0 0 1440 1 15 15</property>
+				      <property name="adjustment">0 0 1440 1 15 0</property>
 				      <accessibility>
 					<atkrelation target="dpms_button" type="controlled-by"/>
 					<atkrelation target="dpms_off_label" type="labelled-by"/>
@@ -1977,7 +1977,7 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="update_policy">GTK_UPDATE_ALWAYS</property>
 				      <property name="snap_to_ticks">True</property>
 				      <property name="wrap">False</property>
-				      <property name="adjustment">0 0 1440 1 15 15</property>
+				      <property name="adjustment">0 0 1440 1 15 0</property>
 				      <accessibility>
 					<atkrelation target="dpms_button" type="controlled-by"/>
 					<atkrelation target="dpms_suspend_label" type="labelled-by"/>
@@ -2010,7 +2010,7 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="update_policy">GTK_UPDATE_ALWAYS</property>
 				      <property name="snap_to_ticks">True</property>
 				      <property name="wrap">False</property>
-				      <property name="adjustment">0 0 1440 1 15 15</property>
+				      <property name="adjustment">0 0 1440 1 15 0</property>
 				      <accessibility>
 					<atkrelation target="dpms_button" type="controlled-by"/>
 					<atkrelation target="dpms_standby_label" type="labelled-by"/>
@@ -2243,7 +2243,7 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="update_policy">GTK_UPDATE_ALWAYS</property>
 				      <property name="snap_to_ticks">True</property>
 				      <property name="wrap">False</property>
-				      <property name="adjustment">0 0 10 1 1 1</property>
+				      <property name="adjustment">0 0 10 1 1 0</property>
 				      <accessibility>
 					<atkrelation target="unfade_button" type="controlled-by"/>
 					<atkrelation target="fade_button" type="controlled-by"/>

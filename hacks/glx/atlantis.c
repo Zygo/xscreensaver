@@ -312,7 +312,7 @@ Init(ModeInfo *mi)
 	/* Add a little randomness */
 	fblue = ((float) (NRAND(30)) / 100.0) + 0.70;
 	fgreen = fblue * 0.56;
-	glClearColor(0.0, fgreen, fblue, 0.0);
+	glClearColor(0.0, fgreen, fblue, 1.0);
 }
 
 ENTRYPOINT void

@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1995, 1996, 1997, 1998, 2004, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -87,7 +86,7 @@ struct state {
 
 /*inline*/ static int rnd( int q )
 {
-
+	if (q < 1) q = 1;
 	return random() % q;
 
 }

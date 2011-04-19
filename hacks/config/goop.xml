@@ -42,8 +42,8 @@
     </select>
 
     <select id="color-mode">
-      <option id="additive" _label="Additive colors (reflected light)"/>
-      <option id="subtractive" _label="Subtractive colors (transmitted light)"
+      <option id="additive" _label="Additive colors (transmitted light)"/>
+      <option id="subtractive" _label="Subtractive colors (reflected light)"
               arg-set="-subtractive"/>
     </select>
   </hgroup>

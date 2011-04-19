@@ -550,8 +550,7 @@ static const GLfloat spotlight_diffuse[] = { 1.0, 1.0, 1.0, 1.0 };
 static void pinit(void)
 {
   glClearDepth(1.0);
-  glClearColor(0.0, 0.0, 0.0, 1.0);
-  
+
   /* setup twoside lighting */
   glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);

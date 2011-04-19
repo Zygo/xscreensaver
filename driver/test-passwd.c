@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -27,6 +27,7 @@
 #include <X11/Intrinsic.h>
 #include <X11/StringDefs.h>
 #include <X11/Shell.h>
+#include <X11/Xlocale.h>
 
 #include "xscreensaver.h"
 #include "resources.h"
@@ -41,7 +42,7 @@ saver_info *global_si_kludge;
 
 FILE *real_stderr, *real_stdout;
 
-void monitor_power_on (saver_info *si) {}
+void monitor_power_on (saver_info *si, Bool on_p) {}
 Bool monitor_powered_on_p (saver_info *si) { return True; }
 void initialize_screensaver_window (saver_info *si) {}
 void raise_window (saver_info *si, Bool i, Bool b, Bool d) {}
@@ -135,6 +136,8 @@ static char *fallback[] = {
  0
 };
 
+extern Bool debug_passwd_window_p;  /* lock.c kludge */
+
 int
 main (int argc, char **argv)
 {
@@ -199,6 +202,11 @@ main (int argc, char **argv)
 
   progclass = "XScreenSaver";
 
+  if (!setlocale(LC_ALL,""))
+    fprintf (stderr, "%s: warning: could not set default locale\n",
+             progname);
+
+
   if (which != TTY)
     {
       toplevel_shell = XtAppInitialize (&si->app, progclass, 0, 0,
@@ -243,6 +251,7 @@ main (int argc, char **argv)
 	  si->unlock_cb = gui_auth_conv;
           si->auth_finished_cb = auth_finished_cb;
 
+          debug_passwd_window_p = True;
 	  xss_authenticate(si, True);
 
           if (si->unlock_state == ul_success)

@@ -1,4 +1,4 @@
-/* glxfonts, Copyright (c) 2001-2009 Jamie Zawinski <jwz@jwz.org>
+/* glxfonts, Copyright (c) 2001-2011 Jamie Zawinski <jwz@jwz.org>
  * Loads X11 fonts for use with OpenGL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -124,6 +124,8 @@ xscreensaver_glXUseXFont (Display *dpy, Font font,
 
   int i;
 
+  clear_gl_error ();
+
   fs = XQueryFont (dpy, font);  
   if (!fs)
     {
@@ -165,6 +167,9 @@ xscreensaver_glXUseXFont (Display *dpy, Font font,
   glPixelStorei	(GL_UNPACK_SKIP_ROWS, 0);
   glPixelStorei	(GL_UNPACK_SKIP_PIXELS, 0);
   glPixelStorei	(GL_UNPACK_ALIGNMENT, 1);
+
+  clear_gl_error(); /* WTF? sometimes "invalid op" from glPixelStorei! */
+
 
   pixmap = XCreatePixmap (dpy, win, 10, 10, 1);
   values.foreground = 0;
@@ -257,6 +262,8 @@ xscreensaver_glXUseXFont (Display *dpy, Font font,
   glPixelStorei(GL_UNPACK_SKIP_ROWS, skiprows);
   glPixelStorei(GL_UNPACK_SKIP_PIXELS, skippixels);
   glPixelStorei(GL_UNPACK_ALIGNMENT, alignment);
+
+  check_gl_error ("xscreensaver_glXUseXFont");
 }
 
 
@@ -315,9 +322,8 @@ load_font (Display *dpy, char *res, XFontStruct **font_ret, GLuint *dlist_ret)
       clear_gl_error ();
       *dlist_ret = glGenLists ((GLuint) last+1);
       check_gl_error ("glGenLists");
-      xscreensaver_glXUseXFont(dpy, id, first, last-first+1,
-                               *dlist_ret + first);
-      check_gl_error ("xscreensaver_glXUseXFont");
+      xscreensaver_glXUseXFont (dpy, id, first, last-first+1,
+                                *dlist_ret + first);
     }
 
   if (font_ret)

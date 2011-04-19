@@ -1820,7 +1820,6 @@ static Bool
 pinit(ModeInfo * mi)
 {
 	glClearDepth(1.0);
-	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glColor3f(1.0, 1.0, 1.0);
 
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);

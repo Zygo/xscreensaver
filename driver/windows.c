@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-2010 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1697,7 +1697,7 @@ unblank_screen (saver_info *si)
   Bool unfade_p = (si->fading_possible_p && p->unfade_p);
   int i;
 
-  monitor_power_on (si);
+  monitor_power_on (si, True);
   reset_watchdog_timer (si, False);
 
   if (si->demoing_p)

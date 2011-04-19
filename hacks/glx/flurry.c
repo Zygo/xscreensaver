@@ -203,7 +203,6 @@ void GLSetupRC(global_info_t *global)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
-    glClearColor(0.0,0.0,0.0,1.0);
     glClear(GL_COLOR_BUFFER_BIT);
 
     glEnableClientState(GL_COLOR_ARRAY);	
@@ -328,12 +327,8 @@ ENTRYPOINT void reshape_flurry(ModeInfo *mi, int width, int height)
     glLoadIdentity();
     gluOrtho2D(0, width, 0, height);
     glMatrixMode(GL_MODELVIEW);
-
-    glClearColor(0.0, 0.0, 0.0, 1.0);
     glClear(GL_COLOR_BUFFER_BIT);
-
     glFlush();
-
     GLResize(global, (float)width, (float)height);
 }
 

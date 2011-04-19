@@ -186,9 +186,8 @@ initFog()
 void
 initGLEnv(Bool doFog)
 {
-	GLfloat		spc[4] = {1.0, 1.0, 1.0, 1.0};
+	GLfloat spc[4] = {1.0, 1.0, 1.0, 1.0};
 
-	glClearColor(0.0, 0.0, 0.0, 0.0);
 	glClearDepth(1.0);
 	glDepthFunc(GL_LESS);
 

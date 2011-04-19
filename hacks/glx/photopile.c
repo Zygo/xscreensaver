@@ -1,4 +1,4 @@
-/* photopile, Copyright (c) 2008-2009 Jens Kilian <jjk@acm.org>
+/* photopile, Copyright (c) 2008-2011 Jens Kilian <jjk@acm.org>
  * Based on carousel, Copyright (c) 2005-2008 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and shuffles them into a pile.
  *
@@ -278,11 +278,15 @@ image_loaded_cb (const char *filename, XRectangle *geom,
     free (frame->title);
   frame->title = (filename ? strdup (filename) : 0);
 
+# if 0 /* xscreensaver-getimage returns paths relative to the image directory
+          now, so leave the sub-directory part in.
+        */
   if (frame->title)   /* strip filename to part after last /. */
     {
       char *s = strrchr (frame->title, '/');
       if (s) strcpy (frame->title, s+1);
     }
+# endif /* 0 */
 
   if (debug_p)
     fprintf (stderr, "%s:   loaded %4d x %-4d  %4d x %-4d  \"%s\"\n",
@@ -459,6 +463,7 @@ init_photopile (ModeInfo *mi)
 
   if ((ss->glx_context = init_GL(mi)) != NULL) {
     reshape_photopile (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+    clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
   } else {
     MI_CLEARWINDOW(mi);
   }
@@ -617,7 +622,13 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
     {
       int sw, sh;
       GLfloat scale = 0.6;
-      char *title = frame->title ? frame->title : "(untitled)";
+      const char *title = frame->title ? frame->title : "(untitled)";
+
+      /* #### Highly approximate, but doing real clipping is harder... */
+      int max = 35;
+      if (strlen(title) > max)
+        title += strlen(title) - max;
+
       sw = texture_string_width (ss->texfont, title, &sh);
 
       glTranslatef (-sw*scale*0.5, -h - sh*scale, z);

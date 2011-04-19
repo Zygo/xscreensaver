@@ -811,34 +811,6 @@ seconds before selecting events on existing windows, under the assumption that
 \fIxscreensaver\fP is started during your login procedure, and the window 
 state may be in flux.  Default 0.  (This used to default to 30, but that was
 back in the days when slow machines and X terminals were more common...)
-.RE
-.PP
-There are a number of different X server extensions which can make
-xscreensaver's job easier.  The next few resources specify whether these
-extensions should be utilized if they are available.
-.TP 8
-.B sgiSaverExtension\fP (class \fBBoolean\fP)
-This resource controls whether the SGI \fBSCREEN_SAVER\fP server extension
-will be used to decide whether the user is idle.  This is the default 
-if \fIxscreensaver\fP has been compiled with support for this 
-extension (which is the default on SGI systems.).  If it is available, 
-the \fBSCREEN_SAVER\fP method is faster and more reliable than what will
-be done otherwise, so use it if you can.  (This extension is only available
-on Silicon Graphics systems, unfortunately.)
-.TP 8
-.B mitSaverExtension\fP (class \fBBoolean\fP)
-This resource controls whether the \fBMIT\-SCREEN\-SAVER\fP server extension
-will be used to decide whether the user is idle.  However, the default for
-this resource is \fIfalse\fP, because even if this extension is available,
-it is flaky (and it also makes the \fBfade\fP option not work properly.)
-Use of this extension is strongly discouraged.  Support for it will
-probably be removed eventually.
-.TP 8
-.B xidleExtension\fP (class \fBBoolean\fP)
-This resource controls whether the \fBXIDLE\fP server extension will be
-used to decide whether the user is idle.  This is the default 
-if \fIxscreensaver\fP has been compiled with support for this extension.
-(This extension is only available for X11R4 and X11R5 systems, unfortunately.)
 .TP 8
 .B procInterrupts\fP (class \fBBoolean\fP)
 This resource controls whether the \fB/proc/interrupts\fP file should be
@@ -915,8 +887,7 @@ and a FAQ can always be found at http://www.jwz.org/xscreensaver/
 .BR xscreensaver\-getimage (1),
 .BR xscreensaver\-text (1).
 .SH COPYRIGHT
-Copyright \(co 1991, 1992, 1993, 1994, 1995, 1996, 1997, 1998, 1999,
-2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009 by Jamie Zawinski.
+Copyright \(co 1991-2011 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that
@@ -929,22 +900,7 @@ Jamie Zawinski <jwz@jwz.org>.  Written in late 1991; version 1.0 posted
 to comp.sources.x on 17-Aug-1992.
 
 Please let me know if you find any bugs or make any improvements.
-.SH ACKNOWLEDGEMENTS
-Thanks to Angela Goodman for the XScreenSaver logo.
 
-Thanks to the many people who have contributed graphics demos to the package.
-
-Thanks to David Wojtowicz for implementing \fIlockTimeout\fP.
-
-Thanks to Martin Kraemer for adding support for shadow passwords and
-locking-disabled diagnostics.
-
-Thanks to Patrick Moreau for the VMS port.
-
-Thanks to Nat Lanza for the Kerberos support.
-
-Thanks to Bill Nottingham for the initial PAM support.
-
-And thanks to Jon A. Christopher for implementing the Athena dialog
-support, back in the days before Lesstif or Gtk were viable alternatives
-to Motif.
+And a huge thank you to the hundreds of people who have contributed, in
+large ways and small, to the xscreensaver collection over the past
+two decades!

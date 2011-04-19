@@ -60,7 +60,7 @@
 #ifndef HAVE_PING
 
 sonar_sensor_data *
-init_ping (Display *dpy, const char *subnet, int timeout, 
+init_ping (Display *dpy, char **error_ret, const char *subnet, int timeout,
            Bool resolve_p, Bool times_p, Bool debug_p)
 {
   if (! (!subnet || !*subnet || !strcmp(subnet, "default")))

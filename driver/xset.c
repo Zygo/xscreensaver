@@ -99,20 +99,8 @@ Bool
 query_xinput_extension (saver_info *si)
 {
   XExtCodes codes;
-
-  if (!XQueryExtension (si->dpy, INAME, &codes.major_opcode,
-			&codes.first_event, &codes.first_error))
-    {
-      if (si->prefs.verbose_p)
-	fprintf (stderr, "\t XInputExtension is not present!\n");
-      return False;
-    }
-  else
-    {
-      if (si->prefs.verbose_p)
-	fprintf (stderr, "\t XInputExtension is present!\n");
-      return True;
-    }
+  return XQueryExtension (si->dpy, INAME, &codes.major_opcode,
+                          &codes.first_event, &codes.first_error);
 }
 
 void

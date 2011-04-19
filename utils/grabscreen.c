@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1993, 1994, 1997, 1998, 2003, 2004, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,6 +14,20 @@
    the difference between drawing on the actual root window, and on the fake
    root window used by the screensaver, since at this level the illusion 
    breaks down...
+
+   The hacks themselves use utils/grabclient.c to invoke the
+   "xscreensaver-getimage" program as a sub-process.
+
+   This code is linked only into "driver/xscreensaver-getimage".  On normal
+   X11 systems, "xscreensaver-getimage.c" invokes the code in this file.
+
+   However, under X11 on MacOS, "xscreensaver-getimage" instead runs the
+   script "driver/xscreensaver-getimage-desktop", which invokes the MacOS-
+   specific program "/usr/sbin/screencapture" to get the desktop image.
+
+   However again, for the MacOS-native (Cocoa) build of the screen savers,
+   "utils/grabclient.c" instead links against "OSX/osxgrabscreen.m", which
+   grabs screen images directly without invoking a sub-process to do it.
  */
 
 #include "utils.h"
@@ -717,6 +730,8 @@ read_display (Screen *screen, Window window, Pixmap into_pixmap,
 
 /* Makes and installs a colormap that makes a PseudoColor or DirectColor
    visual behave like a TrueColor visual of the same depth.
+
+   #### Duplicated in driver/xscreensaver-getimage.c
  */
 static void
 allocate_cubic_colormap (Screen *screen, Window window, Visual *visual)
@@ -732,7 +747,7 @@ allocate_cubic_colormap (Screen *screen, Window window, Visual *visual)
 
   XGetWindowAttributes (dpy, window, &xgwa);
   cmap = xgwa.colormap;
-  depth = visual_depth(screen, visual);
+  depth = visual_depth (screen, visual);
 
   switch (depth)
     {
@@ -784,6 +799,11 @@ allocate_cubic_colormap (Screen *screen, Window window, Visual *visual)
   }
 }
 
+/* Find the pixel index that is closest to the given color
+   (using linear distance in RGB space -- which is far from the best way.)
+
+   #### Duplicated in driver/xscreensaver-getimage.c
+ */
 static unsigned long
 find_closest_pixel (XColor *colors, int ncolors,
                     unsigned long r, unsigned long g, unsigned long b)
@@ -819,6 +839,13 @@ find_closest_pixel (XColor *colors, int ncolors,
 }
 
 
+/* Given an XImage with 8-bit or 12-bit RGB data, convert it to be 
+   displayable with the given X colormap.  The farther from a perfect
+   color cube the contents of the colormap are, the lossier the 
+   transformation will be.  No dithering is done.
+
+   #### Duplicated in driver/xscreensaver-getimage.c
+ */
 void
 remap_image (Screen *screen, Window window, Colormap cmap, XImage *image)
 {

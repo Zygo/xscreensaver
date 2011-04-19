@@ -687,9 +687,6 @@ initialize_gl(ModeInfo *mi, GLsizei width, GLsizei height)
   /* Set the shading model to smooth (Gouraud shading). */
   glShadeModel (GL_SMOOTH);
 
-  /* Set the clear color. */
-  glClearColor( 0, 0, 0, 0 );
-
   glLightModelfv (GL_LIGHT_MODEL_AMBIENT, ambientLight);
   glLightfv (GL_LIGHT0, GL_AMBIENT, whiteLight0);
   glLightfv (GL_LIGHT0, GL_DIFFUSE, sourceLight0);

@@ -671,11 +671,12 @@ apple2_one_frame (apple2_sim_t *sim)
         int c;
         /* If we're in the midst of typing a string, emit a character with
            random timing. */
-        c =*sim->typing++;
+        c =*sim->typing;
         if (c==0) {
           sim->typing=NULL;
         }
         else {
+          sim->typing++;
           a2_printc(sim->st, c);
           if (c=='\r' || c=='\n') {
             sim->next_actiontime = sim->curtime;

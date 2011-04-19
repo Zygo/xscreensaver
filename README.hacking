@@ -5,6 +5,19 @@
 
 ==========================================================================
 
+Any program that can be made to render on an X window created by another
+process can be used as a screen saver.  Just get the window ID out of
+$XSCREENSAVER_WINDOW, draw on that, and you're done.
+
+In theory, you can write a screen saver in any language you like.  In
+practice, however, languages other than C or C++ tend not to allow you to
+draw to windows that they did not create themselves.  Unfortunately, this
+means that if you want to write a screen saver, you must write it in C.
+
+Given that you're going to be writing in C, you might as well take
+advantage of the various utility functions that I have written to make
+that easier.  Writing a new screen saver in C using the frameworks
+included with xscreensaver simplifies things enormously.
 
 Generally, the best way to learn how to do something is to find a similar
 program, and play around with it until you understand it.  Another
@@ -14,8 +27,8 @@ xscreensaver demos, included in the "hacks/" directory, rename the file,
 and edit it until it does what you want.
 
 The "Greynetic" and "Deluxe" hacks are probably good ones to start with,
-since they are so very simple.  For GL programs, "DangerBall" is a good
-example.
+since they are so very simple.  For OpenGL programs, "DangerBall" is a
+good example.
 
 
 ==========================================================================

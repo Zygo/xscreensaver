@@ -1,5 +1,5 @@
 /* dpms.c --- syncing the X Display Power Management values
- * xscreensaver, Copyright (c) 2001-2009 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -217,16 +217,29 @@ monitor_powered_on_p (saver_info *si)
 }
 
 void
-monitor_power_on (saver_info *si)
+monitor_power_on (saver_info *si, Bool on_p)
 {
-  if (!monitor_powered_on_p (si))
+  if ((!!on_p) != monitor_powered_on_p (si))
     {
-      DPMSForceLevel(si->dpy, DPMSModeOn);
+      int event_number, error_number;
+      if (!DPMSQueryExtension(si->dpy, &event_number, &error_number) ||
+          !DPMSCapable(si->dpy))
+        {
+          if (si->prefs.verbose_p)
+            fprintf (stderr,
+                     "%s: unable to power %s monitor: no DPMS extension.\n",
+                     blurb(), (on_p ? "on" : "off"));
+          return;
+        }
+
+      DPMSForceLevel(si->dpy, (on_p ? DPMSModeOn : DPMSModeOff));
       XSync(si->dpy, False);
-      if (!monitor_powered_on_p (si))
+
+      if ((!!on_p) != monitor_powered_on_p (si))  /* double-check */
 	fprintf (stderr,
-       "%s: DPMSForceLevel(dpy, DPMSModeOn) did not power the monitor on?\n",
-		 blurb());
+       "%s: DPMSForceLevel(dpy, %s) did not change monitor power state.\n",
+		 blurb(),
+                 (on_p ? "DPMSModeOn" : "DPMSModeOff"));
     }
 }
 
@@ -248,7 +261,7 @@ monitor_powered_on_p (saver_info *si)
 }
 
 void
-monitor_power_on (saver_info *si)
+monitor_power_on (saver_info *si, Bool on_p)
 {
   return; 
 }

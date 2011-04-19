@@ -42,6 +42,9 @@ Number of poles.  Default: random from 3 to disks+1.
 .B \-speed \fInumber\fP
 Speed multiplier (for smallest disks).  Default: 1.
 .TP 8
+.B \-trails \fInumber\fP
+Length of disk trails, in seconds.  Default: 2.
+.TP 8
 .B \-wireframe | \-no-wireframe
 Render in wireframe instead of solid.
 .TP 8

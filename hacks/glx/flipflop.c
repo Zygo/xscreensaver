@@ -419,8 +419,6 @@ init_flipflop(ModeInfo *mi)
     c->sheet = (randsheet*) malloc(sizeof(randsheet)); 
     randsheet_create( c->sheet ); 
 
-    glClearColor(0.0, 0.0, 0.0, 0.0);
-
     clearbits = GL_COLOR_BUFFER_BIT;
 
     glColorMaterial(GL_FRONT, GL_AMBIENT_AND_DIFFUSE);

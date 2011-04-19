@@ -1,5 +1,5 @@
 /* lock.c --- handling the password dialog for locking-mode.
- * xscreensaver, Copyright (c) 1993-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -83,12 +83,23 @@ vms_passwd_valid_p(char *pw, Bool verbose_p)
 
 typedef struct info_dialog_data info_dialog_data;
 
+
+#define MAX_BYTES_PER_CHAR 8	/* UTF-8 uses no more than 3, I think */
+#define MAX_PASSWD_CHARS   128	/* Longest possible passphrase */
+
 struct passwd_dialog_data {
 
   saver_screen_info *prompt_screen;
   int previous_mouse_x, previous_mouse_y;
 
-  char typed_passwd [80];
+  /* "Characters" in the password may be a variable number of bytes long.
+     typed_passwd contains the raw bytes.
+     typed_passwd_char_size indicates the size in bytes of each character,
+     so that we can make backspace work.
+   */
+  char typed_passwd [MAX_PASSWD_CHARS * MAX_BYTES_PER_CHAR];
+  char typed_passwd_char_size [MAX_PASSWD_CHARS];
+  
   XtIntervalId timer;
   int i_beam;
 
@@ -128,6 +139,7 @@ struct passwd_dialog_data {
 
   Pixel foreground;
   Pixel background;
+  Pixel border;
   Pixel passwd_foreground;
   Pixel passwd_background;
   Pixel thermo_foreground;
@@ -308,6 +320,9 @@ new_passwd_window (saver_info *si)
   pw->background = get_pixel_resource (si->dpy, cmap,
 				       "passwd.background",
 				       "Dialog.Background" );
+  pw->border = get_pixel_resource (si->dpy, cmap,
+				       "passwd.borderColor",
+				       "Dialog.borderColor");
 
   if (pw->foreground == pw->background)
     {
@@ -330,10 +345,10 @@ new_passwd_window (saver_info *si)
                                               "Dialog.Button.Background" );
   pw->thermo_foreground = get_pixel_resource (si->dpy, cmap,
 					      "passwd.thermometer.foreground",
-					      "Dialog.Thermometer.Foreground" );
+					      "Dialog.Thermometer.Foreground");
   pw->thermo_background = get_pixel_resource ( si->dpy, cmap,
 					      "passwd.thermometer.background",
-					      "Dialog.Thermometer.Background" );
+					      "Dialog.Thermometer.Background");
   pw->shadow_top = get_pixel_resource ( si->dpy, cmap,
 				       "passwd.topShadowColor",
 				       "Dialog.Foreground" );
@@ -341,13 +356,16 @@ new_passwd_window (saver_info *si)
 					  "passwd.bottomShadowColor",
 					  "Dialog.Background" );
 
-  pw->preferred_logo_width = get_integer_resource (si->dpy, "passwd.logo.width",
+  pw->preferred_logo_width = get_integer_resource (si->dpy, 
+                                                   "passwd.logo.width",
 						   "Dialog.Logo.Width");
-  pw->preferred_logo_height = get_integer_resource (si->dpy, "passwd.logo.height",
+  pw->preferred_logo_height = get_integer_resource (si->dpy,
+                                                    "passwd.logo.height",
 						    "Dialog.Logo.Height");
   pw->thermo_width = get_integer_resource (si->dpy, "passwd.thermometer.width",
 					   "Dialog.Thermometer.Width");
-  pw->internal_border = get_integer_resource (si->dpy, "passwd.internalBorderWidth",
+  pw->internal_border = get_integer_resource (si->dpy,
+                                              "passwd.internalBorderWidth",
 					      "Dialog.InternalBorderWidth");
   pw->shadow_width = get_integer_resource (si->dpy, "passwd.shadowThickness",
 					   "Dialog.ShadowThickness");
@@ -386,10 +404,9 @@ new_passwd_window (saver_info *si)
   }
 
   /* Before mapping the window, save a pixmap of the current screen.
-     When we lower the window, we
-     restore these bits.  This works, because the running screenhack
-     has already been sent SIGSTOP, so we know nothing else is drawing
-     right now! */
+     When we lower the window, we restore these bits.  This works,
+     because the running screenhack has already been sent SIGSTOP, so
+     we know nothing else is drawing right now! */
   {
     XGCValues gcv;
     GC gc;
@@ -411,6 +428,9 @@ new_passwd_window (saver_info *si)
   si->pw_data = pw;
   return 0;
 }
+
+
+Bool debug_passwd_window_p = False;  /* used only by test-passwd.c */
 
 
 /**
@@ -507,7 +527,8 @@ make_passwd_window (saver_info *si,
       h2 += ascent + descent;
 
       /* Measure the info_label. */
-      if (pw->info_label->overall_width > pw->width) pw->width = pw->info_label->overall_width;
+      if (pw->info_label->overall_width > pw->width)
+        pw->width = pw->info_label->overall_width;
 	h2 += pw->info_label->overall_height;
 
       /* Measure the user string. */
@@ -532,9 +553,11 @@ make_passwd_window (saver_info *si,
 
 	  /* Measure the prompt_label. */
 	  max_string_width_px -= w3;
-	  pw->prompt_label = mlstring_new(prompt, pw->label_font, max_string_width_px);
+	  pw->prompt_label = mlstring_new (prompt, pw->label_font, 
+                                           max_string_width_px);
 
-	  if (pw->prompt_label->overall_width > w2) w2 = pw->prompt_label->overall_width;
+	  if (pw->prompt_label->overall_width > w2)
+            w2 = pw->prompt_label->overall_width;
 
 	  h2 += pw->prompt_label->overall_height;
 
@@ -590,7 +613,9 @@ make_passwd_window (saver_info *si,
 
 	  /* Use (2 * shadow_width) spacing between the buttons. Another
 	     (2 * shadow_width) is required to account for button shadows. */
-	  w2 = MAX (w2, button_w + pw->unlock_button_width + (pw->shadow_width * 4));
+	  w2 = MAX (w2, 
+                    button_w + pw->unlock_button_width +
+                    (pw->shadow_width * 4));
         }
 
       if (w2 > pw->width)  pw->width  = w2;
@@ -613,6 +638,9 @@ make_passwd_window (saver_info *si,
   }
 
   attrmask |= CWOverrideRedirect; attrs.override_redirect = True;
+
+  if (debug_passwd_window_p)
+    attrs.override_redirect = False;  /* kludge for test-passwd.c */
 
   attrmask |= CWEventMask;
   attrs.event_mask = (ExposureMask | KeyPressMask |
@@ -648,6 +676,7 @@ make_passwd_window (saver_info *si,
 		       DefaultVisualOfScreen(screen),
 		       attrmask, &attrs);
       XSetWindowBackground (si->dpy, si->passwd_dialog, pw->background);
+      XSetWindowBorder (si->dpy, si->passwd_dialog, pw->border);
 
       /* We use the default visual, not ssi->visual, so that the logo pixmap's
 	 visual matches that of the si->passwd_dialog window. */
@@ -719,7 +748,7 @@ draw_passwd_window (saver_info *si)
             pw->date_font->ascent + pw->date_font->descent);
 
   if ((strlen(pw->uname_label)) && pw->show_uname_p)
-    height += (pw->uname_font->ascent + pw->uname_font->descent); /* for uname */
+    height += (pw->uname_font->ascent + pw->uname_font->descent);
 
   height += ((pw->button_font->ascent + pw->button_font->descent) * 2 +
              2 * pw->shadow_width);
@@ -820,7 +849,7 @@ draw_passwd_window (saver_info *si)
    */
   if (pw->prompt_label)
     {
-      y1 += (spacing + pw->prompt_label->overall_height + pw->shadow_width * 2);
+      y1 += (spacing + pw->prompt_label->overall_height + pw->shadow_width*2);
 
       pw->passwd_field_x = x2 - pw->shadow_width;
       pw->passwd_field_y = y1 - (pw->passwd_font->ascent +
@@ -842,7 +871,7 @@ draw_passwd_window (saver_info *si)
 
   if (pw->prompt_label)
     {
-      y1 += (spacing + pw->prompt_label->overall_height + pw->shadow_width * 2);
+      y1 += (spacing + pw->prompt_label->overall_height + pw->shadow_width*2);
       draw_shaded_rectangle (si->dpy, si->passwd_dialog,
 			     x1, y1, x2, y2,
 			     pw->shadow_width,
@@ -921,7 +950,9 @@ draw_passwd_window (saver_info *si)
       XSetForeground (si->dpy, gc1, pw->foreground);
       XSetBackground (si->dpy, gc1, pw->background);
       XSetClipMask (si->dpy, gc1, pw->logo_clipmask);
-      XSetClipOrigin (si->dpy, gc1, x1 + ((x2 - (int)w) / 2), y1 + ((y2 - (int)h) / 2));
+      XSetClipOrigin (si->dpy, gc1, 
+                      x1 + ((x2 - (int)w) / 2), 
+                      y1 + ((y2 - (int)h) / 2));
       if (d == 1)
         XCopyPlane (si->dpy, pw->logo_pixmap, si->passwd_dialog, gc1,
                     0, 0, w, h,
@@ -1120,7 +1151,8 @@ update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
 	    x = rects[0].x + rects[0].width - 1;
 	  XDrawLine (si->dpy, si->passwd_dialog, gc1, 
 		     x, y,
-		     x, y + pw->passwd_font->ascent + pw->passwd_font->descent-1);
+		     x, y + pw->passwd_font->ascent + 
+                     pw->passwd_font->descent-1);
 	}
 
       pw->i_beam = (pw->i_beam + 1) % 4;
@@ -1157,8 +1189,10 @@ update_passwd_window (saver_info *si, const char *printed_passwd, float ratio)
 		  pw->unlock_button_x, pw->unlock_button_y,
 		  pw->unlock_button_width, pw->unlock_button_height,
 		  pw->shadow_width,
-		  (pw->unlock_button_down_p ? pw->shadow_bottom : pw->shadow_top),
-		  (pw->unlock_button_down_p ? pw->shadow_top : pw->shadow_bottom),
+		  (pw->unlock_button_down_p ? pw->shadow_bottom :
+                   pw->shadow_top),
+		  (pw->unlock_button_down_p ? pw->shadow_top :
+                   pw->shadow_bottom),
 		  pw->unlock_button_down_p);
 
       /* The "New Login" button
@@ -1234,6 +1268,7 @@ cleanup_passwd_window (saver_info *si)
     }
 
   memset (pw->typed_passwd, 0, sizeof(pw->typed_passwd));
+  memset (pw->typed_passwd_char_size, 0, sizeof(pw->typed_passwd_char_size));
   memset (pw->passwd_string, 0, strlen(pw->passwd_string));
 
   if (pw->timer)
@@ -1693,85 +1728,126 @@ static void
 handle_passwd_key (saver_info *si, XKeyEvent *event)
 {
   passwd_dialog_data *pw = si->pw_data;
-  int pw_size = sizeof (pw->typed_passwd) - 1;
-  char *typed_passwd = pw->typed_passwd;
-  char s[2];
-  char *stars = 0;
-  int i;
-  int size = XLookupString (event, s, 1, 0, compose_status);
+  unsigned char decoded [MAX_BYTES_PER_CHAR * 10]; /* leave some slack */
+  KeySym keysym = 0;
 
-  if (size != 1) return;
+  /* XLookupString may return more than one character via XRebindKeysym;
+     and on some systems it returns multi-byte UTF-8 characters (contrary
+     to its documentation, which says it returns only Latin1.)
+   */
+  int decoded_size = XLookupString (event, (char *)decoded, sizeof(decoded),
+                                    &keysym, compose_status);
 
-  s[1] = 0;
+#if 0
+  {
+    const char *ks = XKeysymToString (keysym);
+    int i;
+    fprintf(stderr, "## %-12s\t=> %d\t", (ks ? ks : "(null)"), decoded_size);
+    for (i = 0; i < decoded_size; i++)
+      fprintf(stderr, "%c", decoded[i]);
+    fprintf(stderr, "\t");
+    for (i = 0; i < decoded_size; i++)
+      fprintf(stderr, "\\%03o", ((unsigned char *)decoded)[i]);
+    fprintf(stderr, "\n");
+  }
+#endif
 
+  if (decoded_size > MAX_BYTES_PER_CHAR)
+    {
+      /* The multi-byte character returned is too large. */
+      XBell (si->dpy, 0);
+      return;
+    }
+
+  decoded[decoded_size] = 0;
   pw->passwd_changed_p = True;
 
   /* Add 10% to the time remaining every time a key is pressed. */
   pw->ratio += 0.1;
   if (pw->ratio > 1) pw->ratio = 1;
 
-  switch (*s)
+  if (decoded_size == 1)		/* Handle single-char commands */
     {
-    case '\010': case '\177':				/* Backspace */
-      if (!*typed_passwd)
-	XBell (si->dpy, 0);
-      else
-	typed_passwd [strlen(typed_passwd)-1] = 0;
-      break;
-
-    case '\025': case '\030':				/* Erase line */
-      memset (typed_passwd, 0, pw_size);
-      break;
-
-    case '\012': case '\015':				/* Enter */
-      finished_typing_passwd(si, pw);
-      break;
-
-    case '\033':					/* Escape */
-      si->unlock_state = ul_cancel;
-      break;
-
-    default:
-      /* Though technically the only illegal characters in Unix passwords
-         are LF and NUL, most GUI programs (e.g., GDM) use regular text-entry
-         fields that only let you type printable characters.  So, people
-         who use funky characters in their passwords are already broken.
-         We follow that precedent.
-       */
-      if (isprint ((unsigned char) *s))
+      switch (*decoded)
         {
-          i = strlen (typed_passwd);
-          if (i >= pw_size-1)
+        case '\010': case '\177':			/* Backspace */
+          {
+            /* kludgey way to get the number of "logical" characters. */
+            int nchars = strlen (pw->typed_passwd_char_size);
+            int nbytes = strlen (pw->typed_passwd);
+            if (nbytes <= 0)
+              XBell (si->dpy, 0);
+            else
+              {
+                int i;
+                for (i = pw->typed_passwd_char_size[nchars-1]; i >= 0; i--)
+                  {
+                    if (nbytes < 0) abort();
+                    pw->typed_passwd[nbytes--] = 0;
+                  }
+                pw->typed_passwd_char_size[nchars-1] = 0;
+              }
+          }
+          break;
+
+        case '\012': case '\015':			/* Enter */
+          finished_typing_passwd (si, pw);
+          break;
+
+        case '\033':					/* Escape */
+          si->unlock_state = ul_cancel;
+          break;
+
+        case '\025': case '\030':			/* Erase line */
+          memset (pw->typed_passwd, 0, sizeof (pw->typed_passwd));
+          memset (pw->typed_passwd_char_size, 0, 
+                  sizeof (pw->typed_passwd_char_size));
+          break;
+
+        default:
+          if (*decoded < ' ' && *decoded != '\t')	/* Other ctrl char */
             XBell (si->dpy, 0);
           else
-            {
-              typed_passwd [i] = *s;
-              typed_passwd [i+1] = 0;
-            }
+            goto SELF_INSERT;
+          break;
         }
-      else
+    }
+  else
+    {
+      int nbytes, nchars;
+    SELF_INSERT:
+      nbytes = strlen (pw->typed_passwd);
+      nchars = strlen (pw->typed_passwd_char_size);
+      if (nchars + 1 >= sizeof (pw->typed_passwd_char_size)-1 ||
+          nbytes + decoded_size >= sizeof (pw->typed_passwd)-1)  /* overflow */
         XBell (si->dpy, 0);
-      break;
+      else
+        {
+          pw->typed_passwd_char_size[nchars] = decoded_size;
+          pw->typed_passwd_char_size[nchars+1] = 0;
+          memcpy (pw->typed_passwd + nbytes, decoded, decoded_size);
+          pw->typed_passwd[nbytes + decoded_size] = 0;
+        }
     }
 
   if (pw->echo_input)
     {
-      /* If the input is wider than the text box, only show the last portion.
-       * This simulates a horizontally scrolling text field. */
+      /* If the input is wider than the text box, only show the last portion,
+         to simulate a horizontally-scrolling text field. */
       int chars_in_pwfield = (pw->passwd_field_width /
 			      pw->passwd_font->max_bounds.width);
-
-      if (strlen(typed_passwd) > chars_in_pwfield)
-	typed_passwd += (strlen(typed_passwd) - chars_in_pwfield);
-
-      update_passwd_window(si, typed_passwd, pw->ratio);
+      const char *output = pw->typed_passwd;
+      if (strlen(output) > chars_in_pwfield)
+	output += (strlen(output) - chars_in_pwfield);
+      update_passwd_window (si, output, pw->ratio);
     }
   else if (pw->show_stars_p)
     {
-      i = strlen(typed_passwd);
-      stars = (char *) malloc(i+1);
-      memset (stars, '*', i);
-      stars[i] = 0;
+      int nchars = strlen (pw->typed_passwd_char_size);
+      char *stars = 0;
+      stars = (char *) malloc(nchars + 1);
+      memset (stars, '*', nchars);
+      stars[nchars] = 0;
       update_passwd_window (si, stars, pw->ratio);
       free (stars);
     }
@@ -1823,7 +1899,7 @@ passwd_event_loop (saver_info *si)
 
 #ifdef RRScreenChangeNotifyMask
           /* Inform Xlib that it's ok to update its data structures. */
-          XRRUpdateConfiguration(&event.x_event); /* Xrandr.h 1.9, 2002/09/29 */
+          XRRUpdateConfiguration(&event.x_event); /* Xrandr.h 1.9, 2002/09/29*/
 #endif /* RRScreenChangeNotifyMask */
 
           /* Resize the existing xscreensaver windows and cached ssi data. */
@@ -1911,6 +1987,13 @@ handle_typeahead (saver_info *si)
 
   memcpy (pw->typed_passwd, si->unlock_typeahead, i);
   pw->typed_passwd [i] = 0;
+  {
+    int j;
+    char *c = pw->typed_passwd_char_size;
+    for (j = 0; j < i; j++)
+      *c++ = 1;
+    *c = 0;
+  }
 
   memset (si->unlock_typeahead, '*', strlen(si->unlock_typeahead));
   si->unlock_typeahead[i] = 0;
@@ -1958,7 +2041,7 @@ remove_trailing_whitespace(const char *str)
  * passwd dialog. A message sequence of info or error followed by a prompt will
  * be reduced into a single dialog window.
  *
- * Returns 0 on success or -1 if some problem occurred (cancelled auth, OOM, ...)
+ * Returns 0 on success or -1 if some problem occurred (cancelled, OOM, etc.)
  */
 int
 gui_auth_conv(int num_msg,
@@ -2054,6 +2137,7 @@ gui_auth_conv(int num_msg,
 fail:
   if (compose_status)
     free (compose_status);
+  compose_status = 0;
 
   if (responses)
     {

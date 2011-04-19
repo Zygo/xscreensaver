@@ -895,7 +895,6 @@ ENTRYPOINT void init_engine(ModeInfo *mi)
  } else {
      MI_CLEARWINDOW(mi);
  }
- glClearColor(0.0,0.0,0.0,0.0);
  glShadeModel(GL_SMOOTH);
  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
  glEnable(GL_DEPTH_TEST);
