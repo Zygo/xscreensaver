@@ -811,9 +811,6 @@ with_x
 with_hackdir
 enable_subdir
 with_configdir
-with_sgi_ext
-with_xidle_ext
-with_sgivc_ext
 with_dpms_ext
 with_xinerama_ext
 with_xinput_ext
@@ -853,6 +850,7 @@ LDFLAGS
 LIBS
 CPPFLAGS
 CPP
+CPPFLAGS
 XMKMF'
 
 
@@ -1501,33 +1499,16 @@ Installation options:
   --with-x-app-defaults=DIR
 			   Where to install xscreensaver configuration file.
 
-Except where noted, all of the --with options below can also take a
-directory argument: for example, `--with-motif=/opt/Motif'.  That would
-cause /opt/Motif/include/ to be added to the -I list, and /opt/Motif/lib/
-to be added to the -L list, assuming those directories exist.
-
-By default, support for each of these options will be built in, if the
-relevant library routines exist.  At run time, they will then be used
-only if the X server being used supports them.  Each --with option has
-a corresponding --without option, to override building support for them
-at all.
-
-Screen blanking and idle-detection options:
-
-  --with-sgi-ext          Include support for the SGI SCREEN_SAVER extension.
-  --with-xidle-ext        Include support for the XIDLE extension.
-  --with-sgivc-ext        Include support for the SGI-VIDEO-CONTROL extension.
   --with-dpms-ext         Include support for the DPMS extension.
   --with-xinerama-ext     Include support for the XINERAMA extension.
-  --with-xinput-ext     Include support for the XInput extension.
+  --with-xinput-ext       Include support for the XInput extension.
   --with-xf86vmode-ext    Include support for XFree86 virtual screens.
   --with-xf86gamma-ext    Include support for XFree86 gamma fading.
   --with-randr-ext        Include support for the X Resize+Rotate extension.
   --with-proc-interrupts  Include support for consulting the /proc/interrupts
                           file to notice keyboard activity.
   --with-pam              Include support for PAM (Pluggable Auth Modules.)
-  --with-pam-service-name=NAME
-                          NAME is the name of the PAM service that
+  --with-pam-service-name NAME arg is the name of the PAM service that
                           xscreensaver will authenticate as.
   --with-kerberos         Include support for Kerberos authentication.
   --with-shadow           Include support for shadow password authentication.
@@ -1540,7 +1521,7 @@ User interface options:
 
   --with-gtk              Use the Gtk toolkit for the user interface.
   --with-motif            Use the Motif toolkit for the user interface
-                          (not recommended.)
+                          (no longer supported.)
 
 Graphics options:
 
@@ -1556,10 +1537,10 @@ Graphics options:
   --with-xshm-ext         Include support for the Shared Memory extension.
   --with-xdbe-ext         Include support for the DOUBLE-BUFFER extension.
   --with-readdisplay      Include support for the XReadDisplay extension.
-  --with-image-directory=DIR  By default, some demos may display random images
-                          from this directory.
+  --with-image-directory  Arg is the default directory from which some demos
+                          will choose random images to display.
   --with-text-file=FILE   By default, some demos may display this file.
-  --with-browser=BROWSER   Specify the browser to show help URL.
+  --with-browser=BROWSER  Specify the web browser used to show the help URL.
   --with-setuid-hacks     Allow some demos to be installed `setuid root'
                           (which is needed in order to ping other hosts.)
 
@@ -2035,17 +2016,32 @@ echo "command line was: $0 $@"
 
 
 
+# This only ever existed in X11R4 and X11R5.
+#AH_TEMPLATE([HAVE_XIDLE_EXTENSION],
+#	    [Define this if you have the XIDLE extension installed. If you
+#	    have the XIDLE extension, this is recommended.  (You have this
+#	    extension if the file /usr/include/X11/extensions/xidle.h
+#	    exists.) Turning on this flag lets XScreenSaver work better with
+#	    servers which support this extension; but it will still work
+#	    with servers which do not suport it, so it's a good idea to
+#	    compile in support for it if you can.])
 
+# Using this extension will crash your X server and make fading not work.
+#AH_TEMPLATE([HAVE_MIT_SAVER_EXTENSION],
+#	    [Define this if you have the MIT-SCREEN-SAVER extension
+#            installed.  See the caveats about this extension, above.
+#            (It's available if /usr/include/X11/extensions/scrnsaver.h
+#            exists.)])
 
+# This only ever existed on SGI hardware.
+#AH_TEMPLATE([HAVE_SGI_SAVER_EXTENSION],
+#	    [Define this if you have the SGI SCREEN_SAVER extension.  This is
+#	    standard on Irix systems, and not available elsewhere.])
 
-
-
-
-
-
-
-
-
+# This only ever existed on SGI hardware.
+#AH_TEMPLATE([HAVE_SGI_VC_EXTENSION],
+#	    [Define this if you have the SGI-VIDEO-CONTROL extension.  This
+#	    is standard on Irix systems, and not available elsewhere.])
 
 
 
@@ -10836,7 +10832,7 @@ fi
 ###############################################################################
 #
 #       Handle the --with-configdir option
-#       Help for --with-x-app-defaults option added..
+#       Help for --with-x-app-defaults option added.
 #
 ###############################################################################
 
@@ -10876,130 +10872,37 @@ fi
 #
 ###############################################################################
 
-have_sgi=no
-with_sgi_req=unspecified
-
-# Check whether --with-sgi-ext was given.
-if test "${with_sgi_ext+set}" = set; then
-  withval=$with_sgi_ext; with_sgi="$withval"; with_sgi_req="$withval"
-else
-  with_sgi=yes
-fi
-
-
-
-   case "$with_sgi" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     { $as_echo "$as_me:$LINENO: checking for SGI SCREEN_SAVER headers" >&5
-$as_echo_n "checking for SGI SCREEN_SAVER headers... " >&6; }
-     d=$with_sgi/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       { $as_echo "$as_me:$LINENO: result: $d" >&5
-$as_echo "$d" >&6; }
-     else
-       { $as_echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-$as_echo "not found ($d: no such directory)" >&6; }
-     fi
-
-     { $as_echo "$as_me:$LINENO: checking for SGI SCREEN_SAVER libs" >&5
-$as_echo_n "checking for SGI SCREEN_SAVER libs... " >&6; }
-     d=$with_sgi/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       { $as_echo "$as_me:$LINENO: result: $d" >&5
-$as_echo "$d" >&6; }
-     else
-       { $as_echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-$as_echo "not found ($d: no such directory)" >&6; }
-     fi
-
-     # replace the directory string with "yes".
-     with_sgi_req="yes"
-     with_sgi=$with_sgi_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-sgi-ext must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-
-if test "$with_sgi" = yes; then
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  { $as_echo "$as_me:$LINENO: checking for X11/extensions/XScreenSaver.h" >&5
-$as_echo_n "checking for X11/extensions/XScreenSaver.h... " >&6; }
-if test "${ac_cv_header_X11_extensions_XScreenSaver_h+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-
-#include <X11/extensions/XScreenSaver.h>
-_ACEOF
-rm -rf conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -rf conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  ac_cv_header_X11_extensions_XScreenSaver_h=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_header_X11_extensions_XScreenSaver_h=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_X11_extensions_XScreenSaver_h" >&5
-$as_echo "$ac_cv_header_X11_extensions_XScreenSaver_h" >&6; }
-if test "x$ac_cv_header_X11_extensions_XScreenSaver_h" = x""yes; then
-  have_sgi=yes
-                     cat >>confdefs.h <<\_ACEOF
-#define HAVE_SGI_SAVER_EXTENSION 1
-_ACEOF
-
-fi
-
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-
-elif test "$with_sgi" != no; then
-  echo "error: must be yes or no: --with-sgi-ext=$with_sgi"
-  exit 1
-fi
+#have_sgi=no
+#with_sgi_req=unspecified
+#AC_ARG_WITH(sgi-ext,
+#[Except where noted, all of the --with options below can also take a
+#directory argument: for example, `--with-motif=/opt/Motif'.  That would
+#cause /opt/Motif/include/ to be added to the -I list, and /opt/Motif/lib/
+#to be added to the -L list, assuming those directories exist.
+#
+#By default, support for each of these options will be built in, if the
+#relevant library routines exist.  At run time, they will then be used
+#only if the X server being used supports them.  Each --with option has
+#a corresponding --without option, to override building support for them
+#at all.
+#
+#Screen blanking and idle-detection options:
+#
+#  --with-sgi-ext          Include support for the SGI SCREEN_SAVER extension.],
+#  [with_sgi="$withval"; with_sgi_req="$withval"],[with_sgi=yes])
+#
+#HANDLE_X_PATH_ARG(with_sgi, --with-sgi-ext, SGI SCREEN_SAVER)
+#
+#if test "$with_sgi" = yes; then
+#  AC_CHECK_X_HEADER(X11/extensions/XScreenSaver.h,
+#                    [have_sgi=yes
+#                     AC_DEFINE(HAVE_SGI_SAVER_EXTENSION)],,
+#                    [#include <X11/Xlib.h>])
+#
+#elif test "$with_sgi" != no; then
+#  echo "error: must be yes or no: --with-sgi-ext=$with_sgi"
+#  exit 1
+#fi
 
 
 ###############################################################################
@@ -11008,129 +10911,23 @@ fi
 #
 ###############################################################################
 
-have_xidle=no
-with_xidle_req=unspecified
-
-# Check whether --with-xidle-ext was given.
-if test "${with_xidle_ext+set}" = set; then
-  withval=$with_xidle_ext; with_xidle="$withval"; with_xidle_req="$withval"
-else
-  with_xidle=yes
-fi
-
-
-
-   case "$with_xidle" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     { $as_echo "$as_me:$LINENO: checking for XIDLE headers" >&5
-$as_echo_n "checking for XIDLE headers... " >&6; }
-     d=$with_xidle/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       { $as_echo "$as_me:$LINENO: result: $d" >&5
-$as_echo "$d" >&6; }
-     else
-       { $as_echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-$as_echo "not found ($d: no such directory)" >&6; }
-     fi
-
-     { $as_echo "$as_me:$LINENO: checking for XIDLE libs" >&5
-$as_echo_n "checking for XIDLE libs... " >&6; }
-     d=$with_xidle/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       { $as_echo "$as_me:$LINENO: result: $d" >&5
-$as_echo "$d" >&6; }
-     else
-       { $as_echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-$as_echo "not found ($d: no such directory)" >&6; }
-     fi
-
-     # replace the directory string with "yes".
-     with_xidle_req="yes"
-     with_xidle=$with_xidle_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-xidle-ext must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-
-if test "$with_xidle" = yes; then
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  { $as_echo "$as_me:$LINENO: checking for X11/extensions/xidle.h" >&5
-$as_echo_n "checking for X11/extensions/xidle.h... " >&6; }
-if test "${ac_cv_header_X11_extensions_xidle_h+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-
-#include <X11/extensions/xidle.h>
-_ACEOF
-rm -rf conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -rf conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  ac_cv_header_X11_extensions_xidle_h=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_header_X11_extensions_xidle_h=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_X11_extensions_xidle_h" >&5
-$as_echo "$ac_cv_header_X11_extensions_xidle_h" >&6; }
-if test "x$ac_cv_header_X11_extensions_xidle_h" = x""yes; then
-  have_xidle=yes
-                     cat >>confdefs.h <<\_ACEOF
-#define HAVE_XIDLE_EXTENSION 1
-_ACEOF
-
-fi
-
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-elif test "$with_xidle" != no; then
-  echo "error: must be yes or no: --with-xidle-ext=$with_xidle"
-  exit 1
-fi
+#have_xidle=no
+#with_xidle_req=unspecified
+#AC_ARG_WITH(xidle-ext,
+#[  --with-xidle-ext        Include support for the XIDLE extension.],
+#  [with_xidle="$withval"; with_xidle_req="$withval"],[with_xidle=yes])
+#
+#HANDLE_X_PATH_ARG(with_xidle, --with-xidle-ext, XIDLE)
+#
+#if test "$with_xidle" = yes; then
+#  AC_CHECK_X_HEADER(X11/extensions/xidle.h,
+#                    [have_xidle=yes
+#                     AC_DEFINE(HAVE_XIDLE_EXTENSION)],,
+#                    [#include <X11/Xlib.h>])
+#elif test "$with_xidle" != no; then
+#  echo "error: must be yes or no: --with-xidle-ext=$with_xidle"
+#  exit 1
+#fi
 
 
 ###############################################################################
@@ -11139,235 +10936,37 @@ fi
 #
 ###############################################################################
 
-have_sgivc=no
-with_sgivc_req=unspecified
-
-# Check whether --with-sgivc-ext was given.
-if test "${with_sgivc_ext+set}" = set; then
-  withval=$with_sgivc_ext; with_sgivc="$withval"; with_sgivc_req="$withval"
-else
-  with_sgivc=yes
-fi
-
-
-
-   case "$with_sgivc" in
-    yes) ;;
-    no)  ;;
-
-    /*)
-     { $as_echo "$as_me:$LINENO: checking for SGI-VIDEO-CONTROL headers" >&5
-$as_echo_n "checking for SGI-VIDEO-CONTROL headers... " >&6; }
-     d=$with_sgivc/include
-     if test -d $d; then
-       X_CFLAGS="-I$d $X_CFLAGS"
-       { $as_echo "$as_me:$LINENO: result: $d" >&5
-$as_echo "$d" >&6; }
-     else
-       { $as_echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-$as_echo "not found ($d: no such directory)" >&6; }
-     fi
-
-     { $as_echo "$as_me:$LINENO: checking for SGI-VIDEO-CONTROL libs" >&5
-$as_echo_n "checking for SGI-VIDEO-CONTROL libs... " >&6; }
-     d=$with_sgivc/lib
-     if test -d $d; then
-       X_LIBS="-L$d $X_LIBS"
-       { $as_echo "$as_me:$LINENO: result: $d" >&5
-$as_echo "$d" >&6; }
-     else
-       { $as_echo "$as_me:$LINENO: result: not found ($d: no such directory)" >&5
-$as_echo "not found ($d: no such directory)" >&6; }
-     fi
-
-     # replace the directory string with "yes".
-     with_sgivc_req="yes"
-     with_sgivc=$with_sgivc_req
-     ;;
-
-    *)
-     echo ""
-     echo "error: argument to --with-sgivc-ext must be \"yes\", \"no\", or a directory."
-     echo "       If it is a directory, then \`DIR/include' will be added to"
-     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
-     exit 1
-     ;;
-   esac
-
-
-if test "$with_sgivc" = yes; then
-
-  # first check for XSGIvc.h
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  { $as_echo "$as_me:$LINENO: checking for X11/extensions/XSGIvc.h" >&5
-$as_echo_n "checking for X11/extensions/XSGIvc.h... " >&6; }
-if test "${ac_cv_header_X11_extensions_XSGIvc_h+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-#include <X11/Xlib.h>
-
-#include <X11/extensions/XSGIvc.h>
-_ACEOF
-rm -rf conftest.$ac_objext
-if { (ac_try="$ac_compile"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_compile") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -rf conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest.$ac_objext; then
-  ac_cv_header_X11_extensions_XSGIvc_h=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_header_X11_extensions_XSGIvc_h=no
-fi
-
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_header_X11_extensions_XSGIvc_h" >&5
-$as_echo "$ac_cv_header_X11_extensions_XSGIvc_h" >&6; }
-if test "x$ac_cv_header_X11_extensions_XSGIvc_h" = x""yes; then
-  have_sgivc=yes
-fi
-
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-
-  # if that succeeded, then check for the -lXsgivc
-  if test "$have_sgivc" = yes; then
-    have_sgivc=no
-
-  ac_save_CPPFLAGS="$CPPFLAGS"
-  ac_save_LDFLAGS="$LDFLAGS"
-#  ac_save_LIBS="$LIBS"
-
-  if test \! -z "$includedir" ; then
-    CPPFLAGS="$CPPFLAGS -I$includedir"
-  fi
-  # note: $X_CFLAGS includes $x_includes
-  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
-
-  if test \! -z "$libdir" ; then
-    LDFLAGS="$LDFLAGS -L$libdir"
-  fi
-  # note: $X_LIBS includes $x_libraries
-  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
-
-  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
-  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
-  { $as_echo "$as_me:$LINENO: checking for XSGIvcQueryGammaMap in -lXsgivc" >&5
-$as_echo_n "checking for XSGIvcQueryGammaMap in -lXsgivc... " >&6; }
-if test "${ac_cv_lib_Xsgivc_XSGIvcQueryGammaMap+set}" = set; then
-  $as_echo_n "(cached) " >&6
-else
-  ac_check_lib_save_LIBS=$LIBS
-LIBS="-lXsgivc -lXext -lX11 $LIBS"
-cat >conftest.$ac_ext <<_ACEOF
-/* confdefs.h.  */
-_ACEOF
-cat confdefs.h >>conftest.$ac_ext
-cat >>conftest.$ac_ext <<_ACEOF
-/* end confdefs.h.  */
-
-/* Override any GCC internal prototype to avoid an error.
-   Use char because int might match the return type of a GCC
-   builtin and then its argument prototype would still apply.  */
-#ifdef __cplusplus
-extern "C"
-#endif
-char XSGIvcQueryGammaMap ();
-int
-main ()
-{
-return XSGIvcQueryGammaMap ();
-  ;
-  return 0;
-}
-_ACEOF
-rm -rf conftest.$ac_objext conftest$ac_exeext
-if { (ac_try="$ac_link"
-case "(($ac_try" in
-  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
-  *) ac_try_echo=$ac_try;;
-esac
-eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
-$as_echo "$ac_try_echo") >&5
-  (eval "$ac_link") 2>conftest.er1
-  ac_status=$?
-  grep -v '^ *+' conftest.er1 >conftest.err
-  rm -rf conftest.er1
-  cat conftest.err >&5
-  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
-  (exit $ac_status); } && {
-	 test -z "$ac_c_werror_flag" ||
-	 test ! -s conftest.err
-       } && test -s conftest$ac_exeext && {
-	 test "$cross_compiling" = yes ||
-	 $as_test_x conftest$ac_exeext
-       }; then
-  ac_cv_lib_Xsgivc_XSGIvcQueryGammaMap=yes
-else
-  $as_echo "$as_me: failed program was:" >&5
-sed 's/^/| /' conftest.$ac_ext >&5
-
-	ac_cv_lib_Xsgivc_XSGIvcQueryGammaMap=no
-fi
-
-rm -rf conftest.dSYM
-rm -f core conftest.err conftest.$ac_objext conftest_ipa8_conftest.oo \
-      conftest$ac_exeext conftest.$ac_ext
-LIBS=$ac_check_lib_save_LIBS
-fi
-{ $as_echo "$as_me:$LINENO: result: $ac_cv_lib_Xsgivc_XSGIvcQueryGammaMap" >&5
-$as_echo "$ac_cv_lib_Xsgivc_XSGIvcQueryGammaMap" >&6; }
-if test "x$ac_cv_lib_Xsgivc_XSGIvcQueryGammaMap" = x""yes; then
-  have_sgivc=yes; SAVER_LIBS="$SAVER_LIBS -lXsgivc"
-else
-  true
-fi
-
-  CPPFLAGS="$ac_save_CPPFLAGS"
-  LDFLAGS="$ac_save_LDFLAGS"
-#  LIBS="$ac_save_LIBS"
-
-  fi
-
-  # if that succeeded, then we've really got it.
-  if test "$have_sgivc" = yes; then
-    cat >>confdefs.h <<\_ACEOF
-#define HAVE_SGI_VC_EXTENSION 1
-_ACEOF
-
-  fi
-
-elif test "$with_sgivc" != no; then
-  echo "error: must be yes or no: --with-sgivc-ext=$with_sgivc"
-  exit 1
-fi
+#have_sgivc=no
+#with_sgivc_req=unspecified
+#AC_ARG_WITH(sgivc-ext,
+#[  --with-sgivc-ext        Include support for the SGI-VIDEO-CONTROL extension.],
+#  [with_sgivc="$withval"; with_sgivc_req="$withval"],[with_sgivc=yes])
+#
+#HANDLE_X_PATH_ARG(with_sgivc, --with-sgivc-ext, SGI-VIDEO-CONTROL)
+#
+#if test "$with_sgivc" = yes; then
+#
+#  # first check for XSGIvc.h
+#  AC_CHECK_X_HEADER(X11/extensions/XSGIvc.h, [have_sgivc=yes],,
+#                    [#include <X11/Xlib.h>])
+#
+#  # if that succeeded, then check for the -lXsgivc
+#  if test "$have_sgivc" = yes; then
+#    have_sgivc=no
+#    AC_CHECK_X_LIB(Xsgivc, XSGIvcQueryGammaMap,
+#                  [have_sgivc=yes; SAVER_LIBS="$SAVER_LIBS -lXsgivc"], [true],
+#                  -lXext -lX11)
+#  fi
+#
+#  # if that succeeded, then we've really got it.
+#  if test "$have_sgivc" = yes; then
+#    AC_DEFINE(HAVE_SGI_VC_EXTENSION)
+#  fi
+#
+#elif test "$with_sgivc" != no; then
+#  echo "error: must be yes or no: --with-sgivc-ext=$with_sgivc"
+#  exit 1
+#fi
 
 
 ###############################################################################
@@ -17763,7 +17362,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 17770 "configure"
+#line 17369 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION

@@ -1,5 +1,5 @@
 /* timers.c --- detecting when the user is idle, and other timer-related tasks.
- * xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -349,7 +349,7 @@ reset_timers (saver_info *si)
 
   /* And if the monitor is already powered off, turn it on.
      You'd think the above would do that, but apparently not? */
-  monitor_power_on (si);
+  monitor_power_on (si, True);
 #endif
 
 }
@@ -712,6 +712,8 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
                                    si->using_sgi_saver_extension) ||
 				   si->using_xinput_extension);
 
+  const char *why = 0;  /* What caused the idle-state to change? */
+
   if (until_idle_p)
     {
       if (polling_for_idleness)
@@ -794,12 +796,14 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	    if (idle >= p->timeout)
               {
                 /* Look, we've been idle long enough.  We're done. */
+                why = "timeout";
                 goto DONE;
               }
             else if (si->emergency_lock_p)
               {
                 /* Oops, the wall clock has jumped far into the future, so
                    we need to lock down in a hurry! */
+                why = "large wall clock change";
                 goto DONE;
               }
             else
@@ -818,7 +822,10 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 
       case ClientMessage:
 	if (handle_clientmessage (si, &event.x_event, until_idle_p))
-	  goto DONE;
+          {
+            why = "ClientMessage";
+            goto DONE;
+          }
 	break;
 
       case CreateNotify:
@@ -935,9 +942,15 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 		 cause deactivation.  Only clicks and keypresses do. */
 	      ;
 	    else
-	      /* If we're not demoing, then any activity causes deactivation.
-	       */
-	      goto DONE;
+              {
+                /* If we're not demoing, then any activity causes deactivation.
+                 */
+                why = (event.x_event.xany.type == MotionNotify ?"mouse motion":
+                       event.x_event.xany.type == KeyPress?"keyboard activity":
+                       event.x_event.xany.type == ButtonPress ? "mouse click" :
+                       "unknown user activity");
+                goto DONE;
+              }
 	  }
 	else
 	  reset_timers (si);
@@ -980,7 +993,10 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 		  }
 
 		if (until_idle_p)
-		  goto DONE;
+                  {
+                    why = "MIT ScreenSaverOn";
+                    goto DONE;
+                  }
 	      }
 	    else if (event.sevent.state == ScreenSaverOff)
 	      {
@@ -988,7 +1004,10 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 		  fprintf (stderr, "%s: MIT ScreenSaverOff event received.\n",
 			   blurb());
 		if (!until_idle_p)
-		  goto DONE;
+                  {
+                    why = "MIT ScreenSaverOff";
+                    goto DONE;
+                  }
 	      }
 	    else
 	      fprintf (stderr,
@@ -1010,7 +1029,10 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 		       blurb());
 
 	    if (until_idle_p)
-	      goto DONE;
+              {
+                why = "SGI ScreenSaverStart";
+                goto DONE;
+              }
 	  }
 	else if (event.x_event.type == (si->sgi_saver_ext_event_number +
 				ScreenSaverEnd))
@@ -1021,29 +1043,38 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	      fprintf (stderr, "%s: SGI ScreenSaverEnd event received.\n",
 		       blurb());
 	    if (!until_idle_p)
-	      goto DONE;
+              {
+                why = "SGI ScreenSaverEnd";
+                goto DONE;
+              }
 	  }
 	else
 #endif /* HAVE_SGI_SAVER_EXTENSION */
 
 #ifdef HAVE_XINPUT
-        if ((!until_idle_p) && (si->num_xinput_devices > 0) &&
+        if ((!until_idle_p) &&
+            (si->num_xinput_devices > 0) &&
 	    (event.x_event.type == si->xinput_DeviceMotionNotify ||
-	     event.x_event.type == si->xinput_DeviceButtonPress ||
-	     event.x_event.type == si->xinput_DeviceButtonRelease ))
+	     event.x_event.type == si->xinput_DeviceButtonPress))
+          /* Ignore DeviceButtonRelease, see ButtonRelease comment above. */
 	  {
 
 	    dispatch_event (si, &event.x_event);
 	    if (si->demoing_p &&
-		(event.x_event.type == si->xinput_DeviceMotionNotify ||
-		 event.x_event.type == si->xinput_DeviceButtonRelease) )
+		event.x_event.type == si->xinput_DeviceMotionNotify)
               /* When we're demoing a single hack, mouse motion doesn't
                  cause deactivation.  Only clicks and keypresses do. */
 	      ;
 	    else
               /* If we're not demoing, then any activity causes deactivation.
                */
-	      goto DONE;
+              {
+                why = (event.x_event.type == si->xinput_DeviceMotionNotify
+                       ? "XI mouse motion" :
+                       event.x_event.type == si->xinput_DeviceButtonPress
+                       ? "XI mouse click" : "unknown XINPUT event");
+                goto DONE;
+              }
 	  }
 	else
 #endif /* HAVE_XINPUT */
@@ -1089,6 +1120,13 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
     }
  DONE:
 
+  if (p->verbose_p)
+    {
+      if (! why) why = "unknown reason";
+      fprintf (stderr, "%s: %s (%s)\n", blurb(),
+               (until_idle_p ? "user is idle" : "user is active"),
+               why);
+    }
 
   /* If there's a user event on the queue, swallow it.
      If we're using a server extension, and the user becomes active, we

@@ -47,7 +47,7 @@
 
    <hgroup>
     <boolean id="skin" _label="Draw skin"           arg-unset="-no-texture"/>
-    <boolean id="cel"  _label="Cartoony"           arg-unset="-cel"/>
+    <boolean id="cel"  _label="Cartoony"            arg-set="-cel"/>
     <boolean id="intersect" _label="Tentacles can intersect" arg-set="-intersect"/>
    </hgroup>
    <hgroup>

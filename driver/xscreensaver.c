@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1227,6 +1227,11 @@ main_loop (saver_info *si)
         for (i = 0; i < si->nscreens; i++)
           spawn_screenhack (&si->screens[i]);
 
+      /* If we are blanking only, we might as well power down the monitor
+         right now, regardless of what the DPMS settings are. */
+      if (p->mode == BLANK_ONLY)
+        monitor_power_on (si, False);
+
       /* Don't start the cycle timer in demo mode. */
       if (!si->demoing_p && p->cycle)
 	si->cycle_id = XtAppAddTimeOut (si->app,
@@ -1381,6 +1386,15 @@ main (int argc, char **argv)
   saver_preferences *p = &si->prefs;
   struct passwd *spasswd;
   int i;
+
+  /* It turns out that if we do NLS stuff here, people running in Japanese
+     locales get font craziness on the password dialog, presumably because
+     it is displaying Japanese characters in a non-Japanese font.  I don't
+     understand how to automatically make all this crap work properly by
+     default, so until someone sends me a better patch, just leave it off
+     and run the daemon in English.  -- jwz, 29-Sep-2010
+   */
+#undef ENABLE_NLS
 
 #ifdef ENABLE_NLS
   if (!setlocale (LC_ALL, ""))

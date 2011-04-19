@@ -173,7 +173,7 @@ flame_init (Display *dpy, Window window)
 static int
 recurse (struct state *st, double x, double y, int l, Display *dpy, Window win)
 {
-  int /*xp, yp,*/ i;
+  int i;
   double nx, ny;
 
   if (l == st->max_levels)
@@ -184,8 +184,8 @@ recurse (struct state *st, double x, double y, int l, Display *dpy, Window win)
 
       if (x > -1.0 && x < 1.0 && y > -1.0 && y < 1.0)
 	{
-/*	  xp = st->points[st->num_points].x = (int) ((st->width / 2) * (x + 1.0));
-	  yp = st->points[st->num_points].y = (int) ((st->height / 2) * (y + 1.0));*/
+	  st->points[st->num_points].x = (int) ((st->width / 2) * (x + 1.0));
+	  st->points[st->num_points].y = (int) ((st->height / 2) * (y + 1.0));
 	  st->num_points++;
 	  if (st->num_points >= POINT_BUFFER_SIZE)
 	    {

@@ -13797,7 +13797,14 @@
 			isa = PBXProject;
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "xscreensaver" */;
 			compatibilityVersion = "Xcode 3.1";
+			developmentRegion = English;
 			hasScannedForEncodings = 1;
+			knownRegions = (
+				English,
+				Japanese,
+				French,
+				German,
+			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* xscreensaver */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -28256,6 +28263,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx10.4;
 				"SDKROOT[arch=x86_64]" = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
+				SYMROOT = OSX/build;
 				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR) $(USER_HEADER_SEARCH_PATHS)";
 				WARNING_CFLAGS = "-Wimplicit";
 				WRAPPER_EXTENSION = saver;
@@ -28266,7 +28274,11 @@
 		C01FCF5008A954540054247B /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
-				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
+				ARCHS = (
+					x86_64,
+					i386,
+					ppc,
+				);
 				GCC_ENABLE_OBJC_GC = supported;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -28317,6 +28329,7 @@
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx10.4;
 				"SDKROOT[arch=x86_64]" = "$(DEVELOPER_SDK_DIR)/MacOSX10.6.sdk";
+				SYMROOT = OSX/build;
 				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR) $(USER_HEADER_SEARCH_PATHS)";
 				WARNING_CFLAGS = "-Wimplicit";
 				WRAPPER_EXTENSION = saver;

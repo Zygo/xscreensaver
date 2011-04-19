@@ -702,7 +702,6 @@ static void init_gl(ModeInfo *mi)
     cp->color_inner[0] = cp->color_inner[1] = cp->color_inner[2] = 1.0;
 
   glClearDepth(1.0);
-  glClearColor(0.0, 0.0, 0.0, 1.0);
   glDrawBuffer(GL_BACK);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glShadeModel(GL_FLAT);

@@ -1251,7 +1251,6 @@ draw(ModeInfo * mi)
 
     mi->polygon_count = 0;
 
-	glClearColor(0.5, 0.5, 0.5, 1.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	glLoadIdentity();
 
@@ -1543,6 +1542,7 @@ init_gleidescope(ModeInfo * mi)
 	if ((gp->glx_context = init_GL(mi)) != NULL) {
 
 		reshape_gleidescope(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+        clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
 
 		glDrawBuffer(GL_BACK);
 

@@ -213,7 +213,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  photopile.man rubikblocks.man surfaces.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
-EXTRAS		= README Makefile.in dxf2gl.pl molecules.sh starwars.txt
+EXTRAS		= README Makefile.in dxf2gl.pl wfront2gl.pl \
+		  molecules.sh starwars.txt
 
 TARFILES	= $(SRCS) $(HDRS) $(MEN) $(RETIRED_MEN) $(EXTRAS)
 

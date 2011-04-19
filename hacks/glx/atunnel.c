@@ -185,7 +185,6 @@ static void Init(ModeInfo * mi)
 	GLfloat light_position[] = {0.0, 0.0, 1.0, 0.0};
 	GLfloat fogColor[4] = {0.8, 0.8, 0.8, 1.0};
 
-  	glClearColor(0, 0, 0, 0);
 	if (do_texture)
 	{
 		glGenTextures(MAX_TEXTURE, sa->texture);

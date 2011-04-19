@@ -229,11 +229,6 @@ init_topBlock (ModeInfo *mi)
 	dropSpeed = (blockHeight/dropSpeed); 
 
   reshape_topBlock (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-  if (0==1) {
-      glClearColor(1.0f, 1.0f, 1.0f, 0.5f);
-  } else {
-      glClearColor(0.0f, 0.0f, 0.0f, 0.5f);
-  }
   glClearDepth(1.0f);
   if (!wire) {
     GLfloat pos[4] = {10.0, 10.0, 1.0, 0.0};

@@ -2654,6 +2654,7 @@ init_juggle (ModeInfo * mi)
   load_font (mi->dpy, "titleFont",  &sp->mode_font, &sp->font_dlist);
 
   reshape_juggle (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+  clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
 
   if (!wire)
     {

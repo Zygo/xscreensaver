@@ -30,7 +30,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.22 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.23 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -915,7 +915,7 @@ sub main() {
     # to read a small number of bytes, and continue reading until they
     # reached EOF.  This is no longer possible.
     #
-    # Note that the current MacOS behavior has all three of these
+    # Note that the current MacOS behavior has all four of these
     # awesome properties: 1) Inconvenient; 2) Has no sane workaround;
     # 3) Different behavior than MacOS 10.1 through 10.4; and 4)
     # Different behavior than every other Unix in the world.

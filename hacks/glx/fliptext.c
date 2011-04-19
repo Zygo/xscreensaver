@@ -1,5 +1,5 @@
 /*
- * fliptext, Copyright (c) 2005-2007 Jamie Zawinski <jwz@jwz.org>
+ * fliptext, Copyright (c) 2005-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -914,6 +914,7 @@ init_fliptext (ModeInfo *mi)
 
   if ((sc->glx_context = init_GL(mi)) != NULL) {
     reshape_fliptext (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+    clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
   }
 
   program = get_string_resource (mi->dpy, "program", "Program");

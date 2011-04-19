@@ -459,7 +459,6 @@ init_noof (ModeInfo *mi)
   bp->glx_context = init_GL(mi);
 
   glDrawBuffer(dbuf_p ? GL_BACK : GL_FRONT);
-  glClearColor(0.0, 0.0, 0.0, 1.0);
   glEnable(GL_LINE_SMOOTH);
   glShadeModel(GL_FLAT);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);

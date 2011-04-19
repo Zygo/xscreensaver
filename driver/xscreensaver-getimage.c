@@ -66,8 +66,11 @@
 
 
 #ifdef __APPLE__
-  /* On MacOSX / XDarwin, the usual X11 mechanism of getting a screen shot
-     doesn't work, and we need to use an external program. */
+  /* On MacOS under X11, the usual X11 mechanism of getting a screen shot
+     doesn't work, and we need to use an external program.  This is only
+     used when running under X11 on MacOS.  If it's a Cocoa build, this
+     path is not taken, and OSX/osxgrabscreen.m is used instead.
+   */
 # define USE_EXTERNAL_SCREEN_GRABBER
 #endif
 
@@ -494,6 +497,8 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
 
 /* Allocates a colormap that makes a PseudoColor or DirectColor
    visual behave like a TrueColor visual of the same depth.
+
+   #### Duplicated in utils/grabscreen.c
  */
 static void
 allocate_cubic_colormap (Screen *screen, Visual *visual, Colormap cmap,
@@ -560,6 +565,8 @@ allocate_cubic_colormap (Screen *screen, Visual *visual, Colormap cmap,
 
 /* Find the pixel index that is closest to the given color
    (using linear distance in RGB space -- which is far from the best way.)
+
+   #### Duplicated in utils/grabscreen.c
  */
 static unsigned long
 find_closest_pixel (XColor *colors, int ncolors,
@@ -600,6 +607,8 @@ find_closest_pixel (XColor *colors, int ncolors,
    displayable with the given X colormap.  The farther from a perfect
    color cube the contents of the colormap are, the lossier the 
    transformation will be.  No dithering is done.
+
+   #### Duplicated in utils/grabscreen.c
  */
 static void
 remap_image (Screen *screen, Colormap cmap, XImage *image, Bool verbose_p)
@@ -1119,7 +1128,7 @@ display_file (Screen *screen, Window window, Drawable drawable,
 
 /* Invokes a sub-process and returns its output (presumably, a file to
    load.)  Free the string when done.  'grab_type' controls which program
-   to run.
+   to run.  Returned pathname may be relative to 'directory', or absolute.
  */
 static char *
 get_filename_1 (Screen *screen, const char *directory, grab_type type,
@@ -1129,7 +1138,7 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
   pid_t forked;
   int fds [2];
   int in, out;
-  char buf[1024];
+  char buf[10240];
   char *av[20];
   int ac = 0;
 
@@ -1214,6 +1223,7 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
         int wait_status = 0;
         FILE *f = fdopen (in, "r");
         int L;
+        char *ret = 0;
 
         close (out);  /* don't need this one */
         *buf = 0;
@@ -1230,14 +1240,28 @@ get_filename_1 (Screen *screen, const char *directory, grab_type type,
           
         if (!*buf)
           return 0;
+
+        ret = strdup (buf);
+
+        if (*ret != '/')
+          {
+            /* Program returned path relative to directory.  Prepend dir
+               to buf so that we can properly stat it. */
+            strcpy (buf, directory);
+            if (directory[strlen(directory)-1] != '/')
+              strcat (buf, "/");
+            strcat (buf, ret);
+          }
+
         if (stat(buf, &st))
           {
             fprintf (stderr, "%s: file does not exist: \"%s\"\n",
                      progname, buf);
+            free (ret);
             return 0;
           }
         else
-          return strdup (buf);
+          return ret;
       }
     }
 
@@ -1487,6 +1511,7 @@ get_image (Screen *screen,
   grab_type which = GRAB_BARS;
   struct stat st;
   const char *file_prop = 0;
+  char *absfile = 0;
   XRectangle geom = { 0, 0, 0, 0 };
 
   if (! drawable_window_p (dpy, window))
@@ -1572,7 +1597,8 @@ get_image (Screen *screen,
      We cannot grab desktop images that way if:
        - the window is a non-top-level window.
 
-     Using the MacOS X way, desktops are just like loaded image files.
+     Under X11 on MacOS, desktops are just like loaded image files.
+     Under Cocoa on MacOS, this code is not used at all.
    */
 # ifndef USE_EXTERNAL_SCREEN_GRABBER
   if (desk_p)
@@ -1650,7 +1676,18 @@ get_image (Screen *screen,
       break;
 
     case GRAB_FILE:
-      if (! display_file (screen, window, drawable, file, verbose_p, &geom))
+      if (*file && *file != '/')	/* pathname is relative to dir. */
+        {
+          if (absfile) free (absfile);
+          absfile = malloc (strlen(dir) + strlen(file) + 10);
+          strcpy (absfile, dir);
+          if (dir[strlen(dir)-1] != '/')
+            strcat (absfile, "/");
+          strcat (absfile, file);
+        }
+      if (! display_file (screen, window, drawable, 
+                          (absfile ? absfile : file),
+                          verbose_p, &geom))
         goto COLORBARS;
       file_prop = file;
       break;
@@ -1686,6 +1723,7 @@ get_image (Screen *screen,
       XDeleteProperty (dpy, window, a);
   }
 
+  if (absfile) free (absfile);
   XSync (dpy, False);
 }
 

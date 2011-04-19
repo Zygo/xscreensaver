@@ -191,15 +191,28 @@ print_glx_visual_info (dpy, vip)
       value != 0)
     printf ("    GLX stencil size:  %d\n", value);
 
-# ifdef GLX_SAMPLE_BUFFERS_SGIS
-  if (!glXGetConfig (dpy, vip, GLX_SAMPLE_BUFFERS_SGIS, &value) &&
-      value != 0)
+# if defined(GL_SAMPLE_BUFFERS)
+#  define SB GL_SAMPLE_BUFFERS
+#  define SM GL_SAMPLES
+# elif defined(GLX_SAMPLE_BUFFERS)
+#  define SB GLX_SAMPLE_BUFFERS
+#  define SM GLX_SAMPLES
+# elif defined(GLX_SAMPLE_BUFFERS_ARB)
+#  define SB GLX_SAMPLE_BUFFERS_ARB
+#  define SM GLX_SAMPLES_ARB
+# elif defined(GLX_SAMPLE_BUFFERS_SGIS)
+#  define SB GLX_SAMPLE_BUFFERS_SGIS
+#  define SM GLX_SAMPLES_SGIS
+# endif
+
+# ifdef SB
+  if (!glXGetConfig (dpy, vip, SB, &value) && value != 0)
     {
       int bufs = value;
-      if (!glXGetConfig (dpy, vip, GLX_SAMPLES_SGIS, &value))
-        printf ("    GLX multisamplers: %d (%d)\n", bufs, value);
+      if (!glXGetConfig (dpy, vip, SM, &value))
+        printf ("    GLX multisample:   %d, %d\n", bufs, value);
     }
-# endif
+# endif /* SB */
 
   if (!glXGetConfig (dpy, vip, GLX_TRANSPARENT_TYPE_EXT, &value) &&
       value != GLX_NONE_EXT)

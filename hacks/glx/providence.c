@@ -617,8 +617,7 @@ ENTRYPOINT void reshape_providence(ModeInfo * mi, int width, int height)
 static void pinit(providencestruct *mp) 
 {
   glClearDepth(1.0);
-  glClearColor(0.0, 0.0, 0.0, 1.0);
-  
+
   /* setup twoside lighting */
   glLightfv(GL_LIGHT0, GL_AMBIENT, ambient2);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);

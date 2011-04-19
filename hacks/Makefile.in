@@ -1,4 +1,4 @@
-# hacks/Makefile.in --- xscreensaver, Copyright (c) 1997-2010 Jamie Zawinski.
+# hacks/Makefile.in --- xscreensaver, Copyright (c) 1997-2011 Jamie Zawinski.
 # the `../configure' script generates `hacks/Makefile' from this file.
 
 @SET_MAKE@
@@ -66,7 +66,7 @@ INCLUDES_1	= -I. -I$(srcdir) -I$(UTILS_SRC) -I..
 INCLUDES	= $(INCLUDES_1) @INCLUDES@
 
 UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
-		  $(UTILS_SRC)/grabscreen.c $(UTILS_SRC)/grabclient.c \
+		  $(UTILS_SRC)/grabclient.c \
 		  $(UTILS_SRC)/hsv.c $(UTILS_SRC)/resources.c \
 		  $(UTILS_SRC)/spline.c $(UTILS_SRC)/usleep.c \
 		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/logo.c \
@@ -74,7 +74,7 @@ UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/yarandom.c $(UTILS_SRC)/erase.c \
 		  $(UTILS_SRC)/xshm.c $(UTILS_SRC)/xdbe.c
 UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
-		  $(UTILS_BIN)/grabscreen.o $(UTILS_BIN)/grabclient.o \
+		  $(UTILS_BIN)/grabclient.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/spline.o $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/visual.o $(UTILS_BIN)/logo.o \
@@ -118,7 +118,7 @@ SCRIPTS		= vidwhacker webcollage ljlatest
 # Programs that are mentioned in XScreenSaver.ad, and that have XML files,
 # but that are not shipped with xscreensaver itself.
 #
-EXTERNALS	= cosmos electricsheep extrusion fireflies goban \
+EXTERNALS	= cosmos electricsheep fireflies goban \
 		  sphereeversion ssystem xaos xdaliclock xearth xfishtank \
 		  xmountains xplanet xsnow
 
@@ -276,7 +276,7 @@ install-program:: $(EXES)
 	    $(install_prefix)$(HACKDIR)/$$program ;			\
 	  $(INSTALL_PROGRAM) $$program					\
 	    $(install_prefix)$(HACKDIR)/$$program ;			\
-	done ;								\
+	done
 
 install-scripts: $(SCRIPTS) munge-scripts
 	@for program in $(SCRIPTS); do					\

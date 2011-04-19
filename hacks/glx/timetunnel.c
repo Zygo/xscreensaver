@@ -989,6 +989,7 @@ static void LoadTexture(ModeInfo * mi, char **fn, const char *filename, GLuint t
         clear_gl_error();
 #ifdef HAVE_GLBINDTEXTURE
         glBindTexture(GL_TEXTURE_2D, texbind);
+        clear_gl_error(); /* WTF? sometimes "invalid op" from glBindTexture! */
 #endif
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, teximage->width, teximage->height,

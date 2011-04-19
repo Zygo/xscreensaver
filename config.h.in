@@ -188,11 +188,6 @@
    have different names.) (HAVE_GL should be defined too.) */
 #undef HAVE_MESA_GL
 
-/* Define this if you have the MIT-SCREEN-SAVER extension installed. See the
-   caveats about this extension, above. (It's available if
-   /usr/include/X11/extensions/scrnsaver.h exists.) */
-#undef HAVE_MIT_SAVER_EXTENSION
-
 /* Define to 1 if you have a working `mmap' system call. */
 #undef HAVE_MMAP
 
@@ -266,14 +261,6 @@
 
 /* Define to 1 if you have the `setrlimit' function. */
 #undef HAVE_SETRLIMIT
-
-/* Define this if you have the SGI SCREEN_SAVER extension. This is standard on
-   Irix systems, and not available elsewhere. */
-#undef HAVE_SGI_SAVER_EXTENSION
-
-/* Define this if you have the SGI-VIDEO-CONTROL extension. This is standard
-   on Irix systems, and not available elsewhere. */
-#undef HAVE_SGI_VC_EXTENSION
 
 /* Define this if your system uses 'shadow' passwords, that is, the passwords
    live in /etc/shadow instead of /etc/passwd, and one reads them with
@@ -372,14 +359,6 @@
 /* Define this if you have the XHPDisableReset function (an HP only thing
    which allows the Ctrl-Sh-Reset key sequence to be temporarily disabled.) */
 #undef HAVE_XHPDISABLERESET
-
-/* Define this if you have the XIDLE extension installed. If you have the
-   XIDLE extension, this is recommended. (You have this extension if the file
-   /usr/include/X11/extensions/xidle.h exists.) Turning on this flag lets
-   XScreenSaver work better with servers which support this extension; but it
-   will still work with servers which do not suport it, so it's a good idea to
-   compile in support for it if you can. */
-#undef HAVE_XIDLE_EXTENSION
 
 /* Define this if you have the Xinerama extension. This is standard on
    sufficiently-recent XFree86 systems, and possibly elsewhere. (It's

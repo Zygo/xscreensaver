@@ -535,7 +535,7 @@ static void warning_dialog_killk_cb (GtkWidget *widget, gpointer user_data)
 
 typedef enum { D_NONE, D_LAUNCH, D_GNOME, D_KDE } dialog_button;
 
-static void
+static Bool
 warning_dialog (GtkWidget *parent, const char *message,
                 dialog_button button_type, int center)
 {
@@ -555,7 +555,7 @@ warning_dialog (GtkWidget *parent, const char *message,
       !GET_WINDOW (parent)) /* too early to pop up transient dialogs */
     {
       fprintf (stderr, "%s: too early for dialog?\n", progname);
-      return;
+      return False;
     }
 
   head = msg;
@@ -680,6 +680,7 @@ warning_dialog (GtkWidget *parent, const char *message,
 #endif /* !HAVE_GTK2 */
 
   free (msg);
+  return True;
 }
 
 
@@ -1485,6 +1486,7 @@ flush_dialog_changes_and_save (state *s)
   GList *kids = gtk_container_children (GTK_CONTAINER (list_widget));
   int i;
 #endif /* !HAVE_GTK2 */
+  static Bool already_warned_about_missing_image_directory = False; /* very long name... */
 
   Bool changed = False;
   GtkWidget *w;
@@ -1587,16 +1589,26 @@ flush_dialog_changes_and_save (state *s)
 # undef PATHNAME
 # undef TEXT
 
-  /* Warn if the image directory doesn't exist.
+  /* Warn if the image directory doesn't exist, when:
+     - not being warned before
+     - image directory is changed and the directory doesn't exist
    */
   if (p2->image_directory &&
       *p2->image_directory &&
-      !directory_p (p2->image_directory))
+      !directory_p (p2->image_directory) &&
+        ( !already_warned_about_missing_image_directory ||
+          ( p->image_directory &&
+            *p->image_directory &&
+            strcmp(p->image_directory, p2->image_directory)
+          )
+        )
+      )
     {
       char b[255];
-      sprintf (b, "Error:\n\n" "Directory does not exist: \"%s\"\n",
+      sprintf (b, "Warning:\n\n" "Directory does not exist: \"%s\"\n",
                p2->image_directory);
-      warning_dialog (s->toplevel_widget, b, D_NONE, 100);
+      if (warning_dialog (s->toplevel_widget, b, D_NONE, 100))
+        already_warned_about_missing_image_directory = True;
     }
 
 

@@ -2231,7 +2231,6 @@ Circuit *ci;
  }
  if (uselight == 0)
     ci->light = 1;
- glClearColor(0.0,0.0,0.0,0.0);
  glShadeModel(GL_SMOOTH);
  glPolygonMode(GL_FRONT_AND_BACK,GL_FILL);
  glEnable(GL_DEPTH_TEST);

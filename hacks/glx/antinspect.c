@@ -537,8 +537,6 @@ ENTRYPOINT void reshape_antinspect(ModeInfo * mi, int width, int height)
 static void pinit(void) 
 {
   glClearDepth(1.0);
-  glClearColor(0.0, 0.0, 0.0, 1.0);
-  
   glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
   glLightfv(GL_LIGHT0, GL_POSITION, position0);

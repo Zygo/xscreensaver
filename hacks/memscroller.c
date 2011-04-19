@@ -97,14 +97,31 @@ memscroller_init (Display *dpy, Window window)
         char res[20];
         sprintf (res, "font%d", i+1);
         fontname = get_string_resource (dpy, res, "Font");
-        st->fonts[i] = XLoadQueryFont (dpy, fontname);
-        if (!st->fonts[i] && i < nfonts-1)
+        /* Each resource can be a comma-separated list of font names.
+           We use the first one that exists. */
+        if (fontname && *fontname) 
           {
-            fprintf (stderr, "%s: unable to load font: \"%s\"\n",
-                     progname, fontname);
-            st->fonts[i] = st->fonts[i+1];
+            char *f2 = strdup(fontname);
+            char *f, *token = f2;
+            while ((f = strtok(token, ",")) && !st->fonts[i])
+              {
+                token = 0;
+                while (*f == ' ' || *f == '\t') f++;
+                st->fonts[i] = XLoadQueryFont (dpy, f);
+              }
+            free (f2);
+            if (!st->fonts[i] && i < nfonts-1)
+              {
+                fprintf (stderr, "%s: unable to load font: \"%s\"\n",
+                         progname, fontname);
+                st->fonts[i] = st->fonts[i+1];
+              }
           }
       }
+
+    if (!st->fonts[0])
+      st->fonts[0] = XLoadQueryFont (dpy, "fixed");
+
     if (!st->fonts[0])
       {
         fprintf (stderr, "%s: unable to load any fonts!", progname);
@@ -586,21 +603,23 @@ static const char *memscroller_defaults [] = {
   ".textColor:		   #00FF00",
   ".foreground:		   #00FF00",
   "*borderSize:		   2",
+
 #ifdef HAVE_COCOA
-  ".font1:		   OCR A Std 192",
-  ".font2:		   OCR A Std 144",
-  ".font3:		   OCR A Std 128",
-  ".font4:		   OCR A Std 96",
-  ".font5:		   OCR A Std 48",
-  ".font6:		   OCR A Std 24",
-#else
+  ".font1:		   OCR A Std 192, Lucida Console 192",
+  ".font2:		   OCR A Std 144, Lucida Console 144",
+  ".font3:		   OCR A Std 128, Lucida Console 128",
+  ".font4:		   OCR A Std 96,  Lucida Console 96",
+  ".font5:		   OCR A Std 48,  Lucida Console 48",
+  ".font6:		   OCR A Std 24,  Lucida Console 24",
+#else  /* !HAVE_COCOA */
   ".font1:		   -*-courier-bold-r-*-*-*-1440-*-*-m-*-*-*",
   ".font2:		   -*-courier-bold-r-*-*-*-960-*-*-m-*-*-*",
   ".font3:		   -*-courier-bold-r-*-*-*-480-*-*-m-*-*-*",
   ".font4:		   -*-courier-bold-r-*-*-*-320-*-*-m-*-*-*",
   ".font5:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
   ".font6:		   fixed",
-#endif
+#endif /* !HAVE_COCOA */
+
   "*delay:		   10000",
   "*offset:		   0",
   0

@@ -99,6 +99,7 @@ init_stonerview (ModeInfo *mi)
   init_move(bp->st);
 
   reshape_stonerview (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+  clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
 }
 
 

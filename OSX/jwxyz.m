@@ -2418,8 +2418,21 @@ XLoadFont (Display *dpy, const char *name)
   Font fid = (Font) calloc (1, sizeof(*fid));
 
   fid->nsfont = try_native_font (name, &fid->ps_name, &fid->size);
+
+  if (!fid->nsfont && name &&
+      strchr (name, ' ') &&
+      !strchr (name, '*')) {
+    // If name contains a space but no stars, it is a native font spec --
+    // return NULL so that we know it really didn't exist.  Else, it is an
+    //  XLFD font, so keep trying.
+    XUnloadFont (dpy, fid);
+    return 0;
+  }
+
   if (! fid->nsfont)
     fid->nsfont = try_xlfd_font (name, &fid->ps_name, &fid->size);
+
+  // We should never return NULL for XLFD fonts.
   if (!fid->nsfont) {
     NSLog(@"no NSFont for \"%s\"", name);
     abort();
@@ -2438,14 +2451,17 @@ XFontStruct *
 XLoadQueryFont (Display *dpy, const char *name)
 {
   Font fid = XLoadFont (dpy, name);
+  if (!fid) return 0;
   return XQueryFont (dpy, fid);
 }
 
 int
 XUnloadFont (Display *dpy, Font fid)
 {
-  free (fid->ps_name);
-  free (fid->metrics.per_char);
+  if (fid->ps_name)
+    free (fid->ps_name);
+  if (fid->metrics.per_char)
+    free (fid->metrics.per_char);
 
   // #### DAMMIT!  I can't tell what's going wrong here, but I keep getting
   //      crashes in [NSFont ascender] <- query_font, and it seems to go away

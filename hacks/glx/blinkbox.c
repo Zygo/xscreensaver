@@ -401,7 +401,6 @@ init_ball (ModeInfo *mi)
 
   glEnable(GL_COLOR_MATERIAL);
   glShadeModel(GL_SMOOTH);
-  glClearColor(0.0f, 0.0f, 0.0f, 0.5f);
   glClearDepth(1.0f);
   glEnable(GL_DEPTH_TEST);
   glDepthFunc(GL_LEQUAL);

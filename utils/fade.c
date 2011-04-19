@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -900,6 +900,11 @@ xf86_whack_gamma(Display *dpy, int screen, xf86_gamma_info *info,
 {
   Bool status;
 
+  XErrorHandler old_handler;
+  XSync (dpy, False);
+  error_handler_hit_p = False;
+  old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+
   if (ratio < 0) ratio = 0;
   if (ratio > 1) ratio = 1;
 
@@ -947,7 +952,10 @@ xf86_whack_gamma(Display *dpy, int screen, xf86_gamma_info *info,
 # endif /* !HAVE_XF86VMODE_GAMMA_RAMP */
     }
 
-  XSync(dpy, False);
+  XSync (dpy, False);
+  XSetErrorHandler (old_handler);
+  XSync (dpy, False);
+
   return status;
 }
 

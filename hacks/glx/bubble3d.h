@@ -60,7 +60,6 @@ struct glb_config {
 					 */
 	GLfloat     screen_bottom;	/* Bottom of screen. */
 	GLfloat     screen_top;	/* Top of screen. */
-	GLfloat     bg_colour[4];	/* Background colour. */
 	GLfloat     bubble_colour[4];	/* Colour of the bubbles. */
 
 	int         polygon_count;

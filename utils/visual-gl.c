@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2009 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2011 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,6 +22,7 @@
 
 #include "utils.h"
 #include "visual.h"
+#include "resources.h"
 
 #ifdef HAVE_GL
 # include <GL/gl.h>
@@ -46,15 +47,38 @@ get_gl_visual (Screen *screen)
 # define DB GLX_DOUBLEBUFFER
 # define ST GLX_STENCIL_SIZE
 
-  int attrs[][20] = {
-   { GLX_RGBA, R,8, G,8, B,8, A,8, D,8, DB, ST,1, 0 }, /* rgb double, stencil */
-   { GLX_RGBA, R,8, G,8, B,8,      D,8, DB, ST,1, 0 }, /* rgb double, stencil */
+# if defined(GL_SAMPLE_BUFFERS)
+#  define SB GL_SAMPLE_BUFFERS
+#  define SM GL_SAMPLES
+# elif defined(GLX_SAMPLE_BUFFERS)
+#  define SB GLX_SAMPLE_BUFFERS
+#  define SM GLX_SAMPLES
+# elif defined(GLX_SAMPLE_BUFFERS_ARB)
+#  define SB GLX_SAMPLE_BUFFERS_ARB
+#  define SM GLX_SAMPLES_ARB
+# elif defined(GLX_SAMPLE_BUFFERS_SGIS)
+#  define SB GLX_SAMPLE_BUFFERS_SGIS
+#  define SM GLX_SAMPLES_SGIS
+# endif
+
+  int attrs[][40] = {
+# ifdef SB				  /* rgba double stencil multisample */
+   { GLX_RGBA, R,8, G,8, B,8, A,8, D,8, DB, ST,1, SB,1, SM,8, 0 },
+   { GLX_RGBA, R,8, G,8, B,8, A,8, D,8, DB, ST,1, SB,1, SM,6, 0 },
+   { GLX_RGBA, R,8, G,8, B,8, A,8, D,8, DB, ST,1, SB,1, SM,4, 0 },
+   { GLX_RGBA, R,8, G,8, B,8, A,8, D,8, DB, ST,1, SB,1, SM,2, 0 },
+#  define SB_COUNT 4 /* #### Kludgey count of preceeding lines! */
+# endif
+   { GLX_RGBA, R,8, G,8, B,8, A,8, D,8, DB, ST,1, 0 }, /* rgba double stencil */
+   { GLX_RGBA, R,8, G,8, B,8,      D,8, DB, ST,1, 0 }, /* rgb  double stencil */
    { GLX_RGBA, R,4, G,4, B,4,      D,4, DB, ST,1, 0 },
    { GLX_RGBA, R,2, G,2, B,2,      D,2, DB, ST,1, 0 },
-   { GLX_RGBA, R,8, G,8, B,8,      D,8, DB,       0 }, /* rgb double */
+   { GLX_RGBA, R,8, G,8, B,8, A,8, D,8, DB,       0 }, /* rgba double */
+   { GLX_RGBA, R,8, G,8, B,8,      D,8, DB,       0 }, /* rgb  double */
    { GLX_RGBA, R,4, G,4, B,4,      D,4, DB,       0 },
    { GLX_RGBA, R,2, G,2, B,2,      D,2, DB,       0 },
-   { GLX_RGBA, R,8, G,8, B,8,      D,8,           0 }, /* rgb single */
+   { GLX_RGBA, R,8, G,8, B,8, A,8, D,8,           0 }, /* rgba single */
+   { GLX_RGBA, R,8, G,8, B,8,      D,8,           0 }, /* rgb  single */
    { GLX_RGBA, R,4, G,4, B,4,      D,4,           0 },
    { GLX_RGBA, R,2, G,2, B,2,      D,2,           0 },
    { I, 8,                         D,8, DB,       0 }, /* cmap double */
@@ -64,8 +88,14 @@ get_gl_visual (Screen *screen)
    { GLX_RGBA, R,1, G,1, B,1,      D,1,           0 }  /* monochrome */
   };
 
-  int i;
-  for (i = 0; i < sizeof(attrs)/sizeof(*attrs); i++)
+  int i = 0;
+
+# ifdef SB
+  if (! get_boolean_resource (dpy, "multiSample", "MultiSample"))
+    i = SB_COUNT;  /* skip over the multibuffer entries in 'attrs' */
+# endif /* SB */
+
+  for (; i < sizeof(attrs)/sizeof(*attrs); i++)
     {
       XVisualInfo *vi = glXChooseVisual (dpy, screen_num, attrs[i]);
       if (vi)
@@ -189,15 +219,15 @@ describe_gl_visual (FILE *f, Screen *screen, Visual *visual,
         value != 0)
       printf ("    GLX stencil size:  %d\n", value);
 
-# ifdef GLX_SAMPLE_BUFFERS_SGIS
-    if (!glXGetConfig (dpy, vi_out, GLX_SAMPLE_BUFFERS_SGIS, &value) &&
+# ifdef SB  /* GL_SAMPLE_BUFFERS || GLX_SAMPLE_BUFFERS_* */
+    if (!glXGetConfig (dpy, vi_out, SB, &value) &&
         value != 0)
       {
         int bufs = value;
-        if (!glXGetConfig (dpy, vi_out, GLX_SAMPLES_SGIS, &value))
-          printf ("    GLX multisamplers: %d (%d)\n", bufs, value);
+        if (!glXGetConfig (dpy, vi_out, SM, &value))
+          printf ("    GLX multisample:   %d, %d\n", bufs, value);
       }
-# endif /* GLX_SAMPLE_BUFFERS_SGIS */
+# endif  /* GL_SAMPLE_BUFFERS || GLX_SAMPLE_BUFFERS_* */
 
     if (!glXGetConfig (dpy, vi_out, GLX_TRANSPARENT_TYPE_EXT, &value) &&
         value != GLX_NONE_EXT)

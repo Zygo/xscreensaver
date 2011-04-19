@@ -438,7 +438,6 @@ initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
   glViewport( 0, 0, width, height ); 
 
   glEnable(GL_DEPTH_TEST);
-  glClearColor(0,0,0,0);
   glDisable (GL_CULL_FACE);
   glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, True);
   glShadeModel(GL_SMOOTH);

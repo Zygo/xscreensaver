@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2009 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2011 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -108,7 +108,7 @@ init_GL (ModeInfo *mi)
 
   if (!ctx) {
 
-    NSOpenGLPixelFormatAttribute attrs[20];
+    NSOpenGLPixelFormatAttribute attrs[40];
     int i = 0;
     attrs[i++] = NSOpenGLPFAColorSize; attrs[i++] = 24;
     attrs[i++] = NSOpenGLPFAAlphaSize; attrs[i++] = 8;
@@ -117,10 +117,42 @@ init_GL (ModeInfo *mi)
     if (get_boolean_resource (mi->dpy, "doubleBuffer", "DoubleBuffer"))
       attrs[i++] = NSOpenGLPFADoubleBuffer;
 
+    Bool ms_p = get_boolean_resource (mi->dpy, "multiSample", "MultiSample");
+
+    /* Sometimes, turning on multisampling kills performance.  At one point,
+       I thought the answer was, "only run multisampling on one screen, and
+       leave it turned off on other screens".  That's what this code does,
+       but it turns out, that solution is insufficient.  I can't really tell
+       what causes poor performance with multisampling, but it's not
+       predictable.  Without changing the code, some times a given saver will
+       perform fine with multisampling on, and other times it will perform
+       very badly.  Without multisampling, they always perform fine.
+     */
+//  if (ms_p && [[view window] screen] != [[NSScreen screens] objectAtIndex:0])
+//    ms_p = 0;
+
+    if (ms_p) {
+      attrs[i++] = NSOpenGLPFASampleBuffers; attrs[i++] = 1;
+      attrs[i++] = NSOpenGLPFASamples;       attrs[i++] = 6;
+      // Don't really understand what this means:
+      // attrs[i++] = NSOpenGLPFANoRecovery;
+    }
+
     attrs[i] = 0;
 
-    NSOpenGLPixelFormat *pixfmt = [[NSOpenGLPixelFormat alloc] 
-                                    initWithAttributes:attrs];
+    NSOpenGLPixelFormat *pixfmt = 
+      [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
+
+    if (ms_p && !pixfmt) {   // Retry without multisampling.
+      i -= 2;
+      attrs[i] = 0;
+      pixfmt = [[NSOpenGLPixelFormat alloc] initWithAttributes:attrs];
+    }
+
+    if (! pixfmt) {
+      NSLog (@"unable to create NSOpenGLPixelFormat");
+      exit (1);
+    }
 
     ctx = [[NSOpenGLContext alloc] 
             initWithFormat:pixfmt
@@ -131,7 +163,7 @@ init_GL (ModeInfo *mi)
   // Sync refreshes to the vertical blanking interval
   GLint r = 1;
   [ctx setValues:&r forParameter:NSOpenGLCPSwapInterval];
-  check_gl_error ("NSOpenGLCPSwapInterval");
+//  check_gl_error ("NSOpenGLCPSwapInterval");  // SEGV sometimes. Too early?
 
   // #### "Build and Analyze" says that ctx leaks, because it doesn't
   //      seem to realize that makeCurrentContext retains it (right?)
@@ -143,6 +175,7 @@ init_GL (ModeInfo *mi)
   [view setOglContext:ctx];
 
   // Clear frame buffer ASAP, else there are bits left over from other apps.
+  glClearColor (0, 0, 0, 1);
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //  glFinish ();
 //  glXSwapBuffers (mi->dpy, mi->window);
@@ -160,6 +193,8 @@ init_GL (ModeInfo *mi)
       NSLog (@"enabling multi-threaded OpenGL failed: %d", err);
     }
   }
+
+  check_gl_error ("init_GL");
 
   // Caller expects a pointer to an opaque struct...  which it dereferences.
   // Don't ask me, it's historical...

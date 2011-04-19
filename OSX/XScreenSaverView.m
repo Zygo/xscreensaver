@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2010 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2011 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -145,7 +145,8 @@ add_default_options (const XrmOptionDescRec *opts,
   };
   static const char *default_defaults [] = {
     ".doFPS:              False",
-    ".doubleBuffer:       True",  // for most OpenGL hacks
+    ".doubleBuffer:       True",
+    ".multiSample:        False",
     ".textMode:           date",
  // ".textLiteral:        ",
  // ".textFile:           ",

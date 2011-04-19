@@ -207,7 +207,7 @@ static void LoadPath(struct tunnel_state *st)
 		}
 		else
 		{
-                        path1 = st->path;
+			if (!path1) path1 = st->path;
 			path2 = (tnPath *)malloc(sizeof(tnPath));
 			path1->next = path2;
 			path1 = path2;

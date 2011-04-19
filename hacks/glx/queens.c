@@ -476,7 +476,6 @@ ENTRYPOINT void init_queens(ModeInfo *mi)
   else
     MI_CLEARWINDOW(mi);
 
-  glClearColor(0.0, 0.0, 0.0, 0.0);
   glNewList(QUEEN, GL_COMPILE);
   qs->queen_polys = draw_model(countof(spidermodel), spidermodel, 24);
   glEndList();

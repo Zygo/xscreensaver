@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2008 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2011 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -826,6 +826,7 @@ init_sonar (ModeInfo *mi)
   sp->glx_context = init_GL(mi);
 
   reshape_sonar (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+  clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
 
   if (!wire)
     {

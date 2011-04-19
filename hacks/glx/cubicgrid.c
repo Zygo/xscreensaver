@@ -158,7 +158,6 @@ static void init_gl(ModeInfo *mi)
   int x, y, z;
   float tf = ticks;
 
-  glClearColor(0.0, 0.0, 0.0, 1.0);
   glDrawBuffer(GL_BACK);
   if(bigdots) {
     glPointSize(2.0);

@@ -307,7 +307,6 @@ pinit(ModeInfo *mi)
 	int status;
 
 	glClearDepth(1.0);
-	glClearColor(0.0, 0.0, 0.0, 1.0);
 
     if (MI_IS_WIREFRAME(mi))
       return;

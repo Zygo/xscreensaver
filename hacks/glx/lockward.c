@@ -805,9 +805,6 @@ init_lockward (ModeInfo *mi)
 	glShadeModel (GL_FLAT);
 	glFrontFace (GL_CW);
 
-
-	glClearColor (0.0, 0.0, 0.0, 1.0);
-
 	ctx->blades_outer	= glGenLists (NRADII);
 	ctx->blades_inner	= glGenLists (NRADII);
 	ctx->rings		= glGenLists (NRADII - 1);

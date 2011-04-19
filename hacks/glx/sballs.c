@@ -666,8 +666,6 @@ static void Init(ModeInfo * mi)
         glLightfv(GL_LIGHT1, GL_DIFFUSE, LightDiffuse);
         glLightfv(GL_LIGHT1, GL_POSITION,LightPosition);
         glEnable(GL_LIGHT1);
-
-        glClearColor(0, 0, 0, 0);
 }
 
 /*

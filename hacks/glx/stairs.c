@@ -298,7 +298,7 @@ draw_sphere(int pos, int tick)
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, MaterialYellow);
     glDisable (GL_TEXTURE_2D);
 	glShadeModel(GL_SMOOTH);
-	glFrontFace(GL_CW);
+	glFrontFace(GL_CCW);
     polys += unit_sphere (32, 32, False);
 	glShadeModel(GL_FLAT);
     glEnable (GL_TEXTURE_2D);
@@ -391,8 +391,6 @@ pinit(void)
 {
     int status;
 	glClearDepth(1.0);
-	glClearColor(0.0, 0.0, 0.0, 1.0);
-
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
 	glLightfv(GL_LIGHT0, GL_POSITION, position0);

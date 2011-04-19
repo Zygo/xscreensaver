@@ -126,6 +126,7 @@ struct splash_dialog_data {
 
   Pixel foreground;
   Pixel background;
+  Pixel border;
   Pixel button_foreground;
   Pixel button_background;
   Pixel shadow_top;
@@ -241,6 +242,9 @@ make_splash_dialog (saver_info *si)
   sp->background = get_pixel_resource (si->dpy, cmap, 
                                        "splash.background",
 				       "Dialog.Background");
+  sp->border = get_pixel_resource (si->dpy, cmap, 
+                                       "splash.borderColor",
+				       "Dialog.borderColor");
 
   if (sp->foreground == sp->background)
     {
@@ -420,6 +424,8 @@ make_splash_dialog (saver_info *si)
 		   DefaultVisualOfScreen(ssi->screen),
 		   attrmask, &attrs);
   XSetWindowBackground (si->dpy, si->splash_dialog, sp->background);
+  XSetWindowBorder (si->dpy, si->splash_dialog, sp->border);
+
 
   sp->logo_pixmap = xscreensaver_logo (ssi->screen, 
                                        /* same visual as si->splash_dialog */

@@ -606,7 +606,6 @@ pinit(ModeInfo * mi)
 	morph3dstruct *mp = &morph3d[MI_SCREEN(mi)];
 
 	glClearDepth(1.0);
-	glClearColor(0.0, 0.0, 0.0, 1.0);
 	glColor3f(1.0, 1.0, 1.0);
 
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);

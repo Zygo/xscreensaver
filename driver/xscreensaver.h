@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -53,7 +53,7 @@ extern void init_xinput_extension (saver_info *si);
 
 /* Display Power Management System (DPMS) interface. */
 extern Bool monitor_powered_on_p (saver_info *si);
-extern void monitor_power_on (saver_info *si);
+extern void monitor_power_on (saver_info *si, Bool on_p);
 
 
 /* =======================================================================

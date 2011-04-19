@@ -439,7 +439,6 @@ init_gl(ModeInfo *mi)
   }
 
   glClearDepth(1.0);
-  glClearColor(0.0, 0.0, 0.0, 1.0);
   glDrawBuffer(GL_BACK);
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
   glShadeModel(GL_FLAT);

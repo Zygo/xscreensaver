@@ -665,7 +665,6 @@ InitSuperquadrics(int wfmode, int snorm, int res, int count, float speed, superq
 	if (snorm)
 		sp->shownorms = 1;
 
-    glClearColor(0.0,0.0,0.0,1.0);
     glClearDepth(1.0);
 
 	if (sp->wireframe) {

@@ -1195,8 +1195,6 @@ static void update_ants(antmazestruct *mp)
 static void pinit(antmazestruct *mp) 
 {
   glClearDepth(1.0);
-  glClearColor(0.0, 0.0, 0.0, 1.0);
-  
   glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
   glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
   glLightfv(GL_LIGHT0, GL_POSITION, position0);

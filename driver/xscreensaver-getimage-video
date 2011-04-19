@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001-2010 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001-2011 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -18,9 +18,10 @@
 # "jigsaw", etc.) get the image to manipulate by running the
 # "xscreensaver-getimage" program.
 #
-# "xscreensaver-getimage" will invoke this program, depending on the
-# value of the "grabVideoFrames" setting in the ~/.xscreensaver file
-# (or in /usr/lib/X11/app-defaults/XScreenSaver).
+# The various screen savers invoke "xscreensaver-getimage", which will in
+# turn invoke this program, depending on the value of the "grabVideoFrames"
+# setting in the ~/.xscreensaver file (or in the app-defaults file, usually
+# /usr/lib/X11/app-defaults/XScreenSaver).
 #
 # Created: 13-Apr-2001.
 
@@ -29,7 +30,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version  = q{ $Revision: 1.19 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version  = q{ $Revision: 1.21 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $tmpdir   = $ENV{TMPDIR} || "/tmp";
 my $tmpfile  = sprintf("%s/xssv.%08x.ppm", $tmpdir, rand(0xFFFFFFFF));
@@ -70,8 +71,10 @@ my @programs = (
   "vidtomem -f $tmpfile 2>&- " .		# Silicon Graphics
 	"&& mv $tmpfile-00000.rgb $tmpfile",
 
-  # "mplayer tv:// -vo pnm -frames 1 2>&- " .	# Maybe works with some cams?
+  # "mplayer -really-quiet tv://0 " .		# Maybe works with some cams?
+  #         "-ao null -vo pnm -frames 1 2>&- " .
   #	"&& mv 00000001.ppm $tmpfile",
+
 );
 
 
@@ -120,21 +123,21 @@ sub grab_image() {
     print STDOUT "$tmpfile\n";
 
   } elsif ($use_stdout_p) {
-    local *IN;
     my $ppm = "";
     my $reader  = "<$tmpfile";
 
     # horrid kludge for SGIs, since they don't use PPM...
     if ($cmd =~ m/^vidtomem\s/) {
-      $reader = "sgitopnm $tmpfile";
+      $reader  = "sgitopnm $tmpfile";
       $reader .= " 2>/dev/null" if ($verbose <= 1);
       $reader .= " |";
     }
 
-    open(IN, $reader) || error ("reading $tmpfile: $!");
+    open (my $in, $reader) || error ("reading $tmpfile: $!");
     print STDERR "$progname: reading $tmpfile\n" if ($verbose > 1);
-    while (<IN>) { $ppm .= $_; }
-    close IN;
+    local $/ = undef;  # read entire file
+    $ppm = <$in>;
+    close $in;
     unlink $tmpfile;
     print STDOUT $ppm;
 
