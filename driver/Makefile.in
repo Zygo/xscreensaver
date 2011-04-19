@@ -128,6 +128,7 @@ XML_LIBS	= @XML_LIBS@
 
 XDPMS_LIBS	= @XDPMS_LIBS@
 XINERAMA_LIBS	= @XINERAMA_LIBS@
+XINPUT_LIBS	= @XINPUT_LIBS@
 
 PASSWD_SRCS	= @PASSWD_SRCS@
 PASSWD_OBJS	= @PASSWD_OBJS@
@@ -743,6 +744,11 @@ $(SAVER_UTIL_OBJS):
 subprocs.o: subprocs.c
 	$(CC) -c $(INCLUDES) $(SUBP_DEFS) $(CFLAGS) $(X_CFLAGS) \
 	  $(srcdir)/subprocs.c
+
+# xscreensaver takes an extra -D option.
+xscreensaver.o: xscreensaver.c
+	$(CC) -c $(INCLUDES) $(DEFS) $(INTL_DEFS) $(CFLAGS) $(X_CFLAGS) \
+	  $(srcdir)/xscreensaver.c
 
 # demo-Gtk takes extra -D options, and an extra -I option.
 demo-Gtk.o: demo-Gtk.c

@@ -207,6 +207,7 @@ static void LoadPath(struct tunnel_state *st)
 		}
 		else
 		{
+                        path1 = st->path;
 			path2 = (tnPath *)malloc(sizeof(tnPath));
 			path1->next = path2;
 			path1 = path2;
@@ -249,7 +250,9 @@ void DrawTunnel(struct tunnel_state *st,
 	
 	cmpos = st->cam_pos;
 	/* Get current curve */
-	if (st->cam_pos->next->next->next)
+	if (st->cam_pos->next &&
+            st->cam_pos->next->next &&
+            st->cam_pos->next->next->next)
 	{
 		p1 = st->cam_pos;
 		for (i=0; i<4; i++)

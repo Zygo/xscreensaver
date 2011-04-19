@@ -1111,7 +1111,7 @@ draw_flow (ModeInfo * mi)
 				   are ok, they help to outline the Poincare'
 				   slice. */
 				for(j = i; j < end; j++) Y(j,b) = Y(i,b);
-				begin = i + 1;
+				/*begin = i + 1;*/
 				break;
 			}
 			

@@ -189,6 +189,10 @@
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
 			  <property name="angle">0</property>
+			  <accessibility>
+			    <atkrelation target="cycle_spinbutton" type="label-for"/>
+			    <atkrelation target="cycle_spinbutton" type="flows-to"/>
+			  </accessibility>
 			</widget>
 			<packing>
 			  <property name="left_attach">1</property>
@@ -218,6 +222,12 @@
 			      <property name="active">False</property>
 			      <property name="inconsistent">False</property>
 			      <property name="draw_indicator">True</property>
+			      <accessibility>
+				<atkproperty name="AtkObject::accessible_name" translatable="yes">Lock Screen</atkproperty>
+				<atkrelation target="lock_spinbutton" type="controller-for"/>
+				<atkrelation target="lock_spinbutton" type="label-for"/>
+				<atkrelation target="lock_spinbutton" type="flows-to"/>
+			      </accessibility>
 			      <signal name="toggled" handler="pref_changed_cb"/>
 			    </widget>
 			  </child>
@@ -244,6 +254,12 @@
 			  <property name="snap_to_ticks">True</property>
 			  <property name="wrap">False</property>
 			  <property name="adjustment">1 1 720 1 15 15</property>
+			  <accessibility>
+			    <atkrelation target="timeout_label" type="labelled-by"/>
+			    <atkrelation target="timeout_mlabel" type="labelled-by"/>
+			    <atkrelation target="timeout_label" type="flows-from"/>
+			    <atkrelation target="timeout_mlabel" type="flows-to"/>
+			  </accessibility>
 			  <signal name="activate" handler="pref_changed_cb"/>
 			  <signal name="focus_out_event" handler="pref_changed_event_cb"/>
 			  <signal name="value_changed" handler="pref_changed_cb"/>
@@ -270,6 +286,14 @@
 			  <property name="snap_to_ticks">True</property>
 			  <property name="wrap">False</property>
 			  <property name="adjustment">0 0 720 1 15 15</property>
+			  <accessibility>
+			    <atkproperty name="AtkObject::accessible_name" translatable="yes">Lock Screen After</atkproperty>
+			    <atkrelation target="lock_button" type="controlled-by"/>
+			    <atkrelation target="lock_button" type="labelled-by"/>
+			    <atkrelation target="lock_mlabel" type="labelled-by"/>
+			    <atkrelation target="lock_button" type="flows-from"/>
+			    <atkrelation target="lock_mlabel" type="flows-to"/>
+			  </accessibility>
 			  <signal name="activate" handler="pref_changed_cb"/>
 			  <signal name="focus_out_event" handler="pref_changed_event_cb"/>
 			  <signal name="value_changed" handler="pref_changed_cb"/>
@@ -297,6 +321,12 @@
 			  <property name="snap_to_ticks">True</property>
 			  <property name="wrap">False</property>
 			  <property name="adjustment">0 0 720 1 15 15</property>
+			  <accessibility>
+			    <atkrelation target="cycle_label" type="labelled-by"/>
+			    <atkrelation target="cycle_mlabel" type="labelled-by"/>
+			    <atkrelation target="cycle_label" type="flows-from"/>
+			    <atkrelation target="cycle_mlabel" type="flows-to"/>
+			  </accessibility>
 			  <signal name="activate" handler="pref_changed_cb"/>
 			  <signal name="focus_out_event" handler="pref_changed_event_cb"/>
 			  <signal name="value_changed" handler="pref_changed_cb"/>
@@ -328,6 +358,10 @@
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
 			  <property name="angle">0</property>
+			  <accessibility>
+			    <atkrelation target="lock_spinbutton" type="label-for"/>
+			    <atkrelation target="lock_spinbutton" type="flows-to"/>
+			  </accessibility>
 			</widget>
 			<packing>
 			  <property name="left_attach">3</property>
@@ -355,39 +389,16 @@
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
 			  <property name="angle">0</property>
+			  <accessibility>
+			    <atkrelation target="cycle_spinbutton" type="label-for"/>
+			    <atkrelation target="cycle_spinbutton" type="flows-from"/>
+			  </accessibility>
 			</widget>
 			<packing>
 			  <property name="left_attach">3</property>
 			  <property name="right_attach">4</property>
 			  <property name="top_attach">1</property>
 			  <property name="bottom_attach">2</property>
-			  <property name="y_options"></property>
-			</packing>
-		      </child>
-
-		      <child>
-			<widget class="GtkLabel" id="timeout_mlabel">
-			  <property name="visible">True</property>
-			  <property name="label" translatable="yes">minutes</property>
-			  <property name="use_underline">False</property>
-			  <property name="use_markup">False</property>
-			  <property name="justify">GTK_JUSTIFY_LEFT</property>
-			  <property name="wrap">False</property>
-			  <property name="selectable">False</property>
-			  <property name="xalign">0</property>
-			  <property name="yalign">0.5</property>
-			  <property name="xpad">8</property>
-			  <property name="ypad">0</property>
-			  <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
-			  <property name="width_chars">-1</property>
-			  <property name="single_line_mode">False</property>
-			  <property name="angle">0</property>
-			</widget>
-			<packing>
-			  <property name="left_attach">3</property>
-			  <property name="right_attach">4</property>
-			  <property name="top_attach">0</property>
-			  <property name="bottom_attach">1</property>
 			  <property name="y_options"></property>
 			</packing>
 		      </child>
@@ -410,6 +421,10 @@
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
 			  <property name="angle">0</property>
+			  <accessibility>
+			    <atkrelation target="timeout_spinbutton" type="label-for"/>
+			    <atkrelation target="timeout_spinbutton" type="flows-to"/>
+			  </accessibility>
 			</widget>
 			<packing>
 			  <property name="left_attach">1</property>
@@ -417,6 +432,37 @@
 			  <property name="top_attach">0</property>
 			  <property name="bottom_attach">1</property>
 			  <property name="x_options">fill</property>
+			  <property name="y_options"></property>
+			</packing>
+		      </child>
+
+		      <child>
+			<widget class="GtkLabel" id="timeout_mlabel">
+			  <property name="visible">True</property>
+			  <property name="label" translatable="yes">minutes</property>
+			  <property name="use_underline">False</property>
+			  <property name="use_markup">False</property>
+			  <property name="justify">GTK_JUSTIFY_LEFT</property>
+			  <property name="wrap">False</property>
+			  <property name="selectable">False</property>
+			  <property name="xalign">0</property>
+			  <property name="yalign">0.5</property>
+			  <property name="xpad">8</property>
+			  <property name="ypad">0</property>
+			  <property name="ellipsize">PANGO_ELLIPSIZE_NONE</property>
+			  <property name="width_chars">-1</property>
+			  <property name="single_line_mode">False</property>
+			  <property name="angle">0</property>
+			  <accessibility>
+			    <atkrelation target="timeout_spinbutton" type="label-for"/>
+			    <atkrelation target="timeout_spinbutton" type="flows-from"/>
+			  </accessibility>
+			</widget>
+			<packing>
+			  <property name="left_attach">3</property>
+			  <property name="right_attach">4</property>
+			  <property name="top_attach">0</property>
+			  <property name="bottom_attach">1</property>
 			  <property name="y_options"></property>
 			</packing>
 		      </child>
@@ -506,6 +552,9 @@
 			      <property name="width_chars">-1</property>
 			      <property name="single_line_mode">False</property>
 			      <property name="angle">0</property>
+			      <accessibility>
+				<atkrelation target="mode_menu_popup" type="label-for"/>
+			      </accessibility>
 			    </widget>
 			    <packing>
 			      <property name="padding">0</property>
@@ -519,6 +568,9 @@
 			      <property name="visible">True</property>
 			      <property name="can_focus">True</property>
 			      <property name="history">0</property>
+			      <accessibility>
+				<atkrelation target="mode_label" type="labelled-by"/>
+			      </accessibility>
 
 			      <child internal-child="menu">
 				<widget class="GtkMenu" id="mode_menu_popup">
@@ -713,6 +765,9 @@
 		      <property name="label_xalign">0</property>
 		      <property name="label_yalign">0.5</property>
 		      <property name="shadow_type">GTK_SHADOW_ETCHED_IN</property>
+		      <accessibility>
+			<atkrelation target="label1" type="labelled-by"/>
+		      </accessibility>
 
 		      <child>
 			<widget class="GtkNotebook" id="preview_notebook">
@@ -936,6 +991,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
 			  <property name="angle">0</property>
+			  <accessibility>
+			    <atkrelation target="preview_frame" type="label-for"/>
+			  </accessibility>
 			</widget>
 			<packing>
 			  <property name="type">label_item</property>
@@ -999,6 +1057,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 		      <property name="label_xalign">0</property>
 		      <property name="label_yalign">0.5</property>
 		      <property name="shadow_type">GTK_SHADOW_ETCHED_IN</property>
+		      <accessibility>
+			<atkrelation target="label2" type="labelled-by"/>
+		      </accessibility>
 
 		      <child>
 			<widget class="GtkHBox" id="grab_hbox">
@@ -1083,6 +1144,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="active">False</property>
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
+				  <accessibility>
+				    <atkrelation target="image_text" type="controller-for"/>
+				    <atkrelation target="image_browse_button" type="controller-for"/>
+				  </accessibility>
 				  <signal name="toggled" handler="pref_changed_cb"/>
 				</widget>
 				<packing>
@@ -1135,6 +1200,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="has_frame">True</property>
 				      <property name="invisible_char">*</property>
 				      <property name="activates_default">False</property>
+				      <accessibility>
+					<atkrelation target="grab_image_button" type="labelled-by"/>
+					<atkrelation target="grab_image_button" type="controlled-by"/>
+				      </accessibility>
 				      <signal name="activate" handler="pref_changed_cb"/>
 				      <signal name="focus_out_event" handler="pref_changed_event_cb"/>
 				    </widget>
@@ -1195,6 +1264,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
 			  <property name="angle">0</property>
+			  <accessibility>
+			    <atkrelation target="grab_frame" type="label-for"/>
+			  </accessibility>
 			</widget>
 			<packing>
 			  <property name="type">label_item</property>
@@ -1216,6 +1288,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 		      <property name="label_xalign">0</property>
 		      <property name="label_yalign">0.5</property>
 		      <property name="shadow_type">GTK_SHADOW_ETCHED_IN</property>
+		      <accessibility>
+			<atkrelation target="label3" type="labelled-by"/>
+		      </accessibility>
 
 		      <child>
 			<widget class="GtkHBox" id="diag_hbox">
@@ -1261,6 +1336,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="active">False</property>
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
+				  <accessibility>
+				    <atkrelation target="text_entry" type="controller-for"/>
+				    <atkrelation target="text_entry" type="label-for"/>
+				  </accessibility>
 				  <signal name="toggled" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:31:44 GMT"/>
 				</widget>
 				<packing>
@@ -1286,6 +1365,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
 				  <property name="group">text_radio</property>
+				  <accessibility>
+				    <atkrelation target="text_file_entry" type="label-for"/>
+				    <atkrelation target="text_file_entry" type="controller-for"/>
+				  </accessibility>
 				  <signal name="toggled" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:31:55 GMT"/>
 				</widget>
 				<packing>
@@ -1311,6 +1394,11 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
 				  <property name="group">text_radio</property>
+				  <accessibility>
+				    <atkrelation target="text_program_entry" type="label-for"/>
+				    <atkrelation target="text_program_entry" type="controller-for"/>
+				    <atkrelation target="text_program_browse" type="controller-for"/>
+				  </accessibility>
 				  <signal name="toggled" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:32:07 GMT"/>
 				</widget>
 				<packing>
@@ -1336,6 +1424,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
 				  <property name="group">text_radio</property>
+				  <accessibility>
+				    <atkrelation target="text_url_entry" type="label-for"/>
+				    <atkrelation target="text_url_entry" type="controller-for"/>
+				  </accessibility>
 				  <signal name="toggled" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:32:17 GMT"/>
 				</widget>
 				<packing>
@@ -1385,6 +1477,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="has_frame">True</property>
 				  <property name="invisible_char">*</property>
 				  <property name="activates_default">False</property>
+				  <accessibility>
+				    <atkrelation target="text_url_radio" type="controlled-by"/>
+				  </accessibility>
 				  <signal name="activate" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:33:10 GMT"/>
 				  <signal name="focus_out_event" handler="pref_changed_event_cb" last_modification_time="Sun, 20 Mar 2005 21:34:26 GMT"/>
 				</widget>
@@ -1405,6 +1500,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="use_underline">True</property>
 				  <property name="relief">GTK_RELIEF_NORMAL</property>
 				  <property name="focus_on_click">True</property>
+				  <accessibility>
+				    <atkrelation target="text_file_radio" type="controlled-by"/>
+				  </accessibility>
 				  <signal name="clicked" handler="browse_text_file_cb" last_modification_time="Sun, 20 Mar 2005 01:24:38 GMT"/>
 				</widget>
 				<packing>
@@ -1429,6 +1527,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="has_frame">True</property>
 				  <property name="invisible_char">*</property>
 				  <property name="activates_default">False</property>
+				  <accessibility>
+				    <atkrelation target="text_program_radio" type="labelled-by"/>
+				    <atkrelation target="text_program_radio" type="controlled-by"/>
+				  </accessibility>
 				  <signal name="activate" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:32:42 GMT"/>
 				  <signal name="focus_out_event" handler="pref_changed_event_cb" last_modification_time="Sun, 20 Mar 2005 21:33:43 GMT"/>
 				</widget>
@@ -1453,6 +1555,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="has_frame">True</property>
 				  <property name="invisible_char">*</property>
 				  <property name="activates_default">False</property>
+				  <accessibility>
+				    <atkrelation target="text_program_radio" type="labelled-by"/>
+				    <atkrelation target="text_program_radio" type="controlled-by"/>
+				  </accessibility>
 				  <signal name="activate" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:33:02 GMT"/>
 				  <signal name="focus_out_event" handler="pref_changed_event_cb" last_modification_time="Sun, 20 Mar 2005 21:34:15 GMT"/>
 				</widget>
@@ -1473,6 +1579,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="use_underline">True</property>
 				  <property name="relief">GTK_RELIEF_NORMAL</property>
 				  <property name="focus_on_click">True</property>
+				  <accessibility>
+				    <atkrelation target="text_program_radio" type="controller-for"/>
+				  </accessibility>
 				  <signal name="clicked" handler="browse_text_program_cb" last_modification_time="Sun, 20 Mar 2005 01:24:51 GMT"/>
 				</widget>
 				<packing>
@@ -1497,6 +1606,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="has_frame">True</property>
 				  <property name="invisible_char">*</property>
 				  <property name="activates_default">False</property>
+				  <accessibility>
+				    <atkrelation target="text_file_radio" type="labelled-by"/>
+				    <atkrelation target="text_file_radio" type="controlled-by"/>
+				  </accessibility>
 				  <signal name="activate" handler="pref_changed_cb" last_modification_time="Sun, 20 Mar 2005 21:32:53 GMT"/>
 				  <signal name="focus_out_event" handler="pref_changed_event_cb" last_modification_time="Sun, 20 Mar 2005 21:33:55 GMT"/>
 				</widget>
@@ -1535,6 +1648,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
 			  <property name="angle">0</property>
+			  <accessibility>
+			    <atkrelation target="diag_frame" type="label-for"/>
+			  </accessibility>
 			</widget>
 			<packing>
 			  <property name="type">label_item</property>
@@ -1599,6 +1715,11 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="active">True</property>
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
+				  <accessibility>
+				    <atkrelation target="dpms_suspend_spinbutton" type="controller-for"/>
+				    <atkrelation target="dpms_standby_spinbutton" type="controller-for"/>
+				    <atkrelation target="dpms_off_spinbutton" type="controller-for"/>
+				  </accessibility>
 				  <signal name="toggled" handler="pref_changed_cb"/>
 				</widget>
 				<packing>
@@ -1635,6 +1756,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="width_chars">-1</property>
 				      <property name="single_line_mode">False</property>
 				      <property name="angle">0</property>
+				      <accessibility>
+					<atkrelation target="dpms_standby_spinbutton" type="label-for"/>
+					<atkrelation target="dpms_standby_spinbutton" type="flows-to"/>
+				      </accessibility>
 				    </widget>
 				    <packing>
 				      <property name="left_attach">0</property>
@@ -1664,6 +1789,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="width_chars">-1</property>
 				      <property name="single_line_mode">False</property>
 				      <property name="angle">0</property>
+				      <accessibility>
+					<atkrelation target="dpms_suspend_spinbutton" type="label-for"/>
+					<atkrelation target="dpms_suspend_spinbutton" type="flows-to"/>
+				      </accessibility>
 				    </widget>
 				    <packing>
 				      <property name="left_attach">0</property>
@@ -1693,6 +1822,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="width_chars">-1</property>
 				      <property name="single_line_mode">False</property>
 				      <property name="angle">0</property>
+				      <accessibility>
+					<atkrelation target="dpms_off_spinbutton" type="label-for"/>
+					<atkrelation target="dpms_off_spinbutton" type="flows-to"/>
+				      </accessibility>
 				    </widget>
 				    <packing>
 				      <property name="left_attach">0</property>
@@ -1721,6 +1854,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="width_chars">-1</property>
 				      <property name="single_line_mode">False</property>
 				      <property name="angle">0</property>
+				      <accessibility>
+					<atkrelation target="dpms_standby_spinbutton" type="label-for"/>
+					<atkrelation target="dpms_standby_spinbutton" type="flows-from"/>
+				      </accessibility>
 				    </widget>
 				    <packing>
 				      <property name="left_attach">2</property>
@@ -1749,6 +1886,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="width_chars">-1</property>
 				      <property name="single_line_mode">False</property>
 				      <property name="angle">0</property>
+				      <accessibility>
+					<atkrelation target="dpms_suspend_spinbutton" type="label-for"/>
+					<atkrelation target="dpms_suspend_spinbutton" type="flows-from"/>
+				      </accessibility>
 				    </widget>
 				    <packing>
 				      <property name="left_attach">2</property>
@@ -1777,6 +1918,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="width_chars">-1</property>
 				      <property name="single_line_mode">False</property>
 				      <property name="angle">0</property>
+				      <accessibility>
+					<atkrelation target="dpms_off_spinbutton" type="label-for"/>
+					<atkrelation target="dpms_off_spinbutton" type="flows-from"/>
+				      </accessibility>
 				    </widget>
 				    <packing>
 				      <property name="left_attach">2</property>
@@ -1800,6 +1945,13 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="snap_to_ticks">True</property>
 				      <property name="wrap">False</property>
 				      <property name="adjustment">0 0 1440 1 15 15</property>
+				      <accessibility>
+					<atkrelation target="dpms_button" type="controlled-by"/>
+					<atkrelation target="dpms_off_label" type="labelled-by"/>
+					<atkrelation target="dpms_off_mlabel" type="labelled-by"/>
+					<atkrelation target="dpms_off_label" type="flows-from"/>
+					<atkrelation target="dpms_off_mlabel" type="flows-to"/>
+				      </accessibility>
 				      <signal name="activate" handler="pref_changed_cb"/>
 				      <signal name="focus_out_event" handler="pref_changed_event_cb"/>
 				      <signal name="value_changed" handler="pref_changed_cb"/>
@@ -1826,6 +1978,13 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="snap_to_ticks">True</property>
 				      <property name="wrap">False</property>
 				      <property name="adjustment">0 0 1440 1 15 15</property>
+				      <accessibility>
+					<atkrelation target="dpms_button" type="controlled-by"/>
+					<atkrelation target="dpms_suspend_label" type="labelled-by"/>
+					<atkrelation target="dpms_suspend_mlabel" type="labelled-by"/>
+					<atkrelation target="dpms_suspend_label" type="flows-from"/>
+					<atkrelation target="dpms_suspend_mlabel" type="flows-to"/>
+				      </accessibility>
 				      <signal name="activate" handler="pref_changed_cb"/>
 				      <signal name="focus_out_event" handler="pref_changed_event_cb"/>
 				      <signal name="value_changed" handler="pref_changed_cb"/>
@@ -1852,6 +2011,13 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="snap_to_ticks">True</property>
 				      <property name="wrap">False</property>
 				      <property name="adjustment">0 0 1440 1 15 15</property>
+				      <accessibility>
+					<atkrelation target="dpms_button" type="controlled-by"/>
+					<atkrelation target="dpms_standby_label" type="labelled-by"/>
+					<atkrelation target="dpms_standby_mlabel" type="labelled-by"/>
+					<atkrelation target="dpms_standby_label" type="flows-from"/>
+					<atkrelation target="dpms_standby_mlabel" type="flows-to"/>
+				      </accessibility>
 				      <signal name="activate" handler="pref_changed_cb"/>
 				      <signal name="focus_out_event" handler="pref_changed_event_cb"/>
 				      <signal name="value_changed" handler="pref_changed_cb"/>
@@ -1899,6 +2065,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
 			  <property name="angle">0</property>
+			  <accessibility>
+			    <atkrelation target="dpms_frame" type="label-for"/>
+			  </accessibility>
 			</widget>
 			<packing>
 			  <property name="type">label_item</property>
@@ -1921,6 +2090,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 		      <property name="label_xalign">0</property>
 		      <property name="label_yalign">0.5</property>
 		      <property name="shadow_type">GTK_SHADOW_ETCHED_IN</property>
+		      <accessibility>
+			<atkrelation target="label5" type="labelled-by"/>
+		      </accessibility>
 
 		      <child>
 			<widget class="GtkHBox" id="cmap_hbox">
@@ -1963,6 +2135,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="active">False</property>
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
+				  <accessibility>
+				    <atkrelation target="fade_spinbutton" type="controller-for"/>
+				  </accessibility>
 				  <signal name="toggled" handler="pref_changed_cb"/>
 				</widget>
 				<packing>
@@ -1984,6 +2159,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				  <property name="active">False</property>
 				  <property name="inconsistent">False</property>
 				  <property name="draw_indicator">True</property>
+				  <accessibility>
+				    <atkrelation target="fade_spinbutton" type="controller-for"/>
+				  </accessibility>
 				  <signal name="toggled" handler="pref_changed_cb"/>
 				</widget>
 				<packing>
@@ -2042,6 +2220,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="width_chars">-1</property>
 				      <property name="single_line_mode">False</property>
 				      <property name="angle">0</property>
+				      <accessibility>
+					<atkrelation target="fade_spinbutton" type="label-for"/>
+					<atkrelation target="fade_spinbutton" type="flows-to"/>
+				      </accessibility>
 				    </widget>
 				    <packing>
 				      <property name="padding">14</property>
@@ -2062,6 +2244,14 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="snap_to_ticks">True</property>
 				      <property name="wrap">False</property>
 				      <property name="adjustment">0 0 10 1 1 1</property>
+				      <accessibility>
+					<atkrelation target="unfade_button" type="controlled-by"/>
+					<atkrelation target="fade_button" type="controlled-by"/>
+					<atkrelation target="fade_label" type="labelled-by"/>
+					<atkrelation target="fade_sec_label" type="labelled-by"/>
+					<atkrelation target="fade_label" type="flows-from"/>
+					<atkrelation target="fade_sec_label" type="flows-to"/>
+				      </accessibility>
 				      <signal name="activate" handler="pref_changed_cb"/>
 				      <signal name="focus_out_event" handler="pref_changed_event_cb"/>
 				      <signal name="value_changed" handler="pref_changed_cb"/>
@@ -2090,6 +2280,10 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 				      <property name="width_chars">-1</property>
 				      <property name="single_line_mode">False</property>
 				      <property name="angle">0</property>
+				      <accessibility>
+					<atkrelation target="fade_spinbutton" type="label-for"/>
+					<atkrelation target="fade_spinbutton" type="flows-from"/>
+				      </accessibility>
 				    </widget>
 				    <packing>
 				      <property name="padding">2</property>
@@ -2163,6 +2357,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
 			  <property name="angle">0</property>
+			  <accessibility>
+			    <atkrelation target="cmap_frame" type="label-for"/>
+			  </accessibility>
 			</widget>
 			<packing>
 			  <property name="type">label_item</property>
@@ -2383,6 +2580,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 	      <property name="label_xalign">0</property>
 	      <property name="label_yalign">0</property>
 	      <property name="shadow_type">GTK_SHADOW_ETCHED_IN</property>
+	      <accessibility>
+		<atkrelation target="label6" type="labelled-by"/>
+	      </accessibility>
 
 	      <child>
 		<widget class="GtkNotebook" id="opt_notebook">
@@ -2482,6 +2682,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 			  <property name="width_chars">-1</property>
 			  <property name="single_line_mode">False</property>
 			  <property name="angle">0</property>
+			  <accessibility>
+			    <atkrelation target="cmd_text" type="label-for"/>
+			  </accessibility>
 			</widget>
 			<packing>
 			  <property name="left_attach">1</property>
@@ -2504,6 +2707,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 			  <property name="has_frame">True</property>
 			  <property name="invisible_char">*</property>
 			  <property name="activates_default">False</property>
+			  <accessibility>
+			    <atkrelation target="cmd_label" type="labelled-by"/>
+			  </accessibility>
 			</widget>
 			<packing>
 			  <property name="left_attach">1</property>
@@ -2538,6 +2744,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 			      <property name="width_chars">-1</property>
 			      <property name="single_line_mode">False</property>
 			      <property name="angle">0</property>
+			      <accessibility>
+				<atkrelation target="visual_combo" type="label-for"/>
+			      </accessibility>
 			    </widget>
 			    <packing>
 			      <property name="padding">0</property>
@@ -2554,6 +2763,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 			      <property name="case_sensitive">False</property>
 			      <property name="enable_arrow_keys">True</property>
 			      <property name="enable_arrows_always">False</property>
+			      <accessibility>
+				<atkrelation target="visual" type="labelled-by"/>
+			      </accessibility>
 
 			      <child internal-child="entry">
 				<widget class="GtkEntry" id="visual_entry">
@@ -2745,6 +2957,9 @@ This probably means that the &quot;xscreensaver-extras&quot; and
 		  <property name="width_chars">-1</property>
 		  <property name="single_line_mode">False</property>
 		  <property name="angle">0</property>
+		  <accessibility>
+		    <atkrelation target="opt_frame" type="label-for"/>
+		  </accessibility>
 		</widget>
 		<packing>
 		  <property name="type">label_item</property>

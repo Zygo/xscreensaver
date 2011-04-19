@@ -110,7 +110,7 @@ init_images (struct state *st)
   images[i++] = &st->left_front;
   images[i++] = &st->right_front;
   images[i++] = &st->front;
-  images[i++] = &st->down;
+  images[i]   = &st->down;
 
 #if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
 
@@ -122,7 +122,7 @@ init_images (struct state *st)
   bits[i++] = nose_f2_xpm;
   bits[i++] = nose_f3_xpm;
   bits[i++] = nose_f1_xpm;
-  bits[i++] = nose_f4_xpm;
+  bits[i]   = nose_f4_xpm;
 
   for (i = 0; i < sizeof (images) / sizeof(*images); i++)
     {

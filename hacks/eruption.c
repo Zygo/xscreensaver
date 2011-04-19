@@ -298,7 +298,7 @@ static void Initialize( struct state *st )
 {
 	XGCValues gcValues;
 	XWindowAttributes XWinAttribs;
-	int iBitsPerPixel, i;
+	int /*iBitsPerPixel,*/ i;
 
 	/* Create the Image for drawing */
 	XGetWindowAttributes( st->dpy, st->window, &XWinAttribs );
@@ -310,7 +310,7 @@ static void Initialize( struct state *st )
 		for( i=0; i<pfvc; i++ )
 			if( pfv[ i ].depth == XWinAttribs.depth )
 			{
-				iBitsPerPixel = pfv[ i ].bits_per_pixel;
+				/*iBitsPerPixel = pfv[ i ].bits_per_pixel;*/
 				break;
 			}
 		if( pfv )
@@ -346,7 +346,6 @@ eruption_init (Display *dpy, Window window)
 	time_t nTime = time( NULL );
 	unsigned short iFrame = 0;
 #endif  /*  VERBOSE */
-        int i;
 
   st->dpy = dpy;
   st->window = window;
@@ -397,7 +396,6 @@ eruption_init (Display *dpy, Window window)
 
 	st->delay = get_integer_resource(st->dpy,  "delay", "Integer" );
 	st->cycles = get_integer_resource(st->dpy,  "cycles", "Integer" );
-	i = st->cycles;
 
 	cache(st);
 	

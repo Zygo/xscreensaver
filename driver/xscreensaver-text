@@ -30,7 +30,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.21 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.22 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -900,6 +900,42 @@ sub main() {
   }
 
   output();
+
+
+  if (defined ($cocoa_id)) {
+    #
+    # On MacOS, sleep for 10 seconds between when the last output is
+    # printed, and when this process exits.  This is because MacOS
+    # 10.5.0 and later broke ptys in a new and exciting way: basically,
+    # once the process at the end of the pty exits, you have exactly
+    # 1 second to read all the queued data off the pipe before it is
+    # summarily flushed.
+    #
+    # Many of the screen savers were written to depend on being able
+    # to read a small number of bytes, and continue reading until they
+    # reached EOF.  This is no longer possible.
+    #
+    # Note that the current MacOS behavior has all three of these
+    # awesome properties: 1) Inconvenient; 2) Has no sane workaround;
+    # 3) Different behavior than MacOS 10.1 through 10.4; and 4)
+    # Different behavior than every other Unix in the world.
+    #
+    # See http://jwz.livejournal.com/817438.html, and for those of
+    # you inside Apple, "Problem ID 5606018".
+    #
+    # One workaround would be to rewrite the savers to have an
+    # internal buffer, and always read as much data as possible as
+    # soon as a pipe has input available.  However, that's a lot more
+    # work, so instead, let's just not exit right away, and hope that
+    # 10 seconds is enough.
+    #
+    # This will solve the problem for invocations of xscreensaver-text
+    # that produce little output (e.g., date-mode); and won't solve it
+    # in cases where a large amount of text is generated in a short
+    # amount of time (e.g., url-mode.)
+    #
+    sleep (10);
+  }
 }
 
 main();

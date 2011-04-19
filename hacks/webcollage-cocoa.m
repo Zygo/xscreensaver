@@ -85,7 +85,7 @@ display_image (state *st, const char *file)
   NSImage *image = [[NSImage alloc] 
                      initWithContentsOfFile:
                        [NSString stringWithCString: file
-                                          encoding: kCFStringEncodingUTF8]];
+                                          encoding: NSUTF8StringEncoding]];
 
   if (! image) {
     fprintf (stderr, "webcollage: failed to load \"%s\"\n", file);

@@ -158,15 +158,11 @@ text_to_ximage (Screen *screen, Visual *visual,
     while ((line = strtok(token, "\r\n")))
       {
         XCharStruct o2;
-        int ascent, descent, direction, xoff2;
+        int ascent, descent, direction;
         token = 0;
 
         XTextExtents(f, line, strlen(line),
                      &direction, &ascent, &descent, &o2);
-        xoff2 = (xoff +
-                 ((overall.lbearing + overall.rbearing) -
-                  (o2.lbearing + o2.rbearing)) / 2);
-
         XDrawString(dpy, bitmap, gc,
                     overall.lbearing + margin + xoff,
                     ((f->ascent * (lines + 1)) +

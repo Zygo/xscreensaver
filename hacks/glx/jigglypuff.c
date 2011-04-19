@@ -434,11 +434,10 @@ static vertex *vertex_split(hedge *h, vector v)
     hedge *h2, *hn1, *hn2;
     vertex *vtxn;
     edge *en;
-    face *f1, *f2;
+    face *f1;
 
     f1 = h->f;
     h2 = partner(h);
-    f2 = h2->f;
     
     vtxn = vertex_new(f1->s, v);
     hn1 = hedge_new(h, vtxn);

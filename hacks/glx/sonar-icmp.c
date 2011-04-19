@@ -366,7 +366,6 @@ read_hosts_file (sonar_sensor_data *ssd, const char *filename)
 
       /* Get the name and address */
 
-      name = addr = 0;
       if ((addr = strtok(buf, " ,;\t\n")))
         name = strtok(0, " ,;\t\n");
       else
@@ -614,7 +613,6 @@ send_ping (ping_data *pd, const sonar_bogie *b)
   ping_bogie *pb = (ping_bogie *) b->closure;
   u_char *packet;
   struct ICMP *icmph;
-  int result;
   const char *token = "org.jwz.xscreensaver.sonar";
 
   int pcktsiz = (sizeof(struct ICMP) + sizeof(struct timeval) + 
@@ -653,8 +651,8 @@ send_ping (ping_data *pd, const sonar_bogie *b)
 
   /* Send it */
 
-  if ((result = sendto(pd->icmpsock, packet, pcktsiz, 0, 
-                       &pb->address, sizeof(pb->address)))
+  if (sendto(pd->icmpsock, packet, pcktsiz, 0, 
+             &pb->address, sizeof(pb->address))
       != pcktsiz)
     {
 #if 0
@@ -1056,7 +1054,7 @@ parse_mode (sonar_sensor_data *ssd, char **error_ret,
       if (new)
         {
           sonar_bogie *nn = new;
-          while (nn && nn->next)
+          while (nn->next)
             nn = nn->next;
           nn->next = hostlist;
           hostlist = new;

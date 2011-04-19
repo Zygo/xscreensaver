@@ -303,10 +303,8 @@ static int cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z,
   int b = 0; /* previous */
   int angle, norm, step, sangle;
   float z1, y1, z2, y2, ex=0;
-  float y3, z3;
-  float Z1, Y1, Z2, Y2, xl, Y3, Z3;
+  float Z1, Y1, Z2, Y2, xl;
   GLfloat y2c[TWOREV], z2c[TWOREV];
-  GLfloat ony, onz; /* previous normals */
   int nsegs, tube = 0;
 
   glPushMatrix();
@@ -317,7 +315,6 @@ static int cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z,
      nsegs += 1;
   sangle = sang;
   angle = eang;
-  ony = onz = 0;
   z1 = e->cos_table[sangle]*outer+z; y1 = e->sin_table[sangle] * outer+y;
   Z1 = e->cos_table[sangle] * inner+z; Y1 = e->sin_table[sangle]*inner+y ; 
   Z2 = z;
@@ -330,15 +327,11 @@ static int cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z,
   for (a = sangle ; a <= angle || b <= angle ; a+= step) {
     y2=outer*(float)e->sin_table[a]+y;
     z2=outer*(float)e->cos_table[a]+z;
-    y3=outer*(float)e->sin_table[a+step]+y;
-    z3=outer*(float)e->cos_table[a+step]+z;
     if (endcaps)
        y2c[a] = y2; z2c[a] = z2; /* cache for later */
     if (tube) {
       Y2=inner*(float)e->sin_table[a]+y;
       Z2=inner*(float)e->cos_table[a]+z;
-      Y3=inner*(float)e->sin_table[a+step]+y;
-      Z3=inner*(float)e->cos_table[a+step]+z;
     }
     glNormal3f(0, y1, z1);
     glVertex3f(x,y1,z1);

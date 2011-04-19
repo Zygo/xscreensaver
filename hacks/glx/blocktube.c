@@ -216,7 +216,6 @@ ENTRYPOINT void init_blocktube (ModeInfo *mi)
         fprintf(stderr, "%s: out of memory\n", progname);
         exit(1);
       }
-      lp = &lps[MI_SCREEN(mi)];
     }
 
     lp = &lps[MI_SCREEN(mi)];

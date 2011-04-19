@@ -72,7 +72,7 @@ zoom_init (Display *dpy, Window window)
   XGCValues gcv;
   XWindowAttributes xgwa;
   Colormap cmap;
-  unsigned long fg, bg;
+  unsigned long bg;
   long gcflags;
   int nblocksx, nblocksy;
 
@@ -83,7 +83,6 @@ zoom_init (Display *dpy, Window window)
   st->sizex = xgwa.width;
   st->sizey = xgwa.height;
   cmap = xgwa.colormap;
-  fg = get_pixel_resource(st->dpy, cmap, "foreground", "Foreground");
   bg = get_pixel_resource(st->dpy, cmap, "background", "Background");
 
   st->delay = get_integer_resource(st->dpy, "delay", "Integer");

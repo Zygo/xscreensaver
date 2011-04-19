@@ -101,16 +101,16 @@ static int gang( int x1, int y1, int x2, int y2 )
 			tang = 90;
 		else
 			tang = 270;
-	}
-	if ( y1 == y2 ) {
+	} else if ( y1 == y2 ) {
 
 		if ( x1 < x2 )
 			tang = 0;
 		else
 			tang = 180;
 
-	} else
-	tang = (int)(0.5+atan2( -(y2-y1), x2 - x1 ) * 180.0 / M_PI );
+	} else {
+          tang = (int)(0.5+atan2( -(y2-y1), x2 - x1 ) * 180.0 / M_PI );
+        }
 
 	while ( tang < 0 )
 		tang += 360;
@@ -170,7 +170,6 @@ static void initColorChanger( struct state *st, color_changer * ch )
 {
 
 	int q;
-	int min, max;
 	XColor old_color, new_color;
 
 	ch->shade_max = 2048;
@@ -185,9 +184,6 @@ static void initColorChanger( struct state *st, color_changer * ch )
 	initXColor( &new_color );
 	
 	for ( q = 0; q < ch->shade_max; q += ch->shade_use ){
-		min = q;
-		max = q + ch->shade_use;
-		if ( max >= ch->shade_max ) max = ch->shade_max-1;
 		blend_palette( ch->shade + q, ch->shade_use, &old_color, &new_color );
 		old_color = new_color;
 

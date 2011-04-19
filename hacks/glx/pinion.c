@@ -883,6 +883,7 @@ push_gear (ModeInfo *mi)
 
   if (g->coax_p)
     {
+      if (!parent) abort();
       if (g->x != parent->x) abort();
       if (g->y != parent->y) abort();
       if (g->z == parent->z) abort();
@@ -1340,8 +1341,6 @@ init_pinion (ModeInfo *mi)
       fprintf(stderr, "%s: out of memory\n", progname);
       exit(1);
     }
-
-    pp = &pps[MI_SCREEN(mi)];
   }
 
   pp = &pps[MI_SCREEN(mi)];

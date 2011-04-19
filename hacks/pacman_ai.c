@@ -609,10 +609,8 @@ static void
 pac_chasing (pacmangamestruct * pp, pacmanstruct * p)
 {
     int posdirs[DIRVECS], nrdirs, i, highest = -(1 << 16),
-        score, dir = 0, prox, worst = 0;
-    int vx, vy;
-
-    prox = pac_ghost_prox_and_vector (pp, p, &vx, &vy);
+        score, dir = 0, worst = 0;
+    int vx = 0, vy = 0;
 
     nrdirs = pac_get_posdirs (pp, p, posdirs);
 
@@ -629,7 +627,6 @@ pac_chasing (pacmangamestruct * pp, pacmanstruct * p)
     }
     nrdirs--;
     posdirs[worst] = 0;
-    highest = -(1 << 16);
 
 
     /* get last possible direction if all else fails */

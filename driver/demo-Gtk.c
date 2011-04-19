@@ -142,6 +142,41 @@ enum {
 };
 #endif /* HAVE_GTK2 */
 
+/* Deal with deprecation of direct access to struct fields on the way to GTK3
+   See http://live.gnome.org/GnomeGoals/UseGseal
+ */
+#if GTK_CHECK_VERSION(2,14,0)
+# define GET_PARENT(w)          gtk_widget_get_parent (w)
+# define GET_WINDOW(w)          gtk_widget_get_window (w)
+# define GET_ACTION_AREA(d)     gtk_dialog_get_action_area (d)
+# define GET_CONTENT_AREA(d)    gtk_dialog_get_content_area (d)
+# define GET_ADJ_VALUE(a)       gtk_adjustment_get_value (a)
+# define SET_ADJ_VALUE(a,v)     gtk_adjustment_set_value (a, v)
+# define SET_ADJ_UPPER(a,v)     gtk_adjustment_set_upper (a, v)
+#else
+# define GET_PARENT(w)          ((w)->parent)
+# define GET_WINDOW(w)          ((w)->window)
+# define GET_ACTION_AREA(d)     ((d)->action_area)
+# define GET_CONTENT_AREA(d)    ((d)->vbox)
+# define GET_ADJ_VALUE(a)       ((a)->value)
+# define SET_ADJ_VALUE(a,v)     (a)->value = v
+# define SET_ADJ_UPPER(a,v)     (a)->upper = v
+#endif
+
+#if GTK_CHECK_VERSION(2,18,0)
+# define SET_CAN_DEFAULT(w)     gtk_widget_set_can_default ((w), TRUE)
+# define GET_SENSITIVE(w)       gtk_widget_get_sensitive (w)
+#else
+# define SET_CAN_DEFAULT(w)     GTK_WIDGET_SET_FLAGS ((w), GTK_CAN_DEFAULT)
+# define GET_SENSITIVE(w)       GTK_WIDGET_IS_SENSITIVE (w)
+#endif
+
+#if GTK_CHECK_VERSION(2,20,0)
+# define GET_REALIZED(w)        gtk_widget_get_realized (w)
+#else
+# define GET_REALIZED(w)        GTK_WIDGET_REALIZED (w)
+#endif
+
 /* from exec.c */
 extern void exec_command (const char *shell, const char *command, int nice);
 extern int on_path_p (const char *program);
@@ -427,9 +462,9 @@ ensure_selected_item_visible (GtkWidget *widget)
 
   adj = gtk_scrolled_window_get_vadjustment (scroller);
 
-  gdk_window_get_geometry (GTK_WIDGET(vp)->window,
+  gdk_window_get_geometry (GET_WINDOW (GTK_WIDGET (vp)),
                            &ignore, &ignore, &ignore, &parent_h, &ignore);
-  gdk_window_get_geometry (GTK_WIDGET(selected)->window,
+  gdk_window_get_geometry (GET_WINDOW (GTK_WIDGET (selected)),
                            &ignore, &child_y, &ignore, &child_h, &ignore);
   children_h = nkids * child_h;
 
@@ -472,8 +507,8 @@ static void
 warning_dialog_dismiss_cb (GtkWidget *widget, gpointer user_data)
 {
   GtkWidget *shell = GTK_WIDGET (user_data);
-  while (shell->parent)
-    shell = shell->parent;
+  while (GET_PARENT (shell))
+    shell = GET_PARENT (shell);
   gtk_widget_destroy (GTK_WIDGET (shell));
 }
 
@@ -513,11 +548,11 @@ warning_dialog (GtkWidget *parent, const char *message,
   GtkWidget *cancel = 0;
   int i = 0;
 
-  while (parent && !parent->window)
-    parent = parent->parent;
+  while (parent && !GET_WINDOW (parent))
+    parent = GET_PARENT (parent);
 
   if (!parent ||
-      !GTK_WIDGET (parent)->window) /* too early to pop up transient dialogs */
+      !GET_WINDOW (parent)) /* too early to pop up transient dialogs */
     {
       fprintf (stderr, "%s: too early for dialog?\n", progname);
       return;
@@ -552,7 +587,7 @@ warning_dialog (GtkWidget *parent, const char *message,
 #endif /* !HAVE_GTK2 */
         if (center <= 0)
           gtk_misc_set_alignment (GTK_MISC (label), 0.0, 0.5);
-        gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox),
+        gtk_box_pack_start (GTK_BOX (GET_CONTENT_AREA (GTK_DIALOG (dialog))),
                             label, TRUE, TRUE, 0);
         gtk_widget_show (label);
       }
@@ -566,12 +601,12 @@ warning_dialog (GtkWidget *parent, const char *message,
     }
 
   label = gtk_label_new ("");
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox),
+  gtk_box_pack_start (GTK_BOX (GET_CONTENT_AREA (GTK_DIALOG (dialog))),
                       label, TRUE, TRUE, 0);
   gtk_widget_show (label);
 
   label = gtk_hbutton_box_new ();
-  gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area),
+  gtk_box_pack_start (GTK_BOX (GET_ACTION_AREA (GTK_DIALOG (dialog))),
                       label, TRUE, TRUE, 0);
 
 #ifdef HAVE_GTK2
@@ -600,13 +635,13 @@ warning_dialog (GtkWidget *parent, const char *message,
   gtk_window_set_position (GTK_WINDOW (dialog), GTK_WIN_POS_CENTER);
   gtk_container_set_border_width (GTK_CONTAINER (dialog), 10);
   gtk_window_set_title (GTK_WINDOW (dialog), progclass);
-  GTK_WIDGET_SET_FLAGS (ok, GTK_CAN_DEFAULT);
+  SET_CAN_DEFAULT (ok);
   gtk_widget_show (ok);
   gtk_widget_grab_focus (ok);
 
   if (cancel)
     {
-      GTK_WIDGET_SET_FLAGS (cancel, GTK_CAN_DEFAULT); 
+      SET_CAN_DEFAULT (cancel);
       gtk_widget_show (cancel);
     }
   gtk_widget_show (label);
@@ -634,8 +669,8 @@ warning_dialog (GtkWidget *parent, const char *message,
                                  (gpointer) dialog);
     }
 
-  gdk_window_set_transient_for (GTK_WIDGET (dialog)->window,
-                                GTK_WIDGET (parent)->window);
+  gdk_window_set_transient_for (GET_WINDOW (GTK_WIDGET (dialog)),
+                                GET_WINDOW (GTK_WIDGET (parent)));
 
 #ifdef HAVE_GTK2
   gtk_window_present (GTK_WINDOW (dialog));
@@ -809,11 +844,11 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
     GtkWidget *dialog = gtk_dialog_new ();
     GtkWidget *hbox, *icon, *vbox, *label1, *label2, *hb, *ok;
     GtkWidget *parent = GTK_WIDGET (menuitem);
-    while (parent->parent)
-      parent = parent->parent;
+    while (GET_PARENT (parent))
+      parent = GET_PARENT (parent);
 
     hbox = gtk_hbox_new (FALSE, 20);
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->vbox),
+    gtk_box_pack_start (GTK_BOX (GET_CONTENT_AREA (GTK_DIALOG (dialog))),
                         hbox, TRUE, TRUE, 0);
 
     colormap = gtk_widget_get_colormap (parent);
@@ -854,7 +889,7 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 
     hb = gtk_hbutton_box_new ();
 
-    gtk_box_pack_start (GTK_BOX (GTK_DIALOG (dialog)->action_area),
+    gtk_box_pack_start (GTK_BOX (GET_ACTION_AREA (GTK_DIALOG (dialog))),
                         hb, TRUE, TRUE, 0);
 
 #ifdef HAVE_GTK2
@@ -880,10 +915,10 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
     gtk_signal_connect_object (GTK_OBJECT (ok), "clicked",
                                GTK_SIGNAL_FUNC (warning_dialog_dismiss_cb),
                                (gpointer) dialog);
-    gdk_window_set_transient_for (GTK_WIDGET (dialog)->window,
-                                  GTK_WIDGET (parent)->window);
-    gdk_window_show (GTK_WIDGET (dialog)->window);
-    gdk_window_raise (GTK_WIDGET (dialog)->window);
+    gdk_window_set_transient_for (GET_WINDOW (GTK_WIDGET (dialog)),
+                                  GET_WINDOW (GTK_WIDGET (parent)));
+    gdk_window_show (GET_WINDOW (GTK_WIDGET (dialog)));
+    gdk_window_raise (GET_WINDOW (GTK_WIDGET (dialog)));
   }
 }
 
@@ -1141,7 +1176,7 @@ static void
 force_list_select_item (state *s, GtkWidget *list, int list_elt, Bool scroll_p)
 {
   GtkWidget *parent = name_to_widget (s, "scroller");
-  Bool was = GTK_WIDGET_IS_SENSITIVE (parent);
+  gboolean was = GET_SENSITIVE (parent);
 #ifdef HAVE_GTK2
   GtkTreeIter iter;
   GtkTreeModel *model;
@@ -1771,7 +1806,8 @@ mode_menu_item_cb (GtkWidget *widget, gpointer user_data)
   GtkWidget *list = name_to_widget (s, "list");
   int list_elt;
 
-  GList *menu_items = gtk_container_children (GTK_CONTAINER (widget->parent));
+  GList *menu_items =
+    gtk_container_children (GTK_CONTAINER (GET_PARENT (widget)));
   int menu_index = 0;
   saver_mode new_mode;
 
@@ -1984,7 +2020,7 @@ list_checkbox_cb (
 
   /* remember previous scroll position of the top of the list */
   adj = gtk_scrolled_window_get_vadjustment (scroller);
-  scroll_top = adj->value;
+  scroll_top = GET_ADJ_VALUE (adj);
 
   flush_dialog_changes_and_save (s);
   force_list_select_item (s, GTK_WIDGET (list), list_elt, False);
@@ -2509,7 +2545,7 @@ populate_hack_list (state *s)
              (but don't actually make it be insensitive, since we still
              want to be able to click on it.)
            */
-          GtkStyle *style = GTK_WIDGET (list)->style;
+          GtkStyle *style = gtk_widget_get_style (GTK_WIDGET (list));
           GdkColor *fg = &style->fg[GTK_STATE_INSENSITIVE];
        /* GdkColor *bg = &style->bg[GTK_STATE_INSENSITIVE]; */
           char *buf = (char *) malloc (strlen (pretty_name) + 100);
@@ -2977,7 +3013,7 @@ force_dialog_repaint (state *s)
 #if 1
   /* Tell GDK to invalidate and repaint the whole window.
    */
-  GdkWindow *w = s->toplevel_widget->window;
+  GdkWindow *w = GET_WINDOW (s->toplevel_widget);
   GdkRegion *region = gdk_region_new ();
   GdkRectangle rect;
   rect.x = rect.y = 0;
@@ -3065,7 +3101,7 @@ fix_text_entry_sizes (state *s)
 #ifdef HAVE_GTK2
     PangoFontMetrics *pain =
       pango_context_get_metrics (gtk_widget_get_pango_context (w),
-                                 w->style->font_desc,
+                                 gtk_widget_get_style (w)->font_desc,
                                  gtk_get_default_language ());
     height = PANGO_PIXELS (pango_font_metrics_get_ascent (pain) +
                            pango_font_metrics_get_descent (pain));
@@ -3502,16 +3538,18 @@ clear_preview_window (state *s)
 {
   GtkWidget *p;
   GdkWindow *window;
+  GtkStyle  *style;
 
   if (!s->toplevel_widget) return;  /* very early */
   p = name_to_widget (s, "preview");
-  window = p->window;
+  window = GET_WINDOW (p);
 
   if (!window) return;
 
   /* Flush the widget background down into the window, in case a subproc
      has changed it. */
-  gdk_window_set_background (window, &p->style->bg[GTK_STATE_NORMAL]);
+  style = gtk_widget_get_style (p);
+  gdk_window_set_background (window, &style->bg[GTK_STATE_NORMAL]);
   gdk_window_clear (window);
 
   {
@@ -3572,15 +3610,16 @@ reset_preview_window (state *s)
      when changing hacks, instead of always trying to reuse the same one?
    */
   GtkWidget *pr = name_to_widget (s, "preview");
-  if (GTK_WIDGET_REALIZED (pr))
+  if (GET_REALIZED (pr))
     {
-      Window oid = (pr->window ? GDK_WINDOW_XWINDOW (pr->window) : 0);
+      GdkWindow *window = GET_WINDOW (pr);
+      Window oid = (window ? GDK_WINDOW_XWINDOW (window) : 0);
       Window id;
       gtk_widget_hide (pr);
       gtk_widget_unrealize (pr);
       gtk_widget_realize (pr);
       gtk_widget_show (pr);
-      id = (pr->window ? GDK_WINDOW_XWINDOW (pr->window) : 0);
+      id = (window ? GDK_WINDOW_XWINDOW (window) : 0);
       if (s->debug_p)
         fprintf (stderr, "%s: window id 0x%X -> 0x%X\n", blurb(),
                  (unsigned int) oid,
@@ -3605,7 +3644,7 @@ fix_preview_visual (state *s)
              (visual == dvisual ? "default" : "non-default"),
              (xvisual ? (unsigned long) xvisual->visualid : 0L));
 
-  if (!GTK_WIDGET_REALIZED (widget) ||
+  if (!GET_REALIZED (widget) ||
       gtk_widget_get_visual (widget) != visual)
     {
       gtk_widget_unrealize (widget);
@@ -3616,8 +3655,8 @@ fix_preview_visual (state *s)
 
   /* Set the Widget colors to be white-on-black. */
   {
-    GdkWindow *window = widget->window;
-    GtkStyle *style = gtk_style_copy (widget->style);
+    GdkWindow *window = GET_WINDOW (widget);
+    GtkStyle *style = gtk_style_copy (gtk_widget_get_style (widget));
     GdkColormap *cmap = gtk_widget_get_colormap (widget);
     GdkColor *fg = &style->fg[GTK_STATE_NORMAL];
     GdkColor *bg = &style->bg[GTK_STATE_NORMAL];
@@ -3880,7 +3919,7 @@ launch_preview_subproc (state *s)
 
   reset_preview_window (s);
 
-  window = pr->window;
+  window = GET_WINDOW (pr);
 
   s->running_preview_error_p = False;
 
@@ -5155,7 +5194,7 @@ main (int argc, char **argv)
       {
         GtkWidget *window = capplet;
         while (window && !GTK_IS_WINDOW (window))
-          window = window->parent;
+          window = GET_PARENT (window);
         if (window)
           {
             gtk_window_set_title (GTK_WINDOW (window), window_title);
@@ -5190,7 +5229,7 @@ main (int argc, char **argv)
 #endif
 
   gtk_widget_show (s->toplevel_widget);
-  init_icon (GTK_WIDGET (s->toplevel_widget)->window);  /* after `show' */
+  init_icon (GET_WINDOW (GTK_WIDGET (s->toplevel_widget)));  /* after `show' */
   fix_preview_visual (s);
 
   /* Realize page zero, so that we can diddle the scrollbar when the

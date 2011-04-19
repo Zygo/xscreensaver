@@ -302,23 +302,25 @@ draw_circle (ModeInfo *mi, Bool teeth_p)
 static void
 draw_bounding_box (ModeInfo *mi)
 {
-  spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)];
+  /* spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)]; */
 
   static const GLfloat c1[4] = { 0.2, 0.2, 0.6, 1.0 };
   static const GLfloat c2[4] = { 1.0, 0.0, 0.0, 1.0 };
   int wire = MI_IS_WIREFRAME(mi);
 
-  GLfloat x1 = cc->bbox[0].x;
-  GLfloat y1 = cc->bbox[0].y;
-  GLfloat z1 = cc->bbox[0].z;
-  GLfloat x2 = cc->bbox[1].x;
-  GLfloat y2 = cc->bbox[1].y;
-  GLfloat z2 = cc->bbox[1].z;
+  GLfloat x1,y1,z1,x2,y2,z2;
 
-#if 1
+# if 0
+  x1 = cc->bbox[0].x;
+  y1 = cc->bbox[0].y;
+  z1 = cc->bbox[0].z;
+  x2 = cc->bbox[1].x;
+  y2 = cc->bbox[1].y;
+  z2 = cc->bbox[1].z;
+# else
   x1 = y1 = z1 = -0.5;
   x2 = y2 = z2 =  0.5;
-#endif
+# endif
 
   if (do_bbox && !wire)
     {
@@ -690,8 +692,6 @@ init_spheremonics (ModeInfo *mi)
       fprintf(stderr, "%s: out of memory\n", progname);
       exit(1);
     }
-
-    cc = &ccs[MI_SCREEN(mi)];
   }
 
   cc = &ccs[MI_SCREEN(mi)];

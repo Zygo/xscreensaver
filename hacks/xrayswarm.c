@@ -482,8 +482,8 @@ static void computeColorIndices(struct state *st)
     if (st->graySIndex[st->trailLen-1-i] > 19) st->graySIndex[st->trailLen-1-i] = 19;
   }
 
-  schizoLength = st->trailLen/4;
-  if (schizoLength < 3) schizoLength = 3;
+  /*schizoLength = st->trailLen/4;
+  if (schizoLength < 3) schizoLength = 3;*/
   /* red schizo */
   for (i = 0; i < st->trailLen; i++) {
     /*    redSIndex[trailLen-1-i] = 

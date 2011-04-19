@@ -38,6 +38,15 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.11:   * Big speed improvement on OSX for heavy XCopyArea
+                        users (`xmatrix', `moire2', `phosphor', etc.)
+                      * Plugged a bad OSX-only Pixmap leak.
+                      * Kludged around the OSX pty bug that caused text to
+                        be truncated in phosphor, starwars, apple2, etc.
+                      * New molecule in `molecule'.
+                      * `glhanoi' now supports an arbitrary number of poles.
+                      * Turned on "New Login" button by default.
+                      * Added support for XInput-style alternate input devices.
 Changes since 5.10:   * New versions of `photopile', `strange'.
                       * Worked around MacOS 10.6 garbage collector bug that
                         caused the screen saver process to become enormous.

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2010 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -63,6 +63,7 @@
 
 - (NSAttributedString *)attributedStringValue;
 {
+  // #### "Build and Analyze" says this leaks. Unsure whether this is true.
   return [[NSAttributedString alloc] initWithString:[self stringValue]];
 }
 

@@ -398,8 +398,6 @@ init_sponge (ModeInfo *mi)
       fprintf(stderr, "%s: out of memory\n", progname);
       exit(1);
     }
-
-    sp = &sps[MI_SCREEN(mi)];
   }
 
   sp = &sps[MI_SCREEN(mi)];

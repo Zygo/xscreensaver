@@ -611,7 +611,6 @@ generate_bottle (ModeInfo *mi)
   int wire = MI_IS_WIREFRAME(mi);
   int faces = resolution * 1.5;
   Bool smooth = do_smooth;
-  Bool have_texture = False;
 
   const lamp_geometry *top_slice = bp->model;
   const char *current_texture = 0;
@@ -660,11 +659,10 @@ generate_bottle (ModeInfo *mi)
           break;
         }
 
-      have_texture = False;
       if (!wire && texture && texture != current_texture)
         {
           current_texture = texture;
-          have_texture = load_texture (mi, current_texture);
+          load_texture (mi, current_texture);
         }
         
       /* Color the discs darker than the tube walls. */
@@ -736,7 +734,7 @@ generate_bottle (ModeInfo *mi)
     }
 
 
-  have_texture = !wire && load_texture (mi, table_tex);
+  if (!wire) load_texture (mi, table_tex);
   glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, table_color);
   bp->bottle_poly_count += draw_table (top_slice->elevation, wire);
 
@@ -1311,8 +1309,6 @@ init_lavalite (ModeInfo *mi)
       fprintf(stderr, "%s: out of memory\n", progname);
       exit(1);
     }
-
-    bp = &bps[MI_SCREEN(mi)];
   }
 
   bp = &bps[MI_SCREEN(mi)];

@@ -1100,7 +1100,7 @@ populate_sentence (state *s, sentence *se)
               y + se->font->ascent > s->xgwa.height)
             {
               unread_word (s, w);
-              done = True;
+              /* done = True; */
               break;
             }
         }
@@ -1500,8 +1500,13 @@ launch_text_generator (state *s)
     }
   else
     {
-      perror (program);
+      char buf[255];
+      sprintf (buf, "%.100s: %.100s", progname, program);
+      perror (buf);
     }
+
+  free(oprogram);
+  free(program);
 }
 
 

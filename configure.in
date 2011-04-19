@@ -94,6 +94,12 @@ AH_TEMPLATE([HAVE_XINERAMA],
 	    elsewhere.  (It's available if the file
 	    /usr/include/X11/extensions/Xinerama.h exists.)])
 
+AH_TEMPLATE([HAVE_XINPUT],
+	    [Define this if you have the Xinput extension.  This is
+	    standard since X11R5, and is thus almost everywhere.
+	    (It's available if the file /usr/include/X11/extensions/XInput.h
+	    exists.)])
+
 AH_TEMPLATE([HAVE_XF86MISCSETGRABKEYSSTATE],
 	    [Define this if you have the XF86MiscSetGrabKeysState function
 	    (which allows the Ctrl-Alt-KP_star and Ctrl-Alt-KP_slash key
@@ -1545,6 +1551,45 @@ fi
 
 ###############################################################################
 #
+#       Check for the XINPUT server extension.
+#
+###############################################################################
+
+have_xinput=no
+with_xinput_req=unspecified
+AC_ARG_WITH(xinput-ext,
+[  --with-xinput-ext     Include support for the XInput extension.],
+  [with_xinput="$withval"; with_xinput_req="$withval"], [with_xinput=yes])
+
+HANDLE_X_PATH_ARG(with_xinput, --with-xinput-ext, XINPUT)
+
+if test "$with_xinput" = yes; then
+
+  # first check for Xinput.h
+  AC_CHECK_X_HEADER(X11/extensions/XInput.h, [have_xinput=yes],,
+                    [#include <X11/Xlib.h>])
+
+  # if that succeeded, then check for libXi
+  if test "$have_xinput" = yes; then
+    have_xinput=no
+    AC_CHECK_X_LIB(Xi, XListInputDevices,
+                   [have_xinput=yes; SAVER_LIBS="$SAVER_LIBS -lXi"],
+                   [true], -lXext -lX11)
+  fi
+
+  # if that succeeded, then we've really got it.
+  if test "$have_xinput" = yes; then
+    AC_DEFINE(HAVE_XINPUT)
+  fi
+
+elif test "$with_xinput" != no; then
+  echo "error: must be yes or no: --with-xinput-ext=$with_xinput"
+  exit 1
+fi
+
+
+###############################################################################
+#
 #       Check for the XF86VMODE server extension (for virtual screens.)
 #
 ###############################################################################
@@ -2297,15 +2342,15 @@ esac
 #
 ###############################################################################
 
-have_login_manager=no
 with_login_manager_req=unspecified
-default_login_manager='gdmflexiserver -ls'
+default_login_manager_1='gdmflexiserver -ls'
+default_login_manager_2='kdmctl reserve'
 
 AC_ARG_WITH(login-manager,
 [  --with-login-manager    Put a "New Login" button on the unlock dialog that
-                          runs a login manager such as gdmflexiserver.],
+                          runs a login manager like gdmflexiserver or kdmctl.],
   [with_login_manager="$withval"; with_login_manager_req="$withval"],
-  [with_login_manager=no])
+  [with_login_manager=yes])
 # no HANDLE_X_PATH_ARG for this one
 
 if test "$enable_locking" = no ; then
@@ -2313,55 +2358,68 @@ if test "$enable_locking" = no ; then
   with_login_manager=no
 fi
 
-if test -n "$with_login_manager_req" ; then
-  ac_cv_login_manager_program=""
+case "$with_login_manager_req" in
+  no)
+    with_login_manager=""
+  ;;
 
- if test "$with_login_manager_req" = "yes" ; then
-   with_login_manager_req=$default_login_manager
- fi
+  yes|unspecified)
+    # Try both defaults, use the one that exists.
 
-  case "$with_login_manager_req" in
-    no)
-      with_login_manager=""
-    ;;
-    /*)
-      # absolute path
-      set dummy $with_login_manager_req ; login_manager_tmp=$2
-      AC_MSG_CHECKING([for $login_manager_tmp])
-      if test -x "$login_manager_tmp" ; then
-        AC_MSG_RESULT(yes)
-      else
-        AC_MSG_RESULT(no)
-        with_login_manager=""
-      fi
-    ;;
-    *)
-      # relative path
-      set dummy $with_login_manager_req ; login_manager_tmp=$2
-      # don't cache
-      unset ac_cv_path_login_manager_tmp
+    set dummy $default_login_manager_1 ; login_manager_tmp=$2
+    unset ac_cv_path_login_manager_tmp  # don't cache
+    AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
+    if test ! -z "$login_manager_tmp" ; then
+      with_login_manager="$default_login_manager_1"
+    else
+      set dummy $default_login_manager_2 ; login_manager_tmp=$2
+      unset ac_cv_path_login_manager_tmp  # don't cache
       AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
-      if test -z "$login_manager_tmp" ; then
-        with_login_manager=""
+      if test ! -z "$login_manager_tmp" ; then
+        with_login_manager="$default_login_manager_2"
       else
-        with_login_manager="$login_manager_tmp"
+        with_login_manager=""
       fi
-    ;;
-  esac
-  ac_cv_login_manager_program="$with_login_manager"
+    fi
+  ;;
 
-elif test -n "$ac_cv_login_manager_program"; then
-  AC_MSG_RESULT([checking for login_manager... (cached) $ac_cv_login_manager_program])
-fi
+  /*)
+    # absolute path specified on cmd line
+    set dummy $with_login_manager_req ; login_manager_tmp=$2
+    AC_MSG_CHECKING([for $login_manager_tmp])
+    if test -x "$login_manager_tmp" ; then
+      AC_MSG_RESULT(yes)
+    else
+      AC_MSG_RESULT(no)
+      with_login_manager=""
+    fi
+  ;;
+
+  *)
+    # relative path specified on cmd line
+    set dummy $with_login_manager_req ; login_manager_tmp=$2
+    unset ac_cv_path_login_manager_tmp    # don't cache
+    AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
+    if test -z "$login_manager_tmp" ; then
+      with_login_manager=""
+    else
+      with_login_manager="$login_manager_tmp"
+    fi
+  ;;
+esac
+ac_cv_login_manager_program="$with_login_manager"
 
 NEW_LOGIN_COMMAND_P=''
 NEW_LOGIN_COMMAND="$ac_cv_login_manager_program"
 
+AC_MSG_CHECKING(for login manager)
 if test -z "$NEW_LOGIN_COMMAND" ; then
-  NEW_LOGIN_COMMAND="$default_login_manager"
+  NEW_LOGIN_COMMAND="$default_login_manager_1"
   NEW_LOGIN_COMMAND_P='! '
+  AC_MSG_RESULT($NEW_LOGIN_COMMAND (disabled))
+else
+  AC_MSG_RESULT($NEW_LOGIN_COMMAND)
 fi
-
 
 
 ###############################################################################

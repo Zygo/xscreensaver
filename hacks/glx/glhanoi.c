@@ -1,6 +1,7 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* glhanoi, Copyright (c) 2005, 2009 Dave Atkinson <da@davea.org.uk>
  * except noise function code Copyright (c) 2002 Ken Perlin
+ * Modified by Lars Huttar (c) 2010, to generalize to 4 or more poles
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,16 +19,21 @@
 #define DEF_LIGHT     "True"
 #define DEF_FOG       "False"
 #define DEF_TEXTURE   "True"
+#define DEF_POLES     "0"   /* choose random value */
+#define DEF_SPEED	  "1"
 
 #define DEFAULTS "*delay:     15000\n" \
 				 "*count:     0\n" \
 				 "*showFPS:   False\n" \
 				 "*wireframe: False\n"
-
+				 
 # define refresh_glhanoi 0
 
+/* polygon resolution of poles and disks */
 #define NSLICE 32
 #define NLOOPS 1
+
+/* How long to wait at start and finish. */
 #define START_DURATION 1.0
 #define FINISH_DURATION 1.0
 #define BASE_LENGTH 30.0
@@ -39,6 +45,7 @@
 #define MARBLE_SCALE 1.01
 
 #undef BELLRAND
+/* Return a double precision number in [0...n], with bell curve distribution. */
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 
 enum {
@@ -92,6 +99,7 @@ typedef struct {
 	GLfloat t1, t2;
 	GLfloat ucostheta, usintheta;
 	GLdouble rotAngle;
+	GLfloat speed;
     int polys;
 } Disk;
 
@@ -99,7 +107,15 @@ typedef struct {
 	Disk **data;
 	int count;
 	int size;
-} Stack;
+} Pole;
+
+/* A SubProblem is a recursive subdivision of the problem, and means
+  "Move nDisks disks from src pole to dst pole, using the poles indicated in 'available'." */
+typedef struct {
+	int nDisks;
+	int src, dst;
+	unsigned long available; /* a bitmask of poles that have no smaller disks on them */
+} SubProblem;
 
 typedef struct {
 	GLXContext *glx_context;
@@ -111,18 +127,23 @@ typedef struct {
 	double lastTime;
 	double duration;
 	int numberOfDisks;
+	int numberOfPoles;
 	int numberOfMoves;
 	int maxDiskIdx;
 	int magicNumber;
 	Disk *currentDisk;
 	int move;
+	/* src, tmp, dst: index of pole that is source / storage / destination for
+		current move */
 	int src;
 	int tmp;
 	int dst;
 	int oldsrc;
 	int oldtmp;
 	int olddst;
-	Stack pole[3];
+	SubProblem *solveStack;
+	int solveStackSize, solveStackIdx;
+	Pole *pole;
 	float boardSize;
 	float baseLength;
 	float baseWidth;
@@ -147,13 +168,14 @@ typedef struct {
 	int drag_y;
 	int noise_initted;
 	int p[512];
-
 } glhcfg;
 
 static glhcfg *glhanoi_cfg = NULL;
 static Bool fog;
 static Bool light;
 static Bool texture;
+static int poles;
+static double speed; /* coefficient for how fast the disks move */
 
 static XrmOptionDescRec opts[] = {
 	{"-light", ".glhanoi.light", XrmoptionNoArg, "true"},
@@ -161,19 +183,25 @@ static XrmOptionDescRec opts[] = {
 	{"-fog", ".glhanoi.fog", XrmoptionNoArg, "true"},
 	{"+fog", ".glhanoi.fog", XrmoptionNoArg, "false"},
 	{"-texture", ".glhanoi.texture", XrmoptionNoArg, "true"},
-	{"+texture", ".glhanoi.texture", XrmoptionNoArg, "false"}
+	{"+texture", ".glhanoi.texture", XrmoptionNoArg, "false"},
+	{"-poles", ".glhanoi.poles", XrmoptionSepArg, 0 },
+	{"-speed", ".glhanoi.speed", XrmoptionSepArg, 0 }
 };
 
 static argtype vars[] = {
 	{&light, "light", "Light", DEF_LIGHT, t_Bool},
 	{&fog, "fog", "Fog", DEF_FOG, t_Bool},
-	{&texture, "texture", "Texture", DEF_TEXTURE, t_Bool}
+	{&texture, "texture", "Texture", DEF_TEXTURE, t_Bool},
+	{&poles, "poles", "Poles", DEF_POLES, t_Int},
+	{&speed, "speed", "Speed", DEF_SPEED, t_Float}
 };
 
 static OptionStruct desc[] = {
 	{"+/-light", "whether to light the scene"},
 	{"+/-fog", "whether to apply fog to the scene"},
-	{"+/-texture", "whether to apply texture to the scene"}
+	{"+/-texture", "whether to apply texture to the scene"},
+	{"-poles r", "number of poles to move disks between"},
+	{"-speed s", "speed multiplier"}
 };
 
 ENTRYPOINT ModeSpecOpt glhanoi_opts = { countof(opts), opts, countof(vars), vars, desc };
@@ -214,14 +242,24 @@ static const GLfloat spc1[4] = { 1.0, 1.0, 1.0, 1.0 };
 
 static float g = 3.0 * 9.80665;		/* hmm, looks like we need more gravity, Scotty... */
 
+static void checkAllocAndExit(Bool item, char *descr) {
+	if (!item) {
+		fprintf(stderr, "%s: unable to allocate memory for %s\n",
+				progname, descr);
+		exit(EXIT_FAILURE);
+	}
+}
+
 #define DOPUSH(X, Y)	(((X)->count) >= ((X)->size)) ? NULL : ((X)->data[(X)->count++] = (Y))
 #define DOPOP(X)	(X)->count <= 0 ? NULL : ((X)->data[--((X)->count)])
 
+/* push disk d onto pole idx */
 static Disk *push(glhcfg *glhanoi, int idx, Disk * d)
 {
 	return DOPUSH(&glhanoi->pole[idx], d);
 }
 
+/* pop the top disk from pole idx */
 static Disk *pop(glhcfg *glhanoi, int idx)
 {
 	return DOPOP(&glhanoi->pole[idx]);
@@ -236,6 +274,7 @@ static inline void swap(int *x, int *y)
 
 /*
  * magic - it's magic...
+ *  Return 1 if the number of trailing zeroes on i is even, unless i is 1 or 0.
  */
 static int magic(int i)
 {
@@ -286,6 +325,7 @@ static void moveSetup(glhcfg *glhanoi, Disk * disk)
 		if(random() % 4 == 0) {
 			disk->rotAngle = -disk->rotAngle;
 		}
+
 	} else {
 		disk->rotAngle = -180.0;
 	}
@@ -296,8 +336,8 @@ static void moveSetup(glhcfg *glhanoi, Disk * disk)
 		FINISHED ? disk->base0 : glhanoi->diskPos[glhanoi->pole[dst].
 												  count];
 
-	disk->xmin = glhanoi->poleOffset * (src - 1);
-	disk->xmax = glhanoi->poleOffset * (dst - 1);
+	disk->xmin = glhanoi->poleOffset * (src - (glhanoi->numberOfPoles - 1.0f) * 0.5);
+	disk->xmax = glhanoi->poleOffset * (dst - (glhanoi->numberOfPoles - 1.0f) * 0.5);
 	disk->ymin = glhanoi->poleHeight;
 
 	absx = fabs(disk->xmax - disk->xmin);
@@ -324,23 +364,160 @@ static void moveSetup(glhcfg *glhanoi, Disk * disk)
 	disk->u2 = disk->usintheta - g * disk->t2;
 }
 
+/* For debugging: show a value as a string of ones and zeroes
+static const char *byteToBinary(int x) {
+    static char b[9];
+	int i, z;
+
+    for (z = 128, i = 0; z > 0; z >>= 1, i++) {
+		b[i] = ((x & z) == z) ? '1' : '0';
+    }
+	b[i] = '\0';
+
+    return b;
+}
+*/
+
+static void pushMove(glhcfg *glhanoi, int n, int src, int dst, int avail) {
+	SubProblem *sp = &(glhanoi->solveStack[glhanoi->solveStackIdx++]);
+ 
+	if (glhanoi->solveStackIdx > glhanoi->solveStackSize) {
+		fprintf(stderr, "solveStack overflow: pushed index %d: %d from %d to %d, using %d\n",
+		glhanoi->solveStackIdx, n, src, dst, avail);
+		exit(EXIT_FAILURE);
+	}
+
+	sp->nDisks = n;
+	sp->src = src;
+	sp->dst = dst;
+	sp->available = avail & ~((unsigned long)(1 << src))
+		& ~((unsigned long)(1 << dst));
+	/*
+	fprintf(stderr, "Debug: >  pushed solveStack %d: %d from %d to %d, using %s\n",
+		glhanoi->solveStackIdx - 1, n, src, dst, byteToBinary(sp->available));
+	*/
+}
+
+
+static Bool solveStackEmpty(glhcfg *glhanoi) {
+	return (glhanoi->solveStackIdx < 1);
+}
+
+static SubProblem *popMove(glhcfg *glhanoi) {
+	SubProblem *sp;
+	if (solveStackEmpty(glhanoi)) return (SubProblem *)NULL;
+	sp = &(glhanoi->solveStack[--glhanoi->solveStackIdx]);
+	/* fprintf(stderr, "Debug:  < popped solveStack %d: %d from %d to %d, using %s\n",
+			glhanoi->solveStackIdx, sp->nDisks, sp->src, sp->dst, byteToBinary(sp->available)); */
+	return sp;
+}
+
+/* Return number of bits set in b */
+static int numBits(unsigned long b) {
+   int count = 0;
+   while (b) {
+      count += b & 0x1u;
+      b >>= 1;
+   }
+   return count;
+}
+
+/* Return index (power of 2) of least significant 1 bit. */
+static int bitScan(unsigned long b) {
+	int count;
+	for (count = 0; b; count++, b >>= 1) {
+		if (b & 0x1u) return count;
+	}
+	return -1;
+}
+
+/* A bit pattern representing all poles */
+#define ALL_POLES ((1 << glhanoi->numberOfPoles) - 1)
+
+#define REMOVE_BIT(a, b)  ((a) & ~(1 << (b)))
+#define    ADD_BIT(a, b)  ((a) |  (1 << (b)))
+
 static void makeMove(glhcfg *glhanoi)
 {
-	int fudge = glhanoi->move + 2;
-	int magicNumber = magic(fudge);
+	if (glhanoi->numberOfPoles == 3) {
+		int fudge = glhanoi->move + 2;
+		int magicNumber = magic(fudge);
 
-	glhanoi->currentDisk = pop(glhanoi, glhanoi->src);
-	moveSetup(glhanoi, glhanoi->currentDisk);
-	push(glhanoi, glhanoi->dst, glhanoi->currentDisk);
-	fudge = fudge % 2;
 
-	if(fudge == 1 || magicNumber) {
-		swap(&glhanoi->src, &glhanoi->tmp);
+		glhanoi->currentDisk = pop(glhanoi, glhanoi->src);
+		moveSetup(glhanoi, glhanoi->currentDisk);
+		push(glhanoi, glhanoi->dst, glhanoi->currentDisk);
+		
+		fudge = fudge % 2;
+
+		if(fudge == 1 || magicNumber) {
+			swap(&glhanoi->src, &glhanoi->tmp);
+		}
+		if(fudge == 0 || glhanoi->magicNumber) {
+			swap(&glhanoi->dst, &glhanoi->tmp);
+		}
+		glhanoi->magicNumber = magicNumber;
+	} else {
+		SubProblem sp;
+		int tmp = 0;
+		
+		if (glhanoi->move == 0) {
+			/* Initialize the solution stack. Original problem:
+				move all disks from pole 0 to furthest pole,
+				using all other poles. */
+			pushMove(glhanoi, glhanoi->numberOfDisks, 0,
+				glhanoi->numberOfPoles - 1,
+				REMOVE_BIT(REMOVE_BIT(ALL_POLES, 0), glhanoi->numberOfPoles - 1));
+		}
+		
+		while (!solveStackEmpty(glhanoi)) {
+			int k, numAvail;
+			sp = *popMove(glhanoi);
+
+			if (sp.nDisks == 1) {
+				/* We have a single, concrete move to do. */
+				/* moveSetup uses glhanoi->src, dst. */
+				glhanoi->src = sp.src;
+				glhanoi->dst = sp.dst;
+				glhanoi->tmp = tmp; /* Probably unnecessary */
+
+				glhanoi->currentDisk = pop(glhanoi, sp.src);
+				moveSetup(glhanoi, glhanoi->currentDisk);
+				push(glhanoi, sp.dst, glhanoi->currentDisk);
+
+				return;
+			} else {
+				/* Divide and conquer, using Frame-Stewart algorithm, until we get to base case */
+				if (sp.nDisks == 1) break;
+				
+				numAvail = numBits(sp.available);
+				if (numAvail < 2) k = sp.nDisks - 1;
+				else if(numAvail >= sp.nDisks - 2) k = 1;
+				/* heuristic for optimal k: sqrt(2n) (see http://www.cs.wm.edu/~pkstoc/boca.pdf) */
+				else k = (int)(sqrt(2 * sp.nDisks));
+				
+				if (k >= sp.nDisks) k = sp.nDisks - 1;
+				else if (k < 1) k = 1;
+				
+				tmp = bitScan(sp.available);
+				/* fprintf(stderr, "Debug: k is %d, tmp is %d\n", k, tmp); */
+				if (tmp == -1) {
+					fprintf(stderr, "Error: n > 1 (%d) and no poles available\n",
+						sp.nDisks);
+				}
+				
+				/* Push on moves in reverse order, since this is a stack. */
+				pushMove(glhanoi, k, tmp, sp.dst,
+					REMOVE_BIT(ADD_BIT(sp.available, sp.src), tmp));
+				pushMove(glhanoi, sp.nDisks - k, sp.src, sp.dst,
+					REMOVE_BIT(sp.available, tmp));
+				pushMove(glhanoi, k, sp.src, tmp,
+					REMOVE_BIT(ADD_BIT(sp.available, sp.dst), tmp));
+				
+				/* Repeat until we've found a move we can make. */
+			}
+		}
 	}
-	if(fudge == 0 || glhanoi->magicNumber) {
-		swap(&glhanoi->dst, &glhanoi->tmp);
-	}
-	glhanoi->magicNumber = magicNumber;
 }
 
 static double lerp(double alpha, double start, double end)
@@ -373,6 +550,7 @@ static void downfunc(GLdouble t, Disk * d)
 	d->rotation[1] = 0.0;
 }
 
+/* Return true iff move is finished. */
 static Bool computePosition(GLfloat t, Disk * d)
 {
 	Bool finished = False;
@@ -435,6 +613,13 @@ static void changeState(glhcfg *glhanoi, State state)
 	glhanoi->startTime = getTime();
 }
 
+static Bool finishedHanoi(glhcfg *glhanoi) {
+	/* use different criteria depending on algorithm */
+	return (glhanoi->numberOfPoles == 3 ?
+		glhanoi->move >= glhanoi->numberOfMoves :
+		solveStackEmpty(glhanoi));
+}
+
 static void update_glhanoi(glhcfg *glhanoi)
 {
 	double t = getTime() - glhanoi->startTime;
@@ -456,13 +641,14 @@ static void update_glhanoi(glhcfg *glhanoi)
 		break;
 
 	case MOVE_DISK:
-		if(computePosition(t, glhanoi->currentDisk)) {
+		if(computePosition(t * glhanoi->currentDisk->speed, glhanoi->currentDisk)) {
 			changeState(glhanoi, MOVE_FINISHED);
 		}
 		break;
 
 	case MOVE_FINISHED:
-		if(++glhanoi->move < glhanoi->numberOfMoves) {
+		++glhanoi->move;
+		if(!finishedHanoi(glhanoi)) {
 			makeMove(glhanoi);
 			changeState(glhanoi, MOVE_DISK);
 		} else {
@@ -608,7 +794,7 @@ static int drawTube(GLdouble bottomRadius, GLdouble topRadius,
 	GLint lastSlice = nSlice - 1;
 	GLfloat radius;
 	GLfloat innerRadius;
-	GLfloat maxRadius;
+	/*GLfloat maxRadius;*/
 
 	if(bottomThickness > bottomRadius) {
 		bottomThickness = bottomRadius;
@@ -622,11 +808,11 @@ static int drawTube(GLdouble bottomRadius, GLdouble topRadius,
 	if(topThickness < 0.0) {
 		topThickness = 0.0;
 	}
-	if(topRadius >= bottomRadius) {
+/*	if(topRadius >= bottomRadius) {
 		maxRadius = topRadius;
 	} else {
 		maxRadius = bottomRadius;
-	}
+	}*/
 
 	/* bottom */
 	y = 0.0;
@@ -834,7 +1020,8 @@ static int drawDisks(glhcfg *glhanoi)
 
 static GLfloat getDiskRadius(glhcfg *glhanoi, int i)
 {
-	return ((GLfloat) i + 3.0) * glhanoi->poleRadius;
+	return ((GLfloat) i + 3.0) * glhanoi->baseLength /
+		(2 * 0.95 * glhanoi->numberOfPoles * (glhanoi->numberOfDisks + 3.0));
 }
 
 static void initData(glhcfg *glhanoi)
@@ -843,39 +1030,46 @@ static void initData(glhcfg *glhanoi)
 	int i;
 
 	glhanoi->baseLength = BASE_LENGTH;
-	glhanoi->poleRadius = glhanoi->baseLength /
-		(2.0 * (3 * glhanoi->numberOfDisks + 7.0));
 	maxDiskRadius = getDiskRadius(glhanoi, glhanoi->numberOfDisks);
+	glhanoi->poleRadius = maxDiskRadius / (glhanoi->numberOfDisks + 3.0);
+	/* fprintf(stderr, "Debug: baseL = %f, maxDiskR = %f, poleR = %f\n",
+		glhanoi->baseLength, maxDiskRadius, glhanoi->poleRadius); */
 	glhanoi->baseWidth = 2.0 * maxDiskRadius;
 	glhanoi->poleOffset = 2.0 * getDiskRadius(glhanoi, glhanoi->maxDiskIdx);
 	glhanoi->diskHeight = 2.0 * glhanoi->poleRadius;
 	glhanoi->baseHeight = 2.0 * glhanoi->poleRadius;
 	glhanoi->poleHeight = glhanoi->numberOfDisks *
 		glhanoi->diskHeight + glhanoi->poleRadius;
+	/* numberOfMoves only applies if numberOfPoles = 3 */
 	glhanoi->numberOfMoves = (1 << glhanoi->numberOfDisks) - 1;
 	glhanoi->boardSize = glhanoi->baseLength * 0.5 * (1.0 + sqrt(5.0));
 
-	for(i = 0; i < 3; i++) {
-		if((glhanoi->pole[i].data =
-			calloc(glhanoi->numberOfDisks, sizeof(Disk *))) == NULL) {
-			fprintf(stderr, "%s: out of memory creating stack %d\n",
-					progname, i);
-			exit(1);
-		}
+	glhanoi->pole = (Pole *)calloc(glhanoi->numberOfPoles, sizeof(Pole));
+	checkAllocAndExit(!!glhanoi->pole, "poles");
+
+	for(i = 0; i < glhanoi->numberOfPoles; i++) {
+		checkAllocAndExit(
+			!!(glhanoi->pole[i].data = calloc(glhanoi->numberOfDisks, sizeof(Disk *))),
+			"disk stack");
 		glhanoi->pole[i].size = glhanoi->numberOfDisks;
 	}
-	if((glhanoi->diskPos =
-		calloc(glhanoi->numberOfDisks, sizeof(double))) == NULL) {
-		fprintf(stderr, "%s: out of memory creating diskPos\n", progname);
-		exit(1);
-	}
+	checkAllocAndExit(
+			!!(glhanoi->diskPos = calloc(glhanoi->numberOfDisks, sizeof(double))),
+			"diskPos");
 
 	glhanoi->the_rotator = make_rotator(0.1, 0.025, 0, 1, 0.005, False);
 	glhanoi->button_down_p = False;
 
 	glhanoi->src = glhanoi->oldsrc = 0;
 	glhanoi->tmp = glhanoi->oldtmp = 1;
-	glhanoi->dst = glhanoi->olddst = 2;
+	glhanoi->dst = glhanoi->olddst = glhanoi->numberOfPoles - 1;
+	
+	if (glhanoi->numberOfPoles > 3) {
+		glhanoi->solveStackSize = glhanoi->numberOfDisks + 2;
+		glhanoi->solveStack = (SubProblem *)calloc(glhanoi->solveStackSize, sizeof(SubProblem));
+		checkAllocAndExit(!!glhanoi->solveStack, "solving stack");
+		glhanoi->solveStackIdx = 0;
+	}
 }
 
 static void initView(glhcfg *glhanoi)
@@ -1092,6 +1286,7 @@ static void setTexture(glhcfg *glhanoi, int n)
 	glBindTexture(GL_TEXTURE_2D, glhanoi->textureNames[n]);
 }
 
+/* returns 1 on failure, 0 on success */
 static int makeTextures(glhcfg *glhanoi)
 {
 	GLubyte *marbleTexture;
@@ -1132,10 +1327,7 @@ static void initFloor(glhcfg *glhanoi)
 	float texIncr = 1.0 / BOARD_SQUARES;
 
     glhanoi->floorpolys = 0;
-	if((glhanoi->floorList = glGenLists(1)) == 0) {
-		fprintf(stderr, "can't allocate memory for floor display list\n");
-		exit(EXIT_FAILURE);
-	}
+	checkAllocAndExit(!!(glhanoi->floorList = glGenLists(1)), "floor display list");
 	glNewList(glhanoi->floorList, GL_COMPILE);
 	x0 = -glhanoi->boardSize / 2.0;
 	tx0 = 0.0f;
@@ -1182,35 +1374,32 @@ static void initFloor(glhcfg *glhanoi)
 
 static void initTowers(glhcfg *glhanoi)
 {
-	if((glhanoi->baseList = glGenLists(1)) == 0) {
-		fprintf(stderr, "can't allocate memory for towers display list\n");
-		exit(EXIT_FAILURE);
-	}
+	int i;
+	
+	checkAllocAndExit(!!(glhanoi->baseList = glGenLists(1)), "tower bases display list");
+
 	glNewList(glhanoi->baseList, GL_COMPILE);
 	setMaterial(baseColor, cWhite, 50);
     glhanoi->basepolys = drawCuboid(glhanoi->baseLength, glhanoi->baseWidth,
                                     glhanoi->baseHeight);
 	glEndList();
 
-	if((glhanoi->poleList = glGenLists(1)) == 0) {
-		fprintf(stderr, "can't allocate memory for towers display list\n");
-		exit(EXIT_FAILURE);
-	}
+	checkAllocAndExit(!!(glhanoi->poleList = glGenLists(1)), "poles display list\n");
+
 	glNewList(glhanoi->poleList, GL_COMPILE);
 	glPushMatrix();
-	glTranslatef(0.0f, glhanoi->baseHeight, 0.0f);
+	glTranslatef(-glhanoi->poleOffset * (glhanoi->numberOfPoles - 1.0f) * 0.5f, glhanoi->baseHeight, 0.0f);
 	setMaterial(poleColor, cWhite, 50);
-    glhanoi->polepolys = drawPole(glhanoi->poleRadius, glhanoi->poleHeight);
-	glPushMatrix();
-	glTranslatef(-glhanoi->poleOffset, 0.0, 0.0);
-	glhanoi->polepolys += drawPole(glhanoi->poleRadius, glhanoi->poleHeight);
-	glPopMatrix();
-	glTranslatef(glhanoi->poleOffset, 0.0, 0.0);
-	glhanoi->polepolys += drawPole(glhanoi->poleRadius, glhanoi->poleHeight);
+	for (i = 0; i < glhanoi->numberOfPoles; i++) {		
+		glhanoi->polepolys = drawPole(glhanoi->poleRadius, glhanoi->poleHeight);
+		/* poleOffset is based on disk radius. */
+		glTranslatef(glhanoi->poleOffset, 0.0, 0.0);
+	}
 	glPopMatrix();
 	glEndList();
 }
 
+/* Parameterized hue based on input 0.0 - 1.0. */
 static double cfunc(double x)
 {
 #define COMP <
@@ -1218,6 +1407,7 @@ static double cfunc(double x)
 		return (1.0 / 12.0) / (1.0 / 7.0) * x;
 	}
 	if(x < 3.0 / 7.0) {
+		/* (7x - 1) / 6 */
 		return (1.0 + 1.0 / 6.0) * x - 1.0 / 6.0;
 	}
 	if(x < 4.0 / 7.0) {
@@ -1232,11 +1422,8 @@ static double cfunc(double x)
 static void initDisks(glhcfg *glhanoi)
 {
 	int i;
-	if((glhanoi->disk =
-		(Disk *) calloc(glhanoi->numberOfDisks, sizeof(Disk))) == NULL) {
-		perror("initDisks");
-		exit(EXIT_FAILURE);
-	}
+	glhanoi->disk = (Disk *) calloc(glhanoi->numberOfDisks, sizeof(Disk));
+	checkAllocAndExit(!!glhanoi->disk, "disks");
 
 	for(i = glhanoi->maxDiskIdx; i >= 0; i--) {
 		GLfloat height = (GLfloat) (glhanoi->maxDiskIdx - i);
@@ -1246,7 +1433,7 @@ static void initDisks(glhcfg *glhanoi)
 		Disk *disk = &glhanoi->disk[i];
 
 		disk->id = i;
-		disk->position[0] = -glhanoi->poleOffset;
+		disk->position[0] = -glhanoi->poleOffset * (glhanoi->numberOfPoles - 1.0f) * 0.5;
 		disk->position[1] = glhanoi->diskHeight * height;
 		disk->position[2] = 0.0;
 		disk->rotation[0] = 0.0;
@@ -1254,21 +1441,24 @@ static void initDisks(glhcfg *glhanoi)
 		disk->rotation[2] = 0.0;
 		disk->polys = 0;
 
+		/* make smaller disks move faster */
+		disk->speed = lerp(((double)glhanoi->numberOfDisks - i) / glhanoi->numberOfDisks, 1.0, speed);
+		/* fprintf(stderr, "disk id: %d, alpha: %0.2f, speed: %0.2f\n", disk->id,
+			((double)(glhanoi->maxDiskIdx - i)) / glhanoi->numberOfDisks, disk->speed); */
+
 		color[0] = diskColor;
 		color[1] = 1.0f;
 		color[2] = 1.0f;
 		HSVtoRGBv(color, color);
 
-		if((disk->displayList = glGenLists(1)) == 0) {
-			fprintf(stderr,
-					"can't allocate memory for disk %d display list\n", i);
-			exit(EXIT_FAILURE);
-		}
+		checkAllocAndExit(!!(disk->displayList = glGenLists(1)), "disk display list");
 		glNewList(disk->displayList, GL_COMPILE);
 		setMaterial(color, cWhite, 100.0);
 		disk->polys += drawDisk3D(glhanoi->poleRadius, 
                                   getDiskRadius(glhanoi, i),
                                   glhanoi->diskHeight);
+		/*fprintf(stderr, "Debug: disk %d has radius %f\n", i,
+			getDiskRadius(glhanoi, i)); */
 		glEndList();
 	}
 	for(i = glhanoi->maxDiskIdx; i >= 0; --i) {
@@ -1336,17 +1526,13 @@ ENTRYPOINT void init_glhanoi(ModeInfo * mi)
 	if(!glhanoi_cfg) {
 		glhanoi_cfg =
 			(glhcfg *) calloc(MI_NUM_SCREENS(mi), sizeof(glhcfg));
-		if(!glhanoi_cfg) {
-			fprintf(stderr, "%s: out of memory creating configs\n",
-					progname);
-			exit(1);
-		}
+		checkAllocAndExit(!!glhanoi_cfg, "configuration");
 	}
 
 	glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
 	glhanoi->glx_context = init_GL(mi);
 	glhanoi->numberOfDisks = MI_BATCHCOUNT(mi);
-
+	
     if (glhanoi->numberOfDisks <= 1)
       glhanoi->numberOfDisks = 3 + (int) BELLRAND(9);
 
@@ -1356,6 +1542,18 @@ ENTRYPOINT void init_glhanoi(ModeInfo * mi)
 		glhanoi->numberOfDisks = (8 * sizeof(int)) - 1;
 
 	glhanoi->maxDiskIdx = glhanoi->numberOfDisks - 1;
+
+	speed = get_float_resource(MI_DISPLAY(mi), "speed", "float");
+	/* fprintf(stderr, "speed: %0.2f\n", speed); */
+	
+	glhanoi->numberOfPoles = get_integer_resource(MI_DISPLAY(mi), "poles", "Integer");
+	/* Set a number of poles from 3 to numberOfDisks + 1, biased toward lower values,
+		with probability decreasing linearly. */
+    if (glhanoi->numberOfPoles <= 2)
+      glhanoi->numberOfPoles = 3 +
+		(int)((1 - sqrt(frand(1.0))) * (glhanoi->numberOfDisks - 1));
+	/* fprintf(stderr, "Debug: Num disks: %d; num poles: %d\n", glhanoi->numberOfDisks, glhanoi->numberOfPoles); */
+	
 	glhanoi->wire = MI_IS_WIREFRAME(mi);
 	glhanoi->light = light;
 	glhanoi->fog = fog;
@@ -1370,10 +1568,7 @@ ENTRYPOINT void init_glhanoi(ModeInfo * mi)
 	}
 
 	initLights(!glhanoi->wire && glhanoi->light);
-	if(makeTextures(glhanoi) != 0) {
-		fprintf(stderr, "can't allocate memory for marble texture\n");
-		exit(EXIT_FAILURE);
-	}
+	checkAllocAndExit(!makeTextures(glhanoi), "textures\n");
 
 	initData(glhanoi);
 	initView(glhanoi);
@@ -1396,7 +1591,6 @@ ENTRYPOINT void init_glhanoi(ModeInfo * mi)
 		glEnable(GL_FOG);
 	}
 
-
 	glhanoi->duration = START_DURATION;
 	changeState(glhanoi, START);
 }
@@ -1410,7 +1604,7 @@ ENTRYPOINT void draw_glhanoi(ModeInfo * mi)
 	if(!glhanoi->glx_context)
 		return;
 
-        glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(glhanoi->glx_context));
+    glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(glhanoi->glx_context));
 
 	glPolygonMode(GL_FRONT, glhanoi->wire ? GL_LINE : GL_FILL);
 
@@ -1498,7 +1692,7 @@ ENTRYPOINT void release_glhanoi(ModeInfo * mi)
 				glDeleteLists(glh->disk[j].displayList, 1);
 			}
 			free(glh->disk);
-			for(i = 0; i < 3; i++) {
+			for(i = 0; i < glh->numberOfPoles; i++) {
 				if(glh->pole[i].data != NULL) {
 					free(glh->pole[i].data);
 				}

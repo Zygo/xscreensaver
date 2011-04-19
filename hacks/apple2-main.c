@@ -279,7 +279,6 @@ a2_dither (unsigned int *in, unsigned char *out, int w, int h)
   long *temp_err;
   int fs_scale = 1024;
   int brightness = 75;
-  int fs_direction;
 
 #if 0
   {
@@ -320,7 +319,6 @@ a2_dither (unsigned int *in, unsigned char *out, int w, int h)
       this_berr[x] = random() % (fs_scale * 2) - fs_scale;
       /* (random errors in [-1 .. 1]) */
     }
-  fs_direction = 1;
 
   for (y = 0; y < h; y++)
     for (x = 0; x < w; x++)
@@ -708,7 +706,7 @@ static void slideshow_controller(apple2_sim_t *sim, int *stepno,
           basename = slash+1;
         }
       {
-        char *dot=strchr(basename,'.');
+        char *dot=strrchr(basename,'.');
         if (dot) *dot=0;
       }
       if (strlen(basename)>20) basename[20]=0;

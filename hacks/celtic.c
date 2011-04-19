@@ -718,13 +718,11 @@ static int pattern_next_unfilled_couple(Pattern p, Edge *e, Direction *d)
 
 static void pattern_make_curves(Pattern p)
 {
-  int i;
   Edge current_edge, first_edge, next_edge;
   Node current_node, first_node;
   Direction current_direction, first_direction;
   Spline s;
 
-  i=0;
   while (pattern_next_unfilled_couple(p, &first_edge, &first_direction)) {
     /* start a new loop */
     s=spline_new(random()%(p->ncolors-2)+2);

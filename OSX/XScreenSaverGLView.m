@@ -125,12 +125,17 @@ init_GL (ModeInfo *mi)
     ctx = [[NSOpenGLContext alloc] 
             initWithFormat:pixfmt
               shareContext:nil];
+//    [pixfmt release]; // #### ???
   }
 
   // Sync refreshes to the vertical blanking interval
   GLint r = 1;
   [ctx setValues:&r forParameter:NSOpenGLCPSwapInterval];
   check_gl_error ("NSOpenGLCPSwapInterval");
+
+  // #### "Build and Analyze" says that ctx leaks, because it doesn't
+  //      seem to realize that makeCurrentContext retains it (right?)
+  //      Not sure what to do to make this warning go away.
 
   [ctx makeCurrentContext];
   check_gl_error ("makeCurrentContext");

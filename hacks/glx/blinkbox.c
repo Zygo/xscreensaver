@@ -151,7 +151,7 @@ swap_mov(GLfloat *a, GLfloat *b)
   swap(a,b);
   j = get_rand();
   if (*a < 0)
-    *a = (j *= -1);
+    *a = j * -1;
   else
     *a = j;
 }

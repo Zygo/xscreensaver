@@ -1728,7 +1728,7 @@ static void updateGrid (struct state *st)
                 s[j] = (random() % 10) + '0';
               s[j++] = '?';
               s[j++] = ':';
-              s[j++] = 0;
+              s[j] = 0;
             }
 
           /* change one digit in this barcode */

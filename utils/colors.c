@@ -336,16 +336,11 @@ make_color_path (Display *dpy, Colormap cmap,
   k = 0;
   for (i = 0; i < npoints; i++)
     {
-      int distance, direction;
-      distance = h[(i+1) % npoints] - h[i];
-      direction = (distance >= 0 ? -1 : 1);
+      int distance = h[(i+1) % npoints] - h[i];
+      int direction = (distance >= 0 ? -1 : 1);
 
-      if (distance > 180)
-	distance = 180 - (distance - 180);
-      else if (distance < -180)
-	distance = -(180 - ((-distance) - 180));
-      else
-	direction = -direction;
+      if (distance <= 180 && distance >= -180)
+        direction = -direction;
 
 #ifdef DEBUG
       fprintf (stderr, "point %d: %3d %.2f %.2f\n",
@@ -541,7 +536,7 @@ make_smooth_colormap (Display *dpy, Visual *visual, Colormap cmap,
 		   allocate_p, (writable_pP && *writable_pP));
 
   /* If we tried for writable cells and got none, try for non-writable. */
-  if (allocate_p && *ncolorsP == 0 && *writable_pP)
+  if (allocate_p && *ncolorsP == 0 && writable_pP && *writable_pP)
     {
       *writable_pP = False;
       goto RETRY_NON_WRITABLE;

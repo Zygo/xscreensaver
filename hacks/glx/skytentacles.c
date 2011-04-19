@@ -850,8 +850,6 @@ init_tentacles (ModeInfo *mi)
       fprintf(stderr, "%s: out of memory\n", progname);
       exit(1);
     }
-
-    tc = &tcs[MI_SCREEN(mi)];
   }
 
   tc = &tcs[MI_SCREEN(mi)];

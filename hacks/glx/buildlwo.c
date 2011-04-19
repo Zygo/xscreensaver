@@ -79,7 +79,7 @@ BuildLWO(int wireframe, const struct lwo *object)
 				grab = pnts + ((int) (*pols) * 3);
 				three[0] = *(grab++);
 				three[1] = *(grab++);
-				three[2] = *(grab++);
+				three[2] = *(grab);
 				glVertex3fv(three);
 			}
 			--num_pnts;

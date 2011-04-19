@@ -837,6 +837,11 @@ make_option_menu (NSUserDefaultsController *prefs,
   rect.origin.x = rect.origin.y = 0;
   rect.size.width = 10;
   rect.size.height = 10;
+
+  // #### "Build and Analyze" says that all of our widgets leak, because it
+  //      seems to not realize that place_child -> addSubview retains them.
+  //      Not sure what to do to make these warnings go away.
+
   NSPopUpButton *popup = [[NSPopUpButton alloc] initWithFrame:rect
                                                      pullsDown:NO];
 
@@ -1326,7 +1331,7 @@ make_text_controls (NSUserDefaultsController *prefs,
   make_text_field (prefs, opts, rgroup, node2, YES);
   [node2 release];
 
-  rect = [last_child(rgroup) frame];
+//  rect = [last_child(rgroup) frame];
 
 /* // trying to make the text fields be enabled only when the checkbox is on..
   control = last_child (rgroup);
@@ -1347,7 +1352,7 @@ make_text_controls (NSUserDefaultsController *prefs,
   make_file_selector (prefs, opts, rgroup, node2, NO, YES);
   [node2 release];
 
-  rect = [last_child(rgroup) frame];
+//  rect = [last_child(rgroup) frame];
 
   //  <string id="textURL" _label="" arg-set="text-url %"/>
   node2 = [[NSXMLElement alloc] initWithName:@"string"];
@@ -1359,7 +1364,7 @@ make_text_controls (NSUserDefaultsController *prefs,
   make_text_field (prefs, opts, rgroup, node2, YES);
   [node2 release];
 
-  rect = [last_child(rgroup) frame];
+//  rect = [last_child(rgroup) frame];
 
   layout_group (rgroup, NO);
 
@@ -1569,8 +1574,7 @@ fix_contentview_size (NSView *parent)
   NSRect f;
   NSArray *kids = [parent subviews];
   int nkids = [kids count];
-  NSView *text;  // the NSText at the bottom of the window
-  NSView *last;  // the last child before the NSText
+  NSView *text = 0;  // the NSText at the bottom of the window
   double maxx = 0, miny = 0;
   int i;
 
@@ -1586,7 +1590,6 @@ fix_contentview_size (NSView *parent)
     f = [kid frame];
     if (f.origin.x + f.size.width > maxx)  maxx = f.origin.x + f.size.width;
     if (f.origin.y - f.size.height < miny) miny = f.origin.y;
-    last = kid;
 //    NSLog(@"start: %3.0f x %3.0f @ %3.0f %3.0f  %3.0f  %@",
 //          f.size.width, f.size.height, f.origin.x, f.origin.y,
 //          f.origin.y + f.size.height, [kid class]);
@@ -1597,6 +1600,7 @@ fix_contentview_size (NSView *parent)
   /* Now that we know the width of the window, set the width of the NSText to
      that, so that it can decide what its height needs to be.
    */
+  if (! text) abort();
   f = [text frame];
 //  NSLog(@"text old: %3.0f x %3.0f @ %3.0f %3.0f  %3.0f  %@",
 //        f.size.width, f.size.height, f.origin.x, f.origin.y,
@@ -1647,10 +1651,10 @@ fix_contentview_size (NSView *parent)
   /* Set the contentView to the size of the children.
    */
   f = [parent frame];
-  float yoff = f.size.height;
+//  float yoff = f.size.height;
   f.size.width = maxx + LEFT_MARGIN;
   f.size.height = -(miny - LEFT_MARGIN*2);
-  yoff = f.size.height - yoff;
+//  yoff = f.size.height - yoff;
   [parent setFrame:f];
 
 //  NSLog(@"max: %3.0f x %3.0f @ %3.0f %3.0f", 
@@ -1897,13 +1901,6 @@ traverse_tree (NSUserDefaultsController *prefs,
                             options:(NSXMLNodePreserveWhitespace |
                                      NSXMLNodePreserveCDATA)
                             error:&err];
-/* clean up?
-    if (!xmlDoc) {
-      xmlDoc = [[NSXMLDocument alloc] initWithContentsOfURL:furl
-                                      options:NSXMLDocumentTidyXML
-                                      error:&err];
-    }
-*/
   if (!xmlDoc || err) {
     if (err)
       NSAssert2 (0, @"XML Error: %@: %@",
@@ -1912,6 +1909,7 @@ traverse_tree (NSUserDefaultsController *prefs,
   }
 
   traverse_tree (prefs, self, opts, [xmlDoc rootElement]);
+  [xmlDoc release];
 
   return self;
 }

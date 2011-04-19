@@ -582,13 +582,13 @@ pipe_cb (XtPointer closure, int *source, XtInputId *id)
     Window r;
     int x, y;
     unsigned int w, h, bbw, d;
-    struct stat *st;
+    struct stat st;
 
     /* Log something to syslog so we can tell the difference between
        corrupted images and broken symlinks. */
     if (!*buf)
       fprintf (stderr, "%s: no image filename found\n", progname);
-    else if (! stat (buf, st))
+    else if (! stat (buf, &st))
       fprintf (stderr, "%s: %s: unparsable\n", progname, buf);
     else
       {
@@ -730,11 +730,9 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
     done = True;
   }
 
-  if (! done) {
+  if (! done)
     draw_colorbars (screen, xgwa.visual, drawable, xgwa.colormap,
                     0, 0, xgwa.width, xgwa.height);
-    done = True;
-  }
 
   if (callback) {
     /* If we got here, we loaded synchronously even though they wanted async.

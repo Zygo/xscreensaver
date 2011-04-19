@@ -63,7 +63,22 @@
 
 #include "demo-Gtk-conf.h"
 
- 
+/* Deal with deprecation of direct access to struct fields on the way to GTK3
+   See http://live.gnome.org/GnomeGoals/UseGseal
+ */
+#if GTK_CHECK_VERSION(2,14,0)
+# define GET_PARENT(w)          gtk_widget_get_parent (w)
+# define GET_ADJ_VALUE(a)       gtk_adjustment_get_value (a)
+# define GET_ADJ_UPPER(a)       gtk_adjustment_get_upper (a)
+# define GET_ADJ_LOWER(a)       gtk_adjustment_get_lower (a)
+#else
+# define GET_PARENT(w)          ((w)->parent)
+# define GET_ADJ_VALUE(a)       ((a)->value)
+# define GET_ADJ_UPPER(a)       ((a)->upper)
+# define GET_ADJ_LOWER(a)       ((a)->lower)
+#endif
+
+
 extern const char *blurb (void);
 
 
@@ -815,6 +830,18 @@ insert_fake_hbox (GtkWidget *parent)
 }
 
 
+static void
+link_atk_label_to_widget(GtkWidget *label, GtkWidget *widget)
+{
+    AtkObject *atk_label = gtk_widget_get_accessible (label);
+    AtkObject *atk_widget = gtk_widget_get_accessible (widget);
+
+    atk_object_add_relationship (atk_label, ATK_RELATION_LABEL_FOR,
+				 atk_widget);
+    atk_object_add_relationship (atk_widget, ATK_RELATION_LABELLED_BY,
+				 atk_label);
+}
+
 /* Given a `parameter' struct, allocates an appropriate GtkWidget for it,
    and stores it in `p->widget'.
    `parent' must be a GtkBox.
@@ -829,10 +856,12 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
     {
     case STRING:
       {
+        GtkWidget *entry = gtk_entry_new ();
         parent = insert_fake_hbox (parent);
         if (label)
           {
             GtkWidget *w = gtk_label_new (_(label));
+            link_atk_label_to_widget (w, entry);
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
             gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
             set_widget_min_width (GTK_WIDGET (w), MIN_LABEL_WIDTH);
@@ -840,7 +869,7 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
             gtk_box_pack_start (GTK_BOX (parent), w, FALSE, FALSE, 4);
           }
 
-        p->widget = gtk_entry_new ();
+        p->widget = entry;
         if (p->string)
           gtk_entry_set_text (GTK_ENTRY (p->widget), (char *) p->string);
         gtk_box_pack_start (GTK_BOX (parent), p->widget, FALSE, FALSE, 4);
@@ -851,6 +880,7 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
         GtkWidget *L = gtk_label_new (label ? _(label) : "");
         GtkWidget *entry = gtk_entry_new ();
         GtkWidget *button = gtk_button_new_with_label (_("Browse..."));
+        link_atk_label_to_widget (L, entry);
         gtk_widget_show (entry);
         gtk_widget_show (button);
         p->widget = entry;
@@ -882,6 +912,7 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
         if (label)
           {
             labelw = gtk_label_new (_(label));
+            link_atk_label_to_widget (labelw, scale);
             gtk_label_set_justify (GTK_LABEL (labelw), GTK_JUSTIFY_LEFT);
             gtk_misc_set_alignment (GTK_MISC (labelw), 0.0, 0.5);
             set_widget_min_width (GTK_WIDGET (labelw), MIN_LABEL_WIDTH);
@@ -895,6 +926,7 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
         if (p->low_label)
           {
             GtkWidget *w = gtk_label_new (_((char *) p->low_label));
+            link_atk_label_to_widget (w, scale);
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
             gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
             set_widget_min_width (GTK_WIDGET (w), MIN_LABEL_WIDTH);
@@ -914,6 +946,7 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
         if (p->high_label)
           {
             GtkWidget *w = gtk_label_new (_((char *) p->high_label));
+            link_atk_label_to_widget (w, scale);
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_LEFT);
             gtk_misc_set_alignment (GTK_MISC (w), 0.0, 0.5);
             set_widget_min_width (GTK_WIDGET (w), MIN_LABEL_WIDTH);
@@ -930,12 +963,13 @@ make_parameter_widget (const char *filename, parameter *p, GtkWidget *parent)
         GtkWidget *spin = gtk_spin_button_new (adj, 15, 0);
         gtk_spin_button_set_numeric (GTK_SPIN_BUTTON (spin), TRUE);
         gtk_spin_button_set_snap_to_ticks (GTK_SPIN_BUTTON (spin), TRUE);
-        gtk_spin_button_set_value (GTK_SPIN_BUTTON (spin), adj->value);
+        gtk_spin_button_set_value (GTK_SPIN_BUTTON (spin), GET_ADJ_VALUE(adj));
         set_widget_min_width (GTK_WIDGET (spin), MIN_SPINBUTTON_WIDTH);
 
         if (label)
           {
             GtkWidget *w = gtk_label_new (_(label));
+            link_atk_label_to_widget (w, spin);
             gtk_label_set_justify (GTK_LABEL (w), GTK_JUSTIFY_RIGHT);
             gtk_misc_set_alignment (GTK_MISC (w), 1.0, 0.5);
             set_widget_min_width (GTK_WIDGET (w), MIN_LABEL_WIDTH);
@@ -1008,8 +1042,8 @@ static void
 file_sel_cancel (GtkWidget *button, gpointer user_data)
 {
   GtkWidget *dialog = button;
-  while (dialog->parent)
-    dialog = dialog->parent;
+  while (GET_PARENT (dialog))
+    dialog = GET_PARENT (dialog);
   gtk_widget_destroy (dialog);
 }
 
@@ -1020,8 +1054,9 @@ file_sel_ok (GtkWidget *button, gpointer user_data)
   GtkWidget *entry = GTK_WIDGET (user_data);
   GtkWidget *dialog = button;
   const char *path;
-  while (dialog->parent)
-    dialog = dialog->parent;
+
+  while (GET_PARENT (dialog))
+    dialog = GET_PARENT (dialog);
   gtk_widget_hide (dialog);
 
   path = gtk_file_selection_get_filename (GTK_FILE_SELECTION (dialog));
@@ -1213,8 +1248,9 @@ parameter_to_switch (parameter *p)
         char buf[255];
         char *s1;
         float value = (p->invert_p
-                       ? invert_range (adj->lower, adj->upper, adj->value) - 1
-                       : adj->value);
+                       ? invert_range (GET_ADJ_LOWER(adj), GET_ADJ_UPPER(adj),
+                                       GET_ADJ_VALUE(adj)) - 1
+                       : GET_ADJ_VALUE(adj));
 
         if (value == p->value)  /* same as default */
           return 0;
@@ -1575,7 +1611,7 @@ parameter_set_switch (parameter *p, gpointer value)
         if (1 == sscanf ((char *) value, "%f %c", &f, &c))
           {
             if (p->invert_p)
-              f = invert_range (adj->lower, adj->upper, f) - 1;
+              f = invert_range (GET_ADJ_LOWER(adj), GET_ADJ_UPPER(adj), f) - 1;
             gtk_adjustment_set_value (adj, f);
           }
         break;

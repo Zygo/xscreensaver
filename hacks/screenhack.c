@@ -444,7 +444,7 @@ screenhack_table_handle_events (Display *dpy,
             ft->reshape_cb (dpy, window, closure,
                             event.xconfigure.width, event.xconfigure.height);
 #ifdef DEBUG_PAIR
-          if (event.xany.window == window2)
+          if (window2 && event.xany.window == window2)
             ft->reshape_cb (dpy, window2, closure2,
                             event.xconfigure.width, event.xconfigure.height);
 #endif
@@ -453,7 +453,7 @@ screenhack_table_handle_events (Display *dpy,
                (! (event.xany.window == window
                    ? ft->event_cb (dpy, window, closure, &event)
 #ifdef DEBUG_PAIR
-                   : event.xany.window == window2
+                   : (window2 && event.xany.window == window2)
                    ? ft->event_cb (dpy, window2, closure2, &event)
 #endif
                    : 0)))

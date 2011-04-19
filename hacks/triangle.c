@@ -301,6 +301,8 @@ draw_triangle (ModeInfo * mi)
 				  {
 					free_colors(mi->dpy, mi->xgwa.colormap, mi->colors,
 								mi->npixels);
+                    mi->npixels = 
+                      get_integer_resource (mi->dpy, "ncolors", "Integer");
 					make_smooth_colormap (mi->dpy,
 										  mi->xgwa.visual, mi->xgwa.colormap,
 										  mi->colors, &mi->npixels,

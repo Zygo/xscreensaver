@@ -105,10 +105,10 @@ static const char sccsid[] = "@(#)rubik.c	5.01 2001/03/01 xlockmore";
 
 #ifdef STANDALONE
 # define MODE_rubik
-# define DEFAULTS	"*delay: 40000 \n"		\
+# define DEFAULTS	"*delay: 20000 \n"		\
 					"*count: -30 \n"		\
 					"*showFPS: False \n"	\
-					"*cycles: 5 \n"			\
+					"*cycles: 20 \n"		\
 					"*size:  -6 \n"
 # define refresh_rubik 0
 # define rubik_handle_event 0
@@ -1789,10 +1789,10 @@ shuffle(ModeInfo * mi)
 				return False;
 		rp->moves[i] = move;
 	}
-	rp->VX = 0.05;
+	rp->VX = 0.005;
 	if (NRAND(100) < 50)
 		rp->VX *= -1;
-	rp->VY = 0.05;
+	rp->VY = 0.005;
 	if (NRAND(100) < 50)
 		rp->VY *= -1;
 	rp->movement.face = NO_FACE;
@@ -1966,16 +1966,16 @@ draw_rubik(ModeInfo * mi)
 		bounced = True;
 	}
 	if (bounced) {
-		rp->VX += ((float) LRAND() / (float) MAXRAND) * 0.02 - 0.01;
-		rp->VX += ((float) LRAND() / (float) MAXRAND) * 0.02 - 0.01;
-		if (rp->VX > 0.06)
-			rp->VX = 0.06;
-		if (rp->VY > 0.06)
-			rp->VY = 0.06;
-		if (rp->VX < -0.06)
-			rp->VX = -0.06;
-		if (rp->VY < -0.06)
-			rp->VY = -0.06;
+		rp->VX += ((float) LRAND() / (float) MAXRAND) * 0.002 - 0.001;
+		rp->VY += ((float) LRAND() / (float) MAXRAND) * 0.002 - 0.001;
+		if (rp->VX > 0.006)
+			rp->VX = 0.006;
+		if (rp->VY > 0.006)
+			rp->VY = 0.006;
+		if (rp->VX < -0.006)
+			rp->VX = -0.006;
+		if (rp->VY < -0.006)
+			rp->VY = -0.006;
 	}
 	if (!MI_IS_ICONIC(mi)) {
 		glTranslatef(rp->PX, rp->PY, 0);
@@ -2084,7 +2084,7 @@ draw_rubik(ModeInfo * mi)
 
 	glFlush();
 
-	rp->step += 0.05;
+	rp->step += 0.002;
 }
 
 #ifndef STANDALONE

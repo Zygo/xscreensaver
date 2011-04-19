@@ -64,6 +64,7 @@ int mono_p = 0;
   
   void *addr = CFBundleGetDataPointerForName (cfb, (CFStringRef) table_name);
   NSAssert2 (addr, @"no symbol \"%@\" in bundle %@", table_name, path);
+  CFRelease (cfb);
 
 //  NSLog (@"%@ = 0x%08X", table_name, (unsigned long) addr);
   return (struct xscreensaver_function_table *) addr;

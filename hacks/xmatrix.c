@@ -502,6 +502,19 @@ init_spinners (m_state *state)
 }
 
 
+static void
+clear_spinners (m_state *state)
+{
+  int i;
+  for (i = 0; i < state->grid_width * state->grid_height; i++)
+    if (state->cells[i].spinner)
+      {
+        state->cells[i].spinner = 0;
+        state->cells[i].changed = 1;
+      }
+}
+
+
 static void set_mode (m_state *, m_mode);
 
 
@@ -563,12 +576,7 @@ init_drain (m_state *state)
     }
 
   /* Turn off all the spinners, else they never go away. */
-  for (i = 0; i < state->grid_width * state->grid_height; i++)
-    if (state->cells[i].spinner)
-      {
-        state->cells[i].spinner = 0;
-        state->cells[i].changed = 1;
-      }
+  clear_spinners (state);
 }
 
 static Bool
@@ -1176,6 +1184,7 @@ hack_text (m_state *state)
         {
         case TRACE_TEXT_A:
         case TRACE_TEXT_B:
+          clear_spinners (state);
           if (state->mode == TRACE_TEXT_A)
             {
               if (state->grid_width >= 52)
@@ -1250,6 +1259,7 @@ hack_text (m_state *state)
 
         case KNOCK:
           {
+            clear_spinners (state);
             state->typing = ("\001Wake up, Neo...\n"
                              "\001The Matrix has you...\n"
                              "\001Follow the white rabbit.\n"
@@ -1275,6 +1285,7 @@ hack_text (m_state *state)
                lot like Cisco IOS to me.  (IOS is a descendant of VMS.)
             */
 
+            clear_spinners (state);
             state->typing =
 # ifdef __GNUC__
             __extension__  /* don't warn about "string length is greater than
@@ -1564,7 +1575,7 @@ hack_matrix (m_state *state)
 
       if (state->mode == TRACE_A || state->mode == TRACE_B)
         bottom_feeder_p = True;
-      if (state->insert_top_p && state->insert_bottom_p)
+      else if (state->insert_top_p && state->insert_bottom_p)
         bottom_feeder_p = (random() & 1);
       else
         bottom_feeder_p = state->insert_bottom_p;

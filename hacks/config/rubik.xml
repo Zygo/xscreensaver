@@ -6,15 +6,16 @@
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
-          low="0" high="100000" default="40000"
+          low="0" high="100000" default="20000"
           convert="invert"/>
 
   <number id="count" type="spinbutton" arg="-count %"
           _label="Count" low="-100" high="100" default="-30"/>
 
   <number id="cycles" type="slider" arg="-cycles %"
-           _label="Timeout" _low-label="Small" _high-label="Large"
-          low="0" high="60" default="5"/>
+           _label="Rotation" _low-label="Slow" _high-label="Fast"
+          low="3" high="200" default="20"
+          convert="invert"/>
 
   <number id="size" type="spinbutton" arg="-size %"
            _label="Size" low="-20" high="20" default="-6"/>

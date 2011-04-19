@@ -695,7 +695,7 @@ draw_demon (ModeInfo * mi)
 						dp->newcell[i + mj] = dp->oldcell[k + ml];
 					/* W */
 					k = (!i) ? dp->ncols - 1 : i - 1;
-					l = j;
+					/*l = j;*/
 					ml = mj;
 					if (dp->oldcell[k + ml] ==
 					    (int) (dp->oldcell[i + mj] + 1) % dp->states)
@@ -865,7 +865,7 @@ draw_demon (ModeInfo * mi)
 									dp->newcell[i + mj] = dp->oldcell[k + ml];
 								/* EE */
 								k = (i + 1 == dp->ncols) ? 0 : i + 1;
-								l = j;
+								/*l = j;*/
 								ml = mj;
 								if (dp->oldcell[k + ml] ==
 								    (int) (dp->oldcell[i + mj] + 1) % dp->states)
@@ -897,7 +897,7 @@ draw_demon (ModeInfo * mi)
 									dp->newcell[i + mj] = dp->oldcell[k + ml];
 								/* WW */
 								k = (!i) ? dp->ncols - 1 : i - 1;
-								l = j;
+								/*l = j;*/
 								ml = mj;
 								if (dp->oldcell[k + ml] ==
 								    (int) (dp->oldcell[i + mj] + 1) % dp->states)

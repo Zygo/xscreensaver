@@ -47,7 +47,6 @@ slidescreen_init (Display *dpy, Window window)
 {
   struct state *st = (struct state *) calloc (1, sizeof(*st));
   XWindowAttributes xgwa;
-  Visual *visual;
   XGCValues gcv;
   long gcflags;
 
@@ -58,7 +57,6 @@ slidescreen_init (Display *dpy, Window window)
                                             st->window, 0, 0);
   st->start_time = time ((time_t) 0);
 
-  visual = xgwa.visual;
   st->max_width = xgwa.width;
   st->max_height = xgwa.height;
 

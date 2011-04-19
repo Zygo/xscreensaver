@@ -90,6 +90,7 @@ dmg:: distdepend check_versions
   V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' $$SRC` ;		      \
   TMPDIR="build" ;							      \
   SRC="build/Release" ;							      \
+  EXTRAS=../../xdaliclock/OSX/build/Release/*.saver ;			      \
   BASE="xscreensaver-$$V" ;						      \
   OUTDIR="../archive" ;							      \
   DMG="$$OUTDIR/$$BASE.dmg" ;						      \
@@ -108,7 +109,7 @@ dmg:: distdepend check_versions
      's/\\\\\\n//g; m/^RETIRED_GL_EXES\s*=\s*(.*)$$/m && print "$$1\n"'	      \
       ../hacks/glx/Makefile.in` ;					      \
 									      \
-  for f in $$SRC/*.saver ; do						      \
+  for f in $$SRC/*.saver $$EXTRAS ; do					      \
    ok=yes ;								      \
    ff=`echo $$f | perl -e '$$_=<>; s@^.*/(.*)\..*$$@\L$$1@; print'`;	      \
    for r in $$retired ; do						      \
@@ -127,6 +128,7 @@ dmg:: distdepend check_versions
   cp -p XScreenSaverDMG.icns "$$STAGE/.VolumeIcon.icns" ;		      \
   /Developer/Tools/SetFile -a C "$$STAGE" ;				      \
   /Developer/Tools/SetFile -a E "$$STAGE/ READ ME.rtf" ;		      \
+  seticon -d ../../xdaliclock/OSX/daliclockSaver.icns $$STAGE/DaliClock.saver;\
   hdiutil makehybrid -quiet -ov -hfs -hfs-volume-name "$$VOLNAME"	      \
     -hfs-openfolder "$$STAGE" "$$STAGE" -o "$$TMPDMG" ;			      \
   rm -rf "$$STAGE" ;							      \

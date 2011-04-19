@@ -496,7 +496,6 @@ loading_msg (ModeInfo *mi, int n)
   carousel_state *ss = &sss[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
   char text[100];
-  GLfloat scale;
 
   if (wire) return;
 
@@ -508,8 +507,6 @@ loading_msg (ModeInfo *mi, int n)
 
   if (ss->loading_sw == 0)    /* only do this once, so that the string doesn't move. */
     ss->loading_sw = texture_string_width (ss->texfont, text, &ss->loading_sh);
-
-  scale = ss->loading_sh / (GLfloat) MI_HEIGHT(mi);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 

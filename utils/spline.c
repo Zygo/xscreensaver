@@ -29,7 +29,6 @@
 
 #define SMOOTHNESS 1.0
 
-static void no_more_memory (void);
 static void grow_spline_points (spline* s);
 static void mid_point (double x0, double y0, double x1, double y1,
 		       double *mx, double *my);
@@ -45,19 +44,11 @@ static void calc_section (spline* s, double cminus1x, double cminus1y,
 			  double cx, double cy, double cplus1x, double cplus1y,
 			  double cplus2x, double cplus2y);
 
-static void
-no_more_memory (void)
-{
-  fprintf (stderr, "No more memory\n");
-  exit (1);
-}
-
 spline*
 make_spline (unsigned int size)
 {
   spline* s = (spline*)calloc (1, sizeof (spline));
-  if (!s)
-    no_more_memory ();
+  if (!s) abort();
   s->n_controls = size;
   s->control_x = (double*)calloc (s->n_controls, sizeof (double));
   s->control_y = (double*)calloc (s->n_controls, sizeof (double));
@@ -67,7 +58,7 @@ make_spline (unsigned int size)
   s->points = (XPoint*)calloc (s->allocated_points, sizeof (XPoint));
 
   if (!s->control_x || !s->control_y || !s->points)
-    no_more_memory ();
+    abort();
 
   return s;
 }
@@ -78,9 +69,7 @@ grow_spline_points (spline *s)
   s->allocated_points *= 2;
   s->points =
     (XPoint*)realloc (s->points, s->allocated_points * sizeof (XPoint));
-
-  if (!s->points)
-    no_more_memory ();
+  if (!s->points) abort();
 }
 
 static void 
