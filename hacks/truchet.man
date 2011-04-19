@@ -1,0 +1,139 @@
+.TH XScreenSaver 1 "27-May-97" "X Version 11"
+.SH NAME
+truchet - draws curved or angular Truchet patterns
+.SH SYNOPSIS
+.B truchet
+[\-display \fIhost:display.screen\fP]  [\-foreground \fIcolor\fP] [\-background \fIcolor\fP]
+[\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fImilliseconds\fP]
+[\-min\-width \fIinteger\fP] [\-min-height \fIinteger\fP] [\-max-width \fIinteger\fP] 
+[\-max-height \fIinteger\fP] [\-max\-linewidth \fIinteger\fP] [\-min-linewidth \fIinteger\fP] 
+[\-erase] [\-no\-erase] [\-erase\-count \fIinteger\fP] [\-square] [\-not\-square] [\-curves]
+[\-no\-curves] [\-angle] [\-no\-angles] [\-scroll] [\-scroll\-overlap \fIinteger\fP] 
+[\-anim\-delay \fIinteger\fP] [\-anim\-step\-size \fIinteger\fP]
+
+[\-fps]
+.SH DESCRIPTION
+The \fItruchet\fP program draws arc and line based Truchet patterns.
+.SH OPTIONS
+.I truchet
+accepts the following options:
+.TP 8
+.B  \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+
+.TP 8
+.B \-delay \fImilliseconds\fP
+How long to wait between drawing each screenful. Default is 1 seconds.
+
+.TP 8 
+.B \-min-width \fIinteger\fP
+The minimum width in pixels of each square. Default is 40.
+
+.TP 8
+.B \-min-height \fIinteger\fP
+The minimum height in pixels of each square. Default is 40.
+
+.TP 8
+.B \-max-width \fIinteger\fP
+The maximum width in pixels of each square. Default is 150.
+
+.TP 8
+.B \-max-height \fIinteger\fP
+The maximum height in pixels of each square. Default is 150.
+
+.TP 8
+.B \-max-linewidth \fIinteger\fP
+The maximum width of the lines used to draw. Default is 25.
+
+.TP 8
+.B \-min-linewidth \fIinteger\fP
+The minimum width of the lines used to draw. Default is 2.
+
+.TP 8
+.B \-erase
+
+.TP 8
+.B \-no-erase
+Whether to clear the screen after each screenful is drawn. Default is True (erase).
+
+.TP 8
+.B \-erase-count \fIinteger\fP
+The number of screenfuls to draw before erasing. Default is 25.
+
+.TP 8
+.B \-square
+
+.TP 8
+.B \-not-square
+Whether to force the tiles to be square. Default is True (square).
+
+.TP 8
+.B \-curves
+
+.TP 8
+.B \-no-curves
+Whether to draw the arc based Truchet pattern. Default is True (curves).
+
+.TP 8
+.B \-angles
+
+.TP 8
+.B \-no-angles
+Whether or not to draw the line based Truchet pattern. Default is True (angles)
+
+.TP 8
+.B \-scroll
+Use the scroll mode. Default is False.
+
+.TP 8
+.B \-scroll-overlap
+The amount to scroll from one side to another. Default is 400.
+
+.TP 8
+.B \-anim-delay
+The time to pause between each animation step. Default is 100.
+
+.TP 8
+.B \-anim-step-size
+The amount of steps to skip between each animation step. Default is 3.
+
+
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1998 by Adrian Likins.
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation. 
+.SH AUTHOR
+Adrian Likins, 1998.
+

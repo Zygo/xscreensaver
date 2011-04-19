@@ -1,0 +1,1017 @@
+/* sonar, Copyright (c) 1998-2008 Jamie Zawinski and Stephen Martin
+ *
+ * Permission to use, copy, modify, distribute, and sell this software and its
+ * documentation for any purpose is hereby granted without fee, provided that
+ * the above copyright notice appear in all copies and that both that
+ * copyright notice and this permission notice appear in supporting
+ * documentation.  No representations are made about the suitability of this
+ * software for any purpose.  It is provided "as is" without express or 
+ * implied warranty.
+ */
+
+/* Created in Apr 1998 by Stephen Martin <smartin@vanderfleet-martin.net>
+ * for the  RedHat Screensaver Contest
+ * Heavily hacked by jwz ever since.
+ * Rewritten in OpenGL by jwz, Aug 2008.
+ *
+ * This is an implementation of a general purpose reporting tool in the
+ * format of a Sonar display. It is designed such that a sensor is read
+ * on every movement of a sweep arm and the results of that sensor are
+ * displayed on the screen. The location of the display points (targets) on the
+ * screen are determined by the current localtion of the sweep and a distance
+ * value associated with the target. 
+ *
+ * Currently the only two sensors that are implemented are the simulator
+ * (the default) and the ping sensor. The simulator randomly creates a set
+ * of bogies that move around on the scope while the ping sensor can be
+ * used to display hosts on your network.
+ *
+ * The ping code is only compiled in if you define HAVE_ICMP or HAVE_ICMPHDR,
+ * because, unfortunately, different systems have different ways of creating
+ * these sorts of packets.
+ *
+ * In order to use the ping sensor on most systems, this program must be
+ * installed as setuid root, so that it can create an ICMP RAW socket.  Root
+ * privileges are disavowed shortly after startup (just after connecting to
+ * the X server and reading the resource database) so this is *believed* to
+ * be a safe thing to do, but it is usually recommended that you have as few
+ * setuid programs around as possible, on general principles.
+ *
+ * It is not necessary to make it setuid on MacOS systems, because on those
+ * systems, unprivileged programs can ping by using ICMP DGRAM sockets
+ * instead of ICMP RAW.
+ *
+ * It should be easy to extend this code to support other sorts of sensors.
+ * Some ideas:
+ *   - search the output of "netstat" for the list of hosts to ping;
+ *   - plot the contents of /proc/interrupts;
+ *   - plot the process table, by process size, cpu usage, or total time;
+ *   - plot the logged on users by idle time or cpu usage.
+ *
+ */
+
+#define DEF_FONT "-*-lucidatypewriter-bold-r-normal-*-*-480-*-*-*-*-iso8859-1"
+#define DEF_SPEED        "1.0"
+#define DEF_SWEEP_SIZE   "0.3"
+#define DEF_FONT_SIZE    "12"
+#define DEF_TEAM_A_NAME  "F18"
+#define DEF_TEAM_B_NAME  "MIG"
+#define DEF_TEAM_A_COUNT "4"
+#define DEF_TEAM_B_COUNT "4"
+#define DEF_PING         "default"
+#define DEF_PING_TIMEOUT "3000"
+#define DEF_RESOLVE      "True"
+#define DEF_TIMES        "True"
+#define DEF_WOBBLE       "True"
+#define DEF_DEBUG        "False"
+
+#define DEFAULTS	"*delay:	30000       \n" \
+			"*font:       " DEF_FONT   "\n" \
+			"*showFPS:      False       \n" \
+			"*wireframe:    False       \n" \
+
+
+# define refresh_sonar 0
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
+#ifdef HAVE_UNISTD_H
+# include <unistd.h>   /* for setuid() */
+#endif
+
+#include "xlockmore.h"
+#include "sonar.h"
+#include "gltrackball.h"
+#include "rotator.h"
+#include "texfont.h"
+#include <ctype.h>
+
+#ifdef USE_GL /* whole file */
+
+typedef struct {
+  double x,y,z;
+} XYZ;
+
+typedef struct {
+  GLXContext *glx_context;
+  trackball_state *trackball;
+  rotator *rot;
+  Bool button_down_p;
+
+  double start_time;
+  GLfloat sweep_offset;
+
+  GLuint screen_list, grid_list, sweep_list, table_list;
+  int screen_polys, grid_polys, sweep_polys, table_polys;
+  GLfloat sweep_th;
+  GLfloat line_thickness;
+
+  texture_font_data *texfont;
+
+  sonar_sensor_data *ssd;
+  char *error;
+
+  sonar_bogie *displayed;	/* on screen and fading */
+  sonar_bogie *pending;		/* returned by sensor, not yet on screen */
+
+} sonar_configuration;
+
+static sonar_configuration *sps = NULL;
+
+static GLfloat speed;
+static GLfloat sweep_size;
+static GLfloat font_size;
+static Bool resolve_p;
+static Bool times_p;
+static Bool wobble_p;
+static Bool debug_p;
+
+static char *team_a_name;
+static char *team_b_name;
+static int team_a_count;
+static int team_b_count;
+static int ping_timeout;
+static char *ping_arg;
+
+static XrmOptionDescRec opts[] = {
+  { "-speed",        ".speed",       XrmoptionSepArg, 0 },
+  { "-sweep-size",   ".sweepSize",   XrmoptionSepArg, 0 },
+  { "-font-size",    ".fontSize",    XrmoptionSepArg, 0 },
+  { "-team-a-name",  ".teamAName",   XrmoptionSepArg, 0 },
+  { "-team-b-name",  ".teamBName",   XrmoptionSepArg, 0 },
+  { "-team-a-count", ".teamACount",  XrmoptionSepArg, 0 },
+  { "-team-b-count", ".teamBCount",  XrmoptionSepArg, 0 },
+  { "-ping",         ".ping",        XrmoptionSepArg, 0 },
+  { "-ping-timeout", ".pingTimeout", XrmoptionSepArg, 0 },
+  { "-dns",          ".resolve",     XrmoptionNoArg, "True" },
+  { "+dns",          ".resolve",     XrmoptionNoArg, "False" },
+  { "-times",        ".times",       XrmoptionNoArg, "True" },
+  { "+times",        ".times",       XrmoptionNoArg, "False" },
+  { "-wobble",       ".wobble",      XrmoptionNoArg, "True" },
+  { "+wobble",       ".wobble",      XrmoptionNoArg, "False" },
+  { "-debug",        ".debug",       XrmoptionNoArg, "True" },
+};
+
+static argtype vars[] = {
+  {&speed,        "speed",       "Speed",       DEF_SPEED,        t_Float},
+  {&sweep_size,   "sweepSize",   "SweepSize",   DEF_SWEEP_SIZE,   t_Float},
+  {&font_size,    "fontSize",    "FontSize",    DEF_FONT_SIZE,    t_Float},
+  {&team_a_name,  "teamAName",   "TeamName",    DEF_TEAM_A_NAME,  t_String},
+  {&team_b_name,  "teamBName",   "TeamName",    DEF_TEAM_B_NAME,  t_String},
+  {&team_a_count, "teamACount",  "TeamCount",   DEF_TEAM_A_COUNT, t_Int},
+  {&team_b_count, "teamBCount",  "TeamCount",   DEF_TEAM_A_COUNT, t_Int},
+  {&ping_arg,     "ping",        "Ping",        DEF_PING,         t_String},
+  {&ping_timeout, "pingTimeout", "PingTimeout", DEF_PING_TIMEOUT, t_Int},
+  {&resolve_p,    "resolve",     "Resolve",     DEF_RESOLVE,      t_Bool},
+  {&times_p,      "times",       "Times",       DEF_TIMES,        t_Bool},
+  {&wobble_p,     "wobble",      "Wobble",      DEF_WOBBLE,       t_Bool},
+  {&debug_p,      "debug",       "Debug",       DEF_DEBUG,        t_Bool},
+};
+
+ENTRYPOINT ModeSpecOpt sonar_opts = {countof(opts), opts, countof(vars), vars, NULL};
+
+
+static int
+draw_screen (ModeInfo *mi, Bool mesh_p, Bool sweep_p)
+{
+  sonar_configuration *sp = &sps[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
+  int polys = 0;
+  int i;
+  int th_steps, r_steps, r_skip, th_skip, th_skip2, outer_r;
+  GLfloat curvature = M_PI * 0.4;
+  GLfloat r0, r1, z0, z1, zoff;
+  XYZ *ring;
+
+  static const GLfloat glass[4]  = {0.0, 0.4, 0.0, 0.5};
+  static const GLfloat lines[4]  = {0.0, 0.7, 0.0, 0.5};
+  static const GLfloat sweepc[4] = {0.2, 1.0, 0.2, 0.5};
+  static const GLfloat spec[4]   = {1.0, 1.0, 1.0, 1.0};
+  static const GLfloat shiny     = 20.0;
+
+  if (wire && !(mesh_p || sweep_p)) return 0;
+
+  glPushAttrib (GL_ENABLE_BIT);
+  glDisable (GL_TEXTURE_2D);
+
+  glFrontFace (GL_CCW);
+  th_steps = 36 * 4;    /* must be a multiple of th_skip2 divisor */
+  r_steps = 40;
+  r_skip = 1;
+  th_skip = 1;
+  th_skip2 = 1;
+  outer_r = 0;
+
+  glMaterialfv (GL_FRONT, GL_SPECULAR,  spec);
+  glMateriali  (GL_FRONT, GL_SHININESS, shiny);
+  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, mesh_p ? lines : glass);
+  if (wire) glColor3fv (lines);
+
+  if (mesh_p) 
+    {
+      th_skip  = th_steps / 12;
+      th_skip2 = th_steps / 36;
+      r_skip = r_steps / 3;
+      outer_r = r_steps * 0.93;
+
+      if (! wire)
+        glLineWidth (sp->line_thickness);
+    }
+
+  ring = (XYZ *) calloc (th_steps, sizeof(*ring));
+
+  for (i = 0; i < th_steps; i++)
+    {
+      double a = M_PI * 2 * i / th_steps;
+      ring[i].x = cos(a);
+      ring[i].y = sin(a);
+    }
+
+  /* place the bottom of the disc on the xy plane. */
+  zoff = cos (curvature/2 * (M_PI/2)) / 2;
+
+  for (i = r_steps; i > 0; i--)
+    {
+      int j0, j1;
+
+      r0 = i     / (GLfloat) r_steps;
+      r1 = (i+1) / (GLfloat) r_steps;
+
+      if (r1 > 1) r1 = 1; /* avoid asin lossage */
+
+      z0 = cos (curvature/2 * asin (r0)) / 2 - zoff;
+      z1 = cos (curvature/2 * asin (r1)) / 2 - zoff;
+
+      glBegin(wire || mesh_p ? GL_LINES : GL_QUAD_STRIP);
+      for (j0 = 0; j0 <= th_steps; j0++)
+        {
+          if (mesh_p && 
+              (i < outer_r
+               ? (j0 % th_skip != 0)
+               : (j0 % th_skip2 != 0)))
+            continue;
+
+          if (sweep_p)
+            {
+              GLfloat color[4];
+              GLfloat r = 1 - (j0 / (GLfloat) (th_steps * sweep_size));
+#if 0
+              color[0] = glass[0] + (sweepc[0] - glass[0]) * r;
+              color[1] = glass[1] + (sweepc[1] - glass[1]) * r;
+              color[2] = glass[2] + (sweepc[2] - glass[2]) * r;
+              color[3] = glass[3];
+#else
+              color[0] = sweepc[0];
+              color[1] = sweepc[1];
+              color[2] = sweepc[2];
+              color[3] = r;
+#endif
+              glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+            }
+
+          j1 = j0 % th_steps;
+          glNormal3f (r0 * ring[j1].x, r0 * ring[j1].y, z0);
+          glVertex3f (r0 * ring[j1].x, r0 * ring[j1].y, z0);
+          glNormal3f (r1 * ring[j1].x, r1 * ring[j1].y, z1);
+          glVertex3f (r1 * ring[j1].x, r1 * ring[j1].y, z1);
+          polys++;
+
+          if (sweep_p && j0 >= th_steps * sweep_size)
+            break;
+          if (sweep_p && wire)
+            break;
+        }
+      glEnd();
+
+      if (mesh_p &&
+          (i == outer_r ||
+           i == r_steps ||
+           (i % r_skip == 0 &&
+            i < r_steps - r_skip)))
+        {
+          glBegin(GL_LINE_LOOP);
+          for (j0 = 0; j0 < th_steps; j0++)
+            {
+              glNormal3f (r0 * ring[j0].x, r0 * ring[j0].y, z0);
+              glVertex3f (r0 * ring[j0].x, r0 * ring[j0].y, z0);
+              polys++;
+            }
+          glEnd();
+        }
+    }
+
+  /* one more polygon for the middle */
+  if (!wire && !sweep_p)
+    {
+      glBegin(wire || mesh_p ? GL_LINE_LOOP : GL_POLYGON);
+      glNormal3f (0, 0, 1);
+      for (i = 0; i < th_steps; i++)
+        {
+          glNormal3f (r0 * ring[i].x, r0 * ring[i].y, z0);
+          glVertex3f (r0 * ring[i].x, r0 * ring[i].y, z0);
+        }
+      polys++;
+      glEnd();
+    }
+
+  glPopAttrib();
+  free (ring);
+
+  return polys;
+}
+
+
+static int
+draw_text (ModeInfo *mi, const char *string, GLfloat r, GLfloat th, 
+           GLfloat ttl, GLfloat size)
+{
+  sonar_configuration *sp = &sps[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
+  int polys = 0;
+  GLfloat font_scale = 0.001 * (size > 0 ? size : font_size) / 14.0;
+  int lines = 0, max_w = 0, lh = 0;
+  char *string2 = strdup (string);
+  char *token = string2;
+  char *line;
+  GLfloat color[4];
+
+  if (size <= 0)   /* if size not specified, draw in yellow with alpha */
+    {
+      color[0] = 1;
+      color[1] = 1;
+      color[2] = 0;
+      color[3] = (ttl / (M_PI * 2)) * 1.2;
+      if (color[3] > 1) color[3] = 1;
+
+      glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+      if (wire)
+        glColor3f (color[0]*color[3], color[1]*color[3], color[2]*color[3]);
+    }
+
+  while ((line = strtok (token, "\r\n")))
+    {
+      int w = texture_string_width (sp->texfont, line, &lh);
+      if (w > max_w) max_w = w;
+      lines++;
+      token = 0;
+    }
+
+  glPushMatrix();
+  glTranslatef (r * cos (th), r * sin(th), 0);
+  glScalef (font_scale, font_scale, font_scale);
+
+  if (size <= 0)		/* Draw the dot */
+    {
+      GLfloat s = font_size * 1.7;
+      glDisable (GL_TEXTURE_2D);
+      glFrontFace (GL_CW);
+      glBegin (wire ? GL_LINE_LOOP : GL_QUADS);
+      glVertex3f (0, s, 0);
+      glVertex3f (s, s, 0);
+      glVertex3f (s, 0, 0);
+      glVertex3f (0, 0, 0);
+      glEnd();
+      glTranslatef (-max_w/2, -lh, 0);
+    }
+  else
+    glTranslatef (-max_w/2, -lh/2, 0);
+
+  /* draw each line, centered */
+  if (! wire) glEnable (GL_TEXTURE_2D);
+  free (string2);
+  string2 = strdup (string);
+  token = string2;
+  while ((line = strtok (token, "\r\n")))
+    {
+      int w = texture_string_width (sp->texfont, line, 0);
+      glPushMatrix();
+      glTranslatef ((max_w-w)/2, 0, 0);
+
+      if (wire)
+        {
+          glBegin (GL_LINE_LOOP);
+          glVertex3f (0, 0, 0);
+          glVertex3f (w, 0, 0);
+          glVertex3f (w, lh, 0);
+          glVertex3f (0, lh, 0);
+          glEnd();
+        }
+      else
+        {
+          glFrontFace (GL_CW);
+          print_texture_string (sp->texfont, line);
+        }
+      glPopMatrix();
+      glTranslatef (0, -lh, 0);
+      polys++;
+      token = 0;
+    }
+  glPopMatrix();
+
+  free (string2);
+
+  if (! wire) glEnable (GL_DEPTH_TEST);
+
+  return polys;
+}
+
+
+/* There's a disc with a hole in it around the screen, to act as a mask
+   preventing slightly off-screen bogies from showing up.  This clips 'em.
+ */
+static int
+draw_table (ModeInfo *mi)
+{
+  /*sonar_configuration *sp = &sps[MI_SCREEN(mi)];*/
+  int wire = MI_IS_WIREFRAME(mi);
+  int polys = 0;
+  int i;
+  int th_steps = 36 * 4;    /* same as in draw_screen */
+
+  static const GLfloat color[4]  = {0.0, 0.0, 0.0, 1.0};
+  static const GLfloat text[4]   = {0.15, 0.15, 0.15, 1.0};
+  static const GLfloat spec[4]   = {0.0, 0.0, 0.0, 1.0};
+  static const GLfloat shiny     = 0.0;
+
+  if (wire) return 0;
+
+  glPushAttrib (GL_ENABLE_BIT);
+  glDisable (GL_TEXTURE_2D);
+
+  glMaterialfv (GL_FRONT, GL_SPECULAR,  spec);
+  glMateriali  (GL_FRONT, GL_SHININESS, shiny);
+  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+
+  glFrontFace (GL_CCW);
+  glBegin(wire ? GL_LINES : GL_QUAD_STRIP);
+  glNormal3f (0, 0, 1);
+  for (i = 0; i <= th_steps; i++)
+    {
+      double a = M_PI * 2 * i / th_steps;
+      double x = cos(a);
+      double y = sin(a);
+      glVertex3f (x, y, 0);
+      glVertex3f (x*10, y*10, 0);
+      polys++;
+    }
+  glEnd();
+  glPopAttrib();
+
+  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, text);
+  glTranslatef (0, 0, 0.01);
+  for (i = 0; i < 360; i += 10)
+    {
+      char buf[10];
+      GLfloat a = M_PI/2 - (i / 180.0 * M_PI);
+      sprintf (buf, "%d", i);
+      polys += draw_text (mi, buf, 1.07, a, 0, 10.0);
+    }
+
+  return polys;
+}
+
+
+static int
+draw_bogies (ModeInfo *mi)
+{
+  sonar_configuration *sp = &sps[MI_SCREEN(mi)];
+  int polys = 0;
+  sonar_bogie *b;
+
+  for (b = sp->displayed; b; b = b->next)
+    {
+      char *s = (char *) 
+        malloc (strlen (b->name) + (b->desc ? strlen(b->desc) : 0) + 3);
+      strcpy (s, b->name);
+      if (b->desc)
+        {
+          strcat (s, "\n");
+          strcat (s, b->desc);
+        }
+      polys += draw_text (mi, s, b->r, b->th, b->ttl, -1);
+      free (s);
+
+      /* Move *very slightly* forward so that the text is not all in the
+         same plane: this prevents flickering with overlapping text as
+         the textures fight for priority. */
+      glTranslatef(0, 0, 0.00002);
+    }
+
+  return polys;
+}
+
+
+/* called from sonar-sim.c and sonar-icmp.c */
+sonar_bogie *
+copy_bogie (sonar_sensor_data *ssd, const sonar_bogie *b)
+{
+  sonar_bogie *b2 = (sonar_bogie *) calloc (1, sizeof(*b2));
+  b2->name = strdup (b->name);
+  b2->desc = b->desc ? strdup (b->desc) : 0;
+  b2->r    = b->r;
+  b2->th   = b->th;
+  b2->ttl  = b->ttl;
+  /* does not copy b->closure */
+
+  /* Take this opportunity to normalize 'th' to the range [0-2pi). */
+  while (b2->th < 0)       b2->th += M_PI*2;
+  while (b2->th >= M_PI*2) b2->th -= M_PI*2;
+
+  return b2;
+}
+
+
+/* called from sonar-icmp.c */
+void
+free_bogie (sonar_sensor_data *ssd, sonar_bogie *b)
+{
+  if (b->closure)
+    ssd->free_bogie_cb (ssd, b->closure);
+  free (b->name);
+  if (b->desc) free (b->desc);
+  free (b);
+}
+
+/* removes it from the list and frees it
+ */
+static void
+delete_bogie (sonar_sensor_data *ssd, sonar_bogie *b,
+              sonar_bogie **from_list)
+{
+  sonar_bogie *ob, *prev;
+  for (prev = 0, ob = *from_list; ob; prev = ob, ob = ob->next)
+    if (ob == b)
+      {
+        if (prev)
+          prev->next = b->next;
+        else
+          (*from_list) = b->next;
+        free_bogie (ssd, b);
+        break;
+      }
+}
+
+
+/* copies the bogie and adds it to the list.
+   if there's another bogie there with the same name, frees that one.
+ */
+static void
+copy_and_insert_bogie (sonar_sensor_data *ssd, sonar_bogie *b,
+                       sonar_bogie **to_list)
+{
+  sonar_bogie *ob, *next;
+  if (!b) abort();
+  for (ob = *to_list, next = ob ? ob->next : 0; 
+       ob; 
+       ob = next, next = ob ? ob->next : 0)
+    {
+      if (ob == b) abort();   /* this will end badly */
+      if (!strcmp (ob->name, b->name))  /* match! */
+        {
+          delete_bogie (ssd, ob, to_list);
+          break;
+        }
+    }
+
+  b = copy_bogie (ssd, b);
+  b->next = *to_list;
+  *to_list = b;
+}
+
+
+static void
+update_sensor_data (sonar_configuration *sp)
+{
+  sonar_bogie *new_list = sp->ssd->scan_cb (sp->ssd);
+  sonar_bogie *b2;
+
+  /* If a bogie exists in 'new_list' but not 'pending', add it.
+     If a bogie exists in both, update it in 'pending'.
+   */
+  for (b2 = new_list; b2; b2 = b2->next)
+    {
+      if (debug_p > 2)
+        fprintf (stderr, "%s:   updated: %s (%5.2f %5.2f %5.2f)\n", 
+                 progname, b2->name, b2->r, b2->th, b2->ttl);
+      copy_and_insert_bogie (sp->ssd, b2, &sp->pending);
+    }
+  if (debug_p > 2) fprintf (stderr, "\n");
+}
+
+
+/* Returns whether the given angle lies between two other angles.
+   When those angles cross 0, it assumes the wedge is the smaller one.
+   That is: 5 lies between 10 and 350 degrees (a 20 degree wedge).
+ */
+static Bool
+point_in_wedge (GLfloat th, GLfloat low, GLfloat high)
+{
+  if (low < high)
+    return (th > low && th <= high);
+  else
+    return (th <= high || th > low);
+}
+
+
+/* Returns the current time in seconds as a double.
+ */
+static double
+double_time (void)
+{
+  struct timeval now;
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tzp;
+  gettimeofday(&now, &tzp);
+# else
+  gettimeofday(&now);
+# endif
+
+  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
+}
+
+
+static void
+sweep (sonar_configuration *sp)
+{
+  sonar_bogie *b;
+
+  /* Move the sweep forward (clockwise).
+   */
+  GLfloat prev_sweep, this_sweep, tick;
+  GLfloat cycle_secs = 30 / speed;  /* default to one cycle every N seconds */
+  this_sweep = ((cycle_secs - fmod (double_time() - sp->start_time +
+                                    sp->sweep_offset,
+                                    cycle_secs))
+                / cycle_secs
+                * M_PI * 2);
+  prev_sweep = sp->sweep_th;
+  tick = prev_sweep - this_sweep;
+  while (tick < 0) tick += M_PI*2;
+
+  sp->sweep_th = this_sweep;
+
+  if (this_sweep < 0 || this_sweep >= M_PI*2) abort();
+  if (prev_sweep < 0)  /* skip first time */
+    return;
+
+  if (tick < 0 || tick >= M_PI*2) abort();
+
+
+  /* Go through the 'pending' sensor data, find those bogies who are
+     just now being swept, and move them from 'pending' to 'displayed'.
+     (Leave bogies that have not yet been swept alone: we'll get to
+     them when the sweep moves forward.)
+   */
+  b = sp->pending;
+  while (b)
+    {
+      sonar_bogie *next = b->next;
+      if (point_in_wedge (b->th, this_sweep, prev_sweep))
+        {
+          if (debug_p > 1) {
+            time_t t = time((time_t *) 0);
+            fprintf (stderr,
+                     "%s: sweep hit: %02d:%02d: %s: (%5.2f %5.2f %5.2f;"
+                     " th=[%.2f < %.2f <= %.2f])\n", 
+                     progname,
+                     (int) (t / 60) % 60, (int) t % 60,
+                     b->name, b->r, b->th, b->ttl,
+                     this_sweep, b->th, prev_sweep);
+          }
+          b->ttl = M_PI * 2.1;
+          copy_and_insert_bogie (sp->ssd, b, &sp->displayed);
+          delete_bogie (sp->ssd, b, &sp->pending);
+        }
+      b = next;
+    }
+
+
+  /* Update TTL on all currently-displayed bogies; delete the dead.
+
+     Request sensor updates on the ones just now being swept.
+
+     Any updates go into 'pending' and might not show up until
+     the next time the sweep comes around.  This is to prevent
+     already-drawn bogies from jumping to a new position without
+     having faded out first.
+  */
+  b = sp->displayed;
+  while (b)
+    {
+      sonar_bogie *next = b->next;
+      b->ttl -= tick;
+
+      if (b->ttl <= 0)
+        {
+          if (debug_p > 1)
+            fprintf (stderr, "%s: TTL expired: %s (%5.2f %5.2f %5.2f)\n",
+                     progname, b->name, b->r, b->th, b->ttl);
+          delete_bogie (sp->ssd, b, &sp->displayed);
+        }
+      b = next;
+    }
+
+  update_sensor_data (sp);
+}
+
+
+static void
+draw_startup_blurb (ModeInfo *mi)
+{
+  sonar_configuration *sp = &sps[MI_SCREEN(mi)];
+  const char *msg = (sp->error ? sp->error : "Resolving hosts...");
+  static const GLfloat color[4] = {0, 1, 0, 1};
+
+  if (!sp->error && ping_arg && !strcmp (ping_arg, "simulation"))
+    return;  /* don't bother */
+
+  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+  glTranslatef (0, 0, 0.3);
+  draw_text (mi, msg, 0, 0, 0, 30.0);
+
+  /* only leave error message up for N seconds */
+  if (sp->error &&
+      sp->start_time + 4 < double_time())
+    {
+      free (sp->error);
+      sp->error = 0;
+    }
+}
+
+
+/* Window management, etc
+ */
+ENTRYPOINT void
+reshape_sonar (ModeInfo *mi, int width, int height)
+{
+  sonar_configuration *sp = &sps[MI_SCREEN(mi)];
+  GLfloat h = (GLfloat) height / (GLfloat) width;
+
+  glViewport (0, 0, (GLint) width, (GLint) height);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  gluPerspective (30.0, 1/h, 1.0, 100.0);
+
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  gluLookAt( 0.0, 0.0, 30.0,
+             0.0, 0.0, 0.0,
+             0.0, 1.0, 0.0);
+
+  glClear(GL_COLOR_BUFFER_BIT);
+
+  sp->line_thickness = (MI_IS_WIREFRAME (mi) ? 1 : MAX (1, height / 300.0));
+}
+
+
+ENTRYPOINT Bool
+sonar_handle_event (ModeInfo *mi, XEvent *event)
+{
+  sonar_configuration *sp = &sps[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
+    {
+      sp->button_down_p = True;
+      gltrackball_start (sp->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
+    {
+      sp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5 ||
+            event->xbutton.button == Button6 ||
+            event->xbutton.button == Button7))
+    {
+      gltrackball_mousewheel (sp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           sp->button_down_p)
+    {
+      gltrackball_track (sp->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
+
+
+ENTRYPOINT void 
+init_sonar (ModeInfo *mi)
+{
+  sonar_configuration *sp;
+  int wire = MI_IS_WIREFRAME(mi);
+
+  if (!sps) {
+    sps = (sonar_configuration *)
+      calloc (MI_NUM_SCREENS(mi), sizeof (sonar_configuration));
+    if (!sps) {
+      fprintf(stderr, "%s: out of memory\n", progname);
+      exit(1);
+    }
+  }
+  sp = &sps[MI_SCREEN(mi)];
+  sp->glx_context = init_GL(mi);
+
+  reshape_sonar (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+
+  if (!wire)
+    {
+      GLfloat pos[4] = {0.05, 0.07, 1.00, 0.0};
+      GLfloat amb[4] = {0.2, 0.2, 0.2, 1.0};
+      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
+      GLfloat spc[4] = {0.0, 1.0, 1.0, 1.0};
+
+      glEnable(GL_TEXTURE_2D);
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glEnable(GL_CULL_FACE);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_NORMALIZE);
+      glEnable(GL_LINE_SMOOTH);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+      glShadeModel(GL_SMOOTH);
+
+      glLightfv(GL_LIGHT0, GL_POSITION, pos);
+      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
+      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
+      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+    }
+
+  sp->trackball = gltrackball_init ();
+  sp->rot = make_rotator (0, 0, 0, 0, speed * 0.003, True);
+
+  sp->texfont = load_texture_font (MI_DISPLAY(mi), "font");
+  check_gl_error ("loading font");
+
+  sp->table_list = glGenLists (1);
+  glNewList (sp->table_list, GL_COMPILE);
+  sp->table_polys = draw_table (mi);
+  glEndList ();
+
+  sp->screen_list = glGenLists (1);
+  glNewList (sp->screen_list, GL_COMPILE);
+  sp->screen_polys = draw_screen (mi, False, False);
+  glEndList ();
+
+  sp->grid_list = glGenLists (1);
+  glNewList (sp->grid_list, GL_COMPILE);
+  sp->grid_polys = draw_screen (mi, True,  False);
+  glEndList ();
+
+  sp->sweep_list = glGenLists (1);
+  glNewList (sp->sweep_list, GL_COMPILE);
+  sp->sweep_polys = draw_screen (mi, False, True);
+  glEndList ();
+
+  sp->start_time = double_time ();
+  sp->sweep_offset = random() % 60;
+  sp->sweep_th = -1;
+}
+
+
+static void
+init_sensor (ModeInfo *mi)
+{
+  sonar_configuration *sp = &sps[MI_SCREEN(mi)];
+
+  if (sp->ssd) abort();
+
+  if (!ping_arg || !*ping_arg ||
+      !strcmp(ping_arg, "default") ||
+      !!strcmp (ping_arg, "simulation"))
+    sp->ssd = init_ping (MI_DISPLAY (mi), &sp->error, ping_arg,
+                         ping_timeout, resolve_p, times_p, debug_p);
+
+  /* Disavow privs.  This was already done in init_ping(), but
+     we might not have called that at all, so do it again. */
+  setuid(getuid());
+
+  if (!sp->ssd)
+    sp->ssd = init_simulation (MI_DISPLAY (mi), &sp->error,
+                               team_a_name, team_b_name,
+                               team_a_count, team_b_count,
+                               debug_p);
+  if (!sp->ssd)
+    abort();
+}
+
+
+ENTRYPOINT void
+draw_sonar (ModeInfo *mi)
+{
+  sonar_configuration *sp = &sps[MI_SCREEN(mi)];
+  Display *dpy = MI_DISPLAY(mi);
+  Window window = MI_WINDOW(mi);
+
+  if (!sp->glx_context)
+    return;
+
+  glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(sp->glx_context));
+
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  glPushMatrix ();
+  { GLfloat s = 7; glScalef (s,s,s); }
+
+  gltrackball_rotate (sp->trackball);
+
+  if (wobble_p)
+    {
+      double x, y, z;
+      double max = 40;
+      get_position (sp->rot, &x, &y, &z, !sp->button_down_p);
+      glRotatef (max/2 - x*max, 1, 0, 0);
+      glRotatef (max/2 - z*max, 0, 1, 0);
+    }
+
+  mi->polygon_count = 0;
+
+  glPushMatrix();					/* table */
+  glCallList (sp->table_list);
+  mi->polygon_count += sp->table_polys;
+  glPopMatrix();
+
+  glPushMatrix();					/* text */
+  glTranslatef (0, 0, -0.01);
+  mi->polygon_count += draw_bogies (mi);
+  glPopMatrix();
+
+  glCallList (sp->screen_list);				/* glass */
+  mi->polygon_count += sp->screen_polys;
+
+  glTranslatef (0, 0, 0.004);				/* sweep */
+  glPushMatrix();
+  glRotatef ((sp->sweep_th * 180 / M_PI), 0, 0, 1);
+  if (sp->sweep_th >= 0)
+    glCallList (sp->sweep_list);
+  mi->polygon_count += sp->sweep_polys;
+  glPopMatrix();
+
+  glTranslatef (0, 0, 0.004);				/* grid */
+  glCallList (sp->grid_list);
+  mi->polygon_count += sp->screen_polys;
+
+  if (! sp->ssd || sp->error)
+    draw_startup_blurb(mi);
+
+  glPopMatrix ();
+
+  if (mi->fps_p) do_fps (mi);
+  glFinish();
+
+  glXSwapBuffers(dpy, window);
+
+  if (! sp->ssd)
+    /* Just starting up.  "Resolving hosts" text printed.  Go stall. */
+    init_sensor (mi);
+  else
+    sweep (sp);
+}
+
+ENTRYPOINT void
+release_sonar (ModeInfo *mi)
+{
+#if 0
+  sonar_configuration *sp = &sps[MI_SCREEN(mi)];
+  sonar_bogie *b = sp->displayed;
+  while (b)
+    {
+      sonar_bogie *next = b->next;
+      free_bogie (sp->ssd, b);
+      b = next;
+    }
+  sp->displayed = 0;
+
+  b = sp->pending;
+  while (b)
+    {
+      sonar_bogie *next = b->next;
+      free_bogie (sp->ssd, b);
+      b = next;
+    }
+  sp->pending = 0;
+
+  sp->ssd->free_data_cb (sp->ssd, sp->ssd->closure);
+  free (sp->ssd);
+  sp->ssd = 0;
+#endif
+}
+
+XSCREENSAVER_MODULE ("Sonar", sonar)
+
+#endif /* USE_GL */

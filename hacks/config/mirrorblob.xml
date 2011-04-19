@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="mirrorblob" _label="MirrorBlob">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
+
+    <number id="zoom" type="slider" arg="-zoom %"
+            _label="Zoom"
+            _low-label="0.1x" _high-label="3.0x"
+            low="0.1" high="3.0" default="1.0"/>
+
+    <number id="hold_time" type="slider" arg="-hold-time %"
+            _label="Time until loading a new image"
+            _low-label="5 sec" _high-label="5 min"
+            low="5.0" high="300.0" default="30.0"/>
+
+    <number id="fade_speed" type="slider" arg="-fade-time %"
+            _label="Transition duration"
+            _low-label="None" _high-label="30 sec"
+            low="0.0" high="30.0" default="5.0"/>
+   </vgroup>
+   <vgroup>
+    <number id="resolution" type="slider" arg="-resolution %"
+             _low-label="Low" _high-label="High"
+             _label="Resolution" low="4" high="50" default="30"/>
+
+    <number id="bumps" type="slider" arg="-bumps %"
+            _low-label="None" _high-label="50 bumps"
+            _label="Bumps" low="0" high="50" default="10"/>
+
+    <number id="blend" type="slider" arg="-blend %"
+            _low-label="Clear" _high-label="Opaque"
+            _label="Transparency" low="0.1" high="1.0" default="1.0"/>
+   </vgroup>
+  </hgroup>
+
+   <hgroup>
+   <vgroup>
+  <boolean id="walls" _label="Enable walls" arg-set="-walls"/>
+  <boolean id="colour" _label="Enable colouring" arg-set="-colour"/>
+  <boolean id="texture" _label="Enable reflected image" arg-unset="-no-texture"/>
+   </vgroup>
+   <vgroup>
+  <boolean id="backgound" _label="Show image on background" arg-unset="-no-paint-background"/>
+  <boolean id="offset_texture" _label="Offset texture coordinates" arg-set="-offset-texture"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+
+   <vgroup>
+    <select id="render">
+        <option id="wire"  _label="Wireframe" arg-set="-wire"/>
+        <option id="solid" _label="Solid surface"/>
+    </select>
+   </vgroup>
+
+  </hgroup>
+
+  <_description>
+Draws a wobbly blob that distorts the image behind it.
+Written by Jon Dowdall; 2003.
+  </_description>
+</screensaver>

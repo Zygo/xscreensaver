@@ -1,0 +1,167 @@
+
+==========================================================================
+
+                     Writing new XScreenSaver modules
+
+==========================================================================
+
+
+Generally, the best way to learn how to do something is to find a similar
+program, and play around with it until you understand it.  Another
+approach is to not worry about understanding it, but to just hack it out.
+Either way, your best bet is probably to start with one of the existing
+xscreensaver demos, included in the "hacks/" directory, rename the file,
+and edit it until it does what you want.
+
+The "Greynetic" and "Deluxe" hacks are probably good ones to start with,
+since they are so very simple.  For GL programs, "DangerBall" is a good
+example.
+
+
+==========================================================================
+Requirements for inclusion with the XScreenSaver collection
+==========================================================================
+
+  If you come up with anything, send it to me!  If it's good, I'd love to
+  include it in the xscreensaver distribution.  However, there are a few
+  requirements for me to distribute it:
+
+  - Write in portable ANSI C.  No C++.  No nonstandard libraries.
+
+  - Write a .man page describing all command-line options.
+
+  - Write an .xml file describing the graphical configuration dialog box.
+
+  - Include a BSD-like copyright/license notice at the top of each source
+    file (preferably, just use the one from "screenhack.h", and include
+    your name and the current year).  The GNU GPL is not compatible with
+    the rest of XScreenSaver.
+
+
+==========================================================================
+The XScreenSaver API
+==========================================================================
+
+  - Start with #include "screenhack.h"
+
+  - Define 2 global variables:
+
+      yoursavername_defaults -- Default values for the resources you use.
+      yoursavername_options  -- The command-line options you accept.
+
+  - Define 5 functions:
+
+      yoursavername_init     -- Return an object holding your global state.
+      yoursavername_draw     -- Draw a single frame, quickly.
+      yoursavername_free     -- Free everything you've allocated.
+      yoursavername_reshape  -- Called when the window is resized.
+      yoursavername_event    -- Called when a keyboard or mouse event happens.
+
+      The "event" function will only be called when running in a window
+      (not as a screen saver).  The "reshape" event will be called when the
+      window size changes, or (as a screen saver) when the display size
+      changes as a result of a RANDR event (e.g., plugging in a new monitor).
+
+      It's ok for both the "event" and "resize" functions to do nothing.
+
+  - All other functions should be static.
+
+  - The last line of the file should be 
+    XSCREENSAVER_MODULE ("YourSaverName", yoursavername)
+
+  - Finally, edit the Makefile to add a rule for your program.
+    Just cut-and-paste one of the existing rules.
+
+  Your "draw" must not run for more than a fraction of a second without
+  returning.  This means "don't call usleep()".  Everything has to be a
+  state machine.
+
+  You may not store global state in global variables, or in function-local
+  static variables.  All of your runtime state must be encapsulted in the
+  "state" object created by your "init" function.  If you use global or
+  static variables, your screen saver will not work properly on MacOS.
+
+  Do not call XSync() or XFlush().  If you think you need to do that, it
+  probably means that you are you are relying on the speed of the graphics
+  card for timing, which probably means that your "draw" function is
+  taking too long.
+
+
+==========================================================================
+The XLockMore API
+==========================================================================
+
+  Some of the display modes that come with xscreensaver were ported from
+  XLock, and so, for historical reasons, they follow a slightly different
+  programming convention.  For newly-written Xlib programs, you'd be
+  better off following the pattern used in hacks like "Deluxe" than in
+  hacks like "Flag".  The XLockMore ones are the ones that begin with
+  "#ifdef STANDALONE" and #include "xlockmore.h".
+
+  But, all OpenGL screen savers have to follow the XLockMore API.
+
+  The XLockMore API is similar to the XScreenSaver API, in that you define
+  (roughly) the same set of functions, but the naming conventions are
+  slightly different.  Instead of "hackname_init", it's "init_hackname",
+  and it should be preceeded with the pseudo-declaration ENTRYPOINT.
+
+  One annoying mis-feature of the XLockMore API is that it *requires* you
+  to make use of global variables for two things: first, for each of your
+  command line options; and second, for an array that holds your global
+  state objects.  These are the only exceptions to the "never use global
+  variables" rule.
+
+
+==========================================================================
+Programming Tips
+==========================================================================  
+
+  - Your screen saver should look reasonable at 20-30 frames per second.
+    That is, do not assume that your "draw" function will be called more
+    than 20 times a second.  Even if you return a smaller requested delay
+    than that, you might not get it.  Likewise, if your "draw" function
+    takes longer than 1/20th of a second to run, your screen saver may be
+    consuming too much CPU.
+
+  - Don't make assumptions about the depth of the display, or whether it
+    is colormapped.  You must allocate all your colors explicitly: do not
+    assume you can construct an RGB value and use that as a pixel value
+    directly.  Use the utility routines provided by "utils/colors.h" to
+    simplify color allocation.
+
+  - It is better to eliminate flicker by double-buffering to a Pixmap
+    than by erasing and re-drawing objects.  Do not use drawing tricks
+    involving XOR.
+
+  - If you use double-buffering, have a resource to turn it off. (MacOS
+    has double-buffering built in, so you'd be triple-buffering.)
+
+  - Understand the differences between Pixmaps and XImages, and keep in
+    mind which operations are happening in client memory and which are in
+    server memory, and which cause latency due to server round-trips.
+    Sometimes using the Shared Memory extension can be helpful, but
+    probably not as often as you might think.
+
+  - On modern machines, OpenGL will always run faster than Xlib.  It's
+    also more portable.  Consider writing in OpenGL whenever possible.
+
+
+==========================================================================
+The MacOS X Port
+==========================================================================
+
+  Though XScreenSaver started its life as an X11 program, it also now runs
+  on MacOS X.  If you do your development on an X11 system, and follow the
+  usual XScreenSaver APIs, you shouldn't need to do anything special for
+  it to also work on MacOS.
+
+  The preprocessor macro HAVE_COCOA will be defined when being compiled in
+  a MacOS (Cocoa/Quartz) environment, and will be undefined when compiling
+  against "real" Xlib.
+
+  To compile on MacOS, use the XCode project included in the source
+  distribution.  You shouldn't need to have X11 installed, and shouldn't
+  need to run "configure" first.  MacOS 10.4.0 and XCode 3.1 or newer are
+  required.
+
+==========================================================================
