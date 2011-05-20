@@ -1227,10 +1227,22 @@ main_loop (saver_info *si)
         for (i = 0; i < si->nscreens; i++)
           spawn_screenhack (&si->screens[i]);
 
-      /* If we are blanking only, we might as well power down the monitor
-         right now, regardless of what the DPMS settings are. */
-      if (p->mode == BLANK_ONLY)
-        monitor_power_on (si, False);
+      /* If we are blanking only, optionally power down monitor right now.
+         To do this, we might need to temporarily re-enable DPMS first.
+       */
+      if (p->mode == BLANK_ONLY &&
+          p->dpms_enabled_p && 
+          p->dpms_quickoff_p)
+        {
+          sync_server_dpms_settings (si->dpy, True,
+                                     p->dpms_standby / 1000,
+                                     p->dpms_suspend / 1000,
+                                     (p->dpms_off
+                                      ? (p->dpms_off / 1000)
+                                      : 0xFFFF),
+                                     False);
+          monitor_power_on (si, False);
+        }
 
       /* Don't start the cycle timer in demo mode. */
       if (!si->demoing_p && p->cycle)

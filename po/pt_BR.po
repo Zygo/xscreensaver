@@ -1,13 +1,13 @@
 # Tradução para o português do Brasil para o programa XScreenSaver.
 # Copyright (C) YEAR Free Software Foundation, Inc.
-# Sérgio Cipolla <secipolla@gmail.com>, 2010.
+# Sérgio Cipolla <secipolla@gmail.com>, 2010-2011.
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: xscreensaver 5.11\n"
+"Project-Id-Version: xscreensaver 5.13\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-09-12 15:24-0300\n"
-"PO-Revision-Date: 2011-03-31 13:12-0300\n"
+"POT-Creation-Date: 2011-04-23 08:26-0300\n"
+"PO-Revision-Date: 2011-04-23 10:30-0300\n"
 "Last-Translator: Sérgio Cipolla <secipolla@gmail.com>\n"
 "Language-Team: Debian-BR Project <debian-l10n-portuguese@lists.debian.org>\n"
 "Language: \n"
@@ -15,11 +15,11 @@ msgstr ""
 "Content-Type: text/plain; charset=ISO-8859-1\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../driver/demo-Gtk-conf.c:853
+#: ../driver/demo-Gtk-conf.c:882
 msgid "Browse..."
 msgstr "Pesquisar..."
 
-#: ../driver/demo-Gtk-conf.c:1050
+#: ../driver/demo-Gtk-conf.c:1085
 msgid "Select file."
 msgstr "Selecionar arquivo."
 
@@ -40,17 +40,17 @@ msgid "reason: %s\n"
 msgstr "razão: %s\n"
 
 #: ../driver/demo-Gtk-widgets.c:161
-#: ../driver/xscreensaver-demo.glade2.h:70
+#: ../driver/xscreensaver-demo.glade2.h:72
 msgid "XScreenSaver"
 msgstr "XScreenSaver"
 
 #: ../driver/demo-Gtk-widgets.c:182
-#: ../driver/xscreensaver-demo.glade2.h:83
+#: ../driver/xscreensaver-demo.glade2.h:85
 msgid "_File"
 msgstr "Ar_quivo"
 
 #: ../driver/demo-Gtk-widgets.c:202
-#: ../driver/xscreensaver-demo.glade2.h:75
+#: ../driver/xscreensaver-demo.glade2.h:77
 msgid "_Blank Screen Now"
 msgstr "_Apagar a tela agora"
 
@@ -59,7 +59,7 @@ msgid "Activate the XScreenSaver daemon now (locking the screen if so configured
 msgstr "Ativar o daemon do XScreenSaver agora (bloqueando a tela se configurado assim)."
 
 #: ../driver/demo-Gtk-widgets.c:215
-#: ../driver/xscreensaver-demo.glade2.h:88
+#: ../driver/xscreensaver-demo.glade2.h:90
 msgid "_Lock Screen Now"
 msgstr "_Bloquear a tela agora"
 
@@ -68,7 +68,7 @@ msgid "Lock the screen now (even if \"Lock Screen\" is unchecked.)"
 msgstr "Bloquear a tela agora (ainda que \"Bloquear a tela\" esteja desmarcado)."
 
 #: ../driver/demo-Gtk-widgets.c:228
-#: ../driver/xscreensaver-demo.glade2.h:86
+#: ../driver/xscreensaver-demo.glade2.h:88
 msgid "_Kill Daemon"
 msgstr "_Interromper o daemon"
 
@@ -77,7 +77,7 @@ msgid "Tell the running XScreenSaver daemon to exit."
 msgstr "Informar o daemon do XScreenSaver em execução para sair."
 
 #: ../driver/demo-Gtk-widgets.c:241
-#: ../driver/xscreensaver-demo.glade2.h:98
+#: ../driver/xscreensaver-demo.glade2.h:100
 msgid "_Restart Daemon"
 msgstr "_Reiniciar o daemon"
 
@@ -94,12 +94,12 @@ msgid "Exit the xscreensaver-demo program (but leave the XScreenSaver daemon run
 msgstr "Sair do programa xscreensaver-demo (mas deixar o daemon do XScreenSaver em execução)."
 
 #: ../driver/demo-Gtk-widgets.c:276
-#: ../driver/xscreensaver-demo.glade2.h:84
+#: ../driver/xscreensaver-demo.glade2.h:86
 msgid "_Help"
 msgstr "Aj_uda"
 
 #: ../driver/demo-Gtk-widgets.c:296
-#: ../driver/xscreensaver-demo.glade2.h:71
+#: ../driver/xscreensaver-demo.glade2.h:73
 msgid "_About..."
 msgstr "_Sobre..."
 
@@ -108,7 +108,7 @@ msgid "Display version information."
 msgstr "Exibir informação da versão."
 
 #: ../driver/demo-Gtk-widgets.c:309
-#: ../driver/xscreensaver-demo.glade2.h:82
+#: ../driver/xscreensaver-demo.glade2.h:84
 msgid "_Documentation..."
 msgstr "_Documentação..."
 
@@ -121,11 +121,12 @@ msgid "Cycle After"
 msgstr "Circular após"
 
 #: ../driver/demo-Gtk-widgets.c:370
-#: ../driver/xscreensaver-demo.glade2.h:62
+#: ../driver/xscreensaver-demo.glade2.h:64
 msgid "Whether a password should be required to un-blank the screen."
 msgstr "Se uma senha deve ser requisitada para reativar a tela."
 
 #: ../driver/demo-Gtk-widgets.c:372
+#: ../driver/xscreensaver-demo.glade2.h:32
 msgid "Lock Screen After"
 msgstr "Bloquear a tela após"
 
@@ -146,12 +147,12 @@ msgstr "Quanto tempo antes do monitor apagar-se."
 #: ../driver/demo-Gtk-widgets.c:1020
 #: ../driver/demo-Gtk-widgets.c:1032
 #: ../driver/demo-Gtk-widgets.c:1044
-#: ../driver/xscreensaver-demo.glade2.h:106
+#: ../driver/xscreensaver-demo.glade2.h:108
 msgid "minutes"
 msgstr "minutos"
 
 #: ../driver/demo-Gtk-widgets.c:482
-#: ../driver/demo-Gtk.c:3278
+#: ../driver/demo-Gtk.c:3326
 msgid "Preview"
 msgstr "Visualizar"
 
@@ -190,12 +191,12 @@ msgid "Random Screen Saver"
 msgstr "Protetor de tela aleatório"
 
 #: ../driver/demo-Gtk-widgets.c:571
-#: ../driver/demo-Gtk.c:2464
+#: ../driver/demo-Gtk.c:2512
 msgid "Use"
 msgstr "Uso"
 
 #: ../driver/demo-Gtk-widgets.c:591
-#: ../driver/demo-Gtk.c:2474
+#: ../driver/demo-Gtk.c:2522
 msgid "Screen Saver"
 msgstr "Protetor de tela"
 
@@ -204,7 +205,7 @@ msgid "\\/"
 msgstr "\\/"
 
 #: ../driver/demo-Gtk-widgets.c:652
-#: ../driver/xscreensaver-demo.glade2.h:38
+#: ../driver/xscreensaver-demo.glade2.h:40
 msgid "Run the next screen saver in the list in full-screen mode (click the mouse to return.)"
 msgstr "Executar o protetor de tela seguinte na lista em tela cheia (clicar com o mouse para voltar)."
 
@@ -213,7 +214,7 @@ msgid "/\\"
 msgstr "/\\"
 
 #: ../driver/demo-Gtk-widgets.c:662
-#: ../driver/xscreensaver-demo.glade2.h:39
+#: ../driver/xscreensaver-demo.glade2.h:41
 msgid "Run the previous screen saver in the list in full-screen mode (click the mouse to return.)"
 msgstr "Executar o protetor de tela anterior na lista em tela cheia (clicar com o mouse para voltar)."
 
@@ -260,7 +261,7 @@ msgid "Colormaps"
 msgstr "Mapa de cores"
 
 #: ../driver/demo-Gtk-widgets.c:840
-#: ../driver/xscreensaver-demo.glade2.h:69
+#: ../driver/xscreensaver-demo.glade2.h:71
 msgid "Whether to install a private colormap when running in 8-bit mode on the default Visual."
 msgstr "Se se deve instalar um mapa de cores privado ao executar em modo de 8-bit no Visual padrão."
 
@@ -269,7 +270,7 @@ msgid "Install Colormap"
 msgstr "Instalar mapa de cores"
 
 #: ../driver/demo-Gtk-widgets.c:865
-#: ../driver/xscreensaver-demo.glade2.h:68
+#: ../driver/xscreensaver-demo.glade2.h:70
 msgid "Whether the screen should slowly fade to black when the screen saver activates."
 msgstr "Se a tela deve ser apagada gradualmente na ativação do protetor de tela."
 
@@ -278,7 +279,7 @@ msgid "Fade To Black When Blanking"
 msgstr "Apagar gradualmente"
 
 #: ../driver/demo-Gtk-widgets.c:882
-#: ../driver/xscreensaver-demo.glade2.h:67
+#: ../driver/xscreensaver-demo.glade2.h:69
 msgid "Whether the screen should slowly fade in from black when the screen saver deactivates."
 msgstr "Se a tela deve ser reativada gradualmente na desativação do protetor de tela."
 
@@ -296,7 +297,7 @@ msgid "How long it should take for the screen to fade in and out."
 msgstr "Quanto tempo deve levar o apagamento e a reativação graduais."
 
 #: ../driver/demo-Gtk-widgets.c:932
-#: ../driver/xscreensaver-demo.glade2.h:111
+#: ../driver/xscreensaver-demo.glade2.h:113
 msgid "seconds"
 msgstr "segundos"
 
@@ -306,7 +307,7 @@ msgid "Display Power Management"
 msgstr "Gerenciamento de energia do monitor"
 
 #: ../driver/demo-Gtk-widgets.c:986
-#: ../driver/xscreensaver-demo.glade2.h:66
+#: ../driver/xscreensaver-demo.glade2.h:68
 msgid "Whether the monitor should be powered down after a while."
 msgstr "Se o monitor deve ser desligado após algum tempo."
 
@@ -342,7 +343,7 @@ msgid "Image Manipulation"
 msgstr "Manipulação de imagem"
 
 #: ../driver/demo-Gtk-widgets.c:1167
-#: ../driver/xscreensaver-demo.glade2.h:63
+#: ../driver/xscreensaver-demo.glade2.h:65
 msgid "Whether the image-manipulating modes should be allowed to operate on an image of your desktop."
 msgstr "Se os modos de manipulação de imagem devem ser executados sobre uma imagem da sua área de trabalho."
 
@@ -359,7 +360,7 @@ msgid "Grab Video Frames"
 msgstr "Capturar quadros de vídeo"
 
 #: ../driver/demo-Gtk-widgets.c:1201
-#: ../driver/xscreensaver-demo.glade2.h:65
+#: ../driver/xscreensaver-demo.glade2.h:67
 msgid "Whether the image-manipulating modes should operate on random images loaded from disk."
 msgstr "Se os modos de manipulação de imagem devem ser executados sobre imagens aleatórias carregadas do disco."
 
@@ -368,7 +369,7 @@ msgid "Choose Random Image:"
 msgstr "Escolher imagem aleatória:"
 
 #: ../driver/demo-Gtk-widgets.c:1236
-#: ../driver/xscreensaver-demo.glade2.h:52
+#: ../driver/xscreensaver-demo.glade2.h:54
 msgid "The directory from which images will be randomly chosen."
 msgstr "O diretório do qual imagens serão escolhidas aleatoriamente."
 
@@ -387,12 +388,12 @@ msgid "XScreenSaver: Mode-Specific Settings"
 msgstr "XScreenSaver: configuração específica do modo"
 
 #: ../driver/demo-Gtk-widgets.c:1467
-#: ../driver/xscreensaver-demo.glade2.h:40
+#: ../driver/xscreensaver-demo.glade2.h:42
 msgid "Settings"
 msgstr "Configuração"
 
 #: ../driver/demo-Gtk-widgets.c:1496
-#: ../driver/xscreensaver-demo.glade2.h:42
+#: ../driver/xscreensaver-demo.glade2.h:44
 msgid "Standard"
 msgstr "Básico"
 
@@ -402,8 +403,8 @@ msgstr "Visual:"
 
 #: ../driver/demo-Gtk-widgets.c:1551
 #: ../driver/demo-Gtk-widgets.c:1574
-#: ../driver/demo-Gtk.c:1726
-#: ../driver/demo-Gtk.c:3297
+#: ../driver/demo-Gtk.c:1773
+#: ../driver/demo-Gtk.c:3345
 #: ../driver/xscreensaver-demo.glade2.h:2
 msgid "Any"
 msgstr "Qualquer"
@@ -429,17 +430,17 @@ msgid "GL"
 msgstr "GL"
 
 #: ../driver/demo-Gtk-widgets.c:1556
-#: ../driver/xscreensaver-demo.glade2.h:53
+#: ../driver/xscreensaver-demo.glade2.h:55
 msgid "TrueColor"
 msgstr "TrueColor"
 
 #: ../driver/demo-Gtk-widgets.c:1557
-#: ../driver/xscreensaver-demo.glade2.h:37
+#: ../driver/xscreensaver-demo.glade2.h:39
 msgid "PseudoColor"
 msgstr "PseudoColor"
 
 #: ../driver/demo-Gtk-widgets.c:1558
-#: ../driver/xscreensaver-demo.glade2.h:43
+#: ../driver/xscreensaver-demo.glade2.h:45
 msgid "StaticGray"
 msgstr "StaticGray"
 
@@ -464,7 +465,7 @@ msgid "Gray"
 msgstr "Cinza"
 
 #: ../driver/demo-Gtk-widgets.c:1563
-#: ../driver/xscreensaver-demo.glade2.h:31
+#: ../driver/xscreensaver-demo.glade2.h:33
 msgid "Mono"
 msgstr "Mono"
 
@@ -509,7 +510,7 @@ msgid "Reset this screen saver to the default settings."
 msgstr "Restaurar este protetor de tela para a configuração padrão."
 
 #: ../driver/demo-Gtk-widgets.c:1720
-#: ../driver/demo-Gtk.c:863
+#: ../driver/demo-Gtk.c:899
 msgid "OK"
 msgstr "OK"
 
@@ -517,8 +518,8 @@ msgstr "OK"
 msgid "Cancel"
 msgstr "Cancelar"
 
-#: ../driver/demo-Gtk.c:723
-#: ../driver/demo-Gtk.c:4409
+#: ../driver/demo-Gtk.c:759
+#: ../driver/demo-Gtk.c:4460
 #, c-format
 msgid ""
 "Warning:\n"
@@ -531,11 +532,11 @@ msgstr ""
 "Parece que o daemon do xscreensaver não está sendo executado\n"
 "no monitor \"%s\". Lançá-lo agora?"
 
-#: ../driver/demo-Gtk.c:771
+#: ../driver/demo-Gtk.c:807
 msgid "For updates, check http://www.jwz.org/xscreensaver/"
 msgstr "Para atualizações, veja http://www.jwz.org/xscreensaver/"
 
-#: ../driver/demo-Gtk.c:901
+#: ../driver/demo-Gtk.c:937
 msgid ""
 "Error:\n"
 "\n"
@@ -545,7 +546,7 @@ msgstr ""
 "\n"
 "Nenhuma URL de ajuda foi especificada.\n"
 
-#: ../driver/demo-Gtk.c:998
+#: ../driver/demo-Gtk.c:1034
 msgid ""
 "Error:\n"
 "\n"
@@ -557,7 +558,7 @@ msgstr ""
 "O daemon do xscreensaver não iniciou adequadamente.\n"
 "\n"
 
-#: ../driver/demo-Gtk.c:1010
+#: ../driver/demo-Gtk.c:1046
 msgid ""
 "You are running as root.  This usually means that xscreensaver\n"
 "was unable to contact your X server because access control is\n"
@@ -591,11 +592,11 @@ msgstr ""
 "Você não deveria executar o X como root. Em vez disso, você deveria\n"
 "autenticar-se como um usuário normal e `su' quando necessário."
 
-#: ../driver/demo-Gtk.c:1026
+#: ../driver/demo-Gtk.c:1062
 msgid "Please check your $PATH and permissions."
 msgstr "Por favor, verifique o seu $PATH e as permissões."
 
-#: ../driver/demo-Gtk.c:1064
+#: ../driver/demo-Gtk.c:1100
 msgid ""
 "Error:\n"
 "\n"
@@ -605,7 +606,7 @@ msgstr ""
 "\n"
 "Incapaz de determinar o nome do arquivo init!\n"
 
-#: ../driver/demo-Gtk.c:1069
+#: ../driver/demo-Gtk.c:1105
 #, c-format
 msgid ""
 "Error:\n"
@@ -616,7 +617,7 @@ msgstr ""
 "\n"
 "Incapaz de escrever %s\n"
 
-#: ../driver/demo-Gtk.c:1132
+#: ../driver/demo-Gtk.c:1168
 msgid ""
 "Error:\n"
 "\n"
@@ -626,7 +627,7 @@ msgstr ""
 "\n"
 "Nenhum recurso `manualCommand' definido."
 
-#: ../driver/demo-Gtk.c:1315
+#: ../driver/demo-Gtk.c:1351
 #, c-format
 msgid ""
 "Error:\n"
@@ -637,7 +638,7 @@ msgstr ""
 "\n"
 "Formato de tempo não analisável: \"%s\"\n"
 
-#: ../driver/demo-Gtk.c:2022
+#: ../driver/demo-Gtk.c:2070
 #, c-format
 msgid ""
 "Error:\n"
@@ -648,8 +649,8 @@ msgstr ""
 "\n"
 "O diretório não existe: \"%s\"\n"
 
-#: ../driver/demo-Gtk.c:2052
-#: ../driver/demo-Gtk.c:2083
+#: ../driver/demo-Gtk.c:2100
+#: ../driver/demo-Gtk.c:2131
 #, c-format
 msgid ""
 "Error:\n"
@@ -660,28 +661,28 @@ msgstr ""
 "\n"
 "O arquivo não existe: \"%s\"\n"
 
-#: ../driver/demo-Gtk.c:2922
+#: ../driver/demo-Gtk.c:2970
 msgid "Descriptions not available: no XML support compiled in."
 msgstr "Descrições não disponíveis: suporte ao XML não foi compilado."
 
-#: ../driver/demo-Gtk.c:2927
+#: ../driver/demo-Gtk.c:2975
 msgid "No description available."
 msgstr "Nenhuma descrição disponível."
 
-#: ../driver/demo-Gtk.c:3249
+#: ../driver/demo-Gtk.c:3297
 msgid "Blank Screen"
 msgstr "Apagar a tela"
 
-#: ../driver/demo-Gtk.c:3255
+#: ../driver/demo-Gtk.c:3303
 msgid "Screen Saver Disabled"
 msgstr "Protetor de tela desativado"
 
-#: ../driver/demo-Gtk.c:3288
+#: ../driver/demo-Gtk.c:3336
 #, c-format
 msgid "%s: %.100s Settings"
 msgstr "%s: configuração do %.100s"
 
-#: ../driver/demo-Gtk.c:3452
+#: ../driver/demo-Gtk.c:3500
 #, c-format
 msgid ""
 "Warning:\n"
@@ -692,23 +693,23 @@ msgstr ""
 "\n"
 "O arquivo \"%s\" foi modificado, recarregando.\n"
 
-#: ../driver/demo-Gtk.c:3537
+#: ../driver/demo-Gtk.c:3587
 msgid "No Preview"
 msgstr "Nenhuma visualização"
 
-#: ../driver/demo-Gtk.c:3537
+#: ../driver/demo-Gtk.c:3587
 msgid "Available"
 msgstr "disponível"
 
-#: ../driver/demo-Gtk.c:3538
+#: ../driver/demo-Gtk.c:3588
 msgid "Not"
 msgstr "Não"
 
-#: ../driver/demo-Gtk.c:3538
+#: ../driver/demo-Gtk.c:3588
 msgid "Installed"
 msgstr "instalado"
 
-#: ../driver/demo-Gtk.c:4419
+#: ../driver/demo-Gtk.c:4470
 #, c-format
 msgid ""
 "Warning:\n"
@@ -741,7 +742,7 @@ msgstr ""
 "\n"
 "Reiniciar o daemon do xscreensaver agora?\n"
 
-#: ../driver/demo-Gtk.c:4444
+#: ../driver/demo-Gtk.c:4495
 #, c-format
 msgid ""
 "Warning:\n"
@@ -768,7 +769,7 @@ msgstr ""
 "\n"
 "Reiniciar o daemon em \"%s\" como \"%s\" agora?\n"
 
-#: ../driver/demo-Gtk.c:4466
+#: ../driver/demo-Gtk.c:4517
 #, c-format
 msgid ""
 "Warning:\n"
@@ -787,7 +788,7 @@ msgstr ""
 "\n"
 "Reiniciar o daemon do xscreensaver agora?\n"
 
-#: ../driver/demo-Gtk.c:4494
+#: ../driver/demo-Gtk.c:4545
 msgid ""
 "Warning:\n"
 "\n"
@@ -803,7 +804,7 @@ msgstr ""
 "\n"
 "Interromper o daemon do GNOME screensaver agora?\n"
 
-#: ../driver/demo-Gtk.c:4503
+#: ../driver/demo-Gtk.c:4554
 msgid ""
 "Warning:\n"
 "\n"
@@ -819,12 +820,12 @@ msgstr ""
 "\n"
 "Interromper o daemon do protetor de tela do KDE agora?\n"
 
-#: ../driver/demo-Gtk.c:4955
+#: ../driver/demo-Gtk.c:5006
 #, c-format
 msgid "%s: unknown option: %s\n"
 msgstr "%s: opção desconhecida: %s\n"
 
-#: ../driver/demo-Gtk.c:5020
+#: ../driver/demo-Gtk.c:5071
 msgid "Screensaver Preferences"
 msgstr "Preferências do protetor de tela"
 
@@ -884,11 +885,15 @@ msgstr "Quanto tempo até que a tela se apague."
 msgid "Install _Colormap"
 msgstr "Instalar mapa de _cores"
 
-#: ../driver/xscreensaver-demo.glade2.h:32
+#: ../driver/xscreensaver-demo.glade2.h:31
+msgid "Lock Screen"
+msgstr "Bloquear a tela"
+
+#: ../driver/xscreensaver-demo.glade2.h:34
 msgid "Never blank the screen or power down the monitor."
 msgstr "Nunca apagar a tela ou desligar o monitor."
 
-#: ../driver/xscreensaver-demo.glade2.h:33
+#: ../driver/xscreensaver-demo.glade2.h:35
 msgid ""
 "No Preview\n"
 "Available"
@@ -896,7 +901,7 @@ msgstr ""
 "Nenhuma visualização\n"
 "disponível"
 
-#: ../driver/xscreensaver-demo.glade2.h:35
+#: ../driver/xscreensaver-demo.glade2.h:37
 msgid ""
 "Not\n"
 "Installed"
@@ -904,43 +909,43 @@ msgstr ""
 "Não\n"
 "instalado"
 
-#: ../driver/xscreensaver-demo.glade2.h:41
+#: ../driver/xscreensaver-demo.glade2.h:43
 msgid "Stand_by After"
 msgstr "Stand_by após"
 
-#: ../driver/xscreensaver-demo.glade2.h:44
+#: ../driver/xscreensaver-demo.glade2.h:46
 msgid "Sus_pend After"
 msgstr "Suspe_nder após"
 
-#: ../driver/xscreensaver-demo.glade2.h:45
+#: ../driver/xscreensaver-demo.glade2.h:47
 msgid "Text Manipulation"
 msgstr "Manipulação de texto"
 
-#: ../driver/xscreensaver-demo.glade2.h:46
+#: ../driver/xscreensaver-demo.glade2.h:48
 msgid "Text _file"
 msgstr "Arquivo de te_xto"
 
-#: ../driver/xscreensaver-demo.glade2.h:47
+#: ../driver/xscreensaver-demo.glade2.h:49
 msgid "Text-displaying modes will display the contents of this URL (HTML or RSS)."
 msgstr "Os modos de exibição de texto exibirão o conteúdo desse URL (HTML ou RSS)."
 
-#: ../driver/xscreensaver-demo.glade2.h:48
+#: ../driver/xscreensaver-demo.glade2.h:50
 msgid "Text-displaying modes will display the contents of this file."
 msgstr "Os modos de exibição de texto exibirão o conteúdo desse arquivo."
 
-#: ../driver/xscreensaver-demo.glade2.h:49
+#: ../driver/xscreensaver-demo.glade2.h:51
 msgid "Text-displaying modes will display the local host name, date, and time."
 msgstr "Os modos de exibição de texto exibirão o nome do host local, a data e a hora."
 
-#: ../driver/xscreensaver-demo.glade2.h:50
+#: ../driver/xscreensaver-demo.glade2.h:52
 msgid "Text-displaying modes will display the output of this program."
 msgstr "Os modos de exibição de texto exibirão a saída desse programa."
 
-#: ../driver/xscreensaver-demo.glade2.h:51
+#: ../driver/xscreensaver-demo.glade2.h:53
 msgid "Text-displaying modes will display the text typed here."
 msgstr "Os modos de exibição de texto exibirão o texto digitado aqui."
 
-#: ../driver/xscreensaver-demo.glade2.h:54
+#: ../driver/xscreensaver-demo.glade2.h:56
 msgid ""
 "Very few (or no) screen savers appear to be available.\n"
 "\n"
@@ -952,147 +957,147 @@ msgstr ""
 "Isso provavelmente significa que os pacotes \"xscreensaver-data-extra\",\n"
 "\"xscreensaver-gl\" e \"xscreensaver-gl-extra\" não estão instalados."
 
-#: ../driver/xscreensaver-demo.glade2.h:58
+#: ../driver/xscreensaver-demo.glade2.h:60
 msgid "When idle or locked, blacken the screen only."
 msgstr "Quando inativa ou bloqueada, apenas apagar a tela."
 
-#: ../driver/xscreensaver-demo.glade2.h:59
+#: ../driver/xscreensaver-demo.glade2.h:61
 msgid "When idle or locked, choose a random display mode from among the checked items in the list below."
 msgstr "Quando inativa ou bloqueada, escolher um modo aleatório entre os marcados na lista abaixo."
 
-#: ../driver/xscreensaver-demo.glade2.h:60
+#: ../driver/xscreensaver-demo.glade2.h:62
 msgid "When idle or locked, choose a random display mode from among the checked items in the list below.  Run that same mode on each monitor."
 msgstr "Quando inativa ou bloqueada, escolher um modo aleatório entre os marcados na lista abaixo. Executar o mesmo modo em todos os monitores."
 
-#: ../driver/xscreensaver-demo.glade2.h:61
+#: ../driver/xscreensaver-demo.glade2.h:63
 msgid "When idle or locked, run the display mode selected below."
 msgstr "Quando inativa ou bloqueada, executar o modo de exibição selecionado abaixo."
 
-#: ../driver/xscreensaver-demo.glade2.h:64
+#: ../driver/xscreensaver-demo.glade2.h:66
 msgid "Whether the image-manipulating modes should operate on images captured from the system's video input (if there is one.)"
 msgstr "Se os modos de manipulação de imagem devem ser executados sobre imagens da captura de vídeo do sistema (se houver)."
 
-#: ../driver/xscreensaver-demo.glade2.h:72
+#: ../driver/xscreensaver-demo.glade2.h:74
 msgid "_Advanced"
 msgstr "Avança_do"
 
-#: ../driver/xscreensaver-demo.glade2.h:73
+#: ../driver/xscreensaver-demo.glade2.h:75
 msgid "_Advanced >>"
 msgstr "_Avançado >>"
 
-#: ../driver/xscreensaver-demo.glade2.h:74
+#: ../driver/xscreensaver-demo.glade2.h:76
 msgid "_Blank After"
 msgstr "A_tivar após"
 
-#: ../driver/xscreensaver-demo.glade2.h:76
+#: ../driver/xscreensaver-demo.glade2.h:78
 msgid "_Blank Screen Only"
 msgstr "apenas apa_gar a tela"
 
-#: ../driver/xscreensaver-demo.glade2.h:77
+#: ../driver/xscreensaver-demo.glade2.h:79
 msgid "_Browse"
 msgstr "_Pesquisar"
 
-#: ../driver/xscreensaver-demo.glade2.h:78
+#: ../driver/xscreensaver-demo.glade2.h:80
 msgid "_Command Line:"
 msgstr "Linha de co_mando:"
 
-#: ../driver/xscreensaver-demo.glade2.h:79
+#: ../driver/xscreensaver-demo.glade2.h:81
 msgid "_Cycle After"
 msgstr "Ci_rcular após"
 
-#: ../driver/xscreensaver-demo.glade2.h:80
+#: ../driver/xscreensaver-demo.glade2.h:82
 msgid "_Disable Screen Saver"
 msgstr "d_esativar o protetor de tela"
 
-#: ../driver/xscreensaver-demo.glade2.h:81
+#: ../driver/xscreensaver-demo.glade2.h:83
 msgid "_Display Modes"
 msgstr "Modos de exibiçã_o"
 
-#: ../driver/xscreensaver-demo.glade2.h:85
+#: ../driver/xscreensaver-demo.glade2.h:87
 msgid "_Host Name and Time"
 msgstr "Nome do _host e hora"
 
-#: ../driver/xscreensaver-demo.glade2.h:87
+#: ../driver/xscreensaver-demo.glade2.h:89
 msgid "_Lock Screen After  "
 msgstr "_Bloquear a tela após"
 
-#: ../driver/xscreensaver-demo.glade2.h:89
+#: ../driver/xscreensaver-demo.glade2.h:91
 msgid "_Mode:"
 msgstr "_Modo:"
 
-#: ../driver/xscreensaver-demo.glade2.h:90
+#: ../driver/xscreensaver-demo.glade2.h:92
 msgid "_Off After"
 msgstr "De_sligar após"
 
-#: ../driver/xscreensaver-demo.glade2.h:91
+#: ../driver/xscreensaver-demo.glade2.h:93
 msgid "_Only One Screen Saver"
 msgstr "apenas um _protetor de tela"
 
-#: ../driver/xscreensaver-demo.glade2.h:92
+#: ../driver/xscreensaver-demo.glade2.h:94
 msgid "_Power Management Enabled"
 msgstr "Gerenciamento de _energia ativado"
 
-#: ../driver/xscreensaver-demo.glade2.h:93
+#: ../driver/xscreensaver-demo.glade2.h:95
 msgid "_Preview"
 msgstr "_Visualizar"
 
-#: ../driver/xscreensaver-demo.glade2.h:94
+#: ../driver/xscreensaver-demo.glade2.h:96
 msgid "_Program"
 msgstr "Progra_ma"
 
-#: ../driver/xscreensaver-demo.glade2.h:95
+#: ../driver/xscreensaver-demo.glade2.h:97
 msgid "_Quit"
 msgstr "_Sair"
 
-#: ../driver/xscreensaver-demo.glade2.h:96
+#: ../driver/xscreensaver-demo.glade2.h:98
 msgid "_Random Screen Saver"
 msgstr "protetor de tela _aleatório"
 
-#: ../driver/xscreensaver-demo.glade2.h:97
+#: ../driver/xscreensaver-demo.glade2.h:99
 msgid "_Reset to Defaults"
 msgstr "_Restaurar para o padrão"
 
-#: ../driver/xscreensaver-demo.glade2.h:99
+#: ../driver/xscreensaver-demo.glade2.h:101
 msgid "_Same Random Savers"
 msgstr "Os _mesmos protetores aleatórios"
 
-#: ../driver/xscreensaver-demo.glade2.h:100
+#: ../driver/xscreensaver-demo.glade2.h:102
 msgid "_Settings..."
 msgstr "_Configuração..."
 
-#: ../driver/xscreensaver-demo.glade2.h:101
+#: ../driver/xscreensaver-demo.glade2.h:103
 msgid "_Standard <<"
 msgstr "_Básico <<"
 
-#: ../driver/xscreensaver-demo.glade2.h:102
+#: ../driver/xscreensaver-demo.glade2.h:104
 msgid "_Text"
 msgstr "_Texto"
 
-#: ../driver/xscreensaver-demo.glade2.h:103
+#: ../driver/xscreensaver-demo.glade2.h:105
 msgid "_URL"
 msgstr "UR_L"
 
-#: ../driver/xscreensaver-demo.glade2.h:104
+#: ../driver/xscreensaver-demo.glade2.h:106
 msgid "_Visual:"
 msgstr "_Visual:"
 
-#: ../driver/xscreensaver-demo.glade2.h:105
+#: ../driver/xscreensaver-demo.glade2.h:107
 msgid "dialog1"
 msgstr "diálogo1"
 
-#: ../driver/xscreensaver-demo.glade2.h:107
+#: ../driver/xscreensaver-demo.glade2.h:109
 msgid "no preview"
 msgstr "sem visualização"
 
-#: ../driver/xscreensaver-demo.glade2.h:108
+#: ../driver/xscreensaver-demo.glade2.h:110
 msgid "not installed"
 msgstr "não instalado"
 
-#: ../driver/xscreensaver-demo.glade2.h:109
+#: ../driver/xscreensaver-demo.glade2.h:111
 msgid "nothing"
 msgstr "nada"
 
-#: ../driver/xscreensaver-demo.glade2.h:110
+#: ../driver/xscreensaver-demo.glade2.h:112
 msgid "preview"
 msgstr "visualizar"
 
@@ -1169,6 +1174,7 @@ msgstr "Ladrilhos tipo bloco"
 #: ../hacks/config/rd-bomb.xml.h:8
 #: ../hacks/config/rdbomb.xml.h:8
 #: ../hacks/config/rocks.xml.h:3
+#: ../hacks/config/rubik.xml.h:4
 #: ../hacks/config/rubikblocks.xml.h:3
 #: ../hacks/config/skytentacles.xml.h:5
 #: ../hacks/config/slidescreen.xml.h:5
@@ -1300,7 +1306,7 @@ msgstr "Modo de ladrilhos aleatório"
 #: ../hacks/config/demon.xml.h:13
 #: ../hacks/config/discrete.xml.h:9
 #: ../hacks/config/distort.xml.h:19
-#: ../hacks/config/dnalogo.xml.h:6
+#: ../hacks/config/dnalogo.xml.h:7
 #: ../hacks/config/drift.xml.h:11
 #: ../hacks/config/endgame.xml.h:7
 #: ../hacks/config/engine.xml.h:16
@@ -1330,7 +1336,7 @@ msgstr "Modo de ladrilhos aleatório"
 #: ../hacks/config/glcells.xml.h:30
 #: ../hacks/config/gleidescope.xml.h:12
 #: ../hacks/config/glforestfire.xml.h:13
-#: ../hacks/config/glhanoi.xml.h:10
+#: ../hacks/config/glhanoi.xml.h:15
 #: ../hacks/config/glknots.xml.h:17
 #: ../hacks/config/glmatrix.xml.h:16
 #: ../hacks/config/glplanet.xml.h:11
@@ -1417,7 +1423,7 @@ msgstr "Modo de ladrilhos aleatório"
 #: ../hacks/config/rorschach.xml.h:8
 #: ../hacks/config/rotor.xml.h:11
 #: ../hacks/config/rotzoomer.xml.h:11
-#: ../hacks/config/rubik.xml.h:10
+#: ../hacks/config/rubik.xml.h:11
 #: ../hacks/config/rubikblocks.xml.h:14
 #: ../hacks/config/sballs.xml.h:13
 #: ../hacks/config/shadebobs.xml.h:14
@@ -1526,6 +1532,7 @@ msgstr "Exibir taxa de quadros"
 #: ../hacks/config/rd-bomb.xml.h:19
 #: ../hacks/config/rdbomb.xml.h:19
 #: ../hacks/config/rocks.xml.h:14
+#: ../hacks/config/rubik.xml.h:13
 #: ../hacks/config/rubikblocks.xml.h:15
 #: ../hacks/config/skytentacles.xml.h:15
 #: ../hacks/config/slidescreen.xml.h:17
@@ -1875,7 +1882,7 @@ msgstr "Longe"
 #: ../hacks/config/glcells.xml.h:7
 #: ../hacks/config/gleidescope.xml.h:4
 #: ../hacks/config/glforestfire.xml.h:5
-#: ../hacks/config/glhanoi.xml.h:5
+#: ../hacks/config/glhanoi.xml.h:8
 #: ../hacks/config/glknots.xml.h:3
 #: ../hacks/config/glmatrix.xml.h:6
 #: ../hacks/config/glplanet.xml.h:2
@@ -1955,7 +1962,7 @@ msgstr "Longe"
 #: ../hacks/config/rocks.xml.h:5
 #: ../hacks/config/rotor.xml.h:2
 #: ../hacks/config/rotzoomer.xml.h:6
-#: ../hacks/config/rubik.xml.h:4
+#: ../hacks/config/rubik.xml.h:5
 #: ../hacks/config/rubikblocks.xml.h:4
 #: ../hacks/config/sballs.xml.h:4
 #: ../hacks/config/shadebobs.xml.h:3
@@ -2074,7 +2081,7 @@ msgstr "Taxa de quadros"
 #: ../hacks/config/glcells.xml.h:10
 #: ../hacks/config/gleidescope.xml.h:6
 #: ../hacks/config/glforestfire.xml.h:7
-#: ../hacks/config/glhanoi.xml.h:7
+#: ../hacks/config/glhanoi.xml.h:10
 #: ../hacks/config/glknots.xml.h:6
 #: ../hacks/config/glmatrix.xml.h:12
 #: ../hacks/config/glplanet.xml.h:4
@@ -2152,7 +2159,7 @@ msgstr "Taxa de quadros"
 #: ../hacks/config/rocks.xml.h:6
 #: ../hacks/config/rotor.xml.h:3
 #: ../hacks/config/rotzoomer.xml.h:7
-#: ../hacks/config/rubik.xml.h:6
+#: ../hacks/config/rubik.xml.h:7
 #: ../hacks/config/rubikblocks.xml.h:5
 #: ../hacks/config/sballs.xml.h:5
 #: ../hacks/config/shadebobs.xml.h:4
@@ -2272,7 +2279,7 @@ msgstr "Alto(a)"
 #: ../hacks/config/glcells.xml.h:17
 #: ../hacks/config/gleidescope.xml.h:9
 #: ../hacks/config/glforestfire.xml.h:9
-#: ../hacks/config/glhanoi.xml.h:8
+#: ../hacks/config/glhanoi.xml.h:12
 #: ../hacks/config/glknots.xml.h:7
 #: ../hacks/config/glmatrix.xml.h:13
 #: ../hacks/config/glplanet.xml.h:8
@@ -2460,7 +2467,6 @@ msgstr "Células de quatro lados"
 #: ../hacks/config/rd-bomb.xml.h:11
 #: ../hacks/config/rdbomb.xml.h:11
 #: ../hacks/config/rorschach.xml.h:4
-#: ../hacks/config/rubik.xml.h:7
 #: ../hacks/config/rubikblocks.xml.h:6
 #: ../hacks/config/sierpinski.xml.h:4
 #: ../hacks/config/slidescreen.xml.h:9
@@ -2580,7 +2586,6 @@ msgstr "Células de seis lados"
 #: ../hacks/config/rd-bomb.xml.h:20
 #: ../hacks/config/rdbomb.xml.h:20
 #: ../hacks/config/rorschach.xml.h:9
-#: ../hacks/config/rubik.xml.h:12
 #: ../hacks/config/rubikblocks.xml.h:16
 #: ../hacks/config/sierpinski.xml.h:11
 #: ../hacks/config/slidescreen.xml.h:18
@@ -2611,7 +2616,6 @@ msgstr "Células de três lados"
 #: ../hacks/config/flow.xml.h:21
 #: ../hacks/config/lissie.xml.h:15
 #: ../hacks/config/loop.xml.h:13
-#: ../hacks/config/rubik.xml.h:13
 #: ../hacks/config/sierpinski.xml.h:13
 #: ../hacks/config/slip.xml.h:13
 msgid "Timeout"
@@ -2646,12 +2650,12 @@ msgid "Draws a few views of a few ants walking around in a simple maze. Written 
 msgstr "Desenha umas vistas de algumas formigas andando por um labirinto simples. Escrito por Blair Tennessy; 2005."
 
 #: ../hacks/config/antspotlight.xml.h:1
-msgid "\"Antspotlight draws an ant (with a headlight) who walks on top of an image of your desktop or other image. Written by Blair Tennessy.\""
-msgstr "O Antspotlight desenha uma formiga (com uma lanterna) que anda sobre uma imagem, da sua área de trabalho ou outra. Escrito por Blair Tennessy."
-
-#: ../hacks/config/antspotlight.xml.h:2
 msgid "AntSpotlight"
 msgstr "AntSpotlight (Formiga e lanterna)"
+
+#: ../hacks/config/antspotlight.xml.h:2
+msgid "Draws an ant (with a headlight) who walks on top of an image of your desktop or other image. Written by Blair Tennessy; 2003."
+msgstr "Desenha uma formiga (com uma lanterna) que anda sobre uma imagem, da sua área de trabalho ou outra. Escrito por Blair Tennessy; 2003."
 
 #: ../hacks/config/apollonian.xml.h:1
 msgid "Apollonian"
@@ -2773,6 +2777,7 @@ msgstr ""
 #: ../hacks/config/deluxe.xml.h:2
 #: ../hacks/config/demon.xml.h:2
 #: ../hacks/config/gears.xml.h:2
+#: ../hacks/config/glhanoi.xml.h:4
 #: ../hacks/config/lisa.xml.h:2
 #: ../hacks/config/lissie.xml.h:2
 #: ../hacks/config/skytentacles.xml.h:2
@@ -2851,14 +2856,14 @@ msgstr "Velocidade das baleias"
 #: ../hacks/config/cubenetic.xml.h:27
 #: ../hacks/config/cubestorm.xml.h:18
 #: ../hacks/config/dangerball.xml.h:15
-#: ../hacks/config/dnalogo.xml.h:7
+#: ../hacks/config/dnalogo.xml.h:8
 #: ../hacks/config/extrusion.xml.h:18
 #: ../hacks/config/flipflop.xml.h:15
 #: ../hacks/config/flyingtoasters.xml.h:16
 #: ../hacks/config/gears.xml.h:15
 #: ../hacks/config/glcells.xml.h:34
 #: ../hacks/config/glforestfire.xml.h:17
-#: ../hacks/config/glhanoi.xml.h:12
+#: ../hacks/config/glhanoi.xml.h:18
 #: ../hacks/config/glknots.xml.h:25
 #: ../hacks/config/glmatrix.xml.h:21
 #: ../hacks/config/glplanet.xml.h:14
@@ -3310,7 +3315,7 @@ msgstr "Linhas de varredura"
 #: ../hacks/config/lissie.xml.h:12
 #: ../hacks/config/loop.xml.h:11
 #: ../hacks/config/rotor.xml.h:12
-#: ../hacks/config/rubik.xml.h:11
+#: ../hacks/config/rubik.xml.h:12
 #: ../hacks/config/wander.xml.h:13
 #: ../hacks/config/worm.xml.h:9
 msgid "Size"
@@ -4087,6 +4092,7 @@ msgstr "Cor aleatória"
 
 #: ../hacks/config/cube21.xml.h:15
 #: ../hacks/config/rocks.xml.h:11
+#: ../hacks/config/rubik.xml.h:9
 #: ../hacks/config/rubikblocks.xml.h:11
 #: ../hacks/config/topblock.xml.h:18
 msgid "Rotation"
@@ -4447,6 +4453,7 @@ msgstr ""
 #: ../hacks/config/deluxe.xml.h:1
 #: ../hacks/config/gflux.xml.h:1
 #: ../hacks/config/glcells.xml.h:1
+#: ../hacks/config/glhanoi.xml.h:2
 #: ../hacks/config/glsnake.xml.h:1
 #: ../hacks/config/hypnowheel.xml.h:1
 #: ../hacks/config/lavalite.xml.h:1
@@ -4553,12 +4560,16 @@ msgid "DNA Logo"
 msgstr "DNA Logo"
 
 #: ../hacks/config/dnalogo.xml.h:2
-msgid "DNA Lounge 375 Eleventh Street San Francisco, CA 94107 http://www.dnalounge.com/ Written by Jamie Zawinski; 2001."
+msgid "DNA Lounge Restaurant -- Bar -- Nightclub -- Cafe -- Est. 1985. 375 Eleventh Street San Francisco, CA 94103 http://www.dnalounge.com/ http://www.dnapizza.com/ Written by Jamie Zawinski; 2001."
 msgstr ""
 
 #: ../hacks/config/dnalogo.xml.h:3
 msgid "Frame Rate"
 msgstr "Taxa de Quadros"
+
+#: ../hacks/config/dnalogo.xml.h:6
+msgid "Pizza"
+msgstr "Pizza"
 
 #: ../hacks/config/drift.xml.h:1
 msgid "Drift"
@@ -5223,6 +5234,7 @@ msgid "This draws sets of turning, interlocking gears, rotating in three dimensi
 msgstr ""
 
 #: ../hacks/config/gflux.xml.h:2
+#: ../hacks/config/glhanoi.xml.h:3
 #: ../hacks/config/lavalite.xml.h:2
 msgid "10"
 msgstr "10"
@@ -5419,31 +5431,43 @@ msgstr "Texturas"
 msgid "This screen saver was removed from the XScreenSaver distribution as of version 5.08. Draws an animation of sprinkling fire-like 3D triangles in a landscape filled with trees. Written by Eric Lassauge; 2002."
 msgstr ""
 
-#: ../hacks/config/glhanoi.xml.h:2
+#: ../hacks/config/glhanoi.xml.h:5
 msgid "31"
 msgstr "31"
 
-#: ../hacks/config/glhanoi.xml.h:3
+#: ../hacks/config/glhanoi.xml.h:6
 #: ../hacks/config/pulsar.xml.h:5
 msgid "Enable fog"
 msgstr "Habilitar neblina"
 
-#: ../hacks/config/glhanoi.xml.h:4
+#: ../hacks/config/glhanoi.xml.h:7
 #: ../hacks/config/pulsar.xml.h:6
 msgid "Enable lighting"
 msgstr "Habilitar iluminação"
 
-#: ../hacks/config/glhanoi.xml.h:6
+#: ../hacks/config/glhanoi.xml.h:9
 msgid "GLHanoi"
 msgstr "GLHanoi (Hanói GL)"
 
-#: ../hacks/config/glhanoi.xml.h:9
+#: ../hacks/config/glhanoi.xml.h:11
+msgid "Length of disk trails"
+msgstr "Comprimento dos rastros dos discos"
+
+#: ../hacks/config/glhanoi.xml.h:13
 msgid "Number of disks"
 msgstr "Número de discos"
 
-#: ../hacks/config/glhanoi.xml.h:11
+#: ../hacks/config/glhanoi.xml.h:14
+msgid "Number of poles"
+msgstr "Número de pinos"
+
+#: ../hacks/config/glhanoi.xml.h:16
 msgid "Solves the Towers of Hanoi puzzle. Move N disks from one pole to another, one disk at a time, with no disk ever resting on a disk smaller than itself. http://en.wikipedia.org/wiki/Tower_of_Hanoi Written by Dave Atkinson; 2005."
 msgstr ""
+
+#: ../hacks/config/glhanoi.xml.h:17
+msgid "Speed (of smallest disks)"
+msgstr "Velocidade (dos discos menores)"
 
 #: ../hacks/config/glknots.xml.h:4
 msgid "GLKnots"
@@ -5650,7 +5674,7 @@ msgid "Spin all the way around"
 msgstr "Girar até o lado oposto"
 
 #: ../hacks/config/goop.xml.h:1
-msgid "Additive colors (reflected light)"
+msgid "Additive colors (transmitted light)"
 msgstr "Cores aditivas (luz transmitida)"
 
 #: ../hacks/config/goop.xml.h:2
@@ -5674,7 +5698,7 @@ msgid "Speed limit"
 msgstr "Limite de velocidade"
 
 #: ../hacks/config/goop.xml.h:16
-msgid "Subtractive colors (transmitted light)"
+msgid "Subtractive colors (reflected light)"
 msgstr "Cores subtrativas (luz refletida)"
 
 #: ../hacks/config/goop.xml.h:17
@@ -6848,8 +6872,9 @@ msgid "Solid"
 msgstr "Sólido"
 
 #: ../hacks/config/mismunch.xml.h:13
+#, fuzzy
 msgid "This screen saver was removed from the XScreenSaver distribution as of version 5.08. It was merged with the \"Munch\" screen saver. Munching errors! This is a creatively broken misimplementation of the classic munching squares graphics hack. See the \"Munch\" screen saver for the original. http://en.wikipedia.org/wiki/HAKMEM http://en.wikipedia.org/wiki/Munching_square Written by Steven Hazel; 2004."
-msgstr ""
+msgstr "Este protetor de tela foi removido da distribuição do XScreenSaver a partir da versão 5.08."
 
 #: ../hacks/config/mismunch.xml.h:14
 #: ../hacks/config/munch.xml.h:17
@@ -7927,7 +7952,7 @@ msgid "Truncated icosahedron"
 msgstr "Icosaedro truncado"
 
 #: ../hacks/config/polyhedra.xml.h:164
-msgid "Truncated icosidodechedon"
+msgid "Truncated icosidodecahedron"
 msgstr "Icosidodecaedro truncado"
 
 #: ../hacks/config/polyhedra.xml.h:165
@@ -8392,11 +8417,11 @@ msgstr "Retângulos em movimento"
 msgid "Draws a Rubik's Cube that rotates in three dimensions and repeatedly shuffles and solves itself. See also the \"GLSnake\" and \"Cube21\" screen savers. http://en.wikipedia.org/wiki/Rubik%27s_Cube Written by Marcelo Vianna; 1997."
 msgstr ""
 
-#: ../hacks/config/rubik.xml.h:5
+#: ../hacks/config/rubik.xml.h:6
 msgid "Hide shuffling"
 msgstr "Ocultar o embaralhamento"
 
-#: ../hacks/config/rubik.xml.h:9
+#: ../hacks/config/rubik.xml.h:10
 msgid "Rubik"
 msgstr "Rubik"
 
@@ -8410,7 +8435,7 @@ msgstr "RubikBlocks"
 
 #: ../hacks/config/sballs.xml.h:3
 msgid "Draws an animation of textured balls spinning like crazy. Written by Eric Lassauge; 2002."
-msgstr ""
+msgstr "Desenha uma animação de bolas texturizadas girando como loucas. Escrito por Eric Lassauge; 2002."
 
 #: ../hacks/config/sballs.xml.h:9
 msgid "Plane"
@@ -8938,7 +8963,7 @@ msgstr "Maior"
 
 #: ../hacks/config/t3d.xml.h:5
 msgid "Cycle seconds"
-msgstr ""
+msgstr "Ciclo em segundos"
 
 #: ../hacks/config/t3d.xml.h:10
 msgid "Minute tick marks"
@@ -8958,11 +8983,11 @@ msgstr ""
 
 #: ../hacks/config/t3d.xml.h:16
 msgid "Turn side-to-side"
-msgstr ""
+msgstr "Girar de um lado para o outro"
 
 #: ../hacks/config/t3d.xml.h:17
 msgid "Wobbliness"
-msgstr ""
+msgstr "Cambaleio"
 
 #: ../hacks/config/tangram.xml.h:12
 msgid "Solves tangram puzzles. http://en.wikipedia.org/wiki/Tangram Written by Jeremy English; 2005."
@@ -9236,7 +9261,7 @@ msgstr ""
 
 #: ../hacks/config/whirlygig.xml.h:8
 msgid "Whirlies"
-msgstr ""
+msgstr "Redemoinhos"
 
 #: ../hacks/config/whirlygig.xml.h:9
 msgid "Whirlygig"
@@ -9248,19 +9273,19 @@ msgstr ""
 
 #: ../hacks/config/whirlygig.xml.h:11
 msgid "X amplitude"
-msgstr ""
+msgstr "Amplitude de X"
 
 #: ../hacks/config/whirlygig.xml.h:12
 msgid "X circle"
-msgstr ""
+msgstr "X em círculos"
 
 #: ../hacks/config/whirlygig.xml.h:13
 msgid "X fun"
-msgstr ""
+msgstr "Alegria de X"
 
 #: ../hacks/config/whirlygig.xml.h:14
 msgid "X funky"
-msgstr ""
+msgstr "X dançante"
 
 #: ../hacks/config/whirlygig.xml.h:15
 msgid "X innie"
@@ -9268,7 +9293,7 @@ msgstr ""
 
 #: ../hacks/config/whirlygig.xml.h:16
 msgid "X linear"
-msgstr ""
+msgstr "X linear"
 
 #: ../hacks/config/whirlygig.xml.h:17
 msgid "X lissajous"
@@ -9276,35 +9301,36 @@ msgstr ""
 
 #: ../hacks/config/whirlygig.xml.h:18
 msgid "X random"
-msgstr ""
+msgstr "X aleatório"
 
 #: ../hacks/config/whirlygig.xml.h:19
 msgid "X speed"
 msgstr "Velocidade de X"
 
 #: ../hacks/config/whirlygig.xml.h:20
+#, fuzzy
 msgid "X spin"
-msgstr ""
+msgstr "X girando"
 
 #: ../hacks/config/whirlygig.xml.h:21
 msgid "X test"
-msgstr ""
+msgstr "Teste de X"
 
 #: ../hacks/config/whirlygig.xml.h:22
 msgid "Y amplitude"
-msgstr ""
+msgstr "Amplitude de Y"
 
 #: ../hacks/config/whirlygig.xml.h:23
 msgid "Y circle"
-msgstr ""
+msgstr "Y em círculos"
 
 #: ../hacks/config/whirlygig.xml.h:24
 msgid "Y fun"
-msgstr ""
+msgstr "Alegria de Y"
 
 #: ../hacks/config/whirlygig.xml.h:25
 msgid "Y funky"
-msgstr ""
+msgstr "Y dançante"
 
 #: ../hacks/config/whirlygig.xml.h:26
 msgid "Y innie"
@@ -9312,7 +9338,7 @@ msgstr ""
 
 #: ../hacks/config/whirlygig.xml.h:27
 msgid "Y linear"
-msgstr ""
+msgstr "Y linear"
 
 #: ../hacks/config/whirlygig.xml.h:28
 msgid "Y lissajous"
@@ -9320,19 +9346,20 @@ msgstr ""
 
 #: ../hacks/config/whirlygig.xml.h:29
 msgid "Y random"
-msgstr ""
+msgstr "Y aleatório"
 
 #: ../hacks/config/whirlygig.xml.h:30
 msgid "Y speed"
 msgstr "Velocidade de Y"
 
 #: ../hacks/config/whirlygig.xml.h:31
+#, fuzzy
 msgid "Y spin"
-msgstr ""
+msgstr "Y girando"
 
 #: ../hacks/config/whirlygig.xml.h:32
 msgid "Y test"
-msgstr ""
+msgstr "Teste de Y"
 
 #: ../hacks/config/worm.xml.h:10
 msgid "This screen saver was removed from the XScreenSaver distribution as of version 5.08. Draws multicolored worms that crawl around the screen. Written by Brad Taylor, Dave Lemke, Boris Putanec, and Henrik Theiling; 1991."

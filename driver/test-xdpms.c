@@ -1,5 +1,5 @@
 /* test-xdpms.c --- playing with the XDPMS extension.
- * xscreensaver, Copyright (c) 1998 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -62,6 +62,16 @@ blurb (void)
   strncpy(buf+n, ct+11, 8);
   strcpy(buf+n+9, ": ");
   return buf;
+}
+
+
+static Bool error_handler_hit_p = False;
+
+static int
+ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
+{
+  error_handler_hit_p = True;
+  return 0;
 }
 
 
@@ -148,11 +158,20 @@ main (int argc, char **argv)
 	  state == DPMSModeSuspend ||
 	  state == DPMSModeOff)
 	{
-	  Status st;
+          XErrorHandler old_handler;
+	  int st;
 	  fprintf(stderr, "%s: monitor is off; turning it on.\n", blurb());
+
+          XSync (dpy, False);
+          error_handler_hit_p = False;
+          old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+          XSync (dpy, False);
 	  st = DPMSForceLevel (dpy, DPMSModeOn);
+          XSync (dpy, False);
+          if (error_handler_hit_p) st = -666;
+
 	  fprintf (stderr, "%s: DPMSForceLevel (dpy, DPMSModeOn) ==> %s\n",
-		   blurb(), (st ? "Ok" : "Error"));
+		   blurb(), (st == -666 ? "X Error" : st ? "Ok" : "Error"));
 	}
 
       sleep (delay);

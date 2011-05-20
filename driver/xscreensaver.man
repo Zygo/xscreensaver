@@ -503,6 +503,11 @@ the X server and the display hardware support power management; not
 all do.  See the \fIPower Management\fP section, below, for more 
 information.
 .TP 8
+.B dpmsQuickOff\fP (class \fBBoolean\fP)
+If \fImode\fP is \fIblank\fP and this is true, then the screen will be
+powered down immediately upon blanking, regardless of other
+power-management settings.
+.TP 8
 .B visualID\fP (class \fBVisualID\fP)
 Specify which X visual to use by default.  (Note carefully that this resource
 is called \fBvisualID\fP, not merely \fBvisual\fP; if you set the \fBvisual\fP

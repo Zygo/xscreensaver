@@ -256,6 +256,14 @@ If \fIPower Management Enabled\fP is selected, the monitor will fully
 power down after this much idle time.  This duration should be greater
 than or equal to \fISuspend\fP.
 .TP 4
+.B Quick Power-off in "Blank Only" Mode
+If the display mode is set to \fIBlank Screen Only\fP and this is
+checked, then the monitor will be powered off immediately upon
+blanking, regardless of the other power-management settings.  In this
+way, the power management idle-timers can be completely disabled, but
+the screen will be powered off when black.  (This might be preferable
+on laptops.)
+.TP 4
 .B Fade To Black When Blanking
 If selected, then when the screensaver activates, the current contents
 of the screen will fade to black instead of simply winking out.  (Note:

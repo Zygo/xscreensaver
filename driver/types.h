@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -112,6 +112,8 @@ struct saver_preferences {
   int pointer_hysteresis;	/* mouse motions less than N/sec are ignored */
 
   Bool dpms_enabled_p;		/* Whether to power down the monitor */
+  Bool dpms_quickoff_p;		/* Whether to power down monitor immediately
+				   in "Blank Only" mode */
   Time dpms_standby;		/* how long until monitor goes black */
   Time dpms_suspend;		/* how long until monitor power-saves */
   Time dpms_off;		/* how long until monitor powers down */

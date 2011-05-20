@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1548,7 +1548,8 @@ flush_dialog_changes_and_save (state *s)
   CHECKBOX (p2->lock_p,           "lock_button");
   MINUTES  (&p2->lock_timeout,    "lock_spinbutton");
 
-  CHECKBOX (p2->dpms_enabled_p,  "dpms_button");
+  CHECKBOX (p2->dpms_enabled_p,   "dpms_button");
+  CHECKBOX (p2->dpms_quickoff_p,  "dpms_quickoff_button");
   MINUTES  (&p2->dpms_standby,    "dpms_standby_spinbutton");
   MINUTES  (&p2->dpms_suspend,    "dpms_suspend_spinbutton");
   MINUTES  (&p2->dpms_off,        "dpms_off_spinbutton");
@@ -1647,10 +1648,11 @@ flush_dialog_changes_and_save (state *s)
   COPY(lock_p,         "lock_p");
   COPY(lock_timeout,   "lock_timeout");
 
-  COPY(dpms_enabled_p, "dpms_enabled_p");
-  COPY(dpms_standby,   "dpms_standby");
-  COPY(dpms_suspend,   "dpms_suspend");
-  COPY(dpms_off,       "dpms_off");
+  COPY(dpms_enabled_p,  "dpms_enabled_p");
+  COPY(dpms_quickoff_p, "dpms_quickoff_enabled_p");
+  COPY(dpms_standby,    "dpms_standby");
+  COPY(dpms_suspend,    "dpms_suspend");
+  COPY(dpms_off,        "dpms_off");
 
 #if 0
   COPY(verbose_p,        "verbose_p");
@@ -2795,6 +2797,7 @@ populate_prefs_page (state *s)
   TOGGLE_ACTIVE ("splash_button",     p->splash_p);
 #endif
   TOGGLE_ACTIVE ("dpms_button",       p->dpms_enabled_p);
+  TOGGLE_ACTIVE ("dpms_quickoff_button", p->dpms_quickoff_p);
   TOGGLE_ACTIVE ("grab_desk_button",  p->grab_desktop_p);
   TOGGLE_ACTIVE ("grab_video_button", p->grab_video_p);
   TOGGLE_ACTIVE ("grab_image_button", p->random_image_p);
@@ -2898,8 +2901,11 @@ populate_prefs_page (state *s)
 
     /* DPMS
      */
+dpms_supported=1;
     SENSITIZE ("dpms_frame",              dpms_supported);
     SENSITIZE ("dpms_button",             dpms_supported);
+    SENSITIZE ("dpms_quickoff_button",    dpms_supported);
+
     SENSITIZE ("dpms_standby_label",      dpms_supported && p->dpms_enabled_p);
     SENSITIZE ("dpms_standby_mlabel",     dpms_supported && p->dpms_enabled_p);
     SENSITIZE ("dpms_standby_spinbutton", dpms_supported && p->dpms_enabled_p);

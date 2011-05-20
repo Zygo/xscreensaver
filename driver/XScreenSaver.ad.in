@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.13
-!                              18-Apr-2011
+!                              version 5.14
+!                              20-May-2011
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -34,6 +34,7 @@
 *lockTimeout:		0:00:00
 *passwdTimeout:		0:00:30
 *dpmsEnabled:		False
+*dpmsQuickoffEnabled:	False
 *dpmsStandby:		2:00:00
 *dpmsSuspend:		2:00:00
 *dpmsOff:		4:00:00

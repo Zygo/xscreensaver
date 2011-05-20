@@ -18,7 +18,7 @@
    <boolean id="2k"         _label="Windows 2000  " arg-unset="-no-2k"/>
    <boolean id="msdos"      _label="MS-DOS"         arg-unset="-no-msdos"/>
    <boolean id="amiga"      _label="AmigaDOS"       arg-unset="-no-amiga"/>
-   <boolean id="atari"      _label="Atari"          arg-set="-atari"/>
+   <boolean id="glados"     _label="GLaDOS"         arg-unset="-no-glados"/>
   </vgroup>
   <vgroup>
    <boolean id="apple2"     _label="Apple ]["       arg-unset="-no-apple2"/>
@@ -27,6 +27,7 @@
    <boolean id="mac"        _label="Sad Mac"        arg-unset="-no-mac"/>
    <boolean id="mac1"       _label="Mac bomb"       arg-unset="-no-mac1"/>
    <boolean id="macsbug"    _label="MacsBug"        arg-unset="-no-macsbug"/>
+   <boolean id="atari"      _label="Atari"          arg-set="-atari"/>
   </vgroup>
   <vgroup>
    <boolean id="macx"       _label="MacOS X"        arg-unset="-no-macx"/>
