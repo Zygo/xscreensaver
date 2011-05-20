@@ -7,6 +7,7 @@
 "*lockTimeout:		0:00:00",
 "*passwdTimeout:		0:00:30",
 "*dpmsEnabled:		False",
+"*dpmsQuickoffEnabled:	False",
 "*dpmsStandby:		2:00:00",
 "*dpmsSuspend:		2:00:00",
 "*dpmsOff:		4:00:00",
@@ -45,9 +46,9 @@
 "*demoCommand: xscreensaver-demo",
 "*prefsCommand: xscreensaver-demo -prefs",
 "*helpURL: http://www.jwz.org/xscreensaver/man.html",
-"*loadURL: firefox '%s' || mozilla '%s' || netscape '%s'",
-"*manualCommand: xterm -sb -fg black -bg gray75 -T '%s manual' \
-		    -e /bin/sh -c 'man \"%s\" ; read foo'",
+"*loadURL: gnome-open '%s'",
+"*manualCommand: gnome-terminal --title '%s manual' \
+		--command '/bin/sh -c \"man %s; read foo\"'",
 "*dateFormat:		%d-%b-%y (%a); %I:%M %p",
 "*installColormap:	True",
 "*programs:								      \

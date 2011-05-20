@@ -276,6 +276,7 @@ static const char * const prefs[] = {
   "ignoreUninstalledPrograms",
   "font",
   "dpmsEnabled",
+  "dpmsQuickOff",
   "dpmsStandby",
   "dpmsSuspend",
   "dpmsOff",
@@ -817,6 +818,7 @@ write_init_file (Display *dpy,
       CHECK("font")		type = pref_str,  s =    stderr_font;
 
       CHECK("dpmsEnabled")	type = pref_bool, b = p->dpms_enabled_p;
+      CHECK("dpmsQuickOff")	type = pref_bool, b = p->dpms_quickoff_p;
       CHECK("dpmsStandby")	type = pref_time, t = p->dpms_standby;
       CHECK("dpmsSuspend")	type = pref_time, t = p->dpms_suspend;
       CHECK("dpmsOff")		type = pref_time, t = p->dpms_off;
@@ -1073,6 +1075,7 @@ load_init_file (Display *dpy, saver_preferences *p)
 						       "Time");
 
   p->dpms_enabled_p  = get_boolean_resource (dpy, "dpmsEnabled", "Boolean");
+  p->dpms_quickoff_p = get_boolean_resource (dpy, "dpmsQuickOff", "Boolean");
   p->dpms_standby    = 1000 * get_minutes_resource (dpy, "dpmsStandby", "Time");
   p->dpms_suspend    = 1000 * get_minutes_resource (dpy, "dpmsSuspend", "Time");
   p->dpms_off        = 1000 * get_minutes_resource (dpy, "dpmsOff",     "Time");

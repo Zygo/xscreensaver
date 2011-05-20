@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2010 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -74,7 +74,7 @@ typedef enum { EOF=0,
                COLOR, INVERT, MOVETO, MARGINS,
                CURSOR_BLOCK, CURSOR_LINE, RECT, COPY, PIXMAP, IMG,
                PAUSE, CHAR_DELAY, LINE_DELAY,
-               LOOP
+               LOOP, RESET
 } bsod_event_type;
 
 struct bsod_event {
@@ -266,6 +266,14 @@ struct bsod_state {
   (bst)->pos++; \
   } while (0)
 
+/* Restart the whole thing from the beginning.
+ */
+#define BSOD_RESET(bst) do { \
+  ensure_queue (bst); \
+  (bst)->queue[(bst)->pos].type = RESET; \
+  (bst)->pos++; \
+  } while (0)
+
 
 static void
 ensure_queue (struct bsod_state *bst)
@@ -442,6 +450,7 @@ bsod_pop (struct bsod_state *bst)
       if (! bst->queue[bst->pos].arg3)    /* "done once" */
         {
           position_for_text (bst, s);
+          bst->queue[bst->pos].arg4 = (void *) bst->queue[bst->pos].type;
           bst->queue[bst->pos].type = LEFT;
 
           if (type == CENTER_FULL ||
@@ -594,6 +603,23 @@ bsod_pop (struct bsod_state *bst)
       bst->pos += off;
       if (bst->pos < 0 || bst->pos >= bst->queue_size)
         abort();
+      return 0;
+    }
+  case RESET:
+    {
+      int i;
+      for (i = 0; i < bst->queue_size; i++)
+        switch (bst->queue[i].type) {
+        case LEFT:   case LEFT_FULL:
+        case CENTER: case CENTER_FULL:
+        case RIGHT:  case RIGHT_FULL:
+          bst->queue[i].arg2 = bst->queue[i].arg1;
+          bst->queue[i].arg3 = 0;
+          bst->queue[i].type = (bsod_event_type) bst->queue[i].arg4;
+          break;
+        default: break;
+        }
+      bst->pos = 0;
       return 0;
     }
   case EOF:
@@ -991,6 +1017,52 @@ windows_other (Display *dpy, Window window)
   default: abort(); break;
   }
 }
+
+
+/* As seen in Portal 2.  By jwz.
+ */
+static struct bsod_state *
+glados (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "glaDOS", "GlaDOS");
+  const char * panicstr[] = {
+    "\n",
+    "MOLTEN CORE WARNING\n",
+    "\n",
+    "An operator error exception has occurred at FISSREAC0020093:09\n",
+    "FISSREAC0020077:14 FISSREAC0020023:17 FISSREAC0020088:22\n",
+    "neutron multiplication rate at spikevalue 99999999\n",
+    "\n",
+    "* Press any keep to vent radiological emissions into atmosphere.\n",
+    "* Consult reactor core manual for instructions on proper reactor core\n",
+    "maintenance and repair.\n",
+    "\n",
+    "Press any key to continue\n",
+  };
+
+  int i;
+
+  bst->y = ((bst->xgwa.height -
+             ((bst->font->ascent + bst->font->descent) * countof(panicstr)))
+            / 2);
+
+  BSOD_MOVETO (bst, 0, bst->y);
+  BSOD_INVERT (bst);
+  BSOD_TEXT   (bst,  CENTER, "OPERATOR ERROR\n");
+  BSOD_INVERT (bst);
+  for (i = 0; i < countof(panicstr); i++)
+    BSOD_TEXT (bst, CENTER, panicstr[i]);
+  BSOD_PAUSE (bst, 1000000);
+  BSOD_INVERT (bst);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_INVERT (bst);
+  BSOD_PAUSE (bst, 250000);
+  BSOD_RESET (bst);
+
+  XClearWindow (dpy, window);
+  return bst;
+}
+
 
 
 /* SCO OpenServer 5 panic, by Tom Kelly <tom@ancilla.toronto.on.ca>
@@ -2362,7 +2434,7 @@ hppa_linux (Display *dpy, Window window)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.93 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $Revision: 1.94 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },
@@ -3610,6 +3682,7 @@ static const struct {
   { "Nvidia",		nvidia },
   { "Apple2",		apple2crash },
   { "ATM",		atm },
+  { "GLaDOS",		glados },
 };
 
 
@@ -3899,6 +3972,7 @@ static const char *bsod_defaults [] = {
   "*doOS2:		   True",
   "*doNvidia:		   True",
   "*doATM:		   True",
+  "*doGLaDOS:		   True",
 
   "*font:		   9x15bold",
   "*font2:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
@@ -3914,6 +3988,9 @@ static const char *bsod_defaults [] = {
   ".windowslh.foreground:  White",
   ".windowslh.background:  #AA0000",    /* EGA color 0x04. */
   ".windowslh.background2: #AAAAAA",    /* EGA color 0x07. */
+
+  ".glaDOS.foreground:	   White",
+  ".glaDOS.background:	   #0000AA",    /* EGA color 0x01. */
 
   ".amiga.foreground:	   #FF0000",
   ".amiga.background:	   Black",
@@ -4066,6 +4143,8 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-os2",		".doOS2",		XrmoptionNoArg,  "False" },
   { "-atm",		".doATM",		XrmoptionNoArg,  "True"  },
   { "-no-atm",		".doATM",		XrmoptionNoArg,  "False" },
+  { "-glados",		".doGLaDOS",		XrmoptionNoArg,  "True"  },
+  { "-no-glados",	".doGLaDOS",		XrmoptionNoArg,  "False" },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };

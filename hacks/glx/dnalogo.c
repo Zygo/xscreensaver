@@ -46,7 +46,7 @@
 			"*frameThickness:   0.03    \n" \
 			"*triangleSize:	    0.045   \n" \
 			"*speed:	    1.0	    \n" \
-			"*pizza:	    False   \n" \
+			"*mode:		    both"  "\n" \
 			".foreground:	    #00AA00 \n" \
 			"*geometry:	    =640x640\n" \
 
@@ -74,6 +74,12 @@
 #include "gltrackball.h"
 
 #ifdef USE_GL /* whole file */
+
+typedef enum {
+  HELIX_IN, HELIX, HELIX_OUT, 
+  PIZZA_IN, PIZZA, PIZZA_OUT,
+  BOTH
+} glyph_mode;
 
 typedef struct {
   Bool spinning_p;
@@ -114,11 +120,14 @@ typedef struct {
   GLfloat triangle_size;
 
   GLfloat speed;
-  Bool pizza_p;
+  glyph_mode mode;
+  glyph_mode anim_state;
+  GLfloat anim_ratio;
 
   spinner gasket_spinnerx, gasket_spinnery, gasket_spinnerz;
   spinner scene_spinnerx,  scene_spinnery;
-  spinner helix_spinnery, helix_spinnerz;
+  spinner helix_spinnerz;
+  spinner pizza_spinnery, pizza_spinnerz;
   spinner frame_spinner;
 
   trackball_state *trackball;
@@ -131,8 +140,11 @@ typedef struct {
 static logo_configuration *dcs = NULL;
 
 static XrmOptionDescRec opts[] = {
-  { "-speed",  ".speed",  XrmoptionSepArg, 0 },
-  { "-pizza",  ".pizza",  XrmoptionNoArg, "True" },
+  { "-speed",  ".speed",  XrmoptionSepArg, 0       },
+  { "-mode",   ".mode",   XrmoptionSepArg, 0       },
+  { "-pizza",  ".mode",   XrmoptionNoArg,  "pizza" },
+  { "-helix",  ".mode",   XrmoptionNoArg,  "helix" },
+  { "-both",   ".mode",   XrmoptionNoArg,  "both"  },
 };
 
 ENTRYPOINT ModeSpecOpt logo_opts = {countof(opts), opts, 0, NULL, NULL};
@@ -1387,6 +1399,7 @@ tess_combine_cb (GLdouble coords[3], GLdouble *d[4], GLfloat w[4],
 }
 
 
+#if 0
 static void
 tess_vertex_cb (void *vertex_data, void *closure)
 {
@@ -1396,6 +1409,7 @@ tess_vertex_cb (void *vertex_data, void *closure)
   to->points[to->i++] = v[1];
   to->points[to->i++] = v[2];
 }
+#endif
 
 static void
 tess_begin_cb (GLenum which)
@@ -1851,7 +1865,28 @@ init_logo (ModeInfo *mi)
   dc->triangle_size   = get_float_resource(mi->dpy, "triangleSize",   "Float");
 
   dc->speed          = get_float_resource(mi->dpy,   "speed",         "Float");
-  dc->pizza_p        = get_boolean_resource(mi->dpy, "pizza",       "Boolean");
+
+  {
+    char *s = get_string_resource (MI_DISPLAY (mi), "mode", "String");
+    if (!s || !*s || !strcasecmp (s, "helix"))
+      dc->mode = HELIX;
+    else if (!strcasecmp (s, "pizza"))
+      dc->mode = PIZZA;
+    else if (!strcasecmp (s, "both"))
+      dc->mode = BOTH;
+    else
+      {
+        fprintf (stderr, "%s: mode must be helix, pizza or both, not \"%s\"\n", 
+                 progname, s);
+        exit (1);
+      }
+    if (s) free (s);
+
+    dc->anim_state = (dc->mode == BOTH
+                      ? ((random() & 1) ? HELIX : PIZZA)
+                      : dc->mode);
+    dc->anim_ratio = 0;
+  }
 
   {
     XColor xcolor;
@@ -1878,13 +1913,18 @@ init_logo (ModeInfo *mi)
 
   dc->trackball = gltrackball_init ();
 
-  dc->gasket_spinnery.probability = 0.1;
   dc->gasket_spinnerx.probability = 0.1;
+  dc->gasket_spinnery.probability = 0.1;
   dc->gasket_spinnerz.probability = 1.0;
+
   dc->helix_spinnerz.probability  = 0.6;
-  dc->helix_spinnery.probability  = (dc->pizza_p ? 0.6 : 0);
+
+  dc->pizza_spinnerz.probability  = 0.6;
+  dc->pizza_spinnery.probability  = 0.6;
+
   dc->scene_spinnerx.probability  = 0.1;
   dc->scene_spinnery.probability  = 0.0;
+
   dc->frame_spinner.probability   = 5.0;
 
   /* start the frame off-screen */
@@ -1909,18 +1949,16 @@ init_logo (ModeInfo *mi)
     glPushMatrix();
     glRotatef(90, 1, 0, 0);
     glRotatef(90, 0, 0, 1);
-    if (dc->pizza_p)
-      make_pizza (dc, 0, 0);
-    else
-      {
-        glPushMatrix();
-        glRotatef(helix_rot, 0, 0, 1);
-        make_ladder (dc, 0, 0);
-        make_helix  (dc, 0, 0);
-        glRotatef (180, 0, 0, 1);
-        make_helix  (dc, 0, 0);
-        glPopMatrix();
-      }
+    make_pizza (dc, 0, 0);
+
+    glPushMatrix();
+    glRotatef(helix_rot, 0, 0, 1);
+    make_ladder (dc, 0, 0);
+    make_helix  (dc, 0, 0);
+    glRotatef (180, 0, 0, 1);
+    make_helix  (dc, 0, 0);
+    glPopMatrix();
+
     dxf_layer++;
     make_gasket (dc, 0);
     dxf_layer++;
@@ -2104,6 +2142,7 @@ draw_logo (ModeInfo *mi)
   GLfloat gcolor[4];
   GLfloat specular[]  = {0.8, 0.8, 0.8, 1.0};
   GLfloat shininess   = 50.0;
+  Bool pizza_p;
 
   if (!dc->glx_context)
     return;
@@ -2111,7 +2150,8 @@ draw_logo (ModeInfo *mi)
   mi->polygon_count = 0;
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(dc->glx_context));
 
-  if (dc->wire_overlay == 0 &&
+  if (!wire &&
+      dc->wire_overlay == 0 &&
       (random() % (int) (PROBABILITY_SCALE / 0.2)) == 0)
     dc->wire_overlay = ((random() % 200) +
                         (random() % 200) +
@@ -2120,17 +2160,78 @@ draw_logo (ModeInfo *mi)
   tick_spinner (mi, &dc->gasket_spinnerx);
   tick_spinner (mi, &dc->gasket_spinnery);
   tick_spinner (mi, &dc->gasket_spinnerz);
-  tick_spinner (mi, &dc->helix_spinnery);
   tick_spinner (mi, &dc->helix_spinnerz);
+  tick_spinner (mi, &dc->pizza_spinnery);
+  tick_spinner (mi, &dc->pizza_spinnerz);
   tick_spinner (mi, &dc->scene_spinnerx);
   tick_spinner (mi, &dc->scene_spinnery);
   tick_spinner (mi, &dc->frame_spinner);
   link_spinners (mi, &dc->scene_spinnerx, &dc->scene_spinnery);
 
+  switch (dc->anim_state)
+    {
+    case HELIX:
+      if (dc->mode == BOTH &&
+          (random() % (int) (PROBABILITY_SCALE / 0.2)) == 0)
+        dc->anim_state = HELIX_OUT;
+      break;
+
+    case HELIX_OUT:
+      dc->anim_ratio += 0.1 * dc->speed;
+      if (dc->anim_ratio >= 1.0)
+        {
+          dc->anim_ratio = 0.0;
+          dc->anim_state = PIZZA_IN;
+        }
+      break;
+
+    case PIZZA_IN:
+      dc->anim_ratio += 0.1 * dc->speed;
+      if (dc->anim_ratio >= 1.0)
+        {
+          dc->anim_ratio = 0.0;
+          dc->anim_state = PIZZA;
+        }
+      break;
+
+    case PIZZA:
+      if (dc->mode == BOTH &&
+          (random() % (int) (PROBABILITY_SCALE / 0.2)) == 0)
+        dc->anim_state = PIZZA_OUT;
+      break;
+
+    case PIZZA_OUT:
+      dc->anim_ratio += 0.1 * dc->speed;
+      if (dc->anim_ratio >= 1.0)
+        {
+          dc->anim_ratio = 0.0;
+          dc->anim_state = HELIX_IN;
+        }
+      break;
+
+    case HELIX_IN:
+      dc->anim_ratio += 0.1 * dc->speed;
+      if (dc->anim_ratio >= 1.0)
+        {
+          dc->anim_ratio = 0.0;
+          dc->anim_state = HELIX;
+        }
+      break;
+
+    default:
+      abort();
+      break;
+    }
+
+  pizza_p = (dc->anim_state == PIZZA ||
+             dc->anim_state == PIZZA_IN ||
+             dc->anim_state == PIZZA_OUT);
+
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix ();
   {
+    GLfloat scale = 0;
     glScalef(3, 3, 3);
 
     glColor3f(dc->color[0], dc->color[1], dc->color[2]);
@@ -2141,7 +2242,7 @@ draw_logo (ModeInfo *mi)
                    ? dc->frame_spinner.position
                    : -dc->frame_spinner.position);
       GLfloat size = (p > 0.5 ? 1-p : p);
-      GLfloat scale = 1 + (size * 10);
+      scale = 1 + (size * 10);
       glPushMatrix();
       /* gltrackball_rotate (dc->trackball); */
       glRotatef(90, 1, 0, 0);
@@ -2215,12 +2316,27 @@ draw_logo (ModeInfo *mi)
     }
     glPopMatrix();
 
-    glRotatef (360 * sin (M_PI/2 * dc->helix_spinnery.position), 1, 0, 0);
-    glRotatef (360 * sin (M_PI/2 * dc->helix_spinnerz.position), 0, 0, 1);
+    if (pizza_p)
+      {
+        glRotatef (360 * sin (M_PI/2 * dc->pizza_spinnery.position), 1, 0, 0);
+        glRotatef (360 * sin (M_PI/2 * dc->pizza_spinnerz.position), 0, 0, 1);
+      }
+    else
+      {
+        glRotatef (360 * sin (M_PI/2 * dc->helix_spinnerz.position), 0, 0, 1);
+      }
+
+    scale = ((dc->anim_state == PIZZA_IN || dc->anim_state == HELIX_IN)
+             ? dc->anim_ratio
+             : ((dc->anim_state == PIZZA_OUT || dc->anim_state == HELIX_OUT)
+                ? 1.0 - dc->anim_ratio
+                : 1.0));
+    if (scale <= 0) scale = 0.001;
+    glScalef (scale, scale, scale);
 
     if (wire)
       {
-        if (dc->pizza_p)
+        if (pizza_p)
           glCallList (dc->pizza_list_wire);
         else
           glCallList (dc->helix_list_wire);
@@ -2228,14 +2344,14 @@ draw_logo (ModeInfo *mi)
       }
     else if (dc->wire_overlay != 0)
       {
-        if (dc->pizza_p)
+        if (pizza_p)
           glCallList (dc->pizza_list_facetted);
         else
           glCallList (dc->helix_list_facetted);
 
         glDisable (GL_LIGHTING);
 
-        if (dc->pizza_p)
+        if (pizza_p)
           glCallList (dc->pizza_list_wire);
         else
           glCallList (dc->helix_list_wire);
@@ -2245,7 +2361,7 @@ draw_logo (ModeInfo *mi)
       }
     else
       {
-        if (dc->pizza_p)
+        if (pizza_p)
           glCallList (dc->pizza_list);
         else
           glCallList (dc->helix_list);

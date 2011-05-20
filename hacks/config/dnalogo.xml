@@ -9,9 +9,15 @@
           low="0" high="100000" default="25000"
           convert="invert"/>
 
-  <boolean id="pizza"   _label="Pizza"                  arg-set="-pizza"/>
-  <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <select id="mode">
+   <option id="glyph"  _label="DNA Lounge logo" arg-set="-mode helix"/>
+   <option id="pizza"  _label="DNA Pizza logo"  arg-set="-mode pizza"/>
+   <option id="both"   _label="DNA Lounge and DNA Pizza logos"/>
+  </select>
+  <hgroup>
+   <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
 
   <_description>
 DNA Lounge

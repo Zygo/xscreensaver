@@ -86,6 +86,16 @@
 
 #ifdef HAVE_DPMS_EXTENSION
 
+static Bool error_handler_hit_p = False;
+
+static int
+ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
+{
+  error_handler_hit_p = True;
+  return 0;
+}
+
+
 void
 sync_server_dpms_settings (Display *dpy, Bool enabled_p,
                            int standby_secs, int suspend_secs, int off_secs,
@@ -221,6 +231,7 @@ monitor_power_on (saver_info *si, Bool on_p)
 {
   if ((!!on_p) != monitor_powered_on_p (si))
     {
+      XErrorHandler old_handler;
       int event_number, error_number;
       if (!DPMSQueryExtension(si->dpy, &event_number, &error_number) ||
           !DPMSCapable(si->dpy))
@@ -232,8 +243,24 @@ monitor_power_on (saver_info *si, Bool on_p)
           return;
         }
 
+      /* The manual for DPMSForceLevel() says that it throws BadMatch if
+         "DPMS is disabled on the specified display."
+
+         The manual for DPMSCapable() says that it "returns True if the X
+         server is capable of DPMS."
+
+         Apparently they consider "capable of DPMS" and "DPMS is enabled"
+         to be different things, and so even if DPMSCapable() returns
+         True, DPMSForceLevel() *might* throw an X Error.  Isn't that
+         just fucking special.
+       */
+      XSync (si->dpy, False);
+      error_handler_hit_p = False;
+      old_handler = XSetErrorHandler (ignore_all_errors_ehandler);
+      XSync (si->dpy, False);
       DPMSForceLevel(si->dpy, (on_p ? DPMSModeOn : DPMSModeOff));
-      XSync(si->dpy, False);
+      XSync (si->dpy, False);
+      /* Ignore error_handler_hit_p, just probe monitor instead */
 
       if ((!!on_p) != monitor_powered_on_p (si))  /* double-check */
 	fprintf (stderr,
