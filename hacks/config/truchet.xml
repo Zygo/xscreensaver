@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="truchet" _label="Truchet">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="1000000" default="400000"
+          convert="invert"/>
+
+  <!-- #### -min-width [40] -->
+  <!-- #### -max-height [150] -->
+  <!-- #### -max-width [150] -->
+  <!-- #### -min-height [40] -->
+  <!-- #### -max-linewidth [25] -->
+  <!-- #### -min-linewidth [2] -->
+  <!-- #### -no-erase -->
+  <!-- #### -erase-count [25] -->
+  <!-- #### -not-square -->
+  <!-- #### -no-angles -->
+  <!-- #### -no-curves -->
+  <!-- #### -scroll -->
+  <!-- #### -scroll-overlap [400] -->
+  <!-- #### -anim-delay [100] -->
+  <!-- #### -anim-step-size [3] -->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <_description>
+This draws line- and arc-based truchet patterns that tile the screen.
+
+http://en.wikipedia.org/wiki/Tessellation
+
+Written by Adrian Likins; 1998.
+  </_description>
+</screensaver>

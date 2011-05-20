@@ -1,0 +1,78 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+anemotaxis - directional search on a plane.
+.SH SYNOPSIS
+.B anemotaxis
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-delay \fInumber\fP]
+[\-distance \fInumber\fP]
+[\-sources \fInumber\fP]
+[\-searchers \fInumber\fP]
+[\-fps]
+.SH DESCRIPTION
+The program demonstrates a search algorithm designed for locating a
+source of odor in turbulent atmosphere. The odor is convected by wind
+which has a constant mean direction and fluctuations around it. The
+searcher is able to sense the odor and determine local instantaneous
+wind direction. The goal is to find the source in the shortest mean
+time.  Some animals face this task to find mates, food, home etc. They
+exhibit very particular, zigzagging search trajectories.
+
+This is modeled as a search on a discrete two-dimensional lattice. The
+source releases particles that drift with constant velocity in one
+direction and walk randomly in the other direction. The searcher knows
+if it hit a particle, and if so, particle's position one time step
+earlier (local wind direction). The program paints sources and
+particles released by them as well as trajectories of searchers who are
+trying to capture the sources.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).
+.TP 8
+.B \-distance \fInumber\fP
+Max initial distance to the source .  10 - 250.  Default: 40.
+.TP 8
+.B \-sources \fInumber\fP
+Max number of sources.  Default: 25.
+.TP 8
+.B \-searchers \fInumber\fP
+Max number of searchers. Default: 25.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 2004 by Eugene Balkovsky.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Eugene Balkovsky
