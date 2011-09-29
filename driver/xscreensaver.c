@@ -1399,18 +1399,28 @@ main (int argc, char **argv)
   struct passwd *spasswd;
   int i;
 
-  /* It turns out that if we do NLS stuff here, people running in Japanese
-     locales get font craziness on the password dialog, presumably because
-     it is displaying Japanese characters in a non-Japanese font.  I don't
-     understand how to automatically make all this crap work properly by
-     default, so until someone sends me a better patch, just leave it off
-     and run the daemon in English.  -- jwz, 29-Sep-2010
-   */
-#undef ENABLE_NLS
+  /* It turns out that if we do setlocale (LC_ALL, "") here, people
+     running in Japanese locales get font craziness on the password
+     dialog, presumably because it is displaying Japanese characters
+     in a non-Japanese font.  However, if we don't call setlocale()
+     at all, then XLookupString() never returns multi-byte UTF-8
+     characters when people type non-Latin1 characters on the
+     keyboard.
 
+     The current theory (and at this point, I'm really guessing!) is
+     that using LC_CTYPE instead of LC_ALL will make XLookupString()
+     behave usefully, without having the side-effect of screwing up
+     the fonts on the unlock dialog.
+
+     See https://bugs.launchpad.net/ubuntu/+source/xscreensaver/+bug/671923
+     from comment #20 onward.
+
+       -- jwz, 24-Sep-2011
+   */
 #ifdef ENABLE_NLS
-  if (!setlocale (LC_ALL, ""))
-    fprintf (stderr, "locale not supported by C library\n");
+  if (!setlocale (LC_CTYPE, ""))
+    fprintf (stderr, "%s: warning: could not set default locale\n",
+             progname);
 
   bindtextdomain (GETTEXT_PACKAGE, LOCALEDIR);
   textdomain (GETTEXT_PACKAGE);

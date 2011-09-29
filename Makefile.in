@@ -81,6 +81,7 @@ tar::
       ` ";								    \
     cd $$d ; done ;							    \
   echo creating tar file $$ADIR$$NAME.tar.gz... ;			    \
+  export COPYFILE_DISABLE=true ;					    \
   GZIP="-9v" $(TAR) -vchzf $$ADIR$$NAME.tar.gz			            \
     `echo $(TARFILES) $$FILES | sed "s|^|$$NAME/|g; s| | $$NAME/|g" ` ;	    \
   rm $$NAME

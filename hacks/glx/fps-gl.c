@@ -1,4 +1,4 @@
-/* fps, Copyright (c) 2001-2009 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright (c) 2001-2011 Jamie Zawinski <jwz@jwz.org>
  * Draw a frames-per-second display (Xlib and OpenGL).
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -64,7 +64,7 @@ xlockmore_gl_compute_fps (Display *dpy, Window w, fps_state *fpst,
       xlockmore_gl_fps_init (fpst);
     }
 
-  fps_compute (fpst, mi->polygon_count);
+  fps_compute (fpst, mi->polygon_count, mi->recursion_depth);
 }
 
 

@@ -15,7 +15,26 @@
 
   <number id="detail" type="slider" arg="-detail %"
     _label="Detail" _low-label="Low" _high-label="High"
-    low="2" high="30" default="9"/>
+    low="4" high="14" default="9"/>
+
+<!--
+  On a 2.93 gHz iMac i7, I get these rates with -delay 0:
+
+    detail 3:  invisible
+    detail 4:  barely visible
+    detail 5:  1000+ fps, looks like noise at -delay 0, ok at -delay 20000
+    detail 8:  ~700+ fps
+    detail 9:  ~400 fps
+    detail 10: ~300 fps
+    detail 11: ~100 fps
+    detail 12:  ~50 fps
+    detail 13:  ~17 fps
+    detail 14:   ~8 fps
+    detail 15:   ~2 fps
+
+  With the default -delay, CPU load only starts causing the frame rate
+  to drop below 30 fps detail 12 or higher.
+-->
 
   <number id="colors" type="slider" arg="-colors %"
     _label="Number of colors" _low-label="2" _high-label="Many"

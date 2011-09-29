@@ -1033,7 +1033,7 @@ glados (Display *dpy, Window window)
     "FISSREAC0020077:14 FISSREAC0020023:17 FISSREAC0020088:22\n",
     "neutron multiplication rate at spikevalue 99999999\n",
     "\n",
-    "* Press any keep to vent radiological emissions into atmosphere.\n",
+    "* Press any key to vent radiological emissions into atmosphere.\n",
     "* Consult reactor core manual for instructions on proper reactor core\n",
     "maintenance and repair.\n",
     "\n",
@@ -2434,7 +2434,7 @@ hppa_linux (Display *dpy, Window window)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.94 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $Revision: 1.95 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },

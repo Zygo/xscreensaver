@@ -487,6 +487,7 @@ draw_strange(ModeInfo * mi)
 		A->Count = 0;
 	}
 	A->Col++;
+    mi->recursion_depth = A->Count;
 }
 
 

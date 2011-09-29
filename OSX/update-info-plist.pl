@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.15 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.17 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 
@@ -34,11 +34,10 @@ sub read_info_plist($) {
   my ($app_dir) = @_;
   my $file = "$app_dir/Contents/Info.plist";
   $file =~ s@/+@/@g;
-  local *IN;
-  my $body = '';
-  error ("$file: $!") unless open (IN, "<$file");
-  while (<IN>) { $body .= $_; }
-  close IN;
+  open (my $in, '<', $file) || error ("$file: $!");
+  local $/ = undef;  # read entire file
+  my $body = <$in>;
+  close $in;
   return ($file, $body);
 }
 
@@ -47,14 +46,18 @@ sub read_saver_xml($) {
   my ($app_dir) = @_;
   error ("$app_dir: no name") 
     unless ($app_dir =~ m@/([^/.]+).(app|saver)/?$@x);
-  my $name = lc($1);
-  my $file = "$app_dir/Contents/Resources/$name.xml";
+  my $name  = $1;
+  my $file  = "$app_dir/Contents/Resources/" . lc($name) . ".xml";
+  my $file2 = "$app_dir/Contents/PlugIns/$name.saver/Contents/Resources/" .
+              lc($name) . ".xml";
   $file =~ s@/+@/@g;
-  local *IN;
-  my $body = '';
-  error ("$file: $!") unless open (IN, "<$file");
-  while (<IN>) { $body .= $_; }
-  close IN;
+  my $in;
+  open ($in, '<', $file) || 
+  open ($in, '<', $file2) || 
+    error ("$file: $!");
+  local $/ = undef;  # read entire file
+  my $body = <$in>;
+  close $in;
   return ($file, $body);
 }
 
@@ -191,7 +194,8 @@ sub set_icon($) {
 
   # "seticon" is from osxutils, http://osxutils.sourceforge.net/
 
-  my $icon = "$app_dir/../../../XScreenSaver.icns";
+  my $icon = ($app_dir =~ m/\.saver$/ ? 'XScreenSaver' : 'SaverRunner');
+  $icon = "$app_dir/../../../$icon.icns";
   my @cmd = ("seticon", "-d", $icon, $app_dir);
   print STDERR "$progname: exec: " . join(' ', @cmd) . "\n"
     if ($verbose > 1);
@@ -263,6 +267,7 @@ sub usage() {
 }
 
 sub main() {
+
   my @files = ();
   while ($_ = $ARGV[0]) {
     shift @ARGV;

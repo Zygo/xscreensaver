@@ -1198,7 +1198,7 @@ create_xscreensaver_demo (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (grab_image_eventbox);
   gtk_box_pack_start (GTK_BOX (grab_vbox), grab_image_eventbox, FALSE, FALSE, 0);
-  gtk_tooltips_set_tip (tooltips, grab_image_eventbox, _("Whether the image-manipulating modes should operate on random images loaded from disk."), NULL);
+  gtk_tooltips_set_tip (tooltips, grab_image_eventbox, _("Whether the image-manipulating modes should load image files."), NULL);
 
   grab_image_button = gtk_check_button_new_with_label (_("Choose Random Image:"));
   gtk_widget_set_name (grab_image_button, "grab_image_button");
@@ -1233,7 +1233,7 @@ create_xscreensaver_demo (void)
                             (GtkDestroyNotify) gtk_widget_unref);
   gtk_widget_show (image_text);
   gtk_box_pack_start (GTK_BOX (image_hbox), image_text, TRUE, TRUE, 0);
-  gtk_tooltips_set_tip (tooltips, image_text, _("The directory from which images will be randomly chosen."), NULL);
+  gtk_tooltips_set_tip (tooltips, image_text, _("The local directory, RSS feed or Atom feed from which images will be randomly chosen."), NULL);
 
   image_browse_button = gtk_button_new_with_label (_("Browse"));
   gtk_widget_set_name (image_browse_button, "image_browse_button");

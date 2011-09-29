@@ -11,7 +11,7 @@
 
   <number id="spikespeed" type="slider" arg="-speed %"
           _label="Spike growth" _low-label="Slow" _high-label="Fast"
-          low="0.0" high="0.25" default="0.05"/>
+          low="0.001" high="0.25" default="0.05"/>
 
   <number id="count" type="slider" arg="-count %"
           _label="Number of spikes" _low-label="Few" _high-label="Ouch"

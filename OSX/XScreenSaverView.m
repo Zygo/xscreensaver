@@ -134,6 +134,7 @@ add_default_options (const XrmOptionDescRec *opts,
     { "-text-literal",           ".textLiteral",       XrmoptionSepArg, 0 },
     { "-text-file",              ".textFile",          XrmoptionSepArg, 0 },
     { "-text-url",               ".textURL",           XrmoptionSepArg, 0 },
+    { "-text-program",           ".textProgram",       XrmoptionSepArg, 0 },
     { "-grab-desktop",           ".grabDesktopImages", XrmoptionNoArg, "True" },
     { "-no-grab-desktop",        ".grabDesktopImages", XrmoptionNoArg, "False"},
     { "-choose-random-images",   ".chooseRandomImages",XrmoptionNoArg, "True" },
@@ -150,7 +151,8 @@ add_default_options (const XrmOptionDescRec *opts,
     ".textMode:           date",
  // ".textLiteral:        ",
  // ".textFile:           ",
- // ".textURL:            ",
+    ".textURL:            http://twitter.com/statuses/public_timeline.atom",
+ // ".textProgram:        ",
     ".grabDesktopImages:  yes",
     ".chooseRandomImages: no",
     ".imageDirectory:     ~/Pictures",
@@ -315,7 +317,7 @@ add_default_options (const XrmOptionDescRec *opts,
 static void
 screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
 {
-  fps_compute (fpst, 0);
+  fps_compute (fpst, 0, -1);
   fps_draw (fpst);
 }
 
@@ -536,6 +538,12 @@ screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
   [sheet retain];
 
   return sheet;
+}
+
+
+- (NSUserDefaultsController *) userDefaultsController
+{
+  return [prefsReader userDefaultsController];
 }
 
 

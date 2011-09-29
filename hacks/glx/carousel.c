@@ -285,15 +285,14 @@ image_loaded_cb (const char *filename, XRectangle *geom,
     free (frame->loading.title);
   frame->loading.title = (filename ? strdup (filename) : 0);
 
-# if 0 /* xscreensaver-getimage returns paths relative to the image directory
-          now, so leave the sub-directory part in.
-        */
-  if (frame->loading.title)   /* strip filename to part after last /. */
-    {
+  /* xscreensaver-getimage returns paths relative to the image directory
+     now, so leave the sub-directory part in.  Unless it's an absolute path.
+  */
+  if (frame->loading.title && frame->loading.title[0] == '/')
+    {    /* strip filename to part after last /. */
       char *s = strrchr (frame->loading.title, '/');
       if (s) strcpy (frame->loading.title, s+1);
     }
-# endif /* 0 */
 
   if (debug_p)
     fprintf (stderr, "%s:   loaded %4d x %-4d  %4d x %-4d  \"%s\"\n",

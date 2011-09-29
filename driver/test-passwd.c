@@ -202,7 +202,7 @@ main (int argc, char **argv)
 
   progclass = "XScreenSaver";
 
-  if (!setlocale(LC_ALL,""))
+  if (!setlocale (LC_CTYPE, ""))
     fprintf (stderr, "%s: warning: could not set default locale\n",
              progname);
 

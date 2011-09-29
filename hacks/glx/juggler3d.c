@@ -1696,6 +1696,8 @@ show_arms(ModeInfo * mi)
   int soffx = 10;
   int soffy = 11;
 
+  glFrontFace(GL_CCW);
+
   j = 1;
   for(side = LEFT; side <= RIGHT; side = (Hand)((int)side + 1)) {
 	/* Translate into device coords */
@@ -1798,6 +1800,8 @@ show_figure(ModeInfo * mi, Bool init)
   }
 
   glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, gcolor);
+
+  glFrontFace(GL_CCW);
 
   {
     GLfloat scale = ((GLfloat) a[10].x - a[9].x) / 2;
@@ -2065,6 +2069,8 @@ show_ball(ModeInfo *mi, unsigned long color, Trace *s)
   gcolor2[1] = gcolor1[1] / 3;
   gcolor2[2] = gcolor1[2] / 3;
 
+  glFrontFace(GL_CCW);
+
   {
     GLfloat scale = BALLRADIUS;
     glPushMatrix();
@@ -2119,6 +2125,8 @@ show_europeanclub(ModeInfo *mi, unsigned long color, Trace *s)
   gcolor1[0] = mi->colors[color].red   / 65536.0;
   gcolor1[1] = mi->colors[color].green / 65536.0;
   gcolor1[2] = mi->colors[color].blue  / 65536.0;
+
+  glFrontFace(GL_CCW);
 
   {
     GLfloat scale = radius;
@@ -2241,6 +2249,8 @@ show_knife(ModeInfo *mi, unsigned long color, Trace *s)
   gcolor1[1] = mi->colors[color].green / 65536.0;
   gcolor1[2] = mi->colors[color].blue  / 65536.0;
 
+  glFrontFace(GL_CCW);
+
   glPushMatrix();
   glTranslatef(x, y, 0);
   glScalef (2, 2, 2);
@@ -2298,6 +2308,8 @@ show_ring(ModeInfo *mi, unsigned long color, Trace *s)
   gcolor2[0] = gcolor1[0] / 3;
   gcolor2[1] = gcolor1[1] / 3;
   gcolor2[2] = gcolor1[2] / 3;
+
+  glFrontFace(GL_CCW);
 
   glPushMatrix();
   glTranslatef(0, 0, 12);  /* back of ring in hand */
@@ -2387,6 +2399,8 @@ show_bball(ModeInfo *mi, unsigned long color, Trace *s)
   gcolor1[0] = mi->colors[color].red   / 65536.0;
   gcolor1[1] = mi->colors[color].green / 65536.0;
   gcolor1[2] = mi->colors[color].blue  / 65536.0;
+
+  glFrontFace(GL_CCW);
 
   {
     GLfloat scale = radius;

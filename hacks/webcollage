@@ -60,24 +60,24 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.152 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.156 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2011" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
 
 
 
-my @search_methods = ( 20, "googlephotos",  \&pick_from_google_image_photos,
-                       10, "googleimgs",    \&pick_from_google_images,
-                       10, "googlenums",    \&pick_from_google_image_numbers,
+my @search_methods = ( 24, "googlephotos",  \&pick_from_google_image_photos,
+                       13, "googleimgs",    \&pick_from_google_images,
+                       13, "googlenums",    \&pick_from_google_image_numbers,
+                       16, "flickr_recent", \&pick_from_flickr_recent,
+                       13, "flickr_random", \&pick_from_flickr_random,
+                       10, "twitpic",       \&pick_from_twitpic_images,
+                        8, "livejournal",   \&pick_from_livejournal_images,
+                        3, "yahoorand",     \&pick_from_yahoo_random_link,
 
-                       19, "altavista",     \&pick_from_alta_vista_random_link,
-                       12, "flickr_recent", \&pick_from_flickr_recent,
-                       10, "flickr_random", \&pick_from_flickr_random,
-                       10, "livejournal",   \&pick_from_livejournal_images,
-                        5, "twitter",       \&pick_from_twitter_images,
-                        4, "yahoorand",     \&pick_from_yahoo_random_link,
-
+                     # This one doesn't work very well: too many non-img links.
+                       0, "twitter",       \&pick_from_twitter_images,
 
                      # This is a cute way to search for a certain webcams.
                      # Not included in default methods, since these images
@@ -85,6 +85,9 @@ my @search_methods = ( 20, "googlephotos",  \&pick_from_google_image_photos,
                      # See also "SurveillanceSaver".
                      #
                         0, "securitycam",   \&pick_from_security_camera,
+
+                     # Nonfunctional as of June 2011.
+                     #  0, "altavista",     \&pick_from_alta_vista_random_link,
 
                      # In Apr 2002, Google asked me to stop searching them.
                      # I asked them to add a "random link" url.  They said
@@ -97,31 +100,31 @@ my @search_methods = ( 20, "googlephotos",  \&pick_from_google_image_photos,
                      # it's no longer possible to do "or" searches on news
                      # images, so we rarely get any hits there any more.
                      # 
-                     #  0, "yahoonews",   \&pick_from_yahoo_news_text,
+                     #  0, "yahoonews",     \&pick_from_yahoo_news_text,
 
                      # Dec 2004: the ircimages guy's server can't take the
                      # heat, so he started banning the webcollage user agent.
                      # I tried to convince him to add a lighter-weight page to
                      # support webcollage better, but he doesn't care.
                      #
-                     #  0, "ircimages", \&pick_from_ircimages,
+                     #  0, "ircimages",     \&pick_from_ircimages,
 
                      # Dec 2002: Alta Vista has a new "random link" URL now.
                      # They added it specifically to better support webcollage!
                      # That was super cool of them.  This is how we used to do
                      # it, before:
                      #
-                     #  0, "avimages", \&pick_from_alta_vista_images,
-                     #  0, "avtext",   \&pick_from_alta_vista_text,
+                     #  0, "avimages",      \&pick_from_alta_vista_images,
+                     #  0, "avtext",        \&pick_from_alta_vista_text,
 
                      # This broke in 2004.  Eh, Lycos sucks anyway.
                      #
-                     #   0, "lycos",      \&pick_from_lycos_text,
+                     #  0, "lycos",         \&pick_from_lycos_text,
 
                      # This broke in 2003, I think.  I suspect Hotbot is
                      # actually the same search engine data as Lycos.
                      #
-                     #  0, "hotbot",     \&pick_from_hotbot_text,
+                     #  0, "hotbot",        \&pick_from_hotbot_text,
                       );
 
 # programs we can use to write to the root window (tried in ascending order.)
@@ -206,8 +209,7 @@ my %poisoners = (
 # site" diagnostic message.
 #
 my %warningless_sites = (
-  "home.earthlink.net"      => 1,  # Lots of home pages here.
-  "www.geocities.com"       => 1,
+  "home.earthlink.net"      => 1,
   "www.angelfire.com"       => 1,
   "members.aol.com"         => 1,
   "img.photobucket.com"     => 1,
@@ -219,7 +221,15 @@ my %warningless_sites = (
   "multiply.com"            => 1,
   "wikimedia.org"           => 1,
   "twitpic.com"             => 1,
-  "amazonaws.com"           => 1,  # used by twitpic.com
+  "amazonaws.com"           => 1,
+  "blogspot.com"            => 1,
+  "photoshelter.com"        => 1,
+  "myspacecdn.com"          => 1,
+  "feedburner.com"          => 1,
+  "wikia.com"               => 1,
+  "ljplus.ru"               => 1,
+  "yandex.ru"               => 1,
+  "imgur.com"               => 1,
 
   "yimg.com"                => 1,  # This is where dailynews.yahoo.com stores
   "eimg.com"                => 1,  # its images, so pick_from_yahoo_news_text()
@@ -718,30 +728,39 @@ sub pick_image_from_body($$) {
   my %unique_urls;
 
   foreach (split(/ *</)) {
-    if ( m/^meta /i ) {
+    if ( m/^meta.*["']keywords["']/i ) {
 
       # Likewise, reject any web pages that have a KEYWORDS meta tag
       # that is too long.
       #
-      if (m/name ?= ?\"?keywords\"?/i &&
-          m/content ?= ?\"([^\"]+)\"/) {
-        my $L = length($1);
-        if ($L > 1000) {
-          LOG (($verbose_filter || $verbose_load),
-               "excessive keywords ($L bytes) in $url: rejecting.");
-          $rejected_urls{$url} = $L;
-          $body = undef;
-          $_ = undef;
-          return ();
-        } else {
-          LOG ($verbose_filter, "  keywords ($L bytes) in $url (ok)");
-        }
+      my $L = length($_);
+      if ($L > 1000) {
+        LOG (($verbose_filter || $verbose_load),
+             "excessive keywords ($L bytes) in $url: rejecting.");
+        $rejected_urls{$url} = $L;
+        $body = undef;
+        $_ = undef;
+        return ();
+      } else {
+        LOG ($verbose_filter, "  keywords ($L bytes) in $url (ok)");
       }
 
-    } elsif ( m/^(img|a) .*(src|href) ?= ?\"? ?(.*?)[ >\"]/io ) {
+    } elsif (m/^ (IMG|A) \b .* (SRC|HREF) \s* = \s* ["']? (.*?) [ "'<>] /six ||
+             m/^ (LINK|META) \b .* (REL|PROPERTY) \s* = \s*
+                 ["']? (image_src|og:image) ["']? /six) {
 
-      my $was_inline = (! ( "$1" eq "a" || "$1" eq "A" ));
+      my $was_inline = (lc($1) eq 'img');
+      my $was_meta   = (lc($1) eq 'link' || lc($1) eq 'meta');
       my $link = $3;
+
+      # For <link rel="image_src" href="...">
+      # and <meta property="og:image" content="...">
+      #
+      if ($was_meta) {
+        next unless (m/ (HREF|CONTENT) \s* = \s* ["']? (.*?) [ "'<>] /six);
+        $link = $2;
+      }
+
       my ( $width )  = m/width ?=[ \"]*(\d+)/oi;
       my ( $height ) = m/height ?=[ \"]*(\d+)/oi;
       $_ = $link;
@@ -813,20 +832,24 @@ sub pick_image_from_body($$) {
       LOG ($verbose_filter,
            "  image $url" .
            ($width && $height ? " (${width}x${height})" : "") .
-           ($was_inline ? " (inline)" : ""));
+           ($was_meta ? " (meta)" : $was_inline ? " (inline)" : ""));
 
-      $urls[++$#urls] = $url;
-      $unique_urls{$url}++;
 
-      # JPEGs are preferable to GIFs and PNGs.
-      $_ = $url;
-      if ( ! m@[.](gif|png)$@io ) {
-        $urls[++$#urls] = $url;
+      my $weight = 1;
+
+      if ($was_meta) {
+        $weight = 20;	 # meta tag images are far preferable to inline images.
+      } else {
+        if ($url !~ m@[.](gif|png)$@io ) {
+          $weight += 2;	 # JPEGs are preferable to GIFs and PNGs.
+        }
+        if (! $was_inline) {
+          $weight += 4;	 # pointers to images are preferable to inlined images.
+        }
       }
 
-      # pointers to images are preferable to inlined images.
-      if ( ! $was_inline ) {
-        $urls[++$#urls] = $url;
+      $unique_urls{$url}++;
+      for (my $i = 0; $i < $weight; $i++) {
         $urls[++$#urls] = $url;
       }
     }
@@ -852,6 +875,7 @@ sub pick_image_from_body($$) {
 
   return $url;
 }
+
 
 # Given a URL and the RSS feed from that URL, pick a random image from
 # the feed.  This is a lot simpler than extracting images out of a page:
@@ -905,12 +929,9 @@ sub pick_dictionary() {
 #
 sub random_word() {
 
-  local *IN;
-  if (! open (IN, "<$wordlist")) {
-    return undef;
-  }
+  return undef unless open (my $in, '<', $wordlist);
 
-  my $size = (stat(IN))[7];
+  my $size = (stat($in))[7];
   my $word = undef;
   my $count = 0;
 
@@ -919,9 +940,9 @@ sub random_word() {
       if (++$count > 100);
 
     my $pos = int (rand ($size));
-    if (seek (IN, $pos, 0)) {
-      $word = <IN>;   # toss partial line
-      $word = <IN>;   # keep next line
+    if (seek ($in, $pos, 0)) {
+      $word = <$in>;   # toss partial line
+      $word = <$in>;   # keep next line
     }
 
     next unless ($word);
@@ -945,7 +966,7 @@ sub random_word() {
     last if ($word);
   }
 
-  close (IN);
+  close ($in);
 
   if ( $word =~ s/\s/\+/gs ) {  # convert intra-word spaces to "+".
     $word = "\%22$word\%22";    # And put quotes (%22) around it.
@@ -956,13 +977,12 @@ sub random_word() {
 
 
 sub random_words($) {
-  my ($or_p) = @_;
-  my $sep = ($or_p ? "%20OR%20" : "%20");
-  return (random_word . $sep .
-          random_word . $sep .
-          random_word . $sep .
-          random_word . $sep .
-          random_word);
+  my ($sep) = @_;
+  return (random_word() . $sep .
+          random_word() . $sep .
+          random_word() . $sep .
+          random_word() . $sep .
+          random_word());
 }
 
 
@@ -1062,11 +1082,10 @@ sub pick_from_search_engine($$$) {
   1 while ($search_count =~ s/^(\d+)(\d{3})/$1,$2/);
 
 #  if ($search_count eq "?" || $search_count eq "0") {
-#    local *OUT;
 #    my $file = "/tmp/wc.html";
-#    open(OUT, ">$file") || error ("writing $file: $!");
-#    print OUT $body;
-#    close OUT;
+#    open (my $out, '>', $file) || error ("writing $file: $!");
+#    print $out $body;
+#    close $out;
 #    print STDERR  blurb() . "###### wrote $file\n";
 #  }
 
@@ -1395,7 +1414,7 @@ sub pick_from_google_images($;$$) {
   my ($timeout, $words, $max_page) = @_;
 
   if (!defined($words)) {
-    $words = random_word;   # only one word for Google
+    $words = random_word();   # only one word for Google
   }
 
   my $page = (int(rand(9)) + 1);
@@ -1416,10 +1435,14 @@ sub pick_from_google_images($;$$) {
     next unless ($u =~ m@imgres\?imgurl@i);    #  All pics start with this
     next if ($u =~ m@[/.]google\.com\b@i);     # skip google builtins
 
-    if ($u =~ m@^/imgres\?imgurl=(.*?)\&imgrefurl=(.*?)\&@) {
+    $u = html_unquote($u);
+    if ($u =~ m@^/imgres\?imgurl=(.*?)&imgrefurl=(.*?)\&@) {
       my $ref = $2;
       my $img = $1;
       $img = "http://$img" unless ($img =~ m/^http:/i);
+
+      $ref = url_decode($ref);
+      $img = url_decode($img);
 
       LOG ($verbose_filter, "  candidate: $ref");
       push @candidates, $img;
@@ -1549,7 +1572,7 @@ my $alta_vista_url = "http://www.altavista.com/web/results" .
 sub pick_from_alta_vista_text($) {
   my ($timeout) = @_;
 
-  my $words = random_words(0);
+  my $words = random_words('%20');
   my $page = (int(rand(9)) + 1);
   my $search_url = $alta_vista_url . $words;
 
@@ -1872,28 +1895,28 @@ sub pick_from_ircimages($) {
 
 ############################################################################
 #
-# Pick images from Twitter's list of recently-posted images.
+# Pick images from Twitpic's list of recently-posted images.
 #
 ############################################################################
 
-my $twitter_img_url = "http://twitpic.com/public_timeline/feed.rss";
+my $twitpic_img_url = "http://twitpic.com/public_timeline/feed.rss";
 
 # With most of our image sources, we get a random page and then select
-# from the images on it.  However, in the case of Twitter, the page
+# from the images on it.  However, in the case of Twitpic, the page
 # of images tends to update slowly; so we'll remember the last N entries
 # on it and randomly select from those, to get a wider variety each time.
 
-my $twit_cache_size = 1000;
-my @twit_cache = (); # fifo, for ordering by age
-my %twit_cache = (); # hash, for detecting dups
+my $twitpic_cache_size = 1000;
+my @twitpic_cache = (); # fifo, for ordering by age
+my %twitpic_cache = (); # hash, for detecting dups
 
-# twitter
-sub pick_from_twitter_images($) {
+# twitpic
+sub pick_from_twitpic_images($) {
   my ($timeout) = @_;
 
-  $last_search = $twitter_img_url;   # for warnings
+  $last_search = $twitpic_img_url;   # for warnings
 
-  my ( $base, $body ) = get_document ($twitter_img_url, undef, $timeout);
+  my ( $base, $body ) = get_document ($twitpic_img_url, undef, $timeout);
 
   # Update the cache.
 
@@ -1910,37 +1933,38 @@ sub pick_from_twitter_images($) {
       $page =~ s@/$@@s;
       $page .= '/full';
 
-      next if ($twit_cache{$page}); # already have it
+      next if ($twitpic_cache{$page}); # already have it
 
       LOG ($verbose_filter, "  candidate: $page");
-      push @twit_cache, $page;
-      $twit_cache{$page} = $page;
+      push @twitpic_cache, $page;
+      $twitpic_cache{$page} = $page;
     }
   }
 
   # Pull from the cache.
 
-  return () if ($#twit_cache == -1);
+  return () if ($#twitpic_cache == -1);
 
-  my $n = $#twit_cache+1;
+  my $n = $#twitpic_cache+1;
   my $i = int(rand($n));
-  my $page = $twit_cache[$i];
+  my $page = $twitpic_cache[$i];
 
-  # delete this one from @twit_cache and from %twit_cache.
+  # delete this one from @twitpic_cache and from %twitpic_cache.
   #
-  @twit_cache = ( @twit_cache[0 .. $i-1],
-                  @twit_cache[$i+1 .. $#twit_cache] );
-  delete $twit_cache{$page};
+  @twitpic_cache = ( @twitpic_cache[0 .. $i-1],
+                     @twitpic_cache[$i+1 .. $#twitpic_cache] );
+  delete $twitpic_cache{$page};
 
   # Keep the size of the cache under the limit by nuking older entries
   #
-  while ($#twit_cache >= $twit_cache_size) {
-    my $page = shift @twit_cache;
-    delete $twit_cache{$page};
+  while ($#twitpic_cache >= $twitpic_cache_size) {
+    my $page = shift @twitpic_cache;
+    delete $twitpic_cache{$page};
   }
 
   ( $base, $body ) = get_document ($page, undef, $timeout);
   my $img = undef;
+  $body = '' unless defined($body);
 
   foreach (split (/<img\s+/, $body)) {
     my ($src) = m/\bsrc=[\"\'](.*?)[\"\']/si;
@@ -1966,6 +1990,102 @@ sub pick_from_twitter_images($) {
   LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
 
   return ($page, $img);
+}
+
+
+############################################################################
+#
+# Pick images from Twitter's list of recently-posted updates.
+#
+############################################################################
+
+# With most of our image sources, we get a random page and then select
+# from the images on it.  However, in the case of Twitter, the page
+# of images only updates once a minute; so we'll remember the last N entries
+# on it and randomly select from those, to get a wider variety each time.
+
+my $twitter_img_url = "http://twitter.com/statuses/public_timeline.rss";
+
+my $twitter_cache_size = 1000;
+my @twitter_cache = (); # fifo, for ordering by age
+my %twitter_cache = (); # hash, for detecting dups
+
+
+# twitter
+sub pick_from_twitter_images($) {
+  my ($timeout) = @_;
+
+  $last_search = $twitter_img_url;   # for warnings
+
+  my ( $base, $body ) = get_document ($twitter_img_url, undef, $timeout);
+
+  # Update the cache.
+
+  if ($body) {
+    $body =~ s/\n/ /gs;
+    $body =~ s/(<item)\b/\n$1/gsi;
+
+    my @items = split (/\n/, $body);
+    shift @items;
+    foreach (@items) {
+      next unless (m@<link>([^<>]*)</link>@si);
+      my $page = html_unquote ($1);
+
+      next if ($twitter_cache{$page}); # already have it
+
+      my ($title) = m@<title\b[^<>]*>(.*?)</title>@si;
+      next unless $title;
+
+      my ($url) = ($title =~ m@\b(https?://[^\s\[\]()<>\"\']+[a-z\d/])@si);
+      next unless $url;
+
+      LOG ($verbose_filter, "  candidate: $page - $url");
+      push @twitter_cache, $page;
+      $twitter_cache{$page} = $url;
+    }
+  }
+
+  # Pull from the cache.
+
+  return () if ($#twitter_cache == -1);
+
+  my $n = $#twitter_cache+1;
+  my $i = int(rand($n));
+  my $page = $twitter_cache[$i];
+  my $url  = $twitter_cache{$page};
+
+  # delete this one from @twitter_cache and from %twitter_cache.
+  #
+  @twitter_cache = ( @twitter_cache[0 .. $i-1],
+                     @twitter_cache[$i+1 .. $#twitter_cache] );
+  delete $twitter_cache{$page};
+
+  # Keep the size of the cache under the limit by nuking older entries
+  #
+  while ($#twitter_cache >= $twitter_cache_size) {
+    my $page = shift @twitter_cache;
+    delete $twitter_cache{$page};
+  }
+
+  LOG ($verbose_load, "picked page $url");
+
+  $suppress_audit = 1;
+
+  my ( $base2, $body2 ) = get_document ($url, $base, $timeout);
+
+  if (!$base2 || !$body2) {
+    $body2 = undef;
+    return ();
+  }
+
+  my $img = pick_image_from_body ($base2, $body2);
+  $body2 = undef;
+
+  if ($img) {
+    return ($base2, $img);
+  } else {
+    return ();
+  }
 }
 
 
@@ -2063,8 +2183,8 @@ sub pick_from_flickr_recent($) {
 #
 ############################################################################
 
-my $flickr_rss_base = ("http://www.flickr.com/services/feeds/photos_public.gne" .
-                       "?format=rss_200_enc&tags=");
+my $flickr_rss_base = ("http://www.flickr.com/services/feeds/photos_public.gne".
+                       "?format=rss_200_enc&tagmode=any&tags=");
 
 # Picks a random RSS feed; picks a random image from that feed;
 # returns 2 URLs: the page containing the image, and the image.
@@ -2074,10 +2194,15 @@ my $flickr_rss_base = ("http://www.flickr.com/services/feeds/photos_public.gne" 
 sub pick_from_flickr_random($) {
   my $timeout = shift;
 
-  my $rss = $flickr_rss_base . random_word();
+  my $words = random_words(',');
+  my $rss = $flickr_rss_base . $words;
   $last_search = $rss;
 
+  $_ = $words;
+  s/,/ /g;
+
   print STDERR "\n\n" if ($verbose_load);
+  LOG ($verbose_load, "words: $_");
   LOG ($verbose_load, "URL: $last_search");
 
   $suppress_audit = 1;
@@ -2126,16 +2251,15 @@ sub pick_from_driftnet($) {
   $last_search = $id;
 
   while ($now = time, $now < $start + $timeout) {
-    local *DIR;
-    opendir (DIR, $dir) || error ("$dir: $!");
-    while (my $file = readdir(DIR)) {
+    opendir (my $dir, $dir) || error ("$dir: $!");
+    while (my $file = readdir($dir)) {
       next if ($file =~ m/^\./);
       $file = "$dir/$file";
-      closedir DIR;
+      closedir ($dir);
       LOG ($verbose_load, "picked file $file ($id)");
       return ($id, $file);
     }
-    closedir DIR;
+    closedir ($dir);
   }
   LOG (($verbose_net || $verbose_load), "timed out for $id");
   return ();
@@ -2152,11 +2276,11 @@ sub get_driftnet_file($) {
   error ("$id: $file not in $driftnet_dir?")
     unless ($file =~ m@^$re@o);
 
-  local *IN;
-  open (IN, $file) || error ("$id: $file: $!");
+  open (my $in, '<', $file) || error ("$id: $file: $!");
   my $body = '';
-  while (<IN>) { $body .= $_; }
-  close IN || error ("$id: $file: $!");
+  local $/ = undef;  # read entire file
+  $body = <$in>;
+  close ($in) || error ("$id: $file: $!");
   unlink ($file) || error ("$id: $file: rm: $!");
   return ($id, $body);
 }
@@ -2205,8 +2329,8 @@ sub spawn_driftnet($) {
 }
 
 # local-directory
-sub pick_from_local_dir {
-  my ( $timeout ) = @_;
+sub pick_from_local_dir($) {
+  my ($timeout) = @_;
 
   my $id = $local_magic;
   $last_search = $id;
@@ -2226,7 +2350,7 @@ sub pick_from_local_dir {
 }
 
 
-sub get_local_file {
+sub get_local_file($) {
   my ($file) = @_;
 
   error ("\$local_dir unset?") unless ($local_dir);
@@ -2236,11 +2360,10 @@ sub get_local_file {
   error ("$id: $file not in $local_dir?")
     unless ($file =~ m@^$re@o);
 
-  local *IN;
-  open (IN, $file) || error ("$id: $file: $!");
-  my $body = '';
-  while (<IN>) { $body .= $_; }
-  close IN || error ("$id: $file: $!");
+  open (my $in, '<', $file) || error ("$id: $file: $!");
+  local $/ = undef;  # read entire file
+  my $body = <$in>;
+  close ($in) || error ("$id: $file: $!");
   return ($id, $body);
 }
 
@@ -2829,12 +2952,12 @@ sub image_to_pnm($$$) {
       $body = undef;
     };
 
-    if (($pid = open(PIPE, "| $cmd2 > $output"))) {
+    if (($pid = open (my $pipe, "| $cmd2 > $output"))) {
       $timed_out = 0;
       alarm $cvt_timeout;
-      print PIPE $body;
+      print $pipe $body;
       $body = undef;
-      close PIPE;
+      close $pipe;
 
       LOG ($verbose_exec, "awaiting $pid");
       waitpid ($pid, 0);
@@ -2889,10 +3012,9 @@ sub ppmmake($$$$) {
   my $pixel = pack('CCC', $r, $g, $b);
   my $bits = "P6\n$w $h\n255\n" . ($pixel x ($w * $h));
 
-  local *OUT;
-  open (OUT, ">$outfile") || error ("$outfile: $!");
-  print OUT $bits;
-  close OUT;
+  open (my $out, '>', $outfile) || error ("$outfile: $!");
+  print $out $bits;
+  close $out;
 }
 
 
@@ -3031,12 +3153,12 @@ sub x_or_pbm_output($) {
     my ($iw, $ih);
 
     my $body = "";
-    local *IMG;
-    open(IMG, "<$bgimage") || error "couldn't open $bgimage: $!";
-    my $cmd;
-    while (<IMG>) { $body .= $_; }
-    close (IMG);
+    open (my $imgf, '<', $bgimage) || error "couldn't open $bgimage: $!";
+    local $/ = undef;  # read entire file
+    $body = <$imgf>;
+    close ($imgf);
 
+    my $cmd;
     if ((@_ = gif_size ($body))) {
       ($iw, $ih) = @_;
       $cmd = "giftopnm |";
@@ -3064,10 +3186,10 @@ sub x_or_pbm_output($) {
          "pasting $bgimage (${iw}x$ih) into base image at $x,$y");
 
     $cmd .= "pnmpaste - $x $y $image_ppm > $image_tmp1";
-    open (IMG, "| $cmd") || error "running $cmd: $!";
-    print IMG $body;
+    open ($imgf, "| $cmd") || error "running $cmd: $!";
+    print $imgf $body;
     $body = undef;
-    close (IMG);
+    close ($imgf);
     LOG ($verbose_exec, "subproc exited normally.");
     rename ($image_tmp1, $image_ppm) ||
       error "renaming $image_tmp1 to $image_ppm: $!";
@@ -3125,10 +3247,9 @@ sub paste_image($$$$) {
       return 0;
     }
 
-    local *OUT;
-    open (OUT, ">$image_tmp1") || error ("writing $image_tmp1: $!");
-    print OUT $body || error ("writing $image_tmp1: $!");
-    close OUT || error ("writing $image_tmp1: $!");
+    open (my $out, '>', $image_tmp1) || error ("writing $image_tmp1: $!");
+    (print $out $body) || error ("writing $image_tmp1: $!");
+    close ($out) || error ("writing $image_tmp1: $!");
 
   } else {
     ($iw, $ih) = image_to_pnm ($img, $body, $image_tmp1);
@@ -3160,12 +3281,11 @@ sub paste_image($$$$) {
     rename ($image_tmp2, $image_tmp1);
 
     # re-get the width/height in case the filter resized it.
-    local *IMG;
-    open(IMG, "<$image_tmp1") || return 0;
-    $_ = <IMG>;
-    $_ = <IMG>;
+    open (my $imgf, '<', $image_tmp1) || return 0;
+    $_ = <$imgf>;
+    $_ = <$imgf>;
     ($iw, $ih) = m/^(\d+) (\d+)$/;
-    close (IMG);
+    close ($imgf);
     return 0 unless ($iw && $ih);
   }
 
@@ -3442,10 +3562,10 @@ sub update_imagemap($$$$$$$$) {
   #
   my $template_html = '';
   {
-    local *IN;
-    if (open (IN, "<$imagemap_html")) {
-      while (<IN>) { $template_html .= $_; }
-      close IN;
+    if (open (my $in, '<', $imagemap_html)) {
+      local $/ = undef;  # read entire file
+      $template_html = <$in>;
+      close $in;
       LOG ($verbose_pbm, "read template $imagemap_html");
     }
 
@@ -3495,10 +3615,9 @@ sub update_imagemap($$$$$$$$) {
       $body =~ s@(<SPAN\s+CLASS=\"webcollage_size\">).*?(</SPAN>)@$1$size$2@si;
     }
 
-    local *OUT;
-    open (OUT, ">$imagemap_html_tmp") || error ("$imagemap_html_tmp: $!");
-    print OUT $body                   || error ("$imagemap_html_tmp: $!");
-    close OUT                         || error ("$imagemap_html_tmp: $!");
+    open (my $out, '>', $imagemap_html_tmp) || error ("$imagemap_html_tmp: $!");
+    (print $out $body)                      || error ("$imagemap_html_tmp: $!");
+    close ($out)                            || error ("$imagemap_html_tmp: $!");
     LOG ($verbose_pbm, "wrote $imagemap_html_tmp");
   }
 

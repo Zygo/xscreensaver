@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2009 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -172,7 +172,7 @@ parse_attrs (NSMutableDictionary *dict, NSXMLNode *node)
     if (! old) {
       NSAssert2 (0, @"unknown attribute \"%@\" in \"%@\"", key, [node name]);
     } else if ([old length] != 0) {
-      NSAssert2 (0, @"duplicate %@: \"%@\", \"%@\"", old, val);
+      NSAssert3 (0, @"duplicate %@: \"%@\", \"%@\"", key, old, val);
     } else {
       [dict setValue:val forKey:key];
     }
@@ -374,7 +374,8 @@ make_file_selector (NSUserDefaultsController *prefs,
                     const XrmOptionDescRec *opts, 
                     NSView *parent, NSXMLNode *node,
                     BOOL dirs_only_p,
-                    BOOL no_label_p)
+                    BOOL no_label_p,
+                    BOOL editable_text_p)
 {
   NSMutableDictionary *dict =
   [NSMutableDictionary dictionaryWithObjectsAndKeys:
@@ -404,9 +405,9 @@ make_file_selector (NSUserDefaultsController *prefs,
   [txt setStringValue:@"123456789 123456789 "];
   [txt sizeToFit];
   [txt setSelectable:YES];
-  [txt setEditable:NO];
-  [txt setBezeled:NO];
-  [txt setDrawsBackground:NO];
+  [txt setEditable:editable_text_p];
+  [txt setBezeled:editable_text_p];
+  [txt setDrawsBackground:editable_text_p];
   [[txt cell] setWraps:NO];
   [[txt cell] setScrollable:YES];
   [[txt cell] setLineBreakMode:NSLineBreakByTruncatingHead];
@@ -424,10 +425,12 @@ make_file_selector (NSUserDefaultsController *prefs,
   bind_switch_to_preferences (prefs, txt, arg, opts);
   [txt release];
 
-  // Make the text field be the same height as the label.
+  // Make the text field and label be the same height, whichever is taller.
   if (lab) {
     rect = [txt frame];
-    rect.size.height = [lab frame].size.height;
+    rect.size.height = ([lab frame].size.height > [txt frame].size.height
+                        ? [lab frame].size.height
+                        : [txt frame].size.height);
     [txt setFrame:rect];
   }
 
@@ -856,7 +859,7 @@ make_option_menu (NSUserDefaultsController *prefs,
     if ([child kind] == NSXMLCommentKind)
       continue;
     if ([child kind] != NSXMLElementKind) {
-      NSAssert2 (0, @"weird XML node kind: %d: %@", [child kind], node);
+      NSAssert2 (0, @"weird XML node kind: %d: %@", (int)[child kind], node);
       continue;
     }
 
@@ -1243,6 +1246,8 @@ layout_group (NSView *group, BOOL horiz_p)
   }
   
   NSRect rect;
+  rect.origin.x = 0;
+  rect.origin.y = 0;
   rect.size.width = maxx;
   rect.size.height = -miny;
   [group setFrame:rect];
@@ -1274,17 +1279,21 @@ make_text_controls (NSUserDefaultsController *prefs,
      ( )  Text       [__________________________]
      ( )  Text file  [_________________] [Choose]
      ( )  URL        [__________________________]
+     ( )  Shell Cmd  [__________________________]
 
     textMode -text-mode date
     textMode -text-mode literal   textLiteral -text-literal %
     textMode -text-mode file      textFile    -text-file %
     textMode -text-mode url       textURL     -text-url %
+    textMode -text-mode program   textProgram -text-program %
    */
   NSRect rect;
   rect.size.width = rect.size.height = 1;
   rect.origin.x = rect.origin.y = 0;
-  NSView *group = [[NSView alloc] initWithFrame:rect];
+  NSView *group  = [[NSView alloc] initWithFrame:rect];
   NSView *rgroup = [[NSView alloc] initWithFrame:rect];
+
+  Bool program_p = TRUE;
 
 
   NSXMLElement *node2;
@@ -1301,7 +1310,7 @@ make_text_controls (NSUserDefaultsController *prefs,
                        initWithFrame:rect
                        mode:NSRadioModeMatrix
                        prototype:proto
-                       numberOfRows:4
+                       numberOfRows: 4 + (program_p ? 1 : 0)
                        numberOfColumns:1];
   [matrix setAllowsEmptySelection:NO];
 
@@ -1310,6 +1319,7 @@ make_text_controls (NSUserDefaultsController *prefs,
   [cnames addObject:@"Text"];
   [cnames addObject:@"File"];
   [cnames addObject:@"URL"];
+  if (program_p) [cnames addObject:@"Shell Cmd"];
   [matrix bind:@"content"
           toObject:cnames
           withKeyPath:@"arrangedObjects"
@@ -1349,7 +1359,7 @@ make_text_controls (NSUserDefaultsController *prefs,
                         @"textFile",           @"id",
                         @"-text-file %",       @"arg",
                         nil]];
-  make_file_selector (prefs, opts, rgroup, node2, NO, YES);
+  make_file_selector (prefs, opts, rgroup, node2, NO, YES, NO);
   [node2 release];
 
 //  rect = [last_child(rgroup) frame];
@@ -1366,6 +1376,20 @@ make_text_controls (NSUserDefaultsController *prefs,
 
 //  rect = [last_child(rgroup) frame];
 
+  if (program_p) {
+    //  <string id="textProgram" _label="" arg-set="text-program %"/>
+    node2 = [[NSXMLElement alloc] initWithName:@"string"];
+    [node2 setAttributesAsDictionary:
+            [NSDictionary dictionaryWithObjectsAndKeys:
+                          @"textProgram",        @"id",
+                          @"-text-program %",    @"arg",
+                          nil]];
+    make_text_field (prefs, opts, rgroup, node2, YES);
+    [node2 release];
+  }
+
+//  rect = [last_child(rgroup) frame];
+
   layout_group (rgroup, NO);
 
   rect = [rgroup frame];
@@ -1378,6 +1402,8 @@ make_text_controls (NSUserDefaultsController *prefs,
   control = last_child (rgroup);
   rect = [control frame];
   rect.size.width = 30;  // width of the string "Text", plus a bit...
+  if (program_p)
+    rect.size.width += 25;
   rect.size.height += LINE_SPACING;
   [matrix setCellSize:rect.size];
   [matrix sizeToCells];
@@ -1392,7 +1418,7 @@ make_text_controls (NSUserDefaultsController *prefs,
   // the text fields.
   // 
   rect.size = [matrix cellSize];
-  rect.size.width *= 10;
+  rect.size.width = 300;
   [matrix setCellSize:rect.size];
   [matrix sizeToCells];
 
@@ -1461,11 +1487,24 @@ make_image_controls (NSUserDefaultsController *prefs,
   [node2 setAttributesAsDictionary:
           [NSDictionary dictionaryWithObjectsAndKeys:
                         @"imageDirectory",     @"id",
-                        @"Images directory:",  @"_label",
+                        @"Images from:",       @"_label",
                         @"-image-directory %", @"arg",
                         nil]];
-  make_file_selector (prefs, opts, parent, node2, YES, NO);
+  make_file_selector (prefs, opts, parent, node2, YES, NO, YES);
   [node2 release];
+
+  // Add a second, explanatory label below the file/URL selector.
+
+  NSTextField *lab2 = 0;
+  lab2 = make_label (@"(Local folder, or URL of RSS or Atom feed)");
+  place_child (parent, lab2, NO);
+
+  // Pack it in a little tighter vertically.
+  NSRect r2 = [lab2 frame];
+  r2.origin.x += 20;
+  r2.origin.y += 14;
+  [lab2 setFrameOrigin:r2.origin];
+  [lab2 release];
 }
 
 
@@ -1481,7 +1520,7 @@ make_control (NSUserDefaultsController *prefs,
   if ([node kind] == NSXMLCommentKind)
     return;
   if ([node kind] != NSXMLElementKind) {
-    NSAssert2 (0, @"weird XML node kind: %d: %@", [node kind], node);
+    NSAssert2 (0, @"weird XML node kind: %d: %@", (int)[node kind], node);
     return;
   }
 
@@ -1501,7 +1540,7 @@ make_control (NSUserDefaultsController *prefs,
     make_text_field (prefs, opts, parent, node, NO);
 
   } else if ([name isEqualToString:@"file"]) {
-    make_file_selector (prefs, opts, parent, node, NO, NO);
+    make_file_selector (prefs, opts, parent, node, NO, NO, NO);
 
   } else if ([name isEqualToString:@"number"]) {
     make_number_selector (prefs, opts, parent, node);

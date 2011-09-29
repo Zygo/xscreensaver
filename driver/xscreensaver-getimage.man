@@ -41,9 +41,12 @@ Selection and loading of images is done by invoking the
 program.
 .TP 4
 .B imageDirectory
-When loading images from disk, this is the directory to search.
-The directory will be searched recursively, and all files in it are 
-assumed to be images.
+When loading images from disk, this is the directory to find them in.
+The directory will be searched recursively for images.
+
+It may also be the URL of an RSS or Atom feed, in which case a
+random image from that feed will be selected instead.  The contents
+of the feed will be cached locally and refreshed periodically as needed.
 .PP
 If none of the three options are set to True, then video
 colorbars will be displayed instead.
@@ -58,7 +61,7 @@ when loading image files or video frames.)
 .BR xscreensaver\-getimage\-file (1)
 .BR xscreensaver\-getimage\-video (1)
 .SH COPYRIGHT
-Copyright \(co 2001 by Jamie Zawinski.  Permission to use, copy,
+Copyright \(co 2001-2011 by Jamie Zawinski.  Permission to use, copy,
 modify, distribute, and sell this software and its documentation for
 any purpose is hereby granted without fee, provided that the above
 copyright notice appear in all copies and that both that copyright

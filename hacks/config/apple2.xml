@@ -32,7 +32,9 @@ the contents of a file or URL.  In "Slideshow Mode", it chooses random
 images and displays them within the limitations of the Apple ][
 display hardware.  (Six available colors in hi-res mode!)
 
-On X11 systems, This program is also a fully-functional VT100 emulator.
+This program is also a fully-functional VT100 emulator!  Run it as an
+application instead of as a screen saver and you can use it as a
+terminal.
 
 http://en.wikipedia.org/wiki/Apple_II_series
 

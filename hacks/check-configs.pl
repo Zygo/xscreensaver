@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008, 2009 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2011 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -19,7 +19,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.3 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my $version = q{ $Revision: 1.4 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
 
 my $verbose = 0;
 
@@ -46,6 +46,7 @@ sub parse_src($) {
   $file = 'sproingiewrap.c' if ($file eq 'sproingies.c');
   $file = 'b_lockglue.c' if ($file eq 'bubble3d.c');
   $file = 'polyhedra-gl.c' if ($file eq 'polyhedra.c');
+  $file = 'companion.c' if ($file eq 'companioncube.c');
 
   $file = "glx/$file" unless (-f $file);
   my $body = '';

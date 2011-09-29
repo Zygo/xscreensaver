@@ -19,9 +19,8 @@ glmatrix - simulates the title sequence effect of the movie
 [\-wireframe]
 [\-fps]
 .SH DESCRIPTION
-The \fIglmatrix\fP program draws dropping characters similar to what
-is seen in the title sequence of the Wachowski brothers' film,
-"The Matrix".
+The \fIglmatrix\fP program draws the 3D "digital rain" effect, as seen
+in the title sequence of the Wachowski brothers' film, "The Matrix".
 
 Also see
 .BR xmatrix (MANSUFFIX)

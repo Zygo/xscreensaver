@@ -51,8 +51,6 @@
 #define DEF_MODE        "Matrix"
 #define DEF_TIMEFMT     " %l%M%p "
 
-#include "gllist.h"
-
 
 #define CHAR_COLS 16
 #define CHAR_ROWS 13

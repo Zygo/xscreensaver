@@ -76,7 +76,7 @@ typedef struct {
 } image;
 
 
-typedef enum { EARLY, IN, NORMAL, LOADING, SHUFFLE } fade_mode;
+typedef enum { EARLY, SHUFFLE, NORMAL, LOADING } fade_mode;
 static int fade_ticks = 60;
 
 typedef struct {
@@ -109,7 +109,8 @@ static int duration;         /* Reload images after this long. */
 static Bool mipmap_p;        /* Use mipmaps instead of single textures. */
 static Bool titles_p;        /* Display image titles. */
 static Bool polaroid_p;      /* Use instant-film look for images. */
-static Bool clip_p;          /* Clip images instead of scaling for -polaroid. */static Bool shadows_p;       /* Draw drop shadows. */
+static Bool clip_p;          /* Clip images instead of scaling for -polaroid. */
+static Bool shadows_p;       /* Draw drop shadows. */
 static Bool debug_p;         /* Be loud and do weird things. */
 
 
@@ -278,15 +279,15 @@ image_loaded_cb (const char *filename, XRectangle *geom,
     free (frame->title);
   frame->title = (filename ? strdup (filename) : 0);
 
-# if 0 /* xscreensaver-getimage returns paths relative to the image directory
-          now, so leave the sub-directory part in.
-        */
-  if (frame->title)   /* strip filename to part after last /. */
+  /* xscreensaver-getimage returns paths relative to the image directory
+     now, so leave the sub-directory part in.  Unless it's an absolute path.
+  */
+  if (frame->title && frame->title[0] == '/')
     {
+      /* strip filename to part after last /. */
       char *s = strrchr (frame->title, '/');
       if (s) strcpy (frame->title, s+1);
     }
-# endif /* 0 */
 
   if (debug_p)
     fprintf (stderr, "%s:   loaded %4d x %-4d  %4d x %-4d  \"%s\"\n",
@@ -694,9 +695,11 @@ draw_photopile (ModeInfo *mi)
     /* Handle state transitions. */
     switch (ss->mode)
       {
-      case IN:
+      case SHUFFLE:
         if (--ss->mode_tick <= 0)
           {
+            ss->nframe = (ss->nframe+1) % (MI_COUNT(mi)+1);
+
             ss->mode = NORMAL;
             ss->last_time = time((time_t *) 0);
           }
@@ -714,15 +717,6 @@ draw_photopile (ModeInfo *mi)
             set_new_positions(ss);
             ss->mode = SHUFFLE;
             ss->mode_tick = fade_ticks / speed;
-          }
-        break;
-      case SHUFFLE:
-        if (--ss->mode_tick <= 0)
-          {
-            ss->nframe = (ss->nframe+1) % (MI_COUNT(mi)+1);
-
-            ss->mode = NORMAL;
-            ss->last_time = time((time_t *) 0);
           }
         break;
       default:
@@ -744,13 +738,6 @@ draw_photopile (ModeInfo *mi)
 
             switch (ss->mode)
               {
-              case IN:
-                s *= t;
-                break;
-              case NORMAL:
-              case LOADING:
-                t = 1.0;
-                break;
               case SHUFFLE:
                 if (i == MI_COUNT(mi))
                   {
@@ -760,6 +747,10 @@ draw_photopile (ModeInfo *mi)
                   {
                     s *= 1.0 - t;
                   }
+                break;
+              case NORMAL:
+              case LOADING:
+                t = 1.0;
                 break;
               default:
                 abort();

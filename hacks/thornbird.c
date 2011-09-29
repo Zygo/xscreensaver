@@ -248,7 +248,6 @@ draw_thornbird(ModeInfo * mi)
 	XDrawPoints(dsp, win, gc, hp->pointBuffer[current],
 		    batchcount, CoordModeOrigin);
 	hp->inc++;
-
 }
 
 ENTRYPOINT void

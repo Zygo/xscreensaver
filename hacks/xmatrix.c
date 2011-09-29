@@ -43,7 +43,7 @@
  *         And keep in mind that this program emulates the
  *         behavior of the computer screens that were visible
  *         in the movies -- not the behavior of the effects in
- *         the title sequences.
+ *         the title sequences.  "GLMatrix" does that.
  *
  *     ==========================================================
  *
