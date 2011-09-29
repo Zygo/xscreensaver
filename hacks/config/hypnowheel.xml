@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="hypnowheel" _label="Hypnowheel">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Slow" _high-label="Fast"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+            low="0.1" high="20.0" default="1.0"/>
+
+    <hgroup>
+    <boolean id="wander"    _label="Wander"             arg-set="-wander"/>
+    <boolean id="symmetric" _label="Symmetric twisting" arg-set="-symmetric"/>
+    </hgroup>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+   </vgroup>
+   <vgroup>
+
+    <number id="layers" type="slider" arg="-layers %"
+            _label="Layers" _low-label="1" _high-label="50"
+            low="1" high="50" default="4"/>
+
+    <number id="count" type="slider" arg="-count %"
+            _label="Arms" _low-label="2" _high-label="50"
+            low="2" high="50" default="13"/>
+
+    <number id="twistiness" type="slider" arg="-twistiness %"
+            _label="Twistiness" _low-label="Low" _high-label="High"
+            low="0.2" high="10.0" default="4.0"/>
+   </vgroup>
+  </hgroup>
+
+  <_description>
+Draws a series of overlapping, translucent spiral patterns.
+The tightness of their spirals fluctuates in and out.
+
+http://en.wikipedia.org/wiki/Moire_pattern
+
+Written by Jamie Zawinski; 2008.
+  </_description>
+</screensaver>
