@@ -685,6 +685,7 @@ substrate_draw (Display *dpy, Window window, void *closure)
     XSetForeground(st->dpy, st->fgc, st->gcv.foreground);
   }
 
+  /* #### mi->recursion_depth = st->f->cycles; */
   return st->growth_delay;
 }
 

@@ -76,6 +76,8 @@ minixpm_to_ximage (Display *dpy, Visual *visual, Colormap colormap, int depth,
 
   unsigned long *pixels;
   XImage *ximage = 0;
+  
+  memset (cmap, 0, sizeof(cmap)); /* avoid warnings */
 
   if (4 != sscanf ((const char *) *data,
                    "%d %d %d %d %c", &w, &h, &ncolors, &nbytes, &c)) {

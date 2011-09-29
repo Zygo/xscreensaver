@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.14
-!                              20-May-2011
+!                              version 5.15
+!                              28-Sep-2011
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -41,6 +41,7 @@
 *grabDesktopImages:	True
 *grabVideoFrames:	False
 *chooseRandomImages:	@DEFAULT_IMAGES_P@
+! This can be a local directory name, or the URL of an RSS or Atom feed.
 *imageDirectory:	@DEFAULT_IMAGE_DIRECTORY@
 *nice:			10
 *memoryLimit:		0
@@ -61,8 +62,8 @@
 *textLiteral:		XScreenSaver
 *textFile:		@DEFAULT_TEXT_FILE@
 *textProgram:		fortune
-*textURL:		http://www.livejournal.com/stats/latest-rss.bml
-!*textURL:		http://twitter.com/statuses/public_timeline.atom
+*textURL:		http://twitter.com/statuses/public_timeline.atom
+!*textURL:		http://www.livejournal.com/stats/latest-rss.bml
 
 *overlayTextForeground:	#FFFF00
 *overlayTextBackground:	#000000
@@ -73,7 +74,9 @@
 *sgiSaverExtension:	True
 *xidleExtension:	True
 *procInterrupts:	True
-*xinputExtensionDev:	True
+
+! Turning this on makes pointerHysteresis not work.
+*xinputExtensionDev:	False
 
 ! Set this to True if you are experiencing longstanding XFree86 bug #421
 ! (xscreensaver not covering the whole screen)
@@ -349,7 +352,10 @@ GetViewPortIsFullOfLies: False
 -				lcdscrub -root				    \n\
 @GL_KLUDGE@ GL: 				photopile -root				    \n\
 @GL_KLUDGE@ GL: 				skytentacles -root			    \n\
-@GL_KLUDGE@ GL: 				rubikblocks -root			    \n
+@GL_KLUDGE@ GL: 				rubikblocks -root			    \n\
+@GL_KLUDGE@ GL: 				companioncube -root			    \n\
+@GL_KLUDGE@ GL: 				hilbert -root				    \n\
+@GL_KLUDGE@ GL: 				tronbit -root				    \n
 
 
 
@@ -432,6 +438,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.bubble3d.name:       Bubble3D
 *hacks.ccurve.name:         CCurve
 *hacks.cloudlife.name:      CloudLife
+*hacks.companioncube.name:  CompanionCube
 *hacks.cubestorm.name:      CubeStorm
 *hacks.cubicgrid.name:      CubicGrid
 *hacks.cwaves.name:         CWaves
@@ -482,6 +489,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.t3d.name:            T3D
 *hacks.timetunnel.name:     TimeTunnel
 *hacks.topblock.name:       TopBlock
+*hacks.tronbit.name:        TronBit
 *hacks.vidwhacker.name:     VidWhacker
 *hacks.webcollage.name:     WebCollage
 *hacks.whirlwindwarp.name:  WhirlWindWarp

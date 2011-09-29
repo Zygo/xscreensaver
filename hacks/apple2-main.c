@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2010 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -833,12 +833,18 @@ subproc_cb (XtPointer closure, int *source, XtInputId *id)
   mine->input_available_p = True;
 }
 
+/* The structure of closure linkage throughout this code is so amazingly
+   baroque that I can't get to the 'struct state' from where I need it. */
+static const char *global_program;
+static Bool global_fast_p;
+
+
 static void
 launch_text_generator (struct terminal_controller_data *mine)
 {
   XtAppContext app = XtDisplayToApplicationContext (mine->dpy);
   char buf[255];
-  char *oprogram = get_string_resource (mine->dpy, "program", "Program");
+  char *oprogram = strdup (global_program);
   char *program = (char *) malloc (strlen (oprogram) + 10);
 
   strcpy (program, "( ");
@@ -1478,7 +1484,7 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
                                                  "Boolean");
   mine->swap_bs_del_p    = get_boolean_resource (mine->dpy, "swapBSDEL", 
                                                  "Boolean");
-  mine->fast_p           = get_boolean_resource (mine->dpy, "fast", "Boolean");
+  mine->fast_p           = global_fast_p;
 
   switch(*stepno) {
 
@@ -1907,8 +1913,6 @@ static void (* const controllers[]) (apple2_sim_t *sim, int *stepno,
   basic_controller
 };
 
-
-
 struct state {
   int duration;
   Bool random_p;
@@ -1944,6 +1948,23 @@ apple2_init (Display *dpy, Window window)
       exit (1);
     }
   if (s) free (s);
+
+  global_program = get_string_resource (dpy, "program", "Program");
+  global_fast_p = get_boolean_resource (dpy, "fast", "Boolean");
+
+
+  /* Kludge for MacOS standalone mode: see OSX/SaverRunner.m. */
+  {
+    const char *s = getenv ("XSCREENSAVER_STANDALONE");
+    if (s && *s && strcmp(s, "0"))
+      {
+        st->controller = terminal_controller;
+        st->random_p   = False;
+        global_program = getenv ("SHELL");
+        global_fast_p  = True;
+      }
+  }
+
 
   if (! st->random_p) {
     if (st->controller == terminal_controller ||

@@ -1,4 +1,4 @@
-# Auto-generated: Fri May 20 11:55:50 PDT 2011
+# Auto-generated: Wed Sep 28 21:16:40 PDT 2011
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -38,6 +38,7 @@ hacks/config/ccurve.xml
 hacks/config/celtic.xml
 hacks/config/circuit.xml
 hacks/config/cloudlife.xml
+hacks/config/companioncube.xml
 hacks/config/compass.xml
 hacks/config/coral.xml
 hacks/config/crackberg.xml
@@ -100,6 +101,7 @@ hacks/config/greynetic.xml
 hacks/config/halftone.xml
 hacks/config/halo.xml
 hacks/config/helix.xml
+hacks/config/hilbert.xml
 hacks/config/hopalong.xml
 hacks/config/hyperball.xml
 hacks/config/hypercube.xml
@@ -205,6 +207,7 @@ hacks/config/thornbird.xml
 hacks/config/timetunnel.xml
 hacks/config/topblock.xml
 hacks/config/triangle.xml
+hacks/config/tronbit.xml
 hacks/config/truchet.xml
 hacks/config/twang.xml
 hacks/config/vermiculate.xml

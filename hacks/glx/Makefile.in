@@ -110,7 +110,10 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c fps-gl.c \
 		  glschool_gl.c glschool_alg.c glcells.c voronoi.c \
 		  moebiusgears.c lockward.c cubicgrid.c hypnowheel.c \
 		  skytentacles.c teapot.c sonar.c sonar-sim.c sonar-icmp.c \
-		  jigsaw.c photopile.c dropshadow.c rubikblocks.c surfaces.c
+		  jigsaw.c photopile.c dropshadow.c rubikblocks.c surfaces.c \
+		  hilbert.c companion.c companion_quad.c companion_disc.c \
+		  companion_heart.c tronbit.c tronbit_idle1.c tronbit_idle2.c \
+		  tronbit_no.c tronbit_yes.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -146,7 +149,10 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  glschool_gl.o glschool_alg.o glcells.o voronoi.o \
 		  moebiusgears.o lockward.o cubicgrid.o hypnowheel.o \
 		  skytentacles.o teapot.o sonar.o sonar-sim.o sonar-icmp.o \
-		  jigsaw.o photopile.o dropshadow.o rubikblocks.o surfaces.o
+		  jigsaw.o photopile.o dropshadow.o rubikblocks.o surfaces.o \
+		  hilbert.o companion.o companion_quad.o companion_disc.o \
+		  companion_heart.o tronbit.o tronbit_idle1.o tronbit_idle2.o \
+		  tronbit_no.o tronbit_yes.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -161,7 +167,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  antmaze tangram crackberg glhanoi cube21 timetunnel \
 		  juggler3d topblock glschool glcells voronoi moebiusgears \
 		  lockward cubicgrid hypnowheel skytentacles jigsaw photopile \
-		  rubikblocks surfaces
+		  rubikblocks surfaces hilbert companioncube tronbit
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 GL_UTIL_EXES	= xscreensaver-gl-helper
@@ -210,10 +216,11 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  juggler3d.man topblock.man glschool.man glcells.man \
 		  voronoi.man moebiusgears.man lockward.man cubicgrid.man \
 		  hypnowheel.man skytentacles.man sonar.man jigsaw.man \
-		  photopile.man rubikblocks.man surfaces.man
+		  photopile.man rubikblocks.man surfaces.man hilbert.man \
+		  companioncube.man tronbit.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
-EXTRAS		= README Makefile.in dxf2gl.pl wfront2gl.pl \
+EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
 		  molecules.sh starwars.txt
 
 TARFILES	= $(SRCS) $(HDRS) $(MEN) $(RETIRED_MEN) $(EXTRAS)
@@ -768,7 +775,7 @@ skytentacles:	skytentacles.o	$(TENTACLE_OBJS)
 
 SONAR_OBJS=sonar-sim.o sonar-icmp.o texfont.o $(HACK_TRACK_OBJS)
 sonar:		sonar.o		$(SONAR_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(SONAR_OBJS) $(XPM_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(SONAR_OBJS) $(HACK_LIBS)
 
 JIGSAW_OBJS=normals.o $(UTILS_BIN)/spline.o $(HACK_TRACK_GRAB_OBJS)
 jigsaw:		jigsaw.o	$(JIGSAW_OBJS)
@@ -780,6 +787,20 @@ photopile:	photopile.o	$(PHOTOPILE_OBJS)
 
 rubikblocks:	rubikblocks.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+HILB_OBJS=sphere.o tube.o $(HACK_TRACK_OBJS)
+hilbert:	hilbert.o	$(HILB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HILB_OBJS) $(HACK_LIBS)
+
+CCUBE_OBJS=companion.o companion_quad.o companion_disc.o companion_heart.o \
+ gllist.o $(HACK_TRACK_OBJS)
+companioncube:			$(CCUBE_OBJS)
+	$(CC_HACK) -o $@	$(CCUBE_OBJS) $(HACK_LIBS)
+
+TBIT_OBJS=tronbit.o tronbit_idle1.o tronbit_idle2.o tronbit_no.o tronbit_yes.o\
+ gllist.o $(HACK_TRACK_OBJS)
+tronbit:			$(TBIT_OBJS)
+	$(CC_HACK) -o $@	$(TBIT_OBJS) $(HACK_LIBS)
 
 ##############################################################################
 #
@@ -1043,6 +1064,26 @@ circuit.o: $(UTILS_SRC)/xshm.h
 circuit.o: $(UTILS_SRC)/yarandom.h
 circuit.o: $(HACK_SRC)/xlockmoreI.h
 circuit.o: $(HACK_SRC)/xlockmore.h
+companion_disc.o: $(srcdir)/gllist.h
+companion_heart.o: $(srcdir)/gllist.h
+companion.o: ../../config.h
+companion.o: $(HACK_SRC)/fps.h
+companion.o: $(srcdir)/gllist.h
+companion.o: $(srcdir)/gltrackball.h
+companion.o: $(srcdir)/rotator.h
+companion.o: $(HACK_SRC)/screenhackI.h
+companion.o: $(UTILS_SRC)/colors.h
+companion.o: $(UTILS_SRC)/grabscreen.h
+companion.o: $(UTILS_SRC)/hsv.h
+companion.o: $(UTILS_SRC)/resources.h
+companion.o: $(UTILS_SRC)/usleep.h
+companion.o: $(UTILS_SRC)/visual.h
+companion.o: $(UTILS_SRC)/xshm.h
+companion.o: $(UTILS_SRC)/yarandom.h
+companion.o: $(HACK_SRC)/xlockmoreI.h
+companion.o: $(HACK_SRC)/xlockmore.h
+companion.o: $(srcdir)/xpm-ximage.h
+companion_quad.o: $(srcdir)/gllist.h
 cow_face.o: $(srcdir)/gllist.h
 cow_hide.o: $(srcdir)/gllist.h
 cow_hoofs.o: $(srcdir)/gllist.h
@@ -1469,7 +1510,6 @@ glknots.o: $(HACK_SRC)/xlockmore.h
 gllist.o: $(srcdir)/gllist.h
 glmatrix.o: ../../config.h
 glmatrix.o: $(HACK_SRC)/fps.h
-glmatrix.o: $(srcdir)/gllist.h
 glmatrix.o: $(HACK_SRC)/images/matrix3.xpm
 glmatrix.o: $(HACK_SRC)/screenhackI.h
 glmatrix.o: $(UTILS_SRC)/colors.h
@@ -1587,6 +1627,23 @@ grab-ximage.o: $(UTILS_SRC)/grabscreen.h
 grab-ximage.o: $(UTILS_SRC)/resources.h
 grab-ximage.o: $(UTILS_SRC)/visual.h
 grab-ximage.o: $(UTILS_SRC)/xshm.h
+hilbert.o: ../../config.h
+hilbert.o: $(HACK_SRC)/fps.h
+hilbert.o: $(srcdir)/gltrackball.h
+hilbert.o: $(srcdir)/rotator.h
+hilbert.o: $(HACK_SRC)/screenhackI.h
+hilbert.o: $(srcdir)/sphere.h
+hilbert.o: $(srcdir)/tube.h
+hilbert.o: $(UTILS_SRC)/colors.h
+hilbert.o: $(UTILS_SRC)/grabscreen.h
+hilbert.o: $(UTILS_SRC)/hsv.h
+hilbert.o: $(UTILS_SRC)/resources.h
+hilbert.o: $(UTILS_SRC)/usleep.h
+hilbert.o: $(UTILS_SRC)/visual.h
+hilbert.o: $(UTILS_SRC)/xshm.h
+hilbert.o: $(UTILS_SRC)/yarandom.h
+hilbert.o: $(HACK_SRC)/xlockmoreI.h
+hilbert.o: $(HACK_SRC)/xlockmore.h
 hypertorus.o: ../../config.h
 hypertorus.o: $(HACK_SRC)/fps.h
 hypertorus.o: $(srcdir)/gltrackball.h
@@ -2340,6 +2397,27 @@ topblock.o: $(HACK_SRC)/xlockmoreI.h
 topblock.o: $(HACK_SRC)/xlockmore.h
 trackball.o: ../../config.h
 trackball.o: $(srcdir)/trackball.h
+tronbit_idle1.o: $(srcdir)/gllist.h
+tronbit_idle2.o: $(srcdir)/gllist.h
+tronbit_no.o: $(srcdir)/gllist.h
+tronbit.o: ../../config.h
+tronbit.o: $(HACK_SRC)/fps.h
+tronbit.o: $(srcdir)/gllist.h
+tronbit.o: $(srcdir)/gltrackball.h
+tronbit.o: $(srcdir)/rotator.h
+tronbit.o: $(HACK_SRC)/screenhackI.h
+tronbit.o: $(srcdir)/sphere.h
+tronbit.o: $(UTILS_SRC)/colors.h
+tronbit.o: $(UTILS_SRC)/grabscreen.h
+tronbit.o: $(UTILS_SRC)/hsv.h
+tronbit.o: $(UTILS_SRC)/resources.h
+tronbit.o: $(UTILS_SRC)/usleep.h
+tronbit.o: $(UTILS_SRC)/visual.h
+tronbit.o: $(UTILS_SRC)/xshm.h
+tronbit.o: $(UTILS_SRC)/yarandom.h
+tronbit.o: $(HACK_SRC)/xlockmoreI.h
+tronbit.o: $(HACK_SRC)/xlockmore.h
+tronbit_yes.o: $(srcdir)/gllist.h
 tube.o: ../../config.h
 tube.o: $(srcdir)/tube.h
 tunnel_draw.o: ../../config.h

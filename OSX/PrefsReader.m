@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2010 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -105,10 +105,11 @@
     
     // make sure there's no resource mentioned in options and not defaults.
     if (![defsdict objectForKey:nsresource]) {
-      if (! (!strcmp(resource, "font") ||    // don't warn about these
+      if (! (!strcmp(resource, "font")        ||    // don't warn about these
              !strcmp(resource, "textLiteral") ||
-             !strcmp(resource, "textFile") ||
-             !strcmp(resource, "textURL") ||
+             !strcmp(resource, "textFile")    ||
+             !strcmp(resource, "textURL")     ||
+             !strcmp(resource, "textProgram") ||
              !strcmp(resource, "imageDirectory")))
         NSLog (@"warning: \"%s\" is in options but not defaults", resource);
     }

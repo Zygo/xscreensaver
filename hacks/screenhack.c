@@ -510,7 +510,7 @@ usleep_and_process_events (Display *dpy,
 static void
 screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
 {
-  fps_compute (fpst, 0);
+  fps_compute (fpst, 0, -1);
   fps_draw (fpst);
 }
 

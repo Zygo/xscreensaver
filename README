@@ -25,7 +25,7 @@ To compile on a Unix system with X11:
 
 To compile on MacOS X:
 
-    Use the included XCode project.  Requires XCode 3.1 and MacOS X 10.4.0
+    Use the included XCode project.  Requires XCode 4 and MacOS X 10.5
     or newer.
 
 Interested in writing a new screen saver?
@@ -38,6 +38,18 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.14:   * New hacks, `hilbert', `companioncube' and `tronbit'.
+                      * Image-manipulating hacks can now load from RSS or Atom
+                        feeds: `imageDirectory' may contain a URL.
+                      * Updated `webcollage' for recent search engine changes.
+                      * `phosphor' and `apple2' can now be run as standalone
+                        terminal emulator applications on MacOS.
+                      * `photopile' sped up.
+                      * New molecule in `molecule'.
+                      * "Upgraded" to XCode 4.0, which means that MacOS 10.4
+                        PPC builds are impossible, and Intel is now required.
+                      * Turned on LC_CTYPE on Linux; maybe Japanese password
+                        entry works now?
 Changes since 5.13:   * Fixed crash in Blank Only Mode when DPMS disabled.
                       * Added "Quick Power-off in Blank Only Mode" option.
                       * BSOD GLaDOS.

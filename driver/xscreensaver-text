@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2010 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005-2011 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -30,7 +30,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.23 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.24 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -247,6 +247,7 @@ sub get_cocoa_prefs($) {
   elsif ($text_mode eq '1') { $text_mode = 'literal'; }
   elsif ($text_mode eq '2') { $text_mode = 'file';    }
   elsif ($text_mode eq '3') { $text_mode = 'url';     }
+  elsif ($text_mode eq '4') { $text_mode = 'program'; }
 
   $v = get_cocoa_pref_1 ($id, "textLiteral");
   $text_literal = $v if defined ($v);
@@ -384,12 +385,14 @@ sub output() {
 
   } else { # $text_mode eq 'date'
 
-    safe_system ("uname", "-n");
+    my $n = `uname -n`;
+    $n =~ s/\.local\n/\n/s;
+    print $n;
 
     my $unamep = 1;
 
     if (-f "/etc/redhat-release") {	    # "Fedora Core release 4 (Stentz)"
-      system ("cat", "/etc/redhat-release");
+      safe_system ("cat", "/etc/redhat-release");
     }
 
     if (-f "/etc/release") {	    	    # "Solaris 10 3/05 s10_74L2a X86"
@@ -400,8 +403,8 @@ sub output() {
       my $sp =				    # "iMac G5"
         `/usr/sbin/system_profiler SPSoftwareDataType SPHardwareDataType`;
       my ($v) = ($sp =~ m/^\s*System Version:\s*(.*)$/mi);
-      my ($s) = ($sp =~ m/^\s*CPU Speed:\s*(.*)$/mi);
-      my ($t) = ($sp =~ m/^\s*Machine Name:\s*(.*)$/mi);
+      my ($s) = ($sp =~ m/^\s*(?:CPU|Processor) Speed:\s*(.*)$/mi);
+      my ($t) = ($sp =~ m/^\s*(?:Machine|Model) Name:\s*(.*)$/mi);
       print "$v\n" if ($v);
       print "$s $t\n" if ($s && $t);
       $unamep = !defined ($v);

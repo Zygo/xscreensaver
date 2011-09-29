@@ -200,6 +200,16 @@ static const struct {
    *		Dihedral Schwarz Triangles (D5 only)
    ***************************************************************************/
 
+  /*	{"3|2 5/2",	"xyz",
+				"xyz",
+				"xyz",
+				"",
+				"",
+				0, 0},
+*/
+
+
+
 							   /* (2 2 5) (D1/5) */
   /*  1 */	{"2 5|2",	"Pentagonal Prism",
 				"Pentagonal Dipyramid",

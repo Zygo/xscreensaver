@@ -372,6 +372,9 @@ draw(ModeInfo *mi)
       glNewList (gp->gasket2, GL_COMPILE); compile_gasket (mi, 2); glEndList();
       glNewList (gp->gasket3, GL_COMPILE); compile_gasket (mi, 3); glEndList();
 
+      mi->recursion_depth = (gp->current_depth > 0
+                             ? gp->current_depth
+                             : -gp->current_depth);
     }
 }
 

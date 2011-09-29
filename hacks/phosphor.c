@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2009 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2011 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -87,6 +87,7 @@ typedef struct {
   Window window;
   XWindowAttributes xgwa;
   XFontStruct *font;
+  const char *program;
   int grid_width, grid_height;
   int char_width, char_height;
   int saved_x, saved_y;
@@ -260,6 +261,20 @@ phosphor_init (Display *dpy, Window window)
       state->char_height = font->max_bounds.ascent + font->max_bounds.descent;
     }
 
+  state->program = get_string_resource (dpy, "program", "Program");
+
+
+  /* Kludge for MacOS standalone mode: see OSX/SaverRunner.m. */
+  {
+    const char *s = getenv ("XSCREENSAVER_STANDALONE");
+    if (s && *s && strcmp(s, "0"))
+      {
+        state->mode = 1;
+        state->program = getenv ("SHELL");
+      }
+  }
+
+
   state->grid_width = state->xgwa.width / (state->char_width * state->scale);
   state->grid_height = state->xgwa.height /(state->char_height * state->scale);
   state->cells = (p_cell *) calloc (sizeof(p_cell),
@@ -355,7 +370,7 @@ phosphor_init (Display *dpy, Window window)
 
 /* Re-query the window size and update the internal character grid if changed.
  */
-static void
+static Bool
 resize_grid (p_state *state)
 {
   int ow = state->grid_width;
@@ -370,7 +385,7 @@ resize_grid (p_state *state)
 
   if (ow == state->grid_width &&
       oh == state->grid_height)
-    return;
+    return False;
 
   state->cells = (p_cell *) calloc (sizeof(p_cell),
                                     state->grid_width * state->grid_height);
@@ -392,6 +407,7 @@ resize_grid (p_state *state)
     state->cursor_y = state->grid_height-1;
 
   free (ocells);
+  return True;
 }
 
 
@@ -1231,9 +1247,8 @@ static void
 launch_text_generator (p_state *state)
 {
   XtAppContext app = XtDisplayToApplicationContext (state->dpy);
-  Display *dpy = state->dpy;
   char buf[255];
-  char *oprogram = get_string_resource (dpy, "program", "Program");
+  const char *oprogram = state->program;
   char *program = (char *) malloc (strlen (oprogram) + 50);
 
   strcpy (program, "( ");
@@ -1328,7 +1343,7 @@ static void
 relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
 {
   p_state *state = (p_state *) closure;
-  if (!state->pipe_timer) abort();
+  /* if (!state->pipe_timer) abort(); */
   state->pipe_timer = 0;
   launch_text_generator (state);
 }
@@ -1342,6 +1357,7 @@ drain_input (p_state *state)
     {
       unsigned char s[2];
       int n = read (fileno (state->pipe), (void *) s, 1);
+
       if (n == 1)
         {
           print_char (state, s[0]);
@@ -1434,7 +1450,9 @@ phosphor_reshape (Display *dpy, Window window, void *closure,
                  unsigned int w, unsigned int h)
 {
   p_state *state = (p_state *) closure;
-  resize_grid (state);
+  Bool changed_p = resize_grid (state);
+
+  if (! changed_p) return;
 
 # if defined(HAVE_FORKPTY) && defined(TIOCSWINSZ)
   if (state->pid && state->pipe)
@@ -1449,7 +1467,23 @@ phosphor_reshape (Display *dpy, Window window, void *closure,
       kill (state->pid, SIGWINCH);
     }
 # endif /* HAVE_FORKPTY && TIOCSWINSZ */
+
+
+  /* If we're running xscreensaver-text, then kill and restart it any
+     time the window is resized so that it gets an updated --cols arg
+     right away.  But if we're running something else, leave it alone.
+   */
+  if (!strcmp (state->program, "xscreensaver-text"))
+    {
+      if (state->pid)
+        kill (state->pid, SIGTERM);
+      if (state->pipe)
+        pclose (state->pipe);
+      state->input_available_p = False;
+      relaunch_generator_timer (state, 0);
+    }
 }
+
 
 static Bool
 phosphor_event (Display *dpy, Window window, void *closure, XEvent *event)

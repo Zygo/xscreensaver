@@ -358,17 +358,17 @@ image_loaded_cb (const char *filename, XRectangle *geom,
       img->geom.height *= scale;
     }
 
-# if 0 /* xscreensaver-getimage returns paths relative to the image directory
-          now, so leave the sub-directory part in.
-        */
-  if (img->title)  /* strip filename to part between last "/" and last ".". */
+  /* xscreensaver-getimage returns paths relative to the image directory
+     now, so leave the sub-directory part in.  Unless it's an absolute path.
+  */
+  if (img->title && img->title[0] == '/')
     {
+      /* strip filename to part between last "/" and last ".". */
       char *s = strrchr (img->title, '/');
       if (s) strcpy (img->title, s+1);
       s = strrchr (img->title, '.');
       if (s) *s = 0;
     }
-# endif /* 0 */
 
   if (debug_p)
     fprintf (stderr, "%s: loaded   img %2d: \"%s\"\n",
@@ -1214,7 +1214,6 @@ draw_slideshow (ModeInfo *mi)
 
   draw_sprites (mi);
 
-  ss->fps = fps_compute (mi->fpst, 0);
   if (mi->fps_p) do_fps (mi);
 
   glFinish();

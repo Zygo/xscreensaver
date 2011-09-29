@@ -526,6 +526,8 @@ draw_sponge (ModeInfo *mi)
                      ? -sp->current_depth : sp->current_depth));
 
       mi->polygon_count = sp->squares_fp;  /* for FPS display */
+      mi->recursion_depth = (sp->current_depth < 0
+                             ? -sp->current_depth : sp->current_depth);
     }
 
   glScalef (2.0, 2.0, 2.0);

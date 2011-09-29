@@ -1734,6 +1734,9 @@ handle_passwd_key (saver_info *si, XKeyEvent *event)
   /* XLookupString may return more than one character via XRebindKeysym;
      and on some systems it returns multi-byte UTF-8 characters (contrary
      to its documentation, which says it returns only Latin1.)
+
+     It seems to only do so, however, if setlocale() has been called.
+     See the code inside ENABLE_NLS in xscreensaver.c.
    */
   int decoded_size = XLookupString (event, (char *)decoded, sizeof(decoded),
                                     &keysym, compose_status);

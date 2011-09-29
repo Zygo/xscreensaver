@@ -15,15 +15,15 @@
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>5.14</string>
+	<string>5.15</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>5.14</string>
+	<string>5.15</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.4</string>
 	<key>NSMainNibFile</key>
-	<string>SaverTester</string>
+	<string>SaverRunner</string>
 	<key>NSPrincipalClass</key>
 	<string>XScreenSaver${EXECUTABLE_NAME}View</string>
 </dict>

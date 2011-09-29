@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2003 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2003-2011 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -12,7 +12,8 @@
 # Reads a Wavefront OBJ file, and emits C data suitable for use with OpenGL's
 # glInterleavedArrays() and glDrawArrays() routines.
 #
-# Assumes that the OBJ file already contains all vertex normals.
+# If the OBJ file does not contain face normals, they are computed.
+# Texture coordinates are ignored.
 #
 # Options:
 #
@@ -26,13 +27,13 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.4 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
 
 # convert a vector to a unit vector
-sub normalize {
+sub normalize($$$) {
   my ($x, $y, $z) = @_;
   my $L = sqrt (($x * $x) + ($y * $y) + ($z * $z));
   if ($L != 0) {
@@ -49,7 +50,7 @@ sub normalize {
 # Calculate the unit normal at p0 given two other points p1,p2 on the
 # surface.  The normal points in the direction of p1 crossproduct p2.
 #
-sub face_normal {
+sub face_normal($$$$$$$$$) {
   my ($p0x, $p0y, $p0z,
       $p1x, $p1y, $p1z,
       $p2x, $p2y, $p2z) = @_;
@@ -72,65 +73,65 @@ sub face_normal {
 }
 
 
-sub parse_obj {
+sub parse_obj($$$) {
   my ($filename, $obj, $normalize_p) = @_;
 
   $_ = $obj;
-  my @verts = ();
-  my @norms = ();
-  my @faces = ();
+  my @verts = ();    # list of refs of coords, [x, y, z]
+  my @norms = ();    # list of refs of coords, [x, y, z]
+  my @texts = ();    # list of refs of coords, [u, v]
+  my @faces = ();    # list of refs of [ point, point, point, ... ]
+                     #  where 'point' is a ref of indexes into the
+                     #  above lists, [ vert, text, norm ]
 
-  my @lines = split (/\n/, $obj);
-
-  my $i = -1;
-  while (++$i <= $#lines) {
-    $_ = $lines[$i];
+  my $lineno = 0;
+  foreach (split (/\n/, $obj)) {
+    $lineno++;
     next if (m/^\s*$|^\s*\#/);
 
     if (m/^v\s/) {
       my ($x, $y, $z) = m/^v\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s*$/;
-      error ("unpsrable V line: $_") unless defined($z);
-      push @verts, ($x+0, $y+0, $z+0);
+      error ("line $lineno: unparsable V line: $_") unless defined($z);
+      push @verts, [$x+0, $y+0, $z+0];
 
     } elsif (m/^vn\s/) {
       my ($x, $y, $z) = m/^vn\s+([^\s]+)\s+([^\s]+)\s+([^\s]+)\s*$/;
-      error ("unpsrable VN line: $_") unless defined($z);
-      push @norms, ($x+0, $y+0, $z+0);
+      error ("line $lineno: unparsable VN line: $_") unless defined($z);
+      push @norms, [$x+0, $y+0, $z+0];
+
+    } elsif (m/^vt\s/) {
+      my ($u, $v) = m/^vt\s+([^\s]+)\s+([^\s]+)\s*$/;
+      error ("line $lineno: unparsable VT line: $_") unless defined($v);
+      push @texts, [$u+0, $v+0];
 
     } elsif (m/^g\b/) {
       # group name
 
     } elsif (m/f\s/) {
-      my ($a, $b, $c, $d, $e, $f) =
-        m/^f\s+
-          ([^\s]+)\s+
-          ([^\s]+)\s+
-          ([^\s]+)\s*
-          ([^\s]+)?\s*
-          ([^\s]+)?\s*
-          ([^\s]+)?\s*
-         $/x;
-      error ("unpsrable F line: $_") unless defined($c);
-
-      # lose texture coord, if any
-      $a =~ s@/.*$@@;
-      $b =~ s@/.*$@@;
-      $c =~ s@/.*$@@;
-      $d =~ s@/.*$@@ if defined($d);
-      $e =~ s@/.*$@@ if defined($e);
-      $f =~ s@/.*$@@ if defined($f);
-
-      push @faces, ($a-1, $b-1, $c-1);
-      push @faces, ($a-1, $c-1, $d-1) if (defined($d));
-      push @faces, ($a-1, $d-1, $e-1) if (defined($e));
-      push @faces, ($a-1, $e-1, $f-1) if (defined($f));
+      my @f = split(/\s+/, $_);
+      shift @f;
+      my @vs = ();
+      foreach my $f (@f) {
+        my ($v, $t, $n);
+        if    ($f =~ m@^(\d+)$@s)             { $v = $1; }
+        elsif ($f =~ m@^(\d+)/(\d+)$@s)       { $v = $1, $t = $2; }
+        elsif ($f =~ m@^(\d+)/(\d+)/(\d+)$@s) { $v = $1, $t = $2; $n = $3; }
+        elsif ($f =~ m@^(\d+)///(\d+)$@s)     { $v = $1; $n = $3; }
+        else {
+          error ("line $lineno: unparsable F line: $_") unless defined($v);
+        }
+        $t = -1 unless defined($t);
+        $n = -1 unless defined($n);
+        push @vs, [$v+0, $t+0, $n+0];
+      }
+      push @faces, \@vs;
 
     } elsif (m/^s\b/) {
-      # ???
+      # turn on smooth shading
     } elsif (m/^(mtllib|usemtl)\b/) {
-      # ???
+      # reference to external materials file (textures, etc.)
     } else {
-      error ("unknown line: $_");
+      error ("line $lineno: unknown line: $_");
     }
   }
 
@@ -145,14 +146,14 @@ sub parse_obj {
     my $maxy = -999999999;
     my $maxz = -999999999;
     my $i = 0;
-    foreach my $n (@verts) {
-      if    ($i == 0) { $minx = $n if ($n < $minx);
-                        $maxx = $n if ($n > $maxx); }
-      elsif ($i == 1) { $miny = $n if ($n < $miny);
-                        $maxy = $n if ($n > $maxy); }
-      else            { $minz = $n if ($n < $minz);
-                        $maxz = $n if ($n > $maxz); }
-      $i = 0 if (++$i == 3);
+    foreach my $v (@verts) {
+      my ($x, $y, $z) = @$v;
+      $minx = $x if ($x < $minx);
+      $maxx = $x if ($x > $maxx);
+      $miny = $y if ($y < $miny);
+      $maxy = $y if ($y > $maxy);
+      $minz = $z if ($z < $minz);
+      $maxz = $z if ($z > $maxz);
     }
 
     my $w = ($maxx - $minx);
@@ -174,7 +175,9 @@ sub parse_obj {
                   sprintf("%.2f x %.2f x %.2f\n", $w, $h, $d)
         if ($verbose);
       foreach my $n (@verts) {
-        $n /= $size;
+        my @n = @$n;
+        foreach (@n) { $_ /= $size; }
+        $n = \@n;
       }
     }
   }
@@ -182,86 +185,87 @@ sub parse_obj {
   # generate interleaved list of triangle coordinates and normals
   #
   my @triangles = ();
-  my $nfaces = ($#faces+1)/3;
-  for ($i = 0; $i < $nfaces; $i++) {
-    my $a = $faces[$i*3];
-    my $b = $faces[$i*3+1];
-    my $c = $faces[$i*3+2];
+  my $nfaces = $#faces+1;
 
-    my $x1 = $verts[$a*3];    my $nx1 = $norms[$a*3];
-    my $y1 = $verts[$a*3+1];  my $ny1 = $norms[$a*3+1];
-    my $z1 = $verts[$a*3+2];  my $nz1 = $norms[$a*3+2];
+  foreach my $f (@faces) {
+    # $f is [ [v, t, n], [v, t, n],  ... ]
 
-    my $x2 = $verts[$b*3];    my $nx2 = $norms[$b*3];
-    my $y2 = $verts[$b*3+1];  my $ny2 = $norms[$b*3+1];
-    my $z2 = $verts[$b*3+2];  my $nz2 = $norms[$b*3+2];
+    my @f = @$f;
 
-    my $x3 = $verts[$c*3];    my $nx3 = $norms[$c*3];
-    my $y3 = $verts[$c*3+1];  my $ny3 = $norms[$c*3+1];
-    my $z3 = $verts[$c*3+2];  my $nz3 = $norms[$c*3+2];
+#    # (Kludge for the companion cube model)
+#    if ($#f > 15) {
+#      my $i = 12;
+#      @f = (@f[$i-1 .. $#f], @f[0 .. $i]);
+#    }
 
-    if (!defined($nz3)) {
-      my ($nx, $ny, $nz) = face_normal ($x1, $y1, $z1,
-                                        $x2, $y2, $z2,
-                                        $x3, $y3, $z3);
-      $nx1 = $nx2 = $nx3 = $nx;
-      $ny1 = $ny2 = $ny3 = $ny;
-      $nz1 = $nz2 = $nz3 = $nz;
+    error ("too few points in face") if ($#f < 2);
+    my $p1 = shift @f;
+
+    # If there are more than 3 points, do a triangle fan from the first one:
+    # [1 2 3] [1 3 4] [1 4 5] etc.  Doesn't always work with convex shapes.
+
+    while ($#f) {
+      my $p2 = shift @f;
+      my $p3 = $f[0];
+
+      my $x1 = $verts[$p1->[0]-1]->[0]; my $nx1 = $norms[$p1->[2]-1]->[0];
+      my $y1 = $verts[$p1->[0]-1]->[1]; my $ny1 = $norms[$p1->[2]-1]->[1];
+      my $z1 = $verts[$p1->[0]-1]->[2]; my $nz1 = $norms[$p1->[2]-1]->[2];
+
+      my $x2 = $verts[$p2->[0]-1]->[0]; my $nx2 = $norms[$p2->[2]-1]->[0];
+      my $y2 = $verts[$p2->[0]-1]->[1]; my $ny2 = $norms[$p2->[2]-1]->[1];
+      my $z2 = $verts[$p2->[0]-1]->[2]; my $nz2 = $norms[$p2->[2]-1]->[2];
+
+      my $x3 = $verts[$p3->[0]-1]->[0]; my $nx3 = $norms[$p3->[2]-1]->[0];
+      my $y3 = $verts[$p3->[0]-1]->[1]; my $ny3 = $norms[$p3->[2]-1]->[1];
+      my $z3 = $verts[$p3->[0]-1]->[2]; my $nz3 = $norms[$p3->[2]-1]->[2];
+
+      error ("missing points in face") unless defined($z3);
+
+      if (!defined($nz3)) {
+        my ($nx, $ny, $nz) = face_normal ($x1, $y1, $z1,
+                                          $x2, $y2, $z2,
+                                          $x3, $y3, $z3);
+        $nx1 = $nx2 = $nx3 = $nx;
+        $ny1 = $ny2 = $ny3 = $ny;
+        $nz1 = $nz2 = $nz3 = $nz;
+      }
+
+
+      push @triangles, [$nx1, $ny1, $nz1,  $x1, $y1, $z1,
+                        $nx2, $ny2, $nz2,  $x2, $y2, $z2,
+                        $nx3, $ny3, $nz3,  $x3, $y3, $z3];
     }
-
-    push @triangles, ($nx1, $ny1, $nz1,  $x1, $y1, $z1,
-                      $nx2, $ny2, $nz2,  $x2, $y2, $z2,
-                      $nx3, $ny3, $nz3,  $x3, $y3, $z3);
   }
 
   return (@triangles);
 }
 
 
-sub generate_c {
-  my ($filename, @points) = @_;
+sub generate_c($@) {
+  my ($filename, @triangles) = @_;
 
   my $code = '';
 
   $code .= "#include \"gllist.h\"\n";
   $code .= "static const float data[]={\n";
 
-  my $npoints = ($#points + 1) / 6;
-  my $nfaces = $npoints / 3;
+  my $nfaces = $#triangles + 1;
+  my $npoints = $nfaces * 3;
 
-  for (my $i = 0; $i < $nfaces; $i++) {
-    my $nax = $points[$i*18];
-    my $nay = $points[$i*18+1];
-    my $naz = $points[$i*18+2];
-
-    my  $ax = $points[$i*18+3];
-    my  $ay = $points[$i*18+4];
-    my  $az = $points[$i*18+5];
-
-    my $nbx = $points[$i*18+6];
-    my $nby = $points[$i*18+7];
-    my $nbz = $points[$i*18+8];
-
-    my  $bx = $points[$i*18+9];
-    my  $by = $points[$i*18+10];
-    my  $bz = $points[$i*18+11];
-
-    my $ncx = $points[$i*18+12];
-    my $ncy = $points[$i*18+13];
-    my $ncz = $points[$i*18+14];
-
-    my  $cx = $points[$i*18+15];
-    my  $cy = $points[$i*18+16];
-    my  $cz = $points[$i*18+17];
-
+  foreach my $t (@triangles) {
+    my ($nx1, $ny1, $nz1,  $x1, $y1, $z1,
+        $nx2, $ny2, $nz2,  $x2, $y2, $z2,
+        $nx3, $ny3, $nz3,  $x3, $y3, $z3) = @$t;
     my $lines = sprintf("\t" . "%.6f,%.6f,%.6f," . "%.6f,%.6f,%.6f,\n" .
                         "\t" . "%.6f,%.6f,%.6f," . "%.6f,%.6f,%.6f,\n" .
                         "\t" . "%.6f,%.6f,%.6f," . "%.6f,%.6f,%.6f,\n",
-                        $nax, $nay, $naz,  $ax, $ay, $az,
-                        $nbx, $nby, $nbz,  $bx, $by, $bz,
-                        $ncx, $ncy, $ncz,  $cx, $cy, $cz);
+                        $nx1, $ny1, $nz1,  $x1, $y1, $z1,
+                        $nx2, $ny2, $nz2,  $x2, $y2, $z2,
+                        $nx3, $ny3, $nz3,  $x3, $y3, $z3);
     $lines =~ s/([.\d])0+,/$1,/g;  # lose trailing insignificant zeroes
     $lines =~ s/\.,/,/g;
+    $lines =~ s/-0,/0,/g;
 
     $code .= $lines;
   }
@@ -287,37 +291,35 @@ sub generate_c {
   $code .= "const struct gllist *$token=&frame;\n";
 
   print STDERR "$filename: " .
-               (($#points+1)/3) . " points, " .
-               (($#points+1)/9) . " faces.\n"
+               (($#triangles+1)*3) . " points, " .
+               (($#triangles+1))   . " faces.\n"
     if ($verbose);
 
   return $code;
 }
 
 
-sub obj_to_gl {
+sub obj_to_gl($$$) {
   my ($infile, $outfile, $normalize_p) = @_;
-  local *IN;
   my $obj = '';
-  open (IN, "<$infile") || error ("$infile: $!");
+  open (my $in, '<', $infile) || error ("$infile: $!");
   my $filename = ($infile eq '-' ? "<stdin>" : $infile);
   print STDERR "$progname: reading $filename...\n"
     if ($verbose);
-  while (<IN>) { $obj .= $_; }
-  close IN;
+  while (<$in>) { $obj .= $_; }
+  close $in;
 
   $obj =~ s/\r\n/\n/g; # CRLF -> LF
   $obj =~ s/\r/\n/g;   # CR -> LF
 
-  my @data = parse_obj ($filename, $obj, $normalize_p);
+  my @triangles = parse_obj ($filename, $obj, $normalize_p);
 
   $filename = ($outfile eq '-' ? "<stdout>" : $outfile);
-  my $code = generate_c ($filename, @data);
+  my $code = generate_c ($filename, @triangles);
 
-  local *OUT;
-  open (OUT, ">$outfile") || error ("$outfile: $!");
-  print OUT $code || error ("$filename: $!");
-  close OUT || error ("$filename: $!");
+  open (my $out, '>', $outfile) || error ("$outfile: $!");
+  (print $out $code) || error ("$filename: $!");
+  (close $out) || error ("$filename: $!");
 
   print STDERR "$progname: wrote $filename\n"
     if ($verbose || $outfile ne '-');

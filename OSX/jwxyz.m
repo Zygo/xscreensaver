@@ -963,8 +963,8 @@ XFillPolygon (Display *dpy, Drawable d, GC gc,
   int i;
   push_fg_gc (d, gc, YES);
   CGContextBeginPath (d->cgc);
+  float x = 0, y = 0;
   for (i = 0; i < npoints; i++) {
-    float x, y;
     if (i > 0 && mode == CoordModePrevious) {
       x += points[i].x;
       y -= points[i].y;
@@ -1265,7 +1265,7 @@ XParseColor (Display *dpy, Colormap cmap, const char *spec, XColor *ret)
     g = (hex[spec[3]] << 4) | hex[spec[4]];
     b = (hex[spec[5]] << 4) | hex[spec[6]];
   } else if (!strcasecmp(spec,"black")) {
-    r = g = b = 0;
+//  r = g = b = 0;
   } else if (!strcasecmp(spec,"white")) {
     r = g = b = 255;
   } else if (!strcasecmp(spec,"red")) {

@@ -31,9 +31,9 @@
 "*ignoreUninstalledPrograms: False",
 "*textMode:		file",
 "*textLiteral:		XScreenSaver",
-"*textFile:		",
+"*textFile:		/usr/X11/share/X11/doc/README.sgml",
 "*textProgram:		fortune",
-"*textURL:		http://www.livejournal.com/stats/latest-rss.bml",
+"*textURL:		http://twitter.com/statuses/public_timeline.atom",
 "*overlayTextForeground:	#FFFF00",
 "*overlayTextBackground:	#000000",
 "*overlayStderr:		True",
@@ -41,7 +41,7 @@
 "*sgiSaverExtension:	True",
 "*xidleExtension:	True",
 "*procInterrupts:	True",
-"*xinputExtensionDev:	True",
+"*xinputExtensionDev:	False",
 "GetViewPortIsFullOfLies: False",
 "*demoCommand: xscreensaver-demo",
 "*prefsCommand: xscreensaver-demo -prefs",
@@ -248,7 +248,10 @@
 -				lcdscrub -root				    \\n\
   GL: 				photopile -root				    \\n\
   GL: 				skytentacles -root			    \\n\
-  GL: 				rubikblocks -root			    \\n",
+  GL: 				rubikblocks -root			    \\n\
+  GL: 				companioncube -root			    \\n\
+  GL: 				hilbert -root				    \\n\
+  GL: 				tronbit -root				    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
 "XScreenSaver.initialDelay:		0:00:00",
@@ -301,6 +304,7 @@
 "*hacks.bubble3d.name:       Bubble3D",
 "*hacks.ccurve.name:         CCurve",
 "*hacks.cloudlife.name:      CloudLife",
+"*hacks.companioncube.name:  CompanionCube",
 "*hacks.cubestorm.name:      CubeStorm",
 "*hacks.cubicgrid.name:      CubicGrid",
 "*hacks.cwaves.name:         CWaves",
@@ -351,6 +355,7 @@
 "*hacks.t3d.name:            T3D",
 "*hacks.timetunnel.name:     TimeTunnel",
 "*hacks.topblock.name:       TopBlock",
+"*hacks.tronbit.name:        TronBit",
 "*hacks.vidwhacker.name:     VidWhacker",
 "*hacks.webcollage.name:     WebCollage",
 "*hacks.whirlwindwarp.name:  WhirlWindWarp",

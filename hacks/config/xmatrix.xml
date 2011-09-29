@@ -37,25 +37,26 @@
             _label="Frame rate" _low-label="Low" _high-label="High"
             low="0" high="100000" default="10000"
             convert="invert"/>
-   </vgroup>
 
-   <vgroup>
     <number id="density" type="slider" arg="-density %"
             _label="Density" _low-label="Sparse" _high-label="Full"
             low="1" high="100" default="75"/>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+   <vgroup>
+    <xscreensaver-text />
    </vgroup>
   </hgroup>
 
-  <xscreensaver-text />
-
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
-
   <_description>
-Draws dropping characters similar to what is seen on the computer 
-monitors in "The Matrix".
+Draws the "digital rain" effect, as seen on the computer monitors in
+"The Matrix".
 
 See also "GLMatrix" for a 3D rendering of the similar effect that
 appeared in the movie's title sequence.
+
+http://en.wikipedia.org/wiki/Matrix_digital_rain
 
 Written by Jamie Zawinski; 1999.
   </_description>

@@ -2829,6 +2829,15 @@ if test "$with_gl" = yes; then
       AC_MSG_RESULT(adding "$osx_crud" to GL_LIBS)
       GL_LIBS="$GL_LIBS $osx_crud"
       unset osx_crud
+
+      # New lossage in 10.6.8: we can't allow -L/opt/local/lib to be in the
+      # link line, or at runtime XQueryExtension gets a segv due to some kind
+      # of library version skew.  Libs must come from /usr/X11/lib even if
+      # $prefix and/or $exec_prefix are set to /opt/local/.
+      #
+      AC_MSG_RESULT(omitting "$libdir" from LDFLAGS)
+      libdir=''
+
     fi
 
 
@@ -3506,10 +3515,13 @@ case "$with_textfile" in
       "/usr/share/doc/xserver-common/copyright"	   \
       "/usr/share/doc/xserver-xorg-core/copyright" \
       "/usr/X11R6/README"			   \
+      "/usr/share/doc/libX11*/COPYING"		   \
+      "/usr/X11/share/X11/doc/README*"		   \
       "/usr/share/doc/debian/debian-manifesto"     \
     ; do
       if test -z "$with_textfile"; then
         AC_MSG_CHECKING([for text file $f])
+	f=`/bin/ls $f 2>&- | head -1`
         if test -f "$f" ; then
           AC_MSG_RESULT(yes)
           with_textfile="$f"

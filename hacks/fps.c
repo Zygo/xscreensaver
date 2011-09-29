@@ -1,4 +1,4 @@
-/* fps, Copyright (c) 2001-2008 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright (c) 2001-2011 Jamie Zawinski <jwz@jwz.org>
  * Draw a frames-per-second display (Xlib and OpenGL).
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -81,7 +81,7 @@ fps_slept (fps_state *st, unsigned long usecs)
 
 
 double
-fps_compute (fps_state *st, unsigned long polys)
+fps_compute (fps_state *st, unsigned long polys, double depth)
 {
   if (! st) return 0;  /* too early? */
 
@@ -148,6 +148,18 @@ fps_compute (fps_state *st, unsigned long polys)
                      (polys / 1000), (polys % 1000), s);
           else
             sprintf (st->string + strlen(st->string), "%lu%s ", polys, s);
+        }
+
+      if (depth >= 0.0)
+        {
+          int L = strlen (st->string);
+          char *s = st->string + L;
+          strcat (s, "\nDepth: ");
+          sprintf (s + strlen(s), "%.1f", depth);
+          L = strlen (s);
+          /* Remove trailing ".0" in case depth is not a fraction. */
+          if (s[L-2] == '.' && s[L-1] == '0')
+            s[L-2] = 0;
         }
     }
 

@@ -796,6 +796,7 @@ ccurve_draw (Display *dpy, Window window, void *closure)
 		       0, 0);
 	}
         st->draw_index++;
+        /* #### mi->recursion_depth = st->draw_index; */
 
         if (st->draw_index >= st->draw_iterations)
           {

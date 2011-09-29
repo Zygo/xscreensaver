@@ -2,7 +2,7 @@
 .SH NAME
 lcdscrub - attempt to repair burn-in on LCD screens
 .SH SYNOPSIS
-.B deluxe
+.B lcdscrub
 [\-display \fIhost:display.screen\fP]
 [\-visual \fIvisual\fP]
 [\-window]

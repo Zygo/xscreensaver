@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008, 2009 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2011 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -18,7 +18,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.6 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my $version = q{ $Revision: 1.7 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
 
 my $verbose = 0;
 
@@ -155,6 +155,7 @@ sub munge_ad($) {
     my $glep = ($hack eq 'extrusion');
     if (-f "$hack.c" || -f "$hack") { $glp = 0; }
     elsif (-f "glx/$hack.c") { $glp = 1; }
+    elsif ($hack eq 'companioncube') { $glp = 1; }  # kludge
     elsif ($dis != 2) { error ("is $hack X or GL?"); }
 
     $counts[($disable{$hack} || 0)]++;
