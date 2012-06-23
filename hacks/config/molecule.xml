@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="molecule" _label="Molecule" gl="yes">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="timeout" type="slider" arg="-timeout %"
+          _label="Duration" _low-label="5 seconds" _high-label="2 minutes"
+          low="5" high="120" default="20"/>
+
+  <hgroup>
+   <vgroup>
+    <boolean id="labels" _label="Label atoms" arg-unset="-no-labels"/>
+    <boolean id="titles" _label="Describe molecule" arg-unset="-no-titles"/>
+    <boolean id="bbox"   _label="Draw bounding box" arg-set="-bbox"/>
+    <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+   </vgroup>
+   <vgroup>
+    <boolean id="atoms"  _label="Draw atomic nuclei" arg-unset="-no-atoms"/>
+    <boolean id="bonds"  _label="Draw atomic bonds" arg-unset="-no-bonds"/>
+    <boolean id="shells" _label="Draw electron shells" arg-unset="-no-shells"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="wander" _label="Wander" arg-set="-wander"/>
+
+   <select id="rotation">
+    <option id="no"  _label="Don't rotate"               arg-set="-spin 0"/>
+    <option id="x"   _label="Rotate around X axis"       arg-set="-spin X"/>
+    <option id="y"   _label="Rotate around Y axis"       arg-set="-spin Y"/>
+    <option id="z"   _label="Rotate around Z axis"       arg-set="-spin Z"/>
+    <option id="xy"  _label="Rotate around X and Y axes" arg-set="-spin XY"/>
+    <option id="xz"  _label="Rotate around X and Z axes" arg-set="-spin XZ"/>
+    <option id="yz"  _label="Rotate around Y and Z axes" arg-set="-spin YZ"/>
+    <option id="xyz" _label="Rotate around all three axes"/>
+   </select>
+  </hgroup>
+
+  <file id="molecule" _label="PDB file or directory" arg="-molecule %"/>
+
+  <_description>
+Draws several different representations of molecules.  Some common
+molecules are built in, and it can also read PDB (Protein Data Bank)
+files as input.
+
+http://en.wikipedia.org/wiki/Protein_Data_Bank_%28file_format%29
+
+Written by Jamie Zawinski; 2001.
+  </_description>
+</screensaver>

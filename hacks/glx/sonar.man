@@ -1,0 +1,163 @@
+.de EX		\"Begin example
+.ne 5
+.if n .sp 1
+.if t .sp .5
+.nf
+.in +.5i
+..
+.de EE
+.fi
+.in -.5i
+.if n .sp 1
+.if t .sp .5
+..
+.TH Sonar 1 "12-Aug-08" "X Version 11"
+.SH NAME
+sonar - display a sonar scope
+.SH SYNOPSIS
+.B sonar
+[\-ping \fIhosts-or-subnets\fP]
+[\-ping\-timeout \fIint\fP]
+[\-delay \fIusecs\fP]
+[\-speed \fIratio\fP]
+[\-sweep-size \fIratio\fP]
+[\-font-size \fIpoints\fP]
+[\-team-a-name \fIstring\fP] 
+[\-team-b-name \fIstring\fP]
+[\-team-a-count \fIint\fP]
+[\-team-b-count \fIint\fP]
+[\-no\-dns] 
+[\-no\-times] 
+[\-no\-wobble] 
+[\-debug] 
+[\-fps]
+.SH DESCRIPTION
+This draws a sonar screen that pings (get it?) the hosts on
+your local network, and plots their distance (response time) from you.
+The three rings represent ping times of approximately 2.5, 70 and 2,000
+milliseconds respectively.
+
+Alternately, it can run a simulation that doesn't involve hosts.
+.SH OPTIONS
+.I sonar
+understands the following options:
+.TP 8
+.B \-ping \fIhosts-or-subnets\fP
+The list of things to ping, separated by commas or spaces. 
+Elements of this list may be:
+.RS 8
+.TP 12
+.B simulation
+Run in simulation mode instead of pinging real hosts.
+.TP 12
+.I hostname
+Ping the given host.
+.TP 12
+.I A.B.C.D
+Ping the given IP address.
+.TP 12
+.B subnet
+Ping the local class C subnet (the nearest 255 addresses).
+.TP 12
+.B subnet/\fINN\fP
+Ping a different-sized local subnet: e.g., \fBsubnet/28\fP would ping
+a 4-bit subnet (the nearest 15 addresses).
+.TP 12
+.I A.B.C.D/NN
+Ping an arbitrary other subnet.  The IP address specifies the base address,
+and the part after the slash is how wide the subnet is.  Typical values
+are /24 (for 255 addresses) and /28 (for 15 addresses).
+.TP 12
+.I filename
+Ping the hosts listed in the given file.  This file can be in the
+format used by \fI/etc/hosts\fP, or it can be any file that has host
+names as the first or second element on each line.  If you use ssh,
+try this:
+
+  sonar -ping $HOME/.ssh/known_hosts
+.RE
+.TP 8
+.B \-ping\-timeout \fIint\fP
+The amount of time in milliseconds the program will wait for an answer
+to a ping.
+.TP 8
+.B \-delay \fIint\fP
+Delay between frames, in microseconds.  Default 20000.
+.TP 8
+.B \-speed \fIratio\fP
+Less than 1 for slower, greater than 1 for faster.  Default 1.
+.TP 8
+.B \-sweep-size \fIratio\fP
+How big the glowing sweep area should be. Default 0.3.
+.TP 8
+.B \-font-size \fIpoints\fP
+How large the text should be.  Default 10 points.
+.TP 8
+.B \-no\-wobble
+Keep the display stationary instead of very slowly wobbling back and forth.
+.TP 8
+.B \-no\-dns
+Do not attempt to resolve IP addresses to hostnames.
+.TP 8
+.B \-no\-times
+Do not display ping times beneath the host names.
+.TP 8
+.B \-team-a-name \fIstring\fP
+In simulation mode, the name of team A.
+.TP 8
+.B \-team-b-name \fIstring\fP
+In simulation mode, the name of team B.
+.TP 8
+.B \-team-a-count \fIint\fP
+In simulation mode, the number of bogies on team A.
+.TP 8
+.B \-team-b-count \fIint\fP
+In simulation mode, the number of bogies on team B.
+.TP 8
+.B \-fps
+Display the current frame rate, polygon count, and CPU load.
+.SH NOTES
+On most Unix systems, this program must be installed as setuid root
+in order to ping hosts.  This is because root privileges are needed
+to create an ICMP RAW socket.  Privileges are disavowed shortly after
+startup (just after connecting to the X server) so this is believed
+to be safe:
+.EX
+chown root:root sonar
+chmod u+s sonar
+.EE
+It is not necessary to make it setuid on MacOS systems, because on
+MacOS, unprivileged programs can ping by using ICMP DGRAM sockets
+instead of ICMP RAW.
+
+In ping-mode, the display is a logarithmic scale, calibrated so that the
+three rings represent ping times of approximately 2.5, 70 and 2,000
+milliseconds respectively.  
+
+This means that if any the hosts you are pinging take longer than 2
+seconds to respond, they won't show up; and if you are pinging several
+hosts with very fast response times, they will all appear close to the
+center of the screen (making their names hard to read.)
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR ping (8)
+.SH COPYRIGHT
+Copyright \(co 2000-2008 by Jamie Zawinski <jwz@jwz.org>
+.RE
+Copyright \(co 1998 by Stephen Martin. <smartin@canada.com>
+
+Permission to use, copy, modify, distribute, and sell this software and its
+documentation for any purpose is hereby granted without fee, provided that
+the above copyright notice appear in all copies and that both that
+copyright notice and this permission notice appear in supporting
+documentation.  No representations are made about the suitability of this
+software for any purpose.  It is provided "as is" without express or 
+implied warranty.
+
+.SH AUTHORS
+Stephen Martin <smartin@canada.com>, 3-nov-1998.
+
+Subnet support, etc. added by Jamie Zawinski, 17-Jul-2000.
+
+Rewritten using OpenGL instead of X11 by Jamie Zawinski, 12-Aug-2008.

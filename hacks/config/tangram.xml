@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="tangram" _label="Tangram" gl="yes">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"/>
+
+  <number id="viewing_time" type="slider" arg="-viewing_time %"
+          _label="Linger" _low-label="Brief" _high-label="Long"
+          low="0" high="30" default="5" />
+
+  <number id="x_camera_rotate" type="slider" arg="-x_camera_rotate %"
+          _label="X rotation" _low-label="Slow" _high-label="Fast"
+          low="0.0" high="1.0" default="0.2" />
+
+  <number id="y_camera_rotate" type="slider" arg="-y_camera_rotate %"
+          _label="Y rotation" _low-label="Slow" _high-label="Fast"
+          low="0.0" high="1.0" default="0.5" />
+
+  <number id="z_camera_rotate" type="slider" arg="-z_camera_rotate %"
+          _label="Z rotation" _low-label="Slow" _high-label="Fast"
+          low="0.0" high="1.0" default="0" />
+
+  <hgroup>
+   <boolean id="labels"    _label="Draw labels" arg-unset="-no-labels"/>
+   <boolean id="wire"      _label="Wireframe"   arg-set="-wireframe"/>
+   <boolean id="rotate"    _label="Rotate"      arg-unset="-no-rotate"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <_description>
+Solves tangram puzzles.
+
+http://en.wikipedia.org/wiki/Tangram
+
+Written by Jeremy English; 2005.
+  </_description>
+</screensaver>
