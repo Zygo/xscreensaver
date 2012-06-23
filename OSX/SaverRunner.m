@@ -341,31 +341,19 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 }
 
 
-- (void) openPreferences: (id) sender
+- (void) openPreferences: (NSString *) saver
 {
-  NSString *saver = [listController selected];
-  if (! saver) return;
-
   [self loadSaver:saver launch:NO];
   if (! saverView) return;
+
+  NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+  [prefs setObject:saver forKey:@"selectedSaverName"];
+  [prefs synchronize];
 
   [rootViewController pushViewController: [saverView configureView]
                       animated:YES];
 }
 
-
-- (void) loadSaverMenu: (id) sender
-{
-  NSString *saver = [listController selected];
-  NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-  if (saver) {
-    [prefs setObject:saver forKey:@"selectedSaverName"];
-  } else {
-    [prefs removeObjectForKey:@"selectedSaverName"];
-  }
-  [self saveScreenshot];
-  [self selectedSaverDidChange:nil];
-}
 
 #endif // USE_IPHONE
 
@@ -423,6 +411,10 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   [ctl save:self];
 
 # else  // USE_IPHONE
+
+  NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+  [prefs setObject:name forKey:@"selectedSaverName"];
+  [prefs synchronize];
 
   if (saverName && [saverName isEqualToString: name]) {
     if (launch && ![saverView isAnimating]) {
@@ -746,41 +738,6 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 }
 
 
-- (UIViewController *) makeMenu
-{
-  listController = [[[SaverListController alloc] 
-                      initWithNames:saverNames
-                      descriptions:[self makeDescTable]]
-                     retain];
-  UIBarButtonItem *run  = [[[UIBarButtonItem alloc]
-                             initWithTitle:@"Run"
-                             style: UIBarButtonItemStylePlain
-                             target: self
-                             action: @selector(loadSaverMenu:)]
-                            autorelease];
-  UIBarButtonItem *about = [[[UIBarButtonItem alloc]
-                             initWithTitle: @"About"
-                             style: UIBarButtonItemStylePlain
-                             target: self
-                             action: @selector(aboutPanel:)]
-                            autorelease];
-  UIBarButtonItem *pref = [[[UIBarButtonItem alloc]
-                             initWithTitle:@"Settings"
-                             style: UIBarButtonItemStylePlain
-                             target: self
-                             action: @selector(openPreferences:)]
-                            autorelease];
-  NSArray *a = [NSArray arrayWithObjects: pref, about, nil];
-
-  [run   setEnabled:NO];
-  [about setEnabled:YES];
-  [pref  setEnabled:NO];
-  listController.navigationItem.leftBarButtonItem  = run;
-  listController.navigationItem.rightBarButtonItems = a;
-
-  return listController;
-}
-
 #endif // USE_IPHONE
 
 
@@ -954,8 +911,11 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
   rootViewController = [[[RotateyViewController alloc] init] retain];
   [window setRootViewController: rootViewController];
-  [rootViewController pushViewController:[self makeMenu]
-                      animated:YES];
+
+  SaverListController *menu = [[SaverListController alloc] 
+                                initWithNames:saverNames
+                                descriptions:[self makeDescTable]];
+  [rootViewController pushViewController:menu animated:YES];
 
   [window makeKeyAndVisible];
   [window setAutoresizesSubviews:YES];
@@ -993,6 +953,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
 # ifdef USE_IPHONE
   NSString *prev = [prefs stringForKey:@"selectedSaverName"];
+
   if (forced)
     prev = forced;
 
@@ -1003,7 +964,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     prev = [saverNames objectAtIndex: (random() % [saverNames count])];
 
   if (prev)
-    [listController scrollTo: prev];
+    [menu scrollTo: prev];
 # endif // USE_IPHONE
 
   if (forced)

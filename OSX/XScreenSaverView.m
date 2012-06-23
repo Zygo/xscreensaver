@@ -400,10 +400,12 @@ double_time (void)
  */
 - (void) allSystemsGo: (NSTimer *) timer
 {
-  NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
-  [prefs setBool:YES forKey:@"wasRunning"];
   NSAssert (timer == crash_timer, @"crash timer screwed up");
   crash_timer = 0;
+
+  NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+  [prefs setBool:YES forKey:@"wasRunning"];
+  [prefs synchronize];
 }
 #endif // USE_IPHONE
 
@@ -421,6 +423,11 @@ double_time (void)
 # ifdef USE_IPHONE
   if (crash_timer)
     [crash_timer invalidate];
+
+  NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
+  [prefs removeObjectForKey:@"wasRunning"];
+  [prefs synchronize];
+
   crash_timer = [NSTimer scheduledTimerWithTimeInterval: 5
                          target:self
                          selector:@selector(allSystemsGo:)
@@ -467,6 +474,7 @@ double_time (void)
   crash_timer = 0;
   NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
   [prefs removeObjectForKey:@"wasRunning"];
+  [prefs synchronize];
 # endif // USE_IPHONE
 
   [super stopAnimation];
@@ -1245,29 +1253,34 @@ double current_device_rotation (void)
   if (rotation_ratio >= 0) return;	// in the midst of rotation animation
   if (orientation == current) return;	// no change
 
+  // When transitioning to FaceUp or FaceDown, pretend there was no change.
+  if (current == UIDeviceOrientationFaceUp ||
+      current == UIDeviceOrientationFaceDown)
+    return;
+
   new_orientation = current;		// current animation target
   rotation_ratio = 0;			// start animating
   rot_start_time = double_time();
 
   switch (orientation) {
-  case UIInterfaceOrientationLandscapeRight:     angle_from = 90;  break;
-  case UIInterfaceOrientationLandscapeLeft:      angle_from = 270; break;
-  case UIInterfaceOrientationPortraitUpsideDown: angle_from = 180; break;
-  default:					 angle_from = 0;   break;
+  case UIDeviceOrientationLandscapeLeft:      angle_from = 90;  break;
+  case UIDeviceOrientationLandscapeRight:     angle_from = 270; break;
+  case UIDeviceOrientationPortraitUpsideDown: angle_from = 180; break;
+  default:                                    angle_from = 0;   break;
   }
 
   switch (new_orientation) {
-  case UIInterfaceOrientationLandscapeRight:     angle_to = 90;  break;
-  case UIInterfaceOrientationLandscapeLeft:      angle_to = 270; break;
-  case UIInterfaceOrientationPortraitUpsideDown: angle_to = 180; break;
-  default:					 angle_to = 0;   break;
+  case UIDeviceOrientationLandscapeLeft:      angle_to = 90;  break;
+  case UIDeviceOrientationLandscapeRight:     angle_to = 270; break;
+  case UIDeviceOrientationPortraitUpsideDown: angle_to = 180; break;
+  default:                                    angle_to = 0;   break;
   }
 
   NSRect ff = [self frame];
 
   switch (orientation) {
-  case UIInterfaceOrientationLandscapeLeft:	// from landscape
-  case UIInterfaceOrientationLandscapeRight:
+  case UIDeviceOrientationLandscapeRight:	// from landscape
+  case UIDeviceOrientationLandscapeLeft:
     rot_from.width  = ff.size.height;
     rot_from.height = ff.size.width;
     break;
@@ -1278,8 +1291,8 @@ double current_device_rotation (void)
   }
 
   switch (new_orientation) {
-  case UIInterfaceOrientationLandscapeLeft:	// to landscape
-  case UIInterfaceOrientationLandscapeRight:
+  case UIDeviceOrientationLandscapeRight:	// to landscape
+  case UIDeviceOrientationLandscapeLeft:
     rot_to.width  = ff.size.height;
     rot_to.height = ff.size.width;
     break;

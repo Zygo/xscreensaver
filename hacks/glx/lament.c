@@ -17,32 +17,25 @@
         "gold" to me.
 
      *  For some reason, the interior surfaces are shinier than the exterior
-        surfaces.  I don't understand why, but this should be remedied.
+        surfaces.  Not sure why.
 
-     *  Perhaps use a slightly-bumpy or oily texture for the interior surfaces?
+     *  Should use a dark wood-grain texture for the interior surfaces.
 
-     *  Some of the edges don't line up perfectly (since the images are not
-        perfectly symetrical.)  Something should be done about this; either
-        making the edges overlap slightly (instead of leaving gaps) or fixing
-        the images so that the edges may be symmetrical.
+     *  Building a face out of multiple adjacent triangles was a terrible
+        idea and leads to visible seams.  Should re-do the face generation
+        to make all of them out of a single triangle strip instead.
+
+     *  The coordinates are slightly off from the image.  lament512.gif is the
+        "right" one, and "lament512b.gif" is the image corrected to line up
+        with what the code is actually doing.
+
+     *  The "star" slices really don't line up well.
 
      *  I want the gold leaf to seem to be raised up from the surface, but I
         think this isn't possible with OpenGL.  Supposedly, OpenGL only 
         supports Gouraud shading (interpolating edge normals from face normals,
         and shading smoothly) but bump-maps only work with Phong shading
         (computing a normal for each rendered pixel.)
-
-     *  As far as I can tell, OpenGL doesn't do shadows.  As a result, the
-        forward-facing interior walls are drawn bright, not dark.  If it was
-        casting shadows properly, it wouldn't matter so much that the edges
-        don't quite line up, because the lines would be black, and thus not
-        visible.  But the edges don't match up, and so the bright interior
-        faces show through, and that sucks.
-
-	But apparently there are tricky ways around this:
-	http://reality.sgi.com/opengl/tips/rts/
-	I think these techniques require GLUT, however, which isn't 
-	(currently) required by any other xscreensaver hacks.
 
      *  There should be strange lighting effects playing across the surface:
         electric sparks, or little glittery blobs of light.  
@@ -61,9 +54,6 @@
         hand, since I don't have any 3d-object-editing tools that I know how
         to use (or that look like they would take any less than several months
         to become even marginally proficient with...)
-
-     *  Perhaps there should be a table top, on which it casts a shadow?
-        And then multiple light sources (for multiple shadows)?
 
      *  Needs music.  ("Hellraiser Themes" by Coil: TORSO CD161; also
         duplicated on the "Unnatural History 2" compilation, WORLN M04699.)
@@ -100,7 +90,11 @@ ENTRYPOINT ModeSpecOpt lament_opts = {countof(opts), opts, countof(vars), vars, 
 #include "xpm-ximage.h"
 #include "rotator.h"
 #include "gltrackball.h"
-#include "../images/lament.xpm"
+#if 0
+# include "../images/lament128.xpm"
+#else
+# include "../images/lament512.xpm"
+#endif
 
 #define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
@@ -330,8 +324,8 @@ star(ModeInfo *mi, Bool top, Bool wire)
   int i;
 
   int points[][2] = {
-    {  77,  74 }, {  60,  98 }, {   0,  71 }, {   0,   0 },    /* L1 */
-    {  60,  98 }, {  55, 127 }, {   0, 127 }, {   0,  71 },    /* L2 */
+    {  77,  74 }, {  60,  99 }, {   0,  74 }, {   0,   0 },    /* L1 */
+    {  60,  99 }, {  55, 127 }, {   0, 127 }, {   0,  74 },    /* L2 */
     {  55, 127 }, {  60, 154 }, {   0, 179 }, {   0, 127 },    /* L3 */
     {  60, 154 }, {  76, 176 }, {   0, 255 }, {   0, 179 },    /* L4 */
     {  76, 176 }, { 100, 193 }, {  74, 255 }, {   0, 255 },    /* B1 */
@@ -1383,7 +1377,8 @@ check_facing(ModeInfo *mi)
 static void
 scale_for_window(ModeInfo *mi)
 {
-  int target_size = 180;
+  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
+  int target_size = lc->texture->width * 1.4;
   int win_size = (MI_WIDTH(mi) > MI_HEIGHT(mi) ? MI_HEIGHT(mi) : MI_WIDTH(mi));
 
   /* This scale makes the box take up most of the window */
@@ -1397,6 +1392,13 @@ scale_for_window(ModeInfo *mi)
      have a 128x128 animation on a 1280x1024 screen that looks good, than
      a 1024x1024 animation that looks really pixelated.
    */
+
+  {
+    int max = 340;		  /* Let's not go larger than life-sized. */
+    if (target_size > max)
+      target_size = max;
+  }
+
   if (win_size > 640 &&
       win_size > target_size * 1.5)
     {

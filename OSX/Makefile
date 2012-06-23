@@ -1,15 +1,17 @@
 # XScreenSaver for MacOS X, Copyright (c) 2006-2011 by Jamie Zawinski.
 
-XCODE_TARGET = "All Savers"
-XCODEBUILD=/Developer/usr/bin/xcodebuild
-XCODE_ARCH=-arch i386 -arch x86_64
+XCODEBUILD = /Developer/usr/bin/xcodebuild
+TARGETS    = -target "All Savers"
+ARCH       = -arch i386 -arch x86_64
+CERT       = 'Jamie Zawinski'
+CERT       = 'iPhone Developer: Jamie Zawinski (Y5M82TL69N)'
 
 default: release
 all: debug release
 
 clean:
 	-rm -rf build
-#	cd ..; $(XCODEBUILD) -target $(XCODE_TARGET) clean
+#	cd ..; $(XCODEBUILD) -target $(TARGETS) clean
 
 distclean:
 	-rm -f config.status config.cache config.log \
@@ -20,10 +22,10 @@ distclean:
 distdepend:: update_plist_version
 
 debug: distdepend
-	cd ..; $(XCODEBUILD) $(XCODE_ARCH) -target $(XCODE_TARGET) -configuration Debug   build
+	cd ..; $(XCODEBUILD) $(ARCH) $(TARGETS) -configuration Debug   build
 
 release:: distdepend
-	cd ..; $(XCODEBUILD) $(XCODE_ARCH) -target $(XCODE_TARGET) -configuration Release build
+	cd ..; $(XCODEBUILD) $(ARCH) $(TARGETS) -configuration Release build
 
 release:: check_versions
 
@@ -31,7 +33,7 @@ release:: sign
 
 sign:
 	@for f in build/Release/*.{saver,app} ; do \
-	  codesign -vfs 'Jamie Zawinski' $$f ; \
+	  codesign -vfs $(CERT) $$f ; \
 	 done
 
 check_versions:

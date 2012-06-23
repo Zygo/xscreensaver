@@ -1608,6 +1608,7 @@
 		AF794FD309974FA60059A8B0 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF794FDF09974FD10059A8B0 /* loop.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258DD0988A468000655EE /* loop.xml */; };
 		AF794FE109974FEC0059A8B0 /* loop.c in Sources */ = {isa = PBXBuildFile; fileRef = AF794FE009974FEC0059A8B0 /* loop.c */; };
+		AF7E080415932A1600D81407 /* iSaverRunner29t.png in Resources */ = {isa = PBXBuildFile; fileRef = AF7E080315932A1600D81407 /* iSaverRunner29t.png */; };
 		AF84AF1F15829AF000607E4C /* SaverListController.m in Sources */ = {isa = PBXBuildFile; fileRef = AF84AF1E15829AF000607E4C /* SaverListController.m */; };
 		AF84AF2015829AF000607E4C /* SaverListController.m in Sources */ = {isa = PBXBuildFile; fileRef = AF84AF1E15829AF000607E4C /* SaverListController.m */; };
 		AF84FD4209B1209E00F3AB06 /* GLUT.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF84FD4109B1209E00F3AB06 /* GLUT.framework */; };
@@ -4747,6 +4748,20 @@
 			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
 			remoteInfo = jwxyz;
 		};
+		AF7E07FD15925DF200D81407 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4FF4930D52CA0800666F98;
+			remoteInfo = m6502.h;
+		};
+		AF7E07FF15925DFE00D81407 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFA56119099378CB00F3E977;
+			remoteInfo = molecules.h;
+		};
 		AF918979158FC00A002B5D1E /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -6058,6 +6073,7 @@
 		AF795014099751940059A8B0 /* pacman_level.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = pacman_level.h; path = hacks/pacman_level.h; sourceTree = "<group>"; };
 		AF795015099751940059A8B0 /* pacman.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = pacman.c; path = hacks/pacman.c; sourceTree = "<group>"; };
 		AF795016099751940059A8B0 /* pacman.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = pacman.h; path = hacks/pacman.h; sourceTree = "<group>"; };
+		AF7E080315932A1600D81407 /* iSaverRunner29t.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = iSaverRunner29t.png; path = OSX/iSaverRunner29t.png; sourceTree = "<group>"; };
 		AF84AF1E15829AF000607E4C /* SaverListController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = SaverListController.m; path = OSX/SaverListController.m; sourceTree = "<group>"; };
 		AF84FD4109B1209E00F3AB06 /* GLUT.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = GLUT.framework; path = /System/Library/Frameworks/GLUT.framework; sourceTree = "<absolute>"; };
 		AF91898F158FC00A002B5D1E /* XScreenSaver.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XScreenSaver.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -9381,6 +9397,7 @@
 		29B97314FDCFA39411CA2CEA /* xscreensaver */ = {
 			isa = PBXGroup;
 			children = (
+				AF7E080315932A1600D81407 /* iSaverRunner29t.png */,
 				AF480AB9098C66E200FB32B8 /* SaverRunner */,
 				080E96DDFE201D6D7F000001 /* libjwxyz */,
 				AFE1FD520981E35400F7970E /* Utils */,
@@ -12080,6 +12097,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = AF91898C158FC00A002B5D1E /* Build configuration list for PBXNativeTarget "XScreenSaver-iOS" */;
 			buildPhases = (
+				AF7E080115925EE300D81407 /* ICMP Sanity Check */,
 				AF91897B158FC00A002B5D1E /* Resources */,
 				AF918985158FC00A002B5D1E /* Sources */,
 				AF918989158FC00A002B5D1E /* Frameworks */,
@@ -12089,6 +12107,8 @@
 			);
 			dependencies = (
 				AF918978158FC00A002B5D1E /* PBXTargetDependency */,
+				AF7E07FE15925DF200D81407 /* PBXTargetDependency */,
+				AF7E080015925DFE00D81407 /* PBXTargetDependency */,
 			);
 			name = "XScreenSaver-iOS";
 			productName = SaverTester;
@@ -14557,6 +14577,7 @@
 			isa = PBXNativeTarget;
 			buildConfigurationList = AFE30BF90E52B14700CCF4A5 /* Build configuration list for PBXNativeTarget "Sonar" */;
 			buildPhases = (
+				AF7E08021592661100D81407 /* ICMP Sanity Check */,
 				AFE30BEB0E52B14700CCF4A5 /* Resources */,
 				AFE30BED0E52B14700CCF4A5 /* Sources */,
 				AFE30BF00E52B14700CCF4A5 /* Frameworks */,
@@ -15912,6 +15933,7 @@
 				AF918B8F158FC53E002B5D1E /* xrayswarm.xml in Resources */,
 				AF918B90158FC53E002B5D1E /* xspirograph.xml in Resources */,
 				AF918B91158FC554002B5D1E /* zoom.xml in Resources */,
+				AF7E080415932A1600D81407 /* iSaverRunner29t.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -18731,6 +18753,34 @@
 			shellPath = /bin/sh;
 			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
+		};
+		AF7E080115925EE300D81407 /* ICMP Sanity Check */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "ICMP Sanity Check";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/OSX/icmp-warning.pl";
+		};
+		AF7E08021592661100D81407 /* ICMP Sanity Check */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "ICMP Sanity Check";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/OSX/icmp-warning.pl";
 		};
 		AF91898A158FC00A002B5D1E /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -25842,6 +25892,16 @@
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
 			targetProxy = AF794FCF09974FA60059A8B0 /* PBXContainerItemProxy */;
+		};
+		AF7E07FE15925DF200D81407 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4FF4930D52CA0800666F98 /* m6502.h */;
+			targetProxy = AF7E07FD15925DF200D81407 /* PBXContainerItemProxy */;
+		};
+		AF7E080015925DFE00D81407 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFA56119099378CB00F3E977 /* molecules.h */;
+			targetProxy = AF7E07FF15925DFE00D81407 /* PBXContainerItemProxy */;
 		};
 		AF918978158FC00A002B5D1E /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;

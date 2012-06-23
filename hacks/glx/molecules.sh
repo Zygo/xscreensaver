@@ -14,4 +14,9 @@ for f in $SRCS ; do
     sed 's/",$/\\n"/' >> $TMP
   echo ',' >> $TMP
 done
-mv $TMP $TARGET
+
+if cmp -s $TMP $TARGET ; then
+  rm $TMP
+else
+  mv $TMP $TARGET
+fi

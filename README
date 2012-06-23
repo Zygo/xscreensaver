@@ -38,6 +38,9 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.16:   * More iOS tweaks.
+                      * Fixed some compilation problems.
+                      * Enlarged the texture image for `lament'.
 Changes since 5.15:   * Ported to iPhone and iPad.
                       * XInput devices now also ignore small mouse motions.
                       * Loading images via RSS feeds is much improved.

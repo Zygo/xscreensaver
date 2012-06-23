@@ -21,7 +21,6 @@
   NSMutableArray *list_by_letter[26];  // 27 to get "#" after "Z".
   NSMutableArray *letter_sections;
   NSMutableArray *section_titles;
-  NSString *selected;
   NSDictionary *descriptions;
 
   int tap_count;
@@ -31,7 +30,6 @@
 
 - (id)initWithNames:(NSArray *)names descriptions:(NSDictionary *)descs;
 - (void) reload:(NSArray *)names descriptions:(NSDictionary *)descs;
-- (NSString *) selected;
 - (void) scrollTo:(NSString *)name;
 @end
 
