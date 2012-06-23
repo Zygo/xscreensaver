@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="DNAlogo" _label="DNA Logo">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame Rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="25000"
+          convert="invert"/>
+
+  <select id="mode">
+   <option id="glyph"  _label="DNA Lounge logo" arg-set="-mode helix"/>
+   <option id="pizza"  _label="DNA Pizza logo"  arg-set="-mode pizza"/>
+   <option id="both"   _label="DNA Lounge and DNA Pizza logos"/>
+  </select>
+  <hgroup>
+   <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <_description>
+DNA Lounge
+
+        Restaurant -- Bar -- Nightclub -- Cafe -- Est. 1985.
+
+        375 Eleventh Street
+        San Francisco, CA
+        94103
+
+        http://www.dnalounge.com/
+        http://www.dnapizza.com/
+
+Written by Jamie Zawinski; 2001.
+  </_description>
+</screensaver>

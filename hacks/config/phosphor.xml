@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="phosphor" _label="Phosphor">
+
+  <command arg="-root"/>
+
+ <hgroup>
+  <vgroup>
+   <number id="delay" type="slider" arg="-delay %"
+           _label="Frame rate" _low-label="Low" _high-label="High"
+           low="0" high="100000" default="50000"
+           convert="invert"/>
+
+   <number id="scale" type="spinbutton" arg="-scale %"
+           _label="Font scale" low="1" high="20" default="6"/>
+
+   <number id="fade" type="slider" arg="-ticks %"
+           _label="Fade" _low-label="Slow" _high-label="Fast"
+           low="1" high="100" default="20"
+           convert="invert"/>
+
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </vgroup>
+  <vgroup>
+   <xscreensaver-text />
+  </vgroup>
+ </hgroup>
+
+  <_description>
+Draws a simulation of an old terminal, with large pixels and
+long-sustain phosphor.
+
+On MacOS and Linux, this program is also a fully-functional VT100
+emulator!  Run it as an application instead of as a screen saver and
+you can use it as a terminal.
+
+Written by Jamie Zawinski; 1999.
+  </_description>
+</screensaver>
