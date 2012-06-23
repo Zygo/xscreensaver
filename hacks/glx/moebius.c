@@ -88,9 +88,32 @@ static const char sccsid[] = "@(#)moebius.c	5.01 2001/03/01 xlockmore";
 # include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#else
+# include <X11/Xlib.h>
+# include <GL/gl.h>
+# include <GL/glu.h>
+#endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
+
 #ifdef MODE_moebius
 
+#if 0 /* Hey, this never actually used the texture at all! */
+#if 0
 #include "e_textures.h"
+#else
+#include "xpm-ximage.h"
+#include "../images/wood.xpm"
+#endif
+#endif /* 0 */
+
+#include "sphere.h"
+#include "tube.h"
+
 #include "rotator.h"
 #include "gltrackball.h"
 
@@ -185,6 +208,7 @@ static moebiusstruct *moebius = (moebiusstruct *) NULL;
 static Bool
 mySphere(float radius)
 {
+#if 0
 	GLUquadricObj *quadObj;
 
 	if ((quadObj = gluNewQuadric()) == 0)
@@ -192,12 +216,19 @@ mySphere(float radius)
 	gluQuadricDrawStyle(quadObj, (GLenum) GLU_FILL);
 	gluSphere(quadObj, radius, 16, 16);
 	gluDeleteQuadric(quadObj);
+#else
+    glPushMatrix();
+    glScalef (radius, radius, radius);
+    unit_sphere (16, 16, False);
+    glPopMatrix();
+#endif
 	return True;
 }
 
 static Bool
 myCone(float radius)
 {
+#if 0
 	GLUquadricObj *quadObj;
 
 	if ((quadObj = gluNewQuadric()) == 0)
@@ -205,6 +236,12 @@ myCone(float radius)
 	gluQuadricDrawStyle(quadObj, (GLenum) GLU_FILL);
 	gluCylinder(quadObj, radius, 0, radius * 3, 8, 1);
 	gluDeleteQuadric(quadObj);
+#else
+    cone (0, 0, 0,
+          0, 0, radius * 3,
+          radius, 0,
+          8, True, True, False);
+#endif
 	return True;
 }
 
@@ -403,6 +440,10 @@ draw_moebius_strip(ModeInfo * mi)
 
 	float       Cx, Cy, Cz;
 
+#ifdef HAVE_JWZGLES
+    solidmoebius = True; /* no LINE PolygonMode */
+#endif
+
 	if (solidmoebius) {
 		glBegin(GL_QUAD_STRIP);
 		Phi = 0;
@@ -540,9 +581,9 @@ reshape_moebius (ModeInfo * mi, int width, int height)
 }
 
 static void
-pinit(void)
+pinit(ModeInfo *mi)
 {
-    int status;
+  /* int status; */
 	glClearDepth(1.0);
 	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient);
 	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
@@ -562,11 +603,13 @@ pinit(void)
 	/* moebius */
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_DEPTH_TEST);
-	glDisable(GL_TEXTURE_2D);
 	glDisable(GL_CULL_FACE);
 
+#if 0
+	glEnable(GL_TEXTURE_2D);
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
+#if 0
     clear_gl_error();
 	status = gluBuild2DMipmaps(GL_TEXTURE_2D, 3,
                                WoodTextureWidth, WoodTextureHeight,
@@ -580,12 +623,29 @@ pinit(void)
         exit (1);
       }
     check_gl_error("mipmapping");
+#else
+    {
+      XImage *img = xpm_to_ximage (mi->dpy,
+                                   mi->xgwa.visual,
+                                   mi->xgwa.colormap,
+                                   wood_texture);
+	  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
+                    img->width, img->height, 0,
+                    GL_RGBA,
+                    /* GL_UNSIGNED_BYTE, */
+                    GL_UNSIGNED_INT_8_8_8_8_REV,
+                    img->data);
+      check_gl_error("texture");
+      XDestroyImage (img);
+    }
+#endif
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+#endif
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, front_shininess);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
@@ -670,7 +730,7 @@ init_moebius (ModeInfo * mi)
 
 		reshape_moebius(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
-		pinit();
+		pinit(mi);
 	} else {
 		MI_CLEARWINDOW(mi);
 	}

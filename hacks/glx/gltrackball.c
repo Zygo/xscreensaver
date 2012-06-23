@@ -1,4 +1,4 @@
-/* gltrackball, Copyright (c) 2002-2008 Jamie Zawinski <jwz@jwz.org>
+/* gltrackball, Copyright (c) 2002-2012 Jamie Zawinski <jwz@jwz.org>
  * GL-flavored wrapper for trackball.c
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -18,11 +18,13 @@
 # include "config.h"
 #endif
 
-#ifdef HAVE_COCOA
-# include <OpenGL/gl.h>
-#else
+#ifndef HAVE_COCOA
 # include <GL/gl.h>
 #endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 #include "trackball.h"
 #include "gltrackball.h"

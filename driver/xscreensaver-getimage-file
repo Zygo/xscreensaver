@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001-2011 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001-2012 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -50,11 +50,14 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
             # errors about UTF-8 all over the place without this.
 
 use Digest::MD5 qw(md5_base64);
-use LWP::Simple qw($ua);
+
+# Some Linux systems don't install LWP by default!
+# Only error out if we're actually loading a URL instead of local data.
+BEGIN { eval 'use LWP::Simple;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.30 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.33 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -325,19 +328,98 @@ sub write_cache($) {
 }
 
 
+sub html_unquote($) {
+  my ($h) = @_;
+  my %ent = ( 'amp' => '&', 'lt' => '<', 'gt' => '>', 
+              'quot' => '"', 'apos' => "'" );
+  $h =~ s/(&(\#)?([[:alpha:]\d]+);?)/
+    {
+     my ($o, $c) = ($1, $3);
+     if (! defined($2)) {
+       $c = $ent{$c};			# for &lt;
+     } else {
+       if ($c =~ m@^x([\dA-F]+)$@si) {	# for &#x41;
+         $c = chr(hex($1));
+       } elsif ($c =~ m@^\d+$@si) {	# for &#65;
+         $c = chr($c);
+       } else {
+         $c = undef;
+       }
+     }
+     ($c || $o);
+    }
+   /gexi;
+  return $h;
+}
+
+
+
+sub set_proxy($) {
+  my ($ua) = @_;
+
+  if (!defined($ENV{http_proxy}) && !defined($ENV{HTTP_PROXY})) {
+    my $proxy_data = `scutil --proxy 2>/dev/null`;
+    my ($server) = ($proxy_data =~ m/\bHTTPProxy\s*:\s*([^\s]+)/s);
+    my ($port)   = ($proxy_data =~ m/\bHTTPPort\s*:\s*([^\s]+)/s);
+    if ($server) {
+      # Note: this ignores the "ExceptionsList".
+      $ENV{http_proxy} = "http://" . $server . ($port ? ":$port" : "") . "/";
+      print STDERR "$progname: MacOS proxy: $ENV{http_proxy}\n"
+        if ($verbose > 2)
+      }
+  }
+
+  $ua->env_proxy();
+}
+
+
+sub init_lwp() {
+  if (! defined ($LWP::Simple::ua)) {
+    error ("\n\n\tPerl is broken. Do this to repair it:\n" .
+           "\n\tsudo cpan LWP::Simple\n");
+  }
+  set_proxy ($LWP::Simple::ua);
+}
+
+
 # Returns a list of the image enclosures in the RSS or Atom feed.
 # Elements of the list are references, [ "url", "guid" ].
 #
+sub parse_feed($);
 sub parse_feed($) {
   my ($url) = @_;
 
-  $ua->agent ("$progname/$version");
-  $ua->timeout (10);  # bail sooner than the default of 3 minutes
+  init_lwp();
+  $LWP::Simple::ua->agent ("$progname/$version");
+  $LWP::Simple::ua->timeout (10);  # bail sooner than the default of 3 minutes
 
   my $body = (LWP::Simple::get($url) || '');
 
-  error ("not an RSS or Atom feed: $url")
-    unless ($body =~ m@^<\?xml\s@si);
+  if ($body !~ m@^<\?xml\s@si) {
+    # Not an RSS/Atom feed.  Try RSS autodiscovery.
+
+    error ("not an RSS or Atom feed, or HTML: $url")
+      unless ($body =~ m@<(HEAD|BODY|A|IMG)\b@si);
+
+    # Find the first <link> with RSS or Atom in it, and use that instead.
+
+    $body =~ s@<LINK\s+([^<>]*)>@{
+      my $p = $1;
+      if ($p =~ m! \b REL  \s* = \s* ['"]? alternate \b!six &&
+          $p =~ m! \b TYPE \s* = \s* ['"]? application/(atom|rss) !six &&
+          $p =~ m! \b HREF \s* = \s* ['"]  ( [^<>'"]+ ) !six
+         ) {
+        my $u2 = html_unquote ($1);
+        print STDERR "$progname: found feed: $u2\n"
+          if ($verbose);
+        return parse_feed ($u2);
+      }
+      '';
+    }@gsexi;
+
+    error ("no RSS or Atom feed for HTML page: $url");
+  }
+
 
   $body =~ s@(<ENTRY|<ITEM)@\001$1@gsi;
   my @items = split(/\001/, $body);
@@ -363,7 +445,7 @@ sub parse_feed($) {
           if ($type) {
             $href = undef unless ($type =~ m@^image/@si);  # omit videos
           }
-          $iurl = $href if ($href);
+          $iurl = html_unquote($href) if $href;
         }
         $link;
       }!gsexi;
@@ -375,8 +457,31 @@ sub parse_feed($) {
       $item =~ s!(<MEDIA:CONTENT[^<>]*>)!{
         my $link = $1;
         my ($href) = ($link =~ m/\bURL\s*=\s*[\"\']([^<>\'\"]+)/si);
-        $iurl = $href if $href;
+        $iurl = html_unquote($href) if $href;
         $link;
+      }!gsexi;
+    }
+
+    # Then look for <enclosure url="..."/> 
+    #
+    if (! $iurl) {
+      $item =~ s!(<ENCLOSURE[^<>]*>)!{
+        my $link = $1;
+        my ($type) = ($link =~ m/\bTYPE\s*=\s*[\"\']?([^<>\'\"]+)/si);
+        my ($href) = ($link =~ m/\bURL\s*=\s*[\"\']([^<>\'\"]+)/si);
+        $iurl = html_unquote($href)
+          if ($href && $type && $type =~ m@^image/@si);  # omit videos
+        $link;
+      }!gsexi;
+    }
+
+    # Ok, maybe there's an image in the <url> field?
+    #
+    if (! $iurl) {
+      $item =~ s!((<URL\b[^<>]*>)([^<>]*))!{
+        my ($all, $u2) = ($1, $3);
+        $iurl = html_unquote($u2) if ($u2 =~ m/$good_file_re/io);
+        $all;
       }!gsexi;
     }
 
@@ -385,11 +490,7 @@ sub parse_feed($) {
     if (! $iurl) {
       $item =~ s!(<description[^<>]*>.*?</description>)!{
         my $desc = $1;
-        $desc =~ s/&lt;/</gs;
-        $desc =~ s/&gt;/>/gs;
-        $desc =~ s/&quot;/\"/gs;
-        $desc =~ s/&apos;/\'/gs;
-        $desc =~ s/&amp;/&/gs;
+        $desc = html_unquote($desc);
         my ($href) = ($desc =~ m@<IMG[^<>]*\bSRC=[\"\']?([^\"\'<>]+)@si);
         $iurl = $href if ($href);
         $desc;
@@ -468,7 +569,8 @@ sub download_image($$$) {
 
   print STDERR "$progname: downloading: $dir/$file for $uid / $url\n" 
     if ($verbose > 1);
-  $ua->agent ("$progname/$version");
+  init_lwp();
+  $LWP::Simple::ua->agent ("$progname/$version");
   my $status = LWP::Simple::mirror ($url, "$dir/$file");
   if (!LWP::Simple::is_success ($status)) {
     print STDERR "$progname: error $status: $url\n";   # keep going
@@ -565,6 +667,8 @@ sub mirror_feed($) {
     #
     my $count = 0;
     my @urls = parse_feed ($url);
+    print STDERR "$progname: " . ($#urls + 1) . " images\n"
+      if ($verbose > 1);
     foreach my $p (@urls) {
       my ($furl, $id) = @$p;
       my $f = download_image ($furl, $id, $dir);
@@ -695,6 +799,10 @@ sub find_random_file($) {
 
   print STDERR "$progname: no suitable images in $dir " .
                "(after $max_tries tries)\n";
+
+  # If we got here, blow away the cache.  Maybe it's stale.
+  unlink $cache_file_name if $cache_file_name;
+
   exit 1;
 }
 
@@ -705,6 +813,11 @@ sub large_enough_p($) {
   my ($w, $h) = image_file_size ($file);
 
   if (!defined ($h)) {
+
+    # Nonexistent files are obviously too small!
+    # Already printed $verbose message about the file not existing.
+    return 0 unless -f $file;
+
     print STDERR "$progname: $file: unable to determine image size\n"
       if ($verbose);
     # Assume that unknown files are of good sizes: this will happen if
@@ -821,7 +934,7 @@ sub image_file_size($) {
   my $in;
   if (! open ($in, '<', $file)) {
     print STDERR "$progname: $file: $!\n" if ($verbose);
-    return undef;
+    return ();
   }
   binmode ($in);  # Larry can take Unicode and shove it up his ass sideways.
   my $body = '';

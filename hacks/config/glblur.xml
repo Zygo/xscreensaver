@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="glblur" _label="GLBlur">
+<screensaver name="glblur" _label="GLBlur" gl="yes">
 
   <command arg="-root"/>
 
@@ -29,8 +29,8 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-This draws a box and a few line segments, and generates a
-radial blur outward from it.  This creates flowing field effects.
+Generates flowing field effects from the vapor trails around a moving
+object.
 
 This is done by rendering the scene into a small texture, then
 repeatedly rendering increasingly-enlarged and increasingly-transparent

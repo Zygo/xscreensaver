@@ -1191,6 +1191,10 @@ main_loop (saver_info *si)
              we would never be able to un-blank it!  We would never
              see any events, and the display would be wedged.
 
+             In particular, without that keyboard grab, we will be
+             unable to ever read keypresses on the unlock dialog.
+             You can't unlock if you can't type your password.
+
              So, just go around the loop again and wait for the
              next bout of idleness.  (If the user remains idle, we
              will next try to blank the screen again in no more than

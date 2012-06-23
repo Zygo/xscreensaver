@@ -1,4 +1,4 @@
-/* glslideshow, Copyright (c) 2003-2011 Jamie Zawinski <jwz@jwz.org>
+/* glslideshow, Copyright (c) 2003-2012 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and smoothly pans around them; crossfades
  * when loading new images.
  *
@@ -160,8 +160,12 @@ typedef struct {
   Bool checked_fps_p;		/* Whether we have checked for a low
                                    frame rate. */
 
+# ifdef HAVE_GLBITMAP
   XFontStruct *xfont;		/* for printing image file names */
   GLuint font_dlist;
+# else
+  texture_font_data *font_data;
+# endif
 
   int sprite_id, image_id;      /* debugging id counters */
 
@@ -812,12 +816,22 @@ draw_sprite (ModeInfo *mi, sprite *sp)
         int x = 10;
         int y = mi->xgwa.height - 10;
         glColor4f (0, 0, 0, sp->opacity);   /* cheap-assed dropshadow */
-        print_gl_string (mi->dpy, ss->xfont, ss->font_dlist,
+        print_gl_string (mi->dpy,
+# ifdef HAVE_GLBITMAP
+                         ss->xfont, ss->font_dlist,
+# else
+                         ss->font_data,
+# endif
                          mi->xgwa.width, mi->xgwa.height, x, y,
                          img->title, False);
         x++; y++;
         glColor4f (1, 1, 1, sp->opacity);
-        print_gl_string (mi->dpy, ss->xfont, ss->font_dlist,
+        print_gl_string (mi->dpy,
+# ifdef HAVE_GLBITMAP
+                         ss->xfont, ss->font_dlist,
+# else
+                         ss->font_data,
+# endif
                          mi->xgwa.width, mi->xgwa.height, x, y,
                          img->title, False);
       }
@@ -873,6 +887,20 @@ draw_sprites (ModeInfo *mi)
   glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix();
+
+  {
+    GLfloat rot = current_device_rotation();
+    glTranslatef (0.5, 0.5, 0);
+    glRotatef(rot, 0, 0, 1);
+    if ((rot >  45 && rot <  135) ||
+        (rot < -45 && rot > -135))
+      {
+        GLfloat s = MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi);
+        glScalef (s, 1/s, 1);
+      }
+    glTranslatef (-0.5, -0.5, 0);
+  }
+
   for (i = 0; i < ss->nsprites; i++)
     draw_sprite (mi, ss->sprites[i]);
   glPopMatrix();
@@ -1120,7 +1148,11 @@ init_slideshow (ModeInfo *mi)
 
   if (debug_p) glLineWidth (3);
 
+#ifdef HAVE_GLBITMAP
   load_font (mi->dpy, "titleFont", &ss->xfont, &ss->font_dlist);
+#else
+  ss->font_data = load_texture_font (mi->dpy, "Font");
+#endif
 
   if (debug_p)
     hack_resources();

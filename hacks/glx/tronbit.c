@@ -1,4 +1,4 @@
-/* tronbit, Copyright (c) 2011 Jamie Zawinski <jwz@jwz.org>
+/* tronbit, Copyright (c) 2011-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -236,6 +236,20 @@ animate_bits (ModeInfo *mi, bit_state omodel, bit_state nmodel, GLfloat ratio)
   int polys = 0;
   GLfloat scale = sin (ratio * M_PI / 2);
   GLfloat osize, nsize, small;
+  int wire = MI_IS_WIREFRAME(mi);
+
+  glShadeModel(GL_SMOOTH);
+
+  glEnable(GL_DEPTH_TEST);
+  glEnable(GL_NORMALIZE);
+  glEnable(GL_CULL_FACE);
+
+  if (!wire)
+    {
+      glEnable(GL_LIGHTING);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_CULL_FACE);
+    }
 
  if ((omodel == BIT_IDLE1 || omodel == BIT_IDLE2) &&
      (nmodel == BIT_IDLE1 || nmodel == BIT_IDLE2))
@@ -273,11 +287,6 @@ draw_histogram (ModeInfo *mi, GLfloat ratio)
   int overlays = 5;
   int k;
   
-  glPushAttrib (GL_TRANSFORM_BIT |  /* for matrix contents */
-                GL_ENABLE_BIT |     /* for various glDisable calls */
-                GL_CURRENT_BIT |    /* for glColor3f() */
-                GL_LIST_BIT);       /* for glListBase() */
-
   glDisable (GL_TEXTURE_2D);
   glDisable (GL_LIGHTING);
   glDisable (GL_BLEND);
@@ -292,7 +301,8 @@ draw_histogram (ModeInfo *mi, GLfloat ratio)
     glPushMatrix();
 
     glLoadIdentity();
-    gluOrtho2D (0, mi->xgwa.width, 0, mi->xgwa.height);
+    glRotatef(current_device_rotation(), 0, 0, 1);
+    glOrtho (0, mi->xgwa.width, 0, mi->xgwa.height, -1, 1);
 
     for (k = 0; k < overlays; k++)
       {
@@ -327,8 +337,6 @@ draw_histogram (ModeInfo *mi, GLfloat ratio)
   }
   glMatrixMode(GL_PROJECTION);
   glPopMatrix();
-
-  glPopAttrib();
 
   glMatrixMode(GL_MODELVIEW);
 
@@ -418,7 +426,6 @@ ENTRYPOINT void
 init_bit (ModeInfo *mi)
 {
   bit_configuration *bp;
-  int wire = MI_IS_WIREFRAME(mi);
   int i;
 
   if (!bps) {
@@ -435,24 +442,6 @@ init_bit (ModeInfo *mi)
   bp->glx_context = init_GL(mi);
 
   reshape_bit (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-
-  if (!wire)
-    {
-      GLfloat pos[4] = {1.0, 1.0, 1.0, 0.0};
-      GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};
-      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
-      GLfloat spc[4] = {0.0, 1.0, 1.0, 1.0};
-
-      glEnable(GL_LIGHTING);
-      glEnable(GL_LIGHT0);
-      glEnable(GL_DEPTH_TEST);
-      glEnable(GL_CULL_FACE);
-
-      glLightfv(GL_LIGHT0, GL_POSITION, pos);
-      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
-      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
-      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
-    }
 
   {
     double spin_speed   = 3.0;
@@ -490,21 +479,32 @@ draw_bit (ModeInfo *mi)
   bit_configuration *bp = &bps[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
+  int wire = MI_IS_WIREFRAME(mi);
 
   if (!bp->glx_context)
     return;
 
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
-  glShadeModel(GL_SMOOTH);
-
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_NORMALIZE);
-  glEnable(GL_CULL_FACE);
-
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  if (!wire)
+    {
+      GLfloat pos[4] = {1.0, 1.0, 1.0, 0.0};
+      GLfloat amb[4] = {0.0, 0.0, 0.0, 1.0};
+      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
+      GLfloat spc[4] = {0.0, 1.0, 1.0, 1.0};
+
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glLightfv(GL_LIGHT0, GL_POSITION, pos);
+      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
+      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
+      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+    }
+
   glPushMatrix ();
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   glScalef(1.1, 1.1, 1.1);
 
@@ -515,7 +515,9 @@ draw_bit (ModeInfo *mi)
                  (y - 0.5) * 5,
                  (z - 0.5) * 3);
 
+    glRotatef(-current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (bp->trackball);
+    glRotatef(current_device_rotation(), 0, 0, 1);
 
     get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);
@@ -526,7 +528,6 @@ draw_bit (ModeInfo *mi)
   mi->polygon_count = 0;
 
   glScalef (6, 6, 6);
-
 
   {
     int nmodel = bp->history [bp->history_fp];

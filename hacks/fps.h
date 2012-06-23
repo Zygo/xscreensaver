@@ -25,4 +25,11 @@ extern void fps_slept (fps_state *, unsigned long usecs);
 extern double fps_compute (fps_state *, unsigned long polys, double depth);
 extern void fps_draw (fps_state *);
 
+/* Doesn't really belong here, but close enough. */
+#ifdef USE_IPHONE
+  extern double current_device_rotation (void);
+#else
+# define current_device_rotation() (0)
+#endif
+
 #endif /* __XSCREENSAVER_FPS_H__ */

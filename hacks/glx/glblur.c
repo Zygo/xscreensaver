@@ -239,11 +239,13 @@ init_texture (ModeInfo *mi)
 
   glGenTextures (1, &bp->texture);
   glBindTexture (GL_TEXTURE_2D, bp->texture);
-  glTexImage2D (GL_TEXTURE_2D, 0, 4, 128, 128, 0,
+  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
+                bp->tex_w, bp->tex_h, 0,
 		GL_RGBA,
                 /* GL_UNSIGNED_BYTE, */
                 GL_UNSIGNED_INT_8_8_8_8_REV,
                 bp->tex_data);
+  check_gl_error ("texture generation");
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 }
@@ -262,7 +264,7 @@ render_scene_to_texture (ModeInfo *mi)
   glBindTexture (GL_TEXTURE_2D, bp->texture);
   glCopyTexImage2D (GL_TEXTURE_2D, 0, GL_LUMINANCE, 0, 0,
                     bp->tex_w, bp->tex_h, 0);
-  check_gl_error ("texture");
+  check_gl_error ("texture2D");
 
   glViewport (0, 0, MI_WIDTH(mi), MI_HEIGHT(mi));
 }
@@ -280,9 +282,6 @@ overlay_blur_texture (ModeInfo *mi)
   GLfloat spost = 0;		    /* starting texture coordinate offset */
   GLfloat alpha_inc;		    /* transparency fade factor */
   GLfloat alpha = 0.2;		    /* initial transparency */
-
-  glDisable (GL_TEXTURE_GEN_S);
-  glDisable (GL_TEXTURE_GEN_T);
 
   glEnable (GL_TEXTURE_2D);
   glDisable (GL_DEPTH_TEST);
@@ -431,7 +430,7 @@ init_glblur (ModeInfo *mi)
       glEnable(GL_LIGHTING);
       glEnable(GL_LIGHT0);
 
-      glMateriali(GL_FRONT, GL_SHININESS, shiny);
+      glMaterialf(GL_FRONT, GL_SHININESS, shiny);
     }
 
   {
@@ -487,6 +486,7 @@ init_glblur (ModeInfo *mi)
   bp->scene_dlist2 = glGenLists (1);
 
   init_texture (mi);
+
   generate_object (mi);
 }
 
@@ -571,7 +571,6 @@ draw_glblur (ModeInfo *mi)
     glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR, spec);
 
     glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color0);
-
     glCallList (bp->obj_dlist0);
 
     glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color1);
@@ -580,6 +579,7 @@ draw_glblur (ModeInfo *mi)
     glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color2);
     glCallList (bp->obj_dlist2);
 
+    glMatrixMode (GL_MODELVIEW);
     glPopMatrix ();
   }
   glEndList ();
@@ -601,6 +601,7 @@ draw_glblur (ModeInfo *mi)
     glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color3);
     glCallList (bp->obj_dlist3);
 
+    glMatrixMode (GL_MODELVIEW);
     glPopMatrix ();
   }
   glEndList ();

@@ -107,7 +107,7 @@ draw_atriangle(ModeInfo * mi, XPoint * p, int y_0, int y_1, int y_2, double dinv
 	Window      window = MI_WINDOW(mi);
 	GC          gc = MI_GC(mi);
 
-	if (MI_NPIXELS(mi) > 2) {	/* color */
+	if (MI_NCOLORS(mi) > 2) {	/* color */
 		int         dmax, dmin;
 		long        color;
 
@@ -119,11 +119,11 @@ draw_atriangle(ModeInfo * mi, XPoint * p, int y_0, int y_1, int y_2, double dinv
 		if (dmax == 0) {
 			color = BLUE;
 		} else {
-			color = MI_NPIXELS(mi) -
-				(int) ((double) MI_NPIXELS(mi) / M_PI_2 * atan(dinv * (dmax - dmin)));
+			color = MI_NCOLORS(mi) -
+				(int) ((double) MI_NCOLORS(mi) / M_PI_2 * atan(dinv * (dmax - dmin)));
 		}
 
-		XSetForeground(display, gc, MI_PIXEL(mi, color % MI_NPIXELS(mi)));
+		XSetForeground(display, gc, mi->colors[color % MI_NCOLORS(mi)].pixel);
 		XFillPolygon(display, window, gc, p, 3, Convex, CoordModeOrigin);
 	} else {
 		/* mono */

@@ -197,9 +197,9 @@ reshape_lockward (ModeInfo *mi, int width, int height)
 	glMatrixMode (GL_PROJECTION);
 	glLoadIdentity ();
 	if (height > width)
-		gluOrtho2D (-8.0, 8.0, -8.0 * h, 8.0 * h);
+		glOrtho (-8.0, 8.0, -8.0 * h, 8.0 * h, -1, 1);
 	else
-		gluOrtho2D (-8.0 / h, 8.0 / h, -8.0, 8.0);
+		glOrtho (-8.0 / h, 8.0 / h, -8.0, 8.0, -1, 1);
 
 	glMatrixMode (GL_MODELVIEW);
 }

@@ -307,6 +307,7 @@ static int preen(int current, int max) {
     return(current);
 }
 
+#if 0
 static void
 smoothen(struct state *st, int x, int lastx, int y, int lasty, int size, int last_color, XColor *colors, Display *dpy, Window window, GC bgc, int screen, struct info *info)
 {
@@ -327,6 +328,7 @@ smoothen(struct state *st, int x, int lastx, int y, int lasty, int size, int las
         smoothen(st, newx, x, newy, y, size, last_color, st->colors, st->dpy, st->window, st->bgc, st->screen, st->info);
     }
 }
+#endif
 
 
 static void *

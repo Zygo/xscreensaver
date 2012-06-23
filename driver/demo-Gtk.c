@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2011 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1412,19 +1412,32 @@ normalize_directory (const char *path)
             {
               s0--;
               s += 3;
-              strcpy (s0, s);
+              /* strcpy (s0, s); */
+              memmove(s0, s, strlen(s) + 1);
               s = s0-1;
             }
         }
-      else if (*s == '/' && !strncmp (s, "/./", 3))	/* delete "/./" */
-        strcpy (s, s+2), s--;
+      else if (*s == '/' && !strncmp (s, "/./", 3)) {	/* delete "/./" */
+        /* strcpy (s, s+2), s--; */
+        memmove(s, s+2, strlen(s+2) + 1);
+        s--;
+       }
       else if (*s == '/' && !strncmp (s, "/.\000", 3))	/* delete "/.$" */
         *s = 0, s--;
     }
 
-  for (s = p2; s && *s; s++)		/* normalize consecutive slashes */
-    while (s[0] == '/' && s[1] == '/')
-      strcpy (s, s+1);
+  /*
+    Normalize consecutive slashes.
+    Ignore doubled slashes after ":" to avoid mangling URLs.
+  */
+
+  for (s = p2; s && *s; s++){
+    if (*s == ':') continue;
+    if (!s[1] || !s[2]) continue;
+    while (s[1] == '/' && s[2] == '/')
+      /* strcpy (s+1, s+2); */
+      memmove (s+1, s+2, strlen(s+2) + 1);
+  }
 
   /* and strip trailing whitespace for good measure. */
   L = strlen(p2);
@@ -1593,10 +1606,12 @@ flush_dialog_changes_and_save (state *s)
   /* Warn if the image directory doesn't exist, when:
      - not being warned before
      - image directory is changed and the directory doesn't exist
+     - image directory does not begin with http://
    */
   if (p2->image_directory &&
       *p2->image_directory &&
       !directory_p (p2->image_directory) &&
+       strncmp(p2->image_directory, "http://", 6) &&
         ( !already_warned_about_missing_image_directory ||
           ( p->image_directory &&
             *p->image_directory &&
@@ -2066,7 +2081,8 @@ store_image_directory (GtkWidget *button, gpointer user_data)
   if (p->image_directory && !strcmp(p->image_directory, path))
     return;  /* no change */
 
-  if (!directory_p (path))
+  /* No warning for URLs. */
+  if ((!directory_p (path)) && strncmp(path, "http://", 6))
     {
       char b[255];
       sprintf (b, _("Error:\n\n" "Directory does not exist: \"%s\"\n"), path);

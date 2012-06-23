@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="menger" _label="Menger">
+<screensaver name="menger" _label="Menger" gl="yes">
 
   <command arg="-root"/>
 
@@ -36,9 +36,8 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-This draws the three-dimensional variant of the recursive Menger
-Gasket, a cube-based fractal object analagous to the Sierpinski
-Tetrahedron.
+This draws the recursive Menger Gasket, a cube-based fractal object
+analagous to the Sierpinski Tetrahedron.
 
 http://en.wikipedia.org/wiki/Menger_sponge
 http://en.wikipedia.org/wiki/Sierpinski_carpet

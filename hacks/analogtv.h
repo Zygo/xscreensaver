@@ -282,11 +282,20 @@ int analogtv_handle_events (analogtv *it);
 #define ANALOGTV_DEFAULTS_SHM
 #endif
 
+#ifndef USE_IPHONE
+# define ANALOGTV_DEF_BRIGHTNESS "2"
+# define ANALOGTV_DEF_CONTRAST "150"
+#else
+  /* Need to really crank this up for it to look good on the iPhone screen. */
+# define ANALOGTV_DEF_BRIGHTNESS "3"
+# define ANALOGTV_DEF_CONTRAST "1000"
+#endif
+
 #define ANALOGTV_DEFAULTS \
   "*TVColor:         70", \
   "*TVTint:          5",  \
-  "*TVBrightness:    2",  \
-  "*TVContrast:      150",\
+  "*TVBrightness:  " ANALOGTV_DEF_BRIGHTNESS,  \
+  "*TVContrast:    " ANALOGTV_DEF_CONTRAST, \
   "*Background:      Black", \
   "*use_cmap:        0",  \
   "*geometry:	     800x600", \
@@ -294,7 +303,10 @@ int analogtv_handle_events (analogtv *it);
   ANALOGTV_DEFAULTS_SHM
 
 #define ANALOGTV_OPTIONS \
-  { "-use-cmap",        ".use_cmap",  XrmoptionSepArg, 0 },
-
+  { "-use-cmap",        ".use_cmap",     XrmoptionSepArg, 0 }, \
+  { "-tv-color",        ".TVColor",      XrmoptionSepArg, 0 }, \
+  { "-tv-tint",         ".TVTint",       XrmoptionSepArg, 0 }, \
+  { "-tv-brightness",   ".TVBrightness", XrmoptionSepArg, 0 }, \
+  { "-tv-contrast",     ".TVContrast",   XrmoptionSepArg, 0 },
 
 #endif /* _XSCREENSAVER_ANALOGTV_H */

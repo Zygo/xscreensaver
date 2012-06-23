@@ -98,10 +98,15 @@ typedef struct {
     XColor *colors;
     int ccolor;
 
+# ifdef HAVE_GLBITMAP
     XFontStruct *xfont1;
     XFontStruct *xfont2;
     XFontStruct *xfont3;
     GLuint font1_dlist, font2_dlist, font3_dlist;
+# else
+  texture_font_data *font1_data, *font2_data, *font3_data;
+# endif
+
     GLuint name_list;
 
     GLfloat theta[3];
@@ -739,9 +744,15 @@ static void draw_tangram_shape(tangram_shape ts)
 static void load_fonts(ModeInfo * mi)
 {
     tangram_configuration *tp = &tps[MI_SCREEN(mi)];
+# ifdef HAVE_GLBITMAP
     load_font(mi->dpy, "titleFont", &tp->xfont1, &tp->font1_dlist);
     load_font(mi->dpy, "titleFont2", &tp->xfont2, &tp->font2_dlist);
     load_font(mi->dpy, "titleFont3", &tp->xfont3, &tp->font3_dlist);
+# else /* !HAVE_GLBITMAP */
+    tp->font1_data = load_texture_font (mi->dpy, "titleFont");
+    tp->font2_data = load_texture_font (mi->dpy, "titleFont2");
+    tp->font3_data = load_texture_font (mi->dpy, "titleFont3");
+# endif /* !HAVE_GLBITMAP */
 }
 
 static void draw_shapes(ModeInfo * mi)
@@ -1031,18 +1042,37 @@ ENTRYPOINT void draw_tangram(ModeInfo * mi)
     glLoadIdentity();
     if (do_labels)
       {
+# ifdef HAVE_GLBITMAP
         XFontStruct *f;
         GLuint fl;
-        glNewList(tp->name_list, GL_COMPILE);
+# else /* !HAVE_GLBITMAP */
+        texture_font_data *f;
+# endif /* !HAVE_GLBITMAP */
         if (MI_WIDTH(mi) >= 500 && MI_HEIGHT(mi) >= 375)
+# ifdef HAVE_GLBITMAP
             f = tp->xfont1, fl = tp->font1_dlist;
+# else /* !HAVE_GLBITMAP */
+            f = tp->font1_data;
+# endif /* !HAVE_GLBITMAP */
         else if (MI_WIDTH(mi) >= 350 && MI_HEIGHT(mi) >= 260)
+# ifdef HAVE_GLBITMAP
             f = tp->xfont2, fl = tp->font2_dlist;
+# else /* !HAVE_GLBITMAP */
+            f = tp->font2_data;
+# endif /* !HAVE_GLBITMAP */
         else
+# ifdef HAVE_GLBITMAP
             f = tp->xfont3, fl = tp->font3_dlist;
+# else /* !HAVE_GLBITMAP */
+            f = tp->font3_data;
+# endif /* !HAVE_GLBITMAP */
 
+        glNewList(tp->name_list, GL_COMPILE);
         glColor3f(0.8, 0.8, 0);
-        print_gl_string(mi->dpy, f, fl,
+        print_gl_string(mi->dpy, f,
+# ifdef HAVE_GLBITMAP
+                        fl,
+# endif /* !HAVE_GLBITMAP */
                         mi->xgwa.width, mi->xgwa.height,
                         10, mi->xgwa.height - 10, tp->pn, False);
         glEndList();
@@ -1052,6 +1082,8 @@ ENTRYPOINT void draw_tangram(ModeInfo * mi)
     glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 128);
 
     draw_shapes(mi);
+
+    if (mi->fps_p) do_fps (mi);
 
     glFlush();
     glPopMatrix();

@@ -1,7 +1,7 @@
 /* passwd-pam.c --- verifying typed passwords with PAM
  * (Pluggable Authentication Modules.)
  * written by Bill Nottingham <notting@redhat.com> (and jwz) for
- * xscreensaver, Copyright (c) 1993-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -258,9 +258,22 @@ pam_try_unlock(saver_info *si, Bool verbose_p,
     {
       int status2;
 
-      /* We don't actually care if the account modules fail or succeed,
-       * but we need to run them anyway because certain pam modules
-       * depend on side effects of the account modules getting run.
+      /* On most systems, it doesn't matter whether the account modules
+         are run, or whether they fail or succeed.
+
+         On some systems, the account modules fail, because they were
+         never configured properly, but it's necessary to run them anyway
+         because certain PAM modules depend on side effects of the account
+         modules having been run.
+
+         And on still other systems, the account modules are actually
+         used, and failures in them should be considered to be true!
+
+         So:
+         - We run the account modules on all systems.
+         - Whether we ignore them is a configure option.
+
+         It's all kind of a mess.
        */
       status2 = pam_acct_mgmt (pamh, 0);
 
@@ -281,6 +294,14 @@ pam_try_unlock(saver_info *si, Bool verbose_p,
             fprintf (stderr, "%s: pam_chauthtok (...) ==> %d (%s)\n",
                      blurb(), status2, PAM_STRERROR(pamh, status2));
         }
+
+      /* If 'configure' requested that we believe the results of PAM
+         account module failures, then obey that status code.
+         Otherwise ignore it.
+       */
+#ifdef PAM_CHECK_ACCOUNT_TYPE
+       status = status2;
+#endif
 
       /* Each time we successfully authenticate, refresh credentials,
          for Kerberos/AFS/DCE/etc.  If this fails, just ignore that

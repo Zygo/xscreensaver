@@ -754,7 +754,6 @@ static const char *pong_defaults [] = {
   "*noise:      0.04",
   "*clock:      false",
   ANALOGTV_DEFAULTS
-  "*TVContrast:      150",
   0
 };
 

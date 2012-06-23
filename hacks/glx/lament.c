@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2004 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -164,6 +164,7 @@ typedef struct {
 
   int anim_pause;		   /* countdown before animating again */
   GLfloat anim_r, anim_y, anim_z;  /* relative position during anims */
+  Bool facing_p;
 
   int state, nstates;
   lament_type *states;
@@ -1356,6 +1357,57 @@ lament_handle_event (ModeInfo *mi, XEvent *event)
 
 
 static void
+check_facing(ModeInfo *mi)
+{
+  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
+
+  GLdouble m[16], p[16], x, y, z;
+  GLint v[4];
+  glGetDoublev (GL_MODELVIEW_MATRIX, m);
+  glGetDoublev (GL_PROJECTION_MATRIX, p);
+  glGetIntegerv (GL_VIEWPORT, v);
+	
+  /* See if a coordinate 5 units in front of the door is near the
+     center of the screen. */
+
+  gluProject (-5, 0, 0, m, p, v, &x, &y, &z);
+  x = (x / MI_WIDTH(mi))  - 0.5;
+  y = (y / MI_HEIGHT(mi)) - 0.5;
+  lc->facing_p = (z < 0.9 &&
+                  x > -0.02 && x < 0.02 &&
+                  y > -0.02 && y < 0.02);
+}
+
+
+
+static void
+scale_for_window(ModeInfo *mi)
+{
+  int target_size = 180;
+  int win_size = (MI_WIDTH(mi) > MI_HEIGHT(mi) ? MI_HEIGHT(mi) : MI_WIDTH(mi));
+
+  /* This scale makes the box take up most of the window */
+  glScalef(8, 8, 8);
+
+  /* But if the window is more than a little larger than our target size,
+     scale the object back down, so that the bits drawn on the screen end
+     up rougly target_size across (actually it ends up a little larger.)
+     Note that the image-map bits we have are 128x128.  Therefore, if the
+     image is magnified a lot, it looks pretty blocky.  So it's better to
+     have a 128x128 animation on a 1280x1024 screen that looks good, than
+     a 1024x1024 animation that looks really pixelated.
+   */
+  if (win_size > 640 &&
+      win_size > target_size * 1.5)
+    {
+      GLfloat ratio = ((GLfloat) target_size / (GLfloat) win_size);
+      ratio *= 2.0;
+      glScalef(ratio, ratio, ratio);
+    }
+}
+
+
+static void
 draw(ModeInfo *mi)
 {
   lament_configuration *lc = &lcs[MI_SCREEN(mi)];
@@ -1373,10 +1425,9 @@ draw(ModeInfo *mi)
   /* Make into the screen be +Y right be +X, and up be +Z. */
   glRotatef(-90.0, 1.0, 0.0, 0.0);
 
-  /* Scale it up. */
-  glScalef(4.0, 4.0, 4.0);
+  scale_for_window (mi);
 
-#ifdef DEBUG
+#if 0
     glPushMatrix();
     {
       /* Shift to the upper left, and draw the vanilla box. */
@@ -1394,7 +1445,7 @@ draw(ModeInfo *mi)
 
     /* Shift to the lower right, and draw the animated object. */
     glTranslatef(0.6, 0.0, -0.6);
-#endif /* DEBUG */
+#endif /* 0 */
 
 
     glPushMatrix();
@@ -1406,6 +1457,8 @@ draw(ModeInfo *mi)
       glRotatef (lc->rotx * 360, 1.0, 0.0, 0.0);
       glRotatef (lc->roty * 360, 0.0, 1.0, 0.0);
       glRotatef (lc->rotz * 360, 0.0, 0.0, 1.0);
+
+      check_facing(mi);
 
       switch (lc->type)
 	{
@@ -1662,28 +1715,11 @@ animate(ModeInfo *mi)
 
       if (lc->anim_r >= 112.0)
 	{
-	  GLfloat hysteresis = 0.05;
-
 	  lc->anim_r = 112.0;
 	  lc->anim_z = 0.0;
 	  lc->anim_pause = pause3;
-
-	  if (lc->rotx >= -hysteresis &&
-	      lc->rotx <=  hysteresis &&
-	      ((lc->rotz >=  (0.25 - hysteresis) &&
-		lc->rotz <=  (0.25 + hysteresis)) ||
-	       (lc->rotz >= (-0.25 - hysteresis) &&
-		lc->rotz <= (-0.25 + hysteresis))))
-	    {
-	      lc->type = LAMENT_LID_ZOOM;
-	      lc->rotx = 0.00;
-	      lc->rotz = (lc->rotz < 0 ? -0.25 : 0.25);
-	    }
-	  else
-	    {
-	      lc->type = LAMENT_LID_CLOSE;
-	    }
-	}
+          lc->type = (lc->facing_p ? LAMENT_LID_ZOOM : LAMENT_LID_CLOSE);
+        }
       break;
 
     case LAMENT_LID_CLOSE:
@@ -1762,13 +1798,8 @@ animate(ModeInfo *mi)
 ENTRYPOINT void
 reshape_lament(ModeInfo *mi, int width, int height)
 {
-  int target_size = 180;
-  int win_size = (width > height ? height : width);
   GLfloat h = (GLfloat) height / (GLfloat) width;
-
   glViewport(0, 0, (GLint) width, (GLint) height);
-
-/*  glViewport(-600, -600, 1800, 1800); */
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
@@ -1776,28 +1807,6 @@ reshape_lament(ModeInfo *mi, int width, int height)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
   glTranslatef(0.0, 0.0, -40.0);
-
-  /* This scale makes the box take up most of the window */
-  glScalef(2.0, 2.0, 2.0);
-
-  /* But if the window is more than a little larger than our target size,
-     scale the object back down, so that the bits drawn on the screen end
-     up rougly target_size across (actually it ends up a little larger.)
-     Note that the image-map bits we have are 128x128.  Therefore, if the
-     image is magnified a lot, it looks pretty blocky.  So it's better to
-     have a 128x128 animation on a 1280x1024 screen that looks good, than
-     a 1024x1024 animation that looks really pixelated.
-   */
-  if (win_size > target_size * 1.5)
-    {
-      GLfloat ratio = ((GLfloat) target_size / (GLfloat) win_size);
-      ratio *= 2.0;
-      glScalef(ratio, ratio, ratio);
-    }
-
-  /* The depth buffer will be cleared, if needed, before the
-   * next frame.  Right now we just want to black the screen.
-   */
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -1850,7 +1859,8 @@ gl_init(ModeInfo *mi)
       parse_image_data(mi);
 
       glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-      glPixelStorei(GL_UNPACK_ROW_LENGTH, lc->texture->width);
+      /* messes up -fps */
+      /* glPixelStorei(GL_UNPACK_ROW_LENGTH, lc->texture->width); */
 
       for (i = 0; i < 6; i++)
 	{
@@ -1872,8 +1882,6 @@ gl_init(ModeInfo *mi)
 	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	  glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-	  glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
 	}
 
 #else  /* !HAVE_GLBINDTEXTURE */

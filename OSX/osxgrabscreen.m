@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2011 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,12 +19,21 @@
 
 #import <stdlib.h>
 #import <stdint.h>
-#import <Cocoa/Cocoa.h>
+#ifndef USE_IPHONE
+# import <Cocoa/Cocoa.h>
+#else
+# import <SaverRunner.h>
+#endif
 #import "jwxyz.h"
 #import "grabscreen.h"
 #import "colorbars.h"
 #import "resources.h"
 #import "usleep.h"
+
+
+#ifdef USE_IPHONE
+# define NSImage UIImage
+#endif
 
 
 #ifndef  MAC_OS_X_VERSION_10_6
@@ -132,8 +141,9 @@ copy_framebuffer_to_ximage (CGDirectDisplayID cgdpy, XImage *xim,
 
 /* Loads an image into the Drawable, returning once the image is loaded.
  */
-void
-osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
+Bool
+osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
+                        XRectangle *geom_ret)
 {
   Display *dpy = DisplayOfScreen (screen);
   NSView *nsview = jwxyz_window_view (xwindow);
@@ -225,7 +235,51 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
   GC gc = XCreateGC (dpy, drawable, 0, &gcv);
   XPutImage (dpy, drawable, gc, xim, 0, 0, 0, 0, xim->width, xim->height);
   XFreeGC (dpy, gc);
+
+  if (geom_ret) {
+    geom_ret->x = 0;
+    geom_ret->y = 0;
+    geom_ret->width  = xim->width;
+    geom_ret->height = xim->height;
+  }
+
   XDestroyImage (xim);
+  return True;
+}
+
+
+#elif defined(USE_IPHONE)
+
+	/* What a hack!
+
+           On iOS, our application delegate, SaverRunner, grabs an image
+           of itself as a UIImage before creating the XScreenSaverView.
+           In this code, we ask SaverRunner for that UIImage, then copy
+           it to the root window.
+         */
+
+Bool
+osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
+                        XRectangle *geom_ret)
+{
+
+  /* Just for a little variety, let's return colorbars every other time. */
+  static int counter = 0;
+  if (counter++ & 1)
+    return False;
+
+  SaverRunner *s = 
+    (SaverRunner *) [[UIApplication sharedApplication] delegate];
+  if (! s)
+    return False;
+  if (! [s isKindOfClass:[SaverRunner class]])
+    abort();
+  UIImage *img = [s screenshot];
+  if (! img)
+    return False;
+  jwxyz_draw_NSImage_or_CGImage (DisplayOfScreen (screen), drawable,
+                                 True, img, geom_ret, 0);
+  return True;
 }
 
 
@@ -240,8 +294,9 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
 
 /* Loads an image into the Drawable, returning once the image is loaded.
  */
-void
-osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
+Bool
+osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
+                        XRectangle *geom_ret)
 {
   Display *dpy = DisplayOfScreen (screen);
   NSView *nsview = jwxyz_window_view (xwindow);
@@ -288,16 +343,19 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable)
   // put us back above the login windows so the screensaver is visible.
   [[nsview window] setLevel:oldLevel];
 
+  if (! img) return False;
+
   // Render the grabbed CGImage into the Drawable.
-  if (img) {
-    jwxyz_draw_NSImage_or_CGImage (DisplayOfScreen (screen), drawable, 
-                                   False, img, NULL, 0);
-    CGImageRelease (img);
-  }
+  jwxyz_draw_NSImage_or_CGImage (DisplayOfScreen (screen), drawable, 
+                                 False, img, geom_ret, 0);
+  CGImageRelease (img);
+  return True;
 }
 
 #endif /* 10.5+ code */
 
+
+# ifndef USE_IPHONE
 
 /* Returns the EXIF rotation property of the image, if any.
  */
@@ -357,6 +415,9 @@ exif_rotation (const char *filename)
 # endif /* 10.5 */
 }
 
+# endif /* USE_IPHONE */
+
+
 
 /* Loads an image file and splats it onto the drawable.
    The image is drawn as large as possible while preserving its aspect ratio.
@@ -367,6 +428,8 @@ Bool
 osx_load_image_file (Screen *screen, Window xwindow, Drawable drawable,
                      const char *filename, XRectangle *geom_ret)
 {
+# ifndef USE_IPHONE
+
   NSImage *img = [[NSImage alloc] initWithContentsOfFile:
                                     [NSString stringWithCString:filename
                                               encoding:NSUTF8StringEncoding]];
@@ -374,9 +437,24 @@ osx_load_image_file (Screen *screen, Window xwindow, Drawable drawable,
     return False;
 
   jwxyz_draw_NSImage_or_CGImage (DisplayOfScreen (screen), drawable, 
-                                 True, img, geom_ret, 
+                                 True, img, geom_ret,
                                  exif_rotation (filename));
   [img release];
   return True;
-}
 
+# else  /* USE_IPHONE */
+
+  /* It would be nice to select a random image from the Photo Album and
+     load that, but that looks like a gigantic pain in the ass, because
+     it's an asynchronous API, and might require manual authorization
+     by the user.  (ALAssetsLibrary, enumerateGroupsWithTypes.)
+
+     Possibly useful sample code to check out:
+       http://www.fiveminutes.eu/accessing-photo-library-using-assets-library-framework-on-iphone/
+
+     So, in the meantime, return False, acquire colorbars.
+   */
+  return False;
+
+# endif /* USE_IPHONE */
+}

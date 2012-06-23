@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="skytentacles" _label="SkyTentacles">
+<screensaver name="skytentacles" _label="SkyTentacles" gl="yes">
 
   <command arg="-root"/>
 

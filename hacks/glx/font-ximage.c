@@ -20,12 +20,15 @@
 
 #ifdef HAVE_COCOA
 # include "jwxyz.h"
-# include <OpenGL/gl.h>
 #else  /* !HAVE_COCOA */
 # include <X11/Xlib.h>
 # include <X11/Xutil.h>
 # include <GL/gl.h>	/* only for GLfloat */
 #endif /* !HAVE_COCOA */
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 extern char *progname;
 

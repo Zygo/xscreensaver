@@ -1,4 +1,4 @@
-/* starwars, Copyright (c) 1998-2011 Jamie Zawinski <jwz@jwz.org> and
+/* starwars, Copyright (c) 1998-2012 Jamie Zawinski <jwz@jwz.org> and
  * Claudio Matsuoka <claudio@helllabs.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -22,7 +22,7 @@
  *
  * For the fanboys:
  *
- *     starwars -program 'cat starwars.txt' -columns 25 -no-wrap -texture
+ *     starwars -program 'cat starwars.txt' -columns 25 -no-wrap
  */
 
 #ifdef HAVE_CONFIG_H
@@ -36,15 +36,15 @@
 # include <unistd.h>
 #endif
 
-#ifndef HAVE_COCOA
-# include <X11/Intrinsic.h>
-#endif
 
-
+#include "starwars.h"
 #define DEFAULTS "*delay:    40000     \n" \
 		 "*showFPS:  False     \n" \
 		 "*fpsTop:   True      \n" \
-		 "*font:   " DEF_FONT "\n"
+		 "*usePty:   False     \n" \
+		 "*font:   " DEF_FONT "\n" \
+		 "*textLiteral: " DEF_TEXT "\n"
+
 
 # define refresh_sws 0
 # define sws_handle_event 0
@@ -52,6 +52,7 @@
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
+#include "textclient.h"
 
 #ifdef USE_GL /* whole file */
 
@@ -91,7 +92,10 @@
 
 #define MAX_THICK_LINES   25
 #define FONT_WEIGHT       14
-#define KEEP_ASPECT
+
+#ifndef USE_IPHONE
+# define KEEP_ASPECT	/* Letterboxing looks dumb on iPhone. */
+#endif
 
 #include "texfont.h"
 #include "glutstroke.h"
@@ -105,11 +109,7 @@ typedef struct {
   GLuint text_list, star_list;
   texture_font_data *texfont;
   int polygon_count;
-
-  FILE *pipe;
-  XtInputId pipe_id;
-  XtIntervalId pipe_timer;
-  Time subproc_relaunch_delay;
+  text_data *tc;
 
   char *buf;
   int buf_size;
@@ -280,105 +280,6 @@ latin1_to_ascii (char *s)
     }
 }
 
-
-/* Subprocess.
-   (This bit mostly cribbed from phosphor.c)
- */
-
-static void drain_input (sws_configuration *sc);
-
-static void
-subproc_cb (XtPointer closure, int *source, XtInputId *id)
-{
-  sws_configuration *sc = (sws_configuration *) closure;
-  drain_input (sc);
-}
-
-
-static void
-launch_text_generator (sws_configuration *sc)
-{
-  XtAppContext app = XtDisplayToApplicationContext (sc->dpy);
-  char *oprogram = get_string_resource (sc->dpy, "program", "Program");
-  char *program = (char *) malloc (strlen (oprogram) + 10);
-  strcpy (program, "( ");
-  strcat (program, oprogram);
-  strcat (program, " ) 2>&1");
-
-  if ((sc->pipe = popen (program, "r")))
-    {
-      sc->pipe_id =
-        XtAppAddInput (app, fileno (sc->pipe),
-                       (XtPointer) (XtInputReadMask | XtInputExceptMask),
-                       subproc_cb, (XtPointer) sc);
-    }
-  else
-    {
-      perror (program);
-    }
-}
-
-
-static void
-relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
-{
-  sws_configuration *sc = (sws_configuration *) closure;
-  if (!sc->pipe_timer) abort();
-  sc->pipe_timer = 0;
-  launch_text_generator (sc);
-}
-
-
-/* When the subprocess has generated some output, this reads as much as it
-   can into sc->buf at sc->buf_tail.
- */
-static void
-drain_input (sws_configuration *sc)
-{
-  XtAppContext app = XtDisplayToApplicationContext (sc->dpy);
-  if (sc->buf_tail < sc->buf_size - 2)
-    {
-      int target = sc->buf_size - sc->buf_tail - 2;
-      int n = (sc->pipe
-               ? read (fileno (sc->pipe),
-                       (void *) (sc->buf + sc->buf_tail),
-                       target)
-               : 0);
-      if (n > 0)
-        {
-          sc->buf_tail += n;
-          sc->buf[sc->buf_tail] = 0;
-        }
-      else
-        {
-          if (sc->pipe)
-            {
-              XtRemoveInput (sc->pipe_id);
-              sc->pipe_id = 0;
-              pclose (sc->pipe);
-              sc->pipe = 0;
-            }
-
-          /* If the process didn't print a terminating newline, add one. */
-          if (sc->buf_tail > 1 &&
-              sc->buf[sc->buf_tail-1] != '\n')
-            {
-              sc->buf[sc->buf_tail++] = '\n';
-              sc->buf[sc->buf_tail] = 0;
-            }
-
-          /* Then add one more, just for giggles. */
-          sc->buf[sc->buf_tail++] = '\n';
-          sc->buf[sc->buf_tail] = 0;
-
-          /* Set up a timer to re-launch the subproc in a bit. */
-          sc->pipe_timer = XtAppAddTimeOut (app, sc->subproc_relaunch_delay,
-                                            relaunch_generator_timer,
-                                            (XtPointer) sc);
-        }
-    }
-}
-
 
 static int
 string_width (sws_configuration *sc, const char *s)
@@ -399,8 +300,7 @@ char_width (sws_configuration *sc, char c)
 }
 
 
-/* Populates the sc->lines list with as many lines as are currently in
-   sc->buf (which was filled by drain_input().
+/* Populates the sc->lines list with as many lines as possible.
  */
 static void
 get_more_lines (sws_configuration *sc)
@@ -412,6 +312,21 @@ get_more_lines (sws_configuration *sc)
   int col_pix = 0;
 
   char *s = sc->buf;
+
+  int target = sc->buf_size - sc->buf_tail - 2;
+
+  /* Fill as much as we can into sc->buf.
+   */
+  while (target > 0)
+    {
+      char c = textclient_getc (sc->tc);
+      if (c <= 0)
+        break;
+      sc->buf[sc->buf_tail++] = c;
+      sc->buf[sc->buf_tail] = 0;
+      target--;
+    }
+
   while (sc->total_lines < max_lines)
     {
       int cw;
@@ -670,6 +585,7 @@ reshape_sws (ModeInfo *mi, int width, int height)
     int w = mi->xgwa.width;
     int h = mi->xgwa.height;
     int yoff = 0;
+    GLfloat rot = current_device_rotation();
 
 #ifdef KEEP_ASPECT
     {
@@ -689,6 +605,19 @@ reshape_sws (ModeInfo *mi, int width, int height)
     gluLookAt (0.0, 0.0, 4600.0,
                0.0, 0.0, 0.0,
                0.0, 1.0, 0.0);
+
+    glRotatef(rot, 0, 0, 1);
+
+    /* Horrible kludge to prevent the text from materializing already
+       on screen on iPhone in landscape mode.
+     */
+    if ((rot >  45 && rot <  135) ||
+        (rot < -45 && rot > -135))
+      {
+        GLfloat s = 1.1;
+        glScalef (s, s, s);
+      }
+
     glRotatef (-60.0, 1.0, 0.0, 0.0);
 
 #if 0
@@ -712,8 +641,8 @@ reshape_sws (ModeInfo *mi, int width, int height)
   {
     GLdouble mm[17], pm[17];
     GLint vp[5];
-    GLfloat x = 0.5, y1 = 0, z = 0;
-    GLfloat y2 = sc->line_height;
+    GLdouble x = 0.5, y1 = 0, z = 0;
+    GLdouble y2 = sc->line_height;
     GLdouble wx=-1, wy1=-1, wy2=-1, wz=-1;
 
     glGetDoublev (GL_MODELVIEW_MATRIX, mm);
@@ -869,7 +798,6 @@ init_sws (ModeInfo *mi)
   if (sc->buf_size < 80) sc->buf_size = 80;
   sc->buf = (char *) calloc (1, sc->buf_size);
 
-  sc->subproc_relaunch_delay = 2 * 1000;   /* 2 seconds */
   sc->total_lines = max_lines-1;
 
   if (random() & 1)
@@ -891,7 +819,7 @@ init_sws (ModeInfo *mi)
       exit (1);
     }
 
-  launch_text_generator (sc);
+  sc->tc = textclient_open (sc->dpy);
 
   /* one more reshape, after line_height has been computed */
   reshape_sws (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
@@ -917,6 +845,10 @@ draw_stars (ModeInfo *mi)
                -100.0, 100.0);
       glRotatef (sc->star_theta, 0.0, 0.0, 1.0);
       if (textures_p) glDisable (GL_TEXTURE_2D);
+
+      /* Keep the stars pointing in the same direction after rotation */
+      glRotatef(current_device_rotation(), 0, 0, 1);
+
       glCallList (sc->star_list);
       if (textures_p) glEnable (GL_TEXTURE_2D);
     }
@@ -938,11 +870,6 @@ draw_sws (ModeInfo *mi)
   if (!sc->glx_context)
     return;
 
-#if 0
-  if (XtAppPending (app) & (XtIMTimer|XtIMAlternateInput))
-    XtAppProcessEvent (app, XtIMTimer|XtIMAlternateInput);
-#endif
-
   glDrawBuffer (GL_BACK);
   glXMakeCurrent (dpy, window, *(sc->glx_context));
 
@@ -953,14 +880,33 @@ draw_sws (ModeInfo *mi)
   glMatrixMode (GL_MODELVIEW);
   glPushMatrix ();
 
+# ifdef USE_IPHONE
+  /* Need to do this every time to get device rotation right */
+  reshape_sws (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+# endif
+
   if (debug_p)
     {
       int i;
       glPushMatrix ();
       if (textures_p) glDisable (GL_TEXTURE_2D);
       glLineWidth (1);
-      glColor3f (0.4, 0.4, 0.4);
       glTranslatef (0,-1, 0);
+
+      glColor3f(1, 0, 0);	/* Red line is where text appears */
+      glPushMatrix();
+      glTranslatef(0, -0.028, 0);
+      glLineWidth (4);
+      glBegin(GL_LINES);
+      glVertex3f(-0.5,  1, 0);
+      glVertex3f( 0.5,  1, 0);
+      glVertex3f(-0.5, -1, 0);
+      glVertex3f( 0.5, -1, 0);
+      glEnd();
+      glLineWidth (1);
+      glPopMatrix();
+
+      glColor3f (0.4, 0.4, 0.4);
       for (i = 0; i < 16; i++)
         {
           box (1, 1, 1);
@@ -1088,12 +1034,8 @@ release_sws (ModeInfo *mi)
     int screen;
     for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
       sws_configuration *sc = &scs[screen];
-      if (sc->pipe_id)
-        XtRemoveInput (sc->pipe_id);
-      if (sc->pipe)
-        pclose (sc->pipe);
-      if (sc->pipe_timer)
-        XtRemoveTimeOut (sc->pipe_timer);
+      if (sc->tc)
+        textclient_close (sc->tc);
 
       /* #### there's more to free here */
     }

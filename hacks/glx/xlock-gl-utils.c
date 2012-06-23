@@ -18,10 +18,6 @@
 #include "xlockmoreI.h"
 #include "glxfonts.h"
 
-#include <GL/gl.h>
-#include <GL/glu.h>
-#include <GL/glx.h>
-
 #ifndef isupper
 # define isupper(c)  ((c) >= 'A' && (c) <= 'Z')
 #endif
@@ -143,7 +139,6 @@ init_GL(ModeInfo * mi)
     return ptr;
   }
 }
-
 
 
 

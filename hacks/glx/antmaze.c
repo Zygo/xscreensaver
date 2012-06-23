@@ -22,18 +22,32 @@ static const char sccsid[] = "@(#)antmaze.c	5.01 2001/03/01 xlockmore";
 #ifdef STANDALONE
 # define MODE_antmaze
 # define DEFAULTS	"*delay:		20000   \n"	\
-			"*showFPS:      False   \n"
+			"*showFPS:      False   \n" \
+			"*fpsSolid:     True    \n"
 
 # define refresh_antmaze 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
-
 #endif /* !STANDALONE */
+
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#else
+# include <X11/Xlib.h>
+# include <GL/gl.h>
+# include <GL/glu.h>
+#endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 #ifdef MODE_antmaze
 
 
+#include "sphere.h"
+#include "tube.h"
 #include "rotator.h"
 #include "gltrackball.h"
 
@@ -174,6 +188,7 @@ static const GLfloat position1[] = {-1.0, -5.0, 1.0, 1.0};
 /* filled sphere */
 static Bool mySphere(float radius) 
 {
+#if 0
   GLUquadricObj *quadObj;
 
   if((quadObj = gluNewQuadric()) == 0)
@@ -181,7 +196,13 @@ static Bool mySphere(float radius)
   gluQuadricDrawStyle(quadObj, (GLenum) GLU_FILL);
   gluSphere(quadObj, radius, 16, 16);
   gluDeleteQuadric(quadObj);
-
+#else
+    glPushMatrix();
+    glScalef (radius, radius, radius);
+    glRotatef (90, 1, 0, 0);
+    unit_sphere (16, 16, False);
+    glPopMatrix();
+#endif
   return True;
 }
 
@@ -204,6 +225,7 @@ static Bool mySphere2(float radius)
 /* textured sphere */
 static Bool mySphereTex(float radius) 
 {
+#if 0
   GLUquadricObj *quadObj;
   
   if((quadObj = gluNewQuadric()) == 0)
@@ -213,6 +235,13 @@ static Bool mySphereTex(float radius)
   gluQuadricNormals(quadObj, GLU_SMOOTH);
   gluSphere(quadObj, radius, 32, 16);
   gluDeleteQuadric(quadObj);
+#else
+    glPushMatrix();
+    glScalef (radius, radius, radius);
+    glRotatef (90, 1, 0, 0);
+    unit_sphere (32, 16, False);
+    glPopMatrix();
+#endif
 
   return True;
 }
@@ -220,6 +249,7 @@ static Bool mySphereTex(float radius)
 /* filled cone */
 static Bool myCone(float radius) 
 {
+#if 0
   GLUquadricObj *quadObj;
   
   if ((quadObj = gluNewQuadric()) == 0)
@@ -227,6 +257,12 @@ static Bool myCone(float radius)
   gluQuadricDrawStyle(quadObj, (GLenum) GLU_FILL);
   gluCylinder(quadObj, radius, 0, radius * 2, 8, 1);
   gluDeleteQuadric(quadObj);
+#else
+    cone (0, 0, 0,
+          0, 0, radius * 2,
+          radius, 0,
+          8, True, True, False);
+#endif
   return True;
 }
 
@@ -1408,6 +1444,20 @@ ENTRYPOINT void init_antmaze(ModeInfo * mi)
     MI_CLEARWINDOW(mi);
 }
 
+static void
+device_rotate(ModeInfo *mi)
+{
+  GLfloat rot = current_device_rotation();
+  glRotatef(rot, 0, 0, 1);
+  if ((rot >  45 && rot <  135) ||
+      (rot < -45 && rot > -135))
+    {
+      GLfloat s = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+      glScalef (1/s, s, 1);
+    }
+}
+
+
 ENTRYPOINT void draw_antmaze(ModeInfo * mi) 
 {
   double h = (GLfloat) MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
@@ -1443,6 +1493,7 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
+  device_rotate(mi);
 
   glPushMatrix();
 
@@ -1453,7 +1504,9 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
 /* 	       started ? -mag : -8.0 + 4.0*fabs(sin(ant_step/10.0)),  */
 /* 	       started ? -mag : -8.0 + 4.0*fabs(sin(ant_step/10.0))); */
 
+  glRotatef(-current_device_rotation(), 0, 0, 1);
   gltrackball_rotate(mp->trackball);
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   glRotatef(mp->ant_step*0.6, 0.0, 1.0, 0.0);
 
@@ -1478,6 +1531,7 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
   glViewport((17*MI_WIDTH(mi))/32, MI_HEIGHT(mi)/2, MI_WIDTH(mi)/2, 3*MI_HEIGHT(mi)/8);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+  device_rotate(mi);
   gluPerspective(45, 1/h, 1, 25.0);
   glMatrixMode(GL_MODELVIEW);
     
@@ -1485,7 +1539,9 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
   glTranslatef(0.0, 0.0, -16.0);
   glRotatef(60.0, 1.0, 0.0, 0.0);
   glRotatef(-15.0 + mp->ant_step/10.0, 0.0, 1.0, 0.0);
+  glRotatef(-current_device_rotation(), 0, 0, 1);
   gltrackball_rotate(mp->trackball);
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   /* sync */
   if(!draw_antmaze_strip(mi)) {
@@ -1500,6 +1556,7 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
   glViewport((5*MI_WIDTH(mi))/8, MI_HEIGHT(mi)/8, (11*MI_WIDTH(mi))/32, 3*MI_HEIGHT(mi)/8);
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+  device_rotate(mi);
   gluPerspective(45, 1/h, 1, 25.0);
   glMatrixMode(GL_MODELVIEW);
     
@@ -1564,7 +1621,10 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
 /*   glPopMatrix(); */
 /*   glPopMatrix(); */
   
-  if (MI_IS_FPS(mi)) do_fps (mi);
+  if (MI_IS_FPS(mi)) {
+    glViewport(0, 0, MI_WIDTH(mi), MI_HEIGHT(mi));
+    do_fps (mi);
+  }
   glFlush();
   
   glXSwapBuffers(display, window);

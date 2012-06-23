@@ -12,11 +12,22 @@
 #ifndef __DROPSHADOW_H__
 #define __DROPSHADOW_H__
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #ifdef HAVE_COCOA
-# include <OpenGL/gl.h>
-#else  /* !HAVE_COCOA -- real Xlib */
+# ifndef HAVE_JWZGLES
+#  include <OpenGL/glu.h>
+# endif
+#else /* !HAVE_COCOA */
 # include <GL/gl.h>
+# include <GL/glu.h>
 #endif /* !HAVE_COCOA */
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 /* Initialize drop shadow texture, return a texture ID.
  */

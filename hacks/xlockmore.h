@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2011 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -28,19 +28,6 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 
 #include "screenhackI.h"
 #include "xlockmoreI.h"
-
-#ifdef USE_GL
-
-# ifdef HAVE_COCOA
-#  include <OpenGL/gl.h>
-#  include <OpenGL/glu.h>
-# else  /* !HAVE_COCOA -- real Xlib */
-#  include <GL/glx.h>
-#  include <GL/glu.h>
-# endif /* !HAVE_COCOA */
-
-# define FreeAllGL(dpy) /* */
-#endif /* USE_GL */
 
 # define ENTRYPOINT static
 
@@ -101,6 +88,8 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #define MI_IS_MOUSE(MI)		(False)
 
 #define MI_CLEARWINDOW(mi) XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi))
+
+#define FreeAllGL(dpy)		/* */
 
 /* Some other utility macros.
  */

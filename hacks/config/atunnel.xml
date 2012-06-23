@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="atunnel" _label="Atunnel">
+<screensaver name="atunnel" _label="Atunnel" gl="yes">
 
   <command arg="-root"/>
 
@@ -15,7 +15,7 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-Draws an animation of a textured tunnel in GL.
+Zooming through a textured tunnel.
 
 Written by Eric Lassauge and Roman Podobedov; 2003.
   </_description>

@@ -2150,6 +2150,8 @@ draw_logo (ModeInfo *mi)
   mi->polygon_count = 0;
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(dc->glx_context));
 
+  glRotatef(current_device_rotation(), 0, 0, 1);
+
   if (!wire &&
       dc->wire_overlay == 0 &&
       (random() % (int) (PROBABILITY_SCALE / 0.2)) == 0)

@@ -29,9 +29,22 @@
 # include "xlock.h"
 #endif
 
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#else
+# include <X11/Xlib.h>
+# include <GL/gl.h>
+# include <GL/glu.h>
+#endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
+
 #ifdef USE_GL
 
 #include "gltrackball.h"
+#include "chessmodels.h"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -62,7 +75,6 @@ ModStruct   queens_description =
 #endif
 
 #define NONE 0
-#define QUEEN 1
 #define MINBOARD 5
 #define MAXBOARD 10
 #define COLORSETS 5
@@ -73,6 +85,7 @@ typedef struct {
   trackball_state *trackball;
   Bool button_down_p;
   GLfloat position[4];
+  int queen_list;
 
   int board[MAXBOARD][MAXBOARD];
   int steps, colorset, BOARDSIZE;
@@ -254,7 +267,7 @@ static int drawPieces(Queenscreen *qs)
     for(j = 0; j < qs->BOARDSIZE; ++j) {
       if(qs->board[i][j]) {
     	glColor3fv(colors[qs->colorset][i%2]);
-	glCallList(QUEEN);
+	glCallList(qs->queen_list);
         polys += qs->queen_polys;
       }
       
@@ -350,6 +363,8 @@ static int display(Queenscreen *qs)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
+  glRotatef(current_device_rotation(), 0, 0, 1);
+
   /* setup light attenuation */
   glEnable(GL_COLOR_MATERIAL);
   glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0.8/(0.01+findAlpha(qs)));
@@ -358,7 +373,9 @@ static int display(Queenscreen *qs)
   /** setup perspective */
   glTranslatef(0.0, 0.0, -1.5*qs->BOARDSIZE);
   glRotatef(30.0, 1.0, 0.0, 0.0);
+  glRotatef(-current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (qs->trackball);
+  glRotatef(current_device_rotation(), 0, 0, 1);
   glRotatef(qs->theta*100, 0.0, 1.0, 0.0);
   glTranslatef(-0.5*qs->BOARDSIZE, 0.0, -0.5*qs->BOARDSIZE);
 
@@ -424,19 +441,23 @@ static const GLfloat spidermodel[][3] =
 
 #define EPSILON 0.001
 
+#if 0
 /** draws cylindermodel */
 static int draw_model(int chunks, const GLfloat model[][3], int r) 
 {
   int i = 0;
   int polys = 0;
-  GLUquadricObj *quadric = gluNewQuadric();
   glPushMatrix();
   glRotatef(-90.0, 1.0, 0.0, 0.0);
   
   for(i = 0; i < chunks; ++i) {
     if(model[i][0] > EPSILON || model[i][1] > EPSILON) {
-      gluCylinder(quadric, model[i][0], model[i][1], model[i][2], r, 1);
-      polys += r;
+      polys += tube (0, 0, 0,
+                     0, 0, model[i][1],
+                     model[i][0], 0,
+                     r, False, False, False);
+/*      gluCylinder(quadric, model[i][0], model[i][1], model[i][2], r, 1);
+      polys += r;*/
     }
     glTranslatef(0.0, 0.0, model[i][2]);
   }
@@ -444,6 +465,7 @@ static int draw_model(int chunks, const GLfloat model[][3], int r)
   glPopMatrix();
   return polys;
 }
+#endif
 
 ENTRYPOINT void reshape_queens(ModeInfo *mi, int width, int height) 
 {
@@ -459,6 +481,7 @@ ENTRYPOINT void init_queens(ModeInfo *mi)
 {
   int screen = MI_SCREEN(mi);
   Queenscreen *qs;
+  int poly_counts[PIECES];
   wire = MI_IS_WIREFRAME(mi);
 
   if(!qss && 
@@ -467,18 +490,34 @@ ENTRYPOINT void init_queens(ModeInfo *mi)
   
   qs = &qss[screen];
   qs->window = MI_WINDOW(mi);
-  qs->trackball = gltrackball_init ();
-
-  qs->BOARDSIZE = 8; /* 8 cuz its classic */
   
   if((qs->glx_context = init_GL(mi)))
     reshape_queens(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   else
     MI_CLEARWINDOW(mi);
 
-  glNewList(QUEEN, GL_COMPILE);
-  qs->queen_polys = draw_model(countof(spidermodel), spidermodel, 24);
-  glEndList();
+  qs->trackball = gltrackball_init ();
+
+  qs->BOARDSIZE = 8; /* 8 cuz its classic */
+
+  gen_model_lists(-1, poly_counts);
+  qs->queen_list = QUEEN;
+  qs->queen_polys = poly_counts[QUEEN];
+
+  /* find a solution */
+  go(qs);
+}
+
+ENTRYPOINT void draw_queens(ModeInfo *mi) 
+{
+  Queenscreen *qs = &qss[MI_SCREEN(mi)];
+  Window w = MI_WINDOW(mi);
+  Display *disp = MI_DISPLAY(mi);
+
+  if(!qs->glx_context)
+    return;
+
+  glXMakeCurrent(disp, w, *(qs->glx_context));
 
   if(flat)
     glShadeModel(GL_FLAT);
@@ -499,22 +538,8 @@ ENTRYPOINT void init_queens(ModeInfo *mi)
   else
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-  /* find a solution */
-  go(qs);
-}
-
-ENTRYPOINT void draw_queens(ModeInfo *mi) 
-{
-  Queenscreen *qs = &qss[MI_SCREEN(mi)];
-  Window w = MI_WINDOW(mi);
-  Display *disp = MI_DISPLAY(mi);
-
-  if(!qs->glx_context)
-    return;
-
-  glXMakeCurrent(disp, w, *(qs->glx_context));
-
   mi->polygon_count = display(qs);
+  mi->recursion_depth = qs->BOARDSIZE;
 
   if(mi->fps_p) do_fps(mi);
   glFinish(); 

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2011 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2012 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -23,21 +23,36 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.17 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.21 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 
 
 my $verbose = 1;
 
+sub read_info_plist($);
 sub read_info_plist($) {
   my ($app_dir) = @_;
-  my $file = "$app_dir/Contents/Info.plist";
+  my $file  = "$app_dir/Contents/Info.plist";
+  my $file2 = "$app_dir/Info.plist";
   $file =~ s@/+@/@g;
-  open (my $in, '<', $file) || error ("$file: $!");
+  my $in;
+  if (open ($in, '<', $file)) {
+  } elsif (open ($in, '<', $file2)) {
+    $file = $file2;
+  } else {
+    error ("$file: $!");
+  }
   local $/ = undef;  # read entire file
   my $body = <$in>;
   close $in;
+
+  if ($body =~ m/^bplist/s) {
+    print STDERR "$progname: converting binary plist file: $file\n";
+    system ("plutil", "-convert", "xml1", $file);
+    return read_info_plist ($app_dir);
+  }
+
   return ($file, $body);
 }
 
@@ -47,14 +62,22 @@ sub read_saver_xml($) {
   error ("$app_dir: no name") 
     unless ($app_dir =~ m@/([^/.]+).(app|saver)/?$@x);
   my $name  = $1;
+
+  return () if ($name eq 'XScreenSaver');
+  return () if ($name eq 'SaverTester');
+
   my $file  = "$app_dir/Contents/Resources/" . lc($name) . ".xml";
-  my $file2 = "$app_dir/Contents/PlugIns/$name.saver/Contents/Resources/" .
+  my $file2 = "$app_dir/" . lc($name) . ".xml";
+  my $file3 = "$app_dir/Contents/PlugIns/$name.saver/Contents/Resources/" .
               lc($name) . ".xml";
   $file =~ s@/+@/@g;
   my $in;
-  open ($in, '<', $file) || 
-  open ($in, '<', $file2) || 
+  if (open ($in, '<', $file)) {
+  } elsif (open ($in, '<', $file2)) { $file = $file2;
+  } elsif (open ($in, '<', $file3)) { $file = $file3;
+  } else {
     error ("$file: $!");
+  }
   local $/ = undef;  # read entire file
   my $body = <$in>;
   close $in;
@@ -66,6 +89,8 @@ sub update_saver_xml($$) {
   my ($app_dir, $vers) = @_;
   my ($filename, $body) = read_saver_xml ($app_dir);
   my $obody = $body;
+
+  return () unless defined ($filename);
 
   $body =~ m@<screensaver[^<>]*?[ \t]_label=\"([^\"]+)\"@m ||
     error ("$filename: no name label");
@@ -219,36 +244,41 @@ sub update($) {
   my $vers = $1;
   my ($ignore, $info_str) = update_saver_xml ($app_dir, $vers);
 
-  $info_str =~ m@^([^\n]+)\n@s ||
-    error ("$filename: unparsable copyright");
-  my $copyright = "$1";
-  $copyright =~ s/\b\d{4}-(\d{4})\b/$1/;
-
-  # Lose the Wikipedia URLs.
-  $info_str =~ s@http:.*?\b(wikipedia|mathworld)\b[^\s]+[ \t]*\n?@@gm;
-
-  $info_str =~ s/(\n\n)\n+/$1/gs;
-  $info_str =~ s/(^\s+|\s+$)//gs;
-  $plist = set_plist_key ($filename, $plist, 
-                          "NSHumanReadableCopyright", $copyright);
-  $plist = set_plist_key ($filename, $plist,
-                          "CFBundleLongVersionString",$copyright);
-  $plist = set_plist_key ($filename, $plist,
-                          "CFBundleGetInfoString",    $info_str);
-
-  if ($oplist eq $plist) {
-    print STDERR "$progname: $filename: unchanged\n" if ($verbose > 1);
+  if (! defined($info_str)) {
+    print STDERR "$progname: $filename: no XML file\n" if ($verbose > 1);
   } else {
-    my $file_tmp = "$filename.tmp";
-    open(OUT, ">$file_tmp") || error ("$file_tmp: $!");
-    print OUT $plist || error ("$file_tmp: $!");
-    close OUT || error ("$file_tmp: $!");
 
-    if (!rename ("$file_tmp", "$filename")) {
-      unlink "$file_tmp";
-      error ("mv \"$file_tmp\" \"$filename\": $!");
+    $info_str =~ m@^([^\n]+)\n@s ||
+      error ("$filename: unparsable copyright");
+    my $copyright = "$1";
+    $copyright =~ s/\b\d{4}-(\d{4})\b/$1/;
+
+    # Lose the Wikipedia URLs.
+    $info_str =~ s@http:.*?\b(wikipedia|mathworld)\b[^\s]+[ \t]*\n?@@gm;
+
+    $info_str =~ s/(\n\n)\n+/$1/gs;
+    $info_str =~ s/(^\s+|\s+$)//gs;
+    $plist = set_plist_key ($filename, $plist, 
+                            "NSHumanReadableCopyright", $copyright);
+    $plist = set_plist_key ($filename, $plist,
+                            "CFBundleLongVersionString",$copyright);
+    $plist = set_plist_key ($filename, $plist,
+                            "CFBundleGetInfoString",    $info_str);
+
+    if ($oplist eq $plist) {
+      print STDERR "$progname: $filename: unchanged\n" if ($verbose > 1);
+    } else {
+      my $file_tmp = "$filename.tmp";
+      open(OUT, ">$file_tmp") || error ("$file_tmp: $!");
+      print OUT $plist || error ("$file_tmp: $!");
+      close OUT || error ("$file_tmp: $!");
+
+      if (!rename ("$file_tmp", "$filename")) {
+        unlink "$file_tmp";
+        error ("mv \"$file_tmp\" \"$filename\": $!");
+      }
+      print STDERR "$progname: wrote $filename\n" if ($verbose);
     }
-    print STDERR "$progname: wrote $filename\n" if ($verbose);
   }
 
   set_icon ($app_dir);
@@ -274,6 +304,7 @@ sub main() {
     if    (m/^--?verbose$/s)  { $verbose++; }
     elsif (m/^-v+$/)          { $verbose += length($_)-1; }
     elsif (m/^--?q(uiet)?$/s) { $verbose = 0; }
+    elsif (m/^-/s)            { usage(); }
     else                      { push @files, $_; }
   }
   usage() unless ($#files >= 0);

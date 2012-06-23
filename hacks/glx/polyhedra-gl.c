@@ -30,6 +30,17 @@
 
 #include "xlockmore.h"
 
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#else
+# include <X11/Xlib.h>
+# include <GL/gl.h>
+# include <GL/glu.h>
+#endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 #define DEF_SPIN        "True"
 #define DEF_WANDER      "True"
@@ -73,8 +84,12 @@ typedef struct {
   int ncolors;
   XColor *colors;
 
+# ifdef HAVE_GLBITMAP
   XFontStruct *xfont1, *xfont2, *xfont3;
   GLuint font1_dlist, font2_dlist, font3_dlist;
+# else
+  texture_font_data *font1_data, *font2_data, *font3_data;
+# endif
 
   time_t last_change_time;
   int change_tick;
@@ -156,9 +171,15 @@ static void
 load_fonts (ModeInfo *mi)
 {
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
+# ifdef HAVE_GLBITMAP
   load_font (mi->dpy, "titleFont",  &bp->xfont1, &bp->font1_dlist);
   load_font (mi->dpy, "titleFont2", &bp->xfont2, &bp->font2_dlist);
   load_font (mi->dpy, "titleFont3", &bp->xfont3, &bp->font3_dlist);
+# else /* !HAVE_GLBITMAP */
+  bp->font1_data = load_texture_font (mi->dpy, "titleFont");
+  bp->font2_data = load_texture_font (mi->dpy, "titleFont2");
+  bp->font3_data = load_texture_font (mi->dpy, "titleFont3");
+# endif /* !HAVE_GLBITMAP */
 }
 
 
@@ -168,10 +189,27 @@ startup_blurb (ModeInfo *mi)
 {
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
   const char *s = "Computing polyhedra...";
+# ifdef HAVE_GLBITMAP
+  XFontStruct *f = bp->xfont1;
+# else /* !HAVE_GLBITMAP */
+  texture_font_data *f = bp->font1_data;
+# endif /* !HAVE_GLBITMAP */
+
   glColor3f (0.8, 0.8, 0);
-  print_gl_string (mi->dpy, bp->xfont1, bp->font1_dlist,
+  print_gl_string (mi->dpy, 
+# ifdef HAVE_GLBITMAP
+                   bp->xfont1, bp->font1_dlist,
+# else /* !HAVE_GLBITMAP */
+                   bp->font1_data,
+# endif /* !HAVE_GLBITMAP */
                    mi->xgwa.width, mi->xgwa.height,
-                   mi->xgwa.width - (string_width (bp->xfont1, s, 0) + 40),
+                   mi->xgwa.width - (
+# ifdef HAVE_GLBITMAP
+                                     string_width (f, s, 0)
+# else /* !HAVE_GLBITMAP */
+                                     texture_string_width (f, s, 0)
+# endif /* !HAVE_GLBITMAP */
+                                     + 40),
                    mi->xgwa.height - 10,
                    s, False);
   glFinish();
@@ -244,12 +282,6 @@ polyhedra_handle_event (ModeInfo *mi, XEvent *event)
       char c = 0;
       XLookupString (&event->xkey, &c, 1, &keysym, 0);
 
-# ifdef HAVE_COCOA
-#  define XK_Right -1
-#  define XK_Left -1
-#  define XK_Up -1
-#  define XK_Down -1
-# endif
       bp->change_to = -1;
       if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
         bp->change_to = random() % bp->npolyhedra;
@@ -310,17 +342,36 @@ new_label (ModeInfo *mi)
                p->density, (p->chi < 0 ? "" : "  "), p->chi);
 
       {
+# ifdef HAVE_GLBITMAP
         XFontStruct *f;
         GLuint fl;
+# else /* !HAVE_GLBITMAP */
+        texture_font_data *f;
+# endif /* !HAVE_GLBITMAP */
         if (MI_WIDTH(mi) >= 500 && MI_HEIGHT(mi) >= 375)
+# ifdef HAVE_GLBITMAP
           f = bp->xfont1, fl = bp->font1_dlist;		       /* big font */
+# else /* !HAVE_GLBITMAP */
+          f = bp->font1_data;
+# endif /* !HAVE_GLBITMAP */
         else if (MI_WIDTH(mi) >= 350 && MI_HEIGHT(mi) >= 260)
+# ifdef HAVE_GLBITMAP
           f = bp->xfont2, fl = bp->font2_dlist;		       /* small font */
+# else /* !HAVE_GLBITMAP */
+          f = bp->font2_data;				       /* small font */
+# endif /* !HAVE_GLBITMAP */
         else
+# ifdef HAVE_GLBITMAP
           f = bp->xfont3, fl = bp->font3_dlist;		       /* tiny font */
+# else /* !HAVE_GLBITMAP */
+          f = bp->font3_data;				       /* tiny font */
+# endif /* !HAVE_GLBITMAP */
 
         glColor3f (0.8, 0.8, 0);
-        print_gl_string (mi->dpy, f, fl,
+        print_gl_string (mi->dpy, f,
+# ifdef HAVE_GLBITMAP
+                         fl,
+# endif /* HAVE_GLBITMAP */
                          mi->xgwa.width, mi->xgwa.height,
                          10, mi->xgwa.height - 10,
                          label, False);

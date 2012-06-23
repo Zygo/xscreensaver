@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2011 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005-2012 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -24,13 +24,17 @@ require 5;
 #use diagnostics;	# Fails on some MacOS 10.5 systems
 use strict;
 
+# Some Linux systems don't install LWP by default!
+# Only error out if we're actually loading a URL instead of local data.
+BEGIN { eval 'use LWP::UserAgent;' }
+
 use Socket;
 use POSIX qw(strftime);
 use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.24 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.26 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -40,7 +44,8 @@ my $text_mode     = 'date';
 my $text_literal  = '';
 my $text_file     = '';
 my $text_program  = '';
-my $text_url      = '';
+my $text_url      = 'http://twitter.com/statuses/public_timeline.atom';
+# Default URL needs to be set and match what's in OSX/XScreenSaverView.m
 
 my $wrap_columns  = undef;
 my $nyarlathotep_p = 0;
@@ -201,6 +206,7 @@ sub get_x11_prefs() {
 
   $text_mode =~ tr/A-Z/a-z/;
   $text_literal =~ s@\\n@\n@gs;
+  $text_literal =~ s@\\\n@\n@gs;
 }
 
 
@@ -251,6 +257,8 @@ sub get_cocoa_prefs($) {
 
   $v = get_cocoa_pref_1 ($id, "textLiteral");
   $text_literal = $v if defined ($v);
+  $text_literal =~ s@\\n@\n@gs;
+  $text_literal =~ s@\\\n@\n@gs;
 
   $v = get_cocoa_pref_1 ($id, "textFile");
   $text_file = $v if defined ($v);
@@ -426,167 +434,6 @@ sub output() {
 }
 
 
-# Loads the given URL, returns: $http, $head, $body.
-#
-sub get_url_1($;$) {
-  my ($url, $referer) = @_;
-  
-  $url =~ s@^feed:@http:@si;
-  if (! ($url =~ m@^http://@i)) {
-    error ("not an HTTP URL: $url");
-  }
-
-  my ($url_proto, $dummy, $serverstring, $path) = split(/\//, $url, 4);
-  $path = "" unless $path;
-
-  my ($them,$port) = split(/:/, $serverstring);
-  $port = 80 unless $port;
-
-  my $them2 = $them;
-  my $port2 = $port;
-  if ($http_proxy) {
-    $serverstring = $http_proxy if $http_proxy;
-    $serverstring =~ s@^[a-z]+://@@;
-    ($them2,$port2) = split(/:/, $serverstring);
-    $port2 = 80 unless $port2;
-  }
-
-  my ($remote, $iaddr, $paddr, $proto, $line);
-  $remote = $them2;
-  if ($port2 =~ /\D/) { $port2 = getservbyname($port2, 'tcp') }
-  if (!$port2) {
-    error ("unrecognised port in $url");
-  }
-
-  $iaddr = inet_aton($remote);
-  error ("host not found: $remote") unless ($iaddr);
-
-  $paddr   = sockaddr_in($port2, $iaddr);
-
-
-  my $head = "";
-  my $body = "";
-
-  $proto   = getprotobyname('tcp');
-  if (!socket(S, PF_INET, SOCK_STREAM, $proto)) {
-    error ("socket: $!");
-  }
-  if (!connect(S, $paddr)) {
-    error ("connect($serverstring): $!");
-  }
-
-  select(S); $| = 1; select(STDOUT);
-
-  my $user_agent = "$progname/$version";
-
-  my $hdrs = ("GET " . ($http_proxy ? $url : "/$path") . " HTTP/1.0\r\n" .
-              "Host: $them\r\n" .
-              "User-Agent: $user_agent\r\n");
-  if ($referer) {
-    $hdrs .= "Referer: $referer\r\n";
-  }
-  $hdrs .= "\r\n";
-
-  if ($verbose > 3) {
-    foreach (split('\r?\n', $hdrs)) {
-      print STDERR "  ==> $_\n";
-    }
-  }
-  print S $hdrs;
-  my $http = <S> || "";
-
-  $_  = $http;
-  s/[\r\n]+$//s;
-  print STDERR "  <== $_\n" if ($verbose > 3);
-
-  while (<S>) {
-    $head .= $_;
-    s/[\r\n]+$//s;
-    last if m@^$@;
-    print STDERR "  <== $_\n" if ($verbose > 3);
-  }
-
-  print STDERR "  <== \n" if ($verbose > 4);
-  my $lines = 0;
-  while (<S>) {
-    s/\r\n/\n/gs;
-    print STDERR "  <== $_" if ($verbose > 4);
-    $body .= $_;
-    $lines++;
-  }
-
-  print STDERR "  <== [ body ]: $lines lines, " . length($body) . " bytes\n"
-    if ($verbose == 4);
-
-  close S;
-
-  if (!$http) {
-    error ("null response: $url");
-  }
-
-  return ( $http, $head, $body );
-}
-
-
-# Loads the given URL, processes redirects, returns (content-type, body).
-#
-sub get_url($;$) {
-  my ($url, $referer) = @_;
-
-  print STDERR "$progname: loading $url\n" if ($verbose > 2);
-
-  my $orig_url = $url;
-  my $loop_count = 0;
-  my $max_loop_count = 10;
-
-  do {
-    my ( $http, $head, $body ) = get_url_1 ($url, $referer);
-
-    $http =~ s/[\r\n]+$//s;
-
-    if ( $http =~ m@^HTTP/[0-9.]+ 30[123]@ ) {
-      $_ = $head;
-
-      my ( $location ) = m@^location:[ \t]*(.*)$@im;
-      if ( $location ) {
-        $location =~ s/[\r\n]$//;
-
-        print STDERR "$progname: redirect from $url to $location\n"
-          if ($verbose > 3);
-
-        $referer = $url;
-        $url = $location;
-
-        if ($url =~ m@^/@) {
-          $referer =~ m@^(http://[^/]+)@i;
-          $url = $1 . $url;
-        } elsif (! ($url =~ m@^[a-z]+:@i)) {
-          $_ = $referer;
-          s@[^/]+$@@g if m@^http://[^/]+/@i;
-          $_ .= "/" if m@^http://[^/]+$@i;
-          $url = $_ . $url;
-        }
-
-      } else {
-        error ("no Location with \"$http\"");
-      }
-
-      if ($loop_count++ > $max_loop_count) {
-        error ("too many redirects ($max_loop_count) from $orig_url");
-      }
-
-    } elsif ( $http =~ m@^HTTP/[0-9.]+ ([4-9][0-9][0-9].*)$@ ) {
-      error ("failed: $1 ($url)");
-
-    } else {
-      my $ct = 'text/plain';
-      $ct = $1 if ($head =~ m/^content-type:\s*([^\s]+)/mi);
-      return ($ct, $body);
-    }
-  } while (1);
-}
-
-
 # Make an educated guess as to what's in this document.
 # We don't necessarily take the Content-Type header at face value.
 # Returns 'html', 'rss', or 'text';
@@ -613,6 +460,7 @@ sub guess_content_type($$) {
 
   return 'text';
 }
+
 
 sub reformat_html($$) {
   my ($body, $rss_p) = @_;
@@ -773,39 +621,54 @@ sub reformat_text($) {
 # variables or by parsing the output of the (MacOS) program "scutil",
 # which tells us what the system-wide proxy settings are.
 #
-sub set_proxy() {
+sub set_proxy($) {
+  my ($ua) = @_;
 
-  # historical suckage: the environment variable name is lower case.
-  $http_proxy = $ENV{http_proxy} || $ENV{HTTP_PROXY};
-
-  if (defined ($http_proxy)) {
-    if ($http_proxy && $http_proxy =~ m@^http://([^/]*)/?$@ ) {
-      # historical suckage: allow "http://host:port" as well as "host:port".
-      $http_proxy = $1;
-    }
-
-  } else {
+  if (!defined($ENV{http_proxy}) && !defined($ENV{HTTP_PROXY})) {
     my $proxy_data = `scutil --proxy 2>/dev/null`;
     my ($server) = ($proxy_data =~ m/\bHTTPProxy\s*:\s*([^\s]+)/s);
     my ($port)   = ($proxy_data =~ m/\bHTTPPort\s*:\s*([^\s]+)/s);
-    # Note: this ignores the "ExceptionsList".
     if ($server) {
-      $http_proxy = $server;
-      $http_proxy .= ":$port" if $port;
-    }
+      # Note: this ignores the "ExceptionsList".
+      $ENV{http_proxy} = "http://" . $server . ($port ? ":$port" : "") . "/";
+      print STDERR "$progname: MacOS proxy: $ENV{http_proxy}\n"
+        if ($verbose > 2)
+      }
   }
 
-  print STDERR "$progname: proxy server: $http_proxy\n" 
-    if ($verbose > 2 && $http_proxy);
+  $ua->env_proxy();
 }
 
 
 sub get_url_text($) {
   my ($url) = @_;
 
-  set_proxy();
+  my $ua = eval 'LWP::UserAgent->new';
 
-  my ($ct, $body) = get_url ($url);
+  if (! $ua) {
+    print STDOUT ("\n\tPerl is broken. Do this to repair it:\n" .
+                  "\n\tsudo cpan LWP::UserAgent\n\n");
+    return;
+  }
+
+  set_proxy ($ua);
+  $ua->agent ("$progname/$version");
+  my $res = $ua->get ($url);
+  my $body;
+  my $ct;
+
+  if ($res && $res->is_success) {
+    $body = $res->decoded_content || '';
+    $ct   = $res->header ('Content-Type') || 'text/plain';
+
+  } else {
+    my $err = ($res ? $res->status_line : '') || '';
+    $err = 'unknown error' unless $err;
+    $err = "$url: $err";
+    # error ($err);
+    $body = "Error loading URL $err\n\n";
+    $ct = 'text/plain';
+  }
 
   $ct = guess_content_type ($ct, $body);
   if ($ct eq 'html') {

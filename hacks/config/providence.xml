@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="providence" _label="Providence">
+<screensaver name="providence" _label="Providence" gl="yes">
 
   <command arg="-root"/>
 

@@ -50,11 +50,18 @@ OpenGL(TM) is a trademark of Silicon Graphics, Inc.
 
 #include "teapot.h"
 
-#ifdef HAVE_COCOA
-# include <OpenGL/gl.h>
-#else
+#ifdef HAVE_JWZGLES
+int unit_teapot (int grid, int wire_p) { return 0; }
+#else /* !HAVE_JWZGLES */
+
+
+#ifndef HAVE_COCOA
 # include <GL/gl.h>
 #endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 
 /* Rim, body, lid, and bottom data must be reflected in x
@@ -212,3 +219,5 @@ unit_teapot (int grid, int wire_p)
 
   return polys;
 }
+
+#endif /* !HAVE_JWZGLES */

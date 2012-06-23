@@ -24,11 +24,13 @@
 # include "config.h"
 #endif
 
-#ifdef HAVE_COCOA
-# include <OpenGL/gl.h>
-#else
+#ifndef HAVE_COCOA
 # include <GL/gl.h>
 #endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 #include "sphere.h"
 
@@ -41,12 +43,12 @@ unit_sphere (int stacks, int slices, int wire_p)
   int i,j;
   double theta1, theta2, theta3;
   XYZ p, n;
-  XYZ la = { 0, 0, 0 }, lb = { 0, 0, 0 };
+  XYZ la = { 0, -1, 0 }, lb = { 0, -1, 0 };
   XYZ c = {0, 0, 0};  /* center */
   double r = 1.0;     /* radius */
   int stacks2 = stacks * 2;
 
-  int mode = (wire_p ? GL_LINE_LOOP : GL_TRIANGLE_STRIP);
+  int mode = (wire_p ? GL_LINE_STRIP : GL_TRIANGLE_STRIP);
 
   int arraysize, out;
   struct { XYZ p; XYZ n; GLfloat s, t; } *array;
@@ -60,7 +62,6 @@ unit_sphere (int stacks, int slices, int wire_p)
   array = (void *) calloc (arraysize, sizeof(*array));
   if (! array) abort();
   out = 0;
-
 
   if (slices < 4 || stacks < 2 || r <= 0)
     {
@@ -78,7 +79,7 @@ unit_sphere (int stacks, int slices, int wire_p)
         {
           theta3 = i * (M_PI+M_PI) / slices;
 
-          if (wire_p && i != 0)
+          if (wire_p)
             {
               array[out++].p = lb;				/* vertex */
               array[out++].p = la;				/* vertex */

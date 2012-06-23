@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2003-2011 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2003-2012 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.4 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.5 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -116,7 +116,7 @@ sub parse_obj($$$) {
         if    ($f =~ m@^(\d+)$@s)             { $v = $1; }
         elsif ($f =~ m@^(\d+)/(\d+)$@s)       { $v = $1, $t = $2; }
         elsif ($f =~ m@^(\d+)/(\d+)/(\d+)$@s) { $v = $1, $t = $2; $n = $3; }
-        elsif ($f =~ m@^(\d+)///(\d+)$@s)     { $v = $1; $n = $3; }
+        elsif ($f =~ m@^(\d+)///?(\d+)$@s)    { $v = $1; $n = $3; }
         else {
           error ("line $lineno: unparsable F line: $_") unless defined($v);
         }

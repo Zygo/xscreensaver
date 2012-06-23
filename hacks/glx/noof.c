@@ -445,6 +445,10 @@ init_noof (ModeInfo *mi)
   int i;
   noof_configuration *bp;
 
+#ifdef HAVE_JWZGLES
+  dbuf_p = 1;
+#endif
+
   if (!bps) {
     bps = (noof_configuration *)
       calloc (MI_NUM_SCREENS(mi), sizeof (noof_configuration));

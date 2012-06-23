@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2009 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2012 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,6 +16,28 @@
 #include "version.h"
 
 #undef usleep /* conflicts with unistd.h on OSX */
+
+#ifdef USE_IPHONE
+  /* Note: to get this to compile for iPhone, you need to fix Xcode!
+     The icmp headers exist for the simulator build environment, but
+     not for the real-device build environment.  This appears to 
+     just be an Apple bug, not intentional.
+
+     xc=/Applications/Xcode.app/Contents
+     for path in    /Developer/Platforms/iPhone*?/Developer/SDKs/?* \
+                 $xc/Developer/Platforms/iPhone*?/Developer/SDKs/?* ; do
+       for file in \
+         /usr/include/netinet/ip.h \
+         /usr/include/netinet/in_systm.h \
+         /usr/include/netinet/ip_icmp.h \
+         /usr/include/netinet/ip_var.h \
+         /usr/include/netinet/udp.h
+       do
+         ln -s "$file" "$path$file"
+       done
+     done
+  */
+#endif
 
 #if defined(HAVE_ICMP) || defined(HAVE_ICMPHDR)
 # include <unistd.h>
@@ -521,8 +543,19 @@ subnet_hosts (sonar_sensor_data *ssd, char **error_ret,
 
   /* Get our IP address and convert it to a string */
 
-  if (! (hent = gethostbyname(hostname)))
+  hent = gethostbyname(hostname);
+  if (! hent)
     {
+      strcat (hostname, ".local");	/* Necessary on iphone */
+      hent = gethostbyname(hostname);
+    }
+
+  if (! hent)
+    {
+      /* Without being able to resolve localhost to an IP, we don't know
+         what our local subnet is.  I don't know another way to find that,
+         short of running "ifconfig" and parsing the output...
+       */
       sprintf(buf, 
               "Unable to resolve\n"
               "local host \"%s\"", 
@@ -530,6 +563,7 @@ subnet_hosts (sonar_sensor_data *ssd, char **error_ret,
       *error_ret = strdup(buf);
       return 0;
     }
+
   strcpy (address, inet_ntoa(*((struct in_addr *)hent->h_addr_list[0])));
 
   /* Construct targets for all addresses in this subnet */

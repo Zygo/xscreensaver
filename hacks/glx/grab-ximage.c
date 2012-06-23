@@ -20,8 +20,9 @@
 
 #ifdef HAVE_COCOA
 # include "jwxyz.h"
-# include <OpenGL/gl.h>
-# include <OpenGL/glu.h>
+# ifndef HAVE_JWZGLES
+#  include <OpenGL/glu.h>
+# endif
 #else
 # include <X11/Xlib.h>
 # include <X11/Xutil.h>
@@ -29,6 +30,10 @@
 # include <GL/glu.h>	/* for gluBuild2DMipmaps */
 # include <GL/glx.h>	/* for glXMakeCurrent() */
 #endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 #include "grab-ximage.h"
 #include "grabscreen.h"
@@ -524,15 +529,11 @@ double_time (void)
 
 /* return the next larger power of 2. */
 static int
-to_pow2 (int i)
+to_pow2 (int value)
 {
-  static const unsigned int pow2[] = { 
-    1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 
-    2048, 4096, 8192, 16384, 32768, 65536 };
-  int j;
-  for (j = 0; j < countof(pow2); j++)
-    if (pow2[j] >= i) return pow2[j];
-  abort();  /* too big! */
+  int i = 1;
+  while (i < value) i <<= 1;
+  return i;
 }
 
 
@@ -587,7 +588,7 @@ ximage_to_texture (XImage *ximage,
                  progname, ximage->width, ximage->height,
                  tex_width, tex_height);
 
-      glTexImage2D (GL_TEXTURE_2D, 0, 3, tex_width, tex_height, 0,
+      glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, tex_width, tex_height, 0,
                     format, type, 0);
       err = glGetError();
 

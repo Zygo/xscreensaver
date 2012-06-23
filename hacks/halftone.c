@@ -78,7 +78,7 @@ static void update_buffer(halftone_screen *halftone, XWindowAttributes * attrs)
     if (halftone->buffer_width != -1 &&
 	halftone->buffer_height != -1)
     {
-      if (halftone->buffer == halftone->window)
+      if (halftone->buffer != halftone->window)
         XFreePixmap(halftone->dpy, halftone->buffer);
       XFreeGC(halftone->dpy, halftone->buffer_gc);
     }

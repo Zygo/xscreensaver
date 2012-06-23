@@ -1246,13 +1246,17 @@ ENTRYPOINT void reshape_crackberg (ModeInfo *mi, int w, int h)
 ENTRYPOINT Bool crackberg_handle_event (ModeInfo *mi, XEvent *ev)
 {
     cberg_state *cberg = &cbergs[MI_SCREEN(mi)];
+    KeySym keysym = 0;
+    char c = 0;
+    if (ev->xany.type == KeyPress || ev->xany.type == KeyRelease)
+      XLookupString (&ev->xkey, &c, 1, &keysym, 0);
 
     if (ev->xany.type == KeyPress) {
-        switch (XKeycodeToKeysym(mi->dpy, ev->xkey.keycode, 0)) {
-# ifndef HAVE_COCOA
+        switch (keysym) {
             case XK_Left:   cberg->motion_state |= MOTION_LROT;  break;
             case XK_Right:  cberg->motion_state |= MOTION_RROT;  break;
-# endif
+            case XK_Down:   cberg->motion_state |= MOTION_BACK;  break;
+            case XK_Up:     cberg->motion_state |= MOTION_FORW;  break;
             case '1':       cberg->motion_state |= MOTION_DEC;   break; 
             case '2':       cberg->motion_state |= MOTION_INC;   break;
             case 'a':       cberg->motion_state |= MOTION_LEFT;  break;
@@ -1276,11 +1280,11 @@ ENTRYPOINT Bool crackberg_handle_event (ModeInfo *mi, XEvent *ev)
         }
 #endif
 
-        switch (XKeycodeToKeysym(mi->dpy, ev->xkey.keycode, 0)) {
-# ifndef HAVE_COCOA
+        switch (keysym) {
             case XK_Left:   cberg->motion_state &= ~MOTION_LROT;  break;
             case XK_Right:  cberg->motion_state &= ~MOTION_RROT;  break;
-# endif
+            case XK_Down:   cberg->motion_state &= ~MOTION_BACK;  break;
+            case XK_Up:     cberg->motion_state &= ~MOTION_FORW;  break;
             case '1':       cberg->motion_state &= ~MOTION_DEC;   break; 
             case '2':       cberg->motion_state &= ~MOTION_INC;   break;
             case 'a':       cberg->motion_state &= ~MOTION_LEFT;  break;
@@ -1373,6 +1377,7 @@ ENTRYPOINT void draw_crackberg (ModeInfo *mi)
         
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glLoadIdentity();
+    glRotatef(current_device_rotation(), 0, 0, 1);
     gluLookAt(0,0,0, 1,0,0, 0,0,1);
     glLightfv(GL_LIGHT0, GL_POSITION, lpos);
     /*glRotated(cberg->roll, 1,0,0); / * XXX blah broken and unused for now..* /

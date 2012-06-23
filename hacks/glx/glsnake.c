@@ -23,23 +23,25 @@
 # include "config.h"
 #endif
 
-#ifdef STANDALONE
-# include "xlockmoreI.h"
-#endif
-
 /* HAVE_GLUT defined if we're building a standalone glsnake,
  * and not defined if we're building as an xscreensaver hack */
 #ifdef HAVE_GLUT
 # include <GL/glut.h>
 #else
 # ifdef HAVE_COCOA
-#  include <OpenGL/gl.h>
-#  include <OpenGL/glu.h>
 #  define HAVE_GETTIMEOFDAY
 # else
 #  include <GL/gl.h>
 #  include <GL/glu.h>
 # endif
+#endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
+
+#ifdef STANDALONE
+# include "xlockmoreI.h"
 #endif
 
 #include <stdio.h>
@@ -199,8 +201,12 @@ struct model_s {
 struct glsnake_cfg {
 #ifndef HAVE_GLUT
     GLXContext * glx_context;
+# ifdef HAVE_GLBITMAP
     XFontStruct * font;
     GLuint font_list;
+# else
+  texture_font_data *font_data;
+# endif
 #else
     /* font list number */
     int font;
@@ -249,6 +255,7 @@ struct glsnake_cfg {
 
     /* the id of the display lists for drawing a node */
     GLuint node_solid, node_wire;
+    int node_polys;
 
     /* is the window fullscreen? */
     int fullscreen;
@@ -1495,7 +1502,11 @@ ModeInfo * mi
     /* set up a font for the labels */
 #ifndef HAVE_GLUT
     if (titles)
+# ifdef HAVE_GLBITMAP
 	load_font(mi->dpy, "labelfont", &bp->font, &bp->font_list);
+# else
+        bp->font_data = load_texture_font (mi->dpy, "labelFont");
+# endif
 #endif
     
     /* build a solid display list */
@@ -1507,32 +1518,39 @@ ModeInfo * mi
     glVertex3fv(solid_prism_v[0]);
     glVertex3fv(solid_prism_v[2]);
     glVertex3fv(solid_prism_v[1]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[1]);
     glVertex3fv(solid_prism_v[6]);
     glVertex3fv(solid_prism_v[7]);
     glVertex3fv(solid_prism_v[8]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[2]);
     glVertex3fv(solid_prism_v[12]);
     glVertex3fv(solid_prism_v[13]);
     glVertex3fv(solid_prism_v[14]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[3]);
     glVertex3fv(solid_prism_v[3]);
     glVertex3fv(solid_prism_v[4]);
     glVertex3fv(solid_prism_v[5]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[4]);
     glVertex3fv(solid_prism_v[9]);
     glVertex3fv(solid_prism_v[11]);
     glVertex3fv(solid_prism_v[10]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[5]);
     glVertex3fv(solid_prism_v[16]);
     glVertex3fv(solid_prism_v[15]);
     glVertex3fv(solid_prism_v[17]);
+    bp->node_polys++;
     glEnd();
+
     /* edges */
     glBegin(GL_QUADS);
     glNormal3fv(solid_prism_n[6]);
@@ -1540,54 +1558,63 @@ ModeInfo * mi
     glVertex3fv(solid_prism_v[12]);
     glVertex3fv(solid_prism_v[14]);
     glVertex3fv(solid_prism_v[2]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[7]);
     glVertex3fv(solid_prism_v[0]);
     glVertex3fv(solid_prism_v[1]);
     glVertex3fv(solid_prism_v[7]);
     glVertex3fv(solid_prism_v[6]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[8]);
     glVertex3fv(solid_prism_v[6]);
     glVertex3fv(solid_prism_v[8]);
     glVertex3fv(solid_prism_v[13]);
     glVertex3fv(solid_prism_v[12]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[9]);
     glVertex3fv(solid_prism_v[3]);
     glVertex3fv(solid_prism_v[5]);
     glVertex3fv(solid_prism_v[17]);
     glVertex3fv(solid_prism_v[15]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[10]);
     glVertex3fv(solid_prism_v[3]);
     glVertex3fv(solid_prism_v[9]);
     glVertex3fv(solid_prism_v[10]);
     glVertex3fv(solid_prism_v[4]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[11]);
     glVertex3fv(solid_prism_v[15]);
     glVertex3fv(solid_prism_v[16]);
     glVertex3fv(solid_prism_v[11]);
     glVertex3fv(solid_prism_v[9]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[12]);
     glVertex3fv(solid_prism_v[1]);
     glVertex3fv(solid_prism_v[2]);
     glVertex3fv(solid_prism_v[5]);
     glVertex3fv(solid_prism_v[4]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[13]);
     glVertex3fv(solid_prism_v[8]);
     glVertex3fv(solid_prism_v[7]);
     glVertex3fv(solid_prism_v[10]);
     glVertex3fv(solid_prism_v[11]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[14]);
     glVertex3fv(solid_prism_v[13]);
     glVertex3fv(solid_prism_v[16]);
     glVertex3fv(solid_prism_v[17]);
     glVertex3fv(solid_prism_v[14]);
+    bp->node_polys++;
     glEnd();
     
     /* faces */
@@ -1596,11 +1623,13 @@ ModeInfo * mi
     glVertex3fv(solid_prism_v[0]);
     glVertex3fv(solid_prism_v[6]);
     glVertex3fv(solid_prism_v[12]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[19]);
     glVertex3fv(solid_prism_v[3]);
     glVertex3fv(solid_prism_v[15]);
     glVertex3fv(solid_prism_v[9]);
+    bp->node_polys++;
     glEnd();
     
     glBegin(GL_QUADS);
@@ -1609,18 +1638,21 @@ ModeInfo * mi
     glVertex3fv(solid_prism_v[4]);
     glVertex3fv(solid_prism_v[10]);
     glVertex3fv(solid_prism_v[7]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[17]);
     glVertex3fv(solid_prism_v[8]);
     glVertex3fv(solid_prism_v[11]);
     glVertex3fv(solid_prism_v[16]);
     glVertex3fv(solid_prism_v[13]);
+    bp->node_polys++;
     
     glNormal3fv(solid_prism_n[18]);
     glVertex3fv(solid_prism_v[2]);
     glVertex3fv(solid_prism_v[14]);
     glVertex3fv(solid_prism_v[17]);
     glVertex3fv(solid_prism_v[5]);
+    bp->node_polys++;
     glEnd();
     glEndList();
     
@@ -1630,18 +1662,24 @@ ModeInfo * mi
     glBegin(GL_LINE_STRIP);
     glVertex3fv(wire_prism_v[0]);
     glVertex3fv(wire_prism_v[1]);
+    bp->node_polys++;
     glVertex3fv(wire_prism_v[2]);
     glVertex3fv(wire_prism_v[0]);
+    bp->node_polys++;
     glVertex3fv(wire_prism_v[3]);
     glVertex3fv(wire_prism_v[4]);
+    bp->node_polys++;
     glVertex3fv(wire_prism_v[5]);
     glVertex3fv(wire_prism_v[3]);
+    bp->node_polys++;
     glEnd();
     glBegin(GL_LINES);
     glVertex3fv(wire_prism_v[1]);
     glVertex3fv(wire_prism_v[4]);
+    bp->node_polys++;
     glVertex3fv(wire_prism_v[2]);
     glVertex3fv(wire_prism_v[5]);
+    bp->node_polys++;
     glEnd();
     glEndList();
     
@@ -1662,7 +1700,8 @@ static void draw_title(
 #endif
 
     /* draw some text */
-    glPushAttrib((GLbitfield) GL_TRANSFORM_BIT | GL_ENABLE_BIT);
+
+/*    glPushAttrib((GLbitfield) GL_TRANSFORM_BIT | GL_ENABLE_BIT);*/
     glDisable(GL_LIGHTING);
     glDisable(GL_DEPTH_TEST);
     if (transparent) {
@@ -1675,9 +1714,9 @@ static void draw_title(
     glPushMatrix();
     glLoadIdentity();
 #ifdef HAVE_GLUT
-    gluOrtho2D((GLdouble) 0., (GLdouble) bp->width, (GLdouble) 0., (GLdouble) bp->height);
+    glOrtho((GLdouble) 0., (GLdouble) bp->width, (GLdouble) 0., (GLdouble) bp->height, -1, 1);
 #else
-    gluOrtho2D((GLdouble) 0., (GLdouble) mi->xgwa.width, (GLdouble) 0., (GLdouble) mi->xgwa.height);
+    glOrtho((GLdouble) 0., (GLdouble) mi->xgwa.width, (GLdouble) 0., (GLdouble) mi->xgwa.height, -1, 1);
 #endif
 
     glColor4f(1.0, 1.0, 1.0, 1.0);
@@ -1703,7 +1742,12 @@ static void draw_title(
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, s[i++]);
 	}
 #else
-	print_gl_string(mi->dpy, bp->font, bp->font_list,
+	print_gl_string(mi->dpy,
+# ifdef HAVE_GLBITMAP
+                        bp->font, bp->font_list,
+# else
+                        bp->font_data,
+# endif
 			mi->xgwa.width, mi->xgwa.height,
 			10.0, (float) mi->xgwa.height - 10.0,
 			s, False);
@@ -1712,7 +1756,9 @@ static void draw_title(
     glPopMatrix();
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
-    glPopAttrib();
+
+
+/*    glPopAttrib();*/
 }
 
 /* apply the matrix to the origin and stick it in vec */
@@ -2142,6 +2188,8 @@ ENTRYPOINT void glsnake_display(
     glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 #endif
     
+    gl_init(mi);
+
     /* clear the buffer */
     glClear((GLbitfield) GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     
@@ -2232,6 +2280,7 @@ ENTRYPOINT void glsnake_display(
     glRotatef(zspin, 0.0, 0.0, 1.0); 
 
     /* now draw each node along the snake -- this is quite ugly :p */
+    mi->polygon_count = 0;
     for (i = 0; i < NODE_COUNT; i++) {
 	/* choose a colour for this node */
 	if ((i == bp->selected || i == bp->selected+1) && interactive)
@@ -2249,6 +2298,7 @@ ENTRYPOINT void glsnake_display(
 	    glCallList(bp->node_wire);
 	else
 	    glCallList(bp->node_solid);
+        mi->polygon_count += bp->node_polys;
 
 	/* now work out where to draw the next one */
 	
@@ -2273,6 +2323,7 @@ ENTRYPOINT void glsnake_display(
 
 #ifndef HAVE_GLUT
 	glsnake_idle(bp);
+        if (mi->fps_p) do_fps(mi);
 #endif
     
     glFlush();

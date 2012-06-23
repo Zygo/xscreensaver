@@ -1453,8 +1453,8 @@ resize_screensaver_window (saver_info *si)
             int x, y;
             unsigned int mask;
             XQueryPointer (si->dpy, ssi->screensaver_window, &root, &child,
-                           &ssi->poll_mouse_last_root_x,
-                           &ssi->poll_mouse_last_root_y,
+                           &ssi->last_poll_mouse.root_x,
+                           &ssi->last_poll_mouse.root_y,
                            &x, &y, &mask);
           }
         }

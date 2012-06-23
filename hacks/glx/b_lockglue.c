@@ -197,7 +197,10 @@ draw_bubble3d(ModeInfo * mi)
 	glXMakeCurrent(display, window, *(c->glx_context));
 
         glb_config.polygon_count = 0;
+        glPushMatrix();
+        glRotatef(current_device_rotation(), 0, 0, 1);
 	do_display(c);
+        glPopMatrix();
         mi->polygon_count = glb_config.polygon_count;
 
         if (mi->fps_p) do_fps (mi);

@@ -100,7 +100,9 @@ static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
 
 #ifdef USE_GL
 
-#include <X11/keysym.h>
+#ifndef HAVE_COCOA
+# include <X11/keysym.h>
+#endif
 #include "gltrackball.h"
 
 
@@ -2769,11 +2771,6 @@ static void set_colors(ModeInfo *mi)
 
 static void init(ModeInfo *mi)
 {
-  static const GLfloat light_ambient[]  = { 0.0, 0.0, 0.0, 1.0 };
-  static const GLfloat light_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
-  static const GLfloat light_specular[] = { 0.0, 0.0, 0.0, 1.0 };
-  static const GLfloat light_position[] = { 0.0, 0.0, 1.0, 0.0 };
-  static const GLfloat mat_specular[]   = { 1.0, 1.0, 1.0, 1.0 };
   polytopesstruct *pp = &poly[MI_SCREEN(mi)];
 
   set_colors(mi);
@@ -2787,62 +2784,6 @@ static void init(ModeInfo *mi)
 
   pp->tick = 0;
   pp->poly = 0;
-
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  if (projection_3d == DISP_3D_PERSPECTIVE)
-    gluPerspective(60.0,1.0,0.1,100.0);
-  else
-    glOrtho(-1.0,1.0,-1.0,1.0,0.1,100.0);;
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-
-  if (display_mode == DISP_WIREFRAME)
-  {
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_LIGHT0);
-    glDisable(GL_BLEND);
-  }
-  else if (display_mode == DISP_SURFACE)
-  {
-    glEnable(GL_DEPTH_TEST);
-    glDepthFunc(GL_LESS);
-    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glLightfv(GL_LIGHT0,GL_AMBIENT,light_ambient);
-    glLightfv(GL_LIGHT0,GL_DIFFUSE,light_diffuse);
-    glLightfv(GL_LIGHT0,GL_SPECULAR,light_specular);
-    glLightfv(GL_LIGHT0,GL_POSITION,light_position);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,mat_specular);
-    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,0.0);
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
-  }
-  else if (display_mode == DISP_TRANSPARENT)
-  {
-    glDisable(GL_DEPTH_TEST);
-    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
-    glEnable(GL_LIGHTING);
-    glEnable(GL_LIGHT0);
-    glLightfv(GL_LIGHT0,GL_AMBIENT,light_ambient);
-    glLightfv(GL_LIGHT0,GL_DIFFUSE,light_diffuse);
-    glLightfv(GL_LIGHT0,GL_SPECULAR,light_specular);
-    glLightfv(GL_LIGHT0,GL_POSITION,light_position);
-    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,mat_specular);
-    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,0.0);
-    glDepthMask(GL_FALSE);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA,GL_ONE);
-  }
-  else
-  {
-    glDisable(GL_DEPTH_TEST);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_LIGHT0);
-    glDisable(GL_BLEND);
-  }
 }
 
 
@@ -2929,9 +2870,12 @@ ENTRYPOINT void reshape_polytopes(ModeInfo *mi, int width, int height)
 
 ENTRYPOINT Bool polytopes_handle_event(ModeInfo *mi, XEvent *event)
 {
-  Display *display = MI_DISPLAY(mi);
   polytopesstruct *pp = &poly[MI_SCREEN(mi)];
-  KeySym  sym;
+  KeySym  sym = 0;
+  char c = 0;
+
+  if (event->xany.type == KeyPress || event->xany.type == KeyRelease)
+    XLookupString (&event->xkey, &c, 1, &sym, 0);
 
   if (event->xany.type == ButtonPress &&
       event->xbutton.button == Button1)
@@ -2950,7 +2894,6 @@ ENTRYPOINT Bool polytopes_handle_event(ModeInfo *mi, XEvent *event)
   }
   else if (event->xany.type == KeyPress)
   {
-    sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
     if (sym == XK_Shift_L || sym == XK_Shift_R)
     {
       pp->current_trackball = 1;
@@ -2963,7 +2906,6 @@ ENTRYPOINT Bool polytopes_handle_event(ModeInfo *mi, XEvent *event)
   }
   else if (event->xany.type == KeyRelease)
   {
-    sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
     if (sym == XK_Shift_L || sym == XK_Shift_R)
     {
       pp->current_trackball = 0;
@@ -3134,6 +3076,12 @@ ENTRYPOINT void init_polytopes(ModeInfo *mi)
  */
 ENTRYPOINT void draw_polytopes(ModeInfo *mi)
 {
+  static const GLfloat light_ambient[]  = { 0.0, 0.0, 0.0, 1.0 };
+  static const GLfloat light_diffuse[]  = { 1.0, 1.0, 1.0, 1.0 };
+  static const GLfloat light_specular[] = { 0.0, 0.0, 0.0, 1.0 };
+  static const GLfloat light_position[] = { 0.0, 0.0, 1.0, 0.0 };
+  static const GLfloat mat_specular[]   = { 1.0, 1.0, 1.0, 1.0 };
+
   Display         *display = MI_DISPLAY(mi);
   Window          window = MI_WINDOW(mi);
   polytopesstruct *hp;
@@ -3147,6 +3095,64 @@ ENTRYPOINT void draw_polytopes(ModeInfo *mi)
     return;
 
   glXMakeCurrent(display,window,*(hp->glx_context));
+
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  if (projection_3d == DISP_3D_PERSPECTIVE)
+    gluPerspective(60.0,1.0,0.1,100.0);
+  else
+    glOrtho(-1.0,1.0,-1.0,1.0,0.1,100.0);;
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
+  if (display_mode == DISP_WIREFRAME)
+  {
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_LIGHT0);
+    glDisable(GL_BLEND);
+  }
+  else if (display_mode == DISP_SURFACE)
+  {
+    glEnable(GL_DEPTH_TEST);
+    glDepthFunc(GL_LESS);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glLightfv(GL_LIGHT0,GL_AMBIENT,light_ambient);
+    glLightfv(GL_LIGHT0,GL_DIFFUSE,light_diffuse);
+    glLightfv(GL_LIGHT0,GL_SPECULAR,light_specular);
+    glLightfv(GL_LIGHT0,GL_POSITION,light_position);
+    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,mat_specular);
+    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,0.0);
+    glDepthMask(GL_TRUE);
+    glDisable(GL_BLEND);
+  }
+  else if (display_mode == DISP_TRANSPARENT)
+  {
+    glDisable(GL_DEPTH_TEST);
+    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE,GL_TRUE);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_LIGHT0);
+    glLightfv(GL_LIGHT0,GL_AMBIENT,light_ambient);
+    glLightfv(GL_LIGHT0,GL_DIFFUSE,light_diffuse);
+    glLightfv(GL_LIGHT0,GL_SPECULAR,light_specular);
+    glLightfv(GL_LIGHT0,GL_POSITION,light_position);
+    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,mat_specular);
+    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,0.0);
+    glDepthMask(GL_FALSE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA,GL_ONE);
+  }
+  else
+  {
+    glDisable(GL_DEPTH_TEST);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_LIGHT0);
+    glDisable(GL_BLEND);
+  }
+
 
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();

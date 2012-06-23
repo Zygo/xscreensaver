@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2011 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -575,7 +575,7 @@ run_screenhack_table (Display *dpy,
 
 #ifdef DEBUG_PAIR
   if (window2) ft->free_cb (dpy, window2, closure2);
-  if (window2) fps_free (fpst2);
+  if (fpst2) fps_free (fpst2);
 #endif
 }
 

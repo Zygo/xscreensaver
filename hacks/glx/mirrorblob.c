@@ -191,20 +191,20 @@ ModStruct   mirrorblob_description =
 
 typedef struct
 {
-  GLdouble x, y;
+  GLfloat x, y;
 } Vector2D;
 
 typedef struct
 {
-  GLdouble x, y, z;
+  GLfloat x, y, z;
 } Vector3D;
 
 typedef struct
 {
-  GLdouble w;
-  GLdouble x;
-  GLdouble y;
-  GLdouble z;
+  GLfloat w;
+  GLfloat x;
+  GLfloat y;
+  GLfloat z;
 } Quaternion;
 
 typedef struct
@@ -461,9 +461,9 @@ normalise (const Vector3D v)
  * Calculate the transform matrix for the given quaternion
  */
 static void
-quaternion_transform (Quaternion q, GLdouble * transform)
+quaternion_transform (Quaternion q, GLfloat * transform)
 {
-  GLdouble x, y, z, w;
+  GLfloat x, y, z, w;
   x = q.x;
   y = q.y;
   z = q.z;
@@ -495,7 +495,7 @@ quaternion_transform (Quaternion q, GLdouble * transform)
  * Apply a matrix transform to the given vector
  */
 static inline Vector3D
-vector_transform (Vector3D u, GLdouble * t)
+vector_transform (Vector3D u, GLfloat * t)
 {
   Vector3D result;
 
@@ -516,7 +516,7 @@ partial (Vector3D node1, Vector3D node2, double distance)
 {
   Vector3D result;
   Vector3D rotation_axis;
-  GLdouble transformation[16];
+  GLfloat transformation[16];
   double angle;
   Quaternion rotation;
 
@@ -737,7 +737,7 @@ initialize_gl(ModeInfo *mi, GLsizei width, GLsizei height)
  * Initialise the openGL state data.
  */
 static void
-set_blob_gl_state(GLdouble alpha)
+set_blob_gl_state(GLfloat alpha)
 {
   if (do_antialias)
     {
@@ -776,12 +776,12 @@ set_blob_gl_state(GLdouble alpha)
       glEnable (GL_BLEND);
       glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
       /* Set the default blob colour to off-white. */
-      glColor4d (0.9, 0.9, 1.0, alpha);
+      glColor4f (0.9, 0.9, 1.0, alpha);
     }
   else
     {
       glDisable(GL_BLEND);
-      glColor4d (0.9, 0.9, 1.0, 1.0);
+      glColor4f (0.9, 0.9, 1.0, 1.0);
     }
     
   glEnable(GL_DEPTH_TEST);
@@ -1394,10 +1394,10 @@ draw_vertex(mirrorblobstruct *gp, int index)
     }
   if (load_textures)
     {
-      glTexCoord3dv((GLdouble *) &gp->tex_coords[index]);
+      glTexCoord2fv(&gp->tex_coords[index].x);
     }
-  glNormal3dv((GLdouble *) &gp->normals[index]);
-  glVertex3dv((GLdouble *) &gp->dots[index]);
+  glNormal3fv(&gp->normals[index].x);
+  glVertex3fv(&gp->dots[index].x);
 }
 
 /******************************************************************************
@@ -1417,6 +1417,7 @@ draw_blob (mirrorblobstruct *gp)
   glTranslatef (0.0, 0.0, -4.0);
 
   gltrackball_rotate (gp->trackball);
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   /* glColor4ub (255, 0, 0, 128); */
   glBegin(GL_TRIANGLES);
@@ -1435,9 +1436,9 @@ draw_blob (mirrorblobstruct *gp)
       if (gp->normals[gp->faces[face].node1].z > 0.0)
         {
           Vector3D end = gp->dots[gp->faces[face].node1];
-          glVertex3dv((GLdouble *) &end);
+          glVertex3dv(&end);
           add(&end, scale(gp->normals[gp->faces[face].node1], 0.25));
-          glVertex3dv((GLdouble *) &end);
+          glVertex3dv(&end);
         }
     }
   glEnd();
@@ -1454,6 +1455,7 @@ static void
 draw_background (ModeInfo *mi)
 {
   mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN(mi)];
+  GLfloat rot = current_device_rotation();
     
   glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_DECAL);
   glEnable (GL_TEXTURE_2D);
@@ -1466,6 +1468,14 @@ draw_background (ModeInfo *mi)
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
+
+  glRotatef (rot, 0, 0, 1);
+  if ((rot >  45 && rot <  135) ||
+      (rot < -45 && rot > -135))
+    {
+      GLfloat s = MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi);
+      glScalef (s, 1/s, 1);
+    }
 
   glOrtho(0.0, MI_WIDTH(mi), MI_HEIGHT(mi), 0.0, -1000.0, 1000.0);
 
@@ -1503,13 +1513,13 @@ draw_scene(ModeInfo * mi)
   check_gl_error ("draw_scene");
 
   mi->polygon_count = 0;
-  glColor4d(1.0, 1.0, 1.0, 1.0);
+  glColor4f (1.0, 1.0, 1.0, 1.0);
 
   current_time = double_time();
   switch (gp->state)
     {
     case INITIALISING:
-      glColor4d(0.0, 0.0, 0.0, 1.0);
+      glColor4f (0.0, 0.0, 0.0, 1.0);
       fade = 1.0;
       break;
 
@@ -1540,7 +1550,7 @@ draw_scene(ModeInfo * mi)
         {
           glClear(GL_DEPTH_BUFFER_BIT);
           glEnable (GL_BLEND);
-          glColor4d (1.0, 1.0, 1.0, motion_blur);
+          glColor4f (1.0, 1.0, 1.0, motion_blur);
         }
       else
         {
@@ -1557,7 +1567,7 @@ draw_scene(ModeInfo * mi)
           glEnable (GL_BLEND);
           /* Select the texture to transition to */
           glBindTexture (GL_TEXTURE_2D, gp->textures[1 - gp->current_texture]);
-          glColor4d (1.0, 1.0, 1.0, 1.0 - fade);
+          glColor4f (1.0, 1.0, 1.0, 1.0 - fade);
 
           draw_background (mi);
           mi->polygon_count++;
@@ -1571,7 +1581,7 @@ draw_scene(ModeInfo * mi)
   else if (motion_blur > 0.0)
     {
       glEnable (GL_BLEND);
-      glColor4d (0.0, 0.0, 0.0, motion_blur);
+      glColor4f (0.0, 0.0, 0.0, motion_blur);
       glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
       glTranslatef (0.0, 0.0, -4.0);
       glRectd (-10.0, -10.0, 10.0, 10.0);
@@ -1669,7 +1679,7 @@ draw_scene(ModeInfo * mi)
                 }
               else
                 {
-                  glColor4d(0.9, 0.9, 1.0, (1.0 - fade) * blend);
+                  glColor4f (0.9, 0.9, 1.0, (1.0 - fade) * blend);
                 }
 
               draw_blob (gp);

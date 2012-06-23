@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2010 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -16,29 +16,85 @@
 
 @implementation InvertedSlider
 
+- (id) initWithFrame:(NSRect)r
+{
+  self = [super initWithFrame:r];
+  if (! self) return 0;
+  inverted = YES;
+  integers = NO;
+  return self;
+}
+
+- (id) initWithFrame:(NSRect)r inverted:(BOOL)_inv integers:(BOOL)_int
+{
+  self = [self initWithFrame:r];
+  inverted = _inv;
+  integers = _int;
+  return self;
+}
+
+
 -(double) transformValue:(double) value
 {
+  double v2 = (integers
+               ? (int) (value + (value < 0 ? -0.5 : 0.5))
+               : value);
   double low   = [self minValue];
   double high  = [self maxValue];
   double range = high - low;
-  double off   = value - low;
-  double trans = low + (range - off);
-  // NSLog (@" ... %.1f -> %.1f    [%.1f - %.1f]", value, trans, low, high);
-  return trans;
+  double off   = v2 - low;
+  if (inverted)
+    v2 = low + (range - off);
+  // NSLog (@" ... %.1f -> %.1f    [%.1f - %.1f]", value, v2, low, high);
+  return v2;
 }
 
 -(double) doubleValue;
 {
+# ifdef USE_IPHONE
+  return [self transformValue:[self value]];
+# else
   return [self transformValue:[super doubleValue]];
+# endif
 }
 
 -(void) setDoubleValue:(double)v
 {
+# ifdef USE_IPHONE
+  return [super setValue:[self transformValue:v]];
+# else
   return [super setDoubleValue:[self transformValue:v]];
+# endif
 }
 
 
+#ifdef USE_IPHONE
+
+- (void)setValue:(float)v animated:(BOOL)a
+{
+  return [super setValue:[self transformValue:v] animated:a];
+}
+
+
+/* Draw the thumb in the right place by also inverting its position
+   relative to the track.
+ */
+- (CGRect)thumbRectForBounds:(CGRect)bounds
+                   trackRect:(CGRect)rect
+                       value:(float)value
+{
+  CGRect thumb = [super thumbRectForBounds:bounds trackRect:rect value:value];
+  if (inverted)
+    thumb.origin.x = rect.size.width - thumb.origin.x - thumb.size.width;
+  return thumb;
+}
+
+#endif // !USE_IPHONE
+
+
+
 /* Implement all accessor methods in terms of "doubleValue" above.
+   (Note that these normally exist only on MacOS, not on iOS.)
  */
 
 -(float) floatValue;

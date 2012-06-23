@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="jigsaw" _label="Jigsaw">
+<screensaver name="jigsaw" _label="Jigsaw" gl="yes">
 
   <command arg="-root"/>
 

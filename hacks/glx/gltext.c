@@ -12,9 +12,9 @@
 #define DEFAULTS	"*delay:	20000        \n" \
 			"*showFPS:      False        \n" \
 			"*wireframe:    False        \n" \
+			"*usePty:       False        \n" \
 
 # define refresh_text 0
-# define release_text 0
 #define SMOOTH_TUBE       /* whether to have smooth or faceted tubes */
 
 #ifdef SMOOTH_TUBE
@@ -32,6 +32,7 @@
 #include "tube.h"
 #include "rotator.h"
 #include "gltrackball.h"
+#include "textclient.h"
 
 #include <ctype.h>
 
@@ -69,6 +70,7 @@ typedef struct {
   int reload;
 
   time_t last_update;
+  text_data *tc;
 
 } text_configuration;
 
@@ -180,41 +182,35 @@ parse_text (ModeInfo *mi)
   text_configuration *tp = &tps[MI_SCREEN(mi)];
 
   if (tp->text) free (tp->text);
+  tp->text = 0;
 
   if (program_str && *program_str && !!strcmp(program_str, "(default)"))
     {
-      FILE *p;
-      int i;
+      int max_lines = 20;
       char buf[1024];
-      sprintf (buf, "( %.900s ) 2>&1", program_str);
-      p = popen (buf, "r");
-      if (! p)
-        sprintf (buf, "error running '%.900s'", program_str);
-      else
-        {
-          char *out = buf;
-          char *end = out + sizeof(buf) - 1;
-          int n;
-          do {
-            n = fread (out, 1, end - out, p);
-            if (n > 0)
-              out += n;
-            *out = 0;
-          } while (n > 0);
-          fclose (p);
-        }
+      char *p = buf;
+      int lines = 0;
 
-      /* Truncate it to 10 lines */
-      {
-        char *s = buf;
-        for (i = 0; i < 10; i++)
-          if (s && (s = strchr (s, '\n')))
-            s++;
-        if (s) *s = 0;
-      }
+      if (! tp->tc)
+        tp->tc = textclient_open (mi->dpy);
+
+      while (p < buf + sizeof(buf) - 1 &&
+             lines < max_lines)
+        {
+          char c = textclient_getc (tp->tc);
+          if (c == '\n')
+            lines++;
+          if (c > 0)
+            *p++ = c;
+          else
+            break;
+        }
+      *p = 0;
+      if (lines == 0 && buf[0])
+        lines++;
 
       tp->text = strdup (buf);
-      tp->reload = 5;
+      tp->reload = 1;
     }
   else if (!text_fmt || !*text_fmt || !strcmp(text_fmt, "(default)"))
     {
@@ -589,7 +585,6 @@ draw_text (ModeInfo *mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix ();
-
   glScalef(1.1, 1.1, 1.1);
 
   {
@@ -600,6 +595,7 @@ draw_text (ModeInfo *mi)
                  (z - 0.5) * 8);
 
     gltrackball_rotate (tp->trackball);
+    glRotatef(current_device_rotation(), 0, 0, 1);
 
     if (face_front_p)
       {
@@ -640,6 +636,25 @@ draw_text (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+ENTRYPOINT void
+release_text(ModeInfo * mi)
+{
+  if (tps)
+    {
+    int screen;
+    for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++)
+      {
+        text_configuration *tp = &tps[MI_SCREEN(mi)];
+        if (tp->tc)
+          textclient_close (tp->tc);
+      }
+    }
+  (void) free(tps);
+  tps = 0;
+  FreeAllGL(mi);
+}
+
 
 XSCREENSAVER_MODULE_2 ("GLText", gltext, text)
 

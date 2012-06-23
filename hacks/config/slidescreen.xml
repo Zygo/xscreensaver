@@ -40,9 +40,8 @@
   <xscreensaver-image />
 
   <_description>
-This takes an image, divides it into a grid, and then randomly
-shuffles the squares around as if it was one of those "fifteen-puzzle"
-games where there is a grid of squares, one of which is missing.
+A variant on a "fifteen puzzle", operating on the screen or an image.
+It divides the image into a grid and randomly shuffles the squares.
 
 http://en.wikipedia.org/wiki/Fifteen_puzzle
 

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="noof" _label="Noof">
+<screensaver name="noof" _label="Noof" gl="yes">
 
   <command arg="-root"/>
 
@@ -12,7 +12,7 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-Draws some rotatey patterns, using OpenGL.
+Draws some flowery, rotatey patterns.
 
 Written by Bill Torzewski; 2004.
   </_description>

@@ -36,9 +36,7 @@ static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/28 xlockmore";
 
 #ifdef USE_GL
 
-#ifdef HAVE_COCOA
-# include <OpenGL/glu.h>
-#else
+#ifndef HAVE_COCOA
 # include <GL/glu.h>
 #endif
 
@@ -510,8 +508,10 @@ RenderSproingie(int t, sp_instance * si)
 {
 	GLfloat     scale, pointsize, mat_color[4] =
 	{0.0, 0.0, 0.0, 1.0};
+#ifndef HAVE_JWZGLES
 	GLdouble    clipplane[4] =
 	{0.0, 1.0, 0.0, 0.0};
+#endif
 	struct sPosColor *thisSproingie = &(si->positions[t]);
 
 	if (thisSproingie->life < 1)
@@ -536,9 +536,14 @@ RenderSproingie(int t, sp_instance * si)
 			     (GLfloat) (thisSproingie->y) +
 			     ((GLfloat) (thisSproingie->frame) / 9.0),
 			     (GLfloat) (thisSproingie->z));
+
+#ifndef HAVE_JWZGLES
+        /* OpenGLES doesn't have this but it doesn't seem to matter */
 		clipplane[3] = ((GLdouble) (thisSproingie->frame) / 9.0) +
 			(si->wireframe ? 0.0 : 0.1);
 		glClipPlane(GL_CLIP_PLANE0, clipplane);
+#endif
+
 /**		glCallList(si->sproingies[0]);*/
 /**/	renderList(si->sproingies[0], si->wireframe);
 		glDisable(GL_CLIP_PLANE0);

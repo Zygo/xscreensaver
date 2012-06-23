@@ -154,14 +154,9 @@ static void make_brick(providencestruct *mp)
   glGenTextures(1, &mp->bricktexture);
   glBindTexture(GL_TEXTURE_2D, mp->bricktexture);
 
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
-  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
   glTexImage2D(GL_TEXTURE_2D, 0, 3, checkImageWidth, 
 	       checkImageHeight, 0, GL_RGB, GL_UNSIGNED_BYTE, 
 	       &mp->checkImage[0][0]);
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 }
 
 
@@ -618,31 +613,10 @@ static void pinit(providencestruct *mp)
 {
   glClearDepth(1.0);
 
-  /* setup twoside lighting */
-  glLightfv(GL_LIGHT0, GL_AMBIENT, ambient2);
-  glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
-  glLightfv(GL_LIGHT0, GL_POSITION, mp->position0);
-
-  glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
-  glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
-  glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
-
   mp->currenttime = 0.0;
   init_particles(mp);
   make_brick(mp);
   build_eye(mp);
-
-  glEnable(GL_NORMALIZE);
-  glFrontFace(GL_CCW);
-/*   glDisable(GL_CULL_FACE); */
-  glEnable(GL_CULL_FACE);
-  glCullFace(GL_BACK);
-  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-  glShadeModel(GL_SMOOTH);
-  glEnable(GL_DEPTH_TEST);
-  glDepthFunc(GL_LEQUAL);
 
   /* build pyramid list */
   mp->pyramidlist = glGenLists(1);
@@ -742,7 +716,7 @@ ENTRYPOINT void init_providence(ModeInfo *mi)
 
   if((mp->glx_context = init_GL(mi)) != NULL) {
     reshape_providence(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-    glDrawBuffer(GL_BACK);
+    /* glDrawBuffer(GL_BACK); */
     pinit(mp);
   }
   else
@@ -767,9 +741,37 @@ ENTRYPOINT void draw_providence(ModeInfo * mi)
   
   glXMakeCurrent(display, window, *(mp->glx_context));
   
+  /* setup twoside lighting */
+  glLightfv(GL_LIGHT0, GL_AMBIENT, ambient2);
+  glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse);
+  glLightfv(GL_LIGHT0, GL_POSITION, mp->position0);
+
+  glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+  glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
+  glEnable(GL_LIGHTING);
+  glEnable(GL_LIGHT0);
+
+  glEnable(GL_NORMALIZE);
+  glFrontFace(GL_CCW);
+/*   glDisable(GL_CULL_FACE); */
+  glEnable(GL_CULL_FACE);
+  glCullFace(GL_BACK);
+  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+  glShadeModel(GL_SMOOTH);
+  glEnable(GL_DEPTH_TEST);
+  glDepthFunc(GL_LEQUAL);
+
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MIN_FILTER,GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_MAG_FILTER,GL_LINEAR);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_S,GL_REPEAT);
+  glTexParameteri(GL_TEXTURE_2D,GL_TEXTURE_WRAP_T,GL_REPEAT);
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix();
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   /* modify camera */
   if(fabs(mp->camera_velocity) > EPSILON) {
@@ -780,7 +782,9 @@ ENTRYPOINT void draw_providence(ModeInfo * mi)
   /* rotate providence */
   glTranslatef(0.0, 0.0, mp->camera_z + sin(mp->theta/4.0));
   glRotatef(10.0+20.0*sin(mp->theta/2.0), 1.0, 0.0, 0.0);
+  glRotatef(-current_device_rotation(), 0, 0, 1);
   gltrackball_rotate(mp->trackball);
+  glRotatef(current_device_rotation(), 0, 0, 1);
   glRotatef(mp->theta * 180.0 / Pi, 0.0, -1.0, 0.0);
 
   /* draw providence */

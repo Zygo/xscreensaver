@@ -26,15 +26,21 @@
 
 /* chessmodels.c: Contains the code for piece model creation */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <math.h>
 #include <stdlib.h>
 
-#ifdef HAVE_COCOA
-# include <OpenGL/gl.h>
-#else
+#ifndef HAVE_COCOA
 # include <GL/glx.h>
 # include <GL/gl.h>
 #endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 #include "chessmodels.h"
 
@@ -1680,14 +1686,22 @@ static int draw_piece( unsigned short *piece_data)
 }
 
 void gen_model_lists( int classic, int poly_count[PIECES]) {
+
+  Bool queen_only_p = classic < 0;
+  if (classic < 0) classic = 0;
+
   piece_size = classic ? 0.095 / 100 : 0.3 / 8192;
 
-  glNewList(KING, GL_COMPILE);
-  poly_count[KING] = draw_piece( classic ? classic_king_data : king_data);
-  glEndList();
+  glGenLists (20); /* this is horrible! List numbers are hardcoded! */
 
   glNewList(QUEEN, GL_COMPILE);
   poly_count[QUEEN] = draw_piece( classic ? classic_queen_data : queen_data);
+  glEndList();
+
+  if (queen_only_p) return;
+
+  glNewList(KING, GL_COMPILE);
+  poly_count[KING] = draw_piece( classic ? classic_king_data : king_data);
   glEndList();
 
   glNewList(BISHOP, GL_COMPILE);

@@ -378,7 +378,7 @@ draw_scanlines (ModeInfo *mi)
       int lh, ls;
       int y;
       glLoadIdentity();
-      gluOrtho2D (0, w, 0, h);
+      glOrtho (0, w, 0, h, -1, 1);
 
       if      (h > 500) lh = 4, ls = 4;
       else if (h > 300) lh = 2, ls = 1;
@@ -630,6 +630,7 @@ draw_boing (ModeInfo *mi)
 
   glPushMatrix ();
   gltrackball_rotate (bp->trackball);
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   glLightfv (GL_LIGHT0, GL_POSITION, bp->lightpos);
 

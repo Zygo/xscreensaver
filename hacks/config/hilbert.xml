@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="hilbert" _label="Hilbert">
+<screensaver name="hilbert" _label="Hilbert" gl="yes">
 
   <command arg="-root"/>
 
@@ -62,7 +62,7 @@ the maximum depth, then unwinds it back.
 The Hilbert path is a single contiguous line that can fill a volume
 without crossing itself.  As a data structure, Hilbert paths are
 useful because ordering along the curve preserves locality: points
-that close together along the curve are also close together in space.
+that are close together along the curve are also close together in space.
 The converse is often, but not always, true.  The coloration
 reflects this.
 

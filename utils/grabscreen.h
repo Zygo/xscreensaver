@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -86,7 +86,8 @@ extern void grabscreen_verbose (void);
 
 #ifdef HAVE_COCOA
 /* Don't use these: internal interface of grabclient.c. */
-extern void osx_grab_desktop_image (Screen *, Window, Drawable);
+extern Bool osx_grab_desktop_image (Screen *, Window, Drawable,
+                                    XRectangle *geom_ret);
 extern Bool osx_load_image_file (Screen *, Window, Drawable,
                                  const char *filename, XRectangle *geom_ret);
 #endif /* HAVE_COCOA */

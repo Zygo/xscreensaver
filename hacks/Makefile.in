@@ -72,7 +72,8 @@ UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/logo.c \
 		  $(UTILS_SRC)/minixpm.c \
 		  $(UTILS_SRC)/yarandom.c $(UTILS_SRC)/erase.c \
-		  $(UTILS_SRC)/xshm.c $(UTILS_SRC)/xdbe.c
+		  $(UTILS_SRC)/xshm.c $(UTILS_SRC)/xdbe.c \
+		  $(UTILS_SRC)/textclient.c
 UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/grabclient.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/resources.o \
@@ -81,7 +82,8 @@ UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_SRC)/minixpm.c \
 		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/erase.o \
 		  $(UTILS_BIN)/xshm.o $(UTILS_BIN)/xdbe.o \
-		  $(UTILS_BIN)/colorbars.o
+		  $(UTILS_BIN)/colorbars.o \
+		  $(UTILS_SRC)/textclient.o
 
 SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  bubbles-default.c decayscreen.c deco.c drift.c flag.c \
@@ -512,6 +514,7 @@ $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 $(UTILS_BIN)/erase.o:		$(UTILS_SRC)/erase.c
 $(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
 $(UTILS_BIN)/xdbe.o:		$(UTILS_SRC)/xdbe.c
+$(UTILS_BIN)/textclient.o:	$(UTILS_SRC)/textclient.c
 
 $(UTIL_OBJS):
 	cd $(UTILS_BIN) ; \
@@ -539,6 +542,7 @@ DBE		= $(XDBE_OBJS)
 BARS		= $(UTILS_BIN)/colorbars.o $(LOGO)
 ATV             = analogtv.o $(SHM)
 APPLE2          = apple2.o $(ATV)
+TEXT            = $(UTILS_BIN)/textclient.o
 
 CC_HACK		= $(CC) $(LDFLAGS)
 
@@ -601,8 +605,8 @@ moire:		moire.o		$(HACK_OBJS) $(COL) $(SHM)
 moire2:		moire2.o	$(HACK_OBJS) $(COL) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
 
-noseguy:	noseguy.o	$(HACK_OBJS) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM) $(XPM_LIBS)
+noseguy:	noseguy.o	$(HACK_OBJS) $(XPM) $(TEXT)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM) $(TEXT) $(XPM_LIBS)
 
 pedal:		pedal.o		$(HACK_OBJS) $(HSV) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HSV) $(ERASE) $(HACK_LIBS)
@@ -658,8 +662,8 @@ truchet:	 truchet.o	$(HACK_OBJS) $(COL)
 bsod:	 	bsod.o		$(HACK_OBJS) $(GRAB) $(APPLE2) $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(APPLE2) $(XPM) $(XPM_LIBS)
 
-apple2:	 	apple2.o apple2-main.o	$(HACK_OBJS) $(ATV) $(GRAB)
-	$(CC_HACK) -o $@ $@.o	apple2-main.o $(HACK_OBJS) $(ATV) $(GRAB) $(XPM_LIBS) $(PTY_LIBS)
+apple2:	 	apple2.o apple2-main.o	$(HACK_OBJS) $(ATV) $(GRAB) $(TEXT)
+	$(CC_HACK) -o $@ $@.o	apple2-main.o $(HACK_OBJS) $(ATV) $(GRAB) $(TEXT) $(XPM_LIBS) $(PTY_LIBS)
 
 xanalogtv: 	xanalogtv.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM) $(XPM_LIBS) $(HACK_LIBS)
@@ -697,11 +701,11 @@ spotlight:	spotlight.o	$(HACK_OBJS) $(GRAB)
 critical:	critical.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
 
-phosphor:	phosphor.o	$(HACK_OBJS) $(COL)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS) $(PTY_LIBS)
+phosphor:	phosphor.o	$(HACK_OBJS) $(TEXT) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TEXT) $(COL) $(HACK_LIBS) $(PTY_LIBS)
 
-xmatrix:	xmatrix.o	$(HACK_OBJS) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(XPM) $(XPM_LIBS)
+xmatrix:	xmatrix.o	$(HACK_OBJS) $(TEXT) $(XPM)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(TEXT) $(XPM) $(XPM_LIBS)
 
 petri:		petri.o		$(HACK_OBJS) $(COL) $(SPL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
@@ -781,8 +785,8 @@ piecewise:	piecewise.o	$(HACK_OBJS) $(COL) $(DBE)
 cloudlife:	cloudlife.o	$(HACK_OBJS) $(COL) $(DBE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(DBE) $(HACK_LIBS)
 
-fontglide:	fontglide.o	$(HACK_OBJS) $(DBE)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(HACK_LIBS)
+fontglide:	fontglide.o	$(HACK_OBJS) $(DBE) $(TEXT)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(TEXT) $(HACK_LIBS)
 
 pong: 	pong.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM) $(XPM_LIBS) $(HACK_LIBS)
@@ -1054,6 +1058,7 @@ apple2-main.o: $(UTILS_SRC)/colors.h
 apple2-main.o: $(UTILS_SRC)/grabscreen.h
 apple2-main.o: $(UTILS_SRC)/hsv.h
 apple2-main.o: $(UTILS_SRC)/resources.h
+apple2-main.o: $(UTILS_SRC)/textclient.h
 apple2-main.o: $(UTILS_SRC)/usleep.h
 apple2-main.o: $(UTILS_SRC)/visual.h
 apple2-main.o: $(UTILS_SRC)/xshm.h
@@ -1580,6 +1585,7 @@ fontglide.o: $(UTILS_SRC)/colors.h
 fontglide.o: $(UTILS_SRC)/grabscreen.h
 fontglide.o: $(UTILS_SRC)/hsv.h
 fontglide.o: $(UTILS_SRC)/resources.h
+fontglide.o: $(UTILS_SRC)/textclient.h
 fontglide.o: $(UTILS_SRC)/usleep.h
 fontglide.o: $(UTILS_SRC)/visual.h
 fontglide.o: $(UTILS_SRC)/xdbe.h
@@ -2056,6 +2062,7 @@ noseguy.o: $(UTILS_SRC)/colors.h
 noseguy.o: $(UTILS_SRC)/grabscreen.h
 noseguy.o: $(UTILS_SRC)/hsv.h
 noseguy.o: $(UTILS_SRC)/resources.h
+noseguy.o: $(UTILS_SRC)/textclient.h
 noseguy.o: $(UTILS_SRC)/usleep.h
 noseguy.o: $(UTILS_SRC)/visual.h
 noseguy.o: $(UTILS_SRC)/yarandom.h
@@ -2199,6 +2206,7 @@ phosphor.o: $(UTILS_SRC)/colors.h
 phosphor.o: $(UTILS_SRC)/grabscreen.h
 phosphor.o: $(UTILS_SRC)/hsv.h
 phosphor.o: $(UTILS_SRC)/resources.h
+phosphor.o: $(UTILS_SRC)/textclient.h
 phosphor.o: $(UTILS_SRC)/usleep.h
 phosphor.o: $(UTILS_SRC)/visual.h
 phosphor.o: $(UTILS_SRC)/yarandom.h
@@ -2751,6 +2759,7 @@ xmatrix.o: $(UTILS_SRC)/colors.h
 xmatrix.o: $(UTILS_SRC)/grabscreen.h
 xmatrix.o: $(UTILS_SRC)/hsv.h
 xmatrix.o: $(UTILS_SRC)/resources.h
+xmatrix.o: $(UTILS_SRC)/textclient.h
 xmatrix.o: $(UTILS_SRC)/usleep.h
 xmatrix.o: $(UTILS_SRC)/visual.h
 xmatrix.o: $(UTILS_SRC)/yarandom.h

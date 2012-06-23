@@ -56,7 +56,8 @@ fps_init (Display *dpy, Window window)
   st->x = 10;
   st->y = 10;
   if (get_boolean_resource (dpy, "fpsTop", "FPSTop"))
-    st->y = - (st->font->ascent + st->font->descent + 10);
+    /* don't leave a blank line in GL top-fps. */
+    st->y = - (/*st->font->ascent +*/ st->font->descent + 10);
 
   strcpy (st->string, "FPS: ... ");
 
@@ -198,7 +199,7 @@ string_width (XFontStruct *f, const char *c, int *height_ret)
 }
 
 
-/* This function is used only in Xlib mode.  For GL mode, see glx/fps-glx.c.
+/* This function is used only in Xlib mode.  For GL mode, see glx/fps-gl.c.
  */
 void
 fps_draw (fps_state *st)

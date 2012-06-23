@@ -31,7 +31,7 @@
 "*ignoreUninstalledPrograms: False",
 "*textMode:		file",
 "*textLiteral:		XScreenSaver",
-"*textFile:		/usr/X11/share/X11/doc/README.sgml",
+"*textFile:		",
 "*textProgram:		fortune",
 "*textURL:		http://twitter.com/statuses/public_timeline.atom",
 "*overlayTextForeground:	#FFFF00",

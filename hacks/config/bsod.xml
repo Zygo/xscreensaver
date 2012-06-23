@@ -51,10 +51,37 @@
 
  <xscreensaver-image />
 
+<!--
+  <hgroup>
+   <vgroup>
+    <number id="tvcolor" type="slider" arg="-tv-color %"
+            _label="Color Knob" _low-label="Low" _high-label="High"
+            low="0" high="1000" default="70"/>
+    <number id="tvtint" type="slider" arg="-tv-tint %"
+            _label="Tint Knob" _low-label="Low" _high-label="High"
+            low="0" high="100" default="5"/>
+   </vgroup>
+   <vgroup>
+    <number id="tvbrightness" type="slider" arg="-tv-brightness %"
+            _label="Brightness Knob" _low-label="Low" _high-label="High"
+            low="0" high="200" default="150"/>
+    <number id="tvcontrast" type="slider" arg="-tv-contrast %"
+            _label="Contrast Knob" _low-label="Low" _high-label="High"
+            low="0" high="1500" default="1000"/>
+   </vgroup>
+  </hgroup>
+-->
+
  <_description>
 BSOD stands for "Blue Screen of Death".  The finest in personal
 computer emulation, BSOD simulates popular screen savers from a
 number of less robust operating systems.
+
+http://en.wikipedia.org/wiki/Blue_Screen_of_Death
+http://en.wikipedia.org/wiki/Screen_of_death
+http://en.wikipedia.org/wiki/Guru_Meditation
+http://en.wikipedia.org/wiki/Row_of_Bombs
+http://en.wikipedia.org/wiki/Bomb_%28symbol%29
 
 Written by Jamie Zawinski; 1998.
  </_description>

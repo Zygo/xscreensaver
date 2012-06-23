@@ -194,7 +194,10 @@ draw_sproingies (ModeInfo * mi)
 	glDrawBuffer(GL_BACK);
 	glXMakeCurrent(display, window, *(sp->glx_context));
 
+    glPushMatrix();
+    glRotatef(current_device_rotation(), 0, 0, 1);
 	NextSproingieDisplay(MI_SCREEN(mi),mi->pause);	/* It will swap. */
+    glPopMatrix();
 
     if (mi->fps_p) do_fps (mi);
     glFinish();

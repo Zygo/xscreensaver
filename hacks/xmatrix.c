@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999, 2001 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -54,6 +54,7 @@
 #endif
 
 #include "screenhack.h"
+#include "textclient.h"
 #include "xpm-pixmap.h"
 #include <stdio.h>
 #include <sys/wait.h>
@@ -62,6 +63,10 @@
 # define HAVE_XPM
 #else
 # define DO_XBM     /* only do mono bitmaps under real X11 */
+#endif
+
+#ifndef HAVE_COCOA
+# include <X11/Intrinsic.h>
 #endif
 
 #if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM)
@@ -77,21 +82,6 @@
 # include "images/matrix1b.xbm"
 # include "images/matrix2b.xbm"
 #endif /* DO_XBM */
-
-#ifndef HAVE_COCOA
-# include <X11/Xatom.h>
-# include <X11/Intrinsic.h>
-#endif
-
-#ifdef HAVE_FORKPTY
-# include <sys/ioctl.h>
-# ifdef HAVE_PTY_H
-#  include <pty.h>
-# endif
-# ifdef HAVE_UTIL_H
-#  include <util.h>
-# endif
-#endif /* HAVE_FORKPTY */
 
 #define CHAR_COLS 16
 #define CHAR_ROWS 13
@@ -201,13 +191,8 @@ typedef struct {
   m_mode mode;
   m_mode def_mode; /* Mode to return to after trace etc. */
 
-  pid_t pid;
-  FILE *pipe;
-  XtInputId pipe_id;
-  Bool input_available_p;
-  Time subproc_relaunch_delay;
+  text_data *tc;
   char buf [BUF_SIZE*2+1]; /* ring buffer */
-
   Bool do_fill_buff;
   int buf_done;
   int buf_pos;
@@ -331,52 +316,13 @@ flip_images (m_state *state, Bool flipped_p)
     }
 }
 
-static void
-subproc_cb (XtPointer closure, int *source, XtInputId *id)
-{
-  m_state *state = (m_state *) closure;
-  state->input_available_p = True;
-}
-
-static void
-launch_text_generator (m_state *state)
-{
-  XtAppContext app = XtDisplayToApplicationContext (state->dpy);
-  char *oprogram = get_string_resource (state->dpy, "program", "Program");
-  char *program = (char *) malloc (strlen (oprogram) + 10);
-  strcpy (program, "( ");
-  strcat (program, oprogram);
-  strcat (program, " ) 2>&1");
-
-  if ((state->pipe = popen (program, "r")))
-    {
-      state->pipe_id =
-        XtAppAddInput (app, fileno (state->pipe),
-                       (XtPointer) (XtInputReadMask | XtInputExceptMask),
-                       subproc_cb, (XtPointer) state);
-    }
-  else
-    {
-      perror (program);
-    }
-}
-
-
-static void
-relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
-{
-  m_state *state = (m_state *) closure;
-  launch_text_generator (state);
-}
 
 /* When the subprocess has generated some output, this reads as much as it
    can into s->buf at s->buf_tail.
  */
-
 static void
 fill_input (m_state *s)
 {
-  XtAppContext app = XtDisplayToApplicationContext (s->dpy);
   int n = 0;
   int loadBytes;
   if(s->buf_done > s->buf_pos){
@@ -385,14 +331,14 @@ fill_input (m_state *s)
   else{
     loadBytes = ((BUF_SIZE - s->buf_pos) + s->buf_done) - 1;
   }
-  if (! s->pipe) return;
-  if (! s->input_available_p) return;
-  s->input_available_p = False;
+
+  if (!s->tc)
+    return;
 
   if (loadBytes > 0){
-  n = read (fileno (s->pipe),
-            (void *) (s->buf+s->buf_pos),
-            loadBytes);
+    char c = textclient_getc (s->tc);
+    n = (c > 0 ? 1 : -1);
+    s->buf [s->buf_pos] = c;
   }
   if (n > 0)
     {
@@ -410,18 +356,8 @@ fill_input (m_state *s)
       /* Couldn't read anything from the buffer */
       /* Assume EOF has been reached, so start again */
       s->do_fill_buff = True;
-      XtRemoveInput (s->pipe_id);
-      s->pipe_id = 0;
-      pclose (s->pipe);
-      s->pipe = 0;
-
-      /* Set up a timer to re-launch the subproc in a bit. */
-      XtAppAddTimeOut (app, s->subproc_relaunch_delay,
-                       relaunch_generator_timer,
-                       (XtPointer) s);
     }
 }
-
 
 
 static void cursor_on_timer (XtPointer closure, XtIntervalId *id);
@@ -815,7 +751,7 @@ xmatrix_init (Display *dpy, Window window)
       set_mode (state, ASCII);
       state->def_mode = ASCII;
       state->use_pipe_p = True;
-      launch_text_generator (state);
+      state->tc = textclient_open (dpy);
     }
   else if (!mode || !*mode || !strcasecmp(mode, "matrix"))
     set_mode (state, MATRIX);
@@ -1768,6 +1704,12 @@ xmatrix_reshape (Display *dpy, Window window, void *closure,
       free (state->feeders);
       state->feeders = nfeeders;
     }
+  if (state->tc)
+    textclient_reshape (state->tc,
+                        state->xgwa.width,
+                        state->xgwa.height,
+                        state->grid_width  - 2,
+                        state->grid_height - 1);
 }
 
 static Bool
@@ -1848,7 +1790,8 @@ static void
 xmatrix_free (Display *dpy, Window window, void *closure)
 {
   m_state *state = (m_state *) closure;
-
+  if (state->tc)
+    textclient_close (state->tc);
   if (state->cursor_timer)
     XtRemoveTimeOut (state->cursor_timer);
 
@@ -1871,6 +1814,7 @@ static const char *xmatrix_defaults [] = {
   "*trace:		   True",
   "*knockKnock:		   True",
   "*usePipe:		   False",
+  "*usePty:                False",
   "*program:		   xscreensaver-text",
   "*geometry:		   800x600",
   0

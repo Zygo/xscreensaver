@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="rubikblocks" _label="RubikBlocks">
+<screensaver name="rubikblocks" _label="RubikBlocks" gl="yes">
 
   <command arg="-root"/>
 
@@ -56,7 +56,7 @@
 Animates the Rubik's Mirror Blocks puzzle.
 See also the "Rubik", "Cube21", and "GLSnake" screen savers.
 
-http://en.wikipedia.org/wiki/Combination_puzzles#Irregular_Cuboids
+http://en.wikipedia.org/wiki/Combination_puzzles#Irregular_cuboids
 
 Written by Vasek Potocek; 2009.
   </_description>

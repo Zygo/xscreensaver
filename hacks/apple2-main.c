@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2011 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -24,26 +24,9 @@
 # include <unistd.h>
 #endif
 
-#ifndef HAVE_COCOA
-# define XK_MISCELLANY
-# include <X11/keysymdef.h>
-# include <X11/Xlib.h>
-# include <X11/Xutil.h>
-# include <X11/Intrinsic.h>
-#endif
-
-#ifdef HAVE_FORKPTY
-# include <sys/ioctl.h>
-# ifdef HAVE_PTY_H
-#  include <pty.h>
-# endif
-# ifdef HAVE_UTIL_H
-#  include <util.h>
-# endif
-#endif /* HAVE_FORKPTY */
-
 #include "screenhack.h"
 #include "apple2.h"
+#include "textclient.h"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -52,8 +35,6 @@
 #define SCREEN_ROWS 24
 
 #define DEBUG
-
-static Time subproc_relaunch_delay = 3000;
 
 
 /* Given a bitmask, returns the position and width of the field.
@@ -795,16 +776,10 @@ static void slideshow_controller(apple2_sim_t *sim, int *stepno,
 
 struct terminal_controller_data {
   Display *dpy;
-  FILE *pipe;
-  XtInputId pipe_id;
-  pid_t pid;
-  int input_available_p;
-  XtIntervalId timeout_id;
   char curword[256];
   unsigned char lastc;
-  int fake_nl;
   double last_emit_time;
-  XComposeStatus compose;
+  text_data *tc;
 
   int escstate;
   int csiparam[NPAR];
@@ -819,19 +794,10 @@ struct terminal_controller_data {
     } bf;
     int w;
   } termattrib;
-  Bool meta_sends_esc_p;
-  Bool swap_bs_del_p;
   Bool fast_p;
 
 };
 
-static void
-subproc_cb (XtPointer closure, int *source, XtInputId *id)
-{
-  struct terminal_controller_data *mine =
-    (struct terminal_controller_data *) closure;
-  mine->input_available_p = True;
-}
 
 /* The structure of closure linkage throughout this code is so amazingly
    baroque that I can't get to the 'struct state' from where I need it. */
@@ -840,197 +806,30 @@ static Bool global_fast_p;
 
 
 static void
-launch_text_generator (struct terminal_controller_data *mine)
-{
-  XtAppContext app = XtDisplayToApplicationContext (mine->dpy);
-  char buf[255];
-  char *oprogram = strdup (global_program);
-  char *program = (char *) malloc (strlen (oprogram) + 10);
-
-  strcpy (program, "( ");
-  strcat (program, oprogram);
-  strcat (program, " ) 2>&1");
-
-  if (mine->pipe) abort();
-
-# ifdef HAVE_FORKPTY
-  if (get_boolean_resource (mine->dpy, "usePty", "Boolean"))
-    {
-      int fd;
-      struct winsize ws;
-
-      ws.ws_col = SCREEN_COLS;
-      ws.ws_row = SCREEN_ROWS;
-      ws.ws_xpixel = ws.ws_col * 6;
-      ws.ws_ypixel = ws.ws_row * 8;
-      
-      mine->pipe = NULL;
-      if((mine->pid = forkpty(&fd, NULL, NULL, &ws)) < 0)
-	{
-          /* Unable to fork */
-          sprintf (buf, "%.100s: forkpty", progname);
-	  perror(buf);
-	}
-      else if(!mine->pid)
-	{
-          /* This is the child fork. */
-          char *av[10];
-          int i = 0;
-	  if (putenv("TERM=vt100"))
-            abort();
-          av[i++] = "/bin/sh";
-          av[i++] = "-c";
-          av[i++] = oprogram;
-          av[i] = 0;
-          execvp (av[0], av);
-          sprintf (buf, "%.100s: %.100s", progname, oprogram);
-	  perror(buf);
-	  exit(1);
-	}
-      else
-	{
-          /* This is the parent fork. */
-	  mine->pipe = fdopen(fd, "r+");
-	  mine->pipe_id =
-	    XtAppAddInput (app, fileno (mine->pipe),
-			   (XtPointer) (XtInputReadMask | XtInputExceptMask),
-			   subproc_cb, (XtPointer) mine);
-	}
-    }
-  else
-# endif /* HAVE_FORKPTY */
-
-  if ((mine->pipe = popen (program, "r")))
-    {
-      if (mine->pipe_id) abort();
-      mine->pipe_id =
-        XtAppAddInput (app, fileno (mine->pipe),
-                       (XtPointer) (XtInputReadMask | XtInputExceptMask),
-                       subproc_cb, (XtPointer) mine);
-    }
-  else
-    {
-      sprintf (buf, "%.100s: %.100s", progname, program);
-      perror(buf);
-    }
-
-  free(oprogram);
-  free(program);
-}
-
-static void
-relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
-{
-  struct terminal_controller_data *mine =
-    (struct terminal_controller_data *) closure;
-  mine->timeout_id=0;
-  launch_text_generator (mine);
-}
-
-static void
 terminal_closegen(struct terminal_controller_data *mine)
 {
-  if (mine->pipe_id) {
-    XtRemoveInput (mine->pipe_id);
-    mine->pipe_id = 0;
-  }
-  if (mine->pipe) {
-    pclose (mine->pipe);
-    mine->pipe = 0;
-  }
-  if (mine->timeout_id) {
-    XtRemoveTimeOut(mine->timeout_id);
-    mine->timeout_id=0;
+  if (mine->tc) {
+    textclient_close (mine->tc);
+    mine->tc = 0;
   }
 }
 
 static int
 terminal_read(struct terminal_controller_data *mine, unsigned char *buf, int n)
 {
-  XtAppContext app = XtDisplayToApplicationContext (mine->dpy);
-  int rc;
-  if (mine->fake_nl) {
-    buf[0]='\n';
-    mine->fake_nl=0;
-    return 1;
-  }
-
-  if (!mine || 
-      !mine->input_available_p ||
-      !mine->pipe)
+  if (!mine || !mine->tc) {
     return 0;
-
-  rc=read (fileno (mine->pipe), (void *) buf, n);
-  if (rc>0) mine->lastc=buf[rc-1];
-
-  if (rc<=0)
-    {
-      terminal_closegen(mine);
-
-      if (mine->lastc != '\n') { /* add a newline at eof if there wasn't one */
-        mine->fake_nl=1;
-      }
-
-      /* Set up a timer to re-launch the subproc in a bit. */
-      mine->timeout_id =
-        XtAppAddTimeOut(app, subproc_relaunch_delay,
-                        relaunch_generator_timer,
-                        (XtPointer) mine);
+  } else {
+    int i, count = 0;
+    for (i = 0; i < n; i++) {
+      int c = textclient_getc (mine->tc);
+      if (c <= 0) break;
+      buf[i] = c;
+      mine->lastc = c;
+      count++;
     }
-
-  mine->input_available_p = False;
-
-  return rc;
-}
-
-
-/* The interpretation of the ModN modifiers is dependent on what keys
-   are bound to them: Mod1 does not necessarily mean "meta".  It only
-   means "meta" if Meta_L or Meta_R are bound to it.  If Meta_L is on
-   Mod5, then Mod5 is the one that means Meta.  Oh, and Meta and Alt
-   aren't necessarily the same thing.  Icepicks in my forehead!
- */
-static unsigned int
-do_icccm_meta_key_stupidity (Display *dpy)
-{
-  unsigned int modbits = 0;
-# ifndef HAVE_COCOA
-  int i, j, k;
-  XModifierKeymap *modmap = XGetModifierMapping (dpy);
-  for (i = 3; i < 8; i++)
-    for (j = 0; j < modmap->max_keypermod; j++)
-      {
-        int code = modmap->modifiermap[i * modmap->max_keypermod + j];
-        KeySym *syms;
-        int nsyms = 0;
-        if (code == 0) continue;
-        syms = XGetKeyboardMapping (dpy, code, 1, &nsyms);
-        for (k = 0; k < nsyms; k++)
-          if (syms[k] == XK_Meta_L || syms[k] == XK_Meta_R ||
-              syms[k] == XK_Alt_L  || syms[k] == XK_Alt_R)
-            modbits |= (1 << i);
-        XFree (syms);
-      }
-  XFreeModifiermap (modmap);
-# endif /* HAVE_COCOA */
-  return modbits;
-}
-
-/* Returns a mask of the bit or bits of a KeyPress event that mean "meta". 
- */
-static unsigned int
-meta_modifier (Display *dpy)
-{
-  static Bool done_once = False;
-  static unsigned int mask = 0;
-  if (!done_once)
-    {
-      /* Really, we are supposed to recompute this if a KeymapNotify
-         event comes in, but fuck it. */
-      done_once = True;
-      mask = do_icccm_meta_key_stupidity (dpy);
-    }
-  return mask;
+    return count;
+  }
 }
 
 
@@ -1039,31 +838,9 @@ terminal_keypress_handler (Display *dpy, XEvent *event, void *data)
 {
   struct terminal_controller_data *mine =
     (struct terminal_controller_data *) data;
-  KeySym keysym;
-  unsigned char c = 0;
-  XLookupString (&event->xkey, (char *) &c, 1, &keysym, &mine->compose);
-  if (c == 0 || !mine->pipe)
-    return 0;
-
-  if (!mine->swap_bs_del_p) ;
-  else if (c == 127) c = 8;
-  else if (c == 8)   c = 127;
-
-  /* If meta was held down, send ESC, or turn on the high bit. */
-  if (event->xkey.state & meta_modifier (dpy))
-    {
-      if (mine->meta_sends_esc_p)
-        fputc ('\033', mine->pipe);
-      else
-        c |= 0x80;
-    }
-
-  fputc (c, mine->pipe);
-  fflush (mine->pipe);
-
-  event->xany.type = 0;  /* do not process this event further */
-
   mine->dpy = dpy;
+  if (event->xany.type == KeyPress && mine->tc)
+    return textclient_putc (mine->tc, &event->xkey);
   return 0;
 }
 
@@ -1480,10 +1257,6 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
   mine=(struct terminal_controller_data *) sim->controller_data;
   mine->dpy = sim->dpy;
 
-  mine->meta_sends_esc_p = get_boolean_resource (mine->dpy, "metaSendsESC",
-                                                 "Boolean");
-  mine->swap_bs_del_p    = get_boolean_resource (mine->dpy, "swapBSDEL", 
-                                                 "Boolean");
   mine->fast_p           = global_fast_p;
 
   switch(*stepno) {
@@ -1498,8 +1271,12 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
     a2_goto(st,2,0);
     mine->cursor_y = 2;
 
-    if (! mine->pipe)
-      launch_text_generator(mine);
+    if (! mine->tc) {
+      mine->tc = textclient_open (mine->dpy);
+      textclient_reshape (mine->tc,
+                          SCREEN_COLS, SCREEN_ROWS,
+                          SCREEN_COLS, SCREEN_ROWS);
+    }
 
     if (! mine->fast_p)
       *next_actiontime += 4.0;
@@ -1526,7 +1303,7 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
       for (i=0; i<nr; i++) {
         c=buf[i];
 
-        if (mine->pid)
+        if (mine->tc)
           a2_vt100_printc (sim, mine, c);
         else
           a2_ascii_printc (st, c, False, False, False, True);

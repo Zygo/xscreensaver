@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,16 +16,13 @@
 
 #include "screenhack.h"
 #include "xpm-pixmap.h"
-#include <stdio.h>
+#include "textclient.h"
 
 #ifdef HAVE_COCOA
 # define HAVE_XPM
 #endif
 
-extern FILE *popen (const char *, const char *);
-extern int pclose (FILE *);
-
-#define font_height(font)	  	(font->ascent + font->descent)
+#define font_height(font) (font->ascent + font->descent)
 
 
 struct state {
@@ -33,7 +30,6 @@ struct state {
   Window window;
   int Width, Height;
   GC fg_gc, bg_gc, text_fg_gc, text_bg_gc;
-  char *words;
   int x, y;
   XFontStruct *font;
 
@@ -41,7 +37,8 @@ struct state {
   Pixmap left1, left2, right1, right2;
   Pixmap left_front, right_front, front, down;
 
-  char *program, *orig_program;
+  char *program;
+  text_data *tc;
 
   int state;	/* indicates states: walking or getting passwd */
   int first_time;
@@ -60,10 +57,11 @@ struct state {
     int x, y, width, height;
   } s_rect;
 
-  char word_buf[BUFSIZ];
+  char words[10240];
+  int lines;
 };
 
-static char *get_words (struct state *);
+static void fill_words (struct state *);
 static void walk (struct state *, int dir);
 static void talk (struct state *, int erase);
 static void talk_1 (struct state *);
@@ -326,18 +324,11 @@ think (struct state *st)
     if (random() & 1)
 	walk(st, FRONT);
     if (random() & 1)
-    {
-      st->words = get_words(st);
       return 1;
-    }
     return 0;
 }
 
-#define MAXLINES 25
-
-#undef BUFSIZ
-#define BUFSIZ ((MAXLINES + 1) * 100)
-
+#define MAXLINES 10
 
 static void
 talk (struct state *st, int force_erase)
@@ -348,8 +339,7 @@ talk (struct state *st, int force_erase)
                     total = 0;
     register char  *p,
                    *p2;
-    char            buf[BUFSIZ],
-                    args[MAXLINES][256];
+    char            args[MAXLINES][256];
 
     /* clear what we've written */
     if (st->talking || force_erase)
@@ -373,7 +363,7 @@ talk (struct state *st, int force_erase)
     }
     st->talking = 1;
     walk(st, FRONT);
-    p = strcpy(buf, st->words);
+    p = st->words;
 
     for (p2 = p; *p2; p2++)
       if (*p2 == '\t') *p2 = ' ';
@@ -450,6 +440,8 @@ talk (struct state *st, int force_erase)
     st->interval = (total / 15) * 1000;
     if (st->interval < 2000) st->interval = 2000;
     st->next_fn = talk_1;
+    *st->words = 0;
+    st->lines = 0;
 }
 
 static void
@@ -485,74 +477,21 @@ look (struct state *st)
 
 
 static void
-init_words (struct state *st)
+fill_words (struct state *st)
 {
-  st->program = get_string_resource (st->dpy, "program", "Program");
-
-  if (st->program)	/* get stderr on stdout, so it shows up on the window */
+  char *p = st->words + strlen(st->words);
+  while (p < st->words + sizeof(st->words) - 1 &&
+         st->lines < MAXLINES)
     {
-      st->orig_program = st->program;
-      st->program = (char *) malloc (strlen (st->program) + 10);
-      strcpy (st->program, "( ");
-      strcat (st->program, st->orig_program);
-      strcat (st->program, " ) 2>&1");
+      char c = textclient_getc (st->tc);
+      if (c == '\n')
+        st->lines++;
+      if (c > 0)
+        *p++ = c;
+      else
+        break;
     }
-
-  st->words = get_words(st);	
-}
-
-static char *
-get_words (struct state *st)
-{
-    FILE           *pp;
-    register char  *p = st->word_buf;
-
-    st->word_buf[0] = '\0';
-
-	if ((pp = popen(st->program, "r")))
-	{
-	    while (fgets(p, sizeof(st->word_buf) - strlen(st->word_buf), pp))
-	    {
-		if (strlen(st->word_buf) + 1 < sizeof(st->word_buf))
-		    p = st->word_buf + strlen(st->word_buf);
-		else
-		    break;
-	    }
-	    (void) pclose(pp);
-	    if (! st->word_buf[0])
-	      sprintf (st->word_buf, "\"%s\" produced no output!", st->orig_program);
-	    else if (!st->first_time &&
-		     (strstr (st->word_buf, ": not found") ||
-		      strstr (st->word_buf, ": Not found") ||
-                      strstr (st->word_buf, ": command not found") ||
-                      strstr (st->word_buf, ": Command not found")))
-	      switch (random () % 20)
-		{
-		case 1: strcat (st->word_buf, "( Get with the st->program, bub. )\n");
-		  break;
-		case 2: strcat (st->word_buf,
-		  "( I blow my nose at you, you silly person! ) \n"); break;
-		case 3: strcat (st->word_buf,
-		  "\nThe resource you want to\nset is `noseguy.program'\n");
-		  break;
-		case 4:
-		  strcat(st->word_buf,"\nHelp!!  Help!!\nAAAAAAGGGGHHH!!  \n\n"); break;
-		case 5: strcpy (st->word_buf, "You have new mail.\n"); break;
-		case 6:
-		  strcat(st->word_buf,"( Hello?  Are you paying attention? )\n");break;
-		case 7:
-		  strcat (st->word_buf, "sh: what kind of fool do you take me for? \n");
-		  break;
-		}
-	    st->first_time = 0;
-	    p = st->word_buf;
-	}
-	else
-	{
-	    perror(st->program);
-	}
-
-    return p;
+  *p = 0;
 }
 
 
@@ -562,8 +501,9 @@ static const char *noseguy_defaults [] = {
   ".foreground:	    #CCCCCC",
   "*textForeground: black",
   "*textBackground: #CCCCCC",
-  "*fpsSolid:	true",
+  "*fpsSolid:	 true",
   "*program:	 xscreensaver-text --cols 40 | head -n15",
+  "*usePty:      False",
   ".font:	 -*-new century schoolbook-*-r-*-*-*-180-*-*-*-*-*-*",
   0
 };
@@ -596,7 +536,8 @@ noseguy_init (Display *d, Window w)
   st->Height = xgwa.height + 2;
   cmap = xgwa.colormap;
 
-  init_words(st);
+  st->program = get_string_resource (st->dpy, "program", "Program");
+  st->tc = textclient_open (st->dpy);
   init_images(st);
 
   if (!fontname || !*fontname)
@@ -650,6 +591,7 @@ static unsigned long
 noseguy_draw (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  fill_words(st);
   st->next_fn(st);
   return (st->interval * 1000);
 }
@@ -669,6 +611,9 @@ noseguy_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 noseguy_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  textclient_close (st->tc);
+  free (st);
 }
 
 XSCREENSAVER_MODULE ("NoseGuy", noseguy)

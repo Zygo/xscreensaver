@@ -580,8 +580,12 @@ typedef struct {
   Object       *objects;
   struct patternindex patternindex;
 
+# ifdef HAVE_GLBITMAP
   XFontStruct *mode_font;
   GLuint font_dlist;
+# else
+  texture_font_data *font_data;
+# endif
 } jugglestruct;
 
 static jugglestruct *juggles = (jugglestruct *) NULL;
@@ -658,10 +662,12 @@ free_juggle(jugglestruct *sp) {
 	free(sp->pattern);
 	sp->pattern = NULL;
   }
+# ifdef HAVE_GLBITMAP
   if (sp->mode_font!=None) {
 	XFreeFontInfo(NULL,sp->mode_font,1);
 	sp->mode_font = None;
   }
+# endif /* HAVE_GLBITMAP */
 }
 
 static Bool
@@ -2665,7 +2671,11 @@ init_juggle (ModeInfo * mi)
 
   sp->glx_context = init_GL(mi);
 
+# ifdef HAVE_GLBITMAP
   load_font (mi->dpy, "titleFont",  &sp->mode_font, &sp->font_dlist);
+# else /* !HAVE_GLBITMAP */
+  sp->font_data = load_texture_font (mi->dpy, "titleFont");
+# endif /* !HAVE_GLBITMAP */
 
   reshape_juggle (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
@@ -2909,6 +2919,7 @@ draw_juggle (ModeInfo *mi)
                  (z - 0.5) * 15);
 
     gltrackball_rotate (sp->trackball);
+    glRotatef(current_device_rotation(), 0, 0, 1);
 
     get_rotation (sp->rot, &x, &y, &z, !sp->button_down_p);
 
@@ -3051,12 +3062,15 @@ draw_juggle (ModeInfo *mi)
 	}
   }
 
-  if(sp->mode_font != None) {
-    print_gl_string (mi->dpy, sp->mode_font, sp->font_dlist,
-                     mi->xgwa.width, mi->xgwa.height,
-                     10, mi->xgwa.height - 10,
-                     sp->pattern, False);
-  }
+  print_gl_string (mi->dpy, 
+# ifdef HAVE_GLBITMAP
+                   sp->mode_font, sp->font_dlist,
+# else /* !HAVE_GLBITMAP */
+                   sp->font_data,
+# endif /* !HAVE_GLBITMAP */
+                   mi->xgwa.width, mi->xgwa.height,
+                   10, mi->xgwa.height - 10,
+                   sp->pattern, False);
 
 #ifdef MEMTEST
   if((int)(sp->time/10) % 1000 == 0)

@@ -309,6 +309,8 @@ static void drawMovingPiece(ModeInfo *mi, Chesscreen *cs, int shadow)
 {
   int piece = cs->mpiece % PIECES;
 
+  if (piece == NONE) return;
+
   glPushMatrix();
 
   if(shadow) glColor4fv(MaterialShadow);
@@ -632,11 +634,15 @@ static void display(ModeInfo *mi, Chesscreen *cs)
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   /** setup perspectiv */
   glTranslatef(0.0, 0.0, -1.5*BOARDSIZE);
   glRotatef(30.0, 1.0, 0.0, 0.0);
+  glRotatef(-current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (cs->trackball);
+  glRotatef(current_device_rotation(), 0, 0, 1);
+
   glRotatef(cs->theta*100, 0.0, 1.0, 0.0);
   glTranslatef(-0.5*BOARDSIZE, 0.0, -0.5*BOARDSIZE);
 

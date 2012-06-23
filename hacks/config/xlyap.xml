@@ -39,7 +39,7 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-This generates pretty fractal pictures via the Lyapunov exponent.
+The Lyapunov exponent makes pretty fractal pictures.
 
 http://en.wikipedia.org/wiki/Lyapunov_exponent
 

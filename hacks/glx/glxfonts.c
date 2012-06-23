@@ -1,4 +1,4 @@
-/* glxfonts, Copyright (c) 2001-2011 Jamie Zawinski <jwz@jwz.org>
+/* glxfonts, Copyright (c) 2001-2012 Jamie Zawinski <jwz@jwz.org>
  * Loads X11 fonts for use with OpenGL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -8,6 +8,11 @@
  * documentation.  No representations are made about the suitability of this
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
+ *
+ * Draws 2D text over the GL scene, e.g., the FPS displays.
+ *
+ * There are two implementations here: one using glBitmap (the OpenGL 1.1 way)
+ * and one using textures via texfont.c (since OpenGLES doesn't have glBitmap).
  */
 
 #ifdef HAVE_CONFIG_H
@@ -21,16 +26,24 @@
 
 #ifdef HAVE_COCOA
 # include "jwxyz.h"
-# include <OpenGL/gl.h>
-# include <OpenGL/glu.h>
-# include <AGL/agl.h>
+/*# include <AGL/agl.h>*/
 #else
 # include <GL/glx.h>
 # include <GL/glu.h>
 #endif
 
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
+
 #include "resources.h"
 #include "glxfonts.h"
+#include "fps.h"
+
+#ifndef HAVE_GLBITMAP
+# include "texfont.h"
+#endif /* HAVE_GLBITMAP */
+
 
 /* These are in xlock-gl.c */
 extern void clear_gl_error (void);
@@ -45,6 +58,38 @@ extern char *progname;
                  it might result in a round-trip, and stall of the pipeline.)
                */
 
+
+/* Width (and optionally height) of the string in pixels.
+ */
+int
+string_width (XFontStruct *f, const char *c, int *height_ret)
+{
+  int x = 0;
+  int max_w = 0;
+  int h = f->ascent + f->descent;
+  while (*c)
+    {
+      int cc = *((unsigned char *) c);
+      if (*c == '\n')
+        {
+          if (x > max_w) max_w = x;
+          x = 0;
+          h += f->ascent + f->descent;
+        }
+      else
+        x += (f->per_char
+              ? f->per_char[cc-f->min_char_or_byte2].width
+              : f->min_bounds.rbearing);
+      c++;
+    }
+  if (x > max_w) max_w = x;
+  if (height_ret) *height_ret = h;
+
+  return max_w;
+}
+
+
+#ifdef HAVE_GLBITMAP
 
 /* Mostly lifted from the Mesa implementation of glXUseXFont(), since
    Mac OS 10.6 no longer supports aglUseFont() which was their analog
@@ -330,35 +375,7 @@ load_font (Display *dpy, char *res, XFontStruct **font_ret, GLuint *dlist_ret)
     *font_ret = f;
 }
 
-
-/* Width (and optionally height) of the string in pixels.
- */
-int
-string_width (XFontStruct *f, const char *c, int *height_ret)
-{
-  int x = 0;
-  int max_w = 0;
-  int h = f->ascent + f->descent;
-  while (*c)
-    {
-      int cc = *((unsigned char *) c);
-      if (*c == '\n')
-        {
-          if (x > max_w) max_w = x;
-          x = 0;
-          h += f->ascent + f->descent;
-        }
-      else
-        x += (f->per_char
-              ? f->per_char[cc-f->min_char_or_byte2].width
-              : f->min_bounds.rbearing);
-      c++;
-    }
-  if (x > max_w) max_w = x;
-  if (height_ret) *height_ret = h;
-
-  return max_w;
-}
+#endif /* HAVE_GLBITMAP */
 
 
 /* Draws the string on the window at the given pixel position.
@@ -368,20 +385,36 @@ string_width (XFontStruct *f, const char *c, int *height_ret)
  */
 void
 print_gl_string (Display *dpy,
-                 XFontStruct *font,
-                 GLuint font_dlist,
+# ifdef HAVE_GLBITMAP
+                 XFontStruct *font, GLuint font_dlist,
+# else
+                 texture_font_data *font_data,
+# endif
                  int window_width, int window_height,
                  GLfloat x, GLfloat y,
                  const char *string,
                  Bool clear_background_p)
 {
+
+  /* If window_width was specified, we're drawing ortho in pixel coordinates.
+     Otherwise, we're just dropping the text at the current position in the
+     scene, billboarded. */
+  Bool in_scene_p = (window_width == 0);
+
+# ifdef HAVE_GLBITMAP
   GLfloat line_height = font->ascent + font->descent;
-  GLfloat sub_shift = (line_height * 0.3);
   int cw = string_width (font, "m", 0);
+# else /* !HAVE_GLBITMAP */
+  int line_height = 0;
+  int cw = texture_string_width (font_data, "m", &line_height);
+# endif /* !HAVE_GLBITMAP */
+
+  GLfloat sub_shift = (line_height * 0.3);
   int tabs = cw * 7;
+  int lines = 0;
+  const char *c;
 
-  y -= line_height;
-
+# ifdef HAVE_GLBITMAP
   /* Sadly, this causes a stall of the graphics pipeline (as would the
      equivalent calls to glGet*.)  But there's no way around this, short
      of having each caller set up the specific display matrix we need
@@ -392,19 +425,53 @@ print_gl_string (Display *dpy,
                 GL_ENABLE_BIT |     /* for various glDisable calls */
                 GL_CURRENT_BIT |    /* for glColor3f() */
                 GL_LIST_BIT);       /* for glListBase() */
-  {
-# ifdef DEBUG
+#  ifdef DEBUG
     check_gl_error ("glPushAttrib");
-# endif
+#  endif
+# else /* !HAVE_GLBITMAP */
+    Bool tex_p   = glIsEnabled (GL_TEXTURE_2D);
+    Bool texs_p  = glIsEnabled (GL_TEXTURE_GEN_S);
+    Bool text_p  = glIsEnabled (GL_TEXTURE_GEN_T);
+    Bool light_p = glIsEnabled (GL_LIGHTING);
+    Bool blend_p = glIsEnabled (GL_BLEND);
+    Bool depth_p = glIsEnabled (GL_DEPTH_TEST);
+    Bool cull_p  = glIsEnabled (GL_CULL_FACE);
+    Bool fog_p   = glIsEnabled (GL_FOG);
+    GLint oblend;
+#  ifndef HAVE_JWZGLES
+    GLint opoly[2];
+    glGetIntegerv (GL_POLYGON_MODE, opoly);
+#  endif
+    glGetIntegerv (GL_BLEND_DST, &oblend);
+# endif /* !HAVE_GLBITMAP */
+
+  for (c = string; *c; c++)
+    if (*c == '\n') lines++;
+
+  y -= line_height;
+
+  {
 
     /* disable lighting and texturing when drawing bitmaps!
        (glPopAttrib() restores these.)
      */
+# ifdef HAVE_GLBITMAP
     glDisable (GL_TEXTURE_2D);
+# else /* !HAVE_GLBITMAP */
+    glEnable (GL_TEXTURE_2D);
+    glDisable (GL_TEXTURE_GEN_S);
+    glDisable (GL_TEXTURE_GEN_T);
+    glPolygonMode (GL_FRONT, GL_FILL);
+    glEnable (GL_BLEND);
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+# endif /* !HAVE_GLBITMAP */
+
     glDisable (GL_LIGHTING);
-    glDisable (GL_BLEND);
-    glDisable (GL_DEPTH_TEST);
+
+      if (!in_scene_p)
+        glDisable (GL_DEPTH_TEST);
     glDisable (GL_CULL_FACE);
+    glDisable (GL_FOG);
 
     /* glPopAttrib() does not restore matrix changes, so we must
        push/pop the matrix stacks to be non-intrusive there.
@@ -415,7 +482,8 @@ print_gl_string (Display *dpy,
 # ifdef DEBUG
       check_gl_error ("glPushMatrix");
 # endif
-      glLoadIdentity();
+      if (!in_scene_p)
+        glLoadIdentity();
 
       /* Each matrix mode has its own stack, so we need to push/pop
          them separately. */
@@ -430,34 +498,71 @@ print_gl_string (Display *dpy,
         check_gl_error ("glPushMatrix");
 # endif
 
-        glLoadIdentity();
-        gluOrtho2D (0, window_width, 0, window_height);
+        if (!in_scene_p)
+          {
+            double rot = current_device_rotation();
+
+            glLoadIdentity();
+            glOrtho (0, window_width, 0, window_height, -1, 1);
+
+            if (rot > 135 || rot < -135)
+              {
+                glTranslatef (window_width, window_height, 0);
+                glRotatef (180, 0, 0, 1);
+              }
+            else if (rot > 45)
+              {
+                glTranslatef (window_width, 0, 0);
+                glRotatef (90, 0, 0, 1);
+                y -= (window_height - window_width);
+                if (y < line_height * lines + 10)
+                  y = line_height * lines + 10;
+              }
+            else if (rot < -45)
+              {
+                glTranslatef(0, window_height, 0);
+                glRotatef (-90, 0, 0, 1);
+                y -= (window_height - window_width);
+                if (y < line_height * lines + 10)
+                  y = line_height * lines + 10;
+              }
+          }
 # ifdef DEBUG
-        check_gl_error ("gluOrtho2D");
+        check_gl_error ("glOrtho");
 # endif
 
         if (clear_background_p)
           {
             int w, h;
-            int lh = font->ascent + font->descent;
-            w = string_width (font, string, &h);
             glColor3f (0, 0, 0);
+# ifdef HAVE_GLBITMAP
+            w = string_width (font, string, &h);
             glRecti (x - font->descent,
-                     y + lh, 
+                     y + line_height, 
                      x + w + 2*font->descent,
-                     y + lh - h - font->descent);
+                     y + line_height - h - font->descent);
+# else /* !HAVE_GLBITMAP */
+            {
+              int descent = line_height * 0.2;
+              if (descent < 2) descent = 2;
+              w = texture_string_width (font_data, string, &h);
+              glRecti (x - descent,
+                       y + line_height, 
+                       x + w + 2*descent,
+                       y + line_height - h - descent);
+            }
+# endif /* !HAVE_GLBITMAP */
             glColor3f (1, 1, 1);
           }
 
         /* draw the text */
-        glRasterPos2f (x, y);
-/*        glListBase (font_dlist);*/
+
         for (i = 0; i < strlen(string); i++)
           {
             unsigned char c = (unsigned char) string[i];
             if (c == '\n')
               {
-                glRasterPos2f (x, (y -= line_height));
+                y -= line_height;
                 x2 = x;
               }
             else if (c == '\t')
@@ -465,25 +570,37 @@ print_gl_string (Display *dpy,
                 x2 -= x;
                 x2 = ((x2 + tabs) / tabs) * tabs;  /* tab to tab stop */
                 x2 += x;
-                glRasterPos2f (x2, y);
               }
             else if (c == '[' && (isdigit (string[i+1])))
               {
                 sub_p = True;
-                glRasterPos2f (x2, (y -= sub_shift));
+                y -= sub_shift;
               }
             else if (c == ']' && sub_p)
               {
                 sub_p = False;
-                glRasterPos2f (x2, (y += sub_shift));
+                y += sub_shift;
               }
             else
               {
-/*            glCallLists (s - string, GL_UNSIGNED_BYTE, string);*/
+# ifdef HAVE_GLBITMAP
+                glRasterPos2f (x2, y);
                 glCallList (font_dlist + (int)(c));
                 x2 += (font->per_char
                        ? font->per_char[c - font->min_char_or_byte2].width
                        : font->min_bounds.width);
+# else /* !HAVE_GLBITMAP */
+                glPushMatrix();
+                glTranslatef (x2, y, 0);
+                {
+                  char s[2];
+                  s[0] = c;
+                  s[1] = 0;
+                  print_texture_string (font_data, s);
+                  x2 += texture_string_width (font_data, s, 0);
+                }
+                glPopMatrix();
+# endif /* !HAVE_GLBITMAP */
               }
           }
 # ifdef DEBUG
@@ -495,10 +612,25 @@ print_gl_string (Display *dpy,
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
   }
+# ifdef HAVE_GLBITMAP
   glPopAttrib();
-# ifdef DEBUG
+#  ifdef DEBUG
   check_gl_error ("glPopAttrib");
-# endif
+#  endif
+# else  /* !HAVE_GLBITMAP */
+  if (tex_p)   glEnable (GL_TEXTURE_2D); else glDisable (GL_TEXTURE_2D);
+  if (texs_p)  glEnable (GL_TEXTURE_GEN_S);/*else glDisable (GL_TEXTURE_GEN_S);*/
+  if (text_p)  glEnable (GL_TEXTURE_GEN_T);/*else glDisable (GL_TEXTURE_GEN_T);*/
+  if (blend_p) glEnable (GL_BLEND); else glDisable (GL_BLEND);
+  if (light_p) glEnable (GL_LIGHTING); /*else glDisable (GL_LIGHTING);*/
+  if (depth_p) glEnable (GL_DEPTH_TEST); else glDisable (GL_DEPTH_TEST);
+  if (cull_p)  glEnable (GL_CULL_FACE); /*else glDisable (GL_CULL_FACE);*/
+  if (fog_p)   glEnable (GL_FOG); /*else glDisable (GL_FOG);*/
+#  ifndef HAVE_JWZGLES
+  glPolygonMode (GL_FRONT, opoly[0]);
+#  endif
+  glBlendFunc (GL_SRC_ALPHA, oblend);
+# endif /* !HAVE_GLBITMAP */
 
   glMatrixMode(GL_MODELVIEW);
 }

@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.15
-!                              28-Sep-2011
+!                              version 5.16
+!                              19-Jun-2012
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -133,6 +133,7 @@ GetViewPortIsFullOfLies: False
 ! This command is executed by the "New Login" button on the lock dialog.
 ! (That button does not appear on the dialog if this program does not exist.)
 ! For Gnome: probably "gdmflexiserver -ls".  KDE, probably "kdmctl reserve".
+! Or maybe yet another wheel-reinvention, "lxdm -c USER_SWITCH".
 !
 @NEW_LOGIN_COMMAND_P@*newLoginCommand:	@NEW_LOGIN_COMMAND@
 

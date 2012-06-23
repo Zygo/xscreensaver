@@ -17,13 +17,14 @@
 
 #include "screenhackI.h"
 
-#ifdef HAVE_COCOA
-# include <OpenGL/gl.h>
-# include <OpenGL/glu.h>
-#else  /* !HAVE_COCOA -- real Xlib */
+#ifndef HAVE_COCOA
 # include <GL/glx.h>
 # include <GL/glu.h>
 #endif /* !HAVE_COCOA */
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 #include "involute.h"
 #include "normals.h"

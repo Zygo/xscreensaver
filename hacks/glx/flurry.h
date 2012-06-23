@@ -35,9 +35,20 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #ifndef __GLCODE__
 #define __GLCODE__
 
-#include <GL/glu.h>
-#include <GL/gl.h>
-#include <GL/glx.h>
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
+
+#ifndef HAVE_COCOA
+# include <GL/gl.h>
+# include <GL/glu.h>
+# include <GL/glx.h>
+#endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
+
 
 #include <stdlib.h>
 #include <math.h>

@@ -49,7 +49,7 @@
 
   <_description>
 
-This one draws spinning, colliding iterated-function-system images.
+Clouds of iterated function systems spin and collide.
 
 Note that the "Detail" parameter is exponential.  Number of points
 drawn is functions^detail.

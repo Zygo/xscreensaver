@@ -246,7 +246,6 @@ static const char *m6502_defaults [] = {
   "*file:",
   "*displaytime:     20",
   ANALOGTV_DEFAULTS
-  "*TVContrast:      150",
   0
 };
 

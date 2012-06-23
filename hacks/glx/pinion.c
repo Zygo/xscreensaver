@@ -1,4 +1,4 @@
-/* pinion, Copyright (c) 2004-2011 Jamie Zawinski <jwz@jwz.org>
+/* pinion, Copyright (c) 2004-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -53,8 +53,13 @@ typedef struct {
   Bool button_down_p;
   unsigned long mouse_gear_id;
 
+# ifdef HAVE_GLBITMAP
   XFontStruct *xfont1, *xfont2, *xfont3;
   GLuint font1_dlist, font2_dlist, font3_dlist;
+# else
+  texture_font_data *font1, *font2, *font3;
+# endif
+
   GLuint title_list;
   int draw_tick;
 
@@ -109,9 +114,15 @@ static void
 load_fonts (ModeInfo *mi)
 {
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
+# ifdef HAVE_GLBITMAP
   load_font (mi->dpy, "titleFont",  &pp->xfont1, &pp->font1_dlist);
   load_font (mi->dpy, "titleFont2", &pp->xfont2, &pp->font2_dlist);
   load_font (mi->dpy, "titleFont3", &pp->xfont3, &pp->font3_dlist);
+# else
+  pp->font1 = load_texture_font (mi->dpy, "titleFont");
+  pp->font2 = load_texture_font (mi->dpy, "titleFont2");
+  pp->font3 = load_texture_font (mi->dpy, "titleFont3");
+# endif
 }
 
 
@@ -152,17 +163,38 @@ new_label (ModeInfo *mi)
   glNewList (pp->title_list, GL_COMPILE);
   if (*label)
     {
+# ifdef HAVE_GLBITMAP
       XFontStruct *f;
       GLuint fl;
+# else
+      texture_font_data *fd;
+# endif
       if (MI_WIDTH(mi) >= 500 && MI_HEIGHT(mi) >= 375)
+# ifdef HAVE_GLBITMAP
         f = pp->xfont1, fl = pp->font1_dlist;                  /* big font */
+# else
+        fd = pp->font1;
+# endif
       else if (MI_WIDTH(mi) >= 350 && MI_HEIGHT(mi) >= 260)
+# ifdef HAVE_GLBITMAP
         f = pp->xfont2, fl = pp->font2_dlist;                  /* small font */
+# else
+        fd = pp->font2;
+# endif
       else
+# ifdef HAVE_GLBITMAP
         f = pp->xfont3, fl = pp->font3_dlist;                  /* tiny font */
+# else
+        fd = pp->font3;
+# endif
 
       glColor3f (0.8, 0.8, 0);
-      print_gl_string (mi->dpy, f, fl,
+      print_gl_string (mi->dpy, 
+# ifdef HAVE_GLBITMAP
+                       f, fl,
+# else
+                       fd,
+# endif
                        mi->xgwa.width, mi->xgwa.height,
                        10, mi->xgwa.height - 10,
                        label, False);
@@ -1160,6 +1192,9 @@ static void
 find_mouse_gear (ModeInfo *mi)
 {
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
+
+# ifndef HAVE_JWZGLES
+
   int screen_width = MI_WIDTH (mi);
   int screen_height = MI_HEIGHT (mi);
   GLfloat h = (GLfloat) screen_height / (GLfloat) screen_width;
@@ -1227,6 +1262,14 @@ find_mouse_gear (ModeInfo *mi)
           pp->mouse_gear_id = pnames[0];
       }
   }
+
+#else  /* HAVE_JWZGLES */
+  /* #### not yet implemented */
+  pp->mouse_gear_id = pp->gears[1]->id;
+  return;
+#endif /* HAVE_JWZGLES */
+
+
 }
 
 
@@ -1332,7 +1375,6 @@ ENTRYPOINT void
 init_pinion (ModeInfo *mi)
 {
   pinion_configuration *pp;
-  int wire = MI_IS_WIREFRAME(mi);
 
   if (!pps) {
     pps = (pinion_configuration *)
@@ -1359,24 +1401,6 @@ init_pinion (ModeInfo *mi)
 
   pp->plane_displacement = gear_size * 0.1;
 
-  if (!wire)
-    {
-      GLfloat pos[4] = {-3.0, 1.0, 1.0, 0.0};
-      GLfloat amb[4] = { 0.0, 0.0, 0.0, 1.0};
-      GLfloat dif[4] = { 1.0, 1.0, 1.0, 1.0};
-      GLfloat spc[4] = { 1.0, 1.0, 1.0, 1.0};
-
-      glEnable(GL_LIGHTING);
-      glEnable(GL_LIGHT0);
-      glEnable(GL_DEPTH_TEST);
-      glEnable(GL_CULL_FACE);
-
-      glLightfv(GL_LIGHT0, GL_POSITION, pos);
-      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
-      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
-      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
-    }
-
   pp->trackball = gltrackball_init ();
 
   ffwd (mi);
@@ -1396,6 +1420,27 @@ draw_pinion (ModeInfo *mi)
 
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(pp->glx_context));
 
+  glPushMatrix();
+  glRotatef(current_device_rotation(), 0, 0, 1);
+
+  if (!wire_p)
+    {
+      GLfloat pos[4] = {-3.0, 1.0, 1.0, 0.0};
+      GLfloat amb[4] = { 0.0, 0.0, 0.0, 1.0};
+      GLfloat dif[4] = { 1.0, 1.0, 1.0, 1.0};
+      GLfloat spc[4] = { 1.0, 1.0, 1.0, 1.0};
+
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_CULL_FACE);
+
+      glLightfv(GL_LIGHT0, GL_POSITION, pos);
+      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
+      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
+      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+    }
+
   if (!pp->button_down_p)
     {
       if (!debug_one_gear_p || pp->ngears == 0)
@@ -1413,7 +1458,9 @@ draw_pinion (ModeInfo *mi)
 
   glPushMatrix ();
   {
+    glRotatef(-current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (pp->trackball);
+    glRotatef(current_device_rotation(), 0, 0, 1);
     mi->polygon_count = 0;
 
     glScalef (16, 16, 16);   /* map vp_width/height to the screen */
@@ -1476,6 +1523,7 @@ draw_pinion (ModeInfo *mi)
   glPopMatrix ();
 
   glCallList (pp->title_list);
+  glPopMatrix ();
 
   if (mi->fps_p) do_fps (mi);
   glFinish();

@@ -42,8 +42,7 @@
   <xscreensaver-image />
 
   <_description>
-Grabs an image of the screen, and then lets a transparent
-lens wander around the screen, magnifying whatever is underneath.
+Wandering lenses distort the screen image in various ways.
 
 Written by Jonas Munsin; 1998.
   </_description>

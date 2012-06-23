@@ -33,7 +33,6 @@
 #include "rotator.h"
 #include "gltrackball.h"
 
-
 #define DEF_START	"0.00"
 #define DEF_DILATE	"1.00"
 #define DEF_END		"27.79"
@@ -486,6 +485,7 @@ static void draw_sign(ModeInfo *mi, tunnel_configuration *tc, float z,  float al
 		GLuint tex, int blend_mode)
 {
 
+#ifndef HAVE_JWZGLES
 	if (alpha > 0.0) {
   		mi->polygon_count ++;
 		/* glEnable(GL_BLEND); */
@@ -527,6 +527,7 @@ static void draw_sign(ModeInfo *mi, tunnel_configuration *tc, float z,  float al
 		/* glDisable(GL_BLEND); */
 
 	}
+#endif /* !HAVE_JWZGLES */
 } /* draw sign */
 
 
@@ -535,6 +536,7 @@ static void draw_sign(ModeInfo *mi, tunnel_configuration *tc, float z,  float al
    tunnel does not move, and is acutally a display list.  if alpha = 0, skip */
 static void draw_cyl(ModeInfo *mi, tunnel_configuration *tc, float alpha, int texnum, int listnum, int shiftnum)
 {
+#ifndef HAVE_JWZGLES
 	if (alpha > 0.0) {
 		if (listnum  ==  tc->diamondlist)
   			mi->polygon_count += 4;
@@ -559,6 +561,7 @@ static void draw_cyl(ModeInfo *mi, tunnel_configuration *tc, float alpha, int te
   		glMatrixMode(GL_MODELVIEW); 
 		/* glDisable(GL_BLEND); */
 	}
+#endif /* HAVE_JWZGLES */
 }
 
 
@@ -901,6 +904,7 @@ static void LoadTexture(ModeInfo * mi, char **fn, const char *filename, GLuint t
 			by = by * 2;
 	}
 
+#ifndef HAVE_JWZGLES
 	if (rescale) {
 		tmpbuf = calloc(bx * by * 4, sizeof(unsigned char));
 		if (gluScaleImage(GL_RGBA, teximage->width, teximage->height, GL_UNSIGNED_BYTE, teximage->data,
@@ -913,6 +917,7 @@ static void LoadTexture(ModeInfo * mi, char **fn, const char *filename, GLuint t
 		teximage->height= by;
 	}
 	/* end rescale code */
+#endif /* !HAVE_JWZGLES */
 		
 	if (anegative ) {
 		for (ix = 0 ; ix < teximage->height * teximage->width; ix++)
@@ -1110,20 +1115,26 @@ init_tunnel (ModeInfo *mi)
           LoadTexture(mi, tunnelstar_xpm, NULL, tc->texture_binds[4], 0, 0.0, False, False);
   	  if (strcasecmp (do_tx1, "(none)")) /* marquee */
          	LoadTexture(mi, NULL, do_tx1, tc->texture_binds[3],  0,0.0, False, False);
+#ifndef HAVE_JWZGLES  /* logo_180_xpm is 180px which is not a power of 2! */
 	  else
          	LoadTexture(mi, (char **) logo_180_xpm, NULL, tc->texture_binds[3],  0,0.0, False, False);
+#endif
   	  if (strcasecmp (do_tx2, "(none)")) /* tardis */
          	LoadTexture(mi, NULL, do_tx2, tc->texture_binds[1], 0, 0.0 ,False, False);
+#ifndef HAVE_JWZGLES  /* logo_180_xpm is 180px which is not a power of 2! */
 	  else
          	LoadTexture(mi, (char **) logo_180_xpm, NULL, tc->texture_binds[1],  0,0.0, False, False);
+#endif
   	  if (strcasecmp (do_tx3, "(none)")) { /* head */
          	LoadTexture(mi,  NULL, do_tx3, tc->texture_binds[6], 0, 0.0 ,False, False);
 		/* negative */
           	LoadTexture(mi,  NULL, do_tx3, tc->texture_binds[9],  2,1.0, True, True);
+#ifndef HAVE_JWZGLES  /* logo_180_xpm is 180px which is not a power of 2! */
 	  } else {
          	LoadTexture(mi, (char **) logo_180_xpm, NULL, tc->texture_binds[6],  0,0.0, False, False);
 		/* negative */
           	LoadTexture(mi, (char **) logo_180_xpm, NULL, tc->texture_binds[9],  2,1.0, True, True);
+#endif
 	  }
           glEnable(GL_TEXTURE_2D);
 	  check_gl_error("tex");

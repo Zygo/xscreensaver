@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2002-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2002-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -111,8 +111,13 @@ typedef struct {
   int mesher;
   int polys1, polys2;  /* polygon counts */
 
+# ifdef HAVE_GLBITMAP
   XFontStruct *font;
   GLuint font_list;
+# else
+  texture_font_data *font_data;
+# endif
+
   int change_tick;
   int done_once;
 
@@ -220,6 +225,14 @@ gl_init (ModeInfo *mi)
        */
       glDisable(GL_CULL_FACE);
       glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, True);
+    }
+
+  if (smooth_p) 
+    {
+      glEnable (GL_LINE_SMOOTH);
+      glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
+      glEnable (GL_BLEND);
     }
 }
 
@@ -361,13 +374,10 @@ draw_bounding_box (ModeInfo *mi)
       glDisable(GL_CULL_FACE);
     }
 
-  glPushAttrib (GL_LIGHTING);
-  glDisable (GL_LIGHTING);
-
-  glColor3f (c2[0], c2[1], c2[2]);
-
   if (do_grid)
     {
+      glDisable (GL_LIGHTING);
+      glColor3f (c2[0], c2[1], c2[2]);
       glPushMatrix();
       glBegin(GL_LINES);
       glVertex3f(0, -0.66, 0);
@@ -382,6 +392,7 @@ draw_bounding_box (ModeInfo *mi)
     }
   else
     {
+#if 0
       glBegin(GL_LINES);
       if (x1 > 0) x1 = 0; if (x2 < 0) x2 = 0;
       if (y1 > 0) y1 = 0; if (y2 < 0) y2 = 0;
@@ -390,9 +401,8 @@ draw_bounding_box (ModeInfo *mi)
       glVertex3f(0 , y1, 0);  glVertex3f(0,  y2, 0); 
       glVertex3f(0,  0,  z1); glVertex3f(0,  0,  z2); 
       glEnd();
+#endif
     }
-
-  glPopAttrib();
 }
 
 
@@ -424,7 +434,6 @@ do_tracer (ModeInfo *mi)
         {
           static const GLfloat c[4] = { 0.6, 0.5, 1.0, 1.0 };
 
-          glPushAttrib (GL_LIGHTING);
           glDisable (GL_LIGHTING);
 
           glPushMatrix();
@@ -436,7 +445,7 @@ do_tracer (ModeInfo *mi)
           draw_circle (mi, False);
           glPopMatrix();
 
-          glPopAttrib();
+          if (! MI_IS_WIREFRAME(mi)) glEnable (GL_LIGHTING);
         }
 
       cc->tracer += 5;
@@ -666,13 +675,10 @@ generate_spheremonics (ModeInfo *mi)
     glEndList();
 
     glNewList(cc->dlist2, GL_COMPILE);
-    glPushAttrib (GL_LIGHTING);
-    glDisable (GL_LIGHTING);
     glPushMatrix();
     glScalef (1.05, 1.05, 1.05);
     cc->polys2 = unit_spheremonics (mi, cc->resolution, 2, cc->m, cc->colors);
     glPopMatrix();
-    glPopAttrib();
     glEndList();
   }
 }
@@ -700,14 +706,6 @@ init_spheremonics (ModeInfo *mi)
     gl_init(mi);
     reshape_spheremonics (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   }
-
-  if (smooth_p) 
-    {
-      glEnable (GL_LINE_SMOOTH);
-      glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
-      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA); 
-      glEnable (GL_BLEND);
-    }
 
   {
     Bool spinx=False, spiny=False, spinz=False;
@@ -745,7 +743,11 @@ init_spheremonics (ModeInfo *mi)
 
   cc->resolution = res;
 
+# ifdef HAVE_GLBITMAP
   load_font (mi->dpy, "labelfont", &cc->font, &cc->font_list);
+# else /* !HAVE_GLBITMAP */
+  cc->font_data = load_texture_font (mi->dpy, "labelFont");
+# endif /* !HAVE_GLBITMAP */
 
   cc->dlist = glGenLists(1);
   cc->dlist2 = glGenLists(1);
@@ -832,6 +834,8 @@ draw_spheremonics (ModeInfo *mi)
 
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(cc->glx_context));
 
+  gl_init(mi);
+
   glShadeModel(GL_SMOOTH);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -863,8 +867,9 @@ draw_spheremonics (ModeInfo *mi)
   glCallList (cc->dlist);
   mi->polygon_count += cc->polys1;
 
-  if (cc->mesher >= 0 /* || mouse_p */)
+  if (cc->mesher >= 0 /* || cc->button_down_p */)
     {
+      glDisable (GL_LIGHTING);
       glCallList (cc->dlist2);
       mi->polygon_count += cc->polys2;
       if (cc->mesher >= 0)
@@ -885,7 +890,12 @@ draw_spheremonics (ModeInfo *mi)
                cc->m[4], cc->m[5], cc->m[6], cc->m[7]);
 
       glColor3f(1.0, 1.0, 0.0);
-      print_gl_string (mi->dpy, cc->font, cc->font_list,
+      print_gl_string (mi->dpy,
+# ifdef HAVE_GLBITMAP
+                       cc->font, cc->font_list,
+# else /* !HAVE_GLBITMAP */
+                       cc->font_data,
+# endif /* !HAVE_GLBITMAP */
                        mi->xgwa.width, mi->xgwa.height,
                        10, mi->xgwa.height - 10,
                        buf, False);

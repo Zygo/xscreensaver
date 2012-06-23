@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,13 +16,23 @@
    the UI (XScreenSaverConfigSheet).
  */
 
-#import <Cocoa/Cocoa.h>
+#ifdef USE_IPHONE
+# import <Foundation/Foundation.h>
+# import <UIKit/UIKit.h>
+# define NSUserDefaultsController NSUserDefaults
+#else
+# import <Cocoa/Cocoa.h>
+#endif
+
+
 #import "jwxyz.h"
 
 @interface PrefsReader : NSObject
 {
+  NSString *saver_name;
   NSUserDefaultsController *userDefaultsController;
   NSUserDefaults *userDefaults;  // this is actually a 'ScreenSaverDefaults'
+  NSDictionary *defaultOptions;  // Hardcoded defaults before any changes.
 }
 
 - (id) initWithName: (NSString *) name
@@ -30,6 +40,7 @@
            defaults: (const char * const *) defs;
 
 - (NSUserDefaultsController *) userDefaultsController;
+- (NSDictionary *) defaultOptions;
 
 - (char *) getStringResource:  (const char *) name;
 - (double) getFloatResource:   (const char *) name;

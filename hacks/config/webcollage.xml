@@ -32,9 +32,12 @@
  -->
 
   <_description>
-This makes collages out of random images pulled off of the
-World Wide Web.  It finds these images by doing random web searches,
-and then extracting images from the returned pages.
+This is what the Internet looks like.
+
+This creates collages out of random images from the World Wide Web.
+It finds the images by feeding random words into various search
+engines, and pulling images (or sections of images) out of the pages
+returned.
 
 WARNING: THE INTERNET SOMETIMES CONTAINS PORNOGRAPHY.
 

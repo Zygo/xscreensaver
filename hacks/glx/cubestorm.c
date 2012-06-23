@@ -252,6 +252,10 @@ init_cube (ModeInfo *mi)
     }
   }
 
+# ifdef HAVE_JWZGLES
+  dbuf_p = True;
+# endif
+
   bp = &bps[MI_SCREEN(mi)];
 
   bp->glx_context = init_GL(mi);

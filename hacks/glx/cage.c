@@ -91,7 +91,12 @@ static const char sccsid[] = "@(#)cage.c	5.01 2001/03/01 xlockmore";
 
 #ifdef MODE_cage
 
+#if 0
 #include "e_textures.h"
+#else
+#include "xpm-ximage.h"
+#include "../images/wood.xpm"
+#endif
 
 ENTRYPOINT ModeSpecOpt cage_opts =
 {0, (XrmOptionDescRec *) NULL, 0, (argtype *) NULL, (OptionStruct *) NULL};
@@ -304,9 +309,7 @@ reshape(ModeInfo * mi, int width, int height)
 static void
 pinit(ModeInfo *mi)
 {
-	int status;
-
-	glClearDepth(1.0);
+  /* int status; */
 
     if (MI_IS_WIREFRAME(mi))
       return;
@@ -335,6 +338,7 @@ pinit(ModeInfo *mi)
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
+#if 0
 	clear_gl_error();
 	if (MI_IS_MONO(mi))
       status = 0;
@@ -350,6 +354,22 @@ pinit(ModeInfo *mi)
 		exit (1);
 	  }
 	check_gl_error("mipmapping");
+#else
+    {
+      XImage *img = xpm_to_ximage (mi->dpy,
+                                   mi->xgwa.visual,
+                                   mi->xgwa.colormap,
+                                   wood_texture);
+	  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
+                    img->width, img->height, 0,
+                    GL_RGBA,
+                    /* GL_UNSIGNED_BYTE, */
+                    GL_UNSIGNED_INT_8_8_8_8_REV,
+                    img->data);
+      check_gl_error("texture");
+      XDestroyImage (img);
+    }
+#endif
 
 	glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
@@ -424,7 +444,6 @@ draw_cage (ModeInfo * mi)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glPushMatrix();
-
 	glTranslatef(0.0, 0.0, -10.0);
 
 	if (!MI_IS_ICONIC(mi)) {
