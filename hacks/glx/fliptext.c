@@ -14,22 +14,6 @@
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#include <ctype.h>
-#include <sys/stat.h>
-
-#ifndef HAVE_COCOA
-# include <X11/Intrinsic.h>
-#endif
-
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#ifdef HAVE_UNAME
-# include <sys/utsname.h>
-#endif /* HAVE_UNAME */
-
-
 /* Utopia 800 needs 64 512x512 textures (4096x4096 bitmap).
    Utopia 720 needs 16 512x512 textures (2048x2048 bitmap).
    Utopia 480 needs 16 512x512 textures (2048x2048 bitmap).
@@ -43,6 +27,7 @@
 #define DEFAULTS "*delay:        10000      \n" \
 		 "*showFPS:      False      \n" \
 		 "*wireframe:    False      \n" \
+		 "*usePty:       False      \n" \
 		 "*font:       " DEF_FONT  "\n" \
 		 ".foreground: " DEF_COLOR "\n" \
 
@@ -56,6 +41,7 @@
 
 #include "xlockmore.h"
 #include "texfont.h"
+#include "textclient.h"
 
 #ifdef USE_GL /* whole file */
 
@@ -105,11 +91,7 @@ typedef struct {
   GLXContext *glx_context;
 
   texture_font_data *texfont;
-
-  FILE *pipe;
-  XtInputId pipe_id;
-  XtIntervalId pipe_timer;
-  Time subproc_relaunch_delay;
+  text_data *tc;
 
   char *buf;
   int buf_size;
@@ -233,106 +215,6 @@ strip (char *s, Bool leading, Bool trailing)
 }
 
 
-
-/* Subprocess.
-   (This bit mostly cribbed from phosphor.c)
- */
-
-static void drain_input (fliptext_configuration *sc);
-
-static void
-subproc_cb (XtPointer closure, int *source, XtInputId *id)
-{
-  fliptext_configuration *sc = (fliptext_configuration *) closure;
-  drain_input (sc);
-}
-
-
-static void
-launch_text_generator (fliptext_configuration *sc)
-{
-  XtAppContext app = XtDisplayToApplicationContext (sc->dpy);
-  char *oprogram = get_string_resource (sc->dpy, "program", "Program");
-  char *program = (char *) malloc (strlen (oprogram) + 10);
-  strcpy (program, "( ");
-  strcat (program, oprogram);
-  strcat (program, " ) 2>&1");
-
-  if ((sc->pipe = popen (program, "r")))
-    {
-      sc->pipe_id =
-        XtAppAddInput (app, fileno (sc->pipe),
-                       (XtPointer) (XtInputReadMask | XtInputExceptMask),
-                       subproc_cb, (XtPointer) sc);
-    }
-  else
-    {
-      perror (program);
-    }
-}
-
-
-static void
-relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
-{
-  fliptext_configuration *sc = (fliptext_configuration *) closure;
-  if (!sc->pipe_timer) abort();
-  sc->pipe_timer = 0;
-  launch_text_generator (sc);
-}
-
-
-/* When the subprocess has generated some output, this reads as much as it
-   can into sc->buf at sc->buf_tail.
- */
-static void
-drain_input (fliptext_configuration *sc)
-{
-  XtAppContext app = XtDisplayToApplicationContext (sc->dpy);
-  if (sc->buf_tail < sc->buf_size - 2)
-    {
-      int target = sc->buf_size - sc->buf_tail - 2;
-      int n = (sc->pipe
-               ? read (fileno (sc->pipe),
-                       (void *) (sc->buf + sc->buf_tail),
-                       target)
-               : 0);
-      if (n > 0)
-        {
-          sc->buf_tail += n;
-          sc->buf[sc->buf_tail] = 0;
-        }
-      else
-        {
-          if (sc->pipe)
-            {
-              XtRemoveInput (sc->pipe_id);
-              sc->pipe_id = 0;
-              pclose (sc->pipe);
-              sc->pipe = 0;
-            }
-
-          /* If the process didn't print a terminating newline, add one. */
-          if (sc->buf_tail > 1 &&
-              sc->buf[sc->buf_tail-1] != '\n')
-            {
-              sc->buf[sc->buf_tail++] = '\n';
-              sc->buf[sc->buf_tail] = 0;
-            }
-
-          /* Then add one more, just for giggles. */
-          sc->buf[sc->buf_tail++] = '\n';
-          sc->buf[sc->buf_tail] = 0;
-
-          /* Set up a timer to re-launch the subproc in a bit. */
-          sc->pipe_timer = XtAppAddTimeOut (app, sc->subproc_relaunch_delay,
-                                            relaunch_generator_timer,
-                                            (XtPointer) sc);
-        }
-    }
-}
-
-
 static int
 char_width (fliptext_configuration *sc, char c)
 {
@@ -354,8 +236,23 @@ get_one_line (fliptext_configuration *sc)
   int wrap_pix = sc->font_wrap_pixels;
   int col = 0;
   int col_pix = 0;
-
   char *s = sc->buf;
+  int target = sc->buf_size - sc->buf_tail - 2;
+
+  /* Fill as much as we can into sc->buf, but stop at newline.
+   */
+  while (target > 0)
+    {
+      char c = textclient_getc (sc->tc);
+      if (c <= 0)
+        break;
+      sc->buf[sc->buf_tail++] = c;
+      sc->buf[sc->buf_tail] = 0;
+      target--;
+      if (c == '\r' || c == '\n')
+        break;
+    }
+
   while (!result)
     {
       int cw;
@@ -973,8 +870,6 @@ init_fliptext (ModeInfo *mi)
   sc->buf_size = target_columns * max_lines;
   sc->buf = (char *) calloc (1, sc->buf_size);
 
-  sc->subproc_relaunch_delay = 2 * 1000;   /* 2 seconds */
-
   alignment_random_p = False;
   if (!alignment_str || !*alignment_str ||
       !strcasecmp(alignment_str, "left"))
@@ -995,7 +890,7 @@ init_fliptext (ModeInfo *mi)
       exit (1);
     }
 
-  launch_text_generator (sc);
+  sc->tc = textclient_open (sc->dpy);
 
   if (max_lines < 1) max_lines = 1;
   min_lines = max_lines * 0.66;
@@ -1036,6 +931,7 @@ draw_fliptext (ModeInfo *mi)
   mi->polygon_count = 0;
 
   glPushMatrix();
+  glRotatef(current_device_rotation(), 0, 0, 1);
   {
     GLfloat s = 3.0 / (sc->top_margin - sc->bottom_margin);
     glScalef(s, s, s);
@@ -1096,12 +992,8 @@ release_fliptext (ModeInfo *mi)
     int screen;
     for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
       fliptext_configuration *sc = &scs[screen];
-      if (sc->pipe_id)
-        XtRemoveInput (sc->pipe_id);
-      if (sc->pipe)
-        pclose (sc->pipe);
-      if (sc->pipe_timer)
-        XtRemoveTimeOut (sc->pipe_timer);
+      if (sc->tc)
+        textclient_close (sc->tc);
 
       /* #### there's more to free here */
     }

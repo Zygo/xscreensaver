@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2010 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,7 +18,27 @@
 
 #import <stdlib.h>
 #import <stdint.h>
-#import <Cocoa/Cocoa.h>
+
+#ifdef USE_IPHONE
+# import <UIKit/UIKit.h>
+# import <UIKit/UIScreen.h>
+# import <QuartzCore/QuartzCore.h>
+# define NSView  UIView
+# define NSRect  CGRect
+# define NSPoint CGPoint
+# define NSSize  CGSize
+# define NSColor UIColor
+# define NSImage UIImage
+# define NSEvent UIEvent
+# define NSFont  UIFont
+# define NSGlyph CGGlyph
+# define NSWindow UIWindow
+# define NSMakeSize   CGSizeMake
+# define NSBezierPath UIBezierPath
+#else
+# import <Cocoa/Cocoa.h>
+#endif
+
 #import "jwxyz.h"
 #import "jwxyz-timers.h"
 
@@ -44,6 +64,7 @@ struct jwxyz_Drawable {
     struct {
       NSView *view;
       unsigned long background;
+      int last_mouse_x, last_mouse_y;
     } window;
     struct {
       int depth;
@@ -57,9 +78,11 @@ struct jwxyz_Display {
   Screen *screen;
   struct jwxyz_sources_data *timers_data;
 
+# ifndef USE_IPHONE
   CGDirectDisplayID cgdpy;  /* ...of the one and only Window, main_window.
                                This can change if the window is dragged to
                                a different screen. */
+# endif
 
   CGColorSpaceRef colorspace;  /* Color space of this screen.  We tag all of
                                   our images with this to avoid translation
@@ -89,8 +112,9 @@ struct jwxyz_Font {
 
 
 Display *
-jwxyz_make_display (void *nsview_arg)
+jwxyz_make_display (void *nsview_arg, void *cgc_arg)
 {
+  CGContextRef cgc = (CGContextRef) cgc_arg;
   NSView *view = (NSView *) nsview_arg;
   if (!view) abort();
 
@@ -111,21 +135,22 @@ jwxyz_make_display (void *nsview_arg)
 
   Window w = (Window) calloc (1, sizeof(*w));
   w->type = WINDOW;
-  // kludge! this needs to be set late, so we do it in XClearWindow!
-  // w->cgc = [[[view window] graphicsContext] graphicsPort];
-  w->cgc = 0;
   w->window.view = view;
   CFRetain (w->window.view);   // needed for garbage collection?
   w->window.background = BlackPixel(0,0);
 
   d->main_window = w;
 
-  [view lockFocus];
-  w->cgc = [[[view window] graphicsContext] graphicsPort];
-  [view unlockFocus];
+# ifndef USE_IPHONE
+  if (! cgc) {
+    [view lockFocus];
+    cgc = [[[view window] graphicsContext] graphicsPort];
+    [view unlockFocus];
+    w->cgc = cgc;
+  }
+# endif
 
-  jwxyz_window_resized (d, w);
-
+  Assert (cgc, "no CGContext");
   return d;
 }
 
@@ -167,15 +192,21 @@ invalidate_drawable_cache (Drawable d)
 /* Call this when the View changes size or position.
  */
 void
-jwxyz_window_resized (Display *dpy, Window w)
+jwxyz_window_resized (Display *dpy, Window w, 
+                      int new_x, int new_y, int new_width, int new_height,
+                      void *cgc_arg)
 {
+  CGContextRef cgc = (CGContextRef) cgc_arg;
   Assert (w->type == WINDOW, "not a window");
-  NSRect r = [w->window.view frame];
-  w->frame.origin.x    = r.origin.x;   // NSRect -> CGRect
-  w->frame.origin.y    = r.origin.y;
-  w->frame.size.width  = r.size.width;
-  w->frame.size.height = r.size.height;
+  w->frame.origin.x    = new_x;
+  w->frame.origin.y    = new_y;
+  w->frame.size.width  = new_width;
+  w->frame.size.height = new_height;
 
+  if (cgc) w->cgc = cgc;
+  Assert (w->cgc, "no CGContext");
+
+# ifndef USE_IPHONE
   // Figure out which screen the window is currently on.
   {
     int wx, wy;
@@ -188,6 +219,7 @@ jwxyz_window_resized (Display *dpy, Window w)
     CGGetDisplaysWithPoint (p, 1, &dpy->cgdpy, &n);
     Assert (dpy->cgdpy, "unable to find CGDisplay");
   }
+# endif // USE_IPHONE
 
 #if 0
   {
@@ -208,6 +240,18 @@ jwxyz_window_resized (Display *dpy, Window w)
 
   invalidate_drawable_cache (w);
 }
+
+
+#ifdef USE_IPHONE
+void
+jwxyz_mouse_moved (Display *dpy, Window w, int x, int y)
+{
+  Assert (w->type == WINDOW, "not a window");
+  w->window.last_mouse_x = x;
+  w->window.last_mouse_y = y;
+}
+#endif // USE_IPHONE
+
 
 
 jwxyz_sources_data *
@@ -356,7 +400,7 @@ push_gc (Drawable d, GC gc)
     set_clip_mask (d, gc);
 }
 
-#define pop_gc(d,gc) CGContextRestoreGState ((d)->cgc)
+#define pop_gc(d,gc) CGContextRestoreGState (d->cgc)
 
 
 /* Pushes a GC context; sets BlendMode, ClipMask, Fill, and Stroke colors.
@@ -374,7 +418,6 @@ push_color_gc (Drawable d, GC gc, unsigned long color,
   }
 
   CGContextRef cgc = d->cgc;
-
   set_color (cgc, color, depth, gc->gcv.alpha_allowed_p, fill_p);
   CGContextSetShouldAntialias (cgc, antialias_p);
 }
@@ -522,9 +565,10 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
       gc->gcv.function == GXclear) {
     // "set" and "clear" are dumb drawing modes that ignore the source
     // bits and just draw solid rectangles.
-    set_color (dst->cgc, (gc->gcv.function == GXset
-                          ? (gc->depth == 1 ? 1 : WhitePixel(0,0))
-                          : (gc->depth == 1 ? 0 : BlackPixel(0,0))),
+    set_color (dst->cgc,
+               (gc->gcv.function == GXset
+                ? (gc->depth == 1 ? 1 : WhitePixel(0,0))
+                : (gc->depth == 1 ? 0 : BlackPixel(0,0))),
                gc->depth, gc->gcv.alpha_allowed_p, YES);
     draw_rect (dpy, dst, 0, dst_x, dst_y, width, height, YES, YES);
     return 0;
@@ -592,7 +636,12 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
   BOOL mask_p = NO;
   BOOL free_cgi_p = NO;
 
-  if (src->type == PIXMAP) {
+
+#ifndef USE_IPHONE
+  // Because of the backbuffer, all iPhone Windows work like Pixmaps.
+  if (src->type == PIXMAP)
+# endif
+  {
 
     // If we are copying from a Pixmap to a Pixmap or Window, we must first
     // copy the bits to an intermediary CGImage object, then copy that to the
@@ -625,9 +674,10 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
       free_cgi_p = YES;
     }
 
-    if (src->pixmap.depth == 1)
+  if (src->type == PIXMAP && src->pixmap.depth == 1)
       mask_p = YES;
 
+# ifndef USE_IPHONE
   } else { /* (src->type == WINDOW) */
     
     NSRect nsfrom;    // NSRect != CGRect on 10.4
@@ -684,21 +734,27 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
       //Assert(CGImageGetColorSpace(cgi) == dpy->colorspace,"bad colorspace");
       CGDataProviderRelease (prov);
     }
+
+# endif // !USE_IPHONE
   }
+
+  CGContextRef cgc = dst->cgc;
 
   if (mask_p) {		// src depth == 1
 
     push_bg_gc (dst, gc, YES);
 
     // fill the destination rectangle with solid background...
-    CGContextFillRect (dst->cgc, orig_dst_rect);
+    CGContextFillRect (cgc, orig_dst_rect);
+
+    Assert (cgc, "no CGC with 1-bit XCopyArea");
 
     // then fill in a solid rectangle of the fg color, using the image as an
     // alpha mask.  (the image has only values of BlackPixel or WhitePixel.)
-    set_color (dst->cgc, gc->gcv.foreground, gc->depth, 
+    set_color (cgc, gc->gcv.foreground, gc->depth, 
                gc->gcv.alpha_allowed_p, YES);
-    CGContextClipToMask (dst->cgc, dst_rect, cgi);
-    CGContextFillRect (dst->cgc, dst_rect);
+    CGContextClipToMask (cgc, dst_rect, cgi);
+    CGContextFillRect (cgc, dst_rect);
 
     pop_gc (dst, gc);
 
@@ -713,17 +769,21 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
     // being copied.
     //
     if (clipped) {
-      set_color (dst->cgc, gc->gcv.background, gc->depth, 
+      set_color (cgc, gc->gcv.background, gc->depth, 
                  gc->gcv.alpha_allowed_p, YES);
-      CGContextFillRect (dst->cgc, orig_dst_rect);
+      CGContextFillRect (cgc, orig_dst_rect);
     }
 
     if (cgi) {
       // copy the CGImage onto the destination CGContext
       //Assert(CGImageGetColorSpace(cgi) == dpy->colorspace, "bad colorspace");
-      CGContextDrawImage (dst->cgc, dst_rect, cgi);
+      CGContextDrawImage (cgc, dst_rect, cgi);
     } else {
       // No cgi means src == dst, and both are Windows.
+
+# ifdef USE_IPHONE
+      abort();  // No NSCopyBits on iOS, but shouldn't be reached anyway.
+# else // !USE_IPHONE
       NSRect nsfrom;
       nsfrom.origin.x    = src_rect.origin.x;    // NSRect != CGRect on 10.4
       nsfrom.origin.y    = src_rect.origin.y;
@@ -733,12 +793,14 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
       nsto.x             = dst_rect.origin.x;
       nsto.y             = dst_rect.origin.y;
       NSCopyBits (0, nsfrom, nsto);
+# endif // !USE_IPHONE
     }
 
     pop_gc (dst, gc);
   }
 
   if (free_cgi_p) CGImageRelease (cgi);
+
   if (releaseme) [releaseme release];
   invalidate_drawable_cache (dst);
   return 0;
@@ -781,13 +843,14 @@ XDrawLine (Display *dpy, Drawable d, GC gc, int x1, int y1, int x2, int y2)
 
   push_fg_gc (d, gc, NO);
 
-  set_line_mode (d->cgc, &gc->gcv);
-  CGContextBeginPath (d->cgc);
-  CGContextMoveToPoint (d->cgc, p.x, p.y);
+  CGContextRef cgc = d->cgc;
+  set_line_mode (cgc, &gc->gcv);
+  CGContextBeginPath (cgc);
+  CGContextMoveToPoint (cgc, p.x, p.y);
   p.x = wr.origin.x + x2;
   p.y = wr.origin.y + wr.size.height - y2;
-  CGContextAddLineToPoint (d->cgc, p.x, p.y);
-  CGContextStrokePath (d->cgc);
+  CGContextAddLineToPoint (cgc, p.x, p.y);
+  CGContextStrokePath (cgc);
   pop_gc (d, gc);
   invalidate_drawable_cache (d);
   return 0;
@@ -801,7 +864,10 @@ XDrawLines (Display *dpy, Drawable d, GC gc, XPoint *points, int count,
   NSPoint p;
   CGRect wr = d->frame;
   push_fg_gc (d, gc, NO);
-  set_line_mode (d->cgc, &gc->gcv);
+
+  CGContextRef cgc = d->cgc;
+
+  set_line_mode (cgc, &gc->gcv);
   
   // if the first and last points coincide, use closepath to get
   // the proper line-joining.
@@ -812,8 +878,8 @@ XDrawLines (Display *dpy, Drawable d, GC gc, XPoint *points, int count,
   p.x = wr.origin.x + points->x;
   p.y = wr.origin.y + wr.size.height - points->y;
   points++;
-  CGContextBeginPath (d->cgc);
-  CGContextMoveToPoint (d->cgc, p.x, p.y);
+  CGContextBeginPath (cgc);
+  CGContextMoveToPoint (cgc, p.x, p.y);
   for (i = 1; i < count; i++) {
     if (mode == CoordModePrevious) {
       p.x += points->x;
@@ -822,11 +888,11 @@ XDrawLines (Display *dpy, Drawable d, GC gc, XPoint *points, int count,
       p.x = wr.origin.x + points->x;
       p.y = wr.origin.y + wr.size.height - points->y;
     }
-    CGContextAddLineToPoint (d->cgc, p.x, p.y);
+    CGContextAddLineToPoint (cgc, p.x, p.y);
     points++;
   }
-  if (closed_p) CGContextClosePath (d->cgc);
-  CGContextStrokePath (d->cgc);
+  if (closed_p) CGContextClosePath (cgc);
+  CGContextStrokePath (cgc);
   pop_gc (d, gc);
   invalidate_drawable_cache (d);
   return 0;
@@ -839,19 +905,21 @@ XDrawSegments (Display *dpy, Drawable d, GC gc, XSegment *segments, int count)
   int i;
   CGRect wr = d->frame;
 
+  CGContextRef cgc = d->cgc;
+
   push_fg_gc (d, gc, NO);
-  set_line_mode (d->cgc, &gc->gcv);
-  CGContextBeginPath (d->cgc);
+  set_line_mode (cgc, &gc->gcv);
+  CGContextBeginPath (cgc);
   for (i = 0; i < count; i++) {
-    CGContextMoveToPoint    (d->cgc, 
+    CGContextMoveToPoint    (cgc, 
                              wr.origin.x + segments->x1,
                              wr.origin.y + wr.size.height - segments->y1);
-    CGContextAddLineToPoint (d->cgc,
+    CGContextAddLineToPoint (cgc,
                              wr.origin.x + segments->x2,
                              wr.origin.y + wr.size.height - segments->y2);
     segments++;
   }
-  CGContextStrokePath (d->cgc);
+  CGContextStrokePath (cgc);
   pop_gc (d, gc);
   invalidate_drawable_cache (d);
   return 0;
@@ -894,12 +962,13 @@ draw_rect (Display *dpy, Drawable d, GC gc,
       push_bg_gc (d, gc, fill_p);
   }
 
+  CGContextRef cgc = d->cgc;
   if (fill_p)
-    CGContextFillRect (d->cgc, r);
+    CGContextFillRect (cgc, r);
   else {
     if (gc)
-      set_line_mode (d->cgc, &gc->gcv);
-    CGContextStrokeRect (d->cgc, r);
+      set_line_mode (cgc, &gc->gcv);
+    CGContextStrokeRect (cgc, r);
   }
 
   if (gc)
@@ -929,6 +998,7 @@ XFillRectangles (Display *dpy, Drawable d, GC gc, XRectangle *rects, int n)
 {
   CGRect wr = d->frame;
   int i;
+  CGContextRef cgc = d->cgc;
   push_fg_gc (d, gc, YES);
   for (i = 0; i < n; i++) {
     CGRect r;
@@ -936,7 +1006,7 @@ XFillRectangles (Display *dpy, Drawable d, GC gc, XRectangle *rects, int n)
     r.origin.y = wr.origin.y + wr.size.height - rects->y - rects->height;
     r.size.width = rects->width;
     r.size.height = rects->height;
-    CGContextFillRect (d->cgc, r);
+    CGContextFillRect (cgc, r);
     rects++;
   }
   pop_gc (d, gc);
@@ -949,7 +1019,8 @@ int
 XClearArea (Display *dpy, Window win, int x, int y, int w, int h, Bool exp)
 {
   Assert (win->type == WINDOW, "not a window");
-  set_color (win->cgc, win->window.background, 32, NO, YES);
+  CGContextRef cgc = win->cgc;
+  set_color (cgc, win->window.background, 32, NO, YES);
   draw_rect (dpy, win, 0, x, y, w, h, NO, YES);
   return 0;
 }
@@ -962,7 +1033,8 @@ XFillPolygon (Display *dpy, Drawable d, GC gc,
   CGRect wr = d->frame;
   int i;
   push_fg_gc (d, gc, YES);
-  CGContextBeginPath (d->cgc);
+  CGContextRef cgc = d->cgc;
+  CGContextBeginPath (cgc);
   float x = 0, y = 0;
   for (i = 0; i < npoints; i++) {
     if (i > 0 && mode == CoordModePrevious) {
@@ -974,15 +1046,15 @@ XFillPolygon (Display *dpy, Drawable d, GC gc,
     }
         
     if (i == 0)
-      CGContextMoveToPoint (d->cgc, x, y);
+      CGContextMoveToPoint (cgc, x, y);
     else
-      CGContextAddLineToPoint (d->cgc, x, y);
+      CGContextAddLineToPoint (cgc, x, y);
   }
-  CGContextClosePath (d->cgc);
+  CGContextClosePath (cgc);
   if (gc->gcv.fill_rule == EvenOddRule)
-    CGContextEOFillPath (d->cgc);
+    CGContextEOFillPath (cgc);
   else
-    CGContextFillPath (d->cgc);
+    CGContextFillPath (cgc);
   pop_gc (d, gc);
   invalidate_drawable_cache (d);
   return 0;
@@ -1014,25 +1086,26 @@ draw_arc (Display *dpy, Drawable d, GC gc, int x, int y,
   
   push_fg_gc (d, gc, fill_p);
 
-  CGContextBeginPath (d->cgc);
+  CGContextRef cgc = d->cgc;
+  CGContextBeginPath (cgc);
   
-  CGContextSaveGState(d->cgc);
-  CGContextTranslateCTM (d->cgc, ctr.x, ctr.y);
-  CGContextScaleCTM (d->cgc, width/2.0, height/2.0);
+  CGContextSaveGState(cgc);
+  CGContextTranslateCTM (cgc, ctr.x, ctr.y);
+  CGContextScaleCTM (cgc, width/2.0, height/2.0);
   if (fill_p)
-    CGContextMoveToPoint (d->cgc, 0, 0);
+    CGContextMoveToPoint (cgc, 0, 0);
 
-  CGContextAddArc (d->cgc, 0.0, 0.0, 1, r1, r2, clockwise);
-  CGContextRestoreGState (d->cgc);  // restore before stroke, for line width
+  CGContextAddArc (cgc, 0.0, 0.0, 1, r1, r2, clockwise);
+  CGContextRestoreGState (cgc);  // restore before stroke, for line width
 
   if (closed_p)
-    CGContextClosePath (d->cgc); // for proper line joining
+    CGContextClosePath (cgc); // for proper line joining
   
   if (fill_p) {
-    CGContextFillPath (d->cgc);
+    CGContextFillPath (cgc);
   } else {
-    set_line_mode (d->cgc, &gc->gcv);
-    CGContextStrokePath (d->cgc);
+    set_line_mode (cgc, &gc->gcv);
+    CGContextStrokePath (cgc);
   }
 
   pop_gc (d, gc);
@@ -1100,6 +1173,10 @@ gcv_defaults (XGCValues *gcv, int depth)
 static void
 set_gcv (GC gc, XGCValues *from, unsigned long mask)
 {
+  if (! mask) return;
+  if (! gc) abort();
+  if (! from) abort();
+
   if (mask & GCFunction)	gc->gcv.function	= from->function;
   if (mask & GCForeground)	gc->gcv.foreground	= from->foreground;
   if (mask & GCBackground)	gc->gcv.background	= from->background;
@@ -1557,11 +1634,13 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
   if (w <= 0 || h <= 0)
     return 0;
 
+  CGContextRef cgc = d->cgc;
+
   if (gc->gcv.function == GXset ||
       gc->gcv.function == GXclear) {
     // "set" and "clear" are dumb drawing modes that ignore the source
     // bits and just draw solid rectangles.
-    set_color (d->cgc, (gc->gcv.function == GXset
+    set_color (cgc, (gc->gcv.function == GXset
                         ? (gc->depth == 1 ? 1 : WhitePixel(0,0))
                         : (gc->depth == 1 ? 0 : BlackPixel(0,0))),
                gc->depth, gc->gcv.alpha_allowed_p, YES);
@@ -1602,7 +1681,7 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
                                     kCGRenderingIntentDefault);
     CGDataProviderRelease (prov);
     //Assert (CGImageGetColorSpace (cgi) == dpy->colorspace, "bad colorspace");
-    CGContextDrawImage (d->cgc, r, cgi);
+    CGContextDrawImage (cgc, r, cgi);
     CGImageRelease (cgi);
 
   } else {   // (bpp == 1)
@@ -1632,10 +1711,10 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
                                          NO); /* interpolate */
     push_fg_gc (d, gc, YES);
 
-    CGContextFillRect (d->cgc, r);			// foreground color
-    CGContextClipToMask (d->cgc, r, mask);
-    set_color (d->cgc, gc->gcv.background, gc->depth, NO, YES);
-    CGContextFillRect (d->cgc, r);			// background color
+    CGContextFillRect (cgc, r);				// foreground color
+    CGContextClipToMask (cgc, r, mask);
+    set_color (cgc, gc->gcv.background, gc->depth, NO, YES);
+    CGContextFillRect (cgc, r);				// background color
     pop_gc (d, gc);
 
     free (flipped);
@@ -1656,21 +1735,36 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
 {
   const unsigned char *data = 0;
   int depth, ibpp, ibpl, alpha_first_p;
+# ifndef USE_IPHONE
   NSBitmapImageRep *bm = 0;
+# endif
   
   Assert ((width  < 65535), "improbably large width");
   Assert ((height < 65535), "improbably large height");
   Assert ((x < 65535 && x > -65535), "improbably large x");
   Assert ((y < 65535 && y > -65535), "improbably large y");
 
-  if (d->type == PIXMAP) {
-    depth = d->pixmap.depth;
-    alpha_first_p = 1; // we created it with kCGImageAlphaNoneSkipFirst.
-    ibpp = CGBitmapContextGetBitsPerPixel (d->cgc);
-    ibpl = CGBitmapContextGetBytesPerRow (d->cgc);
-    data = CGBitmapContextGetData (d->cgc);
+  CGContextRef cgc = d->cgc;
+
+#ifndef USE_IPHONE
+  // Because of the backbuffer, all iPhone Windows work like Pixmaps.
+  if (d->type == PIXMAP)
+# endif
+  {
+    depth = (d->type == PIXMAP
+             ? d->pixmap.depth
+             : 32);
+    // If it's a pixmap, we created it with kCGImageAlphaNoneSkipFirst.
+    // If it's an iPhone window, it's the other way around.
+    alpha_first_p = (d->type == PIXMAP);
+    ibpp = CGBitmapContextGetBitsPerPixel (cgc);
+    ibpl = CGBitmapContextGetBytesPerRow (cgc);
+    data = CGBitmapContextGetData (cgc);
     Assert (data, "CGBitmapContextGetData failed");
-  } else {
+
+# ifndef USE_IPHONE
+  } else { /* (d->type == WINDOW) */
+
     // get the bits (desired sub-rectangle) out of the NSView
     NSRect nsfrom;
     nsfrom.origin.x = x;
@@ -1684,6 +1778,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     ibpl = [bm bytesPerRow];
     data = [bm bitmapData];
     Assert (data, "NSBitmapImageRep initWithFocusedViewRect failed");
+# endif // !USE_IPHONE
   }
   
   // data points at (x,y) with ibpl rowstride.  ignore x,y from now on.
@@ -1762,10 +1857,13 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     }
   }
 
+# ifndef USE_IPHONE
   if (bm) [bm release];
+# endif
 
   return image;
 }
+
 
 
 /* Returns a transformation matrix to do rotation as per the provided
@@ -1826,14 +1924,19 @@ jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d,
                                XRectangle *geom_ret, int exif_rotation)
 {
   CGImageRef cgi;
+# ifndef USE_IPHONE
   CGImageSourceRef cgsrc;
+# endif // USE_IPHONE
   NSSize imgr;
+
+  CGContextRef cgc = d->cgc;
 
   if (nsimg_p) {
 
     NSImage *nsimg = (NSImage *) img_arg;
     imgr = [nsimg size];
 
+# ifndef USE_IPHONE
     // convert the NSImage to a CGImage via the toll-free-bridging 
     // of NSData and CFData...
     //
@@ -1843,6 +1946,9 @@ jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d,
     CFDataRef cfdata = (CFDataRef) nsdata;
     cgsrc = CGImageSourceCreateWithData (cfdata, NULL);
     cgi = CGImageSourceCreateImageAtIndex (cgsrc, 0, NULL);
+# else  // USE_IPHONE
+    cgi = nsimg.CGImage;
+# endif // USE_IPHONE
 
   } else {
     cgi = (CGImageRef) img_arg;
@@ -1879,26 +1985,28 @@ jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d,
   if (d->type == WINDOW)
     XClearWindow (dpy, d);
   else {
-    set_color (d->cgc, BlackPixel(dpy,0), 32, NO, YES);
+    set_color (cgc, BlackPixel(dpy,0), 32, NO, YES);
     draw_rect (dpy, d, 0, 0, 0, winr.size.width, winr.size.height, NO, YES);
   }
 
   CGAffineTransform trans = 
     exif_rotate (exif_rotation, rot_p ? dst2.size : dst.size);
 
-  CGContextSaveGState (d->cgc);
-  CGContextConcatCTM (d->cgc, 
+  CGContextSaveGState (cgc);
+  CGContextConcatCTM (cgc, 
                       CGAffineTransformMakeTranslation (dst.origin.x,
                                                         dst.origin.y));
-  CGContextConcatCTM (d->cgc, trans);
+  CGContextConcatCTM (cgc, trans);
   //Assert (CGImageGetColorSpace (cgi) == dpy->colorspace, "bad colorspace");
-  CGContextDrawImage (d->cgc, dst2, cgi);
-  CGContextRestoreGState (d->cgc);
+  CGContextDrawImage (cgc, dst2, cgi);
+  CGContextRestoreGState (cgc);
 
+# ifndef USE_IPHONE
   if (nsimg_p) {
     CFRelease (cgsrc);
     CGImageRelease (cgi);
   }
+# endif // USE_IPHONE
 
   if (geom_ret) {
     geom_ret->x = dst.origin.x;
@@ -1909,6 +2017,7 @@ jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d,
 
   invalidate_drawable_cache (d);
 }
+
 
 
 Pixmap
@@ -2065,7 +2174,9 @@ query_font (Font fid)
   f->per_char = (XCharStruct *) calloc (last-first+2, sizeof (XCharStruct));
   int i;
 
+# ifndef USE_IPHONE
   NSBezierPath *bpath = [NSBezierPath bezierPath];
+# endif
 
   for (i = first; i <= last; i++) {
     unsigned char str[2];
@@ -2074,6 +2185,10 @@ query_font (Font fid)
 
     NSString *nsstr = [NSString stringWithCString:(char *) str
                                          encoding:NSISOLatin1StringEncoding];
+    NSPoint advancement;
+    NSRect bbox;
+
+# ifndef USE_IPHONE
 
     /* I can't believe we have to go through this bullshit just to
        convert a 'char' to an NSGlyph!!
@@ -2111,14 +2226,43 @@ query_font (Font fid)
        [NSString sizeWithAttributes] both return an advancement-sized
        rectangle, not a rectangle completely enclosing the glyph's ink.
      */
-    NSPoint advancement;
-    NSRect bbox;
     advancement.x = advancement.y = 0;
     [bpath removeAllPoints];
     [bpath moveToPoint:advancement];
     [bpath appendBezierPathWithGlyph:glyph inFont:fid->nsfont];
     advancement = [bpath currentPoint];
     bbox = [bpath bounds];
+
+# else  // USE_IPHONE
+
+    UIFont *ff = fid->nsfont;
+    CGSize size = [nsstr sizeWithFont:ff];
+
+    /* sizeWithFont gives us a character's "width" and "height".
+       There is no way to get a character's "lbearing", "rbearing",
+       or "descent".  We do have the font's overall "descent", though.
+
+       drawAtPoint (to an offscreen CGContext) returns "width" and the
+       "ascent" of the font (not of the glyph, I think) so that doesn't
+       help.
+
+       CGFontGetGlyphBBoxes might help (if it actually returns a bounding
+       box and not just the ascent/width again, which I don't know) but
+       we can't use it anyway because there is no way to map a unichar to
+       a CGGlyph.
+
+       Fuck you sideways, Apple.
+     */
+
+    bbox.origin.x = 0;
+    bbox.origin.y = [ff descender];
+    bbox.size.width  = size.width;
+    bbox.size.height = size.height;
+
+    advancement.x = size.width;
+    advancement.y = 0;
+
+# endif // USE_IPHONE
 
     /* Now that we know the advancement and bounding box, we can compute
        the lbearing and rbearing.
@@ -2160,7 +2304,6 @@ query_font (Font fid)
             (int) advancement.x, (int) advancement.y);
 #endif
   }
-
 }
 
 
@@ -2253,14 +2396,19 @@ try_font (BOOL fixed, BOOL bold, BOOL ital, BOOL serif, float size,
 }
 
 static NSFont *
-try_native_font (const char *name, char **name_ret, float *size_ret)
+try_native_font (const char *name, float scale,
+                 char **name_ret, float *size_ret)
 {
   if (!name) return 0;
   const char *spc = strrchr (name, ' ');
   if (!spc) return 0;
-  int size = 0;
-  if (1 != sscanf (spc, " %d ", &size)) return 0;
+  int dsize = 0;
+  if (1 != sscanf (spc, " %d ", &dsize)) return 0;
+  float size = dsize;
+
   if (size <= 4) return 0;
+
+  size *= scale;
 
   char *name2 = strdup (name);
   name2[strlen(name2) - strlen(spc)] = 0;
@@ -2283,6 +2431,7 @@ try_native_font (const char *name, char **name_ret, float *size_ret)
 static NSFont *
 random_font (BOOL bold, BOOL ital, float size, char **name_ret)
 {
+# ifndef USE_IPHONE
   NSFontTraitMask mask = ((bold ? NSBoldFontMask   : NSUnboldFontMask) |
                           (ital ? NSItalicFontMask : NSUnitalicFontMask));
   NSArray *fonts = [[NSFontManager sharedFontManager]
@@ -2321,11 +2470,70 @@ random_font (BOOL bold, BOOL ital, float size, char **name_ret)
 
   // None of the fonts support ASCII?
   return 0;
+
+# else  // USE_IPHONE
+
+  NSMutableArray *fonts = [NSMutableArray arrayWithCapacity:100];
+  NSArray *families = [UIFont familyNames];
+  NSMutableDictionary *famdict = [NSMutableDictionary 
+                                   dictionaryWithCapacity:100];
+  NSObject *y = [NSNumber numberWithBool:YES];
+  for (NSString *name in families) {
+    // There are many dups in the families array -- uniquify it.
+    [famdict setValue:y forKey:name];
+  }
+
+  for (NSString *name in famdict) {
+    for (NSString *fn in [UIFont fontNamesForFamilyName:name]) {
+
+# define MATCH(X) \
+         ([fn rangeOfString:X options:NSCaseInsensitiveSearch].location \
+         != NSNotFound)
+
+      BOOL bb = MATCH(@"Bold");
+      BOOL ii = MATCH(@"Italic") || MATCH(@"Oblique");
+
+      if (!bold != !bb) continue;
+      if (!ital != !ii) continue;
+
+      /* Check if it can do ASCII.  No good way to accomplish this!
+         These are fonts present in iPhone Simulator as of June 2012
+         that don't include ASCII.
+       */
+      if (MATCH(@"AppleGothic") ||	// Korean
+          MATCH(@"Dingbats") ||		// Dingbats
+          MATCH(@"Emoji") ||		// Emoticons
+          MATCH(@"Geeza") ||		// Arabic
+          MATCH(@"Hebrew") ||		// Hebrew
+          MATCH(@"HiraKaku") ||		// Japanese
+          MATCH(@"HiraMin") ||		// Japanese
+          MATCH(@"Kailasa") ||		// Tibetan
+          MATCH(@"Ornaments") ||	// Dingbats
+          MATCH(@"STHeiti")		// Chinese
+         )
+        continue;
+
+      [fonts addObject:fn];
+# undef MATCH
+    }
+  }
+
+  if (! [fonts count]) return 0;	// Nothing suitable?
+
+  int i = random() % [fonts count];
+  NSString *name = [fonts objectAtIndex:i];
+  UIFont *ff = [UIFont fontWithName:name size:size];
+  *name_ret = strdup ([name cStringUsingEncoding:NSUTF8StringEncoding]);
+
+  return ff;
+
+# endif // USE_IPHONE
 }
 
 
 static NSFont *
-try_xlfd_font (const char *name, char **name_ret, float *size_ret)
+try_xlfd_font (const char *name, float scale,
+               char **name_ret, float *size_ret)
 {
   NSFont *nsfont = 0;
   BOOL bold  = NO;
@@ -2376,6 +2584,8 @@ try_xlfd_font (const char *name, char **name_ret, float *size_ret)
   if (size < 6 || size > 1000)
     size = 12;
 
+  size *= scale;
+
   if (rand)
     nsfont   = random_font (bold, ital, size, &ps_name);
 
@@ -2417,7 +2627,14 @@ XLoadFont (Display *dpy, const char *name)
 {
   Font fid = (Font) calloc (1, sizeof(*fid));
 
-  fid->nsfont = try_native_font (name, &fid->ps_name, &fid->size);
+  float scale = 1;
+
+# ifdef USE_IPHONE
+  // Scale up fonts on Retina displays.
+  scale = dpy->main_window->window.view.contentScaleFactor;
+# endif
+
+  fid->nsfont = try_native_font (name, scale, &fid->ps_name, &fid->size);
 
   if (!fid->nsfont && name &&
       strchr (name, ' ') &&
@@ -2430,11 +2647,10 @@ XLoadFont (Display *dpy, const char *name)
   }
 
   if (! fid->nsfont)
-    fid->nsfont = try_xlfd_font (name, &fid->ps_name, &fid->size);
+    fid->nsfont = try_xlfd_font (name, scale, &fid->ps_name, &fid->size);
 
   // We should never return NULL for XLFD fonts.
   if (!fid->nsfont) {
-    NSLog(@"no NSFont for \"%s\"", name);
     abort();
   }
   CFRetain (fid->nsfont);   // needed for garbage collection?
@@ -2553,11 +2769,11 @@ XTextWidth (XFontStruct *f, const char *s, int length)
 
 
 static void
-set_font (CGContextRef cgc, GC gc)
+set_font (Display *dpy, CGContextRef cgc, GC gc)
 {
   Font font = gc->gcv.font;
   if (! font) {
-    font = XLoadFont (0, 0);
+    font = XLoadFont (dpy, 0);
     gc->gcv.font = font;
     [gc->gcv.font->nsfont retain];
     CFRetain (gc->gcv.font->nsfont);   // needed for garbage collection?
@@ -2593,13 +2809,14 @@ draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
      But the Cocoa way only works on NSView, not on CGContextRef (pixmaps)!
    */
 
+  CGContextRef cgc = d->cgc;
   push_fg_gc (d, gc, YES);
-  set_font (d->cgc, gc);
+  set_font (dpy, cgc, gc);
 
-  CGContextSetTextDrawingMode (d->cgc, kCGTextFill);
+  CGContextSetTextDrawingMode (cgc, kCGTextFill);
   if (gc->gcv.antialias_p)
-    CGContextSetShouldAntialias (d->cgc, YES);
-  CGContextShowTextAtPoint (d->cgc,
+    CGContextSetShouldAntialias (cgc, YES);
+  CGContextShowTextAtPoint (cgc,
                             wr.origin.x + x,
                             wr.origin.y + wr.size.height - y,
                             str, len);
@@ -2731,7 +2948,8 @@ XSetClipMask (Display *dpy, GC gc, Pixmap m)
 
   gc->gcv.clip_mask = copy_pixmap (dpy, m);
   if (gc->gcv.clip_mask)
-    gc->clip_mask = CGBitmapContextCreateImage (gc->gcv.clip_mask->cgc);
+    gc->clip_mask =
+      CGBitmapContextCreateImage (gc->gcv.clip_mask->cgc);
   else
     gc->clip_mask = 0;
 
@@ -2753,6 +2971,17 @@ XQueryPointer (Display *dpy, Window w, Window *root_ret, Window *child_ret,
                int *win_x_ret, int *win_y_ret, unsigned int *mask_ret)
 {
   Assert (w->type == WINDOW, "not a window");
+
+# ifdef USE_IPHONE
+  int x = w->window.last_mouse_x;
+  int y = w->window.last_mouse_y;
+  if (root_x_ret) *root_x_ret = x;
+  if (root_y_ret) *root_y_ret = y;
+  if (win_x_ret)  *win_x_ret  = x;
+  if (win_y_ret)  *win_y_ret  = y;
+
+# else  // !USE_IPHONE
+
   NSWindow *nsw = [w->window.view window];
   NSPoint wpos;
   // get bottom left of window on screen, from bottom left
@@ -2776,8 +3005,13 @@ XQueryPointer (Display *dpy, Window w, Window *root_ret, Window *child_ret,
   NSScreen *screen = (screens && [screens count] > 0
                       ? [screens objectAtIndex:0]
                       : [NSScreen mainScreen]);
+#ifdef USE_IPHONE
+  double s = w->window.view.contentScaleFactor;
+#else
+  int s = 1;
+#endif
   NSRect srect = [screen frame];
-  vpos.y = srect.size.height - vpos.y;
+  vpos.y = (s * srect.size.height) - vpos.y;
   
   // get the mouse position on window, from bottom left
   NSEvent *e = [NSApp currentEvent];
@@ -2794,8 +3028,9 @@ XQueryPointer (Display *dpy, Window w, Window *root_ret, Window *child_ret,
   if (root_y_ret) *root_y_ret = (int) p.y;
   if (win_x_ret)  *win_x_ret  = (int) (p.x - vpos.x);
   if (win_y_ret)  *win_y_ret  = (int) (p.y - vpos.y);
+# endif // !USE_IPHONE
   
-  if (mask_ret)   *mask_ret   = 0;  // ####
+  if (mask_ret)   *mask_ret   = 0;  // #### poll the keyboard modifiers?
   if (root_ret)   *root_ret   = 0;
   if (child_ret)  *child_ret  = 0;
   return True;
@@ -2808,6 +3043,15 @@ XTranslateCoordinates (Display *dpy, Window w, Window dest_w,
                        Window *child_ret)
 {
   Assert (w->type == WINDOW, "not a window");
+
+# ifdef USE_IPHONE
+
+  NSPoint p;
+  p.x = src_x;
+  p.y = src_y;
+
+# else  // !USE_IPHONE
+
   NSWindow *nsw = [w->window.view window];
   NSPoint wpos;
   // get bottom left of window on screen, from bottom left
@@ -2831,8 +3075,13 @@ XTranslateCoordinates (Display *dpy, Window w, Window dest_w,
   NSScreen *screen = (screens && [screens count] > 0
                       ? [screens objectAtIndex:0]
                       : [NSScreen mainScreen]);
+# ifdef USE_IPHONE
+  double s = w->window.view.contentScaleFactor;
+# else
+  int s = 1;
+# endif
   NSRect srect = [screen frame];
-  vpos.y = srect.size.height - vpos.y;
+  vpos.y = (s * srect.size.height) - vpos.y;
   
   // point starts out relative to top left of view
   NSPoint p;
@@ -2842,6 +3091,7 @@ XTranslateCoordinates (Display *dpy, Window w, Window dest_w,
   // get point relative to top left of screen
   p.x += vpos.x;
   p.y += vpos.y;
+# endif // !USE_IPHONE
 
   *dest_x_ret = p.x;
   *dest_y_ret = p.y;

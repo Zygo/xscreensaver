@@ -1,4 +1,4 @@
-/* glxfonts, Copyright (c) 2001-2009 Jamie Zawinski <jwz@jwz.org>
+/* glxfonts, Copyright (c) 2001-2012 Jamie Zawinski <jwz@jwz.org>
  * Loads X11 fonts for use with OpenGL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -15,11 +15,17 @@
 #ifndef __GLXFONTS_H__
 #define __GLXFONTS_H__
 
+#ifndef HAVE_GLBITMAP
+# include "texfont.h"
+#endif /* !HAVE_GLBITMAP */
+
+#ifdef HAVE_GLBITMAP
 /* This is basically the same as glXUseXFont().
    We have our own version of it for portability.
  */
 extern void xscreensaver_glXUseXFont (Display *dpy, Font font, 
                                       int first, int count, int listbase);
+#endif /* HAVE_GLBITMAP */
 
 /* Loads the font named by the X resource "res".
    Returns an XFontStruct.
@@ -38,8 +44,12 @@ extern int string_width (XFontStruct *f, const char *c, int *height_ret);
    Any text inside [] will be rendered as a subscript.
    Assumes the font has been loaded as with load_font(). */
 void print_gl_string (Display *dpy,
+# ifdef HAVE_GLBITMAP
                       XFontStruct *font,
                       GLuint font_dlist,
+# else  /* !HAVE_GLBITMAP */
+                      texture_font_data *font_data,
+# endif /* !HAVE_GLBITMAP */
                       int window_width, int window_height,
                       GLfloat x, GLfloat y,
                       const char *string,

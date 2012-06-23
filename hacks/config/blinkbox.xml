@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="blinkbox" _label="BlinkBox">
+<screensaver name="blinkbox" _label="BlinkBox" gl="yes">
 
   <command arg="-root"/>
 
@@ -23,8 +23,8 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-Shows a ball contained inside of a bounding box.
-Colored blocks blink in when the ball hits the sides.
+A motion-blurred ball bounces inside a box whose tiles only become
+visible upon impact.
 
 Written by Jeremy English; 2003.
   </_description>

@@ -304,6 +304,12 @@ analogtv_configure(analogtv *it)
   wlim = it->xgwa.width;
   ratio = wlim / (float) hlim;
 
+#ifdef USE_IPHONE
+  /* Fill the whole iPhone screen, even though that distorts the image. */
+  min_ratio = 320.0 / 480.0 * (1 - percent);
+  max_ratio = 480.0 / 320.0 * (1 + percent);
+#endif
+
   if (wlim < 266 || hlim < 200)
     {
       wlim = 266;

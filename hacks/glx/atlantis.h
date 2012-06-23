@@ -68,18 +68,24 @@
  * OpenGL(TM) is a trademark of Silicon Graphics, Inc.
  */
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #ifdef STANDALONE
 # include <math.h>
 # include "screenhackI.h"
-# ifdef HAVE_COCOA
-#  include <OpenGL/gl.h>
-# else
+# ifndef HAVE_COCOA
 #  include <GL/gl.h>
 #  include <GL/glx.h>
 # endif
 #else
 # include "xlock.h"
 #endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 #define RAD 57.295
 #define RRAD 0.01745

@@ -1126,7 +1126,7 @@ load_init_file (Display *dpy, saver_preferences *p)
                                                      "sgiSaverExtension",
 						     "Boolean");
 #endif
-#if 0 /* obsolete. */
+#ifdef HAVE_XINPUT
   p->use_xinput_extension = get_boolean_resource (dpy, "xinputExtensionDev",
                                                   "Boolean");
 #endif

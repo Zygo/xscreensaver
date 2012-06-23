@@ -297,8 +297,10 @@ Init(ModeInfo *mi)
             glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
             glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
 
+# ifndef HAVE_JWZGLES
             glEnable(GL_TEXTURE_GEN_S);
             glEnable(GL_TEXTURE_GEN_T);
+# endif
             glEnable(GL_TEXTURE_2D);
 
             glMatrixMode(GL_TEXTURE);
@@ -340,8 +342,8 @@ clear_tank (atlantisstruct * ap)
 
   if (do_gradient && !ap->wire)
     {
-      GLfloat top[3] = { 0.00, 0.40, 0.70 };
-      GLfloat bot[3] = { 0.00, 0.05, 0.18 };
+      GLfloat top[4] = { 0.00, 0.40, 0.70, };
+      GLfloat bot[4] = { 0.00, 0.05, 0.18, };
 
       glMatrixMode(GL_PROJECTION);
       glPushMatrix();
@@ -351,26 +353,19 @@ clear_tank (atlantisstruct * ap)
         glPushMatrix();
         {
           glLoadIdentity();
+          glRotatef(current_device_rotation(), 0, 0, 1);
 
-          /* save GL_COLOR_MATERIAL, GL_COLOR_MATERIAL_FACE, etc.
-             This stalls the pipeline, so it would be better to do this
-             with explicit enable/disable calls, but I can't figure
-             out how to undo the glEnable() and glColor() calls below!
-             Simply calling glDisable(GL_COLOR_MATERIAL) is insufficient!
-           */
-          glPushAttrib (GL_LIGHTING_BIT);
-          {
-            glEnable (GL_COLOR_MATERIAL);
-
-            glShadeModel(GL_SMOOTH);
-            glBegin(GL_QUADS);
-            glColor3f (bot[0], bot[1], bot[2]); glVertex3f (-1, -1, 1);
-            glColor3f (bot[0], bot[1], bot[2]); glVertex3f ( 1, -1, 1);
-            glColor3f (top[0], top[1], top[2]); glVertex3f ( 1,  1, 1);
-            glColor3f (top[0], top[1], top[2]); glVertex3f (-1,  1, 1);
-            glEnd();
-          }
-          glPopAttrib();
+# ifndef HAVE_JWZGLES
+          glShadeModel (GL_SMOOTH);
+# endif
+          glDisable (GL_LIGHTING);
+          glBegin (GL_QUADS);
+          glColor3fv (bot);
+          glVertex3f (-1, -1, 1); glVertex3f ( 1, -1, 1);
+          glColor3fv (top);
+          glVertex3f ( 1,  1, 1); glVertex3f (-1,  1, 1);
+          glEnd();
+          glEnable (GL_LIGHTING);
         }
         glPopMatrix();
       }
@@ -521,8 +516,11 @@ draw_atlantis(ModeInfo * mi)
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+        glPushMatrix();
+        glRotatef(current_device_rotation(), 0, 0, 1);
         AllDisplay(ap);
         Animate(ap);
+        glPopMatrix();
 
         if (mi->fps_p) do_fps (mi);
 	glXSwapBuffers(display, window);

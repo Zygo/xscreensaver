@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="surfaces" _label="Surfaces">
+<screensaver name="surfaces" _label="Surfaces" gl="yes">
 
   <command arg="-root"/>
 

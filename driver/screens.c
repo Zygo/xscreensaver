@@ -1049,8 +1049,8 @@ update_screen_layout (saver_info *si)
       if (ssi->screen != old_screen)
         initialize_screen_root_widget (ssi);
 
-      ssi->poll_mouse_last_root_x = -1;
-      ssi->poll_mouse_last_root_y = -1;
+      ssi->last_poll_mouse.root_x = -1;
+      ssi->last_poll_mouse.root_y = -1;
 
       ssi->x      = m->x;
       ssi->y      = m->y;

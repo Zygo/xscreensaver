@@ -1558,7 +1558,7 @@ init_pacman (ModeInfo * mi)
     pp->spriteys = MAX (pp->ys + (pp->ys >> 1) - 1, 1);
     pp->spritedx = (pp->xs - pp->spritexs) >> 1;
     pp->spritedy = (pp->ys - pp->spriteys) >> 1;
-    pp->old_pac_state = chasing;
+    pp->old_pac_state = ps_chasing;
 
     if (!pp->stippledGC) {
         gcv.foreground = MI_BLACK_PIXEL (mi);

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="flipscreen3d" _label="FlipScreen3D">
+<screensaver name="flipscreen3d" _label="FlipScreen3D" gl="yes">
 
   <command arg="-root"/>
 
@@ -16,8 +16,7 @@
   <xscreensaver-image />
 
   <_description>
-Grabs an image of the desktop, turns it into a GL texture map, and
-spins it around and deforms it in various ways.
+Grabs an image of the desktop and spins and deforms it in 3D.
 
 Written by Ben Buxton and Jamie Zawinski; 2001.
   </_description>

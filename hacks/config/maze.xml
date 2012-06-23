@@ -43,11 +43,12 @@
   </hgroup>
 
   <_description>
-This generates random mazes (with three different maze-generation
-algorithms), and then solves them.  Backtracking and look-ahead paths
-are displayed in different colors.
+This generates random mazes, with three different algorithms: Kruskal,
+Prim, and a depth-first recursive backtracker.  It also solves them.
+Backtracking and look-ahead paths are displayed in different colors.
 
 http://en.wikipedia.org/wiki/Maze_generation_algorithm
+http://en.wikipedia.org/wiki/Maze_solving_algorithm
 
 Written by Martin Weiss, Dave Lemke, Jim Randell, Jamie Zawinski,
 Johannes Keukelaar, and Zack Weinberg; 1985.

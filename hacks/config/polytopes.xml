@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="polytopes" _label="Polytopes">
+<screensaver name="polytopes" _label="Polytopes" gl="yes">
 
  <command arg="-root"/>
 
@@ -94,12 +94,14 @@
  <_description>
 
 This shows one of the six regular 4D polytopes rotating in 4D.
+
 Inspired by H.S.M Coxeter's book "Regular Polytopes", 3rd Edition,
 Dover Publications, Inc., 1973, and Thomas Banchoff's book "Beyond the
 Third Dimension: Geometry, Computer Graphics, and Higher Dimensions",
 Scientific American Library, 1990.
 
 http://en.wikipedia.org/wiki/Hypercube
+http://en.wikipedia.org/wiki/Tesseract
 http://en.wikipedia.org/wiki/Regular_polytope
 
 Written by Carsten Steger; 2003.

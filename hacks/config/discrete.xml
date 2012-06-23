@@ -20,9 +20,8 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-More "discrete map" systems, including new variants of Hopalong and
-Julia, and a few others.  See also the "Hopalong" and "Julia" 
-screen savers.
+Discrete map fractal systems, including variants of Hopalong, Julia,
+and others.
 
 Written by Tim Auckland; 1998.
   </_description>

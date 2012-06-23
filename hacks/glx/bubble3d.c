@@ -252,6 +252,7 @@ glb_bubble_draw(glb_data *d, void *bb)
 	glScalef(b->scale, b->scale, b->scale);
 
 	/* Draw the bubble. */
+    glFrontFace(GL_CW);
 	glBegin(GL_TRIANGLES);
 
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, b->color);

@@ -22,8 +22,6 @@
 #endif
 
 #ifdef HAVE_COCOA
-# include <OpenGL/gl.h>
-# include <OpenGL/glu.h>
 # include <GLUT/tube.h>    /* gle is included with GLUT on OSX */
 #else  /* !HAVE_COCOA */
 # include <GL/gl.h>
@@ -34,6 +32,10 @@
 #  include <GL/tube.h>
 # endif
 #endif /* !HAVE_COCOA */
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 extern void InitStuff_helix2(void);
 extern void DrawStuff_helix2(void);

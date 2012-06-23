@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright (c) 1999-2011 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright (c) 1999-2012 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -60,7 +60,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.156 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.158 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2011" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
@@ -77,7 +77,7 @@ my @search_methods = ( 24, "googlephotos",  \&pick_from_google_image_photos,
                         3, "yahoorand",     \&pick_from_yahoo_random_link,
 
                      # This one doesn't work very well: too many non-img links.
-                       0, "twitter",       \&pick_from_twitter_images,
+                        0, "twitter",       \&pick_from_twitter_images,
 
                      # This is a cute way to search for a certain webcams.
                      # Not included in default methods, since these images
@@ -230,6 +230,7 @@ my %warningless_sites = (
   "ljplus.ru"               => 1,
   "yandex.ru"               => 1,
   "imgur.com"               => 1,
+  "yfrog.com"               => 1,
 
   "yimg.com"                => 1,  # This is where dailynews.yahoo.com stores
   "eimg.com"                => 1,  # its images, so pick_from_yahoo_news_text()
@@ -1974,6 +1975,8 @@ sub pick_from_twitpic_images($) {
 
     $img = $src;
 
+    $img = "http:$img" if ($img =~ m@^//@s);  # Oh come on
+
     # Sometimes these images are hosted on twitpic, sometimes on Amazon.
     if ($img =~ m@^/@) {
       $base =~ s@^(https?://[^/]+)/.*@$1@s;
@@ -2004,9 +2007,14 @@ sub pick_from_twitpic_images($) {
 # of images only updates once a minute; so we'll remember the last N entries
 # on it and randomly select from those, to get a wider variety each time.
 
-my $twitter_img_url = "http://twitter.com/statuses/public_timeline.rss";
+my $twitter_img_url = "http://api.twitter.com/1/statuses/" .
+		      "public_timeline.json" .
+		      "?include_entities=true" .
+		      "&include_rts=true" .
+		      "&count=200";
 
 my $twitter_cache_size = 1000;
+
 my @twitter_cache = (); # fifo, for ordering by age
 my %twitter_cache = (); # hash, for detecting dups
 
@@ -2018,30 +2026,30 @@ sub pick_from_twitter_images($) {
   $last_search = $twitter_img_url;   # for warnings
 
   my ( $base, $body ) = get_document ($twitter_img_url, undef, $timeout);
-
   # Update the cache.
 
   if ($body) {
-    $body =~ s/\n/ /gs;
-    $body =~ s/(<item)\b/\n$1/gsi;
+    $body =~ s/[\r\n]+/ /gs;
 
-    my @items = split (/\n/, $body);
-    shift @items;
+    # Parsing JSON is a pain in the ass.  So we halfass it as usual.
+    $body =~ s/^\[|\]$//s;
+    $body =~ s/(\[.*?\])/{ $_ = $1; s@\},@\} @gs; $_; }/gsexi;
+    my @items = split (/},{/, $body);
     foreach (@items) {
-      next unless (m@<link>([^<>]*)</link>@si);
-      my $page = html_unquote ($1);
+      my ($name) = m@"screen_name":"([^\"]+)"@si;
+      my ($img)  = m@"media_url":"([^\"]+)"@si;
+      my ($page) = m@"display_url":"([^\"]+)"@si;
+      next unless ($name && $img && $page);
+      foreach ($img, $page) {
+        s/\\//gs;
+        $_ = "http://$_" unless (m/^http/si);
+      }
 
       next if ($twitter_cache{$page}); # already have it
 
-      my ($title) = m@<title\b[^<>]*>(.*?)</title>@si;
-      next unless $title;
-
-      my ($url) = ($title =~ m@\b(https?://[^\s\[\]()<>\"\']+[a-z\d/])@si);
-      next unless $url;
-
-      LOG ($verbose_filter, "  candidate: $page - $url");
+      LOG ($verbose_filter, "  candidate: $page - $img");
       push @twitter_cache, $page;
-      $twitter_cache{$page} = $url;
+      $twitter_cache{$page} = $img;
     }
   }
 
@@ -2071,21 +2079,7 @@ sub pick_from_twitter_images($) {
 
   $suppress_audit = 1;
 
-  my ( $base2, $body2 ) = get_document ($url, $base, $timeout);
-
-  if (!$base2 || !$body2) {
-    $body2 = undef;
-    return ();
-  }
-
-  my $img = pick_image_from_body ($base2, $body2);
-  $body2 = undef;
-
-  if ($img) {
-    return ($base2, $img);
-  } else {
-    return ();
-  }
+  return ($page, $url);
 }
 
 
@@ -2132,7 +2126,7 @@ sub pick_from_flickr_recent($) {
     $page = html_unquote ($page);
     $thumb = html_unquote ($thumb);
 
-    next unless ($thumb =~ m@^http://farm\d*\.static\.flickr\.com/@);
+    next unless ($thumb =~ m@^http://farm\d*\.static\.?flickr\.com/@);
 
     my $base = "http://www.flickr.com/";
     $page  =~ s@^/@$base@;
@@ -2272,9 +2266,8 @@ sub get_driftnet_file($) {
   error ("\$driftnet_dir unset?") unless ($driftnet_dir);
 
   my $id = $driftnet_magic;
-  my $re = qr/$driftnet_dir/;
   error ("$id: $file not in $driftnet_dir?")
-    unless ($file =~ m@^$re@o);
+    unless ($file =~ m@^\Q$driftnet_dir@o);
 
   open (my $in, '<', $file) || error ("$id: $file: $!");
   my $body = '';
@@ -2343,6 +2336,7 @@ sub pick_from_local_dir($) {
 
   my $v = ($verbose_exec ? "-v" : "");
   my $pick = `xscreensaver-getimage-file $v "$dir"`;
+  $pick =~ s/\s+$//s;
   $pick = "$dir/$pick" unless ($pick =~ m@^/@s);       # relative path
 
   LOG ($verbose_load, "picked file $pick ($id)");
@@ -2356,9 +2350,8 @@ sub get_local_file($) {
   error ("\$local_dir unset?") unless ($local_dir);
 
   my $id = $local_magic;
-  my $re = qr/$local_dir/;
   error ("$id: $file not in $local_dir?")
-    unless ($file =~ m@^$re@o);
+    unless ($file =~ m@^\Q$local_dir@o);
 
   open (my $in, '<', $file) || error ("$id: $file: $!");
   local $/ = undef;  # read entire file

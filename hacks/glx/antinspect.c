@@ -25,6 +25,19 @@
 #include "xlock.h"
 #endif
 
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#else
+# include <X11/Xlib.h>
+# include <GL/gl.h>
+# include <GL/glu.h>
+#endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
+
+#include "sphere.h"
 #include "gltrackball.h"
 
 #define DEF_SHADOWS  "True"
@@ -148,6 +161,7 @@ static const GLfloat ground[4] = {0.0, 1.0, 0.0, -0.00001};
 /* simple filled sphere */
 static Bool mySphere(float radius) 
 {
+#if 0
   GLUquadricObj *quadObj;
 
   if((quadObj = gluNewQuadric()) == 0)
@@ -155,13 +169,20 @@ static Bool mySphere(float radius)
   gluQuadricDrawStyle(quadObj, (GLenum) GLU_FILL);
   gluSphere(quadObj, radius, 16, 16);
   gluDeleteQuadric(quadObj);
-
+#else
+    glPushMatrix();
+    glScalef (radius, radius, radius);
+    glRotatef (90, 1, 0, 0);
+    unit_sphere (16, 16, False);
+    glPopMatrix();
+#endif
   return True;
 }
 
 /* caged sphere */
 static Bool mySphere2(float radius) 
 {
+#if 0
   GLUquadricObj *quadObj;
 
   if((quadObj = gluNewQuadric()) == 0)
@@ -169,6 +190,13 @@ static Bool mySphere2(float radius)
   gluQuadricDrawStyle(quadObj, (GLenum) GLU_LINE);/*GLU_SILHOUETTE);*/
   gluSphere(quadObj, radius, 16, 8);
   gluDeleteQuadric(quadObj);
+#else
+    glPushMatrix();
+    glScalef (radius, radius, radius);
+    glRotatef (90, 1, 0, 0);
+    unit_sphere (16, 8, True);
+    glPopMatrix();
+#endif
 
   return True;
 }
@@ -651,6 +679,7 @@ ENTRYPOINT void draw_antinspect(ModeInfo * mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix();
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   mi->polygon_count = 0;
 

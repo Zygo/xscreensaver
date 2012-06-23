@@ -16,7 +16,7 @@
 
   <_description>
 Floating stars are acted upon by a mixture of simple 2D
-forcefields.  The strength of each forcefield changes
+force  fields.  The strength of each force field changes
 continuously, and it is also switched on and off at random.
 
 Written by Paul 'Joey' Clark; 2001.

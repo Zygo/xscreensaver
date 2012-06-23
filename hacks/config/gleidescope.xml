@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="gleidescope" _label="Gleidescope">
+<screensaver name="gleidescope" _label="Gleidescope" gl="yes">
 
   <command arg="-root"/>
 
@@ -28,8 +28,7 @@
   <xscreensaver-image />
 
   <_description>
-A kaleidoscope that operates on your desktop image, or on
-image files loaded from disk.  
+A kaleidoscope that operates on your desktop image, or other pictures.
 
 http://en.wikipedia.org/wiki/Kaleidoscope
 

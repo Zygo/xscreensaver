@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="mirrorblob" _label="MirrorBlob">
+<screensaver name="mirrorblob" _label="MirrorBlob" gl="yes">
 
   <command arg="-root"/>
 
@@ -64,6 +64,7 @@
 
   <_description>
 Draws a wobbly blob that distorts the image behind it.
+
 Written by Jon Dowdall; 2003.
   </_description>
 </screensaver>

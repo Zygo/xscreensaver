@@ -12,8 +12,7 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-Draws a few swarms of critters flying around the screen, with
-faded color trails behind them.
+Worm-like swarms of particles with vapor trails.
 
 Written by Chris Leger; 2000.
   </_description>

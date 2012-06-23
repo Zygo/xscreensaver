@@ -199,7 +199,7 @@ void GLSetupRC(global_info_t *global)
     glViewport(0,0,(int) global->sys_glWidth,(int) global->sys_glHeight);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0,global->sys_glWidth,0,global->sys_glHeight);
+    glOrtho(0,global->sys_glWidth,0,global->sys_glHeight,-1,1);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
@@ -325,7 +325,7 @@ ENTRYPOINT void reshape_flurry(ModeInfo *mi, int width, int height)
     glViewport(0.0, 0.0, width, height);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    gluOrtho2D(0, width, 0, height);
+    glOrtho(0, width, 0, height,-1,1);
     glMatrixMode(GL_MODELVIEW);
     glClear(GL_COLOR_BUFFER_BIT);
     glFlush();

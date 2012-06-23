@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="glschool" _label="GLSchool">
+<screensaver name="glschool" _label="GLSchool" gl="yes">
 
  <command arg="-root"/>
 
@@ -32,7 +32,7 @@
  </hgroup>
 
  <_description>
-Uses Craig Reynolds' Boids algorithm to simulate a school of fish.
+Uses Craig Reynolds' classic "Boids" algorithm to simulate a school of fish.
 
 http://en.wikipedia.org/wiki/Boids
 

@@ -61,6 +61,18 @@
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#else
+# include <X11/Xlib.h>
+# include <GL/gl.h>
+# include <GL/glu.h>
+#endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
+
 #include "xlockmore.h"
 #include "rotator.h"
 #include "gltrackball.h"
@@ -1101,6 +1113,7 @@ draw_jigsaw (ModeInfo *mi)
   glPushMatrix ();
 
   gltrackball_rotate (jc->trackball);
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   if (wobble_p && jc->puzzle)
     {

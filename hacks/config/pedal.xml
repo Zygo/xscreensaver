@@ -19,9 +19,7 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-This is sort of a combination spirograph/string-art.  It generates a
-large, complex polygon, and renders it by filling using an even/odd
-winding rule.
+A demonstration of the even-odd winding rule.
 
 Written by Dale Moore; 1995.
   </_description>

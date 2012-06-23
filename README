@@ -38,6 +38,10 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.15:   * Ported to iPhone and iPad.
+                      * XInput devices now also ignore small mouse motions.
+                      * Loading images via RSS feeds is much improved.
+                      * Various minor fixes.
 Changes since 5.14:   * New hacks, `hilbert', `companioncube' and `tronbit'.
                       * Image-manipulating hacks can now load from RSS or Atom
                         feeds: `imageDirectory' may contain a URL.

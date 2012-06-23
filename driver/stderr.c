@@ -1,5 +1,5 @@
 /* stderr.c --- capturing stdout/stderr output onto the screensaver window.
- * xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -464,6 +464,7 @@ initialize_stderr (saver_info *si)
 	  perror ("could not dup() a new stdout:");
 	  return;
 	}
+      close (out);
     }
 
   stderr_stdout_read_fd = in;
@@ -540,9 +541,20 @@ shutdown_stderr (saver_info *si)
   if (real_stderr) fflush (real_stderr);
 
   if (stdout != real_stdout)
-    dup2 (fileno(real_stdout), fileno(stdout));
+    {
+      dup2 (fileno(real_stdout), fileno(stdout));
+      fclose (real_stdout);
+      real_stdout = stdout;
+    }
   if (stderr != real_stderr)
-    dup2 (fileno(real_stderr), fileno(stderr));
-
-  stderr_stdout_read_fd = -1;
+    {
+      dup2 (fileno(real_stderr), fileno(stderr));
+      fclose (real_stderr);
+      real_stderr = stderr;
+    }
+  if (stderr_stdout_read_fd != -1)
+    {
+      close (stderr_stdout_read_fd);
+      stderr_stdout_read_fd = -1;
+    }
 }

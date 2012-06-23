@@ -362,8 +362,11 @@ load_textures (ModeInfo *mi)
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
                 xi->width, xi->height, 0,
                 GL_RGBA,
-                /* GL_UNSIGNED_BYTE, */
+# ifndef USE_IPHONE
                 GL_UNSIGNED_INT_8_8_8_8_REV,
+# else
+                GL_UNSIGNED_BYTE,
+# endif
                 xi->data);
   check_gl_error("texture");
 
@@ -374,14 +377,19 @@ load_textures (ModeInfo *mi)
   glBindTexture (GL_TEXTURE_2D, bp->toast_texture);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+# ifndef HAVE_JWZGLES
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+# endif
   glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
                 xi->width, xi->height, 0,
                 GL_RGBA,
-                /* GL_UNSIGNED_BYTE, */
+# ifndef USE_IPHONE
                 GL_UNSIGNED_INT_8_8_8_8_REV,
+# else
+                GL_UNSIGNED_BYTE,
+# endif
                 xi->data);
   check_gl_error("texture");
 
@@ -476,8 +484,10 @@ init_toasters (ModeInfo *mi)
           glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS,           shiny);
           if (do_texture)
             glBindTexture (GL_TEXTURE_2D, bp->chrome_texture);
+# ifndef HAVE_JWZGLES
           glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
           glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+# endif
         }
       else if (i == TOAST || i == TOAST_BITTEN)
         {
@@ -489,8 +499,10 @@ init_toasters (ModeInfo *mi)
           glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS,           shiny);
           if (do_texture)
             glBindTexture (GL_TEXTURE_2D, bp->toast_texture);
+# ifndef HAVE_JWZGLES
           glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
           glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+# endif
 
           glMatrixMode(GL_TEXTURE);
           glTranslatef(0.5, 0.5, 0);
@@ -795,9 +807,12 @@ draw_toasters (ModeInfo *mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix ();
+  glRotatef(current_device_rotation(), 0, 0, 1);
   glRotatef(bp->view_x, 1, 0, 0);
   glRotatef(bp->view_y, 0, 1, 0);
+  glRotatef(-current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (bp->user_trackball);
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
 
 #if 0

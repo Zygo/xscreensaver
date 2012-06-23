@@ -54,6 +54,26 @@ typedef struct passwd_dialog_data passwd_dialog_data;
 typedef struct splash_dialog_data splash_dialog_data;
 typedef struct _monitor monitor;
 
+typedef struct poll_mouse_data poll_mouse_data;
+struct poll_mouse_data {
+  int root_x;
+  int root_y;
+  Window child;
+  unsigned int mask;
+  time_t time;
+};
+
+#ifdef HAVE_XINPUT
+/* XInputExtension device support */
+#include <X11/extensions/XInput.h>
+
+typedef struct xinput_dev_info xinput_dev_info;
+struct xinput_dev_info {
+  XDevice       *device;
+  XEventClass   press, release, valuator;
+  poll_mouse_data last_poll_mouse;
+};
+#endif
 
 /* This structure holds all the user-specified parameters, read from the
    command line, the resource database, or entered through a dialog box.
@@ -202,7 +222,7 @@ struct saver_info {
   int xinput_DeviceButtonPress;    /* Extension device event codes.          */
   int xinput_DeviceButtonRelease;  /* Assigned by server at runtime          */
   int xinput_DeviceMotionNotify;
-  struct xinput_dev_info *xinput_devices;
+  xinput_dev_info *xinput_devices;
   int num_xinput_devices;
 # endif
 
@@ -395,12 +415,7 @@ struct saver_screen_info {
      timers
      ======================================================================= */
 
-  int poll_mouse_last_root_x;		/* Used only when no server exts. */
-  int poll_mouse_last_root_y;
-  Window poll_mouse_last_child;
-  unsigned int poll_mouse_last_mask;
-  time_t poll_mouse_last_time;
-
+  poll_mouse_data last_poll_mouse;	/* Used only when no server exts. */
 
   /* =======================================================================
      subprocs

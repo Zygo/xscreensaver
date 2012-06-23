@@ -16,6 +16,13 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <number id="tvbrightness" type="slider" arg="-tv-brightness %"
+          _label="Brightness Knob" _low-label="Low" _high-label="High"
+          low="0" high="200" default="150"/>
+  <number id="tvcontrast" type="slider" arg="-tv-contrast %"
+          _label="Contrast Knob" _low-label="Low" _high-label="High"
+          low="0" high="1500" default="1000"/>
+
   <_description>
 This simulates the 1971 Pong home video game, as well as
 various artifacts from displaying it on a color TV set.

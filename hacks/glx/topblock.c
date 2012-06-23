@@ -1,5 +1,4 @@
-/* topblock, Copyright (c) 2006-2009
- *  rednuht <topblock.xscreensaver@jumpstation.co.uk>
+/* topblock, Copyright (c) 2006-2012 rednuht <topblock.xscreensaver@jumpstation.co.uk>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -42,14 +41,13 @@ History
 #include "xlockmore.h"
 #include "topblock.h"
 #include "sphere.h"
+#include "tube.h"
 #include "gltrackball.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
 
-#ifdef HAVE_COCOA
-# include <OpenGL/glu.h>
-#else
+#ifndef HAVE_COCOA
 # include <GL/glu.h>
 #endif
 
@@ -198,7 +196,7 @@ init_topBlock (ModeInfo *mi)
 
   reshape_topBlock (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 
-	if (wire) { drawNipples=False; }
+/*	if (wire) { drawNipples=False; }*/
   tb->numFallingBlocks=0;
 
 	if (size>10) { size = 10; }
@@ -310,6 +308,8 @@ draw_topBlock (ModeInfo *mi)
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);		/* clear current */
 	glLoadIdentity();	/* resets directions, do it every time ! */
+        glRotatef(current_device_rotation(), 0, 0, 1);
+
 	if (!follow) {
 		if (tb->highest>tb->eyeLine) { tb->eyeLine+=((tb->highest-tb->eyeLine)/100);	} /* creates a smooth camera transition */
 		gluLookAt(camX, camY+tb->eyeLine, camZ, tb->eyeX, tb->eyeY+tb->eyeLine, tb->eyeZ, 0.0, 1.0, 0.0);		/* setup viewer, xyz cam, xyz looking at and where is up normaly 0,1,0 */
@@ -318,9 +318,14 @@ draw_topBlock (ModeInfo *mi)
 		glRotatef(90, 0.0, 0.0, 1.0);     /* z axis */
 		followBlock(mi);
 	}
-	glRotatef(-90, 1.0, 0.0, 0.0);		
-  gltrackball_rotate (tb->trackball);
-	glRotatef(90, 1.0, 0.0, 0.0);		
+
+        glScalef (-1, 1, 1);
+        glTranslatef (0, 0, -10);
+        glRotatef(-current_device_rotation(), 0, 0, 1);
+        gltrackball_rotate (tb->trackball);
+        glRotatef(current_device_rotation(), 0, 0, 1);
+        glTranslatef (0, 0, 10);
+        glScalef (-1, 1, 1);
 
 	/* rotate the world */
 	glRotatef(tb->rotation, 0.0, 0.0, 1.0);		
@@ -629,7 +634,6 @@ static void buildCarpet(ModeInfo *mi)
 	GLfloat color[4];
   	int wire = MI_IS_WIREFRAME(mi);
   	topBlockSTATE *tb = &tbs[MI_SCREEN(mi)];
-  	GLUquadricObj *quadratic;
 		color[0] = 0.0f;	
 		color[1] = 1.0f;	
 		color[2] = 0.0f;	
@@ -651,8 +655,7 @@ static void buildCarpet(ModeInfo *mi)
 		glVertex3f(x,y,0.0);
 		glVertex3f(0.0,y,0.0);
                 tb->carpet_polys++;
-	    if (wire) { glEnd(); } 
-		else {
+	    if (!wire) {
 		/* add edge pieces */
 		/* side 1 */
 		glNormal3f( 0, -1, 0 );
@@ -686,20 +689,18 @@ static void buildCarpet(ModeInfo *mi)
 	glEnd();
 	/* nipples */
 	if (drawNipples) {
-		quadratic=gluNewQuadric();			/* Create A Pointer To The Quadric Object */
-		gluQuadricNormals(quadratic, GLU_SMOOTH);	/* Create Smooth Normals  */
-		gluQuadricTexture(quadratic, GL_TRUE);		/* Create Texture Coords  */
 		glTranslatef(0.5f,0.5f,-.25);			/* move to the cylinder center */
 		for (c=0;c<x;c++) {
 			glPushMatrix();	/* save state */
 			for (i=0;i<y;i++) {
-				gluCylinder(quadratic, cylSize, cylSize, 0.25f, resolution, resolution);	/* quad, radius(bottom, radius(top), height, subdivisions (around Z), subdevisions (along Z) */
-                                tb->carpet_polys += resolution*resolution;
-				glRotatef(180, 0.0f, 1.0f, 0.0f); /* they are upside down */
-				gluDisk(quadratic, 0.0f, cylSize, resolution, resolution );	 /* inner size (cd hole), outer size (radius), subdivisions radial, subdivisions circular  */
-                                tb->carpet_polys += resolution*resolution;
-				glRotatef(180, 0.0f, 1.0f, 0.0f); /* recover */
-				glTranslatef(0.0f,1.0f,0.0f);			/* move to the next cylinder center (backward) */
+                          tb->carpet_polys += tube(0, 0, -0.1,
+                                                   0, 0, 0.26,
+                                                   cylSize, 0,
+                                                   resolution, True, True,
+                                                   wire);
+                          glRotatef(180, 0.0f, 1.0f, 0.0f); /* they are upside down */
+                          glRotatef(180, 0.0f, 1.0f, 0.0f); /* recover */
+                          glTranslatef(0.0f,1.0f,0.0f);			/* move to the next cylinder center (backward) */
 			}
 			glPopMatrix();	/* save state */
 			glTranslatef(1.0f,0.0f,0.0f);			/* reset   */
@@ -730,7 +731,6 @@ static void buildBlock(ModeInfo *mi)
 	int i,c;
   int wire = MI_IS_WIREFRAME(mi);
   topBlockSTATE *tb = &tbs[MI_SCREEN(mi)];
-	GLUquadricObj *quadratic;
 	tb->block=glGenLists(1);	/* only one */
 	glNewList(tb->block,GL_COMPILE);
         tb->block_polys=0;
@@ -745,17 +745,16 @@ static void buildBlock(ModeInfo *mi)
 	if (drawNipples) {
 		/* nipples */
 		/* draw 8 cylinders each with a disk cap */
-		quadratic=gluNewQuadric();			/* Create A Pointer To The Quadric Object  */
-		gluQuadricNormals(quadratic, GLU_SMOOTH);	/* Create Smooth Normals  */
 		glRotatef(90, 0.0f, 1.0f, 0.0f);		/* 'aim' the pointer ready for the cylinder */
 		glTranslatef(0.5f,0.5f,0.99f);			/* move to the cylinder center */
 		for (c=0;c<2;c++) {
 			for (i=0;i<4;i++) {
-				gluCylinder(quadratic, cylSize, cylSize, 0.25f, resolution, resolution);	/* quad, radius(bottom, radius(top), height, subdivisions (around Z), subdevisions (along Z) */
-                                tb->block_polys += resolution*resolution;
+                          tb->block_polys += tube(0, 0, 0,
+                                                  0, 0, 0.25,
+                                                  cylSize, 0,
+                                                  resolution, True, True, 
+                                                  wire);
 				glTranslatef(0.0f,0.0f,0.25f);			/* move to the cylinder cap  */
-				gluDisk(quadratic, 0.0f, cylSize, resolution, resolution );	 /* inner size (cd hole), outer size (radius), subdivisions radial, subdivisions circular  */
-                                tb->block_polys += resolution*resolution;
 				glTranslatef(0.0f,0.0f,-0.25f);			/* move back from the cylinder cap  */
 				if (c==0) {	
 					glTranslatef(0.0f,-1.0f,0.0f);			/* move to the next cylinder center (forward) */
@@ -768,10 +767,13 @@ static void buildBlock(ModeInfo *mi)
 		/* udders */
 		/* 3 cylinders on the underside */
 		glTranslatef(1.5f,-2.5f,-1.5f);		/* move to the center, under the top of the brick	 */
+                if (! wire)
 		for (c=0;c<3;c++) {
-			gluCylinder(quadratic, uddSize, uddSize, 1.5f, resolution, resolution);	/* quad, radius(bottom, radius(top), height, subdivisions (around Z), subdevisions (along Z) */
-                        tb->block_polys += resolution*resolution;
-			glTranslatef(0.0f,-1.0f,0.0f);		/* move to the center */	
+                  tb->block_polys += tube(0, 0, 0.1,
+                                          0, 0, 1.4,
+                                          uddSize, 0,
+                                          resolution, True, True, wire);
+                  glTranslatef(0.0f,-1.0f,0.0f);		/* move to the center */	
 		}
 	}
 	glPopMatrix();	/* restore state */

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="sballs" _label="SBalls">
+<screensaver name="sballs" _label="SBalls" gl="yes">
 
   <command arg="-root"/>
 

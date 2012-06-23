@@ -564,10 +564,19 @@ static void Draw(ModeInfo * mi)
        glColor3f(0, 0, 0);
     }
     glBegin(GL_QUAD_STRIP);
+#ifndef USE_IPHONE
+    /* Letterbox the background image */
     glNormal3f(0, 0, 1); glTexCoord2f(0,0); glVertex3f(8, 4.1, -4);
     glNormal3f(0, 0, 1); glTexCoord2f(0,1); glVertex3f(8, -4.1, -4);
     glNormal3f(0, 0, 1); glTexCoord2f(1,0); glVertex3f(-8, 4.1, -4);
     glNormal3f(0, 0, 1); glTexCoord2f(1,1); glVertex3f(-8, -4.1, -4);
+#else
+    /* Fill the iPhone screen. Letterboxing looks dumb there. */
+    glNormal3f(0, 0, 1); glTexCoord2f(0,0); glVertex3f(4, 5.2, -4);
+    glNormal3f(0, 0, 1); glTexCoord2f(0,1); glVertex3f(4, -5.2, -4);
+    glNormal3f(0, 0, 1); glTexCoord2f(1,0); glVertex3f(-4, 5.2, -4);
+    glNormal3f(0, 0, 1); glTexCoord2f(1,1); glVertex3f(-4, -5.2, -4);
+#endif
     glEnd();
     mi->polygon_count++;
 

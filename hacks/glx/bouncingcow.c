@@ -16,9 +16,6 @@
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
 
-/* #define DEBUG */
-
-
 # define refresh_cow 0
 # define release_cow 0
 #define DEF_SPEED       "1.0"
@@ -257,15 +254,7 @@ load_texture (ModeInfo *mi, const char *filename)
 
   glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
   glPixelStorei (GL_UNPACK_ROW_LENGTH, image->width);
-  glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
-  glEnable(GL_TEXTURE_GEN_S);
-  glEnable(GL_TEXTURE_GEN_T);
-  glEnable(GL_TEXTURE_2D);
   return True;
 }
 
@@ -276,6 +265,7 @@ init_cow (ModeInfo *mi)
   cow_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
   int i;
+  Bool tex_p = False;
 
   if (!bps) {
     bps = (cow_configuration *)
@@ -323,6 +313,10 @@ init_cow (ModeInfo *mi)
   for (i = 0; i < countof(all_objs); i++)
     bp->dlists[i] = glGenLists (1);
 
+  tex_p = load_texture (mi, do_texture);
+  if (tex_p)
+    glBindTexture (GL_TEXTURE_2D, bp->texture);
+
   for (i = 0; i < countof(all_objs); i++)
     {
       GLfloat black[4] = {0, 0, 0, 1};
@@ -330,36 +324,37 @@ init_cow (ModeInfo *mi)
 
       glNewList (bp->dlists[i], GL_COMPILE);
 
-      glMatrixMode(GL_MODELVIEW);
-      glPushMatrix();
-      glMatrixMode(GL_TEXTURE);
-      glPushMatrix();
-      glMatrixMode(GL_MODELVIEW);
-
-      glBindTexture (GL_TEXTURE_2D, 0);
+      glDisable (GL_TEXTURE_2D);
 
       if (i == HIDE)
         {
           GLfloat color[4] = {0.63, 0.43, 0.36, 1.00};
-
-          if (load_texture (mi, do_texture))
+          if (tex_p)
             {
-              glBindTexture (GL_TEXTURE_2D, bp->texture);
-              glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-              glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-              glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-
-              /* approximately line it up with ../images/earth.xpm */
-              glMatrixMode(GL_TEXTURE);
-              glTranslatef(0.45, 0.58, 0);
-              glScalef(0.08, 0.16, 1);
-              glRotatef(-5, 0, 0, 1);
-              glMatrixMode(GL_MODELVIEW);
-
               /* if we have a texture, make the base color be white. */
               color[0] = color[1] = color[2] = 1.0;
-            }
 
+              glEnable (GL_TEXTURE_2D);
+
+              glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+              glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+              glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+              glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
+              glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
+              glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+              glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+              glEnable(GL_TEXTURE_GEN_S);
+              glEnable(GL_TEXTURE_GEN_T);
+              glEnable(GL_TEXTURE_2D);
+
+              /* approximately line it up with ../images/earth.xpm */
+              glMatrixMode (GL_TEXTURE);
+              glLoadIdentity();
+              glTranslatef (0.45, 0.58, 0);
+              glScalef (0.08, 0.16, 1);
+              glRotatef (-5, 0, 0, 1);
+              glMatrixMode (GL_MODELVIEW);
+            }
           glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
           glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR,            black);
           glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS,           128);
@@ -407,11 +402,6 @@ init_cow (ModeInfo *mi)
         }
 
       renderList (gll, wire);
-
-      glMatrixMode(GL_TEXTURE);
-      glPopMatrix();
-      glMatrixMode(GL_MODELVIEW);
-      glPopMatrix();
 
       glEndList ();
     }
@@ -511,6 +501,7 @@ draw_cow (ModeInfo *mi)
 
   glPushMatrix ();
   gltrackball_rotate (bp->trackball);
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   glScalef (0.5, 0.5, 0.5);
 

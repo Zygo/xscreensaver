@@ -778,7 +778,8 @@ load_textures (ModeInfo *mi, Bool flip_p)
   glGenTextures (1, &mp->texture);
 
   glPixelStorei (GL_UNPACK_ALIGNMENT, 4);
-  glPixelStorei (GL_UNPACK_ROW_LENGTH, xi->width);
+  /* messes up -fps */
+  /* glPixelStorei (GL_UNPACK_ROW_LENGTH, xi->width);*/
   glBindTexture (GL_TEXTURE_2D, mp->texture);
   check_gl_error ("texture init");
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, xi->width, xi->height, 0, GL_RGBA,
@@ -879,18 +880,7 @@ init_matrix (ModeInfo *mi)
   glEnable(GL_NORMALIZE);
 
   if (do_texture)
-    {
-      load_textures (mi, flip_p);
-      glEnable(GL_TEXTURE_2D);
-      glEnable(GL_BLEND);
-
-      /* Jeff Epler points out:
-         By using GL_ONE instead of GL_SRC_ONE_MINUS_ALPHA, glyphs are
-         added to each other, so that a bright glyph with a darker one
-         in front is a little brighter than the bright glyph alone.
-       */
-      glBlendFunc (GL_SRC_ALPHA, GL_ONE);
-    }
+    load_textures (mi, flip_p);
 
   /* to scale coverage-percent to strips, this number looks about right... */
   mp->nstrips = (int) (density * 2.2);
@@ -1002,6 +992,20 @@ draw_matrix (ModeInfo *mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix ();
+  glRotatef(current_device_rotation(), 0, 0, 1);
+
+  if (do_texture)
+    {
+      glEnable(GL_TEXTURE_2D);
+      glEnable(GL_BLEND);
+
+      /* Jeff Epler points out:
+         By using GL_ONE instead of GL_SRC_ONE_MINUS_ALPHA, glyphs are
+         added to each other, so that a bright glyph with a darker one
+         in front is a little brighter than the bright glyph alone.
+       */
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE);
+    }
 
   if (do_rotate)
     {

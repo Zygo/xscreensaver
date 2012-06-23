@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="moebius" _label="Moebius">
+<screensaver name="moebius" _label="Moebius" gl="yes">
 
   <command arg="-root"/>
 

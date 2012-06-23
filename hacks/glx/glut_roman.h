@@ -2450,5 +2450,6 @@ static const StrokeCharRec chars[] = {
     { 2, char127, 33.3333, 66.6667 },
 };
 
+static
 StrokeFontRec glutStrokeRoman = { "Roman", 128, chars, 119.048, -33.3333 };
 

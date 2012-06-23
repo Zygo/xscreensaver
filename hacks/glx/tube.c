@@ -1,4 +1,4 @@
-/* tube, Copyright (c) 2001-2011 Jamie Zawinski <jwz@jwz.org>
+/* tube, Copyright (c) 2001-2012 Jamie Zawinski <jwz@jwz.org>
  * Utility functions to create tubes and cones in GL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -18,11 +18,13 @@
 
 #include <stdlib.h>
 
-#ifdef HAVE_COCOA
-# include <OpenGL/gl.h>
-#else
+#ifndef HAVE_COCOA
 # include <GL/gl.h>
 #endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 #include "tube.h"
 
@@ -133,6 +135,7 @@ unit_tube (int faces, int smooth, int caps_p, int wire_p)
   glNormalPointer   (   GL_FLOAT, sizeof(*array), &array[0].n);
   glTexCoordPointer (2, GL_FLOAT, sizeof(*array), &array[0].s);
 
+  glFrontFace(GL_CCW);
   glDrawArrays ((wire_p ? GL_LINES :
                  (smooth ? GL_TRIANGLE_STRIP : GL_TRIANGLES)),
                 0, out);
@@ -179,6 +182,7 @@ unit_tube (int faces, int smooth, int caps_p, int wire_p)
         glNormalPointer   (   GL_FLOAT, sizeof(*array), &array[0].n);
         glTexCoordPointer (2, GL_FLOAT, sizeof(*array), &array[0].s);
 
+        glFrontFace(GL_CCW);
         glDrawArrays ((wire_p ? GL_LINE_LOOP : GL_TRIANGLE_FAN), 0, out);
       }
 
@@ -275,6 +279,7 @@ unit_cone (int faces, int smooth, int cap_p, int wire_p)
   glNormalPointer   (   GL_FLOAT, sizeof(*array), &array[0].n);
   glTexCoordPointer (2, GL_FLOAT, sizeof(*array), &array[0].s);
 
+  glFrontFace(GL_CCW);
   glDrawArrays ((wire_p ? GL_LINES : GL_TRIANGLES), 0, out);
 
 
@@ -315,6 +320,7 @@ unit_cone (int faces, int smooth, int cap_p, int wire_p)
       glNormalPointer   (   GL_FLOAT, sizeof(*array), &array[0].n);
       glTexCoordPointer (2, GL_FLOAT, sizeof(*array), &array[0].s);
 
+      glFrontFace(GL_CCW);
       glDrawArrays ((wire_p ? GL_LINE_LOOP : GL_TRIANGLE_FAN), 0, out);
     }
 

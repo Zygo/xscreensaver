@@ -109,8 +109,12 @@ typedef struct {
   rotator *rot;
   trackball_state *trackball;
   Bool button_down_p;
+# ifdef HAVE_GLBITMAP
   XFontStruct *xfont;
   GLuint font_dlist;
+# else
+  texture_font_data *font_data;
+# endif
   char *engine_name;
   int engineType;
   int movepaused;
@@ -916,7 +920,12 @@ ENTRYPOINT void init_engine(ModeInfo *mi)
 
  e->shaft_polys = makeshaft(e);
  e->piston_polys = makepiston(e);
+
+#ifdef HAVE_GLBITMAP
  load_font (mi->dpy, "titleFont", &e->xfont, &e->font_dlist);
+#else
+ e->font_data = load_texture_font (mi->dpy, "Font");
+#endif
 }
 
 ENTRYPOINT Bool
@@ -975,7 +984,12 @@ ENTRYPOINT void draw_engine(ModeInfo *mi)
   mi->polygon_count = display(e);
 
   if (do_titles)
-      print_gl_string (mi->dpy, e->xfont, e->font_dlist,
+      print_gl_string (mi->dpy, 
+# ifdef HAVE_GLBITMAP
+                       e->xfont, e->font_dlist,
+# else
+                       e->font_data,
+# endif
                        mi->xgwa.width, mi->xgwa.height,
                        10, mi->xgwa.height - 10,
                        e->engine_name, False);

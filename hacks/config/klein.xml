@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="klein" _label="Klein">
+<screensaver name="klein" _label="Klein" gl="yes">
 
   <command arg="-root"/>
 
@@ -113,10 +113,12 @@
   </hgroup>
 
   <_description>
-This shows a 4D Klein bottle.  You can walk on the Klein bottle or
-rotate it in 4D or walk on it while it rotates in 4D.  Inspired by
-Thomas Banchoff's book "Beyond the Third Dimension: Geometry, Computer
-Graphics, and Higher Dimensions", Scientific American Library, 1990.
+This animates a Klein bottle, the 4D analog of a moebius strip.
+
+You can walk on the surface of the bottle or rotate it in 4D or walk
+on it while it rotates in 4D.  Inspired by Thomas Banchoff's book
+"Beyond the Third Dimension: Geometry, Computer Graphics, and Higher
+Dimensions", Scientific American Library, 1990.
 
 http://en.wikipedia.org/wiki/Klein_bottle
 

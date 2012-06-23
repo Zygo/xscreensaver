@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2011 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2012 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -191,7 +191,6 @@ draw_screen (ModeInfo *mi, Bool mesh_p, Bool sweep_p)
 
   if (wire && !(mesh_p || sweep_p)) return 0;
 
-  glPushAttrib (GL_ENABLE_BIT);
   glDisable (GL_TEXTURE_2D);
 
   glFrontFace (GL_CCW);
@@ -314,7 +313,6 @@ draw_screen (ModeInfo *mi, Bool mesh_p, Bool sweep_p)
       glEnd();
     }
 
-  glPopAttrib();
   free (ring);
 
   return polys;
@@ -435,7 +433,6 @@ draw_table (ModeInfo *mi)
 
   if (wire) return 0;
 
-  glPushAttrib (GL_ENABLE_BIT);
   glDisable (GL_TEXTURE_2D);
 
   glMaterialfv (GL_FRONT, GL_SPECULAR,  spec);
@@ -455,7 +452,6 @@ draw_table (ModeInfo *mi)
       polys++;
     }
   glEnd();
-  glPopAttrib();
 
   glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, text);
   glTranslatef (0, 0, 0.01);
@@ -812,7 +808,6 @@ ENTRYPOINT void
 init_sonar (ModeInfo *mi)
 {
   sonar_configuration *sp;
-  int wire = MI_IS_WIREFRAME(mi);
 
   if (!sps) {
     sps = (sonar_configuration *)
@@ -827,31 +822,6 @@ init_sonar (ModeInfo *mi)
 
   reshape_sonar (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
-
-  if (!wire)
-    {
-      GLfloat pos[4] = {0.05, 0.07, 1.00, 0.0};
-      GLfloat amb[4] = {0.2, 0.2, 0.2, 1.0};
-      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
-      GLfloat spc[4] = {0.0, 1.0, 1.0, 1.0};
-
-      glEnable(GL_TEXTURE_2D);
-      glEnable(GL_LIGHTING);
-      glEnable(GL_LIGHT0);
-      glEnable(GL_CULL_FACE);
-      glEnable(GL_DEPTH_TEST);
-      glEnable(GL_NORMALIZE);
-      glEnable(GL_LINE_SMOOTH);
-      glEnable(GL_BLEND);
-      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-      glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-      glShadeModel(GL_SMOOTH);
-
-      glLightfv(GL_LIGHT0, GL_POSITION, pos);
-      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
-      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
-      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
-    }
 
   sp->trackball = gltrackball_init ();
   sp->rot = make_rotator (0, 0, 0, 0, speed * 0.003, True);
@@ -918,6 +888,7 @@ draw_sonar (ModeInfo *mi)
   sonar_configuration *sp = &sps[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
+  int wire = MI_IS_WIREFRAME(mi);
 
   if (!sp->glx_context)
     return;
@@ -926,10 +897,41 @@ draw_sonar (ModeInfo *mi)
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
+  if (!wire)
+    {
+      GLfloat pos[4] = {0.05, 0.07, 1.00, 0.0};
+      GLfloat amb[4] = {0.2, 0.2, 0.2, 1.0};
+      GLfloat dif[4] = {1.0, 1.0, 1.0, 1.0};
+      GLfloat spc[4] = {0.0, 1.0, 1.0, 1.0};
+
+      glEnable(GL_TEXTURE_2D);
+      glEnable(GL_LIGHTING);
+      glEnable(GL_LIGHT0);
+      glEnable(GL_CULL_FACE);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_NORMALIZE);
+      glEnable(GL_LINE_SMOOTH);
+      glEnable(GL_BLEND);
+      glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+      glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
+      glShadeModel(GL_SMOOTH);
+
+      glLightfv(GL_LIGHT0, GL_POSITION, pos);
+      glLightfv(GL_LIGHT0, GL_AMBIENT,  amb);
+      glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif);
+      glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
+    }
+
   glPushMatrix ();
-  { GLfloat s = 7; glScalef (s,s,s); }
+  {
+    GLfloat s = 7;
+    if (MI_WIDTH(mi) < MI_HEIGHT(mi))
+      s *= (MI_WIDTH(mi) / (float) MI_HEIGHT(mi));
+    glScalef (s,s,s);
+  }
 
   gltrackball_rotate (sp->trackball);
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   if (wobble_p)
     {

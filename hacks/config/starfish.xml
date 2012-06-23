@@ -30,10 +30,9 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-This generates a sequence of undulating, throbbing, star-like
-patterns which pulsate, rotate, and turn inside out.  Another display
-mode uses these shapes to lay down a field of colors, which are then
-cycled.  The motion is very organic.
+Undulating, throbbing, star-like patterns pulsate, rotate, and turn
+inside out.  Another display mode uses these shapes to lay down a
+field of colors, which are then cycled.  The motion is very organic.
 
 Written by Jamie Zawinski; 1997.
   </_description>

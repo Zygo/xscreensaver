@@ -1,13 +1,19 @@
 #ifndef __GLLIST_H__
 #define __GLLIST_H__
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
+
 #include <stdlib.h>
 
-#ifdef HAVE_COCOA
-# include <OpenGL/gl.h>
-#else
+#ifndef HAVE_COCOA
 # include <GL/gl.h>
 #endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 struct gllist{
 	GLenum format;

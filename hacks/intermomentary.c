@@ -224,8 +224,8 @@ draw_glowpoint(struct state *st, Drawable drawable,
     float a;
     unsigned long c;
 
-    for (i =- 2; i < 3; i++) {
-        for (j =- 2; j < 3; j++) {
+    for (i = -2; i < 3; i++) {
+        for (j = -2; j < 3; j++) {
             a = 0.8 - i * i * 0.1 - j * j * 0.1;
 
             c = trans_point(st, px+i, py+j, 255, a, f);

@@ -853,23 +853,6 @@ static Bool Init(ModeInfo * mi)
 		       fs->eject_r, fs->ridtri);
     }
 
-    glShadeModel(GL_FLAT);
-    glEnable(GL_DEPTH_TEST);
-
-    /* makes particles blend with background */
-    if (!MI_IS_WIREFRAME(mi)||(!fs->np))
-    {
-    	glEnable(GL_BLEND);
-    	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
-
-    /* fog stuff */
-    glEnable(GL_FOG);
-    glFogi(GL_FOG_MODE, GL_EXP);
-    glFogfv(GL_FOG_COLOR, fogcolor);
-    glFogf(GL_FOG_DENSITY, 0.03);
-    glHint(GL_FOG_HINT, GL_NICEST);
-
     /* initialise particles and trees */
     for (i = 0; i < fs->np; i++) {
 	setnewpart(fs, &(fs->p[i]));
@@ -1017,7 +1000,28 @@ ENTRYPOINT void draw_fire(ModeInfo * mi)
 	return;
 
     glXMakeCurrent(display, window, *(fs->glx_context));
+
+    glShadeModel(GL_FLAT);
+    glEnable(GL_DEPTH_TEST);
+
+    /* makes particles blend with background */
+    if (!MI_IS_WIREFRAME(mi)||(!fs->np))
+    {
+    	glEnable(GL_BLEND);
+    	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+
+    /* fog stuff */
+    glEnable(GL_FOG);
+    glFogi(GL_FOG_MODE, GL_EXP);
+    glFogfv(GL_FOG_COLOR, fogcolor);
+    glFogf(GL_FOG_DENSITY, 0.03);
+    glHint(GL_FOG_HINT, GL_NICEST);
+
+    glPushMatrix();
+    glRotatef(current_device_rotation(), 0, 0, 1);
     DrawFire(mi);
+    glPopMatrix();
 #ifndef STANDALONE
     Reshape(mi); /* xlock mode */
 #else

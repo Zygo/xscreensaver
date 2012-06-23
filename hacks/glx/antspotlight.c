@@ -25,6 +25,20 @@
 #include "xlock.h"
 #endif
 
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#else
+# include <X11/Xlib.h>
+# include <GL/gl.h>
+# include <GL/glu.h>
+#endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
+
+#include "sphere.h"
+#include "tube.h"
 #include "rotator.h"
 #include "gltrackball.h"
 
@@ -243,6 +257,7 @@ static Bool draw_ant(ModeInfo *mi, antspotlightstruct *mp,
 /* filled sphere */
 static Bool mySphere(float radius)
 {
+#if 0
   GLUquadricObj *quadObj;
   
   if((quadObj = gluNewQuadric()) == 0)
@@ -251,13 +266,20 @@ static Bool mySphere(float radius)
   gluQuadricDrawStyle(quadObj, (GLenum) GLU_FILL);
   gluSphere(quadObj, radius, 16, 16);
   gluDeleteQuadric(quadObj);
-
+#else
+    glPushMatrix();
+    glScalef (radius, radius, radius);
+    glRotatef (90, 1, 0, 0);
+    unit_sphere (16, 16, False);
+    glPopMatrix();
+#endif
   return True;
 }
 
 /* silhouette sphere */
 static Bool mySphere2(float radius)
 {
+#if 0
   GLUquadricObj *quadObj;
 
   if((quadObj = gluNewQuadric()) == 0)
@@ -265,7 +287,14 @@ static Bool mySphere2(float radius)
   gluQuadricDrawStyle(quadObj, (GLenum) GLU_LINE);
   gluSphere(quadObj, radius, 16, 8);
   gluDeleteQuadric(quadObj);
-
+#else
+  /* #### no GLU_LINE */
+    glPushMatrix();
+    glScalef (radius, radius, radius);
+    glRotatef (90, 1, 0, 0);
+    unit_sphere (16, 16, True);
+    glPopMatrix();
+#endif
   return True;
 }
 
@@ -751,6 +780,7 @@ ENTRYPOINT void draw_antspotlight(ModeInfo * mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   
   glPushMatrix();
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   /* position camera */
 

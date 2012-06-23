@@ -11,11 +11,12 @@
 # ifdef HAVE_CONFIG_H
 #  include "config.h"
 # endif
-# ifdef HAVE_COCOA
-#  include <OpenGL/gl.h>
-# else
+# ifndef HAVE_COCOA
 #  include <GL/gl.h>
 # endif
+# ifdef HAVE_JWZGLES
+#  include "jwzgles.h"
+# endif /* HAVE_JWZGLES */
 # undef APIENTRY
 # define APIENTRY /**/
 #endif

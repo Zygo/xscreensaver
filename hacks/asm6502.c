@@ -1220,7 +1220,8 @@ static void freeallAsmLine(AsmLine *listp)
 }
 
 static BOOL addvalue(Param *param,Bit32 value){
-  if (0 <= param->vp && param->vp < MAX_PARAM_VALUE) {
+  /* jwz: suppress "0 <= unsigned" warning */
+  if (/*0 <= param->vp &&*/ param->vp < MAX_PARAM_VALUE) {
     param->value[param->vp++] = value;
     return TRUE;
   }

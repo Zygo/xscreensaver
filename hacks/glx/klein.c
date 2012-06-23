@@ -136,7 +136,9 @@ static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
 
 #ifdef USE_GL
 
-#include <X11/keysym.h>
+#ifndef HAVE_COCOA
+# include <X11/keysym.h>
+#endif
 
 #include "gltrackball.h"
 
@@ -1699,9 +1701,12 @@ ENTRYPOINT void reshape_klein(ModeInfo *mi, int width, int height)
 
 ENTRYPOINT Bool klein_handle_event(ModeInfo *mi, XEvent *event)
 {
-  Display *display = MI_DISPLAY(mi);
   kleinstruct *kb = &klein[MI_SCREEN(mi)];
-  KeySym  sym;
+  KeySym  sym = 0;
+  char c = 0;
+
+  if (event->xany.type == KeyPress || event->xany.type == KeyRelease)
+    XLookupString (&event->xkey, &c, 1, &sym, 0);
 
   if (event->xany.type == ButtonPress &&
       event->xbutton.button == Button1)
@@ -1720,7 +1725,6 @@ ENTRYPOINT Bool klein_handle_event(ModeInfo *mi, XEvent *event)
   }
   else if (event->xany.type == KeyPress)
   {
-    sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
     if (sym == XK_Shift_L || sym == XK_Shift_R)
     {
       kb->current_trackball = 1;
@@ -1733,7 +1737,6 @@ ENTRYPOINT Bool klein_handle_event(ModeInfo *mi, XEvent *event)
   }
   else if (event->xany.type == KeyRelease)
   {
-    sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
     if (sym == XK_Shift_L || sym == XK_Shift_R)
     {
       kb->current_trackball = 0;

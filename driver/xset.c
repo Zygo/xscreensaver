@@ -88,12 +88,6 @@ init_mit_saver_extension (saver_info *si)
 
 #ifdef HAVE_XINPUT
 /* XInputExtension device support */
-#include <X11/extensions/XInput.h>
-
-struct xinput_dev_info {
-  XDevice	*device;
-  XEventClass	press, release, valuator;
-};
 
 Bool
 query_xinput_extension (saver_info *si)

@@ -2018,6 +2018,7 @@ static void display(ModeInfo *mi)
   glEnable(GL_LIGHTING);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
+  glRotatef(current_device_rotation(), 0, 0, 1);
   gluLookAt(ci->viewer[0], ci->viewer[1], ci->viewer[2], 
             0.0, 0.0, 0.0, 
             0.0, 1.0, 0.0);
@@ -2069,11 +2070,11 @@ static TexNum * fonttexturealloc (ModeInfo *mi,
                                   const char *str, float *fg, float *bg)
 {
   Circuit *ci = &circuit[MI_SCREEN(mi)];
-  int i, status;
+  int i;
   XImage *ximage;
   char *c;
   TexNum *t;
-
+  GLuint mintex;
   if (ci->font_init == 0) {
     for (i = 0 ; i < 50 ; i++) {
       ci->font_strings[i] = NULL;
@@ -2101,7 +2102,8 @@ static TexNum * fonttexturealloc (ModeInfo *mi,
                            mi->xgwa.visual,
                            font, str,
                            fg, bg);
-  for (i = 0 ; ci->font_strings[i] != NULL ; i++) { /* set i to the next unused value */
+  glGenTextures (1, &mintex);
+  for (i = mintex ; ci->font_strings[i] != NULL ; i++) { /* set i to the next unused value */
      if (i > 49) {
         fprintf(stderr, "Texture cache full!\n");
         free(ximage->data);
@@ -2117,17 +2119,24 @@ static TexNum * fonttexturealloc (ModeInfo *mi,
   glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
   clear_gl_error();
-  status = gluBuild2DMipmaps(GL_TEXTURE_2D, 4, ximage->width, ximage->height,
-                             GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
-  if (status)
+#if 0
+  i = gluBuild2DMipmaps(GL_TEXTURE_2D, 4,
+                        ximage->width, ximage->height,
+                        GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
+  if (i)
     {
-      const char *s = (char *) gluErrorString (status);
+      const char *s = (char *) gluErrorString (i);
       fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
                progname, ximage->width, ximage->height,
                (s ? s : "(unknown)"));
-      exit (1);
+      abort();
     }
   check_gl_error("mipmapping");
+#else
+  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, ximage->width, ximage->height, 0,
+                GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
+   check_gl_error("texture");
+#endif
 
   t = malloc(sizeof(TexNum));
   t->w = ximage->width;

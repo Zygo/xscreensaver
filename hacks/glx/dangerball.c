@@ -39,6 +39,7 @@
 #define SPHERE_SLICES 32  /* how densely to render spheres */
 #define SPHERE_STACKS 16
 
+
 typedef struct {
   GLXContext *glx_context;
   rotator *rot;

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="photopile" _label="Photopile">
+<screensaver name="photopile" _label="Photopile" gl="yes">
 
   <command arg="-root"/>
 
@@ -22,7 +22,7 @@
 
     <boolean id="polaroid" _label="Simulate instant film" arg-unset="-no-polaroid"/>
 
-    <boolean id="clip" _label="Clip images" arg-unset="-no-clip"/>
+    <boolean id="clip" _label="Instant film theme" arg-unset="-no-clip"/>
 
     <boolean id="shadows" _label="Draw drop shadows" arg-unset="-no-shadows"/>
 

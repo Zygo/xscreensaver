@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="gflux" _label="GFlux">
+<screensaver name="gflux" _label="GFlux" gl="yes">
 
   <command arg="-root"/>
 
@@ -50,7 +50,7 @@
   <xscreensaver-image />
 
   <_description>
-Draws a rippling waves on a rotating wireframe grid.
+Draws undulating waves on a rotating grid.
 
 Written by Josiah Pease; 2000.
   </_description>

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="cubestorm" _label="CubeStorm">
+<screensaver name="cubestorm" _label="CubeStorm" gl="yes">
 
   <command arg="-root"/>
 

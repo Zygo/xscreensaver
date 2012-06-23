@@ -45,10 +45,7 @@ static const char sccsid[] = "@(#)tunnel_draw.c	5.13 2004/05/25 xlockmore";
 #include <math.h>
 
 #ifdef STANDALONE
-# ifdef HAVE_COCOA
-#  include <OpenGL/gl.h>
-#  include <OpenGL/glu.h>
-# else
+# ifndef HAVE_COCOA
 #  include <GL/gl.h>
 #  include <GL/glu.h>
 # endif
@@ -345,6 +342,7 @@ void DrawTunnel(struct tunnel_state *st,
 			/*  End of tunnel */
 			st->ModeX = 1.0;
 			st->ModeXFlag = 0;
+            glEnd();
 			return;
 		}
 		cvCatmullRom(p4, t, &op);
@@ -377,6 +375,7 @@ void DrawTunnel(struct tunnel_state *st,
 			/*  End of tunnel */
 			st->ModeX = 1.0;
 			st->ModeXFlag = 0;
+            glEnd();
 			return;
 		}
 			

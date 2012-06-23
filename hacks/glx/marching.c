@@ -21,11 +21,13 @@
 #include <stdio.h>
 #include <math.h>
 
-#ifdef HAVE_COCOA
-# include <OpenGL/gl.h>
-#else
+#ifndef HAVE_COCOA
 # include <GL/gl.h>
 #endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 #include "marching.h"
 #include "normals.h"

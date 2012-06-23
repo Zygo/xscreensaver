@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="polyhedra" _label="Polyhedra">
+<screensaver name="polyhedra" _label="Polyhedra" gl="yes">
 
   <command arg="-root"/>
 
@@ -184,10 +184,8 @@
   </hgroup>
 
   <_description>
-Displays different 3D solids and some information about each.
-A new solid is chosen every few seconds.  There are 75 uniform
-polyhedra, plus 5 infinite sets of prisms and antiprisms;
-including their duals brings the total to 160.
+Displays the 75 uniform polyhedra and their duals, plus 5 prisms
+and antiprisms, and some information about each.
 
 http://en.wikipedia.org/wiki/Uniform_polyhedra
 http://en.wikipedia.org/wiki/Stellation

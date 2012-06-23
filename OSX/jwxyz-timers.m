@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -12,11 +12,6 @@
 /* This is the OSX implementation of Xt timers, for libjwxyz.
  */
 
-#import <stdlib.h>
-#import <Cocoa/Cocoa.h>
-#import "jwxyz.h"
-#import "jwxyz-timers.h"
-
 //#define DEBUG_TIMERS
 //#define DEBUG_SOURCES
 
@@ -28,6 +23,17 @@
    just before the draw method is called.
  */
 #undef USE_COCOA_SOURCES
+
+
+#import <stdlib.h>
+
+#ifdef USE_COCOA_SOURCES
+# import <Cocoa/Cocoa.h>
+#endif
+
+#import "jwxyz.h"
+#import "jwxyz-timers.h"
+
 
 
 #ifdef DEBUG_TIMERS
@@ -380,4 +386,18 @@ jwxyz_XtRemoveInput_all (Display *dpy)
   }
 
 # endif /* !USE_COCOA_SOURCES */
+}
+
+
+XtInputMask
+XtAppPending (XtAppContext app)
+{
+  return XtIMAlternateInput;  /* just always say yes */
+}
+
+void
+XtAppProcessEvent (XtAppContext app, XtInputMask mask)
+{
+  jwxyz_sources_data *td = display_sources_data (app_to_display (app));
+  jwxyz_sources_run (td);
 }

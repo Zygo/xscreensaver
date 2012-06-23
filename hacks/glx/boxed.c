@@ -982,6 +982,8 @@ static void draw(ModeInfo * mi)
    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
    glLoadIdentity();
    
+   glRotatef(current_device_rotation(), 0, 0, 1);
+
    gp->tic += 0.01f;
    gp->camtic += 0.01f + 0.01f * sin(gp->tic * speed);
    
@@ -1192,6 +1194,7 @@ pinit(ModeInfo * mi)
    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
    clear_gl_error();
+#if 0
    i = gluBuild2DMipmaps(GL_TEXTURE_2D, 3, 256, 256,
                          GL_RGB, GL_UNSIGNED_BYTE, gp->tex1);
    if (i)
@@ -1202,6 +1205,12 @@ pinit(ModeInfo * mi)
        exit (1);
      }
    check_gl_error("mipmapping");
+#else
+   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGB, 256, 256, 0,
+		       GL_RGB, GL_UNSIGNED_BYTE,
+                 gp->tex1);
+   check_gl_error("texture");
+#endif
 
    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
    glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);

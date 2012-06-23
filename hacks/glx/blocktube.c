@@ -133,8 +133,10 @@ static Bool LoadGLTextures(ModeInfo *mi)
             GL_RGBA, GL_UNSIGNED_INT_8_8_8_8_REV, lp->texti->data);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+# ifndef HAVE_JWZGLES /* #### Sphere maps unimplemented */
         glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
         glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+# endif
     }
     return status;
 }

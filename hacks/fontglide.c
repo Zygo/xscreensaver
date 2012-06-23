@@ -28,6 +28,7 @@
 #endif
 
 #include "screenhack.h"
+#include "textclient.h"
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
 #include "xdbe.h"
@@ -94,12 +95,6 @@ typedef struct {
 
   char *font_override;  /* if -font was specified on the cmd line */
 
-  FILE *pipe;
-  XtIntervalId timer_id;
-  XtInputId pipe_id;
-  Time subproc_relaunch_delay;
-  /* Bool input_available_p; */
-
   char buf [40];	/* this only needs to be as big as one "word". */
   int buf_tail;
 
@@ -107,15 +102,13 @@ typedef struct {
   sentence **sentences;
   Bool spawn_p;		/* whether it is time to create a new sentence */
   int latest_sentence;
-
   unsigned long frame_delay;
-
   int id_tick;
+  text_data *tc;
 
 } state;
 
 
-static void launch_text_generator (state *);
 static void drain_input (state *s);
 
 
@@ -526,8 +519,7 @@ new_word (state *s, sentence *se, char *txt, Bool alloc_p)
                           0, 0, w->width-1, w->height-1);
         }
 
-#if 0
-      if (s->debug_p)
+      if (s->debug_p > 1)
         {
           /* bounding box (behind *each* character) */
           char *ss;
@@ -557,7 +549,6 @@ new_word (state *s, sentence *se, char *txt, Bool alloc_p)
               x += overall.width;
             }
         }
-#endif
 
       /* Draw foreground text */
       XDrawString (s->dpy, w->pixmap, gc1, -w->lbearing, w->ascent,
@@ -1465,134 +1456,19 @@ fontglide_draw (Display *dpy, Window window, void *closure)
 
 
 
-
-/* Subprocess.
-   (This bit mostly cribbed from phosphor.c)
- */
-
-static void
-subproc_cb (XtPointer closure, int *source, XtInputId *id)
-{
-  /* state *s = (state *) closure; */
-  /* s->input_available_p = True; */
-}
-
-
-static void
-launch_text_generator (state *s)
-{
-  char *oprogram = get_string_resource (s->dpy, "program", "Program");
-  char *program = (char *) malloc (strlen (oprogram) + 10);
-  strcpy (program, "( ");
-  strcat (program, oprogram);
-  strcat (program, " ) 2>&1");
-
-  if (s->debug_p)
-    fprintf (stderr, "%s: forking: %s\n", progname, program);
-
-  if ((s->pipe = popen (program, "r")))
-    {
-      s->pipe_id =
-        XtAppAddInput (XtDisplayToApplicationContext (s->dpy), 
-                       fileno (s->pipe),
-                       (XtPointer) (XtInputReadMask | XtInputExceptMask),
-                       subproc_cb, (XtPointer) s);
-    }
-  else
-    {
-      char buf[255];
-      sprintf (buf, "%.100s: %.100s", progname, program);
-      perror (buf);
-    }
-
-  free(oprogram);
-  free(program);
-}
-
-
-static void
-relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
-{
-  state *s = (state *) closure;
-  if (!s->timer_id) abort();
-  s->timer_id = 0;
-  launch_text_generator (s);
-}
-
-
-/* whether there is data available to be read on the file descriptor
- */
-static int
-input_available_p (int fd)
-{
-  struct timeval tv = { 0, };
-  fd_set fds;
-# if 0
-  /* This breaks on BSD, which uses bzero() in the definition of FD_ZERO */
-  FD_ZERO (&fds);
-# else
-  memset (&fds, 0, sizeof(fds));
-# endif
-  FD_SET (fd, &fds);
-  return select (fd+1, &fds, NULL, NULL, &tv);
-}
-
-
 /* When the subprocess has generated some output, this reads as much as it
    can into s->buf at s->buf_tail.
  */
 static void
 drain_input (state *s)
 {
-  XtAppContext app = XtDisplayToApplicationContext (s->dpy);
-
-  if (! s->pipe) return;
-
-  /* if (! s->input_available_p) return; */
-  /* s->input_available_p = False; */
-
-  if (! input_available_p (fileno (s->pipe)))
-    return;
-
-
-  if (s->buf_tail < sizeof(s->buf) - 2)
+  while (s->buf_tail < sizeof(s->buf) - 2)
     {
-      int target = sizeof(s->buf) - s->buf_tail - 2;
-      int n;
-      n = read (fileno (s->pipe),
-                (void *) (s->buf + s->buf_tail),
-                target);
-      if (n > 0)
-        {
-          s->buf_tail += n;
-          s->buf[s->buf_tail] = 0;
-        }
+      char c = textclient_getc (s->tc);
+      if (c > 0)
+        s->buf[s->buf_tail++] = c;
       else
-        {
-          XtRemoveInput (s->pipe_id);
-          s->pipe_id = 0;
-          pclose (s->pipe);
-          s->pipe = 0;
-
-          /* If the process didn't print a terminating newline, add one. */
-          if (s->buf_tail > 1 &&
-              s->buf[s->buf_tail-1] != '\n')
-            {
-              s->buf[s->buf_tail++] = '\n';
-              s->buf[s->buf_tail] = 0;
-            }
-
-          /* Then add one more, to make sure there's a sentence break at EOF.
-           */
-          s->buf[s->buf_tail++] = '\n';
-          s->buf[s->buf_tail] = 0;
-
-          /* Set up a timer to re-launch the subproc in a bit. */
-          if (s->timer_id) abort();
-          s->timer_id = XtAppAddTimeOut (app, s->subproc_relaunch_delay,
-                                         relaunch_generator_timer,
-                                         (XtPointer) s);
-        }
+        break;
     }
 }
 
@@ -1684,14 +1560,11 @@ fontglide_init (Display *dpy, Window window)
                                        "background", "Background");
   s->bg_gc = XCreateGC (s->dpy, s->b, GCForeground, &gcv);
 
-  s->subproc_relaunch_delay = 2 * 1000;
-
-  if (! s->debug_metrics_p)
-    launch_text_generator (s);
-
   s->nsentences = 5; /* #### */
   s->sentences = (sentence **) calloc (s->nsentences, sizeof (sentence *));
   s->spawn_p = True;
+
+  s->tc = textclient_open (dpy);
 
   return s;
 }
@@ -1751,13 +1624,7 @@ static void
 fontglide_free (Display *dpy, Window window, void *closure)
 {
   state *s = (state *) closure;
-
-  if (s->pipe_id)
-    XtRemoveInput (s->pipe_id);
-  if (s->pipe)
-    pclose (s->pipe);
-  if (s->timer_id)
-    XtRemoveTimeOut (s->timer_id);
+  textclient_close (s->tc);
 
   /* #### there's more to free here */
 
@@ -1771,6 +1638,7 @@ static const char *fontglide_defaults [] = {
   ".borderColor:	#555555",
   "*delay:	        10000",
   "*program:	        xscreensaver-text",
+  "*usePty:             false",
   "*mode:               random",
   ".font:               (default)",
   "*fontCharset:        iso8859-1",

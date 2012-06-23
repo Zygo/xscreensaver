@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="glcells" _label="GLCells">
+<screensaver name="glcells" _label="GLCells" gl="yes">
 
   <command arg="-root"/>
 
@@ -53,7 +53,7 @@
   </hgroup>
 
   <_description>
-Cells growing, dividing and dying on your screen.
+Cells growing, dividing and dying on your screen.  Microscopic pathos.
 
 Written by Matthias Toussaint; 2007.
   </_description>

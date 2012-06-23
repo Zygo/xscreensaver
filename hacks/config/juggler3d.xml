@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="juggler3d" _label="Juggler3D">
+<screensaver name="juggler3d" _label="Juggler3D" gl="yes">
   <command arg="-root"/>
 
   <hgroup>
@@ -41,7 +41,8 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-Draws a 3D juggling stick-man.
+Draws a 3D juggling stick-man, with Cambridge juggling pattern
+notation used to describe the patterns he juggles.
 
 http://en.wikipedia.org/wiki/Siteswap
 

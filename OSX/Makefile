@@ -2,6 +2,7 @@
 
 XCODE_TARGET = "All Savers"
 XCODEBUILD=/Developer/usr/bin/xcodebuild
+XCODE_ARCH=-arch i386 -arch x86_64
 
 default: release
 all: debug release
@@ -19,10 +20,10 @@ distclean:
 distdepend:: update_plist_version
 
 debug: distdepend
-	cd ..; $(XCODEBUILD) -target $(XCODE_TARGET) -configuration Debug   build
+	cd ..; $(XCODEBUILD) $(XCODE_ARCH) -target $(XCODE_TARGET) -configuration Debug   build
 
 release:: distdepend
-	cd ..; $(XCODEBUILD) -target $(XCODE_TARGET) -configuration Release build
+	cd ..; $(XCODEBUILD) $(XCODE_ARCH) -target $(XCODE_TARGET) -configuration Release build
 
 release:: check_versions
 
@@ -68,7 +69,7 @@ update_plist_version:
   SRC=../utils/version.h ;						      \
   V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' $$SRC` ;		      \
   T=/tmp/xs.$$$$ ;							      \
-  for S in XScreenSaver.plist SaverRunner.plist ; do			      \
+  for S in XScreenSaver.plist SaverRunner.plist iSaverRunner.plist ; do	      \
     /bin/echo -n "Updating version number in $$S to \"$$V\"... " ;	      \
     KEYS="CFBundleVersion|CFBundleShortVersionString" ;			      \
     perl -0777 -pne							      \
@@ -109,7 +110,7 @@ dmg:: distdepend check_versions
       perl -0 -ne							      \
      's/\\\\\\n//g; m/^RETIRED_GL_EXES\s*=\s*(.*)$$/m && print "$$1\n"'	      \
       ../hacks/glx/Makefile.in ;					      \
-     echo savertester` ;						      \
+     echo xscreensaver` ;						      \
 									      \
   for f in $$SRC/*.{saver,app} $$EXTRAS ; do				      \
    ok=yes ;								      \

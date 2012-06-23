@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -72,6 +72,8 @@ xjack_reshape (Display *dpy, Window window, void *closure,
   if (st->right > st->columns) st->right = st->columns;
   if (st->left > st->columns-20) st->left = st->columns-20;
   if (st->left < 0) st->left = 0;
+
+  XClearWindow (st->dpy, st->window);
 }
 
 
@@ -87,6 +89,12 @@ xjack_init (Display *dpy, Window window)
   st->s = source;
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
   fontname = get_string_resource (st->dpy, "font", "Font");
+
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+
+  if (st->xgwa.width <= 480)
+    fontname = "-*-courier-medium-r-*-*-*-180-*-*-m-*-*-*";
+
   st->font = XLoadQueryFont (st->dpy, fontname);
 
   if (!st->font)
@@ -101,8 +109,6 @@ xjack_init (Display *dpy, Window window)
       fprintf(stderr, "no big fixed-width font like \"%s\"\n", fontname);
       exit(1);
     }
-
-  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
 
   gcv.font = st->font->fid;
   gcv.foreground = get_pixel_resource (st->dpy, st->xgwa.colormap,

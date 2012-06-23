@@ -568,6 +568,7 @@ DisplaySuperquadrics(superquadricsstruct * sp)
 
 	SetCull(0, sp);
 
+    glScalef(0.7, 0.7, 0.7);  /* jwz: scale it down a bit */
 	polys = DoneScale(sp);
 
 	glPopMatrix();

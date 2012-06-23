@@ -59,6 +59,19 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 
 #ifdef USE_GL
 
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#else
+# include <X11/Xlib.h>
+# include <GL/gl.h>
+# include <GL/glu.h>
+#endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
+
+#include "sphere.h"
 #include "buildlwo.h"
 #include "teapot.h"
 
@@ -216,14 +229,22 @@ MakeTube(ModeInfo *mi, int direction)
 }
 
 static void
-mySphere(float radius)
+mySphere(float radius, Bool wire)
 {
+#if 0
 	GLUquadricObj *quadObj;
 
 	quadObj = gluNewQuadric();
 	gluQuadricDrawStyle(quadObj, (GLenum) GLU_FILL);
 	gluSphere(quadObj, radius, 16, 16);
 	gluDeleteQuadric(quadObj);
+#else
+    glPushMatrix();
+    glScalef (radius, radius, radius);
+    glRotatef (90, 1, 0, 0);
+    unit_sphere (16, 16, wire);
+    glPopMatrix();
+#endif
 }
 
 static void
@@ -667,6 +688,11 @@ init_pipes (ModeInfo * mi)
 	}
 	pp = &pipes[screen];
 
+#ifdef HAVE_JWZGLES
+    /* Single-buffering on iOS is so confusing! */
+    dbuf_p = True;
+#endif
+
 	pp->window = MI_WINDOW(mi);
 	if ((pp->glx_context = init_GL(mi)) != NULL) {
 
@@ -724,6 +750,7 @@ draw_pipes (ModeInfo * mi)
 
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
+    Bool        wire = MI_IS_WIREFRAME(mi);
 
 	int         newdir;
 	int         OPX, OPY, OPZ;
@@ -763,7 +790,7 @@ draw_pipes (ModeInfo * mi)
 	if (pp->olddir == dirNone) {
 		glPushMatrix();
 		glTranslatef((pp->PX - 16) / 3.0 * 4.0, (pp->PY - 12) / 3.0 * 4.0, (pp->PZ - 16) / 3.0 * 4.0);
-		mySphere(0.6);
+		mySphere(0.6, wire);
 		glPopMatrix();
 	}
 	/* Check for stop conditions */
@@ -771,7 +798,7 @@ draw_pipes (ModeInfo * mi)
 		glPushMatrix();
 		glTranslatef((pp->PX - 16) / 3.0 * 4.0, (pp->PY - 12) / 3.0 * 4.0, (pp->PZ - 16) / 3.0 * 4.0);
 		/* Finish the system with another sphere */
-		mySphere(0.6);
+		mySphere(0.6, wire);
 
 		glPopMatrix();
 
@@ -834,7 +861,7 @@ draw_pipes (ModeInfo * mi)
 		switch (sysT) {
 			case 1:
 				glTranslatef((pp->PX - 16) / 3.0 * 4.0, (pp->PY - 12) / 3.0 * 4.0, (pp->PZ - 16) / 3.0 * 4.0);
-				mySphere(elbowradius);
+				mySphere(elbowradius, wire);
 				break;
 			case 2:
 			case 3:

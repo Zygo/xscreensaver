@@ -895,8 +895,9 @@ t3d_event (Display *dpy, Window window, void *closure, XEvent *event)
   struct state *st = (struct state *) closure;
   if (event->type == KeyPress)
     {
-      KeySym kpr=XKeycodeToKeysym(st->dpy,event->xkey.keycode,0);
-
+      KeySym keysym;
+      char kpr = 0;
+      XLookupString (&event->xkey, &kpr, 1, &keysym, 0);
       switch (kpr)
         {
         case 's': case 'S':

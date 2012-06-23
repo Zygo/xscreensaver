@@ -1514,6 +1514,7 @@ draw_lavalite (ModeInfo *mi)
 #endif  /* 0 */
 
     glLoadIdentity();
+    glRotatef(current_device_rotation(), 0, 0, 1);
 
     gluLookAt ((cx - 0.5) * 8,		/* Position the camera */
                (cy - 0.5) * 8,
@@ -1522,7 +1523,6 @@ draw_lavalite (ModeInfo *mi)
                0, 1, 0);
 
     gltrackball_rotate (bp->trackball);	/* Apply mouse-based camera position */
-
 
     /* Place the lights relative to the object, before the object has
        been rotated or wandered within the scene. */

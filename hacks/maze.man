@@ -3,7 +3,7 @@
 maze \- an automated X11 demo repeatedly creating and solving a random maze
 .SH SYNOPSIS
 .B maze 
-[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-grid\-size \fIpixels\fP] [\-live\-color \fIcolor\fP] [\-dead\-color \fIcolor\fP] [\-solve\-delay \fIusecs\fP] [\-pre\-delay \fIusecs\fP] [\-post\-delay \fIusecs\fP] [\-generator \fIinteger\fP] [\-max\-length \fIinteger\fP] [\-bridge] [\-no\-bridge]
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-grid\-size \fIpixels\fP] [\-live\-color \fIcolor\fP] [\-dead\-color \fIcolor\fP] [\-solve\-delay \fIusecs\fP] [\-pre\-delay \fIusecs\fP] [\-post\-delay \fIusecs\fP] [\-generator \fIinteger\fP] [\-max\-length \fIinteger\fP]
 [\-fps]
 .SH DESCRIPTION
 The \fImaze\fP program creates a "random" maze and then solves it with 
@@ -27,7 +27,7 @@ or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-grid\-size \fIpixels\fP
 The size of each block of the maze, in pixels; default is 0, meaning
-pick a random grid size.
+pick a random grid size.  Minimum meaningful value is 2.
 .TP 8
 .B \-live\-color \fIcolor\fP
 The color of the path.
@@ -74,14 +74,12 @@ complete.
 
 All generators generate mazes with a certain 'characteristic'. See if you
 can spot them!
+
+The three algorithms are essentially Kruskal, Prim, and a depth-first
+recursive backtracker.
 .TP 8
 .B \-max\-length \fInum\fP
 Controls the maximum length of walls drawn in one go by generator 1.
-.TP 8
-.B \-bridge
-.TP 8
-.B \-no\-bridge
-Controls whether or not a 'bridge' will appear over the logo.
 .PP
 Clicking the mouse in the maze window controls it.
 .TP 16

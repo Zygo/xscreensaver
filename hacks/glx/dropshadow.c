@@ -9,17 +9,13 @@
  * implied warranty.
  */
 
-#include "dropshadow.h"
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif /* HAVE_CONFIG_H */
 
 #include <stdlib.h>
 
-#ifdef HAVE_COCOA
-# include <OpenGL/gl.h>
-# include <OpenGL/glu.h>
-#else  /* !HAVE_COCOA -- real Xlib */
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif /* !HAVE_COCOA */
+#include "dropshadow.h"
 
 /* (Alpha) texture data for drop shadow.
  */
@@ -102,12 +98,21 @@ init_drop_shadow(void)
     if (t <= 0) abort();
 
     glBindTexture (GL_TEXTURE_2D, t);
+#if 0
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     gluBuild2DMipmaps (GL_TEXTURE_2D, GL_ALPHA,
                        drop_shadow_width, drop_shadow_height,
                        GL_ALPHA, GL_UNSIGNED_BYTE,
                        drop_shadow_data);
+#else
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_ALPHA, 
+                  drop_shadow_width, drop_shadow_height, 0,
+                  GL_ALPHA, GL_UNSIGNED_BYTE,
+                  drop_shadow_data);
+#endif
 
     return t;
 }
@@ -122,8 +127,6 @@ draw_drop_shadow (GLuint t,
   const GLfloat ri = x + w, ro = ri + r;
   const GLfloat bi = y,     bo = bi - r;
   const GLfloat ti = y + h, to = ti + r;
-
-  glPushAttrib(GL_COLOR_BUFFER_BIT | GL_TEXTURE_BIT);
 
   glEnable (GL_BLEND);
   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -175,6 +178,4 @@ draw_drop_shadow (GLuint t,
   glTexCoord2f (0.0, 0.5); glVertex3f (lo, ti, z);
 
   glEnd();
-
-  glPopAttrib();
 }

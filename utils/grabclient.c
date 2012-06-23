@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2011 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -693,6 +693,14 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
   Bool done = False;
   XRectangle geom_ret_2;
   char *name_ret_2 = 0;
+  
+# ifdef USE_IPHONE
+  /* Currently, only screen-grabbing is implemented, not loading of
+     images from the iPhone Photo Library.  See osxgrabscreen.m.
+   */
+  deskp = True;
+  filep = False;
+# endif
 
   if (!drawable) abort();
 
@@ -739,10 +747,11 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
   }
 
   if (deskp && !done) {
-    osx_grab_desktop_image (screen, window, drawable);
-    if (name_ret)
-      *name_ret = strdup ("desktop");
-    done = True;
+    if (osx_grab_desktop_image (screen, window, drawable, &geom_ret_2)) {
+      if (name_ret)
+        *name_ret = strdup ("desktop");
+      done = True;
+    }
   }
 
   if (! done)

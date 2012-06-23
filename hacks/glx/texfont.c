@@ -1,4 +1,4 @@
-/* texfonts, Copyright (c) 2005-2010 Jamie Zawinski <jwz@jwz.org>
+/* texfonts, Copyright (c) 2005-2012 Jamie Zawinski <jwz@jwz.org>
  * Loads X11 fonts into textures for use with OpenGL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -21,11 +21,19 @@
 #include <ctype.h>
 
 #ifdef HAVE_COCOA
-# include <OpenGL/glu.h>
+# ifdef USE_IPHONE
+#  include "jwzgles.h"
+# else
+#  include <OpenGL/glu.h>
+# endif
 #else
 # include <GL/glx.h>
 # include <GL/glu.h>
 #endif
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
 
 #include "resources.h"
 #include "texfont.h"
@@ -82,11 +90,30 @@ bitmap_to_texture (Display *dpy, Pixmap p, Visual *visual, int *wP, int *hP)
   int h2 = to_pow2 (oh);
   int x, y;
   XImage *image = XGetImage (dpy, p, 0, 0, ow, oh, ~0L, ZPixmap);
-  unsigned char *data = (unsigned char *) calloc (w2, (h2 + 1));
+  unsigned char *data = (unsigned char *) calloc (w2 * 2, (h2 + 1));
   unsigned char *out = data;
+
+  /* OpenGLES doesn't support GL_INTENSITY, so instead of using a
+     texture with 1 byte per pixel, the intensity value, we have
+     to use 2 bytes per pixel: solid white, and an alpha value.
+   */
+# ifdef HAVE_JWZGLES
+#  undef GL_INTENSITY
+# endif
+
+# ifdef GL_INTENSITY
   GLuint iformat = GL_INTENSITY;
-  GLuint format = GL_LUMINANCE;
-  GLuint type = GL_UNSIGNED_BYTE;
+  GLuint format  = GL_LUMINANCE;
+# else
+  GLuint iformat = GL_LUMINANCE_ALPHA;
+  GLuint format  = GL_LUMINANCE_ALPHA;
+# endif
+  GLuint type    = GL_UNSIGNED_BYTE;
+
+# ifdef HAVE_JWZGLES
+  /* This would work, but it's wasteful for no benefit. */
+  mipmap_p = False;
+# endif
 
   for (y = 0; y < h2; y++)
     for (x = 0; x < w2; x++) {
@@ -94,7 +121,11 @@ bitmap_to_texture (Display *dpy, Pixmap p, Visual *visual, int *wP, int *hP)
       /* instead of averaging all three channels, let's just use red,
          and assume it was already grayscale. */
       unsigned long r = pixel & visual->red_mask;
+      /* This goofy trick is to make any of RGBA/ABGR/ARGB work. */
       pixel = ((r >> 24) | (r >> 16) | (r >> 8) | r) & 0xFF;
+# ifndef GL_INTENSITY
+      *out++ = 0xFF;  /* 2 bytes per pixel */
+# endif
       *out++ = pixel;
     }
   XDestroyImage (image);
@@ -145,8 +176,12 @@ load_texture_font (Display *dpy, char *res)
   const char *def3 = "fixed";
   XFontStruct *f;
   int which;
+  GLint old_texture = 0;
 
-  check_gl_error ("stale texture font");
+  glGetIntegerv (GL_TEXTURE_BINDING_2D, &old_texture);
+
+  if (!strcmp (res, "fpsFont"))
+    def1 = "-*-courier-bold-r-normal-*-180-*";  /* Kludge. Sue me. */
 
   XGetWindowAttributes (dpy, root, &xgwa);
 
@@ -319,6 +354,9 @@ load_texture_font (Display *dpy, char *res)
       XFreePixmap (dpy, p);
     }
 
+  /* Reset to the caller's default */
+  glBindTexture (GL_TEXTURE_2D, old_texture);
+
   return data;
 }
 
@@ -327,26 +365,36 @@ load_texture_font (Display *dpy, char *res)
  */
 int
 texture_string_width (texture_font_data *data, const char *c,
-                      int *line_height_ret)
+                      int *height_ret)
 {
-  int w = 0;
+  int x = 0;
+  int max_w = 0;
   XFontStruct *f = data->font;
+  int h = f->ascent + f->descent;
   while (*c)
     {
       int cc = *((unsigned char *) c);
-      w += (f->per_char && cc >= f->min_char_or_byte2
-            ? f->per_char[cc-f->min_char_or_byte2].width
-            : f->max_bounds.width);
+      if (*c == '\n')
+        {
+          if (x > max_w) max_w = x;
+          x = 0;
+          h += f->ascent + f->descent;
+        }
+      else
+        x += (f->per_char && cc >= f->min_char_or_byte2
+              ? f->per_char[cc-f->min_char_or_byte2].width
+              : f->min_bounds.rbearing);
       c++;
     }
-  if (line_height_ret)
-    *line_height_ret = f->ascent + f->descent;
-  return w;
+  if (x > max_w) max_w = x;
+  if (height_ret) *height_ret = h;
+
+  return max_w;
 }
 
 
-/* Draws the string in the scene at the origin.
-   Newlines and tab stops are honored.
+/* Draws the string in the scene at the current point.
+   Newlines, tab stops and subscripts are honored.
  */
 void
 print_texture_string (texture_font_data *data, const char *string)
@@ -361,12 +409,24 @@ print_texture_string (texture_font_data *data, const char *string)
   int tabs = cw * 7;
   int x, y;
   unsigned int i;
+  GLint old_texture = 0;
+  GLfloat omatrix[16];
+  int ofront;
+
+  glGetIntegerv (GL_TEXTURE_BINDING_2D, &old_texture);
+  glGetIntegerv (GL_FRONT_FACE, &ofront);
+  glGetFloatv (GL_TEXTURE_MATRIX, omatrix);
 
   clear_gl_error ();
 
   glPushMatrix();
 
   glNormal3f (0, 0, 1);
+  glFrontFace (GL_CW);
+
+  glMatrixMode (GL_TEXTURE);
+  glLoadIdentity ();
+  glMatrixMode (GL_MODELVIEW);
 
   x = 0;
   y = 0;
@@ -498,6 +558,14 @@ print_texture_string (texture_font_data *data, const char *string)
         }
       }
   glPopMatrix();
+
+  /* Reset to the caller's default */
+  glBindTexture (GL_TEXTURE_2D, old_texture);
+  glFrontFace (ofront);
+  
+  glMatrixMode (GL_TEXTURE);
+  glMultMatrixf (omatrix);
+  glMatrixMode (GL_MODELVIEW);
 
   check_gl_error ("texture font print");
 }

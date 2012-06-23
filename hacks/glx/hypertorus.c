@@ -95,8 +95,9 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #endif /* !STANDALONE */
 
 #ifdef USE_GL
-
-#include <X11/keysym.h>
+# ifndef HAVE_JWZGLES
+#  include <X11/keysym.h>
+# endif
 
 #include "gltrackball.h"
 
@@ -747,9 +748,12 @@ ENTRYPOINT void reshape_hypertorus(ModeInfo *mi, int width, int height)
 
 ENTRYPOINT Bool hypertorus_handle_event(ModeInfo *mi, XEvent *event)
 {
-  Display *display = MI_DISPLAY(mi);
   hypertorusstruct *hp = &hyper[MI_SCREEN(mi)];
-  KeySym  sym;
+  KeySym  sym = 0;
+  char c = 0;
+
+  if (event->xany.type == KeyPress || event->xany.type == KeyRelease)
+    XLookupString (&event->xkey, &c, 1, &sym, 0);
 
   if (event->xany.type == ButtonPress &&
       event->xbutton.button == Button1)
@@ -768,7 +772,6 @@ ENTRYPOINT Bool hypertorus_handle_event(ModeInfo *mi, XEvent *event)
   }
   else if (event->xany.type == KeyPress)
   {
-    sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
     if (sym == XK_Shift_L || sym == XK_Shift_R)
     {
       hp->current_trackball = 1;
@@ -781,7 +784,6 @@ ENTRYPOINT Bool hypertorus_handle_event(ModeInfo *mi, XEvent *event)
   }
   else if (event->xany.type == KeyRelease)
   {
-    sym = XKeycodeToKeysym(display,event->xkey.keycode,0);
     if (sym == XK_Shift_L || sym == XK_Shift_R)
     {
       hp->current_trackball = 0;

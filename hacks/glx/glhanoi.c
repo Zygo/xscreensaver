@@ -1666,7 +1666,6 @@ static void initTowers(glhcfg *glhanoi)
 		glPopMatrix();
 
 	}
-	glPopMatrix();
 	glEndList();
 }
 
@@ -1959,6 +1958,7 @@ ENTRYPOINT void draw_glhanoi(ModeInfo * mi)
     mi->polygon_count = 0;
 
 	glLoadIdentity();
+    glRotatef(current_device_rotation(), 0, 0, 1);
 
 	update_glhanoi(glhanoi);
 	updateView(glhanoi);

@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="voronoi" _label="Voronoi">
+<screensaver name="voronoi" _label="Voronoi" gl="yes">
 
   <command arg="-root"/>
 
@@ -52,6 +52,7 @@ control point than to any other control point.  That is what
 determines the cell's shapes.
 
 http://en.wikipedia.org/wiki/Voronoi_diagram
+http://en.wikipedia.org/wiki/Tessellation
 
 Written by Jamie Zawinski; 2007.
   </_description>

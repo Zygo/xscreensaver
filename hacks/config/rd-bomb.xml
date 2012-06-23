@@ -54,9 +54,8 @@
   </hgroup>
 
   <_description>
-Draws a grid of growing square-like shapes that, once they overtake
-each other, react in unpredictable ways.  "RD" stands for
-reaction-diffusion.
+Reaction-diffusion: draws a grid of growing square-like shapes that,
+once they overtake each other, react in unpredictable ways.
 
 Written by Scott Draves; 1997.
   </_description>

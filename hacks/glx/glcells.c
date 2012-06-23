@@ -58,7 +58,9 @@
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-#define USE_VERTEX_ARRAY
+#ifndef HAVE_JWZGLES /* glDrawElements unimplemented... */
+# define USE_VERTEX_ARRAY
+#endif
 
 #define TEX_SIZE 64
 
@@ -242,7 +244,9 @@ static Object *create_sphere( State *st, int divisions );
 static Object *clone_Object( Object * );
 /* return 1 if cell is capable to divide */
 static int can_divide( State *st, Cell *cell );
+#ifdef USE_VERTEX_ARRAY
 static VertexArray *array_from_ObjectSmooth( ObjectSmooth * );
+#endif
 static void create_nucleus_texture( State *st );
 
 ENTRYPOINT ModeSpecOpt glcells_opts = { countof(opts), opts,                                                   countof(vars), vars, 
@@ -422,6 +426,7 @@ static Object *clone_Object( Object *obj )
   return ret;
 }
 
+#ifdef USE_VERTEX_ARRAY
 static VertexArray *array_from_ObjectSmooth( ObjectSmooth *obj )
 {
   int i, j;
@@ -449,6 +454,8 @@ static VertexArray *array_from_ObjectSmooth( ObjectSmooth *obj )
   
   return array;
 }
+#endif /* USE_VERTEX_ARRAY */
+
 
 /* create a smoothed version of the given Object
    by computing average normal vectors for the vertexes 
@@ -849,6 +856,8 @@ static int create_list( State *st, double fac )
   ObjectSmooth *smooth;
 #ifdef USE_VERTEX_ARRAY
   VertexArray *vertex_array;
+#else
+  int t, i;
 #endif
   int list = glGenLists(1);  
   

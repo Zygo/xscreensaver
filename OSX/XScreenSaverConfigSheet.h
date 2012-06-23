@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -23,16 +23,55 @@
    specified in the XML to the resource names to use).
  */
 
-#import <Cocoa/Cocoa.h>
+#ifdef USE_IPHONE
+# import <Foundation/Foundation.h>
+# import <UIKit/UIKit.h>
+# define NSView UIView
+# define NSUserDefaultsController NSUserDefaults
+#else
+# import <Cocoa/Cocoa.h>
+#endif
+
 #import "jwxyz.h"
 
-@interface XScreenSaverConfigSheet : NSWindow
+#import <Foundation/NSXMLParser.h>
+
+#undef USE_PICKER_VIEW
+
+@interface XScreenSaverConfigSheet : 
+# ifdef USE_IPHONE
+	   UITableViewController <NSXMLParserDelegate,
+				  UITextFieldDelegate
+#  ifdef USE_PICKER_VIEW
+				  , UIPickerViewDelegate
+				  , UIPickerViewDataSource
+#  endif
+				  >
+# else
+	   NSWindow <NSXMLParserDelegate>
+# endif
 {
+  NSString *saver_name;
   NSUserDefaultsController *userDefaultsController;
+  NSDictionary *defaultOptions;
+  const XrmOptionDescRec *opts;
+  id xml_root, xml_parsing;
+
+# ifdef USE_IPHONE
+  UITextField *active_text_field;
+  NSMutableArray *controls;
+  NSMutableArray *pref_ctls;	// UIControl objects, with index = c.tag
+  NSMutableArray *pref_keys;	// ...and their corresponding resources
+#  ifdef USE_PICKER_VIEW
+  NSMutableArray *picker_values;
+#  endif
+# endif
+
 }
 
 - (id)initWithXMLFile: (NSString *) xml_file
               options: (const XrmOptionDescRec *) opts
-           controller: (NSUserDefaultsController *) prefs;
+           controller: (NSUserDefaultsController *) prefs
+             defaults: (NSDictionary *) defs;
 
 @end

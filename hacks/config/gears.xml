@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="gears" _label="Gears">
+<screensaver name="gears" _label="Gears" gl="yes">
 
   <command arg="-root"/>
 

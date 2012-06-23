@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="glslideshow" _label="GLSlideshow">
+<screensaver name="glslideshow" _label="GLSlideshow" gl="yes">
 
   <command arg="-root"/>
 

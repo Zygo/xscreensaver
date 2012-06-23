@@ -239,7 +239,7 @@ MEN_OSX		= xscreensaver-getimage-desktop.man pdf2jpeg.man
 MEN		= $(MEN_1) @MEN_OSX@
 
 EXTRAS		= README Makefile.in \
-		  XScreenSaver.ad.in XScreenSaver-Xm.ad xscreensaver.pam \
+		  XScreenSaver.ad.in XScreenSaver-Xm.ad xscreensaver.pam.in \
 		  xscreensaver-demo.glade2 xscreensaver-demo.glade2p \
 		  screensaver-properties.desktop.in \
 		  .gdbinit
@@ -414,8 +414,8 @@ uninstall-man:
 	       rm -f $(install_prefix)$(manNdir)/$$instname* ;		\
 	done
 
-install-pam:
-	@src="$(srcdir)/xscreensaver.pam" ;				\
+install-pam: xscreensaver.pam
+	@src="xscreensaver.pam" ;				\
 	dest=`sed -n 's/.*PAM_SERVICE_NAME[ 	]*"\([^"]*\)".*$$/\1/p'	\
 	   < ../config.h` ;						\
 	dir="$(install_prefix)$(PAM_DIR)" ;				\

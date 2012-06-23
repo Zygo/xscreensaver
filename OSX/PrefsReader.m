@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2011 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,11 +16,38 @@
    the UI (XScreenSaverConfigSheet).
  */
 
-#import <ScreenSaver/ScreenSaverDefaults.h>
+#ifndef USE_IPHONE
+# import <ScreenSaver/ScreenSaverDefaults.h>
+#endif
+
 #import "PrefsReader.h"
 #import "screenhackI.h"
 
 @implementation PrefsReader
+
+/* Normally we read resources by looking up "KEY" in the database
+   "org.jwz.xscreensaver.SAVERNAME".  But in the all-in-one iPhone
+   app, everything is stored in the database "org.jwz.xscreensaver"
+   instead, so transform keys to "SAVERNAME.KEY".
+
+   NOTE: This is duplicated in XScreenSaverConfigSheet.m, cause I suck.
+*/
+- (NSString *) makeKey:(NSString *)key
+{
+# ifdef USE_IPHONE
+  NSString *prefix = [saver_name stringByAppendingString:@"."];
+  if (! [key hasPrefix:prefix])  // Don't double up!
+    key = [prefix stringByAppendingString:key];
+# endif
+  return key;
+}
+
+- (NSString *) makeCKey:(const char *)key
+{
+  return [self makeKey:[NSString stringWithCString:key
+                                 encoding:NSUTF8StringEncoding]];
+}
+
 
 /* Converts an array of "key:value" strings to an NSDictionary.
  */
@@ -49,8 +76,7 @@
     // decide whether it's a boolean, int, float, or string, and store
     // an object of the appropriate type in the prefs.
     //
-    NSString *nskey = [NSString stringWithCString:key
-                                         encoding:NSUTF8StringEncoding];
+    NSString *nskey = [self makeCKey:key];
     NSObject *nsval;
     int dd;
     double ff;
@@ -88,9 +114,24 @@
   NSDictionary *defsdict = [self defaultsToDict:defs];
   [userDefaults registerDefaults:defsdict];
 
+  // Save a copy of the default options, since iOS doesn't have
+  // [userDefaultsController initialValues].
+  //
+  if (defaultOptions) 
+    [defaultOptions release];
+  defaultOptions = [[NSMutableDictionary dictionaryWithCapacity:20]
+                     retain];
+  for (NSString *key in defsdict) {
+    [defaultOptions setValue:[defsdict objectForKey:key] forKey:key];
+  }
+
+# ifndef USE_IPHONE
   userDefaultsController = 
     [[NSUserDefaultsController alloc] initWithDefaults:userDefaults
                                       initialValues:defsdict];
+# else  // USE_IPHONE
+  userDefaultsController = userDefaults;
+# endif // USE_IPHONE
 
   NSDictionary *optsdict = [NSMutableDictionary dictionaryWithCapacity:20];
 
@@ -100,8 +141,7 @@
     
     while (*resource == '.' || *resource == '*')
       resource++;
-    NSString *nsresource = [NSString stringWithCString:resource
-                                              encoding:NSUTF8StringEncoding];
+    NSString *nsresource = [self makeCKey:resource];
     
     // make sure there's no resource mentioned in options and not defaults.
     if (![defsdict objectForKey:nsresource]) {
@@ -120,9 +160,7 @@
 
 #if 0
   // make sure there's no resource mentioned in defaults and not options.
-  NSEnumerator *enumerator = [defsdict keyEnumerator];
-  NSString *key;
-  while ((key = [enumerator nextObject])) {
+  for (NSString *key in defsdict) {
     if (! [optsdict objectForKey:key])
       if (! ([key isEqualToString:@"foreground"] || // don't warn about these
              [key isEqualToString:@"background"] ||
@@ -146,6 +184,15 @@
   }
 #endif /* 0 */
 
+#if 0
+  // Dump the entire resource database.
+  NSDictionary *d = [userDefaults dictionaryRepresentation];
+  for (NSObject *key in d) {
+    NSObject *val = [d objectForKey:key];
+    NSLog (@"%@ = %@", key, val);
+  }
+#endif
+
 }
 
 - (NSUserDefaultsController *) userDefaultsController
@@ -154,12 +201,17 @@
   return userDefaultsController;
 }
 
+- (NSDictionary *) defaultOptions
+{
+  NSAssert(defaultOptions, @"userDefaultsController uninitialized");
+  return defaultOptions;
+}
+
 
 - (NSObject *) getObjectResource: (const char *) name
 {
   while (1) {
-    NSString *key = [NSString stringWithCString:name
-                                       encoding:NSUTF8StringEncoding];
+    NSString *key = [self makeCKey:name];
     NSObject *obj = [userDefaults objectForKey:key];
     if (obj)
       return obj;
@@ -191,7 +243,8 @@
            !strcmp(name, "titleFont") ||
            !strcmp(name, "fpsFont") ||    // fps.c
            !strcmp(name, "foreground") || // fps.c
-           !strcmp(name, "background")
+           !strcmp(name, "background") ||
+           !strcmp(name, "textLiteral")
            ))
       NSLog(@"warning: no preference \"%s\" [string]", name);
     return NULL;
@@ -269,11 +322,30 @@
 
 - (BOOL) getBooleanResource: (const char *) name
 {
-  int n = [self getIntegerResource:name];
-  if (n == 0) return NO;
-  else if (n == 1) return YES;
-  else {
-    NSAssert2(0, @"%s = %d but should have been 0 or 1", name, n);
+  NSObject *o = [self getObjectResource:name];
+  if (! o) {
+    return NO;
+  } else if ([o isKindOfClass:[NSNumber class]]) {
+    double n = [(NSNumber *) o doubleValue];
+    if (n == 0) return NO;
+    else if (n == 1) return YES;
+    else goto FAIL;
+  } else if ([o isKindOfClass:[NSString class]]) {
+    NSString *s = (NSString *) o;
+    if ([s isEqualToString:@"true"] ||
+        [s isEqualToString:@"yes"] ||
+        [s isEqualToString:@"1"])
+      return YES;
+    else if ([s isEqualToString:@"false"] ||
+             [s isEqualToString:@"no"] ||
+             [s isEqualToString:@"0"] ||
+             [s isEqualToString:@""])
+      return NO;
+    else
+      goto FAIL;
+  } else {
+  FAIL:
+    NSAssert2(0, @"%s = \"%@\" but should have been a boolean", name, o);
     abort();
   }
 }
@@ -286,7 +358,17 @@
   self = [self init];
   if (!self) return nil;
 
+# ifndef USE_IPHONE
   userDefaults = [ScreenSaverDefaults defaultsForModuleWithName:name];
+# else  // USE_IPHONE
+  userDefaults = [NSUserDefaults standardUserDefaults];
+# endif // USE_IPHONE
+
+  // Convert "org.jwz.xscreensaver.NAME" to just "NAME".
+  NSRange r = [name rangeOfString:@"." options:NSBackwardsSearch];
+  if (r.length)
+    name = [name substringFromIndex:r.location+1];
+  saver_name = [name retain];
 
   [self registerXrmKeys:opts defaults:defs];
   return self;
@@ -294,6 +376,7 @@
 
 - (void) dealloc
 {
+  [saver_name release];
   [userDefaultsController release];
   [super dealloc];
 }

@@ -461,7 +461,7 @@ init_gl(ModeInfo *mi)
   glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, material_diffuse);
   glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, material_specular);
   glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-  if(!tex) return;
+  if (!tex) return;
   glEnable(GL_TEXTURE_2D);
 #ifdef MIPMAP
   clear_gl_error();

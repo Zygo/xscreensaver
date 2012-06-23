@@ -1,4 +1,4 @@
-/* photopile, Copyright (c) 2008-2011 Jens Kilian <jjk@acm.org>
+/* photopile, Copyright (c) 2008-2012 Jens Kilian <jjk@acm.org>
  * Based on carousel, Copyright (c) 2005-2008 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and shuffles them into a pile.
  *
@@ -209,7 +209,9 @@ set_new_positions(photopile_state *ss)
   for (i = 0; i < MI_COUNT(mi)+1; ++i)
     {
       image *frame = ss->frames + i;
-      GLfloat d = sqrt(frame->w*frame->w + frame->h*frame->h);
+      GLfloat w = frame->w;
+      GLfloat h = frame->h;
+      GLfloat d = sqrt(w*w + h*h);
       GLfloat leave = frand(M_PI * 2.0);
       GLfloat enter = frand(M_PI * 2.0);
 
@@ -220,6 +222,10 @@ set_new_positions(photopile_state *ss)
       frame->pos[3].x = BELLRAND(MI_WIDTH(mi));
       frame->pos[3].y = BELLRAND(MI_HEIGHT(mi));
       frame->pos[3].angle = (frand(2.0) - 1.0) * max_tilt;
+
+      /* Try to keep the images mostly inside the screen bounds */
+      frame->pos[3].x = MAX(0.5*w, MIN(MI_WIDTH(mi)-0.5*w, frame->pos[3].x));
+      frame->pos[3].y = MAX(0.5*h, MIN(MI_HEIGHT(mi)-0.5*h, frame->pos[3].y));
 
       /* intermediate points */
       frame->pos[1] = offset_pos(frame->pos[0], leave, d * (0.5 + frand(1.0)));
@@ -358,7 +364,7 @@ loading_msg (ModeInfo *mi)
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
-  gluOrtho2D(0, MI_WIDTH(mi), 0, MI_HEIGHT(mi));
+  glOrtho(0, MI_WIDTH(mi), 0, MI_HEIGHT(mi), -1, 1);
 
   glTranslatef ((MI_WIDTH(mi)  - ss->loading_sw) / 2,
                 (MI_HEIGHT(mi) - ss->loading_sh) / 2,
@@ -420,7 +426,7 @@ reshape_photopile (ModeInfo *mi, int width, int height)
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  gluOrtho2D(0, MI_WIDTH(mi), 0, MI_HEIGHT(mi));
+  glOrtho(0, MI_WIDTH(mi), 0, MI_HEIGHT(mi), -1, 1);
 
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -468,19 +474,6 @@ init_photopile (ModeInfo *mi)
   } else {
     MI_CLEARWINDOW(mi);
   }
-
-  glDisable (GL_LIGHTING);
-  glEnable (GL_DEPTH_TEST);
-  glDisable (GL_CULL_FACE);
-
-  if (! wire)
-    {
-      glShadeModel (GL_SMOOTH);
-      glEnable (GL_LINE_SMOOTH);
-      glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
-      glEnable (GL_BLEND);
-      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    }
 
   ss->shadow = init_drop_shadow();
   ss->texfont = load_texture_font (MI_DISPLAY(mi), "font");
@@ -558,7 +551,12 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
     {
       glColor3f (0, 0, 0);
       draw_drop_shadow(ss->shadow, -w1, -h1, z2, 2.0 * w1, h1 + h2, 20.0);
+      glDisable (GL_BLEND);
     }
+
+  glDisable (GL_LIGHTING);
+  glEnable (GL_DEPTH_TEST);
+  glDisable (GL_CULL_FACE);
 
   /* Draw the retro instant-film frame.
    */
@@ -566,6 +564,10 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
     {
       if (! wire)
         {
+          glShadeModel (GL_SMOOTH);
+          glEnable (GL_LINE_SMOOTH);
+          glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
+
           glColor3f (1, 1, 1);
           glBegin (GL_QUADS);
           glVertex3f (-w1, -h1, z2);
@@ -575,7 +577,7 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
           glEnd();
         }
 
-      glLineWidth (2.0);
+      glLineWidth (1.0);
       glColor3f (0.5, 0.5, 0.5);
       glBegin (GL_LINE_LOOP);
       glVertex3f (-w1, -h1, z);
@@ -608,7 +610,13 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
 
   /* Draw a box around it.
    */
-  glLineWidth (2.0);
+  if (! wire)
+    {
+      glShadeModel (GL_SMOOTH);
+      glEnable (GL_LINE_SMOOTH);
+      glHint (GL_LINE_SMOOTH_HINT, GL_NICEST);
+    }
+  glLineWidth (1.0);
   glColor3f (0.5, 0.5, 0.5);
   glBegin (GL_LINE_LOOP);
   glVertex3f (-w, -h, z);
@@ -647,8 +655,8 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
       if (!wire)
         {
           glEnable (GL_TEXTURE_2D);
+          glEnable (GL_BLEND);
           print_texture_string (ss->texfont, title);
-          glDisable (GL_TEXTURE_2D);
         }
       else
         {
@@ -691,6 +699,11 @@ draw_photopile (ModeInfo *mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   {
     GLfloat t;
+
+    glPushMatrix();
+    glTranslatef (MI_WIDTH(mi)/2, MI_HEIGHT(mi)/2, 0);
+    glRotatef(current_device_rotation(), 0, 0, 1);
+    glTranslatef (-MI_WIDTH(mi)/2, -MI_HEIGHT(mi)/2, 0);
 
     /* Handle state transitions. */
     switch (ss->mode)
@@ -759,6 +772,7 @@ draw_photopile (ModeInfo *mi)
             draw_image(mi, j, t, s, z);
           }
       }
+    glPopMatrix();
   }
 
   if (mi->fps_p) do_fps (mi);

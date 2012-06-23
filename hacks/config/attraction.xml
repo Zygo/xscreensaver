@@ -73,11 +73,10 @@
 
   <_description>
 
-Uses a simple simple motion model to generate many different display
-modes.  The control points attract each other up to a certain
-distance, and then begin to repel each other.  The
-attraction/repulsion is proportional to the distance between any two
-particles, similar to the strong and weak nuclear forces.
+Points attract each other up to a certain distance, and then begin to
+repel each other.  The attraction/repulsion is proportional to the
+distance between any two particles, similar to the strong and weak
+nuclear forces.
 
 Written by Jamie Zawinski and John Pezaris; 1992.
   </_description>

@@ -658,7 +658,13 @@ make_bsod_state (Display *dpy, Window window,
      If the window is big:
        use ".bigFont" if it is loadable, else use ".bigFont2".
    */
-  if (bst->xgwa.height < 640)
+  if (
+# ifdef USE_IPHONE
+      1
+# else
+      bst->xgwa.height < 640
+# endif
+      )
     {
       sprintf (buf1, "%.100s.font", name);
       sprintf (buf2, "%.100s.font", class);
@@ -1598,6 +1604,18 @@ macx_10_0 (Display *dpy, Window window)
     pixmap = xpm_data_to_pixmap (dpy, window, (char **) happy_mac,
                                  &pix_w, &pix_h, &mask);
 
+# ifdef USE_IPHONE
+    if (pixmap)
+      {
+        pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual,
+                                bst->xgwa.depth, pixmap, pix_w, pix_h);
+        mask = double_pixmap (dpy, bst->gc, bst->xgwa.visual,
+                              1, mask, pix_w, pix_h);
+        pix_w *= 2;
+        pix_h *= 2;
+      }
+# endif
+
     x = (bst->xgwa.width - pix_w) / 2;
     y = (bst->xgwa.height - pix_h) / 2;
     if (y < 0) y = 0;
@@ -2434,7 +2452,7 @@ hppa_linux (Display *dpy, Window window)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.95 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $Revision: 1.96 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },
@@ -4073,17 +4091,22 @@ static const char *bsod_defaults [] = {
 
   "*dontClearRoot:         True",
 
-  "*apple2TVColor:         50",
-  "*apple2TVTint:          5",
-  "*apple2TVBrightness:    10",
-  "*apple2TVContrast:      90",
-  "*apple2SimulateUser:    True",
-
   ANALOGTV_DEFAULTS
 
 #ifdef HAVE_XSHM_EXTENSION
   "*useSHM:                True",
 #endif
+
+# ifdef USE_IPHONE
+  "*font:		   Courier-Bold 9",
+  ".amiga.font:	           Courier-Bold 12",
+  ".macsbug.font:	   Courier-Bold 5",
+  ".sco.font:		   Courier-Bold 9",
+  ".hvx.font:		   Courier-Bold 9",
+  ".bsd.font:		   Courier-Bold 9",
+  ".solaris.font:          Courier-Bold 6",
+# endif
+
   0
 };
 

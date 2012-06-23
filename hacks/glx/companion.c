@@ -576,6 +576,7 @@ draw_cube (ModeInfo *mi)
 
   glPushMatrix ();
   gltrackball_rotate (bp->trackball);
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   glScalef (2, 2, 2);
 
