@@ -137,7 +137,7 @@
       pinion	      Uses glSelectBuffer and gluPickMatrix for mouse-clicks.
       pipes           Uses glMap2f for the Utah Teapot.
       polyhedra       Uses GLUtesselator; also Utah Teapot.
-      skytentacles    Uses glTexImage1D and GL_LINE in -cel mode.
+      skytentacles    Uses GL_LINE in -cel mode.
       timetunnel      Uses GL_CONSTANT_ALPHA and all kinds of other stuff.
 
 */
@@ -2568,13 +2568,16 @@ jwzgles_glTexImage1D (GLenum target, GLint level,
                       GLint internalFormat,
                       GLsizei width, GLint border,
                       GLenum format, GLenum type,
-                      const GLvoid *pixels)
+                      const GLvoid *data)
 {
   Assert (!state->compiling_verts, "glTexImage1D not allowed inside glBegin");
   /* technically legal, but stupid! */
   Assert (!state->compiling_list, "glTexImage1D inside glNewList");
   Assert (width  == to_pow2(width), "width must be a power of 2");
-  Assert (0, "glTexImage1D unimplemented");  /* does not exist in GLES */
+
+  if (target == GL_TEXTURE_1D) target = GL_TEXTURE_2D;
+  jwzgles_glTexImage2D (target, level, internalFormat, width, 1,
+                        border, format, type, data);
 }
 
 void
@@ -2613,6 +2616,8 @@ jwzgles_glTexImage2D (GLenum target,
 
   if (internalFormat == GL_RGB && format == GL_RGBA)
     internalFormat = GL_RGBA;  /* WTF */
+  if (type == GL_UNSIGNED_INT_8_8_8_8_REV)
+    type = GL_UNSIGNED_BYTE;
 
   if (! state->replaying_list)
     LOG10 ("direct %-12s %s %d %s %d %d %d %s %s 0x%lX", "glTexImage2D", 
@@ -3094,12 +3099,14 @@ jwzgles_glTexParameterf (GLuint target, GLuint pname, GLfloat param)
   Assert (!state->compiling_verts,
           "glTexParameterf not allowed inside glBegin");
 
-  /* We don't *really* implement mipmaps, so just turn this off.
-   */
+  /* We don't *really* implement mipmaps, so just turn this off. */
   if (param == GL_LINEAR_MIPMAP_LINEAR)   param = GL_LINEAR;
   if (param == GL_NEAREST_MIPMAP_LINEAR)  param = GL_LINEAR;
   if (param == GL_LINEAR_MIPMAP_NEAREST)  param = GL_NEAREST;
   if (param == GL_NEAREST_MIPMAP_NEAREST) param = GL_NEAREST;
+
+  /* We implement 1D textures as 2D textures. */
+  if (target == GL_TEXTURE_1D) target = GL_TEXTURE_2D;
 
   if (state->compiling_list)
     {
@@ -3125,6 +3132,35 @@ jwzgles_glTexParameteri (GLuint target, GLuint pname, GLuint param)
 {
   jwzgles_glTexParameterf (target, pname, param);
 }
+
+
+void
+jwzgles_glBindTexture (GLuint target, GLuint texture)
+{
+  Assert (!state->compiling_verts,
+          "glBindTexture not allowed inside glBegin");
+
+  /* We implement 1D textures as 2D textures. */
+  if (target == GL_TEXTURE_1D) target = GL_TEXTURE_2D;
+
+  if (state->compiling_list)
+    {
+      void_int vv[2];
+      vv[0].i = target;
+      vv[1].i = texture;
+      list_push ("glBindTexture", (list_fn_cb) &jwzgles_glBindTexture,
+                 PROTO_II, vv);
+    }
+  else
+    {
+      if (! state->replaying_list)
+        LOG3 ("direct %-12s %s %d", "glBindTexture", 
+              mode_desc(target), texture);
+      glBindTexture (target, texture);  /* the real one */
+      CHECK("glBindTexture");
+    }
+}
+
 
 
 /* Matrix functions, mostly cribbed from Mesa.
@@ -3463,7 +3499,6 @@ void jwzgles_##NAME (ARGS_##SIG)					\
 
 WRAP (glActiveTexture,	I)
 WRAP (glAlphaFunc,	IF)
-WRAP (glBindTexture,	II)
 WRAP (glBlendFunc,	II)
 WRAP (glClear,		I)
 WRAP (glClearColor,	FFFF)

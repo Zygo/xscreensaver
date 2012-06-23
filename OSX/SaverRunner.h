@@ -33,10 +33,6 @@
 
 @class ScreenSaverView;
 
-#ifdef USE_IPHONE
-# import "SaverListController.h"
-#endif
-
 @interface SaverRunner : NSObject
 {
   NSString *saverName;		// the one currently loaded
@@ -57,21 +53,21 @@
   EAGLContext *eagl_ctx;
   GLuint gl_framebuffer, gl_renderbuffer;
   IBOutlet UIView *view;
-  SaverListController *listController;
   UIImage *saved_screenshot;
 
 # endif // USE_IPHONE
 }
 
 - (void) aboutPanel: (id)sender;
-- (void) openPreferences: (id)sender;
 - (void)loadSaver:(NSString *)name launch:(BOOL)launch;
 - (void) loadSaver: (NSString *)name;
 - (void)selectedSaverDidChange:(NSDictionary *)change;
 
-#ifdef USE_IPHONE
-- (void) loadSaverMenu: (id)sender;
+#ifndef USE_IPHONE
+- (void) openPreferences: (id)sender;
+#else  // USE_IPHONE
+- (void) openPreferences: (NSString *)which;
 - (UIImage *) screenshot;
-#endif
+#endif // USE_IPHONE
 
 @end

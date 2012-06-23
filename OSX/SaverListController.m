@@ -15,6 +15,8 @@
 
 
 #import "SaverListController.h"
+#import "SaverRunner.h"
+#import "version.h"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -22,11 +24,103 @@
 
 @implementation SaverListController
 
+- (void) titleTapped:(id) sender
+{
+  [[UIApplication sharedApplication]
+    openURL:[NSURL URLWithString:@"http://www.jwz.org/xscreensaver/"]];
+}
+
+
+- (void)makeTitleBar
+{
+  // Extract the version number and release date from the version string.
+  // Here's an area where I kind of wish I had "Two Problems".
+
+  NSArray *a = [[NSString stringWithCString: screensaver_id
+                          encoding:NSASCIIStringEncoding]
+                 componentsSeparatedByCharactersInSet:
+                   [NSCharacterSet
+                     characterSetWithCharactersInString:@" ()-"]];
+  NSString *vers = [a objectAtIndex: 3];
+  NSString *year = [a objectAtIndex: 7];
+
+  NSString *line1 = [@"XScreenSaver " stringByAppendingString: vers];
+  NSString *line2 = [@"\u00A9 " stringByAppendingString:
+                        [year stringByAppendingString:
+                                @" Jamie Zawinski <jwz@jwz.org>"]];
+
+  UIView *v = [[UIView alloc] initWithFrame:CGRectZero];
+
+  // The "go to web page" button on the right
+
+  UIImage *img = [UIImage imageWithContentsOfFile:
+                            [[[NSBundle mainBundle] bundlePath]
+                              stringByAppendingPathComponent:
+                                @"iSaverRunner29t.png"]];
+  UIBarButtonItem *button = [[[UIBarButtonItem alloc]
+                               initWithImage: img
+                               style: UIBarButtonItemStylePlain
+                               target: self
+                               action: @selector(titleTapped:)]
+                              autorelease];
+  button.width = img.size.width;
+  self.navigationItem.rightBarButtonItem = button;
+
+  // The title bar
+
+  UILabel *label1 = [[UILabel alloc] initWithFrame:CGRectZero];
+  UILabel *label2 = [[UILabel alloc] initWithFrame:CGRectZero];
+  [label1 setText: line1];
+  [label2 setText: line2];
+  [label1 setBackgroundColor:[UIColor clearColor]];
+  [label2 setBackgroundColor:[UIColor clearColor]];
+
+  [label1 setFont: [UIFont boldSystemFontOfSize: 17]];
+  [label2 setFont: [UIFont systemFontOfSize: 12]];
+  [label1 sizeToFit];
+  [label2 sizeToFit];
+
+  CGRect r1 = [label1 frame];
+  CGRect r2 = [label2 frame];
+  CGRect r3 = r2;
+
+  CGRect win = [self view].frame;
+  if (win.size.width > 320) {					// iPad
+    [label1 setTextAlignment: UITextAlignmentLeft];
+    [label2 setTextAlignment: UITextAlignmentRight];
+    label2.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
+    r3.size.width = win.size.width;
+    r1 = r3;
+    r1.origin.x   += 6;
+    r1.size.width -= 12;
+    r2 = r1;
+
+  } else {							// iPhone
+    r3.size.width = 320; // force it to be flush-left
+    [label1 setTextAlignment: UITextAlignmentLeft];
+    [label2 setTextAlignment: UITextAlignmentLeft];
+    r1.origin.y = -1;    // make it fit in landscape
+    r2.origin.y = r1.origin.y + r1.size.height - 2;
+    r3.size.height = r1.size.height + r2.size.height;
+  }
+  v.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+  [label1 setFrame:r1];
+  [label2 setFrame:r2];
+  [v setFrame:r3];
+
+  [v addSubview:label1];
+  [v addSubview:label2];
+
+  self.navigationItem.titleView = v;
+}
+
+
 - (id)initWithNames:(NSArray *)names descriptions:(NSDictionary *)descs;
 {
   self = [self init];
   if (! self) return 0;
   [self reload:names descriptions:descs];
+  [self makeTitleBar];
   return self;
 }
 
@@ -134,6 +228,8 @@
               reuseIdentifier: id]
              autorelease];
     cell.textLabel.text = id;
+
+    cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
     if (desc)
       cell.detailTextLabel.text = desc;
   }
@@ -141,60 +237,37 @@
 }
 
 
-- (void)tapTimer:(NSTimer *)t
-{
-  [last_tap release];
-  last_tap = 0;
-  tap_count = 0;
-  tap_timer = 0;
-}
-
-
+/* Selecting a row launches the saver.
+ */
 - (void)tableView:(UITableView *)tv
-    didSelectRowAtIndexPath:(NSIndexPath *)ip
+        didSelectRowAtIndexPath:(NSIndexPath *)ip
 {
   UITableViewCell *cell = [tv cellForRowAtIndexPath: ip];
-  selected = cell.textLabel.text;
-  [self.navigationItem.leftBarButtonItem  setEnabled: !!selected];
-  [self.navigationItem.rightBarButtonItem setEnabled: !!selected];
+  SaverRunner *s = 
+    (SaverRunner *) [[UIApplication sharedApplication] delegate];
+  if (! s) return;
+  if (! [s isKindOfClass:[SaverRunner class]])
+    abort();
+  [s loadSaver: cell.textLabel.text];
+}
 
-  if (tap_count == 0) {					// First tap
-    tap_count = 1;
-    last_tap = [[ip copy] retain];
-    tap_timer = [NSTimer scheduledTimerWithTimeInterval: 0.3
-                         target:self 
-                         selector:@selector(tapTimer:)
-                         userInfo:nil
-                         repeats:NO];
-
-  } else if (tap_count == 1 && tap_timer &&		// Second tap
-             [ip isEqual:last_tap]) {
-    [tap_timer invalidate];
-    [last_tap release];
-    last_tap = 0;
-    tap_timer = 0;
-    tap_count = 0;
- 
-    // Press the leftmost button in the button-bar.
-    UIBarButtonItem *b = self.navigationItem.leftBarButtonItem;
-    [[b target] performSelector: [b action] withObject: cell];
-
-  } else if (! [ip isEqual:last_tap]) {			// Tap on a new row
-    if (tap_timer) [tap_timer invalidate];
-    tap_timer = 0;
-    tap_count = 0;
-  }
+/* Selecting a row's Disclosure Button opens the preferences.
+ */
+- (void)tableView:(UITableView *)tv
+        accessoryButtonTappedForRowWithIndexPath:(NSIndexPath *)ip
+{
+  UITableViewCell *cell = [tv cellForRowAtIndexPath: ip];
+  SaverRunner *s = 
+    (SaverRunner *) [[UIApplication sharedApplication] delegate];
+  if (! s) return;
+  if (! [s isKindOfClass:[SaverRunner class]])
+    abort();
+  [s openPreferences: cell.textLabel.text];
 }
 
 
-/* We can't select a row immediately after creation, but selecting it
-   a little while later works (presumably after redisplay has happened)
-   so do it on a timer.
- */
-- (void) scrollToCB: (NSTimer *) timer
+- (void) scrollTo: (NSString *) name
 {
-  NSString *name = [timer userInfo];
-
   int i = 0;
   int j = 0;
   Bool ok = NO;
@@ -213,40 +286,7 @@
     [self.tableView selectRowAtIndexPath:ip
                     animated:NO
                     scrollPosition: UITableViewScrollPositionMiddle];
-    [self tableView:self.tableView didSelectRowAtIndexPath:ip];
   }
-}
-
-
-- (void) scrollTo: (NSString *) name
-{
-  [NSTimer scheduledTimerWithTimeInterval: 0
-           target:self
-           selector:@selector(scrollToCB:)
-           userInfo:name
-           repeats:NO];
-}
-
-
-- (void)viewWillAppear:(BOOL)animated 
-{
-  /* Hitting the back button and returing to this view deselects,
-     and we can't re-select it from here, so again, do it once
-     we return to the event loop.
-   */
-  if (selected)
-    [NSTimer scheduledTimerWithTimeInterval: 0
-             target:self
-             selector:@selector(scrollToCB:)
-             userInfo:selected
-             repeats:NO];
-  [super viewWillAppear:animated];
-}
-
-
-- (NSString *) selected
-{
-  return selected;
 }
 
 

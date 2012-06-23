@@ -187,7 +187,8 @@
 #if 0
   // Dump the entire resource database.
   NSDictionary *d = [userDefaults dictionaryRepresentation];
-  for (NSObject *key in d) {
+  for (NSObject *key in [[d allKeys]
+                          sortedArrayUsingSelector:@selector(compare:)]) {
     NSObject *val = [d objectForKey:key];
     NSLog (@"%@ = %@", key, val);
   }

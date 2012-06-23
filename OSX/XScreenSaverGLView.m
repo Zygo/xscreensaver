@@ -371,6 +371,9 @@ init_GL (ModeInfo *mi)
       [NSNumber numberWithBool:!dbuf_p], kEAGLDrawablePropertyRetainedBacking,
       nil];
 
+    // Without this, the GL frame buffer is half the screen resolution!
+    eagl_layer.contentsScale = [UIScreen mainScreen].scale;
+
     ogl_ctx = [[EAGLContext alloc] initWithAPI:kEAGLRenderingAPIOpenGLES1];
   }
 

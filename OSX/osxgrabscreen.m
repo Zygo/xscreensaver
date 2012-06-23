@@ -22,7 +22,7 @@
 #ifndef USE_IPHONE
 # import <Cocoa/Cocoa.h>
 #else
-# import <SaverRunner.h>
+# import "SaverRunner.h"
 #endif
 #import "jwxyz.h"
 #import "grabscreen.h"

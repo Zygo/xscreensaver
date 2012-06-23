@@ -17,4 +17,9 @@ for f in $SRCS ; do
   echo ',' >> $TMP2
 done
 rm $TMP1
-mv $TMP2 $TARGET
+if cmp -s $TMP2 $TARGET ; then
+  rm $TMP2
+else
+  mv $TMP2 $TARGET
+fi
+

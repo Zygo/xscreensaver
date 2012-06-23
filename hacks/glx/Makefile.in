@@ -57,6 +57,7 @@ HACK_POST2	= @GL_LIBS@ @HACK_LIBS@ $(HACK_POST)
 HACK_LIBS	= $(HACK_PRE)                       $(HACK_POST2)
 XPM_LIBS	= $(HACK_PRE)            @XPM_LIBS@ $(HACK_POST2)
 GLE_LIBS	= $(HACK_PRE) @GLE_LIBS@ @XPM_LIBS@ $(HACK_POST2)
+TEXT_LIBS	= @PTY_LIBS@
 MINIXPM		= $(UTILS_BIN)/minixpm.o
 
 HACK_SRC	= $(srcdir)/..
@@ -577,11 +578,11 @@ gflux:		gflux.o		$(HACK_TRACK_GRAB_OBJS)
 SW_OBJS=starwars.o glut_stroke.o glut_swidth.o \
         $(TEXT) ${FONT_OBJS} $(HACK_OBJS)
 starwars:			$(SW_OBJS)
-	$(CC_HACK) -o $@	$(SW_OBJS) $(HACK_LIBS)
+	$(CC_HACK) -o $@	$(SW_OBJS) $(HACK_LIBS) $(TEXT_LIBS)
 
 GLT_OBJS=gltext.o glut_stroke.o glut_swidth.o tube.o $(TEXT) $(HACK_TRACK_OBJS)
 gltext:				$(GLT_OBJS)
-	$(CC_HACK) -o $@	$(GLT_OBJS) $(HACK_LIBS)
+	$(CC_HACK) -o $@	$(GLT_OBJS) $(HACK_LIBS) $(TEXT_LIBS)
 
 DB_OBJS=sphere.o tube.o $(HACK_TRACK_OBJS)
 dangerball:	dangerball.o	$(DB_OBJS)
@@ -730,7 +731,7 @@ carousel:	carousel.o	${FONT_OBJS} $(HACK_TRACK_GRAB_OBJS)
 	$(CC_HACK) -o $@ $@.o	${FONT_OBJS} $(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
 
 fliptext:	fliptext.o	$(TEXT) ${FONT_OBJS} $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(TEXT) ${FONT_OBJS} $(HACK_OBJS) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(TEXT) ${FONT_OBJS} $(HACK_OBJS) $(HACK_LIBS) $(TEXT_LIBS)
 
 antmaze:	antmaze.o	sphere.o tube.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	sphere.o tube.o $(HACK_TRACK_OBJS) $(HACK_LIBS)

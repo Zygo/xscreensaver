@@ -219,6 +219,7 @@ static void layout_group (NSView *group, BOOL horiz_p);
 # define LEFT_LABEL_WIDTH 70   // width of all left labels
 # define LINE_SPACING     10   // leading between each line
 
+# define FONT_SIZE	  17   // Magic hardcoded UITableView font size.
 
 #pragma mark Talking to the resource database
 
@@ -856,7 +857,8 @@ hreffify (NSText *nstext)
                  [NSCharacterSet whitespaceAndNewlineCharacterSet]]];
   [lab setBackgroundColor:[UIColor clearColor]];
   [lab setNumberOfLines:0]; // unlimited
-  [lab setLineBreakMode:UILineBreakModeWordWrap];
+  // [lab setLineBreakMode:UILineBreakModeWordWrap];
+  [lab setLineBreakMode:UILineBreakModeHeadTruncation];
   [lab setAutoresizingMask: (UIViewAutoresizingFlexibleWidth |
                              UIViewAutoresizingFlexibleHeight)];
 # endif // USE_IPHONE
@@ -1429,10 +1431,8 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
   for (NSArray *item in items) {
     RadioButton *b = [[RadioButton alloc] initWithIndex:i 
                                           items:items];
-    [b setFont:[NSFont boldSystemFontOfSize:
-                         // #### Fucking hardcoded UITableView font size BS!
-                         17 // [NSFont systemFontSize]
-                ]];
+    [b setLineBreakMode:UILineBreakModeHeadTruncation];
+    [b setFont:[NSFont boldSystemFontOfSize: FONT_SIZE]];
     [self placeChild:b on:parent];
     i++;
   }
@@ -1480,6 +1480,20 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
   boldify (lab);
   [lab sizeToFit];
 # else  // USE_IPHONE
+
+  /* There's no way to put rich text or links inside a UILabel.
+
+     I guess Apple expects us to use a UIWebView for this -- but there's
+     no way to measure how tall the HTML-rendered text is (the answer is
+     not: "document.height" via JavaScript) so we can't put the
+     properly-sized cell in the table.
+
+     This is some serious bullshit.
+
+     Another option would be to subclass UILabel and replace its drawRect
+     with new code that uses CTLineDraw.  But that's a huge hassle.
+   */
+
   UILabel *lab = [self makeLabel:text];
   [lab setFont:[NSFont systemFontOfSize: [NSFont systemFontSize]]];
   hreffify (lab);
@@ -1536,8 +1550,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
 
   txt.adjustsFontSizeToFitWidth = YES;
   txt.textColor = [UIColor blackColor];
-  // #### Fucking hardcoded UITableView font size BS!
-  txt.font = [UIFont systemFontOfSize: 17];
+  txt.font = [UIFont systemFontOfSize: FONT_SIZE];
   txt.placeholder = @"";
   txt.borderStyle = UITextBorderStyleRoundedRect;
   txt.textAlignment = UITextAlignmentRight;
@@ -2698,7 +2711,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 - (CGFloat)pickerView:(UIPickerView *)pv
            rowHeightForComponent:(NSInteger)column
 {
-  return [NSFont systemFontSize] * 1.5; // #### WHAT
+  return FONT_SIZE;
 }
 
 - (CGFloat)pickerView:(UIPickerView *)pv
@@ -2753,6 +2766,10 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
                              style: UIBarButtonItemStyleBordered
                              target:self
                              action:@selector(resetAction:)]];
+  NSString *s = saver_name;
+  if ([self view].frame.size.width > 320)
+    s = [s stringByAppendingString: @" Settings"];
+  [self navigationItem].title = s;
 }
 
 
@@ -2778,8 +2795,8 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
               titleForHeaderInSection:(NSInteger)section
 {
   // Titles above each vertically-stacked white box.
-  if (section == 0)
-    return [saver_name stringByAppendingString:@" Settings"];
+//  if (section == 0)
+//    return [saver_name stringByAppendingString:@" Settings"];
   return nil;
 }
 
@@ -2955,9 +2972,8 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
     case 2:
       {
         // With 2 elements, the first of the pair must be a label.
-        ctl = [set objectAtIndex: 0];
-        NSAssert ([ctl isKindOfClass:[UILabel class]], @"unhandled type");
-        cell.textLabel.text = [(UILabel *) ctl text];
+        UILabel *label = (UILabel *) [set objectAtIndex: 0];
+        NSAssert ([label isKindOfClass:[UILabel class]], @"unhandled type");
         ctl = [set objectAtIndex: 1];
 
         r = [ctl frame];
@@ -2974,6 +2990,24 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
         }
         r.origin.y = (p.size.height - r.size.height) / 2;
         [ctl setFrame:r];
+
+        // Make a box.
+        NSView *box = [[UIView alloc] initWithFrame:p];
+        [box addSubview: ctl];
+
+        // cell.textLabel.text = [(UILabel *) ctl text];
+        r = [label frame];
+        r.origin.x = LEFT_MARGIN;
+        r.origin.y = 0;
+        r.size.width  = [ctl frame].origin.x - r.origin.x;
+        r.size.height = p.size.height;
+        [label setFrame:r];
+        [label setFont:[NSFont boldSystemFontOfSize: FONT_SIZE]];
+        label.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
+        box.  autoresizingMask = UIViewAutoresizingFlexibleWidth;
+        [box addSubview: label];
+
+        ctl = box;
       }
       break;
     case 3:
@@ -3008,7 +3042,6 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 
         // Top label goes above, flush center/top.
         if (top) {
-          // [top setFont:[[cell textLabel] font]];  // 0 point?
           r.size = [[top text] sizeWithFont:[top font]
                                constrainedToSize:
                                  CGSizeMake (p.size.width - LEFT_MARGIN*2,
@@ -3049,7 +3082,14 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
           top.autoresizingMask = (UIViewAutoresizingFlexibleLeftMargin|
                                   UIViewAutoresizingFlexibleRightMargin);
 # else
-          cell.textLabel.text = [top text];
+          r = [top frame];
+          r.origin.x = LEFT_MARGIN;
+          r.origin.y = 0;
+          r.size.width  = [mid frame].origin.x - r.origin.x;
+          r.size.height = p.size.height;
+          [top setFrame:r];
+          top.autoresizingMask = UIViewAutoresizingFlexibleRightMargin;
+          [ctl addSubview: top];
 # endif
         }
         [ctl addSubview: left];
@@ -3080,6 +3120,14 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
     if ([ctl isKindOfClass:[RadioButton class]])
       [self updateRadioGroupCell:cell button:(RadioButton *)ctl];
 # endif // USE_PICKER_VIEW
+  }
+
+  if ([ctl isKindOfClass:[UILabel class]]) {
+    // Make label full height to allow text to line-wrap if necessary.
+    r = [ctl frame];
+    r.origin.y = p.origin.y;
+    r.size.height = p.size.height;
+    [ctl setFrame:r];
   }
 
   [cell.contentView addSubview: ctl];
