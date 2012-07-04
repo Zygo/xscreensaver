@@ -761,7 +761,10 @@ draw_moebius (ModeInfo * mi)
 
 	glTranslatef(0.0, 0.0, -10.0);
 
+    /* Do it twice because we don't track the device's orientation. */
+    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (mp->trackball);
+    glRotatef(-current_device_rotation(), 0, 0, 1);
 
 	if (!MI_IS_ICONIC(mi)) {
 		glScalef(Scale4Window * mp->WindH / mp->WindW, Scale4Window, Scale4Window);

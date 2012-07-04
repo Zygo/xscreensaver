@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="DNAlogo" _label="DNA Logo">
+<screensaver name="DNAlogo" _label="DNA Logo" gl="yes">
 
   <command arg="-root"/>
 

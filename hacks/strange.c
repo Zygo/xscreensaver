@@ -42,7 +42,6 @@ static const char sccsid[] = "@(#)strange.c	5.00 2000/11/01 xlockmore";
 
 # define SMOOTH_COLORS
 # define refresh_strange 0
-# define reshape_strange 0
 # define strange_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -142,7 +141,7 @@ typedef struct _ATTRACTOR {
 static ATTRACTOR *Root = (ATTRACTOR *) NULL; 
 
 #ifdef useAccumulator
-XColor* cols;
+static XColor* cols;
 #endif
 
 #ifdef POINTS_HISTORY
@@ -661,6 +660,13 @@ init_strange(ModeInfo * mi)
 
 	/* Do not want any exposure events from XCopyPlane */
 	XSetGraphicsExposures(display, MI_GC(mi), False);
+}
+
+ENTRYPOINT void
+reshape_strange(ModeInfo * mi, int width, int height)
+{
+  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
+  init_strange (mi);
 }
 
 /***************************************************************/

@@ -781,6 +781,12 @@ static void
 distort_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+  /* XClearWindow (dpy, window); */
+  /* Why doesn't this work? */
+  XPutImage (st->dpy, st->window, st->gc, st->orig_map,
+             0, 0, st->orig_map->width, st->orig_map->height, 0, 0);
 }
 
 static Bool

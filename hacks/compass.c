@@ -933,6 +933,11 @@ static void
 compass_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+  st->size2 = MIN(st->xgwa.width, st->xgwa.height);
+  st->x = st->xgwa.width/2;
+  st->y = st->xgwa.height/2;
 }
 
 static Bool

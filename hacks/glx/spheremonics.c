@@ -851,7 +851,10 @@ draw_spheremonics (ModeInfo *mi)
                  (y - 0.5) * 6,
                  (z - 0.5) * 8);
 
+    /* Do it twice because we don't track the device's orientation. */
+    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (cc->trackball);
+    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (cc->rot, &x, &y, &z, !cc->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);

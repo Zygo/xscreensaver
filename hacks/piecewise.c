@@ -940,6 +940,8 @@ static void
 piecewise_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  XGetWindowAttributes(st->dpy, st->window, &st->xgwa);
 }
 
 static Bool

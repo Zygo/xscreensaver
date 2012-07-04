@@ -369,6 +369,7 @@
   NSRange r = [name rangeOfString:@"." options:NSBackwardsSearch];
   if (r.length)
     name = [name substringFromIndex:r.location+1];
+  name = [name stringByReplacingOccurrencesOfString:@" " withString:@""];
   saver_name = [name retain];
 
   [self registerXrmKeys:opts defaults:defs];

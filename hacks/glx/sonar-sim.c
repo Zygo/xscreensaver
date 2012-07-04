@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2008 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2012 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -53,7 +53,7 @@ sim_scan (sonar_sensor_data *ssd)
       while (b->r < 0.2) b->r += scale * 0.1;
       while (b->r > 0.9) b->r -= scale * 0.1;
 
-      b2 = copy_bogie (ssd, b);
+      b2 = sonar_copy_bogie (ssd, b);
       b2->next = list;
       list = b2;
     }
@@ -86,10 +86,10 @@ make_bogies (sonar_sensor_data *ssd)
 
 
 sonar_sensor_data *
-init_simulation (Display *dpy, char **error_ret,
-                 const char *team_a_name, const char *team_b_name,
-                 int team_a_count, int team_b_count,
-                 Bool debug_p)
+sonar_init_simulation (Display *dpy, char **error_ret, char **desc_ret,
+                       const char *team_a_name, const char *team_b_name,
+                       int team_a_count, int team_b_count,
+                       Bool debug_p)
 {
   sonar_sensor_data *ssd = (sonar_sensor_data *) calloc (1, sizeof(*ssd));
   sim_data *sd = (sim_data *) calloc (1, sizeof(*sd));

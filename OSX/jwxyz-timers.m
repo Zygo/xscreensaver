@@ -48,6 +48,12 @@
 # define LOGI(str,arg1,arg2,arg3)
 #endif
 
+#define ASSERT_RET(C,S) do {                    \
+    if (!(C)) {                                 \
+      jwxyz_abort ("jwxyz-timers: %s",(S));     \
+      return;                                   \
+ }} while(0)
+
 
 XtAppContext
 XtDisplayToApplicationContext (Display *dpy)
@@ -96,7 +102,7 @@ jwxyz_timer_release (const void *arg)
   struct jwxyz_XtIntervalId *data = (struct jwxyz_XtIntervalId *) arg;
   data->refcount--;
   LOGT(@"timer  0x%08X: release %d", (unsigned int) data, data->refcount);
-  if (data->refcount < 0) abort();
+  ASSERT_RET (data->refcount >= 0, "double free");
   if (data->refcount == 0) free (data);
 }
 
@@ -117,7 +123,7 @@ jwxyz_source_release (const void *arg)
   data->refcount--;
   LOGI(@"source 0x%08X %2d: release %d", (unsigned int) data, data->fd,
        data->refcount);
-  if (data->refcount < 0) abort();
+  ASSERT_RET (data->refcount >= 0, "double free");
   if (data->refcount == 0) {
 # ifdef USE_COCOA_SOURCES
     if (data->socket)
@@ -165,8 +171,8 @@ jwxyz_source_cb (CFSocketRef s, CFSocketCallBackType type,
 {
   struct jwxyz_XtInputId *data = (struct jwxyz_XtInputId *) info;
 
-  if (type != kCFSocketReadCallBack) abort();
-  if (call_data != 0) abort();  // not used for kCFSocketRead
+  ASSERT_RET (type == kCFSocketReadCallBack, "unnknown type");
+  ASSERT_RET (!call_data, "no call data");  // not used for kCFSocketRead
 
   // We are sometimes called when there is not, in fact, data available!
   // So don't call data->cb if we're being fed a pack of lies.
@@ -218,9 +224,8 @@ void
 XtRemoveTimeOut (XtIntervalId id)
 {
   LOGT(@"timer  0x%08X: remove", (unsigned int) id, 0);
-  if (id->refcount <= 0) abort();
-  if (!id->cftimer) abort();
-
+  ASSERT_RET (id->refcount > 0, "already freed");
+  ASSERT_RET (id->cftimer, "timers corrupted");
   CFRunLoopRemoveTimer (CFRunLoopGetCurrent(), id->cftimer,
                         kCFRunLoopCommonModes);
   CFRunLoopTimerInvalidate (id->cftimer);
@@ -253,8 +258,8 @@ static void
 jwxyz_source_select (XtInputId id)
 {
   jwxyz_sources_data *td = display_sources_data (app_to_display (id->app));
-  if (id->fd <= 0 || id->fd >= FD_SETSIZE) abort();
-  if (td->ids[id->fd]) abort();
+  ASSERT_RET (id->fd > 0 && id->fd < FD_SETSIZE, "fd out of range");
+  ASSERT_RET (td->ids[id->fd] == 0, "sources corrupted");
   td->ids[id->fd] = id;
   td->count++;
 }
@@ -263,9 +268,9 @@ static void
 jwxyz_source_deselect (XtInputId id)
 {
   jwxyz_sources_data *td = display_sources_data (app_to_display (id->app));
-  if (td->count <= 0) abort();
-  if (id->fd <= 0 || id->fd >= FD_SETSIZE) abort();
-  if (td->ids[id->fd] != id) abort();
+  ASSERT_RET (td->count > 0, "sources corrupted");
+  ASSERT_RET (id->fd > 0 && id->fd < FD_SETSIZE, "fd out of range");
+  ASSERT_RET (td->ids[id->fd] == id, "sources corrupted");
   td->ids[id->fd] = 0;
   td->count--;
 }
@@ -288,14 +293,14 @@ jwxyz_sources_run (jwxyz_sources_data *td)
     }
   }
 
-  if (!max) abort();
+  ASSERT_RET (max > 0, "no fds");
 
   if (0 < select (max+1, &fds, NULL, NULL, &tv)) {
     for (i = 0; i < FD_SETSIZE; i++) {
       if (FD_ISSET (i, &fds)) {
         XtInputId id = td->ids[i];
-        if (!id || !id->cb) abort();
-        if (id->fd != i) abort();
+        ASSERT_RET (id && id->cb, "sources corrupted");
+        ASSERT_RET (id->fd == i, "sources corrupted");
         id->cb (id->closure, &id->fd, &id);
       }
     }
@@ -353,10 +358,10 @@ void
 XtRemoveInput (XtInputId id)
 {
   LOGI(@"source 0x%08X %2d: remove", (unsigned int) id, id->fd, 0);
-  if (id->refcount <= 0) abort();
+  ASSERT_RET (id->refcount > 0, "sources corrupted");
 # ifdef USE_COCOA_SOURCES
-  if (! id->cfsource) abort();
-  if (! id->socket) abort();
+  ASSERT_RET (id->cfsource, "sources corrupted");
+  ASSERT_RET (id->socket, "sources corrupted");
 
   CFRunLoopRemoveSource (CFRunLoopGetCurrent(), id->cfsource,
                          kCFRunLoopCommonModes);
@@ -375,7 +380,7 @@ void
 jwxyz_XtRemoveInput_all (Display *dpy)
 {
 # ifdef USE_COCOA_SOURCES
-  abort();
+  ASSERT_RET (0, "unimplemented");
 # else  /* !USE_COCOA_SOURCES */
 
   jwxyz_sources_data *td = display_sources_data (dpy);

@@ -1538,6 +1538,16 @@ static void
 speedmine_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  st->width = w;
+  st->height = h;
+  if (st->dbuf != st->window) {
+      XWindowAttributes xgwa;
+      XGetWindowAttributes (st->dpy, st->window, &xgwa);
+      XFreePixmap (dpy, st->dbuf);
+      st->dbuf = XCreatePixmap (st->dpy, st->window, 
+                                st->width, st->height, xgwa.depth);
+  }
 }
 
 static Bool

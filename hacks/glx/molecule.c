@@ -93,9 +93,14 @@
                     ISO C89 compilers are required to support" when includng
                     the following data file... */
 # endif
-const char * const builtin_pdb_data[] = {
+static const char * const builtin_pdb_data[] = {
 # include "molecules.h"
 };
+
+
+#ifndef USE_IPHONE
+# define LOAD_FILES
+#endif
 
 
 typedef struct {
@@ -884,6 +889,7 @@ parse_pdb_data (molecule *m, const char *data, const char *filename, int line)
 }
 
 
+#ifdef LOAD_FILES
 static int
 parse_pdb_file (molecule *m, const char *name)
 {
@@ -930,6 +936,7 @@ parse_pdb_file (molecule *m, const char *name)
 
   return 0;
 }
+#endif /* LOAD_FILES */
 
 
 typedef struct { char *atom; int count; } atom_and_count;
@@ -1047,16 +1054,17 @@ static void
 load_molecules (ModeInfo *mi)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
-  int wire = MI_IS_WIREFRAME(mi);
   int i;
 
   mc->nmolecules = 0;
+# ifdef LOAD_FILES
   if (molecule_str && *molecule_str && 
       strcmp(molecule_str, "(default)"))	/* try external PDB files */
     {
       /* The -molecule option can point to a .pdb file, or to
          a directory of them.
       */
+      int wire = MI_IS_WIREFRAME(mi);
       struct stat st;
       int nfiles = 0;
       int list_size = 0;
@@ -1160,6 +1168,7 @@ load_molecules (ModeInfo *mi)
       files = 0;
       mc->nmolecules = molecule_ctr;
     }
+# endif /* LOAD_FILES */
 
   if (mc->nmolecules == 0)	/* do the builtins if no files */
     {
@@ -1448,6 +1457,8 @@ draw_labels (ModeInfo *mi)
 
       glTranslatef (0, 0, (size * 1.1));           /* move toward camera */
 
+      glRotatef (current_device_rotation(), 0, 0, 1);  /* right side up */
+
 # ifdef HAVE_GLBITMAP
       glRasterPos3f (0, 0, 0);                     /* draw text here */
 
@@ -1643,7 +1654,10 @@ draw_molecule (ModeInfo *mi)
                  (y - 0.5) * 9,
                  (z - 0.5) * 9);
 
+    /* Do it twice because we don't track the device's orientation. */
+    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (mc->trackball);
+    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (mc->rot, &x, &y, &z, !mc->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);

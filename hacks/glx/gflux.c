@@ -281,7 +281,10 @@ gflux_handle_event (ModeInfo *mi, XEvent *event)
 static void
 userRot(gfluxstruct *gp)
 {
+  /* Do it twice because we don't track the device's orientation. */
+  glRotatef( current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (gp->trackball);
+  glRotatef(-current_device_rotation(), 0, 0, 1);
 }
 
 /* draw the gflux once */

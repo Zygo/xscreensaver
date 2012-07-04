@@ -58,12 +58,12 @@
 # endif // USE_IPHONE
 }
 
-- (void) aboutPanel: (id)sender;
-- (void)loadSaver:(NSString *)name launch:(BOOL)launch;
+- (void) loadSaver: (NSString *)name launch:(BOOL)launch;
 - (void) loadSaver: (NSString *)name;
-- (void)selectedSaverDidChange:(NSDictionary *)change;
+- (void) selectedSaverDidChange:(NSDictionary *)change;
 
 #ifndef USE_IPHONE
+- (void) aboutPanel: (id)sender;
 - (void) openPreferences: (id)sender;
 #else  // USE_IPHONE
 - (void) openPreferences: (NSString *)which;

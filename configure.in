@@ -299,6 +299,9 @@ AH_TEMPLATE([HAVE_ICMPHDR],
 	    [Define this if you do pings with a `struct icmphdr' and an
 	     `un.echo.id' slot.])
 
+AH_TEMPLATE([HAVE_GETIFADDRS],
+	    [Define this if you have the getifaddrs() function.])
+
 AH_TEMPLATE([HAVE_FORKPTY],
 	    [Define this if you have the 'forkpty' function:
 	     This allows 'phosphor' and 'apple2' to run curses-based
@@ -973,6 +976,21 @@ AC_DEFUN(AC_X_RANDOM_PATHS,
     ;;
   esac])
 
+AC_DEFUN(AC_CHECK_GETIFADDRS,
+ [AC_CACHE_CHECK([for getifaddrs], ac_cv_have_getifaddrs,
+  [AC_TRY_COMPILE([#include <stdlib.h>
+                   #include <unistd.h>
+                   #include <arpa/inet.h>
+                   #include <ifaddrs.h>],
+                  [struct ifaddrs *ifa;
+                   getifaddrs (&ifa);
+                   ifa->ifa_next = 0;
+                   ifa->ifa_addr->sa_family = 0;],
+                  [ac_cv_have_getifaddrs=yes],
+                  [ac_cv_have_getifaddrs=no])])
+ if test "$ac_cv_have_getifaddrs" = yes ; then
+   AC_DEFINE(HAVE_GETIFADDRS)
+ fi])
 
 
 ###############################################################################
@@ -1171,6 +1189,7 @@ AC_CHECK_FUNCS(sigaction syslog realpath setrlimit)
 AC_CHECK_FUNCS(setlocale)
 AC_CHECK_ICMP
 AC_CHECK_ICMPHDR
+AC_CHECK_GETIFADDRS
 AC_CHECK_HEADERS(crypt.h sys/select.h)
 AC_PROG_PERL
 

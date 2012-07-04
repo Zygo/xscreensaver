@@ -77,7 +77,7 @@ getDifferenceVector(double *v0, double *v1, double *diff)
 
 
 void
-initFish(Fish *f, double *mins, double *ranges)
+glschool_initFish(Fish *f, double *mins, double *ranges)
 {
 	int i;
 
@@ -92,7 +92,7 @@ initFish(Fish *f, double *mins, double *ranges)
 
 
 void
-initFishes(School *s)
+glschool_initFishes(School *s)
 {
 	int		i;
 	Fish	*f = (Fish *)0;
@@ -103,11 +103,11 @@ initFishes(School *s)
 	Fish	*theFishes = SCHOOL_FISHES(s);
 
 	for(i = 0, f = theFishes; i < nFish; i++, f++)
-		initFish(f, mins, ranges);
+		glschool_initFish(f, mins, ranges);
 }
 
 
-void
+static void
 applyFishMovements(Fish *f, BBox *bbox, double minVel, double maxVel, double momentum)
 {
 	int			i;
@@ -141,7 +141,7 @@ applyFishMovements(Fish *f, BBox *bbox, double minVel, double maxVel, double mom
 
 
 void
-applyMovements(School *s)
+glschool_applyMovements(School *s)
 {
 	int		i = 0;
 	Fish	*f = (Fish *)0;
@@ -158,7 +158,7 @@ applyMovements(School *s)
 
 
 School *
-initSchool(int nFish, double accLimit, double maxV, double minV, double distExp, double momentum,
+glschool_initSchool(int nFish, double accLimit, double maxV, double minV, double distExp, double momentum,
 		   double minRadius, double avoidFact, double matchFact, double centerFact, double targetFact,
 		   double distComp)
 {
@@ -193,14 +193,14 @@ initSchool(int nFish, double accLimit, double maxV, double minV, double distExp,
 }
 
 void
-freeSchool(School *s)
+glschool_freeSchool(School *s)
 {
 	free(SCHOOL_FISHES(s));
 	free(s);
 }
 
 void
-setBBox(School *s, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax)
+glschool_setBBox(School *s, double xMin, double xMax, double yMin, double yMax, double zMin, double zMax)
 {
 	int		i;
 	BBox	*bbox = &SCHOOL_BBOX(s);
@@ -217,7 +217,7 @@ setBBox(School *s, double xMin, double xMax, double yMin, double yMax, double zM
 
 
 void
-newGoal(School *s)
+glschool_newGoal(School *s)
 {
 	SCHOOL_IGOAL(s,0) = 0.85*(drand48()-0.5)*SCHOOL_IRANGE(s,0) + SCHOOL_IMID(s,0);
 	SCHOOL_IGOAL(s,1) = 0.40*(drand48()-0.5)*SCHOOL_IRANGE(s,1) + SCHOOL_IMID(s,1);
@@ -226,7 +226,7 @@ newGoal(School *s)
 
 
 double
-computeNormalAndThetaToPlusZ(double *v, double *xV)
+glschool_computeNormalAndThetaToPlusZ(double *v, double *xV)
 {
 	double	x1 = 0.0;
 	double	y1 = 0.0;
@@ -255,7 +255,7 @@ computeNormalAndThetaToPlusZ(double *v, double *xV)
 
 
 int
-computeGroupVectors(School *s, Fish *ref, double *avoidance, double *centroid, double *avgVel)
+glschool_computeGroupVectors(School *s, Fish *ref, double *avoidance, double *centroid, double *avgVel)
 {
 	int		i;
 	double	dist;
@@ -296,7 +296,7 @@ computeGroupVectors(School *s, Fish *ref, double *avoidance, double *centroid, d
 
 
 void
-computeAccelerations(School *s)
+glschool_computeAccelerations(School *s)
 {
 	int		i;
 	int		j;
@@ -326,7 +326,7 @@ computeAccelerations(School *s)
 		clearVector(centroid);
 		clearVector(avoidance);
 		clearVector(FISH_ACC(ref));
-		neighborCount = computeGroupVectors(s, ref, avoidance, centroid, avgVel);
+		neighborCount = glschool_computeGroupVectors(s, ref, avoidance, centroid, avgVel);
 
 		/* avoidanceAccel[] = avoidance[] * AvoidFact */
 		scaleVector(avoidance, avoidFact);

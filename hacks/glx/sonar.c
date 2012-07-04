@@ -43,11 +43,12 @@
  *
  * It should be easy to extend this code to support other sorts of sensors.
  * Some ideas:
+ *
  *   - search the output of "netstat" for the list of hosts to ping;
  *   - plot the contents of /proc/interrupts;
  *   - plot the process table, by process size, cpu usage, or total time;
  *   - plot the logged on users by idle time or cpu usage.
- *
+ *   - plot IM contacts or Facebook friends and their last-activity times.
  */
 
 #define DEF_FONT "-*-lucidatypewriter-bold-r-normal-*-*-480-*-*-*-*-iso8859-1"
@@ -108,8 +109,10 @@ typedef struct {
 
   texture_font_data *texfont;
 
+  enum { MSG, RESOLVE, RUN } state;
   sonar_sensor_data *ssd;
   char *error;
+  char *desc;
 
   sonar_bogie *displayed;	/* on screen and fading */
   sonar_bogie *pending;		/* returned by sensor, not yet on screen */
@@ -331,10 +334,10 @@ draw_text (ModeInfo *mi, const char *string, GLfloat r, GLfloat th,
   char *string2 = strdup (string);
   char *token = string2;
   char *line;
-  GLfloat color[4];
 
   if (size <= 0)   /* if size not specified, draw in yellow with alpha */
     {
+      GLfloat color[4];
       color[0] = 1;
       color[1] = 1;
       color[2] = 0;
@@ -499,7 +502,7 @@ draw_bogies (ModeInfo *mi)
 
 /* called from sonar-sim.c and sonar-icmp.c */
 sonar_bogie *
-copy_bogie (sonar_sensor_data *ssd, const sonar_bogie *b)
+sonar_copy_bogie (sonar_sensor_data *ssd, const sonar_bogie *b)
 {
   sonar_bogie *b2 = (sonar_bogie *) calloc (1, sizeof(*b2));
   b2->name = strdup (b->name);
@@ -519,7 +522,7 @@ copy_bogie (sonar_sensor_data *ssd, const sonar_bogie *b)
 
 /* called from sonar-icmp.c */
 void
-free_bogie (sonar_sensor_data *ssd, sonar_bogie *b)
+sonar_free_bogie (sonar_sensor_data *ssd, sonar_bogie *b)
 {
   if (b->closure)
     ssd->free_bogie_cb (ssd, b->closure);
@@ -542,7 +545,7 @@ delete_bogie (sonar_sensor_data *ssd, sonar_bogie *b,
           prev->next = b->next;
         else
           (*from_list) = b->next;
-        free_bogie (ssd, b);
+        sonar_free_bogie (ssd, b);
         break;
       }
 }
@@ -569,7 +572,7 @@ copy_and_insert_bogie (sonar_sensor_data *ssd, sonar_bogie *b,
         }
     }
 
-  b = copy_bogie (ssd, b);
+  b = sonar_copy_bogie (ssd, b);
   b->next = *to_list;
   *to_list = b;
 }
@@ -727,7 +730,7 @@ draw_startup_blurb (ModeInfo *mi)
 
   /* only leave error message up for N seconds */
   if (sp->error &&
-      sp->start_time + 4 < double_time())
+      sp->start_time + 6 < double_time())
     {
       free (sp->error);
       sp->error = 0;
@@ -852,6 +855,7 @@ init_sonar (ModeInfo *mi)
   sp->start_time = double_time ();
   sp->sweep_offset = random() % 60;
   sp->sweep_th = -1;
+  sp->state = MSG;
 }
 
 
@@ -865,18 +869,21 @@ init_sensor (ModeInfo *mi)
   if (!ping_arg || !*ping_arg ||
       !strcmp(ping_arg, "default") ||
       !!strcmp (ping_arg, "simulation"))
-    sp->ssd = init_ping (MI_DISPLAY (mi), &sp->error, ping_arg,
-                         ping_timeout, resolve_p, times_p, debug_p);
+    sp->ssd = sonar_init_ping (MI_DISPLAY (mi), &sp->error, &sp->desc,
+                               ping_arg, ping_timeout, resolve_p, times_p,
+                               debug_p);
+
+  sp->start_time = double_time ();  /* for error message timing */
 
   /* Disavow privs.  This was already done in init_ping(), but
      we might not have called that at all, so do it again. */
   setuid(getuid());
 
   if (!sp->ssd)
-    sp->ssd = init_simulation (MI_DISPLAY (mi), &sp->error,
-                               team_a_name, team_b_name,
-                               team_a_count, team_b_count,
-                               debug_p);
+    sp->ssd = sonar_init_simulation (MI_DISPLAY (mi), &sp->error, &sp->desc,
+                                     team_a_name, team_b_name,
+                                     team_a_count, team_b_count,
+                                     debug_p);
   if (!sp->ssd)
     abort();
 }
@@ -923,6 +930,8 @@ draw_sonar (ModeInfo *mi)
     }
 
   glPushMatrix ();
+  glRotatef(current_device_rotation(), 0, 0, 1);
+
   {
     GLfloat s = 7;
     if (MI_WIDTH(mi) < MI_HEIGHT(mi))
@@ -931,7 +940,6 @@ draw_sonar (ModeInfo *mi)
   }
 
   gltrackball_rotate (sp->trackball);
-  glRotatef(current_device_rotation(), 0, 0, 1);
 
   if (wobble_p)
     {
@@ -969,8 +977,33 @@ draw_sonar (ModeInfo *mi)
   glCallList (sp->grid_list);
   mi->polygon_count += sp->screen_polys;
 
-  if (! sp->ssd || sp->error)
+  if (sp->desc)						/* local subnet */
+    {
+      glPushMatrix();
+      glTranslatef (0, 0, 0.00002);
+      mi->polygon_count += draw_text (mi, sp->desc, 1.35, M_PI * 0.75, 0, 10);
+      /* glRotatef (45, 0, 0, 1); */
+      /* mi->polygon_count += draw_text (mi, sp->desc, 1.2, M_PI/2, 0, 10); */
+      glPopMatrix();
+    }
+
+  if (sp->error)
+    sp->state = MSG;
+
+  switch (sp->state) {
+  case MSG:			/* Frame 1: get "Resolving Hosts" on screen. */
     draw_startup_blurb(mi);
+    sp->state++;
+    break;
+  case RESOLVE:			/* Frame 2: gethostbyaddr may take a while. */
+    if (! sp->ssd)
+      init_sensor (mi);
+    sp->state++;
+    break;
+  case RUN:			/* Frame N: ping away */
+    sweep (sp);
+    break;
+  }
 
   glPopMatrix ();
 
@@ -978,12 +1011,6 @@ draw_sonar (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
-
-  if (! sp->ssd)
-    /* Just starting up.  "Resolving hosts" text printed.  Go stall. */
-    init_sensor (mi);
-  else
-    sweep (sp);
 }
 
 ENTRYPOINT void

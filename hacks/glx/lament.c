@@ -1422,7 +1422,10 @@ draw(ModeInfo *mi)
 
   glPushMatrix();
 
+  /* Do it twice because we don't track the device's orientation. */
+  glRotatef( current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (lc->trackball);
+  glRotatef(-current_device_rotation(), 0, 0, 1);
 
   /* Make into the screen be +Y right be +X, and up be +Z. */
   glRotatef(-90.0, 1.0, 0.0, 0.0);

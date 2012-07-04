@@ -64,8 +64,6 @@
 #define WAVES 			6
 #define STRETCHES		8
 
-const double PI = 3.1415926535;
-
 struct lineStruct {
     unsigned int x, y, len, obj, color, ndol;
     int deo;
@@ -171,10 +169,10 @@ _wave(struct state *st, int x, int h, int l, int wave)
   l+=1; 
   switch(wave) {
     case 0:                                         /* cos wave*/
-      return((int)(cos((double)x*PI/l)*h));
+      return((int)(cos((double)x*M_PI/l)*h));
     case 1:                                      /* double wave*/
     case 2:                                      /* double wave*/
-      return((int)(cos((double)x*PI/l)*h)+(int)(sin((double)x*PI/l/st->cs1[1])*h));
+      return((int)(cos((double)x*M_PI/l)*h)+(int)(sin((double)x*M_PI/l/st->cs1[1])*h));
     case 3:                                         /* zig zag */
       return(abs((x%(l*2)-l))*h/l);
     case 4:                                   /* giant zig zag */
@@ -774,10 +772,10 @@ _pattern(struct state *st, int x, int y, int n)
       x+=_wave(st,st->gridy-y,st->gridy/(1+st->cs1[n]),st->gridy,0);
       break;
     case 4:                                           /* U curves */
-      x+=_wave(st,y,st->cs1[n]*st->csw[n]/2,st->gridy*2/PI,0);
+      x+=_wave(st,y,st->cs1[n]*st->csw[n]/2,st->gridy*2/M_PI,0);
       break;
     case 5:
-      x-=_wave(st,y,st->cs1[n]*st->csw[n]/2,st->gridy*2/PI,0);
+      x-=_wave(st,y,st->cs1[n]*st->csw[n]/2,st->gridy*2/M_PI,0);
       break;
   }
   switch(st->wsy[0]) {
@@ -794,10 +792,10 @@ _pattern(struct state *st, int x, int y, int n)
       y+=_wave(st,st->gridx-ox,st->gridx/(1+st->cs1[n]),st->gridx,0);
       break;
     case 4:                                         /* U curves */
-      y+=_wave(st,ox,st->cs1[n]*st->csw[n]/2,st->gridy*2/PI,0);
+      y+=_wave(st,ox,st->cs1[n]*st->csw[n]/2,st->gridy*2/M_PI,0);
       break;
     case 5:
-      y-=_wave(st,ox,st->cs1[n]*st->csw[n]/2,st->gridy*2/PI,0);
+      y-=_wave(st,ox,st->cs1[n]*st->csw[n]/2,st->gridy*2/M_PI,0);
       break;
   }
   switch(st->pattern[n]) {

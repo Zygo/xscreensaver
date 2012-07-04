@@ -29,10 +29,11 @@
    of bundles that have executable code in them.  Bleh.
  */
 
+#import <TargetConditionals.h>
 #import "SaverRunner.h"
 #import "SaverListController.h"
 #import "XScreenSaverGLView.h"
-#import <TargetConditionals.h>
+#import "yarandom.h"
 
 #ifdef USE_IPHONE
 
@@ -417,11 +418,10 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   [prefs synchronize];
 
   if (saverName && [saverName isEqualToString: name]) {
-    if (launch && ![saverView isAnimating]) {
-      [window addSubview: saverView];
-      [saverView startAnimation];
-    }
-    return;
+    if ([saverView isAnimating])
+      return;
+    else
+      goto LAUNCH;
   }
 
   saverName = name;
@@ -452,8 +452,11 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     selector:@selector(didRotate:)
     name:UIDeviceOrientationDidChangeNotification object:nil];
 
+ LAUNCH:
   if (launch) {
+    [self saveScreenshot];
     [window addSubview: saverView];
+    [saverView becomeFirstResponder];
     [saverView startAnimation];
   }
 # endif // USE_IPHONE
@@ -466,9 +469,10 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 }
 
 
+# ifndef USE_IPHONE
+
 - (void)aboutPanel:(id)sender
 {
-# ifndef USE_IPHONE
   NSDictionary *bd = [saverBundle infoDictionary];
   NSMutableDictionary *d = [NSMutableDictionary dictionaryWithCapacity:20];
 
@@ -484,28 +488,9 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
   [[NSApplication sharedApplication]
     orderFrontStandardAboutPanelWithOptions:d];
-
-# else  // USE_IPHONE
-
-  NSDictionary *bd = [[NSBundle mainBundle] infoDictionary];
-  NSString *body = [bd objectForKey:@"CFBundleGetInfoString"];
-
-  body = [body stringByReplacingOccurrencesOfString:@", " withString:@",\n"];
-  body = [body stringByAppendingString:
-               @"\n\n"
-               "Double-tap to run.\n\n"
-               "Double-tap again to\n"
-               "return to this list."];
-
-  [[[UIAlertView alloc] initWithTitle: @""
-                        message: body
-                        delegate: nil
-                        cancelButtonTitle: @"OK"
-                        otherButtonTitles: nil]
-    show];
+}
 
 # endif // USE_IPHONE
-}
 
 
 
@@ -916,6 +901,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
                                 initWithNames:saverNames
                                 descriptions:[self makeDescTable]];
   [rootViewController pushViewController:menu animated:YES];
+  [menu becomeFirstResponder];
 
   [window makeKeyAndVisible];
   [window setAutoresizesSubviews:YES];
@@ -923,8 +909,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
             (UIViewAutoresizingFlexibleWidth | 
              UIViewAutoresizingFlexibleHeight)];
 
-  // Has to be after the list window is up, or we get black.
-  [self saveScreenshot];
+  application.applicationSupportsShakeToEdit = YES;
 
 # endif // USE_IPHONE
 

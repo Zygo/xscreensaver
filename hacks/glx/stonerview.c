@@ -95,8 +95,8 @@ init_stonerview (ModeInfo *mi)
   bp->glx_context = init_GL(mi);
 
   bp->trackball = gltrackball_init ();
-  bp->st = init_view(MI_IS_WIREFRAME(mi), transparent_p);
-  init_move(bp->st);
+  bp->st = stonerview_init_view(MI_IS_WIREFRAME(mi), transparent_p);
+  stonerview_init_move(bp->st);
 
   reshape_stonerview (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
@@ -111,10 +111,12 @@ draw_stonerview (ModeInfo *mi)
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 
   glPushMatrix ();
+  glRotatef( current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (bp->trackball);
-  win_draw(bp->st);
+
+  stonerview_win_draw(bp->st);
   if (! bp->button_down_p)
-    move_increment(bp->st);
+    stonerview_move_increment(bp->st);
   glPopMatrix ();
 
   mi->polygon_count = NUM_ELS;
@@ -132,7 +134,7 @@ release_stonerview (ModeInfo *mi)
     for (screen = 0; screen < MI_NUM_SCREENS(mi); screen++) {
       stonerview_configuration *bp = &bps[screen];
       if (bp->st)
-        win_release (bp->st);
+        stonerview_win_release (bp->st);
     }
     free (bps);
     bps = 0;

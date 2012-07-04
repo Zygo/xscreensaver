@@ -416,7 +416,10 @@ draw_knot (ModeInfo *mi)
                  (y - 0.5) * 8,
                  (z - 0.5) * 15);
 
+    /* Do it twice because we don't track the device's orientation. */
+    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (bp->trackball);
+    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
 

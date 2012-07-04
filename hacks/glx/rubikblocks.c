@@ -262,7 +262,12 @@ draw_main(ModeInfo *mi, rubikblocks_conf *cp)
   glLoadIdentity();
   get_position(cp->rot, &x, &y, &z, !cp->button_down);
   glTranslatef((x-0.5)*6, (y-0.5)*6, -20);
+
+  /* Do it twice because we don't track the device's orientation. */
+  glRotatef( current_device_rotation(), 0, 0, 1);
   gltrackball_rotate(cp->trackball);
+  glRotatef(-current_device_rotation(), 0, 0, 1);
+
   get_rotation(cp->rot, &x, &y, &z, !cp->button_down);
   glRotatef(x*360, 1, 0, 0);
   glRotatef(y*360, 0, 1, 0);

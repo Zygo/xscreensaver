@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2011 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2012 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -19,7 +19,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.4 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my $version = q{ $Revision: 1.5 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
 
 my $verbose = 0;
 
@@ -31,6 +31,12 @@ foreach (qw(count cycles delay ncolors size font)) {
 $xlockmore_default_opts .= 
  "{\"-wireframe\", \".wireframe\", XrmoptionNoArg, \"true\"},\n" .
  "{\"-3d\", \".use3d\", XrmoptionNoArg, \"true\"},\n";
+
+my $analogtv_default_opts = '';
+foreach (qw(color tint brightness contrast)) {
+  $analogtv_default_opts .= "{\"-tv-$_\", \".TV$_\", XrmoptionSepArg, 0},\n";
+}
+
 
 
 # Returns two tables:
@@ -56,11 +62,12 @@ sub parse_src($) {
   close IN;
   $file =~ s@^.*/@@;
 
+  my $xlockmore_p = 0;
+  my $analogtv_p = ($body =~ m/ANALOGTV_DEFAULTS/);
+
   $body =~ s@/\*.*?\*/@@gs;
   $body =~ s@^#\s*(if|ifdef|ifndef|elif|else|endif).*$@@gm;
   $body =~ s/ANALOGTV_(DEFAULTS|OPTIONS)//gs;
-
-  my $xlockmore_p = 0;
 
   print STDERR "$progname: $file: defaults:\n" if ($verbose > 2);
   my %res_to_val;
@@ -116,9 +123,11 @@ sub parse_src($) {
   $switch_to_res{-fps}  = 'doFPS: true';
 
   my ($ign, $opts) = ($body =~ m/(_options|\bopts)\s*\[\]\s*=\s*{(.*?)}\s*;/s);
-  if  ($xlockmore_p || $opts) {
+  if  ($xlockmore_p || $analogtv_p || $opts) {
     $opts = '' unless $opts;
     $opts .= ",\n$xlockmore_default_opts" if ($xlockmore_p);
+    $opts .= ",\n$analogtv_default_opts" if ($analogtv_p);
+
     foreach (split (/,\s*\n/, $opts)) {
       s/^\s*//s;
       s/\s*$//s;
@@ -277,7 +286,10 @@ sub check_config($) {
     error ("$saver: unparsable xml claim: $_") unless $compare;
 
     my $sval = $src_opts->{$res};
-    if (!defined($sval)) {
+    if ($res =~ m/^TV/) {
+      print STDERR "$progname: $saver: OK: skipping \"$res\"\n"
+        if ($verbose > 1);
+    } elsif (!defined($sval)) {
       print STDERR "$progname: $saver: $res: not in source\n";
     } elsif ($compare eq '!='
              ? $sval eq $xval

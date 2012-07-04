@@ -136,7 +136,7 @@
       lockward        Puts verts in lists without glBegin!
       pinion	      Uses glSelectBuffer and gluPickMatrix for mouse-clicks.
       pipes           Uses glMap2f for the Utah Teapot.
-      polyhedra       Uses GLUtesselator; also Utah Teapot.
+      polyhedra       Uses GLUtesselator (concave objects); also Utah Teapot.
       skytentacles    Uses GL_LINE in -cel mode.
       timetunnel      Uses GL_CONSTANT_ALPHA and all kinds of other stuff.
 
@@ -167,7 +167,10 @@
 #elif defined(HAVE_COCOA)
 # include <OpenGL/gl.h>
 # include <OpenGL/glu.h>
-#else
+#else /* X11 */
+# ifndef  GL_GLEXT_PROTOTYPES
+#  define GL_GLEXT_PROTOTYPES /* for glBindBuffer */
+# endif
 # include <GL/glx.h>
 # include <GL/glu.h>
 #endif
@@ -180,11 +183,17 @@
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #undef  Assert
-#define Assert(C,S) do { \
-  if (!(C)) { \
-    fprintf (stderr, "jwzgles: %s\n", S); \
-    abort(); \
-  }} while(0)
+
+#ifdef HAVE_COCOA
+  extern void jwxyz_abort (const char *fmt, ...) __dead2;
+# define Assert(C,S) do { if (!(C)) { jwxyz_abort ("%s",S); }} while(0)
+#else
+# define Assert(C,S) do { \
+    if (!(C)) { \
+      fprintf (stderr, "jwzgles: %s\n", S); \
+      abort(); \
+    }} while(0)
+#endif
 
 
 typedef struct { GLfloat x, y, z; }    XYZ;
@@ -228,7 +237,7 @@ typedef void (*list_fn_cb) (void);
 typedef union { const void *v; GLfloat f; GLuint i; } void_int;
 
 typedef struct {		/* saved args for glDrawArrays */
-  int size, type, stride, bytes;
+  int binding, size, type, stride, bytes;
   void *data;
 } draw_array;
 
@@ -261,14 +270,18 @@ typedef struct {		/* A single element of a display list */
 } list_fn;
 
 
-typedef struct {	/* saved activity within glNewList */
+typedef struct {	/* a display list: saved activity within glNewList */
   int id;
   int size, count;
   list_fn *fns;
+
+  /* Named buffer that should be freed when this display list is deleted. */
+  GLuint buffer;
+
 } list;
 
 
-typedef struct {	/* A display list */
+typedef struct {	/* All display lists */
   list *lists;
   int count, size;
 } list_set;
@@ -349,19 +362,16 @@ mode_desc (int mode)	/* for debugging messages */
   switch (mode) {
 # define SS(X) case GL_##X: return STRINGIFY(X);
   SS(ALPHA)
+  SS(ALPHA_TEST)
   SS(AMBIENT)
   SS(AMBIENT_AND_DIFFUSE)
+  SS(ARRAY_BUFFER)
   SS(AUTO_NORMAL)
   SS(BACK)
   SS(BLEND)
   SS(BLEND_DST)
   SS(BLEND_SRC)
   SS(BLEND_SRC_ALPHA)
-  SS(RGBA_MODE)
-  SS(DOUBLEBUFFER)
-  SS(GREATER)
-  SS(ALPHA_TEST)
-  SS(LESS)
   SS(BYTE)
   SS(C3F_V3F)
   SS(C4F_N3F_V3F)
@@ -370,6 +380,7 @@ mode_desc (int mode)	/* for debugging messages */
   SS(CCW)
   SS(CLAMP)
   SS(COLOR_ARRAY)
+  SS(COLOR_ARRAY_BUFFER_BINDING);
   SS(COLOR_MATERIAL)
   SS(COLOR_MATERIAL_FACE)
   SS(COLOR_MATERIAL_PARAMETER)
@@ -380,8 +391,11 @@ mode_desc (int mode)	/* for debugging messages */
   SS(DEPTH_BUFFER_BIT)
   SS(DEPTH_TEST)
   SS(DIFFUSE)
+  SS(DOUBLEBUFFER)
   SS(DST_ALPHA)
   SS(DST_COLOR)
+  SS(DYNAMIC_DRAW)
+  SS(ELEMENT_ARRAY_BUFFER)
   SS(EYE_LINEAR)
   SS(EYE_PLANE)
   SS(FEEDBACK)
@@ -391,10 +405,12 @@ mode_desc (int mode)	/* for debugging messages */
   SS(FOG)
   SS(FRONT)
   SS(FRONT_AND_BACK)
+  SS(GREATER)
   SS(INTENSITY)
   SS(INVALID_ENUM)
   SS(INVALID_OPERATION)
   SS(INVALID_VALUE)
+  SS(LESS)
   SS(LIGHT0)
   SS(LIGHT1)
   SS(LIGHT2)
@@ -422,6 +438,7 @@ mode_desc (int mode)	/* for debugging messages */
   SS(NEAREST_MIPMAP_NEAREST)
   SS(NORMALIZE)
   SS(NORMAL_ARRAY)
+  SS(NORMAL_ARRAY_BUFFER_BINDING);
   SS(OBJECT_LINEAR)
   SS(OBJECT_PLANE)
   SS(ONE_MINUS_DST_ALPHA)
@@ -445,6 +462,7 @@ mode_desc (int mode)	/* for debugging messages */
   SS(REPEAT)
   SS(RGB)
   SS(RGBA)
+  SS(RGBA_MODE)
   SS(S)
   SS(SELECT)
   SS(SEPARATE_SPECULAR_COLOR)
@@ -460,6 +478,7 @@ mode_desc (int mode)	/* for debugging messages */
   SS(SRC_COLOR)
   SS(STACK_OVERFLOW)
   SS(STACK_UNDERFLOW)
+  SS(STATIC_DRAW)
   SS(STENCIL_BUFFER_BIT)
   SS(T)
   SS(T2F_C3F_V3F)
@@ -479,6 +498,7 @@ mode_desc (int mode)	/* for debugging messages */
   SS(TEXTURE_BORDER_COLOR)
   SS(TEXTURE_COMPONENTS)
   SS(TEXTURE_COORD_ARRAY)
+  SS(TEXTURE_COORD_ARRAY_BUFFER_BINDING);
   SS(TEXTURE_ENV)
   SS(TEXTURE_ENV_COLOR)
   SS(TEXTURE_ENV_MODE)
@@ -507,6 +527,7 @@ mode_desc (int mode)	/* for debugging messages */
   SS(V2F)
   SS(V3F)
   SS(VERTEX_ARRAY)
+  SS(VERTEX_ARRAY_BUFFER_BINDING);
 /*SS(COLOR_BUFFER_BIT) -- same value as GL_LIGHT0 */
 # undef SS
   case (GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT):
@@ -539,6 +560,20 @@ check_gl_error (const char *s)
 #endif /* DEBUG */
 
 
+static void
+make_room (const char *name, void **array, int span, int *count, int *size)
+{
+  if (*count + 1 >= *size)
+    {
+      int new_size = (*count + 20) * 1.2;   /* mildly exponential */
+      *array = realloc (*array, new_size * span);
+      Assert (*array, "out of memory");
+      /* LOG3("%s: grew %d -> %d", name, *size, new_size); */
+      *size = new_size;
+    }
+}
+
+
 int
 jwzgles_glGenLists (int n)
 {
@@ -557,19 +592,10 @@ jwzgles_glGenLists (int n)
     {
       list *L;
       int id = 0;
-
-      /* Adding a new list at the end.  Make room for it.
-       */
-      if (state->lists.count >= state->lists.size - 1)
-        {
-          int new_size = 20 + (state->lists.size * 1.2);
-          state->lists.lists = (list *) 
-            realloc (state->lists.lists, 
-                     new_size * sizeof (*state->lists.lists));
-          Assert (state->lists.lists, "out of memory");
-          state->lists.size = new_size;
-          LOG1("glGenLists grew -> %d", new_size);
-        }
+      make_room ("glGenLists", 
+                 (void **) &state->lists.lists,
+                 sizeof (*state->lists.lists),
+                 &state->lists.count, &state->lists.size);
       state->lists.count++;
       id = state->lists.count;
       L = &state->lists.lists[id-1];
@@ -608,6 +634,11 @@ jwzgles_glNewList (int id, int mode)
 }
 
 
+static void save_arrays (list_fn *, int);
+static void restore_arrays (list_fn *, int);
+static void copy_array_data (draw_array *, int, const char *);
+static void optimize_arrays (void);
+
 void
 jwzgles_glEndList (void)
 {
@@ -615,13 +646,10 @@ jwzgles_glEndList (void)
   Assert (state->set.count == 0, "missing glEnd");
   Assert (!state->compiling_verts, "glEndList not allowed inside glBegin");
   LOG1("glEndList %d", state->compiling_list);
+  optimize_arrays();
   state->compiling_list = 0;
 }
 
-
-static void save_arrays (list_fn *, int);
-static void restore_arrays (list_fn *, int);
-static void copy_array_data (draw_array *, int, const char *);
 
 static void
 list_push (const char * const name, 
@@ -637,16 +665,10 @@ list_push (const char * const name,
   L = &state->lists.lists[state->compiling_list-1];
   Assert (L, "glNewList: no list");
 
-  if (L->count >= L->size - 1)
-    {
-      int new_size = 20 + (L->size * 1.2);
-      L->fns = (list_fn *) realloc (L->fns, new_size * sizeof (*L->fns));
-      Assert (L->fns, "glNewList: no functions");
-      L->size = new_size;
-    }
-
+  make_room ("glNewLists", 
+             (void **) &L->fns, sizeof (*L->fns),
+             &L->count, &L->size);
   memset (&L->fns[L->count], 0, sizeof (*L->fns));
-
   F = L->fns + L->count;
 
   F->name = name;
@@ -678,7 +700,8 @@ list_push (const char * const name,
     LOG2 ("  push %-12s %7.3f", name, av[0].f);
     break;
   case PROTO_II:
-    if (fn == (list_fn_cb) &jwzgles_glBindTexture)
+    if (fn == (list_fn_cb) &jwzgles_glBindTexture ||
+        fn == (list_fn_cb) &jwzgles_glBindBuffer)
       LOG3 ("  push %-12s %s %d", name, mode_desc (av[0].i), av[1].i);
     else
       LOG3 ("  push %-12s %d %d", name, av[0].i, av[1].i);
@@ -834,14 +857,17 @@ jwzgles_glDeleteLists (int id0, int range)
                 {
                   int j;
                   for (j = 0; j < 4; j++)
-                    {
-                      if (lf->arrays[j].data)
-                        free (lf->arrays[j].data);
-                    }
+                    /* If there's a binding, 'data' is an index, not a ptr. */
+                    if (!lf->arrays[j].binding &&
+                        lf->arrays[j].data)
+                      free (lf->arrays[j].data);
+                  free (lf->arrays);
                 }
             }
           if (L->fns) 
             free (L->fns);
+          if (L->buffer)
+            glDeleteBuffers (1, &L->buffer);
 
           memset (L, 0, sizeof (*L));
           L->id = id;
@@ -878,14 +904,16 @@ jwzgles_glNormal3fv (const GLfloat *v)
               (state->compiling_verts ? "  rec  " : ""),
               v[0], v[1], v[2]);
 
-      state->set.cnorm.x = v[0];
-      state->set.cnorm.y = v[1];
-      state->set.cnorm.z = v[2];
-      state->set.ncount++;
-      if (state->set.count > 0 && state->set.ncount == 1)  /* not first! */
-        state->set.ncount++;
-
-      if (! state->compiling_verts)	/* outside glBegin */
+      if (state->compiling_verts)	/* inside glBegin */
+        {
+          state->set.cnorm.x = v[0];
+          state->set.cnorm.y = v[1];
+          state->set.cnorm.z = v[2];
+          state->set.ncount++;
+          if (state->set.count > 0 && state->set.ncount == 1)  /* not first! */
+            state->set.ncount++;
+        }
+      else				/* outside glBegin */
         {
           glNormal3f (v[0], v[1], v[2]);
           CHECK("glNormal3f");
@@ -926,15 +954,18 @@ jwzgles_glTexCoord4fv (const GLfloat *v)
               (state->compiling_verts ? "  rec  " : ""),
               v[0], v[1], v[2], v[3]);
 
-      state->set.ctex.s = v[0];
-      state->set.ctex.t = v[1];
-      state->set.ctex.r = v[2];
-      state->set.ctex.q = v[3];
-      state->set.tcount++;
-      if (state->set.count > 0 && state->set.tcount == 1)  /* not first! */
-        state->set.tcount++;
-
       Assert (state->compiling_verts, "glTexCoord4fv outside glBegin");
+
+      if (state->compiling_verts)	/* inside glBegin */
+        {
+          state->set.ctex.s = v[0];
+          state->set.ctex.t = v[1];
+          state->set.ctex.r = v[2];
+          state->set.ctex.q = v[3];
+          state->set.tcount++;
+          if (state->set.count > 0 && state->set.tcount == 1)  /* not first! */
+            state->set.tcount++;
+        }
     }
 }
 
@@ -1018,15 +1049,17 @@ jwzgles_glColor4fv (const GLfloat *v)
               (state->compiling_verts ? "  rec  " : ""),
               v[0], v[1], v[2], v[3]);
 
-      state->set.ccolor.r = v[0];
-      state->set.ccolor.g = v[1];
-      state->set.ccolor.b = v[2];
-      state->set.ccolor.a = v[3];
-      state->set.ccount++;
-      if (state->set.count > 0 && state->set.ccount == 1)  /* not first! */
-        state->set.ccount++;
-
-      if (! state->compiling_verts)	/* outside glBegin */
+      if (state->compiling_verts)	/* inside glBegin */
+        {
+          state->set.ccolor.r = v[0];
+          state->set.ccolor.g = v[1];
+          state->set.ccolor.b = v[2];
+          state->set.ccolor.a = v[3];
+          state->set.ccount++;
+          if (state->set.count > 0 && state->set.ccount == 1)  /* not first! */
+            state->set.ccount++;
+        }
+      else				/* outside glBegin */
         {
           glColor4f (v[0], v[1], v[2], v[3]);
           CHECK("glColor4");
@@ -1556,6 +1589,8 @@ jwzgles_glEnd (void)
   Assert (state->compiling_verts == 1, "missing glBegin");
   state->compiling_verts--;
 
+  Assert (!state->replaying_list, "how did glEnd get into a display list?");
+
   if (!state->replaying_list)
     {
       LOG5 ("%s  [V = %d, N = %d, T = %d, C = %d]",
@@ -1600,6 +1635,14 @@ jwzgles_glEnd (void)
   was_tex   = jwzgles_glIsEnabled (GL_TEXTURE_COORD_ARRAY);
   was_color = jwzgles_glIsEnabled (GL_COLOR_ARRAY);
   was_mat   = jwzgles_glIsEnabled (GL_COLOR_MATERIAL);
+
+  /* If we're executing glEnd in immediate mode, not from inside a display
+     list (which is the only way it happens, because glEnd doesn't go into
+     display lists), make sure we're not stomping on a saved buffer list:
+     in immediate mode, vertexes are client-side only.
+   */
+  if (! state->compiling_list)
+    jwzgles_glBindBuffer (GL_ARRAY_BUFFER, 0);
 
   if (s->ncount > 1)
     {
@@ -1654,7 +1697,9 @@ jwzgles_glEnd (void)
   else
     is_mat = 0;
 
+  glBindBuffer (GL_ARRAY_BUFFER, 0);    /* This comes later. */
   jwzgles_glDrawArrays (s->mode, 0, s->count);
+  glBindBuffer (GL_ARRAY_BUFFER, 0);    /* Keep out of others' hands */
 
 # define RESET(VAR,FN,ARG) do { \
          if (is_##VAR != was_##VAR) { \
@@ -1672,6 +1717,116 @@ jwzgles_glEnd (void)
   s->tcount = 0;
   s->ccount = 0;
   s->materialistic = 0;
+}
+
+
+/* The display list is full of calls to glDrawArrays(), plus saved arrays
+   of the values we need to restore before calling it.  "Restore" means
+   "ship them off to the GPU before each call".
+
+   So instead, this function walks through the display list and
+   combines all of those vertex, normal, texture and color values into
+   a single VBO array; ships those values off to the GPU *once* at the
+   time of glEndList; and when running the list with glCallList, the
+   values are already on the GPU and don't need to be sent over again.
+
+   The VBO persists in the GPU until the display list is deleted.
+ */
+static void
+optimize_arrays (void)
+{
+  list *L = &state->lists.lists[state->compiling_list-1];
+  int i, j;
+  GLfloat *combo = 0;
+  int combo_count = 0;
+  int combo_size = 0;
+  GLuint buf_name = 0;
+
+  Assert (state->compiling_list, "not compiling a list");
+  Assert (L, "no list");
+  Assert (!L->buffer, "list already has a buffer");
+
+  glGenBuffers (1, &buf_name);
+  CHECK("glGenBuffers");
+  if (! buf_name) return;
+
+  L->buffer = buf_name;
+
+  /* Go through the list and dump the contents of the various saved arrays
+     into one large array.
+   */
+  for (i = 0; i < L->count; i++)
+    {
+      list_fn *F = &L->fns[i];
+      int count;
+      if (! F->arrays)
+        continue;
+      count = F->argv[2].i;  /* 3rd arg to glDrawArrays */
+
+      for (j = 0; j < 4; j++)
+        {
+          draw_array *A = &F->arrays[j];
+          int ocount = combo_count;
+
+          /* If some caller is using arrays that don't have floats in them,
+             we just leave them as-is and ship them over at each call.
+             Doubt this ever really happens.
+           */
+          if (A->type != GL_FLOAT)
+            continue;
+
+          if (! A->data)	/* No array. */
+            continue;
+
+          Assert (A->bytes > 0, "no bytes in draw_array");
+          Assert (((unsigned long) A->data > 0xFFFF),
+                  "buffer data not a pointer");
+
+          combo_count += A->bytes / sizeof(*combo);
+          make_room ("optimize_arrays",
+                     (void **) &combo, sizeof(*combo),
+                     &combo_count, &combo_size);
+          memcpy (combo + ocount, A->data, A->bytes);
+          A->binding = buf_name;
+          free (A->data);
+          /* 'data' is now the byte offset into the VBO. */
+          A->data = (void *) (ocount * sizeof(*combo));
+          /* LOG3("    loaded %lu floats to pos %d of buffer %d",
+               A->bytes / sizeof(*combo), ocount, buf_name); */
+        }
+    }
+
+  if (combo_count == 0)		/* Nothing to do! */
+    {
+      if (combo) free (combo);
+      glDeleteBuffers (1, &buf_name);
+      L->buffer = 0;
+      return;
+    }
+
+  glBindBuffer (GL_ARRAY_BUFFER, buf_name);
+  glBufferData (GL_ARRAY_BUFFER, 
+                combo_count * sizeof (*combo),
+                combo,
+                GL_STATIC_DRAW);
+  glBindBuffer (GL_ARRAY_BUFFER, 0);    /* Keep out of others' hands */
+
+  LOG3("  loaded %d floats of list %d into VBO %d",
+       combo_count, state->compiling_list, buf_name);
+
+# ifdef DEBUG
+#  if 0
+  for (i = 0; i < combo_count; i++)
+    {
+      if (i % 4 == 0)
+        fprintf (stderr, "\njwzgles:    %4d: ", i);
+      fprintf (stderr, " %7.3f", combo[i]);
+    }
+  fprintf (stderr, "\n");
+#  endif
+# endif /* DEBUG */
+
+  if (combo) free (combo);
 }
 
 
@@ -1735,7 +1890,8 @@ jwzgles_glCallList (int id)
             break;
 
           case PROTO_II:
-            if (fn == (list_fn_cb) &jwzgles_glBindTexture)
+            if (fn == (list_fn_cb) &jwzgles_glBindTexture ||
+                fn == (list_fn_cb) &jwzgles_glBindBuffer)
               LOG3 ("  call %-12s %s %d", F->name, 
                     mode_desc (av[0].i), av[1].i);
             else
@@ -1902,6 +2058,7 @@ save_arrays (list_fn *F, int count)
 
 /*  if (state->set.count > 0) */
     {
+      glGetIntegerv (GL_VERTEX_ARRAY_BUFFER_BINDING, &A[i].binding);
       glGetIntegerv (GL_VERTEX_ARRAY_SIZE,    &A[i].size);
       glGetIntegerv (GL_VERTEX_ARRAY_TYPE,    &A[i].type);
       glGetIntegerv (GL_VERTEX_ARRAY_STRIDE,  &A[i].stride);
@@ -1914,6 +2071,7 @@ save_arrays (list_fn *F, int count)
   if (state->set.ncount > 1)
     {
       A[i].size = 3;
+      glGetIntegerv (GL_NORMAL_ARRAY_BUFFER_BINDING, &A[i].binding);
       glGetIntegerv (GL_NORMAL_ARRAY_TYPE,    &A[i].type);
       glGetIntegerv (GL_NORMAL_ARRAY_STRIDE,  &A[i].stride);
       glGetPointerv (GL_NORMAL_ARRAY_POINTER, &A[i].data);
@@ -1924,6 +2082,7 @@ save_arrays (list_fn *F, int count)
   i++;
   if (state->set.tcount > 1)
     {
+      glGetIntegerv (GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING, &A[i].binding);
       glGetIntegerv (GL_TEXTURE_COORD_ARRAY_SIZE,    &A[i].size);
       glGetIntegerv (GL_TEXTURE_COORD_ARRAY_TYPE,    &A[i].type);
       glGetIntegerv (GL_TEXTURE_COORD_ARRAY_STRIDE,  &A[i].stride);
@@ -1935,6 +2094,7 @@ save_arrays (list_fn *F, int count)
   i++;
   if (state->set.ccount > 1)
     {
+      glGetIntegerv (GL_COLOR_ARRAY_BUFFER_BINDING, &A[i].binding);
       glGetIntegerv (GL_COLOR_ARRAY_SIZE,    &A[i].size);
       glGetIntegerv (GL_COLOR_ARRAY_TYPE,    &A[i].type);
       glGetIntegerv (GL_COLOR_ARRAY_STRIDE,  &A[i].stride);
@@ -1958,20 +2118,64 @@ dump_array_data (draw_array *A, int count,
 {
   int bytes = count * A->stride;
 
-  Assert (bytes == A->bytes, "array data corrupted");
+  if (A->binding)
+    {
+      fprintf (stderr, 
+               "jwzgles:     %s %s %d %s %2d, %4d = %5d   bind %d @ %d\n", 
+               action, name,
+               A->size, mode_desc(A->type), A->stride, 
+               count, bytes, A->binding, (int) A->data);
+    }
+  else
+    {
+      Assert (bytes == A->bytes, "array data corrupted");
 
-  fprintf (stderr, "jwzgles:     %s %s %d %s %2d, %4d = %5d @ %lX", 
-           action, name,
-           A->size, mode_desc(A->type), A->stride, 
-           count, bytes, (unsigned long) A->data);
-  if (old)
-    fprintf (stderr, " / %lX", (unsigned long) old);
-  fprintf (stderr, "\n");
+      fprintf (stderr, "jwzgles:     %s %s %d %s %2d, %4d = %5d @ %lX", 
+               action, name,
+               A->size, mode_desc(A->type), A->stride, 
+               count, bytes, (unsigned long) A->data);
+      if (old)
+        fprintf (stderr, " / %lX", (unsigned long) old);
+      fprintf (stderr, "\n");
+    }
+
+  if (A->binding)
+    {
+      Assert (((unsigned long) A->data < 0xFFFF),
+              "buffer binding should be a numeric index,"
+              " but looks like a pointer");
 
 # if 0
-  {
+      /* glGetBufferSubData doesn't actually exist in OpenGLES, but this
+         was helpful for debugging on real OpenGL... */
+      GLfloat *d;
+      int i;
+      fprintf (stderr, "jwzgles: read back:\n");
+      d = (GLfloat *) malloc (A->bytes);
+      glGetBufferSubData (GL_ARRAY_BUFFER, (int) A->data,
+                          count * A->stride, (void *) d);
+      CHECK("glGetBufferSubData");
+      for (i = 0; i < count * A->size; i++)
+        {
+          if (i % 4 == 0)
+            fprintf (stderr, "\njwzgles:    %4d: ", 
+                     i + (int) A->data / sizeof(GLfloat));
+          fprintf (stderr, " %7.3f", d[i]);
+        }
+      fprintf (stderr, "\n");
+      free (d);
+# endif
+    }
+# if 0
+  else
+    {
       unsigned char *b = (unsigned char *) A->data;
       int i;
+      if ((unsigned long) A->data < 0xFFFF)
+        {
+          Assert (0, "buffer data not a pointer");
+          return;
+        }
       for (i = 0; i < count; i++)
         {
           int j;
@@ -1991,10 +2195,11 @@ dump_array_data (draw_array *A, int count,
 static void
 dump_direct_array_data (int count)
 {
-  draw_array A;
+  draw_array A = { 0, };
 
   if (jwzgles_glIsEnabled (GL_VERTEX_ARRAY))
     {
+      glGetIntegerv (GL_VERTEX_ARRAY_BUFFER_BINDING, &A.binding);
       glGetIntegerv (GL_VERTEX_ARRAY_SIZE,    &A.size);
       glGetIntegerv (GL_VERTEX_ARRAY_TYPE,    &A.type);
       glGetIntegerv (GL_VERTEX_ARRAY_STRIDE,  &A.stride);
@@ -2005,6 +2210,7 @@ dump_direct_array_data (int count)
   if (jwzgles_glIsEnabled (GL_NORMAL_ARRAY))
     {
       A.size = 0;
+      glGetIntegerv (GL_NORMAL_ARRAY_BUFFER_BINDING, &A.binding);
       glGetIntegerv (GL_NORMAL_ARRAY_TYPE,    &A.type);
       glGetIntegerv (GL_NORMAL_ARRAY_STRIDE,  &A.stride);
       glGetPointerv (GL_NORMAL_ARRAY_POINTER, &A.data);
@@ -2013,6 +2219,7 @@ dump_direct_array_data (int count)
     }
   if (jwzgles_glIsEnabled (GL_TEXTURE_COORD_ARRAY))
     {
+      glGetIntegerv (GL_TEXTURE_COORD_ARRAY_BUFFER_BINDING, &A.binding);
       glGetIntegerv (GL_TEXTURE_COORD_ARRAY_SIZE,    &A.size);
       glGetIntegerv (GL_TEXTURE_COORD_ARRAY_TYPE,    &A.type);
       glGetIntegerv (GL_TEXTURE_COORD_ARRAY_STRIDE,  &A.stride);
@@ -2022,6 +2229,7 @@ dump_direct_array_data (int count)
     }
   if (jwzgles_glIsEnabled (GL_COLOR_ARRAY))
     {
+      glGetIntegerv (GL_COLOR_ARRAY_BUFFER_BINDING, &A.binding);
       glGetIntegerv (GL_COLOR_ARRAY_SIZE,    &A.size);
       glGetIntegerv (GL_COLOR_ARRAY_TYPE,    &A.type);
       glGetIntegerv (GL_COLOR_ARRAY_STRIDE,  &A.stride);
@@ -2051,7 +2259,11 @@ copy_array_data (draw_array *A, int count, const char *name)
   const unsigned char *IB;
   unsigned char *OB;
 
-  if (! A->data) return;
+  if (((unsigned long) A->data) < 0xFFFF)
+    {
+      Assert (0, "buffer data not a pointer");
+      return;
+    }
 
   Assert (A->size >= 2 && A->size <= 4, "bogus array size");
 
@@ -2114,8 +2326,17 @@ restore_arrays (list_fn *F, int count)
 
   for (i = 0; i < 4; i++)
     {
-      const char *name;
-      if (! A[i].data) continue;
+      const char *name = 0;
+
+      if (!A[i].size)
+        continue;
+
+      Assert ((A[i].binding || A[i].data),
+              "array has neither buffer binding nor data");
+
+      glBindBuffer (GL_ARRAY_BUFFER, A[i].binding);
+      CHECK("glBindBuffer");
+
       switch (i) {
       case 0: glVertexPointer  (A[i].size, A[i].type, A[i].stride, A[i].data);
         name = "vertex ";
@@ -2140,6 +2361,8 @@ restore_arrays (list_fn *F, int count)
       dump_array_data (&A[i], count, "restored", name, 0);
 # endif
     }
+
+  glBindBuffer (GL_ARRAY_BUFFER, 0);    /* Keep out of others' hands */
 }
 
 
@@ -2396,16 +2619,22 @@ jwzgles_glEnableClientState (GLuint cap)
     }
 
   switch (cap) {
+  case GL_VERTEX_ARRAY:
+    state->enabled |= ISENABLED_VERT_ARRAY;
+    break;
   case GL_NORMAL_ARRAY:
-    state->set.ncount += 2;
+    if (! state->compiling_verts)
+      state->set.ncount += 2;
     state->enabled |= ISENABLED_NORM_ARRAY;
     break;
   case GL_TEXTURE_COORD_ARRAY:
-    state->set.tcount += 2;
+    if (! state->compiling_verts)
+      state->set.tcount += 2;
     state->enabled |= ISENABLED_TEX_ARRAY;
     break;
   case GL_COLOR_ARRAY:
-    state->set.ccount += 2;
+    if (! state->compiling_verts)
+      state->set.ccount += 2;
     state->enabled |= ISENABLED_COLOR_ARRAY;
     break;
   default: break;
@@ -2433,16 +2662,22 @@ jwzgles_glDisableClientState (GLuint cap)
     }
 
   switch (cap) {
+  case GL_VERTEX_ARRAY:
+    state->enabled &= ~ISENABLED_VERT_ARRAY;
+    break;
   case GL_NORMAL_ARRAY:
-    state->set.ncount = 0;
+    if (! state->compiling_verts)
+      state->set.ncount = 0;
     state->enabled &= ~ISENABLED_NORM_ARRAY;
     break;
   case GL_TEXTURE_COORD_ARRAY:
-    state->set.tcount = 0;
+    if (! state->compiling_verts)
+      state->set.tcount = 0;
     state->enabled &= ~ISENABLED_TEX_ARRAY;
     break;
   case GL_COLOR_ARRAY:
-    state->set.ccount = 0;
+    if (! state->compiling_verts)
+      state->set.ccount = 0;
     state->enabled &= ~ISENABLED_COLOR_ARRAY;
     break;
   default:
@@ -3046,8 +3281,10 @@ jwzgles_gluErrorString (GLenum error)
 }
 
 
-/* These can be included inside glNewList, but they actually execute
-   immediately anyway. 
+/* These four *Pointer calls (plus glBindBuffer and glBufferData) can
+   be included inside glNewList, but they actually execute immediately
+   anyway, because their data is recorded in the list by the
+   subsequently-recorded call to glDrawArrays.  This is a little weird.
  */
 void
 jwzgles_glVertexPointer (GLuint size, GLuint type, GLuint stride, 
@@ -3092,6 +3329,26 @@ jwzgles_glTexCoordPointer (GLuint size, GLuint type, GLuint stride,
   CHECK("glTexCoordPointer");
 }
 
+void
+jwzgles_glBindBuffer (GLuint target, GLuint buffer)
+{
+  if (! state->replaying_list)
+    LOG3 ("direct %-12s %s %d", "glBindBuffer", mode_desc(target), buffer);
+  glBindBuffer (target, buffer);  /* the real one */
+  CHECK("glBindBuffer");
+}
+
+void
+jwzgles_glBufferData (GLenum target, GLsizeiptr size, const void *data,
+                      GLenum usage)
+{
+  if (! state->replaying_list)
+    LOG5 ("direct %-12s %s %ld 0x%lX %s", "glBufferData",
+          mode_desc(target), size, (unsigned long) data, mode_desc(usage));
+  glBufferData (target, size, data, usage);  /* the real one */
+  CHECK("glBufferData");
+}
+
 
 void
 jwzgles_glTexParameterf (GLuint target, GLuint pname, GLfloat param)
@@ -3107,6 +3364,11 @@ jwzgles_glTexParameterf (GLuint target, GLuint pname, GLfloat param)
 
   /* We implement 1D textures as 2D textures. */
   if (target == GL_TEXTURE_1D) target = GL_TEXTURE_2D;
+
+  /* Apparently this is another invalid enum. Just ignore it. */
+  if ((pname == GL_TEXTURE_WRAP_S || pname == GL_TEXTURE_WRAP_T) &&
+      param == GL_CLAMP)
+    return;
 
   if (state->compiling_list)
     {

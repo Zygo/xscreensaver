@@ -990,7 +990,11 @@ ENTRYPOINT void draw_jigglypuff(ModeInfo *mi)
 	    js->axis -= 2*M_PI;
 	}
     }
+
+    /* Do it twice because we don't track the device's orientation. */
+    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate(js->trackball);
+    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     if(js->color_style == COLOR_STYLE_CYCLE) {
 	int i;

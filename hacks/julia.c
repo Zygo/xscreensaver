@@ -45,33 +45,15 @@ static const char sccsid[] = "@(#)julia.c	4.03 97/04/10 xlockmore";
 					"*fpsSolid:		true   \n" \
 
 # define UNIFORM_COLORS
-# define reshape_julia 0
-# define julia_handle_event 0
 # include "xlockmore.h"				/* in xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* in xlockmore distribution */
 #endif /* !STANDALONE */
 
 
-static Bool track_p;
-
 #define DEF_MOUSE "False"
 
-static XrmOptionDescRec opts[] =
-{
-	{"-mouse", ".julia.mouse", XrmoptionNoArg, "on"},
-	{"+mouse", ".julia.mouse", XrmoptionNoArg, "off"},
-};
-static argtype vars[] =
-{
-	{&track_p, "mouse", "Mouse", DEF_MOUSE, t_Bool},
-};
-static OptionStruct desc[] =
-{
-	{"-/+mouse", "turn on/off mouse tracking"},
-};
-
-ENTRYPOINT ModeSpecOpt julia_opts = { 2, opts, 1, vars, desc };
+ENTRYPOINT ModeSpecOpt julia_opts = { 0, };
 
 
 #define numpoints ((0x2<<jp->depth)-1)
@@ -96,6 +78,8 @@ typedef struct {
 #endif
 	GC          stippledGC;
 	XPoint    **pointBuffer;	/* pointer for XDrawPoints */
+    Bool        button_down_p;
+    int         mouse_x, mouse_y;
 
 } juliastruct;
 
@@ -140,28 +124,13 @@ apply(juliastruct * jp, register double xr, register double xi, int d)
 static void
 incr(ModeInfo * mi, juliastruct * jp)
 {
-	int cx, cy;
-
-	if (track_p)
+	if (jp->button_down_p)
 	  {
-		Window r, c;
-		int rx, ry;
-		unsigned int m;
-		XQueryPointer(MI_DISPLAY(mi), MI_WINDOW(mi),
-					  &r, &c, &rx, &ry, &cx, &cy, &m);
-		if (cx <= 0 || cy <= 0 ||
-			cx >= MI_WIN_WIDTH(mi) || cy >= MI_WIN_HEIGHT(mi))
-		  goto NOTRACK;
-	  }
-
-	if (track_p)
-	  {
-		jp->cr = ((double) (cx + 2 - jp->centerx)) * 2 / jp->centerx;
-		jp->ci = ((double) (cy + 2 - jp->centery)) * 2 / jp->centery;
+		jp->cr = ((double) (jp->mouse_x + 2 - jp->centerx)) * 2 / jp->centerx;
+		jp->ci = ((double) (jp->mouse_y + 2 - jp->centery)) * 2 / jp->centery;
 	  }
 	else
 	  {
-	  NOTRACK:
 #if 0
 		jp->cr = 1.5 * (sin(M_PI * (jp->inc / 300.0)) *
 						sin(jp->inc * M_PI / 200.0));
@@ -207,7 +176,7 @@ init_julia(ModeInfo * mi)
 
 
 #ifndef HAVE_COCOA
-	if (track_p && !jp->cursor)
+	if (jp->button_down_p && !jp->cursor && !jp->cursor)
 	  {
 		Pixmap bit;
 		XColor black;
@@ -230,7 +199,7 @@ init_julia(ModeInfo * mi)
 	if (jp->pixmap == None) {
 		GC          fg_gc = None, bg_gc = None;
 
-		jp->circsize = (MIN(jp->centerx, jp->centery) / 96) * 2 + 1;
+		jp->circsize = MAX(8, (MIN(jp->centerx, jp->centery) / 96) * 2 + 1);
 		jp->pixmap = XCreatePixmap(display, window, jp->circsize, jp->circsize, 1);
 		gcv.foreground = 1;
 		fg_gc = XCreateGC(display, jp->pixmap, GCForeground, &gcv);
@@ -284,6 +253,44 @@ init_julia(ModeInfo * mi)
 }
 
 
+static void
+reshape_julia (ModeInfo *mi, int w, int h)
+{
+  init_julia (mi);
+}
+
+
+ENTRYPOINT Bool
+julia_handle_event (ModeInfo *mi, XEvent *event)
+{
+  juliastruct *jp = &julias[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
+    {
+      jp->button_down_p = True;
+      jp->mouse_x = event->xbutton.x;
+      jp->mouse_y = event->xbutton.y;
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
+    {
+      jp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == MotionNotify && jp->button_down_p)
+    {
+      jp->mouse_x = event->xmotion.x;
+      jp->mouse_y = event->xmotion.y;
+      return True;
+    }
+
+  return False;
+}
+
+
+
 /* hack: moved here by jwz. */
 #define ERASE_IMAGE(d,w,g,x,y,xl,yl,xs,ys) \
 if (yl<y) \
@@ -318,8 +325,11 @@ draw_julia (ModeInfo * mi)
 	new_circle.x = (int) (jp->centerx * jp->cr / 2) + jp->centerx - 2;
 	new_circle.y = (int) (jp->centery * jp->ci / 2) + jp->centery - 2;
 	XSetForeground(display, gc, MI_WIN_BLACK_PIXEL(mi));
-	ERASE_IMAGE(display, window, gc, new_circle.x, new_circle.y,
-		    old_circle.x, old_circle.y, jp->circsize, jp->circsize);
+	XFillArc(display, window, gc, 
+             old_circle.x-jp->circsize/2-2,
+             old_circle.y-jp->circsize/2-2,
+             jp->circsize+4, jp->circsize+4,
+             0, 360*64);
 	/* draw a circle at the c-parameter so you can see it's effect on the
 	   structure of the julia set */
 	XSetForeground(display, jp->stippledGC, MI_WIN_WHITE_PIXEL(mi));
@@ -328,8 +338,12 @@ draw_julia (ModeInfo * mi)
 	XSetStipple(display, jp->stippledGC, jp->pixmap);
 	XSetFillStyle(display, jp->stippledGC, FillOpaqueStippled);
 #endif /* HAVE_COCOA */
-	XFillRectangle(display, window, jp->stippledGC, new_circle.x, new_circle.y,
-		       jp->circsize, jp->circsize);
+	XDrawArc(display, window, jp->stippledGC, 
+             new_circle.x-jp->circsize/2,
+             new_circle.y-jp->circsize/2,
+             jp->circsize, jp->circsize,
+             0, 360*64);
+
 	if (jp->erase == 1) {
 		XDrawPoints(display, window, gc,
 		    jp->pointBuffer[jp->buffer], numpoints, CoordModeOrigin);

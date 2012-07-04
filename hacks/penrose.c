@@ -89,7 +89,6 @@ If one of these are hit penrose will reinitialize.
 					"*fpsSolid: true \n" \
 
 # define refresh_penrose 0
-# define reshape_penrose 0
 # define penrose_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -1328,6 +1327,14 @@ draw_penrose(ModeInfo * mi)
 		tp->failures++;
 }
 
+
+ENTRYPOINT void
+reshape_penrose(ModeInfo * mi, int width, int height)
+{
+	tiling_c   *tp = &tilings[MI_SCREEN(mi)];
+	tp->width = width;
+	tp->height = height;
+}
 
 /* Total clean-up. */
 ENTRYPOINT void

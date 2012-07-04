@@ -306,6 +306,8 @@ extern void jwzgles_glVertexPointer (GLuint, GLuint, GLuint, const void *);
 extern void jwzgles_glNormalPointer (GLenum, GLuint, const void *);
 extern void jwzgles_glColorPointer (GLuint, GLuint, GLuint, const void *);
 extern void jwzgles_glTexCoordPointer (GLuint, GLuint, GLuint, const void *);
+extern void jwzgles_glBindBuffer (GLuint, GLuint);
+extern void jwzgles_glBufferData (GLenum, GLsizeiptr, const void *, GLenum);
 extern const char *jwzgles_gluErrorString (GLenum error);
 
 #endif /* __JWZGLES_I_H__ */

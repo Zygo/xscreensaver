@@ -463,6 +463,9 @@ static void
 whirlwindwarp_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  st->scrwid = w;
+  st->scrhei = h;
 }
 
 static Bool

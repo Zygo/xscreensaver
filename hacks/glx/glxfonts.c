@@ -59,6 +59,10 @@ extern char *progname;
                */
 
 
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
+
 /* Width (and optionally height) of the string in pixels.
  */
 int
@@ -413,6 +417,7 @@ print_gl_string (Display *dpy,
   int tabs = cw * 7;
   int lines = 0;
   const char *c;
+  GLfloat color[4];
 
 # ifdef HAVE_GLBITMAP
   /* Sadly, this causes a stall of the graphics pipeline (as would the
@@ -445,6 +450,8 @@ print_gl_string (Display *dpy,
     glGetIntegerv (GL_BLEND_DST, &oblend);
 # endif /* !HAVE_GLBITMAP */
 
+    glGetFloatv (GL_CURRENT_COLOR, color);
+
   for (c = string; *c; c++)
     if (*c == '\n') lines++;
 
@@ -467,6 +474,7 @@ print_gl_string (Display *dpy,
 # endif /* !HAVE_GLBITMAP */
 
     glDisable (GL_LIGHTING);
+
 
       if (!in_scene_p)
         glDisable (GL_DEPTH_TEST);
@@ -531,6 +539,11 @@ print_gl_string (Display *dpy,
         check_gl_error ("glOrtho");
 # endif
 
+        /* Let's always dropshadow the FPS and Title text. */
+        if (! in_scene_p)
+          clear_background_p = True;
+
+#if 0
         if (clear_background_p)
           {
             int w, h;
@@ -554,6 +567,8 @@ print_gl_string (Display *dpy,
 # endif /* !HAVE_GLBITMAP */
             glColor3f (1, 1, 1);
           }
+#endif /* 0 */
+
 
         /* draw the text */
 
@@ -583,23 +598,43 @@ print_gl_string (Display *dpy,
               }
             else
               {
+                /* outline font in black */
+                const XPoint offsets[] = {{ -1, -1 },
+                                          { -1,  1 },
+                                          {  1,  1 },
+                                          {  1, -1 },
+                                          {  0,  0 }};
+                int j;
+# ifndef HAVE_GLBITMAP
+                char s[2];
+                s[0] = c;
+                s[1] = 0;
+# endif /* !HAVE_GLBITMAP */
+
+                glColor3f (0, 0, 0);
+                for (j = 0; j < countof(offsets); j++)
+                  {
+                    if (! clear_background_p)
+                      j = countof(offsets)-1;
+                    if (offsets[j].x == 0)
+                      glColor4fv (color);
+
 # ifdef HAVE_GLBITMAP
-                glRasterPos2f (x2, y);
-                glCallList (font_dlist + (int)(c));
+                    glRasterPos2f (x2 + offsets[j].x, y + offsets[j].y);
+                    glCallList (font_dlist + (int)(c));
+# else /* !HAVE_GLBITMAP */
+                    glPushMatrix();
+                    glTranslatef (x2 + offsets[j].x, y + offsets[j].y, 0);
+                    print_texture_string (font_data, s);
+                    glPopMatrix();
+# endif /* !HAVE_GLBITMAP */
+                  }
+# ifdef HAVE_GLBITMAP
                 x2 += (font->per_char
                        ? font->per_char[c - font->min_char_or_byte2].width
                        : font->min_bounds.width);
 # else /* !HAVE_GLBITMAP */
-                glPushMatrix();
-                glTranslatef (x2, y, 0);
-                {
-                  char s[2];
-                  s[0] = c;
-                  s[1] = 0;
-                  print_texture_string (font_data, s);
-                  x2 += texture_string_width (font_data, s, 0);
-                }
-                glPopMatrix();
+                x2 += texture_string_width (font_data, s, 0);
 # endif /* !HAVE_GLBITMAP */
               }
           }

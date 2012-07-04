@@ -493,6 +493,10 @@ static void
 starfish_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  free_starfish (st->starfish);
+  st->starfish = 0;
+  st->starfish = reset_starfish (st);
 }
 
 static Bool

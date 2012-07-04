@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -484,6 +484,7 @@ static RETSIGTYPE
 sigchld_handler (int sig)
 {
   saver_info *si = global_si_kludge;	/* I hate C so much... */
+  in_signal_handler_p++;
 
   if (si->prefs.debug_p)
     {
@@ -510,6 +511,7 @@ sigchld_handler (int sig)
     }
 
   init_sigchld();
+  in_signal_handler_p--;
 }
 #endif /* SIGCHLD */
 

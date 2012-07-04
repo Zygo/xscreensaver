@@ -915,6 +915,9 @@ a2_vt100_printc (apple2_sim_t *sim, struct terminal_controller_data *state,
             }
           break;
         case 10: /* LF */
+# ifndef HAVE_FORKPTY
+          state->cursor_x = 0;	/* No ptys on iPhone; assume CRLF. */
+# endif
         case 11: /* VT */
         case 12: /* FF */
           if (state->cursor_y < rows - 1)

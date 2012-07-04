@@ -23,9 +23,14 @@
                     ISO C89 compilers are required to support" when includng
                     the following data file... */
 # endif
-const char * const demo_files[] = {
+static const char * const demo_files[] = {
 # include "m6502.h"
 };
+
+
+#ifndef USE_IPHONE
+# define READ_FILES
+#endif
 
 
 /* We want to paint on a 32 by 32 grid of pixels. We will needed to
@@ -74,7 +79,7 @@ start_rand_bin_prog(machine_6502 *machine, struct state *st){
   while(n == st->which)
     n = random() % st->demos;
   st->which = n;
-  start_eval_string(machine, demo_files[st->which], plot6502, st);
+  m6502_start_eval_string(machine, demo_files[st->which], plot6502, st);
 }
 
 
@@ -114,7 +119,6 @@ m6502_init (Display *dpy, Window window)
 {
   struct state *st = (struct state *) calloc (1, sizeof(*st));
   unsigned int x, y;
-  char *s = get_string_resource (dpy, "file", "File");
   int n = get_integer_resource(dpy, "displaytime", "Displaytime");
   int dh;
   st->demos = countof(demo_files);
@@ -125,7 +129,7 @@ m6502_init (Display *dpy, Window window)
   st->tv=analogtv_allocate(st->dpy, st->window);
   analogtv_set_defaults(st->tv, "");
   
-  st->machine = build6502();
+  st->machine = m6502_build();
   st->inp=analogtv_input_allocate();
   analogtv_setup_sync(st->inp, 1, 0);
   
@@ -141,10 +145,15 @@ m6502_init (Display *dpy, Window window)
 
   init_time(st);
   
-  if (strlen(s) > 0)
-    start_eval_file(st->machine,s, plot6502, st);
+  {
+#ifdef READ_FILES
+    char *s = get_string_resource (dpy, "file", "File");
+    if (strlen(s) > 0)
+      m6502_start_eval_file(st->machine,s, plot6502, st);
   else
+#endif
     start_rand_bin_prog(st->machine,st);
+  }
 
   analogtv_lcp_to_ntsc(ANALOGTV_BLACK_LEVEL, 0.0, 0.0, st->field_ntsc);
 
@@ -214,7 +223,7 @@ m6502_draw (Display *dpy, Window window, void *closure)
   unsigned int x = 0, y = 0;
   double te;
 
-  next_eval(st->machine,500);
+  m6502_next_eval(st->machine,500);
 
   for (x = 0; x < 32; x++)
     for (y = 0; y < 32; y++)

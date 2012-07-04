@@ -333,33 +333,42 @@ static void drawMovingPiece(ModeInfo *mi, Chesscreen *cs, int shadow)
       cs->mpiece = cs->mpiece == PAWN ? QUEEN : BQUEEN;
   }
   else if(cs->mpiece % PIECES == KNIGHT) {
-    GLfloat shine[1];
-    GLfloat spec[4];
-    GLfloat mult;
-    glTranslatef(cs->steps < 50 ? cs->from[1] : cs->to[1], 0.0, 
-		 cs->steps < 50 ? cs->from[0] : cs->to[0]);
+    /* If there is nothing in the path of a knight, move it by sliding,
+       just like the other pieces.  But if there are any pieces on the
+       middle two squares in its path, the knight would intersect them,
+       so in that case, move it in an airborne arc. */
+    GLfloat y;
+    int i, j;
+    Bool blocked_p = False;
+    int fromx = MIN(cs->from[1], cs->to[1]);
+    int fromy = MIN(cs->from[0], cs->to[0]);
+    int tox   = MAX(cs->from[1], cs->to[1]);
+    int toy   = MAX(cs->from[0], cs->to[0]);
+    if (fromx == tox-2) fromx = tox = fromx+1;
+    if (fromy == toy-2) fromy = toy = fromy+1;
+    for (i = fromy; i <= toy; i++) {
+      for (j = fromx; j <= tox; j++) {
+        if (cs->game.board[i][j]) {
+          blocked_p = True;
+          break;
+        }
+      }
+    }
 
-    mult = cs->steps < 10 
-      ? (1.0 - cs->steps / 10.0) : 100 - cs->steps < 10 
-      ? (1.0 - (100 - cs->steps) / 10.0) : 0.0;
+    if (!blocked_p)
+      goto SLIDE;
 
-    shine[0] = mult*shininess[0];
-    spec[0] = mult*specular[0];
-    spec[1] = mult*specular[1];
-    spec[2] = mult*specular[2];
-    spec[3] = 1.0;
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, shine);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, spec);
+    /* Move by hopping. */
+    y = 1.5 * sin (M_PI * cs->steps / 100.0);
+    glTranslatef(cs->from[1]+cs->steps*cs->dx, y,
+                 cs->from[0]+cs->steps*cs->dz);
 
-    glColor4f(shadow ? MaterialShadow[0] : cs->colors[cs->mpiece/7][0], 
-	      shadow ? MaterialShadow[1] : cs->colors[cs->mpiece/7][1], 
-	      shadow ? MaterialShadow[2] : cs->colors[cs->mpiece/7][2],
-	      fabs(49-cs->steps)/49.0);
-
-    glScalef(fabs(49-cs->steps)/49.0, fabs(49-cs->steps)/49.0, fabs(49-cs->steps)/49.0);
-  }
-  else
+  } else {
+  SLIDE:
+    /* Move by sliding. */
     glTranslatef(cs->from[1]+cs->steps*cs->dx, 0.0, cs->from[0]+cs->steps*cs->dz);
+  }
+
 
   if(!cs->wire)
     glEnable(GL_BLEND);
@@ -434,15 +443,87 @@ static void drawBoard(ModeInfo *mi, Chesscreen *cs)
 
       mi->polygon_count++;
     }
-
-  /* chop underneath board */
-/*   glColor3f(0, 0, 0); */
-/*   glNormal3f(0, -1, 0); */
-/*   glVertex3f(0,         0,  BOARDSIZE); */
-/*   glVertex3f(0,         0,  0); */
-/*   glVertex3f(BOARDSIZE, 0,  0); */
-/*   glVertex3f(BOARDSIZE, 0,  BOARDSIZE); */
   glEnd();
+
+  {
+    GLfloat off = 0.01;
+    GLfloat w = BOARDSIZE;
+    GLfloat h = 0.1;
+
+    /* Give the board a slight lip. */
+    /* #### oops, normals are wrong here, but you can't tell */
+
+    glColor3f(0.3, 0.3, 0.3);
+    glBegin (GL_QUADS);
+    glVertex3f (0,  0, 0);
+    glVertex3f (0, -h, 0);
+    glVertex3f (0, -h, w);
+    glVertex3f (0,  0, w);
+
+    glVertex3f (0,  0, w);
+    glVertex3f (0, -h, w);
+    glVertex3f (w, -h, w);
+    glVertex3f (w,  0, w);
+
+    glVertex3f (w,  0, w);
+    glVertex3f (w, -h, w);
+    glVertex3f (w, -h, 0);
+    glVertex3f (w,  0, 0);
+
+    glVertex3f (w,  0, 0);
+    glVertex3f (w, -h, 0);
+    glVertex3f (0, -h, 0);
+    glVertex3f (0,  0, 0);
+
+    glVertex3f (0, -h, 0);
+    glVertex3f (w, -h, 0);
+    glVertex3f (w, -h, w);
+    glVertex3f (0, -h, w);
+    glEnd();
+    mi->polygon_count += 4;
+
+    /* Fill in the underside of the board with an invisible black box
+       to hide the reflections that are not on tiles.  Probably there's
+       a way to do this with stencils instead.
+     */
+    w -= off*2;
+    h = 5;
+
+    glPushMatrix();
+    glTranslatef (off, 0, off);
+    glDisable(GL_LIGHTING);
+    glColor3f(0,0,0);
+    glBegin (GL_QUADS);
+    glVertex3f (0,  0, 0);
+    glVertex3f (0, -h, 0);
+    glVertex3f (0, -h, w);
+    glVertex3f (0,  0, w);
+
+    glVertex3f (0,  0, w);
+    glVertex3f (0, -h, w);
+    glVertex3f (w, -h, w);
+    glVertex3f (w,  0, w);
+
+    glVertex3f (w,  0, w);
+    glVertex3f (w, -h, w);
+    glVertex3f (w, -h, 0);
+    glVertex3f (w,  0, 0);
+
+    glVertex3f (w,  0, 0);
+    glVertex3f (w, -h, 0);
+    glVertex3f (0, -h, 0);
+    glVertex3f (0,  0, 0);
+
+    glVertex3f (0, -h, 0);
+    glVertex3f (w, -h, 0);
+    glVertex3f (w, -h, w);
+    glVertex3f (0, -h, w);
+    glEnd();
+    mi->polygon_count += 4;
+    glPopMatrix();
+    if (!cs->wire)
+      glEnable(GL_LIGHTING);
+  }
 }
 
 static void draw_pieces(ModeInfo *mi, Chesscreen *cs, int wire) 
@@ -639,11 +720,10 @@ static void display(ModeInfo *mi, Chesscreen *cs)
   /** setup perspectiv */
   glTranslatef(0.0, 0.0, -1.5*BOARDSIZE);
   glRotatef(30.0, 1.0, 0.0, 0.0);
-  glRotatef(-current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (cs->trackball);
-  glRotatef(current_device_rotation(), 0, 0, 1);
 
-  glRotatef(cs->theta*100, 0.0, 1.0, 0.0);
+  if (rotate)
+    glRotatef(cs->theta*100, 0.0, 1.0, 0.0);
   glTranslatef(-0.5*BOARDSIZE, 0.0, -0.5*BOARDSIZE);
 
 /*   cs->position[0] = 4.0 + 1.0*-sin(cs->theta*100*M_PI/180.0); */
@@ -799,7 +879,7 @@ ENTRYPOINT void init_chess(ModeInfo *mi)
     make_piece_texture(cs);
     make_board_texture(cs);
   }
-  gen_model_lists( classic, cs->poly_counts);
+  chessmodels_gen_lists( classic, cs->poly_counts);
 
   if(!cs->wire) {
     setup_lights(cs);

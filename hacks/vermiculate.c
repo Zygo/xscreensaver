@@ -807,6 +807,11 @@ static void
 vermiculate_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  st->wid = w;
+  st->hei = h;
+  free (st->point);
+  st->point = (unsigned char *) calloc (1, st->wid * st->hei);
 }
 
 static Bool

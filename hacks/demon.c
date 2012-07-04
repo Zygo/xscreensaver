@@ -59,7 +59,6 @@ static const char sccsid[] = "@(#)demon.c	5.00 2000/11/01 xlockmore";
 					"*ncolors: 64    \n" \
 					"*fpsSolid: true    \n" \
 
-# define reshape_demon 0
 # define demon_handle_event 0
 # define UNIFORM_COLORS
 # include "xlockmore.h"		/* in xscreensaver distribution */
@@ -944,6 +943,14 @@ draw_demon (ModeInfo * mi)
 			}
 		}
 	}
+}
+
+
+ENTRYPOINT void
+reshape_demon(ModeInfo * mi, int width, int height)
+{
+  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
+  init_demon (mi);
 }
 
 

@@ -1197,8 +1197,7 @@ reshape_glcells( ModeInfo *mi, int width, int height )
   
   if (st->food) free( st->food );
   st->food = (int *)malloc( ((width*height)/16)*sizeof(int) );
-  
-  create_cells( st );
+  /* create_cells( st );*/
 }
 
 ENTRYPOINT void 

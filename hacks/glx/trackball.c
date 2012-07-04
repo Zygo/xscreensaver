@@ -72,6 +72,7 @@
  */
 static float tb_project_to_sphere(float, float, float);
 static void normalize_quat(float [4]);
+static void axis_to_quat(float a[3], float phi, float q[4]);
 
 static void
 vzero(float *v)

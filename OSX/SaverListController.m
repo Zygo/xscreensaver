@@ -16,6 +16,7 @@
 
 #import "SaverListController.h"
 #import "SaverRunner.h"
+#import "yarandom.h"
 #import "version.h"
 
 #undef countof
@@ -246,8 +247,7 @@
   SaverRunner *s = 
     (SaverRunner *) [[UIApplication sharedApplication] delegate];
   if (! s) return;
-  if (! [s isKindOfClass:[SaverRunner class]])
-    abort();
+  NSAssert ([s isKindOfClass:[SaverRunner class]], @"not a SaverRunner");
   [s loadSaver: cell.textLabel.text];
 }
 
@@ -260,8 +260,7 @@
   SaverRunner *s = 
     (SaverRunner *) [[UIApplication sharedApplication] delegate];
   if (! s) return;
-  if (! [s isKindOfClass:[SaverRunner class]])
-    abort();
+  NSAssert ([s isKindOfClass:[SaverRunner class]], @"not a SaverRunner");
   [s openPreferences: cell.textLabel.text];
 }
 
@@ -293,6 +292,43 @@
 - (BOOL)shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation)o
 {
   return YES;
+}
+
+
+/* We need this to respond to "shake" gestures
+ */
+- (BOOL)canBecomeFirstResponder
+{
+  return YES;
+}
+
+- (void)motionBegan:(UIEventSubtype)motion withEvent:(UIEvent *)event
+{
+}
+
+- (void)motionCancelled:(UIEventSubtype)motion withEvent:(UIEvent *)event
+{
+}
+
+
+/* Shake means load a random screen saver.
+ */
+- (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event
+{
+  NSMutableArray *a = [NSMutableArray arrayWithCapacity: 200];
+  for (NSArray *sec in letter_sections)
+    for (NSString *s in sec)
+      [a addObject: s];
+  int n = [a count];
+  if (! n) return;
+  NSString *which = [a objectAtIndex: (random() % n)];
+
+  SaverRunner *s = 
+    (SaverRunner *) [[UIApplication sharedApplication] delegate];
+  if (! s) return;
+  NSAssert ([s isKindOfClass:[SaverRunner class]], @"not a SaverRunner");
+  [self scrollTo: which];
+  [s loadSaver: which];
 }
 
 

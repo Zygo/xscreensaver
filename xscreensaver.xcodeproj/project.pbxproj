@@ -346,6 +346,7 @@
 		AF0FAF2709CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF0FAF2809CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF0FAF2909CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
+		AF0FAF3C159BAC7C00BCE2F7 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF0FAF3B159BAC7B00BCE2F7 /* CoreText.framework */; };
 		AF1A17660D6D6EE3008AF328 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF1A17680D6D6EE3008AF328 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF1A177F0D6D6F3E008AF328 /* lcdscrub.c in Sources */ = {isa = PBXBuildFile; fileRef = AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */; };
@@ -1285,6 +1286,8 @@
 		AF35E8900E63823600691F2F /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF35EB240E63829600691F2F /* jigsaw.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258CF0988A468000655EE /* jigsaw.xml */; };
 		AF35EB260E6382BA00691F2F /* jigsaw.c in Sources */ = {isa = PBXBuildFile; fileRef = AF35EB250E6382BA00691F2F /* jigsaw.c */; };
+		AF39483E15A164680000FFCD /* jigsaw.c in Sources */ = {isa = PBXBuildFile; fileRef = AF35EB250E6382BA00691F2F /* jigsaw.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF39483F15A1647A0000FFCD /* jigsaw.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258CF0988A468000655EE /* jigsaw.xml */; };
 		AF3C714B0D624BF50030CC0D /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF3C715E0D624C600030CC0D /* hypnowheel.c in Sources */ = {isa = PBXBuildFile; fileRef = AF3C715D0D624C600030CC0D /* hypnowheel.c */; };
 		AF3C71600D624C7C0030CC0D /* hypnowheel.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF3C715F0D624C7C0030CC0D /* hypnowheel.xml */; };
@@ -1496,6 +1499,8 @@
 		AF51FD4115845FFC00E5741F /* iSaverRunner72.png in Resources */ = {isa = PBXBuildFile; fileRef = AF01295D157D5C2C00C396E1 /* iSaverRunner72.png */; };
 		AF51FD4215845FFF00E5741F /* iSaverRunner114.png in Resources */ = {isa = PBXBuildFile; fileRef = AF01295E157D5C2C00C396E1 /* iSaverRunner114.png */; };
 		AF51FD431584600300E5741F /* iSaverRunner114.png in Resources */ = {isa = PBXBuildFile; fileRef = AF01295E157D5C2C00C396E1 /* iSaverRunner114.png */; };
+		AF561DF615969BC3007CA5ED /* iosgrabimage.m in Sources */ = {isa = PBXBuildFile; fileRef = AF561DF515969BC3007CA5ED /* iosgrabimage.m */; };
+		AF561DF815969C5B007CA5ED /* AssetsLibrary.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF561DF715969C5B007CA5ED /* AssetsLibrary.framework */; };
 		AF6048FB157C07C600CA21E4 /* jwzgles.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6048F8157C07C600CA21E4 /* jwzgles.c */; };
 		AF6048FC157C07C600CA21E4 /* jwzgles.h in Headers */ = {isa = PBXBuildFile; fileRef = AF6048F9157C07C600CA21E4 /* jwzgles.h */; };
 		AF6048FD157C07C600CA21E4 /* jwzglesI.h in Headers */ = {isa = PBXBuildFile; fileRef = AF6048FA157C07C600CA21E4 /* jwzglesI.h */; };
@@ -2401,6 +2406,11 @@
 		AFC75930158D9A7A00C5458E /* iostextclient.m in Sources */ = {isa = PBXBuildFile; fileRef = AFC7592F158D9A7A00C5458E /* iostextclient.m */; };
 		AFCCCBB009BFE4B000353F4D /* rdbomb.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFCCCBAD09BFE4B000353F4D /* rdbomb.xml */; };
 		AFCCCBB309BFE51900353F4D /* thornbird.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC259230988A469000655EE /* thornbird.xml */; };
+		AFCF453715986A2100E6E8CC /* dnalogo.c in Sources */ = {isa = PBXBuildFile; fileRef = AF77787609B653DC00EA3033 /* dnalogo.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFCF453815986A3000E6E8CC /* dnalogo.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF77787909B6545E00EA3033 /* dnalogo.xml */; };
+		AFCF4545159878C300E6E8CC /* polyhedra-gl.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA561B209937DCB00F3E977 /* polyhedra-gl.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFCF4546159878C300E6E8CC /* polyhedra.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA561B309937DCC00F3E977 /* polyhedra.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFCF4547159878D500E6E8CC /* polyhedra.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258F70988A469000655EE /* polyhedra.xml */; };
 		AFCFF1D90CE4517C00C7D111 /* involute.c in Sources */ = {isa = PBXBuildFile; fileRef = AFE6A16A0CDD78EA002805BF /* involute.c */; };
 		AFCFF1DA0CE4518B00C7D111 /* tube.c in Sources */ = {isa = PBXBuildFile; fileRef = AF480ED2098F652A00FB32B8 /* tube.c */; };
 		AFCFF1DB0CE451A300C7D111 /* normals.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA55A93099336D800F3E977 /* normals.c */; };
@@ -5804,6 +5814,7 @@
 		AF0F46DC104E1809000A929C /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
 		AF0FAF0B09CA6FF900EE1051 /* xscreensaver-text */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.perl; name = "xscreensaver-text"; path = "driver/xscreensaver-text"; sourceTree = "<group>"; };
 		AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.script.perl; name = "xscreensaver-getimage-file"; path = "driver/xscreensaver-getimage-file"; sourceTree = "<group>"; };
+		AF0FAF3B159BAC7B00BCE2F7 /* CoreText.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreText.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS5.1.sdk/System/Library/Frameworks/CoreText.framework; sourceTree = DEVELOPER_DIR; };
 		AF14EE300E3CEF1A004CBBD2 /* XScreenSaver.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = XScreenSaver.icns; path = OSX/XScreenSaver.icns; sourceTree = "<group>"; };
 		AF1A17730D6D6EE3008AF328 /* XScreenSaver.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; name = XScreenSaver.saver; path = LCDscrub.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = lcdscrub.c; path = hacks/lcdscrub.c; sourceTree = "<group>"; };
@@ -5989,6 +6000,9 @@
 		AF4FF4D00D52CC8400666F98 /* cubicgrid.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = cubicgrid.c; path = hacks/glx/cubicgrid.c; sourceTree = "<group>"; };
 		AF4FF4D30D52CCAA00666F98 /* cubicgrid.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = cubicgrid.xml; sourceTree = "<group>"; };
 		AF56019B157DAA3D00DB2055 /* iSaverRunner.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = iSaverRunner.xib; path = OSX/iSaverRunner.xib; sourceTree = "<group>"; };
+		AF561DF3159651A7007CA5ED /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS5.1.sdk/System/Library/Frameworks/AudioToolbox.framework; sourceTree = DEVELOPER_DIR; };
+		AF561DF515969BC3007CA5ED /* iosgrabimage.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = iosgrabimage.m; path = OSX/iosgrabimage.m; sourceTree = "<group>"; };
+		AF561DF715969C5B007CA5ED /* AssetsLibrary.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AssetsLibrary.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS5.1.sdk/System/Library/Frameworks/AssetsLibrary.framework; sourceTree = DEVELOPER_DIR; };
 		AF6048F8157C07C600CA21E4 /* jwzgles.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = jwzgles.c; path = hacks/glx/jwzgles.c; sourceTree = "<group>"; };
 		AF6048F9157C07C600CA21E4 /* jwzgles.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = jwzgles.h; path = hacks/glx/jwzgles.h; sourceTree = "<group>"; };
 		AF6048FA157C07C600CA21E4 /* jwzglesI.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = jwzglesI.h; path = hacks/glx/jwzglesI.h; sourceTree = "<group>"; };
@@ -7719,8 +7733,10 @@
 				AF918B96158FD0EA002B5D1E /* libjwxyz.a in Frameworks */,
 				AFEB9C3B1590054B003974F3 /* OpenGLES.framework in Frameworks */,
 				AFEB9C3915900514003974F3 /* UIKit.framework in Frameworks */,
+				AF561DF815969C5B007CA5ED /* AssetsLibrary.framework in Frameworks */,
 				AFEB9C3D15900558003974F3 /* Foundation.framework in Frameworks */,
 				AFEB9C401590056A003974F3 /* CoreGraphics.framework in Frameworks */,
+				AF0FAF3C159BAC7C00BCE2F7 /* CoreText.framework in Frameworks */,
 				AFEB9C411590056A003974F3 /* QuartzCore.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -9138,6 +9154,7 @@
 		080E96DDFE201D6D7F000001 /* libjwxyz */ = {
 			isa = PBXGroup;
 			children = (
+				AF561DF515969BC3007CA5ED /* iosgrabimage.m */,
 				AFC7592F158D9A7A00C5458E /* iostextclient.m */,
 				AFE1FD410981E32E00F7970E /* InvertedSlider.h */,
 				AFE1FD420981E32E00F7970E /* InvertedSlider.m */,
@@ -9397,7 +9414,6 @@
 		29B97314FDCFA39411CA2CEA /* xscreensaver */ = {
 			isa = PBXGroup;
 			children = (
-				AF7E080315932A1600D81407 /* iSaverRunner29t.png */,
 				AF480AB9098C66E200FB32B8 /* SaverRunner */,
 				080E96DDFE201D6D7F000001 /* libjwxyz */,
 				AFE1FD520981E35400F7970E /* Utils */,
@@ -9419,6 +9435,7 @@
 				AF56019B157DAA3D00DB2055 /* iSaverRunner.xib */,
 				AF2D522513E954A0002AA818 /* SaverRunner.icns */,
 				AF01295A157D5C2C00C396E1 /* iSaverRunner29.png */,
+				AF7E080315932A1600D81407 /* iSaverRunner29t.png */,
 				AF01295B157D5C2C00C396E1 /* iSaverRunner50.png */,
 				AF01295C157D5C2C00C396E1 /* iSaverRunner57.png */,
 				AF01295D157D5C2C00C396E1 /* iSaverRunner72.png */,
@@ -9442,6 +9459,9 @@
 				AFEB9C3815900514003974F3 /* UIKit.framework */,
 				AF0F46DC104E1809000A929C /* AppKit.framework */,
 				AF976ED30989BF59001F8B92 /* ScreenSaver.framework */,
+				AF561DF715969C5B007CA5ED /* AssetsLibrary.framework */,
+				AF561DF3159651A7007CA5ED /* AudioToolbox.framework */,
+				AF0FAF3B159BAC7B00BCE2F7 /* CoreText.framework */,
 				1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */,
 				AF480DF1098F528500FB32B8 /* OpenGL.framework */,
 				AF480FE70990375900FB32B8 /* AGL.framework */,
@@ -15737,6 +15757,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AF91897E158FC00A002B5D1E /* iSaverRunner29.png in Resources */,
+				AF7E080415932A1600D81407 /* iSaverRunner29t.png in Resources */,
 				AF91897F158FC00A002B5D1E /* iSaverRunner50.png in Resources */,
 				AF918980158FC00A002B5D1E /* iSaverRunner57.png in Resources */,
 				AF918981158FC00A002B5D1E /* iSaverRunner72.png in Resources */,
@@ -15791,6 +15812,7 @@
 				AF918AE5158FC53D002B5D1E /* demon.xml in Resources */,
 				AF918AE6158FC53D002B5D1E /* discrete.xml in Resources */,
 				AF918AE7158FC53D002B5D1E /* distort.xml in Resources */,
+				AFCF453815986A3000E6E8CC /* dnalogo.xml in Resources */,
 				AF918AE9158FC53D002B5D1E /* drift.xml in Resources */,
 				AF918AEA158FC53D002B5D1E /* endgame.xml in Resources */,
 				AF918AEB158FC53D002B5D1E /* engine.xml in Resources */,
@@ -15839,6 +15861,7 @@
 				AF918B1D158FC53D002B5D1E /* interference.xml in Resources */,
 				AF918B1E158FC53D002B5D1E /* intermomentary.xml in Resources */,
 				AF918B1F158FC53D002B5D1E /* jigglypuff.xml in Resources */,
+				AF39483F15A1647A0000FFCD /* jigsaw.xml in Resources */,
 				AF918B22158FC53D002B5D1E /* juggler3d.xml in Resources */,
 				AF918B23158FC53D002B5D1E /* julia.xml in Resources */,
 				AF918B24158FC53D002B5D1E /* kaleidescope.xml in Resources */,
@@ -15874,6 +15897,7 @@
 				AF918B4A158FC53E002B5D1E /* piecewise.xml in Resources */,
 				AF918B4B158FC53E002B5D1E /* pinion.xml in Resources */,
 				AF918B4C158FC53E002B5D1E /* pipes.xml in Resources */,
+				AFCF4547159878D500E6E8CC /* polyhedra.xml in Resources */,
 				AF918B4E158FC53E002B5D1E /* polyominoes.xml in Resources */,
 				AF918B4F158FC53E002B5D1E /* polytopes.xml in Resources */,
 				AF918B50158FC53E002B5D1E /* pong.xml in Resources */,
@@ -15933,7 +15957,6 @@
 				AF918B8F158FC53E002B5D1E /* xrayswarm.xml in Resources */,
 				AF918B90158FC53E002B5D1E /* xspirograph.xml in Resources */,
 				AF918B91158FC554002B5D1E /* zoom.xml in Resources */,
-				AF7E080415932A1600D81407 /* iSaverRunner29t.png in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -22508,6 +22531,7 @@
 				AF6048FB157C07C600CA21E4 /* jwzgles.c in Sources */,
 				AFC7592D158D8E8B00C5458E /* textclient.c in Sources */,
 				AFC75930158D9A7A00C5458E /* iostextclient.m in Sources */,
+				AF561DF615969BC3007CA5ED /* iosgrabimage.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -23008,6 +23032,7 @@
 				AF918A44158FC3BB002B5D1E /* cubestorm.c in Sources */,
 				AF918A45158FC3BB002B5D1E /* cubicgrid.c in Sources */,
 				AF918A46158FC3BB002B5D1E /* dangerball.c in Sources */,
+				AFCF453715986A2100E6E8CC /* dnalogo.c in Sources */,
 				AF918A48158FC3BB002B5D1E /* dolphin.c in Sources */,
 				AF918A49158FC3BB002B5D1E /* dropshadow.c in Sources */,
 				AF918A4A158FC3E5002B5D1E /* endgame.c in Sources */,
@@ -23038,6 +23063,7 @@
 				AF918A6C158FC3E5002B5D1E /* hypnowheel.c in Sources */,
 				AF918A6D158FC3E5002B5D1E /* involute.c in Sources */,
 				AF918A6E158FC417002B5D1E /* jigglypuff.c in Sources */,
+				AF39483E15A164680000FFCD /* jigsaw.c in Sources */,
 				AF918A6F158FC417002B5D1E /* juggler3d.c in Sources */,
 				AF918A70158FC417002B5D1E /* klein.c in Sources */,
 				AF918A71158FC417002B5D1E /* lament.c in Sources */,
@@ -23054,6 +23080,8 @@
 				AF918A7D158FC417002B5D1E /* pinion.c in Sources */,
 				AF918A7E158FC417002B5D1E /* pipeobjs.c in Sources */,
 				AF918A7F158FC417002B5D1E /* pipes.c in Sources */,
+				AFCF4545159878C300E6E8CC /* polyhedra-gl.c in Sources */,
+				AFCF4546159878C300E6E8CC /* polyhedra.c in Sources */,
 				AF918A82158FC417002B5D1E /* polytopes.c in Sources */,
 				AF918A83158FC417002B5D1E /* providence.c in Sources */,
 				AF918A84158FC417002B5D1E /* pulsar.c in Sources */,
@@ -27851,6 +27879,7 @@
 				SDKROOT = macosx;
 				"SDKROOT[arch=armv6]" = iphoneos;
 				"SDKROOT[arch=armv7]" = iphoneos;
+				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos";
 				VALID_ARCHS = "i386 x86_64 armv6 armv7";
 			};
@@ -27868,6 +27897,7 @@
 				SDKROOT = macosx;
 				"SDKROOT[arch=armv6]" = iphoneos;
 				"SDKROOT[arch=armv7]" = iphoneos;
+				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos";
 				VALID_ARCHS = "i386 x86_64 armv6 armv7";
 			};
@@ -29021,7 +29051,7 @@
 				GCC_THUMB_SUPPORT = NO;
 				INFOPLIST_FILE = OSX/iSaverRunner.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.2;
 				PRODUCT_NAME = XScreenSaver;
 				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
@@ -29052,7 +29082,7 @@
 				GCC_THUMB_SUPPORT = NO;
 				INFOPLIST_FILE = OSX/iSaverRunner.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
-				IPHONEOS_DEPLOYMENT_TARGET = 3.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 4.2;
 				PRODUCT_NAME = XScreenSaver;
 				PROVISIONING_PROFILE = "6713E214-60AD-43CF-AFD3-825AEB87AA75";
 				SDKROOT = iphoneos;
@@ -32704,6 +32734,7 @@
 					"HAVE_GLBINDTEXTURE=1",
 					"HAVE_UNAME=1",
 					"HAVE_ICMP=1",
+					"HAVE_GETIFADDRS=1",
 					"HAVE_FORKPTY=1",
 					"HAVE_UTIL_H=1",
 					"$(GCC_PREPROCESSOR_DEFINITIONS)",
@@ -32762,6 +32793,7 @@
 					"HAVE_GLBINDTEXTURE=1",
 					"HAVE_UNAME=1",
 					"HAVE_ICMP=1",
+					"HAVE_GETIFADDRS=1",
 					"HAVE_FORKPTY=1",
 					"HAVE_UTIL_H=1",
 					"$(GCC_PREPROCESSOR_DEFINITIONS)",

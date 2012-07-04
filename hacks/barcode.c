@@ -1898,6 +1898,9 @@ static void
 barcode_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  st->windowWidth = w;
+  st->windowHeight = h;
 }
 
 static void

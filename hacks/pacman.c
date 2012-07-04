@@ -56,7 +56,6 @@ static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
 
 #	define UNIFORM_COLORS
 #	define BRIGHT_COLORS
-#   define reshape_pacman 0
 #   define pacman_handle_event 0
 #	include "xlockmore.h"   /* in xscreensaver distribution */
 #   include <assert.h>
@@ -131,7 +130,7 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-    {&trackmouse, "trackmouse", "TrackMouse", DEF_TRACKMOUSE, t_Bool}
+    {&pacman_trackmouse, "trackmouse", "TrackMouse", DEF_TRACKMOUSE, t_Bool}
 };
 
 static OptionStruct desc[] = {
@@ -158,8 +157,8 @@ ModStruct pacman_description = {
 
 #endif
 
-Bool trackmouse;
-pacmangamestruct *pacmangames = (pacmangamestruct *) NULL;
+Bool pacman_trackmouse;
+pacmangamestruct *pacman_games = (pacmangamestruct *) NULL;
 
 static void repopulate (ModeInfo * mi);
 static void drawlevel (ModeInfo * mi);
@@ -201,7 +200,7 @@ free_pacman (Display * display, pacmangamestruct * pp)
 static void
 reset_level (ModeInfo * mi, int n, int pac_init)
 {
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     unsigned int ghost;
 
     MI_CLEARWINDOW (mi);
@@ -251,9 +250,9 @@ reset_level (ModeInfo * mi, int n, int pac_init)
         pp->ghosts[ghost].delta.y = 0;
         pp->ghosts[ghost].flash_scared = False;
         pp->ghosts[ghost].wait_pos = False;
-        ghost_update (pp, &(pp->ghosts[ghost]));
+        pacman_ghost_update (pp, &(pp->ghosts[ghost]));
     }
-    pac_update (mi, pp, &(pp->pacman));
+    pacman_update (mi, pp, &(pp->pacman));
 }
 
 static int
@@ -311,9 +310,9 @@ check_death (ModeInfo * mi, pacmangamestruct * pp)
 static void
 repopulate (ModeInfo * mi)
 {
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     pp->pacman.deaths = 0;
-    reset_level (mi, createnewlevel (pp), True);
+    reset_level (mi, pacman_createnewlevel (pp), True);
     check_death (mi, pp);
 }
 
@@ -322,7 +321,7 @@ static void
 setwallcolor (ModeInfo * mi)
 {
     Display *display = MI_DISPLAY (mi);
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
 
     if (MI_NPIXELS (mi) > 2)
         XSetForeground (display, pp->stippledGC, MI_PIXEL (mi, BLUE));
@@ -335,7 +334,7 @@ static void
 setdotcolor (ModeInfo * mi)
 {
     Display *display = MI_DISPLAY (mi);
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
 
     XSetForeground (display, pp->stippledGC, MI_WHITE_PIXEL (mi));
 }
@@ -344,7 +343,7 @@ static void
 cleardotcolor (ModeInfo * mi)
 {
     Display *display = MI_DISPLAY (mi);
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
 
     XSetForeground (display, pp->stippledGC, MI_BLACK_PIXEL (mi));
 }
@@ -355,7 +354,7 @@ draw_position (ModeInfo * mi, int x, int y, int color)
 {
     Display *display = MI_DISPLAY (mi);
     Window window = MI_WINDOW (mi);
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     XFontStruct *font = NULL;
     char *f_name = "-*-utopia-*-r-*-*-*-600-*-*-p-*-*-*";
     char *s = NULL;
@@ -378,7 +377,7 @@ draw_number (ModeInfo * mi, int x, int y, int num, int color)
 {
     Display *display = MI_DISPLAY (mi);
     Window window = MI_WINDOW (mi);
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     XFontStruct *font = NULL;
     char *f_name = "-*-utopia-*-r-*-*-*-600-*-*-p-*-*-*";
     char *s = NULL;
@@ -406,7 +405,7 @@ draw_grid (ModeInfo * mi)
 {
     Display *display = MI_DISPLAY (mi);
     Window window = MI_WINDOW (mi);
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     int h = MI_HEIGHT (mi);
     int w = MI_WIDTH (mi);
     int y = 0;
@@ -430,7 +429,7 @@ draw_string (ModeInfo * mi, int x, int y, char *s, int color)
 {
     Display *display = MI_DISPLAY (mi);
     Window window = MI_WINDOW (mi);
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     XFontStruct *font = NULL;
     char *f_name = "-*-utopia-*-r-*-*-*-600-*-*-p-*-*-*";
 
@@ -482,7 +481,7 @@ print_ghost_stats (ModeInfo *mi, ghoststruct *g , int ghost_num)
 static void
 print_pac_stats ( ModeInfo *mi, pacmanstruct *pac )
 {
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     char s[1024];
     sprintf (s, "Pacman, Deaths: %d", pac->deaths );
     switch ( pac->aistate ){
@@ -516,7 +515,7 @@ print_pac_stats ( ModeInfo *mi, pacmanstruct *pac )
 static void
 dot_rc_to_pixel (ModeInfo * mi, int *x, int *y)
 {
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     *x = (pp->xs * *x) +
         (pp->xs / 2) - (pp->xs > 32 ? (pp->xs / 16) : 1) + pp->xb;
     *y = (pp->ys * *y) +
@@ -529,7 +528,7 @@ dot_rc_to_pixel (ModeInfo * mi, int *x, int *y)
 static void
 dot_width_height (ModeInfo *mi, int *w, int *h)
 {
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     if (pp->xs > 32){
         *w = *h = (pp->xs / 32 );
     }else {
@@ -713,7 +712,7 @@ drawlevelblock (ModeInfo * mi, pacmangamestruct * pp,
 static void
 drawlevel (ModeInfo * mi)
 {
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     unsigned int x, y;
 
     for (y = 0; y < LEVHEIGHT; y++)
@@ -745,7 +744,7 @@ draw_pacman_sprite (ModeInfo * mi)
 {
     Display *display = MI_DISPLAY (mi);
     Window window = MI_WINDOW (mi);
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     unsigned int dir = 0;
     int old_mask_dir = 0;
     int old_mask_mouth = 0;
@@ -851,7 +850,7 @@ draw_ghost_sprite (ModeInfo * mi, const unsigned ghost)
 {
     Display *display = MI_DISPLAY (mi);
     Window window = MI_WINDOW (mi);
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
 #define MAX_WAG_COUNT 50
     unsigned int dir = 0;
     unsigned int fs  = 0; /*flash scared*/
@@ -954,7 +953,7 @@ draw_pacman_sprite (ModeInfo * mi)
 {
     Display *display = MI_DISPLAY (mi);
     Window window = MI_WINDOW (mi);
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     unsigned int dir;
 
     pp->pacman.cf = pp->pacman.col * pp->xs + pp->pacman.delta.x *
@@ -1003,7 +1002,7 @@ draw_ghost_sprite (ModeInfo * mi, const unsigned ghost)
 {
     Display *display = MI_DISPLAY (mi);
     Window window = MI_WINDOW (mi);
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
 
     pp->ghosts[ghost].cf =
         pp->ghosts[ghost].col * pp->xs + pp->ghosts[ghost].delta.x *
@@ -1059,7 +1058,7 @@ ghost_over (ModeInfo * mi, int x, int y)
 {
     int ghost = 0;
     int ret = False;
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     dot_rc_to_pixel (mi, &x, &y);
     for (ghost = 0; ghost < pp->nghosts; ghost++) {
         if ((pp->ghosts[ghost].cf <= x
@@ -1078,11 +1077,11 @@ static void
 flash_bonus_dots (ModeInfo * mi)
 {
 #define MAX_FLASH_COUNT 25
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     int i, x, y;
     for (i = 0; i < NUM_BONUS_DOTS; i++) {
-        if (!bonus_dot_eaten (pp, i)) {
-            bonus_dot_pos (pp, i, &x, &y);
+        if (!pacman_bonus_dot_eaten (pp, i)) {
+            pacman_bonus_dot_pos (pp, i, &x, &y);
             if (ghost_over (mi, x, y))
                 continue;
             if (pp->bd_on)
@@ -1105,10 +1104,10 @@ ate_bonus_dot (ModeInfo * mi)
      */
     unsigned int ret = 0;
     int idx = 0;
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
-    if (is_bonus_dot (pp, pp->pacman.col, pp->pacman.row, &idx)) {
-        ret = !bonus_dot_eaten (pp, idx);
-        eat_bonus_dot (pp, idx);
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
+    if (pacman_is_bonus_dot (pp, pp->pacman.col, pp->pacman.row, &idx)) {
+        ret = !pacman_bonus_dot_eaten (pp, idx);
+        pacman_eat_bonus_dot (pp, idx);
     }
     return ret;
 }
@@ -1117,7 +1116,7 @@ static void
 ghost_scared (ModeInfo * mi)
 {
     unsigned int ghost;
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     for (ghost = 0; ghost < pp->nghosts; ghost++) {
         if (pp->ghosts[ghost].aistate == goingin || 
             pp->ghosts[ghost].aistate == goingout ||
@@ -1133,7 +1132,7 @@ static void
 ghost_not_scared (ModeInfo * mi)
 {
     unsigned int ghost;
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     for (ghost = 0; ghost < pp->nghosts; ghost++){
         if (pp->ghosts[ghost].aistate == goingin ||
             pp->ghosts[ghost].aistate == goingout ||
@@ -1149,7 +1148,7 @@ static void
 ghost_flash_scared (ModeInfo * mi)
 {
     unsigned int ghost;
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     for (ghost = 0; ghost < pp->nghosts; ghost++)
         pp->ghosts[ghost].flash_scared = !pp->ghosts[ghost].flash_scared;
 }
@@ -1162,7 +1161,7 @@ pacman_tick (ModeInfo * mi)
 #define START_FLASH 200
 #define FLASH_COUNT 25
 
-    pacmangamestruct *pp = &pacmangames[MI_SCREEN (mi)];
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
     unsigned int ghost;
 #if 0
     draw_grid (mi);
@@ -1491,13 +1490,13 @@ init_pacman (ModeInfo * mi)
     int dir, mouth;
 #endif
 
-    if (pacmangames == NULL) {
-        if ((pacmangames = (pacmangamestruct *)
+    if (pacman_games == NULL) {
+        if ((pacman_games = (pacmangamestruct *)
              calloc ((size_t) MI_NUM_SCREENS (mi),
                      sizeof (pacmangamestruct))) == NULL)
             return;
     }
-    pp = &pacmangames[MI_SCREEN (mi)];
+    pp = &pacman_games[MI_SCREEN (mi)];
 
     pp->width = (unsigned short) MI_WIDTH (mi);
     pp->height = (unsigned short) MI_HEIGHT (mi);
@@ -1710,9 +1709,9 @@ draw_pacman (ModeInfo * mi)
     unsigned int g;
     pacmangamestruct *pp;
 
-    if (pacmangames == NULL)
+    if (pacman_games == NULL)
         return;
-    pp = &pacmangames[MI_SCREEN (mi)];
+    pp = &pacman_games[MI_SCREEN (mi)];
     if (pp->ghosts == NULL)
         return;
 
@@ -1722,7 +1721,7 @@ draw_pacman (ModeInfo * mi)
     pp->pacman.delta.y += pp->pacman.err.y != 0 ? pp->incy : 0;
 
     if (pp->pacman.delta.x >= pp->xs && pp->pacman.delta.y >= pp->ys) {
-        pac_update (mi, pp, &(pp->pacman));
+        pacman_update (mi, pp, &(pp->pacman));
         check_death (mi, pp);
         pp->pacman.delta.x = pp->incx;
         pp->pacman.delta.y = pp->incy;
@@ -1741,7 +1740,7 @@ draw_pacman (ModeInfo * mi)
         
         if (pp->ghosts[g].delta.x >= pp->xs &&
             pp->ghosts[g].delta.y >= pp->ys) {
-            ghost_update (pp, &(pp->ghosts[g]));
+            pacman_ghost_update (pp, &(pp->ghosts[g]));
             pp->ghosts[g].delta.x = pp->incx;
             pp->ghosts[g].delta.y = pp->incy;
         }
@@ -1758,13 +1757,13 @@ draw_pacman (ModeInfo * mi)
 ENTRYPOINT void
 release_pacman (ModeInfo * mi)
 {
-    if (pacmangames != NULL) {
+    if (pacman_games != NULL) {
         int screen;
 
         for (screen = 0; screen < MI_NUM_SCREENS (mi); screen++)
-            free_pacman (MI_DISPLAY (mi), &pacmangames[screen]);
-        free (pacmangames);
-        pacmangames = (pacmangamestruct *) NULL;
+            free_pacman (MI_DISPLAY (mi), &pacman_games[screen]);
+        free (pacman_games);
+        pacman_games = (pacmangamestruct *) NULL;
     }
 }
 
@@ -1774,6 +1773,17 @@ refresh_pacman (ModeInfo * mi)
 {
     drawlevel (mi);
     pacman_tick (mi);
+}
+
+ENTRYPOINT void
+reshape_pacman(ModeInfo * mi, int width, int height)
+{
+    pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
+    pp->width = width;
+    pp->height = height;
+    MI_CLEARWINDOW (mi);
+    /* repopulate (mi); */
+    drawlevel (mi);
 }
 
 #ifndef STANDALONE

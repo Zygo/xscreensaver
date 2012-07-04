@@ -2,10 +2,10 @@
 
 struct tunnel_state;
 
-extern struct tunnel_state * InitTunnel(void);
-extern void DrawTunnel(struct tunnel_state *,
+extern struct tunnel_state * atunnel_InitTunnel(void);
+extern void atunnel_DrawTunnel(struct tunnel_state *,
                        int do_texture, int do_light, GLuint *textures);
-extern void SplashScreen(struct tunnel_state *,
+extern void atunnel_SplashScreen(struct tunnel_state *,
                          int do_wire, int do_texture, int do_light);
-extern void FreeTunnel(struct tunnel_state *);
+extern void atunnel_FreeTunnel(struct tunnel_state *);
 

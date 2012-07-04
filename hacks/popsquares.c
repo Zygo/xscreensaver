@@ -187,6 +187,36 @@ static void
 popsquares_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  int x, y;
+  XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
+  st->sw = st->xgwa.width / st->subdivision;
+  st->sh = st->xgwa.height / st->subdivision;
+  st->gw = st->sw ? st->xgwa.width / st->sw : 0;
+  st->gh = st->sh ? st->xgwa.height / st->sh : 0;
+  st->nsquares = st->gw * st->gh;
+  free (st->squares);
+  st->squares = (square *) calloc (st->nsquares, sizeof(square));
+
+  for (y = 0; y < st->gh; y++)
+    for (x = 0; x < st->gw; x++) 
+      {
+        square *s = (square *) &st->squares[st->gw * y + x];
+        s->w = st->sw;
+        s->h = st->sh;
+        s->x = x * st->sw;
+        s->y = y * st->sh;
+      }
+
+  randomize_square_colors(st->squares, st->nsquares, st->ncolors);
+
+  if (st->dbuf) {
+    XFreePixmap (dpy, st->ba);
+    XFreePixmap (dpy, st->bb);
+    st->ba = XCreatePixmap (st->dpy, st->window, st->xgwa.width, st->xgwa.height, st->xgwa.depth);
+    st->bb = XCreatePixmap (st->dpy, st->window, st->xgwa.width, st->xgwa.height, st->xgwa.depth);
+    st->b = st->ba;
+  }
 }
 
 static Bool

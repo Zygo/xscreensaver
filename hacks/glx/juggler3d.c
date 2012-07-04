@@ -2908,6 +2908,7 @@ draw_juggle (ModeInfo *mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix ();
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   glTranslatef(0,-3,0);
 
@@ -2919,7 +2920,6 @@ draw_juggle (ModeInfo *mi)
                  (z - 0.5) * 15);
 
     gltrackball_rotate (sp->trackball);
-    glRotatef(current_device_rotation(), 0, 0, 1);
 
     get_rotation (sp->rot, &x, &y, &z, !sp->button_down_p);
 

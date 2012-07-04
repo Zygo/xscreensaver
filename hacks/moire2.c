@@ -306,6 +306,8 @@ static void
 moire2_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  st->reset = 1;
 }
 
 static Bool

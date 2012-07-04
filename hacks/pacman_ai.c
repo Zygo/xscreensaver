@@ -67,9 +67,9 @@ ghost_get_posdirs (pacmangamestruct * pp, int *posdirs, ghoststruct * g)
         /* check if possible direction */
         can_go_in = (g->aistate == goingout || g->aistate == goingin);
         if ((posdirs[i] =
-             check_pos (pp, g->row + dirvecs[i].dy,
-                        g->col + dirvecs[i].dx,
-                        can_go_in)) == True) {
+             pacman_check_pos (pp, g->row + dirvecs[i].dy,
+                               g->col + dirvecs[i].dx,
+                               can_go_in)) == True) {
             nrdirs++;
         }
     }
@@ -245,7 +245,7 @@ clear_dir ( ghoststruct *g ){
 static int 
 found_jail ( int col, int row ){
     int cx, cy;
-    get_jail_opening ( &cx, &cy );
+    pacman_get_jail_opening ( &cx, &cy );
     cy += 1;
     if (row == cy && col == cx )
         return 1;
@@ -261,7 +261,7 @@ move_ghost ( pacmangamestruct * pp,
     int idx = (int)ps;
     int tr = row + dirvecs[idx].dx;
     int tc = col + dirvecs[idx].dy;
-    if ( check_pos ( pp, tr, tc, True )){
+    if ( pacman_check_pos ( pp, tr, tc, True )){
         *new_row = tr;
         *new_col = tc;
         return True;
@@ -332,7 +332,7 @@ find_home ( pacmangamestruct *pp, ghoststruct *g ){
     c = tmp_ghost->col;
     if ( ! recur_back_track ( pp, tmp_ghost, r, c ) ){        
         fprintf(stderr, "Could not find way home.#@$?\n");
-        get_jail_opening ( &cx, &cy);
+        pacman_get_jail_opening ( &cx, &cy);
         fprintf(stderr, "Jail was at (%d%d)\n", cx,cy);   
     }
     for ( i = 0; i < GHOST_TRACE; i++ ){
@@ -388,7 +388,7 @@ pac_dot_vec (pacmangamestruct * pp, pacmanstruct * p, long *vx, long *vy)
 
     for (y = by; y < ey; y++)
         for (x = bx; x < ex; x++)
-            if (check_dot (pp, x, y) == 1) {
+            if (pacman_check_dot (pp, x, y) == 1) {
                 dx = (long) x - (long) (p->col);
                 dy = (long) y - (long) (p->row);
                 dist = dx * dx + dy * dy;
@@ -451,8 +451,8 @@ pac_get_posdirs (pacmangamestruct * pp, pacmanstruct * p, int *posdirs)
             posdirs[i] = 0;
         }
         else if ((posdirs[i] =
-                  check_pos (pp, p->row + dirvecs[i].dy,
-                             p->col + dirvecs[i].dx, 0)) == 1)
+                  pacman_check_pos (pp, p->row + dirvecs[i].dy,
+                                    p->col + dirvecs[i].dx, 0)) == 1)
             nrdirs++;
     }
     p->state_change = 0;
@@ -462,7 +462,7 @@ pac_get_posdirs (pacmangamestruct * pp, pacmanstruct * p, int *posdirs)
 
 /* Clears the trace of vectors. */
 void
-pac_clear_trace (pacmanstruct * p)
+pacman_clear_trace (pacmanstruct * p)
 {
     int i;
 
@@ -517,14 +517,14 @@ pac_eating (pacmangamestruct * pp, pacmanstruct * p)
         4 * 4 && p->aistate == ps_eating) {
         p->aistate = ps_hiding;
         p->state_change = 1;
-        pac_clear_trace (p);
+        pacman_clear_trace (p);
     }
 
     if (prox > 6 * 6 && p->aistate == ps_hiding) {
         p->aistate = ps_eating;
         if (p->justate == 0)
             p->state_change = 1;
-        pac_clear_trace (p);
+        pacman_clear_trace (p);
     }
 
     if (prox < 3 * 3)
@@ -567,7 +567,7 @@ pac_eating (pacmangamestruct * pp, pacmanstruct * p)
         if (p->roundscore >= 12) {
             p->roundscore = 0;
             p->aistate = ps_random;
-            pac_clear_trace (p);
+            pacman_clear_trace (p);
         }
     }
     else
@@ -580,8 +580,8 @@ pac_eating (pacmangamestruct * pp, pacmanstruct * p)
         if (posdirs[i] == 0)
             continue;
         score = dirvecs[i].dx * vx + dirvecs[i].dy * vy;
-        if (check_dot (pp, p->col + dirvecs[i].dx,
-                       p->row + dirvecs[i].dy) == 1) {
+        if (pacman_check_dot (pp, p->col + dirvecs[i].dx,
+                              p->row + dirvecs[i].dy) == 1) {
             if (dotfound == 0) {
                 highest = score;
                 dir = i;
@@ -647,7 +647,7 @@ pac_chasing (pacmangamestruct * pp, pacmanstruct * p)
         if (p->roundscore >= 12) {
             p->roundscore = 0;
             p->aistate = ps_random;
-            pac_clear_trace (p);
+            pacman_clear_trace (p);
         }
     }
     else
@@ -674,7 +674,7 @@ pac_random (pacmangamestruct * pp, pacmanstruct * p)
     if (NRAND (20) == 0) {
         p->aistate = ps_eating;
         p->state_change = 1;
-        pac_clear_trace (p);
+        pacman_clear_trace (p);
     }
 
     nrdirs = pac_get_posdirs (pp, p, posdirs);
@@ -683,12 +683,12 @@ pac_random (pacmangamestruct * pp, pacmanstruct * p)
         if (posdirs[i] == 0)
             continue;
         lastdir = i;
-        if (check_dot (pp, p->col + dirvecs[i].dx,
-                       p->row + dirvecs[i].dy) == 1) {
+        if (pacman_check_dot (pp, p->col + dirvecs[i].dx,
+                              p->row + dirvecs[i].dy) == 1) {
             dir = i;
             p->aistate = ps_eating;
             p->state_change = 1;
-            pac_clear_trace (p);
+            pacman_clear_trace (p);
             break;
         }
         else if (NRAND (nrdirs) == 0)
@@ -769,7 +769,7 @@ pac_trackmouse (ModeInfo * mi, pacmangamestruct * pp, pacmanstruct * p)
 
 /* Calls correct state function, and changes between states. */
 void
-ghost_update (pacmangamestruct * pp, ghoststruct * g)
+pacman_ghost_update (pacmangamestruct * pp, ghoststruct * g)
 {
 
     if (!(g->nextrow == NOWHERE && g->nextcol == NOWHERE)) {
@@ -833,7 +833,7 @@ ghost_update (pacmangamestruct * pp, ghoststruct * g)
 
 /* Calls correct pacman state function. */
 void
-pac_update (ModeInfo * mi, pacmangamestruct * pp, pacmanstruct * p)
+pacman_update (ModeInfo * mi, pacmangamestruct * pp, pacmanstruct * p)
 {
     if (!(p->nextrow == NOWHERE && p->nextcol == NOWHERE)) {
         p->row = p->nextrow;
@@ -843,15 +843,15 @@ pac_update (ModeInfo * mi, pacmangamestruct * pp, pacmanstruct * p)
     if (pp->level[p->row * LEVWIDTH + p->col] == '.' ||
         pp->level[p->row * LEVWIDTH + p->col] == 'o') {
         pp->level[p->row * LEVWIDTH + p->col] = ' ';
-        if (!trackmouse)
+        if (!pacman_trackmouse)
             p->justate = 1;
         pp->dotsleft--;
     }
-    else if (!trackmouse) {
+    else if (!pacman_trackmouse) {
         p->justate = 0;
     }
 
-    if (!(trackmouse && pac_trackmouse (mi, pp, p))) {
+    if (!(pacman_trackmouse && pac_trackmouse (mi, pp, p))) {
         /* update pacman */
         switch (p->aistate) {
         case ps_eating:

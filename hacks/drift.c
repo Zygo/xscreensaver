@@ -38,7 +38,6 @@ static const char sccsid[] = "@(#)drift.c	5.00 2000/11/01 xlockmore";
 				  "*fpsSolid: true \n" \
 
 # define SMOOTH_COLORS
-# define reshape_drift 0
 # define drift_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 # include "erase.h"
@@ -682,6 +681,13 @@ release_drift(ModeInfo * mi)
 		(void) free((void *) drifts);
 		drifts = (driftstruct *) NULL;
 	}
+}
+
+ENTRYPOINT void
+reshape_drift(ModeInfo * mi, int width, int height)
+{
+  MI_CLEARWINDOW(mi);
+  init_drift (mi);
 }
 
 ENTRYPOINT void

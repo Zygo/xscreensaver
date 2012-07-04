@@ -246,7 +246,7 @@ typedef struct
 #define PMM {  sqrt_3, -sqrt_3, -sqrt_3 }       /* +X, -Y, -Z */
 
 /* Structure describing a tetrahedron */
-Vector3D tetrahedron[4][3] = {
+static Vector3D tetrahedron[4][3] = {
     {PPP, MMP, MPM},
     {PMM, MPM, MMP},
     {PPP, MPM, PMM},
@@ -257,7 +257,7 @@ Vector3D tetrahedron[4][3] = {
  * Static blob data
  *****************************************************************************/
 
-const Vector3D zero_vector = { 0.0, 0.0, 0.0 };
+static const Vector3D zero_vector = { 0.0, 0.0, 0.0 };
 
 /* Use 2 textures to allow a gradual fade between images */
 #define NUM_TEXTURES 2
@@ -1412,12 +1412,12 @@ draw_blob (mirrorblobstruct *gp)
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
   /* Move down the z-axis. */
   glTranslatef (0.0, 0.0, -4.0);
 
   gltrackball_rotate (gp->trackball);
-  glRotatef(current_device_rotation(), 0, 0, 1);
 
   /* glColor4ub (255, 0, 0, 128); */
   glBegin(GL_TRIANGLES);

@@ -40,7 +40,6 @@ static const char sccsid[] = "@(#)braid.c	5.00 2000/11/01 xlockmore";
 				   "*fpsSolid: true \n" \
 
 # define UNIFORM_COLORS
-# define reshape_braid 0
 # define braid_handle_event 0
 # include "xlockmore.h"
 # include "erase.h"
@@ -445,6 +444,13 @@ draw_braid(ModeInfo * mi)
 #endif
 		init_braid(mi);
 	}
+}
+
+ENTRYPOINT void
+reshape_braid(ModeInfo * mi, int width, int height)
+{
+  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
+  init_braid (mi);
 }
 
 ENTRYPOINT void

@@ -434,6 +434,9 @@ static void
 flame_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  st->width = w;
+  st->height = h;
 }
 
 static Bool

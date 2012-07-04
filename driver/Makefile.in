@@ -673,11 +673,13 @@ update_ad_version::
   files="XScreenSaver.ad.in ../hacks/config/README ../OSX/bindist.rtf" ;    \
   U=$(UTILS_SRC)/version.h ;						    \
   V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' < $$U` ;		    \
+  Y=`date '+%Y'` ;							    \
   D=`date '+%d-%b-%Y'` ;						    \
   for S in $$files ; do							    \
     T=/tmp/xs.$$$$ ;							    \
     sed -e "s/\(.*version \)[0-9][0-9]*\.[0-9]*[ab]*[0-9]*\(.*\)/\1$$V\2/"  \
         -e "s/\([0-9][0-9]-[A-Z][a-z][a-z]-[0-9][0-9][0-9]*\)/$$D/"	    \
+        -e "s/\( [0-9][0-9][0-9][0-9]-\)[0-9][0-9][0-9][0-9] /\1$$Y /"	    \
       < $$S > $$T ;							    \
     if cmp -s $$S $$T ; then						    \
       true ;								    \

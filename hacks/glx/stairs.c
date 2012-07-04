@@ -496,6 +496,7 @@ ENTRYPOINT void
 draw_stairs (ModeInfo * mi)
 {
 	stairsstruct *sp = &stairs[MI_SCREEN(mi)];
+    GLfloat rot = current_device_rotation();
 
 	Display    *display = MI_DISPLAY(mi);
 	Window      window = MI_WINDOW(mi);
@@ -509,6 +510,14 @@ draw_stairs (ModeInfo * mi)
 
 	glPushMatrix();
 
+    glRotatef(rot, 0, 0, 1);
+    if ((rot >  45 && rot <  135) ||
+        (rot < -45 && rot > -135))
+      {
+        GLfloat s = MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi);
+        glScalef (s, 1/s, 1);
+      }
+
 	glTranslatef(0.0, 0.0, -10.0);
 
 	if (!MI_IS_ICONIC(mi)) {
@@ -518,7 +527,6 @@ draw_stairs (ModeInfo * mi)
 	}
 
     gltrackball_rotate (sp->trackball);
-    glRotatef(current_device_rotation(), 0, 0, 1);
 
     glTranslatef(0, 0.5, 0);
 	glRotatef(44.5, 1, 0, 0);

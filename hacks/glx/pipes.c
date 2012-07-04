@@ -37,9 +37,25 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
  * Marcelo F. Vianna (Apr-09-1997)
  *
  * Revision History:
+ * 24-Jun-12: Eliminate single-buffer dependency.
  * 29-Apr-97: Factory equipment by Ed Mackey.  Productive day today, eh?
  * 29-Apr-97: Less tight turns Jeff Epler <jepler@inetnebr.com>
  * 29-Apr-97: Efficiency speed-ups by Marcelo F. Vianna
+ */
+
+/* This program was originally written to be single-buffered: it kept
+   building up new objects in the front buffer by never clearing the
+   depth or color buffers at the end of each frame.  In that way, it
+   was drawing a very small number of polygons per frame.  However,
+   modern systems make it difficult to live in a single-buffered world
+   like that.  So I changed it to re-generate the scene at every
+   frame, which makes it vastly less efficient, but also, makes it
+   work right on modern hardware.  It generates the entire system up
+   front, putting each "frame" of the animation into its own display
+   list; then it draws successively more of those display lists each
+   time the redisplay method is called.  When it reaches the end,
+   it regenerates a new system and re-populates the existing display
+   lists. -- jwz.
  */
 
 #ifdef STANDALONE
@@ -48,10 +64,10 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 					"*cycles:		5       \n"			\
 					"*size:			500     \n"			\
 	               	"*showFPS:      False   \n"		    \
-	               	"*fpsSolid:     True    \n"
+	               	"*fpsSolid:     True    \n"		    \
+	               	"*wireframe:    False   \n"
 
 # define refresh_pipes 0
-# define pipes_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
@@ -74,17 +90,16 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 #include "sphere.h"
 #include "buildlwo.h"
 #include "teapot.h"
+#include "gltrackball.h"
 
 #define DEF_FACTORY     "2"
 #define DEF_FISHEYE     "True"
 #define DEF_TIGHTTURNS  "False"
 #define DEF_ROTATEPIPES "True"
-#define DEF_DBUF        "False"
 #define NofSysTypes     3
 
 static int  factory;
 static Bool fisheye, tightturns, rotatepipes;
-static Bool dbuf_p;
 
 static XrmOptionDescRec opts[] =
 {
@@ -95,8 +110,6 @@ static XrmOptionDescRec opts[] =
 	{"+tightturns", ".pipes.tightturns", XrmoptionNoArg, "off"},
       {"-rotatepipes", ".pipes.rotatepipes", XrmoptionNoArg, "on"},
       {"+rotatepipes", ".pipes.rotatepipes", XrmoptionNoArg, "off"},
-      {"-db", ".pipes.doubleBuffer", XrmoptionNoArg, "on"},
-      {"+db", ".pipes.doubleBuffer", XrmoptionNoArg, "off"},
 };
 static argtype vars[] =
 {
@@ -104,7 +117,6 @@ static argtype vars[] =
 	{&fisheye, "fisheye", "Fisheye", DEF_FISHEYE, t_Bool},
 	{&tightturns, "tightturns", "Tightturns", DEF_TIGHTTURNS, t_Bool},
 	{&rotatepipes, "rotatepipes", "Rotatepipes", DEF_ROTATEPIPES, t_Bool},
-	{&dbuf_p, "doubleBuffer", "DoubleBuffer", DEF_DBUF, t_Bool}
 };
 static OptionStruct desc[] =
 {
@@ -112,7 +124,6 @@ static OptionStruct desc[] =
 	{"-/+fisheye", "turn on/off zoomed-in view of pipes"},
 	{"-/+tightturns", "turn on/off tight turns"},
 	{"-/+rotatepipes", "turn on/off pipe system rotation per screenful"},
-	{"-/+db", "turn on/off double buffering"}
 };
 
 ENTRYPOINT ModeSpecOpt pipes_opts =
@@ -129,7 +140,6 @@ ModStruct   pipes_description =
 #endif
 
 #define Scale4Window               0.1
-#define Scale4Iconic               0.07
 
 #define one_third                  0.3333333333333333333
 
@@ -151,7 +161,6 @@ ModStruct   pipes_description =
 typedef struct {
 	int         flip;
 
-	GLint       WindH, WindW;
 	int         Cells[HCELLS][VCELLS][HCELLS];
 	int         usedcolors[DEFINEDCOLORS];
 	int         directions[6];
@@ -170,8 +179,16 @@ typedef struct {
 	GLuint      valve, bolts, betweenbolts, elbowbolts, elbowcoins;
 	GLuint      guagehead, guageface, guagedial, guageconnector, teapot;
     int         teapot_polys;
-    int         reset;
 	GLXContext *glx_context;
+
+    Bool button_down_p;
+    trackball_state *trackball;
+    GLuint *dlists, *poly_counts;
+    int dlist_count, dlist_size;
+    int system_index, system_size;
+
+    int fadeout;
+
 } pipesstruct;
 
 extern struct lwo LWO_BigValve, LWO_PipeBetweenBolts, LWO_Bolts3D;
@@ -204,8 +221,10 @@ static pipesstruct *pipes = NULL;
 static void
 MakeTube(ModeInfo *mi, int direction)
 {
+    Bool        wire = MI_IS_WIREFRAME(mi);
 	float       an;
 	float       SINan_3, COSan_3;
+    int facets = (wire ? 5 : 24);
 
 	/*dirUP    = 00000000 */
 	/*dirDOWN  = 00000001 */
@@ -218,8 +237,8 @@ MakeTube(ModeInfo *mi, int direction)
 		glRotatef(90.0, (direction & 2) ? 0.0 : 1.0,
 			  (direction & 2) ? 1.0 : 0.0, 0.0);
 	}
-	glBegin(GL_QUAD_STRIP);
-	for (an = 0.0; an <= 2.0 * M_PI; an += M_PI / 12.0) {
+	glBegin(wire ? GL_LINE_STRIP : GL_QUAD_STRIP);
+	for (an = 0.0; an <= 2.0 * M_PI; an += M_PI * 2 / facets) {
 		glNormal3f((COSan_3 = cos(an) / 3.0), (SINan_3 = sin(an) / 3.0), 0.0);
 		glVertex3f(COSan_3, SINan_3, one_third);
 		glVertex3f(COSan_3, SINan_3, -one_third);
@@ -250,12 +269,13 @@ mySphere(float radius, Bool wire)
 static void
 myElbow(ModeInfo * mi, int bolted)
 {
-#define nsides 25
-#define rings 25
+	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
+    Bool        wire = MI_IS_WIREFRAME(mi);
+
+    int nsides = (wire ? 6 : 25);
+    int rings  = nsides;
 #define r one_third
 #define R one_third
-
-	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
 
 	int         i, j;
 	GLfloat     p0[3], p1[3], p2[3], p3[3];
@@ -303,7 +323,7 @@ myElbow(ModeInfo * mi, int bolted)
 			p0[2] = p1[2] = r * (n0[2] = n1[2] = sin(phi));
 			p2[2] = p3[2] = r * (n2[2] = n3[2] = sin(phi1));
 
-			glBegin(GL_QUADS);
+			glBegin(wire ? GL_LINE_LOOP : GL_QUADS);
 			glNormal3fv(n3);
 			glVertex3fv(p3);
 			glNormal3fv(n2);
@@ -547,34 +567,8 @@ pinit(ModeInfo * mi, int zera)
 	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
 	int         X, Y, Z;
 
-    if (zera)
-      mi->polygon_count = 0;
-
-	glClearDepth(1.0);
-	glColor3f(1.0, 1.0, 1.0);
-
-	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient0);
-	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse0);
-	glLightfv(GL_LIGHT0, GL_POSITION, position0);
-	glLightfv(GL_LIGHT1, GL_AMBIENT, ambient1);
-	glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse1);
-	glLightfv(GL_LIGHT1, GL_POSITION, position1);
-	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
-	glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
-	glEnable(GL_LIGHTING);
-	glEnable(GL_LIGHT0);
-	glEnable(GL_LIGHT1);
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_NORMALIZE);
-	glEnable(GL_CULL_FACE);
-
-	glShadeModel(GL_SMOOTH);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, front_shininess);
-	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
-
 	if (zera) {
 		pp->system_number = 1;
-		glDrawBuffer(dbuf_p ? GL_BACK : GL_FRONT);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		(void) memset(pp->Cells, 0, sizeof (pp->Cells));
 		for (X = 0; X < HCELLS; X++) {
@@ -592,9 +586,6 @@ pinit(ModeInfo * mi, int zera)
 			}
 		}
 		(void) memset(pp->usedcolors, 0, sizeof (pp->usedcolors));
-		if ((pp->initial_rotation += 10.0) > 45.0) {
-			pp->initial_rotation -= 90.0;
-		}
 	}
 	pp->counter = 0;
 	pp->turncounter = 0;
@@ -659,13 +650,11 @@ pinit(ModeInfo * mi, int zera)
 	pp->nowdir = SelectNeighbor(mi);
 }
 
+
 ENTRYPOINT void
 reshape_pipes(ModeInfo * mi, int width, int height)
 {
-	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
-    pinit(mi, 1);
-
-	glViewport(0, 0, pp->WindW = (GLint) width, pp->WindH = (GLint) height);
+	glViewport(0, 0, width, (GLint) height);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	/*glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0); */
@@ -674,6 +663,53 @@ reshape_pipes(ModeInfo * mi, int width, int height)
 
   glClear(GL_COLOR_BUFFER_BIT);
 }
+
+ENTRYPOINT Bool
+pipes_handle_event (ModeInfo *mi, XEvent *event)
+{
+  pipesstruct *pp = &pipes[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
+    {
+      pp->button_down_p = True;
+      gltrackball_start (pp->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
+    {
+      pp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5 ||
+            event->xbutton.button == Button6 ||
+            event->xbutton.button == Button7))
+    {
+      gltrackball_mousewheel (pp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           pp->button_down_p)
+    {
+      gltrackball_track (pp->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
+
+
+
+static void generate_system (ModeInfo *);
+
 
 ENTRYPOINT void
 init_pipes (ModeInfo * mi)
@@ -687,11 +723,6 @@ init_pipes (ModeInfo * mi)
 			return;
 	}
 	pp = &pipes[screen];
-
-#ifdef HAVE_JWZGLES
-    /* Single-buffering on iOS is so confusing! */
-    dbuf_p = True;
-#endif
 
 	pp->window = MI_WINDOW(mi);
 	if ((pp->glx_context = init_GL(mi)) != NULL) {
@@ -741,50 +772,65 @@ init_pipes (ModeInfo * mi)
 	} else {
 		MI_CLEARWINDOW(mi);
 	}
+
+    pp->trackball = gltrackball_init ();
+    generate_system (mi);
 }
 
-ENTRYPOINT void
-draw_pipes (ModeInfo * mi)
+
+static GLuint
+get_dlist (ModeInfo *mi, int i)
+{
+  pipesstruct *pp = &pipes[MI_SCREEN(mi)];
+  if (i >= pp->dlist_count)
+    {
+      pp->dlist_count++;
+      if (pp->dlist_count >= pp->dlist_size)
+        {
+          int s2 = (pp->dlist_size + 100) * 1.2;
+          pp->dlists = (GLuint *)
+            realloc (pp->dlists, s2 * sizeof(*pp->dlists));
+          if (! pp->dlists) abort();
+          pp->poly_counts = (GLuint *)
+            realloc (pp->poly_counts, s2 * sizeof(*pp->poly_counts));
+          if (! pp->poly_counts) abort();
+          pp->dlist_size = s2;
+        }
+      pp->dlists [i] = glGenLists (1);
+      pp->poly_counts [i] = 0;
+    }
+  return pp->dlists[i];
+}
+
+
+
+static void
+generate_system (ModeInfo * mi)
 {
 	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
-
-	Display    *display = MI_DISPLAY(mi);
-	Window      window = MI_WINDOW(mi);
     Bool        wire = MI_IS_WIREFRAME(mi);
 
 	int         newdir;
 	int         OPX, OPY, OPZ;
 
-	if (!pp->glx_context)
-		return;
+    Bool reset_p = False;
 
-	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(pp->glx_context));
+    pp->system_index = 0;
+    pp->system_size = 0;
+    pinit (mi, 1);
 
-    if (pp->reset) {
-      if (--pp->reset) {
-        /* Would be nice to fade to black here, by drawing successive quads
-           over the whole scene with gamma. */
-        return;
-      }
-      pinit(mi, 1);
-    }
+    while (1) {
+      glNewList (get_dlist (mi, pp->system_size++), GL_COMPILE);
+      mi->polygon_count = 0;
 
 	glPushMatrix();
 
-	glTranslatef(0.0, 0.0, fisheye ? -3.8 : -4.8);
-	if (rotatepipes)
-		glRotatef(pp->initial_rotation, 0.0, 1.0, 0.0);
-
-	if (!MI_IS_ICONIC(mi)) {
-		/* Width/height ratio handled by gluPerspective() now. */
-		glScalef(Scale4Window, Scale4Window, Scale4Window);
-	} else {
-		glScalef(Scale4Iconic, Scale4Iconic, Scale4Iconic);
-	}
-
 	FindNeighbors(mi);
 
-	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pp->system_color);
+    if (wire)
+      glColor4fv (pp->system_color);
+    else
+      glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, pp->system_color);
 
 	/* If it's the begining of a system, draw a sphere */
 	if (pp->olddir == dirNone) {
@@ -805,15 +851,12 @@ draw_pipes (ModeInfo * mi)
 		/* If the maximum number of system was drawn, restart (clearing the screen), */
 		/* else start a new system. */
 		if (++pp->system_number > pp->number_of_systems) {
-          /* pause doing nothing for N seconds before clearing the screen. */
-          int secs = 3;
-          pp->reset = secs * 1000000 / (MI_PAUSE(mi) ? MI_PAUSE(mi) : 100);
+          reset_p = True;
 		} else {
 			pinit(mi, 0);
 		}
 
-		glPopMatrix();
-		return;
+        goto NEXT;
 	}
 	pp->counter++;
 	pp->turncounter++;
@@ -1032,15 +1075,109 @@ draw_pipes (ModeInfo * mi)
 	glTranslatef(((pp->PX + OPX) / 2.0 - 16) / 3.0 * 4.0, ((pp->PY + OPY) / 2.0 - 12) / 3.0 * 4.0, ((pp->PZ + OPZ) / 2.0 - 16) / 3.0 * 4.0);
 	MakeTube(mi, newdir);
 
+    NEXT:
 	glPopMatrix();
+    glEndList();
+    pp->poly_counts [pp->system_size-1] = mi->polygon_count;
 
-	glFlush();
+    if (reset_p)
+      break;
+    }
+}
+
+
+ENTRYPOINT void
+draw_pipes (ModeInfo * mi)
+{
+	pipesstruct *pp = &pipes[MI_SCREEN(mi)];
+	Display *display = MI_DISPLAY(mi);
+	Window    window = MI_WINDOW(mi);
+    Bool        wire = MI_IS_WIREFRAME(mi);
+    int i = 0;
+
+	if (!pp->glx_context)
+		return;
+
+	glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(pp->glx_context));
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glColor3f(1.0, 1.0, 1.0);
+
+	glLightfv(GL_LIGHT0, GL_AMBIENT, ambient0);
+	glLightfv(GL_LIGHT0, GL_DIFFUSE, diffuse0);
+	glLightfv(GL_LIGHT0, GL_POSITION, position0);
+	glLightfv(GL_LIGHT1, GL_AMBIENT, ambient1);
+	glLightfv(GL_LIGHT1, GL_DIFFUSE, diffuse1);
+	glLightfv(GL_LIGHT1, GL_POSITION, position1);
+	glLightModelfv(GL_LIGHT_MODEL_AMBIENT, lmodel_ambient);
+	glLightModelfv(GL_LIGHT_MODEL_TWO_SIDE, lmodel_twoside);
+
+    if (wire)
+      glDisable(GL_LIGHTING);
+    else
+      {
+        glEnable(GL_LIGHTING);
+        glEnable(GL_LIGHT0);
+        /* This looks crappy. */
+        /* glEnable(GL_LIGHT1); */
+        glEnable(GL_DEPTH_TEST);
+        glEnable(GL_NORMALIZE);
+        glEnable(GL_CULL_FACE);
+      }
+
+	glShadeModel(GL_SMOOTH);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SHININESS, front_shininess);
+	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, front_specular);
+
+    glPushMatrix();
+
+    pp->initial_rotation += 0.02;
+
+	glTranslatef(0.0, 0.0, fisheye ? -3.8 : -4.8);
+
+    /* Do it twice because we don't track the device's orientation. */
+    glRotatef( current_device_rotation(), 0, 0, 1);
+    gltrackball_rotate (pp->trackball);
+    glRotatef(-current_device_rotation(), 0, 0, 1);
+
+	if (rotatepipes)
+      glRotatef(pp->initial_rotation, 0.0, 1.0, 0.0);
+
+    glScalef(Scale4Window, Scale4Window, Scale4Window);
+
+    mi->polygon_count = 0;
+
+    if (pp->fadeout)
+      {
+        GLfloat s = (pp->fadeout * pp->fadeout) / 10000.0;
+        glScalef (s, s, s);
+        glRotatef (90 * (1 - (pp->fadeout/100.0)), 1, 0, 0.1);
+        pp->fadeout -= 4;
+        if (pp->fadeout <= 0)
+          {
+            pp->fadeout = 0;
+            generate_system (mi);
+          }
+      }
+    else if (pp->system_index < pp->system_size)
+      pp->system_index++;
+    else
+      pp->fadeout = 100;
+
+    for (i = 0; i < pp->system_index; i++)
+      {
+        glCallList (pp->dlists[i]);
+        mi->polygon_count += pp->poly_counts[i];
+      }
+
+    glPopMatrix();
 
     if (mi->fps_p) do_fps (mi);
+    glFinish();
 
-    if (dbuf_p)
-      glXSwapBuffers(display, window);
+    glXSwapBuffers(display, window);
 }
+
 
 #ifndef STANDALONE
 ENTRYPOINT void
@@ -1093,6 +1230,14 @@ release_pipes (ModeInfo * mi)
 					glDeleteLists(pp->guageconnector, 1);
 				if (pp->teapot)
 					glDeleteLists(pp->teapot, 1);
+                if (pp->dlists)
+                  {
+                    int i;
+                    for (i = 0; i < pp->dlist_count; i++)
+                      glDeleteLists (pp->dlists[i], 1);
+                    free (pp->dlists);
+                    free (pp->poly_counts);
+                  }
 			}
 		}
 

@@ -210,6 +210,11 @@ static void
 wander_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  st->width  = w / st->size;
+  st->height = h / st->size;
+  st->width_1  = st->width - 1;
+  st->height_1 = st->height - 1;
 }
 
 static Bool

@@ -51,7 +51,6 @@ static const char sccsid[] = "@(#)triangle.c	4.04 97/07/28 xlockmore";
 					"*fpsSolid: true \n" \
 
 # define SMOOTH_COLORS
-# define reshape_triangle 0
 # define triangle_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -343,6 +342,13 @@ draw_triangle (ModeInfo * mi)
 	if (tp->stage == tp->steps) {
 		tp->stage = -1;
 	}
+}
+
+ENTRYPOINT void
+reshape_triangle(ModeInfo * mi, int width, int height)
+{
+  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
+  init_triangle (mi);
 }
 
 ENTRYPOINT void

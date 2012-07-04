@@ -42,7 +42,7 @@ typedef struct {
 } ChessGame;
 
 #define GAMES 7
-ChessGame games[GAMES] = {
+static ChessGame games[GAMES] = {
   
   /** 
       game 1:

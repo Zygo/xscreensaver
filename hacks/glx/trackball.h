@@ -76,7 +76,7 @@ build_rotmatrix(float m[4][4], float q[4]);
  * the given vector) and an angle about which to rotate.  The angle is
  * expressed in radians.  The result is put into the third argument.
  */
-void
-axis_to_quat(float a[3], float phi, float q[4]);
+/* void
+axis_to_quat(float a[3], float phi, float q[4]); */
 
 #endif /* __TRACKBALL_H__ */

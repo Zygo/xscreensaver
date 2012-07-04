@@ -380,11 +380,20 @@ static void
 anemone_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
-  /* need to re-make pixmaps too...
   struct state *st = (struct state *) closure;
   st->scrWidth = w;
   st->scrHeight = h;
-  */
+#if 0
+  if (st->dbuf) {
+    XWindowAttributes wa;
+    XGetWindowAttributes(dpy, window, &wa);
+    if (st->ba) XFreePixmap (dpy, st->ba);
+    if (st->bb) XFreePixmap (dpy, st->bb);
+    st->ba = XCreatePixmap (dpy, window, st->scrWidth, st->scrHeight, wa.depth);
+    st->bb = XCreatePixmap (dpy, window, st->scrWidth, st->scrHeight, wa.depth);
+    st->b = st->ba;
+  }
+#endif
 }
 
 static Bool

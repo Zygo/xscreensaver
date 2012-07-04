@@ -93,7 +93,6 @@ static const char sccsid[] = "@(#)loop.c	5.01 2000/03/15 xlockmore";
 					"*fpsSolid: true     \n" \
 
 # define UNIFORM_COLORS
-# define reshape_loop 0
 # define loop_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -1676,6 +1675,13 @@ draw_loop (ModeInfo * mi)
 			}
 		}
 	}
+}
+
+ENTRYPOINT void
+reshape_loop(ModeInfo * mi, int width, int height)
+{
+  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
+  init_loop (mi);
 }
 
 ENTRYPOINT void

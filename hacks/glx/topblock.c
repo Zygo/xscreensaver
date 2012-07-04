@@ -72,22 +72,22 @@ typedef struct
 } topBlockSTATE;
 
 /* parameter vars */
-Bool override;
-Bool rotate;
-Bool follow;
-Bool drawCarpet;
-Bool drawBlob;
-Bool drawNipples;
-GLfloat rotateSpeed;
-GLfloat camX;
-GLfloat camY;
-GLfloat camZ;
-GLfloat dropSpeed;
-int maxFalling;
-int maxColors;
-int size;
-int spawn;
-int resolution;
+static Bool override;
+static Bool rotate;
+static Bool follow;
+static Bool drawCarpet;
+static Bool drawBlob;
+static Bool drawNipples;
+static GLfloat rotateSpeed;
+static GLfloat camX;
+static GLfloat camY;
+static GLfloat camZ;
+static GLfloat dropSpeed;
+static int maxFalling;
+static int maxColors;
+static int size;
+static int spawn;
+static int resolution;
 
 static XrmOptionDescRec opts[] = {
   { "-size",        ".size",        XrmoptionSepArg, 0 },
@@ -147,7 +147,7 @@ static argtype vars[] = {
 
 static topBlockSTATE *tbs = NULL;
 
-ModeSpecOpt topBlock_opts = {countof(opts), opts, countof(vars), vars, NULL};
+static ModeSpecOpt topBlock_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
 /* Window management, etc */
 ENTRYPOINT void
@@ -319,13 +319,10 @@ draw_topBlock (ModeInfo *mi)
 		followBlock(mi);
 	}
 
-        glScalef (-1, 1, 1);
-        glTranslatef (0, 0, -10);
-        glRotatef(-current_device_rotation(), 0, 0, 1);
+        /* Rotate the scene around a point that's a little higher up. */
+        glTranslatef (0, 0, -5);
         gltrackball_rotate (tb->trackball);
-        glRotatef(current_device_rotation(), 0, 0, 1);
-        glTranslatef (0, 0, 10);
-        glScalef (-1, 1, 1);
+        glTranslatef (0, 0, 5);
 
 	/* rotate the world */
 	glRotatef(tb->rotation, 0.0, 0.0, 1.0);		

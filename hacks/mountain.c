@@ -35,7 +35,6 @@ static const char sccsid[] = "@(#)mountain.c	5.00 2000/11/01 xlockmore";
 					"*fpsSolid: true \n" \
 
 # define SMOOTH_COLORS
-# define reshape_mountain 0
 # define mountain_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -254,6 +253,14 @@ draw_mountain (ModeInfo * mi)
 			break;
 	}
 }
+
+ENTRYPOINT void
+reshape_mountain(ModeInfo * mi, int width, int height)
+{
+  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
+  init_mountain (mi);
+}
+
 
 ENTRYPOINT void
 release_mountain (ModeInfo * mi)

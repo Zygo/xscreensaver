@@ -1237,7 +1237,6 @@ EndRubberBand(struct state *st, image_data_t *data, XEvent *event)
   data->p_min += diff * delta;
   delta = (double)(st->width - bot.x) / (double)st->width;
   data->p_max -= diff * delta;
-  fflush(stdout);
   set_new_params(st, data);
 }
 

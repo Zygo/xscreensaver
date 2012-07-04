@@ -13,19 +13,20 @@
 #ifndef __STONERVIEW_MOVE_H__
 #define __STONERVIEW_MOVE_H__
 
-typedef struct elem_struct {
+typedef struct {
   GLfloat pos[3];
   GLfloat vervec[2];
   GLfloat col[4];
-} elem_t;
+} stonerview_elem_t;
 
-extern void init_move(stonerview_state *);
-extern void final_move(stonerview_state *);
-extern void move_increment(stonerview_state *);
+extern void stonerview_init_move(stonerview_state *);
+extern void stonerview_final_move(stonerview_state *);
+extern void stonerview_move_increment(stonerview_state *);
 
 
-extern stonerview_state * init_view(int wireframe_p, int transparent_p);
-extern void win_draw(stonerview_state *);
-extern void win_release(stonerview_state *);
+extern stonerview_state * stonerview_init_view(int wireframe_p, 
+                                               int transparent_p);
+extern void stonerview_win_draw(stonerview_state *);
+extern void stonerview_win_release(stonerview_state *);
 
 #endif /* __STONERVIEW_MOVE_H__ */

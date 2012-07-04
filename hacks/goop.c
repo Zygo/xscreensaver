@@ -339,7 +339,9 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
   goop->nlayers = get_integer_resource (dpy, "planes", "Planes");
   if (goop->nlayers <= 0)
     goop->nlayers = (random() % (depth-2)) + 2;
-  goop->layers = (struct layer **) malloc(sizeof(*goop->layers)*goop->nlayers);
+  if (! goop->layers)
+    goop->layers = (struct layer **) 
+      malloc(sizeof(*goop->layers)*goop->nlayers);
 
   goop->additive_p = get_boolean_resource (dpy, "additive", "Additive");
   goop->cmap_p = has_writable_cells (screen, visual);
@@ -542,7 +544,11 @@ static void
 goop_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
-  /* #### write me */
+  struct goop *goop = (struct goop *) closure;
+
+  /* #### leaks like crazy */
+  struct goop *goop2 = goop_init (dpy, window);
+  memcpy (goop, goop2, sizeof(*goop));
 }
 
 static Bool

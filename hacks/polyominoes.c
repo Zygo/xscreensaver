@@ -39,7 +39,6 @@ static const char sccsid[] = "@(#)polyominoes.c 5.01 2000/12/18 xlockmore";
 					"*ncolors: 64 \n" \
 					"*fpsSolid: true \n" \
 
-# define reshape_polyominoes 0
 # define polyominoes_handle_event 0
 # define SMOOTH_COLORS
 # include "xlockmore.h"		/* in xscreensaver distribution */
@@ -2349,6 +2348,13 @@ draw_polyominoes (ModeInfo * mi)
     sp->wait = 100;
   else
     sp->wait = 0;
+}
+
+ENTRYPOINT void
+reshape_polyominoes(ModeInfo * mi, int width, int height)
+{
+  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
+  init_polyominoes (mi);
 }
 
 ENTRYPOINT void

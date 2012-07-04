@@ -19,6 +19,9 @@
 #ifndef __JWXYZ_H__
 #define __JWXYZ_H__
 
+extern void jwxyz_abort(const char *fmt, ...) __dead2;
+#define abort() jwxyz_abort("abort in %s:%d", __FUNCTION__, __LINE__)
+
 typedef int Bool;
 typedef int Status;
 typedef void * XPointer;
@@ -448,6 +451,7 @@ extern int visual_class (Screen *, Visual *);
 
 // also declared in utils/grabclient.h
 extern Bool use_subwindow_mode_p (Screen *, Window);
+
 
 struct jwxyz_Visual {
   VisualID visualid;	/* visual id of this visual */

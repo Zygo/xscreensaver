@@ -24,14 +24,18 @@
   <hgroup>
    <boolean id="fisheye" _label="Fisheye lens" arg-unset="-no-fisheye"/>
    <boolean id="tight"   _label="Allow tight turns" arg-set="-tightturns"/>
-  <select id="style">
-    <option id="curves" _label="Curved pipes"   arg-set="-count 0"/>
+   <select id="style">
+    <option id="curves" _label="Curved pipes"   arg-set="-count 3"/>
     <option id="balls"  _label="Ball joints"    arg-set="-count 1"/>
     <option id="fit"    _label="Bolted fittings"/>
-  </select>
-
+    <option id="random" _label="Random style"   arg-set="-count 0"/>
+   </select>
   </hgroup>
+
+  <hgroup>
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
+  </hgroup>
 
   <_description>
 A growing plumbing system, with bolts and valves.

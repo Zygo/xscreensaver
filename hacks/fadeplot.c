@@ -38,7 +38,6 @@ static const char sccsid[] = "@(#)fadeplot.c	5.00 2000/11/01 xlockmore";
 
 # define BRIGHT_COLORS
 # define UNIFORM_COLORS
-# define reshape_fadeplot 0
 # define fadeplot_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -213,9 +212,19 @@ draw_fadeplot (ModeInfo * mi)
 }
 
 ENTRYPOINT void
+reshape_fadeplot(ModeInfo * mi, int width, int height)
+{
+	fadeplotstruct *fp = &fadeplots[MI_SCREEN(mi)];
+    fp->width  = width;
+    fp->height = height;
+	fp->min = MAX(MIN(fp->width, fp->height) / 2, 1);
+	fp->factor.x = MAX(fp->width / (2 * fp->min), 1);
+	fp->factor.y = MAX(fp->height / (2 * fp->min), 1);
+}
+
+ENTRYPOINT void
 refresh_fadeplot (ModeInfo * mi)
 {
-	MI_CLEARWINDOW(mi);
 }
 
 ENTRYPOINT void

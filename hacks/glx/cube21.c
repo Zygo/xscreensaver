@@ -26,7 +26,7 @@
 
 /* TODO:
  *  some simple "solve mode"
- *  use rotator and trackball
+ *  use rotator
  */
 
 /*-
@@ -46,8 +46,9 @@
                    "*wireframe:     False         \n"
 
 # define refresh_cube21 0
-# define cube21_handle_event 0
 #include "xlockmore.h"
+
+#include "gltrackball.h"
 
 #ifdef USE_GL
 
@@ -177,6 +178,9 @@ typedef struct {
 
   GLfloat texp, texq, posc[6];
   GLfloat color_inner[4];
+
+  Bool button_down_p;
+  trackball_state *trackball;
 
 } cube21_conf;
 
@@ -510,6 +514,12 @@ static Bool draw_main(ModeInfo *mi, cube21_conf *cp)
   else
     glTranslatef(0, 0, zpos);
   glScalef(size, size, size);
+
+  /* Do it twice because we don't track the device's orientation. */
+  glRotatef( current_device_rotation(), 0, 0, 1);
+  gltrackball_rotate (cp->trackball);
+  glRotatef(-current_device_rotation(), 0, 0, 1);
+
   glRotatef(cp->xrot, 1.0, 0.0, 0.0);
   glRotatef(cp->yrot, 0.0, 1.0, 0.0);
   if(cp->wire) glColor3f(0.7, 0.7, 0.7);
@@ -833,6 +843,49 @@ ENTRYPOINT void reshape_cube21(ModeInfo *mi, int width, int height)
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
+ENTRYPOINT Bool
+cube21_handle_event (ModeInfo *mi, XEvent *event)
+{
+  cube21_conf *cp = &cube21[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
+    {
+      cp->button_down_p = True;
+      gltrackball_start (cp->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
+    {
+      cp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5 ||
+            event->xbutton.button == Button6 ||
+            event->xbutton.button == Button7))
+    {
+      gltrackball_mousewheel (cp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           cp->button_down_p)
+    {
+      gltrackball_track (cp->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
+
+
 ENTRYPOINT void release_cube21(ModeInfo *mi) 
 {
   if (cube21 != NULL) {
@@ -857,6 +910,8 @@ ENTRYPOINT void init_cube21(ModeInfo *mi)
     if(!cube21) return;
   }
   cp = &cube21[MI_SCREEN(mi)];
+
+  cp->trackball = gltrackball_init ();
 
   if(!cp->texp) {
     init_posc(cp);

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -48,8 +48,10 @@
 #define DEF_WOBBLE       "True"
 #define DEF_DEBUG        "False"
 
+#define DEF_FONT "-*-helvetica-bold-r-normal-*-240-*"
 #define DEFAULTS  "*delay:		20000	\n" \
 		  "*showFPS:		False	\n" \
+		  "*font:	     " DEF_FONT"\n" \
 		  "*wireframe:		False	\n" \
 		  "*desktopGrabber:   xscreensaver-getimage -no-desktop %s\n" \
 		  "*grabDesktopImages:	False	\n" \
@@ -69,16 +71,19 @@
 # include <GL/glu.h>
 #endif
 
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
 #include "xlockmore.h"
 #include "rotator.h"
 #include "gltrackball.h"
 #include "spline.h"
 #include "normals.h"
 #include "grab-ximage.h"
+#include "texfont.h"
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#else /* !HAVE_JWZGLES */
+# define HAVE_TESS
+#endif /* !HAVE_JWZGLES */
 
 #undef BELLRAND
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
@@ -122,12 +127,15 @@ struct jigsaw_configuration {
   trackball_state *trackball;
   rotator *rot;
   Bool button_down_p;
+  texture_font_data *texfont;
+  GLuint loading_dlist;
 
   int puzzle_width;
   int puzzle_height;
   puzzle_piece *puzzle;
 
-  enum { PUZZLE_LOADING,
+  enum { PUZZLE_LOADING_MSG,
+         PUZZLE_LOADING,
          PUZZLE_UNSCATTER,
          PUZZLE_SOLVE, 
          PUZZLE_SCATTER } state;
@@ -211,6 +219,8 @@ make_puzzle_curve (int pixels)
 }
 
 
+#ifdef HAVE_TESS
+
 static void
 tess_error_cb (GLenum errorCode)
 {
@@ -259,6 +269,149 @@ tess_vertex_cb (void *vertex_data, void *closure)
 
   glVertex3d (x, y, z);
 }
+
+#else  /* HAVE_TESS */
+
+/* Writes triangles into the array of floats.
+   Returns the number of floats written (triangles * 9).
+ */
+static int
+make_piece_eighth (jigsaw_configuration *jc, const spline *s,
+                   int resolution, int type, GLfloat *out,
+                   Bool flip_x, Bool flip_y, Bool rotate_p)
+{
+  GLfloat *oout = out;
+  int cx = resolution/2;
+  int cy = resolution/2;
+  int np = (s->n_points / 2) + 1;
+  int last_x = -999999, last_y = -999999;
+  Bool inflected = False;
+  int i;
+
+  if (type == FLAT)
+    {
+      *out++ = cx;
+      *out++ = 0;
+      *out++ = 0;
+
+      *out++ = cx;
+      *out++ = cy;
+      *out++ = 0;
+
+      *out++ = 0;
+      *out++ = 0;
+      *out++ = 0;
+
+      goto END;
+    }
+
+  for (i = (type == IN ? np-1 : 0); 
+       (type == IN ? i >= 0 : i < np);
+       i += (type == IN ? -1 : 1))
+    {
+      int x = s->points[i].x;
+      int y = s->points[i].y;
+
+      if (type == IN)
+        y = -y;
+
+      if (last_x != -999999)
+        {
+          if (!inflected &&
+              (type == IN
+               ? x >= last_x 
+               : x < last_x))
+            {
+              inflected = True;
+
+              *out++ = cx;
+              *out++ = cy;
+              *out++ = 0;
+
+              *out++ = last_x;
+              *out++ = last_y;
+              *out++ = 0;
+
+              if (type == IN)
+                {
+                  cx = 0;
+                  cy = 0;
+                }
+              else
+                {
+                  cy = y;
+                }
+
+              *out++ = cx;
+              *out++ = cy;
+              *out++ = 0;
+            }
+
+          *out++ = cx;
+          *out++ = cy;
+          *out++ = 0;
+
+          *out++ = last_x;
+          *out++ = last_y;
+          *out++ = 0;
+
+          *out++ = x;
+          *out++ = y;
+          *out++ = 0;
+        }
+
+      last_x = x;
+      last_y = y;
+    }
+ END:
+
+  {
+    int count = out - oout;
+    Bool cw_p;
+
+    if (flip_x)
+      for (i = 0; i < count; i += 3)
+        oout[i] = resolution - oout[i];
+
+    if (flip_y)
+      for (i = 0; i < count; i += 3)
+        oout[i+1] = resolution - oout[i+1];
+
+    cw_p = (type == IN);
+    if (flip_x) cw_p = !cw_p;
+    if (flip_y) cw_p = !cw_p;
+
+    if (cw_p)
+      for (i = 0; i < count; i += 9)
+        {
+          GLfloat x1 = oout[i+0];
+          GLfloat y1 = oout[i+1];
+          GLfloat x2 = oout[i+3];
+          GLfloat y2 = oout[i+4];
+          GLfloat x3 = oout[i+6];
+          GLfloat y3 = oout[i+7];
+          oout[i+0] = x2;
+          oout[i+1] = y2;
+          oout[i+3] = x1;
+          oout[i+4] = y1;
+          oout[i+6] = x3;
+          oout[i+7] = y3;
+        }
+
+    if (rotate_p)
+      for (i = 0; i < count; i += 3)
+        {
+          GLfloat x = oout[i];
+          GLfloat y = oout[i+1];
+          oout[i]   = resolution - y;
+          oout[i+1] = x;
+        }
+
+    return count;
+  }
+}
+
+#endif /* !HAVE_TESS */
 
 
 
@@ -331,11 +484,11 @@ draw_piece (jigsaw_configuration *jc, puzzle_piece *p,
     }
   }
 
-  free_spline (s);
+  { GLfloat ss = 1.0 / resolution; glScalef (ss, ss, ss); }
 
-  { GLfloat s = 1.0 / resolution; glScalef (s, s, s); }
-
+# ifndef HAVE_JWZGLES
   glPolygonMode (GL_FRONT_AND_BACK, wire ? GL_LINE : GL_FILL);
+# endif
 
   if (wire)
     {
@@ -345,9 +498,11 @@ draw_piece (jigsaw_configuration *jc, puzzle_piece *p,
     }
   else
     {
-# ifndef  _GLUfuncptr
-#  define _GLUfuncptr void(*)(void)
-# endif
+# ifdef HAVE_TESS
+
+#  ifndef  _GLUfuncptr
+#   define _GLUfuncptr void(*)(void)
+#  endif
       GLUtesselator *tess = gluNewTess();
       gluTessCallback(tess, GLU_TESS_BEGIN,      (_GLUfuncptr)glBegin);
       gluTessCallback(tess, GLU_TESS_VERTEX_DATA,(_GLUfuncptr)tess_vertex_cb);
@@ -389,9 +544,104 @@ draw_piece (jigsaw_configuration *jc, puzzle_piece *p,
       gluTessEndContour(tess);
       gluTessEndPolygon(tess);
       gluDeleteTess(tess);
+
+      /* Put it back */
+      for (i = 0; i < o; i += 3)
+        {
+          GLdouble *p = pts + i;
+          p[2] = -p[2];
+        }
+
+# else  /* !HAVE_TESS */
+
+      GLfloat *tri = (GLfloat *)
+        (GLfloat *) malloc (s->n_points * 4 * 3 * 3 * sizeof(*pts));
+      GLfloat *otri = tri;
+      int count;
+      GLdouble zz;
+
+      tri += make_piece_eighth (jc, s, resolution, top_type,    tri, 0, 0, 0);
+      tri += make_piece_eighth (jc, s, resolution, top_type,    tri, 1, 0, 0);
+      tri += make_piece_eighth (jc, s, resolution, left_type,   tri, 0, 1, 1);
+      tri += make_piece_eighth (jc, s, resolution, left_type,   tri, 1, 1, 1);
+      tri += make_piece_eighth (jc, s, resolution, bottom_type, tri, 0, 1, 0);
+      tri += make_piece_eighth (jc, s, resolution, bottom_type, tri, 1, 1, 0);
+      tri += make_piece_eighth (jc, s, resolution, right_type,  tri, 0, 0, 1);
+      tri += make_piece_eighth (jc, s, resolution, right_type,  tri, 1, 0, 1);
+      count = (tri - otri) / 9;
+
+      if (! wire)
+        {
+          glEnable (GL_TEXTURE_2D);
+          glEnable (GL_BLEND);
+          glEnable (GL_LIGHTING);
+          glBindTexture(GL_TEXTURE_2D, jc->texid);
+        }
+
+      for (zz = z; zz >= -z; zz -= 2*z)
+        {
+          int i;
+          glFrontFace (zz > 0 ? GL_CCW : GL_CW);
+          glNormal3f (0, 0, (zz > 0 ? 1 : -1));
+
+          if (zz < 0)
+            glDisable (GL_TEXTURE_2D);	/* back face */
+
+          glPushMatrix();
+          glTranslatef (0, 0, zz);
+
+          tri = otri;
+          if (wire)
+            {
+              for (i = 0; i < count; i++)
+                {
+                  glBegin (GL_LINE_LOOP);
+                  glVertex3f (tri[0], tri[1], tri[2]); tri += 3;
+                  glVertex3f (tri[0], tri[1], tri[2]); tri += 3;
+                  glVertex3f (tri[0], tri[1], tri[2]); tri += 3;
+                  glEnd();
+                }
+            }
+          else
+            {
+              GLfloat pw = p->jc->puzzle_width;
+              GLfloat ph = p->jc->puzzle_height;
+              GLfloat r = resolution;
+
+              glBegin (GL_TRIANGLES);
+              for (i = 0; i < count * 3; i++)
+                {
+                  GLfloat x = *tri++;
+                  GLfloat y = *tri++;
+                  GLfloat z = *tri++;
+
+                  /* 0-1 from piece origin */
+                  GLfloat xx = x / r;
+                  GLfloat yy = y / r;
+
+                  /* 0-1 from puzzle origin */
+                  GLfloat tx = (p->home.x + xx)      / pw;
+                  GLfloat ty = (ph - p->home.y - yy) / ph;
+
+                  tx = p->jc->tex_x + (tx * p->jc->tex_width);
+                  ty = p->jc->tex_y + (ty * p->jc->tex_height);
+
+                  glTexCoord2f (tx, ty);
+                  glVertex3f (x, y, z);
+                }
+              glEnd();
+            }
+
+          polys += count;
+          glPopMatrix();
+        }
+
+      free (otri);
+# endif /* !HAVE_TESS */
     }
 
   /* side faces */
+
   glFrontFace (GL_CCW);
   glBegin (wire ? GL_LINES : GL_QUAD_STRIP);
   for (i = 0; i < o; i += 3)
@@ -402,18 +652,20 @@ draw_piece (jigsaw_configuration *jc, puzzle_piece *p,
       GLdouble *pj = pts + j;
       GLdouble *pk = pts + k;
 
-      do_normal  (pj[0], pj[1], -pj[2],
-                  pj[0], pj[1],  pj[2],
+      do_normal  (pj[0], pj[1],  pj[2],
+                  pj[0], pj[1], -pj[2],
                   pk[0], pk[1],  pk[2]);
 
-      glVertex3f (p[0], p[1], -p[2]);
       glVertex3f (p[0], p[1],  p[2]);
+      glVertex3f (p[0], p[1], -p[2]);
       polys++;
     }
   glEnd();
 
   if (! wire)
     glColor3f (0.3, 0.3, 0.3);
+
+  /* outline the edges in gray */
 
   glDisable (GL_TEXTURE_2D);
   glDisable (GL_LIGHTING);
@@ -431,6 +683,7 @@ draw_piece (jigsaw_configuration *jc, puzzle_piece *p,
   glEnd();
   polys += o/3;
 
+  free_spline (s);
   free (pts);
 
   return polys;
@@ -823,8 +1076,14 @@ move_one_piece (ModeInfo *mi)
       p1->to   = p0->current;
       p1->to.r = proper_rotation (jc, p1, p1->to.x, p1->to.y);
 
-      p0->arc_height = 0.5 + frand(3.0);
-      p1->arc_height = 1.0 + frand(3.0);
+      /* Try to avoid having them intersect each other in the air. */
+      p0->arc_height = 0;
+      p1->arc_height = 0;
+      while (fabs (p0->arc_height - p1->arc_height) < 1.5)
+        {
+          p0->arc_height = 0.5 + frand(3.0);
+          p1->arc_height = 1.0 + frand(3.0);
+        }
 
 # define RTILT(V) \
          V = 90 - BELLRAND(180);       \
@@ -893,16 +1152,107 @@ anim_tick (ModeInfo *mi)
 
 
 static void
+loading_msg (ModeInfo *mi)
+{
+  jigsaw_configuration *jc = &sps[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
+  const char *text = "Loading...";
+  int h;
+  int w = texture_string_width (jc->texfont, text, &h);
+
+  if (wire) return;
+
+  glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+  if (! jc->loading_dlist)
+    {
+      GLfloat othick = jc->line_thickness;
+      puzzle_piece P = { 0, };
+      P.jc = jc;
+      jc->loading_dlist = glGenLists (1);
+      glNewList (jc->loading_dlist, GL_COMPILE);
+      jc->line_thickness = 1;
+      draw_piece (jc, &P,
+                  resolution_arg, thickness_arg,
+                  OUT, OUT, IN, OUT, True);
+      jc->line_thickness = othick;
+      glEndList();
+    }
+
+  glColor3f (0.2, 0.2, 0.4);
+
+  glPushMatrix();
+  {
+    double x, y, z;
+    get_position (jc->rot, &x, &y, &z, True);
+    glRotatef (x * 360, 1, 0, 0);
+    glRotatef (y * 360, 0, 1, 0);
+    glRotatef (z * 360, 0, 0, 1);
+    glScalef (5, 5, 5);
+    glTranslatef (-0.5, -0.5, 0);
+    glCallList (jc->loading_dlist);
+  }
+  glPopMatrix();
+
+  glColor3f (0.7, 0.7, 1);
+
+
+  glMatrixMode(GL_PROJECTION);
+  glPushMatrix();
+  glLoadIdentity();
+
+  glMatrixMode(GL_MODELVIEW);
+  glPushMatrix();
+  glLoadIdentity();
+
+  {
+    double rot = current_device_rotation();
+    glRotatef(rot, 0, 0, 1);
+    if ((rot >  45 && rot <  135) ||
+        (rot < -45 && rot > -135))
+      {
+        GLfloat s = MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi);
+        glScalef (s, 1/s, 1);
+      }
+  }
+
+  glOrtho(0, MI_WIDTH(mi), 0, MI_HEIGHT(mi), -1, 1);
+  glTranslatef ((MI_WIDTH(mi)  - w) / 2,
+                (MI_HEIGHT(mi) - h) / 2,
+                0);
+  glEnable (GL_TEXTURE_2D);
+  glPolygonMode (GL_FRONT, GL_FILL);
+  glDisable (GL_LIGHTING);
+  glEnable (GL_BLEND);
+  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+  print_texture_string (jc->texfont, text);
+  glEnable (GL_DEPTH_TEST);
+  glPopMatrix();
+
+  glMatrixMode(GL_PROJECTION);
+  glPopMatrix();
+
+  glMatrixMode(GL_MODELVIEW);
+}
+
+
+static void
 animate (ModeInfo *mi)
 {
   jigsaw_configuration *jc = &sps[MI_SCREEN(mi)];
   double slow = 0.01;
   double fast = 0.04;
 
-  if (jc->button_down_p) return;
+  if (jc->button_down_p && jc->state != PUZZLE_LOADING_MSG)
+    return;
 
   switch (jc->state)
     {
+    case PUZZLE_LOADING_MSG:
+      if (! jc->puzzle)
+        loading_msg (mi);
+      /* fall through */
+
     case PUZZLE_LOADING:
       if (!jc->puzzle) break;	/* still loading */
       jc->tick_speed = slow;
@@ -1081,10 +1431,17 @@ init_jigsaw (ModeInfo *mi)
 
   jc->trackball = gltrackball_init ();
   jc->rot = make_rotator (0, 0, 0, 0, speed * 0.002, True);
+  jc->texfont = load_texture_font (MI_DISPLAY(mi), "font");
 
-  jc->state = PUZZLE_LOADING;
+  jc->state = PUZZLE_LOADING_MSG;
 
   resolution_arg /= complexity_arg;
+
+# ifndef HAVE_TESS
+  /* If it's not even, we get crosses. */
+  if (resolution_arg & 1)
+    resolution_arg++;
+# endif /* !HAVE_TESS */
 
   if (wire)
     make_puzzle_grid (mi);
@@ -1104,16 +1461,17 @@ draw_jigsaw (ModeInfo *mi)
   if (!jc->glx_context)
     return;
 
-  animate (mi);
-
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(jc->glx_context));
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glPushMatrix ();
+  mi->polygon_count = 0;
 
-  gltrackball_rotate (jc->trackball);
+  glPushMatrix ();
   glRotatef(current_device_rotation(), 0, 0, 1);
+  gltrackball_rotate (jc->trackball);
+
+  animate (mi);
 
   if (wobble_p && jc->puzzle)
     {
@@ -1125,17 +1483,15 @@ draw_jigsaw (ModeInfo *mi)
       glRotatef (max/2 - z*max, 0, 1, 0);
     }
 
-  mi->polygon_count = 0;
-
-  glEnable(GL_CULL_FACE);
-  glEnable(GL_DEPTH_TEST);
-  glEnable(GL_NORMALIZE);
-  glEnable(GL_LINE_SMOOTH);
-
   if (jc->puzzle)
     {
       GLfloat s = 14.0 / jc->puzzle_height;
       int x, y;
+
+      glEnable(GL_CULL_FACE);
+      glEnable(GL_DEPTH_TEST);
+      glEnable(GL_NORMALIZE);
+      glEnable(GL_LINE_SMOOTH);
 
       glScalef (s, s, s);
       glTranslatef (-jc->puzzle_width / 2.0, -jc->puzzle_height / 2.0, 0);

@@ -38,7 +38,7 @@ struct stonerview_state {
   /* The list of polygons. This is filled in by move_increment(), and rendered
      by perform_render(). */
   int num_els;
-  elem_t *elist;
+  stonerview_elem_t *elist;
 
   /* A linked list of all osc_t objects created. New objects are added
      to the end of the list, not the beginning. */

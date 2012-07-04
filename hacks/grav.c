@@ -35,7 +35,6 @@ static const char sccsid[] = "@(#)grav.c	5.00 2000/11/01 xlockmore";
 					"*fpsSolid: true \n" \
 
 #define BRIGHT_COLORS
-# define reshape_grav 0
 # define grav_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -325,6 +324,15 @@ draw_grav(ModeInfo * mi)
 
 	for (ball = 0; ball < (unsigned char) gp->nplanets; ball++)
 		draw_planet(mi, &gp->planets[ball]);
+}
+
+ENTRYPOINT void
+reshape_grav(ModeInfo * mi, int width, int height)
+{
+	gravstruct *gp = &gravs[MI_SCREEN(mi)];
+	gp->width  = width;
+	gp->height = height;
+    XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
 }
 
 ENTRYPOINT void

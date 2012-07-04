@@ -21,12 +21,13 @@
 /*   int x, y; */
 /* } XY; */
 
-extern int createnewlevel (pacmangamestruct *);
-extern int check_pos (pacmangamestruct *, int y, int x, int ghostpass);
-extern int check_dot (pacmangamestruct *, unsigned int x, unsigned int y);
-extern int is_bonus_dot (pacmangamestruct *, int x, int y, int *idx);
-extern int bonus_dot_eaten (pacmangamestruct *, int idx);
-extern void eat_bonus_dot (pacmangamestruct *, int idx);
-extern void bonus_dot_pos (pacmangamestruct *, int idx, int *x, int *y);
-extern void get_jail_opening (int *x, int *y);
+extern int pacman_createnewlevel (pacmangamestruct *);
+extern int pacman_check_pos (pacmangamestruct *, int y, int x, int ghostpass);
+extern int pacman_check_dot (pacmangamestruct *,
+                             unsigned int x, unsigned int y);
+extern int pacman_is_bonus_dot (pacmangamestruct *, int x, int y, int *idx);
+extern int pacman_bonus_dot_eaten (pacmangamestruct *, int idx);
+extern void pacman_eat_bonus_dot (pacmangamestruct *, int idx);
+extern void pacman_bonus_dot_pos (pacmangamestruct *, int idx, int *x, int *y);
+extern void pacman_get_jail_opening (int *x, int *y);
 #endif /* __PACMAN_LEVEL_H__ */

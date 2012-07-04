@@ -38,7 +38,6 @@ static const char sccsid[] = "@(#)thornbird.c	5.00 2000/11/01 xlockmore";
 					 "*fpsSolid: true    \n" \
 
 # define BRIGHT_COLORS
-# define reshape_thornbird 0
 # define thornbird_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -248,6 +247,13 @@ draw_thornbird(ModeInfo * mi)
 	XDrawPoints(dsp, win, gc, hp->pointBuffer[current],
 		    batchcount, CoordModeOrigin);
 	hp->inc++;
+}
+
+ENTRYPOINT void
+reshape_thornbird(ModeInfo * mi, int width, int height)
+{
+  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
+  init_thornbird (mi);
 }
 
 ENTRYPOINT void

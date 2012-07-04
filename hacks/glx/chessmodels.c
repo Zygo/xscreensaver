@@ -63,20 +63,20 @@
 #define SETBACKREF 65524
 #define BACKREF 65523
 
-unsigned short classic_pawn_data[] = {
+static unsigned short classic_pawn_data[] = {
   SPIN,16,
   350,0,SEAM,350,200,SEAM,250,300,SEAM,250,400,SEAM,150,600,SEAM,100,880,
   SEAM,180,880,SEAM,100,920,SEAM,200,1160,SEAM,100,1340,0,1340,
   ENDOFDATA
 };
 
-unsigned short classic_rook_data[] = {
+static unsigned short classic_rook_data[] = {
   SPIN,16,
   380,0,SEAM,380,200,SEAM,260,500,SEAM,200,1020,SEAM,280,1020,SEAM,280,1360,SEAM,220,1360,SEAM,220,1300,0,1300,
   ENDOFDATA
 };
 
-unsigned short classic_knight_data[] = {
+static unsigned short classic_knight_data[] = {
   SPIN,16,
   410,0,SEAM,410,200,SEAM,200,360,SEAM,200,480,260,580,
 
@@ -161,7 +161,7 @@ unsigned short classic_knight_data[] = {
   ENDOFDATA
 };
 
-unsigned short classic_bishop_data[] = {
+static unsigned short classic_bishop_data[] = {
   SPIN,16,
   400,0,SEAM,400,200,SEAM,250,300,SEAM,250,400,SEAM,150,700,SEAM,120,940,
   SEAM,250,940,SEAM,170,1100,SEAM,170,1220,SEAM,220,1320,SEAM,220,1480,
@@ -169,7 +169,7 @@ unsigned short classic_bishop_data[] = {
   ENDOFDATA
 };
 
-unsigned short classic_queen_data[] = {
+static unsigned short classic_queen_data[] = {
   SPIN,16,
   480,0,SEAM,480,220,SEAM,340,400,SEAM,340,500,SEAM,180,800,SEAM,140,1180,
   SEAM,290,1180,SEAM,180,1360,SEAM,180,1520,SEAM,200,1780,SEAM,270,1920,
@@ -178,7 +178,7 @@ unsigned short classic_queen_data[] = {
   ENDOFDATA
 };
 
-unsigned short classic_king_data[] = {
+static unsigned short classic_king_data[] = {
   SPIN,16,
   500,0,SEAM,500,200,SEAM,350,300,SEAM,350,460,SEAM,200,760,SEAM,140,1260,
   SEAM,300,1260,SEAM,200,1460,SEAM,200,1560,SEAM,280,1910,SEAM,160,1970,
@@ -205,7 +205,7 @@ unsigned short classic_king_data[] = {
   ENDOFDATA
 };
 
-unsigned short knight_data[] = {
+static unsigned short knight_data[] = {
   VERTICES, SETBACKREF,0, 7910,8863,0, 7790,8863,1326, 7433,8863,2611,
   6850,8863,3817, 6059,8863,4907, 5084,8863,5847, 3955,8863,6611,
   2705,8863,7173, 1373,8863,7517, 0,8863,7633, -1373,8863,7517,
@@ -1016,7 +1016,7 @@ unsigned short knight_data[] = {
   ENDOFDATA
 };
 
-unsigned short bishop_data[] = {
+static unsigned short bishop_data[] = {
   VERTICES, SETBACKREF,0, 5233,26960,0, 5154,26960,909, 4918,26960,1790,
   4532,26960,2617, 4009,26960,3364, 3364,26960,4009, 2617,26960,4532,
   1790,26960,4918, 909,26960,5154, 0,26833,5233, -909,26960,5154,
@@ -1109,7 +1109,7 @@ unsigned short bishop_data[] = {
   ENDOFDATA
 };
 
-unsigned short king_data[] = {
+static unsigned short king_data[] = {
   SPIN,20,
   11378,0,11378,856,SEAM,10928,1152,
   11302,1684,11302,2209,11065,2684,
@@ -1165,7 +1165,7 @@ unsigned short king_data[] = {
   ENDOFDATA
 };
 
-unsigned short queen_data[] = {
+static unsigned short queen_data[] = {
   SPIN,24,
   11092,0,11092,914,SEAM,10653,1284,
   11018,1798,11018,2358,10787,2866,
@@ -1185,7 +1185,7 @@ unsigned short queen_data[] = {
   ENDOFDATA
 };
 
-unsigned short pawn_data[] = {
+static unsigned short pawn_data[] = {
   SPIN,16,
   7395,0,7395,609,
   SEAM,7102,910,7345,1199,7345,1572,7191,1910,
@@ -1200,7 +1200,7 @@ unsigned short pawn_data[] = {
   ENDOFDATA
 };
 
-unsigned short rook_data[] = {
+static unsigned short rook_data[] = {
   SPIN,20,
   9374,0,9374,756,SEAM,9003,1062,9311,1487,
   9311,1951,9116,2371,8521,3083,6701,5807,SEAM,6009,7595,
@@ -1268,7 +1268,8 @@ unsigned short rook_data[] = {
 
 static double piece_size;
 
-static int enumerate_ring_vertices( int steps, unsigned short *data, void *h,
+static int
+enumerate_ring_vertices( int steps, unsigned short *data, void *h,
   void (*process_vertex)(void *h,double x,double y,double z))
 {
   int patlen = 1,i;
@@ -1293,7 +1294,8 @@ static int enumerate_ring_vertices( int steps, unsigned short *data, void *h,
   return pts + patlen * 2 - data;
 }
 
-static void enumerate_vertices( unsigned short *data, void *h,
+static void
+enumerate_vertices( unsigned short *data, void *h,
   void (*process_vertex)(void *h,double x,double y,double z))
 {
   while(1) {
@@ -1368,7 +1370,8 @@ static void enumerate_vertices( unsigned short *data, void *h,
   }
 }
 
-static void enumerate_ring_faces( int basevertex, int steps,
+static void
+enumerate_ring_faces( int basevertex, int steps,
   int prevbase, int prevsteps, void *h, int *count_ret,
   void (*process_face)(void *h,int v1,int v2,int v3,int v4))
 {
@@ -1415,7 +1418,8 @@ static void enumerate_ring_faces( int basevertex, int steps,
   }
 }
 
-static void enumerate_faces( unsigned short *data, void *h, int *count_ret,
+static void
+enumerate_faces( unsigned short *data, void *h, int *count_ret,
   void (*process_face)(void *h,int v1,int v2,int v3,int v4))
 {
   int basevertex = 0, startofvertices = 0;
@@ -1546,7 +1550,8 @@ static void enumerate_faces( unsigned short *data, void *h, int *count_ret,
   }
 }
 
-static void normalize( float v[3]) {
+static void
+normalize( float v[3]) {
   float d = sqrt(v[0]*v[0]+v[1]*v[1]+v[2]*v[2]);
 
   if( d == 0.0) {
@@ -1562,7 +1567,8 @@ static void normalize( float v[3]) {
   v[2] /= d;
 }
 
-static void normcrossprod( float v1[3], float v2[3], float out[3])
+static void
+normcrossprod( float v1[3], float v2[3], float out[3])
 {
   out[0] = v1[1] * v2[2] - v1[2] * v2[1];
   out[1] = v1[2] * v2[0] - v1[0] * v2[2];
@@ -1580,16 +1586,18 @@ static void normcrossprod( float v1[3], float v2[3], float out[3])
 	 (v1)[1] += (v2)[1], \
 	 (v1)[2] += (v2)[2])
 
-int numverts;
-float *vertices;
-float *normals;
+static int numverts;
+static float *vertices;
+static float *normals;
 
-static void count_vertex( void *dummy, double x, double y, double z)
+static void
+count_vertex( void *dummy, double x, double y, double z)
 {
   numverts++;
 }
 
-static void add_normal( void *dummy, int v1, int v2, int v3, int v4)
+static void
+add_normal( void *dummy, int v1, int v2, int v3, int v4)
 {
   float surfnormal[3],d1[3],d2[3];
 
@@ -1620,7 +1628,8 @@ static void add_normal( void *dummy, int v1, int v2, int v3, int v4)
   }
 }
 
-static void collect_vertex( void *curvert, double x, double y, double z)
+static void
+collect_vertex( void *curvert, double x, double y, double z)
 {
   (*(float**)curvert)[0] = x;
   (*(float**)curvert)[1] = y;
@@ -1628,7 +1637,8 @@ static void collect_vertex( void *curvert, double x, double y, double z)
   (*(float**)curvert) += 3;
 }
 
-static void draw_face( void *dummy, int v1, int v2, int v3, int v4)
+static void
+draw_face( void *dummy, int v1, int v2, int v3, int v4)
 {
   glBegin( v4 == -1 ? GL_TRIANGLES : GL_QUADS);
   glNormal3f( normals[v1*3], normals[v1*3+1], normals[v1*3+2]);
@@ -1644,7 +1654,8 @@ static void draw_face( void *dummy, int v1, int v2, int v3, int v4)
   glEnd();
 }
 
-static int draw_piece( unsigned short *piece_data)
+static int
+draw_piece( unsigned short *piece_data)
 {
   int i;
   float *curvert;
@@ -1685,7 +1696,7 @@ static int draw_piece( unsigned short *piece_data)
   return count;
 }
 
-void gen_model_lists( int classic, int poly_count[PIECES]) {
+void chessmodels_gen_lists( int classic, int poly_count[PIECES]) {
 
   Bool queen_only_p = classic < 0;
   if (classic < 0) classic = 0;

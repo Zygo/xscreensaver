@@ -25,8 +25,7 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-A spotlight roams across an embossed version of your desktop or
-other picture.
+A spotlight roams across an embossed version of a loaded image.
 
 Written by Shane Smit; 1999.
   </_description>

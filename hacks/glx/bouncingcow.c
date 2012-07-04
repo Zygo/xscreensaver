@@ -447,6 +447,8 @@ draw_floater (ModeInfo *mi, floater *f)
   glPushMatrix();
   glTranslatef (f->x, f->y, f->z);
 
+  gltrackball_rotate (bp->trackball);
+
   glRotatef (y * 360, 0.0, 1.0, 0.0);
   if (f->spinner_p)
     {
@@ -500,7 +502,6 @@ draw_cow (ModeInfo *mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix ();
-  gltrackball_rotate (bp->trackball);
   glRotatef(current_device_rotation(), 0, 0, 1);
 
   glScalef (0.5, 0.5, 0.5);

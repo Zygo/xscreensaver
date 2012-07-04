@@ -840,13 +840,13 @@ static void init_shapes(ModeInfo * mi)
                       &tp->tlg2, &tp->sq, &tp->rh);
     get_solved_puzzle(mi, &tp->n_tsm1, &tp->n_tsm2, &tp->n_tm, &tp->n_tlg1,
                       &tp->n_tlg2, &tp->n_sq, &tp->n_rh);
-    tp->tsm1.dl = get_sm_tri_dl(wire);
-    tp->tsm2.dl = get_sm_tri_dl(wire);
-    tp->tm.dl = get_md_tri_dl(wire);
-    tp->tlg1.dl = get_lg_tri_dl(wire);
-    tp->tlg2.dl = get_lg_tri_dl(wire);
-    tp->sq.dl = get_square_dl(wire);
-    tp->rh.dl = get_rhomboid_dl(wire);
+    tp->tsm1.dl = tangram_get_sm_tri_dl(wire);
+    tp->tsm2.dl = tangram_get_sm_tri_dl(wire);
+    tp->tm.dl = tangram_get_md_tri_dl(wire);
+    tp->tlg1.dl = tangram_get_lg_tri_dl(wire);
+    tp->tlg2.dl = tangram_get_lg_tri_dl(wire);
+    tp->sq.dl = tangram_get_square_dl(wire);
+    tp->rh.dl = tangram_get_rhomboid_dl(wire);
 }
 
 static void gl_init(ModeInfo * mi)

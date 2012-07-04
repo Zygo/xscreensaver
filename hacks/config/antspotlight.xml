@@ -14,8 +14,7 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-Draws an ant (with a headlight) who walks on top of an
-image of your desktop or other image.  
+Draws an ant (with a headlight) who walks around on top of a loaded image.
 
 Written by Blair Tennessy; 2003.
   </_description>

@@ -1504,9 +1504,7 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
 /* 	       started ? -mag : -8.0 + 4.0*fabs(sin(ant_step/10.0)),  */
 /* 	       started ? -mag : -8.0 + 4.0*fabs(sin(ant_step/10.0))); */
 
-  glRotatef(-current_device_rotation(), 0, 0, 1);
   gltrackball_rotate(mp->trackball);
-  glRotatef(current_device_rotation(), 0, 0, 1);
 
   glRotatef(mp->ant_step*0.6, 0.0, 1.0, 0.0);
 
@@ -1539,9 +1537,7 @@ ENTRYPOINT void draw_antmaze(ModeInfo * mi)
   glTranslatef(0.0, 0.0, -16.0);
   glRotatef(60.0, 1.0, 0.0, 0.0);
   glRotatef(-15.0 + mp->ant_step/10.0, 0.0, 1.0, 0.0);
-  glRotatef(-current_device_rotation(), 0, 0, 1);
   gltrackball_rotate(mp->trackball);
-  glRotatef(current_device_rotation(), 0, 0, 1);
 
   /* sync */
   if(!draw_antmaze_strip(mi)) {

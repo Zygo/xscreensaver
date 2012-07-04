@@ -223,8 +223,8 @@ typedef struct
 
 } pacmangamestruct;
 
-extern pacmangamestruct *pacmangames;
-extern Bool trackmouse;
+extern pacmangamestruct *pacman_games;
+extern Bool pacman_trackmouse;
 
 typedef char lev_t[LEVHEIGHT][LEVWIDTH + 1];
 
