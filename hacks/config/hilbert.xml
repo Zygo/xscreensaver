@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="hilbert" _label="Hilbert" gl="yes">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <vgroup>
+
+    <hgroup>
+     <select id="twodee">
+      <option id="random"  _label="2D or 3D"/>
+      <option id="2D"      _label="2D"               arg-set="-mode 2d"/>
+      <option id="3D"      _label="3D"               arg-set="-mode 3d"/>
+     </select>
+
+     <select id="closed">
+      <option id="random"  _label="Open or closed paths"/>
+      <option id="closed"  _label="Closed"           arg-set="-ends closed"/>
+      <option id="open"    _label="Open"             arg-set="-ends open"/>
+     </select>
+    </hgroup>
+
+    <hgroup>
+     <vgroup>
+      <number id="delay" type="slider" arg="-delay %"
+              _label="Frame rate" _low-label="Slow" _high-label="Fast"
+              low="0" high="100000" default="30000"
+              convert="invert"/>
+
+      <number id="speed" type="slider" arg="-speed %"
+              _label="Speed" _low-label="Slow" _high-label="Fast"
+              low="0.02" high="10.0" default="1.0"/>
+     </vgroup>
+
+     <vgroup>
+      <number id="depth" type="slider" arg="-max-depth %"
+              _label="Recursion levels" _low-label="2" _high-label="10"
+              low="2" high="10" default="5"/>
+
+      <number id="thickness" type="slider" arg="-thickness %"
+              _label="Line thickness" _low-label="Thin" _high-label="Thick"
+              low="0.01" high="1.0" default="0.25"/>
+     </vgroup>
+    </hgroup>
+
+    <hgroup>
+     <boolean id="wander"  _label="Wander"          arg-set="-wander"/>
+     <boolean id="spin"    _label="Spin"            arg-unset="-no-spin"/>
+     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+     <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>
+    </hgroup>
+
+   </vgroup>
+  </hgroup>
+
+  <_description>
+This draws the recursive Hilbert space-filling curve, in both 2D and
+3D variants.  It incrementally animates the growth and recursion to
+the maximum depth, then unwinds it back.
+
+The Hilbert path is a single contiguous line that can fill a volume
+without crossing itself.  As a data structure, Hilbert paths are
+useful because ordering along the curve preserves locality: points
+that are close together along the curve are also close together in space.
+The converse is often, but not always, true.  The coloration
+reflects this.
+
+http://en.wikipedia.org/wiki/Hilbert_curve
+
+Written by Jamie Zawinski; 2011.
+  </_description>
+</screensaver>

@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="kaleidescope" _label="Kaleidescope">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <number id="nsegments" type="slider" arg="-nsegments %"
+          _label="Segments" _low-label="Few" _high-label="Many"
+          low="1" high="100" default="7"/>
+
+  <number id="symmetry" type="slider" arg="-symmetry %"
+          _label="Symmetry" _low-label="3" _high-label="32"
+          low="3" high="32" default="11"/>
+
+  <number id="ntrails" type="slider" arg="-ntrails %"
+          _label="Trails" _low-label="Few" _high-label="Many"
+          low="1" high="1000" default="100"/>
+
+  <!-- #### -local_rotation [-59] -->
+  <!-- #### -global_rotation [1] -->
+  <!-- #### -spring_constant [5] -->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <_description>
+A simple kaleidoscope made of line segments.  See "GLeidescope"
+for a more sophisticated take.
+
+http://en.wikipedia.org/wiki/Kaleidoscope
+
+Written by Ron Tapia; 1997.
+  </_description>
+</screensaver>

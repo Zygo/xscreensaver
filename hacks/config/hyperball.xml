@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="hyperball" _label="HyperBall">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+<!--
+  <number id="z" type="slider" arg="-observer-z %"
+          _label="Zoom" _low-label="Near" _high-label="Far"
+          low="1.125" high="10.0" default="3.0"/>
+-->
+
+  <hgroup>
+    <vgroup>
+      <number id="xw" type="slider" arg="-xw %"
+              _label="XW rotation" _low-label="Slow" _high-label="Fast"
+              low="0" high="20" default="0"/>
+      <number id="xy" type="slider" arg="-xy %"
+              _label="XY rotation" _low-label="Slow" _high-label="Fast"
+              low="0" high="20" default="3"/>
+      <number id="xz" type="slider" arg="-xz %"
+              _label="XZ rotation" _low-label="Slow" _high-label="Fast"
+              low="0" high="20" default="5"/>
+    </vgroup>
+    <vgroup>
+      <number id="yw" type="slider" arg="-yw %"
+              _label="YW rotation" _low-label="Slow" _high-label="Fast"
+              low="0" high="20" default="10"/>
+      <number id="yz" type="slider" arg="-yz %"
+              _label="YZ rotation" _low-label="Slow" _high-label="Fast"
+              low="0" high="20" default="0"/>
+      <number id="zw" type="slider" arg="-zw %"
+              _label="ZW rotation" _low-label="Slow" _high-label="Fast"
+              low="0" high="20" default="0"/>
+    </vgroup>
+  </hgroup>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.10.  It has been replaced by the more general "Polytopes"
+screen saver, which can display this object as well as others.  The
+Polytopes "120-cell" object corresponds to this one.
+
+Hyperball is to hypercube as dodecahedron is to cube: this displays
+a 2D projection of the sequence of 3D objects which are the projections
+of the 4D analog to the dodecahedron.  Technically, it is a "120 cell
+polytope".
+
+http://en.wikipedia.org/wiki/Hypercube
+http://en.wikipedia.org/wiki/Regular_polytope
+
+Written by Joe Keane; 2000.
+  </_description>
+</screensaver>
