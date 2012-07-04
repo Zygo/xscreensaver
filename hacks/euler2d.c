@@ -48,7 +48,6 @@ static const char sccsid[] = "@(#)euler2d.c	5.00 2000/11/01 xlockmore";
 					"*ncolors: 64    \n" \
 					"*fpsSolid: true    \n" \
 
-# define reshape_euler2d 0
 # define euler2d_handle_event 0
 # define SMOOTH_COLORS
 # include "xlockmore.h"		/* in xscreensaver distribution */
@@ -855,6 +854,13 @@ draw_euler2d (ModeInfo * mi)
 	if (++sp->count > MI_CYCLES(mi)) /* pick a new flow */
 		init_euler2d(mi);
 
+}
+
+ENTRYPOINT void
+reshape_euler2d(ModeInfo * mi, int width, int height)
+{
+  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
+  init_euler2d (mi);
 }
 
 ENTRYPOINT void

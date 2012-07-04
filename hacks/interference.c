@@ -457,6 +457,9 @@ static void
 interference_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct inter_context *c = (struct inter_context *) closure;
+  c->w = w;
+  c->h = h;
 }
 
 static Bool

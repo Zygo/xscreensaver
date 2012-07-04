@@ -92,4 +92,11 @@ extern Bool osx_load_image_file (Screen *, Window, Drawable,
                                  const char *filename, XRectangle *geom_ret);
 #endif /* HAVE_COCOA */
 
+#ifdef USE_IPHONE
+extern void ios_load_random_image (void (*callback) (void *uiimage,
+                                                     const char *filename,
+                                                     void *closure),
+                                   void *closure);
+#endif /* USE_IPHONE */
+
 #endif /* __GRABSCREEN_H__ */

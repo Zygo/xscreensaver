@@ -107,6 +107,28 @@ do_worm(struct state *st, struct worm *w)
     w->v = w->v % st->height;
 }
 
+static void
+squiral_init_1 (struct state *st)
+{
+    int i;
+    if (st->worms) free (st->worms);
+    if (st->fill) free (st->fill);
+
+    st->worms=calloc(st->count, sizeof(struct worm));
+    st->fill=calloc(st->width*st->height, sizeof(int));
+
+    st->dirh[0]=0; st->dirh[1]=1; st->dirh[2]=0; st->dirh[3]=st->width-1;
+    st->dirv[0]=st->height-1; st->dirv[1]=0; st->dirv[2]=1; st->dirv[3]=0;
+    for(i=0;i<st->count;i++) {
+	st->worms[i].h=R(st->width);
+	st->worms[i].v=R(st->height);
+	st->worms[i].s=R(4)+4*PROB(st->handedness);
+	st->worms[i].c=R(st->ncolors);
+	if(st->cycle) { st->worms[i].cc=R(3)+st->ncolors; }
+	else st->worms[i].cc=0;
+    }
+}
+
 static void *
 squiral_init (Display *dpy, Window window)
 {
@@ -115,7 +137,6 @@ squiral_init (Display *dpy, Window window)
     Colormap cmap;
     XWindowAttributes xgwa;
     Bool writeable = False;
-    int i;
 
     st->dpy = dpy;
     st->window = window;
@@ -167,19 +188,7 @@ squiral_init (Display *dpy, Window window)
     if(st->worms) free(st->worms);
     if(st->fill)  free(st->fill);
 
-    st->worms=calloc(st->count, sizeof(struct worm));
-    st->fill=calloc(st->width*st->height, sizeof(int));
-
-    st->dirh[0]=0; st->dirh[1]=1; st->dirh[2]=0; st->dirh[3]=st->width-1;
-    st->dirv[0]=st->height-1; st->dirv[1]=0; st->dirv[2]=1; st->dirv[3]=0;
-    for(i=0;i<st->count;i++) {
-	st->worms[i].h=R(st->width);
-	st->worms[i].v=R(st->height);
-	st->worms[i].s=R(4)+4*PROB(st->handedness);
-	st->worms[i].c=R(st->ncolors);
-	if(st->cycle) { st->worms[i].cc=R(3)+st->ncolors; }
-	else st->worms[i].cc=0;
-    }
+    squiral_init_1 (st);
 
     return st;
 }
@@ -219,6 +228,11 @@ static void
 squiral_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  st->width  = w;
+  st->height = h;
+  squiral_init_1 (st);
+  XClearWindow (dpy, window);
 }
 
 static Bool

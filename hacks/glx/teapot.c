@@ -50,19 +50,18 @@ OpenGL(TM) is a trademark of Silicon Graphics, Inc.
 
 #include "teapot.h"
 
-#ifdef HAVE_JWZGLES
-int unit_teapot (int grid, int wire_p) { return 0; }
-#else /* !HAVE_JWZGLES */
-
-
 #ifndef HAVE_COCOA
 # include <GL/gl.h>
 #endif
 
 #ifdef HAVE_JWZGLES
 # include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
+#else
+# define HAVE_GLMAP
+#endif
 
+
+#ifdef HAVE_GLMAP
 
 /* Rim, body, lid, and bottom data must be reflected in x
    and y; handle and spout data across the y axis only.  */
@@ -198,20 +197,20 @@ unit_teapot (int grid, int wire_p)
       &p[0][0][0]);
     glMapGrid2f(grid, 0.0, 1.0, grid, 0.0, 1.0);
     glEvalMesh2(type, 0, grid, 0, grid);
-    polys += grid*grid;
+    polys += grid*grid*2;
     glMap2f(GL_MAP2_VERTEX_3, 0, 1, 3, 4, 0, 1, 12, 4,
       &q[0][0][0]);
     glEvalMesh2(type, 0, grid, 0, grid);
-    polys += grid*grid;
+    polys += grid*grid*2;
     if (i < 6) {
       glMap2f(GL_MAP2_VERTEX_3, 0, 1, 3, 4, 0, 1, 12, 4,
         &r[0][0][0]);
       glEvalMesh2(type, 0, grid, 0, grid);
-      polys += grid*grid;
+      polys += grid*grid*2;
       glMap2f(GL_MAP2_VERTEX_3, 0, 1, 3, 4, 0, 1, 12, 4,
         &s[0][0][0]);
       glEvalMesh2(type, 0, grid, 0, grid);
-      polys += grid*grid;
+      polys += grid*grid*2;
     }
   }
   glPopMatrix();
@@ -220,4 +219,64 @@ unit_teapot (int grid, int wire_p)
   return polys;
 }
 
-#endif /* !HAVE_JWZGLES */
+#else  /* !HAVE_GLMAP */
+
+# include "normals.h"
+# include "teapot2.h"
+
+int
+unit_teapot (int grid, int wire_p)
+{
+  int polys = sizeof (teapot_triangles) / sizeof (*teapot_triangles) / 9;
+  int i;
+  const GLfloat *p = teapot_triangles;
+  GLfloat scale = 1 / 2.3;
+
+  glPushMatrix();
+  glScalef (scale, scale, scale);
+  glTranslatef (0, -1.25, 0);
+
+  if (wire_p)
+    {
+      glBegin (GL_LINES);
+      for (i = 0; i < polys; i++)
+        {
+          XYZ p1, p2, p3;
+          p1.x = *p++; p1.y = *p++; p1.z = *p++;
+          p2.x = *p++; p2.y = *p++; p2.z = *p++;
+          p3.x = *p++; p3.y = *p++; p3.z = *p++;
+          glVertex3f (p1.x, p1.y, p1.z);   /* Draw 2 edges of each triangle */
+          glVertex3f (p2.x, p2.y, p2.z);
+          glVertex3f (p1.x, p1.y, p1.z);
+          glVertex3f (p3.x, p3.y, p3.z);
+          i++;				   /* Skip every other triangle */
+          p += 9;
+        }
+      glEnd();
+      polys /= 2;
+    }
+  else
+    {
+      glFrontFace (GL_CCW);
+      glBegin (GL_TRIANGLES);
+      for (i = 0; i < polys; i++)
+        {
+          XYZ p1, p2, p3;
+          p1.x = *p++; p1.y = *p++; p1.z = *p++;
+          p2.x = *p++; p2.y = *p++; p2.z = *p++;
+          p3.x = *p++; p3.y = *p++; p3.z = *p++;
+          do_normal (p1.x, p1.y, p1.z,
+                     p2.x, p2.y, p2.z,
+                     p3.x, p3.y, p3.z);
+          glVertex3f (p1.x, p1.y, p1.z);
+          glVertex3f (p2.x, p2.y, p2.z);
+          glVertex3f (p3.x, p3.y, p3.z);
+        }
+      glEnd();
+    }
+  glPopMatrix();
+
+  return polys;
+}
+
+#endif /* !HAVE_GLMAP */

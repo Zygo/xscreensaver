@@ -449,6 +449,21 @@ static void
 eruption_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+#if 0
+  struct state *st = (struct state *) closure;
+  int i;
+  for (i = 0; i < st->iWinHeight; ++i)
+    free (st->fire[i]);
+
+  st->iWinWidth = w;
+  st->iWinHeight = h;
+
+  free (st->fire);
+  st->fire = calloc( st->iWinHeight, sizeof(unsigned char*));
+  for (i = 0; i < st->iWinHeight; ++i)
+    st->fire[i] = calloc( st->iWinWidth, sizeof(unsigned char));
+  st->draw_i = -1;
+#endif
 }
 
 static Bool

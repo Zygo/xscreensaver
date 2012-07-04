@@ -261,6 +261,8 @@ static void
 coral_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  init_coral(st);
 }
 
 static Bool

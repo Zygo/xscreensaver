@@ -38,6 +38,16 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.17:   * iOS responds to shake gestures to randomize.
+                      * iOS can load images from your Photo Library.
+                      * iOS has clickable Wikipedia links in Settings panels.
+                      * Made `pipes' be ridiculously less efficient, but spin.
+                      * Added better mouse control to `rubik', `cube21',
+                        `crackberg', and `julia'.
+                      * Cosmetic improvements to `queens' and `endgame'.
+                      * `sonar' can now ping local subnet on DHCP.
+                      * Most savers now resize/rotate properly.
+                      * Various fixes.
 Changes since 5.16:   * More iOS tweaks.
                       * Fixed some compilation problems.
                       * Enlarged the texture image for `lament'.

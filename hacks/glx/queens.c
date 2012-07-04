@@ -352,11 +352,93 @@ static int drawBoard(Queenscreen *qs)
     }
 
   glEnd();
+
+  {
+    GLfloat off = 0.01;
+    GLfloat w = qs->BOARDSIZE;
+    GLfloat h = 0.1;
+
+    /* Give the board a slight lip. */
+    /* #### oops, normals are wrong here, but you can't tell */
+
+    glColor3f(0.3, 0.3, 0.3);
+    glBegin (GL_QUADS);
+    glVertex3f (0,  0, 0);
+    glVertex3f (0, -h, 0);
+    glVertex3f (0, -h, w);
+    glVertex3f (0,  0, w);
+
+    glVertex3f (0,  0, w);
+    glVertex3f (0, -h, w);
+    glVertex3f (w, -h, w);
+    glVertex3f (w,  0, w);
+
+    glVertex3f (w,  0, w);
+    glVertex3f (w, -h, w);
+    glVertex3f (w, -h, 0);
+    glVertex3f (w,  0, 0);
+
+    glVertex3f (w,  0, 0);
+    glVertex3f (w, -h, 0);
+    glVertex3f (0, -h, 0);
+    glVertex3f (0,  0, 0);
+
+    glVertex3f (0, -h, 0);
+    glVertex3f (w, -h, 0);
+    glVertex3f (w, -h, w);
+    glVertex3f (0, -h, w);
+    glEnd();
+    polys += 4;
+
+    /* Fill in the underside of the board with an invisible black box
+       to hide the reflections that are not on tiles.  Probably there's
+       a way to do this with stencils instead.
+     */
+    w -= off*2;
+    h = 5;
+
+    glPushMatrix();
+    glTranslatef (off, 0, off);
+    glDisable(GL_LIGHTING);
+    glColor3f(0,0,0);
+    glBegin (GL_QUADS);
+    glVertex3f (0,  0, 0);
+    glVertex3f (0, -h, 0);
+    glVertex3f (0, -h, w);
+    glVertex3f (0,  0, w);
+
+    glVertex3f (0,  0, w);
+    glVertex3f (0, -h, w);
+    glVertex3f (w, -h, w);
+    glVertex3f (w,  0, w);
+
+    glVertex3f (w,  0, w);
+    glVertex3f (w, -h, w);
+    glVertex3f (w, -h, 0);
+    glVertex3f (w,  0, 0);
+
+    glVertex3f (w,  0, 0);
+    glVertex3f (w, -h, 0);
+    glVertex3f (0, -h, 0);
+    glVertex3f (0,  0, 0);
+
+    glVertex3f (0, -h, 0);
+    glVertex3f (w, -h, 0);
+    glVertex3f (w, -h, w);
+    glVertex3f (0, -h, w);
+    glEnd();
+    polys += 4;
+    glPopMatrix();
+    if (!wire)
+      glEnable(GL_LIGHTING);
+  }
+
   return polys;
 }
 
 static int display(Queenscreen *qs) 
 {
+  int max = 1024;
   int polys = 0;
   glClear(clearbits);
   
@@ -366,6 +448,7 @@ static int display(Queenscreen *qs)
   glRotatef(current_device_rotation(), 0, 0, 1);
 
   /* setup light attenuation */
+  /* #### apparently this does nothing */
   glEnable(GL_COLOR_MATERIAL);
   glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 0.8/(0.01+findAlpha(qs)));
   glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.06);
@@ -373,9 +456,7 @@ static int display(Queenscreen *qs)
   /** setup perspective */
   glTranslatef(0.0, 0.0, -1.5*qs->BOARDSIZE);
   glRotatef(30.0, 1.0, 0.0, 0.0);
-  glRotatef(-current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (qs->trackball);
-  glRotatef(current_device_rotation(), 0, 0, 1);
   glRotatef(qs->theta*100, 0.0, 1.0, 0.0);
   glTranslatef(-0.5*qs->BOARDSIZE, 0.0, -0.5*qs->BOARDSIZE);
 
@@ -388,6 +469,18 @@ static int display(Queenscreen *qs)
     glEnable(GL_LIGHTING);
     glLightfv(GL_LIGHT0, GL_POSITION, qs->position);
     glEnable(GL_LIGHT0);
+  }
+
+  /* Since the lighting attenuation trick up there doesn't seem to be working,
+     let's drop the old board down and drop the new board in. */
+  if (qs->steps < (max/8.0)) {
+    GLfloat y = qs->steps / (max/8.0);
+    y = sin (M_PI/2 * y);
+    glTranslatef (0, 10 - (y * 10), 0);
+  } else if (qs->steps > max-(max/8.0)) {
+    GLfloat y = (qs->steps - (max-(max/8.0))) / (GLfloat) (max/8.0);
+    y = 1 - sin (M_PI/2 * (1-y));
+    glTranslatef (0, -y * 15, 0);
   }
 
   /* draw reflections */
@@ -409,7 +502,7 @@ static int display(Queenscreen *qs)
     qs->theta += .002;
 
   /* zero out board, find new solution of size MINBOARD <= i <= MAXBOARD */
-  if(++qs->steps == 1024) {
+  if(++qs->steps == max) {
     qs->steps = 0;
     blank(qs);
     qs->BOARDSIZE = MINBOARD + (random() % (MAXBOARD - MINBOARD + 1));
@@ -500,7 +593,7 @@ ENTRYPOINT void init_queens(ModeInfo *mi)
 
   qs->BOARDSIZE = 8; /* 8 cuz its classic */
 
-  gen_model_lists(-1, poly_counts);
+  chessmodels_gen_lists(-1, poly_counts);
   qs->queen_list = QUEEN;
   qs->queen_polys = poly_counts[QUEEN];
 

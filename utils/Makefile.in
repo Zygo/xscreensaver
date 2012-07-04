@@ -249,6 +249,7 @@ grabclient.o: $(srcdir)/grabscreen.h
 grabclient.o: $(srcdir)/resources.h
 grabclient.o: $(srcdir)/utils.h
 grabclient.o: $(srcdir)/vroot.h
+grabclient.o: $(srcdir)/yarandom.h
 grabscreen.o: $(srcdir)/colors.h
 grabscreen.o: ../config.h
 grabscreen.o: $(srcdir)/grabscreen.h

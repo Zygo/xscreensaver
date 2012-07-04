@@ -2452,7 +2452,7 @@ hppa_linux (Display *dpy, Window window)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.96 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $Revision: 1.97 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },
@@ -3922,6 +3922,8 @@ bsod_event (Display *dpy, Window window, void *closure, XEvent *event)
   /* pick a new mode and restart when mouse clicked, or certain keys typed. */
 
   if (event->type == ButtonPress)
+    return True;
+  else if (event->type == ButtonRelease)
     reset_p = True;
   else if (event->type == KeyPress)
     {

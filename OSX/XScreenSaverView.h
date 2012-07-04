@@ -53,6 +53,9 @@
 
 
 @interface XScreenSaverView : ScreenSaverView
+# ifdef USE_IPHONE
+			      <UIAlertViewDelegate>
+# endif
 {
   struct xscreensaver_function_table *xsft;
   PrefsReader *prefsReader;
@@ -70,7 +73,8 @@
 
 # ifdef USE_IPHONE
   UIDeviceOrientation orientation, new_orientation;
-  NSTimer *orientation_Timer;
+  double tap_time;
+  CGPoint tap_point;
   BOOL screenLocked;
 
   GLfloat rotation_ratio;	// ratio thru rotation anim, or -1

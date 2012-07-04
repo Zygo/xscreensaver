@@ -949,6 +949,7 @@ static void
 penetrate_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  XClearWindow (dpy, window);
 }
 
 static Bool

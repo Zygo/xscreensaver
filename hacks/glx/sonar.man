@@ -54,19 +54,22 @@ Run in simulation mode instead of pinging real hosts.
 Ping the given host.
 .TP 12
 .I A.B.C.D
-Ping the given IP address.
+Ping the given IPv4 address.
 .TP 12
 .B subnet
-Ping the local class C subnet (the nearest 255 addresses).
+Ping the local subnet.  On systems where we can determine the local
+network mask, we use that; otherwise, we assume Class C (254 hosts).
 .TP 12
 .B subnet/\fINN\fP
 Ping a different-sized local subnet: e.g., \fBsubnet/28\fP would ping
-a 4-bit subnet (the nearest 15 addresses).
+a 4-bit subnet (the nearest 14 addresses).  On systems where we can
+determine the local network mask, we always use that.
 .TP 12
 .I A.B.C.D/NN
-Ping an arbitrary other subnet.  The IP address specifies the base address,
-and the part after the slash is how wide the subnet is.  Typical values
-are /24 (for 255 addresses) and /28 (for 15 addresses).
+Ping an arbitrary other IPv4 subnet.  The address specifies
+the base address, and the part after the slash is how wide the
+subnet is.  Typical values are /24 (for 254 addresses) and /28 (for
+14 addresses).
 .TP 12
 .I filename
 Ping the hosts listed in the given file.  This file can be in the
@@ -138,12 +141,15 @@ This means that if any the hosts you are pinging take longer than 2
 seconds to respond, they won't show up; and if you are pinging several
 hosts with very fast response times, they will all appear close to the
 center of the screen (making their names hard to read.)
+.SH BUGS
+Does not support IPv6.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),
-.BR ping (8)
+.BR ping (8),
+.BR ping6 (8)
 .SH COPYRIGHT
-Copyright \(co 2000-2008 by Jamie Zawinski <jwz@jwz.org>
+Copyright \(co 2000-2012 by Jamie Zawinski <jwz@jwz.org>
 .RE
 Copyright \(co 1998 by Stephen Martin. <smartin@canada.com>
 

@@ -23,6 +23,7 @@
 # import <UIKit/UIKit.h>
 # import <UIKit/UIScreen.h>
 # import <QuartzCore/QuartzCore.h>
+# import <CoreText/CTFont.h>
 # define NSView  UIView
 # define NSRect  CGRect
 # define NSPoint CGPoint
@@ -41,13 +42,10 @@
 
 #import "jwxyz.h"
 #import "jwxyz-timers.h"
+#import "yarandom.h"
 
 #undef  Assert
-#define Assert(C,S) do { \
-  if (!(C)) { \
-    NSLog(@"%s",S); \
-    abort(); \
-  }} while(0)
+#define Assert(C,S) do { if (!(C)) jwxyz_abort ("%s",(S)); } while(0)
 
 # undef MAX
 # undef MIN
@@ -111,12 +109,38 @@ struct jwxyz_Font {
 };
 
 
+/* Instead of calling abort(), throw a real exception, so that
+   XScreenSaverView can catch it and display a dialog.
+ */
+void
+jwxyz_abort (const char *fmt, ...)
+{
+  char s[10240];
+  if (!fmt || !*fmt)
+    strcpy (s, "abort");
+  else
+    {
+      va_list args;
+      va_start (args, fmt);
+      vsprintf (s, fmt, args);
+      va_end (args);
+    }
+  [[NSException exceptionWithName: NSInternalInconsistencyException
+                reason: [NSString stringWithCString: s
+                                  encoding:NSUTF8StringEncoding]
+                userInfo: nil]
+    raise];
+  abort();  // not reached
+}
+
+
 Display *
 jwxyz_make_display (void *nsview_arg, void *cgc_arg)
 {
   CGContextRef cgc = (CGContextRef) cgc_arg;
   NSView *view = (NSView *) nsview_arg;
-  if (!view) abort();
+  Assert (view, "no view");
+  if (!view) return 0;
 
   Display *d = (Display *) calloc (1, sizeof(*d));
   d->screen = (Screen *) calloc (1, sizeof(Screen));
@@ -393,7 +417,7 @@ push_gc (Drawable d, GC gc)
     case GXxor:   CGContextSetBlendMode (cgc, kCGBlendModeDifference); break;
     case GXor:    CGContextSetBlendMode (cgc, kCGBlendModeLighten);    break;
     case GXand:   CGContextSetBlendMode (cgc, kCGBlendModeDarken);     break;
-    default: abort(); break;
+    default: Assert(0, "unknown gcv function"); break;
   }
 
   if (gc->gcv.clip_mask)
@@ -782,7 +806,8 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
       // No cgi means src == dst, and both are Windows.
 
 # ifdef USE_IPHONE
-      abort();  // No NSCopyBits on iOS, but shouldn't be reached anyway.
+      Assert (0, "NSCopyBits unimplemented"); // shouldn't be reached anyway
+      return 0;
 # else // !USE_IPHONE
       NSRect nsfrom;
       nsfrom.origin.x    = src_rect.origin.x;    // NSRect != CGRect on 10.4
@@ -1174,8 +1199,8 @@ static void
 set_gcv (GC gc, XGCValues *from, unsigned long mask)
 {
   if (! mask) return;
-  if (! gc) abort();
-  if (! from) abort();
+  Assert (gc && from, "no gc");
+  if (!gc || !from) return;
 
   if (mask & GCFunction)	gc->gcv.function	= from->function;
   if (mask & GCForeground)	gc->gcv.foreground	= from->foreground;
@@ -1196,17 +1221,18 @@ set_gcv (GC gc, XGCValues *from, unsigned long mask)
   if (mask & GCBackground) validate_pixel (from->background, gc->depth,
                                            gc->gcv.alpha_allowed_p);
     
-  if (mask & GCLineStyle)	abort();
-  if (mask & GCPlaneMask)	abort();
-  if (mask & GCFillStyle)	abort();
-  if (mask & GCTile)		abort();
-  if (mask & GCStipple)		abort();
-  if (mask & GCTileStipXOrigin)	abort();
-  if (mask & GCTileStipYOrigin)	abort();
-  if (mask & GCGraphicsExposures) abort();
-  if (mask & GCDashOffset)	abort();
-  if (mask & GCDashList)	abort();
-  if (mask & GCArcMode)		abort();
+  Assert ((! (mask & (GCLineStyle |
+                      GCPlaneMask |
+                      GCFillStyle |
+                      GCTile |
+                      GCStipple |
+                      GCTileStipXOrigin |
+                      GCTileStipYOrigin |
+                      GCGraphicsExposures |
+                      GCDashOffset |
+                      GCDashList |
+                      GCArcMode))),
+          "unimplemented gcvalues mask");
 }
 
 
@@ -1453,7 +1479,7 @@ XInitImage (XImage *ximage)
     ximage->f.put_pixel = ximage_putpixel_32;
     ximage->f.get_pixel = ximage_getpixel_32;
   } else {
-    abort();
+    Assert (0, "unknown depth");
   }
   return 1;
 }
@@ -2141,12 +2167,12 @@ static void
 query_font (Font fid)
 {
   if (!fid || !fid->nsfont) {
-    NSLog(@"no NSFont in fid");
-    abort();
+    Assert (0, "no NSFont in fid");
+    return;
   }
   if (![fid->nsfont fontName]) {
-    NSLog(@"broken NSFont in fid");
-    abort();
+    Assert(0, @"broken NSFont in fid");
+    return;
   }
 
   int first = 32;
@@ -2176,7 +2202,13 @@ query_font (Font fid)
 
 # ifndef USE_IPHONE
   NSBezierPath *bpath = [NSBezierPath bezierPath];
-# endif
+# else  // USE_IPHONE
+  CTFontRef ctfont =
+    CTFontCreateWithName ((CFStringRef) [fid->nsfont fontName],
+                          [fid->nsfont pointSize],
+                          NULL);
+  Assert (ctfont, @"no CTFontRef for UIFont");
+# endif // USE_IPHONE
 
   for (i = first; i <= last; i++) {
     unsigned char str[2];
@@ -2185,8 +2217,8 @@ query_font (Font fid)
 
     NSString *nsstr = [NSString stringWithCString:(char *) str
                                          encoding:NSISOLatin1StringEncoding];
-    NSPoint advancement;
-    NSRect bbox;
+    NSPoint advancement = { 0, };
+    NSRect bbox = {{ 0, }, };
 
 # ifndef USE_IPHONE
 
@@ -2235,33 +2267,35 @@ query_font (Font fid)
 
 # else  // USE_IPHONE
 
-    UIFont *ff = fid->nsfont;
-    CGSize size = [nsstr sizeWithFont:ff];
+    /* There is no way to get "lbearing", "rbearing" or "descent" out of
+       NSFont.  'sizeWithFont' gives us "width" and "height" only.
+       Likewise, 'drawAtPoint' (to an offscreen CGContext) gives us the
+       width of the character and the ascent of the font.
 
-    /* sizeWithFont gives us a character's "width" and "height".
-       There is no way to get a character's "lbearing", "rbearing",
-       or "descent".  We do have the font's overall "descent", though.
-
-       drawAtPoint (to an offscreen CGContext) returns "width" and the
-       "ascent" of the font (not of the glyph, I think) so that doesn't
-       help.
-
-       CGFontGetGlyphBBoxes might help (if it actually returns a bounding
-       box and not just the ascent/width again, which I don't know) but
-       we can't use it anyway because there is no way to map a unichar to
-       a CGGlyph.
-
-       Fuck you sideways, Apple.
+       Maybe we could use CGFontGetGlyphBBoxes() and avoid linking in
+       the CoreText library, but there's no non-CoreText way to turn a
+       unichar into a CGGlyph.
      */
+    UniChar uchar = [nsstr characterAtIndex: 0];
+    CGGlyph cgglyph = 0;
 
-    bbox.origin.x = 0;
-    bbox.origin.y = [ff descender];
-    bbox.size.width  = size.width;
-    bbox.size.height = size.height;
+    if (CTFontGetGlyphsForCharacters (ctfont, &uchar, &cgglyph, 1))
+      {
+        bbox = CTFontGetBoundingRectsForGlyphs (ctfont,
+                                                kCTFontDefaultOrientation,
+                                                &cgglyph, NULL, 1);
+        CGSize adv = { 0, };
+        CTFontGetAdvancesForGlyphs (ctfont, kCTFontDefaultOrientation,
+                                    &cgglyph, &adv, 1);
+        advancement.x = adv.width;
+        advancement.y = adv.height;
 
-    advancement.x = size.width;
-    advancement.y = 0;
-
+        // Seems to be clipping by a pixel or two.  Add a margin to be safe.
+        bbox.origin.x    -= 2;
+        bbox.origin.y    -= 2;
+        bbox.size.width  += 4;
+        bbox.size.height += 4;
+      }
 # endif // USE_IPHONE
 
     /* Now that we know the advancement and bounding box, we can compute
@@ -2304,6 +2338,10 @@ query_font (Font fid)
             (int) advancement.x, (int) advancement.y);
 #endif
   }
+
+# ifdef USE_IPHONE
+  CFRelease (ctfont);
+# endif
 }
 
 
@@ -2651,7 +2689,8 @@ XLoadFont (Display *dpy, const char *name)
 
   // We should never return NULL for XLFD fonts.
   if (!fid->nsfont) {
-    abort();
+    Assert (0, "no font");
+    return 0;
   }
   CFRetain (fid->nsfont);   // needed for garbage collection?
 

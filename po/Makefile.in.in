@@ -368,7 +368,8 @@ POTFILES: POTFILES.in
 	    && chmod a-w $@-t \
 	    && mv $@-t $@ )
 
-Makefile: stamp-it
+# jwz: depending on stamp-it breaks distclean.
+Makefile:
 	@if test ! -f $@; then \
 		rm -f stamp-it; \
 		$(MAKE) stamp-it; \

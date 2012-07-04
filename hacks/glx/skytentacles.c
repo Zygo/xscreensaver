@@ -993,7 +993,7 @@ draw_tentacles (ModeInfo *mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix ();
-
+  glRotatef(current_device_rotation(), 0, 0, 1);
 
 # if 1
   glScalef (3, 3, 3);
@@ -1017,7 +1017,6 @@ draw_tentacles (ModeInfo *mi)
 # endif
 
   gltrackball_rotate (tc->trackball);
-  glRotatef(current_device_rotation(), 0, 0, 1);
 
   mi->polygon_count = 0;
 

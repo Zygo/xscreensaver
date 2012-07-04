@@ -29,7 +29,8 @@
 
 #define alpha (0.05)
 
-static void tri_45_90(int wire)
+static void
+tri_45_90(int wire)
 {
     GLfloat vertices[][3] = {
         {0, alpha, 0},
@@ -87,8 +88,8 @@ static void tri_45_90(int wire)
     glEnd();
 }
 
-static
-void unit_cube(int wire)
+static void
+unit_cube(int wire)
 {
     glBegin((wire) ? GL_LINE_LOOP : GL_QUADS);
 
@@ -132,8 +133,8 @@ void unit_cube(int wire)
     glEnd();
 }
 
-static
-void unit_rhomboid(int wire)
+static void
+unit_rhomboid(int wire)
 {
     glBegin((wire) ? GL_LINE_LOOP : GL_QUADS);
 
@@ -179,7 +180,8 @@ void unit_rhomboid(int wire)
 
 /* All of the pieces have the same thickness so all of the Y values are the same */
 
-GLuint get_sm_tri_dl(int wire)
+GLuint
+tangram_get_sm_tri_dl(int wire)
 {
     GLuint triangle = glGenLists(1);
     glNewList(triangle, GL_COMPILE);
@@ -189,7 +191,8 @@ GLuint get_sm_tri_dl(int wire)
     return triangle;
 }
 
-GLuint get_lg_tri_dl(int wire)
+GLuint
+tangram_get_lg_tri_dl(int wire)
 {
     GLuint triangle = glGenLists(1);
     glNewList(triangle, GL_COMPILE);
@@ -199,7 +202,8 @@ GLuint get_lg_tri_dl(int wire)
     return triangle;
 }
 
-GLuint get_md_tri_dl(int wire)
+GLuint
+tangram_get_md_tri_dl(int wire)
 {
     GLuint triangle = glGenLists(1);
     glNewList(triangle, GL_COMPILE);
@@ -209,7 +213,8 @@ GLuint get_md_tri_dl(int wire)
     return triangle;
 }
 
-GLuint get_square_dl(int wire)
+GLuint
+tangram_get_square_dl(int wire)
 {
     GLuint square = glGenLists(1);
     glNewList(square, GL_COMPILE);
@@ -219,7 +224,8 @@ GLuint get_square_dl(int wire)
     return square;
 }
 
-GLuint get_rhomboid_dl(int wire)
+GLuint
+tangram_get_rhomboid_dl(int wire)
 {
     GLuint rhomboid = glGenLists(1);
     glNewList(rhomboid, GL_COMPILE);

@@ -253,7 +253,7 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
 	/* What a hack!
 
            On iOS, our application delegate, SaverRunner, grabs an image
-           of itself as a UIImage before creating the XScreenSaverView.
+           of itself as a UIImage before mapping the XScreenSaverView.
            In this code, we ask SaverRunner for that UIImage, then copy
            it to the root window.
          */
@@ -262,18 +262,12 @@ Bool
 osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
                         XRectangle *geom_ret)
 {
-
-  /* Just for a little variety, let's return colorbars every other time. */
-  static int counter = 0;
-  if (counter++ & 1)
-    return False;
-
   SaverRunner *s = 
     (SaverRunner *) [[UIApplication sharedApplication] delegate];
   if (! s)
     return False;
   if (! [s isKindOfClass:[SaverRunner class]])
-    abort();
+    return False;
   UIImage *img = [s screenshot];
   if (! img)
     return False;
@@ -444,16 +438,7 @@ osx_load_image_file (Screen *screen, Window xwindow, Drawable drawable,
 
 # else  /* USE_IPHONE */
 
-  /* It would be nice to select a random image from the Photo Album and
-     load that, but that looks like a gigantic pain in the ass, because
-     it's an asynchronous API, and might require manual authorization
-     by the user.  (ALAssetsLibrary, enumerateGroupsWithTypes.)
-
-     Possibly useful sample code to check out:
-       http://www.fiveminutes.eu/accessing-photo-library-using-assets-library-framework-on-iphone/
-
-     So, in the meantime, return False, acquire colorbars.
-   */
+  /* This is handled differently: see grabclient.c and iosgrabimage.m. */
   return False;
 
 # endif /* USE_IPHONE */

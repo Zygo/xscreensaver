@@ -1,4 +1,4 @@
-/* boing, Copyright (c) 2005-2008 Jamie Zawinski <jwz@jwz.org>
+/* boing, Copyright (c) 2005-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -461,6 +461,13 @@ reshape_boing (ModeInfo *mi, int width, int height)
 
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
+
+  if (height > width)
+    {
+      GLfloat s = width / (GLfloat) height;
+      glScalef (s, s, s);
+    }
+
   gluPerspective (8.0, 1/h, 1.0, 10.0);
 
   glMatrixMode(GL_MODELVIEW);
@@ -629,8 +636,19 @@ draw_boing (ModeInfo *mi)
     tick_physics (mi);
 
   glPushMatrix ();
+
+  {
+    double rot = current_device_rotation();
+    glRotatef(rot, 0, 0, 1);
+    if ((rot >  45 && rot <  135) ||
+        (rot < -45 && rot > -135))
+      {
+        GLfloat s = MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi);
+        glScalef (1/s, s, 1);
+      }
+  }
+
   gltrackball_rotate (bp->trackball);
-  glRotatef(current_device_rotation(), 0, 0, 1);
 
   glLightfv (GL_LIGHT0, GL_POSITION, bp->lightpos);
 

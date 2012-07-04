@@ -91,6 +91,11 @@ int mono_p = 0;
 
 
 
+@interface XScreenSaverView (Private)
+- (void) stopAndClose;
+- (void) stopAndClose:(Bool)relaunch;
+@end
+
 @implementation XScreenSaverView
 
 // Given a lower-cased saver name, returns the function table for it.
@@ -113,7 +118,9 @@ int mono_p = 0;
   if (! name)
     name = [[path lastPathComponent] stringByDeletingPathExtension];
 
-  NSString *table_name = [[name lowercaseString]
+  NSString *table_name = [[[name lowercaseString]
+                            stringByReplacingOccurrencesOfString:@" "
+                            withString:@""]
                            stringByAppendingString:
                              @"_xscreensaver_function_table"];
   void *addr = CFBundleGetDataPointerForName (cfb, (CFStringRef) table_name);
@@ -146,7 +153,7 @@ int mono_p = 0;
   strcat (npath, opath);
   if (putenv (npath)) {
     perror ("putenv");
-    abort();
+    NSAssert1 (0, @"putenv \"%s\" failed", npath);
   }
 
   /* Don't free (npath) -- MacOS's putenv() does not copy it. */
@@ -167,7 +174,7 @@ int mono_p = 0;
   strcat (env, s);
   if (putenv (env)) {
     perror ("putenv");
-    abort();
+    NSAssert1 (0, @"putenv \"%s\" failed", env);
   }
   /* Don't free (env) -- MacOS's putenv() does not copy it. */
 }
@@ -213,7 +220,11 @@ add_default_options (const XrmOptionDescRec *opts,
     ".textURL:            http://twitter.com/statuses/public_timeline.atom",
  // ".textProgram:        ",
     ".grabDesktopImages:  yes",
+# ifndef USE_IPHONE
     ".chooseRandomImages: no",
+# else
+    ".chooseRandomImages: yes",
+# endif
     ".imageDirectory:     ~/Pictures",
     ".relaunchDelay:      2",
     0
@@ -325,7 +336,7 @@ double_time (void)
      "org.jwz.xscreensaver.<SAVERNAME>.<NUMBERS>.plist"
    */
   NSString *name = [NSString stringWithCString:xsft->progclass
-                                      encoding:NSUTF8StringEncoding];
+                             encoding:NSISOLatin1StringEncoding];
   name = [@"org.jwz.xscreensaver." stringByAppendingString:name];
   [self setResourcesEnv:name];
 
@@ -375,7 +386,6 @@ double_time (void)
 
   // xsft
   // fpst
-  // orientation_timer
 
   [super dealloc];
 }
@@ -611,12 +621,41 @@ double current_device_rotation (void)
     [self setFrame:[self frame]];
 }
 
+
+- (void)alertView:(UIAlertView *)av clickedButtonAtIndex:(NSInteger)i
+{
+  if (i == 0) exit (-1);	// Cancel
+  [self stopAndClose];		// Keep going
+}
+
+- (void) handleException: (NSException *)e
+{
+  NSLog (@"Caught exception: %@", e);
+  [[[UIAlertView alloc] initWithTitle:
+                          [NSString stringWithFormat: @"%s crashed!",
+                                    xsft->progclass]
+                        message:
+                          [NSString stringWithFormat:
+                                      @"The error message was:"
+                                    "\n\n%@\n\n"
+                                    "If it keeps crashing, try "
+                                    "resetting its options.",
+                                    e]
+                        delegate: self
+                        cancelButtonTitle: @"Exit"
+                        otherButtonTitles: @"Keep going", nil]
+    show];
+  [self stopAnimation];
+}
+
 #endif // USE_IPHONE
 
 
 - (void) render_x11
 {
 # ifdef USE_IPHONE
+  @try {
+
   if (orientation == UIDeviceOrientationUnknown)
     [self didRotate:nil];
   [self hackRotation];
@@ -760,7 +799,6 @@ double current_device_rotation (void)
     resized_p = NO;
   }
 
-
   // Run any XtAppAddInput callbacks now.
   // (Note that XtAppAddTimeOut callbacks have already been run by
   // the Cocoa event loop.)
@@ -817,6 +855,13 @@ double current_device_rotation (void)
     }
   }
 # endif // DO_GC_HACKERY
+
+# ifdef USE_IPHONE
+  }
+  @catch (NSException *e) {
+    [self handleException: e];
+  }
+# endif // USE_IPHONE
 }
 
 
@@ -969,7 +1014,7 @@ double current_device_rotation (void)
 {
   NSBundle *bundle = [NSBundle bundleForClass:[self class]];
   NSString *file = [NSString stringWithCString:xsft->progclass
-                                      encoding:NSUTF8StringEncoding];
+                                      encoding:NSISOLatin1StringEncoding];
   file = [file lowercaseString];
   NSString *path = [bundle pathForResource:file ofType:@"xml"];
   if (!path) {
@@ -1116,7 +1161,8 @@ double current_device_rotation (void)
         break;
       }
     default:
-      abort();
+      NSAssert (0, @"unknown X11 event type: %d", type);
+      break;
   }
 
   [self lockFocus];
@@ -1194,6 +1240,47 @@ double current_device_rotation (void)
 }
 
 #else  // USE_IPHONE
+
+
+- (void) stopAndClose
+{
+  if ([self isAnimating])
+    [self stopAnimation];
+
+  /* Need to make the SaverListController be the firstResponder again
+     so that it can continue to receive its own shake events.  I
+     suppose that this abstraction-breakage means that I'm adding
+     XScreenSaverView to the UINavigationController wrong...
+   */
+  UIViewController *v = [[self window] rootViewController];
+  if ([v isKindOfClass: [UINavigationController class]]) {
+    UINavigationController *n = (UINavigationController *) v;
+    [[n topViewController] becomeFirstResponder];
+  }
+
+  // [self removeFromSuperview];
+  [UIView animateWithDuration: 0.5
+          animations:^{ self.alpha = 0.0; }
+          completion:^(BOOL finished) {
+	     [self removeFromSuperview];
+             self.alpha = 1.0;
+          }];
+}
+
+
+- (void) stopAndClose:(Bool)relaunch_p
+{
+  [self stopAndClose];
+
+  if (relaunch_p) {   // Fake a shake on the SaverListController.
+    UIViewController *v = [[self window] rootViewController];
+    if ([v isKindOfClass: [UINavigationController class]]) {
+      UINavigationController *n = (UINavigationController *) v;
+      [[n topViewController] motionEnded: UIEventSubtypeMotionShake
+                               withEvent: nil];
+    }
+  }
+}
 
 
 /* Called after the device's orientation has changed.
@@ -1311,7 +1398,11 @@ double current_device_rotation (void)
 }
 
 
-/* In the simulator, multi-touch sequences look like this:
+/* I believe we can't use UIGestureRecognizer for tracking touches
+   because UIPanGestureRecognizer doesn't give us enough detail in its
+   callbacks.
+
+   In the simulator, multi-touch sequences look like this:
 
      touchesBegan [touchA, touchB]
      touchesEnd [touchA, touchB]
@@ -1345,8 +1436,29 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
 }
 
 
+#if 0  // AudioToolbox/AudioToolbox.h
+- (void) beep
+{
+  // There's no way to play a standard system alert sound!
+  // We'd have to include our own WAV for that.  Eh, fuck it.
+  AudioServicesPlaySystemSound (kSystemSoundID_Vibrate);
+# if TARGET_IPHONE_SIMULATOR
+  NSLog(@"BEEP");  // The sim doesn't vibrate.
+# endif
+}
+#endif
+
+
+/* We distinguish between taps and drags.
+   - Drags (down, motion, up) are sent to the saver to handle.
+   - Single-taps exit the saver.
+   This means a saver cannot respond to a single-tap.  Only a few try to.
+ */
+
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
+  tap_time = 0;
+
   if (xsft->event_cb && xwindow) {
     double s = self.contentScaleFactor;
     XEvent xe;
@@ -1363,8 +1475,16 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
       xe.xbutton.y      = s * p.y;
       rotate_mouse (&xe.xbutton.x, &xe.xbutton.y, w, h, rot_current_angle);
       jwxyz_mouse_moved (xdpy, xwindow, xe.xbutton.x, xe.xbutton.y);
+
+      // Ignore return code: don't care whether the hack handled it.
       xsft->event_cb (xdpy, xwindow, xdata, &xe);
+
+      // Remember when/where this was, to determine tap versus drag or hold.
+      tap_time = double_time();
+      tap_point = p;
+
       i++;
+      break;  // No pinches: only look at the first touch.
     }
   }
 }
@@ -1372,18 +1492,6 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
-
-  // Double-tap means "exit" and return to selection menu.
-  //
-  for (UITouch *touch in touches) {
-    if ([touch tapCount] >= 2) {
-      if ([self isAnimating])
-        [self stopAnimation];
-      [self removeFromSuperview];
-      return;
-    }
-  }
-
   if (xsft->event_cb && xwindow) {
     double s = self.contentScaleFactor;
     XEvent xe;
@@ -1393,6 +1501,18 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
     int h = s * [self frame].size.height;
     for (UITouch *touch in touches) {
       CGPoint p = [touch locationInView:self];
+
+      // If the ButtonRelease came less than half a second after ButtonPress,
+      // and didn't move far, then this was a tap, not a drag or a hold.
+      // Interpret it as "exit".
+      //
+      double dist = sqrt (((p.x - tap_point.x) * (p.x - tap_point.x)) +
+                          ((p.y - tap_point.y) * (p.y - tap_point.y)));
+      if (tap_time + 0.5 >= double_time() && dist < 20) {
+        [self stopAndClose];
+        return;
+      }
+
       xe.xany.type      = ButtonRelease;
       xe.xbutton.button = i + 1;
       xe.xbutton.x      = s * p.x;
@@ -1401,6 +1521,7 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
       jwxyz_mouse_moved (xdpy, xwindow, xe.xbutton.x, xe.xbutton.y);
       xsft->event_cb (xdpy, xwindow, xdata, &xe);
       i++;
+      break;  // No pinches: only look at the first touch.
     }
   }
 }
@@ -1424,6 +1545,7 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
       jwxyz_mouse_moved (xdpy, xwindow, xe.xmotion.x, xe.xmotion.y);
       xsft->event_cb (xdpy, xwindow, xdata, &xe);
       i++;
+      break;  // No pinches: only look at the first touch.
     }
   }
 }
@@ -1431,8 +1553,25 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
 
 /* We need this to respond to "shake" gestures
  */
-- (BOOL)canBecomeFirstResponder {
+- (BOOL)canBecomeFirstResponder
+{
   return YES;
+}
+
+- (void)motionBegan:(UIEventSubtype)motion withEvent:(UIEvent *)event
+{
+}
+
+
+- (void)motionCancelled:(UIEventSubtype)motion withEvent:(UIEvent *)event
+{
+}
+
+/* Shake means exit and launch a new saver.
+ */
+- (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event
+{
+  [self stopAndClose:YES];
 }
 
 
@@ -1462,7 +1601,7 @@ static PrefsReader *
 get_prefsReader (Display *dpy)
 {
   XScreenSaverView *view = jwxyz_window_view (XRootWindow (dpy, 0));
-  if (!view) abort();
+  if (!view) return 0;
   return [view prefsReader];
 }
 

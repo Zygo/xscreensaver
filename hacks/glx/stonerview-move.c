@@ -32,7 +32,7 @@
 
 
 void
-init_move(stonerview_state *st)
+stonerview_init_move(stonerview_state *st)
 {
   /*st->theta = new_osc_linear(
     new_osc_wrap(0, 36000, 25),
@@ -95,15 +95,12 @@ init_move(stonerview_state *st)
     new_osc_buffer(st, new_osc_wrap(st, 0, 3600, 17)),
     new_osc_buffer(st, new_osc_wrap(st, 0, 3600, 7)));
 
-  move_increment(st);
-}
-
-void final_move(stonerview_state *st)
-{
+  stonerview_move_increment(st);
 }
 
 /* Set up the list of polygon data for rendering. */
-void move_increment(stonerview_state *st)
+void
+stonerview_move_increment(stonerview_state *st)
 {
   int ix, val;
 /*  GLfloat fval; */
@@ -112,7 +109,7 @@ void move_increment(stonerview_state *st)
   GLfloat ptrad, pttheta;
     
   for (ix=0; ix<st->num_els; ix++) {
-    elem_t *el = &st->elist[ix];
+    stonerview_elem_t *el = &st->elist[ix];
         
     /* Grab r and theta... */
     val = osc_get(st, st->theta, ix);

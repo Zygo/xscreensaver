@@ -327,7 +327,10 @@ draw(ModeInfo *mi)
                  (y - 0.5) * 10,
                  (z - 0.5) * 20);
 
+    /* Do it twice because we don't track the device's orientation. */
+    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (gp->trackball);
+    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (gp->rot, &x, &y, &z, !gp->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);

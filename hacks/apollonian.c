@@ -74,7 +74,6 @@ static const char sccsid[] = "@(#)apollonian.c	5.02 2001/07/01 xlockmore";
 					"*fpsSolid: true   \n" \
 
 # define refresh_apollonian 0
-# define reshape_apollonian 0
 # define apollonian_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 # include "erase.h"
@@ -820,6 +819,13 @@ draw_apollonian (ModeInfo * mi)
 #endif /* STANDALONE */
 		init_apollonian(mi);
       }
+}
+
+ENTRYPOINT void
+reshape_apollonian(ModeInfo * mi, int width, int height)
+{
+  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
+  init_apollonian (mi);
 }
 
 ENTRYPOINT void

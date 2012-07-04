@@ -1078,6 +1078,7 @@ apple2.o: $(UTILS_SRC)/visual.h
 apple2.o: $(UTILS_SRC)/xshm.h
 apple2.o: $(UTILS_SRC)/yarandom.h
 asm6502.o: $(srcdir)/asm6502.h
+asm6502.o: $(UTILS_SRC)/yarandom.h
 attraction.o: ../config.h
 attraction.o: $(srcdir)/fps.h
 attraction.o: $(srcdir)/screenhackI.h

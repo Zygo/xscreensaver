@@ -2217,6 +2217,9 @@ echo "command line was: $0 $@"
 
 
 
+
+
+
 # After checking to see that --srcdir is correct (which AC_INIT does)
 # check for some random other files that come later in the tar file,
 # to make sure everything is here.
@@ -2373,6 +2376,7 @@ fi
 # Random special-cases for X on certain pathological OSes.
 # You know who you are.
 #
+
 
 
 
@@ -6240,6 +6244,68 @@ $as_echo "$ac_cv_have_icmphdr" >&6; }
  if test "$ac_cv_have_icmphdr" = yes ; then
    cat >>confdefs.h <<\_ACEOF
 #define HAVE_ICMPHDR 1
+_ACEOF
+
+ fi
+{ $as_echo "$as_me:$LINENO: checking for getifaddrs" >&5
+$as_echo_n "checking for getifaddrs... " >&6; }
+if test "${ac_cv_have_getifaddrs+set}" = set; then
+  $as_echo_n "(cached) " >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+#include <stdlib.h>
+                   #include <unistd.h>
+                   #include <arpa/inet.h>
+                   #include <ifaddrs.h>
+int
+main ()
+{
+struct ifaddrs *ifa;
+                   getifaddrs (&ifa);
+                   ifa->ifa_next = 0;
+                   ifa->ifa_addr->sa_family = 0;
+  ;
+  return 0;
+}
+_ACEOF
+rm -rf conftest.$ac_objext
+if { (ac_try="$ac_compile"
+case "(($ac_try" in
+  *\"* | *\`* | *\\*) ac_try_echo=\$ac_try;;
+  *) ac_try_echo=$ac_try;;
+esac
+eval ac_try_echo="\"\$as_me:$LINENO: $ac_try_echo\""
+$as_echo "$ac_try_echo") >&5
+  (eval "$ac_compile") 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -rf conftest.er1
+  cat conftest.err >&5
+  $as_echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } && {
+	 test -z "$ac_c_werror_flag" ||
+	 test ! -s conftest.err
+       } && test -s conftest.$ac_objext; then
+  ac_cv_have_getifaddrs=yes
+else
+  $as_echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+	ac_cv_have_getifaddrs=no
+fi
+
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:$LINENO: result: $ac_cv_have_getifaddrs" >&5
+$as_echo "$ac_cv_have_getifaddrs" >&6; }
+ if test "$ac_cv_have_getifaddrs" = yes ; then
+   cat >>confdefs.h <<\_ACEOF
+#define HAVE_GETIFADDRS 1
 _ACEOF
 
  fi
@@ -17409,7 +17475,7 @@ if test "${ac_cv_mesagl_version_string+set}" = set; then
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 17416 "configure"
+#line 17482 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION

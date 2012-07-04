@@ -22,7 +22,7 @@
 
     <number id="resolution" type="slider" arg="-resolution %"
              _label="Resolution" _low-label="Chunky" _high-label="Smooth"
-             low="25" high="200" default="100"/>
+             low="50" high="300" default="100"/>
    </vgroup>
   </hgroup>
 
@@ -37,8 +37,7 @@
   </hgroup>
 
   <_description>
-This grabs a screen image, carves it up into a jigsaw puzzle,
-shuffles it, and then solves the puzzle.
+This carves an image up into a jigsaw puzzle, shuffles it, and solves it.
 
 http://en.wikipedia.org/wiki/Jigsaw_puzzle
 http://en.wikipedia.org/wiki/Tessellation

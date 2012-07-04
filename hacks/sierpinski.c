@@ -41,7 +41,6 @@ static const char sccsid[] = "@(#)sierpinski.c	5.00 2000/11/01 xlockmore";
 					"*fpsSolid: true \n" \
 
 # define BRIGHT_COLORS
-# define reshape_sierpinski 0
 # define sierpinski_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -198,6 +197,13 @@ draw_sierpinski(ModeInfo * mi)
 	}
 	if (++sp->time >= MI_CYCLES(mi))
 		startover(mi);
+}
+
+ENTRYPOINT void
+reshape_sierpinski(ModeInfo * mi, int width, int height)
+{
+  XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
+  init_sierpinski (mi);
 }
 
 ENTRYPOINT void

@@ -103,6 +103,9 @@
 /* Define to 1 if you have the `getcwd' function. */
 #undef HAVE_GETCWD
 
+/* Define this if you have the getifaddrs() function. */
+#undef HAVE_GETIFADDRS
+
 /* Define to 1 if you have the `getpagesize' function. */
 #undef HAVE_GETPAGESIZE
 

@@ -21,6 +21,7 @@
 #include "utils.h"
 #include "grabscreen.h"
 #include "resources.h"
+#include "yarandom.h"
 
 #ifdef HAVE_COCOA
 # include "jwxyz.h"
@@ -511,6 +512,21 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
 
 #else  /* HAVE_COCOA */
 
+struct pipe_closure {
+  FILE *pipe;
+  XtInputId id;
+  Screen *screen;
+  Window xwindow;
+  Drawable drawable;
+  char *directory;
+  void (*callback) (Screen *, Window, Drawable,
+                    const char *name, XRectangle *geom,
+                    void *closure);
+  void *closure;
+};
+
+# ifndef USE_IPHONE
+
 /* Gets the name of an image file to load by running xscreensaver-getimage-file
    at the end of a pipe.  This can be very slow!
  */
@@ -537,20 +553,6 @@ open_image_name_pipe (const char *dir)
   free (cmd);
   return pipe;
 }
-
-
-struct pipe_closure {
-  FILE *pipe;
-  XtInputId id;
-  Screen *screen;
-  Window xwindow;
-  Drawable drawable;
-  char *directory;
-  void (*callback) (Screen *, Window, Drawable,
-                    const char *name, XRectangle *geom,
-                    void *closure);
-  void *closure;
-};
 
 
 static void
@@ -626,6 +628,51 @@ pipe_cb (XtPointer closure, int *source, XtInputId *id)
 }
 
 
+# else  /* USE_IPHONE */
+
+/* Callback for ios_load_random_image(), called after we have loaded an
+   image from the iOS device's Photo Library.  See iosgrabimage.m.
+ */
+static void
+ios_load_random_image_cb (void *uiimage, const char *filename, void *closure)
+{
+  struct pipe_closure *clo2 = (struct pipe_closure *) closure;
+  Display *dpy = DisplayOfScreen (clo2->screen);
+  XRectangle geom;
+
+  if (uiimage)
+    {
+      jwxyz_draw_NSImage_or_CGImage (DisplayOfScreen (clo2->screen), 
+                                     clo2->drawable,
+                                     True, uiimage, &geom,
+                                     0);
+    }
+  else  /* Probably means no images in the gallery. */
+    {
+      XWindowAttributes xgwa;
+      Window r;
+      int x, y;
+      unsigned int w, h, bbw, d;
+      XGetWindowAttributes (dpy, clo2->xwindow, &xgwa);
+      XGetGeometry (dpy, clo2->drawable, &r, &x, &y, &w, &h, &bbw, &d);
+      draw_colorbars (clo2->screen, xgwa.visual, clo2->drawable, xgwa.colormap,
+                      0, 0, w, h);
+      geom.x = geom.y = 0;
+      geom.width = w;
+      geom.height = h;
+      filename = 0;
+    }
+
+  clo2->callback (clo2->screen, clo2->xwindow, clo2->drawable,
+                  filename, &geom, clo2->closure);
+  clo2->callback = 0;
+  if (clo2->directory) free (clo2->directory);
+  free (clo2);
+}
+
+# endif /* USE_IPHONE */
+
+
 static void
 osx_load_image_file_async (Screen *screen, Window xwindow, Drawable drawable,
                            const char *dir,
@@ -635,7 +682,7 @@ osx_load_image_file_async (Screen *screen, Window xwindow, Drawable drawable,
                                              void *closure),
                        void *closure)
 {
-#if 0	/* do it synchronously */
+# if 0	/* do it synchronously */
 
   FILE *pipe = open_image_name_pipe (dir);
   char buf[10240];
@@ -655,22 +702,29 @@ osx_load_image_file_async (Screen *screen, Window xwindow, Drawable drawable,
   }
   callback (screen, xwindow, drawable, buf, &geom, closure);
 
-#else	/* do it asynchronously */
+# else	/* do it asynchronously */
 
-  Display *dpy = DisplayOfScreen (screen);
   struct pipe_closure *clo2 = (struct pipe_closure *) calloc (1, sizeof(*clo2));
-  clo2->directory = strdup (dir);
-  clo2->pipe = open_image_name_pipe (dir);
-  clo2->id = XtAppAddInput (XtDisplayToApplicationContext (dpy), 
-                            fileno (clo2->pipe),
-                            (XtPointer) (XtInputReadMask | XtInputExceptMask),
-                            pipe_cb, (XtPointer) clo2);
+
   clo2->screen = screen;
   clo2->xwindow = xwindow;
   clo2->drawable = drawable;
   clo2->callback = callback;
   clo2->closure = closure;
-#endif
+
+#  ifndef USE_IPHONE
+  clo2->directory = strdup (dir);
+  clo2->pipe = open_image_name_pipe (dir);
+  clo2->id = XtAppAddInput (XtDisplayToApplicationContext (
+                              DisplayOfScreen (screen)), 
+                            fileno (clo2->pipe),
+                            (XtPointer) (XtInputReadMask | XtInputExceptMask),
+                            pipe_cb, (XtPointer) clo2);
+#  else /* USE_IPHONE */
+  ios_load_random_image (ios_load_random_image_cb, clo2);
+#  endif /* USE_IPHONE */
+
+# endif
 }
 
 
@@ -694,14 +748,6 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
   XRectangle geom_ret_2;
   char *name_ret_2 = 0;
   
-# ifdef USE_IPHONE
-  /* Currently, only screen-grabbing is implemented, not loading of
-     images from the iPhone Photo Library.  See osxgrabscreen.m.
-   */
-  deskp = True;
-  filep = False;
-# endif
-
   if (!drawable) abort();
 
   if (callback) {
@@ -729,11 +775,13 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
     geom_ret->height = xgwa.height;
   }
 
+# ifndef USE_IPHONE
   if (filep)
     dir = get_string_resource (dpy, "imageDirectory", "ImageDirectory");
 
   if (!dir || !*dir)
     filep = False;
+# endif /* ! USE_IPHONE */
 
   if (deskp && filep) {
     deskp = !(random() & 5);    /* if both, desktop 1/5th of the time */

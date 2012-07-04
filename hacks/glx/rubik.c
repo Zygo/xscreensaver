@@ -111,12 +111,13 @@ static const char sccsid[] = "@(#)rubik.c	5.01 2001/03/01 xlockmore";
 					"*cycles: 20 \n"		\
 					"*size:  -6 \n"
 # define refresh_rubik 0
-# define rubik_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"					/* from the xlockmore distribution */
 # include "vis.h"
 #endif /* !STANDALONE */
+
+#include "gltrackball.h"
 
 #ifdef MODE_rubik
 
@@ -372,6 +373,8 @@ typedef struct {
 	GLfloat     rotatestep;
 	GLfloat     PX, PY, VX, VY;
 	GLXContext *glx_context;
+    Bool button_down_p;
+    trackball_state *trackball;
 } rubikstruct;
 
 static const float front_shininess[] = {60.0};
@@ -1816,6 +1819,49 @@ reshape_rubik(ModeInfo * mi, int width, int height)
 
 }
 
+ENTRYPOINT Bool
+rubik_handle_event (ModeInfo *mi, XEvent *event)
+{
+  rubikstruct *rp = &rubik[MI_SCREEN(mi)];
+
+  if (event->xany.type == ButtonPress &&
+      event->xbutton.button == Button1)
+    {
+      rp->button_down_p = True;
+      gltrackball_start (rp->trackball,
+                         event->xbutton.x, event->xbutton.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease &&
+           event->xbutton.button == Button1)
+    {
+      rp->button_down_p = False;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button5 ||
+            event->xbutton.button == Button6 ||
+            event->xbutton.button == Button7))
+    {
+      gltrackball_mousewheel (rp->trackball, event->xbutton.button, 10,
+                              !!event->xbutton.state);
+      return True;
+    }
+  else if (event->xany.type == MotionNotify &&
+           rp->button_down_p)
+    {
+      gltrackball_track (rp->trackball,
+                         event->xmotion.x, event->xmotion.y,
+                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      return True;
+    }
+
+  return False;
+}
+
+
 static Bool
 pinit(ModeInfo * mi)
 {
@@ -1896,6 +1942,8 @@ init_rubik(ModeInfo * mi)
 	rp->step = NRAND(90);
 	rp->PX = ((float) LRAND() / (float) MAXRAND) * 2.0 - 1.0;
 	rp->PY = ((float) LRAND() / (float) MAXRAND) * 2.0 - 1.0;
+
+    rp->trackball = gltrackball_init ();
 
 	if ((rp->glx_context = init_GL(mi)) != NULL) {
 
@@ -1982,6 +2030,11 @@ draw_rubik(ModeInfo * mi)
 	} else {
 		glScalef(Scale4Iconic * rp->WindH / rp->WindW, Scale4Iconic, Scale4Iconic);
 	}
+
+    /* Do it twice because we don't track the device's orientation. */
+    glRotatef( current_device_rotation(), 0, 0, 1);
+    gltrackball_rotate (rp->trackball);
+    glRotatef(-current_device_rotation(), 0, 0, 1);
 
 	glRotatef(rp->step * 100, 1, 0, 0);
 	glRotatef(rp->step * 95, 0, 1, 0);

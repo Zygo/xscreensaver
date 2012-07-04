@@ -141,7 +141,12 @@ static Bool draw_main(cubicgrid_conf *cp)
   glTranslatef(0, 0, zpos);
 
   glScalef(size/ticks, size/ticks, size/ticks);
+
+  /* Do it twice because we don't track the device's orientation. */
+  glRotatef( current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (cp->trackball);
+  glRotatef(-current_device_rotation(), 0, 0, 1);
+
   get_rotation (cp->rot, &x, &y, &z, !cp->button_down_p);
   glRotatef (x * 360, 1.0, 0.0, 0.0);
   glRotatef (y * 360, 0.0, 1.0, 0.0);

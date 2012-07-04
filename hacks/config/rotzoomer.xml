@@ -30,7 +30,7 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-Creates a collage of rotated and scaled portions of the screen. 
+Distorts an image by rotating and scaling random sections of it.
 
 Written by Claudio Matsuoka; 2001.
   </_description>

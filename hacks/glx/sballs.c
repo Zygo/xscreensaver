@@ -580,7 +580,10 @@ static void Draw(ModeInfo * mi)
     glEnd();
     mi->polygon_count++;
 
+    /* Do it twice because we don't track the device's orientation. */
+    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (sb->trackball);
+    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     /* rotate the balls */
     glRotatef(sb->rotm[0], 1.0f, 0.0f, 0.0f);

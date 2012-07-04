@@ -15,7 +15,7 @@
 #include "tube.h"
 
 void
-drawGoal(double *goal, GLuint goalList)
+glschool_drawGoal(double *goal, GLuint goalList)
 {
 	glColor3f(1.0, 0.0, 0.0);
 	glPushMatrix();
@@ -28,7 +28,7 @@ drawGoal(double *goal, GLuint goalList)
 }
 
 int
-drawBoundingBox(BBox *bbox, Bool wire)
+glschool_drawBoundingBox(BBox *bbox, Bool wire)
 {
   int polys = 0;
 	double		xMin = BBOX_XMIN(bbox);
@@ -98,18 +98,18 @@ drawBoundingBox(BBox *bbox, Bool wire)
 }
 
 int
-createBBoxList(BBox *bbox, GLuint *bboxList, int wire)
+glschool_createBBoxList(BBox *bbox, GLuint *bboxList, int wire)
 {
   int polys = 0;
 	*bboxList = glGenLists(1);
 	glNewList(*bboxList, GL_COMPILE);
-	polys = drawBoundingBox(bbox, wire);
+	polys = glschool_drawBoundingBox(bbox, wire);
 	glEndList();
         return polys;
 }
 
 void
-createDrawLists(BBox *bbox, GLuint *bboxList, GLuint *goalList, GLuint *fishList, int *fish_polys, int *box_polys, int wire)
+glschool_createDrawLists(BBox *bbox, GLuint *bboxList, GLuint *goalList, GLuint *fishList, int *fish_polys, int *box_polys, int wire)
 {
 
         int faces = 16;
@@ -117,7 +117,7 @@ createDrawLists(BBox *bbox, GLuint *bboxList, GLuint *goalList, GLuint *fishList
         *box_polys = 0;
         *fish_polys = 0;
 
-        *box_polys +=	createBBoxList(bbox, bboxList, wire);
+        *box_polys += glschool_createBBoxList(bbox, bboxList, wire);
 
         *box_polys = 0;
         *fish_polys = 0;
@@ -145,7 +145,7 @@ createDrawLists(BBox *bbox, GLuint *bboxList, GLuint *goalList, GLuint *fishList
 
 
 void
-initLights(void)
+glschool_initLights(void)
 {
 	GLfloat		amb[4] = {0.1, 0.1, 0.1, 1.0};
 	GLfloat		dif[4] = {1.0, 1.0, 1.0, 1.0};
@@ -165,7 +165,7 @@ initLights(void)
 }
 
 void
-initFog()
+glschool_initFog(void)
 {
 	GLfloat		fog[4] = {0.0, 0.0, 0.15, 1.0};
 
@@ -177,7 +177,7 @@ initFog()
 }
 
 void
-initGLEnv(Bool doFog)
+glschool_initGLEnv(Bool doFog)
 {
 	GLfloat spc[4] = {1.0, 1.0, 1.0, 1.0};
 
@@ -194,12 +194,12 @@ initGLEnv(Bool doFog)
 	glShadeModel(GL_SMOOTH);
 	glEnable(GL_CULL_FACE);
 
-	initLights();
-	if (doFog) initFog();
+	glschool_initLights();
+	if (doFog) glschool_initFog();
 }
 
 void
-reshape(int width, int height)
+glschool_reshape(int width, int height)
 {
 	GLfloat h = (GLfloat) width / (GLfloat) height;
 
@@ -214,7 +214,7 @@ reshape(int width, int height)
 }
 
 void
-getColorVect(XColor *colors, int index, double *colorVect)
+glschool_getColorVect(XColor *colors, int index, double *colorVect)
 {
 	colorVect[0] = colors[index].red / 65535.0;
 	colorVect[1] = colors[index].green / 65535.0;
@@ -222,7 +222,7 @@ getColorVect(XColor *colors, int index, double *colorVect)
 }
 
 void
-drawSchool(XColor *colors, School *s,
+glschool_drawSchool(XColor *colors, School *s,
 		   GLuint bboxList, GLuint goalList, GLuint fishList,
 		   int rotCounter, Bool drawGoal_p, Bool drawBBox_p,
            int fish_polys, int box_polys, unsigned long *polys)
@@ -248,16 +248,16 @@ drawSchool(XColor *colors, School *s,
                 *polys += box_polys;
 	}
 
-	if (drawGoal_p)	drawGoal(SCHOOL_GOAL(s), goalList);
+	if (drawGoal_p)	glschool_drawGoal(SCHOOL_GOAL(s), goalList);
 
 	for(i = 0, f = theFishes; i < nFish; i++, f++) {
-		colTheta = computeNormalAndThetaToPlusZ(FISH_AVGVEL(f), xVect);
-		rotTheta = computeNormalAndThetaToPlusZ(FISH_VEL(f), xVect);
+		colTheta = glschool_computeNormalAndThetaToPlusZ(FISH_AVGVEL(f), xVect);
+		rotTheta = glschool_computeNormalAndThetaToPlusZ(FISH_VEL(f), xVect);
 
 		if (FISH_IAVGVEL(f,2) < 0.0) colTheta = 180.0 - colTheta;
 		if (FISH_VZ(f) < 0.0) rotTheta = 180.0 - rotTheta;
 
-		getColorVect(colors, (int)(colTheta+240)%360, colorVect);
+		glschool_getColorVect(colors, (int)(colTheta+240)%360, colorVect);
 		glColor3f(colorVect[0], colorVect[1], colorVect[2]);
 
 		glPushMatrix();

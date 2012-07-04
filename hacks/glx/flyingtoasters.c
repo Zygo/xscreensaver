@@ -810,10 +810,11 @@ draw_toasters (ModeInfo *mi)
   glRotatef(current_device_rotation(), 0, 0, 1);
   glRotatef(bp->view_x, 1, 0, 0);
   glRotatef(bp->view_y, 0, 1, 0);
-  glRotatef(-current_device_rotation(), 0, 0, 1);
-  gltrackball_rotate (bp->user_trackball);
-  glRotatef(current_device_rotation(), 0, 0, 1);
 
+  /* Rotate the scene around a point that's a little deeper in. */
+  glTranslatef (0, 0, -50);
+  gltrackball_rotate (bp->user_trackball);
+  glTranslatef (0, 0,  50);
 
 #if 0
   {

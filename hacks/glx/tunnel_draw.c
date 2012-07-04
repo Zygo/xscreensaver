@@ -111,7 +111,8 @@ struct tunnel_state {
 };
 
 /*=================== Vector normalization ==================================*/
-static void normalize(cvPoint *V)
+static void
+normalize(cvPoint *V)
 {
   float d;
 
@@ -125,7 +126,8 @@ static void normalize(cvPoint *V)
 }
 /*=================== C = A x B  (Vector multiply) ==========================*/
 #if 0
-static void vect_mult(cvPoint *A, cvPoint *B, cvPoint *C)
+static void
+vect_mult(cvPoint *A, cvPoint *B, cvPoint *C)
 {
 	/* Vector multiply */
 	C->x = A->y*B->z - A->z*B->y;
@@ -135,7 +137,8 @@ static void vect_mult(cvPoint *A, cvPoint *B, cvPoint *C)
 #endif
 
 /* Catmull-Rom Curve calculations */
-static void cvCatmullRom(cvPoint *p, float t, cvPoint *outp)
+static void
+cvCatmullRom(cvPoint *p, float t, cvPoint *outp)
 {
 	float t2, t3, t1;
 
@@ -156,7 +159,8 @@ static void cvCatmullRom(cvPoint *p, float t, cvPoint *outp)
 // outp - output point
 //==========================================================================
 */
-static void RotateAroundLine(cvPoint *p, cvPoint *pp, cvPoint *pl, float a, cvPoint *outp)
+static void
+RotateAroundLine(cvPoint *p, cvPoint *pp, cvPoint *pl, float a, cvPoint *outp)
 {
 	cvPoint p1, p2;
 	float l, m, n, ca, sa;
@@ -183,7 +187,8 @@ static void RotateAroundLine(cvPoint *p, cvPoint *pp, cvPoint *pl, float a, cvPo
 
 
 /*=================== Load camera and tunnel path ==========================*/
-static void LoadPath(struct tunnel_state *st)
+static void
+LoadPath(struct tunnel_state *st)
 {
 	float x, y, z;
 	tnPath *path1=NULL, *path2=NULL;
@@ -222,7 +227,7 @@ static void LoadPath(struct tunnel_state *st)
 
 /*=================== Tunnel Initialization ================================*/
 struct tunnel_state *
-InitTunnel(void)
+atunnel_InitTunnel(void)
 {
     struct tunnel_state *st = (struct tunnel_state *) calloc (1, sizeof(*st));
 	LoadPath(st);
@@ -230,7 +235,8 @@ InitTunnel(void)
     return st;
 }
 
-void DrawTunnel(struct tunnel_state *st, 
+void
+atunnel_DrawTunnel(struct tunnel_state *st, 
                 int do_texture, int do_light, GLuint *textures)
 {
 	tnPath *p, *p1, *cmpos;
@@ -438,7 +444,8 @@ void DrawTunnel(struct tunnel_state *st,
 }
 
 /* =================== Show splash screen =================================== */
-void SplashScreen(struct tunnel_state *st, 
+void
+atunnel_SplashScreen(struct tunnel_state *st, 
                   int do_wire, int do_texture, int do_light)
 {
 	if (st->ModeX > 0)
@@ -496,7 +503,8 @@ void SplashScreen(struct tunnel_state *st,
 	}
 }
 
-void FreeTunnel(struct tunnel_state *st)
+void
+atunnel_FreeTunnel(struct tunnel_state *st)
 {
   free (st);
 }

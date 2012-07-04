@@ -76,7 +76,6 @@ static const char sccsid[] = "@(#)crystal.c	4.12 98/09/10 xlockmore";
 						 "*ncolors:		  100	\n" \
 						 "*fpsSolid:		  true	\n" \
 
-# define reshape_crystal 0
 # define crystal_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -1268,6 +1267,13 @@ init_crystal(ModeInfo * mi)
 		crystal_drawatom(mi, atom0);
 	}
 	XSetFunction(display, cryst->gc, GXcopy);
+}
+
+ENTRYPOINT void
+reshape_crystal(ModeInfo * mi, int width, int height)
+{
+  release_crystal(mi);
+  init_crystal(mi);
 }
 
 XSCREENSAVER_MODULE ("Crystal", crystal)

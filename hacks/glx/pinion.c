@@ -1458,9 +1458,7 @@ draw_pinion (ModeInfo *mi)
 
   glPushMatrix ();
   {
-    glRotatef(-current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (pp->trackball);
-    glRotatef(current_device_rotation(), 0, 0, 1);
     mi->polygon_count = 0;
 
     glScalef (16, 16, 16);   /* map vp_width/height to the screen */

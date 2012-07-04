@@ -22,8 +22,8 @@
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <_description>
-Draws a spotlight scanning across a black screen, illuminating the
-underlying desktop (or a picture) when it passes.
+A spotlight scanning across a black screen, illuminating a loaded
+image when it passes.
 
 Written by Rick Schultz and Jamie Zawinski; 1999.
   </_description>

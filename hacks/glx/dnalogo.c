@@ -75,6 +75,12 @@
 
 #ifdef USE_GL /* whole file */
 
+#ifdef HAVE_JWZGLES
+# include "dnapizza.h"
+#else
+# define HAVE_TESS
+#endif
+
 typedef enum {
   HELIX_IN, HELIX, HELIX_OUT, 
   PIZZA_IN, PIZZA, PIZZA_OUT,
@@ -1373,6 +1379,8 @@ make_frame (logo_configuration *dc, int wire)
 /* Make some pizza.
  */
 
+#ifdef HAVE_TESS
+
 typedef struct {
   GLdouble *points;
   int i;
@@ -1423,12 +1431,13 @@ tess_end_cb (void)
   glEnd();
 }
 
+#endif /* HAVE_TESS */
+
 
 static int
 make_pizza (logo_configuration *dc, int facetted, int wire)
 {
   int polys = 0;
-
   int topfaces = (facetted ? 48 : 120);
   int discfaces = (facetted ? 12 : 120);
   int npoints = topfaces * 2 + 100;
@@ -1440,18 +1449,19 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
   GLfloat thick2 = (dc->gasket_thickness / dc->gasket_size) / 4;
   GLfloat th, x, y, s;
   int i, j, k;
-  tess_out TO, *to = &TO;
-  GLUtesselator *tess = gluNewTess();
   int endpoints;
   int endedge1;
+
+# ifdef HAVE_TESS
+  tess_out TO, *to = &TO;
+  GLUtesselator *tess = gluNewTess();
 
   to->points = (GLdouble *) calloc (topfaces * 20, sizeof(GLdouble));
   to->i = 0;
 
-
-# ifndef  _GLUfuncptr
-#  define _GLUfuncptr void(*)(void)
-# endif
+#  ifndef  _GLUfuncptr
+#   define _GLUfuncptr void(*)(void)
+#  endif
 
   gluTessCallback(tess,GLU_TESS_BEGIN,      (_GLUfuncptr)tess_begin_cb);
   gluTessCallback(tess,GLU_TESS_VERTEX,     (_GLUfuncptr)glVertex3dv);
@@ -1461,6 +1471,8 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
 
   gluTessProperty (tess, GLU_TESS_BOUNDARY_ONLY, wire);
   gluTessProperty (tess,GLU_TESS_WINDING_RULE, GLU_TESS_WINDING_ODD);
+
+# endif /* HAVE_TESS */
 
   glPushMatrix();
 
@@ -1546,6 +1558,7 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
       y = p[1];
       polys++;
     }
+
   do_normal (points[0], points[1],  -thick2,
              points[0], points[1],   thick2,
              x,         y,           thick2);
@@ -1555,6 +1568,21 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
   glVertex3f (points[0], points[1], -thick2);
   polys++;
   glEnd();
+
+# ifndef HAVE_TESS
+  if (wire)
+    {
+      /* Outline of slice */
+      glBegin (GL_LINE_LOOP);
+      for (i = 0; i < endpoints; i++)
+        glVertex3f (points[i*3], points[i*3+1], -thick2);
+      glEnd();
+      glBegin (GL_LINE_LOOP);
+      for (i = 0; i < endpoints; i++)
+        glVertex3f (points[i*3], points[i*3+1], thick2);
+      glEnd();
+    }
+# endif /* HAVE_TESS */
 
   /* Compute the holes */
   step = M_PI * 2 / discfaces;
@@ -1583,6 +1611,7 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
   for (k = 0; k < nholes; k++)
     {
       GLdouble *p = holes + (discfaces * 3 * k);
+
       glBegin (wire ? GL_LINES : GL_QUAD_STRIP);
       for (i = 0; i < discfaces; i++)
         {
@@ -1599,8 +1628,23 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
       glVertex3f (p[0], p[1],  thick2);
       polys++;
       glEnd();
+# ifndef HAVE_TESS
+      if (wire)
+        {
+          /* Outline of holes */
+          glBegin (GL_LINE_LOOP);
+          for (i = 0; i < discfaces; i++)
+            glVertex3f (p[i*3], p[i*3+1], -thick2);
+          glEnd();
+          glBegin (GL_LINE_LOOP);
+          for (i = 0; i < discfaces; i++)
+            glVertex3f (p[i*3], p[i*3+1], thick2);
+          glEnd();
+        }
+# endif /* !HAVE_TESS */
     }
 
+# ifdef HAVE_TESS
   glTranslatef (0, 0, -thick2);
   for (y = 0; y <= 1; y++)
     {
@@ -1640,7 +1684,31 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
 
       gluTessEndPolygon (tess);
     }
+
   glTranslatef (0, 0, -thick2);
+
+# else  /* !HAVE_TESS */
+  if (! wire)
+    {
+      glDisableClientState (GL_COLOR_ARRAY);
+      glDisableClientState (GL_NORMAL_ARRAY);
+      glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+      glEnableClientState (GL_VERTEX_ARRAY);
+      glVertexPointer (3, GL_FLOAT, 0, dnapizza_triangles);
+
+      glTranslatef(0, 0, thick2);
+      glNormal3f (0, 0, 1);
+      glFrontFace (GL_CW);
+      glDrawArrays (GL_TRIANGLES, 0, countof (dnapizza_triangles) / 3);
+
+      glTranslatef(0, 0, -thick2*2);
+      glNormal3f (0, 0, -1);
+      glFrontFace (GL_CCW);
+      glDrawArrays (GL_TRIANGLES, 0, countof (dnapizza_triangles) / 3);
+
+      glTranslatef(0, 0, thick2);
+    }
+# endif /* !HAVE_TESS */
 
 
   /* Compute the crust */
@@ -1748,10 +1816,13 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
       glEnd();
     }
 
+# ifdef HAVE_TESS
   gluDeleteTess (tess);
+  free (to->points);
+# endif /* HAVE_TESS */
+
   free (points);
   free (holes);
-  free (to->points);
 
   glPopMatrix();
 
@@ -2150,8 +2221,6 @@ draw_logo (ModeInfo *mi)
   mi->polygon_count = 0;
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(dc->glx_context));
 
-  glRotatef(current_device_rotation(), 0, 0, 1);
-
   if (!wire &&
       dc->wire_overlay == 0 &&
       (random() % (int) (PROBABILITY_SCALE / 0.2)) == 0)
@@ -2232,9 +2301,14 @@ draw_logo (ModeInfo *mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix ();
+  glRotatef(current_device_rotation(), 0, 0, 1);
   {
     GLfloat scale = 0;
     glScalef(3, 3, 3);
+
+# ifdef USE_IPHONE
+    glScalef (0.7, 0.7, 0.7);  /* make room for the frame */
+# endif
 
     glColor3f(dc->color[0], dc->color[1], dc->color[2]);
 
@@ -2253,6 +2327,7 @@ draw_logo (ModeInfo *mi)
       glScalef (1, scale, scale);
       if (wire)
         {
+          glDisable (GL_LIGHTING);
           glCallList (dc->frame_list_wire);
           mi->polygon_count += dc->polys[6];
         }
@@ -2260,6 +2335,7 @@ draw_logo (ModeInfo *mi)
         {
           glCallList (dc->frame_list);
           glDisable (GL_LIGHTING);
+          glColor3fv (dc->color);
           glCallList (dc->frame_list_wire);
           mi->polygon_count += dc->polys[6];
           if (!wire) glEnable (GL_LIGHTING);
@@ -2299,6 +2375,7 @@ draw_logo (ModeInfo *mi)
 
       if (wire)
         {
+          glDisable (GL_LIGHTING);
           glCallList (dc->gasket_list_wire);
           mi->polygon_count += dc->polys[4];
         }
@@ -2306,9 +2383,11 @@ draw_logo (ModeInfo *mi)
         {
           glCallList (dc->gasket_list);
           glDisable (GL_LIGHTING);
+          glColor3fv (dc->color);
           glCallList (dc->gasket_list_wire);
           mi->polygon_count += dc->polys[4];
           if (!wire) glEnable (GL_LIGHTING);
+          glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, gcolor);
         }
       else
         {
@@ -2338,6 +2417,7 @@ draw_logo (ModeInfo *mi)
 
     if (wire)
       {
+        glDisable (GL_LIGHTING);
         if (pizza_p)
           glCallList (dc->pizza_list_wire);
         else
@@ -2352,6 +2432,7 @@ draw_logo (ModeInfo *mi)
           glCallList (dc->helix_list_facetted);
 
         glDisable (GL_LIGHTING);
+        glColor3fv (dc->color);
 
         if (pizza_p)
           glCallList (dc->pizza_list_wire);
@@ -2381,6 +2462,6 @@ draw_logo (ModeInfo *mi)
   glXSwapBuffers(dpy, window);
 }
 
-XSCREENSAVER_MODULE_2 ("DNAlogo", dnalogo, logo)
+XSCREENSAVER_MODULE_2 ("DNALogo", dnalogo, logo)
 
 #endif /* USE_GL */

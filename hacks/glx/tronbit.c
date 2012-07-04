@@ -505,7 +505,6 @@ draw_bit (ModeInfo *mi)
 
   glPushMatrix ();
   glRotatef(current_device_rotation(), 0, 0, 1);
-
   glScalef(1.1, 1.1, 1.1);
 
   {
@@ -514,10 +513,7 @@ draw_bit (ModeInfo *mi)
     glTranslatef((x - 0.5) * 11,
                  (y - 0.5) * 5,
                  (z - 0.5) * 3);
-
-    glRotatef(-current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (bp->trackball);
-    glRotatef(current_device_rotation(), 0, 0, 1);
 
     get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);

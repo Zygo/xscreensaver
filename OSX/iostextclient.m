@@ -38,15 +38,6 @@ struct text_data {
 };
 
 
-void
-textclient_reshape (text_data *d,
-                    int pix_w, int pix_h,
-                    int char_w, int char_h)
-{
-  d->columns = char_w;
-}
-
-
 text_data *
 textclient_open (Display *dpy)
 {
@@ -405,6 +396,7 @@ wrap_text (char *body, int columns)
 {
   int col = 0, last_col = 0;
   char *last_space = 0;
+  if (! body) return;
   for (char *p = body; *p; p++) {
     if (*p == '\r' || *p == '\n' || *p == ' ' || *p == '\t') {
       if (col > columns && last_space) {
@@ -423,6 +415,23 @@ wrap_text (char *body, int columns)
     }
   }
 }
+
+
+static void
+rewrap_text (char *body, int columns)
+{
+  if (! body) return;
+  for (char *p = body; *p; p++) {
+    if (*p == '\n') {
+      if (p[1] == '\n')
+        p++;
+      else
+        *p = ' ';
+    }
+  }
+  wrap_text (body, columns);
+}
+
 
 
 static void
@@ -551,6 +560,16 @@ Bool
 textclient_putc (text_data *d, XKeyEvent *k)
 {
   return False;
+}
+
+
+void
+textclient_reshape (text_data *d,
+                    int pix_w, int pix_h,
+                    int char_w, int char_h)
+{
+  d->columns = char_w;
+  rewrap_text (d->buf, d->columns);
 }
 
 #endif /* USE_IPHONE -- whole file */

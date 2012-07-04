@@ -47,6 +47,8 @@ extern void check_gl_error (const char *type);
 # ifndef USE_IPHONE
   [NSOpenGLContext clearCurrentContext];
 # endif // !USE_IPHONE
+
+  clear_gl_error();	// This hack is defunct, don't let this linger.
 }
 
 
@@ -240,14 +242,19 @@ extern void check_gl_error (const char *type);
  */
 
 
-// redefine these now since they don't work when not inside an ObjC method.
+// redefine NSAssert, etc. here since they don't work when not inside
+// an ObjC method.
 
 #undef NSAssert
 #undef NSAssert1
 #undef NSAssert2
-#define NSAssert(CC,S)      do { if (!(CC)) { NSLog(S);    abort();}} while(0)
-#define NSAssert1(CC,S,A)   do { if (!(CC)) { NSLog(S,A);  abort();}} while(0)
-#define NSAssert2(CC,S,A,B) do { if (!(CC)) { NSLog(S,A,B);abort();}} while(0)
+#define NSASS(S) \
+  jwxyz_abort ("%s", [(S) cStringUsingEncoding:NSUTF8StringEncoding])
+#define NSAssert(CC,S)      do { if (!(CC)) { NSASS((S)); }} while(0)
+#define NSAssert1(CC,S,A)   do { if (!(CC)) { \
+  NSASS(([NSString stringWithFormat: S, A])); }} while(0)
+#define NSAssert2(CC,S,A,B) do { if (!(CC)) { \
+  NSASS(([NSString stringWithFormat: S, A, B])); }} while(0)
 
 
 /* Called by OpenGL savers using the XLockmore API.

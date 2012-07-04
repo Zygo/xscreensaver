@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2008 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2012 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -42,27 +42,30 @@ struct sonar_sensor_data {
 };
 
 /* frees bogie and its contents, including calling the free_bogie_cb. */
-extern void free_bogie (sonar_sensor_data *ssd, sonar_bogie *b);
+extern void sonar_free_bogie (sonar_sensor_data *ssd, sonar_bogie *b);
 
 /* makes a copy of the bogie, not including the 'closure' data. */
-extern sonar_bogie *copy_bogie (sonar_sensor_data *ssd, const sonar_bogie *b);
+extern sonar_bogie *sonar_copy_bogie (sonar_sensor_data *,
+                                      const sonar_bogie *);
 
 
 /* Set up and return sensor state for ICMP pings. */
-extern sonar_sensor_data *init_ping (Display *dpy, 
-                                     char **error_ret,
-                                     const char *subnets,
-                                     int ping_timeout,
-                                     Bool resolve_p, Bool times_p,
-                                     Bool debug_p);
+extern sonar_sensor_data *sonar_init_ping (Display *dpy, 
+                                           char **error_ret,
+                                           char **desc_ret,
+                                           const char *subnets,
+                                           int ping_timeout,
+                                           Bool resolve_p, Bool times_p,
+                                           Bool debug_p);
 
 /* Set up and return sensor state for the simulation. */
-extern sonar_sensor_data *init_simulation (Display *dpy,
-                                           char **error_ret,
-                                           const char *team_a_name, 
-                                           const char *team_b_name,
-                                           int team_a_count, 
-                                           int team_b_count,
-                                           Bool debug_p);
+extern sonar_sensor_data *sonar_init_simulation (Display *dpy,
+                                                 char **error_ret,
+                                                 char **desc_ret,
+                                                 const char *team_a_name, 
+                                                 const char *team_b_name,
+                                                 int team_a_count, 
+                                                 int team_b_count,
+                                                 Bool debug_p);
 
 #endif /* __SONAR_XSCREENSAVER_H__ */

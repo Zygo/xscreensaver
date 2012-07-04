@@ -29,6 +29,8 @@
 #include "trackball.h"
 #include "gltrackball.h"
 
+extern double current_device_rotation (void);  /* Bah, it's in fps.h */
+
 struct trackball_state {
   int x, y;
   GLfloat q[4];
@@ -54,6 +56,7 @@ gltrackball_reset (trackball_state *ts)
   memset (ts, 0, sizeof(*ts));
   trackball (ts->q, 0, 0, 0, 0);
 }
+
 
 /* Begin tracking the mouse: Call this when the mouse button goes down.
    x and y are the mouse position relative to the window.

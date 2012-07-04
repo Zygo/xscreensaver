@@ -48,6 +48,7 @@
 #endif // USE_IPHONE
 
 #undef LABEL_ABOVE_SLIDER
+#define USE_HTML_LABELS
 
 
 #pragma mark XML Parser
@@ -190,6 +191,222 @@ typedef enum { SimpleXMLCommentKind,
 
 # endif // !USE_PICKER_VIEW
 
+
+# pragma mark Implementing labels with clickable links
+
+#if defined(USE_IPHONE) && defined(USE_HTML_LABELS)
+
+@interface HTMLLabel : UIView <UIWebViewDelegate>
+{
+  NSString *html;
+  UIFont *font;
+  UIWebView *webView;
+}
+
+@property(nonatomic, retain) NSString *html;
+@property(nonatomic, retain) UIWebView *webView;
+
+- (id) initWithHTML:(NSString *)h font:(UIFont *)f;
+- (id) initWithText:(NSString *)t font:(UIFont *)f;
+- (void) setHTML:(NSString *)h;
+- (void) setText:(NSString *)t;
+- (void) sizeToFit;
+
+@end
+
+@implementation HTMLLabel
+
+@synthesize html;
+@synthesize webView;
+
+- (id) initWithHTML:(NSString *)h font:(UIFont *)f
+{
+  self = [super init];
+  if (! self) return 0;
+  font = [f retain];
+  webView = [[UIWebView alloc] init];
+  webView.delegate = self;
+  webView.dataDetectorTypes = UIDataDetectorTypeNone;
+  self.   autoresizingMask = (UIViewAutoresizingFlexibleWidth |
+                              UIViewAutoresizingFlexibleHeight);
+  webView.autoresizingMask = (UIViewAutoresizingFlexibleWidth |
+                              UIViewAutoresizingFlexibleHeight);
+  [self addSubview: webView];
+  [self setHTML: h];
+  return self;
+}
+
+- (id) initWithText:(NSString *)t font:(UIFont *)f
+{
+  self = [self initWithHTML:@"" font:f];
+  if (! self) return 0;
+  [self setText: t];
+  return self;
+}
+
+
+- (void) setHTML: (NSString *)h
+{
+  if (! h) return;
+  [h retain];
+  if (html) [html release];
+  html = h;
+  NSString *h2 =
+    [NSString stringWithFormat:
+                @"<!DOCTYPE HTML PUBLIC "
+                   "\"-//W3C//DTD HTML 4.01 Transitional//EN\""
+                   " \"http://www.w3.org/TR/html4/loose.dtd\">"
+                 "<HTML>"
+                  "<HEAD>"
+//                   "<META NAME=\"viewport\" CONTENT=\""
+//                      "width=device-width"
+//                      "initial-scale=1.0;"
+//                      "maximum-scale=1.0;\">"
+                   "<STYLE>"
+                    "<!--\n"
+                      "body {"
+                      " margin: 0; padding: 0; border: 0;"
+                      " font-family: \"%@\";"
+                      " font-size: %.4fpx;"	// Must be "px", not "pt"!
+                      " line-height: %.4fpx;"   // And no spaces before it.
+                      "}"
+                    "\n//-->\n"
+                   "</STYLE>"
+                  "</HEAD>"
+                  "<BODY>"
+                   "%@"
+                  "</BODY>"
+                 "</HTML>",
+              [font fontName],
+              [font pointSize],
+              [font lineHeight],
+              h];
+  [webView loadHTMLString:h2 baseURL:[NSURL URLWithString:@""]];
+}
+
+
+static char *anchorize (const char *url);
+
+- (void) setText: (NSString *)t
+{
+  t = [t stringByReplacingOccurrencesOfString:@"&" withString:@"&amp;"];
+  t = [t stringByReplacingOccurrencesOfString:@"<" withString:@"&lt;"];
+  t = [t stringByReplacingOccurrencesOfString:@">" withString:@"&gt;"];
+  t = [t stringByReplacingOccurrencesOfString:@"\n\n" withString:@" <P> "];
+  t = [t stringByReplacingOccurrencesOfString:@"<P>  "
+         withString:@"<P> &nbsp; &nbsp; &nbsp; &nbsp; "];
+  t = [t stringByReplacingOccurrencesOfString:@"\n "
+         withString:@"<BR> &nbsp; &nbsp; &nbsp; &nbsp; "];
+
+  NSString *h = @"";
+  for (NSString *s in
+         [t componentsSeparatedByCharactersInSet:
+              [NSCharacterSet whitespaceAndNewlineCharacterSet]]) {
+    if ([s hasPrefix:@"http://"] ||
+        [s hasPrefix:@"https://"]) {
+      char *anchor = anchorize ([s cStringUsingEncoding:NSUTF8StringEncoding]);
+      NSString *a2 = [NSString stringWithCString: anchor
+                               encoding: NSUTF8StringEncoding];
+      s = [NSString stringWithFormat: @"<A HREF=\"%@\">%@</A><BR>", s, a2];
+      free (anchor);
+    }
+    h = [NSString stringWithFormat: @"%@ %@", h, s];
+  }
+  [self setHTML: h];
+}
+
+
+-(BOOL) webView:(UIWebView *)wv
+        shouldStartLoadWithRequest:(NSURLRequest *)req
+        navigationType:(UIWebViewNavigationType)type
+{
+  // Force clicked links to open in Safari, not in this window.
+  if (type == UIWebViewNavigationTypeLinkClicked) {
+    [[UIApplication sharedApplication] openURL:[req URL]];
+    return NO;
+  }
+  return YES;
+}
+
+
+- (void) setFrame: (CGRect)r
+{
+  [super setFrame: r];
+  r.origin.x = 0;
+  r.origin.y = 0;
+  [webView setFrame: r];
+  [self setHTML: html];
+  [webView reload];
+}
+
+
+- (NSString *) stripTags:(NSString *)str
+{
+  NSString *result = @"";
+
+  str = [str stringByReplacingOccurrencesOfString:@"<P>"
+             withString:@"<BR><BR>"
+             options:NSCaseInsensitiveSearch
+             range:NSMakeRange(0, [str length])];
+  str = [str stringByReplacingOccurrencesOfString:@"<BR>"
+             withString:@"\n"
+             options:NSCaseInsensitiveSearch
+             range:NSMakeRange(0, [str length])];
+
+  for (NSString *s in [str componentsSeparatedByString: @"<"]) {
+    NSRange r = [s rangeOfString:@">"];
+    if (r.length > 0)
+      s = [s substringFromIndex: r.location + r.length];
+    result = [result stringByAppendingString: s];
+  }
+  return result;
+}
+
+
+- (void) sizeToFit
+{
+  CGRect r = [self frame];
+
+  /* It would be sensible to just ask the UIWebView how tall the page is,
+     instead of hoping that NSString and UIWebView measure fonts and do
+     wrapping in exactly the same way, but I can't make that work.
+     Maybe because it loads async?
+   */
+# if 0
+  r.size.height = [[webView
+                     stringByEvaluatingJavaScriptFromString:
+                       @"document.body.offsetHeight"]
+                    doubleValue];
+# else
+  NSString *text = [self stripTags: html];
+  CGSize s = r.size;
+  s.height = 999999;
+  s = [text sizeWithFont: font
+            constrainedToSize: s
+            lineBreakMode: UILineBreakModeWordWrap];
+
+  // GAAAH. Add one more line, or the UIWebView is still scrollable!
+  // The text is sized right, but it lets you scroll it up anyway.
+  s.height += [font pointSize];
+
+  r.size.height = s.height;
+# endif
+
+  [self setFrame: r];
+}
+
+
+- (void) dealloc
+{
+  [html release];
+  [font release];
+  [webView release];
+  [super dealloc];
+}
+
+@end
+
+#endif // USE_IPHONE && USE_HTML_LABELS
 
 
 @interface XScreenSaverConfigSheet (Private)
@@ -682,6 +899,8 @@ anchorize (const char *url)
 }
 
 
+#if !defined(USE_IPHONE) || !defined(USE_HTML_LABELS)
+
 /* Converts any http: URLs in the given text field to clickable links.
  */
 static void
@@ -766,6 +985,9 @@ hreffify (NSText *nstext)
 # endif
 }
 
+#endif /* !USE_IPHONE || !USE_HTML_LABELS */
+
+
 
 #pragma mark Creating controls from XML
 
@@ -813,6 +1035,26 @@ hreffify (NSText *nstext)
     if ([val length] == 0)
       [dict removeObjectForKey:key];
   }
+
+# ifdef USE_IPHONE
+  // Kludge for starwars.xml:
+  // If there is a "_low-label" and no "_label", but "_low-label" contains
+  // spaces, divide them.
+  NSString *lab = [dict objectForKey:@"_label"];
+  NSString *low = [dict objectForKey:@"_low-label"];
+  if (low && !lab) {
+    NSArray *split =
+      [[[low stringByTrimmingCharactersInSet:
+               [NSCharacterSet whitespaceAndNewlineCharacterSet]]
+         componentsSeparatedByString: @"  "]
+        filteredArrayUsingPredicate:
+          [NSPredicate predicateWithFormat:@"length > 0"]];
+    if (split && [split count] == 2) {
+      [dict setValue:[split objectAtIndex:0] forKey:@"_label"];
+      [dict setValue:[split objectAtIndex:1] forKey:@"_low-label"];
+    }
+  }
+# endif // USE_IPHONE
 }
 
 
@@ -1479,25 +1721,25 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
   hreffify (lab);
   boldify (lab);
   [lab sizeToFit];
+
 # else  // USE_IPHONE
 
-  /* There's no way to put rich text or links inside a UILabel.
-
-     I guess Apple expects us to use a UIWebView for this -- but there's
-     no way to measure how tall the HTML-rendered text is (the answer is
-     not: "document.height" via JavaScript) so we can't put the
-     properly-sized cell in the table.
-
-     This is some serious bullshit.
-
-     Another option would be to subclass UILabel and replace its drawRect
-     with new code that uses CTLineDraw.  But that's a huge hassle.
-   */
+#  ifndef USE_HTML_LABELS
 
   UILabel *lab = [self makeLabel:text];
   [lab setFont:[NSFont systemFontOfSize: [NSFont systemFontSize]]];
   hreffify (lab);
+
+#  else  // USE_HTML_LABELS
+  HTMLLabel *lab = [[HTMLLabel alloc] 
+                     initWithText:text
+                     font:[NSFont systemFontOfSize: [NSFont systemFontSize]]];
+  [lab setFrame:rect];
+  [lab sizeToFit];
+#  endif // USE_HTML_LABELS
+
   [self placeSeparator];
+
 # endif // USE_IPHONE
 
   [self placeChild:lab on:parent];
@@ -2024,7 +2266,6 @@ find_text_field_of_button (NSButton *button)
 
 - (void) makeImageLoaderControlBox:(NSXMLNode *)node on:(NSView *)parent
 {
-# ifndef USE_IPHONE
   /*
     [x]  Grab desktop images
     [ ]  Choose random image:
@@ -2039,11 +2280,19 @@ find_text_field_of_button (NSButton *button)
 
   NSXMLElement *node2;
 
+# ifndef USE_IPHONE
+#  define SCREENS "Grab desktop images"
+#  define PHOTOS  "Choose random images"
+# else
+#  define SCREENS "Grab screenshots"
+#  define PHOTOS  "Use photo library"
+# endif
+
   node2 = [[NSXMLElement alloc] initWithName:@"boolean"];
   [node2 setAttributesAsDictionary:
           [NSDictionary dictionaryWithObjectsAndKeys:
                         @"grabDesktopImages",   @"id",
-                        @"Grab desktop images", @"_label",
+                        @ SCREENS,              @"_label",
                         @"-no-grab-desktop",    @"arg-unset",
                         nil]];
   [self makeCheckbox:node2 on:parent];
@@ -2052,7 +2301,7 @@ find_text_field_of_button (NSButton *button)
   [node2 setAttributesAsDictionary:
           [NSDictionary dictionaryWithObjectsAndKeys:
                         @"chooseRandomImages",    @"id",
-                        @"Choose random images",  @"_label",
+                        @ PHOTOS,                 @"_label",
                         @"-choose-random-images", @"arg-set",
                         nil]];
   [self makeCheckbox:node2 on:parent];
@@ -2067,6 +2316,10 @@ find_text_field_of_button (NSButton *button)
   [self makeFileSelector:node2 on:parent
         dirsOnly:YES withLabel:YES editable:YES];
 
+# undef SCREENS
+# undef PHOTOS
+
+# ifndef USE_IPHONE
   // Add a second, explanatory label below the file/URL selector.
 
   LABEL *lab2 = 0;
@@ -2079,7 +2332,7 @@ find_text_field_of_button (NSButton *button)
   r2.origin.y += 14;
   [lab2 setFrameOrigin:r2.origin];
   [lab2 release];
-# endif // !USE_IPHONE
+# endif // USE_IPHONE
 }
 
 
@@ -2612,6 +2865,8 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   }
 
   saver_name = [self parseXScreenSaverTag: node];
+  saver_name = [saver_name stringByReplacingOccurrencesOfString:@" "
+                           withString:@""];
   [saver_name retain];
   
 # ifndef USE_IPHONE
@@ -2831,7 +3086,20 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
     [t sizeToFit];
     r = t.frame;
     h = r.size.height + LINE_SPACING * 3;
+# ifdef USE_HTML_LABELS
 
+  } else if ([ctl isKindOfClass:[HTMLLabel class]]) {
+    
+    HTMLLabel *t = (HTMLLabel *) ctl;
+    CGRect r = t.frame;
+    r.size.width = [tv frame].size.width;
+    r.size.width -= LEFT_MARGIN * 2;
+    [t setFrame:r];
+    [t sizeToFit];
+    r = t.frame;
+    h = r.size.height + LINE_SPACING * 3;
+
+# endif // USE_HTML_LABELS
   } else {
     CGFloat h2 = [ctl frame].size.height;
     h2 += LINE_SPACING * 2;

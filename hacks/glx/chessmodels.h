@@ -40,5 +40,5 @@
 #define BROOK    12
 #define BPAWN    13 
 
-extern void gen_model_lists( int classic, int poly_count[PIECES]);
+extern void chessmodels_gen_lists( int classic, int poly_count[PIECES]);
 

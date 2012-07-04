@@ -16,6 +16,8 @@
              low="0.1" high="8.0" default="1.0"/>
 
     <select id="ping">
+     <option id="sn" _label="Ping local subnet"/>
+<!--
      <option id="24" _label="Ping subnet/24 (254 hosts)" arg-set="-ping subnet/24"/>
      <option id="25" _label="Ping subnet/25 (126 hosts)" arg-set="-ping subnet/25"/>
      <option id="26" _label="Ping subnet/26 (62 hosts)"  arg-set="-ping subnet/26"/>
@@ -23,8 +25,13 @@
      <option id="28" _label="Ping subnet/28 (14 hosts)"/>
      <option id="29" _label="Ping subnet/29 (6 hosts)"   arg-set="-ping subnet/29"/>
      <option id="30" _label="Ping subnet/30 (2 hosts)"   arg-set="-ping subnet/30"/>
+-->
+
      <option id="ssh" _label="Ping known SSH hosts"      arg-set="-ping /etc/hosts,$HOME/.ssh/known_hosts,$HOME/.ssh/known_hosts2"/>
-     <option id="ssh" _label="Simulation (don't ping)"   arg-set="-ping simulation"/>
+
+     <option id="popular" _label="Ping Google, Facebook, etc." arg-set="-ping google.com,facebook.com,twitter.com,yahoo.com,flickr.com,www.apple.com,wikipedia.org,linux.org,youtube.com,disqus.com,blogger.com,wordpress.com,tumblr.com,whitehouse.gov"/>
+
+     <option id="sim" _label="Simulation (don't ping)"   arg-set="-ping simulation"/>
     </select>
    </vgroup>
 
@@ -67,7 +74,8 @@ milliseconds respectively.
 
 Alternately, it can run a simulation that doesn't involve hosts.
 
-(If pinging doesn't work, you may need to make the executable be setuid.)
+(If pinging doesn't work on Linux, you may need to make the executable
+be setuid.)
 
 http://en.wikipedia.org/wiki/Ping#History
 

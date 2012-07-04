@@ -34,10 +34,15 @@
 #include <stdint.h>
 #include <unistd.h>
 
+#include "yarandom.h"
 #include "asm6502.h"
 
-#ifdef DEBUGGER
+/*#ifdef DEBUGGER
 #  define random rand
+#endif*/
+
+#ifndef USE_IPHONE
+# define READ_FILES
 #endif
 
 typedef enum{
@@ -68,7 +73,7 @@ typedef BOOL (*CharTest) (char);
 /*typedef void (*JumpFunc) (machine_6502* AddrMode);*/
 
 typedef struct {
-  AddrMode type;
+  m6502_AddrMode type;
   Bit32 value[MAX_PARAM_VALUE];
   unsigned int vp; /*value pointer, index into the value table.*/
   char *label;
@@ -259,7 +264,7 @@ static Bit8 nibble(Bit8 value, Side side){
 
 
 /* used for tracing. XXX: combined with function getvalue */
-static BOOL peekValue(machine_6502 *machine, AddrMode adm, Pointer *pointer, Bit16 PC){
+static BOOL peekValue(machine_6502 *machine, m6502_AddrMode adm, Pointer *pointer, Bit16 PC){
   Bit8 zp;
   pointer->value = 0;
   pointer->addr = 0;
@@ -324,7 +329,7 @@ static BOOL peekValue(machine_6502 *machine, AddrMode adm, Pointer *pointer, Bit
 
 
 /* Figure out how to get the value from the addrmode and get it.*/
-static BOOL getValue(machine_6502 *machine, AddrMode adm, Pointer *pointer){
+static BOOL getValue(machine_6502 *machine, m6502_AddrMode adm, Pointer *pointer){
   Bit8 zp;
   pointer->value = 0;
   pointer->addr = 0;
@@ -385,7 +390,8 @@ static BOOL getValue(machine_6502 *machine, AddrMode adm, Pointer *pointer){
 
 }
 
-static void dismem(machine_6502 *machine, AddrMode adm, char *output){
+#if 0
+static void dismem(machine_6502 *machine, m6502_AddrMode adm, char *output){
   Bit8 zp;
   Bit16 n;
   switch(adm){
@@ -442,6 +448,7 @@ static void dismem(machine_6502 *machine, AddrMode adm, char *output){
     break;
   }
 }
+#endif
 
 /* manZeroNeg - Manage the negative and zero flags */
 static void manZeroNeg(machine_6502 *machine, Bit8 value){
@@ -455,7 +462,7 @@ static void warnValue(BOOL isValue){
   }
 }
 
-static void jmpADC(machine_6502 *machine, AddrMode adm){
+static void jmpADC(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   Bit16 tmp;
   Bit8 c = bitOn(machine->regP, CARRY_FL);
@@ -506,7 +513,7 @@ static void jmpADC(machine_6502 *machine, AddrMode adm){
   manZeroNeg(machine,machine->regA);
 }
 
-static void jmpAND(machine_6502 *machine, AddrMode adm){
+static void jmpAND(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -514,7 +521,7 @@ static void jmpAND(machine_6502 *machine, AddrMode adm){
   manZeroNeg(machine,machine->regA);
 }
 
-static void jmpASL(machine_6502 *machine, AddrMode adm){
+static void jmpASL(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   if (isValue){
@@ -533,7 +540,7 @@ static void jmpASL(machine_6502 *machine, AddrMode adm){
   
 }
 
-static void jmpBIT(machine_6502 *machine, AddrMode adm){
+static void jmpBIT(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -550,7 +557,7 @@ static void jumpBranch(machine_6502 *machine, Bit16 offset){
     machine->regPC = machine->regPC + offset;
 }
 
-static void jmpBPL(machine_6502 *machine, AddrMode adm){
+static void jmpBPL(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -559,7 +566,7 @@ static void jmpBPL(machine_6502 *machine, AddrMode adm){
     
 }
 
-static void jmpBMI(machine_6502 *machine, AddrMode adm){
+static void jmpBMI(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -568,7 +575,7 @@ static void jmpBMI(machine_6502 *machine, AddrMode adm){
 
 }
 
-static void jmpBVC(machine_6502 *machine, AddrMode adm){
+static void jmpBVC(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -576,7 +583,7 @@ static void jmpBVC(machine_6502 *machine, AddrMode adm){
     jumpBranch(machine, ptr.addr);
 }
 
-static void jmpBVS(machine_6502 *machine, AddrMode adm){
+static void jmpBVS(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -584,7 +591,7 @@ static void jmpBVS(machine_6502 *machine, AddrMode adm){
     jumpBranch(machine, ptr.addr);
 }
 
-static void jmpBCC(machine_6502 *machine, AddrMode adm){
+static void jmpBCC(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -592,7 +599,7 @@ static void jmpBCC(machine_6502 *machine, AddrMode adm){
     jumpBranch(machine, ptr.addr);
 }
 
-static void jmpBCS(machine_6502 *machine, AddrMode adm){
+static void jmpBCS(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -600,7 +607,7 @@ static void jmpBCS(machine_6502 *machine, AddrMode adm){
     jumpBranch(machine, ptr.addr);
 }
 
-static void jmpBNE(machine_6502 *machine, AddrMode adm){
+static void jmpBNE(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -608,7 +615,7 @@ static void jmpBNE(machine_6502 *machine, AddrMode adm){
     jumpBranch(machine, ptr.addr);
 }
 
-static void jmpBEQ(machine_6502 *machine, AddrMode adm){
+static void jmpBEQ(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -621,28 +628,28 @@ static void doCompare(machine_6502 *machine, Bit16 reg, Pointer *ptr){
   manZeroNeg(machine,(reg - ptr->value));
 }
 
-static void jmpCMP(machine_6502 *machine, AddrMode adm){
+static void jmpCMP(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
   doCompare(machine,machine->regA,&ptr);
 }
 
-static void jmpCPX(machine_6502 *machine, AddrMode adm){
+static void jmpCPX(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
   doCompare(machine,machine->regX,&ptr);
 }
 
-static void jmpCPY(machine_6502 *machine, AddrMode adm){
+static void jmpCPY(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
   doCompare(machine,machine->regY,&ptr);
 }
 
-static void jmpDEC(machine_6502 *machine, AddrMode adm){
+static void jmpDEC(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -654,7 +661,7 @@ static void jmpDEC(machine_6502 *machine, AddrMode adm){
   manZeroNeg(machine,ptr.value);
 }
 
-static void jmpEOR(machine_6502 *machine, AddrMode adm){
+static void jmpEOR(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -662,35 +669,35 @@ static void jmpEOR(machine_6502 *machine, AddrMode adm){
   manZeroNeg(machine, machine->regA);
 }
 
-static void jmpCLC(machine_6502 *machine, AddrMode adm){
+static void jmpCLC(machine_6502 *machine, m6502_AddrMode adm){
   machine->regP = setBit(machine->regP, CARRY_FL, 0);
 }
 
-static void jmpSEC(machine_6502 *machine, AddrMode adm){
+static void jmpSEC(machine_6502 *machine, m6502_AddrMode adm){
   machine->regP = setBit(machine->regP, CARRY_FL, 1);
 }
 
-static void jmpCLI(machine_6502 *machine, AddrMode adm){
+static void jmpCLI(machine_6502 *machine, m6502_AddrMode adm){
   machine->regP = setBit(machine->regP, INTERRUPT_FL, 0);
 }
 
-static void jmpSEI(machine_6502 *machine, AddrMode adm){
+static void jmpSEI(machine_6502 *machine, m6502_AddrMode adm){
   machine->regP = setBit(machine->regP, INTERRUPT_FL, 1);
 }
 
-static void jmpCLV(machine_6502 *machine, AddrMode adm){
+static void jmpCLV(machine_6502 *machine, m6502_AddrMode adm){
   machine->regP = setBit(machine->regP, OVERFLOW_FL, 0);
 }
 
-static void jmpCLD(machine_6502 *machine, AddrMode adm){
+static void jmpCLD(machine_6502 *machine, m6502_AddrMode adm){
   machine->regP = setBit(machine->regP, DECIMAL_FL, 0);
 }
 
-static void jmpSED(machine_6502 *machine, AddrMode adm){
+static void jmpSED(machine_6502 *machine, m6502_AddrMode adm){
   machine->regP = setBit(machine->regP, DECIMAL_FL, 1);
 }
 
-static void jmpINC(machine_6502 *machine, AddrMode adm){
+static void jmpINC(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -699,14 +706,14 @@ static void jmpINC(machine_6502 *machine, AddrMode adm){
   manZeroNeg(machine,ptr.value);
 }
 
-static void jmpJMP(machine_6502 *machine, AddrMode adm){
+static void jmpJMP(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
   machine->regPC = ptr.addr;
 }
 
-static void jmpJSR(machine_6502 *machine, AddrMode adm){
+static void jmpJSR(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   /* Move past the 2 byte parameter. JSR is always followed by
      absolute address. */
@@ -718,7 +725,7 @@ static void jmpJSR(machine_6502 *machine, AddrMode adm){
   machine->regPC = ptr.addr;  
 }
 
-static void jmpLDA(machine_6502 *machine, AddrMode adm){
+static void jmpLDA(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -726,7 +733,7 @@ static void jmpLDA(machine_6502 *machine, AddrMode adm){
   manZeroNeg(machine, machine->regA);
 }
 
-static void jmpLDX(machine_6502 *machine, AddrMode adm){
+static void jmpLDX(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -734,7 +741,7 @@ static void jmpLDX(machine_6502 *machine, AddrMode adm){
   manZeroNeg(machine, machine->regX);
 }
 
-static void jmpLDY(machine_6502 *machine, AddrMode adm){
+static void jmpLDY(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -742,7 +749,7 @@ static void jmpLDY(machine_6502 *machine, AddrMode adm){
   manZeroNeg(machine, machine->regY);
 }
 
-static void jmpLSR(machine_6502 *machine, AddrMode adm){
+static void jmpLSR(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   if (isValue){
@@ -764,11 +771,11 @@ static void jmpLSR(machine_6502 *machine, AddrMode adm){
   }
 }
 
-static void jmpNOP(machine_6502 *machine, AddrMode adm){
+static void jmpNOP(machine_6502 *machine, m6502_AddrMode adm){
   /* no operation */
 }
 
-static void jmpORA(machine_6502 *machine, AddrMode adm){
+static void jmpORA(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -776,17 +783,17 @@ static void jmpORA(machine_6502 *machine, AddrMode adm){
   manZeroNeg(machine,machine->regA);
 }
 
-static void jmpTAX(machine_6502 *machine, AddrMode adm){
+static void jmpTAX(machine_6502 *machine, m6502_AddrMode adm){
   machine->regX = machine->regA;
   manZeroNeg(machine,machine->regX);
 }
 
-static void jmpTXA(machine_6502 *machine, AddrMode adm){
+static void jmpTXA(machine_6502 *machine, m6502_AddrMode adm){
   machine->regA = machine->regX;
   manZeroNeg(machine,machine->regA);
 }
 
-static void jmpDEX(machine_6502 *machine, AddrMode adm){
+static void jmpDEX(machine_6502 *machine, m6502_AddrMode adm){
   if (machine->regX > 0)
     machine->regX--;
   else
@@ -794,23 +801,23 @@ static void jmpDEX(machine_6502 *machine, AddrMode adm){
   manZeroNeg(machine, machine->regX);
 }
 
-static void jmpINX(machine_6502 *machine, AddrMode adm){
+static void jmpINX(machine_6502 *machine, m6502_AddrMode adm){
   Bit16 value = machine->regX + 1;
   machine->regX = value & 0xFF;
   manZeroNeg(machine, machine->regX);
 }
 
-static void jmpTAY(machine_6502 *machine, AddrMode adm){
+static void jmpTAY(machine_6502 *machine, m6502_AddrMode adm){
   machine->regY = machine->regA;
   manZeroNeg(machine, machine->regY);
 }
 
-static void jmpTYA(machine_6502 *machine, AddrMode adm){
+static void jmpTYA(machine_6502 *machine, m6502_AddrMode adm){
   machine->regA = machine->regY;
   manZeroNeg(machine, machine->regA);
 }
 
-static void jmpDEY(machine_6502 *machine, AddrMode adm){
+static void jmpDEY(machine_6502 *machine, m6502_AddrMode adm){
   if (machine->regY > 0)
     machine->regY--;
   else
@@ -818,13 +825,13 @@ static void jmpDEY(machine_6502 *machine, AddrMode adm){
   manZeroNeg(machine, machine->regY);
 }
 
-static void jmpINY(machine_6502 *machine, AddrMode adm){
+static void jmpINY(machine_6502 *machine, m6502_AddrMode adm){
   Bit16 value = machine->regY + 1;
   machine->regY = value & 0xff;
   manZeroNeg(machine, machine->regY);
 }
 
-static void jmpROR(machine_6502 *machine, AddrMode adm){
+static void jmpROR(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   Bit8 cf;
   BOOL isValue = getValue(machine, adm, &ptr);
@@ -849,7 +856,7 @@ static void jmpROR(machine_6502 *machine, AddrMode adm){
   }
 }
 
-static void jmpROL(machine_6502 *machine, AddrMode adm){
+static void jmpROL(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   Bit8 cf;
   BOOL isValue = getValue(machine, adm, &ptr);
@@ -874,12 +881,12 @@ static void jmpROL(machine_6502 *machine, AddrMode adm){
   }
 }
 
-static void jmpRTI(machine_6502 *machine, AddrMode adm){
+static void jmpRTI(machine_6502 *machine, m6502_AddrMode adm){
   machine->regP = stackPop(machine);
   machine->regPC = stackPop(machine);
 }
 
-static void jmpRTS(machine_6502 *machine, AddrMode adm){
+static void jmpRTS(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   Bit16 nr = stackPop(machine);
@@ -888,7 +895,7 @@ static void jmpRTS(machine_6502 *machine, AddrMode adm){
   machine->regPC = (nl << 8) | nr;
 }
 
-static void jmpSBC(machine_6502 *machine, AddrMode adm){
+static void jmpSBC(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   /*Bit8 vflag;*/
   Bit8 c = bitOn(machine->regP, CARRY_FL);
@@ -944,48 +951,48 @@ static void jmpSBC(machine_6502 *machine, AddrMode adm){
   manZeroNeg(machine,machine->regA);
 }
 
-static void jmpSTA(machine_6502 *machine, AddrMode adm){
+static void jmpSTA(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
   memStoreByte(machine,ptr.addr,machine->regA);
 }
 
-static void jmpTXS(machine_6502 *machine, AddrMode adm){
+static void jmpTXS(machine_6502 *machine, m6502_AddrMode adm){
   stackPush(machine,machine->regX);
 }
 
-static void jmpTSX(machine_6502 *machine, AddrMode adm){
+static void jmpTSX(machine_6502 *machine, m6502_AddrMode adm){
   machine->regX = stackPop(machine);
   manZeroNeg(machine, machine->regX);
 }
 
-static void jmpPHA(machine_6502 *machine, AddrMode adm){
+static void jmpPHA(machine_6502 *machine, m6502_AddrMode adm){
   stackPush(machine, machine->regA);
 }
 
-static void jmpPLA(machine_6502 *machine, AddrMode adm){
+static void jmpPLA(machine_6502 *machine, m6502_AddrMode adm){
   machine->regA = stackPop(machine);
   manZeroNeg(machine, machine->regA);
 }
 
-static void jmpPHP(machine_6502 *machine, AddrMode adm){
+static void jmpPHP(machine_6502 *machine, m6502_AddrMode adm){
   stackPush(machine,machine->regP);
 }
 
-static void jmpPLP(machine_6502 *machine, AddrMode adm){
+static void jmpPLP(machine_6502 *machine, m6502_AddrMode adm){
   machine->regP = stackPop(machine);
   machine->regP = setBit(machine->regP, FUTURE_FL, 1);
 }
 
-static void jmpSTX(machine_6502 *machine, AddrMode adm){
+static void jmpSTX(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
   memStoreByte(machine,ptr.addr,machine->regX);
 }
 
-static void jmpSTY(machine_6502 *machine, AddrMode adm){
+static void jmpSTY(machine_6502 *machine, m6502_AddrMode adm){
   Pointer ptr;
   BOOL isValue = getValue(machine, adm, &ptr);
   warnValue(isValue);
@@ -995,7 +1002,7 @@ static void jmpSTY(machine_6502 *machine, AddrMode adm){
 
 
 /* OPCODES */
-static void assignOpCodes(Opcodes *opcodes){
+static void assignOpCodes(m6502_Opcodes *opcodes){
 
  #define SETOP(num, _name, _Imm, _ZP, _ZPX, _ZPY, _ABS, _ABSX, _ABSY, _INDX, _INDY, _SNGL, _BRA, _func) \
 {opcodes[num].name[3] = '\0'; \
@@ -1117,7 +1124,7 @@ static void buildIndexCache(machine_6502 *machine){
 /* opIndex() - Search the opcode table for a match. If found return
    the index into the optable and the address mode of the opcode. If
    the opcode is not found then return -1. */
-static int opIndex(machine_6502 *machine, Bit8 opcode, AddrMode *adm){ 
+static int opIndex(machine_6502 *machine, Bit8 opcode, m6502_AddrMode *adm){ 
   /* XXX could catch errors by setting a addressmode of error or something */
   *adm = machine->opcache[opcode].adm;
   return machine->opcache[opcode].index;
@@ -1663,6 +1670,7 @@ static AsmLine *parseAssembly(machine_6502 *machine, BOOL *codeOk, const char *c
   return listp;
 }
     
+#ifdef READ_FILES
 /* fileToBuffer() - Allocates a buffer and loads all of the file into memory. */
 static char *fileToBuffer(const char *filename){
   const int defaultSize = 1024;
@@ -1695,6 +1703,7 @@ static char *fileToBuffer(const char *filename){
   buffer[i+1] = '\0';
   return buffer;
 }
+#endif
 
 
 /* Routines */
@@ -1724,7 +1733,7 @@ static void reset(machine_6502 *machine){
 }
 
 /* hexDump() - Dump the memory to output */
-void hexDump(machine_6502 *machine, Bit16 start, Bit16 numbytes, FILE *output){
+void m6502_hexDump(machine_6502 *machine, Bit16 start, Bit16 numbytes, FILE *output){
   Bit32 address;
   Bit32 i;
   for( i = 0; i < numbytes; i++){
@@ -1756,7 +1765,7 @@ void hexDump(machine_6502 *machine, Bit16 start, Bit16 numbytes, FILE *output){
 /*   fclose(ofp); */
 /* } */
 
-static BOOL translate(Opcodes *op,Param *param, machine_6502 *machine){
+static BOOL translate(m6502_Opcodes *op,Param *param, machine_6502 *machine){
    switch(param->type){
     case SINGLE:
       if (op->SNGL)
@@ -1940,7 +1949,7 @@ static BOOL compileLine(AsmLine *asmline, void *args){
   else{
     int i;
     char *command = asmline->command;
-    Opcodes op;
+    m6502_Opcodes op;
     for(i = 0; i < NUM_OPCODES; i++){
       if (strcmp(machine->opcodes[i].name, command) == 0){
 	op = machine->opcodes[i];
@@ -2069,7 +2078,7 @@ static BOOL compileCode(machine_6502 *machine, const char *code){
 
 static void execute(machine_6502 *machine){
   Bit8 opcode;
-  AddrMode adm;
+  m6502_AddrMode adm;
   int opidx;
 
   if(!machine->codeRunning) return;
@@ -2090,7 +2099,7 @@ static void execute(machine_6502 *machine){
   }
 }
 
-machine_6502 *build6502(){
+machine_6502 *m6502_build(void){
   machine_6502 *machine;
   machine = ecalloc(1, sizeof(machine_6502));
   assignOpCodes(machine->opcodes);
@@ -2099,14 +2108,14 @@ machine_6502 *build6502(){
   return machine;
 }
 
-void destroy6502(machine_6502 *machine){
+void m6502_destroy6502(machine_6502 *machine){
   free(machine);
   machine = NULL;
 }
 
-void trace(machine_6502 *machine, FILE *output){
+void m6502_trace(machine_6502 *machine, FILE *output){
   Bit8 opcode = memReadByte(machine,machine->regPC);
-  AddrMode adm;
+  m6502_AddrMode adm;
   Pointer ptr;
   int opidx = opIndex(machine,opcode,&adm);
   int stacksz = STACK_TOP - machine->regSP;
@@ -2132,15 +2141,16 @@ void trace(machine_6502 *machine, FILE *output){
       fprintf(output,"\n");
   }
   fprintf(output,"STACK:");
-  hexDump(machine,(STACK_TOP - stacksz) + 1, stacksz, output);
+  m6502_hexDump(machine,(STACK_TOP - stacksz) + 1, stacksz, output);
 }
 
+#if 0
 void disassemble(machine_6502 *machine, FILE *output){
   /* Read the opcode
      increment the program counter
      print the opcode
      loop until end of program. */
-  AddrMode adm;
+  m6502_AddrMode adm;
   Bit16 addr;
   Bit8 opcode;
   int opidx;
@@ -2161,9 +2171,11 @@ void disassemble(machine_6502 *machine, FILE *output){
   free(mem);
   machine->regPC = opc;
 }
+#endif
 
 
-void eval_file(machine_6502 *machine, const char *filename, Plotter plot, void *plotterState){
+#ifdef READ_FILES
+void m6502_eval_file(machine_6502 *machine, const char *filename, m6502_Plotter plot, void *plotterState){
   char *code = NULL;
 
   machine->plot = plot;
@@ -2186,7 +2198,7 @@ void eval_file(machine_6502 *machine, const char *filename, Plotter plot, void *
   }while(machine->codeRunning);
 }
 
-void start_eval_file(machine_6502 *machine, const char *filename, Plotter plot, void *plotterState){
+void m6502_start_eval_file(machine_6502 *machine, const char *filename, m6502_Plotter plot, void *plotterState){
   char *code = NULL;
   reset(machine);
 
@@ -2203,9 +2215,10 @@ void start_eval_file(machine_6502 *machine, const char *filename, Plotter plot, 
   machine->codeRunning = TRUE;
   execute(machine);
 }
+#endif /* READ_FILES */
 
-void start_eval_string(machine_6502 *machine, const char *code,
-		       Plotter plot, void *plotterState){
+void m6502_start_eval_string(machine_6502 *machine, const char *code,
+		       m6502_Plotter plot, void *plotterState){
   reset(machine);
 
   machine->plot = plot;
@@ -2239,7 +2252,7 @@ void start_eval_string(machine_6502 *machine, const char *code,
 /*   execute(machine); */
 /* } */
 
-void next_eval(machine_6502 *machine, int insno){
+void m6502_next_eval(machine_6502 *machine, int insno){
   int i = 0;
   for (i = 1; i < insno; i++){
     if (machine->codeRunning){

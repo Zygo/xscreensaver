@@ -600,6 +600,9 @@ static void
 noseguy_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  st->Width = w + 2;
+  st->Height = h + 2;
 }
 
 static Bool

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2011 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2012 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -18,7 +18,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.7 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my $version = q{ $Revision: 1.8 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
 
 my $verbose = 0;
 
@@ -111,7 +111,7 @@ sub munge_ad($) {
     open (IN, "<$xml") || error ("$xml: $!");
     while (<IN>) { $b .= $_; }
     close IN;
-    my ($name) = ($b =~ m@<screensaver[^<>]*\b_label=\"([^<>\"]+)\">@s);
+    my ($name) = ($b =~ m@<screensaver[^<>]*\b_label=\"([^<>\"]+)\"@s);
     error ("$xml: no name") unless $name;
 
     my $name2 = lc($name);

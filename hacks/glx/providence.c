@@ -782,9 +782,7 @@ ENTRYPOINT void draw_providence(ModeInfo * mi)
   /* rotate providence */
   glTranslatef(0.0, 0.0, mp->camera_z + sin(mp->theta/4.0));
   glRotatef(10.0+20.0*sin(mp->theta/2.0), 1.0, 0.0, 0.0);
-  glRotatef(-current_device_rotation(), 0, 0, 1);
   gltrackball_rotate(mp->trackball);
-  glRotatef(current_device_rotation(), 0, 0, 1);
   glRotatef(mp->theta * 180.0 / Pi, 0.0, -1.0, 0.0);
 
   /* draw providence */

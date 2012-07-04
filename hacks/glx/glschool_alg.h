@@ -107,20 +107,20 @@ typedef struct {
 #define SCHOOL_FISHES(s)		((s)->theFish)
 #define SCHOOL_IFISH(s,i)		((s)->theFish[i])
 
-extern void		initFishes(School *);
-extern void		initFish(Fish *, double *, double *);
+extern void		glschool_initFishes(School *);
+extern void		glschool_initFish(Fish *, double *, double *);
 
-extern void		applyMovements(School *);
-extern void		applyFishMovements(Fish *, BBox *, double, double, double);
+extern void		glschool_applyMovements(School *);
+/* extern void		applyFishMovements(Fish *, BBox *, double, double, double); */
 
-extern void		freeSchool(School *);
-extern School		*initSchool(int, double, double, double, double, double, double, double, double, double, double, double);
+extern void		glschool_freeSchool(School *);
+extern School		*glschool_initSchool(int, double, double, double, double, double, double, double, double, double, double, double);
 
-extern void		newGoal(School *);
-extern void		setBBox(School *, double, double, double, double, double, double);
+extern void		glschool_newGoal(School *);
+extern void		glschool_setBBox(School *, double, double, double, double, double, double);
 
-extern void		computeAccelerations(School *);
-extern double		computeNormalAndThetaToPlusZ(double *, double *);
-int			computeGroupVectors(School *, Fish *, double *, double *, double *);
+extern void		glschool_computeAccelerations(School *);
+extern double		glschool_computeNormalAndThetaToPlusZ(double *, double *);
+int			glschool_computeGroupVectors(School *, Fish *, double *, double *, double *);
 
 #endif /* __GLSCHOOL_ALG_H__ */

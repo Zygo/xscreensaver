@@ -27,14 +27,14 @@ static GLfloat view_scale = 4.0;
 
 
 stonerview_state *
-init_view(int wireframe_p, int transparent_p)
+stonerview_init_view(int wireframe_p, int transparent_p)
 {
   stonerview_state *st = (stonerview_state *) calloc (1, sizeof(*st));
 
   st->wireframe = wireframe_p;
   st->transparent = transparent_p;
   st->num_els = NUM_ELS;
-  st->elist = (elem_t *) calloc (st->num_els, sizeof(*st->elist));
+  st->elist = (stonerview_elem_t *) calloc (st->num_els, sizeof(*st->elist));
 
   st->osctail = &st->oscroot;
 
@@ -59,7 +59,8 @@ init_view(int wireframe_p, int transparent_p)
 }
 
 /* callback: draw everything */
-void win_draw(stonerview_state *st)
+void
+stonerview_win_draw(stonerview_state *st)
 {
   int ix;
   static const GLfloat white[] = { 1.0, 1.0, 1.0, 1.0 };
@@ -78,7 +79,7 @@ void win_draw(stonerview_state *st)
   glShadeModel(GL_FLAT);
 
   for (ix=0; ix < st->num_els; ix++) {
-    elem_t *el = &st->elist[ix];
+    stonerview_elem_t *el = &st->elist[ix];
 
     glNormal3f(0.0, 0.0, 1.0);
 
@@ -106,7 +107,8 @@ void win_draw(stonerview_state *st)
   glPopMatrix();
 }
 
-void win_release(stonerview_state *st)
+void
+stonerview_win_release(stonerview_state *st)
 {
   free (st->elist);
   /*free (st->oscroot);  -- #### how do we free this? */

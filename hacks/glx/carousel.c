@@ -516,13 +516,23 @@ loading_msg (ModeInfo *mi, int n)
   glMatrixMode(GL_PROJECTION);
   glPushMatrix();
   glLoadIdentity();
-  glRotatef(current_device_rotation(), 0, 0, 1);
 
   glMatrixMode(GL_MODELVIEW);
   glPushMatrix();
   glLoadIdentity();
-  glOrtho(0, MI_WIDTH(mi), 0, MI_HEIGHT(mi), -1, 1);
 
+  {
+    double rot = current_device_rotation();
+    glRotatef(rot, 0, 0, 1);
+    if ((rot >  45 && rot <  135) ||
+        (rot < -45 && rot > -135))
+      {
+        GLfloat s = MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi);
+        glScalef (s, 1/s, 1);
+      }
+  }
+
+  glOrtho(0, MI_WIDTH(mi), 0, MI_HEIGHT(mi), -1, 1);
   glTranslatef ((MI_WIDTH(mi)  - ss->loading_sw) / 2,
                 (MI_HEIGHT(mi) - ss->loading_sh) / 2,
                 0);
@@ -833,6 +843,8 @@ draw_carousel (ModeInfo *mi)
 
   glPushMatrix();
 
+  glRotatef(current_device_rotation(), 0, 0, 1);
+
 
   /* Run the startup "un-shrink" animation.
    */
@@ -868,7 +880,6 @@ draw_carousel (ModeInfo *mi)
   {
     double x, y, z;
     gltrackball_rotate (ss->trackball);
-    glRotatef(current_device_rotation(), 0, 0, 1);
 
     /* Tilt the tube up or down by up to 30 degrees */
     get_position (ss->rot, &x, &y, &z, !ss->button_down_p);

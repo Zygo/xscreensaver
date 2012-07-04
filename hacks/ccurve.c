@@ -813,6 +813,14 @@ static void
 ccurve_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  XWindowAttributes xgwa;
+  st->width = w;
+  st->height = h;
+  XGetWindowAttributes (st->dpy, st->window, &xgwa);
+  XFreePixmap (dpy, st->pixmap);
+  st->pixmap = XCreatePixmap (st->dpy, st->window, st->width, st->height,
+                              xgwa.depth);
 }
 
 static Bool

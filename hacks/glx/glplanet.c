@@ -589,7 +589,10 @@ draw_planet (ModeInfo * mi)
                (y - 0.5) * 15,
                (z - 0.5) * 8);
 
+  /* Do it twice because we don't track the device's orientation. */
+  glRotatef( current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (gp->trackball);
+  glRotatef(-current_device_rotation(), 0, 0, 1);
 
   glRotatef (90,1,0,0);
 

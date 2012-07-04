@@ -62,6 +62,11 @@
 # include <X11/keysymdef.h>
 #endif
 
+#ifndef HAVE_JWZGLES
+# define HAVE_TESS
+#endif
+
+
 #ifdef USE_GL /* whole file */
 
 typedef struct {
@@ -381,13 +386,16 @@ new_label (ModeInfo *mi)
 }
 
 
+#ifdef HAVE_TESS
 static void
 tess_error (GLenum errorCode)
 {
   fprintf (stderr, "%s: tesselation error: %s\n",
            progname, gluErrorString(errorCode));
-  exit (0);
+  abort();
 }
+#endif /* HAVE_TESS */
+
 
 static void
 new_polyhedron (ModeInfo *mi)
@@ -400,11 +408,13 @@ new_polyhedron (ModeInfo *mi)
   /* Use the GLU polygon tesselator so that nonconvex faces are displayed
      correctly (e.g., for the "pentagrammic concave deltohedron").
    */
+# ifdef HAVE_TESS
   GLUtesselator *tobj = gluNewTess();
   gluTessCallback (tobj, GLU_TESS_BEGIN,  (void (*) (void)) &glBegin);
   gluTessCallback (tobj, GLU_TESS_END,    (void (*) (void)) &glEnd);
   gluTessCallback (tobj, GLU_TESS_VERTEX, (void (*) (void)) &glVertex3dv);
   gluTessCallback (tobj, GLU_TESS_ERROR,  (void (*) (void)) &tess_error);
+# endif /* HAVE_TESS */
 
   mi->polygon_count = 0;
 
@@ -431,10 +441,20 @@ new_polyhedron (ModeInfo *mi)
   glNewList (bp->object_list, GL_COMPILE);
   if (bp->which == bp->npolyhedra-1)
     {
+      GLfloat bcolor[4];
+      bcolor[0] = bp->colors[0].red   / 65536.0;
+      bcolor[1] = bp->colors[0].green / 65536.0;
+      bcolor[2] = bp->colors[0].blue  / 65536.0;
+      bcolor[3] = 1.0;
+      if (wire)
+        glColor3f (0, 1, 0);
+      else
+        glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, bcolor);
+
       glScalef (0.8, 0.8, 0.8);
       p->nfaces = unit_teapot (6, wire);
-      p->nedges = p->nfaces * 2;           /* #### is this right? */
-      p->npoints = p->nfaces / 3;          /* #### is this right? */
+      p->nedges = p->nfaces * 3 / 2;
+      p->npoints = p->nfaces * 3;
       p->logical_faces = p->nfaces;
       p->logical_vertices = p->npoints;
     }
@@ -455,12 +475,13 @@ new_polyhedron (ModeInfo *mi)
               bcolor[0] = bp->colors[f->color].red   / 65536.0;
               bcolor[1] = bp->colors[f->color].green / 65536.0;
               bcolor[2] = bp->colors[f->color].blue  / 65536.0;
-              bcolor[2] = 1.0;
+              bcolor[3] = 1.0;
               glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, bcolor);
             }
 
           kludge_normal (f->npoints, f->points, p->points);
       
+# ifdef HAVE_TESS
           gluTessBeginPolygon (tobj, 0);
           gluTessBeginContour (tobj);
           for (j = 0; j < f->npoints; j++)
@@ -470,12 +491,26 @@ new_polyhedron (ModeInfo *mi)
             }
           gluTessEndContour (tobj);
           gluTessEndPolygon (tobj);
+# else  /* !HAVE_TESS */
+          glBegin (wire ? GL_LINE_LOOP :
+                   f->npoints == 3 ? GL_TRIANGLES :
+                   f->npoints == 4 ? GL_QUADS :
+                   GL_POLYGON);
+          for (j = 0; j < f->npoints; j++)
+            {
+              point *pp = &p->points[f->points[j]];
+              glVertex3f (pp->x, pp->y, pp->z);
+            }
+          glEnd();
+# endif /* !HAVE_TESS */
         }
     }
   glEndList ();
 
   mi->polygon_count += p->nfaces;
+# ifdef HAVE_TESS
   gluDeleteTess (tobj);
+# endif
 }
 
 
@@ -676,7 +711,10 @@ draw_polyhedra (ModeInfo *mi)
                  (y - 0.5) * 8,
                  (z - 0.5) * 15);
 
+    /* Do it twice because we don't track the device's orientation. */
+    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (bp->trackball);
+    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);
