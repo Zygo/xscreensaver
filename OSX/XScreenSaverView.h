@@ -52,6 +52,11 @@
 #endif // USE_IPHONE
 
 
+#ifdef USE_IPHONE
+# define USE_BACKBUFFER  /* must be in sync with jwxyz.h */
+#endif
+
+
 @interface XScreenSaverView : ScreenSaverView
 # ifdef USE_IPHONE
 			      <UIAlertViewDelegate>
@@ -85,13 +90,14 @@
   NSSize rot_current_size;
   GLfloat rot_current_angle;
 
-  CGContextRef backbuffer;
-  NSSize backbuffer_size;
-
   NSTimer *crash_timer;
 
 # endif // USE_IPHONE
 
+# ifdef USE_BACKBUFFER
+  CGContextRef backbuffer;
+  CGSize backbuffer_size;
+# endif // USE_BACKBUFFER
 }
 
 - (id)initWithFrame:(NSRect)frame saverName:(NSString*)n isPreview:(BOOL)p;
@@ -104,7 +110,11 @@
 #ifdef USE_IPHONE
 - (void)didRotate:(NSNotification *)notification;
 - (void)setScreenLocked:(BOOL)locked;
-- (void)createBackbuffer;
 #endif // USE_IPHONE
+
+#ifdef USE_BACKBUFFER
+- (void)initLayer;
+- (void)createBackbuffer;
+#endif // USE_BACKBUFFER
 
 @end

@@ -22,6 +22,12 @@
 #import "xlockmoreI.h"
 #import "jwxyz-timers.h"
 
+#ifdef USE_IPHONE
+# include "ios_function_tables.h"
+static NSDictionary *function_tables = 0;
+#endif
+
+
 /* Garbage collection only exists if we are being compiled against the 
    10.6 SDK or newer, not if we are building against the 10.4 SDK.
  */
@@ -118,16 +124,29 @@ int mono_p = 0;
   if (! name)
     name = [[path lastPathComponent] stringByDeletingPathExtension];
 
-  NSString *table_name = [[[name lowercaseString]
-                            stringByReplacingOccurrencesOfString:@" "
-                            withString:@""]
-                           stringByAppendingString:
-                             @"_xscreensaver_function_table"];
+  name = [[name lowercaseString]
+           stringByReplacingOccurrencesOfString:@" "
+           withString:@""];
+
+# ifndef USE_IPHONE
+  // CFBundleGetDataPointerForName doesn't work in "Archive" builds.
+  // I'm guessing that symbol-stripping is mandatory.  Fuck.
+  NSString *table_name = [name stringByAppendingString:
+                                 @"_xscreensaver_function_table"];
   void *addr = CFBundleGetDataPointerForName (cfb, (CFStringRef) table_name);
   CFRelease (cfb);
 
   if (! addr)
     NSLog (@"no symbol \"%@\" for \"%@\"", table_name, path);
+
+# else  // USE_IPHONE
+  // Remember: any time you add a new saver to the iOS app,
+  // manually run "make ios_function_tables.h"!
+  if (! function_tables)
+    function_tables = [make_function_tables_dict() retain];
+  NSValue *v = [function_tables objectForKey: name];
+  void *addr = v ? [v pointerValue] : 0;
+# endif // USE_IPHONE
 
   return (struct xscreensaver_function_table *) addr;
 }
@@ -354,15 +373,27 @@ double_time (void)
 
   next_frame_time = 0;
   
-# ifdef USE_IPHONE
+# ifdef USE_BACKBUFFER
   [self createBackbuffer];
+  [self initLayer];
+# endif
 
+# ifdef USE_IPHONE
   // So we can tell when we're docked.
   [UIDevice currentDevice].batteryMonitoringEnabled = YES;
 # endif // USE_IPHONE
 
   return self;
 }
+
+- (void) initLayer
+{
+# ifndef USE_IPHONE
+  [self setLayer: [CALayer layer]];
+  [self setWantsLayer: YES];
+# endif
+}
+
 
 - (id) initWithFrame:(NSRect)frame isPreview:(BOOL)p
 {
@@ -377,7 +408,7 @@ double_time (void)
   if (xdpy)
     jwxyz_free_display (xdpy);
 
-# ifdef USE_IPHONE
+# ifdef USE_BACKBUFFER
   if (backbuffer)
     CGContextRelease (backbuffer);
 # endif
@@ -518,47 +549,30 @@ screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
   fps_draw (fpst);
 }
 
+
 #ifdef USE_IPHONE
 
-/* Create a bitmap context into which we render everything.
+/* On iPhones with Retina displays, we can draw the savers in "real"
+   pixels, and that works great.  The 320x480 "point" screen is really
+   a 640x960 *pixel* screen.  However, Retina iPads have 768x1024
+   point screens which are 1536x2048 pixels, and apparently that's
+   enough pixels that copying those bits to the screen is slow.  Like,
+   drops us from 15fps to 7fps.  So, on Retina iPads, we don't draw in
+   real pixels.  This will probably make the savers look better
+   anyway, since that's a higher resolution than most desktop monitors
+   have even today.  (This is only true for X11 programs, not GL 
+   programs.  Those are fine at full rez.)
  */
-- (void) createBackbuffer
+- (CGFloat) hackedContentScaleFactor
 {
-  CGContextRef ob = backbuffer;
-  NSSize osize = backbuffer_size;
-
-  CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
-  double s = self.contentScaleFactor;
-  backbuffer_size.width  = (int) (s * rot_current_size.width);
-  backbuffer_size.height = (int) (s * rot_current_size.height);
-  backbuffer = CGBitmapContextCreate (NULL,
-                                      backbuffer_size.width,
-                                      backbuffer_size.height,
-                                      8, 
-                                      backbuffer_size.width * 4,
-                                      cs,
-                                      kCGImageAlphaPremultipliedLast);
-  NSAssert (backbuffer, @"unable to allocate back buffer");
-  CGColorSpaceRelease (cs);
-
-  // Clear it.
-  CGContextSetGrayFillColor (backbuffer, 0, 1);
-  CGRect r = CGRectZero;
-  r.size = backbuffer_size;
-  CGContextFillRect (backbuffer, r);
-
-  if (ob) {
-    // Restore old bits, as much as possible, to the X11 upper left origin.
-    NSRect rect;
-    rect.origin.x = 0;
-    rect.origin.y = (backbuffer_size.height - osize.height);
-    rect.size  = osize;
-    CGImageRef img = CGBitmapContextCreateImage (ob);
-    CGContextDrawImage (backbuffer, rect, img);
-    CGImageRelease (img);
-    CGContextRelease (ob);
-  }
+  GLfloat s = [self contentScaleFactor];
+  CGRect frame = [self bounds];
+  if (frame.size.width  >= 1024 ||
+      frame.size.height >= 1024)
+    s = 1;
+  return s;
 }
+
 
 static GLfloat _global_rot_current_angle_kludge;
 
@@ -614,11 +628,11 @@ double current_device_rotation (void)
 
 #   undef CLAMP180
 
-  double s = self.contentScaleFactor;
+  double s = [self hackedContentScaleFactor];
   if (((int) backbuffer_size.width  != (int) (s * rot_current_size.width) ||
        (int) backbuffer_size.height != (int) (s * rot_current_size.height))
 /*      && rotation_ratio == -1*/)
-    [self setFrame:[self frame]];
+    [self resize_x11];
 }
 
 
@@ -651,6 +665,93 @@ double current_device_rotation (void)
 #endif // USE_IPHONE
 
 
+#ifdef USE_BACKBUFFER
+
+/* Create a bitmap context into which we render everything.
+   If the desired size has changed, re-created it.
+ */
+- (void) createBackbuffer
+{
+# ifdef USE_IPHONE
+  double s = [self hackedContentScaleFactor];
+  int new_w = s * rot_current_size.width;
+  int new_h = s * rot_current_size.height;
+# else
+  int new_w = [self bounds].size.width;
+  int new_h = [self bounds].size.height;
+# endif
+
+  if (backbuffer &&
+      backbuffer_size.width  == new_w &&
+      backbuffer_size.height == new_h)
+    return;
+
+  CGSize osize = backbuffer_size;
+  CGContextRef ob = backbuffer;
+
+  backbuffer_size.width  = new_w;
+  backbuffer_size.height = new_h;
+
+  CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
+  backbuffer = CGBitmapContextCreate (NULL,
+                                      backbuffer_size.width,
+                                      backbuffer_size.height,
+                                      8, 
+                                      backbuffer_size.width * 4,
+                                      cs,
+                                      kCGImageAlphaPremultipliedLast);
+  CGColorSpaceRelease (cs);
+  NSAssert (backbuffer, @"unable to allocate back buffer");
+
+  // Clear it.
+  CGRect r;
+  r.origin.x = r.origin.y = 0;
+  r.size = backbuffer_size;
+  CGContextSetGrayFillColor (backbuffer, 0, 1);
+  CGContextFillRect (backbuffer, r);
+
+  if (ob) {
+    // Restore old bits, as much as possible, to the X11 upper left origin.
+    CGRect rect;
+    rect.origin.x = 0;
+    rect.origin.y = (backbuffer_size.height - osize.height);
+    rect.size  = osize;
+    CGImageRef img = CGBitmapContextCreateImage (ob);
+    CGContextDrawImage (backbuffer, rect, img);
+    CGImageRelease (img);
+    CGContextRelease (ob);
+  }
+}
+
+#endif // USE_BACKBUFFER
+
+
+/* Inform X11 that the size of our window has changed.
+ */
+- (void) resize_x11
+{
+  if (!xwindow) return;  // early
+
+# ifdef USE_BACKBUFFER
+  [self createBackbuffer];
+  jwxyz_window_resized (xdpy, xwindow,
+                        0, 0,
+                        backbuffer_size.width, backbuffer_size.height,
+                        backbuffer);
+# else   // !USE_BACKBUFFER
+  NSRect r = [self frame];		// ignoring rotation is closer
+  r.size = [self bounds].size;		// to what XGetGeometry expects.
+  jwxyz_window_resized (xdpy, xwindow,
+                        r.origin.x, r.origin.y,
+                        r.size.width, r.size.height,
+                        0);
+# endif  // !USE_BACKBUFFER
+
+  // Next time render_x11 is called, run the saver's reshape_cb.
+  resized_p = YES;
+}
+
+
 - (void) render_x11
 {
 # ifdef USE_IPHONE
@@ -664,26 +765,14 @@ double current_device_rotation (void)
   if (!initted_p) {
 
     if (! xdpy) {
-# ifdef USE_IPHONE
+# ifdef USE_BACKBUFFER
       NSAssert (backbuffer, @"no back buffer");
       xdpy = jwxyz_make_display (self, backbuffer);
 # else
       xdpy = jwxyz_make_display (self, 0);
 # endif
       xwindow = XRootWindow (xdpy, 0);
-
-# ifdef USE_IPHONE
-      jwxyz_window_resized (xdpy, xwindow,
-                            0, 0,
-                            backbuffer_size.width, backbuffer_size.height,
-                            backbuffer);
-# else
-      NSRect r = [self frame];
-      jwxyz_window_resized (xdpy, xwindow,
-                            r.origin.x, r.origin.y,
-                            r.size.width, r.size.height,
-                            0);
-# endif
+      [self resize_x11];
     }
 
     if (!setup_p) {
@@ -786,14 +875,14 @@ double current_device_rotation (void)
     // Xlib drawing takes place under the animation timer.
     [self resizeContext];
     NSRect r;
-# ifndef USE_IPHONE
-    r = [self frame];
-# else  // USE_IPHONE
+# ifndef USE_BACKBUFFER
+    r = [self bounds];
+# else  // USE_BACKBUFFER
     r.origin.x = 0;
     r.origin.y = 0;
     r.size.width  = backbuffer_size.width;
     r.size.height = backbuffer_size.height;
-# endif // USE_IPHONE
+# endif // USE_BACKBUFFER
 
     xsft->reshape_cb (xdpy, xwindow, xdata, r.size.width, r.size.height);
     resized_p = NO;
@@ -865,11 +954,9 @@ double current_device_rotation (void)
 }
 
 
-/* On MacOS:   drawRect does nothing, and animateOneFrame renders.
-   On iOS GL:  drawRect does nothing, and animateOneFrame renders.
-   On iOS X11: drawRect renders, and animateOneFrame marks the view dirty.
+/* drawRect always does nothing, and animateOneFrame renders bits to the
+   screen.  This is (now) true of both X11 and GL on both MacOS and iOS.
  */
-#ifndef USE_IPHONE
 
 - (void)drawRect:(NSRect)rect
 {
@@ -879,78 +966,58 @@ double current_device_rotation (void)
     [super drawRect:rect];    // early: black.
 }
 
+
+#ifndef USE_BACKBUFFER
+
 - (void) animateOneFrame
 {
   [self render_x11];
 }
 
-#else  // USE_IPHONE
+#else  // USE_BACKBUFFER
 
-- (void)drawRect:(NSRect)rect
+- (void) animateOneFrame
 {
   // Render X11 into the backing store bitmap...
 
   NSAssert (backbuffer, @"no back buffer");
+
+# ifdef USE_IPHONE
   UIGraphicsPushContext (backbuffer);
+# endif
+
   [self render_x11];
+
+# ifdef USE_IPHONE
   UIGraphicsPopContext();
+# endif
 
-  // Then copy that bitmap to the screen.
+# ifdef USE_IPHONE
+  // Then compute the transformations for rotation.
 
-  CGContextRef cgc = UIGraphicsGetCurrentContext();
+  // The rotation origin for layer.affineTransform is in the center already.
+  CGAffineTransform t =
+    CGAffineTransformMakeRotation (rot_current_angle / (180.0 / M_PI));
 
-  // Mask it to only update the parts that are exposed.
-//  CGContextClipToRect (cgc, rect);
+  // Correct the aspect ratio.
+  CGRect frame = [self bounds];
+  double s = [self hackedContentScaleFactor];
+  t = CGAffineTransformScale(t,
+                             backbuffer_size.width  / (s * frame.size.width),
+                             backbuffer_size.height / (s * frame.size.height));
 
-  double s = self.contentScaleFactor;
-  CGRect frame = [self frame];
+  self.layer.affineTransform = t;
+# endif // USE_IPHONE
 
-  NSRect target;
-  target.size.width  = backbuffer_size.width;
-  target.size.height = backbuffer_size.height;
-  target.origin.x = (s * frame.size.width  - target.size.width)  / 2;
-  target.origin.y = (s * frame.size.height - target.size.height) / 2;
+  // Then copy that bitmap to the screen, by just stuffing it into
+  // the layer.  The superclass drawRect method will handle the rest.
 
-  target.origin.x    /= s;
-  target.origin.y    /= s;
-  target.size.width  /= s;
-  target.size.height /= s;
-
-  CGAffineTransform t = CGAffineTransformIdentity;
-
-  // Rotate around center
-  float cx = frame.size.width  / 2;
-  float cy = frame.size.height / 2;
-  t = CGAffineTransformTranslate (t, cx, cy);
-  t = CGAffineTransformRotate (t, -rot_current_angle / (180.0 / M_PI));
-  t = CGAffineTransformTranslate (t, -cx, -cy);
-
-  // Flip Y axis
-  t = CGAffineTransformConcat (t,
-        CGAffineTransformMake ( 1, 0, 0,
-                               -1, 0, frame.size.height));
-
-  // Clear background (visible in corners of screen during rotation)
-  if (rotation_ratio != -1) {
-    CGContextSetGrayFillColor (cgc, 0, 1);
-    CGContextFillRect (cgc, frame);
-  }
-
-  CGContextConcatCTM (cgc, t);
-
-  // Copy the backbuffer to the screen.
-  // Note that CGContextDrawImage measures in "points", not "pixels".
   CGImageRef img = CGBitmapContextCreateImage (backbuffer);
-  CGContextDrawImage (cgc, target, img);
+  self.layer.contents = (id)img;
   CGImageRelease (img);
 }
 
-- (void) animateOneFrame
-{
-  [self setNeedsDisplay];
-}
-
-#endif // !USE_IPHONE
+#endif // !USE_BACKBUFFER
 
 
 
@@ -958,26 +1025,8 @@ double current_device_rotation (void)
 {
   [super setFrame:newRect];
 
-# ifdef USE_IPHONE
-  [self createBackbuffer];
-# endif
-
-  resized_p = YES; // The reshape_cb runs in render_x11
-  if (xwindow) {   // inform Xlib that the window has changed now.
-# ifdef USE_IPHONE
-    NSAssert (backbuffer, @"no back buffer");
-    // The backbuffer is the rotated size, and so is the xwindow.
-    jwxyz_window_resized (xdpy, xwindow,
-                          0, 0,
-                          backbuffer_size.width, backbuffer_size.height,
-                          backbuffer);
-# else
-    jwxyz_window_resized (xdpy, xwindow,
-                          newRect.origin.x, newRect.origin.y,
-                          newRect.size.width, newRect.size.height,
-                          0);
-# endif
-  }
+  if (xwindow)     // inform Xlib that the window has changed now.
+    [self resize_x11];
 }
 
 
@@ -985,13 +1034,8 @@ double current_device_rotation (void)
 - (void) setFrameSize:(NSSize) newSize
 {
   [super setFrameSize:newSize];
-  resized_p = YES;
   if (xwindow)
-    jwxyz_window_resized (xdpy, xwindow,
-                          [self frame].origin.x,
-                          [self frame].origin.y,
-                          newSize.width, newSize.height,
-                          0); // backbuffer only on iPhone
+    [self resize_x11];
 }
 # endif // !USE_IPHONE
 
@@ -1085,12 +1129,12 @@ double current_device_rotation (void)
   NSPoint p = [[[e window] contentView] convertPoint:[e locationInWindow]
                                             toView:self];
 # ifdef USE_IPHONE
-  double s = self.contentScaleFactor;
+  double s = [self hackedContentScaleFactor];
 # else
   int s = 1;
 # endif
   int x = s * p.x;
-  int y = s * ([self frame].size.height - p.y);
+  int y = s * ([self bounds].size.height - p.y);
 
   xe.xany.type = type;
   switch (type) {
@@ -1258,12 +1302,12 @@ double current_device_rotation (void)
     [[n topViewController] becomeFirstResponder];
   }
 
-  // [self removeFromSuperview];
+  UIView *fader = [self superview];  // the "backgroundView" view is our parent
   [UIView animateWithDuration: 0.5
-          animations:^{ self.alpha = 0.0; }
+          animations:^{ fader.alpha = 0.0; }
           completion:^(BOOL finished) {
-	     [self removeFromSuperview];
-             self.alpha = 1.0;
+	     [fader removeFromSuperview];
+             fader.alpha = 1.0;
           }];
 }
 
@@ -1363,7 +1407,7 @@ double current_device_rotation (void)
   default:                                    angle_to = 0;   break;
   }
 
-  NSRect ff = [self frame];
+  NSRect ff = [self bounds];
 
   switch (orientation) {
   case UIDeviceOrientationLandscapeRight:	// from landscape
@@ -1402,6 +1446,9 @@ double current_device_rotation (void)
    because UIPanGestureRecognizer doesn't give us enough detail in its
    callbacks.
 
+   Currently we don't handle multi-touches (just the first touch) but
+   I'm leaving this comment here for future reference:
+
    In the simulator, multi-touch sequences look like this:
 
      touchesBegan [touchA, touchB]
@@ -1426,13 +1473,12 @@ double current_device_rotation (void)
    number of touchEnds matches the number of touchBegins.
  */
 
-static void
-rotate_mouse (int *x, int *y, int w, int h, int rot)
+- (void) rotateMouse:(int)rot x:(int*)x y:(int *)y w:(int)w h:(int)h
 {
-  int ox = *x, oy = *y;
-  if      (rot >  45 && rot <  135) { *x = oy;   *y = w-ox; }
-  else if (rot < -45 && rot > -135) { *x = h-oy; *y = ox;   }
-  else if (rot > 135 || rot < -135) { *x = w-ox; *y = h-oy; }
+  CGRect frame = [self bounds];		// Correct aspect ratio and scale.
+  double s = [self hackedContentScaleFactor];
+  *x *= (backbuffer_size.width  / frame.size.width)  / s;
+  *y *= (backbuffer_size.height / frame.size.height) / s;
 }
 
 
@@ -1460,10 +1506,11 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
   tap_time = 0;
 
   if (xsft->event_cb && xwindow) {
-    double s = self.contentScaleFactor;
+    double s = [self hackedContentScaleFactor];
     XEvent xe;
     memset (&xe, 0, sizeof(xe));
     int i = 0;
+    // #### 'frame' here or 'bounds'?
     int w = s * [self frame].size.width;
     int h = s * [self frame].size.height;
     for (UITouch *touch in touches) {
@@ -1473,7 +1520,8 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
       xe.xbutton.button = i + 1;
       xe.xbutton.x      = s * p.x;
       xe.xbutton.y      = s * p.y;
-      rotate_mouse (&xe.xbutton.x, &xe.xbutton.y, w, h, rot_current_angle);
+      [self rotateMouse: rot_current_angle
+            x: &xe.xbutton.x y: &xe.xbutton.y w: w h: h];
       jwxyz_mouse_moved (xdpy, xwindow, xe.xbutton.x, xe.xbutton.y);
 
       // Ignore return code: don't care whether the hack handled it.
@@ -1493,10 +1541,11 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
   if (xsft->event_cb && xwindow) {
-    double s = self.contentScaleFactor;
+    double s = [self hackedContentScaleFactor];
     XEvent xe;
     memset (&xe, 0, sizeof(xe));
     int i = 0;
+    // #### 'frame' here or 'bounds'?
     int w = s * [self frame].size.width;
     int h = s * [self frame].size.height;
     for (UITouch *touch in touches) {
@@ -1517,7 +1566,8 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
       xe.xbutton.button = i + 1;
       xe.xbutton.x      = s * p.x;
       xe.xbutton.y      = s * p.y;
-      rotate_mouse (&xe.xbutton.x, &xe.xbutton.y, w, h, rot_current_angle);
+      [self rotateMouse: rot_current_angle
+            x: &xe.xbutton.x y: &xe.xbutton.y w: w h: h];
       jwxyz_mouse_moved (xdpy, xwindow, xe.xbutton.x, xe.xbutton.y);
       xsft->event_cb (xdpy, xwindow, xdata, &xe);
       i++;
@@ -1530,10 +1580,11 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
   if (xsft->event_cb && xwindow) {
-    double s = self.contentScaleFactor;
+    double s = [self hackedContentScaleFactor];
     XEvent xe;
     memset (&xe, 0, sizeof(xe));
     int i = 0;
+    // #### 'frame' here or 'bounds'?
     int w = s * [self frame].size.width;
     int h = s * [self frame].size.height;
     for (UITouch *touch in touches) {
@@ -1541,7 +1592,8 @@ rotate_mouse (int *x, int *y, int w, int h, int rot)
       xe.xany.type      = MotionNotify;
       xe.xmotion.x      = s * p.x;
       xe.xmotion.y      = s * p.y;
-      rotate_mouse (&xe.xbutton.x, &xe.xbutton.y, w, h, rot_current_angle);
+      [self rotateMouse: rot_current_angle
+            x: &xe.xbutton.x y: &xe.xbutton.y w: w h: h];
       jwxyz_mouse_moved (xdpy, xwindow, xe.xmotion.x, xe.xmotion.y);
       xsft->event_cb (xdpy, xwindow, xdata, &xe);
       i++;

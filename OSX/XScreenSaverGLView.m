@@ -82,6 +82,16 @@ extern void check_gl_error (const char *type);
 }
 
 
+#ifdef USE_IPHONE
+/* With GL programs, drawing at full resolution isn't a problem.
+ */
+- (CGFloat) hackedContentScaleFactor
+{
+  return [self contentScaleFactor];
+}
+#endif // USE_IPHONE
+
+
 - (void) setOglContext: (NSOpenGLContext *) ctx
 {
   ogl_ctx = ctx;
@@ -89,9 +99,9 @@ extern void check_gl_error (const char *type);
 # ifdef USE_IPHONE
   [EAGLContext setCurrentContext: ogl_ctx];
 
-  double s = self.contentScaleFactor;
-  int w = s * [self frame].size.width;
-  int h = s * [self frame].size.height;
+  double s = [self hackedContentScaleFactor];
+  int w = s * [self bounds].size.width;
+  int h = s * [self bounds].size.height;
 
   if (gl_framebuffer)  glDeleteFramebuffersOES  (1, &gl_framebuffer);
   if (gl_renderbuffer) glDeleteRenderbuffersOES (1, &gl_renderbuffer);
@@ -173,11 +183,21 @@ extern void check_gl_error (const char *type);
     return [CAEAGLLayer class];
 }
 
+- (void) swapBuffers
+{
+  glBindRenderbufferOES (GL_RENDERBUFFER_OES, gl_renderbuffer);
+  [ogl_ctx presentRenderbuffer:GL_RENDERBUFFER_OES];
+}
+#endif // USE_IPHONE
 
-/* On MacOS:   drawRect does nothing, and animateOneFrame renders.
-   On iOS GL:  drawRect does nothing, and animateOneFrame renders.
-   On iOS X11: drawRect renders, and animateOneFrame marks the view dirty.
- */
+
+#ifdef USE_BACKBUFFER
+
+- (void) initLayer
+{
+  // Do nothing.
+}
+
 - (void)drawRect:(NSRect)rect
 {
 }
@@ -185,9 +205,15 @@ extern void check_gl_error (const char *type);
 
 - (void) animateOneFrame
 {
+# ifdef USE_IPHONE
   UIGraphicsPushContext (backbuffer);
+#endif
+
   [self render_x11];
+
+# ifdef USE_IPHONE
   UIGraphicsPopContext();
+#endif
 }
 
 
@@ -202,8 +228,12 @@ extern void check_gl_error (const char *type);
   // Don't resize the X11 window to match rotation. 
   // Rotation and scaling are handled in GL.
   //
-  NSRect f = [self frame];
-  double s = self.contentScaleFactor;
+# ifdef USE_IPHONE
+  double s = [self hackedContentScaleFactor];
+# else
+  double s = 1;
+# endif
+  NSRect f = [self bounds];
   backbuffer_size.width  = (int) (s * f.size.width);
   backbuffer_size.height = (int) (s * f.size.height);
 
@@ -216,13 +246,6 @@ extern void check_gl_error (const char *type);
                                         kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease (cs);
   }
-}
-
-
-- (void) swapBuffers
-{
-  glBindRenderbufferOES (GL_RENDERBUFFER_OES, gl_renderbuffer);
-  [ogl_ctx presentRenderbuffer:GL_RENDERBUFFER_OES];
 }
 # endif // USE_IPHONE
 

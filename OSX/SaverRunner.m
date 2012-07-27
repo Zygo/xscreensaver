@@ -426,10 +426,20 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
   saverName = name;
 
+  if (! backgroundView) {
+    // This view is the parent of the XScreenSaverView, and exists only
+    // so that there is a black background behind it.  Without this, when
+    // rotation is in progresss, the scrolling-list window's corners show
+    // through in the corners.
+    backgroundView = [[[NSView class] alloc] initWithFrame:[window frame]];
+    [backgroundView setBackgroundColor:[NSColor blackColor]];
+  }
+
   if (saverView) {
     if ([saverView isAnimating])
       [saverView stopAnimation];
     [saverView removeFromSuperview];
+    [backgroundView removeFromSuperview];
   }
 
   NSSize size = [window frame].size;
@@ -455,7 +465,8 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
  LAUNCH:
   if (launch) {
     [self saveScreenshot];
-    [window addSubview: saverView];
+    [window addSubview: backgroundView];
+    [backgroundView addSubview: saverView];
     [saverView becomeFirstResponder];
     [saverView startAnimation];
   }

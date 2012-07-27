@@ -12,11 +12,11 @@
 # Created: 20-Jun-2012.
 
 require 5;
-use diagnostics;
+#use diagnostics;	# Fails on some MacOS 10.5 - 10.7 systems
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.1 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
 
 my $verbose = 0;
 

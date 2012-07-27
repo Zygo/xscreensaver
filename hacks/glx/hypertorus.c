@@ -95,9 +95,9 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #endif /* !STANDALONE */
 
 #ifdef USE_GL
-# ifndef HAVE_JWZGLES
-#  include <X11/keysym.h>
-# endif
+#ifndef HAVE_COCOA
+# include <X11/keysym.h>
+#endif
 
 #include "gltrackball.h"
 
