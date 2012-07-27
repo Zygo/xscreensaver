@@ -9,7 +9,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleVersion</key>
-	<string>5.18</string>
+	<string>5.19</string>
 	<key>NSMainNibFile</key>
 	<string>iSaverRunner</string>
 	<key>CFBundlePackageType</key>
@@ -19,7 +19,7 @@
 	<key>UIStatusBarHidden</key>
 	<true/>
 	<key>CFBundleShortVersionString</key>
-	<string>5.18</string>
+	<string>5.19</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>UIRequiredDeviceCapabilities</key>

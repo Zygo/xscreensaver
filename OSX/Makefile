@@ -1,10 +1,11 @@
-# XScreenSaver for MacOS X, Copyright (c) 2006-2011 by Jamie Zawinski.
+# XScreenSaver for MacOS X, Copyright (c) 2006-2012 by Jamie Zawinski.
 
 XCODEBUILD = /Developer/usr/bin/xcodebuild
 TARGETS    = -target "All Savers"
 ARCH       = -arch i386 -arch x86_64
 CERT       = 'Jamie Zawinski'
 CERT       = 'iPhone Developer: Jamie Zawinski (Y5M82TL69N)'
+THUMBDIR   = $(HOME)/www/xscreensaver/screenshots/
 
 default: release
 all: debug release
@@ -28,7 +29,7 @@ release:: distdepend
 	cd ..; $(XCODEBUILD) $(ARCH) $(TARGETS) -configuration Release build
 
 release:: check_versions
-
+release:: update_thumbs
 release:: sign
 
 sign:
@@ -55,6 +56,14 @@ check_versions:
   done ;								\
   if [ "$$RESULT" = 0 ]; then echo "Versions match ($$V2)" ; fi ;	\
   exit $$RESULT
+
+update_thumbs::
+	./update-thumbnail.pl $(THUMBDIR) build/Release/*.saver
+
+
+# Arrrrgh
+ios_function_tables.h::
+	@./build-fntable.pl build/Debug-iphoneos/XScreenSaver.app $@
 
 
 echo_tarfiles:
@@ -85,6 +94,7 @@ update_plist_version:
     fi ;								      \
   done ;								      \
   rm $$T
+
 
 # -format UDBZ saves 4% (~1.2 MB) over UDZO.
 dmg:: distdepend check_versions

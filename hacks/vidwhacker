@@ -452,7 +452,7 @@ sub usage() {
 sub main() {
   while ($_ = $ARGV[0]) {
     shift @ARGV;
-    if ($_ eq "--verbose") { $verbose++; }
+    if (m/^--?verbose$/) { $verbose++; }
     elsif (m/^-v+$/) { $verbose += length($_)-1; }
     elsif (m/^(-display|-disp|-dis|-dpy|-d)$/) { $ENV{DISPLAY} = shift @ARGV; }
     elsif (m/^--?stdin$/) { $use_stdin = 1; }

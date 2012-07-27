@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.21 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.22 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 
@@ -175,9 +175,9 @@ sub update_saver_xml($$) {
     print STDERR "$progname: $filename: unchanged\n" if ($verbose > 1);
   } else {
     my $file_tmp = "$filename.tmp";
-    open(OUT, ">$file_tmp") || error ("$file_tmp: $!");
-    print OUT $body || error ("$file_tmp: $!");
-    close OUT || error ("$file_tmp: $!");
+    open (my $out, '>', $file_tmp) || error ("$file_tmp: $!");
+    print $out $body || error ("$file_tmp: $!");
+    close $out || error ("$file_tmp: $!");
 
     if (!rename ("$file_tmp", "$filename")) {
       unlink "$file_tmp";
@@ -269,9 +269,9 @@ sub update($) {
       print STDERR "$progname: $filename: unchanged\n" if ($verbose > 1);
     } else {
       my $file_tmp = "$filename.tmp";
-      open(OUT, ">$file_tmp") || error ("$file_tmp: $!");
-      print OUT $plist || error ("$file_tmp: $!");
-      close OUT || error ("$file_tmp: $!");
+      open (my $out, '>', $file_tmp) || error ("$file_tmp: $!");
+      print $out $plist || error ("$file_tmp: $!");
+      close $out || error ("$file_tmp: $!");
 
       if (!rename ("$file_tmp", "$filename")) {
         unlink "$file_tmp";

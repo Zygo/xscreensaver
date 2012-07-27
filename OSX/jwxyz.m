@@ -44,6 +44,10 @@
 #import "jwxyz-timers.h"
 #import "yarandom.h"
 
+#ifdef USE_IPHONE
+# define USE_BACKBUFFER  /* must be in sync with XScreenSaverView.h */
+#endif
+
 #undef  Assert
 #define Assert(C,S) do { if (!(C)) jwxyz_abort ("%s",(S)); } while(0)
 
@@ -194,7 +198,7 @@ jwxyz_free_display (Display *dpy)
 void *
 jwxyz_window_view (Window w)
 {
-  Assert (w->type == WINDOW, "not a window");
+  Assert (w && w->type == WINDOW, "not a window");
   return w->window.view;
 }
 
@@ -221,7 +225,7 @@ jwxyz_window_resized (Display *dpy, Window w,
                       void *cgc_arg)
 {
   CGContextRef cgc = (CGContextRef) cgc_arg;
-  Assert (w->type == WINDOW, "not a window");
+  Assert (w && w->type == WINDOW, "not a window");
   w->frame.origin.x    = new_x;
   w->frame.origin.y    = new_y;
   w->frame.size.width  = new_width;
@@ -270,7 +274,7 @@ jwxyz_window_resized (Display *dpy, Window w,
 void
 jwxyz_mouse_moved (Display *dpy, Window w, int x, int y)
 {
-  Assert (w->type == WINDOW, "not a window");
+  Assert (w && w->type == WINDOW, "not a window");
   w->window.last_mouse_x = x;
   w->window.last_mouse_y = y;
 }
@@ -475,6 +479,12 @@ push_bg_gc (Drawable d, GC gc, Bool fill_p)
  */
 #define XDRAWPOINTS_IMAGES
 
+/* Update, 2012: Kurt Revis <krevis@snoize.com> points out that diddling
+   the bitmap data directly is faster.  This only works on Pixmaps, though,
+   not Windows.  (Fortunately, on iOS, the Window is really a Pixmap.)
+ */
+#define XDRAWPOINTS_CGDATA
+
 int
 XDrawPoints (Display *dpy, Drawable d, GC gc, 
              XPoint *points, int count, int mode)
@@ -484,68 +494,125 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
 
   push_fg_gc (d, gc, YES);
 
-# ifdef XDRAWPOINTS_IMAGES
+# ifdef XDRAWPOINTS_CGDATA
 
-  unsigned int argb = gc->gcv.foreground;
-  validate_pixel (argb, gc->depth, gc->gcv.alpha_allowed_p);
-  if (gc->depth == 1)
-    argb = (gc->gcv.foreground ? WhitePixel(0,0) : BlackPixel(0,0));
+#  ifdef USE_BACKBUFFER
+  if (1)  // Because of the backbuffer, all iPhone Windows work like Pixmaps.
+#  else
+  if (d->type == PIXMAP)
+#  endif
+  {
+    CGContextRef cgc = d->cgc;
+    void *data = CGBitmapContextGetData (cgc);
+    size_t bpr = CGBitmapContextGetBytesPerRow (cgc);
+    size_t w = CGBitmapContextGetWidth (cgc);
+    size_t h = CGBitmapContextGetHeight (cgc);
 
-  CGDataProviderRef prov = CGDataProviderCreateWithData (NULL, &argb, 4, NULL);
-  CGImageRef cgi = CGImageCreate (1, 1,
-                                  8, 32, 4,
-                                  dpy->colorspace, 
-                                  /* Host-ordered, since we're using the
-                                     address of an int as the color data. */
-                                  (kCGImageAlphaNoneSkipFirst | 
-                                   kCGBitmapByteOrder32Host),
-                                  prov, 
-                                  NULL,  /* decode[] */
-                                  NO, /* interpolate */
-                                  kCGRenderingIntentDefault);
-  CGDataProviderRelease (prov);
+    Assert (data, "no bitmap data in Drawable");
 
-  CGContextRef cgc = d->cgc;
-  CGRect rect;
-  rect.size.width = rect.size.height = 1;
-  for (i = 0; i < count; i++) {
-    if (i > 0 && mode == CoordModePrevious) {
-      rect.origin.x += points->x;
-      rect.origin.x -= points->y;
+    unsigned int argb = gc->gcv.foreground;
+    validate_pixel (argb, gc->depth, gc->gcv.alpha_allowed_p);
+    if (gc->depth == 1)
+      argb = (gc->gcv.foreground ? WhitePixel(0,0) : BlackPixel(0,0));
+
+    CGFloat x0 = wr.origin.x;
+    CGFloat y0 = wr.origin.y + wr.size.height;
+
+    // It's uglier, but faster, to hoist the conditional out of the loop.
+    if (mode == CoordModePrevious) {
+      CGFloat x = x0, y = y0;
+      for (i = 0; i < count; i++, points++) {
+        x += points->x;
+        y -= points->y;
+
+        if (0 <= x && x < w && 0 <= y && y < h) {
+          unsigned int *p = (unsigned int *)
+            ((char *) data + (size_t) y * bpr + (size_t) x * 4);
+          *p = argb;
+        }
+      }
     } else {
-      rect.origin.x = wr.origin.x + points->x;
-      rect.origin.y = wr.origin.y + wr.size.height - points->y - 1;
+      for (i = 0; i < count; i++, points++) {
+        CGFloat x = x0 + points->x;
+        CGFloat y = y0 - points->y;
+
+        if (0 <= x && x < w && 0 <= y && y < h) {
+          unsigned int *p = (unsigned int *)
+            ((char *) data + (size_t) y * bpr + (size_t) x * 4);
+          *p = argb;
+        }
+      }
     }
 
-    //Assert (CGImageGetColorSpace (cgi) == dpy->colorspace, "bad colorspace");
-    CGContextDrawImage (cgc, rect, cgi);
-    points++;
-  }
+  } else	/* d->type == WINDOW */
 
-  CGImageRelease (cgi);
+# endif /* XDRAWPOINTS_CGDATA */
+  {
+
+# ifdef XDRAWPOINTS_IMAGES
+
+    unsigned int argb = gc->gcv.foreground;
+    validate_pixel (argb, gc->depth, gc->gcv.alpha_allowed_p);
+    if (gc->depth == 1)
+      argb = (gc->gcv.foreground ? WhitePixel(0,0) : BlackPixel(0,0));
+
+    CGDataProviderRef prov = CGDataProviderCreateWithData (NULL, &argb, 4,
+                                                           NULL);
+    CGImageRef cgi = CGImageCreate (1, 1,
+                                    8, 32, 4,
+                                    dpy->colorspace, 
+                                    /* Host-ordered, since we're using the
+                                       address of an int as the color data. */
+                                    (kCGImageAlphaNoneSkipFirst | 
+                                     kCGBitmapByteOrder32Host),
+                                    prov, 
+                                    NULL,  /* decode[] */
+                                    NO, /* interpolate */
+                                    kCGRenderingIntentDefault);
+    CGDataProviderRelease (prov);
+
+    CGContextRef cgc = d->cgc;
+    CGRect rect;
+    rect.size.width = rect.size.height = 1;
+    for (i = 0; i < count; i++) {
+      if (i > 0 && mode == CoordModePrevious) {
+        rect.origin.x += points->x;
+        rect.origin.x -= points->y;
+      } else {
+        rect.origin.x = wr.origin.x + points->x;
+        rect.origin.y = wr.origin.y + wr.size.height - points->y - 1;
+      }
+
+      //Assert(CGImageGetColorSpace (cgi) == dpy->colorspace,"bad colorspace");
+      CGContextDrawImage (cgc, rect, cgi);
+      points++;
+    }
+
+    CGImageRelease (cgi);
 
 # else /* ! XDRAWPOINTS_IMAGES */
 
-  CGRect *rects = (CGRect *) malloc (count * sizeof(CGRect));
-  CGRect *r = rects;
+    CGRect *rects = (CGRect *) malloc (count * sizeof(CGRect));
+    CGRect *r = rects;
   
-  for (i = 0; i < count; i++) {
-    r->size.width = r->size.height = 1;
-    if (i > 0 && mode == CoordModePrevious) {
-      r->origin.x = r[-1].origin.x + points->x;
-      r->origin.y = r[-1].origin.x - points->y;
-    } else {
-      r->origin.x = wr.origin.x + points->x;
-      r->origin.y = wr.origin.y + wr.size.height - points->y;
+    for (i = 0; i < count; i++) {
+      r->size.width = r->size.height = 1;
+      if (i > 0 && mode == CoordModePrevious) {
+        r->origin.x = r[-1].origin.x + points->x;
+        r->origin.y = r[-1].origin.x - points->y;
+      } else {
+        r->origin.x = wr.origin.x + points->x;
+        r->origin.y = wr.origin.y + wr.size.height - points->y;
+      }
+      points++;
+      r++;
     }
-    points++;
-    r++;
-  }
 
-  CGContextFillRects (d->cgc, rects, count);
-  free (rects);
+    CGContextFillRects (d->cgc, rects, count);
+    free (rects);
 
 # endif /* ! XDRAWPOINTS_IMAGES */
+  }
 
   pop_gc (d, gc);
   invalidate_drawable_cache (d);
@@ -661,7 +728,7 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
   BOOL free_cgi_p = NO;
 
 
-#ifndef USE_IPHONE
+#ifndef USE_BACKBUFFER
   // Because of the backbuffer, all iPhone Windows work like Pixmaps.
   if (src->type == PIXMAP)
 # endif
@@ -701,7 +768,7 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
   if (src->type == PIXMAP && src->pixmap.depth == 1)
       mask_p = YES;
 
-# ifndef USE_IPHONE
+# ifndef USE_BACKBUFFER
   } else { /* (src->type == WINDOW) */
     
     NSRect nsfrom;    // NSRect != CGRect on 10.4
@@ -759,7 +826,7 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
       CGDataProviderRelease (prov);
     }
 
-# endif // !USE_IPHONE
+# endif // !USE_BACKBUFFER
   }
 
   CGContextRef cgc = dst->cgc;
@@ -805,10 +872,10 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
     } else {
       // No cgi means src == dst, and both are Windows.
 
-# ifdef USE_IPHONE
+# ifdef USE_BACKBUFFER
       Assert (0, "NSCopyBits unimplemented"); // shouldn't be reached anyway
       return 0;
-# else // !USE_IPHONE
+# else // !USE_BACKBUFFER
       NSRect nsfrom;
       nsfrom.origin.x    = src_rect.origin.x;    // NSRect != CGRect on 10.4
       nsfrom.origin.y    = src_rect.origin.y;
@@ -818,7 +885,7 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
       nsto.x             = dst_rect.origin.x;
       nsto.y             = dst_rect.origin.y;
       NSCopyBits (0, nsfrom, nsto);
-# endif // !USE_IPHONE
+# endif // !USE_BACKBUFFER
     }
 
     pop_gc (dst, gc);
@@ -954,7 +1021,7 @@ XDrawSegments (Display *dpy, Drawable d, GC gc, XSegment *segments, int count)
 int
 XClearWindow (Display *dpy, Window win)
 {
-  Assert (win->type == WINDOW, "not a window");
+  Assert (win && win->type == WINDOW, "not a window");
   CGRect wr = win->frame;
   return XClearArea (dpy, win, 0, 0, wr.size.width, wr.size.height, 0);
 }
@@ -962,7 +1029,7 @@ XClearWindow (Display *dpy, Window win)
 int
 XSetWindowBackground (Display *dpy, Window w, unsigned long pixel)
 {
-  Assert (w->type == WINDOW, "not a window");
+  Assert (w && w->type == WINDOW, "not a window");
   validate_pixel (pixel, 32, NO);
   w->window.background = pixel;
   return 0;
@@ -1043,7 +1110,7 @@ XFillRectangles (Display *dpy, Drawable d, GC gc, XRectangle *rects, int n)
 int
 XClearArea (Display *dpy, Window win, int x, int y, int w, int h, Bool exp)
 {
-  Assert (win->type == WINDOW, "not a window");
+  Assert (win && win->type == WINDOW, "not a window");
   CGContextRef cgc = win->cgc;
   set_color (cgc, win->window.background, 32, NO, YES);
   draw_rect (dpy, win, 0, x, y, w, h, NO, YES);
@@ -1279,7 +1346,7 @@ XFreeGC (Display *dpy, GC gc)
 Status
 XGetWindowAttributes (Display *dpy, Window w, XWindowAttributes *xgwa)
 {
-  Assert (w->type == WINDOW, "not a window");
+  Assert (w && w->type == WINDOW, "not a window");
   memset (xgwa, 0, sizeof(*xgwa));
   xgwa->x      = w->frame.origin.x;
   xgwa->y      = w->frame.origin.y;
@@ -1761,7 +1828,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
 {
   const unsigned char *data = 0;
   int depth, ibpp, ibpl, alpha_first_p;
-# ifndef USE_IPHONE
+# ifndef USE_BACKBUFFER
   NSBitmapImageRep *bm = 0;
 # endif
   
@@ -1772,7 +1839,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
 
   CGContextRef cgc = d->cgc;
 
-#ifndef USE_IPHONE
+#ifndef USE_BACKBUFFER
   // Because of the backbuffer, all iPhone Windows work like Pixmaps.
   if (d->type == PIXMAP)
 # endif
@@ -1788,7 +1855,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     data = CGBitmapContextGetData (cgc);
     Assert (data, "CGBitmapContextGetData failed");
 
-# ifndef USE_IPHONE
+# ifndef USE_BACKBUFFER
   } else { /* (d->type == WINDOW) */
 
     // get the bits (desired sub-rectangle) out of the NSView
@@ -1804,7 +1871,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     ibpl = [bm bytesPerRow];
     data = [bm bitmapData];
     Assert (data, "NSBitmapImageRep initWithFocusedViewRect failed");
-# endif // !USE_IPHONE
+# endif // !USE_BACKBUFFER
   }
   
   // data points at (x,y) with ibpl rowstride.  ignore x,y from now on.
@@ -1883,7 +1950,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     }
   }
 
-# ifndef USE_IPHONE
+# ifndef USE_BACKBUFFER
   if (bm) [bm release];
 # endif
 
@@ -2100,7 +2167,7 @@ XCreatePixmap (Display *dpy, Drawable d,
 int
 XFreePixmap (Display *d, Pixmap p)
 {
-  Assert (p->type == PIXMAP, "not a pixmap");
+  Assert (p && p->type == PIXMAP, "not a pixmap");
   invalidate_drawable_cache (p);
   CGContextRelease (p->cgc);
   if (p->pixmap.cgc_buffer)
@@ -3009,7 +3076,7 @@ XQueryPointer (Display *dpy, Window w, Window *root_ret, Window *child_ret,
                int *root_x_ret, int *root_y_ret, 
                int *win_x_ret, int *win_y_ret, unsigned int *mask_ret)
 {
-  Assert (w->type == WINDOW, "not a window");
+  Assert (w && w->type == WINDOW, "not a window");
 
 # ifdef USE_IPHONE
   int x = w->window.last_mouse_x;
@@ -3081,7 +3148,7 @@ XTranslateCoordinates (Display *dpy, Window w, Window dest_w,
                        int *dest_x_ret, int *dest_y_ret,
                        Window *child_ret)
 {
-  Assert (w->type == WINDOW, "not a window");
+  Assert (w && w->type == WINDOW, "not a window");
 
 # ifdef USE_IPHONE
 

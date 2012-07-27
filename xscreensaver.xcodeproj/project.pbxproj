@@ -1240,6 +1240,229 @@
 		AF1FDA89158FF96600C40F17 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
 		AF1FDA8A158FF96600C40F17 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
 		AF241F83107C38DF00046A84 /* dropshadow.c in Sources */ = {isa = PBXBuildFile; fileRef = AF241F81107C38DF00046A84 /* dropshadow.c */; };
+		AF2C31E615C0F7FE007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31EA15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31EB15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31EC15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31ED15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31EE15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31EF15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31F015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31F115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31F215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31F315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31F415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31F515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31F615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31F715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31F815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31F915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31FA15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31FB15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31FC15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31FD15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31FE15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C31FF15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C320F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C321F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C322F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C323F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C324F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C325F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C326F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327415C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327515C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327615C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327715C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327815C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327915C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327A15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327B15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327C15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327D15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327E15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C327F15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328015C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328115C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328215C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328315C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328415C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328515C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328615C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328715C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328815C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328915C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328A15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328B15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328C15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328D15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328E15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C328F15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329015C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329115C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329215C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329315C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329415C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329515C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329615C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329715C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329815C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329915C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329A15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329B15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329C15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329D15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329E15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C329F15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32A015C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32A115C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32A215C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32A315C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32A415C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32A515C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32A615C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32A715C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32A815C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32A915C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32AA15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32AB15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32AC15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32AD15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32AE15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32AF15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32B015C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32B115C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32B215C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32B315C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32B415C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32B515C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32B615C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32B715C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32B815C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32B915C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32BA15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32BB15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32BC15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32BD15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32BE15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32BF15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32C015C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32C115C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32C215C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32C315C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32C415C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32C515C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32C615C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32C715C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF2C32C815C0FC9D007A6896 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
 		AF2D4D8413E902F5002AA818 /* SaverRunner.nib in Resources */ = {isa = PBXBuildFile; fileRef = AF9772E10989DFC6001F8B92 /* SaverRunner.nib */; };
 		AF2D4D8613E902F5002AA818 /* SaverRunner.m in Sources */ = {isa = PBXBuildFile; fileRef = AFE1FD400981E32E00F7970E /* SaverRunner.m */; };
 		AF2D4D8713E902F5002AA818 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
@@ -5821,6 +6044,7 @@
 		AF1A17800D6D6F62008AF328 /* lcdscrub.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = lcdscrub.xml; sourceTree = "<group>"; };
 		AF241F81107C38DF00046A84 /* dropshadow.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = dropshadow.c; path = hacks/glx/dropshadow.c; sourceTree = "<group>"; };
 		AF241F82107C38DF00046A84 /* dropshadow.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = dropshadow.h; path = hacks/glx/dropshadow.h; sourceTree = "<group>"; };
+		AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		AF2D4D8F13E902F5002AA818 /* Phosphor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Phosphor.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF2D4F7E13E91093002AA818 /* Apple2.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Apple2.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF2D522513E954A0002AA818 /* SaverRunner.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = SaverRunner.icns; path = OSX/SaverRunner.icns; sourceTree = "<group>"; };
@@ -6679,6 +6903,7 @@
 			files = (
 				AF1FD8EF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8F0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8F1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8F2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6690,6 +6915,7 @@
 			files = (
 				AF1FD8F3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8F4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8F5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8F6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6701,6 +6927,7 @@
 			files = (
 				AF1FD7BF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7C0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7C1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7C2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6712,6 +6939,7 @@
 			files = (
 				AF1FDA33158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA34158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32B315C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA35158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA36158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6723,6 +6951,7 @@
 			files = (
 				AF1FD7BB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7BC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7BD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7BE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6734,6 +6963,7 @@
 			files = (
 				AF1FD7F3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7F4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7F5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7F6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6745,6 +6975,7 @@
 			files = (
 				AF1FD723158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD724158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31EE15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD725158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD726158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6756,6 +6987,7 @@
 			files = (
 				AF1FD9F3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9F4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32A315C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9F5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9F6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6767,6 +6999,7 @@
 			files = (
 				AF1FD91B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD91C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD91D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD91E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6778,6 +7011,7 @@
 			files = (
 				AF1FDA2F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA30158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32B215C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA31158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA32158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6789,6 +7023,7 @@
 			files = (
 				AF1FD99B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD99C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328D15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD99D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD99E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6800,6 +7035,7 @@
 			files = (
 				AF1FD993158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD994158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328B15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD995158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD996158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6811,6 +7047,7 @@
 			files = (
 				AF1FD7AB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7AC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7AD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7AE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6822,6 +7059,7 @@
 			files = (
 				AF1FD83F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD840158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD841158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD842158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6833,6 +7071,7 @@
 			files = (
 				AF1FD767158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD768158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31FF15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD769158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD76A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6844,6 +7083,7 @@
 			files = (
 				AF1FD74F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD750158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31F915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD751158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD752158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6855,6 +7095,7 @@
 			files = (
 				AF1FD84B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD84C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD84D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD84E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6866,6 +7107,7 @@
 			files = (
 				AF1FDA7B158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA7C158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32C515C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA7D158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA7E158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6877,6 +7119,7 @@
 			files = (
 				AF1FD743158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD744158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31F615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD745158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD746158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6888,6 +7131,7 @@
 			files = (
 				AF1FD7DB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7DC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7DD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7DE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6899,6 +7143,7 @@
 			files = (
 				AF1FDA83158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA84158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32C715C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA85158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA86158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6910,6 +7155,7 @@
 			files = (
 				AF1FD717158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD718158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31EB15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD719158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD71A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6921,6 +7167,7 @@
 			files = (
 				AF1FD793158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD794158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD795158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD796158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6932,6 +7179,7 @@
 			files = (
 				AF1FD7FF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD800158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD801158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD802158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6943,6 +7191,7 @@
 			files = (
 				AF1FD7F7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7F8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7F9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7FA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6954,6 +7203,7 @@
 			files = (
 				AF1FD85B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD85C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD85D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD85E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6965,6 +7215,7 @@
 			files = (
 				AF1FD787158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD788158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD789158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD78A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6976,6 +7227,7 @@
 			files = (
 				AF1FD71B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD71C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31EC15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD71D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD71E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6987,6 +7239,7 @@
 			files = (
 				AF1FD7AF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7B0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7B1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7B2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -6998,6 +7251,7 @@
 			files = (
 				AF1FD79F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7A0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7A1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7A2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7009,6 +7263,7 @@
 			files = (
 				AF1FD86F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD870158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD871158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD872158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7020,6 +7275,7 @@
 			files = (
 				AF1FD77B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD77C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD77D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD77E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7031,6 +7287,7 @@
 			files = (
 				AF1FD7B3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7B4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7B5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7B6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7042,6 +7299,7 @@
 			files = (
 				AF1FDA6B158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA6C158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32C115C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA6D158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA6E158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7053,6 +7311,7 @@
 			files = (
 				AF1FD7C3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7C4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7C5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7C6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7064,6 +7323,7 @@
 			files = (
 				AF1FD7E3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7E4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7E5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7E6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7075,6 +7335,7 @@
 			files = (
 				AF1FD803158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD804158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD805158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD806158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7086,6 +7347,7 @@
 			files = (
 				AF1FD837158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD838158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD839158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD83A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7097,6 +7359,7 @@
 			files = (
 				AF1FD753158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD754158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31FA15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD755158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD756158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7108,6 +7371,7 @@
 			files = (
 				AF1FD76F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD770158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD771158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD772158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7119,6 +7383,7 @@
 			files = (
 				AF1FD7B7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7B8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7B9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7BA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7130,6 +7395,7 @@
 			files = (
 				AF1FD833158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD834158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD835158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD836158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7141,6 +7407,7 @@
 			files = (
 				AF1FDA3F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA40158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32B615C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA41158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA42158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7152,6 +7419,7 @@
 			files = (
 				AF1FD7EB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7EC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7ED158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7EE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7163,6 +7431,7 @@
 			files = (
 				AF1FD72F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD730158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31F115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD731158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD732158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7174,6 +7443,7 @@
 			files = (
 				AF1FD877158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD878158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD879158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD87A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7185,6 +7455,7 @@
 			files = (
 				AF1FD873158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD874158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD875158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD876158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7196,6 +7467,7 @@
 			files = (
 				AF1FD857158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD858158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD859158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD85A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7207,6 +7479,7 @@
 			files = (
 				AF1FD847158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD848158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD849158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD84A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7218,6 +7491,7 @@
 			files = (
 				AF1FD74B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD74C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31F815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD74D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD74E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7229,6 +7503,7 @@
 			files = (
 				AF1FD83B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD83C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD83D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD83E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7240,6 +7515,7 @@
 			files = (
 				AF1FD7A7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7A8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7A9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7AA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7251,6 +7527,7 @@
 			files = (
 				AF1FD747158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD748158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31F715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD749158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD74A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7262,6 +7539,7 @@
 			files = (
 				AF1FD77F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD780158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD781158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD782158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7273,6 +7551,7 @@
 			files = (
 				AF1FD737158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD738158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31F315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD739158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD73A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7284,6 +7563,7 @@
 			files = (
 				AF1FD7E7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7E8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7E9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7EA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7295,6 +7575,7 @@
 			files = (
 				AF1FD867158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD868158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD869158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD86A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7306,6 +7587,7 @@
 			files = (
 				AF1FD75B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD75C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31FC15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD75D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD75E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7317,6 +7599,7 @@
 			files = (
 				AF1FDA43158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA44158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32B715C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA45158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA46158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7328,6 +7611,7 @@
 			files = (
 				AF1FD827158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD828158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD829158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD82A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7346,6 +7630,7 @@
 			files = (
 				AF1FD79B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD79C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD79D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD79E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7357,6 +7642,7 @@
 			files = (
 				AF1FD897158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD898158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD899158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD89A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7368,6 +7654,7 @@
 			files = (
 				AF1FD933158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD934158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD935158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD936158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7379,6 +7666,7 @@
 			files = (
 				AF1FD957158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD958158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327C15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD959158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD95A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7390,6 +7678,7 @@
 			files = (
 				AF1FD9D7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9D8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329C15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9D9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9DA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7401,6 +7690,7 @@
 			files = (
 				AF1FD97B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD97C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328515C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD97D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD97E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7412,6 +7702,7 @@
 			files = (
 				AF1FDA1F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA20158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32AE15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA21158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA22158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7423,6 +7714,7 @@
 			files = (
 				AF1FD9AF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9B0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329215C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9B1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9B2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7434,6 +7726,7 @@
 			files = (
 				AF1FD92F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD930158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD931158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD932158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7445,6 +7738,7 @@
 			files = (
 				AF1FD943158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD944158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327715C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD945158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD946158FF96500C40F17 /* Carbon.framework in Frameworks */,
 				AF84FD4209B1209E00F3AB06 /* GLUT.framework in Frameworks */,
@@ -7457,6 +7751,7 @@
 			files = (
 				AF1FDA53158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA54158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32BB15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA55158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA56158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7468,6 +7763,7 @@
 			files = (
 				AF1FD807158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD808158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD809158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD80A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7479,6 +7775,7 @@
 			files = (
 				AF1FDA4F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA50158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32BA15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA51158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA52158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7490,6 +7787,7 @@
 			files = (
 				AF1FD7D3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7D4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7D5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7D6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7501,6 +7799,7 @@
 			files = (
 				AF1FD7D7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7D8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7D9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7DA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7512,6 +7811,7 @@
 			files = (
 				AF1FD78B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD78C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD78D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD78E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7523,6 +7823,7 @@
 			files = (
 				AF1FD82B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD82C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD82D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD82E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7534,6 +7835,7 @@
 			files = (
 				AF1FDA3B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA3C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32B515C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA3D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA3E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7545,6 +7847,7 @@
 			files = (
 				AF1FD7EF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7F0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7F1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7F2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7556,6 +7859,7 @@
 			files = (
 				AF1FD8C3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8C4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8C5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8C6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7567,6 +7871,7 @@
 			files = (
 				AF1FD94B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD94C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327915C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD94D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD94E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7578,6 +7883,7 @@
 			files = (
 				AF1FD95B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD95C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327D15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD95D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD95E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7589,6 +7895,7 @@
 			files = (
 				AF1FD9B7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9B8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329415C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9B9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9BA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7600,6 +7907,7 @@
 			files = (
 				AF1FDA17158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA18158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32AC15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA19158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA1A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7611,6 +7919,7 @@
 			files = (
 				AF1FD97F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD980158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328615C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD981158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD982158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7622,6 +7931,7 @@
 			files = (
 				AF1FD94F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD950158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327A15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD951158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD952158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7633,6 +7943,7 @@
 			files = (
 				AF1FDA13158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA14158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32AB15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA15158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA16158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7644,6 +7955,7 @@
 			files = (
 				AF1FD913158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD914158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD915158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD916158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7655,6 +7967,7 @@
 			files = (
 				AF1FD937158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD938158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327415C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD939158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD93A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7666,6 +7979,7 @@
 			files = (
 				AF1FD783158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD784158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD785158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD786158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7677,6 +7991,7 @@
 			files = (
 				AF1FD733158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD734158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31F215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD735158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD736158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7688,6 +8003,7 @@
 			files = (
 				AF1FD98B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD98C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328915C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD98D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD98E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7699,6 +8015,7 @@
 			files = (
 				AF1FD88F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD890158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD891158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD892158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7710,6 +8027,7 @@
 			files = (
 				AF1FD8A3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8A4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8A5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8A6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7721,6 +8039,7 @@
 			files = (
 				AF1FD8BB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8BC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8BD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8BE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7747,6 +8066,7 @@
 			files = (
 				AF1FD7A3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7A4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7A5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7A6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7758,6 +8078,7 @@
 			files = (
 				AF1FD7CF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7D0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7D1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7D2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7769,6 +8090,7 @@
 			files = (
 				AF1FD80B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD80C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD80D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD80E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7780,6 +8102,7 @@
 			files = (
 				AF1FD85F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD860158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD861158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD862158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7791,6 +8114,7 @@
 			files = (
 				AF1FD81F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD820158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD821158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD822158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7802,6 +8126,7 @@
 			files = (
 				AF1FD7CB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7CC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7CD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7CE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7813,6 +8138,7 @@
 			files = (
 				AF1FD773158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD774158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD775158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD776158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7824,6 +8150,7 @@
 			files = (
 				AF1FD72B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD72C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31F015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD72D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD72E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7835,6 +8162,7 @@
 			files = (
 				AF1FD777158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD778158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD779158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD77A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7846,6 +8174,7 @@
 			files = (
 				AF1FD7C7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7C8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7C9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7CA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7857,6 +8186,7 @@
 			files = (
 				AF1FD797158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD798158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD799158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD79A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7868,6 +8198,7 @@
 			files = (
 				AF1FD78F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD790158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD791158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD792158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7879,6 +8210,7 @@
 			files = (
 				AF1FD7DF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7E0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C321D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7E1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7E2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7890,6 +8222,7 @@
 			files = (
 				AF1FD813158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD814158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD815158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD816158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7901,6 +8234,7 @@
 			files = (
 				AF1FD763158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD764158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31FE15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD765158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD766158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7912,6 +8246,7 @@
 			files = (
 				AF1FD817158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD818158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD819158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD81A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7923,6 +8258,7 @@
 			files = (
 				AF1FD727158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD728158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31EF15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD729158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD72A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7933,6 +8269,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFEB9C37158FFF88003974F3 /* ScreenSaver.framework in Frameworks */,
+				AF2C31E615C0F7FE007A6896 /* QuartzCore.framework in Frameworks */,
 				AF918B99158FF045002B5D1E /* Cocoa.framework in Frameworks */,
 				AF918B9A158FF04C002B5D1E /* Carbon.framework in Frameworks */,
 			);
@@ -7944,6 +8281,7 @@
 			files = (
 				AF1FDA2B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA2C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32B115C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA2D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA2E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7955,6 +8293,7 @@
 			files = (
 				AF1FD75F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD760158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31FD15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD761158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD762158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7966,6 +8305,7 @@
 			files = (
 				AF1FD823158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD824158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD825158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD826158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7977,6 +8317,7 @@
 			files = (
 				AF1FD87B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD87C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD87D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD87E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7988,6 +8329,7 @@
 			files = (
 				AF1FD73F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD740158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31F515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD741158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD742158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -7999,6 +8341,7 @@
 			files = (
 				AF1FD76B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD76C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C320015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD76D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD76E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8010,6 +8353,7 @@
 			files = (
 				AF1FD80F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD810158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD811158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD812158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8021,6 +8365,7 @@
 			files = (
 				AF1FD81B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD81C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD81D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD81E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8032,6 +8377,7 @@
 			files = (
 				AF1FD843158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD844158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD845158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD846158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8043,6 +8389,7 @@
 			files = (
 				AF1FD82F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD830158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD831158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD832158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8054,6 +8401,7 @@
 			files = (
 				AF1FD86B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD86C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD86D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD86E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8065,6 +8413,7 @@
 			files = (
 				AF1FD7FB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD7FC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C322415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD7FD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7FE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8076,6 +8425,7 @@
 			files = (
 				AF1FD863158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD864158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD865158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD866158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8087,6 +8437,7 @@
 			files = (
 				AF1FD73B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD73C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31F415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD73D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD73E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8098,6 +8449,7 @@
 			files = (
 				AF1FD71F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD720158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31ED15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD721158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD722158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8109,6 +8461,7 @@
 			files = (
 				AF1FD84F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD850158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD851158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD852158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8120,6 +8473,7 @@
 			files = (
 				AF1FD853158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD854158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C323A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD855158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD856158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8131,6 +8485,7 @@
 			files = (
 				AF1FD90F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD910158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD911158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD912158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8142,6 +8497,7 @@
 			files = (
 				AF1FD9BB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9BC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329515C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9BD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9BE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8153,6 +8509,7 @@
 			files = (
 				AF1FDA1B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA1C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32AD15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA1D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA1E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8164,6 +8521,7 @@
 			files = (
 				AF1FD9C7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9C8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329815C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9C9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9CA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8175,6 +8533,7 @@
 			files = (
 				AF1FD9EF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9F0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32A215C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9F1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9F2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8186,6 +8545,7 @@
 			files = (
 				AF1FDA0F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA10158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32AA15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA11158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA12158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8197,6 +8557,7 @@
 			files = (
 				AF1FDA0B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA0C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32A915C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA0D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA0E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8208,6 +8569,7 @@
 			files = (
 				AF1FD9A7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9A8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329015C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9A9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9AA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8219,6 +8581,7 @@
 			files = (
 				AF1FD90B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD90C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD90D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD90E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8230,6 +8593,7 @@
 			files = (
 				AF1FD977158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD978158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328415C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD979158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD97A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8241,6 +8605,7 @@
 			files = (
 				AF1FD9E7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9E8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32A015C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9E9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9EA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8252,6 +8617,7 @@
 			files = (
 				AF1FD9FF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA00158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32A615C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA01158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA02158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8263,6 +8629,7 @@
 			files = (
 				AF1FD95F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD960158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327E15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD961158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD962158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8274,6 +8641,7 @@
 			files = (
 				AF1FD917158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD918158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD919158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD91A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8285,6 +8653,7 @@
 			files = (
 				AF1FD9B3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9B4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329315C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9B5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9B6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8296,6 +8665,7 @@
 			files = (
 				AF1FD93F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD940158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327615C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD941158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD942158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8307,6 +8677,7 @@
 			files = (
 				AF1FD983158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD984158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328715C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD985158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD986158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8318,6 +8689,7 @@
 			files = (
 				AF1FD907158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD908158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD909158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD90A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8329,6 +8701,7 @@
 			files = (
 				AF1FDA4B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA4C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32B915C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA4D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA4E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8340,6 +8713,7 @@
 			files = (
 				AF1FD9FB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9FC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32A515C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9FD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9FE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8351,6 +8725,7 @@
 			files = (
 				AF1FD927158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD928158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD929158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD92A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8362,6 +8737,7 @@
 			files = (
 				AF1FDA07158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA08158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32A815C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA09158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA0A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8373,6 +8749,7 @@
 			files = (
 				AF1FD9AB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9AC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329115C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9AD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9AE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8384,6 +8761,7 @@
 			files = (
 				AF1FD9EB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9EC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32A115C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9ED158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9EE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8395,6 +8773,7 @@
 			files = (
 				AF1FD93B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD93C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327515C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD93D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD93E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8406,6 +8785,7 @@
 			files = (
 				AF1FD963158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD964158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327F15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD965158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD966158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8417,6 +8797,7 @@
 			files = (
 				AF1FD953158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD954158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327B15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD955158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD956158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8428,6 +8809,7 @@
 			files = (
 				AF1FD903158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD904158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD905158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD906158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8439,6 +8821,7 @@
 			files = (
 				AF1FD997158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD998158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328C15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD999158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD99A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8450,6 +8833,7 @@
 			files = (
 				AF1FD9A3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9A4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328F15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9A5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9A6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8461,6 +8845,7 @@
 			files = (
 				AF1FD98F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD990158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328A15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD991158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD992158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8472,6 +8857,7 @@
 			files = (
 				AF1FD973158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD974158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328315C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD975158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD976158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8483,6 +8869,7 @@
 			files = (
 				AF1FD92B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD92C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD92D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD92E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8494,6 +8881,7 @@
 			files = (
 				AF1FD96F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD970158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328215C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD971158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD972158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8505,6 +8893,7 @@
 			files = (
 				AF1FD8FB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8FC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8FD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8FE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8516,6 +8905,7 @@
 			files = (
 				AF1FD947158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD948158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C327815C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD949158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD94A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8527,6 +8917,7 @@
 			files = (
 				AF1FD8E3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8E4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8E5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8E6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8538,6 +8929,7 @@
 			files = (
 				AF1FD8EB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8EC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8ED158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8EE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8549,6 +8941,7 @@
 			files = (
 				AF1FD9DF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9E0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329E15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9E1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9E2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8560,6 +8953,7 @@
 			files = (
 				AF1FD9C3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9C4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329715C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9C5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9C6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8571,6 +8965,7 @@
 			files = (
 				AF1FD8F7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8F8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326415C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8F9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8FA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8582,6 +8977,7 @@
 			files = (
 				AF1FD9CB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9CC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329915C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9CD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9CE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8593,6 +8989,7 @@
 			files = (
 				AF1FD9DB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9DC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329D15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9DD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9DE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8604,6 +9001,7 @@
 			files = (
 				AF1FD9E3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9E4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329F15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9E5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9E6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8615,6 +9013,7 @@
 			files = (
 				AF1FD9D3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9D4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329B15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9D5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9D6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8626,6 +9025,7 @@
 			files = (
 				AF1FD8FF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD900158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD901158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD902158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8637,6 +9037,7 @@
 			files = (
 				AF1FD8E7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8E8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8E9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8EA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8648,6 +9049,7 @@
 			files = (
 				AF1FDA23158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA24158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32AF15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA25158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA26158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8659,6 +9061,7 @@
 			files = (
 				AF1FD91F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD920158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD921158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD922158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8670,6 +9073,7 @@
 			files = (
 				AF1FD96B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD96C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328115C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD96D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD96E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8681,6 +9085,7 @@
 			files = (
 				AF1FD923158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD924158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C326F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD925158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD926158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8692,6 +9097,7 @@
 			files = (
 				AF1FDA27158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA28158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32B015C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA29158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA2A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8703,6 +9109,7 @@
 			files = (
 				AF1FD99F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9A0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328E15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9A1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9A2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8714,6 +9121,7 @@
 			files = (
 				AF1FD9CF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9D0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329A15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9D1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9D2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8725,6 +9133,7 @@
 			files = (
 				AF1FD987158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD988158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328815C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD989158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD98A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8736,6 +9145,7 @@
 			files = (
 				AF1FD887158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD888158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324715C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD889158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD88A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8747,6 +9157,7 @@
 			files = (
 				AF1FDA47158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA48158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32B815C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA49158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA4A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8758,6 +9169,7 @@
 			files = (
 				AF1FDA7F158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA80158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32C615C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA81158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA82158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8769,6 +9181,7 @@
 			files = (
 				AF1FD8AB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8AC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325015C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8AD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8AE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8780,6 +9193,7 @@
 			files = (
 				AF1FD8AF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8B0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325115C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8B1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8B2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8791,6 +9205,7 @@
 			files = (
 				AF1FD8B3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8B4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325215C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8B5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8B6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8802,6 +9217,7 @@
 			files = (
 				AF1FDA5B158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA5C158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32BD15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA5D158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA5E158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8813,6 +9229,7 @@
 			files = (
 				AF1FDA5F158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA60158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32BE15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA61158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA62158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8824,6 +9241,7 @@
 			files = (
 				AF1FDA63158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA64158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32BF15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA65158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA66158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8835,6 +9253,7 @@
 			files = (
 				AF1FDA67158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA68158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32C015C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA69158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA6A158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8846,6 +9265,7 @@
 			files = (
 				AF1FD8C7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8C8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8C9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8CA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8857,6 +9277,7 @@
 			files = (
 				AF1FD8CF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8D0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8D1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8D2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8868,6 +9289,7 @@
 			files = (
 				AF1FDA73158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA74158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32C315C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA75158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA76158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8879,6 +9301,7 @@
 			files = (
 				AF1FDA77158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA78158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32C415C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA79158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA7A158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8890,6 +9313,7 @@
 			files = (
 				AF1FD89F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8A0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8A1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8A2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8901,6 +9325,7 @@
 			files = (
 				AF1FD8BF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8C0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8C1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8C2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8912,6 +9337,7 @@
 			files = (
 				AF1FD8DF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8E0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325E15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8E1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8E2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8923,6 +9349,7 @@
 			files = (
 				AF1FDA87158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA88158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32C815C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA89158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA8A158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8934,6 +9361,7 @@
 			files = (
 				AF1FDA6F158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA70158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32C215C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA71158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA72158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8945,6 +9373,7 @@
 			files = (
 				AF1FDA37158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA38158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32B415C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA39158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA3A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8956,6 +9385,7 @@
 			files = (
 				AF1FD8A7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8A8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324F15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8A9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8AA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8967,6 +9397,7 @@
 			files = (
 				AF1FD893158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD894158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324A15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD895158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD896158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8978,6 +9409,7 @@
 			files = (
 				AF1FD87F158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD880158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324515C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD881158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD882158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -8989,6 +9421,7 @@
 			files = (
 				AF1FD89B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD89C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD89D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD89E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9000,6 +9433,7 @@
 			files = (
 				AF1FD8DB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8DC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325D15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8DD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8DE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9011,6 +9445,7 @@
 			files = (
 				AF1FDA57158FF96600C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA58158FF96600C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32BC15C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA59158FF96600C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA5A158FF96600C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9022,6 +9457,7 @@
 			files = (
 				AF1FD8D7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8D8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325C15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8D9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8DA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9033,6 +9469,7 @@
 			files = (
 				AF1FD8CB158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8CC158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325915C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8CD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8CE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9044,6 +9481,7 @@
 			files = (
 				AF1FD883158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD884158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324615C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD885158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD886158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9055,6 +9493,7 @@
 			files = (
 				AF1FD88B158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD88C158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C324815C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD88D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD88E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9066,6 +9505,7 @@
 			files = (
 				AF1FD8B7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8B8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325315C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8B9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8BA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9077,6 +9517,7 @@
 			files = (
 				AF1FD8D3158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD8D4158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C325B15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD8D5158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD8D6158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9088,6 +9529,7 @@
 			files = (
 				AF1FDA03158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FDA04158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32A715C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FDA05158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FDA06158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9099,6 +9541,7 @@
 			files = (
 				AF1FD9F7158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9F8158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C32A415C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9F9158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9FA158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9110,6 +9553,7 @@
 			files = (
 				AF1FD9BF158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD9C0158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C329615C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD9C1158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD9C2158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9121,6 +9565,7 @@
 			files = (
 				AF1FD713158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD714158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31EA15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD715158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD716158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9132,6 +9577,7 @@
 			files = (
 				AF1FD757158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD758158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C31FB15C0FC9C007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD759158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD75A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9143,6 +9589,7 @@
 			files = (
 				AF1FD967158FF96500C40F17 /* libjwxyz.a in Frameworks */,
 				AF1FD968158FF96500C40F17 /* ScreenSaver.framework in Frameworks */,
+				AF2C328015C0FC9D007A6896 /* QuartzCore.framework in Frameworks */,
 				AF1FD969158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD96A158FF96500C40F17 /* Carbon.framework in Frameworks */,
 			);
@@ -9459,6 +9906,7 @@
 				AFEB9C3815900514003974F3 /* UIKit.framework */,
 				AF0F46DC104E1809000A929C /* AppKit.framework */,
 				AF976ED30989BF59001F8B92 /* ScreenSaver.framework */,
+				AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */,
 				AF561DF715969C5B007CA5ED /* AssetsLibrary.framework */,
 				AF561DF3159651A7007CA5ED /* AudioToolbox.framework */,
 				AF0FAF3B159BAC7B00BCE2F7 /* CoreText.framework */,
@@ -14700,7 +15148,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0430;
+				LastUpgradeCheck = 0440;
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "xscreensaver" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -26879,8 +27327,6 @@
 				);
 				PRODUCT_NAME = Phosphor;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "AC8EDA6B-E061-4508-B2BA-129DD6D2AF72";
-				"SDKROOT[arch=i386]" = macosx10.6;
-				"SDKROOT[arch=x86_64]" = macosx10.6;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
 			};
@@ -26936,8 +27382,6 @@
 				);
 				PRODUCT_NAME = Phosphor;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "AC8EDA6B-E061-4508-B2BA-129DD6D2AF72";
-				"SDKROOT[arch=i386]" = macosx10.6;
-				"SDKROOT[arch=x86_64]" = macosx10.6;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 				WRAPPER_EXTENSION = app;
@@ -26994,8 +27438,6 @@
 				);
 				PRODUCT_NAME = Apple2;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "AC8EDA6B-E061-4508-B2BA-129DD6D2AF72";
-				"SDKROOT[arch=i386]" = macosx10.6;
-				"SDKROOT[arch=x86_64]" = macosx10.6;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				WRAPPER_EXTENSION = app;
 			};
@@ -27051,8 +27493,6 @@
 				);
 				PRODUCT_NAME = Apple2;
 				"PROVISIONING_PROFILE[sdk=iphoneos*]" = "AC8EDA6B-E061-4508-B2BA-129DD6D2AF72";
-				"SDKROOT[arch=i386]" = macosx10.6;
-				"SDKROOT[arch=x86_64]" = macosx10.6;
 				TARGETED_DEVICE_FAMILY = "1,2";
 				VALIDATE_PRODUCT = YES;
 				WRAPPER_EXTENSION = app;
@@ -29038,7 +29478,6 @@
 					armv7,
 				);
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				DEAD_CODE_STRIPPING = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_APPS_DIR)/Xcode.app/Contents/Developer/Library/Frameworks\"",
@@ -29070,7 +29509,6 @@
 					armv7,
 				);
 				CODE_SIGN_IDENTITY = "iPhone Distribution: Jamie Zawinski";
-				DEAD_CODE_STRIPPING = NO;
 				FRAMEWORK_SEARCH_PATHS = (
 					"$(inherited)",
 					"\"$(SYSTEM_APPS_DIR)/Xcode.app/Contents/Developer/Library/Frameworks\"",
@@ -32720,7 +33158,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				GCC_ENABLE_OBJC_GC = required;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_ENABLE_OBJC_GC = supported;
 				"GCC_ENABLE_OBJC_GC[sdk=iphoneos*][arch=*]" = unsupported;
 				"GCC_ENABLE_OBJC_GC[sdk=iphonesimulator*][arch=*]" = unsupported;
 				GCC_OPTIMIZATION_LEVEL = 0;
@@ -32768,7 +33207,7 @@
 				"MACOSX_DEPLOYMENT_TARGET[sdk=iphoneos*][arch=*]" = "";
 				"MACOSX_DEPLOYMENT_TARGET[sdk=iphonesimulator*][arch=*]" = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.6;
+				SDKROOT = macosx;
 				SYMROOT = OSX/build;
 				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR) $(USER_HEADER_SEARCH_PATHS)";
 				WARNING_CFLAGS = "-Wimplicit";
@@ -32780,7 +33219,8 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
-				GCC_ENABLE_OBJC_GC = required;
+				COMBINE_HIDPI_IMAGES = YES;
+				GCC_ENABLE_OBJC_GC = supported;
 				"GCC_ENABLE_OBJC_GC[sdk=iphoneos*][arch=*]" = unsupported;
 				"GCC_ENABLE_OBJC_GC[sdk=iphonesimulator*][arch=*]" = unsupported;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -32828,7 +33268,7 @@
 				"MACOSX_DEPLOYMENT_TARGET[sdk=iphoneos*][arch=*]" = "";
 				"MACOSX_DEPLOYMENT_TARGET[sdk=iphonesimulator*][arch=*]" = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				SDKROOT = macosx10.6;
+				SDKROOT = macosx;
 				SYMROOT = OSX/build;
 				USER_HEADER_SEARCH_PATHS = "$(PROJECT_DIR) $(USER_HEADER_SEARCH_PATHS)";
 				WARNING_CFLAGS = "-Wimplicit";

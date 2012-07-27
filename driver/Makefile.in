@@ -877,21 +877,7 @@ xdpyinfo: xdpyinfo.o
 # DO NOT DELETE: updated by make distdepend
 
 demo-Gtk-conf.o: ../config.h
-demo-Gtk-conf.o: $(srcdir)/demo-Gtk-conf.h
-demo-Gtk-conf.o: $(UTILS_SRC)/xscreensaver-intl.h
-demo-Gtk.o: XScreenSaver_ad.h
 demo-Gtk.o: ../config.h
-demo-Gtk.o: $(srcdir)/demo-Gtk-conf.h
-demo-Gtk.o: $(srcdir)/demo-Gtk-support.h
-demo-Gtk.o: $(srcdir)/demo-Gtk-widgets.h
-demo-Gtk.o: $(srcdir)/prefs.h
-demo-Gtk.o: $(srcdir)/remote.h
-demo-Gtk.o: $(srcdir)/types.h
-demo-Gtk.o: $(UTILS_SRC)/resources.h
-demo-Gtk.o: $(UTILS_SRC)/usleep.h
-demo-Gtk.o: $(UTILS_SRC)/version.h
-demo-Gtk.o: $(UTILS_SRC)/visual.h
-demo-Gtk.o: $(UTILS_SRC)/xscreensaver-intl.h
 demo-Gtk-support.o: ../config.h
 demo-Gtk-support.o: $(srcdir)/demo-Gtk-support.h
 demo-Gtk-widgets.o: ../config.h

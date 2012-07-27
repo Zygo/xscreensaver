@@ -48,6 +48,7 @@
 # else  // USE_IPHONE
 
   ScreenSaverView *saverView;
+  UIView *backgroundView;
   UINavigationController *rootViewController;
   IBOutlet UIWindow *window;
   EAGLContext *eagl_ctx;

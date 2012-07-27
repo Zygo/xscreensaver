@@ -181,7 +181,7 @@ unpack_addr (unsigned long addr,
 
 
 
-/* If resolves the bogie's name (either a hostname or ip address string)
+/* Resolves the bogie's name (either a hostname or ip address string)
    to a hostent.  Returns 1 if successful, 0 if it failed to resolve.
  */
 static int
@@ -294,7 +294,7 @@ print_host (FILE *out, unsigned long ip, const char *name)
 }
 
 
-/* Create a sonar_bogie a host name or ip address string.
+/* Create a sonar_bogie from a host name or ip address string.
    Returns NULL if the name could not be resolved.
  */
 static sonar_bogie *
@@ -590,9 +590,16 @@ subnet_hosts (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
               if (pd->debug_p)
                 fprintf (stderr, "%s:     if: %4s: %s\n", progname,
                          ifa->ifa_name,
-                         (ifa->ifa_addr->sa_family == AF_UNIX  ? "local" :
+                         (
+# ifdef AF_UNIX
+                          ifa->ifa_addr->sa_family == AF_UNIX  ? "local" :
+# endif
+# ifdef AF_LINK
                           ifa->ifa_addr->sa_family == AF_LINK  ? "link"  :
+# endif
+# ifdef AF_INET6
                           ifa->ifa_addr->sa_family == AF_INET6 ? "ipv6"  :
+# endif
                           "other"));
               continue;
             }
@@ -615,13 +622,12 @@ subnet_hosts (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
            */
           if (mask_width (mask) == 31)
             {
-              char buf[255];
               sprintf (buf,
                        "Can't ping subnet:\n"
                        "local network is\n"
-                       "%s/%d,\n"
+                       "%.100s/%d,\n"
                        "a p2p bridge\n"
-                       "on if %s.",
+                       "on if %.100s.",
                        inet_ntoa (in2), mask_width (mask), ifa->ifa_name);
               if (*error_ret) free (*error_ret);
               *error_ret = strdup (buf);
@@ -676,7 +682,7 @@ subnet_hosts (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
         {
           sprintf(buf, 
                   "Unable to resolve\n"
-                  "local host \"%s\"", 
+                  "local host \"%.100s\"", 
                   hostname);
           *error_ret = strdup(buf);
           return 0;
@@ -695,7 +701,7 @@ subnet_hosts (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
           sprintf (buf,
                    "Unable to determine\n"
                    "local subnet address:\n"
-                   "\"%s\"\n"
+                   "\"%.100s\"\n"
                    "resolves to\n"
                    "loopback address\n"
                    "%u.%u.%u.%u.",
@@ -714,10 +720,14 @@ subnet_hosts (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
   h_base = ntohl (n_base);
 
   if (desc_ret && !*desc_ret) {
-    unsigned int a, b, c, d;
     char buf[255];
-    unpack_addr (n_base, &a, &b, &c, &d);
-    sprintf (buf, "%u.%u.%u.%u/%d", a, b, c, d, subnet_width);
+    unsigned int a, b, c, d;
+    unsigned long bb = n_base & htonl(h_mask);
+    unpack_addr (bb, &a, &b, &c, &d);
+    if (subnet_width > 24)
+      sprintf (buf, "%u.%u.%u.%u/%d", a, b, c, d, subnet_width);
+    else
+      sprintf (buf, "%u.%u.%u/%d", a, b, c, subnet_width);
     *desc_ret = strdup (buf);
   }
 
@@ -805,7 +815,7 @@ send_ping (ping_data *pd, const sonar_bogie *b)
      just to give a clue to anyone sniffing and wondering what's up.
    */
   sprintf ((char *) &packet[sizeof(struct ICMP) + sizeof(struct timeval)],
-           "%s%c%s %s",
+           "%.100s%c%.20s %.20s",
            b->name, 0, token, pd->version);
 
   ICMP_CHECKSUM(icmph) = checksum((u_short *)packet, pcktsiz);
@@ -818,7 +828,7 @@ send_ping (ping_data *pd, const sonar_bogie *b)
     {
 #if 0
       char buf[BUFSIZ];
-      sprintf(buf, "%s: pinging %s", progname, b->name);
+      sprintf(buf, "%s: pinging %.100s", progname, b->name);
       perror(buf);
 #endif
     }
@@ -989,6 +999,11 @@ get_ping (sonar_sensor_data *ssd)
                                                 sizeof(struct ICMP) +
                                                 sizeof(struct timeval)];
             sonar_bogie *b;
+
+            /* Ensure that a maliciously-crafted return packet can't
+               make us overflow in strcmp. */
+            packet[sizeof(packet)-1] = 0;
+
             for (b = pd->targets; b; b = b->next)
               if (!strcmp (name, b->name))
                 {
@@ -1106,8 +1121,8 @@ double_time (void)
 }
 
 
-/* If a bogie is provided, pings it.
-   Then, returns all outstanding ping replies.
+/* Pings the next bogie, if it's time.
+   Returns all outstanding ping replies.
  */
 static sonar_bogie *
 ping_scan (sonar_sensor_data *ssd)
@@ -1271,7 +1286,6 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
   ping_data *pd = (ping_data *) calloc (1, sizeof(*pd));
   sonar_bogie *b;
   char *s;
-  int i;
 
   Bool socket_initted_p = False;
   Bool socket_raw_p     = False;
@@ -1381,16 +1395,20 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
      Even on a /24, allocated IPs tend to cluster together, so
      don't put any two hosts closer together than N degrees to
      avoid unnecessary overlap when we have plenty of space due
-     to addresses that probably won't respond.
+     to addresses that probably won't respond.  And don't spread
+     them out too far apart, because that looks too symmetrical
+     when there are a small number of hosts.
    */
   {
-    int min_separation = 23;  /* degrees */
-    int div = pd->target_count;
-    if (div > 360 / min_separation)
-      div = 360 / min_separation;
-    for (i = 0, b = pd->targets; b; b = b->next, i++)
-      b->th = (M_PI/2 -
-               M_PI * 2 * ((div - i) % div) / div);
+    double th = frand(M_PI);
+    double sep = 360.0 / pd->target_count;
+    if (sep < 23) sep = 23;
+    if (sep > 43) sep = 43;
+    sep /= 180/M_PI;
+    for (b = pd->targets; b; b = b->next) {
+      b->th = th;
+      th += sep;
+    }
   }
 
   return ssd;
