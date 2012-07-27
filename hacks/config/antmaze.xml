@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="antmaze" _label="AntMaze" gl="yes">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <_description>
+Draws a few views of a few ants walking around in a simple maze. 
+
+Written by Blair Tennessy; 2005.
+  </_description>
+</screensaver>
