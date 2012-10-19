@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="xanalogtv" _label="XAnalogTV">
+
+  <command arg="-root"/>
+
+  <xscreensaver-image />
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="tvcolor" type="slider" arg="-tv-color %"
+            _label="Color Knob" _low-label="Low" _high-label="High"
+            low="0" high="1000" default="70"/>
+    <number id="tvtint" type="slider" arg="-tv-tint %"
+            _label="Tint Knob" _low-label="Low" _high-label="High"
+            low="0" high="100" default="5"/>
+   </vgroup>
+   <vgroup>
+    <number id="tvbrightness" type="slider" arg="-tv-brightness %"
+            _label="Brightness Knob" _low-label="Low" _high-label="High"
+            low="0" high="200" default="150"/>
+    <number id="tvcontrast" type="slider" arg="-tv-contrast %"
+            _label="Contrast Knob" _low-label="Low" _high-label="High"
+            low="0" high="1500" default="1000"/>
+   </vgroup>
+  </hgroup>
+
+  <_description>
+
+a detailed simulation of an old TV set, including artifacts like snow,
+bloom, distortion, ghosting, and hash noise.  It also simulates the TV
+warming up. It will cycle through 12 channels, some with images you
+give it, and some with color bars or nothing but static.
+
+Written by Trevor Blackwell; 2003.
+  </_description>
+</screensaver>
