@@ -161,7 +161,7 @@ indicates:
 .ti 10
 (E or e) Recalculate the indices into the color wheel using a different method
 .ti 10
-(F or f) Save current screen to ouput file (not yet implemented)
+(F or f) Save current screen to output file (not yet implemented)
 .ti 10
 (H or h or ?) Display brief help message
 .ti 10

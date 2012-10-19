@@ -440,8 +440,8 @@ draw_moebius_strip(ModeInfo * mi)
 
 	float       Cx, Cy, Cz;
 
-#ifdef HAVE_JWZGLES
-    solidmoebius = True; /* no LINE PolygonMode */
+#ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+    solidmoebius = True;
 #endif
 
 	if (solidmoebius) {

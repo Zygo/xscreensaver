@@ -1890,6 +1890,11 @@ ENTRYPOINT void init_glhanoi(ModeInfo * mi)
 		(int)((1 - sqrt(frand(1.0))) * (glhanoi->numberOfDisks - 1));
 	
 	glhanoi->wire = MI_IS_WIREFRAME(mi);
+
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+    glhanoi->wire = 0;
+# endif
+
 	glhanoi->light = light;
 	glhanoi->fog = fog;
 	glhanoi->texture = texture;

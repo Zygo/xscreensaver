@@ -1,6 +1,6 @@
 # XScreenSaver for MacOS X, Copyright (c) 2006-2012 by Jamie Zawinski.
 
-XCODEBUILD = /Developer/usr/bin/xcodebuild
+XCODEBUILD = /usr/bin/xcodebuild
 TARGETS    = -target "All Savers"
 ARCH       = -arch i386 -arch x86_64
 CERT       = 'Jamie Zawinski'

@@ -332,7 +332,7 @@
     else if (n == 1) return YES;
     else goto FAIL;
   } else if ([o isKindOfClass:[NSString class]]) {
-    NSString *s = (NSString *) o;
+    NSString *s = [((NSString *) o) lowercaseString];
     if ([s isEqualToString:@"true"] ||
         [s isEqualToString:@"yes"] ||
         [s isEqualToString:@"1"])

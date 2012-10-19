@@ -605,6 +605,10 @@ grab_texture(ModeInfo *mi, int texture_index)
 static void
 set_parameters(void)
 {
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+  wireframe = 0;
+# endif
+
   /* In wire frame mode do not draw a texture */
   if (wireframe)
     {

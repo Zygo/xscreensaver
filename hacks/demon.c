@@ -165,7 +165,6 @@ drawcell(ModeInfo * mi, int col, int row, unsigned char state)
 		gc = MI_GC(mi);
 	} else {
 		XGCValues   gcv;
-
 #ifdef DO_STIPPLE
 		gcv.stipple = dp->pixmaps[(state - 1) % (NUMSTIPPLES - 1)];
 #endif /* DO_STIPPLE */
@@ -465,6 +464,10 @@ init_demon (ModeInfo * mi)
 	}
 #endif /* DO_STIPPLE */
 	free_struct(dp);
+
+#ifdef HAVE_COCOA
+    jwxyz_XSetAntiAliasing (MI_DISPLAY(mi), MI_GC(mi), False);
+#endif
 
 	for (nk = 0; nk < NEIGHBORKINDS; nk++) {
 		if (neighbors == plots[0][nk]) {

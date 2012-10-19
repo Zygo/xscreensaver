@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -296,6 +296,7 @@ blitspin_init (Display *d_arg, Window w_arg)
       st->bitmap = xpm_file_to_pixmap (st->dpy, st->window, bitmap_name,
                                    &st->width, &st->height, 0);
       st->scale_up = True; /* probably? */
+      blitspin_init_2 (st);
     }
 
   return st;

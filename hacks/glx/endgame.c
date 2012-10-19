@@ -881,6 +881,10 @@ ENTRYPOINT void init_chess(ModeInfo *mi)
   }
   chessmodels_gen_lists( classic, cs->poly_counts);
 
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+    cs->wire = 0;
+# endif
+
   if(!cs->wire) {
     setup_lights(cs);
     glColorMaterial(GL_FRONT, GL_DIFFUSE);

@@ -1023,10 +1023,8 @@ void DrawSmoke_Scalar(global_info_t *global, flurry_info_t *flurry, SmokeV *s, f
 					s->p[i].animFrame.i[k] = 0;
 				}
 		
-				u0 = (s->p[i].animFrame.i[k]&&7) * 0.125f;
+				u0 = (s->p[i].animFrame.i[k]& 7) * 0.125f;
 				v0 = (s->p[i].animFrame.i[k]>>3) * 0.125f;
-				u1 = u0 + 0.125f;
-				v1 = v0 + 0.125f;
 				u1 = u0 + 0.125f;
 				v1 = v0 + 0.125f;
 				cm = (1.375f - thisWidth/width);

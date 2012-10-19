@@ -34,7 +34,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.26 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.27 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -197,11 +197,11 @@ sub get_x11_prefs() {
   }
 
   if ($verbose > 1) {
-    printf STDERR "$progname: mode:    $text_mode\n";
-    printf STDERR "$progname: literal: $text_literal\n";
-    printf STDERR "$progname: file:    $text_file\n";
-    printf STDERR "$progname: program: $text_program\n";
-    printf STDERR "$progname: url:     $text_url\n";
+    print STDERR "$progname: mode:    $text_mode\n";
+    print STDERR "$progname: literal: $text_literal\n";
+    print STDERR "$progname: file:    $text_file\n";
+    print STDERR "$progname: program: $text_program\n";
+    print STDERR "$progname: url:     $text_url\n";
   }
 
   $text_mode =~ tr/A-Z/a-z/;

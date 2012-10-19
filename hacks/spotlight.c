@@ -38,7 +38,7 @@ struct state {
   int delay;
   int duration;
   time_t start_time;
-
+  int first_time;
   GC window_gc;
 #ifdef DEBUG
   GC white_gc;
@@ -138,6 +138,8 @@ spotlight_init (Display *dpy, Window window)
   st->pm = XCreatePixmap(st->dpy, st->window, st->sizex, st->sizey, xgwa.depth);
   XClearWindow(st->dpy, st->window);
 
+  st->first_time = 1;
+
   /* create buffer to reduce flicker */
 #ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
   st->buffer = 0;
@@ -148,10 +150,6 @@ spotlight_init (Display *dpy, Window window)
   st->buffer_gc = XCreateGC(st->dpy, (st->buffer ? st->buffer : window), gcflags, &gcv);
   if (st->buffer)
     XFillRectangle(st->dpy, st->buffer, st->buffer_gc, 0, 0, st->sizex, st->sizey);
-
-  /* blank out screen */
-  XFillRectangle(st->dpy, st->window, st->window_gc, 0, 0, st->sizex, st->sizey);
-  XSetWindowBackground (st->dpy, st->window, bg);
 
   /* create clip mask (so it's a circle, not a square) */
   clip_pm = XCreatePixmap(st->dpy, st->window, st->radius*4, st->radius*4, 1);
@@ -184,6 +182,10 @@ spotlight_init (Display *dpy, Window window)
   gcv.foreground = fg;
   st->white_gc = XCreateGC(st->dpy, st->window, gcflags, &gcv);
 #endif
+
+  /* blank out screen */
+  XFillRectangle(st->dpy, st->window, st->window_gc, 0, 0, st->sizex, st->sizey);
+
   return st;
 }
 
@@ -251,6 +253,12 @@ onestep (struct state *st, Bool first_p)
          Clip to a circle */
       XSetClipOrigin(st->dpy, st->buffer_gc, st->x,st->y);
       XCopyArea(st->dpy, st->pm, st->buffer, st->buffer_gc, st->x, st->y, st->s, st->s, st->x, st->y);
+
+      if (st->first_time) {
+        /* blank out screen */
+        XFillRectangle(st->dpy, st->window, st->window_gc, 0, 0, st->sizex, st->sizey);
+        st->first_time = 0;
+      }
 
       /* copy buffer to screen (window) */
       XCopyArea(st->dpy, st->buffer, st->window, st->window_gc, st->x , st->y, st->s, st->s, st->x, st->y);

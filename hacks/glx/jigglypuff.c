@@ -872,11 +872,11 @@ static int parse_color(jigglystruct *js)
 
 static void randomize_parameters(jigglystruct *js) {
     do_tetrahedron = random() & 1;
-# ifndef HAVE_JWZGLES
+# ifndef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
     js->do_wireframe = !(random() & 3);
 # endif
     js->color_style = random() % 5;
-# ifdef HAVE_JWZGLES  /* SPHERE_MAP unimplemented */
+# ifdef HAVE_JWZGLES  /* #### SPHERE_MAP unimplemented */
     while (js->color_style == COLOR_STYLE_CHROME)
       js->color_style = random() % 5;;
 # endif

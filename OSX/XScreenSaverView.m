@@ -1200,6 +1200,8 @@ double current_device_rotation (void)
             }
           }
 
+        if (! k) return YES;   // E.g., "KeyRelease XK_Shift_L"
+
         xe.xkey.keycode = k;
         xe.xkey.state = state;
         break;

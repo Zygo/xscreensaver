@@ -436,6 +436,11 @@ init_gl(ModeInfo *mi)
   int status;
 #endif
   cp->wire = MI_IS_WIREFRAME(mi);
+
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+  cp->wire = 0;
+# endif
+
   if(MI_IS_MONO(mi))
     tex = False;
   if(cp->wire) {

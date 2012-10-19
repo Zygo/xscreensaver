@@ -702,6 +702,11 @@ static void init_gl(ModeInfo *mi)
     tex = False;
     cp->cmat = False;
   }
+
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+  cp->wire = 0;
+# endif
+
   if(cp->wire) {
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     return;

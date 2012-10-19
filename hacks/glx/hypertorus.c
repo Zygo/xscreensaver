@@ -631,16 +631,12 @@ static void init(ModeInfo *mi)
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
   if (display_mode == DISP_WIREFRAME)
-  {
-    glDisable(GL_DEPTH_TEST);
-    glShadeModel(GL_FLAT);
-    glPolygonMode(GL_FRONT_AND_BACK,GL_LINE);
-    glDisable(GL_LIGHTING);
-    glDisable(GL_LIGHT0);
-    glDisable(GL_BLEND);
-  }
-  else if (display_mode == DISP_SURFACE)
+    display_mode = DISP_SURFACE;
+# endif
+
+  if (display_mode == DISP_SURFACE)
   {
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -676,7 +672,7 @@ static void init(ModeInfo *mi)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA,GL_ONE);
   }
-  else
+  else  /* display_mode == DISP_WIREFRAME */
   {
     glDisable(GL_DEPTH_TEST);
     glShadeModel(GL_FLAT);
