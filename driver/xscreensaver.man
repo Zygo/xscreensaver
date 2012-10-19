@@ -72,7 +72,7 @@ database.  If the \fI.xscreensaver\fP file exists, it overrides any settings
 in the resource database.  
 
 The syntax of the \fI.xscreensaver\fP file is similar to that of
-the \fI.Xdefaults\fP file; for example, to set the \fItimeout\fP paramter
+the \fI.Xdefaults\fP file; for example, to set the \fItimeout\fP parameter
 in the \fI.xscreensaver\fP file, you would write the following:
 .EX
 timeout: 5
@@ -193,32 +193,15 @@ use it.
 To replace gnome-screensaver with xscreensaver:
 .RS 4
 .TP 3
-\fB1: Turn off gnome-screensaver.\fP
-Open the "\fISystem / Preferences / Screensaver\fP" panel and uncheck
-both boxes.
-.TP 3
-\fB2: Stop gnome-screensaver from launching at login.\fP
-Run the command:
+\fB1: Fully uninstall the gnome-screensaver package.\fP
 .EX
-
-gconftool-2 --type boolean -s \\
-/apps/gnome_settings_daemon/screensaver/start_screensaver \\
-false
-
+sudo apt-get remove gnome-screensaver
 .EE
-Or, just uninstall the "\fIgnome-screensaver\fP" package entirely.
 .TP 3
-\fB3: Launch xscreensaver at login.\fP
-Open the "\fISystem / Preferences / Sessions / Startup Programs\fP" panel.
-Click "\fIAdd\fP" and type "\fIxscreensaver\fP".
+\fB2: Launch xscreensaver at login.\fP
+Open "\fIStartup Applications\fP" and add "\fIxscreensaver\fP".
 .TP 3
-\fB4: Tell Preferences to use the xscreensaver configurator.\fP
-Edit \fI/usr/share/applications/gnome-screensaver-preferences.desktop\fP
-and change the \fIExec=\fP line to say
-    Exec=xscreensaver-demo
-.TP 3
-\fB5: Make "System / Quit / Lock Screen" use xscreensaver.\fP
-Run the command:
+\fB3: Make "Lock Screen" use xscreensaver.\fP
 .EX
 sudo ln -sf /usr/bin/xscreensaver-command \\
             /usr/bin/gnome-screensaver-command

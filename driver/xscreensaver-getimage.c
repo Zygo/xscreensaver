@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001-2008 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2012 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -379,7 +379,7 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
                   &root, &x, &y, &win_width, &win_height, &bw, &win_depth);
   }
 
-  gdk_pixbuf_xlib_init (dpy, screen_number (screen));
+  gdk_pixbuf_xlib_init_with_depth (dpy, screen_number (screen), win_depth);
 # ifdef HAVE_GTK2
   g_type_init();
 # else  /* !HAVE_GTK2 */

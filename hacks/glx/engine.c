@@ -587,7 +587,7 @@ static int boom(Engine *e, GLfloat x, GLfloat y, int s)
   glLightfv(GL_LIGHT1, GL_POSITION, e->boom_lpos);
   glLightfv(GL_LIGHT1, GL_DIFFUSE, e->boom_red);
   glLightfv(GL_LIGHT1, GL_SPECULAR, e->boom_red);
-  glLighti(GL_LIGHT1, GL_LINEAR_ATTENUATION, 1.3);
+  glLightf(GL_LIGHT1, GL_LINEAR_ATTENUATION, 1.3);
   glLighti(GL_LIGHT1, GL_CONSTANT_ATTENUATION, 0);
 
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, e->boom_red);

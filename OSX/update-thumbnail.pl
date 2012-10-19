@@ -18,7 +18,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.22 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.1 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 1;
 

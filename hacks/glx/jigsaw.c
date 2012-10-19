@@ -486,7 +486,7 @@ draw_piece (jigsaw_configuration *jc, puzzle_piece *p,
 
   { GLfloat ss = 1.0 / resolution; glScalef (ss, ss, ss); }
 
-# ifndef HAVE_JWZGLES
+# ifndef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
   glPolygonMode (GL_FRONT_AND_BACK, wire ? GL_LINE : GL_FILL);
 # endif
 

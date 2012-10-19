@@ -383,7 +383,7 @@ static char *anchorize (const char *url);
   s.height = 999999;
   s = [text sizeWithFont: font
             constrainedToSize: s
-            lineBreakMode: UILineBreakModeWordWrap];
+            lineBreakMode:NSLineBreakByWordWrapping];
 
   // GAAAH. Add one more line, or the UIWebView is still scrollable!
   // The text is sized right, but it lets you scroll it up anyway.
@@ -1100,7 +1100,7 @@ hreffify (NSText *nstext)
   [lab setBackgroundColor:[UIColor clearColor]];
   [lab setNumberOfLines:0]; // unlimited
   // [lab setLineBreakMode:UILineBreakModeWordWrap];
-  [lab setLineBreakMode:UILineBreakModeHeadTruncation];
+  [lab setLineBreakMode:NSLineBreakByTruncatingHead];
   [lab setAutoresizingMask: (UIViewAutoresizingFlexibleWidth |
                              UIViewAutoresizingFlexibleHeight)];
 # endif // USE_IPHONE
@@ -1303,7 +1303,7 @@ hreffify (NSText *nstext)
       [lab setFrame:rect];
       [self placeChild:lab on:parent];
 # else  // USE_IPHONE
-      [lab setTextAlignment: UITextAlignmentRight];
+      [lab setTextAlignment: NSTextAlignmentRight];
       [self placeChild:lab on:parent right:(label ? YES : NO)];
 # endif // USE_IPHONE
 
@@ -1673,7 +1673,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
   for (NSArray *item in items) {
     RadioButton *b = [[RadioButton alloc] initWithIndex:i 
                                           items:items];
-    [b setLineBreakMode:UILineBreakModeHeadTruncation];
+    [b setLineBreakMode:NSLineBreakByTruncatingHead];
     [b setFont:[NSFont boldSystemFontOfSize: FONT_SIZE]];
     [self placeChild:b on:parent];
     i++;
@@ -1795,7 +1795,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
   txt.font = [UIFont systemFontOfSize: FONT_SIZE];
   txt.placeholder = @"";
   txt.borderStyle = UITextBorderStyleRoundedRect;
-  txt.textAlignment = UITextAlignmentRight;
+  txt.textAlignment = NSTextAlignmentRight;
   txt.keyboardType = UIKeyboardTypeDefault;  // Full kbd
   txt.autocorrectionType = UITextAutocorrectionTypeNo;
   txt.autocapitalizationType = UITextAutocapitalizationTypeNone;

@@ -38,6 +38,10 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.19:   * Support for iPhone 5 screen size.
+                      * Fixed modifier key handing in Apple2.app and
+                        Phosphor.app on MacOS.
+                      * Various minor bug fixes.
 Changes since 5.18:   * MacOS 10.8.0 compatibility.
                       * iOS performance improvements.
 Changes since 5.17:   * iOS responds to shake gestures to randomize.

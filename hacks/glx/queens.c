@@ -577,6 +577,10 @@ ENTRYPOINT void init_queens(ModeInfo *mi)
   int poly_counts[PIECES];
   wire = MI_IS_WIREFRAME(mi);
 
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+  wire = 0;
+# endif
+
   if(!qss && 
      !(qss = (Queenscreen *) calloc(MI_NUM_SCREENS(mi), sizeof(Queenscreen))))
     return;

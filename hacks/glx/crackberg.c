@@ -1211,7 +1211,9 @@ ENTRYPOINT void init_crackberg (ModeInfo *mi)
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glShadeModel((flat) ? GL_FLAT : GL_SMOOTH);
+# ifndef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
     glPolygonMode(GL_FRONT_AND_BACK, (MI_IS_WIREFRAME(mi)) ? GL_LINE : GL_FILL);
+# endif
 
     if (lit) {
         glEnable(GL_LIGHTING);

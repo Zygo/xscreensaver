@@ -1378,7 +1378,11 @@ static void
 scale_for_window(ModeInfo *mi)
 {
   lament_configuration *lc = &lcs[MI_SCREEN(mi)];
-  int target_size = lc->texture->width * 1.4;
+
+  /* No texture created in -wireframe or -no-texture, so guess. */
+  int target_size = (lc->texture
+                     ? lc->texture->width * 1.4
+                     : 340);
   int win_size = (MI_WIDTH(mi) > MI_HEIGHT(mi) ? MI_HEIGHT(mi) : MI_WIDTH(mi));
 
   /* This scale makes the box take up most of the window */

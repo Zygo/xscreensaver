@@ -363,6 +363,10 @@ static void initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
 	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
   }
 
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+  do_wire = 0;
+# endif
+
   if (do_wire)
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
   else 

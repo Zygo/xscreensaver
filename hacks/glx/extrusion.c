@@ -442,6 +442,10 @@ initializeGL(ModeInfo *mi, GLsizei width, GLsizei height)
   glLightModeli (GL_LIGHT_MODEL_TWO_SIDE, True);
   glShadeModel(GL_SMOOTH);
 
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+  MI_IS_WIREFRAME(mi) = 0;
+# endif
+
   if (do_light)
 	SetupLight();
   if (MI_IS_WIREFRAME(mi)) {

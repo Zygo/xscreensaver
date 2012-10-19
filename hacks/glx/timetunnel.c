@@ -1054,6 +1054,10 @@ init_tunnel (ModeInfo *mi)
   
   wire = MI_IS_WIREFRAME(mi);
 
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+  wire = 0;
+# endif
+
   if (!tconf) {
     tconf = (tunnel_configuration *)
       calloc (MI_NUM_SCREENS(mi), sizeof (tunnel_configuration));

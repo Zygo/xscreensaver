@@ -375,6 +375,9 @@ truchet_init (Display *dpy, Window window)
   
   
   st->frame = XCreatePixmap(st->dpy,st->window, st->xgwa.width+st->overlap, st->xgwa.height+st->overlap, st->xgwa.depth); 
+  XFillRectangle(st->dpy, st->frame, st->bgc, 0, 0, 
+                 st->xgwa.width + st->overlap, 
+                 st->xgwa.height + st->overlap);
   
   return st;
 }

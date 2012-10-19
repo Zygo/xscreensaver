@@ -1,4 +1,4 @@
-/* polyhedra, Copyright (c) 2004-2011 Jamie Zawinski <jwz@jwz.org>
+/* polyhedra, Copyright (c) 2004-2012 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -536,6 +536,11 @@ init_polyhedra (ModeInfo *mi)
 {
   polyhedra_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
+
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+  MI_IS_WIREFRAME(mi) = 0;
+  wire = 0;
+# endif
 
   if (!bps) {
     bps = (polyhedra_configuration *)

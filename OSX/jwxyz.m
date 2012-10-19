@@ -3218,11 +3218,25 @@ XLookupString (XKeyEvent *e, char *buf, int size, KeySym *k_ret,
                XComposeStatus *xc)
 {
   KeySym ks = XKeycodeToKeysym (0, e->keycode, 0);
-  char c = (char) ks;	  // could be smarter about modifiers here...
+  char c = 0;
+  // Do not put non-ASCII KeySyms like XK_Shift_L and XK_Page_Up in the string.
+  if ((unsigned int) ks <= 255)
+    c = (char) ks;
+
+  // Put control characters in the string.  Not meta.
+  if (e->state & ControlMask) {
+    if (c >= 'a' && c <= 'z')    // Upcase control.
+      c -= 'a'-'A';
+    if (c >= '@' && c <= '_')    // Shift to control page.
+      c -= '@';
+    if (c == ' ')		 // C-SPC is NULL.
+      c = 0;
+  }
+
   if (k_ret) *k_ret = ks;
   if (size > 0) buf[0] = c;
   if (size > 1) buf[1] = 0;
-  return 0;
+  return (size > 0 ? 1 : 0);
 }
 
 

@@ -212,6 +212,11 @@ static void Init(ModeInfo * mi)
 	
 		glEnable(GL_LIGHTING);
 	}
+
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+    do_wire = 0;
+# endif
+
   	if (do_wire) {
 		glDisable(GL_NORMALIZE);
 		glDisable(GL_CULL_FACE);

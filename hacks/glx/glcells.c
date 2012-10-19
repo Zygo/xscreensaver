@@ -186,7 +186,7 @@ static argtype vars[] = {
   {&s_maxfood,   "maxfood",   "Max Food",       DEF_MAXFOOD,  t_Int},
   {&s_pause,   "pause",     "Pause at end",   DEF_PAUSE,  t_Int},
   {&s_divideage, "divideage", "Age for duplication (Ticks)",       DEF_DIVIDEAGE,  t_Int},
-  {&s_min_dist,  "mindist",   "Minimum prefered distance to other cells",       DEF_MINDIST,  t_Float},
+  {&s_min_dist,  "mindist",   "Minimum preferred distance to other cells",       DEF_MINDIST,  t_Float},
   {&s_keepold,   "keepold",   "Keep old cells", DEF_KEEPOLD,  t_Bool}
 };
 
@@ -1221,6 +1221,10 @@ init_glcells( ModeInfo *mi )
   st->num_cells = 0;
   st->wire = MI_IS_WIREFRAME(mi);
   
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+  st->wire = 0;
+# endif
+
   /* get settings */
   st->max_cells = s_maxcells;;
   if (st->max_cells < 50) st->max_cells = 50;

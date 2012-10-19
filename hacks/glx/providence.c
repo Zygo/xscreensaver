@@ -711,6 +711,10 @@ ENTRYPOINT void init_providence(ModeInfo *mi)
   mp->mono = MI_IS_MONO(mi);
   mp->wire = MI_IS_WIREFRAME(mi);
 
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+  mp->wire = 0;
+# endif
+
   /* make multiple screens rotate at slightly different rates. */
   mp->theta_scale = 0.7 + frand(0.6);
 
