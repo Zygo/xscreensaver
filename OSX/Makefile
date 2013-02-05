@@ -122,7 +122,8 @@ dmg:: distdepend check_versions
       perl -0 -ne							      \
      's/\\\\\\n//g; m/^RETIRED_GL_EXES\s*=\s*(.*)$$/m && print "$$1\n"'	      \
       ../hacks/glx/Makefile.in ;					      \
-     echo xscreensaver` ;						      \
+     echo xscreensaver ;						      \
+     echo savertester` ;						      \
 									      \
   for f in $$SRC/*.{saver,app} $$EXTRAS ; do				      \
    ok=yes ;								      \

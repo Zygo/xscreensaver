@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-2013 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -114,6 +114,8 @@ struct splash_dialog_data {
   char *heading_label;
   char *body_label;
   char *body2_label;
+  char *body3_label;
+  char *body4_label;
   char *demo_label;
 #ifdef PREFS_BUTTON
   char *prefs_label;
@@ -156,6 +158,7 @@ struct splash_dialog_data {
 void
 make_splash_dialog (saver_info *si)
 {
+  saver_preferences *p = &si->prefs;
   int x, y, bw;
   XSetWindowAttributes attrs;
   unsigned long attrmask = 0;
@@ -163,6 +166,20 @@ make_splash_dialog (saver_info *si)
   saver_screen_info *ssi;
   Colormap cmap;
   char *f;
+
+  Bool whine = senescent_p ();
+
+  if (whine)
+    {
+      /* If locking is not enabled, make sure they see the message. */
+      if (!p->lock_p)
+        {
+          si->prefs.splash_p = True;
+          if (si->prefs.splash_duration < 5000)
+            si->prefs.splash_duration = 5000;
+        }
+      si->prefs.splash_duration += 3000;
+    }
 
   if (si->sp_data)
     return;
@@ -200,6 +217,14 @@ make_splash_dialog (saver_info *si)
   sp->help_label = get_string_resource (si->dpy,
                                         "splash.help.label",
 					"Dialog.Button.Label");
+
+
+
+  if (whine)
+    {
+      sp->body3_label = strdup("WARNING: This version is very old!");
+      sp->body4_label = strdup("Please upgrade!");
+    }
 
   if (!sp->heading_label)
     sp->heading_label = strdup("ERROR: REESOURCES NOT INSTALLED CORRECTLY");
@@ -311,6 +336,20 @@ make_splash_dialog (saver_info *si)
 		  &direction, &ascent, &descent, &overall);
     if (overall.width > sp->width) sp->width = overall.width;
     sp->height += ascent + descent;
+
+    /* Measure the optional body3_label. */
+    if (sp->body3_label)
+      {
+        XTextExtents (sp->heading_font,
+                      sp->body3_label, strlen(sp->body3_label),
+                      &direction, &ascent, &descent, &overall);
+        if (overall.width > sp->width) sp->width = overall.width;
+        XTextExtents (sp->heading_font,
+                      sp->body4_label, strlen(sp->body4_label),
+                      &direction, &ascent, &descent, &overall);
+        if (overall.width > sp->width) sp->width = overall.width;
+        sp->height += (ascent + descent) * 5;
+      }
 
     {
       Dimension w2 = 0, w3 = 0, w4 = 0;
@@ -510,6 +549,24 @@ draw_splash_window (saver_info *si)
 	       sp->body2_label, strlen(sp->body2_label));
   y1 += sp->body_font->descent;
 
+  if (sp->body3_label)
+    {
+      XSetFont (si->dpy, gc1, sp->heading_font->fid);
+      y1 += sp->heading_font->ascent + sp->heading_font->descent;
+      y1 += sp->heading_font->ascent;
+      sw = string_width (sp->heading_font, sp->body3_label);
+      x2 = (x1 + ((x3 - x1 - sw) / 2));
+      XDrawString (si->dpy, si->splash_dialog, gc1, x2, y1,
+                   sp->body3_label, strlen(sp->body3_label));
+      y1 += sp->heading_font->descent + sp->heading_font->ascent;
+      sw = string_width (sp->heading_font, sp->body4_label);
+      x2 = (x1 + ((x3 - x1 - sw) / 2));
+      XDrawString (si->dpy, si->splash_dialog, gc1, x2, y1,
+                   sp->body4_label, strlen(sp->body4_label));
+      y1 += sp->heading_font->descent;
+      XSetFont (si->dpy, gc1, sp->body_font->fid);
+    }
+
   /* The buttons
    */
   XSetForeground (si->dpy, gc1, sp->button_foreground);
@@ -674,6 +731,8 @@ destroy_splash_window (saver_info *si)
   if (sp->heading_label) free (sp->heading_label);
   if (sp->body_label)    free (sp->body_label);
   if (sp->body2_label)   free (sp->body2_label);
+  if (sp->body3_label)   free (sp->body3_label);
+  if (sp->body4_label)   free (sp->body4_label);
   if (sp->demo_label)    free (sp->demo_label);
 #ifdef PREFS_BUTTON
   if (sp->prefs_label)   free (sp->prefs_label);

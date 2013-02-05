@@ -1,4 +1,4 @@
-/* xscreensaver-command, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver-command, Copyright (c) 1991-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -65,7 +65,7 @@ static char *usage = "\n\
 usage: %s -<option>\n\
 \n\
   This program provides external control of a running xscreensaver process.\n\
-  Version %s, copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>.\n\
+  Version %s, copyright (c) 1991-%s Jamie Zawinski <jwz@jwz.org>.\n\
 \n\
   The xscreensaver program is a daemon that runs in the background.\n\
   You control a running xscreensaver process by sending it messages\n\
@@ -145,7 +145,7 @@ usage: %s -<option>\n\
  */
 
 #define USAGE() do { \
- fprintf (stderr, usage, progname, screensaver_version); exit (1); \
+ fprintf (stderr, usage, progname, screensaver_version, year); exit (1); \
  } while(0)
 
 static int watch (Display *);
@@ -160,6 +160,7 @@ main (int argc, char **argv)
   long arg = 0L;
   char *s;
   Atom XA_WATCH = 0;  /* kludge: not really an atom */
+  char year[5];
 
   progname = argv[0];
   s = strrchr (progname, '/');
@@ -168,6 +169,12 @@ main (int argc, char **argv)
   screensaver_version = (char *) malloc (5);
   memcpy (screensaver_version, screensaver_id + 17, 4);
   screensaver_version [4] = 0;
+
+  s = strchr (screensaver_id, '-');
+  s = strrchr (s, '-');
+  s++;
+  strncpy (year, s, 4);
+  year[4] = 0;
 
   for (i = 1; i < argc; i++)
     {

@@ -464,11 +464,10 @@ $(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
 $(UTILS_BIN)/textclient.o:	$(UTILS_SRC)/textclient.c
 
 $(UTIL_OBJS):
-	cd $(UTILS_BIN) ; \
-	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+	$(MAKE) -C $(UTILS_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 
 $(HACK_BIN)/xlockmore.o: $(HACK_SRC)/xlockmore.c
-	cd $(HACK_BIN)  ; $(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
+	$(MAKE) -C $(HACK_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 
 # How we build object files in this directory.

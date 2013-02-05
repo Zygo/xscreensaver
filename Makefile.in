@@ -19,8 +19,8 @@ TARFILES	= README README.hacking README.VMS INSTALL \
 
 TAR		= tar
 
-MAKE_SUBDIR  = for dir in $(SUBDIRS); do (cd $$dir; $(MAKE) $@) || exit 5; done
-MAKE_SUBDIR2 = for dir in $(SUBDIRS2);do (cd $$dir; $(MAKE) $@) || exit 5; done
+MAKE_SUBDIR  = for dir in $(SUBDIRS); do $(MAKE) -C $$dir $@ || exit 5; done
+MAKE_SUBDIR2 = for dir in $(SUBDIRS2); do $(MAKE) -C $$dir $@ || exit 5; done
 
 default::
 	@$(MAKE_SUBDIR)
@@ -45,7 +45,7 @@ depend::
 distdepend::
 	@$(MAKE) update_spec_version
 	@$(MAKE_SUBDIR2)
-	@cd po ; $(MAKE) update-po
+	@$(MAKE) -C po update-po
 
 TAGS:: tags
 tags::
@@ -284,7 +284,7 @@ test-tar::
   chmod -R u+w .
 
 dmg::
-	cd OSX ; $(MAKE) release dmg
+	$(MAKE) -C OSX release dmg
 
 www::
 	@								    \
@@ -349,8 +349,7 @@ www::
   cat $$TMP > download.html ;						    \
   rm -f $$TMP ;								    \
 									    \
-  (cd ..; $(MAKE) xscreensaver/changelog.html				    \
-		  xscreensaver/screenshots/index.html );		    \
+  $(MAKE) -C ../ xscreensaver/changelog.html xscreensaver/screenshots/index.html; \
   cvs diff -U0 changelog.html ;						    \
   set +x ;								    \
 									    \

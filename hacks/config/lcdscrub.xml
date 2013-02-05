@@ -18,16 +18,17 @@
     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
    </vgroup>
    <vgroup>
-    <boolean id="hw" _label="Horizontal white" arg-unset="-no-hw"/>
-    <boolean id="vw" _label="Vertical white"   arg-unset="-no-vw"/>
-    <boolean id="dw" _label="Diagonal white"   arg-unset="-no-dw"/>
-    <boolean id="w"  _label="Solid white"      arg-unset="-no-w"/>
+    <boolean id="hw"  _label="Horizontal white" arg-unset="-no-hw"/>
+    <boolean id="vw"  _label="Vertical white"   arg-unset="-no-vw"/>
+    <boolean id="dw"  _label="Diagonal white"   arg-unset="-no-dw"/>
+    <boolean id="w"   _label="Solid white"      arg-unset="-no-w"/>
+    <boolean id="rgb" _label="Primary colors"   arg-unset="-no-rgb"/>
    </vgroup>
    <vgroup>
-    <boolean id="hb" _label="Horizontal black" arg-unset="-no-hb"/>
-    <boolean id="vb" _label="Vertical black"   arg-unset="-no-vb"/>
-    <boolean id="db" _label="Diagonal black"   arg-unset="-no-db"/>
-    <boolean id="b"  _label="Solid black"      arg-unset="-no-b"/>
+    <boolean id="hb"  _label="Horizontal black" arg-unset="-no-hb"/>
+    <boolean id="vb"  _label="Vertical black"   arg-unset="-no-vb"/>
+    <boolean id="db"  _label="Diagonal black"   arg-unset="-no-db"/>
+    <boolean id="b"   _label="Solid black"      arg-unset="-no-b"/>
    </vgroup>
   </hgroup>
 

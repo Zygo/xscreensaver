@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2012 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2013 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -22,10 +22,14 @@ require 5;
 #use diagnostics;	# Fails on some MacOS 10.5 systems
 use strict;
 
-my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.22 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
+
+my $version = q{ $Revision: 1.23 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
+
+my $thumbdir = $ENV{HOME} . '/www/xscreensaver/screenshots/';
+
 
 
 my $verbose = 1;
@@ -228,6 +232,21 @@ sub set_icon($) {
 }
 
 
+sub set_thumb($) {
+  my ($app_dir) = @_;
+
+  return unless ($app_dir =~ m@\.saver/?$@s);
+
+  my @cmd = ("$exec_dir/update-thumbnail.pl", $thumbdir, $app_dir);
+  push @cmd, "-" . ("v" x $verbose) if ($verbose);
+  print STDERR "$progname: exec: " . join(' ', @cmd) . "\n"
+    if ($verbose > 1);
+  system (@cmd);
+  my $exit  = $? >> 8;
+  exit ($exit) if $exit;
+}
+
+
 sub update($) {
   my ($app_dir) = @_;
 
@@ -282,6 +301,7 @@ sub update($) {
   }
 
   set_icon ($app_dir);
+  set_thumb ($app_dir);
 }
 
 

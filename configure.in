@@ -1184,6 +1184,7 @@ AC_HEADER_TIME
 AC_HEADER_SYS_WAIT
 AC_HEADER_DIRENT
 AC_GETTIMEOFDAY_ARGS
+AC_SYS_LARGEFILE
 AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv sbrk)
 AC_CHECK_FUNCS(sigaction syslog realpath setrlimit)
 AC_CHECK_FUNCS(setlocale)

@@ -413,7 +413,7 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
         int ow = w, oh = h;
         GdkPixbuf *opb = pb;
         pb = gdk_pixbuf_apply_embedded_orientation (opb);
-        gdk_pixbuf_unref (opb);
+        g_object_unref (opb);
         w = gdk_pixbuf_get_width (pb);
         h = gdk_pixbuf_get_height (pb);
         if (verbose_p && (w != ow || h != oh))
@@ -430,7 +430,7 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
                                                     GDK_INTERP_BILINEAR);
           if (pb2)
             {
-              gdk_pixbuf_unref (pb);
+              g_object_unref (pb);
               pb = pb2;
               w = w2;
               h = h2;

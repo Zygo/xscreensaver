@@ -57,7 +57,7 @@ BEGIN { eval 'use LWP::Simple;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.33 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.34 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -485,7 +485,7 @@ sub parse_feed($) {
       }!gsexi;
     }
 
-    # Then look for <description>... with an <img href="..."> inside.
+    # Then look for <description>... with an <img src="..."> inside.
     #
     if (! $iurl) {
       $item =~ s!(<description[^<>]*>.*?</description>)!{
@@ -957,7 +957,7 @@ sub usage() {
          "${min_image_width}x${min_image_height} are excluded.\n" .
   "\n" .
   "       The directory may also be the URL of an RSS/Atom feed.  Enclosed\n" .
-  "       images will be downloaded cached locally.\n" .
+  "       images will be downloaded and cached locally.\n" .
   "\n";
   exit 1;
 }

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2003, 2005, 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2003-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1464,9 +1464,9 @@ drain_input (state *s)
 {
   while (s->buf_tail < sizeof(s->buf) - 2)
     {
-      char c = textclient_getc (s->tc);
+      int c = textclient_getc (s->tc);
       if (c > 0)
-        s->buf[s->buf_tail++] = c;
+        s->buf[s->buf_tail++] = (char) c;
       else
         break;
     }

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -335,11 +335,13 @@ fill_input (m_state *s)
   if (!s->tc)
     return;
 
-  if (loadBytes > 0){
-    char c = textclient_getc (s->tc);
-    n = (c > 0 ? 1 : -1);
-    s->buf [s->buf_pos] = c;
-  }
+  if (loadBytes > 0)
+    {
+      int c = textclient_getc (s->tc);
+      n = (c > 0 ? 1 : -1);
+      s->buf [s->buf_pos] = (char) c;
+    }
+
   if (n > 0)
     {
         s->do_fill_buff = False;
