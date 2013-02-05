@@ -1,0 +1,84 @@
+.TH XScreenSaver 1 "10-Oct-03" "X Version 11"
+.SH NAME
+xanalogtv - Simulate reception on an old analog TV set
+.SH SYNOPSIS
+.B xanalogtv
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
+[\-visual \fIvisual\fP] 
+[\-cycle] [\-no-cycle]
+[\-fps]
+.SH DESCRIPTION
+.I xanalogtv
+shows a simulation of an old TV set showing test patterns and any
+other images you have provided. It reproduces a wide range of TV
+reception bummage: snow, bloom, ghosting, and loss of vertical and
+horizontal sync. It also simulates the TV warming up. It will cycle
+through 12 channels, some with images you give it, and some with color
+bars or nothing but static.
+.PP
+The images that it uses will be grabbed from the portion of the screen
+underlying the window, or from the system's video input, or from a
+random file on disk, as indicated by the \fIgrabDesktopImages\fP,
+\fIgrabVideoFrames\fP, and \fIchooseRandomImages\fP options in the
+\fI~/.xscreensaver\fP file; see
+.BR xscreensaver-demo (1)
+for more details. It looks best with a video input or
+your digital photo collection.
+.PP
+.SH OPTIONS
+.I xanalogtv
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH X RESOURCES
+Notable X resources supported include the following which correspond
+to standard TV controls:
+.BR analogTVTint ,
+.BR analogTVColor ,
+.BR analogTVBrightness ,
+and
+.BR analogTVContrast .
+They range from 0 to 100, except for tint which is an angle 
+between -180 and +180.
+
+.SH SEE ALSO
+.BR X (1),
+.BR xteevee (MANSUFFIX),
+.BR apple2 (MANSUFFIX),
+.BR bsod (MANSUFFIX),
+.BR xscreensaver (1),
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-getimage (1)
+.SH COPYRIGHT
+Copyright \(co 2003 by Trevor Blackwell.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty. 
+.SH AUTHOR
+Trevor Blackwell <tlb@tlb.org>
