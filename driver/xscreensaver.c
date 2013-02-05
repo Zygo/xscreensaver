@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -271,17 +271,24 @@ ERROR!  You must not include vroot.h in this file.
 static void
 do_help (saver_info *si)
 {
+  char *s, year[5];
+  s = strchr (screensaver_id, '-');
+  s = strrchr (s, '-');
+  s++;
+  strncpy (year, s, 4);
+  year[4] = 0;
+
   fflush (stdout);
   fflush (stderr);
   fprintf (stdout, "\
-xscreensaver %s, copyright (c) 1991-2008 by Jamie Zawinski <jwz@jwz.org>\n\
+xscreensaver %s, copyright (c) 1991-%s by Jamie Zawinski <jwz@jwz.org>\n\
 \n\
   All xscreensaver configuration is via the `~/.xscreensaver' file.\n\
   Rather than editing that file by hand, just run `xscreensaver-demo':\n\
   that program lets you configure the screen saver graphically,\n\
   including timeouts, locking, and display modes.\n\
 \n",
-	  si->version);
+	  si->version, year);
   fprintf (stdout, "\
   Just getting started?  Try this:\n\
 \n\
@@ -740,6 +747,13 @@ print_banner (saver_info *si)
 {
   saver_preferences *p = &si->prefs;
 
+  char *s, year[5];
+  s = strchr (screensaver_id, '-');
+  s = strrchr (s, '-');
+  s++;
+  strncpy (year, s, 4);
+  year[4] = 0;
+
   /* This resource gets set some time before the others, so that we know
      whether to print the banner (and so that the banner gets printed before
      any resource-database-related error messages.)
@@ -752,9 +766,9 @@ print_banner (saver_info *si)
 
   if (p->verbose_p)
     fprintf (stderr,
-	     "%s %s, copyright (c) 1991-2008 "
+	     "%s %s, copyright (c) 1991-%s "
 	     "by Jamie Zawinski <jwz@jwz.org>.\n",
-	     progname, si->version);
+	     progname, si->version, year);
 
   if (p->debug_p)
     fprintf (stderr, "\n"
@@ -769,6 +783,17 @@ print_banner (saver_info *si)
 	     "\tuntrusted environments.\n"
 	     "\n",
 	     blurb());
+
+  if (p->verbose_p && senescent_p ())
+    fprintf (stderr, "\n"
+             "*************************************"
+             "**************************************\n"
+	     "%s: Warning: this version of xscreensaver is VERY OLD!\n"
+	     "%s: Please upgrade!  http://www.jwz.org/xscreensaver/\n"
+             "*************************************"
+             "**************************************\n"
+	     "\n",
+             blurb(), blurb());
 
   if (p->verbose_p)
     {

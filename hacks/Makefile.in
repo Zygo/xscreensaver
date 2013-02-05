@@ -111,7 +111,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  apple2-main.c analogtv.c xanalogtv.c pong.c wormhole.c \
 		  pacman.c pacman_ai.c pacman_level.c \
 		  fuzzyflakes.c anemotaxis.c memscroller.c substrate.c \
-		  intermomentary.c fireworkx.c fireworkx_mmx.S fiberlamp.c \
+		  intermomentary.c fireworkx.c fiberlamp.c \
 		  boxfit.c interaggregate.c celtic.c cwaves.c m6502.c \
 		  asm6502.c abstractile.c lcdscrub.c \
 		  webcollage-cocoa.m webcollage-helper-cocoa.m
@@ -517,8 +517,7 @@ $(UTILS_BIN)/xdbe.o:		$(UTILS_SRC)/xdbe.c
 $(UTILS_BIN)/textclient.o:	$(UTILS_SRC)/textclient.c
 
 $(UTIL_OBJS):
-	cd $(UTILS_BIN) ; \
-	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+	$(MAKE) -C $(UTILS_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 
 # How we build object files in this directory.
 .c.o:

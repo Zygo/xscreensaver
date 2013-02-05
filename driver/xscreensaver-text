@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2012 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005-2013 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -34,7 +34,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.27 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.29 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -495,6 +495,19 @@ sub reformat_html($$) {
   s@<[^<>]*>?@@gs;                # lose all other HTML tags
   $_ = de_entify ($_);            # convert HTML entities
 
+  # For Wikipedia: delete anything inside {{ }} and unwrap [[tags]]
+  #
+  if ($rss_p eq 'wiki') {
+    s@/\*.*?\*/@@si;				# /* ... */
+    1 while (s/{{[^{}]*}}//gs);			# {{ ... }}
+    s/\[\[([^:\[\]\|]+)\|([^\[\]]+)\]\]/$2/gs;	# [[link|anchor]]
+    s/\[\[([^:\[\]\|]+)\]\]/$1/gs;		# [[anchor]]
+    s/\[http:[^\[\]\s]+\s+([^\[\]]+)\]/$1/gs;	# [url anchor]
+#   s@\s*<ref>.*?</ref>@*@gs;			# <ref>url<ref>  ->  "*"
+    s/<[^<>]*>//gs;				# <tags> -- omit.
+  }
+
+
   # elide any remaining non-Latin1 binary data...
   s/([\177-\377]+(\s*[\177-\377]+)[^a-z\d]*)/«...» /g;
   #s/([\177-\377]+(\s*[\177-\377]+)[^a-z\d]*)/«$1» /g;
@@ -506,6 +519,7 @@ sub reformat_html($$) {
 
   if (!defined($wrap_columns) || $wrap_columns > 0) {
     $Text::Wrap::columns = ($wrap_columns || 72);
+    $Text::Wrap::break = '[\s/]';  # wrap on slashes for URLs
     $_ = wrap ("", "  ", $_);     # wrap the lines as a paragraph
     s/[ \t]+$//gm;                # lose whitespace at end of line again
   }
@@ -519,6 +533,8 @@ sub reformat_html($$) {
 
 sub reformat_rss($) {
   my ($body) = @_;
+
+  my $wiki_p = ($body =~ m@<generator>[^<>]*Wiki@si);
 
   $body =~ s/(<(ITEM|ENTRY)\b)/\001\001$1/gsi;
   my @items = split (/\001\001/, $body);
@@ -578,7 +594,7 @@ sub reformat_rss($) {
 
     $title = '' if ($body1 eq $title);  # Identical in Twitter's atom feed.
 
-    reformat_html ("$title<P>$body1", 1);
+    reformat_html ("$title<P>$body1", $wiki_p ? 'wiki' : 'rss');
     print "\n";
   }
 }
@@ -608,6 +624,7 @@ sub reformat_text($) {
   if ($wrap_columns && $wrap_columns > 0) {
     print STDERR "$progname: wrapping at $wrap_columns...\n" if ($verbose > 2);
     $Text::Wrap::columns = $wrap_columns;
+    $Text::Wrap::break = '[\s/]';  # wrap on slashes for URLs
     $body = wrap ("", "", $body);
     $body =~ s/[ \t]+$//gm;
   }

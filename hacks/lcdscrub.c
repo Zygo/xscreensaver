@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2008-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,6 +15,9 @@
 
 #include "screenhack.h"
 
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
+
 struct state {
   Display *dpy;
   Window window;
@@ -23,10 +26,12 @@ struct state {
          VERT_W, VERT_B, 
          DIAG_W, DIAG_B, 
          WHITE, BLACK,
+         RGB,
          END } mode;
   unsigned int enabled_mask;
   int count;
-  GC fg, bg;
+  GC fg, bg, bg2;
+  int color_tick;
   int delay;
   int spread;
   int cycles;
@@ -60,14 +65,16 @@ lcdscrub_init (Display *dpy, Window window)
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
   gcv.foreground = BlackPixelOfScreen (st->xgwa.screen);
   gcv.background = WhitePixelOfScreen (st->xgwa.screen);
-  st->bg = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+  st->bg  = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
+  st->bg2 = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
   gcv.foreground = WhitePixelOfScreen (st->xgwa.screen);
   gcv.background = BlackPixelOfScreen (st->xgwa.screen);
   st->fg = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
 
 #ifdef HAVE_COCOA
-  jwxyz_XSetAntiAliasing (st->dpy, st->fg, False);
-  jwxyz_XSetAntiAliasing (st->dpy, st->bg, False);
+  jwxyz_XSetAntiAliasing (st->dpy, st->fg,  False);
+  jwxyz_XSetAntiAliasing (st->dpy, st->bg,  False);
+  jwxyz_XSetAntiAliasing (st->dpy, st->bg2, False);
 #endif
 
   st->enabled_mask = 0;
@@ -81,6 +88,7 @@ lcdscrub_init (Display *dpy, Window window)
   PREF("modeDB", DIAG_B);
   PREF("modeW",  WHITE);
   PREF("modeB",  BLACK);
+  PREF("modeRGB", RGB);
 # undef PREF
   if (! st->enabled_mask) 
     {
@@ -128,6 +136,32 @@ lcdscrub_draw (Display *dpy, Window window, void *closure)
       XDrawLine (st->dpy, st->window, fg, 0, i,
                  st->xgwa.height, i + st->xgwa.height);
     break;
+  case RGB:
+    {
+      int scale = 10 * 8; /* 8 sec */
+      static const unsigned short colors[][3] = {
+        { 0xFFFF, 0x0000, 0x0000 },
+        { 0x0000, 0xFFFF, 0x0000 },
+        { 0x0000, 0x0000, 0xFFFF },
+        { 0xFFFF, 0xFFFF, 0x0000 },
+        { 0xFFFF, 0x0000, 0xFFFF },
+        { 0x0000, 0xFFFF, 0xFFFF },
+        { 0xFFFF, 0xFFFF, 0xFFFF },
+        { 0x0000, 0x0000, 0x0000 },
+      };
+      static unsigned long last = 0;
+      XColor xc;
+      bg = st->bg2;
+      xc.red   = colors[st->color_tick / scale][0];
+      xc.green = colors[st->color_tick / scale][1];
+      xc.blue  = colors[st->color_tick / scale][2];
+      if (last) XFreeColors (st->dpy, st->xgwa.colormap, &last, 1, 0);
+      XAllocColor (st->dpy, st->xgwa.colormap, &xc);
+      last = xc.pixel;
+      XSetForeground (st->dpy, bg, xc.pixel);
+      st->color_tick = (st->color_tick + 1) % (countof(colors) * scale);
+      /* fall through */
+    }
   case WHITE:
   case BLACK:
     XFillRectangle (st->dpy, st->window, bg, 0, 0,
@@ -164,6 +198,7 @@ lcdscrub_free (Display *dpy, Window window, void *closure)
   struct state *st = (struct state *) closure;
   XFreeGC (dpy, st->fg);
   XFreeGC (dpy, st->bg);
+  XFreeGC (dpy, st->bg2);
   free (st);
 }
 
@@ -182,6 +217,7 @@ static const char *lcdscrub_defaults [] = {
   "*modeDB:		True",
   "*modeW:		True",
   "*modeB:		True",
+  "*modeRGB:		True",
   0
 };
 
@@ -197,6 +233,7 @@ static XrmOptionDescRec lcdscrub_options [] = {
   { "-no-db",		".modeDB",	XrmoptionNoArg, "False" },
   { "-no-w",		".modeW",	XrmoptionNoArg, "False" },
   { "-no-b",		".modeB",	XrmoptionNoArg, "False" },
+  { "-no-rgb",		".modeRGB",	XrmoptionNoArg, "False" },
   { 0, 0, 0, 0 }
 };
 

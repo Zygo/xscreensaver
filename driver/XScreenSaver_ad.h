@@ -33,7 +33,7 @@
 "*textLiteral:		XScreenSaver",
 "*textFile:		",
 "*textProgram:		fortune",
-"*textURL:		http://twitter.com/statuses/public_timeline.atom",
+"*textURL:		http://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss",
 "*overlayTextForeground:	#FFFF00",
 "*overlayTextBackground:	#000000",
 "*overlayStderr:		True",
@@ -46,9 +46,9 @@
 "*demoCommand: xscreensaver-demo",
 "*prefsCommand: xscreensaver-demo -prefs",
 "*helpURL: http://www.jwz.org/xscreensaver/man.html",
-"*loadURL: firefox '%s' || mozilla '%s' || netscape '%s'",
-"*manualCommand: xterm -sb -fg black -bg gray75 -T '%s manual' \
-		    -e /bin/sh -c 'man \"%s\" ; read foo'",
+"*loadURL: gnome-open '%s'",
+"*manualCommand: gnome-terminal --title '%s manual' \
+		--command '/bin/sh -c \"man %s; read foo\"'",
 "*dateFormat:		%d-%b-%y (%a); %I:%M %p",
 "*installColormap:	True",
 "*programs:								      \
@@ -288,7 +288,7 @@
 "*passwd.asterisks:              True",
 "*passwd.uname:                  True",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright © 1991-2012 by",
+"*splash.body.label:		Copyright © 1991-2013 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",

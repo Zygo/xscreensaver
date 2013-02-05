@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2011 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1705,18 +1705,193 @@ macx_10_2 (Display *dpy, Window window, Bool v10_3_p)
 # endif /* DO_XPM */
 
 
+/* 2006 Mac Mini with MacOS 10.6 failing with a bad boot drive. By jwz.
+ */
+static struct bsod_state *
+mac_diskfail (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "macdisk", "Mac");
+  int cw = (bst->font->per_char
+            ? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
+            : bst->font->min_bounds.width);
+  int h = bst->font->ascent + bst->font->descent;
+  int L = (bst->xgwa.width - (cw * 80)) / 2;
+  int T = (bst->xgwa.height - (h  * 10)) / 2;
+
+  unsigned long fg = bst->fg;
+  unsigned long bg = bst->bg;
+  unsigned long bg2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                          "macx.background",
+                                          "Mac.Background");
+  if (L < 0) L = 0;
+  if (T < 0) T = 0;
+
+  bst->wrap_p = True;
+  bst->scroll_p = True;
+
+  BSOD_COLOR(bst, bg2, bg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_PAUSE (bst, 3000000);
+
+  BSOD_COLOR(bst, bg, fg);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_COLOR(bst, fg, bg);
+
+  BSOD_MARGINS (bst, L, L);
+  BSOD_MOVETO (bst, L, T);
+
+  BSOD_TEXT (bst, LEFT,
+             "efiboot loaded from device: Acpi(PNP0A03,0)/Pci*1F|2)/Ata"
+             "(Primary,Slave)/HD(Part\n"
+             "2,Sig8997E427-064E-4FE7-8CB9-F27A784B232C)\n"
+             "boot file path: \\System\\Library\\CoreServices\\boot.efi\n"
+             ".Loading kernel cache file 'System\\Library\\Caches\\"
+             "com.apple.kext.caches\\Startup\\\n"
+             "kernelcache_i386.2A14EC2C'\n"
+             "Loading 'mach_kernel'...\n"
+             );
+  BSOD_CHAR_DELAY (bst, 7000);
+  BSOD_TEXT (bst, LEFT,
+             ".....................\n"
+             );
+  BSOD_CHAR_DELAY (bst, 0);
+  BSOD_TEXT (bst, LEFT,
+             "root device uuid is 'B62181B4-6755-3C27-BFA1-49A0E053DBD6\n"
+             "Loading drivers...\n"
+             "Loading System\\Library\\Caches\\com.apple.kext.caches\\"
+             "Startup\\Extensions.mkext....\n"
+             );
+  BSOD_CHAR_DELAY (bst, 7000);
+  BSOD_TEXT (bst, LEFT,
+             "..............................................................."
+             ".................\n"
+             "..............................................................."
+             ".................\n"
+             "..............\n"
+             );
+  BSOD_INVERT (bst);
+  BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+  BSOD_INVERT (bst);
+
+  BSOD_MARGINS (bst, 0, 0);
+  BSOD_MOVETO (bst, 0, h);
+
+  BSOD_CHAR_DELAY (bst, 0);
+  BSOD_LINE_DELAY (bst, 5000);
+  BSOD_TEXT (bst, LEFT,
+             "npvhash=4095\n"
+             "PRE enabled\n"
+             "Darwin Kernel Version 10.8.9: Tue Jun  7 16:33:36 PDT 2011;"
+             " root:xnu-1504.15.3~1/RELEASE_I386\n"
+             "vm_page_bootstrap: 508036 free pages and 16252 wired pages\n"
+             "standard timeslicing quantum is 10000 us\n"
+             "mig_table_max_displ = 73\n"
+             "AppleACPICPU: ProcessorId=0 LocalApicId=0 Enabled\n"
+             "AppleACPICPU: ProcessorId=1 LocalApicId=1 Enabled\n"
+             "calling npo_policy_init for Quarantine\n"
+             "Security policy loaded: Quaantine policy (Quarantine)\n"
+             "calling npo_policy_init for Sandbox\n"
+             "Security policy loaded: Seatbelt sandbox policy (Sandbox)\n"
+             "calling npo_policy_init for TMSafetyNet\n"
+             "Security policy loaded: Safety net for Time Machine "
+             "(TMSafetyNet)\n"
+             "Copyright (c) 1982, 1986, 1989, 1991, 1993\n"
+             "The Regents of the University of California. All rights "
+             "reserved.\n"
+             "\n"
+             "MAC Framework successfully initialized\n"
+             "using 10485 buffer headers and 4096 cluster IO buffer headers\n"
+             "IOAPIC: Version 0x20 Vectors 64:87\n"
+             "ACPI: System State [S0 S3 S4 S5] (S3)\n"
+             "PFM64 0x10000000, 0xf0000000\n"
+             "[ PCI configuration begin ]\n"
+             "PCI configuration changed (bridge=1 device=1 cardbus=0)\n"
+             "[ PCI configuration end, bridges 4 devices 17 ]\n"
+             "nbinit: done (64 MB memory set for nbuf pool)\n"
+             "rooting via boot-uuid from /chosen: "
+             "B62181B4-6755-3C27-BFA1-49A0E053DBD6\n"
+             "Waiting on <dict ID=\"0\"><key>IOProviderClass</key>"
+             "<string ID=\"1\">IOResources</string><key>IOResourceMatch</key>"
+             "<string ID=\"2\">boot-uuid-nedia</string></dict>\n"
+             "com.apple.AppleFSCCompressionTypeZlib kmod start\n"
+             "com.apple.AppleFSCCompressionTypeZlib kmod succeeded\n"
+             "AppleIntelCPUPowerManagementClient: ready\n"
+             "FireWire (OHCI) Lucent ID 5811  built-in now active, GUID "
+             "0019e3fffe97f8b4; max speed s400.\n"
+             "Got boot device = IOService:/AppleACPIPlatformExpert/PCI000/"
+             "AppleACPIPCI/SATA@1F,2/AppleAHCI/PRI202/IOAHCIDevice@0/"
+             "AppleAHCIDiskDriver/IOAHCIBlockStorageDevice/"
+             "IOBlockStorageDriver/ST96812AS Media/IOGUIDPartitionScheme/"
+             "Customer02\n"
+             );
+  BSOD_PAUSE (bst, 1000000);
+  BSOD_TEXT (bst, LEFT,
+             "BSD root: Disk0s, major 14, minor 2\n"
+             "[Bluetooth::CSRHIDTransition] switchtoHCIMode (legacy)\n"
+             "[Bluetooth::CSRHIDTransition] transition complete.\n"
+             "CSRUSBBluetoothHCIController::setupHardware super returned 0\n"
+             );
+  BSOD_PAUSE (bst, 3000000);
+  BSOD_TEXT (bst, LEFT,
+             "disk0s2: I/O error.\n"
+             "0 [Level 3] [ReadUID 0] [Facility com.apple.system.fs] "
+             "[ErrType IO] [ErrNo 5] [IOType Read] [PBlkNum 48424] "
+             "[LBlkNum 1362] [FSLogMsgID 2009724291] [FSLogMsgOrder First]\n"
+             "0 [Level 3] [ReadUID 0] [Facility com.apple.system.fs] "
+             "[DevNode root_device] [MountPt /] [FSLogMsgID 2009724291] "
+             "[FSLogMsgOrder Last]\n"
+             "panic(cpu 0 caller 0x47f5ad): \"Process 1 exec of /sbin/launchd"
+             " failed, errno 5\\n\"0/SourceCache/xnu/xnu-1504.15.3/bsd/kern/"
+             "kern_exec.c:3145\n"
+             "Debugger called: <panic>\n"
+             "Backtrace (CPU 0), Frame : Return Address (4 potential args "
+             "on stack)\n"
+             "0x34bf3e48 : 0x21b837 (0x5dd7fc 0x34bf3e7c 0x223ce1 0x0)\n"
+             "0x34bf3e98 : 0x47f5ad (0x5cf950 0x831c08 0x5 0x0)\n"
+             "0x34bf3ef8 : 0x4696d2 (0x4800d20 0x1fe 0x45a69a0 0x80000001)\n"
+             "0x34bf3f38 : 0x48fee5 (0x46077a8 0x84baa0 0x34bf3f88 "
+             "0x34bf3f94)\n"
+             "0x34bf3f68 : 0x219432 (0x46077a8 0xffffff7f 0x0 0x227c4b)\n"
+             "0x34bf3fa8 : 0x2aacb4 (0xffffffff 0x1 0x22f8f5 0x227c4b)\n"
+             "0x34bf3fc8 : 0x2a1976 (0x0 0x0 0x2a17ab 0x4023ef0)\n"
+             "\n"
+             "BSD process name corresponding to current thread: init\n"
+             "\n"
+             "Mac OS version:\n"
+             "Not yet set\n"
+             "\n"
+             "Kernel version:\n"
+             "Darwin Kernel version 10.8.0: Tue Jun  7 16:33:36 PDT 2011; "
+             "root:xnu-1504.15-3~1/RELEASE_I386\n"
+             "System model name: Macmini1,1 (Mac-F4208EC0)\n"
+             "\n"
+             "System uptime in nanoseconds: 13239332027\n"
+             );
+  BSOD_CURSOR (bst, CURSOR_BLOCK, 500000, 999999);
+
+  XClearWindow (dpy, window);
+
+  return bst;
+}
+
+
+
 static struct bsod_state *
 macx (Display *dpy, Window window)
 {
 # ifdef DO_XPM
-  switch (random() % 3) {
+  switch (random() % 4) {
   case 0: return macx_10_0 (dpy, window);        break;
   case 1: return macx_10_2 (dpy, window, False); break;
   case 2: return macx_10_2 (dpy, window, True);  break;
+  case 3: return mac_diskfail (dpy, window); break;
   default: abort();
   }
 # else  /* !DO_XPM */
-  return macx_10_0 (dpy, window);
+  switch (random() % 2) {
+  case 0:  return macx_10_0 (dpy, window);    break;
+  default: return mac_diskfail (dpy, window); break;
+  }
 # endif /* !DO_XPM */
 }
 
@@ -2452,7 +2627,7 @@ hppa_linux (Display *dpy, Window window)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.97 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $Revision: 1.98 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },
@@ -4036,6 +4211,9 @@ static const char *bsod_defaults [] = {
   ".macx.textBackground:   Black",
   ".macx.background:	   #888888",
 
+  ".macdisk.font:	   -*-courier-bold-r-*-*-*-80-*-*-m-*-*-*",
+  ".macdisk.bigFont:	   -*-courier-bold-r-*-*-*-100-*-*-m-*-*-*",
+
   ".sco.font:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".sco.foreground:	   White",
   ".sco.background:	   Black",
@@ -4107,6 +4285,7 @@ static const char *bsod_defaults [] = {
   ".hvx.font:		   Courier-Bold 9",
   ".bsd.font:		   Courier-Bold 9",
   ".solaris.font:          Courier-Bold 6",
+  ".macdisk.font:          Courier-Bold 6",
 # endif
 
   0

@@ -1,5 +1,5 @@
 /* lock.c --- handling the password dialog for locking-mode.
- * xscreensaver, Copyright (c) 1993-2011 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -486,6 +486,11 @@ make_passwd_window (saver_info *si,
    * loop. By wrapping at a bit less than the available width, there's some
    * room for the dialog to grow without going off the edge of the screen. */
   max_string_width_px *= 0.75;
+
+  if (!info_msg && senescent_p())
+    info_msg = ("\n"
+                "This version of XScreenSaver\n"
+                "is very old! Please upgrade!\n");
 
   pw->info_label = mlstring_new(info_msg ? info_msg : pw->body_label,
 				pw->label_font, max_string_width_px);

@@ -732,8 +732,7 @@ $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 $(UTILS_BIN)/colorbars.o:	$(UTILS_SRC)/colorbars.c
 
 $(SAVER_UTIL_OBJS):
-	cd $(UTILS_BIN) ; \
-	$(MAKE) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
+	$(MAKE) -C $(UTILS_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 
 # How we build object files in this directory.
 .c.o:
@@ -877,7 +876,21 @@ xdpyinfo: xdpyinfo.o
 # DO NOT DELETE: updated by make distdepend
 
 demo-Gtk-conf.o: ../config.h
+demo-Gtk-conf.o: $(srcdir)/demo-Gtk-conf.h
+demo-Gtk-conf.o: $(UTILS_SRC)/xscreensaver-intl.h
+demo-Gtk.o: XScreenSaver_ad.h
 demo-Gtk.o: ../config.h
+demo-Gtk.o: $(srcdir)/demo-Gtk-conf.h
+demo-Gtk.o: $(srcdir)/demo-Gtk-support.h
+demo-Gtk.o: $(srcdir)/demo-Gtk-widgets.h
+demo-Gtk.o: $(srcdir)/prefs.h
+demo-Gtk.o: $(srcdir)/remote.h
+demo-Gtk.o: $(srcdir)/types.h
+demo-Gtk.o: $(UTILS_SRC)/resources.h
+demo-Gtk.o: $(UTILS_SRC)/usleep.h
+demo-Gtk.o: $(UTILS_SRC)/version.h
+demo-Gtk.o: $(UTILS_SRC)/visual.h
+demo-Gtk.o: $(UTILS_SRC)/xscreensaver-intl.h
 demo-Gtk-support.o: ../config.h
 demo-Gtk-support.o: $(srcdir)/demo-Gtk-support.h
 demo-Gtk-widgets.o: ../config.h
@@ -910,6 +923,7 @@ prefs.o: ../config.h
 prefs.o: $(srcdir)/prefs.h
 prefs.o: $(srcdir)/types.h
 prefs.o: $(UTILS_SRC)/resources.h
+prefs.o: $(UTILS_SRC)/version.h
 remote.o: ../config.h
 remote.o: $(srcdir)/remote.h
 screens.o: ../config.h

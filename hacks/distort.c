@@ -1,5 +1,5 @@
 /* -*- mode: C; tab-width: 4 -*-
- * xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -785,8 +785,9 @@ distort_reshape (Display *dpy, Window window, void *closure,
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
   /* XClearWindow (dpy, window); */
   /* Why doesn't this work? */
-  XPutImage (st->dpy, st->window, st->gc, st->orig_map,
-             0, 0, st->orig_map->width, st->orig_map->height, 0, 0);
+  if (st->orig_map)  /* created in distort_finish_loading, might be early */
+    XPutImage (st->dpy, st->window, st->gc, st->orig_map,
+               0, 0, st->orig_map->width, st->orig_map->height, 0, 0);
 }
 
 static Bool

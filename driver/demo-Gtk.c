@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2012 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -802,13 +802,20 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
 {
   char msg [2048];
   char *vers = strdup (screensaver_id + 4);
-  char *s;
+  char *s, *s2;
   char copy[1024];
+  char year[5];
   char *desc = _("For updates, check http://www.jwz.org/xscreensaver/");
 
   s = strchr (vers, ',');
   *s = 0;
   s += 2;
+
+  s2 = vers;
+  s2 = strrchr (vers, '-');
+  s2++;
+  strncpy (year, s2, 4);
+  year[4] = 0;
 
   /* Ole Laursen <olau@hardworking.dk> says "don't use _() here because
      non-ASCII characters aren't allowed in localizable string keys."
@@ -816,9 +823,9 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
      look as good in the plain-old default Latin1 "C" locale.)
    */
 #ifdef HAVE_GTK2
-  sprintf(copy, ("Copyright \xC2\xA9 1991-2008 %s"), s);
+  sprintf(copy, ("Copyright \xC2\xA9 1991-%s %s"), year, s);
 #else  /* !HAVE_GTK2 */
-  sprintf(copy, ("Copyright \251 1991-2008 %s"), s);
+  sprintf(copy, ("Copyright \251 1991-%s %s"), year, s);
 #endif /* !HAVE_GTK2 */
 
   sprintf (msg, "%s\n\n%s", copy, desc);
@@ -5288,6 +5295,20 @@ main (int argc, char **argv)
   /* Issue any warnings about the running xscreensaver daemon. */
   if (! s->debug_p)
     the_network_is_not_the_computer (s);
+
+
+  if (senescent_p())
+    warning_dialog (s->toplevel_widget,
+      _("Warning:\n\n"
+        "This version of xscreensaver is VERY OLD!\n"
+        "Please upgrade!\n"
+        "\n"
+        "http://www.jwz.org/xscreensaver/\n"
+        "\n"
+        "(If this is the latest version that your distro ships, then\n"
+        "your distro is doing you a disservice. Build from source.)\n"
+        ),
+      D_NONE, 7);
 
 
   /* Run the Gtk event loop, and not the Xt event loop.  This means that

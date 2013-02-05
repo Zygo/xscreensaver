@@ -93,9 +93,9 @@
 #ifndef HAVE_PING
 
 sonar_sensor_data *
-init_ping (Display *dpy, char **error_ret, char **desc_ret, 
-           const char *subnet, int timeout,
-           Bool resolve_p, Bool times_p, Bool debug_p)
+sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret, 
+                 const char *subnet, int timeout,
+                 Bool resolve_p, Bool times_p, Bool debug_p)
 {
   if (! (!subnet || !*subnet || !strcmp(subnet, "default")))
     fprintf (stderr, "%s: not compiled with support for pinging hosts.\n",

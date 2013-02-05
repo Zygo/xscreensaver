@@ -1,5 +1,5 @@
 /* dotfile.c --- management of the ~/.xscreensaver file.
- * xscreensaver, Copyright (c) 1998-2011 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -64,6 +64,7 @@
 #endif
 
 
+#include "version.h"
 #include "prefs.h"
 #include "resources.h"
 
@@ -1647,4 +1648,45 @@ stop_the_insanity (saver_preferences *p)
 
   if (p->pointer_hysteresis < 0)   p->pointer_hysteresis = 0;
   if (p->pointer_hysteresis > 100) p->pointer_hysteresis = 100;
+}
+
+
+/* Getting very tired of bug reports of already-fixed bugs due to
+   Linux distros shipping multi-year-old versions.
+ */
+Bool
+senescent_p (void)
+{
+  time_t now = time ((time_t *) 0);
+  struct tm *tm = localtime (&now);
+  char *s, mon[4], year[5];
+  int m, y, months;
+  s = strchr (screensaver_id, '-');
+  s++;
+  strncpy (mon, s, 3);
+  s = strchr (s, '-');
+  s++;
+  strncpy (year, s, 4);
+  mon[3] = 0;
+  year[4] = 0;
+  if      (!strcmp(mon, "Jan")) m = 0;
+  else if (!strcmp(mon, "Feb")) m = 1;
+  else if (!strcmp(mon, "Mar")) m = 2;
+  else if (!strcmp(mon, "Apr")) m = 3;
+  else if (!strcmp(mon, "May")) m = 4;
+  else if (!strcmp(mon, "Jun")) m = 5;
+  else if (!strcmp(mon, "Jul")) m = 6;
+  else if (!strcmp(mon, "Aug")) m = 7;
+  else if (!strcmp(mon, "Sep")) m = 8;
+  else if (!strcmp(mon, "Oct")) m = 9;
+  else if (!strcmp(mon, "Nov")) m = 10;
+  else if (!strcmp(mon, "Dec")) m = 11;
+  else abort();
+
+  y = (year[0]-'0')*1000 + (year[1]-'0')*100 + (year[2]-'0')*10 +(year[3]-'0');
+
+  months = ((((tm->tm_year + 1900) * 12) + tm->tm_mon) -
+            (y * 12 + m));
+
+  return (months > 12);
 }
