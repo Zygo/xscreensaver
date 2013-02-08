@@ -1,0 +1,89 @@
+.TH XScreenSaver 1 "14-Jun-97" "X Version 11"
+.SH NAME
+starfish - radially-symmetric throbbing colormap-hacking graphics demo
+.SH SYNOPSIS
+.B starfish
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-mono] [\-install] [\-visual \fIvisual\fP] [\-delay \fIusecs\fP] [\-delay2 \fIsecs\fP] [\-cycle\-delay2 \fIusecs\fP] [\-thickness \fIpixels\fP] [\-rotation \fIdegrees\fP] [\-duration \fIseconds\fP] [\-colors \fIint\fP] [\-cycle] [\-no\-cycle] [\-blob] [\-no\-blob]
+.SH DESCRIPTION
+The \fIstarfish\fP program draws radially symmetric objects, which expand,
+contract, rotate, and turn inside out.  It uses these shapes to lay down a
+field of smooth colors, and then rotates the colormap.
+.SH OPTIONS
+.I starfish
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-mono 
+If on a color display, pretend we're on a monochrome display.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-delay \fImicroseconds\fP
+How much of a delay should be introduced between steps of the animation.
+Default 10000, or about 1/100th second.
+.TP 8
+.B \-cycle\-delay \fImicroseconds\fP
+How long to wait between shifing the colormap by one step.
+Default 100000, or about 1/10th second.
+.TP 8
+.B \-thickness \fIpixels\fP
+How wide each color band should be.  Default 0, meaning random (the chosen
+value will be between 0 and 15.)
+.TP 8
+.B \-rotation \fIdegrees\fP
+How quickly the objects should rotate at each step.  Default 0, meaning 
+random (the chosen value will be between 0 and 12 degrees.)
+.TP 8
+.B \-colors \fIint\fP
+How many colors to use.  Default 200.  The more colors, the smoother the
+transitions will be, and the nicer the resultant images.
+.TP 8
+.B \-cycle
+.TP 8
+.B \-no\-cycle
+Whether to do colormap cycling.  Default true.
+.TP 8
+.B \-duration \fIseconds\fP
+How long to run before choosing a new shape.  Default 30 seconds.
+.TP 8
+.B \-delay2 \fIseconds\fP
+When \fIduration\fP expires, how long to wait before starting a new run.
+Default 5 seconds.
+.TP 8
+.B \-blob
+.TP 8
+.B \-no\-blob
+If \fIblob\fP option is specified, then the raw shapes will be shown, 
+instead of a field of colors generated from them.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1997 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.
+.SH AUTHOR
+Jamie Zawinski <jwz@jwz.org>, 14-Jun-97.

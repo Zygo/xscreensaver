@@ -1,0 +1,33 @@
+.TH XScreenSaver 1 "5-Nov-00" "X Version 11"
+.SH NAME
+xscreensaver-gl-helper - figure out which X visual to use for GL programs
+.SH SYNOPSIS
+.B xscreensaver-gl-helper
+[\-display \fIhost:display.screen\fP]
+.SH DESCRIPTION
+This program prints the ID of the visual that should be used for proper
+operation of OpenGL programs.  This program only exists so that the 
+.BR xscreensaver (1)
+daemon does not need to link against the OpenGL library.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host, display, and screen number.
+.SH SEE ALSO
+.BR X (1),
+.BR xdpyinfo (1),
+.BR xglinfo (1),
+.BR glxinfo (1),
+.BR glxdpyinfo (1),
+.BR xscreensaver (1),
+.BR xscreensaver\-demo (1),
+.BR xscreensaver\-command (1)
+.SH COPYRIGHT
+Copyright \(co 2000 by Jamie Zawinski.  Permission to use, copy, modify, 
+distribute, and sell this software and its documentation for any purpose is 
+hereby granted without fee, provided that the above copyright notice appear 
+in all copies and that both that copyright notice and this permission notice
+appear in supporting documentation.  No representations are made about the 
+suitability of this software for any purpose.  It is provided "as is" without
+express or implied warranty.

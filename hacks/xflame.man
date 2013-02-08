@@ -1,0 +1,63 @@
+.TH XScreenSaver 1 "27-Feb-00" "X Version 11"
+.SH NAME
+xflame - draws animated flames
+.SH SYNOPSIS
+.B xflame
+[\-display \fIhost:display.screen\fP] [\-window] [\-root] [\-install]
+[\-visual \fIvisual\fP] [\-hspread \fIint\fP] [\-vspread \fIint\fP]
+[\-residual \fIint\fP] [\-variance \fIint\fP] [\-vartrend \fIint\fP] 
+[\-bloom \| \-no\-bloom] 
+[\-bitmap \fIxbm\-file\fP] [\-baseline \fIint\fP]
+.SH DESCRIPTION
+The \fIxflame\fP program draws animated flames across the bottom of the
+screen.  The flames occasionally flare up.  If a bitmap is specified,
+that image will float above the flames, burning.
+.SH OPTIONS
+.I xflame
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-bitmap \fIfilename\fP\fP
+Specifies the bitmap file to use (a monochrome XBM file.)
+The name "none" means not to use a bitmap at all.
+If unspecified, a built-in image will be used.
+.PP
+The other options are arcane.  If someone would care to document them,
+that would be great.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright \(co 1996-1999 by Carsten Haitzler.  Permission to use, copy,
+modify, distribute, and sell this software and its documentation for
+any purpose is hereby granted without fee, provided that the above
+copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation.
+No representations are made about the suitability of this software for
+any purpose.  It is provided "as is" without express or implied
+warranty.
+.SH AUTHOR
+Primarily written by Carsten Haitzler <raster@redhat.com>.
+Modified over the years by Rahul Jain <rahul@rice.edu>, 
+Daniel Zahn <stumpy@religions.com>, and Jamie Zawinski <jwz@jwz.org>.
