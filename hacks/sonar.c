@@ -28,7 +28,8 @@
  *   - plot the process table, by process size, cpu usage, or total time;
  *   - plot the logged on users by idle time or cpu usage.
  *
- * Copyright (C) 1998 by Stephen Martin (smartin@vanderfleet-martin.net).
+ * Copyright (C) 1998, 2001
+ *  by Stephen Martin (smartin@vanderfleet-martin.net).
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
  * the above copyright notice appear in all copies and that both that
@@ -37,7 +38,7 @@
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
  *
- * $Revision: 1.17 $
+ * $Revision: 1.18 $
  *
  * Version 1.0 April 27, 1998.
  * - Initial version
@@ -699,7 +700,7 @@ subnetHostsList(int base, int subnet_width)
         fprintf (stderr,
     "%s: pinging %u hosts is a bad idea; please use a subnet mask of 24 bits\n"
                  "       or more (255 hosts max.)\n",
-                 progname, 1L << (32 - subnet_width));
+                 progname, (1L << (32 - subnet_width)) - 1);
         exit (1);
       }
     else if (subnet_width > 30)
@@ -1662,6 +1663,7 @@ Sonar(sonar_info *si, Bogie *bl)
 	    else
 		prev->next = bp->next;
 	    freeBogie(bp);
+            bp = prev;
 	} else
 	    prev = bp;
     }

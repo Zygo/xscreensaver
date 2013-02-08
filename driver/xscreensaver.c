@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2000 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -219,7 +219,7 @@ do_help (saver_info *si)
   fflush (stdout);
   fflush (stderr);
   fprintf (stdout, "\
-xscreensaver %s, copyright (c) 1991-2000 by Jamie Zawinski <jwz@jwz.org>\n\
+xscreensaver %s, copyright (c) 1991-2001 by Jamie Zawinski <jwz@jwz.org>\n\
 The standard Xt command-line options are accepted; other options include:\n\
 \n\
     -timeout <minutes>       When the screensaver should activate.\n\
@@ -370,16 +370,32 @@ startup_ehandler (String name, String type, String class,
   fprintf (stderr, "\n");
 
   describe_uids (si, stderr);
-  fprintf (stderr, "\n"
+
+  if (si->orig_uid && !strncmp (si->orig_uid, "root/", 5))
+    {
+      fprintf (stderr, "\n"
+          "%s: This is probably because you're logging in as root.  You\n"
+"              shouldn't log in as root: you should log in as a normal user,\n"
+"              and then `su' as needed.  If you insist on logging in as\n"
+"              root, you will have to turn off X's security features before\n"
+"              xscreensaver will work.\n"
+               "\n"
+"              Please read the manual and FAQ for more information:\n",
+               blurb());
+    }
+  else
+    {
+      fprintf (stderr, "\n"
           "%s: Errors at startup are usually authorization problems.\n"
-          "              Did you read the manual and the FAQ?  Specifically,\n"
-          "              the parts of the manual that talk about XAUTH, XDM,\n"
-          "              and root logins?\n"
-          "\n"
+"              But you're not logging in as root (good!) so something\n"
+"              else must be wrong.  Did you read the manual and the FAQ?\n",
+           blurb());
+    }
+
+  fprintf (stderr, "\n"
           "              http://www.jwz.org/xscreensaver/faq.html\n"
           "              http://www.jwz.org/xscreensaver/man.html\n"
-          "\n",
-           blurb());
+          "\n");
 
   fflush (stderr);
   fflush (stdout);
@@ -462,6 +478,20 @@ static Widget
 connect_to_server (saver_info *si, int *argc, char **argv)
 {
   Widget toplevel_shell;
+
+#ifdef HAVE_PUTENV
+  char *d = getenv ("DISPLAY");
+  if (!d || !*d)
+    {
+      const char ndpy[] = "DISPLAY=:0.0";
+      /* if (si->prefs.verbose_p) */      /* sigh, too early to test this... */
+        fprintf (stderr,
+                 "%s: warning: $DISPLAY is not set: defaulting to \"%s\".\n",
+                 blurb(), ndpy+8);
+      if (putenv (ndpy))
+        abort ();
+    }
+#endif /* HAVE_PUTENV */
 
   XSetErrorHandler (saver_ehandler);
 
@@ -594,7 +624,7 @@ print_banner (saver_info *si)
 
   if (p->verbose_p)
     fprintf (stderr,
-	     "%s %s, copyright (c) 1991-2000 "
+	     "%s %s, copyright (c) 1991-2001 "
 	     "by Jamie Zawinski <jwz@jwz.org>.\n",
 	     progname, si->version);
 
@@ -1539,19 +1569,79 @@ static void
 analyze_display (saver_info *si)
 {
   int i, j;
-  static const char *exts[][2] = {
-    { "SCREEN_SAVER",             "SGI Screen-Saver" },
-    { "SCREEN-SAVER",	          "SGI Screen-Saver" },
-    { "MIT-SCREEN-SAVER",         "MIT Screen-Saver" },
-    { "XIDLE",		          "XIdle" },
-    { "SGI-VIDEO-CONTROL",        "SGI Video-Control" },
-    { "READDISPLAY",	          "SGI Read-Display" },
-    { "MIT-SHM",	          "Shared Memory" },
-    { "DOUBLE-BUFFER",	          "Double-Buffering" },
-    { "DPMS",		          "Power Management" },
-    { "GLX",		          "GLX" },
-    { "XFree86-VidModeExtension", "XF86 Video-Mode" },
-    { "XINERAMA",		  "Xinerama" }
+  static struct {
+    const char *name; const char *desc; Bool useful_p;
+  } exts[] = {
+
+   { "SCREEN_SAVER",                            "SGI Screen-Saver",
+#     ifdef HAVE_SGI_SAVER_EXTENSION
+        True
+#     else
+        False
+#     endif
+   }, { "SCREEN-SAVER",                         "SGI Screen-Saver",
+#     ifdef HAVE_SGI_SAVER_EXTENSION
+        True
+#     else
+        False
+#     endif
+   }, { "MIT-SCREEN-SAVER",                     "MIT Screen-Saver",
+#     ifdef HAVE_MIT_SAVER_EXTENSION
+        True
+#     else
+        False
+#     endif
+   }, { "XIDLE",                                "XIdle",           
+#     ifdef HAVE_XIDLE_EXTENSION
+        True
+#     else
+        False
+#     endif
+   }, { "SGI-VIDEO-CONTROL",                    "SGI Video-Control",
+#     ifdef HAVE_SGI_VC_EXTENSION
+        True
+#     else
+        False
+#     endif
+   }, { "READDISPLAY",                          "SGI Read-Display",
+#     ifdef HAVE_READ_DISPLAY_EXTENSION
+        True
+#     else
+        False
+#     endif
+   }, { "MIT-SHM",                              "Shared Memory",   
+#     ifdef HAVE_XSHM_EXTENSION
+        True
+#     else
+        False
+#     endif
+   }, { "DOUBLE-BUFFER",                        "Double-Buffering",
+#     ifdef HAVE_DOUBLE_BUFFER_EXTENSION
+        True
+#     else
+        False
+#     endif
+   }, { "DPMS",                                 "Power Management",
+#     ifdef HAVE_DPMS_EXTENSION
+        True
+#     else
+        False
+#     endif
+   }, { "GLX",                                  "GLX",             
+#     ifdef HAVE_GL
+        True
+#     else
+        False
+#     endif
+   }, { "XFree86-VidModeExtension",             "XF86 Video-Mode", 
+#     ifdef HAVE_XF86VMODE
+        True
+#     else
+        False
+#     endif
+   }, { "XINERAMA",                             "Xinerama",
+        True
+   },
   };
 
   fprintf (stderr, "%s: running on display \"%s\"\n", blurb(),
@@ -1563,8 +1653,11 @@ analyze_display (saver_info *si)
   for (i = 0; i < countof(exts); i++)
     {
       int op = 0, event = 0, error = 0;
-      if (XQueryExtension (si->dpy, exts[i][0], &op, &event, &error))
-	fprintf (stderr, "%s:   %s\n", blurb(), exts[i][1]);
+      if (XQueryExtension (si->dpy, exts[i].name, &op, &event, &error))
+	fprintf (stderr, "%s:  %s%s\n", blurb(),
+                 exts[i].desc,
+                 (exts[i].useful_p ? "" :
+                  "       \t<== unsupported at compile-time!"));
     }
 
   for (i = 0; i < si->nscreens; i++)

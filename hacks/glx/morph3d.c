@@ -68,7 +68,7 @@ static const char sccsid[] = "@(#)morph3d.c	4.07 97/11/24 xlockmore";
 # define HACK_INIT		init_morph3d
 # define HACK_DRAW		draw_morph3d
 # define morph3d_opts		xlockmore_opts
-# define DEFAULTS		"*delay: 1000 \n" \
+# define DEFAULTS		"*delay: 40000 \n" \
 				"*count: 0 \n"
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */

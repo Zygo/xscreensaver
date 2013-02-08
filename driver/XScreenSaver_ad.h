@@ -158,6 +158,9 @@
 -	    \"NerveRot (thick)\"	nerverot -root -count 100 -line-width 4       \
 			        -max-nerve-radius 0.8 -nervousness 0.5 -db  \\n\
 				xrayswarm -root				    \\n\
+-	       \"Zoom (Fatbits)\"	zoom -root				    \\n\
+	       \"Zoom (Lenses)\"	zoom -root -lenses			    \\n\
+				whirlwindwarp -root			    \\n\
   color: 			bubbles -root				    \\n\
   default-n:			webcollage -root			    \\n\
   default-n:  \"WebCollage (whacked)\"					      \
@@ -198,7 +201,8 @@
 -				xfishtank -d -s                             \\n\
 -				xsnow                                       \\n\
 -				goban -root                                 \\n\
--				electricsheep                               \\n",
+-				electricsheep                               \\n\
+-				cosmos -root                                \\n",
 "XScreenSaver.pointerPollTime:		5",
 "XScreenSaver.initialDelay:		0",
 "XScreenSaver.windowCreationTimeout:	30",
@@ -230,7 +234,7 @@
 "*passwd.passwdFont:		*-courier-medium-r-*-*-*-140-*-*-*-iso8859-1",
 "*passwd.thermometer.width:	8",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright © 1991-2000 by",
+"*splash.body.label:		Copyright © 1991-2001 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Demo",
 "*splash.prefs.label:		Prefs",
@@ -475,9 +479,9 @@ visualize the rotation, it uses a different color for the edges of	\
 each face.  Don't think about it too long, or your brain will melt.	\
 Written by Joe Keane, Fritz Mueller, and Jamie Zawinski.",
 "*hacks.hyperball.documentation:						\
-Hyperball is to hypercube as icosahedron is to cube: this displays	\
+Hyperball is to hypercube as dodecahedron is to cube: this displays	\
 a 2D projection of the sequence of 3D objects which are the projections	\
-of the 4D analog to the icosahedron.  Written by Joe Keane.",
+of the 4D analog to the dodecahedron.  Written by Joe Keane.",
 "*hacks.halo.documentation:						\
 This draws trippy psychedelic circular patterns that hurt to look at.	\
 It can also animate the control-points, but that takes a lot of CPU	\
@@ -914,6 +918,16 @@ Written by Josiah Pease.",
 "*hacks.xrayswarm.documentation:     					\
 Draws a few swarms of critters flying around the screen, with nicely	\
 faded color trails behind them.  Written by Chris Leger.",
+"*hacks.zoom.documentation:                                              \
+Zooms in on a part of the screen and then moves around.  With the       \
+-lenses option the result is like looking through many overlapping      \
+lenses rather than just a simple zoom.  Written by James Macnicol.",
+"*hacks.whirlwindwarp.name: WhirlwindWarp",
+"*hacks.whirlwindwarp.documentation:                                  \
+Floating stars are acted upon by a mixture of simple 2D              \
+forcefields.  The strength of each forcefield changes                \
+continuously, and it is also switched on and off at random.          \
+By Paul 'Joey' Clark, ported from a QB program written for Ivor.",
 "*hacks.xdaliclock.name: XDaliClock",
 "*hacks.xdaliclock.documentation:					\
 XDaliClock draws a large digital clock, the numbers of which change by	\
@@ -972,3 +986,6 @@ connection to the Internet.						\
 								    \\n\\n\
 By Scott Draves.  You can find it at <http://www.electricsheep.org/>.   \
 See that web site for configuration information.",
+"*hacks.cosmos.documentation:						\
+Draws fireworks and zooming, fading flares.  By Tom Campbell.           \
+You can find it at <http://www.mindspring.com/~campbell/cosmos/>.",

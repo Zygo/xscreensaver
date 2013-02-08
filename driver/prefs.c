@@ -94,6 +94,22 @@ chase_symlinks (const char *file)
 }
 
 
+static Bool
+i_am_a_nobody (uid_t uid)
+{
+  struct passwd *p;
+
+  p = getpwnam ("nobody");
+  if (! p) p = getpwnam ("noaccess");
+  if (! p) p = getpwnam ("daemon");
+
+  if (! p) /* There is no nobody? */
+    return False;
+
+  return (uid == p->pw_uid);
+}
+
+
 const char *
 init_file_name (void)
 {
@@ -101,7 +117,18 @@ init_file_name (void)
 
   if (!file)
     {
-      struct passwd *p = getpwuid (getuid ());
+      uid_t uid = getuid ();
+      struct passwd *p = getpwuid (uid);
+
+      if (i_am_a_nobody (uid))
+        /* If we're running as nobody, then use root's .xscreensaver file
+           (since ~root/.xscreensaver and ~nobody/.xscreensaver are likely
+           to be different -- if we didn't do this, then xscreensaver-demo
+           would appear to have no effect when the luser is running as root.)
+         */
+        uid = 0;
+
+      p = getpwuid (uid);
 
       if (!p || !p->pw_name || !*p->pw_name)
 	{

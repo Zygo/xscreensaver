@@ -87,6 +87,37 @@ AC_DEFUN(AC_PROG_CC_ANSI,
 
 ###############################################################################
 #
+#       Function to work around the fucked up gcc 2.96 included in Red Hat 7.0
+#
+###############################################################################
+
+AC_DEFUN(AC_ESCHEW_REDHAT_GCC_LOSSAGE,
+ [if test -n "$GCC"; then
+   AC_MSG_CHECKING(for Red Hat GCC lossage)
+   AC_CACHE_VAL(ac_cv_red_hat_gcc_lossage,
+    [ac_cv_red_hat_gcc_lossage=no
+      AC_EGREP_CPP(lossage,
+     [#include <stdlib.h>
+      #if !defined(__USE_POSIX) || !defined(__USE_SVID) || !defined(__USE_BSD)
+        lossage
+      #endif
+     ], ac_cv_red_hat_gcc_lossage=yes)
+    ])
+
+    ac_red_hat_gcc_lossage=$ac_cv_red_hat_gcc_lossage
+    if test "$ac_cv_red_hat_gcc_lossage" = yes ; then
+      rh_defines="-D_POSIX_SOURCE -D_SVID_SOURCE -D_BSD_SOURCE";
+      CC="$CC $rh_defines"
+      AC_MSG_RESULT(yes: need $rh_defines)
+    else
+      AC_MSG_RESULT(no)
+    fi
+  fi
+])
+
+
+###############################################################################
+#
 #       Function to figure out how to create directory trees.
 #
 ###############################################################################
@@ -674,6 +705,7 @@ AC_DEFUN(HANDLE_X_PATH_ARG, [
 # random compiler setup
 AC_CANONICAL_HOST
 AC_PROG_CC_ANSI
+AC_ESCHEW_REDHAT_GCC_LOSSAGE
 AC_PROG_CPP
 AC_C_CONST
 AC_C_INLINE
@@ -2615,7 +2647,8 @@ warn() {
   warnpre
   if test "$warning" = long ; then echo '' ; fi
   warning=yes
-  echo "$warn_prefix $@"
+  rest="$@"
+  echo "$warn_prefix $rest"
 }
 
 warnL() {
@@ -2623,11 +2656,13 @@ warnL() {
   warnpre
   warning=yes
   if test "$was" != no ; then echo '' ; fi
-  echo "$warn_prefix $@"
+  rest="$@"
+  echo "$warn_prefix $rest"
 }
 
 warn2() {
-  echo "             $@"
+  rest="$@"
+  echo "             $rest"
   warning=long
 }
 

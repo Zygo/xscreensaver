@@ -89,6 +89,7 @@ $ triangle	:== $'mydir'triangle
 $ truchet	:== $'mydir'truchet
 $ vines		:== $'mydir'vines
 $ wander	:== $'mydir'wander
+$ whirlwindwarp	:== $'mydir'whirlwindwarp
 $ worm		:== $'mydir'worm
 $ xflame	:== $'mydir'xflame
 $ xjack		:== $'mydir'xjack
@@ -99,6 +100,7 @@ $ xroger	:== $'mydir'xroger
 $ xspirograph	:== $'mydir'xspirograph
 $ xsublim	:== $'mydir'xsublim
 $ xteevee	:== $'mydir'xteevee
+$ zoom		:== $'mydir'zoom
 $ set def [-.DRIVER]
 $ mydir  = mydisk+f$directory()
 $ xscreensaver :== $'mydir'xscreensaver

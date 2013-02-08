@@ -83,7 +83,7 @@ static const char sccsid[] = "@(#)superquadrics.c	4.07 97/11/24 xlockmore";
 # define HACK_INIT					init_superquadrics
 # define HACK_DRAW					draw_superquadrics
 # define superquadrics_opts			xlockmore_opts
-# define DEFAULTS	"*delay:		100     \n"			\
+# define DEFAULTS	"*delay:		40000   \n"			\
 					"*count:		25      \n"			\
 					"*cycles:		40      \n"			\
 					"*wireframe:	False	\n"

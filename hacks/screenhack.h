@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-1997 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2001 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -96,5 +96,11 @@ extern char *defaults [];
 extern void screenhack (Display*,Window);
 extern void screenhack_handle_event (Display*, XEvent*);
 extern void screenhack_handle_events (Display*);
+
+/* Be Posixly correct */
+#undef  bzero
+#define bzero  __ERROR_use_memset_not_bzero_in_xscreensaver__
+#undef  bcopy
+#define bcopy  __ERROR_use_memcpy_not_bcopy_in_xscreensaver__
 
 #endif /* __SCREENHACK_H__ */

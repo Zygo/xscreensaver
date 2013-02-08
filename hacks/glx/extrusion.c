@@ -462,8 +462,10 @@ void Create_Texture(char *filename, int do_mipmap, int do_texture_quality)
 		      format, GL_UNSIGNED_BYTE, image);
   }
   else {
+    clear_gl_error();
     glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0,
 		 format, GL_UNSIGNED_BYTE, image);
+    check_gl_error("texture");
   }
   free(image);
 }

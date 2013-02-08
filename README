@@ -77,6 +77,25 @@ http://www.jwz.org/xscreensaver/.
 
                               ============
 
+Changes since 3.26:   * New hacks: `zoom' and `whirlwindwarp'.
+                      * Fixed a free-memory-reference bug in `sonar'.
+                      * Better error handling when there are no suitable GL
+                        visuals.
+                      * Added diagnostic dialog when xscreensaver-demo is
+                        unable to launch xscreensaver (e.g., when running as
+                        root.)
+                      * Fixed a bug that caused screenhack argument changes
+                        to be ignored when xscreensaver-demo was running as
+                        root (if "root" and "nobody" have different home
+                        directories.)
+                      * Made the programs default to ":0" if $DISPLAY is unset.
+                      * Made the `-verbose' output include information about
+                        which server extensions were supported at compile time.
+                      * Worked around Red Hat 7.0's broken gcc 2.96.
+                      * Updated default delays on the GL hacks to look better
+                        on machines with super-fast 3D hardware.
+                      * Install `screensaver-properties-capplet' to work around
+                        the usual egregious GNOME lossage.
 Changes since 3.25:   * Added "enabled" checkboxes in the list of hacks in
                         xscreensaver-demo (Gtk version only.)
                       * New hacks `hyperball', `xrayswarm', and `gflux'.

@@ -86,13 +86,14 @@ OBJS		= xscreensaver-gl-helper.o \
 		  extrusion-helix4.o extrusion-joinoffset.o extrusion-screw.o \
 		  extrusion-taper.o extrusion-twistoid.o sierpinski3d.o gflux.o
 
-GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
+UTIL_EXES	= xscreensaver-gl-helper
+GL_EXES		= $(UTIL_EXES) \
+		  cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
 		  sierpinski3d gflux
 GLE_EXES	= extrusion
-UTIL_EXES	= xscreensaver-gl-helper
 HACK_EXES	= @GL_EXES@ @GLE_EXES@
-EXES		= $(HACK_EXES) $(UTIL_EXES)
+EXES		= $(HACK_EXES)
 
 HACK_OBJS	= screenhack-gl.o xlock-gl.o $(HACK_BIN)/xlockmore.o \
 		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
@@ -131,7 +132,7 @@ install-program:: $(HACK_EXES)
 	done
 
 # the xscreensaver-gl-helper program, in $bindir
-install-program:: $(UTIL_EXES)
+install-program:: $(HACK_EXES)
 	@if [ ! -d $(install_prefix)$(bindir) ]; then			\
 	  $(INSTALL_DIRS) $(install_prefix)$(bindir) ;			\
 	 fi ;								\

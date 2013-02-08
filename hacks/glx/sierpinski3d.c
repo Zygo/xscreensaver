@@ -41,7 +41,7 @@ static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
 # define gasket_opts				xlockmore_opts
 # define DEFAULTS	"*count:		1       \n"			\
 			"*cycles:		9999    \n"			\
-			"*delay:		8000    \n"			\
+			"*delay:		20000   \n"			\
 			"*maxDepth:		5       \n"			\
 			"*speed:		150     \n"			\
 			"*wireframe:	False	\n"

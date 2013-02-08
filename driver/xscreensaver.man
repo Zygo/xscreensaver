@@ -11,7 +11,7 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "10-Nov-2000 (3.26)" "X Version 11"
+.TH XScreenSaver 1 "19-Jan-2001 (3.27)" "X Version 11"
 .SH NAME
 xscreensaver - graphics hack and screen locker, launched when the user is idle
 .SH SYNOPSIS
@@ -79,7 +79,12 @@ and
 .BR xscreensaver-command (1)
 programs.
 .SH CONFIGURATION
-Options to \fIxscreensaver\fP are specified in one of two places: in 
+The easiest way to configure \fIxscreensaver\fP is to simply run the
+.BR xscreensaver-demo (1)
+program, and change the settings through the GUI.  The rest of this
+manual page describes lower level ways of changing settings.
+
+Options to \fIxscreensaver\fP are stored in one of two places: in 
 a \fI.xscreensaver\fP file in your home directory; or in the X resource
 database.  If the \fI.xscreensaver\fP file exists, it overrides any settings
 in the resource database.  
@@ -569,7 +574,7 @@ also how the subprocesses are killed when the screensaver decides that it's
 time to run a different demo: the old one is killed and a new one is launched.
 
 Before launching a subprocess, \fIxscreensaver\fP stores an appropriate value
-for \fB$DISPLAY\fP in the environment that the child will recieve.  (This is
+for \fB$DISPLAY\fP in the environment that the child will receive.  (This is
 so that if you start \fIxscreensaver\fP with a \fI-display\fP argument, the
 programs which \fIxscreensaver\fP launches will draw on the same display;
 and so that the child will end up drawing on the appropriate screen of a
@@ -590,9 +595,9 @@ program (which see.)
 .SH POWER MANAGEMENT
 Modern X servers contain support to power down the monitor after an idle
 period.  If the monitor has powered down, then \fIxscreensaver\fP will
-notice this, and will not waste CPU by drawing graphics demos on a black
-screen.  An attempt will also be made to explicitly power the monitor
-back up as soon as user activity is detected.
+notice this (after a few minutes), and will not waste CPU by drawing 
+graphics demos on a black screen.  An attempt will also be made to
+explicitly power the monitor back up as soon as user activity is detected.
 
 If your X server supports power management, then
 .BR xset (1)
@@ -656,6 +661,7 @@ The simplest way to accomplish all of this is as follows:
 
 To the file \fI/usr/lib/X11/xdm/Xsetup\fP, add the lines
 .EX
+xhost +localhost
 xscreensaver-command -exit
 xscreensaver &
 .EE
@@ -720,6 +726,24 @@ man pages for
 .BR xauth (1),
 and
 .BR xhost (1).
+.SH USING GDM(1)
+The instructions for using \fIxscreensaver\fP with
+.BR gdm (1)
+are almost the same as for using
+.BR xdm (1),
+above.  There are only two differences, really: instead 
+of editing \fI/usr/lib/X11/xdm/Xsetup\fP, edit the 
+file \fI/etc/X11/gdm/Init/Default\fP; and instead of 
+editing \fI/usr/lib/X11/xdm/Xsession\fP, edit one or all of the 
+files in the \fI/etc/X11/gdm/Sessions/\fP directory.  (Note that
+the default session (\fI/etc/X11/gdm/Sessions/Default\fP) usually
+simply executes \fI/usr/lib/X11/xdm/Xsession\fP, so be careful
+you aren't initializing xscreensaver twice.)
+
+All the same caveats apply for
+.BR gdm (1)
+as for
+.BR xdm (1).
 .SH USING CDE (COMMON DESKTOP ENVIRONMENT)
 The easiest way to use \fIxscreensaver\fP on a system with CDE is to simply
 switch off the built-in CDE screensaver, and use \fIxscreensaver\fP instead;

@@ -1,5 +1,5 @@
 %define	name	xscreensaver
-%define	version	3.26
+%define	version	3.27
 %define	release	1
 %define	serial	1
 %define	prefix	/usr/X11R6
@@ -102,6 +102,7 @@ list_files() {
     sed -n -e 's@.* /\([^ ]*\)$@/\1@p'                    |
     sed    -e "s@^$RPM_BUILD_ROOT@@"                      \
            -e "s@/bin/\.\./@/@"                           |
+    sed    -e 's@\(.*/man/.*\)@\1\*@'                     |
     sort
 }
 

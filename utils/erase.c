@@ -348,7 +348,8 @@ fizzle (Display *dpy, Window window, GC gc,
         for( ix = 0, cx = 0; ix < width; ix += BX, cx++ ) {
           int xx = ix + (SKEWX(cx, cy) + x*((cx%(BX-1))+1))%BX;
           int yy = iy + (SKEWY(cx, cy) + y*((cy%(BY-1))+1))%BY;
-          XDrawPoint(dpy, window, gc, xx, yy);
+          if (xx < width && yy < height)
+            XDrawPoint(dpy, window, gc, xx, yy);
         }
       }
     }

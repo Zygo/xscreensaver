@@ -306,8 +306,8 @@ static void initBugs(void) {
 
   head = tail = 0;
 
-  bzero((char *)bugs, MAX_BUGS*sizeof(bug));
-  bzero((char *)targets, MAX_TARGETS*sizeof(bug));
+  memset((char *)bugs, 0,MAX_BUGS*sizeof(bug));
+  memset((char *)targets, 0, MAX_TARGETS*sizeof(bug));
 
   if (ntargets < 0) ntargets = (0.25+frand(0.75)*frand(1))*MAX_TARGETS;
   if (ntargets < 1) ntargets = 1;
@@ -368,7 +368,7 @@ static void addBugs(int numToAdd) {
 
   for (i = 0; i < numToAdd; i++) {
     b = &bugs[random()%nbugs];
-    bcopy((char *)b, (char *)&bugs[nbugs+i], sizeof(bug));
+    memcpy((char *)&bugs[nbugs+i], (char *)b, sizeof(bug));
     b->closest = &targets[random()%ntargets];
   }
 
@@ -384,7 +384,7 @@ static void addTargets(int numToAdd) {
 
   for (i = 0; i < numToAdd; i++) {
     b = &targets[random()%ntargets];
-    bcopy((char *)b, (char *)&targets[ntargets+i], sizeof(bug));
+    memcpy((char *)&targets[ntargets+i], (char *)b, sizeof(bug));
     b->closest = &targets[random()%ntargets];
   }
 
@@ -736,8 +736,8 @@ void mutateBug(int which) {
     /* turn bug into target */
     if (ntargets < MAX_TARGETS-1 && nbugs > 1) {
       i = random() % nbugs;
-      bcopy((char *)&bugs[i], (char *)&targets[ntargets], sizeof(bug));
-      bcopy((char *)&bugs[nbugs-1], (char *)&bugs[i], sizeof(bug));
+      memcpy((char *)&targets[ntargets], (char *)&bugs[i], sizeof(bug));
+      memcpy((char *)&bugs[i], (char *)&bugs[nbugs-1], sizeof(bug));
       targets[ntargets].pos[0] = frand(maxx);
       targets[ntargets].pos[1] = frand(maxy);
       nbugs--;
@@ -754,7 +754,7 @@ void mutateBug(int which) {
       i = random() % ntargets;
 
       /* copy state into a new bug */
-      bcopy((char *)&targets[i], (char *)&bugs[nbugs], sizeof(bug));
+      memcpy((char *)&bugs[nbugs], (char *)&targets[i], sizeof(bug));
       ntargets--;
 
       /* pick a target for the new bug */
@@ -770,7 +770,7 @@ void mutateBug(int which) {
       nbugs++;
       
       /* copy the last ntarget into the one we just deleted */
-      bcopy((char *)&targets[ntargets], &targets[i], sizeof(bug));
+      memcpy(&targets[i], (char *)&targets[ntargets], sizeof(bug));
     }
   }
 }
@@ -1013,6 +1013,8 @@ void screenhack(Display *d, Window w) {
   int startColor, numColors;
   double start, end;
   int cnt;
+  int sleepCount = 0;
+  int delayAccum = 0;
 
   dpy = d;
   win = w;
@@ -1071,21 +1073,7 @@ void screenhack(Display *d, Window w) {
       */
 
       if (fps > MAX_FPS) {
-#if 0	  
-	if (trailLen >= MAX_TRAIL_LEN) {
-	  addBugs(nbugs);
-	  addTargets(ntargets);
-	} else {
-	  /* make dt smaller, but use longer tail */
-	  clearBugs();
-	  dt = 0.1*trailLen/MAX_TRAIL_LEN;
-	  trailLen = MAX_TRAIL_LEN;
-	  computeColorIndices();
-	  initBugs();
-	}
-#endif
 	delay = (1.0/MAX_FPS - (timePerFrame + delay*1e-6))*1e6;
-	
       } else if (dt*fps < MIN_FPS*DESIRED_DT) {
 	/* need to speed things up somehow */
 	if (0 && nbugs > 10) {
@@ -1114,7 +1102,19 @@ void screenhack(Display *d, Window w) {
     if (frand(1) < changeProb*2/100.0) randomSmallChange();
     if (frand(1) < changeProb*0.3/100.0) randomBigChange();
 #endif
-
-    if (delay > 0) usleep(delay);
+    
+    if (delay > 10000) usleep(delay);
+    else {
+      delayAccum += delay;
+      if (delayAccum > 10000) {
+	usleep(delayAccum);
+	delayAccum = 0;
+	sleepCount = 0;
+      }
+      if (++sleepCount > 2) {
+	sleepCount = 0;
+	usleep(10000);
+      }
+    }
   }
 }

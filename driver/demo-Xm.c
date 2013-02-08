@@ -118,6 +118,7 @@ static void populate_demo_window (Widget toplevel,
 static void populate_prefs_page (Widget top, prefs_pair *pair);
 static int apply_changes_and_save (Widget widget);
 static int maybe_reload_init_file (Widget widget, prefs_pair *pair);
+static void await_xscreensaver (Widget widget);
 
 
 /* Some random utility functions
@@ -419,6 +420,66 @@ restart_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
   sleep (1);
   system ("xscreensaver -nosplash &");
 #endif
+
+  await_xscreensaver (button);
+}
+
+static void
+await_xscreensaver (Widget widget)
+{
+  int countdown = 5;
+
+  Display *dpy = XtDisplay (widget);
+  char *rversion = 0;
+
+  while (!rversion && (--countdown > 0))
+    {
+      /* Check for the version of the running xscreensaver... */
+      server_xscreensaver_version (dpy, &rversion, 0, 0);
+
+      /* If it's not there yet, wait a second... */
+      sleep (1);
+    }
+
+  if (rversion)
+    {
+      /* Got it. */
+      free (rversion);
+    }
+  else
+    {
+      /* Timed out, no screensaver running. */
+
+      char buf [1024];
+      Bool root_p = (geteuid () == 0);
+      
+      strcpy (buf, 
+              "Error:\n\n"
+              "The xscreensaver daemon did not start up properly.\n"
+              "\n");
+
+      if (root_p)
+        strcat (buf,
+            "You are running as root.  This usually means that xscreensaver\n"
+            "was unable to contact your X server because access control is\n"
+            "turned on.  Try running this command:\n"
+            "\n"
+            "                        xhost +localhost\n"
+            "\n"
+            "and then selecting `File / Restart Daemon'.\n"
+            "\n"
+            "Note that turning off access control will allow anyone logged\n"
+            "on to this machine to access your screen, which might be\n"
+            "considered a security problem.  Please read the xscreensaver\n"
+            "manual and FAQ for more information.\n"
+            "\n"
+            "You shouldn't run X as root. Instead, you should log in as a\n"
+            "normal user, and `su' as necessary.");
+      else
+        strcat (buf, "Please check your $PATH and permissions.");
+
+      warning_dialog (XtParent (widget), buf, 1);
+    }
 }
 
 

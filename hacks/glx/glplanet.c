@@ -237,8 +237,10 @@ setup_xbm_texture (char *bits, int width, int height,
 		*out++ = (word & 0x0000FF);
 	  }
 
+  clear_gl_error();
   glTexImage2D(GL_TEXTURE_2D, 0, 3, width, height, 0,
 			   GL_RGB, GL_UNSIGNED_BYTE, data);
+  check_gl_error("texture");
 
   /* setup parameters for texturing */
   glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
@@ -266,9 +268,11 @@ setup_file_texture (ModeInfo *mi, char *filename)
 	  {
 		XImage *image = xpm_to_ximage (dpy, visual, cmap, xpm_data);
 
+        clear_gl_error();
 		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 					 image->width, image->height, 0,
 					 GL_RGBA, GL_UNSIGNED_BYTE, image->data);
+        check_gl_error("texture");
 
 		/* setup parameters for texturing */
 		glPixelStorei(GL_UNPACK_ALIGNMENT, 4);

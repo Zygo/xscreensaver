@@ -183,7 +183,6 @@ parse_image_data(ModeInfo *mi)
 			       lament_faces);
 }
 
-
 
 /* Computing normal vectors (thanks to Nat Friedman <ndf@mit.edu>)
  */
@@ -1975,11 +1974,14 @@ gl_init(ModeInfo *mi)
 	  int height = lc->texture->width;	/* assume square */
 	  glBindTexture(GL_TEXTURE_2D, lc->texids[i]);
 	  glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, exterior_color);
+
+          clear_gl_error();
 	  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 		       lc->texture->width, height, 0,
 		       GL_RGBA, GL_UNSIGNED_BYTE,
 		       (lc->texture->data +
 			(lc->texture->bytes_per_line * height * i)));
+          check_gl_error("texture");
 
 	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
 	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
