@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2002, 2005 Jamie Zawinski <jwz@jwz.org>
+# Copyright Â© 2002-2013 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -24,7 +24,7 @@ use strict;
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.3 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.4 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -60,7 +60,7 @@ my $man_suffix = (".SH ENVIRONMENT\n" .
                   ".BR X (1),\n" .
                   ".BR xscreensaver (1)\n" .
                   ".SH COPYRIGHT\n" .
-                  "Copyright \\(co 2002 by %AUTHOR%.  " .
+                  "Copyright \\(co %YEAR% by %AUTHOR%.  " .
                   "Permission to use, copy, modify, \n" .
                   "distribute, and sell this software and its " .
                   "documentation for any purpose is \n" .
@@ -118,6 +118,7 @@ sub xml2man($) {
                          
     my $carg = $arg;
     my $boolp = m/^<boolean/;
+    my $novalsp = 0;
 
     if ($arg && $arg =~ m/^-no(-.*)/) {
       $arg = "$1 | \\$arg";
@@ -146,8 +147,12 @@ sub xml2man($) {
       $label = "Render in wireframe instead of solid.";
     } elsif ($carg =~ m/^-delay/ && $hi && $hi >= 10000) {
       $label = "Per-frame delay, in microseconds.";
-      $def = sprintf ("%d (%0.2f seconds.)", $def, ($def/1000000.0));
+      $def = sprintf ("%d (%0.2f seconds)", $def, ($def/1000000.0));
       $low = $hi = undef;
+    } elsif ($carg eq '-speed \fInumber\fP') {
+      $label = "Animation speed.  2.0 means twice as fast, " .
+               "0.5 means half as fast.";
+      $novalsp = 1;
     } elsif ($boolp) {
       $label .= ".  Boolean.";
     } elsif ($label) {
@@ -164,8 +169,10 @@ sub xml2man($) {
 
       $args .= "[\\$carg]\n";
 
-      $label .= "  $low - $hi." if (defined($low) && defined($hi));
-      $label .= "  Default: $def." if (defined ($def));
+      if (! $novalsp) {
+        $label .= "  $low - $hi." if (defined($low) && defined($hi));
+        $label .= "  Default: $def." if (defined ($def));
+      }
       $label = wrap ("", "", $label);
 
       $body .= ".TP 8\n.B \\$arg\n$label";
@@ -192,6 +199,8 @@ sub xml2man($) {
     $author = "UNKNOWN";
   }
 
+  $desc =~ s@http://en\.wikipedia\.org/[^\s]+@@gs;
+
   $desc = wrap ("", "", $desc);
 
   $body = (".TH XScreenSaver 1 \"\" \"X Version 11\"\n" .
@@ -208,7 +217,11 @@ sub xml2man($) {
            $body .
            $man_suffix);
 
+  my $year = $1 if ($author =~ s/; (\d{4})$//s);
+  $year = (localtime)[5] + 1900 unless $year;
+
   $body =~ s/%AUTHOR%/$author/g;
+  $body =~ s/%YEAR%/$year/g;
 
 #print $body; exit 0;
 

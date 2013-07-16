@@ -65,6 +65,9 @@ static const char *epicycle_defaults [] = {
   "*divisorPoisson: 0.4",
   "*sizeFactorMin: 1.05",
   "*sizeFactorMax: 2.05",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 
@@ -401,7 +404,7 @@ colour_init(struct state *st, XWindowAttributes *pxgwa)
    */
   if (st->colors)
     {
-      free_colors(st->dpy, st->cmap, st->colors, st->ncolors);
+      free_colors(pxgwa->screen, st->cmap, st->colors, st->ncolors);
       st->colors = 0;
       st->ncolors = 0;
     }
@@ -421,7 +424,8 @@ colour_init(struct state *st, XWindowAttributes *pxgwa)
       st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
       if (!st->colors) abort();
 	  
-      make_smooth_colormap (st->dpy, pxgwa->visual, st->cmap, st->colors, &st->ncolors,
+      make_smooth_colormap (pxgwa->screen, pxgwa->visual, st->cmap,
+                            st->colors, &st->ncolors,
 			    True, /* allocate */
 			    False, /* not writable */
 			    True); /* verbose (complain about failure) */

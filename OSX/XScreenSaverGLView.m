@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -207,13 +207,13 @@ extern void check_gl_error (const char *type);
 {
 # ifdef USE_IPHONE
   UIGraphicsPushContext (backbuffer);
-#endif
+# endif
 
   [self render_x11];
 
 # ifdef USE_IPHONE
   UIGraphicsPopContext();
-#endif
+# endif
 }
 
 
@@ -233,6 +233,7 @@ extern void check_gl_error (const char *type);
 # else
   double s = 1;
 # endif
+  // Store a realistic size in backbuffer_size, though the buffer is minimal.
   NSRect f = [self bounds];
   backbuffer_size.width  = (int) (s * f.size.width);
   backbuffer_size.height = (int) (s * f.size.height);
@@ -247,7 +248,7 @@ extern void check_gl_error (const char *type);
     CGColorSpaceRelease (cs);
   }
 }
-# endif // USE_IPHONE
+# endif // USE_BACKBUFFER
 
 
 - (void)dealloc {
@@ -338,6 +339,7 @@ init_GL (ModeInfo *mi)
 
     NSAssert (pixfmt, @"unable to create NSOpenGLPixelFormat");
 
+    // #### Analyze says: "Potential leak of an object stored into pixfmt"
     ctx = [[NSOpenGLContext alloc] 
             initWithFormat:pixfmt
               shareContext:nil];
@@ -349,9 +351,8 @@ init_GL (ModeInfo *mi)
   [ctx setValues:&r forParameter:NSOpenGLCPSwapInterval];
 //  check_gl_error ("NSOpenGLCPSwapInterval");  // SEGV sometimes. Too early?
 
-  // #### "Build and Analyze" says that ctx leaks, because it doesn't
-  //      seem to realize that makeCurrentContext retains it (right?)
-  //      Not sure what to do to make this warning go away.
+  // #### Analyze says: "Potential leak of an object stored into "ctx"
+  // But makeCurrentContext retains it (right?)
 
   [ctx makeCurrentContext];
   check_gl_error ("makeCurrentContext");
@@ -397,9 +398,9 @@ init_GL (ModeInfo *mi)
     eagl_layer.opaque = TRUE;
     eagl_layer.drawableProperties = 
       [NSDictionary dictionaryWithObjectsAndKeys:
-      kEAGLColorFormatRGBA8,             kEAGLDrawablePropertyColorFormat,
-      [NSNumber numberWithBool:!dbuf_p], kEAGLDrawablePropertyRetainedBacking,
-      nil];
+       kEAGLColorFormatRGBA8,             kEAGLDrawablePropertyColorFormat,
+       [NSNumber numberWithBool:!dbuf_p], kEAGLDrawablePropertyRetainedBacking,
+       nil];
 
     // Without this, the GL frame buffer is half the screen resolution!
     eagl_layer.contentsScale = [UIScreen mainScreen].scale;
@@ -410,6 +411,7 @@ init_GL (ModeInfo *mi)
   if (!ogl_ctx)
     return 0;
   [view setOglContext:ogl_ctx];
+  // #### Analyze says "Potential leak of an object stored into ogl_ctx"
 
   check_gl_error ("OES_init");
 

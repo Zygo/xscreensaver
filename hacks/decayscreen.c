@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -332,8 +332,8 @@ decayscreen_reshape (Display *dpy, Window window, void *closure,
   XClearWindow (st->dpy, st->window);
   XCopyArea (st->dpy, st->saved, st->window, st->gc,
              0, 0, st->saved_w, st->saved_h,
-             (w - st->saved_w) / 2,
-             (h - st->saved_h) / 2);
+             ((int)w - st->saved_w) / 2,
+             ((int)h - st->saved_h) / 2);
   st->sizex = w;
   st->sizey = h;
 }
@@ -366,6 +366,9 @@ static const char *decayscreen_defaults [] = {
   "*delay:			10000",
   "*mode:			random",
   "*duration:			120",
+#ifdef USE_IPHONE
+  "*ignoreRotation:             True",
+#endif
   0
 };
 

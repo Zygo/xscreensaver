@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -533,7 +533,12 @@ static void layout_group (NSView *group, BOOL horiz_p);
   if ([active_text_field canResignFirstResponder])
     [active_text_field resignFirstResponder];
   NSString *pref_key = [pref_keys objectAtIndex: [sender tag]];
-  double v = [sender value];
+
+  // Hacky API. See comment in InvertedSlider.m.
+  double v = ([sender isKindOfClass: [InvertedSlider class]]
+              ? [(InvertedSlider *) sender transformedValue]
+              : [sender value]);
+
   if (v == (int) v)
     [userDefaultsController setInteger:v forKey:pref_key];
   else
@@ -689,7 +694,11 @@ static void layout_group (NSView *group, BOOL horiz_p);
 
   if ([control isKindOfClass:[UISlider class]]) {
     sel = @selector(sliderAction:);
-    [(UISlider *) control setValue: dval];
+    // Hacky API. See comment in InvertedSlider.m.
+    if ([control isKindOfClass:[InvertedSlider class]])
+      [(InvertedSlider *) control setTransformedValue: dval];
+    else
+      [(UISlider *) control setValue: dval];
   } else if ([control isKindOfClass:[UISwitch class]]) {
     sel = @selector(switchAction:);
     [(UISwitch *) control setOn: ((int) dval != 0)];

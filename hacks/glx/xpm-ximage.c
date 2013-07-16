@@ -1,5 +1,5 @@
 /* xpm-ximage.c --- converts XPM data to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 1998-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -157,7 +157,9 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
             }
           row += stride;
         }
-      gdk_pixbuf_unref (pb); /* #### does doing this free colors? */
+
+      /* #### are colors getting freed here? */
+      g_object_unref (pb);
 
       return image;
     }

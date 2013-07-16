@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -477,7 +477,7 @@ copy_default_colormap_contents (Screen *screen,
   XQueryColors (dpy, from_cmap, old_colors, max_cells);
 
   got_cells = max_cells;
-  allocate_writable_colors (dpy, to_cmap, pixels, &got_cells);
+  allocate_writable_colors (screen, to_cmap, pixels, &got_cells);
 
   if (grab_verbose_p && got_cells != max_cells)
     fprintf(stderr, "%s: got only %d of %d cells\n", progname,

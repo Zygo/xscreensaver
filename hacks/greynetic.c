@@ -257,6 +257,9 @@ static const char *greynetic_defaults [] = {
   "*fpsSolid:	true",
   "*delay:	10000",
   "*grey:	false",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

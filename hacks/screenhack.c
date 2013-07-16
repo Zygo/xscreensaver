@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -727,13 +727,17 @@ main (int argc, char **argv)
   {
     char *v = (char *) strdup(strchr(screensaver_id, ' '));
     char *s1, *s2, *s3, *s4;
+    const char *ot = get_string_resource (dpy, "title", "Title");
     s1 = (char *) strchr(v,  ' '); s1++;
     s2 = (char *) strchr(s1, ' ');
     s3 = (char *) strchr(v,  '('); s3++;
     s4 = (char *) strchr(s3, ')');
     *s2 = 0;
     *s4 = 0;
-    sprintf (version, "%s: from the XScreenSaver %s distribution (%s.)",
+    if (ot && !*ot) ot = 0;
+    sprintf (version, "%.50s%s%s: from the XScreenSaver %s distribution (%s)",
+             (ot ? ot : ""),
+             (ot ? ": " : ""),
 	     progclass, s1, s3);
     free(v);
   }

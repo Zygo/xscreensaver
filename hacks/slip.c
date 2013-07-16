@@ -31,7 +31,8 @@ static const char sccsid[] = "@(#)slip.c	5.00 2000/11/01 xlockmore";
 					"*count: 35 \n" \
 					"*cycles: 50 \n" \
 					"*ncolors: 200 \n" \
-					"*fpsSolid:	true \n"
+					"*fpsSolid:	true \n" \
+					"*ignoreRotation: True \n" \
 
 # define refresh_slip 0
 # define slip_handle_event 0

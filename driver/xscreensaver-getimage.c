@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001-2012 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2013 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1666,6 +1666,8 @@ get_image (Screen *screen,
         draw_colorbars (screen, xgwa.visual, drawable, xgwa.colormap,
                         0, 0, 0, 0);
         XSync (dpy, False);
+        if (! file_prop) file_prop = "";
+
       }
       break;
 
@@ -1706,8 +1708,23 @@ get_image (Screen *screen,
   {
     Atom a = XInternAtom (dpy, XA_XSCREENSAVER_IMAGE_FILENAME, False);
     if (file_prop && *file_prop)
-      XChangeProperty (dpy, window, a, XA_STRING, 8, PropModeReplace, 
-                       (unsigned char *) file_prop, strlen(file_prop));
+      {
+        char *f2 = strdup (file_prop);
+
+        /* Take the extension off of the file name. */
+        /* Duplicated in utils/grabclient.c. */
+        char *slash = strrchr (f2, '/');
+        char *dot = strrchr ((slash ? slash : f2), '.');
+        if (dot) *dot = 0;
+        /* Replace slashes with newlines */
+        /* while ((dot = strchr(f2, '/'))) *dot = '\n'; */
+        /* Replace slashes with spaces */
+        while ((dot = strchr(f2, '/'))) *dot = ' ';
+
+        XChangeProperty (dpy, window, a, XA_STRING, 8, PropModeReplace, 
+                         (unsigned char *) f2, strlen(f2));
+        free (f2);
+      }
     else
       XDeleteProperty (dpy, window, a);
 

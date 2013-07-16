@@ -45,7 +45,7 @@
 #define HEIGHT 632                /* 548     */
 #define SHELLCOUNT 4              /* FIXED NUMBER; for SSE optimization */
 #define PIXCOUNT 500              /* 500     */
-#define SHELL_LIFE_DEFAULT 3200   /* 3200    */
+#define SHELL_LIFE_DEFAULT 32     /* 32      */
 #define SHELL_LIFE_RATIO 6        /* 6       */
 #define POWDER 5.0                /* 5.0     */
 #define FTWEAK 12                 /* 12      */
@@ -709,6 +709,9 @@ fireworkx_init (Display *dpy, Window win)
 	st->shoot          = get_boolean_resource(st->dpy, "shoot"   , "Boolean");
 	st->verbose        = get_boolean_resource(st->dpy, "verbose" , "Boolean");
 	st->max_shell_life = get_integer_resource(st->dpy, "maxlife" , "Integer");
+        /* transition from xscreensaver <= 5.20 */
+	if (st->max_shell_life > 100) st->max_shell_life = 100;
+
 	st->delay          = get_integer_resource(st->dpy, "delay"   , "Integer");
 
 	st->max_shell_life = pow(10.0,(st->max_shell_life/50.0)+2.7);
@@ -735,7 +738,8 @@ fireworkx_init (Display *dpy, Window win)
 	{
 		st->colors = (XColor *) calloc(sizeof(XColor),st->ncolors+1);
 		writable = False;
-		make_smooth_colormap(st->dpy, vi, cmap, st->colors, &st->ncolors,
+		make_smooth_colormap(xwa.screen, vi, cmap,
+                                     st->colors, &st->ncolors,
 		                     False, &writable, True);
 	}
 	st->gc = XCreateGC(st->dpy, win, 0, &gcv);

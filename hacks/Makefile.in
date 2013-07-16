@@ -113,7 +113,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  fuzzyflakes.c anemotaxis.c memscroller.c substrate.c \
 		  intermomentary.c fireworkx.c fiberlamp.c \
 		  boxfit.c interaggregate.c celtic.c cwaves.c m6502.c \
-		  asm6502.c abstractile.c lcdscrub.c \
+		  asm6502.c abstractile.c lcdscrub.c hexadrop.c \
 		  webcollage-cocoa.m webcollage-helper-cocoa.m
 SCRIPTS		= vidwhacker webcollage ljlatest
 
@@ -153,7 +153,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o \
 		  interaggregate.o celtic.o cwaves.o webcollage-cocoa.o \
 		  webcollage-helper-cocoa.o m6502.o asm6502.o abstractile.o \
-		  lcdscrub.o
+		  lcdscrub.o hexadrop.o
 
 EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  drift flame galaxy grav greynetic halo \
@@ -174,7 +174,7 @@ EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  fontglide apple2 xanalogtv pong  wormhole \
 		  pacman fuzzyflakes anemotaxis memscroller substrate \
 		  intermomentary fireworkx fiberlamp boxfit interaggregate \
-		  celtic cwaves m6502 abstractile lcdscrub \
+		  celtic cwaves m6502 abstractile lcdscrub hexadrop \
 		  @JPEG_EXES@
 JPEG_EXES	= webcollage-helper
 
@@ -226,7 +226,7 @@ MEN		= anemone.man apollonian.man attraction.man \
 		  anemotaxis.man memscroller.man substrate.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
 		  interaggregate.man celtic.man cwaves.man abstractile.man \
-		  lcdscrub.man
+		  lcdscrub.man hexadrop.man
 
 RETIRED_MEN	= ant.man bubbles.man critical.man flag.man forest.man \
 		  laser.man lightning.man lisa.man lissie.man lmorph.man \
@@ -840,6 +840,9 @@ abstractile:	abstractile.o	$(HACK_OBJS) $(COL)
 
 lcdscrub:	lcdscrub.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
+
+hexadrop:	hexadrop.o	$(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -1709,6 +1712,17 @@ helix.o: $(UTILS_SRC)/resources.h
 helix.o: $(UTILS_SRC)/usleep.h
 helix.o: $(UTILS_SRC)/visual.h
 helix.o: $(UTILS_SRC)/yarandom.h
+hexadrop.o: ../config.h
+hexadrop.o: $(srcdir)/fps.h
+hexadrop.o: $(srcdir)/screenhackI.h
+hexadrop.o: $(srcdir)/screenhack.h
+hexadrop.o: $(UTILS_SRC)/colors.h
+hexadrop.o: $(UTILS_SRC)/grabscreen.h
+hexadrop.o: $(UTILS_SRC)/hsv.h
+hexadrop.o: $(UTILS_SRC)/resources.h
+hexadrop.o: $(UTILS_SRC)/usleep.h
+hexadrop.o: $(UTILS_SRC)/visual.h
+hexadrop.o: $(UTILS_SRC)/yarandom.h
 hopalong.o: ../config.h
 hopalong.o: $(srcdir)/fps.h
 hopalong.o: $(srcdir)/screenhackI.h

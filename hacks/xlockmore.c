@@ -1,5 +1,5 @@
 /* xlockmore.c --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2011 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -382,18 +382,21 @@ xlockmore_init (Display *dpy, Window window,
       switch (mi->xlmft->desired_color_scheme)
         {
         case color_scheme_uniform:
-          make_uniform_colormap (dpy, mi->xgwa.visual, mi->xgwa.colormap,
+          make_uniform_colormap (mi->xgwa.screen, mi->xgwa.visual,
+                                 mi->xgwa.colormap,
                                  mi->colors, &mi->npixels,
                                  True, &mi->writable_p, True);
           break;
         case color_scheme_smooth:
-          make_smooth_colormap (dpy, mi->xgwa.visual, mi->xgwa.colormap,
+          make_smooth_colormap (mi->xgwa.screen, mi->xgwa.visual,
+                                mi->xgwa.colormap,
                                 mi->colors, &mi->npixels,
                                 True, &mi->writable_p, True);
           break;
         case color_scheme_bright:
         case color_scheme_default:
-          make_random_colormap (dpy, mi->xgwa.visual, mi->xgwa.colormap,
+          make_random_colormap (mi->xgwa.screen, mi->xgwa.visual,
+                                mi->xgwa.colormap,
                                 mi->colors, &mi->npixels,
                                 (mi->xlmft->desired_color_scheme ==
                                  color_scheme_bright),

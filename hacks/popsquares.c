@@ -96,7 +96,7 @@ popsquares_init (Display *dpy, Window window)
 
   rgb_to_hsv (fg.red, fg.green, fg.blue, &h1, &s1, &v1);
   rgb_to_hsv (bg.red, bg.green, bg.blue, &h2, &s2, &v2);
-  make_color_ramp (st->dpy, st->xgwa.colormap,
+  make_color_ramp (st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
                    h1, s1, v1,
                    h2, s2, v2,
                    st->colors, &st->ncolors,  /* would this be considered a value-result argument? */
@@ -246,6 +246,9 @@ static const char *popsquares_defaults [] = {
   "*useDBE: True",
   "*useDBEClear: True",
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

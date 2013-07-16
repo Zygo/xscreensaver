@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -55,6 +55,8 @@
   GLuint gl_framebuffer, gl_renderbuffer;
   IBOutlet UIView *view;
   UIImage *saved_screenshot;
+  UIView *aboutBox;
+  NSTimer *splashTimer;
 
 # endif // USE_IPHONE
 }
@@ -62,9 +64,9 @@
 - (void) loadSaver: (NSString *)name launch:(BOOL)launch;
 - (void) loadSaver: (NSString *)name;
 - (void) selectedSaverDidChange:(NSDictionary *)change;
+- (void) aboutPanel: (id)sender;
 
 #ifndef USE_IPHONE
-- (void) aboutPanel: (id)sender;
 - (void) openPreferences: (id)sender;
 #else  // USE_IPHONE
 - (void) openPreferences: (NSString *)which;

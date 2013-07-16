@@ -62,6 +62,7 @@ struct state {
   XImage *orig_map, *buffer_map;
   int ctab[256];
   Colormap colormap;
+  Screen *screen;
   int ncolors;
   int light;
 
@@ -495,6 +496,7 @@ setup_X(struct state *st)
   XGetWindowAttributes(st->dpy, st->window, &xgwa);
   depth = xgwa.depth;
   st->colormap = xgwa.colormap;
+  st->screen = xgwa.screen;
   st->bigwidth = xgwa.width;
   st->bigheight = xgwa.height;
   st->visual = xgwa.visual;
@@ -656,7 +658,8 @@ init_oily_colors(struct state *st)
 
   if (!mono_p) {
     colors = (XColor *)malloc(sizeof(*colors) * (st->ncolors+1));
-    make_smooth_colormap(st->dpy, st->visual, st->colormap, colors, &st->ncolors,
+    make_smooth_colormap(st->screen, st->visual, st->colormap,
+                         colors, &st->ncolors,
                          True, /* allocate */
                          False, /* not writable */
                          True); /* verbose (complain about failure) */
@@ -1104,6 +1107,9 @@ static const char *ripples_defaults[] =
   "*useSHM: True",
 #else
   "*useSHM: False",
+#endif
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
 #endif
   0
 };

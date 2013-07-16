@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -11,8 +11,8 @@
 
 /* Simulation of a pair of quasi-gravitational fields, maybe sorta kinda
    a little like the strong and weak electromagnetic forces.  Derived from
-   a Lispm screensaver by John Pezaris <pz@mit.edu>.  Mouse control and
-   viscosity added by "Philip Edward Cutone, III" <pc2d+@andrew.cmu.edu>.
+   a Lispm screensaver by John Pezaris <pz@mit.edu>.  Viscosity added by
+   Philip Edward Cutone, III <pc2d+@andrew.cmu.edu>.
 
    John sez:
 
@@ -135,11 +135,10 @@ struct state {
   int color_shift;
   int xlim, ylim;
   Bool no_erase_yet; /* for tail mode fix */
-
-  /*flip mods for mouse interaction*/
-  Bool mouse_p;
-  int mouse_x, mouse_y, mouse_mass, root_x, root_y;
   double viscosity;
+
+  int mouse_ball;	/* index of ball being dragged, or 0 if none. */
+  unsigned long mouse_pixel;
 
   enum object_mode mode;
   enum graph_mode graph_mode;
@@ -210,11 +209,6 @@ attraction_init (Display *dpy, Window window)
   st->color_shift = get_integer_resource (dpy, "colorShift", "Integer");
   if (st->color_shift <= 0) st->color_shift = 5;
 
-  /*flip mods for mouse interaction*/
-  st->mouse_p = get_boolean_resource (dpy, "mouse", "Boolean");
-  st->mouse_mass = get_integer_resource (dpy, "mouseSize", "Integer");
-  st->mouse_mass =  st->mouse_mass *  st->mouse_mass *10;
-
   st->viscosity = get_float_resource (dpy, "viscosity", "Float");
 
   mode_str = get_string_resource (dpy, "mode", "Mode");
@@ -281,14 +275,16 @@ attraction_init (Display *dpy, Window window)
 	      double S2 = 1.00;
 	      double V = frand(0.25) + 0.75;
 	      st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
-	      make_color_ramp (dpy, cmap, H, S1, V, H, S2, V, st->colors, &st->ncolors,
+	      make_color_ramp (xgwa.screen, xgwa.visual, cmap,
+                               H, S1, V, H, S2, V, st->colors, &st->ncolors,
 			       False, True, False);
 	    }
 	  else
 	    {
 	      st->ncolors = st->npoints;
 	      st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
-	      make_random_colormap (dpy, xgwa.visual, cmap, st->colors, &st->ncolors,
+	      make_random_colormap (xgwa.screen, xgwa.visual, cmap, 
+                                    st->colors, &st->ncolors,
 				    True, True, False, True);
 	    }
 	  break;
@@ -298,7 +294,8 @@ attraction_init (Display *dpy, Window window)
 	case spline_filled_mode:
 	case tail_mode:
 	  st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
-	  make_smooth_colormap (dpy, xgwa.visual, cmap, st->colors, &st->ncolors,
+	  make_smooth_colormap (xgwa.screen, xgwa.visual, cmap,
+                                st->colors, &st->ncolors,
 				True, False, True);
 	  break;
 	default:
@@ -312,6 +309,10 @@ attraction_init (Display *dpy, Window window)
       st->colors = 0;
       mono_p = True;
     }
+
+  st->mouse_pixel =
+    get_pixel_resource (dpy, cmap, "mouseForeground", "MouseForeground");
+  st->mouse_ball = -1;
 
   if (st->mode != ball_mode)
     {
@@ -448,28 +449,6 @@ compute_force (struct state *st, int i, double *dx_ret, double *dy_ret)
       if (dist > 0.1) /* the balls are not overlapping */
 	{
 	  double new_acc = ((st->balls[j].mass / dist2) *
-			    ((dist < st->threshold) ? -1.0 : 1.0));
-	  double new_acc_dist = new_acc / dist;
-	  *dx_ret += new_acc_dist * x_dist;
-	  *dy_ret += new_acc_dist * y_dist;
-	}
-      else
-	{		/* the balls are overlapping; move randomly */
-	  *dx_ret += (frand (10.0) - 5.0);
-	  *dy_ret += (frand (10.0) - 5.0);
-	}
-    }
-
-  if (st->mouse_p)
-    {
-      x_dist = st->mouse_x - st->balls [i].x;
-      y_dist = st->mouse_y - st->balls [i].y;
-      dist2 = (x_dist * x_dist) + (y_dist * y_dist);
-      dist = sqrt (dist2);
-	
-      if (dist > 0.1) /* the balls are not overlapping */
-	{
-	  double new_acc = ((st->mouse_mass / dist2) *
 			    ((dist < st->threshold) ? -1.0 : 1.0));
 	  double new_acc_dist = new_acc / dist;
 	  *dx_ret += new_acc_dist * x_dist;
@@ -621,15 +600,33 @@ draw_meter_speed (Display *dpy, Window window, struct state *st, int i)
   XDrawRectangle(dpy,window,st->draw_gc, x2,y,w2,h);
 }
 
+/* Returns the position of the mouse relative to the root window.
+ */
+static void
+query_mouse (Display *dpy, Window win, int *x, int *y)
+{
+  Window root1, child1;
+  int mouse_x, mouse_y, root_x, root_y;
+  unsigned int mask;
+  if (XQueryPointer (dpy, win, &root1, &child1,
+                     &root_x, &root_y, &mouse_x, &mouse_y, &mask))
+    {
+      *x = mouse_x;
+      *y = mouse_y;
+    }
+  else
+    {
+      *x = -9999;
+      *y = -9999;
+    }
+}
+
 static unsigned long
 attraction_draw (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   int last_point_stack_fp = st->point_stack_fp;
   
-  Window root1, child1;  /*flip mods for mouse interaction*/
-  unsigned int mask;
-
   int i, radius = st->global_size/2;
 
   st->total_ticks++;
@@ -671,12 +668,6 @@ attraction_draw (Display *dpy, Window window, void *closure)
 
     }
 
-  if (st->mouse_p)
-    {
-      XQueryPointer(dpy, window, &root1, &child1,
-		    &st->root_x, &st->root_y, &st->mouse_x, &st->mouse_y, &mask);
-    }
-
   /* compute the force of attraction/repulsion among all balls */
   for (i = 0; i < st->npoints; i++)
     compute_force (st, i, &st->balls[i].dx, &st->balls[i].dy);
@@ -688,6 +679,7 @@ attraction_draw (Display *dpy, Window window, void *closure)
       double old_y = st->balls[i].y;
       double new_x, new_y;
       int size = st->balls[i].size;
+
       st->balls[i].vx += st->balls[i].dx;
       st->balls[i].vy += st->balls[i].dy;
 
@@ -789,6 +781,21 @@ attraction_draw (Display *dpy, Window window, void *closure)
                 }
             }
         }
+
+      if (i == st->mouse_ball)
+        {
+          int x, y;
+          query_mouse (dpy, window, &x, &y);
+	  if (st->mode == ball_mode)
+            {
+              x -= st->balls[i].size / 2;
+              y -= st->balls[i].size / 2;
+            }
+
+          st->balls[i].x = x;
+          st->balls[i].y = y;
+        }
+
       new_x = st->balls[i].x;
       new_y = st->balls[i].y;
 
@@ -813,7 +820,9 @@ attraction_draw (Display *dpy, Window window, void *closure)
 		  st->balls[i].pixel_index = (st->ncolors * s);
 		}
 	      XSetForeground (dpy, st->draw_gc,
-			      st->colors[st->balls[i].pixel_index].pixel);
+                              (i == st->mouse_ball
+                               ? st->mouse_pixel
+                               : st->colors[st->balls[i].pixel_index].pixel));
 	    }
 	}
 
@@ -967,6 +976,53 @@ attraction_reshape (Display *dpy, Window window, void *closure,
 static Bool
 attraction_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+
+  if (event->xany.type == ButtonPress)
+    {
+      int i;
+      if (st->mouse_ball != -1)  /* second down-click?  drop the ball. */
+        {
+          st->mouse_ball = -1;
+          return True;
+        }
+      else
+        {
+          /* When trying to pick up a ball, first look for a click directly
+             inside the ball; but if we don't find it, expand the radius
+             outward until we find something nearby.
+           */
+          int x = event->xbutton.x;
+          int y = event->xbutton.y;
+          float max = 10 * (st->global_size ? st->global_size : MAX_SIZE);
+          float step = max / 100;
+          float r2;
+          for (r2 = step; r2 < max; r2 += step)
+            {
+              for (i = 0; i < st->npoints; i++)
+                {
+                  float d = ((st->balls[i].x - x) * (st->balls[i].x - x) +
+                             (st->balls[i].y - y) * (st->balls[i].y - y));
+                  float r = st->balls[i].size;
+                  if (r2 > r) r = r2;
+                  if (d < r*r)
+                    {
+                      st->mouse_ball = i;
+                      return True;
+                    }
+                }
+            }
+        }
+      return True;
+    }
+  else if (event->xany.type == ButtonRelease)   /* drop the ball */
+    {
+      st->mouse_ball = -1;
+      return True;
+    }
+
+
+
   return False;
 }
 
@@ -999,11 +1055,9 @@ static const char *attraction_defaults [] = {
   "*threshold:	200",
   "*delay:	10000",
   "*glow:	false",
-  "*mouseSize:	10",
   "*walls:	true",
   "*maxspeed:	true",
   "*cbounce:	true",
-  "*mouse:	false",
   "*viscosity:	1.0",
   "*orbit:	false",
   "*colorShift:	3",
@@ -1012,6 +1066,10 @@ static const char *attraction_defaults [] = {
   "*radius:	0",
   "*vx:		0",
   "*vy:		0",
+  "*mouseForeground: white",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 
@@ -1029,10 +1087,7 @@ static XrmOptionDescRec attraction_options [] = {
   { "-vx",		".vx",		XrmoptionSepArg, 0 },
   { "-vy",		".vy",		XrmoptionSepArg, 0 },
   { "-vmult",		".vMult",	XrmoptionSepArg, 0 },
-  { "-mouse-size",	".mouseSize",	XrmoptionSepArg, 0 },
   { "-viscosity",	".viscosity",	XrmoptionSepArg, 0 },
-  { "-mouse",		".mouse",	XrmoptionNoArg, "true" },
-  { "-nomouse",		".mouse",	XrmoptionNoArg, "false" },
   { "-glow",		".glow",	XrmoptionNoArg, "true" },
   { "-noglow",		".glow",	XrmoptionNoArg, "false" },
   { "-orbit",		".orbit",	XrmoptionNoArg, "true" },

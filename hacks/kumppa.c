@@ -55,6 +55,9 @@ static const char *kumppa_defaults [] ={
   "*random:		True",
   /* leave this off by default, since it slows things down.  -- jwz. */
   "*useDBE:		False",
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
   0
 };
 

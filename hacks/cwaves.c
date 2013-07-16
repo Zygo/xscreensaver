@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2007 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2007-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -57,7 +57,7 @@ cwaves_init (Display *dpy, Window window)
   st->ncolors = get_integer_resource (dpy, "ncolors", "Integer");
   if (st->ncolors < 4) st->ncolors = 4;
   st->colors = (XColor *) malloc (sizeof(*st->colors) * (st->ncolors+1));
-  make_smooth_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap,
+  make_smooth_colormap (st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
                         st->colors, &st->ncolors,
                         True, 0, False);
 
@@ -170,7 +170,8 @@ cwaves_event (Display *dpy, Window window, void *closure, XEvent *event)
   state *st = (state *) closure;
   if (event->type == ButtonPress)
     {
-      make_smooth_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap,
+      make_smooth_colormap (st->xgwa.screen, st->xgwa.visual,
+                            st->xgwa.colormap,
                             st->colors, &st->ncolors,
                             True, 0, False);
       return True;
@@ -192,6 +193,9 @@ static const char *cwaves_defaults [] = {
   "*scale:		   2",
   "*debug:		   False",
   "*delay:		   20000",
+#ifdef USE_IPHONE
+  "*ignoreRotation:        True",
+#endif
   0
 };
 

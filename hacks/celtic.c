@@ -838,6 +838,9 @@ static const char *celtic_defaults[] = {
     "*delay: 10000",
     "*delay2: 5",
     "*showGraph: False",
+#ifdef USE_IPHONE
+    "*ignoreRotation: True",
+#endif
     0
 };
 
@@ -919,10 +922,10 @@ celtic_init (Display *d_arg, Window w_arg)
   else
     {
 #if 0
-      make_random_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap,
+      make_random_colormap (st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
                             st->colors, &st->ncolors, True, True, 0, True);
 #else
-      make_smooth_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap,
+      make_smooth_colormap (st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
                             st->colors, &st->ncolors, True, 0, True);
 #endif
       if (st->ncolors < 2)
@@ -979,7 +982,7 @@ celtic_draw (Display *dpy, Window window, void *closure)
     /* recolor each time */
     st->ncolors = get_integer_resource (st->dpy, "ncolors", "Integer");
     if (st->ncolors > 2)
-      make_smooth_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap,
+      make_smooth_colormap (st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
                             st->colors, &st->ncolors, True, 0, True);
 
     st->eraser = erase_window (st->dpy, st->window, st->eraser);

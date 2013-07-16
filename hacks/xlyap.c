@@ -78,6 +78,9 @@ static const char *xlyap_defaults [] = {
   "*delay:              10000",
   "*linger:             5",
   "*colors:             200",
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
   0
 };
 
@@ -178,8 +181,8 @@ typedef double (*PFD)(double,double);
 /*#define BACKING_PIXMAP*/
 
 struct state {
-  int screen;
   Display *dpy;
+  Screen *screen;
   Visual *visual;
   Colormap cmap;
 
@@ -552,15 +555,15 @@ init_color(struct state *st)
 {
   int i;
   if (st->ncolors)
-    free_colors (st->dpy, st->cmap, st->colors, st->ncolors);
+    free_colors (st->screen, st->cmap, st->colors, st->ncolors);
   st->ncolors = st->maxcolor;
-  make_smooth_colormap(st->dpy, st->visual, st->cmap,
+  make_smooth_colormap(st->screen, st->visual, st->cmap,
                        st->colors, &st->ncolors, True, NULL, True);
 
   for (i = 0; i < st->maxcolor; i++) {
     if (! st->Data_GC[i]) {
       XGCValues gcv;
-      gcv.background = BlackPixel(st->dpy, st->screen);
+      gcv.background = BlackPixelOfScreen(st->screen);
       st->Data_GC[i] = XCreateGC(st->dpy, st->canvas, GCBackground, &gcv);
     }
     XSetForeground(st->dpy, st->Data_GC[i],
@@ -1782,6 +1785,7 @@ xlyap_init (Display *d, Window window)
   st->width = xgwa.width;
   st->height = xgwa.height;
   st->visual = xgwa.visual;
+  st->screen = xgwa.screen;
   st->cmap = xgwa.colormap;
 
   do_defaults(st);
@@ -1799,14 +1803,13 @@ xlyap_init (Display *d, Window window)
   if (builtin >= 0)
     do_preset (st, builtin);
 
-  st->screen = DefaultScreen(st->dpy);
-  st->background = BlackPixel(st->dpy, st->screen);
+  st->background = BlackPixelOfScreen(st->screen);
   setupmem(st);
   init_data(st);
   if (!mono_p)
     st->foreground = st->startcolor;
   else
-    st->foreground = WhitePixel(st->dpy, st->screen);
+    st->foreground = WhitePixelOfScreen(st->screen);
 
   /*
    * Create the window to display the Lyapunov exponents

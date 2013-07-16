@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -62,7 +62,14 @@ draw_star (struct state *st, Drawable w, struct throbber *t)
   XPoint points[11];
   int x = t->x;
   int y = t->y;
-  int s = t->size / 0.383;  /* trial and error, I forget how to derive this */
+
+  /*
+    The following constant is really:
+      sqrt(5 - sqrt(5)) / sqrt(25 - 11 * sqrt(5))
+
+    Reference: http://mathworld.wolfram.com/Pentagram.html
+  */
+  int s = t->size * 2.6180339887498985;
   int s2 = t->size;
   double c = M_PI * 2;
   double o = -M_PI / 2;
@@ -312,7 +319,7 @@ deluxe_init (Display *dpy, Window window)
 #ifndef HAVE_COCOA
     COLOR:
 #endif
-      make_random_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap,
+      make_random_colormap (st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
                             st->colors, &st->ncolors, True, True, 0, True);
       if (st->ncolors < 2)
         goto MONO;
@@ -431,6 +438,9 @@ static const char *deluxe_defaults [] = {
   "*useDBE:		True",
   "*useDBEClear:	True",
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
   0
 };
 

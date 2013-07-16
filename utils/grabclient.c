@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -619,6 +619,19 @@ pipe_cb (XtPointer closure, int *source, XtInputId *id)
     geom.height = h;
   }
 
+  /* Take the extension off of the file name. */
+  /* Duplicated in driver/xscreensaver-getimage.c. */
+  if (buf && *buf)
+    {
+      char *slash = strrchr (buf, '/');
+      char *dot = strrchr ((slash ? slash : buf), '.');
+      if (dot) *dot = 0;
+      /* Replace slashes with newlines */
+      /* while (dot = strchr(buf, '/')) *dot = '\n'; */
+      /* Replace slashes with spaces */
+      while ((dot = strchr(buf, '/'))) *dot = ' ';
+    }
+
   if (absfile) free (absfile);
   clo2->callback (clo2->screen, clo2->xwindow, clo2->drawable, buf, &geom,
                   clo2->closure);
@@ -810,6 +823,7 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
     /* If we got here, we loaded synchronously even though they wanted async.
      */
     callback (screen, window, drawable, name_ret_2, &geom_ret_2, closure);
+    if (name_ret_2) free (name_ret_2);
   }
 }
 

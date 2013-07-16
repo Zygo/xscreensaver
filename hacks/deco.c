@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1997, 1998, 2002, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -54,16 +53,16 @@ struct state {
 
 /* copied from make_random_colormap in colors.c */
 static void
-make_mondrian_colormap (Display *dpy, Visual *visual, Colormap cmap,
+make_mondrian_colormap (Screen *screen, Visual *visual, Colormap cmap,
 		      XColor *colors, int *ncolorsP,
 		      Bool allocate_p,
 		      Bool *writable_pP,
 		      Bool verbose_p)
 {
+  Display *dpy = DisplayOfScreen (screen);
   Bool wanted_writable = (allocate_p && writable_pP && *writable_pP);
   int ncolors = 8;
   int i;
-  Screen *screen = (dpy ? DefaultScreenOfDisplay(dpy) : 0); /* #### WRONG! */
 
   if (*ncolorsP <= 0) return;
 
@@ -104,7 +103,7 @@ make_mondrian_colormap (Display *dpy, Visual *visual, Colormap cmap,
       unsigned long *pixels = (unsigned long *)
 	malloc(sizeof(*pixels) * (ncolors + 1));
 
-      allocate_writable_colors (dpy, cmap, pixels, &ncolors);
+      allocate_writable_colors (screen, cmap, pixels, &ncolors);
       if (ncolors > 0)
 	for (i = 0; i < ncolors; i++)
 	  colors[i].pixel = pixels[i];
@@ -240,17 +239,20 @@ deco_init (Display *dpy, Window window)
       mondrian_set_sizes(st, st->xgwa.width, st->xgwa.height);
 
       /** set up red-yellow-blue-black-white colormap and fgc **/
-      make_mondrian_colormap(dpy, st->xgwa.visual, st->xgwa.colormap,
+      make_mondrian_colormap(st->xgwa.screen, st->xgwa.visual,
+                             st->xgwa.colormap,
 			     st->colors, &st->ncolors, True, 0, True);
 
       /** put white in several cells **/
       /** set min-height and min-width to about 10% of total w/h **/
   }
   else if (st->smoothColors)
-      make_smooth_colormap (dpy, st->xgwa.visual, st->xgwa.colormap,
+      make_smooth_colormap (st->xgwa.screen, st->xgwa.visual,
+                            st->xgwa.colormap,
 			    st->colors, &st->ncolors, True, 0, True);
   else
-      make_random_colormap (dpy, st->xgwa.visual, st->xgwa.colormap,
+      make_random_colormap (st->xgwa.screen, st->xgwa.visual,
+                            st->xgwa.colormap,
 			    st->colors, &st->ncolors, False, True, 0, True);
 
   gcv.line_width = st->old_line_width = st->line_width;
@@ -311,6 +313,9 @@ static const char *deco_defaults [] = {
   "*goldenRatio:        False",
   "*smoothColors:       False",
   "*mondrian:           False",
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
   0
 };
 

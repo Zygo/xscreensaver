@@ -1,4 +1,4 @@
-/* imsmap, Copyright (c) 1992-2008 Juergen Nickelsen and Jamie Zawinski.
+/* imsmap, Copyright (c) 1992-2013 Juergen Nickelsen and Jamie Zawinski.
  * Derived from code by Markus Schirmer, TU Berlin.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -162,7 +162,7 @@ init_map (struct state *st)
   if (mono_p)
     st->flip_xy = 0;
   else if (st->colors)
-    free_colors (st->dpy, st->cmap, st->colors, st->ncolors);
+    free_colors (st->xgwa.screen, st->cmap, st->colors, st->ncolors);
   st->colors = 0;
 
   st->ncolors = get_integer_resource (st->dpy, "ncolors", "Integer");
@@ -188,7 +188,7 @@ init_map (struct state *st)
     {
       st->colors = (XColor *) malloc (st->ncolors * sizeof(*st->colors));
 
-      make_smooth_colormap (st->dpy, st->xgwa.visual, st->cmap,
+      make_smooth_colormap (st->xgwa.screen, st->xgwa.visual, st->cmap,
                             st->colors, &st->ncolors,
                             True, 0, False);
       if (st->ncolors <= 2)
@@ -401,6 +401,9 @@ static const char *imsmap_defaults [] = {
   "*iterations:	7",
   "*delay:	5",
   "*delay2:	20000",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

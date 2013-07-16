@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001-2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -190,17 +190,23 @@ minixpm_to_ximage (Display *dpy, Visual *visual, Colormap colormap, int depth,
   ximage = XCreateImage (dpy, visual, depth,
                          (depth == 1 ? XYBitmap : ZPixmap),
                          0, 0, w, h, 8, 0);
-  if (! ximage) return 0;
+  if (! ximage)
+    {
+      if (pixels) free (pixels);
+      return 0;
+    }
 
   ximage->bitmap_bit_order =
     ximage->byte_order =
     (bigendian() ? MSBFirst : LSBFirst);
 
   ximage->data = (char *) calloc (ximage->height, ximage->bytes_per_line);
-  if (!ximage->data) {
-    XDestroyImage (ximage);
-    return 0;
-  }
+  if (!ximage->data)
+    {
+      XDestroyImage (ximage);
+      if (pixels) free (pixels);
+      return 0;
+    }
 
   w8 = (w + 7) / 8;
   if (mask_ret)

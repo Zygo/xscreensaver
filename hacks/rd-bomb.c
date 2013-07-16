@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
  *
  *  reaction/diffusion textures
  *  Copyright (c) 1997 Scott Draves spot@transmeta.com
@@ -309,6 +309,9 @@ static const char *rd_defaults [] = {
 #else
   "*useSHM:	False",
 #endif
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 
@@ -333,7 +336,8 @@ static void
 random_colors(struct state *st)
 {
   memset(st->colors, 0, st->ncolors*sizeof(*st->colors));
-  make_smooth_colormap (st->dpy, st->visual, st->cmap, st->colors, &st->ncolors,
+  make_smooth_colormap (st->xgwa.screen, st->visual, st->cmap,
+                        st->colors, &st->ncolors,
 			True, 0, True);
   if (st->ncolors <= 2) {
     mono_p = True;

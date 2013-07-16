@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997, 1998, 2006 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -64,7 +64,8 @@ moire2_init_1 (struct state *st)
   if (mono_p)
     ;
   else
-    make_smooth_colormap (st->dpy, xgwa.visual, xgwa.colormap, st->colors, &st->ncolors,
+    make_smooth_colormap (xgwa.screen, xgwa.visual, xgwa.colormap,
+                          st->colors, &st->ncolors,
 			  True, 0, True);
 
   st->bg_pixel = get_pixel_resource(st->dpy,
@@ -328,6 +329,9 @@ static const char *moire2_defaults [] = {
   "*thickness:		0",
   "*colors:		150",
   "*colorShift:		5",
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
   /* Off by default, since it slows it down a lot, and the flicker isn't really

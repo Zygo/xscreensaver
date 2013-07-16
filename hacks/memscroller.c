@@ -86,7 +86,7 @@ memscroller_init (Display *dpy, Window window)
   {
     int ncolors = 255;
     XColor colors[256];
-    make_random_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap,
+    make_random_colormap (st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
                           colors, &ncolors, True, True, 0, False);
   }
 

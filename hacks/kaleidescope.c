@@ -100,6 +100,9 @@ static const char *kaleidescope_defaults [] = {
   "*greenrange:     20000",
   "*bluemin:        30000",
   "*bluerange:      20000",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

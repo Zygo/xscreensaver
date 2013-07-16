@@ -36,6 +36,7 @@ static const char sccsid[] = "@(#)thornbird.c	5.00 2000/11/01 xlockmore";
 					 "*cycles:  400   \n" \
 					 "*ncolors: 64    \n" \
 					 "*fpsSolid: true    \n" \
+					"*ignoreRotation: True \n" \
 
 # define BRIGHT_COLORS
 # define thornbird_handle_event 0

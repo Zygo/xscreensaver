@@ -861,7 +861,9 @@ piecewise_init (Display *dd, Window ww)
       st->colors[0].pixel = get_pixel_resource(st->dpy, st->xgwa.colormap, "foreground", "Foreground");
     }
   else {
-    make_color_loop(st->dpy, st->xgwa.colormap, 0, 1, 1, 120, 1, 1, 240, 1, 1, st->colors, &st->ncolors, True, False);
+    make_color_loop(st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
+                    0, 1, 1, 120, 1, 1, 240, 1, 1,
+                    st->colors, &st->ncolors, True, False);
     if (st->ncolors < 2)
       goto MONO; 
     }
@@ -975,6 +977,9 @@ static const char *piecewise_defaults [] = {
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
   "*useDBE:             True",
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
   0
   };
 

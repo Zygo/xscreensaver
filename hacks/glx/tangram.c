@@ -899,6 +899,8 @@ ENTRYPOINT void init_tangram(ModeInfo * mi)
         gl_init(mi);
     }
 
+    reshape_tangram (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+
     wire = MI_IS_WIREFRAME(mi);
 
     tp->name_list = glGenLists(1);

@@ -38,6 +38,7 @@ static const char sccsid[] = "@(#)braid.c	5.00 2000/11/01 xlockmore";
 				   "*size: -7 \n" \
 				   "*ncolors: 64 \n" \
 				   "*fpsSolid: true \n" \
+				   "*ignoreRotation: True" \
 
 # define UNIFORM_COLORS
 # define braid_handle_event 0

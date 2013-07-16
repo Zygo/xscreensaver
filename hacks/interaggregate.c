@@ -85,6 +85,9 @@ static const char *interaggregate_defaults[] =
     "*baseOrbits: 75",
     "*baseOnCenter: False",
     "*drawCenters: False",
+#ifdef USE_IPHONE
+    "*ignoreRotation: True",
+#endif
     0
 };
 

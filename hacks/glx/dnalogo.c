@@ -2305,10 +2305,7 @@ draw_logo (ModeInfo *mi)
   {
     GLfloat scale = 0;
     glScalef(3, 3, 3);
-
-# ifdef USE_IPHONE
-    glScalef (0.7, 0.7, 0.7);  /* make room for the frame */
-# endif
+    glScalef (0.6, 0.6, 0.6);
 
     glColor3f(dc->color[0], dc->color[1], dc->color[2]);
 

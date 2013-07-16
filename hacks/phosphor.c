@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -236,7 +236,8 @@ phosphor_init (Display *dpy, Window window)
     /* Now allocate a ramp of colors from the main color to the background. */
     rgb_to_hsv (start.red, start.green, start.blue, &h1, &s1, &v1);
     rgb_to_hsv (end.red, end.green, end.blue, &h2, &s2, &v2);
-    make_color_ramp (state->dpy, state->xgwa.colormap,
+    make_color_ramp (state->xgwa.screen, state->xgwa.visual,
+                     state->xgwa.colormap,
                      h1, s1, v1,
                      h2, s2, v2,
                      colors, &ncolors,

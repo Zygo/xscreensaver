@@ -1,4 +1,4 @@
-/* texfonts, Copyright (c) 2005-2012 Jamie Zawinski <jwz@jwz.org>
+/* texfonts, Copyright (c) 2005-2013 Jamie Zawinski <jwz@jwz.org>
  * Loads X11 fonts into textures for use with OpenGL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -440,7 +440,8 @@ print_texture_string (texture_font_data *data, const char *string)
         }
       else if (c == '\t')
         {
-          x = ((x + tabs) / tabs) * tabs;  /* tab to tab stop */
+          if (tabs)
+            x = ((x + tabs) / tabs) * tabs;  /* tab to tab stop */
         }
 # ifdef DO_SUBSCRIPTS
       else if (c == '[' && (isdigit (string[i+1])))

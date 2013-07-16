@@ -47,6 +47,7 @@ static const char sccsid[] = "@(#)euler2d.c	5.00 2000/11/01 xlockmore";
 					"*cycles:  3000  \n" \
 					"*ncolors: 64    \n" \
 					"*fpsSolid: true    \n" \
+					"*ignoreRotation: True \n" \
 
 # define euler2d_handle_event 0
 # define SMOOTH_COLORS

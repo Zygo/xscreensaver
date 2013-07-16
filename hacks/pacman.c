@@ -1779,8 +1779,10 @@ ENTRYPOINT void
 reshape_pacman(ModeInfo * mi, int width, int height)
 {
     pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
-    pp->width = width;
+    pp->width  = width;
     pp->height = height;
+    pp->xb = (pp->width  - pp->ncols * pp->xs) >> 1;
+    pp->yb = (pp->height - pp->nrows * pp->ys) >> 1;
     MI_CLEARWINDOW (mi);
     /* repopulate (mi); */
     drawlevel (mi);

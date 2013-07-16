@@ -284,13 +284,13 @@ static void make_tables(Engine *e)
   float f;
 
   f = ONEREV / (M_PI * 2);
-  for (i = 0 ; i <= TWOREV ; i++) {
+  for (i = 0 ; i < TWOREV ; i++) {
     e->sin_table[i] = sin(i/f);
   }
-  for (i = 0 ; i <= TWOREV ; i++) {
+  for (i = 0 ; i < TWOREV ; i++) {
     e->cos_table[i] = cos(i/f);
   }
-  for (i = 0 ; i <= TWOREV ; i++) {
+  for (i = 0 ; i < TWOREV ; i++) {
     e->tan_table[i] = tan(i/f);
   }
 }

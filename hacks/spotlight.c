@@ -320,6 +320,9 @@ static const char *spotlight_defaults [] = {
   "*delay:			10000",
   "*duration:			120",
   "*radius:			125",
+#ifdef USE_IPHONE
+  "*ignoreRotation:             True",
+#endif
   0
 };
 

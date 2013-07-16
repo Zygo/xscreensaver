@@ -539,7 +539,7 @@ pacman_is_bonus_dot (pacmangamestruct *pp, int x, int y, int *idx)
 {
     int ret = False;
     int i;
-    for (i = 0; i <= NUM_BONUS_DOTS; i++) {
+    for (i = 0; i < NUM_BONUS_DOTS; i++) {
 /*     fprintf(stderr,"is bonus: passed x (%d, %d) bonus (%d, %d)\n",x,y,bonus_dots[i].x, bonus_dots[i].y); */
         if (x == pp->bonus_dots[i].x && y == pp->bonus_dots[i].y) {
             ret = True;
@@ -553,7 +553,7 @@ pacman_is_bonus_dot (pacmangamestruct *pp, int x, int y, int *idx)
 static void
 check_bonus_idx (int idx)
 {
-    assert (0 <= idx && idx <= NUM_BONUS_DOTS);
+    assert (0 <= idx && idx < NUM_BONUS_DOTS);
 }
 
 int

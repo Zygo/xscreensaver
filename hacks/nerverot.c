@@ -799,7 +799,8 @@ static void setupColormap (struct state *st, XWindowAttributes *xgwa)
     colors[0].pixel = get_pixel_resource (st->dpy, xgwa->colormap,
                                           "background", "Background");
     
-    make_color_ramp (st->dpy, xgwa->colormap, h1, s1, v1, h2, s2, v2,
+    make_color_ramp (xgwa->screen, xgwa->visual, xgwa->colormap,
+                     h1, s1, v1, h2, s2, v2,
 		     colors + 1, &st->colorCount, False, True, False);
 
     if (st->colorCount < 1)
@@ -1324,6 +1325,9 @@ static const char *nerverot_defaults [] = {
     "*maxRadius:        25",
     "*maxNerveRadius:	0.7",
     "*nervousness:	0.3",
+#ifdef USE_IPHONE
+    "*ignoreRotation:   True",
+#endif
     0
 };
 

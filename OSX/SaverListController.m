@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -36,6 +36,7 @@
 {
   // Extract the version number and release date from the version string.
   // Here's an area where I kind of wish I had "Two Problems".
+  // I guess I could add custom key to the Info.plist for this.
 
   NSArray *a = [[NSString stringWithCString: screensaver_id
                           encoding:NSASCIIStringEncoding]
@@ -315,6 +316,8 @@
  */
 - (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event
 {
+  if (motion != UIEventSubtypeMotionShake)
+    return;
   NSMutableArray *a = [NSMutableArray arrayWithCapacity: 200];
   for (NSArray *sec in letter_sections)
     for (NSString *s in sec)

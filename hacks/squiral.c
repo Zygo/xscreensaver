@@ -156,7 +156,7 @@ squiral_init (Display *dpy, Window window)
     st->erase_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
     cmap = xgwa.colormap;
     if( st->ncolors ) {
-        free_colors(st->dpy, cmap, st->colors, st->ncolors);
+        free_colors(xgwa.screen, cmap, st->colors, st->ncolors);
         st->ncolors = 0;
     }
     if( mono_p ) {
@@ -166,7 +166,8 @@ squiral_init (Display *dpy, Window window)
       st->ncolors = get_integer_resource(st->dpy, "ncolors", "Integer");
       if (st->ncolors < 0 || st->ncolors > NCOLORSMAX)
         st->ncolors = NCOLORSMAX;
-      make_uniform_colormap(st->dpy, xgwa.visual, cmap, st->colors, &st->ncolors, True,
+      make_uniform_colormap(xgwa.screen, xgwa.visual, cmap,
+                            st->colors, &st->ncolors, True,
 	  &writeable, False);
       if (st->ncolors <= 0) {
         st->ncolors = 1;
@@ -260,6 +261,9 @@ static const char *squiral_defaults[] = {
   "*disorder:   0.005",
   "*cycle:      False",
   "*handedness: 0.5",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

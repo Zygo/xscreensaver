@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2012 Jamie Zawinski <jwz@jwz.org>
+# Copyright Â© 2006-2013 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -18,9 +18,11 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.1 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 1;
+
+$ENV{PATH} = "/opt/local/bin:$ENV{PATH}";   # MacPorts, for ImageMagick
 
 
 sub safe_system(@) {

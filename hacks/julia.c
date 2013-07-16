@@ -38,11 +38,12 @@ static const char sccsid[] = "@(#)julia.c	4.03 97/04/10 xlockmore";
  */
 
 #ifdef STANDALONE
-# define DEFAULTS	"*count:		1000  \n"			\
-					"*cycles:		20    \n"			\
-					"*delay:		10000 \n"			\
-					"*ncolors:		200   \n" \
-					"*fpsSolid:		true   \n" \
+# define DEFAULTS	"*count:		  1000   \n" \
+					"*cycles:		  20     \n" \
+					"*delay:		  10000  \n" \
+					"*ncolors:		  200    \n" \
+					"*fpsSolid:		  true   \n" \
+					"*ignoreRotation: True   \n" \
 
 # define UNIFORM_COLORS
 # include "xlockmore.h"				/* in xscreensaver distribution */

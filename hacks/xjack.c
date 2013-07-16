@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -126,13 +126,13 @@ xjack_init (Display *dpy, Window window)
 
   xjack_reshape (dpy, window, st, st->xgwa.width, st->xgwa.height);
 
-  if (st->columns >= 21)
-    {
-      st->left = 0xFF & (random() % ((st->columns / 2)+1));
-      st->right = st->left + (0xFF & (random() % (st->columns - st->left - 10)
-                                      + 10));
-    }
-  st->x = 0;
+  st->left = 0xFF & (random() % ((st->columns / 2)+1));
+  st->right = st->left + (0xFF & (random() % (st->columns - st->left)
+                                  + 10));
+  if (st->right < st->left + 10) st->right = st->left + 10;
+  if (st->right > st->columns)   st->right = st->columns;
+
+  st->x = st->left;
   st->y = 0;
 
   if (st->xgwa.width > 200 && st->xgwa.height > 200)
@@ -250,6 +250,8 @@ xjack_draw (Display *dpy, Window window, void *closure)
       if (st->break_para)
         st->y++;
 
+      st->break_para = 0;
+
       if (st->mode == 1 || st->mode == 2)
         {
           /* 1 = left margin goes southwest; 2 = southeast */
@@ -282,14 +284,20 @@ xjack_draw (Display *dpy, Window window, void *closure)
 
       if (st->y >= st->rows-1)	/* bottom of page */
         {
+# if 0    /* Nah, this looks bad. */
+
           /* scroll by 1-5 lines */
           st->scrolling = (random() % 5 ? 0 : (0xFF & (random() % 5))) + 1;
+
           if (st->break_para)
             st->scrolling++;
 
           /* but sometimes scroll by a whole page */
           if (0 == (random() % 100))
             st->scrolling += st->rows;
+# else
+          st->scrolling = 1;
+# endif
 
           return xjack_scroll (st);
         }
@@ -349,7 +357,7 @@ xjack_draw (Display *dpy, Window window, void *closure)
         }
 
       if ((tolower(c) != tolower(*st->s))
-          ? (0 == (random() % 10))		/* backup to correct */
+          ? (0 == (random() % 10))	/* backup to correct */
           : (0 == (random() % 400)))	/* fail to advance */
         {
           st->x--;
@@ -420,6 +428,13 @@ xjack_draw (Display *dpy, Window window, void *closure)
               if (st->right > st->columns)
                 st->left -= (st->right - st->columns);
             }
+
+          if (st->right - st->left < 5)
+            st->left = st->right - 5;
+          if (st->left < 0)
+            st->left = 0;
+          if (st->right - st->left < 5)
+            st->right = st->left + 5;
         }
       st->s = source;
     }

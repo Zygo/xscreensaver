@@ -577,6 +577,9 @@ static const char *goop_defaults [] = {
   "*torque:		0.0075",
   "*elasticity:		0.9",
   "*maxVelocity:	0.5",
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
   0
 };
 

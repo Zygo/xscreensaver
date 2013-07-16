@@ -66,7 +66,7 @@ make_spline (unsigned int size)
 static void
 grow_spline_points (spline *s)
 {
-  s->allocated_points *= 2;
+  s->allocated_points = 10 + (s->allocated_points * 1.3);
   s->points =
     (XPoint*)realloc (s->points, s->allocated_points * sizeof (XPoint));
   if (!s->points) abort();

@@ -416,6 +416,9 @@ static const char *blitspin_defaults [] = {
   "*duration:	120",
   "*bitmap:	(default)",
   "*geometry:	512x512",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

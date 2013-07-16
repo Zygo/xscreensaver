@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -22,11 +22,6 @@
 #import "xlockmoreI.h"
 #import "jwxyz-timers.h"
 
-#ifdef USE_IPHONE
-# include "ios_function_tables.h"
-static NSDictionary *function_tables = 0;
-#endif
-
 
 /* Garbage collection only exists if we are being compiled against the 
    10.6 SDK or newer, not if we are building against the 10.4 SDK.
@@ -49,6 +44,8 @@ int mono_p = 0;
 
 
 # ifdef USE_IPHONE
+
+extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
 
 /* Stub definition of the superclass, for iPhone.
  */
@@ -98,7 +95,6 @@ int mono_p = 0;
 
 
 @interface XScreenSaverView (Private)
-- (void) stopAndClose;
 - (void) stopAndClose:(Bool)relaunch;
 @end
 
@@ -120,6 +116,7 @@ int mono_p = 0;
   CFBundleRef cfb = CFBundleCreate (kCFAllocatorDefault, url);
   CFRelease (url);
   NSAssert1 (cfb, @"no CFBundle for \"%@\"", path);
+  // #### Analyze says "Potential leak of an object stored into cfb"
   
   if (! name)
     name = [[path lastPathComponent] stringByDeletingPathExtension];
@@ -141,9 +138,9 @@ int mono_p = 0;
 
 # else  // USE_IPHONE
   // Remember: any time you add a new saver to the iOS app,
-  // manually run "make ios_function_tables.h"!
+  // manually run "make ios-function-table.m"!
   if (! function_tables)
-    function_tables = [make_function_tables_dict() retain];
+    function_tables = [make_function_table_dict() retain];
   NSValue *v = [function_tables objectForKey: name];
   void *addr = v ? [v pointerValue] : 0;
 # endif // USE_IPHONE
@@ -236,7 +233,7 @@ add_default_options (const XrmOptionDescRec *opts,
 # endif
  // ".textLiteral:        ",
  // ".textFile:           ",
-    ".textURL:            http://twitter.com/statuses/public_timeline.atom",
+    ".textURL:            http://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss",
  // ".textProgram:        ",
     ".grabDesktopImages:  yes",
 # ifndef USE_IPHONE
@@ -474,6 +471,7 @@ double_time (void)
                          selector:@selector(allSystemsGo:)
                          userInfo:nil
                          repeats:NO];
+
 # endif // USE_IPHONE
 
   // Never automatically turn the screen off if we are docked,
@@ -562,6 +560,10 @@ screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
    anyway, since that's a higher resolution than most desktop monitors
    have even today.  (This is only true for X11 programs, not GL 
    programs.  Those are fine at full rez.)
+
+   This method is overridden in XScreenSaverGLView, since this kludge
+   isn't necessary for GL programs, being resolution independent by
+   nature.
  */
 - (CGFloat) hackedContentScaleFactor
 {
@@ -629,9 +631,10 @@ double current_device_rotation (void)
 #   undef CLAMP180
 
   double s = [self hackedContentScaleFactor];
-  if (((int) backbuffer_size.width  != (int) (s * rot_current_size.width) ||
-       (int) backbuffer_size.height != (int) (s * rot_current_size.height))
-/*      && rotation_ratio == -1*/)
+  if (!ignore_rotation_p &&
+      /* rotation_ratio && */
+      ((int) backbuffer_size.width  != (int) (s * rot_current_size.width) ||
+       (int) backbuffer_size.height != (int) (s * rot_current_size.height)))
     [self resize_x11];
 }
 
@@ -639,7 +642,7 @@ double current_device_rotation (void)
 - (void)alertView:(UIAlertView *)av clickedButtonAtIndex:(NSInteger)i
 {
   if (i == 0) exit (-1);	// Cancel
-  [self stopAndClose];		// Keep going
+  [self stopAndClose:NO];	// Keep going
 }
 
 - (void) handleException: (NSException *)e
@@ -784,6 +787,13 @@ double current_device_rotation (void)
     resized_p = NO;
     NSAssert(!xdata, @"xdata already initialized");
     
+# ifdef USE_IPHONE
+  /* Some X11 hacks (fluidballs) want to ignore all rotation events. */
+  ignore_rotation_p =
+    get_boolean_resource (xdpy, "ignoreRotation", "IgnoreRotation");
+# endif // USE_IPHONE
+
+
 # undef ya_rand_init
     ya_rand_init (0);
     
@@ -995,18 +1005,19 @@ double current_device_rotation (void)
 # ifdef USE_IPHONE
   // Then compute the transformations for rotation.
 
-  // The rotation origin for layer.affineTransform is in the center already.
-  CGAffineTransform t =
-    CGAffineTransformMakeRotation (rot_current_angle / (180.0 / M_PI));
+  if (!ignore_rotation_p) {
+    // The rotation origin for layer.affineTransform is in the center already.
+    CGAffineTransform t =
+      CGAffineTransformMakeRotation (rot_current_angle / (180.0 / M_PI));
 
-  // Correct the aspect ratio.
-  CGRect frame = [self bounds];
-  double s = [self hackedContentScaleFactor];
-  t = CGAffineTransformScale(t,
-                             backbuffer_size.width  / (s * frame.size.width),
-                             backbuffer_size.height / (s * frame.size.height));
-
-  self.layer.affineTransform = t;
+    // Correct the aspect ratio.
+    CGRect frame = [self bounds];
+    double s = [self hackedContentScaleFactor];
+    t = CGAffineTransformScale(t,
+                            backbuffer_size.width  / (s * frame.size.width),
+                            backbuffer_size.height / (s * frame.size.height));
+    self.layer.affineTransform = t;
+  }
 # endif // USE_IPHONE
 
   // Then copy that bitmap to the screen, by just stuffing it into
@@ -1081,6 +1092,7 @@ double current_device_rotation (void)
 
   // #### am I expected to retain this, or not? wtf.
   //      I thought not, but if I don't do this, we (sometimes) crash.
+  // #### Analyze says "potential leak of an object stored into sheet"
   [sheet retain];
 
   return sheet;
@@ -1207,7 +1219,7 @@ double current_device_rotation (void)
         break;
       }
     default:
-      NSAssert (0, @"unknown X11 event type: %d", type);
+      NSAssert1 (0, @"unknown X11 event type: %d", type);
       break;
   }
 
@@ -1288,7 +1300,7 @@ double current_device_rotation (void)
 #else  // USE_IPHONE
 
 
-- (void) stopAndClose
+- (void) stopAndClose:(Bool)relaunch_p
 {
   if ([self isAnimating])
     [self stopAnimation];
@@ -1305,26 +1317,23 @@ double current_device_rotation (void)
   }
 
   UIView *fader = [self superview];  // the "backgroundView" view is our parent
-  [UIView animateWithDuration: 0.5
-          animations:^{ fader.alpha = 0.0; }
-          completion:^(BOOL finished) {
-	     [fader removeFromSuperview];
-             fader.alpha = 1.0;
-          }];
-}
-
-
-- (void) stopAndClose:(Bool)relaunch_p
-{
-  [self stopAndClose];
 
   if (relaunch_p) {   // Fake a shake on the SaverListController.
-    UIViewController *v = [[self window] rootViewController];
+    // Why is [self window] sometimes null here?
+    UIWindow *w = [[UIApplication sharedApplication] keyWindow];
+    UIViewController *v = [w rootViewController];
     if ([v isKindOfClass: [UINavigationController class]]) {
       UINavigationController *n = (UINavigationController *) v;
       [[n topViewController] motionEnded: UIEventSubtypeMotionShake
                                withEvent: nil];
     }
+  } else {	// Not launching another, animate our return to the list.
+    [UIView animateWithDuration: 0.5
+            animations:^{ fader.alpha = 0.0; }
+            completion:^(BOOL finished) {
+               [fader removeFromSuperview];
+               fader.alpha = 1.0;
+            }];
   }
 }
 
@@ -1505,6 +1514,10 @@ double current_device_rotation (void)
 
 - (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
 {
+  // If they are trying to pinch, just do nothing.
+  if ([[event allTouches] count] > 1)
+    return;
+
   tap_time = 0;
 
   if (xsft->event_cb && xwindow) {
@@ -1542,6 +1555,10 @@ double current_device_rotation (void)
 
 - (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
 {
+  // If they are trying to pinch, just do nothing.
+  if ([[event allTouches] count] > 1)
+    return;
+
   if (xsft->event_cb && xwindow) {
     double s = [self hackedContentScaleFactor];
     XEvent xe;
@@ -1560,7 +1577,7 @@ double current_device_rotation (void)
       double dist = sqrt (((p.x - tap_point.x) * (p.x - tap_point.x)) +
                           ((p.y - tap_point.y) * (p.y - tap_point.y)));
       if (tap_time + 0.5 >= double_time() && dist < 20) {
-        [self stopAndClose];
+        [self stopAndClose:NO];
         return;
       }
 
@@ -1581,6 +1598,10 @@ double current_device_rotation (void)
 
 - (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
 {
+  // If they are trying to pinch, just do nothing.
+  if ([[event allTouches] count] > 1)
+    return;
+
   if (xsft->event_cb && xwindow) {
     double s = [self hackedContentScaleFactor];
     XEvent xe;

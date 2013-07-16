@@ -211,7 +211,8 @@ anemone_init (Display *disp, Window window)
   st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");
   st->ncolors += 3;
   st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
-  make_smooth_colormap (st->dpy, wa.visual, st->cmap, st->colors, &st->ncolors,
+  make_smooth_colormap (wa.screen, wa.visual, st->cmap,
+                        st->colors, &st->ncolors,
                         True, 0, True);
 
   st->gcDraw = XCreateGC(st->dpy, window, 0, &st->gcv);

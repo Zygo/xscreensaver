@@ -249,6 +249,9 @@ static const char *zoom_defaults[] = {
   "*pixspacey:   2",
   "*lensoffsetx: 5",
   "*lensoffsety: 5",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

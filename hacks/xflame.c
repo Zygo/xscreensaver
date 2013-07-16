@@ -125,6 +125,10 @@ MakeImage(struct state *st)
 {
   XGCValues gcv;
 
+  /* #### This probably leaks SHM every time the window is resized. */
+  if (st->xim)
+    XDestroyImage (st->xim);
+
 #ifdef HAVE_XSHM_EXTENSION
   st->shared = True;
   st->xim = create_xshm_image (st->dpy, st->visual, st->depth, ZPixmap, NULL,
@@ -147,8 +151,8 @@ MakeImage(struct state *st)
         }
     }
 
-  st->gc = XCreateGC(st->dpy,st->window,0,&gcv);
-  if (!st->gc) exit (1);
+  if (! st->gc)
+    st->gc = XCreateGC(st->dpy,st->window,0,&gcv);
 }
 
 
@@ -215,6 +219,8 @@ InitFlame(struct state *st)
 {
   st->fwidth  = st->width / 2;
   st->fheight = st->height / 2;
+
+  if (st->flame) free (st->flame);
   st->flame   = (unsigned char *) malloc((st->fwidth + 2) * (st->fheight + 2)
                                      * sizeof(unsigned char));
 
@@ -621,7 +627,7 @@ loadBitmap(struct state *st, int *w, int *h)
       unsigned char *result, *o;
       char *bits = (char *) malloc (sizeof(bob_bits));
       int x, y;
-      int scale = ((st->width > bob_width * 11) ? 2 : 1);
+      int scale = ((st->width > bob_width * 10) ? 2 : 1);
  
       memcpy (bits, bob_bits, sizeof(bob_bits));
       ximage = XCreateImage (st->dpy, st->visual, 1, XYBitmap, 0, bits,
@@ -721,12 +727,6 @@ xflame_init (Display *dpy, Window win)
   InitColors(st);
   st->theim = loadBitmap(st, &st->theimx, &st->theimy);
 
-  /* utils/xshm.c doesn't provide a way to free the shared-memory image, which
-     makes it hard for us to react to window resizing.  So, punt for now.  The
-     size of the window at startup is the size it will stay.
-  */
-  GetXInfo(st);
-
   MakeImage(st);
   InitFlame(st);
   FlameFill(st,0);
@@ -755,6 +755,12 @@ static void
 xflame_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
+  struct state *st = (struct state *) closure;
+  GetXInfo(st);
+  MakeImage(st);
+  InitFlame(st);
+  FlameFill(st,0);
+  XClearWindow (dpy, window);
 }
 
 static Bool

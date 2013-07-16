@@ -16,6 +16,10 @@
    <xscreensaver-text />
   </vgroup>
   <vgroup>
+   <number id="duration" type="slider" arg="-duration %"
+           _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+           low="10" high="600" default="60"/>
+
    <xscreensaver-image />
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </vgroup>

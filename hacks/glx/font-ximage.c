@@ -1,5 +1,5 @@
 /* font-ximage.c --- renders text to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 2001, 2003 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -134,6 +134,8 @@ text_to_ximage (Screen *screen, Visual *visual,
         overall.rbearing = MAX(overall.rbearing, o2.rbearing);
         lines++;
       }
+    free (text);
+    text = 0;
 
     width = overall.lbearing + overall.rbearing + margin + margin + 1;
     height = ((f->ascent + f->descent) * lines) + margin + margin;

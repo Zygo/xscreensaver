@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -197,12 +197,34 @@ extern void jwzgles_glColor3f (GLfloat, GLfloat, GLfloat);
 extern void jwzgles_glColor4f (GLfloat, GLfloat, GLfloat, GLfloat);
 extern void jwzgles_glColor3fv (const GLfloat *);
 extern void jwzgles_glColor4fv (const GLfloat *);
-extern void jwzgles_glColor4i (GLuint, GLuint, GLuint, GLuint);
-extern void jwzgles_glColor3i (GLuint, GLuint, GLuint);
+extern void jwzgles_glColor3s (GLshort, GLshort, GLshort);
+extern void jwzgles_glColor4s (GLshort, GLshort, GLshort, GLshort);
+extern void jwzgles_glColor3sv (const GLshort *);
+extern void jwzgles_glColor4sv (const GLshort *);
+extern void jwzgles_glColor3us (GLushort, GLushort, GLushort);
+extern void jwzgles_glColor4us (GLushort, GLushort, GLushort, GLushort);
+extern void jwzgles_glColor3usv (const GLushort *);
+extern void jwzgles_glColor4usv (const GLushort *);
+extern void jwzgles_glColor3d (GLdouble, GLdouble, GLdouble);
+extern void jwzgles_glColor4d (GLdouble, GLdouble, GLdouble, GLdouble);
+extern void jwzgles_glColor3dv (const GLdouble *);
+extern void jwzgles_glColor4dv (const GLdouble *);
+extern void jwzgles_glColor4i (GLint, GLint, GLint, GLint);
+extern void jwzgles_glColor3i (GLint, GLint, GLint);
 extern void jwzgles_glColor3iv (const GLint *);
 extern void jwzgles_glColor4iv (const GLint *);
+extern void jwzgles_glColor4ui (GLuint, GLuint, GLuint, GLuint);
+extern void jwzgles_glColor3ui (GLuint, GLuint, GLuint);
+extern void jwzgles_glColor3uiv (const GLuint *);
+extern void jwzgles_glColor4uiv (const GLuint *);
+extern void jwzgles_glColor4b (GLbyte, GLbyte, GLbyte, GLbyte);
+extern void jwzgles_glColor3b (GLbyte, GLbyte, GLbyte);
+extern void jwzgles_glColor4bv (const GLbyte *);
+extern void jwzgles_glColor3bv (const GLbyte *);
 extern void jwzgles_glColor4ub (GLubyte, GLubyte, GLubyte, GLubyte);
 extern void jwzgles_glColor3ub (GLubyte, GLubyte, GLubyte);
+extern void jwzgles_glColor4ubv (const GLubyte *);
+extern void jwzgles_glColor3ubv (const GLubyte *);
 extern void jwzgles_glMaterialf (GLuint, GLuint, GLfloat);
 extern void jwzgles_glMateriali (GLuint, GLuint, GLuint);
 extern void jwzgles_glMaterialfv (GLuint, GLuint, const GLfloat *);

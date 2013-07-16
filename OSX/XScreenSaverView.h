@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -86,11 +86,14 @@
   NSSize rot_from, rot_to;	// start size rect, end size rect
   GLfloat angle_from, angle_to;	// start angle, end angle
   double rot_start_time;
+  BOOL ignore_rotation_p;
 
   NSSize rot_current_size;
   GLfloat rot_current_angle;
 
   NSTimer *crash_timer;
+
+  NSDictionary *function_tables;
 
 # endif // USE_IPHONE
 

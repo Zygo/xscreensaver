@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -19,7 +19,7 @@
 
    Second, it can be used to transform any screen saver into a standalone
    program.  Just put one (and only one) .saver bundle into the app
-   bundle's Contents/PlugIns/ directory, and it will load and run that
+   bundle's Contents/Resources/ directory, and it will load and run that
    saver at start-up (without the saver-selection menu or other chrome).
    This is how the "Phosphor.app" and "Apple2.app" programs work.
 
@@ -118,7 +118,10 @@
                           initWithFrame:rect
                           saverName:module
                           isPreview:YES];
-  if (! instance) return 0;
+  if (! instance) {
+    NSLog(@"Failed to instantiate %@ for \"%@\"", new_class, module);
+    return 0;
+  }
 
 
   /* KLUGE: Inform the underlying program that we're in "standalone"
@@ -211,6 +214,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   }
 
   NSAssert (sv, @"no saver view");
+  if (!sv) return;
   NSWindow *prefs = [sv configureSheet];
 
   [NSApp beginSheet:prefs
@@ -362,8 +366,6 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
 - (void)loadSaver:(NSString *)name launch:(BOOL)launch
 {
-  // NSLog (@"selecting saver \"%@\"", name);
-
 # ifndef USE_IPHONE
 
   if (saverName && [saverName isEqualToString: name]) {
@@ -413,6 +415,10 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
 # else  // USE_IPHONE
 
+#  if TARGET_IPHONE_SIMULATOR
+  NSLog (@"selecting saver \"%@\"", name);
+#  endif
+
   NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
   [prefs setObject:name forKey:@"selectedSaverName"];
   [prefs synchronize];
@@ -429,7 +435,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   if (! backgroundView) {
     // This view is the parent of the XScreenSaverView, and exists only
     // so that there is a black background behind it.  Without this, when
-    // rotation is in progresss, the scrolling-list window's corners show
+    // rotation is in progress, the scrolling-list window's corners show
     // through in the corners.
     backgroundView = [[[NSView class] alloc] initWithFrame:[window frame]];
     [backgroundView setBackgroundColor:[NSColor blackColor]];
@@ -469,6 +475,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     [backgroundView addSubview: saverView];
     [saverView becomeFirstResponder];
     [saverView startAnimation];
+    [self aboutPanel:nil];
   }
 # endif // USE_IPHONE
 }
@@ -480,10 +487,10 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 }
 
 
-# ifndef USE_IPHONE
-
 - (void)aboutPanel:(id)sender
 {
+# ifndef USE_IPHONE
+
   NSDictionary *bd = [saverBundle infoDictionary];
   NSMutableDictionary *d = [NSMutableDictionary dictionaryWithCapacity:20];
 
@@ -499,9 +506,168 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
   [[NSApplication sharedApplication]
     orderFrontStandardAboutPanelWithOptions:d];
+# else  // USE_IPHONE
+
+  NSString *name = saverName;
+  NSString *year = [self makeDesc:saverName yearOnly:YES];
+
+
+  CGRect frame = [saverView frame];
+  CGFloat rot;
+  CGFloat pt1 = 24;
+  CGFloat pt2 = 14;
+  UIFont *font1 = [UIFont boldSystemFontOfSize:  pt1];
+  UIFont *font2 = [UIFont italicSystemFontOfSize:pt2];
+  CGSize tsize1 = [name sizeWithFont:font1
+                   constrainedToSize:CGSizeMake(frame.size.width,
+                                                frame.size.height)];
+  CGSize tsize2 = [year sizeWithFont:font2
+                   constrainedToSize:CGSizeMake(frame.size.width,
+                                                frame.size.height)];
+  CGSize tsize = CGSizeMake (tsize1.width > tsize2.width ?
+                             tsize1.width : tsize2.width,
+                             tsize1.height + tsize2.height);
+
+  // Don't know how to find inner margin of UITextView.
+  CGFloat margin = 10;
+  tsize.width  += margin * 4;
+  tsize.height += margin * 2;
+
+  if ([saverView frame].size.width >= 768)
+    tsize.height += pt1 * 3;  // extra bottom margin on iPad
+
+  frame = CGRectMake (0, 0, tsize.width, tsize.height);
+
+  UIInterfaceOrientation orient =
+    // Why are both of these wrong when starting up rotated??
+    [[UIDevice currentDevice] orientation];
+    // [rootViewController interfaceOrientation];
+
+  /* Get the text oriented properly, and move it to the bottom of the
+     screen, since many savers have action in the middle.
+   */
+  switch (orient) {
+  case UIDeviceOrientationLandscapeRight:     
+    rot = -M_PI/2;
+    frame.origin.x = ([saverView frame].size.width
+                      - (tsize.width - tsize.height) / 2
+                      - tsize.height);
+    frame.origin.y = ([saverView frame].size.height - tsize.height) / 2;
+    break;
+  case UIDeviceOrientationLandscapeLeft:
+    rot = M_PI/2;
+    frame.origin.x = -(tsize.width - tsize.height) / 2;
+    frame.origin.y = ([saverView frame].size.height - tsize.height) / 2;
+    break;
+  case UIDeviceOrientationPortraitUpsideDown: 
+    rot = M_PI;
+    frame.origin.x = ([saverView frame].size.width  - tsize.width) / 2;
+    frame.origin.y = 0;
+    break;
+  default:
+    rot = 0;
+    frame.origin.x = ([saverView frame].size.width  - tsize.width) / 2;
+    frame.origin.y =  [saverView frame].size.height - tsize.height;
+    break;
+  }
+
+  if (aboutBox)
+    [aboutBox removeFromSuperview];
+
+  aboutBox = [[UIView alloc] initWithFrame:frame];
+
+  aboutBox.transform = CGAffineTransformMakeRotation (rot);
+  aboutBox.backgroundColor = [UIColor clearColor];
+
+  /* There seems to be no easy way to stroke the font, so instead draw
+     it 5 times, 4 in black and 1 in yellow, offset by 1 pixel, and add
+     a black shadow to each.  (You'd think the shadow alone would be
+     enough, but there's no way to make it dark enough to be legible.)
+   */
+  for (int i = 0; i < 5; i++) {
+    UITextView *textview;
+    int off = 1;
+    frame.origin.x = frame.origin.y = 0;
+    switch (i) {
+      case 0: frame.origin.x = -off; break;
+      case 1: frame.origin.x =  off; break;
+      case 2: frame.origin.y = -off; break;
+      case 3: frame.origin.y =  off; break;
+    }
+
+    for (int j = 0; j < 2; j++) {
+
+      frame.origin.y = (j == 0 ? 0 : pt1);
+      textview = [[UITextView alloc] initWithFrame:frame];
+      textview.font = (j == 0 ? font1 : font2);
+      textview.text = (j == 0 ? name  : year);
+      textview.textAlignment = UITextAlignmentCenter;
+      textview.showsHorizontalScrollIndicator = NO;
+      textview.showsVerticalScrollIndicator   = NO;
+      textview.scrollEnabled = NO;
+      textview.editable = NO;
+      textview.userInteractionEnabled = NO;
+      textview.backgroundColor = [UIColor clearColor];
+      textview.textColor = (i == 4 
+                            ? [UIColor yellowColor]
+                            : [UIColor blackColor]);
+
+      CALayer *textLayer = (CALayer *)
+        [textview.layer.sublayers objectAtIndex:0];
+      textLayer.shadowColor   = [UIColor blackColor].CGColor;
+      textLayer.shadowOffset  = CGSizeMake(0, 0);
+      textLayer.shadowOpacity = 1;
+      textLayer.shadowRadius  = 2;
+
+      [aboutBox addSubview:textview];
+    }
+  }
+
+  CABasicAnimation *anim = 
+    [CABasicAnimation animationWithKeyPath:@"opacity"];
+  anim.duration     = 0.3;
+  anim.repeatCount  = 1;
+  anim.autoreverses = NO;
+  anim.fromValue    = [NSNumber numberWithFloat:0.0];
+  anim.toValue      = [NSNumber numberWithFloat:1.0];
+  [aboutBox.layer addAnimation:anim forKey:@"animateOpacity"];
+
+  [backgroundView addSubview:aboutBox];
+
+  if (splashTimer)
+    [splashTimer invalidate];
+
+  splashTimer =
+    [NSTimer scheduledTimerWithTimeInterval: anim.duration + 2
+             target:self
+             selector:@selector(aboutOff)
+             userInfo:nil
+             repeats:NO];
+# endif // USE_IPHONE
 }
 
-# endif // USE_IPHONE
+
+# ifdef USE_IPHONE
+- (void)aboutOff
+{
+  if (aboutBox) {
+    if (splashTimer) {
+      [splashTimer invalidate];
+      splashTimer = 0;
+    }
+    CABasicAnimation *anim = 
+      [CABasicAnimation animationWithKeyPath:@"opacity"];
+    anim.duration     = 0.3;
+    anim.repeatCount  = 1;
+    anim.autoreverses = NO;
+    anim.fromValue    = [NSNumber numberWithFloat: 1];
+    anim.toValue      = [NSNumber numberWithFloat: 0];
+    anim.delegate     = self;
+    aboutBox.layer.opacity = 0;
+    [aboutBox.layer addAnimation:anim forKey:@"animateOpacity"];
+  }
+}
+#endif // USE_IPHONE
 
 
 
@@ -560,6 +726,9 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     [result addObject: name];
   }
 
+  if (! [result count])
+    result = 0;
+
   return result;
 }
 
@@ -570,7 +739,11 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   NSMutableArray *dirs = [NSMutableArray arrayWithCapacity: 10];
 
 # ifndef USE_IPHONE
-  // On MacOS, look in the "Contents/PlugIns/" directory in the bundle.
+  // On MacOS, look in the "Contents/Resources/" and "Contents/PlugIns/"
+  // directories in the bundle.
+  [dirs addObject: [[[[NSBundle mainBundle] bundlePath]
+                      stringByAppendingPathComponent:@"Contents"]
+                     stringByAppendingPathComponent:@"Resources"]];
   [dirs addObject: [[NSBundle mainBundle] builtInPlugInsPath]];
 
   // Also look in the same directory as the executable.
@@ -578,14 +751,16 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
                      stringByDeletingLastPathComponent]];
 
   // Finally, look in standard MacOS screensaver directories.
-  [dirs addObject: @"~/Library/Screen Savers"];
-  [dirs addObject: @"/Library/Screen Savers"];
-  [dirs addObject: @"/System/Library/Screen Savers"];
+//  [dirs addObject: @"~/Library/Screen Savers"];
+//  [dirs addObject: @"/Library/Screen Savers"];
+//  [dirs addObject: @"/System/Library/Screen Savers"];
 
-# else
-  // On iOS, just look in the bundle's root directory.
+# else  // USE_IPHONE
+
+  // On iOS, only look in the bundle's root directory.
   [dirs addObject: [[NSBundle mainBundle] bundlePath]];
-# endif
+
+# endif // USE_IPHONE
 
   int i;
   for (i = 0; i < [dirs count]; i++) {
@@ -656,6 +831,84 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
 #else  // USE_IPHONE
 
+- (NSString *) makeDesc:(NSString *)saver
+                  yearOnly:(BOOL) yearp
+{
+  NSString *desc = 0;
+  NSString *path = [saverDir stringByAppendingPathComponent:
+                               [[saver lowercaseString]
+                                 stringByReplacingOccurrencesOfString:@" "
+                                 withString:@""]];
+  NSRange r;
+
+  path = [path stringByAppendingPathExtension:@"xml"];
+  desc = [NSString stringWithContentsOfFile:path
+                   encoding:NSISOLatin1StringEncoding
+                   error:nil];
+  if (! desc) goto FAIL;
+
+  r = [desc rangeOfString:@"<_description>"
+            options:NSCaseInsensitiveSearch];
+  if (r.length == 0) {
+    desc = 0;
+    goto FAIL;
+  }
+  desc = [desc substringFromIndex: r.location + r.length];
+  r = [desc rangeOfString:@"</_description>"
+            options:NSCaseInsensitiveSearch];
+  if (r.length > 0)
+    desc = [desc substringToIndex: r.location];
+
+  // Leading and trailing whitespace.
+  desc = [desc stringByTrimmingCharactersInSet:
+                 [NSCharacterSet whitespaceAndNewlineCharacterSet]];
+
+  // Let's see if we can find a year on the last line.
+  r = [desc rangeOfString:@"\n" options:NSBackwardsSearch];
+  NSString *year = 0;
+  for (NSString *word in
+         [[desc substringFromIndex:r.location + r.length]
+           componentsSeparatedByCharactersInSet:
+             [NSCharacterSet characterSetWithCharactersInString:
+                               @" \t\n-."]]) {
+    int n = [word doubleValue];
+    if (n > 1970 && n < 2100)
+      year = word;
+  }
+
+  // Delete everything after the first blank line.
+  r = [desc rangeOfString:@"\n\n" options:0];
+  if (r.length > 0)
+    desc = [desc substringToIndex: r.location];
+
+  // Truncate really long ones.
+  int max = 140;
+  if ([desc length] > max)
+    desc = [desc substringToIndex: max];
+
+  if (year)
+    desc = [year stringByAppendingString:
+                   [@": " stringByAppendingString: desc]];
+
+  if (yearp)
+    desc = year ? year : @"";
+
+FAIL:
+  if (! desc) {
+    desc = @"Oops, this module appears to be incomplete.";
+    // NSLog(@"broken saver: %@", path);
+  }
+
+  return desc;
+}
+
+- (NSString *) makeDesc:(NSString *)saver
+{
+  return [self makeDesc:saver yearOnly:NO];
+}
+
+
+
 /* Create a dictionary of one-line descriptions of every saver,
    for display on the UITableView.
  */
@@ -663,73 +916,9 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 {
   NSMutableDictionary *dict = 
     [NSMutableDictionary dictionaryWithCapacity:[saverNames count]];
-
   for (NSString *saver in saverNames) {
-    NSString *desc = 0;
-    NSString *path = [saverDir stringByAppendingPathComponent:
-                                 [[saver lowercaseString]
-                                   stringByReplacingOccurrencesOfString:@" "
-                                   withString:@""]];
-    NSRange r;
-
-    path = [path stringByAppendingPathExtension:@"xml"];
-    desc = [NSString stringWithContentsOfFile:path
-                     encoding:NSISOLatin1StringEncoding
-                     error:nil];
-    if (! desc) goto FAIL;
-
-    r = [desc rangeOfString:@"<_description>"
-              options:NSCaseInsensitiveSearch];
-    if (r.length == 0) {
-      desc = 0;
-      goto FAIL;
-    }
-    desc = [desc substringFromIndex: r.location + r.length];
-    r = [desc rangeOfString:@"</_description>"
-              options:NSCaseInsensitiveSearch];
-    if (r.length > 0)
-      desc = [desc substringToIndex: r.location];
-
-    // Leading and trailing whitespace.
-    desc = [desc stringByTrimmingCharactersInSet:
-                   [NSCharacterSet whitespaceAndNewlineCharacterSet]];
-
-    // Let's see if we can find a year on the last line.
-    r = [desc rangeOfString:@"\n" options:NSBackwardsSearch];
-    NSString *year = 0;
-    for (NSString *word in
-           [[desc substringFromIndex:r.location + r.length]
-             componentsSeparatedByCharactersInSet:
-               [NSCharacterSet characterSetWithCharactersInString:
-                                 @" \t\n-."]]) {
-      int n = [word doubleValue];
-      if (n > 1970 && n < 2100)
-        year = word;
-    }
-
-    // Delete everything after the first blank line.
-    r = [desc rangeOfString:@"\n\n" options:0];
-    if (r.length > 0)
-      desc = [desc substringToIndex: r.location];
-
-    // Truncate really long ones.
-    int max = 140;
-    if ([desc length] > max)
-      desc = [desc substringToIndex: max];
-
-    if (year)
-      desc = [year stringByAppendingString:
-                     [@": " stringByAppendingString: desc]];
-
-  FAIL:
-    if (! desc) {
-      desc = @"Oops, this module appears to be incomplete.";
-      // NSLog(@"broken saver: %@", path);
-    }
-
-    [dict setObject:desc forKey:saver];
+    [dict setObject:[self makeDesc:saver] forKey:saver];
   }
-
   return dict;
 }
 
@@ -969,8 +1158,9 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 # ifdef USE_IPHONE
   /* Don't auto-launch the saver unless it was running last time.
      XScreenSaverView manages this, on crash_timer.
+     Unless forced.
    */
-  if (! [prefs boolForKey:@"wasRunning"])
+  if (!forced && ![prefs boolForKey:@"wasRunning"])
     return;
 # endif
 

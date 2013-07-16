@@ -708,6 +708,9 @@ static const char *wormhole_defaults [] = {
   "*delay:	10000",
   "*zspeed:	10",
   "*stars:	20",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 
