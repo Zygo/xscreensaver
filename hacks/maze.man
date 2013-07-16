@@ -1,0 +1,148 @@
+.TH XScreenSaver 1 "7-mar-93" "X Version 11"
+.SH NAME
+maze \- an automated X11 demo repeatedly creating and solving a random maze
+.SH SYNOPSIS
+.B maze 
+[\-display \fIhost:display.screen\fP] [\-foreground \fIcolor\fP] [\-background \fIcolor\fP] [\-window] [\-root] [\-install] [\-visual \fIvisual\fP] [\-grid\-size \fIpixels\fP] [\-live\-color \fIcolor\fP] [\-dead\-color \fIcolor\fP] [\-solve\-delay \fIusecs\fP] [\-pre\-delay \fIusecs\fP] [\-post\-delay \fIusecs\fP] [\-generator \fIinteger\fP] [\-max\-length \fIinteger\fP]
+[\-fps]
+.SH DESCRIPTION
+The \fImaze\fP program creates a "random" maze and then solves it with 
+graphical feedback. 
+.SH OPTIONS
+.I maze
+accepts the following options:
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-install
+Install a private colormap for the window.
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-grid\-size \fIpixels\fP
+The size of each block of the maze, in pixels; default is 0, meaning
+pick a random grid size.  Minimum meaningful value is 2.
+.TP 8
+.B \-live\-color \fIcolor\fP
+The color of the path.
+.TP 8
+.B \-dead\-color \fIcolor\fP
+The color of the failed path (it is also stippled with a 50% pattern.)
+.TP 8
+.B \-skip\-color \fIcolor\fP
+The maze solver will choose to not go down a path if it can "see" (in a
+straight line) that it is a dead end.  This is the color to use for paths
+that are skipped for this reason.
+.TP 8
+.B \-surround\-color \fIcolor\fP
+If the maze solver ever completely encloses an area within the maze, then
+it knows that the exit is not in there (and in fact the interior of that
+area might not even be reachable.)  It will mark out those cells using this
+color.
+.TP 8
+.B \-solve\-delay \fIinteger\fP
+Delay (in microseconds) between each step of the solution path.
+Default 5000, or about 1/200th second.
+.TP 8
+.B \-pre\-delay \fIinteger\fP
+Delay (in microseconds) between generating a maze and starting to solve it.
+Default 2000000 (2 seconds.)
+.TP 8
+.B \-post\-delay \fIinteger\fP
+Delay (in microseconds) after solving a maze and before generating a new one.
+Default 4000000 (4 seconds.)
+.TP 8
+.B \-generator \fInum\fP
+Sets the algorithm that will be used to generate the mazes. The
+default is \-1, which randomly selects an algorithm for each maze that
+is generated. Generator 0 is the original one, and works by walking
+around randomly until we hit a place we've been before, then
+backtracking and trying a new direction somewhere. Generator 1 picks a
+random spot in the maze, then draws a straight wall from that spot in
+a random direction until it hits another wall (and continues until the
+maze is complete). Generator 2 is based on sets. Initially all cells
+are in different sets. Then two neighboring cells are chosen and if
+they are in different sets, their sets are joined. If they were in the
+same set, a wall is built between them. This continues until the maze is
+complete. 
+
+All generators generate mazes with a certain 'characteristic'. See if you
+can spot them!
+
+The three algorithms are essentially Kruskal, Prim, and a depth-first
+recursive backtracker.
+.TP 8
+.B \-max\-length \fInum\fP
+Controls the maximum length of walls drawn in one go by generator 1.
+.PP
+Clicking the mouse in the maze window controls it.
+.TP 16
+.B "LeftButton
+Clears the window and restarts maze.
+.TP 16
+.B MiddleButton
+Pause or unpause the program.
+.TP 16
+.B RightButton
+Exit.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH BUGS
+Expose events force a restart of maze.
+
+Mouse actions are based on "raw" values (Button1, Button2 and Button3)
+instead of using the pointer map.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+.PP
+Copyright \(co 1988 by Sun Microsystems, Inc. Mountain View, CA.
+.PP  
+All Rights Reserved
+.PP
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted, provided that
+the above copyright notice appear in all copies and that both that copyright
+notice and this permission notice appear in supporting documentation, and that
+the names of Sun or MIT not be used in advertising or publicity pertaining to
+distribution of the software without specific prior written permission. Sun
+and M.I.T.  make no representations about the suitability of this software for
+any purpose. It is provided "as is" without any express or implied warranty.
+.PP
+SUN DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE, INCLUDING ALL
+IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE. IN
+NO EVENT SHALL SUN BE LIABLE FOR ANY SPECIAL, INDIRECT OR CONSEQUENTIAL
+DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS,
+WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING
+OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.SH AUTHOR(s)
+.nf
+Zack Weinberg [ Smarter maze-solver ] zack@rabi.phys.columbia.edu
+Johannes Keukelaar [ Generators 1 and 2 ] johannes@nada.kth.se 
+  Royal Institute of Technology, Stockholm, Sweden
+Jim Randell	[ XScreenSaver version ] jmr@mddjmr.fc.hp.com
+  HPLabs, Bristol
+Richard Hess	[ X11 extensions ]  	{...}!uunet!cimshop!rhess
+  Consilium, Mountain View, CA
+Dave Lemke	[ X11 version ]		lemke@sun.COM
+  Sun MicroSystems, Mountain View, CA
+Martin Weiss	[ SunView version ]
+  Sun MicroSystems, Mountain View, CA
+.fi
