@@ -12,7 +12,7 @@ http://www.jwz.org/xscreensaver/</string>
 	<key>CFBundleIconFile</key>
 	<string>SaverRunner</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.jwz.xscreensaver.${EXECUTABLE_NAME}</string>
+	<string>${BUNDLE_IDENTIFIER}</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleLongVersionString</key>
@@ -22,11 +22,11 @@ http://www.jwz.org/xscreensaver/</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>5.21</string>
+	<string>5.22</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>5.21</string>
+	<string>5.22</string>
 	<key>LSMinimumSystemVersion</key>
 	<string>10.4</string>
 	<key>NSHumanReadableCopyright</key>

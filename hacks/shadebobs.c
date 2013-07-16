@@ -52,6 +52,9 @@ static const char *shadebobs_defaults [] = {
   "*cycles:   10",
   "*ncolors:  64",    /* changing this doesn't work particularly well */
   "*delay:    10000",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

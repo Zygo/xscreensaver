@@ -110,6 +110,8 @@ struct state {
 
     Pixmap dbuf, stars_mask;
     Colormap cmap;
+    Visual *visual;
+    Screen *screen;
     unsigned int default_fg_pixel;
     GC draw_gc, erase_gc, tunnelend_gc, stars_gc, stars_erase_gc;
 
@@ -1260,7 +1262,7 @@ speedmine_color_ramp (struct state *st, GC *gcs, XColor * colors,
 		h1 = h2 = RAND(360);
 	}
 
-	make_color_ramp (st->dpy, st->cmap, 
+	make_color_ramp (st->screen, st->visual, st->cmap, 
                      h1, s1, v1, h2, s2, v2,
 				     colors, ncolors, False, True, False);
 
@@ -1286,9 +1288,9 @@ change_colors (struct state *st)
 	double s1, s2;
 
 	if (st->psychedelic_flag) {
-		free_colors (st->dpy, st->cmap, st->bonus_colors, st->nr_bonus_colors);
-		free_colors (st->dpy, st->cmap, st->wall_colors, st->nr_wall_colors);
-		free_colors (st->dpy, st->cmap, st->ground_colors, st->nr_ground_colors);
+		free_colors (st->screen, st->cmap, st->bonus_colors, st->nr_bonus_colors);
+		free_colors (st->screen, st->cmap, st->wall_colors, st->nr_wall_colors);
+		free_colors (st->screen, st->cmap, st->ground_colors, st->nr_ground_colors);
 		s1 = 0.4; s2 = 0.9;
 
 		st->ncolors = MAX_COLORS;
@@ -1296,8 +1298,8 @@ change_colors (struct state *st)
 							  &st->ncolors, 0.0, 0.8, 0.0, 0.9);
   		st->nr_ground_colors = st->ncolors;
 	} else {
-		free_colors (st->dpy, st->cmap, st->bonus_colors, st->nr_bonus_colors);
-		free_colors (st->dpy, st->cmap, st->wall_colors, st->nr_wall_colors);
+		free_colors (st->screen, st->cmap, st->bonus_colors, st->nr_bonus_colors);
+		free_colors (st->screen, st->cmap, st->wall_colors, st->nr_wall_colors);
 		st->ncolors = st->nr_ground_colors;
 
 		s1 = 0.0; s2 = 0.6;
@@ -1371,7 +1373,8 @@ init_colors (struct state *st)
 
   rgb_to_hsv (dark.red, dark.green, dark.blue, &h1, &s1, &v1);
   rgb_to_hsv (light.red, light.green, light.blue, &h2, &s2, &v2);
-  make_color_ramp (st->dpy, st->cmap, h1, s1, v1, h2, s2, v2,
+  make_color_ramp (st->screen, st->visual, st->cmap,
+                   h1, s1, v1, h2, s2, v2,
 				  st->ground_colors, &st->ncolors, False, True, False);
   st->nr_ground_colors = st->ncolors;
 
@@ -1432,6 +1435,8 @@ speedmine_init (Display *dpy, Window window)
 
   XGetWindowAttributes (st->dpy, st->window, &xgwa);
   st->cmap = xgwa.colormap;
+  st->visual = xgwa.visual;
+  st->screen = xgwa.screen;
   st->width = xgwa.width;
   st->height = xgwa.height;
 

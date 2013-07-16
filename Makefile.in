@@ -334,7 +334,9 @@ www::
   echo '' ;								    \
 									    \
   for EXT in tar.gz dmg ; do						    \
-    OLDEST=`ls xscreensaver*.$$EXT | head -n 1` ;			    \
+    OLDEST=`ls xscreensaver*.$$EXT | 					    \
+      fgrep -v 5.14 |							    \
+      head -n 1` ;							    \
     /bin/echo -n "Delete $$DEST/$$OLDEST? ";				    \
     read line;								    \
     if [ "x$$line" = "xyes" -o "x$$line" = "xy" ]; then			    \

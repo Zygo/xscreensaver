@@ -125,7 +125,8 @@ cynosure_init (Display *d, Window w)
   if (mono_p)
     ;
   else {
-    make_smooth_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap, st->colors, &st->ncolors,
+    make_smooth_colormap (st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
+                          st->colors, &st->ncolors,
 			  True, 0, True);
     if (st->ncolors <= 2) {
       mono_p = True;
@@ -418,6 +419,9 @@ static const char *cynosure_defaults [] = {
   "*sway:		30",
   "*tweak:		20",
   "*gridSize:		12",
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
   0
 };
 

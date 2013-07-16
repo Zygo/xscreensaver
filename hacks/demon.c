@@ -58,6 +58,7 @@ static const char sccsid[] = "@(#)demon.c	5.00 2000/11/01 xlockmore";
 					"*size:    -7    \n" \
 					"*ncolors: 64    \n" \
 					"*fpsSolid: true    \n" \
+				    "*ignoreRotation: True  \n" \
 
 # define demon_handle_event 0
 # define UNIFORM_COLORS

@@ -38,7 +38,8 @@ static const char sccsid[] = "@(#)strange.c	5.00 2000/11/01 xlockmore";
 # define MODE_strange
 # define DEFAULTS	"*delay: 10000 \n" \
 					"*ncolors: 100 \n" \
-					"*fpsSolid: True \n"
+					"*fpsSolid: True \n" \
+					"*ignoreRotation: True \n" \
 
 # define SMOOTH_COLORS
 # define refresh_strange 0

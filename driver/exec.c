@@ -1,5 +1,5 @@
 /* exec.c --- executes a program in *this* pid, without an intervening process.
- * xscreensaver, Copyright (c) 1991-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -286,6 +286,7 @@ on_path_p (const char *program)
       strcat (p2, "/");
       strcat (p2, cmd);
       result = (0 == stat (p2, &st));
+      free (p2);
       if (result)
         goto DONE;
       token = strtok (0, ":");

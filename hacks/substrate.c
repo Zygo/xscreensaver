@@ -720,6 +720,9 @@ static const char *substrate_defaults[] = {
     "*maxCracks: 100",
     "*sandGrains: 64",
     "*circlePercent: 33",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
     0
 };
 

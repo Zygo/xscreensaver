@@ -50,6 +50,7 @@ $ greynetic	:== $'mydir'greynetic
 $ halftone	:== $'mydir'halftone
 $ halo		:== $'mydir'halo
 $ helix		:== $'mydir'helix
+$ hexadrop	:== $'mydir'hexadrop
 $ hopalong	:== $'mydir'hopalong
 $ ifs		:== $'mydir'ifs
 $ imsmap	:== $'mydir'imsmap

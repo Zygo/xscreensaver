@@ -38,6 +38,20 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.21:   * New hacks, `kaleidocycle', `quasicrystal',
+                        `unknownpleasures' and `hexadrop'.
+                      * Performance improvements for `interference'.
+                      * Fixed possible crashes in `apple2', `maze', `pacman',
+                        `polyominoes', `fireworkx', `engine'.
+                      * Fix for `bumps' in 64 bit.
+                      * Fixed preferences crash on old iOS 5 devices.
+                      * Fixed "Shake to Randomize"; display name of saver.
+                      * Fixed weirdness with "Frame Rate" sliders on iOS.
+                      * Fixed rotation problems with `pacman', `decayscreen'.
+                      * Better dragging in `fluidballs'.
+                      * Ignore rotation in hacks that don't benefit from it.
+                      * Ignore DEACTIVATE messages when locked, instead of
+                        popping up the password dialog box.
 Changes since 5.20:   * Changed default text source from Twitter to Wikipedia,
                         since Twitter now requires a login to get any feeds.
                       * New version of `fireworkx'.

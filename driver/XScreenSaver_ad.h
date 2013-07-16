@@ -251,7 +251,11 @@
   GL: 				rubikblocks -root			    \\n\
   GL: 				companioncube -root			    \\n\
   GL: 				hilbert -root				    \\n\
-  GL: 				tronbit -root				    \\n",
+  GL: 				tronbit -root				    \\n\
+				hexadrop -root				    \\n\
+  GL: 				kaleidocycle -root			    \\n\
+  GL: 				quasicrystal -root			    \\n\
+  GL: 				unknownpleasures -root			    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
 "XScreenSaver.initialDelay:		0:00:00",
@@ -340,6 +344,7 @@
 "*hacks.nerverot.name:       NerveRot",
 "*hacks.noseguy.name:        NoseGuy",
 "*hacks.popsquares.name:     PopSquares",
+"*hacks.quasicrystal.name:   QuasiCrystal",
 "*hacks.rd-bomb.name:        RDbomb",
 "*hacks.rdbomb.name:         RDbomb",
 "*hacks.rotzoomer.name:      RotZoomer",
@@ -356,6 +361,7 @@
 "*hacks.timetunnel.name:     TimeTunnel",
 "*hacks.topblock.name:       TopBlock",
 "*hacks.tronbit.name:        TronBit",
+"*hacks.unknownpleasures.name:UnknownPleasures",
 "*hacks.vidwhacker.name:     VidWhacker",
 "*hacks.webcollage.name:     WebCollage",
 "*hacks.whirlwindwarp.name:  WhirlWindWarp",

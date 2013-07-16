@@ -701,7 +701,8 @@ ccurve_init (Display *dpy, Window window)
     st->context = XCreateGC (st->dpy, st->window, GCForeground | GCBackground,
 			 &values);
     st->color_count = MAXIMUM_COLOR_COUNT;
-    make_color_loop (st->dpy, st->color_map,
+    make_color_loop (hack_attributes.screen, hack_attributes.visual,
+                     st->color_map,
 		     0,   1, 1,
 		     120, 1, 1,
 		     240, 1, 1,
@@ -842,6 +843,9 @@ static const char *ccurve_defaults [] =
     ".delay:      3",
     ".pause:      0.4",
     ".limit: 200000",
+#ifdef USE_IPHONE
+    "*ignoreRotation: True",
+#endif
     0
 };
 

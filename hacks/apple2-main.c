@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1778,7 +1778,8 @@ apple2_reshape (Display *dpy, Window window, void *closure,
                  unsigned int w, unsigned int h)
 {
   struct state *st = (struct state *) closure;
-  analogtv_reconfigure (st->sim->dec);
+  if (st->sim)
+    analogtv_reconfigure (st->sim->dec);
 }
 
 static Bool
@@ -1786,7 +1787,8 @@ apple2_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   struct state *st = (struct state *) closure;
 
-  if (st->controller == terminal_controller &&
+  if (st->sim &&
+      st->controller == terminal_controller &&
       event->xany.type == KeyPress) {
     terminal_keypress_handler (dpy, event, st->sim->controller_data);
     return True;

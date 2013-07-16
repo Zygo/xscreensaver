@@ -1588,6 +1588,9 @@ maze_draw (Display *dpy, Window window, void *closure)
         st->stop = 0;
         st->state = 1;
 
+        if (st->solve_state && st->solve_state->running)
+          st->solve_state->running = 0;
+
         st->sync_p = ((random() % 4) != 0);
 
         size = get_integer_resource (st->dpy, "gridSize", "Dimension");

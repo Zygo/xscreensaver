@@ -74,7 +74,8 @@ static const char sccsid[] = "@(#)crystal.c	4.12 98/09/10 xlockmore";
 						 "*cycles:		  200	\n" \
 						 "*size:		  -15	\n" \
 						 "*ncolors:		  100	\n" \
-						 "*fpsSolid:		  true	\n" \
+						 "*fpsSolid:	   True	\n" \
+						 "*ignoreRotation: True \n" \
 
 # define crystal_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
@@ -582,7 +583,8 @@ draw_crystal(ModeInfo * mi)
 
 /* Rotate colours */
 	if (cryst->cycle_p) {
-		rotate_colors(display, cryst->cmap, cryst->colors, cryst->ncolors,
+		rotate_colors(mi->xgwa.screen, cryst->cmap,
+                      cryst->colors, cryst->ncolors,
 			      cryst->direction);
 		if (!(LRAND() % 1000))
 			cryst->direction = -cryst->direction;
@@ -808,7 +810,8 @@ release_crystal(ModeInfo * mi)
 				MI_BG_PIXEL(mi) = cryst->bg;
 #endif
 				if (cryst->colors && cryst->ncolors && !cryst->no_colors)
-					free_colors(display, cryst->cmap, cryst->colors, cryst->ncolors);
+					free_colors(mi->xgwa.screen, cryst->cmap, cryst->colors,
+                                cryst->ncolors);
 				if (cryst->colors)
 					(void) free((void *) cryst->colors);
 #if 0 /* #### wrong! -jwz */
@@ -1175,7 +1178,8 @@ init_crystal(ModeInfo * mi)
 	if (MI_IS_INSTALL(mi) && MI_NPIXELS(mi) > 2) {
 /* Set up colour map */
 		if (cryst->colors && cryst->ncolors && !cryst->no_colors)
-			free_colors(display, cryst->cmap, cryst->colors, cryst->ncolors);
+			free_colors(mi->xgwa.screen, cryst->cmap,
+                        cryst->colors, cryst->ncolors);
 		if (cryst->colors)
 			(void) free((void *) cryst->colors);
 		cryst->colors = 0;
@@ -1204,14 +1208,20 @@ init_crystal(ModeInfo * mi)
 		}
 		if (!cryst->mono_p) {
 			if (!(LRAND() % 10))
-				make_random_colormap(MI_DISPLAY(mi), MI_VISUAL(mi), cryst->cmap, cryst->colors, &cryst->ncolors,
-						True, True, &cryst->cycle_p, True);
+				make_random_colormap(mi->xgwa.screen, MI_VISUAL(mi),
+                                     cryst->cmap, cryst->colors,
+                                     &cryst->ncolors,
+                                     True, True, &cryst->cycle_p, True);
 			else if (!(LRAND() % 2))
-				make_uniform_colormap(MI_DISPLAY(mi), MI_VISUAL(mi), cryst->cmap, cryst->colors, &cryst->ncolors,
-						      True, &cryst->cycle_p, True);
+				make_uniform_colormap(mi->xgwa.screen, MI_VISUAL(mi),
+                                      cryst->cmap, cryst->colors,
+                                      &cryst->ncolors, True,
+                                      &cryst->cycle_p, True);
 			else
-				make_smooth_colormap(MI_DISPLAY(mi), MI_VISUAL(mi), cryst->cmap, cryst->colors, &cryst->ncolors,
-						     True, &cryst->cycle_p, True);
+				make_smooth_colormap(mi->xgwa.screen, MI_VISUAL(mi),
+                                     cryst->cmap, cryst->colors,
+                                     &cryst->ncolors,
+                                     True, &cryst->cycle_p, True);
 		}
 #if 0 /* #### wrong! -jwz */
 		XInstallColormap(display, cryst->cmap);

@@ -379,7 +379,8 @@ anemotaxis_init (Display *disp, Window win)
   st->ncolors = get_integer_resource (st->dpy, "colors", "Colors");
   st->ncolors++;
   st->colors = (XColor *) malloc(sizeof(*st->colors) * (st->ncolors+1));
-  make_random_colormap (st->dpy, wa.visual, wa.colormap, st->colors, &st->ncolors,
+  make_random_colormap (wa.screen, wa.visual, wa.colormap,
+                        st->colors, &st->ncolors,
                         True, True, 0, True);
 
   st->delay = get_integer_resource(st->dpy, "delay", "Integer");

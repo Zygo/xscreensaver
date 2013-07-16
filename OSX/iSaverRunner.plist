@@ -9,7 +9,7 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleVersion</key>
-	<string>5.21</string>
+	<string>5.22</string>
 	<key>NSMainNibFile</key>
 	<string>iSaverRunner</string>
 	<key>CFBundlePackageType</key>
@@ -19,13 +19,14 @@
 	<key>UIStatusBarHidden</key>
 	<true/>
 	<key>CFBundleShortVersionString</key>
-	<string>5.21</string>
+	<string>5.22</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>UIRequiredDeviceCapabilities</key>
-	<array>
-		<string>armv7</string>
-	</array>
+	<dict>
+		<key>opengles-1</key>
+		<true/>
+	</dict>
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
 	<key>UISupportedInterfaceOrientations~ipad</key>
@@ -38,7 +39,7 @@
 	<key>CFBundleLongVersionString</key>
 	<string>XScreenSaver 5.15, © 2001-2012 Jamie Zawinski.</string>
 	<key>CFBundleIdentifier</key>
-	<string>org.jwz.xscreensaver</string>
+	<string>${BUNDLE_IDENTIFIER}</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleIconFiles</key>

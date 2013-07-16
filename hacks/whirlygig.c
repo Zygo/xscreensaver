@@ -389,7 +389,9 @@ whirlygig_init (Display *dpy, Window window)
 
     {
       Bool writable_p = False;
-    make_uniform_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap, st->colors, &st->ncolors, True, &writable_p, True);
+    make_uniform_colormap (st->xgwa.screen, st->xgwa.visual,
+                           st->xgwa.colormap, st->colors, &st->ncolors,
+                           True, &writable_p, True);
     }
 
     if (st->ba) XFillRectangle (st->dpy, st->ba, st->bgc, 0, 0, st->xgwa.width, st->xgwa.height);

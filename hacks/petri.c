@@ -141,7 +141,7 @@ static void setup_random_colormap (struct state *st, XWindowAttributes *xgwa)
     colors[0].pixel = get_pixel_resource (st->dpy, xgwa->colormap,
                                           "background", "Background");
     
-    make_random_colormap (st->dpy, xgwa->visual, xgwa->colormap,
+    make_random_colormap (xgwa->screen, xgwa->visual, xgwa->colormap,
 			  colors+1, &ncolors, True, True, 0, True);
     if (ncolors < 1)
       {
@@ -732,6 +732,9 @@ static const char *petri_defaults [] = {
   "*originalcolors:	false",
   "*memThrottle:        22M",	/* don't malloc more than this much.
                                    Scale the pixels up if necessary. */
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
     0
 };
 

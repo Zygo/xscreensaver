@@ -63,6 +63,9 @@ static const char *xrayswarm_defaults [] ={
 	".background:		black",
 	"*delay:		20000",
 	"*fpsSolid:		true",
+#ifdef USE_IPHONE
+        "*ignoreRotation:       True",
+#endif
 	0
 };
 

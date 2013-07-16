@@ -461,6 +461,9 @@ static const char *rotzoomer_defaults[] = {
   "*numboxes: 2",
   "*delay: 10000",
   "*duration: 120",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

@@ -458,7 +458,7 @@ init_cube (ModeInfo *mi)
     H[2] = ((H[1] + shift) < 360) ? (H[1]+shift) : (H[1] + shift - 360);
     S[0] = S[1] = S[2] = 1.0;
     V[0] = V[1] = V[2] = 1.0;
-    make_color_loop(0, 0,
+    make_color_loop(0, 0, 0,
 		    H[0], S[0], V[0], 
 		    H[1], S[1], V[1], 
 		    H[2], S[2], V[2], 

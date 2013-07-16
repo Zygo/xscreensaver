@@ -116,7 +116,8 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c fps-gl.c \
 		  jigsaw.c photopile.c dropshadow.c rubikblocks.c surfaces.c \
 		  hilbert.c companion.c companion_quad.c companion_disc.c \
 		  companion_heart.c tronbit.c tronbit_idle1.c tronbit_idle2.c \
-		  tronbit_no.c tronbit_yes.c jwzgles.c
+		  tronbit_no.c tronbit_yes.c jwzgles.c kaleidocycle.c \
+		  quasicrystal.c unknownpleasures.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -155,7 +156,8 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  jigsaw.o photopile.o dropshadow.o rubikblocks.o surfaces.o \
 		  hilbert.o companion.o companion_quad.o companion_disc.o \
 		  companion_heart.o tronbit.o tronbit_idle1.o tronbit_idle2.o \
-		  tronbit_no.o tronbit_yes.o jwzgles.o
+		  tronbit_no.o tronbit_yes.o jwzgles.o kaleidocycle.o \
+		  quasicrystal.o unknownpleasures.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -170,7 +172,8 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  antmaze tangram crackberg glhanoi cube21 timetunnel \
 		  juggler3d topblock glschool glcells voronoi moebiusgears \
 		  lockward cubicgrid hypnowheel skytentacles jigsaw photopile \
-		  rubikblocks surfaces hilbert companioncube tronbit
+		  rubikblocks surfaces hilbert companioncube tronbit \
+		  kaleidocycle quasicrystal unknownpleasures
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 GL_UTIL_EXES	= xscreensaver-gl-helper
@@ -225,7 +228,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  voronoi.man moebiusgears.man lockward.man cubicgrid.man \
 		  hypnowheel.man skytentacles.man sonar.man jigsaw.man \
 		  photopile.man rubikblocks.man surfaces.man hilbert.man \
-		  companioncube.man tronbit.man
+		  companioncube.man tronbit.man kaleidocycle.man \
+		  quasicrystal.man unknownpleasures.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -816,6 +820,17 @@ TBIT_OBJS=tronbit.o tronbit_idle1.o tronbit_idle2.o tronbit_no.o tronbit_yes.o\
  gllist.o $(HACK_TRACK_OBJS)
 tronbit:			$(TBIT_OBJS)
 	$(CC_HACK) -o $@	$(TBIT_OBJS) $(HACK_LIBS)
+
+KALEIDOCYCLE_OBJS=kaleidocycle.o normals.o $(HACK_TRACK_OBJS)
+kaleidocycle:			$(KALEIDOCYCLE_OBJS)
+	$(CC_HACK) -o $@	$(KALEIDOCYCLE_OBJS) $(HACK_LIBS)
+
+quasicrystal:	quasicrystal.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+unknownpleasures: unknownpleasures.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
 
 ##############################################################################
 #
@@ -1960,6 +1975,24 @@ juggler3d.o: $(HACK_SRC)/xlockmoreI.h
 juggler3d.o: $(HACK_SRC)/xlockmore.h
 jwzgles.o: ../../config.h
 jwzgles.o: $(srcdir)/jwzglesI.h
+kaleidocycle.o: ../../config.h
+kaleidocycle.o: $(HACK_SRC)/fps.h
+kaleidocycle.o: $(srcdir)/gltrackball.h
+kaleidocycle.o: $(srcdir)/jwzglesI.h
+kaleidocycle.o: $(srcdir)/jwzgles.h
+kaleidocycle.o: $(srcdir)/normals.h
+kaleidocycle.o: $(srcdir)/rotator.h
+kaleidocycle.o: $(HACK_SRC)/screenhackI.h
+kaleidocycle.o: $(UTILS_SRC)/colors.h
+kaleidocycle.o: $(UTILS_SRC)/grabscreen.h
+kaleidocycle.o: $(UTILS_SRC)/hsv.h
+kaleidocycle.o: $(UTILS_SRC)/resources.h
+kaleidocycle.o: $(UTILS_SRC)/usleep.h
+kaleidocycle.o: $(UTILS_SRC)/visual.h
+kaleidocycle.o: $(UTILS_SRC)/xshm.h
+kaleidocycle.o: $(UTILS_SRC)/yarandom.h
+kaleidocycle.o: $(HACK_SRC)/xlockmoreI.h
+kaleidocycle.o: $(HACK_SRC)/xlockmore.h
 klein.o: ../../config.h
 klein.o: $(HACK_SRC)/fps.h
 klein.o: $(srcdir)/gltrackball.h
@@ -2296,6 +2329,22 @@ pulsar.o: $(UTILS_SRC)/yarandom.h
 pulsar.o: $(HACK_SRC)/xlockmoreI.h
 pulsar.o: $(HACK_SRC)/xlockmore.h
 pulsar.o: $(srcdir)/xpm-ximage.h
+quasicrystal.o: ../../config.h
+quasicrystal.o: $(HACK_SRC)/fps.h
+quasicrystal.o: $(srcdir)/jwzglesI.h
+quasicrystal.o: $(srcdir)/jwzgles.h
+quasicrystal.o: $(srcdir)/rotator.h
+quasicrystal.o: $(HACK_SRC)/screenhackI.h
+quasicrystal.o: $(UTILS_SRC)/colors.h
+quasicrystal.o: $(UTILS_SRC)/grabscreen.h
+quasicrystal.o: $(UTILS_SRC)/hsv.h
+quasicrystal.o: $(UTILS_SRC)/resources.h
+quasicrystal.o: $(UTILS_SRC)/usleep.h
+quasicrystal.o: $(UTILS_SRC)/visual.h
+quasicrystal.o: $(UTILS_SRC)/xshm.h
+quasicrystal.o: $(UTILS_SRC)/yarandom.h
+quasicrystal.o: $(HACK_SRC)/xlockmoreI.h
+quasicrystal.o: $(HACK_SRC)/xlockmore.h
 queens.o: $(srcdir)/chessmodels.h
 queens.o: ../../config.h
 queens.o: $(HACK_SRC)/fps.h
@@ -2840,6 +2889,22 @@ tunnel_draw.o: $(UTILS_SRC)/visual.h
 tunnel_draw.o: $(UTILS_SRC)/xshm.h
 tunnel_draw.o: $(UTILS_SRC)/yarandom.h
 tunnel_draw.o: $(HACK_SRC)/xlockmoreI.h
+unknownpleasures.o: ../../config.h
+unknownpleasures.o: $(HACK_SRC)/fps.h
+unknownpleasures.o: $(srcdir)/gltrackball.h
+unknownpleasures.o: $(srcdir)/jwzglesI.h
+unknownpleasures.o: $(srcdir)/jwzgles.h
+unknownpleasures.o: $(HACK_SRC)/screenhackI.h
+unknownpleasures.o: $(UTILS_SRC)/colors.h
+unknownpleasures.o: $(UTILS_SRC)/grabscreen.h
+unknownpleasures.o: $(UTILS_SRC)/hsv.h
+unknownpleasures.o: $(UTILS_SRC)/resources.h
+unknownpleasures.o: $(UTILS_SRC)/usleep.h
+unknownpleasures.o: $(UTILS_SRC)/visual.h
+unknownpleasures.o: $(UTILS_SRC)/xshm.h
+unknownpleasures.o: $(UTILS_SRC)/yarandom.h
+unknownpleasures.o: $(HACK_SRC)/xlockmoreI.h
+unknownpleasures.o: $(HACK_SRC)/xlockmore.h
 voronoi.o: ../../config.h
 voronoi.o: $(HACK_SRC)/fps.h
 voronoi.o: $(srcdir)/jwzglesI.h

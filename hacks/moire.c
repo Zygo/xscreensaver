@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -120,7 +120,7 @@ moire_init_1 (struct state *st)
 
       st->colors = (XColor *) malloc (sizeof (XColor) * (st->ncolors+2));
       memset(st->colors, 0, (sizeof (XColor) * (st->ncolors+2)));
-      make_color_ramp (st->dpy, xgwa.colormap,
+      make_color_ramp (xgwa.screen, xgwa.visual, xgwa.colormap,
 		       fgh, fgs, fgv, bgh, bgs, bgv,
 		       st->colors, &st->ncolors,
 		       True, True, False);
@@ -259,6 +259,9 @@ static const char *moire_defaults [] = {
   "*useSHM:	      True",
 #else
   "*useSHM:	      False",
+#endif
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
 #endif
   0
 };

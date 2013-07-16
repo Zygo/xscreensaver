@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -151,7 +151,8 @@ flame_init (Display *dpy, Window window)
       st->ncolors = get_integer_resource (st->dpy, "colors", "Integer");
       if (st->ncolors <= 0) st->ncolors = 128;
       st->colors = (XColor *) malloc ((st->ncolors+1) * sizeof (*st->colors));
-      make_smooth_colormap (st->dpy, xgwa.visual, xgwa.colormap, st->colors, &st->ncolors,
+      make_smooth_colormap (xgwa.screen, xgwa.visual, xgwa.colormap,
+                            st->colors, &st->ncolors,
 			    True, 0, True);
       if (st->ncolors <= 2)
 	mono_p = True, st->ncolors = 0;
@@ -418,6 +419,9 @@ static const char *flame_defaults [] = {
   "*delay:	50000",
   "*delay2:	2000000",
   "*points:	10000",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

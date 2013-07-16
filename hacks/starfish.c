@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -341,7 +341,7 @@ reset_starfish (struct state *st)
   if (st->done_once)
     {
       if (st->colors && st->ncolors)
-	free_colors (st->dpy, st->cmap, st->colors, st->ncolors);
+	free_colors (xgwa.screen, st->cmap, st->colors, st->ncolors);
       if (st->colors)
 	free (st->colors);
       st->colors = 0;
@@ -361,10 +361,12 @@ reset_starfish (struct state *st)
   if (mono_p)
     ;
   else if (random() % 3)
-    make_smooth_colormap (st->dpy, xgwa.visual, st->cmap, st->colors, &st->ncolors,
+    make_smooth_colormap (xgwa.screen, xgwa.visual, st->cmap,
+                          st->colors, &st->ncolors,
 			  True, 0, True);
   else
-    make_uniform_colormap (st->dpy, xgwa.visual, st->cmap, st->colors, &st->ncolors,
+    make_uniform_colormap (xgwa.screen, xgwa.visual, st->cmap,
+                           st->colors, &st->ncolors,
 			   True, 0, True);
 
   if (st->ncolors < 2) st->ncolors = 2;
@@ -526,6 +528,9 @@ static const char *starfish_defaults [] = {
   "*duration:		30",
   "*delay2:		5",
   "*mode:		random",
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
   0
 };
 

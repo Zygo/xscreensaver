@@ -1129,6 +1129,9 @@ static const char *blaster_defaults [] = {
   "*move_stars_x: 2",
   "*move_stars_y: 1",
   "*move_stars_random: 0",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

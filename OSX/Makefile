@@ -1,4 +1,4 @@
-# XScreenSaver for MacOS X, Copyright (c) 2006-2012 by Jamie Zawinski.
+# XScreenSaver for MacOS X, Copyright (c) 2006-2013 by Jamie Zawinski.
 
 XCODEBUILD = /usr/bin/xcodebuild
 TARGETS    = -target "All Savers"
@@ -12,7 +12,7 @@ all: debug release
 
 clean:
 	-rm -rf build
-#	cd ..; $(XCODEBUILD) -target $(TARGETS) clean
+#	cd ..; $(XCODEBUILD) $(TARGETS) clean
 
 distclean:
 	-rm -f config.status config.cache config.log \
@@ -33,7 +33,8 @@ release:: update_thumbs
 release:: sign
 
 sign:
-	@for f in build/Release/*.{saver,app} ; do \
+	@for f in build/Release/*.app/Contents/*/*.saver \
+		  build/Release/*.{saver,app} ; do \
 	  codesign -vfs $(CERT) $$f ; \
 	 done
 
@@ -62,8 +63,8 @@ update_thumbs::
 
 
 # Arrrrgh
-ios_function_tables.h::
-	@./build-fntable.pl build/Debug-iphoneos/XScreenSaver.app $@
+ios-function-table.m::
+	@./build-fntable.pl build/Debug-iphonesimulator/XScreenSaver.app $@
 
 
 echo_tarfiles:

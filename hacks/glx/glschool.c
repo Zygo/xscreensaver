@@ -157,7 +157,7 @@ init_glschool(ModeInfo *mi)
 	sc->nColors = 360;
 	sc->context = init_GL(mi);
 	sc->colors = (XColor *)calloc(sc->nColors, sizeof(XColor));
-	make_color_ramp(0, 0,
+	make_color_ramp(0, 0, 0,
 					0.0, 1.0, 1.0,
 					359.0, 1.0, 1.0,
 					sc->colors, &sc->nColors,

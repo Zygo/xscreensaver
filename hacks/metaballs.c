@@ -408,6 +408,9 @@ static const char *metaballs_defaults [] = {
   "*delay:    10000",
   "*radius:   100",
   "*delta:   3",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

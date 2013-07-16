@@ -437,6 +437,9 @@ static const char *munch_defaults [] = {
   "*simul:            5",
   "*clear:            65",
   "*xor:              True",
+#ifdef USE_IPHONE
+  "*ignoreRotation:   True",
+#endif
   0
 };
 

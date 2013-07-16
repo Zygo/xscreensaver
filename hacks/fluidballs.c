@@ -328,6 +328,12 @@ fluidballs_init (Display *dpy, Window window)
   state->shake_p = get_boolean_resource (dpy, "shake", "Shake");
   state->shake_threshold = get_float_resource (dpy, "shakeThreshold",
                                                "ShakeThreshold");
+  state->time_tick = 999999;
+
+# ifdef USE_IPHONE	/* Always obey real-world gravity */
+  state->shake_p = False;
+# endif
+
 
   state->fps_p = get_boolean_resource (dpy, "doFPS", "DoFPS");
   if (state->fps_p)
@@ -442,6 +448,20 @@ check_wall_clock (b_state *state, float max_d)
         return;
 
       state->time_since_shake += (now.tv_sec - state->last_time.tv_sec);
+
+# ifdef USE_IPHONE	/* Always obey real-world gravity */
+      {
+        float a = fabs (fabs(state->accx) > fabs(state->accy)
+                        ? state->accx : state->accy);
+        switch ((int) current_device_rotation ()) {
+        case    0: case  360: state->accx =  0; state->accy =  a; break;
+        case  -90:            state->accx = -a; state->accy =  0; break;
+        case   90:            state->accx =  a; state->accy =  0; break;
+        case  180: case -180: state->accx =  0; state->accy = -a; break;
+        default: break;
+        }
+      }
+# endif /* USE_IPHONE */
 
       if (state->fps_p) 
 	{
@@ -715,17 +735,29 @@ fluidballs_event (Display *dpy, Window window, void *closure, XEvent *event)
           return True;
         }
       else
-        for (i=1; i <= state->count; i++)
-          {
-            float d = ((state->px[i] - rx) * (state->px[i] - rx) +
-                       (state->py[i] - ry) * (state->py[i] - ry));
-            float r = state->r[i];
-            if (d < r*r)
+        {
+          /* When trying to pick up a ball, first look for a click directly
+             inside the ball; but if we don't find it, expand the radius
+             outward until we find something nearby.
+           */
+          float max = state->max_radius * 4;
+          float step = max / 10;
+          float r2;
+          for (r2 = step; r2 < max; r2 += step) {
+            for (i = 1; i <= state->count; i++)
               {
-                state->mouse_ball = i;
-                return True;
+                float d = ((state->px[i] - rx) * (state->px[i] - rx) +
+                           (state->py[i] - ry) * (state->py[i] - ry));
+                float r = state->r[i];
+                if (r2 > r) r = r2;
+                if (d < r*r)
+                  {
+                    state->mouse_ball = i;
+                    return True;
+                  }
               }
           }
+        }
       return True;
     }
   else if (event->xany.type == ButtonRelease)   /* drop the ball */
@@ -780,6 +812,9 @@ static const char *fluidballs_defaults [] = {
   "*useDBE:		True",
   "*useDBEClear:	True",
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
+#ifdef USE_IPHONE
+  "*ignoreRotation:	True",
+#endif
   0
 };
 

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1027,6 +1027,7 @@ jwzgles_glTexCoord1f (GLfloat s)
 }
 
 
+/* glColor: GLfloat */
 
 void
 jwzgles_glColor4fv (const GLfloat *v)
@@ -1079,76 +1080,229 @@ jwzgles_glColor4f (GLfloat r, GLfloat g, GLfloat b, GLfloat a)
   jwzgles_glColor4fv (v);
 }
 
-
 void
 jwzgles_glColor3f (GLfloat r, GLfloat g, GLfloat b)
 {
   jwzgles_glColor4f (r, g, b, 1);
 }
 
-
 void
 jwzgles_glColor3fv (const GLfloat *v)
 {
-  GLfloat vv[4];
-  vv[0] = v[0];
-  vv[1] = v[1];
-  vv[2] = v[2];
-  vv[3] = 1;
-  jwzgles_glColor4fv (vv);
+  jwzgles_glColor3f (v[0], v[1], v[2]);
 }
 
 
+/* glColor: GLdouble */
+
 void
-jwzgles_glColor4i (GLuint r, GLuint g, GLuint b, GLuint a)
+jwzgles_glColor4d (GLdouble r, GLdouble g, GLdouble b, GLdouble a)
 {
   jwzgles_glColor4f (r, g, b, a);
 }
 
-
 void
-jwzgles_glColor3i (GLuint r, GLuint g, GLuint b)
+jwzgles_glColor4dv (const GLdouble *v)
 {
-  jwzgles_glColor4f (r, g, b, 1);
+  jwzgles_glColor4d (v[0], v[1], v[2], v[3]);
 }
 
+void
+jwzgles_glColor3d (GLdouble r, GLdouble g, GLdouble b)
+{
+  jwzgles_glColor4d (r, g, b, 1.0);
+}
+
+void
+jwzgles_glColor3dv (const GLdouble *v)
+{
+  jwzgles_glColor3d (v[0], v[1], v[2]);
+}
+
+
+/* glColor: GLint (INT_MIN - INT_MAX) */
+
+void
+jwzgles_glColor4i (GLint r, GLint g, GLint b, GLint a)
+{
+  /* -0x8000000 - 0x7FFFFFFF  =>  0.0 - 1.0 */
+  jwzgles_glColor4f (0.5 + (GLfloat) r / 0xFFFFFFFF,
+                     0.5 + (GLfloat) g / 0xFFFFFFFF, 
+                     0.5 + (GLfloat) b / 0xFFFFFFFF,
+                     0.5 + (GLfloat) a / 0xFFFFFFFF);
+}
 
 void
 jwzgles_glColor4iv (const GLint *v)
 {
-  GLfloat vv[4];
-  vv[0] = v[0];
-  vv[1] = v[1];
-  vv[2] = v[2];
-  vv[3] = v[3];
-  jwzgles_glColor4fv (vv);
+  jwzgles_glColor4i (v[0], v[1], v[2], v[3]);
 }
 
+
+void
+jwzgles_glColor3i (GLint r, GLint g, GLint b)
+{
+  jwzgles_glColor4i (r, g, b, 0x7FFFFFFF);
+}
 
 void
 jwzgles_glColor3iv (const GLint *v)
 {
-  GLfloat vv[4];
-  vv[0] = v[0];
-  vv[1] = v[1];
-  vv[2] = v[2];
-  vv[3] = 1;
-  jwzgles_glColor4fv (vv);
+  jwzgles_glColor3i (v[0], v[1], v[2]);
 }
 
+
+/* glColor: GLuint (0 - UINT_MAX) */
+
+void
+jwzgles_glColor4ui (GLuint r, GLuint g, GLuint b, GLuint a)
+{
+  /* 0 - 0xFFFFFFFF  =>  0.0 - 1.0 */
+  jwzgles_glColor4f ((GLfloat) r / 0xFFFFFFFF,
+                     (GLfloat) g / 0xFFFFFFFF, 
+                     (GLfloat) b / 0xFFFFFFFF,
+                     (GLfloat) a / 0xFFFFFFFF);
+}
+
+void
+jwzgles_glColor4uiv (const GLuint *v)
+{
+  jwzgles_glColor4ui (v[0], v[1], v[2], v[3]);
+}
+
+void
+jwzgles_glColor3ui (GLuint r, GLuint g, GLuint b)
+{
+  jwzgles_glColor4ui (r, g, b, 0xFFFFFFFF);
+}
+
+void
+jwzgles_glColor3uiv (const GLuint *v)
+{
+  jwzgles_glColor3ui (v[0], v[1], v[2]);
+}
+
+
+/* glColor: GLshort (SHRT_MIN - SHRT_MAX) */
+
+void
+jwzgles_glColor4s (GLshort r, GLshort g, GLshort b, GLshort a)
+{
+  /* -0x8000 - 0x7FFF  =>  0.0 - 1.0 */
+  jwzgles_glColor4f (0.5 + (GLfloat) r / 0xFFFF,
+                     0.5 + (GLfloat) g / 0xFFFF,
+                     0.5 + (GLfloat) b / 0xFFFF,
+                     0.5 + (GLfloat) a / 0xFFFF);
+}
+
+void
+jwzgles_glColor4sv (const GLshort *v)
+{
+  jwzgles_glColor4s (v[0], v[1], v[2], v[3]);
+}
+
+void
+jwzgles_glColor3s (GLshort r, GLshort g, GLshort b)
+{
+  jwzgles_glColor4s (r, g, b, 0x7FFF);
+}
+
+void
+jwzgles_glColor3sv (const GLshort *v)
+{
+  jwzgles_glColor3s (v[0], v[1], v[2]);
+}
+
+
+/* glColor: GLushort (0 - USHRT_MAX) */
+
+void
+jwzgles_glColor4us (GLushort r, GLushort g, GLushort b, GLushort a)
+{
+  /* 0 - 0xFFFF  =>  0.0 - 1.0 */
+  jwzgles_glColor4f ((GLfloat) r / 0xFFFF,
+                     (GLfloat) g / 0xFFFF,
+                     (GLfloat) b / 0xFFFF,
+                     (GLfloat) a / 0xFFFF);
+}
+
+void
+jwzgles_glColor4usv (const GLushort *v)
+{
+  jwzgles_glColor4us (v[0], v[1], v[2], v[3]);
+}
+
+void
+jwzgles_glColor3us (GLushort r, GLushort g, GLushort b)
+{
+  jwzgles_glColor4us (r, g, b, 0xFFFF);
+}
+
+void
+jwzgles_glColor3usv (const GLushort *v)
+{
+  jwzgles_glColor3us (v[0], v[1], v[2]);
+}
+
+
+/* glColor: GLbyte (-128 - 127) */
+
+void
+jwzgles_glColor4b (GLbyte r, GLbyte g, GLbyte b, GLbyte a)
+{
+  /* -128 - 127  =>  0.0 - 1.0 */
+  jwzgles_glColor4f (0.5 + (GLfloat) r / 255,
+                     0.5 + (GLfloat) g / 255,
+                     0.5 + (GLfloat) b / 255,
+                     0.5 + (GLfloat) a / 255);
+}
+
+void
+jwzgles_glColor4bv (const GLbyte *v)
+{
+  jwzgles_glColor4b (v[0], v[1], v[2], v[3]);
+}
+
+void
+jwzgles_glColor3b (GLbyte r, GLbyte g, GLbyte b)
+{
+  jwzgles_glColor4b (r, g, b, 127);
+}
+
+void
+jwzgles_glColor3bv (const GLbyte *v)
+{
+  jwzgles_glColor3b (v[0], v[1], v[2]);
+}
+
+
+/* glColor: GLubyte (0 - 255) */
 
 void
 jwzgles_glColor4ub (GLubyte r, GLubyte g, GLubyte b, GLubyte a)
 {
-  jwzgles_glColor4f (r, g, b, a);
+  /* 0 - 255  =>  0.0 - 1.0 */
+  jwzgles_glColor4f (r / 255.0, g / 255.0, b / 255.0, a / 255.0);
 }
 
+void
+jwzgles_glColor4ubv (const GLubyte *v)
+{
+  jwzgles_glColor4ub (v[0], v[1], v[2], v[3]);
+}
 
 void
 jwzgles_glColor3ub (GLubyte r, GLubyte g, GLubyte b)
 {
-  jwzgles_glColor4f (r, g, b, 1);
+  jwzgles_glColor4ub (r, g, b, 255);
 }
+
+void
+jwzgles_glColor3ubv (const GLubyte *v)
+{
+  jwzgles_glColor3ub (v[0], v[1], v[2]);
+}
+
 
 
 void
@@ -1758,10 +1912,10 @@ optimize_arrays (void)
   for (i = 0; i < L->count; i++)
     {
       list_fn *F = &L->fns[i];
-      int count;
+/*      int count; */
       if (! F->arrays)
         continue;
-      count = F->argv[2].i;  /* 3rd arg to glDrawArrays */
+/*      count = F->argv[2].i;*/  /* 3rd arg to glDrawArrays */
 
       for (j = 0; j < 4; j++)
         {
@@ -2252,7 +2406,6 @@ copy_array_data (draw_array *A, int count, const char *name)
      data multiple times.
    */
   int stride2, bytes, i, j;
-  const void *old;
   void *data2;
   const GLfloat *IF;
   GLfloat *OF;
@@ -2306,7 +2459,6 @@ copy_array_data (draw_array *A, int count, const char *name)
     break;
   }
 
-  old = A->data;
   A->data = data2;
   A->bytes = bytes;
   A->stride = stride2;
@@ -3054,6 +3206,9 @@ jwzgles_glEnable (GLuint bit)
     }
   else
     {
+      /* We implement 1D textures as 2D textures. */
+      if (bit == GL_TEXTURE_1D) bit = GL_TEXTURE_2D;
+
       if (! state->replaying_list)
         LOG2 ("direct %-12s %s", "glEnable", mode_desc(bit));
       glEnable (bit);  /* the real one */
@@ -3095,6 +3250,9 @@ jwzgles_glDisable (GLuint bit)
     }
   else
     {
+      /* We implement 1D textures as 2D textures. */
+      if (bit == GL_TEXTURE_1D) bit = GL_TEXTURE_2D;
+
       if (! state->replaying_list)
         LOG2 ("direct %-12s %s", "glDisable", mode_desc(bit));
       glDisable (bit);  /* the real one */
@@ -3131,6 +3289,10 @@ jwzgles_glIsEnabled (GLuint bit)
   Assert (!state->compiling_verts, "glIsEnabled not allowed inside glBegin");
   Assert (!state->compiling_list,  "glIsEnabled not allowed inside glNewList");
   */
+
+  /* We implement 1D textures as 2D textures. */
+  if (bit == GL_TEXTURE_1D) bit = GL_TEXTURE_2D;
+
   switch (bit) {
   case GL_TEXTURE_2D: return !!(state->enabled & ISENABLED_TEXTURE_2D);
   case GL_TEXTURE_GEN_S: return !!(state->enabled & ISENABLED_TEXTURE_GEN_S);

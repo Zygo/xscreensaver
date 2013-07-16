@@ -30,6 +30,7 @@
 
 
 #include <math.h>
+#include <stdint.h>
 #include "screenhack.h"
 
 #ifdef HAVE_XSHM_EXTENSION
@@ -41,12 +42,6 @@
 /* #define VERBOSE */
 #define RANDOM() ((int) (random() & 0X7FFFFFFFL))
 
-typedef signed char		int8_;
-typedef unsigned char	uint8_;
-typedef short			int16_;
-typedef unsigned short	uint16_;
-typedef long			int32_;
-typedef unsigned long	uint32_;
 typedef unsigned char	BOOL;
 
 
@@ -68,6 +63,9 @@ static const char *bumps_defaults [] = {
 #ifdef HAVE_XSHM_EXTENSION
   "*useSHM:		True",
 #endif /* HAVE_XSHM_EXTENSION */
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 
@@ -91,9 +89,9 @@ static XrmOptionDescRec bumps_options [] = {
  * a member of TBumps. */
 typedef struct
 {
-	uint8_ *aLightMap;
-	uint16_ nFalloffDiameter, nFalloffRadius;
-	uint16_ nLightDiameter, nLightRadius;
+	uint8_t *aLightMap;
+	uint16_t nFalloffDiameter, nFalloffRadius;
+	uint16_t nLightDiameter, nLightRadius;
 	float nAccelX, nAccelY;
 	float nAccelMax;
 	float nVelocityX, nVelocityY;
@@ -112,17 +110,17 @@ typedef struct
         Pixmap source;
 	GC GraphicsContext;
 	XColor *xColors;
-	uint32_ *aColors;
+	unsigned long *aColors;
 	XImage *pXImage;
 #ifdef HAVE_XSHM_EXTENSION
 	XShmSegmentInfo XShmInfo;
 	Bool	bUseShm;
 #endif /* HAVE_XSHM_EXTENSION */
 
-	uint8_ nColorCount;				/* Number of colors used. */
-	uint8_ bytesPerPixel;
-	uint16_ iWinWidth, iWinHeight;
-	uint16_ *aBumpMap;				/* The actual bump map. */
+	uint8_t nColorCount;				/* Number of colors used. */
+	uint8_t bytesPerPixel;
+	uint16_t iWinWidth, iWinHeight;
+	uint16_t *aBumpMap;				/* The actual bump map. */
 	SSpotLight SpotLight;
 
         int delay;
@@ -142,37 +140,37 @@ static void SoftenBumpMap( SBumps * );
 
 
 /* This function pointer will point to the appropriate PutPixel*() function below. */
-static void (*MyPutPixel)( int8_ *, uint32_ );
+static void (*MyPutPixel)( int8_t *, uint32_t );
 
-static void PutPixel32( int8_ *pData, uint32_ pixel )
+static void PutPixel32( int8_t *pData, uint32_t pixel )
 {
-	*(uint32_ *)pData = pixel;
+	*(uint32_t *)pData = pixel;
 }
 
-static void PutPixel24( int8_ *pData, uint32_ pixel )
+static void PutPixel24( int8_t *pData, uint32_t pixel )
 {
 	pData[ 2 ] = ( pixel & 0x00FF0000 ) >> 16;
 	pData[ 1 ] = ( pixel & 0x0000FF00 ) >> 8;
 	pData[ 0 ] = ( pixel & 0x000000FF );
 }
 
-static void PutPixel16( int8_ *pData, uint32_ pixel )
+static void PutPixel16( int8_t *pData, uint32_t pixel )
 {
-	*(uint16_ *)pData = (uint16_)pixel;
+	*(uint16_t *)pData = (uint16_t)pixel;
 }
 
-static void PutPixel8( int8_ *pData, uint32_ pixel )
+static void PutPixel8( int8_t *pData, uint32_t pixel )
 {
-	*(uint8_ *)pData = (uint8_)pixel;
+	*(uint8_t *)pData = (uint8_t)pixel;
 }
 
 /* Creates the light map, which is a circular image... going from black around the edges
  * to white in the center. */
-static void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iDiameter, uint16_ nColorCount )
+static void CreateSpotLight( SSpotLight *pSpotLight, uint16_t iDiameter, uint16_t nColorCount )
 {
 	double nDist;
-	int16_ iDistX, iDistY;
-	uint8_ *pLOffset;
+	int16_t iDistX, iDistY;
+	uint8_t *pLOffset;
 	
 	pSpotLight->nFalloffDiameter = iDiameter;
 	pSpotLight->nFalloffRadius = pSpotLight->nFalloffDiameter / 2;
@@ -183,7 +181,7 @@ static void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iDiameter, uint16_ 
 	printf( "%s: Spot Light Diameter: %d\n", progclass, pSpotLight->nLightDiameter );
 #endif
 
-	pSpotLight->aLightMap = malloc( pSpotLight->nLightDiameter * pSpotLight->nLightDiameter * sizeof(uint8_) );
+	pSpotLight->aLightMap = malloc( pSpotLight->nLightDiameter * pSpotLight->nLightDiameter * sizeof(uint8_t) );
 
 	pLOffset = pSpotLight->aLightMap;
 	for( iDistY=-pSpotLight->nLightRadius; iDistY<pSpotLight->nLightRadius; ++iDistY )
@@ -192,7 +190,7 @@ static void CreateSpotLight( SSpotLight *pSpotLight, uint16_ iDiameter, uint16_ 
 		{
 			nDist = sqrt( pow( iDistX+0.5F, 2 ) + pow( iDistY+0.5F, 2 ) );
 			if( nDist / pSpotLight->nLightRadius <= 1.0f )
-				*pLOffset = (uint8_)(nColorCount - ( ( nDist / pSpotLight->nLightRadius ) * ( nColorCount - 1 ) ));
+				*pLOffset = (uint8_t)(nColorCount - ( ( nDist / pSpotLight->nLightRadius ) * ( nColorCount - 1 ) ));
 			else
 				*pLOffset = 0;
 
@@ -251,8 +249,8 @@ static void CreateBumps( SBumps *pBumps, Display *dpy, Window NewWin )
 {
 	XWindowAttributes XWinAttribs;
 	XGCValues GCValues;
-	int32_ nGCFlags;
-	uint16_ iDiameter;
+	int32_t nGCFlags;
+	uint16_t iDiameter;
 
 	/* Make size and velocity a function of window size, so it appears the same at 100x60 as it does in 3200x1200. */
 	XGetWindowAttributes( dpy, NewWin, &XWinAttribs );
@@ -291,7 +289,7 @@ static void CreateBumps( SBumps *pBumps, Display *dpy, Window NewWin )
 	{
 		pBumps->pXImage = XCreateImage( pBumps->dpy, XWinAttribs.visual, XWinAttribs.depth, 
 									ZPixmap, 0, NULL, iDiameter, iDiameter, BitmapPad( pBumps->dpy ), 0 );
-		pBumps->pXImage->data = malloc( pBumps->pXImage->bytes_per_line * pBumps->pXImage->height * sizeof(int8_) );
+		pBumps->pXImage->data = malloc( pBumps->pXImage->bytes_per_line * pBumps->pXImage->height * sizeof(int8_t) );
 	}
 
 	/* For speed, access the XImage data directly using my own PutPixel routine. */
@@ -347,7 +345,7 @@ static void SetPalette(Display *dpy, SBumps *pBumps, XWindowAttributes *pXWinAtt
 	XColor BaseColor;
 	XColor Color;
 	char *sColor;			/* Spotlight Color */
-	int16_ iColor;
+	int16_t iColor;
 	
 	sColor = get_string_resource(dpy,  "color", "Color" );
 
@@ -374,7 +372,7 @@ static void SetPalette(Display *dpy, SBumps *pBumps, XWindowAttributes *pXWinAtt
 	if( pBumps->nColorCount < 2 )	pBumps->nColorCount = 2;
 	if( pBumps->nColorCount > 128 )	pBumps->nColorCount = 128;
 
-	pBumps->aColors = malloc( pBumps->nColorCount * sizeof(uint32_ ) );
+	pBumps->aColors = malloc( pBumps->nColorCount * sizeof(unsigned long) );
 
 	/* Creates a phong shade:                 / BaseColor  \                               Index/ColorCount 
 	 *							PhongShade = | ------------ | Index + ( 65535 - BaseColor )^ 
@@ -382,15 +380,15 @@ static void SetPalette(Display *dpy, SBumps *pBumps, XWindowAttributes *pXWinAtt
 	pBumps->nColorCount--;
 	for( iColor=0; iColor<=pBumps->nColorCount; iColor++ )
 	{
-		Color.red   = (uint16_)( ( ( BaseColor.red   / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - BaseColor.red,   iColor/(double)pBumps->nColorCount ) );
-		Color.green = (uint16_)( ( ( BaseColor.green / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - BaseColor.green, iColor/(double)pBumps->nColorCount ) );
-		Color.blue  = (uint16_)( ( ( BaseColor.blue  / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - BaseColor.blue,  iColor/(double)pBumps->nColorCount ) );
+		Color.red   = (uint16_t)( ( ( BaseColor.red   / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - BaseColor.red,   iColor/(double)pBumps->nColorCount ) );
+		Color.green = (uint16_t)( ( ( BaseColor.green / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - BaseColor.green, iColor/(double)pBumps->nColorCount ) );
+		Color.blue  = (uint16_t)( ( ( BaseColor.blue  / (double)pBumps->nColorCount ) * iColor ) + pow( 0xFFFF - BaseColor.blue,  iColor/(double)pBumps->nColorCount ) );
 
 		if( !XAllocColor( pBumps->dpy, pXWinAttribs->colormap, &Color ) )
 		{
 			XFreeColors( pBumps->dpy, pXWinAttribs->colormap, pBumps->aColors, iColor, 0 );
 			free( pBumps->aColors );
-			pBumps->aColors = malloc( pBumps->nColorCount * sizeof(uint32_) );
+			pBumps->aColors = malloc( pBumps->nColorCount * sizeof(unsigned long) );
 			pBumps->nColorCount--;
 			iColor = -1;
 		}
@@ -424,11 +422,11 @@ static void InitBumpMap_2(Display *dpy, SBumps *pBumps)
 {
 	XImage *pScreenImage;
 	XColor *pColor;
-	uint8_ nSoften;
-	uint16_ iWidth, iHeight;
-	uint32_ nAverager;
-	uint16_	*pBump;
-	uint16_ maxHeight;
+	uint8_t nSoften;
+	uint16_t iWidth, iHeight;
+	uint32_t nAverager;
+	uint16_t	*pBump;
+	uint16_t maxHeight;
 	double softenMultiplier = 1.0f;
 	BOOL bInvert = (BOOL)get_boolean_resource(dpy,  "invert", "Boolean" );
     XWindowAttributes XWinAttribs;
@@ -446,7 +444,7 @@ static void InitBumpMap_2(Display *dpy, SBumps *pBumps)
 	XClearWindow (pBumps->dpy, pBumps->Win);
 	XSync (pBumps->dpy, 0);
 
-	pBumps->aBumpMap = malloc( pBumps->iWinWidth * pBumps->iWinHeight * sizeof(uint16_) );
+	pBumps->aBumpMap = malloc( pBumps->iWinWidth * pBumps->iWinHeight * sizeof(uint16_t) );
 	
 	nSoften = get_integer_resource(dpy,  "soften", "Integer" );
 	while( nSoften-- )
@@ -510,10 +508,10 @@ static void InitBumpMap_2(Display *dpy, SBumps *pBumps)
  */
 static void SoftenBumpMap( SBumps *pBumps )
 {
-	uint16_ *pOffset, *pTOffset;
-	uint32_ nHeight;
-	uint32_ iWidth, iHeight;
-	uint16_ *aTempBuffer = malloc( pBumps->iWinWidth * pBumps->iWinHeight * sizeof(uint16_) );
+	uint16_t *pOffset, *pTOffset;
+	uint32_t nHeight;
+	uint32_t iWidth, iHeight;
+	uint16_t *aTempBuffer = malloc( pBumps->iWinWidth * pBumps->iWinHeight * sizeof(uint16_t) );
 
 	pOffset = pBumps->aBumpMap;
 	pTOffset = aTempBuffer;
@@ -539,7 +537,7 @@ static void SoftenBumpMap( SBumps *pBumps )
 		}
 	}						
 
-	memcpy( pBumps->aBumpMap, aTempBuffer, pBumps->iWinWidth * pBumps->iWinHeight * sizeof(uint16_) );
+	memcpy( pBumps->aBumpMap, aTempBuffer, pBumps->iWinWidth * pBumps->iWinHeight * sizeof(uint16_t) );
 	free( aTempBuffer );
 }
 
@@ -547,14 +545,14 @@ static void SoftenBumpMap( SBumps *pBumps )
 /* This is where we slap down some pixels... */
 static void Execute( SBumps *pBumps )
 {
-	int32_ nLightXPos, nLightYPos;
-	int32_ iScreenX, iScreenY;
-	int32_ iLightX, iLightY;
-	uint16_ *pBOffset;
-	int8_ *pDOffset;
-	int32_ nX, nY;
-	uint16_ nColor;
-	int32_ nLightOffsetFar = pBumps->SpotLight.nFalloffDiameter - pBumps->SpotLight.nLightRadius;
+	int32_t nLightXPos, nLightYPos;
+	int32_t iScreenX, iScreenY;
+	int32_t iLightX, iLightY;
+	uint16_t *pBOffset;
+	int8_t *pDOffset;
+	int32_t nX, nY;
+	uint16_t nColor;
+	int32_t nLightOffsetFar = pBumps->SpotLight.nFalloffDiameter - pBumps->SpotLight.nLightRadius;
 
 	CalcLightPos( pBumps );
 	
@@ -569,7 +567,7 @@ static void Execute( SBumps *pBumps )
 
     /* warning: pointer targets in assignment differ in signedness
        Should pDOffset be a int8?  I can't tell.  -jwz, 22-Jul-2003 */
-		pDOffset = (int8_ *) &pBumps->pXImage->data[ (iLightY+pBumps->SpotLight.nLightRadius) * pBumps->pXImage->bytes_per_line ];
+		pDOffset = (int8_t *) &pBumps->pXImage->data[ (iLightY+pBumps->SpotLight.nLightRadius) * pBumps->pXImage->bytes_per_line ];
 		pBOffset = pBumps->aBumpMap + ( iScreenY * pBumps->iWinWidth ) + nLightXPos;
 		for( iScreenX=nLightXPos, iLightX=-pBumps->SpotLight.nLightRadius; iLightX<nLightOffsetFar; ++iScreenX, ++iLightX, ++pBOffset, pDOffset+=pBumps->bytesPerPixel )
 		{
@@ -659,7 +657,7 @@ bumps_init (Display *dpy, Window Win)
 
 #ifdef VERBOSE
 	time_t Time = time( NULL );
-	uint16_ iFrame = 0;
+	uint16_t iFrame = 0;
 #endif  /*  VERBOSE */
 	
 	CreateBumps( Bumps, dpy, Win );

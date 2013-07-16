@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1995, 1996, 1997, 1998, 1999, 2003, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -139,10 +138,12 @@ halo_init (Display *dpy, Window window)
   if (mono_p)
     ;
   else if (random() % (cmode == seuss_mode ? 2 : 10))
-    make_uniform_colormap (st->dpy, xgwa.visual, st->cmap, st->colors, &st->ncolors,
+    make_uniform_colormap (xgwa.screen, xgwa.visual, st->cmap,
+                           st->colors, &st->ncolors,
 			   True, 0, True);
   else
-    make_smooth_colormap (st->dpy, xgwa.visual, st->cmap, st->colors, &st->ncolors,
+    make_smooth_colormap (xgwa.screen, xgwa.visual, st->cmap,
+                          st->colors, &st->ncolors,
 			  True, 0, True);
 
   if (st->ncolors <= 2) mono_p = True;
@@ -404,6 +405,9 @@ static const char *halo_defaults [] = {
   "*delay2:		20",
   "*increment:		0",
   "*animate:		False",
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
   0
 };
 

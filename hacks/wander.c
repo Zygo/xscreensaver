@@ -64,12 +64,13 @@ wander_init (Display *dpy, Window window)
     st->color_map = attributes.colormap;
     if (st->color_count)
     {
-        free_colors (st->dpy, st->color_map, st->colors, st->color_count);
+        free_colors (attributes.screen, st->color_map,
+                     st->colors, st->color_count);
         st->color_count = 0;
     }
     st->context = XCreateGC (st->dpy, st->window, 0, &values);
     st->color_count = MAXIMUM_COLOR_COUNT;
-    make_color_loop (st->dpy, st->color_map,
+    make_color_loop (attributes.screen, attributes.visual, st->color_map,
                     0,   1, 1,
                     120, 1, 1,
                     240, 1, 1,
@@ -240,6 +241,9 @@ static const char *wander_defaults [] =
     ".reset:      2500000",
     ".circles:    False",
     ".size:       1",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
     0
 };
 

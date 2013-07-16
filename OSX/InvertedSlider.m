@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
 *
 * Permission to use, copy, modify, distribute, and sell this software and its
 * documentation for any purpose is hereby granted without fee, provided that
@@ -49,72 +49,36 @@
   return v2;
 }
 
--(double) doubleValue;
+#ifndef USE_IPHONE
+
+/* On MacOS, we have to transform the value on every entry and exit point
+   to this class.  So, we implement doubleValue and setDoubleValue to
+   transform the value; and we then have to re-implement every getter and
+   setter in terms of those.  There's no way to simply change how the
+   slider is displayed without mucking with the value inside of it.
+ */
+
+-(double) doubleValue
 {
-# ifdef USE_IPHONE
-  return [self transformValue:[self value]];
-# else
   return [self transformValue:[super doubleValue]];
-# endif
 }
 
 -(void) setDoubleValue:(double)v
 {
-# ifdef USE_IPHONE
-  return [super setValue:[self transformValue:v]];
-# else
   return [super setDoubleValue:[self transformValue:v]];
-# endif
 }
 
+-(float)floatValue       { return (float) [self doubleValue]; }
+-(int)intValue           { return (int) [self doubleValue]; }
+-(NSInteger)integerValue { return (NSInteger) [self doubleValue]; }
+-(id)objectValue { return [NSNumber numberWithDouble:[self doubleValue]]; }
 
-#ifdef USE_IPHONE
-
-- (void)setValue:(float)v animated:(BOOL)a
+-(NSString *)stringValue
 {
-  return [super setValue:[self transformValue:v] animated:a];
-}
-
-
-/* Draw the thumb in the right place by also inverting its position
-   relative to the track.
- */
-- (CGRect)thumbRectForBounds:(CGRect)bounds
-                   trackRect:(CGRect)rect
-                       value:(float)value
-{
-  CGRect thumb = [super thumbRectForBounds:bounds trackRect:rect value:value];
-  if (inverted)
-    thumb.origin.x = rect.size.width - thumb.origin.x - thumb.size.width;
-  return thumb;
-}
-
-#endif // !USE_IPHONE
-
-
-
-/* Implement all accessor methods in terms of "doubleValue" above.
-   (Note that these normally exist only on MacOS, not on iOS.)
- */
-
--(float) floatValue;
-{
-  return (float) [self doubleValue];
-}
-
--(int) intValue;
-{
-  return (int) [self doubleValue];
-}
-
--(id) objectValue;
-{
-  return [NSNumber numberWithDouble:[self doubleValue]];
-}
-
--(NSString *) stringValue;
-{
-  return [NSString stringWithFormat:@"%f", [self floatValue]];
+  if (integers)
+    return [NSString stringWithFormat:@"%d", [self intValue]];
+  else
+    return [NSString stringWithFormat:@"%f", [self doubleValue]];
 }
 
 - (NSAttributedString *)attributedStringValue;
@@ -123,18 +87,18 @@
   return [[NSAttributedString alloc] initWithString:[self stringValue]];
 }
 
-
-/* Implment all setter methods in terms of "setDoubleValue", above.
- */
-
--(void) setFloatValue:(float)v
-{
-  [self setDoubleValue:(double)v];
-}
-
--(void) setIntValue:(int)v
-{
-  [self setDoubleValue:(double)v];
+-(void)setFloatValue:(float)v       { [self setDoubleValue: (double) v];      }
+-(void)setIntValue:  (int)v         { [self setDoubleValue: (double) v];      }
+-(void)setIntegerValue:(NSInteger)v { [self setDoubleValue: (double) v];      }
+-(void)setStringValue:(NSString *)v { [self setDoubleValue: [v doubleValue]]; }
+-(void)takeIntValueFrom:(id)f       { [self setIntValue:    [f intValue]];    }
+-(void)takeFloatValueFrom:(id)f     { [self setFloatValue:  [f floatValue]];  }
+-(void)takeDoubleValueFrom:(id)f    { [self setDoubleValue: [f doubleValue]]; }
+-(void)takeStringValueFrom:(id)f    { [self setStringValue: [f stringValue]]; }
+-(void)takeObjectValueFrom:(id)f    { [self setObjectValue: [f objectValue]]; }
+-(void)takeIntegerValueFrom:(id)f   { [self setIntegerValue:[f integerValue]];}
+-(void) setAttributedStringValue:(NSAttributedString *)v {
+  [self setStringValue:[v string]];
 }
 
 -(void) setObjectValue:(id <NSCopying>)v
@@ -146,14 +110,42 @@
   [self setDoubleValue:[((NSNumber *) v) doubleValue]];
 }
 
--(void) setStringValue:(NSString *)v
+#else  // USE_IPHONE
+
+/* On iOS, we have control over how the value is displayed, but there's no
+   way to transform the value on input and output: if we wrap 'value' and
+   'setValue' analagously to what we do on MacOS, things fail in weird
+   ways.  Presumably some parts of the system are accessing the value
+   instance variable directly instead of going through the methods.
+
+   So the only way around this is to enforce that all of our calls into
+   this object use a new API: 'transformedValue' and 'setTransformedValue'.
+   The code in XScreenSaverConfigSheet uses that instead.
+ */
+
+- (CGRect)thumbRectForBounds:(CGRect)bounds
+                   trackRect:(CGRect)rect
+                       value:(float)value
 {
-  [self setDoubleValue:[v doubleValue]];
+  CGRect thumb = [super thumbRectForBounds: bounds
+                                 trackRect: rect 
+                                     value: [self transformValue:value]];
+  if (inverted)
+    thumb.origin.x = rect.size.width - thumb.origin.x - thumb.size.width;
+  return thumb;
 }
 
--(void) setAttributedStringValue:(NSAttributedString *)v
+-(double) transformedValue
 {
-  [self setStringValue:[v string]];
+  return [self transformValue: [self value]];
 }
+
+-(void) setTransformedValue:(double)v
+{
+  [self setValue: [self transformValue: v]];
+}
+
+#endif // USE_IPHONE
+
 
 @end

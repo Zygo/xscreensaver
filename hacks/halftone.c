@@ -191,7 +191,7 @@ halftone_init (Display *dpy, Window window)
   halftone->ncolors = get_integer_resource (dpy, "colors", "Colors");
   if (halftone->ncolors < 4) halftone->ncolors = 4;
   halftone->colors = (XColor *) calloc(halftone->ncolors, sizeof(XColor));
-  make_smooth_colormap (dpy, attrs.visual, attrs.colormap,
+  make_smooth_colormap (attrs.screen, attrs.visual, attrs.colormap,
                         halftone->colors, &halftone->ncolors,
                         True, 0, False);
   halftone->color0 = 0;
@@ -373,6 +373,9 @@ static const char *halftone_defaults [] = {
   "*sizeFactor:		1.5",
   "*colors:		200",
   "*cycleSpeed:		10",
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
   0
 };
 

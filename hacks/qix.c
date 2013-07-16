@@ -592,6 +592,9 @@ static const char *qix_defaults [] = {
   "*transparent:true",
   "*gravity:	false",
   "*additive:	true",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

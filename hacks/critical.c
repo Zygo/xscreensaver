@@ -216,21 +216,21 @@ setup_colormap (struct state *st, XColor **colors, int *n_colors)
   
   if (!strcmp (color_scheme, "random"))
     {
-      make_random_colormap (st->dpy, st->wattr.visual,
+      make_random_colormap (st->wattr.screen, st->wattr.visual,
 			    st->wattr.colormap,
 			    *colors, n_colors,
 			    True, True, &writable, True);
     }
   else if (!strcmp (color_scheme, "smooth"))
     {
-      make_smooth_colormap (st->dpy, st->wattr.visual,
+      make_smooth_colormap (st->wattr.screen, st->wattr.visual,
 			    st->wattr.colormap,
 			    *colors, n_colors,
 			    True, &writable, True);
     }
   else 
     {
-      make_uniform_colormap (st->dpy, st->wattr.visual,
+      make_uniform_colormap (st->wattr.screen, st->wattr.visual,
 			     st->wattr.colormap,
 			     *colors, n_colors, True,
 			     &writable, True);
@@ -242,7 +242,7 @@ setup_colormap (struct state *st, XColor **colors, int *n_colors)
 static void
 free_colormap (struct state *st, XColor **colors, int n_colors)
 {
-  free_colors (st->dpy, st->wattr.colormap, *colors, n_colors);
+  free_colors (st->wattr.screen, st->wattr.colormap, *colors, n_colors);
   free (*colors);
 }
 

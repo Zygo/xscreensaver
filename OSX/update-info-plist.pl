@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2013 Jamie Zawinski <jwz@jwz.org>
+# Copyright Â© 2006-2013 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -24,7 +24,7 @@ use strict;
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my $version = q{ $Revision: 1.23 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.24 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 
@@ -47,6 +47,7 @@ sub read_info_plist($) {
   } else {
     error ("$file: $!");
   }
+  print STDERR "$progname: read $file\n" if ($verbose > 2);
   local $/ = undef;  # read entire file
   my $body = <$in>;
   close $in;
@@ -82,6 +83,7 @@ sub read_saver_xml($) {
   } else {
     error ("$file: $!");
   }
+  print STDERR "$progname: read $file\n" if ($verbose > 2);
   local $/ = undef;  # read entire file
   my $body = <$in>;
   close $in;

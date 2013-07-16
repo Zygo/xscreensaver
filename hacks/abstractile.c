@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (c) 2004-2009 Steve Sundstrom
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -6,7 +6,7 @@
  * the above copyright notice appear in all copies and that both that
  * copyright notice and this permission notice appear in supporting
  * documentation.  No representations are made about the suitability of this
- * software for any purpose.  It is provided "as is" without express or 
+ * software for any purpose.  It is provided "as is" without express or
  * implied warranty.
  */
 
@@ -41,7 +41,7 @@
 #define PT_NL			3
 
 #define D3D_NONE		0
-#define D3D_BLOCK		1 
+#define D3D_BLOCK		1
 #define D3D_NEON		2
 #define D3D_TILED		3
 
@@ -74,7 +74,7 @@ struct gridStruct {
     unsigned int line, hl, hr, vu, vd, dhl, dhr, dvu, dvd;
 };
 
-/* basically the same as global variables, but used to keep them in a bucket 
+/* basically the same as global variables, but used to keep them in a bucket
    and pass them around easier like the original C++ implementation */
 struct state {
   /* window values */
@@ -118,10 +118,10 @@ struct state {
   int round;
   int outline;
   /* layered draw variables */
-  int pattern[LAYERS], shape[LAYERS], mix[LAYERS]; 
-  int csw[LAYERS], wsx[LAYERS], wsy[LAYERS], sec[LAYERS]; 
-  int cs1[LAYERS], cs2[LAYERS], cs3[LAYERS]; int cs4[LAYERS]; 
-  int wave[LAYERS], waveh[LAYERS], wavel[LAYERS]; 
+  int pattern[LAYERS], shape[LAYERS], mix[LAYERS];
+  int csw[LAYERS], wsx[LAYERS], wsy[LAYERS], sec[LAYERS];
+  int cs1[LAYERS], cs2[LAYERS], cs3[LAYERS]; int cs4[LAYERS];
+  int wave[LAYERS], waveh[LAYERS], wavel[LAYERS];
   int rx1[LAYERS], rx2[LAYERS], rx3[LAYERS];
   int ry1[LAYERS], ry2[LAYERS], ry3[LAYERS];
   /* misc variables */
@@ -130,24 +130,24 @@ struct state {
   struct timeval time;
 };
 
-static int 
-_min(int a, int b) 
+static int
+_min(int a, int b)
 {
   if (a<=b)
     return(a);
   return(b);
 }
 
-static int 
-_max(int a, int b) 
+static int
+_max(int a, int b)
 {
   if (a>=b)
     return(a);
   return(b);
 }
 
-static int 
-_dist(struct state *st, int x1, int x2, int y1, int y2, int s) 
+static int
+_dist(struct state *st, int x1, int x2, int y1, int y2, int s)
 {
   double xd=x1-x2;
   double yd=y1-y2;
@@ -163,10 +163,10 @@ _dist(struct state *st, int x1, int x2, int y1, int y2, int s)
   }
 }
 
-static int 
-_wave(struct state *st, int x, int h, int l, int wave) 
+static int
+_wave(struct state *st, int x, int h, int l, int wave)
 {
-  l+=1; 
+  l+=1;
   switch(wave) {
     case 0:                                         /* cos wave*/
       return((int)(cos((double)x*M_PI/l)*h));
@@ -178,30 +178,30 @@ _wave(struct state *st, int x, int h, int l, int wave)
     case 4:                                   /* giant zig zag */
       return(abs((x%(l*4)-l*2))*h*3/l);
     case 5:                                        /* sawtooth */
-      return((x%(l))*h/l); 
+      return((x%(l))*h/l);
     default:				  	    /* no wave */
       return(0);
-  } 
+  }
 }
 
-static int 
-_triangle(struct state *st, int x, int y, int rx, int ry, int t) 
+static int
+_triangle(struct state *st, int x, int y, int rx, int ry, int t)
 {
   switch(t) {
     case 1:
       return(_min(_min(x+y+rx-(st->gridx/2),st->gridx-x+y),(st->gridy-y+(ry/2))*3/2));
     case 2:
-      return(_min(_min(x-rx,y-ry),(rx+ry-x-y)*2/3)); 
+      return(_min(_min(x-rx,y-ry),(rx+ry-x-y)*2/3));
     case 3:
       return(_min(_min(st->gridx-x-rx,y-ry),(rx+ry-st->gridx+x-y)*2/3));
     case 4:
       return(_min(_min(x-rx,st->gridy-y-ry),(rx+ry-x-st->gridy+y)*2/3));
-  } 
+  }
   return(_min(_min(st->gridx-x-rx,st->gridy-y-ry),(rx+ry-st->gridx+x-st->gridy+y)*2/3));
 }
 
-static void 
-_init_zlist(struct state *st) 
+static void
+_init_zlist(struct state *st)
 {
   unsigned int tmp, y, z;
 
@@ -213,7 +213,7 @@ _init_zlist(struct state *st)
     st->grid[z].line=st->grid[z].hl=st->grid[z].hr=st->grid[z].vu=st->grid[z].vd=st->grid[z].dhl=st->grid[z].dhr=st->grid[z].dvu=st->grid[z].dvd=0;
     st->zlist[z]=z;
   }
-  /* rather than pull x,y points randomly and wait to hit final empy cells a 
+  /* rather than pull x,y points randomly and wait to hit final empy cells a
      list of all points is created and mixed so empty cells do get hit last */
   for (z=0; z<st->gridn; z++) {
     y=random()%st->gridn;
@@ -224,25 +224,24 @@ _init_zlist(struct state *st)
 }
 
 static void
-make_color_ramp_rgb (Display *dpy, Colormap cmap,
+make_color_ramp_rgb (Screen *screen, Visual *visual, Colormap cmap,
     int r1, int g1, int b1,  int r2, int g2, int b2,
-    XColor *colors, int *ncolorsP,
-    Bool closed_p, Bool allocate_p, Bool writable_p)
+    XColor *colors, int *ncolorsP, Bool closed_p)
 {
     int h1, h2;
     double s1, s2, v1, v2;
     rgb_to_hsv(r1, g1, b1, &h1, &s1, &v1);
     rgb_to_hsv(r2, g2, b2, &h2, &s2, &v2);
-    make_color_ramp(dpy, cmap, h1, s1, v1, h2, s2, v2,
-        colors, ncolorsP, False, allocate_p, writable_p);
+    make_color_ramp(screen, visual, cmap, h1, s1, v1, h2, s2, v2,
+        colors, ncolorsP, False, True, 0);
 }
 
 
-static void 
+static void
 _init_colors(struct state *st)
 {
   int col[BASECOLORS];
-  int c1, c2, c3, h1, h2, h3; 
+  int c1, c2, c3, h1, h2, h3;
   int r1, g1, b1, r2, g2, b2, r3, g3, b3;
   double s1, s2, s3, v1, v2, v3;
   XColor tmp_col1[16], tmp_col2[16], tmp_col3[16];
@@ -281,7 +280,7 @@ _init_colors(struct state *st)
     /* 29 pink */     {0xFFFF,0x9999,0xFFFF}};
 
   if (st->d3d) {
-    st->shades = (st->d3d==D3D_TILED) ? 5 : st->lwid/2+1;      
+    st->shades = (st->d3d==D3D_TILED) ? 5 : st->lwid/2+1;
     st->ncolors=4+random()%4;
     if (st->cmap>0) {                      /* tint the basecolors a bit */
       for (c1=0; c1<BASECOLORS; c1++)
@@ -297,44 +296,44 @@ _init_colors(struct state *st)
     }
     switch(st->cmap%4) {
       case 0:                                            /* all */
-        for (c1=0; c1<st->ncolors; c1++) 
+        for (c1=0; c1<st->ncolors; c1++)
           col[c1]=random()%BASECOLORS;
         break;
       case 1:                                          /* darks */
-        for (c1=0; c1<st->ncolors; c1++) 
+        for (c1=0; c1<st->ncolors; c1++)
           col[c1]=random()%15;
         break;
       case 2:                                   /* semi consecutive darks */
         col[0]=random()%15;
-        for (c1=1; c1<st->ncolors; c1++) 
+        for (c1=1; c1<st->ncolors; c1++)
           col[c1]=(col[c1-1]+1+random()%2)%15;
         break;
       case 3:                                   /* consecutive darks */
         col[0]=random()%(15-st->ncolors);
-        for (c1=1; c1<st->ncolors; c1++) 
+        for (c1=1; c1<st->ncolors; c1++)
           col[c1]=col[c1-1]+1;
         break;
     }
     for (c1=0; c1<st->ncolors; c1++) {
       /* adjust colors already set */
-      for (h1=c1*st->shades-1; h1>=0; h1--) 
+      for (h1=c1*st->shades-1; h1>=0; h1--)
         st->colors[h1+st->shades]=st->colors[h1];
-      make_color_ramp_rgb(st->display, st->xgwa.colormap,
-        basecol[col[c1]][0], basecol[col[c1]][1], basecol[col[c1]][2], 
-        0xFFFF, 0xFFFF, 0xFFFF, st->colors, &st->shades, 
-        False, True, False);
+      make_color_ramp_rgb(st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
+        basecol[col[c1]][0], basecol[col[c1]][1], basecol[col[c1]][2],
+        0xFFFF, 0xFFFF, 0xFFFF, st->colors, &st->shades,
+        False);
     }
     return;
   }
   /* not 3d */
   st->shades=1;
   if (st->cmap%2) {                                  /* basecolors */
-    if (random()%3) {           
-      c1=random()%15;                
+    if (random()%3) {
+      c1=random()%15;
       c2=(c1+3+(random()%5))%15;
       c3=(c2+3+(random()%5))%15;
     } else {
-      c1=random()%BASECOLORS;                
+      c1=random()%BASECOLORS;
       c2=(c1+5+(random()%10))%BASECOLORS;
       c3=(c2+5+(random()%10))%BASECOLORS;
     }
@@ -366,9 +365,9 @@ _init_colors(struct state *st)
       st->ncolors=5+random()%5;
       if (st->cmap>1)
         r2=g2=b2=0xFFFF;
-      make_color_ramp_rgb(st->display, st->xgwa.colormap,
-        r1, g1, b1, r2, g2, b2, 
-        st->colors, &st->ncolors, random()%2, True, False);
+      make_color_ramp_rgb(st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
+        r1, g1, b1, r2, g2, b2,
+        st->colors, &st->ncolors, random()%2);
       break;
     case 4:                                /* 3 color make_color_loop */
     case 5:
@@ -379,21 +378,21 @@ _init_colors(struct state *st)
       rgb_to_hsv(r2, g2, b2, &h2, &s2, &v2);
       rgb_to_hsv(r3, g3, b3, &h3, &s3, &v3);
 
-      make_color_loop(st->display, st->xgwa.colormap,
+      make_color_loop(st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
         h1, s1, v1, h2, s2, v2, h3, s3, v3,
         st->colors, &st->ncolors, True, False);
       break;
     case 8:                                            /* random smooth */
     case 9:
       st->ncolors=(random()%4)*6+12;
-      make_smooth_colormap (st->display, st->xgwa.visual, 
-        st->xgwa.colormap, st->colors, &st->ncolors, 
+      make_smooth_colormap (st->xgwa.screen, st->xgwa.visual,
+        st->xgwa.colormap, st->colors, &st->ncolors,
         True, False, True);
       break;
     case 10:                                                 /* rainbow */
       st->ncolors=(random()%4)*6+12;
-      make_uniform_colormap (st->display, st->xgwa.visual, 
-        st->xgwa.colormap, st->colors, &st->ncolors, 
+      make_uniform_colormap (st->xgwa.screen, st->xgwa.visual,
+        st->xgwa.colormap, st->colors, &st->ncolors,
         True, False, True);
       break;
     case 11:                                     /* dark to light blend */
@@ -401,12 +400,12 @@ _init_colors(struct state *st)
     case 13:
     case 14:
       st->ncolors=7;
-      make_color_ramp_rgb(st->display, st->xgwa.colormap,
-        r1, g1, b1, 0xFFFF, 0xFFFF, 0xFFFF, 
-        tmp_col1, &st->ncolors, False, True, False);
-      make_color_ramp_rgb(st->display, st->xgwa.colormap,
-        r2, g2, b2, 0xFFFF, 0xFFFF, 0xFFFF, 
-        tmp_col2, &st->ncolors, False, True, False);
+      make_color_ramp_rgb(st->xgwa.screen, st->xgwa.visual,  st->xgwa.colormap,
+        r1, g1, b1, 0xFFFF, 0xFFFF, 0xFFFF,
+        tmp_col1, &st->ncolors, False);
+      make_color_ramp_rgb(st->xgwa.screen, st->xgwa.visual,  st->xgwa.colormap,
+        r2, g2, b2, 0xFFFF, 0xFFFF, 0xFFFF,
+        tmp_col2, &st->ncolors, False);
       if (st->cmap<13) {
         for(c1=0; c1<=4; c1++) {
            st->colors[c1*2]=tmp_col1[c1];
@@ -414,9 +413,9 @@ _init_colors(struct state *st)
         }
         st->ncolors=10;
       } else {
-        make_color_ramp_rgb(st->display, st->xgwa.colormap,
-          r3, g3, b3, 0xFFFF, 0xFFFF, 0xFFFF, 
-          tmp_col3, &st->ncolors, False, True, False);
+        make_color_ramp_rgb(st->xgwa.screen, st->xgwa.visual,  st->xgwa.colormap,
+          r3, g3, b3, 0xFFFF, 0xFFFF, 0xFFFF,
+          tmp_col3, &st->ncolors, False);
         for(c1=0; c1<=4; c1++) {
            st->colors[c1*3]=tmp_col1[c1];
            st->colors[c1*3+1]=tmp_col2[c1];
@@ -427,8 +426,8 @@ _init_colors(struct state *st)
       break;
     default:                                                  /* random */
       st->ncolors=(random()%4)*6+12;
-      make_random_colormap (st->display, st->xgwa.visual, 
-        st->xgwa.colormap, st->colors, &st->ncolors, 
+      make_random_colormap (st->xgwa.screen, st->xgwa.visual,
+        st->xgwa.colormap, st->colors, &st->ncolors,
         False, True, False, True);
       break;
   }
@@ -447,7 +446,7 @@ _init_colors(struct state *st)
 static int _comparedeo(const void *i, const void *j)
 {
         struct lineStruct *h1, *h2;
-                                                                                
+
         h1=(struct lineStruct *)i;
         h2=(struct lineStruct *)j;
         if (h1->deo > h2->deo)
@@ -457,7 +456,7 @@ static int _comparedeo(const void *i, const void *j)
         return(0);
 }
 
-static int 
+static int
 _hv(struct state *st, int x, int y, int d1, int d2, int pn, Bool de)
 {
   int v1, v2, r;
@@ -495,7 +494,7 @@ _hv(struct state *st, int x, int y, int d1, int d2, int pn, Bool de)
   return(r);
 }
 	
-static int 
+static int
 _getdeo(struct state *st, int x, int y, int map, int de)
 {
   int cr;
@@ -505,39 +504,39 @@ _getdeo(struct state *st, int x, int y, int map, int de)
     case 1:                                          /* vertical one side */
       return(y);
     case 2:                                        /* horizontal two side */
-      return(_min(x,st->gridx-x)+1); 
+      return(_min(x,st->gridx-x)+1);
     case 3:                                          /* vertical two side */
-      return(_min(y,st->gridy-y)+1); 
+      return(_min(y,st->gridy-y)+1);
     case 4:                                                     /* square */
       return(_max(abs(x-st->rx3[de]),abs(y-st->ry3[de]))+1);
     case 5:                                                /* two squares */
-      return(_min(_max(abs(x-(st->rx3[de]/2)),abs(y-st->ry3[de])),_max(abs(x-(st->gridx-(st->rx2[de]/2))),abs(y-st->ry2[de])))+1); 
+      return(_min(_max(abs(x-(st->rx3[de]/2)),abs(y-st->ry3[de])),_max(abs(x-(st->gridx-(st->rx2[de]/2))),abs(y-st->ry2[de])))+1);
     case 6:                                       /* horizontal rectangle */
-      return(_max(abs(x-st->rx3[de]),abs(y-(st->ry3[de]))*st->cs1[de])+1); 
+      return(_max(abs(x-st->rx3[de]),abs(y-(st->ry3[de]))*st->cs1[de])+1);
     case 7:                                         /* vertical rectangle */
-      return(_max(abs(x-st->rx3[de])*st->cs1[de],abs(y-(st->ry3[de])))+1); 
+      return(_max(abs(x-st->rx3[de])*st->cs1[de],abs(y-(st->ry3[de])))+1);
     case 8:                                                    /* + cross */
-      return(_min(abs(x-st->rx3[de]),abs(y-(st->ry3[de])))+1); 
+      return(_min(abs(x-st->rx3[de]),abs(y-(st->ry3[de])))+1);
     case 9:                                                   /* diagonal */
       return((x*3/4+y)+1);
     case 10:                                         /* opposite diagonal */
-      return((x*3/4+st->gridy-y)+1); 
+      return((x*3/4+st->gridy-y)+1);
     case 11:                                                   /* diamond */
-      return((abs(x-st->rx3[de])+abs(y-st->ry3[de]))/2+1); 
+      return((abs(x-st->rx3[de])+abs(y-st->ry3[de]))/2+1);
     case 12:                                              /* two diamonds */
       return(_min(abs(x-(st->rx3[de]/2))+abs(y-st->ry3[de]),abs(x-(st->gridx-(st->rx2[de]/2)))+abs(y-st->ry2[de]))/2+1);
     case 13:                                                    /* circle */
-      return(_dist(st,x,st->rx3[de],y,st->ry3[de],0)+1); 
+      return(_dist(st,x,st->rx3[de],y,st->ry3[de],0)+1);
     case 14:                                        /* horizontal ellipse */
-      return(_dist(st,x,st->rx3[de],y,st->ry3[de],1)+1); 
+      return(_dist(st,x,st->rx3[de],y,st->ry3[de],1)+1);
     case 15:                                          /* vertical ellipse */
-      return(_dist(st,x,st->rx3[de],y,st->ry3[de],2)+1); 
+      return(_dist(st,x,st->rx3[de],y,st->ry3[de],2)+1);
     case 16:                                               /* two circles */
-      return(_min(_dist(st,x,st->rx3[de]/2,y,st->ry3[de],0),_dist(st,x,st->gridx-(st->rx2[de]/2),y,st->ry2[de],0))+1); 
+      return(_min(_dist(st,x,st->rx3[de]/2,y,st->ry3[de],0),_dist(st,x,st->gridx-(st->rx2[de]/2),y,st->ry2[de],0))+1);
     case 17:                                  /* horizontal straight wave */
       return(x+_wave(st,st->gridy+y,st->csw[0]*st->cs1[0],st->csw[0]*st->cs2[0],st->wave[de]));
     case 18:                                    /* vertical straight wave */
-      return(y+_wave(st,st->gridx+x,st->csw[0]*st->cs1[0],st->csw[0]*st->cs2[0],st->wave[de])); 
+      return(y+_wave(st,st->gridx+x,st->csw[0]*st->cs1[0],st->csw[0]*st->cs2[0],st->wave[de]));
     case 19:                                     /* horizontal wavey wave */
       return(x+_wave(st,st->gridy+y+((x/5)*st->edir),st->csw[de]*st->cs1[de],st->csw[de]*st->cs2[de],st->wave[de])+1);
     case 20:                                       /* vertical wavey wave */
@@ -546,19 +545,19 @@ _getdeo(struct state *st, int x, int y, int map, int de)
     case 21:                                  /* simultaneous directional */
       return(_hv(st,x,y,st->cs1[0]%2,st->cs2[0]%2,1,de));
     case 22:                                       /* reverse directional */
-      return(_hv(st,x,y,st->cs1[0]%2,st->cs2[0]%2,-1,de)); 
+      return(_hv(st,x,y,st->cs1[0]%2,st->cs2[0]%2,-1,de));
     case 23:                                                    /* length */
-      if (de) 
-        return(st->dline[st->li].len*1000+random()%5000); 
-      else 
+      if (de)
+        return(st->dline[st->li].len*1000+random()%5000);
+      else
         return(st->eline[st->li].len*1000+random()%5000);
     case 24:                                                    /* object */
-    case 25:                                                    
-    case 26:                                                    
-    case 27:                                                    
-      if (de) 
-        return(st->dline[st->li].obj*100); 
-      else 
+    case 25:
+    case 26:
+    case 27:
+      if (de)
+        return(st->dline[st->li].obj*100);
+      else
         return(st->eline[st->li].obj*100);
     default:                                                     /* color */
       cr = (de) ? st->dline[st->li].color : st->eline[st->li].color;
@@ -578,7 +577,7 @@ _getdeo(struct state *st, int x, int y, int map, int de)
   return(1);
 }
 
-static void 
+static void
 _init_screen(struct state *st)
 {
   int nstr, x;
@@ -606,7 +605,7 @@ _init_screen(struct state *st)
     st->zlist = calloc(st->narray, sizeof(unsigned int));
     st->fdol = calloc(st->narray, sizeof(unsigned int));
     st->odi = calloc(st->narray, sizeof(Bool));
-    if ((st->dline == NULL) || (st->eline == NULL) || 
+    if ((st->dline == NULL) || (st->eline == NULL) ||
       (st->grid == NULL) || (st->zlist == NULL) ||
       (st->fdol == NULL) || (st->odi == NULL)) {
       fprintf(stderr, "not enough memory\n");
@@ -627,7 +626,7 @@ _init_screen(struct state *st)
     st->egridy=st->gridy;
 
     /* create new erase order */
-    for (st->li=1; st->li<=st->eli; st->li++) 
+    for (st->li=1; st->li<=st->eli; st->li++)
       st->eline[st->li].deo=(_getdeo(st,st->eline[st->li].x,st->eline[st->li].y,st->emap,0) + (random()%st->evar) + (random()%st->evar))*st->edir;
     qsort(st->eline, st->eli+1, sizeof(struct lineStruct), _comparedeo);
   }
@@ -637,9 +636,9 @@ _init_screen(struct state *st)
   st->di=st->ei=st->fi=st->li=st->oi=st->zi=0;
   st->grid_full=False;
   /* li starts from 1 */
-  st->dline[0].x=st->dline[0].y=st->dline[0].len=0; 
+  st->dline[0].x=st->dline[0].y=st->dline[0].len=0;
   /* to keep it first after sorting so di is never null */
-  st->dline[0].deo=-999999999; 
+  st->dline[0].deo=-999999999;
 
   /* set random screen variables */
   st->lwid = (st->ii==1) ? 3 : 2+((random()%6)%4);
@@ -647,13 +646,13 @@ _init_screen(struct state *st)
     (st->tile==TILE_OUTLINE)) ? D3D_NONE :
     (st->tile==TILE_BLOCK) ? D3D_BLOCK :
     (st->tile==TILE_NEON) ? D3D_NEON :
-    (st->tile==TILE_TILED) ? D3D_TILED : 
+    (st->tile==TILE_TILED) ? D3D_TILED :
     /* force TILE_D3D on first screen to properly load all shades */
-    ((st->ii==1) && (!st->newcols)) ? D3D_TILED : (random()%5)%4; 
+    ((st->ii==1) && (!st->newcols)) ? D3D_TILED : (random()%5)%4;
 /* st->d3d=D3D_BLOCK; st->lwid=2; */
   st->outline = (st->tile==TILE_OUTLINE) ? 1 :
-     ((st->tile!=TILE_RANDOM) || (random()%5)) ? 0 : 1; 
-  st->round = (st->d3d==D3D_NEON) ? 1 : 
+     ((st->tile!=TILE_RANDOM) || (random()%5)) ? 0 : 1;
+  st->round = (st->d3d==D3D_NEON) ? 1 :
     ((st->d3d==D3D_BLOCK) || (st->outline) || (random()%6)) ? 0 : 1;
   if ((st->d3d) || (st->outline) || (st->round))
     st->lwid+=2;
@@ -663,7 +662,7 @@ _init_screen(struct state *st)
     st->lwid++;
   if (st->tile==TILE_THIN)
     st->lwid=2;
- 
+
   _init_zlist(st);
 
   st->maxlen=(st->lwid>6) ? 2+(random()%4) :
@@ -678,10 +677,10 @@ _init_screen(struct state *st)
   st->dmap = (st->emap+5+(random()%5))%DRAWORDERS;
 
   st->dmap=20+random()%20;
-  
+
   st->dvar = (st->dmap>22) ? 100 : 10+(st->csw[0]*(random()%5));
   st->ddir= (random()%2) ? 1 : -1;
-  
+
   st->emap = (st->dmap+10+(random()%10))%20;
   st->evar = (st->emap>22) ? 100 : 10+(st->csw[0]*(random()%5));
   st->edir= (random()%2) ? 1 : -1;
@@ -694,10 +693,10 @@ _init_screen(struct state *st)
     st->shape[x]=random()%SHAPES;
     st->mix[x]=random()%20;
     nstr = (st->lwid==2) ? 20+random()%12 :
-      (st->lwid==3) ? 16+random()%8 : 
-      (st->lwid==4) ? 12+random()%6 : 
-      (st->lwid==5) ? 10+random()%5 : 
-      (st->lwid==6) ? 8+random()%4 : 
+      (st->lwid==3) ? 16+random()%8 :
+      (st->lwid==4) ? 12+random()%6 :
+      (st->lwid==5) ? 10+random()%5 :
+      (st->lwid==6) ? 8+random()%4 :
         5+random()%5;
     st->csw[x] = _max(5,st->gridy/nstr);
     st->wsx[x] = (st->wsx[x]+3+(random()%3))%STRETCHES;
@@ -709,7 +708,7 @@ _init_screen(struct state *st)
     st->cs3[x] = (st->dialog) ? 1+random()%3 : 2+random()%5;
     st->cs4[x] = (st->dialog) ? 1+random()%3 : 2+random()%5;
     st->wave[x]=random()%WAVES;
-    st->wavel[x]=st->csw[x]*(2+random()%6); 
+    st->wavel[x]=st->csw[x]*(2+random()%6);
     st->waveh[x]=st->csw[x]*(1+random()%3);
     st->rx1[x]=(st->gridx/10+random()%(st->gridx*8/10));
     st->ry1[x]=(st->gridy/10+random()%(st->gridy*8/10));
@@ -720,7 +719,7 @@ _init_screen(struct state *st)
   }
 }
 
-static int 
+static int
 _shape(struct state *st, int x, int y, int rx, int ry, int n)
 {
   switch(st->shape[n]) {
@@ -738,22 +737,22 @@ _shape(struct state *st, int x, int y, int rx, int ry, int n)
     case 8:
       return(1+_dist(st,x,rx,y,ry,st->cs1[n]));
     case 9:					  /* black hole circle */
-      return(1+(st->gridx*st->gridy/(1+(_dist(st,x,rx,y,ry,st->cs2[n]))))); 
+      return(1+(st->gridx*st->gridy/(1+(_dist(st,x,rx,y,ry,st->cs2[n])))));
     case 10:                                                   /* sun */
       return(1+_min(abs(x-rx)*st->gridx/(abs(y-ry)+1),abs(y-ry)*st->gridx/(abs(x-rx)+1)));
     case 11:                             /* 2 circles+inverted circle */
-      return(1+(_dist(st,x,rx,y,ry,st->cs1[n])*_dist(st,x,(rx*3)%st->gridx,y,(ry*5)%st->gridy,st->cs1[n])/(1+_dist(st,x,(rx*4)%st->gridx,y,(ry*7)%st->gridy,st->cs1[n])))); 
+      return(1+(_dist(st,x,rx,y,ry,st->cs1[n])*_dist(st,x,(rx*3)%st->gridx,y,(ry*5)%st->gridy,st->cs1[n])/(1+_dist(st,x,(rx*4)%st->gridx,y,(ry*7)%st->gridy,st->cs1[n]))));
     case 12:                                                   /* star */
       return(1+(int)sqrt(abs((x-rx)*(y-ry))));
     case 13:                                       /* centered ellipse */
       return(1+_dist(st,x,rx,y,ry,0)+_dist(st,x,st->gridx-rx,y,st->gridy-ry,0));
     default:                                               /* triangle */
       return(1+_triangle(st,x,y,rx,ry,st->cs4[n]));
-  } 
+  }
   return(1+_triangle(st,x,y,rx,ry,st->cs4[n]));
 }
 
-static int 
+static int
 _pattern(struct state *st, int x, int y, int n)
 {
   int v=0, ox;
@@ -857,7 +856,7 @@ _pattern(struct state *st, int x, int y, int n)
       v=y+(y+st->csw[n]*st->cs3[n])+_wave(st,x,st->csw[n]/3*st->cs3[n],st->csw[n]/3*st->cs2[n],st->wave[n])+_wave(st,x,st->csw[n]/3*st->cs4[n],st->csw[n]/3*st->cs1[n]*3/2,st->wave[n]);
       break;
     case 19:                                          /* double vwave */
-      v=x+(x+st->csw[n]*st->cs1[n])+_wave(st,y,st->csw[n]/3*st->cs1[n],st->csw[n]/3*st->cs3[n],st->wave[n])+_wave(st,y,st->csw[n]/3*st->cs2[n],st->csw[n]/3*st->cs4[n]*3/2,st->wave[n]); 
+      v=x+(x+st->csw[n]*st->cs1[n])+_wave(st,y,st->csw[n]/3*st->cs1[n],st->csw[n]/3*st->cs3[n],st->wave[n])+_wave(st,y,st->csw[n]/3*st->cs2[n],st->csw[n]/3*st->cs4[n]*3/2,st->wave[n]);
       break;
     case 20:					              /* one shape */
     case 21:
@@ -897,7 +896,7 @@ _pattern(struct state *st, int x, int y, int n)
       v=(_min(_shape(st,x, y, st->rx2[n], st->ry2[n], n),_shape(st,x, y, st->gridx-st->rx2[n], st->gridy-st->ry2[n], n)),_min(_shape(st,x, y, st->gridx-st->rx2[n], st->ry2[n], n),_shape(st,x, y, st->rx2[n], st->gridy-st->ry2[n], n)));
       break;
     case 39:				    	    	/* four rainbows */
-      v=(_min(_shape(st,x, y, st->gridx-st->rx2[n]/2, st->csw[n], n),_shape(st,x, y, st->csw[n], st->ry2[n]/2, n)),_min(_shape(st,x, y, st->rx2[n]/2, st->gridy-st->csw[n], n),_shape(st,x, y, st->gridx-st->csw[n], st->gridy-(st->ry2[n]/2), n))); 
+      v=(_min(_shape(st,x, y, st->gridx-st->rx2[n]/2, st->csw[n], n),_shape(st,x, y, st->csw[n], st->ry2[n]/2, n)),_min(_shape(st,x, y, st->rx2[n]/2, st->gridy-st->csw[n], n),_shape(st,x, y, st->gridx-st->csw[n], st->gridy-(st->ry2[n]/2), n)));
       break;
   }
   /* stretch or contract stripe */
@@ -912,27 +911,27 @@ _pattern(struct state *st, int x, int y, int n)
   return (abs(v));
 }
 
-static int 
+static int
 _getcolor(struct state *st, int x, int y)
 {
   int n, cv[LAYERS];
-  
+
   for (n=0; n<st->layers; n++) {
     cv[n]=_pattern(st,x,y,n);
                   /* first wave/shape */
-    cv[0] = (!n) ? cv[0]/st->csw[0] : 
+    cv[0] = (!n) ? cv[0]/st->csw[0] :
                     /* checkerboard+1 */
-      (st->mix[n]<5) ? (cv[0]*st->csw[0]+cv[n])/st->csw[n] : 
+      (st->mix[n]<5) ? (cv[0]*st->csw[0]+cv[n])/st->csw[n] :
                /* checkerboard+ncol/2 */
-      (st->mix[n]<12) ? cv[0]+(cv[n]/st->csw[n]*st->ncolors/2) : 
+      (st->mix[n]<12) ? cv[0]+(cv[n]/st->csw[n]*st->ncolors/2) :
                            /* add mix */
-      (st->mix[n]<16) ? cv[0]+(cv[n]/st->csw[n]) : 
+      (st->mix[n]<16) ? cv[0]+(cv[n]/st->csw[n]) :
                       /* subtract mix */
-      (st->mix[n]<18) ? cv[0]-(cv[n]/st->csw[n]) : 
+      (st->mix[n]<18) ? cv[0]-(cv[n]/st->csw[n]) :
                   /* r to l morph mix */
-      (st->mix[n]==18) ? ((cv[0]*x)+(cv[n]*(st->gridx-x)/st->csw[n]))/st->gridx : 
+      (st->mix[n]==18) ? ((cv[0]*x)+(cv[n]*(st->gridx-x)/st->csw[n]))/st->gridx :
                   /* u to d morph mix */
-      ((cv[0]*y)+(cv[n]*(st->gridy-y)/st->csw[n]))/st->gridy; 
+      ((cv[0]*y)+(cv[n]*(st->gridy-y)/st->csw[n]))/st->gridy;
   }
   return(cv[0]);
 }
@@ -940,58 +939,58 @@ _getcolor(struct state *st, int x, int y)
 /* return value=line direction
    st->olen=open space to edge or next blocking line
    st->bln=blocking line number or -1 if edge blocks */
-static int 
+static int
 _findopen(struct state *st, int x, int y, int z)
 {
   int dir, od[4], no=0;
 
-  if (((st->grid[z].hl) || (st->grid[z].hr)) && 
-    ((st->grid[z].vu) || (st->grid[z].vd))) 
+  if (((st->grid[z].hl) || (st->grid[z].hr)) &&
+    ((st->grid[z].vu) || (st->grid[z].vd)))
     return(DIR_NONE);
-  if ((z>st->gridx) && (!st->grid[z].hl) && (!st->grid[z].hr) && 
-    (!st->grid[z-st->gridx].line)) { 
-    od[no]=DIR_UP; 
-    no++; 
+  if ((z>st->gridx) && (!st->grid[z].hl) && (!st->grid[z].hr) &&
+    (!st->grid[z-st->gridx].line)) {
+    od[no]=DIR_UP;
+    no++;
   }
-  if ((z<st->gridn-st->gridx) && (!st->grid[z].hl) && 
-    (!st->grid[z].hr) && (!st->grid[z+st->gridx].line)) { 
-    od[no]=DIR_DOWN; 
-    no++; 
+  if ((z<st->gridn-st->gridx) && (!st->grid[z].hl) &&
+    (!st->grid[z].hr) && (!st->grid[z+st->gridx].line)) {
+    od[no]=DIR_DOWN;
+    no++;
   }
-  if ((x) && (!st->grid[z].hl) && (!st->grid[z].hr) && 
+  if ((x) && (!st->grid[z].hl) && (!st->grid[z].hr) &&
     (!st->grid[z-1].line)) {
-    od[no]=DIR_LEFT; 
-    no++; 
+    od[no]=DIR_LEFT;
+    no++;
   }
-  if (((z+1)%st->gridx) && (!st->grid[z].hl) && (!st->grid[z].hr) && 
-    (!st->grid[z+1].line)) { 
-    od[no]=DIR_RIGHT; 
-    no++; 
+  if (((z+1)%st->gridx) && (!st->grid[z].hl) && (!st->grid[z].hr) &&
+    (!st->grid[z+1].line)) {
+    od[no]=DIR_RIGHT;
+    no++;
   }
-  if (!no) 
+  if (!no)
     return(DIR_NONE);
   dir=od[random()%no];
   st->olen=st->bln=0;
   while ((st->olen<=st->maxlen) && (!st->bln)) {
     st->olen++;
-    if (dir==DIR_UP) 
-      st->bln = (y-st->olen<0) ? -1 : 
+    if (dir==DIR_UP)
+      st->bln = (y-st->olen<0) ? -1 :
         st->grid[z-(st->olen*st->gridx)].line;
-    if (dir==DIR_DOWN) 
-      st->bln = (y+st->olen>=st->gridy) ? -1 : 
+    if (dir==DIR_DOWN)
+      st->bln = (y+st->olen>=st->gridy) ? -1 :
         st->grid[z+(st->olen*st->gridx)].line;
-    if (dir==DIR_LEFT) 
-      st->bln = (x-st->olen<0) ? -1 : 
+    if (dir==DIR_LEFT)
+      st->bln = (x-st->olen<0) ? -1 :
         st->grid[z-st->olen].line;
-    if (dir==DIR_RIGHT) 
-      st->bln = (x+st->olen>=st->gridx) ? -1 : 
+    if (dir==DIR_RIGHT)
+      st->bln = (x+st->olen>=st->gridx) ? -1 :
         st->grid[z+st->olen].line;
   }
-  st->olen--; 
+  st->olen--;
   return(dir);
 }
 
-static void 
+static void
 _fillgrid(struct state *st)
 {
   unsigned int gridc, n, add;
@@ -1006,14 +1005,14 @@ _fillgrid(struct state *st)
       st->grid[gridc].line=st->li;
     }
     if (st->dline[st->li].hv) {
-      if (n) 
+      if (n)
         st->grid[gridc].hr=st->li;
       if (n<st->dline[st->li].len)
         st->grid[gridc].hl=st->li;
     } else {
-      if (n) 
+      if (n)
         st->grid[gridc].vd=st->li;
-      if (n<st->dline[st->li].len) 
+      if (n<st->dline[st->li].len)
         st->grid[gridc].vu=st->li;
     }
     if (st->fi>=st->gridn) {
@@ -1023,7 +1022,7 @@ _fillgrid(struct state *st)
   }
 }
 
-static void 
+static void
 _newline(struct state *st)
 {
   int bl, bz, dir, lt, x, y, z;
@@ -1035,60 +1034,60 @@ _newline(struct state *st)
   st->zi++;
   dir=_findopen(st,x,y,z);
 
-  if (!st->grid[z].line) { 
+  if (!st->grid[z].line) {
   /* this is an empty space, make a new line unless nothing is open around it */
     if (dir==DIR_NONE) {
       /* nothing is open, force a len 1 branch in any direction */
-      lt=LINE_FORCE; 
-      while ((dir==DIR_NONE) || 
-        ((dir==DIR_UP) && (!y)) || 
+      lt=LINE_FORCE;
+      while ((dir==DIR_NONE) ||
+        ((dir==DIR_UP) && (!y)) ||
         ((dir==DIR_DOWN) && (y+1==st->gridy)) ||
-        ((dir==DIR_LEFT) && (!x)) || 
+        ((dir==DIR_LEFT) && (!x)) ||
         ((dir==DIR_RIGHT) && (x+1==st->gridx))) {
           dir=random()%4;
       }
       bz = (dir==DIR_UP) ? z-st->gridx : (dir==DIR_DOWN) ? z+st->gridx : (dir==DIR_LEFT) ? z-1 : z+1;
       bl = st->grid[bz].line;
-    } else if ((st->bnratio>1) && (st->bln>0) && 
-      (st->olen<st->maxlen) && (random()%st->bnratio)) { 
+    } else if ((st->bnratio>1) && (st->bln>0) &&
+      (st->olen<st->maxlen) && (random()%st->bnratio)) {
       /* branch into blocking line */
-      lt=LINE_BRIN; 
+      lt=LINE_BRIN;
       bl = st->bln;
-    } else { 
+    } else {
       /* make a new line and new object */
-      lt=LINE_NEW; 
+      lt=LINE_NEW;
       st->oi++;
-    }  
-  } else { 
+    }
+  } else {
     /* this is a filled space, make a branch unless nothing is open around it */
-    if (dir==DIR_NONE) 
+    if (dir==DIR_NONE)
       return;
     /* make a branch out of this line */
-    lt=LINE_BROUT; 
+    lt=LINE_BROUT;
     bl=st->grid[z].line;
   }
   st->li++;
-  st->dline[st->li].len = (lt==LINE_FORCE) ? 1 :  (lt==LINE_BRIN) ? 
+  st->dline[st->li].len = (lt==LINE_FORCE) ? 1 :  (lt==LINE_BRIN) ?
     st->olen+1 : (!st->forcemax) ? st->olen : 1+random()%st->olen;
   st->dline[st->li].x=x;
-  if (dir==DIR_LEFT) 
+  if (dir==DIR_LEFT)
     st->dline[st->li].x-=st->dline[st->li].len;
   st->dline[st->li].y=y;
-  if (dir==DIR_UP) 
+  if (dir==DIR_UP)
     st->dline[st->li].y-=st->dline[st->li].len;
-  st->dline[st->li].hv = ((dir==DIR_LEFT) || (dir==DIR_RIGHT)) ? 
+  st->dline[st->li].hv = ((dir==DIR_LEFT) || (dir==DIR_RIGHT)) ?
     True : False;
-  st->dline[st->li].obj = (lt==LINE_NEW) ? st->oi : 
+  st->dline[st->li].obj = (lt==LINE_NEW) ? st->oi :
     st->dline[bl].obj;
-  st->dline[st->li].color = (lt==LINE_NEW) ? 
+  st->dline[st->li].color = (lt==LINE_NEW) ?
     (_getcolor(st,x,y))%st->ncolors : st->dline[bl].color;
-  st->dline[st->li].deo=(_getdeo(st,x,y,st->dmap,1) + 
+  st->dline[st->li].deo=(_getdeo(st,x,y,st->dmap,1) +
     (random()%st->dvar) + (random()%st->dvar))*st->ddir;
   st->dline[st->li].ndol=0;
   _fillgrid(st);
 }
 
-static void 
+static void
 _create_screen(struct state *st)
 {
   while(!st->grid_full)
@@ -1096,18 +1095,18 @@ _create_screen(struct state *st)
   qsort(st->dline, st->li+1, sizeof(struct lineStruct), _comparedeo);
 /*st->lpu=st->li/20/((6-st->speed)*3);
   Used to use a computed lpu, lines per update to control draw speed
-  draw 1/lpu of the lines before each XSync which takes a split second 
+  draw 1/lpu of the lines before each XSync which takes a split second
   the higher the lpu, the quicker the screen draws.  This worked somewhat
   after the 4->5 update, however with the Mac updating so much more slowly,
   values tuned for it draw the screen in a blink on Linux.  Therefore we
   draw 1/200th of the screen with each update and sleep, if necessary */
-  st->lpu = (st->dialog) ? st->li/50 : st->li/200;   
+  st->lpu = (st->dialog) ? st->li/50 : st->li/200;
   if (!st->lpu) st->lpu = 1;
   st->bi=1;
   st->mode=MODE_ERASE;
 }
 
-static void 
+static void
 _fill_outline(struct state *st, int di)
 {
   int x, y, h, w;
@@ -1120,13 +1119,13 @@ _fill_outline(struct state *st, int di)
     w=(st->dline[di].len+1)*st->lwid-3;
     h=st->lwid-3;
   } else {
-    w=st->lwid-3; 
+    w=st->lwid-3;
     h=(st->dline[di].len+1)*st->lwid-3;
   }
   XFillRectangle (st->display, st->window, st->bgc, x, y, w, h);
 }
 
-static void 
+static void
 _XFillRectangle(struct state *st, int di, int adj)
 {
   int a, b, x, y, w, h;
@@ -1137,7 +1136,7 @@ _XFillRectangle(struct state *st, int di, int adj)
     w=(st->dline[di].len+1)*st->lwid-1;
     h=st->lwid-1;
   } else {
-    w=st->lwid-1; 
+    w=st->lwid-1;
     h=(st->dline[di].len+1)*st->lwid-1;
   }
   switch (st->d3d) {
@@ -1154,25 +1153,25 @@ _XFillRectangle(struct state *st, int di, int adj)
       h-=st->lwid/2-1;
     break;
   }
-  if (!st->round) { 
+  if (!st->round) {
     XFillRectangle(st->display, st->window, st->fgc, x, y, w, h);
   } else {
     if (h<st->lwid) {                                   /* horizontal */
       a=(h-1)/2;
       for (b=0; b<=a; b++)
-        XFillRectangle(st->display, st->window, st->fgc, 
+        XFillRectangle(st->display, st->window, st->fgc,
           x+b, y+a-b, w-b*2, h-((a-b)*2));
     } else {                                               /* vertical */
       a=(w-1)/2;
       for (b=0; b<=a; b++)
-        XFillRectangle(st->display, st->window, st->fgc, 
+        XFillRectangle(st->display, st->window, st->fgc,
           x+a-b, y+b, w-((a-b)*2), h-b*2);
     }
   }
 }
 
-static void 
-_XFillTriangle(struct state *st, int color, int x1, int y1, int x2, int y2, 
+static void
+_XFillTriangle(struct state *st, int color, int x1, int y1, int x2, int y2,
   int x3, int y3)
 {
   XPoint points[3];
@@ -1184,12 +1183,12 @@ _XFillTriangle(struct state *st, int color, int x1, int y1, int x2, int y2,
   points[2].x=x3;
   points[2].y=y3;
   XSetForeground(st->display, st->fgc, st->colors[color].pixel);
-  XFillPolygon (st->display, st->window, st->fgc, points, 3, Convex, 
+  XFillPolygon (st->display, st->window, st->fgc, points, 3, Convex,
       CoordModeOrigin);
 }
 
-static void 
-_XFillPolygon4(struct state *st, int color, int x1, int y1, int x2, int y2, 
+static void
+_XFillPolygon4(struct state *st, int color, int x1, int y1, int x2, int y2,
   int x3, int y3, int x4, int y4)
 {
   XPoint points[4];
@@ -1203,11 +1202,11 @@ _XFillPolygon4(struct state *st, int color, int x1, int y1, int x2, int y2,
   points[3].x=x4;
   points[3].y=y4;
   XSetForeground(st->display, st->fgc, st->colors[color].pixel);
-  XFillPolygon (st->display, st->window, st->fgc, points, 4, Convex, 
+  XFillPolygon (st->display, st->window, st->fgc, points, 4, Convex,
       CoordModeOrigin);
 }
 
-static void 
+static void
 _draw_tiled(struct state *st, int color)
 {
   int a, c, d, x, y, z, m1, m2, lr, nl, w, h;
@@ -1223,26 +1222,26 @@ _draw_tiled(struct state *st, int color)
     if (st->dline[st->di].hv) {
       x = (st->dline[st->di].x+c)*st->lwid;
       y = st->dline[st->di].y*st->lwid;
-      if (c) 
+      if (c)
         st->grid[z].dhr=st->di;
-      if (c<st->dline[st->di].len) 
+      if (c<st->dline[st->di].len)
         st->grid[z].dhl=st->di;
     } else {
       x = st->dline[st->di].x*st->lwid;
       y = (st->dline[st->di].y+c)*st->lwid;
-      if (c) 
+      if (c)
         st->grid[z].dvd=st->di;
-      if (c<st->dline[st->di].len) 
+      if (c<st->dline[st->di].len)
         st->grid[z].dvu=st->di;
     }
     d=0;
-    if (st->grid[z].dhl) 
+    if (st->grid[z].dhl)
       d+=8;
-    if (st->grid[z].dhr) 
+    if (st->grid[z].dhr)
       d+=4;
-    if (st->grid[z].dvu) 
+    if (st->grid[z].dvu)
       d+=2;
-    if (st->grid[z].dvd) 
+    if (st->grid[z].dvd)
       d++;
     /* draw line base */
     switch (d) {
@@ -1255,13 +1254,13 @@ _draw_tiled(struct state *st, int color)
       case 11:
       case 15:
         h = ((d==1) || (d==5)) ? lr : nl;
-        XSetForeground(st->display, st->fgc, 
+        XSetForeground(st->display, st->fgc,
           st->colors[color].pixel);
-        XFillRectangle (st->display, st->window, st->fgc, 
+        XFillRectangle (st->display, st->window, st->fgc,
           x, y, m2, h);
-        XSetForeground(st->display, st->fgc, 
+        XSetForeground(st->display, st->fgc,
            st->colors[color+3].pixel);
-        XFillRectangle (st->display, st->window, st->fgc, 
+        XFillRectangle (st->display, st->window, st->fgc,
           x+m2, y, m1, h);
         break;
       case 4:
@@ -1272,13 +1271,13 @@ _draw_tiled(struct state *st, int color)
       case 13:
       case 14:
         w = (d==4) ? lr : nl;
-        XSetForeground(st->display, st->fgc, 
+        XSetForeground(st->display, st->fgc,
           st->colors[color+1].pixel);
-        XFillRectangle (st->display, st->window, st->fgc, 
+        XFillRectangle (st->display, st->window, st->fgc,
           x, y, w, m2);
-        XSetForeground(st->display, st->fgc, 
+        XSetForeground(st->display, st->fgc,
            st->colors[color+2].pixel);
-        XFillRectangle (st->display, st->window, st->fgc, 
+        XFillRectangle (st->display, st->window, st->fgc,
           x, y+m2, w, m1);
         break;
     }
@@ -1339,7 +1338,7 @@ _draw_tiled(struct state *st, int color)
   }
 }
 
-static long 
+static long
 _mselapsed(struct state *st)
 {
   struct timeval t;
@@ -1349,7 +1348,7 @@ _mselapsed(struct state *st)
   return ((long)t.tv_sec*1000000+t.tv_usec);
 }
 
-static void 
+static void
 _draw_lines(struct state *st)
 {
   int n, z, a, color, sh, di;
@@ -1366,7 +1365,7 @@ _draw_lines(struct state *st)
         st->dline[st->di].ndol=st->fdol[st->dline[st->di].obj];
         st->fdol[st->dline[st->di].obj]=st->di;
         for (sh=0; sh<st->lwid/2; sh++) {
-          XSetForeground(st->display, st->fgc, 
+          XSetForeground(st->display, st->fgc,
             st->colors[color+sh].pixel);
           di=st->di;
           while(di>0) {
@@ -1379,7 +1378,7 @@ _draw_lines(struct state *st)
         st->dline[st->di].ndol=st->fdol[st->dline[st->di].obj];
         st->fdol[st->dline[st->di].obj]=st->di;
         for (sh=0; sh<st->lwid/2; sh++) {
-          XSetForeground(st->display, st->fgc, 
+          XSetForeground(st->display, st->fgc,
             st->colors[color+(st->lwid/2)-sh-1].pixel);
           di=st->di;
           while(di>0) {
@@ -1403,14 +1402,14 @@ _draw_lines(struct state *st)
             _fill_outline(st, st->grid[z].dvu);
             _fill_outline(st, st->grid[z].dvd);
             if (st->dline[st->di].hv) {
-              if (n) 
+              if (n)
                 st->grid[z].dhr=st->di;
-              if (n<st->dline[st->di].len) 
+              if (n<st->dline[st->di].len)
                 st->grid[z].dhl=st->di;
             } else {
-              if (n) 
+              if (n)
                 st->grid[z].dvd=st->di;
-              if (n<st->dline[st->di].len) 
+              if (n<st->dline[st->di].len)
                 st->grid[z].dvu=st->di;
             }
             z+=a;
@@ -1427,25 +1426,25 @@ _draw_lines(struct state *st)
   }
 }
 
-static void 
+static void
 _erase_lines(struct state *st)
 {
   if (!st->ii)
     return;
   for (st->di=st->bi; st->di<_min(st->eli+1,st->bi+st->elpu); st->di++) {
     if (st->eline[st->di].hv) {
-      XFillRectangle (st->display, st->window, st->bgc, 
-      st->eline[st->di].x*st->elwid, 
+      XFillRectangle (st->display, st->window, st->bgc,
+      st->eline[st->di].x*st->elwid,
       st->eline[st->di].y*st->elwid,
       (st->eline[st->di].len+1)*st->elwid, st->elwid);
     } else {
-      XFillRectangle (st->display, st->window, st->bgc, 
-      st->eline[st->di].x*st->elwid, 
+      XFillRectangle (st->display, st->window, st->bgc,
+      st->eline[st->di].x*st->elwid,
       st->eline[st->di].y*st->elwid,
       st->elwid, (st->eline[st->di].len+1)*st->elwid);
     }
     if (st->di==st->eli) /* clear just in case */
-      XFillRectangle(st->display, st->window, st->bgc, 0, 0, 
+      XFillRectangle(st->display, st->window, st->bgc, 0, 0,
         st->xgwa.width, st->xgwa.height);
   }
   if (st->di>st->eli) {
@@ -1493,7 +1492,7 @@ abstractile_init(Display *display, Window window)
 
   /* get screen size and create Graphics Contexts */
   XGetWindowAttributes (display, window, &st->xgwa);
-  gcv.foreground = get_pixel_resource(display, st->xgwa.colormap, 
+  gcv.foreground = get_pixel_resource(display, st->xgwa.colormap,
       "foreground", "Foreground");
   st->fgc = XCreateGC (display, window, GCForeground, &gcv);
   gcv.foreground = get_pixel_resource(display, st->xgwa.colormap,
@@ -1513,12 +1512,12 @@ abstractile_init(Display *display, Window window)
   return st;
 }
 
-static unsigned long 
+static unsigned long
 abstractile_draw (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   int mse, usleep;
- 
+
   gettimeofday(&st->time, NULL);
 
   /* If the window is too small, do nothing, sorry! */
@@ -1538,9 +1537,9 @@ abstractile_draw (Display *dpy, Window window, void *closure)
   }
   mse=_mselapsed(st);
   usleep = ((!st->ii) && (st->mode==MODE_CREATE)) ?  0 :
-      (st->mode==MODE_CREATE) ?  st->sleep*1000000-mse : 
+      (st->mode==MODE_CREATE) ?  st->sleep*1000000-mse :
       /* speed=0-5, goal is 10,8,6,4,2,0 sec normal and 5,4,3,2,1,0 dialog */
-      (5-st->speed)*(2-st->dialog)*100000/st->lpu-mse; 
+      (5-st->speed)*(2-st->dialog)*100000/st->lpu-mse;
   if (usleep>=0)
       return usleep;
   return 0;

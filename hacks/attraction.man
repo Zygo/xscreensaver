@@ -23,7 +23,7 @@ attraction - interactions of opposing forces
 [\-size \fIint\fP] [\-segments \fIint\fP] [\-delay \fIusecs\fP]
 [\-color-shift \fIint\fP] [\-radius \fIint\fP]
 [\-vx \fIint\fP] [\-vy \fIint\fP] [\-glow] [\-noglow]
-[\-orbit] [\-viscosity \fIfloat\fP] [\-mouse] [\-no-mouse] [\-mouse-size]
+[\-orbit] [\-viscosity \fIfloat\fP]
 [\-walls] [\-nowalls] [\-maxspeed] [\-nomaxspeed]
 [\-correct-bounce] [\-fast-bounce]
 [\-fps]
@@ -145,23 +145,10 @@ aren't interesting; lower values cause less motion.
 
 One interesting thing to try is
 .EX
-attraction -viscosity 0.8 -points 75 \\
-  -mouse -geometry =500x500
+attraction -viscosity 0.8 -points 300 -size 10 -geometry =500x500
 .EE
 Give it a few seconds to settle down into a stable clump, and then move
-the mouse through it to make "waves".
-.TP 8
-.B \-mouse
-This will cause the mouse to be considered a control point; it will not be
-drawn, but it will influence the other points, so you can wave the mouse
-and influence the images being created.
-.TP 8
-.B \-no-mouse
-Turns off \fB\-mouse\fP.
-.TP 8
-.B \-mouse-size integer
-In \fB\-mouse\fP mode, this sets the mass of the mouse (analogously to the
-\fB\-size\fP parameter.)
+the drag the mouse through it to make "waves".
 .TP 8
 .B \-nowalls
 This will cause the balls to continue on past the edge of the
@@ -221,7 +208,7 @@ made about the suitability of this software for any purpose.  It is provided
 .SH AUTHOR
 Jamie Zawinski <jwz@jwz.org>, 13-aug-92.
 
-Viscosity and mouse support by Philip Edward Cutone, III.
+Viscosity support by Philip Edward Cutone, III.
 
 Walls, speed limit options, new bouncing, graphs, and tail mode fix by
 Matthew Strait. 31 March 2001

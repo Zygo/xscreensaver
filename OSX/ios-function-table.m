@@ -1,3 +1,12 @@
+/* Generated file, do not edit.
+   Created: Mon Jul  8 16:42:29 2013 by build-fntable.pl 1.2.
+ */
+
+#import <Foundation/Foundation.h>
+#import <UIKit/UIKit.h>
+
+extern NSDictionary *make_function_table_dict(void);
+
 extern struct xscreensaver_function_table
  *abstractile_xscreensaver_function_table,
  *anemone_xscreensaver_function_table,
@@ -87,6 +96,7 @@ extern struct xscreensaver_function_table
  *halftone_xscreensaver_function_table,
  *halo_xscreensaver_function_table,
  *helix_xscreensaver_function_table,
+ *hexadrop_xscreensaver_function_table,
  *hilbert_xscreensaver_function_table,
  *hopalong_xscreensaver_function_table,
  *hypertorus_xscreensaver_function_table,
@@ -101,6 +111,7 @@ extern struct xscreensaver_function_table
  *juggler3d_xscreensaver_function_table,
  *julia_xscreensaver_function_table,
  *kaleidescope_xscreensaver_function_table,
+ *kaleidocycle_xscreensaver_function_table,
  *klein_xscreensaver_function_table,
  *kumppa_xscreensaver_function_table,
  *lament_xscreensaver_function_table,
@@ -142,6 +153,7 @@ extern struct xscreensaver_function_table
  *pulsar_xscreensaver_function_table,
  *pyro_xscreensaver_function_table,
  *qix_xscreensaver_function_table,
+ *quasicrystal_xscreensaver_function_table,
  *queens_xscreensaver_function_table,
  *rdbomb_xscreensaver_function_table,
  *ripples_xscreensaver_function_table,
@@ -180,6 +192,7 @@ extern struct xscreensaver_function_table
  *tronbit_xscreensaver_function_table,
  *truchet_xscreensaver_function_table,
  *twang_xscreensaver_function_table,
+ *unknownpleasures_xscreensaver_function_table,
  *vermiculate_xscreensaver_function_table,
  *voronoi_xscreensaver_function_table,
  *wander_xscreensaver_function_table,
@@ -194,10 +207,16 @@ extern struct xscreensaver_function_table
  *xspirograph_xscreensaver_function_table,
  *zoom_xscreensaver_function_table;
 
-static NSDictionary *make_function_tables_dict(void)
+NSDictionary *make_function_table_dict(void)
 {
   return
     [NSDictionary dictionaryWithObjectsAndKeys:
+
+#if defined(APPLE2_ONLY)
+ 	[NSValue valueWithPointer:&apple2_xscreensaver_function_table], @"apple2",
+#elif defined(PHOSPHOR_ONLY)
+ 	[NSValue valueWithPointer:&phosphor_xscreensaver_function_table], @"phosphor",
+#else
 	[NSValue valueWithPointer:&abstractile_xscreensaver_function_table], @"abstractile",
 	[NSValue valueWithPointer:&anemone_xscreensaver_function_table], @"anemone",
 	[NSValue valueWithPointer:&anemotaxis_xscreensaver_function_table], @"anemotaxis",
@@ -286,6 +305,7 @@ static NSDictionary *make_function_tables_dict(void)
 	[NSValue valueWithPointer:&halftone_xscreensaver_function_table], @"halftone",
 	[NSValue valueWithPointer:&halo_xscreensaver_function_table], @"halo",
 	[NSValue valueWithPointer:&helix_xscreensaver_function_table], @"helix",
+	[NSValue valueWithPointer:&hexadrop_xscreensaver_function_table], @"hexadrop",
 	[NSValue valueWithPointer:&hilbert_xscreensaver_function_table], @"hilbert",
 	[NSValue valueWithPointer:&hopalong_xscreensaver_function_table], @"hopalong",
 	[NSValue valueWithPointer:&hypertorus_xscreensaver_function_table], @"hypertorus",
@@ -300,6 +320,7 @@ static NSDictionary *make_function_tables_dict(void)
 	[NSValue valueWithPointer:&juggler3d_xscreensaver_function_table], @"juggler3d",
 	[NSValue valueWithPointer:&julia_xscreensaver_function_table], @"julia",
 	[NSValue valueWithPointer:&kaleidescope_xscreensaver_function_table], @"kaleidescope",
+	[NSValue valueWithPointer:&kaleidocycle_xscreensaver_function_table], @"kaleidocycle",
 	[NSValue valueWithPointer:&klein_xscreensaver_function_table], @"klein",
 	[NSValue valueWithPointer:&kumppa_xscreensaver_function_table], @"kumppa",
 	[NSValue valueWithPointer:&lament_xscreensaver_function_table], @"lament",
@@ -341,6 +362,7 @@ static NSDictionary *make_function_tables_dict(void)
 	[NSValue valueWithPointer:&pulsar_xscreensaver_function_table], @"pulsar",
 	[NSValue valueWithPointer:&pyro_xscreensaver_function_table], @"pyro",
 	[NSValue valueWithPointer:&qix_xscreensaver_function_table], @"qix",
+	[NSValue valueWithPointer:&quasicrystal_xscreensaver_function_table], @"quasicrystal",
 	[NSValue valueWithPointer:&queens_xscreensaver_function_table], @"queens",
 	[NSValue valueWithPointer:&rdbomb_xscreensaver_function_table], @"rdbomb",
 	[NSValue valueWithPointer:&ripples_xscreensaver_function_table], @"ripples",
@@ -379,6 +401,7 @@ static NSDictionary *make_function_tables_dict(void)
 	[NSValue valueWithPointer:&tronbit_xscreensaver_function_table], @"tronbit",
 	[NSValue valueWithPointer:&truchet_xscreensaver_function_table], @"truchet",
 	[NSValue valueWithPointer:&twang_xscreensaver_function_table], @"twang",
+	[NSValue valueWithPointer:&unknownpleasures_xscreensaver_function_table], @"unknownpleasures",
 	[NSValue valueWithPointer:&vermiculate_xscreensaver_function_table], @"vermiculate",
 	[NSValue valueWithPointer:&voronoi_xscreensaver_function_table], @"voronoi",
 	[NSValue valueWithPointer:&wander_xscreensaver_function_table], @"wander",
@@ -392,5 +415,7 @@ static NSDictionary *make_function_tables_dict(void)
 	[NSValue valueWithPointer:&xrayswarm_xscreensaver_function_table], @"xrayswarm",
 	[NSValue valueWithPointer:&xspirograph_xscreensaver_function_table], @"xspirograph",
 	[NSValue valueWithPointer:&zoom_xscreensaver_function_table], @"zoom",
+#endif
 	nil];
 }
+

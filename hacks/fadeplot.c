@@ -35,6 +35,7 @@ static const char sccsid[] = "@(#)fadeplot.c	5.00 2000/11/01 xlockmore";
 					"*cycles: 1500 \n" \
 					"*ncolors: 64 \n" \
 					"*fpsSolid: true \n" \
+					"*ignoreRotation: True \n" \
 
 # define BRIGHT_COLORS
 # define UNIFORM_COLORS

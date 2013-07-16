@@ -19,7 +19,6 @@
 
 
 #define DEFAULTS	"*delay:	30000       \n" \
-			"*count:        1           \n" \
 			"*showFPS:      False       \n" \
 			"*count:        3           \n" \
 			"*wireframe:    False       \n" \

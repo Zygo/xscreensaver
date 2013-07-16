@@ -298,11 +298,11 @@ draw_triangle (ModeInfo * mi)
 				XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
 				if (!mono_p)
 				  {
-					free_colors(mi->dpy, mi->xgwa.colormap, mi->colors,
+					free_colors(mi->xgwa.screen, mi->xgwa.colormap, mi->colors,
 								mi->npixels);
                     mi->npixels = 
                       get_integer_resource (mi->dpy, "ncolors", "Integer");
-					make_smooth_colormap (mi->dpy,
+					make_smooth_colormap (mi->xgwa.screen,
 										  mi->xgwa.visual, mi->xgwa.colormap,
 										  mi->colors, &mi->npixels,
 										  True, &mi->writable_p, True);

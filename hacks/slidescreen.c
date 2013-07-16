@@ -469,6 +469,9 @@ static const char *slidescreen_defaults [] = {
   "*delay:			50000",
   "*delay2:			1000000",
   "*duration:			120",
+#ifdef USE_IPHONE
+  "*ignoreRotation:             True",
+#endif
   0
 };
 

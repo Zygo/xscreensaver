@@ -45,6 +45,7 @@ static const char sccsid[] = "@(#)galaxy.c 4.04 97/07/28 xlockmore";
 					"*cycles:  250   \n"   \
 					"*ncolors:  64   \n" \
 					"*fpsSolid:  true   \n" \
+					"*ignoreRotation: True \n" \
 
 # define UNIFORM_COLORS
 # define galaxy_handle_event 0

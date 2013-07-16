@@ -87,6 +87,7 @@ If one of these are hit penrose will reinitialize.
 					"*size: 40 \n" \
 					"*ncolors: 64 \n" \
 					"*fpsSolid: true \n" \
+					"*ignoreRotation: True \n" \
 
 # define refresh_penrose 0
 # define penrose_handle_event 0

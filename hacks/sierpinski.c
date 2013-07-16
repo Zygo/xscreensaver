@@ -39,6 +39,7 @@ static const char sccsid[] = "@(#)sierpinski.c	5.00 2000/11/01 xlockmore";
 					"*cycles: 100 \n" \
 					"*ncolors: 64 \n" \
 					"*fpsSolid: true \n" \
+					"*ignoreRotation: True \n" \
 
 # define BRIGHT_COLORS
 # define sierpinski_handle_event 0

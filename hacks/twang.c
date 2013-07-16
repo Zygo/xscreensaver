@@ -767,6 +767,9 @@ static const char *twang_defaults [] = {
 #else
     "*useSHM: False",
 #endif
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
     0
 };
 

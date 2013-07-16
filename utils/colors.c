@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997, 2002 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,8 +22,9 @@
 extern char *progname;
 
 void
-free_colors(Display *dpy, Colormap cmap, XColor *colors, int ncolors)
+free_colors (Screen *screen, Colormap cmap, XColor *colors, int ncolors)
 {
+  Display *dpy = screen ? DisplayOfScreen (screen) : 0;
   int i;
   if (ncolors > 0)
     {
@@ -38,9 +39,10 @@ free_colors(Display *dpy, Colormap cmap, XColor *colors, int ncolors)
 
 
 void
-allocate_writable_colors (Display *dpy, Colormap cmap,
+allocate_writable_colors (Screen *screen, Colormap cmap,
 			  unsigned long *pixels, int *ncolorsP)
 {
+  Display *dpy = screen ? DisplayOfScreen (screen) : 0;
   int desired = *ncolorsP;
   int got = 0;
   int requested = desired;
@@ -94,24 +96,30 @@ complain (int wanted_colors, int got_colors,
 
 
 void
-make_color_ramp (Display *dpy, Colormap cmap,
+make_color_ramp (Screen *screen, Visual *visual, Colormap cmap,
 		 int h1, double s1, double v1,   /* 0-360, 0-1.0, 0-1.0 */
 		 int h2, double s2, double v2,   /* 0-360, 0-1.0, 0-1.0 */
 		 XColor *colors, int *ncolorsP,
 		 Bool closed_p,
 		 Bool allocate_p,
-		 Bool writable_p)
+		 Bool *writable_pP)
 {
+  Display *dpy = screen ? DisplayOfScreen (screen) : 0;
   Bool verbose_p = True;  /* argh. */
   int i;
   int total_ncolors = *ncolorsP;
   int ncolors, wanted;
-  Bool wanted_writable = (allocate_p && writable_p);
+  Bool wanted_writable = (allocate_p && writable_pP && *writable_pP);
   double dh, ds, dv;		/* deltas */
 
   wanted = total_ncolors;
   if (closed_p)
     wanted = (wanted / 2) + 1;
+
+  /* If this visual doesn't support writable cells, don't bother trying.
+   */
+  if (wanted_writable && !has_writable_cells(screen, visual))
+    *writable_pP = False;
 
  AGAIN:
   ncolors = total_ncolors;
@@ -144,7 +152,7 @@ make_color_ramp (Display *dpy, Colormap cmap,
   if (!allocate_p)
     return;
 
-  if (writable_p)
+  if (writable_pP && *writable_pP)
     {
       unsigned long *pixels = (unsigned long *)
 	malloc(sizeof(*pixels) * ((*ncolorsP) + 1));
@@ -175,7 +183,7 @@ make_color_ramp (Display *dpy, Colormap cmap,
 	    }
 	  else
 	    {
-	      free_colors (dpy, cmap, colors, i);
+	      free_colors (screen, cmap, colors, i);
 	      goto FAIL;
 	    }
 	}
@@ -204,7 +212,8 @@ make_color_ramp (Display *dpy, Colormap cmap,
   if (verbose_p &&
       /* don't warn if we got 0 writable colors -- probably TrueColor. */
       (ncolors != 0 || !wanted_writable))
-    complain (wanted, ncolors, wanted_writable, wanted_writable && writable_p);
+    complain (wanted, ncolors, wanted_writable, 
+              (wanted_writable && writable_pP && *writable_pP));
 }
 
 
@@ -212,12 +221,13 @@ make_color_ramp (Display *dpy, Colormap cmap,
 
 
 static void
-make_color_path (Display *dpy, Colormap cmap,
+make_color_path (Screen *screen, Visual *visual, Colormap cmap,
 		 int npoints, int *h, double *s, double *v,
 		 XColor *colors, int *ncolorsP,
 		 Bool allocate_p,
-		 Bool writable_p)
+		 Bool *writable_pP)
 {
+  Display *dpy = screen ? DisplayOfScreen (screen) : 0;
   int i, j, k;
   int total_ncolors = *ncolorsP;
 
@@ -233,11 +243,11 @@ make_color_path (Display *dpy, Colormap cmap,
     }
   else if (npoints == 2)	/* using make_color_ramp() will be faster */
     {
-      make_color_ramp (dpy, cmap,
+      make_color_ramp (screen, visual, cmap,
 		       h[0], s[0], v[0], h[1], s[1], v[1],
 		       colors, ncolorsP,
 		       True,  /* closed_p */
-		       allocate_p, writable_p);
+		       allocate_p, writable_pP);
       return;
     }
   else if (npoints >= MAXPOINTS)
@@ -381,7 +391,7 @@ make_color_path (Display *dpy, Colormap cmap,
   if (!allocate_p)
     return;
 
-  if (writable_p)
+  if (writable_pP && *writable_pP)
     {
       unsigned long *pixels = (unsigned long *)
 	malloc(sizeof(*pixels) * ((*ncolorsP) + 1));
@@ -412,7 +422,7 @@ make_color_path (Display *dpy, Colormap cmap,
 	    }
 	  else
 	    {
-	      free_colors (dpy, cmap, colors, i);
+	      free_colors (screen, cmap, colors, i);
 	      goto FAIL;
 	    }
 	}
@@ -438,28 +448,36 @@ make_color_path (Display *dpy, Colormap cmap,
 
 
 void
-make_color_loop (Display *dpy, Colormap cmap,
+make_color_loop (Screen *screen, Visual *visual, Colormap cmap,
 		 int h0, double s0, double v0,   /* 0-360, 0-1.0, 0-1.0 */
 		 int h1, double s1, double v1,   /* 0-360, 0-1.0, 0-1.0 */
 		 int h2, double s2, double v2,   /* 0-360, 0-1.0, 0-1.0 */
 		 XColor *colors, int *ncolorsP,
 		 Bool allocate_p,
-		 Bool writable_p)
+		 Bool *writable_pP)
 {
+  Bool wanted_writable = (allocate_p && writable_pP && *writable_pP);
+
   int h[3];
   double s[3], v[3];
   h[0] = h0; h[1] = h1; h[2] = h2;
   s[0] = s0; s[1] = s1; s[2] = s2;
   v[0] = v0; v[1] = v1; v[2] = v2;
-  make_color_path(dpy, cmap,
-		  3, h, s, v,
-		  colors, ncolorsP,
-		  allocate_p, writable_p);
+
+  /* If this visual doesn't support writable cells, don't bother trying.
+   */
+  if (wanted_writable && !has_writable_cells(screen, visual))
+    *writable_pP = False;
+
+  make_color_path (screen, visual, cmap,
+                   3, h, s, v,
+                   colors, ncolorsP,
+                   allocate_p, writable_pP);
 }
 
 
 void
-make_smooth_colormap (Display *dpy, Visual *visual, Colormap cmap,
+make_smooth_colormap (Screen *screen, Visual *visual, Colormap cmap,
 		      XColor *colors, int *ncolorsP,
 		      Bool allocate_p,
 		      Bool *writable_pP,
@@ -474,7 +492,6 @@ make_smooth_colormap (Display *dpy, Visual *visual, Colormap cmap,
   double v[MAXPOINTS];
   double total_s = 0;
   double total_v = 0;
-  Screen *screen = (dpy ? DefaultScreenOfDisplay(dpy) : 0); /* #### WRONG! */
   int loop = 0;
 
   if (*ncolorsP <= 0) return;
@@ -532,8 +549,8 @@ make_smooth_colormap (Display *dpy, Visual *visual, Colormap cmap,
     *writable_pP = False;
 
  RETRY_NON_WRITABLE:
-  make_color_path (dpy, cmap, npoints, h, s, v, colors, &ncolors,
-		   allocate_p, (writable_pP && *writable_pP));
+  make_color_path (screen, visual, cmap, npoints, h, s, v, colors, &ncolors,
+		   allocate_p, writable_pP);
 
   /* If we tried for writable cells and got none, try for non-writable. */
   if (allocate_p && *ncolorsP == 0 && writable_pP && *writable_pP)
@@ -551,7 +568,7 @@ make_smooth_colormap (Display *dpy, Visual *visual, Colormap cmap,
 
 
 void
-make_uniform_colormap (Display *dpy, Visual *visual, Colormap cmap,
+make_uniform_colormap (Screen *screen, Visual *visual, Colormap cmap,
 		       XColor *colors, int *ncolorsP,
 		       Bool allocate_p,
 		       Bool *writable_pP,
@@ -559,7 +576,6 @@ make_uniform_colormap (Display *dpy, Visual *visual, Colormap cmap,
 {
   int ncolors = *ncolorsP;
   Bool wanted_writable = (allocate_p && writable_pP && *writable_pP);
-  Screen *screen = (dpy ? DefaultScreenOfDisplay(dpy) : 0); /* #### WRONG! */
 
   double S = ((double) (random() % 34) + 66) / 100.0;	/* range 66%-100% */
   double V = ((double) (random() % 34) + 66) / 100.0;	/* range 66%-100% */
@@ -571,12 +587,11 @@ make_uniform_colormap (Display *dpy, Visual *visual, Colormap cmap,
     *writable_pP = False;
 
  RETRY_NON_WRITABLE:
-  make_color_ramp(dpy, cmap,
+  make_color_ramp(screen, visual, cmap,
 		  0,   S, V,
 		  359, S, V,
 		  colors, &ncolors,
-		  False, allocate_p,
-                  (writable_pP && *writable_pP));
+		  False, allocate_p, writable_pP);
 
   /* If we tried for writable cells and got none, try for non-writable. */
   if (allocate_p && *ncolorsP == 0 && writable_pP && *writable_pP)
@@ -595,17 +610,17 @@ make_uniform_colormap (Display *dpy, Visual *visual, Colormap cmap,
 
 
 void
-make_random_colormap (Display *dpy, Visual *visual, Colormap cmap,
+make_random_colormap (Screen *screen, Visual *visual, Colormap cmap,
 		      XColor *colors, int *ncolorsP,
 		      Bool bright_p,
 		      Bool allocate_p,
 		      Bool *writable_pP,
 		      Bool verbose_p)
 {
+  Display *dpy = screen ? DisplayOfScreen (screen) : 0;
   Bool wanted_writable = (allocate_p && writable_pP && *writable_pP);
   int ncolors = *ncolorsP;
   int i;
-  Screen *screen = (dpy ? DefaultScreenOfDisplay(dpy) : 0); /* #### WRONG! */
 
   if (*ncolorsP <= 0) return;
 
@@ -613,6 +628,7 @@ make_random_colormap (Display *dpy, Visual *visual, Colormap cmap,
   if (wanted_writable && !has_writable_cells(screen, visual))
     *writable_pP = False;
 
+ RETRY_ALL:
   for (i = 0; i < ncolors; i++)
     {
       colors[i].flags = DoRed|DoGreen|DoBlue;
@@ -632,6 +648,19 @@ make_random_colormap (Display *dpy, Visual *visual, Colormap cmap,
 	}
     }
 
+  /* If there are a small number of colors, make sure at least the first
+     two contrast well.
+  */
+  if (!bright_p && ncolors <= 4)
+    {
+      int h0, h1;
+      double s0, s1, v0, v1;
+      rgb_to_hsv (colors[0].red, colors[0].green, colors[0].blue, &h0,&s0,&v0);
+      rgb_to_hsv (colors[1].red, colors[1].green, colors[1].blue, &h1,&s1,&v1);
+      if (fabs (v1-v0) < 0.5)
+        goto RETRY_ALL;
+    }
+
   if (!allocate_p)
     return;
 
@@ -641,7 +670,7 @@ make_random_colormap (Display *dpy, Visual *visual, Colormap cmap,
       unsigned long *pixels = (unsigned long *)
 	malloc(sizeof(*pixels) * (ncolors + 1));
 
-      allocate_writable_colors (dpy, cmap, pixels, &ncolors);
+      allocate_writable_colors (screen, cmap, pixels, &ncolors);
       if (ncolors > 0)
 	for (i = 0; i < ncolors; i++)
 	  colors[i].pixel = pixels[i];
@@ -679,12 +708,14 @@ make_random_colormap (Display *dpy, Visual *visual, Colormap cmap,
 
 
 void
-rotate_colors (Display *dpy, Colormap cmap,
+rotate_colors (Screen *screen, Colormap cmap,
 	       XColor *colors, int ncolors, int distance)
 {
+  Display *dpy = screen ? DisplayOfScreen (screen) : 0;
   int i;
-  XColor *colors2 = (XColor *) malloc(sizeof(*colors2) * ncolors);
+  XColor *colors2;
   if (ncolors < 2) return;
+  colors2 = (XColor *) malloc(sizeof(*colors2) * ncolors);
   distance = distance % ncolors;
   for (i = 0; i < ncolors; i++)
     {

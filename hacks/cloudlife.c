@@ -302,7 +302,8 @@ cloudlife_init (Display *dpy, Window window)
 
     if (st->cycle_colors) {
         st->colors = (XColor *) xrealloc(st->colors, sizeof(XColor) * (st->ncolors+1));
-        make_smooth_colormap (st->dpy, st->xgwa.visual, st->xgwa.colormap, st->colors, &st->ncolors,
+        make_smooth_colormap (st->xgwa.screen, st->xgwa.visual,
+                              st->xgwa.colormap, st->colors, &st->ncolors,
                               True, &tmp, True);
     }
 
@@ -397,6 +398,9 @@ static const char *cloudlife_defaults[] = {
     "*maxAge:		64",
     "*initialDensity:	30",
     "*cellSize:		3",
+#ifdef USE_IPHONE
+    "*ignoreRotation:   True",
+#endif
     0
 };
 

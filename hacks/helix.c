@@ -341,6 +341,9 @@ static const char *helix_defaults [] = {
   "*fpsSolid:	true",
   "*delay:      5",
   "*subdelay:	20000",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

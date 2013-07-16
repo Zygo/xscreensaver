@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.21
-!                              04-Feb-2013
+!                              version 5.22
+!                              16-Jul-2013
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -355,7 +355,11 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				rubikblocks -root			    \n\
 @GL_KLUDGE@ GL: 				companioncube -root			    \n\
 @GL_KLUDGE@ GL: 				hilbert -root				    \n\
-@GL_KLUDGE@ GL: 				tronbit -root				    \n
+@GL_KLUDGE@ GL: 				tronbit -root				    \n\
+				hexadrop -root				    \n\
+@GL_KLUDGE@ GL: 				kaleidocycle -root			    \n\
+@GL_KLUDGE@ GL: 				quasicrystal -root			    \n\
+@GL_KLUDGE@ GL: 				unknownpleasures -root			    \n
 
 
 
@@ -474,6 +478,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.nerverot.name:       NerveRot
 *hacks.noseguy.name:        NoseGuy
 *hacks.popsquares.name:     PopSquares
+*hacks.quasicrystal.name:   QuasiCrystal
 *hacks.rd-bomb.name:        RDbomb
 *hacks.rdbomb.name:         RDbomb
 *hacks.rotzoomer.name:      RotZoomer
@@ -490,6 +495,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.timetunnel.name:     TimeTunnel
 *hacks.topblock.name:       TopBlock
 *hacks.tronbit.name:        TronBit
+*hacks.unknownpleasures.name:UnknownPleasures
 *hacks.vidwhacker.name:     VidWhacker
 *hacks.webcollage.name:     WebCollage
 *hacks.whirlwindwarp.name:  WhirlWindWarp

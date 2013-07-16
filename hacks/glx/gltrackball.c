@@ -116,8 +116,8 @@ gltrackball_mousewheel (trackball_state *ts,
                         int button, int percent, int flip_p)
 {
   int up_p;
-  double move;
   int horizontal_p;
+  int mx, my, move, scale;
 
 #ifdef HAVE_COCOA
   flip_p = 0;      /* MacOS has already handled this. */
@@ -137,15 +137,14 @@ gltrackball_mousewheel (trackball_state *ts,
       up_p = !up_p;
     }
 
+  scale = mx = my = 1000;
   move = (up_p
-          ? 1.0 - (percent / 100.0)
-          : 1.0 + (percent / 100.0));
-
-  gltrackball_start (ts, 50, 50, 100, 100);
-  if (horizontal_p)
-    gltrackball_track (ts, 50*move, 50, 100, 100);
-  else
-    gltrackball_track (ts, 50, 50*move, 100, 100);
+          ? floor (scale * (1.0 - (percent / 100.0)))
+          : ceil  (scale * (1.0 + (percent / 100.0))));
+  if (horizontal_p) mx = move;
+  else              my = move;
+  gltrackball_start (ts, scale, scale, scale*2, scale*2);
+  gltrackball_track (ts, mx, my, scale*2, scale*2);
 }
 
 void

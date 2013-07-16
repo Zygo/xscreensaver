@@ -107,6 +107,9 @@ static const char *ifs_defaults [] = {
 #else
   "*doubleBuffer:	True",
 #endif
+#ifdef USE_IPHONE
+  "*ignoreRotation:     True",
+#endif
   0
 };
 
@@ -435,7 +438,7 @@ ifs_init (Display *d_arg, Window w_arg)
   if (st->colours) free(st->colours);
   st->colours = (XColor *)calloc(st->ncolours, sizeof(XColor));
   if (!st->colours) exit(1);
-  make_smooth_colormap (st->dpy, xgwa.visual, xgwa.colormap, 
+  make_smooth_colormap (xgwa.screen, xgwa.visual, xgwa.colormap, 
                         st->colours, &st->ncolours,
                         True, 0, False);
 

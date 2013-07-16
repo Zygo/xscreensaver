@@ -36,6 +36,7 @@ static const char sccsid[] = "@(#)drift.c	5.00 2000/11/01 xlockmore";
 				  "*count: 30 \n" \
 				  "*ncolors: 200 \n" \
 				  "*fpsSolid: true \n" \
+				  "*ignoreRotation: True \n" \
 
 # define SMOOTH_COLORS
 # define drift_handle_event 0

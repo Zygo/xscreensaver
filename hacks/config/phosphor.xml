@@ -2,7 +2,7 @@
 
 <screensaver name="phosphor" _label="Phosphor">
 
-  <command arg="-root"/>
+ <command arg="-root"/>
 
  <hgroup>
   <vgroup>

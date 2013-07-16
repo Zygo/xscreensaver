@@ -67,7 +67,7 @@ init_coral(struct state *st)
     if(!st->board) exit(1);
     cmap = xgwa.colormap;
     if( st->ncolors ) {
-        free_colors(st->dpy, cmap, st->colors, st->ncolors);
+        free_colors(xgwa.screen, cmap, st->colors, st->ncolors);
         st->ncolors = 0;
     }
     gcv.foreground = st->default_fg_pixel = get_pixel_resource(st->dpy, cmap, "foreground", "Foreground");
@@ -75,7 +75,8 @@ init_coral(struct state *st)
     gcv.foreground = get_pixel_resource (st->dpy, cmap, "background", "Background");
     st->erase_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
     st->ncolors = NCOLORSMAX;
-    make_uniform_colormap(st->dpy, xgwa.visual, cmap, st->colors, &st->ncolors, True, &writeable, False);
+    make_uniform_colormap(xgwa.screen, xgwa.visual, cmap,
+                          st->colors, &st->ncolors, True, &writeable, False);
     if (st->ncolors <= 0) {
       st->ncolors = 2;
       st->colors[0].red = st->colors[0].green = st->colors[0].blue = 0;
@@ -289,6 +290,9 @@ static const char *coral_defaults[] = {
   "*seeds:	20", /* too many for 640x480, too few for 1280x1024 */
   "*delay:	5",
   "*delay2:	20000",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

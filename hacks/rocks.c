@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -416,7 +416,8 @@ rocks_init (Display *d, Window w)
   XQueryColor(st->dpy, cmap, &st->colors[0]);
 
   st->ncolors--;
-  make_random_colormap(st->dpy, xgwa.visual, cmap, st->colors+1, &st->ncolors, True,
+  make_random_colormap(xgwa.screen, xgwa.visual, cmap,
+                       st->colors+1, &st->ncolors, True,
 		       True, 0, True);
   st->ncolors++;
 
@@ -522,6 +523,9 @@ static const char *rocks_defaults [] = {
   "*left3d:	Blue",
   "*right3d:	Red",
   "*delta3d:	1.5",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

@@ -1802,29 +1802,40 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
     }
   else if (type == XA_DEACTIVATE)
     {
-      if (! until_idle_p)
-	{
-          if (si->throttled_p && p->verbose_p)
-            fprintf (stderr, "%s: unthrottled.\n", blurb());
-	  si->throttled_p = False;
+      if (si->locked_p) 
+        {
+          clientmessage_response(si, window, False,
+              "DEACTIVATE ClientMessage received while locked: ignored.",
+              "screen is locked.");
+        }
+      else
+        {
+          if (! until_idle_p)
+            {
+              if (si->throttled_p && p->verbose_p)
+                fprintf (stderr, "%s: unthrottled.\n", blurb());
+              si->throttled_p = False;
 
-	  clientmessage_response(si, window, False,
-				 "DEACTIVATE ClientMessage received.",
-				 "deactivating.");
-	  if (si->using_mit_saver_extension || si->using_sgi_saver_extension)
-	    {
-	      XForceScreenSaver (si->dpy, ScreenSaverReset);
-	      return False;
-	    }
-	  else
-	    {
-	      return True;
-	    }
-	}
-      clientmessage_response(si, window, False,
-     "ClientMessage DEACTIVATE received while inactive: resetting idle timer.",
-			     "not active: idle timer reset.");
-      reset_timers (si);
+              clientmessage_response(si, window, False,
+                                     "DEACTIVATE ClientMessage received.",
+                                     "deactivating.");
+              if (si->using_mit_saver_extension ||
+                  si->using_sgi_saver_extension)
+                {
+                  XForceScreenSaver (si->dpy, ScreenSaverReset);
+                  return False;
+                }
+              else
+                {
+                  return True;
+                }
+            }
+          clientmessage_response(si, window, False,
+                          "ClientMessage DEACTIVATE received while inactive: "
+                          "resetting idle timer.",
+                                 "not active: idle timer reset.");
+          reset_timers (si);
+        }
     }
   else if (type == XA_CYCLE)
     {

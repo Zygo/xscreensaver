@@ -1,4 +1,4 @@
-# Auto-generated: Mon Feb  4 22:38:23 PST 2013
+# Auto-generated: Tue Jul 16 02:23:37 PDT 2013
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -101,6 +101,7 @@ hacks/config/greynetic.xml
 hacks/config/halftone.xml
 hacks/config/halo.xml
 hacks/config/helix.xml
+hacks/config/hexadrop.xml
 hacks/config/hilbert.xml
 hacks/config/hopalong.xml
 hacks/config/hyperball.xml
@@ -118,6 +119,7 @@ hacks/config/juggle.xml
 hacks/config/juggler3d.xml
 hacks/config/julia.xml
 hacks/config/kaleidescope.xml
+hacks/config/kaleidocycle.xml
 hacks/config/klein.xml
 hacks/config/kumppa.xml
 hacks/config/lament.xml
@@ -167,6 +169,7 @@ hacks/config/providence.xml
 hacks/config/pulsar.xml
 hacks/config/pyro.xml
 hacks/config/qix.xml
+hacks/config/quasicrystal.xml
 hacks/config/queens.xml
 hacks/config/rd-bomb.xml
 hacks/config/rdbomb.xml
@@ -210,6 +213,7 @@ hacks/config/triangle.xml
 hacks/config/tronbit.xml
 hacks/config/truchet.xml
 hacks/config/twang.xml
+hacks/config/unknownpleasures.xml
 hacks/config/vermiculate.xml
 hacks/config/vidwhacker.xml
 hacks/config/vines.xml
