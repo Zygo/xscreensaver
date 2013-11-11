@@ -1,0 +1,137 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+flow - strange attractors.
+.SH SYNOPSIS
+.B flow
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-count \fInumber\fP]
+[\-cycles \fInumber\fP]
+[\-periodic|\-no\-periodic]
+[\-search|\-no\-search]
+[\-rotate|\-no\-rotate]
+[\-ride|\-no\-ride]
+[\-box|\-no\-box]
+[\-dbuf|\-no\-dbuf]
+[\-ncolors \fInumber\fP]
+[\-delay \fInumber\fP]
+[\-fps]
+.SH DESCRIPTION
+Strange attractors formed of flows in a 3D differential equation phase
+space.  Features the popular attractors described by \fBLorentz\fP,
+\fBRoessler\fP, \fBBirkhoff\fP and \fBDuffing\fP, and can discover
+entirely new attractors by itself.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-count \fInumber\fP
+Number of particles in the flow.  Default: 3000
+.TP 8
+.B \-size \fInumber\fP
+Length of particle trails.  Negative values indicate
+randomness.  The computational load of a given flow depends on
+(particle count) * (trail length).  Default: -10
+.TP 8
+.B \-cycles \fInumber\fP
+Timeout before changing objects.  0 - 800000.  Default: 10000.
+.TP 8
+.B \-periodic
+.TP 8
+.B \-no\-periodic
+turn on/off periodic attractors.  These are flows in 2 dependent
+variables, with a periodic dependence on a third independent variable
+(eg time).  Flow will sometimes choose to start all the particles in
+the same phase to illustrate the flow's cross-section.  Default:
+on
+.TP 8
+.B \-search
+.TP 8
+.B \-no\-search
+turn on/off search for new attractors.  If this is enabled, a fraction
+of the computing cycles is directed to searching a 60-dimensional
+parameter space for new strange attractors.  If periodic flows are
+enabled, these can be searched too.  Watch carefully - you are quite
+likely to see mathematical objects that have never been seen before,
+and since the parameters are not recorded, you'll probably never see
+them again!  Default: on
+.TP 8
+.B \-rotate
+.TP 8
+.B \-no\-rotate
+turn on/off rotating around attractor.  Default: on
+.TP 8
+.B \-ride
+.TP 8
+.B \-no\-ride
+turn on/off ride in the flow.  Default: on
+
+If both -rotate and -ride are enabled the viewpoint will occasionally
+fly between the two views.
+.TP 8
+.B \-box
+.TP 8
+.B \-no\-box
+turn on/off bounding box.  Default: on
+.TP 8
+.B \-dbuf
+.TP 8
+.B \-no\-dbuf
+turn on/off double buffering.  If Flow runs slowly in full screen, but
+fast in a smaller window (eg on old graphics cards with too little
+memory), try turning this option off.  Default: on
+.TP 8
+.B \-ncolors \fInumber\fP
+Number of Colors.  Default: 200.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH COPYRIGHT
+Copyright (c) 1996 by Tim Auckland <Tim.Auckland@Procket.com>
+Incorporating some code from Stephen Davies Copyright (c) 2000
+
+Search code based on techniques described in "Strange Attractors:
+Creating Patterns in Chaos" by Julien C. Sprott
+
+Permission to use, copy, modify, and distribute this software and its
+documentation for any purpose and without fee is hereby granted,
+provided that the above copyright notice appear in all copies and that
+both that copyright notice and this permission notice appear in
+supporting documentation.
+
+This file is provided AS IS with no warranties of any kind.  The author
+shall have no liability with respect to the infringement of copyrights,
+trade secrets or any patents by this file or any part thereof.  In no
+event will the author be liable for any lost revenue or profits or
+other special, indirect and consequential damages.
+
+Adapted from swarm.c Copyright (c) 1991 by Patrick J. Naughton.
+
+Adapted from xswarm by Jeff Butterworth. (butterwo@ncsc.org).
+.SH AUTHOR
+Tim Auckland

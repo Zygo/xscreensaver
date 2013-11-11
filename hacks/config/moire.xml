@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="moire" _label="Moire">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Duration" _low-label="1 second" _high-label="1 minute"
+          low="1" high="60" default="5"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="64"/>
+
+  <number id="offset" type="slider" arg="-offset %"
+            _label="Offset" _low-label="Small" _high-label="Large"
+            low="1" high="200" default="50"/>
+
+  <!-- #### -no-random -->
+
+<!--  <boolean id="shm" _label="Use shared memory" arg-unset="-no-shm"/> -->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <_description>
+  When the lines on the screen
+  Make more lines in between,
+  That's a moire'!
+
+http://en.wikipedia.org/wiki/Moire_pattern
+
+Written by Jamie Zawinski and Michael Bayne; 1997.
+  </_description>
+</screensaver>

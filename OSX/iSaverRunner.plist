@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleName</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>NSHumanReadableCopyright</key>
+	<string>5.23</string>
+	<key>CFBundleDevelopmentRegion</key>
+	<string>English</string>
+	<key>CFBundleVersion</key>
+	<string>5.23</string>
+	<key>NSMainNibFile</key>
+	<string>iSaverRunner</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleIconFile</key>
+	<string>iSaverRunner57.png</string>
+	<key>UIStatusBarHidden</key>
+	<true/>
+	<key>CFBundleShortVersionString</key>
+	<string>5.23</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<dict>
+		<key>opengles-1</key>
+		<true/>
+	</dict>
+	<key>CFBundleExecutable</key>
+	<string>${EXECUTABLE_NAME}</string>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>CFBundleLongVersionString</key>
+	<string>5.23</string>
+	<key>CFBundleIdentifier</key>
+	<string>${BUNDLE_IDENTIFIER}</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleIconFiles</key>
+	<array>
+		<string>iSaverRunner114.png</string>
+		<string>iSaverRunner72.png</string>
+		<string>iSaverRunner57.png</string>
+		<string>iSaverRunner50.png</string>
+		<string>iSaverRunner29.png</string>
+	</array>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
+	<key>UISupportedInterfaceOrientations</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+	</array>
+	<key>CFBundleDisplayName</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>CFBundleGetInfoString</key>
+	<string>5.23</string>
+</dict>
+</plist>
