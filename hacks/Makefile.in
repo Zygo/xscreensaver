@@ -1172,6 +1172,7 @@ bsod.o: $(srcdir)/apple2.h
 bsod.o: ../config.h
 bsod.o: $(srcdir)/fps.h
 bsod.o: $(srcdir)/images/amiga.xpm
+bsod.o: $(srcdir)/images/android.xpm
 bsod.o: $(srcdir)/images/atari.xbm
 bsod.o: $(srcdir)/images/atm.xbm
 bsod.o: $(srcdir)/images/hmac.xpm

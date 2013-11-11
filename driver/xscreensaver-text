@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2013 Jamie Zawinski <jwz@jwz.org>
+# Copyright Â© 2005-2013 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -34,7 +34,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.29 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.31 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -44,7 +44,7 @@ my $text_mode     = 'date';
 my $text_literal  = '';
 my $text_file     = '';
 my $text_program  = '';
-my $text_url      = 'http://twitter.com/statuses/public_timeline.atom';
+my $text_url      = 'http://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss';
 # Default URL needs to be set and match what's in OSX/XScreenSaverView.m
 
 my $wrap_columns  = undef;
@@ -54,82 +54,99 @@ my $nyarlathotep_p = 0;
 # Maps HTML character entities to the corresponding Latin1 characters.
 #
 my %entity_table = (
-   "quot"   => '"', "amp"    => '&', "lt"     => '<', "gt"     => '>',
-   "nbsp"   => ' ', "iexcl"  => '¡', "cent"   => '¢', "pound"  => '£',
-   "curren" => '¤', "yen"    => '¥', "brvbar" => '¦', "sect"   => '§',
-   "uml"    => '¨', "copy"   => '©', "ordf"   => 'ª', "laquo"  => '«',
-   "not"    => '¬', "shy"    => '­', "reg"    => '®', "macr"   => '¯',
-   "deg"    => '°', "plusmn" => '±', "sup2"   => '²', "sup3"   => '³',
-   "acute"  => '´', "micro"  => 'µ', "para"   => '¶', "middot" => '·',
-   "cedil"  => '¸', "sup1"   => '¹', "ordm"   => 'º', "raquo"  => '»',
-   "frac14" => '¼', "frac12" => '½', "frac34" => '¾', "iquest" => '¿',
-   "Agrave" => 'À', "Aacute" => 'Á', "Acirc"  => 'Â', "Atilde" => 'Ã',
-   "Auml"   => 'Ä', "Aring"  => 'Å', "AElig"  => 'Æ', "Ccedil" => 'Ç',
-   "Egrave" => 'È', "Eacute" => 'É', "Ecirc"  => 'Ê', "Euml"   => 'Ë',
-   "Igrave" => 'Ì', "Iacute" => 'Í', "Icirc"  => 'Î', "Iuml"   => 'Ï',
-   "ETH"    => 'Ð', "Ntilde" => 'Ñ', "Ograve" => 'Ò', "Oacute" => 'Ó',
-   "Ocirc"  => 'Ô', "Otilde" => 'Õ', "Ouml"   => 'Ö', "times"  => '×',
-   "Oslash" => 'Ø', "Ugrave" => 'Ù', "Uacute" => 'Ú', "Ucirc"  => 'Û',
-   "Uuml"   => 'Ü', "Yacute" => 'Ý', "THORN"  => 'Þ', "szlig"  => 'ß',
-   "agrave" => 'à', "aacute" => 'á', "acirc"  => 'â', "atilde" => 'ã',
-   "auml"   => 'ä', "aring"  => 'å', "aelig"  => 'æ', "ccedil" => 'ç',
-   "egrave" => 'è', "eacute" => 'é', "ecirc"  => 'ê', "euml"   => 'ë',
-   "igrave" => 'ì', "iacute" => 'í', "icirc"  => 'î', "iuml"   => 'ï',
-   "eth"    => 'ð', "ntilde" => 'ñ', "ograve" => 'ò', "oacute" => 'ó',
-   "ocirc"  => 'ô', "otilde" => 'õ', "ouml"   => 'ö', "divide" => '÷',
-   "oslash" => 'ø', "ugrave" => 'ù', "uacute" => 'ú', "ucirc"  => 'û',
-   "uuml"   => 'ü', "yacute" => 'ý', "thorn"  => 'þ', "yuml"   => 'ÿ',
-   "apos"   => '\'',
+   "quot"   => '"',    "amp"    => '&',    "lt"     => '<',
+   "gt"     => '>',    "nbsp"   => " ",    "iexcl"  => "\xA1",
+   "cent"   => "\xA2", "pound"  => "\xA3", "curren" => "\xA4",
+   "yen"    => "\xA5", "brvbar" => "\xA6", "sect"   => "\xA7",
+   "uml"    => "\xA8", "copy"   => "\xA9", "ordf"   => "\xAA",
+   "laquo"  => "\xAB", "not"    => "\xAC", "shy"    => "\xAD",
+   "reg"    => "\xAE", "macr"   => "\xAF", "deg"    => "\xB0",
+   "plusmn" => "\xB1", "sup2"   => "\xB2", "sup3"   => "\xB3",
+   "acute"  => "\xB4", "micro"  => "\xB5", "para"   => "\xB6",
+   "middot" => "\xB7", "cedil"  => "\xB8", "sup1"   => "\xB9",
+   "ordm"   => "\xBA", "raquo"  => "\xBB", "frac14" => "\xBC",
+   "frac12" => "\xBD", "frac34" => "\xBE", "iquest" => "\xBF",
+   "Agrave" => "\xC0", "Aacute" => "\xC1", "Acirc"  => "\xC2",
+   "Atilde" => "\xC3", "Auml"   => "\xC4", "Aring"  => "\xC5",
+   "AElig"  => "\xC6", "Ccedil" => "\xC7", "Egrave" => "\xC8",
+   "Eacute" => "\xC9", "Ecirc"  => "\xCA", "Euml"   => "\xCB",
+   "Igrave" => "\xCC", "Iacute" => "\xCD", "Icirc"  => "\xCE",
+   "Iuml"   => "\xCF", "ETH"    => "\xD0", "Ntilde" => "\xD1",
+   "Ograve" => "\xD2", "Oacute" => "\xD3", "Ocirc"  => "\xD4",
+   "Otilde" => "\xD5", "Ouml"   => "\xD6", "times"  => "\xD7",
+   "Oslash" => "\xD8", "Ugrave" => "\xD9", "Uacute" => "\xDA",
+   "Ucirc"  => "\xDB", "Uuml"   => "\xDC", "Yacute" => "\xDD",
+   "THORN"  => "\xDE", "szlig"  => "\xDF", "agrave" => "\xE0",
+   "aacute" => "\xE1", "acirc"  => "\xE2", "atilde" => "\xE3",
+   "auml"   => "\xE4", "aring"  => "\xE5", "aelig"  => "\xE6",
+   "ccedil" => "\xE7", "egrave" => "\xE8", "eacute" => "\xE9",
+   "ecirc"  => "\xEA", "euml"   => "\xEB", "igrave" => "\xEC",
+   "iacute" => "\xED", "icirc"  => "\xEE", "iuml"   => "\xEF",
+   "eth"    => "\xF0", "ntilde" => "\xF1", "ograve" => "\xF2",
+   "oacute" => "\xF3", "ocirc"  => "\xF4", "otilde" => "\xF5",
+   "ouml"   => "\xF6", "divide" => "\xF7", "oslash" => "\xF8",
+   "ugrave" => "\xF9", "uacute" => "\xFA", "ucirc"  => "\xFB",
+   "uuml"   => "\xFC", "yacute" => "\xFD", "thorn"  => "\xFE",
+   "yuml"   => "\xFF", "apos"   => "\'",
 
    # HTML 4 entities that do not have 1:1 Latin1 mappings.
-   "bull"  => "*",   "hellip"=> "...",  "prime" => "'",  "Prime" => "\"",
-   "frasl" => "/",   "trade" => "[tm]", "larr"  => "<-", "rarr"  => "->",
-   "harr"  => "<->", "lArr"  => "<=",   "rArr"  => "=>", "hArr"  => "<=>",
-   "empty" => "Ø",   "minus" => "-",    "lowast"=> "*",  "sim"   => "~",
-   "cong"  => "=~",  "asymp" => "~",    "ne"    => "!=", "equiv" => "==",
-   "le"    => "<=",  "ge"    => ">=",   "lang"  => "<",  "rang"  => ">",
-   "loz"   => "<>",  "OElig" => "OE",   "oelig" => "oe", "Yuml"  => "Y",
-   "circ"  => "^",   "tilde" => "~",    "ensp"  => " ",  "emsp"  => " ",
-   "thinsp"=> " ",   "ndash" => "-",    "mdash" => "-",  "lsquo" => "`",
-   "rsquo" => "'",   "sbquo" => "'",    "ldquo" => "\"", "rdquo" => "\"",
-   "bdquo" => "\"",  "lsaquo"=> "<",    "rsaquo"=> ">",
+   "bull"  => "*",    "hellip"=> "...",  "prime" => "'",  "Prime" => "\"",
+   "frasl" => "/",    "trade" => "[tm]", "larr"  => "<-", "rarr"  => "->",
+   "harr"  => "<->",  "lArr"  => "<=",   "rArr"  => "=>", "hArr"  => "<=>",
+   "empty" => "\xD8", "minus" => "-",    "lowast"=> "*",  "sim"   => "~",
+   "cong"  => "=~",   "asymp" => "~",    "ne"    => "!=", "equiv" => "==",
+   "le"    => "<=",   "ge"    => ">=",   "lang"  => "<",  "rang"  => ">",
+   "loz"   => "<>",   "OElig" => "OE",   "oelig" => "oe", "Yuml"  => "Y",
+   "circ"  => "^",    "tilde" => "~",    "ensp"  => " ",  "emsp"  => " ",
+   "thinsp"=> " ",    "ndash" => "-",    "mdash" => "-",  "lsquo" => "`",
+   "rsquo" => "'",    "sbquo" => "'",    "ldquo" => "\"", "rdquo" => "\"",
+   "bdquo" => "\"",   "lsaquo"=> "<",    "rsaquo"=> ">",
 );
 
 # Maps certain UTF8 characters (2 or 3 bytes) to the corresponding
 # Latin1 characters.
 #
 my %unicode_latin1_table = (
-   "\xC2\xA1" => '¡', "\xC2\xA2" => '¢', "\xC2\xA3" => '£', "\xC2\xA4" => '¤',
-   "\xC2\xA5" => '¥', "\xC2\xA6" => '¦', "\xC2\xA7" => '§', "\xC2\xA8" => '¨',
-   "\xC2\xA9" => '©', "\xC2\xAA" => 'ª', "\xC2\xAB" => '«', "\xC2\xAC" => '¬',
-   "\xC2\xAD" => '­', "\xC2\xAE" => '®', "\xC2\xAF" => '¯', "\xC2\xB0" => '°',
-   "\xC2\xB1" => '±', "\xC2\xB2" => '²', "\xC2\xB3" => '³', "\xC2\xB4" => '´',
-   "\xC2\xB5" => 'µ', "\xC2\xB6" => '¶', "\xC2\xB7" => '·', "\xC2\xB8" => '¸',
-   "\xC2\xB9" => '¹', "\xC2\xBA" => 'º', "\xC2\xBB" => '»', "\xC2\xBC" => '¼',
-   "\xC2\xBD" => '½', "\xC2\xBE" => '¾', "\xC2\xBF" => '¿', "\xC3\x80" => 'À',
-   "\xC3\x81" => 'Á', "\xC3\x82" => 'Â', "\xC3\x83" => 'Ã', "\xC3\x84" => 'Ä',
-   "\xC3\x85" => 'Å', "\xC3\x86" => 'Æ', "\xC3\x87" => 'Ç', "\xC3\x88" => 'È',
-   "\xC3\x89" => 'É', "\xC3\x8A" => 'Ê', "\xC3\x8B" => 'Ë', "\xC3\x8C" => 'Ì',
-   "\xC3\x8D" => 'Í', "\xC3\x8E" => 'Î', "\xC3\x8F" => 'Ï', "\xC3\x90" => 'Ð',
-   "\xC3\x91" => 'Ñ', "\xC3\x92" => 'Ò', "\xC3\x93" => 'Ó', "\xC3\x94" => 'Ô',
-   "\xC3\x95" => 'Õ', "\xC3\x96" => 'Ö', "\xC3\x97" => '×', "\xC3\x98" => 'Ø',
-   "\xC3\x99" => 'Ù', "\xC3\x9A" => 'Ú', "\xC3\x9B" => 'Û', "\xC3\x9C" => 'Ü',
-   "\xC3\x9D" => 'Ý', "\xC3\x9E" => 'Þ', "\xC3\x9F" => 'ß', "\xC3\xA0" => 'à',
-   "\xC3\xA1" => 'á', "\xC3\xA2" => 'â', "\xC3\xA3" => 'ã', "\xC3\xA4" => 'ä',
-   "\xC3\xA5" => 'å', "\xC3\xA6" => 'æ', "\xC3\xA7" => 'ç', "\xC3\xA8" => 'è',
-   "\xC3\xA9" => 'é', "\xC3\xAA" => 'ê', "\xC3\xAB" => 'ë', "\xC3\xAC" => 'ì',
-   "\xC3\xAD" => 'í', "\xC3\xAE" => 'î', "\xC3\xAF" => 'ï', "\xC3\xB0" => 'ð',
-   "\xC3\xB1" => 'ñ', "\xC3\xB2" => 'ò', "\xC3\xB3" => 'ó', "\xC3\xB4" => 'ô',
-   "\xC3\xB5" => 'õ', "\xC3\xB6" => 'ö', "\xC3\xB7" => '÷', "\xC3\xB8" => 'ø',
-   "\xC3\xB9" => 'ù', "\xC3\xBA" => 'ú', "\xC3\xBB" => 'û', "\xC3\xBC" => 'ü',
-   "\xC3\xBD" => 'ý', "\xC3\xBE" => 'þ', "\xC3\xBF" => 'ÿ',
+   "\xC2\xA1" => "\xA1", "\xC2\xA2" => "\xA2", "\xC2\xA3" => "\xA3",
+   "\xC2\xA4" => "\xA4", "\xC2\xA5" => "\xA5", "\xC2\xA6" => "\xA6",
+   "\xC2\xA7" => "\xA7", "\xC2\xA8" => "\xA8", "\xC2\xA9" => "\xA9",
+   "\xC2\xAA" => "\xAA", "\xC2\xAB" => "\xAB", "\xC2\xAC" => "\xAC",
+   "\xC2\xAD" => "\xAD", "\xC2\xAE" => "\xAE", "\xC2\xAF" => "\xAF",
+   "\xC2\xB0" => "\xB0", "\xC2\xB1" => "\xB1", "\xC2\xB2" => "\xB2",
+   "\xC2\xB3" => "\xB3", "\xC2\xB4" => "\xB4", "\xC2\xB5" => "\xB5",
+   "\xC2\xB6" => "\xB6", "\xC2\xB7" => "\xB7", "\xC2\xB8" => "\xB8",
+   "\xC2\xB9" => "\xB9", "\xC2\xBA" => "\xBA", "\xC2\xBB" => "\xBB",
+   "\xC2\xBC" => "\xBC", "\xC2\xBD" => "\xBD", "\xC2\xBE" => "\xBE",
+   "\xC2\xBF" => "\xBF", "\xC3\x80" => "\xC0", "\xC3\x81" => "\xC1",
+   "\xC3\x82" => "\xC2", "\xC3\x83" => "\xC3", "\xC3\x84" => "\xC4",
+   "\xC3\x85" => "\xC5", "\xC3\x86" => "\xC6", "\xC3\x87" => "\xC7",
+   "\xC3\x88" => "\xC8", "\xC3\x89" => "\xC9", "\xC3\x8A" => "\xCA",
+   "\xC3\x8B" => "\xCB", "\xC3\x8C" => "\xCC", "\xC3\x8D" => "\xCD",
+   "\xC3\x8E" => "\xCE", "\xC3\x8F" => "\xCF", "\xC3\x90" => "\xD0",
+   "\xC3\x91" => "\xD1", "\xC3\x92" => "\xD2", "\xC3\x93" => "\xD3",
+   "\xC3\x94" => "\xD4", "\xC3\x95" => "\xD5", "\xC3\x96" => "\xD6",
+   "\xC3\x97" => "\xD7", "\xC3\x98" => "\xD8", "\xC3\x99" => "\xD9",
+   "\xC3\x9A" => "\xDA", "\xC3\x9B" => "\xDB", "\xC3\x9C" => "\xDC",
+   "\xC3\x9D" => "\xDD", "\xC3\x9E" => "\xDE", "\xC3\x9F" => "\xDF",
+   "\xC3\xA0" => "\xE0", "\xC3\xA1" => "\xE1", "\xC3\xA2" => "\xE2",
+   "\xC3\xA3" => "\xE3", "\xC3\xA4" => "\xE4", "\xC3\xA5" => "\xE5",
+   "\xC3\xA6" => "\xE6", "\xC3\xA7" => "\xE7", "\xC3\xA8" => "\xE8",
+   "\xC3\xA9" => "\xE9", "\xC3\xAA" => "\xEA", "\xC3\xAB" => "\xEB",
+   "\xC3\xAC" => "\xEC", "\xC3\xAD" => "\xED", "\xC3\xAE" => "\xEE",
+   "\xC3\xAF" => "\xEF", "\xC3\xB0" => "\xF0", "\xC3\xB1" => "\xF1",
+   "\xC3\xB2" => "\xF2", "\xC3\xB3" => "\xF3", "\xC3\xB4" => "\xF4",
+   "\xC3\xB5" => "\xF5", "\xC3\xB6" => "\xF6", "\xC3\xB7" => "\xF7",
+   "\xC3\xB8" => "\xF8", "\xC3\xB9" => "\xF9", "\xC3\xBA" => "\xFA",
+   "\xC3\xBB" => "\xFB", "\xC3\xBC" => "\xFC", "\xC3\xBD" => "\xFD",
+   "\xC3\xBE" => "\xFE", "\xC3\xBF" => "\xFF",
 
-   "\xE2\x80\x93" => '--',  "\xE2\x80\x94" => '--',
-   "\xE2\x80\x98" => '`',   "\xE2\x80\x99" => '\'',
-   "\xE2\x80\x9C" => "``",  "\xE2\x80\x9D" => "''",
-   "\xE2\x80\xA6" => '...',
-);
-
+   "\xE2\x80\x93" => '--',       "\xE2\x80\x94" => '--',
+   "\xE2\x80\x98" => '`',        "\xE2\x80\x99" => '\'',
+   "\xE2\x80\x9C" => "``",       "\xE2\x80\x9D" => "''",
+   "\xE2\x80\xB2" => "'",        "\xE2\x80\xA6" => '...',
+   "\xE2\x86\x90" => ' &larr; ', "\xE2\x84\xA2" => '&trade;',
+   "\xE2\x80\xA2" => '&bull;',   "\xC2\xA0" => ' ',  # &nbsp;
+ );
 
 # Convert any HTML entities to Latin1 characters.
 #
@@ -161,7 +178,8 @@ sub de_entify($) {
 #
 sub de_unicoddle($) {
   my ($text) = @_;
-  foreach my $key (keys (%unicode_latin1_table)) {
+  foreach my $key (sort { length($b) <=> length($a) }
+                   keys (%unicode_latin1_table)) {
     my $val = $unicode_latin1_table{$key};
     $text =~ s/$key/$val/gs;
   }
@@ -173,13 +191,12 @@ sub de_unicoddle($) {
 #
 sub get_x11_prefs() {
   my $got_any_p = 0;
-  local *IN;
 
-  if (open (IN, "<$config_file")) {
+  if (open (my $in, '<', $config_file)) {
     print STDERR "$progname: reading $config_file\n" if ($verbose > 1);
-    my $body = '';
-    while (<IN>) { $body .= $_; }
-    close IN;
+    local $/ = undef;  # read entire file
+    my $body = <$in>;
+    close $in;
     $got_any_p = get_x11_prefs_1 ($body);
 
   } elsif ($verbose > 1) {
@@ -351,23 +368,22 @@ sub output() {
 
     $text_file =~ s@^~/@$ENV{HOME}/@s;     # allow literal "~/"
 
-    local *IN;
-    if (open (IN, "<$text_file")) {
+    if (open (my $in, '<', $text_file)) {
       print STDERR "$progname: reading $text_file\n" if ($verbose);
 
       if ($wrap_columns && $wrap_columns > 0) {
         # read it, then reformat it.
-        my $body = '';
-        while (<IN>) { $body .= $_; }
+        local $/ = undef;  # read entire file
+        my $body = <$in>;
         reformat_text ($body);
       } else {
-        # stream it
-        while (<IN>) { 
+        # stream it by lines
+        while (<$in>) { 
           y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
-          print $_;
+          print STDOUT $_;
         }
       }
-      close IN;
+      close $in;
     } else {
       error ("$text_file: $!");
     }
@@ -495,22 +511,51 @@ sub reformat_html($$) {
   s@<[^<>]*>?@@gs;                # lose all other HTML tags
   $_ = de_entify ($_);            # convert HTML entities
 
-  # For Wikipedia: delete anything inside {{ }} and unwrap [[tags]]
+  # For Wikipedia: delete anything inside {{ }} and unwrap [[tags]],
+  # among other things.
   #
   if ($rss_p eq 'wiki') {
-    s@/\*.*?\*/@@si;				# /* ... */
-    1 while (s/{{[^{}]*}}//gs);			# {{ ... }}
-    s/\[\[([^:\[\]\|]+)\|([^\[\]]+)\]\]/$2/gs;	# [[link|anchor]]
-    s/\[\[([^:\[\]\|]+)\]\]/$1/gs;		# [[anchor]]
-    s/\[http:[^\[\]\s]+\s+([^\[\]]+)\]/$1/gs;	# [url anchor]
-#   s@\s*<ref>.*?</ref>@*@gs;			# <ref>url<ref>  ->  "*"
-    s/<[^<>]*>//gs;				# <tags> -- omit.
+
+    # Creation line is often truncated: screws up parsing with unbalanced {{.
+    s@(: +<- +Created page) with [^\n]+@$1@s;
+
+    s@/\*.*?\*/@@si;				   # /* ... */
+
+    # Try to omit all tables, since they're impossible to read as text.
+    #
+    1 while (s/{{[^{}]*}}/ /gs);		   # {{ ... }}
+    1 while (s/{\|.*?\|}/\n\n/gs);		   # {| ... |}
+    1 while (s/\|-.*?\|/ /gs);			   # |- ... |  (table cell)
+
+    # Convert anchors to something more readable.
+    #
+    s/\[\[([^\[\]\|]+)\|([^\[\]]+)\]\]/$2/gs;	   # [[link|anchor]]
+    s/\[\[([^:\[\]\|]+)\]\]/$1/gs;		   # [[anchor]]
+    s/\[https?:[^\[\]\s]+\s+([^\[\]]+)\]/$1/gs;	   # [url anchor]
+
+    # Convert all references to asterisks.
+    s@\s*<ref>\s*.*?</ref>@*@gs;		   # <ref> ... <ref> ->  "*"
+    s@\n[ \t]*\d+\s*\^\s*http[^\s]+[ \t]*\n@\n@gs; # 1 ^ URL (a Reflist)
+
+    s@\[\[File:([^\|\]]+).*?\]\]@\n$1\n@gs;	  # [[File: X | ... ]]
+    s@\[\[Category:.*?\]\]@@gs;			  # omit categories
+
+    s/<[^<>]*>//gs;	# Omit all remaining tags
+    s/\'{3,}//gs;	# Omit ''' and ''''
+    s/\'\'/\"/gs;	# ''  ->  "
+    s/\`\`/\"/gs;	# ``  ->  "
+    s/\"\"+/\"/gs;	# ""  ->  "
+
+    s/^[ \t]*[*#]+[ \t]*$//gm;	# Omit lines with just * or # on them
+
+    # Omit trailing headlines with no text after them (e.g. == Notes ==)
+    1 while (s/\n==+[ \t]*[^\n=]+[ \t]*==+\s*$/\n/s);
   }
 
 
   # elide any remaining non-Latin1 binary data...
-  s/([\177-\377]+(\s*[\177-\377]+)[^a-z\d]*)/«...» /g;
-  #s/([\177-\377]+(\s*[\177-\377]+)[^a-z\d]*)/«$1» /g;
+  s/([^\000-\176]+(\s*[^\000-\176]+)[^a-z\d]*)/\xAB...\xBB /g;
+# s/([^\000-\176]+(\s*[^\000-\176]+)[^a-z\d]*)/\xAB$1\xBB /g;
 
   $_ .= "\n";
 
@@ -519,9 +564,9 @@ sub reformat_html($$) {
 
   if (!defined($wrap_columns) || $wrap_columns > 0) {
     $Text::Wrap::columns = ($wrap_columns || 72);
-    $Text::Wrap::break = '[\s/]';  # wrap on slashes for URLs
-    $_ = wrap ("", "  ", $_);     # wrap the lines as a paragraph
-    s/[ \t]+$//gm;                # lose whitespace at end of line again
+    $Text::Wrap::break = '[\s/|]';  # wrap on slashes for URLs
+    $_ = wrap ("", "  ", $_);       # wrap the lines as a paragraph
+    s/[ \t]+$//gm;                  # lose whitespace at end of line again
   }
 
   s/^\n+//gs;
@@ -803,8 +848,8 @@ sub main() {
     # 3) Different behavior than MacOS 10.1 through 10.4; and 4)
     # Different behavior than every other Unix in the world.
     #
-    # See http://jwz.livejournal.com/817438.html, and for those of
-    # you inside Apple, "Problem ID 5606018".
+    # See http://jwz.org/b/DHke, and for those of you inside Apple,
+    # "Problem ID 5606018".
     #
     # One workaround would be to rewrite the savers to have an
     # internal buffer, and always read as much data as possible as

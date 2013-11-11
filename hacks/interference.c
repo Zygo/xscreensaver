@@ -30,7 +30,7 @@
  * Last modified: Wed May 15 00:04:43 2013,
  *              Dave Odell <dmo2118@gmail.com>
  *              Tuned performance; double-buffering is now off by default.
- *              Made animation speed independant of FPS.
+ *              Made animation speed independent of FPS.
  *              Added cleanup code, fixed a few glitches.
  *              Added gratuitous #ifdefs.
  */
@@ -668,6 +668,44 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
  * parallelized, what with all the multi-core hardware nowadays.
  */
 
+#ifdef TEST_PATTERN
+static uint32_t
+_alloc_color(struct inter_context *c, uint16_t r, uint16_t g, uint16_t b)
+{
+	XColor color;
+	color.red = r;
+	color.green = g;
+	color.blue = b;
+	XAllocColor(c->dpy, c->cmap, &color);
+	return color.pixel;
+}
+
+static void _copy_test(Display *dpy, Drawable src, Drawable dst, GC gc, int x, int y, uint32_t cells)
+{
+	XCopyArea(dpy, src, dst, gc, 0, 0, 3, 2, x, y);
+	
+	{
+		XImage *image = XGetImage(dpy, src, 0, 0, 3, 2, cells, ZPixmap);
+		XPutImage(dpy, dst, gc, image, 0, 0, x, y + 2, 3, 2);
+		XDestroyImage(image);
+	}
+}
+
+static void _test_pattern(Display *dpy, Drawable d, GC gc, const uint32_t *rgb)
+{
+	unsigned x;
+	for(x = 0; x != 3; ++x)
+	{
+		XSetForeground(dpy, gc, rgb[x]);
+		XDrawPoint(dpy, d, gc, x, 0);
+		XSetForeground(dpy, gc, rgb[2 - x]);
+		XFillRectangle(dpy, d, gc, x, 1, 1, 1);
+	}
+	
+	_copy_test(dpy, d, d, gc, 0, 2, rgb[0] | rgb[1] | rgb[2]);
+}
+#endif /* TEST_PATTERN */
+
 static unsigned long do_inter(struct inter_context* c)
 {
   int i, j, k;
@@ -856,6 +894,46 @@ static unsigned long do_inter(struct inter_context* c)
               0, 0, 0, 0, c->ximage->width, c->ximage->height);
   }
 #endif
+
+#ifdef TEST_PATTERN
+	{
+/*		XWindowAttributes xgwa;
+		XGetWindowAttributes(c->dpy, c->win, &xgwa); */
+		
+		// if(xgwa.width >= 9 && xgwa.height >= 10)
+		{
+			Screen *screen = ScreenOfDisplay(c->dpy, DefaultScreen(c->dpy));
+			Visual *visual = DefaultVisualOfScreen(screen);
+			Pixmap pixmap = XCreatePixmap(c->dpy, TARGET(c), 3, 10, visual_depth(screen, visual));
+			
+			{
+				XSetForeground(c->dpy, c->copy_gc, _alloc_color(c, 0xffff, 0x7fff, 0x7fff));
+				XDrawPoint(c->dpy, TARGET(c), c->copy_gc, 0, c->h - 1);
+			}
+			
+			uint32_t rgb[3], cells;
+			rgb[0] = _alloc_color(c, 0xffff, 0, 0);
+			rgb[1] = _alloc_color(c, 0, 0xffff, 0);
+			rgb[2] = _alloc_color(c, 0, 0, 0xffff);
+			cells = rgb[0] | rgb[1] | rgb[2];
+			
+			_test_pattern(c->dpy, TARGET(c), c->copy_gc, rgb);
+			_test_pattern(c->dpy, pixmap, c->copy_gc, rgb);
+			// Here's a good spot to verify that the pixmap contains the right colors at the top. 
+			_copy_test(c->dpy, TARGET(c), pixmap, c->copy_gc, 0, 6, cells);
+			
+			XCopyArea(c->dpy, pixmap, TARGET(c), c->copy_gc, 0, 0, 3, 10, 3, 0);
+			{
+				XImage *image = XGetImage(c->dpy, pixmap, 0, 0, 3, 10, cells, ZPixmap);
+				XPutImage(c->dpy, TARGET(c), c->copy_gc, image, 0, 0, 6, 0, 3, 10);
+				XDestroyImage(image);
+			}
+			
+			XFreePixmap(c->dpy, pixmap);
+			XSync(c->dpy, False);
+		}
+	}
+#endif /* TEST_PATTERN */
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
   if (c->back_buf)

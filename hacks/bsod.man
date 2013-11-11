@@ -54,7 +54,7 @@ Specify which visual to use.  Legal values are the name of a visual class,
 or the id number (decimal or hex) of a specific visual.
 .TP 8
 .B \-delay \fIdelay\fP
-The delay between displaying one crash and another.
+The duration each crash-mode is displayed before selecting another.
 .TP 8
 .B \-only \fIwhich\fP
 Tell it to run only one mode, e.g., \fI\-only HPUX\fP.

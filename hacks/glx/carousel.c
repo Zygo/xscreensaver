@@ -1,4 +1,4 @@
-/* carousel, Copyright (c) 2005-2012 Jamie Zawinski <jwz@jwz.org>
+/* carousel, Copyright (c) 2005-2013 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and rotates them around.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -531,6 +531,13 @@ loading_msg (ModeInfo *mi, int n)
         glScalef (s, 1/s, 1);
       }
   }
+
+  if (MI_WIDTH(mi) < MI_HEIGHT(mi))  /* USE_IPHONE portrait orientation */
+    {
+      GLfloat s = (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi));
+      glScalef (s, s, s);
+      glTranslatef(-s/2, 0, 0);
+    }
 
   glOrtho(0, MI_WIDTH(mi), 0, MI_HEIGHT(mi), -1, 1);
   glTranslatef ((MI_WIDTH(mi)  - ss->loading_sw) / 2,

@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.22
-!                              16-Jul-2013
+!                              version 5.23
+!                              09-Nov-2013
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -356,6 +356,7 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				companioncube -root			    \n\
 @GL_KLUDGE@ GL: 				hilbert -root				    \n\
 @GL_KLUDGE@ GL: 				tronbit -root				    \n\
+@GL_KLUDGE@ GL: 				geodesic -root				    \n\
 				hexadrop -root				    \n\
 @GL_KLUDGE@ GL: 				kaleidocycle -root			    \n\
 @GL_KLUDGE@ GL: 				quasicrystal -root			    \n\

@@ -57,7 +57,7 @@ BEGIN { eval 'use LWP::Simple;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.35 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.36 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -549,7 +549,29 @@ sub md5_file($) {
 sub download_image($$$) {
   my ($url, $uid, $dir) = @_;
 
-  my ($ext) = ($url =~ m@\.([a-z\d]+)$@si);
+  my $url2 = $url;
+  $url2 =~ s/\#.*$//s;		# Omit search terms after file extension
+  $url2 =~ s/\?.*$//s;
+  my ($ext) = ($url2 =~ m@\.([a-z\d]+)$@si);
+
+  # If the feed hasn't put a sane extension on their URLs, nothing's going
+  # to work. This code assumes that file names have extensions, even the
+  # ones in the cache directory.
+  #
+  if (! $ext) {
+    print STDERR "$progname: skipping extensionless URL: $url\n"
+      if ($verbose > 1);
+    return undef;
+  }
+
+  # Don't bother downloading files that we will reject anyway.
+  #
+  if (! ($url2 =~ m/$good_file_re/io)) {
+    print STDERR "$progname: skipping non-image URL: $url\n"
+      if ($verbose > 1);
+    return undef;
+  }
+
   my $file = md5_file ($uid);
   $file .= '.' . lc($ext) if $ext;
 
@@ -630,10 +652,11 @@ sub mirror_feed($) {
 
   my $poll_p = ($mtime + $feed_max_age < time);
 
-  $poll_p = 1 unless ($cache_p);  # poll again now with --no-cache cmd line arg.
+  # --no-cache cmd line arg means poll again right now.
+  $poll_p = 1 unless ($cache_p);
 
-  # Even if the cache is young, let's make sure there are at least
-  # a few files in it, and re-check if not.
+  # Even if the cache is young, make sure there is at least one file,
+  # and re-check if not.
   #
   if (! $poll_p) {
     my $count = 0;
@@ -679,7 +702,7 @@ sub mirror_feed($) {
       $count++;
     }
 
-    print STDERR "$progname: empty feed: $url\n" if ($count <= 0);
+    my $empty_p = ($count <= 0);
 
     # Now delete any files that are no longer in the feed.
     # But if there was nothing in the feed (network failure?)
@@ -700,8 +723,12 @@ sub mirror_feed($) {
       }
     }
 
-    # Both feed and cache are empty. No files at all.
+    # Both feed and cache are empty. No files at all. Bail.
     error ("empty feed: $url") if ($kept <= 1);
+
+    # Feed is empty, but we have some files from last time. Warn.
+    print STDERR "$progname: empty feed: using cache: $url\n"
+      if ($empty_p);
 
     $mtime = time();	# update the timestamp
 
@@ -778,8 +805,6 @@ sub find_random_file($) {
   }
 
   write_cache ($dir);
-
-#  @all_files = sort(@all_files);
 
   if ($#all_files < 0) {
     print STDERR "$progname: no files in $dir\n";
@@ -934,11 +959,10 @@ sub image_size($) {
 sub image_file_size($) {
   my ($file) = @_;
   my $in;
-  if (! open ($in, '<', $file)) {
+  if (! open ($in, '<:raw', $file)) {
     print STDERR "$progname: $file: $!\n" if ($verbose);
     return ();
   }
-  binmode ($in);  # Larry can take Unicode and shove it up his ass sideways.
   my $body = '';
   sysread ($in, $body, 1024 * 50);  # The first 50k should be enough.
   close $in;			    # (It's not for certain huge jpegs...
@@ -953,7 +977,7 @@ sub error($) {
 }
 
 sub usage() {
-  print STDERR "usage: $progname [--verbose] directory\n" .
+  print STDERR "usage: $progname [--verbose] directory-or-feed-url\n\n" .
   "       Prints the name of a randomly-selected image file.  The directory\n" .
   "       is searched recursively.  Images smaller than " .
          "${min_image_width}x${min_image_height} are excluded.\n" .
@@ -969,16 +993,16 @@ sub main() {
 
   while ($_ = $ARGV[0]) {
     shift @ARGV;
-    if ($_ eq "--verbose") { $verbose++; }
-    elsif (m/^-v+$/) { $verbose += length($_)-1; }
-    elsif ($_ eq "--name") { }     # ignored, for compatibility
-    elsif ($_ eq "--spotlight")    { $use_spotlight_p = 1; }
-    elsif ($_ eq "--no-spotlight") { $use_spotlight_p = 0; }
-    elsif ($_ eq "--cache")        { $cache_p = 1; }
-    elsif ($_ eq "--no-cache")     { $cache_p = 0; }
-    elsif (m/^-./) { usage; }
-    elsif (!defined($dir)) { $dir = $_; }
-    else { usage; }
+    if    (m/^--?verbose$/s)      { $verbose++; }
+    elsif (m/^-v+$/s)             { $verbose += length($_)-1; }
+    elsif (m/^--?name$/s)         { }   # ignored, for compatibility
+    elsif (m/^--?spotlight$/s)    { $use_spotlight_p = 1; }
+    elsif (m/^--?no-spotlight$/s) { $use_spotlight_p = 0; }
+    elsif (m/^--?cache$/s)        { $cache_p = 1; }
+    elsif (m/^--?no-?cache$/s)    { $cache_p = 0; }
+    elsif (m/^-./)                { usage; }
+    elsif (!defined($dir))        { $dir = $_; }
+    else                          { usage; }
   }
 
   usage unless (defined($dir));

@@ -18,7 +18,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.3 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 1;
 
@@ -95,11 +95,24 @@ sub update($$) {
              "-resize", $size . "^",
              "-gravity", "center",
              "-extent", $size,
+             "-quality", "95",			# saves 8%
+             "+dither", "-colors", "128",	# Saves an additional 61%
              $tmp);
 
   print STDERR "$progname: exec: " . join(' ', @cmd) . "\n" 
     if ($verbose > 2);
   safe_system (@cmd);
+
+  if (! -s $tmp) {
+    unlink $tmp;
+    error ("failed: " . join(" ", @cmd));
+  }
+
+  # This only saves 0.4% on top of the above.
+  #  @cmd = ("optipng", "-quiet", "-o7", $tmp);
+  #  print STDERR "$progname: exec: " . join(' ', @cmd) . "\n" 
+  #    if ($verbose > 2);
+  #  safe_system (@cmd);
 
   if (! -s $tmp) {
     unlink $tmp;

@@ -391,12 +391,12 @@ double_time (void)
 
 - (void) initLayer
 {
-# if !defined(USE_IPHONE) && defined(USE_CALAYER)
+# ifndef USE_IPHONE
   [self setLayer: [CALayer layer]];
   self.layer.delegate = self;
   self.layer.opaque = YES;
   [self setWantsLayer: YES];
-# endif  // !USE_IPHONE && USE_CALAYER
+# endif
 }
 
 
@@ -416,16 +416,7 @@ double_time (void)
 # ifdef USE_BACKBUFFER
   if (backbuffer)
     CGContextRelease (backbuffer);
-
-  if (colorspace)
-    CGColorSpaceRelease (colorspace);
-
-#  ifndef USE_CALAYER
-  if (window_ctx)
-    CGContextRelease (window_ctx);
-#  endif // !USE_CALAYER
-
-# endif // USE_BACKBUFFER
+# endif
 
   [prefsReader release];
 
@@ -700,74 +691,6 @@ double current_device_rotation (void)
   int new_w = [self bounds].size.width;
   int new_h = [self bounds].size.height;
 # endif
-	
-  // Colorspaces and CGContexts only happen with non-GL hacks.
-  if (colorspace)
-    CGColorSpaceRelease (colorspace);
-# ifndef USE_CALAYER
-  if (window_ctx)
-    CGContextRelease (window_ctx);
-# endif
-	
-  NSWindow *window = [self window];
-
-  if (window && xdpy) {
-    [self lockFocus];
-
-# ifndef USE_CALAYER
-    // TODO: This was borrowed from jwxyz_window_resized, and should
-    // probably be refactored.
-	  
-    // Figure out which screen the window is currently on.
-    CGDirectDisplayID cgdpy = 0;
-
-    {
-//    int wx, wy;
-//    TODO: XTranslateCoordinates is returning (0,1200) on my system.
-//    Is this right?
-//    In any case, those weren't valid coordinates for CGGetDisplaysWithPoint.
-//    XTranslateCoordinates (xdpy, xwindow, NULL, 0, 0, &wx, &wy, NULL);
-//    p.x = wx;
-//    p.y = wy;
-
-      NSPoint p0 = {0, 0};
-      p0 = [window convertBaseToScreen:p0];
-      CGPoint p = {p0.x, p0.y};
-      CGDisplayCount n;
-      CGGetDisplaysWithPoint (p, 1, &cgdpy, &n);
-      NSAssert (cgdpy, @"unable to find CGDisplay");
-    }
-
-    {
-      // Figure out this screen's colorspace, and use that for every CGImage.
-      //
-      CMProfileRef profile = 0;
-
-      // CMGetProfileByAVID is deprecated as of OS X 10.6, but there's no
-      // documented replacement as of OS X 10.9.
-      // http://lists.apple.com/archives/colorsync-dev/2012/Nov/msg00001.html
-      CMGetProfileByAVID ((CMDisplayIDType) cgdpy, &profile);
-      NSAssert (profile, @"unable to find colorspace profile");
-      colorspace = CGColorSpaceCreateWithPlatformColorSpace (profile);
-      NSAssert (colorspace, @"unable to find colorspace");
-    }
-# else  // USE_CALAYER
-    // Was apparently faster until 10.9.
-    colorspace = CGColorSpaceCreateDeviceRGB ();
-# endif // USE_CALAYER
-
-# ifndef USE_CALAYER
-    window_ctx = [[window graphicsContext] graphicsPort];
-    CGContextRetain (window_ctx);
-# endif // !USE_CALAYER
-	  
-    [self unlockFocus];
-  } else {
-# ifndef USE_CALAYER
-    window_ctx = NULL;
-# endif // !USE_CALAYER
-    colorspace = CGColorSpaceCreateDeviceRGB();
-  }
 
   if (backbuffer &&
       backbuffer_size.width  == new_w &&
@@ -780,16 +703,18 @@ double current_device_rotation (void)
   backbuffer_size.width  = new_w;
   backbuffer_size.height = new_h;
 
+  CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
   backbuffer = CGBitmapContextCreate (NULL,
                                       backbuffer_size.width,
                                       backbuffer_size.height,
                                       8, 
                                       backbuffer_size.width * 4,
-                                      colorspace,
+                                      cs,
                                       // kCGImageAlphaPremultipliedLast
                                       (kCGImageAlphaNoneSkipFirst |
                                        kCGBitmapByteOrder32Host)
                                       );
+  CGColorSpaceRelease (cs);
   NSAssert (backbuffer, @"unable to allocate back buffer");
 
   // Clear it.
@@ -1069,7 +994,6 @@ double current_device_rotation (void)
 - (void) animateOneFrame
 {
   [self render_x11];
-  jwxyz_flush_context(xdpy);
 }
 
 #else  // USE_BACKBUFFER
@@ -1111,43 +1035,8 @@ double current_device_rotation (void)
   self.layer.bounds = bounds;
 # endif // USE_IPHONE
  
-# ifdef USE_CALAYER
   [self.layer setNeedsDisplay];
-# else // !USE_CALAYER
-  size_t
-    w = CGBitmapContextGetWidth (backbuffer),
-    h = CGBitmapContextGetHeight (backbuffer);
-  
-  size_t bpl = CGBitmapContextGetBytesPerRow (backbuffer);
-  CGDataProviderRef prov = CGDataProviderCreateWithData (NULL,
-                                            CGBitmapContextGetData(backbuffer),
-                                                         bpl * h,
-                                                         NULL);
-
-
-  CGImageRef img = CGImageCreate (w, h,
-                                  8, 32,
-                                  CGBitmapContextGetBytesPerRow(backbuffer),
-                                  colorspace,
-                                  CGBitmapContextGetBitmapInfo(backbuffer),
-                                  prov, NULL, NO,
-                                  kCGRenderingIntentDefault);
-
-  CGDataProviderRelease (prov);
-  
-  CGRect rect;
-  rect.origin.x = 0;
-  rect.origin.y = 0;
-  rect.size = backbuffer_size;
-  CGContextDrawImage (window_ctx, rect, img);
-  
-  CGImageRelease (img);
-
-  CGContextFlush (window_ctx);
-# endif // !USE_CALAYER
 }
-
-# ifdef USE_CALAYER
 
 - (void) drawLayer:(CALayer *)layer inContext:(CGContextRef)ctx
 {
@@ -1158,9 +1047,9 @@ double current_device_rotation (void)
   if (dest_data &&
       CGBitmapContextGetBitmapInfo (ctx) ==
         (kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Host)
-#  ifdef USE_IPHONE
+#ifdef USE_IPHONE
       && CGContextGetCTM (ctx).d < 0
-#  endif // USE_IPHONE
+#endif
       )
   {
     size_t dest_height = CGBitmapContextGetHeight (ctx);
@@ -1188,21 +1077,20 @@ double current_device_rotation (void)
 
     // iPad 1: 9.6 ms, iPad 2: 12.1 ms
 
-#  ifdef USE_IPHONE
+#ifdef USE_IPHONE
     CGContextScaleCTM (ctx, 1, -1);
     CGFloat s = [self contentScaleFactor];
     CGFloat hs = [self hackedContentScaleFactor];
     CGContextTranslateCTM (ctx, 0, -backbuffer_size.height * hs / s);
-#  endif // USE_IPHONE
+#endif
     
     CGImageRef img = CGBitmapContextCreateImage (backbuffer);
     CGContextDrawImage (ctx, self.layer.bounds, img);
     CGImageRelease (img);
   }
 }
-# endif  // USE_CALAYER
 
-#endif // USE_BACKBUFFER
+#endif // !USE_BACKBUFFER
 
 
 

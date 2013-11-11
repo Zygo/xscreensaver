@@ -324,8 +324,12 @@ main (int argc, char **argv)
   if (*cmd == XA_ACTIVATE || *cmd == XA_LOCK ||
       *cmd == XA_NEXT || *cmd == XA_PREV || *cmd == XA_SELECT)
     /* People never guess that KeyRelease deactivates the screen saver too,
-       so if we're issuing an activation command, wait a second. */
-    sleep (1);
+       so if we're issuing an activation command, wait a second.
+       No need to do this if stdin is not a tty, meaning we're not being
+       run from the command line.
+     */
+    if (isatty(0))
+      sleep (1);
 
   i = xscreensaver_command (dpy, *cmd, arg, True, NULL);
   if (i < 0) exit (i);

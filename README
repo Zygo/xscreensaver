@@ -38,6 +38,22 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+Changes since 5.22:   * New hack, `geodesic'.
+                      * iOS and OSX: huge XCopyArea performance improvements.
+                      * More heuristics for using RSS feeds as image sources.
+                      * Improved Wikipedia parser.
+                      * Updated `webcollage' for recent Flickr changes.
+                      * Added Android to `bsod'.
+                      * OSX: Added a real installer.
+                      * iOS and OSX: fixed a font-metrics bug.
+                      * iOS: Fixed aspect ratio bug in non-rotating apps when
+                        launched in landscape mode.
+                      * Made `quasicrystal' work on weak graphics cards.
+                      * iOS: fixed `ifs'.
+                      * Better compression on icons, plists and XML files:
+                        smaller distribution and installation footprint.
+                      * Reverted that DEACTIVATE change. Bad idea.
+                      * `Phosphor' now supports amber as well as green.
 Changes since 5.21:   * New hacks, `kaleidocycle', `quasicrystal',
                         `unknownpleasures' and `hexadrop'.
                       * Performance improvements for `interference'.

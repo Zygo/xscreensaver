@@ -276,6 +276,7 @@ extern void jwxyz_window_resized (Display *, Window,
                                   int, int, int, int,
                                   void *cgc);
 extern void jwxyz_mouse_moved (Display *, Window, int x, int y);
+extern void jwxyz_flush_context (Display *);
 
 extern Window XRootWindow (Display *, int screen);
 extern Screen *XDefaultScreenOfDisplay (Display *);

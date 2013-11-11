@@ -44,6 +44,7 @@
   NSBundle *saverBundle;
   NSArray  *windows;
   IBOutlet NSMenu *menubar;
+  NSTimer *anim_timer;
 
 # else  // USE_IPHONE
 

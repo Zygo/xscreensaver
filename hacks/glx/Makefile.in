@@ -117,7 +117,7 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c fps-gl.c \
 		  hilbert.c companion.c companion_quad.c companion_disc.c \
 		  companion_heart.c tronbit.c tronbit_idle1.c tronbit_idle2.c \
 		  tronbit_no.c tronbit_yes.c jwzgles.c kaleidocycle.c \
-		  quasicrystal.c unknownpleasures.c
+		  quasicrystal.c unknownpleasures.c geodesic.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -157,7 +157,7 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  hilbert.o companion.o companion_quad.o companion_disc.o \
 		  companion_heart.o tronbit.o tronbit_idle1.o tronbit_idle2.o \
 		  tronbit_no.o tronbit_yes.o jwzgles.o kaleidocycle.o \
-		  quasicrystal.o unknownpleasures.o
+		  quasicrystal.o unknownpleasures.o geodesic.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -173,7 +173,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  juggler3d topblock glschool glcells voronoi moebiusgears \
 		  lockward cubicgrid hypnowheel skytentacles jigsaw photopile \
 		  rubikblocks surfaces hilbert companioncube tronbit \
-		  kaleidocycle quasicrystal unknownpleasures
+		  kaleidocycle quasicrystal unknownpleasures geodesic
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 GL_UTIL_EXES	= xscreensaver-gl-helper
@@ -229,7 +229,7 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  hypnowheel.man skytentacles.man sonar.man jigsaw.man \
 		  photopile.man rubikblocks.man surfaces.man hilbert.man \
 		  companioncube.man tronbit.man kaleidocycle.man \
-		  quasicrystal.man unknownpleasures.man
+		  quasicrystal.man unknownpleasures.man geodesic.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -831,6 +831,8 @@ quasicrystal:	quasicrystal.o	$(HACK_TRACK_OBJS)
 unknownpleasures: unknownpleasures.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
+geodesic: geodesic.o		 normals.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	 normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 ##############################################################################
 #
@@ -1575,6 +1577,25 @@ gears.o: $(UTILS_SRC)/xshm.h
 gears.o: $(UTILS_SRC)/yarandom.h
 gears.o: $(HACK_SRC)/xlockmoreI.h
 gears.o: $(HACK_SRC)/xlockmore.h
+geodesic.o: ../../config.h
+geodesic.o: $(HACK_SRC)/fps.h
+geodesic.o: $(srcdir)/gllist.h
+geodesic.o: $(srcdir)/gltrackball.h
+geodesic.o: $(srcdir)/jwzglesI.h
+geodesic.o: $(srcdir)/jwzgles.h
+geodesic.o: $(srcdir)/normals.h
+geodesic.o: $(srcdir)/rotator.h
+geodesic.o: $(HACK_SRC)/screenhackI.h
+geodesic.o: $(UTILS_SRC)/colors.h
+geodesic.o: $(UTILS_SRC)/grabscreen.h
+geodesic.o: $(UTILS_SRC)/hsv.h
+geodesic.o: $(UTILS_SRC)/resources.h
+geodesic.o: $(UTILS_SRC)/usleep.h
+geodesic.o: $(UTILS_SRC)/visual.h
+geodesic.o: $(UTILS_SRC)/xshm.h
+geodesic.o: $(UTILS_SRC)/yarandom.h
+geodesic.o: $(HACK_SRC)/xlockmoreI.h
+geodesic.o: $(HACK_SRC)/xlockmore.h
 gflux.o: ../../config.h
 gflux.o: $(HACK_SRC)/fps.h
 gflux.o: $(srcdir)/gltrackball.h

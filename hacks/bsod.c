@@ -58,6 +58,7 @@
 # include "images/hmac.xpm"
 # include "images/osx_10_2.xpm"
 # include "images/osx_10_3.xpm"
+# include "images/android.xpm"
 #endif
 #include "images/atari.xbm"
 #include "images/mac.xbm"
@@ -2627,7 +2628,7 @@ hppa_linux (Display *dpy, Window window)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.98 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $Revision: 1.100 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },
@@ -3839,6 +3840,226 @@ atm (Display *dpy, Window window)
 }
 
 
+/* An Android phone boot loader, by jwz.
+ */
+static struct bsod_state *
+android (Display *dpy, Window window)
+{
+  struct bsod_state *bst = make_bsod_state (dpy, window, "android", "Android");
+
+  unsigned long bg = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "android.background",
+                                         "Android.Background");
+  unsigned long fg = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "android.foreground",
+                                         "Android.Foreground");
+  unsigned long c1 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "android.color1",
+                                         "Android.Foreground");
+  unsigned long c2 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "android.color2",
+                                         "Android.Foreground");
+  unsigned long c3 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "android.color3",
+                                         "Android.Foreground");
+  unsigned long c4 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "android.color4",
+                                         "Android.Foreground");
+  unsigned long c5 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "android.color5",
+                                         "Android.Foreground");
+  unsigned long c6 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "android.color6",
+                                         "Android.Foreground");
+  unsigned long c7 = get_pixel_resource (dpy, bst->xgwa.colormap,
+                                         "android.color7",
+                                         "Android.Foreground");
+
+  const char *lines0[] = {
+    "Calculating... please wait\n",
+    "osbl:     0x499DF907\n",
+    "amss:     0x73162409\n",
+    "hboot:    0xE46C3327\n",
+    "boot:     0xBA570E7A\n",
+    "recovery: 0xC8BBA213\n",
+    "system:   0x87C3B1F0\n",
+    "\n",
+    "Press power key to go back.\n",
+  };
+
+  const char *lines1[] = {
+    "Checking SD card update...\n",
+    "",
+    "  SD Checking...\n",
+    "  Failed to open zipfile\n",
+    "  loading preload_content...\n",
+    "  [Caution] Preload Content Not Found\n",
+    "  loading HTCUpdateZipName image...\n",
+    "",
+    "  Checking...[PG46IMG.zip]\n",
+    "Please plug off USB\n",
+  };
+
+  const char *lines2[] = {
+    "  SD Checking...\n",
+    "  Loading...[PK76DIAG.zip]\n",
+    "  No image!\n",
+    "  Loading...[PK76DIAG.nbh]\n",
+    "  No image or wrong image!\n",
+    "  Loading...[PK76IMG.zip]\n",
+    "  No image!\n",
+    "  Loading...[PK76IMG.nbh]\n",
+    "  No image or wrong image!\n",
+    "  Loading...[PK76IMG.tar]\n",
+    "  No image!\n",
+    "  Loading...[PK76IMG.aes]\n",
+    "  No image!\n",
+    "  Loading...[PK76IMG.enc]\n",
+    "  No image!\n",
+  };
+
+  int cw = (bst->font->per_char
+            ? bst->font->per_char['n'-bst->font->min_char_or_byte2].width
+            : bst->font->min_bounds.width);
+  int line_height = bst->font->ascent + bst->font->descent;
+
+  int state = 0;
+
+  Pixmap pixmap = 0;
+  int pix_w = 0, pix_h = 0;
+
+# ifdef DO_XPM
+  pixmap = xpm_data_to_pixmap (dpy, window, (char **) android_skate,
+                               &pix_w, &pix_h, 0);
+  if (! pixmap) abort();
+  bst->pixmap = pixmap;
+# endif /* DO_XPM */
+
+  bst->left_margin = (bst->xgwa.width - (cw * 40)) / 2;
+  if (bst->left_margin < 0) bst->left_margin = 0;
+
+  while (1) {
+    unsigned long delay =
+      ((state == 0 || 
+        state == countof(lines0) ||
+        state == countof(lines0) + countof(lines1) ||
+        state == countof(lines0) + countof(lines1) + countof(lines2))
+                           ? 10000 : 0);
+    BSOD_LINE_DELAY (bst, delay);
+
+    if (state <= countof(lines0) + countof(lines1) + countof(lines2))
+      {
+        BSOD_COLOR (bst, bg, bg);
+        BSOD_RECT (bst, True, 0, 0, bst->xgwa.width, bst->xgwa.height);
+        BSOD_COLOR (bst, bg, c1);
+        BSOD_MOVETO (bst, bst->left_margin, bst->top_margin + line_height);
+        BSOD_TEXT (bst, LEFT, "*** UNLOCKED ***\n");
+        BSOD_COLOR (bst, c2, bg);
+        BSOD_TEXT (bst, LEFT, 
+                   "PRIMOU PVT SHIP S-OFF RL\n"
+                   "HBOOT-1.17.0000\n"
+                   "CPLD-None\n"
+                   "MICROP-None\n"
+                   "RADIO-3831.17.00.23_2\n"
+                   "eMMC-bootmode: disabled\n"
+                   "CPU-bootmode : disabled\n"
+                   "HW Secure boot: enabled\n"
+                   "MODEM PATH : OFF\n"
+                   "May 15 2012, 10:28:15\n"
+                   "\n");
+        BSOD_COLOR (bst, bg, c3);
+
+        if (pixmap)
+          {
+            int x = (bst->xgwa.width - pix_w) / 2;
+            int y = bst->xgwa.height - pix_h;
+            BSOD_PIXMAP (bst, 0, 0, pix_w, pix_h, x, y);
+          }
+      }
+
+    if (state == countof(lines0) ||
+        state == countof(lines0) + countof(lines1) ||
+        state == countof(lines0) + countof(lines1) + countof(lines2))
+      {
+        BSOD_TEXT (bst, LEFT, "HBOOT USB\n");
+        BSOD_COLOR (bst, c4, bg);
+        BSOD_TEXT (bst, LEFT,
+                   "\n"
+                   "<VOL UP> to previous item\n"
+                   "<VOL DOWN> to next item\n"
+                   "<POWER> to select item\n"
+                   "\n");
+        BSOD_COLOR (bst, c5, bg); BSOD_TEXT (bst, LEFT, "FASTBOOT\n");
+        BSOD_COLOR (bst, c6, bg); BSOD_TEXT (bst, LEFT, "RECOVERY\n");
+        BSOD_COLOR (bst, c7, bg); BSOD_TEXT (bst, LEFT, "FACTORY RESET\n");
+        BSOD_COLOR (bst, c3, bg); BSOD_TEXT (bst, LEFT, "SIMLOCK\n");
+        BSOD_COLOR (bst, bg, c3); BSOD_TEXT (bst, LEFT, "HBOOT USB\n");
+        BSOD_COLOR (bst, fg, bg); BSOD_TEXT (bst, LEFT, "IMAGE CRC\n");
+        BSOD_COLOR (bst, c3, bg); BSOD_TEXT (bst, LEFT, "SHOW BARCODE\n");
+        BSOD_PAUSE (bst, 3000000);
+      }
+    else if (state < countof(lines0))
+      {
+        BSOD_TEXT (bst, LEFT, "IMAGE CRC\n\n");
+        BSOD_COLOR (bst, c5, bg);
+        {
+          int i;
+          for (i = 0; i <= state; i++) {
+            const char *s = lines0[i];
+            BSOD_COLOR (bst, (strchr(s, ':') ? c7 : c3), bg);
+            BSOD_TEXT (bst, LEFT, s);
+          }
+        }
+        BSOD_PAUSE (bst, 500000);
+        if (state == countof(lines0)-1)
+          BSOD_PAUSE (bst, 2000000);
+      }
+    else if (state < countof(lines0) + countof(lines1))
+      {
+        BSOD_TEXT (bst, LEFT, "HBOOT\n\n");
+        BSOD_COLOR (bst, c5, bg);
+        {
+          int i;
+          for (i = countof(lines0); i <= state; i++) {
+            const char *s = lines1[i - countof(lines0)];
+            BSOD_COLOR (bst, (*s == ' ' ? c6 : c3), bg);
+            BSOD_TEXT (bst, LEFT, s);
+          }
+        }
+        BSOD_PAUSE (bst, 500000);
+        if (state == countof(lines0) + countof(lines1) - 1)
+          BSOD_PAUSE (bst, 2000000);
+      }
+    else if (state < countof(lines0) + countof(lines1) + countof(lines2))
+      {
+        BSOD_TEXT (bst, LEFT, "HBOOT USB\n\n");
+        BSOD_COLOR (bst, c5, bg);
+        {
+          int i;
+          for (i = countof(lines0) + countof(lines1); i <= state; i++) {
+            const char *s = lines2[i - countof(lines0) - countof(lines1)];
+            BSOD_COLOR (bst, (*s == ' ' ? c6 : c3), bg);
+            BSOD_TEXT (bst, LEFT, s);
+          }
+        }
+        BSOD_PAUSE (bst, 500000);
+        if (state == countof(lines0) + countof(lines1) + countof(lines2)-1)
+          BSOD_PAUSE (bst, 2000000);
+      }
+    else
+      break;
+
+    state++;
+  }
+
+  XClearWindow (dpy, window);
+
+  return bst;
+}
+
+
+
+
 /*****************************************************************************
  *****************************************************************************/
 
@@ -3876,6 +4097,7 @@ static const struct {
   { "Apple2",		apple2crash },
   { "ATM",		atm },
   { "GLaDOS",		glados },
+  { "Android",		android },
 };
 
 
@@ -4137,7 +4359,7 @@ bsod_free (Display *dpy, Window window, void *closure)
 
 
 static const char *bsod_defaults [] = {
-  "*delay:		   30",
+  "*delay:		   45",
   "*debug:		   False",
 
   "*doOnly:		   ",
@@ -4168,6 +4390,7 @@ static const char *bsod_defaults [] = {
   "*doNvidia:		   True",
   "*doATM:		   True",
   "*doGLaDOS:		   True",
+  "*doAndroid:		   True",
 
   "*font:		   9x15bold",
   "*font2:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
@@ -4269,6 +4492,16 @@ static const char *bsod_defaults [] = {
   ".atm.foreground:	   Black",
   ".atm.background:	   #FF6600",
 
+  ".android.foreground:	   Black",
+  ".android.background:	   White",
+  ".android.color1:	   #AA00AA", /* violet */
+  ".android.color2:	   #336633", /* green1 */
+  ".android.color3:	   #0000FF", /* blue */
+  ".android.color4:	   #CC7744", /* orange */
+  ".android.color5:	   #99AA55", /* green2 */
+  ".android.color6:	   #66AA33", /* green3 */
+  ".android.color7:	   #FF0000", /* red */
+
   "*dontClearRoot:         True",
 
   ANALOGTV_DEFAULTS
@@ -4349,6 +4582,8 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-atm",		".doATM",		XrmoptionNoArg,  "False" },
   { "-glados",		".doGLaDOS",		XrmoptionNoArg,  "True"  },
   { "-no-glados",	".doGLaDOS",		XrmoptionNoArg,  "False" },
+  { "-android",		".doAndroid",		XrmoptionNoArg,  "True"  },
+  { "-no-android",	".doAndroid",		XrmoptionNoArg,  "False" },
   ANALOGTV_OPTIONS
   { 0, 0, 0, 0 }
 };

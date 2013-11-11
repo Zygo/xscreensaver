@@ -384,7 +384,7 @@ load_font (Display *dpy, char *res, XFontStruct **font_ret, GLuint *dlist_ret)
 
 /* Draws the string on the window at the given pixel position.
    Newlines and tab stops are honored.
-   Any text inside [] will be rendered as a subscript.
+   Any numbers inside [] will be rendered as a subscript.
    Assumes the font has been loaded as with load_font().
  */
 void

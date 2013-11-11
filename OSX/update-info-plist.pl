@@ -21,10 +21,13 @@
 require 5;
 #use diagnostics;	# Fails on some MacOS 10.5 systems
 use strict;
+use IPC::Open3;
+use IO::Uncompress::Gunzip qw(gunzip $GunzipError);
+use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my $version = q{ $Revision: 1.24 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.26 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 
@@ -34,7 +37,24 @@ my $thumbdir = $ENV{HOME} . '/www/xscreensaver/screenshots/';
 
 my $verbose = 1;
 
-sub read_info_plist($);
+sub convert_plist($$) {
+  my ($data, $to_binary_p) = @_;
+  my $is_binary_p = ($data =~ m/^bplist/s);
+  if ($data && (!$is_binary_p) != (!$to_binary_p)) {
+    print STDERR "$progname: converting plist\n" if ($verbose > 2);
+    my $which = ($to_binary_p ? 'binary1' : 'xml1');
+    my $cmd = "plutil -convert $which -s -o - -";
+    my $pid = open3 (my $in, my $out, undef, $cmd) || error ("pipe: $cmd: $!");
+    print $in $data;
+    close $in;
+    local $/ = undef;  # read entire file
+    $data = <$out>;
+    close $out;
+  }
+  return $data;
+}
+
+
 sub read_info_plist($) {
   my ($app_dir) = @_;
   my $file  = "$app_dir/Contents/Info.plist";
@@ -52,12 +72,7 @@ sub read_info_plist($) {
   my $body = <$in>;
   close $in;
 
-  if ($body =~ m/^bplist/s) {
-    print STDERR "$progname: converting binary plist file: $file\n";
-    system ("plutil", "-convert", "xml1", $file);
-    return read_info_plist ($app_dir);
-  }
-
+  $body = convert_plist ($body, 0);  # convert to xml plist
   return ($file, $body);
 }
 
@@ -87,13 +102,18 @@ sub read_saver_xml($) {
   local $/ = undef;  # read entire file
   my $body = <$in>;
   close $in;
-  return ($file, $body);
+
+  # Uncompress the XML if it is compressed.
+  my $body2 = '';
+  gunzip (\$body, \$body2) || error ("$app_dir: xml gunzip: $GunzipError");
+  my $was_compressed_p = ($body ne $body2);
+  return ($file, $body2, $was_compressed_p);
 }
 
 
 sub update_saver_xml($$) {
   my ($app_dir, $vers) = @_;
-  my ($filename, $body) = read_saver_xml ($app_dir);
+  my ($filename, $body, $was_compressed_p) = read_saver_xml ($app_dir);
   my $obody = $body;
 
   return () unless defined ($filename);
@@ -177,11 +197,17 @@ sub update_saver_xml($$) {
 
   $body =~ s@(<_description>)(.*?)(</_description>)@$1$desc1$3@s;
 
-  if ($obody eq $body) {
+  if ($obody eq $body && $was_compressed_p) {
     print STDERR "$progname: $filename: unchanged\n" if ($verbose > 1);
   } else {
+
+    # Gzip the XML.
+    my $body2 = '';
+    gzip (\$body, \$body2) || error ("$app_dir: xml gzip: $GzipError");
+    $body = $body2;
+
     my $file_tmp = "$filename.tmp";
-    open (my $out, '>', $file_tmp) || error ("$file_tmp: $!");
+    open (my $out, '>:raw', $file_tmp) || error ("$file_tmp: $!");
     print $out $body || error ("$file_tmp: $!");
     close $out || error ("$file_tmp: $!");
 
@@ -195,6 +221,40 @@ sub update_saver_xml($$) {
   return ($desc1, $desc2);
 }
 
+
+sub compress_all_xml_files($) {
+  my ($dir) = @_;
+  opendir (my $dirp, $dir) || error ("$dir: $!");
+  my @files = readdir ($dirp);
+  closedir $dirp;
+  foreach my $f (sort @files) {
+    next unless ($f =~ m/\.xml$/si);
+    my $filename = "$dir/$f";
+    open (my $in, '<', $filename) || error ("$filename: $!");
+    print STDERR "$progname: read $filename\n" if ($verbose > 2);
+    local $/ = undef;  # read entire file
+    my $body = <$in>;
+    close $in;
+
+    if ($body =~ m/^<\?xml/s) {
+      my $body2 = '';
+      gzip (\$body, \$body2) || error ("$filename: xml gzip: $GzipError");
+      $body = $body2;
+      my $file_tmp = "$filename.tmp";
+      open (my $out, '>:raw', $file_tmp) || error ("$file_tmp: $!");
+      print $out $body || error ("$file_tmp: $!");
+      close $out || error ("$file_tmp: $!");
+
+      if (!rename ("$file_tmp", "$filename")) {
+        unlink "$file_tmp";
+        error ("mv \"$file_tmp\" \"$filename\": $!");
+      }
+      print STDERR "$progname: compressed $filename\n" if ($verbose);
+    } elsif ($verbose > 2) {
+      print STDERR "$filename: already compressed\n";
+    }
+  }
+}
 
 
 sub set_plist_key($$$$) {
@@ -265,7 +325,12 @@ sub update($) {
   my $vers = $1;
   my ($ignore, $info_str) = update_saver_xml ($app_dir, $vers);
 
-  if (! defined($info_str)) {
+  # No, don't do this -- the iOS version reads the XML file in a few
+  # different places, and most of those places don't understand gzip.
+
+  if ($app_name eq 'XScreenSaver') {
+    compress_all_xml_files ($app_dir);
+  } elsif (! defined($info_str)) {
     print STDERR "$progname: $filename: no XML file\n" if ($verbose > 1);
   } else {
 
@@ -289,8 +354,9 @@ sub update($) {
     if ($oplist eq $plist) {
       print STDERR "$progname: $filename: unchanged\n" if ($verbose > 1);
     } else {
+      $plist = convert_plist ($plist, 1);  # convert to binary plist
       my $file_tmp = "$filename.tmp";
-      open (my $out, '>', $file_tmp) || error ("$file_tmp: $!");
+      open (my $out, '>:raw', $file_tmp) || error ("$file_tmp: $!");
       print $out $plist || error ("$file_tmp: $!");
       close $out || error ("$file_tmp: $!");
 
