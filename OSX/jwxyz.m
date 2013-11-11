@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,6 +18,7 @@
 
 #import <stdlib.h>
 #import <stdint.h>
+#import <wchar.h>
 
 #ifdef USE_IPHONE
 # import <UIKit/UIKit.h>
@@ -44,9 +45,7 @@
 #import "jwxyz-timers.h"
 #import "yarandom.h"
 
-#ifdef USE_IPHONE
 # define USE_BACKBUFFER  /* must be in sync with XScreenSaverView.h */
-#endif
 
 #undef  Assert
 #define Assert(C,S) do { if (!(C)) jwxyz_abort ("%s",(S)); } while(0)
@@ -249,7 +248,10 @@ jwxyz_window_resized (Display *dpy, Window w,
   }
 # endif // USE_IPHONE
 
-#if 0
+# ifndef USE_BACKBUFFER
+  // Funny thing: As of OS X 10.9, if USE_BACKBUFFER is turned off,
+  // then this one's faster.
+
   {
     // Figure out this screen's colorspace, and use that for every CGImage.
     //
@@ -259,12 +261,12 @@ jwxyz_window_resized (Display *dpy, Window w,
     dpy->colorspace = CGColorSpaceCreateWithPlatformColorSpace (profile);
     Assert (dpy->colorspace, "unable to find colorspace");
   }
-# else
+# else  // USE_BACKBUFFER
 
   // WTF?  It's faster if we *do not* use the screen's colorspace!
   //
   dpy->colorspace = CGColorSpaceCreateDeviceRGB();
-# endif
+# endif // USE_BACKBUFFER
 
   invalidate_drawable_cache (w);
 }
@@ -281,6 +283,12 @@ jwxyz_mouse_moved (Display *dpy, Window w, int x, int y)
 #endif // USE_IPHONE
 
 
+void
+jwxyz_flush_context (Display *dpy)
+{
+  // This is only used when USE_BACKBUFFER is off.
+  CGContextFlush(dpy->main_window->cgc); // CGContextSynchronize is another possibility.
+}
 
 jwxyz_sources_data *
 display_sources_data (Display *dpy)
@@ -516,16 +524,16 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
       argb = (gc->gcv.foreground ? WhitePixel(0,0) : BlackPixel(0,0));
 
     CGFloat x0 = wr.origin.x;
-    CGFloat y0 = wr.origin.y + wr.size.height;
+    CGFloat y0 = wr.origin.y; // Y axis is refreshingly not flipped.
 
     // It's uglier, but faster, to hoist the conditional out of the loop.
     if (mode == CoordModePrevious) {
       CGFloat x = x0, y = y0;
       for (i = 0; i < count; i++, points++) {
         x += points->x;
-        y -= points->y;
+        y += points->y;
 
-        if (0 <= x && x < w && 0 <= y && y < h) {
+        if (x >= 0 && x < w && y >= 0 && y < h) {
           unsigned int *p = (unsigned int *)
             ((char *) data + (size_t) y * bpr + (size_t) x * 4);
           *p = argb;
@@ -534,9 +542,9 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
     } else {
       for (i = 0; i < count; i++, points++) {
         CGFloat x = x0 + points->x;
-        CGFloat y = y0 - points->y;
+        CGFloat y = y0 + points->y;
 
-        if (0 <= x && x < w && 0 <= y && y < h) {
+        if (x >= 0 && x < w && y >= 0 && y < h) {
           unsigned int *p = (unsigned int *)
             ((char *) data + (size_t) y * bpr + (size_t) x * 4);
           *p = argb;
@@ -635,6 +643,45 @@ static void draw_rect (Display *, Drawable, GC,
                        int x, int y, unsigned int width, unsigned int height, 
                        BOOL foreground_p, BOOL fill_p);
 
+static Bool
+bitmap_context_p (Drawable d)
+{
+# ifdef USE_BACKBUFFER
+  return True;
+# else
+  // Because of the backbuffer, all iPhone Windows work like Pixmaps.
+  return d->type == PIXMAP;
+# endif
+}
+
+static void
+fill_rect_memset (void *dst, size_t dst_pitch, uint32_t fill_data,
+                  size_t fill_width, size_t fill_height)
+{
+  Assert(sizeof(wchar_t) == 4, "somebody changed the ABI");
+  while (fill_height) {
+    // Would be nice if Apple used SSE/NEON in wmemset. Maybe someday.
+    wmemset (dst, fill_data, fill_width);
+    --fill_height;
+    dst = (char *) dst + dst_pitch;
+  }
+}
+
+static void *
+seek_xy (void *dst, size_t dst_pitch, unsigned x, unsigned y)
+{
+  return (char *)dst + dst_pitch * y + x * 4;
+}
+
+static unsigned int
+drawable_depth (Drawable d)
+{
+  return (d->type == WINDOW
+          ? visual_depth (NULL, NULL)
+          : d->pixmap.depth);
+}
+
+
 int
 XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc, 
            int src_x, int src_y, 
@@ -693,8 +740,6 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
   
   // Clip rects to frames...
   //
-//  CGRect orig_src_rect = src_rect;
-  CGRect orig_dst_rect = dst_rect;
 
 # define CLIP(THIS,THAT,VAL,SIZE) do { \
   float off = THIS##_rect.origin.VAL; \
@@ -715,12 +760,24 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
 
   CLIP (dst, src, x, width);
   CLIP (dst, src, y, height);
+
+  // Not actually the original dst_rect, just the one before it's clipped to
+  // the src_frame.
+  CGRect orig_dst_rect = dst_rect;
+
   CLIP (src, dst, x, width);
   CLIP (src, dst, y, height);
 # undef CLIP
 
-  if (src_rect.size.width <= 0 || src_rect.size.height <= 0)
+  if (orig_dst_rect.size.width <= 0 || orig_dst_rect.size.height <= 0)
     return 0;
+
+  // Sort-of-special case where no pixels can be grabbed from the source,
+  // and the whole destination is filled with the background color.
+  if (src_rect.size.width < 0 || src_rect.size.height < 0) {
+    src_rect.size.width  = 0;
+    src_rect.size.height = 0;
+  }
   
   NSObject *releaseme = 0;
   CGImageRef cgi;
@@ -728,11 +785,116 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
   BOOL free_cgi_p = NO;
 
 
-#ifndef USE_BACKBUFFER
-  // Because of the backbuffer, all iPhone Windows work like Pixmaps.
-  if (src->type == PIXMAP)
-# endif
-  {
+  /* If we're copying from a bitmap to a bitmap, and there's nothing funny
+     going on with clipping masks or depths or anything, optimize it by
+     just doing a memcpy instead of going through a CGI.
+   */
+  if (bitmap_context_p (src)) {
+
+    if (bitmap_context_p (dst) &&
+        gc->gcv.function == GXcopy &&
+        !gc->gcv.clip_mask &&
+        drawable_depth (src) == drawable_depth (dst)) {
+
+      Assert(!(int)src_frame.origin.x &&
+             !(int)src_frame.origin.y &&
+             !(int)dst_frame.origin.x &&
+             !(int)dst_frame.origin.y,
+             "unexpected non-zero origin");
+      
+      char *src_data = CGBitmapContextGetData(src->cgc);
+      char *dst_data = CGBitmapContextGetData(dst->cgc);
+      size_t src_pitch = CGBitmapContextGetBytesPerRow(src->cgc);
+      size_t dst_pitch = CGBitmapContextGetBytesPerRow(dst->cgc);
+      
+      // Int to float and back again. It's not very safe, but it seems to work.
+      int src_x0 = src_rect.origin.x;
+      int dst_x0 = dst_rect.origin.x;
+      
+      // Flip the Y-axis a second time.
+      int src_y0 = (src_frame.origin.y + src_frame.size.height -
+                    src_rect.size.height - src_rect.origin.y);
+      int dst_y0 = (dst_frame.origin.y + dst_frame.size.height -
+                    dst_rect.size.height - dst_rect.origin.y);
+      
+      unsigned width0  = (int) src_rect.size.width;
+      unsigned height0 = (int) src_rect.size.height;
+      
+      Assert((int)src_rect.size.width  == (int)dst_rect.size.width ||
+             (int)src_rect.size.height == (int)dst_rect.size.height,
+             "size mismatch");
+      {
+        char *src_data0 = seek_xy(src_data, src_pitch, src_x0, src_y0);
+        char *dst_data0 = seek_xy(dst_data, dst_pitch, dst_x0, dst_y0);
+        size_t src_pitch0 = src_pitch;
+        size_t dst_pitch0 = dst_pitch;
+        size_t bytes = width0 * 4;
+
+        if (src == dst && dst_y0 > src_y0) {
+          // Copy upwards if the areas might overlap.
+          src_data0 += src_pitch0 * (height0 - 1);
+          dst_data0 += dst_pitch0 * (height0 - 1);
+          src_pitch0 = -src_pitch0;
+          dst_pitch0 = -dst_pitch0;
+        }
+      
+        size_t lines0 = height0;
+        while (lines0) {
+          // memcpy is an alias for memmove on OS X.
+          memmove(dst_data0, src_data0, bytes);
+          src_data0 += src_pitch0;
+          dst_data0 += dst_pitch0;
+          --lines0;
+        }
+      }
+
+      if (clipped) {
+        int orig_dst_x = orig_dst_rect.origin.x;
+        int orig_dst_y = (dst_frame.origin.y + dst_frame.size.height -
+                          orig_dst_rect.origin.y - orig_dst_rect.size.height);
+        int orig_width  = orig_dst_rect.size.width;
+        int orig_height = orig_dst_rect.size.height;
+
+        Assert (orig_dst_x >= 0 &&
+                orig_dst_x + orig_width  <= (int) dst_frame.size.width &&
+                orig_dst_y >= 0 &&
+                orig_dst_y + orig_height <= (int) dst_frame.size.height,
+                "wrong dimensions");
+
+        if (orig_dst_y < dst_y0) {
+          fill_rect_memset (seek_xy (dst_data, dst_pitch,
+                                     orig_dst_x, orig_dst_y), dst_pitch,
+                            gc->gcv.background, orig_width,
+                            dst_y0 - orig_dst_y);
+        }
+
+        if (orig_dst_y + orig_height > dst_y0 + height0) {
+          fill_rect_memset (seek_xy (dst_data, dst_pitch, orig_dst_x,
+                                     dst_y0 + height0),
+                            dst_pitch,
+                            gc->gcv.background, orig_width,
+                            orig_dst_y + orig_height - dst_y0 - height0);
+        }
+
+        if (orig_dst_x < dst_x0) {
+          fill_rect_memset (seek_xy (dst_data, dst_pitch, orig_dst_x, dst_y0),
+                            dst_pitch, gc->gcv.background,
+                            dst_x0 - orig_dst_x, height0);
+        }
+
+        if (dst_x0 + width0 < orig_dst_x + orig_width) {
+          fill_rect_memset (seek_xy (dst_data, dst_pitch, dst_x0 + width0,
+                                     dst_y0),
+                            dst_pitch, gc->gcv.background,
+                            orig_dst_x + orig_width - dst_x0 - width0,
+                            height0);
+        }
+      }
+
+      invalidate_drawable_cache (dst);
+      return 0;
+    }
+
 
     // If we are copying from a Pixmap to a Pixmap or Window, we must first
     // copy the bits to an intermediary CGImage object, then copy that to the
@@ -1827,7 +1989,8 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
            unsigned long plane_mask, int format)
 {
   const unsigned char *data = 0;
-  int depth, ibpp, ibpl, alpha_first_p;
+  int depth, ibpp, ibpl;
+  enum { RGBA, ARGB, BGRA } src_format; // As bytes.
 # ifndef USE_BACKBUFFER
   NSBitmapImageRep *bm = 0;
 # endif
@@ -1847,9 +2010,8 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     depth = (d->type == PIXMAP
              ? d->pixmap.depth
              : 32);
-    // If it's a pixmap, we created it with kCGImageAlphaNoneSkipFirst.
-    // If it's an iPhone window, it's the other way around.
-    alpha_first_p = (d->type == PIXMAP);
+    // We create pixmaps and iPhone backbuffers with kCGImageAlphaNoneSkipFirst.
+    src_format = BGRA; // #### Should this be ARGB on PPC?
     ibpp = CGBitmapContextGetBitsPerPixel (cgc);
     ibpl = CGBitmapContextGetBytesPerRow (cgc);
     data = CGBitmapContextGetData (cgc);
@@ -1861,12 +2023,13 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     // get the bits (desired sub-rectangle) out of the NSView
     NSRect nsfrom;
     nsfrom.origin.x = x;
-    nsfrom.origin.y = y;
+//  nsfrom.origin.y = y;
+    nsfrom.origin.y = d->frame.size.height - height - y;
     nsfrom.size.width = width;
     nsfrom.size.height = height;
     bm = [[NSBitmapImageRep alloc] initWithFocusedViewRect:nsfrom];
     depth = 32;
-    alpha_first_p = ([bm bitmapFormat] & NSAlphaFirstBitmapFormat);
+    src_format = ([bm bitmapFormat] & NSAlphaFirstBitmapFormat) ? ARGB : RGBA;
     ibpp = [bm bitsPerPixel];
     ibpl = [bm bytesPerRow];
     data = [bm bitmapData];
@@ -1918,7 +2081,8 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
       const unsigned char *iline2 = iline;
       unsigned char *oline2 = oline;
 
-      if (alpha_first_p)			// ARGB
+      switch (src_format) {
+      case ARGB:
         for (xx = 0; xx < width; xx++) {
           unsigned char a = (ibpp == 32 ? (*iline2++) : 0xFF);
           unsigned char r = *iline2++;
@@ -1931,7 +2095,8 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
           *((uint32_t *) oline2) = pixel;
           oline2 += 4;
         }
-      else					// RGBA
+        break;
+      case RGBA:
         for (xx = 0; xx < width; xx++) {
           unsigned char r = *iline2++;
           unsigned char g = *iline2++;
@@ -1944,6 +2109,25 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
           *((uint32_t *) oline2) = pixel;
           oline2 += 4;
         }
+        break;
+      case BGRA:
+        for (xx = 0; xx < width; xx++) {
+          unsigned char b = *iline2++;
+          unsigned char g = *iline2++;
+          unsigned char r = *iline2++;
+          unsigned char a = (ibpp == 32 ? (*iline2++) : 0xFF);
+          uint32_t pixel = ((a << 24) |
+                            (r << 16) |
+                            (g <<  8) |
+                            (b <<  0));
+          *((uint32_t *) oline2) = pixel;
+          oline2 += 4;
+        }
+        break;
+      default:
+        abort();
+        break;
+      }
 
       oline += obpl;
       iline += ibpl;
@@ -2157,7 +2341,8 @@ XCreatePixmap (Display *dpy, Drawable d,
                                   width * 4, /* bpl */
                                   dpy->colorspace,
                                   // Without this, it returns 0...
-                                  kCGImageAlphaNoneSkipFirst
+                                  (kCGImageAlphaNoneSkipFirst |
+                                   kCGBitmapByteOrder32Host)
                                   );
   Assert (p->cgc, "could not create CGBitmapContext");
   return p;
@@ -2199,7 +2384,8 @@ copy_pixmap (Display *dpy, Pixmap p)
                                    width * 4, /* bpl */
                                    dpy->colorspace,
                                    // Without this, it returns 0...
-                                   kCGImageAlphaNoneSkipFirst
+                                   (kCGImageAlphaNoneSkipFirst |
+                                    kCGBitmapByteOrder32Host)
                                    );
   Assert (p2->cgc, "could not create CGBitmapContext");
 
@@ -2249,7 +2435,7 @@ query_font (Font fid)
   XCharStruct *min = &f->min_bounds;
   XCharStruct *max = &f->max_bounds;
 
-#define CEIL(F) ((F) < 0 ? floor(F) : ceil(F))
+#define CEIL(F)  ((F) < 0 ? floor(F) : ceil(F))
 
   f->fid               = fid;
   f->min_char_or_byte2 = first;
@@ -2357,11 +2543,31 @@ query_font (Font fid)
         advancement.x = adv.width;
         advancement.y = adv.height;
 
-        // Seems to be clipping by a pixel or two.  Add a margin to be safe.
-        bbox.origin.x    -= 2;
-        bbox.origin.y    -= 2;
-        bbox.size.width  += 4;
-        bbox.size.height += 4;
+        /* A bug that existed was that the GL FPS display was truncating
+           characters slightly: commas looked like periods.
+
+           At one point, I believed the bounding box was being rounded
+           wrong and we needed to add padding to it here.
+
+           I think what was actually going on was, I was computing rbearing
+           wrong.  Also there was an off-by-one error in texfont.c, displaying
+           too little of the bitmap.
+
+           Adding arbitrarily large padding to the bbox is fine in fontglide
+           and FPS display, but screws up BSOD. Increasing bbox width makes
+           inverted text print too wide; decreasing origin makes characters
+           clip.
+
+           I think that all 3 states are correct now with the new lbearing
+           computation plus the texfont fix.
+         */
+#  if 0
+        double kludge = 2;
+        bbox.origin.x    -= kludge;
+        bbox.origin.y    -= kludge;
+        bbox.size.width  += kludge;
+        bbox.size.height += kludge;
+#  endif
       }
 # endif // USE_IPHONE
 
@@ -2372,12 +2578,13 @@ query_font (Font fid)
 
     cs->ascent   = CEIL (bbox.origin.y) + CEIL (bbox.size.height);
     cs->descent  = CEIL(-bbox.origin.y);
-    cs->lbearing = CEIL (bbox.origin.x);
-    cs->rbearing = CEIL (bbox.origin.x) + CEIL (bbox.size.width);
+    cs->lbearing = floor (bbox.origin.x);
+//  cs->rbearing = CEIL (bbox.origin.x) + CEIL (bbox.size.width);
+    cs->rbearing = CEIL (bbox.origin.x + bbox.size.width) - cs->lbearing;
     cs->width    = CEIL (advancement.x);
 
-    Assert (cs->rbearing - cs->lbearing == CEIL(bbox.size.width), 
-            "bbox w wrong");
+//  Assert (cs->rbearing - cs->lbearing == CEIL(bbox.size.width), 
+//          "bbox w wrong");
     Assert (cs->ascent   + cs->descent  == CEIL(bbox.size.height),
             "bbox h wrong");
 
@@ -2397,12 +2604,12 @@ query_font (Font fid)
 
 #if 0
     fprintf(stderr, " %3d %c: w=%3d lb=%3d rb=%3d as=%3d ds=%3d "
-                    " bb=%3d x %3d @ %3d %3d  adv=%3d %3d\n",
+                    " bb=%5.1f x %5.1f @ %5.1f %5.1f  adv=%5.1f %5.1f\n",
             i, i, cs->width, cs->lbearing, cs->rbearing, 
             cs->ascent, cs->descent,
-            (int) bbox.size.width, (int) bbox.size.height,
-            (int) bbox.origin.x, (int) bbox.origin.y,
-            (int) advancement.x, (int) advancement.y);
+            bbox.size.width, bbox.size.height,
+            bbox.origin.x, bbox.origin.y,
+            advancement.x, advancement.y);
 #endif
   }
 

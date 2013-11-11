@@ -18,6 +18,13 @@
            _label="Fade" _low-label="Slow" _high-label="Fast"
            low="1" high="100" default="20"
            convert="invert"/>
+
+   <select id="fg">
+    <option id="green" _label="Green" />
+    <!-- DarkOrange is probably the closest named color. -->
+    <option id="DarkOrange" _label="Amber" arg-set="-fg #ff7900" />
+    <option id="white" _label="White" arg-set="-fg white" />
+   </select>
   </vgroup>
  </hgroup>
 

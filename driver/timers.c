@@ -1,5 +1,5 @@
 /* timers.c --- detecting when the user is idle, and other timer-related tasks.
- * xscreensaver, Copyright (c) 1991-2012 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -580,12 +580,19 @@ check_for_clock_skew (saver_info *si)
       shift > (p->timeout / 1000))
     {
       if (p->verbose_p)
-        fprintf (stderr, "%s: wall clock has jumped by %ld:%02ld:%02ld!\n",
+        fprintf (stderr, "%s: wall clock has jumped by %ld:%02ld:%02ld%s\n",
                  blurb(),
-                 (shift / (60 * 60)), ((shift / 60) % 60), (shift % 60));
+                 (shift / (60 * 60)), ((shift / 60) % 60), (shift % 60),
+                 (p->mode == DONT_BLANK ? " while saver disabled" : ""));
 
-      si->emergency_lock_p = True;
-      idle_timer ((XtPointer) si, 0);
+      /* If the saver is entirely disabled, there's no need to do the
+         emergency-blank-and-lock thing.
+       */
+      if (p->mode != DONT_BLANK)
+        {
+          si->emergency_lock_p = True;
+          idle_timer ((XtPointer) si, 0);
+        }
     }
 
   si->last_wall_clock_time = now;

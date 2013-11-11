@@ -313,41 +313,30 @@ load_texture_font (Display *dpy, char *res)
       data->tex_width  = w;
       data->tex_height = h;
 
-#if 0  /* debugging: splat the bitmap onto the desktop root window */
-      {
-        Window win = RootWindow (dpy, 0);
-        GC gc2 = XCreateGC (dpy, win, 0, &gcv);
-        XSetForeground (dpy, gc2, BlackPixel (dpy, 0));
-        XSetBackground (dpy, gc2, WhitePixel (dpy, 0));
-        XCopyArea (dpy, p, win, gc2, 0, 0, w, h, 0, 0);
-        XFreeGC (dpy, gc2);
-        XSync(dpy, False);
-        usleep (100000);
-      }
-#endif
-
 #if 0  /* debugging: write the bitmap to a pgm file */
       {
         char file[255];
         XImage *image;
         int x, y;
-        FILE *f;
+        FILE *ff;
         sprintf (file, "/tmp/%02d.pgm", which);
         image = XGetImage (dpy, p, 0, 0, w, h, ~0L, ZPixmap);
-        f = fopen (file, "w");
-        fprintf (f, "P5\n%d %d\n255\n", w, h);
+        ff = fopen (file, "w");
+        fprintf (ff, "P5\n%d %d\n255\n", w, h);
         for (y = 0; y < h; y++)
           for (x = 0; x < w; x++) {
             unsigned long pix = XGetPixel (image, x, y);
             unsigned long r = (pix & xgwa.visual->red_mask);
             r = ((r >> 24) | (r >> 16) | (r >> 8) | r);
-            fprintf (f, "%c", (char) r);
+            fprintf (ff, "%c", (char) r);
           }
-        fclose (f);
+        fclose (ff);
         XDestroyImage (image);
-        fprintf (stderr, "%s: wrote %s\n", progname, file);
+        fprintf (stderr, "%s: wrote %s (%d x %d)\n", progname, file,
+                 f->max_bounds.rbearing - f->min_bounds.lbearing,
+                 f->max_bounds.ascent   + f->max_bounds.descent);
       }
-#endif
+#endif /* 0 */
 
       bitmap_to_texture (dpy, p, xgwa.visual, 
                          &data->tex_width, &data->tex_height);
@@ -517,8 +506,8 @@ print_texture_string (texture_font_data *data, const char *string)
           int bx = ax - lbearing;                         /* point B */
           int by = ay + ascent;
 
-          int cx = bx + rbearing;                         /* point C */
-          int cy = by + descent;
+          int cx = bx + rbearing + 1;                     /* point C */
+          int cy = by + descent  + 1;
 
           GLfloat tax = (GLfloat) ax / data->tex_width;  /* tex coords of A */
           GLfloat tay = (GLfloat) ay / data->tex_height;

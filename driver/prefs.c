@@ -1659,16 +1659,18 @@ senescent_p (void)
 {
   time_t now = time ((time_t *) 0);
   struct tm *tm = localtime (&now);
-  char *s, mon[4], year[5];
+  const char *s = screensaver_id;
+  char mon[4], year[5];
   int m, y, months;
-  s = strchr (screensaver_id, '-');
-  s++;
+  s = strchr (s, ' '); if (!s) abort(); s++;
+  s = strchr (s, '('); if (!s) abort(); s++;
+  s = strchr (s, '-'); if (!s) abort(); s++;
   strncpy (mon, s, 3);
-  s = strchr (s, '-');
-  s++;
-  strncpy (year, s, 4);
   mon[3] = 0;
+  s = strchr (s, '-'); if (!s) abort(); s++;
+  strncpy (year, s, 4);
   year[4] = 0;
+  y = atoi (year);
   if      (!strcmp(mon, "Jan")) m = 0;
   else if (!strcmp(mon, "Feb")) m = 1;
   else if (!strcmp(mon, "Mar")) m = 2;
@@ -1682,9 +1684,6 @@ senescent_p (void)
   else if (!strcmp(mon, "Nov")) m = 10;
   else if (!strcmp(mon, "Dec")) m = 11;
   else abort();
-
-  y = (year[0]-'0')*1000 + (year[1]-'0')*100 + (year[2]-'0')*10 +(year[3]-'0');
-
   months = ((((tm->tm_year + 1900) * 12) + tm->tm_mon) -
             (y * 12 + m));
 

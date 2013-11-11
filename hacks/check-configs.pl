@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2012 Jamie Zawinski <jwz@jwz.org>
+# Copyright Â© 2008-2013 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -19,7 +19,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.5 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my $version = q{ $Revision: 1.6 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
 
 my $verbose = 0;
 
@@ -120,7 +120,9 @@ sub parse_src($) {
   print STDERR "$progname: $file: switches to resources:\n"
     if ($verbose > 2);
   my %switch_to_res;
-  $switch_to_res{-fps}  = 'doFPS: true';
+  $switch_to_res{-fps} = 'doFPS: true';
+  $switch_to_res{-fg}  = 'foreground: %';
+  $switch_to_res{-bg}  = 'background: %';
 
   my ($ign, $opts) = ($body =~ m/(_options|\bopts)\s*\[\]\s*=\s*{(.*?)}\s*;/s);
   if  ($xlockmore_p || $analogtv_p || $opts) {

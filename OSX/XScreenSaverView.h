@@ -52,10 +52,8 @@
 #endif // USE_IPHONE
 
 
-#ifdef USE_IPHONE
-# define USE_BACKBUFFER  /* must be in sync with jwxyz.h */
-#endif
-
+#define USE_BACKBUFFER  // must be in sync with jwxyz.m
+#define USE_CALAYER     // requires USE_BACKBUFFER; required by iOS.
 
 @interface XScreenSaverView : ScreenSaverView
 # ifdef USE_IPHONE
@@ -82,6 +80,8 @@
   CGPoint tap_point;
   BOOL screenLocked;
 
+  CGSize initial_bounds;
+	
   GLfloat rotation_ratio;	// ratio thru rotation anim, or -1
   NSSize rot_from, rot_to;	// start size rect, end size rect
   GLfloat angle_from, angle_to;	// start angle, end angle
@@ -100,6 +100,12 @@
 # ifdef USE_BACKBUFFER
   CGContextRef backbuffer;
   CGSize backbuffer_size;
+  CGColorSpaceRef colorspace;
+
+#  ifndef USE_CALAYER
+  CGContextRef window_ctx;
+#  endif
+
 # endif // USE_BACKBUFFER
 }
 
@@ -109,6 +115,7 @@
 - (void) prepareContext;
 - (void) resizeContext;
 - (NSUserDefaultsController *) userDefaultsController;
++ (NSString *) decompressXML:(NSData *)xml;
 
 #ifdef USE_IPHONE
 - (void)didRotate:(NSNotification *)notification;

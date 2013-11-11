@@ -179,7 +179,11 @@ init_quasicrystal (ModeInfo *mi)
   if (! wire)
     {
       unsigned char *o;
+
       tex_width = 4096;
+      glGetIntegerv (GL_MAX_TEXTURE_SIZE, &tex_width);
+      if (tex_width > 4096) tex_width = 4096;
+
       tex_data = (unsigned char *) calloc (4, tex_width);
       o = tex_data;
       for (i = 0; i < tex_width; i++)

@@ -1,4 +1,4 @@
-# Auto-generated: Tue Jul 16 02:23:37 PDT 2013
+# Auto-generated: Sat Nov  9 13:24:46 PST 2013
 driver/demo-Gtk-conf.c
 driver/demo-Gtk-support.c
 driver/demo-Gtk-widgets.c
@@ -82,6 +82,7 @@ hacks/config/forest.xml
 hacks/config/fuzzyflakes.xml
 hacks/config/galaxy.xml
 hacks/config/gears.xml
+hacks/config/geodesic.xml
 hacks/config/gflux.xml
 hacks/config/glblur.xml
 hacks/config/glcells.xml

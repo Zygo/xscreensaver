@@ -1802,6 +1802,12 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
     }
   else if (type == XA_DEACTIVATE)
     {
+# if 0
+      /* When -deactivate is received while locked, pop up the dialog box
+         instead of just ignoring it.  Some people depend on this behavior
+         to be able to unlock by using e.g. a fingerprint reader without
+         also having to click the mouse first.
+       */
       if (si->locked_p) 
         {
           clientmessage_response(si, window, False,
@@ -1809,6 +1815,7 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
               "screen is locked.");
         }
       else
+# endif /* 0 */
         {
           if (! until_idle_p)
             {

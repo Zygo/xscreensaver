@@ -619,12 +619,12 @@ static const char *memscroller_defaults [] = {
   "*borderSize:		   2",
 
 #if defined(HAVE_COCOA) && !defined(USE_IPHONE)
-  ".font1:		   OCR A Std 192, Lucida Console 192",
-  ".font2:		   OCR A Std 144, Lucida Console 144",
-  ".font3:		   OCR A Std 128, Lucida Console 128",
-  ".font4:		   OCR A Std 96,  Lucida Console 96",
-  ".font5:		   OCR A Std 48,  Lucida Console 48",
-  ".font6:		   OCR A Std 24,  Lucida Console 24",
+  ".font1:		   OCR A Std 192, Lucida Console 192, Monaco 192",
+  ".font2:		   OCR A Std 144, Lucida Console 144, Monaco 144",
+  ".font3:		   OCR A Std 128, Lucida Console 128, Monaco 128",
+  ".font4:		   OCR A Std 96,  Lucida Console 96,  Monaco 96",
+  ".font5:		   OCR A Std 48,  Lucida Console 48,  Monaco 48",
+  ".font6:		   OCR A Std 24,  Lucida Console 24,  Monaco 24",
 #else  /* !HAVE_COCOA */
   ".font1:		   -*-courier-bold-r-*-*-*-1440-*-*-m-*-*-*",
   ".font2:		   -*-courier-bold-r-*-*-*-960-*-*-m-*-*-*",

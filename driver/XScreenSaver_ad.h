@@ -252,6 +252,7 @@
   GL: 				companioncube -root			    \\n\
   GL: 				hilbert -root				    \\n\
   GL: 				tronbit -root				    \\n\
+  GL: 				geodesic -root				    \\n\
 				hexadrop -root				    \\n\
   GL: 				kaleidocycle -root			    \\n\
   GL: 				quasicrystal -root			    \\n\

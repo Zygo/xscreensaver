@@ -139,6 +139,11 @@ static void char_to_pixmap (p_state *state, p_char *pc, int c);
 static void clear (p_state *);
 static void set_cursor (p_state *, Bool on);
 
+static unsigned short scale_color_channel (unsigned short ch1, unsigned short ch2)
+{
+  return (ch1 * 100 + ch2 * 156) >> 8;
+}
+
 static void *
 phosphor_init (Display *dpy, Window window)
 {
@@ -220,22 +225,29 @@ phosphor_init (Display *dpy, Window window)
                                            "foreground", "Foreground");
     unsigned long bg = get_pixel_resource (state->dpy, state->xgwa.colormap,
                                            "background", "Background");
-    unsigned long flare = get_pixel_resource (state->dpy,state->xgwa.colormap,
-                                              "flareForeground", "Foreground");
-    unsigned long fade = get_pixel_resource (state->dpy,state->xgwa.colormap,
-                                             "fadeForeground", "Foreground");
+    unsigned long flare = fg;
 
-    XColor start, end;
+    XColor fg_color, bg_color;
 
-    start.pixel = fade;
-    XQueryColor (state->dpy, state->xgwa.colormap, &start);
+    fg_color.pixel = fg;
+    XQueryColor (state->dpy, state->xgwa.colormap, &fg_color);
 
-    end.pixel = bg;
-    XQueryColor (state->dpy, state->xgwa.colormap, &end);
+    bg_color.pixel = bg;
+    XQueryColor (state->dpy, state->xgwa.colormap, &bg_color);
 
     /* Now allocate a ramp of colors from the main color to the background. */
-    rgb_to_hsv (start.red, start.green, start.blue, &h1, &s1, &v1);
-    rgb_to_hsv (end.red, end.green, end.blue, &h2, &s2, &v2);
+    rgb_to_hsv (scale_color_channel(fg_color.red, bg_color.red),
+                scale_color_channel(fg_color.green, bg_color.green),
+                scale_color_channel(fg_color.blue, bg_color.blue),
+                &h1, &s1, &v1);
+    rgb_to_hsv (bg_color.red, bg_color.green, bg_color.blue, &h2, &s2, &v2);
+
+    /* Avoid rainbow effects when fading to black/grey/white. */
+    if (s2 < 0.003)
+      h2 = h1;
+    if (s1 < 0.003)
+      h1 = h2;
+
     make_color_ramp (state->xgwa.screen, state->xgwa.visual,
                      state->xgwa.colormap,
                      h1, s1, v1,
@@ -245,6 +257,21 @@ phosphor_init (Display *dpy, Window window)
 
     /* Adjust to the number of colors we actually got. */
     state->ticks = ncolors + STATE_MAX;
+
+    /* If the foreground is brighter than the background, the flare is white.
+     * Otherwise, the flare is left at the foreground color (i.e. no flare). */
+    rgb_to_hsv (fg_color.red, fg_color.green, fg_color.blue, &h1, &s1, &v1);
+    if (v2 <= v1)
+      {
+        XColor white;
+        /* WhitePixel is only for the default visual, which can be overridden
+         * on the command line. */
+        white.red = 0xffff;
+        white.green = 0xffff;
+        white.blue = 0xffff;
+        if (XAllocColor(state->dpy, state->xgwa.colormap, &white))
+          flare = white.pixel;
+      }
 
     /* Now, GCs all around.
      */
@@ -1218,8 +1245,6 @@ static const char *phosphor_defaults [] = {
   ".background:		   Black",
   ".foreground:		   #00FF00",
   "*fpsSolid:		   true",
-  "*fadeForeground:	   #006400",
-  "*flareForeground:	   #FFFFFF",
 #if defined(BUILTIN_FONT)
   "*font:		   (builtin)",
 #elif defined(HAVE_COCOA)

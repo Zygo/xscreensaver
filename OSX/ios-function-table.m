@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Mon Jul  8 16:42:29 2013 by build-fntable.pl 1.2.
+   Created: Tue Aug 27 02:57:54 2013 by build-fntable.pl 1.2.
  */
 
 #import <Foundation/Foundation.h>
@@ -78,6 +78,7 @@ extern struct xscreensaver_function_table
  *fuzzyflakes_xscreensaver_function_table,
  *galaxy_xscreensaver_function_table,
  *gears_xscreensaver_function_table,
+ *geodesic_xscreensaver_function_table,
  *gflux_xscreensaver_function_table,
  *glblur_xscreensaver_function_table,
  *glcells_xscreensaver_function_table,
@@ -287,6 +288,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&fuzzyflakes_xscreensaver_function_table], @"fuzzyflakes",
 	[NSValue valueWithPointer:&galaxy_xscreensaver_function_table], @"galaxy",
 	[NSValue valueWithPointer:&gears_xscreensaver_function_table], @"gears",
+	[NSValue valueWithPointer:&geodesic_xscreensaver_function_table], @"geodesic",
 	[NSValue valueWithPointer:&gflux_xscreensaver_function_table], @"gflux",
 	[NSValue valueWithPointer:&glblur_xscreensaver_function_table], @"glblur",
 	[NSValue valueWithPointer:&glcells_xscreensaver_function_table], @"glcells",

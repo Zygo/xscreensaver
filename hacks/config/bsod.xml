@@ -7,7 +7,7 @@
  <hgroup>
   <number id="delay" type="slider" arg="-delay %"
           _label="Duration" _low-label="5 seconds" _high-label="2 minutes"
-          low="5" high="120" default="30"/>
+          low="5" high="120" default="45"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
  </hgroup>
 
@@ -19,6 +19,7 @@
    <boolean id="msdos"      _label="MS-DOS"         arg-unset="-no-msdos"/>
    <boolean id="amiga"      _label="AmigaDOS"       arg-unset="-no-amiga"/>
    <boolean id="glados"     _label="GLaDOS"         arg-unset="-no-glados"/>
+   <boolean id="android"    _label="Android"        arg-unset="-no-android"/>
   </vgroup>
   <vgroup>
    <boolean id="apple2"     _label="Apple ]["       arg-unset="-no-apple2"/>

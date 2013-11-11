@@ -93,10 +93,9 @@
                           stringByReplacingOccurrencesOfString:@" "
                           withString:@""]
                          stringByAppendingPathExtension:@"xml"]];
-  NSString *xml = [NSString stringWithContentsOfFile:path
-                            encoding:NSISOLatin1StringEncoding
-                            error:nil];
-  NSAssert (xml, @"no XML: %@", path);
+  NSData *xmld = [NSData dataWithContentsOfFile:path];
+  NSAssert (xmld, @"no XML: %@", path);
+  NSString *xml = [XScreenSaverView decompressXML:xmld];
   Bool gl_p = (xml && [xml rangeOfString:@"gl=\"yes\""].length > 0);
 
   new_class = (gl_p
@@ -508,6 +507,9 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     orderFrontStandardAboutPanelWithOptions:d];
 # else  // USE_IPHONE
 
+  if ([saverNames count] == 1)
+    return;
+
   NSString *name = saverName;
   NSString *year = [self makeDesc:saverName yearOnly:YES];
 
@@ -704,26 +706,27 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     if ([[p pathExtension] caseInsensitiveCompare: ext]) 
       continue;
 
-# ifndef USE_IPHONE
     NSString *name = [[p lastPathComponent] stringByDeletingPathExtension];
-# else  // !USE_IPHONE
 
+# ifdef USE_IPHONE
     // Get the saver name's capitalization right by reading the XML file.
 
     p = [dir stringByAppendingPathComponent: p];
-    NSString *name = [NSString stringWithContentsOfFile:p
-                               encoding:NSISOLatin1StringEncoding
-                               error:nil];
-    NSRange r = [name rangeOfString:@"_label=\"" options:0];
-    name = [name substringFromIndex: r.location + r.length];
-    r = [name rangeOfString:@"\"" options:0];
-    name = [name substringToIndex: r.location];
+    NSData *xmld = [NSData dataWithContentsOfFile:p];
+    NSAssert (xmld, @"no XML: %@", p);
+    NSString *xml = [XScreenSaverView decompressXML:xmld];
+    NSRange r = [xml rangeOfString:@"_label=\"" options:0];
+    NSAssert1 (r.length, @"no name in %@", p);
+    if (r.length) {
+      xml = [xml substringFromIndex: r.location + r.length];
+      r = [xml rangeOfString:@"\"" options:0];
+      if (r.length) name = [xml substringToIndex: r.location];
+    }
+
+# endif // USE_IPHONE
 
     NSAssert1 (name, @"no name in %@", p);
-
-# endif // !USE_IPHONE
-
-    [result addObject: name];
+    if (name) [result addObject: name];
   }
 
   if (! [result count])
@@ -842,9 +845,9 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   NSRange r;
 
   path = [path stringByAppendingPathExtension:@"xml"];
-  desc = [NSString stringWithContentsOfFile:path
-                   encoding:NSISOLatin1StringEncoding
-                   error:nil];
+  NSData *xmld = [NSData dataWithContentsOfFile:path];
+  if (! xmld) goto FAIL;
+  desc = [XScreenSaverView decompressXML:xmld];
   if (! desc) goto FAIL;
 
   r = [desc rangeOfString:@"<_description>"
@@ -895,8 +898,10 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
 FAIL:
   if (! desc) {
-    desc = @"Oops, this module appears to be incomplete.";
-    // NSLog(@"broken saver: %@", path);
+    if ([saverNames count] > 1)
+      desc = @"Oops, this module appears to be incomplete.";
+    else
+      desc = @"";
   }
 
   return desc;
@@ -1060,6 +1065,16 @@ FAIL:
   return win;
 }
 
+
+- (void) animTimer
+{
+  for (NSWindow *win in windows) {
+    ScreenSaverView *sv = find_saverView ([win contentView]);
+    if ([sv isAnimating])
+      [sv animateOneFrame];
+  }
+}
+
 # endif // !USE_IPHONE
 
 
@@ -1165,6 +1180,33 @@ FAIL:
 # endif
 
   [self selectedSaverDidChange:nil];
+
+
+# ifndef USE_IPHONE
+  /* On 10.8 and earlier, [ScreenSaverView startAnimation] causes the
+     ScreenSaverView to run its own timer calling animateOneFrame.
+     On 10.9, that fails because the private class ScreenSaverModule
+     is only initialized properly by ScreenSaverEngine, and in the
+     context of SaverRunner, the null ScreenSaverEngine instance
+     behaves as if [ScreenSaverEngine needsAnimationTimer] returned false.
+     So, if it looks like this is the 10.9 version of ScreenSaverModule
+     instead of the 10.8 version, we run our own timer here.  This sucks.
+   */
+  if (!anim_timer) {
+    Class ssm = NSClassFromString (@"ScreenSaverModule");
+    if (ssm && [ssm instancesRespondToSelector:
+                      @selector(needsAnimationTimer)]) {
+      NSWindow *win = [windows objectAtIndex:0];
+      ScreenSaverView *sv = find_saverView ([win contentView]);
+      anim_timer = [NSTimer scheduledTimerWithTimeInterval:
+                              [sv animationTimeInterval]
+                            target:self
+                            selector:@selector(animTimer)
+                            userInfo:nil
+                            repeats:YES];
+    }
+  }
+# endif // !USE_IPHONE
 }
 
 

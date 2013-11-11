@@ -24,7 +24,7 @@ use strict;
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.4 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.5 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -78,6 +78,7 @@ my $man_suffix = (".SH ENVIRONMENT\n" .
 
 sub xml2man($) {
   my ($exe) = @_;
+  $exe =~ s/\.xml$//s;
   my $cfgdir = (-d "config" ? "config" : "../config");
   my $xml = "$cfgdir/$exe.xml";
   my $man = "$exe.man";

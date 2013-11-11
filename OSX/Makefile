@@ -6,6 +6,7 @@ ARCH       = -arch i386 -arch x86_64
 CERT       = 'Jamie Zawinski'
 CERT       = 'iPhone Developer: Jamie Zawinski (Y5M82TL69N)'
 THUMBDIR   = $(HOME)/www/xscreensaver/screenshots/
+PKGID	   = org.jwz.xscreensaver
 
 default: release
 all: debug release
@@ -46,9 +47,10 @@ check_versions:
   RESULT=0 ;								\
   for S in $$DIR/*.{saver,app} ; do					\
    for P in $$S/Contents/Info.plist ; do				\
-     V2=`perl -0000 -n -e						\
+     V2=`plutil -convert xml1 -o - "$$P" |				\
+	 perl -0000 -n -e						\
 	'm@<key>CFBundleVersion</key>\s*<string>(.*?)</string>@si 	\
-	 && print $$1' < $$P` ;						\
+	 && print $$1'` ;						\
      if [ "$$V2" != "$$V" ] ; then					\
        echo "Wrong version: $$S ($$V2)" ;				\
        RESULT=1 ;							\
@@ -83,7 +85,7 @@ update_plist_version:
   T=/tmp/xs.$$$$ ;							      \
   for S in XScreenSaver.plist SaverRunner.plist iSaverRunner.plist ; do	      \
     /bin/echo -n "Updating version number in $$S to \"$$V\"... " ;	      \
-    KEYS="CFBundleVersion|CFBundleShortVersionString" ;			      \
+    KEYS="CFBundleVersion|CFBundleShortVersionString|CFBundleLongVersionString|CFBundleGetInfoString|NSHumanReadableCopyright" ; \
     perl -0777 -pne							      \
       "s@(<key>($$KEYS)</key>\s*<string>)[^<>]+(</string>)@\$${1}$$V\$${3}@g" \
       < $$S > $$T ;							      \
@@ -97,8 +99,42 @@ update_plist_version:
   rm $$T
 
 
+build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.png ../utils/version.h
+	@\
+  set -e ;								\
+  SRC=../utils/version.h ;						\
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' $$SRC` ;		\
+									\
+  DIST="installer.xml" ;						\
+  STAGE="build/Release/pkg_stage" ;					\
+  PKG1="$@" ;								\
+  PKG2="$$STAGE/contents.pkg" ;						\
+  SCRIPTS="$$STAGE/scripts" ;						\
+  RES="$$STAGE/resources" ;						\
+									\
+  set -x ;								\
+  rm -rf "$$STAGE" ;							\
+  mkdir -p "$$SCRIPTS" "$$RES" ;					\
+									\
+  cp -p installer.sh "$$SCRIPTS/preinstall" ;				\
+  cp -p installer.png "$$RES/background.png" ;				\
+  cp -p installer.rtf "$$RES/welcome.rtf" ;				\
+									\
+  pkgbuild --identifier "$(PKGID)" --version "$$V"			\
+	   --scripts "$$SCRIPTS" --nopayload "$$PKG2" ;			\
+  codesign -vfs $(CERT) "$$PKG2" ;					\
+  codesign -vd "$$PKG2" ;						\
+									\
+  productbuild --distribution "$$DIST" --resources "$$RES"		\
+	       --package-path "$$STAGE" --version "$$V" "$$PKG1" ;	\
+  codesign -vfs $(CERT) "$$PKG1" ;					\
+  codesign -vd "$$PKG1" ;						\
+									\
+  rm -rf "$$STAGE" ;							\
+
+
 # -format UDBZ saves 4% (~1.2 MB) over UDZO.
-dmg:: distdepend check_versions
+dmg:: distdepend check_versions build/Release/installer.pkg
 	@								      \
   set -e ;								      \
   SRC=../utils/version.h ;						      \
@@ -112,10 +148,12 @@ dmg:: distdepend check_versions
   TMPDMG="$$TMPDIR/tmp.dmg" ;						      \
   VOLNAME="XScreenSaver $$V" ;						      \
   STAGE="$$TMPDIR/dmg_stage" ;						      \
+  DST="$$STAGE/Screen Savers" ;						      \
+  PKG="$$STAGE/Install Everything.pkg" ;				      \
   rm -f "$$DMG" ;							      \
   rm -rf "$$STAGE" ;							      \
-  echo + mkdir "$$STAGE" ;						      \
-         mkdir "$$STAGE" ;						      \
+  echo + mkdir -p "$$DST" ;						      \
+         mkdir -p "$$DST" ;						      \
 									      \
   retired=`perl -0 -ne							      \
      's/\\\\\\n//g; m/^RETIRED_EXES\s*=\s*(.*)$$/m && print "$$1\n"'	      \
@@ -133,28 +171,29 @@ dmg:: distdepend check_versions
     if [ "$$ff" = "$$r" ]; then ok=no ; fi ;				      \
    done ;								      \
    if [ "$$ok" = yes ]; then						      \
-    echo + cp -pr "$$f" "$$STAGE/" ;					      \
-           cp -pr "$$f" "$$STAGE/" ;					      \
+    echo + cp -pr "$$f" "$$DST/" ;					      \
+           cp -pr "$$f" "$$DST/" ;					      \
    else									      \
     echo skipping "$$f" ;						      \
    fi ;									      \
   done ;								      \
   set -x ;								      \
-  cp -p bindist.rtf "$$STAGE/ READ ME.rtf" ;				      \
+  cp -p bindist.rtf "$$STAGE/Read Me.rtf" ;				      \
+  cp -p build/Release/installer.pkg "$$PKG" ;				      \
   cp -p bindist-DS_Store "$$STAGE/.DS_Store" ;				      \
+  cp -p bindist.webloc "$$STAGE/Get the iPhone:iPad Version.webloc" ;	      \
   cp -p XScreenSaverDMG.icns "$$STAGE/.VolumeIcon.icns" ;		      \
   /Developer/Tools/SetFile -a C "$$STAGE" ;				      \
-  /Developer/Tools/SetFile -a E "$$STAGE/ READ ME.rtf" ;		      \
-  seticon -d ../../xdaliclock/OSX/daliclockSaver.icns $$STAGE/DaliClock.saver;\
+  /Developer/Tools/SetFile -a E "$$STAGE"/*.{rtf,pkg,webloc} ;		      \
+  seticon -d ../../xdaliclock/OSX/daliclockSaver.icns "$$DST/DaliClock.saver";\
+  seticon -d XScreenSaverFolder.icns "$$DST" ;				      \
+  seticon -d XScreenSaverWebloc.icns "$$STAGE"/*.webloc ;		      \
+  seticon -d XScreenSaverPkg.icns "$$STAGE"/*.pkg ;			      \
   hdiutil makehybrid -quiet -ov -hfs -hfs-volume-name "$$VOLNAME"	      \
     -hfs-openfolder "$$STAGE" "$$STAGE" -o "$$TMPDMG" ;			      \
   rm -rf "$$STAGE" ;							      \
   hdiutil convert -quiet -ov -format UDBZ -imagekey zlib-level=9	      \
     "$$TMPDMG" -o "$$DMG" ;						      \
+  xattr -w com.apple.quarantine "0000;00000000;;" "$$DMG" ;		      \
   rm -f "$$TMPDMG" ;							      \
   ls -ldhgF "$$DMG"
-
-# Adding this is cute:
-#    hdiutil internet-enable -yes -quiet "$$DMG"
-# but means that nobody will ever see the display settings I used!
-# When finder copies the .dmg to a folder, it doesn't preserve them.

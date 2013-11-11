@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001-2011 Jamie Zawinski <jwz@jwz.org>.
+# Copyright Â© 2001-2013 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -30,14 +30,12 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version  = q{ $Revision: 1.21 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version  = q{ $Revision: 1.22 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $tmpdir   = $ENV{TMPDIR} || "/tmp";
 my $tmpfile  = sprintf("%s/xssv.%08x.ppm", $tmpdir, rand(0xFFFFFFFF));
 
-my $verbose           = 0;
-my $use_stdout_p      = 0;
-my $return_filename_p = 0;
+my $verbose = 0;
 
 
 # These are programs that can be used to grab a video frame.  The first one
@@ -112,46 +110,13 @@ sub grab_image() {
   print STDERR "$progname: executing \"$cmd\"\n" if ($verbose);
   system ($cmd);
 
-  if (-z $tmpfile)
-    {
-      unlink $tmpfile;
-      error ("\"$cmd\" produced no data.");
-    }
-
-  if ($return_filename_p) {
-    print STDERR "$progname: wrote \"$tmpfile\"\n" if ($verbose);
-    print STDOUT "$tmpfile\n";
-
-  } elsif ($use_stdout_p) {
-    my $ppm = "";
-    my $reader  = "<$tmpfile";
-
-    # horrid kludge for SGIs, since they don't use PPM...
-    if ($cmd =~ m/^vidtomem\s/) {
-      $reader  = "sgitopnm $tmpfile";
-      $reader .= " 2>/dev/null" if ($verbose <= 1);
-      $reader .= " |";
-    }
-
-    open (my $in, $reader) || error ("reading $tmpfile: $!");
-    print STDERR "$progname: reading $tmpfile\n" if ($verbose > 1);
-    local $/ = undef;  # read entire file
-    $ppm = <$in>;
-    close $in;
+  if (! -s $tmpfile) {
     unlink $tmpfile;
-    print STDOUT $ppm;
-
-  } else {
-
-    $cmd = "xscreensaver-getimage-file";
-    $cmd .= " --verbose" if ($verbose);
-    $cmd .= " $tmpfile";
-
-    print STDERR "$progname: executing \"$cmd\"\n" if ($verbose);
-    system ($cmd);
-
-    unlink $tmpfile;
+    error ("\"$cmd\" produced no data.");
   }
+
+  print STDERR "$progname: wrote \"$tmpfile\"\n" if ($verbose);
+  print STDOUT "$tmpfile\n";
 }
 
 
@@ -163,14 +128,12 @@ sub usage() {
 sub main() {
   while ($_ = $ARGV[0]) {
     shift @ARGV;
-    if ($_ eq "--verbose") { $verbose++; }
-    elsif (m/^-v+$/) { $verbose += length($_)-1; }
-    elsif (m/^--?stdout$/) { $use_stdout_p = 1; }
-    elsif (m/^--?name$/)   { $return_filename_p = 1; }
-    elsif (m/^-./) { usage; }
-    else { usage; }
+    if    (m/^--?verbose$/s) { $verbose++; }
+    elsif (m/^-v+$/s)        { $verbose += length($_)-1; }
+    elsif (m/^--?name$/s)    { }   # ignored, for compatibility
+    elsif (m/^-./)           { usage; }
+    else                     { usage; }
   }
-
   grab_image();
 }
 

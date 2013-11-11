@@ -3418,10 +3418,10 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
    controls on itself that are hooked up to the appropriate preferences.
    The default size of the view is just big enough to hold them all.
  */
-- (id)initWithXMLFile: (NSString *) xml_file
-              options: (const XrmOptionDescRec *) _opts
-           controller: (NSUserDefaultsController *) _prefs
-             defaults: (NSDictionary *) _defs
+- (id)initWithXML: (NSData *) xml_data
+          options: (const XrmOptionDescRec *) _opts
+       controller: (NSUserDefaultsController *) _prefs
+         defaults: (NSDictionary *) _defs
 {
 # ifndef USE_IPHONE
   self = [super init];
@@ -3437,40 +3437,16 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   userDefaultsController = _prefs;
   [userDefaultsController retain];
 
-  NSURL *furl = [NSURL fileURLWithPath:xml_file];
+  NSXMLParser *xmlDoc = [[NSXMLParser alloc] initWithData:xml_data];
 
-  if (!furl) {
-    NSAssert1 (0, @"can't URLify \"%@\"", xml_file);
-    return nil;
-  }
-
-#if 0  // -- the old way
-  NSError *err = nil;
-  NSXMLDocument *xmlDoc = [[NSXMLDocument alloc] 
-                            initWithContentsOfURL:furl
-                            options:(NSXMLNodePreserveWhitespace |
-                                     NSXMLNodePreserveCDATA)
-                            error:&err];
-  if (!xmlDoc || err) {
-    if (err)
-      NSAssert2 (0, @"XML Error: %@: %@",
-                 xml_file, [err localizedDescription]);
-    return nil;
-  }
-
-  traverse_tree (prefs, self, opts, [xmlDoc rootElement]);
-#endif /* 0 */
-
-
-  NSXMLParser *xmlDoc = [[NSXMLParser alloc] initWithContentsOfURL:furl];
   if (!xmlDoc) {
-    NSAssert1 (0, @"XML Error: %@", xml_file);
+    NSAssert1 (0, @"XML Error: %@", xml_data);
     return nil;
   }
   [xmlDoc setDelegate:self];
   if (! [xmlDoc parse]) {
     NSError *err = [xmlDoc parserError];
-    NSAssert2 (0, @"XML Error: %@: %@", xml_file, err);
+    NSAssert2 (0, @"XML Error: %@: %@", xml_data, err);
     return nil;
   }
 

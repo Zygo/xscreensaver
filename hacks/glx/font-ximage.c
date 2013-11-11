@@ -68,7 +68,7 @@ to_pow2 (int i)
    This XImage will be 32 bits per pixel, 8 each per R, G, and B, with the
    extra byte set to 0xFF.
 
-   Foregroune and background are GL-style color specifiers: 4 floats from
+   Foreground and background are GL-style color specifiers: 4 floats from
    0.0-1.0.
  */
 XImage *

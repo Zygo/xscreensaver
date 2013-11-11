@@ -446,6 +446,7 @@ new_word (state *s, sentence *se, char *txt, Bool alloc_p)
   XCharStruct overall;
   int dir, ascent, descent;
   int bw = s->border_width;
+  int slack;
 
   if (!txt)
     return 0;
@@ -453,14 +454,17 @@ new_word (state *s, sentence *se, char *txt, Bool alloc_p)
   w = (word *) calloc (1, sizeof(*w));
   XTextExtents (se->font, txt, strlen(txt), &dir, &ascent, &descent, &overall);
 
-  /* Leave a little more slack */
-  overall.lbearing -= (bw * 2);
-  overall.rbearing += (bw * 2);
-  overall.ascent   += (bw * 2);
-  overall.descent  += (bw * 2);
+  /* Leave a little more slack. Not entirely clear on what's going on here,
+     but maybe it's fonts with goofy metrics. */
+  slack = (overall.ascent + overall.descent) * 0.25;
+  if (slack < bw*2) slack = bw*2;
+  overall.lbearing -= slack;
+  overall.rbearing += slack;
+  overall.ascent   += slack;
+  overall.descent  += slack;
 
-  w->width    = overall.rbearing - overall.lbearing + bw + bw;
-  w->height   = overall.ascent   + overall.descent  + bw + bw;
+  w->width    = overall.rbearing - overall.lbearing;
+  w->height   = overall.ascent   + overall.descent;
   w->ascent   = overall.ascent   + bw;
   w->lbearing = overall.lbearing - bw;
   w->rbearing = overall.width    + bw;
@@ -493,6 +497,9 @@ new_word (state *s, sentence *se, char *txt, Bool alloc_p)
       int i, j;
       XGCValues gcv;
       GC gc0, gc1;
+
+      if (w->width <= 0)  w->width  = 1;
+      if (w->height <= 0) w->height = 1;
 
       w->pixmap = XCreatePixmap (s->dpy, s->b, w->width, w->height, 1L);
       w->mask   = XCreatePixmap (s->dpy, s->b, w->width, w->height, 1L);

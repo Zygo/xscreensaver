@@ -359,8 +359,21 @@ static Bool
 hexadrop_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   state *st = (state *) closure;
+  Bool bonkp = False;
 
-  if (event->type == ButtonPress || event->type == KeyPress)
+
+  if (event->type == ButtonPress)
+    bonkp = True;
+  else if (event->type == KeyPress)
+    {
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+        bonkp = True;
+    }
+
+  if (bonkp)
     {
       cell *c = st->cells;
       st->cells = 0;

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2003-2005 Jamie Zawinski <jwz@jwz.org>.
+# Copyright Â© 2003-2013 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -34,17 +34,15 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.5 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.6 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my @grabber   = ("screencapture", "-x");
 my @converter = ("pdf2jpeg");
 
 my $verbose = 0;
-my $use_stdout_p = 0;
-my $return_filename_p = 0;
 
 
-sub error {
+sub error($) {
   ($_) = @_;
   print STDERR "$progname: $_\n";
   exit 1;
@@ -52,7 +50,7 @@ sub error {
 
 # returns the full path of the named program, or undef.
 #
-sub which {
+sub which($) {
   my ($prog) = @_;
   foreach (split (/:/, $ENV{PATH})) {
     if (-x "$_/$prog") {
@@ -62,7 +60,7 @@ sub which {
   return undef;
 }
 
-sub check_path {
+sub check_path() {
   my $ok = 1;
   foreach ($grabber[0], $converter[0]) {
     if (! which ($_)) {
@@ -74,7 +72,7 @@ sub check_path {
 }
 
 
-sub grab_image {
+sub grab_image() {
 
   check_path();
 
@@ -88,7 +86,7 @@ sub grab_image {
 
   print STDERR "$progname: executing \"" . join(' ', @cmd) . "\"\n"
     if ($verbose);
-  system (@cmd);
+  system (join(' ', @cmd) . ' 2>/dev/null');
 
   my @st = stat($tmpfile);
   my $size = (@st ? $st[7] : 0);
@@ -114,11 +112,10 @@ sub grab_image {
   #
   my $pdf_p = 0;
   {
-    local *IN;
-    open (IN, "<$tmpfile") || error ("$tmpfile: $!");
+    open (my $in, '<:raw', $tmpfile) || error ("$tmpfile: $!");
     my $buf = '';
-    read (IN, $buf, 10);
-    close IN;
+    read ($in, $buf, 10);
+    close $in;
     $pdf_p = ($buf =~ m/^%PDF-/s);
   }
 
@@ -151,55 +148,25 @@ sub grab_image {
     }
   }
 
-  if ($return_filename_p) {
-    print STDERR "$progname: wrote \"$tmpfile\"\n" if ($verbose);
-    print STDOUT "$tmpfile\n";
-
-  } elsif ($use_stdout_p) {
-    local *IN;
-    my $ppm = "";
-    my $reader = "djpeg $tmpfile";
-    $reader .= " 2>/dev/null" if ($verbose <= 1);
-    $reader .= " |";
-
-    open(IN, $reader) || error "reading $tmpfile: $!";
-    print STDERR "$progname: reading $tmpfile\n" if ($verbose > 1);
-    while (<IN>) { $ppm .= $_; }
-    close IN;
-    unlink $tmpfile;
-    print STDOUT $ppm;
-
-  } else {
-
-    @cmd = ("xscreensaver-getimage-file");
-    push @cmd, "--verbose" if ($verbose);
-    push @cmd, $tmpfile;
-
-    print STDERR "$progname: executing \"" . join(' ', @cmd) . "\"\n"
-      if ($verbose);
-    system (@cmd);
-
-    unlink $tmpfile;
-  }
+  print STDERR "$progname: wrote \"$tmpfile\"\n" if ($verbose);
+  print STDOUT "$tmpfile\n";
 }
 
 
-sub usage {
-  print STDERR "usage: $progname [--verbose] [--name | --stdout]\n";
+sub usage() {
+  print STDERR "usage: $progname [--verbose]\n";
   exit 1;
 }
 
-sub main {
+sub main() {
   while ($_ = $ARGV[0]) {
     shift @ARGV;
-    if ($_ eq "--verbose") { $verbose++; }
-    elsif (m/^-v+$/) { $verbose += length($_)-1; }
-    elsif (m/^--?stdout$/) { $use_stdout_p = 1; }
-    elsif (m/^--?name$/)   { $return_filename_p = 1; }
-    elsif (m/^-./) { usage; }
-    else { usage; }
+    if    (m/^--?verbose$/s) { $verbose++; }
+    elsif (m/^-v+$/s)        { $verbose += length($_)-1; }
+    elsif (m/^--?name$/s)    { }   # ignored, for compatibility
+    elsif (m/^-./)           { usage; }
+    else                     { usage; }
   }
-
   grab_image();
 }
 

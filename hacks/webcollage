@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright (c) 1999-2012 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright Â© 1999-2013 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -60,7 +60,7 @@ use bytes;  # Larry can take Unicode and shove it up his ass sideways.
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.159 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.160 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 my $copyright = "WebCollage $version, Copyright (c) 1999-2011" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
@@ -250,44 +250,53 @@ my %warningless_sites = (
 #
 my %entity_table = (
    "apos"   => '\'',
-   "quot"   => '"', "amp"    => '&', "lt"     => '<', "gt"     => '>',
-   "nbsp"   => ' ', "iexcl"  => '¡', "cent"   => '¢', "pound"  => '£',
-   "curren" => '¤', "yen"    => '¥', "brvbar" => '¦', "sect"   => '§',
-   "uml"    => '¨', "copy"   => '©', "ordf"   => 'ª', "laquo"  => '«',
-   "not"    => '¬', "shy"    => '­', "reg"    => '®', "macr"   => '¯',
-   "deg"    => '°', "plusmn" => '±', "sup2"   => '²', "sup3"   => '³',
-   "acute"  => '´', "micro"  => 'µ', "para"   => '¶', "middot" => '·',
-   "cedil"  => '¸', "sup1"   => '¹', "ordm"   => 'º', "raquo"  => '»',
-   "frac14" => '¼', "frac12" => '½', "frac34" => '¾', "iquest" => '¿',
-   "Agrave" => 'À', "Aacute" => 'Á', "Acirc"  => 'Â', "Atilde" => 'Ã',
-   "Auml"   => 'Ä', "Aring"  => 'Å', "AElig"  => 'Æ', "Ccedil" => 'Ç',
-   "Egrave" => 'È', "Eacute" => 'É', "Ecirc"  => 'Ê', "Euml"   => 'Ë',
-   "Igrave" => 'Ì', "Iacute" => 'Í', "Icirc"  => 'Î', "Iuml"   => 'Ï',
-   "ETH"    => 'Ð', "Ntilde" => 'Ñ', "Ograve" => 'Ò', "Oacute" => 'Ó',
-   "Ocirc"  => 'Ô', "Otilde" => 'Õ', "Ouml"   => 'Ö', "times"  => '×',
-   "Oslash" => 'Ø', "Ugrave" => 'Ù', "Uacute" => 'Ú', "Ucirc"  => 'Û',
-   "Uuml"   => 'Ü', "Yacute" => 'Ý', "THORN"  => 'Þ', "szlig"  => 'ß',
-   "agrave" => 'à', "aacute" => 'á', "acirc"  => 'â', "atilde" => 'ã',
-   "auml"   => 'ä', "aring"  => 'å', "aelig"  => 'æ', "ccedil" => 'ç',
-   "egrave" => 'è', "eacute" => 'é', "ecirc"  => 'ê', "euml"   => 'ë',
-   "igrave" => 'ì', "iacute" => 'í', "icirc"  => 'î', "iuml"   => 'ï',
-   "eth"    => 'ð', "ntilde" => 'ñ', "ograve" => 'ò', "oacute" => 'ó',
-   "ocirc"  => 'ô', "otilde" => 'õ', "ouml"   => 'ö', "divide" => '÷',
-   "oslash" => 'ø', "ugrave" => 'ù', "uacute" => 'ú', "ucirc"  => 'û',
-   "uuml"   => 'ü', "yacute" => 'ý', "thorn"  => 'þ', "yuml"   => 'ÿ',
+   "quot"   => '"',    "amp"    => '&',    "lt"     => '<',
+   "gt"     => '>',    "nbsp"   => ' ',    "iexcl"  => '',
+   "cent"   => "\xA2", "pound"  => "\xA3", "curren" => "\xA4",
+   "yen"    => "\xA5", "brvbar" => "\xA6", "sect"   => "\xA7",
+   "uml"    => "\xA8", "copy"   => "\xA9", "ordf"   => "\xAA",
+   "laquo"  => "\xAB", "not"    => "\xAC", "shy"    => "\xAD",
+   "reg"    => "\xAE", "macr"   => "\xAF", "deg"    => "\xB0",
+   "plusmn" => "\xB1", "sup2"   => "\xB2", "sup3"   => "\xB3",
+   "acute"  => "\xB4", "micro"  => "\xB5", "para"   => "\xB6",
+   "middot" => "\xB7", "cedil"  => "\xB8", "sup1"   => "\xB9",
+   "ordm"   => "\xBA", "raquo"  => "\xBB", "frac14" => "\xBC",
+   "frac12" => "\xBD", "frac34" => "\xBE", "iquest" => "\xBF",
+   "Agrave" => "\xC0", "Aacute" => "\xC1", "Acirc"  => "\xC2",
+   "Atilde" => "\xC3", "Auml"   => "\xC4", "Aring"  => "\xC5",
+   "AElig"  => "\xC6", "Ccedil" => "\xC7", "Egrave" => "\xC8",
+   "Eacute" => "\xC9", "Ecirc"  => "\xCA", "Euml"   => "\xCB",
+   "Igrave" => "\xCC", "Iacute" => "\xCD", "Icirc"  => "\xCE",
+   "Iuml"   => "\xCF", "ETH"    => "\xD0", "Ntilde" => "\xD1",
+   "Ograve" => "\xD2", "Oacute" => "\xD3", "Ocirc"  => "\xD4",
+   "Otilde" => "\xD5", "Ouml"   => "\xD6", "times"  => "\xD7",
+   "Oslash" => "\xD8", "Ugrave" => "\xD9", "Uacute" => "\xDA",
+   "Ucirc"  => "\xDB", "Uuml"   => "\xDC", "Yacute" => "\xDD",
+   "THORN"  => "\xDE", "szlig"  => "\xDF", "agrave" => "\xE0",
+   "aacute" => "\xE1", "acirc"  => "\xE2", "atilde" => "\xE3",
+   "auml"   => "\xE4", "aring"  => "\xE5", "aelig"  => "\xE6",
+   "ccedil" => "\xE7", "egrave" => "\xE8", "eacute" => "\xE9",
+   "ecirc"  => "\xEA", "euml"   => "\xEB", "igrave" => "\xEC",
+   "iacute" => "\xED", "icirc"  => "\xEE", "iuml"   => "\xEF",
+   "eth"    => "\xF0", "ntilde" => "\xF1", "ograve" => "\xF2",
+   "oacute" => "\xF3", "ocirc"  => "\xF4", "otilde" => "\xF5",
+   "ouml"   => "\xF6", "divide" => "\xF7", "oslash" => "\xF8",
+   "ugrave" => "\xF9", "uacute" => "\xFA", "ucirc"  => "\xFB",
+   "uuml"   => "\xFC", "yacute" => "\xFD", "thorn"  => "\xFE",
+   "yuml"   => "\xFF",
 
    # HTML 4 entities that do not have 1:1 Latin1 mappings.
-   "bull"  => "*",   "hellip"=> "...",  "prime" => "'",  "Prime" => "\"",
-   "frasl" => "/",   "trade" => "[tm]", "larr"  => "<-", "rarr"  => "->",
-   "harr"  => "<->", "lArr"  => "<=",   "rArr"  => "=>", "hArr"  => "<=>",
-   "empty" => "Ø",   "minus" => "-",    "lowast"=> "*",  "sim"   => "~",
-   "cong"  => "=~",  "asymp" => "~",    "ne"    => "!=", "equiv" => "==",
-   "le"    => "<=",  "ge"    => ">=",   "lang"  => "<",  "rang"  => ">",
-   "loz"   => "<>",  "OElig" => "OE",   "oelig" => "oe", "Yuml"  => "Y",
-   "circ"  => "^",   "tilde" => "~",    "ensp"  => " ",  "emsp"  => " ",
-   "thinsp"=> " ",   "ndash" => "-",    "mdash" => "--", "lsquo" => "`",
-   "rsquo" => "'",   "sbquo" => "'",    "ldquo" => "\"", "rdquo" => "\"",
-   "bdquo" => "\"",  "lsaquo"=> "<",    "rsaquo"=> ">",
+   "bull"  => "*",    "hellip"=> "...",  "prime" => "'",  "Prime" => "\"",
+   "frasl" => "/",    "trade" => "[tm]", "larr"  => "<-", "rarr"  => "->",
+   "harr"  => "<->",  "lArr"  => "<=",   "rArr"  => "=>", "hArr"  => "<=>",
+   "empty" => "\xD8", "minus" => "-",    "lowast"=> "*",  "sim"   => "~",
+   "cong"  => "=~",   "asymp" => "~",    "ne"    => "!=", "equiv" => "==",
+   "le"    => "<=",   "ge"    => ">=",   "lang"  => "<",  "rang"  => ">",
+   "loz"   => "<>",   "OElig" => "OE",   "oelig" => "oe", "Yuml"  => "Y",
+   "circ"  => "^",    "tilde" => "~",    "ensp"  => " ",  "emsp"  => " ",
+   "thinsp"=> " ",    "ndash" => "-",    "mdash" => "--", "lsquo" => "`",
+   "rsquo" => "'",    "sbquo" => "'",    "ldquo" => "\"", "rdquo" => "\"",
+   "bdquo" => "\"",   "lsaquo"=> "<",    "rsaquo"=> ">",
 );
 
 
@@ -2090,7 +2099,7 @@ sub pick_from_twitter_images($) {
 #
 ############################################################################
 
-my $flickr_img_url = "http://www.flickr.com/photos/";
+my $flickr_img_url = "http://www.flickr.com/explore/";
 
 # Like LiveJournal, the Flickr page of images tends to update slowly,
 # so remember the last N entries on it and randomly select from those.
@@ -2121,8 +2130,10 @@ sub pick_from_flickr_recent($) {
   my $count = 0;
   my $count2 = 0;
   foreach (split (/\n/, $body)) {
+
     my ($page, $thumb) = m@<A \s [^<>]* \b HREF=\"([^<>\"]+)\" [^<>]* > \s*
-                           <IMG \s [^<>]* \b SRC=\"([^<>\"]+)\" @xsi;
+                           <IMG \s [^<>]* \b
+			        data-defer-src = \"([^<>\"]+)\" @xsi;
     next unless defined ($thumb);
     $page = html_unquote ($page);
     $thumb = html_unquote ($thumb);
