@@ -13,6 +13,8 @@
 
   <boolean id="shadows" _label="Draw shadows" arg-set="-shadows"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a trio of ants moving their spheres around a circle.
 

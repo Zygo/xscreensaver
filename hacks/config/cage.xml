@@ -12,6 +12,8 @@
   <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws Escher's "Impossible Cage", a 3d analog of a moebius
 strip, and rotates it in three dimensions.

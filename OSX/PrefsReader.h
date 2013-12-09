@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -30,9 +30,14 @@
 @interface PrefsReader : NSObject
 {
   NSString *saver_name;
+
+  NSUserDefaults *userDefaults;   // this is actually a 'ScreenSaverDefaults'
   NSUserDefaultsController *userDefaultsController;
-  NSUserDefaults *userDefaults;  // this is actually a 'ScreenSaverDefaults'
-  NSDictionary *defaultOptions;  // Hardcoded defaults before any changes.
+
+  NSUserDefaults *globalDefaults; // for prefs shared by all xscreensavers.
+  NSUserDefaultsController *globalDefaultsController;
+
+  NSDictionary *defaultOptions;   // Hardcoded defaults before any changes.
 }
 
 - (id) initWithName: (NSString *) name
@@ -40,6 +45,7 @@
            defaults: (const char * const *) defs;
 
 - (NSUserDefaultsController *) userDefaultsController;
+- (NSUserDefaultsController *) globalDefaultsController;
 - (NSDictionary *) defaultOptions;
 
 - (char *) getStringResource:  (const char *) name;

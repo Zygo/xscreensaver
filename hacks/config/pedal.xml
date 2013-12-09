@@ -18,6 +18,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 A demonstration of the even-odd winding rule.
 

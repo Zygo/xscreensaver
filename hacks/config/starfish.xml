@@ -29,6 +29,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Undulating, throbbing, star-like patterns pulsate, rotate, and turn
 inside out.  Another display mode uses these shapes to lay down a

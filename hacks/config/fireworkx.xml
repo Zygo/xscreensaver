@@ -17,6 +17,8 @@
   <boolean id="shoot" _label="Shells upward" arg-set="-shoot"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Exploding fireworks.  See also the "Eruption", "XFlame" and "Pyro"
 screen savers.

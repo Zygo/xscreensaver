@@ -24,6 +24,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Exploding fireworks.  See also the "Fireworkx", "Eruption", and
 "XFlame" screen savers.

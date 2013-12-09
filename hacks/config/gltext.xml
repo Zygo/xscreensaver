@@ -37,6 +37,8 @@
   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Displays a few lines of text spinning around in a solid 3D font.
 The text can use strftime() escape codes to display the current 

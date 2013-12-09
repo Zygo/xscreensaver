@@ -185,7 +185,7 @@ echo_tarfiles:
 
 # How we build object files in this directory.
 .c.o:
-	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+	$(CC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $<
 
 
 # Rules for generating the VMS makefiles on Unix, so that it doesn't have to

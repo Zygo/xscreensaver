@@ -82,7 +82,7 @@ tar::
     cd $$d ; done ;							    \
   echo creating tar file $$ADIR$$NAME.tar.gz... ;			    \
   export COPYFILE_DISABLE=true ;					    \
-  GZIP="-9v" $(TAR) -vchzf $$ADIR$$NAME.tar.gz			            \
+  GZIP="-9v" $(TAR) -vczf $$ADIR$$NAME.tar.gz			            \
     `echo $(TARFILES) $$FILES | sed "s|^|$$NAME/|g; s| | $$NAME/|g" ` ;	    \
   rm $$NAME
 
@@ -94,14 +94,9 @@ tar::
 # out options we don't use.  Odds are good that this will fail with any version
 # of autoconf other than the ones I've tried (2.12 and 2.13.)
 #
-# NOTE: we now require autoconf 2.63 or earlier, because later versions have
-# the "Expanded-Before-Required" change and I can't make any sense of it.
-# If someone wants to send me a patch to make configure.in work with 2.64
-# or later, feel free.  Personally, I can't be bothered.
-#
 configure::
-	autoconf263
-	autoheader263
+	autoconf
+	autoheader
 	@TMP=configure.$$$$ ;						     \
 	echo "munging configure's --help message..." ;			     \
 	( perl -e '							     \

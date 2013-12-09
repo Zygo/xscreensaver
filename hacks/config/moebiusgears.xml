@@ -30,6 +30,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a closed, interlinked chain of rotating gears.  The layout of
 the gears follows the path of a moebius strip.  See also the "Pinion"

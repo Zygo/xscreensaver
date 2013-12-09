@@ -36,6 +36,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws the 3D "digital rain" effect, as seen in the title sequence
 of "The Matrix".

@@ -62,6 +62,8 @@
 
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a wobbly blob that distorts the image behind it.
 

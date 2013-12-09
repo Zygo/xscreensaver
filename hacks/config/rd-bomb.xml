@@ -53,6 +53,8 @@
 
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Reaction-diffusion: draws a grid of growing square-like shapes that,
 once they overtake each other, react in unpredictable ways.

@@ -31,6 +31,8 @@
    </vgroup>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Subdivides and colors rectangles randomly, for a Mondrian-esque effect.
 

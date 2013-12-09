@@ -53,6 +53,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Creates a 3D world with dropping blocks that build up and up.
 Written by rednuht; 2006.

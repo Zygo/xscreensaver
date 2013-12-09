@@ -27,6 +27,8 @@
 
   <xscreensaver-image />
 
+  <xscreensaver-updater />
+
   <_description>
 A kaleidoscope that operates on a loaded image.
 

@@ -21,6 +21,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This generates random inkblot patterns via a reflected random walk.
 Any deep-seated neurotic tendencies which this program reveals

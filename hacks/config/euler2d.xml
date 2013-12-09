@@ -4,34 +4,41 @@
 
   <command arg="-root"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Frame rate" _low-label="Low" _high-label="High"
-          low="0" high="100000" default="10000"
-          convert="invert"/>
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
 
-  <number id="count" type="slider" arg="-count %"
-           _label="Particles" _low-label="Few" _high-label="Many"
-          low="2" high="5000" default="1024"/>
+    <number id="count" type="slider" arg="-count %"
+             _label="Particles" _low-label="Few" _high-label="Many"
+            low="2" high="5000" default="1024"/>
 
-  <number id="eulertail" type="slider" arg="-eulertail %"
-           _label="Trail length" _low-label="Short" _high-label="Long"
-          low="2" high="500" default="10"/>
+    <number id="eulertail" type="slider" arg="-eulertail %"
+             _label="Trail length" _low-label="Short" _high-label="Long"
+            low="2" high="500" default="10"/>
+   </vgroup>
 
-<!--
-  <number id="eulerpower" type="slider" arg="-eulerpower %"
-           _label="Power" _low-label="Low" _high-label="High"
-          low="0.5" high="3.0" default="1.0"/>
--->
+   <vgroup>
+  <!--
+    <number id="eulerpower" type="slider" arg="-eulerpower %"
+             _label="Power" _low-label="Low" _high-label="High"
+            low="0.5" high="3.0" default="1.0"/>
+  -->
 
-  <number id="cycles" type="slider" arg="-cycles %"
-           _label="Duration" _low-label="Short" _high-label="Long"
-          low="100" high="5000" default="3000"/>
+    <number id="cycles" type="slider" arg="-cycles %"
+             _label="Duration" _low-label="Short" _high-label="Long"
+            low="100" high="5000" default="3000"/>
 
-  <number id="ncolors" type="slider" arg="-ncolors %"
-            _label="Number of colors" _low-label="Two" _high-label="Many"
-            low="2" high="255" default="64"/>
+    <number id="ncolors" type="slider" arg="-ncolors %"
+              _label="Number of colors" _low-label="Two" _high-label="Many"
+              low="2" high="255" default="64"/>
+   </vgroup>
+  </hgroup>
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <xscreensaver-updater />
 
   <_description>
 Simulates two dimensional incompressible inviscid fluid flow.

@@ -20,6 +20,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Random dropshadowed rectangles pop onto the screen in lockstep.
 

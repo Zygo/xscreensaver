@@ -24,6 +24,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a Rubik's Cube that rotates in three dimensions and repeatedly
 shuffles and solves itself.  See also the "GLSnake" and "Cube21"

@@ -38,6 +38,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a set of interacting, square-spiral-producing automata.  The
 spirals grow outward until they hit something, then they go around it.

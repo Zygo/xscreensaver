@@ -55,6 +55,9 @@
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
+#undef LINEAR
+#undef DXF_OUTPUT_HACK
+
 #ifdef DXF_OUTPUT_HACK   /* When this is defined, instead of rendering
                             to the screen, we write a DXF CAD file to stdout.
                             This is a kludge of shocking magnitude...
@@ -2239,6 +2242,28 @@ draw_logo (ModeInfo *mi)
   tick_spinner (mi, &dc->frame_spinner);
   link_spinners (mi, &dc->scene_spinnerx, &dc->scene_spinnery);
 
+# ifdef LINEAR
+  {
+    static double i = 0.0;
+    dc->anim_state = HELIX;
+    dc->wire_overlay = 0;
+    dc->gasket_spinnerx.spinning_p = 0;
+    dc->gasket_spinnery.spinning_p = 0;
+    dc->gasket_spinnerz.spinning_p = 0;
+    dc->helix_spinnerz.spinning_p = 0;
+    dc->pizza_spinnery.spinning_p = 0;
+    dc->pizza_spinnerz.spinning_p = 0;
+    dc->scene_spinnerx.spinning_p = 0;
+    dc->scene_spinnery.spinning_p = 0;
+    dc->frame_spinner.spinning_p = 0;
+    dc->frame_spinner.position = 0.3;
+    dc->gasket_spinnerz.position = i;
+    dc->helix_spinnerz.position = i;
+    i += 0.005;
+    if (i > 1) i = 0;
+  }
+# endif /* LINEAR */
+
   switch (dc->anim_state)
     {
     case HELIX:
@@ -2303,9 +2328,11 @@ draw_logo (ModeInfo *mi)
   glPushMatrix ();
   glRotatef(current_device_rotation(), 0, 0, 1);
   {
-    GLfloat scale = 0;
-    glScalef(3, 3, 3);
-    glScalef (0.6, 0.6, 0.6);
+    GLfloat scale = 1.8;
+# ifdef LINEAR
+    scale = 3.85;
+# endif
+    glScalef(scale, scale, scale);
 
     glColor3f(dc->color[0], dc->color[1], dc->color[2]);
 
@@ -2350,14 +2377,20 @@ draw_logo (ModeInfo *mi)
     glRotatef(90, 1, 0, 0);
     glRotatef(90, 0, 0, 1);
 
-    glRotatef (360 * sin (M_PI/2 * dc->scene_spinnerx.position), 0, 1, 0);
-    glRotatef (360 * sin (M_PI/2 * dc->scene_spinnery.position), 0, 0, 1);
+# ifdef LINEAR
+#  define SINIFY(I) (I)
+# else
+#  define SINIFY(I) sin (M_PI/2 * (I))
+# endif
+
+    glRotatef (360 * SINIFY (dc->scene_spinnerx.position), 0, 1, 0);
+    glRotatef (360 * SINIFY (dc->scene_spinnery.position), 0, 0, 1);
 
     glPushMatrix();
     {
-      glRotatef (360 * sin (M_PI/2 * dc->gasket_spinnerx.position), 0, 1, 0);
-      glRotatef (360 * sin (M_PI/2 * dc->gasket_spinnery.position), 0, 0, 1);
-      glRotatef (360 * sin (M_PI/2 * dc->gasket_spinnerz.position), 1, 0, 0);
+      glRotatef (360 * SINIFY (dc->gasket_spinnerx.position), 0, 1, 0);
+      glRotatef (360 * SINIFY (dc->gasket_spinnery.position), 0, 0, 1);
+      glRotatef (360 * SINIFY (dc->gasket_spinnerz.position), 1, 0, 0);
 
       memcpy (gcolor, dc->color, sizeof (dc->color));
       if (dc->wire_overlay != 0)
@@ -2396,12 +2429,12 @@ draw_logo (ModeInfo *mi)
 
     if (pizza_p)
       {
-        glRotatef (360 * sin (M_PI/2 * dc->pizza_spinnery.position), 1, 0, 0);
-        glRotatef (360 * sin (M_PI/2 * dc->pizza_spinnerz.position), 0, 0, 1);
+        glRotatef (360 * SINIFY (dc->pizza_spinnery.position), 1, 0, 0);
+        glRotatef (360 * SINIFY (dc->pizza_spinnerz.position), 0, 0, 1);
       }
     else
       {
-        glRotatef (360 * sin (M_PI/2 * dc->helix_spinnerz.position), 0, 0, 1);
+        glRotatef (360 * SINIFY (dc->helix_spinnerz.position), 0, 0, 1);
       }
 
     scale = ((dc->anim_state == PIZZA_IN || dc->anim_state == HELIX_IN)

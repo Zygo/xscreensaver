@@ -5,51 +5,52 @@
  <command arg="-root"/>
 
  <hgroup>
-  <select id="display-mode">
-   <option id="wire" _label="Wireframe mesh"
-           arg-set="-mode wireframe"/>
-   <option id="surface" _label="Solid surface"
-           arg-set="-mode surface"/>
-   <option id="transparent" _label="Transparent surface"/>
-  </select>
+  <vgroup>
+   <select id="display-mode">
+    <option id="wire" _label="Wireframe mesh"
+            arg-set="-mode wireframe"/>
+    <option id="surface" _label="Solid surface"
+            arg-set="-mode surface"/>
+    <option id="transparent" _label="Transparent surface"/>
+   </select>
 
-  <select id="polytope">
-   <option id="random" _label="Random object"/>
-   <option id="cell-5" _label="5-cell (hyper-tetrahedron)"
-           arg-set="-polytope 5-cell"/>
-   <option id="cell-8" _label="8-cell (hypercube / tesseract)"
-           arg-set="-polytope 8-cell"/>
-   <option id="cell-16" _label="16-cell (hyper-octahedron)"
-           arg-set="-polytope 16-cell"/>
-   <option id="cell-24" _label="24-cell"
-           arg-set="-polytope 24-cell"/>
-   <option id="cell-120" _label="120-cell"
-           arg-set="-polytope 120-cell"/>
-   <option id="cell-600" _label="600-cell"
-           arg-set="-polytope 600-cell"/>
-  </select>
-</hgroup>
+   <select id="polytope">
+    <option id="random" _label="Random object"/>
+    <option id="cell-5" _label="5-cell (hyper-tetrahedron)"
+            arg-set="-polytope 5-cell"/>
+    <option id="cell-8" _label="8-cell (hypercube / tesseract)"
+            arg-set="-polytope 8-cell"/>
+    <option id="cell-16" _label="16-cell (hyper-octahedron)"
+            arg-set="-polytope 16-cell"/>
+    <option id="cell-24" _label="24-cell"
+            arg-set="-polytope 24-cell"/>
+    <option id="cell-120" _label="120-cell"
+            arg-set="-polytope 120-cell"/>
+    <option id="cell-600" _label="600-cell"
+            arg-set="-polytope 600-cell"/>
+   </select>
 
-<hgroup>
-  <select id="colors">
-   <option id="single" _label="Single color" arg-set="-single-color"/>
-   <option id="depth" _label="Colors By 4D Depth"/>
-  </select>
+   <select id="colors">
+    <option id="single" _label="Single color" arg-set="-single-color"/>
+    <option id="depth" _label="Colors By 4D Depth"/>
+   </select>
 
-  <select id="projection3d">
-   <option id="perspective-3d" _label="Perspective 3D"/>
-   <option id="orthographic-3d" _label="Orthographic 3D"
-           arg-set="-orthographic-3d"/>
-  </select>
+   <select id="projection3d">
+    <option id="perspective-3d" _label="Perspective 3D"/>
+    <option id="orthographic-3d" _label="Orthographic 3D"
+            arg-set="-orthographic-3d"/>
+   </select>
 
-  <select id="projection4d">
-   <option id="perspective-4d" _label="Perspective 4D"/>
-   <option id="orthographic-4d" _label="Orthographic 4D"
-           arg-set="-orthographic-4d"/>
-  </select>
-</hgroup>
+   <select id="projection4d">
+    <option id="perspective-4d" _label="Perspective 4D"/>
+    <option id="orthographic-4d" _label="Orthographic 4D"
+            arg-set="-orthographic-4d"/>
+   </select>
 
-<hgroup>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  </vgroup>
+
   <vgroup>
    <number id="speed-wx" type="slider" arg="-speed-wx %"
            _label="WX rotation speed"
@@ -71,6 +72,7 @@
            low="0" high="100000" default="25000"
            convert="invert"/>
   </vgroup>
+
   <vgroup>
    <number id="speed-xy" type="slider" arg="-speed-xy %"
            _label="XY rotation speed"
@@ -86,10 +88,10 @@
            _label="YZ rotation speed"
            _low-label="-4.0" _high-label="4.0"
            low="-4.0" high="4.0" default="2.1"/>
-
-   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </vgroup>
  </hgroup>
+
+  <xscreensaver-updater />
 
  <_description>
 

@@ -40,6 +40,8 @@
 
   <xscreensaver-image />
 
+  <xscreensaver-updater />
+
   <_description>
 Fatbits!  Zooms in on a part of the screen and then moves around.
 With the "Lenses" option, the result is like looking through many

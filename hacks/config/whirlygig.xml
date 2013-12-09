@@ -75,6 +75,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 This screen saver was removed from the XScreenSaver distribution as of
 version 5.08.

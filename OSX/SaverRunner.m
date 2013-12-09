@@ -1103,6 +1103,8 @@ FAIL:
               [NSString stringWithFormat:@"XScreenSaverWindow%d", i]];
     [win setFrameUsingName:[win frameAutosaveName]];
     [a addObject: win];
+    // This prevents clicks from being seen by savers.
+    // [win setMovableByWindowBackground:YES];
   }
 # else  // USE_IPHONE
 
@@ -1213,7 +1215,7 @@ FAIL:
 #ifndef USE_IPHONE
 
 /* When the window closes, exit (even if prefs still open.)
-*/
+ */
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed: (NSApplication *) n
 {
   return YES;

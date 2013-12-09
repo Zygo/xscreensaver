@@ -24,6 +24,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Generates mosaic patterns of interlocking tiles.  
 

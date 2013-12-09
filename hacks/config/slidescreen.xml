@@ -19,6 +19,8 @@
            _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
            low="10" high="600" default="120"/>
 
+    <xscreensaver-image />
+
    </vgroup>
    <vgroup>
    <number id="increment" type="slider" arg="-increment %"
@@ -34,10 +36,10 @@
 
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+   <xscreensaver-updater />
+
    </vgroup>
   </hgroup>
-
-  <xscreensaver-image />
 
   <_description>
 A variant on a "fifteen puzzle", operating on the screen or an image.

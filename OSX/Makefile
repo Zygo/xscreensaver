@@ -7,6 +7,8 @@ CERT       = 'Jamie Zawinski'
 CERT       = 'iPhone Developer: Jamie Zawinski (Y5M82TL69N)'
 THUMBDIR   = $(HOME)/www/xscreensaver/screenshots/
 PKGID	   = org.jwz.xscreensaver
+SETFILE    = /Applications/Xcode.app/Contents/Developer/Tools/SetFile
+SETICON    = /usr/local/bin/seticon
 
 default: release
 all: debug release
@@ -19,8 +21,9 @@ distclean:
 	-rm -f config.status config.cache config.log \
 	  *.bak *.rej TAGS *~ "#"*
 	-rm -rf autom4te*.cache
-	-rm -rf build
+	-rm -rf build Sparkle.framework
 
+distdepend:: Sparkle.framework
 distdepend:: update_plist_version
 
 debug: distdepend
@@ -33,10 +36,13 @@ release:: check_versions
 release:: update_thumbs
 release:: sign
 
+Sparkle.framework:
+	unzip ../archive/Sparkle.framework-2013-12-04.zip
+
 sign:
 	@for f in build/Release/*.app/Contents/*/*.saver \
 		  build/Release/*.{saver,app} ; do \
-	  codesign -vfs $(CERT) $$f ; \
+	  codesign --deep -vfs $(CERT) $$f ; \
 	 done
 
 check_versions:
@@ -72,9 +78,9 @@ ios-function-table.m::
 echo_tarfiles:
 	@echo `find . \
 	  \( \( -name '.??*' -o -name build -o -name CVS -o -name '*~*' \
-	     -o -name 'jwz.*' \) \
+	     -o -name 'jwz.*' -o -name 'Screen Savers' \) \
 	     -prune \) \
-	  -o -type f -print \
+	  -o \( -type f -o -type l \) -print \
 	| sed 's@^\./@@' \
 	| sort`
 
@@ -83,7 +89,7 @@ update_plist_version:
   SRC=../utils/version.h ;						      \
   V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ]*\).*/\1/p' $$SRC` ;		      \
   T=/tmp/xs.$$$$ ;							      \
-  for S in XScreenSaver.plist SaverRunner.plist iSaverRunner.plist ; do	      \
+  for S in *.plist ; do							      \
     /bin/echo -n "Updating version number in $$S to \"$$V\"... " ;	      \
     KEYS="CFBundleVersion|CFBundleShortVersionString|CFBundleLongVersionString|CFBundleGetInfoString|NSHumanReadableCopyright" ; \
     perl -0777 -pne							      \
@@ -97,6 +103,32 @@ update_plist_version:
     fi ;								      \
   done ;								      \
   rm $$T
+
+
+updates.xml::
+	./updates.pl xscreensaver ../README ../archive ~/www/xscreensaver
+	@$(MAKE) test_sig
+
+test_sig::
+	@								    \
+  U=../version.h ;							    \
+  V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ;]*\).*/\1/p' < $$U` ;		    \
+  V=`echo $$V | sed 's/\.//g'` ;					    \
+  ZIP="../archive/DaliClock-$$V.dmg" ;					    \
+  SIG=`sed -n 's/^.*dsaSignature="\(.*\)".*/\1/p' updates.xml` ;	    \
+  PUB="sparkle_dsa_pub.pem" ;						    \
+  NN="t.$$$$" ;								    \
+  SIGB=/tmp/$$NN.sig ;							    \
+  HASH=/tmp/$$NN.hash ;							    \
+  rm -f "$$SIGB" "$$HASH" ;						    \
+  echo "$$SIG " | base64 -D  > "$$SIGB" ;				    \
+  set -e ;								    \
+  for OPENSSL in /usr/bin/openssl /opt/local/bin/openssl ; do		    \
+    $$OPENSSL dgst -sha1 -binary  < "$$ZIP"  > "$$HASH" ;		    \
+    /bin/echo -n "$$OPENSSL	`$$OPENSSL version`:	" ;		    \
+    $$OPENSSL dgst -dss1 -verify "$$PUB" -signature "$$SIGB" "$$HASH" ;	    \
+  done ;								    \
+  rm -f "$$SIGB" "$$HASH" ;						    \
 
 
 build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.png ../utils/version.h
@@ -171,8 +203,8 @@ dmg:: distdepend check_versions build/Release/installer.pkg
     if [ "$$ff" = "$$r" ]; then ok=no ; fi ;				      \
    done ;								      \
    if [ "$$ok" = yes ]; then						      \
-    echo + cp -pr "$$f" "$$DST/" ;					      \
-           cp -pr "$$f" "$$DST/" ;					      \
+    echo + cp -pR "$$f" "$$DST/" ;					      \
+           cp -pR "$$f" "$$DST/" ;					      \
    else									      \
     echo skipping "$$f" ;						      \
    fi ;									      \
@@ -183,12 +215,13 @@ dmg:: distdepend check_versions build/Release/installer.pkg
   cp -p bindist-DS_Store "$$STAGE/.DS_Store" ;				      \
   cp -p bindist.webloc "$$STAGE/Get the iPhone:iPad Version.webloc" ;	      \
   cp -p XScreenSaverDMG.icns "$$STAGE/.VolumeIcon.icns" ;		      \
-  /Developer/Tools/SetFile -a C "$$STAGE" ;				      \
-  /Developer/Tools/SetFile -a E "$$STAGE"/*.{rtf,pkg,webloc} ;		      \
-  seticon -d ../../xdaliclock/OSX/daliclockSaver.icns "$$DST/DaliClock.saver";\
-  seticon -d XScreenSaverFolder.icns "$$DST" ;				      \
-  seticon -d XScreenSaverWebloc.icns "$$STAGE"/*.webloc ;		      \
-  seticon -d XScreenSaverPkg.icns "$$STAGE"/*.pkg ;			      \
+  ${SETFILE} -a C "$$STAGE" ;						      \
+  ${SETFILE} -a E "$$STAGE"/*.{rtf,pkg,webloc} ;			      \
+  $(SETICON) -d ../../xdaliclock/OSX/daliclockSaver.icns		      \
+		"$$DST/DaliClock.saver" ;				      \
+  $(SETICON) -d XScreenSaverFolder.icns "$$DST" ;			      \
+  $(SETICON) -d XScreenSaverWebloc.icns "$$STAGE"/*.webloc ;		      \
+  $(SETICON) -d XScreenSaverPkg.icns "$$STAGE"/*.pkg ;			      \
   hdiutil makehybrid -quiet -ov -hfs -hfs-volume-name "$$VOLNAME"	      \
     -hfs-openfolder "$$STAGE" "$$STAGE" -o "$$TMPDMG" ;			      \
   rm -rf "$$STAGE" ;							      \

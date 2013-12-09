@@ -19,6 +19,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Generates random 3D plots that look vaguely mountainous.
 

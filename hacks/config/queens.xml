@@ -14,6 +14,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 The N-Queens problem: how to place N queens on an NxN chessboard
 such that no queen can attack a sister?

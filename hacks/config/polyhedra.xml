@@ -183,6 +183,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Displays the 75 uniform polyhedra and their duals, plus 5 prisms
 and antiprisms, and some information about each.

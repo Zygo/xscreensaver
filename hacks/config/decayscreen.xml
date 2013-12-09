@@ -35,6 +35,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This takes an image and makes it melt, toward a randomly chosen point
 or direction.  Warning, if the effect continues after the screen saver

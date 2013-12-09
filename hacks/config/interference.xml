@@ -45,6 +45,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Color field based on computing decaying sinusoidal waves.
 

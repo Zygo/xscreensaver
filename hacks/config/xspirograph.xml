@@ -18,6 +18,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Simulates that pen-in-nested-plastic-gears toy from your childhood.
 

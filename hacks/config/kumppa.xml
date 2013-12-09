@@ -19,6 +19,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Spiraling, spinning, and very, very fast splashes of color rush
 toward the screen.

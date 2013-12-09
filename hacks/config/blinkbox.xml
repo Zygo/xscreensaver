@@ -22,6 +22,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 A motion-blurred ball bounces inside a box whose tiles only become
 visible upon impact.

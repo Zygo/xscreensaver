@@ -244,6 +244,11 @@ jwxyz_window_resized (Display *dpy, Window w,
     CGDisplayCount n;
     dpy->cgdpy = 0;
     CGGetDisplaysWithPoint (p, 1, &dpy->cgdpy, &n);
+    // Auuugh!
+    if (! dpy->cgdpy) {
+      p.x = p.y = 0;
+      CGGetDisplaysWithPoint (p, 1, &dpy->cgdpy, &n);
+    }
     Assert (dpy->cgdpy, "unable to find CGDisplay");
   }
 # endif // USE_IPHONE
@@ -775,8 +780,15 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
   // Sort-of-special case where no pixels can be grabbed from the source,
   // and the whole destination is filled with the background color.
   if (src_rect.size.width < 0 || src_rect.size.height < 0) {
+    
+    Assert((int)src_rect.size.width  == (int)dst_rect.size.width ||
+           (int)src_rect.size.height == (int)dst_rect.size.height,
+           "size mismatch");
+    
     src_rect.size.width  = 0;
     src_rect.size.height = 0;
+    dst_rect.size.width  = 0;
+    dst_rect.size.height = 0;
   }
   
   NSObject *releaseme = 0;

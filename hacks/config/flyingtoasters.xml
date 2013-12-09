@@ -27,6 +27,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 A fleet of 3d space-age jet-powered flying toasters (and toast!)
 Inspired by the ancient Berkeley Systems After Dark flying toasters.

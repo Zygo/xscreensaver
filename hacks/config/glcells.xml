@@ -52,6 +52,8 @@
    <boolean id="wireframe" _label="Wireframe" arg-set="-wireframe"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Cells growing, dividing and dying on your screen.  Microscopic pathos.
 

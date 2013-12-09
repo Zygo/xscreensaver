@@ -13,6 +13,8 @@
   <boolean id="trans"   _label="Translucent"     arg-unset="-no-transparent"/>
   <boolean id="showfps" _label="Show frame rate"   arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Chains of colorful squares dance around each other in complex spiral
 patterns.  Inspired by David Tristram's `electropaint' screen saver,

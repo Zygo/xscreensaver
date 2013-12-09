@@ -39,6 +39,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 
 Draws two dimensional metaballs: overlapping and merging balls with

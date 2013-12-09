@@ -23,6 +23,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Animates the Julia set (a close relative of the Mandelbrot set).  The
 small moving dot indicates the control point from which the rest of

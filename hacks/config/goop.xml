@@ -48,6 +48,8 @@
     </select>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws set of animating, transparent, amoeba-like blobs.  The blobs
 change shape as they wander around the screen, and they are translucent,

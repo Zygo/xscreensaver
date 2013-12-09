@@ -33,6 +33,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws an animation of flight through an asteroid field, with
 changes in rotation and direction.

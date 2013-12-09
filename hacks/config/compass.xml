@@ -11,6 +11,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws a compass, with all elements spinning about randomly, for
 that "lost and nauseous" feeling.

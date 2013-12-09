@@ -50,6 +50,8 @@
   <!-- #### -min-radius [3] -->
   <!-- #### -max-radius [25] -->
 
+  <xscreensaver-updater />
+
   <_description>
 Draws different shapes composed of nervously vibrating squiggles,
 as if seen through a camera operated by a monkey on crack.

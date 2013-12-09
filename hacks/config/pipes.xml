@@ -37,6 +37,8 @@
    <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 A growing plumbing system, with bolts and valves.
 

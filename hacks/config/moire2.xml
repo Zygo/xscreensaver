@@ -18,6 +18,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Generates fields of concentric circles or ovals, and combines the
 planes with various operations.  The planes are moving independently

@@ -42,6 +42,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a simulation of the Rubik's Snake puzzle.  See also the "Rubik"
 and "Cube21" screen savers.

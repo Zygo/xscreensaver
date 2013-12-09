@@ -27,6 +27,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a pulsing sequence of transparent stars, circles, and lines.
 

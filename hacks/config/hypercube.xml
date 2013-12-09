@@ -11,6 +11,14 @@
               low="0" high="100000" default="10000"
               convert="invert"/>
 
+      <number id="z" type="slider" arg="-observer-z %"
+              _label="Zoom" _low-label="Near" _high-label="Far"
+              low="1.125" high="10.0" default="3.0"/>
+
+     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    </vgroup>
+
+    <vgroup>
       <number id="xw" type="slider" arg="-xw %"
               _label="XW rotation" _low-label="Slow" _high-label="Fast"
               low="0" high="20" default="0"/>
@@ -22,10 +30,6 @@
               low="0" high="20" default="5"/>
     </vgroup>
     <vgroup>
-      <number id="z" type="slider" arg="-observer-z %"
-              _label="Zoom" _low-label="Near" _high-label="Far"
-              low="1.125" high="10.0" default="3.0"/>
-
       <number id="yw" type="slider" arg="-yw %"
               _label="YW rotation" _low-label="Slow" _high-label="Fast"
               low="0" high="20" default="10"/>
@@ -47,7 +51,7 @@
   <!-- #### -color6 [#00D0FF] -->
   <!-- #### -color7 [#00FFD0] -->
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <xscreensaver-updater />
 
   <_description>
 This screen saver was removed from the XScreenSaver distribution as of
