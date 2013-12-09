@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="stonerview" _label="StonerView" gl="yes">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <boolean id="wire"    _label="Wireframe"         arg-set="-wireframe"/>
+  <boolean id="trans"   _label="Translucent"     arg-unset="-no-transparent"/>
+  <boolean id="showfps" _label="Show frame rate"   arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Chains of colorful squares dance around each other in complex spiral
+patterns.  Inspired by David Tristram's `electropaint' screen saver,
+originally written for SGI computers in the late 1980s or early 1990s.
+
+Written by Andrew Plotkin; 2001.
+  </_description>
+</screensaver>

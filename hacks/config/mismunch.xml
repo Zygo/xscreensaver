@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="mismunch" _label="Mismunch">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="duration" type="slider" arg="-clear %"
+          _label="Duration" _low-label="Short" _high-label="Long"
+          low="1" high="200" default="65"/>
+
+  <number id="simultaneous" type="slider" arg="-simul %"
+          _label="Simultaneous squares" _low-label="One" _high-label="Many"
+          low="1" high="20" default="5"/>
+
+  <select id="mode">
+    <option id="xor"   _label="XOR"/>
+    <option id="solid" _label="Solid" arg-set="-no-xor"/>
+  </select>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.08.  It was merged with the "Munch" screen saver.
+
+Munching errors!  This is a creatively broken misimplementation of the
+classic munching squares graphics hack.  See the "Munch" screen saver
+for the original.
+
+http://en.wikipedia.org/wiki/HAKMEM
+http://en.wikipedia.org/wiki/Munching_square
+
+Written by Steven Hazel; 2004.
+  </_description>
+</screensaver>

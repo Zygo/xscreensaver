@@ -1,0 +1,63 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="goop" _label="Goop">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="12000"
+            convert="invert"/>
+
+    <number id="torque" type="slider" arg="-torque %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+            low="0.0002" high="0.0500" default="0.0075"/>
+
+    <number id="count" type="slider" arg="-planes %"
+            _label="Blobs" _low-label="Few" _high-label="Many"
+            low="1" high="50" default="12"/>
+
+   </vgroup>
+   <vgroup>
+    <number id="elasticity" type="slider" arg="-elasticity %"
+            _label="Elasticity" _low-label="Low" _high-label="High"
+            low="0.1" high="5.0" default="0.9"/>
+
+    <number id="maxv" type="slider" arg="-max-velocity %"
+            _label="Speed limit" _low-label="Low" _high-label="High"
+            low="0.1" high="3.0" default="0.5"/>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+    <select id="mode">
+      <option id="transparent" _label="Transparent blobs"/>
+      <option id="opaque"      _label="Opaque blobs" arg-set="-mode opaque"/>
+      <option id="xor"         _label="XOR blobs"    arg-set="-mode xor"/>
+    </select>
+
+    <select id="color-mode">
+      <option id="additive" _label="Additive colors (transmitted light)"/>
+      <option id="subtractive" _label="Subtractive colors (reflected light)"
+              arg-set="-subtractive"/>
+    </select>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+This draws set of animating, transparent, amoeba-like blobs.  The blobs
+change shape as they wander around the screen, and they are translucent,
+so you can see the lower blobs through the higher ones, and when one
+passes over another, their colors merge.  I got the idea for this from
+a mouse pad I had once, which achieved the same kind of effect in real
+life by having several layers of plastic with colored oil between them.
+
+Written by Jamie Zawinski; 1997.
+  </_description>
+</screensaver>

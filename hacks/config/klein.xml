@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="klein" _label="Klein" gl="yes">
+
+  <command arg="-root"/>
+
+  <hgroup>
+    <select id="kleinbottle">
+      <option id="random"   _label="Random shape"/>
+      <option id="figure-8" _label="Figure 8" arg-set="-klein-bottle figure-8"/>
+      <option id="lawson"   _label="Lawson"   arg-set="-klein-bottle lawson"/>
+    </select>
+
+    <select id="view-mode">
+      <option id="walk"      _label="Random motion"/>
+      <option id="walk"      _label="Walk"          arg-set="-view-mode walk"/>
+      <option id="turn"      _label="Turn"          arg-set="-view-mode turn"/>
+      <option id="walk-turn" _label="Walk and turn" arg-set="-view-mode walk-turn"/>
+    </select>
+
+    <boolean id="orientation-marks" _label="Show orientation marks"
+              arg-set="-orientation-marks"/>
+  </hgroup>
+
+  <hgroup>
+    <select id="display-mode">
+      <option id="random"      _label="Random surface"/>
+      <option id="wire"        _label="Wireframe mesh"      arg-set="-mode wireframe"/>
+      <option id="surface"     _label="Solid surface"       arg-set="-mode surface"/>
+      <option id="transparent" _label="Transparent surface" arg-set="-mode transparent"/>
+    </select>
+
+    <select id="appearance">
+      <option id="random" _label="Random pattern"/>
+      <option id="solid"  _label="Solid object"       arg-set="-appearance solid"/>
+      <option id="bands"  _label="See-through bands"  arg-set="-appearance bands"/>
+    </select>
+
+    <select id="colors">
+      <option id="random"   _label="Random coloration"/>
+      <option id="twosided" _label="Two-sided"       arg-set="-colors two-sided"/>
+      <option id="rainbow"  _label="Rainbow colors"  arg-set="-colors rainbow"/>
+      <option id="depth"    _label="4d depth colors" arg-set="-colors depth"/>
+    </select>
+
+    <select id="projection3d">
+      <option id="random"          _label="Random 3D"/>
+      <option id="perspective-3d"  _label="Perspective 3D"  arg-set="-projection-3d perspective"/>
+      <option id="orthographic-3d" _label="Orthographic 3D" arg-set="-projection-3d orthographic"/>
+    </select>
+
+    <select id="projection4d">
+      <option id="random"          _label="Random 4D"/>
+      <option id="perspective-4d"  _label="Perspective 4D"  arg-set="-projection-4d perspective"/>
+      <option id="orthographic-4d" _label="Orthographic 4D" arg-set="-projection-4d orthographic"/>
+    </select>
+  </hgroup>
+
+  <hgroup>
+    <vgroup>
+      <number id="speed-wx" type="slider" arg="-speed-wx %"
+              _label="WX rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.1"/>
+
+      <number id="speed-wy" type="slider" arg="-speed-wy %"
+              _label="WY rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.3"/>
+
+      <number id="speed-wz" type="slider" arg="-speed-wz %"
+              _label="WZ rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.5"/>
+    </vgroup>
+
+    <vgroup>
+      <number id="speed-xy" type="slider" arg="-speed-xy %"
+              _label="XY rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.7"/>
+
+      <number id="speed-xz" type="slider" arg="-speed-xz %"
+              _label="XZ rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="1.9"/>
+
+      <number id="speed-yz" type="slider" arg="-speed-yz %"
+              _label="YZ rotation speed"
+              _low-label="-4.0" _high-label="4.0"
+              low="-4.0" high="4.0" default="2.1"/>
+    </vgroup>
+
+    <vgroup>
+     <number id="walk-direction" type="slider" arg="-walk-direction %"
+             _label="Walking direction"
+             _low-label="-180.0" _high-label="180.0"
+             low="-180.0" high="180.0" default="7.0"/>
+
+     <number id="walk-speed" type="slider" arg="-walk-speed %"
+             _label="Walking speed"
+             _low-label="1.0" _high-label="100.0"
+             low="1.0" high="100.0" default="20.0"/>
+
+     <number id="delay" type="slider" arg="-delay %"
+             _label="Frame rate" _low-label="Low" _high-label="High"
+             low="0" high="100000" default="10000"
+             convert="invert"/>
+
+     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+This animates a Klein bottle, the 4D analog of a moebius strip.
+
+You can walk on the surface of the bottle or rotate it in 4D or walk
+on it while it rotates in 4D.  Inspired by Thomas Banchoff's book
+"Beyond the Third Dimension: Geometry, Computer Graphics, and Higher
+Dimensions", Scientific American Library, 1990.
+
+http://en.wikipedia.org/wiki/Klein_bottle
+
+Written by Carsten Steger; 2008.
+  </_description>
+</screensaver>

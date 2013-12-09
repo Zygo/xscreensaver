@@ -1,0 +1,111 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+ifs - draws spinning, colliding iterated-function-system images
+.SH SYNOPSIS
+.B ifs
+[\-display \fIhost:display.screen\fP]
+[\-visual \fIvisual\fP]
+[\-window]
+[\-root]
+[\-no\-db]
+[\-delay \fInumber\fP]
+[\-detail \fInumber\fP]
+[\-colors \fInumber\fP]
+[\-functions \fInumber\fP]
+[\-iterate | \-recurse]
+[\-no\-rotate]
+[\-no\-scale]
+[\-no\-translate]
+[\-fps]
+.SH DESCRIPTION
+The \fIifs\fP program draws spinning, colliding iterated-function-system images.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the id number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window.  This is the default.
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-no\-db
+Disable double-buffering.
+.TP 8
+.B \-delay \fInumber\fP
+Per-frame delay, in microseconds.  Default: 20000
+.TP 8
+.B \-colors \fInumber\fP
+Number of colours to use. Default: 200
+.TP 8
+.B \-detail \fInumber\fP
+In \fI\-iterate\fP mode, number of times to randomly iterate the
+functions, in thousands.  In \fI\-recurse\fP mode, number of times
+to apply functions (recursion depth) before drawing each point.
+Default: 9
+.TP 8
+.B \-functions \fInumber\fP
+Number of functions to be iterated. Default: 3
+.TP 8
+.B \-iterate
+Calculate by iteratively applying the functions in a random order,
+usually faster than \fI\-recurse\fP.  This is the default.
+.TP 8
+.B \-recurse
+Calculate by recursively applying all combinations of the functions.
+This is the historical behavior and may produce neater output than
+\fI\-iterate\fP.
+.TP 8
+.B \-no-rotate
+Disable the rotation component of the functions.
+.TP 8
+.B \-no-scale
+Disable the scaling component of the functions.
+.TP 8
+.B \-no-translate
+Disable the varying translation component of the functions.
+.TP 8
+.B \-no-multi
+Turn off multi-coloured mode, only one colour is used to colour the whole set.
+.TP 8
+.B \-fps
+Display the current frame rate and CPU load.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+to get the default host and display number.
+.TP 8
+.B XENVIRONMENT
+to get the name of a resource file that overrides the global resources
+stored in the RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1),
+.BR ifs (MANSUFFIX)
+.SH COPYRIGHT
+Copyright \(co Chris Le Sueur and Robby Griffin, 2005-2006
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be included
+in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+IN NO EVENT SHALL THE X CONSORTIUM BE LIABLE FOR ANY CLAIM, DAMAGES OR
+OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE,
+ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
+OTHER DEALINGS IN THE SOFTWARE.
+.SH AUTHOR
+This version by Chris Le Sueur <thefishface@gmail.com>, Feb 2005
+Many improvements by Robby Griffin <rmg@terc.edu>, Mar 2006
