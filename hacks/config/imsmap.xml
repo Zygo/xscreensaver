@@ -30,6 +30,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This generates random cloud-like patterns.  The idea is to take four
 points on the edge of the image, and assign each a random "elevation".

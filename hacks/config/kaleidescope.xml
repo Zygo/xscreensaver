@@ -27,6 +27,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 A simple kaleidoscope made of line segments.  See "GLeidescope"
 for a more sophisticated take.

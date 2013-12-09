@@ -106,6 +106,7 @@ $ truchet	:== $'mydir'truchet
 $ twang		:== $'mydir'twang
 $ vermiculate	:== $'mydir'vermiculate
 $ wander	:== $'mydir'wander
+$ webcollage-helper	:== $'mydir'webcollage-helper
 $ whirlwindwarp	:== $'mydir'whirlwindwarp
 $ wormhole	:== $'mydir'wormhole
 $ xanalogtv	:== $'mydir'xanalogtv

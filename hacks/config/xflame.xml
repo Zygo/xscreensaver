@@ -22,6 +22,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a simulation of pulsing fire.  It can also take an arbitrary
 image and set it on fire too.

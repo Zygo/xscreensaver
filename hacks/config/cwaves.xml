@@ -19,6 +19,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This generates a languidly-scrolling vertical field of sinusoidal colors.
 

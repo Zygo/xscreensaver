@@ -39,6 +39,8 @@
             _label="Magic lighting effect" low="0" high="8" default="4"/>
     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+    <xscreensaver-updater />
+
    </vgroup>
   </hgroup>
 

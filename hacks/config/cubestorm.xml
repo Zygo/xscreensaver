@@ -29,6 +29,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a series of rotating 3D boxes that intersect each other and
 eventually fill space.

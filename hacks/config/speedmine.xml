@@ -50,6 +50,8 @@
   <!-- #### -no-widening -->
   <!-- #### -psychedelic -->
 
+  <xscreensaver-updater />
+
   <_description>
 Simulates speeding down a rocky mineshaft, or a funky dancing worm.
 

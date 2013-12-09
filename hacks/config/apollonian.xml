@@ -26,6 +26,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws an Apollonian gasket: a fractal packing of circles with
 smaller circles, demonstrating Descartes's theorem.

@@ -24,6 +24,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 A spotlight roams across an embossed version of a loaded image.
 

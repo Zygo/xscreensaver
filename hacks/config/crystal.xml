@@ -33,6 +33,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Moving polygons, similar to a kaleidoscope.  See also the
 "Kaleidescope" and "GLeidescope" screen savers.

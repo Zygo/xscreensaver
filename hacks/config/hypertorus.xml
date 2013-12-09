@@ -14,31 +14,29 @@
 
   <hgroup>
     <select id="display-mode">
-      <option id="wire"        _label="Wireframe mesh"
+      <option id="wire"        _label="Wireframe"
               arg-set="-mode wireframe"/>
-      <option id="surface"     _label="Solid surface"/>
-      <option id="transparent" _label="Transparent surface"
+      <option id="surface"     _label="Solid"/>
+      <option id="transparent" _label="Transparent"
               arg-set="-mode transparent"/>
     </select>
 
     <select id="appearance">
       <option id="solid" _label="Solid object"
               arg-set="-appearance solid"/>
-      <option id="bands" _label="See-through bands"/>
-      <option id="bands" _label="See-through spirals (1 spiral)"
+      <option id="bands" _label="Transparent bands"/>
+      <option id="bands" _label="1 transparent spiral"
               arg-set="-appearance spirals-1"/>
-      <option id="bands" _label="See-through spirals (2 spirals)"
+      <option id="bands" _label="2 transparent spirals"
               arg-set="-appearance spirals-2"/>
-      <option id="bands" _label="See-through spirals (4 spirals)"
+      <option id="bands" _label="4 transparent spirals"
               arg-set="-appearance spirals-4"/>
-      <option id="bands" _label="See-through spirals (8 spirals)"
+      <option id="bands" _label="8 transparent spirals"
               arg-set="-appearance spirals-8"/>
-      <option id="bands" _label="See-through spirals (16 spirals)"
+      <option id="bands" _label="16 Transparent spirals"
               arg-set="-appearance spirals-16"/>
     </select>
-  </hgroup>
 
-  <hgroup>
     <select id="colors">
       <option id="twosided" _label="Two-sided" arg-set="-twosided"/>
       <option id="colorwheel" _label="Color wheel"/>
@@ -98,6 +96,8 @@
     </vgroup>
 
   </hgroup>
+
+  <xscreensaver-updater />
 
   <_description>
 This shows a rotating Clifford Torus: a torus lying on the

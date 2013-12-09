@@ -23,6 +23,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws a simple orbital simulation.  With trails enabled,
 it looks kind of like a cloud-chamber photograph.

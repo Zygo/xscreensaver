@@ -57,6 +57,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Bounces a series of line segments around the screen, and uses
 variations on this basic motion pattern to produce all sorts of

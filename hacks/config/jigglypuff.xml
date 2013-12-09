@@ -4,48 +4,9 @@
 
   <command arg="-root"/>
 
- <boolean id="random" _label="Randomize almost everything" arg-unset="-no-random"/>
-
   <hgroup>
-   <vgroup>
-      <number id="delay" type="slider" arg="-delay %"
-              _label="Frame rate" _low-label="Low" _high-label="High"
-              low="0" high="100000" default="20000"
-              convert="invert"/>
+   <boolean id="random" _label="Randomize almost everything" arg-unset="-no-random"/>
 
-      <number id="speed" type="slider" arg="-speed %"
-              _label="Rotation speed" _low-label="Slow" _high-label="Fast"
-              low="50" high="1000" default="500"/>
-
-      <number id="damping" type="slider" arg="-damping %"
-               _label="Inertial damping" _low-label="Low" _high-label="High"
-               low="10" high="1000" default="500" convert="invert"/>
-
-      <number id="hold" type="slider" arg="-hold %"
-               _label="Vertex-vertex force" _low-label="None" _high-label="Strong"
-               low="0" high="1000" default="800"/>
-    </vgroup>
-    <vgroup>
-      <number id="complexity" type="slider" arg="-complexity %"
-              _label="Complexity" _low-label="Low" _high-label="High"
-              low="1" high="3" default="2"/>
-
-      <number id="spherism" type="slider" arg="-spherism %"
-               _label="Sphere strength" _low-label="None" _high-label="Strong"
-               low="0" high="1000" default="75"/>
-
-      <number id="distance" type="slider" arg="-distance %"
-               _label="Vertex-vertex behavior" _low-label="Expand"
-               _high-label="Collapse" low="0" high="1000" default="100"/>
-
-      <number id="spooky" type="slider" arg="-spooky %"
-               _label="Spookiness" _low-label="None" _high-label="Spoooooky"
-               low="0" high="12" default="0"/>
-
-    </vgroup>
-  </hgroup>
-
-  <hgroup>
    <select id="color">
     <option id="cycle"     _label="Cycle" />
     <option id="flowerbox" _label="Flower box" arg-set="-color flowerbox"/>
@@ -62,6 +23,50 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   </hgroup>
+
+  <hgroup>
+   <vgroup>
+      <number id="delay" type="slider" arg="-delay %"
+              _label="Frame rate" _low-label="Low" _high-label="High"
+              low="0" high="100000" default="20000"
+              convert="invert"/>
+
+      <number id="speed" type="slider" arg="-speed %"
+              _label="Rotation speed" _low-label="Slow" _high-label="Fast"
+              low="50" high="1000" default="500"/>
+
+      <number id="damping" type="slider" arg="-damping %"
+               _label="Inertial damping" _low-label="Low" _high-label="High"
+               low="10" high="1000" default="500" convert="invert"/>
+   </vgroup>
+
+   <vgroup>
+      <number id="hold" type="slider" arg="-hold %"
+               _label="Vertex-vertex force" _low-label="None" _high-label="Strong"
+               low="0" high="1000" default="800"/>
+
+      <number id="complexity" type="slider" arg="-complexity %"
+              _label="Complexity" _low-label="Low" _high-label="High"
+              low="1" high="3" default="2"/>
+
+      <number id="spherism" type="slider" arg="-spherism %"
+               _label="Sphere strength" _low-label="None" _high-label="Strong"
+               low="0" high="1000" default="75"/>
+    </vgroup>
+
+    <vgroup>
+      <number id="distance" type="slider" arg="-distance %"
+               _label="Vertex-vertex behavior" _low-label="Expand"
+               _high-label="Collapse" low="0" high="1000" default="100"/>
+
+      <number id="spooky" type="slider" arg="-spooky %"
+               _label="Spookiness" _low-label="None" _high-label="Spoooooky"
+               low="0" high="12" default="0"/>
+
+    </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
 
   <_description>
 This does bad things with quasi-spherical objects.

@@ -24,6 +24,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws sets of turning, interlocking gears, rotating in three
 dimensions.  See also the "Pinion" and "MoebiusGears" screen savers.

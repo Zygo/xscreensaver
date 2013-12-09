@@ -71,6 +71,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 
 Points attract each other up to a certain distance, and then begin to

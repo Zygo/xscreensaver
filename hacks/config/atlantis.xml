@@ -38,6 +38,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 A 3D animation of a number of sharks, dolphins, and whales.
 

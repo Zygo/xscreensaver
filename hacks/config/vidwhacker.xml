@@ -12,6 +12,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This is a shell script that grabs a frame of video from the system's
 video input, and then uses some PBM filters (chosen at random) to

@@ -47,6 +47,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This screen saver was removed from the XScreenSaver distribution as of
 version 5.09.  It has been replaced by the "Juggler3D" screen saver.

@@ -47,6 +47,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 
 Clouds of iterated function systems spin and collide.

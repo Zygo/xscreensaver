@@ -20,6 +20,8 @@
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws an animation of the character "Bit" from the film, "Tron".
 

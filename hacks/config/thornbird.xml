@@ -25,6 +25,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Displays a view of the "Bird in a Thornbush" fractal.
 

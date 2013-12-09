@@ -40,6 +40,8 @@
    </vgroup>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a grid of 3D colored tiles that change positions with each other.  
 

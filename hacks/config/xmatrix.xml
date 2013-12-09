@@ -43,6 +43,9 @@
             low="1" high="100" default="75"/>
 
     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+    <xscreensaver-updater />
+
    </vgroup>
    <vgroup>
     <xscreensaver-text />

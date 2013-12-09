@@ -22,6 +22,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 A cellular automaton that generates loop-shaped colonies that spawn,
 age, and eventually die.

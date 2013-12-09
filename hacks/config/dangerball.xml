@@ -25,6 +25,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a ball that periodically extrudes many random spikes.  Ouch!
 

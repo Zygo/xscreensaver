@@ -13,6 +13,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws an ant (with a headlight) who walks around on top of a loaded image.
 

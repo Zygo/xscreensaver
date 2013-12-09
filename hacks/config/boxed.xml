@@ -46,6 +46,8 @@
   </hgroup>
 
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a box full of 3D bouncing balls that explode.
 

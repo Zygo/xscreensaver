@@ -47,6 +47,8 @@
    </vgroup>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a stream of text slowly scrolling into the distance at an
 angle, over a star field, like at the beginning of the movie of the

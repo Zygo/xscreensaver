@@ -31,6 +31,8 @@
   <file id="dir" _label="Image directory" arg="-directory %"/>
  -->
 
+  <xscreensaver-updater />
+
   <_description>
 This is what the Internet looks like.
 

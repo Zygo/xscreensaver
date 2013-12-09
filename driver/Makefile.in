@@ -736,30 +736,30 @@ $(SAVER_UTIL_OBJS):
 
 # How we build object files in this directory.
 .c.o:
-	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+	$(CC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $<
 
 .m.o:
-	$(OBJCC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+	$(OBJCC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $<
 
 # subprocs takes an extra -D option.
 subprocs.o: subprocs.c
-	$(CC) -c $(INCLUDES) $(SUBP_DEFS) $(CFLAGS) $(X_CFLAGS) \
+	$(CC) -c $(INCLUDES) $(SUBP_DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) \
 	  $(srcdir)/subprocs.c
 
 # xscreensaver takes an extra -D option.
 xscreensaver.o: xscreensaver.c
-	$(CC) -c $(INCLUDES) $(DEFS) $(INTL_DEFS) $(CFLAGS) $(X_CFLAGS) \
+	$(CC) -c $(INCLUDES) $(DEFS) $(INTL_DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) \
 	  $(srcdir)/xscreensaver.c
 
 # demo-Gtk takes extra -D options, and an extra -I option.
 demo-Gtk.o: demo-Gtk.c
 	$(CC) -c $(INCLUDES) $(SUBP_DEFS) -I$(ICON_SRC) \
-	  $(GTK_DEFS) $(INTL_DEFS) $(CFLAGS) $(X_CFLAGS) \
+	  $(GTK_DEFS) $(INTL_DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) \
 	  $(srcdir)/demo-Gtk.c
 
 # demo-Gtk-conf takes an extra -D option.
 demo-Gtk-conf.o: demo-Gtk-conf.c
-	$(CC) -c $(INCLUDES) $(CONF_DEFS) $(GTK_DEFS) $(CFLAGS) $(X_CFLAGS) \
+	$(CC) -c $(INCLUDES) $(CONF_DEFS) $(GTK_DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) \
 	  $(srcdir)/demo-Gtk-conf.c
 
 
@@ -862,7 +862,7 @@ test-screens: test-screens.o
 
 
 xdpyinfo.o: xdpyinfo.c
-	$(CC) -c $(INCLUDES) -DHAVE_GLX $(CFLAGS) $(X_CFLAGS) \
+	$(CC) -c $(INCLUDES) -DHAVE_GLX $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) \
 	  $(srcdir)/xdpyinfo.c
 
 xdpyinfo: xdpyinfo.o

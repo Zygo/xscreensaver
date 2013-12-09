@@ -2,37 +2,45 @@
                                                                                 
 <screensaver name="glhanoi" _label="GLHanoi" gl="yes">
 
-	<command arg="-root"/>
-	
-	<number id="delay" type="slider" arg="-delay %"
-	  _label="Frame rate" _low-label="Low" _high-label="High"
-          low="0" high="100000" default="15000" convert="invert"/>
-	
-	<number id="count" type="slider" arg="-count %"
-	  _label="Number of disks" _low-label="0" _high-label="31"
-           default="0" low="0" high="31"/>
+ <command arg="-root"/>
 
-	<number id="poles" type="slider" arg="-poles %"
-	  _label="Number of poles" _low-label="0" _high-label="31"
-           default="0" low="3" high="31"/>
-		   
-	<number id="speed" type="slider" arg="-speed %"
-	  _label="Speed (of smallest disks)" _low-label="1" _high-label="20"
-           default="1" low="1" high="20"/>
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="15000" convert="invert"/>
 
-	<number id="trails" type="slider" arg="-trails %"
-	  _label="Length of disk trails" _low-label="0" _high-label="10"
-           default="2" low="0" high="10"/>
-		   
-	<boolean id="fog" _label="Enable fog" arg-set="-fog"/>
+    <number id="count" type="slider" arg="-count %"
+            _label="Number of disks" _low-label="0" _high-label="31"
+            default="0" low="0" high="31"/>
 
-	<boolean id="wire" _label="Wireframe" arg-set="-wireframe"/>
+    <number id="poles" type="slider" arg="-poles %"
+            _label="Number of poles" _low-label="0" _high-label="31"
+            default="0" low="3" high="31"/>
+   </vgroup>
 
-	<boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <vgroup>
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Speed (of smallest disks)" _low-label="1" _high-label="20"
+            default="1" low="1" high="20"/>
 
-	<boolean id="lighting" _label="Enable lighting" arg-unset="-no-light"/>
+    <number id="trails" type="slider" arg="-trails %"
+            _label="Length of disk trails" _low-label="0" _high-label="10"
+            default="2" low="0" high="10"/>
 
-	<_description>
+    <boolean id="fog" _label="Enable fog" arg-set="-fog"/>
+
+    <boolean id="wire" _label="Wireframe" arg-set="-wireframe"/>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+    <boolean id="lighting" _label="Enable lighting" arg-unset="-no-light"/>
+   </vgroup>
+  </hgroup>
+
+ <xscreensaver-updater />
+
+ <_description>
 Solves the Towers of Hanoi puzzle. Move N disks from one pole to
 another, one disk at a time, with no disk ever resting on a disk
 smaller than itself.
@@ -40,5 +48,5 @@ smaller than itself.
 http://en.wikipedia.org/wiki/Tower_of_Hanoi
 
 Written by Dave Atkinson; 2005.
-	</_description>
+ </_description>
 </screensaver>

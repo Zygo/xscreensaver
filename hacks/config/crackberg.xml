@@ -39,6 +39,8 @@
     <option id="vomit" _label="Vomitous coloration" arg-set="-color vomit"/>
   </select>  
 
+  <xscreensaver-updater />
+
   <_description>
 Flies through height maps, optionally animating the creation and
 destruction of generated tiles; tiles `grow' into place.

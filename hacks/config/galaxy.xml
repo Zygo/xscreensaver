@@ -24,6 +24,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws spinning galaxies, which then collide and scatter their
 stars to the, uh, four winds or something.

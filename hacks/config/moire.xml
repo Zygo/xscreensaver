@@ -22,6 +22,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
   When the lines on the screen
   Make more lines in between,

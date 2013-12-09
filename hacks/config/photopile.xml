@@ -51,6 +51,7 @@
   </hgroup>
 
   <xscreensaver-image />
+  <xscreensaver-updater />
 
   <_description>
 Loads several random images, and displays them as if lying in a random pile.

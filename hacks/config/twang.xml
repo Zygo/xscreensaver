@@ -49,6 +49,8 @@
 
   <xscreensaver-image />
 
+  <xscreensaver-updater />
+
   <_description>
 Divides the screen into a grid, and plucks them.
 

@@ -53,6 +53,7 @@
 {
   NSString *saver_name;
   NSUserDefaultsController *userDefaultsController;
+  NSUserDefaultsController *globalDefaultsController;
   NSDictionary *defaultOptions;
   const XrmOptionDescRec *opts;
   id xml_root, xml_parsing;
@@ -72,6 +73,7 @@
 - (id)initWithXML: (NSData *) xml_data
           options: (const XrmOptionDescRec *) opts
        controller: (NSUserDefaultsController *) prefs
+ globalController: (NSUserDefaultsController *) globalPrefs
          defaults: (NSDictionary *) defs;
 
 @end

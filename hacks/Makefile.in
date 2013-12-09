@@ -521,7 +521,7 @@ $(UTIL_OBJS):
 
 # How we build object files in this directory.
 .c.o:
-	$(CC) -c $(INCLUDES) $(DEFS) $(CFLAGS) $(X_CFLAGS) $<
+	$(CC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $<
 
 
 # Make sure these are regenerated when the version number ticks.

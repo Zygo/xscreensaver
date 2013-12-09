@@ -23,6 +23,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws the two-dimensional variant of the recursive Sierpinski
 triangle fractal.  See also the "Sierpinski3D" screen saver.

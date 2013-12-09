@@ -23,6 +23,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws what looks like a waving ribbon following a sinusoidal path.
 

@@ -19,7 +19,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.6 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my $version = q{ $Revision: 1.7 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
 
 my $verbose = 0;
 
@@ -193,7 +193,7 @@ sub parse_xml($$) {
     error ("$progname: $file: unparsable: $_") unless $type;
     next if ($type =~ m@^/@);
 
-    if ($type =~ m/^([hv]group|\?xml|command|string|file|_description|xscreensaver-(image|text))/s) {
+    if ($type =~ m/^([hv]group|\?xml|command|string|file|_description|xscreensaver-(image|text|updater))/s) {
 
     } elsif ($type eq 'screensaver') {
       my ($name) = ($args =~ m/\b_label\s*=\s*\"([^\"]+)\"/);

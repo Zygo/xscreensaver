@@ -32,6 +32,8 @@
   <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws various rotating extruded shapes that twist around, lengthen,
 and turn inside out.

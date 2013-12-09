@@ -43,6 +43,8 @@
 
   <xscreensaver-image />
 
+  <xscreensaver-updater />
+
   <_description>
 Loads several random images, and displays them flying in a circular
 formation.  The formation changes speed and direction randomly, and

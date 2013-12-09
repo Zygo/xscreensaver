@@ -34,6 +34,8 @@
    </vgroup>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws an interconnected set of gears moving across the screen.
 See also the "Gears" and "MoebiusGears" screen savers.

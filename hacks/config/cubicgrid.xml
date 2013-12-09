@@ -19,6 +19,8 @@
   <boolean id="bigdots" _label="Big dots"            arg-unset="-no-bigdots"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws the view of an observer located inside a rotating 3D lattice of colored 
 points.

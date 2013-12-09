@@ -49,6 +49,8 @@
    </vgroup>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Generates some twisting 3d knot patterns.  Spins 'em around.
 

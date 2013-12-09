@@ -33,6 +33,8 @@
   </vgroup>
  </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a simulation of an old terminal, with large pixels and
 long-sustain phosphor.

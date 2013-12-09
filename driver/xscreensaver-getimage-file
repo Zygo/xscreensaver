@@ -57,7 +57,7 @@ BEGIN { eval 'use LWP::Simple;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.36 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.37 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 my $verbose = 0;
 
@@ -250,7 +250,11 @@ sub read_cache($) {
   my $dd = "$ENV{HOME}/Library/Caches";    # MacOS location
   if (-d $dd) {
     $cache_file_name = "$dd/org.jwz.xscreensaver.getimage.cache";
-  } elsif (-d "$ENV{HOME}/tmp") {
+  } elsif (-d "$ENV{HOME}/.cache") {	   # Gnome "FreeDesktop XDG" location
+    $dd = "$ENV{HOME}/.cache/xscreensaver";
+    if (! -d $dd) { mkdir ($dd) || error ("mkdir $dd: $!"); }
+    $cache_file_name = "$dd/xscreensaver-getimage.cache"
+  } elsif (-d "$ENV{HOME}/tmp") {	   # If ~/.tmp/ exists, use it.
     $cache_file_name = "$ENV{HOME}/tmp/.xscreensaver-getimage.cache";
   } else {
     $cache_file_name = "$ENV{HOME}/.xscreensaver-getimage.cache";
@@ -312,7 +316,7 @@ sub write_cache($) {
       print $cache_fd "$dir\n";
       foreach (@all_files) {
         my $f = $_; # stupid Perl. do this to avoid modifying @all_files!
-        $f =~ s@^\Q$dir\L/@@so || die;  # remove $dir from front
+        $f =~ s@^\Q$dir/@@so || die;  # remove $dir from front
         print $cache_fd "$f\n";
       }
     }
@@ -400,6 +404,10 @@ sub parse_feed($) {
   if ($body !~ m@^<\?xml\s@si) {
     # Not an RSS/Atom feed.  Try RSS autodiscovery.
 
+    # (Great news, everybody: Flickr no longer provides RSS for "Sets",
+    # only for "Photostreams", and only the first 20 images of those.
+    # Thanks, assholes.)
+
     error ("not an RSS or Atom feed, or HTML: $url")
       unless ($body =~ m@<(HEAD|BODY|A|IMG)\b@si);
 
@@ -412,6 +420,10 @@ sub parse_feed($) {
           $p =~ m! \b HREF \s* = \s* ['"]  ( [^<>'"]+ ) !six
          ) {
         my $u2 = html_unquote ($1);
+        if ($u2 =~ m!^/!s) {
+          my ($h) = ($url =~ m!^([a-z]+://[^/]+)!si);
+          $u2 = "$h$u2";
+        }
         print STDERR "$progname: found feed: $u2\n"
           if ($verbose);
         return parse_feed ($u2);
@@ -585,10 +597,22 @@ sub download_image($$$) {
 
   # Special-case kludge for Flickr:
   # Their RSS feeds sometimes include only the small versions of the images.
-  # So if the URL ends in "s" (75x75), "t" (100x100) or "m" (240x240),then
-  # munge it to be "b" (1024x1024).
+  # So if the URL ends in one of the "small-size" letters, change it to "b".
   #
-  $url =~ s@_[stm](\.[a-z]+)$@_b$1@si
+  #     _o  orig,  1600 +
+  #     _k  large, 2048 max
+  #     _h  large, 1600 max
+  #     _b  large, 1024 max
+  #     _c  medium, 800 max
+  #     _z  medium, 640 max
+  #     ""  medium, 500 max
+  #     _n  small,  320 max
+  #     _m  small,  240 max
+  #     _t  thumb,  100 max
+  #     _q  square, 150x150
+  #     _s  square,  75x75
+  #
+  $url =~ s@_[sqtmnzc](\.[a-z]+)$@_b$1@si
     if ($url =~ m@^https?://[^/?#&]*?flickr\.com/@si);
 
   print STDERR "$progname: downloading: $dir/$file for $uid / $url\n" 
@@ -614,7 +638,12 @@ sub mirror_feed($) {
   my $dir = "$ENV{HOME}/Library/Caches";    # MacOS location
   if (-d $dir) {
     $dir = "$dir/org.jwz.xscreensaver.feeds";
-  } elsif (-d "$ENV{HOME}/tmp") {
+  } elsif (-d "$ENV{HOME}/.cache") {	   # Gnome "FreeDesktop XDG" location
+    $dir = "$ENV{HOME}/.cache/xscreensaver";
+    if (! -d $dir) { mkdir ($dir) || error ("mkdir $dir: $!"); }
+    $dir .= "/feeds";
+    if (! -d $dir) { mkdir ($dir) || error ("mkdir $dir: $!"); }
+  } elsif (-d "$ENV{HOME}/tmp") {	   # If ~/.tmp/ exists, use it.
     $dir = "$ENV{HOME}/tmp/.xscreensaver-feeds";
   } else {
     $dir = "$ENV{HOME}/.xscreensaver-feeds";
@@ -818,7 +847,7 @@ sub find_random_file($) {
     my $file = $all_files[$n];
     if (large_enough_p ($file)) {
       if (! $url) {
-        $file =~ s@^\Q$dir\L/@@so || die;  # remove $dir from front
+        $file =~ s@^\Q$dir/@@so || die;  # remove $dir from front
       }
       return $file;
     }

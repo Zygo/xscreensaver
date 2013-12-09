@@ -29,6 +29,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Distorts an image by rotating and scaling random sections of it.
 

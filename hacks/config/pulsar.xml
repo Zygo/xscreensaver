@@ -30,6 +30,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws some intersecting planes, making use of alpha blending, fog,
 textures, and mipmaps.

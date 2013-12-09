@@ -21,7 +21,162 @@
 #endif
 
 #import "PrefsReader.h"
+#import "Updater.h"
 #import "screenhackI.h"
+
+#ifndef USE_IPHONE
+
+
+/* GlobalDefaults is an NSUserDefaults implementation that writes into
+   the preferences key we provide, instead of whatever the default would
+   be for this app.  We do this by invoking the Core Foundation preferences
+   routines directly, while presenting the same API as NSUserDefaults.
+
+   We need this so that global prefs will go into the file
+   Library/Preferences/org.jwz.xscreensaver.updater.plist instead of into
+   Library/Preferences/ByHost/org.jwz.xscreensaver.Maze.XXXXX.plist
+   with the per-saver prefs.
+
+   The ScreenSaverDefaults class *almost* does this, but it always writes
+   into the ByHost subdirectory, which means it's not readable by an app
+   that tries to access it with a plain old +standardUserDefaults.
+ */
+@interface GlobalDefaults : NSUserDefaults
+{
+  NSString *domain;
+  NSDictionary *defaults;
+}
+@end
+
+@implementation GlobalDefaults
+- (id) initWithDomain:(NSString *)_domain
+{
+  self = [super init];
+  domain = [_domain retain];
+  return self;
+}
+
+- (void) dealloc
+{
+  [domain release];
+  [defaults release];
+  [super dealloc];
+}
+
+- (void)registerDefaults:(NSDictionary *)dict
+{
+  defaults = [dict retain];
+}
+
+- (id)objectForKey:(NSString *)key
+{
+  NSObject *obj = (NSObject *)
+    CFPreferencesCopyAppValue ((CFStringRef) key, (CFStringRef) domain);
+  if (!obj && defaults)
+    obj = [defaults objectForKey:key];
+  return obj;
+}
+
+- (void)setObject:(id)value forKey:(NSString *)key
+{
+  if (value && defaults) {
+    // If the value is the default, then remove it instead.
+    NSObject *def = [defaults objectForKey:key];
+    if (def && [def isEqual:value])
+      value = NULL;
+  }
+  CFPreferencesSetAppValue ((CFStringRef) key,
+                            (CFPropertyListRef) value,
+                            (CFStringRef) domain);
+}
+
+
+- (BOOL)synchronize
+{
+  return CFPreferencesAppSynchronize ((CFStringRef) domain);
+}
+
+
+// Make sure these all call our objectForKey.
+// Might not be necessary, but safe.
+
+- (NSString *)stringForKey:(NSString *)key
+{
+  return [[self objectForKey:key] stringValue];
+}
+
+- (NSArray *)arrayForKey:(NSString *)key
+{
+  return (NSArray *) [self objectForKey:key];
+}
+
+- (NSDictionary *)dictionaryForKey:(NSString *)key
+{
+  return (NSDictionary *) [self objectForKey:key];
+}
+
+- (NSData *)dataForKey:(NSString *)key
+{
+  return (NSData *) [self objectForKey:key];
+}
+
+- (NSArray *)stringArrayForKey:(NSString *)key
+{
+  return (NSArray *) [self objectForKey:key];
+}
+
+- (NSInteger)integerForKey:(NSString *)key
+{
+  return [[self objectForKey:key] integerValue];
+}
+
+- (float)floatForKey:(NSString *)key
+{
+  return [[self objectForKey:key] floatValue];
+}
+
+- (double)doubleForKey:(NSString *)key
+{
+  return [[self objectForKey:key] doubleValue];
+}
+
+- (BOOL)boolForKey:(NSString *)key
+{
+  return [[self objectForKey:key] integerValue];
+}
+
+// Make sure these all call our setObject.
+// Might not be necessary, but safe.
+
+- (void)removeObjectForKey:(NSString *)key
+{
+  [self setObject:NULL forKey:key];
+}
+
+- (void)setInteger:(NSInteger)value forKey:(NSString *)key
+{
+  [self setObject:[NSNumber numberWithInteger:value] forKey:key];
+}
+
+- (void)setFloat:(float)value forKey:(NSString *)key
+{
+  [self setObject:[NSNumber numberWithFloat:value] forKey:key];
+}
+
+- (void)setDouble:(double)value forKey:(NSString *)key
+{
+  [self setObject:[NSNumber numberWithDouble:value] forKey:key];
+}
+
+- (void)setBool:(BOOL)value forKey:(NSString *)key
+{
+  [self setObject:[NSNumber numberWithBool:value] forKey:key];
+}
+@end
+
+
+#endif // !USE_IPHONE
+
 
 @implementation PrefsReader
 
@@ -31,7 +186,7 @@
    instead, so transform keys to "SAVERNAME.KEY".
 
    NOTE: This is duplicated in XScreenSaverConfigSheet.m, cause I suck.
-*/
+ */
 - (NSString *) makeKey:(NSString *)key
 {
 # ifdef USE_IPHONE
@@ -113,6 +268,7 @@
   // Store the contents of 'defaults' into the real preferences database.
   NSDictionary *defsdict = [self defaultsToDict:defs];
   [userDefaults registerDefaults:defsdict];
+  [globalDefaults registerDefaults:UPDATER_DEFAULTS];
 
   // Save a copy of the default options, since iOS doesn't have
   // [userDefaultsController initialValues].
@@ -129,8 +285,12 @@
   userDefaultsController = 
     [[NSUserDefaultsController alloc] initWithDefaults:userDefaults
                                       initialValues:defsdict];
+  globalDefaultsController = 
+    [[NSUserDefaultsController alloc] initWithDefaults:globalDefaults
+                                      initialValues:defsdict];
 # else  // USE_IPHONE
-  userDefaultsController = userDefaults;
+  userDefaultsController   = userDefaults;
+  globalDefaultsController = userDefaults;
 # endif // USE_IPHONE
 
   NSDictionary *optsdict = [NSMutableDictionary dictionaryWithCapacity:20];
@@ -187,7 +347,15 @@
 
 #if 0
   // Dump the entire resource database.
+  NSLog(@"userDefaults:");
   NSDictionary *d = [userDefaults dictionaryRepresentation];
+  for (NSObject *key in [[d allKeys]
+                          sortedArrayUsingSelector:@selector(compare:)]) {
+    NSObject *val = [d objectForKey:key];
+    NSLog (@"%@ = %@", key, val);
+  }
+  NSLog(@"globalDefaults:");
+  d = [globalDefaults dictionaryRepresentation];
   for (NSObject *key in [[d allKeys]
                           sortedArrayUsingSelector:@selector(compare:)]) {
     NSObject *val = [d objectForKey:key];
@@ -203,29 +371,41 @@
   return userDefaultsController;
 }
 
+- (NSUserDefaultsController *) globalDefaultsController
+{
+  NSAssert(globalDefaultsController, @"globalDefaultsController uninitialized");
+  return globalDefaultsController;
+}
+
 - (NSDictionary *) defaultOptions
 {
-  NSAssert(defaultOptions, @"userDefaultsController uninitialized");
+  NSAssert(defaultOptions, @"defaultOptions uninitialized");
   return defaultOptions;
 }
 
 
 - (NSObject *) getObjectResource: (const char *) name
 {
-  while (1) {
-    NSString *key = [self makeCKey:name];
-    NSObject *obj = [userDefaults objectForKey:key];
-    if (obj)
-      return obj;
+  // First look in userDefaults, then in globalDefaults.
+  for (int globalp = 0; globalp <= 1; globalp++) {
+    const char *name2 = name;
+    while (1) {
+      NSString *key = [self makeCKey:name2];
+      NSObject *obj = [(globalp ? globalDefaults : userDefaults)
+                        objectForKey:key];
+      if (obj)
+        return obj;
 
-    // If key is "foo.bar.baz", check "foo.bar.baz", "bar.baz", and "baz".
-    //
-    const char *dot = strchr (name, '.');
-    if (dot && dot[1])
-      name = dot + 1;
-    else
-      return nil;
+      // If key is "foo.bar.baz", check "foo.bar.baz", "bar.baz", and "baz".
+      //
+      const char *dot = strchr (name2, '.');
+      if (dot && dot[1])
+        name2 = dot + 1;
+      else
+        break;
+    }
   }
+  return NULL;
 }
 
 
@@ -362,8 +542,11 @@
 
 # ifndef USE_IPHONE
   userDefaults = [ScreenSaverDefaults defaultsForModuleWithName:name];
+  globalDefaults = [[[GlobalDefaults alloc] initWithDomain:@UPDATER_DOMAIN]
+                     retain];
 # else  // USE_IPHONE
   userDefaults = [NSUserDefaults standardUserDefaults];
+  globalDefaults = userDefaults;
 # endif // USE_IPHONE
 
   // Convert "org.jwz.xscreensaver.NAME" to just "NAME".
@@ -381,6 +564,7 @@
 {
   [saver_name release];
   [userDefaultsController release];
+  [globalDefaultsController release];
   [super dealloc];
 }
 

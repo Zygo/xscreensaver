@@ -23,6 +23,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This demonstrates a search algorithm designed for locating a source of
 odor in turbulent atmosphere.  The searcher is able to sense the odor

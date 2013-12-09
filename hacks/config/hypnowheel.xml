@@ -39,6 +39,8 @@
    </vgroup>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a series of overlapping, translucent spiral patterns.
 The tightness of their spirals fluctuates in and out.

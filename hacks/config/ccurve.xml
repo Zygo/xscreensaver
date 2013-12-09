@@ -18,6 +18,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Generates self-similar linear fractals, including the classic "C Curve".
 

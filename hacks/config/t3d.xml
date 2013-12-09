@@ -4,31 +4,40 @@
 
   <command arg="-root"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Frame rate" _low-label="Low" _high-label="High"
-          low="0" high="100000" default="40000"
-          convert="invert"/>
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="40000"
+            convert="invert"/>
 
-  <number id="move" type="slider" arg="-move %"
-          _label="Turn side-to-side" _low-label="0 deg" _high-label="90 deg"
-          low="0.0" high="3.0" default="0.5"/>
+    <number id="move" type="slider" arg="-move %"
+            _label="Turn side-to-side" _low-label="0 deg" _high-label="90 deg"
+            low="0.0" high="3.0" default="0.5"/>
 
-  <number id="wobble" type="slider" arg="-wobble %"
-          _label="Wobbliness" _low-label="Low" _high-label="High"
-          low="0.0" high="3.0" default="2.0"/>
+    <number id="wobble" type="slider" arg="-wobble %"
+            _label="Wobbliness" _low-label="Low" _high-label="High"
+            low="0.0" high="3.0" default="2.0"/>
+   </vgroup>
 
-  <number id="cycle" type="slider" arg="-cycle %"
-          _label="Cycle seconds" _low-label="Low" _high-label="High"
-          low="0.0" high="60.0" default="10.0"/>
+   <vgroup>
+    <number id="cycle" type="slider" arg="-cycle %"
+            _label="Cycle seconds" _low-label="Low" _high-label="High"
+            low="0.0" high="60.0" default="10.0"/>
 
-  <number id="mag" type="slider" arg="-mag %"
-          _label="Magnification" _low-label="Smaller" _high-label="Bigger"
-          low="0.1" high="4.0" default="1.0"/>
+    <number id="mag" type="slider" arg="-mag %"
+            _label="Magnification" _low-label="Smaller" _high-label="Bigger"
+            low="0.1" high="4.0" default="1.0"/>
 
-  <select id="mins">
-    <option id="min2" _label="Minute tick marks" arg-set="-minutes"/>
-    <option id="min5" _label="5 minute tick marks"/>
-  </select>
+    <select id="mins">
+      <option id="min2" _label="Minute tick marks" arg-set="-minutes"/>
+      <option id="min5" _label="5 minute tick marks"/>
+    </select>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+   </vgroup>
+  </hgroup>
 
   <!-- #### -fast [50] -->
   <!-- #### -colcycle [?] -->
@@ -36,7 +45,7 @@
   <!-- #### -rgb [?] -->
   <!-- #### -hsv [?] -->
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <xscreensaver-updater />
 
   <_description>
 This screen saver was removed from the XScreenSaver distribution as of

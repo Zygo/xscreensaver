@@ -26,6 +26,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws smoothly-shaded oscillating oval patterns that look
 something like vapor trails or neon tubes.

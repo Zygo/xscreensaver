@@ -44,6 +44,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws a pop-art-ish looking grid of pulsing colors.
 

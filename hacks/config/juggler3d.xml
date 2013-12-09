@@ -40,6 +40,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a 3D juggling stick-man, with Cambridge juggling pattern
 notation used to describe the patterns he juggles.

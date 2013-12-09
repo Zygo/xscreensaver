@@ -32,6 +32,8 @@
    </vgroup>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description> 
 This emulates a 6502 microprocessor, and runs some example programs on
 it.

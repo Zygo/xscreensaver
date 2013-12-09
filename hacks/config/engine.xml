@@ -30,6 +30,8 @@
   </hgroup>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a simple model of an engine that floats around the screen.
 

@@ -14,6 +14,8 @@
   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 "A pyramid unfinished. In the zenith an eye in a triangle, surrounded
 by a glory, proper."

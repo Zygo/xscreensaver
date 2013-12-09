@@ -31,6 +31,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This throws some random bits on the screen, then sucks them
 through a jet engine and spews them out the other side.  To avoid

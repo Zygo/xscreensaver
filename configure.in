@@ -338,7 +338,7 @@ done
 ###############################################################################
 
 AC_DEFUN(AC_PROG_CC_ANSI,
- [AC_PROG_CC
+ [AC_REQUIRE([AC_PROG_CC])
 
   if test -z "$GCC"; then
     # not using GCC

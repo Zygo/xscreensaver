@@ -17,6 +17,8 @@
     <option id="random"  _label="Random"/>
   </select>
 
+  <xscreensaver-updater />
+
   <_description>
 This X11 port of the OSX screensaver of the same name draws a colourful
 star(fish)like flurry of particles.

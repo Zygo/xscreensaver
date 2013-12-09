@@ -14,6 +14,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Floating stars are acted upon by a mixture of simple 2D
 force  fields.  The strength of each force field changes

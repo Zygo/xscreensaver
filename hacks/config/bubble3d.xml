@@ -12,6 +12,8 @@
   <boolean id="transp" _label="Transparent bubbles" arg-unset="-no-transparent"/>
   <string id="color"    _label="Bubble color"      arg="-color %"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <xscreensaver-updater />
+
   <_description>
 Draws a stream of rising, undulating 3D bubbles, rising toward the
 top of the screen, with transparency and specular reflections. 

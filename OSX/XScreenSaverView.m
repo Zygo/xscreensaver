@@ -19,6 +19,7 @@
 #import <zlib.h>
 #import "XScreenSaverView.h"
 #import "XScreenSaverConfigSheet.h"
+#import "Updater.h"
 #import "screenhackI.h"
 #import "xlockmoreI.h"
 #import "jwxyz-timers.h"
@@ -225,6 +226,25 @@ add_default_options (const XrmOptionDescRec *opts,
     { "-fg",                     ".foreground",        XrmoptionSepArg, 0 },
     { "-background",             ".background",        XrmoptionSepArg, 0 },
     { "-bg",                     ".background",        XrmoptionSepArg, 0 },
+
+# ifndef USE_IPHONE
+    // <xscreensaver-updater />
+    {    "-" SUSUEnableAutomaticChecksKey,
+         "." SUSUEnableAutomaticChecksKey, XrmoptionNoArg, "True"  },
+    { "-no-" SUSUEnableAutomaticChecksKey,
+         "." SUSUEnableAutomaticChecksKey, XrmoptionNoArg, "False" },
+    {    "-" SUAutomaticallyUpdateKey,
+         "." SUAutomaticallyUpdateKey, XrmoptionNoArg, "True"  },
+    { "-no-" SUAutomaticallyUpdateKey,
+         "." SUAutomaticallyUpdateKey, XrmoptionNoArg, "False" },
+    {    "-" SUSendProfileInfoKey,
+         "." SUSendProfileInfoKey, XrmoptionNoArg,"True" },
+    { "-no-" SUSendProfileInfoKey,
+         "." SUSendProfileInfoKey, XrmoptionNoArg,"False"},
+    {    "-" SUScheduledCheckIntervalKey,
+         "." SUScheduledCheckIntervalKey, XrmoptionSepArg, 0 },
+# endif // !USE_IPHONE
+
     { 0, 0, 0, 0 }
   };
   static const char *default_defaults [] = {
@@ -248,6 +268,21 @@ add_default_options (const XrmOptionDescRec *opts,
 # endif
     ".imageDirectory:     ~/Pictures",
     ".relaunchDelay:      2",
+
+# ifndef USE_IPHONE
+#  define STR1(S) #S
+#  define STR(S) STR1(S)
+#  define __objc_yes Yes
+#  define __objc_no  No
+    "." SUSUEnableAutomaticChecksKey ": " STR(SUSUEnableAutomaticChecksDef),
+    "." SUAutomaticallyUpdateKey ":  "    STR(SUAutomaticallyUpdateDef),
+    "." SUSendProfileInfoKey ": "         STR(SUSendProfileInfoDef),
+    "." SUScheduledCheckIntervalKey ": "  STR(SUScheduledCheckIntervalDef),
+#  undef __objc_yes
+#  undef __objc_no
+#  undef STR1
+#  undef STR
+# endif // USE_IPHONE
     0
   };
 
@@ -497,6 +532,8 @@ double_time (void)
 # ifdef USE_IPHONE
   [UIApplication sharedApplication].idleTimerDisabled =
     ([UIDevice currentDevice].batteryState != UIDeviceBatteryStateUnplugged);
+  [[UIApplication sharedApplication]
+    setStatusBarHidden:YES withAnimation:UIStatusBarAnimationNone];
 # endif
 }
 
@@ -540,6 +577,8 @@ double_time (void)
   //
 # ifdef USE_IPHONE
   [UIApplication sharedApplication].idleTimerDisabled = NO;
+  [[UIApplication sharedApplication]
+    setStatusBarHidden:NO withAnimation:UIStatusBarAnimationNone];
 # endif
 }
 
@@ -916,7 +955,11 @@ double current_device_rotation (void)
     if (get_boolean_resource (xdpy, "doFPS", "DoFPS")) {
       fpst = fps_init (xdpy, xwindow);
       if (! xsft->fps_cb) xsft->fps_cb = screenhack_do_fps;
+    } else {
+      xsft->fps_cb = 0;
     }
+
+    [self checkForUpdates];
   }
 
 
@@ -1298,6 +1341,7 @@ double current_device_rotation (void)
             initWithXML:[xml dataUsingEncoding:NSUTF8StringEncoding]
                 options:xsft->options
              controller:[prefsReader userDefaultsController]
+       globalController:[prefsReader globalDefaultsController]
                defaults:[prefsReader defaultOptions]];
 
   // #### am I expected to retain this, or not? wtf.
@@ -1316,7 +1360,7 @@ double current_device_rotation (void)
 
 
 /* Announce our willingness to accept keyboard input.
-*/
+ */
 - (BOOL)acceptsFirstResponder
 {
   return YES;
@@ -1564,7 +1608,7 @@ double current_device_rotation (void)
 
    Possibly XScreenSaverView should use Core Animation, and 
    XScreenSaverGLView should override that.
-*/
+ */
 - (void)didRotate:(NSNotification *)notification
 {
   UIDeviceOrientation current = [[UIDevice currentDevice] orientation];
@@ -1873,8 +1917,32 @@ double current_device_rotation (void)
   }
 }
 
-
 #endif // USE_IPHONE
+
+
+- (void) checkForUpdates
+{
+# ifndef USE_IPHONE
+  // We only check once at startup, even if there are multiple screens,
+  // and even if this saver is running for many days.
+  // (Uh, except this doesn't work because this static isn't shared,
+  // even if we make it an exported global. Not sure why. Oh well.)
+  static BOOL checked_p = NO;
+  if (checked_p) return;
+  checked_p = YES;
+  if (! get_boolean_resource (xdpy,
+                              SUSUEnableAutomaticChecksKey,
+                              SUSUEnableAutomaticChecksKey))
+    return;  // If it's off, don't bother running the updater.
+
+  // Otherwise, the updater will decide if it's time to hit the network.
+  NSString *updater = @"XScreenSaverUpdater";
+  if (! [[NSWorkspace sharedWorkspace]
+          launchApplication:updater showIcon:NO autolaunch:NO]) {
+    NSLog(@"Unable to launch %@", updater);
+  }
+# endif // USE_IPHONE
+}
 
 
 @end

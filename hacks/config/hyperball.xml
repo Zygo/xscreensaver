@@ -4,18 +4,21 @@
 
   <command arg="-root"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Frame rate" _low-label="Low" _high-label="High"
-          low="0" high="100000" default="20000"
-          convert="invert"/>
-
-<!--
-  <number id="z" type="slider" arg="-observer-z %"
-          _label="Zoom" _low-label="Near" _high-label="Far"
-          low="1.125" high="10.0" default="3.0"/>
--->
-
   <hgroup>
+    <vgroup>
+     <number id="delay" type="slider" arg="-delay %"
+             _label="Frame rate" _low-label="Low" _high-label="High"
+             low="0" high="100000" default="20000"
+             convert="invert"/>
+
+
+      <number id="z" type="slider" arg="-observer-z %"
+              _label="Zoom" _low-label="Near" _high-label="Far"
+              low="1.125" high="10.0" default="3.0"/>
+
+     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+    </vgroup>
+
     <vgroup>
       <number id="xw" type="slider" arg="-xw %"
               _label="XW rotation" _low-label="Slow" _high-label="Fast"
@@ -40,7 +43,7 @@
     </vgroup>
   </hgroup>
 
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <xscreensaver-updater />
 
   <_description>
 This screen saver was removed from the XScreenSaver distribution as of

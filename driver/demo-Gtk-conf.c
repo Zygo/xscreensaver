@@ -1,5 +1,5 @@
 /* demo-Gtk-conf.c --- implements the dynamic configuration dialogs.
- * xscreensaver, Copyright (c) 2001-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001-2013 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -298,8 +298,9 @@ make_parameter (const char *filename, xmlNodePtr node)
   else if (!strcmp (name, "number"))       p->type = SPINBUTTON;
   else if (!strcmp (name, "select"))       p->type = SELECT;
 
-  else if (!strcmp (name, "xscreensaver-text") ||   /* these are ignored in X11 */
-           !strcmp (name, "xscreensaver-image"))    /* (they are used in Cocoa) */
+  else if (!strcmp (name, "xscreensaver-text") ||   /* ignored in X11; */
+           !strcmp (name, "xscreensaver-image") ||  /* used in Cocoa. */
+           !strcmp (name, "xscreensaver-updater"))
     {
       free (p);
       return 0;

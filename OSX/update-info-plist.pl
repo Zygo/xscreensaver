@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my $version = q{ $Revision: 1.26 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $version = q{ $Revision: 1.28 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 
@@ -85,6 +85,7 @@ sub read_saver_xml($) {
 
   return () if ($name eq 'XScreenSaver');
   return () if ($name eq 'SaverTester');
+  return () if ($name eq 'XScreenSaverUpdater');
 
   my $file  = "$app_dir/Contents/Resources/" . lc($name) . ".xml";
   my $file2 = "$app_dir/" . lc($name) . ".xml";
@@ -178,7 +179,7 @@ sub update_saver_xml($$) {
                "\n" . 
                "From the XScreenSaver collection: " .
                "http://www.jwz.org/xscreensaver/\n" .
-               "Copyright \251 $year by $authors.\n");
+               "Copyright \302\251 $year by $authors.\n");
 
   my $desc2 = ("$name $vers,\n" .			# Info.plist
                "\302\251 $year $authors.\n" .
@@ -196,6 +197,10 @@ sub update_saver_xml($$) {
   $desc2 =~ s/\n\n(From |http:)/\n$1/gs;
 
   $body =~ s@(<_description>)(.*?)(</_description>)@$1$desc1$3@s;
+
+  # NSXMLParser doesn't seem to work properly on Latin1 XML documents,
+  # so we convert these to UTF8 when embedding them in the .saver bundle.
+  $body =~ s@encoding="ISO-8859-1"@encoding="UTF-8"@gsi;
 
   if ($obody eq $body && $was_compressed_p) {
     print STDERR "$progname: $filename: unchanged\n" if ($verbose > 1);

@@ -13,6 +13,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This behaves schizophrenically and makes a lot of typos.
 

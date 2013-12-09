@@ -14,6 +14,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Pale pencil-like scribbles slowly fill the screen.
 

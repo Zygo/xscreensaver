@@ -11,9 +11,9 @@
 .if n .sp 1
 .if t .sp .5
 ..
-.TH XScreenSaver 1 "20-Mar-2005 (4.21)" "X Version 11"
+.TH XScreenSaver 1 "09-Nov-2013 (5.23)" "X Version 11"
 .SH NAME
-xscreensaver - extensible screen saver framework, plus locking
+xscreensaver - extensible screen saver and screen locking framework
 .SH SYNOPSIS
 .B xscreensaver
 [\-display \fIhost:display.screen\fP] \
@@ -884,7 +884,7 @@ and a FAQ can always be found at http://www.jwz.org/xscreensaver/
 .BR xscreensaver\-getimage (1),
 .BR xscreensaver\-text (1).
 .SH COPYRIGHT
-Copyright \(co 1991-2011 by Jamie Zawinski.
+Copyright \(co 1991-2013 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

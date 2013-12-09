@@ -25,6 +25,8 @@
   <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws an animation of textured balls spinning like crazy.
 

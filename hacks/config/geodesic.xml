@@ -37,6 +37,8 @@
    </vgroup>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Animates a mesh geodesic sphere of increasing and decreasing complexity.
 

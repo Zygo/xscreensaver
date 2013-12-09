@@ -4,36 +4,44 @@
 
   <command arg="-root"/>
 
-  <number id="delay" type="slider" arg="-delay %"
-          _label="Frame rate" _low-label="Low" _high-label="High"
-          low="0" high="100000" default="20000"
-          convert="invert"/>
-
-  <number id="density" type="slider" arg="-density %"
-          _label="Density" _low-label="Low" _high-label="High"
-          low="1" high="30" default="2"
-          convert="invert"/>
-
-  <number id="reset" type="slider" arg="-reset %"
-          _label="Duration" _low-label="Short" _high-label="Long"
-          low="10000" high="3000000" default="2500000"/>
-
-  <number id="length" type="slider" arg="-length %"
-          _label="Length" _low-label="Short" _high-label="Long"
-          low="100" high="100000" default="25000"/>
-
   <hgroup>
-    <boolean id="circles" _label="Draw spots" arg-set="-circles"/>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
 
-    <number id="size" type="spinbutton" arg="-size %"
-             _label="Size" low="0" high="100" default="1"/>
+    <number id="density" type="slider" arg="-density %"
+            _label="Density" _low-label="Low" _high-label="High"
+            low="1" high="30" default="2"
+            convert="invert"/>
+
+    <number id="reset" type="slider" arg="-reset %"
+            _label="Duration" _low-label="Short" _high-label="Long"
+            low="10000" high="3000000" default="2500000"/>
+   </vgroup>
+
+   <vgroup>
+    <number id="length" type="slider" arg="-length %"
+            _label="Length" _low-label="Short" _high-label="Long"
+            low="100" high="100000" default="25000"/>
+
+    <number id="advance" type="slider" arg="-advance %"
+            _label="Color contrast" _low-label="Low" _high-label="High"
+            low="1" high="100" default="1"/>
+
+    <hgroup>
+      <boolean id="circles" _label="Draw spots" arg-set="-circles"/>
+
+      <number id="size" type="spinbutton" arg="-size %"
+               _label="Size" low="0" high="100" default="1"/>
+    </hgroup>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
   </hgroup>
 
-  <number id="advance" type="slider" arg="-advance %"
-          _label="Color contrast" _low-label="Low" _high-label="High"
-          low="1" high="100" default="1"/>
-
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <xscreensaver-updater />
 
   <_description>
 Draws a colorful random-walk, in various forms.

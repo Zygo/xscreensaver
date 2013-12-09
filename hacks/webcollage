@@ -48,37 +48,46 @@ use strict;
 #use diagnostics;
 
 
-use Socket;
 require Time::Local;
 require POSIX;
 use Fcntl ':flock'; # import LOCK_* constants
 use POSIX qw(strftime);
-
-use bytes;  # Larry can take Unicode and shove it up his ass sideways.
-            # Perl 5.8.0 causes us to start getting incomprehensible
-            # errors about UTF-8 all over the place without this.
+use LWP::UserAgent;
+use bytes;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.160 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
-my $copyright = "WebCollage $version, Copyright (c) 1999-2011" .
+my $version = q{ $Revision: 1.162 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $copyright = "WebCollage $version, Copyright (c) 1999-2013" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
 
 
 
-my @search_methods = ( 26, "googlephotos",  \&pick_from_google_image_photos,
-                       15, "googleimgs",    \&pick_from_google_images,
-                       15, "googlenums",    \&pick_from_google_image_numbers,
-                       17, "flickr_recent", \&pick_from_flickr_recent,
-                       14, "flickr_random", \&pick_from_flickr_random,
-# twitpic went stale. don't have time to fix it right now.
-#                       10, "twitpic",       \&pick_from_twitpic_images,
-                        9, "livejournal",   \&pick_from_livejournal_images,
+my @search_methods = (
+                      # Google is rate-limiting us now, so this works ok from
+                      # a short-running screen saver, but not as a batch job.
+                      # I haven't found a workaround.
+                      #
+                        7, "googlephotos",  \&pick_from_google_image_photos,
+                        5, "googleimgs",    \&pick_from_google_images,
+                        5, "googlenums",    \&pick_from_google_image_numbers,
+
+                      # So let's try Bing instead. No rate limiting yet!
+                      #
+                        7, "bingphotos",    \&pick_from_bing_image_photos,
+                        6, "bingimgs",      \&pick_from_bing_images,
+                        6, "bingnums",      \&pick_from_bing_image_numbers,
+
+                       19, "flickr_recent", \&pick_from_flickr_recent,
+                       15, "flickr_random", \&pick_from_flickr_random,
+                       20, "instagram",     \&pick_from_instagram,
+                        6, "livejournal",   \&pick_from_livejournal_images,
                         4, "yahoorand",     \&pick_from_yahoo_random_link,
 
-                     # This one doesn't work very well: too many non-img links.
-                        0, "twitter",       \&pick_from_twitter_images,
+                     # Twitter destroyed their whole API in 2013.
+                     #  0, "twitpic",       \&pick_from_twitpic_images,
+                     #  0, "twitter",       \&pick_from_twitter_images,
 
                      # This is a cute way to search for a certain webcams.
                      # Not included in default methods, since these images
@@ -217,6 +226,7 @@ my %warningless_sites = (
   "pics.livejournal.com"    => 1,
   "tinypic.com"             => 1,
   "flickr.com"              => 1,
+  "staticflickr.com"        => 1,
   "pbase.com"               => 1,
   "blogger.com"             => 1,
   "multiply.com"            => 1,
@@ -374,170 +384,62 @@ sub get_document_1($$$) {
   if (!defined($timeout)) { $timeout = $http_timeout; }
   if ($timeout > $http_timeout) { $timeout = $http_timeout; }
 
-  if ($timeout <= 0) {
-    LOG (($verbose_net || $verbose_load), "timed out for $url");
-    return ();
+  my $user_agent = "$progname/$version";
+
+  if ($url =~ m@^http://www\.altavista\.com/@ ||
+      $url =~ m@^http://random\.yahoo\.com/@ ||
+      $url =~ m@^http://images\.google\.com/@ ||
+      $url =~ m@^http://www\.google\.com/@) {
+    # block this, you turkeys.
+    $user_agent = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.7)" .
+                  " Gecko/20070914 Firefox/2.0.0.7";
+
+    # 28-Jun-2007: Google Images now emits the entire page in JS if
+    # you claim to be Gecko.  They also still block "webcollage".
+    # They serve non-JS for unrecognised agents, so let's try this...
+    $user_agent = "NoJavascriptPlease/1.0"
+      if ($url =~ m@^http://[a-z]+\.google\.com/@);
   }
+
+  my $ua = LWP::UserAgent->new;
+  $ua->env_proxy();
+  $ua->agent ("$progname/$version");
+  $ua->default_header ('Referer' => $referer);
+  $ua->timeout($timeout) if $timeout;
+
+  if ($verbose_http) {
+    LOG (1, "  ==> GET $url");
+    LOG (1, "  ==> User-Agent: $user_agent");
+    LOG (1, "  ==> Referer: $referer") if $referer;
+  }
+
+  my $res = $ua->get ($url);
+
+  my $http = ($res ? $res->status_line : '') || '';
+  my $head = ($res ? $res->headers()->as_string : '') || '';
+  my $body = ($res && $res->is_success ? $res->decoded_content : '') || '';
 
   LOG ($verbose_net, "get_document_1 $url " . ($referer ? $referer : ""));
 
-  if (! ($url =~ m@^http://@i)) {
-    LOG ($verbose_net, "not an HTTP URL: $url");
-    return ();
-  }
-
-  my ($url_proto, $dummy, $serverstring, $path) = split(/\//, $url, 4);
-  $path = "" unless $path;
-
-  if (!$url_proto || !$serverstring) {
-    LOG (($verbose_net || $verbose_load), "unparsable URL: $url");
-    return ();
-  }
-
-  my ($them,$port) = split(/:/, $serverstring);
-  $port = 80 unless $port;
-
-  my $them2 = $them;
-  my $port2 = $port;
-  if ($http_proxy) {
-    $serverstring = $http_proxy if $http_proxy;
-    $serverstring =~ s@^[a-z]+://@@;
-    ($them2,$port2) = split(/:/, $serverstring);
-    $port2 = 80 unless $port2;
-  }
-
-  my ($remote, $iaddr, $paddr, $proto, $line);
-  $remote = $them2;
-  if ($port2 =~ /\D/) { $port2 = getservbyname($port2, 'tcp') }
-  if (!$port2) {
-    LOG (($verbose_net || $verbose_load), "unrecognised port in $url");
-    return ();
-  }
-  $iaddr   = inet_aton($remote);
-  if (!$iaddr) {
-    LOG (($verbose_net || $verbose_load), "host not found: $remote");
-    return ();
-  }
-  $paddr   = sockaddr_in($port2, $iaddr);
-
-
-  my $head = "";
-  my $body = "";
-
-  @_ =
-    eval {
-      local $SIG{ALRM} = sub {
-        LOG (($verbose_net || $verbose_load), "timed out ($timeout) for $url");
-        die "alarm\n";
-      };
-      alarm $timeout;
-
-      $proto   = getprotobyname('tcp');
-      if (!socket(S, PF_INET, SOCK_STREAM, $proto)) {
-        LOG (($verbose_net || $verbose_load), "socket: $!");
-        return ();
-      }
-      if (!connect(S, $paddr)) {
-        LOG (($verbose_net || $verbose_load), "connect($serverstring): $!");
-        return ();
-      }
-
-      select(S); $| = 1; select(STDOUT);
-
-      my $cookie = $cookies{$them};
-
-      my $user_agent = "$progname/$version";
-
-      if ($url =~ m@^http://www\.altavista\.com/@ ||
-          $url =~ m@^http://random\.yahoo\.com/@ ||
-          $url =~ m@^http://images\.google\.com/@ ||
-          $url =~ m@^http://www\.google\.com/@) {
-        # block this, you turkeys.
-        $user_agent = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.7)" .
-          " Gecko/20070914 Firefox/2.0.0.7";
-
-        # 28-Jun-2007: Google Images now emits the entire page in JS if
-        # you claim to be Gecko.  They also still block "webcollage".
-        # They serve non-JS for unrecognised agents, so let's try this...
-        $user_agent = "NoJavascriptPlease/1.0"
-          if ($url =~ m@^http://[a-z]+\.google\.com/@);
-      }
-
-      my $hdrs = "GET " . ($http_proxy ? $url : "/$path") . " HTTP/1.0\r\n" .
-                 "Host: $them\r\n" .
-                 "User-Agent: $user_agent\r\n";
-      if ($referer) {
-        $hdrs .= "Referer: $referer\r\n";
-      }
-      if ($cookie) {
-        my @cc = split(/\r?\n/, $cookie);
-        $hdrs .= "Cookie: " . join('; ', @cc) . "\r\n";
-      }
-      $hdrs .= "\r\n";
-
-      foreach (split('\r?\n', $hdrs)) {
-        LOG ($verbose_http, "  ==> $_");
-      }
-      print S $hdrs;
-      my $http = <S> || "";
-
-      # Kludge: the Yahoo Random Link is now returning as its first
-      # line "Status: 301" instead of "HTTP/1.0 301 Found".  Fix it...
-      #
-      $http =~ s@^Status:\s+(\d+)\b@HTTP/1.0 $1@i;
-
-      $_  = $http;
-      s/[\r\n]+$//s;
+  $head =~ s/\r\n/\n/gs;
+  $head =~ s/\r/\n/gs;
+  if ($verbose_http) {
+    foreach (split (/\n/, $head)) {
       LOG ($verbose_http, "  <== $_");
-
-      while (<S>) {
-        $head .= $_;
-        s/[\r\n]+$//s;
-        last if m@^$@;
-        LOG ($verbose_http, "  <== $_");
-
-        if (m@^Set-cookie:\s*([^;\r\n]+)@i) {
-          set_cookie($them, $1)
-        }
-      }
-
-      my $lines = 0;
-      while (<S>) {
-        $body .= $_;
-        $lines++;
-      }
-
-      LOG ($verbose_http,
-           "  <== [ body ]: $lines lines, " . length($body) . " bytes");
-
-      close S;
-
-      if (!$http) {
-        LOG (($verbose_net || $verbose_load), "null response: $url");
-        return ();
-      }
-
-      $SIG{ALRM} = 'DEFAULT';  # seem to be suffering a race?
-      return ( $http, $head, $body );
-    };
-  die if ($@ && $@ ne "alarm\n");       # propagate errors
-
-  if ($@ && $@ ne "alarm\n") {
-    print STDERR blurb() . "DIE " . join(" ", $@) . "\n";
-    die;
+    }
   }
 
-  if ($@) {
-    # timed out
-    $head = undef;
-    $body = undef;
-    $suppress_audit = 1;
+  my @L = split(/\r\n|\r|\n/, $body);
+  my $lines = @L;
+  LOG ($verbose_http,
+       "  <== [ body ]: $lines lines, " . length($body) . " bytes");
+
+  if (!$http) {
+    LOG (($verbose_net || $verbose_load), "null response: $url");
     return ();
-  } else {
-    # didn't
-    alarm 0;
-    return @_;
   }
+
+  return ( $http, $head, $body );
 }
 
 
@@ -1064,6 +966,26 @@ sub pick_from_search_engine($$$) {
 
   my @subpages;
 
+  if ($body =~ m/^\{\"/s) {			# Google AJAX JSON response.
+
+    my @chunks = split (/"GsearchResultClass"/, $body);
+    shift @chunks;
+    my $body2 = '';
+    my $n = 1;
+    foreach (@chunks) {
+      my ($img) = m/"unescapedUrl":"(.*?)"/si;
+      my ($url) = m/"originalContextUrl":"(.*?)"/si;
+      next unless ($img && $url);
+      $url = ("/imgres" .
+              "?imgurl="    . url_quote($img) .
+              "&imgrefurl=" . url_quote($url) .
+              "&...");
+      $body2 .= "<A HREF=\"" . html_quote($url) . "\">$n</A>\n";
+      $n++;
+    }
+    $body = $body2 if $body2;
+  }
+
   my $search_count = "?";
   if ($body =~ m@found (approximately |about )?(<B>)?(\d+)(</B>)? image@) {
     $search_count = $3;
@@ -1115,8 +1037,15 @@ sub pick_from_search_engine($$$) {
     my ($u) = m@<A\s.*\bHREF\s*=\s*([^>]+)>@i;
     next unless $u;
 
-    if ($u =~ m/^\"([^\"]*)\"/) { $u = $1; }   # quoted string
-    elsif ($u =~ m/^([^\s]*)\s/) { $u = $1; }  # or token
+    if (m/\bm="{(.*?)}"/s) {		# Bing info is inside JSON crud
+      my $json = html_unquote($1);
+      my ($href) = ($json =~ m/\bsurl:"(.*?)"/s);
+      my ($img)  = ($json =~ m/\bimgurl:"(.*?)"/s);
+      $u = "$img\t$href" if ($img && $href);
+
+    } elsif ($u =~ m/^\"([^\"]*)\"/) { $u = $1   # quoted string
+    } elsif ($u =~ m/^([^\s]*)\s/) { $u = $1;    # or token
+    }
 
     if ( $rejected_urls{$u} ) {
       LOG ($verbose_filter, "  pre-rejecting candidate: $u");
@@ -1413,11 +1342,10 @@ sub pick_from_security_camera($) {
 ############################################################################
 
 
-my $google_images_url =     "http://images.google.com/images" .
-                            "?site=images" .  # photos
-                            "&btnG=Search" .  # graphics
-                            "&safe=off" .     # no screening
-                            "&imgsafe=off" .
+my $google_images_url =     "http://ajax.googleapis.com/ajax/services/" .
+                            "search/images" .
+                            "?v=1.0" .
+                            "&rsz=large" .
                             "&q=";
 
 # googleimgs
@@ -1428,14 +1356,8 @@ sub pick_from_google_images($;$$) {
     $words = random_word();   # only one word for Google
   }
 
-  my $page = (int(rand(9)) + 1);
-  my $num = 20;     # 20 images per page
-  my $search_url = $google_images_url . $words;
-
-  if ($page > 1) {
-    $search_url .= "&start=" . $page*$num;	# page number
-    $search_url .= "&num="   . $num;            #images per page
-  }
+  my $off = int(rand(40));
+  my $search_url = $google_images_url . $words . "&start=" . $off;
 
   my ($search_hit_count, @subpages) =
     pick_from_search_engine ($timeout, $search_url, $words);
@@ -1450,10 +1372,10 @@ sub pick_from_google_images($;$$) {
     if ($u =~ m@^/imgres\?imgurl=(.*?)&imgrefurl=(.*?)\&@) {
       my $ref = $2;
       my $img = $1;
-      $img = "http://$img" unless ($img =~ m/^http:/i);
-
       $ref = url_decode($ref);
       $img = url_decode($img);
+
+      $img = "http://$img" unless ($img =~ m/^https?:/i);
 
       LOG ($verbose_filter, "  candidate: $ref");
       push @candidates, $img;
@@ -1557,11 +1479,98 @@ sub pick_from_google_image_photos($) {
   my $i = int(rand($#photomakers + 1));
   my $fn = $photomakers[$i];
   my $file = &$fn;
-  my $words .= $file . "%20filetype:jpg";
+  #$file .= "%20filetype:jpg";
 
-  pick_from_google_images ($timeout, $words);
+  pick_from_google_images ($timeout, $file);
 }
 
+
+############################################################################
+#
+# Pick images by feeding random words into Google Image Search.
+# By the way: fuck Microsoft.
+#
+############################################################################
+
+my $bing_images_url =	"http://www.bing.com/images/async" .
+			"?CW=0" .
+			"&CH=0" .
+			"&q=";
+
+
+# bingimgs
+sub pick_from_bing_images($;$$) {
+  my ($timeout, $words, $max_page) = @_;
+
+  if (!defined($words)) {
+    $words = random_word();   # only one word for Bing
+  }
+
+  my $off = int(rand(300));
+  my $search_url = $bing_images_url . $words . "&first=" . $off;
+
+  my ($search_hit_count, @subpages) =
+    pick_from_search_engine ($timeout, $search_url, $words);
+
+  my @candidates = ();
+  my %referers;
+  foreach my $u (@subpages) {
+    my ($img, $ref) = ($u =~ m/^(.*?)\t(.*)$/s);
+    next unless $img;
+    LOG ($verbose_filter, "  candidate: $ref");
+    push @candidates, $img;
+    $referers{$img} = $ref;
+  }
+
+  @candidates = depoison (@candidates);
+  return () if ($#candidates < 0);
+  my $i = int(rand($#candidates+1));
+  my $img = $candidates[$i];
+  my $ref = $referers{$img};
+
+  LOG ($verbose_load, "picked image " . ($i+1) . ": $img (on $ref)");
+  return ($ref, $img);
+}
+
+
+
+
+############################################################################
+#
+# Pick images by feeding random numbers into Bing Image Search.
+#
+############################################################################
+
+# bingnums
+sub pick_from_bing_image_numbers($) {
+  my ($timeout) = @_;
+
+  my $max = 9999;
+  my $number = int(rand($max));
+
+  $number = sprintf("%04d", $number)
+    if (rand() < 0.3);
+
+  pick_from_bing_images ($timeout, "$number");
+}
+
+
+############################################################################
+#
+# Pick images by feeding random numbers into Bing Image Search.
+#
+############################################################################
+
+# bingphotos
+sub pick_from_bing_image_photos($) {
+  my ($timeout) = @_;
+
+  my $i = int(rand($#photomakers + 1));
+  my $fn = $photomakers[$i];
+  my $file = &$fn;
+
+  pick_from_bing_images ($timeout, $file);
+}
 
 
 ############################################################################
@@ -2226,6 +2235,56 @@ sub pick_from_flickr_random($) {
 
   LOG ($verbose_load, "redirected to: $base");
   return ($base, $img);
+}
+
+
+############################################################################
+#
+# Pick random images from Instagram, via gramfeed.com's key.
+#
+############################################################################
+
+my $instagram_url_base = "https://api.instagram.com/v1/media/popular" .
+			 "?client_id=b59fbe4563944b6c88cced13495c0f49";
+
+# instagram_random
+sub pick_from_instagram($) {
+  my $timeout = shift;
+
+  $last_search = $instagram_url_base;
+
+  print STDERR "\n\n" if ($verbose_load);
+  LOG ($verbose_load, "URL: $last_search");
+
+  my ( $base, $body ) = get_document ($last_search, undef, $timeout);
+  if (!$base || !$body) {
+    $body = undef;
+    return;
+  }
+
+  $body =~ s/("link")/\001$1/gs;
+  my @chunks = split(/\001/, $body);
+  shift @chunks;
+  my @urls = ();
+  foreach (@chunks) {
+    s/\\//gs;
+    my ($url) = m/"link":\s*"(.*?)"/s;
+    my ($img) = m/"standard_resolution":{"url":\s*"(.*?)"/s;
+       ($img) = m/"url":\s*"(.*?)"/s unless $url;
+    next unless ($url && $img);
+    push @urls, [ $url, $img ];
+  }
+
+  if ($#urls < 0) {
+    LOG ($verbose_load, "no images on $last_search");
+    return ();
+  }
+
+  my $i = int(rand($#urls+1));
+  my ($url, $img) = @{$urls[$i]};
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/" . ($#urls+1) . ": $url");
+  return ($url, $img);
 }
 
 
@@ -3557,6 +3616,8 @@ sub update_imagemap($$$$$$$$) {
 
   my $imagemap_html = $imagemap_base . ".html";
   my $imagemap_jpg  = $imagemap_base . ".jpg";
+  my $imagemap_jpg2 = $imagemap_jpg;
+  $imagemap_jpg2 =~ s@^.*/@@gs;
 
   if (!defined ($imagemap_html_tmp)) {
     $imagemap_html_tmp = $imagemap_html . sprintf (".%08x", rand(0xffffffff));
@@ -3576,7 +3637,7 @@ sub update_imagemap($$$$$$$$) {
 
     if ($template_html =~ m/^\s*$/s) {
       $template_html = ("<MAP NAME=\"$map_name\"></MAP>\n" .
-                        "<IMG SRC=\"$imagemap_base.jpg\"" .
+                        "<IMG SRC=\"$imagemap_jpg2\"" .
                         " USEMAP=\"$map_name\">\n");
       LOG ($verbose_pbm, "created dummy template");
     }
@@ -3603,7 +3664,7 @@ sub update_imagemap($$$$$$$$) {
     my $body = $template_html;
     my $areas = join ("\n\t", @imagemap_areas);
     my $map = ("<MAP NAME=\"$map_name\">\n\t$areas\n</MAP>");
-    my $img = ("<IMG SRC=\"$imagemap_base.jpg\" " .
+    my $img = ("<IMG SRC=\"$imagemap_jpg2\" " .
                "BORDER=0 " .
                "WIDTH=$image_width HEIGHT=$image_height " .
                "USEMAP=\"#$map_name\">");

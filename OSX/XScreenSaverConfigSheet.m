@@ -24,6 +24,7 @@
  */
 
 #import "XScreenSaverConfigSheet.h"
+#import "Updater.h"
 
 #import "jwxyz.h"
 #import "InvertedSlider.h"
@@ -447,7 +448,7 @@ static void layout_group (NSView *group, BOOL horiz_p);
    instead, so transform keys to "SAVERNAME.KEY".
 
    NOTE: This is duplicated in PrefsReader.m, cause I suck.
-*/
+ */
 - (NSString *) makeKey:(NSString *)key
 {
 # ifdef USE_IPHONE
@@ -524,6 +525,22 @@ static void layout_group (NSView *group, BOOL horiz_p);
 }
 
 
+- (NSUserDefaultsController *)controllerForKey:(NSString *)key
+{
+  static NSDictionary *a = 0;
+  if (! a) {
+    a = UPDATER_DEFAULTS;
+    [a retain];
+  }
+  if ([a objectForKey:key])
+    // These preferences are global to all xscreensavers.
+    return globalDefaultsController;
+  else
+    // All other preferences are per-saver.
+    return userDefaultsController;
+}
+
+
 #ifdef USE_IPHONE
 
 // Called when a slider is bonked.
@@ -539,10 +556,11 @@ static void layout_group (NSView *group, BOOL horiz_p);
               ? [(InvertedSlider *) sender transformedValue]
               : [sender value]);
 
-  if (v == (int) v)
-    [userDefaultsController setInteger:v forKey:pref_key];
-  else
-    [userDefaultsController setDouble:v forKey:pref_key];
+  [[self controllerForKey:pref_key]
+    setObject:((v == (int) v)
+               ? [NSNumber numberWithInt:(int) v]
+               : [NSNumber numberWithDouble: v])
+    forKey:pref_key];
 }
 
 // Called when a checkbox/switch is bonked.
@@ -553,7 +571,7 @@ static void layout_group (NSView *group, BOOL horiz_p);
     [active_text_field resignFirstResponder];
   NSString *pref_key = [pref_keys objectAtIndex: [sender tag]];
   NSString *v = ([sender isOn] ? @"true" : @"false");
-  [userDefaultsController setObject:v forKey:pref_key];
+  [[self controllerForKey:pref_key] setObject:v forKey:pref_key];
 }
 
 # ifdef USE_PICKER_VIEW
@@ -575,7 +593,7 @@ static void layout_group (NSView *group, BOOL horiz_p);
 //NSString *label    = [a objectAtIndex:0];
   NSString *pref_key = [a objectAtIndex:1];
   NSObject *pref_val = [a objectAtIndex:2];
-  [userDefaultsController setObject:pref_val forKey:pref_key];
+  [[self controllerForKey:pref_key] setObject:pref_val forKey:pref_key];
 }
 # else  // !USE_PICKER_VIEW
 
@@ -589,7 +607,7 @@ static void layout_group (NSView *group, BOOL horiz_p);
   NSArray *item = [[sender items] objectAtIndex: [sender index]];
   NSString *pref_key = [item objectAtIndex:1];
   NSObject *pref_val = [item objectAtIndex:2];
-  [userDefaultsController setObject:pref_val forKey:pref_key];
+  [[self controllerForKey:pref_key] setObject:pref_val forKey:pref_key];
 }
 
 - (BOOL)textFieldShouldBeginEditing:(UITextField *)tf
@@ -602,7 +620,7 @@ static void layout_group (NSView *group, BOOL horiz_p);
 {
   NSString *pref_key = [pref_keys objectAtIndex: [tf tag]];
   NSString *txt = [tf text];
-  [userDefaultsController setObject:txt forKey:pref_key];
+  [[self controllerForKey:pref_key] setObject:txt forKey:pref_key];
 }
 
 - (BOOL)textFieldShouldReturn:(UITextField *)tf
@@ -621,15 +639,18 @@ static void layout_group (NSView *group, BOOL horiz_p);
 
 - (void) okAction:(NSObject *)arg
 {
-  [userDefaultsController commitEditing];
-  [userDefaultsController save:self];
+  [userDefaultsController   commitEditing];
+  [globalDefaultsController commitEditing];
+  [userDefaultsController   save:self];
+  [globalDefaultsController save:self];
   [NSApp endSheet:self returnCode:NSOKButton];
   [self close];
 }
 
 - (void) cancelAction:(NSObject *)arg
 {
-  [userDefaultsController revert:self];
+  [userDefaultsController   revert:self];
+  [globalDefaultsController revert:self];
   [NSApp endSheet:self returnCode:NSCancelButton];
   [self close];
 }
@@ -639,12 +660,13 @@ static void layout_group (NSView *group, BOOL horiz_p);
 - (void) resetAction:(NSObject *)arg
 {
 # ifndef USE_IPHONE
-  [userDefaultsController revertToInitialValues:self];
+  [userDefaultsController   revertToInitialValues:self];
+  [globalDefaultsController revertToInitialValues:self];
 # else  // USE_IPHONE
 
   for (NSString *key in defaultOptions) {
     NSObject *val = [defaultOptions objectForKey:key];
-    [userDefaultsController setObject:val forKey:key];
+    [[self controllerForKey:key] setObject:val forKey:key];
   }
 
   for (UIControl *ctl in pref_ctls) {
@@ -662,6 +684,7 @@ static void layout_group (NSView *group, BOOL horiz_p);
 - (void) bindResource:(NSObject *)control key:(NSString *)pref_key
          reload:(BOOL)reload_p
 {
+  NSUserDefaultsController *prefs = [self controllerForKey:pref_key];
 # ifndef USE_IPHONE
   NSString *bindto = ([control isKindOfClass:[NSPopUpButton class]]
                       ? @"selectedObject"
@@ -669,12 +692,12 @@ static void layout_group (NSView *group, BOOL horiz_p);
                          ? @"selectedIndex"
                          : @"value"));
   [control bind:bindto
-       toObject:userDefaultsController
+       toObject:prefs
     withKeyPath:[@"values." stringByAppendingString: pref_key]
         options:nil];
 # else  // USE_IPHONE
   SEL sel;
-  NSObject *val = [userDefaultsController objectForKey:pref_key];
+  NSObject *val = [prefs objectForKey:pref_key];
   NSString *sval = 0;
   double dval = 0;
 
@@ -739,7 +762,7 @@ static void layout_group (NSView *group, BOOL horiz_p);
 # endif // USE_IPHONE
 
 # if 0
-  NSObject *def = [[userDefaultsController defaults] objectForKey:pref_key];
+  NSObject *def = [[prefs defaults] objectForKey:pref_key];
   NSString *s = [NSString stringWithFormat:@"bind: \"%@\"", pref_key];
   s = [s stringByPaddingToLength:18 withString:@" " startingAtIndex:0];
   s = [NSString stringWithFormat:@"%@ = \"%@\"", s, def];
@@ -1071,12 +1094,10 @@ hreffify (NSText *nstext)
  */
 - (NSString *) parseXScreenSaverTag:(NSXMLNode *)node
 {
-  NSMutableDictionary *dict =
-  [NSMutableDictionary dictionaryWithObjectsAndKeys:
-    @"", @"name",
-    @"", @"_label",
-    @"", @"gl",
-    nil];
+  NSMutableDictionary *dict = [@{ @"name":   @"",
+                                  @"_label": @"",
+                                  @"gl":     @"" }
+                                mutableCopy];
   [self parseAttrs:dict node:node];
   NSString *name  = [dict objectForKey:@"name"];
   NSString *label = [dict objectForKey:@"_label"];
@@ -1121,13 +1142,11 @@ hreffify (NSText *nstext)
  */
 - (void) makeCheckbox:(NSXMLNode *)node on:(NSView *)parent
 {
-  NSMutableDictionary *dict =
-    [NSMutableDictionary dictionaryWithObjectsAndKeys:
-      @"", @"id",
-      @"", @"_label",
-      @"", @"arg-set",
-      @"", @"arg-unset",
-      nil];
+  NSMutableDictionary *dict = [@{ @"id":       @"",
+                                  @"_label":    @"",
+                                  @"arg-set":   @"",
+                                  @"arg-unset": @"" }
+                                mutableCopy];
   [self parseAttrs:dict node:node];
   NSString *label     = [dict objectForKey:@"_label"];
   NSString *arg_set   = [dict objectForKey:@"arg-set"];
@@ -1187,22 +1206,20 @@ hreffify (NSText *nstext)
 /* Creates the number selection control described by the given XML node.
    If "type=slider", it's an NSSlider.
    If "type=spinbutton", it's a text field with up/down arrows next to it.
-*/
+ */
 - (void) makeNumberSelector:(NSXMLNode *)node on:(NSView *)parent
 {
-  NSMutableDictionary *dict =
-  [NSMutableDictionary dictionaryWithObjectsAndKeys:
-    @"", @"id",
-    @"", @"_label",
-    @"", @"_low-label",
-    @"", @"_high-label",
-    @"", @"type",
-    @"", @"arg",
-    @"", @"low",
-    @"", @"high",
-    @"", @"default",
-    @"", @"convert",
-    nil];
+  NSMutableDictionary *dict = [@{ @"id":          @"",
+                                  @"_label":      @"",
+                                  @"_low-label":  @"",
+                                  @"_high-label": @"",
+                                  @"type":        @"",
+                                  @"arg":         @"",
+                                  @"low":         @"",
+                                  @"high":        @"",
+                                  @"default":     @"",
+                                  @"convert":     @"" }
+                                mutableCopy];
   [self parseAttrs:dict node:node];
   NSString *label      = [dict objectForKey:@"_label"];
   NSString *low_label  = [dict objectForKey:@"_low-label"];
@@ -1474,7 +1491,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
 
 
 /* Creates the popup menu described by the given XML node (and its children).
-*/
+ */
 - (void) makeOptionMenu:(NSXMLNode *)node on:(NSView *)parent
 {
   NSArray *children = [node children];
@@ -1487,10 +1504,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
 
   // get the "id" attribute off the <select> tag.
   //
-  NSMutableDictionary *dict =
-    [NSMutableDictionary dictionaryWithObjectsAndKeys:
-      @"", @"id",
-      nil];
+  NSMutableDictionary *dict = [@{ @"id": @"", } mutableCopy];
   [self parseAttrs:dict node:node];
   
   NSRect rect;
@@ -1537,12 +1551,10 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
 
     // get the "id", "_label", and "arg-set" attrs off of the <option> tags.
     //
-    NSMutableDictionary *dict2 =
-      [NSMutableDictionary dictionaryWithObjectsAndKeys:
-        @"", @"id",
-        @"", @"_label",
-        @"", @"arg-set",
-        nil];
+    NSMutableDictionary *dict2 = [@{ @"id":      @"",
+                                     @"_label":  @"",
+                                     @"arg-set": @"" }
+                                   mutableCopy];
     [self parseAttrs:dict2 node:child];
     NSString *label   = [dict2 objectForKey:@"_label"];
     NSString *arg_set = [dict2 objectForKey:@"arg-set"];
@@ -1757,18 +1769,16 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
 
 
 /* Creates the NSTextField described by the given XML node.
-*/
+ */
 - (void) makeTextField: (NSXMLNode *)node
                     on: (NSView *)parent
              withLabel: (BOOL) label_p
             horizontal: (BOOL) horiz_p
 {
-  NSMutableDictionary *dict =
-  [NSMutableDictionary dictionaryWithObjectsAndKeys:
-    @"", @"id",
-    @"", @"_label",
-    @"", @"arg",
-    nil];
+  NSMutableDictionary *dict = [@{ @"id":     @"",
+                                  @"_label": @"",
+                                  @"arg":    @"" }
+                                mutableCopy];
   [self parseAttrs:dict node:node];
   NSString *label = [dict objectForKey:@"_label"];
   NSString *arg   = [dict objectForKey:@"arg"];
@@ -1834,7 +1844,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
 
 /* Creates the NSTextField described by the given XML node,
    and hooks it up to a Choose button and a file selector widget.
-*/
+ */
 - (void) makeFileSelector: (NSXMLNode *)node
                        on: (NSView *)parent
                  dirsOnly: (BOOL) dirsOnly
@@ -1842,12 +1852,10 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
                  editable: (BOOL) editable_p
 {
 # ifndef USE_IPHONE	// No files. No selectors.
-  NSMutableDictionary *dict =
-  [NSMutableDictionary dictionaryWithObjectsAndKeys:
-    @"", @"id",
-    @"", @"_label",
-    @"", @"arg",
-    nil];
+  NSMutableDictionary *dict = [@{ @"id":     @"",
+                                  @"_label": @"",
+                                  @"arg":    @"" }
+                                mutableCopy];
   [self parseAttrs:dict node:node];
   NSString *label = [dict objectForKey:@"_label"];
   NSString *arg   = [dict objectForKey:@"arg"];
@@ -2101,37 +2109,28 @@ find_text_field_of_button (NSButton *button)
   // </select>
 
   node2 = [[NSXMLElement alloc] initWithName:@"select"];
-  [node2 setAttributesAsDictionary:
-          [NSDictionary dictionaryWithObjectsAndKeys:
-                        @"textMode",           @"id",
-                        nil]];
+  [node2 setAttributesAsDictionary:@{ @"id": @"textMode" }];
 
   NSXMLNode *node3 = [[NSXMLElement alloc] initWithName:@"option"];
   [node3 setAttributesAsDictionary:
-          [NSDictionary dictionaryWithObjectsAndKeys:
-                        @"date",                      @"id",
-                        @"-text-mode date",           @"arg-set",
-                        @"Display the date and time", @"_label",
-                        nil]];
+           @{ @"id":	  @"date",
+              @"arg-set": @"-text-mode date",
+              @"_label":  @"Display the date and time" }];
   [node3 setParent: node2];
   //[node3 release];
 
   node3 = [[NSXMLElement alloc] initWithName:@"option"];
   [node3 setAttributesAsDictionary:
-          [NSDictionary dictionaryWithObjectsAndKeys:
-                        @"text",                      @"id",
-                        @"-text-mode literal",        @"arg-set",
-                        @"Display static text",       @"_label",
-                        nil]];
+           @{ @"id":      @"text",
+              @"arg-set": @"-text-mode literal",
+              @"_label":  @"Display static text" }];
   [node3 setParent: node2];
   //[node3 release];
 
   node3 = [[NSXMLElement alloc] initWithName:@"option"];
   [node3 setAttributesAsDictionary:
-          [NSDictionary dictionaryWithObjectsAndKeys:
-                        @"url",                           @"id",
-                        @"Display the contents of a URL", @"_label",
-                        nil]];
+           @{ @"id":     @"url",                           
+              @"_label": @"Display the contents of a URL" }];
   [node3 setParent: node2];
   //[node3 release];
 
@@ -2143,13 +2142,12 @@ find_text_field_of_button (NSButton *button)
   //  <string id="textLiteral" _label="" arg-set="-text-literal %"/>
   node2 = [[NSXMLElement alloc] initWithName:@"string"];
   [node2 setAttributesAsDictionary:
-          [NSDictionary dictionaryWithObjectsAndKeys:
-                        @"textLiteral",        @"id",
-                        @"-text-literal %",    @"arg",
+           @{ @"id":     @"textLiteral",
+              @"arg":    @"-text-literal %",
 # ifdef USE_IPHONE
-                        @"Text to display",    @"_label",
+              @"_label": @"Text to display"
 # endif
-                        nil]];
+            }];
   [self makeTextField:node2 on:rgroup 
 # ifndef USE_IPHONE
         withLabel:NO
@@ -2166,17 +2164,15 @@ find_text_field_of_button (NSButton *button)
            toObject:[matrix cellAtRow:1 column:0]
            withKeyPath:@"value"
            options:nil];
-*/
+ */
 
 
 # ifndef USE_IPHONE
   //  <file id="textFile" _label="" arg-set="-text-file %"/>
   node2 = [[NSXMLElement alloc] initWithName:@"string"];
   [node2 setAttributesAsDictionary:
-          [NSDictionary dictionaryWithObjectsAndKeys:
-                        @"textFile",           @"id",
-                        @"-text-file %",       @"arg",
-                        nil]];
+           @{ @"id":  @"textFile",
+              @"arg": @"-text-file %" }];
   [self makeFileSelector:node2 on:rgroup
         dirsOnly:NO withLabel:NO editable:NO];
 # endif // !USE_IPHONE
@@ -2186,13 +2182,12 @@ find_text_field_of_button (NSButton *button)
   //  <string id="textURL" _label="" arg-set="text-url %"/>
   node2 = [[NSXMLElement alloc] initWithName:@"string"];
   [node2 setAttributesAsDictionary:
-          [NSDictionary dictionaryWithObjectsAndKeys:
-                        @"textURL",            @"id",
-                        @"-text-url %",        @"arg",
+           @{ @"id":     @"textURL",            
+              @"arg":    @"-text-url %",
 # ifdef USE_IPHONE
-                        @"URL to display",     @"_label",
+              @"_label": @"URL to display",     
 # endif
-                        nil]];
+            }];
   [self makeTextField:node2 on:rgroup 
 # ifndef USE_IPHONE
         withLabel:NO
@@ -2208,10 +2203,9 @@ find_text_field_of_button (NSButton *button)
     //  <string id="textProgram" _label="" arg-set="text-program %"/>
     node2 = [[NSXMLElement alloc] initWithName:@"string"];
     [node2 setAttributesAsDictionary:
-            [NSDictionary dictionaryWithObjectsAndKeys:
-                          @"textProgram",        @"id",
-                          @"-text-program %",    @"arg",
-                          nil]];
+             @{ @"id":   @"textProgram",
+                 @"arg": @"-text-program %",
+              }];
     [self makeTextField:node2 on:rgroup withLabel:NO horizontal:NO];
   }
 
@@ -2299,29 +2293,26 @@ find_text_field_of_button (NSButton *button)
 
   node2 = [[NSXMLElement alloc] initWithName:@"boolean"];
   [node2 setAttributesAsDictionary:
-          [NSDictionary dictionaryWithObjectsAndKeys:
-                        @"grabDesktopImages",   @"id",
-                        @ SCREENS,              @"_label",
-                        @"-no-grab-desktop",    @"arg-unset",
-                        nil]];
+           @{ @"id":        @"grabDesktopImages",
+              @"_label":    @ SCREENS,
+              @"arg-unset": @"-no-grab-desktop",
+            }];
   [self makeCheckbox:node2 on:parent];
 
   node2 = [[NSXMLElement alloc] initWithName:@"boolean"];
   [node2 setAttributesAsDictionary:
-          [NSDictionary dictionaryWithObjectsAndKeys:
-                        @"chooseRandomImages",    @"id",
-                        @ PHOTOS,                 @"_label",
-                        @"-choose-random-images", @"arg-set",
-                        nil]];
+           @{ @"id":      @"chooseRandomImages",
+              @"_label":  @ PHOTOS,
+              @"arg-set": @"-choose-random-images",
+            }];
   [self makeCheckbox:node2 on:parent];
 
   node2 = [[NSXMLElement alloc] initWithName:@"string"];
   [node2 setAttributesAsDictionary:
-          [NSDictionary dictionaryWithObjectsAndKeys:
-                        @"imageDirectory",     @"id",
-                        @"Images from:",       @"_label",
-                        @"-image-directory %", @"arg",
-                        nil]];
+           @{ @"id":     @"imageDirectory",
+              @"_label": @"Images from:",
+              @"arg":    @"-image-directory %",
+            }];
   [self makeFileSelector:node2 on:parent
         dirsOnly:YES withLabel:YES editable:YES];
 
@@ -2342,6 +2333,106 @@ find_text_field_of_button (NSButton *button)
   [lab2 setFrameOrigin:r2.origin];
   [lab2 release];
 # endif // USE_IPHONE
+}
+
+
+- (void) makeUpdaterControlBox:(NSXMLNode *)node on:(NSView *)parent
+{
+# ifndef USE_IPHONE
+  /*
+    [x]  Check for Updates  [ Monthly ]
+
+  <hgroup>
+   <boolean id="automaticallyChecksForUpdates"
+            _label="Automatically check for updates"
+            arg-unset="-no-automaticallyChecksForUpdates" />
+   <select id="updateCheckInterval">
+    <option="hourly"  _label="Hourly" arg-set="-updateCheckInterval 3600"/>
+    <option="daily"   _label="Daily"  arg-set="-updateCheckInterval 86400"/>
+    <option="weekly"  _label="Weekly" arg-set="-updateCheckInterval 604800"/>
+    <option="monthly" _label="Monthly" arg-set="-updateCheckInterval 2629800"/>
+   </select>
+  </hgroup>
+   */
+
+  // <hgroup>
+
+  NSRect rect;
+  rect.size.width = rect.size.height = 1;
+  rect.origin.x = rect.origin.y = 0;
+  NSView *group = [[NSView alloc] initWithFrame:rect];
+
+  NSXMLElement *node2;
+
+  // <boolean ...>
+
+  node2 = [[NSXMLElement alloc] initWithName:@"boolean"];
+  [node2 setAttributesAsDictionary:
+           @{ @"id":        @SUSUEnableAutomaticChecksKey,
+              @"_label":    @"Automatically check for updates",
+              @"arg-unset": @"-no-" SUSUEnableAutomaticChecksKey,
+            }];
+  [self makeCheckbox:node2 on:group];
+
+  // <select ...>
+
+  node2 = [[NSXMLElement alloc] initWithName:@"select"];
+  [node2 setAttributesAsDictionary:
+           @{ @"id": @SUScheduledCheckIntervalKey }];
+
+  //   <option ...>
+
+  NSXMLNode *node3 = [[NSXMLElement alloc] initWithName:@"option"];
+  [node3 setAttributesAsDictionary:
+           @{ @"id":      @"hourly",
+              @"arg-set": @"-" SUScheduledCheckIntervalKey " 3600",
+              @"_label":  @"Hourly" }];
+  [node3 setParent: node2];
+  //[node3 release];
+
+  node3 = [[NSXMLElement alloc] initWithName:@"option"];
+  [node3 setAttributesAsDictionary:
+           @{ @"id":      @"daily",
+              @"arg-set": @"-" SUScheduledCheckIntervalKey " 86400",
+              @"_label":  @"Daily" }];
+  [node3 setParent: node2];
+  //[node3 release];
+
+  node3 = [[NSXMLElement alloc] initWithName:@"option"];
+  [node3 setAttributesAsDictionary:
+           @{ @"id": @"weekly",
+           // @"arg-set": @"-" SUScheduledCheckIntervalKey " 604800",
+              @"_label": @"Weekly",
+            }];
+  [node3 setParent: node2];
+  //[node3 release];
+
+  node3 = [[NSXMLElement alloc] initWithName:@"option"];
+  [node3 setAttributesAsDictionary:
+           @{ @"id":      @"monthly",
+              @"arg-set": @"-" SUScheduledCheckIntervalKey " 2629800",
+              @"_label":  @"Monthly",
+             }];
+  [node3 setParent: node2];
+  //[node3 release];
+
+  // </option>
+  [self makeOptionMenu:node2 on:group];
+
+  // </hgroup>
+  layout_group (group, TRUE);
+
+  rect.size.width = rect.size.height = 0;
+  NSBox *box = [[NSBox alloc] initWithFrame:rect];
+  [box setTitlePosition:NSNoTitle];
+  [box setBorderType:NSNoBorder];
+  [box setContentViewMargins:rect.size];
+  [box setContentView:group];
+  [box sizeToFit];
+
+  [self placeChild:box on:parent];
+
+# endif // !USE_IPHONE
 }
 
 
@@ -2581,6 +2672,9 @@ layout_group (NSView *group, BOOL horiz_p)
   } else if ([name isEqualToString:@"xscreensaver-image"]) {
     [self makeImageLoaderControlBox:node on:parent];
 
+  } else if ([name isEqualToString:@"xscreensaver-updater"]) {
+    [self makeUpdaterControlBox:node on:parent];
+
   } else {
     NSAssert1 (0, @"unknown tag: %@", name);
   }
@@ -2712,14 +2806,14 @@ fix_contentview_size (NSView *parent)
   }
   
 /*
-Bad:
- parent: 420 x 541 @   0   0
- text:   380 x 100 @  20  22  miny=-501
+    Bad:
+     parent: 420 x 541 @   0   0
+     text:   380 x 100 @  20  22  miny=-501
 
-Good:
- parent: 420 x 541 @   0   0
- text:   380 x 100 @  20  50  miny=-501
-*/
+    Good:
+     parent: 420 x 541 @   0   0
+     text:   380 x 100 @  20  50  miny=-501
+ */
 
   // #### WTF2: See "WTF" above.  If the text field is off the screen,
   //      move it up.  We need this on 10.6 but not on 10.5.  Auugh.
@@ -2889,7 +2983,8 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   fix_contentview_size (panel);
 
   NSView *root = wrap_with_buttons (parent, panel);
-  [userDefaultsController setAppliesImmediately:NO];
+  [userDefaultsController   setAppliesImmediately:NO];
+  [globalDefaultsController setAppliesImmediately:NO];
 
   [panel setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
 
@@ -3158,7 +3253,8 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   NSArray *item = [[b items] objectAtIndex: [b index]];
   NSString *pref_key = [item objectAtIndex:1];
   NSObject *pref_val = [item objectAtIndex:2];
-  NSObject *current = [userDefaultsController objectForKey:pref_key];
+
+  NSObject *current = [[self controllerForKey:pref_key] objectForKey:pref_key];
 
   // Convert them both to strings and compare those, so that
   // we don't get screwed by int 1 versus string "1".
@@ -3421,6 +3517,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 - (id)initWithXML: (NSData *) xml_data
           options: (const XrmOptionDescRec *) _opts
        controller: (NSUserDefaultsController *) _prefs
+ globalController: (NSUserDefaultsController *) _globalPrefs
          defaults: (NSDictionary *) _defs
 {
 # ifndef USE_IPHONE
@@ -3434,19 +3531,24 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   // instance variables
   opts = _opts;
   defaultOptions = _defs;
-  userDefaultsController = _prefs;
-  [userDefaultsController retain];
+  userDefaultsController   = [_prefs retain];
+  globalDefaultsController = [_globalPrefs retain];
 
   NSXMLParser *xmlDoc = [[NSXMLParser alloc] initWithData:xml_data];
 
   if (!xmlDoc) {
-    NSAssert1 (0, @"XML Error: %@", xml_data);
+    NSAssert1 (0, @"XML Error: %@",
+               [[NSString alloc] initWithData:xml_data
+                                 encoding:NSUTF8StringEncoding]);
     return nil;
   }
   [xmlDoc setDelegate:self];
   if (! [xmlDoc parse]) {
     NSError *err = [xmlDoc parserError];
-    NSAssert2 (0, @"XML Error: %@: %@", xml_data, err);
+    NSAssert2 (0, @"XML Error: %@: %@",
+               [[NSString alloc] initWithData:xml_data
+                                 encoding:NSUTF8StringEncoding],
+               err);
     return nil;
   }
 
@@ -3465,6 +3567,7 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 {
   [saver_name release];
   [userDefaultsController release];
+  [globalDefaultsController release];
 # ifdef USE_IPHONE
   [controls release];
   [pref_keys release];

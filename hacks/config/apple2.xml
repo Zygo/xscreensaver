@@ -4,15 +4,15 @@
 
  <command arg="-root"/>
 
- <select id="mode">
-  <option id="random"    _label="Choose display mode randomly"/>
-  <option id="text"      _label="Display scrolling text" arg-set="-mode text"/>
-  <option id="slideshow" _label="Display images"         arg-set="-mode slideshow"/>
-  <option id="basic"     _label="Run basic programs"     arg-set="-mode basic"/>
- </select>
-
  <hgroup>
   <vgroup>
+   <select id="mode">
+    <option id="random"    _label="Choose display mode randomly"/>
+    <option id="text"      _label="Display scrolling text" arg-set="-mode text"/>
+    <option id="slideshow" _label="Display images"         arg-set="-mode slideshow"/>
+    <option id="basic"     _label="Run basic programs"     arg-set="-mode basic"/>
+   </select>
+
    <xscreensaver-text />
   </vgroup>
   <vgroup>
@@ -22,10 +22,9 @@
 
    <xscreensaver-image />
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <xscreensaver-updater />
   </vgroup>
- </hgroup>
 
-  <hgroup>
    <vgroup>
     <number id="tvcolor" type="slider" arg="-tv-color %"
             _label="Color Knob" _low-label="Low" _high-label="High"
@@ -33,8 +32,6 @@
     <number id="tvtint" type="slider" arg="-tv-tint %"
             _label="Tint Knob" _low-label="Low" _high-label="High"
             low="0" high="100" default="5"/>
-   </vgroup>
-   <vgroup>
     <number id="tvbrightness" type="slider" arg="-tv-brightness %"
             _label="Brightness Knob" _low-label="Low" _high-label="High"
             low="0" high="200" default="150"/>

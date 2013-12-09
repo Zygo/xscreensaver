@@ -21,6 +21,8 @@
   <boolean id="wire"    _label="Wireframe"   arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a swirling, falling tunnel of reflective slabs. They fade from
 hue to hue.

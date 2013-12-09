@@ -45,6 +45,8 @@
 
   <file id="molecule" _label="PDB file or directory" arg="-molecule %"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws several different representations of molecules.  Some common
 molecules are built in, and it can also read PDB (Protein Data Bank)

@@ -37,6 +37,7 @@ SRC=`dirname "$PACKAGE_PATH"`/"Screen Savers"
 DST1="$DSTVOLUME/Library/Screen Savers"
 DST2="$DSTVOLUME/Applications"
 PU="$DSTVOLUME/$HOME/Library/Screen Savers"
+UPDATER="XScreenSaverUpdater.app"
 
 function error() {
   echo "Error: $@" >&2
@@ -66,12 +67,13 @@ mkdir -p "$DST1" || error "Unable to create directory $DST1/"
 mkdir -p "$DST2" || error "Unable to create directory $DST2/"
 
 # Install the savers in /System/Library/Screen Savers/
+# Plus the updater.
 #
-for f in *.saver ; do
+for f in *.saver "$UPDATER" ; do
   DD="$DST1/$f"
   echo "Installing $DD" >&2
   rm -rf "$DD" || error "Unable to delete $DD"
-  cp -pr "$f" "$DST1/" || error "Unable to install $f in $DST1/"
+  cp -pR "$f" "$DST1/" || error "Unable to install $f in $DST1/"
   xattr -r -d com.apple.quarantine "$DD"
 
   # If this saver is also installed in the per-user directory,
@@ -84,13 +86,16 @@ done
 
 
 # Install the apps in /Applications/
+# But not the updater.
 #
 for f in *.app ; do
-  DD="$DST2/$f"
-  echo "Installing $DD" >&2
-  rm -rf "$DD" || error "Unable to delete $DD"
-  cp -pr "$f" "$DST2/" || error "Unable to install $f in $DST2/"
-  xattr -r -d com.apple.quarantine "$DD"
+  if [ "$f" != "$UPDATER" ]; then
+    DD="$DST2/$f"
+    echo "Installing $DD" >&2
+    rm -rf "$DD" || error "Unable to delete $DD"
+    cp -pR "$f" "$DST2/" || error "Unable to install $f in $DST2/"
+    xattr -r -d com.apple.quarantine "$DD"
+  fi
 done
 
 # Launch System Preferences with the Screen Saver pane selected.

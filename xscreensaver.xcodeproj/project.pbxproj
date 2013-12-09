@@ -281,6 +281,7 @@
 			);
 			dependencies = (
 				AFCAD5F90992DFE00009617A /* PBXTargetDependency */,
+				AF36340118540D050086A439 /* PBXTargetDependency */,
 				AF480D60098EED6900FB32B8 /* PBXTargetDependency */,
 				AF480D5E098EED6900FB32B8 /* PBXTargetDependency */,
 				AF480D5C098EED6900FB32B8 /* PBXTargetDependency */,
@@ -356,6 +357,13 @@
 		AF1A17680D6D6EE3008AF328 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF1A177F0D6D6F3E008AF328 /* lcdscrub.c in Sources */ = {isa = PBXBuildFile; fileRef = AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */; };
 		AF1A17810D6D6F62008AF328 /* lcdscrub.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF1A17800D6D6F62008AF328 /* lcdscrub.xml */; };
+		AF1AD9E318500F9F00932759 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF1ADA141850132600932759 /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 29B97316FDCFA39411CA2CEA /* main.m */; };
+		AF1ADA161850157400932759 /* Updater.xib in Resources */ = {isa = PBXBuildFile; fileRef = AF1ADA151850157400932759 /* Updater.xib */; };
+		AF1ADA181850180E00932759 /* Sparkle.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF1ADA171850180E00932759 /* Sparkle.framework */; };
+		AF1ADA1A1850186B00932759 /* Sparkle.framework in CopyFiles */ = {isa = PBXBuildFile; fileRef = AF1ADA171850180E00932759 /* Sparkle.framework */; };
+		AF1ADA1B18501B3D00932759 /* SaverRunner.icns in Resources */ = {isa = PBXBuildFile; fileRef = AF2D522513E954A0002AA818 /* SaverRunner.icns */; };
+		AF1ADA1F18504A4F00932759 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
 		AF1FD713158FF96500C40F17 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AF1FD714158FF96500C40F17 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
 		AF1FD715158FF96500C40F17 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
@@ -1493,6 +1501,8 @@
 		AF35E8900E63823600691F2F /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF35EB240E63829600691F2F /* jigsaw.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258CF0988A468000655EE /* jigsaw.xml */; };
 		AF35EB260E6382BA00691F2F /* jigsaw.c in Sources */ = {isa = PBXBuildFile; fileRef = AF35EB250E6382BA00691F2F /* jigsaw.c */; };
+		AF3633FC18530DD90086A439 /* sparkle_dsa_pub.pem in Resources */ = {isa = PBXBuildFile; fileRef = AF3633F918530DD90086A439 /* sparkle_dsa_pub.pem */; };
+		AF3633FD18530DD90086A439 /* Updater.m in Sources */ = {isa = PBXBuildFile; fileRef = AF3633FB18530DD90086A439 /* Updater.m */; };
 		AF39483E15A164680000FFCD /* jigsaw.c in Sources */ = {isa = PBXBuildFile; fileRef = AF35EB250E6382BA00691F2F /* jigsaw.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AF39483F15A1647A0000FFCD /* jigsaw.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258CF0988A468000655EE /* jigsaw.xml */; };
 		AF3C714B0D624BF50030CC0D /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
@@ -3318,6 +3328,13 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF35E88A0E63823600691F2F;
 			remoteInfo = Jigsaw;
+		};
+		AF36340018540D050086A439 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF1AD9E118500F9F00932759;
+			remoteInfo = XScreenSaverUpdater;
 		};
 		AF3C71470D624BF50030CC0D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -6380,6 +6397,19 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		AF1ADA191850185F00932759 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				AF1ADA1A1850186B00932759 /* Sparkle.framework in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		089C165DFE840E0CC02AAC07 /* InfoPlist.strings */ = {isa = PBXFileReference; fileEncoding = 10; lastKnownFileType = text.plist.strings; name = InfoPlist.strings; path = OSX/English.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = /System/Library/Frameworks/Cocoa.framework; sourceTree = "<absolute>"; };
@@ -6420,6 +6450,13 @@
 		AF1A17730D6D6EE3008AF328 /* LCDscrub.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = LCDscrub.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = lcdscrub.c; path = hacks/lcdscrub.c; sourceTree = "<group>"; };
 		AF1A17800D6D6F62008AF328 /* lcdscrub.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = lcdscrub.xml; sourceTree = "<group>"; };
+		AF1AD9E218500F9F00932759 /* XScreenSaverUpdater.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = XScreenSaverUpdater.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF1AD9E518500F9F00932759 /* AppKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };
+		AF1AD9E618500FA000932759 /* CoreData.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };
+		AF1AD9E718500FA000932759 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		AF1ADA0118500FA100932759 /* XCTest.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = XCTest.framework; path = Library/Frameworks/XCTest.framework; sourceTree = DEVELOPER_DIR; };
+		AF1ADA151850157400932759 /* Updater.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; name = Updater.xib; path = OSX/Updater.xib; sourceTree = SOURCE_ROOT; };
+		AF1ADA171850180E00932759 /* Sparkle.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Sparkle.framework; path = OSX/Sparkle.framework; sourceTree = "<group>"; };
 		AF241F81107C38DF00046A84 /* dropshadow.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = dropshadow.c; path = hacks/glx/dropshadow.c; sourceTree = "<group>"; };
 		AF241F82107C38DF00046A84 /* dropshadow.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = dropshadow.h; path = hacks/glx/dropshadow.h; sourceTree = "<group>"; };
 		AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
@@ -6448,6 +6485,10 @@
 		AF3582211433318500E09C51 /* tronbit.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = tronbit.xml; sourceTree = "<group>"; };
 		AF35E8A00E63823600691F2F /* Jigsaw.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Jigsaw.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF35EB250E6382BA00691F2F /* jigsaw.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = jigsaw.c; path = hacks/glx/jigsaw.c; sourceTree = "<group>"; };
+		AF3633F918530DD90086A439 /* sparkle_dsa_pub.pem */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = sparkle_dsa_pub.pem; path = OSX/sparkle_dsa_pub.pem; sourceTree = "<group>"; };
+		AF3633FA18530DD90086A439 /* Updater.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Updater.h; path = OSX/Updater.h; sourceTree = "<group>"; };
+		AF3633FB18530DD90086A439 /* Updater.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Updater.m; path = OSX/Updater.m; sourceTree = "<group>"; };
+		AF3633FE18530DFF0086A439 /* Updater.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Updater.plist; path = OSX/Updater.plist; sourceTree = "<group>"; };
 		AF3C71590D624BF50030CC0D /* Hypnowheel.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Hypnowheel.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF3C715D0D624C600030CC0D /* hypnowheel.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = hypnowheel.c; path = hacks/glx/hypnowheel.c; sourceTree = "<group>"; };
 		AF3C715F0D624C7C0030CC0D /* hypnowheel.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = hypnowheel.xml; sourceTree = "<group>"; };
@@ -7359,6 +7400,16 @@
 				AF1FD7BD158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD7BE158FF96500C40F17 /* Carbon.framework in Frameworks */,
 				AF7836C317DBA580003B9FC0 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF1AD9DF18500F9F00932759 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF1ADA181850180E00932759 /* Sparkle.framework in Frameworks */,
+				AF1ADA1F18504A4F00932759 /* ScreenSaver.framework in Frameworks */,
+				AF1AD9E318500F9F00932759 /* Cocoa.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -10580,6 +10631,7 @@
 				AFDA65A1178A52B70070D24B /* UnknownPleasures.saver */,
 				AFB591BA178B812C00EA4005 /* Hexadrop.saver */,
 				AFF3C9FB17CCAC440028F240 /* Geodesic.saver */,
+				AF1AD9E218500F9F00932759 /* XScreenSaverUpdater.app */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -10589,6 +10641,7 @@
 			children = (
 				AF480AB9098C66E200FB32B8 /* SaverRunner */,
 				080E96DDFE201D6D7F000001 /* libjwxyz */,
+				AF1AD9E818500FA000932759 /* Updater */,
 				AFE1FD520981E35400F7970E /* Utils */,
 				AFE1FD610981E3E700F7970E /* Hacks */,
 				AFC258670988A468000655EE /* config */,
@@ -10626,13 +10679,17 @@
 		29B97323FDCFA39411CA2CEA /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				AF1ADA171850180E00932759 /* Sparkle.framework */,
 				AF78377C17DBA85D003B9FC0 /* libz.dylib */,
 				AF78369617DB9F25003B9FC0 /* libz.dylib */,
 				AFEB9C3E1590056A003974F3 /* CoreGraphics.framework */,
 				AFEB9C3F1590056A003974F3 /* QuartzCore.framework */,
+				AF1AD9E718500FA000932759 /* Foundation.framework */,
 				AFEB9C3C15900558003974F3 /* Foundation.framework */,
 				AFEB9C3A1590054B003974F3 /* OpenGLES.framework */,
 				AFEB9C3815900514003974F3 /* UIKit.framework */,
+				AF1AD9E618500FA000932759 /* CoreData.framework */,
+				AF1AD9E518500F9F00932759 /* AppKit.framework */,
 				AF0F46DC104E1809000A929C /* AppKit.framework */,
 				AF976ED30989BF59001F8B92 /* ScreenSaver.framework */,
 				AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */,
@@ -10644,8 +10701,21 @@
 				AF480FE70990375900FB32B8 /* AGL.framework */,
 				AF84FD4109B1209E00F3AB06 /* GLUT.framework */,
 				AF48112B0990A2C700FB32B8 /* Carbon.framework */,
+				AF1ADA0118500FA100932759 /* XCTest.framework */,
 			);
 			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		AF1AD9E818500FA000932759 /* Updater */ = {
+			isa = PBXGroup;
+			children = (
+				AF3633F918530DD90086A439 /* sparkle_dsa_pub.pem */,
+				AF3633FA18530DD90086A439 /* Updater.h */,
+				AF3633FB18530DD90086A439 /* Updater.m */,
+				AF3633FE18530DFF0086A439 /* Updater.plist */,
+				AF1ADA151850157400932759 /* Updater.xib */,
+			);
+			name = Updater;
 			sourceTree = "<group>";
 		};
 		AF480AB9098C66E200FB32B8 /* SaverRunner */ = {
@@ -11482,6 +11552,25 @@
 			productName = LCDscrub;
 			productReference = AF1A17730D6D6EE3008AF328 /* LCDscrub.saver */;
 			productType = "com.apple.product-type.bundle";
+		};
+		AF1AD9E118500F9F00932759 /* XScreenSaverUpdater */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF1ADA0E18500FA200932759 /* Build configuration list for PBXNativeTarget "XScreenSaverUpdater" */;
+			buildPhases = (
+				AF1AD9DE18500F9F00932759 /* Sources */,
+				AF1AD9DF18500F9F00932759 /* Frameworks */,
+				AF1AD9E018500F9F00932759 /* Resources */,
+				AF1ADA191850185F00932759 /* CopyFiles */,
+				AF1ADA1E18501DC200932759 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = XScreenSaverUpdater;
+			productName = XScreenSaverUpdater;
+			productReference = AF1AD9E218500F9F00932759 /* XScreenSaverUpdater.app */;
+			productType = "com.apple.product-type.application";
 		};
 		AF2D4D7F13E902F5002AA818 /* Phosphor-iOS */ = {
 			isa = PBXNativeTarget;
@@ -16029,7 +16118,7 @@
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0460;
+				LastUpgradeCheck = 0500;
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "xscreensaver" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -16041,6 +16130,7 @@
 				French,
 				German,
 				en,
+				Base,
 			);
 			mainGroup = 29B97314FDCFA39411CA2CEA /* xscreensaver */;
 			projectDirPath = "";
@@ -16286,6 +16376,7 @@
 				AFD5709B0996B88E00BA26F7 /* Worm */,
 				AF9771D60989DC4A001F8B92 /* SaverTester */,
 				AF918977158FC00A002B5D1E /* XScreenSaver-iOS */,
+				AF1AD9E118500F9F00932759 /* XScreenSaverUpdater */,
 			);
 		};
 /* End PBXProject section */
@@ -16329,6 +16420,16 @@
 			files = (
 				AF1A17660D6D6EE3008AF328 /* xscreensaver-getimage-file in Resources */,
 				AF1A17810D6D6F62008AF328 /* lcdscrub.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF1AD9E018500F9F00932759 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF1ADA1B18501B3D00932759 /* SaverRunner.icns in Resources */,
+				AF3633FC18530DD90086A439 /* sparkle_dsa_pub.pem in Resources */,
+				AF1ADA161850157400932759 /* Updater.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -20016,6 +20117,21 @@
 			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
 		};
+		AF1ADA1E18501DC200932759 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
 		AF2D51F413E94AC4002AA818 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
@@ -23532,6 +23648,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF1AD9DE18500F9F00932759 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF1ADA141850132600932759 /* main.m in Sources */,
+				AF3633FD18530DD90086A439 /* Updater.m in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF2D4D8513E902F5002AA818 /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -26150,6 +26275,11 @@
 			target = AF35E88A0E63823600691F2F /* Jigsaw */;
 			targetProxy = AF35E8A20E63825600691F2F /* PBXContainerItemProxy */;
 		};
+		AF36340118540D050086A439 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF1AD9E118500F9F00932759 /* XScreenSaverUpdater */;
+			targetProxy = AF36340018540D050086A439 /* PBXContainerItemProxy */;
+		};
 		AF3C71460D624BF50030CC0D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
@@ -28530,6 +28660,36 @@
 		AF1A17720D6D6EE3008AF328 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+			};
+			name = Release;
+		};
+		AF1ADA0F18500FA200932759 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.updater";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/jwz/src/xscreensaver/OSX,
+				);
+				INFOPLIST_FILE = "$(SRCROOT)/OSX/Updater.plist";
+				"OTHER_CFLAGS[sdk=macosx*]" = "-fno-objc-gc";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
+			};
+			name = Debug;
+		};
+		AF1ADA1018500FA200932759 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.updater";
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					/Users/jwz/src/xscreensaver/OSX,
+				);
+				INFOPLIST_FILE = "$(SRCROOT)/OSX/Updater.plist";
+				"OTHER_CFLAGS[sdk=macosx*]" = "-fno-objc-gc";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
 		};
@@ -34618,6 +34778,15 @@
 			buildConfigurations = (
 				AF1A17710D6D6EE3008AF328 /* Debug */,
 				AF1A17720D6D6EE3008AF328 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF1ADA0E18500FA200932759 /* Build configuration list for PBXNativeTarget "XScreenSaverUpdater" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF1ADA0F18500FA200932759 /* Debug */,
+				AF1ADA1018500FA200932759 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

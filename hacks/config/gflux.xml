@@ -49,6 +49,8 @@
 
   <xscreensaver-image />
 
+  <xscreensaver-updater />
+
   <_description>
 Draws undulating waves on a rotating grid.
 

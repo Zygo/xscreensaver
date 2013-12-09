@@ -11,6 +11,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a few views of a few ants walking around in a simple maze. 
 

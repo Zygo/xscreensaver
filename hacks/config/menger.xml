@@ -35,6 +35,8 @@
   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws the recursive Menger Gasket, a cube-based fractal object
 analagous to the Sierpinski Tetrahedron.

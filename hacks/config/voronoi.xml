@@ -42,6 +42,8 @@
    </vgroup>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 Draws a randomly-colored Voronoi tessellation, and periodically zooms 
 in and adds new points.  The existing points also wander around.

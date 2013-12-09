@@ -21,6 +21,8 @@
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws what looks like a spinning, deforming balloon with
 varying-sized spots painted on its invisible surface.

@@ -54,6 +54,8 @@
    </vgroup>
   </hgroup>
 
+  <xscreensaver-updater />
+
   <_description>
 This draws the recursive Hilbert space-filling curve, in both 2D and
 3D variants.  It incrementally animates the growth and recursion to

@@ -34,9 +34,13 @@
    </vgroup>
   </hgroup>
 
-  <boolean id="random" _label="Various ball sizes"    arg-unset="-no-random"/>
-  <boolean id="shake"  _label="Shake box"             arg-unset="-no-shake"/>
-  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <hgroup>
+   <boolean id="random" _label="Various ball sizes"    arg-unset="-no-random"/>
+   <boolean id="shake"  _label="Shake box"             arg-unset="-no-shake"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
 
   <_description>
 Models the physics of bouncing balls, or of particles in a gas or
