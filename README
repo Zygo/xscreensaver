@@ -38,12 +38,15 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.25	* Try harder to bypass Quarrantine and Gatekeeper in OSX installer.
+	* Some files were missing from the tarball.
+
 5.24	* Added "Automatically check for updates" option on OSX.
 	* Updated feed-loading for recent Flickr changes.
 	* Updated `webcollage' for recent Google changes.
-        * Added Instagram and Bing as `webcollage' image sources.
-        * Updated to latest autoconf.
-        * Bug fixes.
+	* Added Instagram and Bing as `webcollage' image sources.
+	* Updated to latest autoconf.
+	* Bug fixes.
 
 5.23	* New hack, `geodesic'.
 	* iOS and OSX: huge XCopyArea performance improvements.

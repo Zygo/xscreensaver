@@ -629,7 +629,7 @@ pipe_cb (XtPointer closure, int *source, XtInputId *id)
       /* Replace slashes with newlines */
       /* while (dot = strchr(buf, '/')) *dot = '\n'; */
       /* Replace slashes with spaces */
-      while ((dot = strchr(buf, '/'))) *dot = ' ';
+      /* while ((dot = strchr(buf, '/'))) *dot = ' '; */
     }
 
   if (absfile) free (absfile);

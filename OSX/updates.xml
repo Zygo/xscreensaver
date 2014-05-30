@@ -8,6 +8,17 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 5.24</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.24.dmg</link>
+   <description><![CDATA[&bull; Added "Automatically check for updates" option on OSX. <BR>&bull; Updated feed-loading for recent Flickr changes. <BR>&bull; Updated `webcollage' for recent Google changes. <BR>&bull; Added Instagram and Bing as `webcollage' image sources. <BR>&bull; Updated to latest autoconf. <BR>&bull; Bug fixes.]]></description>
+   <pubDate>Sat, 07 Dec 2013 19:06:56 -0800</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.24.dmg"
+    sparkle:version="5.24"
+    sparkle:dsaSignature="MCwCFCIlSSS7+eSfv1YkqIppcyIqTeU7AhRpDCQEQmI61UWhHInQGwduI+Mr8A=="
+    length="50258845"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 5.23</title>
    <link>http://www.jwz.org/xscreensaver/xscreensaver-5.23.dmg</link>
    <description><![CDATA[&bull; New hack, `geodesic'. <BR>&bull; iOS and OSX: huge XCopyArea performance improvements. <BR>&bull; More heuristics for using RSS feeds as image sources. <BR>&bull; Improved Wikipedia parser. <BR>&bull; Updated `webcollage' for recent Flickr changes. <BR>&bull; Added Android to `bsod'. <BR>&bull; OSX: Added a real installer. <BR>&bull; iOS and OSX: fixed a font-metrics bug. <BR>&bull; iOS: Fixed aspect ratio bug in non-rotating apps when launched in landscape mode. <BR>&bull; Made `quasicrystal' work on weak graphics cards. <BR>&bull; iOS: fixed `ifs'. <BR>&bull; Better compression on icons, plists and XML files: smaller distribution and installation footprint. <BR>&bull; Reverted that DEACTIVATE change. Bad idea. <BR>&bull; `Phosphor' now supports amber as well as green.]]></description>
@@ -16,17 +27,6 @@
     sparkle:version="5.23"
     sparkle:dsaSignature="MC0CFQCn+J0qyxUxXj8qTqIzccyEjv90uQIURPhd0yT6PdDlQnXYGKhF30PvsLo="
     length="47275494"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 5.22</title>
-   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.22.dmg</link>
-   <description><![CDATA[&bull; New hacks, `kaleidocycle', `quasicrystal', `unknownpleasures' and `hexadrop'. <BR>&bull; Performance improvements for `interference'. <BR>&bull; Fixed possible crashes in `apple2', `maze', `pacman', `polyominoes', `fireworkx', `engine'. <BR>&bull; Fix for `bumps' in 64 bit. <BR>&bull; Fixed preferences crash on old iOS 5 devices. <BR>&bull; Fixed "Shake to Randomize"; display name of saver. <BR>&bull; Fixed weirdness with "Frame Rate" sliders on iOS. <BR>&bull; Fixed rotation problems with `pacman', `decayscreen'. <BR>&bull; Better dragging in `fluidballs'. <BR>&bull; Ignore rotation in hacks that don't benefit from it. <BR>&bull; Ignore DEACTIVATE messages when locked, instead of popping up the password dialog box.]]></description>
-   <pubDate>Tue, 16 Jul 2013 02:26:09 -0700</pubDate>
-   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.22.dmg"
-    sparkle:version="5.22"
-    sparkle:dsaSignature="MCwCFFNRbFFvz1fSWSY5kLFncywfabyHAhR3HBQCPMiDPc1UtSZDv/kT935sFA=="
-    length="74756948"
     type="application/octet-stream" />
   </item>
   <item>

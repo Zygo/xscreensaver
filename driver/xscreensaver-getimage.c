@@ -1719,7 +1719,7 @@ get_image (Screen *screen,
         /* Replace slashes with newlines */
         /* while ((dot = strchr(f2, '/'))) *dot = '\n'; */
         /* Replace slashes with spaces */
-        while ((dot = strchr(f2, '/'))) *dot = ' ';
+        /* while ((dot = strchr(f2, '/'))) *dot = ' '; */
 
         XChangeProperty (dpy, window, a, XA_STRING, 8, PropModeReplace, 
                          (unsigned char *) f2, strlen(f2));

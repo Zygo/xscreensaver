@@ -111,10 +111,11 @@ updates.xml::
 
 test_sig::
 	@								    \
-  U=../version.h ;							    \
+  U=../utils/version.h ;						    \
   V=`sed -n 's/[^0-9]*\([0-9]\.[0-9][^. ;]*\).*/\1/p' < $$U` ;		    \
-  V=`echo $$V | sed 's/\.//g'` ;					    \
-  ZIP="../archive/DaliClock-$$V.dmg" ;					    \
+  BASE="xscreensaver-$$V" ;						    \
+  OUTDIR="../archive" ;							    \
+  DMG="$$OUTDIR/$$BASE.dmg" ;						    \
   SIG=`sed -n 's/^.*dsaSignature="\(.*\)".*/\1/p' updates.xml` ;	    \
   PUB="sparkle_dsa_pub.pem" ;						    \
   NN="t.$$$$" ;								    \
@@ -124,7 +125,7 @@ test_sig::
   echo "$$SIG " | base64 -D  > "$$SIGB" ;				    \
   set -e ;								    \
   for OPENSSL in /usr/bin/openssl /opt/local/bin/openssl ; do		    \
-    $$OPENSSL dgst -sha1 -binary  < "$$ZIP"  > "$$HASH" ;		    \
+    $$OPENSSL dgst -sha1 -binary  < "$$DMG"  > "$$HASH" ;		    \
     /bin/echo -n "$$OPENSSL	`$$OPENSSL version`:	" ;		    \
     $$OPENSSL dgst -dss1 -verify "$$PUB" -signature "$$SIGB" "$$HASH" ;	    \
   done ;								    \

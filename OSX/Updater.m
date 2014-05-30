@@ -29,6 +29,8 @@
   NSUserDefaults *defs = [NSUserDefaults standardUserDefaults];
   [defs registerDefaults:UPDATER_DEFAULTS];
 
+  [updater setDelegate:self];
+
   // Launch the updater thread.
   [updater checkForUpdatesInBackground];
 
@@ -40,6 +42,30 @@
            userInfo:updater
            repeats:YES];
 }
+
+// Delegate method that lets us append extra info to the system-info URL.
+//
+- (NSArray *) feedParametersForUpdater:(SUUpdater *)updater
+                  sendingSystemProfile:(BOOL)sending
+{
+  // Get the name of the saver that invoked us, and include that in the
+  // system info.
+  NSString *saver = [[[NSProcessInfo 
+                        processInfo]environment]objectForKey:
+                        @"XSCREENSAVER_CLASSPATH"];
+  if (! saver) return nil;
+  NSString *head = @"org.jwz.xscreensaver.";
+  if ([saver hasPrefix:head])
+    saver = [saver substringFromIndex:[head length]];
+
+  return @[ @{ @"key":		@"saver",
+               @"value":	saver,
+               @"displayKey":	@"Current Saver",
+               @"displayValue":	saver
+             }
+          ];
+}
+
 
 - (void) exitWhenDone:(NSTimer *)timer
 {

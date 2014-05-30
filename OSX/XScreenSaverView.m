@@ -1930,18 +1930,60 @@ double current_device_rotation (void)
   static BOOL checked_p = NO;
   if (checked_p) return;
   checked_p = YES;
+
+  // If it's off, don't bother running the updater.  Otherwise, the
+  // updater will decide if it's time to hit the network.
   if (! get_boolean_resource (xdpy,
                               SUSUEnableAutomaticChecksKey,
                               SUSUEnableAutomaticChecksKey))
-    return;  // If it's off, don't bother running the updater.
+    return;
 
-  // Otherwise, the updater will decide if it's time to hit the network.
-  NSString *updater = @"XScreenSaverUpdater";
-  if (! [[NSWorkspace sharedWorkspace]
-          launchApplication:updater showIcon:NO autolaunch:NO]) {
-    NSLog(@"Unable to launch %@", updater);
+  NSString *updater = @"XScreenSaverUpdater.app";
+
+  // There may be multiple copies of the updater: e.g., one in /Applications
+  // and one in the mounted installer DMG!  It's important that we run the
+  // one from the disk and not the DMG, so search for the right one.
+  //
+  NSWorkspace *workspace = [NSWorkspace sharedWorkspace];
+  NSBundle *bundle = [NSBundle bundleForClass:[self class]];
+  NSArray *search =
+    @[[[bundle bundlePath] stringByDeletingLastPathComponent],
+      [@"~/Library/Screen Savers" stringByExpandingTildeInPath],
+      @"/Library/Screen Savers",
+      @"/System/Library/Screen Savers",
+      @"/Applications",
+      @"/Applications/Utilities"];
+  NSString *app_path = nil;
+  for (NSString *dir in search) {
+    NSString *p = [dir stringByAppendingPathComponent:updater];
+    if ([[NSFileManager defaultManager] fileExistsAtPath:p]) {
+      app_path = p;
+      break;
+    }
   }
-# endif // USE_IPHONE
+
+  if (! app_path)
+    app_path = [workspace fullPathForApplication:updater];
+
+  if (app_path && [app_path hasPrefix:@"/Volumes/XScreenSaver "])
+    app_path = 0;  // The DMG version will not do.
+
+  if (!app_path) {
+    NSLog(@"Unable to find %@", updater);
+    return;
+  }
+
+  NSError *err = nil;
+  if (! [workspace launchApplicationAtURL:[NSURL fileURLWithPath:app_path]
+                   options:(NSWorkspaceLaunchWithoutAddingToRecents |
+                            NSWorkspaceLaunchWithoutActivation |
+                            NSWorkspaceLaunchAndHide)
+                   configuration:nil
+                   error:&err]) {
+    NSLog(@"Unable to launch %@: %@", updater, err);
+  }
+
+# endif // !USE_IPHONE
 }
 
 
