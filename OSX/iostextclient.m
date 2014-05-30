@@ -280,7 +280,7 @@ copy_rss_field (const char *s)
     s += 9;
     char *e = strstr (s, "]]");
     if (e) *e = 0;
-    int L = strlen (s);
+    unsigned long L = strlen (s);
     char *s2 = (char *) malloc (L+1);
     memcpy (s2, s, L+1);
     return s2;
@@ -307,10 +307,10 @@ pick_rss_field (const char *a, const char *b, const char *c, const char *d)
   char *b2 = copy_rss_field (b);
   char *c2 = copy_rss_field (c);
   char *d2 = copy_rss_field (d);
-  int al = a2 ? strlen(a2) : 0;
-  int bl = b2 ? strlen(b2) : 0;
-  int cl = c2 ? strlen(c2) : 0;
-  int dl = d2 ? strlen(d2) : 0;
+  unsigned long al = a2 ? strlen(a2) : 0;
+  unsigned long bl = b2 ? strlen(b2) : 0;
+  unsigned long cl = c2 ? strlen(c2) : 0;
+  unsigned long dl = d2 ? strlen(d2) : 0;
   char *ret = 0;
 
   if      (al > bl && al > cl && al > dl) ret = a2;
@@ -471,7 +471,7 @@ url_string (const char *url)
 
   // Only search the first 1/2 K of the document while determining type.
 
-  int L = [body length];
+  unsigned long L = [body length];
   if (L > 512) L = 512;
   NSString *head = [[[body substringToIndex: L]
                       stringByTrimmingCharactersInSet:

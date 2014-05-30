@@ -424,6 +424,8 @@ osx_load_image_file (Screen *screen, Window xwindow, Drawable drawable,
 {
 # ifndef USE_IPHONE
 
+  if (!filename || !*filename) return False;
+
   NSImage *img = [[NSImage alloc] initWithContentsOfFile:
                                     [NSString stringWithCString:filename
                                               encoding:NSUTF8StringEncoding]];

@@ -12,6 +12,7 @@
 #ifndef _XSCREENSAVER_ANALOGTV_H
 #define _XSCREENSAVER_ANALOGTV_H
 
+#include "thread_util.h"
 #include "xshm.h"
 
 /*
@@ -111,12 +112,18 @@ typedef struct analogtv_reception_s {
   The rest of this should be considered mostly opaque to the analogtv module.
  */
 
+struct analogtv_yiq_s {
+  float y,i,q;
+} /*yiq[ANALOGTV_PIC_LEN+10] */;
+
 typedef struct analogtv_s {
 
   Display *dpy;
   Window window;
   Screen *screen;
   XWindowAttributes xgwa;
+
+  struct threadpool threads;
 
 #if 0
   unsigned int onscreen_signature[ANALOGTV_V];
@@ -127,14 +134,14 @@ typedef struct analogtv_s {
   int interlace;
   int interlace_counter;
 
-  double agclevel;
+  float agclevel;
 
   /* If you change these, call analogtv_set_demod */
-  double tint_control,color_control,brightness_control,contrast_control;
-  double height_control, width_control, squish_control;
-  double horiz_desync;
-  double squeezebottom;
-  double powerup;
+  float tint_control,color_control,brightness_control,contrast_control;
+  float height_control, width_control, squish_control;
+  float horiz_desync;
+  float squeezebottom;
+  float powerup;
 
   /* internal cache */
   int blur_mult;
@@ -189,15 +196,11 @@ typedef struct analogtv_s {
   int hashnoise_enable;
   int shrinkpulse;
 
-  double crtload[ANALOGTV_V];
+  float crtload[ANALOGTV_V];
 
   unsigned int red_values[ANALOGTV_CV_MAX];
   unsigned int green_values[ANALOGTV_CV_MAX];
   unsigned int blue_values[ANALOGTV_CV_MAX];
-
-  struct analogtv_yiq_s {
-    float y,i,q;
-  } yiq[ANALOGTV_PIC_LEN+10];
 
   unsigned long colors[256];
   int cmap_y_levels;
@@ -212,13 +215,22 @@ typedef struct analogtv_s {
 
   int channel_change_cycles;
   double rx_signal_level;
-  double rx_signal[ANALOGTV_SIGNAL_LEN + 2*ANALOGTV_H];
+  float *rx_signal;
 
   struct {
     int index;
     double value;
   } leveltable[ANALOGTV_MAX_LINEHEIGHT+1][ANALOGTV_MAX_LINEHEIGHT+1];
 
+  /* Only valid during draw. */
+  unsigned random0, random1;
+  double noiselevel;
+  const analogtv_reception *const *recs;
+  unsigned rec_count;
+
+  float *signal_subtotals;
+
+  float puheight;
 } analogtv;
 
 
@@ -233,14 +245,12 @@ void analogtv_release(analogtv *it);
 int analogtv_set_demod(analogtv *it);
 void analogtv_setup_frame(analogtv *it);
 void analogtv_setup_sync(analogtv_input *input, int do_cb, int do_ssavi);
-void analogtv_draw(analogtv *it);
+void analogtv_draw(analogtv *it, double noiselevel,
+                   const analogtv_reception *const *recs, unsigned rec_count);
 
 int analogtv_load_ximage(analogtv *it, analogtv_input *input, XImage *pic_im);
 
 void analogtv_reception_update(analogtv_reception *inp);
-
-void analogtv_init_signal(analogtv *it, double noiselevel);
-void analogtv_add_signal(analogtv *it, analogtv_reception *rec);
 
 void analogtv_setup_teletext(analogtv_input *input);
 
@@ -300,9 +310,11 @@ int analogtv_handle_events (analogtv *it);
   "*use_cmap:        0",  \
   "*geometry:	     800x600", \
   "*fpsSolid:	     True", \
+  THREAD_DEFAULTS \
   ANALOGTV_DEFAULTS_SHM
 
 #define ANALOGTV_OPTIONS \
+  THREAD_OPTIONS \
   { "-use-cmap",        ".use_cmap",     XrmoptionSepArg, 0 }, \
   { "-tv-color",        ".TVColor",      XrmoptionSepArg, 0 }, \
   { "-tv-tint",         ".TVTint",       XrmoptionSepArg, 0 }, \

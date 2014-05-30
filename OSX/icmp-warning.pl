@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2012 Jamie Zawinski <jwz@jwz.org>
+# Copyright Â© 2012-2014 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -16,7 +16,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my ($version) = ('$Revision: 1.3 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -25,8 +25,28 @@ sub sanity_check() {
   my $fail = '';
   my $d1 = $ENV{SDK_DIR} || '';
   my $d2 = '/usr/include/netinet/';
+  my $d3 = $d2;
+
+  if (! $d1) {
+    print STDERR "ERROR: SDK_DIR unset\n";
+    exit 1;
+  }
+
+  if (! -d $d3) {
+    my @dirs = glob ("/Applications/Xcode.app/Contents/Developer/" .
+                     "Platforms/MacOSX.platform/Developer/SDKs/" .
+                     "MacOSX*sdk/usr/include/netinet");
+    @dirs = sort @dirs;
+    $d3 = $dirs[$#dirs] . "/" if @dirs;
+  }
+
+  if (! -d $d3) {
+    print STDERR "ERROR: There is no $d3 on this system!\n";
+    exit 1;
+  }
+
   foreach my $f ('ip.h', 'in_systm.h', 'ip_icmp.h', 'ip_var.h', 'udp.h') {
-    $fail .= "\tsudo ln -s $d2$f $d1$d2\n"
+    $fail .= "\tsudo ln -s $d3$f $d1$d2\n"
       unless (-f "$d1$d2$f");
   }
 

@@ -1343,7 +1343,7 @@ hack_text (m_state *state)
 
     AGAIN:
       c  = ((unsigned char *) state->typing)[0];
-      c1 = ((unsigned char *) state->typing)[1];
+      c1 = c ? ((unsigned char *) state->typing)[1] : 0;
 
       state->typing_delay = (!c || c1 == '\n'
                              ? state->typing_line_delay

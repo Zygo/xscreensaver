@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -426,12 +426,12 @@ double_time (void)
 
 - (void) initLayer
 {
-# if !defined(USE_IPHONE) && defined(USE_CALAYER)
+# if !defined(USE_IPHONE) && defined(BACKBUFFER_CALAYER)
   [self setLayer: [CALayer layer]];
   self.layer.delegate = self;
   self.layer.opaque = YES;
   [self setWantsLayer: YES];
-# endif  // !USE_IPHONE && USE_CALAYER
+# endif  // !USE_IPHONE && BACKBUFFER_CALAYER
 }
 
 
@@ -445,8 +445,7 @@ double_time (void)
 {
   NSAssert(![self isAnimating], @"still animating");
   NSAssert(!xdata, @"xdata not yet freed");
-  if (xdpy)
-    jwxyz_free_display (xdpy);
+  NSAssert(!xdpy, @"xdpy not yet freed");
 
 # ifdef USE_BACKBUFFER
   if (backbuffer)
@@ -455,10 +454,10 @@ double_time (void)
   if (colorspace)
     CGColorSpaceRelease (colorspace);
 
-#  ifndef USE_CALAYER
+#  ifdef BACKBUFFER_CGCONTEXT
   if (window_ctx)
     CGContextRelease (window_ctx);
-#  endif // !USE_CALAYER
+#  endif // BACKBUFFER_CGCONTEXT
 
 # endif // USE_BACKBUFFER
 
@@ -504,6 +503,10 @@ double_time (void)
 {
   NSAssert(![self isAnimating], @"already animating");
   NSAssert(!initted_p && !xdata, @"already initialized");
+
+  // See comment in render_x11() for why this value is important:
+  [self setAnimationTimeInterval: 1.0 / 120.0];
+
   [super startAnimation];
   /* We can't draw on the window from this method, so we actually do the
      initialization of the screen saver (xsft->init_cb) in the first call
@@ -555,6 +558,12 @@ double_time (void)
      */
     xsft->free_cb (xdpy, xwindow, xdata);
     [self unlockFocus];
+
+    // xdpy must be freed before dealloc is called, because xdpy owns a
+    // circular reference to the parent XScreenSaverView.
+    jwxyz_free_display (xdpy);
+    xdpy = NULL;
+    xwindow = NULL;
 
 //  setup_p = NO; // #### wait, do we need this?
     initted_p = NO;
@@ -743,7 +752,7 @@ double current_device_rotation (void)
   // Colorspaces and CGContexts only happen with non-GL hacks.
   if (colorspace)
     CGColorSpaceRelease (colorspace);
-# ifndef USE_CALAYER
+# ifdef BACKBUFFER_CGCONTEXT
   if (window_ctx)
     CGContextRelease (window_ctx);
 # endif
@@ -753,7 +762,7 @@ double current_device_rotation (void)
   if (window && xdpy) {
     [self lockFocus];
 
-# ifndef USE_CALAYER
+# if defined(BACKBUFFER_CGCONTEXT)
     // TODO: This was borrowed from jwxyz_window_resized, and should
     // probably be refactored.
 	  
@@ -790,21 +799,21 @@ double current_device_rotation (void)
       colorspace = CGColorSpaceCreateWithPlatformColorSpace (profile);
       NSAssert (colorspace, @"unable to find colorspace");
     }
-# else  // USE_CALAYER
+# elif defined(BACKBUFFER_CALAYER)
     // Was apparently faster until 10.9.
     colorspace = CGColorSpaceCreateDeviceRGB ();
-# endif // USE_CALAYER
+# endif // BACKBUFFER_CALAYER
 
-# ifndef USE_CALAYER
+# ifdef BACKBUFFER_CGCONTEXT
     window_ctx = [[window graphicsContext] graphicsPort];
     CGContextRetain (window_ctx);
-# endif // !USE_CALAYER
+# endif // BACKBUFFER_CGCONTEXT
 	  
     [self unlockFocus];
   } else {
-# ifndef USE_CALAYER
+# ifdef BACKBUFFER_CGCONTEXT
     window_ctx = NULL;
-# endif // !USE_CALAYER
+# endif // BACKBUFFER_CGCONTEXT
     colorspace = CGColorSpaceCreateDeviceRGB();
   }
 
@@ -984,24 +993,39 @@ double current_device_rotation (void)
     }
 
 
-  /* It turns out that [ScreenSaverView setAnimationTimeInterval] does nothing.
-     This is bad, because some of the screen hacks want to delay for long 
-     periods (like 5 seconds or a minute!) between frames, and running them
-     all at 60 FPS is no good.
-  
-     So, we don't use setAnimationTimeInterval, and just let the framework call
-     us whenever.  But, we only invoke the screen hack's "draw frame" method
-     when enough time has expired.
+  /* It turns out that on some systems (possibly only 10.5 and older?)
+     [ScreenSaverView setAnimationTimeInterval] does nothing.  This means
+     that we cannot rely on it.
+
+     Some of the screen hacks want to delay for long periods, and letting the
+     framework run the update function at 30 FPS when it really wanted half a
+     minute between frames would be bad.  So instead, we assume that the
+     framework's animation timer might fire whenever, but we only invoke the
+     screen hack's "draw frame" method when enough time has expired.
   
      This means two extra calls to gettimeofday() per frame.  For fast-cycling
      screen savers, that might actually slow them down.  Oh well.
 
-     #### Also, we do not run the draw callback faster than the system's
-          animationTimeInterval, so if any savers are pickier about timing
-          than that, this may slow them down too much.  If that's a problem,
-          then we could call draw_cb in a loop here (with usleep) until the
-          next call would put us past animationTimeInterval...  But a better
-          approach would probably be to just change the saver to not do that.
+     A side-effect of this is that it's not possible for a saver to request
+     an animation interval that is faster than animationTimeInterval.
+
+     HOWEVER!  On modern systems where setAnimationTimeInterval is *not*
+     ignored, it's important that it be faster than 30 FPS.  120 FPS is good.
+
+     An NSTimer won't fire if the timer is already running the invocation
+     function from a previous firing.  So, if we use a 30 FPS
+     animationTimeInterval (33333 탎) and a screenhack takes 40000 탎 for a
+     frame, there will be a 26666 탎 delay until the next frame, 66666 탎
+     after the beginning of the current frame.  In other words, 25 FPS
+     becomes 15 FPS.
+
+     Frame rates tend to snap to values of 30/N, where N is a positive
+     integer, i.e. 30 FPS, 15 FPS, 10, 7.5, 6. And the 'snapped' frame rate
+     is rounded down from what it would normally be.
+
+     So if we set animationTimeInterval to 1/120 instead of 1/30, frame rates
+     become values of 60/N, 120/N, or 240/N, with coarser or finer frame rate
+     steps for higher or lower animation time intervals respectively.
    */
   struct timeval tv;
   gettimeofday (&tv, 0);
@@ -1154,9 +1178,9 @@ double current_device_rotation (void)
   self.layer.bounds = bounds;
 # endif // USE_IPHONE
  
-# ifdef USE_CALAYER
+# if defined(BACKBUFFER_CALAYER)
   [self.layer setNeedsDisplay];
-# else // !USE_CALAYER
+# elif defined(BACKBUFFER_CGCONTEXT)
   size_t
     w = CGBitmapContextGetWidth (backbuffer),
     h = CGBitmapContextGetHeight (backbuffer);
@@ -1187,10 +1211,10 @@ double current_device_rotation (void)
   CGImageRelease (img);
 
   CGContextFlush (window_ctx);
-# endif // !USE_CALAYER
+# endif // BACKBUFFER_CGCONTEXT
 }
 
-# ifdef USE_CALAYER
+# ifdef BACKBUFFER_CALAYER
 
 - (void) drawLayer:(CALayer *)layer inContext:(CGContextRef)ctx
 {
@@ -1243,7 +1267,7 @@ double current_device_rotation (void)
     CGImageRelease (img);
   }
 }
-# endif  // USE_CALAYER
+# endif  // BACKBUFFER_CALAYER
 
 #endif // USE_BACKBUFFER
 
@@ -1295,9 +1319,9 @@ double current_device_rotation (void)
       UInt32 usize = * (UInt32 *) (data.bytes + data.length - 4);
       data2 = [NSMutableData dataWithLength: usize];
       zs.next_in   = (Bytef *) data.bytes;
-      zs.avail_in  = data.length;
+      zs.avail_in  = (uint) data.length;
       zs.next_out  = (Bytef *) data2.bytes;
-      zs.avail_out = data2.length;
+      zs.avail_out = (uint) data2.length;
       ret = inflate (&zs, Z_FINISH);
       inflateEnd (&zs);
     }
@@ -1347,7 +1371,7 @@ double current_device_rotation (void)
   // #### am I expected to retain this, or not? wtf.
   //      I thought not, but if I don't do this, we (sometimes) crash.
   // #### Analyze says "potential leak of an object stored into sheet"
-  [sheet retain];
+  // [sheet retain];
 
   return sheet;
 }

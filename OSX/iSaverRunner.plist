@@ -5,11 +5,11 @@
 	<key>CFBundleName</key>
 	<string>${PRODUCT_NAME}</string>
 	<key>NSHumanReadableCopyright</key>
-	<string>5.26</string>
+	<string>5.27</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
 	<key>CFBundleVersion</key>
-	<string>5.26</string>
+	<string>5.27</string>
 	<key>NSMainNibFile</key>
 	<string>iSaverRunner</string>
 	<key>CFBundlePackageType</key>
@@ -19,7 +19,7 @@
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
 	<key>CFBundleShortVersionString</key>
-	<string>5.26</string>
+	<string>5.27</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>UIRequiredDeviceCapabilities</key>
@@ -37,14 +37,17 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 	</array>
 	<key>CFBundleLongVersionString</key>
-	<string>5.26</string>
+	<string>5.27</string>
 	<key>CFBundleIdentifier</key>
 	<string>${BUNDLE_IDENTIFIER}</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleIconFiles</key>
 	<array>
+		<string>iSaverRunner152.png</string>
+		<string>iSaverRunner120.png</string>
 		<string>iSaverRunner114.png</string>
+		<string>iSaverRunner76.png</string>
 		<string>iSaverRunner72.png</string>
 		<string>iSaverRunner57.png</string>
 		<string>iSaverRunner50.png</string>
@@ -62,6 +65,6 @@
 	<key>CFBundleDisplayName</key>
 	<string>${PRODUCT_NAME}</string>
 	<key>CFBundleGetInfoString</key>
-	<string>5.26</string>
+	<string>5.27</string>
 </dict>
 </plist>

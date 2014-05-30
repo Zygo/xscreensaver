@@ -778,9 +778,9 @@ void
 handle_splash_event (saver_info *si, XEvent *event)
 {
   splash_dialog_data *sp = si->sp_data;
+  if (!sp) return;
   saver_screen_info *ssi = sp->prompt_screen;
   int which = 0;
-  if (!sp) return;
 
   switch (event->xany.type)
     {

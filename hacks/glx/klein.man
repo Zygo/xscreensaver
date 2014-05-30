@@ -1,8 +1,8 @@
 .TH XScreenSaver 1 "" "X Version 11"
 .SH NAME
-kleinbottle - Draws a 4d Klein bottle.
+klein - Draws a 4d Klein bottle.
 .SH SYNOPSIS
-.B kleinbottle
+.B klein
 [\-display \fIhost:display.screen\fP]
 [\-install]
 [\-visual \fIvisual\fP]
@@ -12,6 +12,7 @@ kleinbottle - Draws a 4d Klein bottle.
 [\-fps]
 [\-klein-bottle \fIbottle-name\fP]
 [-figure-8]
+[-squeezed-torus]
 [-lawson]
 [\-mode \fIdisplay-mode\fP]
 [\-wireframe]
@@ -44,54 +45,59 @@ kleinbottle - Draws a 4d Klein bottle.
 [\-walk-direction \fIfloat\fP]
 [\-walk-speed \fIfloat\fP]
 .SH DESCRIPTION
-The \fIkleinbottle\fP program shows two different Klein bottles in 4d:
-the figure-8 Klein bottle or the Lawson Klein bottle.  You can walk on
-the Klein bottle, see it turn in 4d, or walk on it while it turns in
-4d.  The figure-8 Klein bottle is well known in its 3d form.  The 4d
-form used in this program is an extension of the 3d form to 4d that
-does not intersect itself in 4d (which can be seen in the depth colors
-mode).  The Lawson Klein bottle, on the other hand, does intersect
-itself in 4d.  Its primary use is that it has a nice appearance for
-walking and for turning in 3d.  The Klein bottle is a non-orientable
-surface.  To make this apparent, the two-sided color mode can be used.
-Alternatively, orientation markers (curling arrows) can be drawn as a
-texture map on the surface of the Klein bottle.  While walking on the
-Klein bottle, you will notice that the orientation of the curling
-arrows changes (which it must because the Klein bottle is
-non-orientable).  The program projects the 4d Klein bottle to 3d using
-either a perspective or an orthographic projection.  Which of the two
-alternatives looks more appealing depends on the viewing mode and the
-Klein bottle.  For example, the Lawson Klein bottle looks nicest when
-projected perspectively.  The figure-8 Klein bottle, on the other
-hand, looks nicer while walking when projected orthographically from
-4d.  The projected Klein bottle can then be projected to the screen
-either perspectively or orthographically.  When using the walking
-modes, perspective projection to the screen should be used.  There are
-three display modes for the Klein bottle: mesh (wireframe), solid, or
-transparent.  Furthermore, the appearance of the Klein bottle can be
-as a solid object or as a set of see-through bands.  Finally, the
-colors with with the Klein bottle is drawn can be set to two-sided,
-rainbow, or depth.  In the first case, the Klein bottle is drawn with
-red on one "side" and green on the "other side".  Of course, the Klein
-bottle only has one side, so the color jumps from red to green along a
-curve on the surface of the Klein bottle.  This mode enables you to
-see that the Klein bottle is non-orientable.  The second mode draws
-the Klein bottle with fully saturated rainbow colors.  This gives a
-very nice effect when combined with the see-through bands mode or with
-the orientation markers drawn.  The third mode draws the Klein bottle
-with colors that are chosen according to the 4d "depth" of the points.
-This mode enables you to see that the figure-8 Klein bottle does not
-intersect itself in 4d, while the Lawson Klein bottle does intersect
-itself.  The rotation speed for each of the six planes around which
-the Klein bottle rotates can be chosen.  For the walk-and-turn more,
-only the rotation speeds around the true 4d planes are used (the xy,
-xz, and yz planes).  Furthermore, in the walking modes the walking
-direction in the 2d base square of the Klein bottle and the walking
-speed can be chosen.  This program is somewhat inspired by Thomas
-Banchoff's book "Beyond the Third Dimension: Geometry, Computer
-Graphics, and Higher Dimensions", Scientific American Library, 1990.
+The \fIklein\fP program shows three different Klein bottles in 4d: the
+figure-8 Klein bottle, the squeezed torus Klein bottle, or the Lawson
+Klein bottle.  You can walk on the Klein bottle, see it turn in 4d, or
+walk on it while it turns in 4d.  The figure-8 Klein bottle is well
+known in its 3d form.  The 4d form used in this program is an
+extension of the 3d form to 4d that does not intersect itself in 4d
+(which can be seen in the depth colors mode).  The squeezed torus
+Klein bottle also does not intersect itself in 4d (which can be seen
+in the depth colors mode).  The Lawson Klein bottle, on the other
+hand, does intersect itself in 4d.  Its primary use is that it has a
+nice appearance for walking and for turning in 3d.  The Klein bottle
+is a non-orientable surface.  To make this apparent, the two-sided
+color mode can be used.  Alternatively, orientation markers (curling
+arrows) can be drawn as a texture map on the surface of the Klein
+bottle.  While walking on the Klein bottle, you will notice that the
+orientation of the curling arrows changes (which it must because the
+Klein bottle is non-orientable).  The program projects the 4d Klein
+bottle to 3d using either a perspective or an orthographic projection.
+Which of the two alternatives looks more appealing depends on the
+viewing mode and the Klein bottle.  For example, the Lawson Klein
+bottle looks nicest when projected perspectively.  The figure-8 Klein
+bottle, on the other hand, looks nicer while walking when projected
+orthographically from 4d.  For the squeezed torus Klein bottle, both
+projection modes give equally acceptable projections.  The projected
+Klein bottle can then be projected to the screen either perspectively
+or orthographically.  When using the walking modes, perspective
+projection to the screen should be used.  There are three display
+modes for the Klein bottle: mesh (wireframe), solid, or transparent.
+Furthermore, the appearance of the Klein bottle can be as a solid
+object or as a set of see-through bands.  Finally, the colors with
+with the Klein bottle is drawn can be set to two-sided, rainbow, or
+depth.  In the first case, the Klein bottle is drawn with red on one
+"side" and green on the "other side".  Of course, the Klein bottle
+only has one side, so the color jumps from red to green along a curve
+on the surface of the Klein bottle.  This mode enables you to see that
+the Klein bottle is non-orientable.  The second mode draws the Klein
+bottle with fully saturated rainbow colors.  This gives a very nice
+effect when combined with the see-through bands mode or with the
+orientation markers drawn.  The third mode draws the Klein bottle with
+colors that are chosen according to the 4d "depth" of the points.
+This mode enables you to see that the figure-8 and squeezed torus
+Klein bottles do not intersect themselves in 4d, while the Lawson
+Klein bottle does intersect itself.  The rotation speed for each of
+the six planes around which the Klein bottle rotates can be chosen.
+For the walk-and-turn more, only the rotation speeds around the true
+4d planes are used (the xy, xz, and yz planes).  Furthermore, in the
+walking modes the walking direction in the 2d base square of the Klein
+bottle and the walking speed can be chosen.  This program is somewhat
+inspired by Thomas Banchoff's book "Beyond the Third Dimension:
+Geometry, Computer Graphics, and Higher Dimensions", Scientific
+American Library, 1990.
 .SH OPTIONS
-.I kleinbottle
+.I klein
 accepts the following options:
 .TP 8
 .B \-window
@@ -122,6 +128,9 @@ Display a random Klein bottle (default).
 .TP 8
 .B \-klein-bottle figure-8 \fP(Shortcut: \fB\-figure-8\fP)
 Display the figure-8 Klein bottle.
+.TP 8
+.B \-klein-bottle squeezed-torus \fP(Shortcut: \fB\-squeezed-torus\fP)
+Display the squeezed torus Klein bottle.
 .TP 8
 .B \-klein-bottle lawson \fP(Shortcut: \fB\-lawson\fP)
 Display the Lawson Klein bottle.
@@ -287,7 +296,7 @@ stored in the RESOURCE_MANAGER property.
 .BR X (1),
 .BR xscreensaver (1)
 .SH COPYRIGHT
-Copyright \(co 2005-2009 by Carsten Steger.  Permission to use, copy,
+Copyright \(co 2005-2013 by Carsten Steger.  Permission to use, copy,
 modify, distribute, and sell this software and its documentation for
 any purpose is hereby granted without fee, provided that the above
 copyright notice appear in all copies and that both that copyright
@@ -296,4 +305,4 @@ No representations are made about the suitability of this software for
 any purpose.  It is provided "as is" without express or implied
 warranty.
 .SH AUTHOR
-Carsten Steger <carsten@mirsanmir.org>, 03-aug-2009.
+Carsten Steger <carsten@mirsanmir.org>, 25-dec-2013.

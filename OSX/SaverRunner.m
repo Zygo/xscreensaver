@@ -445,6 +445,8 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
       [saverView stopAnimation];
     [saverView removeFromSuperview];
     [backgroundView removeFromSuperview];
+    [[NSNotificationCenter defaultCenter] removeObserver:saverView];
+    [saverView release];
   }
 
   NSSize size = [window frame].size;
@@ -461,7 +463,6 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   }
 
   [saverView setFrame: [window frame]];
-  [saverView retain];
   [[NSNotificationCenter defaultCenter]
     addObserver:saverView
     selector:@selector(didRotate:)

@@ -100,6 +100,7 @@ $ starfish	:== $'mydir'starfish
 $ strange	:== $'mydir'strange
 $ substrate	:== $'mydir'substrate
 $ swirl		:== $'mydir'swirl
+$ tessellimage	:== $'mydir'tessellimage
 $ thornbird	:== $'mydir'thornbird
 $ triangle	:== $'mydir'triangle
 $ truchet	:== $'mydir'truchet

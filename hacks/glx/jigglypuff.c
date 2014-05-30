@@ -286,10 +286,12 @@ static inline void vector_scale(vector v, coord s)
     v[2] *= s;
 }
 
+/*
 static inline coord dot(vector v1, vector v2)
 {
     return v1[0]*v2[0] + v1[1]*v2[1] + v1[2]*v2[2];
 }
+*/
 
 static inline void cross(vector v1, vector v2, vector v)
 {

@@ -16,7 +16,7 @@ exec_prefix	= @exec_prefix@
 bindir		= @bindir@
 datarootdir	= @datarootdir@
 datadir		= @datadir@
-localedir	= $(datadir)/locale
+localedir	= @PO_DATADIR@/locale
 mandir		= @mandir@
 libexecdir	= @libexecdir@
 mansuffix	= 1
@@ -771,7 +771,8 @@ XScreenSaver_ad.h: XScreenSaver.ad
 XScreenSaver_Xm_ad.h: XScreenSaver-Xm.ad
 	$(SHELL) $(UTILS_SRC)/ad2c XScreenSaver-Xm.ad > XScreenSaver_Xm_ad.h
 
-@INTLTOOL_DESKTOP_RULE@
+# What was this for? Now it's undefined.
+# @INTLTOOL_DESKTOP_RULE@
 
 # The executables linked in this directory.
 #

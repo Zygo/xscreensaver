@@ -1,4 +1,4 @@
-/* gltext, Copyright (c) 2001-2012 Jamie Zawinski <jwz@jwz.org>
+/* gltext, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -198,11 +198,11 @@ parse_text (ModeInfo *mi)
       while (p < buf + sizeof(buf) - 1 &&
              lines < max_lines)
         {
-          char c = textclient_getc (tp->tc);
+          int c = textclient_getc (tp->tc);
           if (c == '\n')
             lines++;
           if (c > 0)
-            *p++ = c;
+            *p++ = (char) c;
           else
             break;
         }

@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* juggle */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)juggle.c	5.10 2003/09/02 xlockmore";
-
 #endif
 
 /*-

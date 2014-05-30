@@ -151,7 +151,7 @@ void
 a2_goto(apple2_state_t *st, int r, int c)
 {
   if (r > 23) r = 23;
-  if (c > 39) r = 39;
+  if (c > 39) c = 39;
   st->textlines[st->cursy][st->cursx] |= 0xc0; /* turn off blink */
   st->cursy=r;
   st->cursx=c;
@@ -700,6 +700,9 @@ apple2_one_frame (apple2_sim_t *sim)
         DONE:
           sim->stepno=A2CONTROLLER_FREE;
           sim->controller (sim, &sim->stepno, &sim->next_actiontime);
+          /* if stepno is changed, return 1 */
+          if (sim->stepno != A2CONTROLLER_FREE)
+            return 1;
 
           XClearWindow(sim->dpy, sim->window);
 
@@ -804,10 +807,11 @@ apple2_one_frame (apple2_sim_t *sim)
         }
       }
     }
-    analogtv_init_signal(sim->dec, 0.02);
     analogtv_reception_update(&sim->reception);
-    analogtv_add_signal(sim->dec, &sim->reception);
-    analogtv_draw(sim->dec);
+    {
+      const analogtv_reception *rec = &sim->reception;
+      analogtv_draw(sim->dec, 0.02, &rec, 1);
+    }
  
     return 1;
 }

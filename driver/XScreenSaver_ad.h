@@ -256,7 +256,9 @@
 				hexadrop -root				    \\n\
   GL: 				kaleidocycle -root			    \\n\
   GL: 				quasicrystal -root			    \\n\
-  GL: 				unknownpleasures -root			    \\n",
+  GL: 				unknownpleasures -root			    \\n\
+  GL: 				projectiveplane -root			    \\n\
+				tessellimage -root			    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
 "XScreenSaver.initialDelay:		0:00:00",
@@ -293,7 +295,7 @@
 "*passwd.asterisks:              True",
 "*passwd.uname:                  True",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright © 1991-2013 by",
+"*splash.body.label:		Copyright © 1991-2014 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",
@@ -345,6 +347,7 @@
 "*hacks.nerverot.name:       NerveRot",
 "*hacks.noseguy.name:        NoseGuy",
 "*hacks.popsquares.name:     PopSquares",
+"*hacks.projectiveplane.name:ProjectivePlane",
 "*hacks.quasicrystal.name:   QuasiCrystal",
 "*hacks.rd-bomb.name:        RDbomb",
 "*hacks.rdbomb.name:         RDbomb",

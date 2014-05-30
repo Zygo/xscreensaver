@@ -73,7 +73,8 @@ UTIL_SRCS	= $(UTILS_SRC)/alpha.c $(UTILS_SRC)/colors.c \
 		  $(UTILS_SRC)/minixpm.c \
 		  $(UTILS_SRC)/yarandom.c $(UTILS_SRC)/erase.c \
 		  $(UTILS_SRC)/xshm.c $(UTILS_SRC)/xdbe.c \
-		  $(UTILS_SRC)/textclient.c
+		  $(UTILS_SRC)/textclient.c $(UTILS_SRC)/aligned_malloc.c \
+		  $(UTILS_SRC)/thread_util.c
 UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/grabclient.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/resources.o \
@@ -83,7 +84,8 @@ UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/erase.o \
 		  $(UTILS_BIN)/xshm.o $(UTILS_BIN)/xdbe.o \
 		  $(UTILS_BIN)/colorbars.o \
-		  $(UTILS_SRC)/textclient.o
+		  $(UTILS_SRC)/textclient.o $(UTILS_SRC)/aligned_malloc.o \
+		  $(UTILS_SRC)/thread_util.o
 
 SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  bubbles-default.c decayscreen.c deco.c drift.c flag.c \
@@ -114,6 +116,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  intermomentary.c fireworkx.c fiberlamp.c \
 		  boxfit.c interaggregate.c celtic.c cwaves.c m6502.c \
 		  asm6502.c abstractile.c lcdscrub.c hexadrop.c \
+		  tessellimage.c delaunay.c \
 		  webcollage-cocoa.m webcollage-helper-cocoa.m
 SCRIPTS		= vidwhacker webcollage ljlatest
 
@@ -153,7 +156,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o \
 		  interaggregate.o celtic.o cwaves.o webcollage-cocoa.o \
 		  webcollage-helper-cocoa.o m6502.o asm6502.o abstractile.o \
-		  lcdscrub.o hexadrop.o
+		  lcdscrub.o hexadrop.o tessellimage.o delaunay.o
 
 EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  drift flame galaxy grav greynetic halo \
@@ -175,6 +178,7 @@ EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  pacman fuzzyflakes anemotaxis memscroller substrate \
 		  intermomentary fireworkx fiberlamp boxfit interaggregate \
 		  celtic cwaves m6502 abstractile lcdscrub hexadrop \
+		  tessellimage \
 		  @JPEG_EXES@
 JPEG_EXES	= webcollage-helper
 
@@ -190,11 +194,12 @@ COLOR_OBJS	= $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o
 GRAB_OBJS	= $(UTILS_BIN)/grabclient.o
 XSHM_OBJS	= $(UTILS_BIN)/xshm.o
 XDBE_OBJS	= $(UTILS_BIN)/xdbe.o
+THREAD_OBJS	= $(UTILS_BIN)/aligned_malloc.o $(UTILS_BIN)/thread_util.o
 
 HDRS		= screenhack.h screenhackI.h fps.h fpsI.h xlockmore.h \
 		  xlockmoreI.h automata.h bubbles.h xpm-pixmap.h \
 		  apple2.h analogtv.h pacman.h pacman_ai.h pacman_level.h \
-		  asm6502.h
+		  asm6502.h delaunay.h
 MEN		= anemone.man apollonian.man attraction.man \
 	          blaster.man blitspin.man bouboule.man braid.man bsod.man \
 	          bumps.man ccurve.man compass.man coral.man \
@@ -226,7 +231,7 @@ MEN		= anemone.man apollonian.man attraction.man \
 		  anemotaxis.man memscroller.man substrate.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
 		  interaggregate.man celtic.man cwaves.man abstractile.man \
-		  lcdscrub.man hexadrop.man
+		  lcdscrub.man hexadrop.man tessellimage.man
 
 RETIRED_MEN	= ant.man bubbles.man critical.man flag.man forest.man \
 		  laser.man lightning.man lisa.man lissie.man lmorph.man \
@@ -515,6 +520,8 @@ $(UTILS_BIN)/erase.o:		$(UTILS_SRC)/erase.c
 $(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
 $(UTILS_BIN)/xdbe.o:		$(UTILS_SRC)/xdbe.c
 $(UTILS_BIN)/textclient.o:	$(UTILS_SRC)/textclient.c
+$(UTILS_BIN)/aligned_malloc.o:	$(UTILS_SRC)/aligned_malloc.c
+$(UTILS_BIN)/thread_util.o:	$(UTILS_SRC)/thread_util.c
 
 $(UTIL_OBJS):
 	$(MAKE) -C $(UTILS_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
@@ -539,7 +546,8 @@ COL		= $(COLOR_OBJS)
 SHM		= $(XSHM_OBJS)
 DBE		= $(XDBE_OBJS)
 BARS		= $(UTILS_BIN)/colorbars.o $(LOGO)
-ATV             = analogtv.o $(SHM)
+THRD		= $(THREAD_OBJS)
+ATV		= analogtv.o $(SHM) $(THRD)
 APPLE2          = apple2.o $(ATV)
 TEXT            = $(UTILS_BIN)/textclient.o
 
@@ -652,8 +660,8 @@ cynosure:  	cynosure.o	$(HACK_OBJS) $(COL)
 epicycle:  	epicycle.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
 
-interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE) $(HACK_LIBS)
+interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE) $(THRD)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE) $(THRD) $(HACK_LIBS)
 
 truchet:	 truchet.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
@@ -844,6 +852,9 @@ lcdscrub:	lcdscrub.o	$(HACK_OBJS)
 hexadrop:	hexadrop.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
+tessellimage:	tessellimage.o	delaunay.o $(HACK_OBJS) $(GRAB)
+	$(CC_HACK) -o $@ $@.o	delaunay.o $(HACK_OBJS) $(GRAB) $(HACK_LIBS)
+
 # The rules for those hacks which follow the `xlockmore' API.
 #
 
@@ -992,9 +1003,12 @@ abstractile.o: $(UTILS_SRC)/yarandom.h
 analogtv.o: $(srcdir)/analogtv.h
 analogtv.o: ../config.h
 analogtv.o: $(srcdir)/images/6x10font.xbm
+analogtv.o: $(UTILS_SRC)/aligned_malloc.h
 analogtv.o: $(UTILS_SRC)/grabscreen.h
 analogtv.o: $(UTILS_SRC)/resources.h
+analogtv.o: $(UTILS_SRC)/thread_util.h
 analogtv.o: $(UTILS_SRC)/utils.h
+analogtv.o: $(UTILS_SRC)/visual.h
 analogtv.o: $(UTILS_SRC)/xshm.h
 analogtv.o: $(UTILS_SRC)/yarandom.h
 anemone.o: ../config.h
@@ -1056,11 +1070,13 @@ apple2-main.o: ../config.h
 apple2-main.o: $(srcdir)/fps.h
 apple2-main.o: $(srcdir)/screenhackI.h
 apple2-main.o: $(srcdir)/screenhack.h
+apple2-main.o: $(UTILS_SRC)/aligned_malloc.h
 apple2-main.o: $(UTILS_SRC)/colors.h
 apple2-main.o: $(UTILS_SRC)/grabscreen.h
 apple2-main.o: $(UTILS_SRC)/hsv.h
 apple2-main.o: $(UTILS_SRC)/resources.h
 apple2-main.o: $(UTILS_SRC)/textclient.h
+apple2-main.o: $(UTILS_SRC)/thread_util.h
 apple2-main.o: $(UTILS_SRC)/usleep.h
 apple2-main.o: $(UTILS_SRC)/visual.h
 apple2-main.o: $(UTILS_SRC)/xshm.h
@@ -1071,10 +1087,12 @@ apple2.o: ../config.h
 apple2.o: $(srcdir)/fps.h
 apple2.o: $(srcdir)/images/apple2font.xbm
 apple2.o: $(srcdir)/screenhackI.h
+apple2.o: $(UTILS_SRC)/aligned_malloc.h
 apple2.o: $(UTILS_SRC)/colors.h
 apple2.o: $(UTILS_SRC)/grabscreen.h
 apple2.o: $(UTILS_SRC)/hsv.h
 apple2.o: $(UTILS_SRC)/resources.h
+apple2.o: $(UTILS_SRC)/thread_util.h
 apple2.o: $(UTILS_SRC)/usleep.h
 apple2.o: $(UTILS_SRC)/visual.h
 apple2.o: $(UTILS_SRC)/xshm.h
@@ -1182,10 +1200,12 @@ bsod.o: $(srcdir)/images/osx_10_2.xpm
 bsod.o: $(srcdir)/images/osx_10_3.xpm
 bsod.o: $(srcdir)/screenhackI.h
 bsod.o: $(srcdir)/screenhack.h
+bsod.o: $(UTILS_SRC)/aligned_malloc.h
 bsod.o: $(UTILS_SRC)/colors.h
 bsod.o: $(UTILS_SRC)/grabscreen.h
 bsod.o: $(UTILS_SRC)/hsv.h
 bsod.o: $(UTILS_SRC)/resources.h
+bsod.o: $(UTILS_SRC)/thread_util.h
 bsod.o: $(UTILS_SRC)/usleep.h
 bsod.o: $(UTILS_SRC)/visual.h
 bsod.o: $(UTILS_SRC)/xshm.h
@@ -1391,6 +1411,8 @@ deco.o: $(UTILS_SRC)/resources.h
 deco.o: $(UTILS_SRC)/usleep.h
 deco.o: $(UTILS_SRC)/visual.h
 deco.o: $(UTILS_SRC)/yarandom.h
+delaunay.o: ../config.h
+delaunay.o: $(srcdir)/delaunay.h
 deluxe.o: ../config.h
 deluxe.o: $(srcdir)/fps.h
 deluxe.o: $(srcdir)/screenhackI.h
@@ -1797,13 +1819,16 @@ interference.o: ../config.h
 interference.o: $(srcdir)/fps.h
 interference.o: $(srcdir)/screenhackI.h
 interference.o: $(srcdir)/screenhack.h
+interference.o: $(UTILS_SRC)/aligned_malloc.h
 interference.o: $(UTILS_SRC)/colors.h
 interference.o: $(UTILS_SRC)/grabscreen.h
 interference.o: $(UTILS_SRC)/hsv.h
 interference.o: $(UTILS_SRC)/resources.h
+interference.o: $(UTILS_SRC)/thread_util.h
 interference.o: $(UTILS_SRC)/usleep.h
 interference.o: $(UTILS_SRC)/visual.h
 interference.o: $(UTILS_SRC)/xdbe.h
+interference.o: $(UTILS_SRC)/xshm.h
 interference.o: $(UTILS_SRC)/yarandom.h
 intermomentary.o: ../config.h
 intermomentary.o: $(srcdir)/fps.h
@@ -1961,10 +1986,12 @@ m6502.o: $(srcdir)/fps.h
 m6502.o: m6502.h
 m6502.o: $(srcdir)/screenhackI.h
 m6502.o: $(srcdir)/screenhack.h
+m6502.o: $(UTILS_SRC)/aligned_malloc.h
 m6502.o: $(UTILS_SRC)/colors.h
 m6502.o: $(UTILS_SRC)/grabscreen.h
 m6502.o: $(UTILS_SRC)/hsv.h
 m6502.o: $(UTILS_SRC)/resources.h
+m6502.o: $(UTILS_SRC)/thread_util.h
 m6502.o: $(UTILS_SRC)/usleep.h
 m6502.o: $(UTILS_SRC)/visual.h
 m6502.o: $(UTILS_SRC)/xshm.h
@@ -2256,10 +2283,12 @@ pong.o: ../config.h
 pong.o: $(srcdir)/fps.h
 pong.o: $(srcdir)/screenhackI.h
 pong.o: $(srcdir)/screenhack.h
+pong.o: $(UTILS_SRC)/aligned_malloc.h
 pong.o: $(UTILS_SRC)/colors.h
 pong.o: $(UTILS_SRC)/grabscreen.h
 pong.o: $(UTILS_SRC)/hsv.h
 pong.o: $(UTILS_SRC)/resources.h
+pong.o: $(UTILS_SRC)/thread_util.h
 pong.o: $(UTILS_SRC)/usleep.h
 pong.o: $(UTILS_SRC)/visual.h
 pong.o: $(UTILS_SRC)/xshm.h
@@ -2550,6 +2579,18 @@ t3d.o: $(UTILS_SRC)/resources.h
 t3d.o: $(UTILS_SRC)/usleep.h
 t3d.o: $(UTILS_SRC)/visual.h
 t3d.o: $(UTILS_SRC)/yarandom.h
+tessellimage.o: ../config.h
+tessellimage.o: $(srcdir)/delaunay.h
+tessellimage.o: $(srcdir)/fps.h
+tessellimage.o: $(srcdir)/screenhackI.h
+tessellimage.o: $(srcdir)/screenhack.h
+tessellimage.o: $(UTILS_SRC)/colors.h
+tessellimage.o: $(UTILS_SRC)/grabscreen.h
+tessellimage.o: $(UTILS_SRC)/hsv.h
+tessellimage.o: $(UTILS_SRC)/resources.h
+tessellimage.o: $(UTILS_SRC)/usleep.h
+tessellimage.o: $(UTILS_SRC)/visual.h
+tessellimage.o: $(UTILS_SRC)/yarandom.h
 thornbird.o: ../config.h
 thornbird.o: $(srcdir)/fps.h
 thornbird.o: $(srcdir)/screenhackI.h
@@ -2700,11 +2741,13 @@ xanalogtv.o: ../config.h
 xanalogtv.o: $(srcdir)/fps.h
 xanalogtv.o: $(srcdir)/screenhackI.h
 xanalogtv.o: $(srcdir)/screenhack.h
+xanalogtv.o: $(UTILS_SRC)/aligned_malloc.h
 xanalogtv.o: $(UTILS_SRC)/colors.h
 xanalogtv.o: $(UTILS_SRC)/grabscreen.h
 xanalogtv.o: $(UTILS_SRC)/hsv.h
 xanalogtv.o: $(UTILS_SRC)/images/logo-50.xpm
 xanalogtv.o: $(UTILS_SRC)/resources.h
+xanalogtv.o: $(UTILS_SRC)/thread_util.h
 xanalogtv.o: $(UTILS_SRC)/usleep.h
 xanalogtv.o: $(UTILS_SRC)/visual.h
 xanalogtv.o: $(UTILS_SRC)/xshm.h
@@ -2806,6 +2849,7 @@ xspirograph.o: $(UTILS_SRC)/resources.h
 xspirograph.o: $(UTILS_SRC)/usleep.h
 xspirograph.o: $(UTILS_SRC)/visual.h
 xspirograph.o: $(UTILS_SRC)/yarandom.h
+xsublim.o: ../config.h
 xsublim.o: $(UTILS_SRC)/resources.h
 xsublim.o: $(UTILS_SRC)/usleep.h
 xsublim.o: $(UTILS_SRC)/vroot.h

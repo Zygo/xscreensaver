@@ -153,7 +153,7 @@ fps_compute (fps_state *st, unsigned long polys, double depth)
 
       if (depth >= 0.0)
         {
-          int L = strlen (st->string);
+          unsigned long L = strlen (st->string);
           char *s = st->string + L;
           strcat (s, "\nDepth: ");
           sprintf (s + strlen(s), "%.1f", depth);
@@ -242,7 +242,7 @@ fps_draw (fps_state *st)
       s = strchr (string, '\n');
       if (! s) s = string + strlen(string);
       XDrawString (st->dpy, st->window, st->draw_gc,
-                   x, y, string, s - string);
+                   x, y, string, (int) (s - string));
       string = s;
       string++;
       lines--;

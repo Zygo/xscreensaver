@@ -120,6 +120,7 @@
 				AF7778FB09B6604600EA3033 /* PBXTargetDependency */,
 				AF7778F909B6604600EA3033 /* PBXTargetDependency */,
 				AF7778F709B6604600EA3033 /* PBXTargetDependency */,
+				AF68A49E19196EA000D41CD1 /* PBXTargetDependency */,
 				AF7778F309B6604600EA3033 /* PBXTargetDependency */,
 				AF7778F109B6604600EA3033 /* PBXTargetDependency */,
 				AF7778EF09B6604600EA3033 /* PBXTargetDependency */,
@@ -247,6 +248,7 @@
 				AF7779FD09B660B100EA3033 /* PBXTargetDependency */,
 				AF7779FB09B660B100EA3033 /* PBXTargetDependency */,
 				AF7779F909B660B100EA3033 /* PBXTargetDependency */,
+				AFFAB33519158F1E0020F021 /* PBXTargetDependency */,
 				AF7779F709B660B100EA3033 /* PBXTargetDependency */,
 				AF7779F509B660B100EA3033 /* PBXTargetDependency */,
 				AFBFE7401786405E00432B21 /* PBXTargetDependency */,
@@ -1692,6 +1694,7 @@
 		AF4A3450102A593600A81B2A /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF4A3462102A59EB00A81B2A /* surfaces.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF4A3461102A59EB00A81B2A /* surfaces.xml */; };
 		AF4A3464102A5A0E00A81B2A /* surfaces.c in Sources */ = {isa = PBXBuildFile; fileRef = AF4A3463102A5A0E00A81B2A /* surfaces.c */; };
+		AF4A6692191F7CAE00C74753 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF4A8CA010B609B50074B062 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF4FD6EC0CE7A486005EE58E /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF4FD7010CE7A577005EE58E /* lockward.c in Sources */ = {isa = PBXBuildFile; fileRef = AF4FD7000CE7A577005EE58E /* lockward.c */; };
@@ -1756,7 +1759,23 @@
 		AF6427BA09A2DF09000F4CD4 /* bubbles.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258800988A468000655EE /* bubbles.xml */; };
 		AF6427BE09A2DF47000F4CD4 /* bubbles-default.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6427BB09A2DF47000F4CD4 /* bubbles-default.c */; };
 		AF6427BF09A2DF47000F4CD4 /* bubbles.c in Sources */ = {isa = PBXBuildFile; fileRef = AF6427BC09A2DF47000F4CD4 /* bubbles.c */; };
+		AF68A48519196CF800D41CD1 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF68A48719196CF800D41CD1 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF68A48819196CF800D41CD1 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF68A48919196CF800D41CD1 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF68A48A19196CF800D41CD1 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF68A48B19196CF800D41CD1 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF68A48C19196CF800D41CD1 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF68A49719196E3E00D41CD1 /* tessellimage.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF68A49419196E3E00D41CD1 /* tessellimage.xml */; };
+		AF68A49819196E3E00D41CD1 /* tessellimage.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF68A49419196E3E00D41CD1 /* tessellimage.xml */; };
+		AF68A49919196E3E00D41CD1 /* tessellimage.c in Sources */ = {isa = PBXBuildFile; fileRef = AF68A49519196E3E00D41CD1 /* tessellimage.c */; };
+		AF68A49A19196E3E00D41CD1 /* tessellimage.c in Sources */ = {isa = PBXBuildFile; fileRef = AF68A49519196E3E00D41CD1 /* tessellimage.c */; };
+		AF68A49B19196E3E00D41CD1 /* delaunay.c in Sources */ = {isa = PBXBuildFile; fileRef = AF68A49619196E3E00D41CD1 /* delaunay.c */; };
+		AF68A49C19196E3E00D41CD1 /* delaunay.c in Sources */ = {isa = PBXBuildFile; fileRef = AF68A49619196E3E00D41CD1 /* delaunay.c */; };
 		AF69640B0E4FE3470085DBCE /* teapot.c in Sources */ = {isa = PBXBuildFile; fileRef = AFC211930E4E30C800D87B6E /* teapot.c */; };
+		AF72284818D943DF000D36EC /* iSaverRunner76.png in Resources */ = {isa = PBXBuildFile; fileRef = AF72284518D943DF000D36EC /* iSaverRunner76.png */; };
+		AF72284918D943DF000D36EC /* iSaverRunner120.png in Resources */ = {isa = PBXBuildFile; fileRef = AF72284618D943DF000D36EC /* iSaverRunner120.png */; };
+		AF72284A18D943DF000D36EC /* iSaverRunner152.png in Resources */ = {isa = PBXBuildFile; fileRef = AF72284718D943DF000D36EC /* iSaverRunner152.png */; };
 		AF7511051782B5B900380EA1 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF7511081782B5B900380EA1 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AF7511091782B5B900380EA1 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -2693,6 +2712,7 @@
 		AF9D4E0409B5BC85006E59CF /* apple2.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC2586F0988A468000655EE /* apple2.xml */; };
 		AF9D4E0609B5BC9D006E59CF /* apple2-main.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9D4E0509B5BC9D006E59CF /* apple2-main.c */; };
 		AF9D4E2209B63413006E59CF /* jwxyz-timers.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9D4E2109B63413006E59CF /* jwxyz-timers.m */; };
+		AF9E7EC9190F4C4000A8B01F /* enable_gc.c in Sources */ = {isa = PBXBuildFile; fileRef = AF9E7EC8190F4C4000A8B01F /* enable_gc.c */; };
 		AFA339350B058505002B0E7D /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFA33BAF0B0585F7002B0E7D /* webcollage-cocoa.m in Sources */ = {isa = PBXBuildFile; fileRef = AFA33BAE0B0585F7002B0E7D /* webcollage-cocoa.m */; };
 		AFA33BB00B05860F002B0E7D /* webcollage.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC2592C0988A469000655EE /* webcollage.xml */; };
@@ -3022,6 +3042,10 @@
 		AFD573630997411200BA26F7 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFD573700997418D00BA26F7 /* strange.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC2591D0988A469000655EE /* strange.xml */; };
 		AFD57372099741A200BA26F7 /* strange.c in Sources */ = {isa = PBXBuildFile; fileRef = AFD57371099741A200BA26F7 /* strange.c */; };
+		AFDA11251934424D003D397F /* aligned_malloc.c in Sources */ = {isa = PBXBuildFile; fileRef = AFDA11211934424D003D397F /* aligned_malloc.c */; };
+		AFDA11261934424D003D397F /* aligned_malloc.h in Headers */ = {isa = PBXBuildFile; fileRef = AFDA11221934424D003D397F /* aligned_malloc.h */; };
+		AFDA11271934424D003D397F /* thread_util.c in Sources */ = {isa = PBXBuildFile; fileRef = AFDA11231934424D003D397F /* thread_util.c */; };
+		AFDA11281934424D003D397F /* thread_util.h in Headers */ = {isa = PBXBuildFile; fileRef = AFDA11241934424D003D397F /* thread_util.h */; };
 		AFDA6595178A52B70070D24B /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFDA6597178A52B70070D24B /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AFDA6598178A52B70070D24B /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -3081,6 +3105,17 @@
 		AFF4635F0C440AEF00EE6509 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFF463720C440B9200EE6509 /* glcells.c in Sources */ = {isa = PBXBuildFile; fileRef = AFF463710C440B9200EE6509 /* glcells.c */; };
 		AFF463740C440BAC00EE6509 /* glcells.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFF463730C440BAC00EE6509 /* glcells.xml */; };
+		AFFAB31C19158CE40020F021 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AFFAB31E19158CE40020F021 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AFFAB31F19158CE40020F021 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AFFAB32019158CE40020F021 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AFFAB32119158CE40020F021 /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AFFAB32219158CE40020F021 /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AFFAB32319158CE40020F021 /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AFFAB32F19158E2A0020F021 /* projectiveplane.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFFAB32C19158E2A0020F021 /* projectiveplane.xml */; };
+		AFFAB33019158E2A0020F021 /* projectiveplane.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFFAB32C19158E2A0020F021 /* projectiveplane.xml */; };
+		AFFAB33219158EA80020F021 /* projectiveplane.c in Sources */ = {isa = PBXBuildFile; fileRef = AFFAB33119158EA80020F021 /* projectiveplane.c */; };
+		AFFAB33319158EA80020F021 /* projectiveplane.c in Sources */ = {isa = PBXBuildFile; fileRef = AFFAB33119158EA80020F021 /* projectiveplane.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -3923,6 +3958,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
 			remoteInfo = jwxyz;
+		};
+		AF68A48019196CF800D41CD1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF68A49D19196EA000D41CD1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF68A47E19196CF800D41CD1;
+			remoteInfo = Tessellimage;
 		};
 		AF714E4E105613410046AB1D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -5527,6 +5576,13 @@
 			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
 			remoteInfo = jwxyz;
 		};
+		AF9E7EDE190F4F7200A8B01F /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF9E7EBE190F4C1B00A8B01F;
+			remoteInfo = enable_gc;
+		};
 		AFA160911052FF87009B93AA /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
@@ -6395,6 +6451,20 @@
 			remoteGlobalIDString = AFF463580C440AEF00EE6509;
 			remoteInfo = GLCells;
 		};
+		AFFAB31719158CE40020F021 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AFFAB33419158F1E0020F021 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AFFAB31519158CE40020F021;
+			remoteInfo = ProjectivePlane;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -6407,6 +6477,15 @@
 				AF1ADA1A1850186B00932759 /* Sparkle.framework in CopyFiles */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF9E7EBD190F4C1B00A8B01F /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
 		};
 /* End PBXCopyFilesBuildPhase section */
 
@@ -6677,6 +6756,13 @@
 		AF6427BB09A2DF47000F4CD4 /* bubbles-default.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = "bubbles-default.c"; path = "hacks/bubbles-default.c"; sourceTree = "<group>"; };
 		AF6427BC09A2DF47000F4CD4 /* bubbles.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = bubbles.c; path = hacks/bubbles.c; sourceTree = "<group>"; };
 		AF6427BD09A2DF47000F4CD4 /* bubbles.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = bubbles.h; path = hacks/bubbles.h; sourceTree = "<group>"; };
+		AF68A49219196CF800D41CD1 /* Tessellimage.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Tessellimage.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF68A49419196E3E00D41CD1 /* tessellimage.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = tessellimage.xml; sourceTree = "<group>"; };
+		AF68A49519196E3E00D41CD1 /* tessellimage.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = tessellimage.c; path = hacks/tessellimage.c; sourceTree = "<group>"; };
+		AF68A49619196E3E00D41CD1 /* delaunay.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = delaunay.c; path = hacks/delaunay.c; sourceTree = "<group>"; };
+		AF72284518D943DF000D36EC /* iSaverRunner76.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = iSaverRunner76.png; path = OSX/iSaverRunner76.png; sourceTree = "<group>"; };
+		AF72284618D943DF000D36EC /* iSaverRunner120.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = iSaverRunner120.png; path = OSX/iSaverRunner120.png; sourceTree = "<group>"; };
+		AF72284718D943DF000D36EC /* iSaverRunner152.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; name = iSaverRunner152.png; path = OSX/iSaverRunner152.png; sourceTree = "<group>"; };
 		AF7511121782B5B900380EA1 /* Kaleidocycle.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Kaleidocycle.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF7511141782B64300380EA1 /* kaleidocycle.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = kaleidocycle.c; path = hacks/glx/kaleidocycle.c; sourceTree = "<group>"; };
 		AF7511161782B66400380EA1 /* kaleidescope.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = kaleidescope.xml; sourceTree = "<group>"; };
@@ -6814,6 +6900,8 @@
 		AF9D4DFE09B5BB19006E59CF /* Apple2.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Apple2.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF9D4E0509B5BC9D006E59CF /* apple2-main.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = "apple2-main.c"; path = "hacks/apple2-main.c"; sourceTree = "<group>"; };
 		AF9D4E2109B63413006E59CF /* jwxyz-timers.m */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.objc; name = "jwxyz-timers.m"; path = "OSX/jwxyz-timers.m"; sourceTree = "<group>"; };
+		AF9E7EBF190F4C1B00A8B01F /* enable_gc */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = enable_gc; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF9E7EC8190F4C4000A8B01F /* enable_gc.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; name = enable_gc.c; path = OSX/enable_gc.c; sourceTree = "<group>"; };
 		AFA339400B058505002B0E7D /* WebCollage.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WebCollage.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFA33BAE0B0585F7002B0E7D /* webcollage-cocoa.m */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.objc; name = "webcollage-cocoa.m"; path = "hacks/webcollage-cocoa.m"; sourceTree = "<group>"; };
 		AFA33BC70B058740002B0E7D /* webcollage-helper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = "webcollage-helper"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -7281,6 +7369,10 @@
 		AFD5730C099702C800BA26F7 /* julia.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = julia.c; path = hacks/julia.c; sourceTree = "<group>"; };
 		AFD5736D0997411200BA26F7 /* Strange.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Strange.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFD57371099741A200BA26F7 /* strange.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = strange.c; path = hacks/strange.c; sourceTree = "<group>"; };
+		AFDA11211934424D003D397F /* aligned_malloc.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = aligned_malloc.c; path = utils/aligned_malloc.c; sourceTree = "<group>"; };
+		AFDA11221934424D003D397F /* aligned_malloc.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = aligned_malloc.h; path = utils/aligned_malloc.h; sourceTree = "<group>"; };
+		AFDA11231934424D003D397F /* thread_util.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = thread_util.c; path = utils/thread_util.c; sourceTree = "<group>"; };
+		AFDA11241934424D003D397F /* thread_util.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = thread_util.h; path = utils/thread_util.h; sourceTree = "<group>"; };
 		AFDA65A1178A52B70070D24B /* UnknownPleasures.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = UnknownPleasures.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFDA65A3178A541A0070D24B /* unknownpleasures.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = unknownpleasures.xml; sourceTree = "<group>"; };
 		AFDA65A4178A541A0070D24B /* unknownpleasures.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = unknownpleasures.c; path = hacks/glx/unknownpleasures.c; sourceTree = "<group>"; };
@@ -7335,6 +7427,9 @@
 		AFF4636C0C440AEF00EE6509 /* GLCells.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = GLCells.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFF463710C440B9200EE6509 /* glcells.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = glcells.c; path = hacks/glx/glcells.c; sourceTree = "<group>"; };
 		AFF463730C440BAC00EE6509 /* glcells.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = glcells.xml; sourceTree = "<group>"; };
+		AFFAB32919158CE40020F021 /* ProjectivePlane.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = ProjectivePlane.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AFFAB32C19158E2A0020F021 /* projectiveplane.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = projectiveplane.xml; sourceTree = "<group>"; };
+		AFFAB33119158EA80020F021 /* projectiveplane.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = projectiveplane.c; path = hacks/glx/projectiveplane.c; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -8376,6 +8471,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF68A48619196CF800D41CD1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF68A48719196CF800D41CD1 /* libjwxyz.a in Frameworks */,
+				AF68A48819196CF800D41CD1 /* ScreenSaver.framework in Frameworks */,
+				AF68A48919196CF800D41CD1 /* QuartzCore.framework in Frameworks */,
+				AF68A48A19196CF800D41CD1 /* Cocoa.framework in Frameworks */,
+				AF68A48B19196CF800D41CD1 /* Carbon.framework in Frameworks */,
+				AF68A48C19196CF800D41CD1 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF7511071782B5B900380EA1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
@@ -9051,6 +9159,13 @@
 				AF1FD721158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD722158FF96500C40F17 /* Carbon.framework in Frameworks */,
 				AF78369B17DBA580003B9FC0 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF9E7EBC190F4C1B00A8B01F /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -10365,6 +10480,19 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFFAB31D19158CE40020F021 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFFAB31E19158CE40020F021 /* libjwxyz.a in Frameworks */,
+				AFFAB31F19158CE40020F021 /* ScreenSaver.framework in Frameworks */,
+				AFFAB32019158CE40020F021 /* QuartzCore.framework in Frameworks */,
+				AFFAB32119158CE40020F021 /* Cocoa.framework in Frameworks */,
+				AFFAB32219158CE40020F021 /* Carbon.framework in Frameworks */,
+				AFFAB32319158CE40020F021 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -10392,6 +10520,7 @@
 				AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */,
 				AFC254C409882C97000655EE /* XScreenSaverView.h */,
 				AFC254C509882C97000655EE /* XScreenSaverView.m */,
+				AF9E7EC8190F4C4000A8B01F /* enable_gc.c */,
 			);
 			name = libjwxyz;
 			sourceTree = "<group>";
@@ -10632,6 +10761,9 @@
 				AFB591BA178B812C00EA4005 /* Hexadrop.saver */,
 				AFF3C9FB17CCAC440028F240 /* Geodesic.saver */,
 				AF1AD9E218500F9F00932759 /* XScreenSaverUpdater.app */,
+				AF9E7EBF190F4C1B00A8B01F /* enable_gc */,
+				AFFAB32919158CE40020F021 /* ProjectivePlane.saver */,
+				AF68A49219196CF800D41CD1 /* Tessellimage.saver */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -10665,7 +10797,10 @@
 				AF01295B157D5C2C00C396E1 /* iSaverRunner50.png */,
 				AF01295C157D5C2C00C396E1 /* iSaverRunner57.png */,
 				AF01295D157D5C2C00C396E1 /* iSaverRunner72.png */,
+				AF72284518D943DF000D36EC /* iSaverRunner76.png */,
 				AF01295E157D5C2C00C396E1 /* iSaverRunner114.png */,
+				AF72284618D943DF000D36EC /* iSaverRunner120.png */,
+				AF72284718D943DF000D36EC /* iSaverRunner152.png */,
 				AFC6BBC1161CE07E0084EDB1 /* Default-568h@2x.png */,
 				AF9771D90989DC4A001F8B92 /* SaverRunner.plist */,
 				AF01294C157D31DD00C396E1 /* iSaverRunner.plist */,
@@ -10762,6 +10897,7 @@
 				AF4778FB099DDE79001F091E /* cynosure.c */,
 				AF9D467809B5110B006E59CF /* decayscreen.c */,
 				AFC25B5E0988BA63000655EE /* deco.c */,
+				AF68A49619196E3E00D41CD1 /* delaunay.c */,
 				AF477145099D43E2001F091E /* deluxe.c */,
 				AF9D490709B536F7006E59CF /* distort.c */,
 				AF477605099DA097001F091E /* epicycle.c */,
@@ -10822,6 +10958,7 @@
 				AF4775B3099D9D67001F091E /* starfish.c */,
 				AF477736099DB104001F091E /* substrate.c */,
 				AF4771BA099D4997001F091E /* t3d.c */,
+				AF68A49519196E3E00D41CD1 /* tessellimage.c */,
 				AF35821B1433314C00E09C51 /* tronbit.c */,
 				AF3582171433314C00E09C51 /* tronbit_idle1.c */,
 				AF3582181433314C00E09C51 /* tronbit_idle2.c */,
@@ -11019,6 +11156,7 @@
 				AFA561B309937DCC00F3E977 /* polyhedra.c */,
 				AFA561B409937DCC00F3E977 /* polyhedra.h */,
 				AFA560C3099371D500F3E977 /* polytopes.c */,
+				AFFAB33119158EA80020F021 /* projectiveplane.c */,
 				AFA5621C099384F600F3E977 /* providence.c */,
 				AFA55B3F09933EC600F3E977 /* pulsar.c */,
 				AFF28695178611720050A578 /* quasicrystal.c */,
@@ -11250,6 +11388,7 @@
 				AFC258F90988A469000655EE /* polytopes.xml */,
 				AFC258FA0988A469000655EE /* pong.xml */,
 				AFC258FB0988A469000655EE /* popsquares.xml */,
+				AFFAB32C19158E2A0020F021 /* projectiveplane.xml */,
 				AFC258FC0988A469000655EE /* providence.xml */,
 				AFC258FD0988A469000655EE /* pulsar.xml */,
 				AFC258FE0988A469000655EE /* pyro.xml */,
@@ -11290,6 +11429,7 @@
 				AFC259200988A469000655EE /* swirl.xml */,
 				AFC259210988A469000655EE /* t3d.xml */,
 				AFC259220988A469000655EE /* tangram.xml */,
+				AF68A49419196E3E00D41CD1 /* tessellimage.xml */,
 				AFC259230988A469000655EE /* thornbird.xml */,
 				AFC259240988A469000655EE /* timetunnel.xml */,
 				AF998EFA0A083E8C0051049D /* topblock.xml */,
@@ -11324,6 +11464,8 @@
 		AFE1FD520981E35400F7970E /* Utils */ = {
 			isa = PBXGroup;
 			children = (
+				AFDA11211934424D003D397F /* aligned_malloc.c */,
+				AFDA11221934424D003D397F /* aligned_malloc.h */,
 				AF9D473609B52EE0006E59CF /* colorbars.c */,
 				AF9D473709B52EE0006E59CF /* colorbars.h */,
 				AFC25B990988BC08000655EE /* colors.c */,
@@ -11364,6 +11506,8 @@
 				AF77780909B64F4900EA3033 /* texfont.h */,
 				AFC7592B158D8E8B00C5458E /* textclient.c */,
 				AFC7592C158D8E8B00C5458E /* textclient.h */,
+				AFDA11231934424D003D397F /* thread_util.c */,
+				AFDA11241934424D003D397F /* thread_util.h */,
 				AF480EAD098F63BE00FB32B8 /* trackball.c */,
 				AF480EAF098F63CD00FB32B8 /* trackball.h */,
 				AF480ED2098F652A00FB32B8 /* tube.c */,
@@ -11410,6 +11554,8 @@
 				AF4775C1099D9E79001F091E /* resources.h in Headers */,
 				AF9D473909B52EE0006E59CF /* colorbars.h in Headers */,
 				AF7778C709B65CFE00EA3033 /* font-ximage.h in Headers */,
+				AFDA11261934424D003D397F /* aligned_malloc.h in Headers */,
+				AFDA11281934424D003D397F /* thread_util.h in Headers */,
 				AFBF893F0E41D930006A2D66 /* fps.h in Headers */,
 				AFBF89B20E424036006A2D66 /* fpsI.h in Headers */,
 				AF6048FC157C07C600CA21E4 /* jwzgles.h in Headers */,
@@ -12683,6 +12829,7 @@
 			buildRules = (
 			);
 			dependencies = (
+				AF9E7EDF190F4F7200A8B01F /* PBXTargetDependency */,
 			);
 			name = jwxyz;
 			productName = jwxyz;
@@ -13047,6 +13194,26 @@
 			name = Bubbles;
 			productName = Bubbles;
 			productReference = AF6427B809A2DE36000F4CD4 /* Bubbles.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF68A47E19196CF800D41CD1 /* Tessellimage */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF68A48F19196CF800D41CD1 /* Build configuration list for PBXNativeTarget "Tessellimage" */;
+			buildPhases = (
+				AF68A48119196CF800D41CD1 /* Resources */,
+				AF68A48319196CF800D41CD1 /* Sources */,
+				AF68A48619196CF800D41CD1 /* Frameworks */,
+				AF68A48D19196CF800D41CD1 /* Rez */,
+				AF68A48E19196CF800D41CD1 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF68A47F19196CF800D41CD1 /* PBXTargetDependency */,
+			);
+			name = Tessellimage;
+			productName = Attraction;
+			productReference = AF68A49219196CF800D41CD1 /* Tessellimage.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
 		AF7510FF1782B5B900380EA1 /* Kaleidocycle */ = {
@@ -14089,6 +14256,23 @@
 			productName = Apple2;
 			productReference = AF9D4DFE09B5BB19006E59CF /* Apple2.saver */;
 			productType = "com.apple.product-type.bundle";
+		};
+		AF9E7EBE190F4C1B00A8B01F /* enable_gc */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF9E7EC5190F4C1C00A8B01F /* Build configuration list for PBXNativeTarget "enable_gc" */;
+			buildPhases = (
+				AF9E7EBB190F4C1B00A8B01F /* Sources */,
+				AF9E7EBC190F4C1B00A8B01F /* Frameworks */,
+				AF9E7EBD190F4C1B00A8B01F /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = enable_gc;
+			productName = enable_gc;
+			productReference = AF9E7EBF190F4C1B00A8B01F /* enable_gc */;
+			productType = "com.apple.product-type.tool";
 		};
 		AFA3392E0B058505002B0E7D /* WebCollage */ = {
 			isa = PBXNativeTarget;
@@ -16112,13 +16296,38 @@
 			productReference = AFF4636C0C440AEF00EE6509 /* GLCells.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
+		AFFAB31519158CE40020F021 /* ProjectivePlane */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AFFAB32619158CE40020F021 /* Build configuration list for PBXNativeTarget "ProjectivePlane" */;
+			buildPhases = (
+				AFFAB31819158CE40020F021 /* Resources */,
+				AFFAB31A19158CE40020F021 /* Sources */,
+				AFFAB31D19158CE40020F021 /* Frameworks */,
+				AFFAB32419158CE40020F021 /* Rez */,
+				AFFAB32519158CE40020F021 /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AFFAB31619158CE40020F021 /* PBXTargetDependency */,
+			);
+			name = ProjectivePlane;
+			productName = DangerBall;
+			productReference = AFFAB32919158CE40020F021 /* ProjectivePlane.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
 		29B97313FDCFA39411CA2CEA /* Project object */ = {
 			isa = PBXProject;
 			attributes = {
-				LastUpgradeCheck = 0500;
+				LastUpgradeCheck = 0510;
+				TargetAttributes = {
+					AF918977158FC00A002B5D1E = {
+						DevelopmentTeam = 4627ATJELP;
+					};
+				};
 			};
 			buildConfigurationList = C01FCF4E08A954540054247B /* Build configuration list for PBXProject "xscreensaver" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -16218,6 +16427,7 @@
 				AF477644099DA6D0001F091E /* Squiral */,
 				AF47759F099D9CF7001F091E /* Starfish */,
 				AF477723099DB044001F091E /* Substrate */,
+				AF68A47E19196CF800D41CD1 /* Tessellimage */,
 				AF476FDA099D1686001F091E /* Truchet */,
 				AF9D496C09B5411D006E59CF /* Twang */,
 				AF4776F1099DAE7A001F091E /* Vermiculate */,
@@ -16329,6 +16539,7 @@
 				AF4812B30990D3D900FB32B8 /* Pipes */,
 				AFA5619D09937D7E00F3E977 /* Polyhedra */,
 				AFA560AE0993718D00F3E977 /* Polytopes */,
+				AFFAB31519158CE40020F021 /* ProjectivePlane */,
 				AFA562060993849F00F3E977 /* Providence */,
 				AFA55B2509933E8D00F3E977 /* Pulsar */,
 				AFF2867F17860E830050A578 /* QuasiCrystal */,
@@ -16374,6 +16585,7 @@
 				AFD56F0B0996AAFA00BA26F7 /* Vines */,
 				AF477208099D4EE8001F091E /* Whirlygig */,
 				AFD5709B0996B88E00BA26F7 /* Worm */,
+				AF9E7EBE190F4C1B00A8B01F /* enable_gc */,
 				AF9771D60989DC4A001F8B92 /* SaverTester */,
 				AF918977158FC00A002B5D1E /* XScreenSaver-iOS */,
 				AF1AD9E118500F9F00932759 /* XScreenSaverUpdater */,
@@ -17039,6 +17251,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF68A48119196CF800D41CD1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF68A49719196E3E00D41CD1 /* tessellimage.xml in Resources */,
+				AF4A6692191F7CAE00C74753 /* xscreensaver-getimage-file in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF7511021782B5B900380EA1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -17205,7 +17426,10 @@
 				AF91897F158FC00A002B5D1E /* iSaverRunner50.png in Resources */,
 				AF918980158FC00A002B5D1E /* iSaverRunner57.png in Resources */,
 				AF918981158FC00A002B5D1E /* iSaverRunner72.png in Resources */,
+				AF72284818D943DF000D36EC /* iSaverRunner76.png in Resources */,
 				AF918982158FC00A002B5D1E /* iSaverRunner114.png in Resources */,
+				AF72284918D943DF000D36EC /* iSaverRunner120.png in Resources */,
+				AF72284A18D943DF000D36EC /* iSaverRunner152.png in Resources */,
 				AF918AB4158FC53D002B5D1E /* abstractile.xml in Resources */,
 				AF918AB5158FC53D002B5D1E /* anemone.xml in Resources */,
 				AF918AB6158FC53D002B5D1E /* anemotaxis.xml in Resources */,
@@ -17288,10 +17512,10 @@
 				AF918B0A158FC53D002B5D1E /* glschool.xml in Resources */,
 				AF918B0B158FC53D002B5D1E /* glslideshow.xml in Resources */,
 				AF918B0C158FC53D002B5D1E /* glsnake.xml in Resources */,
+				AF918B10158FC53D002B5D1E /* greynetic.xml in Resources */,
 				AF918B0D158FC53D002B5D1E /* gltext.xml in Resources */,
 				AF918B0E158FC53D002B5D1E /* goop.xml in Resources */,
 				AF918B0F158FC53D002B5D1E /* grav.xml in Resources */,
-				AF918B10158FC53D002B5D1E /* greynetic.xml in Resources */,
 				AF918B11158FC53D002B5D1E /* halftone.xml in Resources */,
 				AF918B12158FC53D002B5D1E /* halo.xml in Resources */,
 				AF918B13158FC53D002B5D1E /* helix.xml in Resources */,
@@ -17348,6 +17572,7 @@
 				AF918B4F158FC53E002B5D1E /* polytopes.xml in Resources */,
 				AF918B50158FC53E002B5D1E /* pong.xml in Resources */,
 				AF918B51158FC53E002B5D1E /* popsquares.xml in Resources */,
+				AFFAB33019158E2A0020F021 /* projectiveplane.xml in Resources */,
 				AF918B52158FC53E002B5D1E /* providence.xml in Resources */,
 				AF918B53158FC53E002B5D1E /* pulsar.xml in Resources */,
 				AF918B54158FC53E002B5D1E /* pyro.xml in Resources */,
@@ -17384,6 +17609,7 @@
 				AF918B75158FC53E002B5D1E /* surfaces.xml in Resources */,
 				AF918B76158FC53E002B5D1E /* swirl.xml in Resources */,
 				AF918B78158FC53E002B5D1E /* tangram.xml in Resources */,
+				AF68A49819196E3E00D41CD1 /* tessellimage.xml in Resources */,
 				AF918B79158FC53E002B5D1E /* thornbird.xml in Resources */,
 				AF918B7A158FC53E002B5D1E /* timetunnel.xml in Resources */,
 				AF918B7B158FC53E002B5D1E /* topblock.xml in Resources */,
@@ -18498,6 +18724,14 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFFAB31819158CE40020F021 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFFAB32F19158E2A0020F021 /* projectiveplane.xml in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXResourcesBuildPhase section */
 
 /* Begin PBXRezBuildPhase section */
@@ -19027,6 +19261,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AF6427B409A2DE36000F4CD4 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF68A48D19196CF800D41CD1 /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -20069,6 +20310,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFFAB32419158CE40020F021 /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXRezBuildPhase section */
 
 /* Begin PBXShellScriptBuildPhase section */
@@ -20298,6 +20546,21 @@
 			showEnvVarsInLog = 0;
 		};
 		AF578FA11434E918002455DD /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AF68A48E19196CF800D41CD1 /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -23593,6 +23856,21 @@
 			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
 			showEnvVarsInLog = 0;
 		};
+		AFFAB32519158CE40020F021 /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -24187,6 +24465,7 @@
 				AF4808C8098C3BE800FB32B8 /* InvertedSlider.m in Sources */,
 				AF4808C9098C3BEC00FB32B8 /* jwxyz.m in Sources */,
 				AF4808CA098C3BEE00FB32B8 /* PrefsReader.m in Sources */,
+				AFDA11251934424D003D397F /* aligned_malloc.c in Sources */,
 				AF4808CC098C3BF200FB32B8 /* spline.c in Sources */,
 				AF4808CD098C3BF400FB32B8 /* usleep.c in Sources */,
 				AF4808CE098C3BF800FB32B8 /* XScreenSaverConfigSheet.m in Sources */,
@@ -24204,6 +24483,7 @@
 				AFA55A530993353500F3E977 /* gllist.c in Sources */,
 				AFA55A95099336D800F3E977 /* normals.c in Sources */,
 				AFA55C570993482800F3E977 /* glxfonts.c in Sources */,
+				AFDA11271934424D003D397F /* thread_util.c in Sources */,
 				AF975C93099C929800B05160 /* xpm-pixmap.c in Sources */,
 				AF4774E8099D8D8C001F091E /* logo.c in Sources */,
 				AF4775C0099D9E79001F091E /* resources.c in Sources */,
@@ -24398,6 +24678,16 @@
 				AF6427AE09A2DE36000F4CD4 /* XScreenSaverSubclass.m in Sources */,
 				AF6427BE09A2DF47000F4CD4 /* bubbles-default.c in Sources */,
 				AF6427BF09A2DF47000F4CD4 /* bubbles.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF68A48319196CF800D41CD1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF68A49919196E3E00D41CD1 /* tessellimage.c in Sources */,
+				AF68A49B19196E3E00D41CD1 /* delaunay.c in Sources */,
+				AF68A48519196CF800D41CD1 /* XScreenSaverSubclass.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -24693,7 +24983,9 @@
 				AF918A1F158FC38A002B5D1E /* slip.c in Sources */,
 				AF918A22158FC38A002B5D1E /* strange.c in Sources */,
 				AF918A23158FC38A002B5D1E /* swirl.c in Sources */,
+				AF68A49A19196E3E00D41CD1 /* tessellimage.c in Sources */,
 				AF918A24158FC38A002B5D1E /* thornbird.c in Sources */,
+				AF68A49C19196E3E00D41CD1 /* delaunay.c in Sources */,
 				AF918A25158FC38A002B5D1E /* triangle.c in Sources */,
 				AF918A28158FC3BB002B5D1E /* antinspect.c in Sources */,
 				AF918A29158FC3BB002B5D1E /* antmaze.c in Sources */,
@@ -24776,6 +25068,7 @@
 				AF918A79158FC417002B5D1E /* molecule.c in Sources */,
 				AF918A7A158FC417002B5D1E /* morph3d.c in Sources */,
 				AF918A7B158FC417002B5D1E /* noof.c in Sources */,
+				AFFAB33319158EA80020F021 /* projectiveplane.c in Sources */,
 				AF918A7C158FC417002B5D1E /* photopile.c in Sources */,
 				AF918A7D158FC417002B5D1E /* pinion.c in Sources */,
 				AF918A7E158FC417002B5D1E /* pipeobjs.c in Sources */,
@@ -25144,6 +25437,14 @@
 				AF9D4DF309B5BB19006E59CF /* analogtv.c in Sources */,
 				AF9D4DF509B5BB19006E59CF /* apple2.c in Sources */,
 				AF9D4E0609B5BC9D006E59CF /* apple2-main.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF9E7EBB190F4C1B00A8B01F /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF9E7EC9190F4C4000A8B01F /* enable_gc.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -26097,6 +26398,15 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AFFAB31A19158CE40020F021 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFFAB31C19158CE40020F021 /* XScreenSaverSubclass.m in Sources */,
+				AFFAB33219158EA80020F021 /* projectiveplane.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -26699,6 +27009,16 @@
 			isa = PBXTargetDependency;
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
 			targetProxy = AF6427AA09A2DE36000F4CD4 /* PBXContainerItemProxy */;
+		};
+		AF68A47F19196CF800D41CD1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF68A48019196CF800D41CD1 /* PBXContainerItemProxy */;
+		};
+		AF68A49E19196EA000D41CD1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF68A47E19196CF800D41CD1 /* Tessellimage */;
+			targetProxy = AF68A49D19196EA000D41CD1 /* PBXContainerItemProxy */;
 		};
 		AF714E4F105613410046AB1D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -27845,6 +28165,11 @@
 			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
 			targetProxy = AF9D4DEE09B5BB19006E59CF /* PBXContainerItemProxy */;
 		};
+		AF9E7EDF190F4F7200A8B01F /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF9E7EBE190F4C1B00A8B01F /* enable_gc */;
+			targetProxy = AF9E7EDE190F4F7200A8B01F /* PBXContainerItemProxy */;
+		};
 		AFA160921052FF87009B93AA /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = AF6425CC09A18855000F4CD4 /* HyperCube */;
@@ -28465,6 +28790,16 @@
 			target = AFF463580C440AEF00EE6509 /* GLCells */;
 			targetProxy = AFF4636E0C440B3B00EE6509 /* PBXContainerItemProxy */;
 		};
+		AFFAB31619158CE40020F021 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AFFAB31719158CE40020F021 /* PBXContainerItemProxy */;
+		};
+		AFFAB33519158F1E0020F021 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AFFAB31519158CE40020F021 /* ProjectivePlane */;
+			targetProxy = AFFAB33419158F1E0020F021 /* PBXContainerItemProxy */;
+		};
 /* End PBXTargetDependency section */
 
 /* Begin PBXVariantGroup section */
@@ -28672,7 +29007,7 @@
 					/Users/jwz/src/xscreensaver/OSX,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/OSX/Updater.plist";
-				"OTHER_CFLAGS[sdk=macosx*]" = "-fno-objc-gc";
+				"OTHER_CFLAGS[sdk=macosx*]" = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -28687,7 +29022,7 @@
 					/Users/jwz/src/xscreensaver/OSX,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/OSX/Updater.plist";
-				"OTHER_CFLAGS[sdk=macosx*]" = "-fno-objc-gc";
+				"OTHER_CFLAGS[sdk=macosx*]" = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -29569,7 +29904,7 @@
 				INSTALL_PATH = /usr/local/lib;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos";
-				VALID_ARCHS = "i386 x86_64 armv6 armv7 armv7s";
+				VALID_ARCHS = "i386 x86_64 armv6 armv7 armv7s arm64";
 			};
 			name = Debug;
 		};
@@ -29579,7 +29914,7 @@
 				INSTALL_PATH = /usr/local/lib;
 				SKIP_INSTALL = YES;
 				SUPPORTED_PLATFORMS = "macosx iphonesimulator iphoneos";
-				VALID_ARCHS = "i386 x86_64 armv6 armv7 armv7s";
+				VALID_ARCHS = "i386 x86_64 armv6 armv7 armv7s arm64";
 			};
 			name = Release;
 		};
@@ -30138,6 +30473,20 @@
 		AF6427B709A2DE36000F4CD4 /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+			};
+			name = Release;
+		};
+		AF68A49019196CF800D41CD1 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = Tessellimage;
+			};
+			name = Debug;
+		};
+		AF68A49119196CF800D41CD1 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = Tessellimage;
 			};
 			name = Release;
 		};
@@ -30737,13 +31086,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"USE_IPHONE=1",
 					"$(inherited)",
 				);
+				"GCC_WARN_64_TO_32_BIT_CONVERSION[arch=*64]" = NO;
 				INFOPLIST_FILE = OSX/iSaverRunner.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				PRODUCT_NAME = XScreenSaver;
+				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
 				WRAPPER_EXTENSION = app;
 			};
@@ -30753,13 +31106,17 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}";
+				CODE_SIGN_IDENTITY = "iPhone Developer";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				GCC_PREPROCESSOR_DEFINITIONS = (
 					"USE_IPHONE=1",
 					"$(inherited)",
 				);
+				"GCC_WARN_64_TO_32_BIT_CONVERSION[arch=*64]" = NO;
 				INFOPLIST_FILE = OSX/iSaverRunner.plist;
 				INSTALL_PATH = "$(HOME)/Applications";
 				PRODUCT_NAME = XScreenSaver;
+				PROVISIONING_PROFILE = "";
 				SDKROOT = iphoneos;
 				WRAPPER_EXTENSION = app;
 			};
@@ -31198,6 +31555,22 @@
 		AF9D4DFD09B5BB19006E59CF /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+			};
+			name = Release;
+		};
+		AF9E7EC6190F4C1C00A8B01F /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+			};
+			name = Debug;
+		};
+		AF9E7EC7190F4C1C00A8B01F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
 			};
 			name = Release;
 		};
@@ -34591,6 +34964,52 @@
 			};
 			name = Release;
 		};
+		AFFAB32719158CE40020F021 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"-ljwxyz",
+					"-framework",
+					ScreenSaver,
+					"-framework",
+					Cocoa,
+					"-framework",
+					Carbon,
+					"-framework",
+					AGL,
+					"-framework",
+					OpenGL,
+				);
+			};
+			name = Debug;
+		};
+		AFFAB32819158CE40020F021 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"-ljwxyz",
+					"-framework",
+					ScreenSaver,
+					"-framework",
+					Cocoa,
+					"-framework",
+					Carbon,
+					"-framework",
+					AGL,
+					"-framework",
+					OpenGL,
+				);
+			};
+			name = Release;
+		};
 		C01FCF4F08A954540054247B /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
@@ -34613,6 +35032,7 @@
 					"HAVE_GETIFADDRS=1",
 					"HAVE_FORKPTY=1",
 					"HAVE_UTIL_H=1",
+					"HAVE_PTHREAD=1",
 					"$(GCC_PREPROCESSOR_DEFINITIONS)",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
@@ -34642,10 +35062,11 @@
 				);
 				INFOPLIST_FILE = OSX/XScreenSaver.plist;
 				INSTALL_PATH = "$(HOME)/Library/Screen Savers";
-				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1.1;
 				LIBRARY_SEARCH_PATHS = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				"OTHER_CFLAGS[sdk=macosx*]" = "-fobjc-gc";
+				OTHER_CFLAGS = "";
+				"OTHER_CFLAGS[sdk=macosx*]" = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				"SDKROOT[arch=arm*]" = iphoneos;
@@ -34679,6 +35100,7 @@
 					"HAVE_GETIFADDRS=1",
 					"HAVE_FORKPTY=1",
 					"HAVE_UTIL_H=1",
+					"HAVE_PTHREAD=1",
 					"$(GCC_PREPROCESSOR_DEFINITIONS)",
 				);
 				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
@@ -34707,12 +35129,13 @@
 				);
 				INFOPLIST_FILE = OSX/XScreenSaver.plist;
 				INSTALL_PATH = "$(HOME)/Library/Screen Savers";
-				IPHONEOS_DEPLOYMENT_TARGET = 4.3;
+				IPHONEOS_DEPLOYMENT_TARGET = 5.1.1;
 				LIBRARY_SEARCH_PATHS = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				LLVM_LTO = NO;
 				"LLVM_LTO[sdk=macosx*]" = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
-				"OTHER_CFLAGS[sdk=macosx*]" = "-fobjc-gc";
+				OTHER_CFLAGS = "";
+				"OTHER_CFLAGS[sdk=macosx*]" = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				"SDKROOT[arch=arm*]" = iphoneos;
@@ -35502,6 +35925,15 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
+		AF68A48F19196CF800D41CD1 /* Build configuration list for PBXNativeTarget "Tessellimage" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF68A49019196CF800D41CD1 /* Debug */,
+				AF68A49119196CF800D41CD1 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
 		AF75110F1782B5B900380EA1 /* Build configuration list for PBXNativeTarget "Kaleidocycle" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
@@ -35966,6 +36398,15 @@
 			buildConfigurations = (
 				AF9D4DFC09B5BB19006E59CF /* Debug */,
 				AF9D4DFD09B5BB19006E59CF /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF9E7EC5190F4C1C00A8B01F /* Build configuration list for PBXNativeTarget "enable_gc" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF9E7EC6190F4C1C00A8B01F /* Debug */,
+				AF9E7EC7190F4C1C00A8B01F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
@@ -36893,6 +37334,15 @@
 			buildConfigurations = (
 				AFF4636A0C440AEF00EE6509 /* Debug */,
 				AFF4636B0C440AEF00EE6509 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AFFAB32619158CE40020F021 /* Build configuration list for PBXNativeTarget "ProjectivePlane" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AFFAB32719158CE40020F021 /* Debug */,
+				AFFAB32819158CE40020F021 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

@@ -120,8 +120,10 @@ static void init_tripples (void)
    }
 
    /* now, a zig-zag corrugation */
-   while (i< NUM_TWIS_PTS) {
+   while (1) {
+      if (i >= NUM_TWIS_PTS) break;
       TWIST ((-10.0 +(double) i), 0.0);
+      if (i >= NUM_TWIS_PTS) break;
       TWIST ((-9.5 +(double) i), 1.0);
    }
 }

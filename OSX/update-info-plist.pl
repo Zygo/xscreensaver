@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2013 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2014 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my $version = q{ $Revision: 1.28 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my ($version) = ('$Revision: 1.30 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 
@@ -314,6 +314,22 @@ sub set_thumb($) {
 }
 
 
+sub enable_gc($) {
+  my ($app_dir) = @_;
+
+  return unless ($app_dir =~ m@\.saver/?$@s);
+  my ($dir, $name) = ($app_dir =~ m@^(.*)/([^/]+)\.saver$@s);
+  error ("unparsable: $app_dir") unless $name;
+  my $exe = "$app_dir/Contents/MacOS/$name";
+  my @cmd = ("$dir/enable_gc", $exe);
+  print STDERR "$progname: exec: " . join(' ', @cmd) . "\n"
+    if ($verbose > 1);
+  system (@cmd);
+  my $exit  = $? >> 8;
+  exit ($exit) if $exit;
+}
+
+
 sub update($) {
   my ($app_dir) = @_;
 
@@ -375,6 +391,7 @@ sub update($) {
 
   set_icon ($app_dir);
   set_thumb ($app_dir);
+  enable_gc ($app_dir);
 }
 
 

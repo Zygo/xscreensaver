@@ -99,7 +99,8 @@ bigendian (void)
 /* Given a bitmask, returns the position and width of the field.
  */
 static void
-decode_mask (unsigned int mask, unsigned int *pos_ret, unsigned int *size_ret)
+decode_mask (unsigned long mask, unsigned long *pos_ret,
+             unsigned long *size_ret)
 {
   int i;
   for (i = 0; i < 32; i++)
@@ -142,10 +143,10 @@ convert_ximage_to_rgba32 (Screen *screen, XImage *image)
   Visual *visual = DefaultVisualOfScreen (screen);
 
   int x, y;
-  unsigned int crpos=0, cgpos=0, cbpos=0, capos=0; /* bitfield positions */
-  unsigned int srpos=0, sgpos=0, sbpos=0;
-  unsigned int srmsk=0, sgmsk=0, sbmsk=0;
-  unsigned int srsiz=0, sgsiz=0, sbsiz=0;
+  unsigned long crpos=0, cgpos=0, cbpos=0, capos=0; /* bitfield positions */
+  unsigned long srpos=0, sgpos=0, sbpos=0;
+  unsigned long srmsk=0, sgmsk=0, sbmsk=0;
+  unsigned long srsiz=0, sgsiz=0, sbsiz=0;
   XColor *colors = 0;
   unsigned char spread_map[3][256];
 

@@ -6,9 +6,10 @@
 
   <hgroup>
     <select id="kleinbottle">
-      <option id="random"   _label="Random shape"/>
-      <option id="figure-8" _label="Figure 8" arg-set="-klein-bottle figure-8"/>
-      <option id="lawson"   _label="Lawson"   arg-set="-klein-bottle lawson"/>
+      <option id="random"         _label="Random shape"/>
+      <option id="figure-8"       _label="Figure 8"       arg-set="-klein-bottle figure-8"/>
+      <option id="squeezed-torus" _label="Squeezed torus" arg-set="-klein-bottle squeezed-torus"/>
+      <option id="lawson"         _label="Lawson"         arg-set="-klein-bottle lawson"/>
     </select>
 
     <select id="view-mode">

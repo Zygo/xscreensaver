@@ -8,6 +8,17 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 5.26</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.26.dmg</link>
+   <description><![CDATA[&bull; More auto-updater tweaks.]]></description>
+   <pubDate>Mon, 09 Dec 2013 03:10:57 -0800</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.26.dmg"
+    sparkle:version="5.26"
+    sparkle:dsaSignature="MC0CFQCzgimeQA5IyboA3SPR6zm3TG9ARgIUHSj5ODBIu/AryfW1Y55sW8//ZVI="
+    length="50489976"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 5.25</title>
    <link>http://www.jwz.org/xscreensaver/xscreensaver-5.25.dmg</link>
    <description><![CDATA[&bull; Try harder to bypass Quarrantine and Gatekeeper in OSX installer. <BR>&bull; Some files were missing from the tarball.]]></description>

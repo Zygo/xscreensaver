@@ -531,10 +531,14 @@ xanalogtv_draw (Display *dpy, Window window, void *closure)
   int curticks=getticks(st);
   double curtime=curticks*0.001;
 
-  if (st->change_now || 
-      (curticks >= st->change_ticks && st->tv->powerup > 10.0)) {
+  const analogtv_reception *recs[MAX_MULTICHAN];
+  unsigned rec_count = 0;
+
+  int auto_change = curticks >= st->change_ticks && st->tv->powerup > 10.0 ? 1 : 0;
+
+  if (st->change_now || auto_change) {
+    st->curinputi=(st->curinputi+st->change_now+auto_change+N_CHANNELS)%N_CHANNELS;
     st->change_now = 0;
-    st->curinputi=(st->curinputi+1)%N_CHANNELS;
     st->cs = &st->chansettings[st->curinputi];
 #if 0
     fprintf (stderr, "%s: channel %d, %s\n", progname, st->curinputi,
@@ -559,17 +563,21 @@ xanalogtv_draw (Display *dpy, Window window, void *closure)
 
   st->tv->powerup=curtime;
 
-  analogtv_init_signal(st->tv, st->cs->noise_level);
   for (i=0; i<MAX_MULTICHAN; i++) {
     analogtv_reception *rec = &st->cs->recs[i];
-    analogtv_input *inp=rec->input;
-    if (!inp) continue;
-
-    analogtv_reception_update(rec);
-    analogtv_add_signal(st->tv, rec);
+    if (rec->input) {
+      analogtv_reception_update(rec);
+      recs[rec_count] = rec;
+      ++rec_count;
+    }
   }
-  analogtv_draw(st->tv);
-  return 10000;
+  analogtv_draw(st->tv, st->cs->noise_level, recs, rec_count);
+
+#ifdef USE_IPHONE
+  return 0;
+#else
+  return 5000;
+#endif
 }
 
 static void
@@ -587,7 +595,8 @@ xanalogtv_event (Display *dpy, Window window, void *closure, XEvent *event)
 
   if (event->type == ButtonPress)
     {
-      st->change_now = 1;
+      unsigned button = event->xbutton.button;
+      st->change_now = button == 2 || button == 3 || button == 5 ? -1 : 1;
       return True;
     }
   else if (event->type == KeyPress)
@@ -595,9 +604,16 @@ xanalogtv_event (Display *dpy, Window window, void *closure, XEvent *event)
       KeySym keysym;
       char c = 0;
       XLookupString (&event->xkey, &c, 1, &keysym, 0);
-      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
+      if (c == ' ' || c == '\t' || c == '\r' || c == '\n' ||
+          keysym == XK_Up || keysym == XK_Right || keysym == XK_Prior)
         {
           st->change_now = 1;
+          return True;
+        }
+      else if (c == '\b' ||
+               keysym == XK_Down || keysym == XK_Left || keysym == XK_Next)
+        {
+          st->change_now = -1;
           return True;
         }
     }

@@ -129,6 +129,14 @@ make_blob (Display *dpy, int maxx, int maxy, int size)
   return b;
 }
 
+static void
+free_blob(struct blob *blob)
+{
+  free_spline(blob->spline);
+  free(blob->r);
+  free(blob);
+}
+
 static void 
 throb_blob (struct blob *b)
 {
@@ -273,6 +281,18 @@ make_layer (Display *dpy, Window window, int width, int height, int nblobs)
   return layer;
 }
 
+static void
+free_layer(struct layer *layer, Display *dpy)
+{
+  int i;
+  for (i = 0; i < layer->nblobs; i++){
+    free_blob(layer->blobs[i]);
+  }
+  free(layer->blobs);
+  XFreeGC(dpy, layer->gc);
+  free(layer);
+}
+
 
 #ifndef HAVE_COCOA
 static void
@@ -330,6 +350,7 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
     goop->mode = xor;
   else
     fprintf (stderr, "%s: bogus mode: \"%s\"\n", progname, s);
+  free(s);
 
   goop->delay = get_integer_resource (dpy, "delay", "Integer");
 
@@ -446,6 +467,21 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
   return goop;
 }
 
+/* Well, the naming of this function is
+   confusing with goop_free()... */
+static void
+free_goop (struct goop *goop, Display *dpy)
+{
+  int i;
+  for (i = 0; i < goop->nlayers; i++){
+    struct layer * layer = goop->layers[i];
+    free_layer(layer, dpy);
+  }
+  free(goop->layers);
+  XFreeGC(dpy, goop->pixmap_gc);
+  XFreeGC(dpy, goop->window_gc);
+}
+
 static void *
 goop_init (Display *dpy, Window window)
 {
@@ -546,9 +582,10 @@ goop_reshape (Display *dpy, Window window, void *closure,
 {
   struct goop *goop = (struct goop *) closure;
 
-  /* #### leaks like crazy */
   struct goop *goop2 = goop_init (dpy, window);
+  free_goop(goop, dpy);
   memcpy (goop, goop2, sizeof(*goop));
+  free(goop2);
 }
 
 static Bool
@@ -560,6 +597,9 @@ goop_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 goop_free (Display *dpy, Window window, void *closure)
 {
+  struct goop *goop = (struct goop *) closure;
+  free_goop(goop, dpy);
+  free(goop);
 }
 
 

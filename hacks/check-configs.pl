@@ -32,10 +32,16 @@ $xlockmore_default_opts .=
  "{\"-wireframe\", \".wireframe\", XrmoptionNoArg, \"true\"},\n" .
  "{\"-3d\", \".use3d\", XrmoptionNoArg, \"true\"},\n";
 
+my $thread_default_opts = 
+  "{\"-threads\",    \".useThreads\", XrmoptionNoArg, \"True\"},\n" .
+  "{\"-no-threads\", \".useThreads\", XrmoptionNoArg, \"False\"},\n";
+
 my $analogtv_default_opts = '';
 foreach (qw(color tint brightness contrast)) {
   $analogtv_default_opts .= "{\"-tv-$_\", \".TV$_\", XrmoptionSepArg, 0},\n";
 }
+
+$analogtv_default_opts .= $thread_default_opts;
 
 
 
@@ -63,11 +69,12 @@ sub parse_src($) {
   $file =~ s@^.*/@@;
 
   my $xlockmore_p = 0;
+  my $thread_p = ($body =~ m/THREAD_DEFAULTS/);
   my $analogtv_p = ($body =~ m/ANALOGTV_DEFAULTS/);
 
   $body =~ s@/\*.*?\*/@@gs;
   $body =~ s@^#\s*(if|ifdef|ifndef|elif|else|endif).*$@@gm;
-  $body =~ s/ANALOGTV_(DEFAULTS|OPTIONS)//gs;
+  $body =~ s/(THREAD|ANALOGTV)_(DEFAULTS|OPTIONS)//gs;
 
   print STDERR "$progname: $file: defaults:\n" if ($verbose > 2);
   my %res_to_val;
@@ -125,9 +132,10 @@ sub parse_src($) {
   $switch_to_res{-bg}  = 'background: %';
 
   my ($ign, $opts) = ($body =~ m/(_options|\bopts)\s*\[\]\s*=\s*{(.*?)}\s*;/s);
-  if  ($xlockmore_p || $analogtv_p || $opts) {
+  if  ($xlockmore_p || $thread_p || $analogtv_p || $opts) {
     $opts = '' unless $opts;
     $opts .= ",\n$xlockmore_default_opts" if ($xlockmore_p);
+    $opts .= ",\n$thread_default_opts" if ($thread_p);
     $opts .= ",\n$analogtv_default_opts" if ($analogtv_p);
 
     foreach (split (/,\s*\n/, $opts)) {

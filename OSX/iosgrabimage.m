@@ -56,7 +56,7 @@ ios_random_image_done (ios_loader_data *d, BOOL ok)
 {
   UIImage *img = 0;
   const char *fn = 0;
-  int n = ok ? [d->assets count] : 0;
+  NSUInteger n = ok ? [d->assets count] : 0;
   if (n > 0) {
     ALAsset *asset = [d->assets objectAtIndex: random() % n];
     ALAssetRepresentation *rep = [asset defaultRepresentation];

@@ -26,6 +26,7 @@
 
 #ifndef USE_IPHONE
 
+#include <objc/runtime.h>
 
 /* GlobalDefaults is an NSUserDefaults implementation that writes into
    the preferences key we provide, instead of whatever the default would
@@ -49,18 +50,42 @@
 @end
 
 @implementation GlobalDefaults
-- (id) initWithDomain:(NSString *)_domain
+- (id) initWithDomain:(NSString *)_domain module:(NSString *)_module
 {
+  // Key-Value Observing tries to create an Objective-C class named
+  // NSKVONotifying_GlobalDefaults when the configuration page is shown. But if
+  // this is the second XScreenSaver .saver running in the same process, class
+  // creation fails because that class name was already used by the first
+  // .saver, and it refers to the GlobalDefaults from the other .saver.
+
+  // This gives the class a unique name, sidestepping the above issue.
+
+  // It really just needs to be unique for this .saver and this instance.
+  // Using the pointer to the .saver's mach_header and the full path to the
+  // .saver would be preferable, but this should be good enough.
+  char class_name[128];
+  sprintf(class_name, "GlobalDefaults_%s_%p_%u",
+          strrchr(_module.UTF8String, '.') + 1, self, random());
+  Class c = objc_allocateClassPair([GlobalDefaults class], class_name, 0);
+  if (!c)
+    return nil;
+  objc_registerClassPair(c);
+
   self = [super init];
+  object_setClass(self, c);
   domain = [_domain retain];
   return self;
 }
 
 - (void) dealloc
 {
+  Class c = object_getClass(self);
+
   [domain release];
   [defaults release];
   [super dealloc];
+
+  objc_disposeClassPair(c);
 }
 
 - (void)registerDefaults:(NSDictionary *)dict
@@ -223,7 +248,7 @@
     while (*val == ' ' || *val == '\t')
       val++;
 
-    int L = strlen(val);
+    unsigned long L = strlen(val);
     while (L > 0 && (val[L-1] == ' ' || val[L-1] == '\t'))
       val[--L] = 0;
 
@@ -289,8 +314,8 @@
     [[NSUserDefaultsController alloc] initWithDefaults:globalDefaults
                                       initialValues:defsdict];
 # else  // USE_IPHONE
-  userDefaultsController   = userDefaults;
-  globalDefaultsController = userDefaults;
+  userDefaultsController   = [userDefaults retain];
+  globalDefaultsController = [userDefaults retain];
 # endif // USE_IPHONE
 
   NSDictionary *optsdict = [NSMutableDictionary dictionaryWithCapacity:20];
@@ -542,11 +567,11 @@
 
 # ifndef USE_IPHONE
   userDefaults = [ScreenSaverDefaults defaultsForModuleWithName:name];
-  globalDefaults = [[[GlobalDefaults alloc] initWithDomain:@UPDATER_DOMAIN]
-                     retain];
+  globalDefaults = [[GlobalDefaults alloc] initWithDomain:@UPDATER_DOMAIN
+                                                   module:name];
 # else  // USE_IPHONE
   userDefaults = [NSUserDefaults standardUserDefaults];
-  globalDefaults = userDefaults;
+  globalDefaults = [userDefaults retain];
 # endif // USE_IPHONE
 
   // Convert "org.jwz.xscreensaver.NAME" to just "NAME".
@@ -565,6 +590,7 @@
   [saver_name release];
   [userDefaultsController release];
   [globalDefaultsController release];
+  [globalDefaults release];
   [super dealloc];
 }
 

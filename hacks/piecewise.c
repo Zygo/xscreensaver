@@ -500,10 +500,12 @@ static void event_shred(event *e)
 
 /******** fringe intersection */
 
+#if 0
 static inline int check_fringe_intersection(double ye, fringe *lo, fringe *hi, double x, double y)
 {
   return ye <= y && ((x < lo->c->x) ^ lo->side) && ((x < hi->c->x) ^ hi->side);
   }
+#endif /* 0 */
 
 static void fringe_intersect(struct state *st, event **eq, double y, fringe *lo, fringe *hi)
 {
@@ -813,6 +815,7 @@ static void draw_circle(struct state *st, Drawable w, GC gc, circle *c)
 
 /******** toplevel */
 
+#if 0
 static void
 check_for_leaks (void)
 {
@@ -830,6 +833,7 @@ check_for_leaks (void)
     }
 #endif /* HAVE_SBRK */
 }
+#endif
 
 static void *
 piecewise_init (Display *dd, Window ww)
@@ -934,7 +938,7 @@ piecewise_draw (Display *dpy, Window window, void *closure)
       st->b = (st->b == st->ba ? st->bb : st->ba);
     }
 
-  check_for_leaks();
+/*  check_for_leaks(); */
   return st->delay;
 }
 

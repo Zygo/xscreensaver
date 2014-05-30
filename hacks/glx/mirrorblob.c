@@ -1123,11 +1123,13 @@ initialise_blob(mirrorblobstruct *gp,
  *
  * Return the magnitude of the given vector
  */
+#if 0
 static inline double
 length (Vector3D u)
 {
   return sqrt (u.x * u.x + u.y * u.y + u.z * u.z);
 }
+#endif
 
 /******************************************************************************
  *

@@ -678,6 +678,7 @@ static unsigned long
 pong_draw (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
+  const analogtv_reception *reception = &st->reception;
 
   if (st->clock)
   {
@@ -737,12 +738,14 @@ pong_draw (Display *dpy, Window window, void *closure)
   }
   if (1) paint_ball(st);
 
-  analogtv_init_signal(st->tv, st->noise);
   analogtv_reception_update(&st->reception);
-  analogtv_add_signal(st->tv, &st->reception);
-  analogtv_draw(st->tv);
+  analogtv_draw(st->tv, st->noise, &reception, 1);
 
-  return 10000;
+#ifdef USE_IPHONE
+  return 0;
+#else
+  return 5000;
+#endif
 }
 
 

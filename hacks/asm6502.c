@@ -1373,8 +1373,10 @@ static BOOL parseDec(char **s, Bit32 *value){
     free(dec);  
     return TRUE;
   }
-  else
+  else{
+    free(dec);
     return FALSE;
+  }
 }
 
 static BOOL parseValue(char **s, Bit32 *value){
@@ -1683,7 +1685,7 @@ static char *fileToBuffer(const char *filename){
   if (!buffer) abort();
 
   ifp = fopen(filename, "rb");
-  if (!ifp) return 0;
+  if (!ifp) abort();
 
   while((c = getc(ifp)) != EOF){
     buffer[i++] = c;

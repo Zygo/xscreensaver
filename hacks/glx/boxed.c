@@ -41,7 +41,7 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 */
 
 #ifdef STANDALONE
-# define DEFAULTS	"*delay:     20000   \n" \
+# define DEFAULTS	"*delay:     15000   \n" \
 			"*showFPS:   False   \n" \
 			"*wireframe: False   \n"
 
@@ -55,8 +55,8 @@ static const char sccsid[] = "@(#)boxed.c	0.9 01/09/26 xlockmore";
 #ifdef USE_GL
 
 # define DEF_SPEED      "0.5"
-# define DEF_BALLS	"25"
-# define DEF_BALLSIZE   "2.0"
+# define DEF_BALLS	"20"
+# define DEF_BALLSIZE   "3.0"
 # define DEF_EXPLOSION	"15.0"
 # define DEF_DECAY	"0.07"
 # define DEF_MOMENTUM	"0.6"
@@ -109,10 +109,11 @@ ModStruct   boxed_description = {
 #define FALSE 0
 
 /* camera */
-#define CAM_HEIGHT 	100.0f
-#define CAMDISTANCE_MIN 20.0
+#define CAM_HEIGHT 	80.0f
+#define CAMDISTANCE_MIN 35.0
 #define CAMDISTANCE_MAX 150.0
 #define CAMDISTANCE_SPEED 1.5
+#define LOOKAT_R 30.0
 
 /* rendering the sphere */
 #define MESH_SIZE	10
@@ -152,7 +153,7 @@ typedef struct {
    vectorf	loc;
    vectorf	dir;
    BOOL         far;
-   BOOL         gone;
+   int          gone;
 } tri;
 
 typedef struct {
@@ -407,7 +408,7 @@ static void updateballs(ballman *bman)
 	     (bman->balls[b].loc.x > 95.0) ||
 	     (bman->balls[b].loc.z < -95.0) ||
 	     (bman->balls[b].loc.z > 95.0)) {
-	    if (bman->balls[b].loc.y < -1000.0)
+	    if (bman->balls[b].loc.y < -2000.0)
 	      createball(&bman->balls[b]);
 	 } else {
 	    bman->balls[b].loc.y = bman->balls[b].radius  + (bman->balls[b].radius - bman->balls[b].loc.y);
@@ -511,7 +512,7 @@ static void createtrisfromball(triman* tman, vectorf *spherev, GLint *spherei, i
    
    for (i=0; i<(tman->num_tri); i++) {
       tman->tris[i].far = FALSE;
-      tman->tris[i].gone = FALSE;
+      tman->tris[i].gone = 0;
       pos = i * 3;
       /* kopieer elke poly apart naar een tri structure */
       copyvector(&tman->vertices[pos+0],&spherev[spherei[pos+0]]);
@@ -580,7 +581,10 @@ static void updatetris(triman *t)
    
    for (b=0;b<t->num_tri;b++) {
       /* the exploded triangles disappear over time */
-      if (rnd() < t->decay) { t->tris[b].gone = TRUE; }
+      if (rnd() < t->decay) {
+	  if (t->tris[b].gone == 0)
+	      t->tris[b].gone = 1;
+      }
       /* apply gravity */
       t->tris[b].dir.y -= (0.1f * speed);
       /* apply movement */
@@ -670,7 +674,7 @@ static void setdefaultconfig(boxed_config *config)
   cfg_balls = MAX(3,MIN(40,cfg_balls));
   cfg_ballsize = MAX(1.0f,MIN(5.0f,cfg_ballsize));
   cfg_explosion = MAX(0.0f,MIN(50.0f,cfg_explosion));
-  cfg_decay = MAX(0.0f,MIN(1.0f,cfg_decay));
+  cfg_decay = MAX(0.02f,MIN(0.90f,cfg_decay));
   cfg_momentum = MAX(0.0f,MIN(1.0f,cfg_momentum));
 
   config->numballs = cfg_balls;
@@ -693,7 +697,7 @@ static int drawfilledbox(boxedstruct *boxed, int wire)
       top is drawn using the entire texture, 
       the sides are drawn using the edge of the texture
     */
-  int polys = 0;
+   int polys = 0;
    
    /* front */
    glBegin(wire ? GL_LINE_LOOP : GL_QUADS);
@@ -875,7 +879,44 @@ static int drawtriman(triman *t, int wire)
    glMaterialfv(GL_FRONT, GL_EMISSION,col);
    
    for (i=0; i<t->num_tri; i++) {
-      if (t->tris[i].gone == TRUE) { continue; }
+      if (t->tris[i].gone > 3) { continue; }
+      if (t->tris[i].gone > 0) {
+	  glColor3f(t->color.x,t->color.y,t->color.z);
+	  col[0] = 1.0f;
+	  col[1] = 1.0f;
+	  col[2] = 1.0f;
+	  glMaterialfv(GL_FRONT, GL_DIFFUSE, col);
+	  col[0] *= 0.8;
+	  col[1] *= 0.8;
+	  col[2] *= 0.8;
+	  glMaterialfv(GL_FRONT, GL_EMISSION,col);
+
+	  pos = i*3;
+	  glPushMatrix();
+	  glTranslatef(t->tris[i].loc.x,t->tris[i].loc.y,t->tris[i].loc.z);
+	  glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLES);
+	  glNormal3f(t->normals[i].x,t->normals[i].y,t->normals[i].z);
+	  glVertex3f(spherev[pos+0].x,spherev[pos+0].y,spherev[pos+0].z);
+	  glVertex3f(spherev[pos+1].x,spherev[pos+1].y,spherev[pos+1].z);
+	  glVertex3f(spherev[pos+2].x,spherev[pos+2].y,spherev[pos+2].z);
+	  polys++;
+	  glEnd();
+	  glPopMatrix();
+
+	  glColor3f(t->color.x,t->color.y,t->color.z);
+	  col[0] = t->color.x;
+	  col[1] = t->color.y;
+	  col[2] = t->color.z;
+	  glMaterialfv(GL_FRONT, GL_DIFFUSE, col);
+	  col[0] *= 0.3;
+	  col[1] *= 0.3;
+	  col[2] *= 0.3;
+	  glMaterialfv(GL_FRONT, GL_EMISSION,col);
+
+	  t->tris[i].gone++;
+	  continue;
+      }
+
       pos = i*3;
       glPushMatrix();
       glTranslatef(t->tris[i].loc.x,t->tris[i].loc.y,t->tris[i].loc.z);
@@ -959,8 +1000,8 @@ static void draw(ModeInfo * mi)
 {
    boxedstruct *gp = &boxed[MI_SCREEN(mi)];
    int wire = MI_IS_WIREFRAME (mi);
-   vectorf v1;
-   GLfloat dcam;
+   vectorf v1,v2;
+   GLfloat r;
    int dx, dz;
    int i;   
    
@@ -988,11 +1029,16 @@ static void draw(ModeInfo * mi)
    gp->camtic += 0.01f + 0.01f * sin(gp->tic * speed);
    
    /* rotate camera around (0,0,0), looking at (0,0,0), up is (0,1,0) */
-   dcam = CAMDISTANCE_MIN + (CAMDISTANCE_MAX - CAMDISTANCE_MIN) + (CAMDISTANCE_MAX - CAMDISTANCE_MIN)*cos((gp->camtic/CAMDISTANCE_SPEED) * speed);
-   v1.x = dcam * sin((gp->camtic/gp->cam_x_speed) * speed);
-   v1.z = dcam * cos((gp->camtic/gp->cam_z_speed) * speed);
+   r = CAMDISTANCE_MIN + (CAMDISTANCE_MAX - CAMDISTANCE_MIN) + (CAMDISTANCE_MAX - CAMDISTANCE_MIN)*cos((gp->camtic/CAMDISTANCE_SPEED) * speed);
+   v1.x = r * sin((gp->camtic/gp->cam_x_speed) * speed);
+   v1.z = r * cos((gp->camtic/gp->cam_x_speed) * speed);
    v1.y = CAM_HEIGHT * sin((gp->camtic/gp->cam_y_speed) * speed) + 1.02 * CAM_HEIGHT;
-   gluLookAt(v1.x,v1.y,v1.z,0.0,0.0,0.0,0.0,1.0,0.0); 
+
+   v2.x = LOOKAT_R * sin((gp->camtic/(gp->cam_x_speed * 5.0f)) * speed);
+   v2.z = LOOKAT_R * cos((gp->camtic/(gp->cam_x_speed * 5.0f)) * speed);
+   v2.y = (CAM_HEIGHT * sin((gp->camtic/gp->cam_y_speed) * speed) + 1.02 * CAM_HEIGHT)/10.0;
+
+   gluLookAt(v1.x,v1.y,v1.z,v2.x,v2.y,v2.x,0.0,1.0,0.0); 
 
    if (!wire) {
      glLightfv(GL_LIGHT0, GL_AMBIENT, l0_ambient); 

@@ -222,6 +222,7 @@ m6502_draw (Display *dpy, Window window, void *closure)
   struct state *st = (struct state *) closure;
   unsigned int x = 0, y = 0;
   double te;
+  const analogtv_reception *reception = &st->reception;
 
   m6502_next_eval(st->machine,500);
 
@@ -229,10 +230,8 @@ m6502_draw (Display *dpy, Window window, void *closure)
     for (y = 0; y < 32; y++)
       paint_pixel(st,x,y,st->pixels[x][y]);
   
-  analogtv_init_signal(st->tv, 0.04);
   analogtv_reception_update(&st->reception);
-  analogtv_add_signal(st->tv, &st->reception);
-  analogtv_draw(st->tv);
+  analogtv_draw(st->tv, 0.04, &reception, 1);
   te = get_time(st);
   
   if (te > st->dt){ /* do something more interesting here XXX */
@@ -243,7 +242,11 @@ m6502_draw (Display *dpy, Window window, void *closure)
     start_rand_bin_prog(st->machine,st);
   }
 
-  return 10000;
+#ifdef USE_IPHONE
+  return 0;
+#else
+  return 5000;
+#endif
 }
 
 

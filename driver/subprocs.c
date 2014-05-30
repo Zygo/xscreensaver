@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991-2012 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1101,6 +1101,7 @@ hack_environment (saver_info *si)
   if (def_path && *def_path)
     {
       const char *opath = getenv("PATH");
+      if (! opath) opath = "/bin:/usr/bin";  /* WTF */
       char *npath = (char *) malloc(strlen(def_path) + strlen(opath) + 20);
       strcpy (npath, "PATH=");
       strcat (npath, def_path);

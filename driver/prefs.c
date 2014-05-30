@@ -1635,7 +1635,9 @@ stop_the_insanity (saver_preferences *p)
 
   if (p->dpms_standby == 0 &&	   /* if *all* are 0, then DPMS is disabled */
       p->dpms_suspend == 0 &&
-      p->dpms_off     == 0)
+      p->dpms_off     == 0 &&
+      !(p->dpms_quickoff_p)           /* ... but we want to do DPMS quick off */
+      )
     p->dpms_enabled_p = False;
 
 

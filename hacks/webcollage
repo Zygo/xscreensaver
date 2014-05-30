@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright © 1999-2013 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright © 1999-2014 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -57,8 +57,8 @@ use bytes;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.162 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
-my $copyright = "WebCollage $version, Copyright (c) 1999-2013" .
+my ($version) = ('$Revision: 1.164 $' =~ m/\s(\d[.\d]+)\s/s);
+my $copyright = "WebCollage $version, Copyright (c) 1999-2014" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
 
@@ -79,11 +79,13 @@ my @search_methods = (
                         6, "bingimgs",      \&pick_from_bing_images,
                         6, "bingnums",      \&pick_from_bing_image_numbers,
 
-                       19, "flickr_recent", \&pick_from_flickr_recent,
-                       15, "flickr_random", \&pick_from_flickr_random,
-                       20, "instagram",     \&pick_from_instagram,
-                        6, "livejournal",   \&pick_from_livejournal_images,
-                        4, "yahoorand",     \&pick_from_yahoo_random_link,
+                       21, "flickr_recent", \&pick_from_flickr_recent,
+                       16, "flickr_random", \&pick_from_flickr_random,
+                       23, "instagram",     \&pick_from_instagram,
+                        4, "livejournal",   \&pick_from_livejournal_images,
+
+                     # No longer exists, as of Apr 2014
+                     #  4, "yahoorand",     \&pick_from_yahoo_random_link,
 
                      # Twitter destroyed their whole API in 2013.
                      #  0, "twitpic",       \&pick_from_twitpic_images,
@@ -1139,47 +1141,47 @@ sub pick_image_from_pages($$$$@) {
 }
 
 
-############################################################################
+#############################################################################
+##
+## Pick images from random pages returned by the Yahoo Random Link
+##
+#############################################################################
 #
-# Pick images from random pages returned by the Yahoo Random Link
+## yahoorand
+#my $yahoo_random_link = "http://random.yahoo.com/fast/ryl";
 #
-############################################################################
-
-# yahoorand
-my $yahoo_random_link = "http://random.yahoo.com/fast/ryl";
-
-
+#
 # Picks a random page; picks a random image on that page;
 # returns two URLs: the page containing the image, and the image.
 # Returns () if nothing found this time.
 #
-sub pick_from_yahoo_random_link($) {
-  my ($timeout) = @_;
-
-  print STDERR "\n\n" if ($verbose_load);
-  LOG ($verbose_load, "URL: $yahoo_random_link");
-
-  $last_search = $yahoo_random_link;   # for warnings
-
-  $suppress_audit = 1;
-
-  my ( $base, $body ) = get_document ($yahoo_random_link, undef, $timeout);
-  if (!$base || !$body) {
-    $body = undef;
-    return;
-  }
-
-  LOG ($verbose_load, "redirected to: $base");
-
-  my $img = pick_image_from_body ($base, $body);
-  $body = undef;
-
-  if ($img) {
-    return ($base, $img);
-  } else {
-    return ();
-  }
-}
+#sub pick_from_yahoo_random_link($) {
+#  my ($timeout) = @_;
+#
+#  print STDERR "\n\n" if ($verbose_load);
+#  LOG ($verbose_load, "URL: $yahoo_random_link");
+#
+#  $last_search = $yahoo_random_link;   # for warnings
+#
+#  $suppress_audit = 1;
+#
+#  my ( $base, $body ) = get_document ($yahoo_random_link, undef, $timeout);
+#  if (!$base || !$body) {
+#    $body = undef;
+#    return;
+#  }
+#
+#  LOG ($verbose_load, "redirected to: $base");
+#
+#  my $img = pick_image_from_body ($base, $body);
+#  $body = undef;
+#
+#  if ($img) {
+#    return ($base, $img);
+#  } else {
+#    return ();
+#  }
+#}
 
 
 ############################################################################
@@ -2147,7 +2149,7 @@ sub pick_from_flickr_recent($) {
     $page = html_unquote ($page);
     $thumb = html_unquote ($thumb);
 
-    next unless ($thumb =~ m@^http://farm\d*\.static\.?flickr\.com/@);
+    next unless ($thumb =~ m@^https?://[^/.]+\d*\.static\.?flickr\.com/@);
 
     my $base = "http://www.flickr.com/";
     $page  =~ s@^/@$base@;

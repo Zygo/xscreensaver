@@ -97,7 +97,7 @@ ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
 
 
 void
-sync_server_dpms_settings (Display *dpy, Bool enabled_p,
+sync_server_dpms_settings (Display *dpy, Bool enabled_p, Bool dpms_quickoff_p,
                            int standby_secs, int suspend_secs, int off_secs,
                            Bool verbose_p)
 {
@@ -106,6 +106,12 @@ sync_server_dpms_settings (Display *dpy, Bool enabled_p,
   CARD16 o_power = 0;
   CARD16 o_standby = 0, o_suspend = 0, o_off = 0;
   Bool bogus_p = False;
+
+  if (dpms_quickoff_p && !off_secs)
+  {
+    /* To do this, we might need to temporarily re-enable DPMS first. */
+    off_secs = 0xFFFF;
+  }
 
   if (standby_secs == 0 && suspend_secs == 0 && off_secs == 0)
     /* all zero implies "DPMS disabled" */

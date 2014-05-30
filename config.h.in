@@ -231,6 +231,12 @@
    examined to determine when keyboard activity has occurred. */
 #undef HAVE_PROC_INTERRUPTS
 
+/* Define this if your system supports POSIX threads. */
+#undef HAVE_PTHREAD
+
+/* Have PTHREAD_PRIO_INHERIT. */
+#undef HAVE_PTHREAD_PRIO_INHERIT
+
 /* Define to 1 if you have the <pty.h> header file. */
 #undef HAVE_PTY_H
 
@@ -446,6 +452,10 @@
 
 /* Set the name of the password helper program, if any */
 #undef PASSWD_HELPER_PROGRAM
+
+/* Define to necessary symbol if this constant uses a non-standard name on
+   your system. */
+#undef PTHREAD_CREATE_JOINABLE
 
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE

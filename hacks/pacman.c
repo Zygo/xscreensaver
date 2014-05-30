@@ -1,9 +1,8 @@
 /* -*- Mode: C; tab-width: 4; indent-tabs-mode: nil; c-basic-offset: 4 -*- */
 /* pacman --- Mr. Pacman and his ghost friends */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
-
 #endif
 
 /*-
@@ -107,6 +106,7 @@ static const char sccsid[] = "@(#)pacman.c	5.00 2000/11/01 xlockmore";
 # include "images/pacman/pacman-ds8.xpm"
 #endif
 
+#if 0
 static const struct
 {
     int dx, dy;
@@ -114,6 +114,7 @@ static const struct
                        {  0, 1},
                        {  1, 0},
                        {  0, -1}};
+#endif
 
 #ifdef DISABLE_INTERACTIVE
 ENTRYPOINT ModeSpecOpt pacman_opts = {
@@ -1479,7 +1480,7 @@ init_pacman (ModeInfo * mi)
 {
     Display *display = MI_DISPLAY (mi);
     Window window = MI_WINDOW (mi);
-    int size = MI_SIZE (mi);
+    long size = MI_SIZE (mi);
     pacmangamestruct *pp;
     XGCValues gcv;
     int i, j, k;

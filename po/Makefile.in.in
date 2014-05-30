@@ -85,6 +85,9 @@
 #       version of) this rule out.
 #
 
+# config.status complains if "po/Makefile.in.in was not created by intltoolize".
+# INTLTOOL_MAKEFILE
+
 GETTEXT_PACKAGE = @GETTEXT_PACKAGE@
 PACKAGE = @PACKAGE@
 VERSION = @VERSION@

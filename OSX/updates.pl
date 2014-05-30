@@ -67,6 +67,7 @@ sub generate_xml($$$$) {
   $body =~ s/^(\d+\.\d+[ \t])/\001$1/gm;
   my @log = split (/\001/, $body);
   shift @log;
+  my $count = 0;
   foreach my $log (@log) {
     my ($v1, $entry) = ($log =~ m/^(\d+\.\d+)\s+(.*)$/s);
 
@@ -93,8 +94,10 @@ sub generate_xml($$$$) {
       }
     }
 
-    my $url = ("${base_url}$app_name/" .
-               ($zip && -f "$www_dir/$zip" ? $zip : ""));
+    my $publishedp = ($zip && -f "$www_dir/$zip");
+    $publishedp = 1 if ($count == 0);
+
+    my $url = ("${base_url}$app_name/" . ($publishedp ? $zip : ""));
 
     $url =~ s@DaliClock/@xdaliclock/@gs if $url; # Kludge
 
@@ -120,7 +123,7 @@ sub generate_xml($$$$) {
       $sig =~ s/\s+//gs;
     }
 
-    my $enc = ($zip && -f "$www_dir/$zip"
+    my $enc = ($publishedp
                ? ("<enclosure url=\"$url\"\n" .
                   " sparkle:version=\"$v1\"\n" .
                   " sparkle:dsaSignature=\"$sig\"\n" .
@@ -139,9 +142,10 @@ sub generate_xml($$$$) {
     $item =~ s/^/  /gm;
 
     # I guess Sparkle doesn't like info-only items.
-    $item = '' unless ($zip && -f "$www_dir/$zip");
+    $item = '' unless $publishedp;
 
     $rss .= $item;
+    $count++;
   }
 
   $rss = ("<?xml version=\"1.0\" encoding=\"utf-8\"?>\n" .

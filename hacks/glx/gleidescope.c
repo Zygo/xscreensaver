@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* vim: set ai ts=4 sw=4: */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 /*static const char sccsid[] = "@(#)gleidescope.c	1.0 03/06/27 xlockmore";*/
 #endif
 

@@ -1521,6 +1521,7 @@ watchdog_timer (XtPointer closure, XtIntervalId *id)
   sync_server_dpms_settings (si->dpy,
                              (p->dpms_enabled_p  &&
                               p->mode != DONT_BLANK),
+                             p->dpms_quickoff_p,
                              p->dpms_standby / 1000,
                              p->dpms_suspend / 1000,
                              p->dpms_off / 1000,

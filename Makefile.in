@@ -12,7 +12,7 @@ SUBDIRS2	= $(SUBDIRS) OSX
 TARFILES	= README README.hacking README.VMS INSTALL \
 		  configure configure.in Makefile.in config.h.in \
 		  config.h-vms install-sh setup.com config.guess aclocal.m4 \
-		  config.sub makevms.com \
+		  ax_pthread.m4 config.sub makevms.com \
 		  intltool-merge.in intltool-extract.in intltool-update.in \
 		  xscreensaver.spec \
 		  xscreensaver.xcodeproj/project.pbxproj
@@ -294,6 +294,13 @@ www::
   NAME2="$$ADIR$$BNAME2" ;						    \
   DNAME2="$$DEST/$$HEAD.dmg" ;						    \
 									    \
+  if ! git diff --quiet ; then						    \
+    echo "uncommitted changes exist!" ;					    \
+    exit 1 ;								    \
+  fi ;									    \
+									    \
+  $(MAKE) -C OSX updates.xml ;						    \
+									    \
   if [ ! -f $$NAME ]; then						    \
     echo "$$NAME does not exist!  Did you forget to \`make tar'?" ;	    \
     exit 1 ; 								    \
@@ -317,9 +324,16 @@ www::
       exit 1 ; 								    \
     fi ;								    \
   fi ;									    \
+									    \
+  git commit -a -m "$$VERS" . ;						    \
+  git tag -a "v$$VERS" -m "$$VERS" . ;					    \
+									    \
+  ( cd $$DEST ;	git pull . ) ;						    \
+									    \
   cp -p $$NAME $$DNAME ;						    \
   cp -p $$NAME2 $$DNAME2 ;						    \
   chmod u+w $$DNAME $$DNAME2 ;						    \
+  cp -p OSX/updates.xml $$DEST ;					    \
   cd $$DEST ;								    \
 									    \
   TMP=/tmp/xd.$$$$ ;							    \
@@ -337,17 +351,18 @@ www::
     if [ "x$$line" = "xyes" -o "x$$line" = "xy" ]; then			    \
       set -x ;								    \
       rm $$OLDEST ;							    \
-      cvs remove $$OLDEST ;						    \
+      git rm $$OLDEST ;							    \
       set +x ;								    \
     fi ;								    \
   done ;								    \
   set -x ;								    \
-  cvs add -kb $$BNAME $$BNAME2 ;					    \
   cat $$TMP > download.html ;						    \
   rm -f $$TMP ;								    \
 									    \
+  git add $$BNAME $$BNAME2 ;						    \
+									    \
   $(MAKE) -C ../ xscreensaver/changelog.html xscreensaver/screenshots/index.html; \
-  cvs diff -U0 changelog.html ;						    \
+  git diff changelog.html ;						    \
   set +x ;								    \
 									    \
   /bin/echo -n "Ok? ";							    \
@@ -356,7 +371,9 @@ www::
     exit 1 ;								    \
   fi ;									    \
 									    \
-  cvs commit -m "$$VERS"
+  git commit -m "$$VERS" . ;						    \
+  git tag -a "v$$VERS" -m "$$VERS" . ;					    \
+  git push . ;								    \
 
 
 count::

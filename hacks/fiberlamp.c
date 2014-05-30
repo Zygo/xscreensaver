@@ -1,7 +1,7 @@
 /* -*- Mode: C; tab-width: 4 -*- */
 /* fiberlamp --- A Fiber Optic Lamp */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)fiberlamp.c	5.00 2000/11/01 xlockmore";
 
 #endif
@@ -59,7 +59,7 @@ ModStruct   fiberlamp_description =
 
 #define SPREAD (30.0) /* Angular spread at the base */
 #define SCALE (MI_WIDTH(mi)/2) /* Screen size */
-#define NODES (20) /* Number of nodes in a fiber.  Variable with range
+#define NODES (20L) /* Number of nodes in a fiber.  Variable with range
 					  10 .. 30, if desired.  High values have
 					  stability problems unless you use small DT */
 
@@ -95,7 +95,7 @@ typedef struct {
   int     init;
   double  psi;
   double  dpsi;
-  int     count, nfibers;
+  long    count, nfibers;
   double  cx;
   double  rx, ry; /* Coordinates relative to root */
   fiberstruct *fiber;
@@ -408,9 +408,9 @@ draw_fiberlamp (ModeInfo * mi)
 	  double x = fs->node[1].x - fl->cx + 0.025;
 	  double y = fs->node[1].z + 0.02;
 	  double angle = atan2(y, x) + fl->psi;
-	  int tipcolor = (int)(MI_NPIXELS(mi)*angle/(2*M_PI)) % MI_NPIXELS(mi);
-	  int fibercolor;
-	  int tiplen;
+	  long tipcolor = (int)(MI_NPIXELS(mi)*angle/(2*M_PI)) % MI_NPIXELS(mi);
+	  long fibercolor;
+	  long tiplen;
 
       if (tipcolor < 0) tipcolor += MI_NPIXELS(mi);
       tipcolor = MI_PIXEL(mi, tipcolor);

@@ -1138,6 +1138,7 @@ maybe_reload_init_file (saver_info *si)
       sync_server_dpms_settings (si->dpy,
                                  (p->dpms_enabled_p  &&
                                   p->mode != DONT_BLANK),
+                                 p->dpms_quickoff_p,
                                  p->dpms_standby / 1000,
                                  p->dpms_suspend / 1000,
                                  p->dpms_off / 1000,
@@ -1270,19 +1271,16 @@ main_loop (saver_info *si)
         for (i = 0; i < si->nscreens; i++)
           spawn_screenhack (&si->screens[i]);
 
-      /* If we are blanking only, optionally power down monitor right now.
-         To do this, we might need to temporarily re-enable DPMS first.
-       */
+      /* If we are blanking only, optionally power down monitor right now. */
       if (p->mode == BLANK_ONLY &&
           p->dpms_enabled_p && 
           p->dpms_quickoff_p)
         {
           sync_server_dpms_settings (si->dpy, True,
+                                     p->dpms_quickoff_p,
                                      p->dpms_standby / 1000,
                                      p->dpms_suspend / 1000,
-                                     (p->dpms_off
-                                      ? (p->dpms_off / 1000)
-                                      : 0xFFFF),
+                                     p->dpms_off / 1000,
                                      False);
           monitor_power_on (si, False);
         }
@@ -1538,6 +1536,7 @@ main (int argc, char **argv)
   sync_server_dpms_settings (si->dpy,
                              (p->dpms_enabled_p  &&
                               p->mode != DONT_BLANK),
+                             p->dpms_quickoff_p,
                              p->dpms_standby / 1000,
                              p->dpms_suspend / 1000,
                              p->dpms_off / 1000,
@@ -2331,11 +2330,13 @@ analyze_display (saver_info *si)
       vi_in.screen = ssi->real_screen_number;
       vi_out = XGetVisualInfo (si->dpy, VisualScreenMask, &vi_in, &out_count);
       if (!vi_out) continue;
-      for (j = 0; j < out_count; j++)
+      for (j = 0; j < out_count; j++) {
+	if (vi_out[j].depth >= 32) continue;
 	if (vi_out[j].class == PseudoColor)
 	  colormapped_depths |= (1 << vi_out[j].depth);
 	else
 	  non_mapped_depths  |= (1 << vi_out[j].depth);
+	}
       XFree ((char *) vi_out);
 
       if (colormapped_depths)

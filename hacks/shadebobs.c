@@ -147,8 +147,11 @@ static void MoveShadeBob( struct state *st, SShadeBob *pShadeBob )
 	pShadeBob->nAngle	   += pShadeBob->nAngleInc;
 	pShadeBob->nAngleDelta -= pShadeBob->nAngleInc;
 
-	if( pShadeBob->nAngle >= st->iDegreeCount )	pShadeBob->nAngle -= st->iDegreeCount;
-	else if( pShadeBob->nAngle < 0 )		pShadeBob->nAngle += st->iDegreeCount;
+	/* Since it can happen that nAngle < 0 and nAngle + iDegreeCount >= iDegreeCount
+	   on floating point, we set some marginal value.
+	*/
+	if( pShadeBob->nAngle + 0.5 >= st->iDegreeCount )	pShadeBob->nAngle -= st->iDegreeCount;
+	else if( pShadeBob->nAngle < -0.5 )		pShadeBob->nAngle += st->iDegreeCount;
 	
 	if( ( pShadeBob->nAngleInc>0.0F  && pShadeBob->nAngleDelta<pShadeBob->nAngleInc ) ||
 	    ( pShadeBob->nAngleInc<=0.0F && pShadeBob->nAngleDelta>pShadeBob->nAngleInc ) )

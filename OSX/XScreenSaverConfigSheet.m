@@ -796,9 +796,8 @@ unwrap (NSString *text)
   // Unwrap lines: delete \n but do not delete \n\n.
   //
   NSArray *lines = [text componentsSeparatedByString:@"\n"];
-  int nlines = [lines count];
+  NSUInteger i, nlines = [lines count];
   BOOL eolp = YES;
-  int i;
 
   text = @"\n";      // start with one blank line
 
@@ -1034,7 +1033,7 @@ hreffify (NSText *nstext)
 - (void) parseAttrs:(NSMutableDictionary *)dict node:(NSXMLNode *)node
 {
   NSArray *attrs = [(NSXMLElement *) node attributes];
-  int n = [attrs count];
+  NSUInteger n = [attrs count];
   int i;
   
   // For each key in the dictionary, fill in the dict with the corresponding
@@ -1495,7 +1494,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
 - (void) makeOptionMenu:(NSXMLNode *)node on:(NSView *)parent
 {
   NSArray *children = [node children];
-  int i, count = [children count];
+  NSUInteger i, count = [children count];
 
   if (count <= 0) {
     NSAssert1 (0, @"no menu items in \"%@\"", [node name]);
@@ -1691,8 +1690,8 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
   [self placeSeparator];
 
   i = 0;
-  for (NSArray *item in items) {
-    RadioButton *b = [[RadioButton alloc] initWithIndex:i 
+  for (__attribute__((unused)) NSArray *item in items) {
+    RadioButton *b = [[RadioButton alloc] initWithIndex: (int)i
                                           items:items];
     [b setLineBreakMode:NSLineBreakByTruncatingHead];
     [b setFont:[NSFont boldSystemFontOfSize: FONT_SIZE]];
@@ -1715,7 +1714,7 @@ set_menu_item_object (NSMenuItem *item, NSObject *obj)
 {
   NSString *text = nil;
   NSArray *children = [node children];
-  int i, count = [children count];
+  NSUInteger i, count = [children count];
 
   for (i = 0; i < count; i++) {
     NSXMLNode *child = [children objectAtIndex:i];
@@ -2432,6 +2431,9 @@ find_text_field_of_button (NSButton *button)
 
   [self placeChild:box on:parent];
 
+  [group release];
+  [box release];
+
 # endif // !USE_IPHONE
 }
 
@@ -2686,7 +2688,7 @@ layout_group (NSView *group, BOOL horiz_p)
 - (void)traverseChildren:(NSXMLNode *)node on:(NSView *)parent
 {
   NSArray *children = [node children];
-  int i, count = [children count];
+  NSUInteger i, count = [children count];
   for (i = 0; i < count; i++) {
     NSXMLNode *child = [children objectAtIndex:i];
     [self makeControl:child on:parent];
@@ -2947,6 +2949,8 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   [cancel setAction:@selector(cancelAction:)];
   [reset  setAction:@selector(resetAction:)];
   
+  [bbox release];
+
   return pbox;
 }
 #endif // !USE_IPHONE
@@ -2993,6 +2997,9 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   [parent setMinSize:rect.size];
   
   [parent setContentView:root];
+	
+  [panel release];
+  [root release];
 
 # else  // USE_IPHONE
 
@@ -3218,9 +3225,9 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
 {
   UITableView *tv = (UITableView *) [self view];
   NSMutableArray *a = [NSMutableArray arrayWithCapacity:20];
-  int rows = [self numberOfSectionsInTableView:tv];
+  NSInteger rows = [self numberOfSectionsInTableView:tv];
   for (int i = 0; i < rows; i++) {
-    int cols = [self tableView:tv numberOfRowsInSection:i];
+    NSInteger cols = [self tableView:tv numberOfRowsInSection:i];
     for (int j = 0; j < cols; j++) {
       NSUInteger ip[2];
       ip[0] = i;

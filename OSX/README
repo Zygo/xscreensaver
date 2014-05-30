@@ -35,6 +35,6 @@ ridiculously long list of steps!
  18: Build "XScreenSaver-iOS" once. then:
      cd ~/src/xscreensaver/OSX ; make ios-function-table.m
      and build it again.
- 19: cvs add xscreensaver.xcodeproj/xcuserdata/*/xcschemes/*.xcscheme
+ 19: git add xscreensaver.xcodeproj/xcuserdata/*/xcschemes/*.xcscheme
  20: Don't forget to create a man page from the XML with xml2man.pl,
      and update Makefile.in.

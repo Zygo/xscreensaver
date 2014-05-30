@@ -93,10 +93,11 @@
 #include  <stdio.h>
 
 /* #include  <X11/bitmaps/gray1> */
+/*
 #define gray1_width  2
 #define gray1_height 2
 static const char gray1_bits[] = { 0x01, 0x02 };
-
+*/
 
 #define MAX_MAZE_SIZE_X	1000
 #define MAX_MAZE_SIZE_Y	1000

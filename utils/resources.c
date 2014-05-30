@@ -172,7 +172,7 @@ get_pixel_resource (Display *dpy, Colormap cmap,
       goto DEFAULT;
     }
   free (s);
-  return color.pixel;
+  return (unsigned int) color.pixel;
  DEFAULT:
   if (s) free (s);
 
@@ -185,7 +185,7 @@ get_pixel_resource (Display *dpy, Colormap cmap,
     color.flags = DoRed|DoGreen|DoBlue;
     color.red = color.green = color.blue = (black_p ? 0 : 0xFFFF);
     if (XAllocColor (dpy, cmap, &color))
-      return color.pixel;
+      return (unsigned int) color.pixel;
     else
       {
         fprintf (stderr, "%s: couldn't allocate %s either!\n", progname,

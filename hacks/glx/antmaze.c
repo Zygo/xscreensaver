@@ -15,7 +15,7 @@
  * tennessy@cs.ubc.ca
  */
 
-#if !defined( lint ) && !defined( SABER )
+#if 0
 static const char sccsid[] = "@(#)antmaze.c	5.01 2001/03/01 xlockmore";
 #endif
 

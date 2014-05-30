@@ -28,7 +28,7 @@ extern char *format_hack (Display *, screenhack *, Bool wrap_p);
 char *make_hack_name (Display *, const char *shell_command);
 
 /* From dpms.c */
-extern void sync_server_dpms_settings (Display *, Bool enabled_p,
+extern void sync_server_dpms_settings (Display *, Bool enabled_p, Bool dpms_quickoff_p,
                                        int standby_secs, int suspend_secs,
                                        int off_secs,
                                        Bool verbose_p);

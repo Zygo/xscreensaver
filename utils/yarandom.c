@@ -1,5 +1,5 @@
 /* yarandom.c -- Yet Another Random Number Generator.
- * Copyright (c) 1997-2010 by Jamie Zawinski <jwz@jwz.org>
+ * Copyright (c) 1997-2014 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -116,7 +116,7 @@ ya_rand_init(unsigned int seed)
          -- Brian Carlson, 2010.
        */
 #define ROT(X,N) (((X)<<(N)) | ((X)>>((sizeof(unsigned int)*8)-(N))))
-      seed = (999 * tp.tv_sec);
+      seed = (999U * (unsigned int) tp.tv_sec);
       seed = ROT (seed, 11);
       seed += (1001 * tp.tv_usec);
       seed = ROT (seed, 7);

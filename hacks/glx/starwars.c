@@ -1,4 +1,4 @@
-/* starwars, Copyright (c) 1998-2012 Jamie Zawinski <jwz@jwz.org> and
+/* starwars, Copyright (c) 1998-2014 Jamie Zawinski <jwz@jwz.org> and
  * Claudio Matsuoka <claudio@helllabs.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -319,10 +319,10 @@ get_more_lines (sws_configuration *sc)
    */
   while (target > 0)
     {
-      char c = textclient_getc (sc->tc);
+      int c = textclient_getc (sc->tc);
       if (c <= 0)
         break;
-      sc->buf[sc->buf_tail++] = c;
+      sc->buf[sc->buf_tail++] = (char) c;
       sc->buf[sc->buf_tail] = 0;
       target--;
     }

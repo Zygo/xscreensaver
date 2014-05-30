@@ -5,7 +5,7 @@
 static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
 #endif
 
-/* Copyright (c) 2005-2009 Carsten Steger <carsten@mirsanmir.org>. */
+/* Copyright (c) 2005-2013 Carsten Steger <carsten@mirsanmir.org>. */
 
 /*
  * Permission to use, copy, modify, and distribute this software and its
@@ -23,15 +23,18 @@ static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
  * REVISION HISTORY:
  * C. Steger - 08/10/04: Initial version
  * C. Steger - 09/08/03: Changes to the parameter handling
+ * C. Steger - 13/12/25: Added the squeezed torus Klein bottle
  */
 
 /*
- * This program shows two different Klein bottles in 4d: the figure-8 Klein
- * bottle or the Lawson Klein bottle.  You can walk on the Klein bottle, see
- * it turn in 4d, or walk on it while it turns in 4d.  The figure-8 Klein
- * bottle is well known in its 3d form.  The 4d form used in this program is
- * an extension of the 3d form to 4d that does not intersect itself in 4d
- * (which can be seen in the depth colors mode).  The Lawson Klein bottle,
+ * This program shows three different Klein bottles in 4d: the figure-8 Klein
+ * bottle, the squeezed torus Klein bottle, or the Lawson Klein bottle.  You
+ * can walk on the Klein bottle, see it turn in 4d, or walk on it while it
+ * turns in 4d.  The figure-8 Klein bottle is well known in its 3d form.  The
+ * 4d form used in this program is an extension of the 3d form to 4d that
+ * does not intersect itself in 4d (which can be seen in the depth colors
+ * mode).  The squeezed torus Klein bottle also does not intersect itself in
+ * 4d (which can be seen in the depth colors mode).  The Lawson Klein bottle,
  * on the other hand, does intersect itself in 4d.  Its primary use is that
  * it has a nice appearance for walking and for turning in 3d.  The Klein
  * bottle is a non-orientable surface.  To make this apparent, the two-sided
@@ -45,10 +48,11 @@ static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
  * Klein bottle.  For example, the Lawson Klein bottle looks nicest when
  * projected perspectively.  The figure-8 Klein bottle, on the other
  * hand, looks nicer while walking when projected orthographically from 4d.
- * The projected Klein bottle can then be projected to the screen either
- * perspectively or orthographically.  When using the walking modes,
- * perspective projection to the screen should be used.  There are three
- * display modes for the Klein bottle: mesh (wireframe), solid, or
+ * For the squeezed torus Klein bottle, both projection modes give equally
+ * acceptable projections.  The projected Klein bottle can then be projected
+ * to the screen either perspectively or orthographically.  When using the
+ * walking modes, perspective projection to the screen should be used.  There
+ * are three display modes for the Klein bottle: mesh (wireframe), solid, or
  * transparent.  Furthermore, the appearance of the Klein bottle can be as
  * a solid object or as a set of see-through bands.  Finally, the colors
  * with with the Klein bottle is drawn can be set to two-sided, rainbow, or
@@ -61,68 +65,70 @@ static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
  * combined with the see-through bands mode or with the orientation markers
  * drawn.  The third mode draws the Klein bottle with colors that are chosen
  * according to the 4d "depth" of the points.  This mode enables you to see
- * that the figure-8 Klein bottle does not intersect itself in 4d, while the
- * Lawson Klein bottle does intersect itself.  The rotation speed for each
- * of the six planes around which the Klein bottle rotates can be chosen.
- * For the walk-and-turn more, only the rotation speeds around the true 4d
- * planes are used (the xy, xz, and yz planes).  Furthermore, in the walking
- * modes the walking direction in the 2d base square of the Klein bottle and
- * the walking speed can be chosen.  This program is somewhat inspired by
- * Thomas Banchoff's book "Beyond the Third Dimension: Geometry, Computer
- * Graphics, and Higher Dimensions", Scientific American Library, 1990.
+ * that the figure-8 and squeezed torus Klein bottles do not intersect
+ * themselves in 4d, while the Lawson Klein bottle does intersect itself.
+ * The rotation speed for each of the six planes around which the Klein
+ * bottle rotates can be chosen.  For the walk-and-turn more, only the
+ * rotation speeds around the true 4d planes are used (the xy, xz, and yz
+ * planes).  Furthermore, in the walking modes the walking direction in the
+ * 2d base square of the Klein bottle and the walking speed can be chosen.
+ * This program is somewhat inspired by Thomas Banchoff's book "Beyond the
+ * Third Dimension: Geometry, Computer Graphics, and Higher Dimensions",
+ * Scientific American Library, 1990.
  */
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
 
-#define KLEIN_BOTTLE_FIGURE_8      0
-#define KLEIN_BOTTLE_LAWSON        1
-#define NUM_KLEIN_BOTTLES          2
+#define KLEIN_BOTTLE_FIGURE_8       0
+#define KLEIN_BOTTLE_SQUEEZED_TORUS 1
+#define KLEIN_BOTTLE_LAWSON         2
+#define NUM_KLEIN_BOTTLES           3
 
-#define DISP_WIREFRAME             0
-#define DISP_SURFACE               1
-#define DISP_TRANSPARENT           2
-#define NUM_DISPLAY_MODES          3
+#define DISP_WIREFRAME              0
+#define DISP_SURFACE                1
+#define DISP_TRANSPARENT            2
+#define NUM_DISPLAY_MODES           3
 
-#define APPEARANCE_SOLID           0
-#define APPEARANCE_BANDS           1
-#define NUM_APPEARANCES            2
+#define APPEARANCE_SOLID            0
+#define APPEARANCE_BANDS            1
+#define NUM_APPEARANCES             2
 
-#define COLORS_TWOSIDED            0
-#define COLORS_RAINBOW             1
-#define COLORS_DEPTH               2
-#define NUM_COLORS                 3
+#define COLORS_TWOSIDED             0
+#define COLORS_RAINBOW              1
+#define COLORS_DEPTH                2
+#define NUM_COLORS                  3
 
-#define VIEW_WALK                  0
-#define VIEW_TURN                  1
-#define VIEW_WALKTURN              2
-#define NUM_VIEW_MODES             3
+#define VIEW_WALK                   0
+#define VIEW_TURN                   1
+#define VIEW_WALKTURN               2
+#define NUM_VIEW_MODES              3
 
-#define DISP_3D_PERSPECTIVE        0
-#define DISP_3D_ORTHOGRAPHIC       1
-#define NUM_DISP_3D_MODES          2
+#define DISP_3D_PERSPECTIVE         0
+#define DISP_3D_ORTHOGRAPHIC        1
+#define NUM_DISP_3D_MODES           2
 
-#define DISP_4D_PERSPECTIVE        0
-#define DISP_4D_ORTHOGRAPHIC       1
-#define NUM_DISP_4D_MODES          2
+#define DISP_4D_PERSPECTIVE         0
+#define DISP_4D_ORTHOGRAPHIC        1
+#define NUM_DISP_4D_MODES           2
 
-#define DEF_KLEIN_BOTTLE           "random"
-#define DEF_DISPLAY_MODE           "random"
-#define DEF_APPEARANCE             "random"
-#define DEF_COLORS                 "random"
-#define DEF_VIEW_MODE              "random"
-#define DEF_MARKS                  "False"
-#define DEF_PROJECTION_3D          "random"
-#define DEF_PROJECTION_4D          "random"
-#define DEF_SPEEDWX                "1.1"
-#define DEF_SPEEDWY                "1.3"
-#define DEF_SPEEDWZ                "1.5"
-#define DEF_SPEEDXY                "1.7"
-#define DEF_SPEEDXZ                "1.9"
-#define DEF_SPEEDYZ                "2.1"
-#define DEF_WALK_DIRECTION         "7.0"
-#define DEF_WALK_SPEED             "20.0"
+#define DEF_KLEIN_BOTTLE            "random"
+#define DEF_DISPLAY_MODE            "random"
+#define DEF_APPEARANCE              "random"
+#define DEF_COLORS                  "random"
+#define DEF_VIEW_MODE               "random"
+#define DEF_MARKS                   "False"
+#define DEF_PROJECTION_3D           "random"
+#define DEF_PROJECTION_4D           "random"
+#define DEF_SPEEDWX                 "1.1"
+#define DEF_SPEEDWY                 "1.3"
+#define DEF_SPEEDWZ                 "1.5"
+#define DEF_SPEEDXY                 "1.7"
+#define DEF_SPEEDXZ                 "1.9"
+#define DEF_SPEEDYZ                 "2.1"
+#define DEF_WALK_DIRECTION          "7.0"
+#define DEF_WALK_SPEED              "20.0"
 
 #ifdef STANDALONE
 # define DEFAULTS           "*delay:      10000 \n" \
@@ -182,6 +188,7 @@ static XrmOptionDescRec opts[] =
 {
   {"-klein-bottle",      ".kleinBottle",   XrmoptionSepArg, 0 },
   {"-figure-8",          ".kleinBottle",   XrmoptionNoArg,  "figure-8" },
+  {"-squeezed-torus",    ".kleinBottle",   XrmoptionNoArg,  "squeezed-torus" },
   {"-lawson",            ".kleinBottle",   XrmoptionNoArg,  "lawson" },
   {"-mode",              ".displayMode",   XrmoptionSepArg, 0 },
   {"-wireframe",         ".displayMode",   XrmoptionNoArg,  "wireframe" },
@@ -240,8 +247,11 @@ ENTRYPOINT ModeSpecOpt klein_opts =
 {sizeof opts / sizeof opts[0], opts, sizeof vars / sizeof vars[0], vars, NULL};
 
 
-/* Radius of the Figure 8 Klein bottle */
+/* Radius of the figure-8 Klein bottle */
 #define FIGURE_8_RADIUS 2.0
+
+/* Radius of the squeezed torus Klein bottle */
+#define SQUEEZED_TORUS_RADIUS 2.0
 
 /* Offset by which we walk above the Klein bottle */
 #define DELTAY  0.02
@@ -860,6 +870,59 @@ static void setup_figure8(ModeInfo *mi, double umin, double umax, double vmin,
 }
 
 
+/* Set up the squeezed torus Klein bottle coordinates, colors, and texture. */
+static void setup_squeezed_torus(ModeInfo *mi, double umin, double umax,
+                                 double vmin, double vmax)
+{
+  int i, j, k, l;
+  double u, v, ur, vr;
+  double cu, su, cv, sv, cv2, sv2;
+  kleinstruct *kb = &klein[MI_SCREEN(mi)];
+
+  ur = umax-umin;
+  vr = vmax-vmin;
+  for (i=0; i<=NUMU; i++)
+  {
+    for (j=0; j<=NUMV; j++)
+    {
+      k = i*(NUMV+1)+j;
+      u = -ur*j/NUMU+umin;
+      v = vr*i/NUMV+vmin;
+      if (colors == COLORS_DEPTH)
+        color((sin(u)*sin(0.5*v)+1.0)*M_PI*2.0/3.0,kb->col[k]);
+      else
+        color(v,kb->col[k]);
+      kb->tex[k][0] = -32*u/(2.0*M_PI);
+      kb->tex[k][1] = 32*v/(2.0*M_PI);
+      cu = cos(u);
+      su = sin(u);
+      cv = cos(v);
+      sv = sin(v);
+      cv2 = cos(0.5*v);
+      sv2 = sin(0.5*v);
+      kb->x[k][0] = (SQUEEZED_TORUS_RADIUS+cu)*cv;
+      kb->x[k][1] = (SQUEEZED_TORUS_RADIUS+cu)*sv;
+      kb->x[k][2] = su*cv2;
+      kb->x[k][3] = su*sv2;
+      kb->xu[k][0] = -su*cv;
+      kb->xu[k][1] = -su*sv;
+      kb->xu[k][2] = cu*cv2;
+      kb->xu[k][3] = cu*sv2;
+      kb->xv[k][0] = -(SQUEEZED_TORUS_RADIUS+cu)*sv;
+      kb->xv[k][1] = (SQUEEZED_TORUS_RADIUS+cu)*cv;
+      kb->xv[k][2] = -0.5*su*sv2;
+      kb->xv[k][3] = 0.5*su*cv2;
+      for (l=0; l<4; l++)
+      {
+        kb->x[k][l] /= SQUEEZED_TORUS_RADIUS+1.25;
+        kb->xu[k][l] /= SQUEEZED_TORUS_RADIUS+1.25;
+        kb->xv[k][l] /= SQUEEZED_TORUS_RADIUS+1.25;
+      }
+    }
+  }
+}
+
+
 /* Set up the Lawson Klein bottle coordinates, colors, and texture. */
 static void setup_lawson(ModeInfo *mi, double umin, double umax, double vmin,
                          double vmax)
@@ -1020,7 +1083,7 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
            | -pm[0] -pm[1] -pm[2] |
     */
     kb->alpha = atan2(-n[2],-pm[2])*180/M_PI;
-    kb->beta = atan2( -b[2],sqrt(b[0]*b[0]+b[1]*b[1]))*180/M_PI;
+    kb->beta = atan2(-b[2],sqrt(b[0]*b[0]+b[1]*b[1]))*180/M_PI;
     kb->delta = atan2(b[1],-b[0])*180/M_PI;
 
     /* Compute the rotation that rotates the Klein bottle in 4D. */
@@ -1042,6 +1105,268 @@ static int figure8(ModeInfo *mi, double umin, double umax, double vmin,
     xx[3] = cu;
     for (l=0; l<4; l++)
       xx[l] /= FIGURE_8_RADIUS+1.25;
+    for (l=0; l<4; l++)
+    {
+      r = 0.0;
+      for (m=0; m<4; m++)
+        r += mat[l][m]*xx[m];
+      y[l] = r;
+    }
+    if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+    {
+      for (l=0; l<3; l++)
+        p[l] = y[l]+kb->offset4d[l];
+    }
+    else
+    {
+      s = y[3]+kb->offset4d[3];
+      for (l=0; l<3; l++)
+        p[l] = (y[l]+kb->offset4d[l])/s;
+    }
+
+    kb->offset3d[0] = -p[0];
+    kb->offset3d[1] = -p[1]-DELTAY;
+    kb->offset3d[2] = -p[2];
+  }
+  else
+  {
+    /* Compute the rotation that rotates the Klein bottle in 4D, including
+       the trackball rotations. */
+    rotateall(kb->alpha,kb->beta,kb->delta,kb->zeta,kb->eta,kb->theta,r1);
+
+    gltrackball_get_quaternion(kb->trackballs[0],q1);
+    gltrackball_get_quaternion(kb->trackballs[1],q2);
+    quats_to_rotmat(q1,q2,r2);
+
+    mult_rotmat(r2,r1,mat);
+  }
+
+  /* Project the points from 4D to 3D. */
+  for (i=0; i<=NUMU; i++)
+  {
+    for (j=0; j<=NUMV; j++)
+    {
+      o = i*(NUMV+1)+j;
+      for (l=0; l<4; l++)
+      {
+        y[l] = (mat[l][0]*kb->x[o][0]+mat[l][1]*kb->x[o][1]+
+                mat[l][2]*kb->x[o][2]+mat[l][3]*kb->x[o][3]);
+        yu[l] = (mat[l][0]*kb->xu[o][0]+mat[l][1]*kb->xu[o][1]+
+                 mat[l][2]*kb->xu[o][2]+mat[l][3]*kb->xu[o][3]);
+        yv[l] = (mat[l][0]*kb->xv[o][0]+mat[l][1]*kb->xv[o][1]+
+                 mat[l][2]*kb->xv[o][2]+mat[l][3]*kb->xv[o][3]);
+      }
+      if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+      {
+        for (l=0; l<3; l++)
+        {
+          kb->pp[o][l] = (y[l]+kb->offset4d[l])+kb->offset3d[l];
+          pu[l] = yu[l];
+          pv[l] = yv[l];
+        }
+      }
+      else
+      {
+        s = y[3]+kb->offset4d[3];
+        q = 1.0/s;
+        t = q*q;
+        for (l=0; l<3; l++)
+        {
+          r = y[l]+kb->offset4d[l];
+          kb->pp[o][l] = r*q+kb->offset3d[l];
+          pu[l] = (yu[l]*s-r*yu[3])*t;
+          pv[l] = (yv[l]*s-r*yv[3])*t;
+        }
+      }
+      kb->pn[o][0] = pu[1]*pv[2]-pu[2]*pv[1];
+      kb->pn[o][1] = pu[2]*pv[0]-pu[0]*pv[2];
+      kb->pn[o][2] = pu[0]*pv[1]-pu[1]*pv[0];
+      t = 1.0/sqrt(kb->pn[o][0]*kb->pn[o][0]+kb->pn[o][1]*kb->pn[o][1]+
+                   kb->pn[o][2]*kb->pn[o][2]);
+      kb->pn[o][0] *= t;
+      kb->pn[o][1] *= t;
+      kb->pn[o][2] *= t;
+    }
+  }
+
+  if (colors == COLORS_TWOSIDED)
+  {
+    glColor3fv(mat_diff_red);
+    if (display_mode == DISP_TRANSPARENT)
+    {
+      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_red);
+      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_trans_green);
+    }
+    else
+    {
+      glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,mat_diff_red);
+      glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_green);
+    }
+  }
+  glBindTexture(GL_TEXTURE_2D,kb->tex_name);
+
+  for (i=0; i<NUMU; i++)
+  {
+    if (appearance == APPEARANCE_BANDS && ((i & (NUMB-1)) >= NUMB/2))
+      continue;
+    if (display_mode == DISP_WIREFRAME)
+      glBegin(GL_QUAD_STRIP);
+    else
+      glBegin(GL_TRIANGLE_STRIP);
+    for (j=0; j<=NUMV; j++)
+    {
+      for (k=0; k<=1; k++)
+      {
+        l = (i+k);
+        m = j;
+        o = l*(NUMV+1)+m;
+        glNormal3fv(kb->pn[o]);
+        glTexCoord2fv(kb->tex[o]);
+        if (colors != COLORS_TWOSIDED)
+        {
+          glColor3fv(kb->col[o]);
+          glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT_AND_DIFFUSE,kb->col[o]);
+        }
+        glVertex3fv(kb->pp[o]);
+        polys++;
+      }
+    }
+    glEnd();
+  }
+  polys /= 2;
+  return polys;
+}
+
+
+/* Draw a squeezed torus Klein bottle projected into 3D. */
+static int squeezed_torus(ModeInfo *mi, double umin, double umax, double vmin,
+                          double vmax)
+{
+  int polys = 0;
+  static const GLfloat mat_diff_red[]         = { 1.0, 0.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_green[]       = { 0.0, 1.0, 0.0, 1.0 };
+  static const GLfloat mat_diff_trans_red[]   = { 1.0, 0.0, 0.0, 0.7 };
+  static const GLfloat mat_diff_trans_green[] = { 0.0, 1.0, 0.0, 0.7 };
+  float p[3], pu[3], pv[3], pm[3], n[3], b[3], mat[4][4];
+  int i, j, k, l, m, o;
+  double u, v;
+  double xx[4], xxu[4], xxv[4], y[4], yu[4], yv[4];
+  double q, r, s, t;
+  double cu, su, cv, sv, cv2, sv2;
+  float q1[4], q2[4], r1[4][4], r2[4][4];
+  kleinstruct *kb = &klein[MI_SCREEN(mi)];
+
+  if (view == VIEW_WALK || view == VIEW_WALKTURN)
+  {
+    /* Compute the rotation that rotates the Klein bottle in 4D without the
+       trackball rotations. */
+    rotateall4d(kb->zeta,kb->eta,kb->theta,mat);
+
+    u = kb->umove;
+    v = kb->vmove;
+    cu = cos(u);
+    su = sin(u);
+    cv = cos(v);
+    sv = sin(v);
+    cv2 = cos(0.5*v);
+    sv2 = sin(0.5*v);
+    xx[0] = (SQUEEZED_TORUS_RADIUS+cu)*cv;
+    xx[1] = (SQUEEZED_TORUS_RADIUS+cu)*sv;
+    xx[2] = su*cv2;
+    xx[3] = su*sv2;
+    xxu[0] = -su*cv;
+    xxu[1] = -su*sv;
+    xxu[2] = cu*cv2;
+    xxu[3] = cu*sv2;
+    xxv[0] = -(SQUEEZED_TORUS_RADIUS+cu)*sv;
+    xxv[1] = (SQUEEZED_TORUS_RADIUS+cu)*cv;
+    xxv[2] = -0.5*su*sv2;
+    xxv[3] = 0.5*su*cv2;
+    for (l=0; l<4; l++)
+    {
+      xx[l] /= SQUEEZED_TORUS_RADIUS+1.25;
+      xxu[l] /= SQUEEZED_TORUS_RADIUS+1.25;
+      xxv[l] /= SQUEEZED_TORUS_RADIUS+1.25;
+    }
+    for (l=0; l<4; l++)
+    {
+      y[l] = (mat[l][0]*xx[0]+mat[l][1]*xx[1]+
+              mat[l][2]*xx[2]+mat[l][3]*xx[3]);
+      yu[l] = (mat[l][0]*xxu[0]+mat[l][1]*xxu[1]+
+               mat[l][2]*xxu[2]+mat[l][3]*xxu[3]);
+      yv[l] = (mat[l][0]*xxv[0]+mat[l][1]*xxv[1]+
+               mat[l][2]*xxv[2]+mat[l][3]*xxv[3]);
+    }
+    if (projection_4d == DISP_4D_ORTHOGRAPHIC)
+    {
+      for (l=0; l<3; l++)
+      {
+        p[l] = y[l]+kb->offset4d[l];
+        pu[l] = yu[l];
+        pv[l] = yv[l];
+      }
+    }
+    else
+    {
+      s = y[3]+kb->offset4d[3];
+      q = 1.0/s;
+      t = q*q;
+      for (l=0; l<3; l++)
+      {
+        r = y[l]+kb->offset4d[l];
+        p[l] = r*q;
+        pu[l] = (yu[l]*s-r*yu[3])*t;
+        pv[l] = (yv[l]*s-r*yv[3])*t;
+      }
+    }
+    n[0] = pu[1]*pv[2]-pu[2]*pv[1];
+    n[1] = pu[2]*pv[0]-pu[0]*pv[2];
+    n[2] = pu[0]*pv[1]-pu[1]*pv[0];
+    t = 1.0/(kb->side*4.0*sqrt(n[0]*n[0]+n[1]*n[1]+n[2]*n[2]));
+    n[0] *= t;
+    n[1] *= t;
+    n[2] *= t;
+    pm[0] = pu[0]*kb->dumove+pv[0]*kb->dvmove;
+    pm[1] = pu[1]*kb->dumove+pv[1]*kb->dvmove;
+    pm[2] = pu[2]*kb->dumove+pv[2]*kb->dvmove;
+    t = 1.0/(4.0*sqrt(pm[0]*pm[0]+pm[1]*pm[1]+pm[2]*pm[2]));
+    pm[0] *= t;
+    pm[1] *= t;
+    pm[2] *= t;
+    b[0] = n[1]*pm[2]-n[2]*pm[1];
+    b[1] = n[2]*pm[0]-n[0]*pm[2];
+    b[2] = n[0]*pm[1]-n[1]*pm[0];
+    t = 1.0/(4.0*sqrt(b[0]*b[0]+b[1]*b[1]+b[2]*b[2]));
+    b[0] *= t;
+    b[1] *= t;
+    b[2] *= t;
+
+    /* Compute alpha, beta, delta from the three basis vectors.
+           |  -b[0]  -b[1]  -b[2] |
+       m = |   n[0]   n[1]   n[2] |
+           | -pm[0] -pm[1] -pm[2] |
+    */
+    kb->alpha = atan2(-n[2],-pm[2])*180/M_PI;
+    kb->beta = atan2(-b[2],sqrt(b[0]*b[0]+b[1]*b[1]))*180/M_PI;
+    kb->delta = atan2(b[1],-b[0])*180/M_PI;
+
+    /* Compute the rotation that rotates the Klein bottle in 4D. */
+    rotateall(kb->alpha,kb->beta,kb->delta,kb->zeta,kb->eta,kb->theta,mat);
+
+    u = kb->umove;
+    v = kb->vmove;
+    cu = cos(u);
+    su = sin(u);
+    cv = cos(v);
+    sv = sin(v);
+    cv2 = cos(0.5*v);
+    sv2 = sin(0.5*v);
+    xx[0] = (SQUEEZED_TORUS_RADIUS+cu)*cv;
+    xx[1] = (SQUEEZED_TORUS_RADIUS+cu)*sv;
+    xx[2] = su*cv2;
+    xx[3] = su*sv2;
+    for (l=0; l<4; l++)
+      xx[l] /= SQUEEZED_TORUS_RADIUS+1.25;
     for (l=0; l<4; l++)
     {
       r = 0.0;
@@ -1278,7 +1603,7 @@ static int lawson(ModeInfo *mi, double umin, double umax, double vmin,
            | -pm[0] -pm[1] -pm[2] |
     */
     kb->alpha = atan2(-n[2],-pm[2])*180/M_PI;
-    kb->beta = atan2( -b[2],sqrt(b[0]*b[0]+b[1]*b[1]))*180/M_PI;
+    kb->beta = atan2(-b[2],sqrt(b[0]*b[0]+b[1]*b[1]))*180/M_PI;
     kb->delta = atan2(b[1],-b[0])*180/M_PI;
 
     /* Compute the rotation that rotates the Klein bottle in 4D. */
@@ -1472,7 +1797,8 @@ static void init(ModeInfo *mi)
     kb->delta = 0.0;
   }
   kb->zeta = 0.0;
-  if (bottle_type == KLEIN_BOTTLE_FIGURE_8)
+  if (bottle_type == KLEIN_BOTTLE_FIGURE_8 ||
+      bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
     kb->eta = 0.0;
   else
     kb->eta = 45.0;
@@ -1497,7 +1823,18 @@ static void init(ModeInfo *mi)
       kb->offset3d[2] = -1.9;
     kb->offset3d[3] = 0.0;
   }
-  else
+  else if (bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
+  {
+    kb->offset4d[0] = 0.0;
+    kb->offset4d[1] = 0.0;
+    kb->offset4d[2] = 0.0;
+    kb->offset4d[3] = 1.4;
+    kb->offset3d[0] = 0.0;
+    kb->offset3d[1] = 0.0;
+    kb->offset3d[2] = -2.0;
+    kb->offset3d[3] = 0.0;
+  }
+  else /* bottle_type == KLEIN_BOTTLE_LAWSON */
   {
     kb->offset4d[0] = 0.0;
     kb->offset4d[1] = 0.0;
@@ -1519,7 +1856,9 @@ static void init(ModeInfo *mi)
   gen_texture(mi);
   if (bottle_type == KLEIN_BOTTLE_FIGURE_8)
     setup_figure8(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
-  else
+  else if (bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
+    setup_squeezed_torus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
+  else /* bottle_type == KLEIN_BOTTLE_LAWSON */
     setup_lawson(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
 
   if (marks)
@@ -1546,7 +1885,7 @@ static void init(ModeInfo *mi)
 
 # ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
   if (display_mode == DISP_WIREFRAME)
-  display_mode = DISP_SURFACE;
+    display_mode = DISP_SURFACE;
 # endif
 
   if (display_mode == DISP_SURFACE)
@@ -1679,7 +2018,9 @@ static void display_klein(ModeInfo *mi)
 
   if (bottle_type == KLEIN_BOTTLE_FIGURE_8)
     mi->polygon_count = figure8(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
-  else
+  else if (bottle_type == KLEIN_BOTTLE_SQUEEZED_TORUS)
+    mi->polygon_count = squeezed_torus(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
+  else /* bottle_type == KLEIN_BOTTLE_LAWSON */
     mi->polygon_count = lawson(mi,0.0,2.0*M_PI,0.0,2.0*M_PI);
 }
 
@@ -1796,6 +2137,10 @@ ENTRYPOINT void init_klein(ModeInfo *mi)
   else if (!strcasecmp(klein_bottle,"figure-8"))
   {
     bottle_type = KLEIN_BOTTLE_FIGURE_8;
+  }
+  else if (!strcasecmp(klein_bottle,"squeezed-torus"))
+  {
+    bottle_type = KLEIN_BOTTLE_SQUEEZED_TORUS;
   }
   else if (!strcasecmp(klein_bottle,"lawson"))
   {

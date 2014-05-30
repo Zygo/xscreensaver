@@ -3,7 +3,7 @@
 
 AC_PREREQ(2.52)
 AC_INIT(driver/subprocs.c)
-AC_CONFIG_HEADER(config.h)
+AC_CONFIG_HEADERS([config.h])
 
 echo "current directory: `pwd`"
 echo "command line was: $0 $@"
@@ -316,6 +316,9 @@ AH_TEMPLATE([GETTIMEOFDAY_TWO_ARGS],
 AH_TEMPLATE([XPointer],
 	    [Define this to void* if you're using X11R4 or earlier.])
 
+AH_TEMPLATE([HAVE_PTHREAD],
+	    [Define this if your system supports POSIX threads.])
+
 # After checking to see that --srcdir is correct (which AC_INIT does)
 # check for some random other files that come later in the tar file,
 # to make sure everything is here.
@@ -333,11 +336,54 @@ done
 
 ###############################################################################
 #
+#       Query AX_PTHREAD, and figure out which compiler gets used.
+#
+###############################################################################
+
+AC_DEFUN([AC_PROG_CC_PTHREAD],
+ [have_pthread=no
+  with_pthread_req=unspecified
+
+  # AX_PTHREAD is from the GNU Autoconf Archive.
+  # https://savannah.gnu.org/projects/autoconf-archive/
+  m4_include(ax_pthread.m4)
+
+  # This affects CC, LIBS, and CFLAGS, instead of defining new variables.
+
+  AC_ARG_WITH([pthread],
+    [  --with-pthread          Enables POSIX threads, for SMP support.],
+    [with_pthread="$withval"; with_pthread_req="$withval"],
+    [with_pthread=yes])
+
+  if test "$with_pthread" = yes; then
+    # AX_PTHREAD might want a different compiler.
+    AX_PTHREAD(
+     [if test "$CC" = "$PTHREAD_CC" -o -z "$ac_original_cc"; then
+        have_pthread=yes
+      else
+        ac_prog_cc_no_pthread=yes
+      fi
+    ])
+
+    if test "$have_pthread" = yes; then
+      AC_DEFINE([HAVE_PTHREAD])
+      CC=$PTHREAD_CC
+
+      # AX_PTHREAD documentation specifically suggests this...
+      LIBS="$PTHREAD_LIBS $LIBS"
+      CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
+    fi
+  fi
+])
+
+
+###############################################################################
+#
 #       Function to figure out how to run the compiler.
 #
 ###############################################################################
 
-AC_DEFUN(AC_PROG_CC_ANSI,
+AC_DEFUN([AC_PROG_CC_ANSI],
  [AC_REQUIRE([AC_PROG_CC])
 
   if test -z "$GCC"; then
@@ -408,7 +454,7 @@ AC_DEFUN(AC_PROG_CC_ANSI,
 #
 ###############################################################################
 
-AC_DEFUN(AC_CHECK_GCC_ARG,
+AC_DEFUN([AC_CHECK_GCC_ARG],
  [if test -n "$GCC"; then
    AC_CACHE_CHECK([whether gcc accepts [$2]],
      ac_cv_gcc_accepts_[$1],
@@ -425,16 +471,16 @@ AC_DEFUN(AC_CHECK_GCC_ARG,
   fi
 ])
 
-AC_DEFUN(AC_NO_LONG_STRING_WARNINGS,
+AC_DEFUN([AC_NO_LONG_STRING_WARNINGS],
          [AC_CHECK_GCC_ARG(no_overlength, -Wno-overlength-strings)])
 
-AC_DEFUN(AC_NO_MISPLACED_DECLARATIONS,
+AC_DEFUN([AC_NO_MISPLACED_DECLARATIONS],
          [AC_CHECK_GCC_ARG(no_decl_after, -Wdeclaration-after-statement)])
 
 # Need to disable Objective C extensions in ANSI C on MacOS X to work
 # around an Apple-specific gcc bug.
 #
-AC_DEFUN(AC_NO_OBJECTIVE_C,
+AC_DEFUN([AC_NO_OBJECTIVE_C],
          [AC_CHECK_GCC_ARG(no_cpp_precomp, -no-cpp-precomp)])
 
 ###############################################################################
@@ -457,7 +503,7 @@ AC_DEFUN(AC_NO_OBJECTIVE_C,
 #
 ###############################################################################
 
-AC_DEFUN(AC_GCC_ACCEPTS_STD, [
+AC_DEFUN([AC_GCC_ACCEPTS_STD], [
   case "$host" in
     *-darwin* )
       # Fucking Apple let // comments sneak into OpenGL headers, so
@@ -469,7 +515,7 @@ AC_DEFUN(AC_GCC_ACCEPTS_STD, [
   esac
 ])
 
-AC_DEFUN(AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE,
+AC_DEFUN([AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE],
  [if test -n "$GCC"; then
    AC_GCC_ACCEPTS_STD
    AC_MSG_RESULT(Disabling C++ comments in ANSI C code.)
@@ -508,7 +554,7 @@ AC_DEFUN(AC_NO_CPLUSPLUS_COMMENTS_IN_C_CODE,
 #
 ###############################################################################
 
-AC_DEFUN(AC_PROG_INSTALL_DIRS,
+AC_DEFUN([AC_PROG_INSTALL_DIRS],
  [AC_CACHE_CHECK([whether "\${INSTALL} -d" creates intermediate directories],
     ac_cv_install_d_creates_dirs,
     [ac_cv_install_d_creates_dirs=no
@@ -559,7 +605,7 @@ AC_DEFUN(AC_PROG_INSTALL_DIRS,
 #
 ###############################################################################
 
-AC_DEFUN(AC_GETTIMEOFDAY_ARGS,
+AC_DEFUN([AC_GETTIMEOFDAY_ARGS],
  [AC_MSG_CHECKING(how to call gettimeofday)
   AC_CACHE_VAL(ac_cv_gettimeofday_args,
    [AC_TRY_COMPILE([#include <stdlib.h>
@@ -598,7 +644,7 @@ changequote(X,Y)
 perl_version_cmd='print $]'
 changequote([,])
 
-AC_DEFUN(AC_PROG_PERL,
+AC_DEFUN([AC_PROG_PERL],
  [AC_PATH_PROGS(PERL, [perl5 perl],,)
   if test -z "$PERL" ; then
     PERL_VERSION=0
@@ -616,7 +662,7 @@ AC_DEFUN(AC_PROG_PERL,
 #
 ###############################################################################
 
-AC_DEFUN(AC_DEMAND_BC,
+AC_DEFUN([AC_DEMAND_BC],
  [ac_bc_result=`echo 6+9 | bc 2>/dev/null`
   AC_MSG_CHECKING([for bc])
   if test "$ac_bc_result" = "15" ; then
@@ -636,7 +682,7 @@ AC_DEFUN(AC_DEMAND_BC,
 #
 ###############################################################################
 
-AC_DEFUN(AC_CHECK_ICMP,
+AC_DEFUN([AC_CHECK_ICMP],
  [AC_CACHE_CHECK([for struct icmp], ac_cv_have_icmp,
   [AC_TRY_COMPILE([#include <stdlib.h>
                    #include <stdio.h>
@@ -679,7 +725,7 @@ AC_DEFUN(AC_CHECK_ICMP,
    AC_DEFINE(HAVE_ICMP)
  fi])
 
-AC_DEFUN(AC_CHECK_ICMPHDR,
+AC_DEFUN([AC_CHECK_ICMPHDR],
  [AC_CACHE_CHECK([for struct icmphdr], ac_cv_have_icmphdr,
   [AC_TRY_COMPILE([#include <stdlib.h>
                    #include <stdio.h>
@@ -727,7 +773,7 @@ AC_DEFUN(AC_CHECK_ICMPHDR,
 # Try and find the app-defaults directory.
 # It sucks that autoconf doesn't do this already...
 #
-AC_DEFUN(AC_PATH_X_APP_DEFAULTS_XMKMF,[
+AC_DEFUN([AC_PATH_X_APP_DEFAULTS_XMKMF],[
   rm -fr conftestdir
   if mkdir conftestdir; then
     cd conftestdir 2>/dev/null
@@ -755,7 +801,7 @@ AC_ARG_WITH(x-app-defaults,[],
 	[eval ac_x_app_defaults="$withval"])
 
 
-AC_DEFUN(AC_PATH_X_APP_DEFAULTS_DIRECT,[
+AC_DEFUN([AC_PATH_X_APP_DEFAULTS_DIRECT],[
   # Look for the directory under a standard set of common directories.
   # Check X11 before X11Rn because it's often a symlink to the current release.
   for ac_dir in                                 \
@@ -814,7 +860,7 @@ AC_DEFUN(AC_PATH_X_APP_DEFAULTS_DIRECT,[
   done
 ])
 
-AC_DEFUN(AC_PATH_X_APP_DEFAULTS,
+AC_DEFUN([AC_PATH_X_APP_DEFAULTS],
   [AC_REQUIRE_CPP()
     AC_CACHE_CHECK([for X app-defaults directory], ac_cv_x_app_defaults,
      [AC_PATH_X_APP_DEFAULTS_XMKMF
@@ -830,7 +876,7 @@ AC_DEFUN(AC_PATH_X_APP_DEFAULTS,
     eval ac_x_app_defaults="$ac_cv_x_app_defaults"])
 
 
-AC_DEFUN(AC_XPOINTER,
+AC_DEFUN([AC_XPOINTER],
  [AC_CACHE_CHECK([for XPointer], ac_cv_xpointer,
                  [AC_TRY_X_COMPILE([#include <X11/Xlib.h>],
                                    [XPointer foo = (XPointer) 0;],
@@ -844,7 +890,7 @@ AC_DEFUN(AC_XPOINTER,
 # Random special-cases for X on certain pathological OSes.
 # You know who you are.
 #
-AC_DEFUN(AC_X_RANDOM_PATHS,
+AC_DEFUN([AC_X_RANDOM_PATHS],
  [case "$host" in
     *-hpux*)
 
@@ -976,7 +1022,7 @@ AC_DEFUN(AC_X_RANDOM_PATHS,
     ;;
   esac])
 
-AC_DEFUN(AC_CHECK_GETIFADDRS,
+AC_DEFUN([AC_CHECK_GETIFADDRS],
  [AC_CACHE_CHECK([for getifaddrs], ac_cv_have_getifaddrs,
   [AC_TRY_COMPILE([#include <stdlib.h>
                    #include <unistd.h>
@@ -1001,7 +1047,7 @@ AC_DEFUN(AC_CHECK_GETIFADDRS,
 
 # Like AC_CHECK_HEADER, but it uses the already-computed -I directories.
 #
-AC_DEFUN(AC_CHECK_X_HEADER, [
+AC_DEFUN([AC_CHECK_X_HEADER], [
   ac_save_CPPFLAGS="$CPPFLAGS"
   if test \! -z "$includedir" ; then 
     CPPFLAGS="$CPPFLAGS -I$includedir"
@@ -1013,7 +1059,7 @@ AC_DEFUN(AC_CHECK_X_HEADER, [
 
 # Like AC_EGREP_HEADER, but it uses the already-computed -I directories.
 #
-AC_DEFUN(AC_EGREP_X_HEADER, [
+AC_DEFUN([AC_EGREP_X_HEADER], [
   ac_save_CPPFLAGS="$CPPFLAGS"
   if test \! -z "$includedir" ; then 
     CPPFLAGS="$CPPFLAGS -I$includedir"
@@ -1025,7 +1071,7 @@ AC_DEFUN(AC_EGREP_X_HEADER, [
 
 # Like AC_TRY_COMPILE, but it uses the already-computed -I directories.
 #
-AC_DEFUN(AC_TRY_X_COMPILE, [
+AC_DEFUN([AC_TRY_X_COMPILE], [
   ac_save_CPPFLAGS="$CPPFLAGS"
   if test \! -z "$includedir" ; then 
     CPPFLAGS="$CPPFLAGS -I$includedir"
@@ -1039,7 +1085,7 @@ AC_DEFUN(AC_TRY_X_COMPILE, [
 # Like AC_CHECK_LIB, but it uses the already-computed -I and -L directories.
 # Use this sparingly; it probably doesn't work very well on X programs.
 #
-AC_DEFUN(AC_CHECK_X_LIB, [
+AC_DEFUN([AC_CHECK_X_LIB], [
   ac_save_CPPFLAGS="$CPPFLAGS"
   ac_save_LDFLAGS="$LDFLAGS"
 #  ac_save_LIBS="$LIBS"
@@ -1067,7 +1113,7 @@ AC_DEFUN(AC_CHECK_X_LIB, [
 # Like AC_TRY_RUN, but it uses the already-computed -I directories.
 # (But not the -L directories!)
 #
-AC_DEFUN(AC_TRY_X_RUN, [
+AC_DEFUN([AC_TRY_X_RUN], [
   ac_save_CPPFLAGS="$CPPFLAGS"
   if test \! -z "$includedir" ; then 
     CPPFLAGS="$CPPFLAGS -I$includedir"
@@ -1094,7 +1140,7 @@ AC_DEFUN(AC_TRY_X_RUN, [
 # /DIR/include and /DIR/lib exist, and adds them to $X_CFLAGS and $X_LIBS
 # as appropriate.
 #
-AC_DEFUN(HANDLE_X_PATH_ARG, [
+AC_DEFUN([HANDLE_X_PATH_ARG], [
    case "$[$1]" in
     yes) ;;
     no)  ;;
@@ -1150,6 +1196,11 @@ test "x$exec_prefix" = xNONE && exec_prefix='${prefix}'
 
 # random compiler setup
 AC_CANONICAL_HOST
+
+ac_original_cc=$CC
+AC_PROG_CC
+AC_PROG_CC_PTHREAD # Needs ac_original_cc.
+
 AC_PROG_CC_ANSI
 AC_NO_LONG_STRING_WARNINGS
 AC_NO_MISPLACED_DECLARATIONS
@@ -1225,7 +1276,7 @@ AC_MSG_RESULT($ac_macosx)
 #
 ###############################################################################
 
-AC_PROG_INTLTOOL
+IT_PROG_INTLTOOL
 GETTEXT_PACKAGE=xscreensaver
 AC_DEFINE_UNQUOTED(GETTEXT_PACKAGE, "$GETTEXT_PACKAGE",
 		   [This is the name of the gettext package to use.])
@@ -2889,6 +2940,9 @@ if test "$with_gl" = yes; then
     # So if the Mesa headers exist, and -lpthread exists, then always
     # link -lpthread after the Mesa libs (be they named -lGL or -lMesaGL.)
     #
+    # Oftentimes, AX_PTHREAD will bring in -lpthread as well; but that ends
+    # up before -l(Mesa)GL, instead of after where it would belong.
+    #
     if test "$ac_have_mesa_gl" = yes; then
       AC_CHECK_LIB(pthread, pthread_create, [GL_LIBS="-lpthread"], [],)
     fi
@@ -4001,6 +4055,18 @@ noteL() {
   warn_prefix="$warn_prefix_1"
 }
 
+
+# ac_prog_cc_no_pthread normally only happens on AIX, because according
+# to AX_PTHREAD, AIX needs CC=xlc_r or CC=cc_r to do threads.
+# If CC is specified, it takes precedence over --with-pthread.
+if test "$ac_prog_cc_no_pthread" ; then
+  warnL "You requested $ac_original_cc for the C compiler, but it doesn't"
+  warn2 "support POSIX threads."
+  echo ""
+  warn2 "If you have multiple CPU cores, try CC=$PTHREAD_CC."
+elif test "$with_pthread_req" = yes -a "$have_pthread" = no ; then
+  warn 'POSIX threads were requested, but were not found.'
+fi
 
 if test "$with_sgi_req" = yes -a "$have_sgi" = no ; then
   warn 'The SGI saver extension was requested, but was not found.'

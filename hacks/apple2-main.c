@@ -762,7 +762,21 @@ static void slideshow_controller(apple2_sim_t *sim, int *stepno,
     *stepno=10;
     break;
 
+  case 80:
+    /* Do nothing, just wait */
+    *next_actiontime += 2.0;
+    *stepno = A2CONTROLLER_FREE;
+    break;
+
   case A2CONTROLLER_FREE:
+    /* It is possible that still image is being loaded,
+       in that case mine cannot be freed, because
+       callback function tries to use it, so wait.
+    */
+    if (mine->image_loading_p) {
+      *stepno = 80;
+      break;
+    }
     free(mine->render_img);
     free(mine->img_filename);
     free(mine);
@@ -1770,7 +1784,11 @@ apple2_draw (Display *dpy, Window window, void *closure)
     st->sim = 0;
   }
 
-  return 10000;
+#ifdef USE_IPHONE
+  return 0;
+#else
+  return 5000;
+#endif
 }
 
 static void

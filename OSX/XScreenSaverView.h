@@ -53,7 +53,10 @@
 
 
 #define USE_BACKBUFFER  // must be in sync with jwxyz.m
-#define USE_CALAYER     // requires USE_BACKBUFFER; required by iOS.
+
+// If USE_BACKBUFFER is enabled, one of these must also be enabled.
+// #define BACKBUFFER_CGCONTEXT   // Not supported by iOS.
+#define BACKBUFFER_CALAYER
 
 @interface XScreenSaverView : ScreenSaverView
 # ifdef USE_IPHONE
@@ -102,7 +105,7 @@
   CGSize backbuffer_size;
   CGColorSpaceRef colorspace;
 
-#  ifndef USE_CALAYER
+#  ifdef BACKBUFFER_CGCONTEXT
   CGContextRef window_ctx;
 #  endif
 

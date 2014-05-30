@@ -2,9 +2,7 @@
 /* flow --- flow of strange bees */
 
 #if 0
-#if !defined( lint ) && !defined( SABER )
 static const char sccsid[] = "@(#)flow.c	5.00 2000/11/01 xlockmore";
-#endif
 #endif
 
 /*-

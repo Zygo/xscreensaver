@@ -38,6 +38,19 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.27	* New hacks, `tessellimage' and `projectiveplane'.
+        * Added support for pthreads, because Dave Odell is a madman.
+	* Updated `webcollage' for recent changes.
+	* Minor iOS tweaks to the `analogtv' hacks.
+        * X11: Don't assume Suspend = 0 implies "No DPMS".
+	* Minor updates to `boxed' and `klein'.
+        * Fixed possible crash in `apple2', `noseguy', `xmatrix', `shadebobs'.
+        * Fixed possible crash in OSX preferences.
+        * OSX Performance improvements.
+        * Plugged some leaks.
+
+5.26	* More auto-updater tweaks.
+
 5.25	* Try harder to bypass Quarrantine and Gatekeeper in OSX installer.
 	* Some files were missing from the tarball.
 

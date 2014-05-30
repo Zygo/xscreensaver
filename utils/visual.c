@@ -1,7 +1,4 @@
-/* xscreensaver, Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999, 2000, 2003, 2006
- * 
- * 
- *  by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2014 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -540,5 +537,50 @@ find_similar_visual(Screen *screen, Visual *old_visual)
   if (!result)
     result = DefaultVisualOfScreen (screen);
 
+  return result;
+}
+
+
+int
+get_bits_per_pixel(Display *dpy, int depth)
+{
+  unsigned i = 0;
+  int count, result;
+  XPixmapFormatValues *formats = XListPixmapFormats(dpy, &count);
+
+  /* XCreateImage calls _XGetBitsPerPixel to figure this out, but that function
+     is private to Xlib.
+
+     For some reason, _XGetBitsPerPixel tries a hard-coded list of depths if
+     it doesn't find a matching pixmap format, but I (Dave Odell) couldn't
+     find any justification for this in the X11 spec. And the XFree86 CVS
+     repository doesn't quite go back far enough to shed any light on what
+     the deal is with that.
+     http://cvsweb.xfree86.org/cvsweb/xc/lib/X11/ImUtil.c
+
+     The hard-coded list apparently was added between X11R5 and X11R6.
+     See <ftp://ftp.x.org/pub/>.
+   */
+
+  if (!formats) return 0;
+
+  for (;;)
+    {
+      if (i == (unsigned)count)
+        {
+          result = 0;
+          break;
+        }
+
+      if (formats[i].depth == depth)
+        {
+          result = formats[i].bits_per_pixel;
+          break;
+        }
+
+      ++i;
+    }
+
+  XFree (formats);
   return result;
 }

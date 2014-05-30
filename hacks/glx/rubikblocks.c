@@ -128,7 +128,6 @@ static const GLfloat lmodel_ambient[] = {0.1, 0.1, 0.1, 1.0};
 static const GLfloat material_ambient[] = {0.7, 0.7, 0.7, 1.0};
 static const GLfloat material_diffuse[] = {0.7, 0.7, 0.7, 1.0};
 static const GLfloat material_specular[] = {0.2, 0.2, 0.2, 1.0};
-static const GLfloat zpos = -18.0;
 
 /*************************************************************************/
 

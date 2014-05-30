@@ -1,5 +1,5 @@
 /* lock.c --- handling the password dialog for locking-mode.
- * xscreensaver, Copyright (c) 1993-2013 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1422,6 +1422,8 @@ destroy_passwd_window (saver_info *si)
 }
 
 
+#if defined(HAVE_XF86MISCSETGRABKEYSSTATE) || defined(HAVE_XF86VMODE)
+
 static Bool error_handler_hit_p = False;
 
 static int
@@ -1430,6 +1432,8 @@ ignore_all_errors_ehandler (Display *dpy, XErrorEvent *error)
   error_handler_hit_p = True;
   return 0;
 }
+
+#endif /* HAVE_XF86MISCSETGRABKEYSSTATE || HAVE_XF86VMODE */
 
 
 #ifdef HAVE_XHPDISABLERESET
@@ -1884,6 +1888,7 @@ passwd_event_loop (saver_info *si)
   } event;
 
   passwd_animate_timer ((XtPointer) si, 0);
+  reset_watchdog_timer (si, False);	/* Disable watchdog while dialog up */
 
   while (si->unlock_state == ul_read)
     {
@@ -1976,6 +1981,8 @@ passwd_event_loop (saver_info *si)
 	  ;
       }
     }
+
+  reset_watchdog_timer (si, True);	/* Re-enable watchdog */
 }
 
 

@@ -449,6 +449,7 @@ extern int has_writable_cells (Screen *, Visual *);
 extern int visual_depth (Screen *, Visual *);
 extern int visual_cells (Screen *, Visual *);
 extern int visual_class (Screen *, Visual *);
+extern int get_bits_per_pixel (Display *, int);
 
 // also declared in utils/grabclient.h
 extern Bool use_subwindow_mode_p (Screen *, Window);

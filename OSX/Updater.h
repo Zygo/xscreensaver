@@ -12,6 +12,9 @@
 #ifndef USE_IPHONE
 #import <Cocoa/Cocoa.h>
 @interface XScreenSaverUpdater : NSObject <NSApplicationDelegate>
+{
+  NSTimer *timer;
+}
 @end
 #endif // !USE_IPHONE
 
@@ -26,6 +29,7 @@
 #define SUSendProfileInfoDef		YES
 #define SUScheduledCheckIntervalKey	"SUScheduledCheckInterval"
 #define SUScheduledCheckIntervalDef	604800
+#define SULastCheckTimeKey		"SULastCheckTime"
 
 #define UPDATER_DEFAULTS @{					\
   @SUSUEnableAutomaticChecksKey: @SUSUEnableAutomaticChecksDef,	\

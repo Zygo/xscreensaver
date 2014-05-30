@@ -33,12 +33,17 @@
  *              Made animation speed independent of FPS.
  *              Added cleanup code, fixed a few glitches.
  *              Added gratuitous #ifdefs.
+ * Last modified: Fri Feb 21 02:14:29 2014, <dmo2118@gmail.com>
+ *              Added support for SMP rendering.
+ *              Tweaked math a bit re: performance.
  */
 
 #include <math.h>
 #include <errno.h>
 
 #include "screenhack.h"
+
+#include "thread_util.h"
 
 #ifdef HAVE_STDINT_H
 # include <stdint.h>
@@ -59,7 +64,7 @@ Does double-buffering make sense? (gridsize = 2)
 USE_XIMAGE is off: Yes (-db: 4.1 FPS, -no-db: 2.9 FPS)
 XPutImage in strips: No (-db: 35.9 FPS, -no-db: 38.7 FPS)
 XPutImage, whole image: No (-db: 32.3 FPS, -no-db: 33.7 FPS)
-MIT-SHM, whole image: Doesn't work anyway: (37.3 FPS)
+MIT-SHM, whole image: Doesn't work anyway: (-no-db: 37.3 FPS)
 
 If gridsize = 1, XPutImage is slow when the XImage is one line at a time.
 XPutImage in strips: -db: 21.2 FPS, -no-db: 19.7 FPS
@@ -78,7 +83,7 @@ quite a bit worse when gridsize = 1.
  * gridsize = 1. (And SHM is turned off.) */
 #define USE_BIG_XIMAGE
 
-/* Numbers are wave_table size, measured in unsigned integers.
+/* Numbers are wave_table size, measured in # of unsigned integers.
  * FPS/radius = 50/radius = 800/radius = 1500/Big-O memory usage
  *
  * Use at most one of the following:
@@ -125,6 +130,7 @@ static const char *interference_defaults [] = {
 #ifdef USE_IPHONE
   "*ignoreRotation: True",
 #endif
+  THREAD_DEFAULTS
   0
 };
 
@@ -145,6 +151,7 @@ static XrmOptionDescRec interference_options [] = {
   { "-shm",	".useSHM",	XrmoptionNoArg, "True" },
   { "-no-shm",	".useSHM",	XrmoptionNoArg, "False" },
 #endif /*  HAVE_XSHM_EXTENSION */
+  THREAD_OPTIONS
   { 0, 0, 0, 0 }
 };
 
@@ -195,15 +202,15 @@ struct inter_context {
   int h;
   Colormap cmap;
   Screen *screen;
+  unsigned bits_per_pixel;
   XColor* pal;
 #ifndef USE_XIMAGE
   GC* gcs;
 #endif
   int radius; /* Not always the same as the X resource. */
   double last_frame;
-#ifdef USE_XIMAGE
-  uint32_t* row;
-#endif
+
+  struct threadpool threadpool;
 
   /*
    * lookup tables
@@ -214,6 +221,18 @@ struct inter_context {
    * Interference sources
    */
   struct inter_source* source;
+};
+
+struct inter_thread
+{
+  const struct inter_context *context;
+  unsigned thread_id;
+
+#ifdef USE_XIMAGE
+  uint32_t* row;
+#endif
+
+  unsigned* result_row;
 };
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
@@ -319,7 +338,6 @@ static double fast_inv_table(unsigned x)
 
 #endif
 
-/* Also destroys c->row. */
 static void destroy_image(Display* dpy, struct inter_context* c)
 {
 #ifdef USE_XIMAGE
@@ -330,13 +348,19 @@ static void destroy_image(Display* dpy, struct inter_context* c)
     } else
 # endif
     {
-      /* Also frees c->ximage->data, which isn't allocated by XCreateImage. */
+      /* Don't let XDestroyImage free c->ximage->data. */
+      thread_free(c->ximage->data);
+      c->ximage->data = NULL;
       XDestroyImage(c->ximage);
     }
   }
-
-  free(c->row);
 #endif
+
+  if(c->threadpool.count)
+  {
+    threadpool_destroy(&c->threadpool);
+    c->threadpool.count = 0;
+  }
 }
 
 static void inter_free(Display* dpy, struct inter_context* c)
@@ -368,10 +392,15 @@ static void inter_free(Display* dpy, struct inter_context* c)
   free(c->source);
 }
 
+static void abort_on_error(int error)
+{
+  fprintf(stderr, "interference: %s\n", strerror(error));
+  exit(1);
+}
+
 static void abort_no_mem(void)
 {
-  fprintf(stderr, "interference: %s\n", strerror(ENOMEM));
-  exit(1);
+  abort_on_error(ENOMEM);
 }
 
 static void check_no_mem(Display* dpy, struct inter_context* c, void* ptr)
@@ -382,19 +411,234 @@ static void check_no_mem(Display* dpy, struct inter_context* c, void* ptr)
   }
 }
 
-/* On allocation error, c->row == NULL. */
+static int inter_thread_create(
+  void* self_raw,
+  struct threadpool* pool,
+  unsigned id)
+{
+  struct inter_thread* self = (struct inter_thread*)self_raw;
+  const struct inter_context* c = GET_PARENT_OBJ(struct inter_context, threadpool, pool);
+
+  self->context = c;
+  self->thread_id = id;
+
+  self->result_row = malloc((c->w / c->grid_size) * sizeof(unsigned));
+  if(!self->result_row)
+    return ENOMEM;
+
+#ifdef USE_XIMAGE
+  self->row = malloc((c->w / c->grid_size) * sizeof(uint32_t));
+  if(!self->row) {
+    free(self->result_row);
+    return ENOMEM;
+  }
+#endif
+
+  return 0;
+}
+
+static void inter_thread_destroy(void* self_raw)
+{
+  struct inter_thread* self = (struct inter_thread*)self_raw;
+#ifdef USE_XIMAGE
+  free(self->row);
+#endif
+  free(self->result_row);
+}
+
+/*
+A higher performance design would have input and output queues, so that when
+worker threads finish with one frame, they can pull the next work order from
+the queue and get started on it immediately, rather than going straight to
+sleep. The current "single-buffered" design still provides reasonable
+performance at low frame rates; high frame rates are noticeably less efficient.
+*/
+
+static void inter_thread_run(void* self_raw)
+{
+  struct inter_thread* self = (struct inter_thread*)self_raw;
+  const struct inter_context* c = self->context;
+
+  int i, j, k;
+  unsigned result;
+  int dist1;
+  int g = c->grid_size;
+  unsigned w_div_g = c->w/g;
+
+  int dx, dy, g2 = 2 * g * g;
+  int px, py, px2g;
+
+  int dist0, ddist;
+
+#ifdef USE_XIMAGE
+  unsigned img_y = g * self->thread_id;
+  void *scanline = c->ximage->data + c->ximage->bytes_per_line * g * self->thread_id;
+#endif
+
+  for(j = self->thread_id; j < c->h/g; j += c->threadpool.count) {
+    px = g/2;
+    py = j*g + px;
+
+    memset(self->result_row, 0, w_div_g * sizeof(unsigned));
+
+    for(k = 0; k < c->count; k++) {
+
+      dx = px - c->source[k].x;
+      dy = py - c->source[k].y;
+
+      dist0 = dx*dx + dy*dy;
+      ddist = -2 * g * c->source[k].x;
+
+      /* px2g = g*(px*2 + g); */
+      px2g = g2;
+
+      for(i = 0; i < w_div_g; i++) {
+        /*
+         * Discarded possibilities for improving performance here:
+         * 1. Using octagon-based distance estimation
+         *    (Which causes giant octagons to appear.)
+         * 2. Square root approximation by reinterpret-casting IEEE floats to
+         *    integers.
+         *    (Which causes angles to appear when two waves interfere.)
+         */
+
+/*      int_float u;
+        u.f = dx*dx + dy*dy;
+        u.i = (1 << 29) + (u.i >> 1) - (1 << 22);
+        dist = u.f; */
+
+#if defined USE_FAST_SQRT_BIGTABLE2
+        dist1 = FAST_TABLE(dist0);
+#elif defined USE_FAST_SQRT_HACKISH
+        dist1 = fast_log2(dist0);
+#else
+        dist1 = sqrt(dist0);
+#endif
+
+        if(dist1 < c->radius)
+          self->result_row[i] += c->wave_height[dist1];
+
+        dist0 += px2g + ddist;
+        px2g += g2;
+      }
+    }
+
+    for(i = 0; i < w_div_g; i++) {
+
+      result = self->result_row[i];
+
+      /* It's slightly faster to do a subtraction or two before calculating the
+       * modulus. - D.O. */
+      if(result >= c->colors)
+      {
+        result -= c->colors;
+        if(result >= c->colors)
+          result %= (unsigned)c->colors;
+      }
+
+#ifdef USE_XIMAGE
+      self->row[i] = c->pal[result].pixel;
+#else
+      XFillRectangle(c->dpy, TARGET(c), c->gcs[result], g*i, g*j, g, g);
+#endif /* USE_XIMAGE */
+    }
+
+#ifdef USE_XIMAGE
+    /* Fill in these `gridsize' horizontal bits in the scanline */
+    if(c->ximage->bits_per_pixel == 32)
+    {
+      uint32_t *ptr = (uint32_t *)scanline;
+      for(i = 0; i < w_div_g; i++) {
+        for(k = 0; k < g; k++)
+          ptr[g*i+k] = self->row[i];
+      }
+    }
+    else if(c->ximage->bits_per_pixel == 24)
+    {
+      uint8_t *ptr = (uint8_t *)scanline;
+      for(i = 0; i < w_div_g; i++) {
+        for(k = 0; k < g; k++) {
+          uint32_t pixel = self->row[i];
+          /* Might not work on big-endian. */
+          ptr[0] = pixel;
+          ptr[1] = (pixel & 0x0000ff00) >> 8;
+          ptr[2] = (pixel & 0x00ff0000) >> 16;
+          ptr += 3;
+        }
+      }
+    }
+    else if(c->ximage->bits_per_pixel == 16)
+    {
+      uint16_t *ptr = (uint16_t *)scanline;
+      for(i = 0; i < w_div_g; i++) {
+        for(k = 0; k < g; k++)
+          ptr[g*i+k] = self->row[i];
+      }
+    }
+    else if(c->ximage->bits_per_pixel == 8)
+    {
+      uint8_t *ptr = (uint8_t *)scanline;
+      for(i = 0; i < w_div_g; i++) {
+        for(k = 0; k < g; k++)
+          ptr[g*i+k] = self->row[i];
+      }
+    }
+    else
+    {
+      for(i = 0; i < w_div_g; i++) {
+        for(k = 0; k < g; k++)
+          /* XPutPixel is thread safe as long as the XImage didn't have its
+           * bits_per_pixel changed. */
+          XPutPixel(c->ximage, (g*i)+k, img_y, self->row[i]);
+      }
+    }
+
+    /* Only the first scanline of the image has been filled in; clone that
+       scanline to the rest of the `gridsize' lines in the ximage */
+    for(k = 0; k < (g-1); k++)
+      memcpy(c->ximage->data + (c->ximage->bytes_per_line * (img_y + k + 1)),
+             c->ximage->data + (c->ximage->bytes_per_line * img_y),
+             c->ximage->bytes_per_line);
+
+# ifndef USE_BIG_XIMAGE
+    /* Move the bits for this horizontal stripe to the server. */
+#  ifdef HAVE_XSHM_EXTENSION
+    if (!c->use_shm)
+#  endif /*  HAVE_XSHM_EXTENSION */
+      XPutImage(c->dpy, TARGET(c), c->copy_gc, c->ximage,
+                0, 0, 0, g*j, c->ximage->width, c->ximage->height);
+# endif
+
+# if defined HAVE_XSHM_EXTENSION && !defined USE_BIG_XIMAGE
+    if (c->use_shm)
+# endif
+    {
+# if defined HAVE_XSHM_EXTENSION || defined USE_BIG_XIMAGE
+      scanline = (char *)scanline + c->ximage->bytes_per_line * g * c->threadpool.count;
+      img_y += g * c->threadpool.count;
+# endif
+    }
+
+#endif /* USE_XIMAGE */
+  }
+}
+
+/* On allocation error, c->ximage == NULL. */
 static void create_image(
   Display* dpy, 
   struct inter_context* c, 
   const XWindowAttributes* xgwa)
 {
 #ifdef USE_XIMAGE
-  c->row = malloc((c->w / c->grid_size) * sizeof(uint32_t));
-  check_no_mem(dpy, c, c->row);
+
+  /* Set the width so that each thread can work on a different line. */
+  unsigned align = thread_memory_alignment(dpy) * 8 - 1;
+  /* The width of a scan line, in *bits*. */
+  unsigned width = (xgwa->width * c->bits_per_pixel + align) & ~align;
 
 # ifdef HAVE_XSHM_EXTENSION
   /*
-   * interference used to put one row at a time to the X server. This changes
+   * Interference used to put one row at a time to the X server. This changes
    * today.
    *
    * XShmPutImage is asynchronous; the contents of the XImage must not be
@@ -417,7 +661,7 @@ static void create_image(
     {
       c->ximage = create_xshm_image(dpy, xgwa->visual, xgwa->depth,
                                     ZPixmap, 0, &c->shm_info,
-                                    xgwa->width, xgwa->height);
+                                    width / c->bits_per_pixel, xgwa->height);
       if (!c->ximage)
         c->use_shm = False;
       /* If create_xshm_image fails, it will not be attempted again. */
@@ -437,29 +681,52 @@ static void create_image(
 # else
                      c->grid_size,               /* height */
 # endif
-                     8, 0);                      /* pad, bpl */
+                     8, width / 8);              /* pad, bpl */
 
       if(c->ximage)
         {
-          c->ximage->data = (char *)
-            calloc(c->ximage->height, c->ximage->bytes_per_line);
-
-          if(!c->ximage->data)
+          if(thread_malloc((void **)&c->ximage->data, dpy,
+                           c->ximage->height * c->ximage->bytes_per_line))
             {
-              free(c->ximage);
+              XFree(c->ximage);
               c->ximage = NULL;
             }
         }
     }
 
-  if(!c->ximage)
-    {
-      free(c->row);
-      c->row = 0;
-    }
-
-  check_no_mem(dpy, c, c->row);
+  check_no_mem(dpy, c, c->ximage);
 #endif /* USE_XIMAGE */
+
+  {
+    static const struct threadpool_class cls =
+    {
+      sizeof(struct inter_thread),
+      inter_thread_create,
+      inter_thread_destroy
+    };
+
+    int error = threadpool_create(
+      &c->threadpool,
+      &cls,
+      dpy,
+#if defined USE_XIMAGE && defined USE_BIG_XIMAGE
+      hardware_concurrency(dpy)
+#else
+      1
+      /* At least three issues with threads without USE_BIG_XIMAGE:
+       * 1. Most of Xlib isn't thread safe without XInitThreads.
+       * 2. X(Un)LockDisplay would need to be called for each line, which is terrible.
+       * 3. There's only one XImage buffer at the moment.
+       */
+#endif
+      );
+
+    if(error) {
+      c->threadpool.count = 0; /* See the note in thread_util.h. */
+      inter_free(dpy, c);
+      abort_on_error(error);
+    }
+  }
 }
 
 static void create_pix_buf(Display* dpy, Window win, struct inter_context *c,
@@ -509,6 +776,7 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
   c->dpy = dpy;
   c->win = win;
 
+
   c->delay = get_integer_resource(dpy, "delay", "Integer");
 
   XGetWindowAttributes(c->dpy, c->win, &xgwa);
@@ -516,6 +784,8 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
   c->h = xgwa.height;
   c->cmap = xgwa.colormap;
   c->screen = xgwa.screen;
+  c->bits_per_pixel = get_bits_per_pixel(c->dpy, xgwa.depth);
+  check_no_mem(dpy, c, (void *)(ptrdiff_t)c->bits_per_pixel);
 
 #ifdef HAVE_XSHM_EXTENSION
   c->use_shm = get_boolean_resource(dpy, "useSHM", "Boolean");
@@ -662,65 +932,52 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
   (c->h/2 + ((int)(cos(c->source[i].y_theta)*((float)c->h/2.0))))
 
 /*
- * This is rather suboptimal. Calculating the distance per-pixel is going to
+ * This is somewhat suboptimal. Calculating the distance per-pixel is going to
  * be a lot slower than using now-ubiquitous SIMD CPU instructions to do four
- * or eight pixels at a time. Plus, this could be almost trivially
- * parallelized, what with all the multi-core hardware nowadays.
+ * or eight pixels at a time.
  */
 
 #ifdef TEST_PATTERN
 static uint32_t
 _alloc_color(struct inter_context *c, uint16_t r, uint16_t g, uint16_t b)
 {
-	XColor color;
-	color.red = r;
-	color.green = g;
-	color.blue = b;
-	XAllocColor(c->dpy, c->cmap, &color);
-	return color.pixel;
+  XColor color;
+  color.red = r;
+  color.green = g;
+  color.blue = b;
+  XAllocColor(c->dpy, c->cmap, &color);
+  return color.pixel;
 }
 
 static void _copy_test(Display *dpy, Drawable src, Drawable dst, GC gc, int x, int y, uint32_t cells)
 {
-	XCopyArea(dpy, src, dst, gc, 0, 0, 3, 2, x, y);
-	
-	{
-		XImage *image = XGetImage(dpy, src, 0, 0, 3, 2, cells, ZPixmap);
-		XPutImage(dpy, dst, gc, image, 0, 0, x, y + 2, 3, 2);
-		XDestroyImage(image);
-	}
+  XCopyArea(dpy, src, dst, gc, 0, 0, 3, 2, x, y);
+
+  {
+    XImage *image = XGetImage(dpy, src, 0, 0, 3, 2, cells, ZPixmap);
+    XPutImage(dpy, dst, gc, image, 0, 0, x, y + 2, 3, 2);
+    XDestroyImage(image);
+  }
 }
 
 static void _test_pattern(Display *dpy, Drawable d, GC gc, const uint32_t *rgb)
 {
-	unsigned x;
-	for(x = 0; x != 3; ++x)
-	{
-		XSetForeground(dpy, gc, rgb[x]);
-		XDrawPoint(dpy, d, gc, x, 0);
-		XSetForeground(dpy, gc, rgb[2 - x]);
-		XFillRectangle(dpy, d, gc, x, 1, 1, 1);
-	}
-	
-	_copy_test(dpy, d, d, gc, 0, 2, rgb[0] | rgb[1] | rgb[2]);
+  unsigned x;
+  for(x = 0; x != 3; ++x)
+  {
+    XSetForeground(dpy, gc, rgb[x]);
+    XDrawPoint(dpy, d, gc, x, 0);
+    XSetForeground(dpy, gc, rgb[2 - x]);
+    XFillRectangle(dpy, d, gc, x, 1, 1, 1);
+  }
+
+  _copy_test(dpy, d, d, gc, 0, 2, rgb[0] | rgb[1] | rgb[2]);
 }
 #endif /* TEST_PATTERN */
 
 static unsigned long do_inter(struct inter_context* c)
 {
-  int i, j, k;
-  unsigned result;
-  int dist;
-  int g = c->grid_size;
-  unsigned w_div_g = c->w/g;
-
-  int dx, dy;
-  int px, py;
-
-#ifdef USE_XIMAGE
-  unsigned img_y = 0;
-  void *scanline = c->ximage->data;
-#endif
+  int i;
 
   double now;
   float elapsed;
@@ -747,134 +1004,8 @@ static unsigned long do_inter(struct inter_context* c)
     c->source[i].y = source_y(c, i);
   }
 
-  for(j = 0; j < c->h/g; j++) {
-    for(i = 0; i < w_div_g; i++) {
-      result = 0;
-      px = i*g + g/2;
-      py = j*g + g/2;
-      for(k = 0; k < c->count; k++) {
-
-        dx = px - c->source[k].x;
-        dy = py - c->source[k].y;
-
-        /*
-         * Other possibilities for improving performance here:
-         * 1. Using octagon-based distance estimation
-         *    (Which causes giant octagons to appear.)
-         * 2. Square root approximation by reinterpret-casting IEEE floats to
-         *    integers.
-         *    (Which causes angles to appear when two waves interfere.)
-         */
-
-/*      int_float u;
-        u.f = dx*dx + dy*dy;
-        u.i = (1 << 29) + (u.i >> 1) - (1 << 22);
-        dist = u.f; */
-
-#if defined USE_FAST_SQRT_BIGTABLE2
-        dist = dx*dx + dy*dy;
-        dist = FAST_TABLE(dist);
-#elif defined USE_FAST_SQRT_HACKISH
-        dist = fast_log2(dx*dx + dy*dy);
-#else
-        dist = sqrt(dx*dx + dy*dy);
-#endif
-
-        result += (dist >= c->radius ? 0 : c->wave_height[dist]);
-      }
-
-      /* It's slightly faster to do a subtraction or two before calculating the
-       * modulus. - D.O. */
-      if(result >= c->colors)
-      {
-        result -= c->colors;
-        if(result >= c->colors)
-          result %= (unsigned)c->colors;
-      }
-
-#ifdef USE_XIMAGE
-      c->row[i] = c->pal[result].pixel;
-#else
-      XFillRectangle(c->dpy, TARGET(c), c->gcs[result], g*i, g*j, g, g);
-#endif /* USE_XIMAGE */
-    }
-
-#ifdef USE_XIMAGE
-    /* Fill in these `gridsize' horizontal bits in the scanline */
-    if(c->ximage->bits_per_pixel == 32)
-    {
-      uint32_t *ptr = (uint32_t *)scanline;
-      for(i = 0; i < w_div_g; i++) {
-        for(k = 0; k < g; k++)
-          ptr[g*i+k] = c->row[i];
-      }
-    }
-    else if(c->ximage->bits_per_pixel == 24)
-    {
-      uint8_t *ptr = (uint8_t *)scanline;
-      for(i = 0; i < w_div_g; i++) {
-        for(k = 0; k < g; k++) {
-          uint32_t pixel = c->row[i];
-          /* Might not work on big-endian. */
-          ptr[0] = pixel;
-          ptr[1] = (pixel & 0x0000ff00) >> 8;
-          ptr[2] = (pixel & 0x00ff0000) >> 16;
-          ptr += 3;
-        }
-      }
-    }
-    else if(c->ximage->bits_per_pixel == 16)
-    {
-      uint16_t *ptr = (uint16_t *)scanline;
-      for(i = 0; i < w_div_g; i++) {
-        for(k = 0; k < g; k++)
-          ptr[g*i+k] = c->row[i];
-      }
-    }
-    else if(c->ximage->bits_per_pixel == 8)
-    {
-      uint8_t *ptr = (uint8_t *)scanline;
-      for(i = 0; i < w_div_g; i++) {
-        for(k = 0; k < g; k++)
-          ptr[g*i+k] = c->row[i];
-      }
-    }
-    else
-    {
-      for(i = 0; i < w_div_g; i++) {
-        for(k = 0; k < g; k++)
-          XPutPixel(c->ximage, (g*i)+k, img_y, c->row[i]);
-      }
-    }
-
-    /* Only the first scanline of the image has been filled in; clone that
-       scanline to the rest of the `gridsize' lines in the ximage */
-    for(k = 0; k < (g-1); k++)
-      memcpy(c->ximage->data + (c->ximage->bytes_per_line * (img_y + k + 1)),
-             c->ximage->data + (c->ximage->bytes_per_line * img_y),
-             c->ximage->bytes_per_line);
-
-# ifndef USE_BIG_XIMAGE
-    /* Move the bits for this horizontal stripe to the server. */
-#  ifdef HAVE_XSHM_EXTENSION
-    if (!c->use_shm)
-#  endif /*  HAVE_XSHM_EXTENSION */
-      XPutImage(c->dpy, TARGET(c), c->copy_gc, c->ximage,
-                0, 0, 0, g*j, c->ximage->width, c->ximage->height);
-# endif
-
-# if defined HAVE_XSHM_EXTENSION && !defined USE_BIG_XIMAGE
-    if (c->use_shm)
-# endif
-    {
-# if defined HAVE_XSHM_EXTENSION || defined USE_BIG_XIMAGE
-      scanline = (char *)scanline + c->ximage->bytes_per_line * g;
-      img_y += g;
-# endif
-    }
-
-#endif /* USE_XIMAGE */
-  }
+  threadpool_run(&c->threadpool, inter_thread_run);
+  threadpool_wait(&c->threadpool);
 
 #ifdef HAVE_XSHM_EXTENSION
   if (c->use_shm)
@@ -896,43 +1027,44 @@ static unsigned long do_inter(struct inter_context* c)
 #endif
 
 #ifdef TEST_PATTERN
-	{
-/*		XWindowAttributes xgwa;
-		XGetWindowAttributes(c->dpy, c->win, &xgwa); */
-		
-		// if(xgwa.width >= 9 && xgwa.height >= 10)
-		{
-			Screen *screen = ScreenOfDisplay(c->dpy, DefaultScreen(c->dpy));
-			Visual *visual = DefaultVisualOfScreen(screen);
-			Pixmap pixmap = XCreatePixmap(c->dpy, TARGET(c), 3, 10, visual_depth(screen, visual));
-			
-			{
-				XSetForeground(c->dpy, c->copy_gc, _alloc_color(c, 0xffff, 0x7fff, 0x7fff));
-				XDrawPoint(c->dpy, TARGET(c), c->copy_gc, 0, c->h - 1);
-			}
-			
-			uint32_t rgb[3], cells;
-			rgb[0] = _alloc_color(c, 0xffff, 0, 0);
-			rgb[1] = _alloc_color(c, 0, 0xffff, 0);
-			rgb[2] = _alloc_color(c, 0, 0, 0xffff);
-			cells = rgb[0] | rgb[1] | rgb[2];
-			
-			_test_pattern(c->dpy, TARGET(c), c->copy_gc, rgb);
-			_test_pattern(c->dpy, pixmap, c->copy_gc, rgb);
-			// Here's a good spot to verify that the pixmap contains the right colors at the top. 
-			_copy_test(c->dpy, TARGET(c), pixmap, c->copy_gc, 0, 6, cells);
-			
-			XCopyArea(c->dpy, pixmap, TARGET(c), c->copy_gc, 0, 0, 3, 10, 3, 0);
-			{
-				XImage *image = XGetImage(c->dpy, pixmap, 0, 0, 3, 10, cells, ZPixmap);
-				XPutImage(c->dpy, TARGET(c), c->copy_gc, image, 0, 0, 6, 0, 3, 10);
-				XDestroyImage(image);
-			}
-			
-			XFreePixmap(c->dpy, pixmap);
-			XSync(c->dpy, False);
-		}
-	}
+  {
+/*  XWindowAttributes xgwa;
+    XGetWindowAttributes(c->dpy, c->win, &xgwa); */
+
+    /* if(xgwa.width >= 9 && xgwa.height >= 10) */
+    {
+      Screen *screen = ScreenOfDisplay(c->dpy, DefaultScreen(c->dpy));
+      Visual *visual = DefaultVisualOfScreen(screen);
+      Pixmap pixmap = XCreatePixmap(c->dpy, TARGET(c), 3, 10, visual_depth(screen, visual));
+
+      {
+        XSetForeground(c->dpy, c->copy_gc, _alloc_color(c, 0xffff, 0x7fff, 0x7fff));
+        XDrawPoint(c->dpy, TARGET(c), c->copy_gc, 0, c->h - 1);
+      }
+
+      uint32_t rgb[3], cells;
+      rgb[0] = _alloc_color(c, 0xffff, 0, 0);
+      rgb[1] = _alloc_color(c, 0, 0xffff, 0);
+      rgb[2] = _alloc_color(c, 0, 0, 0xffff);
+      cells = rgb[0] | rgb[1] | rgb[2];
+
+      _test_pattern(c->dpy, TARGET(c), c->copy_gc, rgb);
+      _test_pattern(c->dpy, pixmap, c->copy_gc, rgb);
+      /* Here's a good spot to verify that the pixmap contains the right colors
+       * at the top. */
+      _copy_test(c->dpy, TARGET(c), pixmap, c->copy_gc, 0, 6, cells);
+
+      XCopyArea(c->dpy, pixmap, TARGET(c), c->copy_gc, 0, 0, 3, 10, 3, 0);
+      {
+        XImage *image = XGetImage(c->dpy, pixmap, 0, 0, 3, 10, cells, ZPixmap);
+        XPutImage(c->dpy, TARGET(c), c->copy_gc, image, 0, 0, 6, 0, 3, 10);
+        XDestroyImage(image);
+      }
+
+      XFreePixmap(c->dpy, pixmap);
+      XSync(c->dpy, False);
+    }
+  }
 #endif /* TEST_PATTERN */
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION

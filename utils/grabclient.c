@@ -564,6 +564,7 @@ pipe_cb (XtPointer closure, int *source, XtInputId *id)
   char buf[10240];
   const char *dir = clo2->directory;
   char *absfile = 0;
+  *buf = 0;
   fgets (buf, sizeof(buf)-1, clo2->pipe);
   pclose (clo2->pipe);
   clo2->pipe = 0;
@@ -861,7 +862,7 @@ print_loading_msg (Screen *screen, Window window)
   fn = 0;
 
   XGetWindowAttributes (dpy, window, &xgwa);
-  w = XTextWidth (f, text, strlen(text));
+  w = XTextWidth (f, text, (int) strlen(text));
 
   gcv.foreground = get_pixel_resource (dpy, xgwa.colormap,
                                        "foreground", "Foreground");
@@ -872,7 +873,7 @@ print_loading_msg (Screen *screen, Window window)
   XDrawImageString (dpy, window, gc,
                     (xgwa.width - w) / 2,
                     (xgwa.height - (f->ascent + f->descent)) / 2 + f->ascent,
-                    text, strlen(text));
+                    text, (int) strlen(text));
   XFreeFont (dpy, f);
   XFreeGC (dpy, gc);
   XSync (dpy, False);

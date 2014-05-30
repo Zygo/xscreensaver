@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Tue Aug 27 02:57:54 2013 by build-fntable.pl 1.2.
+   Created: Tue May  6 12:34:13 2014 by build-fntable.pl 1.2.
  */
 
 #import <Foundation/Foundation.h>
@@ -150,6 +150,7 @@ extern struct xscreensaver_function_table
  *polytopes_xscreensaver_function_table,
  *pong_xscreensaver_function_table,
  *popsquares_xscreensaver_function_table,
+ *projectiveplane_xscreensaver_function_table,
  *providence_xscreensaver_function_table,
  *pulsar_xscreensaver_function_table,
  *pyro_xscreensaver_function_table,
@@ -186,6 +187,7 @@ extern struct xscreensaver_function_table
  *surfaces_xscreensaver_function_table,
  *swirl_xscreensaver_function_table,
  *tangram_xscreensaver_function_table,
+ *tessellimage_xscreensaver_function_table,
  *thornbird_xscreensaver_function_table,
  *timetunnel_xscreensaver_function_table,
  *topblock_xscreensaver_function_table,
@@ -360,6 +362,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&polytopes_xscreensaver_function_table], @"polytopes",
 	[NSValue valueWithPointer:&pong_xscreensaver_function_table], @"pong",
 	[NSValue valueWithPointer:&popsquares_xscreensaver_function_table], @"popsquares",
+	[NSValue valueWithPointer:&projectiveplane_xscreensaver_function_table], @"projectiveplane",
 	[NSValue valueWithPointer:&providence_xscreensaver_function_table], @"providence",
 	[NSValue valueWithPointer:&pulsar_xscreensaver_function_table], @"pulsar",
 	[NSValue valueWithPointer:&pyro_xscreensaver_function_table], @"pyro",
@@ -396,6 +399,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&surfaces_xscreensaver_function_table], @"surfaces",
 	[NSValue valueWithPointer:&swirl_xscreensaver_function_table], @"swirl",
 	[NSValue valueWithPointer:&tangram_xscreensaver_function_table], @"tangram",
+	[NSValue valueWithPointer:&tessellimage_xscreensaver_function_table], @"tessellimage",
 	[NSValue valueWithPointer:&thornbird_xscreensaver_function_table], @"thornbird",
 	[NSValue valueWithPointer:&timetunnel_xscreensaver_function_table], @"timetunnel",
 	[NSValue valueWithPointer:&topblock_xscreensaver_function_table], @"topblock",
