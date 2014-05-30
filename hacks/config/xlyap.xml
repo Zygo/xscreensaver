@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="xlyap" _label="XLyap">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="linger" type="slider" arg="-linger %"
+          _label="Linger" _low-label="Brief" _high-label="Long"
+          low="0" high="10" default="5" />
+
+  <!-- #### -builtin [-1] -->
+  <!-- #### -C [1] -->
+  <!-- #### -D [50] -->
+  <!-- #### -L -->
+  <!-- #### -M [1.0] -->
+  <!-- #### -O [0] -->
+  <!-- #### -R [] -->
+  <!-- #### -S [50] -->
+  <!-- #### -a [2.0] -->
+  <!-- #### -b [2.0] -->
+  <!-- #### -c [7] -->
+  <!-- #### -F [10101010] -->
+  <!-- #### -f [abbabaab] -->
+  <!-- #### -h [] -->
+  <!-- #### -i [0.65] -->
+  <!-- #### -m [] -->
+  <!-- #### -o [] -->
+  <!-- #### -p -->
+  <!-- #### -r [65000] -->
+  <!-- #### -s [256] -->
+  <!-- #### -v -->
+  <!-- #### -w [] -->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+The Lyapunov exponent makes pretty fractal pictures.
+
+http://en.wikipedia.org/wiki/Lyapunov_exponent
+
+Written by Ron Record; 1997.
+  </_description>
+</screensaver>

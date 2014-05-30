@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="thornbird" _label="Thornbird">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="count" type="slider" arg="-count %"
+           _label="Points" _low-label="Few" _high-label="Many"
+          low="10" high="1000" default="100"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Thickness" _low-label="Thin" _high-label="Thick"
+          low="2" high="1000" default="400"/>
+
+<!--
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="2" high="255" default="64"/>
+-->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Displays a view of the "Bird in a Thornbush" fractal.
+
+Written by Tim Auckland; 2002.
+  </_description>
+</screensaver>

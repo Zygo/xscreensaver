@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="discrete" _label="Discrete">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Timeout" _low-label="Small" _high-label="Large"
+          low="100" high="10000" default="2500"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="100"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Discrete map fractal systems, including variants of Hopalong, Julia,
+and others.
+
+Written by Tim Auckland; 1998.
+  </_description>
+</screensaver>

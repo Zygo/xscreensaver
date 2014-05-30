@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="flipscreen3d" _label="FlipScreen3D" gl="yes">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <boolean id="rotate" _label="Rotate" arg-unset="-no-rotate"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-image />
+
+  <xscreensaver-updater />
+
+  <_description>
+Spins and deforms an image.
+
+Written by Ben Buxton and Jamie Zawinski; 2001.
+  </_description>
+</screensaver>
