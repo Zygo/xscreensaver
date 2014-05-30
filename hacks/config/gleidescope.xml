@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="gleidescope" _label="Gleidescope" gl="yes">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <number id="size" _label="Size of tube" arg="-size %"
+	  type="slider" _low-label="Small" _high-label="Large"
+	  low="0" high="10" default="0" />
+
+  <number id="duration" type="slider" arg="-duration %"
+          _label="Image duration"
+          _low-label="10 seconds" _high-label="5 minutes"
+          low="10" high="300" default="30"/>
+
+  <hgroup>
+   <boolean id="move"	_label="Move"   arg-unset="-no-move"/>
+   <boolean id="rotate"	_label="Rotate" arg-unset="-no-rotate"/>
+   <boolean id="zoom"	_label="Zoom"   arg-set="-zoom"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-image />
+
+  <xscreensaver-updater />
+
+  <_description>
+A kaleidoscope that operates on a loaded image.
+
+http://en.wikipedia.org/wiki/Kaleidoscope
+
+Written by Andrew Dean; 2003.
+  </_description>
+</screensaver>

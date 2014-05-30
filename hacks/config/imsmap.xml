@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="imsmap" _label="IMSMap">
+
+  <command arg="-root"/>
+
+  <number id="delay2" type="slider" arg="-delay2 %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Linger" _low-label="1 Second" _high-label="1 Minute"
+          low="1" high="60" default="5"/>
+
+  <number id="iterations" type="slider" arg="-iterations %"
+          _label="Density" _low-label="Sparse" _high-label="Dense"
+          low="1" high="7" default="7"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="50"/>
+
+  <select id="mode">
+    <option id="random" _label="Random coloration"/>
+    <option id="h"      _label="Hue gradients" arg-set="-mode h"/>
+    <option id="s"      _label="Saturation gradients" arg-set="-mode s"/>
+    <option id="v"      _label="Brightness gradients" arg-set="-mode v"/>
+  </select>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+This generates random cloud-like patterns.  The idea is to take four
+points on the edge of the image, and assign each a random "elevation".
+Then find the point between them, and give it a value which is the
+average of the other four, plus some small random offset. 
+Coloration is done based on elevation.
+
+Written by Juergen Nickelsen and Jamie Zawinski; 1992.
+  </_description>
+</screensaver>

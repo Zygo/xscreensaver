@@ -1,0 +1,307 @@
+# utils/Makefile.in --- xscreensaver, Copyright (c) 1997-2010 Jamie Zawinski.
+# the `../configure' script generates `utils/Makefile' from this file.
+
+
+# The utilities in this directory are used mostly by the demos in ../hacks/.
+# The Makefile in that directory builds executables by simply referencing
+# the .o files in this directory.
+
+
+##############################################################################
+#
+# Some rambling about dynamic libraries follows, ignore it if you don't care
+# (which is almost assuredly the case.)
+#
+#
+# It would probably be sensible to just build a single .a file in this
+# directory, and link the hacks against that (statically.)  I haven't done
+# that for two reasons: first, it works now, and why fix what ain't broke;
+# second, it wouldn't actually improve anything for the end user (it would
+# just make the Makefiles be a little smaller.)
+#
+# People sometimes suggest that the stuff in this directory should be in a
+# dynamic library, and that the hacks should be linked dynamically against
+# it.  I haven't done this for a number of reasons:
+#
+#  *  First, the only thing that would improve would be disk space, in that
+#     the executable files themselves would be smaller.  That's it.  Many other
+#     things would get worse if we used a dynamic library:
+#
+#  *  Complication of installation procedures: suddenly, before any of the
+#     hacks will work, you need to have a dynamic library installed, and
+#     the system configured to use it.  This is, basically, rocket science.
+#     Most people don't know how to do this, it's a huge pain, and on many
+#     systems, it requires root access.
+#
+#  *  Complication of the Makefile: every system builds dynamic libraries
+#     differently.  Every compiler takes different flags.  I don't want to
+#     do the hand-holding for the scores of Unix systems and compilers on 
+#     which people try to build this program.
+#
+#  *  Reduction of maintainability: gdb is remarkably bad at dealing with
+#     debug info in dynamic libraries, and when debugging a hack, one would
+#     constantly be fighting the linker and the debugger (or linking
+#     statically when debugging.)
+#
+#  *  Version skew: when things are statically linked, it's perfectly ok to
+#     make incompatible changes to the APIs defined in this directory, so long
+#     as the current version in ../hacks/ is in sync.  Much more care would 
+#     need to be taken with such things if dynamic libraries were involved,
+#     to make sure that the major and minor versions of the library changed
+#     at the appropriate time.  This isn't too hard, but it's more work, and
+#     yet another opportunity to screw up.
+#
+#  *  Runtime memory usage goes *up*.  That's right, up!  When a program
+#     links in a dynamic library, the whole library is brought into the 
+#     address space, not just the files that are actually used.  Normally,
+#     this is ok, because if several programs are using (for example)
+#     libX11.so, chances are that the savings outweighs the overhead.  But
+#     the nature of xscreensaver is that only one of the hacks ever runs at
+#     a time -- so there would never be a second program using the utils/
+#     dynamic library with which things could be shared.
+#
+#  *  Runtime speed decreases slightly, since dynamic code is marginally
+#     slower.  On modern machines, this probably doesn't make a perceptible
+#     difference, however.
+#
+# So basically, I just don't think using libraries would be a win, and it would
+# definitely cause more of a maintenance and portability headache.  However,
+# if someone else wants to do the work to make it be an option to configure,
+# and verifies that it works on several (more than three) different Unixes,
+# I'd be happy to take the patches.
+#                                                           -- jwz, 30-Jun-98
+#
+##############################################################################
+
+
+@SET_MAKE@
+.SUFFIXES:
+.SUFFIXES: .c .o
+
+srcdir		= @srcdir@
+VPATH		= @srcdir@
+prefix		= @prefix@
+datarootdir	= @datarootdir@
+
+CC		= @CC@
+CFLAGS		= @CFLAGS@
+DEFS		= @DEFS@
+
+DEPEND		= @DEPEND@
+DEPEND_FLAGS	= @DEPEND_FLAGS@
+DEPEND_DEFINES	= @DEPEND_DEFINES@
+
+SHELL		= /bin/sh
+INSTALL		= @INSTALL@
+INSTALL_PROGRAM = @INSTALL_PROGRAM@
+INSTALL_DATA	= @INSTALL_DATA@
+INSTALL_DIRS	= @INSTALL_DIRS@
+
+X_CFLAGS	= @X_CFLAGS@
+
+INCLUDES_1	= -I$(srcdir) -I..
+INCLUDES	= $(INCLUDES_1) @INCLUDES@
+
+SRCS		= alpha.c colors.c fade.c grabscreen.c grabclient.c hsv.c \
+		  overlay.c resources.c spline.c usleep.c visual.c \
+		  visual-gl.c xmu.c logo.c yarandom.c erase.c \
+		  xshm.c xdbe.c colorbars.c minixpm.c textclient.c
+OBJS		= alpha.o colors.o fade.o grabscreen.o grabclient.o hsv.o \
+		  overlay.o resources.o spline.o usleep.o visual.o \
+		  visual-gl.o xmu.o logo.o yarandom.o erase.o \
+		  xshm.o xdbe.o colorbars.o minixpm.o textclient.o
+HDRS		= alpha.h colors.h fade.h grabscreen.h hsv.h resources.h \
+		  spline.h usleep.h utils.h version.h visual.h vroot.h xmu.h \
+		  yarandom.h erase.h xshm.h xdbe.h colorbars.h minixpm.h \
+		  xscreensaver-intl.h textclient.h
+STAR		= *
+LOGOS		= images/$(STAR).xpm \
+		  images/$(STAR).png \
+		  images/$(STAR).gif \
+		  images/$(STAR).eps
+EXTRAS		= README Makefile.in ad2c
+VMSFILES	= compile_axp.com compile_decc.com vms-gtod.c vms-gtod.h \
+		  vms-strdup.c
+
+TARFILES	= $(EXTRAS) $(VMSFILES) $(SRCS) $(HDRS) $(LOGOS)
+
+
+default: all
+all: $(OBJS)
+
+install:   install-program   install-man
+uninstall: uninstall-program uninstall-man
+
+install-strip:
+	$(MAKE) INSTALL_PROGRAM='$(INSTALL_PROGRAM) -s' install
+
+install-program:
+install-man:
+uninstall-program:
+uninstall-man:
+
+clean:
+	-rm -f *.o a.out core
+
+distclean: clean
+	-rm -f Makefile TAGS *~ "#"*
+
+# Adds all current dependencies to Makefile
+depend:
+	$(DEPEND) -s '# DO NOT DELETE: updated by make depend'		    \
+	$(DEPEND_FLAGS) --						    \
+	$(INCLUDES) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --	    \
+	$(SRCS)
+
+# Adds some dependencies to Makefile.in -- not totally accurate, but pretty
+# close.  This excludes dependencies on files in /usr/include, etc.  It tries
+# to include only dependencies on files which are themselves a part of this
+# package.
+distdepend::
+	@echo updating dependencies in `pwd`/Makefile.in... ;		    \
+	$(DEPEND) -w 0 -f - 						    \
+	-s '# DO NOT DELETE: updated by make distdepend' $(DEPEND_FLAGS) -- \
+	$(INCLUDES_1) $(DEFS) $(DEPEND_DEFINES) $(CFLAGS) $(X_CFLAGS) --    \
+	$(SRCS) 2>/dev/null |						    \
+	sort -d |							    \
+	(								    \
+	  awk '/^# .*Makefile.in ---/,/^# DO .*distdepend/' < Makefile.in ; \
+	  sed -e '/^#.*/d'						    \
+	      -e 's@ \./@ @g;s@ /[^ ]*@@g;/^.*:$$/d'			    \
+	      -e 's@ \([^$$]\)@ $$(srcdir)/\1@g'			    \
+	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g' ;			    \
+	  echo ''							    \
+	) > /tmp/distdepend.$$$$ &&					    \
+	mv Makefile.in Makefile.in.bak &&				    \
+	mv /tmp/distdepend.$$$$ Makefile.in
+
+TAGS: tags
+tags:
+	find $(srcdir) -name '*.[chly]' -print | xargs etags -a
+
+echo_tarfiles:
+	@echo $(TARFILES)
+
+
+# How we build object files in this directory.
+.c.o:
+	$(CC) -c $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $<
+
+
+# Rules for generating the VMS makefiles on Unix, so that it doesn't have to
+# be done by hand...
+#
+VMS_AXP_COMPILE=$$ CC/DECC/PREFIX=ALL/DEFINE=(VMS,HAVE_CONFIG_H)/INCL=([],[-])
+
+compile_axp.com: Makefile.in
+	@echo generating $@ from $<...  ;				    \
+	( ( for c in $(SRCS) vms-*.c ; do				    \
+	      c=`echo $$c | tr a-z A-Z` ;				    \
+	      echo "$(VMS_AXP_COMPILE) $$c" ;				    \
+            done ;							    \
+	  ) | sort -d ;							    \
+          echo '$$ lib/cre utils.olb_axp' ; 				    \
+	  echo '$$ lib utils.olb_axp *.obj' ; 				    \
+	  echo '$$! delete/noconf *.obj;' ; 				    \
+        ) > $@
+
+compile_decc.com: compile_axp.com
+	@echo generating $@ from $<...  ;				    \
+	sed 's/axp/decc/g' < $< > $@
+
+distdepend:: compile_axp.com compile_decc.com
+
+
+##############################################################################
+#
+# DO NOT DELETE: updated by make distdepend
+
+alpha.o: $(srcdir)/alpha.h
+alpha.o: ../config.h
+alpha.o: $(srcdir)/hsv.h
+alpha.o: $(srcdir)/resources.h
+alpha.o: $(srcdir)/utils.h
+alpha.o: $(srcdir)/visual.h
+alpha.o: $(srcdir)/yarandom.h
+colorbars.o: $(srcdir)/colorbars.h
+colorbars.o: ../config.h
+colorbars.o: $(srcdir)/resources.h
+colorbars.o: $(srcdir)/utils.h
+colors.o: $(srcdir)/colors.h
+colors.o: ../config.h
+colors.o: $(srcdir)/hsv.h
+colors.o: $(srcdir)/utils.h
+colors.o: $(srcdir)/visual.h
+colors.o: $(srcdir)/yarandom.h
+erase.o: ../config.h
+erase.o: $(srcdir)/erase.h
+erase.o: $(srcdir)/resources.h
+erase.o: $(srcdir)/usleep.h
+erase.o: $(srcdir)/utils.h
+erase.o: $(srcdir)/yarandom.h
+fade.o: ../config.h
+fade.o: $(srcdir)/fade.h
+fade.o: $(srcdir)/usleep.h
+fade.o: $(srcdir)/utils.h
+fade.o: $(srcdir)/visual.h
+grabclient.o: ../config.h
+grabclient.o: $(srcdir)/grabscreen.h
+grabclient.o: $(srcdir)/resources.h
+grabclient.o: $(srcdir)/utils.h
+grabclient.o: $(srcdir)/vroot.h
+grabclient.o: $(srcdir)/yarandom.h
+grabscreen.o: $(srcdir)/colors.h
+grabscreen.o: ../config.h
+grabscreen.o: $(srcdir)/grabscreen.h
+grabscreen.o: $(srcdir)/resources.h
+grabscreen.o: $(srcdir)/usleep.h
+grabscreen.o: $(srcdir)/utils.h
+grabscreen.o: $(srcdir)/visual.h
+grabscreen.o: $(srcdir)/vroot.h
+grabscreen.o: $(srcdir)/yarandom.h
+hsv.o: ../config.h
+hsv.o: $(srcdir)/hsv.h
+hsv.o: $(srcdir)/utils.h
+logo.o: ../config.h
+logo.o: $(srcdir)/images/logo-180.xpm
+logo.o: $(srcdir)/images/logo-50.xpm
+logo.o: $(srcdir)/minixpm.h
+logo.o: $(srcdir)/resources.h
+logo.o: $(srcdir)/utils.h
+logo.o: $(srcdir)/visual.h
+minixpm.o: ../config.h
+minixpm.o: $(srcdir)/minixpm.h
+overlay.o: ../config.h
+overlay.o: $(srcdir)/utils.h
+overlay.o: $(srcdir)/visual.h
+resources.o: ../config.h
+resources.o: $(srcdir)/resources.h
+resources.o: $(srcdir)/utils.h
+spline.o: ../config.h
+spline.o: $(srcdir)/spline.h
+spline.o: $(srcdir)/utils.h
+textclient.o: ../config.h
+textclient.o: $(srcdir)/resources.h
+textclient.o: $(srcdir)/textclient.h
+textclient.o: $(srcdir)/utils.h
+usleep.o: ../config.h
+visual-gl.o: ../config.h
+visual-gl.o: $(srcdir)/resources.h
+visual-gl.o: $(srcdir)/utils.h
+visual-gl.o: $(srcdir)/visual.h
+visual.o: ../config.h
+visual.o: $(srcdir)/resources.h
+visual.o: $(srcdir)/utils.h
+visual.o: $(srcdir)/visual.h
+xdbe.o: ../config.h
+xdbe.o: $(srcdir)/resources.h
+xdbe.o: $(srcdir)/utils.h
+xdbe.o: $(srcdir)/xdbe.h
+xmu.o: ../config.h
+xshm.o: ../config.h
+xshm.o: $(srcdir)/resources.h
+xshm.o: $(srcdir)/utils.h
+xshm.o: $(srcdir)/xshm.h
+yarandom.o: ../config.h
+yarandom.o: $(srcdir)/yarandom.h
+

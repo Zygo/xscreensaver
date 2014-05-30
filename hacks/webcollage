@@ -1,0 +1,3958 @@
+#!/usr/bin/perl -w
+#
+# webcollage, Copyright © 1999-2013 by Jamie Zawinski <jwz@jwz.org>
+# This program decorates the screen with random images from the web.
+# One satisfied customer described it as "a nonstop pop culture brainbath."
+#
+# Permission to use, copy, modify, distribute, and sell this software and its
+# documentation for any purpose is hereby granted without fee, provided that
+# the above copyright notice appear in all copies and that both that
+# copyright notice and this permission notice appear in supporting
+# documentation.  No representations are made about the suitability of this
+# software for any purpose.  It is provided "as is" without express or
+# implied warranty.
+
+
+# To run this as a display mode with xscreensaver, add this to `programs':
+#
+#     webcollage -root
+#     webcollage -root -filter 'vidwhacker -stdin -stdout'
+#
+#
+# You can see this in action at http://www.jwz.org/webcollage/ --
+# it auto-reloads about once a minute.  To make a page similar to
+# that on your own system, do this:
+#
+#     webcollage -size '800x600' -imagemap $HOME/www/webcollage/index
+#
+#
+# If you have the "driftnet" program installed, webcollage can display a
+# collage of images sniffed off your local ethernet, instead of pulled out
+# of search engines: in that way, your screensaver can display the images
+# that your co-workers are downloading!
+#
+# Driftnet is available here: http://www.ex-parrot.com/~chris/driftnet/
+# Use it like so:
+#
+#     webcollage -root -driftnet
+#
+# Driftnet is the Unix implementation of the MacOS "EtherPEG" program.
+
+
+require 5;
+use strict;
+
+# We can't "use diagnostics" here, because that library malfunctions if
+# you signal and catch alarms: it says "Uncaught exception from user code"
+# and exits, even though I damned well AM catching it!
+#use diagnostics;
+
+
+require Time::Local;
+require POSIX;
+use Fcntl ':flock'; # import LOCK_* constants
+use POSIX qw(strftime);
+use LWP::UserAgent;
+use bytes;
+
+
+my $progname = $0; $progname =~ s@.*/@@g;
+my $version = q{ $Revision: 1.162 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my $copyright = "WebCollage $version, Copyright (c) 1999-2013" .
+    " Jamie Zawinski <jwz\@jwz.org>\n" .
+    "            http://www.jwz.org/webcollage/\n";
+
+
+
+my @search_methods = (
+                      # Google is rate-limiting us now, so this works ok from
+                      # a short-running screen saver, but not as a batch job.
+                      # I haven't found a workaround.
+                      #
+                        7, "googlephotos",  \&pick_from_google_image_photos,
+                        5, "googleimgs",    \&pick_from_google_images,
+                        5, "googlenums",    \&pick_from_google_image_numbers,
+
+                      # So let's try Bing instead. No rate limiting yet!
+                      #
+                        7, "bingphotos",    \&pick_from_bing_image_photos,
+                        6, "bingimgs",      \&pick_from_bing_images,
+                        6, "bingnums",      \&pick_from_bing_image_numbers,
+
+                       19, "flickr_recent", \&pick_from_flickr_recent,
+                       15, "flickr_random", \&pick_from_flickr_random,
+                       20, "instagram",     \&pick_from_instagram,
+                        6, "livejournal",   \&pick_from_livejournal_images,
+                        4, "yahoorand",     \&pick_from_yahoo_random_link,
+
+                     # Twitter destroyed their whole API in 2013.
+                     #  0, "twitpic",       \&pick_from_twitpic_images,
+                     #  0, "twitter",       \&pick_from_twitter_images,
+
+                     # This is a cute way to search for a certain webcams.
+                     # Not included in default methods, since these images
+                     # aren't terribly interesting by themselves.
+                     # See also "SurveillanceSaver".
+                     #
+                        0, "securitycam",   \&pick_from_security_camera,
+
+                     # Nonfunctional as of June 2011.
+                     #  0, "altavista",     \&pick_from_alta_vista_random_link,
+
+                     # In Apr 2002, Google asked me to stop searching them.
+                     # I asked them to add a "random link" url.  They said
+                     # "that would be easy, we'll think about it" and then
+                     # never wrote back.  Booo Google!  Booooo!  So, screw
+                     # those turkeys, I've turned Google searching back on.
+                     # I'm sure they can take it.  (Jan 2005.)
+
+                     # Jan 2005: Yahoo fucked up their search form so that
+                     # it's no longer possible to do "or" searches on news
+                     # images, so we rarely get any hits there any more.
+                     # 
+                     #  0, "yahoonews",     \&pick_from_yahoo_news_text,
+
+                     # Dec 2004: the ircimages guy's server can't take the
+                     # heat, so he started banning the webcollage user agent.
+                     # I tried to convince him to add a lighter-weight page to
+                     # support webcollage better, but he doesn't care.
+                     #
+                     #  0, "ircimages",     \&pick_from_ircimages,
+
+                     # Dec 2002: Alta Vista has a new "random link" URL now.
+                     # They added it specifically to better support webcollage!
+                     # That was super cool of them.  This is how we used to do
+                     # it, before:
+                     #
+                     #  0, "avimages",      \&pick_from_alta_vista_images,
+                     #  0, "avtext",        \&pick_from_alta_vista_text,
+
+                     # This broke in 2004.  Eh, Lycos sucks anyway.
+                     #
+                     #  0, "lycos",         \&pick_from_lycos_text,
+
+                     # This broke in 2003, I think.  I suspect Hotbot is
+                     # actually the same search engine data as Lycos.
+                     #
+                     #  0, "hotbot",        \&pick_from_hotbot_text,
+                      );
+
+# programs we can use to write to the root window (tried in ascending order.)
+#
+my @root_displayers = (
+  "xscreensaver-getimage -root -file",
+  "chbg       -once -xscreensaver -max_size 100",
+  "xv         -root -quit -viewonly +noresetroot -quick24 -rmode 5" .
+  "           -rfg black -rbg black",
+  "xli        -quiet -onroot -center -border black",
+  "xloadimage -quiet -onroot -center -border black",
+
+# this lame program wasn't built with vroot.h:
+# "xsri       -scale -keep-aspect -center-horizontal -center-vertical",
+);
+
+
+# Some sites need cookies to work properly.   These are they.
+#
+my %cookies = (
+  "www.altavista.com"  =>  "AV_ALL=1",   # request uncensored searches
+  "web.altavista.com"  =>  "AV_ALL=1",
+
+                                         # log in as "cipherpunk"
+  "www.nytimes.com"    =>  'NYT-S=18cHMIlJOn2Y1bu5xvEG3Ufuk6E1oJ.' .
+                           'FMxWaQV0igaB5Yi/Q/guDnLeoL.pe7i1oakSb' .
+                           '/VqfdUdb2Uo27Vzt1jmPn3cpYRlTw9',
+
+  "ircimages.com"      =>  'disclaimer=1',
+);
+
+
+# If this is set, it's a helper program to use for pasting images together:
+# this is a lot faster and more efficient than using PPM pipelines, which is
+# what we do if this program doesn't exist.  (We check for "webcollage-helper"
+# on $PATH at startup, and set this variable appropriately.)
+#
+my $webcollage_helper = undef;
+
+
+# If we have the webcollage-helper program, then it will paste the images
+# together with transparency!  0.0 is invisible, 1.0 is totally opaque.
+#
+my $opacity = 0.85;
+
+
+# Some sites have  managed to poison the search engines.  These are they.
+# (We auto-detect sites that have poisoned the search engines via excessive
+# keywords or dictionary words,  but these are ones that slip through
+# anyway.)
+#
+# This can contain full host names, or 2 or 3 component domains.
+#
+my %poisoners = (
+  "die.net"                 => 1,  # 'l33t h4ck3r d00dz.
+  "genforum.genealogy.com"  => 1,  # Cluttering avtext with human names.
+  "rootsweb.com"            => 1,  # Cluttering avtext with human names.
+  "akamai.net"              => 1,  # Lots of sites have their images on Akamai.
+  "akamaitech.net"          => 1,  # But those are pretty much all banners.
+                                   # Since Akamai is super-expensive, let's
+                                   # go out on a limb and assume that all of
+                                   # their customers are rich-and-boring.
+  "bartleby.com"            => 1,  # Dictionary, cluttering avtext.
+  "encyclopedia.com"        => 1,  # Dictionary, cluttering avtext.
+  "onlinedictionary.datasegment.com" => 1,  # Dictionary, cluttering avtext.
+  "hotlinkpics.com"         => 1,  # Porn site that has poisoned avimages
+                                   # (I don't see how they did it, though!)
+  "alwayshotels.com"        => 1,  # Poisoned Lycos pretty heavily.
+  "nextag.com"              => 1,  # Poisoned Alta Vista real good.
+  "ghettodriveby.com"       => 1,  # Poisoned Google Images.
+  "crosswordsolver.org"     => 1,  # Poisoned Google Images.
+  "xona.com"                => 1,  # Poisoned Google Images.
+  "freepatentsonline.com"   => 1,  # Poisoned Google Images.
+  "herbdatanz.com"          => 1,  # Poisoned Google Images.
+);
+
+
+# When verbosity is turned on, we warn about sites that we seem to be hitting
+# a lot: usually this means some new poisoner has made it into the search
+# engines.  But sometimes, the warning is just because that site has a lot
+# of stuff on it.  So these are the sites that are immune to the "frequent
+# site" diagnostic message.
+#
+my %warningless_sites = (
+  "home.earthlink.net"      => 1,
+  "www.angelfire.com"       => 1,
+  "members.aol.com"         => 1,
+  "img.photobucket.com"     => 1,
+  "pics.livejournal.com"    => 1,
+  "tinypic.com"             => 1,
+  "flickr.com"              => 1,
+  "staticflickr.com"        => 1,
+  "pbase.com"               => 1,
+  "blogger.com"             => 1,
+  "multiply.com"            => 1,
+  "wikimedia.org"           => 1,
+  "twitpic.com"             => 1,
+  "amazonaws.com"           => 1,
+  "blogspot.com"            => 1,
+  "photoshelter.com"        => 1,
+  "myspacecdn.com"          => 1,
+  "feedburner.com"          => 1,
+  "wikia.com"               => 1,
+  "ljplus.ru"               => 1,
+  "yandex.ru"               => 1,
+  "imgur.com"               => 1,
+  "yfrog.com"               => 1,
+
+  "yimg.com"                => 1,  # This is where dailynews.yahoo.com stores
+  "eimg.com"                => 1,  # its images, so pick_from_yahoo_news_text()
+                                   # hits this every time.
+
+  "images.quizfarm.com"     => 1,  # damn those LJ quizzes...
+  "images.quizilla.com"     => 1,
+  "images.quizdiva.net"     => 1,
+
+  "driftnet"                => 1,  # builtin...
+  "local-directory"         => 1,  # builtin...
+);
+
+
+# For decoding HTML-encoded character entities to URLs.
+#
+my %entity_table = (
+   "apos"   => '\'',
+   "quot"   => '"',    "amp"    => '&',    "lt"     => '<',
+   "gt"     => '>',    "nbsp"   => ' ',    "iexcl"  => '',
+   "cent"   => "\xA2", "pound"  => "\xA3", "curren" => "\xA4",
+   "yen"    => "\xA5", "brvbar" => "\xA6", "sect"   => "\xA7",
+   "uml"    => "\xA8", "copy"   => "\xA9", "ordf"   => "\xAA",
+   "laquo"  => "\xAB", "not"    => "\xAC", "shy"    => "\xAD",
+   "reg"    => "\xAE", "macr"   => "\xAF", "deg"    => "\xB0",
+   "plusmn" => "\xB1", "sup2"   => "\xB2", "sup3"   => "\xB3",
+   "acute"  => "\xB4", "micro"  => "\xB5", "para"   => "\xB6",
+   "middot" => "\xB7", "cedil"  => "\xB8", "sup1"   => "\xB9",
+   "ordm"   => "\xBA", "raquo"  => "\xBB", "frac14" => "\xBC",
+   "frac12" => "\xBD", "frac34" => "\xBE", "iquest" => "\xBF",
+   "Agrave" => "\xC0", "Aacute" => "\xC1", "Acirc"  => "\xC2",
+   "Atilde" => "\xC3", "Auml"   => "\xC4", "Aring"  => "\xC5",
+   "AElig"  => "\xC6", "Ccedil" => "\xC7", "Egrave" => "\xC8",
+   "Eacute" => "\xC9", "Ecirc"  => "\xCA", "Euml"   => "\xCB",
+   "Igrave" => "\xCC", "Iacute" => "\xCD", "Icirc"  => "\xCE",
+   "Iuml"   => "\xCF", "ETH"    => "\xD0", "Ntilde" => "\xD1",
+   "Ograve" => "\xD2", "Oacute" => "\xD3", "Ocirc"  => "\xD4",
+   "Otilde" => "\xD5", "Ouml"   => "\xD6", "times"  => "\xD7",
+   "Oslash" => "\xD8", "Ugrave" => "\xD9", "Uacute" => "\xDA",
+   "Ucirc"  => "\xDB", "Uuml"   => "\xDC", "Yacute" => "\xDD",
+   "THORN"  => "\xDE", "szlig"  => "\xDF", "agrave" => "\xE0",
+   "aacute" => "\xE1", "acirc"  => "\xE2", "atilde" => "\xE3",
+   "auml"   => "\xE4", "aring"  => "\xE5", "aelig"  => "\xE6",
+   "ccedil" => "\xE7", "egrave" => "\xE8", "eacute" => "\xE9",
+   "ecirc"  => "\xEA", "euml"   => "\xEB", "igrave" => "\xEC",
+   "iacute" => "\xED", "icirc"  => "\xEE", "iuml"   => "\xEF",
+   "eth"    => "\xF0", "ntilde" => "\xF1", "ograve" => "\xF2",
+   "oacute" => "\xF3", "ocirc"  => "\xF4", "otilde" => "\xF5",
+   "ouml"   => "\xF6", "divide" => "\xF7", "oslash" => "\xF8",
+   "ugrave" => "\xF9", "uacute" => "\xFA", "ucirc"  => "\xFB",
+   "uuml"   => "\xFC", "yacute" => "\xFD", "thorn"  => "\xFE",
+   "yuml"   => "\xFF",
+
+   # HTML 4 entities that do not have 1:1 Latin1 mappings.
+   "bull"  => "*",    "hellip"=> "...",  "prime" => "'",  "Prime" => "\"",
+   "frasl" => "/",    "trade" => "[tm]", "larr"  => "<-", "rarr"  => "->",
+   "harr"  => "<->",  "lArr"  => "<=",   "rArr"  => "=>", "hArr"  => "<=>",
+   "empty" => "\xD8", "minus" => "-",    "lowast"=> "*",  "sim"   => "~",
+   "cong"  => "=~",   "asymp" => "~",    "ne"    => "!=", "equiv" => "==",
+   "le"    => "<=",   "ge"    => ">=",   "lang"  => "<",  "rang"  => ">",
+   "loz"   => "<>",   "OElig" => "OE",   "oelig" => "oe", "Yuml"  => "Y",
+   "circ"  => "^",    "tilde" => "~",    "ensp"  => " ",  "emsp"  => " ",
+   "thinsp"=> " ",    "ndash" => "-",    "mdash" => "--", "lsquo" => "`",
+   "rsquo" => "'",    "sbquo" => "'",    "ldquo" => "\"", "rdquo" => "\"",
+   "bdquo" => "\"",   "lsaquo"=> "<",    "rsaquo"=> ">",
+);
+
+
+##############################################################################
+#
+# Various global flags set by command line parameters, or computed
+#
+##############################################################################
+
+
+my $current_state = "???";      # for diagnostics
+my $load_method;
+my $last_search;
+my $image_succeeded = -1;
+my $suppress_audit = 0;
+
+my $verbose_imgmap = 0;         # print out rectangles and URLs only (stdout)
+my $verbose_warnings = 0;       # print out warnings when things go wrong
+my $verbose_load = 0;           # diagnostics about loading of URLs
+my $verbose_filter = 0;         # diagnostics about page selection/rejection
+my $verbose_net = 0;            # diagnostics about network I/O
+my $verbose_pbm = 0;            # diagnostics about PBM pipelines
+my $verbose_http = 0;           # diagnostics about all HTTP activity
+my $verbose_exec = 0;           # diagnostics about executing programs
+
+my $report_performance_interval = 60 * 15;  # print some stats every 15 minutes
+
+my $http_proxy = undef;
+my $http_timeout = 20;
+my $cvt_timeout = 10;
+
+my $min_width = 50;
+my $min_height = 50;
+my $min_ratio = 1/5;
+
+my $min_gif_area = (120 * 120);
+
+
+my $no_output_p = 0;
+my $urls_only_p = 0;
+my $cocoa_p = 0;
+my $imagemap_base = undef;
+
+my @pids_to_kill = ();  # forked pids we should kill when we exit, if any.
+
+my $driftnet_magic = 'driftnet';
+my $driftnet_dir = undef;
+my $default_driftnet_cmd = "driftnet -a -m 100";
+
+my $local_magic = 'local-directory';
+my $local_dir = undef;
+
+my $wordlist;
+
+my %rejected_urls;
+my @tripwire_words = ("aberrate", "abode", "amorphous", "antioch",
+                      "arrhenius", "arteriole", "blanket", "brainchild",
+                      "burdensome", "carnival", "cherub", "chord", "clever",
+                      "dedicate", "dilogarithm", "dolan", "dryden",
+                      "eggplant");
+
+
+##############################################################################
+#
+# Retrieving URLs
+#
+##############################################################################
+
+# returns three values: the HTTP response line; the document headers;
+# and the document body.
+#
+sub get_document_1($$$) {
+  my ($url, $referer, $timeout) = @_;
+
+  if (!defined($timeout)) { $timeout = $http_timeout; }
+  if ($timeout > $http_timeout) { $timeout = $http_timeout; }
+
+  my $user_agent = "$progname/$version";
+
+  if ($url =~ m@^http://www\.altavista\.com/@ ||
+      $url =~ m@^http://random\.yahoo\.com/@ ||
+      $url =~ m@^http://images\.google\.com/@ ||
+      $url =~ m@^http://www\.google\.com/@) {
+    # block this, you turkeys.
+    $user_agent = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.7)" .
+                  " Gecko/20070914 Firefox/2.0.0.7";
+
+    # 28-Jun-2007: Google Images now emits the entire page in JS if
+    # you claim to be Gecko.  They also still block "webcollage".
+    # They serve non-JS for unrecognised agents, so let's try this...
+    $user_agent = "NoJavascriptPlease/1.0"
+      if ($url =~ m@^http://[a-z]+\.google\.com/@);
+  }
+
+  my $ua = LWP::UserAgent->new;
+  $ua->env_proxy();
+  $ua->agent ("$progname/$version");
+  $ua->default_header ('Referer' => $referer);
+  $ua->timeout($timeout) if $timeout;
+
+  if ($verbose_http) {
+    LOG (1, "  ==> GET $url");
+    LOG (1, "  ==> User-Agent: $user_agent");
+    LOG (1, "  ==> Referer: $referer") if $referer;
+  }
+
+  my $res = $ua->get ($url);
+
+  my $http = ($res ? $res->status_line : '') || '';
+  my $head = ($res ? $res->headers()->as_string : '') || '';
+  my $body = ($res && $res->is_success ? $res->decoded_content : '') || '';
+
+  LOG ($verbose_net, "get_document_1 $url " . ($referer ? $referer : ""));
+
+  $head =~ s/\r\n/\n/gs;
+  $head =~ s/\r/\n/gs;
+  if ($verbose_http) {
+    foreach (split (/\n/, $head)) {
+      LOG ($verbose_http, "  <== $_");
+    }
+  }
+
+  my @L = split(/\r\n|\r|\n/, $body);
+  my $lines = @L;
+  LOG ($verbose_http,
+       "  <== [ body ]: $lines lines, " . length($body) . " bytes");
+
+  if (!$http) {
+    LOG (($verbose_net || $verbose_load), "null response: $url");
+    return ();
+  }
+
+  return ( $http, $head, $body );
+}
+
+
+# returns two values: the document headers; and the document body.
+# if the given URL did a redirect, returns the redirected-to document.
+#
+sub get_document($$;$) {
+  my ($url, $referer, $timeout) = @_;
+  my $start = time;
+
+  if (defined($referer) && $referer eq $driftnet_magic) {
+    return get_driftnet_file ($url);
+  }
+
+  if (defined($referer) && $referer eq $local_magic) {
+    return get_local_file ($url);
+  }
+
+  my $orig_url = $url;
+  my $loop_count = 0;
+  my $max_loop_count = 4;
+
+  do {
+    if (defined($timeout) && $timeout <= 0) {
+      LOG (($verbose_net || $verbose_load), "timed out for $url");
+      $suppress_audit = 1;
+      return ();
+    }
+
+    my ( $http, $head, $body ) = get_document_1 ($url, $referer, $timeout);
+
+    if (defined ($timeout)) {
+      my $now = time;
+      my $elapsed = $now - $start;
+      $timeout -= $elapsed;
+      $start = $now;
+    }
+
+    return () unless $http; # error message already printed
+
+    $http =~ s/[\r\n]+$//s;
+
+    if ( $http =~ m@^HTTP/[0-9.]+ 30[123]@ ) {
+      $_ = $head;
+
+      my ( $location ) = m@^location:[ \t]*(.*)$@im;
+      if ( $location ) {
+        $location =~ s/[\r\n]$//;
+
+        LOG ($verbose_net, "redirect from $url to $location");
+        $referer = $url;
+        $url = $location;
+
+        if ($url =~ m@^/@) {
+          $referer =~ m@^(http://[^/]+)@i;
+          $url = $1 . $url;
+        } elsif (! ($url =~ m@^[a-z]+:@i)) {
+          $_ = $referer;
+          s@[^/]+$@@g if m@^http://[^/]+/@i;
+          $_ .= "/" if m@^http://[^/]+$@i;
+          $url = $_ . $url;
+        }
+
+      } else {
+        LOG ($verbose_net, "no Location with \"$http\"");
+        return ( $url, $body );
+      }
+
+      if ($loop_count++ > $max_loop_count) {
+        LOG ($verbose_net,
+             "too many redirects ($max_loop_count) from $orig_url");
+        $body = undef;
+        return ();
+      }
+
+    } elsif ( $http =~ m@^HTTP/[0-9.]+ ([4-9][0-9][0-9].*)$@ ) {
+
+      LOG (($verbose_net || $verbose_load), "failed: $1 ($url)");
+
+      # http errors -- return nothing.
+      $body = undef;
+      return ();
+
+    } elsif (!$body) {
+
+      LOG (($verbose_net || $verbose_load), "document contains no data: $url");
+      return ();
+
+    } else {
+
+      # ok!
+      return ( $url, $body );
+    }
+
+  } while (1);
+}
+
+# If we already have a cookie defined for this site, and the site is trying
+# to overwrite that very same cookie, let it do so.  This is because nytimes
+# expires its cookies - it lets you upgrade to a new cookie without logging
+# in again, but you have to present the old cookie to get the new cookie.
+# So, by doing this, the built-in cypherpunks cookie will never go "stale".
+#
+sub set_cookie($$) {
+  my ($host, $cookie) = @_;
+  my $oc = $cookies{$host};
+  return unless $oc;
+  $_ = $oc;
+  my ($oc_name, $oc_value) = m@^([^= \t\r\n]+)=(.*)$@;
+  $_ = $cookie;
+  my ($nc_name, $nc_value) = m@^([^= \t\r\n]+)=(.*)$@;
+
+  if ($oc_name eq $nc_name &&
+      $oc_value ne $nc_value) {
+    $cookies{$host} = $cookie;
+    LOG ($verbose_net, "overwrote ${host}'s $oc_name cookie");
+  }
+}
+
+
+############################################################################
+#
+# Extracting image URLs from HTML
+#
+############################################################################
+
+# given a URL and the body text at that URL, selects and returns a random
+# image from it.  returns () if no suitable images found.
+#
+sub pick_image_from_body($$) {
+  my ($url, $body) = @_;
+
+  my $base = $url;
+  $_ = $url;
+
+  # if there's at least one slash after the host, take off the last
+  # pathname component
+  if ( m@^http://[^/]+/@io ) {
+    $base =~ s@[^/]+$@@go;
+  }
+
+  # if there are no slashes after the host at all, put one on the end.
+  if ( m@^http://[^/]+$@io ) {
+    $base .= "/";
+  }
+
+  $_ = $body;
+
+  # strip out newlines, compress whitespace
+  s/[\r\n\t ]+/ /go;
+
+  # nuke comments
+  s/<!--.*?-->//go;
+
+
+  # There are certain web sites that list huge numbers of dictionary
+  # words in their bodies or in their <META NAME=KEYWORDS> tags (surprise!
+  # Porn sites tend not to be reputable!)
+  #
+  # I do not want webcollage to filter on content: I want it to select
+  # randomly from the set of images on the web.  All the logic here for
+  # rejecting some images is really a set of heuristics for rejecting
+  # images that are not really images: for rejecting *text* that is in
+  # GIF/JPEG/PNG form.  I don't want text, I want pictures, and I want
+  # the content of the pictures to be randomly selected from among all
+  # the available content.
+  #
+  # So, filtering out "dirty" pictures by looking for "dirty" keywords
+  # would be wrong: dirty pictures exist, like it or not, so webcollage
+  # should be able to select them.
+  #
+  # However, picking a random URL is a hard thing to do.  The mechanism I'm
+  # using is to search for a selection of random words.  This is not
+  # perfect, but works ok most of the time.  The way it breaks down is when
+  # some URLs get precedence because their pages list *every word* as
+  # related -- those URLs come up more often than others.
+  #
+  # So, after we've retrieved a URL, if it has too many keywords, reject
+  # it.  We reject it not on the basis of what those keywords are, but on
+  # the basis that by having so many, the page has gotten an unfair
+  # advantage against our randomizer.
+  #
+  my $trip_count = 0;
+  foreach my $trip (@tripwire_words) {
+    $trip_count++ if m/$trip/i;
+  }
+
+  if ($trip_count >= $#tripwire_words - 2) {
+    LOG (($verbose_filter || $verbose_load),
+         "there is probably a dictionary in \"$url\": rejecting.");
+    $rejected_urls{$url} = -1;
+    $body = undef;
+    $_ = undef;
+    return ();
+  }
+
+
+  my @urls;
+  my %unique_urls;
+
+  foreach (split(/ *</)) {
+    if ( m/^meta.*["']keywords["']/i ) {
+
+      # Likewise, reject any web pages that have a KEYWORDS meta tag
+      # that is too long.
+      #
+      my $L = length($_);
+      if ($L > 1000) {
+        LOG (($verbose_filter || $verbose_load),
+             "excessive keywords ($L bytes) in $url: rejecting.");
+        $rejected_urls{$url} = $L;
+        $body = undef;
+        $_ = undef;
+        return ();
+      } else {
+        LOG ($verbose_filter, "  keywords ($L bytes) in $url (ok)");
+      }
+
+    } elsif (m/^ (IMG|A) \b .* (SRC|HREF) \s* = \s* ["']? (.*?) [ "'<>] /six ||
+             m/^ (LINK|META) \b .* (REL|PROPERTY) \s* = \s*
+                 ["']? (image_src|og:image) ["']? /six) {
+
+      my $was_inline = (lc($1) eq 'img');
+      my $was_meta   = (lc($1) eq 'link' || lc($1) eq 'meta');
+      my $link = $3;
+
+      # For <link rel="image_src" href="...">
+      # and <meta property="og:image" content="...">
+      #
+      if ($was_meta) {
+        next unless (m/ (HREF|CONTENT) \s* = \s* ["']? (.*?) [ "'<>] /six);
+        $link = $2;
+      }
+
+      my ( $width )  = m/width ?=[ \"]*(\d+)/oi;
+      my ( $height ) = m/height ?=[ \"]*(\d+)/oi;
+      $_ = $link;
+
+      if ( m@^/@o ) {
+        my $site;
+        ( $site = $base ) =~ s@^(http://[^/]*).*@$1@gio;
+        $_ = "$site$link";
+      } elsif ( ! m@^[^/:?]+:@ ) {
+        $_ = "$base$link";
+        s@/\./@/@g;
+        1 while (s@/[^/]+/\.\./@/@g);
+      }
+
+      # skip non-http
+      if ( ! m@^http://@io ) {
+        next;
+      }
+
+      # skip non-image
+      if ( ! m@[.](gif|jpg|jpeg|pjpg|pjpeg|png)$@io ) {
+        next;
+      }
+
+      # skip really short or really narrow images
+      if ( $width && $width < $min_width) {
+        if (!$height) { $height = "?"; }
+        LOG ($verbose_filter, "  skip narrow image $_ (${width}x$height)");
+        next;
+      }
+
+      if ( $height && $height < $min_height) {
+        if (!$width) { $width = "?"; }
+        LOG ($verbose_filter, "  skip short image $_ (${width}x$height)");
+        next;
+      }
+
+      # skip images with ratios that make them look like banners.
+      if ($min_ratio && $width && $height &&
+          ($width * $min_ratio ) > $height) {
+        if (!$height) { $height = "?"; }
+        LOG ($verbose_filter, "  skip bad ratio $_ (${width}x$height)");
+        next;
+      }
+
+      # skip GIFs with a small number of pixels -- those usually suck.
+      if ($width && $height &&
+          m/\.gif$/io &&
+          ($width * $height) < $min_gif_area) {
+        LOG ($verbose_filter, "  skip small GIF $_ (${width}x$height)");
+        next;
+      }
+      
+      # skip images with a URL that indicates a Yahoo thumbnail.
+      if (m@\.yimg\.com/.*/t/@) {
+        if (!$width)  { $width  = "?"; }
+        if (!$height) { $height = "?"; }
+        LOG ($verbose_filter, "  skip yahoo thumb $_ (${width}x$height)");
+        next;
+      }
+
+      my $url = $_;
+
+      if ($unique_urls{$url}) {
+        LOG ($verbose_filter, "  skip duplicate image $_");
+        next;
+      }
+
+      LOG ($verbose_filter,
+           "  image $url" .
+           ($width && $height ? " (${width}x${height})" : "") .
+           ($was_meta ? " (meta)" : $was_inline ? " (inline)" : ""));
+
+
+      my $weight = 1;
+
+      if ($was_meta) {
+        $weight = 20;	 # meta tag images are far preferable to inline images.
+      } else {
+        if ($url !~ m@[.](gif|png)$@io ) {
+          $weight += 2;	 # JPEGs are preferable to GIFs and PNGs.
+        }
+        if (! $was_inline) {
+          $weight += 4;	 # pointers to images are preferable to inlined images.
+        }
+      }
+
+      $unique_urls{$url}++;
+      for (my $i = 0; $i < $weight; $i++) {
+        $urls[++$#urls] = $url;
+      }
+    }
+  }
+
+  my $fsp = ($body =~ m@<frameset@i);
+
+  $_ = undef;
+  $body = undef;
+
+  @urls = depoison (@urls);
+
+  if ( $#urls < 0 ) {
+    LOG ($verbose_load, "no images on $base" . ($fsp ? " (frameset)" : ""));
+    return ();
+  }
+
+  # pick a random element of the table
+  my $i = int(rand($#urls+1));
+  $url = $urls[$i];
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/" . ($#urls+1) . ": $url");
+
+  return $url;
+}
+
+
+# Given a URL and the RSS feed from that URL, pick a random image from
+# the feed.  This is a lot simpler than extracting images out of a page:
+# we already know we have reasonable images, so we just pick one.
+# Returns: the real URL of the page (preferably not the RSS version),
+# and the image.
+
+sub pick_image_from_rss($$) {
+  my ( $url, $body ) = @_;
+  my @suitable = ($body =~ m/<enclosure url="(.*?)"/g);
+
+  my ($base) = ($body =~ m@<link>([^<>]+)</link>@i);
+  $base = $url unless $base;
+
+  # pick a random element of the table
+  if (@suitable) {
+    my $i = int(rand(scalar @suitable));
+    my $url = $suitable[$i];
+    LOG ($verbose_load, "picked image " .($i+1) . "/" . 
+                        ($#suitable+1) . ": $url");
+    return ($base, $url);
+  }
+  return;
+}
+
+
+############################################################################
+#
+# Subroutines for getting pages and images out of search engines
+#
+############################################################################
+
+
+sub pick_dictionary() {
+  my @dicts = ("/usr/dict/words",
+               "/usr/share/dict/words",
+               "/usr/share/lib/dict/words",
+               "/usr/share/dict/cracklib-small",
+               "/usr/share/dict/cracklib-words"
+               );
+  foreach my $f (@dicts) {
+    if (-f $f) {
+      $wordlist = $f;
+      last;
+    }
+  }
+  error ("$dicts[0] does not exist") unless defined($wordlist);
+}
+
+# returns a random word from the dictionary
+#
+sub random_word() {
+
+  return undef unless open (my $in, '<', $wordlist);
+
+  my $size = (stat($in))[7];
+  my $word = undef;
+  my $count = 0;
+
+  while (1) {
+    error ("looping ($count) while reading $wordlist")
+      if (++$count > 100);
+
+    my $pos = int (rand ($size));
+    if (seek ($in, $pos, 0)) {
+      $word = <$in>;   # toss partial line
+      $word = <$in>;   # keep next line
+    }
+
+    next unless ($word);
+    next if ($word =~ m/^[-\']/);
+
+    $word = lc($word);
+    $word =~ s/^.*-//s;
+    $word =~ s/^[^a-z]+//s;
+    $word =~ s/[^a-z]+$//s;
+    $word =~ s/\'s$//s;
+    $word =~ s/ys$/y/s;
+    $word =~ s/ally$//s;
+    $word =~ s/ly$//s;
+    $word =~ s/ies$/y/s;
+    $word =~ s/ally$/al/s;
+    $word =~ s/izes$/ize/s;
+    $word =~ s/esses$/ess/s;
+    $word =~ s/(.{5})ing$/$1/s;
+
+    next if (length ($word) > 14);
+    last if ($word);
+  }
+
+  close ($in);
+
+  if ( $word =~ s/\s/\+/gs ) {  # convert intra-word spaces to "+".
+    $word = "\%22$word\%22";    # And put quotes (%22) around it.
+  }
+
+  return $word;
+}
+
+
+sub random_words($) {
+  my ($sep) = @_;
+  return (random_word() . $sep .
+          random_word() . $sep .
+          random_word() . $sep .
+          random_word() . $sep .
+          random_word());
+}
+
+
+sub url_quote($) {
+  my ($s) = @_;
+  $s =~ s|([^-a-zA-Z0-9.\@/_\r\n])|sprintf("%%%02X", ord($1))|ge;
+  return $s;
+}
+
+sub url_unquote($) {
+  my ($s) = @_;
+  $s =~ s/[+]/ /g;
+  $s =~ s/%([a-z0-9]{2})/chr(hex($1))/ige;
+  return $s;
+}
+
+sub html_quote($) {
+  my ($s) = @_;
+  $s =~ s/&/&amp;/gi;
+  $s =~ s/</&lt;/gi;
+  $s =~ s/>/&gt;/gi;
+  $s =~ s/\"/&quot;/gi;
+  return $s;
+}
+
+sub html_unquote($) {
+  my ($s) = @_;
+  $s =~ s/(&([a-z]+);)/{ $entity_table{$2} || $1; }/gexi;  # e.g., &apos;
+  $s =~ s/(&\#(\d+);)/{ chr($2) }/gexi;                    # e.g., &#39;
+  return $s;
+}
+
+
+# Loads the given URL (a search on some search engine) and returns:
+# - the total number of hits the search engine claimed it had;
+# - a list of URLs from the page that the search engine returned;
+# Note that this list contains all kinds of internal search engine
+# junk URLs too -- caller must prune them.
+#
+sub pick_from_search_engine($$$) {
+  my ( $timeout, $search_url, $words ) = @_;
+
+  $_ = $words;
+  s/%20/ /g;
+
+  print STDERR "\n\n" if ($verbose_load);
+
+  LOG ($verbose_load, "words: $_");
+  LOG ($verbose_load, "URL: $search_url");
+
+  $last_search = $search_url;   # for warnings
+
+  my $start = time;
+  my ( $base, $body ) = get_document ($search_url, undef, $timeout);
+  if (defined ($timeout)) {
+    $timeout -= (time - $start);
+    if ($timeout <= 0) {
+      $body = undef;
+      LOG (($verbose_net || $verbose_load),
+           "timed out (late) for $search_url");
+      $suppress_audit = 1;
+      return ();
+    }
+  }
+
+  return () if (! $body);
+
+
+  my @subpages;
+
+  if ($body =~ m/^\{\"/s) {			# Google AJAX JSON response.
+
+    my @chunks = split (/"GsearchResultClass"/, $body);
+    shift @chunks;
+    my $body2 = '';
+    my $n = 1;
+    foreach (@chunks) {
+      my ($img) = m/"unescapedUrl":"(.*?)"/si;
+      my ($url) = m/"originalContextUrl":"(.*?)"/si;
+      next unless ($img && $url);
+      $url = ("/imgres" .
+              "?imgurl="    . url_quote($img) .
+              "&imgrefurl=" . url_quote($url) .
+              "&...");
+      $body2 .= "<A HREF=\"" . html_quote($url) . "\">$n</A>\n";
+      $n++;
+    }
+    $body = $body2 if $body2;
+  }
+
+  my $search_count = "?";
+  if ($body =~ m@found (approximately |about )?(<B>)?(\d+)(</B>)? image@) {
+    $search_count = $3;
+  } elsif ($body =~ m@<NOBR>((\d{1,3})(,\d{3})*)&nbsp;@i) {
+    $search_count = $1;
+  } elsif ($body =~ m@found ((\d{1,3})(,\d{3})*|\d+) Web p@) {
+    $search_count = $1;
+  } elsif ($body =~ m@found about ((\d{1,3})(,\d{3})*|\d+) results@) {
+    $search_count = $1;
+  } elsif ($body =~ m@\b\d+ - \d+ of (\d+)\b@i) { # avimages
+    $search_count = $1;
+  } elsif ($body =~ m@About ((\d{1,3})(,\d{3})*) images@i) { # avimages
+    $search_count = $1;
+  } elsif ($body =~ m@We found ((\d{1,3})(,\d{3})*|\d+) results@i) { # *vista
+    $search_count = $1;
+  } elsif ($body =~ m@ of about <B>((\d{1,3})(,\d{3})*)<@i) { # googleimages
+    $search_count = $1;
+  } elsif ($body =~ m@<B>((\d{1,3})(,\d{3})*)</B> Web sites were found@i) {
+    $search_count = $1;    # lycos
+  } elsif ($body =~ m@WEB.*?RESULTS.*?\b((\d{1,3})(,\d{3})*)\b.*?Matches@i) {
+    $search_count = $1;                          # hotbot
+  } elsif ($body =~ m@no photos were found containing@i) { # avimages
+    $search_count = "0";
+  } elsif ($body =~ m@found no document matching@i) { # avtext
+    $search_count = "0";
+  }
+  1 while ($search_count =~ s/^(\d+)(\d{3})/$1,$2/);
+
+#  if ($search_count eq "?" || $search_count eq "0") {
+#    my $file = "/tmp/wc.html";
+#    open (my $out, '>', $file) || error ("writing $file: $!");
+#    print $out $body;
+#    close $out;
+#    print STDERR  blurb() . "###### wrote $file\n";
+#  }
+
+
+  my $length = length($body);
+  my $href_count = 0;
+
+  $_ = $body;
+
+  s/[\r\n\t ]+/ /g;
+
+
+  s/(<A )/\n$1/gi;
+  foreach (split(/\n/)) {
+    $href_count++;
+    my ($u) = m@<A\s.*\bHREF\s*=\s*([^>]+)>@i;
+    next unless $u;
+
+    if (m/\bm="{(.*?)}"/s) {		# Bing info is inside JSON crud
+      my $json = html_unquote($1);
+      my ($href) = ($json =~ m/\bsurl:"(.*?)"/s);
+      my ($img)  = ($json =~ m/\bimgurl:"(.*?)"/s);
+      $u = "$img\t$href" if ($img && $href);
+
+    } elsif ($u =~ m/^\"([^\"]*)\"/) { $u = $1   # quoted string
+    } elsif ($u =~ m/^([^\s]*)\s/) { $u = $1;    # or token
+    }
+
+    if ( $rejected_urls{$u} ) {
+      LOG ($verbose_filter, "  pre-rejecting candidate: $u");
+      next;
+    }
+
+    LOG ($verbose_http, "    HREF: $u");
+
+    $subpages[++$#subpages] = $u;
+  }
+
+  if ( $#subpages < 0 ) {
+    LOG ($verbose_filter,
+         "found nothing on $base ($length bytes, $href_count links).");
+    return ();
+  }
+
+  LOG ($verbose_filter, "" . $#subpages+1 . " links on $search_url");
+
+  return ($search_count, @subpages);
+}
+
+
+sub depoison(@) {
+  my (@urls) = @_;
+  my @urls2 = ();
+  foreach (@urls) {
+    my ($h) = m@^http://([^/: \t\r\n]+)@i;
+
+    next unless defined($h);
+
+    if ($poisoners{$h}) {
+      LOG (($verbose_filter), "  rejecting poisoner: $_");
+      next;
+    }
+    if ($h =~ m@([^.]+\.[^.]+\.[^.]+)$@ &&
+        $poisoners{$1}) {
+      LOG (($verbose_filter), "  rejecting poisoner: $_");
+      next;
+    }
+    if ($h =~ m@([^.]+\.[^.]+)$@ &&
+        $poisoners{$1}) {
+      LOG (($verbose_filter), "  rejecting poisoner: $_");
+      next;
+    }
+
+    push @urls2, $_;
+  }
+  return @urls2;
+}
+
+
+# given a list of URLs, picks one at random; loads it; and returns a
+# random image from it.
+# returns the url of the page loaded; the url of the image chosen.
+#
+sub pick_image_from_pages($$$$@) {
+  my ($base, $total_hit_count, $unfiltered_link_count, $timeout, @pages) = @_;
+
+  $total_hit_count = "?" unless defined($total_hit_count);
+
+  @pages = depoison (@pages);
+  LOG ($verbose_load,
+       "" . ($#pages+1) . " candidates of $unfiltered_link_count links" .
+       " ($total_hit_count total)");
+
+  return () if ($#pages < 0);
+
+  my $i = int(rand($#pages+1));
+  my $page = $pages[$i];
+
+  LOG ($verbose_load, "picked page $page");
+
+  $suppress_audit = 1;
+
+  my ( $base2, $body2 ) = get_document ($page, $base, $timeout);
+
+  if (!$base2 || !$body2) {
+    $body2 = undef;
+    return ();
+  }
+
+  my $img = pick_image_from_body ($base2, $body2);
+  $body2 = undef;
+
+  if ($img) {
+    return ($base2, $img);
+  } else {
+    return ();
+  }
+}
+
+
+############################################################################
+#
+# Pick images from random pages returned by the Yahoo Random Link
+#
+############################################################################
+
+# yahoorand
+my $yahoo_random_link = "http://random.yahoo.com/fast/ryl";
+
+
+# Picks a random page; picks a random image on that page;
+# returns two URLs: the page containing the image, and the image.
+# Returns () if nothing found this time.
+#
+sub pick_from_yahoo_random_link($) {
+  my ($timeout) = @_;
+
+  print STDERR "\n\n" if ($verbose_load);
+  LOG ($verbose_load, "URL: $yahoo_random_link");
+
+  $last_search = $yahoo_random_link;   # for warnings
+
+  $suppress_audit = 1;
+
+  my ( $base, $body ) = get_document ($yahoo_random_link, undef, $timeout);
+  if (!$base || !$body) {
+    $body = undef;
+    return;
+  }
+
+  LOG ($verbose_load, "redirected to: $base");
+
+  my $img = pick_image_from_body ($base, $body);
+  $body = undef;
+
+  if ($img) {
+    return ($base, $img);
+  } else {
+    return ();
+  }
+}
+
+
+############################################################################
+#
+# Pick images from random pages returned by the Alta Vista Random Link
+# Note: this seems to have gotten a *lot* less random lately (2007).
+#
+############################################################################
+
+# altavista
+my $alta_vista_random_link = "http://www.altavista.com/image/randomlink";
+
+
+# Picks a random page; picks a random image on that page;
+# returns two URLs: the page containing the image, and the image.
+# Returns () if nothing found this time.
+#
+sub pick_from_alta_vista_random_link($) {
+  my ($timeout) = @_;
+
+  print STDERR "\n\n" if ($verbose_load);
+  LOG ($verbose_load, "URL: $alta_vista_random_link");
+
+  $last_search = $alta_vista_random_link;   # for warnings
+
+  $suppress_audit = 1;
+
+  my ( $base, $body ) = get_document ($alta_vista_random_link,
+                                      undef, $timeout);
+  if (!$base || !$body) {
+    $body = undef;
+    return;
+  }
+
+  LOG ($verbose_load, "redirected to: $base");
+
+  my $img = pick_image_from_body ($base, $body);
+  $body = undef;
+
+  if ($img) {
+    return ($base, $img);
+  } else {
+    return ();
+  }
+}
+
+
+############################################################################
+#
+# Pick images by feeding random words into Alta Vista Image Search
+#
+############################################################################
+
+
+my $alta_vista_images_url = "http://www.altavista.com/image/results" .
+                            "?ipht=1" .       # photos
+                            "&igrph=1" .      # graphics
+                            "&iclr=1" .       # color
+                            "&ibw=1" .        # b&w
+                            "&micat=1" .      # no partner sites
+                            "&sc=on" .        # "site collapse"
+                            "&q=";
+
+# avimages
+sub pick_from_alta_vista_images($) {
+  my ($timeout) = @_;
+
+  my $words = random_word();
+  my $page = (int(rand(9)) + 1);
+  my $search_url = $alta_vista_images_url . $words;
+
+  if ($page > 1) {
+    $search_url .= "&pgno=" . $page;		# page number
+    $search_url .= "&stq=" . (($page-1) * 12);  # first hit result on page
+  }
+
+  my ($search_hit_count, @subpages) =
+    pick_from_search_engine ($timeout, $search_url, $words);
+
+  my @candidates = ();
+  foreach my $u (@subpages) {
+
+    # avimages is encoding their URLs now.
+    next unless ($u =~ s/^.*\*\*(http%3a.*$)/$1/gsi);
+    $u = url_unquote($u);
+
+    next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
+    next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
+    next if ($u =~ m@[/.]yahoo\.com\b@i);         # yahoo and av in cahoots?
+    next if ($u =~ m@[/.]doubleclick\.net\b@i);   # you cretins
+    next if ($u =~ m@[/.]clicktomarket\.com\b@i); # more cretins
+
+    next if ($u =~ m@[/.]viewimages\.com\b@i);    # stacked deck
+    next if ($u =~ m@[/.]gettyimages\.com\b@i);
+
+    LOG ($verbose_filter, "  candidate: $u");
+    push @candidates, $u;
+  }
+
+  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
+                                $timeout, @candidates);
+}
+
+
+
+############################################################################
+#
+# Pick images from Aptix security cameras
+# Cribbed liberally from google image search code.
+# By Jason Sullivan <jasonsul@us.ibm.com>
+#
+############################################################################
+
+my $aptix_images_url = ("http://www.google.com/search" .
+                        "?q=inurl:%22jpg/image.jpg%3Fr%3D%22");
+
+# securitycam
+sub pick_from_security_camera($) {
+  my ($timeout) = @_;
+
+  my $page = (int(rand(9)) + 1);
+  my $num = 20;					# 20 images per page
+  my $search_url = $aptix_images_url;
+
+  if ($page > 1) {
+    $search_url .= "&start=" . $page*$num;	# page number
+    $search_url .= "&num="   . $num;		#images per page
+  }
+
+  my ($search_hit_count, @subpages) =
+    pick_from_search_engine ($timeout, $search_url, '');
+
+  my @candidates = ();
+  my %referers;
+  foreach my $u (@subpages) {
+    next if ($u =~ m@[/.]google\.com\b@i);        # skip google builtins (most links)
+    next unless ($u =~ m@jpg/image.jpg\?r=@i);    #  All pics contain this
+
+    LOG ($verbose_filter, "  candidate: $u");
+    push @candidates, $u;
+    $referers{$u} = $u;
+    }
+
+  @candidates = depoison (@candidates);
+  return () if ($#candidates < 0);
+  my $i = int(rand($#candidates+1));
+  my $img = $candidates[$i];
+  my $ref = $referers{$img};
+
+  LOG ($verbose_load, "picked image " . ($i+1) . ": $img (on $ref)");
+  return ($ref, $img);
+}
+
+
+############################################################################
+#
+# Pick images by feeding random words into Google Image Search.
+# By Charles Gales <gales@us.ibm.com>
+#
+############################################################################
+
+
+my $google_images_url =     "http://ajax.googleapis.com/ajax/services/" .
+                            "search/images" .
+                            "?v=1.0" .
+                            "&rsz=large" .
+                            "&q=";
+
+# googleimgs
+sub pick_from_google_images($;$$) {
+  my ($timeout, $words, $max_page) = @_;
+
+  if (!defined($words)) {
+    $words = random_word();   # only one word for Google
+  }
+
+  my $off = int(rand(40));
+  my $search_url = $google_images_url . $words . "&start=" . $off;
+
+  my ($search_hit_count, @subpages) =
+    pick_from_search_engine ($timeout, $search_url, $words);
+
+  my @candidates = ();
+  my %referers;
+  foreach my $u (@subpages) {
+    next unless ($u =~ m@imgres\?imgurl@i);    #  All pics start with this
+    next if ($u =~ m@[/.]google\.com\b@i);     # skip google builtins
+
+    $u = html_unquote($u);
+    if ($u =~ m@^/imgres\?imgurl=(.*?)&imgrefurl=(.*?)\&@) {
+      my $ref = $2;
+      my $img = $1;
+      $ref = url_decode($ref);
+      $img = url_decode($img);
+
+      $img = "http://$img" unless ($img =~ m/^https?:/i);
+
+      LOG ($verbose_filter, "  candidate: $ref");
+      push @candidates, $img;
+      $referers{$img} = $ref;
+    }
+  }
+
+  @candidates = depoison (@candidates);
+  return () if ($#candidates < 0);
+  my $i = int(rand($#candidates+1));
+  my $img = $candidates[$i];
+  my $ref = $referers{$img};
+
+  LOG ($verbose_load, "picked image " . ($i+1) . ": $img (on $ref)");
+  return ($ref, $img);
+}
+
+
+
+############################################################################
+#
+# Pick images by feeding random numbers into Google Image Search.
+# By jwz, suggested by Ian O'Donnell.
+#
+############################################################################
+
+
+# googlenums
+sub pick_from_google_image_numbers($) {
+  my ($timeout) = @_;
+
+  my $max = 9999;
+  my $number = int(rand($max));
+
+  $number = sprintf("%04d", $number)
+    if (rand() < 0.3);
+
+  pick_from_google_images ($timeout, "$number");
+}
+
+
+
+############################################################################
+#
+# Pick images by feeding random digital camera file names into 
+# Google Image Search.
+# By jwz, inspired by the excellent Random Personal Picture Finder
+# at http://www.diddly.com/random/
+#
+############################################################################
+
+my @photomakers = (
+  #
+  # Common digital camera file name formats, as described at
+  # http://www.diddly.com/random/about.html
+  #
+  sub { sprintf ("dcp%05d.jpg",  int(rand(4000))); },	# Kodak
+  sub { sprintf ("dsc%05d.jpg",  int(rand(4000))); },	# Nikon
+  sub { sprintf ("dscn%04d.jpg", int(rand(4000))); },	# Nikon
+  sub { sprintf ("mvc-%03d.jpg", int(rand(999)));  },	# Sony Mavica
+  sub { sprintf ("mvc%05d.jpg",  int(rand(9999))); },	# Sony Mavica
+  sub { sprintf ("P101%04d.jpg", int(rand(9999))); },	# Olympus w/ date=101
+  sub { sprintf ("P%x%02d%04d.jpg",			# Olympus
+                 int(rand(0xC)), int(rand(30))+1,
+                 rand(9999)); },
+  sub { sprintf ("IMG_%03d.jpg",  int(rand(999))); },	# ?
+  sub { sprintf ("IMAG%04d.jpg",  int(rand(9999))); },	# RCA and Samsung
+  sub { my $n = int(rand(9999));			# Canon
+          sprintf ("1%02d-%04d.jpg", int($n/100), $n); },
+  sub { my $n = int(rand(9999));			# Canon
+          sprintf ("1%02d-%04d_IMG.jpg",
+                   int($n/100), $n); },
+  sub { sprintf ("IMG_%04d.jpg", int(rand(9999))); },	# Canon
+  sub { sprintf ("dscf%04d.jpg", int(rand(9999))); },	# Fuji Finepix
+  sub { sprintf ("pdrm%04d.jpg", int(rand(9999))); },	# Toshiba PDR
+  sub { sprintf ("IM%06d.jpg", int(rand(9999))); },	# HP Photosmart
+  sub { sprintf ("EX%06d.jpg", int(rand(9999))); },	# HP Photosmart
+#  sub { my $n = int(rand(3));				# Kodak DC-40,50,120
+#        sprintf ("DC%04d%s.jpg", int(rand(9999)),
+#                 $n == 0 ? 'S' : $n == 1 ? 'M' : 'L'); },
+  sub { sprintf ("pict%04d.jpg", int(rand(9999))); },	# Minolta Dimage
+  sub { sprintf ("P%07d.jpg", int(rand(9999))); },	# Kodak DC290
+#  sub { sprintf ("%02d%02d%04d.jpg",			# Casio QV3000, QV4000
+#                 int(rand(12))+1, int(rand(31))+1,
+#                 int(rand(999))); },
+#  sub { sprintf ("%02d%x%02d%04d.jpg",			# Casio QV7000
+#                 int(rand(6)), # year
+#                 int(rand(12))+1, int(rand(31))+1,
+#                 int(rand(999))); },
+  sub { sprintf ("IMGP%04d.jpg", int(rand(9999))); },	# Pentax Optio S
+  sub { sprintf ("PANA%04d.jpg", int(rand(9999))); },	# Panasonic vid still
+  sub { sprintf ("HPIM%04d.jpg", int(rand(9999))); },	# HP Photosmart
+  sub { sprintf ("PCDV%04d.jpg", int(rand(9999))); },	# ?
+ );
+
+
+# googlephotos
+sub pick_from_google_image_photos($) {
+  my ($timeout) = @_;
+
+  my $i = int(rand($#photomakers + 1));
+  my $fn = $photomakers[$i];
+  my $file = &$fn;
+  #$file .= "%20filetype:jpg";
+
+  pick_from_google_images ($timeout, $file);
+}
+
+
+############################################################################
+#
+# Pick images by feeding random words into Google Image Search.
+# By the way: fuck Microsoft.
+#
+############################################################################
+
+my $bing_images_url =	"http://www.bing.com/images/async" .
+			"?CW=0" .
+			"&CH=0" .
+			"&q=";
+
+
+# bingimgs
+sub pick_from_bing_images($;$$) {
+  my ($timeout, $words, $max_page) = @_;
+
+  if (!defined($words)) {
+    $words = random_word();   # only one word for Bing
+  }
+
+  my $off = int(rand(300));
+  my $search_url = $bing_images_url . $words . "&first=" . $off;
+
+  my ($search_hit_count, @subpages) =
+    pick_from_search_engine ($timeout, $search_url, $words);
+
+  my @candidates = ();
+  my %referers;
+  foreach my $u (@subpages) {
+    my ($img, $ref) = ($u =~ m/^(.*?)\t(.*)$/s);
+    next unless $img;
+    LOG ($verbose_filter, "  candidate: $ref");
+    push @candidates, $img;
+    $referers{$img} = $ref;
+  }
+
+  @candidates = depoison (@candidates);
+  return () if ($#candidates < 0);
+  my $i = int(rand($#candidates+1));
+  my $img = $candidates[$i];
+  my $ref = $referers{$img};
+
+  LOG ($verbose_load, "picked image " . ($i+1) . ": $img (on $ref)");
+  return ($ref, $img);
+}
+
+
+
+
+############################################################################
+#
+# Pick images by feeding random numbers into Bing Image Search.
+#
+############################################################################
+
+# bingnums
+sub pick_from_bing_image_numbers($) {
+  my ($timeout) = @_;
+
+  my $max = 9999;
+  my $number = int(rand($max));
+
+  $number = sprintf("%04d", $number)
+    if (rand() < 0.3);
+
+  pick_from_bing_images ($timeout, "$number");
+}
+
+
+############################################################################
+#
+# Pick images by feeding random numbers into Bing Image Search.
+#
+############################################################################
+
+# bingphotos
+sub pick_from_bing_image_photos($) {
+  my ($timeout) = @_;
+
+  my $i = int(rand($#photomakers + 1));
+  my $fn = $photomakers[$i];
+  my $file = &$fn;
+
+  pick_from_bing_images ($timeout, $file);
+}
+
+
+############################################################################
+#
+# Pick images by feeding random words into Alta Vista Text Search
+#
+############################################################################
+
+
+my $alta_vista_url = "http://www.altavista.com/web/results" .
+                     "?pg=aq" .
+                     "&aqmode=s" .
+                     "&filetype=html" .
+                     "&sc=on" .        # "site collapse"
+                     "&nbq=50" .
+                     "&aqo=";
+
+# avtext
+sub pick_from_alta_vista_text($) {
+  my ($timeout) = @_;
+
+  my $words = random_words('%20');
+  my $page = (int(rand(9)) + 1);
+  my $search_url = $alta_vista_url . $words;
+
+  if ($page > 1) {
+    $search_url .= "&pgno=" . $page;
+    $search_url .= "&stq=" . (($page-1) * 10);
+  }
+
+  my ($search_hit_count, @subpages) =
+    pick_from_search_engine ($timeout, $search_url, $words);
+
+  my @candidates = ();
+  foreach my $u (@subpages) {
+
+    # Those altavista fuckers are playing really nasty redirection games
+    # these days: the filter your clicks through their site, but use
+    # onMouseOver to make it look like they're not!  Well, it makes it
+    # easier for us to identify search results...
+    #
+    next unless ($u =~ s/^.*\*\*(http%3a.*$)/$1/gsi);
+    $u = url_unquote($u);
+
+    next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
+    next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
+    next if ($u =~ m@[/.]yahoo\.com\b@i);         # yahoo and av in cahoots?
+
+    LOG ($verbose_filter, "  candidate: $u");
+    push @candidates, $u;
+  }
+
+  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
+                                $timeout, @candidates);
+}
+
+
+
+############################################################################
+#
+# Pick images by feeding random words into Hotbot
+#
+############################################################################
+
+my $hotbot_search_url =("http://hotbot.lycos.com/default.asp" .
+                        "?ca=w" .
+                        "&descriptiontype=0" .
+                        "&imagetoggle=1" .
+                        "&matchmode=any" .
+                        "&nummod=2" .
+                        "&recordcount=50" .
+                        "&sitegroup=1" .
+                        "&stem=1" .
+                        "&cobrand=undefined" .
+                        "&query=");
+
+sub pick_from_hotbot_text($) {
+  my ($timeout) = @_;
+
+  $last_search = $hotbot_search_url;   # for warnings
+
+  # lycos seems to always give us back dictionaries and word lists if
+  # we search for more than one word...
+  #
+  my $words = random_word();
+
+  my $start = int(rand(8)) * 10 + 1;
+  my $search_url = $hotbot_search_url . $words . "&first=$start&page=more";
+
+  my ($search_hit_count, @subpages) =
+    pick_from_search_engine ($timeout, $search_url, $words);
+
+  my @candidates = ();
+  foreach my $u (@subpages) {
+
+    # Hotbot plays redirection games too
+    # (not any more?)
+#    next unless ($u =~ m@/director.asp\?.*\btarget=([^&]+)@);
+#    $u = url_decode($1);
+
+    next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
+    next if ($u =~ m@[/.]hotbot\.com\b@i);     # skip hotbot builtins
+    next if ($u =~ m@[/.]lycos\.com\b@i);      # skip hotbot builtins
+    next if ($u =~ m@[/.]inktomi\.com\b@i);    # skip hotbot builtins
+
+    LOG ($verbose_filter, "  candidate: $u");
+    push @candidates, $u;
+  }
+
+  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
+                                $timeout, @candidates);
+}
+
+
+
+############################################################################
+#
+# Pick images by feeding random words into Lycos
+#
+############################################################################
+
+my $lycos_search_url = "http://search.lycos.com/default.asp" .
+                       "?lpv=1" .
+                       "&loc=searchhp" .
+                       "&tab=web" .
+                       "&query=";
+
+sub pick_from_lycos_text($) {
+  my ($timeout) = @_;
+
+  $last_search = $lycos_search_url;   # for warnings
+
+  # lycos seems to always give us back dictionaries and word lists if
+  # we search for more than one word...
+  #
+  my $words = random_word();
+
+  my $start = int(rand(8)) * 10 + 1;
+  my $search_url = $lycos_search_url . $words . "&first=$start&page=more";
+
+  my ($search_hit_count, @subpages) =
+    pick_from_search_engine ($timeout, $search_url, $words);
+
+  my @candidates = ();
+  foreach my $u (@subpages) {
+
+    # Lycos plays redirection games.
+    # (not any more?)
+#    next unless ($u =~ m@^http://click.lycos.com/director.asp
+#                         .*
+#                         \btarget=([^&]+)
+#                         .*
+#                        @x);
+#    $u = url_decode($1);
+
+    next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
+    next if ($u =~ m@[/.]hotbot\.com\b@i);     # skip lycos builtins
+    next if ($u =~ m@[/.]lycos\.com\b@i);      # skip lycos builtins
+    next if ($u =~ m@[/.]terralycos\.com\b@i); # skip lycos builtins
+    next if ($u =~ m@[/.]inktomi\.com\b@i);    # skip lycos builtins
+
+
+    LOG ($verbose_filter, "  candidate: $u");
+    push @candidates, $u;
+  }
+
+  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
+                                $timeout, @candidates);
+}
+
+
+
+############################################################################
+#
+# Pick images by feeding random words into news.yahoo.com
+#
+############################################################################
+
+my $yahoo_news_url = "http://news.search.yahoo.com/search/news" .
+                     "?c=news_photos" .
+                     "&p=";
+
+# yahoonews
+sub pick_from_yahoo_news_text($) {
+  my ($timeout) = @_;
+
+  $last_search = $yahoo_news_url;   # for warnings
+
+  my $words = random_word();
+  my $search_url = $yahoo_news_url . $words;
+
+  my ($search_hit_count, @subpages) =
+    pick_from_search_engine ($timeout, $search_url, $words);
+
+  my @candidates = ();
+  foreach my $u (@subpages) {
+
+    # de-redirectize the URLs
+    $u =~ s@^http://rds\.yahoo\.com/.*-http%3A@http:@s;
+
+    # only accept URLs on Yahoo's news site
+    next unless ($u =~ m@^http://dailynews\.yahoo\.com/@i ||
+                 $u =~ m@^http://story\.news\.yahoo\.com/@i);
+    next unless ($u =~ m@&u=/@);
+
+    LOG ($verbose_filter, "  candidate: $u");
+    push @candidates, $u;
+  }
+
+  return pick_image_from_pages ($search_url, $search_hit_count, $#subpages+1,
+                                $timeout, @candidates);
+}
+
+
+
+############################################################################
+#
+# Pick images from LiveJournal's list of recently-posted images.
+#
+############################################################################
+
+my $livejournal_img_url = "http://www.livejournal.com/stats/latest-img.bml";
+
+# With most of our image sources, we get a random page and then select
+# from the images on it.  However, in the case of LiveJournal, the page
+# of images tends to update slowly; so we'll remember the last N entries
+# on it and randomly select from those, to get a wider variety each time.
+
+my $lj_cache_size = 1000;
+my @lj_cache = (); # fifo, for ordering by age
+my %lj_cache = (); # hash, for detecting dups
+
+# livejournal
+sub pick_from_livejournal_images($) {
+  my ($timeout) = @_;
+
+  $last_search = $livejournal_img_url;   # for warnings
+
+  my ( $base, $body ) = get_document ($livejournal_img_url, undef, $timeout);
+  return () unless $body;
+
+  $body =~ s/\n/ /gs;
+  $body =~ s/(<recent-image)\b/\n$1/gsi;
+
+  foreach (split (/\n/, $body)) {
+    next unless (m/^<recent-image\b/);
+    next unless (m/\bIMG=[\'\"]([^\'\"]+)[\'\"]/si);
+    my $img = html_unquote ($1);
+
+    next if ($lj_cache{$img}); # already have it
+
+    next unless (m/\bURL=[\'\"]([^\'\"]+)[\'\"]/si);
+    my $page = html_unquote ($1);
+    my @pair = ($img, $page);
+    LOG ($verbose_filter, "  candidate: $img");
+    push @lj_cache, \@pair;
+    $lj_cache{$img} = \@pair;
+  }
+
+  return () if ($#lj_cache == -1);
+
+  my $n = $#lj_cache+1;
+  my $i = int(rand($n));
+  my ($img, $page) = @{$lj_cache[$i]};
+
+  # delete this one from @lj_cache and from %lj_cache.
+  #
+  @lj_cache = ( @lj_cache[0 .. $i-1],
+                @lj_cache[$i+1 .. $#lj_cache] );
+  delete $lj_cache{$img};
+
+  # Keep the size of the cache under the limit by nuking older entries
+  #
+  while ($#lj_cache >= $lj_cache_size) {
+    my $pairP = shift @lj_cache;
+    my $img = $pairP->[0];
+    delete $lj_cache{$img};
+  }
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
+
+  return ($page, $img);
+}
+
+
+############################################################################
+#
+# Pick images from ircimages.com (images that have been in the /topic of
+# various IRC channels.)
+#
+############################################################################
+
+my $ircimages_url = "http://ircimages.com/";
+
+# ircimages
+sub pick_from_ircimages($) {
+  my ($timeout) = @_;
+
+  $last_search = $ircimages_url;   # for warnings
+
+  my $n = int(rand(2900));
+  my $search_url = $ircimages_url . "page-$n";
+
+  my ( $base, $body ) = get_document ($search_url, undef, $timeout);
+  return () unless $body;
+
+  my @candidates = ();
+
+  $body =~ s/\n/ /gs;
+  $body =~ s/(<A)\b/\n$1/gsi;
+
+  foreach (split (/\n/, $body)) {
+
+    my ($u) = m@<A\s.*\bHREF\s*=\s*([^>]+)>@i;
+    next unless $u;
+
+    if ($u =~ m/^\"([^\"]*)\"/) { $u = $1; }   # quoted string
+    elsif ($u =~ m/^([^\s]*)\s/) { $u = $1; }  # or token
+
+    next unless ($u =~ m/^http:/i);
+    next if ($u =~ m@^http://(searchirc\.com\|ircimages\.com)@i);
+    next unless ($u =~ m@[.](gif|jpg|jpeg|pjpg|pjpeg|png)$@i);
+
+    LOG ($verbose_http, "    HREF: $u");
+    push @candidates, $u;
+  }
+
+  LOG ($verbose_filter, "" . $#candidates+1 . " links on $search_url");
+
+  return () if ($#candidates == -1);
+
+  my $i = int(rand($#candidates+1));
+  my $img = $candidates[$i];
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/" . ($#candidates+1) .
+       ": $img");
+
+  $search_url = $img;  # hmm...
+  return ($search_url, $img);
+}
+
+
+############################################################################
+#
+# Pick images from Twitpic's list of recently-posted images.
+#
+############################################################################
+
+my $twitpic_img_url = "http://twitpic.com/public_timeline/feed.rss";
+
+# With most of our image sources, we get a random page and then select
+# from the images on it.  However, in the case of Twitpic, the page
+# of images tends to update slowly; so we'll remember the last N entries
+# on it and randomly select from those, to get a wider variety each time.
+
+my $twitpic_cache_size = 1000;
+my @twitpic_cache = (); # fifo, for ordering by age
+my %twitpic_cache = (); # hash, for detecting dups
+
+# twitpic
+sub pick_from_twitpic_images($) {
+  my ($timeout) = @_;
+
+  $last_search = $twitpic_img_url;   # for warnings
+
+  my ( $base, $body ) = get_document ($twitpic_img_url, undef, $timeout);
+
+  # Update the cache.
+
+  if ($body) {
+    $body =~ s/\n/ /gs;
+    $body =~ s/(<item)\b/\n$1/gsi;
+
+    my @items = split (/\n/, $body);
+    shift @items;
+    foreach (@items) {
+      next unless (m@<link>([^<>]*)</link>@si);
+      my $page = html_unquote ($1);
+
+      $page =~ s@/$@@s;
+      $page .= '/full';
+
+      next if ($twitpic_cache{$page}); # already have it
+
+      LOG ($verbose_filter, "  candidate: $page");
+      push @twitpic_cache, $page;
+      $twitpic_cache{$page} = $page;
+    }
+  }
+
+  # Pull from the cache.
+
+  return () if ($#twitpic_cache == -1);
+
+  my $n = $#twitpic_cache+1;
+  my $i = int(rand($n));
+  my $page = $twitpic_cache[$i];
+
+  # delete this one from @twitpic_cache and from %twitpic_cache.
+  #
+  @twitpic_cache = ( @twitpic_cache[0 .. $i-1],
+                     @twitpic_cache[$i+1 .. $#twitpic_cache] );
+  delete $twitpic_cache{$page};
+
+  # Keep the size of the cache under the limit by nuking older entries
+  #
+  while ($#twitpic_cache >= $twitpic_cache_size) {
+    my $page = shift @twitpic_cache;
+    delete $twitpic_cache{$page};
+  }
+
+  ( $base, $body ) = get_document ($page, undef, $timeout);
+  my $img = undef;
+  $body = '' unless defined($body);
+
+  foreach (split (/<img\s+/, $body)) {
+    my ($src) = m/\bsrc=[\"\'](.*?)[\"\']/si;
+    next unless $src;
+    next if m@/js/@s;
+    next if m@/images/@s;
+
+    $img = $src;
+
+    $img = "http:$img" if ($img =~ m@^//@s);  # Oh come on
+
+    # Sometimes these images are hosted on twitpic, sometimes on Amazon.
+    if ($img =~ m@^/@) {
+      $base =~ s@^(https?://[^/]+)/.*@$1@s;
+      $img = $base . $img;
+    }
+    last;
+  }
+
+  if (!$img) {
+    LOG ($verbose_load, "no matching images on $page\n");
+    return ();
+  }
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
+
+  return ($page, $img);
+}
+
+
+############################################################################
+#
+# Pick images from Twitter's list of recently-posted updates.
+#
+############################################################################
+
+# With most of our image sources, we get a random page and then select
+# from the images on it.  However, in the case of Twitter, the page
+# of images only updates once a minute; so we'll remember the last N entries
+# on it and randomly select from those, to get a wider variety each time.
+
+my $twitter_img_url = "http://api.twitter.com/1/statuses/" .
+		      "public_timeline.json" .
+		      "?include_entities=true" .
+		      "&include_rts=true" .
+		      "&count=200";
+
+my $twitter_cache_size = 1000;
+
+my @twitter_cache = (); # fifo, for ordering by age
+my %twitter_cache = (); # hash, for detecting dups
+
+
+# twitter
+sub pick_from_twitter_images($) {
+  my ($timeout) = @_;
+
+  $last_search = $twitter_img_url;   # for warnings
+
+  my ( $base, $body ) = get_document ($twitter_img_url, undef, $timeout);
+  # Update the cache.
+
+  if ($body) {
+    $body =~ s/[\r\n]+/ /gs;
+
+    # Parsing JSON is a pain in the ass.  So we halfass it as usual.
+    $body =~ s/^\[|\]$//s;
+    $body =~ s/(\[.*?\])/{ $_ = $1; s@\},@\} @gs; $_; }/gsexi;
+    my @items = split (/},{/, $body);
+    foreach (@items) {
+      my ($name) = m@"screen_name":"([^\"]+)"@si;
+      my ($img)  = m@"media_url":"([^\"]+)"@si;
+      my ($page) = m@"display_url":"([^\"]+)"@si;
+      next unless ($name && $img && $page);
+      foreach ($img, $page) {
+        s/\\//gs;
+        $_ = "http://$_" unless (m/^http/si);
+      }
+
+      next if ($twitter_cache{$page}); # already have it
+
+      LOG ($verbose_filter, "  candidate: $page - $img");
+      push @twitter_cache, $page;
+      $twitter_cache{$page} = $img;
+    }
+  }
+
+  # Pull from the cache.
+
+  return () if ($#twitter_cache == -1);
+
+  my $n = $#twitter_cache+1;
+  my $i = int(rand($n));
+  my $page = $twitter_cache[$i];
+  my $url  = $twitter_cache{$page};
+
+  # delete this one from @twitter_cache and from %twitter_cache.
+  #
+  @twitter_cache = ( @twitter_cache[0 .. $i-1],
+                     @twitter_cache[$i+1 .. $#twitter_cache] );
+  delete $twitter_cache{$page};
+
+  # Keep the size of the cache under the limit by nuking older entries
+  #
+  while ($#twitter_cache >= $twitter_cache_size) {
+    my $page = shift @twitter_cache;
+    delete $twitter_cache{$page};
+  }
+
+  LOG ($verbose_load, "picked page $url");
+
+  $suppress_audit = 1;
+
+  return ($page, $url);
+}
+
+
+############################################################################
+#
+# Pick images from Flickr's page of recently-posted photos.
+#
+############################################################################
+
+my $flickr_img_url = "http://www.flickr.com/explore/";
+
+# Like LiveJournal, the Flickr page of images tends to update slowly,
+# so remember the last N entries on it and randomly select from those.
+
+# I know that Flickr has an API (http://www.flickr.com/services/api/)
+# but it was easy enough to scrape the HTML, so I didn't bother exploring.
+
+my $flickr_cache_size = 1000;
+my @flickr_cache = (); # fifo, for ordering by age
+my %flickr_cache = (); # hash, for detecting dups
+
+
+# flickr_recent
+sub pick_from_flickr_recent($) {
+  my ($timeout) = @_;
+
+  my $start = 16 * int(rand(100));
+
+  $last_search = $flickr_img_url;   # for warnings
+  $last_search .= "?start=$start" if ($start > 0);
+
+  my ( $base, $body ) = get_document ($last_search, undef, $timeout);
+  return () unless $body;
+
+  $body =~ s/[\r\n]/ /gs;
+  $body =~ s/(<a)\b/\n$1/gsi;
+
+  my $count = 0;
+  my $count2 = 0;
+  foreach (split (/\n/, $body)) {
+
+    my ($page, $thumb) = m@<A \s [^<>]* \b HREF=\"([^<>\"]+)\" [^<>]* > \s*
+                           <IMG \s [^<>]* \b
+			        data-defer-src = \"([^<>\"]+)\" @xsi;
+    next unless defined ($thumb);
+    $page = html_unquote ($page);
+    $thumb = html_unquote ($thumb);
+
+    next unless ($thumb =~ m@^http://farm\d*\.static\.?flickr\.com/@);
+
+    my $base = "http://www.flickr.com/";
+    $page  =~ s@^/@$base@;
+    $thumb =~ s@^/@$base@;
+
+    my $img = $thumb;
+    $img =~ s/_[a-z](\.[a-z\d]+)$/$1/si;  # take off "thumb" suffix
+
+    $count++;
+    next if ($flickr_cache{$img}); # already have it
+
+    my @pair = ($img, $page, $start);
+    LOG ($verbose_filter, "  candidate: $img");
+    push @flickr_cache, \@pair;
+    $flickr_cache{$img} = \@pair;
+    $count2++;
+  }
+
+  return () if ($#flickr_cache == -1);
+
+  my $n = $#flickr_cache+1;
+  my $i = int(rand($n));
+  my ($img, $page) = @{$flickr_cache[$i]};
+
+  # delete this one from @flickr_cache and from %flickr_cache.
+  #
+  @flickr_cache = ( @flickr_cache[0 .. $i-1],
+                    @flickr_cache[$i+1 .. $#flickr_cache] );
+  delete $flickr_cache{$img};
+
+  # Keep the size of the cache under the limit by nuking older entries
+  #
+  while ($#flickr_cache >= $flickr_cache_size) {
+    my $pairP = shift @flickr_cache;
+    my $img = $pairP->[0];
+    delete $flickr_cache{$img};
+  }
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/$n: $img");
+
+  return ($page, $img);
+}
+
+
+############################################################################
+#
+# Pick images from a random RSS feed on Flickr.
+#
+############################################################################
+
+my $flickr_rss_base = ("http://www.flickr.com/services/feeds/photos_public.gne".
+                       "?format=rss_200_enc&tagmode=any&tags=");
+
+# Picks a random RSS feed; picks a random image from that feed;
+# returns 2 URLs: the page containing the image, and the image.
+# Mostly by Joe Mcmahon <mcmahon@yahoo-inc.com>
+#
+# flickr_random
+sub pick_from_flickr_random($) {
+  my $timeout = shift;
+
+  my $words = random_words(',');
+  my $rss = $flickr_rss_base . $words;
+  $last_search = $rss;
+
+  $_ = $words;
+  s/,/ /g;
+
+  print STDERR "\n\n" if ($verbose_load);
+  LOG ($verbose_load, "words: $_");
+  LOG ($verbose_load, "URL: $last_search");
+
+  $suppress_audit = 1;
+
+  my ( $base, $body ) = get_document ($last_search, undef, $timeout);
+  if (!$base || !$body) {
+    $body = undef;
+    return;
+  }
+
+  my $img;
+  ($base, $img) = pick_image_from_rss ($base, $body);
+  $body = undef;
+  return () unless defined ($img);
+
+  LOG ($verbose_load, "redirected to: $base");
+  return ($base, $img);
+}
+
+
+############################################################################
+#
+# Pick random images from Instagram, via gramfeed.com's key.
+#
+############################################################################
+
+my $instagram_url_base = "https://api.instagram.com/v1/media/popular" .
+			 "?client_id=b59fbe4563944b6c88cced13495c0f49";
+
+# instagram_random
+sub pick_from_instagram($) {
+  my $timeout = shift;
+
+  $last_search = $instagram_url_base;
+
+  print STDERR "\n\n" if ($verbose_load);
+  LOG ($verbose_load, "URL: $last_search");
+
+  my ( $base, $body ) = get_document ($last_search, undef, $timeout);
+  if (!$base || !$body) {
+    $body = undef;
+    return;
+  }
+
+  $body =~ s/("link")/\001$1/gs;
+  my @chunks = split(/\001/, $body);
+  shift @chunks;
+  my @urls = ();
+  foreach (@chunks) {
+    s/\\//gs;
+    my ($url) = m/"link":\s*"(.*?)"/s;
+    my ($img) = m/"standard_resolution":{"url":\s*"(.*?)"/s;
+       ($img) = m/"url":\s*"(.*?)"/s unless $url;
+    next unless ($url && $img);
+    push @urls, [ $url, $img ];
+  }
+
+  if ($#urls < 0) {
+    LOG ($verbose_load, "no images on $last_search");
+    return ();
+  }
+
+  my $i = int(rand($#urls+1));
+  my ($url, $img) = @{$urls[$i]};
+
+  LOG ($verbose_load, "picked image " .($i+1) . "/" . ($#urls+1) . ": $url");
+  return ($url, $img);
+}
+
+
+############################################################################
+#
+# Pick images by waiting for driftnet to populate a temp dir with files.
+# Requires driftnet version 0.1.5 or later.
+# (Driftnet is a program by Chris Lightfoot that sniffs your local ethernet
+# for images being downloaded by others.)
+# Driftnet/webcollage integration by jwz.
+#
+############################################################################
+
+# driftnet
+sub pick_from_driftnet($) {
+  my ($timeout) = @_;
+
+  my $id = $driftnet_magic;
+  my $dir = $driftnet_dir;
+  my $start = time;
+  my $now;
+
+  error ("\$driftnet_dir unset?") unless ($dir);
+  $dir =~ s@/+$@@;
+
+  error ("$dir unreadable") unless (-d "$dir/.");
+
+  $timeout = $http_timeout unless ($timeout);
+  $last_search = $id;
+
+  while ($now = time, $now < $start + $timeout) {
+    opendir (my $dir, $dir) || error ("$dir: $!");
+    while (my $file = readdir($dir)) {
+      next if ($file =~ m/^\./);
+      $file = "$dir/$file";
+      closedir ($dir);
+      LOG ($verbose_load, "picked file $file ($id)");
+      return ($id, $file);
+    }
+    closedir ($dir);
+  }
+  LOG (($verbose_net || $verbose_load), "timed out for $id");
+  return ();
+}
+
+
+sub get_driftnet_file($) {
+  my ($file) = @_;
+
+  error ("\$driftnet_dir unset?") unless ($driftnet_dir);
+
+  my $id = $driftnet_magic;
+  error ("$id: $file not in $driftnet_dir?")
+    unless ($file =~ m@^\Q$driftnet_dir@o);
+
+  open (my $in, '<', $file) || error ("$id: $file: $!");
+  my $body = '';
+  local $/ = undef;  # read entire file
+  $body = <$in>;
+  close ($in) || error ("$id: $file: $!");
+  unlink ($file) || error ("$id: $file: rm: $!");
+  return ($id, $body);
+}
+
+
+sub spawn_driftnet($) {
+  my ($cmd) = @_;
+
+  # make a directory to use.
+  while (1) {
+    my $tmp = $ENV{TEMPDIR} || "/tmp";
+    $driftnet_dir = sprintf ("$tmp/driftcollage-%08x", rand(0xffffffff));
+    LOG ($verbose_exec, "mkdir $driftnet_dir");
+    last if mkdir ($driftnet_dir, 0700);
+  }
+
+  if (! ($cmd =~ m/\s/)) {
+    # if the command didn't have any arguments in it, then it must be just
+    # a pointer to the executable.  Append the default args to it.
+    my $dargs = $default_driftnet_cmd;
+    $dargs =~ s/^[^\s]+//;
+    $cmd .= $dargs;
+  }
+
+  # point the driftnet command at our newly-minted private directory.
+  #
+  $cmd .= " -d $driftnet_dir";
+  $cmd .= ">/dev/null" unless ($verbose_exec);
+
+  my $pid = fork();
+  if ($pid < 0) { error ("fork: $!\n"); }
+  if ($pid) {
+    # parent fork
+    push @pids_to_kill, $pid;
+    LOG ($verbose_exec, "forked for \"$cmd\"");
+  } else {
+    # child fork
+    nontrapping_system ($cmd) || error ("exec: $!");
+  }
+
+  # wait a bit, then make sure the process actually started up.
+  #
+  sleep (1);
+  error ("pid $pid failed to start \"$cmd\"")
+    unless (1 == kill (0, $pid));
+}
+
+# local-directory
+sub pick_from_local_dir($) {
+  my ($timeout) = @_;
+
+  my $id = $local_magic;
+  $last_search = $id;
+
+  my $dir = $local_dir;
+  error ("\$local_dir unset?") unless ($dir);
+  $dir =~ s@/+$@@;
+
+  error ("$dir unreadable") unless (-d "$dir/.");
+
+  my $v = ($verbose_exec ? "-v" : "");
+  my $pick = `xscreensaver-getimage-file $v "$dir"`;
+  $pick =~ s/\s+$//s;
+  $pick = "$dir/$pick" unless ($pick =~ m@^/@s);       # relative path
+
+  LOG ($verbose_load, "picked file $pick ($id)");
+  return ($id, $pick);
+}
+
+
+sub get_local_file($) {
+  my ($file) = @_;
+
+  error ("\$local_dir unset?") unless ($local_dir);
+
+  my $id = $local_magic;
+  error ("$id: $file not in $local_dir?")
+    unless ($file =~ m@^\Q$local_dir@o);
+
+  open (my $in, '<', $file) || error ("$id: $file: $!");
+  local $/ = undef;  # read entire file
+  my $body = <$in>;
+  close ($in) || error ("$id: $file: $!");
+  return ($id, $body);
+}
+
+
+
+############################################################################
+#
+# Pick a random image in a random way
+#
+############################################################################
+
+
+# Picks a random image on a random page, and returns two URLs:
+# the page containing the image, and the image.
+# Returns () if nothing found this time.
+#
+
+sub pick_image(;$) {
+  my ($timeout) = @_;
+
+  $current_state = "select";
+  $load_method = "none";
+
+  my $n = int(rand(100));
+  my $fn = undef;
+  my $total = 0;
+  my @rest = @search_methods;
+
+  while (@rest) {
+    my $pct  = shift @rest;
+    my $name = shift @rest;
+    my $tfn  = shift @rest;
+    $total += $pct;
+    if ($total > $n && !defined($fn)) {
+      $fn = $tfn;
+      $current_state = $name;
+      $load_method = $current_state;
+    }
+  }
+
+  if ($total != 100) {
+    error ("internal error: \@search_methods totals to $total%!");
+  }
+
+  record_attempt ($current_state);
+  return $fn->($timeout);
+}
+
+
+
+############################################################################
+#
+# Statistics and logging
+#
+############################################################################
+
+sub timestr() {
+  return strftime ("%H:%M:%S: ", localtime);
+}
+
+sub blurb() {
+  return "$progname: " . timestr() . "$current_state: ";
+}
+
+sub error($) {
+  my ($err) = @_;
+  print STDERR blurb() . "$err\n";
+  exit 1;
+}
+
+sub stacktrace() {
+  my $i = 1;
+  print STDERR "$progname: stack trace:\n";
+  while (1) {
+    my ($package, $filename, $line, $subroutine) = caller($i++);
+    last unless defined($package);
+    $filename =~ s@^.*/@@;
+    print STDERR "  $filename#$line, $subroutine\n";
+  }
+}
+
+
+my $lastlog = "";
+
+sub clearlog() {
+  $lastlog = "";
+}
+
+sub showlog() {
+  my $head = "$progname: DEBUG: ";
+  foreach (split (/\n/, $lastlog)) {
+    print STDERR "$head$_\n";
+  }
+  $lastlog = "";
+}
+
+sub LOG($$) {
+  my ($print, $msg) = @_;
+  my $blurb = timestr() . "$current_state: ";
+  $lastlog .= "$blurb$msg\n";
+  print STDERR "$progname: $blurb$msg\n" if $print;
+}
+
+
+my %stats_attempts;
+my %stats_successes;
+my %stats_elapsed;
+
+my $last_state = undef;
+sub record_attempt($) {
+  my ($name) = @_;
+
+  if ($last_state) {
+    record_failure($last_state) unless ($image_succeeded > 0);
+  }
+  $last_state = $name;
+
+  clearlog();
+  report_performance();
+
+  start_timer($name);
+  $image_succeeded = 0;
+  $suppress_audit = 0;
+}
+
+sub record_success($$$) {
+  my ($name, $url, $base) = @_;
+  if (defined($stats_successes{$name})) {
+    $stats_successes{$name}++;
+  } else {
+    $stats_successes{$name} = 1;
+  }
+
+  stop_timer ($name, 1);
+  my $o = $current_state;
+  $current_state = $name;
+  save_recent_url ($url, $base);
+  $current_state = $o;
+  $image_succeeded = 1;
+  clearlog();
+}
+
+
+sub record_failure($) {
+  my ($name) = @_;
+
+  return if $image_succeeded;
+
+  stop_timer ($name, 0);
+  if ($verbose_load && !$verbose_exec) {
+
+    if ($suppress_audit) {
+      print STDERR "$progname: " . timestr() . "(audit log suppressed)\n";
+      return;
+    }
+
+    my $o = $current_state;
+    $current_state = "DEBUG";
+
+    my $line =  "#" x 78;
+    print STDERR "\n\n\n";
+    print STDERR ("#" x 78) . "\n";
+    print STDERR blurb() . "failed to get an image.  Full audit log:\n";
+    print STDERR "\n";
+    showlog();
+    print STDERR ("-" x 78) . "\n";
+    print STDERR "\n\n";
+
+    $current_state = $o;
+  }
+  $image_succeeded = 0;
+}
+
+
+
+sub stats_of($) {
+  my ($name) = @_;
+  my $i = $stats_successes{$name};
+  my $j = $stats_attempts{$name};
+  $i = 0 unless $i;
+  $j = 0 unless $j;
+  return "" . ($j ? int($i * 100 / $j) : "0") . "%";
+}
+
+
+my $current_start_time = 0;
+
+sub start_timer($) {
+  my ($name) = @_;
+  $current_start_time = time;
+
+  if (defined($stats_attempts{$name})) {
+    $stats_attempts{$name}++;
+  } else {
+    $stats_attempts{$name} = 1;
+  }
+  if (!defined($stats_elapsed{$name})) {
+    $stats_elapsed{$name} = 0;
+  }
+}
+
+sub stop_timer($$) {
+  my ($name, $success) = @_;
+  $stats_elapsed{$name} += time - $current_start_time;
+}
+
+
+my $last_report_time = 0;
+sub report_performance() {
+
+  return unless $verbose_warnings;
+
+  my $now = time;
+  return unless ($now >= $last_report_time + $report_performance_interval);
+  my $ot = $last_report_time;
+  $last_report_time = $now;
+
+  return if ($ot == 0);
+
+  my $blurb = "$progname: " . timestr();
+
+  print STDERR "\n";
+  print STDERR "${blurb}Current standings:\n";
+
+  foreach my $name (sort keys (%stats_attempts)) {
+    my $try = $stats_attempts{$name};
+    my $suc = $stats_successes{$name} || 0;
+    my $pct = int($suc * 100 / $try);
+    my $secs = $stats_elapsed{$name};
+    my $secs_link = $secs / $try;
+    print STDERR sprintf ("$blurb %-14s %4s (%d/%d);" .
+                          "       \t %.1f secs/link\n",
+                          "$name:", "$pct%", $suc, $try, $secs_link);
+  }
+}
+
+
+
+my $max_recent_images = 400;
+my $max_recent_sites  = 20;
+my @recent_images = ();
+my @recent_sites = ();
+
+sub save_recent_url($$) {
+  my ($url, $base) = @_;
+
+  return unless ($verbose_warnings);
+
+  $_ = $url;
+  my ($site) = m@^http://([^ \t\n\r/:]+)@;
+  return unless defined ($site);
+
+  if ($base eq $driftnet_magic || $base eq $local_magic) {
+    $site = $base;
+    @recent_images = ();
+  }
+
+  my $done = 0;
+  foreach (@recent_images) {
+    if ($_ eq $url) {
+      print STDERR blurb() . "WARNING: recently-duplicated image: $url" .
+        " (on $base via $last_search)\n";
+      $done = 1;
+      last;
+    }
+  }
+
+  # suppress "duplicate site" warning via %warningless_sites.
+  #
+  if ($warningless_sites{$site}) {
+    $done = 1;
+  } elsif ($site =~ m@([^.]+\.[^.]+\.[^.]+)$@ &&
+           $warningless_sites{$1}) {
+    $done = 1;
+  } elsif ($site =~ m@([^.]+\.[^.]+)$@ &&
+           $warningless_sites{$1}) {
+    $done = 1;
+  }
+
+  if (!$done) {
+    foreach (@recent_sites) {
+      if ($_ eq $site) {
+        print STDERR blurb() . "WARNING: recently-duplicated site: $site" .
+        " ($url on $base via $last_search)\n";
+        last;
+      }
+    }
+  }
+
+  push @recent_images, $url;
+  push @recent_sites,  $site;
+  shift @recent_images if ($#recent_images >= $max_recent_images);
+  shift @recent_sites  if ($#recent_sites  >= $max_recent_sites);
+}
+
+
+
+##############################################################################
+#
+# other utilities
+#
+##############################################################################
+
+# Does %-decoding.
+#
+sub url_decode($) {
+  ($_) = @_;
+  tr/+/ /;
+  s/%([a-fA-F0-9][a-fA-F0-9])/pack("C", hex($1))/eg;
+  return $_;
+}
+
+
+# Given the raw body of a GIF document, returns the dimensions of the image.
+#
+sub gif_size($) {
+  my ($body) = @_;
+  my $type = substr($body, 0, 6);
+  my $s;
+  return () unless ($type =~ /GIF8[7,9]a/);
+  $s = substr ($body, 6, 10);
+  my ($a,$b,$c,$d) = unpack ("C"x4, $s);
+  return () unless defined ($d);
+  return (($b<<8|$a), ($d<<8|$c));
+}
+
+# Given the raw body of a JPEG document, returns the dimensions of the image.
+#
+sub jpeg_size($) {
+  my ($body) = @_;
+  my $i = 0;
+  my $L = length($body);
+
+  my $c1 = substr($body, $i, 1); $i++;
+  my $c2 = substr($body, $i, 1); $i++;
+  return () unless (ord($c1) == 0xFF && ord($c2) == 0xD8);
+
+  my $ch = "0";
+  while (ord($ch) != 0xDA && $i < $L) {
+    # Find next marker, beginning with 0xFF.
+    while (ord($ch) != 0xFF) {
+      return () if (length($body) <= $i);
+      $ch = substr($body, $i, 1); $i++;
+    }
+    # markers can be padded with any number of 0xFF.
+    while (ord($ch) == 0xFF) {
+      return () if (length($body) <= $i);
+      $ch = substr($body, $i, 1); $i++;
+    }
+
+    # $ch contains the value of the marker.
+    my $marker = ord($ch);
+
+    if (($marker >= 0xC0) &&
+        ($marker <= 0xCF) &&
+        ($marker != 0xC4) &&
+        ($marker != 0xCC)) {  # it's a SOFn marker
+      $i += 3;
+      return () if (length($body) <= $i);
+      my $s = substr($body, $i, 4); $i += 4;
+      my ($a,$b,$c,$d) = unpack("C"x4, $s);
+      return (($c<<8|$d), ($a<<8|$b));
+
+    } else {
+      # We must skip variables, since FFs in variable names aren't
+      # valid JPEG markers.
+      return () if (length($body) <= $i);
+      my $s = substr($body, $i, 2); $i += 2;
+      my ($c1, $c2) = unpack ("C"x2, $s);
+      my $length = ($c1 << 8) | $c2;
+      return () if ($length < 2);
+      $i += $length-2;
+    }
+  }
+  return ();
+}
+
+# Given the raw body of a PNG document, returns the dimensions of the image.
+#
+sub png_size($) {
+  my ($body) = @_;
+  return () unless ($body =~ m/^\211PNG\r/);
+  my ($bits) = ($body =~ m/^.{12}(.{12})/s);
+  return () unless defined ($bits);
+  return () unless ($bits =~ /^IHDR/);
+  my ($ign, $w, $h) = unpack("a4N2", $bits);
+  return ($w, $h);
+}
+
+
+# Given the raw body of a GIF, JPEG, or PNG document, returns the dimensions
+# of the image.
+#
+sub image_size($) {
+  my ($body) = @_;
+  my ($w, $h) = gif_size ($body);
+  if ($w && $h) { return ($w, $h); }
+  ($w, $h) = jpeg_size ($body);
+  if ($w && $h) { return ($w, $h); }
+  return png_size ($body);
+}
+
+
+# returns the full path of the named program, or undef.
+#
+sub which($) {
+  my ($prog) = @_;
+  foreach (split (/:/, $ENV{PATH})) {
+    if (-x "$_/$prog") {
+      return $prog;
+    }
+  }
+  return undef;
+}
+
+
+# Like rand(), but chooses numbers with a bell curve distribution.
+sub bellrand(;$) {
+  ($_) = @_;
+  $_ = 1.0 unless defined($_);
+  $_ /= 3.0;
+  return (rand($_) + rand($_) + rand($_));
+}
+
+
+sub exit_cleanup() {
+  x_cleanup();
+  print STDERR "$progname: exiting\n" if ($verbose_warnings);
+  if (@pids_to_kill) {
+    print STDERR blurb() . "killing: " . join(' ', @pids_to_kill) . "\n";
+    kill ('TERM', @pids_to_kill);
+  }
+}
+
+sub signal_cleanup($) {
+  my ($sig) = @_;
+  print STDERR blurb() . (defined($sig)
+                          ? "caught signal $sig."
+                          : "exiting.")
+                       . "\n"
+    if ($verbose_exec || $verbose_warnings);
+  exit 1;
+}
+
+
+
+##############################################################################
+#
+# Generating a list of urls only
+#
+##############################################################################
+
+sub url_only_output() {
+  do {
+    my ($base, $img) = pick_image;
+    if ($img) {
+      $base =~ s/ /%20/g;
+      $img  =~ s/ /%20/g;
+      print "$img $base\n";
+    }
+  } while (1);
+}
+
+##############################################################################
+#
+# Running as an xscreensaver module, or as a web page imagemap
+#
+##############################################################################
+
+my $image_ppm   = sprintf ("%s/webcollage-%08x.ppm",
+                           ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp"),
+                           rand(0xFFFFFFFF));
+my $image_tmp1  = sprintf ("%s/webcollage-1-%08x.ppm",
+                           ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp"),
+                           rand(0xFFFFFFFF));
+my $image_tmp2  = sprintf ("%s/webcollage-2-%08x.ppm",
+                           ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp"),
+                           rand(0xFFFFFFFF));
+
+my $filter_cmd = undef;
+my $post_filter_cmd = undef;
+my $background = undef;
+
+my @imagemap_areas = ();
+my $imagemap_html_tmp = undef;
+my $imagemap_jpg_tmp = undef;
+
+
+my $img_width;            # size of the image being generated.
+my $img_height;
+
+my $delay = 2;
+
+sub x_cleanup() {
+  unlink $image_ppm, $image_tmp1, $image_tmp2;
+  unlink $imagemap_html_tmp, $imagemap_jpg_tmp
+    if (defined ($imagemap_html_tmp));
+}
+
+
+# Like system, but prints status about exit codes, and kills this process
+# with whatever signal killed the sub-process, if any.
+#
+sub nontrapping_system(@) {
+  $! = 0;
+
+  $_ = join(" ", @_);
+  s/\"[^\"]+\"/\"...\"/g;
+
+  LOG ($verbose_exec, "executing \"$_\"");
+
+  my $rc = system @_;
+
+  if ($rc == 0) {
+    LOG ($verbose_exec, "subproc exited normally.");
+  } elsif (($rc & 0xff) == 0) {
+    $rc >>= 8;
+    LOG ($verbose_exec, "subproc exited with status $rc.");
+  } else {
+    if ($rc & 0x80) {
+      LOG ($verbose_exec, "subproc dumped core.");
+      $rc &= ~0x80;
+    }
+    LOG ($verbose_exec, "subproc died with signal $rc.");
+    # die that way ourselves.
+    kill $rc, $$;
+  }
+
+  return $rc;
+}
+
+
+# Given the URL of a GIF, JPEG, or PNG image, and the body of that image,
+# writes a PPM to the given output file.  Returns the width/height of the
+# image if successful.
+#
+sub image_to_pnm($$$) {
+  my ($url, $body, $output) = @_;
+  my ($cmd, $cmd2, $w, $h);
+
+  if ((@_ = gif_size ($body))) {
+    ($w, $h) = @_;
+    $cmd = "giftopnm";
+  } elsif ((@_ = jpeg_size ($body))) {
+    ($w, $h) = @_;
+    $cmd = "djpeg";
+  } elsif ((@_ = png_size ($body))) {
+    ($w, $h) = @_;
+    $cmd = "pngtopnm";
+  } else {
+    LOG (($verbose_pbm || $verbose_load),
+         "not a GIF, JPG, or PNG" .
+         (($body =~ m@<(base|html|head|body|script|table|a href)\b@i)
+          ? " (looks like HTML)" : "") .
+         ": $url");
+    $suppress_audit = 1;
+    return ();
+  }
+
+  $cmd2 = "exec $cmd";        # yes, this really is necessary.  if we don't
+                              # do this, the process doesn't die properly.
+  if (!$verbose_pbm) {
+    #
+    # We get a "giftopnm: got a 'Application Extension' extension"
+    # warning any time it's an animgif.
+    #
+    # Note that "giftopnm: EOF / read error on image data" is not
+    # always a fatal error -- sometimes the image looks fine anyway.
+    #
+    $cmd2 .= " 2>/dev/null";
+  }
+
+  # There exist corrupted GIF and JPEG files that can make giftopnm and
+  # djpeg lose their minds and go into a loop.  So this gives those programs
+  # a small timeout -- if they don't complete in time, kill them.
+  #
+  my $pid;
+  @_ = eval {
+    my $timed_out;
+
+    local $SIG{ALRM}  = sub {
+      LOG ($verbose_pbm,
+           "timed out ($cvt_timeout) for $cmd on \"$url\" in pid $pid");
+      kill ('TERM', $pid) if ($pid);
+      $timed_out = 1;
+      $body = undef;
+    };
+
+    if (($pid = open (my $pipe, "| $cmd2 > $output"))) {
+      $timed_out = 0;
+      alarm $cvt_timeout;
+      print $pipe $body;
+      $body = undef;
+      close $pipe;
+
+      LOG ($verbose_exec, "awaiting $pid");
+      waitpid ($pid, 0);
+      LOG ($verbose_exec, "$pid completed");
+
+      my $size = (stat($output))[7];
+      $size = -1 unless defined($size);
+      if ($size < 5) {
+        LOG ($verbose_pbm, "$cmd on ${w}x$h \"$url\" failed ($size bytes)");
+        return ();
+      }
+
+      LOG ($verbose_pbm, "created ${w}x$h $output ($cmd)");
+      return ($w, $h);
+    } else {
+      print STDERR blurb() . "$cmd failed: $!\n";
+      return ();
+    }
+  };
+  die if ($@ && $@ ne "alarm\n");       # propagate errors
+  if ($@) {
+    # timed out
+    $body = undef;
+    return ();
+  } else {
+    # didn't
+    alarm 0;
+    $body = undef;
+    return @_;
+  }
+}
+
+
+# Same as the "ppmmake" command: creates a solid-colored PPM.
+# Does not understand the rgb.txt color names except "black" and "white".
+#
+sub ppmmake($$$$) {
+  my ($outfile, $bgcolor, $w, $h) = @_;
+
+  my ($r, $g, $b);
+  if ($bgcolor =~ m/^\#?([\dA-F][\dA-F])([\dA-F][\dA-F])([\dA-F][\dA-F])$/i ||
+      $bgcolor =~ m/^\#?([\dA-F])([\dA-F])([\dA-F])$/i) {
+    ($r, $g, $b) = (hex($1), hex($2), hex($3));
+  } elsif ($bgcolor =~ m/^black$/i) {
+    ($r, $g, $b) = (0, 0, 0);
+  } elsif ($bgcolor =~ m/^white$/i) {
+    ($r, $g, $b) = (0xFF, 0xFF, 0xFF);
+  } else {
+    error ("unparsable color name: $bgcolor");
+  }
+
+  my $pixel = pack('CCC', $r, $g, $b);
+  my $bits = "P6\n$w $h\n255\n" . ($pixel x ($w * $h));
+
+  open (my $out, '>', $outfile) || error ("$outfile: $!");
+  print $out $bits;
+  close $out;
+}
+
+
+sub pick_root_displayer() {
+  my @names = ();
+
+  if ($cocoa_p) {
+    # see "xscreensaver/hacks/webcollage-cocoa.m"
+    return "echo COCOA LOAD ";
+  }
+
+  foreach my $cmd (@root_displayers) {
+    $_ = $cmd;
+    my ($name) = m/^([^ ]+)/;
+    push @names, "\"$name\"";
+    LOG ($verbose_exec, "looking for $name...");
+    foreach my $dir (split (/:/, $ENV{PATH})) {
+      LOG ($verbose_exec, "  checking $dir/$name");
+      return $cmd if (-x "$dir/$name");
+    }
+  }
+
+  $names[$#names] = "or " . $names[$#names];
+  error "none of: " . join (", ", @names) . " were found on \$PATH.";
+}
+
+
+my $ppm_to_root_window_cmd = undef;
+
+
+sub x_or_pbm_output($) {
+  my ($window_id) = @_;
+
+  # Check for our helper program, to see whether we need to use PPM pipelines.
+  #
+  $_ = "webcollage-helper";
+  if (defined ($webcollage_helper) || which ($_)) {
+    $webcollage_helper = $_ unless (defined($webcollage_helper));
+    LOG ($verbose_pbm, "found \"$webcollage_helper\"");
+    $webcollage_helper .= " -v";
+  } else {
+    LOG (($verbose_pbm || $verbose_load), "no $_ program");
+  }
+
+  if ($cocoa_p && !defined ($webcollage_helper)) {
+    error ("webcollage-helper not found in Cocoa-mode!");
+  }
+
+
+  # make sure the various programs we execute exist, right up front.
+  #
+  my @progs = ();
+
+  if (!defined($webcollage_helper)) {
+    # Only need these others if we don't have the helper.
+    @progs = (@progs,
+              "giftopnm", "pngtopnm", "djpeg",
+              "pnmpaste", "pnmscale", "pnmcut");
+  }
+
+  foreach (@progs) {
+    which ($_) || error "$_ not found on \$PATH.";
+  }
+
+  # find a root-window displayer program.
+  #
+  if (!$no_output_p) {
+    $ppm_to_root_window_cmd = pick_root_displayer();
+  }
+
+  if (defined ($window_id)) {
+    error ("-window-id only works if xscreensaver-getimage is installed")
+      unless ($ppm_to_root_window_cmd =~ m/^xscreensaver-getimage\b/);
+
+    error ("unparsable window id: $window_id")
+      unless ($window_id =~ m/^\d+$|^0x[\da-f]+$/i);
+    $ppm_to_root_window_cmd =~ s/--?root\b/$window_id/ ||
+      error ("unable to munge displayer: $ppm_to_root_window_cmd");
+  }
+
+  if (!$img_width || !$img_height) {
+
+    if (!defined ($window_id) &&
+        defined ($ENV{XSCREENSAVER_WINDOW})) {
+      $window_id = $ENV{XSCREENSAVER_WINDOW};
+    }
+
+    if (!defined ($window_id)) {
+      $_ = "xdpyinfo";
+      which ($_) || error "$_ not found on \$PATH.";
+      $_ = `$_`;
+      ($img_width, $img_height) = m/dimensions: *(\d+)x(\d+) /;
+      if (!defined($img_height)) {
+        error "xdpyinfo failed.";
+      }
+    } else {  # we have a window id
+      $_ = "xwininfo";
+      which ($_) || error "$_ not found on \$PATH.";
+      $_ .= " -id $window_id";
+      $_ = `$_`;
+      ($img_width, $img_height) = m/^\s*Width:\s*(\d+)\n\s*Height:\s*(\d+)\n/m;
+
+      if (!defined($img_height)) {
+        error "xwininfo failed.";
+      }
+    }
+  }
+
+  my $bgcolor = "#000000";
+  my $bgimage = undef;
+
+  if ($background) {
+    if ($background =~ m/^\#[0-9a-f]+$/i) {
+      $bgcolor = $background;
+
+    } elsif (-r $background) {
+      $bgimage = $background;
+
+    } elsif (! $background =~ m@^[-a-z0-9 ]+$@i) {
+      error "not a color or readable file: $background";
+
+    } else {
+      # default to assuming it's a color
+      $bgcolor = $background;
+    }
+  }
+
+  # Create the sold-colored base image.
+  #
+  LOG ($verbose_pbm, "creating base image: ${img_width}x${img_height}");
+  $_ = ppmmake ($image_ppm, $bgcolor, $img_width, $img_height);
+
+  # Paste the default background image in the middle of it.
+  #
+  if ($bgimage) {
+    my ($iw, $ih);
+
+    my $body = "";
+    open (my $imgf, '<', $bgimage) || error "couldn't open $bgimage: $!";
+    local $/ = undef;  # read entire file
+    $body = <$imgf>;
+    close ($imgf);
+
+    my $cmd;
+    if ((@_ = gif_size ($body))) {
+      ($iw, $ih) = @_;
+      $cmd = "giftopnm |";
+
+    } elsif ((@_ = jpeg_size ($body))) {
+      ($iw, $ih) = @_;
+      $cmd = "djpeg |";
+
+    } elsif ((@_ = png_size ($body))) {
+      ($iw, $ih) = @_;
+      $cmd = "pngtopnm |";
+
+    } elsif ($body =~ m/^P\d\n(\d+) (\d+)\n/) {
+      $iw = $1;
+      $ih = $2;
+      $cmd = "";
+
+    } else {
+      error "$bgimage is not a GIF, JPEG, PNG, or PPM.";
+    }
+
+    my $x = int (($img_width  - $iw) / 2);
+    my $y = int (($img_height - $ih) / 2);
+    LOG ($verbose_pbm,
+         "pasting $bgimage (${iw}x$ih) into base image at $x,$y");
+
+    $cmd .= "pnmpaste - $x $y $image_ppm > $image_tmp1";
+    open ($imgf, "| $cmd") || error "running $cmd: $!";
+    print $imgf $body;
+    $body = undef;
+    close ($imgf);
+    LOG ($verbose_exec, "subproc exited normally.");
+    rename ($image_tmp1, $image_ppm) ||
+      error "renaming $image_tmp1 to $image_ppm: $!";
+  }
+
+  clearlog();
+
+  while (1) {
+    my ($base, $img) = pick_image();
+    my $source = $current_state;
+    $current_state = "loadimage";
+    if ($img) {
+      my ($headers, $body) = get_document ($img, $base);
+      if ($body) {
+        paste_image ($base, $img, $body, $source);
+        $body = undef;
+      }
+    }
+    $current_state = "idle";
+    $load_method = "none";
+
+    unlink $image_tmp1, $image_tmp2;
+    sleep $delay;
+  }
+}
+
+sub paste_image($$$$) {
+  my ($base, $img, $body, $source) = @_;
+
+  $current_state = "paste";
+
+  $suppress_audit = 0;
+
+  LOG ($verbose_pbm, "got $img (" . length($body) . ")");
+
+  my ($iw, $ih);
+
+  # If we are using the webcollage-helper, then we do not need to convert this
+  # image to a PPM.  But, if we're using a filter command, we still must, since
+  # that's what the filters expect (webcollage-helper can read PPMs, so that's
+  # fine.)
+  #
+  if (defined ($webcollage_helper) &&
+      !defined ($filter_cmd)) {
+
+    ($iw, $ih) = image_size ($body);
+    if (!$iw || !$ih) {
+      LOG (($verbose_pbm || $verbose_load),
+           "not a GIF, JPG, or PNG" .
+           (($body =~ m@<(base|html|head|body|script|table|a href)>@i)
+            ? " (looks like HTML)" : "") .
+           ": $img");
+      $suppress_audit = 1;
+      $body = undef;
+      return 0;
+    }
+
+    open (my $out, '>', $image_tmp1) || error ("writing $image_tmp1: $!");
+    (print $out $body) || error ("writing $image_tmp1: $!");
+    close ($out) || error ("writing $image_tmp1: $!");
+
+  } else {
+    ($iw, $ih) = image_to_pnm ($img, $body, $image_tmp1);
+    $body = undef;
+    if (!$iw || !$ih) {
+      LOG ($verbose_pbm, "unable to make PBM from $img");
+      return 0;
+    }
+  }
+
+  record_success ($load_method, $img, $base);
+
+
+  my $ow = $iw;  # used only for error messages
+  my $oh = $ih;
+
+  # don't just tack this onto the front of the pipeline -- we want it to
+  # be able to change the size of the input image.
+  #
+  if ($filter_cmd) {
+    LOG ($verbose_pbm, "running $filter_cmd");
+
+    my $rc = nontrapping_system "($filter_cmd) < $image_tmp1 >$image_tmp2";
+    if ($rc != 0) {
+      LOG(($verbose_pbm || $verbose_load), "failed command: \"$filter_cmd\"");
+      LOG(($verbose_pbm || $verbose_load), "failed URL: \"$img\" (${ow}x$oh)");
+      return;
+    }
+    rename ($image_tmp2, $image_tmp1);
+
+    # re-get the width/height in case the filter resized it.
+    open (my $imgf, '<', $image_tmp1) || return 0;
+    $_ = <$imgf>;
+    $_ = <$imgf>;
+    ($iw, $ih) = m/^(\d+) (\d+)$/;
+    close ($imgf);
+    return 0 unless ($iw && $ih);
+  }
+
+  my $target_w = $img_width;   # max rectangle into which the image must fit
+  my $target_h = $img_height;
+
+  my $cmd = "";
+  my $scale = 1.0;
+
+
+  # Usually scale the image to fit on the screen -- but sometimes scale it
+  # to fit on half or a quarter of the screen.  (We do this by reducing the
+  # size of the target rectangle.)  Note that the image is not merely scaled
+  # to fit; we instead cut the image in half repeatedly until it fits in the
+  # target rectangle -- that gives a wider distribution of sizes.
+  #
+  if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; } # reduce target rect
+  if (rand() < 0.3) { $target_w /= 2; $target_h /= 2; }
+
+  if ($iw > $target_w || $ih > $target_h) {
+    while ($iw > $target_w ||
+           $ih > $target_h) {
+      $iw = int($iw / 2);
+      $ih = int($ih / 2);
+      $scale /= 2;
+    }
+    if ($iw <= 10 || $ih <= 10) {
+      LOG ($verbose_pbm, "scaling to ${iw}x$ih would have been bogus.");
+      return 0;
+    }
+
+    LOG ($verbose_pbm, "scaling to ${iw}x$ih ($scale)");
+
+    $cmd .= " | pnmscale -xsize $iw -ysize $ih";
+  }
+
+
+  my $src = $image_tmp1;
+
+  my $crop_x = 0;     # the sub-rectangle of the image
+  my $crop_y = 0;     # that we will actually paste.
+  my $crop_w = $iw;
+  my $crop_h = $ih;
+
+  # The chance that we will randomly crop out a section of an image starts
+  # out fairly low, but goes up for images that are very large, or images
+  # that have ratios that make them look like banners (we try to avoid
+  # banner images entirely, but they slip through when the IMG tags didn't
+  # have WIDTH and HEIGHT specified.)
+  #
+  my $crop_chance = 0.2;
+  if ($iw > $img_width * 0.4 || $ih > $img_height * 0.4) {
+    $crop_chance += 0.2;
+  }
+  if ($iw > $img_width * 0.7 || $ih > $img_height * 0.7) {
+    $crop_chance += 0.2;
+  }
+  if ($min_ratio && ($iw * $min_ratio) > $ih) {
+    $crop_chance += 0.7;
+  }
+
+  if ($crop_chance > 0.1) {
+    LOG ($verbose_pbm, "crop chance: $crop_chance");
+  }
+
+  if (rand() < $crop_chance) {
+
+    my $ow = $crop_w;
+    my $oh = $crop_h;
+
+    if ($crop_w > $min_width) {
+      # if it's a banner, select the width linearly.
+      # otherwise, select a bell.
+      my $r = (($min_ratio && ($iw * $min_ratio) > $ih)
+               ? rand()
+               : bellrand());
+      $crop_w = $min_width + int ($r * ($crop_w - $min_width));
+      $crop_x = int (rand() * ($ow - $crop_w));
+    }
+    if ($crop_h > $min_height) {
+      # height always selects as a bell.
+      $crop_h = $min_height + int (bellrand() * ($crop_h - $min_height));
+      $crop_y = int (rand() * ($oh - $crop_h));
+    }
+
+    if ($crop_x != 0   || $crop_y != 0 ||
+        $crop_w != $iw || $crop_h != $ih) {
+      LOG ($verbose_pbm,
+           "randomly cropping to ${crop_w}x$crop_h \@ $crop_x,$crop_y");
+    }
+  }
+
+  # Where the image should logically land -- this might be negative.
+  #
+  my $x = int((rand() * ($img_width  + $crop_w/2)) - $crop_w*3/4);
+  my $y = int((rand() * ($img_height + $crop_h/2)) - $crop_h*3/4);
+
+  # if we have chosen to paste the image outside of the rectangle of the
+  # screen, then we need to crop it.
+  #
+  if ($x < 0 ||
+      $y < 0 ||
+      $x + $crop_w > $img_width ||
+      $y + $crop_h > $img_height) {
+
+    LOG ($verbose_pbm,
+         "cropping for effective paste of ${crop_w}x$crop_h \@ $x,$y");
+
+    if ($x < 0) { $crop_x -= $x; $crop_w += $x; $x = 0; }
+    if ($y < 0) { $crop_y -= $y; $crop_h += $y; $y = 0; }
+
+    if ($x + $crop_w >= $img_width)  { $crop_w = $img_width  - $x - 1; }
+    if ($y + $crop_h >= $img_height) { $crop_h = $img_height - $y - 1; }
+  }
+
+  # If any cropping needs to happen, add pnmcut.
+  #
+  if ($crop_x != 0   || $crop_y != 0 ||
+      $crop_w != $iw || $crop_h != $ih) {
+    $iw = $crop_w;
+    $ih = $crop_h;
+    $cmd .= " | pnmcut $crop_x $crop_y $iw $ih";
+    LOG ($verbose_pbm, "cropping to ${crop_w}x$crop_h \@ $crop_x,$crop_y");
+  }
+
+  LOG ($verbose_pbm, "pasting ${iw}x$ih \@ $x,$y in $image_ppm");
+
+  $cmd .= " | pnmpaste - $x $y $image_ppm";
+
+  $cmd =~ s@^ *\| *@@;
+
+  if (defined ($webcollage_helper)) {
+    $cmd = "$webcollage_helper $image_tmp1 $image_ppm " .
+                              "$scale $opacity " .
+                              "$crop_x $crop_y $x $y " .
+                              "$iw $ih";
+    $_ = $cmd;
+
+  } else {
+    # use a PPM pipeline
+    $_ = "($cmd)";
+    $_ .= " < $image_tmp1 > $image_tmp2";
+  }
+
+  if ($verbose_pbm) {
+    $_ = "($_) 2>&1 | sed s'/^/" . blurb() . "/'";
+  } else {
+    $_ .= " 2> /dev/null";
+  }
+
+  my $rc = nontrapping_system ($_);
+
+  if (defined ($webcollage_helper) && -z $image_ppm) {
+    LOG (1, "failed command: \"$cmd\"");
+    print STDERR "\naudit log:\n\n\n";
+    print STDERR ("#" x 78) . "\n";
+    print STDERR blurb() . "$image_ppm has zero size\n";
+    showlog();
+    print STDERR "\n\n";
+    exit (1);
+  }
+
+  if ($rc != 0) {
+    LOG (($verbose_pbm || $verbose_load), "failed command: \"$cmd\"");
+    LOG (($verbose_pbm || $verbose_load), "failed URL: \"$img\" (${ow}x$oh)");
+    return;
+  }
+
+  if (!defined ($webcollage_helper)) {
+    rename ($image_tmp2, $image_ppm) || return;
+  }
+
+  my $target = "$image_ppm";
+
+  # don't just tack this onto the end of the pipeline -- we don't want it
+  # to end up in $image_ppm, because we don't want the results to be
+  # cumulative.
+  #
+  if ($post_filter_cmd) {
+
+    my $cmd;
+
+    $target = $image_tmp1;
+    if (!defined ($webcollage_helper)) {
+      $cmd = "($post_filter_cmd) < $image_ppm > $target";
+    } else {
+      # Blah, my scripts need the JPEG data, but some other folks need
+      # the PPM data -- what to do?  Ignore the problem, that's what!
+#     $cmd = "djpeg < $image_ppm | ($post_filter_cmd) > $target";
+      $cmd = "($post_filter_cmd) < $image_ppm > $target";
+    }
+
+    $rc = nontrapping_system ($cmd);
+    if ($rc != 0) {
+      LOG ($verbose_pbm, "filter failed: \"$post_filter_cmd\"\n");
+      return;
+    }
+  }
+
+  if (!$no_output_p) {
+    my $tsize = (stat($target))[7];
+    if ($tsize > 200) {
+      $cmd = "$ppm_to_root_window_cmd $target";
+
+      # xv seems to hate being killed.  it tends to forget to clean
+      # up after itself, and leaves windows around and colors allocated.
+      # I had this same problem with vidwhacker, and I'm not entirely
+      # sure what I did to fix it.  But, let's try this: launch xv
+      # in the background, so that killing this process doesn't kill it.
+      # it will die of its own accord soon enough.  So this means we
+      # start pumping bits to the root window in parallel with starting
+      # the next network retrieval, which is probably a better thing
+      # to do anyway.
+      #
+      $cmd .= " &" unless ($cocoa_p);
+
+      $rc = nontrapping_system ($cmd);
+
+      if ($rc != 0) {
+        LOG (($verbose_pbm || $verbose_load), "display failed: \"$cmd\"");
+        return;
+      }
+
+    } else {
+      LOG ($verbose_pbm, "$target size is $tsize");
+    }
+  }
+
+  $source .= "-" . stats_of($source);
+  print STDOUT "image: ${iw}x${ih} @ $x,$y $base $source\n"
+    if ($verbose_imgmap);
+  if ($imagemap_base) {
+    update_imagemap ($base, $x, $y, $iw, $ih,
+                     $image_ppm, $img_width, $img_height);
+  }
+
+  clearlog();
+
+  return 1;
+}
+
+
+sub update_imagemap($$$$$$$$) {
+  my ($url, $x, $y, $w, $h, $image_ppm, $image_width, $image_height) = @_;
+
+  $current_state = "imagemap";
+
+  my $max_areas = 200;
+
+  $url = html_quote ($url);
+  my $x2 = $x + $w;
+  my $y2 = $y + $h;
+  my $area = "<AREA SHAPE=RECT COORDS=\"$x,$y,$x2,$y2\" HREF=\"$url\">";
+  unshift @imagemap_areas, $area;	# put one on the front
+  if ($#imagemap_areas >= $max_areas) {
+    pop @imagemap_areas;		# take one off the back.
+  }
+
+  LOG ($verbose_pbm, "area: $x,$y,$x2,$y2 (${w}x$h)");
+
+  my $map_name = $imagemap_base;
+  $map_name =~ s@^.*/@@;
+  $map_name = 'collage' if ($map_name eq '');
+
+  my $imagemap_html = $imagemap_base . ".html";
+  my $imagemap_jpg  = $imagemap_base . ".jpg";
+  my $imagemap_jpg2 = $imagemap_jpg;
+  $imagemap_jpg2 =~ s@^.*/@@gs;
+
+  if (!defined ($imagemap_html_tmp)) {
+    $imagemap_html_tmp = $imagemap_html . sprintf (".%08x", rand(0xffffffff));
+    $imagemap_jpg_tmp  = $imagemap_jpg  . sprintf (".%08x", rand(0xffffffff));
+  }
+
+  # Read the imagemap html file (if any) to get a template.
+  #
+  my $template_html = '';
+  {
+    if (open (my $in, '<', $imagemap_html)) {
+      local $/ = undef;  # read entire file
+      $template_html = <$in>;
+      close $in;
+      LOG ($verbose_pbm, "read template $imagemap_html");
+    }
+
+    if ($template_html =~ m/^\s*$/s) {
+      $template_html = ("<MAP NAME=\"$map_name\"></MAP>\n" .
+                        "<IMG SRC=\"$imagemap_jpg2\"" .
+                        " USEMAP=\"$map_name\">\n");
+      LOG ($verbose_pbm, "created dummy template");
+    }
+  }
+
+  # Write the jpg to a tmp file
+  #
+  {
+    my $cmd;
+    if (defined ($webcollage_helper)) {
+      $cmd = "cp -p $image_ppm $imagemap_jpg_tmp";
+    } else {
+      $cmd = "cjpeg < $image_ppm > $imagemap_jpg_tmp";
+    }
+    my $rc = nontrapping_system ($cmd);
+    if ($rc != 0) {
+      error ("imagemap jpeg failed: \"$cmd\"\n");
+    }
+  }
+
+  # Write the html to a tmp file
+  #
+  {
+    my $body = $template_html;
+    my $areas = join ("\n\t", @imagemap_areas);
+    my $map = ("<MAP NAME=\"$map_name\">\n\t$areas\n</MAP>");
+    my $img = ("<IMG SRC=\"$imagemap_jpg2\" " .
+               "BORDER=0 " .
+               "WIDTH=$image_width HEIGHT=$image_height " .
+               "USEMAP=\"#$map_name\">");
+    $body =~ s@(<MAP\s+NAME=\"[^\"]*\"\s*>).*?(</MAP>)@$map@is;
+    $body =~ s@<IMG\b[^<>]*\bUSEMAP\b[^<>]*>@$img@is;
+
+    # if there are magic webcollage spans in the html, update those too.
+    #
+    {
+      my @st = stat ($imagemap_jpg_tmp);
+      my $date = strftime("%d-%b-%Y %l:%M:%S %p %Z", localtime($st[9]));
+      my $size = int(($st[7] / 1024) + 0.5) . "K";
+      $body =~ s@(<SPAN\s+CLASS=\"webcollage_date\">).*?(</SPAN>)@$1$date$2@si;
+      $body =~ s@(<SPAN\s+CLASS=\"webcollage_size\">).*?(</SPAN>)@$1$size$2@si;
+    }
+
+    open (my $out, '>', $imagemap_html_tmp) || error ("$imagemap_html_tmp: $!");
+    (print $out $body)                      || error ("$imagemap_html_tmp: $!");
+    close ($out)                            || error ("$imagemap_html_tmp: $!");
+    LOG ($verbose_pbm, "wrote $imagemap_html_tmp");
+  }
+
+  # Rename the two tmp files to the real files
+  #
+  rename ($imagemap_html_tmp, $imagemap_html) ||
+    error "renaming $imagemap_html_tmp to $imagemap_html";
+  LOG ($verbose_pbm, "wrote $imagemap_html");
+  rename ($imagemap_jpg_tmp,  $imagemap_jpg) ||
+    error "renaming $imagemap_jpg_tmp to $imagemap_jpg";
+  LOG ($verbose_pbm, "wrote $imagemap_jpg");
+}
+
+
+# Figure out what the proxy server should be, either from environment
+# variables or by parsing the output of the (MacOS) program "scutil",
+# which tells us what the system-wide proxy settings are.
+#
+sub set_proxy() {
+
+  if (! $http_proxy) {
+    # historical suckage: the environment variable name is lower case.
+    $http_proxy = $ENV{http_proxy} || $ENV{HTTP_PROXY};
+  }
+
+  if (defined ($http_proxy)) {
+    if ($http_proxy && $http_proxy =~ m@^http://([^/]*)/?$@ ) {
+      # historical suckage: allow "http://host:port" as well as "host:port".
+      $http_proxy = $1;
+    }
+
+  } else {
+    my $proxy_data = `scutil --proxy 2>/dev/null`;
+    my ($server) = ($proxy_data =~ m/\bHTTPProxy\s*:\s*([^\s]+)/s);
+    my ($port)   = ($proxy_data =~ m/\bHTTPPort\s*:\s*([^\s]+)/s);
+    # Note: this ignores the "ExceptionsList".
+    if ($server) {
+      $http_proxy = $server;
+      $http_proxy .= ":$port" if $port;
+    }
+  }
+
+  if ($http_proxy) {
+    LOG ($verbose_net, "proxy server: $http_proxy");
+  }
+}
+
+
+sub init_signals() {
+
+  $SIG{HUP}  = \&signal_cleanup;
+  $SIG{INT}  = \&signal_cleanup;
+  $SIG{QUIT} = \&signal_cleanup;
+  $SIG{ABRT} = \&signal_cleanup;
+  $SIG{KILL} = \&signal_cleanup;
+  $SIG{TERM} = \&signal_cleanup;
+
+  # Need this so that if giftopnm dies, we don't die.
+  $SIG{PIPE} = 'IGNORE';
+}
+
+END { exit_cleanup(); }
+
+
+sub main() {
+  $| = 1;
+  srand(time ^ $$);
+
+  my $verbose = 0;
+  my $dict;
+  my $driftnet_cmd = 0;
+
+  $current_state = "init";
+  $load_method = "none";
+
+  my $root_p = 0;
+  my $window_id = undef;
+
+  while ($_ = $ARGV[0]) {
+    shift @ARGV;
+    if ($_ eq "-display" ||
+        $_ eq "-displ" ||
+        $_ eq "-disp" ||
+        $_ eq "-dis" ||
+        $_ eq "-dpy" ||
+        $_ eq "-d") {
+      $ENV{DISPLAY} = shift @ARGV;
+    } elsif ($_ eq "-root") {
+      $root_p = 1;
+    } elsif ($_ eq "-window-id" || $_ eq "--window-id") {
+      $window_id = shift @ARGV;
+      $root_p = 1;
+    } elsif ($_ eq "-no-output") {
+      $no_output_p = 1;
+    } elsif ($_ eq "-urls-only") {
+      $urls_only_p = 1;
+      $no_output_p = 1;
+    } elsif ($_ eq "-cocoa") {
+      $cocoa_p = 1;
+    } elsif ($_ eq "-imagemap") {
+      $imagemap_base = shift @ARGV;
+      $no_output_p = 1;
+    } elsif ($_ eq "-verbose") {
+      $verbose++;
+    } elsif (m/^-v+$/) {
+      $verbose += length($_)-1;
+    } elsif ($_ eq "-delay") {
+      $delay = shift @ARGV;
+    } elsif ($_ eq "-timeout") {
+      $http_timeout = shift @ARGV;
+    } elsif ($_ eq "-filter") {
+      $filter_cmd = shift @ARGV;
+    } elsif ($_ eq "-filter2") {
+      $post_filter_cmd = shift @ARGV;
+    } elsif ($_ eq "-background" || $_ eq "-bg") {
+      $background = shift @ARGV;
+    } elsif ($_ eq "-size") {
+      $_ = shift @ARGV;
+      if (m@^(\d+)x(\d+)$@) {
+        $img_width = $1;
+        $img_height = $2;
+      } else {
+        error "argument to \"-size\" must be of the form \"640x400\"";
+      }
+    } elsif ($_ eq "-proxy" || $_ eq "-http-proxy") {
+      $http_proxy = shift @ARGV;
+    } elsif ($_ eq "-dictionary" || $_ eq "-dict") {
+      $dict = shift @ARGV;
+    } elsif ($_ eq "-opacity") {
+      $opacity = shift @ARGV;
+      error ("opacity must be between 0.0 and 1.0")
+        if ($opacity <= 0 || $opacity > 1);
+    } elsif ($_ eq "-driftnet" || $_ eq "--driftnet") {
+      @search_methods = ( 100, "driftnet", \&pick_from_driftnet );
+      if (! ($ARGV[0] =~ m/^-/)) {
+        $driftnet_cmd = shift @ARGV;
+      } else {
+        $driftnet_cmd = $default_driftnet_cmd;
+      }
+    } elsif ($_ eq "-directory" || $_ eq "--directory") {
+      @search_methods = ( 100, "local", \&pick_from_local_dir );
+      if (! ($ARGV[0] =~ m/^-/)) {
+        $local_dir = shift @ARGV;
+      } else {
+        error ("local directory path must be set")
+      }
+    } elsif ($_ eq "-fps") {
+      # -fps only works on MacOS, via "webcollage-cocoa.m".
+      # Ignore it if passed to this script in an X11 context.
+    } elsif ($_ eq "-debug" || $_ eq "--debug") {
+      my $which = shift @ARGV;
+      my @rest = @search_methods;
+      my $ok = 0;
+      while (@rest) {
+        my $pct  = shift @rest;
+        my $name = shift @rest;
+        my $tfn  = shift @rest;
+
+        if ($name eq $which) {
+          @search_methods = (100, $name, $tfn);
+          $ok = 1;
+          last;
+        }
+      }
+      error "no such search method as \"$which\"" unless ($ok);
+      LOG (1, "DEBUG: using only \"$which\"");
+
+    } else {
+      print STDERR "$copyright\nusage: $progname " .
+              "[-root] [-display dpy] [-verbose] [-debug which]\n" .
+        "\t\t  [-timeout secs] [-delay secs] [-size WxH]\n" .
+        "\t\t  [-no-output] [-urls-only] [-imagemap filename]\n" .
+        "\t\t  [-background color] [-opacity f]\n" .
+        "\t\t  [-filter cmd] [-filter2 cmd]\n" .
+        "\t\t  [-dictionary dictionary-file] [-http-proxy host[:port]]\n" .
+        "\t\t  [-driftnet [driftnet-program-and-args]]\n" .
+        "\t\t  [-directory local-image-directory]\n" .
+        "\n";
+      exit 1;
+    }
+  }
+
+  if (!$root_p && !$no_output_p && !$cocoa_p) {
+    print STDERR $copyright;
+    error "the -root argument is mandatory (for now.)";
+  }
+
+  if (!$no_output_p && !$cocoa_p && !$ENV{DISPLAY}) {
+    error "\$DISPLAY is not set.";
+  }
+
+
+  if ($verbose == 1) {
+    $verbose_imgmap   = 1;
+    $verbose_warnings = 1;
+
+  } elsif ($verbose == 2) {
+    $verbose_imgmap   = 1;
+    $verbose_warnings = 1;
+    $verbose_load     = 1;
+
+  } elsif ($verbose == 3) {
+    $verbose_imgmap   = 1;
+    $verbose_warnings = 1;
+    $verbose_load     = 1;
+    $verbose_filter   = 1;
+
+  } elsif ($verbose == 4) {
+    $verbose_imgmap   = 1;
+    $verbose_warnings = 1;
+    $verbose_load     = 1;
+    $verbose_filter   = 1;
+    $verbose_net      = 1;
+
+  } elsif ($verbose == 5) {
+    $verbose_imgmap   = 1;
+    $verbose_warnings = 1;
+    $verbose_load     = 1;
+    $verbose_filter   = 1;
+    $verbose_net      = 1;
+    $verbose_pbm      = 1;
+
+  } elsif ($verbose == 6) {
+    $verbose_imgmap   = 1;
+    $verbose_warnings = 1;
+    $verbose_load     = 1;
+    $verbose_filter   = 1;
+    $verbose_net      = 1;
+    $verbose_pbm      = 1;
+    $verbose_http     = 1;
+
+  } elsif ($verbose >= 7) {
+    $verbose_imgmap   = 1;
+    $verbose_warnings = 1;
+    $verbose_load     = 1;
+    $verbose_filter   = 1;
+    $verbose_net      = 1;
+    $verbose_pbm      = 1;
+    $verbose_http     = 1;
+    $verbose_exec     = 1;
+  }
+
+  if ($dict) {
+    error ("$dict does not exist") unless (-f $dict);
+    $wordlist = $dict;
+  } else {
+    pick_dictionary();
+  }
+
+  if ($imagemap_base && !($img_width && $img_height)) {
+    error ("-size WxH is required with -imagemap");
+  }
+
+  if (defined ($local_dir)) {
+    $_ = "xscreensaver-getimage-file";
+    which ($_) || error "$_ not found on \$PATH.";
+  }
+
+  init_signals();
+  set_proxy();
+
+  spawn_driftnet ($driftnet_cmd) if ($driftnet_cmd);
+
+  if ($urls_only_p) {
+    url_only_output ();
+  } else {
+    x_or_pbm_output ($window_id);
+  }
+}
+
+main();
+exit (0);

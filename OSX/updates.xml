@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+     xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
+     xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <channel>
+  <title>xscreensaver updater</title>
+  <link>http://www.jwz.org/xscreensaver/updates.xml</link>
+  <description>Updates to xscreensaver.</description>
+  <language>en</language>
+  <item>
+   <title>Version 5.25</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.25.dmg</link>
+   <description><![CDATA[&bull; Try harder to bypass Quarrantine and Gatekeeper in OSX installer. <BR>&bull; Some files were missing from the tarball.]]></description>
+   <pubDate>Mon, 09 Dec 2013 00:38:35 -0800</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.25.dmg"
+    sparkle:version="5.25"
+    sparkle:dsaSignature="MC0CFQCr8H3E7MQ9UF8WoSfkNMYAeezkCgIUCEfh4LmhELZlR53pihwrbPn8/gw="
+    length="50492771"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.24</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.24.dmg</link>
+   <description><![CDATA[&bull; Added "Automatically check for updates" option on OSX. <BR>&bull; Updated feed-loading for recent Flickr changes. <BR>&bull; Updated `webcollage' for recent Google changes. <BR>&bull; Added Instagram and Bing as `webcollage' image sources. <BR>&bull; Updated to latest autoconf. <BR>&bull; Bug fixes.]]></description>
+   <pubDate>Sat, 07 Dec 2013 19:06:56 -0800</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.24.dmg"
+    sparkle:version="5.24"
+    sparkle:dsaSignature="MCwCFCIlSSS7+eSfv1YkqIppcyIqTeU7AhRpDCQEQmI61UWhHInQGwduI+Mr8A=="
+    length="50258845"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.14</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg</link>
+   <description><![CDATA[&bull; Fixed crash in Blank Only Mode when DPMS disabled. <BR>&bull; Added "Quick Power-off in Blank Only Mode" option. <BR>&bull; BSOD GLaDOS.]]></description>
+   <pubDate>Fri, 20 May 2011 11:42:36 -0700</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg"
+    sparkle:version="5.14"
+    sparkle:dsaSignature="MCwCFHrKuttf1gN27mVG3YL8+ueMJmNaAhR6aSkKQefuNFNp6MinLq2o1nocaA=="
+    length="54485615"
+    type="application/octet-stream" />
+  </item>
+ </channel>
+</rss>

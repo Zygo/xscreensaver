@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="lcdscrub" _label="LCDscrub">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="5000000" default="100000"
+          convert="invert"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="spread" type="spinbutton" arg="-spread %"
+            _label="Line spread" low="2" high="64" default="8"/>
+    <number id="cycles" type="spinbutton" arg="-cycles %"
+            _label="Cycles" low="1" high="600" default="60"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+   <vgroup>
+    <boolean id="hw"  _label="Horizontal white" arg-unset="-no-hw"/>
+    <boolean id="vw"  _label="Vertical white"   arg-unset="-no-vw"/>
+    <boolean id="dw"  _label="Diagonal white"   arg-unset="-no-dw"/>
+   </vgroup>
+   <vgroup>
+    <boolean id="w"   _label="Solid white"      arg-unset="-no-w"/>
+    <boolean id="rgb" _label="Primary colors"   arg-unset="-no-rgb"/>
+    <boolean id="hb"  _label="Horizontal black" arg-unset="-no-hb"/>
+   </vgroup>
+   <vgroup>
+    <boolean id="vb"  _label="Vertical black"   arg-unset="-no-vb"/>
+    <boolean id="db"  _label="Diagonal black"   arg-unset="-no-db"/>
+    <boolean id="b"   _label="Solid black"      arg-unset="-no-b"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+This screen saver is not meant to look pretty, but rather, to
+repair burn-in on LCD monitors.
+
+Believe it or not, screen burn is not a thing of the past.
+It can happen to LCD screens pretty easily, even in this modern age.
+However, leaving the screen on and displaying high contrast images
+can often repair the damage.  That's what this screen saver does.
+
+See also:
+http://docs.info.apple.com/article.html?artnum=88343
+http://toastycode.com/blog/2008/02/05/lcd-scrub/
+
+Inspired by the like-named program by Daniel Sandler.
+
+Written by Jamie Zawinski; 2008.
+  </_description>
+</screensaver>

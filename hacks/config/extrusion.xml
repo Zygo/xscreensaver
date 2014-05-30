@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="extrusion" _label="Extrusion" gl="yes">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <select id="mode">
+    <option id="random"  _label="Random object"/>
+    <option id="helix2" _label="Helix 2" arg-set="-name helix2"/>
+    <option id="helix3" _label="Helix 3" arg-set="-name helix3"/>
+    <option id="helix4" _label="Helix 4" arg-set="-name helix4"/>
+    <option id="joinoffset" _label="Join offset" arg-set="-name joinoffset"/>
+    <option id="screw" _label="Screw" arg-set="-name screw"/>
+    <option id="taper" _label="Taper" arg-set="-name taper"/>
+    <option id="twist" _label="Twistoid" arg-set="-name twistoid"/>
+  </select>
+
+  <select id="render">
+    <option id="flat"  _label="Use flat coloring" arg-set="-no-light"/>
+    <option id="light" _label="Use lighting"/>
+  </select>
+
+  <!-- #### -texture -->
+  <!-- #### -texture_quality -->
+  <!-- #### -mipmap -->
+
+  <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Draws various rotating extruded shapes that twist around, lengthen,
+and turn inside out.
+
+Written by Linas Vepstas, David Konerding, and Jamie Zawinski; 1999.
+  </_description>
+</screensaver>

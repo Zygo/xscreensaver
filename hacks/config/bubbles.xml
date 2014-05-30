@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="bubbles" _label="Bubbles">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <boolean id="simple" _label="Draw circles instead of bubble images"
+           arg-set="-simple"/>
+
+  <boolean id="broken" _label="Don't hide bubbles when they pop"
+           arg-set="-broken"/>
+
+  <boolean id="trails" _label="Leave trails" arg-set="-trails"/>
+
+  <select id="gravity">
+    <option id="rise"     _label="Bubbles rise"  arg-set="-mode rise"/>
+    <option id="float"    _label="Bubbles float"/>
+    <option id="drop"     _label="Bubbles fall"  arg-set="-mode drop"/>
+  </select>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.08.
+
+This simulates the kind of bubble formation that happens when water
+boils: small bubbles appear, and as they get closer to each other,
+they combine to form larger bubbles, which eventually pop.
+
+Written by James Macnicol; 1996.
+  </_description>
+</screensaver>
