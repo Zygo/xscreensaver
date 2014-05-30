@@ -1980,7 +1980,7 @@ double current_device_rotation (void)
                             NSWorkspaceLaunchAndHide)
                    configuration:nil
                    error:&err]) {
-    NSLog(@"Unable to launch %@: %@", updater, err);
+    NSLog(@"Unable to launch %@: %@", app_path, err);
   }
 
 # endif // !USE_IPHONE

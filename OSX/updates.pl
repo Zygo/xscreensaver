@@ -51,6 +51,8 @@ sub generate_xml($$$$) {
       next unless $v;
       $sigs{$v}  = $sig  if $sig;
       $dates{$v} = $date if $date;
+      print STDERR "$progname: $v: " . ($date || '?') . "\n"
+        if ($verbose > 1);
     }
   }
 
@@ -107,6 +109,9 @@ sub generate_xml($$$$) {
     my $sig   = $sigs{$v1};
     # Re-generate the sig if the file date changed.
     $sig = undef if ($odate && $odate ne $date);
+
+    print STDERR "$progname: $v1: $date " . ($sig ? "Y" : "N") . "\n"
+      if ($verbose > 1);
 
     if (!$sig && $zip) {
       local %ENV = %ENV;
