@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="vermiculate" _label="Vermiculate">
+
+  <command arg="-root"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Duration" _low-label="Short" _high-label="Long"
+          low="0" high="1000" default="0" />
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Draws squiggly worm-like paths.
+
+Written by Tyler Pierce; 2001.
+  </_description>
+</screensaver>

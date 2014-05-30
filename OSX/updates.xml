@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+     xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
+     xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <channel>
+  <title>xscreensaver updater</title>
+  <link>http://www.jwz.org/xscreensaver/updates.xml</link>
+  <description>Updates to xscreensaver.</description>
+  <language>en</language>
+  <item>
+   <title>Version 5.24</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.24.dmg</link>
+   <description><![CDATA[&bull; Added "Automatically check for updates" option on OSX. <BR>&bull; Updated feed-loading for recent Flickr changes. <BR>&bull; Updated `webcollage' for recent Google changes. <BR>&bull; Added Instagram and Bing as `webcollage' image sources. <BR>&bull; Updated to latest autoconf. <BR>&bull; Bug fixes.]]></description>
+   <pubDate>Sat, 07 Dec 2013 19:06:56 -0800</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.24.dmg"
+    sparkle:version="5.24"
+    sparkle:dsaSignature="MCwCFCIlSSS7+eSfv1YkqIppcyIqTeU7AhRpDCQEQmI61UWhHInQGwduI+Mr8A=="
+    length="50258845"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.23</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.23.dmg</link>
+   <description><![CDATA[&bull; New hack, `geodesic'. <BR>&bull; iOS and OSX: huge XCopyArea performance improvements. <BR>&bull; More heuristics for using RSS feeds as image sources. <BR>&bull; Improved Wikipedia parser. <BR>&bull; Updated `webcollage' for recent Flickr changes. <BR>&bull; Added Android to `bsod'. <BR>&bull; OSX: Added a real installer. <BR>&bull; iOS and OSX: fixed a font-metrics bug. <BR>&bull; iOS: Fixed aspect ratio bug in non-rotating apps when launched in landscape mode. <BR>&bull; Made `quasicrystal' work on weak graphics cards. <BR>&bull; iOS: fixed `ifs'. <BR>&bull; Better compression on icons, plists and XML files: smaller distribution and installation footprint. <BR>&bull; Reverted that DEACTIVATE change. Bad idea. <BR>&bull; `Phosphor' now supports amber as well as green.]]></description>
+   <pubDate>Sat, 09 Nov 2013 13:29:07 -0800</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.23.dmg"
+    sparkle:version="5.23"
+    sparkle:dsaSignature="MC0CFQCn+J0qyxUxXj8qTqIzccyEjv90uQIURPhd0yT6PdDlQnXYGKhF30PvsLo="
+    length="47275494"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.14</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg</link>
+   <description><![CDATA[&bull; Fixed crash in Blank Only Mode when DPMS disabled. <BR>&bull; Added "Quick Power-off in Blank Only Mode" option. <BR>&bull; BSOD GLaDOS.]]></description>
+   <pubDate>Fri, 20 May 2011 11:42:36 -0700</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg"
+    sparkle:version="5.14"
+    sparkle:dsaSignature="MCwCFHrKuttf1gN27mVG3YL8+ueMJmNaAhR6aSkKQefuNFNp6MinLq2o1nocaA=="
+    length="54485615"
+    type="application/octet-stream" />
+  </item>
+ </channel>
+</rss>

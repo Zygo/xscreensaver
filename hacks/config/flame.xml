@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="flame" _label="Flame">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="50000"
+          convert="invert"/>
+
+  <number id="delay2" type="slider" arg="-delay2 %"
+          _label="Linger" _low-label="0 seconds" _high-label="10 seconds"
+          low="1000" high="10000000" default="2000000"/>
+
+  <number id="iterations" type="slider" arg="-iterations %"
+          _label="Number of fractals" _low-label="Few" _high-label="Many"
+          low="1" high="250" default="25"/>
+
+  <number id="points" type="slider" arg="-points %"
+          _label="Complexity" _low-label="Low" _high-label="High"
+          low="100" high="80000" default="10000"/>
+
+  <number id="ncolors" type="slider" arg="-colors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="64"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Iterative fractals.
+
+Written by Scott Draves; 1993.
+  </_description>
+</screensaver>

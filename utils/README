@@ -1,0 +1,6 @@
+
+This directory contains various utilities that are used both by the 
+screensaver driver and by the demo programs; for example, a portable
+implementation of usleep(), and code for manipulating color maps.
+
+If you have compilation problems, check the parameters in ../config.h.

@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="flipflop" _label="FlipFlop" gl="yes">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="20000"
+            convert="invert"/>
+
+    <number id="spin" type="slider" arg="-spin %"
+            _label="Spin" _low-label="Stopped" _high-label="Whirlwind"
+            low="0" high="3.0" default="0.1"/>
+   </vgroup>
+   <vgroup>
+
+    <select id="mode">
+      <option id="tiles"  _label="Draw Tiles"/>
+      <option id="sticks" _label="Draw Sticks" arg-set="-mode sticks"/>
+    </select>
+
+     <number id="size-x" type="spinbutton" arg="-size-x %"
+             _label="Width" low="3" high="20" default="9"/>
+     <number id="size-y" type="spinbutton" arg="-size-y %"
+             _label="Depth" low="3" high="20" default="9"/>
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+   <vgroup>
+    <boolean id="texture" _label="Load image"      arg-set="-texture" />
+    <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+   <vgroup>
+    <xscreensaver-image />
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Draws a grid of 3D colored tiles that change positions with each other.  
+
+Written by Kevin Ogden and Sergio Gutierrez; 2003.
+  </_description>
+</screensaver>
