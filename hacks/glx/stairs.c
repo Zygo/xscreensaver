@@ -343,45 +343,16 @@ stairs_handle_event (ModeInfo *mi, XEvent *event)
 {
   stairsstruct *sp = &stairs[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      sp->button_down_p = True;
-      gltrackball_start (sp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      sp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (sp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           sp->button_down_p)
-    {
-      gltrackball_track (sp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, sp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &sp->button_down_p))
+    return True;
   else if (event->xany.type == KeyPress)
     {
       KeySym keysym;
       char c = 0;
       XLookupString (&event->xkey, &c, 1, &keysym, 0);
-      if (c == ' ')
+      if (c == ' ' || c == '\t')
         {
           gltrackball_reset (sp->trackball);
           return True;
@@ -489,7 +460,7 @@ init_stairs (ModeInfo * mi)
 		MI_CLEARWINDOW(mi);
 	}
 
-    sp->trackball = gltrackball_init ();
+    sp->trackball = gltrackball_init (False);
 }
 
 ENTRYPOINT void

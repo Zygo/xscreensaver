@@ -22,7 +22,7 @@
             low="1" high="255" default="64"/>
 
   <number id="size" type="spinbutton" arg="-size %"
-           _label="Cell size" low="-20" high="20" default="-7"/>
+           _label="Cell size" low="-40" high="40" default="-30"/>
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 

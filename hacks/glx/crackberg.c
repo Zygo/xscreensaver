@@ -1260,7 +1260,9 @@ ENTRYPOINT Bool crackberg_handle_event (ModeInfo *mi, XEvent *ev)
     if (ev->xany.type == KeyPress) {
         switch (keysym) {
             case XK_Left:   cberg->motion_state |= MOTION_LROT;  break;
+            case XK_Prior:  cberg->motion_state |= MOTION_LROT;  break;
             case XK_Right:  cberg->motion_state |= MOTION_RROT;  break;
+            case XK_Next:   cberg->motion_state |= MOTION_RROT;  break;
             case XK_Down:   cberg->motion_state |= MOTION_BACK;  break;
             case XK_Up:     cberg->motion_state |= MOTION_FORW;  break;
             case '1':       cberg->motion_state |= MOTION_DEC;   break; 
@@ -1288,7 +1290,9 @@ ENTRYPOINT Bool crackberg_handle_event (ModeInfo *mi, XEvent *ev)
 
         switch (keysym) {
             case XK_Left:   cberg->motion_state &= ~MOTION_LROT;  break;
+            case XK_Prior:  cberg->motion_state &= ~MOTION_LROT;  break;
             case XK_Right:  cberg->motion_state &= ~MOTION_RROT;  break;
+            case XK_Next:   cberg->motion_state &= ~MOTION_RROT;  break;
             case XK_Down:   cberg->motion_state &= ~MOTION_BACK;  break;
             case XK_Up:     cberg->motion_state &= ~MOTION_FORW;  break;
             case '1':       cberg->motion_state &= ~MOTION_DEC;   break; 

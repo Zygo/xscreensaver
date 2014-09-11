@@ -471,10 +471,8 @@ gleidescope_handle_event(ModeInfo *mi, XEvent *event)
 	printf("event:%d\n", event->xany.type);
 	printf("button:%d\n", event->xbutton.button);
 	*/
-	switch(event->xany.type)
-	{
-		case ButtonPress:
-
+	if (event->xany.type == ButtonPress)
+      {
 			if (event->xbutton.button == Button1 ||
                 event->xbutton.button == Button3)
 			{
@@ -498,10 +496,8 @@ gleidescope_handle_event(ModeInfo *mi, XEvent *event)
 				return True;
 			}
 #endif
-			break;
-
-		case ButtonRelease:
-
+            } else if (event->xany.type == ButtonRelease)
+      {
 			if (event->xbutton.button == Button1 ||
                 event->xbutton.button == Button3)
 			{
@@ -509,10 +505,8 @@ gleidescope_handle_event(ModeInfo *mi, XEvent *event)
 				gp->button_down_p = False;
 				return True;
 			}
-			break;
-
-		case MotionNotify:
-
+            } else if (event->xany.type == MotionNotify)
+      {
 			if (gp->button_down_p)
 			{
 				/* update mouse position */
@@ -523,8 +517,13 @@ gleidescope_handle_event(ModeInfo *mi, XEvent *event)
 
 				return True;
 			}
-			break;
-	}
+      }
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      gp->start_time = -1;
+      gp->fade = 0;
+      return True;
+    }
 
 	return False;
 }

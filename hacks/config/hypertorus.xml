@@ -100,10 +100,10 @@
   <xscreensaver-updater />
 
   <_description>
-This shows a rotating Clifford Torus: a torus lying on the
-"surface" of a 4D hypersphere.  Inspired by Thomas Banchoff's book
-"Beyond the Third Dimension: Geometry, Computer Graphics, and Higher
-Dimensions", Scientific American Library, 1990.
+A Clifford Torus: a torus lying on the "surface" of a 4D hypersphere.
+Inspired by Thomas Banchoff's book "Beyond the Third Dimension:
+Geometry, Computer Graphics, and Higher Dimensions", Scientific
+American Library, 1990.
 
 http://en.wikipedia.org/wiki/N-sphere
 http://en.wikipedia.org/wiki/Clifford_torus

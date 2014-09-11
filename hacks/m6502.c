@@ -60,6 +60,7 @@ struct state {
   int which;/* the program to run*/
   int demos;/* number of demos included */
   struct timeval start_time; 
+  int reset_p;
 };
 
 static void
@@ -234,7 +235,8 @@ m6502_draw (Display *dpy, Window window, void *closure)
   analogtv_draw(st->tv, 0.04, &reception, 1);
   te = get_time(st);
   
-  if (te > st->dt){ /* do something more interesting here XXX */
+  if (st->reset_p || te > st->dt){ /* do something more interesting here XXX */
+    st->reset_p = 0;
     for(x = 0; x < 32; x++)
       for(y = 0; y < 32; y++)
 	st->pixels[x][y] = 0;
@@ -279,6 +281,12 @@ m6502_reshape (Display *dpy, Window window, void *closure,
 static Bool
 m6502_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->reset_p = 1;
+      return True;
+    }
   return False;
 }
 

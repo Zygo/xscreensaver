@@ -44,9 +44,6 @@
                  "*chooseRandomImages:  True  \n"
 
 # define refresh_mirrorblob 0
-/*
-# define mirrorblob_handle_event 0
-*/
 # include "xlockmore.h"
 #else /* !STANDALONE */
 # include "xlock.h"        /* from the xlockmore distribution */
@@ -1757,21 +1754,7 @@ mirrorblob_handle_event (ModeInfo * mi, XEvent * event)
   mirrorblobstruct *gp = &Mirrorblob[MI_SCREEN (mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      gp->button_down = 1;
-      gltrackball_start (gp->trackball, event->xbutton.x,
-                         event->xbutton.y, MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      gp->button_down = 0;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           event->xbutton.button == Button4)
+      event->xbutton.button == Button4)
     {
       zoom *= 1.1;
       return True;
@@ -1783,12 +1766,19 @@ mirrorblob_handle_event (ModeInfo * mi, XEvent * event)
       zoom *= 0.9;
       return True;
     }
-  else if (event->xany.type == MotionNotify && gp->button_down)
+  else if (gltrackball_event_handler (event, gp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &gp->button_down))
     {
-      gltrackball_track (gp->trackball, event->xmotion.x,
-                         event->xmotion.y, MI_WIDTH (mi), MI_HEIGHT (mi));
       return True;
     }
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      gp->state_start_time = 0;
+      gp->state = HOLDING;
+      return True;
+    }
+
   return False;
 }
 
@@ -1823,7 +1813,7 @@ init_mirrorblob(ModeInfo * mi)
     {
       MI_CLEARWINDOW(mi);
     }
-  gp->trackball = gltrackball_init();
+  gp->trackball = gltrackball_init(False);
     
   initialise_blob(gp, MI_WIDTH(mi), MI_HEIGHT(mi), BUMP_ARRAY_SIZE);
   gp->state = INITIALISING;

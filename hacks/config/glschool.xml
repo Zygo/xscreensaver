@@ -34,7 +34,7 @@
   <xscreensaver-updater />
 
  <_description>
-Uses Craig Reynolds' classic "Boids" algorithm to simulate a school of fish.
+A school of fish, using the classic "Boids" algorithm by Craig Reynolds.
 
 http://en.wikipedia.org/wiki/Boids
 

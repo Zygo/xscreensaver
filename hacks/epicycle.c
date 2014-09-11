@@ -764,7 +764,7 @@ static Bool
 epicycle_event (Display *dpy, Window window, void *closure, XEvent *e)
 {
   struct state *st = (struct state *) closure;
-  if (e->type == ButtonPress)
+  if (screenhack_event_helper (dpy, window, e))
     {
       st->restart = 1;
       return True;

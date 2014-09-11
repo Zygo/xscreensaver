@@ -182,6 +182,7 @@
 			buildPhases = (
 			);
 			dependencies = (
+				AF39E2BA198A16920064A58D /* PBXTargetDependency */,
 				AFF3CA0117CCAE210028F240 /* PBXTargetDependency */,
 				AF777A6509B660B700EA3033 /* PBXTargetDependency */,
 				AF777A6309B660B700EA3033 /* PBXTargetDependency */,
@@ -355,7 +356,6 @@
 		AF0FAF2809CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF0FAF2909CA712600EE1051 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF0FAF3C159BAC7C00BCE2F7 /* CoreText.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF0FAF3B159BAC7B00BCE2F7 /* CoreText.framework */; };
-		AF1A17660D6D6EE3008AF328 /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AF1A17680D6D6EE3008AF328 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF1A177F0D6D6F3E008AF328 /* lcdscrub.c in Sources */ = {isa = PBXBuildFile; fileRef = AF1A177E0D6D6F3E008AF328 /* lcdscrub.c */; };
 		AF1A17810D6D6F62008AF328 /* lcdscrub.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF1A17800D6D6F62008AF328 /* lcdscrub.xml */; };
@@ -1507,6 +1507,19 @@
 		AF3633FD18530DD90086A439 /* Updater.m in Sources */ = {isa = PBXBuildFile; fileRef = AF3633FB18530DD90086A439 /* Updater.m */; };
 		AF39483E15A164680000FFCD /* jigsaw.c in Sources */ = {isa = PBXBuildFile; fileRef = AF35EB250E6382BA00691F2F /* jigsaw.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AF39483F15A1647A0000FFCD /* jigsaw.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258CF0988A468000655EE /* jigsaw.xml */; };
+		AF39E289198A11F60064A58D /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
+		AF39E28B198A11F60064A58D /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
+		AF39E28C198A11F60064A58D /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
+		AF39E28D198A11F60064A58D /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF2C31E515C0F7FE007A6896 /* QuartzCore.framework */; };
+		AF39E28E198A11F60064A58D /* Cocoa.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 1058C7A1FEA54F0111CA2CBB /* Cocoa.framework */; };
+		AF39E28F198A11F60064A58D /* Carbon.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF48112B0990A2C700FB32B8 /* Carbon.framework */; };
+		AF39E290198A11F60064A58D /* libz.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = AF78369617DB9F25003B9FC0 /* libz.dylib */; };
+		AF39E2AA198A13F50064A58D /* robot-wireframe.c in Sources */ = {isa = PBXBuildFile; fileRef = AF39E2A0198A13F50064A58D /* robot-wireframe.c */; };
+		AF39E2AB198A13F50064A58D /* winduprobot.c in Sources */ = {isa = PBXBuildFile; fileRef = AF39E2A1198A13F50064A58D /* winduprobot.c */; };
+		AF39E2AD198A15820064A58D /* winduprobot.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF39E2AC198A15820064A58D /* winduprobot.xml */; };
+		AF39E2AE198A15820064A58D /* winduprobot.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF39E2AC198A15820064A58D /* winduprobot.xml */; };
+		AF39E2B7198A15EE0064A58D /* robot-wireframe.c in Sources */ = {isa = PBXBuildFile; fileRef = AF39E2A0198A13F50064A58D /* robot-wireframe.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AF39E2B8198A15EE0064A58D /* winduprobot.c in Sources */ = {isa = PBXBuildFile; fileRef = AF39E2A1198A13F50064A58D /* winduprobot.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AF3C714B0D624BF50030CC0D /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AF3C715E0D624C600030CC0D /* hypnowheel.c in Sources */ = {isa = PBXBuildFile; fileRef = AF3C715D0D624C600030CC0D /* hypnowheel.c */; };
 		AF3C71600D624C7C0030CC0D /* hypnowheel.xml in Resources */ = {isa = PBXBuildFile; fileRef = AF3C715F0D624C7C0030CC0D /* hypnowheel.xml */; };
@@ -2902,6 +2915,8 @@
 		AFB8A69B1782BA34004EDB85 /* kaleidocycle.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFB8A69A1782BA34004EDB85 /* kaleidocycle.xml */; };
 		AFB8A69C1782BF6C004EDB85 /* kaleidocycle.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFB8A69A1782BA34004EDB85 /* kaleidocycle.xml */; };
 		AFB8A69D1782BFA6004EDB85 /* kaleidocycle.c in Sources */ = {isa = PBXBuildFile; fileRef = AF7511141782B64300380EA1 /* kaleidocycle.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
+		AFBE744019A7C6930018AA35 /* robot.c in Sources */ = {isa = PBXBuildFile; fileRef = AFBE743F19A7C6930018AA35 /* robot.c */; };
+		AFBE744119A7C6EF0018AA35 /* robot.c in Sources */ = {isa = PBXBuildFile; fileRef = AFBE743F19A7C6930018AA35 /* robot.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AFBF893E0E41D930006A2D66 /* fps.c in Sources */ = {isa = PBXBuildFile; fileRef = AFBF893C0E41D930006A2D66 /* fps.c */; };
 		AFBF893F0E41D930006A2D66 /* fps.h in Headers */ = {isa = PBXBuildFile; fileRef = AFBF893D0E41D930006A2D66 /* fps.h */; };
 		AFBF89AF0E423FC3006A2D66 /* fps-gl.c in Sources */ = {isa = PBXBuildFile; fileRef = AFBF89AE0E423FC3006A2D66 /* fps-gl.c */; };
@@ -2939,6 +2954,8 @@
 		AFCF4545159878C300E6E8CC /* polyhedra-gl.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA561B209937DCB00F3E977 /* polyhedra-gl.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AFCF4546159878C300E6E8CC /* polyhedra.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA561B309937DCC00F3E977 /* polyhedra.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AFCF4547159878D500E6E8CC /* polyhedra.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFC258F70988A469000655EE /* polyhedra.xml */; };
+		AFCF509C198A1861005B0DB1 /* involute.c in Sources */ = {isa = PBXBuildFile; fileRef = AFE6A16A0CDD78EA002805BF /* involute.c */; };
+		AFCF509D198C3612005B0DB1 /* xscreensaver-text in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF0B09CA6FF900EE1051 /* xscreensaver-text */; };
 		AFCFF1D90CE4517C00C7D111 /* involute.c in Sources */ = {isa = PBXBuildFile; fileRef = AFE6A16A0CDD78EA002805BF /* involute.c */; };
 		AFCFF1DA0CE4518B00C7D111 /* tube.c in Sources */ = {isa = PBXBuildFile; fileRef = AF480ED2098F652A00FB32B8 /* tube.c */; };
 		AFCFF1DB0CE451A300C7D111 /* normals.c in Sources */ = {isa = PBXBuildFile; fileRef = AFA55A93099336D800F3E977 /* normals.c */; };
@@ -3069,7 +3086,6 @@
 		AFE6A18A0CDD7B2E002805BF /* involute.c in Sources */ = {isa = PBXBuildFile; fileRef = AFE6A16A0CDD78EA002805BF /* involute.c */; };
 		AFE6A40C0CDD7BC3002805BF /* moebiusgears.c in Sources */ = {isa = PBXBuildFile; fileRef = AFE6A40B0CDD7BC3002805BF /* moebiusgears.c */; };
 		AFE6A40E0CDD7BDC002805BF /* moebiusgears.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFE6A40D0CDD7BDC002805BF /* moebiusgears.xml */; };
-		AFE6A4200CDD7FAA002805BF /* xscreensaver-getimage-file in Resources */ = {isa = PBXBuildFile; fileRef = AF0FAF1209CA712600EE1051 /* xscreensaver-getimage-file */; };
 		AFE6A4220CDD7FAA002805BF /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFE6A4350CDD800F002805BF /* abstractile.c in Sources */ = {isa = PBXBuildFile; fileRef = AFE6A4340CDD800F002805BF /* abstractile.c */; };
 		AFE6A4370CDD8027002805BF /* abstractile.xml in Resources */ = {isa = PBXBuildFile; fileRef = AFE6A4360CDD8026002805BF /* abstractile.xml */; };
@@ -3079,6 +3095,8 @@
 		AFEB9C3D15900558003974F3 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFEB9C3C15900558003974F3 /* Foundation.framework */; };
 		AFEB9C401590056A003974F3 /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFEB9C3E1590056A003974F3 /* CoreGraphics.framework */; };
 		AFEB9C411590056A003974F3 /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AFEB9C3F1590056A003974F3 /* QuartzCore.framework */; };
+		AFF1BA0F19A96D8B0016A88D /* lament_model.c in Sources */ = {isa = PBXBuildFile; fileRef = AFF1BA0E19A96D8B0016A88D /* lament_model.c */; };
+		AFF1BA1019A96D8B0016A88D /* lament_model.c in Sources */ = {isa = PBXBuildFile; fileRef = AFF1BA0E19A96D8B0016A88D /* lament_model.c */; settings = {COMPILER_FLAGS = "-DUSE_GL"; }; };
 		AFF2868617860E830050A578 /* XScreenSaverSubclass.m in Sources */ = {isa = PBXBuildFile; fileRef = AF9CC7A0099580E70075E99B /* XScreenSaverSubclass.m */; };
 		AFF2868817860E830050A578 /* libjwxyz.a in Frameworks */ = {isa = PBXBuildFile; fileRef = AF4808C1098C3B6C00FB32B8 /* libjwxyz.a */; };
 		AFF2868917860E830050A578 /* ScreenSaver.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AF976ED30989BF59001F8B92 /* ScreenSaver.framework */; };
@@ -3370,6 +3388,20 @@
 			proxyType = 1;
 			remoteGlobalIDString = AF1AD9E118500F9F00932759;
 			remoteInfo = XScreenSaverUpdater;
+		};
+		AF39E284198A11F60064A58D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF4808C0098C3B6C00FB32B8;
+			remoteInfo = jwxyz;
+		};
+		AF39E2B9198A16920064A58D /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 29B97313FDCFA39411CA2CEA /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = AF39E282198A11F60064A58D;
+			remoteInfo = WindupRobot;
 		};
 		AF3C71470D624BF50030CC0D /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -6568,6 +6600,10 @@
 		AF3633FA18530DD90086A439 /* Updater.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Updater.h; path = OSX/Updater.h; sourceTree = "<group>"; };
 		AF3633FB18530DD90086A439 /* Updater.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = Updater.m; path = OSX/Updater.m; sourceTree = "<group>"; };
 		AF3633FE18530DFF0086A439 /* Updater.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Updater.plist; path = OSX/Updater.plist; sourceTree = "<group>"; };
+		AF39E296198A11F60064A58D /* WindupRobot.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = WindupRobot.saver; sourceTree = BUILT_PRODUCTS_DIR; };
+		AF39E2A0198A13F50064A58D /* robot-wireframe.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = "robot-wireframe.c"; path = "hacks/glx/robot-wireframe.c"; sourceTree = "<group>"; };
+		AF39E2A1198A13F50064A58D /* winduprobot.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = winduprobot.c; path = hacks/glx/winduprobot.c; sourceTree = "<group>"; };
+		AF39E2AC198A15820064A58D /* winduprobot.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = winduprobot.xml; sourceTree = "<group>"; };
 		AF3C71590D624BF50030CC0D /* Hypnowheel.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = Hypnowheel.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AF3C715D0D624C600030CC0D /* hypnowheel.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = hypnowheel.c; path = hacks/glx/hypnowheel.c; sourceTree = "<group>"; };
 		AF3C715F0D624C7C0030CC0D /* hypnowheel.xml */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = text.xml; path = hypnowheel.xml; sourceTree = "<group>"; };
@@ -7074,6 +7110,7 @@
 		AFB5A0ED0981FF8B00871B16 /* usleep.c */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.c; name = usleep.c; path = utils/usleep.c; sourceTree = "<group>"; };
 		AFB5A0EE0981FF8B00871B16 /* usleep.h */ = {isa = PBXFileReference; fileEncoding = 12; lastKnownFileType = sourcecode.c.h; name = usleep.h; path = utils/usleep.h; sourceTree = "<group>"; };
 		AFB8A69A1782BA34004EDB85 /* kaleidocycle.xml */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = kaleidocycle.xml; sourceTree = "<group>"; };
+		AFBE743F19A7C6930018AA35 /* robot.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = robot.c; path = hacks/glx/robot.c; sourceTree = "<group>"; };
 		AFBF893C0E41D930006A2D66 /* fps.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = fps.c; path = hacks/fps.c; sourceTree = "<group>"; };
 		AFBF893D0E41D930006A2D66 /* fps.h */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.h; name = fps.h; path = hacks/fps.h; sourceTree = "<group>"; };
 		AFBF89AE0E423FC3006A2D66 /* fps-gl.c */ = {isa = PBXFileReference; fileEncoding = 5; lastKnownFileType = sourcecode.c.c; name = "fps-gl.c"; path = "hacks/glx/fps-gl.c"; sourceTree = "<group>"; };
@@ -7415,6 +7452,7 @@
 		AFEB9C3C15900558003974F3 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS5.0.sdk/System/Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };
 		AFEB9C3E1590056A003974F3 /* CoreGraphics.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS5.0.sdk/System/Library/Frameworks/CoreGraphics.framework; sourceTree = DEVELOPER_DIR; };
 		AFEB9C3F1590056A003974F3 /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS5.0.sdk/System/Library/Frameworks/QuartzCore.framework; sourceTree = DEVELOPER_DIR; };
+		AFF1BA0E19A96D8B0016A88D /* lament_model.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lament_model.c; path = hacks/glx/lament_model.c; sourceTree = "<group>"; };
 		AFF2869217860E830050A578 /* QuasiCrystal.saver */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = QuasiCrystal.saver; sourceTree = BUILT_PRODUCTS_DIR; };
 		AFF28694178611720050A578 /* quasicrystal.xml */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; path = quasicrystal.xml; sourceTree = "<group>"; };
 		AFF28695178611720050A578 /* quasicrystal.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = quasicrystal.c; path = hacks/glx/quasicrystal.c; sourceTree = "<group>"; };
@@ -7589,6 +7627,19 @@
 				AF1FD99D158FF96500C40F17 /* Cocoa.framework in Frameworks */,
 				AF1FD99E158FF96500C40F17 /* Carbon.framework in Frameworks */,
 				AF78373D17DBA580003B9FC0 /* libz.dylib in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF39E28A198A11F60064A58D /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF39E28B198A11F60064A58D /* libjwxyz.a in Frameworks */,
+				AF39E28C198A11F60064A58D /* ScreenSaver.framework in Frameworks */,
+				AF39E28D198A11F60064A58D /* QuartzCore.framework in Frameworks */,
+				AF39E28E198A11F60064A58D /* Cocoa.framework in Frameworks */,
+				AF39E28F198A11F60064A58D /* Carbon.framework in Frameworks */,
+				AF39E290198A11F60064A58D /* libz.dylib in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -10764,6 +10815,7 @@
 				AF9E7EBF190F4C1B00A8B01F /* enable_gc */,
 				AFFAB32919158CE40020F021 /* ProjectivePlane.saver */,
 				AF68A49219196CF800D41CD1 /* Tessellimage.saver */,
+				AF39E296198A11F60064A58D /* WindupRobot.saver */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -11136,6 +11188,7 @@
 				AF7511141782B64300380EA1 /* kaleidocycle.c */,
 				AFA55F3F0993626E00F3E977 /* klein.c */,
 				AFA55A8E0993369100F3E977 /* lament.c */,
+				AFF1BA0E19A96D8B0016A88D /* lament_model.c */,
 				AFA55DDD09935DB600F3E977 /* lavalite.c */,
 				AF4FD7000CE7A577005EE58E /* lockward.c */,
 				AFA55DE109935DFB00F3E977 /* marching.c */,
@@ -11161,6 +11214,8 @@
 				AFA55B3F09933EC600F3E977 /* pulsar.c */,
 				AFF28695178611720050A578 /* quasicrystal.c */,
 				AFA55E0609935EB800F3E977 /* queens.c */,
+				AFBE743F19A7C6930018AA35 /* robot.c */,
+				AF39E2A0198A13F50064A58D /* robot-wireframe.c */,
 				AFA559EA0993335C00F3E977 /* rubik.c */,
 				AF32D9FA0F3AD1200080F535 /* rubikblocks.c */,
 				AFA55A400993351F00F3E977 /* s1_1.c */,
@@ -11219,6 +11274,7 @@
 				AFDA65A4178A541A0070D24B /* unknownpleasures.c */,
 				AF0DCA5F0C4CBB7300D76972 /* voronoi.c */,
 				AF0839AD09930C4900277BE9 /* whale.c */,
+				AF39E2A1198A13F50064A58D /* winduprobot.c */,
 			);
 			name = OpenGL;
 			sourceTree = "<group>";
@@ -11446,6 +11502,7 @@
 				AFC2592C0988A469000655EE /* webcollage.xml */,
 				AFC2592D0988A469000655EE /* whirlwindwarp.xml */,
 				AFC2592F0988A469000655EE /* whirlygig.xml */,
+				AF39E2AC198A15820064A58D /* winduprobot.xml */,
 				AFC259300988A469000655EE /* worm.xml */,
 				AFC259310988A469000655EE /* wormhole.xml */,
 				AFC259320988A469000655EE /* xanalogtv.xml */,
@@ -11836,6 +11893,26 @@
 			name = Jigsaw;
 			productName = Jigsaw;
 			productReference = AF35E8A00E63823600691F2F /* Jigsaw.saver */;
+			productType = "com.apple.product-type.bundle";
+		};
+		AF39E282198A11F60064A58D /* WindupRobot */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = AF39E293198A11F60064A58D /* Build configuration list for PBXNativeTarget "WindupRobot" */;
+			buildPhases = (
+				AF39E285198A11F60064A58D /* Resources */,
+				AF39E287198A11F60064A58D /* Sources */,
+				AF39E28A198A11F60064A58D /* Frameworks */,
+				AF39E291198A11F60064A58D /* Rez */,
+				AF39E292198A11F60064A58D /* Run Update Info Plist */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				AF39E283198A11F60064A58D /* PBXTargetDependency */,
+			);
+			name = WindupRobot;
+			productName = DangerBall;
+			productReference = AF39E296198A11F60064A58D /* WindupRobot.saver */;
 			productType = "com.apple.product-type.bundle";
 		};
 		AF3C71450D624BF50030CC0D /* Hypnowheel */ = {
@@ -16563,6 +16640,7 @@
 				AF3581FB143330F900E09C51 /* TronBit */,
 				AFDA658E178A52B70070D24B /* Unknown Pleasures */,
 				AF0DCA420C4CBB0D00D76972 /* Voronoi */,
+				AF39E282198A11F60064A58D /* WindupRobot */,
 				AF137D410F075C9B004DE3B2 /* Obsolete */,
 				AFA55CCC09934CE400F3E977 /* GLForestFire */,
 				AFD570C90996B9F800BA26F7 /* Ant */,
@@ -16630,7 +16708,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AF1A17660D6D6EE3008AF328 /* xscreensaver-getimage-file in Resources */,
 				AF1A17810D6D6F62008AF328 /* lcdscrub.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -16709,6 +16786,15 @@
 			files = (
 				AF35EB240E63829600691F2F /* jigsaw.xml in Resources */,
 				AF4A8CA010B609B50074B062 /* xscreensaver-getimage-file in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF39E285198A11F60064A58D /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AF39E2AD198A15820064A58D /* winduprobot.xml in Resources */,
+				AFCF509D198C3612005B0DB1 /* xscreensaver-text in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -17622,6 +17708,7 @@
 				AF918B83158FC53E002B5D1E /* voronoi.xml in Resources */,
 				AF918B84158FC53E002B5D1E /* wander.xml in Resources */,
 				AF918B86158FC53E002B5D1E /* whirlwindwarp.xml in Resources */,
+				AF39E2AE198A15820064A58D /* winduprobot.xml in Resources */,
 				AF918B89158FC53E002B5D1E /* wormhole.xml in Resources */,
 				AF918B8A158FC53E002B5D1E /* xanalogtv.xml in Resources */,
 				AF918B8B158FC53E002B5D1E /* xflame.xml in Resources */,
@@ -18687,7 +18774,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				AFE6A4200CDD7FAA002805BF /* xscreensaver-getimage-file in Resources */,
 				AFE6A4370CDD8027002805BF /* abstractile.xml in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -18792,6 +18878,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		AF35E89B0E63823600691F2F /* Rez */ = {
+			isa = PBXRezBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		AF39E291198A11F60064A58D /* Rez */ = {
 			isa = PBXRezBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -20456,6 +20549,21 @@
 			showEnvVarsInLog = 0;
 		};
 		AF35E89C0E63823600691F2F /* Run Update Info Plist */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Run Update Info Plist";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "$SOURCE_ROOT/OSX/update-info-plist.pl -q $BUILT_PRODUCTS_DIR/$PRODUCT_NAME$WRAPPER_SUFFIX";
+			showEnvVarsInLog = 0;
+		};
+		AF39E292198A11F60064A58D /* Run Update Info Plist */ = {
 			isa = PBXShellScriptBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -24012,6 +24120,18 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		AF39E287198A11F60064A58D /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AFCF509C198A1861005B0DB1 /* involute.c in Sources */,
+				AF39E289198A11F60064A58D /* XScreenSaverSubclass.m in Sources */,
+				AF39E2AB198A13F50064A58D /* winduprobot.c in Sources */,
+				AFBE744019A7C6930018AA35 /* robot.c in Sources */,
+				AF39E2AA198A13F50064A58D /* robot-wireframe.c in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 		AF3C714A0D624BF50030CC0D /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
@@ -25058,6 +25178,7 @@
 				AFB8A69D1782BFA6004EDB85 /* kaleidocycle.c in Sources */,
 				AF918A70158FC417002B5D1E /* klein.c in Sources */,
 				AF918A71158FC417002B5D1E /* lament.c in Sources */,
+				AFF1BA1019A96D8B0016A88D /* lament_model.c in Sources */,
 				AF918A72158FC417002B5D1E /* lavalite.c in Sources */,
 				AF918A74158FC417002B5D1E /* marching.c in Sources */,
 				AF918A75158FC417002B5D1E /* menger.c in Sources */,
@@ -25080,6 +25201,8 @@
 				AF918A84158FC417002B5D1E /* pulsar.c in Sources */,
 				AFF28699178611720050A578 /* quasicrystal.c in Sources */,
 				AF918A85158FC417002B5D1E /* queens.c in Sources */,
+				AFBE744119A7C6EF0018AA35 /* robot.c in Sources */,
+				AF39E2B7198A15EE0064A58D /* robot-wireframe.c in Sources */,
 				AF918A86158FC417002B5D1E /* rubik.c in Sources */,
 				AF918A87158FC417002B5D1E /* rubikblocks.c in Sources */,
 				AF918A88158FC417002B5D1E /* s1_1.c in Sources */,
@@ -25132,6 +25255,7 @@
 				AFDA65A8178A541A0070D24B /* unknownpleasures.c in Sources */,
 				AF918AB2158FC47B002B5D1E /* voronoi.c in Sources */,
 				AF918AB3158FC47B002B5D1E /* whale.c in Sources */,
+				AF39E2B8198A15EE0064A58D /* winduprobot.c in Sources */,
 				AFAA6B451773F07800DE720C /* ios-function-table.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -25543,6 +25667,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				AFA55A8F0993369100F3E977 /* lament.c in Sources */,
+				AFF1BA0F19A96D8B0016A88D /* lament_model.c in Sources */,
 				AF9CCAC409959D450075E99B /* XScreenSaverSubclass.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -26589,6 +26714,16 @@
 			isa = PBXTargetDependency;
 			target = AF1AD9E118500F9F00932759 /* XScreenSaverUpdater */;
 			targetProxy = AF36340018540D050086A439 /* PBXContainerItemProxy */;
+		};
+		AF39E283198A11F60064A58D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF4808C0098C3B6C00FB32B8 /* jwxyz */;
+			targetProxy = AF39E284198A11F60064A58D /* PBXContainerItemProxy */;
+		};
+		AF39E2BA198A16920064A58D /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = AF39E282198A11F60064A58D /* WindupRobot */;
+			targetProxy = AF39E2B9198A16920064A58D /* PBXContainerItemProxy */;
 		};
 		AF3C71460D624BF50030CC0D /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
@@ -29273,6 +29408,54 @@
 					"-framework",
 					OpenGL,
 				);
+			};
+			name = Release;
+		};
+		AF39E294198A11F60064A58D /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"-ljwxyz",
+					"-framework",
+					ScreenSaver,
+					"-framework",
+					Cocoa,
+					"-framework",
+					Carbon,
+					"-framework",
+					AGL,
+					"-framework",
+					OpenGL,
+				);
+				PRODUCT_NAME = WindupRobot;
+			};
+			name = Debug;
+		};
+		AF39E295198A11F60064A58D /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"USE_GL=1",
+					"$(GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS)",
+				);
+				"OTHER_LDFLAGS[sdk=macosx*]" = (
+					"-ljwxyz",
+					"-framework",
+					ScreenSaver,
+					"-framework",
+					Cocoa,
+					"-framework",
+					Carbon,
+					"-framework",
+					AGL,
+					"-framework",
+					OpenGL,
+				);
+				PRODUCT_NAME = WindupRobot;
 			};
 			name = Release;
 		};
@@ -35067,6 +35250,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_CFLAGS = "";
 				"OTHER_CFLAGS[sdk=macosx*]" = "-fobjc-gc";
+				"OTHER_LDFLAGS[sdk=macosx*]" = "-headerpad_max_install_names";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				"SDKROOT[arch=arm*]" = iphoneos;
@@ -35083,8 +35267,8 @@
 			buildSettings = {
 				ARCHS = "$(ARCHS_STANDARD_32_64_BIT)";
 				BUNDLE_IDENTIFIER = "org.jwz.${PROJECT_NAME:rfc1034identifier}.${PRODUCT_NAME:rfc1034identifier}";
-				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jamie Zawinski";
-				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "iPhone Distribution: Jamie Zawinski";
+				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Distribution: Jamie Zawinski (4627ATJELP)";
+				"CODE_SIGN_IDENTITY[sdk=iphonesimulator*]" = "iPhone Distribution: Jamie Zawinski (4627ATJELP)";
 				COMBINE_HIDPI_IMAGES = YES;
 				GCC_GENERATE_DEBUGGING_SYMBOLS = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
@@ -35136,6 +35320,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_CFLAGS = "";
 				"OTHER_CFLAGS[sdk=macosx*]" = "-fobjc-gc";
+				"OTHER_LDFLAGS[sdk=macosx*]" = "-headerpad_max_install_names";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				"SDKROOT[arch=arm*]" = iphoneos;
@@ -35264,6 +35449,15 @@
 			buildConfigurations = (
 				AF35E89E0E63823600691F2F /* Debug */,
 				AF35E89F0E63823600691F2F /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		AF39E293198A11F60064A58D /* Build configuration list for PBXNativeTarget "WindupRobot" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				AF39E294198A11F60064A58D /* Debug */,
+				AF39E295198A11F60064A58D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

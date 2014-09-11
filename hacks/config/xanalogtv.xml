@@ -30,11 +30,10 @@
   <xscreensaver-updater />
 
   <_description>
-
-a detailed simulation of an old TV set, including artifacts like snow,
-bloom, distortion, ghosting, and hash noise.  It also simulates the TV
-warming up. It will cycle through 12 channels, some with images you
-give it, and some with color bars or nothing but static.
+An old TV set, including artifacts like snow, bloom, distortion,
+ghosting, and hash noise.  It also simulates the TV warming up. It
+will cycle through 12 channels, some with images you give it, and some
+with color bars or nothing but static.
 
 Written by Trevor Blackwell; 2003.
   </_description>

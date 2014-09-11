@@ -8,6 +8,17 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 5.29</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.29.dmg</link>
+   <description><![CDATA[&bull; Downgraded to Xcode 5.0.2 to make it possible to build savers that will still run on 10.6 and 10.7. Sigh. <BR>&bull; Updated `webcollage' for recent changes.]]></description>
+   <pubDate>Sun, 08 Jun 2014 14:56:08 -0700</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.29.dmg"
+    sparkle:version="5.29"
+    sparkle:dsaSignature="MC0CFQC4BbJnSlHL8xiAJHw/RVUKJ2q23AIUZAPp7UaHNFJd1Hb/Ih9z970pwMg="
+    length="51332404"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 5.28</title>
    <link>http://www.jwz.org/xscreensaver/xscreensaver-5.28.dmg</link>
    <description><![CDATA[&bull; Fixed some compilation problems and intermittent crashes. <BR>&bull; Turned off the OSX 10.6 enable_gc hack. It didn't work.]]></description>
@@ -27,17 +38,6 @@
     sparkle:version="5.27"
     sparkle:dsaSignature="MC0CFQDIHH0Q0NqJ8K0XDDe8lUPpTdpLeQIUW1tdF1xsu0WviJ+EpxOXYiudetM="
     length="50979508"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 5.26</title>
-   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.26.dmg</link>
-   <description><![CDATA[&bull; More auto-updater tweaks.]]></description>
-   <pubDate>Mon, 09 Dec 2013 03:10:57 -0800</pubDate>
-   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.26.dmg"
-    sparkle:version="5.26"
-    sparkle:dsaSignature="MC0CFQCzgimeQA5IyboA3SPR6zm3TG9ARgIUHSj5ODBIu/AryfW1Y55sW8//ZVI="
-    length="50489976"
     type="application/octet-stream" />
   </item>
   <item>

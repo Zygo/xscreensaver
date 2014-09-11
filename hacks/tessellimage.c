@@ -883,30 +883,10 @@ tessellimage_event (Display *dpy, Window window, void *closure, XEvent *event)
       st->button_down_p = False;
       return True;
     }
-  else if (event->xany.type == KeyPress)
+  else if (screenhack_event_helper (dpy, window, event))
     {
-      KeySym keysym = 0;
-      char c = 0;
-      if (event->xany.type == KeyPress || event->xany.type == KeyRelease)
-        XLookupString (&event->xkey, &c, 1, &keysym, 0);
-
-      switch (keysym) {
-      case XK_Left:
-      case XK_Right:
-      case XK_Down:
-      case XK_Up:
-        st->start_time = 0;   /* load next image */
-        return True;
-      }
-
-      switch (c) {
-      case '\r':
-      case '\n':
-      case '+':
-      case '=':
-        st->start_time = 0;
-        return True;
-      }
+      st->start_time = 0;   /* load next image */
+      return True;
     }
 
   return False;
@@ -943,6 +923,7 @@ static const char *tessellimage_defaults [] = {
   "*cache:			True",
 #ifdef USE_IPHONE
   "*ignoreRotation:             True",
+  "*rotateImages:               True",
 #endif
   0
 };

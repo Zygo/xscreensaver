@@ -1,4 +1,4 @@
-/* tronbit, Copyright (c) 2011-2012 Jamie Zawinski <jwz@jwz.org>
+/* tronbit, Copyright (c) 2011-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -317,6 +317,7 @@ draw_histogram (ModeInfo *mi, GLfloat ratio)
         for (i = 0; i < samples; i++)
           {
             GLfloat x = i;
+            if (j >= samples) j = 0;
             GLfloat y = bp->histogram[j];
             GLfloat z = 0;
 
@@ -327,7 +328,7 @@ draw_histogram (ModeInfo *mi, GLfloat ratio)
             y *= scaley;
 
             glVertex3f (x, y, z);
-            if (++j >= samples) j = 0;
+            ++j;
             polys++;
           }
         glEnd();
@@ -373,45 +374,22 @@ bit_handle_event (ModeInfo *mi, XEvent *event)
 {
   bit_configuration *bp = &bps[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      bp->button_down_p = True;
-      gltrackball_start (bp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      bp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 3,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           bp->button_down_p)
-    {
-      gltrackball_track (bp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, bp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &bp->button_down_p))
+    return True;
   else if (event->xany.type == KeyPress)
     {
       KeySym keysym;
       char c = 0;
       XLookupString (&event->xkey, &c, 1, &keysym, 0);
-      if (c == ' ' || c == '1' || c == '0')
+
+      if (keysym == XK_Up || keysym == XK_Left || keysym == XK_Prior)
+        c = '1';
+      else if (keysym == XK_Down || keysym == XK_Right || keysym == XK_Next)
+        c = '0';
+
+      if (c == ' ' || c == '\t' || c == '\n' || c == '1' || c == '0')
         {
           bp->kbd = c;
           return True;
@@ -454,7 +432,7 @@ init_bit (ModeInfo *mi)
                             spin_accel,
                             do_wander ? wander_speed : 0,
                             False);
-    bp->trackball = gltrackball_init ();
+    bp->trackball = gltrackball_init (False);
   }
 
   for (i = 0; i < countof(bp->dlists); i++)

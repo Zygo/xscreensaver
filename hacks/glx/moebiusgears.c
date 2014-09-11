@@ -1,4 +1,4 @@
-/* moebiusgears, Copyright (c) 2007-2008 Jamie Zawinski <jwz@jwz.org>
+/* moebiusgears, Copyright (c) 2007-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -108,50 +108,6 @@ reshape_mgears (ModeInfo *mi, int width, int height)
 }
 
 
-ENTRYPOINT Bool
-mgears_handle_event (ModeInfo *mi, XEvent *event)
-{
-  mgears_configuration *bp = &bps[MI_SCREEN(mi)];
-
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      bp->button_down_p = True;
-      gltrackball_start (bp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      bp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           bp->button_down_p)
-    {
-      gltrackball_track (bp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-
-  return False;
-}
-
-
-
 ENTRYPOINT void 
 init_mgears (ModeInfo *mi)
 {
@@ -192,6 +148,7 @@ init_mgears (ModeInfo *mi)
       glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
     }
 
+  if (! bp->rot)
   {
     double spin_speed   = 0.5;
     double wander_speed = 0.01;
@@ -204,7 +161,7 @@ init_mgears (ModeInfo *mi)
                             do_wander ? wander_speed : 0,
                             False /* don't randomize */
                             );
-    bp->trackball = gltrackball_init ();
+    bp->trackball = gltrackball_init (True);
   }
 
   {
@@ -251,7 +208,15 @@ init_mgears (ModeInfo *mi)
     if (teeth_arg > 45 && size == INVOLUTE_LARGE)
       size = INVOLUTE_MEDIUM;
 
+    if (bp->gears)
+      {
+        for (i = 0; i < bp->ngears; i++)
+          glDeleteLists (bp->gears[i].g.dlist, 1);
+        free (bp->gears);
+      }
+
     bp->ngears = total_gears;
+
     bp->gears = (mogear *) calloc (bp->ngears, sizeof(*bp->gears));
     for (i = 0; i < bp->ngears; i++)
       {
@@ -307,6 +272,51 @@ init_mgears (ModeInfo *mi)
 }
 
 
+ENTRYPOINT Bool
+mgears_handle_event (ModeInfo *mi, XEvent *event)
+{
+  mgears_configuration *bp = &bps[MI_SCREEN(mi)];
+
+  if (gltrackball_event_handler (event, bp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &bp->button_down_p))
+    return True;
+  else if (event->xany.type == KeyPress)
+    {
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+      if (c == '+' || c == '=' ||
+          keysym == XK_Up || keysym == XK_Right || keysym == XK_Next)
+        {
+          MI_COUNT(mi) += 2;
+          init_mgears (mi);
+          return True;
+        }
+      else if (c == '-' || c == '_' ||
+               keysym == XK_Down || keysym == XK_Left || keysym == XK_Prior)
+        {
+          if (MI_COUNT(mi) <= 13)
+            return False;
+          MI_COUNT(mi) -= 2;
+          init_mgears (mi);
+          return True;
+        }
+      else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+        goto DEF;
+    }
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+    DEF:
+      MI_COUNT(mi) = 13 + (2 * (random() % 10));
+      init_mgears (mi);
+      return True;
+    }
+
+  return False;
+}
+
+
 ENTRYPOINT void
 draw_mgears (ModeInfo *mi)
 {
@@ -339,10 +349,7 @@ draw_mgears (ModeInfo *mi)
                   (y - 0.5) * 4,
                   (z - 0.5) * 7);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (bp->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
 

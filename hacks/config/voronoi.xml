@@ -45,8 +45,8 @@
   <xscreensaver-updater />
 
   <_description>
-Draws a randomly-colored Voronoi tessellation, and periodically zooms 
-in and adds new points.  The existing points also wander around.
+A Voronoi tessellation.  Periodically zooms in and adds new points.
+The existing points also wander around.
 
 There are a set of control points on the plane, each at the center of
 a colored cell.  Every pixel within that cell is closer to that cell's

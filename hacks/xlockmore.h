@@ -179,7 +179,8 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 	   refresh_ ## PREFIX,						\
 	   release_ ## PREFIX,						\
 	   PREFIX   ## _handle_event,					\
-	   & PREFIX ## _opts						\
+	   & PREFIX ## _opts,						\
+	   0								\
   };									\
 									\
   struct xscreensaver_function_table					\

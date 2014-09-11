@@ -1,6 +1,6 @@
 /* Munching Squares and Mismunch
  *
- * Portions copyright 1992-2008 Jamie Zawinski <jwz@jwz.org>
+ * Portions copyright 1992-2014 Jamie Zawinski <jwz@jwz.org>
  *
  *   Permission to use, copy, modify, distribute, and sell this
  *   software and its documentation for any purpose is hereby
@@ -417,6 +417,20 @@ munch_reshape (Display *dpy, Window window, void *closure,
 static Bool
 munch_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      int i;
+      st->window_height--;
+      munch_reshape(dpy, window, closure, st->window_width, st->window_height);
+      st->mismunch = random() & 1;
+      for (i = 0; i < st->simul; i++) {
+        free (st->munchers[i]);
+        st->munchers[i] = make_muncher(st);
+      }
+      XClearWindow(dpy, window);
+      return True;
+    }
   return False;
 }
 

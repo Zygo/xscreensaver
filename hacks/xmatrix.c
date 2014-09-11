@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1711,7 +1711,8 @@ xmatrix_reshape (Display *dpy, Window window, void *closure,
                         state->xgwa.width,
                         state->xgwa.height,
                         state->grid_width  - 2,
-                        state->grid_height - 1);
+                        state->grid_height - 1,
+                        0);
 }
 
 static Bool
@@ -1781,8 +1782,14 @@ xmatrix_event (Display *dpy, Window window, void *closure, XEvent *event)
          return True;
 
        default:
-         return False;
+         break;
        }
+   }
+
+ if (screenhack_event_helper (dpy, window, event))
+   {
+     set_mode (state, DRAIN_MATRIX);
+     return True;
    }
 
   return False;
@@ -1818,7 +1825,7 @@ static const char *xmatrix_defaults [] = {
   "*usePipe:		   False",
   "*usePty:                False",
   "*program:		   xscreensaver-text",
-  "*geometry:		   800x600",
+  "*geometry:		   960x720",
   0
 };
 

@@ -1264,7 +1264,7 @@ scale_pixmap (Display ** dpy, GC gc, Pixmap source, int dwidth, int dheight)
     end = dheight * yscale;
     /* Scale height of temp into dest pixmap */
     for (i = 0; i <= end; i += yscale)
-        XCopyArea (*dpy, temp, dest, gc, 0, i, swidth, 1, 0, j++);
+        XCopyArea (*dpy, temp, dest, gc, 0, i, dwidth, 1, 0, j++);
 
     XFreePixmap (*dpy, temp);
     return (Pixmap) dest;

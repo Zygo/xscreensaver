@@ -579,13 +579,7 @@ typedef struct {
   ObjType       objtypes;
   Object       *objects;
   struct patternindex patternindex;
-
-# ifdef HAVE_GLBITMAP
-  XFontStruct *mode_font;
-  GLuint font_dlist;
-# else
   texture_font_data *font_data;
-# endif
 } jugglestruct;
 
 static jugglestruct *juggles = (jugglestruct *) NULL;
@@ -662,12 +656,6 @@ free_juggle(jugglestruct *sp) {
 	free(sp->pattern);
 	sp->pattern = NULL;
   }
-# ifdef HAVE_GLBITMAP
-  if (sp->mode_font!=None) {
-	XFreeFontInfo(NULL,sp->mode_font,1);
-	sp->mode_font = None;
-  }
-# endif /* HAVE_GLBITMAP */
 }
 
 static Bool
@@ -2671,11 +2659,7 @@ init_juggle (ModeInfo * mi)
 
   sp->glx_context = init_GL(mi);
 
-# ifdef HAVE_GLBITMAP
-  load_font (mi->dpy, "titleFont",  &sp->mode_font, &sp->font_dlist);
-# else /* !HAVE_GLBITMAP */
   sp->font_data = load_texture_font (mi->dpy, "titleFont");
-# endif /* !HAVE_GLBITMAP */
 
   reshape_juggle (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
@@ -2708,7 +2692,7 @@ init_juggle (ModeInfo * mi)
     double spin_accel   = 0.05;
     sp->rot = make_rotator (0, spin_speed, 0, 
                             spin_accel, wander_speed, False);
-    sp->trackball = gltrackball_init ();
+    sp->trackball = gltrackball_init (False);
   }
 
   if (only && *only && strcmp(only, " ")) {
@@ -2832,51 +2816,15 @@ juggle_handle_event (ModeInfo *mi, XEvent *event)
 {
   jugglestruct *sp = &juggles[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
+  if (gltrackball_event_handler (event, sp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &sp->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      sp->button_down_p = True;
-      gltrackball_start (sp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      change_juggle (mi);
       return True;
     }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      sp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (sp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           sp->button_down_p)
-    {
-      gltrackball_track (sp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == KeyPress)
-    {
-      KeySym keysym;
-      char c = 0;
-      XLookupString (&event->xkey, &c, 1, &keysym, 0);
-      if (c == ' ' || c == '\n' || c == '\r' || c == '\t')
-        {
-          change_juggle (mi);
-          return True;
-        }
-    }
-
 
   return False;
 }
@@ -3062,12 +3010,7 @@ draw_juggle (ModeInfo *mi)
 	}
   }
 
-  print_gl_string (mi->dpy, 
-# ifdef HAVE_GLBITMAP
-                   sp->mode_font, sp->font_dlist,
-# else /* !HAVE_GLBITMAP */
-                   sp->font_data,
-# endif /* !HAVE_GLBITMAP */
+  print_gl_string (mi->dpy, sp->font_data,
                    mi->xgwa.width, mi->xgwa.height,
                    10, mi->xgwa.height - 10,
                    sp->pattern, False);

@@ -35,8 +35,7 @@
   <xscreensaver-updater />
 
   <_description>
-Draws various rotating extruded shapes that twist around, lengthen,
-and turn inside out.
+Various extruded shapes twist and turn inside out.
 
 Written by Linas Vepstas, David Konerding, and Jamie Zawinski; 1999.
   </_description>

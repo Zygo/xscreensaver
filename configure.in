@@ -193,8 +193,6 @@ AH_TEMPLATE([HAVE_GLE3],[Define this if you have the -lgle from GLE version 3])
 AH_TEMPLATE([HAVE_JWZGLES],[Define this to target the OpenGL ES 1.x API
 	    instead of OpenGL 1.3.])
 
-AH_TEMPLATE([HAVE_GLBITMAP],[Define this if glBitmap exists.])
-
 AH_TEMPLATE([HAVE_XSHM_EXTENSION],
 	    [Define this if you have the X Shared Memory Extension.])
 
@@ -2611,6 +2609,9 @@ pkg_check_version() {
 
 jurassic_gtk=no
 gtk_halfassed=no
+have_gtk_2_22_or_higher=no
+COMMENT_DEMO_GLADE2_GTK_2_22_HEAD=""
+COMMENT_DEMO_GLADE2_GTK_2_22_TAIL=""
 
 if test "$with_gtk" = yes; then
   have_gtk=no
@@ -2661,6 +2662,15 @@ if test "$with_gtk" = yes; then
     AC_DEFINE(HAVE_XML)
   fi
 
+  if test "$have_gtk" = yes; then
+    ok="yes"
+    pkg_check_version gtk+-2.0 2.22
+    have_gtk_2_22_or_higher="$ok"
+    if test "$have_gtk_2_22_or_higher" = yes; then
+      COMMENT_DEMO_GLADE2_GTK_2_22_HEAD="<!-- comment>"
+      COMMENT_DEMO_GLADE2_GTK_2_22_TAIL="</comment -->"
+    fi
+  fi
 fi
 
 
@@ -3183,18 +3193,6 @@ elif test "$with_gles" != no; then
   echo "error: must be yes or no: --with-gles=$with_xpm"
   exit 1
 fi
-
-# May want to phase out glBitmap even in a non-GLES world.
-#
-if test "$have_gles" = yes; then
-  GLFPS_OBJS="fps-gl.o glxfonts.o texfont.o"
-  GLFONT_OBJS=""
-else
-  AC_DEFINE(HAVE_GLBITMAP)
-  GLFPS_OBJS="fps-gl.o glxfonts.o"
-  GLFONT_OBJS="texfont.o"
-fi
-
 
 ###############################################################################
 #
@@ -3941,6 +3939,9 @@ AC_SUBST(DEFAULT_IMAGES_P)
 AC_SUBST(DEFAULT_IMAGE_DIRECTORY)
 AC_SUBST(DEFAULT_TEXT_FILE)
 AC_SUBST(WITH_BROWSER)
+AC_SUBST(COMMENT_DEMO_GLADE2_GTK_2_22_HEAD)
+AC_SUBST(COMMENT_DEMO_GLADE2_GTK_2_22_TAIL)
+
 
 AC_SUBST(OBJCC)
 AC_SUBST(EXES_OSX)
@@ -3967,8 +3968,6 @@ AC_SUBST(GL_KLUDGE)
 AC_SUBST(GLE_EXES)
 AC_SUBST(GLE_KLUDGE)
 AC_SUBST(JWZGLES_OBJS)
-AC_SUBST(GLFPS_OBJS)
-AC_SUBST(GLFONT_OBJS)
 AC_SUBST(GNOME24)
 AC_SUBST(GNOME22)
 AC_SUBST(NOGNOME)
@@ -3991,6 +3990,7 @@ AC_OUTPUT(Makefile
           utils/Makefile
           driver/Makefile
           driver/xscreensaver.pam
+          driver/xscreensaver-demo.glade2
           hacks/Makefile
           hacks/glx/Makefile
           po/Makefile.in

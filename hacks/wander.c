@@ -33,6 +33,7 @@ struct state {
    int          height;
    unsigned int length;
    unsigned int reset;
+   Bool reset_p;
    unsigned int size;
    int          width;
    int delay;
@@ -169,8 +170,9 @@ wander_draw (Display *dpy, Window window, void *closure)
             }
         }
 
-      if ((random () % st->reset_limit) == 0)
+      if (st->reset_p || (random () % st->reset_limit) == 0)
         {
+          st->reset_p = 0;
           st->eraser = erase_window (st->dpy, st->window, st->eraser);
           st->color = st->colors [random () % st->color_count].pixel;
           st->x = random () % st->width;
@@ -221,6 +223,12 @@ wander_reshape (Display *dpy, Window window, void *closure,
 static Bool
 wander_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->reset_p = 1;
+      return True;
+    }
   return False;
 }
 

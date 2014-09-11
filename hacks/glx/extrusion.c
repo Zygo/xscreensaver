@@ -285,7 +285,7 @@ init_rotation (ModeInfo *mi)
                           0.2,
                           0.005,
                           True);
-  gp->trackball = gltrackball_init ();
+  gp->trackball = gltrackball_init (True);
 
   lastx = (random() % (int) (max_lastx - min_lastx)) + min_lastx;
   lasty = (random() % (int) (max_lasty - min_lasty)) + min_lasty;
@@ -484,45 +484,33 @@ extrusion_handle_event (ModeInfo *mi, XEvent *event)
        event->xbutton.button == Button6 ||
        event->xbutton.button == Button7))
     {
-      gltrackball_mousewheel (gp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
     }
   else if (event->xany.type == ButtonPress &&   /* rotate with left button */
            !event->xbutton.state)		/* if no modifier keys */
     {
-      gp->button_down_p = True;
-      gltrackball_start (gp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
     }
   else if (event->xany.type == ButtonPress)  /* deform with other buttons */
     {                                        /* or with modifier keys */
       gp->button2_down_p = True;
-      gp->mouse_start_x = gp->mouse_x = event->xbutton.x;
-      gp->mouse_start_y = gp->mouse_y = event->xbutton.y;
-      return True;
     }
   else if (event->xany.type == ButtonRelease)
     {
       gp->button_down_p = False;
       gp->button2_down_p = False;
-      return True;
     }
   else if (event->xany.type == MotionNotify)
     {
-      if (gp->button_down_p)
-        gltrackball_track (gp->trackball,
-                           event->xmotion.x, event->xmotion.y,
-                           MI_WIDTH (mi), MI_HEIGHT (mi));
       if (gp->button2_down_p)
         {
           gp->mouse_x = event->xmotion.x;
           gp->mouse_y = event->xmotion.y;
         }
-      return True;
     }
+
+  if (gltrackball_event_handler (event, gp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &gp->button_down_p))
+    return True;
 
   return False;
 }

@@ -1,4 +1,4 @@
-/* fps, Copyright (c) 2001-2012 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
  * Draw a frames-per-second display (Xlib and OpenGL).
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -37,26 +37,7 @@ extern void check_gl_error (const char *type);
 static void
 xlockmore_gl_fps_init (fps_state *st)
 {
-#ifdef HAVE_GLBITMAP
-
-  XFontStruct *f = st->font;
-  int first = f->min_char_or_byte2;
-  int last  = f->max_char_or_byte2;
-
-  clear_gl_error ();
-  st->font_dlist = glGenLists ((GLuint) last+1);
-  check_gl_error ("glGenLists");
-
-  xscreensaver_glXUseXFont (st->dpy, f->fid,
-                            first, last-first+1, st->font_dlist + first);
-  check_gl_error ("xscreensaver_glXUseXFont");
-
-#else  /* !HAVE_GLBITMAP */
-
-  clear_gl_error();  /* screw it */
   st->gl_fps_data = load_texture_font (st->dpy, "fpsFont");
-
-#endif /* !HAVE_GLBITMAP */
 }
 
 
@@ -101,12 +82,7 @@ xlockmore_gl_draw_fps (ModeInfo *mi)
       y += lines*lh + st->font->descent;
 
       glColor3f (1, 1, 1);
-      print_gl_string (st->dpy, 
-# ifdef HAVE_GLBITMAP
-                       st->font, st->font_dlist, 
-# else  /* !HAVE_GLBITMAP */
-                       st->gl_fps_data,
-# endif /* !HAVE_GLBITMAP */
+      print_gl_string (st->dpy, st->gl_fps_data,
                        xgwa.width, xgwa.height,
                        st->x, y, st->string, st->clear_p);
     }

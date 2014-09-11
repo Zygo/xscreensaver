@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -31,6 +31,7 @@ struct text_data {
   char *literal, *url;
 
   int columns;
+  int max_lines;
   char *buf;
   int buf_size;
   char *fp;
@@ -392,10 +393,11 @@ strip_rss (char *rss)
 
 
 static void
-wrap_text (char *body, int columns)
+wrap_text (char *body, int columns, int max_lines)
 {
   int col = 0, last_col = 0;
   char *last_space = 0;
+  int lines = 0;
   if (! body) return;
   for (char *p = body; *p; p++) {
     if (*p == '\r' || *p == '\n' || *p == ' ' || *p == '\t') {
@@ -410,6 +412,12 @@ wrap_text (char *body, int columns)
       col = 0;
       last_col = 0;
       last_space = 0;
+      lines++;
+      if (max_lines && lines >= max_lines)
+        {
+          *p = 0;
+          break;
+        }
     } else {
       col++;
     }
@@ -429,7 +437,7 @@ rewrap_text (char *body, int columns)
         *p = ' ';
     }
   }
-  wrap_text (body, columns);
+  wrap_text (body, columns, 0);
 }
 
 
@@ -544,7 +552,7 @@ textclient_getc (text_data *d)
       abort();
     }
     if (d->columns > 10)
-      wrap_text (d->buf, d->columns);
+      wrap_text (d->buf, d->columns, d->max_lines);
     d->fp = d->buf;
   }
 
@@ -566,9 +574,11 @@ textclient_putc (text_data *d, XKeyEvent *k)
 void
 textclient_reshape (text_data *d,
                     int pix_w, int pix_h,
-                    int char_w, int char_h)
+                    int char_w, int char_h,
+                    int max_lines)
 {
   d->columns = char_w;
+  d->max_lines = max_lines;
   rewrap_text (d->buf, d->columns);
 }
 

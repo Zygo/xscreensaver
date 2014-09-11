@@ -974,7 +974,6 @@ static const char *penetrate_defaults [] = {
   "*bgrowth:	5",
   "*lrate:	80",
   "*smart:	False",
-  "*geometry:	800x500",
   0
 };
 

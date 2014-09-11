@@ -1,4 +1,4 @@
-/* kaleidocycle, Copyright (c) 2013 Jamie Zawinski <jwz@jwz.org>
+/* kaleidocycle, Copyright (c) 2013-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -111,37 +111,38 @@ kaleidocycle_handle_event (ModeInfo *mi, XEvent *event)
 {
   kaleidocycle_configuration *bp = &bps[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
+  if (gltrackball_event_handler (event, bp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &bp->button_down_p))
+    return True;
+  else if (event->xany.type == KeyPress)
     {
-      bp->button_down_p = True;
-      gltrackball_start (bp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+      if (c == '+' || c == '.' || c == '>' || c == '=' || c == '+' ||
+          keysym == XK_Right || keysym == XK_Up || keysym == XK_Next)
+        {
+          bp->mode = IN;
+          return True;
+        }
+      else if ((c == '-' || c == ',' || c == '<' || c == '-' || c == '_' ||
+               keysym == XK_Left || keysym == XK_Down || keysym == XK_Prior) &&
+               bp->count > bp->min_count)
+        {
+          bp->mode = OUT;
+          return True;
+        }
+      else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+        goto DEF;
     }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      bp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 5,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           bp->button_down_p)
-    {
-      gltrackball_track (bp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
+    DEF:
+      if (bp->count <= bp->min_count)
+        bp->mode = IN;
+      else
+        bp->mode = (random() & 1) ? IN : OUT;
       return True;
     }
 
@@ -228,7 +229,7 @@ init_kaleidocycle (ModeInfo *mi)
                             False);
     bp->rot2 = make_rotator (twist_speed, 0, 0, twist_accel, 0, True);
 
-    bp->trackball = gltrackball_init ();
+    bp->trackball = gltrackball_init (True);
   }
 
   if (MI_COUNT(mi) < 8) MI_COUNT(mi) = 8;
@@ -424,10 +425,7 @@ draw_kaleidocycle (ModeInfo *mi)
                  (y - 0.5) * 5,
                  (z - 0.5) * 10);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (bp->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
     glRotatef (x * 360, 1, 0, 0);

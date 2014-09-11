@@ -1,5 +1,5 @@
 /* sphere, Copyright (c) 2002 Paul Bourke <pbourke@swin.edu.au>,
- *         Copyright (c) 2010 Jamie Zawinski <jwz@jwz.org>
+ *         Copyright (c) 2010-2014 Jamie Zawinski <jwz@jwz.org>
  * Utility function to create a unit sphere in GL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -36,8 +36,8 @@
 
 typedef struct { GLfloat x, y, z; } XYZ;
 
-int
-unit_sphere (int stacks, int slices, int wire_p)
+static int
+unit_sphere_1 (int stacks, int slices, int wire_p, int half_p)
 {
   int polys = 0;
   int i,j;
@@ -47,6 +47,7 @@ unit_sphere (int stacks, int slices, int wire_p)
   XYZ c = {0, 0, 0};  /* center */
   double r = 1.0;     /* radius */
   int stacks2 = stacks * 2;
+  int end = (half_p ? stacks/2 : stacks);
 
   int mode = (wire_p ? GL_LINE_STRIP : GL_TRIANGLE_STRIP);
 
@@ -70,7 +71,7 @@ unit_sphere (int stacks, int slices, int wire_p)
       goto END;
     }
 
-  for (j = 0; j < stacks; j++)
+  for (j = 0; j < end; j++)
     {
       theta1 = j       * (M_PI+M_PI) / stacks2 - M_PI_2;
       theta2 = (j + 1) * (M_PI+M_PI) / stacks2 - M_PI_2;
@@ -135,4 +136,17 @@ unit_sphere (int stacks, int slices, int wire_p)
   free (array);
 
   return polys;
+}
+
+
+int
+unit_sphere (int stacks, int slices, int wire_p)
+{
+  return unit_sphere_1 (stacks, slices, wire_p, 0);
+}
+
+int
+unit_dome (int stacks, int slices, int wire_p)
+{
+  return unit_sphere_1 (stacks, slices, wire_p, 1);
 }

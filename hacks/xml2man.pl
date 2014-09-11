@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2002-2013 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2002-2014 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -24,7 +24,7 @@ use strict;
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.5 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my ($version) = ('$Revision: 1.6 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -181,6 +181,7 @@ sub xml2man($) {
 
     } elsif (m@^<_description>\s*(.*)\s*</_description>@) {
       $desc = $1;
+    } elsif (m@^<xscreensaver-updater@) {
     } else {
       print STDERR "$progname: ERROR: UNKNOWN: $_\n";
     }

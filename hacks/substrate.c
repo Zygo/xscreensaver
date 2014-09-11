@@ -699,6 +699,12 @@ substrate_reshape (Display *dpy, Window window, void *closure,
 static Bool
 substrate_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->f->cycles = st->max_cycles;
+      return True;
+    }
   return False;
 }
 

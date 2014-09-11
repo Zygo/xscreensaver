@@ -279,7 +279,7 @@ init_topBlock (ModeInfo *mi)
     tb->eyeY=20;
     tb->eyeZ=0;
   }
-  tb->trackball = gltrackball_init ();
+  tb->trackball = gltrackball_init (False);
 }
 
 /* provides the per frame entertainment */
@@ -803,7 +803,12 @@ ENTRYPOINT Bool
 topBlock_handle_event (ModeInfo *mi, XEvent *event)
 {
   topBlockSTATE *tb = &tbs[MI_SCREEN(mi)];
-	if (event->xany.type == KeyPress)    {
+
+  if (gltrackball_event_handler (event, tb->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &tb->button_down_p))
+    return True;
+  else if (event->xany.type == KeyPress) {
     KeySym keysym;
     char c = 0;
     XLookupString (&event->xkey, &c, 1, &keysym, 0);
@@ -848,40 +853,8 @@ topBlock_handle_event (ModeInfo *mi, XEvent *event)
 			return True;
 		}
 	}
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      tb->button_down_p = True;
-      gltrackball_start (tb->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      tb->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (tb->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           tb->button_down_p)
-    {
-      gltrackball_track (tb->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-	return False;
+
+  return False;
 }
 
 /* this is tha main change for v5 compatability and acompanying ENTRYPOINTS */

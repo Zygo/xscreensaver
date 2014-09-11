@@ -1,4 +1,4 @@
-/* molecule, Copyright (c) 2001-2012 Jamie Zawinski <jwz@jwz.org>
+/* molecule, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
  * Draws molecules, based on coordinates from PDB (Protein Data Base) files.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -24,11 +24,7 @@
    http://www.wwpdb.org/docs.html
  */
 
-#ifdef HAVE_GLBITMAP
-# define ATOM_FONT "-*-helvetica-medium-r-normal-*-180-*"
-#else
-# define ATOM_FONT "-*-helvetica-medium-r-normal-*-240-*"
-#endif
+#define ATOM_FONT "-*-helvetica-medium-r-normal-*-240-*"
 
 #define DEFAULTS	"*delay:	10000         \n" \
 			"*showFPS:      False         \n" \
@@ -171,13 +167,7 @@ typedef struct {
   GLuint molecule_dlist;
   GLuint shell_dlist;
 
-# ifdef HAVE_GLBITMAP
-  XFontStruct *xfont1, *xfont2, *xfont3;
-  GLuint font1_dlist, font2_dlist, font3_dlist;
-# else
   texture_font_data *font1_data, *font2_data, *font3_data;
-# endif
-
 
   int polygon_count;
 
@@ -275,15 +265,9 @@ static void
 load_fonts (ModeInfo *mi)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
-# ifdef HAVE_GLBITMAP
-  load_font (mi->dpy, "atomFont",  &mc->xfont1, &mc->font1_dlist);
-  load_font (mi->dpy, "atomFont2", &mc->xfont2, &mc->font2_dlist);
-  load_font (mi->dpy, "titleFont", &mc->xfont3, &mc->font3_dlist);
-# else
   mc->font1_data = load_texture_font (mi->dpy, "atomFont");
   mc->font2_data = load_texture_font (mi->dpy, "atomFont2");
   mc->font3_data = load_texture_font (mi->dpy, "titleFont");
-# endif
 }
 
 
@@ -1234,12 +1218,7 @@ startup_blurb (ModeInfo *mi)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
   const char *s = "Constructing molecules...";
-  print_gl_string (mi->dpy,
-# ifdef HAVE_GLBITMAP
-                   mc->xfont3, mc->font3_dlist,
-# else
-                   mc->font3_data,
-# endif
+  print_gl_string (mi->dpy, mc->font3_data,
                    mi->xgwa.width, mi->xgwa.height,
                    10, mi->xgwa.height - 10,
                    s, False);
@@ -1252,51 +1231,15 @@ molecule_handle_event (ModeInfo *mi, XEvent *event)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
+  if (gltrackball_event_handler (event, mc->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &mc->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      mc->button_down_p = True;
-      gltrackball_start (mc->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      mc->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (mc->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == KeyPress)
-    {
-      KeySym keysym;
-      char c = 0;
-      XLookupString (&event->xkey, &c, 1, &keysym, 0);
-
-      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
-        {
-          GLfloat speed = 4.0;
-          mc->mode = 1;
-          mc->mode_tick = 10 * speed;
-          return True;
-        }
-    }
-  else if (event->xany.type == MotionNotify &&
-           mc->button_down_p)
-    {
-      gltrackball_track (mc->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      GLfloat speed = 4.0;
+      mc->mode = 1;
+      mc->mode_tick = 10 * speed;
       return True;
     }
 
@@ -1360,7 +1303,7 @@ init_molecule (ModeInfo *mi)
                             spin_accel,
                             do_wander ? wander_speed : 0,
                             (spinx && spiny && spinz));
-    mc->trackball = gltrackball_init ();
+    mc->trackball = gltrackball_init (True);
   }
 
   orig_do_labels = do_labels;
@@ -1397,12 +1340,6 @@ draw_labels (ModeInfo *mi)
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
   molecule *m = &mc->molecules[mc->which];
-# ifdef HAVE_GLBITMAP
-  XFontStruct *xfont = (mc->scale_down ? mc->xfont2 : mc->xfont1);
-  GLuint font_dlist  = (mc->scale_down ? mc->font2_dlist : mc->font1_dlist);
-# else
-  texture_font_data *font_data = mc->font1_data;  /* don't scale down */
-# endif
   int i;
 
   if (!do_labels)
@@ -1459,39 +1396,18 @@ draw_labels (ModeInfo *mi)
 
       glRotatef (current_device_rotation(), 0, 0, 1);  /* right side up */
 
-# ifdef HAVE_GLBITMAP
-      glRasterPos3f (0, 0, 0);                     /* draw text here */
-
-      /* Before drawing the string, shift the origin to center
-         the text over the origin of the sphere. */
-      glBitmap (0, 0, 0, 0,
-                -string_width (xfont, a->label, 0) / 2,
-                -xfont->descent,
-                NULL);
-      {
-        int j;
-        for (j = 0; j < strlen(a->label); j++)
-          glCallList (font_dlist + (int)(a->label[j]));
-      }
-# else
       {
         int h;
-        int w = texture_string_width (font_data, a->label, &h);
+        int w = texture_string_width (mc->font1_data, a->label, &h);
         GLfloat s = 1.0 / h;
         GLfloat max = 18;   /* max point size to avoid pixellated text */
         if (h > max) s *= max/h;
         glScalef (s, s, 1);
         glTranslatef (-w/2, h*2/3, 0);
-        print_gl_string (mi->dpy,
-# ifdef HAVE_GLBITMAP
-                         xfont, font_dlist,
-# else
-                         font_data,
-# endif
+        print_gl_string (mi->dpy, mc->font1_data,
                          0, 0, 0, 0,
                          a->label, False);
       }
-# endif
 
       glPopMatrix();
     }
@@ -1654,10 +1570,7 @@ draw_molecule (ModeInfo *mi)
                  (y - 0.5) * 9,
                  (z - 0.5) * 9);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (mc->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (mc->rot, &x, &y, &z, !mc->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);
@@ -1689,12 +1602,7 @@ draw_molecule (ModeInfo *mi)
       if (do_titles && m->label && *m->label)
         {
           set_atom_color (mi, 0, True, 1);
-          print_gl_string (mi->dpy,
-# ifdef HAVE_GLBITMAP
-                           mc->xfont3, mc->font3_dlist,
-# else
-                           mc->font3_data,
-# endif
+          print_gl_string (mi->dpy, mc->font3_data,
                            mi->xgwa.width, mi->xgwa.height,
                            10, mi->xgwa.height - 10,
                            m->label, False);

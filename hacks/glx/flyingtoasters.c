@@ -1,4 +1,4 @@
-/* flyingtoasters, Copyright (c) 2003-2006 Jamie Zawinski <jwz@jwz.org>
+/* flyingtoasters, Copyright (c) 2003-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -50,8 +50,12 @@
 #include "xpm-ximage.h"
 #include <ctype.h>
 
-#include "../images/chromesphere.xpm"
-#include "../images/toast.xpm"
+#define HAVE_TEXTURE
+#ifdef HAVE_TEXTURE
+# include "../images/chromesphere.xpm"
+# include "../images/toast.xpm"
+#endif /* HAVE_TEXTURE */
+
 
 #ifdef USE_GL /* whole file */
 
@@ -118,8 +122,11 @@ typedef struct {
   int track_tick;
 
   GLuint *dlists;
+
+# ifdef HAVE_TEXTURE
   GLuint chrome_texture;
   GLuint toast_texture;
+# endif
 
   int nfloaters;
   floater *floaters;
@@ -306,43 +313,16 @@ toasters_handle_event (ModeInfo *mi, XEvent *event)
 {
   toaster_configuration *bp = &bps[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      bp->button_down_p = True;
-      gltrackball_start (bp->user_trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      bp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (bp->user_trackball, event->xbutton.button, 5,
-                              !event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           bp->button_down_p)
-    {
-      gltrackball_track (bp->user_trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, bp->user_trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &bp->button_down_p))
+    return True;
 
   return False;
 }
 
+
+#ifdef HAVE_TEXTURE
 
 static void
 load_textures (ModeInfo *mi)
@@ -354,6 +334,7 @@ load_textures (ModeInfo *mi)
                       chromesphere_xpm);
   clear_gl_error();
 
+#ifndef HAVE_JWZGLES /* No SPHERE_MAP yet */
   glGenTextures (1, &bp->chrome_texture);
   glBindTexture (GL_TEXTURE_2D, bp->chrome_texture);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -369,6 +350,9 @@ load_textures (ModeInfo *mi)
 # endif
                 xi->data);
   check_gl_error("texture");
+  XDestroyImage (xi);
+  xi = 0;
+#endif
 
   xi = xpm_to_ximage (mi->dpy, mi->xgwa.visual, mi->xgwa.colormap,
                       toast_xpm);
@@ -377,10 +361,8 @@ load_textures (ModeInfo *mi)
   glBindTexture (GL_TEXTURE_2D, bp->toast_texture);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-# ifndef HAVE_JWZGLES
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP);
-# endif
   glPixelStorei (GL_UNPACK_ALIGNMENT, 1);
   glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA,
                 xi->width, xi->height, 0,
@@ -392,11 +374,12 @@ load_textures (ModeInfo *mi)
 # endif
                 xi->data);
   check_gl_error("texture");
-
-  glEnable(GL_TEXTURE_GEN_S);
-  glEnable(GL_TEXTURE_GEN_T);
-  glEnable(GL_TEXTURE_2D);
+  XDestroyImage (xi);
+  xi = 0;
 }
+
+#endif /* HAVE_TEXTURE */
+
 
 
 ENTRYPOINT void 
@@ -446,10 +429,12 @@ init_toasters (ModeInfo *mi)
       glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
     }
 
+# ifdef HAVE_TEXTURE
   if (!wire && do_texture)
     load_textures (mi);
+# endif
 
-  bp->user_trackball = gltrackball_init ();
+  bp->user_trackball = gltrackball_init (False);
   auto_track_init (mi);
 
   bp->dlists = (GLuint *) calloc (countof(all_objs)+1, sizeof(GLuint));
@@ -473,6 +458,7 @@ init_toasters (ModeInfo *mi)
       glScalef (6, 6, 6);
 
       glBindTexture (GL_TEXTURE_2D, 0);
+      glDisable (GL_TEXTURE_2D);
 
       if (i == BASE_TOASTER)
         {
@@ -482,11 +468,18 @@ init_toasters (ModeInfo *mi)
           glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
           glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR,            spec);
           glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS,           shiny);
+#ifdef HAVE_TEXTURE
           if (do_texture)
-            glBindTexture (GL_TEXTURE_2D, bp->chrome_texture);
-# ifndef HAVE_JWZGLES
-          glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
-          glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+            {
+#ifndef HAVE_JWZGLES /* No SPHERE_MAP yet */
+              glEnable (GL_TEXTURE_2D);
+              glEnable (GL_TEXTURE_GEN_S);
+              glEnable (GL_TEXTURE_GEN_T);
+              glBindTexture (GL_TEXTURE_2D, bp->chrome_texture);
+              glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+              glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_SPHERE_MAP);
+#endif
+            }
 # endif
         }
       else if (i == TOAST || i == TOAST_BITTEN)
@@ -497,11 +490,16 @@ init_toasters (ModeInfo *mi)
           glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
           glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR,            spec);
           glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS,           shiny);
+#ifdef HAVE_TEXTURE
           if (do_texture)
-            glBindTexture (GL_TEXTURE_2D, bp->toast_texture);
-# ifndef HAVE_JWZGLES
-          glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
-          glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+            {
+              glEnable (GL_TEXTURE_2D);
+              glEnable (GL_TEXTURE_GEN_S);
+              glEnable (GL_TEXTURE_GEN_T);
+              glBindTexture (GL_TEXTURE_2D, bp->toast_texture);
+              glTexGeni(GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+              glTexGeni(GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
+            }
 # endif
 
           glMatrixMode(GL_TEXTURE);

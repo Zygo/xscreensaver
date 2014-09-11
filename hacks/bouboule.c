@@ -78,7 +78,7 @@ static const char sccsid[] = "@(#)bouboule.c	4.00 97/01/01 xlockmore";
 					"*size:			15      \n"			\
 					"*delay:		20000   \n"			\
 					"*ncolors:		64      \n"			\
-					"*use3d:		False   \n"			\
+					"*use3d:		True    \n"			\
 					"*delta3d:		1.5		\n"			\
 					"*right3d:		red		\n"			\
 					"*left3d:		blue	\n"			\

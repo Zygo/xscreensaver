@@ -300,7 +300,7 @@ generate_potfiles_in:
 	 ( cd $(top_srcdir);			\
 	   echo "# Auto-generated: `LANG=C date`" ;	\
 	   ( grep -l '_("' driver/*.[ch] ;	\
-	     ls driver/*.glade2			\
+	     ls driver/*.glade2.in			\
 		driver/*.desktop.in		\
 		hacks/config/*.xml ) | sort	\
 	  ) > $$tmp &&				\

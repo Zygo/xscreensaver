@@ -546,9 +546,9 @@ install-gnome:: xscreensaver-demo.glade2
 	         $(INSTALL_DIRS) "$(install_prefix)$(GTK_GLADEDIR)"	     ;\
 	  fi								     ;\
 	  target=xscreensaver-demo.glade2				     ;\
-	  echo $(INSTALL_DATA) $(srcdir)/$$target                             \
+	  echo $(INSTALL_DATA) $$target                             \
 	    $(install_prefix)$(GTK_GLADEDIR)/$$target                        ;\
-	  if   $(INSTALL_DATA) $(srcdir)/$$target                             \
+	  if   $(INSTALL_DATA) $$target                             \
 	    $(install_prefix)$(GTK_GLADEDIR)/$$target                        ;\
 	    then true                                                        ;\
           else                                                                \

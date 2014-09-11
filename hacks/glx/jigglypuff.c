@@ -929,33 +929,11 @@ ENTRYPOINT Bool jigglypuff_handle_event(ModeInfo *mi, XEvent *event)
 {
     jigglystruct *js = &jss[MI_SCREEN(mi)];
     
-    if(event->xany.type == ButtonPress &&
-       event->xbutton.button == Button1) {
-	js->button_down = 1;
-	gltrackball_start(js->trackball, event->xbutton.x, event->xbutton.y,
-			  MI_WIDTH(mi), MI_HEIGHT(mi));
-	return True;
-    }
-    else if(event->xany.type == ButtonRelease &&
-	    event->xbutton.button == Button1) {
-	js->button_down = 0;
-	return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (js->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-    else if(event->xany.type == MotionNotify && js->button_down) {
-	gltrackball_track(js->trackball, event->xmotion.x, event->xmotion.y,
-			  MI_WIDTH(mi), MI_HEIGHT(mi));
-	return True;
-    }
+    if (gltrackball_event_handler (event, js->trackball,
+                                   MI_WIDTH (mi), MI_HEIGHT (mi),
+                                   &js->button_down))
+    return True;
+
     return False;
 }
 
@@ -993,10 +971,7 @@ ENTRYPOINT void draw_jigglypuff(ModeInfo *mi)
 	}
     }
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate(js->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     if(js->color_style == COLOR_STYLE_CYCLE) {
 	int i;
@@ -1076,7 +1051,7 @@ ENTRYPOINT void init_jigglypuff(ModeInfo *mi)
     else {
 	MI_CLEARWINDOW(mi);
     }
-    js->trackball = gltrackball_init();
+    js->trackball = gltrackball_init(True);
 /*    _DEBUG("distance : %f\nhold : %f\nspherify : %f\ndamping : %f\ndfact : %f\n",
 	   js->stable_distance, js->hold_strength, js->spherify_strength,
 	   js->damping_velocity, js->damping_factor);

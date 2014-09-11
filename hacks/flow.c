@@ -102,7 +102,6 @@ static const char sccsid[] = "@(#)flow.c	5.00 2000/11/01 xlockmore";
 					"*cycles:      10000 \n" \
 					"*ncolors:     200   \n"
 
-# define flow_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
@@ -773,7 +772,9 @@ init_flow (ModeInfo * mi)
 
 	free_flow(sp);
 	sp->beecount = MI_COUNT(mi);
-	if (sp->beecount < 0) {	/* random variations */
+	if (!sp->beecount) {
+		sp->beecount = 1; /* The camera requires 1 or more */
+	} else if (sp->beecount < 0) {	/* random variations */
 		sp->beecount = NRAND(-sp->beecount) + 1; /* Minimum 1 */
 	}
 
@@ -804,7 +805,7 @@ init_flow (ModeInfo * mi)
 		allocate(sp->csegs, XSegment,
 				 (sp->beecount + BOX_L) * MI_NPIXELS(mi) * sp->taillen);
 		allocate(sp->cnsegs, int, MI_NPIXELS(mi));
-		allocate(sp->old_segs, XSegment, sp->beecount * sp->taillen);
+		allocate(sp->old_segs, XSegment, (sp->beecount + BOX_L) * sp->taillen);
 		allocate(sp->p, dvector, sp->beecount * sp->taillen);
 	}
 
@@ -1223,6 +1224,18 @@ refresh_flow (ModeInfo * mi)
 {
 	if(!dbufp) MI_CLEARWINDOW(mi);
 }
+
+ENTRYPOINT Bool
+flow_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      init_flow (mi);
+      return True;
+    }
+  return False;
+}
+
 
 XSCREENSAVER_MODULE ("Flow", flow)
 

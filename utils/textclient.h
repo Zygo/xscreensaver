@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -24,7 +24,8 @@ extern text_data *textclient_open (Display *);
 extern void textclient_close (text_data *);
 extern void textclient_reshape (text_data *,
                                 int pix_w, int pix_h,
-                                int char_w, int char_h);
+                                int char_w, int char_h,
+                                int max_lines);
 extern int textclient_getc (text_data *);
 extern Bool textclient_putc (text_data *, XKeyEvent *);
 

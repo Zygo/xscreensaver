@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -398,6 +398,12 @@ blitspin_reshape (Display *dpy, Window window, void *closure,
 static Bool
 blitspin_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->start_time = 0;
+      return True;
+    }
   return False;
 }
 
@@ -415,7 +421,7 @@ static const char *blitspin_defaults [] = {
   "*delay2:	500000",
   "*duration:	120",
   "*bitmap:	(default)",
-  "*geometry:	512x512",
+  "*geometry:	1080x1080",
 #ifdef USE_IPHONE
   "*ignoreRotation: True",
 #endif

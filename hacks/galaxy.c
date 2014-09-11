@@ -48,7 +48,6 @@ static const char sccsid[] = "@(#)galaxy.c 4.04 97/07/28 xlockmore";
 					"*ignoreRotation: True \n" \
 
 # define UNIFORM_COLORS
-# define galaxy_handle_event 0
 # include "xlockmore.h"    /* from the xscreensaver distribution */
 #else  /* !STANDALONE */
 # include "xlock.h"     /* from the xlockmore distribution */
@@ -465,5 +464,17 @@ refresh_galaxy(ModeInfo * mi)
 {
  /* Do nothing, it will refresh by itself */
 }
+
+ENTRYPOINT Bool
+galaxy_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      reshape_galaxy (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+  return False;
+}
+
 
 XSCREENSAVER_MODULE ("Galaxy", galaxy)

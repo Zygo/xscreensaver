@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -359,21 +359,8 @@ static Bool
 hexadrop_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   state *st = (state *) closure;
-  Bool bonkp = False;
 
-
-  if (event->type == ButtonPress)
-    bonkp = True;
-  else if (event->type == KeyPress)
-    {
-      KeySym keysym;
-      char c = 0;
-      XLookupString (&event->xkey, &c, 1, &keysym, 0);
-      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
-        bonkp = True;
-    }
-
-  if (bonkp)
+  if (screenhack_event_helper (dpy, window, event))
     {
       cell *c = st->cells;
       st->cells = 0;

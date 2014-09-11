@@ -36,8 +36,7 @@
   <xscreensaver-updater />
 
   <_description>
-This draws a bunch of moving circles which switch from visibility to
-invisibility at intersection points.
+Moving circles switch from visibility to invisibility at intersection points.
 
 Written by Geoffrey Irving; 2003.
   </_description>

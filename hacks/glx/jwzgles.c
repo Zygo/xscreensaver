@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -126,11 +126,12 @@
 
    As a result of that, these savers look wrong:
 
+      atlantis        Uses EYE_PLANE.
       blocktube       Uses SPHERE_MAP.
-      bouncingcow     Uses OBJECT_LINEAR (when run with -texture)
       dnalogo         Uses GLUtesselator.
       extrusion       Uses all kinds of GLUT crap.
-      flyingtoasters  Uses SPHERE_MAP and OBJECT_LINEAR.
+      flyingtoasters  Uses SPHERE_MAP.
+      winduprobot     Uses SPHERE_MAP.
       jigglypuff      Uses SPHERE_MAP (in chrome mode), GL_LINE (in wireframe)
       jigsaw          Uses GLUtesselator.
       lockward        Puts verts in lists without glBegin!
@@ -234,7 +235,9 @@ typedef void (*list_fn_cb) (void);
    or vice versa.  They tend to be passed in different registers,
    and you need to know about that because it's still 1972 here.
  */
-typedef union { const void *v; GLfloat f; GLuint i; } void_int;
+typedef union {
+  const void *v; GLfloat f; GLuint i; GLshort s; GLdouble d;
+} void_int;
 
 typedef struct {		/* saved args for glDrawArrays */
   int binding, size, type, stride, bytes;
@@ -290,17 +293,25 @@ typedef struct {	/* All display lists */
 #define ISENABLED_TEXTURE_2D	(1<<0)
 #define ISENABLED_TEXTURE_GEN_S	(1<<1)
 #define ISENABLED_TEXTURE_GEN_T	(1<<2)
-#define ISENABLED_LIGHTING	(1<<3)
-#define ISENABLED_BLEND		(1<<4)
-#define ISENABLED_DEPTH_TEST	(1<<5)
-#define ISENABLED_CULL_FACE	(1<<6)
-#define ISENABLED_NORMALIZE	(1<<7)
-#define ISENABLED_FOG		(1<<8)
-#define ISENABLED_COLMAT	(1<<9)
-#define ISENABLED_VERT_ARRAY	(1<<10)
-#define ISENABLED_NORM_ARRAY	(1<<11)
-#define ISENABLED_TEX_ARRAY	(1<<12)
-#define ISENABLED_COLOR_ARRAY	(1<<13)
+#define ISENABLED_TEXTURE_GEN_R	(1<<3)
+#define ISENABLED_TEXTURE_GEN_Q	(1<<4)
+#define ISENABLED_LIGHTING	(1<<5)
+#define ISENABLED_BLEND		(1<<6)
+#define ISENABLED_DEPTH_TEST	(1<<7)
+#define ISENABLED_CULL_FACE	(1<<8)
+#define ISENABLED_NORMALIZE	(1<<9)
+#define ISENABLED_FOG		(1<<10)
+#define ISENABLED_COLMAT	(1<<11)
+#define ISENABLED_VERT_ARRAY	(1<<12)
+#define ISENABLED_NORM_ARRAY	(1<<13)
+#define ISENABLED_TEX_ARRAY	(1<<14)
+#define ISENABLED_COLOR_ARRAY	(1<<15)
+
+
+typedef struct {
+  GLuint mode;
+  GLfloat obj[4], eye[4];
+} texgen_state;
 
 
 typedef struct {	/* global state */
@@ -312,13 +323,16 @@ typedef struct {	/* global state */
   int compiling_verts;	/* inside glBegin */
 
   list_set lists;	/* saved lists */
-  unsigned long enabled;
+
+  unsigned long enabled;	/* enabled flags, immediate mode */
+  unsigned long list_enabled;	/* and for the list-in-progress */
+
+  texgen_state s, t, r, q;
 
 } jwzgles_state;
 
 
-static jwzgles_state global_state = { { 0, }, 0, 0, 0, { 0, }, 0, };
-static jwzgles_state *state = &global_state;
+static jwzgles_state *state = 0;
 
 
 #ifdef DEBUG
@@ -574,6 +588,34 @@ make_room (const char *name, void **array, int span, int *count, int *size)
 }
 
 
+void
+jwzgles_reset (void)
+{
+  if (! state)
+    state = (jwzgles_state *) calloc (1, sizeof (*state));
+
+  if (state->lists.lists)
+    {
+      state->compiling_list = 0;
+      if (state->lists.count)
+        jwzgles_glDeleteLists (1, state->lists.count);
+      free (state->lists.lists);
+    }
+
+  if (state->set.verts)   free (state->set.verts);
+  if (state->set.norms)   free (state->set.norms);
+  if (state->set.tex)     free (state->set.tex);
+  if (state->set.color)   free (state->set.color);
+
+  memset (state, 0, sizeof(*state));
+
+  state->s.mode = state->t.mode = state->r.mode = state->q.mode =
+    GL_EYE_LINEAR;
+  state->s.obj[0] = state->s.eye[0] = 1;  /* s = 1 0 0 0 */
+  state->t.obj[1] = state->t.eye[1] = 1;  /* t = 0 1 0 0 */
+}
+
+
 int
 jwzgles_glGenLists (int n)
 {
@@ -630,6 +672,8 @@ jwzgles_glNewList (int id, int mode)
   
   state->compiling_list = id;
 
+  state->list_enabled = state->enabled;
+
   LOG1("glNewList -> %d", id);
 }
 
@@ -638,6 +682,8 @@ static void save_arrays (list_fn *, int);
 static void restore_arrays (list_fn *, int);
 static void copy_array_data (draw_array *, int, const char *);
 static void optimize_arrays (void);
+static void generate_texture_coords (GLuint, GLuint);
+
 
 void
 jwzgles_glEndList (void)
@@ -648,6 +694,7 @@ jwzgles_glEndList (void)
   LOG1("glEndList %d", state->compiling_list);
   optimize_arrays();
   state->compiling_list = 0;
+  state->list_enabled = state->enabled;
 }
 
 
@@ -1763,11 +1810,11 @@ jwzgles_glEnd (void)
   else if (s->mode == GL_POLYGON)
     s->mode = GL_TRIANGLE_FAN;		/* They do the same thing! */
 
-  glVertexPointer   (4, GL_FLOAT, sizeof(*s->verts), s->verts);  /* XYZW */
-  glNormalPointer   (   GL_FLOAT, sizeof(*s->norms), s->norms);  /* XYZ  */
-  glTexCoordPointer (4, GL_FLOAT, sizeof(*s->tex),   s->tex);    /* STRQ */
-  glColorPointer    (4, GL_FLOAT, sizeof(*s->color), s->color);  /* RGBA */
-  CHECK("glColorPointer");
+  jwzgles_glColorPointer   (4,GL_FLOAT, sizeof(*s->color),s->color); /* RGBA */
+  jwzgles_glNormalPointer  (  GL_FLOAT, sizeof(*s->norms),s->norms); /* XYZ  */
+  jwzgles_glTexCoordPointer(4,GL_FLOAT, sizeof(*s->tex),  s->tex);   /* STRQ */
+  jwzgles_glVertexPointer  (4,GL_FLOAT, sizeof(*s->verts),s->verts); /* XYZW */
+  /* glVertexPointer must come after glTexCoordPointer */
 
   /* If there were no calls to glNormal3f inside of glBegin/glEnd,
      don't bother enabling the normals array.
@@ -1781,9 +1828,8 @@ jwzgles_glEnd (void)
 
      Be careful to leave the arrays' enabled/disabled state the same as
      before, or a later caller might end up using one of our arrays by
-     mistake.  #### Actually this isn't quite right: if glEnd is in a
-     list, it saves the trailing enable/disable calls in the list, instead
-     if restoring them to what their state was before the list was run.
+     mistake.  (Remember that jwzgles_glIsEnabled() tracks the enablement
+     of the list-in-progress as well as the global state.)
   */
   was_norm  = jwzgles_glIsEnabled (GL_NORMAL_ARRAY);
   was_tex   = jwzgles_glIsEnabled (GL_TEXTURE_COORD_ARRAY);
@@ -1811,8 +1857,13 @@ jwzgles_glEnd (void)
       jwzgles_glDisableClientState (GL_NORMAL_ARRAY);
     }
 
-  if (s->tcount > 1)
+  if (s->tcount > 1 ||
+      ((state->compiling_list ? state->list_enabled : state->enabled)
+       & (ISENABLED_TEXTURE_GEN_S | ISENABLED_TEXTURE_GEN_T |
+          ISENABLED_TEXTURE_GEN_R | ISENABLED_TEXTURE_GEN_Q)))
     {
+      /* Enable texture coords if any were specified; or if generation
+         is on in immediate mode; or if this list turned on generation. */
       is_tex = 1;
       jwzgles_glEnableClientState (GL_TEXTURE_COORD_ARRAY);
     }
@@ -2464,7 +2515,7 @@ copy_array_data (draw_array *A, int count, const char *name)
   A->stride = stride2;
 
 # ifdef DEBUG
-  dump_array_data (A, count, "saved", name, old);
+  dump_array_data (A, count, "saved", name, 0);
 # endif
 }
 
@@ -2521,6 +2572,17 @@ restore_arrays (list_fn *F, int count)
 void
 jwzgles_glDrawArrays (GLuint mode, GLuint first, GLuint count)
 {
+  /* If we are auto-generating texture coordinates, do that now, after
+     the vertex array was installed, but before drawing, This happens
+     when recording into a list, or in direct mode.  It must happen
+     before calling optimize_arrays() from glEndList().
+   */
+  if (! state->replaying_list &&
+      ((state->compiling_list ? state->list_enabled : state->enabled)
+       & (ISENABLED_TEXTURE_GEN_S | ISENABLED_TEXTURE_GEN_T |
+          ISENABLED_TEXTURE_GEN_R | ISENABLED_TEXTURE_GEN_Q)))
+    generate_texture_coords (first, count);
+
   if (state->compiling_list)
     {
       void_int vv[3];
@@ -2752,93 +2814,6 @@ jwzgles_glInterleavedArrays (GLenum format, GLsizei stride, const void *data)
 
 
 void
-jwzgles_glEnableClientState (GLuint cap)
-{
-  if (state->compiling_list)
-    {
-      void_int vv[1];
-      vv[0].i = cap;
-      list_push ("glEnableClientState", 
-                 (list_fn_cb) &jwzgles_glEnableClientState,
-                 PROTO_I, vv);
-    }
-  else
-    {
-      if (! state->replaying_list)
-        LOG2 ("direct %-12s %s", "glEnableClientState", mode_desc(cap));
-      glEnableClientState (cap);  /* the real one */
-      CHECK("glEnableClientState");
-    }
-
-  switch (cap) {
-  case GL_VERTEX_ARRAY:
-    state->enabled |= ISENABLED_VERT_ARRAY;
-    break;
-  case GL_NORMAL_ARRAY:
-    if (! state->compiling_verts)
-      state->set.ncount += 2;
-    state->enabled |= ISENABLED_NORM_ARRAY;
-    break;
-  case GL_TEXTURE_COORD_ARRAY:
-    if (! state->compiling_verts)
-      state->set.tcount += 2;
-    state->enabled |= ISENABLED_TEX_ARRAY;
-    break;
-  case GL_COLOR_ARRAY:
-    if (! state->compiling_verts)
-      state->set.ccount += 2;
-    state->enabled |= ISENABLED_COLOR_ARRAY;
-    break;
-  default: break;
-  }
-}
-
-
-void
-jwzgles_glDisableClientState (GLuint cap)
-{
-  if (state->compiling_list)
-    {
-      void_int vv[1];
-      vv[0].i = cap;
-      list_push ("glDisableClientState", 
-                 (list_fn_cb) &jwzgles_glDisableClientState,
-                 PROTO_I, vv);
-    }
-  else
-    {
-      if (! state->replaying_list)
-        LOG2 ("direct %-12s %s", "glDisableClientState", mode_desc(cap));
-      glDisableClientState (cap);  /* the real one */
-      CHECK("glDisableClientState");
-    }
-
-  switch (cap) {
-  case GL_VERTEX_ARRAY:
-    state->enabled &= ~ISENABLED_VERT_ARRAY;
-    break;
-  case GL_NORMAL_ARRAY:
-    if (! state->compiling_verts)
-      state->set.ncount = 0;
-    state->enabled &= ~ISENABLED_NORM_ARRAY;
-    break;
-  case GL_TEXTURE_COORD_ARRAY:
-    if (! state->compiling_verts)
-      state->set.tcount = 0;
-    state->enabled &= ~ISENABLED_TEX_ARRAY;
-    break;
-  case GL_COLOR_ARRAY:
-    if (! state->compiling_verts)
-      state->set.ccount = 0;
-    state->enabled &= ~ISENABLED_COLOR_ARRAY;
-    break;
-  default:
-    break;
-  }
-}
-
-
-void
 jwzgles_glMultMatrixf (const GLfloat *m)
 {
   Assert (!state->compiling_verts,
@@ -3058,30 +3033,41 @@ jwzgles_glCopyTexImage2D (GLenum target, GLint level, GLenum internalformat,
 }
 
 
+/* OpenGLES doesn't have auto texture-generation at all!
+   "Oh, just rewrite that code to use GPU shaders", they say.
+   How fucking convenient.
+ */
 void
 jwzgles_glTexGenfv (GLenum coord, GLenum pname, const GLfloat *params)
 {
-  /* OpenGLES doesn't have this at all!
-     "Oh, just rewrite that code to use GPU shaders", they say.
-     How fucking convenient.
+  texgen_state *s;
 
-     So, when this is enabled, we could emit a GL_TEXTURE_COORD_ARRAY
-     and compute coords for each vertex in the current GL_VERTEX_ARRAY
-     as per http://www.opengl.org/wiki/Mathematics_of_glTexGen
-     but holy shit, what a pain in the ass!
+  if (pname == GL_TEXTURE_GEN_MODE)
+    LOG5 ("%sdirect %-12s %s %s %s", 
+          (state->compiling_list || state->replaying_list ? "  " : ""),
+          "glTexGenfv",
+          mode_desc(coord), mode_desc(pname), mode_desc(params[0]));
+  else
+    LOG8 ("%sdirect %-12s %s %s %3.1f %3.1f %3.1f %3.1f",
+          (state->compiling_list || state->replaying_list ? "  " : ""),
+          "glTexGenfv",
+          mode_desc(coord), mode_desc(pname),
+          params[0], params[1], params[2], params[3]);
 
-     For GL_OBJECT_LINEAR, we can just re-use the vertex array as
-     the texture array, using a proper stride.  That's hardly worth
-     the effort, though, because bouncingcow is the only hack that
-     uses that, and not even by default.
-   */
-  Assert (coord == GL_S || coord == GL_T, "glTexGenfv: unimplemented coord");
+  switch (coord) {
+  case GL_S: s = &state->s; break;
+  case GL_T: s = &state->t; break;
+  case GL_R: s = &state->r; break;
+  case GL_Q: s = &state->q; break;
+  default: Assert (0, "glGetTexGenfv: unknown coord"); break;
+  }
 
-  /* This is probably default-ish, so do nothing. */
-  if (pname == GL_EYE_PLANE) return;
-
-  Assert (pname == GL_TEXTURE_GEN_MODE, "glTexGenfv: unimplemented name");
-  Assert (params[0] == GL_EYE_LINEAR, "glTexGenfv: unimplemented mode");
+  switch (pname) {
+  case GL_TEXTURE_GEN_MODE: s->mode = params[0]; break;
+  case GL_OBJECT_PLANE:     memcpy (s->obj, params, sizeof(s->obj)); break;
+  case GL_EYE_PLANE:        memcpy (s->eye, params, sizeof(s->eye)); break;
+  default: Assert (0, "glTexGenfv: unknown pname"); break;
+  }
 }
 
 void
@@ -3089,6 +3075,168 @@ jwzgles_glTexGeni (GLenum coord, GLenum pname, GLint param)
 {
   GLfloat v = param;
   jwzgles_glTexGenfv (coord, pname, &v);
+}
+
+void
+jwzgles_glGetTexGenfv (GLenum coord, GLenum pname, GLfloat *params)
+{
+  texgen_state *s;
+
+  switch (coord) {
+  case GL_S: s = &state->s; break;
+  case GL_T: s = &state->t; break;
+  case GL_R: s = &state->r; break;
+  case GL_Q: s = &state->q; break;
+  default: Assert (0, "glGetTexGenfv: unknown coord"); break;
+  }
+
+  switch (pname) {
+  case GL_TEXTURE_GEN_MODE: params[0] = s->mode; break;
+  case GL_OBJECT_PLANE:     memcpy (params, s->obj, sizeof(s->obj)); break;
+  case GL_EYE_PLANE:        memcpy (params, s->eye, sizeof(s->eye)); break;
+  default: Assert (0, "glGetTexGenfv: unknown pname"); break;
+  }
+
+  if (pname == GL_TEXTURE_GEN_MODE)
+    LOG5 ("%sdirect %-12s %s %s -> %s", 
+          (state->compiling_list || state->replaying_list ? "  " : ""),
+          "glGetTexGenfv",
+          mode_desc(coord), mode_desc(pname), mode_desc(params[0]));
+  else
+    LOG8 ("%sdirect %-12s %s %s -> %3.1f %3.1f %3.1f %3.1f",
+          (state->compiling_list || state->replaying_list ? "  " : ""),
+          "glGetTexGenfv",
+          mode_desc(coord), mode_desc(pname),
+          params[0], params[1], params[2], params[3]);
+}
+
+
+static GLfloat
+dot_product (int rank, GLfloat *a, GLfloat *b)
+{
+  /* A dot B  =>  (A[1] * B[1]) + ... + (A[n] * B[n]) */
+  GLfloat ret = 0;
+  int i;
+  for (i = 0; i < rank; i++) 
+    ret += a[i] * b[i];
+  return ret;
+}
+
+
+
+/* Compute the texture coordinates of the prevailing list of verts as per
+   http://www.opengl.org/wiki/Mathematics_of_glTexGen
+ */
+static void
+generate_texture_coords (GLuint first, GLuint count)
+{
+  GLfloat *tex_out, *tex_array;
+  GLsizei tex_stride;
+  GLuint i;
+  draw_array A = { 0, };
+  char *verts_in;
+
+  struct { GLuint which, flag, mode; GLfloat plane[4]; } tg[4] = {
+    { GL_S, ISENABLED_TEXTURE_GEN_S, 0, { 0, } },
+    { GL_T, ISENABLED_TEXTURE_GEN_T, 0, { 0, } },
+    { GL_R, ISENABLED_TEXTURE_GEN_R, 0, { 0, } },
+    { GL_Q, ISENABLED_TEXTURE_GEN_Q, 0, { 0, }}};
+                                                    
+  int tcoords = 0;
+
+  /* Read the texture plane configs that were stored with glTexGen.
+   */
+  for (i = 0; i < countof(tg); i++)
+    {
+      GLfloat mode = 0;
+      if (! ((state->compiling_list ? state->list_enabled : state->enabled)
+             & tg[i].flag))
+        continue;
+      jwzgles_glGetTexGenfv (tg[i].which, GL_TEXTURE_GEN_MODE, &mode);
+      jwzgles_glGetTexGenfv (tg[i].which, GL_OBJECT_PLANE, tg[i].plane);
+      tg[i].mode = mode;
+      tcoords++;
+    }
+
+  if (tcoords == 0) return;  /* Nothing to do! */
+
+
+  /* Make the array to store our texture coords in. */
+
+  tex_stride = tcoords * sizeof(GLfloat);
+  tex_array = (GLfloat *) calloc (first + count, tex_stride);
+  tex_out = tex_array;
+
+
+  /* Read the prevailing vertex array, that was stored with
+     glVertexPointer or glInterleavedArrays.
+   */
+  glGetIntegerv (GL_VERTEX_ARRAY_BUFFER_BINDING, &A.binding);
+  glGetIntegerv (GL_VERTEX_ARRAY_SIZE,    &A.size);
+  glGetIntegerv (GL_VERTEX_ARRAY_TYPE,    &A.type);
+  glGetIntegerv (GL_VERTEX_ARRAY_STRIDE,  &A.stride);
+  glGetPointerv (GL_VERTEX_ARRAY_POINTER, &A.data);
+  A.bytes = count * A.stride;
+
+  verts_in = (char *) A.data;
+
+  /* Iterate over each vertex we're drawing.
+     We just skip the ones < start, but the tex array has
+     left room for zeroes there anyway.
+   */
+  for (i = first; i < first + count; i++)
+    {
+      GLfloat vert[4] = { 0, };
+      int j, k;
+
+      /* Extract this vertex into `vert' as a float, whatever its type was. */
+      for (j = 0; j < A.size; j++)
+        {
+          switch (A.type) {
+          case GL_SHORT:  vert[j] = ((GLshort *)  verts_in)[j]; break;
+          case GL_INT:    vert[j] = ((GLint *)    verts_in)[j]; break;
+          case GL_FLOAT:  vert[j] = ((GLfloat *)  verts_in)[j]; break;
+          case GL_DOUBLE: vert[j] = ((GLdouble *) verts_in)[j]; break;
+          default: Assert (0, "unknown vertex type"); break;
+          }
+        }
+
+      /* Compute the texture coordinate for this vertex.
+         For GL_OBJECT_LINEAR, these coordinates are static, and can go
+         into the display list.  But for GL_EYE_LINEAR, GL_SPHERE_MAP and
+         GL_REFLECTION_MAP, they depend on the prevailing ModelView matrix,
+         and so need to be computed afresh each time glDrawArrays is called.
+         Unfortunately, our verts and norms are gone by then, dumped down
+         into the VBO and discarded from CPU RAM.  Bleh.
+       */
+      for (j = 0, k = 0; j < countof(tg); j++)
+        {
+          if (! ((state->compiling_list ? state->list_enabled : state->enabled)
+                 & tg[j].flag))
+            continue;
+          switch (tg[j].mode) {
+          case GL_OBJECT_LINEAR:
+            tex_out[k] = dot_product (4, vert, tg[j].plane);
+            break;
+          default:
+            Assert (0, "unimplemented texture mode");
+            break;
+          }
+          k++;
+        }
+
+      /* fprintf (stderr, "%4d: V %-5.1f %-5.1f %-5.1f  T %-5.1f %-5.1f\n",
+               i, vert[0], vert[1], vert[2], tex_out[0], tex_out[1]); */
+
+      /* Move verts_in and tex_out forward to the next vertex by stride. */
+      verts_in += A.stride;
+      tex_out = (GLfloat *) (((char *) tex_out) + tex_stride);
+    }
+
+  jwzgles_glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+  jwzgles_glTexCoordPointer (tcoords, GL_FLOAT, tex_stride,
+                             (GLvoid *) tex_array);
+  free (tex_array);
 }
 
 
@@ -3194,127 +3342,156 @@ jwzgles_glClearDepth (GLfloat d)
 }
 
 
+/* When in immediate mode, we store a bit into state->enabled, and also
+   call the real glEnable() / glDisable().
+
+   When recording a list, we store a bit into state->list_enabled instead,
+   so that we can see what the prevailing enablement state will be when
+   the list is run.
+
+   set: 1 = set, -1 = clear, 0 = query.
+*/
+static int
+enable_disable (GLuint bit, int set)
+{
+  int result = (set > 0);
+  int omitp = 0;
+  int csp = 0;
+  unsigned long flag = 0;
+
+  switch (bit) {
+  case GL_TEXTURE_1D:     /* We implement 1D textures as 2D textures. */
+  case GL_TEXTURE_2D:     flag = ISENABLED_TEXTURE_2D;		     break;
+  case GL_TEXTURE_GEN_S:  flag = ISENABLED_TEXTURE_GEN_S; omitp = 1; break;
+  case GL_TEXTURE_GEN_T:  flag = ISENABLED_TEXTURE_GEN_T; omitp = 1; break;
+  case GL_TEXTURE_GEN_R:  flag = ISENABLED_TEXTURE_GEN_R; omitp = 1; break;
+  case GL_TEXTURE_GEN_Q:  flag = ISENABLED_TEXTURE_GEN_Q; omitp = 1; break;
+  case GL_LIGHTING:       flag = ISENABLED_LIGHTING;		     break;
+  case GL_BLEND:          flag = ISENABLED_BLEND;		     break;
+  case GL_DEPTH_TEST:     flag = ISENABLED_DEPTH_TEST;		     break;
+  case GL_CULL_FACE:      flag = ISENABLED_CULL_FACE;		     break;
+  case GL_NORMALIZE:      flag = ISENABLED_NORMALIZE;		     break;
+  case GL_FOG:            flag = ISENABLED_FOG;			     break;
+  case GL_COLOR_MATERIAL: flag = ISENABLED_COLMAT;		     break;
+
+  /* Maybe technically these only work with glEnableClientState,
+     but we treat that as synonymous with glEnable. */
+  case GL_VERTEX_ARRAY:   flag = ISENABLED_VERT_ARRAY;     csp = 1;  break;
+  case GL_NORMAL_ARRAY:   flag = ISENABLED_NORM_ARRAY;     csp = 1;  break;
+  case GL_COLOR_ARRAY:    flag = ISENABLED_COLOR_ARRAY;    csp = 1;  break;
+  case GL_TEXTURE_COORD_ARRAY: flag = ISENABLED_TEX_ARRAY; csp = 1;  break;
+
+  default:
+    Assert (set != 0, "glIsEnabled unimplemented bit");
+    break;
+  }
+
+  if (set)  /* setting or unsetting, not querying */
+    {
+      const char *fns[4] = { "glEnable", "glDisable",
+                             "glEnableClientState", "glDisableClientState" };
+      list_fn_cb fs[4] = { (list_fn_cb) &jwzgles_glEnable,
+                           (list_fn_cb) &jwzgles_glDisable,
+                           (list_fn_cb) &jwzgles_glEnableClientState,
+                           (list_fn_cb) &jwzgles_glDisableClientState };
+      const char *fn = fns[(csp ? 2 : 0) + (set < 0 ? 1 : 0)];
+      list_fn_cb  f  =  fs[(csp ? 2 : 0) + (set < 0 ? 1 : 0)];
+
+      Assert (!state->compiling_verts,
+              "glEnable/glDisable not allowed inside glBegin");
+
+      if (state->compiling_list)
+        {
+          void_int vv[1];
+          vv[0].i = bit;
+          list_push (fn, f,PROTO_I, vv);
+        }
+
+      if (! state->replaying_list &&
+          ! state->compiling_list)
+        LOG2 ("direct %-12s %s", fn, mode_desc(bit));
+
+      if (csp && !state->compiling_verts)
+        {
+          if (set > 0)
+            switch (bit) {
+            case GL_NORMAL_ARRAY: state->set.ncount        += 2; break;
+            case GL_TEXTURE_COORD_ARRAY: state->set.tcount += 2; break;
+            case GL_COLOR_ARRAY: state->set.ccount         += 2; break;
+            default: break;
+            }
+          else
+            switch (bit) {
+            case GL_NORMAL_ARRAY: state->set.ncount        = 0; break;
+            case GL_TEXTURE_COORD_ARRAY: state->set.tcount = 0; break;
+            case GL_COLOR_ARRAY: state->set.ccount         = 0; break;
+            default: break;
+            }
+        }
+
+      if (omitp || state->compiling_list)
+        ;
+      else if (set > 0 && csp)
+        glEnableClientState (bit);	/* the real one */
+      else if (set < 0 && csp)
+        glDisableClientState (bit);	/* the real one */
+      else if (set > 0)
+        glEnable (bit);			/* the real one */
+      else
+        glDisable (bit);		/* the real one */
+
+      CHECK(fn);
+    }
+
+  /* Store the bit in our state as well, or query it.
+   */
+  if (flag)
+    {
+      unsigned long *enabled = (state->compiling_list
+                                ? &state->list_enabled
+                                : &state->enabled);
+      if (set > 0)
+        *enabled |= flag;
+      else if (set < 0)
+        *enabled &= ~flag;
+      else
+        result = !!(*enabled & flag);
+    }
+
+  return result;
+}
+
+
 void
 jwzgles_glEnable (GLuint bit)
 {
-  Assert (!state->compiling_verts, "glEnable not allowed inside glBegin");
-  if (state->compiling_list)
-    {
-      void_int vv[1];
-      vv[0].i = bit;
-      list_push ("glEnable", (list_fn_cb) &jwzgles_glEnable, PROTO_I, vv);
-    }
-  else
-    {
-      /* We implement 1D textures as 2D textures. */
-      if (bit == GL_TEXTURE_1D) bit = GL_TEXTURE_2D;
-
-      if (! state->replaying_list)
-        LOG2 ("direct %-12s %s", "glEnable", mode_desc(bit));
-      glEnable (bit);  /* the real one */
-      CHECK("glEnable");
-
-      switch (bit) {
-      case GL_TEXTURE_2D: state->enabled |= ISENABLED_TEXTURE_2D; break;
-      case GL_TEXTURE_GEN_S: state->enabled |= ISENABLED_TEXTURE_GEN_S; break;
-      case GL_TEXTURE_GEN_T: state->enabled |= ISENABLED_TEXTURE_GEN_T; break;
-      case GL_LIGHTING: state->enabled |= ISENABLED_LIGHTING; break;
-      case GL_BLEND: state->enabled |= ISENABLED_BLEND; break;
-      case GL_DEPTH_TEST: state->enabled |= ISENABLED_DEPTH_TEST; break;
-      case GL_CULL_FACE: state->enabled |= ISENABLED_CULL_FACE; break;
-      case GL_NORMALIZE: state->enabled |= ISENABLED_NORMALIZE; break;
-      case GL_FOG: state->enabled |= ISENABLED_FOG; break;
-      case GL_COLOR_MATERIAL: state->enabled |= ISENABLED_COLMAT; break;
-
-      /* Do these work with glEnable or only with glEnableClientState? */
-      case GL_VERTEX_ARRAY: state->enabled |= ISENABLED_VERT_ARRAY; break;
-      case GL_NORMAL_ARRAY: state->enabled |= ISENABLED_NORM_ARRAY; break;
-      case GL_TEXTURE_COORD_ARRAY: state->enabled |= ISENABLED_TEX_ARRAY;break;
-      case GL_COLOR_ARRAY:  state->enabled |= ISENABLED_COLOR_ARRAY; break;
-
-      default: break;
-      }
-    }
+  enable_disable (bit, 1);
 }
-
 
 void
 jwzgles_glDisable (GLuint bit)
 {
-  Assert (!state->compiling_verts, "glDisable not allowed inside glBegin");
-  if (state->compiling_list)
-    {
-      void_int vv[1];
-      vv[0].i = bit;
-      list_push ("glDisable", (list_fn_cb) &jwzgles_glDisable, PROTO_I, vv);
-    }
-  else
-    {
-      /* We implement 1D textures as 2D textures. */
-      if (bit == GL_TEXTURE_1D) bit = GL_TEXTURE_2D;
-
-      if (! state->replaying_list)
-        LOG2 ("direct %-12s %s", "glDisable", mode_desc(bit));
-      glDisable (bit);  /* the real one */
-      CHECK("glDisable");
-
-      switch (bit) {
-      case GL_TEXTURE_2D: state->enabled &= ~ISENABLED_TEXTURE_2D; break;
-      case GL_TEXTURE_GEN_S: state->enabled &= ~ISENABLED_TEXTURE_GEN_S; break;
-      case GL_TEXTURE_GEN_T: state->enabled &= ~ISENABLED_TEXTURE_GEN_T; break;
-      case GL_LIGHTING: state->enabled &= ~ISENABLED_LIGHTING; break;
-      case GL_BLEND: state->enabled &= ~ISENABLED_BLEND; break;
-      case GL_DEPTH_TEST: state->enabled &= ~ISENABLED_DEPTH_TEST; break;
-      case GL_CULL_FACE: state->enabled &= ~ISENABLED_CULL_FACE; break;
-      case GL_NORMALIZE: state->enabled &= ~ISENABLED_NORMALIZE; break;
-      case GL_FOG: state->enabled &= ~ISENABLED_FOG; break;
-      case GL_COLOR_MATERIAL: state->enabled &= ~ISENABLED_COLMAT; break;
-
-      /* Do these work with glEnable or only with glEnableClientState? */
-      case GL_VERTEX_ARRAY: state->enabled &= ~ISENABLED_VERT_ARRAY; break;
-      case GL_NORMAL_ARRAY: state->enabled &= ~ISENABLED_NORM_ARRAY; break;
-      case GL_TEXTURE_COORD_ARRAY: state->enabled &= ~ISENABLED_TEX_ARRAY;break;
-      case GL_COLOR_ARRAY:  state->enabled &= ~ISENABLED_COLOR_ARRAY; break;
-
-      default: break;
-      }
-    }
+  enable_disable (bit, -1);
 }
-
 
 GLboolean
 jwzgles_glIsEnabled (GLuint bit)
 {
- /*
-  Assert (!state->compiling_verts, "glIsEnabled not allowed inside glBegin");
-  Assert (!state->compiling_list,  "glIsEnabled not allowed inside glNewList");
-  */
-
-  /* We implement 1D textures as 2D textures. */
-  if (bit == GL_TEXTURE_1D) bit = GL_TEXTURE_2D;
-
-  switch (bit) {
-  case GL_TEXTURE_2D: return !!(state->enabled & ISENABLED_TEXTURE_2D);
-  case GL_TEXTURE_GEN_S: return !!(state->enabled & ISENABLED_TEXTURE_GEN_S);
-  case GL_TEXTURE_GEN_T: return !!(state->enabled & ISENABLED_TEXTURE_GEN_T);
-  case GL_LIGHTING: return !!(state->enabled & ISENABLED_LIGHTING);
-  case GL_BLEND: return !!(state->enabled & ISENABLED_BLEND);
-  case GL_DEPTH_TEST: return !!(state->enabled & ISENABLED_DEPTH_TEST);
-  case GL_CULL_FACE: return !!(state->enabled & ISENABLED_CULL_FACE);
-  case GL_NORMALIZE: return !!(state->enabled & ISENABLED_NORMALIZE);
-  case GL_FOG: return !!(state->enabled & ISENABLED_FOG);
-  case GL_COLOR_MATERIAL: return !!(state->enabled & ISENABLED_COLMAT);
-
-  /* Do these work with glEnable or only with glEnableClientState?
-     We need to query them, and there is no glIsClientStateEnabled.
-   */
-  case GL_VERTEX_ARRAY: return !!(state->enabled & ISENABLED_VERT_ARRAY);
-  case GL_NORMAL_ARRAY: return !!(state->enabled & ISENABLED_NORM_ARRAY);
-  case GL_TEXTURE_COORD_ARRAY: return !!(state->enabled & ISENABLED_TEX_ARRAY);
-  case GL_COLOR_ARRAY: return !!(state->enabled & ISENABLED_COLOR_ARRAY);
-  default: Assert (0, "glIsEnabled unimplemented bit"); break;
-  }
+  return enable_disable (bit, 0);
 }
+
+void
+jwzgles_glEnableClientState (GLuint cap)
+{
+  enable_disable (cap, 1);
+}
+
+void
+jwzgles_glDisableClientState (GLuint cap)
+{
+  enable_disable (cap, -1);
+}
+
 
 
 /* The spec says that OpenGLES 1.x doesn't implement glGetFloatv.
@@ -3459,6 +3636,7 @@ jwzgles_glVertexPointer (GLuint size, GLuint type, GLuint stride,
   CHECK("glVertexPointer");
 }
 
+
 void
 jwzgles_glNormalPointer (GLuint type, GLuint stride, const GLvoid *ptr)
 {
@@ -3575,7 +3753,9 @@ jwzgles_glBindTexture (GLuint target, GLuint texture)
       list_push ("glBindTexture", (list_fn_cb) &jwzgles_glBindTexture,
                  PROTO_II, vv);
     }
-  else
+
+  /* Do it immediately as well, for generate_texture_coords */
+  /* else */
     {
       if (! state->replaying_list)
         LOG3 ("direct %-12s %s %d", "glBindTexture", 

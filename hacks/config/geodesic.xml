@@ -40,7 +40,7 @@
   <xscreensaver-updater />
 
   <_description>
-Animates a mesh geodesic sphere of increasing and decreasing complexity.
+A mesh geodesic sphere of increasing and decreasing complexity.
 
 A geodesic sphere is an icosohedron whose equilateral faces are
 sub-divided into non-equilateral triangles to more closely approximate

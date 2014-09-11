@@ -51,7 +51,6 @@ static const char sccsid[] = "@(#)triangle.c	4.04 97/07/28 xlockmore";
 					"*fpsSolid: true \n" \
 
 # define SMOOTH_COLORS
-# define triangle_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"			/* in xlockmore distribution */
@@ -365,5 +364,17 @@ refresh_triangle (ModeInfo * mi)
 {
 	/* Do nothing, it will refresh by itself */
 }
+
+ENTRYPOINT Bool
+triangle_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      reshape_triangle (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+  return False;
+}
+
 
 XSCREENSAVER_MODULE ("Triangle", triangle)

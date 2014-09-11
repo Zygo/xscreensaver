@@ -193,44 +193,28 @@ setup_lights(void)
     glEnable(GL_LIGHT0);
 }
 
+static void get_texture(ModeInfo *);
+
+
 ENTRYPOINT Bool
 flipflop_handle_event (ModeInfo *mi, XEvent *event)
 {
     Flipflopcreen *c = &qs[MI_SCREEN(mi)];
 
-    if (event->xany.type == ButtonPress &&
-        event->xbutton.button == Button1)
+  if (gltrackball_event_handler (event, c->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &c->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      if (!textured || c->got_texture)
         {
-            c->button_down_p = True;
-            gltrackball_start (c->trackball,
-                               event->xbutton.x, event->xbutton.y,
-                               MI_WIDTH (mi), MI_HEIGHT (mi));
-            return True;
+          textured = 1;
+          c->got_texture = False;
+          get_texture (mi);
+          return True;
         }
-    else if (event->xany.type == ButtonRelease &&
-             event->xbutton.button == Button1)
-        {
-            c->button_down_p = False;
-            return True;
-        }
-    else if (event->xany.type == ButtonPress &&
-             (event->xbutton.button == Button4 ||
-              event->xbutton.button == Button5 ||
-              event->xbutton.button == Button6 ||
-              event->xbutton.button == Button7))
-        {
-            gltrackball_mousewheel (c->trackball, event->xbutton.button, 5,
-                                    !event->xbutton.state);
-            return True;
-        }
-    else if (event->xany.type == MotionNotify &&
-             c->button_down_p)
-        {
-            gltrackball_track (c->trackball,
-                               event->xmotion.x, event->xmotion.y,
-                               MI_WIDTH (mi), MI_HEIGHT (mi));
-            return True;
-        }
+    }
 
     return False;
 }
@@ -405,7 +389,7 @@ init_flipflop(ModeInfo *mi)
 
     c = &qs[screen];
     c->window = MI_WINDOW(mi);
-    c->trackball = gltrackball_init ();
+    c->trackball = gltrackball_init (False);
 
     c->flipspeed = 0.03;
     c->reldist = 1;

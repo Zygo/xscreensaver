@@ -55,12 +55,11 @@ static const char sccsid[] = "@(#)demon.c	5.00 2000/11/01 xlockmore";
 # define DEFAULTS	"*delay:   50000 \n" \
 					"*count:   0     \n" \
 					"*cycles:  1000  \n" \
-					"*size:    -7    \n" \
+					"*size:    -30   \n" \
 					"*ncolors: 64    \n" \
 					"*fpsSolid: true    \n" \
 				    "*ignoreRotation: True  \n" \
 
-# define demon_handle_event 0
 # define UNIFORM_COLORS
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -983,6 +982,19 @@ refresh_demon (ModeInfo * mi)
 	dp->redrawing = 1;
 	dp->redrawpos = 0;
 }
+
+ENTRYPOINT Bool
+demon_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      reshape_demon (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+  return False;
+}
+
+
 
 XSCREENSAVER_MODULE ("Demon", demon)
 

@@ -94,7 +94,6 @@ static const char sccsid[] = "@(#)loop.c	5.01 2000/03/15 xlockmore";
 					"*ignoreRotation: True \n" \
 
 # define UNIFORM_COLORS
-# define loop_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
@@ -1697,6 +1696,17 @@ refresh_loop (ModeInfo * mi)
 	MI_CLEARWINDOW(mi);
 	lp->redrawing = 1;
 	lp->redrawpos = lp->by * lp->ncols + lp->bx;
+}
+
+ENTRYPOINT Bool
+loop_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      reshape_loop (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+  return False;
 }
 
 XSCREENSAVER_MODULE ("Loop", loop)

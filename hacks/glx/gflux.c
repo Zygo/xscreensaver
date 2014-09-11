@@ -42,7 +42,7 @@
 #ifdef STANDALONE
 #define DEFAULTS                        "*delay:		20000\n" \
 										"*showFPS:      False\n" \
-                                        "*mode:         light\n" \
+                                        "*mode:         grab\n"  \
                                         "*useSHM:       True \n" 
 
 
@@ -240,38 +240,16 @@ gflux_handle_event (ModeInfo *mi, XEvent *event)
 {
   gfluxstruct *gp = &gfluxes[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
+  if (gltrackball_event_handler (event, gp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &gp->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      gp->button_down_p = True;
-      gltrackball_start (gp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      gp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (gp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           gp->button_down_p)
-    {
-      gltrackball_track (gp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
+      if (_draw == grab) {
+        grabTexture(gp);
+        return True;
+      }
     }
 
   return False;
@@ -281,10 +259,7 @@ gflux_handle_event (ModeInfo *mi, XEvent *event)
 static void
 userRot(gfluxstruct *gp)
 {
-  /* Do it twice because we don't track the device's orientation. */
-  glRotatef( current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (gp->trackball);
-  glRotatef(-current_device_rotation(), 0, 0, 1);
 }
 
 /* draw the gflux once */
@@ -387,13 +362,13 @@ ENTRYPOINT void init_gflux(ModeInfo * mi)
     }
     gp = &gfluxes[screen];
 
-    gp->trackball = gltrackball_init ();
+    gp->trackball = gltrackball_init (True);
 
     gp->time = frand(1000.0);  /* don't run two screens in lockstep */
 
     {
       char *s = get_string_resource (mi->dpy, "mode", "Mode");
-      if (!s || !*s)                       _draw = wire;
+      if (!s || !*s)                       _draw = grab;
       else if (!strcasecmp (s, "wire"))    _draw = wire;
       else if (!strcasecmp (s, "solid"))   _draw = solid;
       else if (!strcasecmp (s, "light"))   _draw = light;

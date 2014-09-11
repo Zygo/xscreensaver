@@ -1,4 +1,4 @@
-/* unknownpleasures, Copyright (c) 2013 Jamie Zawinski <jwz@jwz.org>
+/* unknownpleasures, Copyright (c) 2013-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -135,25 +135,10 @@ unk_handle_event (ModeInfo *mi, XEvent *event)
   unk_configuration *bp = &bps[MI_SCREEN(mi)];
 
   if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      bp->button_down_p = True;
-      gltrackball_start (bp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      bp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
+      (event->xbutton.button == Button4 ||
+       event->xbutton.button == Button5 ||
+       event->xbutton.button == Button6 ||
+       event->xbutton.button == Button7))
     {
       int b = event->xbutton.button;
       int speed = 1;
@@ -169,26 +154,15 @@ unk_handle_event (ModeInfo *mi, XEvent *event)
       gltrackball_mousewheel (bp->trackball, b, speed, !!event->xbutton.state);
       return True;
     }
-  else if (event->xany.type == MotionNotify &&
-           bp->button_down_p)
+  else if (gltrackball_event_handler (event, bp->trackball,
+                                      MI_WIDTH (mi), MI_HEIGHT (mi),
+                                      &bp->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      gltrackball_track (bp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      bp->orthop = !bp->orthop;
+      reshape_unk (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
       return True;
-    }
-  else if (event->xany.type == KeyPress)
-    {
-      KeySym keysym;
-      char c = 0;
-      XLookupString (&event->xkey, &c, 1, &keysym, 0);
-      if (c == ' ')
-        {
-          bp->orthop = !bp->orthop;
-          reshape_unk (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
-          return True;
-        }
-      return False;
     }
 
   return False;
@@ -225,7 +199,7 @@ init_unk (ModeInfo *mi)
   bp->count = MI_COUNT(mi);
   if (bp->count < 1) bp->count = 1;
 
-  bp->trackball = gltrackball_init ();
+  bp->trackball = gltrackball_init (False);
 
   if (MI_COUNT(mi) < 1) MI_COUNT(mi) = 1;
 

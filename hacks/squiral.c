@@ -239,6 +239,13 @@ squiral_reshape (Display *dpy, Window window, void *closure,
 static Bool
 squiral_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      squiral_init_1 (st);
+      XClearWindow (dpy, window);
+      return True;
+    }
   return False;
 }
 

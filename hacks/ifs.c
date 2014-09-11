@@ -516,6 +516,20 @@ ifs_reshape (Display *dpy, Window window, void *closure,
 static Bool
 ifs_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *)closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      int i;
+      for (i = 0; i < st->lensnum; i++) {
+        CreateLens(st,
+                   myrandom(1)-0.5,
+                   myrandom(1),
+                   myrandom(4)-2,
+                   myrandom(4)+2,
+                   &st->lenses[i]);
+      }
+      return True;
+    }
   return False;
 }
 

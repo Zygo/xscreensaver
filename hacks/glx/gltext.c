@@ -306,39 +306,10 @@ text_handle_event (ModeInfo *mi, XEvent *event)
 {
   text_configuration *tp = &tps[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      tp->button_down_p = True;
-      gltrackball_start (tp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      tp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (tp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           tp->button_down_p)
-    {
-      gltrackball_track (tp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, tp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &tp->button_down_p))
+    return True;
 
   return False;
 }
@@ -398,7 +369,7 @@ init_text (ModeInfo *mi)
     tp->rot2 = (face_front_p
                 ? make_rotator (0, 0, 0, 0, tilt_speed, True)
                 : 0);
-    tp->trackball = gltrackball_init ();
+    tp->trackball = gltrackball_init (False);
   }
 
   tp->ncolors = 255;

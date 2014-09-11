@@ -1,5 +1,5 @@
 /* dotfile.c --- management of the ~/.xscreensaver file.
- * xscreensaver, Copyright (c) 1998-2013 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -309,6 +309,7 @@ static const char * const prefs[] = {
   "overlayTextBackground",	/* not saved -- X resources only */
   "overlayTextForeground",	/* not saved -- X resources only */
   "bourneShell",		/* not saved -- X resources only */
+  "authWarningSlack",
   0
 };
 
@@ -865,6 +866,7 @@ write_init_file (Display *dpy,
       CHECK("overlayTextBackground") continue;  /* don't save */
       CHECK("overlayTextForeground") continue;  /* don't save */
       CHECK("bourneShell")	     continue;  /* don't save */
+      CHECK("authWarningSlack") type = pref_int, i = p->auth_warning_slack;
       else			abort();
 # undef CHECK
 
@@ -1102,6 +1104,8 @@ load_init_file (Display *dpy, saver_preferences *p)
   p->new_login_command = get_string_resource(dpy,
                                              "newLoginCommand",
                                              "NewLoginCommand");
+  p->auth_warning_slack = get_integer_resource(dpy, "authWarningSlack",
+                                               "Integer");
 
   /* If "*splash" is unset, default to true. */
   {
@@ -1650,44 +1654,87 @@ stop_the_insanity (saver_preferences *p)
 
   if (p->pointer_hysteresis < 0)   p->pointer_hysteresis = 0;
   if (p->pointer_hysteresis > 100) p->pointer_hysteresis = 100;
+
+  if (p->auth_warning_slack < 0)   p->auth_warning_slack = 0;
+  if (p->auth_warning_slack > 300) p->auth_warning_slack = 300;
 }
 
 
-/* Getting very tired of bug reports of already-fixed bugs due to
-   Linux distros shipping multi-year-old versions.
- */
 Bool
 senescent_p (void)
 {
-  time_t now = time ((time_t *) 0);
-  struct tm *tm = localtime (&now);
-  const char *s = screensaver_id;
-  char mon[4], year[5];
-  int m, y, months;
-  s = strchr (s, ' '); if (!s) abort(); s++;
-  s = strchr (s, '('); if (!s) abort(); s++;
-  s = strchr (s, '-'); if (!s) abort(); s++;
-  strncpy (mon, s, 3);
-  mon[3] = 0;
-  s = strchr (s, '-'); if (!s) abort(); s++;
-  strncpy (year, s, 4);
-  year[4] = 0;
-  y = atoi (year);
-  if      (!strcmp(mon, "Jan")) m = 0;
-  else if (!strcmp(mon, "Feb")) m = 1;
-  else if (!strcmp(mon, "Mar")) m = 2;
-  else if (!strcmp(mon, "Apr")) m = 3;
-  else if (!strcmp(mon, "May")) m = 4;
-  else if (!strcmp(mon, "Jun")) m = 5;
-  else if (!strcmp(mon, "Jul")) m = 6;
-  else if (!strcmp(mon, "Aug")) m = 7;
-  else if (!strcmp(mon, "Sep")) m = 8;
-  else if (!strcmp(mon, "Oct")) m = 9;
-  else if (!strcmp(mon, "Nov")) m = 10;
-  else if (!strcmp(mon, "Dec")) m = 11;
-  else abort();
-  months = ((((tm->tm_year + 1900) * 12) + tm->tm_mon) -
-            (y * 12 + m));
+  /* If you are in here because you're planning on disabling this warning
+     before redistributing my software, please don't.
 
-  return (months > 12);
+     I sincerely request that you do one of the following:
+
+         1: leave this code intact and this warning in place, -OR-
+
+         2: Remove xscreensaver from your distribution.
+
+     I would seriously prefer that you not distribute my software at all
+     than that you distribute one version and then never update it for
+     years.
+
+     I am *constantly* getting email from users reporting bugs that have
+     been fixed for literally years who have no idea that the software
+     they are running is years out of date.  Yes, it would be great if we
+     lived in the ideal world where people checked that they were running
+     the latest release before they report a bug, but we don't.  To most
+     people, "running the latest release" is synonymous with "running the
+     latest release that my distro packages for me."
+
+     When they even bother to tell me what version they're running, I
+     say, "That version is three years old!", and they say "But this is
+     the latest version my distro ships".  Then I say, "your distro
+     sucks", and they say "but I don't know how to compile from source,
+     herp derp I eat paste", and *everybody* goes away unhappy.
+
+     It wastes an enormous amount of my time, and kind of makes me regret
+     ever having released this software in the first place.
+
+     So seriously. I ask that if you're planning on disabling this
+     obsolescence warning, that you instead just remove xscreensaver from
+     your distro entirely.  Everybody will be happier that way.  Check
+     out gnome-screensaver instead, I understand it's really nice.
+
+     Of course, my license allows you to ignore me and do whatever the
+     fuck you want, but as the author, I hope you will have the common
+     courtesy of complying with my request.
+
+     Thank you!
+
+     jwz, 2014
+  */
+  time_t now = time ((time_t *) 0);				/*   N   */
+  struct tm *tm = localtime (&now);				/*   o   */
+  const char *s = screensaver_id;				/*       */
+  char mon[4], year[5];						/*   d   */
+  int m, y, months;						/*   o   */
+  s = strchr (s, ' '); if (!s) abort(); s++;			/*   n   */
+  s = strchr (s, '('); if (!s) abort(); s++;			/*   '   */
+  s = strchr (s, '-'); if (!s) abort(); s++;			/*   t   */
+  strncpy (mon, s, 3);						/*       */
+  mon[3] = 0;							/*   d   */
+  s = strchr (s, '-'); if (!s) abort(); s++;			/*   o   */
+  strncpy (year, s, 4);						/*       */
+  year[4] = 0;							/*   i   */
+  y = atoi (year);						/*   t   */
+  if      (!strcmp(mon, "Jan")) m = 0;				/*   ,   */
+  else if (!strcmp(mon, "Feb")) m = 1;				/*       */
+  else if (!strcmp(mon, "Mar")) m = 2;				/*   s   */
+  else if (!strcmp(mon, "Apr")) m = 3;				/*   t   */
+  else if (!strcmp(mon, "May")) m = 4;				/*   o   */
+  else if (!strcmp(mon, "Jun")) m = 5;				/*   p   */
+  else if (!strcmp(mon, "Jul")) m = 6;				/*   ,   */
+  else if (!strcmp(mon, "Aug")) m = 7;				/*       */
+  else if (!strcmp(mon, "Sep")) m = 8;				/*   s   */
+  else if (!strcmp(mon, "Oct")) m = 9;				/*   t   */
+  else if (!strcmp(mon, "Nov")) m = 10;				/*   a   */
+  else if (!strcmp(mon, "Dec")) m = 11;				/*   a   */
+  else abort();							/*   a   */
+  months = ((((tm->tm_year + 1900) * 12) + tm->tm_mon) -	/*   h   */
+            (y * 12 + m));					/*   h   */
+							  	/*   h   */
+  return (months > 18);						/*   p   */
 }

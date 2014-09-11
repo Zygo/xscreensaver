@@ -43,7 +43,7 @@
   <xscreensaver-updater />
 
   <_description>
-Draws a grid of 3D colored tiles that change positions with each other.  
+Colored tiles swap with each other.
 
 Written by Kevin Ogden and Sergio Gutierrez; 2003.
   </_description>

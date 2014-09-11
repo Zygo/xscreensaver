@@ -33,11 +33,11 @@
   <xscreensaver-updater />
 
   <_description>
-This generates random cloud-like patterns.  The idea is to take four
-points on the edge of the image, and assign each a random "elevation".
-Then find the point between them, and give it a value which is the
-average of the other four, plus some small random offset. 
-Coloration is done based on elevation.
+Cloud-like patterns.  The idea is to take four points on the edge of
+the image, and assign each a random "elevation".  Then find the point
+between them, and give it a value which is the average of the other
+four, plus some small random offset. Coloration is done based on
+elevation.
 
 Written by Juergen Nickelsen and Jamie Zawinski; 1992.
   </_description>

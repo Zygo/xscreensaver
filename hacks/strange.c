@@ -43,7 +43,6 @@ static const char sccsid[] = "@(#)strange.c	5.00 2000/11/01 xlockmore";
 
 # define SMOOTH_COLORS
 # define refresh_strange 0
-# define strange_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
@@ -696,6 +695,18 @@ release_strange(ModeInfo * mi)
 		Root = (ATTRACTOR *) NULL; 
 	}
 }
+
+ENTRYPOINT Bool
+strange_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      reshape_strange (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+  return False;
+}
+
 
 XSCREENSAVER_MODULE ("Strange", strange)
 

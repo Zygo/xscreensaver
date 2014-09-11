@@ -1,4 +1,4 @@
-/* bouncingcow, Copyright (c) 2003-2006 Jamie Zawinski <jwz@jwz.org>
+/* bouncingcow, Copyright (c) 2003-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -178,39 +178,10 @@ cow_handle_event (ModeInfo *mi, XEvent *event)
 {
   cow_configuration *bp = &bps[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      bp->button_down_p = True;
-      gltrackball_start (bp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      bp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 10,
-                              !event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           bp->button_down_p)
-    {
-      gltrackball_track (bp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, bp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &bp->button_down_p))
+    return True;
 
   return False;
 }
@@ -307,7 +278,7 @@ init_cow (ModeInfo *mi)
       glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
     }
 
-  bp->trackball = gltrackball_init ();
+  bp->trackball = gltrackball_init (False);
 
   bp->dlists = (GLuint *) calloc (countof(all_objs)+1, sizeof(GLuint));
   for (i = 0; i < countof(all_objs); i++)
@@ -334,8 +305,6 @@ init_cow (ModeInfo *mi)
               /* if we have a texture, make the base color be white. */
               color[0] = color[1] = color[2] = 1.0;
 
-              glEnable (GL_TEXTURE_2D);
-
               glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
               glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_OBJECT_LINEAR);
               glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
@@ -357,8 +326,8 @@ init_cow (ModeInfo *mi)
             }
           glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
           glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR,            black);
-          glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS,           128);
-        }
+          glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS,           128); 
+       }
       else if (i == TAIL)
         {
           GLfloat color[4] = {0.63, 0.43, 0.36, 1.00};

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -341,6 +341,12 @@ decayscreen_reshape (Display *dpy, Window window, void *closure,
 static Bool
 decayscreen_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->start_time = 0;
+      return True;
+    }
   return False;
 }
 
@@ -368,6 +374,7 @@ static const char *decayscreen_defaults [] = {
   "*duration:			120",
 #ifdef USE_IPHONE
   "*ignoreRotation:             True",
+  "*rotateImages:               True",
 #endif
   0
 };

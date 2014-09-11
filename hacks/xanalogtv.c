@@ -616,6 +616,14 @@ xanalogtv_event (Display *dpy, Window window, void *closure, XEvent *event)
           st->change_now = -1;
           return True;
         }
+      else if (screenhack_event_helper (dpy, window, event))
+        goto DEF;
+    }
+  else if (screenhack_event_helper (dpy, window, event))
+    {
+    DEF:
+      st->change_now = ((random() & 1) ? 1 : -1);
+      return True;
     }
 
   return False;

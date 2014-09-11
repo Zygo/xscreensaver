@@ -17,15 +17,14 @@
             _label="Number of colors" _low-label="Two" _high-label="Many"
             low="1" high="255" default="64"/>
 
-  <boolean id="3d" _label="Do Red/Blue 3D separation" arg-set="-3d"/>
+  <boolean id="3d" _label="Do Red/Blue 3D separation" arg-unset="-no-3d"/>
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 
   <xscreensaver-updater />
 
   <_description>
-This draws what looks like a spinning, deforming balloon with
-varying-sized spots painted on its invisible surface.
+A deforming balloon with varying-sized spots painted on its invisible surface.
 
 Written by Jeremie Petit; 1997.
   </_description>

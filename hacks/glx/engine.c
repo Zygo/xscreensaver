@@ -109,12 +109,7 @@ typedef struct {
   rotator *rot;
   trackball_state *trackball;
   Bool button_down_p;
-# ifdef HAVE_GLBITMAP
-  XFontStruct *xfont;
-  GLuint font_dlist;
-# else
   texture_font_data *font_data;
-# endif
   char *engine_name;
   int engineType;
   int movepaused;
@@ -535,6 +530,7 @@ static int makepiston(Engine *e)
   int polys = 0;
   GLfloat colour[] = {0.6, 0.6, 0.6, 1.0};
   
+  if (e->piston_list) glDeleteLists(1, e->piston_list);
   e->piston_list = glGenLists(1);
   glNewList(e->piston_list, GL_COMPILE);
   glRotatef(90, 0, 0, 1);
@@ -632,10 +628,7 @@ static int display(Engine *e)
   if (spin) {
     double x, y, z;
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (e->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation(e->rot, &x, &y, &z, !e->button_down_p);
     glRotatef(x*ONEREV, 1.0, 0.0, 0.0);
@@ -655,7 +648,7 @@ static int display(Engine *e)
 
   /* init the ln[] matrix for speed */
   if (e->ln_init == 0) {
-    for (e->ln_init = 0 ; e->ln_init < 730 ; e->ln_init++) {
+    for (e->ln_init = 0 ; e->ln_init < countof(e->sin_table) ; e->ln_init++) {
       zb = e->sin_table[e->ln_init];
       yb = e->cos_table[e->ln_init];
       /* y ordinate of piston */
@@ -781,6 +774,7 @@ static int makeshaft (Engine *e)
   float crankThick = 0.2;
   float crankDiam = 0.3;
 
+  if (e->shaft_list) glDeleteLists(1, e->shaft_list);
   e->shaft_list = glGenLists(1);
   glNewList(e->shaft_list, GL_COMPILE);
 
@@ -898,7 +892,7 @@ ENTRYPOINT void init_engine(ModeInfo *mi)
                         move ? wander_speed : 0,
                         True);
 
-    e->trackball = gltrackball_init ();
+    e->trackball = gltrackball_init (True);
  }
 
  if ((e->glx_context = init_GL(mi)) != NULL) {
@@ -915,7 +909,8 @@ ENTRYPOINT void init_engine(ModeInfo *mi)
  make_tables(e);
  e->engineType = find_engine(which_engine);
 
- e->engine_name = malloc(200);
+ if (!e->engine_name)
+   e->engine_name = malloc(200);
  sprintf (e->engine_name,
           "%s\n%s%d%s",
           engines[e->engineType].engineName,
@@ -928,11 +923,8 @@ ENTRYPOINT void init_engine(ModeInfo *mi)
  e->shaft_polys = makeshaft(e);
  e->piston_polys = makepiston(e);
 
-#ifdef HAVE_GLBITMAP
- load_font (mi->dpy, "titleFont", &e->xfont, &e->font_dlist);
-#else
- e->font_data = load_texture_font (mi->dpy, "Font");
-#endif
+ if (!e->font_data)
+   e->font_data = load_texture_font (mi->dpy, "titleFont");
 }
 
 ENTRYPOINT Bool
@@ -943,36 +935,24 @@ engine_handle_event (ModeInfo *mi, XEvent *event)
    if (event->xany.type == ButtonPress &&
        event->xbutton.button == Button1)
    {
-       e->button_down_p = True;
-       gltrackball_start (e->trackball,
-		          event->xbutton.x, event->xbutton.y,
-			  MI_WIDTH (mi), MI_HEIGHT (mi));
-       e->movepaused = 1;
        return True;
    }
    else if (event->xany.type == ButtonRelease &&
             event->xbutton.button == Button1) {
-       e->button_down_p = False;
        e->movepaused = 0;
-       return True;
    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
+
+  if (gltrackball_event_handler (event, e->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &e->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      gltrackball_mousewheel (e->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
+      which_engine = NULL; /* randomize */
+      init_engine(mi);
       return True;
     }
-   else if (event->xany.type == MotionNotify &&
-            e->button_down_p) {
-      gltrackball_track (e->trackball,
-		         event->xmotion.x, event->xmotion.y,
-			 MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-   }
+
   return False;
 }
 
@@ -992,12 +972,7 @@ ENTRYPOINT void draw_engine(ModeInfo *mi)
 
   glColor3f (1, 1, 0);
   if (do_titles)
-      print_gl_string (mi->dpy, 
-# ifdef HAVE_GLBITMAP
-                       e->xfont, e->font_dlist,
-# else
-                       e->font_data,
-# endif
+      print_gl_string (mi->dpy, e->font_data,
                        mi->xgwa.width, mi->xgwa.height,
                        10, mi->xgwa.height - 10,
                        e->engine_name, False);

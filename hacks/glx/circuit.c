@@ -2018,7 +2018,7 @@ static void display(ModeInfo *mi)
   glEnable(GL_LIGHTING);
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
-  glRotatef(current_device_rotation(), 0, 0, 1);
+  /* glRotatef(current_device_rotation(), 0, 0, 1); */
   gluLookAt(ci->viewer[0], ci->viewer[1], ci->viewer[2], 
             0.0, 0.0, 0.0, 
             0.0, 1.0, 0.0);

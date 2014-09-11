@@ -1,4 +1,4 @@
-/* polyhedra, Copyright (c) 2004-2012 Jamie Zawinski <jwz@jwz.org>
+/* polyhedra, Copyright (c) 2004-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -89,12 +89,7 @@ typedef struct {
   int ncolors;
   XColor *colors;
 
-# ifdef HAVE_GLBITMAP
-  XFontStruct *xfont1, *xfont2, *xfont3;
-  GLuint font1_dlist, font2_dlist, font3_dlist;
-# else
   texture_font_data *font1_data, *font2_data, *font3_data;
-# endif
 
   time_t last_change_time;
   int change_tick;
@@ -176,15 +171,9 @@ static void
 load_fonts (ModeInfo *mi)
 {
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
-# ifdef HAVE_GLBITMAP
-  load_font (mi->dpy, "titleFont",  &bp->xfont1, &bp->font1_dlist);
-  load_font (mi->dpy, "titleFont2", &bp->xfont2, &bp->font2_dlist);
-  load_font (mi->dpy, "titleFont3", &bp->xfont3, &bp->font3_dlist);
-# else /* !HAVE_GLBITMAP */
   bp->font1_data = load_texture_font (mi->dpy, "titleFont");
   bp->font2_data = load_texture_font (mi->dpy, "titleFont2");
   bp->font3_data = load_texture_font (mi->dpy, "titleFont3");
-# endif /* !HAVE_GLBITMAP */
 }
 
 
@@ -194,26 +183,13 @@ startup_blurb (ModeInfo *mi)
 {
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
   const char *s = "Computing polyhedra...";
-# ifdef HAVE_GLBITMAP
-  XFontStruct *f = bp->xfont1;
-# else /* !HAVE_GLBITMAP */
   texture_font_data *f = bp->font1_data;
-# endif /* !HAVE_GLBITMAP */
 
   glColor3f (0.8, 0.8, 0);
-  print_gl_string (mi->dpy, 
-# ifdef HAVE_GLBITMAP
-                   bp->xfont1, bp->font1_dlist,
-# else /* !HAVE_GLBITMAP */
-                   bp->font1_data,
-# endif /* !HAVE_GLBITMAP */
+  print_gl_string (mi->dpy, bp->font1_data,
                    mi->xgwa.width, mi->xgwa.height,
                    mi->xgwa.width - (
-# ifdef HAVE_GLBITMAP
-                                     string_width (f, s, 0)
-# else /* !HAVE_GLBITMAP */
                                      texture_string_width (f, s, 0)
-# endif /* !HAVE_GLBITMAP */
                                      + 40),
                    mi->xgwa.height - 10,
                    s, False);
@@ -256,31 +232,10 @@ polyhedra_handle_event (ModeInfo *mi, XEvent *event)
 {
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      bp->button_down_p = True;
-      gltrackball_start (bp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      bp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
+  if (gltrackball_event_handler (event, bp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &bp->button_down_p))
+    return True;
   else if (event->xany.type == KeyPress)
     {
       KeySym keysym;
@@ -291,22 +246,22 @@ polyhedra_handle_event (ModeInfo *mi, XEvent *event)
       if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
         bp->change_to = random() % bp->npolyhedra;
       else if (c == '>' || c == '.' || c == '+' || c == '=' ||
-               keysym == XK_Right || keysym == XK_Up)
+               keysym == XK_Right || keysym == XK_Up || keysym == XK_Next)
         bp->change_to = (bp->which + 1) % bp->npolyhedra;
       else if (c == '<' || c == ',' || c == '-' || c == '_' ||
                c == '\010' || c == '\177' ||
-               keysym == XK_Left || keysym == XK_Down)
+               keysym == XK_Left || keysym == XK_Down || keysym == XK_Prior)
         bp->change_to = (bp->which + bp->npolyhedra - 1) % bp->npolyhedra;
+      else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+        goto DEF;
 
       if (bp->change_to != -1)
         return True;
     }
-  else if (event->xany.type == MotionNotify &&
-           bp->button_down_p)
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      gltrackball_track (bp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
+    DEF:
+      bp->change_to = random() % bp->npolyhedra;
       return True;
     }
 
@@ -347,36 +302,18 @@ new_label (ModeInfo *mi)
                p->density, (p->chi < 0 ? "" : "  "), p->chi);
 
       {
-# ifdef HAVE_GLBITMAP
-        XFontStruct *f;
-        GLuint fl;
-# else /* !HAVE_GLBITMAP */
+        GLfloat color[4] = { 0.8, 0.8, 0.8, 1 };
         texture_font_data *f;
-# endif /* !HAVE_GLBITMAP */
         if (MI_WIDTH(mi) >= 500 && MI_HEIGHT(mi) >= 375)
-# ifdef HAVE_GLBITMAP
-          f = bp->xfont1, fl = bp->font1_dlist;		       /* big font */
-# else /* !HAVE_GLBITMAP */
           f = bp->font1_data;
-# endif /* !HAVE_GLBITMAP */
         else if (MI_WIDTH(mi) >= 350 && MI_HEIGHT(mi) >= 260)
-# ifdef HAVE_GLBITMAP
-          f = bp->xfont2, fl = bp->font2_dlist;		       /* small font */
-# else /* !HAVE_GLBITMAP */
           f = bp->font2_data;				       /* small font */
-# endif /* !HAVE_GLBITMAP */
         else
-# ifdef HAVE_GLBITMAP
-          f = bp->xfont3, fl = bp->font3_dlist;		       /* tiny font */
-# else /* !HAVE_GLBITMAP */
           f = bp->font3_data;				       /* tiny font */
-# endif /* !HAVE_GLBITMAP */
 
-        glColor3f (0.8, 0.8, 0);
+        glColor4fv (color);
+        glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
         print_gl_string (mi->dpy, f,
-# ifdef HAVE_GLBITMAP
-                         fl,
-# endif /* HAVE_GLBITMAP */
                          mi->xgwa.width, mi->xgwa.height,
                          10, mi->xgwa.height - 10,
                          label, False);
@@ -593,7 +530,7 @@ init_polyhedra (ModeInfo *mi)
                             spin_accel,
                             do_wander ? wander_speed : 0,
                             True);
-    bp->trackball = gltrackball_init ();
+    bp->trackball = gltrackball_init (True);
   }
 
   bp->npolyhedra = construct_polyhedra (&bp->polyhedra);
@@ -716,10 +653,7 @@ draw_polyhedra (ModeInfo *mi)
                  (y - 0.5) * 8,
                  (z - 0.5) * 15);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (bp->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);

@@ -1,4 +1,4 @@
-/* gltrackball, Copyright (c) 2002-2008 Jamie Zawinski <jwz@jwz.org>
+/* gltrackball, Copyright (c) 2002-2014 Jamie Zawinski <jwz@jwz.org>
  * GL-flavored wrapper for trackball.c
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -18,7 +18,7 @@ typedef struct trackball_state trackball_state;
 /* Returns a trackball_state object, which encapsulates the stuff necessary
    to make dragging the mouse on the window of a GL program do the right thing.
  */
-extern trackball_state *gltrackball_init (void);
+extern trackball_state *gltrackball_init (int ignore_device_rotation_p);
 
 /* Begin tracking the mouse: Call this when the mouse button goes down.
    x and y are the mouse position relative to the window.
@@ -31,6 +31,10 @@ extern void gltrackball_start (trackball_state *, int x, int y, int w, int h);
    w and h are the size of the window.
  */
 extern void gltrackball_track (trackball_state *, int x, int y, int w, int h);
+
+/* Stop tracking the mouse: Call this when the mouse button goes up.
+ */
+extern void gltrackball_stop (trackball_state *);
 
 /* Execute the rotations current encapsulated in the trackball_state:
    this does something analagous to glRotatef().
@@ -55,5 +59,13 @@ extern void gltrackball_get_quaternion (trackball_state *ts, float q[4]);
  */
 extern void gltrackball_reset (trackball_state *ts);
 
-#endif /* __GLTRACKBALL_H__ */
+/* A utility function for event-handler functions:
+   Handles the various motion and click events related to trackballs.
+   Returns True if the event was handled.
+ */
+extern Bool gltrackball_event_handler (XEvent *,
+                                       trackball_state *,
+                                       int window_width, int window_height,
+                                       Bool *button_down_p);
 
+#endif /* __GLTRACKBALL_H__ */

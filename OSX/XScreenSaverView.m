@@ -382,6 +382,7 @@ double_time (void)
   [self setMultipleTouchEnabled:YES];
   orientation = UIDeviceOrientationUnknown;
   [self didRotate:nil];
+  [self initGestures];
 # endif // USE_IPHONE
 
   setup_p = YES;
@@ -967,6 +968,7 @@ double current_device_rotation (void)
       fpst = fps_init (xdpy, xwindow);
       if (! xsft->fps_cb) xsft->fps_cb = screenhack_do_fps;
     } else {
+      fpst = NULL;
       xsft->fps_cb = 0;
     }
 
@@ -1395,19 +1397,55 @@ double current_device_rotation (void)
 }
 
 
+- (void) beep
+{
+# ifndef USE_IPHONE
+  NSBeep();
+# else // USE_IPHONE 
+
+  // There's no way to play a standard system alert sound!
+  // We'd have to include our own WAV for that.
+  //
+  // Or we could vibrate:
+  // #import <AudioToolbox/AudioToolbox.h>
+  // AudioServicesPlaySystemSound (kSystemSoundID_Vibrate);
+  //
+  // Instead, just flash the screen white, then fade.
+  //
+  UIView *v = [[UIView alloc] initWithFrame: [self frame]]; 
+  [v setBackgroundColor: [UIColor whiteColor]];
+  [[self window] addSubview:v];
+  [UIView animateWithDuration: 0.1
+          animations:^{ [v setAlpha: 0.0]; }
+          completion:^(BOOL finished) { [v removeFromSuperview]; } ];
+
+# endif  // USE_IPHONE
+}
+
+
+/* Send an XEvent to the hack.  Returns YES if it was handled.
+ */
+- (BOOL) sendEvent: (XEvent *) e
+{
+  if (!initted_p || ![self isAnimating]) // no event handling unless running.
+    return NO;
+
+  [self lockFocus];
+  [self prepareContext];
+  BOOL result = xsft->event_cb (xdpy, xwindow, xdata, e);
+  [self unlockFocus];
+  return result;
+}
+
+
 #ifndef USE_IPHONE
 
 /* Convert an NSEvent into an XEvent, and pass it along.
    Returns YES if it was handled.
  */
-- (BOOL) doEvent: (NSEvent *) e
+- (BOOL) convertEvent: (NSEvent *) e
             type: (int) type
 {
-  if (![self isPreview] ||     // no event handling if actually screen-saving!
-      ![self isAnimating] ||
-      !initted_p)
-    return NO;
-
   XEvent xe;
   memset (&xe, 0, sizeof(xe));
   
@@ -1505,77 +1543,73 @@ double current_device_rotation (void)
       break;
   }
 
-  [self lockFocus];
-  [self prepareContext];
-  BOOL result = xsft->event_cb (xdpy, xwindow, xdata, &xe);
-  [self unlockFocus];
-  return result;
+  return [self sendEvent: &xe];
 }
 
 
 - (void) mouseDown: (NSEvent *) e
 {
-  if (! [self doEvent:e type:ButtonPress])
+  if (! [self convertEvent:e type:ButtonPress])
     [super mouseDown:e];
 }
 
 - (void) mouseUp: (NSEvent *) e
 {
-  if (! [self doEvent:e type:ButtonRelease])
+  if (! [self convertEvent:e type:ButtonRelease])
     [super mouseUp:e];
 }
 
 - (void) otherMouseDown: (NSEvent *) e
 {
-  if (! [self doEvent:e type:ButtonPress])
+  if (! [self convertEvent:e type:ButtonPress])
     [super otherMouseDown:e];
 }
 
 - (void) otherMouseUp: (NSEvent *) e
 {
-  if (! [self doEvent:e type:ButtonRelease])
+  if (! [self convertEvent:e type:ButtonRelease])
     [super otherMouseUp:e];
 }
 
 - (void) mouseMoved: (NSEvent *) e
 {
-  if (! [self doEvent:e type:MotionNotify])
+  if (! [self convertEvent:e type:MotionNotify])
     [super mouseMoved:e];
 }
 
 - (void) mouseDragged: (NSEvent *) e
 {
-  if (! [self doEvent:e type:MotionNotify])
+  if (! [self convertEvent:e type:MotionNotify])
     [super mouseDragged:e];
 }
 
 - (void) otherMouseDragged: (NSEvent *) e
 {
-  if (! [self doEvent:e type:MotionNotify])
+  if (! [self convertEvent:e type:MotionNotify])
     [super otherMouseDragged:e];
 }
 
 - (void) scrollWheel: (NSEvent *) e
 {
-  if (! [self doEvent:e type:ButtonPress])
+  if (! [self convertEvent:e type:ButtonPress])
     [super scrollWheel:e];
 }
 
 - (void) keyDown: (NSEvent *) e
 {
-  if (! [self doEvent:e type:KeyPress])
+  if (! [self convertEvent:e type:KeyPress])
     [super keyDown:e];
 }
 
 - (void) keyUp: (NSEvent *) e
 {
-  if (! [self doEvent:e type:KeyRelease])
+  if (! [self convertEvent:e type:KeyRelease])
     [super keyUp:e];
 }
 
 - (void) flagsChanged: (NSEvent *) e
 {
-  if (! [self doEvent:e type:KeyPress])
+  if (! [self convertEvent:e type:KeyPress])
     [super flagsChanged:e];
 }
 
@@ -1733,36 +1767,73 @@ double current_device_rotation (void)
 }
 
 
-/* I believe we can't use UIGestureRecognizer for tracking touches
-   because UIPanGestureRecognizer doesn't give us enough detail in its
-   callbacks.
+/* We distinguish between taps and drags.
 
-   Currently we don't handle multi-touches (just the first touch) but
-   I'm leaving this comment here for future reference:
+   - Drags/pans (down, motion, up) are sent to the saver to handle.
+   - Single-taps exit the saver.
+   - Double-taps are sent to the saver as a "Space" keypress.
+   - Swipes (really, two-finger drags/pans) send Up/Down/Left/RightArrow keys.
 
-   In the simulator, multi-touch sequences look like this:
-
-     touchesBegan [touchA, touchB]
-     touchesEnd [touchA, touchB]
-
-   But on real devices, sometimes you get that, but sometimes you get:
-
-     touchesBegan [touchA, touchB]
-     touchesEnd [touchB]
-     touchesEnd [touchA]
-
-   Or even
-
-     touchesBegan [touchA]
-     touchesBegan [touchB]
-     touchesEnd [touchA]
-     touchesEnd [touchB]
-
-   So the only way to properly detect a "pinch" gesture is to remember
-   the start-point of each touch as it comes in; and the end-point of
-   each touch as those come in; and only process the gesture once the
-   number of touchEnds matches the number of touchBegins.
+   This means a saver cannot respond to a single-tap.  Only a few try to.
  */
+
+- (void)initGestures
+{
+  UITapGestureRecognizer *dtap = [[UITapGestureRecognizer alloc]
+                                   initWithTarget:self
+                                   action:@selector(handleDoubleTap)];
+  dtap.numberOfTapsRequired = 2;
+  dtap.numberOfTouchesRequired = 1;
+
+  UITapGestureRecognizer *stap = [[UITapGestureRecognizer alloc]
+                                   initWithTarget:self
+                                   action:@selector(handleTap)];
+  stap.numberOfTapsRequired = 1;
+  stap.numberOfTouchesRequired = 1;
+ 
+  UIPanGestureRecognizer *pan = [[UIPanGestureRecognizer alloc]
+                                  initWithTarget:self
+                                  action:@selector(handlePan:)];
+  pan.maximumNumberOfTouches = 1;
+  pan.minimumNumberOfTouches = 1;
+ 
+  // I couldn't get Swipe to work, but using a second Pan recognizer works.
+  UIPanGestureRecognizer *pan2 = [[UIPanGestureRecognizer alloc]
+                                   initWithTarget:self
+                                   action:@selector(handlePan2:)];
+  pan2.maximumNumberOfTouches = 2;
+  pan2.minimumNumberOfTouches = 2;
+
+  // Also handle long-touch, and treat that the same as Pan.
+  // Without this, panning doesn't start until there's motion, so the trick
+  // of holding down your finger to freeze the scene doesn't work.
+  //
+  UILongPressGestureRecognizer *hold = [[UILongPressGestureRecognizer alloc]
+                                         initWithTarget:self
+                                         action:@selector(handleLongPress:)];
+  hold.numberOfTapsRequired = 0;
+  hold.numberOfTouchesRequired = 1;
+  hold.minimumPressDuration = 0.25;   /* 1/4th second */
+
+  [stap requireGestureRecognizerToFail: dtap];
+  [stap requireGestureRecognizerToFail: hold];
+  [dtap requireGestureRecognizerToFail: hold];
+  [pan  requireGestureRecognizerToFail: hold];
+
+  [self addGestureRecognizer: dtap];
+  [self addGestureRecognizer: stap];
+  [self addGestureRecognizer: pan];
+  [self addGestureRecognizer: pan2];
+  [self addGestureRecognizer: hold];
+
+  [dtap release];
+  [stap release];
+  [pan  release];
+  [pan2 release];
+  [hold release];
+}
+
+
 
 - (void) rotateMouse:(int)rot x:(int*)x y:(int *)y w:(int)w h:(int)h
 {
@@ -1775,136 +1846,122 @@ double current_device_rotation (void)
 }
 
 
-#if 0  // AudioToolbox/AudioToolbox.h
-- (void) beep
-{
-  // There's no way to play a standard system alert sound!
-  // We'd have to include our own WAV for that.  Eh, fuck it.
-  AudioServicesPlaySystemSound (kSystemSoundID_Vibrate);
-# if TARGET_IPHONE_SIMULATOR
-  NSLog(@"BEEP");  // The sim doesn't vibrate.
-# endif
-}
-#endif
-
-
-/* We distinguish between taps and drags.
-   - Drags (down, motion, up) are sent to the saver to handle.
-   - Single-taps exit the saver.
-   This means a saver cannot respond to a single-tap.  Only a few try to.
+/* Single click exits saver.
  */
-
-- (void)touchesBegan:(NSSet *)touches withEvent:(UIEvent *)event
+- (void) handleTap
 {
-  // If they are trying to pinch, just do nothing.
-  if ([[event allTouches] count] > 1)
-    return;
-
-  tap_time = 0;
-
-  if (xsft->event_cb && xwindow) {
-    double s = [self hackedContentScaleFactor];
-    XEvent xe;
-    memset (&xe, 0, sizeof(xe));
-    int i = 0;
-    // #### 'frame' here or 'bounds'?
-    int w = s * [self frame].size.width;
-    int h = s * [self frame].size.height;
-    for (UITouch *touch in touches) {
-      CGPoint p = [touch locationInView:self];
-      xe.xany.type = ButtonPress;
-      xe.xbutton.button = i + 1;
-      xe.xbutton.button = i + 1;
-      xe.xbutton.x      = s * p.x;
-      xe.xbutton.y      = s * p.y;
-      [self rotateMouse: rot_current_angle
-            x: &xe.xbutton.x y: &xe.xbutton.y w: w h: h];
-      jwxyz_mouse_moved (xdpy, xwindow, xe.xbutton.x, xe.xbutton.y);
-
-      // Ignore return code: don't care whether the hack handled it.
-      xsft->event_cb (xdpy, xwindow, xdata, &xe);
-
-      // Remember when/where this was, to determine tap versus drag or hold.
-      tap_time = double_time();
-      tap_point = p;
-
-      i++;
-      break;  // No pinches: only look at the first touch.
-    }
-  }
+  [self stopAndClose:NO];
 }
 
 
-- (void)touchesEnded:(NSSet *)touches withEvent:(UIEvent *)event
+/* Double click sends Space KeyPress.
+ */
+- (void) handleDoubleTap
 {
-  // If they are trying to pinch, just do nothing.
-  if ([[event allTouches] count] > 1)
-    return;
+  if (!xsft->event_cb || !xwindow) return;
 
-  if (xsft->event_cb && xwindow) {
-    double s = [self hackedContentScaleFactor];
-    XEvent xe;
-    memset (&xe, 0, sizeof(xe));
-    int i = 0;
-    // #### 'frame' here or 'bounds'?
-    int w = s * [self frame].size.width;
-    int h = s * [self frame].size.height;
-    for (UITouch *touch in touches) {
-      CGPoint p = [touch locationInView:self];
-
-      // If the ButtonRelease came less than half a second after ButtonPress,
-      // and didn't move far, then this was a tap, not a drag or a hold.
-      // Interpret it as "exit".
-      //
-      double dist = sqrt (((p.x - tap_point.x) * (p.x - tap_point.x)) +
-                          ((p.y - tap_point.y) * (p.y - tap_point.y)));
-      if (tap_time + 0.5 >= double_time() && dist < 20) {
-        [self stopAndClose:NO];
-        return;
-      }
-
-      xe.xany.type      = ButtonRelease;
-      xe.xbutton.button = i + 1;
-      xe.xbutton.x      = s * p.x;
-      xe.xbutton.y      = s * p.y;
-      [self rotateMouse: rot_current_angle
-            x: &xe.xbutton.x y: &xe.xbutton.y w: w h: h];
-      jwxyz_mouse_moved (xdpy, xwindow, xe.xbutton.x, xe.xbutton.y);
-      xsft->event_cb (xdpy, xwindow, xdata, &xe);
-      i++;
-      break;  // No pinches: only look at the first touch.
-    }
-  }
+  XEvent xe;
+  memset (&xe, 0, sizeof(xe));
+  xe.xkey.keycode = ' ';
+  xe.xany.type = KeyPress;
+  BOOL ok1 = [self sendEvent: &xe];
+  xe.xany.type = KeyRelease;
+  BOOL ok2 = [self sendEvent: &xe];
+  if (!(ok1 || ok2))
+    [self beep];
 }
 
 
-- (void)touchesMoved:(NSSet *)touches withEvent:(UIEvent *)event
+/* Drag with one finger down: send MotionNotify.
+ */
+- (void) handlePan:(UIGestureRecognizer *)sender
 {
-  // If they are trying to pinch, just do nothing.
-  if ([[event allTouches] count] > 1)
+  if (!xsft->event_cb || !xwindow) return;
+
+  double s = [self hackedContentScaleFactor];
+  XEvent xe;
+  memset (&xe, 0, sizeof(xe));
+
+  CGPoint p = [sender locationInView:self];
+  int x = s * p.x;
+  int y = s * p.y;
+  int w = s * [self frame].size.width;  // #### 'frame' here or 'bounds'?
+  int h = s * [self frame].size.height;
+  [self rotateMouse: rot_current_angle x:&x y:&y w:w h:h];
+  jwxyz_mouse_moved (xdpy, xwindow, x, y);
+
+  switch (sender.state) {
+  case UIGestureRecognizerStateBegan:
+    xe.xany.type = ButtonPress;
+    xe.xbutton.button = 1;
+    xe.xbutton.x = x;
+    xe.xbutton.y = y;
+    break;
+
+  case UIGestureRecognizerStateEnded:
+    xe.xany.type = ButtonRelease;
+    xe.xbutton.button = 1;
+    xe.xbutton.x = x;
+    xe.xbutton.y = y;
+    break;
+
+  case UIGestureRecognizerStateChanged:
+    xe.xany.type = MotionNotify;
+    xe.xmotion.x = x;
+    xe.xmotion.y = y;
+    break;
+
+  default:
+    break;
+  }
+
+  BOOL ok = [self sendEvent: &xe];
+  if (!ok && xe.xany.type == ButtonRelease)
+    [self beep];
+}
+
+
+/* Hold one finger down: assume we're about to start dragging.
+   Treat the same as Pan.
+ */
+- (void) handleLongPress:(UIGestureRecognizer *)sender
+{
+  [self handlePan:sender];
+}
+
+
+
+/* Drag with 2 fingers down: send arrow keys.
+ */
+- (void) handlePan2:(UIPanGestureRecognizer *)sender
+{
+  if (!xsft->event_cb || !xwindow) return;
+
+  if (sender.state != UIGestureRecognizerStateEnded)
     return;
 
-  if (xsft->event_cb && xwindow) {
-    double s = [self hackedContentScaleFactor];
-    XEvent xe;
-    memset (&xe, 0, sizeof(xe));
-    int i = 0;
-    // #### 'frame' here or 'bounds'?
-    int w = s * [self frame].size.width;
-    int h = s * [self frame].size.height;
-    for (UITouch *touch in touches) {
-      CGPoint p = [touch locationInView:self];
-      xe.xany.type      = MotionNotify;
-      xe.xmotion.x      = s * p.x;
-      xe.xmotion.y      = s * p.y;
-      [self rotateMouse: rot_current_angle
-            x: &xe.xbutton.x y: &xe.xbutton.y w: w h: h];
-      jwxyz_mouse_moved (xdpy, xwindow, xe.xmotion.x, xe.xmotion.y);
-      xsft->event_cb (xdpy, xwindow, xdata, &xe);
-      i++;
-      break;  // No pinches: only look at the first touch.
-    }
-  }
+  double s = [self hackedContentScaleFactor];
+  XEvent xe;
+  memset (&xe, 0, sizeof(xe));
+
+  CGPoint p = [sender translationInView:self];
+  int x = s * p.x;
+  int y = s * p.y;
+  int w = s * [self frame].size.width;  // #### 'frame' here or 'bounds'?
+  int h = s * [self frame].size.height;
+  [self rotateMouse: rot_current_angle x:&x y:&y w:w h:h];
+  // jwxyz_mouse_moved (xdpy, xwindow, x, y);
+
+  if (abs(x) > abs(y))
+    xe.xkey.keycode = (x > 0 ? XK_Right : XK_Left);
+  else
+    xe.xkey.keycode = (y > 0 ? XK_Down : XK_Up);
+
+  BOOL ok1 = [self sendEvent: &xe];
+  xe.xany.type = KeyRelease;
+  BOOL ok2 = [self sendEvent: &xe];
+  if (!(ok1 || ok2))
+    [self beep];
 }
 
 

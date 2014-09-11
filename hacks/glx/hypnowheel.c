@@ -25,7 +25,6 @@
 
 # define refresh_hypnowheel 0
 # define release_hypnowheel 0
-# define hypnowheel_handle_event 0
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
@@ -176,17 +175,20 @@ init_hypnowheel (ModeInfo *mi)
 
   reshape_hypnowheel (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 
-  bp->rot = make_rotator (0, 0, 0, 0, speed * 0.0025, False);
+  if (! bp->rot)
+    bp->rot = make_rotator (0, 0, 0, 0, speed * 0.0025, False);
 
   bp->ncolors = 1024;
-  bp->colors = (XColor *) calloc(bp->ncolors, sizeof(XColor));
+  if (!bp->colors)
+    bp->colors = (XColor *) calloc(bp->ncolors, sizeof(XColor));
   make_smooth_colormap (0, 0, 0,
                         bp->colors, &bp->ncolors,
                         False, 0, False);
 
   if (MI_COUNT(mi) < 2) MI_COUNT(mi) = 2;
   if (nlayers < 1) nlayers = 1;
-  bp->discs = (disc *) calloc (nlayers, sizeof (disc));
+  if (!bp->discs)
+    bp->discs = (disc *) calloc (nlayers, sizeof (disc));
 
   for (i = 0; i < nlayers; i++)
     {
@@ -201,6 +203,7 @@ init_hypnowheel (ModeInfo *mi)
       spin_speed   += frand (spin_speed   / 5);
       wander_speed += frand (wander_speed * 3);
 
+      if (!bp->discs[i].rot)
       bp->discs[i].rot = make_rotator (spin_speed, spin_speed, spin_speed,
                                        spin_accel,
                                        (do_wander ? wander_speed : 0),
@@ -292,6 +295,18 @@ draw_hypnowheel (ModeInfo *mi)
 
   glXSwapBuffers(dpy, window);
 }
+
+ENTRYPOINT Bool
+hypnowheel_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      init_hypnowheel (mi);
+      return True;
+    }
+  return False;
+}
+
 
 XSCREENSAVER_MODULE ("Hypnowheel", hypnowheel)
 

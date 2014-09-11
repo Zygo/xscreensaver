@@ -218,6 +218,12 @@ zoom_reshape (Display *dpy, Window window, void *closure,
 static Bool
 zoom_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->start_time = 0;
+      return True;
+    }
   return False;
 }
 
@@ -251,6 +257,7 @@ static const char *zoom_defaults[] = {
   "*lensoffsety: 5",
 #ifdef USE_IPHONE
   "*ignoreRotation: True",
+  "*rotateImages:   True",
 #endif
   0
 };

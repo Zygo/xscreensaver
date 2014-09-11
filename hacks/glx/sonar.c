@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2012 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2014 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -769,39 +769,10 @@ sonar_handle_event (ModeInfo *mi, XEvent *event)
 {
   sonar_configuration *sp = &sps[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      sp->button_down_p = True;
-      gltrackball_start (sp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      sp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (sp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           sp->button_down_p)
-    {
-      gltrackball_track (sp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, sp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &sp->button_down_p))
+    return True;
 
   return False;
 }
@@ -826,7 +797,7 @@ init_sonar (ModeInfo *mi)
   reshape_sonar (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
 
-  sp->trackball = gltrackball_init ();
+  sp->trackball = gltrackball_init (False);
   sp->rot = make_rotator (0, 0, 0, 0, speed * 0.003, True);
 
   sp->texfont = load_texture_font (MI_DISPLAY(mi), "font");

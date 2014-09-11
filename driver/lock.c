@@ -2193,6 +2193,11 @@ auth_finished_cb (saver_info *si)
           s = buf;
         }
       si->unlock_failures = 0;
+
+      /* ignore failures if they all were too recent */
+      if (time((time_t *) 0) - si->unlock_failure_time 
+          < si->prefs.auth_warning_slack)
+	goto END;
     }
   else						/* good, with no failures, */
     goto END;					/* or timeout, or cancel. */

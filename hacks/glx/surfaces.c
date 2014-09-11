@@ -163,10 +163,7 @@ static void draw(ModeInfo *mi)
     get_position(sp->rot, &x, &y, &z, !sp->button_down_p);
     glTranslatef((x-0.5)*10, (y-0.5)*10, (z-0.5)*20);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate(sp->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation(sp->rot, &x, &y, &z, !sp->button_down_p);
     glRotatef(x*360, 1.0, 0.0, 0.0);
@@ -439,34 +436,10 @@ ENTRYPOINT Bool surface_handle_event(ModeInfo *mi, XEvent *event)
 {
   surfacestruct *sp = &surface[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress && event->xbutton.button == Button1)
-  {
-    sp->button_down_p = True;
-    gltrackball_start(sp->trackball, event->xbutton.x, event->xbutton.y,
-                      MI_WIDTH (mi), MI_HEIGHT (mi));
+  if (gltrackball_event_handler (event, sp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &sp->button_down_p))
     return True;
-  }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-  {
-    sp->button_down_p = False;
-    return True;
-  }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7)) {
-    gltrackball_mousewheel(sp->trackball, event->xbutton.button, 10,
-                           !!event->xbutton.state);
-    return True;
-  }
-  else if (event->xany.type == MotionNotify && sp->button_down_p)
-  {
-    gltrackball_track (sp->trackball, event->xmotion.x, event->xmotion.y,
-                       MI_WIDTH (mi), MI_HEIGHT (mi));
-    return True;
-  }
 
   return False;
 }
@@ -496,7 +469,7 @@ ENTRYPOINT void init_surface(ModeInfo *mi)
                            1.0,
                            do_wander ? wander_speed : 0,
                            True);
-    sp->trackball = gltrackball_init ();
+    sp->trackball = gltrackball_init (True);
   }
 
   if (!strcasecmp(surface_type,"random"))

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2013 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005-2014 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -34,7 +34,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.31 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my ($version) = ('$Revision: 1.33 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -47,7 +47,8 @@ my $text_program  = '';
 my $text_url      = 'http://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss';
 # Default URL needs to be set and match what's in OSX/XScreenSaverView.m
 
-my $wrap_columns  = undef;
+my $wrap_columns   = undef;
+my $truncate_lines = undef;
 my $nyarlathotep_p = 0;
 
 
@@ -371,11 +372,12 @@ sub output() {
     if (open (my $in, '<', $text_file)) {
       print STDERR "$progname: reading $text_file\n" if ($verbose);
 
-      if ($wrap_columns && $wrap_columns > 0) {
+      if (($wrap_columns && $wrap_columns > 0) || $truncate_lines) {
         # read it, then reformat it.
         local $/ = undef;  # read entire file
         my $body = <$in>;
-        reformat_text ($body);
+        $body = reformat_text ($body);
+        print STDOUT $body;
       } else {
         # stream it by lines
         while (<$in>) { 
@@ -394,10 +396,21 @@ sub output() {
     $text_program = which ($prog) . $args;
     print STDERR "$progname: running $text_program\n" if ($verbose);
 
-    if ($wrap_columns && $wrap_columns > 0) {
+    if (($wrap_columns && $wrap_columns > 0) || $truncate_lines) {
       # read it, then reformat it.
-      my $body = `( $text_program ) 2>&1`;
-      reformat_text ($body);
+      my $lines = 0;
+      my $body = "";
+      my $cmd = "( $text_program ) 2>&1";
+      # $cmd .= " | sed -l"; # line buffer instead of 4k pipe buffer
+      open (my $pipe, '-|:unix', $cmd);
+      while (my $line = <$pipe>) {
+        $body .= $line;
+        $lines++;
+        last if ($truncate_lines && $lines > $truncate_lines);
+      }
+      close $pipe;
+      $body = reformat_text ($body);
+      print STDOUT $body;
     } else {
       # stream it
       safe_system ("$text_program");
@@ -571,8 +584,13 @@ sub reformat_html($$) {
 
   s/^\n+//gs;
 
+  if ($truncate_lines) {
+    s/^(([^\n]*\n){$truncate_lines}).*$/$1/s;
+  }
+
   y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
-  print STDOUT $_;
+
+  return $_;
 }
 
 
@@ -601,6 +619,8 @@ sub reformat_rss($) {
       push @items, (shift @items);
     }
   }
+
+  my $out = '';
 
   my $i = -1;
   foreach (@items) {
@@ -639,16 +659,23 @@ sub reformat_rss($) {
 
     $title = '' if ($body1 eq $title);  # Identical in Twitter's atom feed.
 
-    reformat_html ("$title<P>$body1", $wiki_p ? 'wiki' : 'rss');
-    print "\n";
+    $out .= reformat_html ("$title<P>$body1", $wiki_p ? 'wiki' : 'rss');
+    $out .= "\n";
   }
+
+  if ($truncate_lines) {
+    $out =~ s/^(([^\n]*\n){$truncate_lines}).*$/$1/s;
+  }
+
+  return $out;
 }
 
 
 sub rss_field_to_html($) {
   my ($body) = @_;
 
-  # Assume that if <![CDATA[...]]> is present, everything inside that.
+  # If <![CDATA[...]]> is present, everything inside that is HTML,
+  # and not double-encoded.
   #
   if ($body =~ m/^\s*<!\[CDATA\[(.*?)\]\s*\]/is) {
     $body = $1;
@@ -674,8 +701,12 @@ sub reformat_text($) {
     $body =~ s/[ \t]+$//gm;
   }
 
+  if ($truncate_lines) {
+    $body =~ s/^(([^\n]*\n){$truncate_lines}).*$/$1/s;
+  }
+
   $body =~ y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
-  print STDOUT $body;
+  return $body;
 }
 
 
@@ -735,13 +766,14 @@ sub get_url_text($) {
   $ct = guess_content_type ($ct, $body);
   if ($ct eq 'html') {
     print STDERR "$progname: converting HTML...\n" if ($verbose > 2);
-    reformat_html ($body, 0);
+    $body = reformat_html ($body, 0);
   } elsif ($ct eq 'rss')  {
-    reformat_rss ($body);
+    $body = reformat_rss ($body);
   } else {
     print STDERR "$progname: plain text...\n" if ($verbose > 2);
-    reformat_text ($body);
+    $body = reformat_text ($body);
   }
+  print STDOUT $body;
 }
 
 
@@ -779,6 +811,8 @@ sub usage() {
     "                        it will be converted to plain-text.\n" .
     "\n" .
     "       --cols N         Wrap lines at this column.  Default 72.\n" .
+    "\n" .
+    "       --lines N        No more than N lines of output.\n" .
     "\n");
   exit 1;
 }
@@ -807,6 +841,7 @@ sub main() {
                               $text_url = shift @ARGV || '';
                               $load_p = 0; }
     elsif (m/^--?col(umn)?s?$/) { $wrap_columns = 0 + shift @ARGV; }
+    elsif (m/^--?lines?$/)  { $truncate_lines = 0 + shift @ARGV; }
     elsif (m/^--?cocoa$/)   { $cocoa_id = shift @ARGV; }
     elsif (m/^--?nyarlathotep$/) { $nyarlathotep_p++; }
     elsif (m/^-./) { usage; }

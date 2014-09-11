@@ -74,7 +74,7 @@ ModStruct   providence_description = {
 
 #define EYE_PARTICLE_COUNT 2000
 
-#define LOOKUPSIZE 3600
+#define LOOKUPSIZE (3600/5)  /* 3600 was way too much RAM on iOS */
 #define EYELENGTH 300
 
 #define EPSILON 0.0001
@@ -644,49 +644,27 @@ ENTRYPOINT Bool providence_handle_event(ModeInfo *mi, XEvent *event)
 
   switch(event->xany.type) {
   case ButtonPress:
-
     switch(event->xbutton.button) {
-
-    case Button1:
-      mp->button_down_p = True;
-      gltrackball_start(mp->trackball, 
-			event->xbutton.x, event->xbutton.y,
-			MI_WIDTH (mi), MI_HEIGHT (mi));
-      break;
-      
     case Button4:
       mp->camera_velocity += 1.0;
-      break;
-
+      return True;
     case Button5:
       mp->camera_velocity -= 1.0;
+      return True;
+    default:
       break;
     }
-
     break;
-    
-  case ButtonRelease:
-
-    switch(event->xbutton.button) {
-    case Button1:
-      mp->button_down_p = False;
-      break;
-    }
-
-    break;
-
-  case MotionNotify:
-    if(mp->button_down_p)
-      gltrackball_track(mp->trackball,
-			event->xmotion.x, event->xmotion.y,
-			MI_WIDTH (mi), MI_HEIGHT (mi));
-    break;
-    
   default:
-    return False;
+    break;
   }
 
-  return True;
+  if (gltrackball_event_handler (event, mp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &mp->button_down_p))
+    return True;
+
+  return False;
 }
 
 ENTRYPOINT void init_providence(ModeInfo *mi) 
@@ -699,7 +677,7 @@ ENTRYPOINT void init_providence(ModeInfo *mi)
       return;
   }
   mp = &providence[MI_SCREEN(mi)];
-  mp->trackball = gltrackball_init ();
+  mp->trackball = gltrackball_init (False);
 
   mp->position0[0] = 1;
   mp->position0[1] = 5;

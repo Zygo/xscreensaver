@@ -57,9 +57,9 @@
   <xscreensaver-updater />
 
   <_description>
-This draws the recursive Hilbert space-filling curve, in both 2D and
-3D variants.  It incrementally animates the growth and recursion to
-the maximum depth, then unwinds it back.
+The recursive Hilbert space-filling curve, both 2D and 3D variants.
+It incrementally animates the growth and recursion to the maximum
+depth, then unwinds it back.
 
 The Hilbert path is a single contiguous line that can fill a volume
 without crossing itself.  As a data structure, Hilbert paths are

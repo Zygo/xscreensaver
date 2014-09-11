@@ -289,6 +289,12 @@ pedal_reshape (Display *dpy, Window window, void *closure,
 static Bool
 pedal_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->erase_p = 1;
+      return True;
+    }
   return False;
 }
 

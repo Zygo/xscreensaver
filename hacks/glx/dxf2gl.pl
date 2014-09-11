@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2003 Jamie Zawinski <jwz@jwz.org>
+# Copyright Â© 2003-2014 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -22,20 +22,30 @@
 #                     If this option is not specified, planar normals will be
 #                     used, resulting in a "faceted" object.
 #
+#    --wireframe      Emit lines instead of faces.
+#
+#    --layers         Emit a separate set of polygons for each layer in the
+#                     input file, instead of emitting the whole file as a
+#                     single unit.
+#
 # Created:  8-Mar-2003.
 
 require 5;
 use diagnostics;
 use strict;
 
+use POSIX qw(mktime strftime);
+use Math::Trig qw(acos);
+use Text::Wrap;
+
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my ($version) = ('$Revision: 1.11 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
 
 # convert a vector to a unit vector
-sub normalize {
+sub normalize($$$) {
   my ($x, $y, $z) = @_;
   my $L = sqrt (($x * $x) + ($y * $y) + ($z * $z));
   if ($L != 0) {
@@ -52,7 +62,7 @@ sub normalize {
 # Calculate the unit normal at p0 given two other points p1,p2 on the
 # surface.  The normal points in the direction of p1 crossproduct p2.
 #
-sub face_normal {
+sub face_normal($$$$$$$$$) {
   my ($p0x, $p0y, $p0z,
       $p1x, $p1y, $p1z,
       $p2x, $p2y, $p2z) = @_;
@@ -75,14 +85,12 @@ sub face_normal {
 }
 
 
-# why this isn't in perlfunc, I don't know.
-sub acos { atan2( sqrt(1 - $_[0] * $_[0]), $_[0] ) }
 my $pi = 3.141592653589793;
 my $radians_to_degrees = 180.0 / $pi;
 
 # Calculate the angle (in degrees) between two vectors.
 #
-sub vector_angle {
+sub vector_angle($$$$$$) {
   my ($x1, $y1, $z1,
       $x2, $y2, $z2) = @_;
 
@@ -108,10 +116,12 @@ sub vector_angle {
   return ($angle * $radians_to_degrees);
 }
 
+
 # given a list of triangles ( [ X1, Y1, Z1,  X2, Y2, Z2,  X3, Y3, Z3, ]+ )
-# returns a list of the normals for each vertex.
+# returns a list of the normals for each vertex.  These are the smoothed
+# normals: the average of the normals of the participating faces.
 #
-sub compute_vertex_normals {
+sub compute_vertex_normals(@) {
   my (@points) = @_;
   my $npoints = ($#points+1) / 3;
   my $nfaces = $npoints / 3;
@@ -134,23 +144,11 @@ sub compute_vertex_normals {
     # store in the %point_faces hash table a list of every face number
     # in which a point participates
 
-    my $p;
-    my @flist;
-
-    $p = "$ax $ay $az";
-    @flist = (defined($point_faces{$p}) ? @{$point_faces{$p}} : ());
-    push @flist, $i;
-    $point_faces{$p} = \@flist;
-
-    $p = "$bx $by $bz";
-    @flist = (defined($point_faces{$p}) ? @{$point_faces{$p}} : ());
-    push @flist, $i;
-    $point_faces{$p} = \@flist;
-
-    $p = "$cx $cy $cz";
-    @flist = (defined($point_faces{$p}) ? @{$point_faces{$p}} : ());
-    push @flist, $i;
-    $point_faces{$p} = \@flist;
+    foreach my $p ("$ax $ay $az", "$bx $by $bz", "$cx $cy $cz") {
+      my @flist = (defined($point_faces{$p}) ? @{$point_faces{$p}} : ());
+      push @flist, $i;
+      $point_faces{$p} = \@flist;
+    }
   }
 
 
@@ -174,9 +172,8 @@ sub compute_vertex_normals {
       error ("overshot in verts?") unless defined($z);
 
       # Iterate over the faces in which this point participates.
-      # This face's normal is the average of the normals of those faces.
-      # Except, faces are ignored if any point in them is at more than
-      # a 90 degree angle from the zeroth face (arbitrarily.)
+      # But ignore any other faces that are at more than an N degree
+      # angle from this point's face. Those are sharp edges.
       #
       my ($nx, $ny, $nz) = (0, 0, 0);
       my @faces = @{$point_faces{"$x $y $z"}};
@@ -185,9 +182,10 @@ sub compute_vertex_normals {
           @points[($fn*9) .. ($fn*9)+8];
         my @fnorm = @{$face_normals[$fn]};
 
-        # ignore any adjascent faces that are more than 90 degrees off.
-        my $angle = vector_angle (@norm, @fnorm);
-        next if ($angle >= 90);
+        # ignore any adjascent faces that are more than N degrees off.
+        my $angle = vector_angle ($norm[0],  $norm[1],  $norm[2],
+                                  $fnorm[0], $fnorm[1], $fnorm[2]);
+        next if ($angle >= 30);
 
         $nx += $fnorm[0];
         $ny += $fnorm[1];
@@ -202,61 +200,86 @@ sub compute_vertex_normals {
 }
 
 
+sub parse_dxf($$$$$) {
+  my ($filename, $dxf, $normalize_p, $wireframe_p, $layers_p) = @_;
 
-sub parse_dxf {
-  my ($filename, $dxf, $normalize_p) = @_;
+  $dxf =~ s/\r\n/\n/gs;				# CRLF
+  $dxf =~ s/^[ \t\n]+|[ \t\n]+$//s;		# leading/trailing whitespace
 
-  $_ = $dxf;
-  my ($points_txt, $coords_txt);
-  my $vvers;
+  # Convert whitespace within a line to _, e.g., "ObjectDBX Classes".
+  # What the hell is up with this file format!
+  1 while ($dxf =~ s/([^ \t\n])[ \t]+([^ \t\n])/$1_$2/gs);
 
-  $dxf =~ s/([^\n]*)\n([^\n]*)\n/$1\t$2\n/g;  # join even and odd lines
+  $dxf =~ s/\r/\n/gs;
 
-  my @triangles = ();
+  # Turn blank lines into "", e.g., "$DIMBLK \n 1 \n \n 9 \n"
+  $dxf =~ s/\n\n/\n""\n/gs;
 
-  my @items = split (/\n/, $dxf);
-  while ($#items >= 0) {
+  my @tokens = split (/[ \t\n]+/, $dxf);	# tokenize
 
-    $_ = shift @items;
+  my @entities = ();				# parse
+  while (@tokens) {
+    my @elts = ();
+    my $key = shift @tokens;			# sectionize at "0 WORD"
+    do {
+      my $val = shift @tokens;
+      push @elts, [ $key, $val ];		# contents are [CODE VAL]
+      $key = shift @tokens;
+    } while ($key && $key ne 0);
+    unshift @tokens, $key if defined($key);
+    push @entities, \@elts;
+  }
+  my %triangles;   # list of points, indexed by layer name
+  my %lines;
+  my $error_count = 0;
 
-    if      (m/^\s* 0 \s+ SECTION \b/x) {
-    } elsif (m/^\s* 2 \s+ HEADER \b/x) {
-    } elsif (m/^\s* 0 \s+ ENDSEC \b/x) {
-    } elsif (m/^\s* 2 \s+ ENTITIES \b/x) {
-    } elsif (m/^\s* 0 \s+ EOF \b/x) {
-    } elsif (m/^\s* 0 \s+ 3DFACE \b/x) {
+  foreach my $entity (@entities) {
+    my $header = shift @$entity;
+    my ($code, $name) = @$header;
+
+    if ($name eq 'SECTION' ||
+        $name eq 'HEADER' ||
+        $name eq 'ENDSEC' ||
+        $name eq 'EOF') {
+      print STDERR "$progname: $filename: ignoring \"$code $name\"\n"
+        if ($verbose > 1);
+
+    } elsif ($name eq '3DFACE') {
 
       my @points = ();
       my $pc = 0;
+      my $layer = '';
 
-      while ($#items >= 0) {
-        $_ = shift @items;  # get next line
+      foreach my $entry (@$entity) {
+        my ($key, $val) = @$entry;
+        if      ($key eq 8)  { $layer = $val;			# layer name
 
-        my $d = '(-?\d+\.?\d+)';
-        if (m/^\s* 8 \b/x) {        # layer name
-        } elsif (m/^\s* 62 \b/x) {  # color number
+        } elsif ($key eq 10) { $pc++; $points[0] = $val;	# X1
+        } elsif ($key eq 20) { $pc++; $points[1] = $val;	# Y1
+        } elsif ($key eq 30) { $pc++; $points[2] = $val;	# Z1
 
-        } elsif (m/^\s* 10 \s+ $d/xo) { $pc++; $points[ 0] = $1;    # X1
-        } elsif (m/^\s* 20 \s+ $d/xo) { $pc++; $points[ 1] = $1;    # Y1
-        } elsif (m/^\s* 30 \s+ $d/xo) { $pc++; $points[ 2] = $1;    # Z1
+        } elsif ($key eq 11) { $pc++; $points[3] = $val;	# X2
+        } elsif ($key eq 21) { $pc++; $points[4] = $val;	# Y2
+        } elsif ($key eq 31) { $pc++; $points[5] = $val;	# Z2
 
-        } elsif (m/^\s* 11 \s+ $d/xo) { $pc++; $points[ 3] = $1;    # X2
-        } elsif (m/^\s* 21 \s+ $d/xo) { $pc++; $points[ 4] = $1;    # Y2
-        } elsif (m/^\s* 31 \s+ $d/xo) { $pc++; $points[ 5] = $1;    # Z2
+        } elsif ($key eq 12) { $pc++; $points[6] = $val;	# X3
+        } elsif ($key eq 22) { $pc++; $points[7] = $val;	# Y3
+        } elsif ($key eq 32) { $pc++; $points[8] = $val;	# Z3
 
-        } elsif (m/^\s* 12 \s+ $d/xo) { $pc++; $points[ 6] = $1;    # X3
-        } elsif (m/^\s* 22 \s+ $d/xo) { $pc++; $points[ 7] = $1;    # Y3
-        } elsif (m/^\s* 32 \s+ $d/xo) { $pc++; $points[ 8] = $1;    # Z3
+        } elsif ($key eq 13) { $pc++; $points[9]  = $val;	# X4
+        } elsif ($key eq 23) { $pc++; $points[10] = $val;	# Y4
+        } elsif ($key eq 33) { $pc++; $points[11] = $val;	# Z4
 
-        } elsif (m/^\s* 13 \s+ $d/xo) { $pc++; $points[ 9] = $1;    # X4
-        } elsif (m/^\s* 23 \s+ $d/xo) { $pc++; $points[10] = $1;    # Y4
-        } elsif (m/^\s* 33 \s+ $d/xo) { $pc++; $points[11] = $1;    # Z4
+        } elsif ($key eq 62) {				# color number
+        } elsif ($key eq 70) {				# invisible edge flag
         } else {
-          error ("$filename: unknown 3DFACE entry: $_\n");
+          print STDERR "$progname: $filename: WARNING:" .
+            " unknown $name: \"$key $val\"\n";
+          $error_count++;
         }
-
-        last if ($pc >= 12);
       }
+
+      error ("got $pc points in $name") unless ($pc == 12);
 
       if ($points[6] != $points[9] ||
           $points[7] != $points[10] ||
@@ -268,15 +291,104 @@ sub parse_dxf {
 
       foreach (@points) { $_ += 0; }    # convert strings to numbers
 
-      push @triangles, @points;
+      $layer = '' unless $layers_p;
+
+      $triangles{$layer} = [] unless defined ($triangles{$layer});
+      push @{$triangles{$layer}}, @points;
+
+    } elsif ($name eq 'LINE') {
+
+      my @points = ();
+      my $pc = 0;
+      my $layer = '';
+
+      foreach my $entry (@$entity) {
+        my ($key, $val) = @$entry;
+        if      ($key eq 8)  { $layer = $val;			# layer name
+
+        } elsif ($key eq 10) { $pc++; $points[0] = $val;	# X1
+        } elsif ($key eq 20) { $pc++; $points[1] = $val;	# Y1
+        } elsif ($key eq 30) { $pc++; $points[2] = $val;	# Z1
+
+        } elsif ($key eq 11) { $pc++; $points[3] = $val;	# X2
+        } elsif ($key eq 21) { $pc++; $points[4] = $val;	# Y2
+        } elsif ($key eq 31) { $pc++; $points[5] = $val;	# Z2
+
+        } elsif ($key eq 39) {				# thickness
+        } elsif ($key eq 62) {				# color number
+        } else {
+          print STDERR "$progname: $filename: WARNING:" .
+            " unknown $name: \"$key $val\"\n";
+          $error_count++;
+        }
+      }
+
+      error ("got $pc points in $name") unless ($pc == 6);
+
+      foreach (@points) { $_ += 0; }    # convert strings to numbers
+
+      $layer = '' unless $layers_p;
+
+      $lines{$layer} = [] unless defined ($lines{$layer});
+      push @{$lines{$layer}}, @points;
+
+    } elsif ($name =~ m/^\d+$/s) {
+      error ("sequence lost: \"$code $name\"");
 
     } else {
-      error ("$filename: unknown: $_\n");
+      print STDERR "$progname: $filename: WARNING: unknown: \"$code $name\"\n";
+      $error_count++;
     }
+
+    error ("too many errors: bailing!") if ($error_count > 50);
   }
 
+  if ($wireframe_p) {
 
-  my $npoints = ($#triangles+1) / 3;
+    # Convert faces to lines.
+    # Don't duplicate shared edges.
+
+    foreach my $layer (keys %triangles) {
+      my %dups;
+      my @triangles = @{$triangles{$layer}};
+      while (@triangles) {
+        my $x1 = shift @triangles; # 0
+        my $y1 = shift @triangles; # 1
+        my $z1 = shift @triangles; # 2
+        my $x2 = shift @triangles; # 3
+        my $y2 = shift @triangles; # 4
+        my $z2 = shift @triangles; # 5
+        my $x3 = shift @triangles; # 6
+        my $y3 = shift @triangles; # 7
+        my $z3 = shift @triangles; # 8
+
+        my $p = sub(@) {
+          my ($x1, $y1, $z1, $x2, $y2, $z2) = @_;
+          my $key1 = "$x1, $y1, $z1, $x2, $y2, $z2";
+          my $key2 = "$x2, $y2, $z2, $x1, $y1, $z1";
+          my $dup = $dups{$key1} || $dups{$key2};
+          $dups{$key1} = 1;
+          $dups{$key2} = 1;
+          push @{$lines{$layer}}, @_ unless $dup;
+        }
+        ;
+        $p->($x1, $y1, $z1, $x2, $y2, $z2);
+        $p->($x2, $y2, $z2, $x3, $y3, $z3);
+        $p->($x3, $y3, $z3, $x1, $y1, $z1);
+      }
+
+      @{$triangles{$layer}} = ();
+    }
+
+  } else {
+    foreach my $layer (keys %lines) {
+      my $n = @{$lines{$layer}};
+      @{$lines{$layer}} = ();
+      print STDERR "$progname: $filename: $layer: WARNING:" .
+                   " ignored $n stray LINE" . ($n == 1 ? "" : "s") . ".\n"
+       if ($n);
+    }
+  }
 
 
   # find bounding box, and normalize
@@ -289,14 +401,20 @@ sub parse_dxf {
     my $maxy = -999999999;
     my $maxz = -999999999;
     my $i = 0;
-    foreach my $n (@triangles) {
-      if    ($i == 0) { $minx = $n if ($n < $minx);
-                        $maxx = $n if ($n > $maxx); }
-      elsif ($i == 1) { $miny = $n if ($n < $miny);
-                        $maxy = $n if ($n > $maxy); }
-      else            { $minz = $n if ($n < $minz);
-                        $maxz = $n if ($n > $maxz); }
-      $i = 0 if (++$i == 3);
+
+    foreach my $layer (keys %triangles) {
+      my %dups;
+      my @triangles = @{$triangles{$layer}};
+
+      foreach my $n (@{$lines{$layer}}, @{$triangles{$layer}}) {
+        if    ($i == 0) { $minx = $n if ($n < $minx);
+                          $maxx = $n if ($n > $maxx); }
+        elsif ($i == 1) { $miny = $n if ($n < $miny);
+                          $maxy = $n if ($n > $maxy); }
+        else            { $minz = $n if ($n < $minz);
+                          $maxz = $n if ($n > $maxz); }
+        $i = 0 if (++$i == 3);
+      }
     }
 
     my $w = ($maxx - $minx);
@@ -305,43 +423,47 @@ sub parse_dxf {
     my $sizea = ($w > $h ? $w : $h);
     my $sizeb = ($w > $d ? $w : $d);
     my $size = ($sizea > $sizeb ? $sizea : $sizeb);
-        
+
     print STDERR "$progname: $filename: bbox is " .
                   sprintf("%.2f x %.2f x %.2f\n", $w, $h, $d)
+       if ($verbose);
+    print STDERR "$progname: $filename: center is " .
+                  sprintf("%.2f, %.2f, %.2f\n",
+                          $minx + $w / 2,
+                          $miny + $h / 2,
+                          $minz + $d / 2)
        if ($verbose);
 
     if ($normalize_p) {
       $w /= $size;
       $h /= $size;
       $d /= $size;
-      print STDERR "$progname: $filename: dividing by $size for bbox of " .
-                  sprintf("%.2f x %.2f x %.2f\n", $w, $h, $d)
+
+      print STDERR "$progname: $filename: dividing by " .
+                   sprintf("%.2f", $size) . " for bbox of " .
+                   sprintf("%.2f x %.2f x %.2f\n", $w, $h, $d)
         if ($verbose);
-      foreach my $n (@triangles) {
-        $n /= $size;
+      foreach my $layer (keys %triangles) {
+        foreach my $n (@{$triangles{$layer}}) { $n /= $size; }
+        foreach my $n (@{$lines{$layer}})     { $n /= $size; }
       }
     }
   }
 
-  return (@triangles);
+  return ($wireframe_p ? \%lines : \%triangles);
 }
 
 
-sub generate_c {
-  my ($filename, $smooth_p, @points) = @_;
+sub generate_c_1($$$$$@) {
+  my ($name, $outfile, $smooth_p, $wireframe_p, $normalize_p, @points) = @_;
 
   my $ccw_p = 1;  # counter-clockwise winding rule for computing normals
 
-  my $code = '';
-
-  $code .= "#include \"gllist.h\"\n";
-  $code .= "static const float data[]={\n";
-
   my $npoints = ($#points + 1) / 3;
-  my $nfaces = $npoints / 3;
+  my $nfaces = ($wireframe_p ? $npoints/2 : $npoints/3);
 
   my @normals;
-  if ($smooth_p) {
+  if ($smooth_p && !$wireframe_p) {
     @normals = compute_vertex_normals (@points);
 
     if ($#normals != $#points) {
@@ -350,63 +472,111 @@ sub generate_c {
     }
   }
 
-  for (my $i = 0; $i < $nfaces; $i++) {
-    my $ax = $points[$i*9];
-    my $ay = $points[$i*9+1];
-    my $az = $points[$i*9+2];
+  my $code .= "\nstatic const float ${name}_data[] = {\n";
 
-    my $bx = $points[$i*9+3];
-    my $by = $points[$i*9+4];
-    my $bz = $points[$i*9+5];
+  if ($wireframe_p) {
+    my %dups;
+    for (my $i = 0; $i < $nfaces; $i++) {
+      my $ax = $points[$i*6];
+      my $ay = $points[$i*6+1];
+      my $az = $points[$i*6+2];
 
-    my $cx = $points[$i*9+6];
-    my $cy = $points[$i*9+7];
-    my $cz = $points[$i*9+8];
+      my $bx = $points[$i*6+3];
+      my $by = $points[$i*6+4];
+      my $bz = $points[$i*6+5];
 
-    my ($nax, $nay, $naz,
-        $nbx, $nby, $nbz,
-        $ncx, $ncy, $ncz);
+      my $lines = sprintf("\t" . "%.6f,%.6f,%.6f,\n" .
+                          "\t" . "%.6f,%.6f,%.6f,\n",
+                          $ax, $ay, $az,
+                          $bx, $by, $bz);
+      $lines =~ s/([.\d])0+,/$1,/g;  # lose trailing insignificant zeroes
+      $lines =~ s/\.,/,/g;
+      $lines =~ s/-0,/0,/g;
 
-    if ($smooth_p) {
-      $nax = $normals[$i*9];
-      $nay = $normals[$i*9+1];
-      $naz = $normals[$i*9+2];
-
-      $nbx = $normals[$i*9+3];
-      $nby = $normals[$i*9+4];
-      $nbz = $normals[$i*9+5];
-
-      $ncx = $normals[$i*9+6];
-      $ncy = $normals[$i*9+7];
-      $ncz = $normals[$i*9+8];
-
-    } else {
-      if ($ccw_p) {
-        ($nax, $nay, $naz) = face_normal ($ax, $ay, $az,
-                                          $bx, $by, $bz,
-                                          $cx, $cy, $cz);
-      } else {
-        ($nax, $nay, $naz) = face_normal ($ax, $ay, $az,
-                                          $cx, $cy, $cz,
-                                          $bx, $by, $bz);
-      }
-      ($nbx, $nby, $nbz) = ($nax, $nay, $naz);
-      ($ncx, $ncy, $ncz) = ($nax, $nay, $naz);
+      $code .= $lines;
     }
 
-    my $lines = sprintf("\t" . "%.6f,%.6f,%.6f," . "%.6f,%.6f,%.6f,\n" .
-                        "\t" . "%.6f,%.6f,%.6f," . "%.6f,%.6f,%.6f,\n" .
-                        "\t" . "%.6f,%.6f,%.6f," . "%.6f,%.6f,%.6f,\n",
-                        $nax, $nay, $naz,  $ax, $ay, $az,
-                        $nbx, $nby, $nbz,  $bx, $by, $bz,
-                        $ncx, $ncy, $ncz,  $cx, $cy, $cz);
-    $lines =~ s/([.\d])0+,/$1,/g;  # lose trailing insignificant zeroes
-    $lines =~ s/\.,/,/g;
+  } else {
+    for (my $i = 0; $i < $nfaces; $i++) {
+      my $ax = $points[$i*9];
+      my $ay = $points[$i*9+1];
+      my $az = $points[$i*9+2];
 
-    $code .= $lines;
+      my $bx = $points[$i*9+3];
+      my $by = $points[$i*9+4];
+      my $bz = $points[$i*9+5];
+
+      my $cx = $points[$i*9+6];
+      my $cy = $points[$i*9+7];
+      my $cz = $points[$i*9+8];
+
+      my ($nax, $nay, $naz,
+          $nbx, $nby, $nbz,
+          $ncx, $ncy, $ncz);
+
+      if ($smooth_p) {
+        $nax = $normals[$i*9];
+        $nay = $normals[$i*9+1];
+        $naz = $normals[$i*9+2];
+
+        $nbx = $normals[$i*9+3];
+        $nby = $normals[$i*9+4];
+        $nbz = $normals[$i*9+5];
+
+        $ncx = $normals[$i*9+6];
+        $ncy = $normals[$i*9+7];
+        $ncz = $normals[$i*9+8];
+
+      } else {
+        if ($ccw_p) {
+          ($nax, $nay, $naz) = face_normal ($ax, $ay, $az,
+                                            $bx, $by, $bz,
+                                            $cx, $cy, $cz);
+        } else {
+          ($nax, $nay, $naz) = face_normal ($ax, $ay, $az,
+                                            $cx, $cy, $cz,
+                                            $bx, $by, $bz);
+        }
+        ($nbx, $nby, $nbz) = ($nax, $nay, $naz);
+        ($ncx, $ncy, $ncz) = ($nax, $nay, $naz);
+      }
+
+      my $lines = sprintf("\t" . "%.6f,%.6f,%.6f," . "%.6f,%.6f,%.6f,\n" .
+                          "\t" . "%.6f,%.6f,%.6f," . "%.6f,%.6f,%.6f,\n" .
+                          "\t" . "%.6f,%.6f,%.6f," . "%.6f,%.6f,%.6f,\n",
+                          $nax, $nay, $naz,  $ax, $ay, $az,
+                          $nbx, $nby, $nbz,  $bx, $by, $bz,
+                          $ncx, $ncy, $ncz,  $cx, $cy, $cz);
+      $lines =~ s/([.\d])0+,/$1,/g;  # lose trailing insignificant zeroes
+      $lines =~ s/\.,/,/g;
+      $lines =~ s/-0,/0,/g;
+
+      $code .= $lines;
+    }
   }
 
-  my $token = $filename;    # guess at a C token from the filename
+  my $format    = ($wireframe_p ? 'GL_V3F'   : 'GL_N3F_V3F');
+  my $primitive = ($wireframe_p ? 'GL_LINES' : 'GL_TRIANGLES');
+
+  $code =~ s/,\n$//s;
+  $code .= "\n};\n";
+  $code .= "static const struct gllist ${name}_frame = {\n";
+  $code .= " $format, $primitive, $npoints, ${name}_data, 0\n};\n";
+  $code .= "const struct gllist *$name = &${name}_frame;\n";
+
+  print STDERR "$progname: $outfile: $name: $npoints points, $nfaces faces.\n"
+    if ($verbose);
+
+  return ($code, $npoints, $nfaces);
+}
+
+
+sub generate_c($$$$$$) {
+  my ($infile, $outfile, $smooth_p, $wireframe_p, $normalize_p, $layers) = @_;
+
+  my $code = '';
+
+  my $token = $outfile;    # guess at a C token from the filename
   $token =~ s/\<[^<>]*\>//;
   $token =~ s@^.*/@@;
   $token =~ s/\.[^.]*$//;
@@ -417,74 +587,132 @@ sub generate_c {
   $token =~ tr [A-Z] [a-z];
   $token = 'foo' if ($token eq '');
 
-  my $format = 'GL_N3F_V3F';
-  my $primitive = 'GL_TRIANGLES';
+  my @layers = sort (keys %$layers);
 
-  $code =~ s/,\n$//s;
-  $code .= "\n};\n";
-  $code .= "static const struct gllist frame={";
-  $code .= "$format,$primitive,$npoints,data,NULL};\n";
-  $code .= "const struct gllist *$token=&frame;\n";
+  $infile =~ s@^.*/@@s;
+  $code .= ("/* Generated from \"$infile\" on " .
+            strftime ("%d-%b-%Y", localtime ()) . ".\n" .
+            "   " . ($wireframe_p
+                     ? "Wireframe."
+                     : ($smooth_p ? 
+                        "Smoothed vertex normals." :
+                        "Faceted face normals.")) .
+            ($normalize_p ? " Normalized to unit bounding box." : "") .
+            "\n" .
+            (@layers > 1
+             ? wrap ("   ", "     ", "Components: " . join (", ", @layers)) . ".\n"
+             : "") .
+            " */\n\n");
 
-  print STDERR "$progname: $filename: " .
-               (($#points+1)/3) . " points, " .
-               (($#points+1)/9) . " faces.\n"
-    if ($verbose);
+  $code .= "#include \"gllist.h\"\n";
+
+  my $npoints = 0;
+  my $nfaces = 0;
+
+  foreach my $layer (@layers) {
+    my $name = $layer ? "${token}_${layer}" : $token;
+    my ($c, $np, $nf) =
+      generate_c_1 ($name, $outfile,
+                    $smooth_p, $wireframe_p, $normalize_p,
+                    @{$layers->{$layer}});
+    $code .= $c;
+    $npoints += $np;
+    $nfaces  += $nf;
+  }
+
+  print STDERR "$progname: $outfile: total: $npoints points, $nfaces faces.\n"
+    if ($verbose && @layers > 1);
 
   return $code;
 }
 
 
-sub dxf_to_gl {
-  my ($infile, $outfile, $smooth_p, $normalize_p) = @_;
-  local *IN;
-  my $dxf = '';
-  open (IN, "<$infile") || error ("$infile: $!");
-  my $filename = ($infile eq '-' ? "<stdin>" : $infile);
-  print STDERR "$progname: reading $filename...\n"
-    if ($verbose);
-  while (<IN>) { $dxf .= $_; }
-  close IN;
+# Returns true if the two files differ (by running "cmp")
+#
+sub cmp_files($$) {
+  my ($file1, $file2) = @_;
 
-  $dxf =~ s/\r\n/\n/g; # CRLF -> LF
-  $dxf =~ s/\r/\n/g;   # CR -> LF
+  my @cmd = ("cmp", "-s", "$file1", "$file2");
+  print STDERR "$progname: executing \"" . join(" ", @cmd) . "\"\n"
+    if ($verbose > 3);
 
-  my @data = parse_dxf ($filename, $dxf, $normalize_p);
+  system (@cmd);
+  my $exit_value  = $? >> 8;
+  my $signal_num  = $? & 127;
+  my $dumped_core = $? & 128;
 
-  $filename = ($outfile eq '-' ? "<stdout>" : $outfile);
-  my $code = generate_c ($filename, $smooth_p, @data);
-
-  local *OUT;
-  open (OUT, ">$outfile") || error ("$outfile: $!");
-  print OUT $code || error ("$filename: $!");
-  close OUT || error ("$filename: $!");
-
-  print STDERR "$progname: wrote $filename\n"
-    if ($verbose || $outfile ne '-');
+  error ("$cmd[0]: core dumped!") if ($dumped_core);
+  error ("$cmd[0]: signal $signal_num!") if ($signal_num);
+  return $exit_value;
 }
 
 
-sub error {
+sub dxf_to_gl($$$$$$) {
+  my ($infile, $outfile, $smooth_p, $normalize_p, $wireframe_p, $layers_p) = @_;
+
+  open (my $in, "<$infile") || error ("$infile: $!");
+  my $filename = ($infile eq '-' ? "<stdin>" : $infile);
+  print STDERR "$progname: reading $filename...\n"
+    if ($verbose);
+
+  local $/ = undef;  # read entire file
+  my $dxf = <$in>;
+  close $in;
+
+  my $data = parse_dxf ($filename, $dxf, $normalize_p, $wireframe_p, $layers_p);
+
+  $filename = ($outfile eq '-' ? "<stdout>" : $outfile);
+  my $code = generate_c ($infile, $filename, $smooth_p, $wireframe_p,
+                         $normalize_p, $data);
+
+  if ($outfile eq '-') {
+    print STDOUT $code;
+  } else {
+    my $tmp = "$outfile.tmp";
+    open (my $out, '>', $tmp) || error ("$tmp: $!");
+    print $out $code || error ("$filename: $!");
+    close $out || error ("$filename: $!");
+    if (cmp_files ($filename, $tmp)) {
+      if (!rename ($tmp, $filename)) {
+        unlink $tmp;
+        error ("mv $tmp $filename: $!");
+      }
+      print STDERR "$progname: wrote $filename\n";
+    } else {
+      unlink "$tmp" || error ("rm $tmp: $!\n");
+      print STDERR "$progname: $filename unchanged\n" if ($verbose);
+    }
+  }
+}
+
+
+sub error() {
   ($_) = @_;
   print STDERR "$progname: $_\n";
   exit 1;
 }
 
-sub usage {
-  print STDERR "usage: $progname [--verbose] [--smooth] [infile [outfile]]\n";
+sub usage() {
+  print STDERR "usage: $progname " .
+        "[--verbose] [--normalize] [--smooth] [--wireframe] [--layers]\n" .
+        "[infile [outfile]]\n";
   exit 1;
 }
 
-sub main {
+sub main() {
   my ($infile, $outfile);
   my $normalize_p = 0;
   my $smooth_p = 0;
+  my $wireframe_p = 0;
+  my $layers_p = 0;
   while ($_ = $ARGV[0]) {
     shift @ARGV;
     if ($_ eq "--verbose") { $verbose++; }
     elsif (m/^-v+$/) { $verbose += length($_)-1; }
     elsif ($_ eq "--normalize") { $normalize_p = 1; }
     elsif ($_ eq "--smooth") { $smooth_p = 1; }
+    elsif ($_ eq "--wireframe") { $wireframe_p = 1; }
+    elsif ($_ eq "--layers") { $layers_p = 1; }
     elsif (m/^-./) { usage; }
     elsif (!defined($infile)) { $infile = $_; }
     elsif (!defined($outfile)) { $outfile = $_; }
@@ -494,7 +722,7 @@ sub main {
   $infile  = "-" unless defined ($infile);
   $outfile = "-" unless defined ($outfile);
 
-  dxf_to_gl ($infile, $outfile, $smooth_p, $normalize_p);
+  dxf_to_gl ($infile, $outfile, $smooth_p, $normalize_p, $wireframe_p, $layers_p);
 }
 
 main;

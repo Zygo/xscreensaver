@@ -34,11 +34,7 @@
   <xscreensaver-updater />
 
   <_description>
-This throws some random bits on the screen, then sucks them
-through a jet engine and spews them out the other side.  To avoid
-turning the image completely to mush, every now and then it will it
-interject some splashes of color into the scene, or go into a spin
-cycle, or stretch the image like taffy.
+A jet engine consumes the screen, then puts it through a spin cycle.
 
 Written by Scott Draves and Jamie Zawinski; 1997.
   </_description>

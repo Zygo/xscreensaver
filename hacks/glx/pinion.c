@@ -1,4 +1,4 @@
-/* pinion, Copyright (c) 2004-2012 Jamie Zawinski <jwz@jwz.org>
+/* pinion, Copyright (c) 2004-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -53,12 +53,7 @@ typedef struct {
   Bool button_down_p;
   unsigned long mouse_gear_id;
 
-# ifdef HAVE_GLBITMAP
-  XFontStruct *xfont1, *xfont2, *xfont3;
-  GLuint font1_dlist, font2_dlist, font3_dlist;
-# else
   texture_font_data *font1, *font2, *font3;
-# endif
 
   GLuint title_list;
   int draw_tick;
@@ -114,15 +109,9 @@ static void
 load_fonts (ModeInfo *mi)
 {
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
-# ifdef HAVE_GLBITMAP
-  load_font (mi->dpy, "titleFont",  &pp->xfont1, &pp->font1_dlist);
-  load_font (mi->dpy, "titleFont2", &pp->xfont2, &pp->font2_dlist);
-  load_font (mi->dpy, "titleFont3", &pp->xfont3, &pp->font3_dlist);
-# else
   pp->font1 = load_texture_font (mi->dpy, "titleFont");
   pp->font2 = load_texture_font (mi->dpy, "titleFont2");
   pp->font3 = load_texture_font (mi->dpy, "titleFont3");
-# endif
 }
 
 
@@ -163,38 +152,16 @@ new_label (ModeInfo *mi)
   glNewList (pp->title_list, GL_COMPILE);
   if (*label)
     {
-# ifdef HAVE_GLBITMAP
-      XFontStruct *f;
-      GLuint fl;
-# else
       texture_font_data *fd;
-# endif
       if (MI_WIDTH(mi) >= 500 && MI_HEIGHT(mi) >= 375)
-# ifdef HAVE_GLBITMAP
-        f = pp->xfont1, fl = pp->font1_dlist;                  /* big font */
-# else
         fd = pp->font1;
-# endif
       else if (MI_WIDTH(mi) >= 350 && MI_HEIGHT(mi) >= 260)
-# ifdef HAVE_GLBITMAP
-        f = pp->xfont2, fl = pp->font2_dlist;                  /* small font */
-# else
         fd = pp->font2;
-# endif
       else
-# ifdef HAVE_GLBITMAP
-        f = pp->xfont3, fl = pp->font3_dlist;                  /* tiny font */
-# else
         fd = pp->font3;
-# endif
 
       glColor3f (0.8, 0.8, 0);
-      print_gl_string (mi->dpy, 
-# ifdef HAVE_GLBITMAP
-                       f, fl,
-# else
-                       fd,
-# endif
+      print_gl_string (mi->dpy, fd,
                        mi->xgwa.width, mi->xgwa.height,
                        10, mi->xgwa.height - 10,
                        label, False);
@@ -1322,39 +1289,10 @@ pinion_handle_event (ModeInfo *mi, XEvent *event)
 {
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      pp->button_down_p = True;
-      gltrackball_start (pp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      pp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (pp->trackball, event->xbutton.button, 5,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           pp->button_down_p)
-    {
-      gltrackball_track (pp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, pp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &pp->button_down_p))
+    return True;
   else if (event->xany.type == KeyPress)
     {
       KeySym keysym;
@@ -1401,7 +1339,7 @@ init_pinion (ModeInfo *mi)
 
   pp->plane_displacement = gear_size * 0.1;
 
-  pp->trackball = gltrackball_init ();
+  pp->trackball = gltrackball_init (False);
 
   ffwd (mi);
 }

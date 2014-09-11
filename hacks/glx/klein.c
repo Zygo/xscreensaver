@@ -2124,8 +2124,8 @@ ENTRYPOINT void init_klein(ModeInfo *mi)
   kb = &klein[MI_SCREEN(mi)];
 
   
-  kb->trackballs[0] = gltrackball_init();
-  kb->trackballs[1] = gltrackball_init();
+  kb->trackballs[0] = gltrackball_init(True);
+  kb->trackballs[1] = gltrackball_init(True);
   kb->current_trackball = 0;
   kb->button_pressed = False;
 

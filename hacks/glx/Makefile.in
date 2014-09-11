@@ -68,22 +68,19 @@ UTILS_BIN	= $(HACK_BIN)/../utils
 INCLUDES_1	= -I. -I$(srcdir) -I$(UTILS_SRC) -I$(HACK_SRC) -I../..
 INCLUDES	= $(INCLUDES_1) @INCLUDES@
 
-UTIL_SRCS	= $(UTILS_SRC)/colors.c $(UTILS_SRC)/hsv.c \
-		  $(UTILS_SRC)/resources.c $(UTILS_SRC)/usleep.c \
-		  $(UTILS_SRC)/visual.c $(UTILS_SRC)/visual-gl.c \
-		  $(UTILS_SRC)/yarandom.c $(UTILS_SRC)/xshm.c \
-		  $(UTILS_SRC)/textclient.c
-UTIL_OBJS	= $(UTILS_SRC)/colors.o $(UTILS_SRC)/hsv.o \
+UTILDIR_OBJS	= $(UTILS_SRC)/colors.o $(UTILS_SRC)/hsv.o \
 		  $(UTILS_SRC)/resources.o $(UTILS_SRC)/usleep.o \
 		  $(UTILS_SRC)/visual.o $(UTILS_SRC)/visual-gl.o \
-		   $(UTILS_SRC)/yarandom.o $(UTILS_SRC)/xshm.o \
+		  $(UTILS_SRC)/yarandom.o $(UTILS_SRC)/xshm.o \
 		  $(UTILS_SRC)/textclient.o
+HACKDIR_OBJS	= $(HACK_SRC)/screenhack.o $(UTILS_SRC)/xlockmore.o \
+		  $(HACK_SRC)/fps.o
 
 SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c fps-gl.c \
 		  atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
-		  buildlwo.c cage.c dolphin.c gears.c lament.c moebius.c \
-		  morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c s1_3.c \
-		  s1_4.c s1_5.c s1_6.c s1_b.c shark.c sproingies.c \
+		  buildlwo.c cage.c dolphin.c gears.c lament.c lament_model.c \
+		  moebius.c morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c \
+		  s1_3.c s1_4.c s1_5.c s1_6.c s1_b.c shark.c sproingies.c \
 		  sproingiewrap.c stairs.c superquadrics.c swim.c whale.c \
 		  xlock-gl-utils.c xpm-ximage.c glplanet.c pulsar.c \
 		  extrusion.c extrusion-helix2.c extrusion-helix3.c \
@@ -118,13 +115,13 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c fps-gl.c \
 		  companion_heart.c tronbit.c tronbit_idle1.c tronbit_idle2.c \
 		  tronbit_no.c tronbit_yes.c jwzgles.c kaleidocycle.c \
 		  quasicrystal.c unknownpleasures.c geodesic.c \
-		  projectiveplane.c
+		  projectiveplane.c winduprobot.c robot.c robot-wireframe.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
-		  buildlwo.o cage.o dolphin.o gears.o lament.o moebius.o \
-		  morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o s1_3.o \
-		  s1_4.o s1_5.o s1_6.o s1_b.o shark.o sproingies.o \
+		  buildlwo.o cage.o dolphin.o gears.o lament.o lament_model.o \
+		  moebius.o morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o \
+		  s1_3.o s1_4.o s1_5.o s1_6.o s1_b.o shark.o sproingies.o \
 		  sproingiewrap.o stairs.o superquadrics.o swim.o whale.o \
 		  xlock-gl-utils.o xpm-ximage.o glplanet.o pulsar.o \
 		  extrusion.o extrusion-helix2.o extrusion-helix3.o \
@@ -159,7 +156,7 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  companion_heart.o tronbit.o tronbit_idle1.o tronbit_idle2.o \
 		  tronbit_no.o tronbit_yes.o jwzgles.o kaleidocycle.o \
 		  quasicrystal.o unknownpleasures.o geodesic.o \
-		  projectiveplane.o
+		  projectiveplane.o winduprobot.o robot.o robot-wireframe.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -176,7 +173,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  lockward cubicgrid hypnowheel skytentacles jigsaw photopile \
 		  rubikblocks surfaces hilbert companioncube tronbit \
 		  kaleidocycle quasicrystal unknownpleasures geodesic \
-		  projectiveplane
+		  projectiveplane winduprobot
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 GL_UTIL_EXES	= xscreensaver-gl-helper
@@ -190,9 +187,7 @@ EXES		= @GL_UTIL_EXES@ $(HACK_EXES)
 RETIRED_EXES	= @RETIRED_GL_EXES@
 RETIRED_GL_EXES	= glforestfire
 
-FPS_OBJS	= @GLFPS_OBJS@ $(HACK_BIN)/fps.o
-FONT_OBJS	= @GLFONT_OBJS@
-
+FPS_OBJS	= glxfonts.o texfont.o $(HACK_BIN)/fps.o fps-gl.o
 HACK_OBJS	= $(JWZGLES_OBJS) $(HACK_BIN)/screenhack.o \
 		  xlockmore-gl.o xlock-gl-utils.o ${FPS_OBJS} \
 		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
@@ -233,11 +228,11 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  photopile.man rubikblocks.man surfaces.man hilbert.man \
 		  companioncube.man tronbit.man kaleidocycle.man \
 		  quasicrystal.man unknownpleasures.man geodesic.man \
-		  projectiveplane.man
+		  projectiveplane.man winduprobot.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
-		  molecules.sh starwars.txt
+		  molecules.sh starwars.txt *.dxf
 
 TARFILES	= $(SRCS) $(HDRS) $(GL_MEN) $(RETIRED_MEN) $(EXTRAS)
 
@@ -456,9 +451,9 @@ distdepend:: check_men validate_xml
 
 
 
-# Rules for noticing when the objects from the utils directory are out of
-# date with respect to their sources, and going and building them according
-# to the rules in their own Makefile...
+# Rules for noticing when the objects from the utils and hacks
+# directories are out of date with respect to their sources, and going
+# and building them according to the rules in their own Makefile...
 #
 $(UTILS_BIN)/colors.o:		$(UTILS_SRC)/colors.c
 $(UTILS_BIN)/grabclient.o:	$(UTILS_SRC)/grabclient.c
@@ -470,11 +465,13 @@ $(UTILS_BIN)/visual-gl.o:	$(UTILS_SRC)/visual-gl.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 $(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
 $(UTILS_BIN)/textclient.o:	$(UTILS_SRC)/textclient.c
+$(HACK_BIN)/screenhack.o:	$(HACK_SRC)/screenhack.c
+$(HACK_BIN)/xlockmore.o:	$(HACK_SRC)/xlockmore.c
+$(HACK_BIN)/fps.o:		$(HACK_SRC)/fps.c
 
-$(UTIL_OBJS):
-	$(MAKE) -C $(UTILS_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
-
-$(HACK_BIN)/xlockmore.o: $(HACK_SRC)/xlockmore.c
+$(UTILDIR_OBJS):
+	$(MAKE) -C $(UTILS_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
+$(HACKDIR_OBJS):
 	$(MAKE) -C $(HACK_BIN) $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)"
 
 
@@ -554,9 +551,13 @@ SPROINGIES = sproingiewrap.o gllist.o \
 sproingies: sproingies.o	$(HACK_OBJS) $(SPROINGIES)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(SPROINGIES) $(HACK_LIBS)
 
-LAMENTOBJS = $(HACK_TRACK_OBJS) xpm-ximage.o normals.o
+LAMENTOBJS = gllist.o lament_model.o $(HACK_TRACK_OBJS) xpm-ximage.o normals.o
 lament:		lament.o	$(LAMENTOBJS)
 	$(CC_HACK) -o $@ $@.o	$(LAMENTOBJS) $(XPM_LIBS)
+
+lament_dxf::
+	./dxf2gl.pl --smooth --layers lament.dxf lament_model.c
+
 
 B3D_OBJS = b_sphere.o b_draw.o b_lockglue.o $(HACK_OBJS)
 bubble3d:	bubble3d.o	$(B3D_OBJS)
@@ -582,8 +583,7 @@ sierpinski3d:	sierpinski3d.o	$(HACK_TRACK_OBJS)
 gflux:		gflux.o		$(HACK_TRACK_GRAB_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
 
-SW_OBJS=starwars.o glut_stroke.o glut_swidth.o \
-        $(TEXT) ${FONT_OBJS} $(HACK_OBJS)
+SW_OBJS=starwars.o glut_stroke.o glut_swidth.o $(TEXT) $(HACK_OBJS)
 starwars:			$(SW_OBJS)
 	$(CC_HACK) -o $@	$(SW_OBJS) $(HACK_LIBS) $(TEXT_LIBS)
 
@@ -647,11 +647,40 @@ TOAST_OBJS=\
 flyingtoasters:			$(TOAST_OBJS)
 	$(CC_HACK) -o $@	$(TOAST_OBJS) $(XPM_LIBS)
 
+toaster_dxf::
+	@set -e ; \
+	for f in \
+	  toaster.dxf \
+	  toaster_base.dxf \
+	  toaster_handle.dxf \
+	  toaster_handle2.dxf \
+	  toaster_jet.dxf \
+	  toaster_knob.dxf \
+	  toaster_slots.dxf \
+	  toaster_wing.dxf \
+	  toast.dxf \
+	  toast2.dxf \
+	; do \
+	  f2=`echo $$f | sed 's/dxf$$/c/'` ; \
+	  ./dxf2gl.pl --normalize --smooth $$f $$f2 ; \
+	done ; \
+
 COW_OBJS=\
   cow_face.o cow_hide.o cow_hoofs.o cow_horns.o cow_tail.o cow_udder.o \
   bouncingcow.o gllist.o xpm-ximage.o $(HACK_TRACK_OBJS)
 bouncingcow:			$(COW_OBJS)	    
 	$(CC_HACK) -o $@	$(COW_OBJS) $(XPM_LIBS)
+
+ROBO_OBJS=\
+  robot.o robot-wireframe.o \
+  gllist.o xpm-ximage.o normals.o involute.o sphere.o \
+  winduprobot.o $(TEXT) $(HACK_TRACK_OBJS)
+winduprobot:			$(ROBO_OBJS)
+	$(CC_HACK) -o $@	$(ROBO_OBJS) $(XPM_LIBS) $(TEXT_LIBS)
+
+winduprobot_dxf::
+	./dxf2gl.pl --smooth --layers robot.dxf robot.c
+	./dxf2gl.pl --wireframe robot-wireframe.dxf robot-wireframe.c
 
 glslideshow:	glslideshow.o	$(HACK_GRAB_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_GRAB_OBJS) $(HACK_LIBS)
@@ -738,11 +767,11 @@ moebiusgears:	moebiusgears.o	$(GEARS_OBJS)
 boing:		boing.o		normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
-carousel:	carousel.o	${FONT_OBJS} $(HACK_TRACK_GRAB_OBJS)
-	$(CC_HACK) -o $@ $@.o	${FONT_OBJS} $(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
+carousel:	carousel.o	$(HACK_TRACK_GRAB_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_GRAB_OBJS) $(HACK_LIBS)
 
-fliptext:	fliptext.o	$(TEXT) ${FONT_OBJS} $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(TEXT) ${FONT_OBJS} $(HACK_OBJS) $(HACK_LIBS) $(TEXT_LIBS)
+fliptext:	fliptext.o	$(TEXT) $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(TEXT) $(HACK_OBJS) $(HACK_LIBS) $(TEXT_LIBS)
 
 antmaze:	antmaze.o	sphere.o tube.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	sphere.o tube.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -798,16 +827,15 @@ TENTACLE_OBJS=normals.o xpm-ximage.o $(HACK_TRACK_OBJS)
 skytentacles:	skytentacles.o	$(TENTACLE_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(TENTACLE_OBJS) $(XPM_LIBS)
 
-SONAR_OBJS=sonar-sim.o sonar-icmp.o ${FONT_OBJS} $(HACK_TRACK_OBJS)
+SONAR_OBJS=sonar-sim.o sonar-icmp.o $(HACK_TRACK_OBJS)
 sonar:		sonar.o		$(SONAR_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(SONAR_OBJS) $(HACK_LIBS)
 
-JIGSAW_OBJS=normals.o $(UTILS_BIN)/spline.o \
-	${FONT_OBJS} $(HACK_TRACK_GRAB_OBJS)
+JIGSAW_OBJS=normals.o $(UTILS_BIN)/spline.o $(HACK_TRACK_GRAB_OBJS)
 jigsaw:		jigsaw.o	$(JIGSAW_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(JIGSAW_OBJS) $(HACK_LIBS)
 
-PHOTOPILE_OBJS=${FONT_OBJS} dropshadow.o  $(HACK_GRAB_OBJS)
+PHOTOPILE_OBJS=dropshadow.o  $(HACK_GRAB_OBJS)
 photopile:	photopile.o	$(PHOTOPILE_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(PHOTOPILE_OBJS) $(HACK_LIBS)
 
@@ -2037,8 +2065,13 @@ klein.o: $(UTILS_SRC)/xshm.h
 klein.o: $(UTILS_SRC)/yarandom.h
 klein.o: $(HACK_SRC)/xlockmoreI.h
 klein.o: $(HACK_SRC)/xlockmore.h
+lament_model.o: ../../config.h
+lament_model.o: $(srcdir)/gllist.h
+lament_model.o: $(srcdir)/jwzglesI.h
+lament_model.o: $(srcdir)/jwzgles.h
 lament.o: ../../config.h
 lament.o: $(HACK_SRC)/fps.h
+lament.o: $(srcdir)/gllist.h
 lament.o: $(srcdir)/gltrackball.h
 lament.o: $(HACK_SRC)/images/lament512.xpm
 lament.o: $(srcdir)/jwzglesI.h
@@ -2406,6 +2439,14 @@ queens.o: $(UTILS_SRC)/xshm.h
 queens.o: $(UTILS_SRC)/yarandom.h
 queens.o: $(HACK_SRC)/xlockmoreI.h
 queens.o: $(HACK_SRC)/xlockmore.h
+robot.o: ../../config.h
+robot.o: $(srcdir)/gllist.h
+robot.o: $(srcdir)/jwzglesI.h
+robot.o: $(srcdir)/jwzgles.h
+robot-wireframe.o: ../../config.h
+robot-wireframe.o: $(srcdir)/gllist.h
+robot-wireframe.o: $(srcdir)/jwzglesI.h
+robot-wireframe.o: $(srcdir)/jwzgles.h
 rotator.o: ../../config.h
 rotator.o: $(srcdir)/rotator.h
 rotator.o: $(UTILS_SRC)/yarandom.h
@@ -2977,6 +3018,29 @@ whale.o: $(UTILS_SRC)/resources.h
 whale.o: $(UTILS_SRC)/usleep.h
 whale.o: $(UTILS_SRC)/visual.h
 whale.o: $(UTILS_SRC)/yarandom.h
+winduprobot.o: ../../config.h
+winduprobot.o: $(HACK_SRC)/fps.h
+winduprobot.o: $(srcdir)/gllist.h
+winduprobot.o: $(srcdir)/gltrackball.h
+winduprobot.o: $(srcdir)/glxfonts.h
+winduprobot.o: $(srcdir)/involute.h
+winduprobot.o: $(srcdir)/jwzglesI.h
+winduprobot.o: $(srcdir)/jwzgles.h
+winduprobot.o: $(HACK_SRC)/screenhackI.h
+winduprobot.o: $(srcdir)/sphere.h
+winduprobot.o: $(srcdir)/texfont.h
+winduprobot.o: $(UTILS_SRC)/colors.h
+winduprobot.o: $(UTILS_SRC)/grabscreen.h
+winduprobot.o: $(UTILS_SRC)/hsv.h
+winduprobot.o: $(UTILS_SRC)/resources.h
+winduprobot.o: $(UTILS_SRC)/textclient.h
+winduprobot.o: $(UTILS_SRC)/usleep.h
+winduprobot.o: $(UTILS_SRC)/visual.h
+winduprobot.o: $(UTILS_SRC)/xshm.h
+winduprobot.o: $(UTILS_SRC)/yarandom.h
+winduprobot.o: $(HACK_SRC)/xlockmoreI.h
+winduprobot.o: $(HACK_SRC)/xlockmore.h
+winduprobot.o: $(srcdir)/xpm-ximage.h
 xlock-gl-utils.o: ../../config.h
 xlock-gl-utils.o: $(HACK_SRC)/fps.h
 xlock-gl-utils.o: $(srcdir)/glxfonts.h

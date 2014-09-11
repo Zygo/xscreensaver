@@ -42,10 +42,11 @@
   <xscreensaver-updater />
 
   <_description>
+A pre-heliocentric model of planetary motion.
+
 This draws the path traced out by a point on the edge of a
 circle.  That circle rotates around a point on the rim of another
-circle, and so on, several times. These were the basis for the
-pre-heliocentric model of planetary motion.
+circle, and so on, several times.
 
 http://en.wikipedia.org/wiki/Deferent_and_epicycle
 

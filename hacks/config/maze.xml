@@ -56,7 +56,7 @@
 
 
   <_description>
-This generates random mazes, with three different algorithms: Kruskal,
+Generates random mazes, with three different algorithms: Kruskal,
 Prim, and a depth-first recursive backtracker.  It also solves them.
 Backtracking and look-ahead paths are displayed in different colors.
 

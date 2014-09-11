@@ -39,7 +39,6 @@ static const char sccsid[] = "@(#)swirl.c	4.00 97/01/01 xlockmore";
 
 # define SMOOTH_COLORS
 # define WRITABLE_COLORS
-# define swirl_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 # ifdef HAVE_XSHM_EXTENSION
 #  include "xshm.h"
@@ -1483,6 +1482,17 @@ refresh_swirl (ModeInfo * mi)
 			swirl->resolution = swirl->resolution + 1;
 		swirl->drawing = False;
 	}
+}
+
+ENTRYPOINT Bool
+swirl_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      reshape_swirl (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+  return False;
 }
 
 XSCREENSAVER_MODULE ("Swirl", swirl)

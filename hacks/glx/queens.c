@@ -111,37 +111,13 @@ queens_handle_event (ModeInfo *mi, XEvent *event)
 {
   Queenscreen *qs = &qss[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
+  if (gltrackball_event_handler (event, qs->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &qs->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      qs->button_down_p = True;
-      gltrackball_start (qs->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      qs->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (qs->trackball, event->xbutton.button, 5,
-                              !event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           qs->button_down_p)
-    {
-      gltrackball_track (qs->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      qs->steps = 1024 - 1;
       return True;
     }
 
@@ -573,7 +549,7 @@ ENTRYPOINT void init_queens(ModeInfo *mi)
   else
     MI_CLEARWINDOW(mi);
 
-  qs->trackball = gltrackball_init ();
+  qs->trackball = gltrackball_init (False);
 
   qs->BOARDSIZE = 8; /* 8 cuz its classic */
 

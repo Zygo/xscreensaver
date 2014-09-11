@@ -105,17 +105,15 @@ static void generic_draw(struct state *st, XImage *, XImage *, int, int, int *);
 
 static void distort_finish_loading (struct state *);
 
-static void *
-distort_init (Display *dpy, Window window)
+static void
+distort_reset (struct state *st)
 {
-  struct state *st = (struct state *) calloc (1, sizeof(*st));
-	XGCValues gcv;
-	long gcflags;
-	int i;
     char *s;
+    int i;
 
-    st->dpy = dpy;
-    st->window = window;
+    st->start_time = 0;
+
+	XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
 
 	st->delay = get_integer_resource(st->dpy, "delay", "Integer");
     st->duration = get_integer_resource (st->dpy, "duration", "Seconds");
@@ -123,19 +121,15 @@ distort_init (Display *dpy, Window window)
 	st->speed = get_integer_resource(st->dpy, "speed", "Integer");
 	st->number = get_integer_resource(st->dpy, "number", "Integer");
 
-    if (st->delay < 0) st->delay = 0;
-    if (st->duration < 1) st->duration = 1;
-
-#ifdef HAVE_XSHM_EXTENSION
-	st->use_shm = get_boolean_resource(st->dpy, "useSHM", "Boolean");
-#endif /* HAVE_XSHM_EXTENSION */
-	
 	st->blackhole = get_boolean_resource(st->dpy, "blackhole", "Boolean");
 	st->vortex = get_boolean_resource(st->dpy, "vortex", "Boolean");
 	st->magnify = get_boolean_resource(st->dpy, "magnify", "Boolean");
 	st->reflect = get_boolean_resource(st->dpy, "reflect", "Boolean");
 	st->slow = get_boolean_resource(st->dpy, "slow", "Boolean");
 	
+    if (st->delay < 0) st->delay = 0;
+    if (st->duration < 1) st->duration = 1;
+
     st->effect = NULL;
     s = get_string_resource(st->dpy, "effect", "String");
 	if (s && !strcasecmp(s,"swamp"))
@@ -146,8 +140,6 @@ distort_init (Display *dpy, Window window)
       ;
     else if (s && *s)
       fprintf(stderr,"%s: bogus effect: %s\n", progname, s);
-
-	XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
 
 	if (st->effect == NULL && st->radius == 0 && st->speed == 0 && st->number == 0
 		&& !st->blackhole && !st->vortex && !st->magnify && !st->reflect) {
@@ -268,6 +260,23 @@ distort_init (Display *dpy, Window window)
 	}
 	if (st->draw == NULL)
 		st->draw = &plain_draw;
+}
+
+static void *
+distort_init (Display *dpy, Window window)
+{
+  struct state *st = (struct state *) calloc (1, sizeof(*st));
+	XGCValues gcv;
+	long gcflags;
+
+    st->dpy = dpy;
+    st->window = window;
+
+#ifdef HAVE_XSHM_EXTENSION
+	st->use_shm = get_boolean_resource(st->dpy, "useSHM", "Boolean");
+#endif /* HAVE_XSHM_EXTENSION */
+	
+    distort_reset (st);
 
 	st->black_pixel = BlackPixelOfScreen( st->xgwa.screen );
 
@@ -791,6 +800,12 @@ distort_reshape (Display *dpy, Window window, void *closure,
 static Bool
 distort_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      distort_reset(st);
+      return True;
+    }
   return False;
 }
 
@@ -834,6 +849,7 @@ static const char *distort_defaults [] = {
 #endif /* HAVE_XSHM_EXTENSION */
 #ifdef USE_IPHONE
   "*ignoreRotation:     True",
+  "*rotateImages:       True",
 #endif
 	0
 };

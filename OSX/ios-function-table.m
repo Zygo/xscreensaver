@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Tue May  6 12:34:13 2014 by build-fntable.pl 1.2.
+   Created: Wed Jul 30 23:28:05 2014 by build-fntable.pl 1.2.
  */
 
 #import <Foundation/Foundation.h>
@@ -200,6 +200,7 @@ extern struct xscreensaver_function_table
  *voronoi_xscreensaver_function_table,
  *wander_xscreensaver_function_table,
  *whirlwindwarp_xscreensaver_function_table,
+ *winduprobot_xscreensaver_function_table,
  *wormhole_xscreensaver_function_table,
  *xanalogtv_xscreensaver_function_table,
  *xflame_xscreensaver_function_table,
@@ -412,6 +413,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&voronoi_xscreensaver_function_table], @"voronoi",
 	[NSValue valueWithPointer:&wander_xscreensaver_function_table], @"wander",
 	[NSValue valueWithPointer:&whirlwindwarp_xscreensaver_function_table], @"whirlwindwarp",
+	[NSValue valueWithPointer:&winduprobot_xscreensaver_function_table], @"winduprobot",
 	[NSValue valueWithPointer:&wormhole_xscreensaver_function_table], @"wormhole",
 	[NSValue valueWithPointer:&xanalogtv_xscreensaver_function_table], @"xanalogtv",
 	[NSValue valueWithPointer:&xflame_xscreensaver_function_table], @"xflame",

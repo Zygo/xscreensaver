@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2007-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2007-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -168,7 +168,7 @@ static Bool
 cwaves_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   state *st = (state *) closure;
-  if (event->type == ButtonPress)
+  if (screenhack_event_helper (dpy, window, event))
     {
       make_smooth_colormap (st->xgwa.screen, st->xgwa.visual,
                             st->xgwa.colormap,

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -52,7 +52,7 @@
 # endif
 #endif /* HAVE_FORKPTY */
 
-/*#define DEBUG*/
+#undef DEBUG
 
 extern const char *progname;
 
@@ -60,6 +60,7 @@ struct text_data {
   Display *dpy;
   char *program;
   int pix_w, pix_h, char_w, char_h;
+  int max_lines;
 
   Bool pty_p;
   XtIntervalId pipe_timer;
@@ -110,7 +111,12 @@ launch_text_generator (text_data *d)
      if someone ever uses a --program that includes a % anywhere.
    */
   if (!strcmp (oprogram, "xscreensaver-text"))
-    sprintf (program + strlen(program), " --cols %d", d->char_w);
+    {
+      if (d->char_w)
+        sprintf (program + strlen(program), " --cols %d", d->char_w);
+      if (d->max_lines)
+        sprintf (program + strlen(program), " --lines %d", d->max_lines);
+    }
 
   strcat (program, " ) 2>&1");
 
@@ -130,7 +136,7 @@ launch_text_generator (text_data *d)
       ws.ws_xpixel = d->pix_w;
       ws.ws_ypixel = d->pix_h;
       
-      d->pipe = NULL;
+      d->pipe = 0;
       if ((d->pid = forkpty(&fd, NULL, NULL, &ws)) < 0)
 	{
           /* Unable to fork */
@@ -156,7 +162,9 @@ launch_text_generator (text_data *d)
       else
 	{
           /* This is the parent fork. */
+          if (d->pipe) abort();
 	  d->pipe = fdopen (fd, "r+");
+          if (d->pipe_id) abort();
 	  d->pipe_id =
 	    XtAppAddInput (app, fileno (d->pipe),
 			   (XtPointer) (XtInputReadMask | XtInputExceptMask),
@@ -177,8 +185,10 @@ launch_text_generator (text_data *d)
         protected_stdin_p = 1;
       }
 
+      if (d->pipe) abort();
       if ((d->pipe = popen (program, "r")))
 	{
+          if (d->pipe_id) abort();
 	  d->pipe_id =
 	    XtAppAddInput (app, fileno (d->pipe),
 			   (XtPointer) (XtInputReadMask | XtInputExceptMask),
@@ -211,10 +221,58 @@ relaunch_generator_timer (XtPointer closure, XtIntervalId *id)
 }
 
 
+static void
+start_timer (text_data *d)
+{
+  XtAppContext app = XtDisplayToApplicationContext (d->dpy);
+
+# ifdef DEBUG
+  fprintf (stderr, "%s: textclient: relaunching in %d\n", progname, 
+           (int) d->subproc_relaunch_delay);
+# endif
+  if (d->pipe_timer)
+    XtRemoveTimeOut (d->pipe_timer);
+  d->pipe_timer =
+    XtAppAddTimeOut (app, d->subproc_relaunch_delay,
+                     relaunch_generator_timer,
+                     (XtPointer) d);
+}
+
+
+static void
+close_pipe (text_data *d)
+{
+  if (d->pid)
+    {
+# ifdef DEBUG
+      fprintf (stderr, "%s: textclient: kill %d\n", progname, d->pid);
+# endif
+      kill (d->pid, SIGTERM);
+    }
+  d->pid = 0;
+
+  if (d->pipe_id)
+    XtRemoveInput (d->pipe_id);
+  d->pipe_id = 0;
+
+  if (d->pipe)
+    {
+# ifdef DEBUG
+      fprintf (stderr, "%s: textclient: pclose\n", progname);
+# endif
+      pclose (d->pipe);
+    }
+  d->pipe = 0;
+
+
+}
+
+
 void
 textclient_reshape (text_data *d,
                     int pix_w, int pix_h,
-                    int char_w, int char_h)
+                    int char_w, int char_h,
+                    int max_lines)
 {
 # if defined(HAVE_FORKPTY) && defined(TIOCSWINSZ)
 
@@ -222,6 +280,7 @@ textclient_reshape (text_data *d,
   d->pix_h  = pix_h;
   d->char_w = char_w;
   d->char_h = char_h;
+  d->max_lines = max_lines;
 
 # ifdef DEBUG
   fprintf (stderr, "%s: textclient: reshape: %dx%d, %dx%d\n", progname,
@@ -248,14 +307,9 @@ textclient_reshape (text_data *d,
    */
   if (!strcmp (d->program, "xscreensaver-text"))
     {
-      if (d->pid)
-        kill (d->pid, SIGTERM);
-      if (d->pipe_id)
-        XtRemoveInput (d->pipe_id);
-      if (d->pipe)
-        pclose (d->pipe);
+      close_pipe (d);
       d->input_available_p = False;
-      relaunch_generator_timer (d, 0);
+      start_timer (d);
     }
 }
 
@@ -283,7 +337,11 @@ textclient_open (Display *dpy)
     }
 
   d->subproc_relaunch_delay =
-    (1000 * get_integer_resource (dpy, "relaunchDelay", "Time"));
+    get_integer_resource (dpy, "relaunchDelay", "Time");
+  if (d->subproc_relaunch_delay < 1)
+    d->subproc_relaunch_delay = 1;
+  d->subproc_relaunch_delay *= 1000;
+
 
   d->meta_sends_esc_p = get_boolean_resource (dpy, "metaSendsESC", "Boolean");
   d->swap_bs_del_p    = get_boolean_resource (dpy, "swapBSDEL",    "Boolean");
@@ -303,7 +361,7 @@ textclient_open (Display *dpy)
   }
 # endif
 
-  launch_text_generator (d);
+  start_timer (d);
 
   return d;
 }
@@ -316,14 +374,12 @@ textclient_close (text_data *d)
   fprintf (stderr, "%s: textclient: free\n", progname);
 # endif
 
+  close_pipe (d);
   if (d->program)
     free (d->program);
-  if (d->pipe_id)
-    XtRemoveInput (d->pipe_id);
-  if (d->pipe)
-    pclose (d->pipe);
   if (d->pipe_timer)
     XtRemoveTimeOut (d->pipe_timer);
+  d->pipe_timer = 0;
   memset (d, 0, sizeof (*d));
   free (d);
 }
@@ -350,10 +406,6 @@ textclient_getc (text_data *d)
         ret = s[0];
       else		/* EOF */
         {
-          if (d->pipe_id)
-            XtRemoveInput (d->pipe_id);
-          d->pipe_id = 0;
-
 	  if (d->pid)
 	    {
 # ifdef DEBUG
@@ -361,17 +413,10 @@ textclient_getc (text_data *d)
                        progname, d->pid);
 # endif
 	      waitpid (d->pid, NULL, 0);
-	      fclose (d->pipe);
               d->pid = 0;
 	    }
-	  else
-	    {
-# ifdef DEBUG
-              fprintf (stderr, "%s: textclient: pclose\n", progname);
-# endif
-	      pclose (d->pipe);
-	    }
-          d->pipe = 0;
+
+          close_pipe (d);
 
           if (d->out_column > 0)
             {
@@ -382,14 +427,7 @@ textclient_getc (text_data *d)
               d->out_buffer = "\r\n\r\n";
             }
 
-# ifdef DEBUG
-          fprintf (stderr, "%s: textclient: relaunching in %d\n", progname, 
-                   (int) d->subproc_relaunch_delay);
-# endif
-          d->pipe_timer =
-            XtAppAddTimeOut (app, d->subproc_relaunch_delay,
-                             relaunch_generator_timer,
-                             (XtPointer) d);
+          start_timer (d);
         }
       d->input_available_p = False;
     }

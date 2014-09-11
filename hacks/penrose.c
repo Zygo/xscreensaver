@@ -90,7 +90,6 @@ If one of these are hit penrose will reinitialize.
 					"*ignoreRotation: True \n" \
 
 # define refresh_penrose 0
-# define penrose_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
@@ -1350,6 +1349,18 @@ release_penrose(ModeInfo * mi)
 		tilings = (tiling_c *) NULL;
 	}
 }
+
+ENTRYPOINT Bool
+penrose_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      init_penrose (mi);
+      return True;
+    }
+  return False;
+}
+
 
 XSCREENSAVER_MODULE ("Penrose", penrose)
 

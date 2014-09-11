@@ -871,8 +871,10 @@ static int
 backup (struct state *st)                                          /* back up a move */
 {
   st->sqnum--;
-  st->cur_sq_x = st->move_list[st->sqnum].x;
-  st->cur_sq_y = st->move_list[st->sqnum].y;
+  if (st->sqnum >= 0) {
+    st->cur_sq_x = st->move_list[st->sqnum].x;
+    st->cur_sq_y = st->move_list[st->sqnum].y;
+  }
   return ( st->sqnum );
 }
 
@@ -1612,9 +1614,8 @@ static Bool
 maze_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   struct state *st = (struct state *) closure;
-  switch (event->type) 
+  if (event->type == ButtonPress)
     {
-    case ButtonPress:
       switch (event->xbutton.button) 
         {
         case 2:
@@ -1631,14 +1632,17 @@ maze_event (Display *dpy, Window window, void *closure, XEvent *event)
           st->stop = 0 ;
           return True;
         }
-      break;
-
-    case Expose:
+    }
+  else if (event->type == Expose)
+    {
       st->restart = 1;
-      break;
-
-    default:
-      break;
+      return False;
+    }
+  else if (screenhack_event_helper (dpy, window, event))
+    {
+      st->restart = 1 ;
+      st->stop = 0 ;
+      return True;
     }
   return False;
 }

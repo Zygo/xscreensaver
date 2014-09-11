@@ -312,7 +312,7 @@
                                       initialValues:defsdict];
   globalDefaultsController = 
     [[NSUserDefaultsController alloc] initWithDefaults:globalDefaults
-                                      initialValues:defsdict];
+                                      initialValues:UPDATER_DEFAULTS];
 # else  // USE_IPHONE
   userDefaultsController   = [userDefaults retain];
   globalDefaultsController = [userDefaults retain];
@@ -411,24 +411,33 @@
 
 - (NSObject *) getObjectResource: (const char *) name
 {
-  // First look in userDefaults, then in globalDefaults.
-  for (int globalp = 0; globalp <= 1; globalp++) {
-    const char *name2 = name;
-    while (1) {
-      NSString *key = [self makeCKey:name2];
-      NSObject *obj = [(globalp ? globalDefaults : userDefaults)
-                        objectForKey:key];
-      if (obj)
-        return obj;
+  // Only look in globalDefaults for updater preferences.
 
-      // If key is "foo.bar.baz", check "foo.bar.baz", "bar.baz", and "baz".
-      //
-      const char *dot = strchr (name2, '.');
-      if (dot && dot[1])
-        name2 = dot + 1;
-      else
-        break;
-    }
+  static NSDictionary *updaterDefaults;
+  if (!updaterDefaults) {
+    updaterDefaults = UPDATER_DEFAULTS;
+    [updaterDefaults retain];
+  }
+  
+  NSUserDefaults *defaults =
+    [updaterDefaults objectForKey:[NSString stringWithUTF8String:name]] ?
+    globalDefaults :
+    userDefaults;
+  
+  const char *name2 = name;
+  while (1) {
+    NSString *key = [self makeCKey:name2];
+    NSObject *obj = [defaults objectForKey:key];
+    if (obj)
+      return obj;
+
+    // If key is "foo.bar.baz", check "foo.bar.baz", "bar.baz", and "baz".
+    //
+    const char *dot = strchr (name2, '.');
+    if (dot && dot[1])
+      name2 = dot + 1;
+    else
+      break;
   }
   return NULL;
 }

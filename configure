@@ -634,8 +634,6 @@ HACKDIR
 NOGNOME
 GNOME22
 GNOME24
-GLFONT_OBJS
-GLFPS_OBJS
 JWZGLES_OBJS
 GLE_KLUDGE
 GLE_EXES
@@ -660,6 +658,8 @@ MEN_OSX
 SCRIPTS_OSX
 EXES_OSX
 OBJCC
+COMMENT_DEMO_GLADE2_GTK_2_22_TAIL
+COMMENT_DEMO_GLADE2_GTK_2_22_HEAD
 WITH_BROWSER
 DEFAULT_TEXT_FILE
 DEFAULT_IMAGE_DIRECTORY
@@ -2441,8 +2441,6 @@ echo "command line was: $0 $@"
 #AH_TEMPLATE([HAVE_SGI_VC_EXTENSION],
 #	    [Define this if you have the SGI-VIDEO-CONTROL extension.  This
 #	    is standard on Irix systems, and not available elsewhere.])
-
-
 
 
 
@@ -12081,6 +12079,9 @@ $as_echo "no" >&6; }
 
 jurassic_gtk=no
 gtk_halfassed=no
+have_gtk_2_22_or_higher=no
+COMMENT_DEMO_GLADE2_GTK_2_22_HEAD=""
+COMMENT_DEMO_GLADE2_GTK_2_22_TAIL=""
 
 if test "$with_gtk" = yes; then
   have_gtk=no
@@ -12148,6 +12149,15 @@ $as_echo "$ac_cv_gtk_config_libs" >&6; }
 
   fi
 
+  if test "$have_gtk" = yes; then
+    ok="yes"
+    pkg_check_version gtk+-2.0 2.22
+    have_gtk_2_22_or_higher="$ok"
+    if test "$have_gtk_2_22_or_higher" = yes; then
+      COMMENT_DEMO_GLADE2_GTK_2_22_HEAD="<!-- comment>"
+      COMMENT_DEMO_GLADE2_GTK_2_22_TAIL="</comment -->"
+    fi
+  fi
 fi
 
 
@@ -13109,7 +13119,7 @@ if ${ac_cv_mesagl_version_string+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 13116 "configure"
+#line 13126 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -13696,19 +13706,6 @@ elif test "$with_gles" != no; then
   echo "error: must be yes or no: --with-gles=$with_xpm"
   exit 1
 fi
-
-# May want to phase out glBitmap even in a non-GLES world.
-#
-if test "$have_gles" = yes; then
-  GLFPS_OBJS="fps-gl.o glxfonts.o texfont.o"
-  GLFONT_OBJS=""
-else
-  $as_echo "#define HAVE_GLBITMAP 1" >>confdefs.h
-
-  GLFPS_OBJS="fps-gl.o glxfonts.o"
-  GLFONT_OBJS="texfont.o"
-fi
-
 
 ###############################################################################
 #
@@ -15438,6 +15435,7 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 
 
 
+
 APPDEFAULTS=$ac_x_app_defaults
 
 
@@ -15446,7 +15444,7 @@ APPDEFAULTS=$ac_x_app_defaults
 
 
 
-ac_config_files="$ac_config_files Makefile utils/Makefile driver/Makefile driver/xscreensaver.pam hacks/Makefile hacks/glx/Makefile po/Makefile.in driver/XScreenSaver.ad"
+ac_config_files="$ac_config_files Makefile utils/Makefile driver/Makefile driver/xscreensaver.pam driver/xscreensaver-demo.glade2 hacks/Makefile hacks/glx/Makefile po/Makefile.in driver/XScreenSaver.ad"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -16157,6 +16155,7 @@ do
     "utils/Makefile") CONFIG_FILES="$CONFIG_FILES utils/Makefile" ;;
     "driver/Makefile") CONFIG_FILES="$CONFIG_FILES driver/Makefile" ;;
     "driver/xscreensaver.pam") CONFIG_FILES="$CONFIG_FILES driver/xscreensaver.pam" ;;
+    "driver/xscreensaver-demo.glade2") CONFIG_FILES="$CONFIG_FILES driver/xscreensaver-demo.glade2" ;;
     "hacks/Makefile") CONFIG_FILES="$CONFIG_FILES hacks/Makefile" ;;
     "hacks/glx/Makefile") CONFIG_FILES="$CONFIG_FILES hacks/glx/Makefile" ;;
     "po/Makefile.in") CONFIG_FILES="$CONFIG_FILES po/Makefile.in" ;;

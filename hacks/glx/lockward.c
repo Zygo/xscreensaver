@@ -214,7 +214,7 @@ lockward_handle_event (ModeInfo *mi, XEvent *event)
 		char	c = 0;
 
 		XLookupString (&event->xkey, &c, 1, &keysym, 0);
-		if (c == 'b') {
+		if (c == ' ' || c == '\t') {
 			ctx->blendmode ^= 1;
 			return True;
 		}

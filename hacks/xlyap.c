@@ -1877,11 +1877,13 @@ static Bool
 xlyap_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   struct state *st = (struct state *) closure;
+
   switch(event->type)
     {
     case KeyPress:
-      return Getkey(st, &event->xkey);
-      return True;
+      if (Getkey(st, &event->xkey))
+        return True;
+      break;
 #if 0
     case ButtonPress:
       StartRubberBand(st, &st->rubber_data, event);
@@ -1896,6 +1898,13 @@ xlyap_event (Display *dpy, Window window, void *closure, XEvent *event)
     default: 
       break;
     }
+
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      Clear(st);
+      return True;
+    }
+
   return False;
 }
 

@@ -35,7 +35,6 @@ static const char sccsid[] = "@(#)mountain.c	5.00 2000/11/01 xlockmore";
 					"*fpsSolid: true \n" \
 
 # define SMOOTH_COLORS
-# define mountain_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
@@ -291,6 +290,17 @@ refresh_mountain(ModeInfo * mi)
 	MI_CLEARWINDOW(mi);
 	mp->x = 0;
 	mp->y = 0;
+}
+
+ENTRYPOINT Bool
+mountain_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      init_mountain (mi);
+      return True;
+    }
+  return False;
 }
 
 XSCREENSAVER_MODULE ("Mountain", mountain)

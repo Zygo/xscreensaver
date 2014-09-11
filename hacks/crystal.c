@@ -77,7 +77,6 @@ static const char sccsid[] = "@(#)crystal.c	4.12 98/09/10 xlockmore";
 						 "*fpsSolid:	   True	\n" \
 						 "*ignoreRotation: True \n" \
 
-# define crystal_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"			/* in xlockmore distribution */
@@ -1284,6 +1283,17 @@ reshape_crystal(ModeInfo * mi, int width, int height)
 {
   release_crystal(mi);
   init_crystal(mi);
+}
+
+ENTRYPOINT Bool
+crystal_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      reshape_crystal (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+  return False;
 }
 
 XSCREENSAVER_MODULE ("Crystal", crystal)

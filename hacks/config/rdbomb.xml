@@ -47,7 +47,8 @@
             _label="Reaction" low="-1" high="2" default="-1"/>
     <number id="diffusion" type="spinbutton" arg="-diffusion %"
             _label="Diffusion" low="-1" high="2" default="-1"/>
-
+   </vgroup>
+   <vgroup>
     <!-- #### default is wrong -->
     <number id="radius" type="spinbutton" arg="-radius %"
            _label="Seed radius" low="-1" high="60" default="-1"/>

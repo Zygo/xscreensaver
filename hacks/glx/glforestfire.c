@@ -962,7 +962,7 @@ init_fire(ModeInfo * mi)
     else
     	fs->num_trees = 0;
 
-    fs->trackball = gltrackball_init ();
+    fs->trackball = gltrackball_init (False);
 
     /* xlock GL stuff */
     if ((fs->glx_context = init_GL(mi)) != NULL) {
@@ -1064,43 +1064,10 @@ fire_handle_event (ModeInfo *mi, XEvent *event)
 {
   firestruct *fs = &fire[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      fs->button_down_p = True;
-      event->xbutton.x = MI_WIDTH(mi)  - event->xbutton.x; /* kludge! */
-      event->xbutton.y = MI_HEIGHT(mi) - event->xbutton.y;
-      gltrackball_start (fs->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      fs->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (fs->trackball, event->xbutton.button, 5,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           fs->button_down_p)
-    {
-      event->xmotion.x = MI_WIDTH(mi)  - event->xmotion.x; /* kludge! */
-      event->xmotion.y = MI_HEIGHT(mi) - event->xmotion.y;
-      gltrackball_track (fs->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, fs->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &fs->button_down_p))
+    return True;
 
   return False;
 }

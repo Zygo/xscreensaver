@@ -1,4 +1,4 @@
-/* cubenetic, Copyright (c) 2002-2008 Jamie Zawinski <jwz@jwz.org>
+/* cubenetic, Copyright (c) 2002-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -333,42 +333,42 @@ shuffle_texture (ModeInfo *mi)
 }
 
 
+static void
+reset_colors (ModeInfo *mi)
+{
+  cube_configuration *cc = &ccs[MI_SCREEN(mi)];
+  double H[3], S[3], V[3];
+  int shift = 60;
+  H[0] = frand(360.0); 
+  H[1] = ((H[0] + shift) < 360) ? (H[0]+shift) : (H[0] + shift - 360);
+  H[2] = ((H[1] + shift) < 360) ? (H[1]+shift) : (H[1] + shift - 360);
+  S[0] = S[1] = S[2] = 1.0;
+  V[0] = V[1] = V[2] = 1.0;
+  make_color_loop(0, 0, 0,
+                  H[0], S[0], V[0], 
+                  H[1], S[1], V[1], 
+                  H[2], S[2], V[2], 
+                  cc->texture_colors, &cc->ncolors,
+                  False, False);
+
+  make_smooth_colormap (0, 0, 0,
+                        cc->cube_colors, &cc->ncolors, 
+                        False, 0, False);
+}
+
+
 ENTRYPOINT Bool
 cube_handle_event (ModeInfo *mi, XEvent *event)
 {
   cube_configuration *cc = &ccs[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
+  if (gltrackball_event_handler (event, cc->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &cc->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      cc->button_down_p = True;
-      gltrackball_start (cc->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      cc->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (cc->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           cc->button_down_p)
-    {
-      gltrackball_track (cc->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      reset_colors (mi);
       return True;
     }
 
@@ -443,32 +443,14 @@ init_cube (ModeInfo *mi)
                             1.0,
                             do_wander ? wander_speed : 0,
                             (spinx && spiny && spinz));
-    cc->trackball = gltrackball_init ();
+    cc->trackball = gltrackball_init (True);
   }
 
   cc->ncolors = 256;
   cc->texture_colors = (XColor *) calloc(cc->ncolors, sizeof(XColor));
   cc->cube_colors    = (XColor *) calloc(cc->ncolors, sizeof(XColor));
 
-  {
-    double H[3], S[3], V[3];
-    int shift = 60;
-    H[0] = frand(360.0); 
-    H[1] = ((H[0] + shift) < 360) ? (H[0]+shift) : (H[0] + shift - 360);
-    H[2] = ((H[1] + shift) < 360) ? (H[1]+shift) : (H[1] + shift - 360);
-    S[0] = S[1] = S[2] = 1.0;
-    V[0] = V[1] = V[2] = 1.0;
-    make_color_loop(0, 0, 0,
-		    H[0], S[0], V[0], 
-		    H[1], S[1], V[1], 
-		    H[2], S[2], V[2], 
-		    cc->texture_colors, &cc->ncolors,
-		    False, False);
-
-    make_smooth_colormap (0, 0, 0,
-                          cc->cube_colors, &cc->ncolors, 
-                          False, 0, False);
-  }
+  reset_colors (mi);
 
   cc->ncubes = MI_COUNT (mi);
   cc->cubes = (cube *) calloc (sizeof(cube), cc->ncubes);
@@ -560,10 +542,7 @@ draw_cube (ModeInfo *mi)
                  (y - 0.5) * 6,
                  (z - 0.5) * 15);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (cc->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (cc->rot, &x, &y, &z, !cc->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);

@@ -41,7 +41,6 @@ static const char sccsid[] = "@(#)discrete.c	5.00 2000/11/01 xlockmore";
 				    "*ignoreRotation: True \n" \
 
 # define SMOOTH_COLORS
-# define discrete_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 # include "erase.h"
 #else /* STANDALONE */
@@ -456,6 +455,20 @@ refresh_discrete(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+ENTRYPOINT Bool
+discrete_handle_event (ModeInfo *mi, XEvent *event)
+{
+  discretestruct *hp = &discretes[MI_SCREEN(mi)];
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      hp->count = MI_CYCLES(mi);
+      return True;
+    }
+  return False;
+}
+
+
 
 XSCREENSAVER_MODULE ("Discrete", discrete)
 

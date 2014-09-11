@@ -415,6 +415,8 @@ init_GL (ModeInfo *mi)
 
   check_gl_error ("OES_init");
 
+  jwzgles_reset ();
+  
 # endif // USE_IPHONE
 
   // Caller expects a pointer to an opaque struct...  which it dereferences.

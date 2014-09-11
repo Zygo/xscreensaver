@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,21 +15,7 @@
 //#define DEBUG_TIMERS
 //#define DEBUG_SOURCES
 
-/* If this is defined, we implement timers in terms of CFRunLoopTimerCreate.
-   But I couldn't get that to work right: when the left window was accepting
-   input, the right window would starve.  So I implemented them in terms of
-   select() instead.  This is more efficient anyway, since instead of the
-   event loop telling us that input is ready constantly, we only check once
-   just before the draw method is called.
- */
-#undef USE_COCOA_SOURCES
-
-
 #import <stdlib.h>
-
-#ifdef USE_COCOA_SOURCES
-# import <Cocoa/Cocoa.h>
-#endif
 
 #import "jwxyz.h"
 #import "jwxyz-timers.h"
@@ -37,15 +23,19 @@
 
 
 #ifdef DEBUG_TIMERS
-# define LOGT(str,arg1,arg2) NSLog(str,arg1,arg2)
+# define LOGT( str,arg1)      NSLog(str,arg1)
+# define LOGT2(str,arg1,arg2) NSLog(str,arg1,arg2)
 #else
-# define LOGT(str,arg1,arg2)
+# define LOGT( str,arg1)
+# define LOGT2(str,arg1,arg2)
 #endif
 
 #ifdef DEBUG_SOURCES
-# define LOGI(str,arg1,arg2,arg3) NSLog(str,arg1,arg2,arg3)
+# define LOGI( str,arg1,arg2)      NSLog(str,arg1,arg2)
+# define LOGI2(str,arg1,arg2,arg3) NSLog(str,arg1,arg2,arg3)
 #else
-# define LOGI(str,arg1,arg2,arg3)
+# define LOGI( str,arg1,arg2)
+# define LOGI2(str,arg1,arg2,arg3)
 #endif
 
 #define ASSERT_RET(C,S) do {                    \
@@ -64,21 +54,25 @@ XtDisplayToApplicationContext (Display *dpy)
 #define app_to_display(APP) ((Display *) (APP))
 
 
+struct jwxyz_sources_data {
+  int fd_count;
+  XtInputId ids[FD_SETSIZE];
+  struct jwxyz_XtIntervalId *all_timers;
+};
+
 struct jwxyz_XtIntervalId {
+  XtAppContext app;
   CFRunLoopTimerRef cftimer;
   int refcount;
 
   XtTimerCallbackProc cb;
   XtPointer closure;
+
+  struct jwxyz_XtIntervalId *next;
 };
 
 struct jwxyz_XtInputId {
-# ifdef USE_COCOA_SOURCES
-  CFRunLoopSourceRef cfsource;
-  CFSocketRef socket;
-# else
   XtAppContext app;
-# endif
   int refcount;
 
   XtInputCallbackProc cb;
@@ -92,18 +86,46 @@ jwxyz_timer_retain (const void *arg)
 {
   struct jwxyz_XtIntervalId *data = (struct jwxyz_XtIntervalId *) arg;
   data->refcount++;
-  LOGT(@"timer  0x%08X: retain %d", (unsigned int) data, data->refcount);
+  LOGT2(@"timer  0x%08X: retain %d", (unsigned int) data, data->refcount);
   return arg;
 }
 
+/* This is called both by the user to manually kill a timer (XtRemoveTimeOut)
+   and by the run loop after a timer has fired (CFRunLoopTimerInvalidate).
+ */
 static void
 jwxyz_timer_release (const void *arg)
 {
   struct jwxyz_XtIntervalId *data = (struct jwxyz_XtIntervalId *) arg;
+  jwxyz_sources_data *td = display_sources_data (app_to_display (data->app));
+
   data->refcount--;
-  LOGT(@"timer  0x%08X: release %d", (unsigned int) data, data->refcount);
+  LOGT2(@"timer  0x%08X: release %d", (unsigned int) data, data->refcount);
   ASSERT_RET (data->refcount >= 0, "double free");
-  if (data->refcount == 0) free (data);
+
+  if (data->refcount == 0) {
+
+    // Remove it from the list of live timers.
+    XtIntervalId prev, timer;
+    int hit = 0;
+    for (timer = td->all_timers, prev = 0;
+         timer;
+         prev = timer, timer = timer->next) {
+      if (timer == data) {
+        ASSERT_RET (!hit, "circular timer list");
+        if (prev)
+          prev->next = timer->next;
+        else
+          td->all_timers = timer->next;
+        timer->next = 0;
+        hit = 1;
+      } else {
+        ASSERT_RET (timer->refcount > 0, "timer list corrupted");
+      }
+    }
+
+    free (data);
+  }
 }
 
 static const void *
@@ -111,8 +133,8 @@ jwxyz_source_retain (const void *arg)
 {
   struct jwxyz_XtInputId *data = (struct jwxyz_XtInputId *) arg;
   data->refcount++;
-  LOGI(@"source 0x%08X %2d: retain %d", (unsigned int) data, data->fd, 
-       data->refcount);
+  LOGI2(@"source 0x%08X %2d: retain %d", (unsigned int) data, data->fd, 
+        data->refcount);
   return arg;
 }
 
@@ -121,16 +143,10 @@ jwxyz_source_release (const void *arg)
 {
   struct jwxyz_XtInputId *data = (struct jwxyz_XtInputId *) arg;
   data->refcount--;
-  LOGI(@"source 0x%08X %2d: release %d", (unsigned int) data, data->fd,
-       data->refcount);
+  LOGI2(@"source 0x%08X %2d: release %d", (unsigned int) data, data->fd,
+        data->refcount);
   ASSERT_RET (data->refcount >= 0, "double free");
   if (data->refcount == 0) {
-# ifdef USE_COCOA_SOURCES
-    if (data->socket)
-      CFRelease (data->socket);
-    if (data->cfsource)
-      CFRelease (data->cfsource);
-# endif /* USE_COCOA_SOURCES */
     memset (data, 0xA1, sizeof(*data));
     data->fd = -666;
     free (data);
@@ -142,7 +158,7 @@ static void
 jwxyz_timer_cb (CFRunLoopTimerRef timer, void *arg)
 {
   struct jwxyz_XtIntervalId *data = (struct jwxyz_XtIntervalId *) arg;
-  LOGT(@"timer  0x%08X: fire", (unsigned int) data, 0);
+  LOGT(@"timer  0x%08X: fire", (unsigned int) data);
   data->cb (data->closure, &data);
 
   // Our caller (__CFRunLoopDoTimer) will now call CFRunLoopTimerInvalidate,
@@ -150,56 +166,18 @@ jwxyz_timer_cb (CFRunLoopTimerRef timer, void *arg)
 }
 
 
-#ifdef USE_COCOA_SOURCES
-
-/* whether there is data available to be read on the file descriptor
- */
-static int
-input_available_p (int fd)
-{
-  struct timeval tv = { 0, };
-  fd_set fds;
-  FD_ZERO (&fds);
-  FD_SET (fd, &fds);
-  return select (fd+1, &fds, NULL, NULL, &tv);
-}
-
-
-static void
-jwxyz_source_cb (CFSocketRef s, CFSocketCallBackType type,
-                 CFDataRef address, const void *call_data, void *info)
-{
-  struct jwxyz_XtInputId *data = (struct jwxyz_XtInputId *) info;
-
-  ASSERT_RET (type == kCFSocketReadCallBack, "unnknown type");
-  ASSERT_RET (!call_data, "no call data");  // not used for kCFSocketRead
-
-  // We are sometimes called when there is not, in fact, data available!
-  // So don't call data->cb if we're being fed a pack of lies.
-  //
-  if (! input_available_p (data->fd)) {
-    LOGI(@"source 0x%08X %2d: false alarm!", (unsigned int) data, data->fd, 0);
-    return;
-  }
-
-  LOGI(@"source 0x%08X %2d: fire", (unsigned int) data, data->fd, 0);
-
-  data->cb (data->closure, &data->fd, &data);
-}
-
-#endif /* USE_COCOA_SOURCES */
-
-
 XtIntervalId
 XtAppAddTimeOut (XtAppContext app, unsigned long msecs,
                  XtTimerCallbackProc cb, XtPointer closure)
 {
+  jwxyz_sources_data *td = display_sources_data (app_to_display (app));
   struct jwxyz_XtIntervalId *data = (struct jwxyz_XtIntervalId *)
     calloc (1, sizeof(*data));
+  data->app = app;
   data->cb = cb;
   data->closure = closure;
 
-  LOGT(@"timer  0x%08X: alloc %d", (unsigned int) data, msecs);
+  LOGT2(@"timer  0x%08X: alloc %lu", (unsigned int) data, msecs);
   
   CFRunLoopTimerContext ctx = { 0, };
   ctx.info    = data;
@@ -214,6 +192,9 @@ XtAppAddTimeOut (XtAppContext app, unsigned long msecs,
                           jwxyz_timer_cb, &ctx);
   // CFRunLoopTimerCreate called jwxyz_timer_retain.
 
+  data->next = td->all_timers;
+  td->all_timers = data;
+
   CFRunLoopAddTimer (CFRunLoopGetCurrent(), data->cftimer,
                      kCFRunLoopCommonModes);
   return data;
@@ -223,22 +204,16 @@ XtAppAddTimeOut (XtAppContext app, unsigned long msecs,
 void
 XtRemoveTimeOut (XtIntervalId id)
 {
-  LOGT(@"timer  0x%08X: remove", (unsigned int) id, 0);
+  LOGT(@"timer  0x%08X: remove", (unsigned int) id);
   ASSERT_RET (id->refcount > 0, "already freed");
   ASSERT_RET (id->cftimer, "timers corrupted");
+
   CFRunLoopRemoveTimer (CFRunLoopGetCurrent(), id->cftimer,
                         kCFRunLoopCommonModes);
   CFRunLoopTimerInvalidate (id->cftimer);
   // CFRunLoopTimerInvalidate called jwxyz_timer_release.
 }
 
-
-#ifndef USE_COCOA_SOURCES
-
-struct jwxyz_sources_data {
-  int count;
-  XtInputId ids[FD_SETSIZE];
-};
 
 jwxyz_sources_data *
 jwxyz_sources_init (XtAppContext app)
@@ -247,13 +222,6 @@ jwxyz_sources_init (XtAppContext app)
   return td;
 }
 
-void
-jwxyz_sources_free (jwxyz_sources_data *td)
-{
-  free (td);
-}
-
-
 static void
 jwxyz_source_select (XtInputId id)
 {
@@ -261,24 +229,24 @@ jwxyz_source_select (XtInputId id)
   ASSERT_RET (id->fd > 0 && id->fd < FD_SETSIZE, "fd out of range");
   ASSERT_RET (td->ids[id->fd] == 0, "sources corrupted");
   td->ids[id->fd] = id;
-  td->count++;
+  td->fd_count++;
 }
 
 static void
 jwxyz_source_deselect (XtInputId id)
 {
   jwxyz_sources_data *td = display_sources_data (app_to_display (id->app));
-  ASSERT_RET (td->count > 0, "sources corrupted");
+  ASSERT_RET (td->fd_count > 0, "sources corrupted");
   ASSERT_RET (id->fd > 0 && id->fd < FD_SETSIZE, "fd out of range");
   ASSERT_RET (td->ids[id->fd] == id, "sources corrupted");
   td->ids[id->fd] = 0;
-  td->count--;
+  td->fd_count--;
 }
 
 void
 jwxyz_sources_run (jwxyz_sources_data *td)
 {
-  if (td->count == 0) return;
+  if (td->fd_count == 0) return;
 
   struct timeval tv = { 0, };
   fd_set fds;
@@ -307,8 +275,6 @@ jwxyz_sources_run (jwxyz_sources_data *td)
   }
 }
 
-#endif /* !USE_COCOA_SOURCES */
-
 
 XtInputId
 XtAppAddInput (XtAppContext app, int fd, XtPointer flags,
@@ -320,36 +286,11 @@ XtAppAddInput (XtAppContext app, int fd, XtPointer flags,
   data->fd = fd;
   data->closure = closure;
 
-  LOGI(@"source 0x%08X %2d: alloc", (unsigned int) data, data->fd, 0);
-
-# ifdef USE_COCOA_SOURCES
-
-  CFSocketContext ctx = { 0, };
-  ctx.info    = data;
-  ctx.retain  = jwxyz_source_retain;
-  ctx.release = jwxyz_source_release;
-
-  data->socket = CFSocketCreateWithNative (NULL, fd, kCFSocketReadCallBack,
-                                           jwxyz_source_cb, &ctx);
-  // CFSocketCreateWithNative called jwxyz_source_retain.
-  
-  CFSocketSetSocketFlags (data->socket,
-                          kCFSocketAutomaticallyReenableReadCallBack
-                          );
-  // not kCFSocketCloseOnInvalidate.
-
-  data->cfsource = CFSocketCreateRunLoopSource (NULL, data->socket, 0);
-  
-  CFRunLoopAddSource (CFRunLoopGetCurrent(), data->cfsource,
-                     kCFRunLoopCommonModes);
-  
-# else  /* !USE_COCOA_SOURCES */
+  LOGI(@"source 0x%08X %2d: alloc", (unsigned int) data, data->fd);
 
   data->app = app;
   jwxyz_source_retain (data);
   jwxyz_source_select (data);
-
-# endif /* !USE_COCOA_SOURCES */
 
   return data;
 }
@@ -357,40 +298,52 @@ XtAppAddInput (XtAppContext app, int fd, XtPointer flags,
 void
 XtRemoveInput (XtInputId id)
 {
-  LOGI(@"source 0x%08X %2d: remove", (unsigned int) id, id->fd, 0);
+  LOGI(@"source 0x%08X %2d: remove", (unsigned int) id, id->fd);
   ASSERT_RET (id->refcount > 0, "sources corrupted");
-# ifdef USE_COCOA_SOURCES
-  ASSERT_RET (id->cfsource, "sources corrupted");
-  ASSERT_RET (id->socket, "sources corrupted");
-
-  CFRunLoopRemoveSource (CFRunLoopGetCurrent(), id->cfsource,
-                         kCFRunLoopCommonModes);
-  CFSocketInvalidate (id->socket);
-  // CFSocketInvalidate called jwxyz_source_release.
-
-# else  /* !USE_COCOA_SOURCES */
 
   jwxyz_source_deselect (id);
   jwxyz_source_release (id);
-
-# endif /* !USE_COCOA_SOURCES */
 }
 
-void
-jwxyz_XtRemoveInput_all (Display *dpy)
+static void
+jwxyz_XtRemoveInput_all (jwxyz_sources_data *td)
 {
-# ifdef USE_COCOA_SOURCES
-  ASSERT_RET (0, "unimplemented");
-# else  /* !USE_COCOA_SOURCES */
-
-  jwxyz_sources_data *td = display_sources_data (dpy);
   int i;
   for (i = 0; i < FD_SETSIZE; i++) {
     XtInputId id = td->ids[i];
     if (id) XtRemoveInput (id);
   }
+}
 
-# endif /* !USE_COCOA_SOURCES */
+
+static void
+jwxyz_XtRemoveTimeOut_all (jwxyz_sources_data *td)
+{
+  struct jwxyz_XtIntervalId *timer, *next;
+  int count = 0;
+
+  // Iterate the timer list, being careful that XtRemoveTimeOut removes
+  // things from that list.
+  if (td->all_timers) {
+    for (timer = td->all_timers, next = timer->next;
+         timer;
+         timer = next, next = (timer ? timer->next : 0)) {
+      XtRemoveTimeOut (timer);
+      count++;
+      ASSERT_RET (count < 10000, "way too many timers to free");
+    }
+    ASSERT_RET (!td->all_timers, "timer list didn't empty");
+  }
+}
+
+
+void
+jwxyz_sources_free (jwxyz_sources_data *td)
+{
+  jwxyz_XtRemoveInput_all (td);
+  jwxyz_XtRemoveTimeOut_all (td);
+  memset (td, 0xA1, sizeof(*td));
+  free (td);
 }
 
 

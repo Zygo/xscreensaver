@@ -827,6 +827,12 @@ ccurve_reshape (Display *dpy, Window window, void *closure,
 static Bool
 ccurve_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->draw_index = 0;
+      return True;
+    }
   return False;
 }
 

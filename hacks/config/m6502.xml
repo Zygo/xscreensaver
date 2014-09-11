@@ -35,8 +35,7 @@
   <xscreensaver-updater />
 
   <_description> 
-This emulates a 6502 microprocessor, and runs some example programs on
-it.
+Emulates a 6502 microprocessor, and runs some example programs on it.
 
 The family of 6502 chips were used throughout the 70's and 80's in
 machines such as the Atari 2600, Commodore PET, VIC20 and C64, Apple

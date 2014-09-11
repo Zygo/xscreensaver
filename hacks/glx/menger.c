@@ -1,4 +1,4 @@
-/* menger, Copyright (c) 2001-2006 Jamie Zawinski <jwz@jwz.org>
+/* menger, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
  *         Copyright (c) 2002 Aurelien Jacobs <aurel@gnuage.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -346,37 +346,38 @@ sponge_handle_event (ModeInfo *mi, XEvent *event)
 {
   sponge_configuration *sp = &sps[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
+  if (gltrackball_event_handler (event, sp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &sp->button_down_p))
+    return True;
+  else if (event->xany.type == KeyPress)
     {
-      sp->button_down_p = True;
-      gltrackball_start (sp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+      if (c == '+' || c == '=' ||
+          keysym == XK_Up || keysym == XK_Right || keysym == XK_Next)
+        {
+          sp->draw_tick = speed;
+          sp->current_depth += (sp->current_depth > 0 ? 1 : -1);
+          sp->current_depth--;
+          return True;
+        }
+      else if (c == '-' || c == '_' ||
+               keysym == XK_Down || keysym == XK_Left || keysym == XK_Prior)
+        {
+          sp->draw_tick = speed;
+          sp->current_depth -= (sp->current_depth > 0 ? 1 : -1);
+          sp->current_depth--;
+          return True;
+        }
+      else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+        goto DEF;
     }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      sp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (sp->trackball, event->xbutton.button, 5,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           sp->button_down_p)
-    {
-      gltrackball_track (sp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
+    DEF:
+      sp->draw_tick = speed;
       return True;
     }
 
@@ -437,7 +438,7 @@ init_sponge (ModeInfo *mi)
                             1.0,
                             do_wander ? wander_speed : 0,
                             True);
-    sp->trackball = gltrackball_init ();
+    sp->trackball = gltrackball_init (True);
   }
 
   sp->ncolors = 128;
@@ -486,10 +487,7 @@ draw_sponge (ModeInfo *mi)
                  (y - 0.5) * 6,
                  (z - 0.5) * 15);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (sp->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (sp->rot, &x, &y, &z, !sp->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);

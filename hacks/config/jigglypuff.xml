@@ -69,7 +69,7 @@
   <xscreensaver-updater />
 
   <_description>
-This does bad things with quasi-spherical objects.
+Quasi-spherical objects are distorted.
 
 You have a tetrahedron with tesselated faces.  The vertices on these
 faces have forces on them: one proportional to the distance from the

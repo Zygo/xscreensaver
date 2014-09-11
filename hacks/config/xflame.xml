@@ -25,8 +25,7 @@
   <xscreensaver-updater />
 
   <_description>
-Draws a simulation of pulsing fire.  It can also take an arbitrary
-image and set it on fire too.
+Pulsing fire.  It can also take an arbitrary image and set it on fire too.
 
 Written by Carsten Haitzler and many others; 1999.
   </_description>

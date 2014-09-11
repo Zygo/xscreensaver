@@ -638,51 +638,33 @@ ENTRYPOINT Bool antspotlight_handle_event(ModeInfo *mi, XEvent *event)
 {
   antspotlightstruct *mp = &antspotlight[MI_SCREEN(mi)];
 
-  switch(event->xany.type) {
-  case ButtonPress:
+  if (gltrackball_event_handler (event, mp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &mp->button_down_p))
+    return True;
 
-    switch(event->xbutton.button) {
+  if (event->xany.type == ButtonPress)
+    {
+      switch(event->xbutton.button) {
 
-    case Button1:
-      mp->button_down_p = True;
-      gltrackball_start(mp->trackball, 
-			event->xbutton.x, event->xbutton.y,
-			MI_WIDTH (mi), MI_HEIGHT (mi));
-      break;
+      case Button1:
+        mp->button_down_p = True;
+        gltrackball_start(mp->trackball, 
+                          event->xbutton.x, event->xbutton.y,
+                          MI_WIDTH (mi), MI_HEIGHT (mi));
+        return True;
       
-    case Button4:
-      mp->mag = max(mp->mag-1, 1);
-      break;
+      case Button4:
+        mp->mag = max(mp->mag-1, 1);
+        return True;
 
-    case Button5:
-      mp->mag = min(mp->mag+1, MAX_MAGNIFICATION);
-      break;
+      case Button5:
+        mp->mag = min(mp->mag+1, MAX_MAGNIFICATION);
+        return True;
+      }
     }
 
-    break;
-    
-  case ButtonRelease:
-
-    switch(event->xbutton.button) {
-    case Button1:
-      mp->button_down_p = False;
-      break;
-    }
-
-    break;
-
-  case MotionNotify:
-    if(mp->button_down_p)
-      gltrackball_track(mp->trackball,
-			event->xmotion.x, event->xmotion.y,
-			MI_WIDTH (mi), MI_HEIGHT (mi));
-    break;
-    
-  default:
-    return False;
-  }
-
-  return True;
+  return False;
 }
 
 static void
@@ -733,7 +715,7 @@ ENTRYPOINT void init_antspotlight(ModeInfo *mi)
   }
   mp = &antspotlight[MI_SCREEN(mi)];
   mp->rot = make_rotator (rot_speed, rot_speed, rot_speed, 1, 0, True);
-  mp->trackball = gltrackball_init ();
+  mp->trackball = gltrackball_init (False);
 
   if((mp->glx_context = init_GL(mi)) != NULL) {
     reshape_antspotlight(mi, MI_WIDTH(mi), MI_HEIGHT(mi));

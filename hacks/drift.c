@@ -39,7 +39,6 @@ static const char sccsid[] = "@(#)drift.c	5.00 2000/11/01 xlockmore";
 				  "*ignoreRotation: True \n" \
 
 # define SMOOTH_COLORS
-# define drift_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 # include "erase.h"
 #else /* STANDALONE */
@@ -696,6 +695,18 @@ refresh_drift(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+ENTRYPOINT Bool
+drift_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      reshape_drift (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+  return False;
+}
+
 
 XSCREENSAVER_MODULE ("Drift", drift)
 

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1292,7 +1292,8 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
       mine->tc = textclient_open (mine->dpy);
       textclient_reshape (mine->tc,
                           SCREEN_COLS, SCREEN_ROWS,
-                          SCREEN_COLS, SCREEN_ROWS);
+                          SCREEN_COLS, SCREEN_ROWS,
+                          0);
     }
 
     if (! mine->fast_p)

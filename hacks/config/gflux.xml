@@ -28,11 +28,11 @@
   </hgroup>
 
   <select id="mode">
-   <option id="wire"    _label="Wire mesh"           arg-set="-mode wire"/>
-   <option id="solid"   _label="Flat lighting"       arg-set="-mode solid"/>
-   <option id="light"   _label="Directional lighting"/>
-   <option id="checker" _label="Checkerboard"        arg-set="-mode checker"/>
-   <option id="grab"    _label="Picture"             arg-set="-mode grab"/>
+   <option id="wire"    _label="Wire mesh"            arg-set="-mode wire"/>
+   <option id="solid"   _label="Flat lighting"        arg-set="-mode solid"/>
+   <option id="light"   _label="Directional lighting" arg-set="-mode light"/>
+   <option id="checker" _label="Checkerboard"         arg-set="-mode checker"/>
+   <option id="grab"    _label="Picture"              />
   </select>
 
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
@@ -52,7 +52,7 @@
   <xscreensaver-updater />
 
   <_description>
-Draws undulating waves on a rotating grid.
+Undulating waves on a rotating grid.
 
 Written by Josiah Pease; 2000.
   </_description>

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -37,7 +37,6 @@ struct state {
   Pixmap left1, left2, right1, right2;
   Pixmap left_front, right_front, front, down;
 
-  char *program;
   text_data *tc;
 
   int state;	/* indicates states: walking or getting passwd */
@@ -490,18 +489,28 @@ static void
 fill_words (struct state *st)
 {
   char *p = st->words + strlen(st->words);
+  char *c;
+  int lines = 0;
+  int max = MAXLINES;
+
+  for (c = st->words; c < p; c++)
+    if (*c == '\n')
+      lines++;
+
   while (p < st->words + sizeof(st->words) - 1 &&
-         st->lines < MAXLINES)
+         lines < max)
     {
       int c = textclient_getc (st->tc);
       if (c == '\n')
-        st->lines++;
+        lines++;
       if (c > 0)
         *p++ = (char) c;
       else
         break;
     }
   *p = 0;
+
+  st->lines = lines;
 }
 
 
@@ -512,7 +521,7 @@ static const char *noseguy_defaults [] = {
   "*textForeground: black",
   "*textBackground: #CCCCCC",
   "*fpsSolid:	 true",
-  "*program:	 xscreensaver-text --cols 40 | head -n15",
+  "*program:	 xscreensaver-text",
   "*usePty:      False",
   ".font:	 -*-new century schoolbook-*-r-*-*-*-180-*-*-*-*-*-*",
   0
@@ -546,8 +555,15 @@ noseguy_init (Display *d, Window w)
   st->Height = xgwa.height + 2;
   cmap = xgwa.colormap;
 
-  st->program = get_string_resource (st->dpy, "program", "Program");
   st->tc = textclient_open (st->dpy);
+  {
+    int w = 40;
+    int h = 15;
+    textclient_reshape (st->tc, w, h, w, h,
+                        /* Passing MAXLINES isn't actually necessary */
+                        0);
+  }
+
   init_images(st);
 
   if (!fontname || !*fontname)

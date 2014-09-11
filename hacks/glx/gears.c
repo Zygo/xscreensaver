@@ -1,4 +1,4 @@
-/* gears, Copyright (c) 2007-2008 Jamie Zawinski <jwz@jwz.org>
+/* gears, Copyright (c) 2007-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -100,50 +100,6 @@ reshape_gears (ModeInfo *mi, int width, int height)
 
   glClear(GL_COLOR_BUFFER_BIT);
 }
-
-
-ENTRYPOINT Bool
-gears_handle_event (ModeInfo *mi, XEvent *event)
-{
-  gears_configuration *bp = &bps[MI_SCREEN(mi)];
-
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      bp->button_down_p = True;
-      gltrackball_start (bp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      bp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           bp->button_down_p)
-    {
-      gltrackball_track (bp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-
-  return False;
-}
-
 
 
 static void
@@ -765,20 +721,30 @@ init_gears (ModeInfo *mi)
       glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
     }
 
-  {
-    double spin_speed   = 0.5;
-    double wander_speed = 0.01;
-    double spin_accel   = 0.25;
+  if (! bp->rot)
+    {
+      double spin_speed   = 0.5;
+      double wander_speed = 0.01;
+      double spin_accel   = 0.25;
 
-    bp->rot = make_rotator (do_spin ? spin_speed : 0,
-                            do_spin ? spin_speed : 0,
-                            do_spin ? spin_speed : 0,
-                            spin_accel,
-                            do_wander ? wander_speed : 0,
-                            True
-                            );
-    bp->trackball = gltrackball_init ();
-  }
+      bp->rot = make_rotator (do_spin ? spin_speed : 0,
+                              do_spin ? spin_speed : 0,
+                              do_spin ? spin_speed : 0,
+                              spin_accel,
+                              do_wander ? wander_speed : 0,
+                              True
+                              );
+      bp->trackball = gltrackball_init (True);
+    }
+
+  if (bp->gears)
+    {
+      for (i = 0; i < bp->ngears; i++)
+        free_gear (bp->gears[i]);
+      free (bp->gears);
+      bp->gears = 0;
+      bp->ngears = 0;
+    }
 
   if (!(random() % 8))
     {
@@ -788,10 +754,11 @@ init_gears (ModeInfo *mi)
     {
       gear *g = 0;
       int total_gears = MI_COUNT (mi);
-      int i;
+
+      bp->planetary_p = False;
+
       if (total_gears <= 0)
         total_gears = 3 + abs (BELLRAND (8) - 4);  /* 3 - 7, mostly 3. */
-
       bp->gears = (gear **) calloc (total_gears+2, sizeof(**bp->gears));
       bp->ngears = 0;
 
@@ -869,10 +836,7 @@ draw_gears (ModeInfo *mi)
                   (y - 0.5) * 4,
                   (z - 0.5) * 7);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (bp->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
 
@@ -939,6 +903,24 @@ draw_gears (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+}
+
+ENTRYPOINT Bool
+gears_handle_event (ModeInfo *mi, XEvent *event)
+{
+  gears_configuration *bp = &bps[MI_SCREEN(mi)];
+
+  if (gltrackball_event_handler (event, bp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &bp->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      init_gears (mi);
+      return True;
+    }
+
+  return False;
 }
 
 XSCREENSAVER_MODULE ("Gears", gears)

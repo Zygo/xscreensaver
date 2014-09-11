@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2002-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2002-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -111,12 +111,7 @@ typedef struct {
   int mesher;
   int polys1, polys2;  /* polygon counts */
 
-# ifdef HAVE_GLBITMAP
-  XFontStruct *font;
-  GLuint font_list;
-# else
   texture_font_data *font_data;
-# endif
 
   int change_tick;
   int done_once;
@@ -735,7 +730,7 @@ init_spheremonics (ModeInfo *mi)
                             1.0,
                             do_wander ? wander_speed : 0,
                             (spinx && spiny && spinz));
-    cc->trackball = gltrackball_init ();
+    cc->trackball = gltrackball_init (True);
   }
 
   cc->tracer = -1;
@@ -743,11 +738,7 @@ init_spheremonics (ModeInfo *mi)
 
   cc->resolution = res;
 
-# ifdef HAVE_GLBITMAP
-  load_font (mi->dpy, "labelfont", &cc->font, &cc->font_list);
-# else /* !HAVE_GLBITMAP */
-  cc->font_data = load_texture_font (mi->dpy, "labelFont");
-# endif /* !HAVE_GLBITMAP */
+  cc->font_data = load_texture_font (mi->dpy, "labelfont");
 
   cc->dlist = glGenLists(1);
   cc->dlist2 = glGenLists(1);
@@ -772,49 +763,13 @@ spheremonics_handle_event (ModeInfo *mi, XEvent *event)
 {
   spheremonics_configuration *cc = &ccs[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
+  if (gltrackball_event_handler (event, cc->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &cc->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      cc->button_down_p = True;
-      gltrackball_start (cc->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      cc->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (cc->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == KeyPress)
-    {
-      KeySym keysym;
-      char c = 0;
-      XLookupString (&event->xkey, &c, 1, &keysym, 0);
-
-      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
-        {
-          cc->change_tick = duration;
-          return True;
-        }
-    }
-  else if (event->xany.type == MotionNotify &&
-           cc->button_down_p)
-    {
-      gltrackball_track (cc->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      cc->change_tick = duration;
       return True;
     }
 
@@ -851,10 +806,7 @@ draw_spheremonics (ModeInfo *mi)
                  (y - 0.5) * 6,
                  (z - 0.5) * 8);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (cc->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (cc->rot, &x, &y, &z, !cc->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);
@@ -893,12 +845,7 @@ draw_spheremonics (ModeInfo *mi)
                cc->m[4], cc->m[5], cc->m[6], cc->m[7]);
 
       glColor3f(1.0, 1.0, 0.0);
-      print_gl_string (mi->dpy,
-# ifdef HAVE_GLBITMAP
-                       cc->font, cc->font_list,
-# else /* !HAVE_GLBITMAP */
-                       cc->font_data,
-# endif /* !HAVE_GLBITMAP */
+      print_gl_string (mi->dpy, cc->font_data,
                        mi->xgwa.width, mi->xgwa.height,
                        10, mi->xgwa.height - 10,
                        buf, False);

@@ -669,37 +669,13 @@ pipes_handle_event (ModeInfo *mi, XEvent *event)
 {
   pipesstruct *pp = &pipes[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
+  if (gltrackball_event_handler (event, pp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &pp->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      pp->button_down_p = True;
-      gltrackball_start (pp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      pp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (pp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           pp->button_down_p)
-    {
-      gltrackball_track (pp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      pp->fadeout = 100;
       return True;
     }
 
@@ -773,7 +749,7 @@ init_pipes (ModeInfo * mi)
 		MI_CLEARWINDOW(mi);
 	}
 
-    pp->trackball = gltrackball_init ();
+    pp->trackball = gltrackball_init (True);
     generate_system (mi);
 }
 
@@ -1135,10 +1111,7 @@ draw_pipes (ModeInfo * mi)
 
 	glTranslatef(0.0, 0.0, fisheye ? -3.8 : -4.8);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (pp->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
 	if (rotatepipes)
       glRotatef(pp->initial_rotation, 0.0, 1.0, 0.0);

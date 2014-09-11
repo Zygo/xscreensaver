@@ -35,7 +35,6 @@ static const char sccsid[] = "@(#)slip.c	5.00 2000/11/01 xlockmore";
 					"*ignoreRotation: True \n" \
 
 # define refresh_slip 0
-# define slip_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
 # include "xlock.h"		/* in xlockmore distribution */
@@ -361,6 +360,19 @@ release_slip (ModeInfo * mi)
 		(void) free((void *) slips);
 		slips = (slipstruct *) NULL;
 	}
+}
+
+ENTRYPOINT Bool
+slip_handle_event (ModeInfo *mi, XEvent *event)
+{
+  slipstruct *sp = &slips[MI_SCREEN(mi)];
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      sp->first_time = 1;
+      sp->nblits_remaining = 0;
+      return True;
+    }
+  return False;
 }
 
 XSCREENSAVER_MODULE ("Slip", slip)

@@ -34,9 +34,9 @@
 
   <_description>
 
-This bouncing ball is a clone of the first graphics demo for the Amiga
-1000, which was written by Dale Luck and RJ Mical during a break at
-the 1984 Consumer Electronics Show (or so the legend goes.)
+A clone of the first graphics demo for the Amiga 1000, which was
+written by Dale Luck and RJ Mical during a break at the 1984 Consumer
+Electronics Show (or so the legend goes.)
 
 This looks like the original Amiga demo if you turn off "smoothing"
 and "lighting" and turn on "scanlines", and is somewhat more modern

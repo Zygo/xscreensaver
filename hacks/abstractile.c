@@ -18,8 +18,6 @@
 #include <sys/time.h>
 /*#include <sys/utsname.h>*/
 
-#define DEBUGFILE       "/tmp/abstractile.dbg"
-
 #define MODE_CREATE		0   /* init, create, then finish sleep */
 #define MODE_ERASE		1   /* erase, then reset colors */
 #define MODE_DRAW		2
@@ -1079,8 +1077,13 @@ _newline(struct state *st)
     True : False;
   st->dline[st->li].obj = (lt==LINE_NEW) ? st->oi :
     st->dline[bl].obj;
-  st->dline[st->li].color = (lt==LINE_NEW) ?
-    (_getcolor(st,x,y))%st->ncolors : st->dline[bl].color;
+  if (lt==LINE_NEW) {
+    int color =  (_getcolor(st,x,y))%st->ncolors;
+    if (color < 0) color += st->ncolors;
+    st->dline[st->li].color = color;
+  } else {
+    st->dline[st->li].color = st->dline[bl].color;
+  }
   st->dline[st->li].deo=(_getdeo(st,x,y,st->dmap,1) +
     (random()%st->dvar) + (random()%st->dvar))*st->ddir;
   st->dline[st->li].ndol=0;
@@ -1559,6 +1562,13 @@ abstractile_reshape (Display *dpy, Window window, void *closure,
 static Bool
 abstractile_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->mode=MODE_CREATE;
+      return True;
+    }
+
   return False;
 }
 
@@ -1576,6 +1586,9 @@ static const char *abstractile_defaults [] = {
   "*sleep:             3",
   "*speed:             3",
   "*tile:         random",
+#ifdef USE_IPHONE
+  "*ignoreRotation: True",
+#endif
   0
 };
 

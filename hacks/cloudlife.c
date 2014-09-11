@@ -377,6 +377,14 @@ cloudlife_reshape (Display *dpy, Window window, void *closure,
 static Bool
 cloudlife_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      XClearWindow (dpy, window);
+      st->cycles = 0;
+      st->field = init_field(st);
+      return True;
+    }
   return False;
 }
 

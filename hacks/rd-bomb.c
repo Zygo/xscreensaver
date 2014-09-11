@@ -95,10 +95,10 @@ pixack_init(struct state *st, int *size_h, int *size_v)
   st->height = get_integer_resource (st->dpy, "height", "Integer");
 
   if (st->width <= 0 && st->height <= 0 && (R & 1))
-    st->width = st->height = 48 + BELLRAND(256);
+    st->width = st->height = 64 + BELLRAND(512);
 
-  if (st->width  <= 0) st->width  = 48 + BELLRAND(256);
-  if (st->height <= 0) st->height = 48 + BELLRAND(256);
+  if (st->width  <= 0) st->width  = 64 + BELLRAND(512);
+  if (st->height <= 0) st->height = 64 + BELLRAND(512);
 
   if (st->width  > st->xgwa.width)  st->width  = st->xgwa.width;
   if (st->height > st->xgwa.height) st->height = st->xgwa.height;

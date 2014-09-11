@@ -204,35 +204,16 @@ ENTRYPOINT Bool chess_handle_event (ModeInfo *mi, XEvent *event)
 {
   Chesscreen *cs = &qs[MI_SCREEN(mi)];
 
-  if(event->xany.type == ButtonPress && event->xbutton.button == Button1) {
-    cs->button_down_p = True;
-    gltrackball_start (cs->trackball,
-		       event->xbutton.x, event->xbutton.y,
-		       MI_WIDTH (mi), MI_HEIGHT (mi));
+  if (gltrackball_event_handler (event, cs->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &cs->button_down_p))
     return True;
-  }
-  else if(event->xany.type == ButtonRelease 
-	  && event->xbutton.button == Button1) {
-    cs->button_down_p = False;
-    return True;
-  }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      gltrackball_mousewheel (cs->trackball, event->xbutton.button, 5,
-                              !event->xbutton.state);
+      cs->done = 1;
       return True;
     }
-  else if(event->xany.type == MotionNotify && cs->button_down_p) {
-    gltrackball_track (cs->trackball,
-		       event->xmotion.x, event->xmotion.y,
-		       MI_WIDTH (mi), MI_HEIGHT (mi));
-    return True;
-  }
-  
+ 
   return False;
 }
 
@@ -825,7 +806,7 @@ ENTRYPOINT void init_chess(ModeInfo *mi)
   cs = &qs[screen];
   cs->window = MI_WINDOW(mi);
   cs->wire = MI_IS_WIREFRAME(mi);
-  cs->trackball = gltrackball_init ();
+  cs->trackball = gltrackball_init (False);
   
   cs->oldwhite = -1;
 

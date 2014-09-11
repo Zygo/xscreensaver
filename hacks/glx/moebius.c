@@ -668,39 +668,10 @@ moebius_handle_event (ModeInfo *mi, XEvent *event)
 {
   moebiusstruct *mp = &moebius[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      mp->button_down_p = True;
-      gltrackball_start (mp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      mp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (mp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           mp->button_down_p)
-    {
-      gltrackball_track (mp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, mp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &mp->button_down_p))
+    return True;
 
   return False;
 }
@@ -723,7 +694,7 @@ init_moebius (ModeInfo * mi)
     {
       double rot_speed = 0.3;
       mp->rot = make_rotator (rot_speed, rot_speed, rot_speed, 1, 0, True);
-      mp->trackball = gltrackball_init ();
+      mp->trackball = gltrackball_init (True);
     }
 
 	if ((mp->glx_context = init_GL(mi)) != NULL) {
@@ -761,10 +732,7 @@ draw_moebius (ModeInfo * mi)
 
 	glTranslatef(0.0, 0.0, -10.0);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (mp->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
 	if (!MI_IS_ICONIC(mi)) {
 		glScalef(Scale4Window * mp->WindH / mp->WindW, Scale4Window, Scale4Window);

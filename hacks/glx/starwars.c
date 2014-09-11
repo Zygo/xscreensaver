@@ -281,7 +281,7 @@ latin1_to_ascii (char *s)
 
 
 static int
-string_width (sws_configuration *sc, const char *s)
+sw_string_width (sws_configuration *sc, const char *s)
 {
   if (textures_p)
     return texture_string_width (sc->texfont, s, 0);
@@ -295,7 +295,7 @@ char_width (sws_configuration *sc, char c)
   char s[2];
   s[0] = c;
   s[1] = 0;
-  return string_width (sc, s);
+  return sw_string_width (sc, s);
 }
 
 
@@ -444,7 +444,7 @@ draw_string (sws_configuration *sc, GLfloat x, GLfloat y, const char *s)
       while (*s)
         {
           *c = *s++;
-          w = string_width (sc, c);
+          w = sw_string_width (sc, c);
           glBegin (GL_LINE_LOOP);
           glVertex3f (0, 0, 0);
           glVertex3f (w, 0, 0);
@@ -1000,7 +1000,7 @@ draw_sws (ModeInfo *mi)
 
           if (alignment >= 0)
             {
-              int n = string_width (sc, line);
+              int n = sw_string_width (sc, line);
               xoff = 1.0 - (n * sc->font_scale);
             }
 

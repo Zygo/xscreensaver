@@ -1,4 +1,4 @@
-/* carousel, Copyright (c) 2005-2013 Jamie Zawinski <jwz@jwz.org>
+/* carousel, Copyright (c) 2005-2014 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and rotates them around.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -426,11 +426,6 @@ carousel_handle_event (ModeInfo *mi, XEvent *event)
     {
       if (! ss->button_down_p)
         ss->button_down_time = time((time_t *) 0);
-      ss->button_down_p = True;
-      gltrackball_start (ss->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
     }
   else if (event->xany.type == ButtonRelease &&
            event->xbutton.button == Button1)
@@ -446,25 +441,16 @@ carousel_handle_event (ModeInfo *mi, XEvent *event)
           for (i = 0; i < ss->nframes; i++)
             ss->frames[i]->expires += secs;
         }
-      ss->button_down_p = False;
-      return True;
     }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
+
+  if (gltrackball_event_handler (event, ss->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &ss->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      gltrackball_mousewheel (ss->trackball, event->xbutton.button, 5,
-                              !event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           ss->button_down_p)
-    {
-      gltrackball_track (ss->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
+      int i = random() % ss->nframes;
+      ss->frames[i]->expires  = 0;
       return True;
     }
 
@@ -609,7 +595,7 @@ init_carousel (ModeInfo *mi)
     ss->rot = make_rotator (spin_speed, spin_speed, spin_speed,
                             spin_accel, wander_speed, True);
 
-    ss->trackball = gltrackball_init ();
+    ss->trackball = gltrackball_init (False);
   }
 
   if (strstr ((char *) glGetString(GL_EXTENSIONS),

@@ -29,6 +29,7 @@
 "*visualID:		default",
 "*captureStderr: 	True",
 "*ignoreUninstalledPrograms: False",
+"*authWarningSlack:	20",
 "*textMode:		file",
 "*textLiteral:		XScreenSaver",
 "*textFile:		",
@@ -46,9 +47,9 @@
 "*demoCommand: xscreensaver-demo",
 "*prefsCommand: xscreensaver-demo -prefs",
 "*helpURL: http://www.jwz.org/xscreensaver/man.html",
-"*loadURL: gnome-open '%s'",
-"*manualCommand: gnome-terminal --title '%s manual' \
-		--command '/bin/sh -c \"man %s; read foo\"'",
+"*loadURL: firefox '%s' || mozilla '%s' || netscape '%s'",
+"*manualCommand: xterm -sb -fg black -bg gray75 -T '%s manual' \
+		    -e /bin/sh -c 'man \"%s\" ; read foo'",
 "*dateFormat:		%d-%b-%y (%a); %I:%M %p",
 "*installColormap:	True",
 "*programs:								      \
@@ -258,7 +259,8 @@
   GL: 				quasicrystal -root			    \\n\
   GL: 				unknownpleasures -root			    \\n\
   GL: 				projectiveplane -root			    \\n\
-				tessellimage -root			    \\n",
+				tessellimage -root			    \\n\
+  GL: 				winduprobot -root			    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
 "XScreenSaver.initialDelay:		0:00:00",
@@ -295,7 +297,7 @@
 "*passwd.asterisks:              True",
 "*passwd.uname:                  True",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright \\xa9 1991-2014 by",
+"*splash.body.label:		Copyright \\251 1991-2014 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",
@@ -369,6 +371,7 @@
 "*hacks.vidwhacker.name:     VidWhacker",
 "*hacks.webcollage.name:     WebCollage",
 "*hacks.whirlwindwarp.name:  WhirlWindWarp",
+"*hacks.winduprobot.name:    WindupRobot",
 "*hacks.xanalogtv.name:      XAnalogTV",
 "*hacks.xrayswarm.name:      XRaySwarm",
 "*hacks.documentation.isInstalled: True",

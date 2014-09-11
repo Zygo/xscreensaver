@@ -38,9 +38,8 @@
   <xscreensaver-updater />
 
   <_description>
-This takes an image and makes it melt, toward a randomly chosen point
-or direction.  Warning, if the effect continues after the screen saver
-is off, seek medical attention.
+Melts an image in various ways. Warning, if the effect continues after
+the screen saver is off, seek medical attention.
 
 Written by David Wald, Vivek Khera, Jamie Zawinski, and Vince Levey; 1993.
   </_description>

@@ -49,7 +49,6 @@ static const char sccsid[] = "@(#)euler2d.c	5.00 2000/11/01 xlockmore";
 					"*fpsSolid: true    \n" \
 					"*ignoreRotation: True \n" \
 
-# define euler2d_handle_event 0
 # define SMOOTH_COLORS
 # include "xlockmore.h"		/* in xscreensaver distribution */
 #else /* STANDALONE */
@@ -882,6 +881,19 @@ refresh_euler2d (ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+ENTRYPOINT Bool
+euler2d_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      init_euler2d (mi);
+      return True;
+    }
+  return False;
+}
+
+
 
 XSCREENSAVER_MODULE ("Euler2D", euler2d)
 

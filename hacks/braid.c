@@ -41,7 +41,6 @@ static const char sccsid[] = "@(#)braid.c	5.00 2000/11/01 xlockmore";
 				   "*ignoreRotation: True" \
 
 # define UNIFORM_COLORS
-# define braid_handle_event 0
 # include "xlockmore.h"
 # include "erase.h"
 #else /* STANDALONE */
@@ -200,7 +199,7 @@ init_braid(ModeInfo * mi)
 		braid->nstrands = INTRAND(MINSTRANDS,
 				       MAX(MIN(MIN(MAXSTRANDS, MI_COUNT(mi)),
 					       (int) ((braid->max_radius - braid->min_radius) / 5.0)), MINSTRANDS));
-	braid->braidlength = INTRAND(MINLENGTH, MIN(MAXLENGTH, braid->nstrands * 6));
+	braid->braidlength = INTRAND(MINLENGTH, MIN(MAXLENGTH -1, braid->nstrands * 6));
 
 	for (i = 0; i < braid->braidlength; i++) {
 		braid->braidword[i] =
@@ -452,6 +451,18 @@ reshape_braid(ModeInfo * mi, int width, int height)
 {
   XClearWindow (MI_DISPLAY (mi), MI_WINDOW(mi));
   init_braid (mi);
+}
+
+ENTRYPOINT Bool
+braid_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      reshape_braid (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+      return True;
+    }
+
+  return False;
 }
 
 ENTRYPOINT void

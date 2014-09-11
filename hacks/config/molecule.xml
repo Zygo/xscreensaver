@@ -48,9 +48,8 @@
   <xscreensaver-updater />
 
   <_description>
-Draws several different representations of molecules.  Some common
-molecules are built in, and it can also read PDB (Protein Data Bank)
-files as input.
+Some interesting molecules. Several molecules are built in, and it can
+also read PDB (Protein Data Bank) files as input.
 
 http://en.wikipedia.org/wiki/Protein_Data_Bank_%28file_format%29
 

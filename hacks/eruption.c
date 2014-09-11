@@ -449,9 +449,10 @@ static void
 eruption_reshape (Display *dpy, Window window, void *closure, 
                  unsigned int w, unsigned int h)
 {
-#if 0
   struct state *st = (struct state *) closure;
+  XWindowAttributes XWinAttribs;
   int i;
+
   for (i = 0; i < st->iWinHeight; ++i)
     free (st->fire[i]);
 
@@ -462,8 +463,14 @@ eruption_reshape (Display *dpy, Window window, void *closure,
   st->fire = calloc( st->iWinHeight, sizeof(unsigned char*));
   for (i = 0; i < st->iWinHeight; ++i)
     st->fire[i] = calloc( st->iWinWidth, sizeof(unsigned char));
+
+  XDestroyImage( st->pImage );
+  XGetWindowAttributes( st->dpy, st->window, &XWinAttribs );
+  st->pImage = XCreateImage( st->dpy, XWinAttribs.visual, XWinAttribs.depth, ZPixmap, 0, NULL,
+							  XWinAttribs.width, XWinAttribs.height, BitmapPad( st->dpy ), 0 );
+  (st->pImage)->data = calloc((st->pImage)->bytes_per_line, (st->pImage)->height);
+
   st->draw_i = -1;
-#endif
 }
 
 static Bool
@@ -477,7 +484,6 @@ eruption_free (Display *dpy, Window window, void *closure)
 {
 #if 0
   struct state *st = (struct state *) closure;
-	free( st->pImage->data );
 	XDestroyImage( st->pImage );
 	free( st->aiColorVals );
 	for (i = 0; i < st->iWinHeight; ++i)

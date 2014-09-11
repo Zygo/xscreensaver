@@ -1,4 +1,4 @@
-/* sphere, Copyright (c) 2001-2008 Jamie Zawinski <jwz@jwz.org>
+/* sphere, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
  * Utility function to create a unit sphere in GL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -19,5 +19,6 @@
    Returns number of polygons used.
  */
 extern int unit_sphere (int stacks, int slices, int wire_p);
+extern int unit_dome (int stacks, int slices, int wire_p);
 
 #endif /* __SPHERE_H__ */

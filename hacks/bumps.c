@@ -65,6 +65,7 @@ static const char *bumps_defaults [] = {
 #endif /* HAVE_XSHM_EXTENSION */
 #ifdef USE_IPHONE
   "*ignoreRotation: True",
+  "*rotateImages:   True",
 #endif
   0
 };
@@ -713,6 +714,13 @@ bumps_reshape (Display *dpy, Window window, void *closure,
 static Bool
 bumps_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  SBumps *Bumps = (SBumps *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      Bumps->start_time = 0;
+      return True;
+    }
+
   return False;
 }
 

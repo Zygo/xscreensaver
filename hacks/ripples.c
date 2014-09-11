@@ -1077,6 +1077,12 @@ ripples_reshape (Display *dpy, Window window, void *closure,
 static Bool
 ripples_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->start_time = 0;
+      return True;
+    }
   return False;
 }
 
@@ -1110,6 +1116,7 @@ static const char *ripples_defaults[] =
 #endif
 #ifdef USE_IPHONE
   "*ignoreRotation: True",
+  "*rotateImages:   True",
 #endif
   0
 };

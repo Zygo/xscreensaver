@@ -816,6 +816,12 @@ vermiculate_reshape (Display *dpy, Window window, void *closure,
 static Bool
 vermiculate_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->reset_p = 1;
+      return True;
+    }
   return False;
 }
 
@@ -882,8 +888,9 @@ consume_instring(struct state *st)
 block in which it's invoked, since it declares variables: */
 #define forallinbank(LDP) linedata *LDP; int bankc; \
 		for (bankc = 1;	\
-		(LDP = &st->thread[st->bank[bankc - 1] - 1],	\
-		bankc <= st->bnkt); bankc++)
+		((bankc <= st->bnkt) ? ( \
+			(LDP = &st->thread[st->bank[bankc - 1] - 1],	1) \
+			) : 0) ; bankc++)
 			      {
 				forallinbank (L) L->slice = degs / (st->ch - '0');
 			      }

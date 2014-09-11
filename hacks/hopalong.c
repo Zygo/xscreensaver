@@ -61,7 +61,6 @@ static const char sccsid[] = "@(#)hop.c	5.00 2000/11/01 xlockmore";
 
 # define SMOOTH_COLORS
 # define reshape_hop 0
-# define hop_handle_event 0
 # include "xlockmore.h"		/* in xscreensaver distribution */
 # include "erase.h"
 #else /* STANDALONE */
@@ -574,6 +573,20 @@ refresh_hop(ModeInfo * mi)
 {
 	MI_CLEARWINDOW(mi);
 }
+
+ENTRYPOINT Bool
+hop_handle_event (ModeInfo *mi, XEvent *event)
+{
+  if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      MI_CLEARWINDOW(mi);
+      init_hop (mi);
+      return True;
+    }
+  return False;
+}
+
+
 
 XSCREENSAVER_MODULE_2 ("Hopalong", hopalong, hop)
 

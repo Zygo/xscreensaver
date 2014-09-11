@@ -1,4 +1,4 @@
-/* hilbert, Copyright (c) 2011 Jamie Zawinski <jwz@jwz.org>
+/* hilbert, Copyright (c) 2011-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -778,54 +778,42 @@ hilbert_handle_event (ModeInfo *mi, XEvent *event)
 {
   hilbert_configuration *bp = &bps[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      bp->button_down_p = True;
-      gltrackball_start (bp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      bp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           bp->button_down_p)
-    {
-      gltrackball_track (bp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, bp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &bp->button_down_p))
+    return True;
   else if (event->xany.type == KeyPress)
     {
       KeySym keysym;
       char c = 0;
       XLookupString (&event->xkey, &c, 1, &keysym, 0);
-      if (c == '+' || c == '=')
+      if (c == '+' || c == '=' ||
+          keysym == XK_Up || keysym == XK_Right || keysym == XK_Next)
         {
           bp->depth++;
           if (bp->depth > max_depth) bp->depth = max_depth;
           return True;
         }
-      else if (c == '-' || c == '_')
+      else if (c == '-' || c == '_' ||
+               keysym == XK_Down || keysym == XK_Left || keysym == XK_Prior)
         {
           bp->depth--;
           if (bp->depth < 1) bp->depth = 1;
+          return True;
+        }
+      else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+        {
+          bp->depth += bp->depth_tick;
+          if (bp->depth > max_depth-1)
+            {
+              bp->depth = max_depth;
+              bp->depth_tick = -1;
+            }
+          else if (bp->depth <= 1)
+            {
+              bp->depth = 1;
+              bp->depth_tick = 1;
+            }
           return True;
         }
     }
@@ -900,7 +888,7 @@ init_hilbert (ModeInfo *mi)
                             do_wander ? wander_speed : 0,
                             do_spin);
     bp->rot2 = make_rotator (0, 0, 0, 0, tilt_speed, True);
-    bp->trackball = gltrackball_init ();
+    bp->trackball = gltrackball_init (True);
   }
 
   if (mode_str && !strcasecmp(mode_str, "2d"))
@@ -1017,10 +1005,7 @@ draw_hilbert (ModeInfo *mi)
                  (y - 0.5) * 8,
                  (z - 0.5) * 15);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (bp->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
 

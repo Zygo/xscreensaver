@@ -1,5 +1,5 @@
 /* timetunnel. Based on dangerball.c, hack by Sean Brennan <zettix@yahoo.com>*/
-/* dangerball, Copyright (c) 2001-2004 Jamie Zawinski <jwz@jwz.org>
+/* dangerball, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -376,37 +376,10 @@ tunnel_handle_event (ModeInfo *mi, XEvent *event)
 {
   tunnel_configuration *tc = &tconf[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      tc->button_down_p = True;
-      gltrackball_start (tc->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      tc->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5))
-    {
-      gltrackball_mousewheel (tc->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           tc->button_down_p)
-    {
-      gltrackball_track (tc->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, tc->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &tc->button_down_p))
+    return True;
 
   return False;
 }
@@ -1157,7 +1130,7 @@ init_tunnel (ModeInfo *mi)
       glAlphaFunc(GL_GREATER, 0.5);
     }
 
-    tc->trackball = gltrackball_init ();
+    tc->trackball = gltrackball_init (True);
 
 
   tc->texshift = calloc(tc->num_texshifts, sizeof(GLfloat));

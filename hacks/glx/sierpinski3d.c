@@ -327,10 +327,7 @@ draw(ModeInfo *mi)
                  (y - 0.5) * 10,
                  (z - 0.5) * 20);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (gp->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (gp->rot, &x, &y, &z, !gp->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);
@@ -421,37 +418,38 @@ gasket_handle_event (ModeInfo *mi, XEvent *event)
 {
   gasketstruct *gp = &gasket[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
+  if (gltrackball_event_handler (event, gp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &gp->button_down_p))
+    return True;
+  else if (event->xany.type == KeyPress)
     {
-      gp->button_down_p = True;
-      gltrackball_start (gp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+      if (c == '+' || c == '=' ||
+          keysym == XK_Up || keysym == XK_Right || keysym == XK_Next)
+        {
+          gp->tick = speed;
+          gp->current_depth += (gp->current_depth > 0 ? 1 : -1);
+          gp->current_depth--;
+          return True;
+        }
+      else if (c == '-' || c == '_' ||
+               keysym == XK_Down || keysym == XK_Left || keysym == XK_Prior)
+        {
+          gp->tick = speed;
+          gp->current_depth -= (gp->current_depth > 0 ? 1 : -1);
+          gp->current_depth--;
+          return True;
+        }
+      else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+        goto DEF;
     }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      gp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (gp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           gp->button_down_p)
-    {
-      gltrackball_track (gp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
+    DEF:
+      gp->tick = speed;
       return True;
     }
 
@@ -484,7 +482,7 @@ init_gasket(ModeInfo *mi)
                             1.0,
                             do_wander ? wander_speed : 0,
                             True);
-    gp->trackball = gltrackball_init ();
+    gp->trackball = gltrackball_init (True);
   }
 
   gp->ncolors = 255;

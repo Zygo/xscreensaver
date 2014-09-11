@@ -396,6 +396,12 @@ cynosure_reshape (Display *dpy, Window window, void *closure,
 static Bool
 cynosure_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->i = st->iterations;
+      return True;
+    }
   return False;
 }
 

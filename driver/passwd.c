@@ -1,5 +1,5 @@
 /* passwd.c --- verifying typed passwords with the OS.
- * xscreensaver, Copyright (c) 1993-2004 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,6 +22,8 @@
 #ifdef HAVE_UNISTD_H
 # include <unistd.h>
 #endif
+#include <time.h>
+#include <sys/time.h>
 
 #ifndef VMS
 # include <pwd.h>		/* for getpwuid() */
@@ -322,6 +324,9 @@ xss_authenticate(saver_info *si, Bool verbose_p)
 
   if (si->unlock_state == ul_fail)
     {
+      /* Note the time of the first failure */
+      if (si->unlock_failures == 0)
+        si->unlock_failure_time = time((time_t *) 0);
       si->unlock_failures++;
       do_syslog (si, verbose_p);
     }

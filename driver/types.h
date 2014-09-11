@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2011 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -164,6 +164,10 @@ struct saver_preferences {
   char *help_url;		/* Where the help document resides. */
   char *load_url_command;	/* How one loads URLs. */
   char *new_login_command;	/* Command for the "New Login" button. */
+
+  int auth_warning_slack;	/* Don't warn about login failures if they
+                                   all happen within this many seconds of
+                                   a successful login. */
 };
 
 /* This structure holds all the data that applies to the program as a whole,
@@ -270,6 +274,7 @@ struct saver_info {
 
   int unlock_failures;		/* Counts failed login attempts while the
 				   screen is locked. */
+  time_t unlock_failure_time;	/* Time of first failed login attempt. */
 
   char *unlock_typeahead;	/* If the screen is locked, and the user types
                                    a character, we assume that it is the first

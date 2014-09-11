@@ -1,4 +1,4 @@
-/* cubestorm, Copyright (c) 2003-2008 Jamie Zawinski <jwz@jwz.org>
+/* cubestorm, Copyright (c) 2003-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -183,39 +183,10 @@ cube_handle_event (ModeInfo *mi, XEvent *event)
 {
   cube_configuration *bp = &bps[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      bp->button_down_p = True;
-      gltrackball_start (bp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      bp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           bp->button_down_p)
-    {
-      gltrackball_track (bp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, bp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &bp->button_down_p))
+    return True;
   else if (event->xany.type == KeyPress)
     {
       KeySym keysym;
@@ -226,11 +197,14 @@ cube_handle_event (ModeInfo *mi, XEvent *event)
           glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
           return True;
         }
-      else if (c == '\r' || c == '\n')
-        {
-          new_cube_colors (mi);
-          return True;
-        }
+      else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+        goto DEF;
+    }
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+    DEF:
+      new_cube_colors (mi);
+      return True;
     }
   return False;
 }
@@ -262,7 +236,7 @@ init_cube (ModeInfo *mi)
 
   if (MI_COUNT(mi) <= 0) MI_COUNT(mi) = 1;
 
-  bp->trackball = gltrackball_init ();
+  bp->trackball = gltrackball_init (True);
   bp->subcubes = (subcube *) calloc (MI_COUNT(mi), sizeof(subcube));
   for (i = 0; i < MI_COUNT(mi); i++)
     {

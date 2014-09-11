@@ -2030,6 +2030,13 @@ ENTRYPOINT Bool glhanoi_handle_event(ModeInfo * mi, XEvent * event)
 
 		return True;
 	}
+#if 0 /* #### doesn't work */
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      changeState(glhanoi, START);
+      return True;
+    }
+#endif
 	return False;
 }
 

@@ -372,7 +372,7 @@ static Bool
 imsmap_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   struct state *st = (struct state *) closure;
-  if (event->xany.type == ButtonPress)
+  if (screenhack_event_helper (dpy, window, event))
     {
       init_map (st);
       return True;

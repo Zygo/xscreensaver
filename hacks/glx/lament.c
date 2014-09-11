@@ -13,47 +13,15 @@
 
    TODO:
 
-     *  The "gold" color isn't quite right; it looks more like "yellow" than
-        "gold" to me.
-
-     *  For some reason, the interior surfaces are shinier than the exterior
-        surfaces.  Not sure why.
-
-     *  Should use a dark wood-grain texture for the interior surfaces.
-
-     *  Building a face out of multiple adjacent triangles was a terrible
-        idea and leads to visible seams.  Should re-do the face generation
-        to make all of them out of a single triangle strip instead.
-
-     *  The coordinates are slightly off from the image.  lament512.gif is the
-        "right" one, and "lament512b.gif" is the image corrected to line up
-        with what the code is actually doing.
-
-     *  The "star" slices really don't line up well.
-
-     *  I want the gold leaf to seem to be raised up from the surface, but I
-        think this isn't possible with OpenGL.  Supposedly, OpenGL only 
-        supports Gouraud shading (interpolating edge normals from face normals,
-        and shading smoothly) but bump-maps only work with Phong shading
-        (computing a normal for each rendered pixel.)
+     *  The gold leaf should appear to be raised up from the surface, but
+        I think this isn't possible with OpenGL.  No bump maps.
 
      *  There should be strange lighting effects playing across the surface:
-        electric sparks, or little glittery blobs of light.  
-        http://reality.sgi.com/opengl/tips/lensflare/ might provide guidance.
+        electric sparks, or little glittery blobs of light.  Maybe like
+        http://www.opengl.org/archives/resources/features/KilgardTechniques/
+        LensFlare/
 
-     *  Need to add some more modes, to effect the transition from the cube
-        shapes to the "spike" or "leviathan" shapes.  I have extensive notes
-        on how these transformations occur, but unfortunately, due to camera
-        trickery, the transitions require dematerializations which do not
-        preserve object volume.  But I suppose that's allowed, in
-        non-Euclidian or hyperdimensional spaces (since the extra mass could
-        simply be rotated along the axis to which one cannot point.)
-
-        The other hard thing about this is that the "leviathan" shapes contain
-        a much larger number of facets, and I modelled this whole thing by 
-        hand, since I don't have any 3d-object-editing tools that I know how
-        to use (or that look like they would take any less than several months
-        to become even marginally proficient with...)
+     *  Chains.
 
      *  Needs music.  ("Hellraiser Themes" by Coil: TORSO CD161; also
         duplicated on the "Unnatural History 2" compilation, WORLN M04699.)
@@ -68,8 +36,115 @@
 
 #ifdef USE_GL /* whole file */
 
+#include "gllist.h"
+
+/* #define DEBUG_MODE LAMENT_LEVIATHAN_COLLAPSE */
+
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
+#undef MAX
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
+#undef MIN
+#define MIN(x, y) ((x) < (y) ? (x) : (y))
+
+extern const struct gllist
+  *lament_model_box,
+  *lament_model_iso_base_a,
+  *lament_model_iso_base_b,
+  *lament_model_iso_den,
+  *lament_model_iso_dse,
+  *lament_model_iso_dwn,
+  *lament_model_iso_swd,
+  *lament_model_iso_une,
+  *lament_model_iso_unw,
+  *lament_model_iso_use,
+  *lament_model_iso_usw,
+  *lament_model_leviathan,
+  *lament_model_lid_a,
+  *lament_model_lid_b,
+  *lament_model_lid_base,
+  *lament_model_lid_c,
+  *lament_model_lid_d,
+  *lament_model_pillar_a,
+  *lament_model_pillar_b,
+  *lament_model_pillar_base,
+  *lament_model_star_d,
+  *lament_model_star_u,
+  *lament_model_taser_a,
+  *lament_model_taser_b,
+  *lament_model_taser_base,
+  *lament_model_tetra_base,
+  *lament_model_tetra_dse,
+  *lament_model_tetra_dwn,
+  *lament_model_tetra_une,
+  *lament_model_tetra_usw;
+
+static const struct gllist * const *all_objs[] = {
+  &lament_model_box,
+  &lament_model_iso_base_a,
+  &lament_model_iso_base_b,
+  &lament_model_iso_den,
+  &lament_model_iso_dse,
+  &lament_model_iso_dwn,
+  &lament_model_iso_swd,
+  &lament_model_iso_une,
+  &lament_model_iso_unw,
+  &lament_model_iso_use,
+  &lament_model_iso_usw,
+  &lament_model_leviathan,
+  &lament_model_lid_a,
+  &lament_model_lid_b,
+  &lament_model_lid_base,
+  &lament_model_lid_c,
+  &lament_model_lid_d,
+  &lament_model_pillar_a,
+  &lament_model_pillar_b,
+  &lament_model_pillar_base,
+  &lament_model_star_d,
+  &lament_model_star_u,
+  &lament_model_taser_a,
+  &lament_model_taser_b,
+  &lament_model_taser_base,
+  &lament_model_tetra_base,
+  &lament_model_tetra_dse,
+  &lament_model_tetra_dwn,
+  &lament_model_tetra_une,
+  &lament_model_tetra_usw
+};
+
+typedef enum {	/* must be in the same order as in `all_objs'. */
+  OBJ_BOX = 0,
+  OBJ_ISO_BASE_A,
+  OBJ_ISO_BASE_B,
+  OBJ_ISO_DEN,
+  OBJ_ISO_DSE,
+  OBJ_ISO_DWN,
+  OBJ_ISO_SWD,
+  OBJ_ISO_UNE,
+  OBJ_ISO_UNW,
+  OBJ_ISO_USE,
+  OBJ_ISO_USW,
+  OBJ_LEVIATHAN,
+  OBJ_LID_A,
+  OBJ_LID_B,
+  OBJ_LID_BASE,
+  OBJ_LID_C,
+  OBJ_LID_D,
+  OBJ_PILLAR_A,
+  OBJ_PILLAR_B,
+  OBJ_PILLAR_BASE,
+  OBJ_STAR_D,
+  OBJ_STAR_U,
+  OBJ_TASER_A,
+  OBJ_TASER_B,
+  OBJ_TASER_BASE,
+  OBJ_TETRA_BASE,
+  OBJ_TETRA_DSE,
+  OBJ_TETRA_DWN,
+  OBJ_TETRA_UNE,
+  OBJ_TETRA_USW
+} lament_obj_index;
+
 
 #define DEF_TEXTURE "True"
 
@@ -86,23 +161,18 @@ static argtype vars[] = {
 
 ENTRYPOINT ModeSpecOpt lament_opts = {countof(opts), opts, countof(vars), vars, NULL};
 
-#include "normals.h"
 #include "xpm-ximage.h"
 #include "rotator.h"
 #include "gltrackball.h"
+#include "normals.h"
 
 #ifdef __GNUC__
  __extension__ /* don't warn about "string length is greater than the length
                   ISO C89 compilers are required to support" when including
                   the following XPM file... */
 #endif
-#if 0
-# include "../images/lament128.xpm"
-#else
-# include "../images/lament512.xpm"
-#endif
+#include "../images/lament512.xpm"
 
-#define RAND(n) ((long) ((random() & 0x7fffffff) % ((long) (n))))
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
 
 typedef enum {
@@ -127,7 +197,23 @@ typedef enum {
   LAMENT_TASER_OUT,
   LAMENT_TASER_SLIDE,
   LAMENT_TASER_SLIDE_IN,
-  LAMENT_TASER_IN
+  LAMENT_TASER_IN,
+
+  LAMENT_PILLAR_OUT,
+  LAMENT_PILLAR_SPIN,
+  LAMENT_PILLAR_IN,
+
+  LAMENT_SPHERE_OUT,
+  LAMENT_SPHERE_IN,
+
+  LAMENT_LEVIATHAN_SPIN,
+  LAMENT_LEVIATHAN_FADE,
+  LAMENT_LEVIATHAN_TWIST,
+  LAMENT_LEVIATHAN_COLLAPSE,
+  LAMENT_LEVIATHAN_EXPAND,
+  LAMENT_LEVIATHAN_UNTWIST,
+  LAMENT_LEVIATHAN_UNFADE,
+  LAMENT_LEVIATHAN_UNSPIN,
 
 } lament_type;
 
@@ -135,13 +221,25 @@ static const GLfloat exterior_color[] =
  { 0.33, 0.22, 0.03, 1.00,  /* ambient    */
    0.78, 0.57, 0.11, 1.00,  /* specular   */
    0.99, 0.91, 0.81, 1.00,  /* diffuse    */
-   27.80                   /* shininess  */
+   27.80                    /* shininess  */
  };
 static const GLfloat interior_color[] =
  { 0.20, 0.20, 0.15, 1.00,  /* ambient    */
    0.40, 0.40, 0.32, 1.00,  /* specular   */
    0.99, 0.99, 0.81, 1.00,  /* diffuse    */
    50.80                    /* shininess  */
+ };
+static const GLfloat leviathan_color[] =
+ { 0.30, 0.30, 0.30, 1.00,  /* ambient    */
+   0.85, 0.85, 0.95, 1.00,  /* specular   */
+   0.99, 0.99, 0.99, 1.00,  /* diffuse    */
+   50.80                    /* shininess  */
+ };
+static const GLfloat black_color[] =
+ { 0.05, 0.05, 0.05, 1.00,  /* ambient    */
+   0.05, 0.05, 0.05, 1.00,  /* specular   */
+   0.05, 0.05, 0.05, 1.00,  /* diffuse    */
+   80.00                    /* shininess  */
  };
 
 
@@ -151,15 +249,13 @@ typedef struct {
   double rotx, roty, rotz;
   trackball_state *trackball;
   Bool button_down_p;
+  Bool ffwdp;
 
-  GLuint box;			   /* display list IDs */
-  GLuint star1, star2;
-  GLuint tetra_une, tetra_usw, tetra_dwn, tetra_dse, tetra_mid;
-  GLuint lid_0, lid_1, lid_2, lid_3, lid_4;
-  GLuint taser_base, taser_lifter, taser_slider;
+  GLuint dlists[countof(all_objs)];
+  GLuint polys[countof(all_objs)];
 
   XImage *texture;		   /* image bits */
-  GLuint texids[6];		   /* texture map IDs */
+  GLuint texids[8];		   /* texture map IDs */
   lament_type type;		   /* which mode of the object is current */
 
   int anim_pause;		   /* countdown before animating again */
@@ -173,1194 +269,11 @@ typedef struct {
 
 static lament_configuration *lcs = NULL;
 
-#define FACE_N 3
-#define FACE_S 2
-#define FACE_E 0
-#define FACE_W 4
-#define FACE_U 5
-#define FACE_D 1
 
-static void
-parse_image_data(ModeInfo *mi)
+static Bool
+facing_screen_p (ModeInfo *mi)
 {
-  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
-  lc->texture = xpm_to_ximage (mi->dpy,
-			       mi->xgwa.visual,
-			       mi->xgwa.colormap,
-			       lament_faces);
-}
-
-
-/* Shorthand utilities for making faces, with proper normals.
- */
-
-static void
-set_colors (const GLfloat *color)
-{
-  glMaterialfv(GL_FRONT, GL_AMBIENT, color+0);
-  glMaterialfv(GL_FRONT, GL_DIFFUSE, color+4);
-  glMaterialfv(GL_FRONT, GL_SPECULAR, color+8);
-  glMaterialfv(GL_FRONT, GL_SHININESS, color+12);
-}
-
-static void
-face3(GLint texture, const GLfloat *color, Bool wire,
-      GLfloat s1, GLfloat t1, GLfloat x1, GLfloat y1, GLfloat z1,
-      GLfloat s2, GLfloat t2, GLfloat x2, GLfloat y2, GLfloat z2,
-      GLfloat s3, GLfloat t3, GLfloat x3, GLfloat y3, GLfloat z3)
-{
-#ifdef HAVE_GLBINDTEXTURE
-  glBindTexture(GL_TEXTURE_2D, texture);
-#endif /* HAVE_GLBINDTEXTURE */
-  set_colors(color);
-
-  do_normal(x1, y1, z1,  x2, y2, z2,  x3, y3, z3);
-  glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLES);
-  glTexCoord2f(s1, t1); glVertex3f(x1, y1, z1);
-  glTexCoord2f(s2, t2); glVertex3f(x2, y2, z2);
-  glTexCoord2f(s3, t3); glVertex3f(x3, y3, z3);
-  glEnd();
-}
-
-static void
-face4(GLint texture, const GLfloat *color, Bool wire,
-      GLfloat s1, GLfloat t1, GLfloat x1, GLfloat y1, GLfloat z1,
-      GLfloat s2, GLfloat t2, GLfloat x2, GLfloat y2, GLfloat z2,
-      GLfloat s3, GLfloat t3, GLfloat x3, GLfloat y3, GLfloat z3,
-      GLfloat s4, GLfloat t4, GLfloat x4, GLfloat y4, GLfloat z4)
-{
-#ifdef HAVE_GLBINDTEXTURE
-  glBindTexture(GL_TEXTURE_2D, texture);
-#endif /* HAVE_GLBINDTEXTURE */
-  set_colors(color);
-  do_normal(x1, y1, z1,  x2, y2, z2,  x3, y3, z3);
-  glBegin(wire ? GL_LINE_LOOP : GL_QUADS);
-  glTexCoord2f(s1, t1); glVertex3f(x1, y1, z1);
-  glTexCoord2f(s2, t2); glVertex3f(x2, y2, z2);
-  glTexCoord2f(s3, t3); glVertex3f(x3, y3, z3);
-  glTexCoord2f(s4, t4); glVertex3f(x4, y4, z4);
-  glEnd();
-}
-
-static void
-face5(GLint texture, const GLfloat *color, Bool wire,
-      GLfloat s1, GLfloat t1, GLfloat x1, GLfloat y1, GLfloat z1,
-      GLfloat s2, GLfloat t2, GLfloat x2, GLfloat y2, GLfloat z2,
-      GLfloat s3, GLfloat t3, GLfloat x3, GLfloat y3, GLfloat z3,
-      GLfloat s4, GLfloat t4, GLfloat x4, GLfloat y4, GLfloat z4,
-      GLfloat s5, GLfloat t5, GLfloat x5, GLfloat y5, GLfloat z5)
-{
-#ifdef HAVE_GLBINDTEXTURE
-  glBindTexture(GL_TEXTURE_2D, texture);
-#endif /* HAVE_GLBINDTEXTURE */
-  set_colors(color);
-  do_normal(x1, y1, z1,  x2, y2, z2,  x3, y3, z3);
-  glBegin(wire ? GL_LINE_LOOP : GL_POLYGON);
-  glTexCoord2f(s1, t1); glVertex3f(x1, y1, z1);
-  glTexCoord2f(s2, t2); glVertex3f(x2, y2, z2);
-  glTexCoord2f(s3, t3); glVertex3f(x3, y3, z3);
-  glTexCoord2f(s4, t4); glVertex3f(x4, y4, z4);
-  glTexCoord2f(s5, t5); glVertex3f(x5, y5, z5);
-  glEnd();
-}
-
-
-
-/* Creating object models
- */
-
-static void
-box(ModeInfo *mi, Bool wire)
-{
-  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
-
-  glNewList(lc->box, GL_COMPILE);
-  glShadeModel(GL_SMOOTH);
-
-  /* N */
-  face4(lc->texids[FACE_N], exterior_color, wire,
-	0.0, 0.0,	-0.5,  0.5,  0.5,
-	1.0, 0.0,	 0.5,  0.5,  0.5,
-	1.0, 1.0,	 0.5,  0.5, -0.5,
-	0.0, 1.0,	-0.5,  0.5, -0.5);
-
-  /* S */
-  face4(lc->texids[FACE_S], exterior_color, wire,
-	0.0, 0.0,	 -0.5, -0.5, -0.5,
-	1.0, 0.0,	  0.5, -0.5, -0.5,
-	1.0, 1.0,	  0.5, -0.5,  0.5,
-	0.0, 1.0,	 -0.5, -0.5,  0.5);
-
-  /* E */
-  face4(lc->texids[FACE_E], exterior_color, wire,
-	0.0, 0.0,	 0.5, -0.5, -0.5,
-	1.0, 0.0,	 0.5,  0.5, -0.5,
-	1.0, 1.0,	 0.5,  0.5,  0.5,
-	0.0, 1.0,	 0.5, -0.5,  0.5);
-
-  /* W */
-  face4(lc->texids[FACE_W], exterior_color, wire,
-	1.0, 1.0,	-0.5, -0.5,  0.5,
-	0.0, 1.0,	-0.5,  0.5,  0.5,
-	0.0, 0.0,	-0.5,  0.5, -0.5,
-	1.0, 0.0,	-0.5, -0.5, -0.5);
-
-  /* U */
-  face4(lc->texids[FACE_U], exterior_color, wire,
-	1.0, 0.0,	 0.5, -0.5,  0.5,
-	1.0, 1.0,	 0.5,  0.5,  0.5,
-	0.0, 1.0,	-0.5,  0.5,  0.5,
-	0.0, 0.0,	-0.5, -0.5,  0.5);
-
-  /* D */
-  face4(lc->texids[FACE_D], exterior_color, wire,
-	0.0, 1.0,	-0.5, -0.5, -0.5,
-	0.0, 0.0,	-0.5,  0.5, -0.5,
-	1.0, 0.0,	 0.5,  0.5, -0.5,
-	1.0, 1.0,	 0.5, -0.5, -0.5);
-
-  glEndList();
-}
-
-
-static void
-star(ModeInfo *mi, Bool top, Bool wire)
-{
-  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
-  int i;
-
-  int points[][2] = {
-    {  77,  74 }, {  60,  99 }, {   0,  74 }, {   0,   0 },    /* L1 */
-    {  60,  99 }, {  55, 127 }, {   0, 127 }, {   0,  74 },    /* L2 */
-    {  55, 127 }, {  60, 154 }, {   0, 179 }, {   0, 127 },    /* L3 */
-    {  60, 154 }, {  76, 176 }, {   0, 255 }, {   0, 179 },    /* L4 */
-    {  76, 176 }, { 100, 193 }, {  74, 255 }, {   0, 255 },    /* B1 */
-    { 100, 193 }, { 127, 198 }, { 127, 255 }, {  74, 255 },    /* B2 */
-    { 127, 198 }, { 151, 193 }, { 180, 255 }, { 127, 255 },    /* B3 */
-    { 151, 193 }, { 178, 177 }, { 255, 255 }, { 180, 255 },    /* B4 */
-    { 178, 177 }, { 193, 155 }, { 255, 181 }, { 255, 255 },    /* R4 */
-    { 193, 155 }, { 199, 127 }, { 255, 127 }, { 255, 181 },    /* R3 */
-    { 199, 127 }, { 194,  99 }, { 255,  74 }, { 255, 127 },    /* R2 */
-    { 194,  99 }, { 179,  76 }, { 255,   0 }, { 255,  74 },    /* R1 */
-    { 179,  76 }, { 155,  60 }, { 180,   0 }, { 255,   0 },    /* T4 */
-    { 155,  60 }, { 126,  55 }, { 126,   0 }, { 180,   0 },    /* T3 */
-    { 126,  55 }, { 100,  60 }, {  75,   0 }, { 126,   0 },    /* T2 */
-    { 100,  60 }, {  77,  74 }, {   0,   0 }, {  75,   0 },    /* T1 */
-  };
-
-  for (i = 0; i < countof(points); i++)
-    points[i][1] = 255-points[i][1];
-
-  if (top)
-    glNewList(lc->star1, GL_COMPILE);
-  else
-    glNewList(lc->star2, GL_COMPILE);
-
-  if (!top)
-    glRotatef(-180.0, 1.0, 0.0, 0.0);
-
-  for (i = 0; i < countof(points)/4; i += 2)
-    {
-      int j, k;
-
-      /* Top face.
-       */
-
-      GLfloat s[4], t[4], x[4], y[4], z[4];
-      for (j = 3, k = 0; j >= 0; j--, k++)
-	{
-	  GLfloat xx = points[(i*4)+j][0] / 255.0L;
-	  GLfloat yy = points[(i*4)+j][1] / 255.0L;
-	  s[k] = xx;
-	  t[k] = yy;
-	  x[k] = xx-0.5;
-	  y[k] = yy-0.5;
-	  z[k] = 0.5;
-	}
-      face4(lc->texids[top ? FACE_U : FACE_D], exterior_color, wire,
-	    s[0], t[0],  x[0], y[0], z[0],
-	    s[1], t[1],  x[1], y[1], z[1],
-	    s[2], t[2],  x[2], y[2], z[2],
-	    s[3], t[3],  x[3], y[3], z[3]);
-
-      /* Bottom face.
-       */
-      for (j = 0, k = 0; j < 4; j++, k++)
-	{
-	  GLfloat xx = points[(i*4)+j][0] / 255.0L;
-	  GLfloat yy = points[(i*4)+j][1] / 255.0L;
-	  s[k] = xx;
-	  t[k] = 1.0 - yy;
-	  x[k] = xx-0.5;
-	  y[k] = yy-0.5;
-	  z[k] = -0.5;
-	}
-      face4(lc->texids[top ? FACE_U : FACE_D], exterior_color, wire,
-	    s[0], t[0],  x[0], y[0], z[0],
-	    s[1], t[1],  x[1], y[1], z[1],
-	    s[2], t[2],  x[2], y[2], z[2],
-	    s[3], t[3],  x[3], y[3], z[3]);
-
-      /* Connecting faces.
-       */
-      for (j = 3; j >= 0; j--)
-	{
-	  int k = (j == 0 ? 3 : j-1);
-	  Bool front_p = (j == 3);
-	  GLfloat x1 = points[(i*4)+j][0] / 255.0L;
-	  GLfloat y1 = points[(i*4)+j][1] / 255.0L;
-	  GLfloat x2 = points[(i*4)+k][0] / 255.0L;
-	  GLfloat y2 = points[(i*4)+k][1] / 255.0L;
-
-	  GLfloat tx1=0.0, tx2=1.0, ty1=0.0, ty2=1.0;
-
-	  int texture = 0;
-	  int facing = i/4;
-	  facing = (facing + j + 5) % 4;
-
-	  switch (facing) {
-	  case 0:
-	    texture = FACE_W;
-	    if (top) {
-	      tx1 = 1.0 - y1;  tx2 = 1.0 - y2;
-	      ty1 = 0.0;       ty2 = 1.0;
-	    } else {
-	      tx1 = y1;  tx2 = y2;
-	      ty1 = 1.0; ty2 = 0.0;
-	    }
-	    break;
-	  case 1:
-	    texture = top ? FACE_S : FACE_N;
-	    tx1 = x1;  tx2 = x2;
-	    ty1 = 0.0; ty2 = 1.0;
-	    break;
-	  case 2:
-	    texture = FACE_E;
-	    if (top) {
-	      tx1 = y1;  tx2 = y2;
-	      ty1 = 0.0; ty2 = 1.0;
-	    } else {
-	      tx1 = 1.0 - y1;  tx2 = 1.0 - y2;
-	      ty1 = 1.0;       ty2 = 0.0;
-	    }
-	    break;
-	  case 3:
-	    texture = top ? FACE_N : FACE_S;
-	    tx1 = x1;  tx2 = x2;
-	    ty1 = 1.0; ty2 = 0.0;
-	    break;
-	  }
-
-	  x1 -= 0.5; x2 -= 0.5;
-	  y1 -= 0.5; y2 -= 0.5;
-
-	  face4(front_p ? lc->texids[texture] : 0,
-		front_p ? exterior_color : interior_color,
-		wire,
-		tx1, ty2,  x1, y1,  0.5,
-		tx1, ty1,  x1, y1, -0.5,
-		tx2, ty1,  x2, y2, -0.5,
-		tx2, ty2,  x2, y2,  0.5);
-	}
-    }
-
-
-  /* Central core top cap.
-   */
-#ifdef HAVE_GLBINDTEXTURE
-  glBindTexture(GL_TEXTURE_2D, lc->texids[top ? FACE_U : FACE_D]);
-#endif /* HAVE_GLBINDTEXTURE */
-  set_colors(exterior_color);
-
-  i = 1;
-  do_normal(points[i+0][0], points[i+0][1], 0,
-	    points[i+4][0], points[i+4][1], 0,
-	    points[i+8][0], points[i+8][1], 0);
-  glBegin(wire ? GL_LINE_LOOP : GL_POLYGON);
-  for (i = 1; i < countof(points); i += 4)
-    {
-      GLfloat x = points[i][0] / 255.0L;
-      GLfloat y = points[i][1] / 255.0L;
-      glTexCoord2f(x, y);
-      glVertex3f(x-0.5, y-0.5, 0.5);
-    }
-  glEnd();
-
-
-  /* Central core bottom cap.
-   */
-#ifdef HAVE_GLBINDTEXTURE
-  glBindTexture(GL_TEXTURE_2D, 0);
-#endif /* HAVE_GLBINDTEXTURE */
-  set_colors(interior_color);
-
-  i = countof(points) - 9;
-  do_normal(points[i+0][0], points[i+0][1], 0,
-	    points[i+4][0], points[i+4][1], 0,
-	    points[i+8][0], points[i+8][1], 0);
-
-  glBegin(wire ? GL_LINE_LOOP : GL_POLYGON);
-  for (i = countof(points) - 3; i >= 0; i -= 4)
-    {
-      GLfloat x = points[i][0] / 255.0L;
-      GLfloat y = points[i][1] / 255.0L;
-      glVertex3f(x-0.5, y-0.5, 0);
-    }
-  glEnd();
-  
-
-  /* Central core walls.
-   */
-  for (i = 1; i < countof(points); i += 4)
-    {
-
-      GLfloat x1 = points[i-1][0] / 255.0L;
-      GLfloat y1 = points[i-1][1] / 255.0L;
-      GLfloat x2 = points[i][0] / 255.0L;
-      GLfloat y2 = points[i][1] / 255.0L;
-      face4(0, interior_color, wire,
-	    0.0, 0.0,  x1-0.5, y1-0.5, 0.5,
-	    0.0, 0.0,  x1-0.5, y1-0.5, 0.0,
-	    0.0, 0.0,  x2-0.5, y2-0.5, 0.0,
-	    0.0, 0.0,  x2-0.5, y2-0.5, 0.5);
-    }
-
-  glEndList();
-}
-
-
-static void
-tetra(ModeInfo *mi, Bool wire)
-{
-  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
-
-  glNewList(lc->tetra_une, GL_COMPILE);
-  {
-    glShadeModel(GL_SMOOTH);
-
-    /* Ua */
-    face3(lc->texids[FACE_U], exterior_color, wire,
-	  1.0, 0.0,	 0.5, -0.5,  0.5,
-	  1.0, 1.0,	 0.5,  0.5,  0.5,
-	  0.0, 1.0,	-0.5,  0.5,  0.5);
-
-    /* Na */
-    face3(lc->texids[FACE_N], exterior_color, wire,
-	  0.0, 0.0,	-0.5,  0.5,  0.5,
-	  1.0, 0.0,	 0.5,  0.5,  0.5,
-	  1.0, 1.0,	 0.5,  0.5, -0.5);
-
-    /* Eb */
-    face3(lc->texids[FACE_E], exterior_color, wire,
-	  1.0, 0.0,	 0.5,  0.5, -0.5,
-	  1.0, 1.0,	 0.5,  0.5,  0.5,
-	  0.0, 1.0,	 0.5, -0.5,  0.5);
-
-    face3(0, interior_color, wire,
-	  0.0, 0.0,	 0.5,  0.5, -0.5,
-	  0.0, 0.0,	 0.5, -0.5,  0.5,
-	  0.0, 0.0,	-0.5,  0.5,  0.5);
-  }
-  glEndList();
-
-  glNewList(lc->tetra_usw, GL_COMPILE);
-  {
-    /* Ub */
-    face3(lc->texids[FACE_U], exterior_color, wire,
-	  0.0, 1.0,	-0.5,  0.5,  0.5,
-	  0.0, 0.0,	-0.5, -0.5,  0.5,
-	  1.0, 0.0,	 0.5, -0.5,  0.5);
-
-    /* Sb */
-    face3(lc->texids[FACE_S], exterior_color, wire,
-	  1.0, 1.0,	 0.5, -0.5,  0.5,
-	  0.0, 1.0,	-0.5, -0.5,  0.5,
-	  0.0, 0.0,	-0.5, -0.5, -0.5);
-
-    /* Wb */
-    face3(lc->texids[FACE_W], exterior_color, wire,
-	  1.0, 0.0,	-0.5, -0.5, -0.5,
-	  1.0, 1.0,	-0.5, -0.5,  0.5,
-	  0.0, 1.0,	-0.5,  0.5,  0.5);
-
-    face3(0, interior_color, wire,
-	  0.0,0.0,	-0.5, -0.5, -0.5,
-	  0.0,0.0,	-0.5,  0.5,  0.5,
-	  0.0,0.0,	 0.5, -0.5,  0.5);
-  }
-  glEndList();
-
-  glNewList(lc->tetra_dwn, GL_COMPILE);
-  {
-    /* Db */
-    face3(lc->texids[FACE_D], exterior_color, wire,
-	  0.0, 1.0,	-0.5, -0.5, -0.5,
-	  0.0, 0.0,	-0.5,  0.5, -0.5,
-	  1.0, 0.0,	 0.5,  0.5, -0.5);
-
-    /* Wa */
-    face3(lc->texids[FACE_W], exterior_color, wire,
-	  0.0, 1.0,	-0.5,  0.5,  0.5,
-	  0.0, 0.0,	-0.5,  0.5, -0.5,
-	  1.0, 0.0,	-0.5, -0.5, -0.5);
-
-    /* Nb */
-    face3(lc->texids[FACE_N], exterior_color, wire,
-	  1.0, 1.0,	 0.5,  0.5, -0.5,
-	  0.0, 1.0,	-0.5,  0.5, -0.5,
-	  0.0, 0.0,	-0.5,  0.5,  0.5);
-
-    face3(0, interior_color, wire,
-	  0.0, 0.0,	 0.5,  0.5, -0.5,
-	  0.0, 0.0,	-0.5,  0.5,  0.5,
-	  0.0, 0.0,	-0.5, -0.5, -0.5);
-  }
-  glEndList();
-
-  glNewList(lc->tetra_dse, GL_COMPILE);
-  {
-    /* Sa */
-    face3(lc->texids[FACE_S], exterior_color, wire,
-	  0.0, 0.0,	-0.5, -0.5, -0.5,
-	  1.0, 0.0,	 0.5, -0.5, -0.5,
-	  1.0, 1.0,	 0.5, -0.5,  0.5);
-
-    /* Ea */
-    face3(lc->texids[FACE_E], exterior_color, wire,
-	  0.0, 1.0,	 0.5, -0.5,  0.5,
-	  0.0, 0.0,	 0.5, -0.5, -0.5,
-	  1.0, 0.0,	 0.5,  0.5, -0.5);
-
-    /* Da */
-    face3(lc->texids[FACE_D], exterior_color, wire,
-	  1.0, 0.0,	 0.5,  0.5, -0.5,
-	  1.0, 1.0,	 0.5, -0.5, -0.5,
-	  0.0, 1.0,	-0.5, -0.5, -0.5);
-
-    face3(0, interior_color, wire,
-	  0.0, 0.0,	 0.5, -0.5,  0.5,
-	  0.0, 0.0,	 0.5,  0.5, -0.5,
-	  0.0, 0.0,	-0.5, -0.5, -0.5);
-  }
-  glEndList();
-
-  glNewList(lc->tetra_mid, GL_COMPILE);
-  {
-    face3(0, interior_color, wire,
-	  0.0, 0.0,	 0.5, -0.5,  0.5,
-	  0.0, 0.0,	 0.5,  0.5, -0.5,
-	  0.0, 0.0,	-0.5,  0.5,  0.5);
-
-    face3(0, interior_color, wire,
-	  0.0, 0.0,	-0.5,  0.5,  0.5,
-	  0.0, 0.0,	-0.5, -0.5, -0.5,
-	  0.0, 0.0,	 0.5, -0.5,  0.5);
-
-    face3(0, interior_color, wire,
-	  0.0, 0.0,	-0.5,  0.5,  0.5,
-	  0.0, 0.0,	 0.5,  0.5, -0.5,
-	  0.0, 0.0,	-0.5, -0.5, -0.5);
-
-    face3(0, interior_color, wire,
-	  0.0, 0.0,	 0.5,  0.5, -0.5,
-	  0.0, 0.0,	 0.5, -0.5,  0.5,
-	  0.0, 0.0,	-0.5, -0.5, -0.5);
-
-    face3(0, interior_color, wire,
-	  0.0, 0.0,	 0.5, -0.5,  0.5,
-	  0.0, 0.0,	 0.5,  0.5, -0.5,
-	  0.0, 0.0,	-0.5, -0.5, -0.5);
-  }
-  glEndList();
-
-}
-
-static void
-lid(ModeInfo *mi, Bool wire)
-{
-  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
-  int i;
-
-  int points[][2] = {
-    { 128,  20 },{  21, 129 },{   0, 129 },{   0,   0 },{ 128,   0 }, /* L1 */
-    {  21, 129 },{ 127, 234 },{ 127, 255 },{   0, 255 },{   0, 129 }, /* L2 */
-    { 127, 234 },{ 233, 127 },{ 255, 127 },{ 255, 255 },{ 127, 255 }, /* R2 */
-    { 233, 127 },{ 128,  20 },{ 128,   0 },{ 255,   0 },{ 255, 127 }, /* R1 */
-  };
-
-  for (i = 0; i < countof(points); i++)
-    points[i][1] = 255-points[i][1];
-
-  glNewList(lc->lid_0, GL_COMPILE);
-  glShadeModel(GL_SMOOTH);
-
-  /* N */
-  face4(lc->texids[FACE_N], exterior_color, wire,
-	0.0, 0.0,	-0.5,  0.5,  0.5,
-	1.0, 0.0,	 0.5,  0.5,  0.5,
-	1.0, 1.0,	 0.5,  0.5, -0.5,
-	0.0, 1.0,	-0.5,  0.5, -0.5);
-
-  /* S */
-  face4(lc->texids[FACE_S], exterior_color, wire,
-	0.0, 0.0,	-0.5, -0.5, -0.5,
-	1.0, 0.0,	 0.5, -0.5, -0.5,
-	1.0, 1.0,	 0.5, -0.5,  0.5,
-	0.0, 1.0,	-0.5, -0.5,  0.5);
-
-  /* E */
-  face4(lc->texids[FACE_E], exterior_color, wire,
-	0.0, 0.0,	 0.5, -0.5, -0.5,
-	1.0, 0.0,	 0.5,  0.5, -0.5,
-	1.0, 1.0,	 0.5,  0.5,  0.5,
-	0.0, 1.0,	 0.5, -0.5,  0.5);
-
-  /* U */
-  face4(lc->texids[FACE_U], exterior_color, wire,
-	1.0, 0.0,	 0.5, -0.5,  0.5,
-	1.0, 1.0,	 0.5,  0.5,  0.5,
-	0.0, 1.0,	-0.5,  0.5,  0.5,
-	0.0, 0.0,	-0.5, -0.5,  0.5);
-
-  /* D */
-  face4(lc->texids[FACE_D], exterior_color, wire,
-	0.0, 1.0,	-0.5, -0.5, -0.5,
-	0.0, 0.0,	-0.5,  0.5, -0.5,
-	1.0, 0.0,	 0.5,  0.5, -0.5,
-	1.0, 1.0,	 0.5, -0.5, -0.5);
-
-  /* W -- lid_0 */
-  for (i = 0; i < countof(points)/5; i++)
-    {
-      int j;
-      GLfloat s[5], t[5], x[5], y[5], z[5];
-      for (j = 0; j < 5; j++)
-	{
-	  GLfloat xx = points[(i*5)+j][0] / 255.0L;
-	  GLfloat yy = points[(i*5)+j][1] / 255.0L;
-	  s[j] = 1.0-xx;
-	  t[j] = yy;
-	  x[j] = -0.5;
-	  y[j] = xx-0.5;
-	  z[j] = yy-0.5;
-	}
-      face5(lc->texids[FACE_W], exterior_color, wire,
-	    s[0], t[0],  x[0], y[0], z[0],
-	    s[1], t[1],  x[1], y[1], z[1],
-	    s[2], t[2],  x[2], y[2], z[2],
-	    s[3], t[3],  x[3], y[3], z[3],
-	    s[4], t[4],  x[4], y[4], z[4]);
-    }
-  glEndList();
-
-
-  /* W -- lid_1 through lid_4 */
-  for (i = 0; i < 4; i++)
-    {
-      GLfloat x1, y1, x2, y2, x3, y3;
-
-      glNewList(lc->lid_1 + i, GL_COMPILE);
-      glShadeModel(GL_SMOOTH);
-
-      x1 = points[(i*5)+1][0] / 255.0L;
-      y1 = points[(i*5)+1][1] / 255.0L;
-      x2 = points[(i*5)][0] / 255.0L;
-      y2 = points[(i*5)][1] / 255.0L;
-      x3 = 0.5;
-      y3 = 0.5;
-
-      /* Outer surface */
-      face3(lc->texids[FACE_W], exterior_color, wire,
-	    1.0-x1, y1, 	-0.5, x1-0.5, y1-0.5,
-	    1.0-x2, y2, 	-0.5, x2-0.5, y2-0.5,
-	    1.0-x3, y3, 	-0.5, x3-0.5, y3-0.5);
-
-      /* Inner surface */
-      face3(0, interior_color, wire,
-	    0.0, 0.0,	-0.48, x2-0.5, y2-0.5,
-	    0.0, 0.0,	-0.48, x1-0.5, y1-0.5,
-	    0.0, 0.0,	-0.48, x3-0.5, y3-0.5);
-
-      /* Lip 1 */
-      face4(0, interior_color, wire,
-	    0.0, 0.0,	-0.5,  x1-0.5, y1-0.5,
-	    0.0, 0.0,	-0.5,  x3-0.5, y3-0.5,
-	    0.0, 0.0,	-0.48, x3-0.5, y3-0.5,
-	    0.0, 0.0,	-0.48, x1-0.5, y1-0.5);
-
-      /* Lip 2 */
-      face4(0, interior_color, wire,
-	    0.0, 0.0,	-0.48, x2-0.5, y2-0.5,
-	    0.0, 0.0,	-0.48, x3-0.5, y3-0.5,
-	    0.0, 0.0,	-0.5,  x3-0.5, y3-0.5,
-	    0.0, 0.0,	-0.5,  x2-0.5, y2-0.5);
-
-      glEndList();
-    }
-}
-
-static void
-taser(ModeInfo *mi, Bool wire)
-{
-  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
-  int i;
-
-  int slider_face_points[][2] = {
-    {  86,  58 },{  38, 106 },{  70, 106 },{ 118,  58 },{  -1,  -1 }, /* a */
-    { 136,  58 },{ 184, 106 },{ 216, 106 },{ 168,  58 },{  -1,  -1 }, /* b */
-    {  38, 106 },{   0, 144 },{   0, 190 },{  60, 190 },{ 108, 106 }, /* c */
-    { 144, 106 },{ 194, 190 },{ 254, 190 },{ 254, 144 },{ 216, 106 }, /* d */
-    {  98, 124 },{  60, 190 },{  92, 190 },{ 126, 158 },{ 126, 124 }, /* e */
-    { 126, 124 },{ 126, 158 },{ 160, 190 },{ 194, 190 },{ 154, 124 }, /* f */
-    {  22, 190 },{  22, 254 },{  60, 254 },{  60, 190 },{  -1,  -1 }, /* g */
-    { 194, 190 },{ 194, 254 },{ 230, 254 },{ 230, 190 },{  -1,  -1 }, /* h */
-    {  60, 190 },{  60, 210 },{  92, 210 },{  92, 190 },{  -1,  -1 }, /* i */
-    { 160, 190 },{ 160, 210 },{ 194, 210 },{ 194, 190 },{  -1,  -1 }, /* j */
-    { 110, 172 },{  92, 190 },{ 110, 190 },{  -1,  -1 },{  -1,  -1 }, /* k */
-    { 140, 172 },{ 140, 190 },{ 160, 190 },{  -1,  -1 },{  -1,  -1 }, /* l */
-    { 110, 172 },{ 140, 172 },{ 126, 156 },{  -1,  -1 },{  -1,  -1 }, /* m */
-  };
-
-  int body_face_points[][2] = {
-    {   0,   0 },{   0,  58 },{ 254,  58 },{ 254,   0 },{  -1,  -1 }, /* A */
-    {   0,  58 },{   0, 144 },{  86,  58 },{  -1,  -1 },{  -1,  -1 }, /* B */
-    { 168,  58 },{ 254, 144 },{ 254,  58 },{  -1,  -1 },{  -1,  -1 }, /* C */
-    { 118,  58 },{  70, 106 },{ 184, 106 },{ 136,  58 },{  -1,  -1 }, /* F */
-    { 108, 106 },{  98, 124 },{ 154, 124 },{ 144, 106 },{  -1,  -1 }, /* G */
-  };
-
-  int lifter_face_points[][2] = {
-    {   0, 190 },{   0, 254 },{  22, 254 },{  22, 190 },{  -1,  -1 }, /* D */
-    { 230, 190 },{ 230, 254 },{ 254, 254 },{ 254, 190 },{  -1,  -1 }, /* E */
-    {  60, 210 },{  60, 254 },{ 194, 254 },{ 194, 210 },{  -1,  -1 }, /* H */
-    {  92, 190 },{  92, 210 },{ 160, 210 },{ 160, 190 },{  -1,  -1 }, /* I */
-    { 110, 172 },{ 110, 190 },{ 140, 190 },{ 140, 172 },{  -1,  -1 }, /* J */
-  };
-
-  int body_perimiter_points[][2] = {
-    {   0, 144 },{  86,  59 },{ 119,  58 },{  71, 107 },
-    { 108, 107 },{  98, 124 },{ 155, 124 },{ 144, 107 },
-    { 185, 106 },{ 136,  59 },{ 169,  59 },{ 255, 145 },
-    { 255,   0 },{   0,   0 },
-  };
-
-  int slider_perimiter_points[][2] = {
-    {  86,  58 },{   0,  144 },{   0, 190 },{  22,  190 },{  22, 254 },
-    {  60, 254 },{  60,  210 },{  92, 210 },{  92,  190 },{ 110, 190 },
-    { 110, 172 },{  140, 172 },{ 140, 190 },{ 160,  190 },{ 160, 210 },
-    { 194, 210 },{  194, 254 },{ 230, 254 },{ 230,  190 },{ 254, 190 },
-    { 254, 144 },{  168,  58 },{ 136,  58 },{ 184,  106 },{ 144, 106 },
-    { 154, 124 },{  98,  124 },{ 108, 106 },{  70,  106 },{ 118,  58 },
-  };
-
-  int lifter_perimiter_points_1[][2] = {
-    {   0, 189 },{   0, 254 },{  22, 255 },{  23, 190 },
-  };
-
-  int lifter_perimiter_points_2[][2] = {
-    { 230, 254 },{ 255, 255 },{ 254, 190 },{ 230, 190 },
-  };
-
-  int lifter_perimiter_points_3[][2] = {
-    {  60, 254 },{ 194, 254 },{ 194, 211 },{ 160, 210 },
-    { 160, 190 },{ 140, 191 },{ 141, 172 },{ 111, 172 },
-    { 110, 190 },{ 93, 190 },{ 92, 210 },{ 60, 211 },
-  };
-
-  for (i = 0; i < countof(slider_face_points); i++)
-    slider_face_points[i][1] = 255-slider_face_points[i][1];
-  for (i = 0; i < countof(body_face_points); i++)
-    body_face_points[i][1] = 255-body_face_points[i][1];
-  for (i = 0; i < countof(lifter_face_points); i++)
-    lifter_face_points[i][1] = 255-lifter_face_points[i][1];
-  for (i = 0; i < countof(body_perimiter_points); i++)
-    body_perimiter_points[i][1] = 255-body_perimiter_points[i][1];
-  for (i = 0; i < countof(slider_perimiter_points); i++)
-    slider_perimiter_points[i][1] = 255-slider_perimiter_points[i][1];
-  for (i = 0; i < countof(lifter_perimiter_points_1); i++)
-    lifter_perimiter_points_1[i][1] = 255-lifter_perimiter_points_1[i][1];
-  for (i = 0; i < countof(lifter_perimiter_points_2); i++)
-    lifter_perimiter_points_2[i][1] = 255-lifter_perimiter_points_2[i][1];
-  for (i = 0; i < countof(lifter_perimiter_points_3); i++)
-    lifter_perimiter_points_3[i][1] = 255-lifter_perimiter_points_3[i][1];
-
-  /* -------------------------------------------------------------------- */
-
-  glNewList(lc->taser_base, GL_COMPILE);
-  glShadeModel(GL_SMOOTH);
-
-  /* N */
-  face4(lc->texids[FACE_N], exterior_color, wire,
-	0.0, 0.0,	-0.5,  0.5,  0.5,
-	0.75, 0.0,	 0.25, 0.5,  0.5,
-	0.75, 0.75,	 0.25, 0.5, -0.25,
-	0.0, 0.75,	-0.5,  0.5, -0.25);
-
-  /* S */
-  face4(lc->texids[FACE_S], exterior_color, wire,
-	0.0,  0.25,	-0.5,  -0.5, -0.25,
-	0.75, 0.25,	 0.25, -0.5, -0.25,
-	0.75, 1.0,	 0.25, -0.5,  0.5,
-	0.0,  1.0,	-0.5,  -0.5,  0.5);
-
-  /* interior E */
-  face4(0, interior_color, wire,
-	0.0, 0.0,	 0.25, -0.5, -0.25,
-	1.0, 0.0,	 0.25,  0.5, -0.25,
-	1.0, 1.0,	 0.25,  0.5,  0.5,
-	0.0, 1.0,	 0.25, -0.5,  0.5);
-
-  /* W */
-  face4(lc->texids[FACE_W], exterior_color, wire,
-	1.0, 1.0,	-0.5, -0.5,  0.5,
-	0.0, 1.0,	-0.5,  0.5,  0.5,
-	0.0, 0.25,	-0.5,  0.5, -0.25,
-	1.0, 0.25,	-0.5, -0.5, -0.25);
-
-  /* U */
-  face4(lc->texids[FACE_U], exterior_color, wire,
-	0.75, 0.0,	 0.25, -0.5,  0.5,
-	0.75, 1.0,	 0.25,  0.5,  0.5,
-	0.0, 1.0,	-0.5,   0.5,  0.5,
-	0.0, 0.0,	-0.5,  -0.5,  0.5);
-
-  /* interior D */
-  face4(0, interior_color, wire,
-	0.0, 1.0,	-0.5,  -0.5, -0.25,
-	0.0, 0.0,	-0.5,   0.5, -0.25,
-	1.0, 0.0,	 0.25,  0.5, -0.25,
-	1.0, 1.0,	 0.25, -0.5, -0.25);
-
-  /* Top face */
-  for (i = 0; i < countof(body_face_points)/5; i++)
-    {
-      int j;
-#ifdef HAVE_GLBINDTEXTURE
-      glBindTexture(GL_TEXTURE_2D, lc->texids[FACE_E]);
-#endif /* HAVE_GLBINDTEXTURE */
-      set_colors(exterior_color);
-
-      do_normal(0, body_face_points[(i*5)+0][0], body_face_points[(i*5)+0][1],
-		0, body_face_points[(i*5)+1][0], body_face_points[(i*5)+1][1],
-		0, body_face_points[(i*5)+2][0], body_face_points[(i*5)+2][1]
-		);
-      glBegin(wire ? GL_LINE_LOOP : GL_POLYGON);
-      for (j = 0; j < 5; j++)
-	{
-	  int ix = body_face_points[(i*5)+j][0];
-	  int iy = body_face_points[(i*5)+j][1];
-	  GLfloat x, y;
-	  if (ix == -1)  /* these are padding: ignore them */
-	    continue;
-	  x = ix / 255.0L;
-	  y = iy / 255.0L;
-	  glTexCoord2f(x, y);
-	  glVertex3f(0.5, x-0.5, y-0.5);
-	}
-      glEnd();
-    }
-
-  /* Side walls */
-  for (i = 0; i < countof(body_perimiter_points); i++)
-    {
-      int j = (i+1 >= countof(body_perimiter_points) ? 0 : i+1);
-      GLfloat x1 = body_perimiter_points[i][0] / 255.0;
-      GLfloat y1 = body_perimiter_points[i][1] / 255.0;
-      GLfloat x2 = body_perimiter_points[j][0] / 255.0;
-      GLfloat y2 = body_perimiter_points[j][1] / 255.0;
-      int texture = -1;
-      GLfloat s1=0, t1=0, s2=0, t2=0, s3=0, t3=0, s4=0, t4=0;
-
-      if (i == 11)
-	{
-	  texture = lc->texids[FACE_N];
-	  s1 = 1.0;  t1 = 0.0;
-	  s2 = 1.0;  t2 = 0.568;
-	  s3 = 0.75, t3 = 0.568;
-	  s4 = 0.75; t4 = 0.0;
-	}
-      else if (i == 12)
-	{
-	  texture = lc->texids[FACE_U];
-	  s1 = 1.0;  t1 = 0.0;
-	  s2 = 1.0;  t2 = 1.0;
-	  s3 = 0.75, t3 = 1.0;
-	  s4 = 0.75; t4 = 0.0;
-	}
-      else if (i == 13)
-	{
-	  texture = lc->texids[FACE_S];
-	  s1 = 1.0;  t1 = 0.437;
-	  s2 = 1.0;  t2 = 1.0;
-	  s3 = 0.75; t3 = 1.0;
-	  s4 = 0.75; t4 = 0.437;
-	}
-
-      face4((texture == -1 ? 0 : texture),
-	    (texture == -1 ? interior_color : exterior_color),
-	    wire,
-	    s1, t1,  0.5,  x2-0.5, y2-0.5,
-	    s2, t2,  0.5,  x1-0.5, y1-0.5,
-	    s3, t3,  0.25, x1-0.5, y1-0.5,
-	    s4, t4,  0.25, x2-0.5, y2-0.5);
-    }
-
-  glEndList();
-
-  /* -------------------------------------------------------------------- */
-
-  glNewList(lc->taser_lifter, GL_COMPILE);
-  glShadeModel(GL_SMOOTH);
-
-  /* N */
-  face4(lc->texids[FACE_N], exterior_color, wire,
-	0.0,  0.75,	-0.5,  0.5, -0.25,
-	0.75, 0.75,	 0.25, 0.5, -0.25,
-	0.75, 1.0,	 0.25, 0.5, -0.5,
-	0.0,  1.0,	-0.5,  0.5, -0.5);
-
-  /* S */
-  face4(lc->texids[FACE_S], exterior_color, wire,
-	0.0,  0.0,	-0.5,  -0.5, -0.5,
-	0.75, 0.0,	 0.25, -0.5, -0.5,
-	0.75, 0.25,	 0.25, -0.5, -0.25,
-	0.0,  0.25,	-0.5,  -0.5, -0.25);
-
-  /* interior E */
-  face4(0, interior_color, wire,
-	0.0, 1.0,	 0.25, -0.5, -0.5,
-	1.0, 1.0,	 0.25,  0.5, -0.5,
-	1.0, 0.0,	 0.25,  0.5, -0.25,
-	0.0, 0.0,	 0.25, -0.5, -0.25);
-
-  /* W */
-  face4(lc->texids[FACE_W], exterior_color, wire,
-	1.0, 0.25,	-0.5, -0.5, -0.25,
-	0.0, 0.25,	-0.5,  0.5, -0.25,
-	0.0, 0.0,	-0.5,  0.5, -0.5,
-	1.0, 0.0,	-0.5, -0.5, -0.5);
-
-  /* interior U */
-  face4(0, interior_color, wire,
-	1.0, 0.0,	 0.25, -0.5,  -0.25,
-	1.0, 1.0,	 0.25,  0.5,  -0.25,
-	0.0, 1.0,	-0.5,   0.5,  -0.25,
-	0.0, 0.0,	-0.5,  -0.5,  -0.25);
-
-  /* D */
-  face4(lc->texids[FACE_D], exterior_color, wire,
-	0.0, 1.0,	-0.5, -0.5, -0.5,
-	0.0, 0.0,	-0.5,  0.5, -0.5,
-	0.75, 0.0,	 0.25,  0.5, -0.5,
-	0.75, 1.0,	 0.25, -0.5, -0.5);
-
-
-  /* Top face */
-  for (i = 0; i < countof(lifter_face_points)/5; i++)
-    {
-      int j;
-
-#ifdef HAVE_GLBINDTEXTURE
-      glBindTexture(GL_TEXTURE_2D, lc->texids[FACE_E]);
-#endif /* HAVE_GLBINDTEXTURE */
-      set_colors(exterior_color);
-
-      do_normal(
-         0, lifter_face_points[(i*5)+0][0], lifter_face_points[(i*5)+0][1],
-	 0, lifter_face_points[(i*5)+1][0], lifter_face_points[(i*5)+1][1],
-	 0, lifter_face_points[(i*5)+2][0], lifter_face_points[(i*5)+2][1]);
-
-      glBegin(wire ? GL_LINE_LOOP : GL_POLYGON);
-      for (j = 0; j < 5; j++)
-	{
-	  int ix = lifter_face_points[(i*5)+j][0];
-	  int iy = lifter_face_points[(i*5)+j][1];
-	  GLfloat x, y;
-	  if (ix == -1)  /* these are padding: ignore them */
-	    continue;
-	  x = ix / 255.0L;
-	  y = iy / 255.0L;
-	  glTexCoord2f(x, y);
-	  glVertex3f(0.5, x-0.5, y-0.5);
-	}
-      glEnd();
-    }
-
-  /* Side walls */
-  for (i = 0; i < countof(lifter_perimiter_points_1); i++)
-    {
-      int j = (i+1 >= countof(lifter_perimiter_points_1) ? 0 : i+1);
-      GLfloat x1 = lifter_perimiter_points_1[i][0] / 255.0;
-      GLfloat y1 = lifter_perimiter_points_1[i][1] / 255.0;
-      GLfloat x2 = lifter_perimiter_points_1[j][0] / 255.0;
-      GLfloat y2 = lifter_perimiter_points_1[j][1] / 255.0;
-      int texture = -1;
-      GLfloat s1=0, t1=0, s2=0, t2=0, s3=0, t3=0, s4=0, t4=0;
-
-      if (i == 0)
-	{
-	  texture = lc->texids[FACE_S];
-	  s1 = 1.0;  t1 = 0.0;
-	  s2 = 1.0;  t2 = 0.26;
-	  s3 = 0.75, t3 = 0.26;
-	  s4 = 0.75; t4 = 0.0;
-	}
-      else if (i == 1)
-	{
-	  texture = lc->texids[FACE_D];
-	  s1 = 1.0;  t1 = 0.914;
-	  s2 = 1.0;  t2 = 1.0;
-	  s3 = 0.75; t3 = 1.0;
-	  s4 = 0.75; t4 = 0.914;
-	}
-
-      face4((texture == -1 ? 0 : texture),
-	    (texture == -1 ? interior_color : exterior_color),
-	    wire,
-	    s1, t1,  0.5,  x2-0.5, y2-0.5,
-	    s2, t2,  0.5,  x1-0.5, y1-0.5,
-	    s3, t3,  0.25, x1-0.5, y1-0.5,
-	    s4, t4,  0.25, x2-0.5, y2-0.5);
-    }
-
-  for (i = 0; i < countof(lifter_perimiter_points_2); i++)
-    {
-      int j = (i+1 >= countof(lifter_perimiter_points_2) ? 0 : i+1);
-      GLfloat x1 = lifter_perimiter_points_2[i][0] / 255.0;
-      GLfloat y1 = lifter_perimiter_points_2[i][1] / 255.0;
-      GLfloat x2 = lifter_perimiter_points_2[j][0] / 255.0;
-      GLfloat y2 = lifter_perimiter_points_2[j][1] / 255.0;
-      int texture = -1;
-      GLfloat s1=0, t1=0, s2=0, t2=0, s3=0, t3=0, s4=0, t4=0;
-
-      if (i == 0)
-	{
-	  texture = lc->texids[FACE_D];
-	  s1 = 1.0;  t1 = 0.0;
-	  s2 = 1.0;  t2 = 0.095;
-	  s3 = 0.75; t3 = 0.095;
-	  s4 = 0.75; t4 = 0.0;
-	}
-      else if (i == 1)
-	{
-	  texture = lc->texids[FACE_N];
-	  s1 = 1.0;  t1 = 0.745;
-	  s2 = 1.0;  t2 = 1.0;
-	  s3 = 0.75; t3 = 1.0;
-	  s4 = 0.75; t4 = 0.745;
-	}
-
-      face4((texture == -1 ? 0 : texture),
-	    (texture == -1 ? interior_color : exterior_color),
-	    wire,
-	    s1, t1,  0.5,  x2-0.5, y2-0.5,
-	    s2, t2,  0.5,  x1-0.5, y1-0.5,
-	    s3, t3,  0.25, x1-0.5, y1-0.5,
-	    s4, t4,  0.25, x2-0.5, y2-0.5);
-    }
-
-  for (i = 0; i < countof(lifter_perimiter_points_3); i++)
-    {
-      int j = (i+1 >= countof(lifter_perimiter_points_3) ? 0 : i+1);
-      GLfloat x1 = lifter_perimiter_points_3[i][0] / 255.0;
-      GLfloat y1 = lifter_perimiter_points_3[i][1] / 255.0;
-      GLfloat x2 = lifter_perimiter_points_3[j][0] / 255.0;
-      GLfloat y2 = lifter_perimiter_points_3[j][1] / 255.0;
-      int texture = -1;
-      GLfloat s1=0, t1=0, s2=0, t2=0, s3=0, t3=0, s4=0, t4=0;
-
-      if (i == 0)
-	{
-	  texture = lc->texids[FACE_D];
-	  s1 = 1.0;  t1 = 0.235;
-	  s2 = 1.0;  t2 = 0.765;
-	  s3 = 0.75; t3 = 0.765;
-	  s4 = 0.75; t4 = 0.235;
-	}
-
-      face4((texture == -1 ? 0 : texture),
-	    (texture == -1 ? interior_color : exterior_color),
-	    wire,
-	    s1, t1,  0.5,  x2-0.5, y2-0.5,
-	    s2, t2,  0.5,  x1-0.5, y1-0.5,
-	    s3, t3,  0.25, x1-0.5, y1-0.5,
-	    s4, t4,  0.25, x2-0.5, y2-0.5);
-    }
-
-  glEndList();
-
-  /* -------------------------------------------------------------------- */
-
-  glNewList(lc->taser_slider, GL_COMPILE);
-  glShadeModel(GL_SMOOTH);
-
-  /* Top face */
-  for (i = 0; i < countof(slider_face_points)/5; i++)
-    {
-      int j;
-#ifdef HAVE_GLBINDTEXTURE
-      glBindTexture(GL_TEXTURE_2D, lc->texids[FACE_E]);
-#endif /* HAVE_GLBINDTEXTURE */
-      set_colors(exterior_color);
-
-      do_normal(
-	   0, slider_face_points[(i*5)+0][0], slider_face_points[(i*5)+0][1],
-	   0, slider_face_points[(i*5)+1][0], slider_face_points[(i*5)+1][1],
-	   0, slider_face_points[(i*5)+2][0], slider_face_points[(i*5)+2][1]);
-      glBegin(wire ? GL_LINE_LOOP : GL_POLYGON);
-      for (j = 0; j < 5; j++)
-	{
-	  int ix = slider_face_points[(i*5)+j][0];
-	  int iy = slider_face_points[(i*5)+j][1];
-	  GLfloat x, y;
-	  if (ix == -1)  /* these are padding: ignore them */
-	    continue;
-	  x = ix / 255.0L;
-	  y = iy / 255.0L;
-	  glTexCoord2f(x, y);
-	  glVertex3f(0.5, x-0.5, y-0.5);
-	}
-      glEnd();
-    }
-
-  /* Bottom face */
-  for (i = countof(slider_face_points)/5 - 1; i >= 0; i--)
-    {
-      int j;
-#ifdef HAVE_GLBINDTEXTURE
-      glBindTexture(GL_TEXTURE_2D, 0);
-#endif /* HAVE_GLBINDTEXTURE */
-      set_colors(interior_color);
-
-      do_normal(
-	   0, slider_face_points[(i*5)+2][0], slider_face_points[(i*5)+2][1],
-	   0, slider_face_points[(i*5)+1][0], slider_face_points[(i*5)+1][1],
-	   0, slider_face_points[(i*5)+0][0], slider_face_points[(i*5)+0][1]);
-      glBegin(wire ? GL_LINE_LOOP : GL_POLYGON);
-      for (j = 4; j >= 0; j--)
-	{
-	  int ix = slider_face_points[(i*5)+j][0];
-	  int iy = slider_face_points[(i*5)+j][1];
-	  GLfloat x, y;
-	  if (ix == -1)  /* these are padding: ignore them */
-	    continue;
-	  x = ix / 255.0L;
-	  y = iy / 255.0L;
-	  glTexCoord2f(x, y);
-	  glVertex3f(0.25, x-0.5, y-0.5);
-	}
-      glEnd();
-    }
-
-  /* Side walls */
-  for (i = 0; i < countof(slider_perimiter_points); i++)
-    {
-      int j = (i+1 >= countof(slider_perimiter_points) ? 0 : i+1);
-      GLfloat x1 = slider_perimiter_points[i][0] / 255.0;
-      GLfloat y1 = slider_perimiter_points[i][1] / 255.0;
-      GLfloat x2 = slider_perimiter_points[j][0] / 255.0;
-      GLfloat y2 = slider_perimiter_points[j][1] / 255.0;
-      int texture = -1;
-      GLfloat s1=0, t1=0, s2=0, t2=0, s3=0, t3=0, s4=0, t4=0;
-
-      if (i == 1)
-	{
-	  texture = lc->texids[FACE_S];
-	  s1 = 1.0;  t1 = 0.255;
-	  s2 = 1.0;  t2 = 0.435;
-	  s3 = 0.75; t3 = 0.435;
-	  s4 = 0.75; t4 = 0.255;
-	}
-      else if (i == 4)
-	{
-	  texture = lc->texids[FACE_D];
-	  s1 = 1.0;  t1 = 0.758;
-	  s2 = 1.0;  t2 = 0.915;
-	  s3 = 0.75; t3 = 0.915;
-	  s4 = 0.75; t4 = 0.758;
-	}
-      else if (i == 16)
-	{
-	  texture = lc->texids[FACE_D];
-	  s1 = 1.0;  t1 = 0.095;
-	  s2 = 1.0;  t2 = 0.24;
-	  s3 = 0.75; t3 = 0.24;
-	  s4 = 0.75; t4 = 0.095;
-	}
-      else if (i == 19)
-	{
-	  texture = lc->texids[FACE_N];
-	  s1 = 1.0;  t1 = 0.568;
-	  s2 = 1.0;  t2 = 0.742;
-	  s3 = 0.75; t3 = 0.742;
-	  s4 = 0.75; t4 = 0.568;
-	}
-
-      face4((texture == -1 ? 0 : texture),
-	    (texture == -1 ? interior_color : exterior_color),
-	    wire,
-	    s1, t1,  0.5,  x2-0.5, y2-0.5,
-	    s2, t2,  0.5,  x1-0.5, y1-0.5,
-	    s3, t3,  0.25, x1-0.5, y1-0.5,
-	    s4, t4,  0.25, x2-0.5, y2-0.5);
-    }
-
-  glEndList();
-}
-
-
-
-/* Rendering and animating object models
- */
-
-ENTRYPOINT Bool
-lament_handle_event (ModeInfo *mi, XEvent *event)
-{
-  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
-
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      lc->button_down_p = True;
-      gltrackball_start (lc->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      lc->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (lc->trackball, event->xbutton.button, 5,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           lc->button_down_p)
-    {
-      gltrackball_track (lc->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-
-  return False;
-}
-
-
-static void
-check_facing(ModeInfo *mi)
-{
-  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
-
+  Bool facing_p;
   GLdouble m[16], p[16], x, y, z;
   GLint v[4];
   glGetDoublev (GL_MODELVIEW_MATRIX, m);
@@ -1369,61 +282,551 @@ check_facing(ModeInfo *mi)
 	
   /* See if a coordinate 5 units in front of the door is near the
      center of the screen. */
-
-  gluProject (-5, 0, 0, m, p, v, &x, &y, &z);
+  gluProject (0, -5, 0, m, p, v, &x, &y, &z);
   x = (x / MI_WIDTH(mi))  - 0.5;
   y = (y / MI_HEIGHT(mi)) - 0.5;
-  lc->facing_p = (z < 0.9 &&
-                  x > -0.02 && x < 0.02 &&
-                  y > -0.02 && y < 0.02);
+
+  facing_p = (z < 0.9 &&
+              x > -0.15 && x < 0.15 &&
+              y > -0.15 && y < 0.15);
+
+# ifdef DEBUG_MODE
+  glBindTexture(GL_TEXTURE_2D, 0);
+  glDisable (GL_LIGHTING);
+  glColor3f (1, (facing_p ? 1 : 0), 0);
+  glBegin (GL_LINES);
+  glVertex3f (0, 0, 0);
+  glVertex3f (0, -5, 0);
+  glEnd();
+  if (!MI_IS_WIREFRAME(mi)) glEnable (GL_LIGHTING);
+# endif /* DEBUG_MODE */
+
+  return facing_p;
 }
 
 
-
 static void
-scale_for_window(ModeInfo *mi)
+scale_for_window (ModeInfo *mi)
 {
   lament_configuration *lc = &lcs[MI_SCREEN(mi)];
 
-  /* No texture created in -wireframe or -no-texture, so guess. */
-  int target_size = (lc->texture
-                     ? lc->texture->width * 1.4
-                     : 340);
-  int win_size = (MI_WIDTH(mi) > MI_HEIGHT(mi) ? MI_HEIGHT(mi) : MI_WIDTH(mi));
+  GLfloat target_size = 1.4 * (lc->texture ? lc->texture->width : 512);
+  GLfloat size = MI_WIDTH(mi) < MI_HEIGHT(mi) ? MI_WIDTH(mi) : MI_HEIGHT(mi);
+  GLfloat scale;
 
-  /* This scale makes the box take up most of the window */
-  glScalef(8, 8, 8);
+  /* Make it take up roughly the full width of the window. */
+  scale = 20;
 
-  /* But if the window is more than a little larger than our target size,
-     scale the object back down, so that the bits drawn on the screen end
-     up rougly target_size across (actually it ends up a little larger.)
-     Note that the image-map bits we have are 128x128.  Therefore, if the
-     image is magnified a lot, it looks pretty blocky.  So it's better to
-     have a 128x128 animation on a 1280x1024 screen that looks good, than
-     a 1024x1024 animation that looks really pixelated.
+  /* But if the window is wider than tall, make it only take up the
+     height of the window instead.
    */
+  if (MI_WIDTH(mi) > MI_HEIGHT(mi))
+    scale /= MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi);
 
-  {
-    int max = 340;		  /* Let's not go larger than life-sized. */
-    if (target_size > max)
-      target_size = max;
-  }
-
-  if (win_size > 640 &&
-      win_size > target_size * 1.5)
+  /* Constrain it to roughly life-sized on the screen, not huge.
+   */
+# ifdef USE_IPHONE
+  if (size > 768)  /* iPad retina */
+    target_size *= 1.5;
+  else
+# endif
     {
-      GLfloat ratio = ((GLfloat) target_size / (GLfloat) win_size);
-      ratio *= 2.0;
-      glScalef(ratio, ratio, ratio);
+      GLfloat max = 500;  /* 3" on my screen... */
+      if (target_size > max)
+        target_size = max;
     }
+
+  /* But if that would make the image larger than target_size, scale it
+     back down again.  The image-map bits we have are 512x512, so if the
+     image is magnified a lot, it looks pretty blocky.  It's better to
+     have a 512x512 animation on a 1920x1080 screen that looks good
+     than a 1024x1024 animation that looks really pixelated.
+   */
+  if (size > target_size)
+    scale *= target_size / size;
+
+  glScalef (scale, scale, scale);
 }
 
 
 static void
-draw(ModeInfo *mi)
+set_colors (const GLfloat *color)
+{
+  glMaterialfv(GL_FRONT, GL_AMBIENT,   color + 0);
+  glMaterialfv(GL_FRONT, GL_DIFFUSE,   color + 4);
+  glMaterialfv(GL_FRONT, GL_SPECULAR,  color + 8);
+  glMaterialfv(GL_FRONT, GL_SHININESS, color + 12);
+}
+
+static void
+set_colors_alpha (const GLfloat *color, GLfloat a)
+{
+  GLfloat c[countof(leviathan_color)];
+  memcpy (c, color, sizeof(c));
+  c[3] = c[7] = c[11] = a;
+  set_colors (c);
+}
+
+
+static void
+which_face (ModeInfo *mi, const GLfloat *f, int *face, int *outerp)
+{
+  GLfloat size = 3;          /* 3" square */
+  const GLfloat *n = f;      /* normal */
+  const GLfloat *v = f + 3;  /* vertex */
+  GLfloat slack = 0.01;
+
+  /* First look at the normal to determine which direction this triangle
+     is facing (or is most-closely facing).
+     It's an outer surface if it is within epsilon of the cube wall that
+     it is facing.  Otherwise, it's an inner surface.
+   */
+  if      (n[1] < -0.5)   *face = 1, *outerp = v[1] < slack;       /* S */
+  else if (n[2] >  0.5)   *face = 2, *outerp = v[2] > size-slack;  /* U */
+  else if (n[1] >  0.5)   *face = 3, *outerp = v[1] > size-slack;  /* N */
+  else if (n[2] < -0.5)   *face = 4, *outerp = v[2] < slack;       /* D */
+  else if (n[0] < -0.5)   *face = 5, *outerp = v[0] < slack;       /* W */
+  else /* (n[0] >  0.5)*/ *face = 6, *outerp = v[0] > size-slack;  /* E */
+
+  /* Faces that don't have normals parallel to the axes aren't external. */
+  if (*outerp &&
+      (n[0] > -0.95 && n[0] < 0.95 &&
+       n[1] > -0.95 && n[1] < 0.95 &&
+       n[2] > -0.95 && n[2] < 0.95))
+    *outerp = 0;
+}
+
+
+static void
+texturize_vert (ModeInfo *mi, int which, const GLfloat *v)
+{
+  GLfloat size = 3;          /* 3" square */
+  GLfloat s = 0, q = 0;
+
+  /* Texture coordinates are surface coordinates,
+     on the plane of this cube wall. */
+  switch (which) {
+  case 0: break;
+  case 1: s = v[0], q = v[2]; break;
+  case 2: s = v[0], q = v[1]; break;
+  case 3: s = v[0], q = v[2]; q = size - q; break;
+  case 4: s = v[0], q = v[1]; q = size - q; break;
+  case 5: s = v[1], q = v[2]; break;
+  case 6: s = v[1], q = v[2]; break;
+  default: abort(); break;
+  }
+
+  glTexCoord2f (s / size, q / size);
+}
+
+
+static void
+leviathan (ModeInfo *mi, GLfloat ratio, GLfloat alpha, Bool top_p)
 {
   lament_configuration *lc = &lcs[MI_SCREEN(mi)];
   Bool wire = MI_IS_WIREFRAME(mi);
+  GLfloat r = 0.34;
+  GLfloat z = 2 * ratio;
+  XYZ p[3];
+  int i;
+
+  GLfloat th = acos (2 / sqrt (6));  /* Line up with cube's diagonal */
+
+  glPushMatrix();
+
+  glRotatef (-45, 0, 1, 0);
+  glRotatef (-th * 180 / M_PI, 0, 0, 1);
+
+  if (!top_p)
+    glRotatef (180, 0, 0, 1);
+
+  for (i = 0; i < countof(p); i++)
+    {
+      GLfloat th = i * M_PI * 2 / countof(p);
+      p[i].x = cos(th) * r;
+      p[i].y = sin(th) * r;
+    }
+
+  glFrontFace (GL_CCW);
+  for (i = 0; i < countof(p); i++)
+    {
+      int j = (i + 1) % countof(p);
+/*      if (top_p)*/
+        do_normal (z, 0, 0,
+                   0, p[i].y, p[i].z,
+                   0, p[j].y, p[j].z);
+/*
+      else
+        do_normal (z, 0, 0,
+                   0, p[j].y, p[j].z,
+                   0, p[i].y, p[i].z);
+*/
+
+      if (do_texture)  /* Leviathan is the final texture */
+        glBindTexture (GL_TEXTURE_2D, lc->texids[countof(lc->texids) - 1]);
+
+      set_colors (leviathan_color);
+
+      glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
+      glTexCoord2f (0.5, 1);
+      glVertex3f (z, 0, 0);
+
+      glTexCoord2f (0, 0);
+      glVertex3f (0, p[i].x, p[i].y);
+
+      glTexCoord2f (1, 0);
+      glVertex3f (0, p[j].x, p[j].y);
+      glEnd();
+      mi->polygon_count++;
+
+      /* Shield for fading */
+      if (alpha < 0.9 && !wire)
+        {
+          GLfloat a = 0.35;
+          GLfloat b = 0.69;
+
+          set_colors_alpha (black_color, 1-alpha);
+          glBindTexture (GL_TEXTURE_2D, 0);
+          if (!wire)
+            {
+              glEnable (GL_BLEND);
+              glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            }
+
+          glBegin (wire ? GL_LINE_LOOP : GL_QUADS);
+
+          glVertex3f (z*a, p[j].x * b, p[j].y * b);
+          glVertex3f (z*a, p[i].x * b, p[i].y * b);
+          glVertex3f (0, p[i].x * 1.01, p[i].y * 1.01);
+          glVertex3f (0, p[j].x * 1.01, p[j].y * 1.01);
+          glEnd();
+          mi->polygon_count++;
+          glDisable (GL_BLEND);
+        }
+    }
+
+  glPopMatrix();
+}
+
+
+static void
+folding_walls (ModeInfo *mi, GLfloat ratio, Bool top_p)
+{
+  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
+  Bool wire = MI_IS_WIREFRAME(mi);
+  const GLfloat pa[4][2] = {{ -0.5,      -0.215833 },
+                            {  0,         0.5      },
+                            {  0.5,       0        },
+                            { -0.215833, -0.5      }};
+  const int tex[6] = { 0, 5, 1,  4, 2, 3 };
+  const GLfloat top = -pa[0][1];
+  GLfloat end_angle = 30.85;
+  GLfloat rr = sin (ratio / 2 * M_PI);
+  GLfloat offa = 0.15 * rr;
+  GLfloat offb = 0.06 * rr;
+  GLfloat p[4][3];
+  GLfloat t[4][2];
+  int i;
+
+  glPushMatrix();
+
+  if (top_p)
+    {
+      glRotatef (60, 1, -1, 1);
+      glRotatef (180, 0, 1, 0);
+      glRotatef (90, 1, 0, 0);
+    }
+  else
+    {
+      glRotatef (180, 1, 0, 0);
+    }
+
+  /* Scale down the points near the axis */
+
+  p[0][0] = pa[0][0];
+  p[0][1] = 0.5;
+  p[0][2] = pa[0][1];
+
+  p[1][0] = pa[1][0] - offb;
+  p[1][1] = 0.5;
+  p[1][2] = pa[1][1] - offa;
+
+  p[2][0] = pa[2][0] - offa;
+  p[2][1] = 0.5;
+  p[2][2] = pa[2][1] - offb;
+
+  p[3][0] = pa[3][0];
+  p[3][1] = 0.5;
+  p[3][2] = pa[3][1];
+
+  if (!wire)
+    {
+      glEnable (GL_BLEND);
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
+
+  for (i = 0; i < 3; i++)
+    {
+      glPushMatrix();
+
+      if (i == 1)
+        {
+          glRotatef (-90, 1, 0, 0);
+          glRotatef (180, 1, 1, 0);
+        }
+      else if (i == 2)
+        {
+          glRotatef (-90, 1, 0, 0);
+          glRotatef (180, 0, 1, 0);
+          glRotatef (90, 0, 1, 0);
+        }
+
+      glRotatef (-90, 0, 1, 0);
+
+      glTranslatef (-(top/2 + 0.25), 0.5, -(top/2 + 0.25));
+      glRotatef (-45, 0, 1, 0);
+      glRotatef (ratio * -end_angle, 0, 0, 1);
+      glRotatef (45, 0, 1, 0);
+      glTranslatef (top/2 + 0.25, -0.5, top/2 + 0.25);
+
+      /* Get the texture coordinates right.
+         This is hairy and incomprehensible. */
+
+      t[0][0] = pa[0][1] + 0.5; t[0][1] = pa[0][0] + 0.5;
+      t[1][0] = pa[1][1] + 0.5; t[1][1] = pa[1][0] + 0.5;
+      t[2][0] = pa[2][1] + 0.5; t[2][1] = pa[2][0] + 0.5;
+      t[3][0] = pa[3][1] + 0.5; t[3][1] = pa[3][0] + 0.5;
+
+      if (i == 0 && !top_p)
+        {
+# define SWAP(A,B) A = 1-A, B = 1-B
+          SWAP(t[0][0], t[0][1]);
+          SWAP(t[1][0], t[1][1]);
+          SWAP(t[2][0], t[2][1]);
+          SWAP(t[3][0], t[3][1]);
+# undef SWAP
+        }
+      else if (i == 0 && top_p)
+        {
+          GLfloat ot[4][3];
+          memcpy (ot, t, sizeof(t));
+# define SWAP(A,B) A = 1-A, B = 1-B
+          SWAP(t[0][0], ot[2][1]);
+          SWAP(t[1][0], ot[3][1]);
+          SWAP(t[2][0], ot[0][1]);
+          SWAP(t[3][0], ot[1][1]);
+# undef SWAP
+        }
+      else if (i == 1)
+        {
+          GLfloat f;
+# define SWAP(A,B) f = A, A = B, B = -f
+          SWAP(t[0][0], t[0][1]);
+          SWAP(t[1][0], t[1][1]);
+          SWAP(t[2][0], t[2][1]);
+          SWAP(t[3][0], t[3][1]);
+# undef SWAP
+        }
+
+      set_colors_alpha (exterior_color, 1-ratio);
+      glBindTexture (GL_TEXTURE_2D, lc->texids[tex[i + (top_p ? 3 : 0)]]);
+
+      glBegin (wire ? GL_LINE_LOOP : GL_QUADS);
+      do_normal (p[0][0], p[0][1], p[0][2],
+                 p[1][0], p[1][1], p[1][2],
+                 p[2][0], p[2][1], p[2][2]);
+      glTexCoord2fv(t[0]); glVertex3fv(p[0]);
+      glTexCoord2fv(t[1]); glVertex3fv(p[1]);
+      glTexCoord2fv(t[2]); glVertex3fv(p[2]);
+      glTexCoord2fv(t[3]); glVertex3fv(p[3]);
+      glEnd();
+      mi->polygon_count++;
+
+      /* The triangles between the quads */
+# if 0
+      /* #### There is a fucking gap between the two black triangles 
+         that I can't figure out!  So instead of drawing the triangles,
+         we build a black shield around the middle bit in leviathan()
+         and count on back-face culling to have roughly the same effect.
+       */
+      if (!wire)
+        {
+          GLfloat pp[4][3];
+          memcpy (pp, p, sizeof(pp));
+          memcpy (pp[2], pp[1], sizeof(pp[1]));
+          pp[2][0] -= 0.5 * (1-ratio);
+          pp[2][1] -= 0.5 * (1-ratio);
+
+          glBindTexture (GL_TEXTURE_2D, 0);
+          set_colors_alpha (black_color, 1-ratio);
+
+          glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLES);
+          do_normal (pp[0][0], pp[0][1], pp[0][2],
+                     pp[2][0], pp[2][1], pp[2][2],
+                     pp[1][0], pp[1][1], pp[1][2]);
+          glVertex3fv(pp[0]);
+          glVertex3fv(pp[2]);
+          glVertex3fv(pp[1]);
+          glEnd();
+          mi->polygon_count++;
+        }
+# endif
+
+      glPopMatrix();
+    }
+
+  if (! wire) glDisable (GL_BLEND);
+
+  glPopMatrix();
+}
+
+
+static int
+lament_sphere (ModeInfo *mi, GLfloat ratio)
+{
+  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
+  Bool wire = MI_IS_WIREFRAME(mi);
+  GLfloat size = 3; /* 3" square */
+  int polys = 0;
+  int facets = 16;  /* NxN grid on each face */
+  int face;
+  static const GLfloat norms[6][3] = {{ 0, -1, 0 }, {  0, 0, 1 }, { 0, 1, 0 },
+                                      { 0, 0, -1 }, { -1, 0, 0 }, { 1, 0, 0 }};
+  GLfloat s = 1.0 / facets;
+
+  /* The ratio used for the normals: linger on the square normals. */
+  GLfloat ratio2 = 1 - sin ((1 - ratio) / 2 * M_PI);
+  GLfloat r1 = 1 - ratio2 / 2;
+  GLfloat r2 =     ratio2 / 2;
+
+  glPushMatrix();
+  glTranslatef (-0.5, -0.5, -0.5);
+  glScalef (1/size, 1/size, 1/size);
+
+  set_colors (exterior_color);
+
+  for (face = 0; face < 6; face++)
+    {
+      GLfloat x0, y0;
+      for (y0 = 0; y0 < 1; y0 += s)
+        for (x0 = 0; x0 < 1; x0 += s)
+        {
+          int i;
+          GLfloat x1 = x0 + s;
+          GLfloat y1 = y0 + s;
+          GLfloat pa[4][3];	/* verts of the cube */
+          GLfloat pb[4][3];	/* verts of the transition to the sphere */
+          Bool frontp;
+          GLfloat norm[4][3];	/* normals of the transitional verts */
+
+          if (norms[face][0])
+            frontp = norms[face][0] < 0,
+            pa[0][1] = x0, pa[0][2] = y0, pa[0][0] = (frontp ? 0 : 1),
+            pa[1][1] = x1, pa[1][2] = y0, pa[1][0] = pa[0][0],
+            pa[2][1] = x1, pa[2][2] = y1, pa[2][0] = pa[0][0],
+            pa[3][1] = x0, pa[3][2] = y1, pa[3][0] = pa[0][0];
+          else if (norms[face][1])
+            frontp = norms[face][1] > 0,
+            pa[0][0] = x0, pa[0][2] = y0, pa[0][1] = (frontp ? 1 : 0),
+            pa[1][0] = x1, pa[1][2] = y0, pa[1][1] = pa[0][1],
+            pa[2][0] = x1, pa[2][2] = y1, pa[2][1] = pa[0][1],
+            pa[3][0] = x0, pa[3][2] = y1, pa[3][1] = pa[0][1];
+          else /* (norms[face][2]) */
+            frontp = norms[face][2] < 0,
+            pa[0][0] = x0, pa[0][1] = y0, pa[0][2] = (frontp ? 0 : 1),
+            pa[1][0] = x1, pa[1][1] = y0, pa[1][2] = pa[0][2],
+            pa[2][0] = x1, pa[2][1] = y1, pa[2][2] = pa[0][2],
+            pa[3][0] = x0, pa[3][1] = y1, pa[3][2] = pa[0][2];
+
+          for (i = 0; i < countof(pa); i++)
+            pa[i][0] *= size, pa[i][1] *= size, pa[i][2] *= size;
+
+          /* Convert square to sphere by treating as a normalized vector */
+          for (i = 0; i < countof(pa); i++)
+            {
+              GLfloat x = (pa[i][0] / size) - 0.5;
+              GLfloat y = (pa[i][1] / size) - 0.5;
+              GLfloat z = (pa[i][2] / size) - 0.5;
+              GLfloat d = sqrt (x*x + y*y + z*z) / 2;
+              x = x/d + size/2;
+              y = y/d + size/2;
+              z = z/d + size/2;
+
+              pb[i][0] = pa[i][0] + ((x - pa[i][0]) * ratio);
+              pb[i][1] = pa[i][1] + ((y - pa[i][1]) * ratio);
+              pb[i][2] = pa[i][2] + ((z - pa[i][2]) * ratio);
+            }
+
+          /* The normals of an intermediate point are the weighted average
+             of the cube's orthogonal normals, and the sphere's radial
+             normals: early in the sequence, the edges are sharp, but they
+             soften as it expands. */
+          {
+            XYZ na, pa0, pa1, pa2;
+            pa0.x = pa[0][0]; pa0.y = pa[0][1]; pa0.z = pa[0][2];
+            pa1.x = pa[1][0]; pa1.y = pa[1][1]; pa1.z = pa[1][2];
+            pa2.x = pa[2][0]; pa2.y = pa[2][1]; pa2.z = pa[2][2];
+            na = calc_normal (pa0, pa1, pa2);
+
+            for (i = 0; i < countof(pb); i++)
+              {
+                GLfloat d;
+                XYZ nb;
+
+                nb.x = pb[i][0];
+                nb.y = pb[i][1];
+                nb.z = pb[i][2];
+                d = sqrt (nb.x*nb.x + nb.y*nb.y + nb.z*nb.z);  /* normalize */
+                nb.x /= d;
+                nb.y /= d;
+                nb.z /= d;
+
+                norm[i][0] = (na.x * r1) + (nb.x * r2);  /* weighted */
+                norm[i][1] = (na.y * r1) + (nb.y * r2);
+                norm[i][2] = (na.z * r1) + (nb.z * r2);
+              }
+          }
+
+	  if (! wire)
+            glBindTexture (GL_TEXTURE_2D, lc->texids[face]);
+
+          glFrontFace (frontp ? GL_CW : GL_CCW);
+          glBegin (wire ? GL_LINE_LOOP : GL_QUADS);
+
+          texturize_vert (mi, face+1, pa[0]);
+          glNormal3fv (norm[0]);
+          glVertex3fv (pb[0]);
+
+          texturize_vert (mi, face+1, pa[1]);
+          glNormal3fv (norm[1]);
+          glVertex3fv (pb[1]);
+
+          texturize_vert (mi, face+1, pa[2]);
+          glNormal3fv (norm[2]);
+          glVertex3fv (pb[2]);
+
+          texturize_vert (mi, face+1, pa[3]);
+          glNormal3fv (norm[3]);
+          glVertex3fv (pb[3]);
+
+          glEnd();
+          polys++;
+        }
+    }
+
+  glPopMatrix();
+
+  return polys;
+}
+
+
+static void
+draw (ModeInfo *mi)
+{
+  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
+  Bool wire = MI_IS_WIREFRAME(mi);
+
+  mi->polygon_count = 0;
 
   if (!wire)
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1432,156 +835,275 @@ draw(ModeInfo *mi)
 
   glPushMatrix();
 
-  /* Do it twice because we don't track the device's orientation. */
-  glRotatef( current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (lc->trackball);
-  glRotatef(-current_device_rotation(), 0, 0, 1);
 
-  /* Make into the screen be +Y right be +X, and up be +Z. */
-  glRotatef(-90.0, 1.0, 0.0, 0.0);
+  /* Make into the screen be +Y, right be +X, and up be +Z. */
+  glRotatef (-90.0, 1.0, 0.0, 0.0);
 
   scale_for_window (mi);
 
-#if 0
-    glPushMatrix();
+  /* Apply rotation to the object. */
+  if (lc->type != LAMENT_LID_ZOOM)
+    get_rotation (lc->rot, &lc->rotx, &lc->roty, &lc->rotz,
+                  !lc->button_down_p);
+# ifdef DEBUG_MODE
+  lc->rotx = 0.18;
+  lc->roty = 0.22;
+  lc->rotx = lc->roty = 0;
+  lc->rotz = 0;
+# endif
+
+  glRotatef (lc->rotx * 360, 1, 0, 0);
+  glRotatef (lc->roty * 360, 0, 1, 0);
+  glRotatef (lc->rotz * 360, 0, 0, 1);
+
+  glScalef (0.5, 0.5, 0.5);
+
+  switch (lc->type)
     {
-      /* Shift to the upper left, and draw the vanilla box. */
-      glTranslatef(-0.6, 0.0, 0.6);
+    case LAMENT_BOX:
+      glCallList (lc->dlists[OBJ_BOX]);
+      mi->polygon_count += lc->polys[OBJ_BOX];
+      break;
 
-      /* Apply rotation to the object. */
-      glRotatef(x * 360, 1.0, 0.0, 0.0);
-      glRotatef(y * 360, 0.0, 1.0, 0.0);
-      glRotatef(z * 360, 0.0, 0.0, 1.0);
+    case LAMENT_STAR_OUT:
+    case LAMENT_STAR_ROT:
+    case LAMENT_STAR_ROT_IN:
+    case LAMENT_STAR_ROT_OUT:
+    case LAMENT_STAR_UNROT:
+    case LAMENT_STAR_IN:
+      glTranslatef (0.0, 0.0, lc->anim_z/2);
+      glRotatef (lc->anim_r/2, 0.0, 0.0, 1.0);
+      glCallList (lc->dlists[OBJ_STAR_U]);
+      mi->polygon_count += lc->polys[OBJ_STAR_U];
 
-      /* Draw it. */
-      glCallList(lc->box);
+      glTranslatef (0.0, 0.0, -lc->anim_z);
+      glRotatef (-lc->anim_r, 0.0, 0.0, 1.0);
+      glCallList (lc->dlists[OBJ_STAR_D]);
+      mi->polygon_count += lc->polys[OBJ_STAR_D];
+      break;
+
+    case LAMENT_TETRA_UNE:
+    case LAMENT_TETRA_USW:
+    case LAMENT_TETRA_DWN:
+    case LAMENT_TETRA_DSE:
+      {
+        int magic;
+        GLfloat x, y, z;
+        switch (lc->type) {
+        case LAMENT_TETRA_UNE: magic = OBJ_TETRA_UNE; x= 1; y= 1; z= 1; break;
+        case LAMENT_TETRA_USW: magic = OBJ_TETRA_USW; x= 1; y= 1; z=-1; break;
+        case LAMENT_TETRA_DWN: magic = OBJ_TETRA_DWN; x= 1; y=-1; z= 1; break;
+        case LAMENT_TETRA_DSE: magic = OBJ_TETRA_DSE; x=-1; y= 1; z= 1; break;
+        default: abort(); break;
+        }
+        glCallList(lc->dlists[OBJ_TETRA_BASE]);
+        mi->polygon_count += lc->polys[OBJ_TETRA_BASE];
+        if (magic != OBJ_TETRA_UNE) glCallList (lc->dlists[OBJ_TETRA_UNE]);
+        if (magic != OBJ_TETRA_USW) glCallList (lc->dlists[OBJ_TETRA_USW]);
+        if (magic != OBJ_TETRA_DWN) glCallList (lc->dlists[OBJ_TETRA_DWN]);
+        if (magic != OBJ_TETRA_DSE) glCallList (lc->dlists[OBJ_TETRA_DSE]);
+        glRotatef (lc->anim_r, x, y, z);
+        glCallList (lc->dlists[magic]);
+        mi->polygon_count += lc->polys[magic] * 3;
+      }
+      break;
+
+    case LAMENT_LID_OPEN:
+    case LAMENT_LID_CLOSE:
+    case LAMENT_LID_ZOOM:
+      {
+        lc->facing_p = facing_screen_p (mi);
+
+        if (lc->anim_z < 0.5)
+          glTranslatef (0, -30 * lc->anim_z, 0);    /* zoom */
+        else
+          glTranslatef (8 * (0.5 - (lc->anim_z - 0.5)), 0, 0);
+
+        GLfloat d = 0.21582;
+        int i;
+        const int lists[4] = { OBJ_LID_A, OBJ_LID_B, OBJ_LID_C, OBJ_LID_D };
+        glCallList (lc->dlists[OBJ_LID_BASE]);
+        mi->polygon_count += lc->polys[OBJ_LID_BASE];
+        for (i = 0; i < countof(lists); i++)
+          {
+            glPushMatrix();
+            glRotatef (90 * i, 0, 1, 0);
+            glTranslatef (-d, -0.5, d);
+            glRotatef (-45, 0, 1, 0);
+            glRotatef (-lc->anim_r, 1, 0, 0);
+            glRotatef (45, 0, 1, 0);
+            glTranslatef (d, 0.5, -d);
+            glRotatef (-90 * i, 0, 1, 0);
+            glCallList (lc->dlists[lists[i]]);
+            mi->polygon_count += lc->polys[lists[i]];
+            glPopMatrix();
+          }
+
+# ifdef DEBUG_MODE
+        if (lc->facing_p)
+          {
+            glColor3f(1, 0, 0);
+            glBegin (wire ? GL_LINE_LOOP : GL_QUADS);
+            glVertex3f (-0.49, 0.49, -0.49);
+            glVertex3f ( 0.49, 0.49, -0.49);
+            glVertex3f ( 0.49, 0.49,  0.49);
+            glVertex3f (-0.49, 0.49,  0.49);
+            glEnd();
+            mi->polygon_count++;
+          }
+# endif /* DEBUG_MODE */
+      }
+      break;
+
+    case LAMENT_TASER_OUT:
+    case LAMENT_TASER_SLIDE:
+    case LAMENT_TASER_SLIDE_IN:
+    case LAMENT_TASER_IN:
+
+      glTranslatef (0, -lc->anim_z/2, 0);
+      glCallList (lc->dlists[OBJ_TASER_BASE]);
+      mi->polygon_count += lc->polys[OBJ_TASER_BASE];
+
+      glTranslatef (0, lc->anim_z, 0);
+      glCallList (lc->dlists[OBJ_TASER_A]);
+      mi->polygon_count += lc->polys[OBJ_TASER_A];
+
+      glTranslatef (lc->anim_y, 0, 0);
+      glCallList (lc->dlists[OBJ_TASER_B]);
+      mi->polygon_count += lc->polys[OBJ_TASER_B];
+      break;
+
+    case LAMENT_PILLAR_OUT:
+    case LAMENT_PILLAR_SPIN:
+    case LAMENT_PILLAR_IN:
+
+      glCallList (lc->dlists[OBJ_PILLAR_BASE]);
+      mi->polygon_count += lc->polys[OBJ_PILLAR_BASE];
+
+      glPushMatrix();
+      if (lc->anim_z == 1 || lc->anim_z == 3)
+        {
+          glRotatef (lc->anim_r, 0, 0, 1);
+          glTranslatef (0, 0, lc->anim_y);
+        }
+      glCallList (lc->dlists[OBJ_PILLAR_A]);
+      mi->polygon_count += lc->polys[OBJ_PILLAR_A];
+      glPopMatrix();
+
+      glPushMatrix();
+      if (lc->anim_z == 2 || lc->anim_z == 3)
+        {
+          glRotatef (lc->anim_r, 0, 0, 1);
+          glTranslatef (0, 0, -lc->anim_y);
+        }
+      glCallList (lc->dlists[OBJ_PILLAR_B]);
+      mi->polygon_count += lc->polys[OBJ_PILLAR_B];
+      glPopMatrix();
+      break;
+
+    case LAMENT_SPHERE_OUT:
+    case LAMENT_SPHERE_IN:
+      mi->polygon_count += lament_sphere (mi, lc->anim_y);
+      break;
+
+    case LAMENT_LEVIATHAN_SPIN:
+    case LAMENT_LEVIATHAN_UNSPIN:
+    case LAMENT_LEVIATHAN_FADE:
+    case LAMENT_LEVIATHAN_UNFADE:
+    case LAMENT_LEVIATHAN_TWIST:
+    case LAMENT_LEVIATHAN_UNTWIST:
+      {
+        /* These normals are hard to compute, so I pulled them from the
+           model. */
+        const GLfloat axes[6][4] =
+          {{ OBJ_ISO_UNE,  0.633994, 0.442836,   0.633994 },
+           { OBJ_ISO_USW,  0.442836,  0.633994, -0.633994 },
+           { OBJ_ISO_DSE, -0.633994,  0.633994,  0.442836 },
+           { OBJ_ISO_SWD, -0.633994, -0.442836, -0.633994 },
+           { OBJ_ISO_DEN, -0.442836, -0.633994,  0.633994 },
+           { OBJ_ISO_UNW,  0.633994, -0.633994, -0.442836 }};
+        int i;
+
+        GLfloat s = (1 - lc->anim_z);
+        GLfloat s2 = MAX (0, 360 - lc->anim_r) / 360.0;
+        Bool blendp = 0;
+
+        switch (lc->type) {
+        case LAMENT_LEVIATHAN_SPIN: break;
+        case LAMENT_LEVIATHAN_UNSPIN: s2 = 1 - s2; break;
+        default: s2 = 0; blendp = 1; break;
+        }
+
+        if (wire) blendp = 0;
+
+        s  = (s * 0.6) + 0.4;
+
+        leviathan (mi, 1 - s2, 1, True);
+        glCallList (lc->dlists[OBJ_ISO_BASE_A]);
+        mi->polygon_count += lc->polys[OBJ_ISO_BASE_A];
+
+        glPushMatrix();
+        glScalef (s2, s2, s2);
+        glCallList (lc->dlists[OBJ_ISO_USE]);
+        mi->polygon_count += lc->polys[OBJ_ISO_USE];
+        glPopMatrix();
+
+        glPushMatrix();
+        glRotatef (lc->anim_y, 1, -1, 1);
+        glCallList (lc->dlists[OBJ_ISO_BASE_B]);
+        mi->polygon_count += lc->polys[OBJ_ISO_BASE_B];
+        leviathan (mi, 1 - s2, 1, False);
+        glPopMatrix();
+
+        if (blendp)
+          {
+# ifndef HAVE_JWZGLES /* no glBlendColor */
+            glEnable (GL_BLEND);
+            glBlendFunc (GL_CONSTANT_ALPHA, GL_SRC_ALPHA);
+            glBlendColor (1, 1, 1, MAX(0, 1-(lc->anim_z * 3)));
+# endif
+          }
+
+        for (i = 0; i < countof(axes); i++)
+          {
+            glPushMatrix();
+            glRotatef (lc->anim_r, axes[i][1], axes[i][2], axes[i][3]);
+            glScalef (s, s, s);
+            glCallList (lc->dlists[(int) axes[i][0]]);
+            mi->polygon_count += lc->polys[(int) axes[i][0]];
+            glPopMatrix();
+            if (i == 2)
+              glRotatef (lc->anim_y, 1, -1, 1);
+          }
+
+        if (blendp) glDisable (GL_BLEND);
+
+        glPushMatrix();
+        glScalef (s2, s2, s2);
+        glCallList (lc->dlists[OBJ_ISO_DWN]);
+        mi->polygon_count += lc->polys[OBJ_ISO_DWN];
+        glPopMatrix();
+      }
+      break;
+
+    case LAMENT_LEVIATHAN_COLLAPSE:
+    case LAMENT_LEVIATHAN_EXPAND:
+      {
+        glPushMatrix();
+        leviathan (mi, 1, lc->anim_y, True);
+        glRotatef (180, 1, -1, 1);
+        leviathan (mi, 1, lc->anim_y, False);
+        glPopMatrix();
+        folding_walls (mi, lc->anim_y, True);
+        folding_walls (mi, lc->anim_y, False);
+      }
+      break;
+
+    default:
+      abort();
+      break;
     }
-    glPopMatrix();
-
-    /* Shift to the lower right, and draw the animated object. */
-    glTranslatef(0.6, 0.0, -0.6);
-#endif /* 0 */
-
-
-    glPushMatrix();
-    {
-      /* Apply rotation to the object. */
-      if (lc->type != LAMENT_LID_ZOOM)
-        get_rotation (lc->rot, &lc->rotx, &lc->roty, &lc->rotz,
-                      !lc->button_down_p);
-      glRotatef (lc->rotx * 360, 1.0, 0.0, 0.0);
-      glRotatef (lc->roty * 360, 0.0, 1.0, 0.0);
-      glRotatef (lc->rotz * 360, 0.0, 0.0, 1.0);
-
-      check_facing(mi);
-
-      switch (lc->type)
-	{
-	case LAMENT_BOX:
-	  glCallList(lc->box);
-	  break;
-
-	case LAMENT_STAR_OUT:
-	case LAMENT_STAR_ROT:
-	case LAMENT_STAR_ROT_IN:
-	case LAMENT_STAR_ROT_OUT:
-	case LAMENT_STAR_UNROT:
-	case LAMENT_STAR_IN:
-	  glTranslatef(0.0, 0.0, lc->anim_z/2);
-	  glRotatef(lc->anim_r/2, 0.0, 0.0, 1.0);
-	  glCallList(lc->star1);
-
-	  glTranslatef(0.0, 0.0, -lc->anim_z);
-	  glRotatef(-lc->anim_r, 0.0, 0.0, 1.0);
-	  glCallList(lc->star2);
-	  break;
-
-	case LAMENT_TETRA_UNE:
-	case LAMENT_TETRA_USW:
-	case LAMENT_TETRA_DWN:
-	case LAMENT_TETRA_DSE:
-	  {
-	    int magic;
-	    GLfloat x, y, z;
-	    switch (lc->type) {
-	    case LAMENT_TETRA_UNE: magic = lc->tetra_une;
-	      x = 1.0; y = 1.0; z = 1.0; break;
-	    case LAMENT_TETRA_USW: magic = lc->tetra_usw;
-	      x = 1.0; y = 1.0; z = -1.0; break;
-	    case LAMENT_TETRA_DWN: magic = lc->tetra_dwn;
-	      x = 1.0; y = -1.0; z = 1.0; break;
-	    case LAMENT_TETRA_DSE: magic = lc->tetra_dse;
-	      x = -1.0; y = 1.0; z = 1.0; break;
-	    default: abort(); break;
-	    }
-	    glCallList(lc->tetra_mid);
-	    if (magic != lc->tetra_une) glCallList(lc->tetra_une);
-	    if (magic != lc->tetra_usw) glCallList(lc->tetra_usw);
-	    if (magic != lc->tetra_dwn) glCallList(lc->tetra_dwn);
-	    if (magic != lc->tetra_dse) glCallList(lc->tetra_dse);
-	    glRotatef(lc->anim_r, x, y, z);
-	    glCallList(magic);
-	  }
-	  break;
-
-	case LAMENT_LID_OPEN:
-	case LAMENT_LID_CLOSE:
-	case LAMENT_LID_ZOOM:
-	  {
-	    GLfloat d = 0.417;
-
-	    glTranslatef(lc->anim_z, 0.0, 0.0);
-
-	    glCallList(lc->lid_0);
-
-	    glPushMatrix();
-	      glTranslatef(-0.5, -d, 0.0);
-	      glRotatef(-lc->anim_r, 0.0, -1.0, -1.0);
-	      glTranslatef( 0.5,  d, 0.0);
-	      glCallList(lc->lid_1);
-	    glPopMatrix();
-	    glPushMatrix();
-	      glTranslatef(-0.5, -d, 0.0);
-	      glRotatef( lc->anim_r, 0.0, -1.0,   1.0);
-	      glTranslatef( 0.5,  d, 0.0);
-	      glCallList(lc->lid_2);
-	    glPopMatrix();
-	    glPushMatrix();
-	      glTranslatef(-0.5,  d, 0.0);
-	      glRotatef( lc->anim_r, 0.0,  -1.0,  -1.0);
-	      glTranslatef( 0.5, -d, 0.0);
-	      glCallList(lc->lid_3);
-	    glPopMatrix();
-	    glPushMatrix();
-	      glTranslatef(-0.5,  d, 0.0);
-	      glRotatef(-lc->anim_r, 0.0,  -1.0,   1.0);
-	      glTranslatef( 0.5, -d, 0.0);
-	      glCallList(lc->lid_4);
-	    glPopMatrix();
-	  }
-	  break;
-
-	case LAMENT_TASER_OUT:
-	case LAMENT_TASER_SLIDE:
-	case LAMENT_TASER_SLIDE_IN:
-	case LAMENT_TASER_IN:
-
-	  glTranslatef(-lc->anim_z/2, 0.0, 0.0);
-	  glCallList(lc->taser_base);
-
-	  glTranslatef(lc->anim_z, 0.0, 0.0);
-	  glCallList(lc->taser_lifter);
-
-	  glTranslatef(0.0, 0.0, lc->anim_y);
-	  glCallList(lc->taser_slider);
-	  break;
-
-	default:
-	  abort();
-	  break;
-	}
-    }
-    glPopMatrix();
 
   glPopMatrix();
 }
@@ -1590,7 +1112,9 @@ draw(ModeInfo *mi)
 /* Rather than just picking states randomly, pick an ordering randomly, do it,
    and then re-randomize.  That way one can be assured of seeing all states in
    a short time period, though not always in the same order (it's frustrating
-   to see it pick the same state 5x in a row.)
+   to see it pick the same state 5x in a row.)  Though, that can still happen,
+   since states are in the list multiple times as a way of giving them
+   probabilities.
  */
 static void
 shuffle_states (lament_configuration *lc)
@@ -1607,12 +1131,12 @@ shuffle_states (lament_configuration *lc)
 
 
 static void
-animate(ModeInfo *mi)
+animate (ModeInfo *mi)
 {
   lament_configuration *lc = &lcs[MI_SCREEN(mi)];
   int pause = 10;
-/*  int pause2 = 60;*/
-  int pause3 = 120;
+  int pause2 = 120;
+  GLfloat speed = (lc->ffwdp ? 20 : 1);
 
   switch (lc->type)
     {
@@ -1627,7 +1151,7 @@ animate(ModeInfo *mi)
         lc->type = lc->states[lc->state];
 
 	if (lc->type == LAMENT_BOX)
-	  lc->anim_pause = pause3;
+	  lc->anim_pause = pause2;
 
 	lc->anim_r = 0.0;
 	lc->anim_y = 0.0;
@@ -1638,7 +1162,7 @@ animate(ModeInfo *mi)
       /* -------------------------------------------------------------- */
 
     case LAMENT_STAR_OUT:
-      lc->anim_z += 0.01;
+      lc->anim_z += 0.01 * speed;
       if (lc->anim_z >= 1.0)
 	{
 	  lc->anim_z = 1.0;
@@ -1648,7 +1172,7 @@ animate(ModeInfo *mi)
       break;
 
     case LAMENT_STAR_ROT:
-      lc->anim_r += 1.0;
+      lc->anim_r += 1.0 * speed;
       if (lc->anim_r >= 45.0)
 	{
 	  lc->anim_r = 45.0;
@@ -1658,17 +1182,17 @@ animate(ModeInfo *mi)
       break;
 
     case LAMENT_STAR_ROT_IN:
-      lc->anim_z -= 0.01;
+      lc->anim_z -= 0.01 * speed;
       if (lc->anim_z <= 0.0)
 	{
 	  lc->anim_z = 0.0;
 	  lc->type = LAMENT_STAR_ROT_OUT;
-	  lc->anim_pause = pause3 * (1 + (random() % 4) + (random() % 4));
+	  lc->anim_pause = pause2 * (1 + frand(2) + frand(2));
 	}
       break;
 
     case LAMENT_STAR_ROT_OUT:
-      lc->anim_z += 0.01;
+      lc->anim_z += 0.01 * speed;
       if (lc->anim_z >= 1.0)
 	{
 	  lc->anim_z = 1.0;
@@ -1678,7 +1202,7 @@ animate(ModeInfo *mi)
       break;
       
     case LAMENT_STAR_UNROT:
-      lc->anim_r -= 1.0;
+      lc->anim_r -= 1.0 * speed;
       if (lc->anim_r <= 0.0)
 	{
 	  lc->anim_r = 0.0;
@@ -1688,12 +1212,12 @@ animate(ModeInfo *mi)
       break;
 
     case LAMENT_STAR_IN:
-      lc->anim_z -= 0.01;
+      lc->anim_z -= 0.01 * speed;
       if (lc->anim_z <= 0.0)
 	{
 	  lc->anim_z = 0.0;
 	  lc->type = LAMENT_BOX;
-	  lc->anim_pause = pause3;
+	  lc->anim_pause = pause2;
 	}
       break;
 
@@ -1704,12 +1228,12 @@ animate(ModeInfo *mi)
     case LAMENT_TETRA_DWN:
     case LAMENT_TETRA_DSE:
 
-      lc->anim_r += 1.0;
+      lc->anim_r += 1.0 * speed;
       if (lc->anim_r >= 360.0)
 	{
 	  lc->anim_r = 0.0;
 	  lc->type = LAMENT_BOX;
-	  lc->anim_pause = pause3;
+	  lc->anim_pause = pause2;
 	}
       else if (lc->anim_r > 119.0 && lc->anim_r <= 120.0)
 	{
@@ -1726,30 +1250,30 @@ animate(ModeInfo *mi)
       /* -------------------------------------------------------------- */
 
     case LAMENT_LID_OPEN:
-      lc->anim_r += 1.0;
+      lc->anim_r += 1.0 * speed;
 
       if (lc->anim_r >= 112.0)
 	{
 	  lc->anim_r = 112.0;
 	  lc->anim_z = 0.0;
-	  lc->anim_pause = pause3;
+	  lc->anim_pause = pause2;
           lc->type = (lc->facing_p ? LAMENT_LID_ZOOM : LAMENT_LID_CLOSE);
         }
       break;
 
     case LAMENT_LID_CLOSE:
-      lc->anim_r -= 1.0;
+      lc->anim_r -= 1.0 * speed;
       if (lc->anim_r <= 0.0)
 	{
 	  lc->anim_r = 0.0;
 	  lc->type = LAMENT_BOX;
-	  lc->anim_pause = pause3;
+	  lc->anim_pause = pause2;
 	}
       break;
 
     case LAMENT_LID_ZOOM:
-      lc->anim_z -= 0.1;
-      if (lc->anim_z < -50.0)
+      lc->anim_z += 0.01 * speed;
+      if (lc->anim_z > 1.0)
 	{
 	  lc->anim_r = 0.0;
 	  lc->anim_z = 0.0;
@@ -1760,27 +1284,27 @@ animate(ModeInfo *mi)
       /* -------------------------------------------------------------- */
 
     case LAMENT_TASER_OUT:
-      lc->anim_z += 0.0025;
-      if (lc->anim_z >= 0.25)
+      lc->anim_z += 0.005 * speed;
+      if (lc->anim_z >= 0.5)
 	{
-	  lc->anim_z = 0.25;
+	  lc->anim_z = 0.5;
 	  lc->type = LAMENT_TASER_SLIDE;
-	  lc->anim_pause = pause * (1 + (random() % 5) + (random() % 5));
+	  lc->anim_pause = pause * (1 + frand(5) + frand(5));
 	}
       break;
 
     case LAMENT_TASER_SLIDE:
-      lc->anim_y += 0.0025;
-      if (lc->anim_y >= 0.23)
+      lc->anim_y += 0.005 * speed;
+      if (lc->anim_y >= 0.255)
 	{
-	  lc->anim_y = 0.23;
+	  lc->anim_y = 0.255;
 	  lc->type = LAMENT_TASER_SLIDE_IN;
-	  lc->anim_pause = pause3 * (1 + (random() % 5) + (random() % 5));
+	  lc->anim_pause = pause2 * (1 + frand(5) + frand(5));
 	}
       break;
 
     case LAMENT_TASER_SLIDE_IN:
-      lc->anim_y -= 0.0025;
+      lc->anim_y -= 0.0025 * speed;
       if (lc->anim_y <= 0.0)
 	{
 	  lc->anim_y = 0.0;
@@ -1790,12 +1314,182 @@ animate(ModeInfo *mi)
       break;
 
     case LAMENT_TASER_IN:
-      lc->anim_z -= 0.0025;
+      lc->anim_z -= 0.0025 * speed;
       if (lc->anim_z <= 0.0)
 	{
 	  lc->anim_z = 0.0;
 	  lc->type = LAMENT_BOX;
-	  lc->anim_pause = pause3;
+	  lc->anim_pause = pause2;
+	}
+      break;
+
+      /* -------------------------------------------------------------- */
+
+    case LAMENT_PILLAR_OUT:
+
+      if (lc->anim_y == 0)  /* mostly in */
+        lc->anim_y += 0.005 * ((random() % 5) ? -1 : 1) * speed;
+      else if (lc->anim_y > 0)
+        lc->anim_y += 0.005 * speed;
+      else
+        lc->anim_y -= 0.001 * speed;
+
+      if (lc->anim_z == 0)
+        {
+          int i = (random() % 7);   /* A, B or both */
+          if      (i == 0) lc->anim_z = 3;
+          else if (i < 5)  lc->anim_z = 2;
+          else             lc->anim_z = 1;
+
+          /* We can do quarter turns, because it's radially symmetrical. */
+          lc->anim_r =  90.0 * (1 + frand(6)) * RANDSIGN();
+        }
+      if (lc->anim_y > 0.4)
+        {
+          lc->anim_y = 0.4;
+          lc->type = LAMENT_PILLAR_SPIN;
+          lc->anim_pause = pause;
+        }
+      else if (lc->anim_y < -0.03)
+        {
+          lc->anim_y = -0.03;
+          lc->type = LAMENT_PILLAR_SPIN;
+          lc->anim_pause = pause;
+        }
+      break;
+
+    case LAMENT_PILLAR_SPIN:
+      {
+        Bool negp = (lc->anim_r < 0);
+        lc->anim_r += (negp ? 1 : -1) * speed;
+        if (negp ? lc->anim_r > 0 : lc->anim_r < 0)
+          {
+            lc->anim_r = 0;
+            lc->type = LAMENT_PILLAR_IN;
+          }
+      }
+      break;
+
+    case LAMENT_PILLAR_IN:
+      {
+        Bool negp = (lc->anim_y < 0);
+        lc->anim_y += (negp ? 1 : -1) * 0.005 * speed;
+        if (negp ? lc->anim_y > 0 : lc->anim_y < 0)
+          {
+            lc->anim_y = 0;
+            lc->anim_z = 0;
+            lc->type = LAMENT_BOX;
+            lc->anim_pause = pause;
+          }
+      }
+      break;
+
+      /* -------------------------------------------------------------- */
+
+    case LAMENT_SPHERE_OUT:
+      {
+        lc->anim_y += 0.01 * speed;
+        if (lc->anim_y >= 1)
+          {
+            lc->anim_y = 1;
+            lc->type = LAMENT_SPHERE_IN;
+            lc->anim_pause = pause2 * (1 + frand(1) + frand(1));
+          }
+      }
+      break;
+
+    case LAMENT_SPHERE_IN:
+      {
+        lc->anim_y -= 0.01 * speed;
+        if (lc->anim_y <= 0)
+          {
+            lc->anim_y = 0;
+            lc->type = LAMENT_BOX;
+            lc->anim_pause = pause;
+          }
+      }
+      break;
+
+      /* -------------------------------------------------------------- */
+
+    case LAMENT_LEVIATHAN_SPIN:
+      lc->anim_r += 3.5 * speed;
+      if (lc->anim_r >= 360 * 3)
+	{
+	  lc->anim_r = 0;
+	  lc->type = LAMENT_LEVIATHAN_FADE;
+	  lc->anim_pause = 0;
+	}
+      break;
+
+    case LAMENT_LEVIATHAN_FADE:
+      lc->anim_z += 0.01 * speed;
+      if (lc->anim_z >= 1)
+	{
+	  lc->anim_z = 1;
+	  lc->type = LAMENT_LEVIATHAN_TWIST;
+	  lc->anim_pause = 0;
+	}
+      break;
+
+    case LAMENT_LEVIATHAN_TWIST:
+      lc->anim_y += 2 * speed;
+      lc->anim_z = 1;
+      if (lc->anim_y >= 180)
+	{
+	  lc->anim_y = 0;
+	  lc->type = LAMENT_LEVIATHAN_COLLAPSE;
+	  lc->anim_pause = 0;
+	}
+      break;
+
+    case LAMENT_LEVIATHAN_COLLAPSE:
+      lc->anim_y += 0.01 * speed;
+      if (lc->anim_y >= 1)
+	{
+	  lc->anim_y = 1.0;
+	  lc->type = LAMENT_LEVIATHAN_EXPAND;
+	  lc->anim_pause = pause2 * 4;
+	}
+      break;
+
+    case LAMENT_LEVIATHAN_EXPAND:
+      lc->anim_y -= 0.005 * speed;
+      if (lc->anim_y <= 0)
+	{
+	  lc->anim_y = 180;
+	  lc->type = LAMENT_LEVIATHAN_UNTWIST;
+	}
+      break;
+
+    case LAMENT_LEVIATHAN_UNTWIST:
+      lc->anim_y -= 2 * speed;
+      lc->anim_z = 1;
+      if (lc->anim_y <= 0)
+	{
+	  lc->anim_y = 0;
+	  lc->type = LAMENT_LEVIATHAN_UNFADE;
+	  lc->anim_pause = 0;
+	}
+      break;
+
+    case LAMENT_LEVIATHAN_UNFADE:
+      lc->anim_z -= 0.1 * speed;
+      if (lc->anim_z <= 0)
+	{
+	  lc->anim_z = 0;
+	  lc->type = LAMENT_LEVIATHAN_UNSPIN;
+	  lc->anim_pause = 0;
+	}
+      break;
+
+    case LAMENT_LEVIATHAN_UNSPIN:
+      lc->anim_r += 3.5 * speed;
+      if (lc->anim_r >= 360 * 2)
+	{
+	  lc->anim_r = 0;
+	  lc->type = LAMENT_BOX;
+	  lc->anim_pause = pause2;
 	}
       break;
 
@@ -1803,34 +1497,41 @@ animate(ModeInfo *mi)
       abort();
       break;
     }
-}
 
+# ifdef DEBUG_MODE
 
-
-/* Window management, etc
- */
+  lc->anim_pause = 0;
 
-ENTRYPOINT void
-reshape_lament(ModeInfo *mi, int width, int height)
-{
-  GLfloat h = (GLfloat) height / (GLfloat) width;
-  glViewport(0, 0, (GLint) width, (GLint) height);
+  if (lc->type == LAMENT_BOX)
+    lc->type = DEBUG_MODE;
 
-  glMatrixMode(GL_PROJECTION);
-  glLoadIdentity();
-  glFrustum(-1.0, 1.0, -h, h, 5.0, 60.0);
-  glMatrixMode(GL_MODELVIEW);
-  glLoadIdentity();
-  glTranslatef(0.0, 0.0, -40.0);
-  glClear(GL_COLOR_BUFFER_BIT);
+  if (lc->ffwdp)
+    {
+      lc->ffwdp = 0;
+      while (lc->type != DEBUG_MODE)
+        animate (mi);
+    }
+
+# else /* !DEBUG_MODE */
+
+  if (lc->ffwdp && lc->type == LAMENT_BOX)
+    {
+      lc->ffwdp = 0;
+      while (lc->type == LAMENT_BOX)
+        animate (mi);
+      lc->anim_pause = 0;
+    }
+
+# endif /* !DEBUG_MODE */
 }
 
 
 static void
-gl_init(ModeInfo *mi)
+gl_init (ModeInfo *mi)
 {
   lament_configuration *lc = &lcs[MI_SCREEN(mi)];
   Bool wire = MI_IS_WIREFRAME(mi);
+  int i;
 
   if (wire)
     do_texture = False;
@@ -1852,7 +1553,6 @@ gl_init(ModeInfo *mi)
 /*    glLightfv(GL_LIGHT1, GL_AMBIENT,  amb1); */
       glLightfv(GL_LIGHT0, GL_DIFFUSE,  dif0);
       glLightfv(GL_LIGHT1, GL_DIFFUSE,  dif1);
-      set_colors(exterior_color);
 
       glEnable(GL_LIGHTING);
       glEnable(GL_LIGHT0);
@@ -1866,22 +1566,23 @@ gl_init(ModeInfo *mi)
 
   if (do_texture)
     {
-#ifdef HAVE_GLBINDTEXTURE
       int i;
-      for (i = 0; i < 6; i++)
+      for (i = 0; i < countof(lc->texids); i++)
 	glGenTextures(1, &lc->texids[i]);
 
-      parse_image_data(mi);
+      lc->texture = xpm_to_ximage (mi->dpy,
+                                   mi->xgwa.visual,
+                                   mi->xgwa.colormap,
+                                   lament512);
 
       glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
       /* messes up -fps */
       /* glPixelStorei(GL_UNPACK_ROW_LENGTH, lc->texture->width); */
 
-      for (i = 0; i < 6; i++)
+      for (i = 0; i < countof(lc->texids); i++)
 	{
 	  int height = lc->texture->width;	/* assume square */
 	  glBindTexture(GL_TEXTURE_2D, lc->texids[i]);
-	  set_colors(exterior_color);
 
           clear_gl_error();
 	  glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
@@ -1893,92 +1594,114 @@ gl_init(ModeInfo *mi)
 			(lc->texture->bytes_per_line * height * i)));
           check_gl_error("texture");
 
-	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-	  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-	}
+          glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+          glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+          glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+          glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+          check_gl_error("texture");
 
-#else  /* !HAVE_GLBINDTEXTURE */
-      fprintf(stderr,
-	      "%s: this version of GL doesn't support multiple texture maps.\n"
-	      "\tGet OpenGL 1.1.\n",
-	      progname);
-      exit (1);
-#endif /* !HAVE_GLBINDTEXTURE */
+          /* This makes scaled pixmaps tolerable to look at. */
+# if !defined(GL_TEXTURE_LOD_BIAS) && defined(GL_TEXTURE_LOD_BIAS_EXT)
+#   define GL_TEXTURE_LOD_BIAS GL_TEXTURE_LOD_BIAS_EXT
+# endif
+# ifdef GL_TEXTURE_LOD_BIAS
+          glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, 0.25);
+# endif
+          clear_gl_error();  /* invalid enum on iPad 3 */
+	}
     }
 
-  lc->box = glGenLists(16);
-  lc->star1 = lc->box+1;
-  lc->star2 = lc->box+2;
-  lc->tetra_une = lc->box+3;
-  lc->tetra_usw = lc->box+4;
-  lc->tetra_dwn = lc->box+5;
-  lc->tetra_dse = lc->box+6;
-  lc->tetra_mid = lc->box+7;
-  lc->lid_0 = lc->box+8;
-  lc->lid_1 = lc->box+9;
-  lc->lid_2 = lc->box+10;
-  lc->lid_3 = lc->box+11;
-  lc->lid_4 = lc->box+12;
-  lc->taser_base = lc->box+13;
-  lc->taser_lifter = lc->box+14;
-  lc->taser_slider = lc->box+15;
+  for (i = 0; i < countof(all_objs); i++)
+    {
+      GLfloat s = 1/3.0;  /* box is 3" square */
+      const struct gllist *L = *all_objs[i];
+      const GLfloat *f = (const GLfloat *) L->data;
+      int j;
 
-  box(mi, wire);
-  star(mi, True, wire);
-  star(mi, False, wire);
-  tetra(mi, wire);
-  lid(mi, wire);
-  taser(mi, wire);
+      lc->dlists[i] = glGenLists(1);
+      lc->polys[i] = L->points / 3;
+      glNewList(lc->dlists[i], GL_COMPILE);
+      if (L->primitive != GL_TRIANGLES) abort();
+      if (L->format != GL_N3F_V3F) abort();
+
+      glPushMatrix();
+      glTranslatef (-0.5, -0.5, -0.5);
+      glScalef (s, s, s);
+      
+      for (j = 0; j < L->points; j += 3)
+        {
+          int face, outerp;
+          Bool blackp = (i == OBJ_ISO_BASE_A || i == OBJ_ISO_BASE_B);
+          which_face (mi, f, &face, &outerp); /* from norm of first vert */
+
+          set_colors (outerp ? exterior_color :
+                      blackp ? black_color : interior_color);
+          glBindTexture (GL_TEXTURE_2D, 
+                         (outerp ? lc->texids[face-1] :
+                          blackp ? 0 : lc->texids[6]));
+
+          glBegin (wire ? GL_LINE_LOOP : GL_TRIANGLES);
+          if (face) texturize_vert (mi, face, f+3);
+          glNormal3fv (f); f += 3; glVertex3fv (f); f += 3;
+          if (face) texturize_vert (mi, face, f+3);
+          glNormal3fv (f); f += 3; glVertex3fv (f); f += 3;
+          if (face) texturize_vert (mi, face, f+3);
+          glNormal3fv (f); f += 3; glVertex3fv (f); f += 3;
+          glEnd();
+        }
+      glPopMatrix();
+
+      glEndList();
+    }
 }
 
 
-# ifdef HAVE_MESA_GL
-
-# include <signal.h>
-
-static RETSIGTYPE
-lament_signal_kludge (int sig)
+ENTRYPOINT Bool
+lament_handle_event (ModeInfo *mi, XEvent *event)
 {
-  signal (sig, SIG_DFL);
-  fprintf (stderr,
-           "\n"
-           "%s: dying with signal %d (%s).\n"
-           "\n"
-           "\tThis is almost certainly a bug in the Mesa GL library,\n"
-           "\tespecially if the stack trace in the core file mentions\n"
-           "\t`lambda_textured_triangle' or `render_quad'.\n"
-           "\n"
-           "\tFirst make sure that you have the latest version of Mesa.\n"
-           "\tIf that doesn't fix it, then I encourage you to report this\n"
-           "\tbug to the Mesa maintainers at <http://www.mesa3d.org/>.\n"
-           "\n",
-           progname,
-           sig,
-           (sig == SIGILL ? "SIGILL" :
-            sig == SIGFPE ? "SIGFPE" :
-            sig == SIGBUS ? "SIGBUS" :
-            sig == SIGSEGV ? "SIGSEGV" : "???"));
-  fflush (stderr);
-  kill (getpid (), sig);
-}
+  lament_configuration *lc = &lcs[MI_SCREEN(mi)];
 
-static void
-handle_signals (void)
-{
-  signal (SIGILL,  lament_signal_kludge);
-  signal (SIGFPE,  lament_signal_kludge);
-  signal (SIGBUS,  lament_signal_kludge);
-  signal (SIGSEGV, lament_signal_kludge);
+  if (gltrackball_event_handler (event, lc->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &lc->button_down_p))
+    return True;
+  else if (event->xany.type == KeyPress)
+    {
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+      if (c == ' ' || c == '\t')
+        {
+          lc->ffwdp = True;
+          return True;
+        }
+    }
+
+  return False;
 }
-# endif /* HAVE_MESA_GL */
 
 
 ENTRYPOINT void
-init_lament(ModeInfo *mi)
+reshape_lament (ModeInfo *mi, int width, int height)
+{
+  GLfloat h = (GLfloat) height / (GLfloat) width;
+  glViewport(0, 0, (GLint) width, (GLint) height);
+
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glFrustum(-1.0, 1.0, -h, h, 5.0, 60.0);
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+  glTranslatef(0.0, 0.0, -40.0);
+  glClear(GL_COLOR_BUFFER_BIT);
+}
+
+
+ENTRYPOINT void
+init_lament (ModeInfo *mi)
 {
   lament_configuration *lc;
+  int i;
   if (!lcs)
     {
       lcs = (lament_configuration *)
@@ -1995,7 +1718,7 @@ init_lament(ModeInfo *mi)
   {
     double rot_speed = 0.5;
     lc->rot = make_rotator (rot_speed, rot_speed, rot_speed, 1, 0, True);
-    lc->trackball = gltrackball_init ();
+    lc->trackball = gltrackball_init (True);
   }
 
   lc->type = LAMENT_BOX;
@@ -2007,39 +1730,40 @@ init_lament(ModeInfo *mi)
       gl_init(mi);
     }
 
-  lc->states = (lament_type *) calloc (50, sizeof (*lc->states));
+  lc->states = (lament_type *) calloc (200, sizeof (*lc->states));
   lc->nstates = 0;
-  lc->states[lc->nstates++] = LAMENT_STAR_OUT;
-  lc->states[lc->nstates++] = LAMENT_STAR_OUT;
-  lc->states[lc->nstates++] = LAMENT_TETRA_UNE;
-  lc->states[lc->nstates++] = LAMENT_TETRA_USW;
-  lc->states[lc->nstates++] = LAMENT_TETRA_DWN;
-  lc->states[lc->nstates++] = LAMENT_TETRA_DSE;
-  lc->states[lc->nstates++] = LAMENT_LID_OPEN;
-  lc->states[lc->nstates++] = LAMENT_LID_OPEN;
-  lc->states[lc->nstates++] = LAMENT_LID_OPEN;
-  lc->states[lc->nstates++] = LAMENT_TASER_OUT;
-  lc->states[lc->nstates++] = LAMENT_TASER_OUT;
-  lc->states[lc->nstates++] = LAMENT_BOX;
-  lc->states[lc->nstates++] = LAMENT_BOX;
-  lc->states[lc->nstates++] = LAMENT_BOX;
-  lc->states[lc->nstates++] = LAMENT_BOX;
-  lc->states[lc->nstates++] = LAMENT_BOX;
-  lc->states[lc->nstates++] = LAMENT_BOX;
-  lc->states[lc->nstates++] = LAMENT_BOX;
-  lc->states[lc->nstates++] = LAMENT_BOX;
-  lc->states[lc->nstates++] = LAMENT_BOX;
-  lc->states[lc->nstates++] = LAMENT_BOX;
+
+# define PUSH(N,WHICH) \
+    for (i = 0; i < N; i++) lc->states[lc->nstates++] = WHICH
+
+  PUSH (4, LAMENT_TETRA_UNE);		/* most common */
+  PUSH (4, LAMENT_TETRA_USW);
+  PUSH (4, LAMENT_TETRA_DWN);
+  PUSH (4, LAMENT_TETRA_DSE);
+
+  PUSH (8, LAMENT_STAR_OUT);		/* pretty common */
+  PUSH (8, LAMENT_TASER_OUT);
+  PUSH (8, LAMENT_PILLAR_OUT);
+
+  PUSH (4, LAMENT_LID_OPEN);		/* rare */
+  PUSH (2, LAMENT_SPHERE_OUT);		/* rare */
+  PUSH (1, LAMENT_LEVIATHAN_SPIN);	/* very rare */
+
+  PUSH (35, LAMENT_BOX);		/* rest state */
+# undef PUSH
+
   shuffle_states (lc);
 
-# ifdef HAVE_MESA_GL
-  handle_signals ();
-# endif /* HAVE_MESA_GL */
+# ifdef DEBUG_MODE
+  lc->type = DEBUG_MODE;
+  lc->anim_pause = 0;
+# endif
+
 }
 
 
 ENTRYPOINT void
-draw_lament(ModeInfo *mi)
+draw_lament (ModeInfo *mi)
 {
   lament_configuration *lc = &lcs[MI_SCREEN(mi)];
   Display *dpy = MI_DISPLAY(mi);
@@ -2057,7 +1781,7 @@ draw_lament(ModeInfo *mi)
   glFinish();
   glXSwapBuffers(dpy, window);
 
-  if (lc->anim_pause)
+  if (!lc->ffwdp && lc->anim_pause)
     lc->anim_pause--;
   else
     animate(mi);

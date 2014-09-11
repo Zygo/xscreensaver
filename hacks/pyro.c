@@ -353,7 +353,6 @@ static const char *pyro_defaults [] = {
   "*delay:	10000",
   "*frequency:	30",
   "*scatter:	100",
-  "*geometry:	800x500",
   0
 };
 

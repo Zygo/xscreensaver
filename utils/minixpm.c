@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -120,6 +120,16 @@ minixpm_to_ximage (Display *dpy, Visual *visual, Colormap colormap, int depth,
             {
               r = g = b = -1;
               line += 4;
+            }
+          else if (!strncasecmp(line, "white", 5))
+            {
+              r = g = b = 255;
+              line += 5;
+            }
+          else if (!strncasecmp(line, "black", 5))
+            {
+              r = g = b = 0;
+              line += 5;
             }
           else
             {

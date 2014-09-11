@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -323,7 +323,8 @@ phosphor_init (Display *dpy, Window window)
                       state->xgwa.width,
                       state->xgwa.height,
                       state->grid_width  - 1,
-                      state->grid_height - 1);
+                      state->grid_height - 1,
+                      0);
 
   return state;
 }
@@ -1209,7 +1210,8 @@ phosphor_reshape (Display *dpy, Window window, void *closure,
 
   textclient_reshape (state->tc, w, h,
                       state->grid_width  - 1,
-                      state->grid_height - 1);
+                      state->grid_height - 1,
+                      0);
 }
 
 

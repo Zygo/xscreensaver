@@ -85,7 +85,7 @@ struct state {
   Graph graph;
   XWindowAttributes xgwa;
   int delay2;
-  int reset;
+  int reset, force_reset;
   double t;
 
   struct params params;
@@ -972,8 +972,11 @@ celtic_draw (Display *dpy, Window window, void *closure)
     return 10000;
   }
 
-  if (st->reset) {
+  if (st->reset || st->force_reset) {
+    int delay = (st->force_reset ? 0 : st->delay2);
     st->reset = 0;
+    st->force_reset = 0;
+    st->t = 1;
 
     pattern_del(st->pattern);
     st->pattern = NULL;
@@ -986,7 +989,7 @@ celtic_draw (Display *dpy, Window window, void *closure)
                             st->colors, &st->ncolors, True, 0, True);
 
     st->eraser = erase_window (st->dpy, st->window, st->eraser);
-    return st->delay2;
+    return (delay);
   }
 
   if (st->pattern == NULL) {
@@ -1105,6 +1108,12 @@ celtic_reshape (Display *dpy, Window window, void *closure,
 static Bool
 celtic_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->force_reset = 1;
+      return True;
+    }
   return False;
 }
 

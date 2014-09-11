@@ -580,10 +580,7 @@ static void Draw(ModeInfo * mi)
     glEnd();
     mi->polygon_count++;
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (sb->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     /* rotate the balls */
     glRotatef(sb->rotm[0], 1.0f, 0.0f, 0.0f);
@@ -705,7 +702,7 @@ ENTRYPOINT void init_sballs(ModeInfo * mi)
     }
     sb = &sballs[MI_SCREEN(mi)];
 
-    sb->trackball = gltrackball_init ();
+    sb->trackball = gltrackball_init (True);
 
     if ((sb->glx_context = init_GL(mi)) != NULL) {
 
@@ -791,39 +788,10 @@ sballs_handle_event (ModeInfo *mi, XEvent *event)
 {
   sballsstruct *sb = &sballs[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      sb->button_down_p = True;
-      gltrackball_start (sb->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      sb->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (sb->trackball, event->xbutton.button, 5,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           sb->button_down_p)
-    {
-      gltrackball_track (sb->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, sb->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &sb->button_down_p))
+    return True;
 
   return False;
 }

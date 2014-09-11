@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.29
-!                              08-Jun-2014
+!                              version 5.30
+!                              10-Sep-2014
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -57,6 +57,7 @@
 *visualID:		default
 *captureStderr: 	True
 *ignoreUninstalledPrograms: False
+*authWarningSlack:	20
 
 *textMode:		file
 *textLiteral:		XScreenSaver
@@ -362,7 +363,8 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				quasicrystal -root			    \n\
 @GL_KLUDGE@ GL: 				unknownpleasures -root			    \n\
 @GL_KLUDGE@ GL: 				projectiveplane -root			    \n\
-				tessellimage -root			    \n
+				tessellimage -root			    \n\
+@GL_KLUDGE@ GL: 				winduprobot -root			    \n
 
 
 
@@ -421,7 +423,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *passwd.uname:                  True
 
 *splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright \xa9 1991-2014 by
+*splash.body.label:		Copyright \251 1991-2014 by
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Settings
 *splash.help.label:		Help
@@ -503,6 +505,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.vidwhacker.name:     VidWhacker
 *hacks.webcollage.name:     WebCollage
 *hacks.whirlwindwarp.name:  WhirlWindWarp
+*hacks.winduprobot.name:    WindupRobot
 *hacks.xanalogtv.name:      XAnalogTV
 *hacks.xrayswarm.name:      XRaySwarm
 

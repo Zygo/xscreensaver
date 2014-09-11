@@ -109,6 +109,7 @@ grabImage_start (struct state *st, XWindowAttributes *xwa)
 {
     XFillRectangle (st->dpy, st->window, st->backgroundGC, 0, 0, 
 		    st->windowWidth, st->windowHeight);
+
     st->backgroundImage = 
 	XGetImage (st->dpy, st->window, 0, 0, st->windowWidth, st->windowHeight,
 		   ~0L, ZPixmap);
@@ -638,6 +639,12 @@ twang_reshape (Display *dpy, Window window, void *closure,
 static Bool
 twang_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
+  struct state *st = (struct state *) closure;
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->start_time = 0;
+      return True;
+    }
   return False;
 }
 
@@ -769,6 +776,7 @@ static const char *twang_defaults [] = {
 #endif
 #ifdef USE_IPHONE
   "*ignoreRotation: True",
+  "*rotateImages:   True",
 #endif
     0
 };

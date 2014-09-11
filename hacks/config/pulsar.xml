@@ -33,8 +33,7 @@
   <xscreensaver-updater />
 
   <_description>
-Draws some intersecting planes, making use of alpha blending, fog,
-textures, and mipmaps.
+Intersecting planes, with alpha blending, fog, textures, and mipmaps.
 
 Written by David Konerding; 1999.
   </_description>

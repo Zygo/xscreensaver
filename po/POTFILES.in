@@ -1,8 +1,8 @@
-# Auto-generated: Sun Jun  8 14:43:58 PDT 2014
+# Auto-generated: Wed Sep 10 20:26:41 PDT 2014
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
-driver/xscreensaver-demo.glade2
+driver/xscreensaver-demo.glade2.in
 hacks/config/abstractile.xml
 hacks/config/anemone.xml
 hacks/config/anemotaxis.xml
@@ -223,6 +223,7 @@ hacks/config/wander.xml
 hacks/config/webcollage.xml
 hacks/config/whirlwindwarp.xml
 hacks/config/whirlygig.xml
+hacks/config/winduprobot.xml
 hacks/config/worm.xml
 hacks/config/wormhole.xml
 hacks/config/xanalogtv.xml

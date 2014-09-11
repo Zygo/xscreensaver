@@ -77,7 +77,7 @@
 
 /* #define DEBUG 1 */
 
-#ifdef DEBUG
+#if defined(DEBUG) && (defined(__linux) || defined(__FreeBSD__))
 /* only works on linux + freebsd */
 #include <machine/cpufunc.h>
 
@@ -216,8 +216,8 @@ analogtv_set_defaults(analogtv *it, char *prefix)
   printf("  controls: tint=%g color=%g brightness=%g contrast=%g\n",
          it->tint_control, it->color_control, it->brightness_control,
          it->contrast_control);
-  printf("  freq_error %g: %g %d\n",
-         it->freq_error, it->freq_error_inc, it->flutter_tint);
+/*  printf("  freq_error %g: %g %d\n",
+         it->freq_error, it->freq_error_inc, it->flutter_tint); */
   printf("  desync: %g %d\n",
          it->horiz_desync, it->flutter_horiz_desync);
   printf("  hashnoise rpm: %g\n",
@@ -319,19 +319,18 @@ analogtv_configure(analogtv *it)
   /* If the window is very small, don't let the image we draw get lower
      than the actual TV resolution (266x200.)
 
-     If the aspect ratio of the window is within 15% of a 4:3 ratio,
+     If the aspect ratio of the window is close to a 4:3 or 16:9 ratio,
      then scale the image to exactly fill the window.
 
      Otherwise, center the image either horizontally or vertically,
-     padding on the left+right, or top+bottom, but not both.
+     letterboxing or pillarboxing (but not both).
 
      If it's very close (2.5%) to a multiple of VISLINES, make it exact
      For example, it maps 1024 => 1000.
    */
-  float percent = 0.15;  /* jwz: 20% caused severe top/bottom clipping
-                                 in Pong on 1680x1050 iMac screen. */
-  float min_ratio = 4.0 / 3.0 * (1 - percent);
-  float max_ratio = 4.0 / 3.0 * (1 + percent);
+  float percent = 0.15;
+  float min_ratio =  4.0 / 3.0 * (1 - percent);
+  float max_ratio = 16.0 / 9.0 * (1 + percent);
   float ratio;
   float height_snap=0.025;
 
@@ -341,8 +340,8 @@ analogtv_configure(analogtv *it)
 
 #ifdef USE_IPHONE
   /* Fill the whole iPhone screen, even though that distorts the image. */
-  min_ratio = 640.0 / 1136.0 * (1 - percent);
-  max_ratio = 1136.0 / 640.0 * (1 + percent);
+  min_ratio = 0;
+  max_ratio = 10;
 #endif
 
   if (wlim < 266 || hlim < 200)
@@ -364,7 +363,7 @@ analogtv_configure(analogtv *it)
                wlim, hlim, min_ratio, ratio, max_ratio);
 # endif
     }
-  else if (ratio > max_ratio)
+  else if (ratio >= max_ratio)
     {
       wlim = hlim*max_ratio;
 # ifdef DEBUG
@@ -374,7 +373,7 @@ analogtv_configure(analogtv *it)
                min_ratio, ratio, max_ratio);
 # endif
     }
-  else /* ratio < min_ratio */
+  else /* ratio <= min_ratio */
     {
       hlim = wlim/min_ratio;
 # ifdef DEBUG

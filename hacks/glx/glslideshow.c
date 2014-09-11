@@ -1,4 +1,4 @@
-/* glslideshow, Copyright (c) 2003-2012 Jamie Zawinski <jwz@jwz.org>
+/* glslideshow, Copyright (c) 2003-2014 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and smoothly pans around them; crossfades
  * when loading new images.
  *
@@ -160,12 +160,7 @@ typedef struct {
   Bool checked_fps_p;		/* Whether we have checked for a low
                                    frame rate. */
 
-# ifdef HAVE_GLBITMAP
-  XFontStruct *xfont;		/* for printing image file names */
-  GLuint font_dlist;
-# else
-  texture_font_data *font_data;
-# endif
+  texture_font_data *font_data;	/* for printing image file names */
 
   int sprite_id, image_id;      /* debugging id counters */
 
@@ -816,22 +811,12 @@ draw_sprite (ModeInfo *mi, sprite *sp)
         int x = 10;
         int y = mi->xgwa.height - 10;
         glColor4f (0, 0, 0, sp->opacity);   /* cheap-assed dropshadow */
-        print_gl_string (mi->dpy,
-# ifdef HAVE_GLBITMAP
-                         ss->xfont, ss->font_dlist,
-# else
-                         ss->font_data,
-# endif
+        print_gl_string (mi->dpy, ss->font_data,
                          mi->xgwa.width, mi->xgwa.height, x, y,
                          img->title, False);
         x++; y++;
         glColor4f (1, 1, 1, sp->opacity);
-        print_gl_string (mi->dpy,
-# ifdef HAVE_GLBITMAP
-                         ss->xfont, ss->font_dlist,
-# else
-                         ss->font_data,
-# endif
+        print_gl_string (mi->dpy, ss->font_data,
                          mi->xgwa.width, mi->xgwa.height, x, y,
                          img->title, False);
       }
@@ -957,24 +942,7 @@ slideshow_handle_event (ModeInfo *mi, XEvent *event)
 {
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      ss->change_now_p = True;
-      return True;
-    }
-  else if (event->xany.type == KeyPress)
-    {
-      KeySym keysym;
-      char c = 0;
-      XLookupString (&event->xkey, &c, 1, &keysym, 0);
-      if (c == ' ' || c == '\r' || c == '\n' || c == '\t')
-        {
-          ss->change_now_p = True;
-          return True;
-        }
-    }
-  else if (event->xany.type == Expose ||
+  if (event->xany.type == Expose ||
            event->xany.type == GraphicsExpose ||
            event->xany.type == VisibilityNotify)
     {
@@ -982,6 +950,11 @@ slideshow_handle_event (ModeInfo *mi, XEvent *event)
       if (debug_p)
         fprintf (stderr, "%s: exposure\n", blurb());
       return False;
+    }
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      ss->change_now_p = True;
+      return True;
     }
 
   return False;
@@ -1148,11 +1121,7 @@ init_slideshow (ModeInfo *mi)
 
   if (debug_p) glLineWidth (3);
 
-#ifdef HAVE_GLBITMAP
-  load_font (mi->dpy, "titleFont", &ss->xfont, &ss->font_dlist);
-#else
-  ss->font_data = load_texture_font (mi->dpy, "Font");
-#endif
+  ss->font_data = load_texture_font (mi->dpy, "titleFont");
 
   if (debug_p)
     hack_resources();

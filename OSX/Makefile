@@ -92,6 +92,32 @@ check_gc:
   exit $$RESULT
 
 
+check_coretext:
+	@\
+  DIR="build/Release" ;							\
+  RESULT=0 ;								\
+  for S in "$$DIR/"*.{saver,app} ; do					\
+   SS=`echo "$$S" | sed -e 's@^.*/@@' -e 's/[.][a-z]*$$//'` ;		\
+   D="$$S/Contents/MacOS/$$SS" ;					\
+   FF=`otool -l "$$D"							\
+      | fgrep '/CoreText.framework/'					\
+      | sed -n 's/^ *name \([^ ]*\).*$$/\1/p'` ;			\
+   if [ -z "$$FF" ] ; then						\
+     echo "$$S not linked with CoreText" >/dev/null ;			\
+   else 								\
+     OK=`echo "$$FF" | fgrep -v '/ApplicationServices.framework/'` ;	\
+     if [ ! -z "$$OK" ]; then						\
+       echo "$$S is linked with the wrong CoreText: $$FF" ;		\
+       RESULT=1 ;							\
+     else								\
+       echo "$$S linked right: $$FF" >/dev/null ;			\
+     fi ;								\
+   fi ;									\
+  done ;								\
+  if [ "$$RESULT" = 0 ]; then echo "CoreText linked correctly" ; fi ;	\
+  exit $$RESULT
+
+
 update_thumbs::
 	./update-thumbnail.pl $(THUMBDIR) build/Release/*.saver
 
@@ -193,7 +219,10 @@ build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.
 
 
 # -format UDBZ saves 4% (~1.2 MB) over UDZO.
-dmg:: distdepend check_versions check_gc build/Release/installer.pkg
+dmg:: distdepend
+dmg:: check_versions check_gc check_coretext
+dmg:: build/Release/installer.pkg
+dmg::
 	@								      \
   set -e ;								      \
   SRC=../utils/version.h ;						      \
@@ -224,18 +253,24 @@ dmg:: distdepend check_versions check_gc build/Release/installer.pkg
      echo savertester` ;						      \
 									      \
   for f in $$SRC/*.{saver,app} $$EXTRAS ; do				      \
+   f2=`basename "$$f"` ;						      \
    ok=yes ;								      \
    ff=`echo $$f | perl -e '$$_=<>; s@^.*/(.*)\..*$$@\L$$1@; print'`;	      \
    for r in $$retired ; do						      \
     if [ "$$ff" = "$$r" ]; then ok=no ; fi ;				      \
    done ;								      \
+   DSTNAME="" ;								      \
+   if [ "$$f2" = "XScreenSaverUpdater.app" ]; then			      \
+     DSTNAME=".$$f2" ;							      \
+   fi ;									      \
    if [ "$$ok" = yes ]; then						      \
-    echo + cp -pR "$$f" "$$DST/" ;					      \
-           cp -pR "$$f" "$$DST/" ;					      \
+    echo + cp -pR "$$f" "$$DST/$$DSTNAME" ;				      \
+           cp -pR "$$f" "$$DST/$$DSTNAME" ;				      \
    else									      \
     echo skipping "$$f" ;						      \
    fi ;									      \
   done ;								      \
+									      \
   set -x ;								      \
   cp -p bindist.rtf "$$STAGE/Read Me.rtf" ;				      \
   cp -p build/Release/installer.pkg "$$PKG" ;				      \
@@ -257,3 +292,62 @@ dmg:: distdepend check_versions check_gc build/Release/installer.pkg
   xattr -w com.apple.quarantine "0000;00000000;;" "$$DMG" ;		      \
   rm -f "$$TMPDMG" ;							      \
   ls -ldhgF "$$DMG"
+
+
+# When debugging, sometimes I have to reset the preferences for all
+# the savers.  Also I like FPS to be turned on, and them all to be
+# pointed at the same image directory.
+#
+show_prefs::
+	@cd build/Debug ;						      \
+	for f in *.saver ; do						      \
+	  f=`echo "$$f" | sed 's/\..*//'` ;				      \
+	  echo "########################## $$f" ;			      \
+	  defaults -currentHost read org.jwz.xscreensaver."$$f" 2>&- ;	      \
+	done ;								      \
+	for f in Apple2 Phosphor updater ; do				      \
+	  echo "########################## $$f" ;			      \
+	  defaults read org.jwz.xscreensaver."$$f" 2>&- ;		      \
+	done
+
+reset_prefs::
+	@cd build/Debug ;						      \
+	W1='defaults' ;							      \
+	W2="$$W1 -currentHost write" ;					      \
+	img='~/Pictures/Screensaver' ;					      \
+	for f in *.saver ; do						      \
+	  name=`echo "$$f" | sed 's/\..*//'` ;				      \
+	  echo "########################## $$name" ;			      \
+	  domain="org.jwz.xscreensaver" ;				      \
+	  dd="$$domain.$$name" ;					      \
+	  $$W1 -currentHost delete "$$dd" 2>&- ;			      \
+	  $$W2 "$$dd" doFPS -bool true ;				      \
+	  if [ -f $$f/Contents/Resources/xscreensaver-text ] ; then	      \
+	    $$W2 "$$dd" textMode url ;					      \
+	  fi ;								      \
+	  if [ -f $$f/Contents/Resources/xscreensaver-getimage-file ] ; then  \
+	    $$W2 "$$dd" chooseRandomImages -bool true ;			      \
+	    $$W2 "$$dd" grabDesktopImages -bool false ;			      \
+	    $$W2 "$$dd" imageDirectory "$$img" ;       			      \
+	  fi ;								      \
+	  if ( strings "$$f/Contents/MacOS/$$name" |			      \
+		grep NSOpenGLContext >/dev/null ) ; then		      \
+	    $$W2 "$$dd" multiSample -bool true ;			      \
+	  fi ;								      \
+	done ;								      \
+									      \
+	$$W1 delete "$$domain.Apple2" 2>&- ;				      \
+	$$W1 delete "$$domain.Phosphor" 2>&- ;				      \
+	$$W1 delete "$$domain.updater" 2>&- ;				      \
+	$$W1 write  "$$domain.updater" SUScheduledCheckIntervalKey 86400;     \
+									      \
+	$$W2 "$$domain.BoxFit" grab -bool true ;			      \
+	$$W2 "$$domain.FlipFlop" textured -bool true ;			      \
+	$$W2 "$$domain.GLSlideshow" titles -bool true ;			      \
+	$$W2 "$$domain.Photopile" titles -bool true ;			      \
+	$$W2 "$$domain.SkyTentacles" mode cel ;				      \
+	$$W2 "$$domain.Sonar" ping					      \
+	  '/etc/hosts,$$HOME/.ssh/known_hosts,$$HOME/.ssh/known_hosts2' ;     \
+	$$W2 "$$domain.XMatrix" matrixFont small ;			      \
+	$$W2 "$$domain.XMatrix" textMode literal ;			      \
+	$$W2 "$$domain.XMatrix" textLiteral "MONKEY BUTTER" ;		      \

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2013 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2008-2014 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -19,7 +19,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.7 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my ($version) = ('$Revision: 1.9 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -30,7 +30,8 @@ foreach (qw(count cycles delay ncolors size font)) {
 }
 $xlockmore_default_opts .= 
  "{\"-wireframe\", \".wireframe\", XrmoptionNoArg, \"true\"},\n" .
- "{\"-3d\", \".use3d\", XrmoptionNoArg, \"true\"},\n";
+ "{\"-3d\", \".use3d\", XrmoptionNoArg, \"true\"},\n" .
+ "{\"-no-3d\", \".use3d\", XrmoptionNoArg, \"false\"},\n";
 
 my $thread_default_opts = 
   "{\"-threads\",    \".useThreads\", XrmoptionNoArg, \"True\"},\n" .
@@ -62,10 +63,9 @@ sub parse_src($) {
 
   $file = "glx/$file" unless (-f $file);
   my $body = '';
-  local *IN;
-  open (IN, "<$file") || error ("$file: $!");
-  while (<IN>) { $body .= $_; }
-  close IN;
+  open (my $in, '<', $file) || error ("$file: $!");
+  while (<$in>) { $body .= $_; }
+  close $in;
   $file =~ s@^.*/@@;
 
   my $xlockmore_p = 0;

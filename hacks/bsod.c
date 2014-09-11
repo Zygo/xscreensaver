@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -2628,7 +2628,7 @@ hppa_linux (Display *dpy, Window window)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.100 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $Revision: 1.101 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },
@@ -4318,18 +4318,8 @@ bsod_event (Display *dpy, Window window, void *closure, XEvent *event)
 
   /* pick a new mode and restart when mouse clicked, or certain keys typed. */
 
-  if (event->type == ButtonPress)
-    return True;
-  else if (event->type == ButtonRelease)
+  if (screenhack_event_helper (dpy, window, event))
     reset_p = True;
-  else if (event->type == KeyPress)
-    {
-      KeySym keysym;
-      char c = 0;
-      XLookupString (&event->xkey, &c, 1, &keysym, 0);
-      if (c == ' ' || c == '\t' || c == '\r' || c == '\n')
-        reset_p = True;
-    }
 
   if (reset_p)
     {

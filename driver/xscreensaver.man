@@ -643,6 +643,13 @@ if an attempt is made to run the nonexistent program.  Also, the
 program will suppress the non-existent programs from the list if this
 is true.  Default: false.
 .TP 8
+.B authWarningSlack\fP (class \fBInteger\fP)
+If \fIall\fP failed unlock attempts (incorrect password entered) were
+made within this period of time, the usual dialog that warns about such
+attempts after a successful login will be suppressed. The assumption
+is that incorrect passwords entered within a few seconds of a correct
+one are user error, rather than hostile action.  Default 20 seconds.
+.TP 8
 .B GetViewPortIsFullOfLies\fP (class \fBBoolean\fP)
 Set this to true if the xscreensaver window doesn't cover the whole screen.
 This works around a longstanding XFree86 bug #421.  See the 

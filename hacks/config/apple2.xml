@@ -42,9 +42,9 @@
   </hgroup>
 
  <_description>
-Simulates an original Apple ][ Plus computer in all its 1979 glory.  It
-also reproduces the appearance of display on a color television set of
-the period.
+An Apple ][+ computer simulation, in all its 1979 glory.  It also
+reproduces the appearance of display on a color television set of the
+period.
 
 In "Basic Programming Mode", a simulated user types in a BASIC program
 and runs it.  In "Text Mode", it displays the output of a program, or

@@ -36,8 +36,7 @@
   <xscreensaver-updater />
 
   <_description>
-This draws an animation of flight through an asteroid field, with
-changes in rotation and direction.
+An asteroid field zooms by.
 
 Written by Jamie Zawinski; 1992.
   </_description>

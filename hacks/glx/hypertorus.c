@@ -830,8 +830,8 @@ ENTRYPOINT void init_hypertorus(ModeInfo *mi)
   hp = &hyper[MI_SCREEN(mi)];
 
   
-  hp->trackballs[0] = gltrackball_init();
-  hp->trackballs[1] = gltrackball_init();
+  hp->trackballs[0] = gltrackball_init(True);
+  hp->trackballs[1] = gltrackball_init(True);
   hp->current_trackball = 0;
   hp->button_pressed = False;
 

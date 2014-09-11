@@ -1,5 +1,5 @@
 /* windows.c --- turning the screen black; dealing with visuals, virtual roots.
- * xscreensaver, Copyright (c) 1991-2011 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -396,10 +396,10 @@ ensure_no_screensaver_running (Display *dpy, Screen *screen)
 	  && type != None)
 	{
 	  unsigned char *id;
-	  if (!XGetWindowProperty (dpy, kids[i], XA_SCREENSAVER_ID, 0, 512,
+	  if (XGetWindowProperty (dpy, kids[i], XA_SCREENSAVER_ID, 0, 512,
 				   False, XA_STRING, &type, &format, &nitems,
 				   &bytesafter, &id)
-	      == Success
+	      != Success
 	      || type == None)
 	    id = (unsigned char *) "???";
 

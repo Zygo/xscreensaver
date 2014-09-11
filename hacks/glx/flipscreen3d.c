@@ -119,43 +119,25 @@ static Screenflip *screenflip = NULL;
 static const GLfloat viewer[] = {0.0, 0.0, 15.0};
 
 
+static void getSnapshot (ModeInfo *);
+
+
 ENTRYPOINT Bool
 screenflip_handle_event (ModeInfo *mi, XEvent *event)
 {
   Screenflip *c = &screenflip[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
+  if (gltrackball_event_handler (event, c->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &c->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
     {
-      c->button_down_p = True;
-      gltrackball_start (c->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      c->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (c->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           c->button_down_p)
-    {
-      gltrackball_track (c->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
+      if (!c->waiting_for_image_p)
+        {
+          getSnapshot (mi);
+          return True;
+        }
     }
 
   return False;
@@ -461,7 +443,7 @@ ENTRYPOINT void init_screenflip(ModeInfo *mi)
  c = &screenflip[screen];
  c->window = MI_WINDOW(mi);
 
- c->trackball = gltrackball_init ();
+ c->trackball = gltrackball_init (False);
 
  if ((c->glx_context = init_GL(mi)) != NULL) {
       reshape_screenflip(mi, MI_WIDTH(mi), MI_HEIGHT(mi));

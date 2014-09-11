@@ -262,10 +262,7 @@ draw_main(ModeInfo *mi, rubikblocks_conf *cp)
   get_position(cp->rot, &x, &y, &z, !cp->button_down);
   glTranslatef((x-0.5)*6, (y-0.5)*6, -20);
 
-  /* Do it twice because we don't track the device's orientation. */
-  glRotatef( current_device_rotation(), 0, 0, 1);
   gltrackball_rotate(cp->trackball);
-  glRotatef(-current_device_rotation(), 0, 0, 1);
 
   get_rotation(cp->rot, &x, &y, &z, !cp->button_down);
   glRotatef(x*360, 1, 0, 0);
@@ -522,7 +519,7 @@ init_cp(rubikblocks_conf *cp)
 
   cp->rot = make_rotator(spin?spinspeed:0, spin?spinspeed:0, spin?spinspeed:0,
       0.1, wander?wspeed:0, True);
-  cp->trackball = gltrackball_init();
+  cp->trackball = gltrackball_init(True);
 
   if(rndstart) randomize(cp);
 }
@@ -626,32 +623,12 @@ ENTRYPOINT Bool
 rubikblocks_handle_event (ModeInfo *mi, XEvent *event)
 {
   rubikblocks_conf *cp = &rubikblocks[MI_SCREEN(mi)];
-  if(event->xany.type == ButtonPress && event->xbutton.button == Button1)
-  {
-    cp->button_down = True;
-    gltrackball_start(cp->trackball, event->xbutton.x, event->xbutton.y,
-        MI_WIDTH(mi), MI_HEIGHT(mi));
+
+  if (gltrackball_event_handler (event, cp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &cp->button_down))
     return True;
-  }
-  else if(event->xany.type == ButtonRelease && event->xbutton.button == Button1)
-  {
-    cp->button_down = False;
-    return True;
-  }
-  else if(event->xany.type == ButtonPress &&
-      (event->xbutton.button == Button4 || event->xbutton.button == Button5 ||
-       event->xbutton.button == Button6 || event->xbutton.button == Button7))
-  {
-    gltrackball_mousewheel(cp->trackball,
-        event->xbutton.button, 5, !!event->xbutton.state);
-    return True;
-  }
-  else if(event->xany.type == MotionNotify && cp->button_down)
-  {
-    gltrackball_track(cp->trackball, event->xmotion.x, event->xmotion.y,
-        MI_WIDTH (mi), MI_HEIGHT (mi));
-    return True;
-  }
+
   return False;
 }
 

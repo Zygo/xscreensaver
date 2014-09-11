@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -114,8 +114,13 @@
 # define GL_V2F					0x2A20
 # define GL_V3F					0x2A21
 # define GL_VIEWPORT_BIT			0x00000800
+# define GL_INT					0x1404
+# define GL_DOUBLE				0x140A
 
 #endif
+
+
+extern void jwzgles_reset (void);
 
 
 /* Prototypes for the things re-implemented in jwzgles.c 
@@ -284,6 +289,7 @@ extern void jwzgles_glTexParameterf (GLuint, GLuint, GLfloat);
 extern void jwzgles_glTexParameteri (GLuint, GLuint, GLuint);
 extern void jwzgles_glTexGeni (GLenum, GLenum, GLint);
 extern void jwzgles_glTexGenfv (GLenum, GLenum, const GLfloat *);
+extern void jwzgles_glGetTexGenfv (GLenum, GLenum, GLfloat *);
 extern void jwzgles_glRectf (GLfloat, GLfloat, GLfloat, GLfloat);
 extern void jwzgles_glRecti (GLint, GLint, GLint, GLint);
 extern void jwzgles_glLightModelfv (GLenum, const GLfloat *);

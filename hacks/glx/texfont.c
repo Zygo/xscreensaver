@@ -1,5 +1,4 @@
-/* texfonts, Copyright (c) 2005-2013 Jamie Zawinski <jwz@jwz.org>
- * Loads X11 fonts into textures for use with OpenGL.
+/* texfonts, Copyright (c) 2005-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -8,8 +7,10 @@
  * documentation.  No representations are made about the suitability of this
  * software for any purpose.  It is provided "as is" without express or 
  * implied warranty.
+ *
+ * Renders X11 fonts into textures for use with OpenGL.
+ * A higher level API is in glxfonts.c.
  */
-
 
 #ifdef HAVE_CONFIG_H
 # include "config.h"
@@ -37,6 +38,9 @@
 
 #include "resources.h"
 #include "texfont.h"
+
+#define DO_SUBSCRIPTS
+
 
 /* These are in xlock-gl.c */
 extern void clear_gl_error (void);
@@ -149,6 +153,20 @@ bitmap_to_texture (Display *dpy, Pixmap p, Visual *visual, int *wP, int *hP)
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
                    mipmap_p ? GL_LINEAR_MIPMAP_LINEAR : GL_LINEAR);
 
+
+  /* This makes scaled font pixmaps tolerable to look at.
+     LOD bias is part of OpenGL 1.4.
+     GL_EXT_texture_lod_bias has been present since the original iPhone.
+   */
+# if !defined(GL_TEXTURE_LOD_BIAS) && defined(GL_TEXTURE_LOD_BIAS_EXT)
+#   define GL_TEXTURE_LOD_BIAS GL_TEXTURE_LOD_BIAS_EXT
+# endif
+# ifdef GL_TEXTURE_LOD_BIAS
+  if (mipmap_p)
+    glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, 0.25);
+# endif
+  clear_gl_error();  /* invalid enum on iPad 3 */
+
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
   glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
@@ -159,72 +177,19 @@ bitmap_to_texture (Display *dpy, Pixmap p, Visual *visual, int *wP, int *hP)
 }
 
 
-/* Loads the font named by the X resource "res" and returns
-   a texture-font object.
-*/
-texture_font_data *
-load_texture_font (Display *dpy, char *res)
+static texture_font_data *
+load_texture_xfont (Display *dpy, XFontStruct *f)
 {
   Screen *screen = DefaultScreenOfDisplay (dpy);
   Window root = RootWindowOfScreen (screen);
   XWindowAttributes xgwa;
-
-  texture_font_data *data = 0;
-  char *font = get_string_resource (dpy, res, "Font");
-  const char *def1 = "-*-helvetica-medium-r-normal-*-240-*";
-  const char *def2 = "-*-helvetica-medium-r-normal-*-180-*";
-  const char *def3 = "fixed";
-  XFontStruct *f;
   int which;
   GLint old_texture = 0;
+  texture_font_data *data = 0;
 
   glGetIntegerv (GL_TEXTURE_BINDING_2D, &old_texture);
 
-  if (!strcmp (res, "fpsFont"))
-    def1 = "-*-courier-bold-r-normal-*-180-*";  /* Kludge. Sue me. */
-
   XGetWindowAttributes (dpy, root, &xgwa);
-
-  if (!res || !*res) abort();
-  if (!font) font = strdup(def1);
-
-  f = XLoadQueryFont(dpy, font);
-  if (!f && !!strcmp (font, def1))
-    {
-      fprintf (stderr, "%s: unable to load font \"%s\", using \"%s\"\n",
-               progname, font, def1);
-      free (font);
-      font = strdup (def1);
-      f = XLoadQueryFont(dpy, font);
-    }
-
-  if (!f && !!strcmp (font, def2))
-    {
-      fprintf (stderr, "%s: unable to load font \"%s\", using \"%s\"\n",
-               progname, font, def2);
-      free (font);
-      font = strdup (def2);
-      f = XLoadQueryFont(dpy, font);
-    }
-
-  if (!f && !!strcmp (font, def3))
-    {
-      fprintf (stderr, "%s: unable to load font \"%s\", using \"%s\"\n",
-               progname, font, def3);
-      free (font);
-      font = strdup (def3);
-      f = XLoadQueryFont(dpy, font);
-    }
-
-  if (!f)
-    {
-      fprintf (stderr, "%s: unable to load fallback font \"%s\" either!\n",
-               progname, font);
-      exit (1);
-    }
-
-  free (font);
-  font = 0;
 
   data = (texture_font_data *) calloc (1, sizeof(*data));
   data->dpy = dpy;
@@ -350,16 +315,76 @@ load_texture_font (Display *dpy, char *res)
 }
 
 
-/* Width of the string in pixels.
+/* Loads the font named by the X resource "res" and returns
+   a texture-font object.
+*/
+texture_font_data *
+load_texture_font (Display *dpy, char *res)
+{
+  char *font = get_string_resource (dpy, res, "Font");
+  const char *def1 = "-*-helvetica-medium-r-normal-*-240-*";
+  const char *def2 = "-*-helvetica-medium-r-normal-*-180-*";
+  const char *def3 = "fixed";
+  XFontStruct *f;
+
+  if (!strcmp (res, "fpsFont"))
+    def1 = "-*-courier-bold-r-normal-*-180-*";  /* Kludge. Sue me. */
+
+  if (!res || !*res) abort();
+  if (!font) font = strdup(def1);
+
+  f = XLoadQueryFont(dpy, font);
+  if (!f && !!strcmp (font, def1))
+    {
+      fprintf (stderr, "%s: unable to load font \"%s\", using \"%s\"\n",
+               progname, font, def1);
+      free (font);
+      font = strdup (def1);
+      f = XLoadQueryFont(dpy, font);
+    }
+
+  if (!f && !!strcmp (font, def2))
+    {
+      fprintf (stderr, "%s: unable to load font \"%s\", using \"%s\"\n",
+               progname, font, def2);
+      free (font);
+      font = strdup (def2);
+      f = XLoadQueryFont(dpy, font);
+    }
+
+  if (!f && !!strcmp (font, def3))
+    {
+      fprintf (stderr, "%s: unable to load font \"%s\", using \"%s\"\n",
+               progname, font, def3);
+      free (font);
+      font = strdup (def3);
+      f = XLoadQueryFont(dpy, font);
+    }
+
+  if (!f)
+    {
+      fprintf (stderr, "%s: unable to load fallback font \"%s\" either!\n",
+               progname, font);
+      exit (1);
+    }
+
+  free (font);
+  font = 0;
+
+  return load_texture_xfont (dpy, f);
+}
+
+
+/* Bounding box of the multi-line string, in pixels.
  */
 int
-texture_string_width (texture_font_data *data, const char *c,
-                      int *height_ret)
+texture_string_width (texture_font_data *data, const char *c, int *height_ret)
 {
+  XFontStruct *f = data->font;
   int x = 0;
   int max_w = 0;
-  XFontStruct *f = data->font;
-  int h = f->ascent + f->descent;
+  int lh = f->ascent + f->descent;
+  int h = lh;
   while (*c)
     {
       int cc = *((unsigned char *) c);
@@ -367,23 +392,24 @@ texture_string_width (texture_font_data *data, const char *c,
         {
           if (x > max_w) max_w = x;
           x = 0;
-          h += f->ascent + f->descent;
+          h += lh;
         }
       else
-        x += (f->per_char && cc >= f->min_char_or_byte2
+        x += (f->per_char
               ? f->per_char[cc-f->min_char_or_byte2].width
               : f->min_bounds.rbearing);
       c++;
     }
   if (x > max_w) max_w = x;
   if (height_ret) *height_ret = h;
-
   return max_w;
 }
 
 
-/* Draws the string in the scene at the current point.
-   Newlines, tab stops and subscripts are honored.
+/* Draws the string in the scene at the origin.
+   Newlines and tab stops are honored.
+   Any numbers inside [] will be rendered as a subscript.
+   Assumes the font has been loaded as with load_texture_font().
  */
 void
 print_texture_string (texture_font_data *data, const char *string)
@@ -566,10 +592,13 @@ void
 free_texture_font (texture_font_data *data)
 {
   int i;
-  if (data->font)
-    XFreeFont (data->dpy, data->font);
+
   for (i = 0; i < data->ntextures; i++)
     if (data->texid[i])
       glDeleteTextures (1, &data->texid[i]);
+
+  if (data->font)
+    XFreeFont (data->dpy, data->font);
+
   free (data);
 }

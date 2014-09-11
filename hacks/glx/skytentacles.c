@@ -1,4 +1,4 @@
-/* Sky Tentacles, Copyright (c) 2008-2012 Jamie Zawinski <jwz@jwz.org>
+/* Sky Tentacles, Copyright (c) 2008-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -38,6 +38,10 @@ static char *grey_texture[] = {
 };
 
 #ifdef USE_GL /* whole file */
+
+# ifndef HAVE_JWZGLES
+#  define HAVE_POLYGONMODE
+# endif
 
 #define DEF_SPEED       "1.0"
 #define DEF_SMOOTH      "True"
@@ -352,9 +356,8 @@ draw_sucker (tentacle *t, Bool front_p)
   t->mi->polygon_count += points/2;
 }
 
-
 static void
-draw_tentacle (tentacle *t, Bool front_p)
+draw_tentacle_1 (tentacle *t, Bool front_p, Bool outline_p)
 {
   tentacles_configuration *tc = &tcs[MI_SCREEN(t->mi)];
   int i;
@@ -409,8 +412,10 @@ draw_tentacle (tentacle *t, Bool front_p)
     }
 
 
+# ifdef HAVE_POLYGONMODE
   if (cel_p)
     glPolygonMode (GL_FRONT_AND_BACK, (front_p ? GL_FILL : GL_LINE));
+# endif
 
   glPushMatrix();
   glTranslatef (t->x, t->y, t->z);
@@ -432,7 +437,7 @@ draw_tentacle (tentacle *t, Bool front_p)
       glPopAttrib();
     }
 
-  if (!front_p)
+  if (!front_p || outline_p)
     glColor4fv (tc->outline_color);
   else if (wire)
     glColor4fv (t->tentacle_color);
@@ -458,6 +463,9 @@ draw_tentacle (tentacle *t, Bool front_p)
 
           if (j <= indented_points/2 || j >= arg_slices-indented_points/2)
             r *= 0.75;  /* indent the stripe */
+
+          if (outline_p)
+            r *= 1.1;
 
           ring[j].x = r * ucirc[j].x;
           ring[j].y = 0;
@@ -502,7 +510,7 @@ draw_tentacle (tentacle *t, Bool front_p)
 
               GLfloat ts = j / (double) arg_slices;
 
-              if (!front_p)
+              if (!front_p || outline_p)
                 glColor4fv (tc->outline_color);
               else if (j <= indented_points/2 || 
                        j >= arg_slices-indented_points/2)
@@ -583,7 +591,13 @@ draw_tentacle (tentacle *t, Bool front_p)
                 nsuckers = (i % segs_per_sucker) ? 0 : 1;
               }
 
-            if (front_p)
+            if (outline_p)
+              {
+                glColor4fv (tc->outline_color);
+                glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, 
+                              tc->outline_color);
+              }
+            else if (front_p)
               {
                 glColor4fv (t->sucker_color);
                 glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, 
@@ -619,9 +633,16 @@ draw_tentacle (tentacle *t, Bool front_p)
 
                 scale = t->segments[i].thickness / arg_thickness;
                 scale *= 0.7 * sucker_size;
+
                 glScalef (scale, scale, scale * 4);
 
                 glTranslatef (0, 0, -0.1);  /* embed */
+
+                if (outline_p)
+                  {
+                    scale = 1.1;
+                    glScalef (scale, scale, scale);
+                  }
 
                 glTranslatef (1, 0, 0);     /* left */
                 draw_sucker (t, front_p);
@@ -639,7 +660,7 @@ draw_tentacle (tentacle *t, Bool front_p)
       /* Now draw the end caps.
        */
       glLineWidth (tc->line_thickness);
-      if (i == 0 || i == t->nsegments-1)
+      if (!outline_p && (i == 0 || i == t->nsegments-1))
         {
           int j;
           GLfloat ctrz = ctr.z + ((i == 0 ? -1 : 1) *
@@ -710,6 +731,22 @@ draw_tentacle (tentacle *t, Bool front_p)
 
 
 static void
+draw_tentacle (tentacle *t, Bool front_p)
+{
+# ifndef HAVE_POLYGONMODE
+  Bool wire = MI_IS_WIREFRAME (t->mi);
+  if (!wire && cel_p && front_p)
+    {
+      draw_tentacle_1 (t, front_p, True);
+      glClear (GL_DEPTH_BUFFER_BIT);
+    }
+# endif /* HAVE_POLYGONMODE */
+
+  draw_tentacle_1 (t, front_p, False);
+}
+
+
+static void
 move_tentacle (tentacle *t)
 {
   /* tentacles_configuration *tc = &tcs[MI_SCREEN(t->mi)]; */
@@ -770,39 +807,10 @@ tentacles_handle_event (ModeInfo *mi, XEvent *event)
 {
   tentacles_configuration *tc = &tcs[MI_SCREEN(mi)];
 
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      tc->button_down_p = True;
-      gltrackball_start (tc->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      tc->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (tc->trackball, event->xbutton.button, 10,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           tc->button_down_p)
-    {
-      gltrackball_track (tc->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
+  if (gltrackball_event_handler (event, tc->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &tc->button_down_p))
+    return True;
   else if (event->xany.type == KeyPress)
     {
       KeySym keysym;
@@ -875,7 +883,7 @@ init_tentacles (ModeInfo *mi)
       glEnable (GL_LIGHT0);
     }
 
-  tc->trackball = gltrackball_init ();
+  tc->trackball = gltrackball_init (False);
 
   tc->left_p = !(random() % 5);
 
@@ -901,10 +909,6 @@ init_tentacles (ModeInfo *mi)
 
   for (i = 0; i < MI_COUNT(mi); i++)
     move_tentacle (make_tentacle (mi, i, MI_COUNT(mi)));
-
-# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
-  cel_p = 0;
-# endif
 
   if (wire) texture_p = cel_p = False;
   if (cel_p) texture_p = False;

@@ -1,5 +1,5 @@
 /* xlock-gl.c --- xscreensaver compatibility layer for xlockmore GL modules.
- * xscreensaver, Copyright (c) 1997-2008 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -55,6 +55,10 @@ init_GL(ModeInfo * mi)
   GLXContext glx_context = 0;
   XVisualInfo vi_in, *vi_out;
   int out_count;
+
+# ifdef HAVE_JWZGLES
+  jwzgles_reset();
+# endif
 
   vi_in.screen = screen_number (screen);
   vi_in.visualid = XVisualIDFromVisual (visual);

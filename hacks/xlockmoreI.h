@@ -165,6 +165,8 @@ struct xlockmore_function_table {
   void (*hack_free) (ModeInfo *);
   Bool (*hack_handle_events) (ModeInfo *, XEvent *);
   ModeSpecOpt *opts;
+
+  unsigned screen_count; /* Only used on the OS X and iOS ports. */
 };
 
 #endif /* __XLOCKMORE_INTERNAL_H__ */

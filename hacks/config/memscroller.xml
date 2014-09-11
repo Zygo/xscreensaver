@@ -26,8 +26,7 @@
   <xscreensaver-updater />
 
   <_description>
-This draws a dump of its own process memory scrolling across the screen
-in three windows at three different rates.
+Scrolls a dump of its own memory in three windows at three different rates.
 
 Written by Jamie Zawinski; 2004.
   </_description>

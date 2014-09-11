@@ -1,4 +1,4 @@
-/* geodesic, Copyright (c) 2013 Jamie Zawinski <jwz@jwz.org>
+/* geodesic, Copyright (c) 2013-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -473,49 +473,6 @@ reshape_geodesic (ModeInfo *mi, int width, int height)
 
 
 
-ENTRYPOINT Bool
-geodesic_handle_event (ModeInfo *mi, XEvent *event)
-{
-  geodesic_configuration *bp = &bps[MI_SCREEN(mi)];
-
-  if (event->xany.type == ButtonPress &&
-      event->xbutton.button == Button1)
-    {
-      bp->button_down_p = True;
-      gltrackball_start (bp->trackball,
-                         event->xbutton.x, event->xbutton.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-  else if (event->xany.type == ButtonRelease &&
-           event->xbutton.button == Button1)
-    {
-      bp->button_down_p = False;
-      return True;
-    }
-  else if (event->xany.type == ButtonPress &&
-           (event->xbutton.button == Button4 ||
-            event->xbutton.button == Button5 ||
-            event->xbutton.button == Button6 ||
-            event->xbutton.button == Button7))
-    {
-      gltrackball_mousewheel (bp->trackball, event->xbutton.button, 3,
-                              !!event->xbutton.state);
-      return True;
-    }
-  else if (event->xany.type == MotionNotify &&
-           bp->button_down_p)
-    {
-      gltrackball_track (bp->trackball,
-                         event->xmotion.x, event->xmotion.y,
-                         MI_WIDTH (mi), MI_HEIGHT (mi));
-      return True;
-    }
-
-  return False;
-}
-
-
 ENTRYPOINT void 
 init_geodesic (ModeInfo *mi)
 {
@@ -591,6 +548,7 @@ init_geodesic (ModeInfo *mi)
   glEnable (GL_LIGHTING);
   glEnable (GL_LIGHT0);
 
+  if (! bp->rot)
   {
     double spin_speed   = 0.25  * speed;
     double wander_speed = 0.01 * speed;
@@ -602,13 +560,14 @@ init_geodesic (ModeInfo *mi)
                             spin_accel,
                             do_wander ? wander_speed : 0,
                             True);
-    bp->trackball = gltrackball_init ();
+    bp->trackball = gltrackball_init (True);
   }
 
   if (MI_COUNT(mi) < 1) MI_COUNT(mi) = 1;
 
   bp->ncolors = 1024;
-  bp->colors = (XColor *) calloc(bp->ncolors, sizeof(XColor));
+  if (! bp->colors)
+    bp->colors = (XColor *) calloc(bp->ncolors, sizeof(XColor));
   make_smooth_colormap (0, 0, 0,
                         bp->colors, &bp->ncolors,
                         False, 0, False);
@@ -623,6 +582,26 @@ init_geodesic (ModeInfo *mi)
   bp->thickness = 0.1;
   bp->thickdelta = 0;
 #endif
+}
+
+
+ENTRYPOINT Bool
+geodesic_handle_event (ModeInfo *mi, XEvent *event)
+{
+  geodesic_configuration *bp = &bps[MI_SCREEN(mi)];
+
+  if (gltrackball_event_handler (event, bp->trackball,
+                                 MI_WIDTH (mi), MI_HEIGHT (mi),
+                                 &bp->button_down_p))
+    return True;
+  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+    {
+      mode_str = "random";
+      init_geodesic (mi);
+      return True;
+    }
+
+  return False;
 }
 
 
@@ -657,10 +636,7 @@ draw_geodesic (ModeInfo *mi)
                  (y - 0.5) * 8,
                  (z - 0.5) * 15);
 
-    /* Do it twice because we don't track the device's orientation. */
-    glRotatef( current_device_rotation(), 0, 0, 1);
     gltrackball_rotate (bp->trackball);
-    glRotatef(-current_device_rotation(), 0, 0, 1);
 
     get_rotation (bp->rot, &x, &y, &z, !bp->button_down_p);
     glRotatef (x * 360, 1.0, 0.0, 0.0);

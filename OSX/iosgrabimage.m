@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -42,7 +42,8 @@
  */
 
 typedef struct {
-  void (*callback) (void *uiimage, const char *fn, void *closure);
+  void (*callback) (void *uiimage, const char *fn, int width, int height,
+                    void *closure);
   void *closure;
 
   ALAssetsLibrary *library;
@@ -79,13 +80,14 @@ ios_random_image_done (ios_loader_data *d, BOOL ok)
   [d->assets release];
   [d->library release];
 
-  d->callback (img, fn, d->closure);
+  d->callback (img, fn, [img size].width, [img size].height, d->closure);
   free (d);
 }
 
 
 void
 ios_load_random_image (void (*callback) (void *uiimage, const char *fn,
+                                         int width, int height,
                                          void *closure),
                        void *closure)
 {

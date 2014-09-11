@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2005-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2005-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -503,10 +503,11 @@ static Bool
 boxfit_event (Display *dpy, Window window, void *closure, XEvent *event)
 {
   state *st = (state *) closure;
-  if (event->xany.type == ButtonPress) {
-    st->growing_p = !st->growing_p;
-    return True;
-  }
+  if (screenhack_event_helper (dpy, window, event))
+    {
+      st->growing_p = !st->growing_p;
+      return True;
+    }
   return False;
 }
 
@@ -533,6 +534,7 @@ static const char *boxfit_defaults [] = {
   "*chooseRandomImages:    True",    /* HAVE_COCOA */
 #ifdef USE_IPHONE
   "*ignoreRotation:	   True",
+  "*rotateImages:          True",
 #endif
   0
 };

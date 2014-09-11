@@ -271,8 +271,6 @@ Init(ModeInfo *mi)
           }
         else
           {
-            GLfloat s_plane[] = { 1, 0, 0, 0 };
-            GLfloat t_plane[] = { 0, 0, 1, 0 };
             GLfloat scale = 0.0005;
 
             if (!ap->texture)
@@ -292,14 +290,17 @@ Init(ModeInfo *mi)
 
             glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-            glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-            glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
-            glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
-            glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
-
 # ifndef HAVE_JWZGLES
-            glEnable(GL_TEXTURE_GEN_S);
-            glEnable(GL_TEXTURE_GEN_T);
+            {
+              GLfloat s_plane[] = { 1, 0, 0, 0 };
+              GLfloat t_plane[] = { 0, 0, 1, 0 };
+              glTexGeni (GL_S, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+              glTexGeni (GL_T, GL_TEXTURE_GEN_MODE, GL_EYE_LINEAR);
+              glTexGenfv(GL_S, GL_EYE_PLANE, s_plane);
+              glTexGenfv(GL_T, GL_EYE_PLANE, t_plane);
+              glEnable(GL_TEXTURE_GEN_S);
+              glEnable(GL_TEXTURE_GEN_T);
+            }
 # endif
             glEnable(GL_TEXTURE_2D);
 

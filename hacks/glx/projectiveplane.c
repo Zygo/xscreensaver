@@ -1588,8 +1588,8 @@ ENTRYPOINT void init_projectiveplane(ModeInfo *mi)
   pp = &projectiveplane[MI_SCREEN(mi)];
 
   
-  pp->trackballs[0] = gltrackball_init();
-  pp->trackballs[1] = gltrackball_init();
+  pp->trackballs[0] = gltrackball_init(True);
+  pp->trackballs[1] = gltrackball_init(True);
   pp->current_trackball = 0;
   pp->button_pressed = False;
 

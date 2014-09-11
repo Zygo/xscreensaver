@@ -1,5 +1,4 @@
-/* xscreensaver, Copyright (c) 1992, 1997, 2001, 2003, 2006
- *  Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -29,5 +28,14 @@ xscreensaver_logo (Screen *screen, Visual *visual,
                    unsigned long **pixels_ret, int *npixels_ret,
                    Pixmap *mask_ret,
                    Bool big_p);
+
+
+/* A utility function for event-handler functions:
+   Returns True if the event is a simple click, Space, Tab, etc.
+   Returns False otherwise.
+   The idea here is that most hacks interpret to clicks or basic
+   keypresses as "change it up".
+ */
+extern Bool screenhack_event_helper (Display *, Window, XEvent *);
 
 #endif /* __XSCREENSAVER_RESOURCES_H__ */
