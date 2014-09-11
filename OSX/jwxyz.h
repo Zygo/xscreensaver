@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -268,6 +268,9 @@ typedef unsigned long			XtInputMask;
 #define DisplayWidth XDisplayWidth
 #define DisplayHeight XDisplayHeight
 #define XMaxRequestSize(dpy) (65535)
+
+#define ScreenCount(dpy) jwxyz_ScreenCount(dpy)
+extern int jwxyz_ScreenCount(Display *);
 
 extern Display *jwxyz_make_display (void *nsview, void *cgc);
 extern void jwxyz_free_display (Display *);

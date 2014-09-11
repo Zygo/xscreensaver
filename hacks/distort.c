@@ -1,5 +1,5 @@
 /* -*- mode: C; tab-width: 4 -*-
- * xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -152,24 +152,24 @@ distort_init (Display *dpy, Window window)
 	if (st->effect == NULL && st->radius == 0 && st->speed == 0 && st->number == 0
 		&& !st->blackhole && !st->vortex && !st->magnify && !st->reflect) {
 /* if no cmdline options are given, randomly choose one of:
- * -radius 50 -number 4 -speed 1 -bounce
- * -radius 50 -number 4 -speed 1 -blackhole
- * -radius 50 -number 4 -speed 1 -vortex
- * -radius 50 -number 4 -speed 1 -vortex -magnify
- * -radius 50 -number 4 -speed 1 -vortex -magnify -blackhole
- * -radius 100 -number 1 -speed 2 -bounce
- * -radius 100 -number 1 -speed 2 -blackhole
- * -radius 100 -number 1 -speed 2 -vortex
- * -radius 100 -number 1 -speed 2 -vortex -magnify
- * -radius 100 -number 1 -speed 2 -vortex -magnify -blackhole
+ * -radius 125 -number 4 -speed 1 -bounce
+ * -radius 125 -number 4 -speed 1 -blackhole
+ * -radius 125 -number 4 -speed 1 -vortex
+ * -radius 125 -number 4 -speed 1 -vortex -magnify
+ * -radius 125 -number 4 -speed 1 -vortex -magnify -blackhole
+ * -radius 250 -number 1 -speed 2 -bounce
+ * -radius 250 -number 1 -speed 2 -blackhole
+ * -radius 250 -number 1 -speed 2 -vortex
+ * -radius 250 -number 1 -speed 2 -vortex -magnify
+ * -radius 250 -number 1 -speed 2 -vortex -magnify -blackhole
  * -radius 80 -number 1 -speed 2 -reflect
- * -radius 50 -number 3 -speed 2 -reflect
+ * -radius 125 -number 3 -speed 2 -reflect
  * jwz: not these
- *   -radius 50 -number 4 -speed 2 -swamp
- *   -radius 50 -number 4 -speed 2 -swamp -blackhole
- *   -radius 50 -number 4 -speed 2 -swamp -vortex
- *   -radius 50 -number 4 -speed 2 -swamp -vortex -magnify
- *   -radius 50 -number 4 -speed 2 -swamp -vortex -magnify -blackhole
+ *   -radius 125 -number 4 -speed 2 -swamp
+ *   -radius 125 -number 4 -speed 2 -swamp -blackhole
+ *   -radius 125 -number 4 -speed 2 -swamp -vortex
+ *   -radius 125 -number 4 -speed 2 -swamp -vortex -magnify
+ *   -radius 125 -number 4 -speed 2 -swamp -vortex -magnify -blackhole
  */
 		
 		i = (random() % 12 /* 17 */);
@@ -178,74 +178,70 @@ distort_init (Display *dpy, Window window)
 
 		switch (i) {
 			case 0:
-				st->radius=50;st->number=4;st->speed=1;
+				st->radius=125;st->number=4;st->speed=1;
 				st->effect=&move_lense;break;
 			case 1:
-				st->radius=50;st->number=4;st->speed=1;st->blackhole=1;
+				st->radius=125;st->number=4;st->speed=1;st->blackhole=1;
 				st->effect=&move_lense;break;
 			case 2:
-				st->radius=50;st->number=4;st->speed=1;st->vortex=1;
+				st->radius=125;st->number=4;st->speed=1;st->vortex=1;
 				st->effect=&move_lense;break;
 			case 3:
-				st->radius=50;st->number=4;st->speed=1;st->vortex=1;st->magnify=1;
+				st->radius=125;st->number=4;st->speed=1;st->vortex=1;st->magnify=1;
 				st->effect=&move_lense;break;
 			case 4:
-				st->radius=50;st->number=4;st->speed=1;st->vortex=1;st->magnify=1;st->blackhole=1;
+				st->radius=125;st->number=4;st->speed=1;st->vortex=1;st->magnify=1;st->blackhole=1;
 				st->effect=&move_lense;break;
 			case 5:
-				st->radius=100;st->number=1;st->speed=2;
+				st->radius=250;st->number=1;st->speed=2;
 				st->effect=&move_lense;break;
 			case 6:
-				st->radius=100;st->number=1;st->speed=2;st->blackhole=1;
+				st->radius=250;st->number=1;st->speed=2;st->blackhole=1;
 				st->effect=&move_lense;break;
 			case 7:
-				st->radius=100;st->number=1;st->speed=2;st->vortex=1;
+				st->radius=250;st->number=1;st->speed=2;st->vortex=1;
 				st->effect=&move_lense;break;
 			case 8:
-				st->radius=100;st->number=1;st->speed=2;st->vortex=1;st->magnify=1;
+				st->radius=250;st->number=1;st->speed=2;st->vortex=1;st->magnify=1;
 				st->effect=&move_lense;break;
 			case 9:
-				st->radius=100;st->number=1;st->speed=2;st->vortex=1;st->magnify=1;st->blackhole=1;
+				st->radius=250;st->number=1;st->speed=2;st->vortex=1;st->magnify=1;st->blackhole=1;
 				st->effect=&move_lense;break;
 
 			case 10:
 				st->radius=80;st->number=1;st->speed=2;st->reflect=1;
 				st->draw = &reflect_draw;st->effect = &move_lense;break;
 			case 11:
-				st->radius=50;st->number=4;st->speed=2;st->reflect=1;
+				st->radius=125;st->number=4;st->speed=2;st->reflect=1;
 				st->draw = &reflect_draw;st->effect = &move_lense;break;
 
 #if 0 /* jwz: not these */
 			case 12:
-				st->radius=50;st->number=4;st->speed=2;
+				st->radius=125;st->number=4;st->speed=2;
 				effect=&swamp_thing;break;
 			case 13:
-				st->radius=50;st->number=4;st->speed=2;st->blackhole=1;
+				st->radius=125;st->number=4;st->speed=2;st->blackhole=1;
 				effect=&swamp_thing;break;
 			case 14:
-				st->radius=50;st->number=4;st->speed=2;st->vortex=1;
+				st->radius=125;st->number=4;st->speed=2;st->vortex=1;
 				effect=&swamp_thing;break;
 			case 15:
-				st->radius=50;st->number=4;st->speed=2;st->vortex=1;st->magnify=1;
+				st->radius=125;st->number=4;st->speed=2;st->vortex=1;st->magnify=1;
 				effect=&swamp_thing;break;
 			case 16:
-				st->radius=50;st->number=4;st->speed=2;st->vortex=1;st->magnify=1;st->blackhole=1;
+				st->radius=125;st->number=4;st->speed=2;st->vortex=1;st->magnify=1;st->blackhole=1;
 				effect=&swamp_thing;break;
 #endif
 
             default:
                 abort(); break;
 		}
-
-        /* but if the window is small, reduce default radius */
-        if (st->xgwa.width < st->radius * 8)
-          st->radius = st->xgwa.width/8;
 	}
 
     /* never allow the radius to be too close to the min window dimension
      */
-    if (st->radius >= st->xgwa.width  * 0.45) st->radius = st->xgwa.width  * 0.45;
-    if (st->radius >= st->xgwa.height * 0.45) st->radius = st->xgwa.height * 0.45;
+    if (st->radius > st->xgwa.width  * 0.3) st->radius = st->xgwa.width  * 0.3;
+    if (st->radius > st->xgwa.height * 0.3) st->radius = st->xgwa.height * 0.3;
 
 
     /* -swamp mode consumes vast amounts of memory, proportional to radius --
@@ -664,6 +660,7 @@ static void reflect_draw(struct state *st, int k)
 static void new_rnd_coo(struct state *st, int k)
 {
 	int i;
+    int loop = 0;
 
 	st->xy_coo[k].x = (random() % (st->xgwa.width-2*st->radius));
 	st->xy_coo[k].y = (random() % (st->xgwa.height-2*st->radius));
@@ -677,6 +674,7 @@ static void new_rnd_coo(struct state *st, int k)
 				i=-1; /* ugly */
 			} 
 		}
+        if (loop++ > 1000) return;  /* let's not get stuck */
 	}
 }
 

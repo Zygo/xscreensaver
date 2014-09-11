@@ -11,16 +11,16 @@
  * The problem:
  * 
  *   - OSX 10.5 and earlier require .saver bundles to not use GC.
- *   - OSX 10.6 require .saver bundles to use GC.
- *   - OSX 10.7 and later require .saver bundles to not use GC.
+ *   - OSX 10.6 and 10.7 require .saver bundles to use GC.
+ *   - OSX 10.8 and later require .saver bundles to not use GC.
  * 
  * So the way to build a portable .saver is to build it with "GC optional",
  * via "-fobjc-gc" on the x86-64 architecture.
  * 
- * But XCode 5.x on OSX 10.9 no longer supports building executables
- * that support GC, even optionally.  So there's no way to make XCode
- * 5.x create a .saver bundle that will work on OSX 10.6. Though it
- * will work on 10.5!
+ * But XCode 5.0.2 was the last version of XCode to support building
+ * executables that support GC, even optionally.  So there's no way to make
+ * the XCode that ships with OSX 10.9 create a .saver bundle that will work
+ * on OSX 10.6 and 10.7. Though it will work on 10.5!
  * 
  * The fix: after compiling, hand-hack the generated binary to tag the
  * x86-64 arch with the OBJC_IMAGE_SUPPORTS_GC flag.
@@ -45,6 +45,13 @@
  * dependency of "libjwxyz" (so that it gets built first) and is
  * invoked by "update-info-plist.pl" (so that it gets run on every
  * saver).
+ *
+ *
+ * UPDATE, 2-Jun-2014:
+ *
+ * Actually, this seems not to be working.  We're seeing intermittent
+ * crashes in malloc/calloc/free on 10.6 64 bit.  When compiled with
+ * legit -fobjc-gc, those crashes don't occur.
  */
 
 #include <assert.h>

@@ -87,9 +87,9 @@ circumcircle (double xp,double yp,
   dy = yp - *yc;
   drsqr = dx*dx + dy*dy;
 
-  // Original
-  //return((drsqr <= *rsqr) ? TRUE : FALSE);
-  // Proposed by Chuck Morris
+  /* Original
+     return((drsqr <= *rsqr) ? TRUE : FALSE);
+     Proposed by Chuck Morris */
   return((drsqr - *rsqr) <= EPSILON ? TRUE : FALSE);
 }
 
@@ -115,7 +115,7 @@ delaunay (int nv,XYZ *pxyz,ITRIANGLE *v,int *ntri)
 
   int inside;
   int i,j,k;
-  double xp,yp,x1,y1,x2,y2,x3,y3,xc,yc,r;
+  double xp,yp,x1,y1,x2,y2,x3,y3,xc=0,yc=0,r=0;
   double xmin,xmax,ymin,ymax,xmid,ymid;
   double dx,dy,dmax;
 

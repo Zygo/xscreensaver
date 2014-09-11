@@ -78,7 +78,9 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
   if (!initted)
     {
 #ifdef HAVE_GTK2
+#if !GLIB_CHECK_VERSION(2, 36 ,0)
       g_type_init ();
+#endif
 #endif
       gdk_pixbuf_xlib_init (dpy, DefaultScreen (dpy));
       xlib_rgb_init (dpy, DefaultScreenOfDisplay (dpy));

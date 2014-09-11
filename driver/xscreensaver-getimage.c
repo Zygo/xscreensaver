@@ -381,7 +381,9 @@ read_file_gdk (Screen *screen, Window window, Drawable drawable,
 
   gdk_pixbuf_xlib_init_with_depth (dpy, screen_number (screen), win_depth);
 # ifdef HAVE_GTK2
+# if !GLIB_CHECK_VERSION(2, 36 ,0)
   g_type_init();
+# endif
 # else  /* !HAVE_GTK2 */
   xlib_rgb_init (dpy, screen);
 # endif /* !HAVE_GTK2 */

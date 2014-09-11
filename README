@@ -38,6 +38,13 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.29	* Downgraded to Xcode 5.0.2 to make it possible to build savers
+          that will still run on 10.6 and 10.7.  Sigh.
+	* Updated `webcollage' for recent changes.
+
+5.28	* Fixed some compilation problems and intermittent crashes.
+        * Turned off the OSX 10.6 enable_gc hack. It didn't work.
+
 5.27	* New hacks, `tessellimage' and `projectiveplane'.
         * Added support for pthreads, because Dave Odell is a madman.
 	* Updated `webcollage' for recent changes.

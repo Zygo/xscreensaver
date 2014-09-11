@@ -960,6 +960,8 @@ double current_device_rotation (void)
       (void *(*) (Display *, Window, void *)) xsft->init_cb;
     
     xdata = init_cb (xdpy, xwindow, xsft->setup_arg);
+    // NSAssert(xdata, @"no xdata from init");
+    if (! xdata) abort();
 
     if (get_boolean_resource (xdpy, "doFPS", "DoFPS")) {
       fpst = fps_init (xdpy, xwindow);
@@ -1064,6 +1066,8 @@ double current_device_rotation (void)
 # ifndef USE_IPHONE
   NSDisableScreenUpdates();
 # endif
+  // NSAssert(xdata, @"no xdata when drawing");
+  if (! xdata) abort();
   unsigned long delay = xsft->draw_cb (xdpy, xwindow, xdata);
   if (fpst) xsft->fps_cb (xdpy, xwindow, fpst, xdata);
 # ifndef USE_IPHONE

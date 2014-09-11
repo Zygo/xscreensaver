@@ -1,4 +1,4 @@
-# Makefile.in --- xscreensaver, Copyright (c) 1999-2010 Jamie Zawinski.
+# Makefile.in --- xscreensaver, Copyright (c) 1999-2014 Jamie Zawinski.
 # the `../configure' script generates `Makefile' from this file.
 
 @SET_MAKE@
@@ -95,6 +95,7 @@ tar::
 # of autoconf other than the ones I've tried (2.12 and 2.13.)
 #
 configure::
+	aclocal
 	autoconf
 	autoheader
 	@TMP=configure.$$$$ ;						     \
@@ -372,8 +373,8 @@ www::
   fi ;									    \
 									    \
   git commit -m "$$VERS" . ;						    \
-  git tag -a "v$$VERS" -m "$$VERS" . ;					    \
-  git push . ;								    \
+  git tag -a "v$$VERS" -m "$$VERS" ;					    \
+  git push ;								    \
 
 
 count::

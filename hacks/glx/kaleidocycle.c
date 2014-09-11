@@ -31,6 +31,7 @@
 #include "rotator.h"
 #include "gltrackball.h"
 #include <ctype.h>
+#include <math.h>
 
 #ifdef USE_GL /* whole file */
 

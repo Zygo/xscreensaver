@@ -10,6 +10,8 @@
  * implied warranty.
  */
 
+/* (circle-mode by jwz, 4-Jun-2014; not finished yet.) */
+
 /*
  * Options:
  *
@@ -18,6 +20,7 @@
  * -n <num>	number of zoomboxes
  * -move	enable mobile zoomboxes
  * -sweep	enable sweep mode
+ * -circle	enable circle mode
  * -anim	enable snapshot mode
  * -no-anim	enable snapshot mode
  * -delay	delay in milliseconds
@@ -57,6 +60,7 @@ struct state {
   int num_zoom;
   int move;
   int sweep;
+  int circle;
   int delay;
   int anim;
   int duration;
@@ -77,16 +81,39 @@ rotzoom (struct state *st, struct zoom_area *za)
   int x, y, c, s, zoom, z;
   int x2 = za->x + za->w - 1, y2 = za->y + za->h - 1;
   int ox = 0, oy = 0;
+  int w2 = (za->w/2) * (za->w/2);
 
   z = 8100 * sin (M_PI * za->a2 / 8192);
   zoom = 8192 + z;
 
-  c = zoom * cos (M_PI * za->a1 / 8192);
-  s = zoom * sin (M_PI * za->a1 / 8192);
   for (y = za->y; y <= y2; y++) {
     for (x = za->x; x <= x2; x++) {
-      ox = (x * c + y * s) >> 13;
-      oy = (-x * s + y * c) >> 13;
+      c = zoom * cos (M_PI * za->a1 / 8192);
+      s = zoom * sin (M_PI * za->a1 / 8192);
+      if (st->circle) {
+        int cx = za->x + za->w / 2;
+        int cy = za->y + za->h / 2;
+        int dx = x - cx;
+        int dy = y - cy;
+        int d2 = (dx*dx) + (dy*dy);
+
+        ox = x;
+        oy = y;
+
+        if (d2 > w2) {
+          ox = x;
+          oy = y;
+        } else {
+          double r = sqrt ((double) d2);
+          double th = atan ((double)dy / (double) (dx == 0 ? 1 : dx));
+          th += M_PI * (za->a1 / 300.0);
+          ox = 10 + cx + (int) (r * cos(th));
+          oy = 10 + cy + (int) (r * sin(th));
+        }
+      } else {
+        ox = (x * c + y * s) >> 13;
+        oy = (-x * s + y * c) >> 13;
+      }
 
       while (ox < 0)
         ox += st->width;
@@ -102,7 +129,7 @@ rotzoom (struct state *st, struct zoom_area *za)
   }
 
   za->a1 += za->inc1;		/* Rotation angle */
-  za->a1 &= 0x3fff;;
+  za->a1 &= 0x3fff;
 
   za->a2 += za->inc2;		/* Zoom */
   za->a2 &= 0x3fff;
@@ -166,6 +193,38 @@ reset_zoom (struct state *st, struct zoom_area *za)
     za->a2 = 0;
     za->inc1 = ((2 * (random() & 1)) - 1) * (1 + random () % 7);
     za->inc2 = ((2 * (random() & 1)) - 1) * (1 + random () % 7);
+  } else if (st->circle) {
+
+    za->w = 50 + random() % 300;
+    if (za->w > st->width / 3)
+      za->w = st->width / 3;
+    if (za->w > st->height / 3)
+      za->w = st->height / 3;
+    za->h = za->w;
+
+    za->ww = st->width - za->w;
+    za->hh = st->height - za->h;
+
+    za->x = (za->ww ? random() % za->ww : 0);
+    za->y = (za->hh ? random() % za->hh : 0);
+
+    za->dx = 0;
+    za->dy = 0;
+    za->inc1 = ((2 * (random() & 1)) - 1) * (random () % 30);
+
+    if (st->anim) {
+      za->n = 50 + random() % 1000;
+      za->a1 = 0;
+      za->a2 = 0;
+    } else {
+      za->n = 5 + random() % 10;
+      za->a1 = random ();
+      za->a2 = random ();
+    }
+
+    za->inc1 = ((2 * (random() & 1)) - 1) * (random () % 30);
+    za->inc2 = ((2 * (random() & 1)) - 1) * (random () % 30);
+
   } else {
     za->w = 50 + random() % 300;
     za->h = 50 + random() % 300;
@@ -403,6 +462,8 @@ rotzoomer_init (Display *dpy, Window window)
     st->move = True;
   else if (!strcasecmp (s, "sweep"))
     st->sweep = True;
+  else if (!strcasecmp (s, "circle"))
+    st->circle = True;
   else
     fprintf (stderr, "%s: bogus mode: \"%s\"\n", progname, s);
 
@@ -419,6 +480,11 @@ rotzoomer_init (Display *dpy, Window window)
   /* Can't have static sweep mode */
   if (!st->anim)
     st->sweep = 0;
+
+  if (st->circle) {
+    st->move = 0;
+    st->sweep = 0;
+  }
 
   st->start_time = time ((time_t) 0);
 
@@ -474,6 +540,7 @@ static XrmOptionDescRec rotzoomer_options[] = {
   { "-mode",	".mode",	XrmoptionSepArg, 0      },
   { "-move",	".mode",	XrmoptionNoArg, "move"  },
   { "-sweep",	".mode",	XrmoptionNoArg, "sweep" },
+  { "-circle",	".mode",	XrmoptionNoArg, "circle"},
   { "-anim",	".anim",	XrmoptionNoArg, "True"  },
   { "-no-anim",	".anim",	XrmoptionNoArg, "False" },
   { "-delay",	".delay",	XrmoptionSepArg, 0      },

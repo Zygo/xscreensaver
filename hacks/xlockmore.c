@@ -1,5 +1,5 @@
 /* xlockmore.c --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2013 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -295,25 +295,13 @@ xlockmore_init (Display *dpy, Window window,
 #ifdef HAVE_COCOA
   
   /* In Cocoa-based xscreensaver, all hacks run in the same address space,
-     so each one needs to get its own screen number.  We just use a global
-     counter for that, instead of actually trying to figure out which
-     monitor each window is on.  Also, the embedded "preview" view counts
-     as a screen as well.
-    
-     Note that the screen number will increase each time the saver is
-     restarted (e.g., each time preferences are changed!)  So we just
-     keep pushing the num_screens number up as needed, and assume that
-     no more than 10 simultanious copies will be running at once...
+     so each one needs to get its own screen number.  Believe what jwxyz
+     says about screen counts and numbers.
    */
-  {
-    static int screen_tick = 0;
-    mi->num_screens = 10;
-    mi->screen_number = screen_tick++;
-    if (screen_tick >= mi->num_screens)
-      mi->num_screens += 10;
-  }
-  
+  mi->num_screens = ScreenCount (dpy);
+  mi->screen_number = XScreenNumberOfScreen (mi->xgwa.screen);
   root_p = True;
+
 #else /* !HAVE_COCOA -- real Xlib */
   
   /* In Xlib-based xscreensaver, each hack runs in its own address space,

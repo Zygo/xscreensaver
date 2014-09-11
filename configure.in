@@ -1,4 +1,4 @@
-# configure.in --- xscreensaver, Copyright (c) 1997-2005 Jamie Zawinski.
+# configure.in --- xscreensaver, Copyright (c) 1997-2014 Jamie Zawinski.
 #
 
 AC_PREREQ(2.52)
@@ -15,7 +15,7 @@ echo "command line was: $0 $@"
 ###############################################################################
 
 AH_TOP([
-/* config.h.in --- xscreensaver, Copyright (c) 1998-2000 Jamie Zawinski.
+/* config.h.in --- xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski.
  *
  *  The best way to set these parameters is by running the included `configure'
  *  script.  That examines your system, and generates `config.h' from 
@@ -368,10 +368,6 @@ AC_DEFUN([AC_PROG_CC_PTHREAD],
     if test "$have_pthread" = yes; then
       AC_DEFINE([HAVE_PTHREAD])
       CC=$PTHREAD_CC
-
-      # AX_PTHREAD documentation specifically suggests this...
-      LIBS="$PTHREAD_LIBS $LIBS"
-      CFLAGS="$CFLAGS $PTHREAD_CFLAGS"
     fi
   fi
 ])
@@ -4332,10 +4328,7 @@ if test "$have_gl" = no ; then
   echo ''
   warn2 'Those demos which use 3D will not be built or installed.'
   warn2 'You might want to consider installing OpenGL and'
-  warn2 "re-running configure.  If your vendor doesn't ship"
-  warn2 'their own implementation of OpenGL, you can get a free'
-  warn2 'version at <http://www.mesa3d.org/>.  For general OpenGL'
-  warn2 'info, see <http://www.opengl.org/>.'
+  warn2 're-running configure.'
 
 fi
 
@@ -4355,7 +4348,7 @@ if test "$have_gl" = yes -a "$have_gle" = no ; then
     warn2 'library is not.'
   else
     noteL 'The OpenGL Library was found, but the GLE (GL Extrusion)'
-    warn2 'was not.'
+    warn2 'library was not.'
   fi
 
   if test "$gle_halfassed" = yes ; then
@@ -4370,8 +4363,7 @@ if test "$have_gl" = yes -a "$have_gle" = no ; then
   warn2 'Some of the OpenGL (3D) demos (those that depend on GLE)'
   warn2 'will not be built or installed.  You might want to consider'
   warn2 'installing GLE and re-running configure.  You can find the'
-  warn2 'GLE library at <http://www.linas.org/gle/>.  For general'
-  warn2 'OpenGL info, see <http://www.opengl.org/>.'
+  warn2 'GLE library at <http://www.linas.org/gle/>'
 
  fi
 fi
@@ -4506,7 +4498,7 @@ if test "$do_dir_warning" = yes; then
   echo '      "xscreensaver-demo", and "xscreensaver-command" executables'
   echo "      will be installed in ${bindir}/."
   echo ""
-  echo "      The various graphics demos (190+ different executables) will"
+  echo "      The various graphics demos (200+ different executables) will"
   echo "      be installed in ${HACKDIR}/."
   echo ""
   echo "      If you would prefer the demos to be installed elsewhere,"

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2013 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -778,9 +778,10 @@ void
 handle_splash_event (saver_info *si, XEvent *event)
 {
   splash_dialog_data *sp = si->sp_data;
-  if (!sp) return;
-  saver_screen_info *ssi = sp->prompt_screen;
+  saver_screen_info *ssi;
   int which = 0;
+  if (!sp) return;
+  ssi = sp->prompt_screen;
 
   switch (event->xany.type)
     {

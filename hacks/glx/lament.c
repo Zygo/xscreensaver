@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -90,6 +90,12 @@ ENTRYPOINT ModeSpecOpt lament_opts = {countof(opts), opts, countof(vars), vars, 
 #include "xpm-ximage.h"
 #include "rotator.h"
 #include "gltrackball.h"
+
+#ifdef __GNUC__
+ __extension__ /* don't warn about "string length is greater than the length
+                  ISO C89 compilers are required to support" when including
+                  the following XPM file... */
+#endif
 #if 0
 # include "../images/lament128.xpm"
 #else

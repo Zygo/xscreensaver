@@ -1,7 +1,5 @@
-# Auto-generated: Mon Dec  9 03:01:47 PST 2013
+# Auto-generated: Sun Jun  8 14:43:58 PDT 2014
 driver/demo-Gtk-conf.c
-driver/demo-Gtk-support.c
-driver/demo-Gtk-widgets.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
 driver/xscreensaver-demo.glade2
@@ -166,6 +164,7 @@ hacks/config/polyominoes.xml
 hacks/config/polytopes.xml
 hacks/config/pong.xml
 hacks/config/popsquares.xml
+hacks/config/projectiveplane.xml
 hacks/config/providence.xml
 hacks/config/pulsar.xml
 hacks/config/pyro.xml
@@ -207,6 +206,7 @@ hacks/config/surfaces.xml
 hacks/config/swirl.xml
 hacks/config/t3d.xml
 hacks/config/tangram.xml
+hacks/config/tessellimage.xml
 hacks/config/thornbird.xml
 hacks/config/timetunnel.xml
 hacks/config/topblock.xml

@@ -573,11 +573,12 @@ tessellate (struct state *st)
 
   if (ticked_p && st->cache[st->thresh])
     {
-      XCopyArea (st->dpy, 
-                 st->cache[st->thresh],
-                 st->output, st->pgc,
-                 0, 0, st->delta->width, st->delta->height, 
-                 0, 0);
+      if (st->output)
+        XCopyArea (st->dpy, 
+                   st->cache[st->thresh],
+                   st->output, st->pgc,
+                   0, 0, st->delta->width, st->delta->height, 
+                   0, 0);
     }
   else if (ticked_p)
     {
@@ -753,12 +754,13 @@ tessellate (struct state *st)
               fprintf (stderr, "%s: out of memory\n", progname);
               abort();
             }
-          XCopyArea (st->dpy, 
-                     st->output,
-                     st->cache[st->thresh],
-                     st->pgc,
-                     0, 0, st->delta->width, st->delta->height, 
-                     0, 0);
+          if (st->output)
+            XCopyArea (st->dpy, 
+                       st->output,
+                       st->cache[st->thresh],
+                       st->pgc,
+                       0, 0, st->delta->width, st->delta->height, 
+                       0, 0);
         }
     }
 
@@ -916,8 +918,8 @@ tessellimage_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   flush_cache (st);
-  XFreeGC (dpy, st->wgc);
-  XFreeGC (dpy, st->pgc);
+  if (st->wgc) XFreeGC (dpy, st->wgc);
+  if (st->pgc) XFreeGC (dpy, st->pgc);
   if (st->image)  XFreePixmap (dpy, st->image);
   if (st->output) XFreePixmap (dpy, st->output);
   if (st->delta)  XDestroyImage (st->delta);

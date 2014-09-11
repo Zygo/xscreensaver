@@ -1101,8 +1101,9 @@ hack_environment (saver_info *si)
   if (def_path && *def_path)
     {
       const char *opath = getenv("PATH");
+      char *npath;
       if (! opath) opath = "/bin:/usr/bin";  /* WTF */
-      char *npath = (char *) malloc(strlen(def_path) + strlen(opath) + 20);
+      npath = (char *) malloc(strlen(def_path) + strlen(opath) + 20);
       strcpy (npath, "PATH=");
       strcat (npath, def_path);
       strcat (npath, ":");

@@ -77,6 +77,7 @@ struct jwxyz_Drawable {
 struct jwxyz_Display {
   Window main_window;
   Screen *screen;
+  int screen_count;
   struct jwxyz_sources_data *timers_data;
 
 # ifndef USE_IPHONE
@@ -93,6 +94,7 @@ struct jwxyz_Display {
 struct jwxyz_Screen {
   Display *dpy;
   Visual *visual;
+  int screen_number;
 };
 
 struct jwxyz_GC {
@@ -137,6 +139,26 @@ jwxyz_abort (const char *fmt, ...)
 }
 
 
+/* We keep a list of all of the Displays that have been created and not
+   yet freed so that they can have sensible display numbers.  If three
+   displays are created (0, 1, 2) and then #1 is closed, then the fourth
+   display will be given the now-unused display number 1. (Everything in
+   here assumes a 1:1 Display/Screen mapping.)
+
+   The size of this array is the most number of live displays at one time.
+   So if it's 20, then we'll blow up if the system has 19 monitors and also
+   has System Preferences open (the small preview window).
+
+   Note that xlockmore-style savers tend to allocate big structures, so
+   setting this to 1000 will waste a few megabytes.  Also some of them assume
+   that the number of screens never changes, so dynamically expanding this
+   array won't work.
+ */
+# ifndef USE_IPHONE
+static Display *jwxyz_live_displays[20] = { 0, };
+# endif
+
+
 Display *
 jwxyz_make_display (void *nsview_arg, void *cgc_arg)
 {
@@ -149,6 +171,24 @@ jwxyz_make_display (void *nsview_arg, void *cgc_arg)
   d->screen = (Screen *) calloc (1, sizeof(Screen));
   d->screen->dpy = d;
   
+  d->screen_count = 1;
+  d->screen->screen_number = 0;
+# ifndef USE_IPHONE
+  {
+    // Find the first empty slot in live_displays and plug us in.
+    int size = sizeof(jwxyz_live_displays) / sizeof(*jwxyz_live_displays);
+    int i;
+    for (i = 0; i < size; i++) {
+      if (! jwxyz_live_displays[i])
+        break;
+    }
+    if (i >= size) abort();
+    jwxyz_live_displays[i] = d;
+    d->screen_count = size;
+    d->screen->screen_number = i;
+  }
+# endif // !USE_IPHONE
+
   Visual *v = (Visual *) calloc (1, sizeof(Visual));
   v->class      = TrueColor;
   v->red_mask   = 0x00FF0000;
@@ -187,6 +227,21 @@ jwxyz_free_display (Display *dpy)
   jwxyz_XtRemoveInput_all (dpy);
   // #### jwxyz_XtRemoveTimeOut_all ();
   
+# ifndef USE_IPHONE
+  {
+    // Find us in live_displays and clear that slot.
+    int size = ScreenCount(dpy);
+    int i;
+    for (i = 0; i < size; i++) {
+      if (dpy == jwxyz_live_displays[i]) {
+        jwxyz_live_displays[i] = 0;
+        break;
+      }
+    }
+    if (i >= size) abort();
+  }
+# endif // !USE_IPHONE
+
   free (dpy->screen->visual);
   free (dpy->screen);
   CFRelease (dpy->main_window->window.view);
@@ -336,7 +391,13 @@ XDisplayNumberOfScreen (Screen *s)
 int
 XScreenNumberOfScreen (Screen *s)
 {
-  return 0;
+  return s->screen_number;
+}
+
+int
+jwxyz_ScreenCount (Display *dpy)
+{
+  return dpy->screen_count;
 }
 
 int

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -48,6 +48,7 @@ void initialize_screensaver_window (saver_info *si) {}
 void raise_window (saver_info *si, Bool i, Bool b, Bool d) {}
 Bool blank_screen (saver_info *si) {return False;}
 void unblank_screen (saver_info *si) {}
+void reset_watchdog_timer(saver_info *si, Bool on_p) {}
 Bool select_visual (saver_screen_info *ssi, const char *v) { return False; }
 Bool window_exists_p (Display *dpy, Window window) {return True;}
 void start_notice_events_timer (saver_info *si, Window w, Bool b) {}
@@ -79,7 +80,6 @@ idle_timer (XtPointer closure, XtIntervalId *id)
   fake_event.xany.window  = 0;
   XPutBackEvent (si->dpy, &fake_event);
 }
-
 
 static int
 text_auth_conv (

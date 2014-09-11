@@ -91,7 +91,7 @@
      <number id="walk-direction" type="slider" arg="-walk-direction %"
              _label="Walking direction"
              _low-label="-180.0" _high-label="180.0"
-             low="-180.0" high="180.0" default="7.0"/>
+             low="-180.0" high="180.0" default="83.0"/>
 
      <number id="walk-speed" type="slider" arg="-walk-speed %"
              _label="Walking speed"

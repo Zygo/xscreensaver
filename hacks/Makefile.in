@@ -1,4 +1,4 @@
-# hacks/Makefile.in --- xscreensaver, Copyright (c) 1997-2011 Jamie Zawinski.
+# hacks/Makefile.in --- xscreensaver, Copyright (c) 1997-2014 Jamie Zawinski.
 # the `../configure' script generates `hacks/Makefile' from this file.
 
 @SET_MAKE@
@@ -30,6 +30,9 @@ LDFLAGS		= @LDFLAGS@
 DEFS		= -DSTANDALONE @DEFS@
 LIBS		= @LIBS@
 PERL		= @PERL@
+
+THREAD_LIBS	= @PTHREAD_LIBS@
+THREAD_CFLAGS	= @PTHREAD_CFLAGS@
 
 DEPEND		= @DEPEND@
 DEPEND_FLAGS	= @DEPEND_FLAGS@
@@ -546,8 +549,9 @@ COL		= $(COLOR_OBJS)
 SHM		= $(XSHM_OBJS)
 DBE		= $(XDBE_OBJS)
 BARS		= $(UTILS_BIN)/colorbars.o $(LOGO)
-THRD		= $(THREAD_OBJS)
-ATV		= analogtv.o $(SHM) $(THRD)
+THRO		= $(THREAD_OBJS)
+THRL		= $(THREAD_CFLAGS) $(THREAD_LIBS)
+ATV		= analogtv.o $(SHM) $(THRO)
 APPLE2          = apple2.o $(ATV)
 TEXT            = $(UTILS_BIN)/textclient.o
 
@@ -660,8 +664,8 @@ cynosure:  	cynosure.o	$(HACK_OBJS) $(COL)
 epicycle:  	epicycle.o	$(HACK_OBJS) $(COL) $(ERASE)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(ERASE) $(HACK_LIBS)
 
-interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE) $(THRD)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE) $(THRD) $(HACK_LIBS)
+interference:  interference.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE) $(THRO)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SHM) $(DBE) $(THRO) $(HACK_LIBS) $(THRL)
 
 truchet:	 truchet.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
@@ -670,10 +674,10 @@ bsod:	 	bsod.o		$(HACK_OBJS) $(GRAB) $(APPLE2) $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(APPLE2) $(XPM) $(XPM_LIBS)
 
 apple2:	 	apple2.o apple2-main.o	$(HACK_OBJS) $(ATV) $(GRAB) $(TEXT)
-	$(CC_HACK) -o $@ $@.o	apple2-main.o $(HACK_OBJS) $(ATV) $(GRAB) $(TEXT) $(XPM_LIBS) $(TEXT_LIBS)
+	$(CC_HACK) -o $@ $@.o	apple2-main.o $(HACK_OBJS) $(ATV) $(GRAB) $(TEXT) $(XPM_LIBS) $(TEXT_LIBS) $(THRL)
 
 xanalogtv: 	xanalogtv.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM) $(XPM_LIBS) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM) $(XPM_LIBS) $(HACK_LIBS) $(THRL)
 
 distort:	distort.o	$(HACK_OBJS) $(GRAB) $(SHM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(SHM) $(HACK_LIBS)
@@ -796,7 +800,7 @@ fontglide:	fontglide.o	$(HACK_OBJS) $(DBE) $(TEXT)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(DBE) $(TEXT) $(HACK_LIBS) $(TEXT_LIBS)
 
 pong: 	pong.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM) $(XPM_LIBS) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(ATV) $(GRAB) $(XPM) $(XPM_LIBS) $(HACK_LIBS) $(THRL)
 
 wormhole: 	wormhole.o	$(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(HACK_LIBS)
@@ -841,7 +845,7 @@ m6502.h:
 
 m6502.o:	m6502.h
 m6502:		m6502.o		asm6502.o $(HACK_OBJS) $(ATV)
-	$(CC_HACK) -o $@ $@.o	asm6502.o $(HACK_OBJS) $(ATV) $(HACK_LIBS)
+	$(CC_HACK) -o $@ $@.o	asm6502.o $(HACK_OBJS) $(ATV) $(HACK_LIBS) $(THRL)
 
 abstractile:	abstractile.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
@@ -1021,7 +1025,6 @@ anemone.o: $(UTILS_SRC)/hsv.h
 anemone.o: $(UTILS_SRC)/resources.h
 anemone.o: $(UTILS_SRC)/usleep.h
 anemone.o: $(UTILS_SRC)/visual.h
-anemone.o: $(UTILS_SRC)/xdbe.h
 anemone.o: $(UTILS_SRC)/yarandom.h
 anemotaxis.o: ../config.h
 anemotaxis.o: $(srcdir)/fps.h
@@ -1033,7 +1036,6 @@ anemotaxis.o: $(UTILS_SRC)/hsv.h
 anemotaxis.o: $(UTILS_SRC)/resources.h
 anemotaxis.o: $(UTILS_SRC)/usleep.h
 anemotaxis.o: $(UTILS_SRC)/visual.h
-anemotaxis.o: $(UTILS_SRC)/xdbe.h
 anemotaxis.o: $(UTILS_SRC)/yarandom.h
 ant.o: $(srcdir)/automata.h
 ant.o: ../config.h
@@ -1327,7 +1329,6 @@ compass.o: $(UTILS_SRC)/hsv.h
 compass.o: $(UTILS_SRC)/resources.h
 compass.o: $(UTILS_SRC)/usleep.h
 compass.o: $(UTILS_SRC)/visual.h
-compass.o: $(UTILS_SRC)/xdbe.h
 compass.o: $(UTILS_SRC)/yarandom.h
 coral.o: ../config.h
 coral.o: $(srcdir)/fps.h
@@ -1424,7 +1425,6 @@ deluxe.o: $(UTILS_SRC)/hsv.h
 deluxe.o: $(UTILS_SRC)/resources.h
 deluxe.o: $(UTILS_SRC)/usleep.h
 deluxe.o: $(UTILS_SRC)/visual.h
-deluxe.o: $(UTILS_SRC)/xdbe.h
 deluxe.o: $(UTILS_SRC)/yarandom.h
 demon.o: $(srcdir)/automata.h
 demon.o: ../config.h
@@ -1601,7 +1601,6 @@ fluidballs.o: $(UTILS_SRC)/hsv.h
 fluidballs.o: $(UTILS_SRC)/resources.h
 fluidballs.o: $(UTILS_SRC)/usleep.h
 fluidballs.o: $(UTILS_SRC)/visual.h
-fluidballs.o: $(UTILS_SRC)/xdbe.h
 fluidballs.o: $(UTILS_SRC)/yarandom.h
 fontglide.o: ../config.h
 fontglide.o: $(srcdir)/fps.h
@@ -1614,7 +1613,6 @@ fontglide.o: $(UTILS_SRC)/resources.h
 fontglide.o: $(UTILS_SRC)/textclient.h
 fontglide.o: $(UTILS_SRC)/usleep.h
 fontglide.o: $(UTILS_SRC)/visual.h
-fontglide.o: $(UTILS_SRC)/xdbe.h
 fontglide.o: $(UTILS_SRC)/yarandom.h
 forest.o: ../config.h
 forest.o: $(srcdir)/fps.h
@@ -1827,7 +1825,6 @@ interference.o: $(UTILS_SRC)/resources.h
 interference.o: $(UTILS_SRC)/thread_util.h
 interference.o: $(UTILS_SRC)/usleep.h
 interference.o: $(UTILS_SRC)/visual.h
-interference.o: $(UTILS_SRC)/xdbe.h
 interference.o: $(UTILS_SRC)/xshm.h
 interference.o: $(UTILS_SRC)/yarandom.h
 intermomentary.o: ../config.h
@@ -1889,7 +1886,6 @@ kumppa.o: $(UTILS_SRC)/hsv.h
 kumppa.o: $(UTILS_SRC)/resources.h
 kumppa.o: $(UTILS_SRC)/usleep.h
 kumppa.o: $(UTILS_SRC)/visual.h
-kumppa.o: $(UTILS_SRC)/xdbe.h
 kumppa.o: $(UTILS_SRC)/yarandom.h
 laser.o: ../config.h
 laser.o: $(srcdir)/fps.h
@@ -2040,7 +2036,6 @@ moire2.o: $(UTILS_SRC)/hsv.h
 moire2.o: $(UTILS_SRC)/resources.h
 moire2.o: $(UTILS_SRC)/usleep.h
 moire2.o: $(UTILS_SRC)/visual.h
-moire2.o: $(UTILS_SRC)/xdbe.h
 moire2.o: $(UTILS_SRC)/yarandom.h
 moire.o: ../config.h
 moire.o: $(srcdir)/fps.h
@@ -2262,7 +2257,6 @@ piecewise.o: $(UTILS_SRC)/hsv.h
 piecewise.o: $(UTILS_SRC)/resources.h
 piecewise.o: $(UTILS_SRC)/usleep.h
 piecewise.o: $(UTILS_SRC)/visual.h
-piecewise.o: $(UTILS_SRC)/xdbe.h
 piecewise.o: $(UTILS_SRC)/yarandom.h
 polyominoes.o: ../config.h
 polyominoes.o: $(srcdir)/fps.h
@@ -2303,7 +2297,6 @@ popsquares.o: $(UTILS_SRC)/hsv.h
 popsquares.o: $(UTILS_SRC)/resources.h
 popsquares.o: $(UTILS_SRC)/usleep.h
 popsquares.o: $(UTILS_SRC)/visual.h
-popsquares.o: $(UTILS_SRC)/xdbe.h
 popsquares.o: $(UTILS_SRC)/yarandom.h
 pyro.o: ../config.h
 pyro.o: $(srcdir)/fps.h
@@ -2710,7 +2703,6 @@ whirlygig.o: $(UTILS_SRC)/hsv.h
 whirlygig.o: $(UTILS_SRC)/resources.h
 whirlygig.o: $(UTILS_SRC)/usleep.h
 whirlygig.o: $(UTILS_SRC)/visual.h
-whirlygig.o: $(UTILS_SRC)/xdbe.h
 whirlygig.o: $(UTILS_SRC)/yarandom.h
 wormhole.o: ../config.h
 wormhole.o: $(srcdir)/fps.h

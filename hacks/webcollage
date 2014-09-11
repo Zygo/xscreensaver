@@ -57,7 +57,7 @@ use bytes;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.164 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.165 $' =~ m/\s(\d[.\d]+)\s/s);
 my $copyright = "WebCollage $version, Copyright (c) 1999-2014" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
@@ -1494,10 +1494,7 @@ sub pick_from_google_image_photos($) {
 #
 ############################################################################
 
-my $bing_images_url =	"http://www.bing.com/images/async" .
-			"?CW=0" .
-			"&CH=0" .
-			"&q=";
+my $bing_images_url =	"http://www.bing.com/images/async?q=";
 
 
 # bingimgs

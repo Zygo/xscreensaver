@@ -273,7 +273,7 @@ draw_quasicrystal (ModeInfo *mi)
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
   int wire = MI_IS_WIREFRAME(mi);
-  double r, ps;
+  double r=0, ps=0;
   int i;
 
   if (!bp->glx_context)

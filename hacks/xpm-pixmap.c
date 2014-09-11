@@ -61,7 +61,9 @@ xpm_to_pixmap_1 (Display *dpy, Window window,
   if (!initted)
     {
 #ifdef HAVE_GTK2
+#if !GLIB_CHECK_VERSION(2, 36 ,0)
       g_type_init ();
+#endif
 #endif /* HAVE_GTK2 */
       gdk_pixbuf_xlib_init (dpy, screen_number (xgwa.screen));
       xlib_rgb_init (dpy, xgwa.screen);

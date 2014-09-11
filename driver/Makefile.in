@@ -93,9 +93,7 @@ INCLUDES	= $(INCLUDES_1) @INCLUDES@
 MOTIF_SRCS	= demo-Xm.c demo-Xm-widgets.c
 MOTIF_OBJS	= demo-Xm.o demo-Xm-widgets.o
 
-GTK_SRCS	= demo-Gtk.c demo-Gtk-conf.c \
-		  demo-Gtk-widgets.c demo-Gtk-support.c
-GTK_EXTRA_OBJS  = demo-Gtk-widgets.o demo-Gtk-support.o
+GTK_SRCS	= demo-Gtk.c demo-Gtk-conf.c
 GTK_OBJS	= demo-Gtk.o demo-Gtk-conf.o @GTK_EXTRA_OBJS@
 
 PWENT_SRCS	= passwd-pwent.c
@@ -227,7 +225,6 @@ SCRIPTS		= $(SCRIPTS_1) @SCRIPTS_OSX@
 
 HDRS		= XScreenSaver_ad.h XScreenSaver_Xm_ad.h \
 		  xscreensaver.h prefs.h remote.h exec.h \
-		  demo-Gtk-widgets.h demo-Gtk-stubs.h demo-Gtk-support.h \
 		  demo-Gtk-conf.h auth.h mlstring.h types.h
 MEN_1		= xscreensaver.man xscreensaver-demo.man \
 		  xscreensaver-command.man \
@@ -771,13 +768,12 @@ XScreenSaver_ad.h: XScreenSaver.ad
 XScreenSaver_Xm_ad.h: XScreenSaver-Xm.ad
 	$(SHELL) $(UTILS_SRC)/ad2c XScreenSaver-Xm.ad > XScreenSaver_Xm_ad.h
 
-# What was this for? Now it's undefined.
-# @INTLTOOL_DESKTOP_RULE@
+@INTLTOOL_DESKTOP_RULE@
 
 # The executables linked in this directory.
 #
 xscreensaver: $(SAVER_OBJS)
-	$(CC) $(LDFLAGS) -o $@ $(SAVER_OBJS) $(SAVER_LIBS)
+	$(CC) $(LDFLAGS) -o $@ $(SAVER_OBJS) $(SAVER_LIBS) $(INTL_LIBS)
 
 xscreensaver-command: $(CMD_OBJS)
 	$(CC) $(LDFLAGS) -o $@ $(CMD_OBJS) $(CMD_LIBS)
@@ -882,8 +878,6 @@ demo-Gtk-conf.o: $(UTILS_SRC)/xscreensaver-intl.h
 demo-Gtk.o: XScreenSaver_ad.h
 demo-Gtk.o: ../config.h
 demo-Gtk.o: $(srcdir)/demo-Gtk-conf.h
-demo-Gtk.o: $(srcdir)/demo-Gtk-support.h
-demo-Gtk.o: $(srcdir)/demo-Gtk-widgets.h
 demo-Gtk.o: $(srcdir)/prefs.h
 demo-Gtk.o: $(srcdir)/remote.h
 demo-Gtk.o: $(srcdir)/types.h
@@ -892,12 +886,6 @@ demo-Gtk.o: $(UTILS_SRC)/usleep.h
 demo-Gtk.o: $(UTILS_SRC)/version.h
 demo-Gtk.o: $(UTILS_SRC)/visual.h
 demo-Gtk.o: $(UTILS_SRC)/xscreensaver-intl.h
-demo-Gtk-support.o: ../config.h
-demo-Gtk-support.o: $(srcdir)/demo-Gtk-support.h
-demo-Gtk-widgets.o: ../config.h
-demo-Gtk-widgets.o: $(srcdir)/demo-Gtk-stubs.h
-demo-Gtk-widgets.o: $(srcdir)/demo-Gtk-support.h
-demo-Gtk-widgets.o: $(srcdir)/demo-Gtk-widgets.h
 demo-Xm.o: ../config.h
 demo-Xm-widgets.o: ../config.h
 dpms.o: ../config.h

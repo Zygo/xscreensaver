@@ -85,7 +85,7 @@ bevel_image (GdkPixbuf **pbP, int bevel_pct,
   if (! gdk_pixbuf_get_has_alpha (pb))
     {
       GdkPixbuf *pb2 = gdk_pixbuf_add_alpha (pb, FALSE, 0, 0, 0);
-      gdk_pixbuf_unref (pb);
+      g_object_unref (pb);
       pb = pb2;
     }
 
@@ -205,7 +205,7 @@ paste (const char *paste_file,
       int new_h = paste_h * from_scale;
       GdkPixbuf *new_pb = gdk_pixbuf_scale_simple (paste_pb, new_w, new_h,
                                                    GDK_INTERP_HYPER);
-      gdk_pixbuf_unref (paste_pb);
+      g_object_unref (paste_pb);
       paste_pb = new_pb;
       paste_w = gdk_pixbuf_get_width (paste_pb);
       paste_h = gdk_pixbuf_get_height (paste_pb);
@@ -323,9 +323,9 @@ paste (const char *paste_file,
     fprintf (stderr, "%s: pasted %dx%d from %d,%d to %d,%d\n",
              progname, paste_w, paste_h, from_x, from_y, to_x, to_y);
 
-  gdk_pixbuf_unref (paste_pb);
+  g_object_unref (paste_pb);
   write_pixbuf (base_pb, base_file);
-  gdk_pixbuf_unref (base_pb);
+  g_object_unref (base_pb);
 }
 
 
@@ -491,7 +491,9 @@ main (int argc, char **argv)
   if (h < 0) usage();
 
 #ifdef HAVE_GTK2
+#if !GLIB_CHECK_VERSION(2, 36 ,0)
   g_type_init ();
+#endif
 #endif /* HAVE_GTK2 */
 
   paste (paste_file, base_file,

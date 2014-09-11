@@ -123,11 +123,6 @@
 #include "logo-50.xpm"
 #include "logo-180.xpm"
 
-#undef dgettext  /* else these are defined twice... */
-#undef dcgettext
-
-#include "demo-Gtk-widgets.h"
-#include "demo-Gtk-support.h"
 #include "demo-Gtk-conf.h"
 
 #include <stdio.h>
@@ -4721,7 +4716,7 @@ delayed_scroll_kludge (gpointer data)
 
 #ifdef HAVE_GTK2
 
-GtkWidget *
+static GtkWidget *
 create_xscreensaver_demo (void)
 {
   GtkWidget *nb;
@@ -4732,7 +4727,7 @@ create_xscreensaver_demo (void)
   return name_to_widget (global_state_kludge, "xscreensaver_demo");
 }
 
-GtkWidget *
+static GtkWidget *
 create_xscreensaver_settings_dialog (void)
 {
   GtkWidget *w, *box;

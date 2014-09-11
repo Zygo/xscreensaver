@@ -1,5 +1,5 @@
 #!/bin/sh
-# XScreenSaver, Copyright © 2013 Jamie Zawinski <jwz@jwz.org>
+# XScreenSaver, Copyright © 2013-2014 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -19,37 +19,44 @@
 #exec >/tmp/xscreensaver.log 2>&1
 #set -x
 
+DEBUG=0
+REQUIRED_SPACE=160	# MB. Highly approximate.
+
 export PATH="/bin:/sbin:/usr/bin:/usr/sbin:$PATH"
 
-REQUIRED_SPACE=140	# MB. Highly approximate.
+function error() {
+  echo "XScreenSaver Installer: Error: $@" >&2
+  (
+    # Using "System Events" says "No user interaction allowed" on 10.9.
+    # But using "Automator Runner" still seems to work.
+    osascript <<__EOF__
+      tell app "Automator Runner" to \
+        display dialog "$@" \
+        buttons "Bummer" \
+        default button 1 \
+        with icon 0 \
+        with title "Installation Error"
+__EOF__
+  ) </dev/null >/dev/null 2>&1 &
+  exit 1
+}
 
-DEBUG=0
+#if[ x"$DSTVOLUME"    = x ]; then error "DSTVOLUME unset";    fi
+if [ x"$PACKAGE_PATH" = x ]; then error "PACKAGE_PATH unset"; fi
+if [ x"$HOME"         = x ]; then error "HOME unset";         fi
 
-if [ x"$USER" = xjwz ]; then
-  DEBUG=1
-fi
 
 echo "Destination: $DSTVOLUME" >&2
 
-if [ "$DEBUG" != 0 ]; then
-  DSTVOLUME=/tmp
-fi
+if [ x"$USER" = xjwz ]; then DEBUG=1; fi
+
+if [ "$DEBUG" != 0 ]; then DSTVOLUME=/tmp; fi
 
 SRC=`dirname "$PACKAGE_PATH"`/"Screen Savers"
 DST1="$DSTVOLUME/Library/Screen Savers"
 DST2="$DSTVOLUME/Applications"
 PU="$DSTVOLUME/$HOME/Library/Screen Savers"
 UPDATER="XScreenSaverUpdater.app"
-
-function error() {
-  echo "Error: $@" >&2
-  (
-    osascript <<__EOF__
-      tell app "System Events" to display dialog "$@" buttons "Bummer" default button 1 with icon 0 with title "Installation Error"
-__EOF__
-  ) </dev/null >/dev/null 2>&1 &
-  exit 1
-}
 
 cd "$SRC" || error "The 'Screen Savers' folder does not exist.
 

@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my ($version) = ('$Revision: 1.30 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.33 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 
@@ -391,7 +391,7 @@ sub update($) {
 
   set_icon ($app_dir);
   set_thumb ($app_dir);
-  enable_gc ($app_dir);
+# enable_gc ($app_dir);
 }
 
 

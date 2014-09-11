@@ -1,21 +1,28 @@
-# XScreenSaver for MacOS X, Copyright (c) 2006-2013 by Jamie Zawinski.
+# XScreenSaver for MacOS X, Copyright (c) 2006-2014 by Jamie Zawinski.
 
-XCODEBUILD = /usr/bin/xcodebuild
-TARGETS    = -target "All Savers"
+# We have to use Xcode 5.0.2 in order to build savers that will run on
+# MacOS 10.6 and 10.7, because that's the latest version of Xcode that
+# ships with a version of clang that implements "-fobjc-gc".
+#
+XCODE_APP = /Applications/Xcode-5.0.2.app
+
+TARGETS    = All Savers
 ARCH       = -arch i386 -arch x86_64
 CERT       = 'Jamie Zawinski'
 CERT       = 'iPhone Developer: Jamie Zawinski (Y5M82TL69N)'
-THUMBDIR   = $(HOME)/www/xscreensaver/screenshots/
 PKGID	   = org.jwz.xscreensaver
-SETFILE    = /Applications/Xcode.app/Contents/Developer/Tools/SetFile
+THUMBDIR   = $(HOME)/www/xscreensaver/screenshots/
+XCODEBUILD = $(XCODE_APP)/Contents/Developer/usr/bin/xcodebuild
+SETFILE    = $(XCODE_APP)/Contents/Developer/Tools/SetFile
 SETICON    = /usr/local/bin/seticon
+# seticon is from osxutils1.7.pkg
 
 default: release
 all: debug release
 
 clean:
 	-rm -rf build
-#	cd ..; $(XCODEBUILD) $(TARGETS) clean
+#	cd ..; $(XCODEBUILD) -target "$(TARGETS)" clean
 
 distclean:
 	-rm -f config.status config.cache config.log \
@@ -27,10 +34,10 @@ distdepend:: Sparkle.framework
 distdepend:: update_plist_version
 
 debug: distdepend
-	cd ..; $(XCODEBUILD) $(ARCH) $(TARGETS) -configuration Debug   build
+	cd ..; $(XCODEBUILD) $(ARCH) -target "$(TARGETS)" -configuration Debug   build
 
 release:: distdepend
-	cd ..; $(XCODEBUILD) $(ARCH) $(TARGETS) -configuration Release build
+	cd ..; $(XCODEBUILD) $(ARCH) -target "$(TARGETS)" -configuration Release build
 
 release:: check_versions
 release:: update_thumbs
@@ -65,6 +72,25 @@ check_versions:
   done ;								\
   if [ "$$RESULT" = 0 ]; then echo "Versions match ($$V2)" ; fi ;	\
   exit $$RESULT
+
+
+check_gc:
+	@\
+  DIR="build/Release" ;							\
+  RESULT=0 ;								\
+  for S in "$$DIR/"*.saver ; do						\
+   SS=`echo "$$S" | sed -e 's@^.*/@@' -e 's/.saver$$//'` ;		\
+   D="$$S/Contents/MacOS/$$SS" ;					\
+   V=`otool -s __DATA __objc_imageinfo "$$D"				\
+      | grep ' 00 02 00 '` ;						\
+   if [ -z "$$V" ]; then						\
+     echo "$$S does not have GC enabled" ;				\
+     RESULT=1 ;								\
+   fi ;									\
+  done ;								\
+  if [ "$$RESULT" = 0 ]; then echo "GC enabled" ; fi ;			\
+  exit $$RESULT
+
 
 update_thumbs::
 	./update-thumbnail.pl $(THUMBDIR) build/Release/*.saver
@@ -167,7 +193,7 @@ build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.
 
 
 # -format UDBZ saves 4% (~1.2 MB) over UDZO.
-dmg:: distdepend check_versions build/Release/installer.pkg
+dmg:: distdepend check_versions check_gc build/Release/installer.pkg
 	@								      \
   set -e ;								      \
   SRC=../utils/version.h ;						      \

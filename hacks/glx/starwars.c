@@ -36,7 +36,6 @@
 # include <unistd.h>
 #endif
 
-
 #include "starwars.h"
 #define DEFAULTS "*delay:    40000     \n" \
 		 "*showFPS:  False     \n" \
@@ -1045,6 +1044,12 @@ release_sws (ModeInfo *mi)
   FreeAllGL(mi);
 }
 
+
+#ifdef __GNUC__
+ __extension__ /* don't warn about "string length is greater than the length
+                  ISO C89 compilers are required to support" when including
+                  "starwars.txt" in the defaults... */
+#endif
 
 XSCREENSAVER_MODULE_2 ("StarWars", starwars, sws)
 

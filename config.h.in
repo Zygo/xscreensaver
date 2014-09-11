@@ -1,7 +1,7 @@
 /* config.h.in.  Generated from configure.in by autoheader.  */
 
 
-/* config.h.in --- xscreensaver, Copyright (c) 1998-2000 Jamie Zawinski.
+/* config.h.in --- xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski.
  *
  *  The best way to set these parameters is by running the included `configure'
  *  script.  That examines your system, and generates `config.h' from 
@@ -14,14 +14,6 @@
 
 /* Define this to allow the root password to unlock the screen. */
 #undef ALLOW_ROOT_PASSWD
-
-/* Define to one of `_getb67', `GETB67', `getb67' for Cray-2 and Cray-YMP
-   systems. This function is required for `alloca.c' support on those systems.
-   */
-#undef CRAY_STACKSEG_END
-
-/* Define to 1 if using `alloca.c'. */
-#undef C_ALLOCA
 
 /* always defined to indicate that i18n is enabled */
 #undef ENABLE_NLS
@@ -42,15 +34,8 @@
    getpwnam().) I haven't tested this one, let me know if it works. */
 #undef HAVE_ADJUNCT_PASSWD
 
-/* Define to 1 if you have `alloca', as a function or macro. */
-#undef HAVE_ALLOCA
-
-/* Define to 1 if you have <alloca.h> and it should be used (not on Ultrix).
-   */
-#undef HAVE_ALLOCA_H
-
-/* Define to 1 if you have the <argz.h> header file. */
-#undef HAVE_ARGZ_H
+/* Define to 1 if you have the `bind_textdomain_codeset' function. */
+#undef HAVE_BIND_TEXTDOMAIN_CODESET
 
 /* Define this if you have Gnome and want to build support for the
    xscreensaver control panel in the Gnome Control Center (gnomecc). (This is
@@ -105,9 +90,6 @@
 
 /* Define this if you have the getifaddrs() function. */
 #undef HAVE_GETIFADDRS
-
-/* Define to 1 if you have the `getpagesize' function. */
-#undef HAVE_GETPAGESIZE
 
 /* Define if the GNU gettext() function is already present or preinstalled. */
 #undef HAVE_GETTEXT
@@ -181,14 +163,8 @@
 /* Define if your <locale.h> file defines LC_MESSAGES. */
 #undef HAVE_LC_MESSAGES
 
-/* Define to 1 if you have the <limits.h> header file. */
-#undef HAVE_LIMITS_H
-
 /* Define to 1 if you have the <locale.h> header file. */
 #undef HAVE_LOCALE_H
-
-/* Define to 1 if you have the <malloc.h> header file. */
-#undef HAVE_MALLOC_H
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
@@ -197,23 +173,14 @@
    have different names.) (HAVE_GL should be defined too.) */
 #undef HAVE_MESA_GL
 
-/* Define to 1 if you have a working `mmap' system call. */
-#undef HAVE_MMAP
-
 /* Define this if you have Motif. */
 #undef HAVE_MOTIF
-
-/* Define to 1 if you have the `munmap' function. */
-#undef HAVE_MUNMAP
 
 /* Define to 1 if you have the <ndir.h> header file, and it defines `DIR'. */
 #undef HAVE_NDIR_H
 
 /* Define to 1 if you have the `nice' function. */
 #undef HAVE_NICE
-
-/* Define to 1 if you have the <nl_types.h> header file. */
-#undef HAVE_NL_TYPES_H
 
 /* Define this if you have the XML library headers in their old,
    non-namespaced location (you lack the gnome-xml/libxml symlink) */
@@ -265,9 +232,6 @@
 /* Define to 1 if you have the `select' function. */
 #undef HAVE_SELECT
 
-/* Define to 1 if you have the `setenv' function. */
-#undef HAVE_SETENV
-
 /* Define to 1 if you have the `setlocale' function. */
 #undef HAVE_SETLOCALE
 
@@ -296,15 +260,6 @@
 /* Define to 1 if you have the <stdlib.h> header file. */
 #undef HAVE_STDLIB_H
 
-/* Define to 1 if you have the `strcasecmp' function. */
-#undef HAVE_STRCASECMP
-
-/* Define to 1 if you have the `strchr' function. */
-#undef HAVE_STRCHR
-
-/* Define to 1 if you have the `strdup' function. */
-#undef HAVE_STRDUP
-
 /* Define to 1 if you have the <strings.h> header file. */
 #undef HAVE_STRINGS_H
 
@@ -321,9 +276,6 @@
 /* Define to 1 if you have the <sys/ndir.h> header file, and it defines `DIR'.
    */
 #undef HAVE_SYS_NDIR_H
-
-/* Define to 1 if you have the <sys/param.h> header file. */
-#undef HAVE_SYS_PARAM_H
 
 /* Define to 1 if you have the <sys/select.h> header file. */
 #undef HAVE_SYS_SELECT_H
@@ -402,15 +354,6 @@
 /* Define this if you have the X Shared Memory Extension. */
 #undef HAVE_XSHM_EXTENSION
 
-/* Define to 1 if you have the `__argz_count' function. */
-#undef HAVE___ARGZ_COUNT
-
-/* Define to 1 if you have the `__argz_next' function. */
-#undef HAVE___ARGZ_NEXT
-
-/* Define to 1 if you have the `__argz_stringify' function. */
-#undef HAVE___ARGZ_STRINGIFY
-
 /* Define this to remove the option of locking the screen at all. */
 #undef NO_LOCKING
 
@@ -460,14 +403,6 @@
 /* Define as the return type of signal handlers (`int' or `void'). */
 #undef RETSIGTYPE
 
-/* If using the C implementation of alloca, define if you know the
-   direction of stack growth for your system; otherwise it will be
-   automatically deduced at runtime.
-	STACK_DIRECTION > 0 => grows toward higher addresses
-	STACK_DIRECTION < 0 => grows toward lower addresses
-	STACK_DIRECTION = 0 => direction of growth unknown */
-#undef STACK_DIRECTION
-
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
@@ -502,9 +437,6 @@
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef mode_t
-
-/* Define to `long int' if <sys/types.h> does not define. */
-#undef off_t
 
 /* Define to `int' if <sys/types.h> does not define. */
 #undef pid_t

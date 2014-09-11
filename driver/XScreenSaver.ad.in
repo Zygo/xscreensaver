@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.27
-!                              27-May-2014
+!                              version 5.29
+!                              08-Jun-2014
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -421,7 +421,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *passwd.uname:                  True
 
 *splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright © 1991-2014 by
+*splash.body.label:		Copyright \xa9 1991-2014 by
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Settings
 *splash.help.label:		Help

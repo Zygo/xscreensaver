@@ -29007,7 +29007,7 @@
 					/Users/jwz/src/xscreensaver/OSX,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/OSX/Updater.plist";
-				"OTHER_CFLAGS[sdk=macosx*]" = "";
+				"OTHER_CFLAGS[sdk=macosx*]" = "-fno-objc-gc";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -29022,7 +29022,7 @@
 					/Users/jwz/src/xscreensaver/OSX,
 				);
 				INFOPLIST_FILE = "$(SRCROOT)/OSX/Updater.plist";
-				"OTHER_CFLAGS[sdk=macosx*]" = "";
+				"OTHER_CFLAGS[sdk=macosx*]" = "-fno-objc-gc";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				WRAPPER_EXTENSION = app;
 			};
@@ -35066,7 +35066,7 @@
 				LIBRARY_SEARCH_PATHS = "$(BUILD_DIR)/$(CONFIGURATION)$(EFFECTIVE_PLATFORM_NAME)";
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_CFLAGS = "";
-				"OTHER_CFLAGS[sdk=macosx*]" = "";
+				"OTHER_CFLAGS[sdk=macosx*]" = "-fobjc-gc";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				"SDKROOT[arch=arm*]" = iphoneos;
@@ -35135,7 +35135,7 @@
 				"LLVM_LTO[sdk=macosx*]" = YES;
 				MACOSX_DEPLOYMENT_TARGET = 10.4;
 				OTHER_CFLAGS = "";
-				"OTHER_CFLAGS[sdk=macosx*]" = "";
+				"OTHER_CFLAGS[sdk=macosx*]" = "-fobjc-gc";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SDKROOT = macosx;
 				"SDKROOT[arch=arm*]" = iphoneos;

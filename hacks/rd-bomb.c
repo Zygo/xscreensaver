@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
  *
  *  reaction/diffusion textures
  *  Copyright (c) 1997 Scott Draves spot@transmeta.com
@@ -99,6 +99,9 @@ pixack_init(struct state *st, int *size_h, int *size_v)
 
   if (st->width  <= 0) st->width  = 48 + BELLRAND(256);
   if (st->height <= 0) st->height = 48 + BELLRAND(256);
+
+  if (st->width  > st->xgwa.width)  st->width  = st->xgwa.width;
+  if (st->height > st->xgwa.height) st->height = st->xgwa.height;
 
   /* jwz: when (and only when) XSHM is in use on an SGI 8-bit visual,
      we get shear unless st->width is a multiple of 4.  I don't understand
