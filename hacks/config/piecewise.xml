@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="piecewise" _label="Piecewise">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
+
+    <number id="count" type="slider" arg="-count %"
+            _label="Count" _low-label="Few" _high-label="Many"
+            low="4" high="100" default="32"/>
+
+    <number id="colorspeed" type="slider" arg="-colorspeed %"
+            _label="Color shift" _low-label="Slow" _high-label="Fast"
+            low="0" high="100" default="10"/>
+   </vgroup>
+   <vgroup>
+
+    <number id="minradius" type="slider" arg="-minradius %"
+            _label="Minimum radius" _low-label="Small" _high-label="Large"
+            low="0.01" high="0.5" default="0.05"/>
+
+    <number id="maxradius" type="slider" arg="-maxradius %"
+            _label="Maximum radius" _low-label="Small" _high-label="Large"
+            low="0.01" high="0.5" default="0.2"/>
+   </vgroup>
+  </hgroup>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Moving circles switch from visibility to invisibility at intersection points.
+
+Written by Geoffrey Irving; 2003.
+  </_description>
+</screensaver>

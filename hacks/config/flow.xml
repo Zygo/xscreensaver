@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="flow" _label="Flow">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="speed" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
+
+    <number id="count" type="slider" arg="-count %"
+            _label="Count" _low-label="Few" _high-label="Many"
+             low="10" high="5000" default="3000"/>
+
+    <number id="cycles" type="slider" arg="-cycles %"
+             _label="Timeout" _low-label="Small" _high-label="Large"
+            low="0" high="800000" default="10000"/>
+   </vgroup>
+   <vgroup>
+    <number id="ncolors" type="slider" arg="-ncolors %"
+              _label="Number of colors" _low-label="Two" _high-label="Many"
+              low="1" high="255" default="200"/>
+
+    <number id="size" type="slider" arg="-size %"
+              _label="Length of trails" _low-label="Short" _high-label="Long"
+              low="-20" high="-2" default="-10" convert="invert"/>
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+   <vgroup>
+    <boolean id="rotate" _label="Rotating around attractor" arg-unset="-no-rotate"/>
+    <boolean id="ride"   _label="Ride in the flow" arg-unset="-no-ride"/>
+    <boolean id="box"    _label="Draw bounding box"  arg-unset="-no-box"/>
+   </vgroup>
+   <vgroup>
+    <boolean id="periodic" _label="Periodic attractors" arg-unset="-no-periodic"/>
+    <boolean id="search" _label="Search for new attractors" arg-unset="-no-search"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Strange attractors formed of flows in a 3D differential equation phase
+space.  Features the popular attractors described by Lorentz,
+Roessler, Birkhoff and Duffing, and can discover entirely new
+attractors by itself.
+
+http://en.wikipedia.org/wiki/Attractor#Strange_attractor
+
+Written by Tim Auckland; 1998.
+  </_description>
+</screensaver>

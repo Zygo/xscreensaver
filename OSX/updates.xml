@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+     xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
+     xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <channel>
+  <title>xscreensaver updater</title>
+  <link>http://www.jwz.org/xscreensaver/updates.xml</link>
+  <description>Updates to xscreensaver.</description>
+  <language>en</language>
+  <item>
+   <title>Version 5.29</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.29.dmg</link>
+   <description><![CDATA[&bull; Downgraded to Xcode 5.0.2 to make it possible to build savers that will still run on 10.6 and 10.7. Sigh. <BR>&bull; Updated `webcollage' for recent changes.]]></description>
+   <pubDate>Sun, 08 Jun 2014 14:56:08 -0700</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.29.dmg"
+    sparkle:version="5.29"
+    sparkle:dsaSignature="MC0CFQC4BbJnSlHL8xiAJHw/RVUKJ2q23AIUZAPp7UaHNFJd1Hb/Ih9z970pwMg="
+    length="51332404"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.28</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.28.dmg</link>
+   <description><![CDATA[&bull; Fixed some compilation problems and intermittent crashes. <BR>&bull; Turned off the OSX 10.6 enable_gc hack. It didn't work.]]></description>
+   <pubDate>Wed, 04 Jun 2014 13:51:27 -0700</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.28.dmg"
+    sparkle:version="5.28"
+    sparkle:dsaSignature="MC0CFCic+M1r8vJdzeZ0tbsvhSlkcuOTAhUAqxQeckaXmn8TV+KJp3EsoEzMiBo="
+    length="51021639"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.27</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.27.dmg</link>
+   <description><![CDATA[&bull; New hacks, `tessellimage' and `projectiveplane'. <BR>&bull; Added support for pthreads, because Dave Odell is a madman. <BR>&bull; Updated `webcollage' for recent changes. <BR>&bull; Minor iOS tweaks to the `analogtv' hacks. <BR>&bull; X11: Don't assume Suspend = 0 implies "No DPMS". <BR>&bull; Minor updates to `boxed' and `klein'. <BR>&bull; Fixed possible crash in `apple2', `noseguy', `xmatrix', `shadebobs'. <BR>&bull; Fixed possible crash in OSX preferences. <BR>&bull; OSX Performance improvements. <BR>&bull; Plugged some leaks.]]></description>
+   <pubDate>Tue, 27 May 2014 03:05:35 -0700</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.27.dmg"
+    sparkle:version="5.27"
+    sparkle:dsaSignature="MC0CFQDIHH0Q0NqJ8K0XDDe8lUPpTdpLeQIUW1tdF1xsu0WviJ+EpxOXYiudetM="
+    length="50979508"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.14</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg</link>
+   <description><![CDATA[&bull; Fixed crash in Blank Only Mode when DPMS disabled. <BR>&bull; Added "Quick Power-off in Blank Only Mode" option. <BR>&bull; BSOD GLaDOS.]]></description>
+   <pubDate>Fri, 20 May 2011 11:42:36 -0700</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg"
+    sparkle:version="5.14"
+    sparkle:dsaSignature="MCwCFHrKuttf1gN27mVG3YL8+ueMJmNaAhR6aSkKQefuNFNp6MinLq2o1nocaA=="
+    length="54485615"
+    type="application/octet-stream" />
+  </item>
+ </channel>
+</rss>

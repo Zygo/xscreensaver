@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="epicycle" _label="Epicycle">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <number id="ncolors" type="slider" arg="-colors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="100"/>
+
+  <number id="holdtime" type="slider" arg="-holdtime %"
+          _label="Linger" _low-label="1 second" _high-label="30 seconds"
+          low="1" high="30" default="2"/>
+
+  <hgroup>
+  <number id="linewidth" type="spinbutton" arg="-linewidth %"
+          _label="Line thickness" low="1" high="50" default="4"/>
+
+  <number id="harmonics" type="spinbutton" arg="-harmonics %"
+          _label="Harmonics" low="1" high="20" default="8"/>
+  </hgroup>
+
+  <!-- #### -color0 [red] -->
+  <!-- #### -colours [100] -->
+  <!-- #### -foreground [white] -->
+  <!-- #### -min_circles [2] -->
+  <!-- #### -max_circles [10] -->
+  <!-- #### -min_speed [0.003] -->
+  <!-- #### -max_speed [0.005] -->
+  <!-- #### -timestep [1.0] -->
+  <!-- #### -divisor_poisson [0.4] -->
+  <!-- #### -size_factor_min [1.05] -->
+  <!-- #### -size_factor_max [2.05] -->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+A pre-heliocentric model of planetary motion.
+
+This draws the path traced out by a point on the edge of a
+circle.  That circle rotates around a point on the rim of another
+circle, and so on, several times.
+
+http://en.wikipedia.org/wiki/Deferent_and_epicycle
+
+Written by James Youngman; 1998.
+  </_description>
+</screensaver>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="penetrate" _label="Penetrate">
+
+  <command arg="-root"/>
+
+  <number id="bgrowth" type="slider" arg="-bgrowth %"
+          _label="Explosions" _low-label="Slow" _high-label="Fast"
+          low="1" high="20" default="5"/>
+
+  <number id="lrate" type="slider" arg="-lrate %"
+          _label="Lasers" _low-label="Slow" _high-label="Fast"
+          low="10" high="200" default="80"
+          convert="invert"/>
+
+  <select id="mode">
+    <option id="dumb"  _label="Start badly, but learn"/>
+    <option id="smart" _label="Always play well" arg-set="-smart"/>
+  </select>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Simulates (something like) the classic arcade game Missile Command.
+
+http://en.wikipedia.org/wiki/Missile_Command
+
+Written by Adam Miller; 1999.
+  </_description>
+</screensaver>

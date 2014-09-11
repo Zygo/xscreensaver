@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="starfish" _label="Starfish">
+
+  <command arg="-root"/>
+
+  <select id="mode">
+    <option id="random" _label="Random"/>
+    <option id="zoom"   _label="Color gradients" arg-set="-mode zoom"/>
+    <option id="blob"   _label="Pulsating blob"  arg-set="-mode blob"/>
+  </select>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="duration" type="slider" arg="-duration %"
+          _label="Duration" _low-label="1 second" _high-label="30 seconds"
+          low="1" high="60" default="30"/>
+
+  <number id="thickness" type="slider" arg="-thickness %"
+          _label="Lines" _low-label="Thin" _high-label="Thick"
+          low="0" high="150" default="0"/>
+
+  <number id="ncolors" type="slider" arg="-colors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="200"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Undulating, throbbing, star-like patterns pulsate, rotate, and turn
+inside out.  Another display mode uses these shapes to lay down a
+field of colors, which are then cycled.  The motion is very organic.
+
+Written by Jamie Zawinski; 1997.
+  </_description>
+</screensaver>

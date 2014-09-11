@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="nerverot" _label="NerveRot">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
+
+    <number id="iters" type="slider" arg="-max-iters %"
+            _label="Duration" _low-label="Short" _high-label="Long"
+            low="100" high="8000" default="1200"/>
+
+    <number id="count" type="slider" arg="-count %"
+            _label="Blot count" _low-label="Few" _high-label="Many"
+            low="1" high="1000" default="250"/>
+
+    <number id="ncolors" type="slider" arg="-colors %"
+            _label="Colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="4"/>
+   </vgroup>
+   <vgroup>
+    <number id="event" type="slider" arg="-event-chance %"
+            _label="Changes" _low-label="Seldom" _high-label="Frequent"
+             low="0.0" high="1.0" default="0.2"/>
+
+    <number id="nervous" type="slider" arg="-nervousness %"
+            _label="Nervousness" _low-label="Calm" _high-label="Spastic"
+             low="0.0" high="1.0" default="0.3"/>
+
+    <number id="mnr" type="slider" arg="-max-nerve-radius %"
+            _label="Crunchiness" _low-label="Low" _high-label="High"
+             low="0.0" high="1.0" default="0.7"/>
+
+    <number id="linewidth" type="spinbutton" arg="-line-width %"
+            _label="Line thickness" low="0" high="100" default="0"/>
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+   </vgroup>
+  </hgroup>
+
+  <!-- #### -iter-amt [0.01] -->
+  <!-- #### -min-scale [0.6] -->
+  <!-- #### -max-scale [1.75] -->
+  <!-- #### -min-radius [3] -->
+  <!-- #### -max-radius [25] -->
+
+  <xscreensaver-updater />
+
+  <_description>
+Nervously vibrating squiggles.
+
+Written by Dan Bornstein; 2000.
+  </_description>
+</screensaver>

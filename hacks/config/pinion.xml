@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="pinion" _label="Pinion" gl="yes">
+
+  <command arg="-root"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="15000"
+            convert="invert"/>
+
+    <number id="spin" type="slider" arg="-spin %"
+            _label="Rotation speed" _low-label="Slow" _high-label="Fast"
+            low="0.1" high="7.0" default="1.0"/>
+
+    <number id="scroll" type="slider" arg="-scroll %"
+            _label="Scrolling speed" _low-label="Slow" _high-label="Fast"
+            low="0.1" high="8.0" default="1.0"/>
+
+   </vgroup>
+   <vgroup>
+    <number id="size" type="slider" arg="-size %"
+            _label="Gear size" _low-label="Tiny" _high-label="Huge"
+            low="0.1" high="3.0" default="1.0"/>
+
+    <number id="max-rpm" type="slider" arg="-max-rpm %"
+            _label="Max RPM" _low-label="100" _high-label="2000"
+            low="100" high="2000" default="900"/>
+
+    <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+A gear system marches across the screen.
+See also the "Gears" and "MoebiusGears" screen savers.
+
+http://en.wikipedia.org/wiki/Involute_gear
+
+Written by Jamie Zawinski; 2004.
+  </_description>
+</screensaver>

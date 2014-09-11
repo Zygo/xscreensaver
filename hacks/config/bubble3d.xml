@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="bubble3d" _label="Bubble3D" gl="yes">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <boolean id="transp" _label="Transparent bubbles" arg-unset="-no-transparent"/>
+  <string id="color"    _label="Bubble color"      arg="-color %"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  <xscreensaver-updater />
+
+  <_description>
+Rising, undulating 3D bubbles, with transparency and specular reflections. 
+
+Written by Richard Jones; 1998.
+  </_description>
+</screensaver>

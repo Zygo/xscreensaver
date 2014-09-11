@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="strange" _label="Strange">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="points" type="slider" arg="-points %"
+            _label="Number of points" _low-label="1k" _high-label="100k"
+            low="1000" high="100000" default="5500"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="100"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Strange attractors: a swarm of dots swoops and twists around.
+
+http://en.wikipedia.org/wiki/Attractor#Strange_attractor
+
+Written by Massimino Pascal; 1997.
+  </_description>
+</screensaver>
