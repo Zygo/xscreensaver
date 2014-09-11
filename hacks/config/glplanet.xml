@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="glplanet" _label="GLPlanet" gl="yes">
+
+  <command arg="-root"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <!-- #### -no-texture -->
+  <!-- #### -no-stars -->
+
+  <file id="bitmap" _label="Image file" arg="-image %"/>
+
+  <hgroup>
+   <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
+   <boolean id="rotate" _label="Rotate"    arg-unset="-no-rotate"/>
+   <boolean id="roll"   _label="Roll"      arg-unset="-no-roll"/>
+   <boolean id="stars"  _label="Stars"     arg-unset="-no-stars"/>
+  </hgroup>
+
+  <hgroup>
+   <boolean id="light"   _label="Lighting"               arg-unset="-no-light"/>
+   <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Draws the Earth bouncing around in space.
+
+If you would like it to display a different planet, the texture maps
+that come with "ssystem" work well.
+
+Written by David Konerding; 1998.
+  </_description>
+</screensaver>

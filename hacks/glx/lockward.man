@@ -1,0 +1,79 @@
+.TH XScreenSaver 1 "" "X Version 11"
+.SH NAME
+lockward - Rotating spinning color-cycling things
+.SH SYNOPSIS
+.B lockward
+[\-display \fIdisplayspec\fP]
+[\-root]
+[\-window]
+[\-visual \fIarg\fP]
+[\-window-id \fIarg\fP]
+[\-delay \fIusec\fP]
+[\-pair]
+[\-fps]
+[\-blink | \-no-blink]
+[\-rotateidle-min \fImsec\fP]
+[\-rotateidle-max \fImsec\fP]
+[\-blinkidle-min \fImsec\fP]
+[\-blinkidle-max \fImsec\fP]
+[\-blinkdwell-min \fImsec\fP]
+[\-blinkdwell-max \fImsec\fP]
+.SH DESCRIPTION
+.B lockward
+draws a spinning, rotating set of notched wheels overlaid with some flashing
+effects, using OpenGL.  It's a sort of cross between the wards in a
+combination lock and those old information displays that animated via
+polarized light.
+.SH OPTIONS
+.TP 8
+.B \-visual \fIvisual\fP
+Specify which visual to use.  Legal values are the name of a visual class,
+or the ID number (decimal or hex) of a specific visual.
+.TP 8
+.B \-window
+Draw on a newly-created window (default).
+.TP 8
+.B \-root
+Draw on the root window.
+.TP 8
+.B \-delay \fImicroseconds\fP
+Per-frame delay, in microseconds.  Default: 20000 (50 frames/sec).
+.TP 8
+.B \-blink | \-no-blink
+Enables/disables the blinking effects.  Default: Enabled.
+.TP 8
+.B \-fps
+Display the current frame rate, CPU load, and polygon count.
+.TP 8
+.B \-rotateidle-min \fImilliseconds
+.TP 8
+.B \-rotateidle-max \fImilliseconds
+The minimum and maximum time each spinner will sit idle, in milliseconds.
+Defaults: Min 1000, max 6000.
+.TP 8
+.B \-blinkidle-min \fImilliseconds
+.TP 8
+.B \-blinkidle-max \fImilliseconds
+The minimum and maximum time between blinking effects, in milliseconds.
+Defaults: Min 1000, max 9000.
+.TP 8
+.B \-blinkdwell-min \fImilliseconds
+.TP 8
+.B \-blinkdwell-max \fImilliseconds
+The minimum and maximum dwell time for the blinking effects, in
+milliseconds.  This affects how quickly the blinks actually happen.
+Defaults: Min 100, max 600.
+.SH ENVIRONMENT
+.PP
+.TP 8
+.B DISPLAY
+Default host and display number.
+.TP 8
+.B XENVIRONMENT
+Name of a resource file that overrides the global resources stored in the
+RESOURCE_MANAGER property.
+.SH SEE ALSO
+.BR X (1),
+.BR xscreensaver (1)
+.SH AUTHORS
+Leo L. Schwab <ewhac@best.com>
