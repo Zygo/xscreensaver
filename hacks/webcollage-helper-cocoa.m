@@ -1,5 +1,5 @@
 /* webcollage-helper-cocoa --- scales and pastes one image into another
- * xscreensaver, Copyright (c) 2002-2009 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2002-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -105,7 +105,7 @@ load_image (const char *file)
   NSImage *image = [[NSImage alloc] 
                      initWithContentsOfFile:
                        [NSString stringWithCString: file
-                                          encoding: kCFStringEncodingUTF8]];
+                                          encoding: NSUTF8StringEncoding]];
   if (! image)
     image = load_ppm_image (file);
 
@@ -113,6 +113,14 @@ load_image (const char *file)
     fprintf (stderr, "%s: unable to load %s\n", progname, file);
     exit (1);
   }
+
+  
+  // [NSImage size] defaults to the image size in points instead of pixels,
+  // so if an image file specified "pixels per inch" we can end up with
+  // absurdly sized images.  Set it back to 1:1 pixel:point.
+  //
+  NSImageRep *rep = [image.representations firstObject];
+  image.size = NSMakeSize (rep.pixelsWide, rep.pixelsHigh);
 
   return image;
 }

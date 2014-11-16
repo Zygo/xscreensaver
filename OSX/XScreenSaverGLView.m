@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -223,32 +223,31 @@ extern void check_gl_error (const char *type);
    and discarded.  That's ok, though, because mostly it's just calls to
    XClearWindow and housekeeping stuff like that.  So we make a tiny one.
  */
-- (void) createBackbuffer
+- (void) createBackbuffer:(CGSize)new_size
 {
-  // Don't resize the X11 window to match rotation. 
-  // Rotation and scaling are handled in GL.
-  //
-# ifdef USE_IPHONE
-  double s = [self hackedContentScaleFactor];
-# else
-  double s = 1;
-# endif
-  // Store a realistic size in backbuffer_size, though the buffer is minimal.
-  NSRect f = [self bounds];
-  backbuffer_size.width  = (int) (s * f.size.width);
-  backbuffer_size.height = (int) (s * f.size.height);
+  backbuffer_size = new_size;
 
   if (! backbuffer) {
     CGColorSpaceRef cs = CGColorSpaceCreateDeviceRGB();
     int w = 8;
     int h = 8;
-    backbuffer = CGBitmapContextCreate (NULL, w, h,
+    backbuffer = CGBitmapContextCreate (NULL, w, h,   // yup, only 8px x 8px.
                                         8, w*4, cs,
                                         kCGImageAlphaPremultipliedLast);
     CGColorSpaceRelease (cs);
   }
 }
 # endif // USE_BACKBUFFER
+
+
+/* When changing the device orientation, leave the X11 Window and glViewport
+   in portrait configuration.  OpenGL hacks examine current_device_rotation()
+   within the scene as needed.
+ */
+- (BOOL)reshapeRotatedWindow
+{
+  return NO;
+}
 
 
 - (void)dealloc {
@@ -418,6 +417,17 @@ init_GL (ModeInfo *mi)
   jwzgles_reset ();
   
 # endif // USE_IPHONE
+
+  // I don't know why this is necessary, but it beats randomly having some
+  // textures be upside down.
+  //
+  glMatrixMode(GL_TEXTURE);
+  glLoadIdentity();
+  glMatrixMode(GL_PROJECTION);
+  glLoadIdentity();
+  glMatrixMode(GL_MODELVIEW);
+  glLoadIdentity();
+
 
   // Caller expects a pointer to an opaque struct...  which it dereferences.
   // Don't ask me, it's historical...

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+      package="org.jwz.xscreensaver"
+      android:versionCode="1"
+      android:versionName="1.0">
+    <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="19" />
+
+    <application android:icon="@drawable/thumbnail" android:label="@string/app_name" android:name=".XscreensaverApp">
+
+
+	<service android:label="@string/superquadrics_name" android:name=".gen.SuperquadricsService"
+		android:permission="android.permission.BIND_WALLPAPER">
+		<intent-filter>
+			<action android:name="android.service.wallpaper.WallpaperService" />
+		</intent-filter>
+		<meta-data android:name="android.service.wallpaper"
+			android:resource="@xml/superquadrics" />
+	</service>
+        <activity
+           android:label="@string/superquadrics_settings"
+           android:name="org.jwz.xscreensaver.gen.SuperquadricsSettings"
+           android:theme="@android:style/Theme.Light.WallpaperSettings"
+           android:exported="true">
+        </activity>
+
+
+	<service android:label="@string/sproingies_name" android:name=".gen.SproingiesService"
+		android:permission="android.permission.BIND_WALLPAPER">
+		<intent-filter>
+			<action android:name="android.service.wallpaper.WallpaperService" />
+		</intent-filter>
+		<meta-data android:name="android.service.wallpaper"
+			android:resource="@xml/sproingies" />
+	</service>
+        <activity
+           android:label="@string/sproingies_settings"
+           android:name="org.jwz.xscreensaver.gen.SproingiesSettings"
+           android:theme="@android:style/Theme.Light.WallpaperSettings"
+           android:exported="true">
+        </activity>
+
+
+
+    </application>
+
+    <uses-sdk android:minSdkVersion="14" />
+	<uses-feature android:name="android.software.live_wallpaper" android:required="true" />
+</manifest> 

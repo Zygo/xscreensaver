@@ -17,7 +17,12 @@
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#undef DEBUG
+
+/* If you turn on DEBUG, this program also masquerades as a tool for
+   debugging font metrics issues, which is probably only if interest
+   if you are doing active development on libjwxyz.a itself.
+ */
+/* #define DEBUG */
 
 #include <math.h>
 
@@ -31,6 +36,8 @@
 
 #include "screenhack.h"
 #include "textclient.h"
+#include "xft.h"
+#include "utf8wc.h"
 
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
 #include "xdbe.h"
@@ -38,8 +45,15 @@
 
 typedef struct {
   char *text;
-  int x, y, width, height;
-  int ascent, lbearing, rbearing;
+
+  int x, y;		/* Position of origin of first character in word */
+
+			/* These have the same meanings as in XCharStruct: */
+  int lbearing;		/* origin to leftmost pixel */
+  int rbearing;		/* origin to rightmost pixel */
+  int ascent;		/* origin to topmost pixel */
+  int descent;		/* origin to bottommost pixel */
+  int width;		/* origin to next word's origin */
 
   int nticks, tick;
   int start_x,  start_y;
@@ -50,16 +64,14 @@ typedef struct {
 
 typedef struct {
   int id;
-  XColor fg;
-  XColor bg;
   Bool dark_p;
   Bool move_chars_p;
   int width;
 
   char *font_name;
-  XFontStruct *font;
-
   GC fg_gc;
+  XftFont *xftfont;
+  XftColor xftcolor_fg, xftcolor_bg;
 
   int nwords;
   word **words;
@@ -160,11 +172,16 @@ pick_font_1 (state *s, sentence *se)
   int count = 0, count2 = 0;
   int i;
 
-  if (se->font)
+  if (se->xftfont)
     {
-      XFreeFont (s->dpy, se->font);
+      XftFontClose (s->dpy, se->xftfont);
+      XftColorFree (s->dpy, s->xgwa.visual, s->xgwa.colormap,
+                    &se->xftcolor_fg);
+      XftColorFree (s->dpy, s->xgwa.visual, s->xgwa.colormap,
+                    &se->xftcolor_bg);
+
       free (se->font_name);
-      se->font = 0;
+      se->xftfont = 0;
       se->font_name = 0;
     }
 
@@ -203,9 +220,12 @@ pick_font_1 (state *s, sentence *se)
   names2 = XListFontsWithInfo (s->dpy, names[i], 1000, &count2, &info);
   if (count2 <= 0)
     {
-      fprintf (stderr, "%s: pattern %s\n"
-                "     gave unusable %s\n\n",
-               progname, pattern, names[i]);
+# ifdef DEBUG
+      if (s->debug_p)
+        fprintf (stderr, "%s: pattern %s\n"
+                 "     gave unusable %s\n\n",
+                 progname, pattern, names[i]);
+# endif /* DEBUG */
       goto FAIL;
     }
 
@@ -321,30 +341,98 @@ pick_font_1 (state *s, sentence *se)
 
   if (! ok) return False;
 
-  se->font = XLoadQueryFont (s->dpy, pattern);
+  se->xftfont = XftFontOpenXlfd (s->dpy, screen_number (s->xgwa.screen),
+                                 pattern);
+
+  /* Sometimes we get fonts with screwed up metrics.  For example:
+     -b&h-lucida-medium-r-normal-sans-40-289-100-100-p-0-iso8859-1
+
+     When using XDrawString, XTextExtents and XTextExtents16, it is rendered
+     as a scaled-up bitmap font.  The character M has rbearing 70, ascent 68
+     and width 78, which is correct for the glyph as rendered.
+
+     But when using XftDrawStringUtf8 and XftTextExtentsUtf8, it is rendered
+     at the original, smaller, un-scaled size, with rbearing 26, ascent 25
+     and... width 77!
+
+     So it's taking the *size* from the unscaled font, the *advancement* from
+     the scaled-up version, and then *not* actually scaling it up.  Awesome.
+
+     So, after loading the font, measure the M, and if its advancement is more
+     than 20% larger than its rbearing, reject the font.
+
+     ------------------------------------------------------------------------
+
+     Some observations on this nonsense from Dave Odell:
+
+     1. -*-lucidatypewriter-bold-r-normal-*-*-480-*-*-*-*-iso8859-1 normally
+        resolves to /usr/share/fonts/X11/100dpi/lutBS24-ISO8859-1.pcf.gz.
+
+        -*-lucidatypewriter-* is from the 'xfonts-100dpi' package in
+        Debian/Ubuntu. It's usually (54.46% of systems), but not always,
+        installed whenever an X.org server (57.96% of systems) is.  It might
+        be a good idea for this and xfonts-75dpi to be recommended
+        dependencies of XScreenSaver in Debian, but that's neither here nor
+        there.  https://qa.debian.org/popcon.php?package=xorg
+        https://qa.debian.org/popcon.php?package=xfonts-100dpi
+
+     2. It normally resolves to the PCF font... but not always.
+
+        Fontconfig has /etc/fonts/conf.d/ (it's /opt/local/etc/fonts/conf.d/
+        with MacPorts) containing symlinks to configuration files. And both
+        Debian and Ubuntu normally has a 70-no-bitmaps.conf, installed as part
+        of the 'fontconfig-config' package. And the 70-no-bitmaps.conf
+        symlink... disables bitmap fonts.
+
+        Without bitmap fonts, I get DejaVu Sans.
+
+     3. There's another symlink of interest here:
+        /etc/fonts/conf.d/10-scale-bitmap-fonts.conf. This adds space to the
+        right of glyphs of bitmap fonts when the requested size of the font is
+        larger than the actual bitmap font. Ubuntu and MacPorts has this one.
+
+        This specifically is causing text to have excessive character spacing.
+
+        (jwz asks: WHY WOULD ANYONE EVER WANT THIS BEHAVIOR?)
+
+     4. Notice that I'm only talking about Debian and Ubuntu. Other distros
+        will probably have different symlinks in /etc/fonts/conf.d/. So yes,
+        this can be an issue on Linux as well as MacOS.
+   */
+  {
+    XGlyphInfo extents;
+    int rbearing, width;
+    float ratio;
+    float min = 0.8;
+
+    XftTextExtentsUtf8 (s->dpy, se->xftfont, (FcChar8 *) "M", 1, &extents);
+    rbearing = extents.width - extents.x;
+    width = extents.xOff;
+    ratio = rbearing / (float) width;
 
 # ifdef DEBUG
-  if (! se->font)
+    if (s->debug_p)
+      fprintf (stderr, "%s: M ratio %.2f (%d %d): %s\n", progname,
+               ratio, rbearing, width, pattern);
+# endif
+
+    if (ratio < min && !s->font_override)
+      {
+# ifdef DEBUG
+        if (s->debug_p)
+          fprintf (stderr, "%s: skipping font with broken metrics: %s\n",
+                   progname, pattern);
+# endif
+        return False;
+      }
+  }
+
+
+# ifdef DEBUG
+  if (! se->xftfont)
     {
       if (s->debug_p)
         fprintf (stderr, "%s: unable to load font %s\n",
-                 progname, pattern);
-      return False;
-    }
-
-  if (se->font->min_bounds.width == se->font->max_bounds.width &&
-      !s->font_override)
-    {
-      /* This is to weed out
-         "-urw-nimbus mono l-medium-o-normal--*-*-*-*-p-*-iso8859-1" and
-         "-urw-courier-medium-r-normal--*-*-*-*-p-*-iso8859-1".
-         We asked for only proportional fonts, but this fixed-width font
-         shows up anyway -- but it has goofy metrics (see below) so it
-         looks terrible anyway.
-       */
-      if (s->debug_p)
-        fprintf (stderr,
-                 "%s: skipping bogus monospace non-charcell font: %s\n",
                  progname, pattern);
       return False;
     }
@@ -354,7 +442,6 @@ pick_font_1 (state *s, sentence *se)
 # endif /* DEBUG */
 
   se->font_name = strdup (pattern);
-  XSetFont (s->dpy, se->fg_gc, se->font->fid);
   return True;
 }
 
@@ -366,10 +453,11 @@ static void
 pick_font (state *s, sentence *se)
 {
   int i;
-  for (i = 0; i < 20; i++)
+  for (i = 0; i < 50; i++)
     if (pick_font_1 (s, se))
       return;
-  fprintf (stderr, "%s: too many font-loading failures: giving up!\n", progname);
+  fprintf (stderr, "%s: too many font-loading failures: giving up!\n",
+           progname);
   exit (1);
 }
 
@@ -463,58 +551,67 @@ get_word_text (state *s)
 }
 
 
+/* Returns a 1-bit pixmap of the same size as the drawable,
+   with a 0 wherever the drawable is black.
+ */
+static Pixmap
+make_mask (Screen *screen, Visual *visual, Drawable drawable)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  unsigned long black = BlackPixelOfScreen (screen);
+  Window r;
+  int x, y;
+  unsigned int w, h, bw, d;
+  XImage *out, *in;
+  Pixmap mask;
+  GC gc;
+
+  XGetGeometry (dpy, drawable, &r, &x, &y, &w, &h, &bw, &d);
+  in = XGetImage (dpy, drawable, 0, 0, w, h, ~0L, ZPixmap);
+  out = XCreateImage (dpy, visual, 1, XYPixmap, 0, 0, w, h, 8, 0);
+  out->data = (char *) malloc (h * out->bytes_per_line);
+  for (y = 0; y < h; y++)
+    for (x = 0; x < w; x++)
+      XPutPixel (out, x, y, (black != XGetPixel (in, x, y)));
+  mask = XCreatePixmap (dpy, drawable, w, h, 1L);
+  gc = XCreateGC (dpy, mask, 0, 0);
+  XPutImage (dpy, mask, gc, out, 0, 0, 0, 0, w, h);
+  XFreeGC (dpy, gc);
+  free (in->data);
+  free (out->data);
+  in->data = out->data = 0;
+  XDestroyImage (in);
+  XDestroyImage (out);
+  return mask;
+}
+
+
 /* Gets some random text, and creates a "word" object from it.
  */
 static word *
 new_word (state *s, sentence *se, const char *txt, Bool alloc_p)
 {
   word *w;
-  XCharStruct overall;
-  int dir, ascent, descent;
+  XGlyphInfo extents;
   int bw = s->border_width;
-  int slack;
 
   if (!txt)
     return 0;
 
   w = (word *) calloc (1, sizeof(*w));
-  XTextExtents (se->font, txt, strlen(txt), &dir, &ascent, &descent, &overall);
+  XftTextExtentsUtf8 (s->dpy, se->xftfont, (FcChar8 *) txt, strlen(txt),
+                      &extents);
 
-  /* Leave a little more slack. Not entirely clear on what's going on here,
-     but maybe it's fonts with goofy metrics. */
-  slack = (overall.ascent + overall.descent) * 0.25;
-  if (slack < bw*2) slack = bw*2;
-  overall.lbearing -= slack;
-  overall.rbearing += slack;
-  overall.ascent   += slack;
-  overall.descent  += slack;
+  w->lbearing = -extents.x;
+  w->rbearing = extents.width - extents.x;
+  w->ascent   = extents.y;
+  w->descent  = extents.height - extents.y;
+  w->width    = extents.xOff;
 
-  w->width    = overall.rbearing - overall.lbearing;
-  w->height   = overall.ascent   + overall.descent;
-  w->ascent   = overall.ascent   + bw;
-  w->lbearing = overall.lbearing - bw;
-  w->rbearing = overall.width    + bw;
-
-# if 0
-  /* The metrics on some fonts are strange -- e.g.,
-     "-urw-nimbus mono l-medium-o-normal--*-*-*-*-p-*-iso8859-1" and
-     "-urw-courier-medium-r-normal--*-*-*-*-p-*-iso8859-1" both have
-     an rbearing so wide that it looks like there are two spaces after
-     each letter.  If this character says it has an rbearing that is to
-     the right of its ink, ignore that.
-
-     #### Of course, this hack only helps when we're in `move_chars_p' mode
-          and drawing a char at a time -- when we draw the whole word at once,
-          XDrawString believes the bogus metrics and spaces the font out
-          crazily anyway.
-
-     Sigh, this causes some text to mis-render in, e.g.,
-     "-adobe-utopia-medium-i-normal--114-*-100-100-p-*-iso8859-1"
-     (in "ux", we need the rbearing on "r" or we get too much overlap.)
-   */
-  if (w->rbearing > w->width)
-    w->rbearing = w->width;
-# endif /* 0 */
+  w->lbearing -= bw;
+  w->rbearing += bw;
+  w->descent  += bw;
+  w->ascent   += bw;
 
   if (s->mode == SCROLL && !alloc_p) abort();
 
@@ -522,118 +619,84 @@ new_word (state *s, sentence *se, const char *txt, Bool alloc_p)
     {
       int i, j;
       XGCValues gcv;
-      GC gc0, gc1;
+      GC gc_fg, gc_bg, gc_black;
+      XftDraw *xftdraw;
+      int width  = w->rbearing - w->lbearing;
+      int height = w->ascent + w->descent;
 
-      if (w->width <= 0)  w->width  = 1;
-      if (w->height <= 0) w->height = 1;
+      if (width <= 0)  width  = 1;
+      if (height <= 0) height = 1;
 
-      w->pixmap = XCreatePixmap (s->dpy, s->b, w->width, w->height, 1L);
-      w->mask   = XCreatePixmap (s->dpy, s->b, w->width, w->height, 1L);
+      w->pixmap = XCreatePixmap (s->dpy, s->b, width, height, s->xgwa.depth);
+      xftdraw = XftDrawCreate (s->dpy, w->pixmap, s->xgwa.visual,
+                               s->xgwa.colormap);
 
-      gcv.font = se->font->fid;
-      gcv.foreground = 0L;
-      gcv.background = 1L;
-      gc0 = XCreateGC (s->dpy, w->pixmap, GCFont|GCForeground|GCBackground,
-                       &gcv);
-      gcv.foreground = 1L;
-      gcv.background = 0L;
-      gc1 = XCreateGC (s->dpy, w->pixmap, GCFont|GCForeground|GCBackground,
-                       &gcv);
+      gcv.foreground = se->xftcolor_fg.pixel;
+      gc_fg = XCreateGC (s->dpy, w->pixmap, GCForeground, &gcv);
 
-      XFillRectangle (s->dpy, w->mask,   gc0, 0, 0, w->width, w->height);
-      XFillRectangle (s->dpy, w->pixmap, gc0, 0, 0, w->width, w->height);
+      gcv.foreground = se->xftcolor_bg.pixel;
+      gc_bg = XCreateGC (s->dpy, w->pixmap, GCForeground, &gcv);
+
+      gcv.foreground = BlackPixelOfScreen (s->xgwa.screen);
+      gc_black = XCreateGC (s->dpy, w->pixmap, GCForeground, &gcv);
+
+      XFillRectangle (s->dpy, w->pixmap, gc_black, 0, 0, width, height);
 
 # ifdef DEBUG
       if (s->debug_p)
         {
           /* bounding box (behind the characters) */
-          XDrawRectangle (s->dpy, w->pixmap, (se->dark_p ? gc0 : gc1),
-                          0, 0, w->width-1, w->height-1);
-          XDrawRectangle (s->dpy, w->mask,   gc1,
-                          0, 0, w->width-1, w->height-1);
-        }
-
-      if (s->debug_p > 1)
-        {
-          /* bounding box (behind *each* character) */
-          char *ss;
-          int x = 0;
-          for (ss = txt; *ss; ss++)
-            {
-              XTextExtents (se->font, ss, 1, &dir, &ascent, &descent, &overall);
-              XDrawRectangle (s->dpy, w->pixmap, (se->dark_p ? gc0 : gc1),
-                              x, w->ascent - overall.ascent, 
-                              overall.width, 
-                              overall.ascent + overall.descent);
-              XDrawRectangle (s->dpy, w->mask,   gc1,
-                              x, w->ascent - overall.ascent, 
-                              overall.width,
-                              overall.ascent + overall.descent);
-
-              XDrawRectangle (s->dpy, w->pixmap, (se->dark_p ? gc0 : gc1),
-                              x - overall.lbearing, w->ascent - overall.ascent, 
-                              overall.rbearing, 
-                              overall.ascent + overall.descent);
-              XDrawRectangle (s->dpy, w->mask,   gc1,
-                              x - overall.lbearing, w->ascent - overall.ascent, 
-                              overall.rbearing,
-                              overall.ascent + overall.descent);
-
-
-              x += overall.width;
-            }
+          XDrawRectangle (s->dpy, w->pixmap, (se->dark_p ? gc_bg : gc_fg),
+                          0, 0, width-1, height-1);
         }
 # endif /* DEBUG */
 
-      /* Draw foreground text */
-      XDrawString (s->dpy, w->pixmap, gc1, -w->lbearing, w->ascent,
-                   txt, strlen(txt));
-
-      /* Cheesy hack to draw a border */
-      /* (I should be able to do this in i*2 time instead of i*i time,
-         but I can't get it right, so fuck it.) */
-      XSetFunction (s->dpy, gc1, GXor);
+      /* Draw background text for border */
       for (i = -bw; i <= bw; i++)
         for (j = -bw; j <= bw; j++)
-          XCopyArea (s->dpy, w->pixmap, w->mask, gc1,
-                     0, 0, w->width, w->height,
-                     i, j);
+          XftDrawStringUtf8 (xftdraw, &se->xftcolor_bg, se->xftfont,
+                             -w->lbearing + i, w->ascent + j,
+                             (FcChar8 *) txt, strlen(txt));
+
+      /* Draw foreground text */
+      XftDrawStringUtf8 (xftdraw, &se->xftcolor_fg, se->xftfont,
+                         -w->lbearing, w->ascent,
+                         (FcChar8 *) txt, strlen(txt));
 
 # ifdef DEBUG
       if (s->debug_p)
         {
-          XSetFunction (s->dpy, gc1, GXcopy);
-          if (w->ascent != w->height)
+          if (w->ascent != height)
             {
               /* baseline (on top of the characters) */
-              XDrawLine (s->dpy, w->pixmap, (se->dark_p ? gc0 : gc1),
-                         0, w->ascent, w->width-1, w->ascent);
-              XDrawLine (s->dpy, w->mask,   gc1,
-                         0, w->ascent, w->width-1, w->ascent);
+              XDrawLine (s->dpy, w->pixmap, (se->dark_p ? gc_bg : gc_fg),
+                         0, w->ascent, width-1, w->ascent);
             }
 
-          if (w->lbearing != 0)
+          if (w->lbearing < 0)
             {
               /* left edge of charcell */
-              XDrawLine (s->dpy, w->pixmap, (se->dark_p ? gc0 : gc1),
-                         w->lbearing, 0, w->lbearing, w->height-1);
-              XDrawLine (s->dpy, w->mask,   gc1,
-                         w->lbearing, 0, w->lbearing, w->height-1);
+              XDrawLine (s->dpy, w->pixmap, (se->dark_p ? gc_bg : gc_fg),
+                         -w->lbearing, 0,
+                         -w->lbearing, height-1);
             }
 
           if (w->rbearing != w->width)
             {
               /* right edge of charcell */
-              XDrawLine (s->dpy, w->pixmap, (se->dark_p ? gc0 : gc1),
-                         w->rbearing, 0, w->rbearing, w->height-1);
-              XDrawLine (s->dpy, w->mask,   gc1,
-                         w->rbearing, 0, w->rbearing, w->height-1);
+              XDrawLine (s->dpy, w->pixmap, (se->dark_p ? gc_bg : gc_fg),
+                         w->width - w->lbearing, 0,
+                         w->width - w->lbearing, height-1);
             }
         }
 # endif /* DEBUG */
 
-      XFreeGC (s->dpy, gc0);
-      XFreeGC (s->dpy, gc1);
+      w->mask = make_mask (s->xgwa.screen, s->xgwa.visual, w->pixmap);
+
+      XftDrawDestroy (xftdraw);
+      XFreeGC (s->dpy, gc_fg);
+      XFreeGC (s->dpy, gc_bg);
+      XFreeGC (s->dpy, gc_black);
     }
 
   w->text = strdup (txt);
@@ -668,16 +731,21 @@ free_sentence (state *s, sentence *se)
   int i;
   for (i = 0; i < se->nwords; i++)
     free_word (s, se->words[i]);
-  if (se->words) free (se->words);
+  if (se->words)
+    free (se->words);
+  if (se->font_name)
+    free (se->font_name);
+  if (se->fg_gc)
+    XFreeGC (s->dpy, se->fg_gc);
 
-  if (se->fg.flags)
-    XFreeColors (s->dpy, s->xgwa.colormap, &se->fg.pixel, 1, 0);
-  if (se->bg.flags)
-    XFreeColors (s->dpy, s->xgwa.colormap, &se->bg.pixel, 1, 0);
-
-  if (se->font_name) free (se->font_name);
-  if (se->font) XFreeFont (s->dpy, se->font);
-  if (se->fg_gc) XFreeGC (s->dpy, se->fg_gc);
+  if (se->xftfont)
+    {
+      XftFontClose (s->dpy, se->xftfont);
+      XftColorFree (s->dpy, s->xgwa.visual, s->xgwa.colormap,
+                    &se->xftcolor_fg);
+      XftColorFree (s->dpy, s->xgwa.visual, s->xgwa.colormap,
+                    &se->xftcolor_bg);
+    }
 
   free (se);
 }
@@ -705,53 +773,56 @@ split_words (state *s, sentence *se)
   word **words2;
   int nwords2 = 0;
   int i, j;
+
+  char ***word_chars = (char ***) malloc (se->nwords * sizeof(*word_chars));
   for (i = 0; i < se->nwords; i++)
-    nwords2 += strlen (se->words[i]->text);
+    {
+      int L;
+      word *ow = se->words[i];
+      word_chars[i] = utf8_split (ow->text, &L);
+      nwords2 += L;
+    }
 
   words2 = (word **) calloc (nwords2, sizeof(*words2));
 
   for (i = 0, j = 0; i < se->nwords; i++)
     {
-      word *ow = se->words[i];
-      int L = strlen (ow->text);
+      char **chars = word_chars[i];
+      word *parent = se->words[i];
+      int x  = parent->x;
+      int y  = parent->y;
+      int sx = parent->start_x;
+      int sy = parent->start_y;
+      int tx = parent->target_x;
+      int ty = parent->target_y;
       int k;
 
-      int x  = ow->x;
-      int y  = ow->y;
-      int sx = ow->start_x;
-      int sy = ow->start_y;
-      int tx = ow->target_x;
-      int ty = ow->target_y;
-
-      for (k = 0; k < L; k++)
+      for (k = 0; chars[k]; k++)
         {
-          char t2[2];
-          word *w2;
-          int xoff, yoff;
-
-          t2[0] = ow->text[k];
-          t2[1] = 0;
-          w2 = new_word (s, se, t2, True);
+          char *t2 = chars[k];
+          word *w2 = new_word (s, se, t2, True);
           words2[j++] = w2;
 
-          xoff = (w2->lbearing - ow->lbearing);
-          yoff = (ow->ascent - w2->ascent);
+          w2->x = x;
+          w2->y = y;
+          w2->start_x = sx;
+          w2->start_y = sy;
+          w2->target_x = tx;
+          w2->target_y = ty;
 
-          w2->x        = x  + xoff;
-          w2->y        = y  + yoff;
-          w2->start_x  = sx + xoff;
-          w2->start_y  = sy + yoff;
-          w2->target_x = tx + xoff;
-          w2->target_y = ty + yoff;
-
-          x  += w2->rbearing;
-          sx += w2->rbearing;
-          tx += w2->rbearing;
+          x  += w2->width;
+          sx += w2->width;
+          tx += w2->width;
         }
 
-      free_word (s, ow);
-      se->words[i] = 0;
+      /* This is not invariant when kerning is involved! */
+      /* if (x != parent->x + parent->width) abort(); */
+
+      free (chars);  /* but we retain its contents */
+      free_word (s, parent);
     }
+  if (j != nwords2) abort();
+  free (word_chars);
   free (se->words);
 
   se->words = words2;
@@ -766,7 +837,7 @@ static void
 scatter_sentence (state *s, sentence *se)
 {
   int i = 0;
-  int off = 100;
+  int off = s->border_width * 4 + 2;
 
   int flock_p = ((random() % 4) == 0);
   int mode = (flock_p ? (random() % 12) : 0);
@@ -776,69 +847,32 @@ scatter_sentence (state *s, sentence *se)
       word *w = se->words[i];
       int x, y;
       int r = (flock_p ? mode : (random() % 4));
-      switch (r)
-        {
-          /* random positions on the edges */
+      int left   = -(off + w->rbearing);
+      int top    = -(off + w->descent);
+      int right  = off - w->lbearing + s->xgwa.width;
+      int bottom = off + w->ascent + s->xgwa.height;
 
-        case 0:
-          x = -off - w->width;
-          y = random() % s->xgwa.height;
-          break;
-        case 1:
-          x = off + s->xgwa.width;
-          y = random() % s->xgwa.height;
-          break;
-        case 2:
-          x = random() % s->xgwa.width;
-          y = -off - w->height;
-          break;
-        case 3:
-          x = random() % s->xgwa.width;
-          y = off + s->xgwa.height;
-          break;
+      switch (r) {
+      /* random positions on the edges */
+      case 0:  x = left;  y = random() % s->xgwa.height; break;
+      case 1:  x = right; y = random() % s->xgwa.height; break;
+      case 2:  x = random() % s->xgwa.width; y = top;    break;
+      case 3:  x = random() % s->xgwa.width; y = bottom; break;
 
-          /* straight towards the edges */
+      /* straight towards the edges */
+      case 4:  x = left;  y = w->target_y;  break;
+      case 5:  x = right; y = w->target_y;  break;
+      case 6:  x = w->target_x; y = top;    break;
+      case 7:  x = w->target_x; y = bottom; break;
 
-        case 4:
-          x = -off - w->width;
-          y = w->target_y;
-          break;
-        case 5:
-          x = off + s->xgwa.width;
-          y = w->target_y;
-          break;
-        case 6:
-          x = w->target_x;
-          y = -off - w->height;
-          break;
-        case 7:
-          x = w->target_x;
-          y = off + s->xgwa.height;
-          break;
+      /* corners */
+      case 8:  x = left;  y = top;    break;
+      case 9:  x = left;  y = bottom; break;
+      case 10: x = right; y = top;    break;
+      case 11: x = right; y = bottom; break;
 
-          /* corners */
-
-        case 8:
-          x = -off - w->width;
-          y = -off - w->height;
-          break;
-        case 9:
-          x = -off - w->width;
-          y =  off + s->xgwa.height;
-          break;
-        case 10:
-          x =  off + s->xgwa.width;
-          y =  off + s->xgwa.height;
-          break;
-        case 11:
-          x =  off + s->xgwa.width;
-          y = -off - w->height;
-          break;
-
-        default:
-          abort();
-          break;
-        }
+      default: abort(); break;
+      }
 
       if (se->anim_state == IN)
         {
@@ -898,7 +932,7 @@ aim_sentence (state *s, sentence *se)
     }
 
   nticks = ((se->words[0]->start_x - se->words[0]->target_x)
-            / (s->speed * 10));
+            / (s->speed * 7));
   nticks *= (frand(0.9) + frand(0.9) + frand(0.9));
 
   if (nticks < 2)
@@ -954,49 +988,36 @@ sort_sentences (state *s)
 static void
 recolor (state *s, sentence *se)
 {
-  if (se->fg.flags)
-    XFreeColors (s->dpy, s->xgwa.colormap, &se->fg.pixel, 1, 0);
-  if (se->bg.flags)
-    XFreeColors (s->dpy, s->xgwa.colormap, &se->bg.pixel, 1, 0);
+  XRenderColor fg, bg;
 
-  se->fg.flags  = DoRed|DoGreen|DoBlue;
-  se->bg.flags  = DoRed|DoGreen|DoBlue;
+  fg.red   = (random() % 0x5555) + 0xAAAA;
+  fg.green = (random() % 0x5555) + 0xAAAA;
+  fg.blue  = (random() % 0x5555) + 0xAAAA;
+  fg.alpha = 0xFFFF;
+  bg.red   = (random() % 0x5555);
+  bg.green = (random() % 0x5555);
+  bg.blue  = (random() % 0x5555);
+  bg.alpha = 0xFFFF;
+  se->dark_p = False;
 
-  switch (random() % 2)
+  if (random() & 1)
     {
-    case 0:   /* bright fg, dim bg */
-      se->fg.red    = (random() % 0x8888) + 0x8888;
-      se->fg.green  = (random() % 0x8888) + 0x8888;
-      se->fg.blue   = (random() % 0x8888) + 0x8888;
-      se->bg.red    = (random() % 0x5555);
-      se->bg.green  = (random() % 0x5555);
-      se->bg.blue   = (random() % 0x5555);
-      break;
-
-    case 1:   /* bright bg, dim fg */
-      se->fg.red    = (random() % 0x4444);
-      se->fg.green  = (random() % 0x4444);
-      se->fg.blue   = (random() % 0x4444);
-      se->bg.red    = (random() % 0x4444) + 0xCCCC;
-      se->bg.green  = (random() % 0x4444) + 0xCCCC;
-      se->bg.blue   = (random() % 0x4444) + 0xCCCC;
-      break;
-
-    default:
-      abort();
-      break;
+      XRenderColor swap = fg; fg = bg; bg = swap;
+      se->dark_p = True;
     }
 
-# ifdef DEBUG
-  if (s->debug_p)
-    se->dark_p = (se->fg.red*2 + se->fg.green*3 + se->fg.blue <
-                  se->bg.red*2 + se->bg.green*3 + se->bg.blue);
-# endif /* DEBUG */
+  if (se->xftfont)
+    {
+      XftColorFree (s->dpy, s->xgwa.visual, s->xgwa.colormap,
+                    &se->xftcolor_fg);
+      XftColorFree (s->dpy, s->xgwa.visual, s->xgwa.colormap,
+                    &se->xftcolor_bg);
+    }
 
-  if (XAllocColor (s->dpy, s->xgwa.colormap, &se->fg))
-    XSetForeground (s->dpy, se->fg_gc, se->fg.pixel);
-  if (XAllocColor (s->dpy, s->xgwa.colormap, &se->bg))
-    XSetBackground (s->dpy, se->fg_gc, se->bg.pixel);
+  XftColorAllocValue (s->dpy, s->xgwa.visual, s->xgwa.colormap, &fg,
+                     &se->xftcolor_fg);
+  XftColorAllocValue (s->dpy, s->xgwa.visual, s->xgwa.colormap, &bg,
+                     &se->xftcolor_bg);
 }
 
 
@@ -1082,12 +1103,18 @@ populate_sentence (state *s, sentence *se)
             break;		/* If EOF after some words, end of sentence. */
         }
 
-      if (! se->font)           /* Got a word: need a font now */
+      if (! se->xftfont)           /* Got a word: need a font now */
         {
+          XGlyphInfo extents;
           pick_font (s, se);
-          if (y < se->font->ascent)
-            y += se->font->ascent;
-          space = XTextWidth (se->font, " ", 1);
+          if (y < se->xftfont->ascent)
+            y += se->xftfont->ascent;
+
+          /* Measure the space character to figure out how much room to
+             leave between words (since we don't actually render that.) */
+          XftTextExtentsUtf8 (s->dpy, se->xftfont, (FcChar8 *) " ", 1,
+                              &extents);
+          space = extents.xOff;
         }
 
       w = new_word (s, se, txt, !se->move_chars_p);
@@ -1120,14 +1147,14 @@ populate_sentence (state *s, sentence *se)
           line_start = se->nwords;
 
           x = left;
-          y += se->font->ascent;
+          y += se->xftfont->ascent + se->xftfont->descent;
 
           /* If we're close to the bottom of the screen, stop, and 
              unread the current word.  (But not if this is the first
              word, otherwise we might just get stuck on it.)
            */
           if (se->nwords > 0 &&
-              y + se->font->ascent > s->xgwa.height)
+              y + se->xftfont->ascent + se->xftfont->descent > s->xgwa.height)
             {
               unread_word (s, w);
               /* done = True; */
@@ -1135,17 +1162,17 @@ populate_sentence (state *s, sentence *se)
             }
         }
 
-      w->target_x = x + w->lbearing;
-      w->target_y = y - w->ascent;
+      w->target_x = x;
+      w->target_y = y;
 
-      x += w->rbearing + space;
+      x += w->width + space;
       se->width = x;
 
       if (se->nwords >= (array_size - 1))
         {
           array_size += 100;
-          se->words = (word **) realloc (se->words,
-                                         array_size * sizeof(*se->words));
+          se->words = (word **)
+            realloc (se->words, array_size * sizeof(*se->words));
           if (!se->words)
             {
               fprintf (stderr, "%s: out of memory (%d words)\n",
@@ -1191,22 +1218,26 @@ populate_sentence (state *s, sentence *se)
 /* Render a single word object to the screen.
  */
 static void
-draw_word (state *s, sentence *se, word *w)
+draw_word (state *s, sentence *se, word *word)
 {
-  if (! w->pixmap) return;
+  int x, y, w, h;
+  if (! word->pixmap) return;
 
-  if (w->x + w->width < 0 ||
-      w->y + w->height < 0 ||
-      w->x > s->xgwa.width ||
-      w->y > s->xgwa.height)
+  x = word->x + word->lbearing;
+  y = word->y - word->ascent;
+  w = word->rbearing - word->lbearing;
+  h = word->ascent + word->descent;
+
+  if (x + w < 0 ||
+      y + h < 0 ||
+      x > s->xgwa.width ||
+      y > s->xgwa.height)
     return;
 
-  XSetClipMask (s->dpy, se->fg_gc, w->mask);
-  XSetClipOrigin (s->dpy, se->fg_gc, w->x, w->y);
-  XCopyPlane (s->dpy, w->pixmap, s->b, se->fg_gc,
-              0, 0, w->width, w->height,
-              w->x, w->y,
-              1L);
+  XSetClipMask (s->dpy, se->fg_gc, word->mask);
+  XSetClipOrigin (s->dpy, se->fg_gc, x, y);
+  XCopyArea (s->dpy, word->pixmap, s->b, se->fg_gc,
+             0, 0, w, h, x, y);
 }
 
 
@@ -1371,7 +1402,8 @@ draw_sentence (state *s, sentence *se)
 }
 
 
-#ifdef DEBUG
+#ifdef DEBUG    /* All of this stuff is for -debug-metrics mode. */
+
 
 static Pixmap
 scale_ximage (Screen *screen, Window window, XImage *img, int scale,
@@ -1456,13 +1488,18 @@ fontglide_draw_metrics (state *s)
 {
   unsigned int margin = (s->debug_metrics_antialiasing_p ? 2 : 0);
 
-  char txt[2], txt2[80];
+  char txt[2], utxt[3], txt2[80];
+  XChar2b *txt3 = 0;
   const char *fn = (s->font_override ? s->font_override : "fixed");
   XFontStruct *font = XLoadQueryFont (s->dpy, fn);
   XFontStruct *font2 = XLoadQueryFont (s->dpy, "fixed");
-  XCharStruct c, overall;
+  XCharStruct c, overall, fake_c;
   int dir, ascent, descent;
   int x, y;
+  XGlyphInfo extents;
+  XftFont *xftfont;
+  XftColor xftcolor;
+  XftDraw *xftdraw;
   int sc = s->debug_scale;
   GC gc;
   unsigned long red    = 0xFFFF0000;  /* so shoot me */
@@ -1470,7 +1507,7 @@ fontglide_draw_metrics (state *s)
   unsigned long blue   = 0xFF6666FF;
   unsigned long yellow = 0xFFFFFF00;
   unsigned long cyan   = 0xFF004040;
-  int i;
+  int i, j;
   Drawable dest = s->b ? s->b : s->window;
 
   if (sc < 1) sc = 1;
@@ -1478,12 +1515,50 @@ fontglide_draw_metrics (state *s)
   txt[0] = s->debug_metrics_p;
   txt[1] = 0;
 
+  /* Convert Latin1 to UTF-8. */
+  if ((unsigned char) txt[0] >= 0xC0)
+    {
+      utxt[0] = 0xC3;
+      utxt[1] = ((unsigned char) txt[0]) & 0xBF;
+      utxt[2] = 0;
+    }
+  else if ((unsigned char) txt[0] >= 0xA0)
+    {
+      utxt[0] = 0xC2;
+      utxt[1] = txt[0];
+      utxt[2] = 0;
+    }
+  else
+    {
+      utxt[0] = txt[0];
+      utxt[1] = 0;
+    }
+
+  txt3 = utf8_to_XChar2b (utxt, 0);
+
+  if (! font) font = font2;
+
   gc  = XCreateGC (s->dpy, dest, 0, 0);
   XSetFont (s->dpy, gc,  font->fid);
 
 # ifdef HAVE_COCOA
   jwxyz_XSetAntiAliasing (s->dpy, gc, False);
 # endif
+
+  xftfont = XftFontOpenXlfd (s->dpy, screen_number(s->xgwa.screen), fn);
+  if (! xftfont)
+    xftfont = XftFontOpenXlfd (s->dpy, screen_number(s->xgwa.screen), "fixed");
+  if (! xftfont)
+    abort();
+
+
+  xftdraw = XftDrawCreate (s->dpy, dest, s->xgwa.visual,
+                           s->xgwa.colormap);
+  XftColorAllocName (s->dpy, s->xgwa.visual, s->xgwa.colormap, "white",
+                     &xftcolor);
+  XftTextExtentsUtf8 (s->dpy, xftfont, (FcChar8 *) utxt, strlen(utxt),
+                      &extents);
+
 
   XTextExtents (font, txt, strlen(txt), 
                 &dir, &ascent, &descent, &overall);
@@ -1494,21 +1569,54 @@ fontglide_draw_metrics (state *s)
   XSetForeground (s->dpy, gc, BlackPixelOfScreen (s->xgwa.screen));
   XFillRectangle (s->dpy, dest, gc, 0, 0, s->xgwa.width, s->xgwa.height);
 
-  x = (s->xgwa.width  - overall.width) / 2;
-  y = (s->xgwa.height - (2 * sc * (ascent + descent))) / 2;
-
-  for (i = 0; i < 2; i++)
+  for (j = 0; j < 2; j++) {
+    Bool xft_p = (j != 0);
+    int ww = s->xgwa.width / 2 - 20;
+    x = (ww - overall.width) / 2;
+    y = (s->xgwa.height - (2 * sc * (ascent + descent))) / 2;
+    
+   for (i = 0; i < 2; i++)
     {
-      XCharStruct cc = (i == 0 ? c : overall);
-      int x1 = s->xgwa.width * 0.15;
-      int x2 = s->xgwa.width * 0.85;
-      int x3 = s->xgwa.width;
+      int xoff = (j == 0 ? 0 : ww + 20);
+      XCharStruct cc;
+      int x1 = xoff + ww * 0.18;
+      int x2 = xoff + ww * 0.82;
+      int x3 = xoff + ww;
+      int pixw, pixh;
+      Pixmap p;
 
-      int pixw = margin * 2 + cc.rbearing - cc.lbearing;
-      int pixh = margin * 2 + cc.ascent + cc.descent;
-      Pixmap p = (pixw > 0 && pixh > 0
-                  ? XCreatePixmap (s->dpy, dest, pixw, pixh, s->xgwa.depth)
-                  : 0);
+      memset (&fake_c, 0, sizeof(fake_c));
+
+      if (!xft_p && i == 0)
+        cc = c;
+      else if (!xft_p && i == 1)
+        cc = overall;
+      else if (xft_p && i == 0)
+        {
+          /* Measure the glyph in the Xft way */
+          XGlyphInfo extents;
+          XftTextExtentsUtf8 (s->dpy, xftfont, (FcChar8 *) utxt, strlen(utxt),
+                              &extents);
+          fake_c.lbearing = -extents.x;
+          fake_c.rbearing = extents.width - extents.x;
+          fake_c.ascent   = extents.y;
+          fake_c.descent  = extents.height - extents.y;
+          fake_c.width    = extents.xOff;
+          cc = fake_c;
+        }
+      else if (xft_p)
+        {
+          /* Measure the glyph in the 16-bit way */
+          int dir, ascent, descent;
+          XTextExtents16 (font, txt3, 1, &dir, &ascent, &descent, &fake_c);
+          cc = fake_c;
+        }
+
+      pixw = margin * 2 + cc.rbearing - cc.lbearing;
+      pixh = margin * 2 + cc.ascent + cc.descent;
+      p = (pixw > 0 && pixh > 0
+           ? XCreatePixmap (s->dpy, dest, pixw, pixh, s->xgwa.depth)
+           : 0);
 
       if (p)
         {
@@ -1525,10 +1633,28 @@ fontglide_draw_metrics (state *s)
 # ifdef HAVE_COCOA
           jwxyz_XSetAntiAliasing (s->dpy, gc2, s->debug_metrics_antialiasing_p);
 # endif
-          XDrawString (s->dpy, p, gc2,
-                       -cc.lbearing + margin,
-                       cc.ascent + margin,
-                       txt, strlen(txt));
+
+          if (xft_p && i == 0)
+            {
+              XftDraw *xftdraw2 = XftDrawCreate (s->dpy, p, s->xgwa.visual,
+                                                 s->xgwa.colormap);
+              XftDrawStringUtf8 (xftdraw2, &xftcolor, xftfont,
+                                 -cc.lbearing + margin,
+                                 cc.ascent + margin,
+                                 (FcChar8 *) utxt, strlen(utxt));
+              XftDrawDestroy (xftdraw2);
+            }
+          else if (xft_p)
+            XDrawString16 (s->dpy, p, gc2,
+                           -cc.lbearing + margin,
+                           cc.ascent + margin,
+                           txt3, 1);
+          else
+            XDrawString (s->dpy, p, gc2,
+                         -cc.lbearing + margin,
+                         cc.ascent + margin,
+                         txt, strlen(txt));
+
           {
             unsigned x2, y2;
             XImage *img = XGetImage (s->dpy, p, 0, 0, pixw, pixh,
@@ -1557,7 +1683,9 @@ fontglide_draw_metrics (state *s)
                       if (ink & 0xFFFFFF)
                       {
                         XSetFont (s->dpy, gc, font2->fid);
-                        XDrawString (s->dpy, dest, gc, 10, 40, "Ink escape!", 11);
+                        XDrawString (s->dpy, dest, gc,
+                                     xoff + 10, 40,
+                                     "Ink escape!", 11);
                       }
                   }
 
@@ -1574,7 +1702,8 @@ fontglide_draw_metrics (state *s)
                                     img, margin, margin + h - 1, 0, w))
                       {
                         XSetFont (s->dpy, gc, font2->fid);
-                        XDrawString (s->dpy, dest, gc, 10, 60,
+                        XDrawString (s->dpy, dest, gc, 
+                                     xoff + 10, 60,
                                      "Wasted space: ", 14);
                       }
                   }
@@ -1629,7 +1758,7 @@ fontglide_draw_metrics (state *s)
 
           XCopyArea (s->dpy, p2, dest, gc,
                      0, 0, sc*pixw, sc*pixh,
-                     x + sc * (cc.lbearing - margin),
+                     xoff + x + sc * (cc.lbearing - margin),
                      y - sc * (cc.ascent + margin));
           XFreePixmap (s->dpy, p);
           XFreePixmap (s->dpy, p2);
@@ -1643,23 +1772,41 @@ fontglide_draw_metrics (state *s)
 # ifdef HAVE_COCOA
           jwxyz_XSetAntiAliasing (s->dpy, gc, s->debug_metrics_antialiasing_p);
 # endif
-          sprintf (txt2, "%c        [XX%cXX]    [%c%c%c%c]",
-                   s->debug_metrics_p, s->debug_metrics_p,
-                   s->debug_metrics_p, s->debug_metrics_p,
-                   s->debug_metrics_p, s->debug_metrics_p);
-          XDrawString (s->dpy, dest, gc,
-                       x + (sc*cc.rbearing/2) - cc.rbearing/2, ascent + 10,
-                       txt2, strlen(txt2));
+          sprintf (txt2, "%s        [XX%sXX]    [%s%s%s%s]",
+                   (xft_p ? utxt : txt),
+                   (xft_p ? utxt : txt),
+                   (xft_p ? utxt : txt),
+                   (xft_p ? utxt : txt),
+                   (xft_p ? utxt : txt),
+                   (xft_p ? utxt : txt));
+
+          if (xft_p)
+            XftDrawStringUtf8 (xftdraw, &xftcolor, xftfont,
+                               xoff + x/2 + (sc*cc.rbearing/2) - cc.rbearing/2,
+                               ascent + 10,
+                             (FcChar8 *) txt2, strlen(txt2));
+          else
+            XDrawString (s->dpy, dest, gc,
+                         xoff + x/2 + (sc*cc.rbearing/2) - cc.rbearing/2,
+                         ascent + 10,
+                         txt2, strlen(txt2));
 # ifdef HAVE_COCOA
           jwxyz_XSetAntiAliasing (s->dpy, gc, False);
 # endif
           XSetFont (s->dpy, gc, font2->fid);
-          sprintf (txt2, "%c %3d 0%03o 0x%02x%s",
-                   s->debug_metrics_p, s->debug_metrics_p,
-                   s->debug_metrics_p, s->debug_metrics_p,
-                   (txt[0] < font->min_char_or_byte2 ? " *" : ""));
+          if (xft_p && utxt[1])
+            sprintf (txt2, "0%03o 0%03o   %02x %02x",
+                     (unsigned char) utxt[0], (unsigned char) utxt[1],
+                     (unsigned char) utxt[0], (unsigned char) utxt[1]);
+          else if (xft_p)
+            txt2[0] = 0;
+          else
+            sprintf (txt2, "%c %3d 0%03o 0x%02x%s",
+                     s->debug_metrics_p, s->debug_metrics_p,
+                     s->debug_metrics_p, s->debug_metrics_p,
+                     (txt[0] < font->min_char_or_byte2 ? " *" : ""));
           XDrawString (s->dpy, dest, gc,
-                       10, 20,
+                       xoff + 10, 20,
                        txt2, strlen(txt2));
         }
 
@@ -1667,23 +1814,32 @@ fontglide_draw_metrics (state *s)
       jwxyz_XSetAntiAliasing (s->dpy, gc, True);
 # endif
 
-      XSetFont (s->dpy, gc, font2->fid);
+      {
+        const char *ss = (j == 0
+                          ? (i == 0 ? "char" : "overall")
+                          : (i == 0 ? "utf8" : "16 bit"));
+        XSetFont (s->dpy, gc, font2->fid);
 
-      XSetForeground (s->dpy, gc, red);
+        XSetForeground (s->dpy, gc, red);
 
-      sprintf (txt2, "%s ascent %d",
-               (i == 0 ? "char" : "overall"),
-               ascent);
-      XDrawString (s->dpy, dest, gc, 10, y - sc*ascent - 2,
-                   txt2, strlen(txt2));
-      XDrawLine (s->dpy, dest, gc, 0, y - sc*ascent,  x3, y - sc*ascent);
+        sprintf (txt2, "%s ascent %d", ss, ascent);
+        XDrawString (s->dpy, dest, gc, 
+                     xoff + 10,
+                     y - sc*ascent - 2,
+                     txt2, strlen(txt2));
+        XDrawLine (s->dpy, dest, gc,
+                   xoff, y - sc*ascent,
+                   x3,   y - sc*ascent);
 
-      sprintf (txt2, "%s descent %d",
-               (i == 0 ? "char" : "overall"),
-               descent);
-      XDrawString (s->dpy, dest, gc, 10, y + sc*descent - 2,
-                   txt2, strlen(txt2));
-      XDrawLine (s->dpy, dest, gc, 0, y + sc*descent, x3, y + sc*descent);
+        sprintf (txt2, "%s descent %d", ss, descent);
+        XDrawString (s->dpy, dest, gc, 
+                     xoff + 10,
+                     y + sc*descent - 2,
+                     txt2, strlen(txt2));
+        XDrawLine (s->dpy, dest, gc, 
+                   xoff, y + sc*descent,
+                   x3,   y + sc*descent);
+      }
 
 
       /* ascent, descent, baseline */
@@ -1692,21 +1848,26 @@ fontglide_draw_metrics (state *s)
 
       sprintf (txt2, "ascent %d", cc.ascent);
       if (cc.ascent != 0)
-        XDrawString (s->dpy, dest, gc, x1, y - sc*cc.ascent - 2,
+        XDrawString (s->dpy, dest, gc,
+                     x1, y - sc*cc.ascent - 2,
                      txt2, strlen(txt2));
       XDrawLine (s->dpy, dest, gc,
-                 x1, y - sc*cc.ascent,  x2, y - sc*cc.ascent);
+                 x1, y - sc*cc.ascent,
+                 x2, y - sc*cc.ascent);
 
       sprintf (txt2, "descent %d", cc.descent);
       if (cc.descent != 0)
-        XDrawString (s->dpy, dest, gc, x1, y + sc*cc.descent - 2,
+        XDrawString (s->dpy, dest, gc,
+                     x1, y + sc*cc.descent - 2,
                      txt2, strlen(txt2));
       XDrawLine (s->dpy, dest, gc,
-                 x1, y + sc*cc.descent, x2, y + sc*cc.descent);
+                 x1, y + sc*cc.descent,
+                 x2, y + sc*cc.descent);
 
       XSetForeground (s->dpy, gc, yellow);
       strcpy (txt2, "baseline");
-      XDrawString (s->dpy, dest, gc, x1, y - 2,
+      XDrawString (s->dpy, dest, gc,
+                   x1, y - 2,
                    txt2, strlen(txt2));
       XDrawLine (s->dpy, dest, gc, x1, y, x2, y);
 
@@ -1717,20 +1878,21 @@ fontglide_draw_metrics (state *s)
 
       strcpy (txt2, "origin");
       XDrawString (s->dpy, dest, gc,
-                   x + 2, y + sc*(descent + 10),
+                   xoff + x + 2,
+                   y + sc*(descent + 10),
                    txt2, strlen(txt2));
       XDrawLine (s->dpy, dest, gc,
-                 x, y - sc*(ascent  - 10),
-                 x, y + sc*(descent + 10));
+                 xoff + x, y - sc*(ascent  - 10),
+                 xoff + x, y + sc*(descent + 10));
 
       sprintf (txt2, "width %d", cc.width);
       XDrawString (s->dpy, dest, gc,
-                   x + sc*cc.width + 2,
+                   xoff + x + sc*cc.width + 2,
                    y + sc*(descent + 10) + 10, 
                    txt2, strlen(txt2));
       XDrawLine (s->dpy, dest, gc,
-                 x + sc*cc.width, y - sc*(ascent  - 10),
-                 x + sc*cc.width, y + sc*(descent + 10));
+                 xoff + x + sc*cc.width, y - sc*(ascent  - 10),
+                 xoff + x + sc*cc.width, y + sc*(descent + 10));
 
 
       /* lbearing, rbearing */
@@ -1738,23 +1900,26 @@ fontglide_draw_metrics (state *s)
       XSetForeground (s->dpy, gc, green);
 
       sprintf (txt2, "lbearing %d", cc.lbearing);
-      XDrawString (s->dpy, dest, gc, x + sc*cc.lbearing + 2,
+      XDrawString (s->dpy, dest, gc,
+                   xoff + x + sc*cc.lbearing + 2,
                    y + sc * descent + 30, 
                    txt2, strlen(txt2));
       XDrawLine (s->dpy, dest, gc,
-                 x + sc*cc.lbearing, y - sc*ascent,
-                 x + sc*cc.lbearing, y + sc*descent + 20);
+                 xoff + x + sc*cc.lbearing, y - sc*ascent,
+                 xoff + x + sc*cc.lbearing, y + sc*descent + 20);
 
       sprintf (txt2, "rbearing %d", cc.rbearing);
-      XDrawString (s->dpy, dest, gc, x + sc*cc.rbearing + 2,
+      XDrawString (s->dpy, dest, gc,
+                   xoff + x + sc*cc.rbearing + 2,
                    y + sc * descent + 40, 
                    txt2, strlen(txt2));
       XDrawLine (s->dpy, dest, gc,
-                 x + sc*cc.rbearing, y - sc*ascent,
-                 x + sc*cc.rbearing, y + sc*descent + 40);
+                 xoff + x + sc*cc.rbearing, y - sc*ascent,
+                 xoff + x + sc*cc.rbearing, y + sc*descent + 40);
 
       y += sc * (ascent + descent) * 2;
     }
+  }
 
   if (dest != s->window)
     XCopyArea (s->dpy, dest, s->window, s->bg_gc,
@@ -1762,7 +1927,14 @@ fontglide_draw_metrics (state *s)
 
   XFreeGC (s->dpy, gc);
   XFreeFont (s->dpy, font);
-  XFreeFont (s->dpy, font2);
+  if (font != font2)
+    XFreeFont (s->dpy, font2);
+
+  XftFontClose (s->dpy, xftfont);
+  XftColorFree (s->dpy, s->xgwa.visual, s->xgwa.colormap, &xftcolor);
+  XftDrawDestroy (xftdraw);
+  free (txt3);
+
   return s->frame_delay;
 }
 
@@ -2020,7 +2192,13 @@ static const char *fontglide_defaults [] = {
   "*usePty:             false",
   "*mode:               random",
   ".font:               (default)",
+
+  /* I'm not entirely clear on whether the charset of an XLFD has any
+     meaning when Xft is being used. */
   "*fontCharset:        iso8859-1",
+/*"*fontCharset:        iso10646-1", */
+/*"*fontCharset:        *-*",*/
+
   "*fontBorderWidth:    2",
   "*speed:              1.0",
   "*linger:             1.0",

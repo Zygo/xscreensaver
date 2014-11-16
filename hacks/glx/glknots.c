@@ -352,7 +352,7 @@ draw_knot (ModeInfo *mi)
               now - bp->last_time >= duration)
             {
               bp->mode = 1;    /* go out */
-              bp->mode_tick = 10 * speed;
+              bp->mode_tick = 10 / speed;
               bp->last_time = now;
             }
         }
@@ -362,7 +362,7 @@ draw_knot (ModeInfo *mi)
       if (--bp->mode_tick <= 0)
         {
           new_knot (mi);
-          bp->mode_tick = 10 * speed;
+          bp->mode_tick = 10 / speed;
           bp->mode = 2;  /* go in */
         }
     }
@@ -416,8 +416,8 @@ draw_knot (ModeInfo *mi)
   if (bp->mode != 0)
     {
       GLfloat s = (bp->mode == 1
-                   ? bp->mode_tick / (10 * speed)
-                   : ((10 * speed) - bp->mode_tick + 1) / (10 * speed));
+                   ? bp->mode_tick / (10 / speed)
+                   : ((10 / speed) - bp->mode_tick + 1) / (10 / speed));
       glScalef (s, s, s);
     }
 

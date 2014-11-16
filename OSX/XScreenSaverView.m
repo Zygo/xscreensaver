@@ -47,6 +47,8 @@ int mono_p = 0;
 
 # ifdef USE_IPHONE
 
+#  define NSSizeToCGSize(x) (x)
+
 extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
 
 /* Stub definition of the superclass, for iPhone.
@@ -268,6 +270,7 @@ add_default_options (const XrmOptionDescRec *opts,
 # endif
     ".imageDirectory:     ~/Pictures",
     ".relaunchDelay:      2",
+    ".texFontCacheSize:   30",
 
 # ifndef USE_IPHONE
 #  define STR1(S) #S
@@ -354,6 +357,23 @@ double_time (void)
 }
 #endif // USE_IPHONE
 
+#if TARGET_IPHONE_SIMULATOR
+static const char *
+orientname(unsigned long o)
+{
+  switch (o) {
+  case UIDeviceOrientationUnknown:		return "Unknown";
+  case UIDeviceOrientationPortrait:		return "Portrait";
+  case UIDeviceOrientationPortraitUpsideDown:	return "PortraitUpsideDown";
+  case UIDeviceOrientationLandscapeLeft:	return "LandscapeLeft";
+  case UIDeviceOrientationLandscapeRight:	return "LandscapeRight";
+  case UIDeviceOrientationFaceUp:		return "FaceUp";
+  case UIDeviceOrientationFaceDown:		return "FaceDown";
+  default:					return "ERROR";
+  }
+}
+#endif // TARGET_IPHONE_SIMULATOR
+
 
 - (id) initWithFrame:(NSRect)frame
            saverName:(NSString *)saverName
@@ -413,7 +433,7 @@ double_time (void)
   next_frame_time = 0;
   
 # ifdef USE_BACKBUFFER
-  [self createBackbuffer];
+  [self createBackbuffer:NSSizeToCGSize(frame.size)];
   [self initLayer];
 # endif
 
@@ -675,11 +695,17 @@ double current_device_rotation (void)
     double duration = 1/6.0;
     rotation_ratio = 1 - ((rot_start_time + duration - now) / duration);
 
-    if (rotation_ratio > 1) {	// Done animating.
+    if (rotation_ratio > 1 || ignore_rotation_p) {	// Done animating.
       orientation = new_orientation;
       rot_current_angle = angle_to;
       rot_current_size = rot_to;
       rotation_ratio = -1;
+
+# if TARGET_IPHONE_SIMULATOR
+      NSLog (@"rotation ended: %s %d, %d x %d",
+             orientname(orientation), (int) rot_current_angle,
+             (int) rot_current_size.width, (int) rot_current_size.height);
+# endif
 
       // Check orientation again in case we rotated again while rotating:
       // this is a no-op if nothing has changed.
@@ -696,10 +722,11 @@ double current_device_rotation (void)
 #   undef CLAMP180
 
   double s = [self hackedContentScaleFactor];
-  if (!ignore_rotation_p &&
-      /* rotation_ratio && */
-      ((int) backbuffer_size.width  != (int) (s * rot_current_size.width) ||
-       (int) backbuffer_size.height != (int) (s * rot_current_size.height)))
+  CGSize rotsize = ((ignore_rotation_p || ![self reshapeRotatedWindow])
+                    ? initial_bounds
+                    : rot_current_size);
+  if ((int) backbuffer_size.width  != (int) (s * rotsize.width) ||
+      (int) backbuffer_size.height != (int) (s * rotsize.height))
     [self resize_x11];
 }
 
@@ -738,18 +765,8 @@ double current_device_rotation (void)
 /* Create a bitmap context into which we render everything.
    If the desired size has changed, re-created it.
  */
-- (void) createBackbuffer
+- (void) createBackbuffer:(CGSize)new_size
 {
-# ifdef USE_IPHONE
-  double s = [self hackedContentScaleFactor];
-  CGSize rotsize = ignore_rotation_p ? initial_bounds : rot_current_size;
-  int new_w = s * rotsize.width;
-  int new_h = s * rotsize.height;
-# else
-  int new_w = [self bounds].size.width;
-  int new_h = [self bounds].size.height;
-# endif
-	
   // Colorspaces and CGContexts only happen with non-GL hacks.
   if (colorspace)
     CGColorSpaceRelease (colorspace);
@@ -819,21 +836,25 @@ double current_device_rotation (void)
   }
 
   if (backbuffer &&
-      backbuffer_size.width  == new_w &&
-      backbuffer_size.height == new_h)
+      (int)backbuffer_size.width  == (int)new_size.width &&
+      (int)backbuffer_size.height == (int)new_size.height)
     return;
 
   CGSize osize = backbuffer_size;
   CGContextRef ob = backbuffer;
 
-  backbuffer_size.width  = new_w;
-  backbuffer_size.height = new_h;
+  backbuffer_size = new_size;
+
+# if TARGET_IPHONE_SIMULATOR
+  NSLog(@"backbuffer %.0f %.0f",
+        backbuffer_size.width, backbuffer_size.height);
+# endif
 
   backbuffer = CGBitmapContextCreate (NULL,
-                                      backbuffer_size.width,
-                                      backbuffer_size.height,
+                                      (int)backbuffer_size.width,
+                                      (int)backbuffer_size.height,
                                       8, 
-                                      backbuffer_size.width * 4,
+                                      (int)backbuffer_size.width * 4,
                                       colorspace,
                                       // kCGImageAlphaPremultipliedLast
                                       (kCGImageAlphaNoneSkipFirst |
@@ -870,20 +891,31 @@ double current_device_rotation (void)
 {
   if (!xwindow) return;  // early
 
+  CGSize new_size;
 # ifdef USE_BACKBUFFER
-  [self createBackbuffer];
-  jwxyz_window_resized (xdpy, xwindow,
-                        0, 0,
-                        backbuffer_size.width, backbuffer_size.height,
+#  ifdef USE_IPHONE
+  double s = [self hackedContentScaleFactor];
+  CGSize rotsize = ((ignore_rotation_p || ![self reshapeRotatedWindow])
+                    ? initial_bounds
+                    : rot_current_size);
+  new_size.width  = s * rotsize.width;
+  new_size.height = s * rotsize.height;
+#  else
+  new_size = NSSizeToCGSize([self bounds].size);
+#  endif
+
+  [self createBackbuffer:new_size];
+  jwxyz_window_resized (xdpy, xwindow, 0, 0, new_size.width, new_size.height,
                         backbuffer);
 # else   // !USE_BACKBUFFER
-  NSRect r = [self frame];		// ignoring rotation is closer
-  r.size = [self bounds].size;		// to what XGetGeometry expects.
-  jwxyz_window_resized (xdpy, xwindow,
-                        r.origin.x, r.origin.y,
-                        r.size.width, r.size.height,
+  new_size = [self bounds].size;
+  jwxyz_window_resized (xdpy, xwindow, 0, 0, new_size.width, new_size.height,
                         0);
 # endif  // !USE_BACKBUFFER
+
+# if TARGET_IPHONE_SIMULATOR
+  NSLog(@"reshape %.0f x %.0f", new_size.width, new_size.height);
+# endif
 
   // Next time render_x11 is called, run the saver's reshape_cb.
   resized_p = YES;
@@ -1179,6 +1211,7 @@ double current_device_rotation (void)
   CGRect bounds;
   bounds.origin.x = 0;
   bounds.origin.y = 0;
+
   bounds.size.width = backbuffer_size.width / s;
   bounds.size.height = backbuffer_size.height / s;
   self.layer.bounds = bounds;
@@ -1626,50 +1659,96 @@ double current_device_rotation (void)
      suppose that this abstraction-breakage means that I'm adding
      XScreenSaverView to the UINavigationController wrong...
    */
-  UIViewController *v = [[self window] rootViewController];
-  if ([v isKindOfClass: [UINavigationController class]]) {
-    UINavigationController *n = (UINavigationController *) v;
-    [[n topViewController] becomeFirstResponder];
+//  UIViewController *v = [[self window] rootViewController];
+//  if ([v isKindOfClass: [UINavigationController class]]) {
+//    UINavigationController *n = (UINavigationController *) v;
+//    [[n topViewController] becomeFirstResponder];
+//  }
+  [self resignFirstResponder];
+
+  // Find SaverRunner.window (as opposed to SaverRunner.saverWindow)
+  UIWindow *listWindow = 0;
+  for (UIWindow *w in [[UIApplication sharedApplication] windows]) {
+    if (w != [self window]) {
+      listWindow = w;
+      break;
+    }
   }
 
   UIView *fader = [self superview];  // the "backgroundView" view is our parent
 
   if (relaunch_p) {   // Fake a shake on the SaverListController.
-    // Why is [self window] sometimes null here?
-    UIWindow *w = [[UIApplication sharedApplication] keyWindow];
-    UIViewController *v = [w rootViewController];
+    UIViewController *v = [listWindow rootViewController];
     if ([v isKindOfClass: [UINavigationController class]]) {
+# if TARGET_IPHONE_SIMULATOR
+      NSLog (@"simulating shake on saver list");
+# endif
       UINavigationController *n = (UINavigationController *) v;
       [[n topViewController] motionEnded: UIEventSubtypeMotionShake
                                withEvent: nil];
     }
   } else {	// Not launching another, animate our return to the list.
+# if TARGET_IPHONE_SIMULATOR
+    NSLog (@"fading back to saver list");
+# endif
+    UIWindow *saverWindow = [self window]; // not SaverRunner.window
+    [listWindow setHidden:NO];
     [UIView animateWithDuration: 0.5
             animations:^{ fader.alpha = 0.0; }
             completion:^(BOOL finished) {
                [fader removeFromSuperview];
                fader.alpha = 1.0;
+               [saverWindow setHidden:YES];
+               [listWindow makeKeyAndVisible];
+               [[[listWindow rootViewController] view] becomeFirstResponder];
             }];
   }
 }
 
 
+/* Whether the shape of the X11 Window should be changed to HxW when the
+   device is in a landscape orientation.  X11 hacks want this, but OpenGL
+   hacks do not.
+ */
+- (BOOL)reshapeRotatedWindow
+{
+  return YES;
+}
+
+
 /* Called after the device's orientation has changed.
+   
+   Rotation is complicated: the UI, X11 and OpenGL work in 3 different ways.
 
-   Note: we could include a subclass of UIViewController which
-   contains a shouldAutorotateToInterfaceOrientation method that
-   returns YES, in which case Core Animation would auto-rotate our
-   View for us in response to rotation events... but, that interacts
-   badly with the EAGLContext -- if you introduce Core Animation into
-   the path, the OpenGL pipeline probably falls back on software
-   rendering and performance goes to hell.  Also, the scaling and
-   rotation that Core Animation does interacts incorrectly with the GL
-   context anyway.
+   The UI (list of savers, preferences panels) is rotated by the system,
+   because its UIWindow is under a UINavigationController that does
+   automatic rotation, using Core Animation.
 
-   So, we have to hack the rotation animation manually, in the GL world.
+   The savers are under a different UIWindow and a UINavigationController
+   that does not do automatic rotation.
 
-   Possibly XScreenSaverView should use Core Animation, and 
-   XScreenSaverGLView should override that.
+   We have to do it this way for OpenGL savers because using Core Animation
+   on an EAGLContext causes the OpenGL pipeline to fall back on software
+   rendering and performance goes to hell.
+
+   For X11-only savers, we could just use Core Animation and let the system
+   handle it, but (maybe) it's simpler to do it the same way for X11 and GL.
+
+   During and after rotation, the size/shape of the X11 window changes,
+   and ConfigureNotify events are generated.
+
+   X11 code (jwxyz) continues to draw into the (reshaped) backbuffer, which
+   rotated at the last minute via a CGAffineTransformMakeRotation when it is
+   copied to the display hardware.
+
+   GL code always recieves a portrait-oriented X11 Window whose size never
+   changes.  The GL COLOR_BUFFER is displayed on the hardware directly and
+   unrotated, so the GL hacks themselves are responsible for rotating the
+   GL scene to match current_device_rotation().
+
+   Touch events are converted to mouse clicks, and those XEvent coordinates
+   are reported in the coordinate system currently in use by the X11 window.
+   Again, GL must convert those.
  */
 - (void)didRotate:(NSNotification *)notification
 {
@@ -1688,7 +1767,9 @@ double current_device_rotation (void)
     case UIInterfaceOrientationPortraitUpsideDown:
       current = UIDeviceOrientationPortraitUpsideDown;
       break;
-    case UIInterfaceOrientationLandscapeLeft:		// It's opposite day
+    /* It's opposite day, "because rotating the device to the left requires
+       rotating the content to the right" */
+    case UIInterfaceOrientationLandscapeLeft:
       current = UIDeviceOrientationLandscapeRight;
       break;
     case UIInterfaceOrientationLandscapeRight:
@@ -1757,6 +1838,13 @@ double current_device_rotation (void)
     rot_to.height = initial_bounds.height;
     break;
   }
+
+# if TARGET_IPHONE_SIMULATOR
+  NSLog (@"rotation begun: %s %d -> %s %d; %d x %d",
+         orientname(orientation), (int) rot_current_angle,
+         orientname(new_orientation), (int) angle_to,
+         (int) rot_current_size.width, (int) rot_current_size.height);
+# endif
 
  if (! initted_p) {
    // If we've done a rotation but the saver hasn't been initialized yet,
@@ -1834,15 +1922,41 @@ double current_device_rotation (void)
 }
 
 
-
-- (void) rotateMouse:(int)rot x:(int*)x y:(int *)y w:(int)w h:(int)h
+/* Given a mouse (touch) coordinate in unrotated, unscaled view coordinates,
+   convert it to what X11 and OpenGL expect.
+ */
+- (void) convertMouse:(int)rot x:(int*)x y:(int *)y
 {
-  // This is a no-op unless contentScaleFactor != hackedContentScaleFactor.
-  // Currently, this is the iPad Retina only.
-  CGRect frame = [self bounds];		// Scale.
-  double s = [self hackedContentScaleFactor];
-  *x *= (backbuffer_size.width  / frame.size.width)  / s;
-  *y *= (backbuffer_size.height / frame.size.height) / s;
+  int w = [self frame].size.width;
+  int h = [self frame].size.height;
+  int xx = *x, yy = *y;
+  int swap;
+
+  if (ignore_rotation_p) {
+    // We need to rotate the coordinates to match the unrotated X11 window.
+    switch (orientation) {
+    case UIDeviceOrientationLandscapeRight:
+      swap = xx; xx = h-yy; yy = swap;
+      break;
+    case UIDeviceOrientationLandscapeLeft:
+      swap = xx; xx = yy; yy = w-swap;
+      break;
+    case UIDeviceOrientationPortraitUpsideDown: 
+      xx = w-xx; yy = h-yy;
+    default:
+      break;
+    }
+  }
+
+  double s = [self contentScaleFactor];
+  *x = xx * s;
+  *y = yy * s;
+
+# if TARGET_IPHONE_SIMULATOR
+  NSLog (@"touch %4d, %-4d in %4d x %-4d  %d %d\n",
+         *x, *y, (int)(w*s), (int)(h*s),
+         ignore_rotation_p, [self reshapeRotatedWindow]);
+# endif
 }
 
 
@@ -1878,16 +1992,13 @@ double current_device_rotation (void)
 {
   if (!xsft->event_cb || !xwindow) return;
 
-  double s = [self hackedContentScaleFactor];
   XEvent xe;
   memset (&xe, 0, sizeof(xe));
 
-  CGPoint p = [sender locationInView:self];
-  int x = s * p.x;
-  int y = s * p.y;
-  int w = s * [self frame].size.width;  // #### 'frame' here or 'bounds'?
-  int h = s * [self frame].size.height;
-  [self rotateMouse: rot_current_angle x:&x y:&y w:w h:h];
+  CGPoint p = [sender locationInView:self];  // this is in points, not pixels
+  int x = p.x;
+  int y = p.y;
+  [self convertMouse: rot_current_angle x:&x y:&y];
   jwxyz_mouse_moved (xdpy, xwindow, x, y);
 
   switch (sender.state) {
@@ -1940,17 +2051,13 @@ double current_device_rotation (void)
   if (sender.state != UIGestureRecognizerStateEnded)
     return;
 
-  double s = [self hackedContentScaleFactor];
   XEvent xe;
   memset (&xe, 0, sizeof(xe));
 
-  CGPoint p = [sender translationInView:self];
-  int x = s * p.x;
-  int y = s * p.y;
-  int w = s * [self frame].size.width;  // #### 'frame' here or 'bounds'?
-  int h = s * [self frame].size.height;
-  [self rotateMouse: rot_current_angle x:&x y:&y w:w h:h];
-  // jwxyz_mouse_moved (xdpy, xwindow, x, y);
+  CGPoint p = [sender locationInView:self];  // this is in points, not pixels
+  int x = p.x;
+  int y = p.y;
+  [self convertMouse: rot_current_angle x:&x y:&y];
 
   if (abs(x) > abs(y))
     xe.xkey.keycode = (x > 0 ? XK_Right : XK_Left);

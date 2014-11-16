@@ -23,6 +23,7 @@
 
 #include "screenhack.h"
 #include "textclient.h"
+#include "utf8wc.h"
 
 #define FUZZY_BORDER
 
@@ -73,9 +74,12 @@ typedef struct {
   int scale;
   int ticks;
   int mode;
+
   int escstate;
   int csiparam[NPAR];
   int curparam;
+  int unicruds; char unicrud[7];
+
   p_char **chars;
   p_cell *cells;
   XGCValues gcv;
@@ -728,6 +732,8 @@ scroll (p_state *state)
 static void
 print_char (p_state *state, int c)
 {
+  int cols = state->grid_width;
+  int rows = state->grid_height;
   p_cell *cell = &state->cells[state->grid_width * state->cursor_y
 			       + state->cursor_x];
 
@@ -745,7 +751,11 @@ print_char (p_state *state, int c)
                        CRLF line endings instead of bare LF, so that's no good.
                      */
     {
-      int i, start, end;
+      int i;
+      int start, end;
+
+      /* Mostly duplicated in apple2-main.c */
+
       switch (state->escstate)
 	{
 	case 0:
@@ -760,20 +770,23 @@ print_char (p_state *state, int c)
 		state->cursor_x--;
 	      break;
 	    case 9: /* HT */
-	      if (state->cursor_x < state->grid_width - 8)
+	      if (state->cursor_x < cols - 8)
 		{
 		  state->cursor_x = (state->cursor_x & ~7) + 8;
 		}
 	      else
 		{
 		  state->cursor_x = 0;
-		  if (state->cursor_y < state->grid_height - 1)
+		  if (state->cursor_y < rows - 1)
 		    state->cursor_y++;
 		  else
 		    scroll (state);
 		}
 	      break;
 	    case 10: /* LF */
+# ifndef HAVE_FORKPTY
+              state->cursor_x = 0;	/* No ptys on iPhone; assume CRLF. */
+# endif
 	    case 11: /* VT */
 	    case 12: /* FF */
 	      if(state->last_c == 13)
@@ -782,14 +795,14 @@ print_char (p_state *state, int c)
 		  cell->p_char = state->chars[state->bk];
 		  cell->changed = True;
 		}
-	      if (state->cursor_y < state->grid_height - 1)
+	      if (state->cursor_y < rows - 1)
 		state->cursor_y++;
 	      else
 		scroll (state);
 	      break;
 	    case 13: /* CR */
 	      state->cursor_x = 0;
-	      cell = &state->cells[state->grid_width * state->cursor_y];
+	      cell = &state->cells[cols * state->cursor_y];
 	      if((cell->p_char == NULL) || (cell->p_char->name == CURSOR_INDEX))
 		state->bk = ' ';
 	      else
@@ -797,8 +810,7 @@ print_char (p_state *state, int c)
 	      break;
 	    case 14: /* SO */
 	    case 15: /* SI */
-	      /* Dummy case - I don't want to load several fonts for
-		 the maybe two programs world-wide that use that */
+              /* Dummy case - there is one and only one font. */
 	      break;
 	    case 24: /* CAN */
 	    case 26: /* SUB */
@@ -818,6 +830,49 @@ print_char (p_state *state, int c)
 	      state->curparam = 0;
 	      break;
 	    default:
+
+              /* states 102-106 are for UTF-8 decoding */
+
+              if ((c & 0xE0) == 0xC0) {        /* 110xxxxx: 11 bits, 2 bytes */
+                state->unicruds = 1;
+                state->unicrud[0] = c;
+                state->escstate = 102;
+                break;
+              } else if ((c & 0xF0) == 0xE0) { /* 1110xxxx: 16 bits, 3 bytes */
+                state->unicruds = 1;
+                state->unicrud[0] = c;
+                state->escstate = 103;
+                break;
+              } else if ((c & 0xF8) == 0xF0) { /* 11110xxx: 21 bits, 4 bytes */
+                state->unicruds = 1;
+                state->unicrud[0] = c;
+                state->escstate = 104;
+                break;
+              } else if ((c & 0xFC) == 0xF8) { /* 111110xx: 26 bits, 5 bytes */
+                state->unicruds = 1;
+                state->unicrud[0] = c;
+                state->escstate = 105;
+                break;
+              } else if ((c & 0xFE) == 0xFC) { /* 1111110x: 31 bits, 6 bytes */
+                state->unicruds = 1;
+                state->unicrud[0] = c;
+                state->escstate = 106;
+                break;
+              }
+
+            PRINT:
+
+              /* If the cursor is in column 39 and we print a character, then
+                 that character shows up in column 39, and the cursor is no
+                 longer visible on the screen (it's in "column 40".)  If
+                 another character is printed, then that character shows up in
+                 column 0, and the cursor moves to column 1.
+
+                 This is empirically what xterm and gnome-terminal do, so that
+                 must be the right thing.  (In xterm, the cursor vanishes,
+                 whereas; in gnome-terminal, the cursor overprints the
+                 character in col 39.)
+               */
 	      cell->state = FLARE;
 	      cell->p_char = state->chars[c];
 	      cell->changed = True;
@@ -826,10 +881,10 @@ print_char (p_state *state, int c)
 	      if (c != ' ' && cell->p_char->blank_p)
 		cell->p_char = state->chars[CURSOR_INDEX];
 
-	      if (state->cursor_x >= state->grid_width - 1)
+	      if (state->cursor_x >= cols - 1 /*####*/)
 		{
 		  state->cursor_x = 0;
-		  if (state->cursor_y >= state->grid_height - 1)
+		  if (state->cursor_y >= rows - 1)
 		    scroll (state);
 		  else
 		    state->cursor_y++;
@@ -849,7 +904,7 @@ print_char (p_state *state, int c)
 	      state->escstate = 0;
 	      break;
 	    case 'D': /* Linefeed */
-	      if (state->cursor_y < state->grid_height - 1)
+	      if (state->cursor_y < rows - 1)
 		state->cursor_y++;
 	      else
 		scroll (state);
@@ -880,10 +935,14 @@ print_char (p_state *state, int c)
 		state->csiparam[i] = 0;
 	      state->curparam = 0;
 	      break;
-	    case '%': /* Select charset */
-	      /* No, I don't support UTF-8, since the phosphor font
-		 isn't even Unicode anyway. We must still catch the
-		 last byte, though. */
+            case '%': /* Select charset */
+              /* @: Select default (ISO 646 / ISO 8859-1)
+                 G: Select UTF-8
+                 8: Select UTF-8 (obsolete)
+
+                 We can just ignore this and always process UTF-8, I think?
+                 We must still catch the last byte, though.
+               */
 	    case '(':
 	    case ')':
 	      /* I don't support different fonts either - see above
@@ -924,15 +983,15 @@ print_char (p_state *state, int c)
 	    case '@':
 	      for (i = 0; i < state->csiparam[0]; i++)
 		{
-		  if(++state->cursor_x > state->grid_width)
+		  if(++state->cursor_x > cols)
 		    {
 		      state->cursor_x = 0;
-		      if (state->cursor_y < state->grid_height - 1)
+		      if (state->cursor_y < rows - 1)
 			state->cursor_y++;
 		      else
 			scroll (state);
 		    }
-		  cell = &state->cells[state->grid_width * state->cursor_y + state->cursor_x];
+		  cell = &state->cells[cols * state->cursor_y + state->cursor_x];
 		  if (cell->state == FLARE || cell->state == NORMAL)
 		    {
 		      cell->state = FADE;
@@ -956,16 +1015,16 @@ print_char (p_state *state, int c)
 	    case 'B':
 	      if (state->csiparam[0] == 0)
 		state->csiparam[0] = 1;
-	      if ((state->cursor_y += state->csiparam[0]) >= state->grid_height - 1)
-		state->cursor_y = state->grid_height - 1;
+	      if ((state->cursor_y += state->csiparam[0]) >= rows - 1 /*####*/)
+		state->cursor_y = rows - 1;
 	      state->escstate = 0;
 	      break;
 	    case 'a':
 	    case 'C':
 	      if (state->csiparam[0] == 0)
 		state->csiparam[0] = 1;
-	      if ((state->cursor_x += state->csiparam[0]) >= state->grid_width - 1)
-		state->cursor_x = state->grid_width - 1;
+	      if ((state->cursor_x += state->csiparam[0]) >= cols - 1 /*####*/)
+		state->cursor_x = cols - 1;
 	      state->escstate = 0;
 	      break;
 	    case 'D':
@@ -976,22 +1035,22 @@ print_char (p_state *state, int c)
 	      state->escstate = 0;
 	      break;
 	    case 'd':
-	      if ((state->cursor_y = (state->csiparam[0] - 1)) >= state->grid_height - 1)
-		state->cursor_y = state->grid_height - 1;
+	      if ((state->cursor_y = (state->csiparam[0] - 1)) >= rows - 1 /*####*/)
+		state->cursor_y = rows - 1;
 	      state->escstate = 0;
 	      break;
 	    case '`':
 	    case 'G':
-	      if ((state->cursor_x = (state->csiparam[0] - 1)) >= state->grid_width - 1)
-		state->cursor_x = state->grid_width - 1;
+	      if ((state->cursor_x = (state->csiparam[0] - 1)) >= cols - 1 /*####*/)
+		state->cursor_x = cols - 1;
 	      state->escstate = 0;
 	      break;
 	    case 'f':
 	    case 'H':
-	      if ((state->cursor_y = (state->csiparam[0] - 1)) >= state->grid_height - 1)
-		state->cursor_y = state->grid_height - 1;
-	      if ((state->cursor_x = (state->csiparam[1] - 1)) >= state->grid_width - 1)
-		state->cursor_x = state->grid_width - 1;
+	      if ((state->cursor_y = (state->csiparam[0] - 1)) >= rows - 1 /*####*/)
+		state->cursor_y = rows - 1;
+	      if ((state->cursor_x = (state->csiparam[1] - 1)) >= cols - 1 /*####*/)
+		state->cursor_x = cols - 1;
 	      if(state->cursor_y < 0)
 		state->cursor_y = 0;
 	      if(state->cursor_x < 0)
@@ -1000,11 +1059,11 @@ print_char (p_state *state, int c)
 	      break;
 	    case 'J':
 	      start = 0;
-	      end = state->grid_height * state->grid_width;
+	      end = rows * cols;
 	      if (state->csiparam[0] == 0)
-		start = state->grid_width * state->cursor_y + state->cursor_x;
+		start = cols * state->cursor_y + state->cursor_x;
 	      if (state->csiparam[0] == 1)
-		end = state->grid_width * state->cursor_y + state->cursor_x;
+		end = cols * state->cursor_y + state->cursor_x;
 	      for (i = start; i < end; i++)
 		{
 		  cell = &state->cells[i];
@@ -1019,7 +1078,7 @@ print_char (p_state *state, int c)
 	      break;
 	    case 'K':
 	      start = 0;
-	      end = state->grid_width;
+	      end = cols;
 	      if (state->csiparam[0] == 0)
 		start = state->cursor_x;
 	      if (state->csiparam[1] == 1)
@@ -1035,6 +1094,9 @@ print_char (p_state *state, int c)
 		}
 	      state->escstate = 0;
 	      break;
+            case 'm': /* Set attributes unimplemented (bold, blink, rev) */
+              state->escstate = 0;
+              break;
 	    case 's': /* Save position */
 	      state->saved_x = state->cursor_x;
 	      state->saved_y = state->cursor_y;
@@ -1074,6 +1136,39 @@ print_char (p_state *state, int c)
 	case 3:
 	  state->escstate = 0;
 	  break;
+
+        case 102:
+        case 103:
+        case 104:
+        case 105:
+        case 106:
+          {
+            int total = state->escstate - 100;  /* see what I did there */
+            if (state->unicruds < total) {
+              /* Buffer more bytes of the UTF-8 sequence */
+              state->unicrud[state->unicruds++] = c;
+            }
+
+            if (state->unicruds >= total) {
+              /* Done! Convert it to Latin1 and print that. */
+              char *s;
+              state->unicrud[state->unicruds] = 0;
+              s = utf8_to_latin1 ((const char *) state->unicrud, False);
+              state->unicruds = 0;
+              state->escstate = 0;
+              if (s) {
+                c = (unsigned char) s[0];
+                free (s);
+                goto PRINT;
+              } else {
+                c = 0;
+              }
+            }
+          }
+          break;
+
+        default:
+          abort();
 	}
       set_cursor (state, True);
     }
@@ -1089,7 +1184,7 @@ print_char (p_state *state, int c)
 	  else
 	    {
 	      state->cursor_x = 0;
-	      if (state->cursor_y == state->grid_height - 1)
+	      if (state->cursor_y == rows - 1)
 		scroll (state);
 	      else
 		state->cursor_y++;
@@ -1101,6 +1196,8 @@ print_char (p_state *state, int c)
 	}
       else
 	{
+          /* #### This should do UTF-8 decoding */
+
 	  cell->state = FLARE;
 	  cell->p_char = state->chars[c];
 	  cell->changed = True;
@@ -1109,10 +1206,10 @@ print_char (p_state *state, int c)
 	  if (c != ' ' && cell->p_char->blank_p)
 	    cell->p_char = state->chars[CURSOR_INDEX];
 
-	  if (state->cursor_x >= state->grid_width - 1)
+	  if (state->cursor_x >= cols - 1)
 	    {
 	      state->cursor_x = 0;
-	      if (state->cursor_y >= state->grid_height - 1)
+	      if (state->cursor_y >= rows - 1)
 		scroll (state);
 	      else
 		state->cursor_y++;

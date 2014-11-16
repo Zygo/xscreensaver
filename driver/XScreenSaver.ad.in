@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.30
-!                              10-Sep-2014
+!                              version 5.31
+!                              15-Nov-2014
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -216,7 +216,7 @@ GetViewPortIsFullOfLies: False
 				distort -root				    \n\
 				epicycle -root				    \n\
 				flow -root				    \n\
-- GL: 				glplanet -root				    \n\
+@GL_KLUDGE@ GL: 				glplanet -root				    \n\
 				interference -root			    \n\
 				kumppa -root				    \n\
 @GL_KLUDGE@ GL: 				lament -root				    \n\
@@ -311,7 +311,7 @@ GetViewPortIsFullOfLies: False
 				popsquares -root			    \n\
 @GL_KLUDGE@ GL: 				surfaces -root				    \n\
 				xanalogtv -root				    \n\
--				abstractile -root			    \n\
+				abstractile -root			    \n\
 				anemotaxis -root			    \n\
 - GL: 				antinspect -root			    \n\
 				fireworkx -root				    \n\
@@ -362,6 +362,9 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				kaleidocycle -root			    \n\
 @GL_KLUDGE@ GL: 				quasicrystal -root			    \n\
 @GL_KLUDGE@ GL: 				unknownpleasures -root			    \n\
+				binaryring -root			    \n\
+@GL_KLUDGE@ GL: 				cityflow -root				    \n\
+@GL_KLUDGE@ GL: 				geodesicgears -root			    \n\
 @GL_KLUDGE@ GL: 				projectiveplane -root			    \n\
 				tessellimage -root			    \n\
 @GL_KLUDGE@ GL: 				winduprobot -root			    \n
@@ -438,6 +441,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.antinspect.name:     AntInspect
 *hacks.antmaze.name:        AntMaze
 *hacks.antspotlight.name:   AntSpotlight
+*hacks.binaryring.name:     BinaryRing
 *hacks.blinkbox.name:       BlinkBox
 *hacks.blitspin.name:       BlitSpin
 *hacks.blocktube.name:      BlockTube
@@ -463,6 +467,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.flyingtoasters.name: FlyingToasters
 *hacks.fontglide.name:      FontGlide
 *hacks.fuzzyflakes.name:    FuzzyFlakes
+*hacks.geodesicgears.name:  GeodesicGears
 *hacks.gflux.name:          GFlux
 *hacks.gleidescope.name:    Gleidescope
 *hacks.glforestfire.name:   GLForestFire

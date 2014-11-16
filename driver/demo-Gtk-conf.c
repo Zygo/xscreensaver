@@ -1,5 +1,5 @@
 /* demo-Gtk-conf.c --- implements the dynamic configuration dialogs.
- * xscreensaver, Copyright (c) 2001-2013 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -300,7 +300,8 @@ make_parameter (const char *filename, xmlNodePtr node)
 
   else if (!strcmp (name, "xscreensaver-text") ||   /* ignored in X11; */
            !strcmp (name, "xscreensaver-image") ||  /* used in Cocoa. */
-           !strcmp (name, "xscreensaver-updater"))
+           !strcmp (name, "xscreensaver-updater") ||
+           !strcmp (name, "video"))
     {
       free (p);
       return 0;
@@ -1169,7 +1170,7 @@ de_stringify (char *s)
   char q = s[0];
   if (q != '\'' && q != '\"' && q != '`')
     abort();
-  memmove (s, s+1, strlen (s)+1);
+  memmove (s, s+1, strlen (s));
   while (*s && *s != q)
     {
       if (*s == '\\')

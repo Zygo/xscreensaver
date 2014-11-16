@@ -48,7 +48,7 @@
 #define DEF_WOBBLE       "True"
 #define DEF_DEBUG        "False"
 
-#define DEF_FONT "-*-helvetica-bold-r-normal-*-240-*"
+#define DEF_FONT "-*-helvetica-bold-r-normal-*-*-240-*-*-*-*-*-*"
 #define DEFAULTS  "*delay:		20000	\n" \
 		  "*showFPS:		False	\n" \
 		  "*font:	     " DEF_FONT"\n" \

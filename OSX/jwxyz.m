@@ -47,6 +47,7 @@
 #import "jwxyz.h"
 #import "jwxyz-timers.h"
 #import "yarandom.h"
+#import "utf8wc.h"
 
 # define USE_BACKBUFFER  /* must be in sync with XScreenSaverView.h */
 
@@ -114,6 +115,10 @@ struct jwxyz_Font {
   // In X11, "Font" is just an ID, and "XFontStruct" contains the metrics.
   // But we need the metrics on both of them, so they go here.
   XFontStruct metrics;
+};
+
+struct jwxyz_XFontSet {
+  Font font;
 };
 
 
@@ -2477,7 +2482,8 @@ copy_pixmap (Display *dpy, Pixmap p)
    "rbearing" is the distance from the logical origin to the rightmost pixel.
 
    "descent" is the distance from the logical origin to the bottommost pixel.
-   For characters with descenders, it is negative.
+   For characters with descenders, it is positive.  For superscripts, it
+   is negative.
 
    "ascent" is the distance from the logical origin to the topmost pixel.
    It is the number of pixels above the baseline.
@@ -2488,6 +2494,46 @@ copy_pixmap (Display *dpy, Pixmap p)
    If "rbearing" is greater than "width", then this character overlaps the
    following character.  If smaller, then there is trailing blank space.
  */
+
+
+static void
+glyph_metrics (CTFontRef ctfont, CGGlyph cgglyph, XCharStruct *cs)
+{
+  CGRect bbox = CTFontGetBoundingRectsForGlyphs (ctfont,
+                                                 kCTFontDefaultOrientation,
+                                                 &cgglyph, NULL, 1);
+  CGSize advancement;
+  CTFontGetAdvancesForGlyphs (ctfont, kCTFontDefaultOrientation,
+                              &cgglyph, &advancement, 1);
+
+# ifndef USE_IPHONE
+  // Only necessary for when LCD smoothing is enabled, which iOS doesn't do.
+  bbox.origin.x    -= 2.0/3.0;
+  bbox.size.width  += 4.0/3.0;
+  bbox.size.height += 1.0/2.0;
+# endif
+
+//#define CEIL(F)  ((F) < 0 ? floor(F) : ceil(F))
+//#define FLOOR(F) ((F) < 0 ? ceil(F) : floor(F))
+#define CEIL(F)  ceil(F)
+#define FLOOR(F) floor(F)
+
+  /* Now that we know the advancement and bounding box, we can compute
+     the lbearing and rbearing.
+   */
+//cs->ascent   = CEIL (bbox.origin.y) + CEIL (bbox.size.height);
+  cs->ascent   = CEIL (bbox.origin.y + bbox.size.height);
+  cs->descent  = CEIL(-bbox.origin.y);
+  cs->lbearing = FLOOR (bbox.origin.x);
+//cs->rbearing = CEIL (bbox.origin.x) + CEIL (bbox.size.width);
+  cs->rbearing = CEIL (bbox.origin.x + bbox.size.width);
+  cs->width    = FLOOR (advancement.width + 0.5);
+
+  //  Assert (cs->rbearing - cs->lbearing == CEIL(bbox.size.width), 
+  //          "bbox w wrong");
+  //  Assert (cs->ascent   + cs->descent  == CEIL(bbox.size.height),
+  //          "bbox h wrong");
+}
 
 
 // This is XQueryFont, but for the XFontStruct embedded in 'Font'
@@ -2510,11 +2556,6 @@ query_font (Font fid)
   XFontStruct *f = &fid->metrics;
   XCharStruct *min = &f->min_bounds;
   XCharStruct *max = &f->max_bounds;
-
-//#define CEIL(F)  ((F) < 0 ? floor(F) : ceil(F))
-//#define FLOOR(F) ((F) < 0 ? ceil(F) : floor(F))
-#define CEIL(F)  ceil(F)
-#define FLOOR(F) floor(F)
 
   f->fid               = fid;
   f->min_char_or_byte2 = first;
@@ -2539,8 +2580,7 @@ query_font (Font fid)
   Assert (ctfont, @"no CTFontRef for UIFont");
 
   for (i = first; i <= last; i++) {
-    CGSize advancement = CGSizeMake (0, 0);
-    CGRect bbox = CGRectMake (0, 0, 0, 0);
+    XCharStruct *cs = &f->per_char[i-first];
 
     /* There is no way to get "lbearing", "rbearing" or "descent" out of
        NSFont.  'sizeWithFont' gives us "width" and "height" only.
@@ -2554,18 +2594,10 @@ query_font (Font fid)
     CGGlyph cgglyph = 0;
 
     if (CTFontGetGlyphsForCharacters (ctfont, &i, &cgglyph, 1))
-      {
-        bbox = CTFontGetBoundingRectsForGlyphs (ctfont,
-                                                kCTFontDefaultOrientation,
-                                                &cgglyph, NULL, 1);
-        CTFontGetAdvancesForGlyphs (ctfont, kCTFontDefaultOrientation,
-                                    &cgglyph, &advancement, 1);
-      }
+      glyph_metrics (ctfont, cgglyph, cs);
     else
-      {
-        // This is normal, since Latin1 does not encode 0-31 or 127-159.
-        // NSLog (@"no glyph for character %d\n", i);
-      }
+      // This is normal, since Latin1 does not encode 0-31 or 127-159.
+      memset (cs, 0, sizeof(*cs));
 
 # if 0
     if (i == 224) {  // Latin1 == "agrave", MacRoman == "daggerdouble".
@@ -2580,32 +2612,7 @@ query_font (Font fid)
                                      cgglyph);
       Assert ([glyph_name isEqualToString:@"uacute"], @"wrong encoding");
     }
-# endif // 9
-
-# ifndef USE_IPHONE
-    // Only necessary for when LCD smoothing is enabled, which iOS doesn't do.
-    bbox.origin.x    -= 2.0/3.0;
-    bbox.size.width  += 4.0/3.0;
-    bbox.size.height += 1.0/2.0;
-# endif
- 
-    /* Now that we know the advancement and bounding box, we can compute
-       the lbearing and rbearing.
-     */
-    XCharStruct *cs = &f->per_char[i-first];
-
-//    cs->ascent   = CEIL (bbox.origin.y) + CEIL (bbox.size.height);
-    cs->ascent   = CEIL (bbox.origin.y + bbox.size.height);
-    cs->descent  = CEIL(-bbox.origin.y);
-    cs->lbearing = FLOOR (bbox.origin.x);
-//  cs->rbearing = CEIL (bbox.origin.x) + CEIL (bbox.size.width);
-    cs->rbearing = CEIL (bbox.origin.x + bbox.size.width);
-    cs->width    = FLOOR (advancement.width + 0.5);
-
-//  Assert (cs->rbearing - cs->lbearing == CEIL(bbox.size.width), 
-//          "bbox w wrong");
-//  Assert (cs->ascent   + cs->descent  == CEIL(bbox.size.height),
-//          "bbox h wrong");
+# endif // 0
 
     max->width    = MAX (max->width,    cs->width);
     max->ascent   = MAX (max->ascent,   cs->ascent);
@@ -3061,14 +3068,57 @@ XSetFont (Display *dpy, GC gc, Font fid)
   return 0;
 }
 
+
+XFontSet
+XCreateFontSet (Display *dpy, char *name, 
+                char ***missing_charset_list_return,
+                int *missing_charset_count_return,
+                char **def_string_return)
+{
+  char *name2 = strdup (name);
+  char *s = strchr (name, ",");
+  if (s) *s = 0;
+  XFontSet set = 0;
+  Font f = XLoadFont (dpy, name2);
+  if (f)
+    {
+      set = (XFontSet) calloc (1, sizeof(*set));
+      set->font = f;
+    }
+  free (name2);
+  if (missing_charset_list_return)  *missing_charset_list_return = 0;
+  if (missing_charset_count_return) *missing_charset_count_return = 0;
+  if (def_string_return) *def_string_return = 0;
+  return set;
+}
+
+
+void
+XFreeFontSet (Display *dpy, XFontSet set)
+{
+  XUnloadFont (dpy, set->font);
+  free (set);
+}
+
+
+void
+XFreeStringList (char **list)
+{
+  int i;
+  if (!list) return;
+  for (i = 0; list[i]; i++)
+    XFree (list[i]);
+  XFree (list);
+}
+
+
 int
 XTextExtents (XFontStruct *f, const char *s, int length,
               int *dir_ret, int *ascent_ret, int *descent_ret,
               XCharStruct *cs)
 {
   memset (cs, 0, sizeof(*cs));
-  int i;
-  for (i = 0; i < length; i++) {
+  for (int i = 0; i < length; i++) {
     unsigned char c = (unsigned char) s[i];
     if (c < f->min_char_or_byte2 || c > f->max_char_or_byte2)
       c = f->default_char;
@@ -3099,24 +3149,118 @@ XTextWidth (XFontStruct *f, const char *s, int length)
 }
 
 
+int
+XTextExtents16 (XFontStruct *f, const XChar2b *s, int length,
+                int *dir_ret, int *ascent_ret, int *descent_ret,
+                XCharStruct *cs)
+{
+  Font fid = f->fid;
+  CTFontRef ctfont =
+    CTFontCreateWithName ((CFStringRef) [fid->nsfont fontName],
+                          [fid->nsfont pointSize],
+                          NULL);
+  Assert (ctfont, @"no CTFontRef for UIFont");
+
+  int utf8_len = 0;
+  char *utf8 = XChar2b_to_utf8 (s, &utf8_len);
+  NSString *nsstr = [NSString stringWithCString:utf8
+                                       encoding:NSUTF8StringEncoding];
+  NSUInteger L = [nsstr length];
+
+  for (int i = 0; i < L; i++) {
+    unichar c = [nsstr characterAtIndex:i];
+    XCharStruct cc;
+    CGGlyph cgglyph = 0;
+
+    if (CTFontGetGlyphsForCharacters (ctfont, &c, &cgglyph, 1))
+      glyph_metrics (ctfont, cgglyph, &cc);
+    else
+      // This is normal, since Latin1 does not encode 0-31 or 127-159.
+      memset (&cc, 0, sizeof(cc));
+
+    if (i == 0) {
+      *cs = cc;
+    } else {
+      cs->ascent   = MAX (cs->ascent,   cc.ascent);
+      cs->descent  = MAX (cs->descent,  cc.descent);
+      cs->lbearing = MIN (cs->lbearing, cs->width + cc.lbearing);
+      cs->rbearing = MAX (cs->rbearing, cs->width + cc.rbearing);
+      cs->width   += cc.width;
+    }
+  }
+  *dir_ret = 0;
+  *ascent_ret  = f->ascent;
+  *descent_ret = f->descent;
+
+  free (utf8);
+  CFRelease (ctfont);
+
+  return 0;
+}
+
+
+int
+Xutf8TextExtents (XFontSet set, const char *str, int num_bytes,
+                  XRectangle *overall_ink_return,
+                  XRectangle *overall_logical_return)
+{
+  Font fid = set->font;
+  CTFontRef ctfont =
+    CTFontCreateWithName ((CFStringRef) [fid->nsfont fontName],
+                          [fid->nsfont pointSize],
+                          NULL);
+  Assert (ctfont, @"no CTFontRef for UIFont");
+
+  NSString *nsstr = [NSString stringWithCString:str
+                                       encoding:NSUTF8StringEncoding];
+  NSUInteger L = [nsstr length];
+
+  XRectangle ink = { 0, };
+  XRectangle logical = { 0, };
+
+  logical.height = fid->metrics.ascent;
+
+  for (int i = 0; i < L; i++) {
+    unichar c = [nsstr characterAtIndex:i];
+    XCharStruct cs;
+    CGGlyph cgglyph = 0;
+
+    if (CTFontGetGlyphsForCharacters (ctfont, &c, &cgglyph, 1))
+      glyph_metrics (ctfont, cgglyph, &cs);
+    else
+      // This is normal, since Latin1 does not encode 0-31 or 127-159.
+      memset (&cs, 0, sizeof(cs));
+
+    logical.width += cs.width;
+
+    ink.height = MAX(ink.height, cs.ascent);
+    ink.y      = MIN(ink.y,      cs.descent);
+
+    if (i == 0)
+      ink.x = cs.lbearing;
+
+    if (i == L-1) {
+      ink.width += cs.rbearing;
+    } else {
+      ink.width += cs.width;
+    }
+  }
+    
+  CFRelease (ctfont);
+
+  if (overall_ink_return)
+    *overall_ink_return = ink;
+  if (overall_logical_return)
+    *overall_logical_return = logical;
+  return 0;
+}
+
+
 static int
 draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
-             const char  *str, int len, BOOL clear_background_p)
+             NSString *nsstr)
 {
-  if (clear_background_p) {
-    int ascent, descent, dir;
-    XCharStruct cs;
-    XTextExtents (&gc->gcv.font->metrics, str, len,
-                  &dir, &ascent, &descent, &cs);
-    draw_rect (dpy, d, gc,
-               x + MIN (0, cs.lbearing),
-               y - MAX (0, ascent),
-               MAX (MAX (0, cs.rbearing) -
-                    MIN (0, cs.lbearing),
-                    cs.width),
-               MAX (0, ascent) + MAX (0, descent),
-               NO, YES);
-  }
+  if (! nsstr) return 1;
 
   CGRect wr = d->frame;
   CGContextRef cgc = d->cgc;
@@ -3145,11 +3289,6 @@ draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
   //
   set_color (cgc, argb, 32, NO, YES);
 
-  char *s2 = (char *) malloc (len + 1);
-  strncpy (s2, str, len);
-  s2[len] = 0;
-  NSString *nsstr = [NSString stringWithCString:s2
-                                       encoding:NSISOLatin1StringEncoding];
   NSAttributedString *astr = [[NSAttributedString alloc]
                                initWithString:nsstr
                                    attributes:attr];
@@ -3171,14 +3310,69 @@ int
 XDrawString (Display *dpy, Drawable d, GC gc, int x, int y,
              const char  *str, int len)
 {
-  return draw_string (dpy, d, gc, x, y, str, len, NO);
+  char *s2 = (char *) malloc (len + 1);
+  strncpy (s2, str, len);
+  s2[len] = 0;
+  NSString *nsstr = [NSString stringWithCString:s2
+                                       encoding:NSISOLatin1StringEncoding];
+  int ret = draw_string (dpy, d, gc, x, y, nsstr);
+  free (s2);
+  return ret;
 }
+
+
+int
+XDrawString16 (Display *dpy, Drawable d, GC gc, int x, int y,
+             const XChar2b *str, int len)
+{
+  char *s2 = XChar2b_to_utf8 (str, 0);
+  NSString *nsstr = [NSString stringWithCString:s2
+                                       encoding:NSUTF8StringEncoding];
+  if (! nsstr)
+    /* If the C string has invalid UTF8 bytes in it, the result is
+       "undefined", which turns out to mean "return a null string"
+       instead of just omitting the bogus characters. Greaaat.
+       So try it again as Latin1, I guess. */
+    nsstr = [NSString stringWithCString:s2 encoding:NSISOLatin1StringEncoding];
+  int ret = draw_string (dpy, d, gc, x, y, nsstr);
+  free (s2);
+  return ret;
+}
+
+
+void
+Xutf8DrawString (Display *dpy, Drawable d, XFontSet set, GC gc,
+                 int x, int y, const char *str, int len)
+{
+  char *s2 = (char *) malloc (len + 1);
+  strncpy (s2, str, len);
+  s2[len] = 0;
+  NSString *nsstr = [NSString stringWithCString:s2
+                                       encoding:NSUTF8StringEncoding];
+  if (! nsstr)
+    nsstr = [NSString stringWithCString:s2 encoding:NSISOLatin1StringEncoding];
+  draw_string (dpy, d, gc, x, y, nsstr);
+  free (s2);
+}
+
 
 int
 XDrawImageString (Display *dpy, Drawable d, GC gc, int x, int y,
                   const char *str, int len)
 {
-  return draw_string (dpy, d, gc, x, y, str, len, YES);
+  int ascent, descent, dir;
+  XCharStruct cs;
+  XTextExtents (&gc->gcv.font->metrics, str, len,
+                &dir, &ascent, &descent, &cs);
+  draw_rect (dpy, d, gc,
+             x + MIN (0, cs.lbearing),
+             y - MAX (0, ascent),
+             MAX (MAX (0, cs.rbearing) -
+                  MIN (0, cs.lbearing),
+                  cs.width),
+             MAX (0, ascent) + MAX (0, descent),
+             NO, YES);
+  return XDrawString (dpy, d, gc, x, y, str, len);
 }
 
 
@@ -3488,6 +3682,18 @@ get_bits_per_pixel (Display *dpy, int depth)
 {
   Assert (depth == 32 || depth == 1, "unexpected depth");
   return depth;
+}
+
+int
+screen_number (Screen *screen)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  int i;
+  for (i = 0; i < ScreenCount (dpy); i++)
+    if (ScreenOfDisplay (dpy, i) == screen)
+      return i;
+  abort ();
+  return 0;
 }
 
 // declared in utils/grabclient.h

@@ -625,6 +625,8 @@ DEPEND_DEFINES
 DEPEND_FLAGS
 DEPEND
 APPDEFAULTS
+ANIM_LIBS
+ANIM_OBJS
 GTK_EXTRA_OBJS
 HACK_CONF_DIR
 PO_DATADIR
@@ -649,6 +651,9 @@ LOCK_SRCS
 SAVER_GL_LIBS
 SAVER_GL_OBJS
 SAVER_GL_SRCS
+XFT_LIBS
+XFT_OBJS
+XFT_SRCS
 XMU_LIBS
 XMU_OBJS
 XMU_SRCS
@@ -846,6 +851,7 @@ with_gles
 with_pixbuf
 with_xpm
 with_jpeg
+with_xft
 with_xshm_ext
 with_xdbe_ext
 with_readdisplay
@@ -853,6 +859,7 @@ with_image_directory
 with_text_file
 with_browser
 with_setuid_hacks
+with_record_animation
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1542,6 +1549,7 @@ Graphics options:
   --with-xpm              Include support for XPM files in some demos.
                           (Not needed if Pixbuf is used.)
   --with-jpeg             Include support for the JPEG library.
+  --with-xft              Include support for the X Freetype library.
   --with-xshm-ext         Include support for the Shared Memory extension.
   --with-xdbe-ext         Include support for the DOUBLE-BUFFER extension.
   --with-readdisplay      Include support for the XReadDisplay extension.
@@ -1551,6 +1559,8 @@ Graphics options:
   --with-browser=BROWSER  Specify the web browser used to show the help URL.
   --with-setuid-hacks     Allow some demos to be installed `setuid root'
                           (which is needed in order to ping other hosts.)
+
+  --with-record-animation Include code for generating MP4 videos.
 
 
 Some influential environment variables:
@@ -2045,6 +2055,63 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_c_check_func
+
+# ac_fn_c_check_member LINENO AGGR MEMBER VAR INCLUDES
+# ----------------------------------------------------
+# Tries to find if the field MEMBER exists in type AGGR, after including
+# INCLUDES, setting cache variable VAR accordingly.
+ac_fn_c_check_member ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2.$3" >&5
+$as_echo_n "checking for $2.$3... " >&6; }
+if eval \${$4+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$5
+int
+main ()
+{
+static $2 ac_aggr;
+if (ac_aggr.$3)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$4=yes"
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$5
+int
+main ()
+{
+static $2 ac_aggr;
+if (sizeof ac_aggr.$3)
+return 0;
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  eval "$4=yes"
+else
+  eval "$4=no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+eval ac_res=\$$4
+	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
+$as_echo "$ac_res" >&6; }
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+
+} # ac_fn_c_check_member
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -2441,6 +2508,12 @@ echo "command line was: $0 $@"
 #AH_TEMPLATE([HAVE_SGI_VC_EXTENSION],
 #	    [Define this if you have the SGI-VIDEO-CONTROL extension.  This
 #	    is standard on Irix systems, and not available elsewhere.])
+
+
+
+
+
+
 
 
 
@@ -5800,6 +5873,28 @@ _ACEOF
 fi
 done
 
+for ac_func in getaddrinfo
+do :
+  ac_fn_c_check_func "$LINENO" "getaddrinfo" "ac_cv_func_getaddrinfo"
+if test "x$ac_cv_func_getaddrinfo" = xyes; then :
+  cat >>confdefs.h <<_ACEOF
+#define HAVE_GETADDRINFO 1
+_ACEOF
+
+fi
+done
+
+ac_fn_c_check_member "$LINENO" "struct sockaddr" "sa_len" "ac_cv_member_struct_sockaddr_sa_len" "#include <sys/socket.h>
+"
+if test "x$ac_cv_member_struct_sockaddr_sa_len" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_SOCKADDR_SA_LEN 1
+_ACEOF
+
+
+fi
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct icmp" >&5
 $as_echo_n "checking for struct icmp... " >&6; }
 if ${ac_cv_have_icmp+:} false; then :
@@ -6727,24 +6822,10 @@ $as_echo_n "checking for X app-defaults directory... " >&6; }
 if ${ac_cv_x_app_defaults+:} false; then :
   $as_echo_n "(cached) " >&6
 else
-
-  rm -fr conftestdir
-  if mkdir conftestdir; then
-    cd conftestdir 2>/dev/null
-    # Make sure to not put "make" in the Imakefile rules, since we grep it out.
-    cat > Imakefile <<'EOF'
-acfindx:
-	@echo 'ac_x_app_defaults="${XAPPLOADDIR}"'
-EOF
-    if (xmkmf) >/dev/null 2>&1 && test -f Makefile; then
-      # GNU make sometimes prints "make[1]: Entering...", which'd confuse us.
-      eval `${MAKE-make} acfindx 2>/dev/null | grep -v make`
-    fi
-    cd .. 2>/dev/null
-    rm -fr conftestdir
-  fi
+  # skip this, it's always wrong these days.
+      #  AC_PATH_X_APP_DEFAULTS_XMKMF
       if test x"$ac_x_app_defaults" = x; then
-
+        true
   # Look for the directory under a standard set of common directories.
   # Check X11 before X11Rn because it's often a symlink to the current release.
   for ac_dir in                                 \
@@ -6760,6 +6841,8 @@ EOF
     /usr/lib/X11R6/app-defaults                 \
     /usr/lib/X11R5/app-defaults                 \
     /usr/lib/X11R4/app-defaults                 \
+                                                \
+    /etc/X11/app-defaults                       \
                                                 \
     /usr/local/X11/lib/app-defaults             \
     /usr/local/X11R6/lib/app-defaults           \
@@ -6804,6 +6887,7 @@ EOF
 
       fi
       if test x"$ac_x_app_defaults" = x; then
+        /bin/echo -n 'fallback: '
         ac_cv_x_app_defaults="/usr/lib/X11/app-defaults"
       else
         # Record where we found app-defaults for the cache.
@@ -13119,7 +13203,7 @@ if ${ac_cv_mesagl_version_string+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 13126 "configure"
+#line 13210 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -14377,6 +14461,295 @@ fi
 
 ###############################################################################
 #
+#       Check for -lXft
+#
+###############################################################################
+
+have_xutf8drawstring=no
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Xutf8DrawString in -lX11" >&5
+$as_echo_n "checking for Xutf8DrawString in -lX11... " >&6; }
+if ${ac_cv_lib_X11_Xutf8DrawString+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lX11 -lX11 -lXext -lm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char Xutf8DrawString ();
+int
+main ()
+{
+return Xutf8DrawString ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_X11_Xutf8DrawString=yes
+else
+  ac_cv_lib_X11_Xutf8DrawString=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_X11_Xutf8DrawString" >&5
+$as_echo "$ac_cv_lib_X11_Xutf8DrawString" >&6; }
+if test "x$ac_cv_lib_X11_Xutf8DrawString" = xyes; then :
+  have_xutf8drawstring=yes
+else
+  true
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+if test "$have_xutf8drawstring" = yes ; then
+  $as_echo "#define HAVE_XUTF8DRAWSTRING 1" >>confdefs.h
+
+fi
+
+
+have_xft=no
+with_xft_req=unspecified
+xft_halfassed=no
+
+# Check whether --with-xft was given.
+if test "${with_xft+set}" = set; then :
+  withval=$with_xft; with_xft="$withval"; with_xft_req="$withval"
+else
+  with_xft=yes
+fi
+
+
+
+   case "$with_xft" in
+    yes) ;;
+    no)  ;;
+
+    /*)
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Xft headers" >&5
+$as_echo_n "checking for Xft headers... " >&6; }
+     d=$with_xft/include
+     if test -d $d; then
+       X_CFLAGS="-I$d $X_CFLAGS"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
+$as_echo "$d" >&6; }
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
+$as_echo "not found ($d: no such directory)" >&6; }
+     fi
+
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Xft libs" >&5
+$as_echo_n "checking for Xft libs... " >&6; }
+     d=$with_xft/lib
+     if test -d $d; then
+       X_LIBS="-L$d $X_LIBS"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
+$as_echo "$d" >&6; }
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
+$as_echo "not found ($d: no such directory)" >&6; }
+     fi
+
+     # replace the directory string with "yes".
+     with_xft_req="yes"
+     with_xft=$with_xft_req
+     ;;
+
+    *)
+     echo ""
+     echo "error: argument to --with-xft must be \"yes\", \"no\", or a directory."
+     echo "       If it is a directory, then \`DIR/include' will be added to"
+     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
+     exit 1
+     ;;
+   esac
+
+
+if test "$with_xft" != yes -a "$with_xft" != no ; then
+  echo "error: must be yes or no: --with-xft=$with_xft"
+  exit 1
+fi
+
+if test "$with_xft" = yes; then
+
+  pkgs=''
+  ok="yes"
+  pkg_check_version xft 2.1.0
+  have_xft="$ok"
+
+  if test "$have_xft" = yes; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Xft includes" >&5
+$as_echo_n "checking for Xft includes... " >&6; }
+if ${ac_cv_xft_config_cflags+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_xft_config_cflags=`$pkg_config --cflags $pkgs`
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_xft_config_cflags" >&5
+$as_echo "$ac_cv_xft_config_cflags" >&6; }
+    { $as_echo "$as_me:${as_lineno-$LINENO}: checking for Xft libs" >&5
+$as_echo_n "checking for Xft libs... " >&6; }
+if ${ac_cv_xft_config_libs+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_cv_xft_config_libs=`$pkg_config --libs $pkgs`
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_xft_config_libs" >&5
+$as_echo "$ac_cv_xft_config_libs" >&6; }
+  fi
+
+  ac_xft_config_cflags=$ac_cv_xft_config_cflags
+  ac_xft_config_libs=$ac_cv_xft_config_libs
+
+  if test "$have_xft" = yes; then
+    #
+    # we appear to have Xft; check for headers/libs to be sure.
+    #
+    ac_save_xft_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $ac_xft_config_cflags"
+
+    have_xft=no
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  ac_fn_c_check_header_mongrel "$LINENO" "X11/Xft/Xft.h" "ac_cv_header_X11_Xft_Xft_h" "$ac_includes_default"
+if test "x$ac_cv_header_X11_Xft_Xft_h" = xyes; then :
+  have_xft=yes
+fi
+
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+
+    CPPFLAGS="$ac_save_xft_CPPFLAGS"
+  fi
+
+  if test "$have_xft" = yes; then
+    # we have the headers, now check for the libraries
+    have_xft=no
+    xft_halfassed=yes
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: checking for Xft usability..." >&5
+$as_echo "checking for Xft usability..." >&6; }
+
+  ac_save_CPPFLAGS="$CPPFLAGS"
+  ac_save_LDFLAGS="$LDFLAGS"
+#  ac_save_LIBS="$LIBS"
+
+  if test \! -z "$includedir" ; then
+    CPPFLAGS="$CPPFLAGS -I$includedir"
+  fi
+  # note: $X_CFLAGS includes $x_includes
+  CPPFLAGS="$CPPFLAGS $X_CFLAGS"
+
+  if test \! -z "$libdir" ; then
+    LDFLAGS="$LDFLAGS -L$libdir"
+  fi
+  # note: $X_LIBS includes $x_libraries
+  LDFLAGS="$LDFLAGS $X_LIBS $X_EXTRA_LIBS"
+
+  CPPFLAGS=`eval eval eval eval eval eval eval eval eval echo $CPPFLAGS`
+  LDFLAGS=`eval eval eval eval eval eval eval eval eval echo $LDFLAGS`
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for XftDrawStringUtf8 in -lc" >&5
+$as_echo_n "checking for XftDrawStringUtf8 in -lc... " >&6; }
+if ${ac_cv_lib_c_XftDrawStringUtf8+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  ac_check_lib_save_LIBS=$LIBS
+LIBS="-lc $ac_xft_config_libs -lX11 -lXext -lm $LIBS"
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+/* Override any GCC internal prototype to avoid an error.
+   Use char because int might match the return type of a GCC
+   builtin and then its argument prototype would still apply.  */
+#ifdef __cplusplus
+extern "C"
+#endif
+char XftDrawStringUtf8 ();
+int
+main ()
+{
+return XftDrawStringUtf8 ();
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_link "$LINENO"; then :
+  ac_cv_lib_c_XftDrawStringUtf8=yes
+else
+  ac_cv_lib_c_XftDrawStringUtf8=no
+fi
+rm -f core conftest.err conftest.$ac_objext \
+    conftest$ac_exeext conftest.$ac_ext
+LIBS=$ac_check_lib_save_LIBS
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_lib_c_XftDrawStringUtf8" >&5
+$as_echo "$ac_cv_lib_c_XftDrawStringUtf8" >&6; }
+if test "x$ac_cv_lib_c_XftDrawStringUtf8" = xyes; then :
+  have_xft=yes
+fi
+
+  CPPFLAGS="$ac_save_CPPFLAGS"
+  LDFLAGS="$ac_save_LDFLAGS"
+#  LIBS="$ac_save_LIBS"
+
+  fi
+
+  if test "$have_xft" = no; then
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: checking for Xft usability... no" >&5
+$as_echo "checking for Xft usability... no" >&6; }
+  fi
+fi
+
+if test "$have_xft" = yes; then
+  INCLUDES="$INCLUDES $ac_xft_config_cflags"
+  XFT_LIBS="$ac_xft_config_libs"
+  XFT_SRCS=''
+  XFT_OBJS=''
+  $as_echo "#define HAVE_XFT 1" >>confdefs.h
+
+else
+  XFT_LIBS=''
+  XFT_SRCS='$(UTILS_SRC)/xft.c'
+  XFT_OBJS='$(UTILS_BIN)/xft.o'
+fi
+
+
+###############################################################################
+#
 #       Check for pty support: this allows 'phosphor' and 'apple2'
 #	to run curses-based programs, or be used as terminal windows.
 #
@@ -15195,6 +15568,88 @@ fi
 
 ###############################################################################
 #
+#       Check for --with-record-animation
+#
+###############################################################################
+
+record_anim_default=no
+record_anim="$record_anim_default"
+
+# Check whether --with-record-animation was given.
+if test "${with_record_animation+set}" = set; then :
+  withval=$with_record_animation; record_anim="$withval"
+else
+  record_anim="$record_anim_default"
+fi
+
+
+
+   case "$record_anim" in
+    yes) ;;
+    no)  ;;
+
+    /*)
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for record animation headers" >&5
+$as_echo_n "checking for record animation headers... " >&6; }
+     d=$record_anim/include
+     if test -d $d; then
+       X_CFLAGS="-I$d $X_CFLAGS"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
+$as_echo "$d" >&6; }
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
+$as_echo "not found ($d: no such directory)" >&6; }
+     fi
+
+     { $as_echo "$as_me:${as_lineno-$LINENO}: checking for record animation libs" >&5
+$as_echo_n "checking for record animation libs... " >&6; }
+     d=$record_anim/lib
+     if test -d $d; then
+       X_LIBS="-L$d $X_LIBS"
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $d" >&5
+$as_echo "$d" >&6; }
+     else
+       { $as_echo "$as_me:${as_lineno-$LINENO}: result: not found ($d: no such directory)" >&5
+$as_echo "not found ($d: no such directory)" >&6; }
+     fi
+
+     # replace the directory string with "yes".
+     record_anim_req="yes"
+     record_anim=$record_anim_req
+     ;;
+
+    *)
+     echo ""
+     echo "error: argument to --with-record-animation must be \"yes\", \"no\", or a directory."
+     echo "       If it is a directory, then \`DIR/include' will be added to"
+     echo "       the -I list, and \`DIR/lib' will be added to the -L list."
+     exit 1
+     ;;
+   esac
+
+
+if test "$record_anim" = yes; then
+  true
+elif test "$record_anim" != no; then
+  echo "error: must be yes or no: --with-record-animation=$record_anim"
+  exit 1
+fi
+
+if test "$record_anim" = yes; then
+  if test "$have_gdk_pixbuf" != yes; then
+    as_fn_error $? "--with-record-animation requires GDK-Pixbuf" "$LINENO" 5
+  else
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: enabling --with-record-animation" >&5
+$as_echo "enabling --with-record-animation" >&6; }
+    $as_echo "#define HAVE_RECORD_ANIM 1" >>confdefs.h
+
+    ANIM_OBJS='$(ANIM_OBJS)'
+    ANIM_LIBS='$(ANIM_LIBS)'
+  fi
+fi
+
+###############################################################################
+#
 #       Done testing.  Now, set up the various -I and -L variables,
 #       and decide which GUI program to build by default.
 #
@@ -15366,6 +15821,11 @@ INCLUDES=`echo "$INCLUDES" | sed 's@ -I${prefix}/include@@g;'`
 #       Perform substitutions and write Makefiles.
 #
 ###############################################################################
+
+
+
+
+
 
 
 
@@ -17065,6 +17525,28 @@ if test "$have_jpeg" = no ; then
   else
     warn2 "This means the \`webcollage' program will be much slower."
   fi
+fi
+
+
+if test "$have_xft" = no ; then
+  if test "$with_xft_req" = yes ; then
+    warnL "Use of libXft was requested, but it was not found."
+  elif test "$with_xft_req" = no ; then
+    noteL 'The Xft library is not being used.'
+  else
+    noteL "The Xft library was not found."
+  fi
+
+  if test "$xft_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'libraries; so either Xft is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
+    echo ''
+  fi
+
+  warn2 "This means that fonts won't be anti-aliased."
 fi
 
 

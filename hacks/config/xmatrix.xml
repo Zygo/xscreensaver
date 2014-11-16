@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=dSJQHm-YoWc"/>
+
   <hgroup>
    <select id="size">
      <option id="font1" _label="Small font"  arg-set="-small"/>

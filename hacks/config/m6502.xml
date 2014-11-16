@@ -4,6 +4,8 @@
 
   <command arg="-root" />
 
+  <video href="http://www.youtube.com/watch?v=KlDw0nYwUe4"/>
+
   <number id="displaytime" type="slider" arg="-displaytime %"
           _label="Display time for each program"
           _low-label="5 seconds" _high-label="2 minutes"
@@ -34,7 +36,7 @@
 
   <xscreensaver-updater />
 
-  <_description> 
+  <_description>
 Emulates a 6502 microprocessor, and runs some example programs on it.
 
 The family of 6502 chips were used throughout the 70's and 80's in

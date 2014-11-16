@@ -93,16 +93,40 @@ subproc_cb (XtPointer closure, int *source, XtInputId *id)
 }
 
 
+# define BACKSLASH(c) \
+  (! ((c >= 'a' && c <= 'z') || \
+      (c >= 'A' && c <= 'Z') || \
+      (c >= '0' && c <= '9') || \
+      c == '.' || c == '_' || c == '-' || c == '+' || c == '/'))
+
 static void
 launch_text_generator (text_data *d)
 {
   XtAppContext app = XtDisplayToApplicationContext (d->dpy);
   char buf[255];
   const char *oprogram = d->program;
-  char *program = (char *) malloc (strlen (oprogram) + 50);
+  char *s;
 
-  strcpy (program, "( ");
-  strcat (program, oprogram);
+# ifdef HAVE_COCOA
+  /* /bin/sh on OS X 10.10 wipes out the PATH. */
+  const char *path = getenv("PATH");
+  char *cmd = s = malloc ((strlen(oprogram) + strlen(path)) * 2 + 100);
+  strcpy (s, "export PATH=");
+  s += strlen (s);
+  while (*path) {
+    char c = *path++;
+    if (BACKSLASH(c)) *s++ = '\\';
+    *s++ = c;
+  }
+  strcpy (s, "; ");
+  s += strlen (s);
+# else
+  char *cmd = s = malloc ((strlen(oprogram)) * 2 + 100);
+# endif
+
+  strcpy (s, "( ");
+  strcat (s, oprogram);
+  s += strlen (s);
 
   /* Kludge!  Special-case "xscreensaver-text" to tell it how wide
      the screen is.  We used to do this by just always feeding
@@ -113,15 +137,16 @@ launch_text_generator (text_data *d)
   if (!strcmp (oprogram, "xscreensaver-text"))
     {
       if (d->char_w)
-        sprintf (program + strlen(program), " --cols %d", d->char_w);
+        sprintf (s, " --cols %d", d->char_w);
       if (d->max_lines)
-        sprintf (program + strlen(program), " --lines %d", d->max_lines);
+        sprintf (s, " --lines %d", d->max_lines);
+      s += strlen(s);
     }
 
-  strcat (program, " ) 2>&1");
+  strcpy (s, " ) 2>&1");
 
 # ifdef DEBUG
-  fprintf (stderr, "%s: textclient: launch %s: %s\n", progname, 
+  fprintf (stderr, "%s: textclient: launch %s: %s\n", cmd, 
            (d->pty_p ? "pty" : "pipe"), program);
 # endif
 
@@ -152,7 +177,7 @@ launch_text_generator (text_data *d)
             abort();
           av[i++] = "/bin/sh";
           av[i++] = "-c";
-          av[i++] = program;
+          av[i++] = cmd;
           av[i] = 0;
           execvp (av[0], av);
           sprintf (buf, "%.100s: %.100s", progname, oprogram);
@@ -186,7 +211,7 @@ launch_text_generator (text_data *d)
       }
 
       if (d->pipe) abort();
-      if ((d->pipe = popen (program, "r")))
+      if ((d->pipe = popen (cmd, "r")))
 	{
           if (d->pipe_id) abort();
 	  d->pipe_id =
@@ -199,12 +224,12 @@ launch_text_generator (text_data *d)
 	}
       else
 	{
-          sprintf (buf, "%.100s: %.100s", progname, program);
+          sprintf (buf, "%.100s: %.100s", progname, cmd);
 	  perror (buf);
 	}
     }
 
-  free (program);
+  free (cmd);
 }
 
 

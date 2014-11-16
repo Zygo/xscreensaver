@@ -1,4 +1,4 @@
-/* involute, Copyright (c) 2004-2007 Jamie Zawinski <jwz@jwz.org>
+/* involute, Copyright (c) 2004-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -51,7 +51,8 @@ typedef struct {
 
   enum { INVOLUTE_SMALL, 
          INVOLUTE_MEDIUM, 
-         INVOLUTE_LARGE } size;	/* Controls complexity of mesh. */
+         INVOLUTE_LARGE, 
+         INVOLUTE_HUGE } size;	/* Controls complexity of mesh. */
   GLfloat color[4];
   GLfloat color2[4];
 

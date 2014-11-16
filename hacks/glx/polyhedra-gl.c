@@ -18,9 +18,9 @@
 #define DEFAULTS	"*delay:	30000         \n" \
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
-			"*titleFont:  -*-helvetica-medium-r-normal-*-140-*\n" \
-			"*titleFont2: -*-helvetica-medium-r-normal-*-100-*\n" \
-			"*titleFont3: -*-helvetica-medium-r-normal-*-80-*\n"  \
+	"*titleFont:  -*-helvetica-medium-r-normal-*-*-140-*-*-*-*-*-*\n" \
+	"*titleFont2: -*-helvetica-medium-r-normal-*-*-100-*-*-*-*-*-*\n" \
+	"*titleFont3: -*-helvetica-medium-r-normal-*-*-80-*-*-*-*-*-*\n"  \
 
 
 # define refresh_polyhedra 0
@@ -49,7 +49,7 @@
 #define DEF_DURATION    "12"
 #define DEF_WHICH       "random"
 
-#include "glxfonts.h"
+#include "texfont.h"
 #include "normals.h"
 #include "polyhedra.h"
 #include "colors.h"
@@ -81,7 +81,6 @@ typedef struct {
   int which;
   int change_to;
   GLuint object_list;
-  GLuint title_list;
 
   int mode;  /* 0 = normal, 1 = out, 2 = in */
   int mode_tick;
@@ -186,13 +185,9 @@ startup_blurb (ModeInfo *mi)
   texture_font_data *f = bp->font1_data;
 
   glColor3f (0.8, 0.8, 0);
-  print_gl_string (mi->dpy, bp->font1_data,
-                   mi->xgwa.width, mi->xgwa.height,
-                   mi->xgwa.width - (
-                                     texture_string_width (f, s, 0)
-                                     + 40),
-                   mi->xgwa.height - 10,
-                   s, False);
+  print_texture_label (mi->dpy, f,
+                       mi->xgwa.width, mi->xgwa.height,
+                       0, s);
   glFinish();
   glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi));
 }
@@ -201,8 +196,6 @@ startup_blurb (ModeInfo *mi)
 
 /* Window management, etc
  */
-static void new_label (ModeInfo *mi);
-
 ENTRYPOINT void
 reshape_polyhedra (ModeInfo *mi, int width, int height)
 {
@@ -221,9 +214,6 @@ reshape_polyhedra (ModeInfo *mi, int width, int height)
              0.0, 1.0, 0.0);
 
   glClear(GL_COLOR_BUFFER_BIT);
-
-  /* need to re-render the text when the window size changes */
-  new_label (mi);
 }
 
 
@@ -270,56 +260,50 @@ polyhedra_handle_event (ModeInfo *mi, XEvent *event)
 
 
 static void
-new_label (ModeInfo *mi)
+draw_label (ModeInfo *mi)
 {
   polyhedra_configuration *bp = &bps[MI_SCREEN(mi)];
   polyhedron *p = bp->which >= 0 ? bp->polyhedra[bp->which] : 0;
+  char label[1024];
+  char name2[255];
+  GLfloat color[4] = { 0.8, 0.8, 0.8, 1 };
+  texture_font_data *f;
 
-  glNewList (bp->title_list, GL_COMPILE);
-  if (p && do_titles)
-    {
-      char label[1024];
-      char name2[255];
-      strcpy (name2, p->name);
-      if (*p->class)
-        sprintf (name2 + strlen(name2), "  (%s)", p->class);
+  if (!p || !do_titles) return;
 
-      sprintf (label,
-               "Polyhedron %d:   \t%s\n\n"
-               "Wythoff Symbol:\t%s\n"
-               "Vertex Configuration:\t%s\n"
-               "Symmetry Group:\t%s\n"
-            /* "Dual of:              \t%s\n" */
-               "\n"
-               "Faces:\t  %d\n"
-               "Edges:\t  %d\n"
-               "Vertices:\t  %d\n"
-               "Density:\t  %d\n"
-               "Euler:\t%s%d\n",
-               bp->which, name2, p->wythoff, p->config, p->group,
-            /* p->dual, */
-               p->logical_faces, p->nedges, p->logical_vertices,
-               p->density, (p->chi < 0 ? "" : "  "), p->chi);
+  strcpy (name2, p->name);
+  if (*p->class)
+    sprintf (name2 + strlen(name2), "  (%s)", p->class);
 
-      {
-        GLfloat color[4] = { 0.8, 0.8, 0.8, 1 };
-        texture_font_data *f;
-        if (MI_WIDTH(mi) >= 500 && MI_HEIGHT(mi) >= 375)
-          f = bp->font1_data;
-        else if (MI_WIDTH(mi) >= 350 && MI_HEIGHT(mi) >= 260)
-          f = bp->font2_data;				       /* small font */
-        else
-          f = bp->font3_data;				       /* tiny font */
+  sprintf (label,
+           "Polyhedron %d:   \t%s\n\n"
+           "Wythoff Symbol:\t%s\n"
+           "Vertex Configuration:\t%s\n"
+           "Symmetry Group:\t%s\n"
+        /* "Dual of:              \t%s\n" */
+           "\n"
+           "Faces:\t  %d\n"
+           "Edges:\t  %d\n"
+           "Vertices:\t  %d\n"
+           "Density:\t  %d\n"
+           "Euler:\t%s%d\n",
+           bp->which, name2, p->wythoff, p->config, p->group,
+        /* p->dual, */
+           p->logical_faces, p->nedges, p->logical_vertices,
+           p->density, (p->chi < 0 ? "" : "  "), p->chi);
 
-        glColor4fv (color);
-        glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
-        print_gl_string (mi->dpy, f,
-                         mi->xgwa.width, mi->xgwa.height,
-                         10, mi->xgwa.height - 10,
-                         label, False);
-      }
-    }
-  glEndList ();
+  if (MI_WIDTH(mi) >= 500 && MI_HEIGHT(mi) >= 375)
+    f = bp->font1_data;
+  else if (MI_WIDTH(mi) >= 350 && MI_HEIGHT(mi) >= 260)
+    f = bp->font2_data;				       /* small font */
+  else
+    f = bp->font3_data;				       /* tiny font */
+
+  glColor4fv (color);
+  glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, color);
+  print_texture_label (mi->dpy, f,
+                       mi->xgwa.width, mi->xgwa.height,
+                       1, label);
 }
 
 
@@ -369,8 +353,6 @@ new_polyhedron (ModeInfo *mi)
                (random() % bp->npolyhedra));
   bp->change_to = -1;
   p = bp->polyhedra[bp->which];
-
-  new_label (mi);
 
   if (wire)
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
@@ -537,7 +519,6 @@ init_polyhedra (ModeInfo *mi)
   construct_teapot (mi);
 
   bp->object_list = glGenLists (1);
-  bp->title_list  = glGenLists (1);
   bp->change_to = -1;
 
   {
@@ -615,7 +596,7 @@ draw_polyhedra (ModeInfo *mi)
           if (!bp->button_down_p && now - bp->last_change_time >= duration)
             {
               bp->mode = 1;    /* go out */
-              bp->mode_tick = 20 * speed;
+              bp->mode_tick = 20 / speed;
               bp->last_change_time = now;
             }
         }
@@ -625,7 +606,7 @@ draw_polyhedra (ModeInfo *mi)
       if (--bp->mode_tick <= 0)
         {
           new_polyhedron (mi);
-          bp->mode_tick = 20 * speed;
+          bp->mode_tick = 20 / speed;
           bp->mode = 2;  /* go in */
         }
     }
@@ -669,15 +650,15 @@ draw_polyhedra (ModeInfo *mi)
   if (bp->mode != 0)
     {
       GLfloat s = (bp->mode == 1
-                   ? bp->mode_tick / (20 * speed)
-                   : ((20 * speed) - bp->mode_tick + 1) / (20 * speed));
+                   ? bp->mode_tick / (20 / speed)
+                   : ((20 / speed) - bp->mode_tick + 1) / (20 / speed));
       glScalef (s, s, s);
     }
 
   glScalef (2, 2, 2);
   glCallList (bp->object_list);
   if (bp->mode == 0 && !bp->button_down_p)
-    glCallList (bp->title_list);
+    draw_label (mi);    /* print_texture_font can't go inside a display list */
 
   glPopMatrix ();
 

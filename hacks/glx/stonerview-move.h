@@ -14,9 +14,9 @@
 #define __STONERVIEW_MOVE_H__
 
 typedef struct {
-  GLfloat pos[3];
-  GLfloat vervec[2];
-  GLfloat col[4];
+  double pos[3];
+  double vervec[2];
+  double col[4];
 } stonerview_elem_t;
 
 extern void stonerview_init_move(stonerview_state *);

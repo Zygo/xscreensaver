@@ -1,5 +1,5 @@
 /* -*- mode: c; tab-width: 4; fill-column: 78 -*- */
-/* vi: set ts=4 tw=128: */
+/* vi: set ts=4 tw=78: */
 
 /*
 thread_util.h, Copyright (c) 2014 Dave Odell <dmo2118@gmail.com>
@@ -88,6 +88,15 @@ implied warranty.
 #else
 #	include <X11/Xlib.h>
 #endif
+
+#if HAVE_PTHREAD
+int threads_available(Display *dpy);
+#else
+#	define threads_available(dpy) (-1)
+#endif
+/* > 0: Threads are available. This is normally _POSIX_VERSION.
+    -1: Threads are not available.
+*/
 
 unsigned hardware_concurrency(Display *dpy);
 /* This is supposed to return the number of available CPU cores. This number
@@ -271,13 +280,15 @@ struct threadpool_class
 	size_t size;
 
 /*	Create the thread private object. Called in sequence for each thread
-	(effectively) from threadpool_create.  self: A pointer to size bytes of
-	memory, allocated to hold the thread object.  pool: The threadpool object
-	that owns all the threads. If the threadpool is nested in another struct,
-	try GET_PARENT_OBJ.  id: The ID for the thread; numbering starts at zero
-	and goes up by one for each thread.  Return 0 on success. On failure,
-	return a value from errno.h; this will be returned from
-	threadpool_create. */
+	(effectively) from threadpool_create.
+    self: A pointer to size bytes of memory, allocated to hold the thread
+          object.
+    pool: The threadpool object that owns all the threads. If the threadpool
+          is nested in another struct, try GET_PARENT_OBJ.
+    id:   The ID for the thread; numbering starts at zero and goes up by one
+          for each thread.
+    Return 0 on success. On failure, return a value from errno.h; this will
+    be returned from threadpool_create. */
 	int (*create)(void *self, struct threadpool *pool, unsigned id);
 
 /*	Destroys the thread private object. Called in sequence (though not always
@@ -295,14 +306,133 @@ void threadpool_destroy(struct threadpool *self);
 void threadpool_run(struct threadpool *self, void (*func)(void *));
 void threadpool_wait(struct threadpool *self);
 
+/*
+   io_thread is meant to wrap blocking I/O operations in a one-shot worker
+   thread, with cancel semantics.
+
+   Unlike threadpool_*, io_thread will not 'fake it'; it is up to the caller
+   to figure out what to do if the system doesn't have threads. In
+   particular, the start_routine passed to io_thread_create will never be
+   called.
+
+   Clients of io_thread implement four functions:
+   - state *process_start(...);
+     Starts the worker thread.
+   - bool process_is_done(state *);
+     Returns true if the I/O operation is complete.
+   - void process_cancel(state *);
+     "Cancels" the I/O operation. The thread will continue to run, but it
+     will detach, and clean itself up upon completion.
+   - int process_finish(state *, ...)
+     Waits for the I/O operation to complete, returns results, and cleans up.
+
+   Or:        /---\
+             \/   |    /--> cancel
+   start -> is_done --+
+                       \--> finish
+
+   These functions follow a basic pattern:
+   - start:
+     1. Allocate a thread state object with thread_alloc. This state object
+        contains an io_thread member.
+     2. Save parameters from the start parameters to the state object.
+     3. Start the thread with _io_thread_create. The thread receives the state
+        object as its parameter.
+   - On the worker thread:
+     1. Do the I/O.
+     2. Call io_thread_return.
+       2a. If the result != 0, free the state object.
+   - is_done:
+     1. Just call _io_thread_is_done.
+   - cancel:
+     1. Call io_thread_cancel.
+       1a. If the result != 0, free the state object.
+   - finish:
+     1. Call io_thread_finish.
+     2. Copy results out of the state object as needed.
+     3. Free the state object...or return it to the caller.
+
+   Incidentally, there may sometimes be asynchronous versions of blocking I/O
+   functions (struct aiocb and friends, for example); these should be
+   preferred over io_thread when performance is a concern.
+ */
+
+enum _io_thread_status
+{
+	_io_thread_working, _io_thread_done, _io_thread_cancelled
+};
+
+struct io_thread
+{
 #if HAVE_PTHREAD
-#	define THREAD_DEFAULTS \
-	"*useThreads: True",
+	/* Common misconception: "volatile" should be applied to atomic variables,
+	   such as 'status', below. This is false, see
+	   <http://stackoverflow.com/q/2484980>. */
+	enum _io_thread_status status;
+	pthread_t thread;
+#else
+	char gcc_emits_a_warning_when_the_struct_has_no_members;
+#endif
+};
+
+#if HAVE_PTHREAD
+
+void *io_thread_create(struct io_thread *self, void *parent, void *(*start_routine)(void *), Display *dpy, unsigned stacksize);
+/*
+   Create the thread, returns NULL on failure.  Failure is usually due to
+   ENOMEM, or the system doesn't support threads.
+   self:          The io_thread object to be initialized.
+   parent:        The parameter to start_routine.  The io_thread should be
+                  contained within or be reachable from this.
+   start_routine: The start routine for the worker thread.
+   dpy:           The X11 Display, so that '*useThreads' is honored.
+   stacksize:     The stack size for the thread. Set to 0 for the system
+                  default.
+   A note about stacksize: Linux, for example, uses a default of 2 MB of
+   stack per thread. Now, this memory is usually committed on the first
+   write, so lots of threads won't waste RAM, but it does mean that on a
+   32-bit system, there's a limit of just under 1024 threads with the 2 MB
+   default due to typical address space limitations of 2 GB for userspace
+   processes.  And 1024 threads might not always be enough...
+ */
+
+int io_thread_return(struct io_thread *self);
+/* Called at the end of start_routine, from above. Returns non-zero if the
+   thread has been cancelled, and cleanup needs to take place. */
+
+int io_thread_is_done(struct io_thread *self);
+/* Call from the main thread. Returns non-zero if the thread finished. */
+
+int io_thread_cancel(struct io_thread *self);
+/* Call from the main thread if the results from the worker thread are not
+   needed. This cleans up the io_thread. Returns non-zero if cleanup needs
+   to take place. */
+
+void io_thread_finish(struct io_thread *self);
+/* Call from the main thread to wait for the worker thread to finish. This
+   cleans up the io_thread. */
+
+#else
+
+#define IO_THREAD_STACK_MIN 0
+
+#define io_thread_create(self, parent, start_routine, dpy, stacksize) NULL
+#define io_thread_return(self) 0
+#define io_thread_is_done(self) 1
+#define io_thread_cancel(self) 0
+#define io_thread_finish(self)
+
+#endif
+
+#if HAVE_PTHREAD
+#	define THREAD_DEFAULTS       "*useThreads: True",
+#	define THREAD_DEFAULTS_XLOCK "*useThreads: True\n"
 #	define THREAD_OPTIONS \
 	{"-threads",    ".useThreads", XrmoptionNoArg, "True"}, \
 	{"-no-threads", ".useThreads", XrmoptionNoArg, "False"},
 #else
 #	define THREAD_DEFAULTS
+#	define THREAD_DEFAULTS_XLOCK
 #	define THREAD_OPTIONS
 #endif
 

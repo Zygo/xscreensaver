@@ -1526,7 +1526,7 @@ main (int argc, char **argv)
   if (p->verbose_p) analyze_display (si);
   initialize_server_extensions (si);
 
-  si->blank_time = time ((time_t) 0); /* must be before ..._window */
+  si->blank_time = time ((time_t *) 0); /* must be before ..._window */
   initialize_screensaver_window (si);
 
   select_events (si);

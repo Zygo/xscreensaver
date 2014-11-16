@@ -1,5 +1,5 @@
 /* xlockmore.h --- xscreensaver compatibility layer for xlockmore modules.
- * xscreensaver, Copyright (c) 1997-2012 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -45,6 +45,8 @@ typedef struct ModeInfo ModeInfo;
 #   include <OpenGL/gl.h>
 #   include <OpenGL/glu.h>
 #  endif
+# elif defined(HAVE_ANDROID)
+#  include <GLES/gl.h>
 # else
 #  include <GL/gl.h>
 #  include <GL/glu.h>
@@ -166,7 +168,7 @@ struct xlockmore_function_table {
   Bool (*hack_handle_events) (ModeInfo *, XEvent *);
   ModeSpecOpt *opts;
 
-  unsigned screen_count; /* Only used on the OS X and iOS ports. */
+  unsigned int screen_count; /* Only used on the OS X and iOS ports. */
 };
 
 #endif /* __XLOCKMORE_INTERNAL_H__ */

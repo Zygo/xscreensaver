@@ -131,7 +131,7 @@
 			"*count:	200	\n" \
 			"*cycles:	1000	\n" \
 			"*ncolors:	32	\n" \
-                        "*titleFont:  -*-helvetica-bold-r-normal-*-180-*\n" \
+             "*titleFont:  -*-helvetica-bold-r-normal-*-*-180-*-*-*-*-*-*\n" \
 			"*showFPS:	False	\n" \
 			"*wireframe:	False	\n" \
 
@@ -144,7 +144,7 @@
 #include "tube.h"
 #include "rotator.h"
 #include "gltrackball.h"
-#include "glxfonts.h"
+#include "texfont.h"
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
@@ -2657,7 +2657,8 @@ init_juggle (ModeInfo * mi)
 
   sp = &juggles[MI_SCREEN(mi)];
 
-  sp->glx_context = init_GL(mi);
+  if (!sp->glx_context)   /* re-initting breaks print_texture_label */
+    sp->glx_context = init_GL(mi);
 
   sp->font_data = load_texture_font (mi->dpy, "titleFont");
 
@@ -3010,10 +3011,10 @@ draw_juggle (ModeInfo *mi)
 	}
   }
 
-  print_gl_string (mi->dpy, sp->font_data,
-                   mi->xgwa.width, mi->xgwa.height,
-                   10, mi->xgwa.height - 10,
-                   sp->pattern, False);
+  glColor3f (1, 1, 0);
+  print_texture_label (mi->dpy, sp->font_data,
+                       mi->xgwa.width, mi->xgwa.height,
+                       1, sp->pattern);
 
 #ifdef MEMTEST
   if((int)(sp->time/10) % 1000 == 0)

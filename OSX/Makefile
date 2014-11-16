@@ -259,13 +259,13 @@ dmg::
    for r in $$retired ; do						      \
     if [ "$$ff" = "$$r" ]; then ok=no ; fi ;				      \
    done ;								      \
-   DSTNAME="" ;								      \
    if [ "$$f2" = "XScreenSaverUpdater.app" ]; then			      \
-     DSTNAME=".$$f2" ;							      \
-   fi ;									      \
-   if [ "$$ok" = yes ]; then						      \
-    echo + cp -pR "$$f" "$$DST/$$DSTNAME" ;				      \
-           cp -pR "$$f" "$$DST/$$DSTNAME" ;				      \
+    DST_HACK="XScreenSaver.updater" ;					      \
+    echo + tar ... "$$DST/$$DST_HACK" ;					      \
+    ( cd $$SRC ; tar -czf - "$$f2" ) > "$$DST/$$DST_HACK" ;		      \
+   elif [ "$$ok" = yes ]; then						      \
+    echo + cp -pR "$$f" "$$DST/" ;					      \
+           cp -pR "$$f" "$$DST/" ;					      \
    else									      \
     echo skipping "$$f" ;						      \
    fi ;									      \

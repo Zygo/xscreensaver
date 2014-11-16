@@ -108,5 +108,5 @@ warranty.
 Barry Dmytro <badcherry@mailc.net>
 .SH CREDITS
 The color generation algorithm was borrowed from a friend <ZoeB>
-from #vegans@irc.blitzed.org.  Her site is http://beautifulfreak.net/.
+from #vegans@irc.blitzed.org.  Her site was [REDACTED].
 To see her original code in action visit her site.

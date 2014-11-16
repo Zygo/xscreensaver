@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2012-2013 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2012-2014 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -23,22 +23,71 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.2 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my ($version) = ('$Revision: 1.3 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 
-sub build_h($$) {
-  my ($app_dir, $outfile) = @_;
+# List of savers not included in the iOS build.
+#
+my %disable = (
+   'extrusion'		=> 1,
+   'lcdscrub'		=> 1,
+   'lockward'		=> 1,
+   'webcollage'		=> 1,
+  );
 
-  opendir (my $dh, $app_dir) || error ("$app_dir: $!");
-  print STDERR "$progname: scanning $app_dir...\n" if ($verbose > 1);
+# Parse the RETIRED_EXES variable from the Makefiles to populate %disable.
+# Duplicated in ../hacks/munge-ad.pl.
+#
+sub parse_makefiles() {
+  foreach my $mf ( "hacks/Makefile.in", "hacks/glx/Makefile.in" ) {
+    open (my $in, '<', $mf) || error ("$mf: $!");
+    print STDERR "$progname: reading $mf\n" if ($verbose > 1);
+    local $/ = undef;  # read entire file
+    my $body = <$in>;
+    close $in;
 
-  my @names = ();
-  foreach (sort (readdir ($dh))) {
-    next unless (m/^(.*)\.xml$/);
-    push @names, $1;
+    $body =~ s/\\\n//gs;
+    my ($var)  = ($body =~ m/^RETIRED_EXES\s*=\s*(.*)$/mi);
+    my ($var2) = ($body =~ m/^RETIRED_GL_EXES\s*=\s*(.*)$/mi);
+    error ("no RETIRED_EXES in $mf") unless $var;
+    $var .= " $var2" if $var2;
+    foreach my $hack (split (/\s+/, $var)) {
+      $disable{$hack} = 2;
+    }
   }
-  closedir $dh;
+}
+
+
+sub build_h($) {
+  my ($outfile) = @_;
+
+  parse_makefiles();
+
+  my @schemes = glob('xscreensaver.xcodeproj/xcuserdata/' .
+                     '*.xcuserdatad/xcschemes/*.xcscheme');
+  error ("no scheme files") unless (@schemes);
+
+  my %names = ();
+
+  foreach my $s (@schemes) {
+    open (my $in, '<', $s) || error ("$s: $!");
+    local $/ = undef;  # read entire file
+    my $body = <$in>;
+    close $in;
+    my ($name) = ($body =~ m@BuildableName *= *"([^\"<>]+?)\.saver"@s);
+    next unless $name;
+    $name = lc($name);
+    if ($disable{$name}) {
+      print STDERR "$progname: skipping $name\n" if ($verbose > 1);
+      next;
+    }
+    print STDERR "$progname: found $name\n" if ($verbose > 1);
+    $names{$name} = 1;
+  }
+
+  my @names = sort (keys %names);
+  error ("too few names") if (@names < 100);
 
   my $suf = 'xscreensaver_function_table';
 
@@ -112,25 +161,24 @@ sub error($) {
 }
 
 sub usage() {
-  print STDERR "usage: $progname [--verbose] program.app output.c\n";
+  print STDERR "usage: $progname [--verbose] output.c\n";
   exit 1;
 }
 
 sub main() {
 
-  my ($app, $out);
+  my ($out);
   while ($_ = $ARGV[0]) {
     shift @ARGV;
     if    (m/^--?verbose$/s)  { $verbose++; }
     elsif (m/^-v+$/)          { $verbose += length($_)-1; }
     elsif (m/^--?q(uiet)?$/s) { $verbose = 0; }
     elsif (m/^-/s)            { usage(); }
-    elsif (! $app)            { $app = $_; }
     elsif (! $out)            { $out = $_; }
     else                      { usage(); }
   }
-  usage() unless ($out && $app);
-  build_h ($app, $out);
+  usage() unless ($out);
+  build_h ($out);
 }
 
 main();

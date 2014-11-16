@@ -108,12 +108,124 @@ reshape_mgears (ModeInfo *mi, int width, int height)
 }
 
 
+static void
+reset_mgears (ModeInfo *mi)
+{
+  mgears_configuration *bp = &bps[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
+  int total_gears = MI_COUNT(mi);
+  double gears_per_turn;
+  double gear_r, tw, th, thick, slope;
+  int i, nubs, size;
+
+  if (! (total_gears & 1)) 
+    total_gears++;		/* must be odd or gears intersect */
+
+  /* Number of teeth must be odd if number of gears is odd, or teeth don't
+     mesh when the loop closes.  And since number of gears must be odd...
+  */
+  if (! (teeth_arg & 1)) teeth_arg++;
+  if (teeth_arg < 7) teeth_arg = 7;
+
+  if (total_gears < 13)	/* gear mesh angle is too steep with less */
+    total_gears = 13;
+
+  thick = 0.2;
+  nubs = (random() & 3) ? 0 : (random() % teeth_arg) / 2;
+
+  slope = 0;
+
+  /* Sloping gears are incompatible with "-roll" ... */
+  /* slope= -M_PI * 2 / total_gears; */
+
+  gears_per_turn = total_gears / 2.0;
+
+  bp->ring_r = 3;
+  gear_r = M_PI * bp->ring_r / gears_per_turn;
+  tw = 0;
+  th = gear_r * 2.5 / teeth_arg;
+
+  /* If the gears are small, use a lower density mesh. */
+  size = (gear_r > 0.60 ? INVOLUTE_HUGE   :
+          gear_r > 0.32 ? INVOLUTE_LARGE  :
+          gear_r > 0.13 ? INVOLUTE_MEDIUM :
+          INVOLUTE_SMALL);
+
+  /* If there are lots of teeth, use a lower density mesh. */
+  if (teeth_arg > 77)
+    size = INVOLUTE_SMALL;
+  if (teeth_arg > 45 && size >= INVOLUTE_HUGE)
+    size = INVOLUTE_MEDIUM;
+
+  if (bp->gears)
+    {
+      for (i = 0; i < bp->ngears; i++)
+        glDeleteLists (bp->gears[i].g.dlist, 1);
+      free (bp->gears);
+      bp->gears = 0;
+    }
+
+  bp->ngears = total_gears;
+
+  bp->gears = (mogear *) calloc (bp->ngears, sizeof(*bp->gears));
+  for (i = 0; i < bp->ngears; i++)
+    {
+      mogear *mg = &bp->gears[i];
+      gear *g = &mg->g;
+
+      g->r           = gear_r;
+      g->size        = size;
+      g->nteeth      = teeth_arg;
+      g->tooth_w     = tw;
+      g->tooth_h     = th;
+      g->tooth_slope = slope;
+      g->thickness   = g->r * thick;
+      g->thickness2  = g->thickness * 0.1;
+      g->thickness3  = g->thickness;
+      g->inner_r     = g->r * 0.80;
+      g->inner_r2    = g->r * 0.60;
+      g->inner_r3    = g->r * 0.55;
+      g->nubs        = nubs;
+      mg->pos_th     = (M_PI * 2 / gears_per_turn) * i;
+      mg->pos_thz    = (M_PI / 2 / gears_per_turn) * i;
+
+      g->th = ((i & 1)
+               ? (M_PI * 2 / g->nteeth)
+               : 0);
+
+      /* Colorize
+       */
+      g->color[0] = 0.7 + frand(0.3);
+      g->color[1] = 0.7 + frand(0.3);
+      g->color[2] = 0.7 + frand(0.3);
+      g->color[3] = 1.0;
+
+      g->color2[0] = g->color[0] * 0.85;
+      g->color2[1] = g->color[1] * 0.85;
+      g->color2[2] = g->color[2] * 0.85;
+      g->color2[3] = g->color[3];
+
+      /* Now render the gear into its display list.
+       */
+      g->dlist = glGenLists (1);
+      if (! g->dlist)
+        {
+          check_gl_error ("glGenLists");
+          abort();
+        }
+
+      glNewList (g->dlist, GL_COMPILE);
+      g->polygons += draw_involute_gear (g, wire);
+      glEndList ();
+    }
+}
+
+
 ENTRYPOINT void 
 init_mgears (ModeInfo *mi)
 {
   mgears_configuration *bp;
   int wire = MI_IS_WIREFRAME(mi);
-  int i;
 
   if (!bps) {
     bps = (mgears_configuration *)
@@ -148,7 +260,6 @@ init_mgears (ModeInfo *mi)
       glLightfv(GL_LIGHT0, GL_SPECULAR, spc);
     }
 
-  if (! bp->rot)
   {
     double spin_speed   = 0.5;
     double wander_speed = 0.01;
@@ -164,111 +275,7 @@ init_mgears (ModeInfo *mi)
     bp->trackball = gltrackball_init (True);
   }
 
-  {
-    int total_gears = MI_COUNT(mi);
-    double gears_per_turn;
-    double gear_r, tw, th, thick, slope;
-    int nubs, size;
-
-    if (! (total_gears & 1)) 
-      total_gears++;		/* must be odd or gears intersect */
-
-    /* Number of teeth must be odd if number of gears is odd, or teeth don't
-       mesh when the loop closes.  And since number of gears must be odd...
-     */
-    if (! (teeth_arg & 1)) teeth_arg++;
-    if (teeth_arg < 7) teeth_arg = 7;
-
-    if (total_gears < 13)	/* gear mesh angle is too steep with less */
-      total_gears = 13;
-
-    thick = 0.2;
-    nubs = (random() & 3) ? 0 : (random() % teeth_arg) / 2;
-
-    slope = 0;
-
-    /* Sloping gears are incompatible with "-roll" ... */
-    /* slope= -M_PI * 2 / total_gears; */
-
-    gears_per_turn = total_gears / 2.0;
-
-    bp->ring_r = 3;
-    gear_r = M_PI * bp->ring_r / gears_per_turn;
-    tw = 0;
-    th = gear_r * 2.5 / teeth_arg;
-
-    /* If the gears are small, use a lower density mesh. */
-    size = (gear_r > 0.32 ? INVOLUTE_LARGE  :
-            gear_r > 0.13 ? INVOLUTE_MEDIUM :
-            INVOLUTE_SMALL);
-
-    /* If there are lots of teeth, use a lower density mesh. */
-    if (teeth_arg > 77)
-      size = INVOLUTE_SMALL;
-    if (teeth_arg > 45 && size == INVOLUTE_LARGE)
-      size = INVOLUTE_MEDIUM;
-
-    if (bp->gears)
-      {
-        for (i = 0; i < bp->ngears; i++)
-          glDeleteLists (bp->gears[i].g.dlist, 1);
-        free (bp->gears);
-      }
-
-    bp->ngears = total_gears;
-
-    bp->gears = (mogear *) calloc (bp->ngears, sizeof(*bp->gears));
-    for (i = 0; i < bp->ngears; i++)
-      {
-        mogear *mg = &bp->gears[i];
-        gear *g = &mg->g;
-
-        g->r           = gear_r;
-        g->size        = size;
-        g->nteeth      = teeth_arg;
-        g->tooth_w     = tw;
-        g->tooth_h     = th;
-        g->tooth_slope = slope;
-        g->thickness   = g->r * thick;
-        g->thickness2  = g->thickness * 0.1;
-        g->thickness3  = g->thickness;
-        g->inner_r     = g->r * 0.80;
-        g->inner_r2    = g->r * 0.60;
-        g->inner_r3    = g->r * 0.55;
-        g->nubs        = nubs;
-        mg->pos_th     = (M_PI * 2 / gears_per_turn) * i;
-        mg->pos_thz    = (M_PI / 2 / gears_per_turn) * i;
-
-        g->th = ((i & 1)
-                 ? (M_PI * 2 / g->nteeth)
-                 : 0);
-
-        /* Colorize
-         */
-        g->color[0] = 0.7 + frand(0.3);
-        g->color[1] = 0.7 + frand(0.3);
-        g->color[2] = 0.7 + frand(0.3);
-        g->color[3] = 1.0;
-
-        g->color2[0] = g->color[0] * 0.85;
-        g->color2[1] = g->color[1] * 0.85;
-        g->color2[2] = g->color[2] * 0.85;
-        g->color2[3] = g->color[3];
-
-        /* Now render the gear into its display list.
-         */
-        g->dlist = glGenLists (1);
-        if (! g->dlist)
-          {
-            check_gl_error ("glGenLists");
-            abort();
-          }
-
-        glNewList (g->dlist, GL_COMPILE);
-        g->polygons += draw_involute_gear (g, wire);
-        glEndList ();
-      }
-  }
+  reset_mgears (mi);
 }
 
 
@@ -290,7 +297,7 @@ mgears_handle_event (ModeInfo *mi, XEvent *event)
           keysym == XK_Up || keysym == XK_Right || keysym == XK_Next)
         {
           MI_COUNT(mi) += 2;
-          init_mgears (mi);
+          reset_mgears (mi);
           return True;
         }
       else if (c == '-' || c == '_' ||
@@ -299,7 +306,7 @@ mgears_handle_event (ModeInfo *mi, XEvent *event)
           if (MI_COUNT(mi) <= 13)
             return False;
           MI_COUNT(mi) -= 2;
-          init_mgears (mi);
+          reset_mgears (mi);
           return True;
         }
       else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
@@ -309,7 +316,7 @@ mgears_handle_event (ModeInfo *mi, XEvent *event)
     {
     DEF:
       MI_COUNT(mi) = 13 + (2 * (random() % 10));
-      init_mgears (mi);
+      reset_mgears (mi);
       return True;
     }
 

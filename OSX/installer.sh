@@ -71,7 +71,8 @@ PU="$DSTVOLUME/$HOME/Library/Screen Savers"
 # is in the DMG, and we remove the leading dot when installing it.
 # Without this, auto-updates won't work right.
 #
-UPDATER=".XScreenSaverUpdater.app"
+UPDATER_SRC="XScreenSaver.updater"
+UPDATER_DST="XScreenSaverUpdater.app"
 
 
 cd "$SRC" || error "The 'Screen Savers' folder does not exist.
@@ -94,20 +95,26 @@ mkdir -p "$DST2" || error "Unable to create directory $DST2/"
 # Install the savers and the updater in /System/Library/Screen Savers/
 # Install the other apps in /Applications/
 #
-for f in *.{saver,app} "$UPDATER" ; do
+for f in *.{saver,app} "$UPDATER_SRC" ; do
   EXT=`echo "$f" | sed 's/^.*\.//'`
-  if [ "$EXT" = "app" -a "$f" != "$UPDATER" ]; then
+  if [ "$f" = "$UPDATER_SRC" ]; then
+    DST="$DST1"
+  elif [ "$EXT" = "app" ]; then
     DST="$DST2"
   else
     DST="$DST1"
   fi
 
-  f2=`echo "$f" | sed 's/^\.//'`   # install ".foo" as "foo"
-  DD="$DST/$f2"
+  DD="$DST/$f"
 
   echo "Installing $DD" >&2
   rm -rf "$DD" || error "Unable to delete $DD"
-  cp -pR "$f" "$DD/" || error "Unable to install $f in $DST/"
+
+  if [ "$f" = "$UPDATER_SRC" ]; then
+    ( cd "$DST/" && tar -xzf - ) < "$f" || error "Unable to unpack $f in $DST/"
+  else
+    cp -pR "$f" "$DD" || error "Unable to install $f in $DST/"
+  fi
 
   # Eliminate the "this was downloaded from the interweb" warning.
   xattr -r -d com.apple.quarantine "$DD"

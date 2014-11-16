@@ -291,7 +291,6 @@ init_cube (ModeInfo *mi)
   draw_faces (mi);
   glEndList ();
 
-  glDrawBuffer(dbuf_p ? GL_BACK : GL_FRONT);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -308,6 +307,8 @@ draw_cube (ModeInfo *mi)
 
   if (!bp->glx_context)
     return;
+
+  glDrawBuffer(dbuf_p ? GL_BACK : GL_FRONT);
 
   glXMakeCurrent(MI_DISPLAY(mi), MI_WINDOW(mi), *(bp->glx_context));
 

@@ -1,5 +1,5 @@
 /* -*- mode: c; tab-width: 4; fill-column: 78 -*- */
-/* vi: set ts=4 tw=128: */
+/* vi: set ts=4 tw=78: */
 
 /*
 thread_util.c, Copyright (c) 2014 Dave Odell <dmo2118@gmail.com>
@@ -284,14 +284,12 @@ const pthread_mutex_t mutex_initializer =
 
 const pthread_cond_t cond_initializer = PTHREAD_COND_INITIALIZER;
 
-static long _has_pthread = 0; /* Initialize on first threadpool/barrier_create. */
+static int _has_pthread = 0; /* Initialize when needed. */
 static int _cache_line_size = sizeof(void *);
 
-#endif /* HAVE_PTHREAD */
-
-static void _thread_util_init(Display *dpy)
+/* This is actually the init function for various things in here. */
+int threads_available(Display *dpy)
 {
-#if HAVE_PTHREAD
 /*	This is maybe not thread-safe, but: this should -- and generally will --
 	be called before the program launches its second thread. */
 
@@ -317,8 +315,11 @@ static void _thread_util_init(Display *dpy)
 			}
 		}
 	}
-#endif
+
+	return _has_pthread;
 }
+
+#endif /* HAVE_PTHREAD */
 
 /*
    hardware_concurrency() -
@@ -476,19 +477,18 @@ static unsigned _hardware_concurrency(void)
 
 unsigned hardware_concurrency(Display *dpy)
 {
-	_thread_util_init(dpy);
 #if HAVE_PTHREAD
-	if(_has_pthread >= 0)
+	if(threads_available(dpy) >= 0)
 		return _hardware_concurrency();
 #endif
 	return 1;
 }
 
-/* thread_memory_alignment() */
+/* thread_memory_alignment() - */
 
 unsigned thread_memory_alignment(Display *dpy)
 {
-	_thread_util_init(dpy);
+	(void)threads_available(dpy);
 #if HAVE_PTHREAD
 	return _cache_line_size;
 #else
@@ -714,7 +714,7 @@ static void _unlock_and_destroy(struct threadpool *self)
 
 int threadpool_create(struct threadpool *self, const struct threadpool_class *cls, Display *dpy, unsigned count)
 {
-	_thread_util_init(dpy);
+	(void)threads_available(dpy);
 
 	self->count = count;
 
@@ -869,3 +869,177 @@ void threadpool_wait(struct threadpool *self)
 	}
 #endif
 }
+
+/* io_thread - */
+
+#if HAVE_PTHREAD
+/* Without threads at compile time, there's only stubs in thread_util.h. */
+
+#	define VERSION_CHECK(cc_major, cc_minor, req_major, req_minor) \
+	((cc_major) > (req_major) || \
+	(cc_major) == (req_major) && (cc_minor) >= (req_minor))
+
+#	if defined(__GNUC__) && (__GNUC__ > 4 || __GNUC__ == 4 && __GNUC_MINOR__ >= 7) || \
+	defined(__clang__) && \
+		(!defined(__apple_build_version__) && VERSION_CHECK(__clang_major__, __clang_minor__, 3, 1) || \
+		  defined(__apple_build_version__) && VERSION_CHECK(__clang_major__, __clang_minor__, 3, 1)) || \
+	defined(__ICC) && __ICC >= 1400
+
+/*
+   Clang 3.0 has a partial implementation of GNU atomics; 3.1 rounds it out.
+   http://llvm.org/viewvc/llvm-project/cfe/tags/RELEASE_30/final/include/clang/Basic/Builtins.def?view=markup
+   http://llvm.org/viewvc/llvm-project/cfe/tags/RELEASE_31/final/include/clang/Basic/Builtins.def?view=markup
+
+   Apple changes the Clang version to track Xcode versions; use
+   __apple_build_version__ to distinguish between the two.
+
+   Xcode 4.3 uses Apple LLVM 3.1, which corresponds to Clang 3.1.
+   https://en.wikipedia.org/wiki/Xcode
+
+   Earlier versions of Intel C++ may also support these intrinsics.
+ */
+
+#define _status_load(status) (__atomic_load_n((status), __ATOMIC_SEQ_CST))
+#define _status_exchange(obj, desired) (__atomic_exchange_n((obj), (desired), __ATOMIC_SEQ_CST))
+
+/* C11 atomics are around the corner, but they're not here yet for many
+   systems. (Including mine.) */
+/*
+#elif __STDC_VERSION__ >= 201112l && !defined __STDC_NO_ATOMICS__
+
+#include <stdatomic.h>
+
+#define _status_load(status) (atomic_load((status)))
+#define _status_exchange(obj, desired) (atomic_exchange((obj), (desired)))
+*/
+
+/* Solaris profiles atomic ops on at least Solaris 10. See atomic_swap(3C) and
+   membar_ops(3C). This would probably also need a snippet in configure.in.
+   http://graegert.com/programming/using-atomic-operations-in-c-on-solaris-10
+*/
+
+#	else
+
+/* No atomic variables, so here's some ugly mutex-based code instead. */
+
+/* Nothing ever destroys this mutex. */
+pthread_mutex_t _global_mutex = PTHREAD_MUTEX_INITIALIZER;
+
+#define _lock()	PTHREAD_VERIFY(pthread_mutex_lock(&_global_mutex))
+#define _unlock() PTHREAD_VERIFY(pthread_mutex_unlock(&_global_mutex))
+
+static enum _io_thread_status _status_load(enum _io_thread_status *status)
+{
+	enum _io_thread_status result;
+	_lock();
+	result = *status;
+	_unlock();
+	return result;
+}
+
+static enum _io_thread_status _status_exchange(enum _io_thread_status *obj, enum _io_thread_status desired)
+{
+	enum _io_thread_status result;
+	_lock();
+	result = *obj;
+	*obj = desired;
+	_unlock();
+	return result;
+}
+
+#	endif
+
+void *io_thread_create(struct io_thread *self, void *parent, void *(*start_routine)(void *), Display *dpy, unsigned stacksize)
+{
+	if(threads_available(dpy) >= 0)
+	{
+		int error;
+		pthread_attr_t attr;
+		pthread_attr_t *attr_ptr = NULL;
+
+		if(stacksize)
+		{
+			attr_ptr = &attr;
+			if(pthread_attr_init(&attr))
+				return NULL;
+#   if defined _POSIX_SOURCE || defined _POSIX_C_SOURCE || defined _XOPEN_SOURCE
+			/* PTHREAD_STACK_MIN needs the above test. */
+			assert(stacksize >= PTHREAD_STACK_MIN);
+#   endif
+			PTHREAD_VERIFY(pthread_attr_setstacksize(&attr, stacksize));
+		}
+
+		/* This doesn't need to be an atomic store, since pthread_create(3)
+		   "synchronizes memory with respect to other threads".
+		   http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap04.html#tag_04_11 */
+		self->status = _io_thread_working;
+
+		error = pthread_create(&self->thread, attr_ptr, start_routine, parent);
+		assert(!error || error == EAGAIN);
+		if(error)
+			parent = NULL;
+
+		if(attr_ptr)
+			PTHREAD_VERIFY(pthread_attr_destroy(attr_ptr));
+
+		return parent;
+	}
+
+	return NULL;
+}
+
+int io_thread_return(struct io_thread *self)
+{
+	if(_has_pthread >= 0)
+	{
+		enum _io_thread_status old_status = _status_exchange(&self->status, _io_thread_done);
+		assert(old_status == _io_thread_working ||
+		       old_status == _io_thread_cancelled);
+		return old_status != _io_thread_working;
+	}
+
+	return 0;
+}
+
+int io_thread_is_done(struct io_thread *self)
+{
+	if(_has_pthread >= 0)
+	{
+		int result = _status_load(&self->status);
+		assert(result != _io_thread_cancelled);
+		return result;
+	}
+	return 1;
+}
+
+int io_thread_cancel(struct io_thread *self)
+{
+	if(_has_pthread >= 0)
+	{
+		enum _io_thread_status old_status =
+			_status_exchange(&self->status, _io_thread_cancelled);
+		assert(old_status == _io_thread_working ||
+		       old_status == _io_thread_done);
+
+		PTHREAD_VERIFY(pthread_detach(self->thread));
+		return old_status != _io_thread_working;
+	}
+
+	return 0;
+}
+
+void io_thread_finish(struct io_thread *self)
+{
+	if(_has_pthread >= 0)
+	{
+#	ifndef NDEBUG
+		enum _io_thread_status status = _status_load(&self->status);
+		assert(status == _io_thread_working ||
+		       status == _io_thread_done);
+#	endif
+		PTHREAD_VERIFY(pthread_join(self->thread, NULL));
+		assert(_status_load(&self->status) == _io_thread_done);
+	}
+}
+
+#endif /* HAVE_PTHREAD */

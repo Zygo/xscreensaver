@@ -4,6 +4,8 @@
 
  <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=p3QZqhp67l8"/>
+
  <hgroup>
   <vgroup>
    <select id="mode">
@@ -58,6 +60,6 @@ you can use it as a terminal.
 
 http://en.wikipedia.org/wiki/Apple_II_series
 
-Written by Trevor Blackwell; 2003.
+Written by Trevor Blackwell and Jamie Zawinski; 2003.
   </_description>
 </screensaver>

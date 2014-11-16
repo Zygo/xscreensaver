@@ -289,7 +289,7 @@ distort_init (Display *dpy, Window window)
 
     st->img_loader = load_image_async_simple (0, st->xgwa.screen, st->window,
                                               st->window, 0, 0);
-    st->start_time = time ((time_t) 0);
+    st->start_time = time ((time_t *) 0);
     return st;
 }
 
@@ -298,7 +298,7 @@ distort_finish_loading (struct state *st)
 {
     int i;
 
-    st->start_time = time ((time_t) 0);
+    st->start_time = time ((time_t *) 0);
 
 	st->buffer_map = 0;
 	st->orig_map = XGetImage(st->dpy, st->window, 0, 0, st->xgwa.width, st->xgwa.height,
@@ -771,7 +771,7 @@ distort_draw (Display *dpy, Window window, void *closure)
     }
 
   if (!st->img_loader &&
-      st->start_time + st->duration < time ((time_t) 0)) {
+      st->start_time + st->duration < time ((time_t *) 0)) {
     st->img_loader = load_image_async_simple (0, st->xgwa.screen, st->window,
                                               st->window, 0, 0);
     return st->delay;

@@ -325,7 +325,7 @@ init_hack (struct state *st)
 {
   int i;
 
-  st->start_time = time ((time_t) 0);
+  st->start_time = time ((time_t *) 0);
   st->zoom_box = calloc (st->num_zoom, sizeof (struct zoom_area *));
   for (i = 0; i < st->num_zoom; i++) {
     st->zoom_box[i] = create_zoom (st);
@@ -358,12 +358,12 @@ rotzoomer_draw (Display *disp, Window win, void *closure)
     }
 
   if (!st->img_loader &&
-      st->start_time + st->duration < time ((time_t) 0)) {
+      st->start_time + st->duration < time ((time_t *) 0)) {
     XWindowAttributes xgwa;
     XGetWindowAttributes(st->dpy, st->window, &xgwa);
     st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
                                               st->window, 0, 0);
-    st->start_time = time ((time_t) 0);
+    st->start_time = time ((time_t *) 0);
     return st->delay;
   }
 
@@ -486,7 +486,7 @@ rotzoomer_init (Display *dpy, Window window)
     st->sweep = 0;
   }
 
-  st->start_time = time ((time_t) 0);
+  st->start_time = time ((time_t *) 0);
 
   setup_X (st);
 

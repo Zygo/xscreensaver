@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -48,13 +48,17 @@
 
 # else  // USE_IPHONE
 
-  ScreenSaverView *saverView;
-  UIView *backgroundView;
-  UINavigationController *rootViewController;
+  UINavigationController *rotating_nav;		// Hierarchy 1 (UI)
   IBOutlet UIWindow *window;
+  IBOutlet UIView *view;
+
+  UINavigationController *nonrotating_nav;	// Hierarchy 2 (savers)
+  UIWindow *saverWindow;
+  UIView *backgroundView;
+  ScreenSaverView *saverView;
+
   EAGLContext *eagl_ctx;
   GLuint gl_framebuffer, gl_renderbuffer;
-  IBOutlet UIView *view;
   UIImage *saved_screenshot;
   UIView *aboutBox;
   NSTimer *splashTimer;

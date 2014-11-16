@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2008-2012 Jamie Zawinski <jwz@jwz.org>
+# Copyright Â© 2008-2014 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -18,15 +18,14 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.8 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my ($version) = ('$Revision: 1.10 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
 # 1 means disabled: marked with "-" by default in the .ad file.
-# 2 means retired: not mentioned in .ad at all.
+# 2 means retired: not mentioned in .ad at all (parsed from Makefile).
 #
 my %disable = ( 
-   'abstractile'	=> 1,
    'antinspect'		=> 1,
    'antmaze'		=> 1,
    'antspotlight'	=> 1,
@@ -36,10 +35,8 @@ my %disable = (
    'dnalogo'		=> 1,
    'fadeplot'		=> 1,
    'glblur'		=> 1,
-   'glplanet'		=> 1,
    'glslideshow'	=> 1,
    'jigglypuff'		=> 1,
-   'juggle'		=> 2,
    'kaleidescope'	=> 1,
    'lcdscrub'		=> 1,
    'loop'		=> 1,
@@ -56,19 +53,18 @@ my %disable = (
    'thornbird'		=> 1,
    'vidwhacker'		=> 1,
    'webcollage'		=> 1,
-   'xsublim'		=> 2,
   );
 
 
 # Parse the RETIRED_EXES variable from the Makefiles to populate %disable.
+# Duplicated in ../OSX/build-fntable.pl.
 #
 sub parse_makefiles() {
   foreach my $mf ( "Makefile.in", "glx/Makefile.in" ) {
-    my $body = '';
-    local *IN;
-    open (IN, "<$mf") || error ("$mf: $!");
-    while (<IN>) { $body .= $_; }
-    close IN;
+    open (my $in, '<', $mf) || error ("$mf: $!");
+    local $/ = undef;  # read entire file
+    my $body = <$in>;
+    close $in;
 
     $body =~ s/\\\n//gs;
     my ($var)  = ($body =~ m/^RETIRED_EXES\s*=\s*(.*)$/mi);
@@ -87,11 +83,10 @@ sub munge_ad($) {
 
   parse_makefiles();
 
-  my $body = '';
-  local *IN;
-  open (IN, "<$file") || error ("$file: $!");
-  while (<IN>) { $body .= $_; }
-  close IN;
+  open (my $in, '<', $file) || error ("$file: $!");
+  local $/ = undef;  # read entire file
+  my $body = <$in>;
+  close $in;
   my $obody = $body;
 
   my ($top, $mid, $bot) = ($body =~ m/^(.*?\n)(\*hacks\..*?\n)(\n.*)$/s);
@@ -107,10 +102,10 @@ sub munge_ad($) {
   $dir =~ s@/[^/]*$@@s;
   my @counts = (0,0,0,0,0,0,0,0,0,0);
   foreach my $xml (sort (glob ("$dir/../hacks/config/*.xml"))) {
-    my $b = '';
-    open (IN, "<$xml") || error ("$xml: $!");
-    while (<IN>) { $b .= $_; }
-    close IN;
+    open (my $in, '<', $xml) || error ("$xml: $!");
+    local $/ = undef;  # read entire file
+    my $b = <$in>;
+    close $in;
     my ($name) = ($b =~ m@<screensaver[^<>]*\b_label=\"([^<>\"]+)\"@s);
     error ("$xml: no name") unless $name;
 
@@ -202,10 +197,9 @@ sub munge_ad($) {
   # Write file if changed.
   #
   if ($body ne $obody) {
-    local *OUT;
-    open (OUT, ">$file") || error ("$file: $!");
-    print OUT $body;
-    close OUT;
+    open (my $out, '>', $file) || error ("$file: $!");
+    print $out $body;
+    close $out;
     print STDERR "$progname: wrote $file\n";
   } elsif ($verbose) {
     print STDERR "$progname: $file unchanged\n";

@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2006-2013 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2006-2014 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -18,7 +18,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.3 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my ($version) = ('$Revision: 1.4 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 
@@ -92,6 +92,7 @@ sub update($$) {
                      rand(0xFFFFFFFF));
   my @cmd = ("convert",
              $img, 
+             "-strip",
              "-resize", $size . "^",
              "-gravity", "center",
              "-extent", $size,

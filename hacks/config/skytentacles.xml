@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=iCjtXUSQv1A"/>
+
  <hgroup>
   <vgroup>
   <number id="count" type="slider" arg="-count %"

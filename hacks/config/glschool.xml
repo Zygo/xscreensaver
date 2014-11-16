@@ -4,6 +4,8 @@
 
  <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=SuMIatcSPdU"/>
+
   <hgroup>
    <vgroup>
  <number id="delay" type="slider" arg="-delay %"
@@ -38,6 +40,6 @@ A school of fish, using the classic "Boids" algorithm by Craig Reynolds.
 
 http://en.wikipedia.org/wiki/Boids
 
-Written by David C. Lambert; 2006.
+Written by David C. Lambert and Jamie Zawinski; 2006.
  </_description>
 </screensaver>

@@ -81,16 +81,17 @@
   UIDeviceOrientation orientation, new_orientation;
   BOOL screenLocked;
 
-  CGSize initial_bounds;
+  CGSize initial_bounds;	// portrait-mode geometry
 	
   GLfloat rotation_ratio;	// ratio thru rotation anim, or -1
   NSSize rot_from, rot_to;	// start size rect, end size rect
   GLfloat angle_from, angle_to;	// start angle, end angle
   double rot_start_time;
-  BOOL ignore_rotation_p;
+  BOOL ignore_rotation_p;	// hack requests "always portrait".
+				// some want this, some do not.
 
-  NSSize rot_current_size;
-  GLfloat rot_current_angle;
+  NSSize rot_current_size;	// current intermediate or final orientation.
+  GLfloat rot_current_angle;	// only right angles when rotation complete.
 
   NSTimer *crash_timer;
 
@@ -120,12 +121,13 @@
 
 #ifdef USE_IPHONE
 - (void)didRotate:(NSNotification *)notification;
+- (BOOL)reshapeRotatedWindow;
 - (void)setScreenLocked:(BOOL)locked;
 #endif // USE_IPHONE
 
 #ifdef USE_BACKBUFFER
 - (void)initLayer;
-- (void)createBackbuffer;
+- (void)createBackbuffer:(CGSize)s;
 #endif // USE_BACKBUFFER
 
 @end

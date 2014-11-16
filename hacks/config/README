@@ -4,8 +4,8 @@
             a screen saver and locker for the X window system
                             by Jamie Zawinski
 
-                              version 5.30
-                               10-Sep-2014
+                              version 5.31
+                               15-Nov-2014
 
                      http://www.jwz.org/xscreensaver/
 
@@ -202,6 +202,12 @@ The tags and parameters used here are:
 
         Where to position the "Check for Updates" options.
         This is used on MacOS and ignored on X11.
+
+-----------------------------------------------------------------------
+
+  <video href="URL" />
+
+        A link to a Youtube preview of this screen saver.
 
 -----------------------------------------------------------------------
 

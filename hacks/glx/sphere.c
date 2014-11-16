@@ -24,7 +24,10 @@
 # include "config.h"
 #endif
 
-#ifndef HAVE_COCOA
+#ifdef HAVE_COCOA
+#elif defined(HAVE_ANDROID)
+# include <GLES/gl.h>
+#else  /* real X11 */
 # include <GL/gl.h>
 #endif
 

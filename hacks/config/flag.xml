@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=LuEC3EONzjc"/>
+
   <string id="text" _label="Text for flag" arg="-text %"/>
 
   <number id="delay" type="slider" arg="-delay %"

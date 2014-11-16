@@ -118,7 +118,8 @@
     - gluNewQuadric, gluCylinder, etc: rewrite your code to use tube.c, etc.
 
     - Putting verts in a display list without a wrapping glBegin.
-      (I didn't realize that even worked!)
+      I didn't realize that even worked!  Lockward used to do that,
+      before I fixed it to not.
 
     - Not every function is implemented; just the ones that I needed for
       xscreensaver.  However, the trivial ones are trivial to enable
@@ -134,13 +135,11 @@
       winduprobot     Uses SPHERE_MAP.
       jigglypuff      Uses SPHERE_MAP (in chrome mode), GL_LINE (in wireframe)
       jigsaw          Uses GLUtesselator.
-      lockward        Puts verts in lists without glBegin!
       pinion	      Uses glSelectBuffer and gluPickMatrix for mouse-clicks.
       pipes           Uses glMap2f for the Utah Teapot.
       polyhedra       Uses GLUtesselator (concave objects); also Utah Teapot.
       skytentacles    Uses GL_LINE in -cel mode.
       timetunnel      Uses GL_CONSTANT_ALPHA and all kinds of other stuff.
-
 */
 
 
@@ -168,7 +167,9 @@
 #elif defined(HAVE_COCOA)
 # include <OpenGL/gl.h>
 # include <OpenGL/glu.h>
-#else /* X11 */
+#elif defined(HAVE_ANDROID)
+# include <GLES/gl.h>
+#else /* real X11 */
 # ifndef  GL_GLEXT_PROTOTYPES
 #  define GL_GLEXT_PROTOTYPES /* for glBindBuffer */
 # endif
@@ -306,6 +307,7 @@ typedef struct {	/* All display lists */
 #define ISENABLED_NORM_ARRAY	(1<<13)
 #define ISENABLED_TEX_ARRAY	(1<<14)
 #define ISENABLED_COLOR_ARRAY	(1<<15)
+#define ISENABLED_ALPHA_TEST	(1<<16)
 
 
 typedef struct {
@@ -3369,6 +3371,7 @@ enable_disable (GLuint bit, int set)
   case GL_LIGHTING:       flag = ISENABLED_LIGHTING;		     break;
   case GL_BLEND:          flag = ISENABLED_BLEND;		     break;
   case GL_DEPTH_TEST:     flag = ISENABLED_DEPTH_TEST;		     break;
+  case GL_ALPHA_TEST:     flag = ISENABLED_ALPHA_TEST;		     break;
   case GL_CULL_FACE:      flag = ISENABLED_CULL_FACE;		     break;
   case GL_NORMALIZE:      flag = ISENABLED_NORMALIZE;		     break;
   case GL_FOG:            flag = ISENABLED_FOG;			     break;

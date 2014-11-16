@@ -2,46 +2,16 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-	<key>CFBundleName</key>
-	<string>${PRODUCT_NAME}</string>
-	<key>NSHumanReadableCopyright</key>
-	<string>5.30</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>English</string>
-	<key>CFBundleVersion</key>
-	<string>5.30</string>
-	<key>NSMainNibFile</key>
-	<string>iSaverRunner</string>
-	<key>CFBundlePackageType</key>
-	<string>APPL</string>
-	<key>CFBundleIconFile</key>
-	<string>iSaverRunner57.png</string>
-	<key>UIViewControllerBasedStatusBarAppearance</key>
-	<false/>
-	<key>CFBundleShortVersionString</key>
-	<string>5.30</string>
-	<key>CFBundleInfoDictionaryVersion</key>
-	<string>6.0</string>
-	<key>UIRequiredDeviceCapabilities</key>
-	<dict>
-		<key>opengles-1</key>
-		<true/>
-	</dict>
+	<key>CFBundleDisplayName</key>
+	<string>${PRODUCT_NAME}</string>
 	<key>CFBundleExecutable</key>
 	<string>${EXECUTABLE_NAME}</string>
-	<key>UISupportedInterfaceOrientations~ipad</key>
-	<array>
-		<string>UIInterfaceOrientationPortrait</string>
-		<string>UIInterfaceOrientationPortraitUpsideDown</string>
-		<string>UIInterfaceOrientationLandscapeLeft</string>
-		<string>UIInterfaceOrientationLandscapeRight</string>
-	</array>
-	<key>CFBundleLongVersionString</key>
-	<string>5.30</string>
-	<key>CFBundleIdentifier</key>
-	<string>${BUNDLE_IDENTIFIER}</string>
-	<key>CFBundleSignature</key>
-	<string>????</string>
+	<key>CFBundleGetInfoString</key>
+	<string>5.31</string>
+	<key>CFBundleIconFile</key>
+	<string>iSaverRunner57.png</string>
 	<key>CFBundleIconFiles</key>
 	<array>
 		<string>iSaverRunner152.png</string>
@@ -53,8 +23,33 @@
 		<string>iSaverRunner50.png</string>
 		<string>iSaverRunner29.png</string>
 	</array>
+	<key>CFBundleIdentifier</key>
+	<string>${BUNDLE_IDENTIFIER}</string>
+	<key>CFBundleInfoDictionaryVersion</key>
+	<string>6.0</string>
+	<key>CFBundleLongVersionString</key>
+	<string>5.31</string>
+	<key>CFBundleName</key>
+	<string>${PRODUCT_NAME}</string>
+	<key>CFBundlePackageType</key>
+	<string>APPL</string>
+	<key>CFBundleShortVersionString</key>
+	<string>5.31</string>
+	<key>CFBundleSignature</key>
+	<string>????</string>
+	<key>CFBundleVersion</key>
+	<string>5.31</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
+	<key>NSHumanReadableCopyright</key>
+	<string>5.31</string>
+	<key>NSMainNibFile</key>
+	<string>iSaverRunner</string>
+	<key>UIRequiredDeviceCapabilities</key>
+	<dict>
+		<key>opengles-1</key>
+		<true/>
+	</dict>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
@@ -62,9 +57,14 @@
 		<string>UIInterfaceOrientationLandscapeRight</string>
 		<string>UIInterfaceOrientationPortraitUpsideDown</string>
 	</array>
-	<key>CFBundleDisplayName</key>
-	<string>${PRODUCT_NAME}</string>
-	<key>CFBundleGetInfoString</key>
-	<string>5.30</string>
+	<key>UISupportedInterfaceOrientations~ipad</key>
+	<array>
+		<string>UIInterfaceOrientationPortrait</string>
+		<string>UIInterfaceOrientationPortraitUpsideDown</string>
+		<string>UIInterfaceOrientationLandscapeLeft</string>
+		<string>UIInterfaceOrientationLandscapeRight</string>
+	</array>
+	<key>UIViewControllerBasedStatusBarAppearance</key>
+	<false/>
 </dict>
 </plist>

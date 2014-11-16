@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=c2gvyGVNG80"/>
+
   <hgroup>
     <select id="kleinbottle">
       <option id="random"         _label="Random shape"/>

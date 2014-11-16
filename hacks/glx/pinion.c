@@ -12,9 +12,9 @@
 #define DEFAULTS        "*delay:        15000              \n" \
                         "*showFPS:      False              \n" \
                         "*wireframe:    False              \n" \
-                        "*titleFont:  -*-helvetica-medium-r-normal-*-180-*\n" \
-                        "*titleFont2: -*-helvetica-medium-r-normal-*-120-*\n" \
-                        "*titleFont3: -*-helvetica-medium-r-normal-*-80-*\n"  \
+           "*titleFont:  -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
+           "*titleFont2: -*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*\n" \
+           "*titleFont3: -*-helvetica-medium-r-normal-*-*-80-*-*-*-*-*-*\n"  \
 
 # define refresh_pinion 0
 # define release_pinion 0
@@ -27,7 +27,7 @@
 #include "xlockmore.h"
 #include "normals.h"
 #include "gltrackball.h"
-#include "glxfonts.h"
+#include "texfont.h"
 #include "involute.h"
 #include <ctype.h>
 
@@ -55,7 +55,6 @@ typedef struct {
 
   texture_font_data *font1, *font2, *font3;
 
-  GLuint title_list;
   int draw_tick;
 
   GLfloat plane_displacement;        /* distance between coaxial gears */
@@ -119,7 +118,7 @@ load_fonts (ModeInfo *mi)
 static void rpm_string (double rpm, char *s);
 
 static void
-new_label (ModeInfo *mi)
+draw_label (ModeInfo *mi)
 {
   pinion_configuration *pp = &pps[MI_SCREEN(mi)];
   char label[1024];
@@ -149,7 +148,6 @@ new_label (ModeInfo *mi)
                  g->tooth_h * MI_HEIGHT(mi));
     }
 
-  glNewList (pp->title_list, GL_COMPILE);
   if (*label)
     {
       texture_font_data *fd;
@@ -161,12 +159,10 @@ new_label (ModeInfo *mi)
         fd = pp->font3;
 
       glColor3f (0.8, 0.8, 0);
-      print_gl_string (mi->dpy, fd,
-                       mi->xgwa.width, mi->xgwa.height,
-                       10, mi->xgwa.height - 10,
-                       label, False);
+      print_texture_label (mi->dpy, fd,
+                           mi->xgwa.width, mi->xgwa.height,
+                           1, label);
     }
-  glEndList ();
 }
 
 
@@ -312,6 +308,10 @@ new_gear (ModeInfo *mi, gear *parent, Bool coaxial_p)
 
   /* g->tooth_slope = (parent ? -parent->tooth_slope : 4); */
 
+  if (debug_one_gear_p)
+    g->tooth_slope = frand(20)-10;
+
+
   /* Colorize
    */
   g->color[0] = 0.5 + frand(0.5);
@@ -411,7 +411,8 @@ new_gear (ModeInfo *mi, gear *parent, Bool coaxial_p)
     double pix = g->tooth_h * MI_HEIGHT(mi); /* approx. tooth size in pixels */
     if (pix <= 2.5)      g->size = INVOLUTE_SMALL;
     else if (pix <= 3.5) g->size = INVOLUTE_MEDIUM;
-    else                 g->size = INVOLUTE_LARGE;
+    else if (pix <= 25)  g->size = INVOLUTE_LARGE;
+    else                 g->size = INVOLUTE_HUGE;
   }
 
   g->base_p = !parent;
@@ -1232,7 +1233,7 @@ find_mouse_gear (ModeInfo *mi)
 
 #else  /* HAVE_JWZGLES */
   /* #### not yet implemented */
-  pp->mouse_gear_id = pp->gears[1]->id;
+  pp->mouse_gear_id = (pp->ngears > 1 ? pp->gears[1]->id : 0);
   return;
 #endif /* HAVE_JWZGLES */
 
@@ -1330,8 +1331,6 @@ init_pinion (ModeInfo *mi)
   load_fonts (mi);
   reshape_pinion (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
   clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
-
-  pp->title_list  = glGenLists (1);
 
   pp->ngears = 0;
   pp->gears_size = 0;
@@ -1453,12 +1452,11 @@ draw_pinion (ModeInfo *mi)
       {
         pp->draw_tick = 0;
         find_mouse_gear (mi);
-        new_label (mi);
       }
   }
   glPopMatrix ();
 
-  glCallList (pp->title_list);
+  draw_label (mi);
   glPopMatrix ();
 
   if (mi->fps_p) do_fps (mi);

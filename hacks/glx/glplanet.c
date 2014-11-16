@@ -15,6 +15,7 @@
  *
  * Revision History:
  *
+ * 10-Nov-14: jwz@jwz.org   Night map. Better stars.
  * 16-Jan-02: jwz@jwz.org   gdk_pixbuf support.
  * 21-Mar-01: jwz@jwz.org   Broke sphere routine out into its own file.
  *
@@ -26,12 +27,6 @@
  *
  * 8-Oct-98: Released initial version of "glplanet"
  * (David Konerding, dek@cgl.ucsf.edu)
- *
- * BUGS:
- * -bounce is broken
- * 
- *   For even more spectacular results, grab the images from the "SSystem"
- *   package (http://www.msu.edu/user/kamelkev/) and use its JPEGs!
  */
 
 
@@ -65,22 +60,22 @@
 #define DEF_SPIN    "0.03"
 #define DEF_TEXTURE "True"
 #define DEF_STARS   "True"
-#define DEF_LIGHT   "True"
 #define DEF_RESOLUTION "128"
 #define DEF_IMAGE   "BUILTIN"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
+#undef BELLRAND
+#define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
+
 static int do_rotate;
 static int do_roll;
 static int do_wander;
 static int do_texture;
 static int do_stars;
-static int do_light;
 static char *which_image;
 static int resolution;
-static float star_spin;
 
 static XrmOptionDescRec opts[] = {
   {"-rotate",  ".glplanet.rotate",  XrmoptionNoArg, "true" },
@@ -94,8 +89,6 @@ static XrmOptionDescRec opts[] = {
   {"-stars",   ".glplanet.stars",   XrmoptionNoArg, "true" },
   {"+stars",   ".glplanet.stars",   XrmoptionNoArg, "false" },
   {"-spin",    ".glplanet.spin",    XrmoptionSepArg, 0 },
-  {"-light",   ".glplanet.light",   XrmoptionNoArg, "true" },
-  {"+light",   ".glplanet.light",   XrmoptionNoArg, "false" },
   {"-image",   ".glplanet.image",  XrmoptionSepArg, 0 },
   {"-resolution", ".glplanet.resolution", XrmoptionSepArg, 0 },
 };
@@ -106,10 +99,8 @@ static argtype vars[] = {
   {&do_wander,   "wander",  "Wander",  DEF_WANDER,  t_Bool},
   {&do_texture,  "texture", "Texture", DEF_TEXTURE, t_Bool},
   {&do_stars,    "stars",   "Stars",   DEF_STARS,   t_Bool},
-  {&do_light,    "light",   "Light",   DEF_LIGHT,   t_Bool},
   {&which_image, "image",   "Image",   DEF_IMAGE,   t_String},
   {&resolution,  "resolution","Resolution", DEF_RESOLUTION, t_Int},
-  {&star_spin,   "spin",    "Float",   DEF_SPIN,    t_Float},
 };
 
 ENTRYPOINT ModeSpecOpt planet_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -128,6 +119,7 @@ ModStruct   planet_description =
                     the following XPM file... */
 # endif
 #include "../images/earth.xpm"
+#include "../images/earth_night.xpm"
 
 #include "xpm-ximage.h"
 #include "rotator.h"
@@ -140,31 +132,25 @@ ModStruct   planet_description =
  * at the expense of rendering speed
  */
 
-#define NUM_STARS 1000
-
-/* radius of the sphere- fairly arbitrary */
-#define RADIUS 4
-
-/* distance away from the sphere model */
-#define DIST 40
-
-
-
 /* structure for holding the planet data */
 typedef struct {
   GLuint platelist;
+  GLuint shadowlist;
   GLuint latlonglist;
   GLuint starlist;
+  int starcount;
   int screen_width, screen_height;
   GLXContext *glx_context;
   Window window;
   XColor fg, bg;
-  GLfloat sunpos[4];
-  double z;
+  GLfloat z;
+  GLfloat tilt;
   rotator *rot;
   trackball_state *trackball;
-  double star_theta;
   Bool button_down_p;
+  GLuint tex1, tex2;
+  int draw_axis;
+
 } planetstruct;
 
 
@@ -234,16 +220,25 @@ setup_file_texture (ModeInfo *mi, char *filename)
 static void
 setup_texture(ModeInfo * mi)
 {
-/*  planetstruct *gp = &planets[MI_SCREEN(mi)];*/
-
-  glEnable(GL_TEXTURE_2D);
+  planetstruct *gp = &planets[MI_SCREEN(mi)];
 
   if (!which_image ||
 	  !*which_image ||
 	  !strcmp(which_image, "BUILTIN"))
-	setup_xpm_texture (mi, earth_xpm);
+    {
+      glGenTextures (1, &gp->tex1);
+      glBindTexture (GL_TEXTURE_2D, gp->tex1);
+      setup_xpm_texture (mi, earth_xpm);
+      glGenTextures (1, &gp->tex2);
+      glBindTexture (GL_TEXTURE_2D, gp->tex2);
+      setup_xpm_texture (mi, earth_night_xpm);
+    }
   else
-	setup_file_texture (mi, which_image);
+    {
+      glGenTextures (1, &gp->tex1);
+      glBindTexture (GL_TEXTURE_2D, gp->tex1);
+      setup_file_texture (mi, which_image);
+    }
 
   check_gl_error("texture initialization");
 
@@ -262,27 +257,36 @@ init_stars (ModeInfo *mi)
   int width  = MI_WIDTH(mi);
   int height = MI_HEIGHT(mi);
   int size = (width > height ? width : height);
-  int nstars = size * size / 320;
+  int nstars = size * size / 80;
   int max_size = 3;
   GLfloat inc = 0.5;
   int steps = max_size / inc;
 
   gp->starlist = glGenLists(1);
   glNewList(gp->starlist, GL_COMPILE);
-
-  glEnable(GL_POINT_SMOOTH);
-
   for (j = 1; j <= steps; j++)
     {
       glPointSize(inc * j);
       glBegin (GL_POINTS);
       for (i = 0; i < nstars / steps; i++)
         {
-          glColor3f (0.6 + frand(0.3),
-                     0.6 + frand(0.3),
-                     0.6 + frand(0.3));
-          glVertex2f (2 * size * (0.5 - frand(1.0)),
-                      2 * size * (0.5 - frand(1.0)));
+          GLfloat d = 0.1;
+          GLfloat r = 0.15 + frand(0.3);
+          GLfloat g = r + frand(d) - d;
+          GLfloat b = r + frand(d) - d;
+
+          GLfloat x = frand(1)-0.5;
+          GLfloat y = frand(1)-0.5;
+          GLfloat z = ((random() & 1)
+                       ? frand(1)-0.5
+                       : (BELLRAND(1)-0.5)/12);   /* milky way */
+          d = sqrt (x*x + y*y + z*z);
+          x /= d;
+          y /= d;
+          z /= d;
+          glColor3f (r, g, b);
+          glVertex3f (x, y, z);
+          gp->starcount++;
         }
       glEnd ();
     }
@@ -291,93 +295,6 @@ init_stars (ModeInfo *mi)
   check_gl_error("stars initialization");
 }
 
-
-static void
-draw_stars (ModeInfo *mi)
-{
-  planetstruct *gp = &planets[MI_SCREEN(mi)];
-  
-  glDisable(GL_TEXTURE_2D);
-  glDisable(GL_LIGHTING);
-  glDisable(GL_DEPTH_TEST);
-
-  glMatrixMode (GL_PROJECTION);
-  glPushMatrix ();
-  {
-    glLoadIdentity ();
-
-    glMatrixMode (GL_MODELVIEW);
-    glPushMatrix ();
-    {
-      glLoadIdentity ();
-      glOrtho (-0.5 * MI_WIDTH(mi),  0.5 * MI_WIDTH(mi),
-               -0.5 * MI_HEIGHT(mi), 0.5 * MI_HEIGHT(mi),
-               -100.0, 100.0);
-      glRotatef (gp->star_theta, 0.0, 0.0, 1.0);
-      glCallList (gp->starlist);
-    }
-    glPopMatrix ();
-  }
-  glMatrixMode (GL_PROJECTION);
-  glPopMatrix ();
-
-  glMatrixMode (GL_MODELVIEW);
-}
-
-
-
-/* Set up lighting */
-static void
-init_sun (ModeInfo * mi)
-{
-  planetstruct *gp = &planets[MI_SCREEN(mi)];
-
-  GLfloat lamb[4] = { 0.1, 0.1, 0.1, 1.0 };
-  GLfloat ldif[4] = { 1.0, 1.0, 1.0, 1.0 };
-  GLfloat spec[4] = { 1.0, 1.0, 1.0, 1.0 };
-
-  GLfloat mamb[4] = { 0.5, 0.5, 0.5, 1.0 };
-  GLfloat mdif[4] = { 1.0, 1.0, 1.0, 1.0 };
-  GLfloat mpec[4] = { 1.0, 1.0, 1.0, 1.0 };
-  GLfloat shiny = .4;
-
-  {
-    double h =  0.1 + frand(0.8);   /* east-west position - screen-side. */
-    double v = -0.3 + frand(0.6);   /* north-south position */
-
-    if (h > 0.3 && h < 0.8)         /* avoid having the sun at the camera */
-      h += (h > 0.5 ? 0.2 : -0.2);
-
-    gp->sunpos[0] = cos(h * M_PI);
-    gp->sunpos[1] = sin(h * M_PI);
-    gp->sunpos[2] = sin(v * M_PI);
-    gp->sunpos[3] =  0.00;
-  }
-
-  glEnable(GL_LIGHTING);
-  glEnable(GL_LIGHT0);
-
-  glLightfv (GL_LIGHT0, GL_POSITION, gp->sunpos);
-  glLightfv (GL_LIGHT0, GL_AMBIENT,  lamb);
-  glLightfv (GL_LIGHT0, GL_DIFFUSE,  ldif);
-  glLightfv (GL_LIGHT0, GL_SPECULAR, spec);
-
-  check_gl_error("sun");
-  glMaterialfv (GL_FRONT, GL_AMBIENT,  mamb);
-  glMaterialfv (GL_FRONT, GL_DIFFUSE,  mdif);
-  glMaterialfv (GL_FRONT, GL_SPECULAR, mpec);
-  glMaterialf  (GL_FRONT, GL_SHININESS, shiny);
-
-
-/*  glEnable(GL_BLEND);*/
-/*  glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);*/
-  glShadeModel(GL_SMOOTH);
-
-  check_gl_error("lighting");
-}
-
-
-#define RANDSIGN() ((random() & 1) ? 1 : -1)
 
 ENTRYPOINT void
 reshape_planet (ModeInfo *mi, int width, int height)
@@ -390,7 +307,7 @@ reshape_planet (ModeInfo *mi, int width, int height)
   glFrustum(-1.0, 1.0, -h, h, 5.0, 100.0);
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  glTranslatef(0.0, 0.0, -DIST);
+  glTranslatef(0.0, 0.0, -40);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
@@ -458,46 +375,42 @@ init_planet (ModeInfo * mi)
   }
 
   {
-    double spin_speed   = 0.5;
-    double wander_speed = 0.02;
+    double spin_speed   = 0.1;
+    double wander_speed = 0.005;
     gp->rot = make_rotator (do_roll ? spin_speed : 0,
                             do_roll ? spin_speed : 0,
                             0, 1,
                             do_wander ? wander_speed : 0,
                             True);
     gp->z = frand (1.0);
+    gp->tilt = frand (23.4);
     gp->trackball = gltrackball_init (True);
   }
 
   if (wire)
-    {
-      do_texture = False;
-      do_light = False;
-    }
+    do_texture = False;
 
   if (do_texture)
     setup_texture (mi);
 
-  if (do_light)
-	init_sun (mi);
-
   if (do_stars)
     init_stars (mi);
-
-  if (random() & 1)
-    star_spin = -star_spin;
 
   /* construct the polygons of the planet
    */
   gp->platelist = glGenLists(1);
   glNewList (gp->platelist, GL_COMPILE);
-  glColor3f (1,1,1);
-  glPushMatrix ();
-  glScalef (RADIUS, RADIUS, RADIUS);
-  glRotatef (90, 1, 0, 0);
   glFrontFace(GL_CCW);
+  glPushMatrix();
+  glRotatef (90, 1, 0, 0);
   unit_sphere (resolution, resolution, wire);
-  glPopMatrix ();
+  glPopMatrix();
+  glEndList();
+
+  gp->shadowlist = glGenLists(1);
+  glNewList (gp->shadowlist, GL_COMPILE);
+  glFrontFace(GL_CCW);
+  unit_dome (resolution, resolution, wire);
   glEndList();
 
   /* construct the polygons of the latitude/longitude/axis lines.
@@ -505,12 +418,6 @@ init_planet (ModeInfo * mi)
   gp->latlonglist = glGenLists(1);
   glNewList (gp->latlonglist, GL_COMPILE);
   glPushMatrix ();
-  glDisable (GL_TEXTURE_2D);
-  glDisable (GL_LIGHTING);
-  glDisable (GL_LINE_SMOOTH);
-  glColor3f (0.1, 0.3, 0.1);
-  glScalef (RADIUS, RADIUS, RADIUS);
-  glScalef (1.01, 1.01, 1.01);
   glRotatef (90, 1, 0, 0);
   unit_sphere (12, 24, 1);
   glBegin(GL_LINES);
@@ -521,12 +428,14 @@ init_planet (ModeInfo * mi)
   glEndList();
 }
 
+
 ENTRYPOINT void
 draw_planet (ModeInfo * mi)
 {
   planetstruct *gp = &planets[MI_SCREEN(mi)];
-  Display    *display = MI_DISPLAY(mi);
-  Window      window = MI_WINDOW(mi);
+  int wire = MI_IS_WIREFRAME(mi);
+  Display *dpy = MI_DISPLAY(mi);
+  Window window = MI_WINDOW(mi);
   double x, y, z;
 
   if (!gp->glx_context)
@@ -535,20 +444,23 @@ draw_planet (ModeInfo * mi)
   glDrawBuffer(GL_BACK);
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-  glXMakeCurrent (display, window, *(gp->glx_context));
+  glXMakeCurrent (dpy, window, *(gp->glx_context));
 
   mi->polygon_count = 0;
 
-  if (do_stars)
+  if (gp->button_down_p)
+    gp->draw_axis = 60;
+  else if (!gp->draw_axis && !(random() % 1000))
+    gp->draw_axis = 60 + (random() % 90);
+
+  if (do_rotate && !gp->button_down_p)
     {
-      draw_stars (mi);
-      mi->polygon_count += NUM_STARS;
+      gp->z -= 0.001;     /* the sun sets in the west */
+      if (gp->z < 0) gp->z += 1;
     }
 
-  if (do_light)   glEnable(GL_LIGHTING);
-  if (do_texture) glEnable(GL_TEXTURE_2D);
-
-  glEnable (GL_LINE_SMOOTH);
+  glEnable(GL_LINE_SMOOTH);
+  glEnable(GL_POINT_SMOOTH);
   glEnable(GL_DEPTH_TEST);
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK); 
@@ -556,13 +468,12 @@ draw_planet (ModeInfo * mi)
   glPushMatrix();
 
   get_position (gp->rot, &x, &y, &z, !gp->button_down_p);
-  glTranslatef((x - 0.5) * 15,
-               (y - 0.5) * 15,
-               (z - 0.5) * 8);
+  x = (x - 0.5) * 6;
+  y = (y - 0.5) * 6;
+  z = (z - 0.5) * 3;
+  glTranslatef(x, y, z);
 
   gltrackball_rotate (gp->trackball);
-
-  glRotatef (90,1,0,0);
 
   if (do_roll)
     {
@@ -570,31 +481,120 @@ draw_planet (ModeInfo * mi)
       glRotatef (x * 360, 1.0, 0.0, 0.0);
       glRotatef (y * 360, 0.0, 1.0, 0.0);
     }
+  else
+    glRotatef (current_device_rotation(), 0, 0, 1);
 
-  glLightfv (GL_LIGHT0, GL_POSITION, gp->sunpos);
-
-  glRotatef (gp->z * 360, 0.0, 0.0, 1.0);
-  if (do_rotate && !gp->button_down_p)
+  if (do_stars)
     {
-      gp->z -= 0.005;     /* the sun sets in the west */
-      if (gp->z < 0) gp->z += 1;
+      glDisable(GL_TEXTURE_2D);
+      glPushMatrix();
+      glTranslatef(-x, -y, -z);
+      glScalef (40, 40, 40);
+      glRotatef (90, 1, 0, 0);
+      glRotatef (35, 1, 0, 0);
+      glCallList (gp->starlist);
+      mi->polygon_count += gp->starcount;
+      glPopMatrix();
+      glClear(GL_DEPTH_BUFFER_BIT);
     }
 
+  glRotatef (90, 1, 0, 0);
+  glRotatef (35, 1, 0, 0);
+  glRotatef (10, 0, 1, 0);
+  glRotatef (120, 0, 0, 1);
+
+  glScalef (3, 3, 3);
+
+# ifdef USE_IPHONE
+  glScalef (2, 2, 2);
+# endif
+
+  if (wire)
+    glColor3f (0.5, 0.5, 1);
+  else
+    glColor3f (1, 1, 1);
+
+  if (do_texture)
+    {
+      glEnable(GL_TEXTURE_2D);
+      glBindTexture (GL_TEXTURE_2D, gp->tex1);
+    }
+
+  glPushMatrix();
+  glRotatef (gp->z * 360, 0, 0, 1);
   glCallList (gp->platelist);
   mi->polygon_count += resolution*resolution;
+  glPopMatrix();
 
-  if (gp->button_down_p)
+  /* Originally we just used GL_LIGHT0 to produce the day/night sides of
+     the planet, but that always looked crappy, even with a vast number of
+     polygons, because the day/night terminator didn't exactly line up with
+     the polygon edges.
+
+     So instead, draw the full "day" sphere; clear the depth buffer; draw
+     a rotated/tilted half-sphere into the depth buffer only; then draw
+     the "night" sphere.  That lets us divide the sphere into the two maps,
+     and the dividing line can be at any angle, regardless of polygon layout.
+
+     The half-sphere is scaled slightly larger to avoid polygon fighting,
+     since those triangles won't exactly line up because of the rotation.
+
+     The downside of this is that the day/night terminator is 100% sharp.
+     It would be nice if it was a little blurry.
+   */
+
+  if (wire)
     {
+      glPushMatrix();
+      glRotatef (gp->tilt, 1, 0, 0);
+      glColor3f(0, 0, 0);
+      glLineWidth(4);
+      glCallList (gp->shadowlist);
+      glLineWidth(1);
+      mi->polygon_count += resolution*(resolution/2);
+      glPopMatrix();
+    }
+  else if (do_texture && gp->tex2)
+    {
+      glClear(GL_DEPTH_BUFFER_BIT);
+      glDisable(GL_TEXTURE_2D);
+      glColorMask (0, 0, 0, 0);
+      glPushMatrix();
+      glRotatef (gp->tilt, 1, 0, 0);
+      glScalef (1.01, 1.01, 1.01);
+      glCallList (gp->shadowlist);
+      mi->polygon_count += resolution*(resolution/2);
+      glPopMatrix();
+      glColorMask (1, 1, 1, 1);
+      glEnable(GL_TEXTURE_2D);
+
+      glBindTexture (GL_TEXTURE_2D, gp->tex2);
+      glPushMatrix();
+      glRotatef (gp->z * 360, 0, 0, 1);
+      glCallList (gp->platelist);
+      mi->polygon_count += resolution*resolution;
+      glPopMatrix();
+    }
+
+  if (gp->draw_axis)
+    {
+      glPushMatrix();
+      glRotatef (gp->z * 360, 0.0, 0.0, 1.0);
+      glScalef (1.02, 1.02, 1.02);
+      glDisable (GL_TEXTURE_2D);
+      glDisable (GL_LIGHTING);
+      glDisable (GL_LINE_SMOOTH);
+      glColor3f (0.1, 0.3, 0.1);
       glCallList (gp->latlonglist);
       mi->polygon_count += 24*24;
+      glPopMatrix();
+      if (gp->draw_axis) gp->draw_axis--;
     }
   glPopMatrix();
 
   if (mi->fps_p) do_fps (mi);
   glFinish();
-  glXSwapBuffers(display, window);
-
-  gp->star_theta += star_spin;
+  glXSwapBuffers(dpy, window);
 }
 
 

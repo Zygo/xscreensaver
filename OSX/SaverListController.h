@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,12 +15,13 @@
 
 #import <UIKit/UIKit.h>
 
-@interface SaverListController : UITableViewController {
+@interface SaverListController : UITableViewController <UISearchBarDelegate> {
 
   int active_section_count;
   NSMutableArray *list_by_letter[26];  // 27 to get "#" after "Z".
   NSMutableArray *letter_sections;
   NSMutableArray *section_titles;
+  NSArray *names;
   NSDictionary *descriptions;
 
   int tap_count;
@@ -29,7 +30,6 @@
 }
 
 - (id)initWithNames:(NSArray *)names descriptions:(NSDictionary *)descs;
-- (void) reload:(NSArray *)names descriptions:(NSDictionary *)descs;
 - (void) scrollTo:(NSString *)name;
 @end
 

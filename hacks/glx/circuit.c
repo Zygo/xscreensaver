@@ -31,7 +31,8 @@
 
 #ifdef STANDALONE
 #define DEFAULTS        "*delay:   20000 \n" \
-                        "*showFPS: False \n"
+                        "*showFPS: False \n" \
+               "*componentFont: -*-courier-bold-r-normal-*-*-140-*-*-*-*-*-*"
 
 # define refresh_circuit 0
 # define circuit_handle_event 0
@@ -53,13 +54,12 @@
 
 #ifdef USE_GL
 
-#include "font-ximage.h"
+#include "texfont.h"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 static int maxparts;
-static char *font;
 static int rotatespeed;
 static int spin;
 static int uselight;
@@ -70,7 +70,6 @@ static int seven;
 
 static XrmOptionDescRec opts[] = {
   {"-parts", ".circuit.parts", XrmoptionSepArg, 0 },
-  {"-font", ".circuit.font", XrmoptionSepArg, 0 },
   {"-rotate-speed", ".circuit.rotatespeed", XrmoptionSepArg, 0 },
   {"+spin", ".circuit.spin", XrmoptionNoArg, "false" },
   {"-spin", ".circuit.spin", XrmoptionNoArg, "true" },
@@ -82,7 +81,6 @@ static XrmOptionDescRec opts[] = {
 
 static argtype vars[] = {
   {&maxparts, "parts", "Parts", DEF_PARTS, t_Int},
-  {&font, "font", "Font", "fixed", t_String},
   {&rotatespeed, "rotatespeed", "Rotatespeed", DEF_ROTATESPEED, t_Int},
   {&spin, "spin", "Spin", DEF_SPIN, t_Bool},
   {&uselight, "light", "Light", DEF_LIGHT, t_Bool},
@@ -109,13 +107,6 @@ static float f_rand(void)
 }
 
 #define RAND_RANGE(min, max) ((min) + (max - min) * f_rand())
-
-/* used for allocating font textures */
-typedef struct {
-  int num; /* index number */
-  int w;   /* width */
-  int h;   /* height */
-} TexNum;
 
 /* Represents a band on a resistor/diode/etc */
 typedef struct {
@@ -177,8 +168,7 @@ static const char * const smctypes[] = {
 
 typedef struct {
   int type; /* package type. 0 = to-92, 1 = to-220 */
-  GLfloat tw, th; /* texture dimensions */
-  GLuint tnum; /* texture binding */
+  const char *text;
 } Transistor;
 
 typedef struct {
@@ -252,8 +242,7 @@ static const ICTypes ictypes[] = {
 typedef struct {
   int type; /* 0 = DIL, 1 = flat square */
   int pins; 
-  float tw, th; /* texture dimensions for markings */
-  int tnum; /* texture number */
+  char text[100];
 } IC;
 
 /* 7 segment display */
@@ -345,6 +334,7 @@ typedef struct {
   int display_i;
   GLfloat rotate_angle;
 
+  texture_font_data *font;
   char *font_strings[50]; /* max of 40 textures */
   int font_w[50], font_h[50];
   int font_init;
@@ -371,13 +361,11 @@ static int DrawRCA(Circuit *, RCA *);
 static int DrawThreeFive(Circuit *, ThreeFive *);
 static int DrawSwitch(Circuit *, Switch *);
 
-static void freetexture(Circuit *, GLuint);
 static void reorder(Component *[]);
 static int circle(Circuit *, float, int,int);
 static int bandedCylinder(Circuit *, 
                            float, float , GLfloat, GLfloat , GLfloat,  
                            Band **, int);
-static TexNum *fonttexturealloc(ModeInfo *, const char *, float *, float *);
 static int Rect(GLfloat , GLfloat , GLfloat, GLfloat , GLfloat ,GLfloat);
 static int ICLeg(GLfloat, GLfloat, GLfloat, int);
 static int HoledRectangle(Circuit *ci, 
@@ -531,40 +519,6 @@ static int wire(Circuit *ci, float len)
   return polys;
 }
 
-#if 0
-static int ring(GLfloat inner, GLfloat outer, int nsegs)
-{
-  int polys = 0;
-  GLfloat z1, z2, y1, y2;
-  GLfloat Z1, Z2, Y1, Y2;
-  int i;
-
-  z1 = inner; y1 = 0;
-  Z1 = outer; Y1 = 0;
-  glBegin(GL_QUADS);
-  glNormal3f(1, 0, 0);
-  for(i=0; i <=360 ; i+= 360/nsegs)
-  {
-    float angle=i;
-    z2=inner*(float)ci->sin_table[(int)angle];
-    y2=inner*(float)ci->cos_table[(int)angle];
-    Z2=outer*(float)ci->sin_table[(int)angle];
-    Y2=outer*(float)ci->cos_table[(int)angle];
-    glVertex3f(0, Y1, Z1);
-    glVertex3f(0, y1, z1);
-    glVertex3f(0, y2, z2);
-    glVertex3f(0, Y2, Z2);
-    polys++;
-    z1=z2;
-    y1=y2;
-    Z1=Z2;
-    Y1=Y2;
-  }
-  glEnd();
-  return polys;
-}
-#endif
-
 static int sphere(Circuit *ci, GLfloat r, float stacks, float slices,
              int startstack, int endstack, int startslice,
              int endslice)
@@ -673,14 +627,6 @@ static int DrawComponent(Circuit *ci, Component *c, unsigned long *polysP)
           glDisable(GL_LIGHT1);
           ci->light = 0; ci->lighton = 0;
         }
-	if (c->type == 5) {
-          if (((IC *)c->c)->tnum)
-            freetexture(ci, ((IC *)c->c)->tnum);
-	}
-	if (c->type == 2) {
-          if (((Transistor *)c->c)->tnum)
-            freetexture(ci, ((Transistor *)c->c)->tnum);
-	}
         if (c->type == 1)
           free(((Diode *)c->c)->band); /* remember to free diode band */
         free(c->c);
@@ -1091,7 +1037,7 @@ static int DrawIC(Circuit *ci, IC *c)
   GLfloat lspec[] = {0.6, 0.6, 0.6, 0};
   GLfloat lcol[] = {0.4, 0.4, 0.4, 0};
   GLfloat lshine = 40;
-  float mult, th, size;
+  float th, size;
 
   glPushMatrix();
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, col);
@@ -1155,7 +1101,6 @@ static int DrawIC(Circuit *ci, IC *c)
       polys++;
     glEnd();
     glDisable(GL_POLYGON_OFFSET_FILL);
-    if (c->tnum) glBindTexture(GL_TEXTURE_2D, c->tnum);
     glEnable(GL_TEXTURE_2D);
     glEnable(GL_BLEND);
     if (c->pins == 8)
@@ -1163,20 +1108,23 @@ static int DrawIC(Circuit *ci, IC *c)
     else
       size = 0.6;
     th = size*2/3;
-    mult = size*c->tw / c->th;
-    mult /= 2;
-    glBegin(GL_QUADS); /* text markings */
-     glNormal3f(0, 0, 1);
-     glTexCoord2f(0, 1);
-     glVertex3f(th, mult, 0.1);
-     glTexCoord2f(1, 1);
-     glVertex3f(th, -mult, 0.1);
-     glTexCoord2f(1, 0);
-     glVertex3f(-th, -mult, 0.1);
-     glTexCoord2f(0, 0);
-     glVertex3f(-th, mult, 0.1);
-      polys++;
-    glEnd();
+
+    {
+      GLfloat texfg[] = {0.7, 0.7, 0.7, 1.0};
+      GLfloat s = 0.015;
+      int w, h;
+      w = texture_string_width (ci->font, c->text, &h);
+
+      glPushMatrix();
+      glTranslatef (0, 0, 0.1);
+      glRotatef (90, 0, 0, 1);
+      glScalef (s, s, s);
+      glTranslatef (-w/2, 0, 0);
+      glColor4fv (texfg);
+      print_texture_string (ci->font, c->text);
+      glPopMatrix();
+    }
+
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
     d = (h*2-0.1) / c->pins;
@@ -1394,32 +1342,29 @@ static int DrawTransistor(Circuit *ci, Transistor *t)
   glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, col);
   glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
   if (t->type == 1) { /* TO-92 style */
-    float mult, y1, y2;
-    mult = 1.5*t->th/t->tw;
-    y1 = 0.2+mult/2;
-    y2 = 0.8-mult/2;
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, col);
     glRotatef(90, 0, 1, 0);
     glRotatef(90, 0, 0, 1);
     polys += createCylinder(ci, 1.0, 0.4, 1, 1);
     polys += Rect(0, -0.2, 0.4, 1, 0.2, 0.8);
 /* Draw the markings */
-    glEnable(GL_TEXTURE_2D);
-    if (t->tnum) glBindTexture(GL_TEXTURE_2D, t->tnum);
-    glEnable(GL_BLEND);
-    glDepthMask(GL_FALSE);
-    glBegin (GL_QUADS);
-     glNormal3f(0, 0, 1);
-     glTexCoord2f(0, 1);
-     glVertex3f(y1, -0.21, 0.3);
-     glTexCoord2f(1, 1);
-     glVertex3f(y1, -0.21, -0.3);
-     glTexCoord2f(1, 0);
-     glVertex3f(y2, -0.21, -0.3);
-     glTexCoord2f(0, 0);
-     glVertex3f(y2, -0.21, 0.3);
-     polys++;
-    glEnd();
+
+    {
+      GLfloat texfg[] = {0.7, 0.7, 0.7, 1.0};
+      GLfloat s = 0.015;
+      int w, h;
+      w = texture_string_width (ci->font, t->text, &h);
+
+      glPushMatrix();
+      glRotatef (90, 1, 0, 0);
+      glTranslatef (0.5, -0.05, 0.21);
+      glScalef (s, s, s);
+      glTranslatef (-w/2, 0, 0);
+      glColor4fv (texfg);
+      print_texture_string (ci->font, t->text);
+      glPopMatrix();
+    }
+
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
@@ -1430,26 +1375,21 @@ static int DrawTransistor(Circuit *ci, Transistor *t)
     glTranslatef(0, 0, 0.2);
     polys += wire(ci, 2);
   } else if (t->type == 0) { /* TO-220 Style */
-    float mult, y1, y2;
-    mult = 1.5*t->th/t->tw;
-    y1 = 0.75+mult/2;
-    y2 = 0.75-mult/2;
     polys += Rect(0, 0, 0, 1.5, 1.5, 0.5);
-    glEnable(GL_TEXTURE_2D);
-    if (t->tnum) glBindTexture(GL_TEXTURE_2D, t->tnum);
-    glEnable(GL_BLEND);
-    glDepthMask(GL_FALSE);
-    glBegin (GL_QUADS);
-     glNormal3f(0, 0, 1);
-     glTexCoord2f(0, 1);
-     glVertex3f(0, y1, 0.01);
-     glTexCoord2f(1, 1);
-     glVertex3f(1.5, y1, 0.01);
-     glTexCoord2f(1, 0);
-     glVertex3f(1.5, y2, 0.01);
-     glTexCoord2f(0, 0);
-     glVertex3f(0, y2, 0.01);
-    glEnd();
+    {
+      GLfloat texfg[] = {0.7, 0.7, 0.7, 1.0};
+      GLfloat s = 0.015;
+      int w, h;
+      w = texture_string_width (ci->font, t->text, &h);
+
+      glPushMatrix();
+      glTranslatef (0.75, 0.75, 0.01);
+      glScalef (s, s, s);
+      glTranslatef (-w/2, 0, 0);
+      glColor4fv (texfg);
+      print_texture_string (ci->font, t->text);
+      glPopMatrix();
+    }
     glDisable(GL_TEXTURE_2D);
     glDisable(GL_BLEND);
     glDepthMask(GL_TRUE);
@@ -1475,7 +1415,6 @@ static int DrawTransistor(Circuit *ci, Transistor *t)
     polys += Rect(0, 0, 0, 1, 0.5, 0.2);
 /* Draw the markings */
     glEnable(GL_TEXTURE_2D);
-    if (t->tnum) glBindTexture(GL_TEXTURE_2D, t->tnum);
     glEnable(GL_BLEND);
     glDepthMask(GL_FALSE);
     glBegin (GL_QUADS);
@@ -1614,48 +1553,16 @@ static Component * NewComponent(ModeInfo *mi)
 static Transistor *NewTransistor(ModeInfo *mi)
 {
   Transistor *t;
-  float texfg[] = {0.7, 0.7, 0.7, 1.0};
-  float texbg[] = {0.3, 0.3, 0.3, 0.1};
-  TexNum *tn;
-  const char *val;
 
   t = malloc(sizeof(Transistor));
   t->type = (random() % 3);
   if (t->type == 0) {
-    val = transistortypes[random() % countof(transistortypes)];
-    tn = fonttexturealloc(mi, val, texfg, texbg);
-    if (tn == NULL) {
-      fprintf(stderr, "Error getting a texture for a string!\n");
-      t->tnum = 0;
-    } else {
-      t->tnum = tn->num;
-      t->tw = tn->w; t->th = tn->h;
-      free(tn);
-    }
+    t->text = transistortypes[random() % countof(transistortypes)];
   } else if (t->type == 2) {
-    val = smctypes[random() % countof(smctypes)];
-    tn = fonttexturealloc(mi, val, texfg, texbg);
-    if (tn == NULL) {
-      fprintf(stderr, "Error getting a texture for a string!\n");
-      t->tnum = 0;
-    } else {
-      t->tnum = tn->num;
-      t->tw = tn->w; t->th = tn->h;
-      free(tn);
-    }
+    t->text = smctypes[random() % countof(smctypes)];
   } else if (t->type == 1) {
-    val = to92types[random() % countof(to92types)];
-    tn = fonttexturealloc(mi, val, texfg, texbg);
-    if (tn == NULL) {
-      fprintf(stderr, "Error getting a texture for a string!\n");
-      t->tnum = 0;
-    } else {
-      t->tnum = tn->num;
-      t->tw = tn->w; t->th = tn->h;
-      free(tn);
-    }
+    t->text = to92types[random() % countof(to92types)];
   }
-
   return t;
 }
 
@@ -1693,11 +1600,7 @@ static IC *NewIC(ModeInfo *mi)
 {
   IC *c;
   int pins;
-  TexNum *tn;
-  float texfg[] = {0.7, 0.7, 0.7, 1.0};
-  float texbg[] = {0.1, 0.1, 0.1, 0};
   const char *val;
-  char *str;
   int types[countof(ictypes)], i, n = 0;
 
   c = malloc(sizeof(IC));
@@ -1726,18 +1629,8 @@ static IC *NewIC(ModeInfo *mi)
 
   if (n > countof(types)) abort();
   val = ictypes[types[random() % n]].val;
-  str = malloc(strlen(val) + 1 + 4 + 1); /* add space for production date */
-  sprintf(str, "%s\n%02d%02d", val, (int)RAND_RANGE(80, 100), (int)RAND_RANGE(1,53));
-  tn = fonttexturealloc(mi, str, texfg, texbg);
-  free(str);
-  if (tn == NULL) {
-    fprintf(stderr, "Error allocating font texture for '%s'\n", val);
-    c->tnum = 0;
-  } else {
-    c->tw = tn->w; c->th = tn->h;
-    c->tnum = tn->num;
-    free(tn);
-  }
+  sprintf(c->text, "%s\n%02d%02d", val,
+          (int)RAND_RANGE(80, 100), (int)RAND_RANGE(1,53));
   c->pins = pins;
   return c;
 }
@@ -2058,101 +1951,6 @@ static void display(ModeInfo *mi)
   glFlush();
 }
 
-static void freetexture (Circuit *ci, GLuint texture) 
-{
-  ci->s_refs[texture]--;
-  if (ci->s_refs[texture] < 1) {
-    glDeleteTextures(1, &texture);
-  }
-}
-
-static TexNum * fonttexturealloc (ModeInfo *mi,
-                                  const char *str, float *fg, float *bg)
-{
-  Circuit *ci = &circuit[MI_SCREEN(mi)];
-  int i;
-  XImage *ximage;
-  char *c;
-  TexNum *t;
-  GLuint mintex;
-  if (ci->font_init == 0) {
-    for (i = 0 ; i < 50 ; i++) {
-      ci->font_strings[i] = NULL;
-      ci->s_refs[i] = 0;
-      ci->font_w[i] = 0; ci->font_h[i] = 0;
-    }
-    ci->font_init++;
-  }
-  for (i = 0 ; i < 50 ; i++) {
-    if (!ci->s_refs[i] && ci->font_strings[i]) {
-      free (ci->font_strings[i]);
-      ci->font_strings[i] = NULL;
-    }
-    if (ci->font_strings[i] && !strcmp(str, ci->font_strings[i])) { /* if one matches */
-      t = malloc(sizeof(TexNum));
-      t->w = ci->font_w[i]; t->h = ci->font_h[i];
-      t->num = i;
-      ci->s_refs[i]++;
-      return t;
-    }
-  }
-
-  /* at this point we need to make the new texture */
-  ximage = text_to_ximage (mi->xgwa.screen,
-                           mi->xgwa.visual,
-                           font, str,
-                           fg, bg);
-  glGenTextures (1, &mintex);
-  for (i = mintex ; ci->font_strings[i] != NULL ; i++) { /* set i to the next unused value */
-     if (i > 49) {
-        fprintf(stderr, "Texture cache full!\n");
-        free(ximage->data);
-        ximage->data = 0;
-        XFree (ximage);
-        return NULL;
-     }
-  }
-
-  glBindTexture(GL_TEXTURE_2D, i);
-  glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-  clear_gl_error();
-#if 0
-  i = gluBuild2DMipmaps(GL_TEXTURE_2D, 4,
-                        ximage->width, ximage->height,
-                        GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
-  if (i)
-    {
-      const char *s = (char *) gluErrorString (i);
-      fprintf (stderr, "%s: error mipmapping %dx%d texture: %s\n",
-               progname, ximage->width, ximage->height,
-               (s ? s : "(unknown)"));
-      abort();
-    }
-  check_gl_error("mipmapping");
-#else
-  glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, ximage->width, ximage->height, 0,
-                GL_RGBA, GL_UNSIGNED_BYTE, ximage->data);
-   check_gl_error("texture");
-#endif
-
-  t = malloc(sizeof(TexNum));
-  t->w = ximage->width;
-  t->h = ximage->height;
-  ci->font_w[i] = t->w; ci->font_h[i] = t->h;
-  free(ximage->data);
-  ximage->data = 0;
-  XFree (ximage);
-  c = malloc(strlen(str)+1);
-  strncpy(c, str, strlen(str)+1);
-  ci->font_strings[i] = c;
-  ci->s_refs[i]++;
-  t->num = i;
-  return t;
-}
-
 /* ensure transparent components are at the end */
 static void reorder(Component *c[])
 {
@@ -2218,7 +2016,7 @@ Circuit *ci;
  ci = &circuit[screen];
  ci->window = MI_WINDOW(mi);
 
- ci->XMAX = ci->YMAX = 30;
+ ci->XMAX = ci->YMAX = 50;
  ci->viewer[2] = 14;
  ci->lightpos[0] = 7;
  ci->lightpos[1] = 7;
@@ -2229,6 +2027,8 @@ Circuit *ci;
  ci->grid_col[2] = 0.05;
  ci->grid_col2[1] = 0.125;
  ci->grid_col2[2] = 0.05;
+
+ ci->font = load_texture_font (MI_DISPLAY(mi), "componentFont");
 
  if (maxparts >= MAX_COMPONENTS)
    maxparts = MAX_COMPONENTS-1;
@@ -2271,10 +2071,9 @@ ENTRYPOINT void draw_circuit(ModeInfo *mi)
 
 ENTRYPOINT void release_circuit(ModeInfo *mi)
 {
-  if (circuit != NULL) {
-   (void) free((void *) circuit);
-   circuit = NULL;
-  }
+  Circuit *ci = &circuit[MI_SCREEN(mi)];
+  if (ci->font)
+    free_texture_font (ci->font);
   FreeAllGL(mi);
 }
 

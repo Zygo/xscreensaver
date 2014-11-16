@@ -121,6 +121,24 @@ quasicrystal_handle_event (ModeInfo *mi, XEvent *event)
       bp->button_down_p = False;
       return True;
     }
+  else if (event->xany.type == ButtonPress &&	/* wheel up or right */
+           (event->xbutton.button == Button4 ||
+            event->xbutton.button == Button7))
+    {
+    UP:
+      if (bp->contrast <= 0) return False;
+      bp->contrast--;
+      return True;
+    }
+  else if (event->xany.type == ButtonPress &&	/* wheel down or left */
+           (event->xbutton.button == Button5 ||
+            event->xbutton.button == Button6))
+    {
+    DOWN:
+      if (bp->contrast >= 100) return False;
+      bp->contrast++;
+      return True;
+    }
   else if (event->xany.type == MotionNotify &&
            bp->button_down_p)
     {
@@ -139,6 +157,24 @@ quasicrystal_handle_event (ModeInfo *mi, XEvent *event)
       bp->mousex = event->xmotion.x;
       bp->mousey = event->xmotion.y;
       return True;
+    }
+  else
+    {
+      if (event->xany.type == KeyPress)
+        {
+          KeySym keysym;
+          char c = 0;
+          XLookupString (&event->xkey, &c, 1, &keysym, 0);
+          if (c == '<' || c == ',' || c == '-' || c == '_' ||
+              keysym == XK_Left || keysym == XK_Up || keysym == XK_Prior)
+            goto UP;
+          else if (c == '>' || c == '.' || c == '=' || c == '+' ||
+                   keysym == XK_Right || keysym == XK_Down ||
+                   keysym == XK_Next)
+            goto DOWN;
+        }
+
+      return screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event);
     }
 
   return False;
@@ -289,6 +325,11 @@ draw_quasicrystal (ModeInfo *mi)
   glDisable(GL_DEPTH_TEST);
   glDisable(GL_CULL_FACE);
   glDisable (GL_LIGHTING);
+  if (!wire)
+    {
+      glEnable (GL_TEXTURE_1D);
+      glEnable (GL_TEXTURE_2D);  /* jwzgles needs this too, bleh. */
+    }
 
   glEnable (GL_BLEND);
   glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -346,10 +387,7 @@ draw_quasicrystal (ModeInfo *mi)
       glColor4f (1, 1, 1, (wire ? 0.5 : 1.0 / bp->count));
 
       if (!wire)
-        {
-          glEnable (GL_TEXTURE_1D);
-          glBindTexture (GL_TEXTURE_1D, p->texid);
-        }
+        glBindTexture (GL_TEXTURE_1D, p->texid);
 
       glBegin (wire ? GL_LINE_LOOP : GL_QUADS);
       glNormal3f (0, 0, 1);

@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=UsUGENa7jvE"/>
+
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="10000"
@@ -42,6 +44,6 @@
   <_description>
 A growing plumbing system, with bolts and valves.
 
-Written by Marcelo Vianna; 1997.
+Written by Marcelo Vianna and Jamie Zawinski; 1997.
   </_description>
 </screensaver>

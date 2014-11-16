@@ -10,6 +10,7 @@ $ apollonian	:== $'mydir'apollonian
 $ apple2	:== $'mydir'apple2
 $ attraction	:== $'mydir'attraction
 $ barcode	:== $'mydir'barcode
+$ binaryring	:== $'mydir'binaryring
 $ blaster	:== $'mydir'blaster
 $ blitspin	:== $'mydir'blitspin
 $ bouboule	:== $'mydir'bouboule

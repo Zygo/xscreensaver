@@ -533,7 +533,7 @@ setup_X(struct state *st)
 
     st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
                                               st->window, 0, 0);
-    st->start_time = time ((time_t) 0);
+    st->start_time = time ((time_t *) 0);
   } else {
     XGCValues gcv;
 
@@ -1033,7 +1033,7 @@ ripples_draw (Display *dpy, Window window, void *closure)
       if (! st->img_loader) {  /* just finished */
         XWindowAttributes xgwa;
         XGetWindowAttributes(st->dpy, st->window, &xgwa);
-        st->start_time = time ((time_t) 0);
+        st->start_time = time ((time_t *) 0);
         st->orig_map = XGetImage (st->dpy, st->window, 0, 0, 
                                   xgwa.width, xgwa.height,
                                   ~0L, ZPixmap);
@@ -1043,12 +1043,12 @@ ripples_draw (Display *dpy, Window window, void *closure)
     }
 
     if (!st->img_loader &&
-        st->start_time + st->duration < time ((time_t) 0)) {
+        st->start_time + st->duration < time ((time_t *) 0)) {
       XWindowAttributes xgwa;
       XGetWindowAttributes(st->dpy, st->window, &xgwa);
       st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
                                                 st->window, 0, 0);
-      st->start_time = time ((time_t) 0);
+      st->start_time = time ((time_t *) 0);
       return st->delay;
     }
 

@@ -316,10 +316,11 @@ draw_histogram (ModeInfo *mi, GLfloat ratio)
         j = bp->histogram_fp + 1;
         for (i = 0; i < samples; i++)
           {
-            GLfloat x = i;
+            GLfloat x, y, z;
             if (j >= samples) j = 0;
-            GLfloat y = bp->histogram[j];
-            GLfloat z = 0;
+            x = i;
+            y = bp->histogram[j];
+            z = 0;
 
             y += (int) ((random() % 16) - 8);
             y += 16;  /* margin at bottom of screen */

@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=gmtAySJdsfg"/>
+
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="10000"
@@ -28,6 +30,6 @@ The barcodes follow the UPC-A, UPC-E, EAN-8 or EAN-13 standards.
 http://en.wikipedia.org/wiki/Universal_Product_Code
 http://en.wikipedia.org/wiki/European_Article_Number
 
-Written by Dan Bornstein; 2003.
+Written by Dan Bornstein and Jamie Zawinski; 2003.
   </_description>
 </screensaver>

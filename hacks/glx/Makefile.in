@@ -48,13 +48,14 @@ X_LIBS		= @X_LIBS@
 X_PRE_LIBS	= @X_PRE_LIBS@
 X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 XMU_LIBS	= @XMU_LIBS@
+XFT_LIBS	= @XFT_LIBS@
 
 # Note: see comment in ../../driver/Makefile.in for explanation of X_LIBS, etc.
 #
 HACK_PRE	= $(LIBS) $(X_LIBS)
-HACK_POST     = $(X_PRE_LIBS) -lXt -lX11 $(XMU_LIBS) -lXext $(X_EXTRA_LIBS) -lm
+HACK_POST     = $(X_PRE_LIBS) $(XFT_LIBS) -lXt -lX11 $(XMU_LIBS) -lXext $(X_EXTRA_LIBS) -lm
 HACK_POST2	= @GL_LIBS@ @HACK_LIBS@ $(HACK_POST)
-HACK_LIBS	= $(HACK_PRE)                       $(HACK_POST2)
+HACK_LIBS	= $(HACK_PRE)           @ANIM_LIBS@ $(HACK_POST2)
 XPM_LIBS	= $(HACK_PRE)            @XPM_LIBS@ $(HACK_POST2)
 GLE_LIBS	= $(HACK_PRE) @GLE_LIBS@ @XPM_LIBS@ $(HACK_POST2)
 TEXT_LIBS	= @PTY_LIBS@
@@ -68,15 +69,20 @@ UTILS_BIN	= $(HACK_BIN)/../utils
 INCLUDES_1	= -I. -I$(srcdir) -I$(UTILS_SRC) -I$(HACK_SRC) -I../..
 INCLUDES	= $(INCLUDES_1) @INCLUDES@
 
-UTILDIR_OBJS	= $(UTILS_SRC)/colors.o $(UTILS_SRC)/hsv.o \
-		  $(UTILS_SRC)/resources.o $(UTILS_SRC)/usleep.o \
-		  $(UTILS_SRC)/visual.o $(UTILS_SRC)/visual-gl.o \
-		  $(UTILS_SRC)/yarandom.o $(UTILS_SRC)/xshm.o \
-		  $(UTILS_SRC)/textclient.o
+UTILDIR_OBJS	= $(UTILS_BIN)/colors.o $(UTILS_BIN)/grabclient.o \
+		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/resources.o \
+		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/visual.o \
+		  $(UTILS_BIN)/xmu.o $(UTILS_BIN)/xft.o \
+		  $(UTILS_BIN)/utf8wc.o $(UTILS_BIN)/logo.o \
+		  $(UTILS_BIN)/minixpm.o $(UTILS_BIN)/visual-gl.o \
+		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/xshm.o \
+		  $(UTILS_BIN)/textclient.o $(UTILS_BIN)/async_netdb.o \
+		  $(UTILS_BIN)/aligned_malloc.o $(UTILS_BIN)/thread_util.o \
+		  $(UTILS_BIN)/spline.o
 HACKDIR_OBJS	= $(HACK_SRC)/screenhack.o $(UTILS_SRC)/xlockmore.o \
 		  $(HACK_SRC)/fps.o
 
-SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c fps-gl.c \
+SRCS		= xscreensaver-gl-helper.c normals.c fps-gl.c \
 		  atlantis.c b_draw.c b_lockglue.c b_sphere.c bubble3d.c \
 		  buildlwo.c cage.c dolphin.c gears.c lament.c lament_model.c \
 		  moebius.c morph3d.c pipeobjs.c pipes.c rubik.c s1_1.c s1_2.c \
@@ -89,7 +95,7 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c fps-gl.c \
 		  gflux.c stonerview.c stonerview-move.c stonerview-osc.c \
 		  stonerview-view.c starwars.c glut_stroke.c glut_swidth.c \
 		  gltext.c molecule.c dangerball.c sphere.c tube.c circuit.c \
-		  menger.c engine.c flipscreen3d.c font-ximage.c dnalogo.c \
+		  menger.c engine.c flipscreen3d.c dnalogo.c \
 		  grab-ximage.c glsnake.c boxed.c glforestfire.c sballs.c \
 		  cubenetic.c spheremonics.c marching.c lavalite.c rotator.c \
 		  trackball.c gltrackball.c queens.c endgame.c chessmodels.c \
@@ -114,10 +120,11 @@ SRCS		= xscreensaver-gl-helper.c normals.c glxfonts.c fps-gl.c \
 		  hilbert.c companion.c companion_quad.c companion_disc.c \
 		  companion_heart.c tronbit.c tronbit_idle1.c tronbit_idle2.c \
 		  tronbit_no.c tronbit_yes.c jwzgles.c kaleidocycle.c \
-		  quasicrystal.c unknownpleasures.c geodesic.c \
-		  projectiveplane.c winduprobot.c robot.c robot-wireframe.c
+		  quasicrystal.c unknownpleasures.c geodesic.c geodesicgears.c \
+		  projectiveplane.c winduprobot.c robot.c robot-wireframe.c \
+		  cityflow.c
 
-OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
+OBJS		= xscreensaver-gl-helper.o normals.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
 		  buildlwo.o cage.o dolphin.o gears.o lament.o lament_model.o \
 		  moebius.o morph3d.o pipeobjs.o pipes.o rubik.o s1_1.o s1_2.o \
@@ -130,7 +137,7 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  gflux.o stonerview.o stonerview-move.o stonerview-osc.o \
 		  stonerview-view.o starwars.o glut_stroke.o glut_swidth.o \
 		  gltext.o molecule.o dangerball.o sphere.o tube.o circuit.o \
-		  menger.o engine.o flipscreen3d.o font-ximage.o dnalogo.o \
+		  menger.o engine.o flipscreen3d.o dnalogo.o \
 	          grab-ximage.o glsnake.o boxed.o glforestfire.o sballs.o \
 		  cubenetic.o spheremonics.o marching.o lavalite.o rotator.o \
 		  trackball.o gltrackball.o queens.o endgame.o chessmodels.o \
@@ -155,8 +162,9 @@ OBJS		= xscreensaver-gl-helper.o normals.o glxfonts.o fps-gl.o \
 		  hilbert.o companion.o companion_quad.o companion_disc.o \
 		  companion_heart.o tronbit.o tronbit_idle1.o tronbit_idle2.o \
 		  tronbit_no.o tronbit_yes.o jwzgles.o kaleidocycle.o \
-		  quasicrystal.o unknownpleasures.o geodesic.o \
-		  projectiveplane.o winduprobot.o robot.o robot-wireframe.o
+		  quasicrystal.o unknownpleasures.o geodesic.o geodesicgears.o \
+		  projectiveplane.o winduprobot.o robot.o robot-wireframe.o \
+		  cityflow.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -173,7 +181,7 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  lockward cubicgrid hypnowheel skytentacles jigsaw photopile \
 		  rubikblocks surfaces hilbert companioncube tronbit \
 		  kaleidocycle quasicrystal unknownpleasures geodesic \
-		  projectiveplane winduprobot
+		  geodesicgears projectiveplane winduprobot cityflow
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 GL_UTIL_EXES	= xscreensaver-gl-helper
@@ -182,25 +190,29 @@ HACK_EXES_1	= @GL_EXES@ @GLE_EXES@
 HACK_EXES	= $(HACK_EXES_1) @SUID_EXES@
 XSHM_OBJS	= $(UTILS_BIN)/xshm.o
 GRAB_OBJS	= $(UTILS_BIN)/grabclient.o grab-ximage.o $(XSHM_OBJS)
+ANIM_OBJS	= recanim-gl.o
+ANIM_LIBS	= @XPM_LIBS@
 EXES		= @GL_UTIL_EXES@ $(HACK_EXES)
 
 RETIRED_EXES	= @RETIRED_GL_EXES@
 RETIRED_GL_EXES	= glforestfire
 
-FPS_OBJS	= glxfonts.o texfont.o $(HACK_BIN)/fps.o fps-gl.o
-HACK_OBJS	= $(JWZGLES_OBJS) $(HACK_BIN)/screenhack.o \
+FPS_OBJS	= texfont.o $(HACK_BIN)/fps.o fps-gl.o @XFT_OBJS@
+HACK_OBJS	= $(JWZGLES_OBJS) $(HACK_BIN)/screenhack.o @ANIM_OBJS@ \
 		  xlockmore-gl.o xlock-gl-utils.o ${FPS_OBJS} \
 		  $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/visual-gl.o $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/hsv.o \
-		  $(UTILS_BIN)/colors.o
+		  $(UTILS_BIN)/colors.o $(UTILS_BIN)/async_netdb.o \
+		  $(UTILS_BIN)/aligned_malloc.o $(UTILS_BIN)/thread_util.o \
+		  $(UTILS_BIN)/utf8wc.o
 
 HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
-		  grab-ximage.h font-ximage.h tube.h sphere.h boxed.h \
+		  grab-ximage.h tube.h sphere.h boxed.h \
 		  stonerview.h stonerview-move.h stonerview-osc.h \
 		  glutstroke.h glut_roman.h marching.h rotator.h trackball.h \
 		  gltrackball.h chessmodels.h chessgames.h gllist.h flurry.h \
-		  tunnel_draw.h ants.h polyhedra.h normals.h glxfonts.h \
+		  tunnel_draw.h ants.h polyhedra.h normals.h \
 		  texfont.h tangram_shapes.h sproingies.h extrusion.h \
 		  glschool.h glschool_gl.h glschool_alg.h topblock.h \
 		  involute.h teapot.h sonar.h dropshadow.h starwars.h \
@@ -228,7 +240,8 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  photopile.man rubikblocks.man surfaces.man hilbert.man \
 		  companioncube.man tronbit.man kaleidocycle.man \
 		  quasicrystal.man unknownpleasures.man geodesic.man \
-		  projectiveplane.man winduprobot.man
+		  geodesicgears.man projectiveplane.man winduprobot.man \
+		  cityflow.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -461,10 +474,19 @@ $(UTILS_BIN)/hsv.o:		$(UTILS_SRC)/hsv.c
 $(UTILS_BIN)/resources.o:	$(UTILS_SRC)/resources.c
 $(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
 $(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
+$(UTILS_BIN)/xmu.o:		$(UTILS_SRC)/xmu.c
+$(UTILS_BIN)/xft.o:		$(UTILS_SRC)/xft.c
+$(UTILS_BIN)/utf8wc.o:		$(UTILS_SRC)/utf8wc.c
+$(UTILS_BIN)/logo.o:		$(UTILS_SRC)/logo.c
+$(UTILS_BIN)/minixpm.o:		$(UTILS_SRC)/minixpm.c
 $(UTILS_BIN)/visual-gl.o:	$(UTILS_SRC)/visual-gl.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
 $(UTILS_BIN)/xshm.o:		$(UTILS_SRC)/xshm.c
 $(UTILS_BIN)/textclient.o:	$(UTILS_SRC)/textclient.c
+$(UTILS_BIN)/async_netdb.o:	$(UTILS_SRC)/async_netdb.c
+$(UTILS_BIN)/aligned_malloc.o:	$(UTILS_SRC)/aligned_malloc.c
+$(UTILS_BIN)/thread_util.o:	$(UTILS_SRC)/thread_util.c
+$(UTILS_BIN)/spline.o:		$(UTILS_SRC)/spline.c
 $(HACK_BIN)/screenhack.o:	$(HACK_SRC)/screenhack.c
 $(HACK_BIN)/xlockmore.o:	$(HACK_SRC)/xlockmore.c
 $(HACK_BIN)/fps.o:		$(HACK_SRC)/fps.c
@@ -495,6 +517,8 @@ xscreensaver-gl-helper: $(HELPER_OBJS)
 XLM_CFLAGS=-DUSE_GL $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS)
 xlockmore-gl.o: $(HACK_SRC)/xlockmore.c
 	$(CC) -o $@ -c $(XLM_CFLAGS) $(HACK_SRC)/xlockmore.c
+recanim-gl.o: $(HACK_SRC)/recanim.c
+	$(CC) -o $@ -c $(XLM_CFLAGS) $(HACK_SRC)/recanim.c
 
 CC_HACK		= $(CC) $(LDFLAGS)
 
@@ -521,7 +545,8 @@ FLURRY_OBJS = $(FLURRY_OBJS_1) $(HACK_OBJS)
 flurry:		flurry.o	$(FLURRY_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(FLURRY_OBJS) $(HACK_LIBS) -lm
 
-GEARS_OBJS=normals.o involute.o $(HACK_TRACK_OBJS)
+GEARS_OBJS_1=normals.o involute.o
+GEARS_OBJS=$(GEARS_OBJS_1) $(HACK_TRACK_OBJS)
 gears:		gears.o		tube.o $(GEARS_OBJS)
 	$(CC_HACK) -o $@ $@.o	tube.o $(GEARS_OBJS) $(HACK_LIBS)
 
@@ -596,8 +621,8 @@ DB_OBJS=sphere.o tube.o $(HACK_TRACK_OBJS)
 dangerball:	dangerball.o	$(DB_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(DB_OBJS) $(HACK_LIBS)
 
-circuit:	circuit.o	font-ximage.o $(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o   font-ximage.o $(HACK_OBJS) $(HACK_LIBS)
+circuit:	circuit.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o   $(HACK_OBJS) $(HACK_LIBS)
 
 menger:		menger.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o   $(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -672,9 +697,8 @@ bouncingcow:			$(COW_OBJS)
 	$(CC_HACK) -o $@	$(COW_OBJS) $(XPM_LIBS)
 
 ROBO_OBJS=\
-  robot.o robot-wireframe.o \
-  gllist.o xpm-ximage.o normals.o involute.o sphere.o \
-  winduprobot.o $(TEXT) $(HACK_TRACK_OBJS)
+  robot.o robot-wireframe.o gllist.o xpm-ximage.o sphere.o \
+  winduprobot.o $(GEARS_OBJS_1) $(TEXT) $(HACK_TRACK_OBJS)
 winduprobot:			$(ROBO_OBJS)
 	$(CC_HACK) -o $@	$(ROBO_OBJS) $(XPM_LIBS) $(TEXT_LIBS)
 
@@ -868,6 +892,12 @@ unknownpleasures: unknownpleasures.o	$(HACK_TRACK_OBJS)
 
 geodesic: geodesic.o		 normals.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	 normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+geodesicgears: geodesicgears.o	 $(GEARS_OBJS)
+	$(CC_HACK) -o $@ $@.o	 $(GEARS_OBJS) $(HACK_LIBS)
+
+cityflow:	cityflow.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 ##############################################################################
 #
@@ -1162,11 +1192,11 @@ chessmodels.o: ../../config.h
 chessmodels.o: $(srcdir)/jwzglesI.h
 chessmodels.o: $(srcdir)/jwzgles.h
 circuit.o: ../../config.h
-circuit.o: $(srcdir)/font-ximage.h
 circuit.o: $(HACK_SRC)/fps.h
 circuit.o: $(srcdir)/jwzglesI.h
 circuit.o: $(srcdir)/jwzgles.h
 circuit.o: $(HACK_SRC)/screenhackI.h
+circuit.o: $(srcdir)/texfont.h
 circuit.o: $(UTILS_SRC)/colors.h
 circuit.o: $(UTILS_SRC)/grabscreen.h
 circuit.o: $(UTILS_SRC)/hsv.h
@@ -1177,6 +1207,22 @@ circuit.o: $(UTILS_SRC)/xshm.h
 circuit.o: $(UTILS_SRC)/yarandom.h
 circuit.o: $(HACK_SRC)/xlockmoreI.h
 circuit.o: $(HACK_SRC)/xlockmore.h
+cityflow.o: ../../config.h
+cityflow.o: $(HACK_SRC)/fps.h
+cityflow.o: $(srcdir)/gltrackball.h
+cityflow.o: $(srcdir)/jwzglesI.h
+cityflow.o: $(srcdir)/jwzgles.h
+cityflow.o: $(HACK_SRC)/screenhackI.h
+cityflow.o: $(UTILS_SRC)/colors.h
+cityflow.o: $(UTILS_SRC)/grabscreen.h
+cityflow.o: $(UTILS_SRC)/hsv.h
+cityflow.o: $(UTILS_SRC)/resources.h
+cityflow.o: $(UTILS_SRC)/usleep.h
+cityflow.o: $(UTILS_SRC)/visual.h
+cityflow.o: $(UTILS_SRC)/xshm.h
+cityflow.o: $(UTILS_SRC)/yarandom.h
+cityflow.o: $(HACK_SRC)/xlockmoreI.h
+cityflow.o: $(HACK_SRC)/xlockmore.h
 companion_disc.o: ../../config.h
 companion_disc.o: $(srcdir)/gllist.h
 companion_disc.o: $(srcdir)/jwzglesI.h
@@ -1391,7 +1437,6 @@ endgame.o: $(HACK_SRC)/xlockmore.h
 engine.o: ../../config.h
 engine.o: $(HACK_SRC)/fps.h
 engine.o: $(srcdir)/gltrackball.h
-engine.o: $(srcdir)/glxfonts.h
 engine.o: $(srcdir)/jwzglesI.h
 engine.o: $(srcdir)/jwzgles.h
 engine.o: $(srcdir)/rotator.h
@@ -1571,14 +1616,9 @@ flyingtoasters.o: $(UTILS_SRC)/yarandom.h
 flyingtoasters.o: $(HACK_SRC)/xlockmoreI.h
 flyingtoasters.o: $(HACK_SRC)/xlockmore.h
 flyingtoasters.o: $(srcdir)/xpm-ximage.h
-font-ximage.o: ../../config.h
-font-ximage.o: $(srcdir)/font-ximage.h
-font-ximage.o: $(srcdir)/jwzglesI.h
-font-ximage.o: $(srcdir)/jwzgles.h
 fps-gl.o: ../../config.h
 fps-gl.o: $(HACK_SRC)/fpsI.h
 fps-gl.o: $(HACK_SRC)/fps.h
-fps-gl.o: $(srcdir)/glxfonts.h
 fps-gl.o: $(srcdir)/jwzglesI.h
 fps-gl.o: $(srcdir)/jwzgles.h
 fps-gl.o: $(HACK_SRC)/screenhackI.h
@@ -1612,6 +1652,27 @@ gears.o: $(UTILS_SRC)/xshm.h
 gears.o: $(UTILS_SRC)/yarandom.h
 gears.o: $(HACK_SRC)/xlockmoreI.h
 gears.o: $(HACK_SRC)/xlockmore.h
+geodesicgears.o: ../../config.h
+geodesicgears.o: $(HACK_SRC)/fps.h
+geodesicgears.o: $(srcdir)/gllist.h
+geodesicgears.o: $(srcdir)/gltrackball.h
+geodesicgears.o: $(srcdir)/involute.h
+geodesicgears.o: $(srcdir)/jwzglesI.h
+geodesicgears.o: $(srcdir)/jwzgles.h
+geodesicgears.o: $(srcdir)/normals.h
+geodesicgears.o: $(srcdir)/rotator.h
+geodesicgears.o: $(HACK_SRC)/screenhackI.h
+geodesicgears.o: $(srcdir)/texfont.h
+geodesicgears.o: $(UTILS_SRC)/colors.h
+geodesicgears.o: $(UTILS_SRC)/grabscreen.h
+geodesicgears.o: $(UTILS_SRC)/hsv.h
+geodesicgears.o: $(UTILS_SRC)/resources.h
+geodesicgears.o: $(UTILS_SRC)/usleep.h
+geodesicgears.o: $(UTILS_SRC)/visual.h
+geodesicgears.o: $(UTILS_SRC)/xshm.h
+geodesicgears.o: $(UTILS_SRC)/yarandom.h
+geodesicgears.o: $(HACK_SRC)/xlockmoreI.h
+geodesicgears.o: $(HACK_SRC)/xlockmore.h
 geodesic.o: ../../config.h
 geodesic.o: $(HACK_SRC)/fps.h
 geodesic.o: $(srcdir)/gllist.h
@@ -1774,6 +1835,7 @@ glmatrix.o: $(srcdir)/xpm-ximage.h
 glplanet.o: ../../config.h
 glplanet.o: $(HACK_SRC)/fps.h
 glplanet.o: $(srcdir)/gltrackball.h
+glplanet.o: $(HACK_SRC)/images/earth_night.xpm
 glplanet.o: $(HACK_SRC)/images/earth.xpm
 glplanet.o: $(srcdir)/jwzglesI.h
 glplanet.o: $(srcdir)/jwzgles.h
@@ -1821,7 +1883,6 @@ glschool.o: $(HACK_SRC)/xlockmoreI.h
 glschool.o: $(HACK_SRC)/xlockmore.h
 glslideshow.o: ../../config.h
 glslideshow.o: $(HACK_SRC)/fps.h
-glslideshow.o: $(srcdir)/glxfonts.h
 glslideshow.o: $(srcdir)/grab-ximage.h
 glslideshow.o: $(srcdir)/jwzglesI.h
 glslideshow.o: $(srcdir)/jwzgles.h
@@ -1839,7 +1900,6 @@ glslideshow.o: $(HACK_SRC)/xlockmoreI.h
 glslideshow.o: $(HACK_SRC)/xlockmore.h
 glsnake.o: ../../config.h
 glsnake.o: $(HACK_SRC)/fps.h
-glsnake.o: $(srcdir)/glxfonts.h
 glsnake.o: $(srcdir)/jwzglesI.h
 glsnake.o: $(srcdir)/jwzgles.h
 glsnake.o: $(HACK_SRC)/screenhackI.h
@@ -1871,6 +1931,7 @@ gltext.o: $(UTILS_SRC)/hsv.h
 gltext.o: $(UTILS_SRC)/resources.h
 gltext.o: $(UTILS_SRC)/textclient.h
 gltext.o: $(UTILS_SRC)/usleep.h
+gltext.o: $(UTILS_SRC)/utf8wc.h
 gltext.o: $(UTILS_SRC)/visual.h
 gltext.o: $(UTILS_SRC)/xshm.h
 gltext.o: $(UTILS_SRC)/yarandom.h
@@ -1889,13 +1950,6 @@ glut_swidth.o: ../../config.h
 glut_swidth.o: $(srcdir)/glutstroke.h
 glut_swidth.o: $(srcdir)/jwzglesI.h
 glut_swidth.o: $(srcdir)/jwzgles.h
-glxfonts.o: ../../config.h
-glxfonts.o: $(HACK_SRC)/fps.h
-glxfonts.o: $(srcdir)/glxfonts.h
-glxfonts.o: $(srcdir)/jwzglesI.h
-glxfonts.o: $(srcdir)/jwzgles.h
-glxfonts.o: $(srcdir)/texfont.h
-glxfonts.o: $(UTILS_SRC)/resources.h
 grab-ximage.o: ../../config.h
 grab-ximage.o: $(srcdir)/grab-ximage.h
 grab-ximage.o: $(srcdir)/jwzglesI.h
@@ -2011,7 +2065,6 @@ jigsaw.o: $(HACK_SRC)/xlockmore.h
 juggler3d.o: ../../config.h
 juggler3d.o: $(HACK_SRC)/fps.h
 juggler3d.o: $(srcdir)/gltrackball.h
-juggler3d.o: $(srcdir)/glxfonts.h
 juggler3d.o: $(srcdir)/jwzglesI.h
 juggler3d.o: $(srcdir)/jwzgles.h
 juggler3d.o: $(srcdir)/rotator.h
@@ -2204,7 +2257,6 @@ moebius.o: $(HACK_SRC)/xlockmore.h
 molecule.o: ../../config.h
 molecule.o: $(HACK_SRC)/fps.h
 molecule.o: $(srcdir)/gltrackball.h
-molecule.o: $(srcdir)/glxfonts.h
 molecule.o: $(srcdir)/jwzglesI.h
 molecule.o: $(srcdir)/jwzgles.h
 molecule.o: molecules.h
@@ -2278,7 +2330,6 @@ photopile.o: $(HACK_SRC)/xlockmore.h
 pinion.o: ../../config.h
 pinion.o: $(HACK_SRC)/fps.h
 pinion.o: $(srcdir)/gltrackball.h
-pinion.o: $(srcdir)/glxfonts.h
 pinion.o: $(srcdir)/involute.h
 pinion.o: $(srcdir)/jwzglesI.h
 pinion.o: $(srcdir)/jwzgles.h
@@ -2321,7 +2372,6 @@ pipes.o: $(HACK_SRC)/xlockmore.h
 polyhedra-gl.o: ../../config.h
 polyhedra-gl.o: $(HACK_SRC)/fps.h
 polyhedra-gl.o: $(srcdir)/gltrackball.h
-polyhedra-gl.o: $(srcdir)/glxfonts.h
 polyhedra-gl.o: $(srcdir)/jwzglesI.h
 polyhedra-gl.o: $(srcdir)/jwzgles.h
 polyhedra-gl.o: $(srcdir)/normals.h
@@ -2601,10 +2651,12 @@ sonar.o: $(srcdir)/rotator.h
 sonar.o: $(HACK_SRC)/screenhackI.h
 sonar.o: $(srcdir)/sonar.h
 sonar.o: $(srcdir)/texfont.h
+sonar.o: $(UTILS_SRC)/aligned_malloc.h
 sonar.o: $(UTILS_SRC)/colors.h
 sonar.o: $(UTILS_SRC)/grabscreen.h
 sonar.o: $(UTILS_SRC)/hsv.h
 sonar.o: $(UTILS_SRC)/resources.h
+sonar.o: $(UTILS_SRC)/thread_util.h
 sonar.o: $(UTILS_SRC)/usleep.h
 sonar.o: $(UTILS_SRC)/visual.h
 sonar.o: $(UTILS_SRC)/xshm.h
@@ -2625,7 +2677,6 @@ sonar-sim.o: $(UTILS_SRC)/yarandom.h
 spheremonics.o: ../../config.h
 spheremonics.o: $(HACK_SRC)/fps.h
 spheremonics.o: $(srcdir)/gltrackball.h
-spheremonics.o: $(srcdir)/glxfonts.h
 spheremonics.o: $(srcdir)/jwzglesI.h
 spheremonics.o: $(srcdir)/jwzgles.h
 spheremonics.o: $(srcdir)/normals.h
@@ -2712,14 +2763,13 @@ starwars.o: $(UTILS_SRC)/hsv.h
 starwars.o: $(UTILS_SRC)/resources.h
 starwars.o: $(UTILS_SRC)/textclient.h
 starwars.o: $(UTILS_SRC)/usleep.h
+starwars.o: $(UTILS_SRC)/utf8wc.h
 starwars.o: $(UTILS_SRC)/visual.h
 starwars.o: $(UTILS_SRC)/xshm.h
 starwars.o: $(UTILS_SRC)/yarandom.h
 starwars.o: $(HACK_SRC)/xlockmoreI.h
 starwars.o: $(HACK_SRC)/xlockmore.h
 stonerview-move.o: ../../config.h
-stonerview-move.o: $(srcdir)/jwzglesI.h
-stonerview-move.o: $(srcdir)/jwzgles.h
 stonerview-move.o: $(srcdir)/stonerview.h
 stonerview-move.o: $(srcdir)/stonerview-move.h
 stonerview-move.o: $(srcdir)/stonerview-osc.h
@@ -2744,8 +2794,6 @@ stonerview.o: $(UTILS_SRC)/yarandom.h
 stonerview.o: $(HACK_SRC)/xlockmoreI.h
 stonerview.o: $(HACK_SRC)/xlockmore.h
 stonerview-osc.o: ../../config.h
-stonerview-osc.o: $(srcdir)/jwzglesI.h
-stonerview-osc.o: $(srcdir)/jwzgles.h
 stonerview-osc.o: $(srcdir)/stonerview.h
 stonerview-osc.o: $(srcdir)/stonerview-move.h
 stonerview-osc.o: $(srcdir)/stonerview-osc.h
@@ -2805,7 +2853,6 @@ swim.o: $(UTILS_SRC)/yarandom.h
 swim.o: $(HACK_SRC)/xlockmoreI.h
 tangram.o: ../../config.h
 tangram.o: $(HACK_SRC)/fps.h
-tangram.o: $(srcdir)/glxfonts.h
 tangram.o: $(srcdir)/jwzglesI.h
 tangram.o: $(srcdir)/jwzgles.h
 tangram.o: $(HACK_SRC)/screenhackI.h
@@ -2832,10 +2879,13 @@ teapot.o: $(srcdir)/normals.h
 teapot.o: $(srcdir)/teapot2.h
 teapot.o: $(srcdir)/teapot.h
 texfont.o: ../../config.h
+texfont.o: $(HACK_SRC)/fps.h
 texfont.o: $(srcdir)/jwzglesI.h
 texfont.o: $(srcdir)/jwzgles.h
 texfont.o: $(srcdir)/texfont.h
 texfont.o: $(UTILS_SRC)/resources.h
+texfont.o: $(UTILS_SRC)/xft.h
+texfont.o: $(UTILS_SRC)/xshm.h
 timetunnel.o: ../../config.h
 timetunnel.o: $(HACK_SRC)/fps.h
 timetunnel.o: $(srcdir)/gltrackball.h
@@ -3022,7 +3072,6 @@ winduprobot.o: ../../config.h
 winduprobot.o: $(HACK_SRC)/fps.h
 winduprobot.o: $(srcdir)/gllist.h
 winduprobot.o: $(srcdir)/gltrackball.h
-winduprobot.o: $(srcdir)/glxfonts.h
 winduprobot.o: $(srcdir)/involute.h
 winduprobot.o: $(srcdir)/jwzglesI.h
 winduprobot.o: $(srcdir)/jwzgles.h
@@ -3043,7 +3092,6 @@ winduprobot.o: $(HACK_SRC)/xlockmore.h
 winduprobot.o: $(srcdir)/xpm-ximage.h
 xlock-gl-utils.o: ../../config.h
 xlock-gl-utils.o: $(HACK_SRC)/fps.h
-xlock-gl-utils.o: $(srcdir)/glxfonts.h
 xlock-gl-utils.o: $(srcdir)/jwzglesI.h
 xlock-gl-utils.o: $(srcdir)/jwzgles.h
 xlock-gl-utils.o: $(HACK_SRC)/screenhackI.h

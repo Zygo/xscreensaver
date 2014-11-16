@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=Y2JTY7bssPM"/>
+
   <hgroup>
    <number id="whirlies" type="spinbutton" arg="-whirlies %"
            _label="Whirlies" low="-1" high="50" default="-1"/>

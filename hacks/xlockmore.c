@@ -19,7 +19,7 @@
 #include "xlockmoreI.h"
 #include "screenhack.h"
 
-#ifndef HAVE_COCOA
+#if !defined(HAVE_COCOA) && !defined(HAVE_ANDROID)
 # include <X11/Intrinsic.h>
 #endif /* !HAVE_COCOA */
 
@@ -292,12 +292,12 @@ xlockmore_init (Display *dpy, Window window,
   mi->window = window;
   XGetWindowAttributes (dpy, window, &mi->xgwa);
   
-#ifdef HAVE_COCOA
+#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
   
 # if 0
-  /* In Cocoa-based xscreensaver, all hacks run in the same address space,
-     so each one needs to get its own screen number.  Believe what jwxyz
-     says about screen counts and numbers.
+  /* In Cocoa and Android-based xscreensaver, all hacks run in the
+     same address space, so each one needs to get its own screen
+     number.  Believe what jwxyz says about screen counts and numbers.
    */
   mi->num_screens = ScreenCount (dpy);
   mi->screen_number = XScreenNumberOfScreen (mi->xgwa.screen);
@@ -316,7 +316,7 @@ xlockmore_init (Display *dpy, Window window,
 # endif
   root_p = True;
 
-#else /* !HAVE_COCOA -- real Xlib */
+#else /* real Xlib */
   
   /* In Xlib-based xscreensaver, each hack runs in its own address space,
      so each one only needs to be aware of one screen.

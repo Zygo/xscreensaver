@@ -236,7 +236,9 @@ pixack_frame(struct state *st, char *pix_buf)
       /* John E. Pearson "Complex Patterns in a Simple System"
 	 Science, July 1993 */
 
-      uvv = (((r1 * r2) >> bps) * r2) >> bps;
+      /* uvv = (((r1 * r2) >> bps) * r2) >> bps; */
+      /* avoid signed integer overflow */
+      uvv = ((((r1 >> 1)* r2) >> bps) * r2) >> (bps - 1);
       switch (st->reaction) {  /* costs 4% */
       case 0:
 	r1 += 4 * (((28 * (mx-r1)) >> 10) - uvv);

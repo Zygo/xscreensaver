@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="https://www.youtube.com/watch?v=u8esWjcR4eI"/>
+
   <number id="delay" type="slider" arg="-delay %"
           _label="Duration" _low-label="2 seconds" _high-label="2 minutes"
           low="2" high="120" default="5"/>

@@ -51,7 +51,7 @@
  *   - plot IM contacts or Facebook friends and their last-activity times.
  */
 
-#define DEF_FONT "-*-lucidatypewriter-bold-r-normal-*-*-480-*-*-*-*-iso8859-1"
+#define DEF_FONT "-*-courier-bold-r-normal-*-*-480-*-*-*-*-iso8859-1"
 #define DEF_SPEED        "1.0"
 #define DEF_SWEEP_SIZE   "0.3"
 #define DEF_FONT_SIZE    "12"
@@ -66,10 +66,14 @@
 #define DEF_WOBBLE       "True"
 #define DEF_DEBUG        "False"
 
+#include "thread_util.h"
+
 #define DEFAULTS	"*delay:	30000       \n" \
 			"*font:       " DEF_FONT   "\n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
+			"*texFontCacheSize: 300     \n" \
+			THREAD_DEFAULTS_XLOCK
 
 
 # define refresh_sonar 0
@@ -88,6 +92,16 @@
 #include <ctype.h>
 
 #ifdef USE_GL /* whole file */
+
+/* #define TEST_ASYNC_NETDB 1 */
+
+# if TEST_ASYNC_NETDB
+#   include "async_netdb.h"
+
+#   include <assert.h>
+#   include <netinet/in.h>
+#   include <stdio.h>
+# endif /* TEST_ASYNC_NETDB */
 
 typedef struct {
   double x,y,z;
@@ -117,6 +131,10 @@ typedef struct {
   sonar_bogie *displayed;	/* on screen and fading */
   sonar_bogie *pending;		/* returned by sensor, not yet on screen */
 
+# if TEST_ASYNC_NETDB
+  async_name_from_addr_t query0;
+  async_addr_from_name_t query1;
+# endif
 } sonar_configuration;
 
 static sonar_configuration *sps = NULL;
@@ -152,6 +170,7 @@ static XrmOptionDescRec opts[] = {
   { "+times",        ".times",       XrmoptionNoArg, "False" },
   { "-wobble",       ".wobble",      XrmoptionNoArg, "True" },
   { "+wobble",       ".wobble",      XrmoptionNoArg, "False" },
+  THREAD_OPTIONS
   { "-debug",        ".debug",       XrmoptionNoArg, "True" },
 };
 
@@ -386,7 +405,7 @@ draw_text (ModeInfo *mi, const char *string, GLfloat r, GLfloat th,
     {
       int w = texture_string_width (sp->texfont, line, 0);
       glPushMatrix();
-      glTranslatef ((max_w-w)/2, 0, 0);
+      glTranslatef ((max_w-w)/2, 0, polys * 4); /* 'polys' stops Z-fighting. */
 
       if (wire)
         {
@@ -430,7 +449,6 @@ draw_table (ModeInfo *mi)
   int th_steps = 36 * 4;    /* same as in draw_screen */
 
   static const GLfloat color[4]  = {0.0, 0.0, 0.0, 1.0};
-  static const GLfloat text[4]   = {0.15, 0.15, 0.15, 1.0};
   static const GLfloat spec[4]   = {0.0, 0.0, 0.0, 1.0};
   static const GLfloat shiny     = 0.0;
 
@@ -456,6 +474,20 @@ draw_table (ModeInfo *mi)
     }
   glEnd();
 
+  return polys;
+}
+
+
+static int
+draw_angles (ModeInfo *mi)
+{
+  int i;
+  int polys = 0;
+
+  static const GLfloat text[4]   = {0.15, 0.15, 0.15, 1.0};
+  static const GLfloat spec[4]   = {0.0, 0.0, 0.0, 1.0};
+
+  glMaterialfv (GL_FRONT, GL_SPECULAR,  spec);
   glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, text);
   glTranslatef (0, 0, 0.01);
   for (i = 0; i < 360; i += 10)
@@ -830,6 +862,53 @@ init_sonar (ModeInfo *mi)
 }
 
 
+# ifdef TEST_ASYNC_NETDB
+
+#   include <arpa/inet.h>
+
+static void _print_sockaddr (void *addr, socklen_t addrlen, FILE *stream)
+{
+  sa_family_t family = ((struct sockaddr *)addr)->sa_family;
+  char buf[256];
+  switch (family)
+    {
+    case AF_INET:
+      fputs (inet_ntoa(((struct sockaddr_in *)addr)->sin_addr), stream);
+      break;
+    case AF_INET6:
+      inet_ntop(family, &((struct sockaddr_in6 *)addr)->sin6_addr,
+                buf, sizeof (buf));
+      fputs (buf, stream);
+      break;
+    default:
+      abort();
+      break;
+    }
+}
+
+static void _print_error (int gai_error, int errno_error, FILE *stream)
+{
+  fputs (gai_error == EAI_SYSTEM ? strerror(errno_error) : gai_strerror(gai_error), stream);
+}
+
+#   if ASYNC_NETDB_USE_GAI
+
+static void _print_thread (pthread_t thread, FILE *stream)
+{
+#     ifdef __linux__
+    fprintf (stream, "%#lx", thread);
+#     elif defined __APPLE__ && defined __MACH__
+    fprintf (stream, "%p", thread);
+#     else
+    putc ('?', stream);
+#     endif
+}
+
+#   endif /* ASYNC_NETDB_USE_GAI */
+
+# endif /* TEST_ASYNC_NETDB */
+
+
 static void
 init_sensor (ModeInfo *mi)
 {
@@ -857,6 +936,90 @@ init_sensor (ModeInfo *mi)
                                      debug_p);
   if (!sp->ssd)
     abort();
+
+# if TEST_ASYNC_NETDB
+  /*
+     For extremely mysterious reasons, setuid apparently causes
+     pthread_join(3) to deadlock.
+     A rough guess at the sequence of events:
+     1. Worker thread is created.
+     2. Worker thread exits.
+     3. setuid(getuid()) is called.
+     4. pthread_join is called slightly later.
+
+     This may have something to do with glibc's use of SIGSETXID.
+   */
+
+  putc ('\n', stderr);
+
+#   if !ASYNC_NETDB_USE_GAI
+  fputs ("Warning: getaddrinfo() was not available at compile time.\n", stderr);
+#   endif
+
+  {
+    static const unsigned long addresses[] =
+      {
+        INADDR_LOOPBACK,
+        0x00010203,
+        0x08080808
+      };
+    struct sockaddr_in addr;
+    addr.sin_family = AF_INET;
+    addr.sin_port = 0;
+    addr.sin_addr.s_addr = htonl (addresses[random () % 3]);
+
+    sp->query0 = async_name_from_addr_start (MI_DISPLAY (mi), (void *)&addr,
+                                             sizeof(addr));
+    assert (sp->query0);
+    if (sp->query0)
+      {
+        fputs ("Looking up hostname from address: ", stderr);
+        _print_sockaddr (&addr, sizeof(addr), stderr);
+#   if ASYNC_NETDB_USE_GAI
+        fputs (" @ ", stderr);
+        _print_thread (sp->query0->io.thread, stderr);
+#   endif
+        putc ('\n', stderr);
+      }
+
+    if (!(random () & 3))
+      {
+        fputs ("Aborted hostname lookup (early)\n", stderr);
+        async_name_from_addr_cancel (sp->query0);
+        sp->query0 = NULL;
+      }
+  }
+
+  {
+    static const char *const hosts[] =
+      {
+        "example.com",
+        "invalid",
+        "ip6-localhost"
+      };
+    const char *host = hosts[random () % 3];
+
+    sp->query1 = async_addr_from_name_start (MI_DISPLAY(mi), host);
+
+    assert (sp->query1);
+
+    fprintf (stderr, "Looking up address from hostname: %s", host);
+#   if ASYNC_NETDB_USE_GAI
+    fputs (" @ ", stderr);
+    _print_thread (sp->query1->io.thread, stderr);
+#   endif
+    putc ('\n', stderr);
+
+    if (!(random () & 3))
+      {
+        fputs ("Aborted address lookup (early)\n", stderr);
+        async_addr_from_name_cancel (sp->query1);
+        sp->query1 = NULL;
+      }
+  }
+
+  fflush (stderr);
+# endif
 }
 
 
@@ -948,6 +1111,10 @@ draw_sonar (ModeInfo *mi)
   glCallList (sp->grid_list);
   mi->polygon_count += sp->screen_polys;
 
+  glPushMatrix();
+  mi->polygon_count += draw_angles (mi);		/* angles */
+  glPopMatrix();
+
   if (sp->desc)						/* local subnet */
     {
       glPushMatrix();
@@ -982,6 +1149,72 @@ draw_sonar (ModeInfo *mi)
   glFinish();
 
   glXSwapBuffers(dpy, window);
+
+# if TEST_ASYNC_NETDB
+  if(sp->query0 && async_name_from_addr_is_done (sp->query0))
+    {
+      if (!(random () & 3))
+        {
+          fputs ("Aborted hostname lookup (late)\n", stderr);
+          async_name_from_addr_cancel (sp->query0);
+        }
+      else
+        {
+          char *hostname = NULL;
+          int errno_error;
+          int gai_error = async_name_from_addr_finish (sp->query0, &hostname,
+                                                       &errno_error);
+
+          if(gai_error)
+            {
+              fputs ("Couldn't get hostname: ", stderr);
+              _print_error (gai_error, errno_error, stderr);
+              putc ('\n', stderr);
+            }
+          else
+            {
+              fprintf (stderr, "Got a hostname: %s\n", hostname);
+              free (hostname);
+            }
+        }
+
+      sp->query0 = NULL;
+    }
+
+  if(sp->query1 && async_addr_from_name_is_done (sp->query1))
+    {
+      if (!(random () & 3))
+        {
+          fputs ("Aborted address lookup (late)\n", stderr);
+          async_addr_from_name_cancel (sp->query1);
+        }
+      else
+        {
+          async_netdb_sockaddr_storage_t addr;
+          socklen_t addrlen;
+          int errno_error;
+          int gai_error = async_addr_from_name_finish (sp->query1, &addr,
+                                                       &addrlen, &errno_error);
+
+          if (gai_error)
+            {
+              fputs ("Couldn't get address: ", stderr);
+              _print_error (gai_error, errno_error, stderr);
+              putc ('\n', stderr);
+            }
+          else
+            {
+              fputs ("Got an address: ", stderr);
+              _print_sockaddr (&addr, addrlen, stderr);
+              putc ('\n', stderr);
+            }
+        }
+
+      sp->query1 = NULL;
+    }
+
+  fflush (stderr);
+# endif /* TEST_ASYNC_NETDB */
 }
 
 ENTRYPOINT void

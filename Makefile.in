@@ -7,8 +7,7 @@ VPATH		= @srcdir@
 
 SHELL		= /bin/sh
 SUBDIRS 	= utils driver hacks hacks/glx po
-#SUBDIRS 	= utils driver hacks hacks/glx
-SUBDIRS2	= $(SUBDIRS) OSX
+SUBDIRS2	= $(SUBDIRS) OSX android
 TARFILES	= README README.hacking README.VMS INSTALL \
 		  configure configure.in Makefile.in config.h.in \
 		  config.h-vms install-sh setup.com config.guess aclocal.m4 \
@@ -326,10 +325,10 @@ www::
     fi ;								    \
   fi ;									    \
 									    \
-  git commit -a -m "$$VERS" . ;						    \
-  git tag -a "v$$VERS" -m "$$VERS" . ;					    \
+  git tag -a "v$$VERS" -m "$$VERS" ;					    \
+  git commit -m "$$VERS" . ;						    \
 									    \
-  ( cd $$DEST ;	git pull . ) ;						    \
+  ( cd $$DEST ;	git pull ) ;						    \
 									    \
   cp -p $$NAME $$DNAME ;						    \
   cp -p $$NAME2 $$DNAME2 ;						    \
@@ -372,8 +371,8 @@ www::
     exit 1 ;								    \
   fi ;									    \
 									    \
-  git commit -m "$$VERS" . ;						    \
   git tag -a "v$$VERS" -m "$$VERS" ;					    \
+  git commit -m "$$VERS" . ;						    \
   git push ;								    \
 
 

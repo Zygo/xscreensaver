@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=J3KAsV31d6M"/>
+
   <number id="size" type="slider" arg="-size %"
           _label="Size" _low-label="Tiny" _high-label="Huge"
           low="0.02" high="0.9" default="0.5"/>

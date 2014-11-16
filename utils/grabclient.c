@@ -527,26 +527,48 @@ struct pipe_closure {
 
 # ifndef USE_IPHONE
 
+# define BACKSLASH(c) \
+  (! ((c >= 'a' && c <= 'z') || \
+      (c >= 'A' && c <= 'Z') || \
+      (c >= '0' && c <= '9') || \
+      c == '.' || c == '_' || c == '-' || c == '+' || c == '/'))
+
 /* Gets the name of an image file to load by running xscreensaver-getimage-file
    at the end of a pipe.  This can be very slow!
  */
 static FILE *
 open_image_name_pipe (const char *dir)
 {
-  char *cmd = malloc (strlen(dir) * 2 + 100);
   char *s;
-  strcpy (cmd, "xscreensaver-getimage-file --name ");
-  s = cmd + strlen (cmd);
-  while (*dir) {
-    char c = *dir++;
-    /* put a backslash in front of any character that might confuse sh. */
-    if (! ((c >= 'a' && c <= 'z') ||
-           (c >= 'A' && c <= 'Z') ||
-           (c >= '0' && c <= '9') ||
-           c == '.' || c == '_' || c == '-' || c == '+' || c == '/'))
-      *s++ = '\\';
+
+# ifdef HAVE_COCOA
+  /* /bin/sh on OS X 10.10 wipes out the PATH. */
+  const char *path = getenv("PATH");
+  char *cmd = s = malloc ((strlen(dir) + strlen(path)) * 2 + 100);
+  strcpy (s, "/bin/sh -c 'export PATH=");
+  s += strlen (s);
+  while (*path) {
+    char c = *path++;
+    if (BACKSLASH(c)) *s++ = '\\';
     *s++ = c;
   }
+  strcpy (s, "; ");
+  s += strlen (s);
+# else
+  char *cmd = s = malloc (strlen(dir) * 2 + 100);
+# endif
+
+  strcpy (s, "xscreensaver-getimage-file --name ");
+  s += strlen (s);
+  while (*dir) {
+    char c = *dir++;
+    if (BACKSLASH(c)) *s++ = '\\';
+    *s++ = c;
+  }
+# ifdef HAVE_COCOA
+  strcpy (s, "'");
+  s += strlen (s);
+# endif
   *s = 0;
 
   FILE *pipe = popen (cmd, "r");

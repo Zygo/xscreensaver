@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=wqPOZiuj4RI"/>
+
   <number id="speed" type="slider" arg="-growth-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="18000" convert="invert"/>

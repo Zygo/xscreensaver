@@ -140,7 +140,7 @@ decayscreen_init (Display *dpy, Window window)
     gcflags |= GCSubwindowMode;
   st->gc = XCreateGC (st->dpy, st->window, gcflags, &gcv);
 
-  st->start_time = time ((time_t) 0);
+  st->start_time = time ((time_t *) 0);
   decayscreen_load_image (st);
 
   return st;
@@ -177,7 +177,7 @@ decayscreen_draw (Display *dpy, Window window, void *closure)
                                                   0, 0, 0, 0, 0);
         if (! st->img_loader) {  /* just finished */
 
-          st->start_time = time ((time_t) 0);
+          st->start_time = time ((time_t *) 0);
           if (st->random_p)
             st->mode = random() % (FUZZ+1);
 
@@ -199,7 +199,7 @@ decayscreen_draw (Display *dpy, Window window, void *closure)
     }
 
     if (!st->img_loader &&
-        st->start_time + st->duration < time ((time_t) 0)) {
+        st->start_time + st->duration < time ((time_t *) 0)) {
       decayscreen_load_image (st);
     }
 

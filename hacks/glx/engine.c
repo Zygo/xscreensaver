@@ -24,7 +24,7 @@
 #ifdef STANDALONE
 #define DEFAULTS        "*delay:           30000        \n" \
                         "*showFPS:         False        \n" \
-			"*titleFont:  -*-helvetica-medium-r-normal-*-180-*\n" \
+	"*titleFont:  -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
 
 # define refresh_engine 0
 # include "xlockmore.h"              /* from the xscreensaver distribution */
@@ -32,7 +32,7 @@
 # include "xlock.h"                  /* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-#include "glxfonts.h"
+#include "texfont.h"
 #include "rotator.h"
 #include "gltrackball.h"
 
@@ -895,7 +895,8 @@ ENTRYPOINT void init_engine(ModeInfo *mi)
     e->trackball = gltrackball_init (True);
  }
 
- if ((e->glx_context = init_GL(mi)) != NULL) {
+ if (!e->glx_context &&   /* re-initting breaks print_texture_label */
+     (e->glx_context = init_GL(mi)) != NULL) {
       reshape_engine(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
  } else {
      MI_CLEARWINDOW(mi);
@@ -972,10 +973,9 @@ ENTRYPOINT void draw_engine(ModeInfo *mi)
 
   glColor3f (1, 1, 0);
   if (do_titles)
-      print_gl_string (mi->dpy, e->font_data,
-                       mi->xgwa.width, mi->xgwa.height,
-                       10, mi->xgwa.height - 10,
-                       e->engine_name, False);
+      print_texture_label (mi->dpy, e->font_data,
+                           mi->xgwa.width, mi->xgwa.height,
+                           1, e->engine_name);
 
   if(mi->fps_p) do_fps(mi);
   glFinish(); 

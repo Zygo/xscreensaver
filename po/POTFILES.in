@@ -1,4 +1,4 @@
-# Auto-generated: Wed Sep 10 20:26:41 PDT 2014
+# Auto-generated: Sat Nov 15 15:33:42 PST 2014
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
@@ -16,6 +16,7 @@ hacks/config/atlantis.xml
 hacks/config/attraction.xml
 hacks/config/atunnel.xml
 hacks/config/barcode.xml
+hacks/config/binaryring.xml
 hacks/config/blaster.xml
 hacks/config/blinkbox.xml
 hacks/config/blitspin.xml
@@ -35,6 +36,7 @@ hacks/config/carousel.xml
 hacks/config/ccurve.xml
 hacks/config/celtic.xml
 hacks/config/circuit.xml
+hacks/config/cityflow.xml
 hacks/config/cloudlife.xml
 hacks/config/companioncube.xml
 hacks/config/compass.xml
@@ -81,6 +83,7 @@ hacks/config/fuzzyflakes.xml
 hacks/config/galaxy.xml
 hacks/config/gears.xml
 hacks/config/geodesic.xml
+hacks/config/geodesicgears.xml
 hacks/config/gflux.xml
 hacks/config/glblur.xml
 hacks/config/glcells.xml

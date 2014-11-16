@@ -48,9 +48,11 @@ typedef struct jwxyz_XrmDatabase *      XrmDatabase;
 typedef struct jwxyz_XImage		XImage;
 typedef struct jwxyz_XFontStruct	XFontStruct;
 typedef struct jwxyz_Font *		Font;
+typedef struct jwxyz_XFontSet *		XFontSet;
 typedef struct jwxyz_XCharStruct	XCharStruct;
 typedef struct jwxyz_XComposeStatus	XComposeStatus;
 typedef struct jwxyz_XPixmapFormatValues XPixmapFormatValues;
+typedef struct jwxyz_XChar2b            XChar2b;
 
 typedef union  jwxyz_XEvent		XEvent;
 typedef struct jwxyz_XAnyEvent		XAnyEvent;
@@ -365,6 +367,8 @@ extern int XDrawString (Display *, Drawable, GC, int x, int y, const char *,
                         int len);
 extern int XDrawImageString (Display *, Drawable, GC, int x, int y, 
                              const char *, int len);
+extern int XDrawString16 (Display *, Drawable, GC, int x, int y,
+                          const XChar2b *, int len);
 
 extern Bool XQueryPointer (Display *, Window, Window *root_ret,
                            Window *child_ret,
@@ -420,8 +424,23 @@ extern int XUnloadFont (Display *, Font);
 extern int XTextExtents (XFontStruct *, const char *, int length,
                          int *dir_ret, int *ascent_ret, int *descent_ret,
                          XCharStruct *overall_ret);
+extern int XTextExtents16 (XFontStruct *, const XChar2b *, int length,
+                           int *dir_ret, int *ascent_ret, int *descent_ret,
+                           XCharStruct *overall_ret);
 extern int XTextWidth (XFontStruct *, const char *, int length);
 extern int XSetFont (Display *, GC, Font);
+
+extern XFontSet XCreateFontSet (Display *, char *name, 
+                                char ***missing_charset_list_return,
+                                int *missing_charset_count_return,
+                                char **def_string_return);
+extern void XFreeFontSet (Display *, XFontSet);
+extern void XFreeStringList (char **);
+extern int Xutf8TextExtents (XFontSet, const char *, int num_bytes,
+                             XRectangle *overall_ink_return,
+                             XRectangle *overall_logical_return);
+extern void Xutf8DrawString (Display *, Drawable, XFontSet, GC,
+                             int x, int y, const char *, int num_bytes);
 
 extern Pixmap XCreatePixmap (Display *, Drawable,
                              unsigned int width, unsigned int height,
@@ -453,6 +472,7 @@ extern int visual_depth (Screen *, Visual *);
 extern int visual_cells (Screen *, Visual *);
 extern int visual_class (Screen *, Visual *);
 extern int get_bits_per_pixel (Display *, int);
+extern int screen_number (Screen *);
 
 // also declared in utils/grabclient.h
 extern Bool use_subwindow_mode_p (Screen *, Window);
@@ -695,11 +715,11 @@ struct jwxyz_XImage {
 };
 
 struct jwxyz_XCharStruct {
-  short	lbearing;	/* origin to left edge of raster */
-  short	rbearing;	/* origin to right edge of raster */
+  short	lbearing;	/* origin to left edge of ink */
+  short	rbearing;	/* origin to right edge of ink */
   short	width;		/* advance to next char's origin */
-  short	ascent;		/* baseline to top edge of raster */
-  short	descent;	/* baseline to bottom edge of raster */
+  short	ascent;		/* baseline to top edge of ink */
+  short	descent;	/* baseline to bottom edge of ink */
 #if 0
   unsigned short attributes;	/* per char flags (not predefined) */
 #endif
@@ -740,6 +760,11 @@ struct  jwxyz_XPixmapFormatValues {
   int depth;
   int bits_per_pixel;
   int scanline_pad;
+};
+
+struct jwxyz_XChar2b {
+  unsigned char byte1;
+  unsigned char byte2;
 };
 
 #endif /* __JWXYZ_H__ */

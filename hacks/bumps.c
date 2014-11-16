@@ -433,7 +433,7 @@ static void InitBumpMap_2(Display *dpy, SBumps *pBumps)
     XWindowAttributes XWinAttribs;
     XGetWindowAttributes( pBumps->dpy, pBumps->Win, &XWinAttribs );
 
-    pBumps->start_time = time ((time_t) 0);
+    pBumps->start_time = time ((time_t *) 0);
 
 	pScreenImage = XGetImage( pBumps->dpy, pBumps->source, 0, 0, 
                               pBumps->iWinWidth, pBumps->iWinHeight,
@@ -666,7 +666,7 @@ bumps_init (Display *dpy, Window Win)
     Bumps->duration = get_integer_resource (dpy, "duration", "Seconds");
     if (Bumps->delay < 0) Bumps->delay = 0;
     if (Bumps->duration < 1) Bumps->duration = 1;
-    Bumps->start_time = time ((time_t) 0);
+    Bumps->start_time = time ((time_t *) 0);
     return Bumps;
 }
 
@@ -684,7 +684,7 @@ bumps_draw (Display *dpy, Window window, void *closure)
     }
 
   if (!Bumps->img_loader &&
-      Bumps->start_time + Bumps->duration < time ((time_t) 0)) {
+      Bumps->start_time + Bumps->duration < time ((time_t *) 0)) {
     Bumps->img_loader = load_image_async_simple (0, Bumps->screen,
                                                  Bumps->Win, Bumps->source, 
                                                  0, 0);
