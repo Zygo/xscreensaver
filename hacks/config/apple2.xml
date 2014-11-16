@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="apple2" _label="Apple2">
+
+ <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=p3QZqhp67l8"/>
+
+ <hgroup>
+  <vgroup>
+   <select id="mode">
+    <option id="random"    _label="Choose display mode randomly"/>
+    <option id="text"      _label="Display scrolling text" arg-set="-mode text"/>
+    <option id="slideshow" _label="Display images"         arg-set="-mode slideshow"/>
+    <option id="basic"     _label="Run basic programs"     arg-set="-mode basic"/>
+   </select>
+
+   <xscreensaver-text />
+  </vgroup>
+  <vgroup>
+   <number id="duration" type="slider" arg="-duration %"
+           _label="Duration" _low-label="10 seconds" _high-label="10 minutes"
+           low="10" high="600" default="60"/>
+
+   <xscreensaver-image />
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <xscreensaver-updater />
+  </vgroup>
+
+   <vgroup>
+    <number id="tvcolor" type="slider" arg="-tv-color %"
+            _label="Color Knob" _low-label="Low" _high-label="High"
+            low="0" high="1000" default="70"/>
+    <number id="tvtint" type="slider" arg="-tv-tint %"
+            _label="Tint Knob" _low-label="Low" _high-label="High"
+            low="0" high="100" default="5"/>
+    <number id="tvbrightness" type="slider" arg="-tv-brightness %"
+            _label="Brightness Knob" _low-label="Low" _high-label="High"
+            low="0" high="200" default="150"/>
+    <number id="tvcontrast" type="slider" arg="-tv-contrast %"
+            _label="Contrast Knob" _low-label="Low" _high-label="High"
+            low="0" high="1500" default="1000"/>
+   </vgroup>
+  </hgroup>
+
+ <_description>
+An Apple ][+ computer simulation, in all its 1979 glory.  It also
+reproduces the appearance of display on a color television set of the
+period.
+
+In "Basic Programming Mode", a simulated user types in a BASIC program
+and runs it.  In "Text Mode", it displays the output of a program, or
+the contents of a file or URL.  In "Slideshow Mode", it chooses random
+images and displays them within the limitations of the Apple ][
+display hardware.  (Six available colors in hi-res mode!)
+
+On MacOS and Linux, this program is also a fully-functional VT100
+emulator!  Run it as an application instead of as a screen saver and
+you can use it as a terminal.
+
+http://en.wikipedia.org/wiki/Apple_II_series
+
+Written by Trevor Blackwell and Jamie Zawinski; 2003.
+  </_description>
+</screensaver>

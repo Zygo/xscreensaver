@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="cubicgrid" _label="CubicGrid" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=nOTi7gy9l-I"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+    _label="Frame rate" _low-label="Low" _high-label="High"
+    low="0" high="100000" default="20000" convert="invert"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+    _label="Speed" _low-label="Slow" _high-label="Fast"
+    low="0.2" high="10.0" default="1.0"/>
+
+  <number id="zoom" type="slider" arg="-zoom %"
+    _label="Dot spacing" _low-label="Close" _high-label="Far"
+    low="15" high="100" default="20"/>  
+
+  <boolean id="bigdots" _label="Big dots"            arg-unset="-no-bigdots"/>
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+A rotating lattice of colored points.
+
+Written by Vasek Potocek; 2007.
+  </_description>
+</screensaver>

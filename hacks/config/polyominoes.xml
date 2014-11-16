@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="polyominoes" _label="Polyominoes">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=6j2H2gL8cws"/>
+
+  <boolean id="identical" _label="Identical pieces" arg-set="-identical"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Duration" _low-label="Short" _high-label="Long"
+          low="500" high="5000" default="2000"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="2" high="255" default="64"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Repeatedly attempts to completely fill a rectangle with
+irregularly-shaped puzzle pieces.
+
+http://en.wikipedia.org/wiki/Polyomino
+
+Written by Stephen Montgomery-Smith; 2002.
+  </_description>
+</screensaver>

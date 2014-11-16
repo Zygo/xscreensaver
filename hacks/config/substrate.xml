@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="substrate" _label="Substrate">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=dCCVgBOVD0E"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="speed" type="slider" arg="-growth-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="18000" convert="invert"/>
+
+    <number id="maxcyc" type="slider" arg="-max-cycles %"
+            _label="Duration"  _low-label="Short" _high-label="Long"
+            low="2000" high="25000" default="10000" />
+
+    <number id="sandg" type="slider" arg="-sand-grains %"
+            _label="Sand grains" _low-label="Few" _high-label="Lots"
+            low="16" high="128" default="64" />
+
+    <number id="curve" type="slider" arg="-circle-percent %"
+            _label="Circle percentage" _low-label="0%" _high-label="100%"
+            low="0" high="100" default="33" />
+   </vgroup>
+   <vgroup>
+    <number id="init" type="spinbutton" arg="-initial-cracks %"
+            _label="Initial cracks" low="3" high="15" default="3"/>
+
+    <boolean id="wire" _label="Wireframe only" arg-set="-wireframe" />
+
+    <boolean id="seamless" _label="Seamless mode" arg-set="-seamless" />
+
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+Crystalline lines grow on a computational substrate.  A simple
+perpendicular growth rule creates intricate city-like structures.
+
+Written by J. Tarbell and Mike Kershaw; 2004.
+  </_description>
+</screensaver>

@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="interference" _label="Interference">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=nEmvx4l1sHI"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="wspeed" type="slider" arg="-speed %"
+              _label="Wave speed" _low-label="Slow" _high-label="Fast"
+              low="1" high="100" default="30"/>
+
+    <number id="radius" type="slider" arg="-radius %"
+              _label="Wave size" _low-label="Small" _high-label="Large"
+              low="50" high="1500" default="800"/>
+
+    <number id="count" type="slider" arg="-count %"
+            _label="Number of waves" _low-label="Few" _high-label="Many"
+           low="0" high="20" default="3"/>
+
+   </vgroup>
+   <vgroup>
+    <number id="gridsize" type="slider" arg="-gridsize %"
+            _label="Magnification" _low-label="Low" _high-label="High"
+            low="1" high="20" default="4"/>
+
+    <number id="ncolors" type="slider" arg="-ncolors %"
+              _label="Number of colors" _low-label="Two" _high-label="Many"
+              low="1" high="255" default="128"/>
+
+    <number id="color_contrast" type="slider" arg="-color-shift %"
+            _label="Color contrast" _low-label="Low" _high-label="High"
+             low="0" high="100" default="60"/>
+
+    <number id="hue" type="slider" arg="-hue %"
+            _label="Hue" _low-label="0" _high-label="360"
+             low="0" high="360" default="0"/>
+   </vgroup>
+  </hgroup>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Color field based on computing decaying sinusoidal waves.
+
+Written by Hannu Mallat; 1998.
+  </_description>
+</screensaver>

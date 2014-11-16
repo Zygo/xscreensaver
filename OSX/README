@@ -1,0 +1,39 @@
+
+This directory contains the MacOS-specific code for building a Cocoa
+version of xscreensaver without using X11.
+
+To build it, just type "make", or use the included XCode project.  The
+executables will show up in the "build/Release/" and/or "build/Debug/"
+directories.
+
+If you build using anything later than Xcode 5.0.2, the resultant savers
+will require MacOS 10.7 or later.  To support 10.4 through 10.6, you must
+use Xcode 5.0.2 or earlier.
+
+This is how you add a new screen saver to the Xcode project. It's a
+ridiculously long list of steps!
+
+  1: Duplicate a target (Dangerball for GL, or Attraction for X11).
+  2: Rename it, and drag it to the right spot in the list.
+  3: Delete the dangerball.c and dangerball.xml files from the new target.
+  4: Delete the "DangerBall copy-Info.plist" file that got created.
+  5: Delete the "DangerBall copy-Info.plist" from the Build Settings too.
+  6: Change PRODUCT_NAME in Build Settings.
+  7: Manage Schemes, rename "DangerBall Copy".
+  8: Move to the right place in the list.
+  9: Scheme / Run: set SELECTED_SAVER environment variable.
+ 10: Scheme / Run / Info: Executable: SaverTester.app.
+ 11: File / Add Files / the new .c and .xml.
+     Add to targets: the new target, and also "XScreenSaver-iOS".
+ 12: Re-order them in the file list.
+ 13: In target "All Savers (OpenGL)" add the new target as a dependency.
+ 14: In target "XScreenSaver-iOS", reorder new files in "Copy" and "Compile".
+ 15: In target "XScreenSaver-iOS", add "-DUSE_GL" to the new file's options.
+ 16: Put a 200x150 screen shot in ~/www/xscreensaver/screenshots/
+ 17: ln -s ../../src/xscreensaver/OSX/build/Debug/NEW.saver \
+           ~/Library/Screen\ Savers/
+ 18: git add xscreensaver.xcodeproj/xcuserdata/*/xcschemes/*.xcscheme
+ 19: Don't forget to create a man page from the XML with xml2man.pl,
+     and update Makefile.in.
+ 20: Make a video: -record-animation 3600 -delay 1 -geom 1920x1080+128+64
+     ./upload-video.pl NAME

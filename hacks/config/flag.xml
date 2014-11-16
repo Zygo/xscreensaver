@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="flag" _label="Flag">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=LuEC3EONzjc"/>
+
+  <string id="text" _label="Text for flag" arg="-text %"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="200000" default="50000"
+          convert="invert"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Timeout" _low-label="Small" _high-label="Large"
+          low="0" high="800000" default="1000"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="200"/>
+
+  <!-- #### -size [-7] -->
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+This screen saver was removed from the XScreenSaver distribution as of
+version 5.08.
+
+This draws a waving colored flag, that undulates its way around the
+screen.  The flag can contain arbitrary text and images.  By default,
+it displays either the current system name and OS type, or a picture
+of "Bob".
+
+Written by Charles Vidal and Jamie Zawinski; 1997.
+  </_description>
+</screensaver>

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="cubestorm" _label="CubeStorm" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=enuZbkMiqCE"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="30000"
+          convert="invert"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0.01" high="5.0" default="1.0"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Cubes" _low-label="Few" _high-label="Many"
+          low="1" high="20" default="4"/>
+
+  <number id="thickness" type="slider" arg="-thickness %"
+          _label="Struts" _low-label="Thin" _high-label="Thick"
+          low="0.01" high="1.0" default="0.06"/>
+
+  <hgroup>
+   <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
+   <boolean id="spin"   _label="Spin"      arg-unset="-no-spin"/>
+   <boolean id="wire"   _label="Wireframe" arg-set="-wireframe"/>
+  </hgroup>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Boxes change shape and intersect each other, filling space.
+
+Written by Jamie Zawinski; 2003.
+  </_description>
+</screensaver>

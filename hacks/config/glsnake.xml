@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="glsnake" _label="GLSnake" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=AIqz-G0n1JU"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="duration" type="slider" arg="-statictime %"
+            _label="Duration" _low-label="1" _high-label="30 seconds"
+            low="1000" high="30000" default="5000"/>
+
+    <number id="packing" type="slider" arg="-explode %"
+            _label="Packing" _low-label="Tight" _high-label="Loose"
+            low="0.0" high="0.5" default="0.03"/>
+   </vgroup>
+   <vgroup>
+
+    <number id="angvel" type="slider" arg="-angvel %"
+            _label="Angular velocity" _low-label="Slow" _high-label="Fast"
+            low="0.05" high="5.0" default="1.0"/>
+    <number id="yangvel" type="slider" arg="-yangvel %"
+            _label="Y angular velocity" _low-label="Slow" _high-label="Fast"
+            low="0.0" high="1.0" default="0.10"/>
+
+    <number id="zangvel" type="slider" arg="-zangvel %"
+            _label="Z angular velocity" _low-label="Slow" _high-label="Fast"
+            low="0.0" high="1.0" default="0.14"/>
+
+   </vgroup>
+  </hgroup>
+
+
+  <hgroup>
+   <boolean id="labels" _label="Show titles"      arg-set="-titles"/>
+   <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+The "Rubik's Snake" puzzle.  See also the "Rubik" and "Cube21" screen savers.
+
+http://en.wikipedia.org/wiki/Rubik%27s_Snake
+
+Written by Jamie Wilkinson, Andrew Bennetts, and Peter Aylett; 2002.
+  </_description>
+</screensaver>
