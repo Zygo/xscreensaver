@@ -73,7 +73,7 @@ ios_random_image_done (ios_loader_data *d, BOOL ok)
                      scale: 1
                      orientation: orient];
       if (img)
-        fn = [[rep filename] cStringUsingEncoding:NSISOLatin1StringEncoding];
+        fn = [[rep filename] cStringUsingEncoding:NSUTF8StringEncoding];
     }
   }
 

@@ -36,7 +36,7 @@ static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/28 xlockmore";
 
 #ifdef USE_GL
 
-#ifndef HAVE_COCOA
+#if !defined(HAVE_COCOA) && !defined(HAVE_ANDROID)
 # include <GL/glu.h>
 #endif
 

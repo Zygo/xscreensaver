@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=QfglC_lvUTA"/>
+
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
@@ -22,6 +24,6 @@ See also the "Queens" screen saver.
 
 http://en.wikipedia.org/wiki/Chess_endgame
 
-Written by Blair Tennessy; 2002.
+Written by Blair Tennessy and Jamie Zawinski; 2002.
   </_description>
 </screensaver>

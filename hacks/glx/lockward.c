@@ -48,6 +48,10 @@
 #define	NSPINNERS	4
 #define	NRADII		8
 #define	COLORIDX_SHF	4
+#define	SUBDIV		6
+
+#undef countof
+#define countof(x) (sizeof((x))/sizeof((*x)))
 
 
 /***************************************************************************
@@ -106,17 +110,26 @@ enum blinktype {
 	MAX_BTYPE
 };
 
+typedef struct { GLfloat x,y,z; } XYZ;
+
 typedef struct lockward_context {
 	GLXContext	*glx_context;
 
 	spinnerstate	spinners[NSPINNERS];
 	blinkstate	blink;
 
-	GLuint		blades_outer, blades_inner;
+        /* This used to put vertexes into lists without putting begin/end
+           into the same list!  I didn't even know that worked.  Well, it
+           doesn't work with jwzgles, so I changed it to not do that. */
+     /* GLuint		blades_outer, blades_inner; */
+        XYZ points_outer[NRADII][SUBDIV+1];
+        XYZ points_inner[NRADII][SUBDIV+1];
+
 	GLuint		rings;
 	Bool		blendmode;
 	int		nextblink;
 	int		fps;
+
 } lockward_context;
 
 
@@ -278,7 +291,6 @@ random_blade_rot (lockward_context *ctx, struct spinnerstate *ss)
  * the inner one, or the blade clockwise-ness will be wrong, and become
  * invisible.  Arcs of various radii are compiled.
  */
-#define	SUBDIV		6
 
 static void
 gen_blade_arcs (lockward_context *ctx)
@@ -296,11 +308,19 @@ gen_blade_arcs (lockward_context *ctx)
 	 * Start at left side of outer radius.  Strike all its vertices.
 	 */
 	for (n = 0;  n < NRADII;  ++n) {
-		glNewList (ctx->blades_outer + n, GL_COMPILE);
-		for (i = SUBDIV;  i >= 0;  --i)
-			glVertex3f (cos (here + step * i) * (n + 1.0),
-			            sin (here + step * i) * (n + 1.0), 0);
-		glEndList ();
+          /* glNewList (ctx->blades_outer + n, GL_COMPILE); */
+          XYZ *a = ctx->points_outer[n];
+          int j = 0;
+          for (i = SUBDIV;  i >= 0;  --i) {
+            /* glVertex3f (cos (here + step * i) * (n + 1.0),
+                           sin (here + step * i) * (n + 1.0), 0); */
+            a[j].x = cos (here + step * i) * (n + 1.0);
+            a[j].y = sin (here + step * i) * (n + 1.0);
+            a[j].z = 0;
+            j++;
+          }
+          if (j != SUBDIV+1) abort();
+          /* glEndList (); */
 	}
 
 	/*
@@ -308,11 +328,19 @@ gen_blade_arcs (lockward_context *ctx)
 	 * Move to inner radius, strike all vertices in opposite order.
 	 */
 	for (n = 0;  n < NRADII;  ++n) {
-		glNewList (ctx->blades_inner + n, GL_COMPILE);
-		for (i = 0;  i <= SUBDIV;  ++i)
-			glVertex3f (cos (here + step * i) * (n + 1.0),
-			            sin (here + step * i) * (n + 1.0), 0);
-		glEndList ();
+          /* glNewList (ctx->blades_inner + n, GL_COMPILE); */
+          XYZ *a = ctx->points_inner[n];
+          int j = 0;
+          for (i = 0;  i <= SUBDIV;  ++i) {
+            /* glVertex3f (cos (here + step * i) * (n + 1.0),
+		           sin (here + step * i) * (n + 1.0), 0); */
+            a[j].x = cos (here + step * i) * (n + 1.0);
+            a[j].y = sin (here + step * i) * (n + 1.0);
+            a[j].z = 0;
+            j++;
+          }
+          if (j != SUBDIV+1) abort();
+          /* glEndList (); */
 	}
 }
 
@@ -367,13 +395,25 @@ set_alpha_by_dwell (struct blinkstate *bs)
 		bs->color[3] = bs->dwellcnt > (-bs->dwell >> 2)  ?  1.0  : 0.0;
 }
 
+
 static void
-draw_blink_blade (lockward_context *ctx, int inner, int outer)
+draw_blink_blade (lockward_context *ctx, int inner, int outer,
+                  Bool begin_p)
 {
-	glBegin (GL_TRIANGLE_FAN);
-	glCallList (ctx->blades_outer + outer);
-	glCallList (ctx->blades_inner + inner);
-	glEnd ();
+  int i;
+  if (begin_p) glBegin (GL_TRIANGLE_FAN);
+  /* glCallList (ctx->blades_outer + outer); */
+  for (i = 0; i < countof(*ctx->points_outer); i++)
+    glVertex3f(ctx->points_outer[outer][i].x,
+               ctx->points_outer[outer][i].y,
+               ctx->points_outer[outer][i].z);
+
+  /* glCallList (ctx->blades_inner + inner); */
+  for (i = 0; i < countof(*ctx->points_inner); i++)
+    glVertex3f(ctx->points_inner[inner][i].x,
+               ctx->points_inner[inner][i].y,
+               ctx->points_inner[inner][i].z);
+  if (begin_p) glEnd();
 }
 
 static int
@@ -415,9 +455,9 @@ draw_blink_radial_random (lockward_context *ctx, struct blinkstate *bs)
 	glColor4fv (bs->color);
 	glRotatef (bs->direction * 360.0 / (GLfloat) g_blades, 0, 0, 1);
 	if (bs->radius >= 0)
-		draw_blink_blade (ctx, bs->radius, bs->radius + 1);
+		draw_blink_blade (ctx, bs->radius, bs->radius + 1, True);
 	else
-		draw_blink_blade (ctx, 0, NRADII - 1);
+		draw_blink_blade (ctx, 0, NRADII - 1, True);
 
 	--bs->dwellcnt;
 
@@ -443,7 +483,7 @@ draw_blink_radial_sequential (lockward_context *ctx, struct blinkstate *bs)
 	glRotatef ((bs->counter * bs->direction + (int) bs->val)
 	            * 360.0 / (GLfloat) g_blades,
 	           0, 0, 1);
-	draw_blink_blade (ctx, 0, NRADII - 1);
+	draw_blink_blade (ctx, 0, NRADII - 1, True);
 
 	--bs->dwellcnt;
 
@@ -472,7 +512,7 @@ draw_blink_radial_doubleseq (lockward_context *ctx, struct blinkstate *bs)
 	glPushMatrix ();
 	glRotatef (((int) bs->val + bs->counter) * 360.0 / (GLfloat) g_blades,
 	           0, 0, 1);
-	draw_blink_blade (ctx, 0, NRADII - 1);
+	draw_blink_blade (ctx, 0, NRADII - 1, True);
 	glPopMatrix ();
 	polys = SUBDIV + SUBDIV;
 
@@ -480,7 +520,7 @@ draw_blink_radial_doubleseq (lockward_context *ctx, struct blinkstate *bs)
 		glRotatef (((int) bs->val - bs->counter)
 		            * 360.0 / (GLfloat) g_blades,
 		           0, 0, 1);
-		draw_blink_blade (ctx, 0, NRADII - 1);
+		draw_blink_blade (ctx, 0, NRADII - 1, True);
 		polys += SUBDIV + SUBDIV;
 	}
 
@@ -591,7 +631,7 @@ draw_blink_segment_scatter (lockward_context *ctx, struct blinkstate *bs)
 
 			glPushMatrix ();
 			glRotatef (i * 360.0 / (GLfloat) g_blades, 0, 0, 1);
-			draw_blink_blade (ctx, inner, outer);
+			draw_blink_blade (ctx, inner, outer, True);
 			glPopMatrix ();
 
 			polys += SUBDIV + SUBDIV;
@@ -711,16 +751,20 @@ draw_lockward (ModeInfo *mi)
 		glPushMatrix ();
 		glRotatef (ss->rot - ss->rotcount * ss->rotinc, 0, 0, 1);
 		for (i = ss->nblades;  --i >= 0; ) {
-			glPushMatrix ();
-			glRotatef (360.0 * i / ss->nblades, 0, 0, 1);
+                  glPushMatrix ();
+                  glRotatef (360.0 * i / ss->nblades, 0, 0, 1);
 
-			glBegin (GL_TRIANGLE_FAN);
-			glCallList (ctx->blades_outer + ss->bladeidx[i].outer);
-			glCallList (ctx->blades_inner + ss->bladeidx[i].inner);
-			glEnd ();
+                  glBegin (GL_TRIANGLE_FAN);
+                  /* glCallList (ctx->blades_outer + ss->bladeidx[i].outer); */
+                  /* glCallList (ctx->blades_inner + ss->bladeidx[i].inner); */
+                  draw_blink_blade (ctx,
+                                    ss->bladeidx[i].inner,
+                                    ss->bladeidx[i].outer,
+                                    False);
+                  glEnd ();
 
-			glPopMatrix ();
-			mi->polygon_count += SUBDIV + SUBDIV;
+                  glPopMatrix ();
+                  mi->polygon_count += SUBDIV + SUBDIV;
 		}
 		glPopMatrix ();
 
@@ -805,8 +849,8 @@ init_lockward (ModeInfo *mi)
 	glShadeModel (GL_FLAT);
 	glFrontFace (GL_CW);
 
-	ctx->blades_outer	= glGenLists (NRADII);
-	ctx->blades_inner	= glGenLists (NRADII);
+	/* ctx->blades_outer	= glGenLists (NRADII); */
+	/* ctx->blades_inner	= glGenLists (NRADII); */
 	ctx->rings		= glGenLists (NRADII - 1);
 	ctx->blendmode		= 0;
 	ctx->fps		= 1000000 / MI_DELAY (mi);
@@ -892,10 +936,10 @@ free_lockward (lockward_context *ctx)
 		free (ctx->blink.noise);
 	if (glIsList (ctx->rings))
 		glDeleteLists (ctx->rings, NRADII - 1);
-	if (glIsList (ctx->blades_outer))
+	/* if (glIsList (ctx->blades_outer))
 		glDeleteLists (ctx->blades_outer, NRADII);
 	if (glIsList (ctx->blades_inner))
-		glDeleteLists (ctx->blades_inner, NRADII);
+		glDeleteLists (ctx->blades_inner, NRADII); */
 
 	for (i = NSPINNERS;  --i >= 0; ) {
 		spinnerstate *ss = &ctx->spinners[i];

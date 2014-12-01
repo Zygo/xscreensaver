@@ -50,13 +50,14 @@ X_LIBS		= @X_LIBS@
 X_PRE_LIBS	= @X_PRE_LIBS@
 X_EXTRA_LIBS	= @X_EXTRA_LIBS@
 XMU_LIBS	= @XMU_LIBS@
+XFT_LIBS	= @XFT_LIBS@
 
 # Note: see comment in ../driver/Makefile.in for explanation of X_LIBS, etc.
 #
 HACK_PRE	= $(LIBS) $(X_LIBS)
-HACK_POST     = $(X_PRE_LIBS) -lXt -lX11 $(XMU_LIBS) -lXext $(X_EXTRA_LIBS) -lm
-HACK_LIBS	= $(HACK_PRE)            @HACK_LIBS@ $(HACK_POST)
-XPM_LIBS	= $(HACK_PRE) @XPM_LIBS@ @HACK_LIBS@ $(HACK_POST)
+HACK_POST     = $(X_PRE_LIBS) $(XFT_LIBS) -lXt -lX11 $(XMU_LIBS) -lXext $(X_EXTRA_LIBS) -lm
+HACK_LIBS	= $(HACK_PRE) @ANIM_LIBS@ @HACK_LIBS@ $(HACK_POST)
+XPM_LIBS	= $(HACK_PRE) @XPM_LIBS@  @HACK_LIBS@ $(HACK_POST)
 JPEG_LIBS	= @JPEG_LIBS@
 XLOCK_LIBS	= $(HACK_LIBS)
 TEXT_LIBS	= @PTY_LIBS@
@@ -83,12 +84,13 @@ UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/spline.o $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/visual.o $(UTILS_BIN)/logo.o \
-		  $(UTILS_SRC)/minixpm.c \
+		  $(UTILS_SRC)/minixpm.o \
 		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/erase.o \
 		  $(UTILS_BIN)/xshm.o $(UTILS_BIN)/xdbe.o \
 		  $(UTILS_BIN)/colorbars.o \
 		  $(UTILS_SRC)/textclient.o $(UTILS_SRC)/aligned_malloc.o \
-		  $(UTILS_SRC)/thread_util.o
+		  $(UTILS_SRC)/thread_util.o \
+		  $(UTILS_SRC)/xft.o $(UTILS_SRC)/utf8wc.o
 
 SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  bubbles-default.c decayscreen.c deco.c drift.c flag.c \
@@ -119,7 +121,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  intermomentary.c fireworkx.c fiberlamp.c \
 		  boxfit.c interaggregate.c celtic.c cwaves.c m6502.c \
 		  asm6502.c abstractile.c lcdscrub.c hexadrop.c \
-		  tessellimage.c delaunay.c \
+		  tessellimage.c delaunay.c recanim.c binaryring.c \
 		  webcollage-cocoa.m webcollage-helper-cocoa.m
 SCRIPTS		= vidwhacker webcollage ljlatest
 
@@ -159,7 +161,8 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  intermomentary.o fireworkx.o fiberlamp.o boxfit.o \
 		  interaggregate.o celtic.o cwaves.o webcollage-cocoa.o \
 		  webcollage-helper-cocoa.o m6502.o asm6502.o abstractile.o \
-		  lcdscrub.o hexadrop.o tessellimage.o delaunay.o
+		  lcdscrub.o hexadrop.o tessellimage.o delaunay.o recanim.o \
+		  binaryring.o
 
 EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  drift flame galaxy grav greynetic halo \
@@ -181,7 +184,7 @@ EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  pacman fuzzyflakes anemotaxis memscroller substrate \
 		  intermomentary fireworkx fiberlamp boxfit interaggregate \
 		  celtic cwaves m6502 abstractile lcdscrub hexadrop \
-		  tessellimage \
+		  tessellimage binaryring \
 		  @JPEG_EXES@
 JPEG_EXES	= webcollage-helper
 
@@ -190,19 +193,22 @@ RETIRED_EXES	= ant bubbles critical flag forest hyperball hypercube laser \
 		  whirlygig worm xsublim juggle
 
 HACK_OBJS_1	= fps.o $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
-		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o @XMU_OBJS@
+		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o \
+		  $(UTILS_BIN)/utf8wc.o @XMU_OBJS@ @XFT_OBJS@ @ANIM_OBJS@
 HACK_OBJS	= screenhack.o $(HACK_OBJS_1)
 XLOCK_OBJS	= screenhack.o xlockmore.o $(COLOR_OBJS) $(HACK_OBJS_1)
 COLOR_OBJS	= $(UTILS_BIN)/hsv.o $(UTILS_BIN)/colors.o
 GRAB_OBJS	= $(UTILS_BIN)/grabclient.o
 XSHM_OBJS	= $(UTILS_BIN)/xshm.o
 XDBE_OBJS	= $(UTILS_BIN)/xdbe.o
+ANIM_OBJS	= recanim.o
+ANIM_LIBS	= @XPM_LIBS@
 THREAD_OBJS	= $(UTILS_BIN)/aligned_malloc.o $(UTILS_BIN)/thread_util.o
 
 HDRS		= screenhack.h screenhackI.h fps.h fpsI.h xlockmore.h \
 		  xlockmoreI.h automata.h bubbles.h xpm-pixmap.h \
 		  apple2.h analogtv.h pacman.h pacman_ai.h pacman_level.h \
-		  asm6502.h delaunay.h
+		  asm6502.h delaunay.h recanim.h
 MEN		= anemone.man apollonian.man attraction.man \
 	          blaster.man blitspin.man bouboule.man braid.man bsod.man \
 	          bumps.man ccurve.man compass.man coral.man \
@@ -234,7 +240,7 @@ MEN		= anemone.man apollonian.man attraction.man \
 		  anemotaxis.man memscroller.man substrate.man \
 		  intermomentary.man fireworkx.man fiberlamp.man boxfit.man \
 		  interaggregate.man celtic.man cwaves.man abstractile.man \
-		  lcdscrub.man hexadrop.man tessellimage.man
+		  lcdscrub.man hexadrop.man tessellimage.man binaryring.man
 
 RETIRED_MEN	= ant.man bubbles.man critical.man flag.man forest.man \
 		  laser.man lightning.man lisa.man lissie.man lmorph.man \
@@ -516,6 +522,8 @@ $(UTILS_BIN)/spline.o:		$(UTILS_SRC)/spline.c
 $(UTILS_BIN)/usleep.o:		$(UTILS_SRC)/usleep.c
 $(UTILS_BIN)/visual.o:		$(UTILS_SRC)/visual.c
 $(UTILS_BIN)/xmu.o:		$(UTILS_SRC)/xmu.c
+$(UTILS_BIN)/xft.o:		$(UTILS_SRC)/xft.c
+$(UTILS_BIN)/utf8wc.o:		$(UTILS_SRC)/utf8wc.c
 $(UTILS_BIN)/logo.o:		$(UTILS_SRC)/logo.c
 $(UTILS_BIN)/minixpm.o:		$(UTILS_SRC)/minixpm.c
 $(UTILS_BIN)/yarandom.o:	$(UTILS_SRC)/yarandom.c
@@ -561,6 +569,9 @@ xscreensaver-sgigl: xscreensaver-sgigl.c
 	$(CC) $(LDFLAGS) -o $@ $< -I$(UTILS_SRC) $(HACK_PRE) \
 		$(XMU_LIBS) -lX11 -lXext $(X_EXTRA_LIBS) -lm
 
+test-utf8wc: $(UTILS_SRC)/utf8wc.c
+	$(CC) $(INCLUDES) $(DEFS) $(CPPFLAGS) $(CFLAGS) $(X_CFLAGS) $(LDFLAGS)\
+	-o $@ -DSELFTEST $<
 
 # The rules for those hacks which follow the `screenhack.c' API.
 # If make wasn't such an utter abomination, these could all be combined
@@ -570,6 +581,9 @@ xscreensaver-sgigl: xscreensaver-sgigl.c
 #
 attraction:	attraction.o	$(HACK_OBJS) $(COL) $(SPL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(SPL) $(HACK_LIBS)
+
+binaryring:  binaryring.o $(HACK_OBJS) $(COL)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 blitspin:	blitspin.o	$(HACK_OBJS) $(GRAB) $(XPM)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(XPM) $(XPM_LIBS)
@@ -671,7 +685,7 @@ truchet:	 truchet.o	$(HACK_OBJS) $(COL)
 	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 bsod:	 	bsod.o		$(HACK_OBJS) $(GRAB) $(APPLE2) $(XPM)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(APPLE2) $(XPM) $(XPM_LIBS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(GRAB) $(APPLE2) $(XPM) $(XPM_LIBS) $(THRL)
 
 apple2:	 	apple2.o apple2-main.o	$(HACK_OBJS) $(ATV) $(GRAB) $(TEXT)
 	$(CC_HACK) -o $@ $@.o	apple2-main.o $(HACK_OBJS) $(ATV) $(GRAB) $(TEXT) $(XPM_LIBS) $(TEXT_LIBS) $(THRL)
@@ -1080,6 +1094,7 @@ apple2-main.o: $(UTILS_SRC)/resources.h
 apple2-main.o: $(UTILS_SRC)/textclient.h
 apple2-main.o: $(UTILS_SRC)/thread_util.h
 apple2-main.o: $(UTILS_SRC)/usleep.h
+apple2-main.o: $(UTILS_SRC)/utf8wc.h
 apple2-main.o: $(UTILS_SRC)/visual.h
 apple2-main.o: $(UTILS_SRC)/xshm.h
 apple2-main.o: $(UTILS_SRC)/yarandom.h
@@ -1124,6 +1139,17 @@ barcode.o: $(UTILS_SRC)/resources.h
 barcode.o: $(UTILS_SRC)/usleep.h
 barcode.o: $(UTILS_SRC)/visual.h
 barcode.o: $(UTILS_SRC)/yarandom.h
+binaryring.o: ../config.h
+binaryring.o: $(srcdir)/fps.h
+binaryring.o: $(srcdir)/screenhackI.h
+binaryring.o: $(srcdir)/screenhack.h
+binaryring.o: $(UTILS_SRC)/colors.h
+binaryring.o: $(UTILS_SRC)/grabscreen.h
+binaryring.o: $(UTILS_SRC)/hsv.h
+binaryring.o: $(UTILS_SRC)/resources.h
+binaryring.o: $(UTILS_SRC)/usleep.h
+binaryring.o: $(UTILS_SRC)/visual.h
+binaryring.o: $(UTILS_SRC)/yarandom.h
 blaster.o: ../config.h
 blaster.o: $(srcdir)/fps.h
 blaster.o: $(srcdir)/screenhackI.h
@@ -1612,7 +1638,9 @@ fontglide.o: $(UTILS_SRC)/hsv.h
 fontglide.o: $(UTILS_SRC)/resources.h
 fontglide.o: $(UTILS_SRC)/textclient.h
 fontglide.o: $(UTILS_SRC)/usleep.h
+fontglide.o: $(UTILS_SRC)/utf8wc.h
 fontglide.o: $(UTILS_SRC)/visual.h
+fontglide.o: $(UTILS_SRC)/xft.h
 fontglide.o: $(UTILS_SRC)/yarandom.h
 forest.o: ../config.h
 forest.o: $(srcdir)/fps.h
@@ -2102,6 +2130,7 @@ noseguy.o: $(UTILS_SRC)/resources.h
 noseguy.o: $(UTILS_SRC)/textclient.h
 noseguy.o: $(UTILS_SRC)/usleep.h
 noseguy.o: $(UTILS_SRC)/visual.h
+noseguy.o: $(UTILS_SRC)/xft.h
 noseguy.o: $(UTILS_SRC)/yarandom.h
 noseguy.o: $(srcdir)/xpm-pixmap.h
 pacman_ai.o: ../config.h
@@ -2245,6 +2274,7 @@ phosphor.o: $(UTILS_SRC)/hsv.h
 phosphor.o: $(UTILS_SRC)/resources.h
 phosphor.o: $(UTILS_SRC)/textclient.h
 phosphor.o: $(UTILS_SRC)/usleep.h
+phosphor.o: $(UTILS_SRC)/utf8wc.h
 phosphor.o: $(UTILS_SRC)/visual.h
 phosphor.o: $(UTILS_SRC)/yarandom.h
 piecewise.o: ../config.h
@@ -2332,6 +2362,17 @@ rd-bomb.o: $(UTILS_SRC)/resources.h
 rd-bomb.o: $(UTILS_SRC)/usleep.h
 rd-bomb.o: $(UTILS_SRC)/visual.h
 rd-bomb.o: $(UTILS_SRC)/yarandom.h
+recanim.o: ../config.h
+recanim.o: $(srcdir)/fps.h
+recanim.o: $(srcdir)/recanim.h
+recanim.o: $(srcdir)/screenhackI.h
+recanim.o: $(UTILS_SRC)/colors.h
+recanim.o: $(UTILS_SRC)/grabscreen.h
+recanim.o: $(UTILS_SRC)/hsv.h
+recanim.o: $(UTILS_SRC)/resources.h
+recanim.o: $(UTILS_SRC)/usleep.h
+recanim.o: $(UTILS_SRC)/visual.h
+recanim.o: $(UTILS_SRC)/yarandom.h
 ripples.o: ../config.h
 ripples.o: $(srcdir)/fps.h
 ripples.o: $(srcdir)/screenhackI.h
@@ -2392,6 +2433,7 @@ rotzoomer.o: $(UTILS_SRC)/visual.h
 rotzoomer.o: $(UTILS_SRC)/yarandom.h
 screenhack.o: ../config.h
 screenhack.o: $(srcdir)/fps.h
+screenhack.o: $(srcdir)/recanim.h
 screenhack.o: $(srcdir)/screenhackI.h
 screenhack.o: $(UTILS_SRC)/colors.h
 screenhack.o: $(UTILS_SRC)/grabscreen.h

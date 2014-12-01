@@ -469,8 +469,8 @@ starfish_draw (Display *dpy, Window window, void *closure)
   if (st->duration > 0)
     {
       if (st->start_time == 0)
-        st->start_time = time ((time_t) 0);
-      now = time ((time_t) 0);
+        st->start_time = time ((time_t *) 0);
+      now = time ((time_t *) 0);
       if (st->start_time + st->duration < now)
         {
           st->start_time = now;

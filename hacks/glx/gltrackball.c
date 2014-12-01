@@ -20,7 +20,10 @@
 
 #ifdef HAVE_COCOA
 # include "jwxyz.h"
-#else  /* !HAVE_COCOA -- real X11 */
+#elif defined(HAVE_ANDROID)
+# include "jwxyz.h"
+# include <GLES/gl.h>
+#else  /* real X11 */
 # include <X11/X.h>
 # include <X11/Xlib.h>
 # include <GL/gl.h>
@@ -73,7 +76,11 @@ gltrackball_init (int ignore_device_rotation_p)
 void
 gltrackball_reset (trackball_state *ts)
 {
+  int bd = ts->button_down_p;
+  int ig = ts->ignore_device_rotation_p;
   memset (ts, 0, sizeof(*ts));
+  ts->button_down_p = bd;
+  ts->ignore_device_rotation_p = ig;
   trackball (ts->q, 0, 0, 0, 0);
 }
 

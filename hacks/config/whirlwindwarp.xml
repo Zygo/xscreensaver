@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=eWrRhSYzimY"/>
+
   <number id="points" type="slider" arg="-points %"
           _label="Particles" _low-label="Few" _high-label="Many"
           low="10" high="1000" default="400"/>

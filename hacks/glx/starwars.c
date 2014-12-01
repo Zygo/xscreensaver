@@ -41,9 +41,10 @@
 		 "*showFPS:  False     \n" \
 		 "*fpsTop:   True      \n" \
 		 "*usePty:   False     \n" \
+		 "*texFontCacheSize: 300\n" \
 		 "*font:   " DEF_FONT "\n" \
-		 "*textLiteral: " DEF_TEXT "\n"
-
+		 "*textLiteral: " DEF_TEXT "\n" \
+		 "*program: xscreensaver-text --cols 0"  /* don't wrap */
 
 # define refresh_sws 0
 # define sws_handle_event 0
@@ -52,6 +53,7 @@
 
 #include "xlockmore.h"
 #include "textclient.h"
+#include "utf8wc.h"
 
 #ifdef USE_GL /* whole file */
 
@@ -64,7 +66,6 @@
 # endif
 
 
-#define DEF_PROGRAM    "xscreensaver-text --cols 0"  /* don't wrap */
 #define DEF_LINES      "125"
 #define DEF_STEPS      "35"
 #define DEF_SPIN       "0.03"
@@ -78,14 +79,7 @@
 #define DEF_TEXTURES   "True"
 #define DEF_DEBUG      "False"
 
-/* Utopia 800 needs 64 512x512 textures (4096x4096 bitmap).
-   Utopia 720 needs 16 512x512 textures (2048x2048 bitmap).
-   Utopia 480 needs 16 512x512 textures (2048x2048 bitmap).
-   Utopia 400 needs  4 512x512 textures (1024x1024 bitmap).
-   Utopia 180 needs  1 512x512 texture.
-   Times  240 needs  1 512x512 texture.
- */
-#define DEF_FONT       "-*-utopia-bold-r-normal-*-*-720-*-*-*-*-iso8859-1"
+#define DEF_FONT       "-*-utopia-bold-r-normal-*-*-360-*-*-*-*-*-*"
 
 #define TAB_WIDTH        8
 
@@ -107,7 +101,6 @@ typedef struct {
 
   GLuint text_list, star_list;
   texture_font_data *texfont;
-  int polygon_count;
   text_data *tc;
 
   char *buf;
@@ -132,7 +125,6 @@ typedef struct {
 
 static sws_configuration *scs = NULL;
 
-static char *program;
 static int max_lines;
 static int scroll_steps;
 static float star_spin;
@@ -148,7 +140,6 @@ static char *alignment_str;
 static int alignment;
 
 static XrmOptionDescRec opts[] = {
-  {"-program",     ".program",   XrmoptionSepArg, 0 },
   {"-lines",       ".lines",     XrmoptionSepArg, 0 },
   {"-steps",       ".steps",     XrmoptionSepArg, 0 },
   {"-spin",        ".spin",      XrmoptionSepArg, 0 },
@@ -174,7 +165,6 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {&program,        "program",   "Program",    DEF_PROGRAM,   t_String},
   {&max_lines,      "lines",     "Integer",    DEF_LINES,     t_Int},
   {&scroll_steps,   "steps",     "Integer",    DEF_STEPS,     t_Int},
   {&star_spin,      "spin",      "Float",      DEF_SPIN,      t_Float},
@@ -250,32 +240,6 @@ strip (char *s, Bool leading, Bool trailing)
       while (*s2)
         *s++ = *s2++;
       *s = 0;
-    }
-}
-
-
-/* The GLUT font only has ASCII characters in them, so do what we can to
-   convert Latin1 characters to the nearest ASCII equivalent... 
- */
-static void
-latin1_to_ascii (char *s)
-{
-  unsigned char *us = (unsigned char *) s;
-  const unsigned char ascii[95] = {
-    '!', 'C', '#', '#', 'Y', '|', 'S', '_', 'C', '?', '<', '=', '-', 'R', '_',
-    '?', '?', '2', '3', '\'','u', 'P', '.', ',', '1', 'o', '>', '?', '?', '?',
-    '?', 'A', 'A', 'A', 'A', 'A', 'A', 'E', 'C', 'E', 'E', 'E', 'E', 'I', 'I',
-    'I', 'I', 'D', 'N', 'O', 'O', 'O', 'O', 'O', 'x', '0', 'U', 'U', 'U', 'U',
-    'Y', 'p', 'S', 'a', 'a', 'a', 'a', 'a', 'a', 'e', 'c', 'e', 'e', 'e', 'e',
-    'i', 'i', 'i', 'i', 'o', 'n', 'o', 'o', 'o', 'o', 'o', '/', 'o', 'u', 'u',
-    'u', 'u', 'y', 'p', 'y' };
-  while (*us)
-    {
-      if (*us >= 161)
-        *us = ascii[*us - 161];
-      else if (*us > 127)
-        *us = '?';
-      us++;
     }
 }
 
@@ -368,7 +332,12 @@ get_more_lines (sws_configuration *sc)
           sc->lines[sc->total_lines][L] = 0;
 
           if (!textures_p)
-            latin1_to_ascii (sc->lines[sc->total_lines]);
+            {
+              /* The GLUT font only has ASCII characters. */
+              char *s1 = utf8_to_latin1 (sc->lines[sc->total_lines], True);
+              free (sc->lines[sc->total_lines]);
+              sc->lines[sc->total_lines] = s1;
+            }
 
           {
             char *t = sc->lines[sc->total_lines];
@@ -431,20 +400,19 @@ draw_string (sws_configuration *sc, GLfloat x, GLfloat y, const char *s)
 
   if (debug_p)
     {
-      GLfloat w;
       GLfloat h = sc->line_height / sc->font_scale;
-      char c[2];
-      c[1]=0;
-      s = os;
+      char **chars = utf8_split (os, 0);
+      int i;
+
       if (textures_p) glDisable (GL_TEXTURE_2D);
       glLineWidth (1);
       glColor3f (0.4, 0.4, 0.4);
       glPushMatrix ();
       glTranslatef (x, y, 0);
-      while (*s)
+      for (i = 0; chars[i]; i++)
         {
-          *c = *s++;
-          w = sw_string_width (sc, c);
+          GLfloat w = sw_string_width (sc, chars[i]);
+          free (chars[i]);
           glBegin (GL_LINE_LOOP);
           glVertex3f (0, 0, 0);
           glVertex3f (w, 0, 0);
@@ -453,6 +421,7 @@ draw_string (sws_configuration *sc, GLfloat x, GLfloat y, const char *s)
           glEnd();
           glTranslatef (w, 0, 0);
         }
+      free (chars);
       glPopMatrix ();
       if (textures_p) glEnable (GL_TEXTURE_2D);
     }
@@ -670,8 +639,6 @@ gl_init (ModeInfo *mi)
 {
   sws_configuration *sc = &scs[MI_SCREEN(mi)];
 
-  program = get_string_resource (mi->dpy, "program", "Program");
-
   glDisable (GL_LIGHTING);
   glDisable (GL_DEPTH_TEST);
 
@@ -788,12 +755,16 @@ init_sws (ModeInfo *mi)
   sc->line_height = font_height * sc->font_scale;
 
 
-  /* Buffer only two lines of text.
+  /* Buffer only a few lines of text.
      If the buffer is too big, there's a significant delay between
      when the program launches and when the text appears, which can be
      irritating for time-sensitive output (clock, current music, etc.)
+
+     I'd like to buffer only 2 lines, but we need to assume that we
+     could get a whole line of N-byte Unicrud, and if we fill the buffer
+     before hitting the end of the line, we stall.
    */
-  sc->buf_size = target_columns * 2;
+  sc->buf_size = target_columns * 2 * 4;
   if (sc->buf_size < 80) sc->buf_size = 80;
   sc->buf = (char *) calloc (1, sc->buf_size);
 
@@ -914,14 +885,78 @@ draw_sws (ModeInfo *mi)
         }
       if (textures_p) glEnable (GL_TEXTURE_2D);
       glPopMatrix ();
+      check_gl_error ("debug render");
     }
 
   /* Scroll to current position */
   glTranslatef (0.0, sc->intra_line_scroll, 0.0);
 
   glColor3f (1.0, 1.0, 0.4);
-  glCallList (sc->text_list);
-  mi->polygon_count = sc->polygon_count;
+
+  mi->polygon_count = 0;
+
+  glPushMatrix ();
+  glScalef (sc->font_scale, sc->font_scale, sc->font_scale);
+  for (i = 0; i < sc->total_lines; i++)
+    {
+      double fade = (fade_p ? 1.0 * i / sc->total_lines : 1.0);
+      int offscreen_lines = 2;
+
+      double x = -0.5;
+      double y =  ((sc->total_lines - (i + offscreen_lines) - 1)
+                   * sc->line_height);
+      double xoff = 0;
+      char *line = sc->lines[i];
+
+      if (debug_p)
+        {
+          double xx = x * 1.4;  /* a little more to the left */
+          char n[20];
+          sprintf(n, "%d:", i);
+          draw_string (sc, xx / sc->font_scale, y / sc->font_scale, n);
+        }
+
+      if (!line || !*line)
+        continue;
+
+      if (sc->line_thickness != 1 && !textures_p)
+        {
+          int max_thick_lines = MAX_THICK_LINES;
+          GLfloat thinnest_line = 1.0;
+          GLfloat thickest_line = sc->line_thickness;
+          GLfloat range = thickest_line - thinnest_line;
+          GLfloat thickness;
+
+          int j = sc->total_lines - i - 1;
+
+          if (j > max_thick_lines)
+            thickness = thinnest_line;
+          else
+            thickness = (thinnest_line +
+                         (range * ((max_thick_lines - j) /
+                                   (GLfloat) max_thick_lines)));
+
+          glLineWidth (thickness);
+        }
+
+      if (alignment >= 0)
+        {
+          int n = sw_string_width (sc, line);
+          xoff = 1.0 - (n * sc->font_scale);
+        }
+
+      if (alignment == 0)
+        xoff /= 2;
+
+      glColor3f (fade, fade, 0.5 * fade);
+      draw_string (sc, (x + xoff) / sc->font_scale, y / sc->font_scale,
+                   line);
+      if (textures_p)
+        mi->polygon_count += strlen (line);
+    }
+  glPopMatrix ();
+
+
 
   sc->intra_line_scroll += sc->line_height / scroll_steps;
 
@@ -949,72 +984,6 @@ draw_sws (ModeInfo *mi)
            here so that new text still pulls in from the bottom of
            the screen, isntead of just appearing. */
         sc->total_lines = max_lines;
-
-      glDeleteLists (sc->text_list, 1);
-      sc->text_list = glGenLists (1);
-      glNewList (sc->text_list, GL_COMPILE);
-      sc->polygon_count = 0;
-      glPushMatrix ();
-      glScalef (sc->font_scale, sc->font_scale, sc->font_scale);
-      for (i = 0; i < sc->total_lines; i++)
-        {
-          double fade = (fade_p ? 1.0 * i / sc->total_lines : 1.0);
-          int offscreen_lines = 2;
-
-          double x = -0.5;
-          double y =  ((sc->total_lines - (i + offscreen_lines) - 1)
-                       * sc->line_height);
-          double xoff = 0;
-          char *line = sc->lines[i];
-
-          if (debug_p)
-            {
-              double xx = x * 1.4;  /* a little more to the left */
-              char n[20];
-              sprintf(n, "%d:", i);
-              draw_string (sc, xx / sc->font_scale, y / sc->font_scale, n);
-            }
-
-          if (!line || !*line)
-            continue;
-
-          if (sc->line_thickness != 1 && !textures_p)
-            {
-              int max_thick_lines = MAX_THICK_LINES;
-              GLfloat thinnest_line = 1.0;
-              GLfloat thickest_line = sc->line_thickness;
-              GLfloat range = thickest_line - thinnest_line;
-              GLfloat thickness;
-
-              int j = sc->total_lines - i - 1;
-
-              if (j > max_thick_lines)
-                thickness = thinnest_line;
-              else
-                thickness = (thinnest_line +
-                             (range * ((max_thick_lines - j) /
-                                       (GLfloat) max_thick_lines)));
-
-              glLineWidth (thickness);
-            }
-
-          if (alignment >= 0)
-            {
-              int n = sw_string_width (sc, line);
-              xoff = 1.0 - (n * sc->font_scale);
-            }
-
-          if (alignment == 0)
-            xoff /= 2;
-
-          glColor3f (fade, fade, 0.5 * fade);
-          draw_string (sc, (x + xoff) / sc->font_scale, y / sc->font_scale,
-                       line);
-          if (textures_p)
-            sc->polygon_count += strlen (line);
-        }
-      glPopMatrix ();
-      glEndList ();
     }
 
   glPopMatrix ();

@@ -11,7 +11,7 @@
  * implied warranty.
  */
 
-#define DEF_FONT "-*-helvetica-bold-r-normal-*-240-*"
+#define DEF_FONT "-*-helvetica-bold-r-normal-*-*-480-*-*-*-*-*-*"
 #define DEFAULTS  "*count:           7         \n" \
                   "*delay:           10000     \n" \
                   "*wireframe:       False     \n" \
@@ -630,7 +630,7 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
   if (titles_p)
     {
       int sw, sh;
-      GLfloat scale = 0.6;
+      GLfloat scale = 1;
       const char *title = frame->title ? frame->title : "(untitled)";
 
       /* #### Highly approximate, but doing real clipping is harder... */
@@ -639,6 +639,8 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
         title += strlen(title) - max;
 
       sw = texture_string_width (ss->texfont, title, &sh);
+
+      sh *= (polaroid_p ? 2.2 : 1.4);  /* move text down from the photo */
 
       glTranslatef (-sw*scale*0.5, -h - sh*scale, z);
       glScalef (scale, scale, 1);

@@ -112,7 +112,7 @@
 				distort -root				    \\n\
 				epicycle -root				    \\n\
 				flow -root				    \\n\
-- GL: 				glplanet -root				    \\n\
+  GL: 				glplanet -root				    \\n\
 				interference -root			    \\n\
 				kumppa -root				    \\n\
   GL: 				lament -root				    \\n\
@@ -127,7 +127,7 @@
 				compass -root				    \\n\
 				deluxe -root				    \\n\
 -				demon -root				    \\n\
-- GL: 				extrusion -root				    \\n\
+  GL: 				extrusion -root				    \\n\
 -				loop -root				    \\n\
 				penetrate -root				    \\n\
 				petri -root				    \\n\
@@ -207,7 +207,7 @@
 				popsquares -root			    \\n\
   GL: 				surfaces -root				    \\n\
 				xanalogtv -root				    \\n\
--				abstractile -root			    \\n\
+				abstractile -root			    \\n\
 				anemotaxis -root			    \\n\
 - GL: 				antinspect -root			    \\n\
 				fireworkx -root				    \\n\
@@ -258,6 +258,9 @@
   GL: 				kaleidocycle -root			    \\n\
   GL: 				quasicrystal -root			    \\n\
   GL: 				unknownpleasures -root			    \\n\
+				binaryring -root			    \\n\
+  GL: 				cityflow -root				    \\n\
+  GL: 				geodesicgears -root			    \\n\
   GL: 				projectiveplane -root			    \\n\
 				tessellimage -root			    \\n\
   GL: 				winduprobot -root			    \\n",
@@ -304,6 +307,7 @@
 "*hacks.antinspect.name:     AntInspect",
 "*hacks.antmaze.name:        AntMaze",
 "*hacks.antspotlight.name:   AntSpotlight",
+"*hacks.binaryring.name:     BinaryRing",
 "*hacks.blinkbox.name:       BlinkBox",
 "*hacks.blitspin.name:       BlitSpin",
 "*hacks.blocktube.name:      BlockTube",
@@ -329,6 +333,7 @@
 "*hacks.flyingtoasters.name: FlyingToasters",
 "*hacks.fontglide.name:      FontGlide",
 "*hacks.fuzzyflakes.name:    FuzzyFlakes",
+"*hacks.geodesicgears.name:  GeodesicGears",
 "*hacks.gflux.name:          GFlux",
 "*hacks.gleidescope.name:    Gleidescope",
 "*hacks.glforestfire.name:   GLForestFire",

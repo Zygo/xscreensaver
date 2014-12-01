@@ -16,7 +16,9 @@
 
 #ifdef HAVE_COCOA
 # include "jwxyz.h"
-#else /* !HAVE_COCOA -- real Xlib */
+#elif defined(HAVE_ANDROID)
+# include <GLES/gl.h>
+#else /* real Xlib */
 # include <GL/glx.h>
 # include <GL/glu.h>
 #endif /* !HAVE_COCOA */
@@ -27,19 +29,26 @@
 
 #include "xlockmoreI.h"
 #include "fpsI.h"
-#include "glxfonts.h"
+#include "texfont.h"
 
 /* These are in xlock-gl.c */
 extern void clear_gl_error (void);
 extern void check_gl_error (const char *type);
 
+typedef struct {
+  texture_font_data *texfont;
+  int line_height;
+} gl_fps_data;
+
 
 static void
 xlockmore_gl_fps_init (fps_state *st)
 {
-  st->gl_fps_data = load_texture_font (st->dpy, "fpsFont");
+  gl_fps_data *data = (gl_fps_data *) calloc (1, sizeof(*data));
+  data->texfont = load_texture_font (st->dpy, "fpsFont");
+  texture_string_width (data->texfont, "M", &data->line_height);
+  st->gl_fps_data = data;
 }
-
 
 
 /* Callback in xscreensaver_function_table, via xlockmore.c.
@@ -67,10 +76,10 @@ xlockmore_gl_draw_fps (ModeInfo *mi)
   fps_state *st = mi->fpst;
   if (st)   /* might be too early */
     {
+      gl_fps_data *data = (gl_fps_data *) st->gl_fps_data;
       XWindowAttributes xgwa;
       int lines = 1;
       const char *s;
-      int lh = st->font->ascent + st->font->descent;
       int y = st->y;
 
       XGetWindowAttributes (st->dpy, st->window, &xgwa);
@@ -78,12 +87,12 @@ xlockmore_gl_draw_fps (ModeInfo *mi)
         if (*s == '\n') lines++;
 
       if (y < 0)
-        y = xgwa.height + y - lines*lh;
-      y += lines*lh + st->font->descent;
+        y = xgwa.height + y - (lines * data->line_height);
+      y += lines * data->line_height;
 
       glColor3f (1, 1, 1);
-      print_gl_string (st->dpy, st->gl_fps_data,
-                       xgwa.width, xgwa.height,
-                       st->x, y, st->string, st->clear_p);
+      print_texture_label (st->dpy, data->texfont,
+                           xgwa.width, xgwa.height,
+                           2, st->string);
     }
 }

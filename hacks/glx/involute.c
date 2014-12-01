@@ -1,4 +1,4 @@
-/* involute, Copyright (c) 2004-2007 Jamie Zawinski <jwz@jwz.org>
+/* involute, Copyright (c) 2004-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -43,12 +43,15 @@ static Bool show_normals_p = False;
  */
 static int
 draw_ring (int segments,
-           GLfloat r, GLfloat top, GLfloat bottom, 
+           GLfloat r, GLfloat top, GLfloat bottom, GLfloat slope,
            Bool in_p, Bool wire_p)
 {
   int i;
   int polys = 0;
   GLfloat width = M_PI * 2 / segments;
+
+  GLfloat s1 = 1 + ((bottom-top) * slope / 2);
+  GLfloat s2 = 1 - ((bottom-top) * slope / 2);
 
   if (top != bottom)
     {
@@ -63,8 +66,8 @@ draw_ring (int segments,
             glNormal3f (-cth, -sth, 0);
           else
             glNormal3f (cth, sth, 0);
-          glVertex3f (cth * r, sth * r, top);
-          glVertex3f (cth * r, sth * r, bottom);
+          glVertex3f (s1 * cth * r, s1 * sth * r, top);
+          glVertex3f (s2 * cth * r, s2 * sth * r, bottom);
         }
       polys += segments;
       glEnd();
@@ -143,7 +146,7 @@ draw_disc (int segments,
  */
 static int
 draw_spokes (int n, GLfloat thickness, int segments,
-             GLfloat ra, GLfloat rb, GLfloat z1, GLfloat z2,
+             GLfloat ra, GLfloat rb, GLfloat z1, GLfloat z2, GLfloat slope,
              Bool wire_p)
 {
   int i;
@@ -153,6 +156,9 @@ draw_spokes (int n, GLfloat thickness, int segments,
   int insegs, outsegs;
   int tick;
   int state;
+
+  GLfloat s1 = 1 + ((z2-z1) * slope / 2);
+  GLfloat s2 = 1 - ((z2-z1) * slope / 2);
 
   if (ra <= 0 || rb <= 0) abort();
 
@@ -196,10 +202,10 @@ draw_spokes (int n, GLfloat thickness, int segments,
           glFrontFace (GL_CCW);
           glBegin (wire_p ? GL_LINES : GL_QUADS);
           glNormal3f (0, 0, -1);
-          glVertex3f (cth1 * ra, sth1 * ra, z1);
-          glVertex3f (cth1 * rb, sth1 * rb, z1);
-          glVertex3f (cth2 * rb, sth2 * rb, z1);
-          glVertex3f (cth2 * ra, sth2 * ra, z1);
+          glVertex3f (s1 * cth1 * ra, s1 * sth1 * ra, z1);
+          glVertex3f (s1 * cth1 * rb, s1 * sth1 * rb, z1);
+          glVertex3f (s1 * cth2 * rb, s1 * sth2 * rb, z1);
+          glVertex3f (s1 * cth2 * ra, s1 * sth2 * ra, z1);
           polys++;
           glEnd();
 
@@ -207,10 +213,10 @@ draw_spokes (int n, GLfloat thickness, int segments,
           glFrontFace (GL_CW);
           glBegin (wire_p ? GL_LINES : GL_QUADS);
           glNormal3f (0, 0, 1);
-          glVertex3f (cth1 * ra, sth1 * ra, z2);
-          glVertex3f (cth1 * rb, sth1 * rb, z2);
-          glVertex3f (cth2 * rb, sth2 * rb, z2);
-          glVertex3f (cth2 * ra, sth2 * ra, z2);
+          glVertex3f (s2 * cth1 * ra, s2 * sth1 * ra, z2);
+          glVertex3f (s2 * cth1 * rb, s2 * sth1 * rb, z2);
+          glVertex3f (s2 * cth2 * rb, s2 * sth2 * rb, z2);
+          glVertex3f (s2 * cth2 * ra, s2 * sth2 * ra, z2);
           polys++;
           glEnd();
         }
@@ -220,13 +226,13 @@ draw_spokes (int n, GLfloat thickness, int segments,
           /* left */
           glFrontFace (GL_CW);
           glBegin (wire_p ? GL_LINES : GL_QUADS);
-          do_normal (cth1 * rb, sth1 * rb, z1,
-                     cth1 * ra, sth1 * ra, z1,
-                     cth1 * rb, sth1 * rb, z2);
-          glVertex3f (cth1 * ra, sth1 * ra, z1);
-          glVertex3f (cth1 * rb, sth1 * rb, z1);
-          glVertex3f (cth1 * rb, sth1 * rb, z2);
-          glVertex3f (cth1 * ra, sth1 * ra, z2);
+          do_normal (s1 * cth1 * rb, s1 * sth1 * rb, z1,
+                     s1 * cth1 * ra, s1 * sth1 * ra, z1,
+                     s2 * cth1 * rb, s2 * sth1 * rb, z2);
+          glVertex3f (s1 * cth1 * ra, s1 * sth1 * ra, z1);
+          glVertex3f (s1 * cth1 * rb, s1 * sth1 * rb, z1);
+          glVertex3f (s2 * cth1 * rb, s2 * sth1 * rb, z2);
+          glVertex3f (s2 * cth1 * ra, s2 * sth1 * ra, z2);
           polys++;
           glEnd();
         }
@@ -236,13 +242,13 @@ draw_spokes (int n, GLfloat thickness, int segments,
           /* right */
           glFrontFace (GL_CCW);
           glBegin (wire_p ? GL_LINES : GL_QUADS);
-          do_normal (cth2 * ra, sth2 * ra, z1,
-                     cth2 * rb, sth2 * rb, z1,
-                     cth2 * rb, sth2 * rb, z2);
-          glVertex3f (cth2 * ra, sth2 * ra, z1);
-          glVertex3f (cth2 * rb, sth2 * rb, z1);
-          glVertex3f (cth2 * rb, sth2 * rb, z2);
-          glVertex3f (cth2 * ra, sth2 * ra, z2);
+          do_normal (s1 * cth2 * ra, s1 * sth2 * ra, z1,
+                     s1 * cth2 * rb, s1 * sth2 * rb, z1,
+                     s2 * cth2 * rb, s2 * sth2 * rb, z2);
+          glVertex3f (s1 * cth2 * ra, s1 * sth2 * ra, z1);
+          glVertex3f (s1 * cth2 * rb, s1 * sth2 * rb, z1);
+          glVertex3f (s2 * cth2 * rb, s2 * sth2 * rb, z2);
+          glVertex3f (s2 * cth2 * ra, s2 * sth2 * ra, z2);
           polys++;
           glEnd();
         }
@@ -260,7 +266,7 @@ draw_gear_nubs (gear *g, Bool wire_p)
 {
   int polys = 0;
   int i;
-  int steps = (g->size != INVOLUTE_LARGE ? 5 : 20);
+  int steps = (g->size < INVOLUTE_LARGE ? 5 : 20);
   double r, size, height;
   GLfloat *cc;
   int which;
@@ -298,13 +304,13 @@ draw_gear_nubs (gear *g, Bool wire_p)
         }
 
       if (wire_p && !wire_all_p)
-        polys += draw_ring ((g->size == INVOLUTE_LARGE ? steps/2 : steps),
-                            size, 0, 0, False, wire_p);
+        polys += draw_ring ((g->size >= INVOLUTE_LARGE ? steps/2 : steps),
+                            size, 0, 0, 0, False, wire_p);
       else
         {
           polys += draw_disc (steps, 0, size, -height,      True,  wire_p);
           polys += draw_disc (steps, 0, size,  height,      False, wire_p);
-          polys += draw_ring (steps, size, -height, height, False, wire_p);
+          polys += draw_ring (steps, size, -height, height, 0, False, wire_p);
         }
       glPopMatrix();
     }
@@ -360,8 +366,8 @@ draw_gear_interior (gear *g, Bool wire_p)
 
   int steps = g->nteeth * 2;
   if (steps < 10) steps = 10;
-  if ((wire_p && !wire_all_p) || g->size != INVOLUTE_LARGE) steps /= 2;
-  if (g->size != INVOLUTE_LARGE && steps > 16) steps = 16;
+  if ((wire_p && !wire_all_p) || g->size < INVOLUTE_LARGE) steps /= 2;
+  if (g->size < INVOLUTE_LARGE && steps > 16) steps = 16;
 
   /* ring 1 (facing in) is done in draw_gear_teeth */
 
@@ -373,27 +379,29 @@ draw_gear_interior (gear *g, Bool wire_p)
       GLfloat rb = g->inner_r2;        /*  since the points don't line up */
       GLfloat za = -g->thickness2/2;
       GLfloat zb =  g->thickness2/2;
+      GLfloat s1 = 1 + (g->thickness2 * g->tooth_slope / 2);
+      GLfloat s2 = 1 - (g->thickness2 * g->tooth_slope / 2);
 
       glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, g->color2);
 
       if ((g->coax_p != 1 && !g->inner_r3) ||
           (wire_p && wire_all_p))
-        polys += 
-          draw_ring (steps, rb, za, zb, True, wire_p);  /* ring facing in*/
+        polys +=   /* ring facing in */
+          draw_ring (steps, rb, za, zb, g->tooth_slope, True, wire_p);
 
       if (wire_p && wire_all_p)
-        polys += 
-          draw_ring (steps, ra, za, zb, True, wire_p);  /* ring facing in*/
+        polys +=  /* ring facing in */
+          draw_ring (steps, ra, za, zb, g->tooth_slope, True, wire_p);
 
       if (g->spokes)
         polys += draw_spokes (g->spokes, g->spoke_thickness,
-                              steps, ra, rb, za, zb, wire_p);
+                              steps, ra, rb, za, zb, g->tooth_slope, wire_p);
       else if (!wire_p || wire_all_p)
         {
-          polys += 
-            draw_disc (steps, ra, rb, za, True, wire_p);  /* top plate */
-          polys += 
-            draw_disc (steps, ra, rb, zb, False, wire_p); /* bottom plate*/
+          polys +=   /* top plate */
+            draw_disc (steps, s1*ra, s1*rb, za, True, wire_p);
+          polys +=   /* bottom plate */
+            draw_disc (steps, s2*ra, s2*rb, zb, False, wire_p);
         }
     }
 
@@ -405,22 +413,24 @@ draw_gear_interior (gear *g, Bool wire_p)
       GLfloat rb = g->inner_r3;
       GLfloat za = -g->thickness3/2;
       GLfloat zb =  g->thickness3/2;
+      GLfloat s1 = 1 + (g->thickness3 * g->tooth_slope / 2);
+      GLfloat s2 = 1 - (g->thickness3 * g->tooth_slope / 2);
 
       glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, g->color);
 
-      polys += 
-        draw_ring (steps, ra, za, zb, False, wire_p);  /* ring facing out */
+      polys +=   /* ring facing out */
+        draw_ring (steps, ra, za, zb, g->tooth_slope, False, wire_p);
 
       if (g->coax_p != 1 || (wire_p && wire_all_p))
-        polys +=
-          draw_ring (steps, rb, za, zb, True, wire_p);  /* ring facing in */
+        polys += /* ring facing in */
+          draw_ring (steps, rb, za, zb, g->tooth_slope, True, wire_p);
 
       if (!wire_p || wire_all_p)
         {
-          polys += 
-            draw_disc (steps, ra, rb, za, True, wire_p);  /* top plate */
-          polys += 
-            draw_disc (steps, ra, rb, zb, False, wire_p); /* bottom plate */
+          polys +=   /* top plate */
+            draw_disc (steps, s1*ra, s1*rb, za, True, wire_p);
+          polys +=  /* bottom plate */
+            draw_disc (steps, s2*ra, s2*rb, zb, False, wire_p);
         }
     }
 
@@ -441,14 +451,14 @@ draw_gear_interior (gear *g, Bool wire_p)
       if (wire_p && !wire_all_p) steps /= 2;
 
       polys += 
-        draw_ring (steps, ra, za, zb, False, wire_p);  /* ring facing out */
+        draw_ring (steps, ra, za, zb, g->tooth_slope, False, wire_p);
 
       if (!wire_p || wire_all_p)
         {
           polys += 
             draw_disc (steps, 0,  ra, za, True, wire_p);  /* top plate */
-          polys
-            += draw_disc (steps, 0,  ra, zb, False, wire_p); /* bottom plate */
+          polys +=
+            draw_disc (steps, 0,  ra, zb, False, wire_p); /* bottom plate */
         }
     }
   return polys;
@@ -526,7 +536,7 @@ gear_teeth_geometry (gear *g,
                      tooth_face *irim)      /* inner rim (the hole)  */
 {
   int i;
-  int ppt = 9;   /* max points per tooth */
+  int ppt = 20;   /* max points per tooth */
   GLfloat width = M_PI * 2 / g->nteeth;
   GLfloat rh = g->tooth_h;
   GLfloat tw = width;
@@ -534,50 +544,64 @@ gear_teeth_geometry (gear *g,
   /* Approximate shape of an "involute" gear tooth.
 
                                  (TH)
-                 th0 th1 th2 th3 th4 th5 th6 th7 th8   th9    th10
+                 th0 th2 th4 th6 th8 t10 t12 t14 th16  th18   th20
                    :  :  :   :    :    :   :  :  :      :      :
                    :  :  :   :    :    :   :  :  :      :      :
         r0 ........:..:..:...___________...:..:..:......:......:..
                    :  :  :  /:    :    :\  :  :  :      :      :
                    :  :  : / :    :    : \ :  :  :      :      :
                    :  :  :/  :    :    :  \:  :  :      :      :
-        r1 ........:.....@...:....:....:...@..:..:......:......:..
+        r2 ........:.....@...:....:....:...@..:..:......:......:..
                    :  : @:   :    :    :   :@ :  :      :      :
     (R) ...........:...@.:...:....:....:...:.@..........:......:......
                    :  :@ :   :    :    :   : @:  :      :      :
-        r2 ........:..@..:...:....:....:...:..@:........:......:..
+        r4 ........:..@..:...:....:....:...:..@:........:......:..
                    : /:  :   :    :    :   :  :\ :      :      :
                    :/ :  :   :    :    :   :  : \:      :      : /
-        r3 ......__/..:..:...:....:....:...:..:..\______________/
+        r6 ......__/..:..:...:....:....:...:..:..\______________/
                    :  :  :   :    :    :   :  :  :      :      :
                    |  :  :   :    :    :   :  :  |      :      :
                    :  :  :   :    :    :   :  :  :      :      :
                    |  :  :   :    :    :   :  :  |      :      :
-        r4 ......__:_____________________________:________________
+        r8 ......__:_____________________________:________________
    */
 
-  GLfloat r[20];
-  GLfloat th[20];
+  GLfloat r[30];
+  GLfloat th[30];
   GLfloat R = g->r;
 
-  r[0] = R + (rh * 0.5);
-  r[1] = R + (rh * 0.25);
-  r[2] = R - (r[1]-R);
-  r[3] = R - (r[0]-R);
-  r[4] = g->inner_r;
+  r[0] = R + (rh * 0.50);
+  r[1] = R + (rh * 0.40);
+  r[2] = R + (rh * 0.25);
+  r[3] = R + (rh * 0.05);
+  r[4] = R - (r[2]-R);
+  r[5] = R - (r[1]-R);
+  r[6] = R - (r[0]-R);
+  r[7] = r[6]; /* unused */
+  r[8] = g->inner_r;
 
-  th[0] = -tw * (g->size == INVOLUTE_SMALL ? 0.5 : 
-                 g->size == INVOLUTE_MEDIUM ? 0.41 : 0.45);
-  th[1] = -tw * 0.30;
-  th[2] = -tw * (g->nteeth >= 5 ? 0.16 : 0.12);
-  th[3] = -tw * (g->size == INVOLUTE_MEDIUM ? 0.1 : 0.04);
-  th[4] =  0;
-  th[5] =  -th[3];
-  th[6] =  -th[2];
-  th[7] =  -th[1];
-  th[8] =  -th[0];
-  th[9] =  width / 2;
-  th[10]=  th[0] + width;
+  th[0]  = -tw * (g->size == INVOLUTE_SMALL ? 0.5 : 
+                  g->size == INVOLUTE_MEDIUM ? 0.41 : 0.45);
+  th[1]  = -tw * 0.375;
+  th[2]  = -tw * 0.300;
+  th[3]  = -tw * 0.230;
+  th[4]  = -tw * (g->nteeth >= 5 ? 0.16 : 0.12);
+  th[5]  = -tw * 0.100;
+  th[6]  = -tw * (g->size == INVOLUTE_MEDIUM ? 0.1 : 0.04);
+  th[7]  = -tw * 0.020;
+  th[8]  =  0;
+  th[9]  = -th[7];
+  th[10] = -th[6];
+  th[11] = -th[5];
+  th[12] = -th[4];
+  th[13] = -th[3];
+  th[14] = -th[2];
+  th[15] = -th[1];
+  th[16] = -th[0];
+  th[17] =  width * 0.47;
+  th[18] =  width * 0.50;
+  th[19] =  width * 0.53;
+  th[20] =  th[0] + width; /* unused */
 
   if (g->inverted_p)   /* put the teeth on the inside */
     {
@@ -586,23 +610,6 @@ gear_teeth_geometry (gear *g,
       for (i = 0; i < countof(r); i++)
         r[i] = R - (r[i] - R);
     }
-
-#if 0
-  if (g->inverted_p)   /* put the teeth on the inside */
-    {
-      GLfloat swap[countof(th)];
-
-      for (i = 0; i < maxr; i++)
-        swap[maxr-i-1] = R - (r[i] - R);
-      for (i = 0; i < maxr; i++)
-        r[i] = swap[i];
-
-      for (i = 0; i < maxth; i++)
-        swap[maxth-i-1] = -th[i];
-      for (i = 0; i < maxth; i++)
-        th[i] = swap[i];
-    }
-#endif
 
   orim->npoints  = 0;
   orim->points   = (XYZ *) calloc(ppt * g->nteeth+1, sizeof(*orim->points));
@@ -638,32 +645,51 @@ gear_teeth_geometry (gear *g,
         irim->points[irim->npoints].y = sin(TH+th[(PTH)]) * r[(IPR)]; \
         irim->npoints++
 
-      if (g->size == INVOLUTE_SMALL)
-        {
-          PUSH(3, 4, 0);       /* tooth left 1 */
-          PUSH(0, 4, 4);       /* tooth top middle */
-        }
-      else if (g->size == INVOLUTE_MEDIUM)
-        {
-          PUSH(3, 4, 0);       /* tooth left 1 */
-          PUSH(0, 4, 3);       /* tooth top left */
-          PUSH(0, 4, 5);       /* tooth top right */
-          PUSH(3, 4, 8);       /* tooth right 3 */
-        }
-      else if (g->size == INVOLUTE_LARGE)
-        {
-          PUSH(3, 4, 0);       /* tooth left 1 */
-          PUSH(2, 4, 1);       /* tooth left 2 */
-          PUSH(1, 4, 2);       /* tooth left 3 */
-          PUSH(0, 4, 3);       /* tooth top left */
-          PUSH(0, 4, 5);       /* tooth top right */
-          PUSH(1, 4, 6);       /* tooth right 1 */
-          PUSH(2, 4, 7);       /* tooth right 2 */
-          PUSH(3, 4, 8);       /* tooth right 3 */
-          PUSH(3, 4, 9);       /* gap top */
-        }
-      else
+      switch (g->size) {
+      case INVOLUTE_SMALL:
+        PUSH(6, 8, 0);       /* tooth left 1 */
+        PUSH(0, 8, 8);       /* tooth top middle */
+        break;
+      case INVOLUTE_MEDIUM:
+        PUSH(6, 8, 0);       /* tooth left 1 */
+        PUSH(0, 8, 6);       /* tooth top left */
+        PUSH(0, 8, 10);      /* tooth top right */
+        PUSH(6, 8, 16);      /* tooth right 6 */
+        break;
+      case INVOLUTE_LARGE:
+        PUSH(6, 8, 0);       /* tooth left 1 */
+        PUSH(4, 8, 2);       /* tooth left 3 */
+        PUSH(2, 8, 4);       /* tooth left 5 */
+        PUSH(0, 8, 6);       /* tooth top left */
+        PUSH(0, 8, 10);      /* tooth top right */
+        PUSH(2, 8, 12);      /* tooth right 1 */
+        PUSH(4, 8, 14);      /* tooth right 3 */
+        PUSH(6, 8, 16);      /* tooth right 5 */
+        PUSH(6, 8, 18);      /* gap top */
+        break;
+      case INVOLUTE_HUGE:
+        PUSH(6, 8, 0);       /* tooth left 1 */
+        PUSH(5, 8, 1);       /* tooth left 2 */
+        PUSH(4, 8, 2);       /* tooth left 3 */
+        PUSH(3, 8, 3);       /* tooth left 4 */
+        PUSH(2, 8, 4);       /* tooth left 5 */
+        PUSH(1, 8, 5);       /* tooth left 6 */
+        PUSH(0, 8, 6);       /* tooth top left */
+        PUSH(0, 8, 8);       /* tooth top left */
+        PUSH(0, 8, 10);      /* tooth top right */
+        PUSH(1, 8, 11);      /* tooth top right */
+        PUSH(2, 8, 12);      /* tooth right 1 */
+        PUSH(3, 8, 13);      /* tooth right 2 */
+        PUSH(4, 8, 14);      /* tooth right 3 */
+        PUSH(5, 8, 15);      /* tooth right 4 */
+        PUSH(6, 8, 16);      /* tooth right 5 */
+        PUSH(6, 8, 17);      /* tooth right 6 */
+        PUSH(6, 8, 18);      /* gap top */
+        PUSH(6, 8, 19);      /* gap top */
+        break;
+      default:
         abort();
+      }
 #     undef PUSH
 
       if (i == 0 && orim->npoints > ppt) abort();  /* go update "ppt"! */
@@ -793,7 +819,7 @@ draw_gear_teeth (gear *g, Bool wire_p)
       glVertex3f (s2*orim.points[i].x, s2*orim.points[i].y, z2);
 
       /* Show the face normal vectors */
-      if (wire_p && show_normals_p)
+      if (0&&wire_p && show_normals_p)
         {
           XYZ n = orim.fnormals[i];
           int a = i;
@@ -847,8 +873,8 @@ draw_gear_teeth (gear *g, Bool wire_p)
   for (i = 0; i < irim.npoints; i++)
     {
       glNormal3f(-irim.pnormals[i].x, -irim.pnormals[i].y,-irim.pnormals[i].z);
-      glVertex3f (irim.points[i].x, irim.points[i].y, z1);
-      glVertex3f (irim.points[i].x, irim.points[i].y, z2);
+      glVertex3f (s1*irim.points[i].x, s1*irim.points[i].y, z1);
+      glVertex3f (s2*irim.points[i].x, s2*irim.points[i].y, z2);
 
       /* Show the face normal vectors */
       if (wire_p && show_normals_p)
@@ -878,8 +904,8 @@ draw_gear_teeth (gear *g, Bool wire_p)
   if (!wire_p)  /* close the quad loop */
     {
       glNormal3f (-irim.pnormals[0].x,-irim.pnormals[0].y,-irim.pnormals[0].z);
-      glVertex3f (irim.points[0].x, irim.points[0].y, z1);
-      glVertex3f (irim.points[0].x, irim.points[0].y, z2);
+      glVertex3f (s1*irim.points[0].x, s1*irim.points[0].y, z1);
+      glVertex3f (s2*irim.points[0].x, s2*irim.points[0].y, z2);
     }
   polys += irim.npoints;
   glEnd();
@@ -913,12 +939,12 @@ draw_gear_teeth (gear *g, Bool wire_p)
           for (i = 0; i < orim.npoints; i++)
             {
               glVertex3f (s*orim.points[i].x, s*orim.points[i].y, z);
-              glVertex3f (  irim.points[i].x,   irim.points[i].y, z);
+              glVertex3f (s*irim.points[i].x, s*irim.points[i].y, z);
             }
           if (!wire_p)  /* close the quad loop */
             {
               glVertex3f (s*orim.points[0].x, s*orim.points[0].y, z);
-              glVertex3f (  irim.points[0].x,   irim.points[0].y, z);
+              glVertex3f (s*irim.points[0].x, s*irim.points[0].y, z);
             }
           polys += orim.npoints;
           glEnd();

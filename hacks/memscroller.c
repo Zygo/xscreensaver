@@ -302,6 +302,18 @@ open_file (state *st)
 #endif
 
 
+/* "The brk and sbrk functions are historical curiosities left over
+   from earlier days before the advent of virtual memory management."
+      -- sbrk(2) man page on BSD systems, as of 1995 or so.
+ */
+#ifdef HAVE_SBRK
+# if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) /* gcc >= 4.2 */
+   /* Don't print "warning: 'sbrk' is deprecated". */
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+# endif
+#endif
+
+
 static unsigned int
 more_bits (state *st, scroller *sc)
 {
@@ -345,13 +357,6 @@ more_bits (state *st, scroller *sc)
         sc->data = lomem;
 
 # ifdef HAVE_SBRK  /* re-get it each time through */
-      /* "The brk and sbrk functions are historical curiosities left over
-         from earlier days before the advent of virtual memory management."
-            -- sbrk(2) man page on MacOS
-       */
-#  if (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 2)) /* gcc >= 4.2 */
-#   pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#  endif
       himem = ((unsigned char *) sbrk(0)) - (2 * sizeof(void *));
 # endif
 

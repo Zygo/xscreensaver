@@ -14,22 +14,17 @@
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-/* Utopia 800 needs 64 512x512 textures (4096x4096 bitmap).
-   Utopia 720 needs 16 512x512 textures (2048x2048 bitmap).
-   Utopia 480 needs 16 512x512 textures (2048x2048 bitmap).
-   Utopia 400 needs  4 512x512 textures (1024x1024 bitmap).
-   Utopia 180 needs  1 512x512 texture.
-   Times  240 needs  1 512x512 texture.
- */
-#define DEF_FONT       "-*-utopia-bold-r-normal-*-*-720-*-*-*-*-iso8859-1"
+#define DEF_FONT       "-*-utopia-bold-r-normal-*-*-720-*-*-*-*-*-*"
 #define DEF_COLOR      "#00CCFF"
 
 #define DEFAULTS "*delay:        10000      \n" \
 		 "*showFPS:      False      \n" \
 		 "*wireframe:    False      \n" \
 		 "*usePty:       False      \n" \
+		 "*texFontCacheSize: 60     \n" \
 		 "*font:       " DEF_FONT  "\n" \
 		 ".foreground: " DEF_COLOR "\n" \
+		 "*program: xscreensaver-text --cols 0"  /* don't wrap */
 
 # define refresh_fliptext 0
 # define fliptext_handle_event 0
@@ -54,7 +49,6 @@
 # endif
 
 
-#define DEF_PROGRAM    "xscreensaver-text --cols 0"  /* don't wrap */
 #define DEF_LINES      "8"
 #define DEF_FONT_SIZE  "20"
 #define DEF_COLUMNS    "80"
@@ -120,7 +114,6 @@ typedef struct {
 
 static fliptext_configuration *scs = NULL;
 
-static char *program;
 static int max_lines, min_lines;
 static float font_size;
 static int target_columns;
@@ -129,7 +122,6 @@ static int alignment, alignment_random_p;
 static GLfloat speed;
 
 static XrmOptionDescRec opts[] = {
-  {"-program",     ".program",   XrmoptionSepArg, 0 },
   {"-lines",       ".lines",     XrmoptionSepArg, 0 },
   {"-size",	   ".fontSize",  XrmoptionSepArg, 0 },
   {"-columns",	   ".columns",   XrmoptionSepArg, 0 },
@@ -142,7 +134,6 @@ static XrmOptionDescRec opts[] = {
 };
 
 static argtype vars[] = {
-  {&program,        "program",   "Program",    DEF_PROGRAM,   t_String},
   {&max_lines,      "lines",     "Integer",    DEF_LINES,     t_Int},
   {&font_size,      "fontSize",  "Float",      DEF_FONT_SIZE, t_Float},
   {&target_columns, "columns",   "Integer",    DEF_COLUMNS,   t_Int},
@@ -813,8 +804,6 @@ init_fliptext (ModeInfo *mi)
     reshape_fliptext (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
     clear_gl_error(); /* WTF? sometimes "invalid op" from glViewport! */
   }
-
-  program = get_string_resource (mi->dpy, "program", "Program");
 
   {
     int cw, lh;

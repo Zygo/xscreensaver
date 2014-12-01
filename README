@@ -38,6 +38,22 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.31	* New hacks, `geodesicgears', `binaryring' and `cityflow'.
+        * UTF-8 text support (instead of only Latin1) and antialiased text
+          on X11 with Xft (instead of only on OSX/iOS) in `fontglide',
+          `noseguy', `fliptext', `starwars', and `winduprobot'.
+          The other text-displaying hacks (`apple2', `phosphor', `xmatrix',
+          and `gltext') also now accept UTF-8 input, though they convert it
+          to Latin1 or ASCII.
+	* `glplanet' now has both day and night maps, and a sharp terminator.
+	* Fixed `webcollage' on OSX.
+	* Fixed a transparency glitch in `winduprobot'.
+	* `lockward' works on iOS.
+	* Text and image loading work on OSX 10.10.
+	* Rotation works properly on iOS 8.
+	* Added a search field on iOS.
+	* Preliminary, unfinished support for Android.
+
 5.30	* New hack, `winduprobot'.
 	* Many improvements to `lament', including Leviathan.
 	* Fixed the normals in `flyingtoasters': shading is correct now.

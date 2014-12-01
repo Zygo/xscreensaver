@@ -57,7 +57,7 @@ use bytes;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.165 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.167 $' =~ m/\s(\d[.\d]+)\s/s);
 my $copyright = "WebCollage $version, Copyright (c) 1999-2014" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "            http://www.jwz.org/webcollage/\n";
@@ -244,6 +244,7 @@ my %warningless_sites = (
   "yandex.ru"               => 1,
   "imgur.com"               => 1,
   "yfrog.com"               => 1,
+  "cdninstagram.com"        => 1,
 
   "yimg.com"                => 1,  # This is where dailynews.yahoo.com stores
   "eimg.com"                => 1,  # its images, so pick_from_yahoo_news_text()
@@ -2239,18 +2240,39 @@ sub pick_from_flickr_random($) {
 
 ############################################################################
 #
-# Pick random images from Instagram, via gramfeed.com's key.
+# Pick random images from Instagram.
 #
 ############################################################################
 
-my $instagram_url_base = "https://api.instagram.com/v1/media/popular" .
-			 "?client_id=b59fbe4563944b6c88cced13495c0f49";
+my $instagram_url_base = "https://api.instagram.com/v1/media/popular";
 
 # instagram_random
 sub pick_from_instagram($) {
   my $timeout = shift;
 
-  $last_search = $instagram_url_base;
+  # Liberated access tokens.
+  # jsdo.it search for: instagram client_id
+  # Google search for: instagram "&client_id=" site:jsfiddle.net
+  my @tokens = ('b59fbe4563944b6c88cced13495c0f49', # gramfeed.com
+                'fa26679250df49c48a33fbcf30aae989', # instac.at
+                'd9494686198d4dfeb954979a3e270e5e', # iconosquare.com
+                '793ef48bb18e4197b61afce2d799b81c', # jsdo.it
+                '67b8a3e0073449bba70600d0fc68e6cb', # jsdo.it
+                '26a098e0df4d4b9ea8b4ce6c505b7742', # jsdo.it
+                '2437cbcd906a4c10940f990d283d3cd5', # jsdo.it
+                '191c7d7d5312464cbd92134f36ffdab5', # jsdo.it
+                'acfec809437b4340b2c38f66503af774', # jsdo.it
+                'e9f77604a3a24beba949c12d18130988', # jsdo.it
+                '2cd7bcf68ae346529770073d311575b3', # jsdo.it
+                '830c600fe8d742e2ab3f3b94f9bb22b7', # jsdo.it
+                '55865a0397ad41e5997dd95ef4df8da1', # jsdo.it
+                '192a5742f3644ea8bed1d25e439286a8', # jsdo.it
+                '38ed1477e7a44595861b8842cdb8ba23', # jsdo.it
+                'e52f79f645f54488ad0cc47f6f55ade6', # jsfiddle.net
+                );
+
+  my $tok = $tokens[int(rand($#tokens+1))];
+  $last_search = $instagram_url_base . "?client_id=" . $tok;
 
   print STDERR "\n\n" if ($verbose_load);
   LOG ($verbose_load, "URL: $last_search");
@@ -2835,8 +2857,9 @@ sub image_size($) {
 sub which($) {
   my ($prog) = @_;
   foreach (split (/:/, $ENV{PATH})) {
-    if (-x "$_/$prog") {
-      return $prog;
+    my $path = "$_/$prog";
+    if (-x $path) {
+      return $path;
     }
   }
   return undef;
@@ -2896,15 +2919,17 @@ sub url_only_output() {
 #
 ##############################################################################
 
-my $image_ppm   = sprintf ("%s/webcollage-%08x.ppm",
-                           ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp"),
-                           rand(0xFFFFFFFF));
-my $image_tmp1  = sprintf ("%s/webcollage-1-%08x.ppm",
-                           ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp"),
-                           rand(0xFFFFFFFF));
-my $image_tmp2  = sprintf ("%s/webcollage-2-%08x.ppm",
-                           ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp"),
-                           rand(0xFFFFFFFF));
+my ($image_ppm, $image_tmp1, $image_tmp2);
+{
+  my $seed = rand(0xFFFFFFFF);
+  $image_ppm = sprintf ("%s/webcollage-%08x",
+                        ($ENV{TMPDIR} ? $ENV{TMPDIR} : "/tmp"),
+                        $seed);
+  $image_tmp1 = $image_ppm . '-1.ppm';
+  $image_tmp2 = $image_ppm . '-2.ppm';
+  $image_ppm .= '.ppm';
+}
+
 
 my $filter_cmd = undef;
 my $post_filter_cmd = undef;
@@ -3111,11 +3136,22 @@ my $ppm_to_root_window_cmd = undef;
 sub x_or_pbm_output($) {
   my ($window_id) = @_;
 
+  # Adjust the PATH for OS X 10.10.
+  #
+  $_ = $0;
+  s:/[^/]*$::;
+  s/([^a-zA-Z0-9._\-+\/])/\\$1/g;
+  $ENV{PATH} = "$_:$ENV{PATH}";
+
   # Check for our helper program, to see whether we need to use PPM pipelines.
   #
   $_ = "webcollage-helper";
-  if (defined ($webcollage_helper) || which ($_)) {
-    $webcollage_helper = $_ unless (defined($webcollage_helper));
+
+  if (! defined ($webcollage_helper)) {
+    $webcollage_helper = which ($_);
+  }
+
+  if (defined ($webcollage_helper)) {
     LOG ($verbose_pbm, "found \"$webcollage_helper\"");
     $webcollage_helper .= " -v";
   } else {
@@ -3141,6 +3177,16 @@ sub x_or_pbm_output($) {
   foreach (@progs) {
     which ($_) || error "$_ not found on \$PATH.";
   }
+
+  # If we're using webcollage-helper and not a filter, then the tmp files
+  # are JPEGs, not PPMs.
+  #
+  if (defined ($webcollage_helper) && !defined ($filter_cmd)) {
+    foreach ($image_ppm, $image_tmp1, $image_tmp2) {
+      s/\.ppm$/.jpg/s;
+    }
+  }
+
 
   # find a root-window displayer program.
   #
@@ -3306,6 +3352,14 @@ sub paste_image($$$$) {
             ? " (looks like HTML)" : "") .
            ": $img");
       $suppress_audit = 1;
+      $body = undef;
+      return 0;
+    }
+
+    if ($iw <= 0 || $ih <= 0 || $iw > 9999 || $ih > 9999) {
+      LOG (($verbose_pbm || $verbose_load),
+           "ludicrous image dimensions: $iw x $ih (" . length($body) .
+           "): $img");
       $body = undef;
       return 0;
     }

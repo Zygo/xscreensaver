@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=G1OLn4Mdk5Y"/>
+
   <number id="iterations" type="slider" arg="-iterations %"
           _label="Iterations" _low-label="Small" _high-label="Large"
           low="0" high="10000" default="4000"/>

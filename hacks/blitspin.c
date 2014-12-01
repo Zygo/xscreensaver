@@ -154,7 +154,7 @@ blitspin_draw (Display *dpy, Window window, void *closure)
         st->first_time = 0;
         st->loaded_p = True;
         st->qwad = -1;
-        st->start_time = time ((time_t) 0);
+        st->start_time = time ((time_t *) 0);
         blitspin_init_2 (st);
       }
 
@@ -165,7 +165,7 @@ blitspin_draw (Display *dpy, Window window, void *closure)
 
   if (!st->img_loader &&
       st->load_ext_p &&
-      st->start_time + st->duration < time ((time_t) 0)) {
+      st->start_time + st->duration < time ((time_t *) 0)) {
     /* Start a new image loading, but keep rotating the old image 
        until the new one arrives. */
     st->img_loader = load_image_async_simple (0, st->xgwa.screen, st->window,
@@ -254,7 +254,7 @@ blitspin_init (Display *d_arg, Window w_arg)
   if (st->delay2 < 0) st->delay2 = 0;
   if (st->duration < 1) st->duration = 1;
 
-  st->start_time = time ((time_t) 0);
+  st->start_time = time ((time_t *) 0);
 
   bitmap_name = get_string_resource (st->dpy, "bitmap", "Bitmap");
   if (! bitmap_name || !*bitmap_name)

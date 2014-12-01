@@ -342,6 +342,7 @@ fill_input (m_state *s)
       s->buf [s->buf_pos] = (char) c;
     }
 
+
   if (n > 0)
     {
         s->do_fill_buff = False;
@@ -1824,7 +1825,7 @@ static const char *xmatrix_defaults [] = {
   "*knockKnock:		   True",
   "*usePipe:		   False",
   "*usePty:                False",
-  "*program:		   xscreensaver-text",
+  "*program:		   xscreensaver-text --latin1",
   "*geometry:		   960x720",
   0
 };

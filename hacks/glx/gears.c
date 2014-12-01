@@ -238,7 +238,8 @@ new_gear (ModeInfo *mi, gear *parent)
     double pix = g->tooth_h * MI_HEIGHT(mi); /* approx. tooth size in pixels */
     if (pix <= 2.5)      g->size = INVOLUTE_SMALL;
     else if (pix <= 3.5) g->size = INVOLUTE_MEDIUM;
-    else                 g->size = INVOLUTE_LARGE;
+    else if (pix <= 25)  g->size = INVOLUTE_LARGE;
+    else                 g->size = INVOLUTE_HUGE;
   }
 
   g->base_p = !parent;

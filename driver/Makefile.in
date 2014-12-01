@@ -237,7 +237,7 @@ MEN		= $(MEN_1) @MEN_OSX@
 
 EXTRAS		= README Makefile.in \
 		  XScreenSaver.ad.in XScreenSaver-Xm.ad xscreensaver.pam.in \
-		  xscreensaver-demo.glade2 xscreensaver-demo.glade2p \
+		  xscreensaver-demo.glade2.in xscreensaver-demo.glade2p \
 		  screensaver-properties.desktop.in \
 		  .gdbinit
 VMSFILES	= compile_axp.com compile_decc.com link_axp.com link_decc.com \

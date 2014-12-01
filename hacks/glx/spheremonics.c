@@ -63,7 +63,7 @@
 #define DEFAULTS "*delay:	30000	    \n" \
 		 "*showFPS:	False	    \n" \
 		 "*wireframe:	False	    \n" \
-		 "*labelfont:   -*-helvetica-medium-r-normal-*-180-*\n"
+	 "*labelfont:   -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n"
 
 # define refresh_spheremonics 0
 # define release_spheremonics 0
@@ -71,7 +71,7 @@
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
-#include "glxfonts.h"
+#include "texfont.h"
 #include "normals.h"
 #include "colors.h"
 #include "rotator.h"
@@ -845,10 +845,9 @@ draw_spheremonics (ModeInfo *mi)
                cc->m[4], cc->m[5], cc->m[6], cc->m[7]);
 
       glColor3f(1.0, 1.0, 0.0);
-      print_gl_string (mi->dpy, cc->font_data,
-                       mi->xgwa.width, mi->xgwa.height,
-                       10, mi->xgwa.height - 10,
-                       buf, False);
+      print_texture_label (mi->dpy, cc->font_data,
+                           mi->xgwa.width, mi->xgwa.height,
+                           1, buf);
     }
 
   if (!static_parms)

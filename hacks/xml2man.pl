@@ -24,7 +24,7 @@ use strict;
 use Text::Wrap;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.6 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.7 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -182,6 +182,7 @@ sub xml2man($) {
     } elsif (m@^<_description>\s*(.*)\s*</_description>@) {
       $desc = $1;
     } elsif (m@^<xscreensaver-updater@) {
+    } elsif (m@^<video\b@) {
     } else {
       print STDERR "$progname: ERROR: UNKNOWN: $_\n";
     }

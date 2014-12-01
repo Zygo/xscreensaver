@@ -7,7 +7,6 @@ glplanet - rotating 3d texture-mapped planet.
 [\-visual \fIvisual\fP]
 [\-window]
 [\-root]
-[\-no-light]
 [\-delay \fInumber\fP]
 [\-image \fIfile\fP]
 [\-resolution \fInumber\fP]
@@ -28,9 +27,6 @@ Draw on a newly-created window.  This is the default.
 .TP 8
 .B \-root
 Draw on the root window.
-.TP 8
-.B \-light | \-no-light
-Use Flat Coloring.
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 20000 (0.02 seconds.).

@@ -112,6 +112,10 @@
 #include "vroot.h"
 #include "fps.h"
 
+#ifdef HAVE_RECORD_ANIM
+# include "recanim.h"
+#endif
+
 #ifndef _XSCREENSAVER_VROOT_H_
 # error Error!  You have an old version of vroot.h!  Check -I args.
 #endif /* _XSCREENSAVER_VROOT_H_ */
@@ -148,6 +152,11 @@ static XrmOptionDescRec default_options [] = {
 # ifdef DEBUG_PAIR
   { "-pair",	".pair",		XrmoptionNoArg, "True" },
 # endif /* DEBUG_PAIR */
+
+# ifdef HAVE_RECORD_ANIM
+  { "-record-animation", ".recordAnim", XrmoptionSepArg, 0 },
+# endif /* HAVE_RECORD_ANIM */
+
   { 0, 0, 0, 0 }
 };
 
@@ -477,15 +486,23 @@ usleep_and_process_events (Display *dpy,
                          , Window window2, fps_state *fpst2, void *closure2,
                            unsigned long delay2
 #endif
+# ifdef HAVE_RECORD_ANIM
+                         , record_anim_state *anim_state
+# endif
                            )
 {
   do {
-    unsigned long quantum = 100000;  /* 1/10th second */
+    unsigned long quantum = 33333;  /* 30 fps */
     if (quantum > delay) 
       quantum = delay;
     delay -= quantum;
 
     XSync (dpy, False);
+
+#ifdef HAVE_RECORD_ANIM
+    if (anim_state) screenhack_record_anim (anim_state);
+#endif
+
     if (quantum > 0)
       {
         usleep (quantum);
@@ -520,6 +537,9 @@ run_screenhack_table (Display *dpy,
                       Window window,
 # ifdef DEBUG_PAIR
                       Window window2,
+# endif
+# ifdef HAVE_RECORD_ANIM
+                      record_anim_state *anim_state,
 # endif
                       const struct xscreensaver_function_table *ft)
 {
@@ -566,9 +586,17 @@ run_screenhack_table (Display *dpy,
 #ifdef DEBUG_PAIR
                                        , window2, fpst2, closure2, delay2
 #endif
+#ifdef HAVE_RECORD_ANIM
+                                       , anim_state
+#endif
                                        ))
         break;
     }
+
+#ifdef HAVE_RECORD_ANIM
+  /* Exiting before target frames hit: write the video anyway. */
+  if (anim_state) screenhack_record_anim_free (anim_state);
+#endif
 
   ft->free_cb (dpy, window, closure);
   if (fpst) fps_free (fpst);
@@ -677,6 +705,9 @@ main (int argc, char **argv)
   Window window2 = 0;
   Widget toplevel2 = 0;
 # endif
+#ifdef HAVE_RECORD_ANIM
+  record_anim_state *anim_state = 0;
+#endif
   XtAppContext app;
   Bool root_p;
   Window on_window = 0;
@@ -922,11 +953,27 @@ main (int argc, char **argv)
 # undef ya_rand_init
   ya_rand_init (0);
 
+
+#ifdef HAVE_RECORD_ANIM
+  {
+    int frames = get_integer_resource (dpy, "recordAnim", "Integer");
+    if (frames > 0)
+      anim_state = screenhack_record_anim_init (xgwa.screen, window, frames);
+  }
+#endif
+
   run_screenhack_table (dpy, window, 
 # ifdef DEBUG_PAIR
                         window2,
 # endif
+# ifdef HAVE_RECORD_ANIM
+                        anim_state,
+# endif
                         ft);
+
+#ifdef HAVE_RECORD_ANIM
+  if (anim_state) screenhack_record_anim_free (anim_state);
+#endif
 
   XtDestroyWidget (toplevel);
   XtDestroyApplicationContext (app);

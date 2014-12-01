@@ -17,14 +17,6 @@
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#ifndef HAVE_COCOA
-# include <GL/gl.h>
-#endif
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
-
 typedef struct stonerview_state stonerview_state;
 
 #include "stonerview-osc.h"

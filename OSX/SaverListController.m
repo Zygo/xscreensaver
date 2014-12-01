@@ -58,9 +58,9 @@
   UIImage *img = [UIImage imageWithContentsOfFile:
                             [[[NSBundle mainBundle] bundlePath]
                               stringByAppendingPathComponent:
-                                @"iSaverRunner29t.png"]];
+                                @"iSaverRunner57t.png"]];
   UIButton *button = [[UIButton alloc] init];
-  [button setFrame: CGRectMake(0, 0, img.size.width, img.size.height)];
+  [button setFrame: CGRectMake(0, 0, img.size.width/2, img.size.height/2)];
   [button setBackgroundImage:img forState:UIControlStateNormal];
   [button addTarget:self
           action:@selector(titleTapped:)
@@ -89,8 +89,8 @@
 
   CGRect win = [self view].frame;
   if (win.size.width > 320) {					// iPad
-    [label1 setTextAlignment: UITextAlignmentLeft];
-    [label2 setTextAlignment: UITextAlignmentRight];
+    [label1 setTextAlignment: NSTextAlignmentLeft];
+    [label2 setTextAlignment: NSTextAlignmentRight];
     label2.autoresizingMask = UIViewAutoresizingFlexibleLeftMargin;
     r3.size.width = win.size.width;
     r1 = r3;
@@ -100,8 +100,8 @@
 
   } else {							// iPhone
     r3.size.width = 320; // force it to be flush-left
-    [label1 setTextAlignment: UITextAlignmentLeft];
-    [label2 setTextAlignment: UITextAlignmentLeft];
+    [label1 setTextAlignment: NSTextAlignmentLeft];
+    [label2 setTextAlignment: NSTextAlignmentLeft];
     r1.origin.y = -1;    // make it fit in landscape
     r2.origin.y = r1.origin.y + r1.size.height - 2;
     r3.size.height = r1.size.height + r2.size.height;
@@ -114,15 +114,33 @@
   [v addSubview:label1];
   [v addSubview:label2];
 
+  // Default opacity looks bad.
+  [v setBackgroundColor:[[v backgroundColor] colorWithAlphaComponent:1]];
+
   self.navigationItem.titleView = v;
+
+  win.origin.x = 0;
+  win.origin.y = 0;
+  win.size.height = 44; // #### This cannot possibly be right.
+  UISearchBar *search = [[UISearchBar alloc] initWithFrame:win];
+  search.delegate = self;
+  search.placeholder = @"Search...";
+  self.tableView.tableHeaderView = search;
+
+  // Dismiss the search field's keyboard as soon as we scroll.
+# ifdef __IPHONE_7_0
+  if ([self.tableView respondsToSelector:@selector(keyboardDismissMode)])
+    [self.tableView setKeyboardDismissMode:
+           UIScrollViewKeyboardDismissModeOnDrag];
+# endif
 }
 
 
-- (id)initWithNames:(NSArray *)names descriptions:(NSDictionary *)descs;
+- (id)initWithNames:(NSArray *)_names descriptions:(NSDictionary *)_descs;
 {
   self = [self init];
   if (! self) return 0;
-  [self reload:names descriptions:descs];
+  [self reload:_names descriptions:_descs search:nil];
   [self makeTitleBar];
   return self;
 }
@@ -133,6 +151,8 @@
   int n = countof(list_by_letter);
   NSMutableArray *a = [NSMutableArray arrayWithCapacity: n];
   for (int i = 0; i < n; i++) {
+    if ([list_by_letter[i] count] == 0)  // Omit empty letter sections.
+      continue;
     char s[2];
     s[0] = (i == 'Z'-'A'+1 ? '#' : i+'A');
     s[1] = 0;
@@ -143,11 +163,25 @@
 }
 
 
-- (void) reload:(NSArray *)names descriptions:(NSDictionary *)descs
+/* Called when text is typed into the top search bar.
+ */
+- (void)searchBar:(UISearchBar *)bar textDidChange:(NSString *)txt
 {
-  if (descriptions)
-    [descriptions release];
-  descriptions = [descs retain];
+  [self reload:names descriptions:descriptions search:txt];
+}
+
+
+- (void) reload:(NSArray *)_names descriptions:(NSDictionary *)_descs
+         search:search
+{
+  if (names != _names) {
+    if (names) [names release];
+    names = [_names retain];
+  }
+  if (_descs != descriptions) {
+    if (descriptions) [descriptions release];
+    descriptions = [_descs retain];
+  }
 
   int n = countof(list_by_letter);
   for (int i = 0; i < n; i++) {
@@ -155,6 +189,25 @@
   }
 
   for (NSString *name in names) {
+
+    // If we're searching, omit any items that don't have a match in the
+    // title or description.
+    //
+    BOOL matchp = (!search || [search length] == 0);
+    if (! matchp) {
+      matchp = ([name rangeOfString:search
+                            options:NSCaseInsensitiveSearch].location
+                != NSNotFound);
+    }
+    if (! matchp) {
+      NSString *desc = [descriptions objectForKey:name];
+      matchp = ([desc rangeOfString:search
+                            options:NSCaseInsensitiveSearch].location
+                != NSNotFound);
+    }
+    if (! matchp)
+      continue;
+
     int index = ([name cStringUsingEncoding: NSASCIIStringEncoding])[0];
     if (index >= 'a' && index <= 'z')
       index -= 'a'-'A';
@@ -217,25 +270,23 @@
 - (UITableViewCell *)tableView:(UITableView *)tv
                      cellForRowAtIndexPath:(NSIndexPath *)ip
 {
-  NSString *id =
+  NSString *title = 
     [[letter_sections objectAtIndex: [ip indexAtPosition: 0]]
       objectAtIndex: [ip indexAtPosition: 1]];
-  NSString *desc = [descriptions objectForKey:id];
+  NSString *desc = [descriptions objectForKey:title];
 
-  UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier: id];
-  if (!cell) {
+  NSString *id = @"Cell";
+  UITableViewCell *cell = [tv dequeueReusableCellWithIdentifier:id];
+  if (!cell)
     cell = [[[UITableViewCell alloc]
-              initWithStyle: (desc
-                              ? UITableViewCellStyleSubtitle
-                              : UITableViewCellStyleDefault)
+                initWithStyle: UITableViewCellStyleSubtitle
               reuseIdentifier: id]
              autorelease];
-    cell.textLabel.text = id;
 
-    cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
-    if (desc)
-      cell.detailTextLabel.text = desc;
-  }
+  cell.textLabel.text = title;
+  cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
+  cell.detailTextLabel.text = desc;
+
   return cell;
 }
 
@@ -249,6 +300,10 @@
   SaverRunner *s = 
     (SaverRunner *) [[UIApplication sharedApplication] delegate];
   if (! s) return;
+
+  // Dismiss the search field's keyboard before launching a saver.
+  [self.tableView.tableHeaderView resignFirstResponder];
+
   NSAssert ([s isKindOfClass:[SaverRunner class]], @"not a SaverRunner");
   [s loadSaver: cell.textLabel.text];
 }
@@ -288,12 +343,6 @@
                     animated:NO
                     scrollPosition: UITableViewScrollPositionMiddle];
   }
-}
-
-
-- (BOOL)shouldAutorotateToInterfaceOrientation: (UIInterfaceOrientation)o
-{
-  return YES;
 }
 
 

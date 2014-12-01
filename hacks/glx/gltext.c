@@ -34,6 +34,7 @@
 #include "rotator.h"
 #include "gltrackball.h"
 #include "textclient.h"
+#include "utf8wc.h"
 
 #include <ctype.h>
 
@@ -151,43 +152,15 @@ gl_init (ModeInfo *mi)
 }
 
 
-/* The GLUT font only has ASCII characters in them, so do what we can to
-   convert Latin1 characters to the nearest ASCII equivalent... 
- */
-static void
-latin1_to_ascii (char *s)
-{
-  unsigned char *us = (unsigned char *) s;
-  const unsigned char ascii[95] = {
-    '!', 'C', '#', '#', 'Y', '|', 'S', '_', 'C', '?', '<', '=', '-', 'R', '_',
-    '?', '?', '2', '3', '\'','u', 'P', '.', ',', '1', 'o', '>', '?', '?', '?',
-    '?', 'A', 'A', 'A', 'A', 'A', 'A', 'E', 'C', 'E', 'E', 'E', 'E', 'I', 'I',
-    'I', 'I', 'D', 'N', 'O', 'O', 'O', 'O', 'O', 'x', '0', 'U', 'U', 'U', 'U',
-    'Y', 'p', 'S', 'a', 'a', 'a', 'a', 'a', 'a', 'e', 'c', 'e', 'e', 'e', 'e',
-    'i', 'i', 'i', 'i', 'o', 'n', 'o', 'o', 'o', 'o', 'o', '/', 'o', 'u', 'u',
-    'u', 'u', 'y', 'p', 'y' };
-  while (*us)
-    {
-      if (*us >= 161)
-        *us = ascii[*us - 161];
-      else if (*us > 127)
-        *us = '?';
-      us++;
-    }
-}
-
-
 static void
 parse_text (ModeInfo *mi)
 {
   text_configuration *tp = &tps[MI_SCREEN(mi)];
-
-  if (tp->text) free (tp->text);
-  tp->text = 0;
+  char *old = tp->text;
 
   if (program_str && *program_str && !!strcmp(program_str, "(default)"))
     {
-      int max_lines = 20;
+      int max_lines = 8;
       char buf[1024];
       char *p = buf;
       int lines = 0;
@@ -211,7 +184,11 @@ parse_text (ModeInfo *mi)
         lines++;
 
       tp->text = strdup (buf);
-      tp->reload = 1;
+      
+      tp->reload = 7;  /* Let this one linger for a few seconds */
+      if (!*tp->text)
+        tp->reload = 1;
+
     }
   else if (!text_fmt || !*text_fmt || !strcmp(text_fmt, "(default)"))
     {
@@ -297,7 +274,23 @@ parse_text (ModeInfo *mi)
       tp->reload = 1;
     }
 
-  latin1_to_ascii (tp->text);
+  {
+    /* The GLUT font only has ASCII characters. */
+    char *s1 = utf8_to_latin1 (tp->text, True);
+    free (tp->text);
+    tp->text = s1;
+  }
+
+  /* If we had text before but got no text this time, hold on to the
+     old one, to avoid flickering.
+   */
+  if (old && *old && !*tp->text)
+    {
+      free (tp->text);
+      tp->text = old;
+    }
+  else if (old)
+    free (old);
 }
 
 

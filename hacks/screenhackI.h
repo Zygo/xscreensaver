@@ -67,9 +67,9 @@
 # include <values.h>
 #endif
 
-#ifdef HAVE_COCOA
+#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
 # include "jwxyz.h"
-#else  /* !HAVE_COCOA -- real X11 */
+#else  /* real X11 */
 # include <X11/Xlib.h>
 # include <X11/Xutil.h>
 # include <X11/Xresource.h>

@@ -26,11 +26,7 @@ struct fps_state {
   char string[1024];
 
   /* for glx/fps-gl.c */
-# ifdef HAVE_GLBITMAP
-  unsigned long font_dlist;
-# else
   void *gl_fps_data;
-# endif
 
   GC draw_gc, erase_gc;
 

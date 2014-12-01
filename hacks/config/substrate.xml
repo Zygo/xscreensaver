@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=dCCVgBOVD0E"/>
+
   <hgroup>
    <vgroup>
     <number id="speed" type="slider" arg="-growth-delay %"
@@ -27,6 +29,8 @@
             _label="Initial cracks" low="3" high="15" default="3"/>
 
     <boolean id="wire" _label="Wireframe only" arg-set="-wireframe" />
+
+    <boolean id="seamless" _label="Seamless mode" arg-set="-seamless" />
 
     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
    </vgroup>

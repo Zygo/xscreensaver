@@ -632,6 +632,10 @@ bigendian (void)
 
    If this hack ever grows into something that displays full Latin1 text,
    well then, Something Else Will Need To Be Done.
+
+   Since currently GLMatrix does not run textclient / xscreensaver-text,
+   it's not an issue.  (XMatrix does that.)
+
  */
 static void
 spank_image (matrix_configuration *mp, XImage *xi)

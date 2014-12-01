@@ -73,7 +73,7 @@
                   "*showFPS:         False                \n" \
 	          "*fpsSolid:        True                 \n" \
 	          "*useSHM:          True                 \n" \
-		  "*titleFont:       -*-helvetica-medium-r-normal-*-180-*\n" \
+            "*titleFont: -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
                   "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n" \
 		  "*grabDesktopImages:   False \n" \
 		  "*chooseRandomImages:  True  \n"
@@ -99,7 +99,7 @@
 # define DEF_MIPMAP         "True"
 
 #include "grab-ximage.h"
-#include "glxfonts.h"
+#include "texfont.h"
 
 typedef struct {
   double x, y, w, h;
@@ -806,19 +806,13 @@ draw_sprite (ModeInfo *mi, sprite *sp)
 
 
     if (do_titles &&
-        img->title && *img->title)
+        img->title && *img->title &&
+        (sp->state == IN || sp->state == FULL))
       {
-        int x = 10;
-        int y = mi->xgwa.height - 10;
-        glColor4f (0, 0, 0, sp->opacity);   /* cheap-assed dropshadow */
-        print_gl_string (mi->dpy, ss->font_data,
-                         mi->xgwa.width, mi->xgwa.height, x, y,
-                         img->title, False);
-        x++; y++;
         glColor4f (1, 1, 1, sp->opacity);
-        print_gl_string (mi->dpy, ss->font_data,
-                         mi->xgwa.width, mi->xgwa.height, x, y,
-                         img->title, False);
+        print_texture_label (mi->dpy, ss->font_data,
+                             mi->xgwa.width, mi->xgwa.height,
+                             1, img->title);
       }
   }
   glPopMatrix();

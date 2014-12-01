@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">    <PreferenceCategory
+        android:title="@string/sproingies_settings"
+        android:key="sproingieswallpaper_settings">
+    <ListPreference
+            android:key="sproingies_count"
+            android:title="@string/sproingies_count_settings_title"
+            android:summary="@string/sproingies_count_settings_summary"
+            android:entries="@array/sproingies_count_names"
+	    android:defaultValue="8"
+            android:entryValues="@array/sproingies_count_prefix" />
+    </PreferenceCategory>
+</PreferenceScreen>

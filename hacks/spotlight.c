@@ -22,6 +22,7 @@
 
 /* #define DEBUG */
 #include <math.h>
+#include <limits.h>
 #include "screenhack.h"
 
 #define MINX 0.0
@@ -73,13 +74,15 @@ static long
 currentTimeInMs(struct state *st)
 {
   struct timeval curTime;
+  unsigned long ret_unsigned;
 #ifdef GETTIMEOFDAY_TWO_ARGS
   struct timezone tz = {0,0};
   gettimeofday(&curTime, &tz);
 #else
   gettimeofday(&curTime);
 #endif
-  return curTime.tv_sec*1000 + curTime.tv_usec/1000.0;
+  ret_unsigned = curTime.tv_sec *1000U + curTime.tv_usec / 1000;
+  return (ret_unsigned <= LONG_MAX) ? ret_unsigned : -1 - (long)(ULONG_MAX - ret_unsigned);
 }
 
 
@@ -155,7 +158,7 @@ spotlight_init (Display *dpy, Window window)
   clip_pm = XCreatePixmap(st->dpy, st->window, st->radius*4, st->radius*4, 1);
   st->img_loader = load_image_async_simple (0, xgwa.screen, st->window, st->pm,
                                             0, 0);
-  st->start_time = time ((time_t) 0);
+  st->start_time = time ((time_t *) 0);
 
   gcv.foreground = 0L;
   clip_gc = XCreateGC(st->dpy, clip_pm, gcflags, &gcv);
@@ -197,18 +200,19 @@ static void
 onestep (struct state *st, Bool first_p)
 {
   long now;
+  unsigned long now_unsigned;
 
   if (st->img_loader)   /* still loading */
     {
       st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
       if (! st->img_loader) {  /* just finished */
-        st->start_time = time ((time_t) 0);
+        st->start_time = time ((time_t *) 0);
       }
       return;
     }
 
   if (!st->img_loader &&
-      st->start_time + st->duration < time ((time_t) 0)) {
+      st->start_time + st->duration < time ((time_t *) 0)) {
     st->img_loader = load_image_async_simple (0, st->screen, st->window,
                                               st->pm, 0, 0);
     return;
@@ -221,7 +225,8 @@ onestep (struct state *st, Bool first_p)
 
   st->s = st->radius *4 ;   /* s = width of buffer */
 
-  now = currentTimeInMs(st) + st->off;
+  now_unsigned = (unsigned long) currentTimeInMs(st) + st->off;
+  now = (now_unsigned <= LONG_MAX) ? now_unsigned : -1 - (long)(ULONG_MAX - now_unsigned);
 
   /* find new x,y */
   st->x = ((1 + sin(((double)now) / X_PERIOD * 2. * M_PI))/2.0) 

@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=hXZquXPG4pg"/>
+
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
@@ -22,7 +24,6 @@
   </hgroup>
 
   <hgroup>
-   <boolean id="light"   _label="Lighting"               arg-unset="-no-light"/>
    <boolean id="wire"    _label="Wireframe"              arg-set="-wireframe"/>
    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   </hgroup>
@@ -35,6 +36,6 @@ The Earth, bouncing around in space.
 If you would like it to display a different planet, the texture maps
 that come with "ssystem" work well.
 
-Written by David Konerding; 1998.
+Written by David Konerding and Jamie Zawinski; 1998.
   </_description>
 </screensaver>

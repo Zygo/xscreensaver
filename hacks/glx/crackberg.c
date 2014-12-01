@@ -1335,6 +1335,19 @@ ENTRYPOINT Bool crackberg_handle_event (ModeInfo *mi, XEvent *ev)
       if (dy > 0 && dy > dx) dx = 0;
       if (dy < 0 && dy < dx) dx = 0;
 
+      {
+        int rot = current_device_rotation();
+        int swap;
+        while (rot <= -180) rot += 360;
+        while (rot >   180) rot -= 360;
+        if (rot > 135 || rot < -135)		/* 180 */
+            dx = -dx, dy = -dy;
+        else if (rot > 45)			/* 90 */
+          swap = dx, dx = -dy, dy = swap;
+        else if (rot < -45)			/* 270 */
+          swap = dx, dx = dy, dy = -swap;
+      }
+
       if      (dx > 0) cberg->motion_state |= MOTION_LEFT;
       else if (dx < 0) cberg->motion_state |= MOTION_RIGHT;
       else if (dy > 0) cberg->motion_state |= MOTION_FORW;

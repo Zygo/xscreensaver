@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=atwc7IJHuLo"/>
+
   <select id="mode">
     <option id="random" _label="Random"/>
     <option id="zoom"   _label="Color gradients" arg-set="-mode zoom"/>

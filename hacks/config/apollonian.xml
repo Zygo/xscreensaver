@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=aeWnjSROR8U"/>
+
   <boolean id="label" _label="Draw labels" arg-unset="-no-label"/>
 
   <boolean id="altgeom" _label="Include alternate geometries"

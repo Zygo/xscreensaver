@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=snm7o95AR8E"/>
+
   <hgroup>
    <vgroup>
 
@@ -58,6 +60,6 @@ Loads several random images, and displays them as if lying in a random pile.
 The pile is periodically reshuffled, with new images coming in and old ones
 being thrown out.
 
-Written by Jens Kilian; 2008.
+Written by Jens Kilian and Jamie Zawinski; 2008.
   </_description>
 </screensaver>

@@ -68,8 +68,12 @@ for more details.
 .B \-program \fIcommand\fP
 The given program is run, and its output is displayed.
 If specified, this overrides \fI\-text\fP.
-The program will be re-run every 5 seconds to re-generate the text.
-It should run quickly, and shouldn't generate too much text.
+The output of this program will be repeatedely displayed, with new
+pages of text shifting in every few seconds.  Lines should be relatively
+short.  You might try:
+.EX
+-program 'xscreensaver-text --cols 20'
+.EE
 .TP 8
 .B \-wander
 Move the text around the screen.  This is the default.
@@ -110,8 +114,9 @@ stored in the RESOURCE_MANAGER property.
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1)
+.BR xscreensaver-text (1)
 .SH COPYRIGHT
-Copyright \(co 2001-2005 by Jamie Zawinski.
+Copyright \(co 2001-2014 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software and
 its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

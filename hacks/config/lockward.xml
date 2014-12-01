@@ -4,6 +4,8 @@
 
   <command arg="-root" />
 
+  <video href="https://www.youtube.com/watch?v=MGwySGVQZ2M"/>
+
     <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
           low="0" high="100000" default="20000"
@@ -55,7 +57,7 @@
 
   <xscreensaver-updater />
 
-  <_description> 
+  <_description>
 A translucent spinning, blinking thing.  Sort of a cross between the wards
 in an old combination lock and those old backlit information displays that
 animated and changed color via polarized light.

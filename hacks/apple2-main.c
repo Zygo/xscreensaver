@@ -27,6 +27,7 @@
 #include "screenhack.h"
 #include "apple2.h"
 #include "textclient.h"
+#include "utf8wc.h"
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -800,6 +801,7 @@ struct terminal_controller_data {
   int curparam;
   int cursor_x, cursor_y;
   int saved_x,  saved_y;
+  int unicruds; char unicrud[7];
   union {
     struct {
       unsigned int bold : 1;
@@ -901,6 +903,8 @@ a2_vt100_printc (apple2_sim_t *sim, struct terminal_controller_data *state,
   int i;
   int start, end;
 
+  /* Mostly duplicated in phosphor.c */
+
   switch (state->escstate)
     {
     case 0:
@@ -964,6 +968,38 @@ a2_vt100_printc (apple2_sim_t *sim, struct terminal_controller_data *state,
           state->curparam = 0;
           break;
         default:
+
+          /* states 102-106 are for UTF-8 decoding */
+
+          if ((c & 0xE0) == 0xC0) {        /* 110xxxxx - 11 bits, 2 bytes */
+            state->unicruds = 1;
+            state->unicrud[0] = c;
+            state->escstate = 102;
+            break;
+          } else if ((c & 0xF0) == 0xE0) { /* 1110xxxx - 16 bits, 3 bytes */
+            state->unicruds = 1;
+            state->unicrud[0] = c;
+            state->escstate = 103;
+            break;
+          } else if ((c & 0xF8) == 0xF0) { /* 11110xxx - 21 bits, 4 bytes */
+            state->unicruds = 1;
+            state->unicrud[0] = c;
+            state->escstate = 104;
+            break;
+          } else if ((c & 0xFC) == 0xF8) { /* 111110xx - 26 bits, 5 bytes */
+            state->unicruds = 1;
+            state->unicrud[0] = c;
+            state->escstate = 105;
+            break;
+          } else if ((c & 0xFE) == 0xFC) { /* 1111110x - 31 bits, 6 bytes */
+            state->unicruds = 1;
+            state->unicrud[0] = c;
+            state->escstate = 106;
+            break;
+          }
+
+        PRINT:
+
           /* If the cursor is in column 39 and we print a character, then
              that character shows up in column 39, and the cursor is no longer
              visible on the screen (it's in "column 40".)  If another character
@@ -1038,9 +1074,13 @@ a2_vt100_printc (apple2_sim_t *sim, struct terminal_controller_data *state,
           state->curparam = 0;
           break;
         case '%': /* Select charset */
-          /* No, I don't support UTF-8, since the apple2 font
-             isn't even Unicode anyway. We must still catch the
-             last byte, though. */
+          /* @: Select default (ISO 646 / ISO 8859-1)
+             G: Select UTF-8
+             8: Select UTF-8 (obsolete)
+
+             We can just ignore this and always process UTF-8, I think?
+             We must still catch the last byte, though.
+           */
         case '(':
         case ')':
           /* I don't support different fonts either - see above
@@ -1250,6 +1290,39 @@ a2_vt100_printc (apple2_sim_t *sim, struct terminal_controller_data *state,
     case 3:
       state->escstate = 0;
       break;
+
+    case 102:
+    case 103:
+    case 104:
+    case 105:
+    case 106:
+      {
+        int total = state->escstate - 100;  /* see what I did there */
+        if (state->unicruds < total) {
+          /* Buffer more bytes of the UTF-8 sequence */
+          state->unicrud[state->unicruds++] = c;
+        }
+
+        if (state->unicruds >= total) {
+          /* Done! Convert it to ASCII and print that. */
+          char *s;
+          state->unicrud[state->unicruds] = 0;
+          s = utf8_to_latin1 ((const char *) state->unicrud, True);
+          state->unicruds = 0;
+          state->escstate = 0;
+          if (s) {
+            c = s[0];
+            free (s);
+            goto PRINT;
+          } else {
+            c = 0;
+          }
+        }
+      }
+      break;
+
+    default:
+      abort();
     }
   a2_goto(st, state->cursor_y, state->cursor_x);
 }
@@ -1299,23 +1372,35 @@ terminal_controller(apple2_sim_t *sim, int *stepno, double *next_actiontime)
     if (! mine->fast_p)
       *next_actiontime += 4.0;
     *stepno = 10;
+
+    mine->last_emit_time = sim->curtime;
     break;
 
   case 10:
+  case 11:
     {
+      Bool first_line_p = (*stepno == 10);
       unsigned char buf[1024];
       int nr,nwant;
       double elapsed;
 
       elapsed=sim->curtime - mine->last_emit_time;
-      mine->last_emit_time=sim->curtime;
-      nwant=elapsed*25.0;
-      if (elapsed>1.0) nwant=1;
-      if (nwant<1) nwant=1;
-      if (nwant>4) nwant=4;
+
+      nwant = elapsed * 25.0;   /* characters per second */
+
+      if (first_line_p) {
+        *stepno = 11;
+        nwant = 1;
+      }
+
+      if (nwant > 40) nwant = 40;
 
       if (mine->fast_p)
         nwant = sizeof(buf)-1;
+
+      if (nwant <= 0) break;
+
+      mine->last_emit_time = sim->curtime;
 
       nr=terminal_read(mine, buf, nwant);
       for (i=0; i<nr; i++) {

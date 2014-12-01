@@ -28,13 +28,16 @@ use strict;
 # Only error out if we're actually loading a URL instead of local data.
 BEGIN { eval 'use LWP::UserAgent;' }
 
+# Not sure how prevalent this is. Hope it's part of the default install.
+BEGIN { eval 'use HTML::Entities;' }
+
 use Socket;
 use POSIX qw(strftime);
 use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.33 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.37 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -49,141 +52,63 @@ my $text_url      = 'http://en.wikipedia.org/w/index.php?title=Special:NewPages&
 
 my $wrap_columns   = undef;
 my $truncate_lines = undef;
+my $latin1_p = 0;
 my $nyarlathotep_p = 0;
 
-
-# Maps HTML character entities to the corresponding Latin1 characters.
-#
-my %entity_table = (
-   "quot"   => '"',    "amp"    => '&',    "lt"     => '<',
-   "gt"     => '>',    "nbsp"   => " ",    "iexcl"  => "\xA1",
-   "cent"   => "\xA2", "pound"  => "\xA3", "curren" => "\xA4",
-   "yen"    => "\xA5", "brvbar" => "\xA6", "sect"   => "\xA7",
-   "uml"    => "\xA8", "copy"   => "\xA9", "ordf"   => "\xAA",
-   "laquo"  => "\xAB", "not"    => "\xAC", "shy"    => "\xAD",
-   "reg"    => "\xAE", "macr"   => "\xAF", "deg"    => "\xB0",
-   "plusmn" => "\xB1", "sup2"   => "\xB2", "sup3"   => "\xB3",
-   "acute"  => "\xB4", "micro"  => "\xB5", "para"   => "\xB6",
-   "middot" => "\xB7", "cedil"  => "\xB8", "sup1"   => "\xB9",
-   "ordm"   => "\xBA", "raquo"  => "\xBB", "frac14" => "\xBC",
-   "frac12" => "\xBD", "frac34" => "\xBE", "iquest" => "\xBF",
-   "Agrave" => "\xC0", "Aacute" => "\xC1", "Acirc"  => "\xC2",
-   "Atilde" => "\xC3", "Auml"   => "\xC4", "Aring"  => "\xC5",
-   "AElig"  => "\xC6", "Ccedil" => "\xC7", "Egrave" => "\xC8",
-   "Eacute" => "\xC9", "Ecirc"  => "\xCA", "Euml"   => "\xCB",
-   "Igrave" => "\xCC", "Iacute" => "\xCD", "Icirc"  => "\xCE",
-   "Iuml"   => "\xCF", "ETH"    => "\xD0", "Ntilde" => "\xD1",
-   "Ograve" => "\xD2", "Oacute" => "\xD3", "Ocirc"  => "\xD4",
-   "Otilde" => "\xD5", "Ouml"   => "\xD6", "times"  => "\xD7",
-   "Oslash" => "\xD8", "Ugrave" => "\xD9", "Uacute" => "\xDA",
-   "Ucirc"  => "\xDB", "Uuml"   => "\xDC", "Yacute" => "\xDD",
-   "THORN"  => "\xDE", "szlig"  => "\xDF", "agrave" => "\xE0",
-   "aacute" => "\xE1", "acirc"  => "\xE2", "atilde" => "\xE3",
-   "auml"   => "\xE4", "aring"  => "\xE5", "aelig"  => "\xE6",
-   "ccedil" => "\xE7", "egrave" => "\xE8", "eacute" => "\xE9",
-   "ecirc"  => "\xEA", "euml"   => "\xEB", "igrave" => "\xEC",
-   "iacute" => "\xED", "icirc"  => "\xEE", "iuml"   => "\xEF",
-   "eth"    => "\xF0", "ntilde" => "\xF1", "ograve" => "\xF2",
-   "oacute" => "\xF3", "ocirc"  => "\xF4", "otilde" => "\xF5",
-   "ouml"   => "\xF6", "divide" => "\xF7", "oslash" => "\xF8",
-   "ugrave" => "\xF9", "uacute" => "\xFA", "ucirc"  => "\xFB",
-   "uuml"   => "\xFC", "yacute" => "\xFD", "thorn"  => "\xFE",
-   "yuml"   => "\xFF", "apos"   => "\'",
-
-   # HTML 4 entities that do not have 1:1 Latin1 mappings.
-   "bull"  => "*",    "hellip"=> "...",  "prime" => "'",  "Prime" => "\"",
-   "frasl" => "/",    "trade" => "[tm]", "larr"  => "<-", "rarr"  => "->",
-   "harr"  => "<->",  "lArr"  => "<=",   "rArr"  => "=>", "hArr"  => "<=>",
-   "empty" => "\xD8", "minus" => "-",    "lowast"=> "*",  "sim"   => "~",
-   "cong"  => "=~",   "asymp" => "~",    "ne"    => "!=", "equiv" => "==",
-   "le"    => "<=",   "ge"    => ">=",   "lang"  => "<",  "rang"  => ">",
-   "loz"   => "<>",   "OElig" => "OE",   "oelig" => "oe", "Yuml"  => "Y",
-   "circ"  => "^",    "tilde" => "~",    "ensp"  => " ",  "emsp"  => " ",
-   "thinsp"=> " ",    "ndash" => "-",    "mdash" => "-",  "lsquo" => "`",
-   "rsquo" => "'",    "sbquo" => "'",    "ldquo" => "\"", "rdquo" => "\"",
-   "bdquo" => "\"",   "lsaquo"=> "<",    "rsaquo"=> ">",
-);
-
-# Maps certain UTF8 characters (2 or 3 bytes) to the corresponding
-# Latin1 characters.
-#
-my %unicode_latin1_table = (
-   "\xC2\xA1" => "\xA1", "\xC2\xA2" => "\xA2", "\xC2\xA3" => "\xA3",
-   "\xC2\xA4" => "\xA4", "\xC2\xA5" => "\xA5", "\xC2\xA6" => "\xA6",
-   "\xC2\xA7" => "\xA7", "\xC2\xA8" => "\xA8", "\xC2\xA9" => "\xA9",
-   "\xC2\xAA" => "\xAA", "\xC2\xAB" => "\xAB", "\xC2\xAC" => "\xAC",
-   "\xC2\xAD" => "\xAD", "\xC2\xAE" => "\xAE", "\xC2\xAF" => "\xAF",
-   "\xC2\xB0" => "\xB0", "\xC2\xB1" => "\xB1", "\xC2\xB2" => "\xB2",
-   "\xC2\xB3" => "\xB3", "\xC2\xB4" => "\xB4", "\xC2\xB5" => "\xB5",
-   "\xC2\xB6" => "\xB6", "\xC2\xB7" => "\xB7", "\xC2\xB8" => "\xB8",
-   "\xC2\xB9" => "\xB9", "\xC2\xBA" => "\xBA", "\xC2\xBB" => "\xBB",
-   "\xC2\xBC" => "\xBC", "\xC2\xBD" => "\xBD", "\xC2\xBE" => "\xBE",
-   "\xC2\xBF" => "\xBF", "\xC3\x80" => "\xC0", "\xC3\x81" => "\xC1",
-   "\xC3\x82" => "\xC2", "\xC3\x83" => "\xC3", "\xC3\x84" => "\xC4",
-   "\xC3\x85" => "\xC5", "\xC3\x86" => "\xC6", "\xC3\x87" => "\xC7",
-   "\xC3\x88" => "\xC8", "\xC3\x89" => "\xC9", "\xC3\x8A" => "\xCA",
-   "\xC3\x8B" => "\xCB", "\xC3\x8C" => "\xCC", "\xC3\x8D" => "\xCD",
-   "\xC3\x8E" => "\xCE", "\xC3\x8F" => "\xCF", "\xC3\x90" => "\xD0",
-   "\xC3\x91" => "\xD1", "\xC3\x92" => "\xD2", "\xC3\x93" => "\xD3",
-   "\xC3\x94" => "\xD4", "\xC3\x95" => "\xD5", "\xC3\x96" => "\xD6",
-   "\xC3\x97" => "\xD7", "\xC3\x98" => "\xD8", "\xC3\x99" => "\xD9",
-   "\xC3\x9A" => "\xDA", "\xC3\x9B" => "\xDB", "\xC3\x9C" => "\xDC",
-   "\xC3\x9D" => "\xDD", "\xC3\x9E" => "\xDE", "\xC3\x9F" => "\xDF",
-   "\xC3\xA0" => "\xE0", "\xC3\xA1" => "\xE1", "\xC3\xA2" => "\xE2",
-   "\xC3\xA3" => "\xE3", "\xC3\xA4" => "\xE4", "\xC3\xA5" => "\xE5",
-   "\xC3\xA6" => "\xE6", "\xC3\xA7" => "\xE7", "\xC3\xA8" => "\xE8",
-   "\xC3\xA9" => "\xE9", "\xC3\xAA" => "\xEA", "\xC3\xAB" => "\xEB",
-   "\xC3\xAC" => "\xEC", "\xC3\xAD" => "\xED", "\xC3\xAE" => "\xEE",
-   "\xC3\xAF" => "\xEF", "\xC3\xB0" => "\xF0", "\xC3\xB1" => "\xF1",
-   "\xC3\xB2" => "\xF2", "\xC3\xB3" => "\xF3", "\xC3\xB4" => "\xF4",
-   "\xC3\xB5" => "\xF5", "\xC3\xB6" => "\xF6", "\xC3\xB7" => "\xF7",
-   "\xC3\xB8" => "\xF8", "\xC3\xB9" => "\xF9", "\xC3\xBA" => "\xFA",
-   "\xC3\xBB" => "\xFB", "\xC3\xBC" => "\xFC", "\xC3\xBD" => "\xFD",
-   "\xC3\xBE" => "\xFE", "\xC3\xBF" => "\xFF",
-
-   "\xE2\x80\x93" => '--',       "\xE2\x80\x94" => '--',
-   "\xE2\x80\x98" => '`',        "\xE2\x80\x99" => '\'',
-   "\xE2\x80\x9C" => "``",       "\xE2\x80\x9D" => "''",
-   "\xE2\x80\xB2" => "'",        "\xE2\x80\xA6" => '...',
-   "\xE2\x86\x90" => ' &larr; ', "\xE2\x84\xA2" => '&trade;',
-   "\xE2\x80\xA2" => '&bull;',   "\xC2\xA0" => ' ',  # &nbsp;
- );
 
 # Convert any HTML entities to Latin1 characters.
 #
 sub de_entify($) {
   my ($text) = @_;
-  $text =~ s/(&(\#)?([[:alpha:]\d]+);?)/
-    {
-     my $c = $3;
-     if (! defined($2)) {
-       $c = $entity_table{$c};		# for &Aacute;
-     } else {
-       if ($c =~ m@^x([\dA-F]+)$@si) {	# for &#x41;
-         $c = chr(hex($1));
-       } elsif ($c =~ m@^\d+$@si) {	# for &#65;
-         $c = chr($c);
-       } else {
-         $c = undef;
-       }
-     }
-     ($c || "[$3]");			# for &unknown; => "[unknown]"
-    }
-   /gexi;
-  return $text;
+
+  return '' unless defined($text);
+  return $text unless ($text =~ m/&/s);
+
+  # Convert any HTML entities to Unicode characters,
+  # if the HTML::Entities module is installed.
+  eval {
+    my $t2 = $text;
+    $text = undef;
+    $text = HTML::Entities::decode_entities ($t2);
+  };
+  return $text if defined($text);
+
+  # If it's not installed, just complain instead of trying to halfass it.
+  print STDOUT ("\n\tPerl is broken. Do this to repair it:\n" .
+                "\n\tsudo cpan HTML::Entities\n\n");
+  exit (1);
 }
 
 
 # Convert any Unicode characters to Latin1 if possible.
 # Unconvertable bytes are left alone.
 #
-sub de_unicoddle($) {
+sub utf8_to_latin1($) {
   my ($text) = @_;
-  foreach my $key (sort { length($b) <=> length($a) }
-                   keys (%unicode_latin1_table)) {
-    my $val = $unicode_latin1_table{$key};
-    $text =~ s/$key/$val/gs;
-  }
+
+  utf8::encode ($text);  # Unpack Unicode back to multi-byte UTF-8.
+
+  # Maybe it would be better to handle this in the Unicode domain
+  # by doing things like s/\x{2018}/\"/g, but without decoding the
+  # string back to UTF-8 first, I'm at a loss as to how to have
+  # "&aacute;" print as "\340" instead of as "\303\240".
+
+  $text =~ s/ \xC2 ( [\xA0-\xFF] ) / $1 /gsex;
+  $text =~ s/ \xC3 ( [\x80-\xFF] ) / chr (ord($1) | 0x40) /gsex;
+
+  # Handles a few 3-byte sequences too.
+  $text =~ s/\xE2\x80\x93/--/gs;
+  $text =~ s/\xE2\x80\x94/--/gs;
+  $text =~ s/\xE2\x80\x98/`/gs;
+  $text =~ s/\xE2\x80\x99/'/gs;
+  $text =~ s/\xE2\x80\x9C/``/gs;
+  $text =~ s/\xE2\x80\x9D/'/gs;
+  $text =~ s/\xE2\x80\xA2/&bull;/gs;
+  $text =~ s/\xE2\x80\xA6/.../gs;
+  $text =~ s/\xE2\x80\xB2/'/gs;
+  $text =~ s/\xE2\x84\xA2/&trade;/gs;
+  $text =~ s/\xE2\x86\x90/ &larr; /gs;
+
   return $text;
 }
 
@@ -361,6 +286,7 @@ sub output() {
 
   if ($text_mode eq 'literal') {
     $text_literal = strftime ($text_literal, localtime);
+    $text_literal = utf8_to_latin1($text_literal) if ($latin1_p);
     $text_literal =~ y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
     print STDOUT $text_literal;
     print STDOUT "\n" unless ($text_literal =~ m/\n$/s);
@@ -381,6 +307,7 @@ sub output() {
       } else {
         # stream it by lines
         while (<$in>) { 
+          $_ = utf8_to_latin1($_) if ($latin1_p);
           y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
           print STDOUT $_;
         }
@@ -438,7 +365,8 @@ sub output() {
 
     if (-f "/usr/sbin/system_profiler") {   # "Mac OS X 10.4.5 (8H14)"
       my $sp =				    # "iMac G5"
-        `/usr/sbin/system_profiler SPSoftwareDataType SPHardwareDataType`;
+        `/usr/sbin/system_profiler SPSoftwareDataType SPHardwareDataType 2>/dev/null`;
+      # system_profiler on OS X 10.10 generates spurious error messages.
       my ($v) = ($sp =~ m/^\s*System Version:\s*(.*)$/mi);
       my ($s) = ($sp =~ m/^\s*(?:CPU|Processor) Speed:\s*(.*)$/mi);
       my ($t) = ($sp =~ m/^\s*(?:Machine|Model) Name:\s*(.*)$/mi);
@@ -511,6 +439,10 @@ sub reformat_html($$) {
     s@[\r\n]@ @gsi;
   }
 
+  # This right here is the part where I doom us all to inhuman
+  # toil for the One whose Name cannot be expressed in the
+  # Basic Multilingual Plane. http://jwz.org/b/yhAT He comes.
+
   s@<!--.*?-->@@gsi;				 # lose comments
   s@<(STYLE|SCRIPT)\b[^<>]*>.*?</\1\s*>@@gsi;    # lose css and js
 
@@ -529,8 +461,10 @@ sub reformat_html($$) {
   #
   if ($rss_p eq 'wiki') {
 
+    s@<!--.*?-->@@gsi;				 # lose HTML comments again
+
     # Creation line is often truncated: screws up parsing with unbalanced {{.
-    s@(: +<- +Created page) with [^\n]+@$1@s;
+    s@(: +[^a-zA-Z ]* *Created page) with [^\n]+@$1@s;
 
     s@/\*.*?\*/@@si;				   # /* ... */
 
@@ -563,12 +497,16 @@ sub reformat_html($$) {
 
     # Omit trailing headlines with no text after them (e.g. == Notes ==)
     1 while (s/\n==+[ \t]*[^\n=]+[ \t]*==+\s*$/\n/s);
+
+    $_ = de_entify ($_);            # convert HTML entities, again
   }
 
 
-  # elide any remaining non-Latin1 binary data...
-  s/([^\000-\176]+(\s*[^\000-\176]+)[^a-z\d]*)/\xAB...\xBB /g;
-# s/([^\000-\176]+(\s*[^\000-\176]+)[^a-z\d]*)/\xAB$1\xBB /g;
+  # elide any remaining non-Latin1 binary data.
+  if ($latin1_p) {
+    utf8::encode ($_);  # Unpack Unicode back to multi-byte UTF-8.
+    s/([^\000-\176]+(\s*[^\000-\176]+)[^a-z\d]*)/\xAB...\xBB /g;
+  }
 
   $_ .= "\n";
 
@@ -588,6 +526,7 @@ sub reformat_html($$) {
     s/^(([^\n]*\n){$truncate_lines}).*$/$1/s;
   }
 
+  $_ = utf8_to_latin1($_) if ($latin1_p);
   y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
 
   return $_;
@@ -683,7 +622,6 @@ sub rss_field_to_html($) {
     $body = de_entify ($body);      # convert entities to get HTML from XML
   }
 
-  $body = de_unicoddle ($body);     # convert UTF8 to Latin1
   return $body;
 }
 
@@ -705,6 +643,7 @@ sub reformat_text($) {
     $body =~ s/^(([^\n]*\n){$truncate_lines}).*$/$1/s;
   }
 
+  $body = utf8_to_latin1($body) if ($latin1_p);
   $body =~ y/A-Za-z/N-ZA-Mn-za-m/ if ($nyarlathotep_p);
   return $body;
 }
@@ -763,6 +702,8 @@ sub get_url_text($) {
     $ct = 'text/plain';
   }
 
+  utf8::decode ($body);  # Pack multi-byte UTF-8 back into wide chars.
+
   $ct = guess_content_type ($ct, $body);
   if ($ct eq 'html') {
     print STDERR "$progname: converting HTML...\n" if ($verbose > 2);
@@ -813,6 +754,8 @@ sub usage() {
     "       --cols N         Wrap lines at this column.  Default 72.\n" .
     "\n" .
     "       --lines N        No more than N lines of output.\n" .
+    "\n" .
+    "       --latin1         Emit Latin1 instead of UTF-8.\n" .
     "\n");
   exit 1;
 }
@@ -843,6 +786,7 @@ sub main() {
     elsif (m/^--?col(umn)?s?$/) { $wrap_columns = 0 + shift @ARGV; }
     elsif (m/^--?lines?$/)  { $truncate_lines = 0 + shift @ARGV; }
     elsif (m/^--?cocoa$/)   { $cocoa_id = shift @ARGV; }
+    elsif (m/^--?latin1$/)  { $latin1_p++; }
     elsif (m/^--?nyarlathotep$/) { $nyarlathotep_p++; }
     elsif (m/^-./) { usage; }
     else { usage; }

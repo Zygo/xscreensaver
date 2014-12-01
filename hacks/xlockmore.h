@@ -112,10 +112,10 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
    a struct in `MODULENAME_xscreensaver_function_table',
    and a pointer to that in `xscreensaver_function_table'.
 
-   In a Cocoa world, we only define the prefixed symbol;
+   In a Cocoa or Android world, we only define the prefixed symbol;
    the un-prefixed symbol does not exist.
  */
-#ifdef HAVE_COCOA
+#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
 # define XSCREENSAVER_LINK(NAME)
 #else
 # define XSCREENSAVER_LINK(NAME) \
@@ -123,10 +123,10 @@ ERROR!  Sorry, xlockmore.h requires ANSI C (gcc, for example.)
 #endif
 
 
-# if !defined(USE_GL) || defined(HAVE_COCOA)
+# if !defined(USE_GL) || defined(HAVE_COCOA) || defined(HAVE_ANDROID)
 #  define xlockmore_pick_gl_visual 0
 #  define xlockmore_validate_gl_visual 0
-# endif  /* !USE_GL || HAVE_COCOA */
+# endif  /* !USE_GL || HAVE_COCOA || HAVE_ANDROID */
 
 # ifdef USE_GL
 #  define XLOCKMORE_FPS xlockmore_gl_compute_fps

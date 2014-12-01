@@ -19,6 +19,19 @@
 # include "config.h"
 #endif
 
+#ifdef HAVE_COCOA
+# include "jwxyz.h"
+#elif defined(HAVE_ANDROID)
+# include <GLES/gl.h>
+#else /* real Xlib */
+# include <GL/glx.h>
+# include <GL/glu.h>
+#endif /* !HAVE_COCOA */
+
+#ifdef HAVE_JWZGLES
+# include "jwzgles.h"
+#endif /* HAVE_JWZGLES */
+
 #include <stdlib.h>
 #include "stonerview.h"
 
@@ -95,7 +108,12 @@ stonerview_win_draw(stonerview_state *st)
     if (st->wireframe) continue;
 
     /* fill the square */
-    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, el->col);
+    {
+      GLfloat col[4];
+      col[0] = el->col[0]; col[1] = el->col[1];
+      col[2] = el->col[2]; col[3] = el->col[3];
+      glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, col);
+    }
     glBegin(GL_QUADS);
     glVertex3f(el->pos[0]-el->vervec[0], el->pos[1]-el->vervec[1], el->pos[2]);
     glVertex3f(el->pos[0]+el->vervec[1], el->pos[1]-el->vervec[0], el->pos[2]);

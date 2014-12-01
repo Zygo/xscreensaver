@@ -85,6 +85,9 @@
    (gdk-pixbuf 2.12). */
 #undef HAVE_GDK_PIXBUF_APPLY_EMBEDDED_ORIENTATION
 
+/* Define to 1 if you have the `getaddrinfo' function. */
+#undef HAVE_GETADDRINFO
+
 /* Define to 1 if you have the `getcwd' function. */
 #undef HAVE_GETCWD
 
@@ -223,6 +226,9 @@
 /* Define to 1 if you have the `realpath' function. */
 #undef HAVE_REALPATH
 
+/* Define this to enable recording of videos. */
+#undef HAVE_RECORD_ANIM
+
 /* Define to 1 if you have the `sbrk' function. */
 #undef HAVE_SBRK
 
@@ -262,6 +268,9 @@
 
 /* Define to 1 if you have the <string.h> header file. */
 #undef HAVE_STRING_H
+
+/* Define to 1 if `sa_len' is a member of `struct sockaddr'. */
+#undef HAVE_STRUCT_SOCKADDR_SA_LEN
 
 /* Define to 1 if you have the `syslog' function. */
 #undef HAVE_SYSLOG
@@ -320,6 +329,9 @@
    XF86VidMode[GS]etGamma(). These appeared in XFree86 4.1.0. */
 #undef HAVE_XF86VMODE_GAMMA_RAMP
 
+/* Define this if you have libXft2. */
+#undef HAVE_XFT
+
 /* Define this if you have the XHPDisableReset function (an HP only thing
    which allows the Ctrl-Sh-Reset key sequence to be temporarily disabled.) */
 #undef HAVE_XHPDISABLERESET
@@ -350,6 +362,9 @@
 
 /* Define this if you have the X Shared Memory Extension. */
 #undef HAVE_XSHM_EXTENSION
+
+/* Define this if you have the function Xutf8DrawString(). */
+#undef HAVE_XUTF8DRAWSTRING
 
 /* Define this to remove the option of locking the screen at all. */
 #undef NO_LOCKING

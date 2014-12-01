@@ -11,6 +11,7 @@
  */
 
 #include <math.h>
+#include <limits.h>
 #include "screenhack.h"
 
 #ifndef MIN
@@ -56,13 +57,15 @@ struct state {
 static long currentTimeInMs(struct state *st)
 { 
   struct timeval curTime;
+  unsigned long ret_unsigned;
 #ifdef GETTIMEOFDAY_TWO_ARGS
   struct timezone tz = {0,0};
   gettimeofday(&curTime, &tz);
 #else
   gettimeofday(&curTime);
 #endif
-  return curTime.tv_sec*1000 + curTime.tv_usec/1000.0;
+  ret_unsigned = curTime.tv_sec *1000U + curTime.tv_usec / 1000;
+  return (ret_unsigned <= LONG_MAX) ? ret_unsigned : -1 - (long)(ULONG_MAX - ret_unsigned);
 }
 
 static void *
@@ -124,7 +127,7 @@ zoom_init (Display *dpy, Window window)
   XFillRectangle(st->dpy, st->window, st->window_gc, 0, 0, st->sizex, st->sizey);
   XSetWindowBackground(st->dpy, st->window, bg);
 
-  st->start_time = time ((time_t) 0);
+  st->start_time = time ((time_t *) 0);
   st->img_loader = load_image_async_simple (0, xgwa.screen, st->window,
                                             st->pm, 0, 0);
 
@@ -153,13 +156,14 @@ zoom_draw (Display *dpy, Window window, void *closure)
   unsigned x, y, i, j;
 
   long now;
+  unsigned long now_unsigned;
 
   if (st->img_loader)   /* still loading */
     {
       st->img_loader = load_image_async_simple (st->img_loader, 0, 0, 0, 0, 0);
       if (! st->img_loader) {  /* just finished */
         XClearWindow (st->dpy, st->window);
-        st->start_time = time ((time_t) 0);
+        st->start_time = time ((time_t *) 0);
         if (!st->lenses) {
           st->orig_map = XGetImage(st->dpy, st->pm, 0, 0, st->sizex, st->sizey, ~0L, ZPixmap);
 /*          XFreePixmap(st->dpy, st->pm);
@@ -170,7 +174,7 @@ zoom_draw (Display *dpy, Window window, void *closure)
     }
 
   if (!st->img_loader &&
-      st->start_time + st->duration < time ((time_t) 0)) {
+      st->start_time + st->duration < time ((time_t *) 0)) {
     st->img_loader = load_image_async_simple (0, st->screen, st->window,
                                               st->pm, 0, 0);
     return st->delay;
@@ -179,7 +183,8 @@ zoom_draw (Display *dpy, Window window, void *closure)
 #define nrnd(x) (random() % (x))
 
   now = currentTimeInMs(st);
-  now += st->sinusoid_offset;  /* don't run multiple screens in lock-step */
+  now_unsigned = (unsigned long) now + st->sinusoid_offset;  /* don't run multiple screens in lock-step */
+  now = (now_unsigned <= LONG_MAX) ? now_unsigned : -1 - (long)(ULONG_MAX - now_unsigned);
 
   /* find new x,y */
   st->tlx = ((1. + sin(((double)now) / X_PERIOD * 2. * M_PI))/2.0)

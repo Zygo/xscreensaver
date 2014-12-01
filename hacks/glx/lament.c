@@ -913,6 +913,10 @@ draw (ModeInfo *mi)
     case LAMENT_LID_CLOSE:
     case LAMENT_LID_ZOOM:
       {
+        GLfloat d = 0.21582;
+        int i;
+        const int lists[4] = { OBJ_LID_A, OBJ_LID_B, OBJ_LID_C, OBJ_LID_D };
+
         lc->facing_p = facing_screen_p (mi);
 
         if (lc->anim_z < 0.5)
@@ -920,9 +924,6 @@ draw (ModeInfo *mi)
         else
           glTranslatef (8 * (0.5 - (lc->anim_z - 0.5)), 0, 0);
 
-        GLfloat d = 0.21582;
-        int i;
-        const int lists[4] = { OBJ_LID_A, OBJ_LID_B, OBJ_LID_C, OBJ_LID_D };
         glCallList (lc->dlists[OBJ_LID_BASE]);
         mi->polygon_count += lc->polys[OBJ_LID_BASE];
         for (i = 0; i < countof(lists); i++)

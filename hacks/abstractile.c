@@ -90,7 +90,8 @@ struct state {
     /* draw, erase, fill, init, line, object, z indexes */
   unsigned int di, ei, fi, ii, bi, li, eli, oi, zi;
   /* size variables */
-  unsigned int gridx, gridy, gridn;                     /* grid size */
+  int gridx, gridy;                     /* grid size */
+  unsigned int gridn;
   int lwid, bwid, swid;/* line width, background width, shadow width */
   int narray, max_wxh;
   int elwid, elpu, egridx, egridy; /* for now */
@@ -205,6 +206,7 @@ _init_zlist(struct state *st)
 
   st->gridx=st->xgwa.width/st->lwid;
   st->gridy=st->xgwa.height/st->lwid;
+  if ((st->gridx <= 0) || (st->gridy <= 0)) abort();
   st->gridn=st->gridx*st->gridy;
   /* clear grid */
   for (z=0; z<st->gridn; z++) {

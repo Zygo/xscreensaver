@@ -149,15 +149,14 @@ static GLfloat angvel;
 #define DEFAULTS "*delay:          30000                      \n" \
                  "*count:          30                         \n" \
                  "*showFPS:        False                      \n" \
-                 "*labelfont:   -*-helvetica-medium-r-normal-*-180-*\n" \
-
+         "*labelfont:   -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
 
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
 #include "xlockmore.h"
-#include "glxfonts.h"
+#include "texfont.h"
 
 static XrmOptionDescRec opts[] = {
     { "-explode", ".explode", XrmoptionSepArg, DEF_EXPLODE },
@@ -1733,10 +1732,9 @@ static void draw_title(
 		glutBitmapCharacter(GLUT_BITMAP_HELVETICA_12, s[i++]);
 	}
 #else
-	print_gl_string(mi->dpy, bp->font_data,
-                        mi->xgwa.width, mi->xgwa.height,
-			10.0, (float) mi->xgwa.height - 10.0,
-			s, False);
+	print_texture_label (mi->dpy, bp->font_data,
+                             mi->xgwa.width, mi->xgwa.height,
+                             1, s);
 #endif
     }
     glPopMatrix();

@@ -1,0 +1,7 @@
+// To create builds that work properly on MacOS 10.6, Xcode 5.0.2 must
+// be used, since that is the latest version that supports garbage collection.
+// If the Xcode version is 5.02 or earlier, this must be set to "-fobjc-gc".
+// If the Xcode version is newer than that, this must be blank (and the
+// builds created will not work on 10.6.)
+//
+OBJC_GC_CFLAGS=-fobjc-gc

@@ -24,15 +24,12 @@
    http://www.wwpdb.org/docs.html
  */
 
-#define ATOM_FONT "-*-helvetica-medium-r-normal-*-240-*"
-
 #define DEFAULTS	"*delay:	10000         \n" \
 			"*showFPS:      False         \n" \
 			"*wireframe:    False         \n" \
-			"*atomFont:   " ATOM_FONT "\n" \
-			"*atomFont2:  -*-helvetica-bold-r-normal-*-80-*\n" \
-			"*titleFont:  -*-helvetica-medium-r-normal-*-180-*\n" \
-			"*noLabelThreshold:    30     \n" \
+	"*atomFont:   -*-helvetica-medium-r-normal-*-*-240-*-*-*-*-*-*\n" \
+	"*titleFont:  -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
+			"*noLabelThreshold:    150    \n" \
 			"*wireframeThreshold:  150    \n" \
 
 # define refresh_molecule 0
@@ -44,7 +41,7 @@
 #include "colors.h"
 #include "sphere.h"
 #include "tube.h"
-#include "glxfonts.h"
+#include "texfont.h"
 #include "rotator.h"
 #include "gltrackball.h"
 
@@ -163,18 +160,20 @@ typedef struct {
 
   int mode;  /* 0 = normal, 1 = out, 2 = in */
   int mode_tick;
+  int next;  /* 0 = random, -1 = back, 1 = forward */
 
   GLuint molecule_dlist;
   GLuint shell_dlist;
 
-  texture_font_data *font1_data, *font2_data, *font3_data;
+  texture_font_data *atom_font, *title_font;
 
   int polygon_count;
 
   time_t draw_time;
   int draw_tick;
 
-  int scale_down;
+  GLfloat overall_scale;
+  int low_rez_p;
 
 } molecule_configuration;
 
@@ -248,8 +247,8 @@ static int
 sphere (molecule_configuration *mc,
         GLfloat x, GLfloat y, GLfloat z, GLfloat diameter, Bool wire)
 {
-  int stacks = (mc->scale_down ? SPHERE_STACKS_2 : SPHERE_STACKS);
-  int slices = (mc->scale_down ? SPHERE_SLICES_2 : SPHERE_SLICES);
+  int stacks = (mc->low_rez_p ? SPHERE_STACKS_2 : SPHERE_STACKS);
+  int slices = (mc->low_rez_p ? SPHERE_SLICES_2 : SPHERE_SLICES);
 
   glPushMatrix ();
   glTranslatef (x, y, z);
@@ -265,9 +264,8 @@ static void
 load_fonts (ModeInfo *mi)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
-  mc->font1_data = load_texture_font (mi->dpy, "atomFont");
-  mc->font2_data = load_texture_font (mi->dpy, "atomFont2");
-  mc->font3_data = load_texture_font (mi->dpy, "titleFont");
+  mc->atom_font = load_texture_font (mi->dpy, "atomFont");
+  mc->title_font = load_texture_font (mi->dpy, "titleFont");
 }
 
 
@@ -519,14 +517,15 @@ ensure_bounding_box_visible (ModeInfo *mi)
 
   mc->molecule_size = size;
 
-  mc->scale_down = 0;
+  mc->low_rez_p = 0;
+  mc->overall_scale = 1;
 
   if (size > max_size)
     {
-      GLfloat scale = max_size / size;
-      glScalef (scale, scale, scale);
+      mc->overall_scale = max_size / size;
+      glScalef (mc->overall_scale, mc->overall_scale, mc->overall_scale);
 
-      mc->scale_down = scale < 0.3;
+      mc->low_rez_p = mc->overall_scale < 0.3;
     }
 
   glTranslatef (-(x1 + w/2),
@@ -588,21 +587,23 @@ build_molecule (ModeInfo *mi, Bool transparent_p)
           }
         else
           {
-            int faces = (mc->scale_down ? TUBE_FACES_2 : TUBE_FACES);
+            int faces = (mc->low_rez_p ? TUBE_FACES_2 : TUBE_FACES);
 # ifdef SMOOTH_TUBE
             int smooth = True;
 # else
             int smooth = False;
 # endif
-            GLfloat thickness = 0.07 * b->strength;
-            GLfloat cap_size = 0.03;
+            Bool cap_p = (!do_atoms || do_shells);
+            GLfloat base = 0.07;
+            GLfloat thickness = base * b->strength;
+            GLfloat cap_size = (cap_p ? base / 2 : 0);
             if (thickness > 0.3)
               thickness = 0.3;
 
             polys += tube (from->x, from->y, from->z,
                            to->x,   to->y,   to->z,
                            thickness, cap_size,
-                           faces, smooth, (!do_atoms || do_shells), wire);
+                           faces, smooth, cap_p, wire);
           }
       }
 
@@ -1218,10 +1219,9 @@ startup_blurb (ModeInfo *mi)
 {
   molecule_configuration *mc = &mcs[MI_SCREEN(mi)];
   const char *s = "Constructing molecules...";
-  print_gl_string (mi->dpy, mc->font3_data,
-                   mi->xgwa.width, mi->xgwa.height,
-                   10, mi->xgwa.height - 10,
-                   s, False);
+  print_texture_label (mi->dpy, mc->title_font,
+                       mi->xgwa.width, mi->xgwa.height,
+                       0, s);
   glFinish();
   glXSwapBuffers(MI_DISPLAY(mi), MI_WINDOW(mi));
 }
@@ -1235,12 +1235,35 @@ molecule_handle_event (ModeInfo *mi, XEvent *event)
                                  MI_WIDTH (mi), MI_HEIGHT (mi),
                                  &mc->button_down_p))
     return True;
-  else if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+  else
     {
-      GLfloat speed = 4.0;
-      mc->mode = 1;
-      mc->mode_tick = 10 * speed;
-      return True;
+      if (event->xany.type == KeyPress)
+        {
+          KeySym keysym;
+          char c = 0;
+          XLookupString (&event->xkey, &c, 1, &keysym, 0);
+          if (c == '<' || c == ',' || c == '-' || c == '_' ||
+              keysym == XK_Left || keysym == XK_Up || keysym == XK_Prior)
+            {
+              mc->next = -1;
+              goto SWITCH;
+            }
+          else if (c == '>' || c == '.' || c == '=' || c == '+' ||
+                   keysym == XK_Right || keysym == XK_Down ||
+                   keysym == XK_Next)
+            {
+              mc->next = 1;
+              goto SWITCH;
+            }
+        }
+
+      if (screenhack_event_helper (MI_DISPLAY(mi), MI_WINDOW(mi), event))
+        {
+        SWITCH:
+          mc->mode = 1;
+          mc->mode_tick = 4;
+          return True;
+        }
     }
 
   return False;
@@ -1398,15 +1421,13 @@ draw_labels (ModeInfo *mi)
 
       {
         int h;
-        int w = texture_string_width (mc->font1_data, a->label, &h);
-        GLfloat s = 1.0 / h;
-        GLfloat max = 18;   /* max point size to avoid pixellated text */
-        if (h > max) s *= max/h;
+        int w = texture_string_width (mc->atom_font, a->label, &h);
+        GLfloat s = 1.0 / h;		/* Scale to unit */
+        s *= mc->overall_scale;		/* Scale to size of atom */
+        s *= 0.8;			/* Shrink a bit */
         glScalef (s, s, 1);
-        glTranslatef (-w/2, h*2/3, 0);
-        print_gl_string (mi->dpy, mc->font1_data,
-                         0, 0, 0, 0,
-                         a->label, False);
+        glTranslatef (-w * 0.5, h * 0.3 - h, 0);
+        print_texture_string (mc->atom_font, a->label);
       }
 
       glPopMatrix();
@@ -1434,6 +1455,18 @@ pick_new_molecule (ModeInfo *mi, time_t last)
   else if (last == 0)
     {
       mc->which = random() % mc->nmolecules;
+    }
+  else if (mc->next < 0)
+    {
+      mc->which--;
+      if (mc->which < 0) mc->which = mc->nmolecules-1;
+      mc->next = 0;
+    }
+  else if (mc->next > 0)
+    {
+      mc->which++;
+      if (mc->which >= mc->nmolecules) mc->which = 0;
+      mc->next = 0;
     }
   else
     {
@@ -1537,7 +1570,7 @@ draw_molecule (ModeInfo *mi)
             {
               /* randomize molecules every -timeout seconds */
               mc->mode = 1;    /* go out */
-              mc->mode_tick = 10 * speed;
+              mc->mode_tick = 80 / speed;
               mc->draw_time = now;
             }
         }
@@ -1546,10 +1579,9 @@ draw_molecule (ModeInfo *mi)
     {
       if (--mc->mode_tick <= 0)
         {
-          mc->mode_tick = 10 * speed;
+          mc->mode_tick = 80 / speed;
           mc->mode = 2;  /* go in */
           pick_new_molecule (mi, mc->draw_time);
-          mc->draw_time = now;
         }
     }
   else if (mc->mode == 2)   /* in */
@@ -1583,8 +1615,8 @@ draw_molecule (ModeInfo *mi)
   if (mc->mode != 0)
     {
       GLfloat s = (mc->mode == 1
-                   ? mc->mode_tick / (10 * speed)
-                   : ((10 * speed) - mc->mode_tick + 1) / (10 * speed));
+                   ? mc->mode_tick / (80 / speed)
+                   : ((80 / speed) - mc->mode_tick + 1) / (80 / speed));
       glScalef (s, s, s);
     }
 
@@ -1602,10 +1634,9 @@ draw_molecule (ModeInfo *mi)
       if (do_titles && m->label && *m->label)
         {
           set_atom_color (mi, 0, True, 1);
-          print_gl_string (mi->dpy, mc->font3_data,
-                           mi->xgwa.width, mi->xgwa.height,
-                           10, mi->xgwa.height - 10,
-                           m->label, False);
+          print_texture_label (mi->dpy, mc->title_font,
+                               mi->xgwa.width, mi->xgwa.height,
+                               1, m->label);
         }
     }
   glPopMatrix();

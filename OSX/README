@@ -6,9 +6,9 @@ To build it, just type "make", or use the included XCode project.  The
 executables will show up in the "build/Release/" and/or "build/Debug/"
 directories.
 
-To build these programs, XCode 2.4 or later is required.
-To run them, MacOS 10.4.0 or later is required.
-
+If you build using anything later than Xcode 5.0.2, the resultant savers
+will require MacOS 10.7 or later.  To support 10.4 through 10.6, you must
+use Xcode 5.0.2 or earlier.
 
 This is how you add a new screen saver to the Xcode project. It's a
 ridiculously long list of steps!
@@ -32,9 +32,8 @@ ridiculously long list of steps!
  16: Put a 200x150 screen shot in ~/www/xscreensaver/screenshots/
  17: ln -s ../../src/xscreensaver/OSX/build/Debug/NEW.saver \
            ~/Library/Screen\ Savers/
- 18: Build "XScreenSaver-iOS" once. then:
-     cd ~/src/xscreensaver/OSX ; make ios-function-table.m
-     and build it again.
- 19: git add xscreensaver.xcodeproj/xcuserdata/*/xcschemes/*.xcscheme
- 20: Don't forget to create a man page from the XML with xml2man.pl,
+ 18: git add xscreensaver.xcodeproj/xcuserdata/*/xcschemes/*.xcscheme
+ 19: Don't forget to create a man page from the XML with xml2man.pl,
      and update Makefile.in.
+ 20: Make a video: -record-animation 3600 -delay 1 -geom 1920x1080+128+64
+     ./upload-video.pl NAME

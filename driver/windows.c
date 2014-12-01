@@ -1681,7 +1681,7 @@ blank_screen (saver_info *si)
   raise_window (si, False, False, False);
 
   si->screen_blanked_p = True;
-  si->blank_time = time ((time_t) 0);
+  si->blank_time = time ((time_t *) 0);
   si->last_wall_clock_time = 0;
 
   store_saver_status (si);  /* store blank time */
@@ -1803,7 +1803,7 @@ unblank_screen (saver_info *si)
     XUnmapWindow (si->dpy, si->screens[i].screensaver_window);
 
   si->screen_blanked_p = False;
-  si->blank_time = time ((time_t) 0);
+  si->blank_time = time ((time_t *) 0);
   si->last_wall_clock_time = 0;
 
   store_saver_status (si);  /* store unblank time */

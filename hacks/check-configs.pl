@@ -19,7 +19,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.9 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.12 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -74,7 +74,7 @@ sub parse_src($) {
 
   $body =~ s@/\*.*?\*/@@gs;
   $body =~ s@^#\s*(if|ifdef|ifndef|elif|else|endif).*$@@gm;
-  $body =~ s/(THREAD|ANALOGTV)_(DEFAULTS|OPTIONS)//gs;
+  $body =~ s/(THREAD|ANALOGTV)_(DEFAULTS|OPTIONS)(_XLOCK)?//gs;
 
   print STDERR "$progname: $file: defaults:\n" if ($verbose > 2);
   my %res_to_val;
@@ -194,6 +194,8 @@ sub parse_xml($$) {
   $body =~ s/</\001</gs;
   $body =~ s/\001(<option)/$1/gs;
 
+  my $video = undef;
+
   print STDERR "$progname: $file: options:\n" if ($verbose > 2);
   foreach (split (m/\001/, $body)) {
     next if (m/^\s*$/s);
@@ -208,6 +210,13 @@ sub parse_xml($$) {
       my $val = "progclass = $name";
       push @result, $val;
       print STDERR "$progname: $file:   name:    $name\n" if ($verbose > 2);
+
+    } elsif ($type eq 'video') {
+      error ("$file: multiple videos") if $video;
+      ($video) = ($args =~ m/\bhref="(.*?)"/);
+      error ("$file: unparsable video") unless $video;
+      error ("$file: unparsable video URL")
+        unless ($video =~ m@^https?://www\.youtube\.com/watch\?v=[^?&]+$@s);
 
     } elsif ($type eq 'number') {
       my ($arg) = ($args =~ m/\barg\s*=\s*\"([^\"]+)\"/);
@@ -276,6 +285,9 @@ sub parse_xml($$) {
       error ("$file: unknown type \"$type\" for no arg");
     }
   }
+
+#  error ("$file: no video") unless $video;
+  print STDERR "\n$file: WARNING: no video\n\n" unless $video;
 
   return @result;
 }

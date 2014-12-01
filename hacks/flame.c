@@ -204,7 +204,7 @@ recurse (struct state *st, double x, double y, int l, Display *dpy, Window win)
 	     "I think this happens on HPUX.  I think it's non-IEEE
 	     to generate an exception instead of a silent NaN."
 	   */
-	  if ((abs(x) > 1.0E5) || (abs(y) > 1.0E5))
+	  if ((fabs(x) > 1.0E5) || (fabs(y) > 1.0E5))
 	    x = x / y;
 
 	  nx = st->f[0][0][i] * x + st->f[0][1][i] * y + st->f[0][2][i];

@@ -107,14 +107,24 @@ struct state {
 static void
 grabImage_start (struct state *st, XWindowAttributes *xwa)
 {
+    Pixmap p;
+    GC gc;
+    XGCValues gcv;
     XFillRectangle (st->dpy, st->window, st->backgroundGC, 0, 0, 
 		    st->windowWidth, st->windowHeight);
 
+    p = XCreatePixmap (st->dpy, st->window,
+                       xwa->width, xwa->height, xwa->depth);
+    gc = XCreateGC (st->dpy, st->window, 0, &gcv);
+    XCopyArea (st->dpy, st->window, p, gc, 0, 0,
+               xwa->width, xwa->height, 0, 0);
     st->backgroundImage = 
-	XGetImage (st->dpy, st->window, 0, 0, st->windowWidth, st->windowHeight,
+	XGetImage (st->dpy, p, 0, 0, st->windowWidth, st->windowHeight,
 		   ~0L, ZPixmap);
+    XFreeGC (st->dpy, gc);
+    XFreePixmap (st->dpy, p);
 
-    st->start_time = time ((time_t) 0);
+    st->start_time = time ((time_t *) 0);
     st->img_loader = load_image_async_simple (0, xwa->screen, st->window,
                                               st->window, 0, 0);
 }
@@ -125,7 +135,7 @@ grabImage_done (struct state *st)
     XWindowAttributes xwa;
     XGetWindowAttributes (st->dpy, st->window, &xwa);
 
-    st->start_time = time ((time_t) 0);
+    st->start_time = time ((time_t *) 0);
     if (st->sourceImage) XDestroyImage (st->sourceImage);
     st->sourceImage = XGetImage (st->dpy, st->window, 0, 0, st->windowWidth, st->windowHeight,
 			     ~0L, ZPixmap);
@@ -616,7 +626,7 @@ twang_draw (Display *dpy, Window window, void *closure)
     }
 
   if (!st->img_loader &&
-      st->start_time + st->duration < time ((time_t) 0)) {
+      st->start_time + st->duration < time ((time_t *) 0)) {
     XWindowAttributes xgwa;
     XGetWindowAttributes (st->dpy, st->window, &xgwa);
     grabImage_start (st, &xgwa);

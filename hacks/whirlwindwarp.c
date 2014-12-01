@@ -447,7 +447,8 @@ whirlwindwarp_draw (Display *dpy, Window window, void *closure)
         struct timeval now;
         long timediff;
         gettimeofday(&now, NULL);
-        timediff = now.tv_sec*1000000 + now.tv_usec - st->lastframe.tv_sec*1000000 - st->lastframe.tv_usec;
+        /* timediff = now.tv_sec*1000000 + now.tv_usec - st->lastframe.tv_sec*1000000 - st->lastframe.tv_usec; */
+        timediff = (now.tv_sec - st->lastframe.tv_sec) * 1000000 + now.tv_usec - st->lastframe.tv_usec;
         if (timediff < utimeperframe) {
           /* fprintf(stderr,"sleeping for %i\n",utimeperframe-timediff); */
           this_delay = (utimeperframe-timediff);

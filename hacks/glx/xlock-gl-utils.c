@@ -16,7 +16,7 @@
 
 #include <stdio.h>
 #include "xlockmoreI.h"
-#include "glxfonts.h"
+#include "texfont.h"
 
 #ifndef isupper
 # define isupper(c)  ((c) >= 'A' && (c) <= 'Z')

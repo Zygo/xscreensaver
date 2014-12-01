@@ -1,4 +1,4 @@
-/* tangram, Copyright (c) 2005 Jeremy English <jhe@jeremyenglish.org>
+/* tangram, Copyright (c) 2005-2014 Jeremy English <jhe@jeremyenglish.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without
@@ -18,9 +18,9 @@
 
 #define DEFAULTS	"*delay:	10000		 \n" \
 			"*wireframe:    False         \n" \
-			"*titleFont:  -*-helvetica-medium-r-normal-*-180-*\n" \
-			"*titleFont2: -*-helvetica-medium-r-normal-*-120-*\n" \
-			"*titleFont3: -*-helvetica-medium-r-normal-*-80-*\n"  \
+	"*titleFont:  -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
+	"*titleFont2: -*-helvetica-medium-r-normal-*-*-120-*-*-*-*-*-*\n" \
+	"*titleFont3: -*-helvetica-medium-r-normal-*-*-80-*-*-*-*-*-*\n"  \
 
 # define refresh_tangram 0
 # define release_tangram 0
@@ -37,7 +37,7 @@
 #include <time.h>
 #include <math.h>
 #include "tangram_shapes.h"
-#include "glxfonts.h"
+#include "texfont.h"
 
 typedef struct {
     GLubyte r;
@@ -98,9 +98,6 @@ typedef struct {
     int ccolor;
 
     texture_font_data *font1_data, *font2_data, *font3_data;
-
-    GLuint name_list;
-
     GLfloat theta[3];
     Bool going_down[3];
 
@@ -753,7 +750,22 @@ static void draw_shapes(ModeInfo * mi)
     draw_tangram_shape(tp->tlg2);
     draw_tangram_shape(tp->sq);
     draw_tangram_shape(tp->rh);
-    if (do_labels) glCallList(tp->name_list);
+
+    if (do_labels)
+      {
+        texture_font_data *f;
+        if (MI_WIDTH(mi) >= 500 && MI_HEIGHT(mi) >= 375)
+            f = tp->font1_data;
+        else if (MI_WIDTH(mi) >= 350 && MI_HEIGHT(mi) >= 260)
+            f = tp->font2_data;
+        else
+            f = tp->font3_data;
+
+        glColor3f(0.8, 0.8, 0);
+        print_texture_label (mi->dpy, f,
+                             mi->xgwa.width, mi->xgwa.height,
+                             1, tp->pn);
+      }
 }
 
 static void set_perspective(void)
@@ -888,8 +900,6 @@ ENTRYPOINT void init_tangram(ModeInfo * mi)
     reshape_tangram (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 
     wire = MI_IS_WIREFRAME(mi);
-
-    tp->name_list = glGenLists(1);
 
     load_fonts(mi);
     init_shapes(mi);
@@ -1028,23 +1038,6 @@ ENTRYPOINT void draw_tangram(ModeInfo * mi)
     glPushMatrix();
 
     glLoadIdentity();
-    if (do_labels)
-      {
-        texture_font_data *f;
-        if (MI_WIDTH(mi) >= 500 && MI_HEIGHT(mi) >= 375)
-            f = tp->font1_data;
-        else if (MI_WIDTH(mi) >= 350 && MI_HEIGHT(mi) >= 260)
-            f = tp->font2_data;
-        else
-            f = tp->font3_data;
-
-        glNewList(tp->name_list, GL_COMPILE);
-        glColor3f(0.8, 0.8, 0);
-        print_gl_string(mi->dpy, f,
-                        mi->xgwa.width, mi->xgwa.height,
-                        10, mi->xgwa.height - 10, tp->pn, False);
-        glEndList();
-      }
 
     glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, white);
     glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 128);

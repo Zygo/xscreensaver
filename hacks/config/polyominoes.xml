@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=6j2H2gL8cws"/>
+
   <boolean id="identical" _label="Identical pieces" arg-set="-identical"/>
 
   <number id="delay" type="slider" arg="-delay %"

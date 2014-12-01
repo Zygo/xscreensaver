@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">    <PreferenceCategory
+        android:title="@string/hilbert_settings"
+        android:key="hilbertwallpaper_settings">
+    <ListPreference
+            android:key="hilbert_mode"
+            android:title="@string/hilbert_mode_settings_title"
+            android:summary="@string/hilbert_mode_settings_summary"
+            android:entries="@array/hilbert_mode_names"
+	    android:defaultValue="3d"
+            android:entryValues="@array/hilbert_mode_prefix" />
+    </PreferenceCategory>
+</PreferenceScreen>

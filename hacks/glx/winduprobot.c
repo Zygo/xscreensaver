@@ -34,7 +34,7 @@
  *    http://www.guitar-list.com/download-software/convert-sketchup-skp-files-dxf-or-stl
  */
 
-#define LABEL_FONT "-*-helvetica-bold-r-normal-*-240-*"
+#define LABEL_FONT "-*-helvetica-bold-r-normal-*-*-240-*-*-*-*-*-*"
 
 #define DEFAULTS	"*delay:	20000       \n" \
 			"*count:        25          \n" \
@@ -60,7 +60,7 @@
 			"*program:      xscreensaver-text\n" \
 			"*usePty:       False\n"
 
-#define DEBUG
+#undef DEBUG
 #define WORDBUBBLES
 
 # define refresh_robot 0
@@ -82,7 +82,7 @@
 
 #ifdef WORDBUBBLES
 # include "textclient.h"
-# include "glxfonts.h"
+# include "texfont.h"
 #endif
 
 #include <ctype.h>
@@ -1605,8 +1605,10 @@ init_walker (ModeInfo *mi, walker *f)
 /* Draw a robot standing in the right place, 1 unit tall.
  */
 static int
-draw_walker (ModeInfo *mi, walker *f)
+draw_walker (ModeInfo *mi, walker *f, const char *tag)
 {
+  robot_configuration *bp = &bps[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
   int count = 0;
   glPushMatrix();
 
@@ -1637,14 +1639,35 @@ draw_walker (ModeInfo *mi, walker *f)
   /* Draw these last, and outer shell first, to make transparency work.
      The order in which things hit the depth buffer matters.
    */
- if (f->body_transparency >= 0.001)
-   {
-     count += draw_arm (mi, f, True,  f->hand_rot[0], f->hand_pos[0]);
-     count += draw_arm (mi, f, False, f->hand_rot[1], f->hand_pos[1]);
-     count += draw_body (mi, f, False);
-     count += draw_body (mi, f, True);
-     count += draw_dome (mi, f);
-   }
+  if (f->body_transparency >= 0.001)
+    {
+      count += draw_arm (mi, f, True,  f->hand_rot[0], f->hand_pos[0]);
+      count += draw_arm (mi, f, False, f->hand_rot[1], f->hand_pos[1]);
+      count += draw_body (mi, f, False);
+      count += draw_body (mi, f, True);
+      count += draw_dome (mi, f);
+    }
+
+  if (tag)  /* For debugging depth sorting: label each robot */
+    {
+      GLfloat m[4][4];
+      if (! wire) glDisable (GL_DEPTH_TEST);
+      glColor3f (1, 1, 1);
+      glPushMatrix();
+
+      /* Billboard rotation */
+      glGetFloatv (GL_MODELVIEW_MATRIX, &m[0][0]);
+      m[0][0] = 1; m[1][0] = 0; m[2][0] = 0;
+      m[0][1] = 0; m[1][1] = 1; m[2][1] = 0;
+      m[0][2] = 0; m[1][2] = 0; m[2][2] = 1;
+      glLoadIdentity();
+      glMultMatrixf (&m[0][0]);
+      glScalef (0.04, 0.04, 0.04);
+
+      print_texture_string (bp->font_data, tag);
+      glPopMatrix();
+      if (! wire) glEnable (GL_DEPTH_TEST);
+    }
 
   glPopMatrix();
   return count;
@@ -2112,7 +2135,7 @@ draw_label (ModeInfo *mi, walker *f, GLfloat y_off, GLfloat scale,
     glTranslatef (-w/2, h*2/3 + (cw * 7), 0);
 
     glPushMatrix();
-    glTranslatef (0, -h - ch/4, -0.1);
+    glTranslatef (0, -h + (ch * 1.2), -0.1);
     draw_bubble_box (mi, w, h, 
                      ch * 2,		/* corner radius */
                      ch * 2.5,		/* arrow height */
@@ -2121,9 +2144,7 @@ draw_label (ModeInfo *mi, walker *f, GLfloat y_off, GLfloat scale,
     glPopMatrix();
 
     glColor4fv (bp->text_color);
-    print_gl_string (mi->dpy, bp->font_data,
-                     0, 0, 0, 0,
-                     label, False);
+    print_texture_string (bp->font_data, label);
   }
 
   glPopMatrix();
@@ -2229,6 +2250,20 @@ bubble (ModeInfo *mi)
 
 
 
+typedef struct {
+  int i;
+  GLdouble d;
+} depth_sorter;
+
+static int
+cmp_depth_sorter (const void *aa, const void *bb)
+{
+  const depth_sorter *a = (depth_sorter *) aa;
+  const depth_sorter *b = (depth_sorter *) bb;
+  return (a->d == b->d ? 0 : a->d < b->d ? -1 : 1);
+}
+
+
 ENTRYPOINT void
 draw_robot (ModeInfo *mi)
 {
@@ -2236,6 +2271,7 @@ draw_robot (ModeInfo *mi)
   Display *dpy = MI_DISPLAY(mi);
   Window window = MI_WINDOW(mi);
   GLfloat robot_size;
+  depth_sorter *sorted;
   int i;
 
   if (!bp->glx_context)
@@ -2336,32 +2372,64 @@ draw_robot (ModeInfo *mi)
 
 # endif /* DEBUG */
 
+  /* For transparency to work right, we have to draw the robots from
+     back to front, from the perspective of the observer.  So project
+     the origin of the robot to screen coordinates, and sort that by Z.
+   */
+  sorted = (depth_sorter *) calloc (bp->nwalkers, sizeof (*sorted));
+  {
+    GLdouble m[16], p[16];
+    GLint v[4];
+    glGetDoublev (GL_MODELVIEW_MATRIX, m);
+    glGetDoublev (GL_PROJECTION_MATRIX, p);
+    glGetIntegerv (GL_VIEWPORT, v);
+
+    for (i = 0; i < bp->nwalkers; i++)
+      {
+        GLdouble x, y, z;
+        walker *f = &bp->walkers[i];
+        gluProject (f->y, f->z, f->x, m, p, v, &x, &y, &z);
+        sorted[i].i = i;
+        sorted[i].d = -z;
+      }
+    qsort (sorted, i, sizeof(*sorted), cmp_depth_sorter);
+  }
+
+
   mi->polygon_count = 0;
   for (i = 0; i < bp->nwalkers; i++)
     {
-      walker *f = &bp->walkers[i];
-      int i, ticks = 22 * speed * f->speed;
+      int ii = sorted[i].i;
+      walker *f = &bp->walkers[ii];
+      int ticks = 22 * speed * f->speed;
       int max = 180;
+      char tag[1024];
+      *tag = 0;
 
       if (ticks < 1) ticks = 1;
       if (ticks > max) ticks = max;
 
-      mi->polygon_count += draw_walker (mi, f);
-
 # ifdef DEBUG
       if (debug_p)
+        sprintf (tag, "%.4f, %.4f,  %.4f",
+                 bp->debug_x, bp->debug_y, bp->debug_z);
+      else
         {
-          char s[1024];
-          sprintf (s, "%.4f, %.4f,  %.4f",
-                   bp->debug_x, bp->debug_y, bp->debug_z);
-          glColor3f (1, 1, 1);
-          draw_label (mi, f, -0.3, 1, s);
+#  if 1
+          /* sprintf (tag + strlen(tag), "    %d\n", ii); */
+          sprintf (tag + strlen(tag), "    %d\n", bp->nwalkers - i - 1);
+          /* sprintf (tag + strlen(tag), "%.03f\n", sorted[i].d); */
+#  endif
         }
+
 # endif /* DEBUG */
 
-      for (i = 0; i < ticks; i++)
+      mi->polygon_count += draw_walker (mi, f, tag);
+
+      for (ii = 0; ii < ticks; ii++)
         tick_walker (mi, f);
     }
+  free (sorted);
 
 
   glPopMatrix ();

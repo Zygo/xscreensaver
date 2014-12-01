@@ -65,6 +65,7 @@
 # include <X11/Xlib.h>
 # include <X11/Xutil.h>
 #endif
+#include <limits.h>
 
 #include <assert.h>
 #include <errno.h>
@@ -941,11 +942,13 @@ analogtv_setup_frame(analogtv *it)
   }
   if (it->hashnoise_rpm > 0.0) {
     int hni;
+    double hni_double;
     int hnc=it->hashnoise_counter; /* in 24.8 format */
 
     /* Convert rpm of a 16-pole motor into dots in 24.8 format */
-    hni = (int)(ANALOGTV_V * ANALOGTV_H * 256.0 /
-                (it->hashnoise_rpm * 16.0 / 60.0 / 60.0));
+    hni_double = ANALOGTV_V * ANALOGTV_H * 256.0 /
+                (it->hashnoise_rpm * 16.0 / 60.0 / 60.0);
+    hni = (hni_double <= INT_MAX) ? (int)hni_double : INT_MAX;
 
     while (hnc < (ANALOGTV_V * ANALOGTV_H)<<8) {
       y=(hnc>>8)/ANALOGTV_H;
@@ -954,7 +957,12 @@ analogtv_setup_frame(analogtv *it)
       if (x>0 && x<ANALOGTV_H - ANALOGTV_HASHNOISE_LEN) {
         it->hashnoise_times[y]=x;
       }
-      hnc += hni + (int)(random()%65536)-32768;
+      /* hnc += hni + (int)(random()%65536)-32768; */
+      {
+        hnc += (int)(random()%65536)-32768;
+        if ((hnc >= 0) && (INT_MAX - hnc < hni)) break;
+        hnc += hni;
+      }
     }
 /*    hnc -= (ANALOGTV_V * ANALOGTV_H)<<8;*/
   }
@@ -1195,14 +1203,17 @@ static void analogtv_init_signal(const analogtv *it, double noiselevel, unsigned
   float *pe=it->rx_signal + end;
   float *p=ps;
   unsigned int fastrnd=rnd_seek(FASTRND_A, FASTRND_C, it->random0, start);
+  unsigned int fastrnd_offset;
   float nm1,nm2;
   float noisemul = sqrt(noiselevel*150)/(float)0x7fffffff;
 
-  nm1 = ((int)fastrnd-(int)0x7fffffff) * noisemul;
+  fastrnd_offset = fastrnd - 0x7fffffff;
+  nm1 = (fastrnd_offset <= INT_MAX ? (int)fastrnd_offset : -1 - (int)(UINT_MAX - fastrnd_offset)) * noisemul;
   while (p != pe) {
     nm2=nm1;
     fastrnd = (fastrnd*FASTRND_A+FASTRND_C) & 0xffffffffu;
-    nm1 = ((int)fastrnd-(int)0x7fffffff) * noisemul;
+    fastrnd_offset = fastrnd - 0x7fffffff;
+    nm1 = (fastrnd_offset <= INT_MAX ? (int)fastrnd_offset : -1 - (int)(UINT_MAX - fastrnd_offset)) * noisemul;
     *p++ = nm1*nm2;
   }
 }
@@ -1243,7 +1254,8 @@ static void analogtv_add_signal(const analogtv *it, const analogtv_reception *re
     */
 
     float sig0=(float)s[0];
-    float noise = ((int)fastrnd-(int)0x7fffffff) * (50.0f/(float)0x7fffffff);
+    unsigned int fastrnd_offset = fastrnd - 0x7fffffff;
+    float noise = (fastrnd_offset <= INT_MAX ? (int)fastrnd_offset : -1 - (int)(UINT_MAX - fastrnd_offset)) * (50.0f/(float)0x7fffffff);
     fastrnd = (fastrnd*FASTRND_A+FASTRND_C) & 0xffffffffu;
 
     p[0] += sig0 * level * (1.0f - noise_ampl) + noise * noise_ampl;

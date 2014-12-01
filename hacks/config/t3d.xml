@@ -4,6 +4,8 @@
 
   <command arg="-root"/>
 
+  <video href="http://www.youtube.com/watch?v=5UohH7U2CAI"/>
+
   <hgroup>
    <vgroup>
     <number id="delay" type="slider" arg="-delay %"

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2011 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -80,7 +80,7 @@ input_available_p (int fd)
 
 
 static void
-display_image (state *st, const char *file)
+display_image (Display *dpy, Window window, state *st, const char *file)
 {
   NSImage *image = [[NSImage alloc] 
                      initWithContentsOfFile:
@@ -92,10 +92,14 @@ display_image (state *st, const char *file)
     return;
   }
 
-  [image drawAtPoint: NSMakePoint (0, 0)
-            fromRect: NSMakeRect (0, 0, [image size].width, [image size].height)
-           operation: NSCompositeCopy
-            fraction: 1.0];
+  CGFloat w = [image size].width;
+  CGFloat h = [image size].height;
+  if (w <= 1 || h <= 1) {
+    fprintf (stderr, "webcollage: unparsable image \"%s\"\n", file);
+    return;
+  }
+
+  jwxyz_draw_NSImage_or_CGImage (dpy, window, True, image, 0, 0);
   [image release];
 }
 
@@ -298,7 +302,7 @@ webcollage_draw (Display *dpy, Window window, void *closure)
   const char *target = "COCOA LOAD ";
   if (!strncmp (target, buf, strlen(target))) {
     const char *file = buf + strlen(target);
-    display_image (st, file);
+    display_image (dpy, window, st, file);
   }
 
   return st->delay;

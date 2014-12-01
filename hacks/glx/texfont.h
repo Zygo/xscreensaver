@@ -32,6 +32,17 @@ extern int texture_string_width (texture_font_data *, const char *,
  */
 extern void print_texture_string (texture_font_data *, const char *);
 
+/* Draws the string on the window at the given pixel position.
+   Newlines and tab stops are honored.
+   Any numbers inside [] will be rendered as a subscript.
+   Assumes the font has been loaded as with load_texture_font().
+
+   Position is 0 for center, 1 for top left, 2 for bottom left.
+ */
+void print_texture_label (Display *, texture_font_data *,
+                          int window_width, int window_height,
+                          int position, const char *string);
+
 /* Releases the texture font.
  */
 extern void free_texture_font (texture_font_data *);

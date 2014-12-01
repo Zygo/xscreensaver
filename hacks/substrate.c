@@ -122,6 +122,7 @@ struct field {
     unsigned int cycles;
 
     unsigned int wireframe;
+    unsigned int seamless;
 };
 
 struct state {
@@ -164,6 +165,7 @@ static struct field
     f->parsedcolors = NULL;
     f->cycles = 0;
     f->wireframe = 0;
+    f->seamless = 0;
     f->fgcolor = 0;
     f->bgcolor = 0;
     f->visdepth = 0;
@@ -398,6 +400,10 @@ region_color(struct state *st, GC fgc, struct field *f, crack *cr)
 
         cx = (int) rx;
         cy = (int) ry;
+        if (f->seamless) {
+            cx %= f->width;
+            cy %= f->height;
+        }
 
         if ((cx >= 0) && (cx < f->width) && (cy >= 0) && (cy < f->height)) {
             /* safe to check */
@@ -431,6 +437,10 @@ region_color(struct state *st, GC fgc, struct field *f, crack *cr)
     for (i = 0; i < grains; i++) {
         drawx = (cr->x + (rx - cr->x) * sin(cr->sandp + sin((float) i * w)));
         drawy = (cr->y + (ry - cr->y) * sin(cr->sandp + sin((float) i * w)));
+        if (f->seamless) {
+            drawx = fmod(drawx + f->width, f->width);
+            drawy = fmod(drawy + f->height, f->height);
+        }
 
         /* Draw sand bit */
         c = trans_point(st, drawx, drawy, cr->sandcolor, (0.1 - i / (grains * 10.0)), f);
@@ -502,12 +512,19 @@ movedrawcrack(struct state *st, GC fgc, struct field *f, int cracknum)
         cr->t += cr->t_inc;
         cr->degrees_drawn += abs(cr->t_inc);
     }
+    if (f->seamless) {
+        cr->x = fmod(cr->x + f->width, f->width);
+        cr->y = fmod(cr->y + f->height, f->height);
+    }
 
     /* bounds check */
     /* modification of random(-0.33,0.33) */
     cx = (int) (cr->x + (frand(0.66) - 0.33));
     cy = (int) (cr->y + (frand(0.66) - 0.33));
-
+    if (f->seamless) {
+        cx %= f->width;
+        cy %= f->height;
+    }
 
     if ((cx >= 0) && (cx < f->width) && (cy >= 0) && (cy < f->height)) {
         /* draw sand painter if we're not wireframe */
@@ -580,6 +597,7 @@ substrate_init (Display *dpy, Window window)
     st->f->wireframe = (get_boolean_resource(st->dpy, "wireFrame", "Boolean"));
     st->f->grains = (get_integer_resource(st->dpy, "sandGrains", "Integer"));
     st->f->circle_percent = (get_integer_resource(st->dpy, "circlePercent", "Integer"));
+    st->f->seamless = (get_boolean_resource(st->dpy, "seamless", "Boolean"));
 
     if (st->f->initial_cracks <= 2) {
         fprintf(stderr, "%s: Initial cracks must be greater than 2\n", progname);
@@ -720,6 +738,7 @@ static const char *substrate_defaults[] = {
     ".foreground: black",
     "*fpsSolid:	true",
     "*wireFrame: false",
+    "*seamless: false",
     "*maxCycles: 10000",
     "*growthDelay: 18000",
     "*initialCracks: 3",
@@ -736,6 +755,7 @@ static XrmOptionDescRec substrate_options[] = {
     {"-background", ".background", XrmoptionSepArg, 0},
     {"-foreground", ".foreground", XrmoptionSepArg, 0},
     {"-wireframe", ".wireFrame", XrmoptionNoArg, "true"},
+    {"-seamless", ".seamless", XrmoptionNoArg, "true"},
     {"-max-cycles", ".maxCycles", XrmoptionSepArg, 0},
     {"-growth-delay", ".growthDelay", XrmoptionSepArg, 0},
     {"-initial-cracks", ".initialCracks", XrmoptionSepArg, 0},

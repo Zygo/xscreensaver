@@ -15,7 +15,7 @@
 extern char *progname;
 
 
-#ifndef HAVE_COCOA
+#if !defined(HAVE_COCOA) && !defined(HAVE_ANDROID)
 
 #include <X11/Xresource.h>
 
@@ -135,10 +135,10 @@ get_float_resource (Display *dpy, char *res_name, char *res_class)
   return 0.0;
 }
 
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_COCOA && !HAVE_ANDROID */
 
 
-/* These functions are the same with Xlib and Cocoa:
+/* These functions are the same with Xlib, Cocoa and Android:
  */
 
 

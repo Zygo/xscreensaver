@@ -169,6 +169,12 @@ AH_TEMPLATE([HAVE_XMU],
 	    of X, and if your vendor doesn't ship it, you should report that
 	    as a bug.])
 
+AH_TEMPLATE([HAVE_XUTF8DRAWSTRING],
+	    [Define this if you have the function Xutf8DrawString().])
+
+AH_TEMPLATE([HAVE_XFT],
+	    [Define this if you have libXft2.])
+
 AH_TEMPLATE([HAVE_GL],
 	    [Define this if you have OpenGL.  Some of the demos require it,
 	    so if you don't have it, then those particular demos won't be
@@ -316,6 +322,9 @@ AH_TEMPLATE([XPointer],
 
 AH_TEMPLATE([HAVE_PTHREAD],
 	    [Define this if your system supports POSIX threads.])
+
+AH_TEMPLATE([HAVE_RECORD_ANIM],
+	    [Define this to enable recording of videos.])
 
 # After checking to see that --srcdir is correct (which AC_INIT does)
 # check for some random other files that come later in the tar file,
@@ -812,6 +821,8 @@ AC_DEFUN([AC_PATH_X_APP_DEFAULTS_DIRECT],[
     /usr/lib/X11R5/app-defaults                 \
     /usr/lib/X11R4/app-defaults                 \
                                                 \
+    /etc/X11/app-defaults                       \
+                                                \
     /usr/local/X11/lib/app-defaults             \
     /usr/local/X11R6/lib/app-defaults           \
     /usr/local/X11R5/lib/app-defaults           \
@@ -857,11 +868,13 @@ AC_DEFUN([AC_PATH_X_APP_DEFAULTS_DIRECT],[
 AC_DEFUN([AC_PATH_X_APP_DEFAULTS],
   [AC_REQUIRE_CPP()
     AC_CACHE_CHECK([for X app-defaults directory], ac_cv_x_app_defaults,
-     [AC_PATH_X_APP_DEFAULTS_XMKMF
+     [# skip this, it's always wrong these days.
+      #  AC_PATH_X_APP_DEFAULTS_XMKMF
       if test x"$ac_x_app_defaults" = x; then
-        AC_PATH_X_APP_DEFAULTS_DIRECT
+        true AC_PATH_X_APP_DEFAULTS_DIRECT
       fi
       if test x"$ac_x_app_defaults" = x; then
+        /bin/echo -n 'fallback: '
         ac_cv_x_app_defaults="/usr/lib/X11/app-defaults"
       else
         # Record where we found app-defaults for the cache.
@@ -1233,6 +1246,8 @@ AC_SYS_LARGEFILE
 AC_CHECK_FUNCS(select fcntl uname nice setpriority getcwd getwd putenv sbrk)
 AC_CHECK_FUNCS(sigaction syslog realpath setrlimit)
 AC_CHECK_FUNCS(setlocale)
+AC_CHECK_FUNCS(getaddrinfo)
+AC_CHECK_MEMBERS([struct sockaddr.sa_len],,, [[#include <sys/socket.h>]])
 AC_CHECK_ICMP
 AC_CHECK_ICMPHDR
 AC_CHECK_GETIFADDRS
@@ -3401,6 +3416,94 @@ fi
 
 ###############################################################################
 #
+#       Check for -lXft
+#
+###############################################################################
+
+have_xutf8drawstring=no
+AC_CHECK_X_LIB(X11, Xutf8DrawString,
+               [have_xutf8drawstring=yes],
+               [true], -lX11 -lXext -lm)
+if test "$have_xutf8drawstring" = yes ; then
+  AC_DEFINE(HAVE_XUTF8DRAWSTRING)
+fi
+
+
+have_xft=no
+with_xft_req=unspecified
+xft_halfassed=no
+AC_ARG_WITH(xft,
+[  --with-xft              Include support for the X Freetype library.],
+  [with_xft="$withval"; with_xft_req="$withval"],
+  [with_xft=yes])
+
+HANDLE_X_PATH_ARG(with_xft, --with-xft, Xft)
+
+if test "$with_xft" != yes -a "$with_xft" != no ; then
+  echo "error: must be yes or no: --with-xft=$with_xft"
+  exit 1
+fi
+
+if test "$with_xft" = yes; then
+
+  pkgs=''
+  ok="yes"
+  pkg_check_version xft 2.1.0
+  have_xft="$ok"
+
+  if test "$have_xft" = yes; then
+    AC_CACHE_CHECK([for Xft includes], ac_cv_xft_config_cflags,
+               [ac_cv_xft_config_cflags=`$pkg_config --cflags $pkgs`])
+    AC_CACHE_CHECK([for Xft libs], ac_cv_xft_config_libs,
+               [ac_cv_xft_config_libs=`$pkg_config --libs $pkgs`])
+  fi
+
+  ac_xft_config_cflags=$ac_cv_xft_config_cflags
+  ac_xft_config_libs=$ac_cv_xft_config_libs
+
+  if test "$have_xft" = yes; then
+    #
+    # we appear to have Xft; check for headers/libs to be sure.
+    #
+    ac_save_xft_CPPFLAGS="$CPPFLAGS"
+    CPPFLAGS="$CPPFLAGS $ac_xft_config_cflags"
+
+    have_xft=no
+    AC_CHECK_X_HEADER(X11/Xft/Xft.h, [have_xft=yes])
+
+    CPPFLAGS="$ac_save_xft_CPPFLAGS"
+  fi
+
+  if test "$have_xft" = yes; then
+    # we have the headers, now check for the libraries
+    have_xft=no
+    xft_halfassed=yes
+
+    AC_MSG_RESULT(checking for Xft usability...)
+    AC_CHECK_X_LIB(c, XftDrawStringUtf8, [have_xft=yes],,
+                   $ac_xft_config_libs -lX11 -lXext -lm)
+  fi
+
+  if test "$have_xft" = no; then
+    AC_MSG_RESULT(checking for Xft usability... no)
+  fi
+fi
+
+if test "$have_xft" = yes; then
+  INCLUDES="$INCLUDES $ac_xft_config_cflags"
+  XFT_LIBS="$ac_xft_config_libs"
+  XFT_SRCS=''
+  XFT_OBJS=''
+  AC_DEFINE(HAVE_XFT)
+else
+  XFT_LIBS=''
+  XFT_SRCS='$(UTILS_SRC)/xft.c'
+  XFT_OBJS='$(UTILS_BIN)/xft.o'
+fi
+
+
+###############################################################################
+#
 #       Check for pty support: this allows 'phosphor' and 'apple2'
 #	to run curses-based programs, or be used as terminal windows.
 #
@@ -3739,6 +3842,39 @@ fi
 
 ###############################################################################
 #
+#       Check for --with-record-animation
+#
+###############################################################################
+
+record_anim_default=no
+record_anim="$record_anim_default"
+AC_ARG_WITH(record-animation,
+[  --with-record-animation Include code for generating MP4 videos.
+],
+  [record_anim="$withval"], [record_anim="$record_anim_default"])
+
+HANDLE_X_PATH_ARG(record_anim, --with-record-animation, record animation)
+
+if test "$record_anim" = yes; then
+  true
+elif test "$record_anim" != no; then
+  echo "error: must be yes or no: --with-record-animation=$record_anim"
+  exit 1
+fi
+
+if test "$record_anim" = yes; then
+  if test "$have_gdk_pixbuf" != yes; then
+    AC_MSG_ERROR(--with-record-animation requires GDK-Pixbuf)
+  else
+    AC_MSG_RESULT(enabling --with-record-animation)
+    AC_DEFINE(HAVE_RECORD_ANIM)
+    ANIM_OBJS='$(ANIM_OBJS)'
+    ANIM_LIBS='$(ANIM_LIBS)'
+  fi
+fi
+
+###############################################################################
+#
 #       Done testing.  Now, set up the various -I and -L variables,
 #       and decide which GUI program to build by default.
 #
@@ -3953,6 +4089,9 @@ AC_SUBST(PASSWD_OBJS)
 AC_SUBST(XMU_SRCS)
 AC_SUBST(XMU_OBJS)
 AC_SUBST(XMU_LIBS)
+AC_SUBST(XFT_SRCS)
+AC_SUBST(XFT_OBJS)
+AC_SUBST(XFT_LIBS)
 AC_SUBST(SAVER_GL_SRCS)
 AC_SUBST(SAVER_GL_OBJS)
 AC_SUBST(SAVER_GL_LIBS)
@@ -3977,6 +4116,8 @@ AC_SUBST(GTK_DATADIR)
 AC_SUBST(PO_DATADIR)
 AC_SUBST(HACK_CONF_DIR)
 AC_SUBST(GTK_EXTRA_OBJS)
+AC_SUBST(ANIM_OBJS)
+AC_SUBST(ANIM_LIBS)
 
 APPDEFAULTS=$ac_x_app_defaults
 AC_SUBST(APPDEFAULTS)
@@ -4283,6 +4424,28 @@ if test "$have_jpeg" = no ; then
   else
     warn2 "This means the \`webcollage' program will be much slower."
   fi
+fi
+
+
+if test "$have_xft" = no ; then
+  if test "$with_xft_req" = yes ; then
+    warnL "Use of libXft was requested, but it was not found."
+  elif test "$with_xft_req" = no ; then
+    noteL 'The Xft library is not being used.'
+  else
+    noteL "The Xft library was not found."
+  fi
+
+  if test "$xft_halfassed" = yes ; then
+    echo ''
+    warn2 'More specifically, we found the headers, but not the'
+    warn2 'libraries; so either Xft is half-installed on this'
+    warn2 "system, or something else went wrong.  The \`config.log'"
+    warn2 'file might contain some clues.'
+    echo ''
+  fi
+
+  warn2 "This means that fonts won't be anti-aliased."
 fi
 
 
