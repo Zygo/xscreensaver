@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="boing" _label="Boing" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=J3KAsV31d6M"/>
+
+  <number id="size" type="slider" arg="-size %"
+          _label="Size" _low-label="Tiny" _high-label="Huge"
+          low="0.02" high="0.9" default="0.5"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0.1" high="10.0" default="1.0"/>
+
+  <vgroup>
+   <hgroup>
+    <number id="meridians" type="spinbutton" arg="-meridians %"
+            _label="Meridians" low="1" high="90" default="16"/>
+    <number id="parallels" type="spinbutton" arg="-parallels %"
+            _label="Parallels" low="1" high="90" default="8"/>
+   </hgroup>
+   <hgroup>
+    <boolean id="smoothing" _label="Smoothing" arg-set="-smooth"/>
+    <boolean id="lighting"  _label="Lighting" arg-set="-lighting"/>
+    <boolean id="scanlines" _label="Scanlines" arg-unset="-no-scanlines"/>
+   </hgroup>
+   <hgroup>
+    <boolean id="wire"      _label="Wireframe" arg-set="-wireframe"/>
+    <boolean id="showfps"   _label="Show frame rate" arg-set="-fps"/>
+   </hgroup>
+  </vgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+
+A clone of the first graphics demo for the Amiga 1000, which was
+written by Dale Luck and RJ Mical during a break at the 1984 Consumer
+Electronics Show (or so the legend goes.)
+
+This looks like the original Amiga demo if you turn off "smoothing"
+and "lighting" and turn on "scanlines", and is somewhat more modern
+otherwise.
+
+http://en.wikipedia.org/wiki/Amiga#Boing_Ball
+
+Written by Jamie Zawinski; 2005.
+  </_description>
+</screensaver>

@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="utf-8"?>
+<rss version="2.0"
+     xmlns:sparkle="http://www.andymatuschak.org/xml-namespaces/sparkle"
+     xmlns:dc="http://purl.org/dc/elements/1.1/">
+ <channel>
+  <title>xscreensaver updater</title>
+  <link>http://www.jwz.org/xscreensaver/updates.xml</link>
+  <description>Updates to xscreensaver.</description>
+  <language>en</language>
+  <item>
+   <title>Version 5.31</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.31.dmg</link>
+   <description><![CDATA[&bull; New hacks, `geodesicgears', `binaryring' and `cityflow'. <BR>&bull; UTF-8 text support (instead of only Latin1) and antialiased text on X11 with Xft (instead of only on OSX/iOS) in `fontglide', `noseguy', `fliptext', `starwars', and `winduprobot'. The other text-displaying hacks (`apple2', `phosphor', `xmatrix', and `gltext') also now accept UTF-8 input, though they convert it to Latin1 or ASCII. <BR>&bull; `glplanet' now has both day and night maps, and a sharp terminator. <BR>&bull; Fixed `webcollage' on OSX. <BR>&bull; Fixed a transparency glitch in `winduprobot'. <BR>&bull; `lockward' works on iOS. <BR>&bull; Text and image loading work on OSX 10.10. <BR>&bull; Rotation works properly on iOS 8. <BR>&bull; Added a search field on iOS. <BR>&bull; Preliminary, unfinished support for Android.]]></description>
+   <pubDate>Sat, 15 Nov 2014 15:38:27 -0800</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.31.dmg"
+    sparkle:version="5.31"
+    sparkle:dsaSignature="MC4CFQCdDs107OqBIERPG9dULT0g49uc4wIVALUB7StXIXaAKxuklWvNO2y80pNf"
+    length="55131377"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.30</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.30.dmg</link>
+   <description><![CDATA[&bull; New hack, `winduprobot'. <BR>&bull; Many improvements to `lament', including Leviathan. <BR>&bull; Fixed the normals in `flyingtoasters': shading is correct now. <BR>&bull; Implemented TEXTURE_GEN in GLES: flying toast is now toasted on iOS. <BR>&bull; Make cel-shading sort-of work in `skytentacles' on iOS. <BR>&bull; Fixed dragging-to-rotate on rotated iOS devices, I think. <BR>&bull; Dragging has inertia now. <BR>&bull; Most hacks respond to mouse-clicks, double-taps and swipes as meaning "do something different now". <BR>&bull; Reworked OpenGL fonts. <BR>&bull; The OSX auto-update installer wasn't working. This time for sure? <BR>&bull; Various minor fixes.]]></description>
+   <pubDate>Wed, 10 Sep 2014 22:04:30 -0700</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.30.dmg"
+    sparkle:version="5.30"
+    sparkle:dsaSignature="MC0CFDPqS6izb2TmEZpWMTqOwsOs3XiTAhUAoqdy8mZ0FdDHvO519aXvZR3WZIo="
+    length="53012325"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.29</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.29.dmg</link>
+   <description><![CDATA[&bull; Downgraded to Xcode 5.0.2 to make it possible to build savers that will still run on 10.6 and 10.7. Sigh. <BR>&bull; Updated `webcollage' for recent changes.]]></description>
+   <pubDate>Sun, 08 Jun 2014 14:56:08 -0700</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.29.dmg"
+    sparkle:version="5.29"
+    sparkle:dsaSignature="MC0CFQC4BbJnSlHL8xiAJHw/RVUKJ2q23AIUZAPp7UaHNFJd1Hb/Ih9z970pwMg="
+    length="51332404"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.14</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg</link>
+   <description><![CDATA[&bull; Fixed crash in Blank Only Mode when DPMS disabled. <BR>&bull; Added "Quick Power-off in Blank Only Mode" option. <BR>&bull; BSOD GLaDOS.]]></description>
+   <pubDate>Fri, 20 May 2011 11:42:36 -0700</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg"
+    sparkle:version="5.14"
+    sparkle:dsaSignature="MCwCFHrKuttf1gN27mVG3YL8+ueMJmNaAhR6aSkKQefuNFNp6MinLq2o1nocaA=="
+    length="54485615"
+    type="application/octet-stream" />
+  </item>
+ </channel>
+</rss>

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="boxed" _label="Boxed" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=CU4QFtZm9So"/>
+
+  <hgroup>
+   <vgroup>
+
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="15000"
+            convert="invert"/>
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+            low="0.001" high="4.0" default="0.5"/>
+
+    <number id="balls" type="slider" arg="-balls %"
+            _label="Number of balls" _low-label="Few" _high-label="Lots"
+            low="3" high="40" default="20"/>
+
+    <number id="ballsize" type="slider" arg="-ballsize %"
+            _label="Ball size" _low-label="Tiny" _high-label="Huge"
+            low="1.0" high="5.0" default="3.0"/>
+
+   </vgroup>
+
+   <vgroup>
+
+    <number id="explosion" type="slider" arg="-explosion %"
+            _label="Explosion force" _low-label="Popcorn" _high-label="Nuke"
+            low="1.0" high="50.0" default="15.0"/>
+
+    <number id="decay" type="slider" arg="-decay %"
+            _label="Explosion decay" _low-label="Linger" _high-label="Pop!"
+            low="0.0" high="1.0" default="0.07"/>
+
+    <number id="momentum" type="slider" arg="-momentum %"
+            _label="Explosion momentum" _low-label="None" _high-label="Full"
+            low="0.0" high="1.0" default="0.6"/>
+
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+   <boolean id="wire"    _label="Wireframe" arg-set="-wireframe"/>
+
+   </vgroup>
+  </hgroup>
+
+
+  <xscreensaver-updater />
+
+  <_description>
+A box full of 3D bouncing balls that explode.
+
+Written by Sander van Grieken; 2002.
+  </_description>
+</screensaver>

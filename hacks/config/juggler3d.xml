@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="juggler3d" _label="Juggler3D" gl="yes">
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=TJkKaXBOvCA"/>
+
+  <hgroup>
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="10000"
+            convert="invert"/>
+
+    <number id="count" type="slider" arg="-count %"
+            _label="Speed" _low-label="Slow" _high-label="Fast"
+            low="50" high="1000" default="200"
+            convert="invert"/>
+   </vgroup>
+   <vgroup>
+    <number id="cycles" type="slider" arg="-cycles %"
+            _label="Performance length" _low-label="Short" _high-label="Long"
+            low="50" high="1000" default="1000"/>
+
+    <number id="tail" type="slider" arg="-tail %"
+            _label="Trail length" _low-label="None" _high-label="Long"
+            low="0" high="100" default="1"/>
+   </vgroup>
+  </hgroup>
+
+  <hgroup>
+    <boolean id="balls" _label="Balls" arg-unset="-no-balls"/>
+    <boolean id="clubs" _label="Clubs" arg-unset="-no-clubs"/>
+    <boolean id="rings" _label="Rings" arg-unset="-no-rings"/>
+    <boolean id="knives" _label="Knives" arg-unset="-no-knives"/>
+<!--<boolean id="torches" _label="Flaming torches" arg-unset="-no-torches"/>-->
+    <boolean id="bballs" _label="Bowling balls" arg-unset="-no-bballs"/>
+  </hgroup>
+
+  <boolean id="describe" _label="Print Cambridge juggling pattern descriptions" arg-unset="-no-describe"/>
+  <string id="pattern" _label="Juggle this pattern" arg="-pattern %" />
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+A 3D juggling stick-man, with Cambridge juggling pattern
+notation used to describe the patterns he juggles.
+
+http://en.wikipedia.org/wiki/Siteswap
+
+Written by Tim Auckland and Jamie Zawinski; 2002.
+  </_description>
+</screensaver>

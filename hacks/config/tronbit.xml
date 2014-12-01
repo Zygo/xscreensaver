@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="tronbit" _label="TronBit" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=dIF4fodt-L8"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="30000"
+          convert="invert"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Animation speed" _low-label="Slow" _high-label="Fast"
+          low="0.05" high="10.0" default="1.0"/>
+
+  <hgroup>
+   <boolean id="spin"    _label="Spin"            arg-unset="-no-spin"/>
+   <boolean id="wander"  _label="Wander"          arg-unset="-no-wander"/>
+   <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+The character "Bit" from the film, "Tron".
+
+The "yes" state is a tetrahedron; the "no" state is the second
+stellation of an icosahedron; and the idle state oscillates between
+a small triambic icosahedron and the compound of an icosahedron and
+a dodecahedron.
+
+http://en.wikipedia.org/wiki/List_of_Tron_characters#Bit
+http://en.wikipedia.org/wiki/Uniform_polyhedra
+http://en.wikipedia.org/wiki/Stellation
+
+Written by Jamie Zawinski; 2011.
+  </_description>
+</screensaver>

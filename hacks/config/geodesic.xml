@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="geodesic" _label="Geodesic" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=qulzooBLIcU"/>
+
+  <hgroup>
+   <vgroup>
+    <select id="object">
+     <option id="mesh"       _label="Mesh faces"/>
+     <option id="solid"      _label="Solid faces" arg-set="-mode solid"/>
+     <option id="stellated"  _label="Stellated faces" arg-set="-mode stellated"/>
+     <option id="stellated2" _label="Inverse Stellated" arg-set="-mode stellated2"/>
+     <option id="wire"       _label="Wireframe" arg-set="-mode wire"/>
+     <option id="random"     _label="Random face style" arg-set="-mode random"/>
+    </select>
+
+    <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>
+    <boolean id="spin"   _label="Spin"      arg-unset="-no-spin"/>
+    <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+   </vgroup>
+
+   <vgroup>
+    <number id="delay" type="slider" arg="-delay %"
+            _label="Frame rate" _low-label="Low" _high-label="High"
+            low="0" high="100000" default="30000"
+            convert="invert"/>
+
+    <number id="speed" type="slider" arg="-speed %"
+            _label="Animation speed" _low-label="Slow" _high-label="Fast"
+            low="0.05" high="10.0" default="1.0"/>
+
+    <number id="count" type="slider" arg="-count %"
+            _label="Depth" _low-label="1" _high-label="8"
+            low="1" high="8" default="4"/>
+   </vgroup>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+A mesh geodesic sphere of increasing and decreasing complexity.
+
+A geodesic sphere is an icosohedron whose equilateral faces are
+sub-divided into non-equilateral triangles to more closely approximate
+a sphere.
+
+The animation shows the equilateral triangles subdivided into four
+coplanar equilateral triangles; and then inflated outward, causing the
+sub-triangles to no longer be equilateral, but to more closely
+approximate the surface of a sphere.
+
+http://en.wikipedia.org/wiki/Geodesic_dome
+http://en.wikipedia.org/wiki/Buckminster_Fuller
+
+Written by Jamie Zawinski; 2013.
+  </_description>
+</screensaver>

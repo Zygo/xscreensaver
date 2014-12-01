@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="grav" _label="Grav">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=spQRFDmDMeg"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="10000"
+          convert="invert"/>
+
+  <number id="count" type="slider" arg="-count %"
+          _label="Number of objects" _low-label="Few" _high-label="Many"
+          low="1" high="40" default="12"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="1" high="255" default="64"/>
+
+  <hgroup>
+   <boolean id="decay" _label="Orbital decay" arg-unset="-no-decay"/>
+   <boolean id="trail" _label="Object trails" arg-unset="-no-trail"/>
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+An orbital simulation.  With trails enabled, it looks kind of like a
+cloud-chamber photograph.
+
+Written by Greg Bowering; 1997.
+  </_description>
+</screensaver>

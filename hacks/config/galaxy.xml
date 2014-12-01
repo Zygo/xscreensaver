@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="galaxy" _label="Galaxy">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=xBprAm9w-Fo"/>
+
+  <number id="delay" type="slider" arg="-delay %"
+          _label="Frame rate" _low-label="Low" _high-label="High"
+          low="0" high="100000" default="20000"
+          convert="invert"/>
+
+  <number id="count" type="spinbutton" arg="-count %"
+          _label="Count" low="-20" high="20" default="-5"/>
+
+  <number id="cycles" type="slider" arg="-cycles %"
+           _label="Duration" _low-label="Short" _high-label="Long"
+          low="10" high="1000" default="250"/>
+
+  <number id="ncolors" type="slider" arg="-ncolors %"
+            _label="Number of colors" _low-label="Two" _high-label="Many"
+            low="10" high="255" default="64"/>
+
+  <boolean id="spin" _label="Rotate viewpoint" arg-unset="-no-spin"/>
+
+  <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+
+  <xscreensaver-updater />
+
+  <_description>
+Spinning galaxies collide.
+
+Written by Uli Siegmund, Harald Backert, and Hubert Feyrer; 1997.
+  </_description>
+</screensaver>
