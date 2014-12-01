@@ -2967,8 +2967,15 @@ XLoadFont (Display *dpy, const char *name)
   float scale = 1;
 
 # ifdef USE_IPHONE
-  // Scale up fonts on Retina displays.
-  scale = dpy->main_window->window.view.contentScaleFactor;
+  /* Since iOS screens are physically smaller than desktop screens, scale up
+     the fonts to make them more readable.
+
+     Note that X11 apps on iOS also have the backbuffer sized in points
+     instead of pixels, resulting in an effective X11 screen size of 768x1024
+     or so, even if the display has significantly higher resolution.  That is
+     unrelated to this hack, which is really about DPI.
+   */
+  scale = 2;
 # endif
 
   fid->nsfont = try_native_font (name, scale, &fid->ps_name, &fid->size);
@@ -3509,13 +3516,8 @@ XQueryPointer (Display *dpy, Window w, Window *root_ret, Window *child_ret,
   NSScreen *screen = (screens && [screens count] > 0
                       ? [screens objectAtIndex:0]
                       : [NSScreen mainScreen]);
-#ifdef USE_IPHONE
-  double s = w->window.view.contentScaleFactor;
-#else
-  int s = 1;
-#endif
   NSRect srect = [screen frame];
-  vpos.y = (s * srect.size.height) - vpos.y;
+  vpos.y = srect.size.height - vpos.y;
   
   // get the mouse position on window, from bottom left
   NSEvent *e = [NSApp currentEvent];
@@ -3579,13 +3581,8 @@ XTranslateCoordinates (Display *dpy, Window w, Window dest_w,
   NSScreen *screen = (screens && [screens count] > 0
                       ? [screens objectAtIndex:0]
                       : [NSScreen mainScreen]);
-# ifdef USE_IPHONE
-  double s = w->window.view.contentScaleFactor;
-# else
-  int s = 1;
-# endif
   NSRect srect = [screen frame];
-  vpos.y = (s * srect.size.height) - vpos.y;
+  vpos.y = srect.size.height - vpos.y;
   
   // point starts out relative to top left of view
   NSPoint p;

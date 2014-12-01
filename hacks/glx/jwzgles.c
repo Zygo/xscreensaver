@@ -3977,6 +3977,15 @@ jwzgles_gluProject (GLdouble objx, GLdouble objy, GLdouble objz,
 }
 
 
+void jwzgles_glViewport (GLuint x, GLuint y, GLuint w, GLuint h)
+{
+# if TARGET_IPHONE_SIMULATOR
+/*  fprintf (stderr, "glViewport %dx%d\n", w, h); */
+# endif
+  glViewport (x, y, w, h);  /* the real one */
+}
+
+
 /* The following functions are present in both OpenGL 1.1 and in OpenGLES 1,
    but are allowed within glNewList/glEndList, so we must wrap them to allow
    them to either be recorded in lists, or run directly.
@@ -4143,7 +4152,6 @@ WRAP (glStencilOp,	III)
 WRAP (glTexEnvf,	IIF)
 WRAP (glTexEnvi,	III)
 WRAP (glTranslatef,	FFF)
-WRAP (glViewport,	IIII)
 #undef  TYPE_IV
 #define TYPE_IV GLuint
 WRAP (glDeleteTextures,	IIV)

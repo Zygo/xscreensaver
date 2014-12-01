@@ -87,7 +87,13 @@ extern void check_gl_error (const char *type);
  */
 - (CGFloat) hackedContentScaleFactor
 {
-  return [self contentScaleFactor];
+  NSSize ssize = [[[UIScreen mainScreen] currentMode] size];
+  NSSize bsize = [self bounds].size;
+
+  // Ratio of screen size in pixels to view size in points.
+  GLfloat s = ((ssize.width > ssize.height ? ssize.width : ssize.height) /
+               (bsize.width > bsize.height ? bsize.width : bsize.height));
+  return s;
 }
 #endif // USE_IPHONE
 

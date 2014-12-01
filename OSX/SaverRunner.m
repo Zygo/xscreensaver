@@ -74,6 +74,58 @@
 
 @end
 
+
+/* This subclass exists to ensure that all events on the saverWindow actually
+   go to the saverView.  For some reason, the rootViewController's
+   UILayoutContainerView was capturing all of our events (touches and shakes).
+ */
+
+@interface EventCapturingWindow : UIWindow
+@property(assign) UIView *eventView;
+@end
+
+@implementation EventCapturingWindow
+@synthesize eventView;
+
+/* Always deliver touch events to the eventView if we have one.
+ */
+- (UIView *)hitTest:(CGPoint)point withEvent:(UIEvent *)event
+{
+  if (eventView)
+    return eventView;
+  else
+    return [super hitTest:point withEvent:event];
+}
+
+/* Always deliver motion events to the eventView if we have one.
+ */
+- (void)motionBegan:(UIEventSubtype)motion withEvent:(UIEvent *)event
+{
+  if (eventView)
+    [eventView motionBegan:motion withEvent:event];
+  else
+    [super motionBegan:motion withEvent:event];
+}
+
+- (void)motionEnded:(UIEventSubtype)motion withEvent:(UIEvent *)event
+{
+  if (eventView)
+    [eventView motionEnded:motion withEvent:event];
+  else
+    [super motionEnded:motion withEvent:event];
+}
+
+- (void)motionCancelled:(UIEventSubtype)motion withEvent:(UIEvent *)event
+{
+  if (eventView)
+    [eventView motionCancelled:motion withEvent:event];
+  else
+    [super motionCancelled:motion withEvent:event];
+}
+
+@end
+
+
 #endif // USE_IPHONE
 
 
@@ -449,12 +501,14 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   [prefs setObject:name forKey:@"selectedSaverName"];
   [prefs synchronize];
 
+/* Cacheing this screws up rotation when starting a saver twice in a row.
   if (saverName && [saverName isEqualToString: name]) {
     if ([saverView isAnimating])
       return;
     else
       goto LAUNCH;
   }
+*/
 
   saverName = name;
 
@@ -467,26 +521,118 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     [saverView release];
   }
 
-  /* We can't just use [window bounds] because that is the *rotated* rectangle
-     and we need the *unrotated* rectangle, so that the view is always created
-     in portrait orientation.  Without that, the initial rotation event that
-     takes us from unknown->landscape will be out of step with reality.
-   */
   UIScreen *screen = [UIScreen mainScreen];
-# ifndef __IPHONE_8_0				// iOS 7 SDK
-  NSSize size = [screen bounds].size;
-  int ss = [screen scale];
-# else						// iOS 8 SDK
-  NSSize size = ([screen respondsToSelector:@selector(nativeBounds)]
-                 ? [screen nativeBounds].size	//  iOS 8
-                 : [screen bounds].size);	//  iOS 7
-  int ss = ([screen respondsToSelector:@selector(nativeScale)]
-            ? [screen nativeScale]		//  iOS 8
-            : [screen scale]);			//  iOS 7
-# endif						// iOS 8 SDK
+  NSSize size;
+  double scale;
 
-  size.width  /= ss;
-  size.height /= ss;
+# ifndef __IPHONE_8_0				// iOS 7 SDK or earlier
+
+  size = [screen bounds].size;  		//  points, not pixels
+  scale = [screen scale];			//  available in iOS 4
+
+# else						// iOS 8 SDK or later
+
+  if ([screen respondsToSelector:@selector(nativeBounds)]) {
+    size = [screen nativeBounds].size;		//  available in iOS 8
+    scale = 1;  // nativeBounds is in pixels.
+
+    /* 'nativeScale' is very confusing.
+
+       iPhone 4s:
+          bounds:        320x480   scale:        2
+          nativeBounds:  640x960   nativeScale:  2
+       iPhone 5s:
+          bounds:        320x568   scale:        2
+          nativeBounds:  640x1136  nativeScale:  2
+       iPad 2:
+          bounds:       768x1024   scale:        1
+          nativeBounds: 768x1024   nativeScale:  1
+       iPad Retina/Air:
+          bounds:       768x1024   scale:        2
+          nativeBounds: 1536x2048  nativeScale:  2
+       iPhone 6:
+          bounds:        320x568   scale:        2
+          nativeBounds:  640x1136  nativeScale:  2
+       iPhone 6+:
+          bounds:        320x568   scale:        2
+          nativeBounds:  960x1704  nativeScale:  3
+
+       According to a StackOverflow comment:
+
+         The iPhone 6+ renders internally using @3x assets at a virtual
+         resolution of 2208x1242 (with 736x414 points), then samples that down
+         for display. The same as using a scaled resolution on a Retina MacBook
+         -- it lets them hit an integral multiple for pixel assets while still
+         having e.g. 12pt text look the same size on the screen.
+
+         The 6, the 5s, the 5, the 4s and the 4 are all 326 pixels per inch,
+         and use @2x assets to stick to the approximately 160 points per inch
+         of all previous devices.
+
+         The 6+ is 401 pixels per inch. So it'd hypothetically need roughly
+         @2.46x assets. Instead Apple uses @3x assets and scales the complete
+         output down to about 84% of its natural size.
+
+         In practice Apple has decided to go with more like 87%, turning the
+         1080 into 1242. No doubt that was to find something as close as
+         possible to 84% that still produced integral sizes in both directions
+         -- 1242/1080 = 2208/1920 exactly, whereas if you'd turned the 1080
+         into, say, 1286, you'd somehow need to render 2286.22 pixels
+         vertically to scale well.
+     */
+
+  } else {
+    size = [screen bounds].size;		//  points, not pixels
+    scale = [screen scale];			//  available in iOS 4
+  }
+# endif  // iOS 8
+
+  size.width  = ceilf (size.width  / scale);
+  size.height = ceilf (size.height / scale);
+
+
+# if TARGET_IPHONE_SIMULATOR
+  NSLog(@"screen: %.0fx%0.f",
+        [[screen currentMode] size].width,
+        [[screen currentMode] size].height);
+  NSLog(@"bounds: %.0fx%0.f x %.1f = %.0fx%0.f",
+        [screen bounds].size.width,
+        [screen bounds].size.height,
+        [screen scale],
+        [screen scale] * [screen bounds].size.width,
+        [screen scale] * [screen bounds].size.height);
+
+#  ifdef __IPHONE_8_0
+  if ([screen respondsToSelector:@selector(nativeBounds)])
+    NSLog(@"native: %.0fx%0.f / %.1f = %.0fx%0.f",
+          [screen nativeBounds].size.width,
+          [screen nativeBounds].size.height,
+          [screen nativeScale],
+          [screen nativeBounds].size.width  / [screen nativeScale],
+          [screen nativeBounds].size.height / [screen nativeScale]);
+#  endif
+
+
+  /* Our view must be full screen, and view sizes are measured in points,
+     not pixels.  However, since our view is on a UINavigationController
+     that does not rotate, the size must be portrait-mode even if the
+     device is landscape.
+
+     On iOS 7, [screen bounds] always returned portrait-mode values.
+     On iOS 8, it rotates.  So swap as necessary.
+     On iOS 8, [screen nativeBounds] is unrotated, in pixels not points.
+   */
+  size = [screen bounds].size;
+  if (size.width > size.height) {
+    double s = size.width;
+    size.width = size.height;
+    size.height = s;
+  }
+
+  NSLog(@"saverView: %.0fx%.0f", size.width, size.height);
+# endif // TARGET_IPHONE_SIMULATOR
+
+
   saverView = [self makeSaverView:name withSize:size];
 
   if (! saverView) {
@@ -504,32 +650,40 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     selector:@selector(didRotate:)
     name:UIDeviceOrientationDidChangeNotification object:nil];
 
- LAUNCH:
+  /* LAUNCH: */
 
   if (launch) {
     [self saveScreenshot];
-    NSRect f = [saverWindow bounds];
+    NSRect f;
+    f.origin.x = 0;
+    f.origin.y = 0;
+    f.size = [[UIScreen mainScreen] bounds].size;
+    if (f.size.width > f.size.height) {  // Force portrait
+      double swap = f.size.width;
+      f.size.width = f.size.height;
+      f.size.height = swap;
+    }
     [backgroundView setFrame:f];
     [saverView setFrame:f];
     [saverWindow addSubview: backgroundView];
     [backgroundView addSubview: saverView];
+    [saverWindow setFrame:f];
     [saverView setBackgroundColor:[NSColor blackColor]];
-
-    /* WTF! Without creating and keying this window, we get no events
-       delivered on the saverView/saverWindow!  Bad craziness.
-     */
-    {
-      UIWindow *dummy = [[UIWindow alloc] initWithFrame:CGRectMake(0,0,0,0)];
-      [dummy setRootViewController: nonrotating_nav];  // Must be this one.
-      [dummy setHidden:NO];  // required
-      [dummy setHidden:YES];
-      [dummy release];
-    }
 
     [saverWindow setHidden:NO];
     [saverWindow makeKeyAndVisible];
     [saverView startAnimation];
     [self aboutPanel:nil];
+
+    // Tell the UILayoutContainerView to stop intercepting our events.
+    //    [[saverWindow rootViewController] view].userInteractionEnabled = NO;
+    //    saverView.userInteractionEnabled = YES;
+
+    // Tell the saverWindow that all events should go to saverView.
+    //
+    NSAssert ([saverWindow isKindOfClass:[EventCapturingWindow class]],
+              @"saverWindow is not an EventCapturingWindow");
+    ((EventCapturingWindow *) saverWindow).eventView = saverView;
 
     // Doing this makes savers cut back to the list instead of fading,
     // even though [XScreenSaverView stopAndClose] does setHidden:NO first.
@@ -1233,7 +1387,7 @@ FAIL:
 # endif						// iOS 8 SDK
   frame.size.width  /= ss;
   frame.size.height /= ss;
-  saverWindow = [[UIWindow alloc] initWithFrame:frame];
+  saverWindow = [[EventCapturingWindow alloc] initWithFrame:frame];
   [saverWindow setRootViewController: nonrotating_nav];
   [saverWindow setHidden:YES];
 

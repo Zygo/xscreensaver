@@ -1,4 +1,4 @@
-/* fps, Copyright (c) 2001-2011 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
  * Draw a frames-per-second display (Xlib and OpenGL).
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -56,8 +56,7 @@ fps_init (Display *dpy, Window window)
   st->x = 10;
   st->y = 10;
   if (get_boolean_resource (dpy, "fpsTop", "FPSTop"))
-    /* don't leave a blank line in GL top-fps. */
-    st->y = - (/*st->font->ascent +*/ st->font->descent + 10);
+    st->y = - (st->font->ascent + st->font->descent + 10);
 
   strcpy (st->string, "FPS: ... ");
 

@@ -342,7 +342,11 @@ utf8_to_latin1 (const char *string, Bool ascii_p)
       long len2 = utf8_decode (in, in_end - in, &uc);
       in += len2;
 
-      if (uc > 0xFF)
+      if (uc == '\240')	/* &nbsp; */
+        uc = ' ';
+      else if (uc >= 0x2300 && uc <= 0x36F)
+        uc = 0;		/* Discard "Unicode Combining Diacriticals Block" */
+      else if (uc > 0xFF)
         switch (uc) {
 
         /* Map "Unicode General Punctuation Block" to Latin1 equivalents. */
@@ -403,15 +407,11 @@ utf8_to_latin1 (const char *string, Bool ascii_p)
         default:
           break;
         }
-      else if (uc >= 0x2300 && uc <= 0x36F)
-        uc = 0;		/* Discard "Unicode Combining Diacriticals Block" */
-      else if (uc == '\240')
-        uc = ' ';	/* &nbsp; */
 
       if (uc > 0xFF)
         /* "Inverted question mark" looks enough like 0xFFFD,
            the "Unicode Replacement Character". */
-        uc = (ascii_p ? '#' : 0xBF);
+        uc = (ascii_p ? '#' : '\277');
 
       if (ascii_p)	/* Map Latin1 to the closest ASCII versions. */
         {

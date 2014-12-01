@@ -3357,9 +3357,14 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
   CGFloat ww = [tv frame].size.width;
   CGFloat hh = [self tableView:tv heightForRowAtIndexPath:ip];
 
+  float os_version = [[[UIDevice currentDevice] systemVersion] floatValue];
+
   // Width of the column of labels on the left.
   CGFloat left_width = ww * 0.4;
   CGFloat right_edge = ww - LEFT_MARGIN;
+
+  if (os_version < 7)  // margins were wider on iOS 6.1
+    right_edge -= 10;
 
   CGFloat max = FONT_SIZE * 12;
   if (left_width > max) left_width = max;
@@ -3383,6 +3388,10 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
         if ([ctl isKindOfClass:[UISwitch class]]) {	// Checkboxes.
           r.size.width = 80;  // Magic.
           r.origin.x = right_edge - r.size.width + 30;  // beats me
+
+          if (os_version < 7)  // checkboxes were wider on iOS 6.1
+            r.origin.x -= 25;
+
         } else {
           r.origin.x = left_width;			// Text fields, etc.
           r.size.width = right_edge - r.origin.x;
