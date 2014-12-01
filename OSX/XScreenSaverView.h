@@ -81,17 +81,17 @@
   UIDeviceOrientation orientation, new_orientation;
   BOOL screenLocked;
 
-  CGSize initial_bounds;	// portrait-mode geometry
+  CGSize initial_bounds;	// portrait-mode size (pixels, not points).
 	
-  GLfloat rotation_ratio;	// ratio thru rotation anim, or -1
-  NSSize rot_from, rot_to;	// start size rect, end size rect
-  GLfloat angle_from, angle_to;	// start angle, end angle
-  double rot_start_time;
-  BOOL ignore_rotation_p;	// hack requests "always portrait".
-				// some want this, some do not.
-
-  NSSize rot_current_size;	// current intermediate or final orientation.
+  GLfloat rotation_ratio;	// ratio [0-1] thru rotation anim, or -1
+  NSSize rot_current_size;	// intermediate or at-rest orientation.
+  NSSize rot_from, rot_to;	// start/end size rect (pixels, not points)
   GLfloat rot_current_angle;	// only right angles when rotation complete.
+  GLfloat angle_from, angle_to;	// start angle, end angle (degrees)
+  double rot_start_time;
+
+  BOOL ignore_rotation_p;	// whether hack requested "always portrait".
+				// some want this, some do not.
 
   NSTimer *crash_timer;
 
@@ -101,7 +101,7 @@
 
 # ifdef USE_BACKBUFFER
   CGContextRef backbuffer;
-  CGSize backbuffer_size;
+  CGSize backbuffer_size;	// pixels, not points.
   CGColorSpaceRef colorspace;
 
 #  ifdef BACKBUFFER_CGCONTEXT

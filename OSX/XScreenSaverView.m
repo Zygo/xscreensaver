@@ -141,8 +141,7 @@ extern NSDictionary *make_function_table_dict(void);  // ios-function-table.m
     NSLog (@"no symbol \"%@\" for \"%@\"", table_name, path);
 
 # else  // USE_IPHONE
-  // Remember: any time you add a new saver to the iOS app,
-  // manually run "make ios-function-table.m"!
+  // Depends on the auto-generated "ios-function-table.m" being up to date.
   if (! function_tables)
     function_tables = [make_function_table_dict() retain];
   NSValue *v = [function_tables objectForKey: name];
@@ -379,14 +378,6 @@ orientname(unsigned long o)
            saverName:(NSString *)saverName
            isPreview:(BOOL)isPreview
 {
-# ifdef USE_IPHONE
-  initial_bounds = frame.size;
-  rot_current_size = frame.size;	// needs to be early, because
-  rot_from = rot_current_size;		// [self setFrame] is called by
-  rot_to = rot_current_size;		// [super initWithFrame].
-  rotation_ratio = -1;
-# endif
-
   if (! (self = [super initWithFrame:frame isPreview:isPreview]))
     return 0;
   
@@ -397,13 +388,6 @@ orientname(unsigned long o)
   }
 
   [self setShellPath];
-
-# ifdef USE_IPHONE
-  [self setMultipleTouchEnabled:YES];
-  orientation = UIDeviceOrientationUnknown;
-  [self didRotate:nil];
-  [self initGestures];
-# endif // USE_IPHONE
 
   setup_p = YES;
   if (xsft->setup_cb)
@@ -431,16 +415,33 @@ orientname(unsigned long o)
   progname = progclass = xsft->progclass;
 
   next_frame_time = 0;
-  
-# ifdef USE_BACKBUFFER
-  [self createBackbuffer:NSSizeToCGSize(frame.size)];
-  [self initLayer];
-# endif
 
 # ifdef USE_IPHONE
+  double s = [self hackedContentScaleFactor];
+# else
+  double s = 1;
+# endif
+
+  CGSize bb_size;	// pixels, not points
+  bb_size.width  = s * frame.size.width;
+  bb_size.height = s * frame.size.height;
+
+# ifdef USE_IPHONE
+  initial_bounds = rot_current_size = rot_from = rot_to = bb_size;
+  rotation_ratio = -1;
+
+  orientation = UIDeviceOrientationUnknown;
+  [self didRotate:nil];
+  [self initGestures];
+
   // So we can tell when we're docked.
   [UIDevice currentDevice].batteryMonitoringEnabled = YES;
 # endif // USE_IPHONE
+
+# ifdef USE_BACKBUFFER
+  [self createBackbuffer:bb_size];
+  [self initLayer];
+# endif
 
   return self;
 }
@@ -653,10 +654,16 @@ screenhack_do_fps (Display *dpy, Window w, fps_state *fpst, void *closure)
  */
 - (CGFloat) hackedContentScaleFactor
 {
-  GLfloat s = [self contentScaleFactor];
-  if (initial_bounds.width  >= 1024 ||
-      initial_bounds.height >= 1024)
+  NSSize ssize = [[[UIScreen mainScreen] currentMode] size];
+  NSSize bsize = [self bounds].size;
+
+  // Ratio of screen size in pixels to view size in points.
+  GLfloat s = ((ssize.width > ssize.height ? ssize.width : ssize.height) /
+               (bsize.width > bsize.height ? bsize.width : bsize.height));
+
+  if (ssize.width >= 1024 && ssize.height >= 1024)
     s = 1;
+
   return s;
 }
 
@@ -721,12 +728,11 @@ double current_device_rotation (void)
 
 #   undef CLAMP180
 
-  double s = [self hackedContentScaleFactor];
   CGSize rotsize = ((ignore_rotation_p || ![self reshapeRotatedWindow])
                     ? initial_bounds
                     : rot_current_size);
-  if ((int) backbuffer_size.width  != (int) (s * rotsize.width) ||
-      (int) backbuffer_size.height != (int) (s * rotsize.height))
+  if ((int) backbuffer_size.width  != (int) rotsize.width ||
+      (int) backbuffer_size.height != (int) rotsize.height)
     [self resize_x11];
 }
 
@@ -764,6 +770,8 @@ double current_device_rotation (void)
 
 /* Create a bitmap context into which we render everything.
    If the desired size has changed, re-created it.
+   new_size is in rotated pixels, not points: the same size
+   and shape as the X11 window as seen by the hacks.
  */
 - (void) createBackbuffer:(CGSize)new_size
 {
@@ -840,13 +848,13 @@ double current_device_rotation (void)
       (int)backbuffer_size.height == (int)new_size.height)
     return;
 
-  CGSize osize = backbuffer_size;
   CGContextRef ob = backbuffer;
 
-  backbuffer_size = new_size;
+  CGSize osize = backbuffer_size;	// pixels, not points.
+  backbuffer_size = new_size;		// pixels, not points.
 
 # if TARGET_IPHONE_SIMULATOR
-  NSLog(@"backbuffer %.0f %.0f",
+  NSLog(@"backbuffer %.0fx%.0f",
         backbuffer_size.width, backbuffer_size.height);
 # endif
 
@@ -871,10 +879,12 @@ double current_device_rotation (void)
 
   if (ob) {
     // Restore old bits, as much as possible, to the X11 upper left origin.
-    CGRect rect;
+
+    CGRect rect;   // pixels, not points
     rect.origin.x = 0;
     rect.origin.y = (backbuffer_size.height - osize.height);
-    rect.size  = osize;
+    rect.size = osize;
+
     CGImageRef img = CGBitmapContextCreateImage (ob);
     CGContextDrawImage (backbuffer, rect, img);
     CGImageRelease (img);
@@ -891,18 +901,18 @@ double current_device_rotation (void)
 {
   if (!xwindow) return;  // early
 
-  CGSize new_size;
+  CGSize new_size;	// pixels, not points
+
 # ifdef USE_BACKBUFFER
 #  ifdef USE_IPHONE
-  double s = [self hackedContentScaleFactor];
   CGSize rotsize = ((ignore_rotation_p || ![self reshapeRotatedWindow])
                     ? initial_bounds
                     : rot_current_size);
-  new_size.width  = s * rotsize.width;
-  new_size.height = s * rotsize.height;
-#  else
+  new_size.width  = rotsize.width;
+  new_size.height = rotsize.height;
+#  else  // !USE_IPHONE
   new_size = NSSizeToCGSize([self bounds].size);
-#  endif
+#  endif // !USE_IPHONE
 
   [self createBackbuffer:new_size];
   jwxyz_window_resized (xdpy, xwindow, 0, 0, new_size.width, new_size.height,
@@ -914,7 +924,7 @@ double current_device_rotation (void)
 # endif  // !USE_BACKBUFFER
 
 # if TARGET_IPHONE_SIMULATOR
-  NSLog(@"reshape %.0f x %.0f", new_size.width, new_size.height);
+  NSLog(@"reshape %.0fx%.0f", new_size.width, new_size.height);
 # endif
 
   // Next time render_x11 is called, run the saver's reshape_cb.
@@ -1196,25 +1206,31 @@ double current_device_rotation (void)
 # endif
 
 # ifdef USE_IPHONE
-  // Then compute the transformations for rotation.
-  double hs = [self hackedContentScaleFactor];
-  double s = [self contentScaleFactor];
-
   // The rotation origin for layer.affineTransform is in the center already.
   CGAffineTransform t = ignore_rotation_p ?
     CGAffineTransformIdentity :
     CGAffineTransformMakeRotation (rot_current_angle / (180.0 / M_PI));
 
-  CGFloat f = s / hs;
-  self.layer.affineTransform = CGAffineTransformScale(t, f, f);
+  // Ratio of backbuffer size in pixels to layer size in points.
+  CGSize ssize = backbuffer_size;
+  CGSize bsize = [self bounds].size;
+  GLfloat s = ((ssize.width > ssize.height ? ssize.width : ssize.height) /
+               (bsize.width > bsize.height ? bsize.width : bsize.height));
 
+  self.layer.contentsScale = s;
+  self.layer.affineTransform = t;
+
+  /* Setting the layer's bounds also sets the view's bounds.
+     The view's bounds must be in points, not pixels, and it
+     must be rotated to the current orientation.
+   */
   CGRect bounds;
   bounds.origin.x = 0;
   bounds.origin.y = 0;
-
-  bounds.size.width = backbuffer_size.width / s;
-  bounds.size.height = backbuffer_size.height / s;
+  bounds.size.width  = ssize.width  / s;
+  bounds.size.height = ssize.height / s;
   self.layer.bounds = bounds;
+
 # endif // USE_IPHONE
  
 # if defined(BACKBUFFER_CALAYER)
@@ -1907,6 +1923,8 @@ double current_device_rotation (void)
   [stap requireGestureRecognizerToFail: hold];
   [dtap requireGestureRecognizerToFail: hold];
   [pan  requireGestureRecognizerToFail: hold];
+
+  [self setMultipleTouchEnabled:YES];
 
   [self addGestureRecognizer: dtap];
   [self addGestureRecognizer: stap];

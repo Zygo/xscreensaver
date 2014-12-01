@@ -38,6 +38,8 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.32	* Fixed some X11 compilation problems.
+	* Fixed display size and shake gestures on iOS.
 5.31	* New hacks, `geodesicgears', `binaryring' and `cityflow'.
         * UTF-8 text support (instead of only Latin1) and antialiased text
           on X11 with Xft (instead of only on OSX/iOS) in `fontglide',

@@ -38,6 +38,7 @@ extern void check_gl_error (const char *type);
 typedef struct {
   texture_font_data *texfont;
   int line_height;
+  Bool top_p;
 } gl_fps_data;
 
 
@@ -45,6 +46,7 @@ static void
 xlockmore_gl_fps_init (fps_state *st)
 {
   gl_fps_data *data = (gl_fps_data *) calloc (1, sizeof(*data));
+  data->top_p = get_boolean_resource (st->dpy, "fpsTop", "FPSTop");
   data->texfont = load_texture_font (st->dpy, "fpsFont");
   texture_string_width (data->texfont, "M", &data->line_height);
   st->gl_fps_data = data;
@@ -93,6 +95,7 @@ xlockmore_gl_draw_fps (ModeInfo *mi)
       glColor3f (1, 1, 1);
       print_texture_label (st->dpy, data->texfont,
                            xgwa.width, xgwa.height,
-                           2, st->string);
+                           (data->top_p ? 1 : 2),
+                           st->string);
     }
 }

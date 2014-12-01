@@ -27,6 +27,12 @@
 #include "colors.h"
 #include "hsv.h"
 
+#if HAVE_STDINT_H
+# include <stdint.h>
+#else
+typedef unsigned long uint32_t;
+#endif
+
 #define ANTIALIAS   1
 #define BLACK       0
 #define WHITE       1

@@ -327,7 +327,7 @@ init_cube (ModeInfo *mi)
       cube->y = (frand(1)-0.5);
 
       cube->z = frand(0.12);
-      double th = (skew ? frand(skew) : 0) * M_PI / 180;
+      double th = -(skew ? frand(skew) : 0) * M_PI / 180;
       cube->cth = cos(th);
       cube->sth = sin(th);
 

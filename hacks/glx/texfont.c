@@ -713,6 +713,24 @@ print_texture_label (Display *dpy,
       lh = texture_string_width (data, "M", 0);
       w = texture_string_width (data, string, &h);
 
+# ifdef USE_IPHONE
+      /* Size of the font is in points, so scale iOS pixels to points. */
+      {
+        GLfloat scale = 1;
+        scale = window_width / 768.0;
+        if (scale < 1) scale = 1;
+
+        /* jwxyz-XLoadFont has already doubled the font size, to compensate
+           for physically smaller screens.  Undo that, since OpenGL hacks
+           use full-resolution framebuffers, unlike X11 hacks. */
+        scale /= 2;
+
+        window_width  /= scale;
+        window_height /= scale;
+        glScalef (scale, scale, scale);
+      }
+# endif /* USE_IPHONE */
+
       if (rot > 135 || rot < -135)		/* 180 */
         {
           glTranslatef (window_width, window_height, 0);
