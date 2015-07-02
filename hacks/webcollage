@@ -1,6 +1,6 @@
 #!/usr/bin/perl -w
 #
-# webcollage, Copyright © 1999-2014 by Jamie Zawinski <jwz@jwz.org>
+# webcollage, Copyright © 1999-2015 by Jamie Zawinski <jwz@jwz.org>
 # This program decorates the screen with random images from the web.
 # One satisfied customer described it as "a nonstop pop culture brainbath."
 #
@@ -15,15 +15,15 @@
 
 # To run this as a display mode with xscreensaver, add this to `programs':
 #
-#     webcollage -root
-#     webcollage -root -filter 'vidwhacker -stdin -stdout'
+#     webcollage --root
+#     webcollage --root --filter 'vidwhacker --stdin --stdout'
 #
 #
 # You can see this in action at http://www.jwz.org/webcollage/ --
 # it auto-reloads about once a minute.  To make a page similar to
 # that on your own system, do this:
 #
-#     webcollage -size '800x600' -imagemap $HOME/www/webcollage/index
+#     webcollage --size '800x600' --imagemap $HOME/www/webcollage/index
 #
 #
 # If you have the "driftnet" program installed, webcollage can display a
@@ -34,7 +34,7 @@
 # Driftnet is available here: http://www.ex-parrot.com/~chris/driftnet/
 # Use it like so:
 #
-#     webcollage -root -driftnet
+#     webcollage --root --driftnet
 #
 # Driftnet is the Unix implementation of the MacOS "EtherPEG" program.
 
@@ -57,10 +57,10 @@ use bytes;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.167 $' =~ m/\s(\d[.\d]+)\s/s);
-my $copyright = "WebCollage $version, Copyright (c) 1999-2014" .
+my ($version) = ('$Revision: 1.171 $' =~ m/\s(\d[.\d]+)\s/s);
+my $copyright = "WebCollage $version, Copyright (c) 1999-2015" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
-    "            http://www.jwz.org/webcollage/\n";
+    "                  http://www.jwz.org/webcollage/\n";
 
 
 
@@ -389,26 +389,44 @@ sub get_document_1($$$) {
 
   my $user_agent = "$progname/$version";
 
-  if ($url =~ m@^http://www\.altavista\.com/@ ||
-      $url =~ m@^http://random\.yahoo\.com/@ ||
-      $url =~ m@^http://images\.google\.com/@ ||
-      $url =~ m@^http://www\.google\.com/@) {
+  if ($url =~ m@^https?://www\.altavista\.com/@s ||
+      $url =~ m@^https?://random\.yahoo\.com/@s  ||
+      $url =~ m@^https?://[^./]+\.google\.com/@s ||
+      $url =~ m@^https?://www\.livejournal\.com/@s) {
     # block this, you turkeys.
-    $user_agent = "Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.7)" .
-                  " Gecko/20070914 Firefox/2.0.0.7";
-
-    # 28-Jun-2007: Google Images now emits the entire page in JS if
-    # you claim to be Gecko.  They also still block "webcollage".
-    # They serve non-JS for unrecognised agents, so let's try this...
-    $user_agent = "NoJavascriptPlease/1.0"
-      if ($url =~ m@^http://[a-z]+\.google\.com/@);
+    $user_agent = 'Mozilla/5.0 (X11; U; Linux i686; en-US; rv:1.8.1.7)' .
+                  ' Gecko/20070914 Firefox/2.0.0.7';
   }
 
-  my $ua = LWP::UserAgent->new;
-  $ua->env_proxy();
-  $ua->agent ("$progname/$version");
-  $ua->default_header ('Referer' => $referer);
+  my $ua = LWP::UserAgent->new ( agent => $user_agent,
+                                 keep_alive => 0,
+                                 env_proxy => 0,
+                               );
+  $ua->proxy ('http', $http_proxy) if $http_proxy;
+  $ua->default_header ('Referer' => $referer) if $referer;
+  $ua->default_header ('Accept' => '*/*');
   $ua->timeout($timeout) if $timeout;
+
+  if (0) {
+    $ua->add_handler ("request_send",
+                      sub($$$) {
+                        my ($req, $ua, $h) = @_;
+                        print "\n>>[[\n"; $req->dump; print "\n]]\n";
+                        return;
+                      });
+    $ua->add_handler ("response_data",
+                      sub($$$$) {
+                        my ($req, $ua, $h, $data) = @_;
+                        #print "\n<<[[\n"; print $data; print "\n]]\n";
+                        return 1;
+                      });
+    $ua->add_handler ("request_done",
+                      sub($$$) {
+                        my ($req, $ua, $h) = @_;
+                        print "\n<<[[\n"; $req->dump; print "\n]]\n";
+                        return;
+                      });
+  }
 
   if ($verbose_http) {
     LOG (1, "  ==> GET $url");
@@ -497,12 +515,12 @@ sub get_document($$;$) {
         $url = $location;
 
         if ($url =~ m@^/@) {
-          $referer =~ m@^(http://[^/]+)@i;
+          $referer =~ m@^(https?://[^/]+)@i;
           $url = $1 . $url;
         } elsif (! ($url =~ m@^[a-z]+:@i)) {
           $_ = $referer;
-          s@[^/]+$@@g if m@^http://[^/]+/@i;
-          $_ .= "/" if m@^http://[^/]+$@i;
+          s@[^/]+$@@g if m@^https?://[^/]+/@i;
+          $_ .= "/" if m@^https?://[^/]+$@i;
           $url = $_ . $url;
         }
 
@@ -580,12 +598,12 @@ sub pick_image_from_body($$) {
 
   # if there's at least one slash after the host, take off the last
   # pathname component
-  if ( m@^http://[^/]+/@io ) {
+  if ( m@^https?://[^/]+/@io ) {
     $base =~ s@[^/]+$@@go;
   }
 
   # if there are no slashes after the host at all, put one on the end.
-  if ( m@^http://[^/]+$@io ) {
+  if ( m@^https?://[^/]+$@io ) {
     $base .= "/";
   }
 
@@ -683,7 +701,7 @@ sub pick_image_from_body($$) {
 
       if ( m@^/@o ) {
         my $site;
-        ( $site = $base ) =~ s@^(http://[^/]*).*@$1@gio;
+        ( $site = $base ) =~ s@^(https?://[^/]*).*@$1@gio;
         $_ = "$site$link";
       } elsif ( ! m@^[^/:?]+:@ ) {
         $_ = "$base$link";
@@ -692,7 +710,7 @@ sub pick_image_from_body($$) {
       }
 
       # skip non-http
-      if ( ! m@^http://@io ) {
+      if ( ! m@^https?://@io ) {
         next;
       }
 
@@ -1076,7 +1094,7 @@ sub depoison(@) {
   my (@urls) = @_;
   my @urls2 = ();
   foreach (@urls) {
-    my ($h) = m@^http://([^/: \t\r\n]+)@i;
+    my ($h) = m@^https?://([^/: \t\r\n]+)@i;
 
     next unless defined($h);
 
@@ -1269,7 +1287,7 @@ sub pick_from_alta_vista_images($) {
     next unless ($u =~ s/^.*\*\*(http%3a.*$)/$1/gsi);
     $u = url_unquote($u);
 
-    next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
+    next unless ($u =~ m@^https?://@i);    #  skip non-HTTP or relative URLs
     next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
     next if ($u =~ m@[/.]yahoo\.com\b@i);         # yahoo and av in cahoots?
     next if ($u =~ m@[/.]doubleclick\.net\b@i);   # you cretins
@@ -1615,7 +1633,7 @@ sub pick_from_alta_vista_text($) {
     next unless ($u =~ s/^.*\*\*(http%3a.*$)/$1/gsi);
     $u = url_unquote($u);
 
-    next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
+    next unless ($u =~ m@^https?://@i);    #  skip non-HTTP or relative URLs
     next if ($u =~ m@[/.]altavista\.com\b@i);     # skip altavista builtins
     next if ($u =~ m@[/.]yahoo\.com\b@i);         # yahoo and av in cahoots?
 
@@ -1671,7 +1689,7 @@ sub pick_from_hotbot_text($) {
 #    next unless ($u =~ m@/director.asp\?.*\btarget=([^&]+)@);
 #    $u = url_decode($1);
 
-    next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
+    next unless ($u =~ m@^https?://@i);    #  skip non-HTTP or relative URLs
     next if ($u =~ m@[/.]hotbot\.com\b@i);     # skip hotbot builtins
     next if ($u =~ m@[/.]lycos\.com\b@i);      # skip hotbot builtins
     next if ($u =~ m@[/.]inktomi\.com\b@i);    # skip hotbot builtins
@@ -1719,14 +1737,14 @@ sub pick_from_lycos_text($) {
 
     # Lycos plays redirection games.
     # (not any more?)
-#    next unless ($u =~ m@^http://click.lycos.com/director.asp
+#    next unless ($u =~ m@^https?://click.lycos.com/director.asp
 #                         .*
 #                         \btarget=([^&]+)
 #                         .*
 #                        @x);
 #    $u = url_decode($1);
 
-    next unless ($u =~ m@^http://@i);    #  skip non-HTTP or relative URLs
+    next unless ($u =~ m@^https?://@i);    #  skip non-HTTP or relative URLs
     next if ($u =~ m@[/.]hotbot\.com\b@i);     # skip lycos builtins
     next if ($u =~ m@[/.]lycos\.com\b@i);      # skip lycos builtins
     next if ($u =~ m@[/.]terralycos\.com\b@i); # skip lycos builtins
@@ -1769,11 +1787,11 @@ sub pick_from_yahoo_news_text($) {
   foreach my $u (@subpages) {
 
     # de-redirectize the URLs
-    $u =~ s@^http://rds\.yahoo\.com/.*-http%3A@http:@s;
+    $u =~ s@^https?://rds\.yahoo\.com/.*-http%3A@http:@s;
 
     # only accept URLs on Yahoo's news site
-    next unless ($u =~ m@^http://dailynews\.yahoo\.com/@i ||
-                 $u =~ m@^http://story\.news\.yahoo\.com/@i);
+    next unless ($u =~ m@^https?://dailynews\.yahoo\.com/@i ||
+                 $u =~ m@^https?://story\.news\.yahoo\.com/@i);
     next unless ($u =~ m@&u=/@);
 
     LOG ($verbose_filter, "  candidate: $u");
@@ -1810,7 +1828,10 @@ sub pick_from_livejournal_images($) {
   $last_search = $livejournal_img_url;   # for warnings
 
   my ( $base, $body ) = get_document ($livejournal_img_url, undef, $timeout);
-  return () unless $body;
+
+  # Often the document comes back empty. If so, just use the cache.
+  # return () unless $body;
+  $body = '' unless defined($body);
 
   $body =~ s/\n/ /gs;
   $body =~ s/(<recent-image)\b/\n$1/gsi;
@@ -1890,8 +1911,8 @@ sub pick_from_ircimages($) {
     if ($u =~ m/^\"([^\"]*)\"/) { $u = $1; }   # quoted string
     elsif ($u =~ m/^([^\s]*)\s/) { $u = $1; }  # or token
 
-    next unless ($u =~ m/^http:/i);
-    next if ($u =~ m@^http://(searchirc\.com\|ircimages\.com)@i);
+    next unless ($u =~ m/^https?:/i);
+    next if ($u =~ m@^https?://(searchirc\.com\|ircimages\.com)@i);
     next unless ($u =~ m@[.](gif|jpg|jpeg|pjpg|pjpeg|png)$@i);
 
     LOG ($verbose_http, "    HREF: $u");
@@ -2131,30 +2152,38 @@ sub pick_from_flickr_recent($) {
   $last_search .= "?start=$start" if ($start > 0);
 
   my ( $base, $body ) = get_document ($last_search, undef, $timeout);
-  return () unless $body;
 
-  $body =~ s/[\r\n]/ /gs;
-  $body =~ s/(<a)\b/\n$1/gsi;
+  # If the document comes back empty. just use the cache.
+  # return () unless $body;
+  $body = '' unless defined($body);
 
   my $count = 0;
   my $count2 = 0;
-  foreach (split (/\n/, $body)) {
 
-    my ($page, $thumb) = m@<A \s [^<>]* \b HREF=\"([^<>\"]+)\" [^<>]* > \s*
-                           <IMG \s [^<>]* \b
-			        data-defer-src = \"([^<>\"]+)\" @xsi;
-    next unless defined ($thumb);
-    $page = html_unquote ($page);
-    $thumb = html_unquote ($thumb);
+  if ($body =~ m@{ *"_data": \[ ( .*? \} ) \]@six) {
+    $body = $1;
+  } else {
+    LOG ($verbose_load, "flickr unparsable: $last_search");
+    return ();
+  }
 
-    next unless ($thumb =~ m@^https?://[^/.]+\d*\.static\.?flickr\.com/@);
+  $body =~ s/[\r\n]/ /gs;
+  $body =~ s/(\},) *(\{)/$1\n$2/gs;     # "_flickrModelRegistry"
 
-    my $base = "http://www.flickr.com/";
-    $page  =~ s@^/@$base@;
-    $thumb =~ s@^/@$base@;
+  foreach my $chunk (split (/\n/, $body)) {
+    my ($img) = ($chunk =~ m@"displayUrl": *"(.*?)"@six);
+    next unless defined ($img);
+    $img =~ s/\\//gs;
+    $img = "//" unless ($img =~ m@^/@s);
+    $img = "http:$img" unless ($img =~ m/^http/s);
 
-    my $img = $thumb;
-    $img =~ s/_[a-z](\.[a-z\d]+)$/$1/si;  # take off "thumb" suffix
+    my ($user) = ($chunk =~ m/"pathAlias": *"(.*?)"/si);
+    next unless defined ($user);
+
+    my ($id) = ($img =~ m@/\d+/(\d+)_([\da-f]+)_@si);
+    my ($page) = "https://www.flickr.com/photos/$user/$id/";
+
+    # $img =~ s/_[a-z](\.[a-z\d]+)$/$1/si;  # take off "thumb" suffix
 
     $count++;
     next if ($flickr_cache{$img}); # already have it
@@ -2698,7 +2727,7 @@ sub save_recent_url($$) {
   return unless ($verbose_warnings);
 
   $_ = $url;
-  my ($site) = m@^http://([^ \t\n\r/:]+)@;
+  my ($site) = m@^https?://([^ \t\n\r/:]+)@;
   return unless defined ($site);
 
   if ($base eq $driftnet_magic || $base eq $local_magic) {
@@ -3153,7 +3182,7 @@ sub x_or_pbm_output($) {
 
   if (defined ($webcollage_helper)) {
     LOG ($verbose_pbm, "found \"$webcollage_helper\"");
-    $webcollage_helper .= " -v";
+    $webcollage_helper = "'$webcollage_helper' -v";
   } else {
     LOG (($verbose_pbm || $verbose_load), "no $_ program");
   }
@@ -3757,13 +3786,13 @@ sub update_imagemap($$$$$$$$) {
 #
 sub set_proxy() {
 
-  if (! $http_proxy) {
+  if (! defined($http_proxy)) {
     # historical suckage: the environment variable name is lower case.
     $http_proxy = $ENV{http_proxy} || $ENV{HTTP_PROXY};
   }
 
   if (defined ($http_proxy)) {
-    if ($http_proxy && $http_proxy =~ m@^http://([^/]*)/?$@ ) {
+    if ($http_proxy && $http_proxy =~ m@^https?://([^/]*)/?$@ ) {
       # historical suckage: allow "http://host:port" as well as "host:port".
       $http_proxy = $1;
     }
@@ -3779,8 +3808,17 @@ sub set_proxy() {
     }
   }
 
+  delete $ENV{http_proxy};
+  delete $ENV{HTTP_PROXY};
+  delete $ENV{https_proxy};
+  delete $ENV{HTTPS_PROXY};
+  delete $ENV{PERL_LWP_ENV_PROXY};
+
   if ($http_proxy) {
+    $http_proxy = 'http://' . $http_proxy;
     LOG ($verbose_net, "proxy server: $http_proxy");
+  } else {
+    $http_proxy = undef;  # for --proxy ''
   }
 }
 
@@ -3815,78 +3853,73 @@ sub main() {
   my $root_p = 0;
   my $window_id = undef;
 
-  while ($_ = $ARGV[0]) {
-    shift @ARGV;
-    if ($_ eq "-display" ||
-        $_ eq "-displ" ||
-        $_ eq "-disp" ||
-        $_ eq "-dis" ||
-        $_ eq "-dpy" ||
-        $_ eq "-d") {
+  while ($#ARGV >= 0) {
+    $_ = shift @ARGV;
+    if (m/^--?d(i(s(p(l(a(y)?)?)?)?)?)?$/s) {
       $ENV{DISPLAY} = shift @ARGV;
-    } elsif ($_ eq "-root") {
+    } elsif (m/^--?root$/s) {
       $root_p = 1;
-    } elsif ($_ eq "-window-id" || $_ eq "--window-id") {
+    } elsif (m/^--?window-id$/s) {
       $window_id = shift @ARGV;
       $root_p = 1;
-    } elsif ($_ eq "-no-output") {
+    } elsif (m/^--?no-output$/s) {
       $no_output_p = 1;
-    } elsif ($_ eq "-urls-only") {
+    } elsif (m/^--?urls(-only)?$/s) {
       $urls_only_p = 1;
       $no_output_p = 1;
-    } elsif ($_ eq "-cocoa") {
+    } elsif (m/^--?cocoa$/s) {
       $cocoa_p = 1;
-    } elsif ($_ eq "-imagemap") {
+    } elsif (m/^--?imagemap$/s) {
       $imagemap_base = shift @ARGV;
       $no_output_p = 1;
-    } elsif ($_ eq "-verbose") {
+    } elsif (m/^--?verbose$/s) {
       $verbose++;
     } elsif (m/^-v+$/) {
       $verbose += length($_)-1;
-    } elsif ($_ eq "-delay") {
+    } elsif (m/^--?delay$/s) {
       $delay = shift @ARGV;
-    } elsif ($_ eq "-timeout") {
+    } elsif (m/^--?timeout$/s) {
       $http_timeout = shift @ARGV;
-    } elsif ($_ eq "-filter") {
+    } elsif (m/^--?filter$/s) {
       $filter_cmd = shift @ARGV;
-    } elsif ($_ eq "-filter2") {
+    } elsif (m/^--?filter2$/s) {
       $post_filter_cmd = shift @ARGV;
-    } elsif ($_ eq "-background" || $_ eq "-bg") {
+    } elsif (m/^--?(background|bg)$/s) {
       $background = shift @ARGV;
-    } elsif ($_ eq "-size") {
+    } elsif (m/^--?size$/s) {
       $_ = shift @ARGV;
       if (m@^(\d+)x(\d+)$@) {
         $img_width = $1;
         $img_height = $2;
       } else {
-        error "argument to \"-size\" must be of the form \"640x400\"";
+        error "argument to \"--size\" must be of the form \"640x400\"";
       }
-    } elsif ($_ eq "-proxy" || $_ eq "-http-proxy") {
+    } elsif (m/^--?(http-)?proxy$/s) {
       $http_proxy = shift @ARGV;
-    } elsif ($_ eq "-dictionary" || $_ eq "-dict") {
+    } elsif (m/^--?dict(ionary)?$/s) {
       $dict = shift @ARGV;
-    } elsif ($_ eq "-opacity") {
+    } elsif (m/^--?opacity$/s) {
       $opacity = shift @ARGV;
       error ("opacity must be between 0.0 and 1.0")
         if ($opacity <= 0 || $opacity > 1);
-    } elsif ($_ eq "-driftnet" || $_ eq "--driftnet") {
+    } elsif (m/^--?driftnet$/s) {
       @search_methods = ( 100, "driftnet", \&pick_from_driftnet );
       if (! ($ARGV[0] =~ m/^-/)) {
         $driftnet_cmd = shift @ARGV;
       } else {
         $driftnet_cmd = $default_driftnet_cmd;
       }
-    } elsif ($_ eq "-directory" || $_ eq "--directory") {
+    } elsif (m/^--?dir(ectory)?$/s) {
       @search_methods = ( 100, "local", \&pick_from_local_dir );
       if (! ($ARGV[0] =~ m/^-/)) {
         $local_dir = shift @ARGV;
       } else {
         error ("local directory path must be set")
       }
-    } elsif ($_ eq "-fps") {
+    } elsif (m/^--?fps$/s) {
       # -fps only works on MacOS, via "webcollage-cocoa.m".
       # Ignore it if passed to this script in an X11 context.
-    } elsif ($_ eq "-debug" || $_ eq "--debug") {
+    } elsif (m/^--?debug$/s) {
       my $which = shift @ARGV;
       my @rest = @search_methods;
       my $ok = 0;
@@ -3903,17 +3936,19 @@ sub main() {
       }
       error "no such search method as \"$which\"" unless ($ok);
       LOG (1, "DEBUG: using only \"$which\"");
+      $report_performance_interval = 30;
 
     } else {
+      print STDERR "unknown option: $_\n\n";
       print STDERR "$copyright\nusage: $progname " .
-              "[-root] [-display dpy] [-verbose] [-debug which]\n" .
-        "\t\t  [-timeout secs] [-delay secs] [-size WxH]\n" .
-        "\t\t  [-no-output] [-urls-only] [-imagemap filename]\n" .
-        "\t\t  [-background color] [-opacity f]\n" .
-        "\t\t  [-filter cmd] [-filter2 cmd]\n" .
-        "\t\t  [-dictionary dictionary-file] [-http-proxy host[:port]]\n" .
-        "\t\t  [-driftnet [driftnet-program-and-args]]\n" .
-        "\t\t  [-directory local-image-directory]\n" .
+              "[--root] [--display dpy] [--verbose] [--debug which]\n" .
+        "\t\t  [--timeout secs] [--delay secs] [--size WxH]\n" .
+        "\t\t  [--no-output] [--urls-only] [--imagemap filename]\n" .
+        "\t\t  [--background color] [--opacity f]\n" .
+        "\t\t  [--filter cmd] [--filter2 cmd]\n" .
+        "\t\t  [--dictionary dictionary-file] [--http-proxy host[:port]]\n" .
+        "\t\t  [--driftnet [driftnet-program-and-args]]\n" .
+        "\t\t  [--directory local-image-directory]\n" .
         "\n";
       exit 1;
     }
@@ -3921,7 +3956,7 @@ sub main() {
 
   if (!$root_p && !$no_output_p && !$cocoa_p) {
     print STDERR $copyright;
-    error "the -root argument is mandatory (for now.)";
+    error "the --root argument is mandatory (for now.)";
   }
 
   if (!$no_output_p && !$cocoa_p && !$ENV{DISPLAY}) {
@@ -3987,7 +4022,7 @@ sub main() {
   }
 
   if ($imagemap_base && !($img_width && $img_height)) {
-    error ("-size WxH is required with -imagemap");
+    error ("--size WxH is required with --imagemap");
   }
 
   if (defined ($local_dir)) {

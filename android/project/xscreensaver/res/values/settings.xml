@@ -1,90 +1,207 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!--
-/*
-* Copyright (C) 4008 The Android Open Source Project
-*
-* Licensed under the Apache License, Version 2.0 (the "License");
-* you may not use this file except in compliance with the License.
-* You may obtain a copy of the License at
-*
-*      http://www.apache.org/licenses/LICENSE-2.0
-*
-* Unless required by applicable law or agreed to in writing, software
-* distributed under the License is distributed on an "AS IS" BASIS,
-* WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-* See the License for the specific language governing permissions and
-* limitations under the License.
-*/
--->
-
 <resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
-
-    <string-array name="stonerview_speed_names">
-        <item>"Off"</item>
-        <item>"On"</item>
-    </string-array>
-
-    <string-array name="stonerview_speed_prefix">
-        <item>"0"</item>
-        <item>"1"</item>
-    </string-array>
-
-
-    <string-array name="superquadrics_speed_names">
-        <item>"0.1"</item>
-        <item>"1"</item>
-        <item>"3"</item>
-        <item>"5"</item>
-        <item>"8"</item>
-        <item>"10</item>
-        <item>"15"</item>
-    </string-array>
-
-    <string-array name="superquadrics_speed_prefix">
-        <item>"0.1"</item>
-        <item>"1"</item>
-        <item>"3"</item>
-        <item>"5"</item>
-        <item>"8"</item>
-        <item>"10</item>
-        <item>"15"</item>
-    </string-array>
-
-
-
     <string-array name="sproingies_count_names">
-        <item>"1"</item>
-        <item>"2"</item>
-        <item>"4"</item>
-        <item>"8"</item>
-        <item>"15"</item>
-        <item>"23"</item>
-        <item>"30"</item>
+        <item>"One"</item>
+        <item>"Lots"</item>
     </string-array>
-
     <string-array name="sproingies_count_prefix">
         <item>"1"</item>
-        <item>"2"</item>
-        <item>"4"</item>
-        <item>"8"</item>
-        <item>"15"</item>
-        <item>"23"</item>
         <item>"30"</item>
     </string-array>
-
-
-    <string-array name="hilbert_mode_names">
-        <item>"2d"</item>
-        <item>"3d"</item>
-        <item>"random"</item>
+    <string-array name="sproingies_wireframe_names">
+        <item>"True"</item>
+        <item>"False"</item>
     </string-array>
-
-    <string-array name="hilbert_mode_prefix">
-        <item>"2d"</item>
-        <item>"3d"</item>
-        <item>"random"</item>
+    <string-array name="sproingies_wireframe_prefix">
+        <item>@string/t</item>
+        <item>@string/f</item>
     </string-array>
-
-
-
+    <string-array name="superquadrics_spinspeed_names">
+        <item>"Slow"</item>
+        <item>"Fast"</item>
+    </string-array>
+    <string-array name="superquadrics_spinspeed_prefix">
+        <item>"0.1"</item>
+        <item>"15.0"</item>
+    </string-array>
+    <string-array name="stonerview_transparent_names">
+        <item>"True"</item>
+        <item>"False"</item>
+    </string-array>
+    <string-array name="stonerview_transparent_prefix">
+        <item>@string/t</item>
+        <item>@string/f</item>
+    </string-array>
+    <string-array name="unknownpleasures_speed_names">
+        <item>"Slow"</item>
+        <item>"Fast"</item>
+    </string-array>
+    <string-array name="unknownpleasures_speed_prefix">
+        <item>"0.1"</item>
+        <item>"3.0"</item>
+    </string-array>
+    <string-array name="unknownpleasures_wireframe_names">
+        <item>"True"</item>
+        <item>"False"</item>
+    </string-array>
+    <string-array name="unknownpleasures_wireframe_prefix">
+        <item>@string/t</item>
+        <item>@string/f</item>
+    </string-array>
+    <string-array name="bouncingcow_count_names">
+        <item>"Moo"</item>
+        <item>"Herd"</item>
+    </string-array>
+    <string-array name="bouncingcow_count_prefix">
+        <item>"1"</item>
+        <item>"9"</item>
+    </string-array>
+    <string-array name="bouncingcow_speed_names">
+        <item>"Slow"</item>
+        <item>"Fast"</item>
+    </string-array>
+    <string-array name="bouncingcow_speed_prefix">
+        <item>"0.05"</item>
+        <item>"2.0"</item>
+    </string-array>
+    <string-array name="hypertorus_speedwz_names">
+        <item>"-4.0"</item>
+        <item>"4.0"</item>
+    </string-array>
+    <string-array name="hypertorus_speedwz_prefix">
+        <item>"-4.0"</item>
+        <item>"4.0"</item>
+    </string-array>
+    <string-array name="hypertorus_displayMode_names">
+        <item>"wireframe"</item>
+        <item>"transparent"</item>
+        <item>"surface"</item>
+    </string-array>
+    <string-array name="hypertorus_displayMode_prefix">
+        <item>"wireframe"</item>
+        <item>"transparent"</item>
+        <item>"surface"</item>
+    </string-array>
+    <string-array name="hypertorus_projection4d_names">
+        <item>"orthographic"</item>
+        <item>"perspective"</item>
+    </string-array>
+    <string-array name="hypertorus_projection4d_prefix">
+        <item>"orthographic"</item>
+        <item>"perspective"</item>
+    </string-array>
+    <string-array name="hypertorus_speedwy_names">
+        <item>"-4.0"</item>
+        <item>"4.0"</item>
+    </string-array>
+    <string-array name="hypertorus_speedwy_prefix">
+        <item>"-4.0"</item>
+        <item>"4.0"</item>
+    </string-array>
+    <string-array name="hypertorus_appearance_names">
+        <item>"solid"</item>
+        <item>"spirals-1"</item>
+        <item>"spirals-2"</item>
+        <item>"spirals-4"</item>
+        <item>"spirals-8"</item>
+        <item>"spirals-16"</item>
+        <item>"bands"</item>
+    </string-array>
+    <string-array name="hypertorus_appearance_prefix">
+        <item>"solid"</item>
+        <item>"spirals-1"</item>
+        <item>"spirals-2"</item>
+        <item>"spirals-4"</item>
+        <item>"spirals-8"</item>
+        <item>"spirals-16"</item>
+        <item>"bands"</item>
+    </string-array>
+    <string-array name="hypertorus_colors_names">
+        <item>"twosided"</item>
+        <item>"colorwheel"</item>
+    </string-array>
+    <string-array name="hypertorus_colors_prefix">
+        <item>"twosided"</item>
+        <item>"colorwheel"</item>
+    </string-array>
+    <string-array name="hypertorus_speedxz_names">
+        <item>"-4.0"</item>
+        <item>"4.0"</item>
+    </string-array>
+    <string-array name="hypertorus_speedxz_prefix">
+        <item>"-4.0"</item>
+        <item>"4.0"</item>
+    </string-array>
+    <string-array name="hypertorus_speedxy_names">
+        <item>"-4.0"</item>
+        <item>"4.0"</item>
+    </string-array>
+    <string-array name="hypertorus_speedxy_prefix">
+        <item>"-4.0"</item>
+        <item>"4.0"</item>
+    </string-array>
+    <string-array name="hypertorus_projection3d_names">
+        <item>"orthographic"</item>
+        <item>"perspective"</item>
+    </string-array>
+    <string-array name="hypertorus_projection3d_prefix">
+        <item>"orthographic"</item>
+        <item>"perspective"</item>
+    </string-array>
+    <string-array name="hypertorus_speedyz_names">
+        <item>"-4.0"</item>
+        <item>"4.0"</item>
+    </string-array>
+    <string-array name="hypertorus_speedyz_prefix">
+        <item>"-4.0"</item>
+        <item>"4.0"</item>
+    </string-array>
+    <string-array name="hypertorus_speedwx_names">
+        <item>"-4.0"</item>
+        <item>"4.0"</item>
+    </string-array>
+    <string-array name="hypertorus_speedwx_prefix">
+        <item>"-4.0"</item>
+        <item>"4.0"</item>
+    </string-array>
+    <string-array name="glhanoi_fog_names">
+        <item>"True"</item>
+        <item>"False"</item>
+    </string-array>
+    <string-array name="glhanoi_fog_prefix">
+        <item>@string/t</item>
+        <item>@string/f</item>
+    </string-array>
+    <string-array name="glhanoi_trails_names">
+        <item>"0"</item>
+        <item>"10"</item>
+    </string-array>
+    <string-array name="glhanoi_trails_prefix">
+        <item>"0"</item>
+        <item>"10"</item>
+    </string-array>
+    <string-array name="glhanoi_light_names">
+        <item>"True"</item>
+        <item>"False"</item>
+    </string-array>
+    <string-array name="glhanoi_light_prefix">
+        <item>@string/t</item>
+        <item>@string/f</item>
+    </string-array>
+    <string-array name="glhanoi_poles_names">
+        <item>"0"</item>
+        <item>"31"</item>
+    </string-array>
+    <string-array name="glhanoi_poles_prefix">
+        <item>"3"</item>
+        <item>"31"</item>
+    </string-array>
+    <string-array name="glhanoi_speed_names">
+        <item>"1"</item>
+        <item>"20"</item>
+    </string-array>
+    <string-array name="glhanoi_speed_prefix">
+        <item>"1"</item>
+        <item>"20"</item>
+    </string-array>
 </resources>

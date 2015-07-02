@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2014-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,11 +16,53 @@
 #ifndef __XSCREENSAVER_XFT_H__
 #define __XSCREENSAVER_XFT_H__
 
+/* The XGlyphInfo field names and values are, of course, arbitrarily
+   different from XCharStruct for no sensible reason.  These macros
+   translate between them.
+ */
+
+# define XGlyphInfo_to_XCharStruct(G,C) do {		\
+    (C).lbearing  =  -(G).x;				\
+    (C).rbearing  =   (G).width - (G).x;		\
+    (C).ascent    =   (G).y;				\
+    (C).descent   =   (G).height - (G).y;		\
+    (C).width     =   (G).xOff;				\
+} while (0)
+
+# define XCharStruct_to_XGlyphInfo(C,G) do {		\
+    (G).x         =  -(C).lbearing;			\
+    (G).y         =   (C).ascent;			\
+    (G).xOff      =   (C).width;			\
+    (G).yOff      =   0;				\
+    (G).width     =   (C).rbearing - (C).lbearing;	\
+    (G).height    =   (C).ascent   + (C).descent;	\
+} while (0)
+
+/* Xutf8TextExtents returns a bounding box in an XRectangle, which
+   conveniently interprets everything in the opposite direction
+   from XGlyphInfo!
+ */
+# define XCharStruct_to_XmbRectangle(C,R) do {		\
+    (R).x         =   (C).lbearing;			\
+    (R).y         =  -(C).ascent;			\
+    (R).width     =   (C).rbearing - (C).lbearing;	\
+    (R).height    =   (C).ascent   + (C).descent;	\
+} while (0)
+
+# define XmbRectangle_to_XCharStruct(R,C,ADV) do {	\
+    (C).lbearing  =   (R).x;				\
+    (C).rbearing  =   (R).width + (R).x;		\
+    (C).ascent    =  -(R).y;				\
+    (C).descent   =   (R).height + (R).y;		\
+    (C).width     =   (ADV);				\
+} while (0)
+
+
 # ifdef HAVE_XFT
 
 #  include <X11/Xft/Xft.h>
 
-# else  /* !HAVE_XFT -- whole file */
+# else  /* !HAVE_XFT -- the rest of the file */
 
 # ifdef HAVE_COCOA
 #  include "jwxyz.h"
@@ -30,8 +72,10 @@
 #  include <X11/Xlib.h>
 # endif
 
-/* This doesn't seem to work right.  See comment in xft.c. */
-# undef HAVE_XUTF8DRAWSTRING
+/* This doesn't seem to work right under X11.  See comment in xft.c. */
+# ifndef HAVE_COCOA
+#  undef HAVE_XUTF8DRAWSTRING
+# endif
 
 
 # ifndef _Xconst
@@ -42,29 +86,6 @@ typedef struct _XGlyphInfo {
   unsigned short width, height;     /* bounding box of the ink */
   short x, y;		/* distance from upper left of bbox to glyph origin. */
   short xOff, yOff;	/* distance from glyph origin to next origin. */
-
-  /* These field names and values are, of course, arbitrarily different
-     from XCharStruct for no sensible reason.  Here's a translation key
-     between the two:
-
-     XGlyphInfo from XCharStruct:
-
-       g.x         =  -c.lbearing;
-       g.y         =   c.ascent;
-       g.xOff      =   c.width;
-       g.yOff      =   0;
-       g.width     =   c.rbearing - c.lbearing;
-       g.height    =   c.ascent   + c.descent;
-     
-     XCharStruct from XGlyphInfo:
-
-       c.lbearing  =  -g.x;
-       c.rbearing  =   g.width - g.x;
-       c.ascent    =   g.y;
-       c.descent   =   g.height - g.y;
-       c.width     =   g.xOff;
-   */
-
 } XGlyphInfo;
 
 
@@ -97,6 +118,7 @@ typedef unsigned char FcChar8;
 
 
 XftFont *XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd);
+#define XftFontOpenName XftFontOpenXlfd
 
 void XftFontClose (Display *dpy, XftFont *font);
 

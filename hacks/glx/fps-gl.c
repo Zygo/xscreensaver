@@ -1,4 +1,4 @@
-/* fps, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
+/* fps, Copyright (c) 2001-2015 Jamie Zawinski <jwz@jwz.org>
  * Draw a frames-per-second display (Xlib and OpenGL).
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -46,9 +46,11 @@ static void
 xlockmore_gl_fps_init (fps_state *st)
 {
   gl_fps_data *data = (gl_fps_data *) calloc (1, sizeof(*data));
+  int ascent, descent;
   data->top_p = get_boolean_resource (st->dpy, "fpsTop", "FPSTop");
   data->texfont = load_texture_font (st->dpy, "fpsFont");
-  texture_string_width (data->texfont, "M", &data->line_height);
+  texture_string_metrics (data->texfont, "M", 0, &ascent, &descent);
+  data->line_height = ascent + descent;
   st->gl_fps_data = data;
 }
 

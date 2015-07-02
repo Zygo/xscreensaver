@@ -89,7 +89,7 @@ This mode enables you to see that the figure-8 and squeezed torus
 Klein bottles do not intersect themselves in 4d, while the Lawson
 Klein bottle does intersect itself.  The rotation speed for each of
 the six planes around which the Klein bottle rotates can be chosen.
-For the walk-and-turn more, only the rotation speeds around the true
+For the walk-and-turn mode, only the rotation speeds around the true
 4d planes are used (the xy, xz, and yz planes).  Furthermore, in the
 walking modes the walking direction in the 2d base square of the Klein
 bottle and the walking speed can be chosen.  This program is somewhat
@@ -296,7 +296,7 @@ stored in the RESOURCE_MANAGER property.
 .BR X (1),
 .BR xscreensaver (1)
 .SH COPYRIGHT
-Copyright \(co 2005-2013 by Carsten Steger.  Permission to use, copy,
+Copyright \(co 2005-2014 by Carsten Steger.  Permission to use, copy,
 modify, distribute, and sell this software and its documentation for
 any purpose is hereby granted without fee, provided that the above
 copyright notice appear in all copies and that both that copyright
@@ -305,4 +305,4 @@ No representations are made about the suitability of this software for
 any purpose.  It is provided "as is" without express or implied
 warranty.
 .SH AUTHOR
-Carsten Steger <carsten@mirsanmir.org>, 25-dec-2013.
+Carsten Steger <carsten@mirsanmir.org>, 03-oct-2014.

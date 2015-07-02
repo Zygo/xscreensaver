@@ -27,9 +27,7 @@
 
 #define N_SHAPES 7
 
-/* For some reason this hack screws up on Cocoa if we try to double-buffer it.
-   It looks fine single-buffered, so let's just do that. */
-static int dbuf_p = 0;
+static int dbuf_p = 1;  /* always */
 
 ENTRYPOINT ModeSpecOpt noof_opts = {0, NULL, 0, NULL, NULL};
 
@@ -444,10 +442,6 @@ init_noof (ModeInfo *mi)
 {
   int i;
   noof_configuration *bp;
-
-#ifdef HAVE_JWZGLES
-  dbuf_p = 1;
-#endif
 
   if (!bps) {
     bps = (noof_configuration *)

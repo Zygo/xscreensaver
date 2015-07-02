@@ -1,4 +1,4 @@
-/* carousel, Copyright (c) 2005-2014 Jamie Zawinski <jwz@jwz.org>
+/* carousel, Copyright (c) 2005-2015 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and rotates them around.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -494,8 +494,14 @@ loading_msg (ModeInfo *mi, int n)
     sprintf (text, "Loading images...  (%d%%)",
              (int) (n * 100 / MI_COUNT(mi)));
 
-  if (ss->loading_sw == 0)    /* only do this once, so that the string doesn't move. */
-    ss->loading_sw = texture_string_width (ss->texfont, text, &ss->loading_sh);
+  if (ss->loading_sw == 0)
+    {
+      /* only do this once, so that the string doesn't move. */
+      XCharStruct e;
+      texture_string_metrics (ss->texfont, text, &e, 0, 0);
+      ss->loading_sw = e.width;
+      ss->loading_sh = e.ascent + e.descent;
+    }
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -773,10 +779,13 @@ draw_frame (ModeInfo *mi, image_frame *frame, time_t now, Bool body_p)
     }
   else					/* Draw a title under the image. */
     {
+      XCharStruct e;
       int sw, sh;
       GLfloat scale = 0.05;
       char *title = frame->current.title ? frame->current.title : "(untitled)";
-      sw = texture_string_width (ss->texfont, title, &sh);
+      texture_string_metrics (ss->texfont, title, &e, 0, 0);
+      sw = e.width;
+      sh = e.ascent + e.descent;
 
       glTranslatef (0, -scale, 0);
 

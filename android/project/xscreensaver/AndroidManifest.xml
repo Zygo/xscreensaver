@@ -1,48 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-      package="org.jwz.xscreensaver"
-      android:versionCode="1"
-      android:versionName="1.0">
-    <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="19" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="org.jwz.xscreensaver"
+android:versionCode="1"
+android:versionName="1.0">
+<uses-sdk android:minSdkVersion="14" android:targetSdkVersion="19" />
+<application android:icon="@drawable/thumbnail" android:label="@string/app_name" android:name=".XscreensaverApp">
 
-    <application android:icon="@drawable/thumbnail" android:label="@string/app_name" android:name=".XscreensaverApp">
+<service android:label="@string/sproingies_name" android:name=".gen.SproingiesService" android:permission="android.permission.BIND_WALLPAPER">
+ <intent-filter>
+   <action android:name="android.service.wallpaper.WallpaperService" />
+ </intent-filter>
+ <meta-data android:name="android.service.wallpaper" android:resource="@xml/sproingies" />
+</service>
+<activity android:label="@string/sproingies_settings" android:name="org.jwz.xscreensaver.gen.SproingiesSettings" android:theme="@android:style/Theme.Light.WallpaperSettings" android:exported="true">
+</activity>
 
+<service android:label="@string/superquadrics_name" android:name=".gen.SuperquadricsService" android:permission="android.permission.BIND_WALLPAPER">
+ <intent-filter>
+   <action android:name="android.service.wallpaper.WallpaperService" />
+ </intent-filter>
+ <meta-data android:name="android.service.wallpaper" android:resource="@xml/superquadrics" />
+</service>
+<activity android:label="@string/superquadrics_settings" android:name="org.jwz.xscreensaver.gen.SuperquadricsSettings" android:theme="@android:style/Theme.Light.WallpaperSettings" android:exported="true">
+</activity>
 
-	<service android:label="@string/superquadrics_name" android:name=".gen.SuperquadricsService"
-		android:permission="android.permission.BIND_WALLPAPER">
-		<intent-filter>
-			<action android:name="android.service.wallpaper.WallpaperService" />
-		</intent-filter>
-		<meta-data android:name="android.service.wallpaper"
-			android:resource="@xml/superquadrics" />
-	</service>
-        <activity
-           android:label="@string/superquadrics_settings"
-           android:name="org.jwz.xscreensaver.gen.SuperquadricsSettings"
-           android:theme="@android:style/Theme.Light.WallpaperSettings"
-           android:exported="true">
-        </activity>
+<service android:label="@string/stonerview_name" android:name=".gen.StonerviewService" android:permission="android.permission.BIND_WALLPAPER">
+ <intent-filter>
+   <action android:name="android.service.wallpaper.WallpaperService" />
+ </intent-filter>
+ <meta-data android:name="android.service.wallpaper" android:resource="@xml/stonerview" />
+</service>
+<activity android:label="@string/stonerview_settings" android:name="org.jwz.xscreensaver.gen.StonerviewSettings" android:theme="@android:style/Theme.Light.WallpaperSettings" android:exported="true">
+</activity>
 
+<service android:label="@string/unknownpleasures_name" android:name=".gen.UnknownpleasuresService" android:permission="android.permission.BIND_WALLPAPER">
+ <intent-filter>
+   <action android:name="android.service.wallpaper.WallpaperService" />
+ </intent-filter>
+ <meta-data android:name="android.service.wallpaper" android:resource="@xml/unknownpleasures" />
+</service>
+<activity android:label="@string/unknownpleasures_settings" android:name="org.jwz.xscreensaver.gen.UnknownpleasuresSettings" android:theme="@android:style/Theme.Light.WallpaperSettings" android:exported="true">
+</activity>
 
-	<service android:label="@string/sproingies_name" android:name=".gen.SproingiesService"
-		android:permission="android.permission.BIND_WALLPAPER">
-		<intent-filter>
-			<action android:name="android.service.wallpaper.WallpaperService" />
-		</intent-filter>
-		<meta-data android:name="android.service.wallpaper"
-			android:resource="@xml/sproingies" />
-	</service>
-        <activity
-           android:label="@string/sproingies_settings"
-           android:name="org.jwz.xscreensaver.gen.SproingiesSettings"
-           android:theme="@android:style/Theme.Light.WallpaperSettings"
-           android:exported="true">
-        </activity>
+<service android:label="@string/bouncingcow_name" android:name=".gen.BouncingcowService" android:permission="android.permission.BIND_WALLPAPER">
+ <intent-filter>
+   <action android:name="android.service.wallpaper.WallpaperService" />
+ </intent-filter>
+ <meta-data android:name="android.service.wallpaper" android:resource="@xml/bouncingcow" />
+</service>
+<activity android:label="@string/bouncingcow_settings" android:name="org.jwz.xscreensaver.gen.BouncingcowSettings" android:theme="@android:style/Theme.Light.WallpaperSettings" android:exported="true">
+</activity>
 
+<service android:label="@string/hypertorus_name" android:name=".gen.HypertorusService" android:permission="android.permission.BIND_WALLPAPER">
+ <intent-filter>
+   <action android:name="android.service.wallpaper.WallpaperService" />
+ </intent-filter>
+ <meta-data android:name="android.service.wallpaper" android:resource="@xml/hypertorus" />
+</service>
+<activity android:label="@string/hypertorus_settings" android:name="org.jwz.xscreensaver.gen.HypertorusSettings" android:theme="@android:style/Theme.Light.WallpaperSettings" android:exported="true">
+</activity>
 
+<service android:label="@string/glhanoi_name" android:name=".gen.GlhanoiService" android:permission="android.permission.BIND_WALLPAPER">
+ <intent-filter>
+   <action android:name="android.service.wallpaper.WallpaperService" />
+ </intent-filter>
+ <meta-data android:name="android.service.wallpaper" android:resource="@xml/glhanoi" />
+</service>
+<activity android:label="@string/glhanoi_settings" android:name="org.jwz.xscreensaver.gen.GlhanoiSettings" android:theme="@android:style/Theme.Light.WallpaperSettings" android:exported="true">
+</activity>
 
-    </application>
+</application>
 
-    <uses-sdk android:minSdkVersion="14" />
-	<uses-feature android:name="android.software.live_wallpaper" android:required="true" />
-</manifest> 
+<uses-sdk android:minSdkVersion="14" />
+<uses-feature android:name="android.software.live_wallpaper" android:required="true" />
+</manifest>

@@ -1,4 +1,4 @@
-/* texfonts, Copyright (c) 2005-2014 Jamie Zawinski <jwz@jwz.org>
+/* texfonts, Copyright (c) 2005-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -65,8 +65,8 @@ typedef struct texfont_cache texfont_cache;
 struct texfont_cache {
   char *string;
   GLuint texid;
-  int width, height;
-  int width2, height2;
+  XCharStruct extents;
+  int tex_width, tex_height;
   texfont_cache *next;
 };
 
@@ -154,7 +154,6 @@ bitmap_to_texture (Display *dpy, Pixmap p, Visual *visual, int depth,
 # endif /* HAVE_XSHM_EXTENSION */
 
 # ifdef HAVE_XSHM_EXTENSION
-# error XX
   if (use_shm)
     {
       image = create_xshm_image (dpy, visual, depth, ZPixmap, 0, &shm_info,
@@ -174,7 +173,10 @@ bitmap_to_texture (Display *dpy, Pixmap p, Visual *visual, int depth,
   mipmap_p = False;
 # endif
 
-  for (y = 0; y < h2; y++)
+# ifdef DUMP_BITMAPS
+  fprintf (stderr, "\n");
+# endif
+  for (y = 0; y < h2; y++) {
     for (x = 0; x < w2; x++) {
       /* Might be better to average a scale x scale square of source pixels,
          but at the resolutions we're dealing with, this is probably good
@@ -188,11 +190,36 @@ bitmap_to_texture (Display *dpy, Pixmap p, Visual *visual, int depth,
       unsigned long r = pixel & visual->red_mask;
       /* This goofy trick is to make any of RGBA/ABGR/ARGB work. */
       pixel = ((r >> 24) | (r >> 16) | (r >> 8) | r) & 0xFF;
+
+# ifdef DUMP_BITMAPS
+      if (sx < ow && sy < oh)
+#  ifdef HAVE_COCOA
+        fprintf (stderr, "%c", 
+                 r >= 0xFF000000 ? '#' : 
+                 r >= 0x88000000 ? '%' : 
+                 r ? '.' : ' ');
+#  else
+        fprintf (stderr, "%c", 
+                 r >= 0xFF0000 ? '#' : 
+                 r >= 0x880000 ? '%' : 
+                 r ? '.' : ' ');
+#  endif
+# endif
+
+# if 0  /* Debugging checkerboard */
+      if (sx < ow && sy < oh && (((sx / 4) & 1) ^ ((sy / 4) & 1)))
+        pixel = 0x3F;
+# endif
+
 # ifndef GL_INTENSITY
       *out++ = 0xFF;  /* 2 bytes per pixel (luminance, alpha) */
 # endif
       *out++ = pixel;
     }
+# ifdef DUMP_BITMAPS
+    fprintf (stderr, "\n");
+# endif
+  }
 
 # ifdef HAVE_XSHM_EXTENSION
   if (use_shm)
@@ -299,28 +326,31 @@ load_texture_font (Display *dpy, char *res)
 }
 
 
-/* Measure the string, or render it, depending on whether the XftDraw
-   is supplied.
+/* Measure the string, returning the overall metrics.
+   Newlines and tab stops are honored.
+   Any numbers inside [] will be rendered as a subscript.
+
+   The origin is at the origin of the first character, so subsequent
+   lines of a multi-line string look like descenders (below baseline).
+
+   If an XftDraw is supplied, render the string as well, at X,Y.
+   Positive Y is down (X11 style, not OpenGL style).
  */
-static int
+static void
 iterate_texture_string (texture_font_data *data,
-                        const char *s, 
+                        const char *s,
+                        int draw_x, int draw_y,
                         XftDraw *xftdraw, XftColor *xftcolor,
-                        int x, int y,
-                        int *height_ret)
+                        XCharStruct *metrics_ret)
 {
   int line_height = data->xftfont->ascent + data->xftfont->descent;
-  int left = x;
-  int max_x, ox, oy;
+  int subscript_offset = line_height * 0.3;
   const char *os = s;
   Bool sub_p = False, osub_p = False;
   int cw = 0, tabs = 0;
-  XGlyphInfo extents;
-
-  y += line_height;
-  max_x = x;
-  ox = x;
-  oy = y;
+  XCharStruct overall = { 0, };
+  int x  = 0, y  = 0;
+  int ox = x, oy = y;
 
   while (1)
     {
@@ -330,19 +360,39 @@ iterate_texture_string (texture_font_data *data,
           (*s == '[' && isdigit(s[1])) ||
           (*s == ']' && sub_p))
         {
-          if (s == os)
-            extents.xOff = 0;
-          else
-            XftTextExtentsUtf8 (data->dpy, data->xftfont,
-                                (FcChar8 *) os, (int) (s - os),
-                                &extents);
-          x += extents.xOff;
-          if (x > max_x)
-            max_x = x;
+          if (s != os)
+            {
+              XGlyphInfo e;
+              XCharStruct c;
+              int y2 = y;
+              if (sub_p) y2 += subscript_offset;
+
+              XftTextExtentsUtf8 (data->dpy, data->xftfont,
+                                  (FcChar8 *) os, (int) (s - os),
+                                  &e);
+              c.lbearing = -e.x;		/* XGlyphInfo to XCharStruct */
+              c.rbearing =  e.width  - e.x;
+              c.ascent   =  e.y;
+              c.descent  =  e.height - e.y;
+              c.width    =  e.xOff;
+
+# undef MAX
+# undef MIN
+# define MAX(A,B) ((A)>(B)?(A):(B))
+# define MIN(A,B) ((A)<(B)?(A):(B))
+              overall.ascent   = MAX (overall.ascent,   -y2 + c.ascent);
+              overall.descent  = MAX (overall.descent,   y2 + c.descent);
+              overall.lbearing = MIN (overall.lbearing, (x  + c.lbearing));
+              overall.rbearing = MAX (overall.rbearing,  x  + c.rbearing);
+              overall.width    = MAX (overall.width,     x  + c.width);
+              x += c.width;
+# undef MAX
+# undef MIN
+            }
 
           if (*s == '\n')
             {
-              x = left;
+              x = 0;
               y += line_height;
               sub_p = False;
             }
@@ -351,9 +401,10 @@ iterate_texture_string (texture_font_data *data,
               if (! cw)
                 {
                   /* Measure "m" to determine tab width. */
+                  XGlyphInfo e;
                   XftTextExtentsUtf8 (data->dpy, data->xftfont,
-                                      (FcChar8 *) "m", 1, &extents);
-                  cw = extents.xOff;
+                                      (FcChar8 *) "m", 1, &e);
+                  cw = e.xOff;
                   if (cw <= 0) cw = 1;
                   tabs = cw * 7;
                 }
@@ -366,8 +417,9 @@ iterate_texture_string (texture_font_data *data,
 
           if (xftdraw && s != os)
             XftDrawStringUtf8 (xftdraw, xftcolor, data->xftfont,
-                               ox, 
-                               oy + (int) (osub_p ? line_height * 0.3 : 0),
+                               draw_x + ox,
+                               draw_y +
+                               oy + (osub_p ? subscript_offset : 0),
                                (FcChar8 *) os, (int) (s - os));
           if (!*s) break;
           os = s+1;
@@ -378,21 +430,30 @@ iterate_texture_string (texture_font_data *data,
       s++;
     }
 
-  if (height_ret)
-    *height_ret = y;
-  return max_x;
+  if (metrics_ret)
+    *metrics_ret = overall;
 }
 
 
-/* Bounding box of the multi-line string, in pixels.
+/* Bounding box of the multi-line string, in pixels,
+   and overall ascent/descent of the font.
  */
-int
-texture_string_width (texture_font_data *data, const char *s, int *height_ret)
+void
+texture_string_metrics (texture_font_data *data, const char *s,
+                        XCharStruct *metrics_ret,
+                        int *ascent_ret, int *descent_ret)
 {
-  return iterate_texture_string (data, s, 0, 0, 0, 0, height_ret);
+  if (metrics_ret)
+    iterate_texture_string (data, s, 0, 0, 0, 0, metrics_ret);
+  if (ascent_ret)  *ascent_ret  = data->xftfont->ascent;
+  if (descent_ret) *descent_ret = data->xftfont->descent;
 }
 
 
+/* Returns a cache entry for this string, with a valid texid.
+   If the returned entry has a string in it, the texture is valid.
+   Otherwise it is an empty entry waiting to be rendered.
+ */
 static struct texfont_cache *
 get_cache (texture_font_data *data, const char *string)
 {
@@ -425,11 +486,10 @@ get_cache (texture_font_data *data, const char *string)
   if (count > data->cache_size)
     {
       free (prev->string);
-      prev->string  = 0;
-      prev->width   = 0;
-      prev->height  = 0;
-      prev->width2  = 0;
-      prev->height2 = 0;
+      prev->string     = 0;
+      prev->tex_width  = 0;
+      prev->tex_height = 0;
+      memset (&prev->extents, 0, sizeof(prev->extents));
       if (prev2)
         prev2->next = 0;
       if (prev != data->cache)
@@ -451,89 +511,160 @@ get_cache (texture_font_data *data, const char *string)
 }
 
 
+/* Renders the given string into the prevailing texture.
+   Returns the metrics of the text, and size of the texture.
+ */
+void
+string_to_texture (texture_font_data *data, const char *string,
+                   XCharStruct *extents_ret,
+                   int *tex_width_ret, int *tex_height_ret)
+{
+  Window window = RootWindow (data->dpy, 0);
+  Pixmap p;
+  XGCValues gcv;
+  GC gc;
+  XWindowAttributes xgwa;
+  XRenderColor rcolor;
+  XftColor xftcolor;
+  XftDraw *xftdraw;
+  int width, height;
+  XCharStruct overall;
+
+  /* Measure the string and create a Pixmap of the proper size.
+   */
+  XGetWindowAttributes (data->dpy, window, &xgwa);
+  iterate_texture_string (data, string, 0, 0, 0, 0, &overall);
+  width  = overall.rbearing - overall.lbearing;
+  height = overall.ascent   + overall.descent;
+  if (width  <= 0) width  = 1;
+  if (height <= 0) height = 1;
+  p = XCreatePixmap (data->dpy, window, width, height, xgwa.depth);
+
+  gcv.foreground = BlackPixelOfScreen (xgwa.screen);
+  gc = XCreateGC (data->dpy, p, GCForeground, &gcv);
+  XFillRectangle (data->dpy, p, gc, 0, 0, width, height);
+  XFreeGC (data->dpy, gc);
+
+  /* Render the string into the pixmap.
+   */
+  rcolor.red = rcolor.green = rcolor.blue = rcolor.alpha = 0xFFFF;
+  XftColorAllocValue (data->dpy, xgwa.visual, xgwa.colormap,
+                      &rcolor, &xftcolor);
+  xftdraw = XftDrawCreate (data->dpy, p, xgwa.visual, xgwa.colormap);
+  iterate_texture_string (data, string,
+                          -overall.lbearing, overall.ascent,
+                          xftdraw, &xftcolor, 0);
+  XftDrawDestroy (xftdraw);
+  XftColorFree (data->dpy, xgwa.visual, xgwa.colormap, &xftcolor);
+
+  /* Copy the bits from the Pixmap into a texture, unless it's cached.
+   */
+  bitmap_to_texture (data->dpy, p, xgwa.visual, xgwa.depth, 
+                     &width, &height);
+  XFreePixmap (data->dpy, p);
+
+  if (extents_ret)    *extents_ret    = overall;
+  if (tex_width_ret)  *tex_width_ret  = width;
+  if (tex_height_ret) *tex_height_ret = height;
+}
+
+
+/* Set the various OpenGL parameters for properly rendering things
+   with a texture generated by string_to_texture().
+ */
+void
+enable_texture_string_parameters (void)
+{
+  glEnable (GL_TEXTURE_2D);
+
+  /* Texture-rendering parameters to make font pixmaps tolerable to look at.
+   */
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
+                   GL_LINEAR_MIPMAP_LINEAR);
+
+  /* LOD bias is part of OpenGL 1.4.
+     GL_EXT_texture_lod_bias has been present since the original iPhone.
+  */
+# if !defined(GL_TEXTURE_LOD_BIAS) && defined(GL_TEXTURE_LOD_BIAS_EXT)
+#   define GL_TEXTURE_LOD_BIAS GL_TEXTURE_LOD_BIAS_EXT
+# endif
+# ifdef GL_TEXTURE_LOD_BIAS
+  glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, 0.25);
+# endif
+  clear_gl_error();  /* invalid enum on iPad 3 */
+
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+  /* Don't write the transparent parts of the quad into the depth buffer. */
+  glAlphaFunc (GL_GREATER, 0.01);
+  glEnable (GL_ALPHA_TEST);
+  glEnable (GL_BLEND);
+  glDisable (GL_LIGHTING);
+  glDisable (GL_TEXTURE_GEN_S);
+  glDisable (GL_TEXTURE_GEN_T);
+  glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+}
+
+
 /* Draws the string in the scene at the origin.
    Newlines and tab stops are honored.
    Any numbers inside [] will be rendered as a subscript.
    Assumes the font has been loaded as with load_texture_font().
+
+   The origin is at the origin of the first character, so subsequent
+   lines of a multi-line string are below that.
  */
 void
 print_texture_string (texture_font_data *data, const char *string)
 {
-  int line_height = data->xftfont->ascent + data->xftfont->descent;
-  int margin = line_height * 0.35;
-  int width, height;
-  int width2, height2;
-  XWindowAttributes xgwa;
-  Pixmap p = 0;
+  XCharStruct overall;
+  int tex_width, tex_height;
   texfont_cache *cache;
+  GLint old_texture;
 
   if (!*string) return;
 
+  clear_gl_error ();
+
+  /* Save the prevailing texture ID, and bind ours.  Restored at the end. */
+  glGetIntegerv (GL_TEXTURE_BINDING_2D, &old_texture);
+
   cache = get_cache (data, string);
+
+  glBindTexture (GL_TEXTURE_2D, cache->texid);
+  check_gl_error ("texture font binding");
 
   /* Measure the string and make a pixmap that will fit it,
      unless it's cached.
    */
   if (cache->string)
     {
-      width   = data->cache->width;
-      height  = data->cache->height;
+      overall    = data->cache->extents;
+      tex_width  = data->cache->tex_width;
+      tex_height = data->cache->tex_height;
     }
   else
-    {
-      Window window = RootWindow (data->dpy, 0);
-      XGCValues gcv;
-      GC gc;
-
-      XGetWindowAttributes (data->dpy, window, &xgwa);
-      width = iterate_texture_string (data, string, 0, 0, 0, 0, &height);
-      p = XCreatePixmap (data->dpy, window, 
-                         width  + margin*2,
-                         height + margin*2,
-                         xgwa.depth);
-      gcv.foreground = BlackPixelOfScreen (xgwa.screen);
-      gc = XCreateGC (data->dpy, p, GCForeground, &gcv);
-      XFillRectangle (data->dpy, p, gc, 0, 0, 
-                      width  + margin*2,
-                      height + margin*2);
-      XFreeGC (data->dpy, gc);
-    }
-
-  /* Draw the string into the pixmap, unless it's cached.
-   */
-  if (!cache->string)
-    {
-      XRenderColor rcolor;
-      XftColor xftcolor;
-      XftDraw *xftdraw;
-      rcolor.red = rcolor.green = rcolor.blue = rcolor.alpha = 0xFFFF;
-      XftColorAllocValue (data->dpy, xgwa.visual, xgwa.colormap,
-                          &rcolor, &xftcolor);
-      xftdraw = XftDrawCreate (data->dpy, p, xgwa.visual, xgwa.colormap);
-      iterate_texture_string (data, string, xftdraw, &xftcolor,
-                              margin, 0, 0);
-      XftDrawDestroy (xftdraw);
-      XftColorFree (data->dpy, xgwa.visual, xgwa.colormap, &xftcolor);
-    }
+    string_to_texture (data, string, &overall, &tex_width, &tex_height);
 
   {
-    GLint old_texture;
     int ofront, oblend;
-    Bool alpha_p, blend_p;
+    Bool alpha_p, blend_p, light_p, gen_s_p, gen_t_p;
     GLfloat omatrix[16];
     GLfloat qx0, qy0, qx1, qy1;
     GLfloat tx0, ty0, tx1, ty1;
 
     /* Save the prevailing texture environment, and set up ours.
      */
-    glGetIntegerv (GL_TEXTURE_BINDING_2D, &old_texture);
     glGetIntegerv (GL_FRONT_FACE, &ofront);
     glGetIntegerv (GL_BLEND_DST, &oblend);
     glGetFloatv (GL_TEXTURE_MATRIX, omatrix);
     blend_p = glIsEnabled (GL_BLEND);
     alpha_p = glIsEnabled (GL_ALPHA_TEST);
-
-    clear_gl_error ();
+    light_p = glIsEnabled (GL_LIGHTING);
+    gen_s_p = glIsEnabled (GL_TEXTURE_GEN_S);
+    gen_t_p = glIsEnabled (GL_TEXTURE_GEN_T);
 
     glPushMatrix();
 
@@ -544,68 +675,22 @@ print_texture_string (texture_font_data *data, const char *string)
     glLoadIdentity ();
     glMatrixMode (GL_MODELVIEW);
 
-    glBindTexture (GL_TEXTURE_2D, cache->texid);
-    check_gl_error ("texture font binding");
-
-    glEnable(GL_TEXTURE_2D);
-
-    /* Copy the bits from the Pixmap into a texture, unless it's cached.
-     */
-    if (cache->string)
-      {
-        width2  = data->cache->width2;
-        height2 = data->cache->height2;
-        if (p) abort();
-      }
-    else
-      {
-        width2  = width  + margin*2;
-        height2 = height + margin*2;
-        bitmap_to_texture (data->dpy, p, xgwa.visual, xgwa.depth,
-                           &width2, &height2);
-        XFreePixmap (data->dpy, p);
-      }
-
-
-    /* Texture-rendering parameters to make font pixmaps tolerable to look at.
-     */
-
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER,
-                     GL_LINEAR_MIPMAP_LINEAR);
-
-    /* LOD bias is part of OpenGL 1.4.
-       GL_EXT_texture_lod_bias has been present since the original iPhone.
-     */
-# if !defined(GL_TEXTURE_LOD_BIAS) && defined(GL_TEXTURE_LOD_BIAS_EXT)
-#   define GL_TEXTURE_LOD_BIAS GL_TEXTURE_LOD_BIAS_EXT
-# endif
-# ifdef GL_TEXTURE_LOD_BIAS
-    glTexParameterf (GL_TEXTURE_2D, GL_TEXTURE_LOD_BIAS, 0.25);
-# endif
-    clear_gl_error();  /* invalid enum on iPad 3 */
-
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-
-    /* Don't write the transparent parts of the quad into the depth buffer. */
-    glAlphaFunc (GL_GREATER, 0.01);
-    glEnable (GL_ALPHA_TEST);
-    glEnable (GL_BLEND);
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    enable_texture_string_parameters();
 
     /* Draw a quad with that texture on it, possibly using a cached texture.
+       Position the XCharStruct origin at 0,0 in the scene.
      */
-    qx0 = -margin;
-    qy0 = line_height + margin;
-    qx1 = width + margin;
-    qy1 = line_height - height - margin;
+    qx0 =  overall.lbearing;
+    qy0 = -overall.descent;
+    qx1 =  overall.rbearing;
+    qy1 =  overall.ascent;
 
     tx0 = 0;
-    ty0 = 0;
-    tx1 = (width  + margin*2) / (GLfloat) width2;
-    ty1 = (height + margin*2) / (GLfloat) height2;
+    ty1 = 0;
+    tx1 = (overall.rbearing - overall.lbearing) / (GLfloat) tex_width;
+    ty0 = (overall.ascent + overall.descent)    / (GLfloat) tex_height;
 
+    glFrontFace (GL_CCW);
     glBegin (GL_QUADS);
     glTexCoord2f (tx0, ty0); glVertex3f (qx0, qy0, 0);
     glTexCoord2f (tx1, ty0); glVertex3f (qx1, qy0, 0);
@@ -621,6 +706,10 @@ print_texture_string (texture_font_data *data, const char *string)
     glFrontFace (ofront);
     if (!alpha_p) glDisable (GL_ALPHA_TEST);
     if (!blend_p) glDisable (GL_BLEND);
+    if (light_p) glEnable (GL_LIGHTING);
+    if (gen_s_p) glEnable (GL_TEXTURE_GEN_S);
+    if (gen_t_p) glEnable (GL_TEXTURE_GEN_T);
+
     glBlendFunc (GL_SRC_ALPHA, oblend);
   
     glMatrixMode (GL_TEXTURE);
@@ -633,11 +722,10 @@ print_texture_string (texture_font_data *data, const char *string)
      */
     if (!cache->string)
       {
-        cache->string  = strdup (string);
-        cache->width   = width;
-        cache->height  = height;
-        cache->width2  = width2;
-        cache->height2 = height2;
+        cache->string     = strdup (string);
+        cache->extents    = overall;
+        cache->tex_width  = tex_width;
+        cache->tex_height = tex_height;
       }
   }
 }
@@ -662,7 +750,6 @@ print_texture_label (Display *dpy,
   Bool tex_p   = glIsEnabled (GL_TEXTURE_2D);
   Bool texs_p  = glIsEnabled (GL_TEXTURE_GEN_S);
   Bool text_p  = glIsEnabled (GL_TEXTURE_GEN_T);
-  Bool light_p = glIsEnabled (GL_LIGHTING);
   Bool depth_p = glIsEnabled (GL_DEPTH_TEST);
   Bool cull_p  = glIsEnabled (GL_CULL_FACE);
   Bool fog_p   = glIsEnabled (GL_FOG);
@@ -683,7 +770,6 @@ print_texture_label (Display *dpy,
 
   glDisable (GL_TEXTURE_GEN_S);
   glDisable (GL_TEXTURE_GEN_T);
-  glDisable (GL_LIGHTING);
   glDisable (GL_CULL_FACE);
   glDisable (GL_FOG);
 
@@ -700,7 +786,9 @@ print_texture_label (Display *dpy,
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
     {
-      int x, y, w, h, lh, swap;
+      XCharStruct cs;
+      int ascent, descent;
+      int x, y, w, h, swap;
       int rot = (int) current_device_rotation();
 
       glLoadIdentity();
@@ -710,14 +798,14 @@ print_texture_label (Display *dpy,
       while (rot <= -180) rot += 360;
       while (rot >   180) rot -= 360;
 
-      lh = texture_string_width (data, "M", 0);
-      w = texture_string_width (data, string, &h);
+      texture_string_metrics (data, string, &cs, &ascent, &descent);
+      h = cs.ascent + cs.descent;
+      w  = cs.width;
 
 # ifdef USE_IPHONE
-      /* Size of the font is in points, so scale iOS pixels to points. */
       {
-        GLfloat scale = 1;
-        scale = window_width / 768.0;
+        /* Size of the font is in points, so scale iOS pixels to points. */
+        GLfloat scale = window_width / 768.0;
         if (scale < 1) scale = 1;
 
         /* jwxyz-XLoadFont has already doubled the font size, to compensate
@@ -756,15 +844,15 @@ print_texture_label (Display *dpy,
       switch (position) {
       case 0:					/* center */
         x = (window_width  - w) / 2;
-        y = (window_height - h) / 2;
+        y = (window_height + h) / 2 - ascent;
         break;
       case 1:					/* top */
-        x = lh;
-        y = window_height - lh * 2;
+        x = ascent;
+        y = window_height - ascent*2;
         break;
       case 2:					/* bottom */
-        x = lh;
-        y = h - lh;
+        x = ascent;
+        y = h;
         break;
       default:
         abort();
@@ -801,7 +889,6 @@ print_texture_label (Display *dpy,
   if (tex_p)   glEnable (GL_TEXTURE_2D); else glDisable (GL_TEXTURE_2D);
   if (texs_p)  glEnable (GL_TEXTURE_GEN_S);/*else glDisable(GL_TEXTURE_GEN_S);*/
   if (text_p)  glEnable (GL_TEXTURE_GEN_T);/*else glDisable(GL_TEXTURE_GEN_T);*/
-  if (light_p) glEnable (GL_LIGHTING); /*else glDisable (GL_LIGHTING);*/
   if (depth_p) glEnable (GL_DEPTH_TEST); else glDisable (GL_DEPTH_TEST);
   if (cull_p)  glEnable (GL_CULL_FACE); /*else glDisable (GL_CULL_FACE);*/
   if (fog_p)   glEnable (GL_FOG); /*else glDisable (GL_FOG);*/

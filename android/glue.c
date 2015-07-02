@@ -10,9 +10,6 @@
 #include "jwzglesI.h"
 #include "version.h"
 
-#undef PI
-#define PI 3.1415926535897932f
-
 void drawXscreensaver();
 
 int sWindowWidth = 0;
@@ -34,47 +31,8 @@ struct xscreensaver_function_table
     *stonerview_xscreensaver_function_table,
     *sproingies_xscreensaver_function_table,
     *blinkbox_xscreensaver_function_table,
-    *flipflop_xscreensaver_function_table,
+    *bouncingcow_xscreensaver_function_table,
     *superquadrics_xscreensaver_function_table;
-
-
-Bool mono_p;
-
-
-static XrmOptionDescRec default_options[] = {
-    {"-root", ".root", XrmoptionNoArg, "True"},
-    {"-window", ".root", XrmoptionNoArg, "False"},
-    {"-mono", ".mono", XrmoptionNoArg, "True"},
-    {"-install", ".installColormap", XrmoptionNoArg, "True"},
-    {"-noinstall", ".installColormap", XrmoptionNoArg, "False"},
-    {"-visual", ".visualID", XrmoptionSepArg, 0},
-    {"-window-id", ".windowID", XrmoptionSepArg, 0},
-    {"-fps", ".doFPS", XrmoptionNoArg, "True"},
-    {"-no-fps", ".doFPS", XrmoptionNoArg, "False"},
-
-#ifdef DEBUG_PAIR
-    {"-pair", ".pair", XrmoptionNoArg, "True"},
-#endif				/* DEBUG_PAIR */
-    {0, 0, 0, 0}
-};
-
-static char *default_defaults[] = {
-    ".root:               false",
-    "*geometry:           600x480",	/* this should be .geometry, but nooooo... */
-    "*mono:               false",
-    "*installColormap:    false",
-    "*doFPS:              false",
-    "*multiSample:        false",
-    "*visualID:           default",
-    "*windowID:           ",
-    "*desktopGrabber:     xscreensaver-getimage %s",
-    0
-};
-
-static XrmOptionDescRec *merged_options;
-static int merged_options_size;
-static char **merged_defaults;
-
 
 struct running_hack {
     struct xscreensaver_function_table *xsft;
@@ -86,10 +44,8 @@ struct running_hack {
 const char *progname;
 const char *progclass;
 
-
 struct running_hack rh[8];
 // ^ magic number of hacks - TODO: remove magic number
-
 
 
 int chosen;
@@ -111,35 +67,34 @@ JNIEXPORT void JNICALL
     Java_org_jwz_xscreensaver_CallNative_nativeDone
     (JNIEnv * env);
 JNIEXPORT void JNICALL
-    Java_org_jwz_xscreensaver_gen_SuperquadricsWallpaper_nativeSettings
+    Java_org_jwz_xscreensaver_gen_SproingiesWallpaper_allnativeSettings
     (JNIEnv * env, jobject thiz, jstring jhack, jstring hackPref,
-     jint draw);
+     jint draw, jstring key);
 JNIEXPORT void JNICALL
-    Java_org_jwz_xscreensaver_gen_StonerviewWallpaper_nativeSettings
+    Java_org_jwz_xscreensaver_gen_SuperquadricsWallpaper_allnativeSettings
     (JNIEnv * env, jobject thiz, jstring jhack, jstring hackPref,
-     jint draw);
+     jint draw, jstring key);
 JNIEXPORT void JNICALL
-    Java_org_jwz_xscreensaver_gen_SproingiesWallpaper_nativeSettings
+    Java_org_jwz_xscreensaver_gen_HilbertWallpaper_allnativeSettings
     (JNIEnv * env, jobject thiz, jstring jhack, jstring hackPref,
-     jint draw);
+     jint draw, jstring key);
 JNIEXPORT void JNICALL
-    Java_org_jwz_xscreensaver_gen_HilbertWallpaper_nativeSettings
+    Java_org_jwz_xscreensaver_gen_StonerviewWallpaper_allnativeSettings
     (JNIEnv * env, jobject thiz, jstring jhack, jstring hackPref,
-     jint draw);
+     jint draw, jstring key);
+JNIEXPORT void JNICALL
+    Java_org_jwz_xscreensaver_gen_BouncingcowWallpaper_allnativeSettings
+    (JNIEnv * env, jobject thiz, jstring jhack, jstring hackPref,
+     jint draw, jstring key);
+
+
 
 void doinit()
 {
 
-
     if (chosen == 0) {
 	progname = "superquadrics";
 	rh[chosen].xsft = &superquadrics_xscreensaver_function_table;
-	//progname = "blinkbox";
-	//rh[chosen].xsft = &blinkbox_xscreensaver_function_table;
-	//progname = "flipflop";
-	//rh[chosen].xsft = &flipflop_xscreensaver_function_table;
-	//progname = "hypertorus";
-	//rh[chosen].xsft = &hypertorus_xscreensaver_function_table;
     } else if (chosen == 1) {
 	progname = "stonerview";
 	rh[chosen].xsft = &stonerview_xscreensaver_function_table;
@@ -151,6 +106,9 @@ void doinit()
     } else if (chosen == 3) {
 	progname = "hilbert";
 	rh[chosen].xsft = &hilbert_xscreensaver_function_table;
+    } else if (chosen == 4) {
+	progname = "bouncingcow";
+	rh[chosen].xsft = &bouncingcow_xscreensaver_function_table;
     } else {
 	progname = "sproingies";
 	rh[chosen].xsft = &sproingies_xscreensaver_function_table;
@@ -177,6 +135,17 @@ void doinit()
     rh[chosen].closure =
 	init_cb(rh[chosen].dpy, rh[chosen].window,
 		rh[chosen].xsft->setup_arg);
+
+}
+
+
+
+void drawXscreensaver()
+{
+    pthread_mutex_lock(&mutg);
+    rh[chosen].xsft->draw_cb(rh[chosen].dpy, rh[chosen].window,
+			     rh[chosen].closure);
+    pthread_mutex_unlock(&mutg);
 
 }
 
@@ -247,77 +216,91 @@ JNIEXPORT void JNICALL
 }
 
 JNIEXPORT void JNICALL
-    Java_org_jwz_xscreensaver_gen_SuperquadricsWallpaper_nativeSettings
+    Java_org_jwz_xscreensaver_gen_HilbertWallpaper_allnativeSettings
     (JNIEnv * env, jobject thiz, jstring jhack, jstring hackPref,
-     jint draw) {
+     jint draw, jstring key) {
 
-    double sq_speed;
+
+    const char *chack = (*env)->GetStringUTFChars(env, hackPref, NULL);
+    char *hck = (char *) chack;
+    const char *kchack = (*env)->GetStringUTFChars(env, key, NULL);
+    char *khck = (char *) kchack;
+
+    if (draw == 2) {
+        setHilbertSettings(hck, khck);
+    }
+
+    chosen = 3;
+}
+
+JNIEXPORT void JNICALL
+    Java_org_jwz_xscreensaver_gen_SuperquadricsWallpaper_allnativeSettings
+    (JNIEnv * env, jobject thiz, jstring jhack, jstring hackPref,
+     jint draw, jstring key) {
+
     const char *chack = (*env)->GetStringUTFChars(env, hackPref, NULL);
     char *hck = (char *) chack;
 
-    if (draw == 0) {
+    const char *kchack = (*env)->GetStringUTFChars(env, key, NULL);
+    char *khck = (char *) kchack;
 
-	double sqd;
-	sq_speed = sscanf(hck, "%lf", &sqd);
-	setSuperquadricsSpeed(sqd);
+    if (draw == 2) {
+        setSuperquadricsSettings(hck, khck);
     }
 
     chosen = 0;
 }
 
-JNIEXPORT void JNICALL
-    Java_org_jwz_xscreensaver_gen_StonerviewWallpaper_nativeSettings
-    (JNIEnv * env, jobject thiz, jstring jhack, jstring hackPref,
-     jint draw) {
-
-    int count;
-    const char *chack = (*env)->GetStringUTFChars(env, hackPref, NULL);
-    char *hck = (char *) chack;
-    count = atoi(hck);
-    if (draw == 0) {
-	setStonerviewTransparency(count);
-    }
-
-    chosen = 1;
-}
-
-
 
 JNIEXPORT void JNICALL
-    Java_org_jwz_xscreensaver_gen_SproingiesWallpaper_nativeSettings
+    Java_org_jwz_xscreensaver_gen_SproingiesWallpaper_allnativeSettings
     (JNIEnv * env, jobject thiz, jstring jhack, jstring hackPref,
-     jint draw) {
+     jint draw, jstring key) {
 
-    int count;
     const char *chack = (*env)->GetStringUTFChars(env, hackPref, NULL);
     char *hck = (char *) chack;
-    count = atoi(hck);
-    if (draw == 0) {
-	setSproingiesCount(count);
+
+    const char *kchack = (*env)->GetStringUTFChars(env, key, NULL);
+    char *khck = (char *) kchack;
+
+    if (draw == 2) {
+        setSproingiesSettings(hck, khck);
     }
 
     chosen = 2;
 }
 
 JNIEXPORT void JNICALL
-    Java_org_jwz_xscreensaver_gen_HilbertWallpaper_nativeSettings
+    Java_org_jwz_xscreensaver_gen_StonerviewWallpaper_allnativeSettings
     (JNIEnv * env, jobject thiz, jstring jhack, jstring hackPref,
-     jint draw) {
+     jint draw, jstring key) {
+
     const char *chack = (*env)->GetStringUTFChars(env, hackPref, NULL);
     char *hck = (char *) chack;
-    if (draw == 0) {
-	setHilbertMode(hck);
+    const char *kchack = (*env)->GetStringUTFChars(env, key, NULL);
+    char *khck = (char *) kchack;
+
+    if (draw == 2) {
+        setStonerviewSettings(hck, khck);
     }
-    chosen = 3;
+
+    chosen = 1;
 }
 
+JNIEXPORT void JNICALL
+    Java_org_jwz_xscreensaver_gen_BouncingcowWallpaper_allnativeSettings
+    (JNIEnv * env, jobject thiz, jstring jhack, jstring hackPref,
+     jint draw, jstring key) {
 
+    const char *chack = (*env)->GetStringUTFChars(env, hackPref, NULL);
+    char *hck = (char *) chack;
+    const char *kchack = (*env)->GetStringUTFChars(env, key, NULL);
+    char *khck = (char *) kchack;
 
-void drawXscreensaver()
-{
-    pthread_mutex_lock(&mutg);
-    rh[chosen].xsft->draw_cb(rh[chosen].dpy, rh[chosen].window,
-			     rh[chosen].closure);
-    pthread_mutex_unlock(&mutg);
+    if (draw == 2) {
+        setBouncingcowSettings(hck, khck);
+    }
 
+    chosen = 4;
 }
+

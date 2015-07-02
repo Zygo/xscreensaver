@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2014-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -32,5 +32,16 @@ extern char ** utf8_split (const char *string, int *length_ret);
 /* Converts a UTF8 string to the closest Latin1 or ASCII equivalent.
  */
 extern char *utf8_to_latin1 (const char *string, Bool ascii_p);
+
+/* Converts a Unicode character to a multi-byte UTF8 sequence.
+   Returns the number of bytes written.
+ */
+extern int utf8_encode (unsigned long uc, char *out, long length);
+
+/* Parse the first UTF8 character at the front of the string.
+   Return the Unicode character, and the number of bytes read.
+ */
+extern long utf8_decode (const unsigned char *in, long length,
+                         unsigned long *unicode_ret);
 
 #endif /* __XSCREENSAVER_UTF8WC_H__ */

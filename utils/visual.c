@@ -295,7 +295,7 @@ pick_best_gl_visual (Screen *screen)
 
   int ndepths = 0;
   int *depths = XListDepths (dpy, screen_number (screen), &ndepths);
-  int screen_depth = depths[ndepths];
+  int screen_depth = (depths && ndepths) ? depths[ndepths - 1] : 0;
   XFree (depths);
 
   vi_in.class = TrueColor;

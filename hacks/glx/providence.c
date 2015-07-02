@@ -274,7 +274,7 @@ static void update_particles(providencestruct *mp)
     int x = mp->eyeparticles[i][1] + random()%(cos(mp->theta) < 0.0 ? 8 : 16);
 
     /* reset if dead */
-    if(x > EYELENGTH || random()%(cos(mp->theta) < 0.0 ? 40 : 10) == 0) {
+    if(x >= EYELENGTH || random()%(cos(mp->theta) < 0.0 ? 40 : 10) == 0) {
 
 /*     if(x > EYELENGTH || (x > EYELENGTH/(2/3.0) && random()%7 == 0)) { */
       mp->eyeparticles[i][0] = random()%LOOKUPSIZE;

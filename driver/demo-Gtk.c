@@ -1557,7 +1557,7 @@ flush_dialog_changes_and_save (state *s)
 
 # define TEXT(FIELD,NAME) \
     w = name_to_widget (s, (NAME)); \
-    (FIELD) = (char *) gtk_entry_get_text (GTK_ENTRY (w))
+    (FIELD) = (char *) g_strdup(gtk_entry_get_text (GTK_ENTRY (w)))
 
   MINUTES  (&p2->timeout,         "timeout_spinbutton");
   MINUTES  (&p2->cycle,           "cycle_spinbutton");

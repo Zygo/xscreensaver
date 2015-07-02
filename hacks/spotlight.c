@@ -180,12 +180,6 @@ spotlight_init (Display *dpy, Window window)
   
   st->off = random();
 
-#ifdef DEBUG
-  /* create GC with white fg */
-  gcv.foreground = fg;
-  st->white_gc = XCreateGC(st->dpy, st->window, gcflags, &gcv);
-#endif
-
   /* blank out screen */
   XFillRectangle(st->dpy, st->window, st->window_gc, 0, 0, st->sizex, st->sizey);
 

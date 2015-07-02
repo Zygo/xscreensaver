@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2014-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -52,7 +52,7 @@ uc_truncate (unsigned long uc)
 /* Parse the first UTF8 character at the front of the string.
    Return the Unicode character, and the number of bytes read.
  */
-static long
+long
 utf8_decode (const unsigned char *in, long length, unsigned long *unicode_ret)
 {
   const unsigned char *start = in;
@@ -156,7 +156,7 @@ utf8_decode (const unsigned char *in, long length, unsigned long *unicode_ret)
 /* Converts a Unicode character to a multi-byte UTF8 sequence.
    Returns the number of bytes written.
  */
-static int
+int
 utf8_encode (unsigned long uc, char *out, long length)
 {
   const char *old = out;
@@ -264,12 +264,29 @@ utf8_split (const char *string, int *length_ret)
 
   while (in < end)
     {
-      long len2 = utf8_decode (in, len, 0);
+      unsigned long uc;
+      long len2 = utf8_decode (in, len, &uc);
       char tmp[10];
       strncpy (tmp, (char *) in, len2);
       tmp[len2] = 0;
       ret[i++] = strdup (tmp);
       in += len2;
+
+      /* If this is a Combining Diacritical, append it to the previous
+         character. E.g., "y\314\206\314\206" is one string, not three.
+       */
+      if (i > 1 && uc >= 0x300 && uc <= 0x36F)
+        {
+          long L1 = strlen(ret[i-2]);
+          long L2 = strlen(ret[i-1]);
+          char *s2 = (char *) malloc (L1 + L2 + 1);
+          strncpy (s2,      ret[i-2], L1);
+          strncpy (s2 + L1, ret[i-1], L2);
+          s2[L1 + L2] = 0;
+          free (ret[i-2]);
+          ret[i-2] = s2;
+          i--;
+        }
     }
   ret[i] = 0;
 
@@ -314,10 +331,11 @@ XChar2b_to_utf8 (const XChar2b *in, int *length_ret)
   *out = 0;
 
   /* shrink */
-  utf8 = (char *) realloc (utf8, (out - utf8 + 1) * sizeof(*utf8));
+  out_len = (int) (out - utf8 + 1);
+  utf8 = (char *) realloc (utf8, out_len);
 
   if (length_ret)
-    *length_ret = (int) (out - utf8);
+    *length_ret = out_len;
 
   return utf8;
 }
@@ -344,7 +362,7 @@ utf8_to_latin1 (const char *string, Bool ascii_p)
 
       if (uc == '\240')	/* &nbsp; */
         uc = ' ';
-      else if (uc >= 0x2300 && uc <= 0x36F)
+      else if (uc >= 0x300 && uc <= 0x36F)
         uc = 0;		/* Discard "Unicode Combining Diacriticals Block" */
       else if (uc > 0xFF)
         switch (uc) {

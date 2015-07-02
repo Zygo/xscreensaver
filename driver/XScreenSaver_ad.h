@@ -34,7 +34,7 @@
 "*textLiteral:		XScreenSaver",
 "*textFile:		",
 "*textProgram:		fortune",
-"*textURL:		http://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss",
+"*textURL:		https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss",
 "*overlayTextForeground:	#FFFF00",
 "*overlayTextBackground:	#000000",
 "*overlayStderr:		True",
@@ -262,8 +262,10 @@
   GL: 				cityflow -root				    \\n\
   GL: 				geodesicgears -root			    \\n\
   GL: 				projectiveplane -root			    \\n\
+  GL: 				romanboy -root				    \\n\
 				tessellimage -root			    \\n\
-  GL: 				winduprobot -root			    \\n",
+  GL: 				winduprobot -root			    \\n\
+  GL: 				splitflap -root				    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
 "XScreenSaver.initialDelay:		0:00:00",
@@ -300,7 +302,7 @@
 "*passwd.asterisks:              True",
 "*passwd.uname:                  True",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright \\251 1991-2014 by",
+"*splash.body.label:		Copyright \\251 1991-2015 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",
@@ -358,6 +360,7 @@
 "*hacks.quasicrystal.name:   QuasiCrystal",
 "*hacks.rd-bomb.name:        RDbomb",
 "*hacks.rdbomb.name:         RDbomb",
+"*hacks.romanboy.name:       RomanBoy",
 "*hacks.rotzoomer.name:      RotZoomer",
 "*hacks.rubikblocks.name:    RubikBlocks",
 "*hacks.sballs.name:         SBalls",
@@ -366,6 +369,7 @@
 "*hacks.skytentacles.name:   SkyTentacles",
 "*hacks.slidescreen.name:    SlideScreen",
 "*hacks.speedmine.name:      SpeedMine",
+"*hacks.splitflap.name:      SplitFlap",
 "*hacks.starwars.name:       StarWars",
 "*hacks.stonerview.name:     StonerView",
 "*hacks.t3d.name:            T3D",

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -201,6 +201,7 @@ Bool safe_XF86VidModeGetViewPort (Display *, int, int *, int *);
 #endif /* HAVE_XF86VMODE */
 
 extern Atom XA_VROOT, XA_XSETROOT_ID, XA_ESETROOT_PMAP_ID, XA_XROOTPMAP_ID;
+extern Atom XA_NET_WM_USER_TIME;
 extern Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
 extern Atom XA_SCREENSAVER_STATUS, XA_LOCK, XA_BLANK;
 extern Atom XA_DEMO, XA_PREFS;

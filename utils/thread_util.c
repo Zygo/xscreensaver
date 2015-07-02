@@ -39,7 +39,7 @@ implied warranty.
 
 #if defined __MACH__ && defined __APPLE__ /* OS X, iOS */
 #	include <sys/sysctl.h>
-#	include <stdint.h>
+#	include <inttypes.h>
 #endif
 
 #define IS_POWER_OF_2(x) ((x) > 0 && !((x) & ((x) - 1)))

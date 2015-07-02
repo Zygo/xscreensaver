@@ -13,7 +13,7 @@
  *
  * Interestingly, the original image is copyright-free:
  * http://adamcap.com/2011/05/19/history-of-joy-division-unknown-pleasures-album-art/
- * http://en.wikipedia.org/wiki/Unknown_Pleasures
+ * https://en.wikipedia.org/wiki/Unknown_Pleasures
  *
  * TODO:
  *

@@ -40,7 +40,7 @@ my %disable = (
 # Duplicated in ../hacks/munge-ad.pl.
 #
 sub parse_makefiles() {
-  foreach my $mf ( "hacks/Makefile.in", "hacks/glx/Makefile.in" ) {
+  foreach my $mf ( "../hacks/Makefile.in", "../hacks/glx/Makefile.in" ) {
     open (my $in, '<', $mf) || error ("$mf: $!");
     print STDERR "$progname: reading $mf\n" if ($verbose > 1);
     local $/ = undef;  # read entire file

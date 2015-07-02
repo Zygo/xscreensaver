@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2014 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2015 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -370,7 +370,11 @@ draw_text (ModeInfo *mi, const char *string, GLfloat r, GLfloat th,
 
   while ((line = strtok (token, "\r\n")))
     {
-      int w = texture_string_width (sp->texfont, line, &lh);
+      XCharStruct e;
+      int w, ascent, descent;
+      texture_string_metrics (sp->texfont, line, &e, &ascent, &descent);
+      w = e.width;
+      lh = ascent + descent;
       if (w > max_w) max_w = w;
       lines++;
       token = 0;
@@ -403,7 +407,10 @@ draw_text (ModeInfo *mi, const char *string, GLfloat r, GLfloat th,
   token = string2;
   while ((line = strtok (token, "\r\n")))
     {
-      int w = texture_string_width (sp->texfont, line, 0);
+      XCharStruct e;
+      int w;
+      texture_string_metrics (sp->texfont, line, &e, 0, 0);
+      w = e.width;
       glPushMatrix();
       glTranslatef ((max_w-w)/2, 0, polys * 4); /* 'polys' stops Z-fighting. */
 
@@ -750,22 +757,22 @@ static void
 draw_startup_blurb (ModeInfo *mi)
 {
   sonar_configuration *sp = &sps[MI_SCREEN(mi)];
-  const char *msg = (sp->error ? sp->error : "Resolving hosts...");
-  static const GLfloat color[4] = {0, 1, 0, 1};
 
-  if (!sp->error && ping_arg && !strcmp (ping_arg, "simulation"))
-    return;  /* don't bother */
-
-  glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
-  glTranslatef (0, 0, 0.3);
-  draw_text (mi, msg, 0, 0, 0, 30.0);
-
-  /* only leave error message up for N seconds */
-  if (sp->error &&
-      sp->start_time + 6 < double_time())
+  if (sp->error)
     {
-      free (sp->error);
-      sp->error = 0;
+      const char *msg = sp->error;
+      static const GLfloat color[4] = {0, 1, 0, 1};
+
+      glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, color);
+      glTranslatef (0, 0, 0.3);
+      draw_text (mi, msg, 0, 0, 0, 30.0);
+
+      /* only leave error message up for N seconds */
+      if (sp->start_time + 6 < double_time())
+        {
+          free (sp->error);
+          sp->error = 0;
+        }
     }
 }
 
@@ -919,15 +926,14 @@ init_sensor (ModeInfo *mi)
   if (!ping_arg || !*ping_arg ||
       !strcmp(ping_arg, "default") ||
       !!strcmp (ping_arg, "simulation"))
+    /* sonar_init_ping() always disavows privs, even on failure. */
     sp->ssd = sonar_init_ping (MI_DISPLAY (mi), &sp->error, &sp->desc,
                                ping_arg, ping_timeout, resolve_p, times_p,
                                debug_p);
+  else
+    setuid(getuid()); /* Disavow privs if not pinging. */
 
   sp->start_time = double_time ();  /* for error message timing */
-
-  /* Disavow privs.  This was already done in init_ping(), but
-     we might not have called that at all, so do it again. */
-  setuid(getuid());
 
   if (!sp->ssd)
     sp->ssd = sonar_init_simulation (MI_DISPLAY (mi), &sp->error, &sp->desc,

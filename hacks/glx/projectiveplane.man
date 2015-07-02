@@ -72,7 +72,7 @@ visualized in different manners.  When using distance colors, the
 origin is the point that is displayed as fully saturated red, which is
 easier to see as the center of the reddish area on the projective
 plane.  Alternatively, when using distance bands, the origin is the
-center of the only band that projects to a disc.  When using direction
+center of the only band that projects to a disk.  When using direction
 bands, the origin is the point where all direction bands collapse to a
 point.  Finally, when orientation markers are being displayed, the
 origin the the point where all orientation markers are compressed to a
@@ -90,7 +90,7 @@ Note that when the projective plane is displayed with bands, the
 orientation markers are placed in the middle of the bands.  For
 distance bands, the bands are chosen in such a way that the band at
 the origin is only half as wide as the remaining bands, which results
-in a disc being displayed at the origin that has the same diameter as
+in a disk being displayed at the origin that has the same diameter as
 the remaining bands.  This choice, however, also implies that the band
 at infinity is half as wide as the other bands.  Since the projective
 plane is attached to itself (in a complicated fashion) at the line at
@@ -157,7 +157,7 @@ orientation in 4d.  As discussed above, this mode enables you to see
 that the projective plane does not intersect itself in 4d.
 .PP
 The rotation speed for each of the six planes around which the
-projective plane rotates can be chosen.  For the walk-and-turn more,
+projective plane rotates can be chosen.  For the walk-and-turn mode,
 only the rotation speeds around the true 4d planes are used (the xy,
 xz, and yz planes).
 .PP
@@ -397,4 +397,4 @@ No representations are made about the suitability of this software for
 any purpose.  It is provided "as is" without express or implied
 warranty.
 .SH AUTHOR
-Carsten Steger <carsten@mirsanmir.org>, 03-jan-2014.
+Carsten Steger <carsten@mirsanmir.org>, 03-oct-2014.

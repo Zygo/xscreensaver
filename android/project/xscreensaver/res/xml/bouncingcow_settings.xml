@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="@string/bouncingcow_settings"
+        android:key="bouncingcowwallpaper_settings">
+    <org.jwz.xscreensaver.SliderPreference
+        android:defaultValue="@string/bouncingcow_count_float"
+        android:dialogMessage="@string/bouncingcow_count_settings_summary"
+        android:key="bouncingcow_count"
+        android:summary="@array/bouncingcow_count_prefix"
+        android:title="@string/bouncingcow_count_settings_title" />
+    <org.jwz.xscreensaver.SliderPreference
+        android:defaultValue="@string/bouncingcow_speed_float"
+        android:dialogMessage="@string/bouncingcow_speed_settings_summary"
+        android:key="bouncingcow_speed"
+        android:summary="@array/bouncingcow_speed_prefix"
+        android:title="@string/bouncingcow_speed_settings_title" />
+    </PreferenceCategory>
+</PreferenceScreen>

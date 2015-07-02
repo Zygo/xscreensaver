@@ -55,8 +55,8 @@ a colored cell.  Every pixel within that cell is closer to that cell's
 control point than to any other control point.  That is what
 determines the cell's shapes.
 
-http://en.wikipedia.org/wiki/Voronoi_diagram
-http://en.wikipedia.org/wiki/Tessellation
+https://en.wikipedia.org/wiki/Voronoi_diagram
+https://en.wikipedia.org/wiki/Tessellation
 
 Written by Jamie Zawinski; 2007.
   </_description>

@@ -21,8 +21,8 @@ ridiculously long list of steps!
   6: Change PRODUCT_NAME in Build Settings.
   7: Manage Schemes, rename "DangerBall Copy".
   8: Move to the right place in the list.
-  9: Scheme / Run: set SELECTED_SAVER environment variable.
- 10: Scheme / Run / Info: Executable: SaverTester.app.
+  9: Scheme / Run / Info: Executable: SaverTester.app.
+ 10: Scheme / Run / Arguments: set SELECTED_SAVER environment variable.
  11: File / Add Files / the new .c and .xml.
      Add to targets: the new target, and also "XScreenSaver-iOS".
  12: Re-order them in the file list.

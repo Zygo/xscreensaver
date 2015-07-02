@@ -80,13 +80,7 @@ extern void xlockmore_setup (struct xscreensaver_function_table *, void *);
 extern void xlockmore_do_fps (Display *, Window, fps_state *, void *);
 
 
-/* Compatibility with the xlockmore RNG API
-   (note that the xlockmore hacks never expect negative numbers.)
- */
-#define LRAND()			((long) (random() & 0x7fffffff))
-#define NRAND(n)		((int) (LRAND() % (n)))
-#define MAXRAND			(2147483648.0) /* unsigned 1<<31 as a float */
-#define SRAND(n)		/* already seeded by screenhack.c */
+/* The xlockmore RNG API is implemented in utils/yarandom.h. */
 
 
 struct ModeInfo {

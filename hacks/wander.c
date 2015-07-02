@@ -84,7 +84,7 @@ wander_init (Display *dpy, Window window)
         XAllocColor (st->dpy, st->color_map, &st->colors [0]);
         XAllocColor (st->dpy, st->color_map, &st->colors [1]);
     }
-    st->color_index = random () % st->color_count;
+    st->color_index = NRAND (st->color_count);
     
     st->advance = get_integer_resource (st->dpy, "advance", "Integer");
     st->density = get_integer_resource (st->dpy, "density", "Integer");
@@ -101,16 +101,16 @@ wander_init (Display *dpy, Window window)
     XSetForeground (st->dpy, st->context, st->colors [st->color_index].pixel);
 
 
-    st->x = random () % st->width;
-    st->y = random () % st->height;
+    st->x = NRAND (st->width);
+    st->y = NRAND (st->height);
     st->last_x = st->x;
     st->last_y = st->y;
     st->width_1 = st->width - 1;
     st->height_1 = st->height - 1;
     st->length_limit = st->length;
     st->reset_limit = st->reset;
-    st->color_index = random () % st->color_count;
-    st->color = st->colors [random () % st->color_count].pixel;
+    st->color_index = NRAND (st->color_count);
+    st->color = st->colors [NRAND (st->color_count)].pixel;
     st->pixmap = XCreatePixmap (st->dpy, window, st->size,
                             st->size, st->depth);
 
@@ -138,7 +138,7 @@ wander_draw (Display *dpy, Window window, void *closure)
 
   for (i = 0; i < 2000; i++)
     {
-      if (random () % st->density)
+      if (NRAND (st->density))
         {
           st->x = st->last_x;
           st->y = st->last_y;
@@ -147,15 +147,19 @@ wander_draw (Display *dpy, Window window, void *closure)
         {
           st->last_x = st->x;
           st->last_y = st->y;
-          st->x = (st->x + st->width_1  + (random () % 3)) % st->width;
-          st->y = (st->y + st->height_1 + (random () % 3)) % st->height;
+          st->x += st->width_1  + NRAND (3);
+          while (st->x >= st->width)
+            st->x -= st->width;
+          st->y += st->height_1 + NRAND (3);
+          while (st->y >= st->height)
+            st->y -= st->height;
         }
 
-      if ((random () % st->length_limit) == 0)
+      if (NRAND (st->length_limit) == 0)
         {
           if (st->advance == 0)
             {
-              st->color_index = random () % st->color_count;
+              st->color_index = NRAND (st->color_count);
             }
           else
             {
@@ -170,13 +174,13 @@ wander_draw (Display *dpy, Window window, void *closure)
             }
         }
 
-      if (st->reset_p || (random () % st->reset_limit) == 0)
+      if (st->reset_p || NRAND (st->reset_limit) == 0)
         {
           st->reset_p = 0;
           st->eraser = erase_window (st->dpy, st->window, st->eraser);
-          st->color = st->colors [random () % st->color_count].pixel;
-          st->x = random () % st->width;
-          st->y = random () % st->height;
+          st->color = st->colors [NRAND (st->color_count)].pixel;
+          st->x = NRAND (st->width);
+          st->y = NRAND (st->height);
           st->last_x = st->x;
           st->last_y = st->y;
           if (st->circles)

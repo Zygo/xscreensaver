@@ -1624,7 +1624,7 @@ moveRubik(rubikstruct * rp, int face, int direction, int position)
 }
 
 #ifdef DEBUG
-void
+static void
 printCube(rubikstruct * rp)
 {
 	int         face, position, sizeOfRow, sizeOfColumn;

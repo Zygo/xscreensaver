@@ -32,7 +32,7 @@ Searches for a source of odor in a turbulent atmosphere.  The searcher
 is able to sense the odor and determine local instantaneous wind
 direction.  The goal is to find the source in the shortest mean time.
 
-http://en.wikipedia.org/wiki/Anemotaxis
+https://en.wikipedia.org/wiki/Anemotaxis
 
 Written by Eugene Balkovsky; 2004.
   </_description>

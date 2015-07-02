@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -37,17 +37,26 @@
 # define NSMakeSize   CGSizeMake
 # define NSBezierPath UIBezierPath
 # define colorWithDeviceRed colorWithRed
+
+# define NSFontTraitMask      UIFontDescriptorSymbolicTraits
+// The values for the flags for NSFontTraitMask and
+// UIFontDescriptorSymbolicTraits match up, not that it really matters here.
+# define NSBoldFontMask       UIFontDescriptorTraitBold
+# define NSFixedPitchFontMask UIFontDescriptorTraitMonoSpace
+# define NSItalicFontMask     UIFontDescriptorTraitItalic
 #else
 # import <Cocoa/Cocoa.h>
 #endif
 
 #import <CoreText/CTFont.h>
 #import <CoreText/CTLine.h>
+#import <CoreText/CTRun.h>
 
 #import "jwxyz.h"
 #import "jwxyz-timers.h"
 #import "yarandom.h"
 #import "utf8wc.h"
+#import "xft.h"
 
 # define USE_BACKBUFFER  /* must be in sync with XScreenSaverView.h */
 
@@ -97,6 +106,8 @@ struct jwxyz_Display {
 
 struct jwxyz_Screen {
   Display *dpy;
+  CGBitmapInfo bitmap_info;
+  unsigned long black, white;
   Visual *visual;
   int screen_number;
 };
@@ -108,9 +119,11 @@ struct jwxyz_GC {
 };
 
 struct jwxyz_Font {
+  Display *dpy;
   char *ps_name;
   NSFont *nsfont;
   float size;   // points
+  char *xa_font;
 
   // In X11, "Font" is just an ID, and "XFontStruct" contains the metrics.
   // But we need the metrics on both of them, so they go here.
@@ -118,7 +131,7 @@ struct jwxyz_Font {
 };
 
 struct jwxyz_XFontSet {
-  Font font;
+  XFontStruct *font;
 };
 
 
@@ -144,6 +157,245 @@ jwxyz_abort (const char *fmt, ...)
                 userInfo: nil]
     raise];
   abort();  // not reached
+}
+
+// 24/32bpp -> 32bpp image conversion.
+// Any of RGBA, BGRA, ABGR, or ARGB can be represented by a rotate of 0/8/16/24
+// bits and an optional byte order swap.
+
+// This type encodes such a conversion.
+typedef unsigned convert_mode_t;
+
+// It's rotate, then swap.
+// A rotation here shifts bytes forward in memory. On x86/ARM, that's a left
+// rotate, and on PowerPC, a rightward rotation.
+static const convert_mode_t CONVERT_MODE_ROTATE_MASK = 0x3;
+static const convert_mode_t CONVERT_MODE_SWAP = 0x4;
+
+
+// Converts an array of pixels ('src') from one format to another, placing the
+// result in 'dest', according to the pixel conversion mode 'mode'.
+static void
+convert_row (uint32_t *dest, const void *src, size_t count,
+             convert_mode_t mode, size_t src_bpp)
+{
+  Assert (src_bpp == 24 || src_bpp == 32, "weird bpp");
+
+  // This works OK iff src == dest or src and dest do not overlap.
+
+  if (!mode) {
+    if (src != dest)
+      memcpy (dest, src, count * 4);
+    return;
+  }
+
+  // This is correct, but not fast.
+  convert_mode_t rot = (mode & CONVERT_MODE_ROTATE_MASK) * 8;
+  convert_mode_t flip = mode & CONVERT_MODE_SWAP;
+
+  src_bpp /= 8;
+
+  uint32_t *dest_end = dest + count;
+  while (dest != dest_end) {
+    uint32_t x;
+
+    if (src_bpp == 4)
+      x = *(const uint32_t *)src;
+    else { // src_bpp == 3
+      const uint8_t *src8 = (const uint8_t *)src;
+      // __LITTLE/BIG_ENDIAN__ are defined by the compiler.
+# if defined __LITTLE_ENDIAN__
+      x = src8[0] | (src8[1] << 8) | (src8[2] << 16) | 0xff000000;
+# elif defined __BIG_ENDIAN__
+      x = (src8[0] << 24) | (src8[1] << 16) | (src8[2] << 8) | 0xff;
+# else
+#  error "Can't determine system endianness."
+# endif
+    }
+
+    src = (const uint8_t *)src + src_bpp;
+
+    /* The naive (i.e. ubiquitous) portable implementation of bitwise rotation,
+       for 32-bit integers, is:
+
+       (x << rot) | (x >> (32 - rot))
+
+       This works nearly everywhere. Compilers on x86 wil generally recognize
+       the idiom and convert it to a ROL instruction. But there's a problem
+       here: according to the C specification, bit shifts greater than or equal
+       to the length of the integer are undefined. And if rot = 0:
+       1. (x << 0) | (x >> (32 - 0))
+       2. (x << 0) | (x >> 32)
+       3. (x << 0) | (Undefined!)
+
+       Still, when the compiler converts this to a ROL on x86, everything works
+       as intended. But, there are two additional problems when Clang does
+       compile-time constant expression evaluation with the (x >> 32)
+       expression:
+       1. Instead of evaluating it to something reasonable (either 0, like a
+          human would intuitively expect, or x, like x86 would with SHR), Clang
+          seems to pull a value out of nowhere, like -1, or some other random
+          number.
+       2. Clang's warning for this, -Wshift-count-overflow, only works when the
+          shift count is a literal constant, as opposed to an arbitrary
+          expression that is optimized down to a constant.
+       Put together, this means that the assertions in jwxyz_make_display with
+       convert_px break with the above naive rotation, but only for a release
+       build.
+
+       http://blog.regehr.org/archives/1063
+       http://llvm.org/bugs/show_bug.cgi?id=17332
+       As described in those links, there is a solution here: Masking the
+       undefined shift with '& 31' as below makes the experesion well-defined
+       again. And LLVM is set to pick up on this safe version of the idiom and
+       use a rotation instruction on architectures (like x86) that support it,
+       just like it does with the unsafe version.
+
+       Too bad LLVM doesn't want to pick up on that particular optimization
+       here. Oh well. At least this code usually isn't critical w.r.t.
+       performance.
+     */
+
+# if defined __LITTLE_ENDIAN__
+    x = (x << rot) | (x >> ((32 - rot) & 31));
+# elif defined __BIG_ENDIAN__
+    x = (x >> rot) | (x << ((32 - rot) & 31));
+# endif
+
+    if (flip)
+      x = __builtin_bswap32(x); // LLVM/GCC built-in function.
+
+    *dest = x;
+    ++dest;
+  }
+}
+
+
+// Converts a single pixel.
+static uint32_t
+convert_px (uint32_t px, convert_mode_t mode)
+{
+  convert_row (&px, &px, 1, mode, 32);
+  return px;
+}
+
+
+// This returns the inverse conversion mode, such that:
+// pixel
+//   == convert_px(convert_px(pixel, mode), convert_mode_invert(mode))
+//   == convert_px(convert_px(pixel, convert_mode_invert(mode)), mode)
+static convert_mode_t
+convert_mode_invert (convert_mode_t mode)
+{
+  // swap(0); rot(n) == rot(n); swap(0)
+  // swap(1); rot(n) == rot(-n); swap(1)
+  return mode & CONVERT_MODE_SWAP ? mode : CONVERT_MODE_ROTATE_MASK & -mode;
+}
+
+
+// This combines two conversions into one, such that:
+// convert_px(convert_px(pixel, mode0), mode1)
+//   == convert_px(pixel, convert_mode_merge(mode0, mode1))
+static convert_mode_t
+convert_mode_merge (convert_mode_t m0, convert_mode_t m1)
+{
+  // rot(r0); swap(s0); rot(r1); swap(s1)
+  // rot(r0); rot(s0 ? -r1 : r1); swap(s0); swap(s1)
+  // rot(r0 + (s0 ? -r1 : r1)); swap(s0 + s1)
+  return
+    ((m0 + (m0 & CONVERT_MODE_SWAP ? -m1 : m1)) & CONVERT_MODE_ROTATE_MASK) |
+    ((m0 ^ m1) & CONVERT_MODE_SWAP);
+}
+
+
+// This returns a conversion mode that converts an arbitrary 32-bit format
+// specified by bitmap_info to RGBA.
+static convert_mode_t
+convert_mode_to_rgba (CGBitmapInfo bitmap_info)
+{
+  // Former default: kCGImageAlphaNoneSkipFirst | kCGBitmapByteOrder32Little
+  // i.e. BGRA
+  // red   = 0x00FF0000;
+  // green = 0x0000FF00;
+  // blue  = 0x000000FF;
+
+  // RGBA: kCGImageAlphaNoneSkipLast | kCGBitmapByteOrder32Big
+
+  CGImageAlphaInfo alpha_info =
+    (CGImageAlphaInfo)(bitmap_info & kCGBitmapAlphaInfoMask);
+
+  Assert (! (bitmap_info & kCGBitmapFloatComponents),
+          "kCGBitmapFloatComponents unsupported");
+  Assert (alpha_info != kCGImageAlphaOnly, "kCGImageAlphaOnly not supported");
+
+  convert_mode_t rot = alpha_info == kCGImageAlphaFirst ||
+                       alpha_info == kCGImageAlphaPremultipliedFirst ||
+                       alpha_info == kCGImageAlphaNoneSkipFirst ?
+                       3 : 0;
+
+  CGBitmapInfo byte_order = bitmap_info & kCGBitmapByteOrderMask;
+
+  Assert (byte_order == kCGBitmapByteOrder32Little ||
+          byte_order == kCGBitmapByteOrder32Big,
+          "byte order not supported");
+
+  convert_mode_t swap = byte_order == kCGBitmapByteOrder32Little ?
+                        CONVERT_MODE_SWAP : 0;
+  if (swap)
+    rot = CONVERT_MODE_ROTATE_MASK & -rot;
+  return swap | rot;
+}
+
+
+union color_bytes
+{
+  uint32_t pixel;
+  uint8_t bytes[4];
+};
+
+
+static uint32_t
+alloc_color (Display *dpy, uint16_t r, uint16_t g, uint16_t b, uint16_t a)
+{
+  union color_bytes color;
+
+  /* Instead of (int)(c / 256.0), another possibility is
+     (int)(c * 255.0 / 65535.0 + 0.5). This can be calculated using only
+     uint8_t integer_math(uint16_t c) {
+       unsigned c0 = c + 128;
+       return (c0 - (c0 >> 8)) >> 8;
+     }
+   */
+
+  color.bytes[0] = r >> 8;
+  color.bytes[1] = g >> 8;
+  color.bytes[2] = b >> 8;
+  color.bytes[3] = a >> 8;
+
+  return
+    convert_px (color.pixel,
+      convert_mode_invert (convert_mode_to_rgba (dpy->screen->bitmap_info)));
+}
+
+
+static void
+query_color (Display *dpy, unsigned long pixel, uint8_t *rgba)
+{
+  union color_bytes color;
+  color.pixel = convert_px ((uint32_t)pixel,
+                            convert_mode_to_rgba (dpy->screen->bitmap_info));
+  for (unsigned i = 0; i != 4; ++i)
+    rgba[i] = color.bytes[i];
+}
+
+
+static void
+query_color_float (Display *dpy, unsigned long pixel, float *rgba)
+{
+  uint8_t rgba8[4];
+  query_color (dpy, pixel, rgba8);
+  for (unsigned i = 0; i != 4; ++i)
+    rgba[i] = rgba8[i] * (1.0f / 255.0f);
 }
 
 
@@ -197,11 +449,49 @@ jwxyz_make_display (void *nsview_arg, void *cgc_arg)
   }
 # endif // !USE_IPHONE
 
+# ifdef USE_BACKBUFFER
+  d->screen->bitmap_info = CGBitmapContextGetBitmapInfo (cgc);
+# else
+  d->screen->bitmap_info = (kCGImageAlphaNoneSkipFirst |
+                            kCGBitmapByteOrder32Little);
+# endif
+  d->screen->black = alloc_color (d, 0x0000, 0x0000, 0x0000, 0xFFFF);
+  d->screen->white = alloc_color (d, 0xFFFF, 0xFFFF, 0xFFFF, 0xFFFF);
+
+# if 0
+  // Tests for the image conversion modes.
+  {
+    const uint32_t key = 0x04030201;
+#  ifdef __LITTLE_ENDIAN__
+    assert (convert_px (key, 0) == key);
+    assert (convert_px (key, 1) == 0x03020104);
+    assert (convert_px (key, 3) == 0x01040302);
+    assert (convert_px (key, 4) == 0x01020304);
+    assert (convert_px (key, 5) == 0x04010203);
+#  endif
+    for (unsigned i = 0; i != 8; ++i) {
+      assert (convert_px(convert_px(key, i), convert_mode_invert(i)) == key);
+      assert (convert_mode_invert(convert_mode_invert(i)) == i);
+    }
+
+    for (unsigned i = 0; i != 8; ++i) {
+      for (unsigned j = 0; j != 8; ++j)
+        assert (convert_px(convert_px(key, i), j) ==
+                convert_px(key, convert_mode_merge(i, j)));
+    }
+  }
+# endif
+
   Visual *v = (Visual *) calloc (1, sizeof(Visual));
   v->class      = TrueColor;
-  v->red_mask   = 0x00FF0000;
-  v->green_mask = 0x0000FF00;
-  v->blue_mask  = 0x000000FF;
+  v->red_mask   = alloc_color (d, 0xFFFF, 0x0000, 0x0000, 0x0000);
+  v->green_mask = alloc_color (d, 0x0000, 0xFFFF, 0x0000, 0x0000);
+  v->blue_mask  = alloc_color (d, 0x0000, 0x0000, 0xFFFF, 0x0000);
+  CGBitmapInfo byte_order = d->screen->bitmap_info & kCGBitmapByteOrderMask;
+  Assert ( ! (d->screen->bitmap_info & kCGBitmapFloatComponents) &&
+          (byte_order == kCGBitmapByteOrder32Little ||
+           byte_order == kCGBitmapByteOrder32Big),
+          "invalid bits per channel");
   v->bits_per_rgb = 8;
   d->screen->visual = v;
   
@@ -212,7 +502,7 @@ jwxyz_make_display (void *nsview_arg, void *cgc_arg)
   w->type = WINDOW;
   w->window.view = view;
   CFRetain (w->window.view);   // needed for garbage collection?
-  w->window.background = BlackPixel(0,0);
+  w->window.background = BlackPixel(d,0);
 
   d->main_window = w;
 
@@ -355,7 +645,8 @@ void
 jwxyz_flush_context (Display *dpy)
 {
   // This is only used when USE_BACKBUFFER is off.
-  CGContextFlush(dpy->main_window->cgc); // CGContextSynchronize is another possibility.
+  // CGContextSynchronize is another possibility.
+  CGContextFlush(dpy->main_window->cgc);
 }
 
 jwxyz_sources_data *
@@ -419,36 +710,54 @@ XDisplayHeight (Display *dpy, int screen)
   return (int) dpy->main_window->frame.size.height;
 }
 
+unsigned long
+XBlackPixelOfScreen(Screen *screen)
+{
+  return screen->black;
+}
+
+unsigned long
+XWhitePixelOfScreen(Screen *screen)
+{
+  return screen->white;
+}
+
+unsigned long
+XCellsOfScreen(Screen *screen)
+{
+  Visual *v = screen->visual;
+  return v->red_mask | v->green_mask | v->blue_mask;
+}
+
 static void
-validate_pixel (unsigned long pixel, unsigned int depth, BOOL alpha_allowed_p)
+validate_pixel (Display *dpy, unsigned long pixel, unsigned int depth,
+                BOOL alpha_allowed_p)
 {
   if (depth == 1)
     Assert ((pixel == 0 || pixel == 1), "bogus mono pixel");
   else if (!alpha_allowed_p)
-    Assert (((pixel & BlackPixel(0,0)) == BlackPixel(0,0)),
+    Assert (((pixel & BlackPixel(dpy,0)) == BlackPixel(dpy,0)),
             "bogus color pixel");
 }
 
 
 static void
-set_color (CGContextRef cgc, unsigned long argb, unsigned int depth,
-           BOOL alpha_allowed_p, BOOL fill_p)
+set_color (Display *dpy, CGContextRef cgc, unsigned long argb,
+           unsigned int depth, BOOL alpha_allowed_p, BOOL fill_p)
 {
-  validate_pixel (argb, depth, alpha_allowed_p);
+  validate_pixel (dpy, argb, depth, alpha_allowed_p);
   if (depth == 1) {
     if (fill_p)
       CGContextSetGrayFillColor   (cgc, (argb ? 1.0 : 0.0), 1.0);
     else
       CGContextSetGrayStrokeColor (cgc, (argb ? 1.0 : 0.0), 1.0);
   } else {
-    float a = ((argb >> 24) & 0xFF) / 255.0;
-    float r = ((argb >> 16) & 0xFF) / 255.0;
-    float g = ((argb >>  8) & 0xFF) / 255.0;
-    float b = ((argb      ) & 0xFF) / 255.0;
+    float rgba[4];
+    query_color_float (dpy, argb, rgba);
     if (fill_p)
-      CGContextSetRGBFillColor   (cgc, r, g, b, a);
+      CGContextSetRGBFillColor   (cgc, rgba[0], rgba[1], rgba[2], rgba[3]);
     else
-      CGContextSetRGBStrokeColor (cgc, r, g, b, a);
+      CGContextSetRGBStrokeColor (cgc, rgba[0], rgba[1], rgba[2], rgba[3]);
   }
 }
 
@@ -516,19 +825,19 @@ push_gc (Drawable d, GC gc)
 /* Pushes a GC context; sets BlendMode, ClipMask, Fill, and Stroke colors.
  */
 static void
-push_color_gc (Drawable d, GC gc, unsigned long color, 
+push_color_gc (Display *dpy, Drawable d, GC gc, unsigned long color,
                BOOL antialias_p, Bool fill_p)
 {
   push_gc (d, gc);
 
   int depth = gc->depth;
   switch (gc->gcv.function) {
-    case GXset:   color = (depth == 1 ? 1 : WhitePixel(0,0)); break;
-    case GXclear: color = (depth == 1 ? 0 : BlackPixel(0,0)); break;
+    case GXset:   color = (depth == 1 ? 1 : WhitePixel(dpy,0)); break;
+    case GXclear: color = (depth == 1 ? 0 : BlackPixel(dpy,0)); break;
   }
 
   CGContextRef cgc = d->cgc;
-  set_color (cgc, color, depth, gc->gcv.alpha_allowed_p, fill_p);
+  set_color (dpy, cgc, color, depth, gc->gcv.alpha_allowed_p, fill_p);
   CGContextSetShouldAntialias (cgc, antialias_p);
 }
 
@@ -536,17 +845,17 @@ push_color_gc (Drawable d, GC gc, unsigned long color,
 /* Pushes a GC context; sets Fill and Stroke colors to the foreground color.
  */
 static void
-push_fg_gc (Drawable d, GC gc, Bool fill_p)
+push_fg_gc (Display *dpy, Drawable d, GC gc, Bool fill_p)
 {
-  push_color_gc (d, gc, gc->gcv.foreground, gc->gcv.antialias_p, fill_p);
+  push_color_gc (dpy, d, gc, gc->gcv.foreground, gc->gcv.antialias_p, fill_p);
 }
 
 /* Pushes a GC context; sets Fill and Stroke colors to the background color.
  */
 static void
-push_bg_gc (Drawable d, GC gc, Bool fill_p)
+push_bg_gc (Display *dpy, Drawable d, GC gc, Bool fill_p)
 {
-  push_color_gc (d, gc, gc->gcv.background, gc->gcv.antialias_p, fill_p);
+  push_color_gc (dpy, d, gc, gc->gcv.background, gc->gcv.antialias_p, fill_p);
 }
 
 
@@ -574,8 +883,6 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
   int i;
   CGRect wr = d->frame;
 
-  push_fg_gc (d, gc, YES);
-
 # ifdef XDRAWPOINTS_CGDATA
 
 #  ifdef USE_BACKBUFFER
@@ -593,9 +900,9 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
     Assert (data, "no bitmap data in Drawable");
 
     unsigned long argb = gc->gcv.foreground;
-    validate_pixel (argb, gc->depth, gc->gcv.alpha_allowed_p);
+    validate_pixel (dpy, argb, gc->depth, gc->gcv.alpha_allowed_p);
     if (gc->depth == 1)
-      argb = (gc->gcv.foreground ? WhitePixel(0,0) : BlackPixel(0,0));
+      argb = (gc->gcv.foreground ? WhitePixel(dpy,0) : BlackPixel(dpy,0));
 
     CGFloat x0 = wr.origin.x;
     CGFloat y0 = wr.origin.y; // Y axis is refreshingly not flipped.
@@ -630,13 +937,14 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
 
 # endif /* XDRAWPOINTS_CGDATA */
   {
+    push_fg_gc (dpy, d, gc, YES);
 
 # ifdef XDRAWPOINTS_IMAGES
 
     unsigned int argb = gc->gcv.foreground;
-    validate_pixel (argb, gc->depth, gc->gcv.alpha_allowed_p);
+    validate_pixel (dpy, argb, gc->depth, gc->gcv.alpha_allowed_p);
     if (gc->depth == 1)
-      argb = (gc->gcv.foreground ? WhitePixel(0,0) : BlackPixel(0,0));
+      argb = (gc->gcv.foreground ? WhitePixel(dpy,0) : BlackPixel(dpy,0));
 
     CGDataProviderRef prov = CGDataProviderCreateWithData (NULL, &argb, 4,
                                                            NULL);
@@ -645,8 +953,7 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
                                     dpy->colorspace, 
                                     /* Host-ordered, since we're using the
                                        address of an int as the color data. */
-                                    (kCGImageAlphaNoneSkipFirst | 
-                                     kCGBitmapByteOrder32Host),
+                                    dpy->screen->bitmap_info,
                                     prov, 
                                     NULL,  /* decode[] */
                                     NO, /* interpolate */
@@ -694,9 +1001,10 @@ XDrawPoints (Display *dpy, Drawable d, GC gc,
     free (rects);
 
 # endif /* ! XDRAWPOINTS_IMAGES */
+
+    pop_gc (d, gc);
   }
 
-  pop_gc (d, gc);
   invalidate_drawable_cache (d);
 
   return 0;
@@ -777,10 +1085,10 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
       gc->gcv.function == GXclear) {
     // "set" and "clear" are dumb drawing modes that ignore the source
     // bits and just draw solid rectangles.
-    set_color (dst->cgc,
+    set_color (dpy, dst->cgc,
                (gc->gcv.function == GXset
-                ? (gc->depth == 1 ? 1 : WhitePixel(0,0))
-                : (gc->depth == 1 ? 0 : BlackPixel(0,0))),
+                ? (gc->depth == 1 ? 1 : WhitePixel(dpy,0))
+                : (gc->depth == 1 ? 0 : BlackPixel(dpy,0))),
                gc->depth, gc->gcv.alpha_allowed_p, YES);
     draw_rect (dpy, dst, 0, dst_x, dst_y, width, height, YES, YES);
     return 0;
@@ -1076,7 +1384,7 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
 
   if (mask_p) {		// src depth == 1
 
-    push_bg_gc (dst, gc, YES);
+    push_bg_gc (dpy, dst, gc, YES);
 
     // fill the destination rectangle with solid background...
     CGContextFillRect (cgc, orig_dst_rect);
@@ -1085,7 +1393,7 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
 
     // then fill in a solid rectangle of the fg color, using the image as an
     // alpha mask.  (the image has only values of BlackPixel or WhitePixel.)
-    set_color (cgc, gc->gcv.foreground, gc->depth, 
+    set_color (dpy, cgc, gc->gcv.foreground, gc->depth,
                gc->gcv.alpha_allowed_p, YES);
     CGContextClipToMask (cgc, dst_rect, cgi);
     CGContextFillRect (cgc, dst_rect);
@@ -1103,7 +1411,7 @@ XCopyArea (Display *dpy, Drawable src, Drawable dst, GC gc,
     // being copied.
     //
     if (clipped) {
-      set_color (cgc, gc->gcv.background, gc->depth, 
+      set_color (dpy, cgc, gc->gcv.background, gc->depth,
                  gc->gcv.alpha_allowed_p, YES);
       CGContextFillRect (cgc, orig_dst_rect);
     }
@@ -1176,7 +1484,7 @@ XDrawLine (Display *dpy, Drawable d, GC gc, int x1, int y1, int x2, int y2)
   p.x = wr.origin.x + x1;
   p.y = wr.origin.y + wr.size.height - y1;
 
-  push_fg_gc (d, gc, NO);
+  push_fg_gc (dpy, d, gc, NO);
 
   CGContextRef cgc = d->cgc;
   set_line_mode (cgc, &gc->gcv);
@@ -1198,7 +1506,7 @@ XDrawLines (Display *dpy, Drawable d, GC gc, XPoint *points, int count,
   int i;
   NSPoint p;
   CGRect wr = d->frame;
-  push_fg_gc (d, gc, NO);
+  push_fg_gc (dpy, d, gc, NO);
 
   CGContextRef cgc = d->cgc;
 
@@ -1242,7 +1550,7 @@ XDrawSegments (Display *dpy, Drawable d, GC gc, XSegment *segments, int count)
 
   CGContextRef cgc = d->cgc;
 
-  push_fg_gc (d, gc, NO);
+  push_fg_gc (dpy, d, gc, NO);
   set_line_mode (cgc, &gc->gcv);
   CGContextBeginPath (cgc);
   for (i = 0; i < count; i++) {
@@ -1273,7 +1581,7 @@ int
 XSetWindowBackground (Display *dpy, Window w, unsigned long pixel)
 {
   Assert (w && w->type == WINDOW, "not a window");
-  validate_pixel (pixel, 32, NO);
+  validate_pixel (dpy, pixel, 32, NO);
   w->window.background = pixel;
   return 0;
 }
@@ -1292,9 +1600,9 @@ draw_rect (Display *dpy, Drawable d, GC gc,
 
   if (gc) {
     if (foreground_p)
-      push_fg_gc (d, gc, fill_p);
+      push_fg_gc (dpy, d, gc, fill_p);
     else
-      push_bg_gc (d, gc, fill_p);
+      push_bg_gc (dpy, d, gc, fill_p);
   }
 
   CGContextRef cgc = d->cgc;
@@ -1334,7 +1642,7 @@ XFillRectangles (Display *dpy, Drawable d, GC gc, XRectangle *rects, int n)
   CGRect wr = d->frame;
   int i;
   CGContextRef cgc = d->cgc;
-  push_fg_gc (d, gc, YES);
+  push_fg_gc (dpy, d, gc, YES);
   for (i = 0; i < n; i++) {
     CGRect r;
     r.origin.x = wr.origin.x + rects->x;
@@ -1355,7 +1663,7 @@ XClearArea (Display *dpy, Window win, int x, int y, int w, int h, Bool exp)
 {
   Assert (win && win->type == WINDOW, "not a window");
   CGContextRef cgc = win->cgc;
-  set_color (cgc, win->window.background, 32, NO, YES);
+  set_color (dpy, cgc, win->window.background, 32, NO, YES);
   draw_rect (dpy, win, 0, x, y, w, h, NO, YES);
   return 0;
 }
@@ -1367,7 +1675,7 @@ XFillPolygon (Display *dpy, Drawable d, GC gc,
 {
   CGRect wr = d->frame;
   int i;
-  push_fg_gc (d, gc, YES);
+  push_fg_gc (dpy, d, gc, YES);
   CGContextRef cgc = d->cgc;
   CGContextBeginPath (cgc);
   float x = 0, y = 0;
@@ -1419,7 +1727,7 @@ draw_arc (Display *dpy, Drawable d, GC gc, int x, int y,
   BOOL clockwise = angle2 < 0;
   BOOL closed_p = (angle2 >= 360*64 || angle2 <= -360*64);
   
-  push_fg_gc (d, gc, fill_p);
+  push_fg_gc (dpy, d, gc, fill_p);
 
   CGContextRef cgc = d->cgc;
   CGContextBeginPath (cgc);
@@ -1490,12 +1798,12 @@ XFillArcs (Display *dpy, Drawable d, GC gc, XArc *arcs, int narcs)
 
 
 static void
-gcv_defaults (XGCValues *gcv, int depth)
+gcv_defaults (Display *dpy, XGCValues *gcv, int depth)
 {
   memset (gcv, 0, sizeof(*gcv));
   gcv->function   = GXcopy;
-  gcv->foreground = (depth == 1 ? 1 : WhitePixel(0,0));
-  gcv->background = (depth == 1 ? 0 : BlackPixel(0,0));
+  gcv->foreground = (depth == 1 ? 1 : WhitePixel(dpy,0));
+  gcv->background = (depth == 1 ? 0 : BlackPixel(dpy,0));
   gcv->line_width = 1;
   gcv->cap_style  = CapNotLast;
   gcv->join_style = JoinMiter;
@@ -1506,7 +1814,7 @@ gcv_defaults (XGCValues *gcv, int depth)
 }
 
 static void
-set_gcv (GC gc, XGCValues *from, unsigned long mask)
+set_gcv (Display *dpy, GC gc, XGCValues *from, unsigned long mask)
 {
   if (! mask) return;
   Assert (gc && from, "no gc");
@@ -1526,9 +1834,9 @@ set_gcv (GC gc, XGCValues *from, unsigned long mask)
   if (mask & GCClipMask)	XSetClipMask (0, gc, from->clip_mask);
   if (mask & GCFont)		XSetFont (0, gc, from->font);
 
-  if (mask & GCForeground) validate_pixel (from->foreground, gc->depth,
+  if (mask & GCForeground) validate_pixel (dpy, from->foreground, gc->depth,
                                            gc->gcv.alpha_allowed_p);
-  if (mask & GCBackground) validate_pixel (from->background, gc->depth,
+  if (mask & GCBackground) validate_pixel (dpy, from->background, gc->depth,
                                            gc->gcv.alpha_allowed_p);
     
   Assert ((! (mask & (GCLineStyle |
@@ -1556,15 +1864,15 @@ XCreateGC (Display *dpy, Drawable d, unsigned long mask, XGCValues *xgcv)
     gc->depth = d->pixmap.depth;
   }
 
-  gcv_defaults (&gc->gcv, gc->depth);
-  set_gcv (gc, xgcv, mask);
+  gcv_defaults (dpy, &gc->gcv, gc->depth);
+  set_gcv (dpy, gc, xgcv, mask);
   return gc;
 }
 
 int
 XChangeGC (Display *dpy, GC gc, unsigned long mask, XGCValues *gcv)
 {
-  set_gcv (gc, gcv, mask);
+  set_gcv (dpy, gc, gcv, mask);
   return 0;
 }
 
@@ -1621,13 +1929,8 @@ XGetGeometry (Display *dpy, Drawable d, Window *root_ret,
 Status
 XAllocColor (Display *dpy, Colormap cmap, XColor *color)
 {
-  // store 32 bit ARGB in the pixel field.
-  // (The uint32_t is so that 0xFF000000 doesn't become 0xFFFFFFFFFF000000)
-  color->pixel = (uint32_t)
-                 ((                       0xFF  << 24) |
-                  (((color->red   >> 8) & 0xFF) << 16) |
-                  (((color->green >> 8) & 0xFF) <<  8) |
-                  (((color->blue  >> 8) & 0xFF)      ));
+  color->pixel = alloc_color (dpy,
+                              color->red, color->green, color->blue, 0xFFFF);
   return 1;
 }
 
@@ -1717,13 +2020,12 @@ XAllocNamedColor (Display *dpy, Colormap cmap, char *name,
 int
 XQueryColor (Display *dpy, Colormap cmap, XColor *color)
 {
-  validate_pixel (color->pixel, 32, NO);
-  unsigned char r = ((color->pixel >> 16) & 0xFF);
-  unsigned char g = ((color->pixel >>  8) & 0xFF);
-  unsigned char b = ((color->pixel      ) & 0xFF);
-  color->red   = (r << 8) | r;
-  color->green = (g << 8) | g;
-  color->blue  = (b << 8) | b;
+  validate_pixel (dpy, color->pixel, 32, NO);
+  uint8_t rgba[4];
+  query_color(dpy, color->pixel, rgba);
+  color->red   = (rgba[0] << 8) | rgba[0];
+  color->green = (rgba[1] << 8) | rgba[1];
+  color->blue  = (rgba[2] << 8) | rgba[2];
   color->flags = DoRed|DoGreen|DoBlue;
   return 0;
 }
@@ -1811,9 +2113,9 @@ XCreateImage (Display *dpy, Visual *visual, unsigned int depth,
   ximage->bitmap_bit_order = ximage->byte_order;
   ximage->bitmap_pad = bitmap_pad;
   ximage->depth = depth;
-  ximage->red_mask   = (depth == 1 ? 0 : 0x00FF0000);
-  ximage->green_mask = (depth == 1 ? 0 : 0x0000FF00);
-  ximage->blue_mask  = (depth == 1 ? 0 : 0x000000FF);
+  ximage->red_mask   = (depth == 1 ? 0 : dpy->screen->visual->red_mask);
+  ximage->green_mask = (depth == 1 ? 0 : dpy->screen->visual->green_mask);
+  ximage->blue_mask  = (depth == 1 ? 0 : dpy->screen->visual->blue_mask);
   ximage->bits_per_pixel = (depth == 1 ? 1 : 32);
   ximage->bytes_per_line = bytes_per_line;
 
@@ -1824,8 +2126,13 @@ XCreateImage (Display *dpy, Visual *visual, unsigned int depth,
 XImage *
 XSubImage (XImage *from, int x, int y, unsigned int w, unsigned int h)
 {
-  XImage *to = XCreateImage (0, 0, from->depth, from->format, 0, 0,
-                             w, h, from->bitmap_pad, 0);
+  XImage *to = (XImage *) malloc (sizeof(*to));
+  memcpy (to, from, sizeof(*from));
+  to->width = w;
+  to->height = h;
+  to->bytes_per_line = 0;
+  XInitImage (to);
+
   to->data = (char *) malloc (h * to->bytes_per_line);
 
   if (x >= from->width)
@@ -1976,9 +2283,9 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
       gc->gcv.function == GXclear) {
     // "set" and "clear" are dumb drawing modes that ignore the source
     // bits and just draw solid rectangles.
-    set_color (cgc, (gc->gcv.function == GXset
-                        ? (gc->depth == 1 ? 1 : WhitePixel(0,0))
-                        : (gc->depth == 1 ? 0 : BlackPixel(0,0))),
+    set_color (dpy, cgc, (gc->gcv.function == GXset
+                        ? (gc->depth == 1 ? 1 : WhitePixel(dpy,0))
+                        : (gc->depth == 1 ? 0 : BlackPixel(dpy,0))),
                gc->depth, gc->gcv.alpha_allowed_p, YES);
     draw_rect (dpy, d, 0, dest_x, dest_y, w, h, YES, YES);
     return 0;
@@ -2007,10 +2314,7 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
     CGImageRef cgi = CGImageCreate (w, h,
                                     bpp/4, bpp, bpl,
                                     dpy->colorspace, 
-                                    /* Need this for XPMs to have the right
-                                       colors, e.g. the logo in "maze". */
-                                    (kCGImageAlphaNoneSkipFirst |
-                                     kCGBitmapByteOrder32Host),
+                                    dpy->screen->bitmap_info,
                                     prov, 
                                     NULL,  /* decode[] */
                                     NO, /* interpolate */
@@ -2045,11 +2349,11 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
                                          prov,
                                          NULL,  /* decode[] */
                                          NO); /* interpolate */
-    push_fg_gc (d, gc, YES);
+    push_fg_gc (dpy, d, gc, YES);
 
     CGContextFillRect (cgc, r);				// foreground color
     CGContextClipToMask (cgc, r, mask);
-    set_color (cgc, gc->gcv.background, gc->depth, NO, YES);
+    set_color (dpy, cgc, gc->gcv.background, gc->depth, NO, YES);
     CGContextFillRect (cgc, r);				// background color
     pop_gc (d, gc);
 
@@ -2071,7 +2375,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
 {
   const unsigned char *data = 0;
   size_t depth, ibpp, ibpl;
-  enum { RGBA, ARGB, BGRA } src_format; // As bytes.
+  convert_mode_t mode;
 # ifndef USE_BACKBUFFER
   NSBitmapImageRep *bm = 0;
 # endif
@@ -2091,8 +2395,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     depth = (d->type == PIXMAP
              ? d->pixmap.depth
              : 32);
-    // We create pixmaps and iPhone backbuffers with kCGImageAlphaNoneSkipFirst.
-    src_format = BGRA; // #### Should this be ARGB on PPC?
+    mode = convert_mode_to_rgba (dpy->screen->bitmap_info);
     ibpp = CGBitmapContextGetBitsPerPixel (cgc);
     ibpl = CGBitmapContextGetBytesPerRow (cgc);
     data = CGBitmapContextGetData (cgc);
@@ -2110,7 +2413,7 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
     nsfrom.size.height = height;
     bm = [[NSBitmapImageRep alloc] initWithFocusedViewRect:nsfrom];
     depth = 32;
-    src_format = ([bm bitmapFormat] & NSAlphaFirstBitmapFormat) ? ARGB : RGBA;
+    mode = ([bm bitmapFormat] & NSAlphaFirstBitmapFormat) ? 3 : 0;
     ibpp = [bm bitsPerPixel];
     ibpl = [bm bytesPerRow];
     data = [bm bitmapData];
@@ -2154,61 +2457,16 @@ XGetImage (Display *dpy, Drawable d, int x, int y,
       iline += ibpl;
     }
   } else {
-    Assert (ibpp == 24 || ibpp == 32, "weird obpp");
     const unsigned char *iline = data;
     unsigned char *oline = (unsigned char *) image->data;
+
+    mode = convert_mode_merge (mode,
+             convert_mode_invert (
+               convert_mode_to_rgba (dpy->screen->bitmap_info)));
+
     for (yy = 0; yy < height; yy++) {
 
-      const unsigned char *iline2 = iline;
-      unsigned char *oline2 = oline;
-
-      switch (src_format) {
-      case ARGB:
-        for (xx = 0; xx < width; xx++) {
-          unsigned char a = (ibpp == 32 ? (*iline2++) : 0xFF);
-          unsigned char r = *iline2++;
-          unsigned char g = *iline2++;
-          unsigned char b = *iline2++;
-          uint32_t pixel = ((a << 24) |
-                            (r << 16) |
-                            (g <<  8) |
-                            (b <<  0));
-          *((uint32_t *) oline2) = pixel;
-          oline2 += 4;
-        }
-        break;
-      case RGBA:
-        for (xx = 0; xx < width; xx++) {
-          unsigned char r = *iline2++;
-          unsigned char g = *iline2++;
-          unsigned char b = *iline2++;
-          unsigned char a = (ibpp == 32 ? (*iline2++) : 0xFF);
-          uint32_t pixel = ((a << 24) |
-                            (r << 16) |
-                            (g <<  8) |
-                            (b <<  0));
-          *((uint32_t *) oline2) = pixel;
-          oline2 += 4;
-        }
-        break;
-      case BGRA:
-        for (xx = 0; xx < width; xx++) {
-          unsigned char b = *iline2++;
-          unsigned char g = *iline2++;
-          unsigned char r = *iline2++;
-          unsigned char a = (ibpp == 32 ? (*iline2++) : 0xFF);
-          uint32_t pixel = ((a << 24) |
-                            (r << 16) |
-                            (g <<  8) |
-                            (b <<  0));
-          *((uint32_t *) oline2) = pixel;
-          oline2 += 4;
-        }
-        break;
-      default:
-        abort();
-        break;
-      }
+      convert_row ((uint32_t *)oline, iline, width, mode, ibpp);
 
       oline += obpl;
       iline += ibpl;
@@ -2343,7 +2601,7 @@ jwxyz_draw_NSImage_or_CGImage (Display *dpy, Drawable d,
   if (d->type == WINDOW)
     XClearWindow (dpy, d);
   else {
-    set_color (cgc, BlackPixel(dpy,0), 32, NO, YES);
+    set_color (dpy, cgc, BlackPixel(dpy,0), 32, NO, YES);
     draw_rect (dpy, d, 0, 0, 0, winr.size.width, winr.size.height, NO, YES);
   }
 
@@ -2421,10 +2679,7 @@ XCreatePixmap (Display *dpy, Drawable d,
                                   8, /* bits per component */
                                   width * 4, /* bpl */
                                   dpy->colorspace,
-                                  // Without this, it returns 0...
-                                  (kCGImageAlphaNoneSkipFirst |
-                                   kCGBitmapByteOrder32Host)
-                                  );
+                                  dpy->screen->bitmap_info);
   Assert (p->cgc, "could not create CGBitmapContext");
   return p;
 }
@@ -2464,13 +2719,21 @@ copy_pixmap (Display *dpy, Pixmap p)
                                    8, /* bits per component */
                                    width * 4, /* bpl */
                                    dpy->colorspace,
-                                   // Without this, it returns 0...
-                                   (kCGImageAlphaNoneSkipFirst |
-                                    kCGBitmapByteOrder32Host)
-                                   );
+                                   dpy->screen->bitmap_info);
   Assert (p2->cgc, "could not create CGBitmapContext");
 
   return p2;
+}
+
+
+char *
+XGetAtomName (Display *dpy, Atom atom)
+{
+  if (atom == XA_FONT)
+    return strdup ("FONT");
+
+  // Note that atoms (that aren't predefined) are just char *.
+  return strdup ((char *) atom);
 }
 
 
@@ -2494,46 +2757,81 @@ copy_pixmap (Display *dpy, Pixmap p)
    If "rbearing" is greater than "width", then this character overlaps the
    following character.  If smaller, then there is trailing blank space.
  */
-
-
 static void
-glyph_metrics (CTFontRef ctfont, CGGlyph cgglyph, XCharStruct *cs)
+utf8_metrics (Font fid, NSString *nsstr, XCharStruct *cs)
 {
-  CGRect bbox = CTFontGetBoundingRectsForGlyphs (ctfont,
-                                                 kCTFontDefaultOrientation,
-                                                 &cgglyph, NULL, 1);
-  CGSize advancement;
-  CTFontGetAdvancesForGlyphs (ctfont, kCTFontDefaultOrientation,
-                              &cgglyph, &advancement, 1);
+  // Returns the metrics of the multi-character, single-line UTF8 string.
+
+  NSFont *nsfont = fid->nsfont;
+  Drawable d = XRootWindow (fid->dpy, 0);
+
+  CGContextRef cgc = d->cgc;
+  NSDictionary *attr =
+    [NSDictionary dictionaryWithObjectsAndKeys:
+                    nsfont, NSFontAttributeName,
+                  nil];
+  NSAttributedString *astr = [[NSAttributedString alloc]
+                               initWithString:nsstr
+                                   attributes:attr];
+  CTLineRef ctline = CTLineCreateWithAttributedString (
+                       (__bridge CFAttributedStringRef) astr);
+  CGContextSetTextPosition (cgc, 0, 0);
+  CGContextSetShouldAntialias (cgc, True);  // #### Guess?
+
+  memset (cs, 0, sizeof(*cs));
+
+  // "CTRun represents set of consecutive glyphs sharing the same
+  // attributes and direction".
+  //
+  // We also get multiple runs any time font subsitution happens:
+  // E.g., if the current font is Verdana-Bold, a &larr; character
+  // in the NSString will actually be rendered in LucidaGrande-Bold.
+  //
+  int count = 0;
+  for (id runid in (NSArray *)CTLineGetGlyphRuns(ctline)) {
+    CTRunRef run = (CTRunRef) runid;
+    CFRange r = { 0, };
+    CGRect bbox = CTRunGetImageBounds (run, cgc, r);
+    CGFloat ascent, descent, leading;
+    CGFloat advancement =
+      CTRunGetTypographicBounds (run, r, &ascent, &descent, &leading);
 
 # ifndef USE_IPHONE
-  // Only necessary for when LCD smoothing is enabled, which iOS doesn't do.
-  bbox.origin.x    -= 2.0/3.0;
-  bbox.size.width  += 4.0/3.0;
-  bbox.size.height += 1.0/2.0;
+    // Only necessary for when LCD smoothing is enabled, which iOS doesn't do.
+    bbox.origin.x    -= 2.0/3.0;
+    bbox.size.width  += 4.0/3.0;
+    bbox.size.height += 1.0/2.0;
 # endif
 
-//#define CEIL(F)  ((F) < 0 ? floor(F) : ceil(F))
-//#define FLOOR(F) ((F) < 0 ? ceil(F) : floor(F))
-#define CEIL(F)  ceil(F)
-#define FLOOR(F) floor(F)
+    // Create the metrics for this run:
+    XCharStruct cc;
+    cc.ascent   = ceil  (bbox.origin.y + bbox.size.height);
+    cc.descent  = ceil (-bbox.origin.y);
+    cc.lbearing = floor (bbox.origin.x);
+    cc.rbearing = ceil  (bbox.origin.x + bbox.size.width);
+    cc.width    = floor (advancement + 0.5);
 
-  /* Now that we know the advancement and bounding box, we can compute
-     the lbearing and rbearing.
-   */
-//cs->ascent   = CEIL (bbox.origin.y) + CEIL (bbox.size.height);
-  cs->ascent   = CEIL (bbox.origin.y + bbox.size.height);
-  cs->descent  = CEIL(-bbox.origin.y);
-  cs->lbearing = FLOOR (bbox.origin.x);
-//cs->rbearing = CEIL (bbox.origin.x) + CEIL (bbox.size.width);
-  cs->rbearing = CEIL (bbox.origin.x + bbox.size.width);
-  cs->width    = FLOOR (advancement.width + 0.5);
+    // Add those metrics into the cumulative metrics:
+    if (count == 0)
+      *cs = cc;
+    else
+      {
+        cs->ascent   = MAX (cs->ascent,     cc.ascent);
+        cs->descent  = MAX (cs->descent,    cc.descent);
+        cs->lbearing = MIN (cs->lbearing,   cs->width + cc.lbearing);
+        cs->rbearing = MAX (cs->rbearing,   cs->width + cc.rbearing);
+        cs->width    = MAX (cs->width,      cs->width + cc.width);
+      }
 
-  //  Assert (cs->rbearing - cs->lbearing == CEIL(bbox.size.width), 
-  //          "bbox w wrong");
-  //  Assert (cs->ascent   + cs->descent  == CEIL(bbox.size.height),
-  //          "bbox h wrong");
+    // Why no y? What about vertical text?
+    // XCharStruct doesn't encapsulate that but XGlyphInfo does.
+
+    count++;
+  }
+
+  CFRelease (ctline);
 }
+
 
 
 // This is XQueryFont, but for the XFontStruct embedded in 'Font'
@@ -2561,58 +2859,26 @@ query_font (Font fid)
   f->min_char_or_byte2 = first;
   f->max_char_or_byte2 = last;
   f->default_char      = 'M';
-  f->ascent            =  CEIL ([fid->nsfont ascender]);
-  f->descent           = -FLOOR ([fid->nsfont descender]);
+  f->ascent            =  ceil ([fid->nsfont ascender]);
+  f->descent           = -floor ([fid->nsfont descender]);
 
-  min->width    = 255;  // set to smaller values in the loop
-  min->ascent   = 255;
-  min->descent  = 255;
-  min->lbearing = 255;
-  min->rbearing = 255;
+  min->width    = 32767;  // set to smaller values in the loop
+  min->ascent   = 32767;
+  min->descent  = 32767;
+  min->lbearing = 32767;
+  min->rbearing = 32767;
 
   f->per_char = (XCharStruct *) calloc (last-first+2, sizeof (XCharStruct));
-  UniChar i;
 
-  CTFontRef ctfont =
-    CTFontCreateWithName ((CFStringRef) [fid->nsfont fontName],
-                          [fid->nsfont pointSize],
-                          NULL);
-  Assert (ctfont, @"no CTFontRef for UIFont");
-
-  for (i = first; i <= last; i++) {
+  for (int i = first; i <= last; i++) {
     XCharStruct *cs = &f->per_char[i-first];
 
-    /* There is no way to get "lbearing", "rbearing" or "descent" out of
-       NSFont.  'sizeWithFont' gives us "width" and "height" only.
-       Likewise, 'drawAtPoint' (to an offscreen CGContext) gives us the
-       width of the character and the ascent of the font.
-
-       Maybe we could use CGFontGetGlyphBBoxes() and avoid linking in
-       the CoreText library, but there's no non-CoreText way to turn a
-       unichar into a CGGlyph.
-     */
-    CGGlyph cgglyph = 0;
-
-    if (CTFontGetGlyphsForCharacters (ctfont, &i, &cgglyph, 1))
-      glyph_metrics (ctfont, cgglyph, cs);
-    else
-      // This is normal, since Latin1 does not encode 0-31 or 127-159.
-      memset (cs, 0, sizeof(*cs));
-
-# if 0
-    if (i == 224) {  // Latin1 == "agrave", MacRoman == "daggerdouble".
-      NSString *glyph_name = (NSString *)
-        CGFontCopyGlyphNameForGlyph (CTFontCopyGraphicsFont (ctfont, 0),
-                                     cgglyph);
-      Assert ([glyph_name isEqualToString:@"agrave"], @"wrong encoding");
-    }
-    if (i == 250) {  // Latin1 == "uacute", MacRoman == "dotaccent".
-      NSString *glyph_name = (NSString *)
-        CGFontCopyGlyphNameForGlyph (CTFontCopyGraphicsFont (ctfont, 0),
-                                     cgglyph);
-      Assert ([glyph_name isEqualToString:@"uacute"], @"wrong encoding");
-    }
-# endif // 0
+    char s2[2];
+    s2[0] = i;
+    s2[1] = 0;
+    NSString *nsstr = [NSString stringWithCString:s2
+                               encoding:NSISOLatin1StringEncoding];
+    utf8_metrics (fid, nsstr, cs);
 
     max->width    = MAX (max->width,    cs->width);
     max->ascent   = MAX (max->ascent,   cs->ascent);
@@ -2626,9 +2892,6 @@ query_font (Font fid)
     min->lbearing = MIN (min->lbearing, cs->lbearing);
     min->rbearing = MIN (min->rbearing, cs->rbearing);
 
-# undef CEIL
-# undef FLOOR
-
 # if 0
     fprintf(stderr, " %3d %c: w=%3d lb=%3d rb=%3d as=%3d ds=%3d "
                     " bb=%5.1f x %5.1f @ %5.1f %5.1f  adv=%5.1f %5.1f\n",
@@ -2639,8 +2902,6 @@ query_font (Font fid)
             advancement.width, advancement.height);
 # endif // 0
   }
-
-  CFRelease (ctfont);
 }
 
 
@@ -2652,6 +2913,15 @@ XQueryFont (Display *dpy, Font fid)
   // copy XFontStruct
   XFontStruct *f = (XFontStruct *) calloc (1, sizeof(*f));
   *f = fid->metrics;
+
+  // build XFontProps
+  f->n_properties = 1;
+  f->properties = malloc (sizeof(*f->properties) * f->n_properties);
+  f->properties[0].name = XA_FONT;
+  Assert (sizeof (f->properties[0].card32) >= sizeof (char *),
+          "atoms probably needs a real implementation");
+  // If XInternAtom is ever implemented, use it here.
+  f->properties[0].card32 = (char *)fid->xa_font;
 
   // copy XCharStruct array
   int size = (f->max_char_or_byte2 - f->min_char_or_byte2) + 1;
@@ -2679,6 +2949,7 @@ copy_font (Font fid)
 
   // copy the other pointers
   fid2->ps_name = strdup (fid->ps_name);
+  fid2->xa_font = strdup (fid->xa_font);
 //  [fid2->nsfont retain];
   fid2->metrics.fid = fid2;
 
@@ -2686,55 +2957,122 @@ copy_font (Font fid)
 }
 
 
+static NSArray *
+font_family_members (NSString *family_name)
+{
+# ifndef USE_IPHONE
+  return [[NSFontManager sharedFontManager]
+          availableMembersOfFontFamily:family_name];
+# else
+  return [UIFont fontNamesForFamilyName:family_name];
+# endif
+}
+
+
+static NSString *
+default_font_family (NSFontTraitMask require)
+{
+  return require & NSFixedPitchFontMask ? @"Courier" : @"Verdana";
+}
+
+
 static NSFont *
-try_font (BOOL fixed, BOOL bold, BOOL ital, BOOL serif, float size,
+try_font (NSFontTraitMask traits, NSFontTraitMask mask,
+          NSString *family_name, float size,
           char **name_ret)
 {
   Assert (size > 0, "zero font size");
-  const char *name;
 
-  if (fixed) {
-    // 
-    // "Monaco" only exists in plain.
-    // "LucidaSansTypewriterStd" gets an AGL bad value error.
-    // 
-    if (bold && ital) name = "Courier-BoldOblique";
-    else if (bold)    name = "Courier-Bold";
-    else if (ital)    name = "Courier-Oblique";
-    else              name = "Courier";
+  NSArray *family_members = font_family_members (family_name);
+  if (!family_members.count)
+    family_members = font_family_members (default_font_family (traits));
 
-  } else if (serif) {
-    // 
-    // "Georgia" looks better than "Times".
-    // 
-    if (bold && ital) name = "Georgia-BoldItalic";
-    else if (bold)    name = "Georgia-Bold";
-    else if (ital)    name = "Georgia-Italic";
-    else              name = "Georgia";
+# ifndef USE_IPHONE
+  for (unsigned k = 0; k != family_members.count; ++k) {
 
-  } else {
-    // 
-    // "Geneva" only exists in plain.
-    // "LucidaSansStd-BoldItalic" gets an AGL bad value error.
-    // "Verdana" renders smoother than "Helvetica" for some reason.
-    // 
-    if (bold && ital) name = "Verdana-BoldItalic";
-    else if (bold)    name = "Verdana-Bold";
-    else if (ital)    name = "Verdana-Italic";
-    else              name = "Verdana";
+    NSArray *member = [family_members objectAtIndex:k];
+    NSFontTraitMask font_mask =
+    [(NSNumber *)[member objectAtIndex:3] unsignedIntValue];
+
+    if ((font_mask & mask) == traits) {
+
+      NSString *name = [member objectAtIndex:0];
+      NSFont *f = [NSFont fontWithName:name size:size];
+      if (!f)
+        break;
+
+      /* Don't use this font if it (probably) doesn't include ASCII characters.
+       */
+      NSStringEncoding enc = [f mostCompatibleStringEncoding];
+      if (! (enc == NSUTF8StringEncoding ||
+             enc == NSISOLatin1StringEncoding ||
+             enc == NSNonLossyASCIIStringEncoding ||
+             enc == NSISOLatin2StringEncoding ||
+             enc == NSUnicodeStringEncoding ||
+             enc == NSWindowsCP1250StringEncoding ||
+             enc == NSWindowsCP1252StringEncoding ||
+             enc == NSMacOSRomanStringEncoding)) {
+        // NSLog(@"skipping \"%@\": encoding = %d", name, enc);
+        break;
+      }
+      // NSLog(@"using \"%@\": %d", name, enc);
+
+      // *name_ret = strdup ([name cStringUsingEncoding:NSUTF8StringEncoding]);
+      *name_ret = strdup (name.UTF8String);
+      return f;
+    }
+  }
+# else // USE_IPHONE
+
+  for (NSString *fn in family_members) {
+# define MATCH(X) \
+         ([fn rangeOfString:X options:NSCaseInsensitiveSearch].location \
+         != NSNotFound)
+
+    // The magic invocation for getting font names is
+    // [[UIFontDescriptor
+    //   fontDescriptorWithFontAttributes:@{UIFontDescriptorNameAttribute: name}]
+    //  symbolicTraits]
+    // ...but this only works on iOS 7 and later.
+    NSFontTraitMask font_mask = 0;
+    if (MATCH(@"Bold"))
+      font_mask |= NSBoldFontMask;
+    if (MATCH(@"Italic") || MATCH(@"Oblique"))
+      font_mask |= NSItalicFontMask;
+
+    if ((font_mask & mask) == traits) {
+
+      /* Check if it can do ASCII.  No good way to accomplish this!
+         These are fonts present in iPhone Simulator as of June 2012
+         that don't include ASCII.
+       */
+      if (MATCH(@"AppleGothic") ||	// Korean
+          MATCH(@"Dingbats") ||		// Dingbats
+          MATCH(@"Emoji") ||		// Emoticons
+          MATCH(@"Geeza") ||		// Arabic
+          MATCH(@"Hebrew") ||		// Hebrew
+          MATCH(@"HiraKaku") ||		// Japanese
+          MATCH(@"HiraMin") ||		// Japanese
+          MATCH(@"Kailasa") ||		// Tibetan
+          MATCH(@"Ornaments") ||	// Dingbats
+          MATCH(@"STHeiti")		// Chinese
+       )
+         break;
+
+      *name_ret = strdup (fn.UTF8String);
+      return [UIFont fontWithName:fn size:size];
+    }
+# undef MATCH
   }
 
-  NSString *nsname = [NSString stringWithCString:name
-                                        encoding:NSUTF8StringEncoding];
-  NSFont *f = [NSFont fontWithName:nsname size:size];
-  if (f)
-    *name_ret = strdup(name);
-  return f;
+# endif
+
+  return NULL;
 }
 
 static NSFont *
 try_native_font (const char *name, float scale,
-                 char **name_ret, float *size_ret)
+                 char **name_ret, float *size_ret, char **xa_font)
 {
   if (!name) return 0;
   const char *spc = strrchr (name, ' ');
@@ -2755,6 +3093,7 @@ try_native_font (const char *name, float scale,
   if (f) {
     *name_ret = name2;
     *size_ret = size;
+    *xa_font = strdup (name); // Maybe this should be an XLFD?
     return f;
   } else {
     free (name2);
@@ -2766,192 +3105,221 @@ try_native_font (const char *name, float scale,
 /* Returns a random font in the given size and face.
  */
 static NSFont *
-random_font (BOOL bold, BOOL ital, float size, char **name_ret)
+random_font (NSFontTraitMask traits, NSFontTraitMask mask,
+             float size, NSString **family_ret, char **name_ret)
 {
-# ifndef USE_IPHONE
-  NSFontTraitMask mask = ((bold ? NSBoldFontMask   : NSUnboldFontMask) |
-                          (ital ? NSItalicFontMask : NSUnitalicFontMask));
-  NSArray *fonts = [[NSFontManager sharedFontManager]
-                     availableFontNamesWithTraits:mask];
-  if (!fonts) return 0;
 
-  int n = [fonts count];
+# ifndef USE_IPHONE
+  // Providing Unbold or Unitalic in the mask for availableFontNamesWithTraits
+  // returns an empty list, at least on a system with default fonts only.
+  NSArray *families = [[NSFontManager sharedFontManager]
+                       availableFontFamilies];
+  if (!families) return 0;
+# else
+  NSArray *families = [UIFont familyNames];
+
+  // There are many dups in the families array -- uniquify it.
+  {
+    NSArray *sorted_families =
+    [families sortedArrayUsingSelector:@selector(compare:)];
+    NSMutableArray *new_families =
+    [NSMutableArray arrayWithCapacity:sorted_families.count];
+
+    NSString *prev_family = nil;
+    for (NSString *family in sorted_families) {
+      if ([family compare:prev_family])
+        [new_families addObject:family];
+    }
+
+    families = new_families;
+  }
+# endif // USE_IPHONE
+
+  long n = [families count];
   if (n <= 0) return 0;
 
   int j;
   for (j = 0; j < n; j++) {
     int i = random() % n;
-    NSString *name = [fonts objectAtIndex:i];
-    NSFont *f = [NSFont fontWithName:name size:size];
-    if (!f) continue;
+    NSString *family_name = [families objectAtIndex:i];
 
-    /* Don't use this font if it (probably) doesn't include ASCII characters.
-     */
-    NSStringEncoding enc = [f mostCompatibleStringEncoding];
-    if (! (enc == NSUTF8StringEncoding ||
-           enc == NSISOLatin1StringEncoding ||
-           enc == NSNonLossyASCIIStringEncoding ||
-           enc == NSISOLatin2StringEncoding ||
-           enc == NSUnicodeStringEncoding ||
-           enc == NSWindowsCP1250StringEncoding ||
-           enc == NSWindowsCP1252StringEncoding ||
-           enc == NSMacOSRomanStringEncoding)) {
-      // NSLog(@"skipping \"%@\": encoding = %d", name, enc);
-      continue;
+    NSFont *result = try_font (traits, mask, family_name, size, name_ret);
+    if (result) {
+      [*family_ret release];
+      *family_ret = family_name;
+      [*family_ret retain];
+      return result;
     }
-    // NSLog(@"using \"%@\": %d", name, enc);
-
-    *name_ret = strdup ([name cStringUsingEncoding:NSUTF8StringEncoding]);
-    return f;
   }
 
   // None of the fonts support ASCII?
   return 0;
+}
 
-# else  // USE_IPHONE
 
-  NSMutableArray *fonts = [NSMutableArray arrayWithCapacity:100];
-  NSArray *families = [UIFont familyNames];
-  NSMutableDictionary *famdict = [NSMutableDictionary 
-                                   dictionaryWithCapacity:100];
-  NSObject *y = [NSNumber numberWithBool:YES];
-  for (NSString *name in families) {
-    // There are many dups in the families array -- uniquify it.
-    [famdict setValue:y forKey:name];
+// Fonts need this. XDisplayHeightMM and friends should probably be consistent
+// with this as well if they're ever implemented.
+static const unsigned dpi = 75;
+
+
+static const char *
+xlfd_field_end (const char *s)
+{
+  const char *s2 = strchr(s, '-');
+  if (!s2)
+    s2 = s + strlen(s);
+  return s2;
+}
+
+
+static size_t
+xlfd_next (const char **s, const char **s2)
+{
+  if (!**s2) {
+    *s = *s2;
+  } else {
+    Assert (**s2 == '-', "xlfd parse error");
+    *s = *s2 + 1;
+    *s2 = xlfd_field_end (*s);
   }
 
-  for (NSString *name in famdict) {
-    for (NSString *fn in [UIFont fontNamesForFamilyName:name]) {
-
-# define MATCH(X) \
-         ([fn rangeOfString:X options:NSCaseInsensitiveSearch].location \
-         != NSNotFound)
-
-      BOOL bb = MATCH(@"Bold");
-      BOOL ii = MATCH(@"Italic") || MATCH(@"Oblique");
-
-      if (!bold != !bb) continue;
-      if (!ital != !ii) continue;
-
-      /* Check if it can do ASCII.  No good way to accomplish this!
-         These are fonts present in iPhone Simulator as of June 2012
-         that don't include ASCII.
-       */
-      if (MATCH(@"AppleGothic") ||	// Korean
-          MATCH(@"Dingbats") ||		// Dingbats
-          MATCH(@"Emoji") ||		// Emoticons
-          MATCH(@"Geeza") ||		// Arabic
-          MATCH(@"Hebrew") ||		// Hebrew
-          MATCH(@"HiraKaku") ||		// Japanese
-          MATCH(@"HiraMin") ||		// Japanese
-          MATCH(@"Kailasa") ||		// Tibetan
-          MATCH(@"Ornaments") ||	// Dingbats
-          MATCH(@"STHeiti")		// Chinese
-         )
-        continue;
-
-      [fonts addObject:fn];
-# undef MATCH
-    }
-  }
-
-  if (! [fonts count]) return 0;	// Nothing suitable?
-
-  int i = random() % [fonts count];
-  NSString *name = [fonts objectAtIndex:i];
-  UIFont *ff = [UIFont fontWithName:name size:size];
-  *name_ret = strdup ([name cStringUsingEncoding:NSUTF8StringEncoding]);
-
-  return ff;
-
-# endif // USE_IPHONE
+  return *s2 - *s;
 }
 
 
 static NSFont *
 try_xlfd_font (const char *name, float scale,
-               char **name_ret, float *size_ret)
+               char **name_ret, float *size_ret, char **xa_font)
 {
   NSFont *nsfont = 0;
-  BOOL bold  = NO;
-  BOOL ital  = NO;
-  BOOL fixed = NO;
-  BOOL serif = NO;
+  NSString *family_name = nil;
+  NSFontTraitMask require = 0, forbid = 0;
   BOOL rand  = NO;
   float size = 0;
   char *ps_name = 0;
 
   const char *s = (name ? name : "");
-  while (*s) {
-    while (*s && (*s == '*' || *s == '-'))
-      s++;
-    const char *s2 = s;
-    while (*s2 && (*s2 != '*' && *s2 != '-'))
-      s2++;
-    
-    unsigned long L = s2-s;
-    if (s == s2)
-      ;
+
+  size_t L = strlen (s);
 # define CMP(STR) (L == strlen(STR) && !strncasecmp (s, (STR), L))
-    else if (CMP ("random"))   rand  = YES;
-    else if (CMP ("bold"))     bold  = YES;
-    else if (CMP ("i"))        ital  = YES;
-    else if (CMP ("o"))        ital  = YES;
-    else if (CMP ("courier"))  fixed = YES;
-    else if (CMP ("fixed"))    fixed = YES;
-    else if (CMP ("m"))        fixed = YES;
-    else if (CMP ("times"))    serif = YES;
-    else if (CMP ("6x10"))     fixed = YES, size = 8;
-    else if (CMP ("6x10bold")) fixed = YES, size = 8,  bold = YES;
-    else if (CMP ("9x15"))     fixed = YES, size = 12;
-    else if (CMP ("9x15bold")) fixed = YES, size = 12, bold = YES;
-    else if (CMP ("vga"))      fixed = YES, size = 12;
-    else if (CMP ("console"))  fixed = YES, size = 12;
-    else if (CMP ("gallant"))  fixed = YES, size = 12;
-# undef CMP
-    else if (size == 0) {
-      int n = 0;
-      if (1 == sscanf (s, " %d ", &n))
-        size = n / 10.0;
+# define UNSPEC   (L == 0 || L == 1 && *s == '*')
+  if      (CMP ("6x10"))     size = 8,  require |= NSFixedPitchFontMask;
+  else if (CMP ("6x10bold")) size = 8,  require |= NSFixedPitchFontMask | NSBoldFontMask;
+  else if (CMP ("fixed"))    size = 12, require |= NSFixedPitchFontMask;
+  else if (CMP ("9x15"))     size = 12, require |= NSFixedPitchFontMask;
+  else if (CMP ("9x15bold")) size = 12, require |= NSFixedPitchFontMask | NSBoldFontMask;
+  else if (CMP ("vga"))      size = 12, require |= NSFixedPitchFontMask;
+  else if (CMP ("console"))  size = 12, require |= NSFixedPitchFontMask;
+  else if (CMP ("gallant"))  size = 12, require |= NSFixedPitchFontMask;
+  else {
+
+    // Incorrect fields are ignored.
+
+    if (*s == '-')
+      ++s;
+    const char *s2 = xlfd_field_end(s);
+
+    // Foundry (ignore)
+
+    L = xlfd_next (&s, &s2); // Family name
+    // This used to substitute Georgia for Times. Now it doesn't.
+    if (CMP ("random")) {
+      rand = YES;
+    } else if (CMP ("fixed")) {
+      require |= NSFixedPitchFontMask;
+      family_name = @"Courier";
+    } else if (!UNSPEC) {
+      family_name = [[[NSString alloc] initWithBytes:s
+                                              length:L
+                                            encoding:NSUTF8StringEncoding]
+                     autorelease];
     }
 
-    s = s2;
+    L = xlfd_next (&s, &s2); // Weight name
+    if (CMP ("bold") || CMP ("demibold"))
+      require |= NSBoldFontMask;
+    else if (CMP ("medium") || CMP ("regular"))
+      forbid |= NSBoldFontMask;
+
+    L = xlfd_next (&s, &s2); // Slant
+    if (CMP ("i") || CMP ("o"))
+      require |= NSItalicFontMask;
+    else if (CMP ("r"))
+      forbid |= NSItalicFontMask;
+
+    xlfd_next (&s, &s2); // Set width name (ignore)
+    xlfd_next (&s, &s2); // Add style name (ignore)
+
+    xlfd_next (&s, &s2); // Pixel size (ignore)
+
+    xlfd_next (&s, &s2); // Point size
+    char *s3;
+    uintmax_t n = strtoumax(s, &s3, 10);
+    if (s2 == s3)
+      size = n / 10.0;
+
+    xlfd_next (&s, &s2); // Resolution X (ignore)
+    xlfd_next (&s, &s2); // Resolution Y (ignore)
+
+    xlfd_next (&s, &s2); // Spacing
+    if (CMP ("p"))
+      forbid |= NSFixedPitchFontMask;
+    else if (CMP ("m") || CMP ("c"))
+      require |= NSFixedPitchFontMask;
+
+    // Don't care about average_width or charset registry.
   }
+# undef CMP
+# undef UNSPEC
+
+  if (!family_name && !rand)
+    family_name = default_font_family (require);
 
   if (size < 6 || size > 1000)
     size = 12;
 
   size *= scale;
 
-  if (rand)
-    nsfont   = random_font (bold, ital, size, &ps_name);
+  NSFontTraitMask mask = require | forbid;
+
+  if (rand) {
+    nsfont   = random_font (require, mask, size, &family_name, &ps_name);
+    [family_name autorelease];
+  }
 
   if (!nsfont)
-    nsfont   = try_font (fixed, bold, ital, serif, size, &ps_name);
+    nsfont   = try_font (require, mask, family_name, size, &ps_name);
 
   // if that didn't work, turn off attibutes until it does
   // (e.g., there is no "Monaco-Bold".)
   //
-  if (!nsfont && serif) {
-    serif = NO;
-    nsfont = try_font (fixed, bold, ital, serif, size, &ps_name);
+  if (!nsfont && (mask & NSItalicFontMask)) {
+    require &= ~NSItalicFontMask;
+    mask &= ~NSItalicFontMask;
+    nsfont = try_font (require, mask, family_name, size, &ps_name);
   }
-  if (!nsfont && ital) {
-    ital = NO;
-    nsfont = try_font (fixed, bold, ital, serif, size, &ps_name);
+  if (!nsfont && (mask & NSBoldFontMask)) {
+    require &= ~NSBoldFontMask;
+    mask &= ~NSBoldFontMask;
+    nsfont = try_font (require, mask, family_name, size, &ps_name);
   }
-  if (!nsfont && bold) {
-    bold = NO;
-    nsfont = try_font (fixed, bold, ital, serif, size, &ps_name);
-  }
-  if (!nsfont && fixed) {
-    fixed = NO;
-    nsfont = try_font (fixed, bold, ital, serif, size, &ps_name);
+  if (!nsfont && (mask & NSFixedPitchFontMask)) {
+    require &= ~NSFixedPitchFontMask;
+    mask &= ~NSFixedPitchFontMask;
+    nsfont = try_font (require, mask, family_name, size, &ps_name);
   }
 
   if (nsfont) {
     *name_ret = ps_name;
     *size_ret = size;
+    float actual_size = size / scale;
+    asprintf(xa_font, "-*-%s-%s-%c-*-*-%u-%u-%u-%u-%c-0-iso10646-1",
+             family_name.UTF8String,
+             (require & NSBoldFontMask) ? "bold" : "medium",
+             (require & NSItalicFontMask) ? 'o' : 'r',
+             (unsigned)(dpi * actual_size / 72.27 + 0.5),
+             (unsigned)(actual_size * 10 + 0.5), dpi, dpi,
+             (require & NSFixedPitchFontMask) ? 'm' : 'p');
     return nsfont;
   } else {
     return 0;
@@ -2978,7 +3346,9 @@ XLoadFont (Display *dpy, const char *name)
   scale = 2;
 # endif
 
-  fid->nsfont = try_native_font (name, scale, &fid->ps_name, &fid->size);
+  fid->dpy = dpy;
+  fid->nsfont = try_native_font (name, scale, &fid->ps_name, &fid->size,
+                                 &fid->xa_font);
 
   if (!fid->nsfont && name &&
       strchr (name, ' ') &&
@@ -2991,7 +3361,8 @@ XLoadFont (Display *dpy, const char *name)
   }
 
   if (! fid->nsfont)
-    fid->nsfont = try_xlfd_font (name, scale, &fid->ps_name, &fid->size);
+    fid->nsfont = try_xlfd_font (name, scale, &fid->ps_name, &fid->size,
+                                 &fid->xa_font);
 
   // We should never return NULL for XLFD fonts.
   if (!fid->nsfont) {
@@ -3047,8 +3418,10 @@ XFreeFontInfo (char **names, XFontStruct *info, int n)
   }
   if (info) {
     for (i = 0; i < n; i++)
-      if (info[i].per_char)
+      if (info[i].per_char) {
         free (info[i].per_char);
+        free (info[i].properties);
+      }
     free (info);
   }
   return 0;
@@ -3086,7 +3459,7 @@ XCreateFontSet (Display *dpy, char *name,
   char *s = strchr (name, ",");
   if (s) *s = 0;
   XFontSet set = 0;
-  Font f = XLoadFont (dpy, name2);
+  XFontStruct *f = XLoadQueryFont (dpy, name2);
   if (f)
     {
       set = (XFontSet) calloc (1, sizeof(*set));
@@ -3103,8 +3476,16 @@ XCreateFontSet (Display *dpy, char *name,
 void
 XFreeFontSet (Display *dpy, XFontSet set)
 {
-  XUnloadFont (dpy, set->font);
+  XFreeFont (dpy, set->font);
   free (set);
+}
+
+
+const char *
+jwxyz_nativeFontName (Font f, float *size)
+{
+  if (size) *size = f->size;
+  return f->ps_name;
 }
 
 
@@ -3119,27 +3500,80 @@ XFreeStringList (char **list)
 }
 
 
+// Returns the verbose Unicode name of this character, like "agrave" or
+// "daggerdouble".  Used by fontglide debugMetrics.
+//
+char *
+jwxyz_unicode_character_name (Font fid, unsigned long uc)
+{
+  char *ret = 0;
+  CTFontRef ctfont =
+    CTFontCreateWithName ((CFStringRef) [fid->nsfont fontName],
+                          [fid->nsfont pointSize],
+                          NULL);
+  Assert (ctfont, @"no CTFontRef for UIFont");
+
+  CGGlyph cgglyph;
+  if (CTFontGetGlyphsForCharacters (ctfont, (UniChar *) &uc, &cgglyph, 1)) {
+    NSString *name = (NSString *)
+      CGFontCopyGlyphNameForGlyph (CTFontCopyGraphicsFont (ctfont, 0),
+                                   cgglyph);
+    ret = (name ? strdup ([name UTF8String]) : 0);
+  }
+
+  CFRelease (ctfont);
+  return ret;
+}
+
+
+// Given a UTF8 string, return an NSString.  Bogus UTF8 characters are ignored.
+// We have to do this because stringWithCString returns NULL if there are
+// any invalid characters at all.
+//
+static NSString *
+sanitize_utf8 (const char *in, int in_len, Bool *latin1_pP)
+{
+  int out_len = in_len * 4;   // length of string might increase
+  char *s2 = (char *) malloc (out_len);
+  char *out = s2;
+  const char *in_end  = in  + in_len;
+  const char *out_end = out + out_len;
+  Bool latin1_p = True;
+
+  while (in < in_end)
+    {
+      unsigned long uc;
+      long L1 = utf8_decode ((const unsigned char *) in, in_end - in, &uc);
+      long L2 = utf8_encode (uc, out, out_end - out);
+      in  += L1;
+      out += L2;
+      if (uc > 255) latin1_p = False;
+    }
+  *out = 0;
+  NSString *nsstr =
+    [NSString stringWithCString:s2 encoding:NSUTF8StringEncoding];
+  free (s2);
+  if (latin1_pP) *latin1_pP = latin1_p;
+  return (nsstr ? nsstr : @"");
+}
+
+
 int
 XTextExtents (XFontStruct *f, const char *s, int length,
               int *dir_ret, int *ascent_ret, int *descent_ret,
               XCharStruct *cs)
 {
-  memset (cs, 0, sizeof(*cs));
-  for (int i = 0; i < length; i++) {
-    unsigned char c = (unsigned char) s[i];
-    if (c < f->min_char_or_byte2 || c > f->max_char_or_byte2)
-      c = f->default_char;
-    const XCharStruct *cc = &f->per_char[c - f->min_char_or_byte2];
-    if (i == 0) {
-      *cs = *cc;
-    } else {
-      cs->ascent   = MAX (cs->ascent,   cc->ascent);
-      cs->descent  = MAX (cs->descent,  cc->descent);
-      cs->lbearing = MIN (cs->lbearing, cs->width + cc->lbearing);
-      cs->rbearing = MAX (cs->rbearing, cs->width + cc->rbearing);
-      cs->width   += cc->width;
-    }
-  }
+  // Unfortunately, adding XCharStructs together to get the extents for a
+  // string doesn't work: Cocoa uses non-integral character advancements, but
+  // XCharStruct.width is an integer. Plus that doesn't take into account
+  // kerning pairs, alternate glyphs, and fun stuff like the word "Zapfino" in
+  // Zapfino.
+
+  NSString *nsstr = [[[NSString alloc] initWithBytes:s
+                                              length:length
+                                            encoding:NSISOLatin1StringEncoding]
+                     autorelease];
+  utf8_metrics (f->fid, nsstr, cs);
   *dir_ret = 0;
   *ascent_ret  = f->ascent;
   *descent_ret = f->descent;
@@ -3161,105 +3595,77 @@ XTextExtents16 (XFontStruct *f, const XChar2b *s, int length,
                 int *dir_ret, int *ascent_ret, int *descent_ret,
                 XCharStruct *cs)
 {
-  Font fid = f->fid;
-  CTFontRef ctfont =
-    CTFontCreateWithName ((CFStringRef) [fid->nsfont fontName],
-                          [fid->nsfont pointSize],
-                          NULL);
-  Assert (ctfont, @"no CTFontRef for UIFont");
+  Bool latin1_p = True;
+  int i, utf8_len = 0;
+  char *utf8 = XChar2b_to_utf8 (s, &utf8_len);   // already sanitized
 
-  int utf8_len = 0;
-  char *utf8 = XChar2b_to_utf8 (s, &utf8_len);
-  NSString *nsstr = [NSString stringWithCString:utf8
-                                       encoding:NSUTF8StringEncoding];
-  NSUInteger L = [nsstr length];
-
-  for (int i = 0; i < L; i++) {
-    unichar c = [nsstr characterAtIndex:i];
-    XCharStruct cc;
-    CGGlyph cgglyph = 0;
-
-    if (CTFontGetGlyphsForCharacters (ctfont, &c, &cgglyph, 1))
-      glyph_metrics (ctfont, cgglyph, &cc);
-    else
-      // This is normal, since Latin1 does not encode 0-31 or 127-159.
-      memset (&cc, 0, sizeof(cc));
-
-    if (i == 0) {
-      *cs = cc;
-    } else {
-      cs->ascent   = MAX (cs->ascent,   cc.ascent);
-      cs->descent  = MAX (cs->descent,  cc.descent);
-      cs->lbearing = MIN (cs->lbearing, cs->width + cc.lbearing);
-      cs->rbearing = MAX (cs->rbearing, cs->width + cc.rbearing);
-      cs->width   += cc.width;
+  for (i = 0; i < length; i++)
+    if (s[i].byte1 > 0) {
+      latin1_p = False;
+      break;
     }
+
+  {
+    NSString *nsstr = [NSString stringWithCString:utf8
+                                encoding:NSUTF8StringEncoding];
+    utf8_metrics (f->fid, nsstr, cs);
   }
+
   *dir_ret = 0;
   *ascent_ret  = f->ascent;
   *descent_ret = f->descent;
-
   free (utf8);
-  CFRelease (ctfont);
-
   return 0;
 }
 
 
+/* "Returns the distance in pixels in the primary draw direction from
+   the drawing origin to the origin of the next character to be drawn."
+
+   "overall_ink_return is set to the bbox of the string's character ink."
+
+   "The overall_ink_return for a nondescending, horizontally drawn Latin
+   character is conventionally entirely above the baseline; that is,
+   overall_ink_return.height <= -overall_ink_return.y."
+
+     [So this means that y is the top of the ink, and height grows down:
+      For above-the-baseline characters, y is negative.]
+
+   "The overall_ink_return for a nonkerned character is entirely at, and to
+   the right of, the origin; that is, overall_ink_return.x >= 0."
+
+     [So this means that x is the left of the ink, and width grows right.
+      For left-of-the-origin characters, x is negative.]
+
+   "A character consisting of a single pixel at the origin would set
+   overall_ink_return fields y = 0, x = 0, width = 1, and height = 1."
+ */
 int
-Xutf8TextExtents (XFontSet set, const char *str, int num_bytes,
+Xutf8TextExtents (XFontSet set, const char *str, int len,
                   XRectangle *overall_ink_return,
                   XRectangle *overall_logical_return)
 {
-  Font fid = set->font;
-  CTFontRef ctfont =
-    CTFontCreateWithName ((CFStringRef) [fid->nsfont fontName],
-                          [fid->nsfont pointSize],
-                          NULL);
-  Assert (ctfont, @"no CTFontRef for UIFont");
+  Bool latin1_p;
+  NSString *nsstr = sanitize_utf8 (str, len, &latin1_p);
+  XCharStruct cs;
 
-  NSString *nsstr = [NSString stringWithCString:str
-                                       encoding:NSUTF8StringEncoding];
-  NSUInteger L = [nsstr length];
+  utf8_metrics (set->font->fid, nsstr, &cs);
 
-  XRectangle ink = { 0, };
-  XRectangle logical = { 0, };
+  /* "The overall_logical_return is the bounding box that provides minimum
+     spacing to other graphical features for the string. Other graphical
+     features, for example, a border surrounding the text, should not
+     intersect this rectangle."
 
-  logical.height = fid->metrics.ascent;
-
-  for (int i = 0; i < L; i++) {
-    unichar c = [nsstr characterAtIndex:i];
-    XCharStruct cs;
-    CGGlyph cgglyph = 0;
-
-    if (CTFontGetGlyphsForCharacters (ctfont, &c, &cgglyph, 1))
-      glyph_metrics (ctfont, cgglyph, &cs);
-    else
-      // This is normal, since Latin1 does not encode 0-31 or 127-159.
-      memset (&cs, 0, sizeof(cs));
-
-    logical.width += cs.width;
-
-    ink.height = MAX(ink.height, cs.ascent);
-    ink.y      = MIN(ink.y,      cs.descent);
-
-    if (i == 0)
-      ink.x = cs.lbearing;
-
-    if (i == L-1) {
-      ink.width += cs.rbearing;
-    } else {
-      ink.width += cs.width;
-    }
-  }
-    
-  CFRelease (ctfont);
-
+     So I think that means they're the same?  Or maybe "ink" is the bounding
+     box, and "logical" is the advancement?  But then why is the return value
+     the advancement?
+   */
   if (overall_ink_return)
-    *overall_ink_return = ink;
+    XCharStruct_to_XmbRectangle (cs, *overall_ink_return);
   if (overall_logical_return)
-    *overall_logical_return = logical;
-  return 0;
+    XCharStruct_to_XmbRectangle (cs, *overall_logical_return);
+
+  return cs.width;
 }
 
 
@@ -3274,16 +3680,24 @@ draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
 
   unsigned long argb = gc->gcv.foreground;
   if (gc->depth == 1) argb = (argb ? WhitePixel(dpy,0) : BlackPixel(dpy,0));
-  float a = ((argb >> 24) & 0xFF) / 255.0;
-  float r = ((argb >> 16) & 0xFF) / 255.0;
-  float g = ((argb >>  8) & 0xFF) / 255.0;
-  float b = ((argb      ) & 0xFF) / 255.0;
-  NSColor *fg = [NSColor colorWithDeviceRed:r green:g blue:b alpha:a];
+  float rgba[4];
+  query_color_float (dpy, argb, rgba);
+  NSColor *fg = [NSColor colorWithDeviceRed:rgba[0]
+                                      green:rgba[1]
+                                       blue:rgba[2]
+                                      alpha:rgba[3]];
 
   if (!gc->gcv.font) {
     Assert (0, "no font");
     return 1;
   }
+
+  /* This crashes on iOS 5.1 because NSForegroundColorAttributeName,
+      NSFontAttributeName, and NSAttributedString are only present on iOS 6
+      and later.  We could resurrect the Quartz code from v5.29 and do a
+      runtime conditional on that, but that would be a pain in the ass.
+      Probably time to just make iOS 6 a requirement.
+   */
 
   NSDictionary *attr =
     [NSDictionary dictionaryWithObjectsAndKeys:
@@ -3294,17 +3708,31 @@ draw_string (Display *dpy, Drawable d, GC gc, int x, int y,
   // Don't understand why we have to do both set_color and
   // NSForegroundColorAttributeName, but we do.
   //
-  set_color (cgc, argb, 32, NO, YES);
+  set_color (dpy, cgc, argb, 32, NO, YES);
 
   NSAttributedString *astr = [[NSAttributedString alloc]
                                initWithString:nsstr
                                    attributes:attr];
   CTLineRef dl = CTLineCreateWithAttributedString (
                    (__bridge CFAttributedStringRef) astr);
+
+  // Not sure why this is necessary, but xoff is positive when the first
+  // character on the line has a negative lbearing.  Without this, the
+  // string is rendered with the first ink at 0 instead of at lbearing.
+  // I have not seen xoff be negative, so I'm not sure if that can happen.
+  //
+  // Test case: "Combining Double Tilde" U+0360 (\315\240) followed by
+  // a letter.
+  //
+  CGFloat xoff = CTLineGetOffsetForStringIndex (dl, 0, NULL);
+  Assert (xoff >= 0, "unexpected CTLineOffset");
+  x -= xoff;
+
   CGContextSetTextPosition (cgc,
                             wr.origin.x + x,
                             wr.origin.y + wr.size.height - y);
   CGContextSetShouldAntialias (cgc, gc->gcv.antialias_p);
+
   CTLineDraw (dl, cgc);
   CFRelease (dl);
 
@@ -3332,15 +3760,9 @@ int
 XDrawString16 (Display *dpy, Drawable d, GC gc, int x, int y,
              const XChar2b *str, int len)
 {
-  char *s2 = XChar2b_to_utf8 (str, 0);
-  NSString *nsstr = [NSString stringWithCString:s2
-                                       encoding:NSUTF8StringEncoding];
-  if (! nsstr)
-    /* If the C string has invalid UTF8 bytes in it, the result is
-       "undefined", which turns out to mean "return a null string"
-       instead of just omitting the bogus characters. Greaaat.
-       So try it again as Latin1, I guess. */
-    nsstr = [NSString stringWithCString:s2 encoding:NSISOLatin1StringEncoding];
+  char *s2 = XChar2b_to_utf8 (str, 0);   // already sanitized
+  NSString *nsstr =
+    [NSString stringWithCString:s2 encoding:NSUTF8StringEncoding];
   int ret = draw_string (dpy, d, gc, x, y, nsstr);
   free (s2);
   return ret;
@@ -3354,10 +3776,7 @@ Xutf8DrawString (Display *dpy, Drawable d, XFontSet set, GC gc,
   char *s2 = (char *) malloc (len + 1);
   strncpy (s2, str, len);
   s2[len] = 0;
-  NSString *nsstr = [NSString stringWithCString:s2
-                                       encoding:NSUTF8StringEncoding];
-  if (! nsstr)
-    nsstr = [NSString stringWithCString:s2 encoding:NSISOLatin1StringEncoding];
+  NSString *nsstr = sanitize_utf8 (str, len, 0);
   draw_string (dpy, d, gc, x, y, nsstr);
   free (s2);
 }
@@ -3386,7 +3805,7 @@ XDrawImageString (Display *dpy, Drawable d, GC gc, int x, int y,
 int
 XSetForeground (Display *dpy, GC gc, unsigned long fg)
 {
-  validate_pixel (fg, gc->depth, gc->gcv.alpha_allowed_p);
+  validate_pixel (dpy, fg, gc->depth, gc->gcv.alpha_allowed_p);
   gc->gcv.foreground = fg;
   return 0;
 }
@@ -3395,7 +3814,7 @@ XSetForeground (Display *dpy, GC gc, unsigned long fg)
 int
 XSetBackground (Display *dpy, GC gc, unsigned long bg)
 {
-  validate_pixel (bg, gc->depth, gc->gcv.alpha_allowed_p);
+  validate_pixel (dpy, bg, gc->depth, gc->gcv.alpha_allowed_p);
   gc->gcv.background = bg;
   return 0;
 }
@@ -3665,7 +4084,7 @@ visual_depth (Screen *s, Visual *v)
 int
 visual_cells (Screen *s, Visual *v)
 {
-  return 0xFFFFFF;
+  return (int)(v->red_mask | v->green_mask | v->blue_mask);
 }
 
 int

@@ -5264,12 +5264,13 @@ fi
 done
 
 
-for ac_header in unistd.h
+for ac_header in unistd.h inttypes.h
 do :
-  ac_fn_c_check_header_mongrel "$LINENO" "unistd.h" "ac_cv_header_unistd_h" "$ac_includes_default"
-if test "x$ac_cv_header_unistd_h" = xyes; then :
+  as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
+ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Header"\" = x"yes"; then :
   cat >>confdefs.h <<_ACEOF
-#define HAVE_UNISTD_H 1
+#define `$as_echo "HAVE_$ac_header" | $as_tr_cpp` 1
 _ACEOF
 
 fi
@@ -11771,6 +11772,8 @@ esac
 with_login_manager_req=unspecified
 default_login_manager_1='gdmflexiserver -ls'
 default_login_manager_2='kdmctl reserve'
+default_login_manager_3='lxdm -c USER_SWITCH'
+default_login_manager_4='dm-tool switch-to-greeter'
 
 
 # Check whether --with-login-manager was given.
@@ -11793,11 +11796,14 @@ case "$with_login_manager_req" in
   ;;
 
   yes|unspecified)
-    # Try both defaults, use the one that exists.
+    # Try various defaults, use the first one that exists.
 
-    set dummy $default_login_manager_1 ; login_manager_tmp=$2
-    unset ac_cv_path_login_manager_tmp  # don't cache
-    # Extract the first word of "$login_manager_tmp", so it can be a program name with args.
+    with_login_manager=""
+
+    if test -z "$with_login_manager" ; then
+      set dummy $default_login_manager_1 ; login_manager_tmp=$2
+      unset ac_cv_path_login_manager_tmp  # don't cache
+      # Extract the first word of "$login_manager_tmp", so it can be a program name with args.
 set dummy $login_manager_tmp; ac_word=$2
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
 $as_echo_n "checking for $ac_word... " >&6; }
@@ -11837,9 +11843,12 @@ $as_echo "no" >&6; }
 fi
 
 
-    if test ! -z "$login_manager_tmp" ; then
-      with_login_manager="$default_login_manager_1"
-    else
+      if test ! -z "$login_manager_tmp" ; then
+        with_login_manager="$default_login_manager_1"
+      fi
+    fi
+
+    if test -z "$with_login_manager" ; then
       set dummy $default_login_manager_2 ; login_manager_tmp=$2
       unset ac_cv_path_login_manager_tmp  # don't cache
       # Extract the first word of "$login_manager_tmp", so it can be a program name with args.
@@ -11884,10 +11893,105 @@ fi
 
       if test ! -z "$login_manager_tmp" ; then
         with_login_manager="$default_login_manager_2"
-      else
-        with_login_manager=""
       fi
     fi
+
+    if test -z "$with_login_manager" ; then
+      set dummy $default_login_manager_3 ; login_manager_tmp=$2
+      unset ac_cv_path_login_manager_tmp  # don't cache
+      # Extract the first word of "$login_manager_tmp", so it can be a program name with args.
+set dummy $login_manager_tmp; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_login_manager_tmp+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $login_manager_tmp in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_login_manager_tmp="$login_manager_tmp" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_login_manager_tmp="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+login_manager_tmp=$ac_cv_path_login_manager_tmp
+if test -n "$login_manager_tmp"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $login_manager_tmp" >&5
+$as_echo "$login_manager_tmp" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+      if test ! -z "$login_manager_tmp" ; then
+        with_login_manager="$default_login_manager_3"
+      fi
+    fi
+
+    if test -z "$with_login_manager" ; then
+      set dummy $default_login_manager_4 ; login_manager_tmp=$2
+      unset ac_cv_path_login_manager_tmp  # don't cache
+      # Extract the first word of "$login_manager_tmp", so it can be a program name with args.
+set dummy $login_manager_tmp; ac_word=$2
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for $ac_word" >&5
+$as_echo_n "checking for $ac_word... " >&6; }
+if ${ac_cv_path_login_manager_tmp+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  case $login_manager_tmp in
+  [\\/]* | ?:[\\/]*)
+  ac_cv_path_login_manager_tmp="$login_manager_tmp" # Let the user override the test with a path.
+  ;;
+  *)
+  as_save_IFS=$IFS; IFS=$PATH_SEPARATOR
+for as_dir in $PATH
+do
+  IFS=$as_save_IFS
+  test -z "$as_dir" && as_dir=.
+    for ac_exec_ext in '' $ac_executable_extensions; do
+  if as_fn_executable_p "$as_dir/$ac_word$ac_exec_ext"; then
+    ac_cv_path_login_manager_tmp="$as_dir/$ac_word$ac_exec_ext"
+    $as_echo "$as_me:${as_lineno-$LINENO}: found $as_dir/$ac_word$ac_exec_ext" >&5
+    break 2
+  fi
+done
+  done
+IFS=$as_save_IFS
+
+  ;;
+esac
+fi
+login_manager_tmp=$ac_cv_path_login_manager_tmp
+if test -n "$login_manager_tmp"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: $login_manager_tmp" >&5
+$as_echo "$login_manager_tmp" >&6; }
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+
+
+      if test ! -z "$login_manager_tmp" ; then
+        with_login_manager="$default_login_manager_4"
+      fi
+    fi
+
   ;;
 
   /*)
@@ -13203,7 +13307,7 @@ if ${ac_cv_mesagl_version_string+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 13210 "configure"
+#line 13314 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION

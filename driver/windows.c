@@ -74,9 +74,9 @@ typedef long PROP32;
 extern int kill (pid_t, int);		/* signal() is in sys/signal.h... */
 
 Atom XA_VROOT, XA_XSETROOT_ID, XA_ESETROOT_PMAP_ID, XA_XROOTPMAP_ID;
+Atom XA_NET_WM_USER_TIME;
 Atom XA_SCREENSAVER, XA_SCREENSAVER_VERSION, XA_SCREENSAVER_ID;
 Atom XA_SCREENSAVER_STATUS;
-
 
 extern saver_info *global_si_kludge;	/* I hate C so much... */
 

@@ -22,17 +22,14 @@
 # import <OpenGLES/ES1/gl.h>
 # import <OpenGLES/ES1/glext.h>
 # import <QuartzCore/QuartzCore.h>
-# define NSOpenGLContext EAGLContext
 #else
 # import <AppKit/NSOpenGL.h>
 #endif
 
 @interface XScreenSaverGLView : XScreenSaverView
 {
-  NSOpenGLContext *ogl_ctx;      // OpenGL rendering context
-
 # ifdef USE_IPHONE
-  GLuint gl_framebuffer, gl_renderbuffer, gl_depthbuffer;
+  GLuint gl_depthbuffer;
 # endif /* USE_IPHONE */
 }
 

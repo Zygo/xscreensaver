@@ -106,6 +106,9 @@ enum {
 };
 
 static void
+p_hit_top_bottom(Paddle *p);
+
+static void
 hit_top_bottom(struct state *st)
 {
   if ( (st->ball.y <= PONG_TMARG) ||
@@ -155,6 +158,10 @@ new_game(struct state *st)
 
   st->l_paddle.h = PONG_H/4;
   st->r_paddle.h = PONG_H/4;
+  /* Adjust paddle position again, because
+     paddle length is enlarged (reset) above. */
+  p_hit_top_bottom(&st->l_paddle);
+  p_hit_top_bottom(&st->r_paddle);
 }
 
 static void

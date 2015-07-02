@@ -119,7 +119,7 @@ load_image (const char *file)
   // so if an image file specified "pixels per inch" we can end up with
   // absurdly sized images.  Set it back to 1:1 pixel:point.
   //
-  NSImageRep *rep = [image.representations firstObject];
+  NSImageRep *rep = [image.representations objectAtIndex:0];
   image.size = NSMakeSize (rep.pixelsWide, rep.pixelsHigh);
 
   return image;

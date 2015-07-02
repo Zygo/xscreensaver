@@ -37,7 +37,7 @@ Draw on the root window.
 Number of Waves.  0 - 20.  Default: 3.
 .TP 8
 .B \-gridsize \fInumber\fP
-Magnification.	1 - 20.  Default: 4.
+Magnification.	1 - 20.  Default: 2.
 .TP 8
 .B \-delay \fInumber\fP
 Per-frame delay, in microseconds.  Default: 30000 (0.03 seconds.).
@@ -49,7 +49,7 @@ Wave Speed.  1 - 100.  Default: 30.
 Wave Size.  50 - 1500.	Default: 800.
 .TP 8
 .B \-ncolors \fInumber\fP
-Number of Colors.  Default: 128.
+Number of Colors.  Default: 192.
 .TP 8
 .B \-color-shift \fInumber\fP
 Color Contrast.  0 - 100.  Default: 60.

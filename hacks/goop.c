@@ -442,7 +442,7 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
             {
               /* give a non-opaque alpha to the color */
               unsigned long pixel = goop->layers[i]->pixel;
-              unsigned long amask = BlackPixelOfScreen (0);
+              unsigned long amask = BlackPixelOfScreen (screen);
               unsigned long a = (0xBBBBBBBB & amask);
               pixel = (pixel & (~amask)) | a;
               goop->layers[i]->pixel = pixel;

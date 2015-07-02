@@ -20,8 +20,6 @@
 #include "xshm.h"
 #endif
 
-#define DEBUG
-
 /*
  * Implementation notes
  *

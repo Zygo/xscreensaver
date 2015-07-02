@@ -1,5 +1,5 @@
 /*
- * fliptext, Copyright (c) 2005-2014 Jamie Zawinski <jwz@jwz.org>
+ * fliptext, Copyright (c) 2005-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -209,10 +209,12 @@ strip (char *s, Bool leading, Bool trailing)
 static int
 char_width (fliptext_configuration *sc, char c)
 {
+  XCharStruct e;
   char s[2];
   s[0] = c;
   s[1] = 0;
-  return texture_string_width (sc->texfont, s, 0);
+  texture_string_metrics (sc->texfont, s, &e, 0, 0);
+  return e.width;
 }
 
 
@@ -349,6 +351,7 @@ blank_p (const char *s)
 static line *
 make_line (fliptext_configuration *sc, Bool skip_blanks_p)
 {
+  XCharStruct e;
   line *ln;
   char *s;
 
@@ -365,7 +368,8 @@ make_line (fliptext_configuration *sc, Bool skip_blanks_p)
   ln = (line *) calloc (1, sizeof(*ln));
   ln->text = s;
   ln->state = NEW;
-  ln->width = sc->font_scale * texture_string_width (sc->texfont, s, 0);
+  texture_string_metrics (sc->texfont, s, &e, 0, 0);
+  ln->width = sc->font_scale * e.width;
   ln->height = sc->font_scale * sc->line_height;
 
   memcpy (ln->color, sc->color, sizeof(ln->color));
@@ -445,8 +449,11 @@ draw_line (ModeInfo *mi, line *line)
       glColor3f (0.4, 0.4, 0.4);
       while (*s)
         {
+          XCharStruct e;
           *c = *s++;
-          w = texture_string_width (sc->texfont, c, &h);
+          texture_string_metrics (sc->texfont, c, &e, 0, 0);
+          w = e.width;
+          h = e.ascent + e.descent;
           glBegin (GL_LINE_LOOP);
           glVertex3f (0, 0, 0);
           glVertex3f (w, 0, 0);
@@ -806,10 +813,13 @@ init_fliptext (ModeInfo *mi)
   }
 
   {
-    int cw, lh;
+    XCharStruct e;
+    int cw, lh, ascent, descent;
     sc->texfont = load_texture_font (MI_DISPLAY(mi), "font");
     check_gl_error ("loading font");
-    cw = texture_string_width (sc->texfont, "n", &lh);
+    texture_string_metrics (sc->texfont, "n", &e, &ascent, &descent);
+    cw = e.width;
+    lh = ascent + descent;
     sc->char_width = cw;
     sc->line_height = lh;
   }

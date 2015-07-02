@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.32
-!                              18-Nov-2014
+!                              version 5.33
+!                              25-Jun-2015
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -63,7 +63,7 @@
 *textLiteral:		XScreenSaver
 *textFile:		@DEFAULT_TEXT_FILE@
 *textProgram:		fortune
-*textURL:		http://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss
+*textURL:		https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss
 
 *overlayTextForeground:	#FFFF00
 *overlayTextBackground:	#000000
@@ -134,6 +134,7 @@ GetViewPortIsFullOfLies: False
 ! (That button does not appear on the dialog if this program does not exist.)
 ! For Gnome: probably "gdmflexiserver -ls".  KDE, probably "kdmctl reserve".
 ! Or maybe yet another wheel-reinvention, "lxdm -c USER_SWITCH".
+! Oh wait, this wheel just keeps getting better: "dm-tool switch-to-greeter".
 !
 @NEW_LOGIN_COMMAND_P@*newLoginCommand:	@NEW_LOGIN_COMMAND@
 
@@ -366,8 +367,10 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				cityflow -root				    \n\
 @GL_KLUDGE@ GL: 				geodesicgears -root			    \n\
 @GL_KLUDGE@ GL: 				projectiveplane -root			    \n\
+@GL_KLUDGE@ GL: 				romanboy -root				    \n\
 				tessellimage -root			    \n\
-@GL_KLUDGE@ GL: 				winduprobot -root			    \n
+@GL_KLUDGE@ GL: 				winduprobot -root			    \n\
+@GL_KLUDGE@ GL: 				splitflap -root				    \n
 
 
 
@@ -426,7 +429,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *passwd.uname:                  True
 
 *splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright \251 1991-2014 by
+*splash.body.label:		Copyright \251 1991-2015 by
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Settings
 *splash.help.label:		Help
@@ -492,6 +495,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.quasicrystal.name:   QuasiCrystal
 *hacks.rd-bomb.name:        RDbomb
 *hacks.rdbomb.name:         RDbomb
+*hacks.romanboy.name:       RomanBoy
 *hacks.rotzoomer.name:      RotZoomer
 *hacks.rubikblocks.name:    RubikBlocks
 *hacks.sballs.name:         SBalls
@@ -500,6 +504,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.skytentacles.name:   SkyTentacles
 *hacks.slidescreen.name:    SlideScreen
 *hacks.speedmine.name:      SpeedMine
+*hacks.splitflap.name:      SplitFlap
 *hacks.starwars.name:       StarWars
 *hacks.stonerview.name:     StonerView
 *hacks.t3d.name:            T3D

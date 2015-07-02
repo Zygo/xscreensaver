@@ -1,4 +1,4 @@
-/* winduprobot, Copyright (c) 2014 Jamie Zawinski <jwz@jwz.org>
+/* winduprobot, Copyright (c) 2014, 2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -32,6 +32,11 @@
  *  - Clean up the model a little bit more;
  *  - Export to DXF with "Millimeters", "Triangles", using
  *    http://www.guitar-list.com/download-software/convert-sketchup-skp-files-dxf-or-stl
+ *
+ * We did eventually end up with robotic award statues, but we constructed
+ * them out of mass-produced wind-up robots, rather than 3D printing them:
+ * http://www.dnalounge.com/gallery/2014/09-14/045.html
+ * http://www.youtube.com/watch?v=EZF4ZAAy49g
  */
 
 #define LABEL_FONT "-*-helvetica-bold-r-normal-*-*-240-*-*-*-*-*-*"
@@ -2115,7 +2120,8 @@ draw_label (ModeInfo *mi, walker *f, GLfloat y_off, GLfloat scale,
   glRotatef (current_device_rotation(), 0, 0, 1);  /* right side up */
 
   {
-    int cw, ch, w, h;
+    XCharStruct e;
+    int cw, ch, w, h, ascent, descent;
     GLfloat s;
     GLfloat max = 24;   /* max point size to avoid pixellated text */
 
@@ -2123,13 +2129,17 @@ draw_label (ModeInfo *mi, walker *f, GLfloat y_off, GLfloat scale,
     if (mi->xgwa.height <= 640 || mi->xgwa.width <= 640)
       max *= 3;
     
-    cw = texture_string_width (bp->font_data, "X", &ch);  /* line height */
+    texture_string_metrics (bp->font_data, "X", &e, &ascent, &descent);
+    cw = e.width;
+    ch = ascent + descent;
     s = 1.0 / ch;
     if (ch > max) s *= max/ch;
 
     s *= scale;
 
-    w = texture_string_width (bp->font_data, label, &h);
+    texture_string_metrics (bp->font_data, label, &e, 0, 0);
+    w = e.width;
+    h = e.ascent + e.descent;
 
     glScalef (s, s, 1);
     glTranslatef (-w/2, h*2/3 + (cw * 7), 0);
@@ -2144,6 +2154,7 @@ draw_label (ModeInfo *mi, walker *f, GLfloat y_off, GLfloat scale,
     glPopMatrix();
 
     glColor4fv (bp->text_color);
+    glTranslatef (0, ch/2, 0);
     print_texture_string (bp->font_data, label);
   }
 

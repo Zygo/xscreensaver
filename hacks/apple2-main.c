@@ -35,8 +35,6 @@
 #define SCREEN_COLS 40
 #define SCREEN_ROWS 24
 
-#define DEBUG
-
 
 /* Given a bitmask, returns the position and width of the field.
  */

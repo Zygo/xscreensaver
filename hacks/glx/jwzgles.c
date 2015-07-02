@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1586,6 +1586,12 @@ jwzgles_glVertex2f (GLfloat x, GLfloat y)
   v[1] = y;
   v[2] = 0;
   jwzgles_glVertex3fv (v);
+}
+
+void
+jwzgles_glVertex2dv (const GLdouble *v)
+{
+  jwzgles_glVertex2f (v[0], v[1]);
 }
 
 void

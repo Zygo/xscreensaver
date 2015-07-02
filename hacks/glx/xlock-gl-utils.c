@@ -1,5 +1,5 @@
 /* xlock-gl.c --- xscreensaver compatibility layer for xlockmore GL modules.
- * xscreensaver, Copyright (c) 1997-2014 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1997-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -134,6 +134,8 @@ init_GL(ModeInfo * mi)
                   1.0);
   }
 
+  glClear (GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
   /* GLXContext is already a pointer type.
      Why this function returns a pointer to a pointer, I have no idea...
    */
@@ -169,6 +171,11 @@ check_gl_error (const char *type)
   case GL_STACK_OVERFLOW:        e = "stack overflow";    break;
   case GL_STACK_UNDERFLOW:       e = "stack underflow";   break;
   case GL_OUT_OF_MEMORY:         e = "out of memory";     break;
+#ifdef GL_INVALID_FRAMEBUFFER_OPERATION
+  case GL_INVALID_FRAMEBUFFER_OPERATION:
+    e = "invalid framebuffer operation";
+    break;
+#endif
 #ifdef GL_TABLE_TOO_LARGE_EXT
   case GL_TABLE_TOO_LARGE_EXT:   e = "table too large";   break;
 #endif

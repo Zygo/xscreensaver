@@ -1233,7 +1233,7 @@ INSTALL_SCRIPT='${INSTALL}'
 
 # random libc stuff
 AC_HEADER_STDC
-AC_CHECK_HEADERS(unistd.h)
+AC_CHECK_HEADERS(unistd.h inttypes.h)
 AC_TYPE_MODE_T
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T
@@ -2453,6 +2453,8 @@ esac
 with_login_manager_req=unspecified
 default_login_manager_1='gdmflexiserver -ls'
 default_login_manager_2='kdmctl reserve'
+default_login_manager_3='lxdm -c USER_SWITCH'
+default_login_manager_4='dm-tool switch-to-greeter'
 
 AC_ARG_WITH(login-manager,
 [  --with-login-manager    Put a "New Login" button on the unlock dialog that
@@ -2472,23 +2474,46 @@ case "$with_login_manager_req" in
   ;;
 
   yes|unspecified)
-    # Try both defaults, use the one that exists.
+    # Try various defaults, use the first one that exists.
 
-    set dummy $default_login_manager_1 ; login_manager_tmp=$2
-    unset ac_cv_path_login_manager_tmp  # don't cache
-    AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
-    if test ! -z "$login_manager_tmp" ; then
-      with_login_manager="$default_login_manager_1"
-    else
+    with_login_manager=""
+
+    if test -z "$with_login_manager" ; then
+      set dummy $default_login_manager_1 ; login_manager_tmp=$2
+      unset ac_cv_path_login_manager_tmp  # don't cache
+      AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
+      if test ! -z "$login_manager_tmp" ; then
+        with_login_manager="$default_login_manager_1"
+      fi
+    fi
+
+    if test -z "$with_login_manager" ; then
       set dummy $default_login_manager_2 ; login_manager_tmp=$2
       unset ac_cv_path_login_manager_tmp  # don't cache
       AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
       if test ! -z "$login_manager_tmp" ; then
         with_login_manager="$default_login_manager_2"
-      else
-        with_login_manager=""
       fi
     fi
+
+    if test -z "$with_login_manager" ; then
+      set dummy $default_login_manager_3 ; login_manager_tmp=$2
+      unset ac_cv_path_login_manager_tmp  # don't cache
+      AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
+      if test ! -z "$login_manager_tmp" ; then
+        with_login_manager="$default_login_manager_3"
+      fi
+    fi
+
+    if test -z "$with_login_manager" ; then
+      set dummy $default_login_manager_4 ; login_manager_tmp=$2
+      unset ac_cv_path_login_manager_tmp  # don't cache
+      AC_PATH_PROG(login_manager_tmp, $login_manager_tmp, [])
+      if test ! -z "$login_manager_tmp" ; then
+        with_login_manager="$default_login_manager_4"
+      fi
+    fi
+
   ;;
 
   /*)

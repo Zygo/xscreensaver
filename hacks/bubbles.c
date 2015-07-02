@@ -43,6 +43,8 @@
 # include "config.h"
 #endif
 
+#undef DEBUG /* doesn't compile */
+
 #include <math.h>
 #include <limits.h>
 

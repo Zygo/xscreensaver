@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -141,6 +141,7 @@ extern void jwzgles_glTexCoord3f (GLfloat s, GLfloat t, GLfloat r);
 extern void jwzgles_glTexCoord4fv (const GLfloat *);
 extern void jwzgles_glTexCoord4f (GLfloat s, GLfloat t, GLfloat r, GLfloat q);
 extern void jwzgles_glVertex2f (GLfloat x, GLfloat y);
+extern void jwzgles_glVertex2dv (const GLdouble *);
 extern void jwzgles_glVertex2fv (const GLfloat *);
 extern void jwzgles_glVertex2i (GLint x, GLint y);
 extern void jwzgles_glVertex3f (GLfloat x, GLfloat y, GLfloat z);

@@ -14,7 +14,7 @@ TARFILES	= README README.hacking README.VMS INSTALL \
 		  ax_pthread.m4 config.sub makevms.com \
 		  intltool-merge.in intltool-extract.in intltool-update.in \
 		  xscreensaver.spec \
-		  xscreensaver.xcodeproj/project.pbxproj
+		  OSX/xscreensaver.xcodeproj/project.pbxproj
 
 TAR		= tar
 

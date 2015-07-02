@@ -234,7 +234,7 @@ greynetic_draw (Display *dpy, Window window, void *closure)
       {
         /* give a non-opaque alpha to the color */
         unsigned long pixel = gcv.foreground;
-        unsigned long amask = BlackPixelOfScreen (0);
+        unsigned long amask = BlackPixel (dpy,0);
         unsigned long a = (random() & amask);
         pixel = (pixel & (~amask)) | a;
         gcv.foreground = pixel;

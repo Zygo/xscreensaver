@@ -475,7 +475,7 @@ add_qline (struct state *st,
             {
               /* give a non-opaque alpha to the color */
               unsigned long pixel = qline->color.pixel;
-              unsigned long amask = BlackPixelOfScreen (0);
+              unsigned long amask = BlackPixel (st->dpy, 0);
               unsigned long a = (0xBBBBBBBB & amask);
               pixel = (pixel & (~amask)) | a;
               qline->color.pixel = pixel;

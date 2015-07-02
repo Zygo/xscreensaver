@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2005-2014 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2005-2015 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -37,7 +37,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.37 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.38 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -47,7 +47,7 @@ my $text_mode     = 'date';
 my $text_literal  = '';
 my $text_file     = '';
 my $text_program  = '';
-my $text_url      = 'http://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss';
+my $text_url      = 'https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss';
 # Default URL needs to be set and match what's in OSX/XScreenSaverView.m
 
 my $wrap_columns   = undef;
@@ -190,7 +190,10 @@ sub get_cocoa_prefs($) {
   $text_mode = $v if defined ($v);
 
   # The "textMode" pref is set to a number instead of a string because I
-  # can't figure out the black magic to make Cocoa bindings work right.
+  # couldn't figure out the black magic to make Cocoa bindings work right.
+  #
+  # Update: as of 5.33, Cocoa writes strings instead of numbers, but 
+  # pre-existing saved preferences might still have numbers in them.
   #
   if    ($text_mode eq '0') { $text_mode = 'date';    }
   elsif ($text_mode eq '1') { $text_mode = 'literal'; }

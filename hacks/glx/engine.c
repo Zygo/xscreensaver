@@ -530,8 +530,8 @@ static int makepiston(Engine *e)
   int polys = 0;
   GLfloat colour[] = {0.6, 0.6, 0.6, 1.0};
   
-  if (e->piston_list) glDeleteLists(1, e->piston_list);
-  e->piston_list = glGenLists(1);
+  /* if (e->piston_list) glDeleteLists(1, e->piston_list); */
+  if (! e->piston_list) e->piston_list = glGenLists(1);
   glNewList(e->piston_list, GL_COMPILE);
   glRotatef(90, 0, 0, 1);
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, colour);
@@ -774,8 +774,8 @@ static int makeshaft (Engine *e)
   float crankThick = 0.2;
   float crankDiam = 0.3;
 
-  if (e->shaft_list) glDeleteLists(1, e->shaft_list);
-  e->shaft_list = glGenLists(1);
+  /* if (e->shaft_list) glDeleteLists(1, e->shaft_list); */
+  if (! e->shaft_list) e->shaft_list = glGenLists(1);
   glNewList(e->shaft_list, GL_COMPILE);
 
   glMaterialfv(GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
@@ -836,7 +836,8 @@ ENTRYPOINT void reshape_engine(ModeInfo *mi, int width, int height)
  glViewport(0,0,(GLint)width, (GLint) height);
  glMatrixMode(GL_PROJECTION);
  glLoadIdentity();
- glFrustum(-1.0,1.0,-1.0,1.0,1.5,70.0);
+/* glFrustum(-1.0,1.0,-1.0,1.0,1.5,70.0);*/
+ gluPerspective(40.0,((GLdouble)width)/height,1.5,70.0);
  glMatrixMode(GL_MODELVIEW);
  e->win_h = height; 
  e->win_w = width;

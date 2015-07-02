@@ -1,4 +1,4 @@
-# Auto-generated: Tue Nov 18 23:24:06 PST 2014
+# Auto-generated: Thu Jun 25 11:59:01 PDT 2015
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
@@ -178,6 +178,7 @@ hacks/config/rd-bomb.xml
 hacks/config/rdbomb.xml
 hacks/config/ripples.xml
 hacks/config/rocks.xml
+hacks/config/romanboy.xml
 hacks/config/rorschach.xml
 hacks/config/rotor.xml
 hacks/config/rotzoomer.xml
@@ -195,6 +196,7 @@ hacks/config/speedmine.xml
 hacks/config/sphere.xml
 hacks/config/spheremonics.xml
 hacks/config/spiral.xml
+hacks/config/splitflap.xml
 hacks/config/spotlight.xml
 hacks/config/sproingies.xml
 hacks/config/squiral.xml

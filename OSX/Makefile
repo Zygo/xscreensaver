@@ -22,7 +22,7 @@ all: debug release
 
 clean:
 	-rm -rf build
-#	cd ..; $(XCODEBUILD) -target "$(TARGETS)" clean
+#	$(XCODEBUILD) -target "$(TARGETS)" clean
 
 distclean:
 	-rm -f config.status config.cache config.log \
@@ -34,10 +34,10 @@ distdepend:: Sparkle.framework
 distdepend:: update_plist_version
 
 debug: distdepend
-	cd ..; $(XCODEBUILD) $(ARCH) -target "$(TARGETS)" -configuration Debug   build
+	$(XCODEBUILD) $(ARCH) -target "$(TARGETS)" -configuration Debug   build
 
 release:: distdepend
-	cd ..; $(XCODEBUILD) $(ARCH) -target "$(TARGETS)" -configuration Release build
+	$(XCODEBUILD) $(ARCH) -target "$(TARGETS)" -configuration Release build
 
 release:: check_versions
 release:: update_thumbs
@@ -128,12 +128,14 @@ ios-function-table.m::
 
 
 echo_tarfiles:
-	@echo `find . \
-	  \( \( -name '.??*' -o -name build -o -name CVS -o -name '*~*' \
-	     -o -name 'jwz.*' -o -name 'Screen Savers' \) \
-	     -prune \) \
-	  -o \( -type f -o -type l \) -print \
-	| sed 's@^\./@@' \
+	@echo `( find .							\
+	  \( \( -name '.??*' -o -name build -o -name CVS -o -name '*~*'	\
+	     -o -name 'jwz.*' -o -name 'Screen Savers'			\
+             -o -name xscreensaver.xcodeproj \)				\
+	     -prune \)							\
+	  -o \( -type f -o -type l \) -print ;				\
+	  echo xscreensaver.xcodeproj/project.pbxproj )			\
+	| sed 's@^\./@@'						\
 	| sort`
 
 update_plist_version:
@@ -351,3 +353,8 @@ reset_prefs::
 	$$W2 "$$domain.XMatrix" matrixFont small ;			      \
 	$$W2 "$$domain.XMatrix" textMode literal ;			      \
 	$$W2 "$$domain.XMatrix" textLiteral "MONKEY BUTTER" ;		      \
+
+# defaults -currentHost write org.jwz.xscreensaver.FontGlide debugMetrics -bool true
+# defaults -currentHost write org.jwz.xscreensaver.StarWars debug -bool true
+# defaults -currentHost write org.jwz.xscreensaver.StarWars textMode file
+# defaults -currentHost write org.jwz.xscreensaver.StarWars textFile ~/src/xscreensaver/hacks/glx/zalgo.txt

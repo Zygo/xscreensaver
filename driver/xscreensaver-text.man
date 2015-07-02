@@ -68,7 +68,7 @@ URLs should be cached, use "If-Modified-Since", and obey "Expires".
 .RS 0
 .I http://www.livejournal.com/stats/latest-rss.bml,
 .RS 0
-.I http://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss,
+.I https://en.wikipedia.org/w/index.php?title=Special:NewPages&feed=rss,
 .RS 0
 .BR driftnet (1),
 .BR EtherPEG ,

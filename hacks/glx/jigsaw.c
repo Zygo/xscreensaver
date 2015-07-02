@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1157,8 +1157,11 @@ loading_msg (ModeInfo *mi)
   jigsaw_configuration *jc = &sps[MI_SCREEN(mi)];
   int wire = MI_IS_WIREFRAME(mi);
   const char *text = "Loading...";
-  int h;
-  int w = texture_string_width (jc->texfont, text, &h);
+  XCharStruct e;
+  int w, h;
+  texture_string_metrics (jc->texfont, text, &e, 0, 0);
+  w = e.width;
+  h = e.ascent + e.descent;
 
   if (wire) return;
 

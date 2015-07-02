@@ -34,7 +34,7 @@ difference is that cells have a maximum age, after which they count as
 3 for populating the next generation.  This makes long-lived formations
 explode instead of just sitting there.
 
-http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
+https://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 
 Written by Don Marti; 2003.
   </_description>

@@ -23,7 +23,7 @@ produced depending on the period, position, and rotation of the component
 planes, and whether the rotation of the planes is evenly distributed around
 the circle (the "symmetric" option, above) or random. See also the
 "RD-Bomb", "CWaves" and "Penrose" screen savers.
-http://en.wikipedia.org/wiki/Quasicrystal
+https://en.wikipedia.org/wiki/Quasicrystal
 .SH OPTIONS
 .TP 8
 .B \-visual \fIvisual\fP

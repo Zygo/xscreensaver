@@ -978,7 +978,9 @@ celtic_draw (Display *dpy, Window window, void *closure)
     st->force_reset = 0;
     st->t = 1;
 
-    pattern_del(st->pattern);
+    if (st->pattern != NULL) {
+      pattern_del(st->pattern);
+    }
     st->pattern = NULL;
     graph_del(st->graph);
 

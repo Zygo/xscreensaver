@@ -472,7 +472,12 @@ static void build_substrate(struct field *f)
 
     /* erase the crack grid */
     f->cgrid = (int *) xrealloc(f->cgrid, sizeof(int) * f->height * f->width);
-    memset(f->cgrid, 10001, f->height * f->width * sizeof(int));
+    {
+        int j;
+        int *p = f->cgrid;
+        for (j = 0; j < f->height * f->width; j++)
+            *p++ = 10001;
+    }
 
     /* Not necessary now that make_crack ensures we have usable default
      *  values in start_crack's timeout case 

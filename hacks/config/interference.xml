@@ -29,11 +29,11 @@
    <vgroup>
     <number id="gridsize" type="slider" arg="-gridsize %"
             _label="Magnification" _low-label="Low" _high-label="High"
-            low="1" high="20" default="4"/>
+            low="1" high="20" default="2"/>
 
     <number id="ncolors" type="slider" arg="-ncolors %"
               _label="Number of colors" _low-label="Two" _high-label="Many"
-              low="1" high="255" default="128"/>
+              low="1" high="255" default="192"/>
 
     <number id="color_contrast" type="slider" arg="-color-shift %"
             _label="Color contrast" _low-label="Low" _high-label="High"

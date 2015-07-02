@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Fri Nov 14 19:37:08 2014 by build-fntable.pl 1.3.
+   Created: Sat May  2 19:45:40 2015 by build-fntable.pl 1.3.
  */
 
 #import <Foundation/Foundation.h>
@@ -163,6 +163,7 @@ extern struct xscreensaver_function_table
  *rdbomb_xscreensaver_function_table,
  *ripples_xscreensaver_function_table,
  *rocks_xscreensaver_function_table,
+ *romanboy_xscreensaver_function_table,
  *rorschach_xscreensaver_function_table,
  *rotzoomer_xscreensaver_function_table,
  *rubik_xscreensaver_function_table,
@@ -177,6 +178,7 @@ extern struct xscreensaver_function_table
  *sonar_xscreensaver_function_table,
  *speedmine_xscreensaver_function_table,
  *spheremonics_xscreensaver_function_table,
+ *splitflap_xscreensaver_function_table,
  *spotlight_xscreensaver_function_table,
  *sproingies_xscreensaver_function_table,
  *squiral_xscreensaver_function_table,
@@ -379,6 +381,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&rdbomb_xscreensaver_function_table], @"rdbomb",
 	[NSValue valueWithPointer:&ripples_xscreensaver_function_table], @"ripples",
 	[NSValue valueWithPointer:&rocks_xscreensaver_function_table], @"rocks",
+	[NSValue valueWithPointer:&romanboy_xscreensaver_function_table], @"romanboy",
 	[NSValue valueWithPointer:&rorschach_xscreensaver_function_table], @"rorschach",
 	[NSValue valueWithPointer:&rotzoomer_xscreensaver_function_table], @"rotzoomer",
 	[NSValue valueWithPointer:&rubik_xscreensaver_function_table], @"rubik",
@@ -393,6 +396,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&sonar_xscreensaver_function_table], @"sonar",
 	[NSValue valueWithPointer:&speedmine_xscreensaver_function_table], @"speedmine",
 	[NSValue valueWithPointer:&spheremonics_xscreensaver_function_table], @"spheremonics",
+	[NSValue valueWithPointer:&splitflap_xscreensaver_function_table], @"splitflap",
 	[NSValue valueWithPointer:&spotlight_xscreensaver_function_table], @"spotlight",
 	[NSValue valueWithPointer:&sproingies_xscreensaver_function_table], @"sproingies",
 	[NSValue valueWithPointer:&squiral_xscreensaver_function_table], @"squiral",

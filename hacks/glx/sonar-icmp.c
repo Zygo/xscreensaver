@@ -14,6 +14,7 @@
 #include "screenhackI.h"
 #include "sonar.h"
 #include "version.h"
+#include "async_netdb.h"
 
 #undef usleep /* conflicts with unistd.h on OSX */
 
@@ -61,6 +62,7 @@
 # include <netinet/udp.h>
 # include <arpa/inet.h>
 # include <netdb.h>
+# include <errno.h>
 # ifdef HAVE_GETIFADDRS
 #  include <ifaddrs.h>
 # endif
@@ -130,6 +132,8 @@ static long delta(struct timeval *, struct timeval *);
 
 
 typedef struct {
+  Display *dpy;                 /* Only used to get *useThreads. */
+
   char *version;		/* short version number of xscreensaver */
   int icmpsock;			/* socket for sending pings */
   int pid;			/* our process ID */
@@ -149,7 +153,11 @@ typedef struct {
 } ping_data;
 
 typedef struct {
-  struct sockaddr address;	/* ip address */
+  async_name_from_addr_t lookup_name;
+  async_addr_from_name_t lookup_addr;
+  async_netdb_sockaddr_storage_t address;	/* ip address */
+  socklen_t addrlen;
+  char *fallback;
 } ping_bogie;
 
 
@@ -182,26 +190,23 @@ unpack_addr (unsigned long addr,
 
 
 /* Resolves the bogie's name (either a hostname or ip address string)
-   to a hostent.  Returns 1 if successful, 0 if it failed to resolve.
+   to a hostent.  Returns 1 if successful, 0 if something went wrong.
  */
 static int
 resolve_bogie_hostname (ping_data *pd, sonar_bogie *sb, Bool resolve_p)
 {
   ping_bogie *pb = (ping_bogie *) sb->closure;
-  struct hostent *hent;
-  struct sockaddr_in *iaddr;
 
   unsigned int ip[4];
   char c;
-
-  iaddr = (struct sockaddr_in *) &(pb->address);
-  iaddr->sin_family = AF_INET;
 
   if (4 == sscanf (sb->name, " %u.%u.%u.%u %c",
                    &ip[0], &ip[1], &ip[2], &ip[3], &c))
     {
       /* It's an IP address.
        */
+      struct sockaddr_in *iaddr = (struct sockaddr_in *) &(pb->address);
+
       if (ip[3] == 0)
         {
           if (pd->debug_p > 1)
@@ -210,22 +215,22 @@ resolve_bogie_hostname (ping_data *pd, sonar_bogie *sb, Bool resolve_p)
           return 0;
         }
 
+      iaddr->sin_family = AF_INET;
       iaddr->sin_addr.s_addr = pack_addr (ip[0], ip[1], ip[2], ip[3]);
+      pb->addrlen = sizeof(struct sockaddr_in);
+
       if (resolve_p)
-        hent = gethostbyaddr ((const char *) &iaddr->sin_addr.s_addr,
-                              sizeof(iaddr->sin_addr.s_addr),
-                              AF_INET);
-      else
-        hent = 0;
-
-      if (pd->debug_p > 1)
-        fprintf (stderr, "%s:   %s => %s\n",
-                 progname, sb->name,
-                 ((hent && hent->h_name && *hent->h_name)
-                  ? hent->h_name : "<unknown>"));
-
-      if (hent && hent->h_name && *hent->h_name)
-        sb->name = strdup (hent->h_name);
+        {
+          pb->lookup_name =
+            async_name_from_addr_start (pd->dpy,
+                                        (const struct sockaddr *)&pb->address,
+                                        pb->addrlen);
+          if (!pb->lookup_name)
+            {
+              fprintf (stderr, "%s:   unable to start host resolution.\n",
+                       progname);
+            }
+        }
     }
   else
     {
@@ -258,24 +263,14 @@ resolve_bogie_hostname (ping_data *pd, sonar_bogie *sb, Bool resolve_p)
           return 0;
         }
 
-      hent = gethostbyname (sb->name);
-      if (!hent)
+      pb->lookup_addr = async_addr_from_name_start(pd->dpy, sb->name);
+      if (!pb->lookup_addr)
         {
           if (pd->debug_p)
-            fprintf (stderr, "%s:   could not resolve host:  %s\n",
-                     progname, sb->name);
+            /* Either address space exhaustion or RAM exhaustion. */
+            fprintf (stderr, "%s:   unable to start host resolution.\n",
+                     progname);
           return 0;
-        }
-
-      memcpy (&iaddr->sin_addr, hent->h_addr_list[0],
-              sizeof(iaddr->sin_addr));
-
-      if (pd->debug_p > 1)
-        {
-          unsigned int a, b, c, d;
-          unpack_addr (iaddr->sin_addr.s_addr, &a, &b, &c, &d);
-          fprintf (stderr, "%s:   %s => %d.%d.%d.%d\n",
-                   progname, sb->name, a, b, c, d);
         }
     }
   return 1;
@@ -283,14 +278,97 @@ resolve_bogie_hostname (ping_data *pd, sonar_bogie *sb, Bool resolve_p)
 
 
 static void
-print_host (FILE *out, unsigned long ip, const char *name)
+print_address (FILE *out, int width, const void *sockaddr, socklen_t addrlen)
 {
-  char ips[50];
-  unsigned int a, b, c, d;
-  unpack_addr (ip, &a, &b, &c, &d);		/* ip is in network order */
-  sprintf (ips, "%u.%u.%u.%u", a, b, c, d);
+#ifdef HAVE_GETADDRINFO
+  char buf[NI_MAXHOST];
+#else
+  char buf[50];
+#endif
+
+  const struct sockaddr *addr = (const struct sockaddr *)sockaddr;
+  const char *ips = buf;
+
+  if (!addr->sa_family)
+    ips = "<no address>";
+  else
+    {
+#ifdef HAVE_GETADDRINFO
+      int gai_error = getnameinfo (sockaddr, addrlen, buf, sizeof(buf),
+                                   NULL, 0, NI_NUMERICHOST);
+      if (gai_error == EAI_SYSTEM)
+        ips = strerror(errno);
+      else if (gai_error)
+        ips = gai_strerror(gai_error);
+#else
+      switch (addr->sa_family)
+        {
+        case AF_INET:
+          {
+            u_long ip = ((struct sockaddr_in *)sockaddr)->sin_addr.s_addr;
+            unsigned int a, b, c, d;
+            unpack_addr (ip, &a, &b, &c, &d);   /* ip is in network order */
+            sprintf (buf, "%u.%u.%u.%u", a, b, c, d);
+          }
+          break;
+        default:
+          ips = "<unknown>";
+          break;
+        }
+#endif
+    }
+
+  fprintf (out, "%-*s", width, ips);
+}
+
+
+static void
+print_host (FILE *out, const sonar_bogie *sb)
+{
+  const ping_bogie *pb = (const ping_bogie *) sb->closure;
+  const char *name = sb->name;
   if (!name || !*name) name = "<unknown>";
-  fprintf (out, "%-16s %s\n", ips, name);
+  print_address (out, 16, &pb->address, pb->addrlen);
+  fprintf (out, " %s\n", name);
+}
+
+
+static Bool
+is_address_ok(Bool debug_p, const sonar_bogie *b)
+{
+  const ping_bogie *pb = (const ping_bogie *) b->closure;
+  const struct sockaddr *addr = (const struct sockaddr *)&pb->address;
+
+  switch (addr->sa_family)
+    {
+    case AF_INET:
+      {
+        struct sockaddr_in *iaddr = (struct sockaddr_in *) addr;
+
+        /* Don't ever use loopback (127.0.0.x) hosts */
+        unsigned long ip = iaddr->sin_addr.s_addr;
+        if ((ntohl (ip) & 0xFFFFFF00L) == 0x7f000000L)  /* 127.0.0.x */
+          {
+            if (debug_p)
+              fprintf (stderr, "%s:   ignoring loopback host %s\n",
+                       progname, b->name);
+            return False;
+          }
+
+        /* Don't ever use broadcast (255.x.x.x) hosts */
+        if ((ntohl (ip) & 0xFF000000L) == 0xFF000000L)  /* 255.x.x.x */
+          {
+            if (debug_p)
+              fprintf (stderr, "%s:   ignoring broadcast host %s\n",
+                       progname, b->name);
+            return False;
+          }
+      }
+
+      break;
+    }
+
+  return True;
 }
 
 
@@ -298,13 +376,12 @@ print_host (FILE *out, unsigned long ip, const char *name)
    Returns NULL if the name could not be resolved.
  */
 static sonar_bogie *
-bogie_for_host (sonar_sensor_data *ssd, const char *name, Bool resolve_p)
+bogie_for_host (sonar_sensor_data *ssd, const char *name, const char *fallback)
 {
   ping_data *pd = (ping_data *) ssd->closure;
   sonar_bogie *b = (sonar_bogie *) calloc (1, sizeof(*b));
   ping_bogie *pb = (ping_bogie *) calloc (1, sizeof(*pb));
-  struct sockaddr_in *iaddr;
-  unsigned long ip;
+  Bool resolve_p = pd->resolve_p;
 
   b->name = strdup (name);
   b->closure = pb;
@@ -312,37 +389,25 @@ bogie_for_host (sonar_sensor_data *ssd, const char *name, Bool resolve_p)
   if (! resolve_bogie_hostname (pd, b, resolve_p))
     goto FAIL;
 
-  iaddr = (struct sockaddr_in *) &(pb->address);
-
-  /* Don't ever use loopback (127.0.0.x) hosts */
-  ip = iaddr->sin_addr.s_addr;
-  if ((ntohl (ip) & 0xFFFFFF00L) == 0x7f000000L)  /* 127.0.0.x */
-    {
-      if (pd->debug_p)
-        fprintf (stderr, "%s:   ignoring loopback host %s\n", 
-                 progname, b->name);
-      goto FAIL;
-    }
-
-  /* Don't ever use broadcast (255.x.x.x) hosts */
-  if ((ntohl (ip) & 0xFF000000L) == 0xFF000000L)  /* 255.x.x.x */
-    {
-      if (pd->debug_p)
-        fprintf (stderr, "%s:   ignoring broadcast host %s\n",
-                 progname, b->name);
-      goto FAIL;
-    }
+  if (! pb->lookup_addr && ! is_address_ok (pd->debug_p, b))
+    goto FAIL;
 
   if (pd->debug_p > 1)
     {
       fprintf (stderr, "%s:   added ", progname);
-      print_host (stderr, ip, b->name);
+      print_host (stderr, b);
     }
 
+  if (fallback)
+    pb->fallback = strdup (fallback);
   return b;
 
  FAIL:
   if (b) sonar_free_bogie (ssd, b);
+
+  if (fallback)
+    return bogie_for_host (ssd, fallback, NULL);
+
   return 0;
 }
 
@@ -440,11 +505,13 @@ read_hosts_file (sonar_sensor_data *ssd, const char *filename)
 
       /* Create a new target using first the name then the address */
 
-      new = 0;
-      if (name)
-        new = bogie_for_host (ssd, name, pd->resolve_p);
-      if (!new && addr)
-        new = bogie_for_host (ssd, addr, pd->resolve_p);
+      if (!name)
+        {
+          name = addr;
+          addr = NULL;
+        }
+
+      new = bogie_for_host (ssd, name, addr);
 
       if (new)
         {
@@ -459,40 +526,112 @@ read_hosts_file (sonar_sensor_data *ssd, const char *filename)
 #endif /* READ_FILES */
 
 
+static sonar_bogie **
+found_duplicate_host (const ping_data *pd, sonar_bogie **list,
+                      sonar_bogie *bogie)
+{
+  if (pd->debug_p)
+  {
+    fprintf (stderr, "%s: deleted duplicate: ", progname);
+    print_host (stderr, bogie);
+  }
+
+  return list;
+}
+
+
+static sonar_bogie **
+find_duplicate_host (const ping_data *pd, sonar_bogie **list,
+                     sonar_bogie *bogie)
+{
+  const ping_bogie *pb = (const ping_bogie *) bogie->closure;
+  const struct sockaddr *addr1 = (const struct sockaddr *) &(pb->address);
+
+  while(*list)
+    {
+      const ping_bogie *pb2 = (const ping_bogie *) (*list)->closure;
+
+      if (!pb2->lookup_addr)
+        {
+          const struct sockaddr *addr2 =
+            (const struct sockaddr *) &(pb2->address);
+
+          if (addr1->sa_family == addr2->sa_family)
+            {
+              switch (addr1->sa_family)
+                {
+                case AF_INET:
+                  {
+                    unsigned long ip1 =
+                      ((const struct sockaddr_in *)addr1)->sin_addr.s_addr;
+                    const struct sockaddr_in *i2 =
+                      (const struct sockaddr_in *)addr2;
+                    unsigned long ip2 = i2->sin_addr.s_addr;
+
+                    if (ip1 == ip2)
+                      return found_duplicate_host (pd, list, bogie);
+                  }
+                  break;
+#ifdef AF_INET6
+                case AF_INET6:
+                  {
+                    if (! memcmp(
+                            &((const struct sockaddr_in6 *)addr1)->sin6_addr,
+                            &((const struct sockaddr_in6 *)addr2)->sin6_addr,
+                            16))
+                      return found_duplicate_host (pd, list, bogie);
+                  }
+                  break;
+#endif
+                default:
+                  {
+                    /* Fallback behavior: Just memcmp the two addresses.
+
+                       For this to work, unused space in the sockaddr must be
+                       set to zero. Which may actually be the case:
+                       - async_addr_from_name_finish won't put garbage into
+                         sockaddr_in.sin_zero or elsewhere unless getaddrinfo
+                         does.
+                       - ping_bogie is allocated with calloc(). */
+
+                    if (pb->addrlen == pb2->addrlen &&
+                        ! memcmp(addr1, addr2, pb->addrlen))
+                      return found_duplicate_host (pd, list, bogie);
+                  }
+                  break;
+                }
+            }
+        }
+
+      list = &(*list)->next;
+    }
+
+  return NULL;
+}
+
+
 static sonar_bogie *
 delete_duplicate_hosts (sonar_sensor_data *ssd, sonar_bogie *list)
 {
   ping_data *pd = (ping_data *) ssd->closure;
   sonar_bogie *head = list;
-  sonar_bogie *sb;
+  sonar_bogie *sb = head;
 
-  for (sb = head; sb; sb = sb->next)
+  while (sb)
     {
       ping_bogie *pb = (ping_bogie *) sb->closure;
-      struct sockaddr_in *i1 = (struct sockaddr_in *) &(pb->address);
-      unsigned long ip1 = i1->sin_addr.s_addr;
 
-      sonar_bogie *sb2;
-      for (sb2 = sb; sb2; sb2 = sb2->next)
+      if (!pb->lookup_addr)
         {
-          if (sb2 && sb2->next)
-            {
-              ping_bogie *pb2 = (ping_bogie *) sb2->next->closure;
-              struct sockaddr_in *i2 = (struct sockaddr_in *) &(pb2->address);
-              unsigned long ip2 = i2->sin_addr.s_addr;
-
-              if (ip1 == ip2)
-                {
-                  if (pd->debug_p)
-                    {
-                      fprintf (stderr, "%s: deleted duplicate: ", progname);
-                      print_host (stderr, ip2, sb2->next->name);
-                    }
-                  sb2->next = sb2->next->next;
-                  /* #### sb leaked */
-                }
-            }
+          sonar_bogie **sb2 = find_duplicate_host (pd, &sb->next, sb);
+          if (sb2)
+            *sb2 = (*sb2)->next;
+            /* #### sb leaked */
+          else
+            sb = sb->next;
         }
+      else
+        sb = sb->next;
     }
 
   return head;
@@ -764,7 +903,7 @@ subnet_hosts (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
     p = address + strlen(address) + 1;
     sprintf(p, "%d", i);
 
-    new = bogie_for_host (ssd, address, pd->resolve_p);
+    new = bogie_for_host (ssd, address, NULL);
     if (new)
       {
         new->next = list;
@@ -785,9 +924,10 @@ send_ping (ping_data *pd, const sonar_bogie *b)
   u_char *packet;
   struct ICMP *icmph;
   const char *token = "org.jwz.xscreensaver.sonar";
+  char *host_id;
 
   int pcktsiz = (sizeof(struct ICMP) + sizeof(struct timeval) + 
-                 strlen(b->name) + 1 +
+                 sizeof(socklen_t) + pb->addrlen +
                  strlen(token) + 1 + 
                  strlen(pd->version) + 1);
 
@@ -809,21 +949,24 @@ send_ping (ping_data *pd, const sonar_bogie *b)
   gettimeofday((struct timeval *) &packet[sizeof(struct ICMP)]);
 # endif
 
-  /* We store the name of the host we're pinging in the packet, and parse
+  /* We store the sockaddr of the host we're pinging in the packet, and parse
      that out of the return packet later (see get_ping() for why).
      After that, we also include the name and version of this program,
      just to give a clue to anyone sniffing and wondering what's up.
    */
-  sprintf ((char *) &packet[sizeof(struct ICMP) + sizeof(struct timeval)],
-           "%.100s%c%.20s %.20s",
-           b->name, 0, token, pd->version);
+  host_id = (char *) &packet[sizeof(struct ICMP) + sizeof(struct timeval)];
+  *(socklen_t *)host_id = pb->addrlen;
+  host_id += sizeof(socklen_t);
+  memcpy(host_id, &pb->address, pb->addrlen);
+  host_id += pb->addrlen;
+  sprintf (host_id, "%.20s %.20s", token, pd->version);
 
   ICMP_CHECKSUM(icmph) = checksum((u_short *)packet, pcktsiz);
 
   /* Send it */
 
   if (sendto(pd->icmpsock, packet, pcktsiz, 0, 
-             &pb->address, sizeof(pb->address))
+             (struct sockaddr *)&pb->address, sizeof(pb->address))
       != pcktsiz)
     {
 #if 0
@@ -992,24 +1135,59 @@ get_ping (sonar_sensor_data *ssd)
              pb->address, but it is possible that, in certain weird router
              or NAT situations, that the reply will come back from a 
              different address than the one we sent it to.  So instead,
-             we parse the name out of the reply packet payload.
+             we parse the sockaddr out of the reply packet payload.
            */
           {
-            const char *name = (char *) &packet[iphdrlen +
-                                                sizeof(struct ICMP) +
-                                                sizeof(struct timeval)];
+            const socklen_t *host_id = (socklen_t *) &packet[
+              iphdrlen + sizeof(struct ICMP) + sizeof(struct timeval)];
+
             sonar_bogie *b;
 
             /* Ensure that a maliciously-crafted return packet can't
-               make us overflow in strcmp. */
-            packet[sizeof(packet)-1] = 0;
+               make us overflow in memcmp. */
+            if (result > 0 && (const u_char *)(host_id + 1) <= packet + result)
+              {
+                const u_char *host_end = (const u_char *)(host_id + 1) +
+                                         *host_id;
 
-            for (b = pd->targets; b; b = b->next)
-              if (!strcmp (name, b->name))
-                {
-                  new = copy_ping_bogie (ssd, b);
-                  break;
-                }
+                if ((const u_char *)(host_id + 1) <= host_end &&
+                    host_end <= packet + result)
+                  {
+                    for (b = pd->targets; b; b = b->next)
+                      {
+                        ping_bogie *pb = (ping_bogie *)b->closure;
+                        if (*host_id == pb->addrlen &&
+                            !memcmp(&pb->address, host_id + 1, pb->addrlen) )
+                          {
+                            /* Check to see if the name lookup is done. */
+                            if (pb->lookup_name &&
+                                async_name_from_addr_is_done (pb->lookup_name))
+                              {
+                                char *host = NULL;
+
+                                async_name_from_addr_finish (pb->lookup_name,
+                                                             &host, NULL);
+
+                                if (pd->debug_p > 1)
+                                  fprintf (stderr, "%s:   %s => %s\n",
+                                           progname, b->name,
+                                           host ? host : "<unknown>");
+
+                                if (host)
+                                  {
+                                    free(b->name);
+                                    b->name = host;
+                                  }
+
+                                pb->lookup_name = NULL;
+                              }
+
+                            new = copy_ping_bogie (ssd, b);
+                            break;
+                          }
+                      }
+                  }
+              }
           }
 
           if (! new)      /* not in targets? */
@@ -1100,6 +1278,14 @@ ping_free_data (sonar_sensor_data *ssd, void *closure)
 static void
 ping_free_bogie_data (sonar_sensor_data *sd, void *closure)
 {
+  ping_bogie *pb = (ping_bogie *) closure;
+
+  if (pb->lookup_name)
+    async_name_from_addr_cancel (pb->lookup_name);
+  if (pb->lookup_addr)
+    async_addr_from_name_cancel (pb->lookup_addr);
+  free (pb->fallback);
+
   free (closure);
 }
 
@@ -1121,6 +1307,19 @@ double_time (void)
 }
 
 
+static void
+free_bogie_after_lookup(sonar_sensor_data *ssd, sonar_bogie **sbp,
+                        sonar_bogie **sb)
+{
+  ping_bogie *pb = (ping_bogie *)(*sb)->closure;
+
+  *sbp = (*sb)->next;
+  pb->lookup_addr = NULL; /* Prevent double-free in sonar_free_bogie. */
+  sonar_free_bogie (ssd, *sb);
+  *sb = NULL;
+}
+
+
 /* Pings the next bogie, if it's time.
    Returns all outstanding ping replies.
  */
@@ -1134,11 +1333,89 @@ ping_scan (sonar_sensor_data *ssd)
 
   if (now > pd->last_ping_time + ping_interval)   /* time to ping someone */
     {
+      struct sonar_bogie **sbp;
+
       if (pd->last_pinged)
-        pd->last_pinged = pd->last_pinged->next;
-      if (! pd->last_pinged)
-        pd->last_pinged = pd->targets;
-      send_ping (pd, pd->last_pinged);
+        {
+          sbp = &pd->last_pinged->next;
+          if (!*sbp)
+            sbp = &pd->targets;
+        }
+      else
+        sbp = &pd->targets;
+
+      if (!*sbp)
+        /* Aaaaand we're out of bogies. */
+        pd->last_pinged = NULL;
+      else
+        {
+          sonar_bogie *sb = *sbp;
+          ping_bogie *pb = (ping_bogie *)sb->closure;
+          if (pb->lookup_addr &&
+              async_addr_from_name_is_done (pb->lookup_addr))
+            {
+              if (async_addr_from_name_finish (pb->lookup_addr, &pb->address,
+                                               &pb->addrlen, NULL))
+                {
+                  char *fallback = pb->fallback;
+                  pb->fallback = NULL;
+
+                  if (pd->debug_p)
+                    fprintf (stderr, "%s:   could not resolve host:  %s\n",
+                             progname, sb->name);
+
+                  free_bogie_after_lookup (ssd, sbp, &sb);
+
+                  /* Insert the fallback bogie right where the old one was. */
+                  if (fallback)
+                    {
+                      sonar_bogie *new_bogie = bogie_for_host (ssd, fallback,
+                                                               NULL);
+                      new_bogie->next = *sbp;
+
+                      if (! ((ping_bogie *)new_bogie->closure)->lookup_addr &&
+                        ! find_duplicate_host(pd, &pd->targets, new_bogie))
+                        *sbp = new_bogie;
+                      else
+                        sonar_free_bogie (ssd, new_bogie);
+
+                      free (fallback);
+                    }
+                }
+              else
+                {
+                  if (pd->debug_p > 1)
+                    {
+                      fprintf (stderr, "%s:   %s => ", progname, sb->name);
+                      print_address (stderr, 0, &pb->address, pb->addrlen);
+                      putc('\n', stderr);
+                    }
+
+                  if (! is_address_ok (pd->debug_p, sb))
+                    free_bogie_after_lookup (ssd, sbp, &sb);
+                  else if (find_duplicate_host (pd, &pd->targets, sb))
+                    /* Tricky: find_duplicate_host skips the current bogie when
+                       scanning the targets list because pb->lookup_addr hasn't
+                       been NULL'd yet.
+
+                       Not that it matters much, but behavior here is to
+                       keep the existing address.
+                     */
+                    free_bogie_after_lookup (ssd, sbp, &sb);
+                }
+
+              if (sb)
+                pb->lookup_addr = NULL;
+            }
+
+          if (sb && !pb->lookup_addr)
+            {
+              assert (pb->addrlen);
+              send_ping (pd, sb);
+              pd->last_pinged = sb;
+            }
+        }
+
       pd->last_ping_time = now;
     }
 
@@ -1209,7 +1486,7 @@ parse_mode (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
         {
           /* IP: A.B.C.D
            */
-          new = bogie_for_host (ssd, token, pd->resolve_p);
+          new = bogie_for_host (ssd, token, NULL);
         }
       else if (!strcmp (token, "subnet"))
         {
@@ -1238,7 +1515,7 @@ parse_mode (sonar_sensor_data *ssd, char **error_ret, char **desc_ret,
         {
           /* not an existant file - must be a host name
            */
-          new = bogie_for_host (ssd, token, pd->resolve_p);
+          new = bogie_for_host (ssd, token, NULL);
         }
 
       if (new)
@@ -1282,6 +1559,9 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
                  const char *subnet, int timeout,
                  Bool resolve_p, Bool times_p, Bool debug_p)
 {
+  /* Important! Do not return from this function without disavowing privileges
+     with setuid(getuid()).
+   */
   sonar_sensor_data *ssd = (sonar_sensor_data *) calloc (1, sizeof(*ssd));
   ping_data *pd = (ping_data *) calloc (1, sizeof(*pd));
   sonar_bogie *b;
@@ -1289,6 +1569,8 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
 
   Bool socket_initted_p = False;
   Bool socket_raw_p     = False;
+
+  pd->dpy = dpy;
 
   pd->resolve_p = resolve_p;
   pd->times_p   = times_p;
@@ -1367,11 +1649,8 @@ sonar_init_ping (Display *dpy, char **error_ret, char **desc_ret,
       fprintf (stderr, "%s: Target list:\n", progname);
       for (b = pd->targets; b; b = b->next)
         {
-          ping_bogie *pb = (ping_bogie *) b->closure;
-          struct sockaddr_in *iaddr = (struct sockaddr_in *) &(pb->address);
-          unsigned long ip = iaddr->sin_addr.s_addr;
           fprintf (stderr, "%s:   ", progname);
-          print_host (stderr, ip, b->name);
+          print_host (stderr, b);
         }
     }
 

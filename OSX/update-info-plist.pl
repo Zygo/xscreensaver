@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my ($version) = ('$Revision: 1.35 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.38 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 
@@ -43,13 +43,24 @@ sub convert_plist($$) {
   if ($data && (!$is_binary_p) != (!$to_binary_p)) {
     print STDERR "$progname: converting plist\n" if ($verbose > 2);
     my $which = ($to_binary_p ? 'binary1' : 'xml1');
-    my $cmd = "plutil -convert $which -s -o - -";
-    my $pid = open3 (my $in, my $out, undef, $cmd) || error ("pipe: $cmd: $!");
+    my @cmd = ('plutil', '-convert', $which, '-s', '-o', '-', '-');
+    my $pid = open3 (my $in, my $out, undef, @cmd) ||
+      error ("pipe: $cmd[0]: $!");
+    error ("$cmd[0]: $!") unless $pid;
     print $in $data;
     close $in;
     local $/ = undef;  # read entire file
     $data = <$out>;
     close $out;
+    waitpid ($pid, 0);
+    if ($?) {
+      my $exit_value  = $? >> 8;
+      my $signal_num  = $? & 127;
+      my $dumped_core = $? & 128;
+      error ("$cmd[0]: core dumped!") if ($dumped_core);
+      error ("$cmd[0]: signal $signal_num!") if ($signal_num);
+      error ("$cmd[0]: exited with $exit_value!") if ($exit_value);
+    }
   }
   return $data;
 }
@@ -138,8 +149,13 @@ sub update_saver_xml($$) {
        s/\nCopyright [^ \r\n\t]+ (\d{4})(-\d{4})? (.*)\.$/\nWritten $3; $1./s;
   $desc =~ s/^\n+//s;
 
-  error ("$filename: description contains bad characters")
-    if ($desc =~ m/([^\t\n -~]|[<>])/);
+  error ("$filename: description contains markup: $1")
+    if ($desc =~ m/([<>&][^<>&\s]*)/s);
+  error ("$filename: description contains ctl chars: $1")
+    if ($desc =~ m/([\000-\010\013-\037])/s);
+  error ("$filename: description contains non-ASCII and is not UTF-8: $1")
+    if ($body !~ m/\Q<?xml version="1.0" encoding="UTF-8"/s &&
+        $desc =~ m/([^\000-\176])/s);
 
   error ("$filename: can't extract authors")
     unless ($desc =~ m@^(.*)\nWritten by[ \t]+(.+)$@s);

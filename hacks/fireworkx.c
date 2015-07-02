@@ -100,6 +100,9 @@ struct state
 	int depth;
 	int bigendian;
 	int ncolors;
+	Bool button_down_p;
+	int deferred;
+
 };
 
 /*
@@ -777,10 +780,18 @@ fireworkx_draw (Display *dpy, Window win, void *closure)
 		{
 			if (!explode(st, fs))
 			{
-				recycle(st, fs, rnd(st->width), rnd(st->height));
+				if (st->button_down_p)
+                                  st->deferred++;
+                                else
+				  recycle(st, fs, rnd(st->width), rnd(st->height));
 			}
 		}
 	}
+
+        while (!st->button_down_p && st->deferred) {
+          st->deferred--;
+          recycle_oldest(st, rnd(st->width), rnd(st->height));
+        }
 
 	glow_blur(st);
 
@@ -810,8 +821,15 @@ fireworkx_event (Display *dpy, Window window, void *closure, XEvent *event)
 	if (event->type == ButtonPress)
 	{
 		recycle_oldest(st, event->xbutton.x, event->xbutton.y);
+		st->button_down_p = True;
 		return True;
 	}
+	else if (event->type == ButtonRelease)
+	{
+		st->button_down_p = False;
+		return True;
+	}
+
 	return False;
 }
 

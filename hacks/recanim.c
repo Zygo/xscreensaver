@@ -1,4 +1,4 @@
-/* recanim, Copyright (c) 2014 Jamie Zawinski <jwz@jwz.org>
+/* recanim, Copyright (c) 2014-2015 Jamie Zawinski <jwz@jwz.org>
  * Record animation frames of the running screenhack.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -48,6 +48,7 @@ struct record_anim_state {
   XWindowAttributes xgwa;
   char *title;
   int pct;
+  int fade_frames;
 # ifdef USE_GL
   char *data, *data2;
 # else  /* !USE_GL */
@@ -75,6 +76,10 @@ screenhack_record_anim_init (Screen *screen, Window window, int target_frames)
   st->window = window;
   st->target_frames = target_frames;
   st->frame_count = 0;
+  st->fade_frames = 30 * 1.5;
+
+  if (st->fade_frames >= (st->target_frames / 2) - 30)
+    st->fade_frames = 0;
 
 # ifdef HAVE_GDK_PIXBUF
   {
@@ -119,6 +124,22 @@ screenhack_record_anim_init (Screen *screen, Window window, int target_frames)
 # endif /* !HAVE_COCOA */
 
   return st;
+}
+
+
+/* Fade to black. Assumes data is 3-byte packed.
+ */
+static void
+fade_frame (record_anim_state *st, unsigned char *data, double ratio)
+{
+  int x, y, i;
+  int w = st->xgwa.width;
+  int h = st->xgwa.height;
+  unsigned char *s = data;
+  for (y = 0; y < h; y++)
+    for (x = 0; x < w; x++)
+      for (i = 0; i < 3; i++)
+        *s++ *= ratio;
 }
 
 
@@ -187,6 +208,14 @@ screenhack_record_anim (record_anim_state *st)
 
 # endif /* USE_GL */
 
+
+  if (st->frame_count < st->fade_frames)
+    fade_frame (st, (unsigned char *) data,
+                (double) st->frame_count / st->fade_frames);
+  else if (st->frame_count >= st->target_frames - st->fade_frames)
+    fade_frame (st, (unsigned char *) data,
+                (double) (st->target_frames - st->frame_count - 1) /
+                st->fade_frames);
 
 # ifdef HAVE_GDK_PIXBUF
   {
@@ -278,9 +307,9 @@ screenhack_record_anim_free (record_anim_state *st)
 
   sprintf (cmd,
            "ffmpeg"
-           " -r 30"   /* Must be before -i */
-           " -framerate 30"
-           " -i '%s-%%06d.%s'",
+           " -framerate 30"	/* rate of input: must be before -i */
+           " -i '%s-%%06d.%s'"
+           " -r 30",		/* rate of output: must be after -i */
            progname, type);
   if (soundtrack)
     sprintf (cmd + strlen(cmd),

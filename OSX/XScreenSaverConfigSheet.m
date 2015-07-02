@@ -149,6 +149,48 @@ typedef enum { SimpleXMLCommentKind,
 @end
 
 
+#pragma mark textMode value transformer
+
+// A value transformer for mapping "url" to "3" and vice versa in the
+// "textMode" preference, since NSMatrix uses NSInteger selectedIndex.
+
+#ifndef USE_IPHONE
+@interface TextModeTransformer: NSValueTransformer {}
+@end
+@implementation TextModeTransformer
++ (Class)transformedValueClass { return [NSString class]; }
++ (BOOL)allowsReverseTransformation { return YES; }
+
+- (id)transformedValue:(id)value {
+  if ([value isKindOfClass:[NSString class]]) {
+    int i = -1;
+    if      ([value isEqualToString:@"date"])    { i = 0; }
+    else if ([value isEqualToString:@"literal"]) { i = 1; }
+    else if ([value isEqualToString:@"file"])    { i = 2; }
+    else if ([value isEqualToString:@"url"])     { i = 3; }
+    else if ([value isEqualToString:@"program"]) { i = 4; }
+    if (i != -1)
+      value = [NSNumber numberWithInt: i];
+  }
+  return value;
+}
+
+- (id)reverseTransformedValue:(id)value {
+  if ([value isKindOfClass:[NSNumber class]]) {
+    switch ((int) [value doubleValue]) {
+    case 0: value = @"date";    break;
+    case 1: value = @"literal"; break;
+    case 2: value = @"file";    break;
+    case 3: value = @"url";     break;
+    case 4: value = @"program"; break;
+    }
+  }
+  return value;
+}
+@end
+#endif // USE_IPHONE
+
+
 #pragma mark Implementing radio buttons
 
 /* The UIPickerView is a hideous and uncustomizable piece of shit.
@@ -666,6 +708,11 @@ static void layout_group (NSView *group, BOOL horiz_p);
 
 - (void) okAction:(NSObject *)arg
 {
+  // Without the setAppliesImmediately:, when the saver restarts, it's still
+  // got the old settings. -[XScreenSaverConfigSheet traverseTree] sets this
+  // to NO; default is YES.
+  [userDefaultsController   setAppliesImmediately:YES];
+  [globalDefaultsController setAppliesImmediately:YES];
   [userDefaultsController   commitEditing];
   [globalDefaultsController commitEditing];
   [userDefaultsController   save:self];
@@ -713,15 +760,23 @@ static void layout_group (NSView *group, BOOL horiz_p);
 {
   NSUserDefaultsController *prefs = [self controllerForKey:pref_key];
 # ifndef USE_IPHONE
+  NSDictionary *opts_dict = nil;
   NSString *bindto = ([control isKindOfClass:[NSPopUpButton class]]
                       ? @"selectedObject"
                       : ([control isKindOfClass:[NSMatrix class]]
                          ? @"selectedIndex"
                          : @"value"));
+
+  if ([control isKindOfClass:[NSMatrix class]]) {
+    opts_dict = @{ NSValueTransformerNameBindingOption:
+                   @"TextModeTransformer" };
+  }
+
   [control bind:bindto
        toObject:prefs
     withKeyPath:[@"values." stringByAppendingString: pref_key]
-        options:nil];
+        options:opts_dict];
+
 # else  // USE_IPHONE
   SEL sel;
   NSObject *val = [prefs objectForKey:pref_key];
@@ -792,9 +847,17 @@ static void layout_group (NSView *group, BOOL horiz_p);
   NSObject *def = [[prefs defaults] objectForKey:pref_key];
   NSString *s = [NSString stringWithFormat:@"bind: \"%@\"", pref_key];
   s = [s stringByPaddingToLength:18 withString:@" " startingAtIndex:0];
-  s = [NSString stringWithFormat:@"%@ = \"%@\"", s, def];
-  s = [s stringByPaddingToLength:28 withString:@" " startingAtIndex:0];
-  NSLog (@"%@ %@/%@", s, [def class], [control class]);
+  s = [NSString stringWithFormat:@"%@ = %@", s, 
+                ([def isKindOfClass:[NSString class]]
+                 ? [NSString stringWithFormat:@"\"%@\"", def]
+                 : def)];
+  s = [s stringByPaddingToLength:30 withString:@" " startingAtIndex:0];
+  s = [NSString stringWithFormat:@"%@ %@ / %@", s,
+                [def class], [control class]];
+#  ifndef USE_IPHONE
+  s = [NSString stringWithFormat:@"%@ / %@", s, bindto];
+#  endif
+  NSLog (@"%@", s);
 # endif
 }
 
@@ -3587,6 +3650,12 @@ wrap_with_buttons (NSWindow *window, NSView *panel)
                err);
     return nil;
   }
+
+# ifndef USE_IPHONE
+  TextModeTransformer *t = [[TextModeTransformer alloc] init];
+  [NSValueTransformer setValueTransformer:t
+                      forName:@"TextModeTransformer"];
+# endif // USE_IPHONE
 
   [self traverseTree];
   xml_root = 0;

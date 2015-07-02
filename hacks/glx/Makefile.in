@@ -122,7 +122,7 @@ SRCS		= xscreensaver-gl-helper.c normals.c fps-gl.c \
 		  tronbit_no.c tronbit_yes.c jwzgles.c kaleidocycle.c \
 		  quasicrystal.c unknownpleasures.c geodesic.c geodesicgears.c \
 		  projectiveplane.c winduprobot.c robot.c robot-wireframe.c \
-		  cityflow.c
+		  cityflow.c romanboy.c splitflap.c splitflap_obj.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -164,7 +164,7 @@ OBJS		= xscreensaver-gl-helper.o normals.o fps-gl.o \
 		  tronbit_no.o tronbit_yes.o jwzgles.o kaleidocycle.o \
 		  quasicrystal.o unknownpleasures.o geodesic.o geodesicgears.o \
 		  projectiveplane.o winduprobot.o robot.o robot-wireframe.o \
-		  cityflow.o
+		  cityflow.o romanboy.o splitflap.o splitflap_obj.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -181,7 +181,8 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  lockward cubicgrid hypnowheel skytentacles jigsaw photopile \
 		  rubikblocks surfaces hilbert companioncube tronbit \
 		  kaleidocycle quasicrystal unknownpleasures geodesic \
-		  geodesicgears projectiveplane winduprobot cityflow
+		  geodesicgears projectiveplane winduprobot cityflow romanboy \
+		  splitflap
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 GL_UTIL_EXES	= xscreensaver-gl-helper
@@ -216,7 +217,7 @@ HDRS		= atlantis.h bubble3d.h buildlwo.h e_textures.h xpm-ximage.h \
 		  texfont.h tangram_shapes.h sproingies.h extrusion.h \
 		  glschool.h glschool_gl.h glschool_alg.h topblock.h \
 		  involute.h teapot.h sonar.h dropshadow.h starwars.h \
-		  jwzgles.h jwzglesI.h teapot2.h dnapizza.h
+		  jwzgles.h jwzglesI.h teapot2.h dnapizza.h curlicue.h
 GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  cubenetic.man dangerball.man engine.man extrusion.man \
 		  flipscreen3d.man gears.man gflux.man \
@@ -241,11 +242,11 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  companioncube.man tronbit.man kaleidocycle.man \
 		  quasicrystal.man unknownpleasures.man geodesic.man \
 		  geodesicgears.man projectiveplane.man winduprobot.man \
-		  cityflow.man
+		  cityflow.man romanboy.man splitflap.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
-		  molecules.sh starwars.txt *.dxf
+		  molecules.sh starwars.txt zalgo.txt *.dxf
 
 TARFILES	= $(SRCS) $(HDRS) $(GL_MEN) $(RETIRED_MEN) $(EXTRAS)
 
@@ -724,6 +725,9 @@ hypertorus:	hypertorus.o	$(HACK_TRACK_OBJS)
 projectiveplane:	projectiveplane.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
 
+romanboy:	romanboy.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
 glmatrix:	glmatrix.o	xpm-ximage.o $(HACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	xpm-ximage.o $(HACK_OBJS) $(XPM_LIBS)
 
@@ -898,6 +902,14 @@ geodesicgears: geodesicgears.o	 $(GEARS_OBJS)
 
 cityflow:	cityflow.o	$(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+splitflap_dxf::
+	./dxf2gl.pl --normalize --smooth --layers splitflap.dxf splitflap_obj.c
+
+FLAP_OBJS=splitflap_obj.o gllist.o splitflap.o $(TEXT) $(HACK_TRACK_OBJS)
+splitflap:			$(FLAP_OBJS)
+	$(CC_HACK) -o $@	$(FLAP_OBJS) $(XPM_LIBS) $(TEXT_LIBS)
+
 
 ##############################################################################
 #
@@ -2103,6 +2115,7 @@ kaleidocycle.o: $(UTILS_SRC)/yarandom.h
 kaleidocycle.o: $(HACK_SRC)/xlockmoreI.h
 kaleidocycle.o: $(HACK_SRC)/xlockmore.h
 klein.o: ../../config.h
+klein.o: $(srcdir)/curlicue.h
 klein.o: $(HACK_SRC)/fps.h
 klein.o: $(srcdir)/gltrackball.h
 klein.o: $(srcdir)/jwzglesI.h
@@ -2409,6 +2422,7 @@ polytopes.o: $(UTILS_SRC)/yarandom.h
 polytopes.o: $(HACK_SRC)/xlockmoreI.h
 polytopes.o: $(HACK_SRC)/xlockmore.h
 projectiveplane.o: ../../config.h
+projectiveplane.o: $(srcdir)/curlicue.h
 projectiveplane.o: $(HACK_SRC)/fps.h
 projectiveplane.o: $(srcdir)/gltrackball.h
 projectiveplane.o: $(srcdir)/jwzglesI.h
@@ -2497,6 +2511,23 @@ robot-wireframe.o: ../../config.h
 robot-wireframe.o: $(srcdir)/gllist.h
 robot-wireframe.o: $(srcdir)/jwzglesI.h
 robot-wireframe.o: $(srcdir)/jwzgles.h
+romanboy.o: ../../config.h
+romanboy.o: $(srcdir)/curlicue.h
+romanboy.o: $(HACK_SRC)/fps.h
+romanboy.o: $(srcdir)/gltrackball.h
+romanboy.o: $(srcdir)/jwzglesI.h
+romanboy.o: $(srcdir)/jwzgles.h
+romanboy.o: $(HACK_SRC)/screenhackI.h
+romanboy.o: $(UTILS_SRC)/colors.h
+romanboy.o: $(UTILS_SRC)/grabscreen.h
+romanboy.o: $(UTILS_SRC)/hsv.h
+romanboy.o: $(UTILS_SRC)/resources.h
+romanboy.o: $(UTILS_SRC)/usleep.h
+romanboy.o: $(UTILS_SRC)/visual.h
+romanboy.o: $(UTILS_SRC)/xshm.h
+romanboy.o: $(UTILS_SRC)/yarandom.h
+romanboy.o: $(HACK_SRC)/xlockmoreI.h
+romanboy.o: $(HACK_SRC)/xlockmore.h
 rotator.o: ../../config.h
 rotator.o: $(srcdir)/rotator.h
 rotator.o: $(UTILS_SRC)/yarandom.h
@@ -2634,10 +2665,13 @@ sonar-icmp.o: ../../config.h
 sonar-icmp.o: $(HACK_SRC)/fps.h
 sonar-icmp.o: $(HACK_SRC)/screenhackI.h
 sonar-icmp.o: $(srcdir)/sonar.h
+sonar-icmp.o: $(UTILS_SRC)/aligned_malloc.h
+sonar-icmp.o: $(UTILS_SRC)/async_netdb.h
 sonar-icmp.o: $(UTILS_SRC)/colors.h
 sonar-icmp.o: $(UTILS_SRC)/grabscreen.h
 sonar-icmp.o: $(UTILS_SRC)/hsv.h
 sonar-icmp.o: $(UTILS_SRC)/resources.h
+sonar-icmp.o: $(UTILS_SRC)/thread_util.h
 sonar-icmp.o: $(UTILS_SRC)/usleep.h
 sonar-icmp.o: $(UTILS_SRC)/version.h
 sonar-icmp.o: $(UTILS_SRC)/visual.h
@@ -2697,6 +2731,32 @@ sphere.o: ../../config.h
 sphere.o: $(srcdir)/jwzglesI.h
 sphere.o: $(srcdir)/jwzgles.h
 sphere.o: $(srcdir)/sphere.h
+splitflap.o: ../../config.h
+splitflap.o: $(HACK_SRC)/fps.h
+splitflap.o: $(srcdir)/gllist.h
+splitflap.o: $(srcdir)/gltrackball.h
+splitflap.o: $(srcdir)/jwzglesI.h
+splitflap.o: $(srcdir)/jwzgles.h
+splitflap.o: $(srcdir)/rotator.h
+splitflap.o: $(HACK_SRC)/screenhackI.h
+splitflap.o: $(srcdir)/texfont.h
+splitflap.o: $(UTILS_SRC)/colors.h
+splitflap.o: $(UTILS_SRC)/grabscreen.h
+splitflap.o: $(UTILS_SRC)/hsv.h
+splitflap.o: $(UTILS_SRC)/resources.h
+splitflap.o: $(UTILS_SRC)/textclient.h
+splitflap.o: $(UTILS_SRC)/usleep.h
+splitflap.o: $(UTILS_SRC)/utf8wc.h
+splitflap.o: $(UTILS_SRC)/visual.h
+splitflap.o: $(UTILS_SRC)/xshm.h
+splitflap.o: $(UTILS_SRC)/yarandom.h
+splitflap.o: $(HACK_SRC)/xlockmoreI.h
+splitflap.o: $(HACK_SRC)/xlockmore.h
+splitflap.o: $(srcdir)/xpm-ximage.h
+splitflap_obj.o: ../../config.h
+splitflap_obj.o: $(srcdir)/gllist.h
+splitflap_obj.o: $(srcdir)/jwzglesI.h
+splitflap_obj.o: $(srcdir)/jwzgles.h
 sproingies.o: ../../config.h
 sproingies.o: $(HACK_SRC)/fps.h
 sproingies.o: $(srcdir)/gllist.h

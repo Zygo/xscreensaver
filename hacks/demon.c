@@ -228,25 +228,6 @@ addtolist(ModeInfo * mi, int col, int row, unsigned char state)
 	return True;
 }
 
-#ifdef DEBUG
-static void
-print_state(ModeInfo * mi, int state)
-{
-	demonstruct *dp = &demons[MI_SCREEN(mi)];
-	CellList   *locallist;
-	int         i = 0;
-
-	locallist = dp->cellList[state];
-	(void) printf("state %d\n", state);
-	while (locallist) {
-		(void) printf("%d	x %d, y %d\n", i,
-			      locallist->pt.x, locallist->pt.y);
-		locallist = locallist->next;
-		i++;
-	}
-}
-
-#endif
 
 static void
 free_state(demonstruct * dp, int state)

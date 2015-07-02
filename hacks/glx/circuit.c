@@ -11,7 +11,7 @@
  *                    surface mount, to-92 markings. Fixed ~5min crash.
  *                    Better LED illumination. Other minor changes.
  *
- * Copyright (C) 2001,2002 Ben Buxton (bb@cactii.net)
+ * Copyright (C) 2001-2015 Ben Buxton (bb@cactii.net)
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1112,8 +1112,11 @@ static int DrawIC(Circuit *ci, IC *c)
     {
       GLfloat texfg[] = {0.7, 0.7, 0.7, 1.0};
       GLfloat s = 0.015;
+      XCharStruct e;
       int w, h;
-      w = texture_string_width (ci->font, c->text, &h);
+      texture_string_metrics (ci->font, c->text, &e, 0, 0);
+      w = e.width;
+      h = e.ascent + e.descent;
 
       glPushMatrix();
       glTranslatef (0, 0, 0.1);
@@ -1352,9 +1355,11 @@ static int DrawTransistor(Circuit *ci, Transistor *t)
     {
       GLfloat texfg[] = {0.7, 0.7, 0.7, 1.0};
       GLfloat s = 0.015;
+      XCharStruct e;
       int w, h;
-      w = texture_string_width (ci->font, t->text, &h);
-
+      texture_string_metrics (ci->font, t->text, &e, 0, 0);
+      w = e.width;
+      h = e.ascent + e.descent;
       glPushMatrix();
       glRotatef (90, 1, 0, 0);
       glTranslatef (0.5, -0.05, 0.21);
@@ -1379,9 +1384,11 @@ static int DrawTransistor(Circuit *ci, Transistor *t)
     {
       GLfloat texfg[] = {0.7, 0.7, 0.7, 1.0};
       GLfloat s = 0.015;
+      XCharStruct e;
       int w, h;
-      w = texture_string_width (ci->font, t->text, &h);
-
+      texture_string_metrics (ci->font, t->text, &e, 0, 0);
+      w = e.width;
+      h = e.ascent + e.descent;
       glPushMatrix();
       glTranslatef (0.75, 0.75, 0.01);
       glScalef (s, s, s);

@@ -50,7 +50,7 @@ points are chosen by selecting those pixels whose distance value is
 above a certain threshold: those are the pixels that have the largest
 change in color/brightness.
 
-http://en.wikipedia.org/wiki/Delaunay_triangulation
+https://en.wikipedia.org/wiki/Delaunay_triangulation
 
 Written by Jamie Zawinski; 2014.
   </_description>

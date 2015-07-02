@@ -12,7 +12,7 @@
  * Created: 07-May-2007 
  */
 
-#include <stdint.h> 
+#include <inttypes.h>
 #include <string.h>
 #include "screenhack.h"
 #include "analogtv.h"

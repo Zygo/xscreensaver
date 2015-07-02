@@ -27,8 +27,8 @@
 #include "colors.h"
 #include "hsv.h"
 
-#if HAVE_STDINT_H
-# include <stdint.h>
+#if HAVE_INTTYPES_H
+# include <inttypes.h>
 #else
 typedef unsigned long uint32_t;
 #endif

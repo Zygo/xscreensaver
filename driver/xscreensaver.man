@@ -180,7 +180,7 @@ If DPMS seems not to be working with XFree86, make sure the "DPMS"
 option is set in your \fI/etc/X11/XF86Config\fP file.  See the
 .BR XF86Config (5)
 manual for details.
-.SH USING GNOME
+.SH USING GNOME OR UNITY
 For the better part of a decade, GNOME shipped xscreensaver as-is,
 and everything just worked out of the box.  In 2005, however, they
 decided to re-invent the wheel and ship their own replacement for
@@ -202,11 +202,23 @@ sudo apt-get remove gnome-screensaver
 Select "\fIStartup Applications\fP" from the menu (or manually
 launch "\fIgnome-session-properties\fP") and add "\fIxscreensaver\fP".
 .TP 3
-\fB3: Make "Lock Screen" use xscreensaver.\fP
+\fB3: Make GNOME's "Lock Screen" use xscreensaver.\fP
 .EX
 sudo ln -sf /usr/bin/xscreensaver-command \\
             /usr/bin/gnome-screensaver-command
 .EE
+That doesn't work under Unity, though.  Apparently it has its own
+built-in screen locker which is not gnome-screensaver, and cannot be
+removed, and yet still manages to be bug-addled and insecure. 
+Keep reinventing that wheel, guys!  (If you have figured out how to
+replace Unity's locking "feature" with xscreensaver, let me know.)
+.TP 3
+\fB4: Turn off Unity's built-in blanking.\fP
+Open "\fISystem Settings / Brightness & Lock\fP";
+.br
+Un-check "\fIStart Automatically\fP";
+.br
+Set \fI"Turn screen off when inactive for"\fP to \fI"Never."\fP
 .SH USING KDE
 Like GNOME, KDE also decided to invent their own screen saver framework
 from scratch instead of simply using xscreensaver.  To replace the KDE
@@ -258,12 +270,39 @@ Now use xscreensaver normally, controlling it via the usual
 and
 .BR xscreensaver-command (1)
 mechanisms.
-.SH USING UNITY
-Guess what, they did it again!  Ubuntu Unity's screen-locking
-framework is \fIyet another\fP rewrite, and it is completely broken,
-bug-ridden and insecure. At this time I don't have any information on
-how to turn it off and use xscreensaver instead.  If you do, let me
-know.
+.SH USING SYSTEMD
+If the above didn't do it, and your system has
+.BR systemd (1),
+then give this a try:
+
+.TP 3
+\fB1: Create a service.\fP
+Create the file \fI~/.config/systemd/user/xscreensaver.service\fP
+containing:
+.EX
+[Unit]
+Description=XScreenSaver
+[Service]
+ExecStart=xscreensaver
+[Install]
+WantedBy=default.target
+.EE
+\fB2. Enable it.\fP
+.EX
+systemctl --user enable xscreensaver
+.EE
+Then restart X11.
+.SH USING UPSTART
+Still not working, but on your distro, that newfangled
+.BR systemd (1)
+nonsense has already fallen out of favor?  Then maybe this will work:
+launch the \fIStartup Applications\fP applet, click \fI"Add"\fP, and
+enter these lines, then restart X11:
+.EX
+Name: XScreenSaver
+Command: xscreensaver
+Comment: xscreensaver
+.EE
 .SH USING GDM
 You can run \fIxscreensaver\fP from your 
 .BR gdm (1)
@@ -443,6 +482,10 @@ running graphics-hack sub-process will be killed (with \fBSIGTERM\fP), and a
 new one started.  If this is 0, then the graphics hack will never be changed:
 only one demo will run until the screensaver is deactivated by user activity.
 Default 10 minutes.
+
+The running saver will be restarted every \fIcycle\fP minutes even when
+\fImode\fP is \fIone\fP, since some savers tend to converge on a steady
+state.
 .TP 8
 .B lock\fP (class \fBBoolean\fP)
 Enable locking: before the screensaver will turn off, it will require you 
@@ -899,7 +942,7 @@ and a FAQ can always be found at http://www.jwz.org/xscreensaver/
 .BR xscreensaver\-getimage (1),
 .BR xscreensaver\-text (1).
 .SH COPYRIGHT
-Copyright \(co 1991-2014 by Jamie Zawinski.
+Copyright \(co 1991-2015 by Jamie Zawinski.
 Permission to use, copy, modify, distribute, and sell this software
 and its documentation for any purpose is hereby granted without fee,
 provided that the above copyright notice appear in all copies and that

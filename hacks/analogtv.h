@@ -207,6 +207,8 @@ typedef struct analogtv_s {
   int cmap_i_levels;
   int cmap_q_levels;
 
+  float tint_i, tint_q;
+  
   int cur_hsync;
   int line_hsync[ANALOGTV_V];
   int cur_vsync;

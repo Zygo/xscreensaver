@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+    <PreferenceCategory
+        android:title="@string/hypertorus_settings"
+        android:key="hypertoruswallpaper_settings">
+    <org.jwz.xscreensaver.SliderPreference
+        android:defaultValue="@string/hypertorus_speedxz_float"
+        android:dialogMessage="@string/hypertorus_speedxz_settings_summary"
+        android:key="hypertorus_speedxz"
+        android:summary="@array/hypertorus_speedxz_prefix"
+        android:title="@string/hypertorus_speedxz_settings_title" />
+    <ListPreference
+            android:key="hypertorus_projection3d"
+            android:title="@string/hypertorus_projection3d_settings_title"
+            android:summary="@string/hypertorus_projection3d_settings_summary"
+            android:entries="@array/hypertorus_projection3d_names"
+            android:defaultValue="@string/hypertorus_projection3d_default"
+            android:entryValues="@array/hypertorus_projection3d_prefix" />
+    <org.jwz.xscreensaver.SliderPreference
+        android:defaultValue="@string/hypertorus_speedxy_float"
+        android:dialogMessage="@string/hypertorus_speedxy_settings_summary"
+        android:key="hypertorus_speedxy"
+        android:summary="@array/hypertorus_speedxy_prefix"
+        android:title="@string/hypertorus_speedxy_settings_title" />
+    <org.jwz.xscreensaver.SliderPreference
+        android:defaultValue="@string/hypertorus_speedwy_float"
+        android:dialogMessage="@string/hypertorus_speedwy_settings_summary"
+        android:key="hypertorus_speedwy"
+        android:summary="@array/hypertorus_speedwy_prefix"
+        android:title="@string/hypertorus_speedwy_settings_title" />
+    <org.jwz.xscreensaver.SliderPreference
+        android:defaultValue="@string/hypertorus_speedwx_float"
+        android:dialogMessage="@string/hypertorus_speedwx_settings_summary"
+        android:key="hypertorus_speedwx"
+        android:summary="@array/hypertorus_speedwx_prefix"
+        android:title="@string/hypertorus_speedwx_settings_title" />
+    <ListPreference
+            android:key="hypertorus_colors"
+            android:title="@string/hypertorus_colors_settings_title"
+            android:summary="@string/hypertorus_colors_settings_summary"
+            android:entries="@array/hypertorus_colors_names"
+            android:defaultValue="@string/hypertorus_colors_default"
+            android:entryValues="@array/hypertorus_colors_prefix" />
+    <org.jwz.xscreensaver.SliderPreference
+        android:defaultValue="@string/hypertorus_speedyz_float"
+        android:dialogMessage="@string/hypertorus_speedyz_settings_summary"
+        android:key="hypertorus_speedyz"
+        android:summary="@array/hypertorus_speedyz_prefix"
+        android:title="@string/hypertorus_speedyz_settings_title" />
+    <ListPreference
+            android:key="hypertorus_displayMode"
+            android:title="@string/hypertorus_displayMode_settings_title"
+            android:summary="@string/hypertorus_displayMode_settings_summary"
+            android:entries="@array/hypertorus_displayMode_names"
+            android:defaultValue="@string/hypertorus_displayMode_default"
+            android:entryValues="@array/hypertorus_displayMode_prefix" />
+    <org.jwz.xscreensaver.SliderPreference
+        android:defaultValue="@string/hypertorus_speedwz_float"
+        android:dialogMessage="@string/hypertorus_speedwz_settings_summary"
+        android:key="hypertorus_speedwz"
+        android:summary="@array/hypertorus_speedwz_prefix"
+        android:title="@string/hypertorus_speedwz_settings_title" />
+    <ListPreference
+            android:key="hypertorus_projection4d"
+            android:title="@string/hypertorus_projection4d_settings_title"
+            android:summary="@string/hypertorus_projection4d_settings_summary"
+            android:entries="@array/hypertorus_projection4d_names"
+            android:defaultValue="@string/hypertorus_projection4d_default"
+            android:entryValues="@array/hypertorus_projection4d_prefix" />
+    <ListPreference
+            android:key="hypertorus_appearance"
+            android:title="@string/hypertorus_appearance_settings_title"
+            android:summary="@string/hypertorus_appearance_settings_summary"
+            android:entries="@array/hypertorus_appearance_names"
+            android:defaultValue="@string/hypertorus_appearance_default"
+            android:entryValues="@array/hypertorus_appearance_prefix" />
+    </PreferenceCategory>
+</PreferenceScreen>

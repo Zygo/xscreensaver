@@ -31,7 +31,7 @@
 #include <assert.h>
 #include <ctype.h>
 #include <math.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include <unistd.h>
 
 #include "yarandom.h"

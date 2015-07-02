@@ -36,6 +36,9 @@
  * Last modified: Fri Feb 21 02:14:29 2014, <dmo2118@gmail.com>
  *              Added support for SMP rendering.
  *              Tweaked math a bit re: performance.
+ * Last modified: Tue Dec 30 16:43:33 2014, <dmo2118@gmail.com>
+ *              Killed the black margin on the right and bottom.
+ *              Reduced the default grid size to 2.
  */
 
 #include <math.h>
@@ -45,8 +48,8 @@
 
 #include "thread_util.h"
 
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
 #else
 
 typedef unsigned int uint32_t;
@@ -108,8 +111,8 @@ static const char *interference_defaults [] = {
   ".background:  black",
   ".foreground:  white",
   "*count:       3",     /* number of waves */
-  "*gridsize:    4",     /* pixel size, smaller values for better resolution */
-  "*ncolors:     128",   /* number of colours used */
+  "*gridsize:    2",     /* pixel size, smaller values for better resolution */
+  "*ncolors:     192",   /* number of colours used */
   "*hue:         0",     /* hue to use for base color (0-360) */
   "*speed:       30",    /* speed of wave origins moving around */
   "*delay:       30000", /* or something */
@@ -200,6 +203,7 @@ struct inter_context {
    */
   int w;
   int h;
+  unsigned w_div_g, h_div_g;
   Colormap cmap;
   Screen *screen;
   unsigned bits_per_pixel;
@@ -422,12 +426,12 @@ static int inter_thread_create(
   self->context = c;
   self->thread_id = id;
 
-  self->result_row = malloc((c->w / c->grid_size) * sizeof(unsigned));
+  self->result_row = malloc(c->w_div_g * sizeof(unsigned));
   if(!self->result_row)
     return ENOMEM;
 
 #ifdef USE_XIMAGE
-  self->row = malloc((c->w / c->grid_size) * sizeof(uint32_t));
+  self->row = malloc(c->w_div_g * sizeof(uint32_t));
   if(!self->row) {
     free(self->result_row);
     return ENOMEM;
@@ -463,7 +467,6 @@ static void inter_thread_run(void* self_raw)
   unsigned result;
   int dist1;
   int g = c->grid_size;
-  unsigned w_div_g = c->w/g;
 
   int dx, dy, g2 = 2 * g * g;
   int px, py, px2g;
@@ -475,11 +478,11 @@ static void inter_thread_run(void* self_raw)
   void *scanline = c->ximage->data + c->ximage->bytes_per_line * g * self->thread_id;
 #endif
 
-  for(j = self->thread_id; j < c->h/g; j += c->threadpool.count) {
+  for(j = self->thread_id; j < c->h_div_g; j += c->threadpool.count) {
     px = g/2;
     py = j*g + px;
 
-    memset(self->result_row, 0, w_div_g * sizeof(unsigned));
+    memset(self->result_row, 0, c->w_div_g * sizeof(unsigned));
 
     for(k = 0; k < c->count; k++) {
 
@@ -492,7 +495,7 @@ static void inter_thread_run(void* self_raw)
       /* px2g = g*(px*2 + g); */
       px2g = g2;
 
-      for(i = 0; i < w_div_g; i++) {
+      for(i = 0; i < c->w_div_g; i++) {
         /*
          * Discarded possibilities for improving performance here:
          * 1. Using octagon-based distance estimation
@@ -523,7 +526,7 @@ static void inter_thread_run(void* self_raw)
       }
     }
 
-    for(i = 0; i < w_div_g; i++) {
+    for(i = 0; i < c->w_div_g; i++) {
 
       result = self->result_row[i];
 
@@ -548,7 +551,7 @@ static void inter_thread_run(void* self_raw)
     if(c->ximage->bits_per_pixel == 32)
     {
       uint32_t *ptr = (uint32_t *)scanline;
-      for(i = 0; i < w_div_g; i++) {
+      for(i = 0; i < c->w_div_g; i++) {
         for(k = 0; k < g; k++)
           ptr[g*i+k] = self->row[i];
       }
@@ -556,7 +559,7 @@ static void inter_thread_run(void* self_raw)
     else if(c->ximage->bits_per_pixel == 24)
     {
       uint8_t *ptr = (uint8_t *)scanline;
-      for(i = 0; i < w_div_g; i++) {
+      for(i = 0; i < c->w_div_g; i++) {
         for(k = 0; k < g; k++) {
           uint32_t pixel = self->row[i];
           /* Might not work on big-endian. */
@@ -570,7 +573,7 @@ static void inter_thread_run(void* self_raw)
     else if(c->ximage->bits_per_pixel == 16)
     {
       uint16_t *ptr = (uint16_t *)scanline;
-      for(i = 0; i < w_div_g; i++) {
+      for(i = 0; i < c->w_div_g; i++) {
         for(k = 0; k < g; k++)
           ptr[g*i+k] = self->row[i];
       }
@@ -578,14 +581,14 @@ static void inter_thread_run(void* self_raw)
     else if(c->ximage->bits_per_pixel == 8)
     {
       uint8_t *ptr = (uint8_t *)scanline;
-      for(i = 0; i < w_div_g; i++) {
+      for(i = 0; i < c->w_div_g; i++) {
         for(k = 0; k < g; k++)
           ptr[g*i+k] = self->row[i];
       }
     }
     else
     {
-      for(i = 0; i < w_div_g; i++) {
+      for(i = 0; i < c->w_div_g; i++) {
         for(k = 0; k < g; k++)
           /* XPutPixel is thread safe as long as the XImage didn't have its
            * bits_per_pixel changed. */
@@ -633,8 +636,17 @@ static void create_image(
 
   /* Set the width so that each thread can work on a different line. */
   unsigned align = thread_memory_alignment(dpy) * 8 - 1;
+  unsigned wbits, w, h;
+
+  c->w = xgwa->width;
+  c->h = xgwa->height;
+  c->w_div_g = (c->w + c->grid_size - 1) / c->grid_size;
+  c->h_div_g = (c->h + c->grid_size - 1) / c->grid_size;
+  w = c->w_div_g * c->grid_size;
+  h = c->h_div_g * c->grid_size;
+
   /* The width of a scan line, in *bits*. */
-  unsigned width = (xgwa->width * c->bits_per_pixel + align) & ~align;
+  wbits = (w * c->bits_per_pixel + align) & ~align;
 
 # ifdef HAVE_XSHM_EXTENSION
   /*
@@ -661,7 +673,7 @@ static void create_image(
     {
       c->ximage = create_xshm_image(dpy, xgwa->visual, xgwa->depth,
                                     ZPixmap, 0, &c->shm_info,
-                                    width / c->bits_per_pixel, xgwa->height);
+                                    wbits / c->bits_per_pixel, h);
       if (!c->ximage)
         c->use_shm = False;
       /* If create_xshm_image fails, it will not be attempted again. */
@@ -675,13 +687,13 @@ static void create_image(
       c->ximage =
         XCreateImage(dpy, xgwa->visual,
                      xgwa->depth, ZPixmap, 0, 0, /* depth, fmt, offset, data */
-                     xgwa->width,                /* width */
+                     w,                          /* width */
 # ifdef USE_BIG_XIMAGE
-                     xgwa->height,               /* height */
+                     h,                          /* height */
 # else
                      c->grid_size,               /* height */
 # endif
-                     8, width / 8);              /* pad, bpl */
+                     8, wbits / 8);              /* pad, bpl */
 
       if(c->ximage)
         {
@@ -780,8 +792,6 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
   c->delay = get_integer_resource(dpy, "delay", "Integer");
 
   XGetWindowAttributes(c->dpy, c->win, &xgwa);
-  c->w = xgwa.width;
-  c->h = xgwa.height;
   c->cmap = xgwa.colormap;
   c->screen = xgwa.screen;
   c->bits_per_pixel = get_bits_per_pixel(c->dpy, xgwa.depth);
@@ -1114,9 +1124,6 @@ interference_reshape (Display *dpy, Window window, void *closure,
                || c->back_buf
 # endif
                );
-
-  c->w = w;
-  c->h = h;
 
 #ifdef USE_XIMAGE
   destroy_image(dpy, c);

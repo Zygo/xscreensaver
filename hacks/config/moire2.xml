@@ -27,7 +27,7 @@ Generates fields of concentric circles or ovals, and combines the
 planes with various operations.  The planes are moving independently
 of one another, causing the interference lines to spray.
 
-http://en.wikipedia.org/wiki/Moire_pattern
+https://en.wikipedia.org/wiki/Moire_pattern
 
 Written by Jamie Zawinski; 1998.
   </_description>

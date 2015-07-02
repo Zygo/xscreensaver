@@ -26,6 +26,22 @@ LOCAL_SRC_FILES := \
     xscreensaver/hacks/glx/trackball.c \
     xscreensaver/hacks/glx/gltrackball.c \
     xscreensaver/hacks/glx/texfont.c \
+    xscreensaver/hacks/glx/stonerview.c \
+    xscreensaver/hacks/glx/stonerview-move.c \
+    xscreensaver/hacks/glx/stonerview-osc.c \
+    xscreensaver/hacks/glx/stonerview-view.c \
+    xscreensaver/hacks/glx/hilbert.c \
+    xscreensaver/hacks/glx/xpm-ximage.c \
+    xscreensaver/hacks/glx/cow_face.c \
+    xscreensaver/hacks/glx/cow_hide.c \
+    xscreensaver/hacks/glx/cow_hoofs.c \
+    xscreensaver/hacks/glx/cow_horns.c \
+    xscreensaver/hacks/glx/cow_tail.c \
+    xscreensaver/hacks/glx/cow_udder.c \
+    xscreensaver/hacks/glx/bouncingcow.c \
+    xscreensaver/hacks/glx/unknownpleasures.c \
+    xscreensaver/hacks/glx/glhanoi.c \
+    xscreensaver/utils/minixpm.c \
     xscreensaver/utils/hsv.c \
     xscreensaver/utils/colors.c \
     xscreensaver/utils/resources.c \
@@ -35,7 +51,7 @@ LOCAL_SRC_FILES := \
     xscreensaver/android/XScreenSaverView.c \
     xscreensaver/android/XScreenSaverGLView.c \
     xscreensaver/android/jwxyz.c \
-    xscreensaver/android/glue.c
+    xscreensaver/android/gen/glue.c
 
 LOCAL_LDLIBS := -lGLESv1_CM -ldl -llog
 

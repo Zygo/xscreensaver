@@ -30,7 +30,7 @@
 
 
 #include <math.h>
-#include <stdint.h>
+#include <inttypes.h>
 #include "screenhack.h"
 
 #ifdef HAVE_XSHM_EXTENSION

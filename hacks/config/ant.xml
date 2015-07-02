@@ -66,8 +66,8 @@ as the heads ("ants") walk along the screen, they change pixel
 values in their path.  Then, as they pass over changed pixels, their
 behavior is influenced.
 
-http://en.wikipedia.org/wiki/Langton%27s_ant
-http://en.wikipedia.org/wiki/Turing_machine
+https://en.wikipedia.org/wiki/Langton%27s_ant
+https://en.wikipedia.org/wiki/Turing_machine
 
 Written by David Bagley; 1997.
   </_description>

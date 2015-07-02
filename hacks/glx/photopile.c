@@ -1,4 +1,4 @@
-/* photopile, Copyright (c) 2008-2012 Jens Kilian <jjk@acm.org>
+/* photopile, Copyright (c) 2008-2015 Jens Kilian <jjk@acm.org>
  * Based on carousel, Copyright (c) 2005-2008 Jamie Zawinski <jwz@jwz.org>
  * Loads a sequence of images and shuffles them into a pile.
  *
@@ -353,7 +353,12 @@ loading_msg (ModeInfo *mi)
   if (wire) return;
 
   if (ss->loading_sw == 0)    /* only do this once */
-    ss->loading_sw = texture_string_width (ss->texfont, text, &ss->loading_sh);
+    {
+      XCharStruct e;
+      texture_string_metrics (ss->texfont, text, &e, 0, 0);
+      ss->loading_sw = e.width;
+      ss->loading_sh = e.ascent + e.descent;
+    }
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -629,20 +634,26 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
    */
   if (titles_p)
     {
-      int sw, sh;
+      int sw, sh, ascent, descent;
       GLfloat scale = 1;
       const char *title = frame->title ? frame->title : "(untitled)";
+      XCharStruct e;
 
       /* #### Highly approximate, but doing real clipping is harder... */
       int max = 35;
       if (strlen(title) > max)
         title += strlen(title) - max;
 
-      sw = texture_string_width (ss->texfont, title, &sh);
+      texture_string_metrics (ss->texfont, title, &e, &ascent, &descent);
+      sw = e.width;
+      sh = ascent + descent;
 
-      sh *= (polaroid_p ? 2.2 : 1.4);  /* move text down from the photo */
+      /* Scale the text to match the pixel size of the photo */
+      scale *= w / 300.0;
 
-      glTranslatef (-sw*scale*0.5, -h - sh*scale, z);
+      /* Move to below photo */
+      glTranslatef (0, -h - sh * (polaroid_p ? 2.2 : 0.5), 0);
+      glTranslatef (-sw*scale/2, sh*scale/2, z);
       glScalef (scale, scale, 1);
 
       if (wire || !polaroid_p)

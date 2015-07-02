@@ -1,28 +1,43 @@
 # XScreenSaver for Android
 
-default: all
 
-all:
-	@echo Nope. ; exit 1
+TARGET		= project
 
-clean::
+default: apk
+
+clean:: gradle_clean
 
 distclean::
 
 distdepend::
 
-# Todo:
+all:
+	cd project ; ./gradlew assembleDebug
+
+# TODO:
 # check_versions:
 # update_thumbs:
 
-
-# Should probably exclude "gen"
-
 echo_tarfiles:
-	@echo `find . \
-	  \( \( -name '.??*' -o -name build -o -name '*~*' \) \
+	@echo `find \
+		Makefile \
+		README \
+		*.[ch] *.pl \
+		project \
+		project/xscreensaver/res/drawable/*.png \
+		project/xscreensaver/res/values/settings.xml \
+		project/xscreensaver/res/values/strings.xml \
+	  \( \( -name '.??*' -o -name build -o -name gen -o -name '*~*' \) \
 	     -prune \) \
 	  -o \( -type f -o -type l \) -print \
 	| sed 's@^\./@@' \
 	| sort`
+
+apk: apk_raw_debug
+
+apk_raw_debug:
+		cd $(TARGET); ./gradlew assembleDebug
+
+gradle_clean:
+		cd $(TARGET); ./gradlew clean
 

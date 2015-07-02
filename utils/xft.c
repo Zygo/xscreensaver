@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2014-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -58,11 +58,28 @@ XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd)
 
 # ifdef HAVE_XUTF8DRAWSTRING
   {
+    unsigned i;
+
+    // In the event of -*-random-* (under JWXYZ), get the actual XLFD,
+    // otherwise we'll get another random font that doesn't match ff->xfont.
+    char *xlfd_resolved = NULL;
+
     char **missing_charset_list_return;
     int missing_charset_count_return;
     char *def_string_return;
 
-    char *ss = (char *) malloc (strlen(xlfd) + 10);
+    char *ss;
+
+    for (i = 0; i != ff->xfont->n_properties; ++i) {
+      if (ff->xfont->properties[i].name == XA_FONT) {
+        xlfd_resolved = XGetAtomName (dpy, ff->xfont->properties[i].card32);
+        if (xlfd_resolved)
+          xlfd = xlfd_resolved;
+        break;
+      }
+    }
+
+    ss = (char *) malloc (strlen(xlfd) + 10);
     strcpy (ss, xlfd);
     strcat (ss, ",*");
     ff->fontset = XCreateFontSet (dpy, ss,
@@ -86,6 +103,7 @@ XftFontOpenXlfd (Display *dpy, int screen, _Xconst char *xlfd)
       XFreeStringList (missing_charset_list_return);
 
     free (ss);
+    free (xlfd_resolved);
   }
 # endif
 
@@ -258,28 +276,34 @@ XftTextExtentsUtf8 (Display	    *dpy,
 		    int		    len,
 		    XGlyphInfo	    *extents)
 {
-  int direction, ascent, descent;
   XCharStruct overall;
-  XChar2b *s16;
-  int s16_len = 0;
-  char *s2 = (char *) malloc (len + 1);
 
-  if (!dpy || !font || !string || !extents || !s2) abort();
+  if (!dpy || !font || !string || !extents) abort();
 
-  strncpy (s2, (char *) string, len);
-  s2[len] = 0;
-  s16 = utf8_to_XChar2b (s2, &s16_len);
-  free (s2);
-  XTextExtents16 (font->xfont, s16, s16_len,
-                  &direction, &ascent, &descent, &overall);
-  free (s16);
+# ifdef HAVE_XUTF8DRAWSTRING
+  {
+    XRectangle ink;
+    int advancement =
+      Xutf8TextExtents (font->fontset, (const char *) string, len, &ink, 0);
+    XmbRectangle_to_XCharStruct (ink, overall, advancement);
+  }
+# else  /* !HAVE_XUTF8DRAWSTRING */
+  {
+    char *s2 = (char *) malloc (len + 1);
+    int direction, ascent, descent;
+    XChar2b *s16;
+    int s16_len = 0;
+    strncpy (s2, (char *) string, len);
+    s2[len] = 0;
+    s16 = utf8_to_XChar2b (s2, &s16_len);
+    XTextExtents16 (font->xfont, s16, s16_len,
+                    &direction, &ascent, &descent, &overall);
+    free (s2);
+    free (s16);
+  }
+# endif /* !HAVE_XUTF8DRAWSTRING */
 
-  extents->x      = -overall.lbearing;
-  extents->y      =  overall.ascent;
-  extents->xOff   =  overall.width;
-  extents->yOff   =  0;
-  extents->width  =  overall.rbearing - overall.lbearing;
-  extents->height =  overall.ascent + overall.descent;
+  XCharStruct_to_XGlyphInfo (overall, *extents);
 }
 
 
@@ -311,9 +335,14 @@ XftDrawStringUtf8 (XftDraw	    *draw,
      (beyond the Basic Multilingual Plane).
    */
 
-  /* #### I guess I don't really understand how FontSet works, because this
-          seems to just truncate the text at the first non-ASCII character.
-          The XDrawString16() path works, however.
+  /* #### I guess I don't really understand how FontSet works, because when
+          using the real X11 implementation of Xutf8DrawString, this seems
+          to just truncate the text at the first non-ASCII character.
+
+          The XDrawString16() path works, however, at the expense of losing
+          everything above Basic Multilingual.  However, that path is only
+          taken on X11 systems that are old enough to not have libXft,
+          which means that the chance of Unicode working was already slim.
    */
   Xutf8DrawString (draw->dpy, draw->drawable, font->fontset, draw->gc, x, y, 
                    (const char *) string, len);

@@ -12,7 +12,7 @@
 
 
 /* Documentation on the PDB file format:
-   http://en.wikipedia.org/wiki/Protein_Data_Bank_%28file_format%29
+   https://en.wikipedia.org/wiki/Protein_Data_Bank_%28file_format%29
    http://www.wwpdb.org/docs.html
    http://www.wwpdb.org/documentation/format32/v3.2.html
    http://www.wwpdb.org/documentation/format32/sect9.html
@@ -1368,9 +1368,6 @@ draw_labels (ModeInfo *mi)
   if (!do_labels)
     return;
 
-  if (!wire)
-    glDisable (GL_LIGHTING);   /* don't light fonts */
-
   for (i = 0; i < m->natoms; i++)
     {
       molecule_atom *a = &m->atoms[i];
@@ -1384,7 +1381,7 @@ draw_labels (ModeInfo *mi)
 
       /* First, we translate the origin to the center of the atom.
 
-         Then we retrieve the prevailing modelview matrix (which
+         Then we retrieve the prevailing modelview matrix, which
          includes any rotation, wandering, and user-trackball-rolling
          of the scene.
 
@@ -1420,25 +1417,22 @@ draw_labels (ModeInfo *mi)
       glRotatef (current_device_rotation(), 0, 0, 1);  /* right side up */
 
       {
-        int h;
-        int w = texture_string_width (mc->atom_font, a->label, &h);
+        XCharStruct e;
+        int w, h;
+        texture_string_metrics (mc->atom_font, a->label, &e, 0, 0);
+        w = e.width;
+        h = e.ascent + e.descent;
+
         GLfloat s = 1.0 / h;		/* Scale to unit */
         s *= mc->overall_scale;		/* Scale to size of atom */
         s *= 0.8;			/* Shrink a bit */
         glScalef (s, s, 1);
-        glTranslatef (-w * 0.5, h * 0.3 - h, 0);
+        glTranslatef (-w/2, -h/2, 0);
         print_texture_string (mc->atom_font, a->label);
       }
 
       glPopMatrix();
     }
-
-  /* More efficient to always call glEnable() with correct values
-     than to call glPushAttrib()/glPopAttrib(), since reading
-     attributes from GL does a round-trip and  stalls the pipeline.
-   */
-  if (!wire)
-    glEnable (GL_LIGHTING);
 }
 
 

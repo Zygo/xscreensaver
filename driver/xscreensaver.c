@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -92,6 +92,14 @@
  *   would malfunction if some other client selected KeyPress events on the
  *   subwindows.  It is an incredible misdesign that one client can make
  *   another client malfunction in this way.
+ *
+ *   But here's a new kink that started showing up in late 2014: GNOME programs
+ *   don't actually select for or receive KeyPress events! They do it behind
+ *   the scenes through some kind of Input Method magic, even when running in
+ *   an en_US locale.  However, in that case, those applications *do* seem to
+ *   update the _NET_WM_USER_TIME on their own windows every time they have
+ *   received a secret KeyPress, so we *also* monitor that property on every
+ *   window, and treat changes to it as identical to KeyPress.
  *
  *   To detect mouse motion, we periodically wake up and poll the mouse
  *   position and button/modifier state, and notice when something has
@@ -659,6 +667,7 @@ connect_to_server (saver_info *si, int *argc, char **argv)
   XA_XSETROOT_ID = XInternAtom (si->dpy, "_XSETROOT_ID", False);
   XA_ESETROOT_PMAP_ID = XInternAtom (si->dpy, "ESETROOT_PMAP_ID", False);
   XA_XROOTPMAP_ID = XInternAtom (si->dpy, "_XROOTPMAP_ID", False);
+  XA_NET_WM_USER_TIME = XInternAtom (si->dpy, "_NET_WM_USER_TIME", False);
   XA_ACTIVATE = XInternAtom (si->dpy, "ACTIVATE", False);
   XA_DEACTIVATE = XInternAtom (si->dpy, "DEACTIVATE", False);
   XA_RESTART = XInternAtom (si->dpy, "RESTART", False);

@@ -1,5 +1,5 @@
 /* timers.c --- detecting when the user is idle, and other timer-related tasks.
- * xscreensaver, Copyright (c) 1991-2013 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -140,9 +140,10 @@ notice_events (saver_info *si, Window window, Bool top_p)
 
   XGetWindowAttributes (si->dpy, window, &attrs);
   events = ((attrs.all_event_masks | attrs.do_not_propagate_mask)
-	    & KeyPressMask);
+	    & (KeyPressMask | PropertyChangeMask));
 
   /* Select for SubstructureNotify on all windows.
+     Select for PropertyNotify on all windows.
      Select for KeyPress on all windows that already have it selected.
 
      Note that we can't select for ButtonPress, because of X braindamage:
@@ -161,7 +162,8 @@ notice_events (saver_info *si, Window window, Bool top_p)
      systems that have it.  Oh, if it's a PS/2 mouse, not serial or USB.
      This sucks!
    */
-  XSelectInput (si->dpy, window, SubstructureNotifyMask | events);
+  XSelectInput (si->dpy, window,
+                SubstructureNotifyMask | PropertyChangeMask | events);
 
   if (top_p && p->debug_p && (events & KeyPressMask))
     {
@@ -687,6 +689,7 @@ swallow_unlock_typeahead_events (saver_info *si, XEvent *e)
       explicitly informed by SGI SCREEN_SAVER server event;
       explicitly informed by MIT-SCREEN-SAVER server event;
       select events on all windows, and note events on any of them;
+      note that a client updated their window's _NET_WM_USER_TIME property;
       note that /proc/interrupts has changed;
       deactivated by clientmessage.
 
@@ -983,6 +986,37 @@ sleep_until_idle (saver_info *si, Bool until_idle_p)
 	  reset_timers (si);
 
 	break;
+
+      case PropertyNotify:
+
+        if (event.x_event.xproperty.state == PropertyNewValue &&
+            event.x_event.xproperty.atom == XA_NET_WM_USER_TIME)
+          {
+            /* Let's just assume that they only ever set USER_TIME to the
+               current time, and don't do something stupid like repeatedly
+               setting it to 20 minutes ago. */
+
+            why = "WM_USER_TIME";
+
+            if (p->debug_p)
+              {
+                Window w = event.x_event.xproperty.window;
+                XWindowAttributes xgwa;
+                int i;
+                XGetWindowAttributes (si->dpy, w, &xgwa);
+                for (i = 0; i < si->nscreens; i++)
+                  if (xgwa.root == RootWindowOfScreen (si->screens[i].screen))
+                    break;
+                fprintf (stderr,"%s: %d: %s on 0x%lx\n",
+                         blurb(), i, why, (unsigned long) w);
+              }
+
+            if (until_idle_p)
+              reset_timers (si);
+            else
+              goto DONE;
+          }
+        break;
 
       default:
 

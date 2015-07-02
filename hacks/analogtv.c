@@ -59,6 +59,11 @@
   Fixed a bug or two.
 */
 
+/* 2015-02-27, Tomasz Sulej <tomeksul@gmail.com>:
+   - tint_control variable is used now
+   - removed unusable hashnoise code
+ */
+
 #ifdef HAVE_COCOA
 # include "jwxyz.h"
 #else /* !HAVE_COCOA */
@@ -792,11 +797,8 @@ analogtv_ntsc_to_yiq(const analogtv *it, int lineno, const float *signal,
     colormode = (cb_i * cb_i + cb_q * cb_q) > 2.8;
 
     if (colormode) {
-      double tint_i = -cos((103 + it->color_control)*3.1415926/180);
-      double tint_q = sin((103 + it->color_control)*3.1415926/180);
-
-      multiq2[0] = (cb_i*tint_i - cb_q*tint_q) * it->color_control;
-      multiq2[1] = (cb_q*tint_i + cb_i*tint_q) * it->color_control;
+      multiq2[0] = (cb_i*it->tint_i - cb_q*it->tint_q) * it->color_control;
+      multiq2[1] = (cb_q*it->tint_i + cb_i*it->tint_q) * it->color_control;
       multiq2[2]=-multiq2[0];
       multiq2[3]=-multiq2[1];
     }
@@ -908,7 +910,7 @@ analogtv_setup_teletext(analogtv_input *input)
 void
 analogtv_setup_frame(analogtv *it)
 {
-  int i,x,y;
+  /*  int i,x,y;*/
 
   it->redraw_all=0;
 
@@ -920,10 +922,13 @@ analogtv_setup_frame(analogtv *it)
       ((int)(random()&0xff)-0x80) * 0.000001;
   }
 
+  /* it wasn't used
   for (i=0; i<ANALOGTV_V; i++) {
     it->hashnoise_times[i]=0;
   }
+  */
 
+  /* let's leave it to process shrinkpulse */
   if (it->hashnoise_enable && !it->hashnoise_on) {
     if (random()%10000==0) {
       it->hashnoise_on=1;
@@ -933,6 +938,8 @@ analogtv_setup_frame(analogtv *it)
   if (random()%1000==0) {
     it->hashnoise_on=0;
   }
+
+#if 0  /* never used */
   if (it->hashnoise_on) {
     it->hashnoise_rpm += (15000.0 - it->hashnoise_rpm)*0.05 +
       ((int)(random()%2000)-1000)*0.1;
@@ -964,8 +971,11 @@ analogtv_setup_frame(analogtv *it)
         hnc += hni;
       }
     }
-/*    hnc -= (ANALOGTV_V * ANALOGTV_H)<<8;*/
   }
+#endif /* 0 */
+
+/*    hnc -= (ANALOGTV_V * ANALOGTV_H)<<8;*/
+
 
   if (it->rx_signal_level != 0.0)
     it->agclevel = 1.0/it->rx_signal_level;
@@ -1739,7 +1749,7 @@ analogtv_draw(analogtv *it, double noiselevel,
               const analogtv_reception *const *recs, unsigned rec_count)
 {
   int i,lineno;
-  int /*bigloadchange,*/drawcount;
+  /*  int bigloadchange,drawcount;*/
   double baseload;
   int overall_top, overall_bot;
 
@@ -1794,14 +1804,18 @@ analogtv_draw(analogtv *it, double noiselevel,
   baseload=0.5;
   /* if (it->hashnoise_on) baseload=0.5; */
 
-  /*bigloadchange=1;*/
-  drawcount=0;
+  /*bigloadchange=1;
+    drawcount=0;*/
   it->crtload[ANALOGTV_TOP-1]=baseload;
   it->puheight = puramp(it, 2.0, 1.0, 1.3) * it->height_control *
     (1.125 - 0.125*puramp(it, 2.0, 2.0, 1.1));
 
   analogtv_setup_levels(it, it->puheight * (double)it->useheight/(double)ANALOGTV_VISLINES);
 
+  /* calculate tint once per frame */
+  it->tint_i = -cos((103 + it->tint_control)*3.1415926/180);
+  it->tint_q = sin((103 + it->tint_control)*3.1415926/180);
+  
   for (lineno=ANALOGTV_TOP; lineno<ANALOGTV_BOT; lineno++) {
     int slineno, ytop, ybot;
     unsigned signal_offset;
@@ -1827,7 +1841,7 @@ analogtv_draw(analogtv *it, double noiselevel,
     }
     it->onscreen_signature[lineno] = linesig;
 #endif
-    drawcount++;
+    /*    drawcount++;*/
 
     /*
       Interpolate the 600-dotclock line into however many horizontal

@@ -12,6 +12,14 @@
 #ifndef __YARANDOM_H__
 #define __YARANDOM_H__
 
+#ifdef HAVE_CONFIG_H
+# include "config.h"
+#endif
+
+#ifdef HAVE_INTTYPES_H
+# include <inttypes.h>
+#endif
+
 #undef random
 #undef rand
 #undef drand48
@@ -61,5 +69,35 @@ static double _frand_tmp_;
    _frand_tmp_ < 0 ? (-_frand_tmp_) : _frand_tmp_)
 
 #endif /* not GCC2 */
+
+/* Compatibility with the xlockmore RNG API
+   (note that the xlockmore hacks never expect negative numbers.)
+ */
+#define LRAND()         ((long) (random() & 0x7fffffff))
+
+/* The first NRAND(n) is much faster, when uint64_t is available to allow it.
+ * Especially on ARM and other processors without built-in division.
+ *
+ * n must be greater than zero.
+ *
+ * The division by RAND_MAX+1 should optimize down to a bit shift.
+ *
+ * Although the result here is never negative, this needs to return signed
+ * integers: A binary operator in C requires operands have the same type, and
+ * if one side is signed and the other is unsigned, but they're both the same
+ * size, then the signed operand is cast to unsigned, and the result is
+ * similarly unsigned. This can potentially cause problems when idioms like
+ * "NRAND(n) * RANDSIGN()" (where RANDSIGN() returns either -1 or 1) is used
+ * to get random numbers from the range (-n,n).
+ */
+#ifdef HAVE_INTTYPES_H
+# define NRAND(n)       ((int32_t) ((uint64_t) random() * (uint32_t) (n) / \
+                                    ((uint64_t) RAND_MAX + 1)))
+#else
+# define NRAND(n)       ((int) (LRAND() % (n)))
+#endif
+
+#define MAXRAND         (2147483648.0) /* unsigned 1<<31 as a float */
+#define SRAND(n)        /* already seeded by screenhack.c */
 
 #endif /* __YARANDOM_H__ */

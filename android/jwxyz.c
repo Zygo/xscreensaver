@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -73,8 +73,28 @@ struct jwxyz_Display {
 struct jwxyz_Screen {
     Display *dpy;
     Visual *visual;
+    unsigned long black, white;
     int screen_number;
 };
+
+
+Screen *
+XDefaultScreenOfDisplay (Display *dpy)
+{
+  return dpy->screen;
+}
+
+unsigned long
+XBlackPixelOfScreen(Screen *screen)
+{
+  return screen->black;
+}
+
+unsigned long
+XWhitePixelOfScreen(Screen *screen)
+{
+  return screen->white;
+}
 
 
 static void draw_rect(Display *, Drawable, GC,
@@ -314,6 +334,8 @@ Display * jwxyz_make_display (void *nsview_arg, void *cgc_arg)
 
     d->screen_count = 1;
     d->screen->screen_number = 0;
+    d->screen->black = 0xFF000000;
+    d->screen->white = 0xFFFFFFFF;
 
     Visual *v = (Visual *) calloc(1, sizeof(Visual));
     v->class = TrueColor;
@@ -325,7 +347,7 @@ Display * jwxyz_make_display (void *nsview_arg, void *cgc_arg)
 
     Window w = (Window) calloc(1, sizeof(*w));
     w->type = WINDOW;
-    w->window.background = BlackPixel(0, 0);
+    w->window.background = BlackPixelOfScreen(d->screen);
 
     d->main_window = w;
 
@@ -428,5 +450,18 @@ int
 XTextExtents16 (XFontStruct *f, const XChar2b *s, int length,
                 int *dir_ret, int *ascent_ret, int *descent_ret,
                 XCharStruct *cs)
+{
+}
+
+int
+XPutPixel (XImage *ximage, int x, int y, unsigned long pixel)
+{
+}
+
+XImage *
+XCreateImage (Display *dpy, Visual *visual, unsigned int depth,
+              int format, int offset, char *data,
+              unsigned int width, unsigned int height,
+              int bitmap_pad, int bytes_per_line)
 {
 }

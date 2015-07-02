@@ -7,3 +7,80 @@ If you're messing with this, please let us know!
 
         dennis@panaceasupplies.com
         jwz@jwz.org
+
+
+To build:
+
+    Install JDK 7 (http://www.oracle.com/technetwork/java/javase/downloads/)
+    Install Android Studio (http://developer.android.com/sdk/)
+    Install Android NDK (http://developer.android.com/ndk/downloads)
+      Rename or link the "android-ndk-*" directory to "ndk" inside your
+      $ANDROID_HOME (the "sdk/" directory that is the parent of
+      "build-tools/", etc.)  That is, it should be "sdk/ndk/".
+
+    set $ANDROID_HOME to where your SDK is installed, or
+    set "sdk.dir" in project/local.properties.
+    On MacOS, the value you want is probably ~/Library/Android/sdk/
+    Also set "ndk.dir" in project/local.properties.
+
+    cd android
+    make
+
+    If it fails, try a "make clean" and then try make again.
+    Make sure you have the needed Android SDK platform versions installed.
+
+    Hopefully an "xscreensaver-debug.apk" file will appear in
+    android/project/xscreensaver/build/outputs/apk/.
+
+    Load that onto your device and go to:
+      Settings / Display / Wallpaper / Live Wallpapers.
+
+    To launch the emulator:
+      $ANDROID_HOME/sdk/tools/emulator -avd Nexus_5_API_21_x86
+
+    To load it into the currently-running emulator:
+      $ANDROID_HOME/platform-tools/adb install -r \
+        project/xscreensaver/build/outputs/apk/xscreensaver-debug.apk
+
+
+The files in these subdirectories are source code, more or less:
+
+        project/xscreensaver/*.xml
+        project/xscreensaver/src/org/jwz/xscreensaver/
+        project/GLWallpaperService/ (a third-party library, unchanged)
+
+These directories are boilerplate for Android apps:
+
+        project/xscreensaver/res/layout/
+        project/xscreensaver/res/values/
+        project/xscreensaver/res/xml/
+        project/xscreensaver/res/drawable-ldpi/
+        project/xscreensaver/res/drawable-mdpi/
+        project/xscreensaver/res/drawable-hdpi/
+        project/xscreensaver/res/drawable/thumbnail.png
+
+These are files that we generate:
+
+        project/xscreensaver/src/org/jwz/xscreensaver/gen/
+
+These too (intermediate build files):
+
+        .gradle/
+        gen/
+        project/GLWallpaperService/build/
+        project/build/
+        project/xscreensaver/build/
+        project/xscreensaver/libs/
+        project/xscreensaver/obj/
+        project/xscreensaver/res/xml/
+
+These are files that we *will* generate but don't yet:
+
+        project/xscreensaver/res/drawable/*.png
+        XScreenSaverView.c
+
+When adding a new hack, edit:
+
+        project/xscreensaver/jni/Android.mk
+        project/xscreensaver/build.gradle
+        generate_files.pl
