@@ -808,6 +808,9 @@ AC_DEFUN([AC_PATH_X_APP_DEFAULTS_DIRECT],[
   # Look for the directory under a standard set of common directories.
   # Check X11 before X11Rn because it's often a symlink to the current release.
   for ac_dir in                                 \
+                                                \
+    /usr/share/X11/app-defaults                 \
+                                                \
     /usr/X11/lib/app-defaults                   \
     /usr/X11R6/lib/app-defaults                 \
     /usr/X11R6/lib/X11/app-defaults             \

@@ -8,25 +8,25 @@
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 5.33</title>
+   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.33.dmg</link>
+   <description><![CDATA[&bull; New hacks, `splitflap' and `romanboy'. <BR>&bull; Better detection of user activity on modern GNOME systems. <BR>&bull; Sonar now does asynchronous host name resolution. <BR>&bull; Improved Unicode support. <BR>&bull; Updated `webcollage' for recent changes. <BR>&bull; Various minor fixes.]]></description>
+   <pubDate>Thu, 25 Jun 2015 12:45:10 -0700</pubDate>
+   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.33.dmg"
+    sparkle:version="5.33"
+    sparkle:dsaSignature="MCwCFEd0Zr8mliQgeG30xb2yfmitxc3yAhQs6xnD7v8ho9wmyCv1yJFjexcfgA=="
+    length="58437761"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 5.32</title>
    <link>http://www.jwz.org/xscreensaver/xscreensaver-5.32.dmg</link>
-   <description><![CDATA[&bull; Fixed some X11 compilation problems. <BR>&bull; Fixed display size and shake gestures on iOS.]]></description>
+   <description><![CDATA[&bull; Fixed some X11 compilation problems. <BR>&bull; Fixed display size and shake gestures on iOS. <BR>&bull; OSX/iOS Performance improvements.]]></description>
    <pubDate>Tue, 18 Nov 2014 23:25:45 -0800</pubDate>
    <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.32.dmg"
     sparkle:version="5.32"
     sparkle:dsaSignature="MC0CFC8zpKjqvEY7GD1ePcf6P5leMJEhAhUAmNXVKRrAFBXwvyfJBw79iN3zobQ="
     length="55175283"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 5.31</title>
-   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.31.dmg</link>
-   <description><![CDATA[&bull; New hacks, `geodesicgears', `binaryring' and `cityflow'. <BR>&bull; UTF-8 text support (instead of only Latin1) and antialiased text on X11 with Xft (instead of only on OSX/iOS) in `fontglide', `noseguy', `fliptext', `starwars', and `winduprobot'. The other text-displaying hacks (`apple2', `phosphor', `xmatrix', and `gltext') also now accept UTF-8 input, though they convert it to Latin1 or ASCII. <BR>&bull; `glplanet' now has both day and night maps, and a sharp terminator. <BR>&bull; Fixed `webcollage' on OSX. <BR>&bull; Fixed a transparency glitch in `winduprobot'. <BR>&bull; `lockward' works on iOS. <BR>&bull; Text and image loading work on OSX 10.10. <BR>&bull; Rotation works properly on iOS 8. <BR>&bull; Added a search field on iOS. <BR>&bull; Preliminary, unfinished support for Android.]]></description>
-   <pubDate>Sat, 15 Nov 2014 15:38:27 -0800</pubDate>
-   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.31.dmg"
-    sparkle:version="5.31"
-    sparkle:dsaSignature="MC4CFQCdDs107OqBIERPG9dULT0g49uc4wIVALUB7StXIXaAKxuklWvNO2y80pNf"
-    length="55131377"
     type="application/octet-stream" />
   </item>
   <item>

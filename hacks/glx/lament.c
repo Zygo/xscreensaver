@@ -326,7 +326,7 @@ scale_for_window (ModeInfo *mi)
   /* Constrain it to roughly life-sized on the screen, not huge.
    */
 # ifdef USE_IPHONE
-  if (size > 768)  /* iPad retina */
+  if (size > 768)  /* iPad retina / iPhone 6 */
     target_size *= 1.5;
   else
 # endif

@@ -27,7 +27,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.0 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.1 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -1582,6 +1582,7 @@ sub make_service($) {
               "            // handle prefs, other initialization\n" .
               "            renderer = new " . $hack .
               "Wallpaper();\n" .
+              "            setEGLConfigChooser(8, 8, 8, 8, 16, 0);\n" .
               "            setRenderer(renderer);\n" .
               "            setRenderMode(RENDERMODE_CONTINUOUSLY);\n" .
               "        }\n\n" .

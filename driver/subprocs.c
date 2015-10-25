@@ -1,5 +1,5 @@
 /* subprocs.c --- choosing, spawning, and killing screenhacks.
- * xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -387,6 +387,11 @@ block_sigchld (void)
 void
 unblock_sigchld (void)
 {
+  if (block_sigchld_handler <= 0)
+    abort();
+
+  if (block_sigchld_handler <= 1)  /* only unblock if count going to 0 */
+    {
 #ifdef HAVE_SIGACTION
   struct sigaction sa;
   sigset_t child_set;
@@ -402,6 +407,7 @@ unblock_sigchld (void)
 #else /* !HAVE_SIGACTION */
   signal(SIGPIPE, SIG_DFL);
 #endif /* !HAVE_SIGACTION */
+    }
 
   block_sigchld_handler--;
 }
@@ -415,7 +421,7 @@ kill_job (saver_info *si, pid_t pid, int signal)
 
   clean_job_list();
 
-  if (block_sigchld_handler)
+  if (in_signal_handler_p)
     /* This function should not be called from the signal handler. */
     abort();
 

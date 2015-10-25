@@ -6830,6 +6830,9 @@ else
   # Look for the directory under a standard set of common directories.
   # Check X11 before X11Rn because it's often a symlink to the current release.
   for ac_dir in                                 \
+                                                \
+    /usr/share/X11/app-defaults                 \
+                                                \
     /usr/X11/lib/app-defaults                   \
     /usr/X11R6/lib/app-defaults                 \
     /usr/X11R6/lib/X11/app-defaults             \
@@ -13307,7 +13310,7 @@ if ${ac_cv_mesagl_version_string+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 13314 "configure"
+#line 13317 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION

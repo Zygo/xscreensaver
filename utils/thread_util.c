@@ -694,18 +694,16 @@ static void _unlock_and_destroy(struct threadpool *self)
 
 	PTHREAD_VERIFY(pthread_mutex_unlock(&self->mutex));
 
-	if(!threads)
-		return;
-
+	if(threads)
 	{
 		unsigned i, count = _threadpool_count_parallel(self);
 		for(i = 0; i != count; ++i)
 			PTHREAD_VERIFY(pthread_join(threads[i], NULL));
-	}
 
-	free(threads);
-	PTHREAD_VERIFY(pthread_cond_destroy(&self->cond));
-	PTHREAD_VERIFY(pthread_mutex_destroy(&self->mutex));
+		free(threads);
+		PTHREAD_VERIFY(pthread_cond_destroy(&self->cond));
+		PTHREAD_VERIFY(pthread_mutex_destroy(&self->mutex));
+	}
 
 	_serial_destroy(self);
 }

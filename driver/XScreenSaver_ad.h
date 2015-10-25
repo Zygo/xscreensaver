@@ -265,7 +265,8 @@
   GL: 				romanboy -root				    \\n\
 				tessellimage -root			    \\n\
   GL: 				winduprobot -root			    \\n\
-  GL: 				splitflap -root				    \\n",
+  GL: 				splitflap -root				    \\n\
+				testx11 -root				    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
 "XScreenSaver.initialDelay:		0:00:00",
@@ -373,6 +374,7 @@
 "*hacks.starwars.name:       StarWars",
 "*hacks.stonerview.name:     StonerView",
 "*hacks.t3d.name:            T3D",
+"*hacks.testx11.name:        TestX11",
 "*hacks.timetunnel.name:     TimeTunnel",
 "*hacks.topblock.name:       TopBlock",
 "*hacks.tronbit.name:        TronBit",

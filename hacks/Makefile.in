@@ -122,7 +122,7 @@ SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  boxfit.c interaggregate.c celtic.c cwaves.c m6502.c \
 		  asm6502.c abstractile.c lcdscrub.c hexadrop.c \
 		  tessellimage.c delaunay.c recanim.c binaryring.c \
-		  webcollage-cocoa.m webcollage-helper-cocoa.m
+		  webcollage-cocoa.m webcollage-helper-cocoa.m testx11.c
 SCRIPTS		= vidwhacker webcollage ljlatest
 
 # Programs that are mentioned in XScreenSaver.ad, and that have XML files,
@@ -162,7 +162,7 @@ OBJS		= attraction.o blitspin.o bouboule.o braid.o bubbles.o \
 		  interaggregate.o celtic.o cwaves.o webcollage-cocoa.o \
 		  webcollage-helper-cocoa.o m6502.o asm6502.o abstractile.o \
 		  lcdscrub.o hexadrop.o tessellimage.o delaunay.o recanim.o \
-		  binaryring.o
+		  binaryring.o testx11.o
 
 EXES		= attraction blitspin bouboule braid decayscreen deco \
 		  drift flame galaxy grav greynetic halo \
@@ -273,7 +273,7 @@ TARFILES	= $(SRCS) $(HDRS) $(SCRIPTS) $(MEN) $(RETIRED_MEN) \
 
 
 default: all
-all: $(EXES) $(RETIRED_EXES)
+all: $(EXES) $(RETIRED_EXES) testx11
 
 install:   install-program   install-scripts install-xml install-man
 uninstall: uninstall-program uninstall-xml uninstall-man
@@ -389,7 +389,7 @@ uninstall-xml:
 	done
 
 clean:
-	-rm -f *.o a.out core $(EXES) $(RETIRED_EXES) m6502.h
+	-rm -f *.o a.out core $(EXES) $(RETIRED_EXES) testx11 m6502.h
 
 distclean: clean
 	-rm -f Makefile TAGS *~ "#"*
@@ -872,6 +872,9 @@ hexadrop:	hexadrop.o	$(HACK_OBJS) $(COL)
 
 tessellimage:	tessellimage.o	delaunay.o $(HACK_OBJS) $(GRAB)
 	$(CC_HACK) -o $@ $@.o	delaunay.o $(HACK_OBJS) $(GRAB) $(HACK_LIBS)
+
+testx11:	testx11.o	$(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -2627,6 +2630,17 @@ tessellimage.o: $(UTILS_SRC)/resources.h
 tessellimage.o: $(UTILS_SRC)/usleep.h
 tessellimage.o: $(UTILS_SRC)/visual.h
 tessellimage.o: $(UTILS_SRC)/yarandom.h
+testx11.o: ../config.h
+testx11.o: $(srcdir)/fps.h
+testx11.o: $(srcdir)/screenhackI.h
+testx11.o: $(srcdir)/screenhack.h
+testx11.o: $(UTILS_SRC)/colors.h
+testx11.o: $(UTILS_SRC)/grabscreen.h
+testx11.o: $(UTILS_SRC)/hsv.h
+testx11.o: $(UTILS_SRC)/resources.h
+testx11.o: $(UTILS_SRC)/usleep.h
+testx11.o: $(UTILS_SRC)/visual.h
+testx11.o: $(UTILS_SRC)/yarandom.h
 thornbird.o: ../config.h
 thornbird.o: $(srcdir)/fps.h
 thornbird.o: $(srcdir)/screenhackI.h

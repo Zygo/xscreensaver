@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -606,6 +606,16 @@ lock_initialization (saver_info *si, int *argc, char **argv)
           si->locking_disabled_p = True;
           si->nolock_reason = "Cannot lock securely on MacOS X";
         }
+    }
+
+  /* Like MacOS, locking under Wayland's embedded X11 server does not work.
+     (X11 grabs don't work because the Wayland window manager lives at a
+     higher level than the X11 emulation layer.)
+   */
+  if (!si->locking_disabled_p && getenv ("WAYLAND_DISPLAY"))
+    {
+      si->locking_disabled_p = True;
+      si->nolock_reason = "Cannot lock securely under Wayland";
     }
 
   if (si->prefs.debug_p)    /* But allow locking anyway in debug mode. */
@@ -1264,6 +1274,12 @@ main_loop (saver_info *si)
               fprintf (stderr,
                   "%s: unable to grab keyboard or mouse!  Blanking aborted.\n",
                        blurb());
+
+              /* Since we were unable to blank, clearly we're not locked,
+                 but we might have been prematurely marked as locked by
+                 the LOCK ClientMessage. */
+              if (si->locked_p)
+                set_locked_p (si, False);
 
               schedule_wakeup_event (si, retry, p->debug_p);
               continue;
@@ -2053,7 +2069,16 @@ handle_clientmessage (saver_info *si, XEvent *event, Bool until_idle_p)
 			    : "locking.");
 	  sprintf (buf, "LOCK ClientMessage received; %s", response);
 	  clientmessage_response (si, window, False, buf, response);
+
+          /* Note that this leaves things in a slightly inconsistent state:
+             we are blanked but not locked.  And blanking might actually
+             fail if we can't get the grab. */
 	  set_locked_p (si, True);
+
+           /* Have to set the time or xscreensaver-command doesn't
+              report the LOCK state change. */
+           si->blank_time = time ((time_t *) 0);
+
 	  si->selection_mode = 0;
 	  si->demoing_p = False;
 

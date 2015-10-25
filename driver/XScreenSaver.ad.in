@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.33
-!                              25-Jun-2015
+!                              version 5.34
+!                              24-Oct-2015
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at http://www.jwz.org/xscreensaver/
@@ -370,7 +370,8 @@ GetViewPortIsFullOfLies: False
 @GL_KLUDGE@ GL: 				romanboy -root				    \n\
 				tessellimage -root			    \n\
 @GL_KLUDGE@ GL: 				winduprobot -root			    \n\
-@GL_KLUDGE@ GL: 				splitflap -root				    \n
+@GL_KLUDGE@ GL: 				splitflap -root				    \n\
+				testx11 -root				    \n
 
 
 
@@ -508,6 +509,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.starwars.name:       StarWars
 *hacks.stonerview.name:     StonerView
 *hacks.t3d.name:            T3D
+*hacks.testx11.name:        TestX11
 *hacks.timetunnel.name:     TimeTunnel
 *hacks.topblock.name:       TopBlock
 *hacks.tronbit.name:        TronBit

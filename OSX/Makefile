@@ -88,6 +88,19 @@ check_gc:
      RESULT=1 ;								\
    fi ;									\
   done ;								\
+									\
+  for D in "$$DIR"/webcollage-helper					\
+	   "$$DIR"/*.saver/Contents/*/webcollage-helper			\
+	   "$$DIR"/*.app/Contents/*/XScreenSaverUpdater			\
+   ; do									\
+   V=`otool -s __DATA __objc_imageinfo "$$D"				\
+      | grep ' 00 02 00 '` ;						\
+   if [ ! -z "$$V" ]; then						\
+     echo "$$D has GC enabled" ;					\
+     RESULT=1 ;								\
+   fi ;									\
+  done ;								\
+									\
   if [ "$$RESULT" = 0 ]; then echo "GC enabled" ; fi ;			\
   exit $$RESULT
 
@@ -261,6 +274,7 @@ dmg::
    for r in $$retired ; do						      \
     if [ "$$ff" = "$$r" ]; then ok=no ; fi ;				      \
    done ;								      \
+   if [ "$$ff" = testx11 ]; then ok=no ; fi ;				      \
    if [ "$$f2" = "XScreenSaverUpdater.app" ]; then			      \
     DST_HACK="XScreenSaver.updater" ;					      \
     echo + tar ... "$$DST/$$DST_HACK" ;					      \

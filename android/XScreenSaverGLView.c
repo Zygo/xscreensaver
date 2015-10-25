@@ -48,6 +48,11 @@ GLXContext *
 init_GL (ModeInfo *mi)
 {
   Window win = mi->window;
+
+  // Caller expects a pointer to an opaque struct...  which it dereferences.
+  // Don't ask me, it's historical...
+  static int blort = -1;
+  return (void *) &blort;
 }
 
 /* report a GL error. */

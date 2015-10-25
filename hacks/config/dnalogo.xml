@@ -12,9 +12,10 @@
           convert="invert"/>
 
   <select id="mode">
-   <option id="glyph"  _label="DNA Lounge logo" arg-set="-mode helix"/>
-   <option id="pizza"  _label="DNA Pizza logo"  arg-set="-mode pizza"/>
-   <option id="both"   _label="DNA Lounge and DNA Pizza logos"/>
+   <option id="glyph"    _label="DNA Lounge logo" arg-set="-mode helix"/>
+   <option id="pizza"    _label="DNA Pizza logo"  arg-set="-mode pizza"/>
+   <option id="both"     _label="DNA Lounge and DNA Pizza logos"/>
+   <option id="codeword" _label="Codeword logo"   arg-set="-mode codeword"/>
   </select>
   <hgroup>
    <boolean id="wire"    _label="Wireframe"       arg-set="-wireframe"/>
@@ -32,8 +33,17 @@ DNA Lounge
         San Francisco, CA
         94103
 
+Codeword
+
+        Restaurant -- Bar -- Nightclub -- Cafe -- Est. 2015.
+
+        917 Folsom Street
+        San Francisco, CA
+        94107
+
         http://www.dnalounge.com/
         http://www.dnapizza.com/
+        http://www.codeword-sf.com/
 
 Written by Jamie Zawinski; 2001.
   </_description>

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -942,6 +942,12 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     NSString *name = [[p lastPathComponent] stringByDeletingPathExtension];
 
 # ifdef USE_IPHONE
+
+#  ifdef __OPTIMIZE__
+    // Do not show TestX11 in release builds.
+    if (! [name caseInsensitiveCompare:@"testx11"])
+      continue;
+#  endif
     // Get the saver name's capitalization right by reading the XML file.
 
     p = [dir stringByAppendingPathComponent: p];

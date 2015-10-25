@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2002-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2002-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -626,7 +626,7 @@ static const char *memscroller_defaults [] = {
   ".foreground:		   #00FF00",
   "*borderSize:		   2",
 
-#if defined(HAVE_COCOA) && !defined(USE_IPHONE)
+#if defined(HAVE_COCOA)
   ".font1:		   OCR A Std 192, Lucida Console 192, Monaco 192",
   ".font2:		   OCR A Std 144, Lucida Console 144, Monaco 144",
   ".font3:		   OCR A Std 128, Lucida Console 128, Monaco 128",

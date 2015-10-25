@@ -159,13 +159,13 @@ extern void check_gl_error (const char *type);
   Bool ms_p = [prefsReader getBooleanResource:"multiSample"];
 
   /* Sometimes, turning on multisampling kills performance.  At one point,
-   I thought the answer was, "only run multisampling on one screen, and
-   leave it turned off on other screens".  That's what this code does,
-   but it turns out, that solution is insufficient.  I can't really tell
-   what causes poor performance with multisampling, but it's not
-   predictable.  Without changing the code, some times a given saver will
-   perform fine with multisampling on, and other times it will perform
-   very badly.  Without multisampling, they always perform fine.
+     I thought the answer was, "only run multisampling on one screen, and
+     leave it turned off on other screens".  That's what this code does,
+     but it turns out, that solution is insufficient.  I can't really tell
+     what causes poor performance with multisampling, but it's not
+     predictable.  Without changing the code, some times a given saver will
+     perform fine with multisampling on, and other times it will perform
+     very badly.  Without multisampling, they always perform fine.
    */
   //  if (ms_p && [[view window] screen] != [[NSScreen screens] objectAtIndex:0])
   //    ms_p = 0;
@@ -198,9 +198,9 @@ extern void check_gl_error (const char *type);
   Bool dbuf_p = [prefsReader getBooleanResource:"doubleBuffer"];
 
   /* There seems to be no way to actually turn off double-buffering in
-   EAGLContext (e.g., no way to draw to the front buffer directly)
-   but if we turn on "retained backing" for non-buffering apps like
-   "pipes", at least the back buffer isn't auto-cleared on them.
+     EAGLContext (e.g., no way to draw to the front buffer directly)
+     but if we turn on "retained backing" for non-buffering apps like
+     "pipes", at least the back buffer isn't auto-cleared on them.
    */
 
   return [NSDictionary dictionaryWithObjectsAndKeys:

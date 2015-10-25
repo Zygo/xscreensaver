@@ -1008,7 +1008,7 @@ store_saver_status (saver_info *si)
 
   status = (PROP32 *) calloc (size, sizeof(PROP32));
 
-  status[0] = (PROP32) (si->screen_blanked_p
+  status[0] = (PROP32) (si->screen_blanked_p || si->locked_p
                         ? (si->locked_p ? XA_LOCK : XA_BLANK)
                         : 0);
   status[1] = (PROP32) si->blank_time;

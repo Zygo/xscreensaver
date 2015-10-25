@@ -1,4 +1,4 @@
-/* DNA Logo, Copyright (c) 2001-2014 Jamie Zawinski <jwz@jwz.org>
+/* DNA Logo, Copyright (c) 2001-2015 Jamie Zawinski <jwz@jwz.org>
  *
  *      DNA Lounge
  *
@@ -45,10 +45,27 @@
 			"*frameDepth:	    0.01    \n" \
 			"*frameThickness:   0.03    \n" \
 			"*triangleSize:	    0.045   \n" \
+			"*cwFacets:	    3	    \n" \
+			"*cwDiscFacets:	    64	    \n" \
+			"*cwSpread:	    0.5	    \n" \
+			"*cwLineWidth:	    0.18    \n" \
+			"*cwThickness:	    0.15    \n" \
+			"*cwCapSize:	    0.4     \n" \
+			"*text:		    CODEWORD\n" \
 			"*speed:	    1.0	    \n" \
 			"*mode:		    both"  "\n" \
-			".foreground:	    #00AA00 \n" \
+			".background:	    #000000\n" \
+			".foreground:	    #00AA00\n" \
+			".cwForeground:	    #FCA816\n" \
+			".cwBackground:	    #943225\n" \
+		        "*cwFont:           " CWFONT "\n" \
 			"*geometry:	    =640x640\n" \
+
+# if defined(HAVE_COCOA)
+#  define CWFONT "Yearling 28, OCR A Std 24"
+# else
+#  define CWFONT "-*-helvetica-medium-r-normal-*-*-240-*-*-*-*-*-*"
+# endif
 
 # define refresh_logo 0
 # define release_logo 0
@@ -73,8 +90,11 @@
 #include "xlockmore.h"
 #include "normals.h"
 #include "tube.h"
+#include "sphere.h"
 #include "rotator.h"
 #include "gltrackball.h"
+#include "utf8wc.h"
+#include "texfont.h"
 
 #ifdef USE_GL /* whole file */
 
@@ -85,9 +105,10 @@
 #endif
 
 typedef enum {
-  HELIX_IN, HELIX, HELIX_OUT, 
+  HELIX_IN, HELIX, HELIX_OUT,
   PIZZA_IN, PIZZA, PIZZA_OUT,
-  BOTH
+  HELIX_AND_PIZZA,
+  CODEWORD_IN, CODEWORD, CODEWORD_OUT, CODEWORD_BLANK
 } glyph_mode;
 
 typedef struct {
@@ -128,13 +149,27 @@ typedef struct {
   GLfloat frame_thickness;
   GLfloat triangle_size;
 
+  int codeword_facets, codeword_disc_facets;
+  GLfloat codeword_spread, codeword_line_width, codeword_thickness;
+  GLfloat codeword_cap_size;
+  const char *codeword_text;
+  char *codeword_text_out;
+  int *codeword_text_points;
+  XYZ *codeword_path;
+  int codeword_path_npoints;
+  int codeword_nguides;
+  XYZ *codeword_guides;
+  GLfloat codeword_color[4], codeword_bg[4];
+  texture_font_data *font;
+
   GLfloat speed;
   glyph_mode mode;
   glyph_mode anim_state;
   GLfloat anim_ratio;
 
   spinner gasket_spinnerx, gasket_spinnery, gasket_spinnerz;
-  spinner scene_spinnerx,  scene_spinnery;
+  spinner scene_spinnerx,  scene_spinnery;	/* for DNA */
+  rotator *scene_rot;				/* for Codeword */
   spinner helix_spinnerz;
   spinner pizza_spinnery, pizza_spinnerz;
   spinner frame_spinner;
@@ -149,11 +184,14 @@ typedef struct {
 static logo_configuration *dcs = NULL;
 
 static XrmOptionDescRec opts[] = {
-  { "-speed",  ".speed",  XrmoptionSepArg, 0       },
-  { "-mode",   ".mode",   XrmoptionSepArg, 0       },
-  { "-pizza",  ".mode",   XrmoptionNoArg,  "pizza" },
-  { "-helix",  ".mode",   XrmoptionNoArg,  "helix" },
-  { "-both",   ".mode",   XrmoptionNoArg,  "both"  },
+  { "-speed",    ".speed",  XrmoptionSepArg, 0          },
+  { "-mode",     ".mode",   XrmoptionSepArg, 0          },
+  { "-pizza",    ".mode",   XrmoptionNoArg,  "pizza"    },
+  { "-helix",    ".mode",   XrmoptionNoArg,  "helix"    },
+  { "-both",     ".mode",   XrmoptionNoArg,  "both"     },
+  { "-codeword", ".mode",   XrmoptionNoArg,  "codeword" },
+  { "-cw",       ".mode",   XrmoptionNoArg,  "codeword" },
+  { "-text",     ".text",   XrmoptionSepArg, 0          },
 };
 
 ENTRYPOINT ModeSpecOpt logo_opts = {countof(opts), opts, 0, NULL, NULL};
@@ -420,15 +458,20 @@ dxf_glDrawArrays (GLenum mode, GLint first, GLsizei count)
 }
 
 
-# define XYZ tube_XYZ /* avoid conflict with normals.h */
-# include "tube.c"    /* Yes, I really am including a C file. */
+# define XYZ tube_XYZ   /* avoid conflict with normals.h */
+# include "tube.c"      /* Yes, I really am including a C file. */
+# undef XYZ
+# define XYZ sphere_XYZ
+# define unit_sphere unit_sphere_dxf
+# define unit_dome unit_dome_dxf
+# include "sphere.c"
 # undef XYZ
 
 #endif /* DXF_OUTPUT_HACK */
 
 
 
-/* Calculate the angle (in degrees) between two vectors.
+/* Calculate the angle (in radians) between two vectors.
  */
 static GLfloat
 vector_angle (double ax, double ay, double az,
@@ -454,7 +497,30 @@ vector_angle (double ax, double ay, double az,
   if (cc > 1) cc = 1;  /* avoid fp rounding error (1.000001 => sqrt error) */
   angle = acos (cc);
 
-  return (angle * M_PI / 180);
+  return (angle);
+}
+
+static void
+normalize (XYZ *p)
+{
+  GLfloat d = sqrt (p->x*p->x + p->y*p->y + p->z*p->z);
+  if (d != 0)
+    {
+      p->x /= d;
+      p->y /= d;
+      p->z /= d;
+    }
+  else
+    {
+      p->x = p->y = p->z = 0;
+    }
+}
+
+
+static double
+dot (const XYZ u, const XYZ v)
+{
+  return (u.x * v.x) + (u.y * v.y) + (u.z * v.z);
 }
 
 
@@ -950,7 +1016,7 @@ make_gasket (logo_configuration *dc, int wire)
 
             GLfloat anglea = vector_angle (nx, ny, 0, nxa, nya, 0);
             GLfloat anglez = vector_angle (nx, ny, 0, nxz, nyz, 0);
-            GLfloat pointy = 0.005;
+            GLfloat pointy = 0.6;
 
             if (anglea > pointy)
               {
@@ -1833,6 +1899,804 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
 }
 
 
+/* Upcase string, convert Unicrud to ASCII, remove any non-letters.
+ */
+static char *
+codeword_simplify_text (const char *s0)
+{
+  char *s1 = utf8_to_latin1 ((s0 ? s0 : ""), True);
+  int L = strlen(s1);
+  char *s2 = (char *) malloc (L + 10);
+  char *s3 = s2;
+  int i;
+  for (i = 0; i < L; i++)
+    {
+      char c = s1[i];
+      if (c >= 'a' && c <= 'z')
+        c -= 'a'-'A';
+      if (c >= 'A' && c <= 'Z')
+        *s3++ = c;
+    }
+  *s3 = 0;
+  if (! *s2)
+    strcpy (s2, "CODEWORD");
+  return s2;
+}
+
+
+static void
+make_codeword_path (ModeInfo *mi)
+{
+  logo_configuration *dc = &dcs[MI_SCREEN(mi)];
+  int letters = strlen (dc->codeword_text);
+
+  GLfloat rtick = dc->codeword_spread;
+  GLfloat iradius = rtick * dc->codeword_cap_size;
+
+  int dial = 0;
+  int letter;
+  GLfloat last_r;
+
+  GLfloat inner_circum = M_PI * 2 * (iradius + rtick * 2);
+  GLfloat outer_circum = M_PI * 2 * (iradius + rtick * (letters + 1));
+  GLfloat facet_length = inner_circum / (26 * dc->codeword_facets);
+  int outer_facets = ceil (outer_circum / facet_length);
+
+  int *histo = (int *) calloc (letters * 26, sizeof(*histo));
+  XYZ *points = (XYZ *) calloc (letters * outer_facets, sizeof (*points));
+  int npoints = 0;
+
+  for (letter = -1; letter < letters; letter++)
+    {
+      if (letter == -1)			/* Inner starting point */
+        {
+          points[npoints].x = iradius;
+          points[npoints].y = 0;
+          last_r = iradius;
+          npoints++;
+        }
+      else				/* Add arc for this letter */
+        {
+          int direction = (letter & 1 ? -1 : 1);
+          int v = (dc->codeword_text[letter] - 'A' + 1);
+          int dial1 = dial + v * direction;
+
+          GLfloat th;
+          GLfloat th0 = M_PI * 2 / 26 * dial;
+          GLfloat th1 = M_PI * 2 / 26 * dial1;
+          GLfloat r  = iradius + rtick * (letter + 2);
+          GLfloat circum = M_PI * 2 * r;
+          GLfloat arc_length = circum * v / 26;
+          int arc_facets = ceil (fabs (arc_length / facet_length));
+          GLfloat facet_th = (th1 - th0) / arc_facets;
+
+          if (arc_facets > outer_facets) abort();
+
+          /* Let's put some intermediate facets on the crossbars too,
+             so that the animation doesn't speed up on those. */
+          {
+            GLfloat rr;
+            for (rr = last_r + facet_length;
+                 rr <= r - facet_length;
+                 rr += facet_length)
+              {
+                points[npoints].x = rr * cos (th0);
+                points[npoints].y = rr * sin (th0);
+                npoints++;
+              }
+            last_r = r;
+          }
+
+
+          for (th = th0;
+               (th0 < th1
+                ? th <= th1 + facet_th
+                : th >= th1 + facet_th);
+               th += facet_th)
+            {
+              GLfloat th2 = th;
+              if (th0 < th1 && th > th1)
+                th2 = th1;
+              if (th0 > th1 && th < th1)
+                th2 = th1;
+              points[npoints].x = r * cos (th2);
+              points[npoints].y = r * sin (th2);
+
+              /* Ugh, add point only if it differs from prev.
+                 Not sure how this happens. */
+              if (npoints == 0 ||
+                  points[npoints-1].x != points[npoints].x ||
+                  points[npoints-1].y != points[npoints].y)
+                npoints++;
+            }
+
+          /* Mark up the histo array to find the outer border. */
+          {
+            int i;
+            for (i = dial;
+                 (direction > 0
+                  ? i <= dial1
+                  : i >= dial1);
+                  i += direction)
+              {
+                int x = (i + 26) % 26;
+                int y;
+                for (y = 0; y <= letter; y++)
+                  histo[y * 26 + x]++;
+              }
+          }
+
+          dc->codeword_text_points[letter] = npoints;
+
+          dial = dial1;
+        }
+    }
+
+  if (npoints >= letters * outer_facets) abort();
+
+# if 0
+  { /* Print histo */
+    int x, y;
+    for (y = 0; y < letters; y++)
+      {
+        fprintf (stderr, "%2d: ", y);
+        for (x = 0; x < 26; x++)
+          fprintf (stderr, "%x", histo[y * 26 + x]);
+        fprintf (stderr, "\n");
+      }
+    fprintf (stderr, "\n");
+  }
+# endif
+
+
+  /* Find a gap in the outer edge, to draw guide dots. */
+  {
+    int x, y;
+    int last_row = letters;
+    int start_dial = -1, end_dial = -1;
+
+    for (y = letters-1; y >= 0; y--)
+      {
+        for (x = 0; x < 26; x++)
+          {
+            if (histo[y * 26 + x] == 0)
+              {
+                if (last_row != y)
+                  start_dial = end_dial = -1;
+                last_row = y;
+                if (start_dial == -1)
+                  start_dial = x;
+                end_dial = x;
+              }
+          }
+      }
+
+    if (last_row < letters-1 && start_dial >= 0)
+      {
+        GLfloat r = iradius + rtick * (last_row + 2);
+        int i;
+
+        dc->codeword_nguides = 0;
+        dc->codeword_guides = (XYZ *) 
+          calloc (end_dial - start_dial + 1, sizeof (*dc->codeword_guides));
+        for (i = start_dial; i <= end_dial; i++)
+          {
+            GLfloat th = i * M_PI * 2 / 26;
+            GLfloat x = r * cos (th);
+            GLfloat y = r * sin (th);
+            dc->codeword_guides[dc->codeword_nguides].x = x;
+            dc->codeword_guides[dc->codeword_nguides].y = y;
+            dc->codeword_nguides++;
+          }
+      }
+    free (histo);
+    histo = 0;
+  }
+
+  dc->codeword_path_npoints = npoints;
+  dc->codeword_path = points;
+}
+
+
+static int
+draw_codeword_cap (ModeInfo *mi)
+{
+  logo_configuration *dc = &dcs[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
+  int polys = 0;
+
+  int segments  = dc->codeword_disc_facets;
+  GLfloat size  = dc->codeword_spread * dc->codeword_cap_size;
+  GLfloat width = dc->codeword_line_width / 2;
+  GLfloat thick = dc->codeword_thickness  / 2;
+  GLfloat r1 = size + width/2;
+  GLfloat r2 = size - width/2;
+  GLfloat facet, th, z;
+
+  if (wire) segments = 12;
+  facet = M_PI * 2 / segments;
+
+  glPushMatrix();
+
+  /* Top and bottom */
+
+  for (z = -thick; z <= thick; z += thick*2)
+    {
+      glNormal3f (0, 0, (z < 0 ? -1 : 1));
+      glFrontFace (z < 0 ? GL_CCW : GL_CW);
+
+      glBegin (wire ? GL_LINES : GL_QUAD_STRIP);
+      for (th = 0; th <= M_PI*2; th += facet)
+        {
+          GLfloat x = cos (th);
+          GLfloat y = sin (th);
+          glVertex3f (r1 * x, r1 * y, z);
+          glVertex3f (r2 * x, r2 * y, z);
+        }
+      glEnd();
+
+      if (wire)
+        {
+          glBegin (GL_LINE_LOOP);
+          for (th = 0; th <= M_PI*2; th += facet)
+            {
+              GLfloat x = cos (th);
+              GLfloat y = sin (th);
+              glVertex3f (r1 * x, r1 * y, z);
+            }
+          glEnd();
+          glBegin (GL_LINE_LOOP);
+          for (th = 0; th <= M_PI*2; th += facet)
+            {
+              GLfloat x = cos (th);
+              GLfloat y = sin (th);
+              glVertex3f (r2 * x, r2 * y, z);
+            }
+          glEnd();
+        }
+    }
+
+  /* Inside and outside */
+
+  for (z = -1; z <= 1; z += 2)
+    {
+      glFrontFace (z < 0 ? GL_CCW : GL_CW);
+
+      glBegin (wire ? GL_LINES : GL_QUAD_STRIP);
+      for (th = 0; th <= M_PI*2; th += facet)
+        {
+          GLfloat th1 = th + facet;
+          GLfloat x0 = cos (th);
+          GLfloat y0 = sin (th);
+          GLfloat x1 = cos (th1);
+          GLfloat y1 = sin (th1);
+          GLfloat r = z < 0 ? r1 : r2;
+
+          if (z < 0)
+            do_normal (r * x0, r * y0,  thick,
+                       r * x0, r * y0, -thick,
+                       r * x1, r * y1, -thick);
+          else
+            do_normal (r * x1, r * y1,  thick,
+                       r * x1, r * y1, -thick,
+                       r * x0, r * y0, -thick);
+
+          glVertex3f (r * x0, r * y0,  thick);
+          glVertex3f (r * x0, r * y0, -thick);
+        }
+      glEnd();
+    }
+
+  glPopMatrix();
+
+  return polys;
+}
+
+
+static int
+draw_codeword_guides (ModeInfo *mi, GLfloat anim_ratio)
+{
+  logo_configuration *dc = &dcs[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
+  int polys = 0;
+
+  int segments = dc->codeword_disc_facets;
+  GLfloat s = dc->codeword_line_width / 2;
+  GLfloat each = 1.0 / dc->codeword_nguides;
+  int i;
+
+  if (wire) segments = 6;
+
+  for (i = 0; i < dc->codeword_nguides; i++)
+    {
+      GLfloat ratio;
+      if      (anim_ratio <  i*each)     ratio = 0;
+      else if (anim_ratio >= (i+1)*each) ratio = 1;
+      else    ratio = (anim_ratio - i*each) / each;
+
+      if (ratio <= 0) continue;
+      if (ratio == 0) ratio = 0.001;
+
+      glPushMatrix();
+      glTranslatef (dc->codeword_guides[i].x,
+                    dc->codeword_guides[i].y,
+                    dc->codeword_guides[i].z);
+
+      glScalef (ratio, ratio, ratio);
+
+      /* If the line width and thickness are pretty close to each other,
+         use spheres. Otherwise use tubes. 
+       */
+      if (dc->codeword_thickness < dc->codeword_line_width * 1.3 &&
+          dc->codeword_thickness > dc->codeword_line_width / 1.3)
+        {
+          glScalef (s, s, s);
+          glFrontFace (GL_CCW);
+          polys += unit_sphere (segments, segments, wire);
+        }
+      else
+        {
+          polys += tube (0, 0, -dc->codeword_thickness / 2,
+                         0, 0,  dc->codeword_thickness / 2,
+                         s, 0, segments, True, True, wire);
+        }
+
+      glPopMatrix();
+    }
+
+  return polys;
+}
+
+
+/* Compute the characters at which the cursor is currently pointing,
+   and render it on the logo. 
+ */
+static void
+codeword_text_output (ModeInfo *mi, GLfloat anim_ratio)
+{
+  logo_configuration *dc = &dcs[MI_SCREEN(mi)];
+  int i;
+  int L = strlen (dc->codeword_text);
+  int point = dc->codeword_path_npoints * anim_ratio;
+  Bool hit = False;
+
+  if (dc->anim_state == CODEWORD_BLANK)
+    point = 0;
+
+  for (i = 0; i < L; i++)
+    {
+      if (point >= dc->codeword_text_points[i])
+        dc->codeword_text_out[i] = dc->codeword_text[i];
+      else if (hit)
+        dc->codeword_text_out[i] = 0;
+      else
+        {
+          int steps = dc->codeword_text[i] - 'A' + 1;
+          int last = (i > 0 ? dc->codeword_text_points[i-1] : 0);
+          double ratio = ((point - last) /
+                          (double) (dc->codeword_text_points[i] - last));
+          char chr = 'A' + (ratio * steps);
+          if (ratio < 0.1) chr = 0;
+          dc->codeword_text_out[i] = chr;
+          hit = True;
+        }
+    }
+  dc->codeword_text_out[i] = 0;
+
+  if (*dc->codeword_text_out &&
+      !strcmp (dc->codeword_text, "CODEWORD"))
+    {
+      int i;
+      int L2 = strlen (dc->codeword_text_out);
+      GLfloat ss = 0.01;
+      int ascent, descent;
+
+      glPushMatrix();
+      glColor4fv (dc->codeword_color);
+      glRotatef (90, 0, 1, 0);
+      glRotatef (-90, 0, 0, 1);
+
+      for (i = 0; i < L2; i++)
+        {
+          XCharStruct e;
+          char buf[2];
+          glPushMatrix();
+          glRotatef ((i + 0.5) * 360 / 26.0, 0, 0, 1);
+
+# if 0
+          {
+            GLfloat th;
+            glDisable(GL_LIGHTING);
+            glBegin(GL_LINES);
+            glVertex3f(0,0,0);
+            glVertex3f(0,-4,0);
+            glEnd();
+            glBegin(GL_LINE_STRIP);
+            for (th = M_PI * 1.45; th < M_PI * 1.55; th += 0.1)
+              {
+                GLfloat r = 3.85;
+                glVertex3f (r * cos(th), r * sin(th), 0);
+              }
+            glEnd();
+            if (!MI_IS_WIREFRAME(mi)) glEnable(GL_LIGHTING);
+          }
+# endif
+
+          glTranslatef (0, -dc->codeword_spread * (L - 1), 0);
+          glScalef (ss, ss, ss);
+          buf[0] = dc->codeword_text_out[i] + ('a' - 'A');
+          buf[1] = 0;
+          texture_string_metrics (dc->font, buf, &e, &ascent, &descent);
+
+# ifdef USE_IPHONE
+          /* #### Magic magic magic WTF... */
+          glScalef (0.5, 0.5, 0.5);
+# endif
+
+          glTranslatef (-e.width * 1.0,
+                        -(ascent + descent + e.descent * 2.4), /* #### WTF */
+                          0);
+
+          glScalef (2, 2, 2);
+
+# if 0
+          glDisable(GL_LIGHTING);
+          glBegin(GL_LINE_LOOP);
+          glVertex3f(0, 0, 0);
+          glVertex3f(e.width, 0, 0);
+          glVertex3f(e.width, e.ascent + e.descent, 0);
+          glVertex3f(0, e.ascent + e.descent, 0);
+          glEnd();
+          if (!MI_IS_WIREFRAME(mi)) glEnable(GL_LIGHTING);
+# endif
+
+          glDisable(GL_CULL_FACE);  /* tell texfont.c to draw both sides */
+          print_texture_string (dc->font, buf);
+          glEnable(GL_CULL_FACE);
+
+          glPopMatrix();
+        }
+      glPopMatrix();
+    }
+}
+
+
+/* Convert the precomputed path to a thick line of polygons.
+   We could actually precompute all of these polygons too,
+   but it's fast enough.
+ */
+static int
+draw_codeword_path (ModeInfo *mi)
+{
+  logo_configuration *dc = &dcs[MI_SCREEN(mi)];
+  int wire = MI_IS_WIREFRAME(mi);
+  int polys = 0;
+
+  GLfloat anim_ratio = (dc->anim_state == CODEWORD_IN ?      dc->anim_ratio :
+                        dc->anim_state == CODEWORD_OUT ? 1 - dc->anim_ratio :
+                        dc->anim_state == CODEWORD_BLANK ? 0 :
+                        1);
+  int last_anim_point = 0;
+
+  GLfloat width = dc->codeword_line_width / 2;
+  GLfloat thick = dc->codeword_thickness  / 2;
+  int i, k;
+  GLfloat j;
+
+  int quad_size = (dc->codeword_path_npoints + 1) * 2;
+  XYZ *quads = (XYZ *) calloc (quad_size, sizeof(*quads));
+  XYZ *norms = (XYZ *) calloc (quad_size, sizeof(*norms));
+  int nquads = 0;
+
+  for (i = 0; i < dc->codeword_path_npoints; i++)
+    {
+      XYZ p1 = dc->codeword_path[i];
+      XYZ p2 = (i < dc->codeword_path_npoints-1
+                ? dc->codeword_path[i+1]
+                : dc->codeword_path[i-1]);
+      XYZ p1a, p1b;
+
+      XYZ n;          /* normal of the first line segment */
+      n.x = -(p2.y - p1.y);
+      n.y =  (p2.x - p1.x);
+      n.z =  0;
+      normalize (&n);
+
+      if (i == 0)
+        {
+          p1a.x = p1.x - width / 2 * n.x;
+          p1a.y = p1.y - width / 2 * n.y;
+          p1a.z = 0;
+
+          p1b.x = p1.x + width / 2 * n.x;
+          p1b.y = p1.y + width / 2 * n.y;
+          p1b.z = 0;
+        }
+      else if (i == dc->codeword_path_npoints - 1)
+        {
+          p1b.x = p1.x - width / 2 * n.x;
+          p1b.y = p1.y - width / 2 * n.y;
+          p1b.z = 0;
+
+          p1a.x = p1.x + width / 2 * n.x;
+          p1a.y = p1.y + width / 2 * n.y;
+          p1a.z = 0;
+        }
+      else
+        {
+          XYZ p0 = dc->codeword_path[i-1];
+
+          XYZ t, t0, t1;  /* tangent of corner between two line segments */
+          XYZ m;	  /* miter line: normal of tangent */
+          GLfloat d;	  /* length of miter */
+
+          t0.x = p2.x - p1.x;
+          t0.y = p2.y - p1.y;
+          t0.z = p2.z - p1.z;
+          normalize (&t0);
+
+          t1.x = p1.x - p0.x;
+          t1.y = p1.y - p0.y;
+          t1.z = p1.z - p0.z;
+          normalize (&t1);
+
+          t.x = t0.x + t1.x;
+          t.y = t0.y + t1.y;
+          t.z = t0.z + t1.z;
+          normalize (&t);
+
+          m.x = -t.y;
+          m.y =  t.x;
+          m.z =  0;
+
+          /* find length of miter by projecting it on one of the normals */
+          d = width / 2 / dot (m, n);
+
+          p1a.x = p1.x - d * m.x;
+          p1a.y = p1.y - d * m.y;
+          p1a.z = 0;
+
+          p1b.x = p1.x + d * m.x;
+          p1b.y = p1.y + d * m.y;
+          p1b.z = 0;
+        }
+
+      quads[nquads++] = p1a;
+      quads[nquads++] = p1b;
+
+      if (nquads >= quad_size) abort();
+
+      if (i / (double) dc->codeword_path_npoints > anim_ratio)
+        break;
+
+      last_anim_point = i;
+    }
+
+
+  /* Compute normals for each point along the interior edge */
+  for (k = 0; k <= 1; k++)
+    {
+      for (i = k; i < nquads-2; i += 2)
+        {
+          XYZ p1a = quads[i];
+          XYZ p2a = quads[i+2];
+          XYZ p1b = p1a;
+          XYZ p2b = p2a;
+          p1a.z =  thick;  /* a: top */
+          p1b.z = -thick;  /* b: bottom */
+          p2a.z =  thick;
+          p2b.z = -thick;
+
+          norms[i] = (k == 0
+                      ? calc_normal (p1a, p1b, p2b)
+                      : calc_normal (p2a, p2b, p1a));
+        }
+    }
+
+  glPushMatrix();
+  glColor4fv (dc->codeword_color);
+  glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, dc->codeword_color);
+
+# ifdef USE_IPHONE  /* Make the whole thing fit on the phone screen */
+  {
+    GLfloat size = MI_WIDTH(mi) < MI_HEIGHT(mi) ? MI_WIDTH(mi) : MI_HEIGHT(mi);
+    glScalef (0.9, 0.9, 0.9);
+    if (size <= 768)  /* iPad retina / iPhone 6 */
+      glScalef (0.7, 0.7, 0.7);
+  }
+# endif
+
+  codeword_text_output (mi, anim_ratio);
+
+  glRotatef (90, 1, 0, 0);
+  glRotatef (90, 0, 1, 0);
+  glRotatef (-90, 0, 0, 1);
+  glScalef (0.8, 0.8, 0.8);
+
+  glNormal3f (0, 0, -1);
+
+  if (anim_ratio <= 0)
+    {
+      polys += draw_codeword_cap (mi);
+      goto DONE;
+    }
+
+# if 0
+  glColor3f (1, 0, 0);
+  glBegin(GL_LINE_STRIP);
+  for (i = 0; i < dc->codeword_path_npoints; i++)
+    {
+      glVertex3f (dc->codeword_path[i].x,
+                  dc->codeword_path[i].y,
+                  dc->codeword_path[i].z);
+      polys++;
+    }
+  glEnd();
+  glColor4fv (dc->codeword_color);
+# endif
+
+  if (wire)
+    {
+      int k;
+      GLfloat j;
+      for (i = 0; i <= 1; i++)
+        for (j = -thick; j <= thick; j += thick*2)
+          {
+            glBegin (GL_LINE_STRIP);
+            for (k = i; k < nquads; k += 2)
+              {
+                glVertex3f (quads[k].x, quads[k].y, j);
+                polys++;
+              }
+            glEnd();
+          }
+    }
+
+  /* Top and bottom */
+
+  for (j = -thick; j <= thick; j += thick*2)
+    {
+      if (j < 0)
+        {
+          glNormal3f (0, 0, -1);
+          glFrontFace (GL_CW);
+        }
+      else
+        {
+          glNormal3f (0, 0, 1);
+          glFrontFace (GL_CCW);
+        }
+      glBegin (wire ? GL_LINES : GL_QUAD_STRIP);
+      for (i = 0; i < nquads; i += 2)
+        {
+          glVertex3f (quads[i+1].x, quads[i+1].y, j);
+          glVertex3f (quads[i].x,   quads[i].y,   j);
+          polys++;
+        }
+      glEnd();
+    }
+
+  /* Edges */
+
+  for (k = 0; k <= 1; k++)
+    {
+      if (k > 0)
+        {
+          glNormal3f (0, 0, -1);
+          glFrontFace (GL_CW);
+        }
+      else
+        {
+          glNormal3f (0, 0, 1);
+          glFrontFace (GL_CCW);
+        }
+
+      glBegin (wire ? GL_LINES : GL_QUADS);
+      for (i = k; i < nquads; i += 2)
+        {
+          XYZ p1a = quads[i];
+          XYZ p2a = (i < nquads-2) ? quads[i+2] : p1a;
+          XYZ p1b = p1a;
+          XYZ p2b = p2a;
+
+          XYZ n1 = norms[i];
+          XYZ n2 = (i < nquads-2) ? norms[i+2] : n1;
+
+          /* If the two normals are very similar, smooth the face.
+             If they are different, it's a sharp turn, and use the
+             same normal for both edges (not quite right, but close).
+          */
+          GLfloat angle = vector_angle (n1.x, n1.y, n1.z,
+                                        n2.x, n2.y, n2.z);
+          GLfloat pointy = 0.8;
+
+          p1a.z =  thick;
+          p1b.z = -thick;
+          p2a.z =  thick;
+          p2b.z = -thick;
+
+          glNormal3f (n1.x, n1.y, n1.z);
+          glVertex3f (p1a.x, p1a.y, p1a.z);
+          glVertex3f (p1b.x, p1b.y, p1b.z);
+
+          if (angle < pointy)
+            glNormal3f (n2.x, n2.y, n2.z);
+          glVertex3f (p2b.x, p2b.y, p2b.z);
+          glVertex3f (p2a.x, p2a.y, p2a.z);
+          polys++;
+        }
+      glEnd();
+    }
+
+
+  /* Only draw the guides when the path is almost complete;
+     fade them in and out based on completeness. */
+  {
+    GLfloat size = 0.95;
+    GLfloat r = (anim_ratio > size
+                 ? (anim_ratio - size) / (1 - size)
+                 : 0);
+    polys += draw_codeword_guides (mi, r);
+  }
+
+
+  /* Draw the start and end caps */
+  {
+    int i;
+    GLfloat x, y, z, x2, y2, z2, X, Y, Z, L;
+    GLfloat r = dc->codeword_spread * dc->codeword_cap_size;
+
+    i = 0;
+    x = dc->codeword_path[i].x;
+    y = dc->codeword_path[i].y;
+    z = dc->codeword_path[i].z;
+
+    x -= r;
+
+    glPushMatrix();
+    glTranslatef (x, y, z);
+    polys += draw_codeword_cap (mi);
+    glPopMatrix();
+
+    /* end cap */
+
+    i = last_anim_point + 1;
+    if (i > dc->codeword_path_npoints - 1)
+      i = dc->codeword_path_npoints - 1;
+
+    x = dc->codeword_path[i].x;
+    y = dc->codeword_path[i].y;
+    z = dc->codeword_path[i].z;
+
+    i--;
+    x2 = dc->codeword_path[i].x;
+    y2 = dc->codeword_path[i].y;
+    z2 = dc->codeword_path[i].z;
+
+    X = (x2 - x);
+    Y = (y2 - y);
+    Z = (z2 - z);
+    L = sqrt (X*X + Y*Y + Z*Z);
+
+    glPushMatrix();
+    glTranslatef (x, y, z);
+    glRotatef (-atan2 (X, Y)               * (180 / M_PI), 0, 0, 1);
+    glRotatef ( atan2 (Z, sqrt(X*X + Y*Y)) * (180 / M_PI), 1, 0, 0);
+    glTranslatef (0, -r, 0);
+    polys += draw_codeword_cap (mi);
+    glPopMatrix();
+  }
+
+ DONE:
+
+  glPopMatrix();
+
+  free (quads);
+  free (norms);
+
+  return polys;
+}
+
 
 
 /* Window management, etc
@@ -1938,7 +2802,22 @@ init_logo (ModeInfo *mi)
   dc->frame_thickness = get_float_resource(mi->dpy, "frameThickness", "Float");
   dc->triangle_size   = get_float_resource(mi->dpy, "triangleSize",   "Float");
 
-  dc->speed          = get_float_resource(mi->dpy,   "speed",         "Float");
+  dc->speed           = get_float_resource(mi->dpy, "speed",          "Float");
+  dc->codeword_text   = get_string_resource(mi->dpy, "text",         "String");
+  dc->codeword_text   = codeword_simplify_text (dc->codeword_text);
+  dc->codeword_text_out =
+    calloc (strlen(dc->codeword_text) + 1, sizeof(*dc->codeword_text_out));
+  dc->codeword_text_points =
+    (int *) calloc (strlen(dc->codeword_text) + 1,
+                    sizeof(*dc->codeword_text_points));
+
+  dc->codeword_facets = get_integer_resource(mi->dpy, "cwFacets",  "Integer");
+  dc->codeword_disc_facets = get_integer_resource(mi->dpy,
+                                                  "cwDiscFacets",  "Integer");
+  dc->codeword_spread = get_float_resource(mi->dpy, "cwSpread",    "Float");
+  dc->codeword_line_width = get_float_resource(mi->dpy, "cwLineWidth", "Float");
+  dc->codeword_thickness  = get_float_resource(mi->dpy, "cwThickness", "Float");
+  dc->codeword_cap_size = get_float_resource(mi->dpy, "cwCapSize",     "Float");
 
   {
     char *s = get_string_resource (MI_DISPLAY (mi), "mode", "String");
@@ -1947,25 +2826,32 @@ init_logo (ModeInfo *mi)
     else if (!strcasecmp (s, "pizza"))
       dc->mode = PIZZA;
     else if (!strcasecmp (s, "both"))
-      dc->mode = BOTH;
+      dc->mode = HELIX_AND_PIZZA;
+    else if (!strcasecmp (s, "codeword"))
+      dc->mode = CODEWORD_IN;
     else
       {
-        fprintf (stderr, "%s: mode must be helix, pizza or both, not \"%s\"\n", 
+        fprintf (stderr,
+               "%s: mode must be helix, pizza, both or codeword, not \"%s\"\n", 
                  progname, s);
         exit (1);
       }
     if (s) free (s);
 
-    dc->anim_state = (dc->mode == BOTH
+    dc->anim_state = (dc->mode == HELIX_AND_PIZZA
                       ? ((random() & 1) ? HELIX : PIZZA)
                       : dc->mode);
     dc->anim_ratio = 0;
   }
 
+  if (dc->mode == CODEWORD_IN)
+    dc->font = load_texture_font (MI_DISPLAY(mi), "cwFont");
+
   {
     XColor xcolor;
 
-    char *color_name = get_string_resource (mi->dpy, "foreground", "Foreground");
+    char *color_name =
+      get_string_resource (mi->dpy, "foreground", "Foreground");
     char *s2;
     for (s2 = color_name + strlen(color_name) - 1; s2 > color_name; s2--)
       if (*s2 == ' ' || *s2 == '\t')
@@ -1983,6 +2869,42 @@ init_logo (ModeInfo *mi)
     dc->color[1] = xcolor.green / 65535.0;
     dc->color[2] = xcolor.blue  / 65535.0;
     dc->color[3] = 1.0;
+
+    color_name = get_string_resource (mi->dpy, "cwForeground", "Foreground");
+    for (s2 = color_name + strlen(color_name) - 1; s2 > color_name; s2--)
+      if (*s2 == ' ' || *s2 == '\t')
+        *s2 = 0;
+      else
+        break;
+
+    if (! XParseColor (MI_DISPLAY(mi), mi->xgwa.colormap, color_name, &xcolor))
+      {
+        fprintf (stderr, "%s: can't parse color %s\n", progname, color_name);
+        exit (1);
+      }
+
+    dc->codeword_color[0] = xcolor.red   / 65535.0;
+    dc->codeword_color[1] = xcolor.green / 65535.0;
+    dc->codeword_color[2] = xcolor.blue  / 65535.0;
+    dc->codeword_color[3] = 1.0;
+
+    color_name = get_string_resource (mi->dpy, "cwBackground", "Background");
+    for (s2 = color_name + strlen(color_name) - 1; s2 > color_name; s2--)
+      if (*s2 == ' ' || *s2 == '\t')
+        *s2 = 0;
+      else
+        break;
+
+    if (! XParseColor (MI_DISPLAY(mi), mi->xgwa.colormap, color_name, &xcolor))
+      {
+        fprintf (stderr, "%s: can't parse color %s\n", progname, color_name);
+        exit (1);
+      }
+
+    dc->codeword_bg[0] = xcolor.red   / 65535.0;
+    dc->codeword_bg[1] = xcolor.green / 65535.0;
+    dc->codeword_bg[2] = xcolor.blue  / 65535.0;
+    dc->codeword_bg[3] = 1.0;
   }
 
   dc->trackball = gltrackball_init (False);
@@ -1996,10 +2918,16 @@ init_logo (ModeInfo *mi)
   dc->pizza_spinnerz.probability  = 0.6;
   dc->pizza_spinnery.probability  = 0.6;
 
+  dc->frame_spinner.probability   = 5.0;
+
   dc->scene_spinnerx.probability  = 0.1;
   dc->scene_spinnery.probability  = 0.0;
 
-  dc->frame_spinner.probability   = 5.0;
+  if (dc->mode == CODEWORD_IN)
+    {
+      double tilt_speed = 0.003;
+      dc->scene_rot = make_rotator (0, 0, 0, 0, tilt_speed, True);
+    }
 
   /* start the frame off-screen */
   dc->frame_spinner.spinning_p = True;
@@ -2016,6 +2944,7 @@ init_logo (ModeInfo *mi)
 
 # ifdef DXF_OUTPUT_HACK
   {
+#  if 0
     dc->frame_depth = dc->gasket_depth;
     dxf_layer = 1;
     dxf_color = 3;
@@ -2039,6 +2968,17 @@ init_logo (ModeInfo *mi)
     make_frame (dc, 0);
     glPopMatrix();
     dxf_end();
+#  else
+    dxf_start();
+    glPushMatrix();
+    glRotatef(90, 1, 0, 0);
+    glRotatef(90, 0, 0, 1);
+    dc->anim_state = CODEWORD;
+    make_codeword_path (mi);
+    draw_codeword_path (mi);
+    glPopMatrix();
+    dxf_end();
+#  endif
   }
 # endif
 
@@ -2110,6 +3050,9 @@ init_logo (ModeInfo *mi)
   if (do_frame) dc->polys[6] += make_frame (dc, 1);
   glEndList ();
 
+  make_codeword_path (mi);
+
+
   /* When drawing both solid and wireframe objects,
      make sure the wireframe actually shows up! */
   glEnable (GL_POLYGON_OFFSET_FILL);
@@ -2126,6 +3069,31 @@ logo_handle_event (ModeInfo *mi, XEvent *event)
                                  MI_WIDTH (mi), MI_HEIGHT (mi),
                                  &dc->button_down_p))
     return True;
+  else if (event->xany.type == KeyPress)
+    {
+      KeySym keysym;
+      char c = 0;
+      XLookupString (&event->xkey, &c, 1, &keysym, 0);
+      if (c == ' ' || c == '\t')
+        {
+          switch (dc->anim_state) {
+          case HELIX:    
+            dc->anim_state = HELIX_OUT;
+            dc->anim_ratio = 0.0;
+            return True;
+          case PIZZA:
+            dc->anim_state = PIZZA_OUT;
+            dc->anim_ratio = 0.0;
+            return True;
+          case CODEWORD:
+            dc->anim_state = CODEWORD_OUT;
+            dc->anim_ratio = 0.0;
+            return True;
+          default:
+            break;
+          }
+        }
+    }
 
   return False;
 }
@@ -2188,6 +3156,7 @@ draw_logo (ModeInfo *mi)
   GLfloat specular[]  = {0.8, 0.8, 0.8, 1.0};
   GLfloat shininess   = 50.0;
   Bool pizza_p;
+  Bool codeword_p;
 
   if (!dc->glx_context)
     return;
@@ -2238,7 +3207,7 @@ draw_logo (ModeInfo *mi)
   switch (dc->anim_state)
     {
     case HELIX:
-      if (dc->mode == BOTH &&
+      if (dc->mode == HELIX_AND_PIZZA &&
           (random() % (int) (PROBABILITY_SCALE / 0.2)) == 0)
         dc->anim_state = HELIX_OUT;
       break;
@@ -2262,7 +3231,7 @@ draw_logo (ModeInfo *mi)
       break;
 
     case PIZZA:
-      if (dc->mode == BOTH &&
+      if (dc->mode == HELIX_AND_PIZZA &&
           (random() % (int) (PROBABILITY_SCALE / 0.2)) == 0)
         dc->anim_state = PIZZA_OUT;
       break;
@@ -2285,6 +3254,55 @@ draw_logo (ModeInfo *mi)
         }
       break;
 
+
+    case CODEWORD_IN:
+      dc->scene_spinnerx.probability = 0.2;
+      dc->scene_spinnery.probability = 0.05;
+      if (! dc->button_down_p)
+        dc->anim_ratio += 0.004 * dc->speed;
+      if (dc->anim_ratio >= 1.0)
+        {
+          dc->anim_state = CODEWORD;
+          dc->anim_ratio = frand (0.5);
+        }
+      break;
+
+    case CODEWORD:
+      dc->scene_spinnerx.probability = 2.5;
+      dc->scene_spinnery.probability = 0.2;
+      if (! dc->button_down_p)
+        dc->anim_ratio += (0.0005 + frand(0.002)) * dc->speed;
+      if (dc->anim_ratio >= 1.0)
+        {
+          dc->anim_ratio = 0.0;
+          dc->anim_state = CODEWORD_OUT;
+        }
+      break;
+
+    case CODEWORD_OUT:
+      dc->scene_spinnerx.probability = 0;
+      dc->scene_spinnery.probability = 0;
+      if (! dc->button_down_p)
+        dc->anim_ratio += 0.02 * dc->speed;
+      if (dc->anim_ratio >= 1.0)
+        {
+          dc->anim_ratio = 0.0;
+          dc->anim_state = CODEWORD_BLANK;
+        }
+      break;
+
+    case CODEWORD_BLANK:
+      dc->scene_spinnerx.probability = 0;
+      dc->scene_spinnery.probability = 0;
+      if (! dc->button_down_p)
+        dc->anim_ratio += 0.01 * dc->speed;
+      if (dc->anim_ratio >= 1.0)
+        {
+          dc->anim_ratio = 0.0;
+          dc->anim_state = CODEWORD_IN;
+        }
+      break;
+
     default:
       abort();
       break;
@@ -2293,6 +3311,11 @@ draw_logo (ModeInfo *mi)
   pizza_p = (dc->anim_state == PIZZA ||
              dc->anim_state == PIZZA_IN ||
              dc->anim_state == PIZZA_OUT);
+
+  codeword_p = (dc->anim_state == CODEWORD ||
+                dc->anim_state == CODEWORD_IN ||
+                dc->anim_state == CODEWORD_OUT ||
+                dc->anim_state == CODEWORD_BLANK);
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -2307,41 +3330,43 @@ draw_logo (ModeInfo *mi)
 
     glColor3f(dc->color[0], dc->color[1], dc->color[2]);
 
-    /* Draw frame before trackball rotation */
-    {
-      GLfloat p = (dc->frame_spinner.position >= 0
-                   ? dc->frame_spinner.position
-                   : -dc->frame_spinner.position);
-      GLfloat size = (p > 0.5 ? 1-p : p);
-      scale = 1 + (size * 10);
-      glPushMatrix();
-      /* gltrackball_rotate (dc->trackball); */
-      glRotatef(90, 1, 0, 0);
-      glRotatef(90, 0, 0, 1);
 
-      glScalef (1, scale, scale);
-      if (wire)
-        {
-          glDisable (GL_LIGHTING);
-          glCallList (dc->frame_list_wire);
-          mi->polygon_count += dc->polys[6];
-        }
-      else if (dc->wire_overlay != 0)
-        {
-          glCallList (dc->frame_list);
-          glDisable (GL_LIGHTING);
-          glColor3fv (dc->color);
-          glCallList (dc->frame_list_wire);
-          mi->polygon_count += dc->polys[6];
-          if (!wire) glEnable (GL_LIGHTING);
-        }
-      else
-        {
-          glCallList (dc->frame_list);
-          mi->polygon_count += dc->polys[5];
-        }
-      glPopMatrix();
-    }
+    /* Draw frame before trackball rotation */
+    if (! codeword_p)
+      {
+        GLfloat p = (dc->frame_spinner.position >= 0
+                     ? dc->frame_spinner.position
+                     : -dc->frame_spinner.position);
+        GLfloat size = (p > 0.5 ? 1-p : p);
+        scale = 1 + (size * 10);
+        glPushMatrix();
+        /* gltrackball_rotate (dc->trackball); */
+        glRotatef(90, 1, 0, 0);
+        glRotatef(90, 0, 0, 1);
+
+        glScalef (1, scale, scale);
+        if (wire)
+          {
+            glDisable (GL_LIGHTING);
+            glCallList (dc->frame_list_wire);
+            mi->polygon_count += dc->polys[6];
+          }
+        else if (dc->wire_overlay != 0)
+          {
+            glCallList (dc->frame_list);
+            glDisable (GL_LIGHTING);
+            glColor3fv (dc->color);
+            glCallList (dc->frame_list_wire);
+            mi->polygon_count += dc->polys[6];
+            if (!wire) glEnable (GL_LIGHTING);
+          }
+        else
+          {
+            glCallList (dc->frame_list);
+            mi->polygon_count += dc->polys[5];
+          }
+        glPopMatrix();
+      }
 
     gltrackball_rotate (dc->trackball);
 
@@ -2354,102 +3379,124 @@ draw_logo (ModeInfo *mi)
 #  define SINIFY(I) sin (M_PI/2 * (I))
 # endif
 
-    glRotatef (360 * SINIFY (dc->scene_spinnerx.position), 0, 1, 0);
-    glRotatef (360 * SINIFY (dc->scene_spinnery.position), 0, 0, 1);
-
-    glPushMatrix();
-    {
-      glRotatef (360 * SINIFY (dc->gasket_spinnerx.position), 0, 1, 0);
-      glRotatef (360 * SINIFY (dc->gasket_spinnery.position), 0, 0, 1);
-      glRotatef (360 * SINIFY (dc->gasket_spinnerz.position), 1, 0, 0);
-
-      memcpy (gcolor, dc->color, sizeof (dc->color));
-      if (dc->wire_overlay != 0)
-        {
-          gcolor[0]   = gcolor[1]   = gcolor[2]   = 0;
-          specular[0] = specular[1] = specular[2] = 0;
-          shininess = 0;
-        }
-      glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, gcolor);
-      glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR,  specular);
-      glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS, shininess);
-
-      if (wire)
-        {
-          glDisable (GL_LIGHTING);
-          glCallList (dc->gasket_list_wire);
-          mi->polygon_count += dc->polys[4];
-        }
-      else if (dc->wire_overlay != 0)
-        {
-          glCallList (dc->gasket_list);
-          glDisable (GL_LIGHTING);
-          glColor3fv (dc->color);
-          glCallList (dc->gasket_list_wire);
-          mi->polygon_count += dc->polys[4];
-          if (!wire) glEnable (GL_LIGHTING);
-          glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, gcolor);
-        }
-      else
-        {
-          glCallList (dc->gasket_list);
-          mi->polygon_count += dc->polys[3];
-        }
-    }
-    glPopMatrix();
-
-    if (pizza_p)
+    if (! codeword_p)
       {
-        glRotatef (360 * SINIFY (dc->pizza_spinnery.position), 1, 0, 0);
-        glRotatef (360 * SINIFY (dc->pizza_spinnerz.position), 0, 0, 1);
-      }
-    else
-      {
-        glRotatef (360 * SINIFY (dc->helix_spinnerz.position), 0, 0, 1);
-      }
+        glRotatef (360 * SINIFY (dc->scene_spinnerx.position), 0, 1, 0);
+        glRotatef (360 * SINIFY (dc->scene_spinnery.position), 0, 0, 1);
 
-    scale = ((dc->anim_state == PIZZA_IN || dc->anim_state == HELIX_IN)
-             ? dc->anim_ratio
-             : ((dc->anim_state == PIZZA_OUT || dc->anim_state == HELIX_OUT)
-                ? 1.0 - dc->anim_ratio
-                : 1.0));
-    if (scale <= 0) scale = 0.001;
-    glScalef (scale, scale, scale);
+        glPushMatrix();
 
-    if (wire)
-      {
-        glDisable (GL_LIGHTING);
-        if (pizza_p)
-          glCallList (dc->pizza_list_wire);
+        glRotatef (360 * SINIFY (dc->gasket_spinnerx.position), 0, 1, 0);
+        glRotatef (360 * SINIFY (dc->gasket_spinnery.position), 0, 0, 1);
+        glRotatef (360 * SINIFY (dc->gasket_spinnerz.position), 1, 0, 0);
+
+        memcpy (gcolor, dc->color, sizeof (dc->color));
+        if (dc->wire_overlay != 0)
+          {
+            gcolor[0]   = gcolor[1]   = gcolor[2]   = 0;
+            specular[0] = specular[1] = specular[2] = 0;
+            shininess = 0;
+          }
+        glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, gcolor);
+        glMaterialfv (GL_FRONT_AND_BACK, GL_SPECULAR,  specular);
+        glMaterialf  (GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+
+        if (wire)
+          {
+            glDisable (GL_LIGHTING);
+            glCallList (dc->gasket_list_wire);
+            mi->polygon_count += dc->polys[4];
+          }
+        else if (dc->wire_overlay != 0)
+          {
+            glCallList (dc->gasket_list);
+            glDisable (GL_LIGHTING);
+            glColor3fv (dc->color);
+            glCallList (dc->gasket_list_wire);
+            mi->polygon_count += dc->polys[4];
+            if (!wire) glEnable (GL_LIGHTING);
+            glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, gcolor);
+          }
         else
-          glCallList (dc->helix_list_wire);
-        mi->polygon_count += dc->polys[1];
-      }
-    else if (dc->wire_overlay != 0)
-      {
-        if (pizza_p)
-          glCallList (dc->pizza_list_facetted);
-        else
-          glCallList (dc->helix_list_facetted);
-
-        glDisable (GL_LIGHTING);
-        glColor3fv (dc->color);
+          {
+            glCallList (dc->gasket_list);
+            mi->polygon_count += dc->polys[3];
+          }
+        glPopMatrix();
 
         if (pizza_p)
-          glCallList (dc->pizza_list_wire);
+          {
+            glRotatef (360 * SINIFY (dc->pizza_spinnery.position), 1, 0, 0);
+            glRotatef (360 * SINIFY (dc->pizza_spinnerz.position), 0, 0, 1);
+          }
         else
-          glCallList (dc->helix_list_wire);
+          {
+            glRotatef (360 * SINIFY (dc->helix_spinnerz.position), 0, 0, 1);
+          }
 
-        mi->polygon_count += dc->polys[2];
-        if (!wire) glEnable (GL_LIGHTING);
-      }
-    else
-      {
-        if (pizza_p)
-          glCallList (dc->pizza_list);
+        scale = ((dc->anim_state == PIZZA_IN || dc->anim_state == HELIX_IN)
+                 ? dc->anim_ratio
+                 : ((dc->anim_state == PIZZA_OUT || dc->anim_state == HELIX_OUT)
+                    ? 1.0 - dc->anim_ratio
+                    : 1.0));
+        if (scale <= 0) scale = 0.001;
+        glScalef (scale, scale, scale);
+
+        if (wire)
+          {
+            glDisable (GL_LIGHTING);
+            if (pizza_p)
+              glCallList (dc->pizza_list_wire);
+            else
+              glCallList (dc->helix_list_wire);
+            mi->polygon_count += dc->polys[1];
+          }
+        else if (dc->wire_overlay != 0)
+          {
+            if (pizza_p)
+              glCallList (dc->pizza_list_facetted);
+            else
+              glCallList (dc->helix_list_facetted);
+
+            glDisable (GL_LIGHTING);
+            glColor3fv (dc->color);
+
+            if (pizza_p)
+              glCallList (dc->pizza_list_wire);
+            else
+              glCallList (dc->helix_list_wire);
+
+            mi->polygon_count += dc->polys[2];
+            if (!wire) glEnable (GL_LIGHTING);
+          }
         else
-          glCallList (dc->helix_list);
-        mi->polygon_count += dc->polys[0];
+          {
+            if (pizza_p)
+              glCallList (dc->pizza_list);
+            else
+              glCallList (dc->helix_list);
+            mi->polygon_count += dc->polys[0];
+          }
+      }
+    else	/* codeword_p */
+      {
+# if 0
+        double max = 70;  /* face front */
+        double x, y, z;
+        get_position (dc->scene_rot, &x, &y, &z, !dc->button_down_p);
+        glRotatef (max/2 - x*max, 0, 0, 1);
+        glRotatef (max/2 - y*max, 0, 1, 0);
+        /* glRotatef (max/2 - z*max, 1, 0, 0); */
+# else
+        glRotatef (360 * SINIFY (dc->scene_spinnerx.position), 0, 1, 0);
+        glRotatef (360 * SINIFY (dc->scene_spinnery.position), 0, 0, 1);
+# endif
+
+        glClearColor (dc->codeword_bg[0],
+                      dc->codeword_bg[1],
+                      dc->codeword_bg[2],
+                      dc->codeword_bg[3]);
+        mi->polygon_count += draw_codeword_path (mi);
       }
   }
   glPopMatrix();

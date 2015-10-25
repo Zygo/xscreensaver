@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1997-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1997-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -390,6 +390,10 @@ reset_starfish (struct state *st)
   flags |= GCFillRule;
   gcv.fill_rule = EvenOddRule;
   st->gc = XCreateGC (st->dpy, st->window, flags, &gcv);
+#ifdef HAVE_COCOA
+  if (!st->blob_p)
+    jwxyz_XSetAntiAliasing (st->dpy, st->gc, False);
+#endif
 
   return make_window_starfish (st);
 }

@@ -1700,7 +1700,8 @@ to_pow2 (size_t x)
   // NSAssert(xdata, @"no xdata when drawing");
   if (! xdata) abort();
   unsigned long delay = xsft->draw_cb (xdpy, xwindow, xdata);
-  if (fpst) xsft->fps_cb (xdpy, xwindow, fpst, xdata);
+  if (fpst && xsft->fps_cb)
+    xsft->fps_cb (xdpy, xwindow, fpst, xdata);
 
   gettimeofday (&tv, 0);
   now = tv.tv_sec + (tv.tv_usec / 1000000.0);

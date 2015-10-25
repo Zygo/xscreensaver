@@ -1,4 +1,4 @@
-# Auto-generated: Thu Jun 25 11:59:01 PDT 2015
+# Auto-generated: Sat Oct 24 12:15:03 PDT 2015
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
@@ -212,6 +212,7 @@ hacks/config/swirl.xml
 hacks/config/t3d.xml
 hacks/config/tangram.xml
 hacks/config/tessellimage.xml
+hacks/config/testx11.xml
 hacks/config/thornbird.xml
 hacks/config/timetunnel.xml
 hacks/config/topblock.xml

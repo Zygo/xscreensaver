@@ -27,7 +27,8 @@ echo_tarfiles:
 		project/xscreensaver/res/drawable/*.png \
 		project/xscreensaver/res/values/settings.xml \
 		project/xscreensaver/res/values/strings.xml \
-	  \( \( -name '.??*' -o -name build -o -name gen -o -name '*~*' \) \
+	  \( \( -name '.??*' -o -name build -o -name gen \
+                -o -name libs -o -name obj -o -name '*~*' \) \
 	     -prune \) \
 	  -o \( -type f -o -type l \) -print \
 	| sed 's@^\./@@' \
@@ -39,5 +40,5 @@ apk_raw_debug:
 		cd $(TARGET); ./gradlew assembleDebug
 
 gradle_clean:
-		cd $(TARGET); ./gradlew clean
+		-cd $(TARGET); ./gradlew clean
 

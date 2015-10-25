@@ -37,7 +37,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.38 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.39 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -473,8 +473,8 @@ sub reformat_html($$) {
 
     # Try to omit all tables, since they're impossible to read as text.
     #
-    1 while (s/{{[^{}]*}}/ /gs);		   # {{ ... }}
-    1 while (s/{\|.*?\|}/\n\n/gs);		   # {| ... |}
+    1 while (s/\{\{[^{}]*}}/ /gs);		   # {{ ... }}
+    1 while (s/\{\|.*?\|\}/\n\n/gs);		   # {| ... |}
     1 while (s/\|-.*?\|/ /gs);			   # |- ... |  (table cell)
 
     # Convert anchors to something more readable.

@@ -825,8 +825,8 @@ JUGG_OBJS=sphere.o tube.o $(HACK_TRACK_OBJS)
 juggler3d:	juggler3d.o	$(JUGG_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(JUGG_OBJS) $(HACK_LIBS)
 
-dnalogo:	dnalogo.o      tube.o normals.o $(HACK_TRACK_OBJS)
-	$(CC_HACK) -o $@ $@.o  tube.o normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+dnalogo:	dnalogo.o      tube.o sphere.o normals.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o  tube.o sphere.o normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
 
 topblock:	topblock.o	sphere.o tube.o $(HACK_TRACK_OBJS)
 	$(CC_HACK) -o $@ $@.o	sphere.o tube.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
@@ -1400,12 +1400,15 @@ dnalogo.o: $(srcdir)/jwzgles.h
 dnalogo.o: $(srcdir)/normals.h
 dnalogo.o: $(srcdir)/rotator.h
 dnalogo.o: $(HACK_SRC)/screenhackI.h
+dnalogo.o: $(srcdir)/sphere.h
+dnalogo.o: $(srcdir)/texfont.h
 dnalogo.o: $(srcdir)/tube.h
 dnalogo.o: $(UTILS_SRC)/colors.h
 dnalogo.o: $(UTILS_SRC)/grabscreen.h
 dnalogo.o: $(UTILS_SRC)/hsv.h
 dnalogo.o: $(UTILS_SRC)/resources.h
 dnalogo.o: $(UTILS_SRC)/usleep.h
+dnalogo.o: $(UTILS_SRC)/utf8wc.h
 dnalogo.o: $(UTILS_SRC)/visual.h
 dnalogo.o: $(UTILS_SRC)/xshm.h
 dnalogo.o: $(UTILS_SRC)/yarandom.h

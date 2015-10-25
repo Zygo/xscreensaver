@@ -655,6 +655,9 @@ print_texture_string (texture_font_data *data, const char *string)
     GLfloat qx0, qy0, qx1, qy1;
     GLfloat tx0, ty0, tx1, ty1;
 
+    /* If face culling is not enabled, draw front and back. */
+    Bool draw_back_face_p = !glIsEnabled (GL_CULL_FACE);
+
     /* Save the prevailing texture environment, and set up ours.
      */
     glGetIntegerv (GL_FRONT_FACE, &ofront);
@@ -690,6 +693,7 @@ print_texture_string (texture_font_data *data, const char *string)
     tx1 = (overall.rbearing - overall.lbearing) / (GLfloat) tex_width;
     ty0 = (overall.ascent + overall.descent)    / (GLfloat) tex_height;
 
+    glEnable (GL_CULL_FACE);
     glFrontFace (GL_CCW);
     glBegin (GL_QUADS);
     glTexCoord2f (tx0, ty0); glVertex3f (qx0, qy0, 0);
@@ -697,6 +701,18 @@ print_texture_string (texture_font_data *data, const char *string)
     glTexCoord2f (tx1, ty1); glVertex3f (qx1, qy1, 0);
     glTexCoord2f (tx0, ty1); glVertex3f (qx0, qy1, 0);
     glEnd();
+
+    if (draw_back_face_p)
+      {
+        glFrontFace (GL_CW);
+        glBegin (GL_QUADS);
+        glTexCoord2f (tx0, ty0); glVertex3f (qx0, qy0, 0);
+        glTexCoord2f (tx1, ty0); glVertex3f (qx1, qy0, 0);
+        glTexCoord2f (tx1, ty1); glVertex3f (qx1, qy1, 0);
+        glTexCoord2f (tx0, ty1); glVertex3f (qx0, qy1, 0);
+        glEnd();
+        glDisable (GL_CULL_FACE);
+      }
 
     glPopMatrix();
 

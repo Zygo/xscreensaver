@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -28,7 +28,8 @@ extern char *format_hack (Display *, screenhack *, Bool wrap_p);
 char *make_hack_name (Display *, const char *shell_command);
 
 /* From dpms.c */
-extern void sync_server_dpms_settings (Display *, Bool enabled_p, Bool dpms_quickoff_p,
+extern void sync_server_dpms_settings (Display *, Bool enabled_p,
+                                       Bool dpms_quickoff_p,
                                        int standby_secs, int suspend_secs,
                                        int off_secs,
                                        Bool verbose_p);

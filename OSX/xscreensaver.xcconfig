@@ -4,4 +4,4 @@
 // If the Xcode version is newer than that, this must be blank (and the
 // builds created will not work on 10.6.)
 //
-OBJC_GC_CFLAGS=
+OBJC_GC_CFLAGS=-fobjc-gc

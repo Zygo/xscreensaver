@@ -3,18 +3,6 @@
     <PreferenceCategory
         android:title="@string/glhanoi_settings"
         android:key="glhanoiwallpaper_settings">
-    <org.jwz.xscreensaver.SliderPreference
-        android:defaultValue="@string/glhanoi_trails_float"
-        android:dialogMessage="@string/glhanoi_trails_settings_summary"
-        android:key="glhanoi_trails"
-        android:summary="@array/glhanoi_trails_prefix"
-        android:title="@string/glhanoi_trails_settings_title" />
-    <org.jwz.xscreensaver.SliderPreference
-        android:defaultValue="@string/glhanoi_poles_float"
-        android:dialogMessage="@string/glhanoi_poles_settings_summary"
-        android:key="glhanoi_poles"
-        android:summary="@array/glhanoi_poles_prefix"
-        android:title="@string/glhanoi_poles_settings_title" />
     <ListPreference
             android:key="glhanoi_fog"
             android:title="@string/glhanoi_fog_settings_title"
@@ -22,6 +10,12 @@
             android:entries="@array/glhanoi_fog_names"
             android:defaultValue="@string/glhanoi_fog_default"
             android:entryValues="@array/glhanoi_fog_prefix" />
+    <org.jwz.xscreensaver.SliderPreference
+        android:defaultValue="@string/glhanoi_trails_float"
+        android:dialogMessage="@string/glhanoi_trails_settings_summary"
+        android:key="glhanoi_trails"
+        android:summary="@array/glhanoi_trails_prefix"
+        android:title="@string/glhanoi_trails_settings_title" />
     <ListPreference
             android:key="glhanoi_light"
             android:title="@string/glhanoi_light_settings_title"
@@ -29,6 +23,12 @@
             android:entries="@array/glhanoi_light_names"
             android:defaultValue="@string/glhanoi_light_default"
             android:entryValues="@array/glhanoi_light_prefix" />
+    <org.jwz.xscreensaver.SliderPreference
+        android:defaultValue="@string/glhanoi_poles_float"
+        android:dialogMessage="@string/glhanoi_poles_settings_summary"
+        android:key="glhanoi_poles"
+        android:summary="@array/glhanoi_poles_prefix"
+        android:title="@string/glhanoi_poles_settings_title" />
     <org.jwz.xscreensaver.SliderPreference
         android:defaultValue="@string/glhanoi_speed_float"
         android:dialogMessage="@string/glhanoi_speed_settings_summary"

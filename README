@@ -38,6 +38,10 @@ XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
 
+5.34	* Fixed a crash when hot-swapping monitors while locked.
+	* Fixed some incorrect output from `xscreensaver-command -watch'.
+	* Various OSX and iOS performance improvements.
+
 5.33	* New hacks, `splitflap' and `romanboy'.
 	* Better detection of user activity on modern GNOME systems.
 	* Sonar now does asynchronous host name resolution.

@@ -57,7 +57,7 @@ use bytes;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.171 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.172 $' =~ m/\s(\d[.\d]+)\s/s);
 my $copyright = "WebCollage $version, Copyright (c) 1999-2015" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
     "                  http://www.jwz.org/webcollage/\n";
@@ -437,7 +437,8 @@ sub get_document_1($$$) {
   my $res = $ua->get ($url);
 
   my $http = ($res ? $res->status_line : '') || '';
-  my $head = ($res ? $res->headers()->as_string : '') || '';
+  my $head = ($res ? $res->headers()   : '') || '';
+  $head = $head->as_string() if $head;
   my $body = ($res && $res->is_success ? $res->decoded_content : '') || '';
 
   LOG ($verbose_net, "get_document_1 $url " . ($referer ? $referer : ""));
@@ -1058,7 +1059,7 @@ sub pick_from_search_engine($$$) {
     my ($u) = m@<A\s.*\bHREF\s*=\s*([^>]+)>@i;
     next unless $u;
 
-    if (m/\bm="{(.*?)}"/s) {		# Bing info is inside JSON crud
+    if (m/\bm="\{(.*?)\}"/s) {		# Bing info is inside JSON crud
       my $json = html_unquote($1);
       my ($href) = ($json =~ m/\bsurl:"(.*?)"/s);
       my ($img)  = ($json =~ m/\bimgurl:"(.*?)"/s);
@@ -2074,7 +2075,7 @@ sub pick_from_twitter_images($) {
     # Parsing JSON is a pain in the ass.  So we halfass it as usual.
     $body =~ s/^\[|\]$//s;
     $body =~ s/(\[.*?\])/{ $_ = $1; s@\},@\} @gs; $_; }/gsexi;
-    my @items = split (/},{/, $body);
+    my @items = split (/\},\{/, $body);
     foreach (@items) {
       my ($name) = m@"screen_name":"([^\"]+)"@si;
       my ($img)  = m@"media_url":"([^\"]+)"@si;
@@ -2319,7 +2320,7 @@ sub pick_from_instagram($) {
   foreach (@chunks) {
     s/\\//gs;
     my ($url) = m/"link":\s*"(.*?)"/s;
-    my ($img) = m/"standard_resolution":{"url":\s*"(.*?)"/s;
+    my ($img) = m/"standard_resolution":\{"url":\s*"(.*?)"/s;
        ($img) = m/"url":\s*"(.*?)"/s unless $url;
     next unless ($url && $img);
     push @urls, [ $url, $img ];

@@ -831,20 +831,22 @@ static int drawball(boxedstruct *gp, ball *b, int wire)
 
    if (!gp->gllists[GLL_BALL]) {
       glNewList(gp->listobjects + GLL_BALL,GL_COMPILE);
+      glBegin(wire ? GL_LINES : GL_TRIANGLES);
       cnt = SPHERE_INDICES/3;
       for (i=0; i<cnt; i++) {
 	 pos = i * 3;
-	 glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLES);
 	 glNormal3f(spherev[spherei[pos+0]].x,spherev[spherei[pos+0]].y,spherev[spherei[pos+0]].z);
 	 glVertex3f(spherev[spherei[pos+0]].x,spherev[spherei[pos+0]].y,spherev[spherei[pos+0]].z);
 	 glNormal3f(spherev[spherei[pos+1]].x,spherev[spherei[pos+1]].y,spherev[spherei[pos+1]].z);
          gp->list_polys[GLL_BALL]++;
 	 glVertex3f(spherev[spherei[pos+1]].x,spherev[spherei[pos+1]].y,spherev[spherei[pos+1]].z);
+	 if (wire)
+	    glVertex3f(spherev[spherei[pos+1]].x,spherev[spherei[pos+1]].y,spherev[spherei[pos+1]].z);
 	 glNormal3f(spherev[spherei[pos+2]].x,spherev[spherei[pos+2]].y,spherev[spherei[pos+2]].z);
 	 glVertex3f(spherev[spherei[pos+2]].x,spherev[spherei[pos+2]].y,spherev[spherei[pos+2]].z);
          gp->list_polys[GLL_BALL]++;
-	 glEnd();
       }
+      glEnd();
       glEndList();
       gp->gllists[GLL_BALL] = 1;
    } else {
@@ -856,6 +858,27 @@ static int drawball(boxedstruct *gp, ball *b, int wire)
    return polys;
 }
 
+
+/*
+ * Draw a single triangle
+ */
+static void drawtri(triman *t, int wire, int i)
+{
+   const vectorf *spherev = t->vertices + i*3;
+   const vectorf *loc = &t->tris[i].loc;
+
+   glNormal3f(t->normals[i].x,t->normals[i].y,t->normals[i].z);
+   glVertex3f(spherev[0].x+loc->x,spherev[0].y+loc->y,spherev[0].z+loc->z);
+   glVertex3f(spherev[1].x+loc->x,spherev[1].y+loc->y,spherev[1].z+loc->z);
+   if (wire)
+      glVertex3f(spherev[1].x+loc->x,spherev[1].y+loc->y,spherev[1].z+loc->z);
+   glVertex3f(spherev[2].x+loc->x,spherev[2].y+loc->y,spherev[2].z+loc->z);
+   if (wire) {
+      glVertex3f(spherev[2].x+loc->x,spherev[2].y+loc->y,spherev[2].z+loc->z);
+      glVertex3f(spherev[0].x+loc->x,spherev[0].y+loc->y,spherev[0].z+loc->z);
+  }
+}
+
     
 /* 
  * Draw all triangles in triman
@@ -863,8 +886,7 @@ static int drawball(boxedstruct *gp, ball *b, int wire)
 static int drawtriman(triman *t, int wire) 
 {
    int polys = 0;
-   int i,pos;
-   vectorf *spherev = t->vertices;
+   int i;
    GLfloat col[3];
    
    glPushMatrix();
@@ -877,6 +899,7 @@ static int drawtriman(triman *t, int wire)
    col[1] *= 0.3;
    col[2] *= 0.3;
    glMaterialfv(GL_FRONT, GL_EMISSION,col);
+   glBegin(wire ? GL_LINES : GL_TRIANGLES);
    
    for (i=0; i<t->num_tri; i++) {
       if (t->tris[i].gone > 3) { continue; }
@@ -891,17 +914,8 @@ static int drawtriman(triman *t, int wire)
 	  col[2] *= 0.8;
 	  glMaterialfv(GL_FRONT, GL_EMISSION,col);
 
-	  pos = i*3;
-	  glPushMatrix();
-	  glTranslatef(t->tris[i].loc.x,t->tris[i].loc.y,t->tris[i].loc.z);
-	  glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLES);
-	  glNormal3f(t->normals[i].x,t->normals[i].y,t->normals[i].z);
-	  glVertex3f(spherev[pos+0].x,spherev[pos+0].y,spherev[pos+0].z);
-	  glVertex3f(spherev[pos+1].x,spherev[pos+1].y,spherev[pos+1].z);
-	  glVertex3f(spherev[pos+2].x,spherev[pos+2].y,spherev[pos+2].z);
+	  drawtri(t, wire, i);
 	  polys++;
-	  glEnd();
-	  glPopMatrix();
 
 	  glColor3f(t->color.x,t->color.y,t->color.z);
 	  col[0] = t->color.x;
@@ -917,19 +931,11 @@ static int drawtriman(triman *t, int wire)
 	  continue;
       }
 
-      pos = i*3;
-      glPushMatrix();
-      glTranslatef(t->tris[i].loc.x,t->tris[i].loc.y,t->tris[i].loc.z);
-      glBegin(wire ? GL_LINE_LOOP : GL_TRIANGLES);
-      glNormal3f(t->normals[i].x,t->normals[i].y,t->normals[i].z);
-      glVertex3f(spherev[pos+0].x,spherev[pos+0].y,spherev[pos+0].z);
-      glVertex3f(spherev[pos+1].x,spherev[pos+1].y,spherev[pos+1].z);
-      glVertex3f(spherev[pos+2].x,spherev[pos+2].y,spherev[pos+2].z);
+      drawtri(t, wire, i);
       polys++;
-      glEnd();
-      glPopMatrix();
-   }   
-   glPopMatrix();   
+   }
+   glEnd();
+   glPopMatrix();
    return polys;
 }
       
