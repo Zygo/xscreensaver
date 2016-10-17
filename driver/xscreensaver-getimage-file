@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2001-2013 Jamie Zawinski <jwz@jwz.org>.
+# Copyright © 2001-2016 Jamie Zawinski <jwz@jwz.org>.
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -57,7 +57,7 @@ BEGIN { eval 'use LWP::Simple;' }
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.38 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my ($version) = ('$Revision: 1.40 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -360,19 +360,28 @@ sub html_unquote($) {
 
 
 
+# Figure out what the proxy server should be, either from environment
+# variables or by parsing the output of the (MacOS) program "scutil",
+# which tells us what the system-wide proxy settings are.
+#
 sub set_proxy($) {
   my ($ua) = @_;
 
-  if (!defined($ENV{http_proxy}) && !defined($ENV{HTTP_PROXY})) {
-    my $proxy_data = `scutil --proxy 2>/dev/null`;
-    my ($server) = ($proxy_data =~ m/\bHTTPProxy\s*:\s*([^\s]+)/s);
-    my ($port)   = ($proxy_data =~ m/\bHTTPPort\s*:\s*([^\s]+)/s);
-    if ($server) {
+  my $proxy_data = `scutil --proxy 2>/dev/null`;
+  foreach my $proto ('http', 'https') {
+    my ($server) = ($proxy_data =~ m/\b${proto}Proxy\s*:\s*([^\s]+)/si);
+    my ($port)   = ($proxy_data =~ m/\b${proto}Port\s*:\s*([^\s]+)/si);
+    my ($enable) = ($proxy_data =~ m/\b${proto}Enable\s*:\s*([^\s]+)/si);
+
+    if ($server && $enable) {
       # Note: this ignores the "ExceptionsList".
-      $ENV{http_proxy} = "http://" . $server . ($port ? ":$port" : "") . "/";
-      print STDERR "$progname: MacOS proxy: $ENV{http_proxy}\n"
-        if ($verbose > 2)
-      }
+      my $proto2 = 'http';
+      $ENV{"${proto}_proxy"} = ("${proto2}://" . $server .
+                                ($port ? ":$port" : "") . "/");
+      print STDERR "$progname: MacOS $proto proxy: " .
+                   $ENV{"${proto}_proxy"} . "\n"
+        if ($verbose > 2);
+    }
   }
 
   $ua->env_proxy();
@@ -407,6 +416,9 @@ sub parse_feed($) {
     # (Great news, everybody: Flickr no longer provides RSS for "Sets",
     # only for "Photostreams", and only the first 20 images of those.
     # Thanks, assholes.)
+
+    error ("null response: $url")
+      if ($body =~ m/^\s*$/s);
 
     error ("not an RSS or Atom feed, or HTML: $url")
       unless ($body =~ m@<(HEAD|BODY|A|IMG)\b@si);

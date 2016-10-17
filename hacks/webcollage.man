@@ -121,7 +121,7 @@ If this option is specified, then instead of writing an image to the
 root window, two files will be created: "\fIbase\fP.html" and "\fIbase\fP.jpg".
 The JPEG will be the collage; the HTML file will include that image, and
 an image-map making the sub-images be linked to the pages on which they
-were found (just like \fIhttp://www.jwz.org/webcollage/\fP.)
+were found (just like \fIhttps://www.jwz.org/webcollage/\fP.)
 .TP 8
 .B \-filter \fIcommand\fP
 Filter all source images through this command.  The command must take
@@ -210,9 +210,9 @@ Animating GIFs are not supported: only the first frame will be used.
 .SH UPGRADES
 The latest version of webcollage can be found as a part of
 xscreensaver, at 
-.B http://www.jwz.org/xscreensaver/,
+.B https://www.jwz.org/xscreensaver/,
 or on the WebCollage page at 
-.B http://www.jwz.org/webcollage/.
+.B https://www.jwz.org/webcollage/.
 
 DriftNet:
 .B http://www.ex-parrot.com/~chris/driftnet/

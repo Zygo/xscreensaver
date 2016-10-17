@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -16,11 +16,13 @@
  * usePty: bool		Whether to run the command interactively.
  * metaSendsESC: bool	Whether to send Alt-x as ESC x in pty-mode.
  * swapBSDEL: bool	Swap Backspace and Delete in pty-mode.
+ *
+ * On iOS and Android, textclient-mobile.c is used instead.
  */
 
 #include "utils.h"
 
-#ifndef USE_IPHONE /* whole file -- see OSX/iostextclient.m */
+#if !defined(USE_IPHONE) && !defined(HAVE_ANDROID)  /* whole file */
 
 #include "textclient.h"
 #include "resources.h"
@@ -49,6 +51,9 @@
 # endif
 # ifdef HAVE_UTIL_H
 #  include <util.h>
+# endif
+# ifdef HAVE_SYS_TERMIOS_H
+#  include <sys/termios.h>
 # endif
 #endif /* HAVE_FORKPTY */
 

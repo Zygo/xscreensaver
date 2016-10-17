@@ -52,7 +52,7 @@ static const char sccsid[] = "@(#)ant.c	5.00 2000/11/01 xlockmore";
   Neighbors 6 and neighbors 3 produce the same Turk ants.
 */
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 /*# define DO_STIPPLE*/
 #endif
 

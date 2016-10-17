@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=LeQa9inGEKc"/>
+  <video href="https://www.youtube.com/watch?v=LeQa9inGEKc"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
@@ -18,19 +18,19 @@
   <hgroup>
    <vgroup>
     <number id="pixwidth" type="spinbutton" arg="-pixwidth %"
-            _label="X magnification" low="2" high="100" default="10"/>
+            _label="X mag" low="2" high="100" default="40" />
     <number id="pixspacex" type="spinbutton" arg="-pixspacex %"
-            _label=" X border width" low="0" high="10" default="2"/>
+            _label=" X border" low="0" high="10" default="2" />
     <number id="lensoffsetx" type="spinbutton" arg="-lensoffsetx %"
-            _label="   X lens offset" low="1" high="100" default="5"/>
+            _label="   X lens" low="1" high="100" default="5" />
    </vgroup>
    <vgroup>
     <number id="pixheight" type="spinbutton" arg="-pixheight %"
-            _label="Y magnification" low="2" high="100" default="10"/>
+            _label="Y mag" low="2" high="100" default="40" />
     <number id="pixspacey" type="spinbutton" arg="-pixspacey %"
-            _label=" Y border width" low="0" high="10" default="2"/>
+            _label=" Y border" low="0" high="10" default="2" />
     <number id="lensoffsety" type="spinbutton" arg="-lensoffsety %"
-            _label="    Y lens offset" low="1" high="100" default="5"/>
+            _label="    Y lens" low="1" high="100" default="5" />
    </vgroup>
 
    <vgroup>

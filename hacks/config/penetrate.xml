@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=iuutzMOVYgI"/>
+  <video href="https://www.youtube.com/watch?v=iuutzMOVYgI"/>
 
   <number id="bgrowth" type="slider" arg="-bgrowth %"
           _label="Explosions" _low-label="Slow" _high-label="Fast"

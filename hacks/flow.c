@@ -778,7 +778,7 @@ init_flow (ModeInfo * mi)
 		sp->beecount = NRAND(-sp->beecount) + 1; /* Minimum 1 */
 	}
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   dbufp = False;
 # endif
 
@@ -834,7 +834,7 @@ draw_flow (ModeInfo * mi)
 	if (sp->csegs == NULL)
 		return;
 
-#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
     XClearWindow (MI_DISPLAY(mi), MI_WINDOW(mi));
 #endif
 

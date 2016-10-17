@@ -61,7 +61,7 @@ static const char *truchet_defaults [] = {
   "*anim-delay:               100",
   "*anim-step-size:           3",
   "*randomize:		      true",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:           True",
 #endif
    0

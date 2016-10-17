@@ -26,7 +26,7 @@ extern double fps_compute (fps_state *, unsigned long polys, double depth);
 extern void fps_draw (fps_state *);
 
 /* Doesn't really belong here, but close enough. */
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   extern double current_device_rotation (void);
 #else
 # define current_device_rotation() (0)

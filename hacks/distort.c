@@ -35,6 +35,7 @@
  */
 
 #include <math.h>
+#include <time.h>
 #include "screenhack.h"
 /*#include <X11/Xmd.h>*/
 
@@ -847,7 +848,7 @@ static const char *distort_defaults [] = {
 #ifdef HAVE_XSHM_EXTENSION
 	"*useSHM:			False",		/* xshm turns out not to help. */
 #endif /* HAVE_XSHM_EXTENSION */
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
   "*rotateImages:       True",
 #endif

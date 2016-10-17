@@ -284,6 +284,23 @@ vidmode_scan_monitors (Display *dpy, char **errP)
           m->height = ml.vdisplay;
         }
 
+      /* On a system that has VidMode but does not have RANDR, and that has
+         "Option Rotate" set, WidthOfScreen/HeightOfScreen are the rotated
+         size, but XF86VidModeModeLine contains the unrotated size.
+         Maybe there's something in 'flags' that indicates this?
+         Or, we can just notice that the aspect ratios are inverted:
+       */
+      if (m->width > 0 &&
+          m->height > 0 &&
+          ((m->width > m->height) != 
+           (WidthOfScreen(screen) > HeightOfScreen(screen))))
+        {
+          int swap = m->width;
+          m->width = m->height;
+          m->height = swap;
+        }
+
+
       /* Apparently, though the server stores the X position in increments of
          1 pixel, it will only make changes to the *display* in some other
          increment.  With XF86_SVGA on a Thinkpad, the display only updates
@@ -294,7 +311,7 @@ vidmode_scan_monitors (Display *dpy, char **errP)
          I consider it a bug that XF86VidModeGetViewPort() is telling me the
          server's *target* scroll position rather than the server's *actual*
          scroll position.  David Dawes agrees, and says they may fix this in
-         XFree86 4.0, but it's notrivial.
+         XFree86 4.0, but it's nontrivial.
 
          He also confirms that this behavior is server-dependent, so the
          actual scroll position cannot be reliably determined by the client.

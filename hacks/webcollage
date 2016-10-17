@@ -19,7 +19,7 @@
 #     webcollage --root --filter 'vidwhacker --stdin --stdout'
 #
 #
-# You can see this in action at http://www.jwz.org/webcollage/ --
+# You can see this in action at https://www.jwz.org/webcollage/ --
 # it auto-reloads about once a minute.  To make a page similar to
 # that on your own system, do this:
 #
@@ -57,10 +57,10 @@ use bytes;
 
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.172 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.173 $' =~ m/\s(\d[.\d]+)\s/s);
 my $copyright = "WebCollage $version, Copyright (c) 1999-2015" .
     " Jamie Zawinski <jwz\@jwz.org>\n" .
-    "                  http://www.jwz.org/webcollage/\n";
+    "                  https://www.jwz.org/webcollage/\n";
 
 
 

@@ -4,48 +4,48 @@
      xmlns:dc="http://purl.org/dc/elements/1.1/">
  <channel>
   <title>xscreensaver updater</title>
-  <link>http://www.jwz.org/xscreensaver/updates.xml</link>
+  <link>https://www.jwz.org/xscreensaver/updates.xml</link>
   <description>Updates to xscreensaver.</description>
   <language>en</language>
   <item>
+   <title>Version 5.35</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.35.dmg</link>
+   <description><![CDATA[&bull; New hacks, `dymaxionmap', `unicrud', `energystream', `raverhoop' and `hydrostat'. <BR>&bull; Added Windows 10 to `bsod'. <BR>&bull; X11: ignore WM_USER_TIME property changes with days-old timestamps. Thanks, KDE. <BR>&bull; MacOS, iOS: Better fonts in 'BSOD' and 'memscroller'. <BR>&bull; MacOS 10.7 or later and iOS 6.0 or later are now required, since Xcode 6 can no longer build executables that work on older OSes. <BR>&bull; Many, many Android improvements. <BR>&bull; iOS: Fixed rotation to work with the new iOS 8+ API. <BR>&bull; X11: `pong' is now playable.]]></description>
+   <pubDate>Mon, 23 May 2016 21:08:11 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.35.dmg"
+    sparkle:version="5.35"
+    sparkle:dsaSignature="MC4CFQC4E0tIMWvdSbiycSktRBSLdA18aQIVAJknRfXSqcFu6Dd5Lem7+fnsevDi"
+    length="50566210"
+    type="application/octet-stream" />
+  </item>
+  <item>
+   <title>Version 5.34</title>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.34.dmg</link>
+   <description><![CDATA[&bull; Fixed a crash when hot-swapping monitors while locked. <BR>&bull; Fixed some incorrect output from `xscreensaver-command -watch'. <BR>&bull; Various OSX and iOS performance improvements.]]></description>
+   <pubDate>Sat, 24 Oct 2015 12:16:41 -0700</pubDate>
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.34.dmg"
+    sparkle:version="5.34"
+    sparkle:dsaSignature="MCwCFAoZpMknlOVF0zFXlzFruzFvRXufAhQVKY0qlzelKcArrlC6k7EbHLTcyg=="
+    length="58850776"
+    type="application/octet-stream" />
+  </item>
+  <item>
    <title>Version 5.33</title>
-   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.33.dmg</link>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.33.dmg</link>
    <description><![CDATA[&bull; New hacks, `splitflap' and `romanboy'. <BR>&bull; Better detection of user activity on modern GNOME systems. <BR>&bull; Sonar now does asynchronous host name resolution. <BR>&bull; Improved Unicode support. <BR>&bull; Updated `webcollage' for recent changes. <BR>&bull; Various minor fixes.]]></description>
    <pubDate>Thu, 25 Jun 2015 12:45:10 -0700</pubDate>
-   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.33.dmg"
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.33.dmg"
     sparkle:version="5.33"
     sparkle:dsaSignature="MCwCFEd0Zr8mliQgeG30xb2yfmitxc3yAhQs6xnD7v8ho9wmyCv1yJFjexcfgA=="
     length="58437761"
     type="application/octet-stream" />
   </item>
   <item>
-   <title>Version 5.32</title>
-   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.32.dmg</link>
-   <description><![CDATA[&bull; Fixed some X11 compilation problems. <BR>&bull; Fixed display size and shake gestures on iOS. <BR>&bull; OSX/iOS Performance improvements.]]></description>
-   <pubDate>Tue, 18 Nov 2014 23:25:45 -0800</pubDate>
-   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.32.dmg"
-    sparkle:version="5.32"
-    sparkle:dsaSignature="MC0CFC8zpKjqvEY7GD1ePcf6P5leMJEhAhUAmNXVKRrAFBXwvyfJBw79iN3zobQ="
-    length="55175283"
-    type="application/octet-stream" />
-  </item>
-  <item>
-   <title>Version 5.30</title>
-   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.30.dmg</link>
-   <description><![CDATA[&bull; New hack, `winduprobot'. <BR>&bull; Many improvements to `lament', including Leviathan. <BR>&bull; Fixed the normals in `flyingtoasters': shading is correct now. <BR>&bull; Implemented TEXTURE_GEN in GLES: flying toast is now toasted on iOS. <BR>&bull; Make cel-shading sort-of work in `skytentacles' on iOS. <BR>&bull; Fixed dragging-to-rotate on rotated iOS devices, I think. <BR>&bull; Dragging has inertia now. <BR>&bull; Most hacks respond to mouse-clicks, double-taps and swipes as meaning "do something different now". <BR>&bull; Reworked OpenGL fonts. <BR>&bull; The OSX auto-update installer wasn't working. This time for sure? <BR>&bull; Various minor fixes.]]></description>
-   <pubDate>Wed, 10 Sep 2014 22:04:30 -0700</pubDate>
-   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.30.dmg"
-    sparkle:version="5.30"
-    sparkle:dsaSignature="MC0CFDPqS6izb2TmEZpWMTqOwsOs3XiTAhUAoqdy8mZ0FdDHvO519aXvZR3WZIo="
-    length="53012325"
-    type="application/octet-stream" />
-  </item>
-  <item>
    <title>Version 5.14</title>
-   <link>http://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg</link>
+   <link>https://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg</link>
    <description><![CDATA[&bull; Fixed crash in Blank Only Mode when DPMS disabled. <BR>&bull; Added "Quick Power-off in Blank Only Mode" option. <BR>&bull; BSOD GLaDOS.]]></description>
    <pubDate>Fri, 20 May 2011 11:42:36 -0700</pubDate>
-   <enclosure url="http://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg"
+   <enclosure url="https://www.jwz.org/xscreensaver/xscreensaver-5.14.dmg"
     sparkle:version="5.14"
     sparkle:dsaSignature="MCwCFHrKuttf1gN27mVG3YL8+ueMJmNaAhR6aSkKQefuNFNp6MinLq2o1nocaA=="
     length="54485615"

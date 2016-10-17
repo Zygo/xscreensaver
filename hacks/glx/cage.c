@@ -79,10 +79,10 @@ static const char sccsid[] = "@(#)cage.c	5.01 2001/03/01 xlockmore";
 # define MODE_cage
 # define DEFAULTS			"*delay:		25000   \n"			\
 							"*showFPS:      False   \n"			\
-							"*wireframe:	False	\n"
+							"*wireframe:	False	\n"			\
+							"*suppressRotationAnimation: True\n" \
 
 # define refresh_cage 0
-# define reshape_cage 0
 # define cage_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -291,7 +291,7 @@ draw_impossiblecage(ModeInfo *mi, cagestruct * cp, int wire)
 }
 
 static void
-reshape(ModeInfo * mi, int width, int height)
+reshape_cage(ModeInfo * mi, int width, int height)
 {
 	cagestruct *cp = &cage[MI_SCREEN(mi)];
 	int i;
@@ -415,7 +415,7 @@ init_cage (ModeInfo * mi)
 	cp->step = NRAND(90);
 	if ((cp->glx_context = init_GL(mi)) != NULL) {
 
-		reshape(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
+		reshape_cage(mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 		glDrawBuffer(GL_BACK);
 		pinit(mi);
 	} else {
@@ -451,6 +451,18 @@ draw_cage (ModeInfo * mi)
 	} else {
 		glScalef(Scale4Iconic * cp->WindH / cp->WindW, Scale4Iconic, Scale4Iconic);
 	}
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    int o = (int) current_device_rotation();
+    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+    if (o != 0 && o != 180 && o != -180) {
+      glScalef (1/h, h, 1/h);  /* #### not quite right */
+      h = 1.7;
+      glScalef (h, h, h);
+    }
+  }
+# endif
 
 	/* cage */
 	glRotatef(cp->step * 100, 0, 0, 1);

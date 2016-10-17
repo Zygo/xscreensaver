@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2003-2012 Jamie Zawinski <jwz@jwz.org>
+# Copyright Â© 2003-2012 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -27,7 +27,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.5 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my ($version) = ('$Revision: 1.6 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 

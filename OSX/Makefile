@@ -1,21 +1,23 @@
-# XScreenSaver for MacOS X, Copyright (c) 2006-2014 by Jamie Zawinski.
+# XScreenSaver for MacOS X, Copyright (c) 2006-2015 by Jamie Zawinski.
 
-# We have to use Xcode 5.0.2 in order to build savers that will run on
-# MacOS 10.6 and 10.7, because that's the latest version of Xcode that
-# ships with a version of clang that implements "-fobjc-gc".
+XCODE_APP = /Applications/Xcode.app
+
+# To build savers that will run on MacOS 10.6 and 10.7, Xcode 5.0.2 must
+# be used (as that's the latest version of Xcode that ships with a version
+# of clang that implements "-fobjc-gc").  However, Xcode 5.0.2 will not
+# launch on MacOS 10.11 or later.
 #
-XCODE_APP = /Applications/Xcode-5.0.2.app
+# XCODE_APP = /Applications/Xcode-5.0.2.app
 
 TARGETS    = All Savers
-ARCH       = -arch i386 -arch x86_64
+ARCH       = -arch i386 -arch x86_64 ONLY_ACTIVE_ARCH=NO
 CERT       = 'Jamie Zawinski'
 CERT       = 'iPhone Developer: Jamie Zawinski (Y5M82TL69N)'
 PKGID	   = org.jwz.xscreensaver
-THUMBDIR   = $(HOME)/www/xscreensaver/screenshots/
+THUMBDIR   = build/screenshots
 XCODEBUILD = $(XCODE_APP)/Contents/Developer/usr/bin/xcodebuild
 SETFILE    = $(XCODE_APP)/Contents/Developer/Tools/SetFile
-SETICON    = /usr/local/bin/seticon
-# seticon is from osxutils1.7.pkg
+SETICON    = ./seticon.pl
 
 default: release
 all: debug release
@@ -40,11 +42,62 @@ release:: distdepend
 	$(XCODEBUILD) $(ARCH) -target "$(TARGETS)" -configuration Release build
 
 release:: check_versions
-release:: update_thumbs
 release:: sign
 
 Sparkle.framework:
 	unzip ../archive/Sparkle.framework-2013-12-04.zip
+
+# Download and resize images from jwz.org.
+# This saves us having to include 4MB of images in the tar file
+# that will only be used by a vast minority of people building
+# from source.
+# update-info-plist.pl runs this as needed.
+# Might be better to do this with curl, since that is installed by default.
+
+URL = https://www.jwz.org/xscreensaver/screenshots/
+WGET = wget -q -U xscreensaver-build-osx
+CVT  = -thumbnail '200x150^' -gravity center -extent 200x150 \
+     \( +clone  -alpha extract \
+        -draw 'fill black polygon 0,0 0,6 6,0 fill white circle 6,6 6,0' \
+        \( +clone -flip \) -compose Multiply -composite \
+        \( +clone -flop \) -compose Multiply -composite \
+     \) -alpha off -compose CopyOpacity -composite \
+    -colorspace sRGB \
+    -strip \
+    -quality 95 \
+    +dither -colors 128
+
+$(THUMBDIR)/%.png:
+	@\
+	FILE1=`echo "$@" | sed 's!^.*/\([^/]*\)\.png$$!\1.jpg!'` ;	\
+	FILE2="$@" ;							\
+	TMP="$$FILE2".tmp ;						\
+	URL="$(URL)$$FILE1" ;						\
+	URL2="$(URL)retired/$$FILE1" ;					\
+	if [ ! -d $(THUMBDIR) ]; then mkdir -p $(THUMBDIR) ; fi ;	\
+	rm -f "$$FILE2" "$$TMP" ;					\
+	set +e ;							\
+	echo "downloading $$URL..." ;					\
+	$(WGET) -O"$$TMP" "$$URL" ;					\
+	if [ ! -s "$$TMP" ]; then					\
+	  echo "downloading $$URL2..." ;				\
+	  $(WGET) -O"$$TMP" "$$URL2" ;					\
+	fi ;								\
+	if [ ! -s "$$TMP" ]; then					\
+	  rm -f "$$TMP" ;						\
+	  echo "failed: $$URL" ;					\
+	  exit 1 ;							\
+	fi ;								\
+	rm -f "$$FILE2" ;						\
+	convert jpg:- $(CVT) "$$FILE2" < "$$TMP" ;			\
+	if [ ! -s "$$FILE2" ]; then					\
+	  echo "$$FILE2 failed" >&2 ;					\
+	  rm -f "$$FILE2" "$$TMP" ;					\
+	  exit 1 ;							\
+	else								\
+	  rm -f "$$TMP" ;						\
+	fi
+
 
 sign:
 	@for f in build/Release/*.app/Contents/*/*.saver \
@@ -129,10 +182,6 @@ check_coretext:
   done ;								\
   if [ "$$RESULT" = 0 ]; then echo "CoreText linked correctly" ; fi ;	\
   exit $$RESULT
-
-
-update_thumbs::
-	./update-thumbnail.pl $(THUMBDIR) build/Release/*.saver
 
 
 # Arrrrgh
@@ -235,7 +284,8 @@ build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.
 
 # -format UDBZ saves 4% (~1.2 MB) over UDZO.
 dmg:: distdepend
-dmg:: check_versions check_gc check_coretext
+dmg:: check_versions check_coretext
+#dmg:: check_gc
 dmg:: build/Release/installer.pkg
 dmg::
 	@								      \
@@ -291,7 +341,7 @@ dmg::
   cp -p bindist.rtf "$$STAGE/Read Me.rtf" ;				      \
   cp -p build/Release/installer.pkg "$$PKG" ;				      \
   cp -p bindist-DS_Store "$$STAGE/.DS_Store" ;				      \
-  cp -p bindist.webloc "$$STAGE/Get the iPhone:iPad Version.webloc" ;	      \
+  cp -p bindist.webloc "$$STAGE/" ;					      \
   cp -p XScreenSaverDMG.icns "$$STAGE/.VolumeIcon.icns" ;		      \
   ${SETFILE} -a C "$$STAGE" ;						      \
   ${SETFILE} -a E "$$STAGE"/*.{rtf,pkg,webloc} ;			      \
@@ -300,6 +350,7 @@ dmg::
   $(SETICON) -d XScreenSaverFolder.icns "$$DST" ;			      \
   $(SETICON) -d XScreenSaverWebloc.icns "$$STAGE"/*.webloc ;		      \
   $(SETICON) -d XScreenSaverPkg.icns "$$STAGE"/*.pkg ;			      \
+  mv "$$STAGE/bindist.webloc" "$$STAGE/Get the iPhone:iPad Version.webloc" ;  \
   hdiutil makehybrid -quiet -ov -hfs -hfs-volume-name "$$VOLNAME"	      \
     -hfs-openfolder "$$STAGE" "$$STAGE" -o "$$TMPDMG" ;			      \
   rm -rf "$$STAGE" ;							      \

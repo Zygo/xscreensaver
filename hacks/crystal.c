@@ -567,7 +567,7 @@ draw_crystal(ModeInfo * mi)
 	crystalstruct *cryst = &crystals[MI_SCREEN(mi)];
 	int         i;
 
-#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
     XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
 #endif
 

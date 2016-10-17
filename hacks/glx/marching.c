@@ -21,8 +21,12 @@
 #include <stdio.h>
 #include <math.h>
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # include <GL/gl.h>
+#endif
+
+#ifdef HAVE_ANDROID
+# include <GLES/gl.h>
 #endif
 
 #ifdef HAVE_JWZGLES

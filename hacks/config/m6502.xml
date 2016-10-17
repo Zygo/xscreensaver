@@ -4,7 +4,7 @@
 
   <command arg="-root" />
 
-  <video href="http://www.youtube.com/watch?v=KlDw0nYwUe4"/>
+  <video href="https://www.youtube.com/watch?v=KlDw0nYwUe4"/>
 
   <number id="displaytime" type="slider" arg="-displaytime %"
           _label="Display time for each program"

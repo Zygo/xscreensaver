@@ -15,7 +15,7 @@
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 # ifndef HAVE_JWZGLES
 #  include <OpenGL/glu.h>
@@ -24,6 +24,10 @@
 # include <X11/Xlib.h>
 # include <GL/gl.h>
 # include <GL/glu.h>
+#endif
+
+#ifdef HAVE_ANDROID
+#include <GLES/gl.h>
 #endif
 
 #ifdef HAVE_JWZGLES

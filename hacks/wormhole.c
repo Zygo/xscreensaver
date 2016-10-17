@@ -303,7 +303,7 @@ static void resizeWormhole( struct state *st, wormhole * worm )
 	st->SCREEN_X = attr.width;
 	st->SCREEN_Y = attr.height;
 
-# ifndef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifndef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
 	XFreePixmap( st->dpy, worm->work );
 	worm->work = XCreatePixmap( st->dpy, st->window, st->SCREEN_X, st->SCREEN_Y, attr.depth );
 # endif
@@ -323,7 +323,7 @@ static void initWormhole( struct state *st, wormhole * worm, Display * display, 
 	st->SCREEN_X = attr.width;
 	st->SCREEN_Y = attr.height;
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
         worm->work = st->window;
 # else
 	worm->work = XCreatePixmap( st->dpy, st->window, st->SCREEN_X, st->SCREEN_Y, attr.depth );
@@ -708,7 +708,7 @@ static const char *wormhole_defaults [] = {
   "*delay:	10000",
   "*zspeed:	10",
   "*stars:	20",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

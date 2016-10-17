@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -66,6 +66,7 @@ void resize_screensaver_window (saver_info *si) { }
 void describe_monitor_layout (saver_info *si) { }
 Bool update_screen_layout (saver_info *si) { return 0; }
 Bool in_signal_handler_p = 0;
+char *timestring (time_t when) { return ""; }
 
 const char *blurb(void) { return progname; }
 Atom XA_SCREENSAVER, XA_DEMO, XA_PREFS;

@@ -419,7 +419,7 @@ static const char *flame_defaults [] = {
   "*delay:	50000",
   "*delay2:	2000000",
   "*points:	10000",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

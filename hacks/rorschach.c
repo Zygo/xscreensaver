@@ -194,7 +194,7 @@ static const char *rorschach_defaults [] = {
   "*iterations:	4000",
   "*offset:	7",
   "*delay:	5",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

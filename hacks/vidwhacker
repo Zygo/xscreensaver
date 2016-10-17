@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.32 $ }; $version =~ s/^[^0-9]+([0-9.]+).*$/$1/;
+my ($version) = ('$Revision: 1.33 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $use_stdin = 0;
@@ -440,7 +440,7 @@ sub error($) {
 
 sub usage() {
   print STDERR "VidWhacker, Copyright (c) 2001 Jamie Zawinski <jwz\@jwz.org>\n";
-  print STDERR "            http://www.jwz.org/xscreensaver/";
+  print STDERR "            https://www.jwz.org/xscreensaver/";
   print STDERR "\n";
   print STDERR "usage: $0 [-display dpy] [-verbose]\n";
   print STDERR "\t\t[-root | -window | -window-id 0xXXXXX ]\n";

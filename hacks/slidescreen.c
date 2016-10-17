@@ -108,7 +108,7 @@ slidescreen_init (Display *dpy, Window window)
     else
       st->bg = 1;
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
     if (!fg_ok || bg_ok)
       {
         int i;
@@ -167,7 +167,7 @@ slidescreen_init (Display *dpy, Window window)
 	  }
 	XFree(all);
       }
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */
   }
 
   gcv.foreground = st->fg;
@@ -475,7 +475,7 @@ static const char *slidescreen_defaults [] = {
   "*delay:			50000",
   "*delay2:			1000000",
   "*duration:			120",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:             True",
   "*rotateImages:               True",
 #endif

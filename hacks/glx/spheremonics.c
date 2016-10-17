@@ -63,6 +63,7 @@
 #define DEFAULTS "*delay:	30000	    \n" \
 		 "*showFPS:	False	    \n" \
 		 "*wireframe:	False	    \n" \
+		 "*suppressRotationAnimation: True\n" \
 	 "*labelfont:   -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n"
 
 # define refresh_spheremonics 0
@@ -178,6 +179,14 @@ reshape_spheremonics (ModeInfo *mi, int width, int height)
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
 
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1/h);
+  }
+
+# endif
   glClear(GL_COLOR_BUFFER_BIT);
 }
 

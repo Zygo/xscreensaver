@@ -51,7 +51,11 @@
      orientation just before the view controller is modal-presented, and
      restore the proper status bar orientation just before the saverView is
      created so it can pick it up in didRotate:. */
-  UIInterfaceOrientation _storedOrientation;
+  // UIInterfaceOrientation _storedOrientation;
+
+  BOOL _showAboutBox;
+  UIView *aboutBox;
+  NSTimer *splashTimer;
 }
 
 @property(nonatomic, retain) NSString *saverName;
@@ -85,14 +89,12 @@
   SaverViewController *nonrotating_controller;	// Hierarchy 2 (savers)
 
   UIImage *saved_screenshot;
-  UIView *aboutBox;
-  NSTimer *splashTimer;
 
 # endif // USE_IPHONE
 }
 
-- (XScreenSaverView *) makeSaverView: (NSString *) module
-                            withSize: (NSSize) size;
+- (XScreenSaverView *) newSaverView: (NSString *) module
+                           withSize: (NSSize) size;
 - (void) loadSaver: (NSString *)name;
 - (void) selectedSaverDidChange:(NSDictionary *)change;
 
@@ -101,8 +103,8 @@
 #else  // USE_IPHONE
 - (void) openPreferences: (NSString *)which;
 - (UIImage *) screenshot;
-- (void)aboutPanel:(UIView *)saverView
-       orientation:(UIInterfaceOrientation)orient;
+- (NSString *) makeDesc:(NSString *)saver
+               yearOnly:(BOOL) yearp;
 #endif // USE_IPHONE
 
 @end

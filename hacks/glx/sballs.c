@@ -564,7 +564,7 @@ static void Draw(ModeInfo * mi)
        glColor3f(0, 0, 0);
     }
     glBegin(GL_QUAD_STRIP);
-#ifndef USE_IPHONE
+#ifndef HAVE_MOBILE
     /* Letterbox the background image */
     glNormal3f(0, 0, 1); glTexCoord2f(0,0); glVertex3f(8, 4.1, -4);
     glNormal3f(0, 0, 1); glTexCoord2f(0,1); glVertex3f(8, -4.1, -4);
@@ -597,8 +597,8 @@ static void Draw(ModeInfo * mi)
     if (do_texture)
 #ifdef HAVE_GLBINDTEXTURE
        glBindTexture(GL_TEXTURE_2D, sb->faceid);
-#endif /* HAVE_GLBINDTEXTURE */
     else
+#endif /* HAVE_GLBINDTEXTURE */
        glEnable(GL_LIGHTING);
     for (sphere=0;sphere<spheres;sphere++)
     {

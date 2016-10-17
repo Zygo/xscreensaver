@@ -97,9 +97,6 @@ rotzoom (struct state *st, struct zoom_area *za)
         int dy = y - cy;
         int d2 = (dx*dx) + (dy*dy);
 
-        ox = x;
-        oy = y;
-
         if (d2 > w2) {
           ox = x;
           oy = y;
@@ -269,7 +266,7 @@ create_zoom (struct state *st)
 {
   struct zoom_area *za;
 
-  za = malloc (sizeof (struct zoom_area));
+  za = calloc (1, sizeof (struct zoom_area));
   reset_zoom (st, za);
 
   return za;
@@ -533,7 +530,7 @@ static const char *rotzoomer_defaults[] = {
   "*numboxes: 2",
   "*delay: 10000",
   "*duration: 120",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
   "*rotateImages:   True",
 #endif

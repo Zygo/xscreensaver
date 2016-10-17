@@ -53,13 +53,25 @@
 
 #if ASYNC_NETDB_USE_GAI
 
-typedef struct sockaddr_storage async_netdb_sockaddr_storage_t;
+/* Without using union, gcc-6 warns for
+   breaking strict aliasing rules
+ */
+typedef union {
+	struct sockaddr_storage x_sockaddr_storage;
+	struct sockaddr_in x_sockaddr_in;
+	struct sockaddr_in6 x_sockaddr_in6;
+} async_netdb_sockaddr_storage_t;
 
 int _async_netdb_is_done (struct io_thread *io);
 
 #else
 
-typedef struct sockaddr_in async_netdb_sockaddr_storage_t;
+/* Because the definition for the above case is now union,
+   the definition for this case must also be union...
+*/
+typedef union {
+	struct sockaddr_in x_sockaddr_in;
+} async_netdb_sockaddr_storage_t;
 
 # ifndef EAI_SYSTEM
 /* The EAI_* codes are specified specifically as preprocessor macros, so

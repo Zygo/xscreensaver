@@ -22,6 +22,7 @@
 			"*contrast:     30          \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
+			"*suppressRotationAnimation: True\n" \
 
 # define refresh_quasicrystal 0
 # define release_quasicrystal 0

@@ -145,7 +145,7 @@ static const char sccsid[] = "@(#)klein.c  1.1 08/10/04 xlockmore";
 
 #ifdef USE_GL
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # include <X11/keysym.h>
 #endif
 

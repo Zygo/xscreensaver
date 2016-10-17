@@ -42,7 +42,7 @@
 #include "gltrackball.h"
 
 /* Bah, copied from ../fps.h */
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   extern double current_device_rotation (void);
 #else
 # define current_device_rotation() (0)
@@ -241,7 +241,7 @@ gltrackball_mousewheel (trackball_state *ts,
   int horizontal_p;
   int mx, my, move, scale;
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
   flip_p = 0;      /* MacOS has already handled this. */
 #endif
 

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,12 +18,76 @@
    same API as this program (utils/grabclient.c).
  */
 
+/* This code is a mess.  There's two decades of history in this file.
+   There are several distinct paths through this file depending on what
+   platform it's being compiled for:
+
+
+   X11 execution path:
+
+       load_image_async CB
+           load_random_image_x11
+               fork_exec_cb
+                   "xscreensaver-getimage 0xWINDOW 0xPIXMAP"
+                       "xscreensaver-getimage-file --name /DIR"
+                       draw_colorbars
+                       XPutImage
+                   XtAppAddInput xscreensaver_getimage_cb
+       ...
+       xscreensaver_getimage_cb
+           get_name_from_xprops
+           get_original_geometry_from_xprops
+           CB name, geom, closure
+
+
+   MacOS execution path:
+
+       load_image_async CB
+           load_random_image_cocoa
+               osx_grab_desktop_image (osxgrabscreen.m, MacOS version)
+                   copy_framebuffer_to_ximage
+                   XPutImage
+               draw_colorbars
+               osx_load_image_file_async
+                   open_image_name_pipe
+                       "xscreensaver-getimage-file --name /DIR"
+                 XtAppAddInput xscreensaver_getimage_file_cb
+       ...
+       xscreensaver_getimage_file_cb
+           osx_load_image_file
+               CB name, geom, closure
+
+
+   iOS execution path:
+
+       load_image_async CB
+           load_random_image_cocoa
+               osx_grab_desktop_image (osxgrabscreen.m, iOS version)
+                   CGWindowListCreateImage
+                   jwxyz_draw_NSImage_or_CGImage
+               draw_colorbars
+               ios_load_random_image
+                   ios_load_random_image_cb
+                       jwxyz_draw_NSImage_or_CGImage
+                       CB name, geom, closure
+
+
+   Andrid execution path:
+
+       load_image_async CB
+           load_random_image_android
+               jwxyz_load_random_image (jwxyz-android.c)
+                   XPutImage
+               draw_colorbars
+               CB name, geom, closure
+ */
+
 #include "utils.h"
 #include "grabscreen.h"
 #include "resources.h"
 #include "yarandom.h"
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 # include "colorbars.h"
 #else /* !HAVE_COCOA -- real Xlib */
@@ -46,7 +110,35 @@ extern char *progname;
 
 static void print_loading_msg (Screen *, Window);
 
-#ifndef HAVE_COCOA
+
+/* Used for pipe callbacks in X11 or OSX mode.
+   X11: this is the xscreensaver_getimage_cb closure,
+     when waiting on the fork of "xscreensaver-getimage"
+   OSX: this is the xscreensaver_getimage_file_cb closure,
+     when waiting on the fork of "xscreensaver-getimage-file"
+ */
+typedef struct {
+  void (*callback) (Screen *, Window, Drawable,
+                    const char *name, XRectangle *geom, void *closure);
+  Screen *screen;
+  Window window;
+  Drawable drawable;
+  void *closure;
+  XtInputId pipe_id;
+  FILE *pipe;
+
+# if !defined(USE_IPHONE) && !defined(HAVE_COCOA)  /* Real X11 */
+  pid_t pid;
+# endif
+
+# if !defined(USE_IPHONE) && defined(HAVE_COCOA)   /* Desktop OSX */
+  char *directory;
+# endif
+
+} xscreensaver_getimage_data;
+
+
+#if !defined(HAVE_COCOA) && !defined(HAVE_ANDROID)   /* Real X11 */
 
 static Bool error_handler_hit_p = False;
 
@@ -177,8 +269,11 @@ checkerboard (Screen *screen, Drawable drawable)
 }
 
 
+/* Read the image's original name off of the window's X properties.
+   Used only when running "real" X11, not jwxyz.
+ */
 static char *
-get_name (Display *dpy, Window window)
+get_name_from_xprops (Display *dpy, Window window)
 {
   Atom type;
   int format;
@@ -197,8 +292,11 @@ get_name (Display *dpy, Window window)
 }
 
 
+/* Read the image's original geometry off of the window's X properties.
+   Used only when running "real" X11, not jwxyz.
+ */
 static Bool
-get_geometry (Display *dpy, Window window, XRectangle *ret)
+get_original_geometry_from_xprops (Display *dpy, Window window, XRectangle *ret)
 {
   Atom type;
   int format;
@@ -246,10 +344,10 @@ hack_subproc_environment (Display *dpy)
 
   /* Allegedly, BSD 4.3 didn't have putenv(), but nobody runs such systems
      any more, right?  It's not Posix, but everyone seems to have it. */
-#ifdef HAVE_PUTENV
+# ifdef HAVE_PUTENV
   if (putenv (ndpy))
     abort ();
-#endif /* HAVE_PUTENV */
+# endif /* HAVE_PUTENV */
 
   /* don't free (ndpy) -- some implementations of putenv (BSD 4.4,
      glibc 2.0) copy the argument, but some (libc4,5, glibc 2.1.2, MacOS)
@@ -264,6 +362,9 @@ hack_subproc_environment (Display *dpy)
    this is due to the intermediate /bin/sh that system() uses to
    parse arguments?  I'm not sure.  But using fork() and execvp()
    here seems to close the race.
+
+   Used to execute "xscreensaver-getimage".
+   Used only when running "real" X11, not jwxyz.
  */
 static void
 exec_simple_command (const char *command)
@@ -282,48 +383,13 @@ exec_simple_command (const char *command)
 }
 
 
-static void
-fork_exec_wait (const char *command)
-{
-  char buf [255];
-  pid_t forked;
-  int status;
+static void xscreensaver_getimage_cb (XtPointer closure,
+                                      int *fd, XtIntervalId *id);
 
-  switch ((int) (forked = fork ()))
-    {
-    case -1:
-      sprintf (buf, "%s: couldn't fork", progname);
-      perror (buf);
-      return;
-
-    case 0:
-      exec_simple_command (command);
-      exit (1);  /* exits child fork */
-      break;
-
-    default:
-      waitpid (forked, &status, 0);
-      break;
-    }
-}
-
-
-typedef struct {
-  void (*callback) (Screen *, Window, Drawable,
-                    const char *name, XRectangle *geom, void *closure);
-  Screen *screen;
-  Window window;
-  Drawable drawable;
-  void *closure;
-  FILE *read_pipe;
-  FILE *write_pipe;
-  XtInputId pipe_id;
-  pid_t pid;
-} grabclient_data;
-
-
-static void finalize_cb (XtPointer closure, int *fd, XtIntervalId *id);
-
+/* Spawn a program, and run the callback when it finishes.
+   Used to execute "xscreensaver-getimage".
+   Used only when running "real" X11, not jwxyz.
+ */
 static void
 fork_exec_cb (const char *command,
               Screen *screen, Window window, Drawable drawable,
@@ -333,9 +399,10 @@ fork_exec_cb (const char *command,
               void *closure)
 {
   XtAppContext app = XtDisplayToApplicationContext (DisplayOfScreen (screen));
-  grabclient_data *data;
+  xscreensaver_getimage_data *data;
   char buf [255];
   pid_t forked;
+  FILE *wpipe;
 
   int fds [2];
 
@@ -346,16 +413,16 @@ fork_exec_cb (const char *command,
       exit (1);
     }
 
-  data = (grabclient_data *) calloc (1, sizeof(*data));
+  data = (xscreensaver_getimage_data *) calloc (1, sizeof(*data));
   data->callback   = callback;
   data->closure    = closure;
   data->screen     = screen;
   data->window     = window;
   data->drawable   = drawable;
-  data->read_pipe  = fdopen (fds[0], "r");
-  data->write_pipe = fdopen (fds[1], "w");
+  data->pipe       = fdopen (fds[0], "r");
+  wpipe            = fdopen (fds[1], "w");   /* Is this necessary? */
 
-  if (!data->read_pipe || !data->write_pipe)
+  if (!data->pipe || !wpipe)
     {
       sprintf (buf, "%s: fdopen", progname);
       perror (buf);
@@ -363,9 +430,9 @@ fork_exec_cb (const char *command,
     }
 
   data->pipe_id =
-    XtAppAddInput (app, fileno (data->read_pipe),
+    XtAppAddInput (app, fileno (data->pipe),
                    (XtPointer) (XtInputReadMask | XtInputExceptMask),
-                   finalize_cb, (XtPointer) data);
+                   xscreensaver_getimage_cb, (XtPointer) data);
 
   forked = fork ();
   switch ((int) forked)
@@ -377,8 +444,8 @@ fork_exec_cb (const char *command,
 
     case 0:					/* child */
 
-      fclose (data->read_pipe);
-      data->read_pipe = 0;
+      fclose (data->pipe);
+      data->pipe = 0;
 
       /* clone the write pipe onto stdout so that it gets closed
          when the fork exits.  This will shut down the pipe and
@@ -395,8 +462,7 @@ fork_exec_cb (const char *command,
       break;
 
     default:					/* parent */
-      fclose (data->write_pipe);
-      data->write_pipe = 0;
+      fclose (wpipe);
       data->pid = forked;
       break;
     }
@@ -405,25 +471,27 @@ fork_exec_cb (const char *command,
 
 /* Called in the parent when the forked process dies.
    Runs the caller's callback, and cleans up.
+   This runs when "xscreensaver-getimage" exits.
+   Used only when running "real" X11, not jwxyz.
  */
 static void
-finalize_cb (XtPointer closure, int *fd, XtIntervalId *id)
+xscreensaver_getimage_cb (XtPointer closure, int *fd, XtIntervalId *id)
 {
-  grabclient_data *data = (grabclient_data *) closure;
+  xscreensaver_getimage_data *data = (xscreensaver_getimage_data *) closure;
   Display *dpy = DisplayOfScreen (data->screen);
   char *name;
   XRectangle geom = { 0, 0, 0, 0 };
 
   XtRemoveInput (*id);
 
-  name = get_name (dpy, data->window);
-  get_geometry (dpy, data->window, &geom);
+  name = get_name_from_xprops (dpy, data->window);
+  get_original_geometry_from_xprops (dpy, data->window, &geom);
 
   data->callback (data->screen, data->window, data->drawable,
                   name, &geom, data->closure);
   if (name) free (name);
 
-  fclose (data->read_pipe);
+  fclose (data->pipe);
 
   if (data->pid)	/* reap zombies */
     {
@@ -439,15 +507,14 @@ finalize_cb (XtPointer closure, int *fd, XtIntervalId *id)
 
 /* Loads an image into the Drawable.
    When grabbing desktop images, the Window will be unmapped first.
+   Used only when running "real" X11, not jwxyz.
  */
 static void
-load_random_image_1 (Screen *screen, Window window, Drawable drawable,
-                     void (*callback) (Screen *, Window, Drawable,
-                                       const char *name, XRectangle *geom,
-                                       void *closure),
-                     void *closure,
-                     char **name_ret,
-                     XRectangle *geom_ret)
+load_random_image_x11 (Screen *screen, Window window, Drawable drawable,
+                       void (*callback) (Screen *, Window, Drawable,
+                                         const char *name, XRectangle *geom,
+                                         void *closure),
+                       void *closure)
 {
   Display *dpy = DisplayOfScreen (screen);
   char *grabber = get_string_resource(dpy, "desktopGrabber", "DesktopGrabber");
@@ -487,45 +554,17 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
   XSync (dpy, True);
   hack_subproc_environment (dpy);
 
-  if (callback)
-    {
-      /* Start the image loading in another fork and return immediately.
-         Invoke the callback function when done.
-       */
-      if (name_ret) abort();
-      fork_exec_cb (cmd, screen, window, drawable, callback, closure);
-    }
-  else
-    {
-      /* Wait for the image to load, and return it immediately.
-       */
-      fork_exec_wait (cmd);
-      if (name_ret)
-        *name_ret = get_name (dpy, window);
-      if (geom_ret)
-        get_geometry (dpy, window, geom_ret);
-    }
+  /* Start the image loading in another fork and return immediately.
+     Invoke the callback function when done. */
+  fork_exec_cb (cmd, screen, window, drawable, callback, closure);
 
   free (cmd);
   XSync (dpy, True);
 }
 
-#else  /* HAVE_COCOA */
+#elif defined (HAVE_COCOA) /* OSX or iOS */
 
-struct pipe_closure {
-  FILE *pipe;
-  XtInputId id;
-  Screen *screen;
-  Window xwindow;
-  Drawable drawable;
-  char *directory;
-  void (*callback) (Screen *, Window, Drawable,
-                    const char *name, XRectangle *geom,
-                    void *closure);
-  void *closure;
-};
-
-# ifndef USE_IPHONE
+# ifndef USE_IPHONE   /* HAVE_COCOA && !USE_IPHONE -- desktop OSX */
 
 # define BACKSLASH(c) \
   (! ((c >= 'a' && c <= 'z') || \
@@ -541,7 +580,6 @@ open_image_name_pipe (const char *dir)
 {
   char *s;
 
-# ifdef HAVE_COCOA
   /* /bin/sh on OS X 10.10 wipes out the PATH. */
   const char *path = getenv("PATH");
   char *cmd = s = malloc ((strlen(dir) + strlen(path)) * 2 + 100);
@@ -554,9 +592,6 @@ open_image_name_pipe (const char *dir)
   }
   strcpy (s, "; ");
   s += strlen (s);
-# else
-  char *cmd = s = malloc (strlen(dir) * 2 + 100);
-# endif
 
   strcpy (s, "xscreensaver-getimage-file --name ");
   s += strlen (s);
@@ -565,10 +600,10 @@ open_image_name_pipe (const char *dir)
     if (BACKSLASH(c)) *s++ = '\\';
     *s++ = c;
   }
-# ifdef HAVE_COCOA
+
   strcpy (s, "'");
   s += strlen (s);
-# endif
+
   *s = 0;
 
   FILE *pipe = popen (cmd, "r");
@@ -578,11 +613,11 @@ open_image_name_pipe (const char *dir)
 
 
 static void
-pipe_cb (XtPointer closure, int *source, XtInputId *id)
+xscreensaver_getimage_file_cb (XtPointer closure, int *source, XtInputId *id)
 {
   /* This is not called from a signal handler, so doing stuff here is fine.
    */
-  struct pipe_closure *clo2 = (struct pipe_closure *) closure;
+  xscreensaver_getimage_data *clo2 = (xscreensaver_getimage_data *) closure;
   char buf[10240];
   const char *dir = clo2->directory;
   char *absfile = 0;
@@ -590,8 +625,8 @@ pipe_cb (XtPointer closure, int *source, XtInputId *id)
   fgets (buf, sizeof(buf)-1, clo2->pipe);
   pclose (clo2->pipe);
   clo2->pipe = 0;
-  XtRemoveInput (clo2->id);
-  clo2->id = 0;
+  XtRemoveInput (clo2->pipe_id);
+  clo2->pipe_id = 0;
 
   /* strip trailing newline */
   int L = strlen(buf);
@@ -610,12 +645,12 @@ pipe_cb (XtPointer closure, int *source, XtInputId *id)
       strcat (absfile, buf);
     }
 
-  if (! osx_load_image_file (clo2->screen, clo2->xwindow, clo2->drawable,
+  if (! osx_load_image_file (clo2->screen, clo2->window, clo2->drawable,
                              (absfile ? absfile : buf), &geom)) {
     /* unable to load image - draw colorbars 
      */
     XWindowAttributes xgwa;
-    XGetWindowAttributes (dpy, clo2->xwindow, &xgwa);
+    XGetWindowAttributes (dpy, clo2->window, &xgwa);
     Window r;
     int x, y;
     unsigned int w, h, bbw, d;
@@ -644,7 +679,7 @@ pipe_cb (XtPointer closure, int *source, XtInputId *id)
 
   /* Take the extension off of the file name. */
   /* Duplicated in driver/xscreensaver-getimage.c. */
-  if (buf && *buf)
+  if (*buf)
     {
       char *slash = strrchr (buf, '/');
       char *dot = strrchr ((slash ? slash : buf), '.');
@@ -656,7 +691,7 @@ pipe_cb (XtPointer closure, int *source, XtInputId *id)
     }
 
   if (absfile) free (absfile);
-  clo2->callback (clo2->screen, clo2->xwindow, clo2->drawable, buf, &geom,
+  clo2->callback (clo2->screen, clo2->window, clo2->drawable, buf, &geom,
                   clo2->closure);
   clo2->callback = 0;
   free (clo2->directory);
@@ -664,7 +699,7 @@ pipe_cb (XtPointer closure, int *source, XtInputId *id)
 }
 
 
-# else  /* USE_IPHONE */
+# else   /* HAVE_COCOA && USE_IPHONE -- iOS */
 
 /* Callback for ios_load_random_image(), called after we have loaded an
    image from the iOS device's Photo Library.  See iosgrabimage.m.
@@ -673,7 +708,7 @@ static void
 ios_load_random_image_cb (void *uiimage, const char *filename, 
                           int width, int height, void *closure)
 {
-  struct pipe_closure *clo2 = (struct pipe_closure *) closure;
+  xscreensaver_getimage_data *clo2 = (xscreensaver_getimage_data *) closure;
   Display *dpy = DisplayOfScreen (clo2->screen);
   XRectangle geom;
   XWindowAttributes xgwa;
@@ -682,7 +717,7 @@ ios_load_random_image_cb (void *uiimage, const char *filename,
   unsigned int w, h, bbw, d;
   int rot = 0;
 
-  XGetWindowAttributes (dpy, clo2->xwindow, &xgwa);
+  XGetWindowAttributes (dpy, clo2->window, &xgwa);
   XGetGeometry (dpy, clo2->drawable, &r, &x, &y, &w, &h, &bbw, &d);
 
   /* If the image is portrait and the window is landscape, or vice versa,
@@ -712,14 +747,13 @@ ios_load_random_image_cb (void *uiimage, const char *filename,
       filename = 0;
     }
 
-  clo2->callback (clo2->screen, clo2->xwindow, clo2->drawable,
+  clo2->callback (clo2->screen, clo2->window, clo2->drawable,
                   filename, &geom, clo2->closure);
   clo2->callback = 0;
-  if (clo2->directory) free (clo2->directory);
   free (clo2);
 }
 
-# endif /* USE_IPHONE */
+# endif /* HAVE_COCOA && USE_IPHONE */
 
 
 static void
@@ -731,62 +765,37 @@ osx_load_image_file_async (Screen *screen, Window xwindow, Drawable drawable,
                                              void *closure),
                        void *closure)
 {
-# if 0	/* do it synchronously */
-
-  FILE *pipe = open_image_name_pipe (dir);
-  char buf[10240];
-  *buf = 0;
-  fgets (buf, sizeof(buf)-1, pipe);
-  pclose (pipe);
-
-  /* strip trailing newline */
-  int L = strlen(buf);
-  while (L > 0 && (buf[L-1] == '\r' || buf[L-1] == '\n'))
-    buf[--L] = 0;
-
-  XRectangle geom;
-  if (! osx_load_image_file (screen, xwindow, drawable, buf, &geom)) {
-    /* draw colorbars */
-    abort();
-  }
-  callback (screen, xwindow, drawable, buf, &geom, closure);
-
-# else	/* do it asynchronously */
-
-  struct pipe_closure *clo2 = (struct pipe_closure *) calloc (1, sizeof(*clo2));
+  xscreensaver_getimage_data *clo2 =
+    (xscreensaver_getimage_data *) calloc (1, sizeof(*clo2));
 
   clo2->screen = screen;
-  clo2->xwindow = xwindow;
+  clo2->window = xwindow;
   clo2->drawable = drawable;
   clo2->callback = callback;
   clo2->closure = closure;
 
-#  ifndef USE_IPHONE
+# ifndef USE_IPHONE   /* Desktop OSX */
   clo2->directory = strdup (dir);
   clo2->pipe = open_image_name_pipe (dir);
-  clo2->id = XtAppAddInput (XtDisplayToApplicationContext (
-                              DisplayOfScreen (screen)), 
+  clo2->pipe_id = XtAppAddInput (XtDisplayToApplicationContext (
+                            DisplayOfScreen (screen)), 
                             fileno (clo2->pipe),
                             (XtPointer) (XtInputReadMask | XtInputExceptMask),
-                            pipe_cb, (XtPointer) clo2);
-#  else /* USE_IPHONE */
+                            xscreensaver_getimage_file_cb, (XtPointer) clo2);
+# else /* USE_IPHONE */
   ios_load_random_image (ios_load_random_image_cb, clo2);
-#  endif /* USE_IPHONE */
-
-# endif
+# endif /* USE_IPHONE */
 }
 
 
 /* Loads an image into the Drawable, returning once the image is loaded.
  */
 static void
-load_random_image_1 (Screen *screen, Window window, Drawable drawable,
-                     void (*callback) (Screen *, Window, Drawable,
-                                       const char *name, XRectangle *geom,
-                                       void *closure),
-                     void *closure,
-                     char **name_ret,
-                     XRectangle *geom_ret)
+load_random_image_cocoa (Screen *screen, Window window, Drawable drawable,
+                         void (*callback) (Screen *, Window, Drawable,
+                                           const char *name, XRectangle *geom,
+                                           void *closure),
+                         void *closure)
 {
   Display *dpy = DisplayOfScreen (screen);
   XWindowAttributes xgwa;
@@ -794,15 +803,10 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
   Bool filep = get_boolean_resource (dpy, "chooseRandomImages", "Boolean");
   const char *dir = 0;
   Bool done = False;
-  XRectangle geom_ret_2;
-  char *name_ret_2 = 0;
+  XRectangle geom;
+  char *name = 0;
   
   if (!drawable) abort();
-
-  if (callback) {
-    geom_ret = &geom_ret_2;
-    name_ret = &name_ret_2;
-  }
 
   XGetWindowAttributes (dpy, window, &xgwa);
   {
@@ -814,15 +818,10 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
     xgwa.height = h;
   }
 
-  if (name_ret)
-    *name_ret = 0;
-
-  if (geom_ret) {
-    geom_ret->x = 0;
-    geom_ret->y = 0;
-    geom_ret->width  = xgwa.width;
-    geom_ret->height = xgwa.height;
-  }
+  geom.x = 0;
+  geom.y = 0;
+  geom.width  = xgwa.width;
+  geom.height = xgwa.height;
 
 # ifndef USE_IPHONE
   if (filep)
@@ -844,9 +843,8 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
   }
 
   if (deskp && !done) {
-    if (osx_grab_desktop_image (screen, window, drawable, &geom_ret_2)) {
-      if (name_ret)
-        *name_ret = strdup ("desktop");
+    if (osx_grab_desktop_image (screen, window, drawable, &geom)) {
+      name = strdup ("desktop");
       done = True;
     }
   }
@@ -855,15 +853,75 @@ load_random_image_1 (Screen *screen, Window window, Drawable drawable,
     draw_colorbars (screen, xgwa.visual, drawable, xgwa.colormap,
                     0, 0, xgwa.width, xgwa.height);
 
-  if (callback) {
-    /* If we got here, we loaded synchronously even though they wanted async.
-     */
-    callback (screen, window, drawable, name_ret_2, &geom_ret_2, closure);
-    if (name_ret_2) free (name_ret_2);
-  }
+  /* If we got here, we loaded synchronously, so we're done. */
+  callback (screen, window, drawable, name, &geom, closure);
+  if (name) free (name);
 }
 
-#endif /* HAVE_COCOA */
+
+#elif defined(HAVE_ANDROID)
+
+/* Loads an image into the Drawable, returning once the image is loaded.
+ */
+static void
+load_random_image_android (Screen *screen, Window window, Drawable drawable,
+                           void (*callback) (Screen *, Window, Drawable,
+                                             const char *name,
+                                             XRectangle *geom, void *closure),
+                           void *closure)
+{
+  Display *dpy = DisplayOfScreen (screen);
+  XWindowAttributes xgwa;
+  XRectangle geom;
+  char *name = 0;
+  char *data = 0;
+  int width  = 0;
+  int height = 0;
+  
+  if (!drawable) abort();
+
+  XGetWindowAttributes (dpy, window, &xgwa);
+  {
+    Window r;
+    int x, y;
+    unsigned int w, h, bbw, d;
+    XGetGeometry (dpy, drawable, &r, &x, &y, &w, &h, &bbw, &d);
+    xgwa.width = w;
+    xgwa.height = h;
+  }
+
+  geom.x = 0;
+  geom.y = 0;
+  geom.width  = xgwa.width;
+  geom.height = xgwa.height;
+
+  data = jwxyz_load_random_image (dpy, &width, &height, &name);
+  if (! data)
+    draw_colorbars (screen, xgwa.visual, drawable, xgwa.colormap,
+                    0, 0, xgwa.width, xgwa.height);
+  else
+    {
+      XImage *img = XCreateImage (dpy, xgwa.visual, 32,
+                                  ZPixmap, 0, data, width, height, 0, 0);
+      XGCValues gcv;
+      GC gc;
+      gcv.foreground = BlackPixelOfScreen (screen);
+      gc = XCreateGC (dpy, drawable, GCForeground, &gcv);
+      XFillRectangle (dpy, drawable, gc, 0, 0, xgwa.width, xgwa.height);
+      XPutImage (dpy, drawable, gc, img, 0, 0, 
+                 (xgwa.width  - width) / 2,
+                 (xgwa.height - height) / 2,
+                 width, height);
+      XDestroyImage (img);
+      XFreeGC (dpy, gc);
+    }
+
+  callback (screen, window, drawable, name, &geom, closure);
+  if (name) free (name);
+}
+
+#endif /* HAVE_ANDROID */
+
 
 
 /* Writes the string "Loading..." in the middle of the screen.
@@ -926,7 +984,14 @@ load_image_async (Screen *screen, Window window, Drawable drawable,
                                     void *closure),
                   void *closure)
 {
-  load_random_image_1 (screen, window, drawable, callback, closure, 0, 0);
+  if (!callback) abort();
+# if defined(HAVE_COCOA)
+  load_random_image_cocoa   (screen, window, drawable, callback, closure);
+# elif defined(HAVE_ANDROID)
+  load_random_image_android (screen, window, drawable, callback, closure);
+# else /* real X11 */
+  load_random_image_x11     (screen, window, drawable, callback, closure);
+# endif
 }
 
 struct async_load_state {

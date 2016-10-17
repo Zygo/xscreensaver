@@ -7,3 +7,13 @@ buildscript {
         classpath 'com.android.tools.build:gradle:1.1.0'
     }
 }
+
+task clean(type: Delete) {
+    delete('./build')
+}
+
+task distClean(type: Delete) {
+    delete('./.gradle')
+}
+
+distClean.dependsOn clean

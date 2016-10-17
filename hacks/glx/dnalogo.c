@@ -1,4 +1,4 @@
-/* DNA Logo, Copyright (c) 2001-2015 Jamie Zawinski <jwz@jwz.org>
+/* DNA Logo, Copyright (c) 2001-2016 Jamie Zawinski <jwz@jwz.org>
  *
  *      DNA Lounge
  *
@@ -8,7 +8,7 @@
  *      San Francisco, CA
  *      94103
  *
- *      http://www.dnalounge.com/
+ *      https://www.dnalounge.com/
  *      http://www.dnapizza.com/
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -61,7 +61,7 @@
 		        "*cwFont:           " CWFONT "\n" \
 			"*geometry:	    =640x640\n" \
 
-# if defined(HAVE_COCOA)
+# if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
 #  define CWFONT "Yearling 28, OCR A Std 24"
 # else
 #  define CWFONT "-*-helvetica-medium-r-normal-*-*-240-*-*-*-*-*-*"
@@ -72,7 +72,6 @@
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-#undef LINEAR
 #undef DXF_OUTPUT_HACK
 
 #ifdef DXF_OUTPUT_HACK   /* When this is defined, instead of rendering
@@ -113,9 +112,11 @@ typedef enum {
 
 typedef struct {
   Bool spinning_p;
-  GLfloat position;     /* 0.0 - 1.0 */
-  GLfloat speed;        /* how far along the path (may be negative) */
-  GLfloat probability;  /* relative likelyhood to start spinning */
+  GLfloat position;		/* 0.0 - 1.0 */
+  GLfloat position_eased;	/* 0.0 - 1.0, eased in and out */
+  GLfloat easement;		/* portion of path that is eased. <= 0.5 */
+  GLfloat speed;		/* how far along the path (may be negative) */
+  GLfloat probability;		/* relative likelyhood to start spinning */
 } spinner;
 
 typedef struct {
@@ -1519,7 +1520,6 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
   GLfloat th, x, y, s;
   int i, j, k;
   int endpoints;
-  int endedge1;
 
 # ifdef HAVE_TESS
   tess_out TO, *to = &TO;
@@ -1571,7 +1571,6 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
         points[j++] = edge[i*2];
         points[j++] = 0;
       }
-    endedge1 = i;
   }
 
   s = 0.798;  /* radius of end of slice, before crust gap */
@@ -1759,21 +1758,39 @@ make_pizza (logo_configuration *dc, int facetted, int wire)
 # else  /* !HAVE_TESS */
   if (! wire)
     {
+      glTranslatef(0, 0, thick2);
+      glNormal3f (0, 0, 1);
+      glFrontFace (GL_CW);
+
+      /* Sadly, jwzgl's glVertexPointer seems not to be recordable inside
+         display lists. */
+#  if 0
       glDisableClientState (GL_COLOR_ARRAY);
       glDisableClientState (GL_NORMAL_ARRAY);
       glDisableClientState (GL_TEXTURE_COORD_ARRAY);
       glEnableClientState (GL_VERTEX_ARRAY);
       glVertexPointer (3, GL_FLOAT, 0, dnapizza_triangles);
-
-      glTranslatef(0, 0, thick2);
-      glNormal3f (0, 0, 1);
-      glFrontFace (GL_CW);
       glDrawArrays (GL_TRIANGLES, 0, countof (dnapizza_triangles) / 3);
+#  else
+      glBegin (GL_TRIANGLES);
+      for (i = 0; i < countof (dnapizza_triangles); i += 3)
+        glVertex3fv (dnapizza_triangles + i);
+      glEnd();
+#  endif
 
       glTranslatef(0, 0, -thick2*2);
       glNormal3f (0, 0, -1);
       glFrontFace (GL_CCW);
+
+#  if 0
       glDrawArrays (GL_TRIANGLES, 0, countof (dnapizza_triangles) / 3);
+#  else
+      int i;
+      glBegin (GL_TRIANGLES);
+      for (i = 0; i < countof (dnapizza_triangles); i += 3)
+        glVertex3fv (dnapizza_triangles + i);
+      glEnd();
+#  endif
 
       glTranslatef(0, 0, thick2);
     }
@@ -1935,7 +1952,7 @@ make_codeword_path (ModeInfo *mi)
 
   int dial = 0;
   int letter;
-  GLfloat last_r;
+  GLfloat last_r = 0;
 
   GLfloat inner_circum = M_PI * 2 * (iradius + rtick * 2);
   GLfloat outer_circum = M_PI * 2 * (iradius + rtick * (letters + 1));
@@ -2328,7 +2345,7 @@ codeword_text_output (ModeInfo *mi, GLfloat anim_ratio)
           buf[1] = 0;
           texture_string_metrics (dc->font, buf, &e, &ascent, &descent);
 
-# ifdef USE_IPHONE
+# ifdef HAVE_MOBILE
           /* #### Magic magic magic WTF... */
           glScalef (0.5, 0.5, 0.5);
 # endif
@@ -2497,7 +2514,7 @@ draw_codeword_path (ModeInfo *mi)
   glColor4fv (dc->codeword_color);
   glMaterialfv (GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE, dc->codeword_color);
 
-# ifdef USE_IPHONE  /* Make the whole thing fit on the phone screen */
+# ifdef HAVE_MOBILE  /* Make the whole thing fit on the phone screen */
   {
     GLfloat size = MI_WIDTH(mi) < MI_HEIGHT(mi) ? MI_WIDTH(mi) : MI_HEIGHT(mi);
     glScalef (0.9, 0.9, 0.9);
@@ -2643,7 +2660,7 @@ draw_codeword_path (ModeInfo *mi)
   /* Draw the start and end caps */
   {
     int i;
-    GLfloat x, y, z, x2, y2, z2, X, Y, Z, L;
+    GLfloat x, y, z, x2, y2, z2, X, Y, Z;
     GLfloat r = dc->codeword_spread * dc->codeword_cap_size;
 
     i = 0;
@@ -2676,7 +2693,6 @@ draw_codeword_path (ModeInfo *mi)
     X = (x2 - x);
     Y = (y2 - y);
     Z = (z2 - z);
-    L = sqrt (X*X + Y*Y + Z*Z);
 
     glPushMatrix();
     glTranslatef (x, y, z);
@@ -2717,6 +2733,14 @@ reshape_logo (ModeInfo *mi, int width, int height)
   gluLookAt( 0.0, 0.0, 30.0,
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1/h);  /* #### Why does this change the lighting? */
+  }
+# endif
 
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -2912,16 +2936,25 @@ init_logo (ModeInfo *mi)
   dc->gasket_spinnerx.probability = 0.1;
   dc->gasket_spinnery.probability = 0.1;
   dc->gasket_spinnerz.probability = 1.0;
+  dc->gasket_spinnerx.easement    = 0.08;
+  dc->gasket_spinnery.easement    = 0.08;
+  dc->gasket_spinnerz.easement    = 0.08;
 
   dc->helix_spinnerz.probability  = 0.6;
+  dc->helix_spinnerz.easement     = 0.2;
 
   dc->pizza_spinnerz.probability  = 0.6;
   dc->pizza_spinnery.probability  = 0.6;
+  dc->pizza_spinnerz.easement     = 0.2;
+  dc->pizza_spinnery.easement     = 0.2;
 
   dc->frame_spinner.probability   = 5.0;
+  dc->frame_spinner.easement      = 0.2;
 
   dc->scene_spinnerx.probability  = 0.1;
   dc->scene_spinnery.probability  = 0.0;
+  dc->scene_spinnerx.easement     = 0.1;
+  dc->scene_spinnery.easement     = 0.1;
 
   if (dc->mode == CODEWORD_IN)
     {
@@ -3099,6 +3132,14 @@ logo_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
+static GLfloat
+spinner_ease (GLfloat x)
+{
+  /* Smooth curve up, ending at slope = 1. */
+  return cos ((x/2 + 1) * M_PI) + 1;
+}
+
+
 static void
 tick_spinner (ModeInfo *mi, spinner *s)
 {
@@ -3110,12 +3151,20 @@ tick_spinner (ModeInfo *mi, spinner *s)
   if (s->spinning_p)
     {
       s->position += s->speed;
-      if (s->position >=  1.0 || s->position <= -1.0)
-          
+      if (s->position >=  1.0 || s->position <= 0.0)
         {
           s->position = 0;
+          s->position_eased = 0;
           s->spinning_p = False;
         }
+      else if (s->easement > 0 && s->position <= s->easement)
+        s->position_eased = (s->easement *
+                             spinner_ease (s->position / s->easement));
+      else if (s->easement > 0 && s->position >= 1-s->easement)
+        s->position_eased = (1 - s->easement *
+                             spinner_ease ((1 - s->position) / s->easement));
+      else
+        s->position_eased = s->position;
     }
   else if (s->probability &&
            (random() % (int) (PROBABILITY_SCALE / s->probability)) == 0)
@@ -3127,7 +3176,10 @@ tick_spinner (ModeInfo *mi, spinner *s)
         s->speed = dc->speed * (frand(ss/3) + frand(ss/3) + frand(ss/3));
       } while (s->speed <= 0);
       if (random() & 1)
-        s->speed = -s->speed;
+        {
+          s->speed = -s->speed;
+          s->position = 1.0;
+        }
     }
 }
 
@@ -3181,28 +3233,6 @@ draw_logo (ModeInfo *mi)
   tick_spinner (mi, &dc->scene_spinnery);
   tick_spinner (mi, &dc->frame_spinner);
   link_spinners (mi, &dc->scene_spinnerx, &dc->scene_spinnery);
-
-# ifdef LINEAR
-  {
-    static double i = 0.0;
-    dc->anim_state = HELIX;
-    dc->wire_overlay = 0;
-    dc->gasket_spinnerx.spinning_p = 0;
-    dc->gasket_spinnery.spinning_p = 0;
-    dc->gasket_spinnerz.spinning_p = 0;
-    dc->helix_spinnerz.spinning_p = 0;
-    dc->pizza_spinnery.spinning_p = 0;
-    dc->pizza_spinnerz.spinning_p = 0;
-    dc->scene_spinnerx.spinning_p = 0;
-    dc->scene_spinnery.spinning_p = 0;
-    dc->frame_spinner.spinning_p = 0;
-    dc->frame_spinner.position = 0.3;
-    dc->gasket_spinnerz.position = i;
-    dc->helix_spinnerz.position = i;
-    i += 0.005;
-    if (i > 1) i = 0;
-  }
-# endif /* LINEAR */
 
   switch (dc->anim_state)
     {
@@ -3268,7 +3298,7 @@ draw_logo (ModeInfo *mi)
       break;
 
     case CODEWORD:
-      dc->scene_spinnerx.probability = 2.5;
+      dc->scene_spinnerx.probability = 0.5;
       dc->scene_spinnery.probability = 0.2;
       if (! dc->button_down_p)
         dc->anim_ratio += (0.0005 + frand(0.002)) * dc->speed;
@@ -3323,9 +3353,6 @@ draw_logo (ModeInfo *mi)
   glRotatef(current_device_rotation(), 0, 0, 1);
   {
     GLfloat scale = 1.8;
-# ifdef LINEAR
-    scale = 3.85;
-# endif
     glScalef(scale, scale, scale);
 
     glColor3f(dc->color[0], dc->color[1], dc->color[2]);
@@ -3334,9 +3361,9 @@ draw_logo (ModeInfo *mi)
     /* Draw frame before trackball rotation */
     if (! codeword_p)
       {
-        GLfloat p = (dc->frame_spinner.position >= 0
-                     ? dc->frame_spinner.position
-                     : -dc->frame_spinner.position);
+        GLfloat p = (dc->frame_spinner.position_eased >= 0
+                     ? dc->frame_spinner.position_eased
+                     : -dc->frame_spinner.position_eased);
         GLfloat size = (p > 0.5 ? 1-p : p);
         scale = 1 + (size * 10);
         glPushMatrix();
@@ -3373,22 +3400,16 @@ draw_logo (ModeInfo *mi)
     glRotatef(90, 1, 0, 0);
     glRotatef(90, 0, 0, 1);
 
-# ifdef LINEAR
-#  define SINIFY(I) (I)
-# else
-#  define SINIFY(I) sin (M_PI/2 * (I))
-# endif
-
     if (! codeword_p)
       {
-        glRotatef (360 * SINIFY (dc->scene_spinnerx.position), 0, 1, 0);
-        glRotatef (360 * SINIFY (dc->scene_spinnery.position), 0, 0, 1);
+        glRotatef (360 * dc->scene_spinnerx.position_eased, 0, 1, 0);
+        glRotatef (360 * dc->scene_spinnery.position_eased, 0, 0, 1);
 
         glPushMatrix();
 
-        glRotatef (360 * SINIFY (dc->gasket_spinnerx.position), 0, 1, 0);
-        glRotatef (360 * SINIFY (dc->gasket_spinnery.position), 0, 0, 1);
-        glRotatef (360 * SINIFY (dc->gasket_spinnerz.position), 1, 0, 0);
+        glRotatef (360 * dc->gasket_spinnerx.position_eased, 0, 1, 0);
+        glRotatef (360 * dc->gasket_spinnery.position_eased, 0, 0, 1);
+        glRotatef (360 * dc->gasket_spinnerz.position_eased, 1, 0, 0);
 
         memcpy (gcolor, dc->color, sizeof (dc->color));
         if (dc->wire_overlay != 0)
@@ -3426,12 +3447,12 @@ draw_logo (ModeInfo *mi)
 
         if (pizza_p)
           {
-            glRotatef (360 * SINIFY (dc->pizza_spinnery.position), 1, 0, 0);
-            glRotatef (360 * SINIFY (dc->pizza_spinnerz.position), 0, 0, 1);
+            glRotatef (360 * dc->pizza_spinnery.position_eased, 1, 0, 0);
+            glRotatef (360 * dc->pizza_spinnerz.position_eased, 0, 0, 1);
           }
         else
           {
-            glRotatef (360 * SINIFY (dc->helix_spinnerz.position), 0, 0, 1);
+            glRotatef (360 * dc->helix_spinnerz.position_eased, 0, 0, 1);
           }
 
         scale = ((dc->anim_state == PIZZA_IN || dc->anim_state == HELIX_IN)
@@ -3488,8 +3509,8 @@ draw_logo (ModeInfo *mi)
         glRotatef (max/2 - y*max, 0, 1, 0);
         /* glRotatef (max/2 - z*max, 1, 0, 0); */
 # else
-        glRotatef (360 * SINIFY (dc->scene_spinnerx.position), 0, 1, 0);
-        glRotatef (360 * SINIFY (dc->scene_spinnery.position), 0, 0, 1);
+        glRotatef (360 * dc->scene_spinnerx.position_eased, 0, 1, 0);
+        glRotatef (360 * dc->scene_spinnery.position_eased, 0, 0, 1);
 # endif
 
         glClearColor (dc->codeword_bg[0],

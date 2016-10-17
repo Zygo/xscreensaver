@@ -1470,6 +1470,10 @@ maze_init (Display *dpy_arg, Window window_arg)
   XSetForeground (st->dpy, st->erase_gc, bg);
   XSetBackground (st->dpy, st->erase_gc, bg);
 
+# ifdef HAVE_JWXYZ
+  jwxyz_XSetAntiAliasing (st->dpy, st->gc, False);
+# endif
+
   {
     Window r;
     int x, y;

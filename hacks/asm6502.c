@@ -20,8 +20,6 @@
       I changed the structure of the assembler in this version.
 */
 
-#define NDEBUG  /* Uncomment when done with debugging */
-
 #include <stdlib.h>
 #include <stdio.h>
 /*#include <malloc.h>*/
@@ -41,7 +39,7 @@
 #  define random rand
 #endif*/
 
-#ifndef USE_IPHONE
+#ifndef HAVE_MOBILE
 # define READ_FILES
 #endif
 
@@ -1876,7 +1874,7 @@ static BOOL translate(m6502_Opcodes *op,Param *param, machine_6502 *machine){
 	if (op->BRA) {
 	  pushByte(machine, op->BRA);
           {
-            int diff = abs(param->lbladdr - machine->defaultCodePC);
+            int diff = (param->lbladdr - machine->defaultCodePC);
             int backward = (param->lbladdr < machine->defaultCodePC);
             pushByte(machine, (backward) ? 0xff - diff : diff - 1);
           }

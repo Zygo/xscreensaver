@@ -185,7 +185,7 @@ halo_init (Display *dpy, Window window)
   gcv.background = st->bg_pixel;
   st->copy_gc = XCreateGC (st->dpy, st->window, GCForeground | GCBackground, &gcv);
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (dpy, st->draw_gc,  False);
   jwxyz_XSetAntiAliasing (dpy, st->erase_gc, False);
   jwxyz_XSetAntiAliasing (dpy, st->copy_gc,  False);
@@ -405,7 +405,7 @@ static const char *halo_defaults [] = {
   "*delay2:		20",
   "*increment:		0",
   "*animate:		False",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
   0

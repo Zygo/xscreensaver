@@ -1,5 +1,5 @@
 /* stderr.c --- capturing stdout/stderr output onto the screensaver window.
- * xscreensaver, Copyright (c) 1991-2012 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1991-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -510,7 +510,7 @@ stderr_log_file (saver_info *si)
            "%s: logging to \"%s\" at %s\n"
  "##########################################################################\n"
            "\n",
-           blurb(), filename, timestring());
+           blurb(), filename, timestring(0));
 }
 
 

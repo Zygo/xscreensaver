@@ -403,7 +403,7 @@ anemotaxis_init (Display *disp, Window win)
 
   st->dbuf = True;
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
     st->dbuf = False;
 # endif
 

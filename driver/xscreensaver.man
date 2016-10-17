@@ -283,7 +283,7 @@ containing:
 [Unit]
 Description=XScreenSaver
 [Service]
-ExecStart=xscreensaver
+ExecStart=/usr/bin/xscreensaver
 [Install]
 WantedBy=default.target
 .EE
@@ -349,7 +349,7 @@ and
 .BR xhost (1).
 .SH BUGS
 Bugs?  There are no bugs.  Ok, well, maybe.  If you find one, please let
-me know.  http://www.jwz.org/xscreensaver/bugs.html explains how to
+me know.  https://www.jwz.org/xscreensaver/bugs.html explains how to
 construct the most useful bug reports.
 .PP
 .TP 4
@@ -928,7 +928,7 @@ to get the name of a resource file that overrides the global resources
 stored in the RESOURCE_MANAGER property.
 .SH UPGRADES
 The latest version of xscreensaver, an online version of this manual,
-and a FAQ can always be found at http://www.jwz.org/xscreensaver/
+and a FAQ can always be found at https://www.jwz.org/xscreensaver/
 .SH SEE ALSO
 .BR X (1),
 .BR Xsecurity (1),

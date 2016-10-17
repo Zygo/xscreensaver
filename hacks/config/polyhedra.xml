@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=gYb-3EErLJE"/>
+  <video href="https://www.youtube.com/watch?v=gYb-3EErLJE"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
@@ -137,7 +137,7 @@
 <option _label="Great snub icosidodecahedron" arg-set="-which great_snub_icosidodecahedron"/>
 <option _label="Great pentagonal hexecontahedron" arg-set="-which great_pentagonal_hexecontahedron"/>
 <option _label="Small stellated truncated dodecahedron" arg-set="-which small_stellated_truncated_dodecahedron"/>
-<option _label="Great pentakisdodekahedron" arg-set="-which great_pentakisdodekahedron"/>
+<option _label="Great pentakisdodecahedron" arg-set="-which great_pentakisdodecahedron"/>
 <option _label="Truncated dodecadodecahedron" arg-set="-which truncated_dodecadodecahedron"/>
 <option _label="Medial disdyakistriacontahedron" arg-set="-which medial_disdyakistriacontahedron"/>
 <option _label="Inverted snub dodecadodecahedron" arg-set="-which inverted_snub_dodecadodecahedron"/>

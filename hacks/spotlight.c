@@ -144,7 +144,7 @@ spotlight_init (Display *dpy, Window window)
   st->first_time = 1;
 
   /* create buffer to reduce flicker */
-#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   st->buffer = 0;
 #else
   st->buffer = XCreatePixmap(st->dpy, st->window, st->sizex, st->sizey, xgwa.depth);
@@ -325,7 +325,7 @@ static const char *spotlight_defaults [] = {
   "*delay:			10000",
   "*duration:			120",
   "*radius:			125",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:             True",
   "*rotateImages:               True",
 #endif

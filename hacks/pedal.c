@@ -318,7 +318,7 @@ static const char *pedal_defaults [] = {
   "*fpsSolid:			true",
   "*delay:			5",
   "*maxlines:			1000",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:             True",
 #endif
   0

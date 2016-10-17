@@ -227,7 +227,7 @@ hyperball_draw (Display *dpy, Window window, void *closure)
   if (icon || !(hs->roted | resize))
     goto skip1;
 
-#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   XClearWindow (dpy, window);
 #endif
 
@@ -498,7 +498,7 @@ hyperball_event (Display *dpy, Window win, void *closure, XEvent *event)
         }
       break;
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
     case UnmapNotify:
       hs->hs_icon = 1;
       hs->hs_redraw = 0;

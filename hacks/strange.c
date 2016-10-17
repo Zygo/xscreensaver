@@ -82,7 +82,7 @@ ModStruct   strange_description =
 "Shows strange attractors", 0, NULL};
 #endif
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # define NO_DBUF
 #endif
 
@@ -577,18 +577,18 @@ init_strange(ModeInfo * mi)
 
 		gcv.foreground = 0;
 		gcv.background = 0;
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 		gcv.graphics_exposures = False;
-#endif /* HAVE_COCOA */
+#endif /* HAVE_JWXYZ */
 		gcv.function = GXcopy;
 
 		if (Attractor->dbuf_gc != None)
 			XFreeGC(display, Attractor->dbuf_gc);
 
 		if ((Attractor->dbuf_gc = XCreateGC(display, Attractor->dbuf,
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 				GCGraphicsExposures |
-#endif /* HAVE_COCOA */
+#endif /* HAVE_JWXYZ */
                                GCFunction | GCForeground | GCBackground,
 				&gcv)) == None) {
 			XFreePixmap(display, Attractor->dbuf);

@@ -2092,8 +2092,7 @@ show_europeanclub(ModeInfo *mi, unsigned long color, Trace *s)
   GLfloat gcolor1[4] = { 0, 0, 0, 1 };
   GLfloat gcolor2[4] = { 1, 1, 1, 1 };
   int slices = 16;
-  int divs = s->divisions;
-  divs = 4;
+  int divs = 4;
 
   /*    6   6
          +-+

@@ -39,6 +39,7 @@
 # define DEFAULTS           "*delay: 20000\n" \
                             "*showFPS: False\n" \
                             "*wireframe: False\n" \
+			    "*suppressRotationAnimation: True\n" \
 
 # define refresh_jigglypuff 0
 # define release_jigglypuff 0
@@ -959,6 +960,16 @@ ENTRYPOINT void draw_jigglypuff(ModeInfo *mi)
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
     glTranslatef(0,0,-10);
+
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+    {
+      GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+      int o = (int) current_device_rotation();
+      if (o != 0 && o != 180 && o != -180)
+        glScalef (1/h, 1/h, 1/h);
+    }
+# endif
 
     glRotatef(js->angle, sin(js->axis), cos(js->axis), -sin(js->axis));
     glTranslatef(0, 0, 5);

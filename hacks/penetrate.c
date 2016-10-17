@@ -172,10 +172,11 @@ static void launch (struct state *st, int xlim, int ylim, int src)
   m->splits = 0;
   if (m->jenis < 50) {
     int j = ylim * 0.4;
-    if (j)
+    if (j) {
 	 m->splits = random() % j;
 	 if (m->splits < ylim * 0.08)
 		m->splits = 0;
+    }
   }
 
   /* special if we're from another missile */
@@ -436,7 +437,7 @@ penetrate_init (Display *dpy, Window window)
   gcv.foreground = get_pixel_resource(st->dpy, st->cmap, "background", "Background");
   st->erase_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
 
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (st->dpy, st->erase_gc, False);
   jwxyz_XSetAntiAliasing (st->dpy, st->draw_gc, False);
 # endif

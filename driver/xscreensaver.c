@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1991-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1991-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -305,7 +305,7 @@ xscreensaver %s, copyright (c) 1991-%s by Jamie Zawinski <jwz@jwz.org>\n\
 \n\
   For updates, online manual, and FAQ, please see the web page:\n\
 \n\
-       http://www.jwz.org/xscreensaver/\n\
+       https://www.jwz.org/xscreensaver/\n\
 \n");
 
   fflush (stdout);
@@ -317,7 +317,7 @@ xscreensaver %s, copyright (c) 1991-%s by Jamie Zawinski <jwz@jwz.org>\n\
 Bool in_signal_handler_p = 0;	/* I hate C so much... */
 
 char *
-timestring (void)
+timestring (time_t when)
 {
   if (in_signal_handler_p)
     {
@@ -330,9 +330,10 @@ timestring (void)
     }
   else
     {
-      time_t now = time ((time_t *) 0);
-      char *str = (char *) ctime (&now);
-      char *nl = (char *) strchr (str, '\n');
+      char *str, *nl;
+      if (! when) when = time ((time_t *) 0);
+      str = (char *) ctime (&when);
+      nl = (char *) strchr (str, '\n');
       if (nl) *nl = 0; /* take off that dang newline */
       return str;
     }
@@ -348,7 +349,7 @@ blurb (void)
   else
     {
       static char buf[255];
-      char *ct = timestring();
+      char *ct = timestring(0);
       int n = strlen(progname);
       if (n > 100) n = 99;
       strncpy(buf, progname, n);
@@ -424,7 +425,7 @@ saver_ehandler (Display *dpy, XErrorEvent *error)
    "    won't work.  A \"log.txt\" file will also be written.  Please *do*\n"
    "    include the complete \"log.txt\" file with your bug report.\n"
    "\n"
-   "    http://www.jwz.org/xscreensaver/bugs.html explains how to create\n"
+   "    https://www.jwz.org/xscreensaver/bugs.html explains how to create\n"
    "    the most useful bug reports, and how to examine core files.\n"
    "\n"
    "    The more information you can provide, the better.  But please\n"
@@ -494,8 +495,8 @@ startup_ehandler (String name, String type, String class,
     }
 
   fprintf (stderr, "\n"
-          "              http://www.jwz.org/xscreensaver/faq.html\n"
-          "              http://www.jwz.org/xscreensaver/man.html\n"
+          "              https://www.jwz.org/xscreensaver/faq.html\n"
+          "              https://www.jwz.org/xscreensaver/man.html\n"
           "\n");
 
   fflush (stderr);
@@ -749,7 +750,7 @@ process_command_line (saver_info *si, int *argc, char **argv)
     You control a running xscreensaver process by sending it messages\n\
     with `xscreensaver-demo' or `xscreensaver-command'.\n\
 .   See the man pages for details, or check the web page:\n\
-    http://www.jwz.org/xscreensaver/\n\n");
+    https://www.jwz.org/xscreensaver/\n\n");
 	    }
 
 	  exit (1);
@@ -803,12 +804,12 @@ print_banner (saver_info *si)
 	     "\n",
 	     blurb());
 
-  if (p->verbose_p && senescent_p ())
+  if (p->verbose_p && decrepit_p ())
     fprintf (stderr, "\n"
              "*************************************"
              "**************************************\n"
 	     "%s: Warning: this version of xscreensaver is VERY OLD!\n"
-	     "%s: Please upgrade!  http://www.jwz.org/xscreensaver/\n"
+	     "%s: Please upgrade!  https://www.jwz.org/xscreensaver/\n"
              "*************************************"
              "**************************************\n"
 	     "\n",
@@ -1197,10 +1198,10 @@ main_loop (saver_info *si)
 	{
 	  if (si->demoing_p)
 	    fprintf (stderr, "%s: demoing %d at %s.\n", blurb(),
-		     si->selection_mode, timestring());
+		     si->selection_mode, timestring(0));
 	  else
             fprintf (stderr, "%s: blanking screen at %s.\n", blurb(),
-                     timestring());
+                     timestring(0));
 	}
 
       maybe_reload_init_file (si);
@@ -1209,7 +1210,7 @@ main_loop (saver_info *si)
         {
           if (p->verbose_p)
             fprintf (stderr, "%s: idle with blanking disabled at %s.\n",
-                     blurb(), timestring());
+                     blurb(), timestring(0));
 
           /* Go around the loop and wait for the next bout of idleness,
              or for the init file to change, or for a remote command to
@@ -1411,7 +1412,7 @@ main_loop (saver_info *si)
 
       if (p->verbose_p)
 	fprintf (stderr, "%s: unblanking screen at %s.\n",
-		 blurb(), timestring ());
+		 blurb(), timestring (0));
 
       /* Kill before unblanking, to stop drawing as soon as possible. */
       for (i = 0; i < si->nscreens; i++)

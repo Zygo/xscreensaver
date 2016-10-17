@@ -1,4 +1,4 @@
-/* testx11.c, Copyright (c) 2015 Dave Odell <dmo2118@gmail.com>
+/* testx11.c, Copyright (c) 2015-2016 Dave Odell <dmo2118@gmail.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -15,11 +15,12 @@
  */
 
 #include "screenhack.h"
+#include "glx/rotator.h"
 
 #include <assert.h>
 #include <errno.h>
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # define jwxyz_XSetAntiAliasing(dpy, gc, p)
 #endif
 
@@ -32,6 +33,9 @@
 static const char *testx11_defaults [] = {
   ".background: #a020f0", /* purple */
   ".foreground: white",
+#ifdef HAVE_MOBILE
+  "*ignoreRotation: True",
+#endif
   0
 };
 
@@ -39,16 +43,13 @@ static XrmOptionDescRec testx11_options [] = {
   { 0, 0, 0, 0 }
 };
 
-#if defined HAVE_COCOA || defined HAVE_ANDROID
-# define HAVE_JWXYZ 1
-#endif
-
 enum
 {
   mode_welcome,
   mode_primitives,
   mode_images,
   mode_copy,
+  mode_preserve,
 
   mode_count
 };
@@ -65,17 +66,36 @@ struct testx11 {
 
   unsigned mode;
 
+  /* Pixels from XAllocPixel. */
   unsigned long rgb[3], salmon, magenta, gray50, dark_slate_gray1, cyan;
 
-  Pixmap backdrop_tile, clip_mask_tile, backdrop_scratch;
-  XColor backdrop_colors[64];
-  int backdrop_ncolors;
   unsigned frame;
 
-  GC copy_gc, black_gc, mono_gc, thick_line_gc, xor_gc, point_gc;
   Bool anti_alias_p;
 
-  Pixmap mini_pix, pix64;
+  /* These X11 objects aren't altered after creation, except for:
+     - copy_gc and thick_line_gc get anti-aliasing toggled.
+     - xor_gc's clip mask (if it's turned on) always covers the entire window.
+   */
+  GC copy_gc, mono_gc, thick_line_gc, xor_gc, graph_gc;
+  Pixmap clip_mask_tile;
+
+  /* Backdrop stuff, naturally. */
+  GC backdrop_black_gc;
+  Pixmap backdrop_tile, backdrop_scratch;
+  XColor backdrop_colors[64];
+  int backdrop_ncolors;
+
+  /* The following items may be modified by various test modes. */
+  Pixmap primitives_mini_pix;
+
+  GC images_point_gc;
+
+  Pixmap copy_pix64;
+
+  Pixmap preserve[2];
+
+  rotator *rot;
 };
 
 
@@ -117,51 +137,54 @@ create_backbuffer(struct testx11 *st)
 # endif
 }
 
+static Bool
+toggle_antialiasing (struct testx11 *st)
+{
+  st->anti_alias_p ^= True;
+  jwxyz_XSetAntiAliasing (st->dpy, st->copy_gc, st->anti_alias_p);
+  jwxyz_XSetAntiAliasing (st->dpy, st->thick_line_gc, st->anti_alias_p);
+  return True;
+}
+
 
 static void
-copy_test (Display *dpy, Drawable src, Drawable dst, GC gc, int x, int y,
-           unsigned long cells)
+primitives_mini_rect(struct testx11 *st, Drawable t, int x, int y)
 {
-  XCopyArea(dpy, src, dst, gc, 0, 0, 3, 2, x, y);
+  XFillRectangle(st->dpy, t, st->copy_gc, x, y, 2, 2);
+}
+
+static void
+images_copy_test (Display *dpy, Drawable src, Drawable dst, GC gc,
+                  int src_y, int dst_x, int dst_y, unsigned long cells)
+{
+  XCopyArea(dpy, src, dst, gc, 0, src_y, 3, 2, dst_x, dst_y);
 
   {
-    XImage *image = XGetImage(dpy, src, 0, 0, 3, 2, cells, ZPixmap);
-    XPutImage(dpy, dst, gc, image, 0, 0, x, y + 2, 3, 2);
+    XImage *image = XGetImage(dpy, src, 0, src_y, 3, 2, cells, ZPixmap);
+    XPutImage(dpy, dst, gc, image, 0, 0, dst_x, dst_y + 2, 3, 2);
     XDestroyImage(image);
   }
 }
 
 static void
-test_pattern (struct testx11 *st, Drawable d)
+images_pattern (struct testx11 *st, Drawable d, unsigned y)
 {
   unsigned x;
   for (x = 0; x != 3; ++x) {
-    XSetForeground(st->dpy, st->point_gc, st->rgb[x]);
-    XDrawPoint(st->dpy, d, st->point_gc, x, 0);
-    XSetForeground(st->dpy, st->point_gc, st->rgb[2 - x]);
-    XFillRectangle(st->dpy, d, st->point_gc, x, 1, 1, 1);
+    XSetForeground(st->dpy, st->images_point_gc, st->rgb[x]);
+    XDrawPoint(st->dpy, d, st->images_point_gc, x, y);
+    XSetForeground(st->dpy, st->images_point_gc, st->rgb[2 - x]);
+    XFillRectangle(st->dpy, d, st->images_point_gc, x, y + 1, 1, 1);
   }
 
-  copy_test (st->dpy, d, d, st->point_gc, 0, 2,
-             st->rgb[0] | st->rgb[1] | st->rgb[2]);
-}
-
-static void
-mini_rect(struct testx11 *st, Drawable t, int x, int y)
-{
-  XFillRectangle(st->dpy, t, st->copy_gc, x, y, 2, 2);
-}
-
-static Bool
-toggle_antialiasing (struct testx11 *st)
-{
-  st->anti_alias_p ^= True;
-  jwxyz_XSetAntiAliasing(st->dpy, st->copy_gc, st->anti_alias_p);
-  return True;
+  images_copy_test (st->dpy, d, d, st->images_point_gc, y, 0, y + 2,
+                    st->rgb[0] | st->rgb[1] | st->rgb[2]);
 }
 
 static const unsigned tile_size = 16;
 static const unsigned tile_count = 8;
+
+static const unsigned preserve_size = 128;
 
 static void
 make_clip_mask (struct testx11 *st)
@@ -248,7 +271,13 @@ testx11_init (Display *dpy, Window win)
 
   st->frame = 0;
 
+# ifdef HAVE_ANDROID
+  st->mode = mode_primitives;
+# else
   st->mode = mode_welcome;
+# endif
+
+  st->anti_alias_p = False;
 
   gcv.function = GXcopy;
   gcv.foreground = st->cyan;
@@ -257,29 +286,32 @@ testx11_init (Display *dpy, Window win)
   gcv.cap_style = CapRound;
   /* TODO: Real X11 uses fixed by default. */
   gcv.font = XLoadFont (dpy, "fixed");
-  st->copy_gc = XCreateGC (dpy, win, GCFunction | GCForeground | GCBackground | GCLineWidth | GCCapStyle | GCFont, &gcv);
+  st->copy_gc = XCreateGC (dpy, win,
+                           GCFunction | GCForeground | GCBackground
+                             | GCLineWidth | GCCapStyle | GCFont, &gcv);
 
   gcv.foreground = BlackPixelOfScreen (st->xgwa.screen);
-  st->black_gc = XCreateGC (dpy, win, GCForeground, &gcv);
-
-  st->anti_alias_p = False;
-  jwxyz_XSetAntiAliasing (dpy, st->copy_gc, False);
+  st->backdrop_black_gc = XCreateGC (dpy, win, GCForeground, &gcv);
 
   gcv.foreground = alloc_color (st, 0x8000, 0x4000, 0xffff);
   gcv.line_width = 8;
   gcv.cap_style = CapProjecting;
-  st->thick_line_gc = XCreateGC (dpy, win, GCForeground | GCLineWidth | GCCapStyle, &gcv);
+  st->thick_line_gc = XCreateGC (dpy, win,
+                                 GCForeground | GCLineWidth | GCCapStyle,
+                                 &gcv);
 
   gcv.function = GXxor;
   st->xor_gc = XCreateGC (dpy, win, GCFunction, &gcv);
 
-  st->point_gc = XCreateGC (dpy, win, 0, NULL);
+  st->images_point_gc = XCreateGC (dpy, win, 0, NULL);
+
+  st->graph_gc = XCreateGC (dpy, win, 0, &gcv);
 
   st->mono_gc = XCreateGC (dpy, st->clip_mask_tile, 0, &gcv);
 
-  st->pix64 = XCreatePixmap(dpy, win, 64, 64, st->xgwa.depth);
+  st->copy_pix64 = XCreatePixmap(dpy, win, 64, 64, st->xgwa.depth);
 
-  st->mini_pix = XCreatePixmap (dpy, win, 16, 16, st->xgwa.depth);
+  st->primitives_mini_pix = XCreatePixmap (dpy, win, 16, 16, st->xgwa.depth);
 
   {
     static const char text[] = "Welcome from testx11_init().";
@@ -289,8 +321,16 @@ testx11_init (Display *dpy, Window win)
 
   make_clip_mask (st);
 
+  st->preserve[0] =
+    XCreatePixmap(dpy, win, preserve_size, preserve_size, st->xgwa.depth);
+  st->preserve[1] =
+    XCreatePixmap(dpy, win, preserve_size, preserve_size, st->xgwa.depth);
+
+  toggle_antialiasing (st);
+
   jwxyz_assert_display (dpy);
 
+  st->rot = make_rotator (2, 2, 2, 2, 0.01, False);
   return st;
 }
 
@@ -307,13 +347,15 @@ backdrop (struct testx11 *st, Drawable t)
     for (x = 0; x != tile_count; ++x) {
       unsigned c = ((sin ((x + st->frame / 8.0) * s0) * y_fac) - 1) / 2 * st->backdrop_ncolors / 2;
       c = (c + st->frame) % st->backdrop_ncolors;
-      XSetBackground (st->dpy, st->black_gc, st->backdrop_colors[c].pixel);
-      XCopyPlane (st->dpy, st->backdrop_tile, st->backdrop_scratch, st->black_gc,
-                  0, st->frame % tile_size, tile_size, tile_size, x * tile_size, y * tile_size, 1);
+      XSetBackground (st->dpy, st->backdrop_black_gc,
+                      st->backdrop_colors[c].pixel);
+      XCopyPlane (st->dpy, st->backdrop_tile, st->backdrop_scratch,
+                  st->backdrop_black_gc, 0, st->frame % tile_size,
+                  tile_size, tile_size, x * tile_size, y * tile_size, 1);
     }
   }
 
-  /* XFillRectangle (st->dpy, t, st->black_gc, 0, 0, w, h); */
+  /* XFillRectangle (st->dpy, t, st->backdrop_black_gc, 0, 0, w, h); */
 
   for (y = 0; y < h; y += tile_count * tile_size) {
     for (x = 0; x < w; x += tile_count * tile_size) {
@@ -327,6 +369,162 @@ static const unsigned button_pad = 16;
 static const unsigned button_size = 64;
 
 
+static void
+testx11_graph_rotator (struct testx11 *st)
+{
+  double x, y, z;
+
+  int boxw = st->xgwa.width / 3;
+  int boxh = (st->xgwa.height - (22 * 5)) / 4;
+  int boxx = st->xgwa.width - boxw - 20;
+  int boxy = st->xgwa.height - boxh - 20;
+  
+  /* position */
+
+  get_position (st->rot, &x, &y, &z, True);
+  if (x < 0 || x >= 1 || y < 0 || y >= 1 || z < 0 || z >= 1) abort();
+      
+
+  XSetForeground (st->dpy, st->graph_gc, st->dark_slate_gray1);
+  XDrawRectangle (st->dpy, st->win, st->graph_gc,
+                  boxx-1, boxy-1, boxw+2, boxh+2);
+
+  XCopyArea (st->dpy, st->win, st->win, st->graph_gc,
+             boxx+1, boxy, boxw-1, boxh, boxx, boxy);
+
+  XSetForeground (st->dpy, st->graph_gc, BlackPixelOfScreen (st->xgwa.screen));
+  XDrawLine (st->dpy, st->win, st->graph_gc,
+             boxx + boxw - 1, boxy,
+             boxx + boxw - 1, boxy + boxh);
+
+  XSetForeground (st->dpy, st->graph_gc, st->salmon);
+  XDrawPoint (st->dpy, st->win, st->graph_gc,
+              boxx + boxw - 1,
+              boxy + boxh - 1 - (int) (x * (boxh - 1)));
+
+  XSetForeground (st->dpy, st->graph_gc, st->magenta);
+  XDrawPoint (st->dpy, st->win, st->graph_gc,
+              boxx + boxw - 1,
+              boxy + boxh - 1 - (int) (y * (boxh - 1)));
+
+  XSetForeground (st->dpy, st->graph_gc, st->gray50);
+  XDrawPoint (st->dpy, st->win, st->graph_gc,
+              boxx + boxw - 1,
+              boxy + boxh - 1 - (int) (z * (boxh - 1)));
+
+  /* spin */
+
+  get_rotation (st->rot, &x, &y, &z, True);
+  if (x < 0 || x >= 1 || y < 0 || y >= 1 || z < 0 || z >= 1) abort();
+
+  /* put 0 in the middle */
+  x += 0.5; if (x > 1) x--;
+  y += 0.5; if (y > 1) y--;
+  z += 0.5; if (z > 1) z--;
+
+
+  boxy -= boxh + 20;
+
+  XSetForeground (st->dpy, st->graph_gc, st->dark_slate_gray1);
+  XDrawRectangle (st->dpy, st->win, st->graph_gc,
+                  boxx-1, boxy-1, boxw+2, boxh+2);
+
+  XCopyArea (st->dpy, st->win, st->win, st->graph_gc,
+             boxx+1, boxy, boxw-1, boxh, boxx, boxy);
+
+  XSetForeground (st->dpy, st->graph_gc, BlackPixelOfScreen (st->xgwa.screen));
+  XDrawLine (st->dpy, st->win, st->graph_gc,
+             boxx + boxw - 1, boxy,
+             boxx + boxw - 1, boxy + boxh);
+
+  XSetForeground (st->dpy, st->graph_gc, st->magenta);
+  XDrawPoint (st->dpy, st->win, st->graph_gc,
+              boxx + boxw - 1,
+              boxy + boxh - 1 - (int) (x * (boxh - 1)));
+
+
+  boxy -= boxh + 20;
+
+  XSetForeground (st->dpy, st->graph_gc, st->dark_slate_gray1);
+  XDrawRectangle (st->dpy, st->win, st->graph_gc,
+                  boxx-1, boxy-1, boxw+2, boxh+2);
+
+  XCopyArea (st->dpy, st->win, st->win, st->graph_gc,
+             boxx+1, boxy, boxw-1, boxh, boxx, boxy);
+
+  XSetForeground (st->dpy, st->graph_gc, BlackPixelOfScreen (st->xgwa.screen));
+  XDrawLine (st->dpy, st->win, st->graph_gc,
+             boxx + boxw - 1, boxy,
+             boxx + boxw - 1, boxy + boxh);
+
+  XSetForeground (st->dpy, st->graph_gc, st->magenta);
+  XDrawPoint (st->dpy, st->win, st->graph_gc,
+              boxx + boxw - 1,
+              boxy + boxh - 1 - (int) (y * (boxh - 1)));
+
+
+  boxy -= boxh + 20;
+
+  XSetForeground (st->dpy, st->graph_gc, st->dark_slate_gray1);
+  XDrawRectangle (st->dpy, st->win, st->graph_gc,
+                  boxx-1, boxy-1, boxw+2, boxh+2);
+
+  XCopyArea (st->dpy, st->win, st->win, st->graph_gc,
+             boxx+1, boxy, boxw-1, boxh, boxx, boxy);
+
+  XSetForeground (st->dpy, st->graph_gc, BlackPixelOfScreen (st->xgwa.screen));
+  XDrawLine (st->dpy, st->win, st->graph_gc,
+             boxx + boxw - 1, boxy,
+             boxx + boxw - 1, boxy + boxh);
+
+  XSetForeground (st->dpy, st->graph_gc, st->magenta);
+  XDrawPoint (st->dpy, st->win, st->graph_gc,
+              boxx + boxw - 1,
+              boxy + boxh - 1 - (int) (z * (boxh - 1)));
+}
+
+
+/* Draws a blinking box in what should be the upper left corner of the
+   device, as physically oriented. The box is taller than it is wide.
+ */
+static void
+testx11_show_orientation (struct testx11 *st)
+{
+#ifdef HAVE_MOBILE
+  int x, y;
+  int w = st->xgwa.width;
+  int h = st->xgwa.height;
+  int ww = 15;
+  int hh = ww*2;
+  static int tick = 0;
+  static int oo = -1;
+  int o = (int) current_device_rotation ();
+
+  if (o != oo) {
+//    fprintf (stderr,"ROT %d -> %d\n", oo, o);
+    oo = o;
+  }
+
+  switch (o) {
+  case    0: case  360: x = 0;    y = 0;    w = ww; h = hh; break;
+  case   90: case -270: x = 0;    y = h-ww; w = hh; h = ww; break;
+  case  -90: case  270: x = w-hh; y = 0;    w = hh; h = ww; break;
+  case  180: case -180: x = w-ww; y = h-hh; w = ww; h = hh; break;
+  default: return;
+  }
+
+  if (++tick > 20) tick = 0;
+
+  XSetForeground (st->dpy, st->graph_gc, 
+                  (tick > 10
+                   ? WhitePixelOfScreen (st->xgwa.screen)
+                   : BlackPixelOfScreen (st->xgwa.screen)));
+  XFillRectangle (st->dpy, st->win, st->graph_gc,
+                  x, y, w, h);
+#endif
+}
+
+
 static unsigned long
 testx11_draw (Display *dpy, Window win, void *st_raw)
 {
@@ -335,10 +533,7 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
 # ifdef HAVE_JWXYZ
   Drawable t = win;
 # else
-  Drawable t =
-    st->mode == mode_welcome ||
-    st->mode == mode_images ||
-    st->mode == mode_copy ? win : st->backbuffer;
+  Drawable t = st->mode == mode_primitives ? st->backbuffer : win;
 # endif
   unsigned i;
 
@@ -346,6 +541,8 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
   assert (win == st->win);
 
   jwxyz_assert_display (dpy);
+
+  XSetWindowBackground (dpy, win, st->gray50);
 
   switch (st->mode)
   {
@@ -357,23 +554,23 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
     XDrawPoint (dpy, t, st->thick_line_gc, 1, 0);
     XDrawPoint (dpy, t, st->thick_line_gc, 1, 1);
 
-    mini_rect (st, t, 2, 0);
-    mini_rect (st, t, 0, 2);
-    mini_rect (st, t, 4, 2);
-    mini_rect (st, t, 2, 4);
+    primitives_mini_rect (st, t, 2, 0);
+    primitives_mini_rect (st, t, 0, 2);
+    primitives_mini_rect (st, t, 4, 2);
+    primitives_mini_rect (st, t, 2, 4);
 
-    mini_rect (st, t, 30, -2);
-    mini_rect (st, t, 32, 0);
+    primitives_mini_rect (st, t, 30, -2);
+    primitives_mini_rect (st, t, 32, 0);
 
-    mini_rect (st, t, 30, h - 2);
-    mini_rect (st, t, 32, h);
+    primitives_mini_rect (st, t, 30, h - 2);
+    primitives_mini_rect (st, t, 32, h);
 
-    mini_rect (st, t, -2, 30);
-    mini_rect (st, t, 0, 32);
-    mini_rect (st, t, w - 2, 30);
-    mini_rect (st, t, w, 32);
+    primitives_mini_rect (st, t, -2, 30);
+    primitives_mini_rect (st, t, 0, 32);
+    primitives_mini_rect (st, t, w - 2, 30);
+    primitives_mini_rect (st, t, w, 32);
 
-    mini_rect (st, t, w / 2 + 4, h / 2 + 4);
+    primitives_mini_rect (st, t, w / 2 + 4, h / 2 + 4);
 
     XFillArc (dpy, t, st->copy_gc, 16, 16, 256, 256, 45 * 64, -135 * 64);
     /* XCopyArea(dpy, t, t, st->copy_gc, 48, 48, 128, 128, 64, 64); */
@@ -500,18 +697,23 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
     /* Box 3 */
 
     {
-      XCopyArea (dpy, t, st->mini_pix, st->copy_gc, 104, 55, 16, 16, 0, 0);
-      /* XCopyArea (dpy, t, st->mini_pix, st->copy_gc, 105, 56, 14, 14, 1, 1);
-         XCopyArea (dpy, t, st->mini_pix, st->copy_gc, 1, 1, 14, 14, 1, 1);
+      XCopyArea (dpy, t, st->primitives_mini_pix, st->copy_gc,
+                 104, 55, 16, 16, 0, 0);
+      /* XCopyArea (dpy, t, st->primitives_mini_pix, st->copy_gc,
+                    105, 56, 14, 14, 1, 1);
+         XCopyArea (dpy, t, st->primitives_mini_pix, st->copy_gc,
+                    1, 1, 14, 14, 1, 1);
        */
 
       /* This point gets hidden. */
       XDrawPoint (dpy, t, st->copy_gc, 104 + 8, 55 + 8);
 
-      XDrawPoint (dpy, st->mini_pix, st->copy_gc, 0, 0);
-      XDrawPoint (dpy, st->mini_pix, st->copy_gc, 15, 15);
-      XDrawRectangle (dpy, st->mini_pix, st->copy_gc, 1, 1, 13, 13);
-      XCopyArea (dpy, st->mini_pix, t, st->copy_gc, 0, 0, 16, 16, 104, 55);
+      XDrawPoint (dpy, st->primitives_mini_pix, st->copy_gc, 0, 0);
+      XDrawPoint (dpy, st->primitives_mini_pix, st->copy_gc, 15, 15);
+      XDrawRectangle (dpy, st->primitives_mini_pix, st->copy_gc,
+                      1, 1, 13, 13);
+      XCopyArea (dpy, st->primitives_mini_pix, t, st->copy_gc,
+                 0, 0, 16, 16, 104, 55);
     }
 
     {
@@ -534,6 +736,13 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
 
     /* if(w >= 9 && h >= 10) */
     {
+#ifdef HAVE_ANDROID
+      /* Draw below the status bar. */
+      const unsigned y = 64;
+#else
+      const unsigned y = 0;
+#endif
+
       Screen *screen = st->xgwa.screen;
       Visual *visual = st->xgwa.visual;
       Pixmap pixmap = XCreatePixmap (dpy, t, 3, 10,
@@ -541,21 +750,23 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
       unsigned long cells = cells = st->rgb[0] | st->rgb[1] | st->rgb[2];
 
       {
-        XSetForeground (dpy, st->point_gc, st->salmon);
-        XDrawPoint(dpy, t, st->point_gc, 0, h - 1);
+        XSetForeground (dpy, st->images_point_gc, st->salmon);
+        XDrawPoint (dpy, t, st->images_point_gc, 0, h - 1);
+        XDrawLine (dpy, t, st->images_point_gc, 0, y - 1, 8, y - 1);
       }
 
-      test_pattern (st, t);
-      test_pattern (st, pixmap);
+      images_pattern (st, t, y);
+      images_pattern (st, pixmap, 0);
       /* Here's a good spot to verify that the pixmap contains the right colors
          at the top.
        */
-      copy_test (dpy, t, pixmap, st->copy_gc, 0, 6, cells);
+      images_copy_test (dpy, t, pixmap, st->copy_gc, y, 0, 6, cells);
 
-      XCopyArea (dpy, pixmap, t, st->copy_gc, 0, 0, 3, 10, 3, 0);
+      XCopyArea (dpy, pixmap, t, st->copy_gc, 0, 0, 3, 10, 3, y);
+
       {
         XImage *image = XGetImage (dpy, pixmap, 0, 0, 3, 10, cells, ZPixmap);
-        XPutImage (dpy, t, st->copy_gc, image, 0, 0, 6, 0, 3, 10);
+        XPutImage (dpy, t, st->copy_gc, image, 0, 0, 6, y, 3, 10);
         XDestroyImage (image);
       }
 
@@ -592,20 +803,44 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
     if (use_copy)
     {
       GC gc = st->copy_gc;
-      XCopyArea (st->dpy, t, st->pix64, gc, 0, h - 64, 64, 64, 0, 0);
+      XCopyArea (st->dpy, t, st->copy_pix64, gc, 0, h - 64, 64, 64, 0, 0);
 
       XSetForeground (st->dpy, st->xor_gc, st->rgb[1]);
       XSetBackground (st->dpy, st->xor_gc, st->cyan);
 
-      /* XCopyArea (st->dpy, st->pix64, st->pix64, gc, 32, 32, 64, 64, 0, 0);
-         XCopyArea (st->dpy, st->pix64, t, gc, 0, 0, 64, 64, 4, h - 68);
+      /* XCopyArea (st->dpy, st->copy_pix64, st->copy_pix64, gc,
+                    32, 32, 64, 64, 0, 0);
+         XCopyArea (st->dpy, st->copy_pix64, t, gc, 0, 0, 64, 64, 4, h - 68);
        */
-      XCopyArea (st->dpy, st->pix64, t, gc, 32, 32, 128, 64, 0, h - 64);
+      XCopyArea (st->dpy, st->copy_pix64, t, gc, 32, 32, 128, 64, 0, h - 64);
     }
 
     break;
+
+  case mode_preserve:
+    backdrop (st, t);
+
+    if(!(st->frame % 10)) {
+      const unsigned r = 16;
+      unsigned n = st->frame / 10;
+      unsigned m = n >> 1;
+      XFillArc (st->dpy, st->preserve[n & 1],
+                m & 1 ? st->copy_gc : st->thick_line_gc,
+                NRAND(preserve_size) - r, NRAND(preserve_size) - r,
+                r * 2, r * 2, 0, 360 * 64);
+    }
+
+    XCopyArea (st->dpy, st->preserve[0], t, st->copy_gc, 0, 0,
+               preserve_size, preserve_size, 0, 0);
+    XCopyArea (st->dpy, st->preserve[1], t, st->copy_gc, 0, 0,
+               preserve_size, preserve_size, preserve_size, 0);
+    XCopyArea (st->dpy, st->preserve[1], t, st->copy_gc, 0, 0,
+               preserve_size, preserve_size,
+               w - preserve_size / 2, preserve_size);
+    break;
   }
 
+  /* Mode toggle buttons */
   for (i = 1; i != mode_count; ++i) {
     unsigned i0 = i - 1;
     char str[32];
@@ -615,7 +850,7 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
     button_dims.width = button_size;
     button_dims.height = button_size;
     if (!st->mode)
-      XFillRectangles (dpy, t, st->black_gc, &button_dims, 1);
+      XFillRectangles (dpy, t, st->backdrop_black_gc, &button_dims, 1);
     XDrawRectangle (dpy, t, st->copy_gc, button_dims.x, button_dims.y,
                     button_dims.width, button_dims.height);
 
@@ -627,6 +862,9 @@ testx11_draw (Display *dpy, Window win, void *st_raw)
 
   if (t != win)
     XCopyArea (dpy, t, win, st->copy_gc, 0, 0, w, h, 0, 0);
+
+  testx11_graph_rotator (st);
+  testx11_show_orientation (st);
 
   ++st->frame;
   return 1000000 / 20;

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -97,7 +97,9 @@
 {
   NSObject *obj = (NSObject *)
     CFPreferencesCopyAppValue ((CFStringRef) key, (CFStringRef) domain);
-  if (!obj && defaults)
+  if (obj)
+    [obj autorelease];
+  else if (defaults)
     obj = [defaults objectForKey:key];
   return obj;
 }

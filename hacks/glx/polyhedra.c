@@ -200,18 +200,7 @@ static const struct {
    *		Dihedral Schwarz Triangles (D5 only)
    ***************************************************************************/
 
-  /*	{"3|2 5/2",	"xyz",
-				"xyz",
-				"xyz",
-				"",
-				"",
-				0, 0},
-*/
-
-
-
-							   /* (2 2 5) (D1/5) */
-  /*  1 */	{"2 5|2",	"Pentagonal Prism",
+  /*  0 */	{"2 5|2",	"Pentagonal Prism",
 				"Pentagonal Dipyramid",
 				"Dihedral (D[1/5])",
 				"",
@@ -225,14 +214,14 @@ static const struct {
 				"",
 				0, 0},
 							 /* (2 2 5/2) (D2/5) */
-  /*  3 */	{"2 5/2|2",	"Pentagrammic Prism",
+  /*  4 */	{"2 5/2|2",	"Pentagrammic Prism",
 				"Pentagrammic Dipyramid",
 				"Dihedral (D[2/5])",
 				"",
 				"",
 				0, 0},
 
-  /*  4 */	{"|2 2 5/2",	"Pentagrammic Antiprism",
+  /*  6 */	{"|2 2 5/2",	"Pentagrammic Antiprism",
 				"Pentagrammic Deltohedron",
 				"Dihedral (D[2/5])",
 				"",
@@ -240,7 +229,7 @@ static const struct {
 				0, 0},
 							 /* (5/3 2 2) (D3/5) */
 
-  /*  5 */	{"|2 2 5/3",	"Pentagrammic Crossed Antiprism",
+  /*  8 */	{"|2 2 5/3",	"Pentagrammic Crossed Antiprism",
 				"Pentagrammic Concave Deltohedron",
 				"Dihedral (D[3/5])",
 				"",
@@ -252,21 +241,21 @@ static const struct {
    ***************************************************************************/
 
 							     /* (2 3 3) (T1) */
-  /*  6 */	{"3|2 3",	"Tetrahedron",
+  /*  10 */	{"3|2 3",	"Tetrahedron",
 				"Tetrahedron",
 				"Tetrahedral (T[1])",
 				"Platonic Solid",
 				"Platonic Solid",
 				15, 1},
 
-  /*  7 */	{"2 3|3",	"Truncated Tetrahedron",
+  /*  12 */	{"2 3|3",	"Truncated Tetrahedron",
 				"Triakistetrahedron",
 				"Tetrahedral (T[1])",
-				"Archimedian Solid",
+				"Archimedean Solid",
 				"Catalan Solid",
 				16, 6},
 							   /* (3/2 3 3) (T2) */
-  /*  8 */	{"3/2 3|3",	"Octahemioctahedron",
+  /*  14 */	{"3/2 3|3",	"Octahemioctahedron",
 				"Octahemioctacron",
 				"Tetrahedral (T[2])",
 				"",
@@ -274,7 +263,7 @@ static const struct {
 				37, 68},
 
 							   /* (3/2 2 3) (T3) */
-  /*  9 */	{"3/2 3|2",	"Tetrahemihexahedron",
+  /*  16 */	{"3/2 3|2",	"Tetrahemihexahedron",
 				"Tetrahemihexacron",
 				"Tetrahedral (T[3])",
 				"",
@@ -286,64 +275,68 @@ static const struct {
    ***************************************************************************/
 
 							     /* (2 3 4) (O1) */
-  /* 10 */	{"4|2 3",	"Octahedron",
+  /* 18 */	{"4|2 3",	"Octahedron",
 				"Cube",
 				"Octahedral (O[1])",
 				"Platonic Solid",
 				"Platonic Solid",
 				17, 2},
 
-  /* 11 */	{"3|2 4",	"Cube",
+  /* 20 */	{"3|2 4",	"Cube",
 				"Octahedron",
 				"Octahedral (O[1])",
 				"Platonic Solid",
 				"Platonic Solid",
 				18, 3},
 
-  /* 12 */	{"2|3 4",	"Cuboctahedron",
+  /* 22 */	{"2|3 4",	"Cuboctahedron",
 				"Rhombic Dodecahedron",
 				"Octahedral (O[1])",
-				"Archimedian Solid",
+				"Archimedean Solid",
 				"Catalan Solid",
 				19, 11},
 
-  /* 13 */	{"2 4|3",	"Truncated Octahedron",
+  /* 24 */	{"2 4|3",	"Truncated Octahedron",
 				"Tetrakishexahedron",
 				"Octahedral (O[1])",
-				"Archimedian Solid",
+				"Archimedean Solid",
 				"Catalan Solid",
 				20, 7},
 
-  /* 14 */	{"2 3|4",	"Truncated Cube",
+  /* 26 */	{"2 3|4",	"Truncated Cube",
 				"Triakisoctahedron",
 				"Octahedral (O[1])",
-				"Archimedian Solid",
+				"Archimedean Solid",
 				"Catalan Solid",
 				21, 8},
 
-  /* 15 */	{"3 4|2",	"Rhombicuboctahedron",
+  /* 28 */	{"3 4|2",	"Rhombicuboctahedron",
 				"Deltoidal Icositetrahedron",
 				"Octahedral (O[1])",
-				"Archimedian Solid",
+				"Archimedean Solid",
 				"Catalan Solid",
 				22, 13},
 
-  /* 16 */	{"2 3 4|",	"Truncated Cuboctahedron",
+  /* 30 */	{"2 3 4|",	"Truncated Cuboctahedron",
 				"Disdyakisdodecahedron",
 				"Octahedral (O[1])",
-				"Archimedian Solid",
+				"Archimedean Solid",
 				"Catalan Solid",
 				23, 15},
 
-  /* 17 */	{"|2 3 4",	"Snub Cube",
+  /* 32, 33, 66, and 67 are chiral, existing in both left and right handed
+     (enantiomeric) forms, so it would make sense to display both versions.
+  */
+
+  /* 32 */	{"|2 3 4",	"Snub Cube",
 				"Pentagonal Icositetrahedron",
-				"Octahedral (O[1])",
-				"Archimedian Solid",
+				"Octahedral (O[1]), Chiral",
+				"Archimedean Solid",
 				"Catalan Solid",
 				24, 17},
 							  /* (3/2 4 4) (O2b) */
 
-  /* 18 */	{"3/2 4|4",	"Small Cubicuboctahedron",
+  /* 34 */	{"3/2 4|4",	"Small Cubicuboctahedron",
 				"Small Hexacronic Icositetrahedron",
 				"Octahedral (O[2b])",
 				"",
@@ -351,21 +344,21 @@ static const struct {
 				38, 69},
 							   /* (4/3 3 4) (O4) */
 
-  /* 19 */	{"3 4|4/3",	"Great Cubicuboctahedron",
+  /* 36 */	{"3 4|4/3",	"Great Cubicuboctahedron",
 				"Great Hexacronic Icositetrahedron",
 				"Octahedral (O[4])",
 				"",
 				"",
 				50, 77},
 
-  /* 20 */	{"4/3 4|3",	"Cubohemioctahedron",
+  /* 38 */	{"4/3 4|3",	"Cubohemioctahedron",
 				"Hexahemioctacron",
 				"Octahedral (O[4])",
 				"",
 				"",
 				51, 78},
 
-  /* 21 */	{"4/3 3 4|",	"Cubitruncated Cuboctahedron",
+  /* 40 */	{"4/3 3 4|",	"Cubitruncated Cuboctahedron",
 				"Tetradyakishexahedron",
 				"Octahedral (O[4])",
 				"",
@@ -373,14 +366,14 @@ static const struct {
 				52, 79},
 							   /* (3/2 2 4) (O5) */
 
-  /* 22 */	{"3/2 4|2",	"Great Rhombicuboctahedron",
+  /* 42 */	{"3/2 4|2",	"Great Rhombicuboctahedron",
 				"Great Deltoidal Icositetrahedron",
 				"Octahedral (O[5])",
 				"",
 				"",
 				59, 85},
 
-  /* 23 */	{"3/2 2 4|",	"Small Rhombihexahedron",
+  /* 44 */	{"3/2 2 4|",	"Small Rhombihexahedron",
 				"Small Rhombihexacron",
 				"Octahedral (O[5])",
 				"",
@@ -388,14 +381,14 @@ static const struct {
 				60, 86},
 							   /* (4/3 2 3) (O7) */
 
-  /* 24 */	{"2 3|4/3",	"Stellated Truncated Hexahedron",
+  /* 46 */	{"2 3|4/3",	"Stellated Truncated Hexahedron",
 				"Great Triakisoctahedron",
 				"Octahedral (O[7])",
 				"",
 				"",
 				66, 92},
 
-  /* 25 */	{"4/3 2 3|",	"Great Truncated Cuboctahedron",
+  /* 48 */	{"4/3 2 3|",	"Great Truncated Cuboctahedron",
 				"Great Disdyakisdodecahedron",
 				"Octahedral (O[7])",
 				"",
@@ -403,7 +396,7 @@ static const struct {
 				67, 93},
 							/* (4/3 3/2 2) (O11) */
 
-  /* 26 */	{"4/3 3/2 2|",	"Great Rhombihexahedron",
+  /* 50 */	{"4/3 3/2 2|",	"Great Rhombihexahedron",
 				"Great Rhombihexacron",
 				"Octahedral (O[11])",
 				"",
@@ -415,78 +408,82 @@ static const struct {
    ***************************************************************************/
 
 							     /* (2 3 5) (I1) */
-  /* 27 */	{"5|2 3",	"Icosahedron",
+  /* 52 */	{"5|2 3",	"Icosahedron",
 				"Dodecahedron",
 				"Icosahedral (I[1])",
 				"Platonic Solid",
 				"Platonic Solid",
 				25, 4},
 
-  /* 28 */	{"3|2 5",	"Dodecahedron",
+  /* 54 */	{"3|2 5",	"Dodecahedron",
 				"Icosahedron",
 				"Icosahedral (I[1])",
 				"Platonic Solid",
 				"Platonic Solid",
 				26, 5},
 
-  /* 29 */	{"2|3 5",	"Icosidodecahedron",
+  /* 56 */	{"2|3 5",	"Icosidodecahedron",
 				"Rhombic Triacontahedron",
 				"Icosahedral (I[1])",
-				"Archimedian Solid",
+				"Archimedean Solid",
 				"Catalan Solid",
 				28, 12},
 
-  /* 30 */	{"2 5|3",	"Truncated Icosahedron",
+  /* 58 */	{"2 5|3",	"Truncated Icosahedron",
 				"Pentakisdodecahedron",
 				"Icosahedral (I[1])",
-				"Archimedian Solid",
+				"Archimedean Solid",
 				"Catalan Solid",
 				27, 9},
 
-  /* 31 */	{"2 3|5",	"Truncated Dodecahedron",
+  /* 60 */	{"2 3|5",	"Truncated Dodecahedron",
 				"Triakisicosahedron",
 				"Icosahedral (I[1])",
-				"Archimedian Solid",
+				"Archimedean Solid",
 				"Catalan Solid",
 				29, 10},
 
-  /* 32 */	{"3 5|2",	"Rhombicosidodecahedron",
+  /* 62 */	{"3 5|2",	"Rhombicosidodecahedron",
 				"Deltoidal Hexecontahedron",
 				"Icosahedral (I[1])",
-				"Archimedian Solid",
+				"Archimedean Solid",
 				"Catalan Solid",
 				30, 14},
 
-  /* 33 */	{"2 3 5|",	"Truncated Icosidodecahedron",
+  /* 64 */	{"2 3 5|",	"Truncated Icosidodecahedron",
 				"Disdyakistriacontahedron",
 				"Icosahedral (I[1])",
-				"Archimedian Solid",
+				"Archimedean Solid",
 				"Catalan Solid",
 				31, 16},
 
-  /* 34 */	{"|2 3 5",	"Snub Dodecahedron",
+  /* 32, 33, 66, and 67 are chiral, existing in both left and right handed
+     (enantiomeric) forms, so it would make sense to display both versions.
+  */
+
+  /* 66 */	{"|2 3 5",	"Snub Dodecahedron",
 				"Pentagonal Hexecontahedron",
-				"Icosahedral (I[1])",
-				"Archimedian Solid",
+				"Icosahedral (I[1]), Chiral",
+				"Archimedean Solid",
 				"Catalan Solid",
 				32, 18},
 							  /* (5/2 3 3) (I2a) */
 
-  /* 35 */	{"3|5/2 3",	"Small Ditrigonal Icosidodecahedron",
+  /* 68 */	{"3|5/2 3",	"Small Ditrigonal Icosidodecahedron",
 				"Small Triambic Icosahedron",
 				"Icosahedral (I[2a])",
 				"",
 				"",
 				39, 70},
 
-  /* 36 */	{"5/2 3|3",	"Small Icosicosidodecahedron",
+  /* 70 */	{"5/2 3|3",	"Small Icosicosidodecahedron",
 				"Small Icosacronic Hexecontahedron",
 				"Icosahedral (I[2a])",
 				"",
 				"",
 				40, 71},
 
-  /* 37 */	{"|5/2 3 3",	"Small Snub Icosicosidodecahedron",
+  /* 72 */	{"|5/2 3 3",	"Small Snub Icosicosidodecahedron",
 				"Small Hexagonal Hexecontahedron",
 				"Icosahedral (I[2a])",
 				"",
@@ -494,7 +491,7 @@ static const struct {
 				41, 110},
 							  /* (3/2 5 5) (I2b) */
 
-  /* 38 */	{"3/2 5|5",	"Small Dodecicosidodecahedron",
+  /* 74 */	{"3/2 5|5",	"Small Dodecicosidodecahedron",
 				"Small Dodecacronic Hexecontahedron",
 				"Icosahedral (I[2b])",
 				"",
@@ -502,49 +499,49 @@ static const struct {
 				42, 72},
 							   /* (2 5/2 5) (I3) */
 
-  /* 39 */	{"5|2 5/2",	"Small Stellated Dodecahedron",
+  /* 76 */	{"5|2 5/2",	"Small Stellated Dodecahedron",
 				"Great Dodecahedron",
 				"Icosahedral (I[3])",
-				"Truncated Kepler-Poinsot Solid",
+				"",
 				"",
 				43, 20},
 
-  /* 40 */	{"5/2|2 5",	"Great Dodecahedron",
+  /* 78 */	{"5/2|2 5",	"Great Dodecahedron",
 				"Small Stellated Dodecahedron",
 				"Icosahedral (I[3])",
 				"",
 				"",
 				44, 21},
 
-  /* 41 */	{"2|5/2 5",	"Great Dodecadodecahedron",
+  /* 80 */	{"2|5/2 5",	"Great Dodecadodecahedron",
 				"Medial Rhombic Triacontahedron",
 				"Icosahedral (I[3])",
 				"",
 				"",
 				45, 73},
 
-  /* 42 */	{"2 5/2|5",	"Truncated Great Dodecahedron",
+  /* 82 */	{"2 5/2|5",	"Truncated Great Dodecahedron",
 				"Small Stellapentakisdodecahedron",
 				"Icosahedral (I[3])",
-				"Truncated Kepler-Poinsot Solid",
+				"",
 				"",
 				47, 75},
 
-  /* 43 */	{"5/2 5|2",	"Rhombidodecadodecahedron",
+  /* 84 */	{"5/2 5|2",	"Rhombidodecadodecahedron",
 				"Medial Deltoidal Hexecontahedron",
 				"Icosahedral (I[3])",
 				"",
 				"",
 				48, 76},
 
-  /* 44 */	{"2 5/2 5|",	"Small Rhombidodecahedron",
+  /* 86 */	{"2 5/2 5|",	"Small Rhombidodecahedron",
 				"Small Rhombidodecacron",
 				"Icosahedral (I[3])",
 				"",
 				"",
 				46, 74},
 
-  /* 45 */	{"|2 5/2 5",	"Snub Dodecadodecahedron",
+  /* 88 */	{"|2 5/2 5",	"Snub Dodecadodecahedron",
 				"Medial Pentagonal Hexecontahedron",
 				"Icosahedral (I[3])",
 				"",
@@ -552,71 +549,71 @@ static const struct {
 				49, 111},
 							   /* (5/3 3 5) (I4) */
 
-  /* 46 */	{"3|5/3 5",	"Ditrigonal Dodecadodecahedron",
+  /* 90 */	{"3|5/3 5",	"Ditrigonal Dodecadodecahedron",
 				"Medial Triambic Icosahedron",
 				"Icosahedral (I[4])",
 				"",
 				"",
 				53, 80},
 
-  /* 47 */	{"3 5|5/3",	"Great Ditrigonal Dodecicosidodecahedron",
+  /* 92 */	{"3 5|5/3",	"Great Ditrigonal Dodecicosidodecahedron",
 			       "Great Ditrigonal Dodecacronic Hexecontahedron",
 				"Icosahedral (I[4])",
 				"",
 				"",
 				54, 81},
 
-  /* 48 */	{"5/3 3|5",	"Small Ditrigonal Dodecicosidodecahedron",
+  /* 94 */	{"5/3 3|5",	"Small Ditrigonal Dodecicosidodecahedron",
 			       "Small Ditrigonal Dodecacronic Hexecontahedron",
 				"Icosahedral (I[4])",
 				"",
 				"",
 				55, 82},
 
-  /* 49 */	{"5/3 5|3",	"Icosidodecadodecahedron",
+  /* 96 */	{"5/3 5|3",	"Icosidodecadodecahedron",
 				"Medial Icosacronic Hexecontahedron",
 				"Icosahedral (I[4])",
 				"",
 				"",
 				56, 83},
 
-  /* 50 */	{"5/3 3 5|",	"Icositruncated Dodecadodecahedron",
+  /* 98 */	{"5/3 3 5|",	"Icositruncated Dodecadodecahedron",
 				"Tridyakisicosahedron",
 				"Icosahedral (I[4])",
 				"",
 				"",
 				57, 84},
 
-  /* 51 */	{"|5/3 3 5",	"Snub Icosidodecadodecahedron",
+  /* 100 */	{"|5/3 3 5",	"Snub Icosidodecadodecahedron",
 				"Medial Hexagonal Hexecontahedron",
 				"Icosahedral (I[4])",
 				"",
-				"",
+				"Kepler-Poinsot Solid",
 				58, 112},
 							  /* (3/2 3 5) (I6b) */
 
-  /* 52 */	{"3/2|3 5",	"Great Ditrigonal Icosidodecahedron",
+  /* 102 */	{"3/2|3 5",	"Great Ditrigonal Icosidodecahedron",
 				"Great Triambic Icosahedron",
 				"Icosahedral (I[6b])",
 				"",
 				"",
 				61, 87},
 
-  /* 53 */	{"3/2 5|3",	"Great Icosicosidodecahedron",
+  /* 104 */	{"3/2 5|3",	"Great Icosicosidodecahedron",
 				"Great Icosacronic Hexecontahedron",
 				"Icosahedral (I[6b])",
 				"",
 				"",
 				62, 88},
 
-  /* 54 */	{"3/2 3|5",	"Small Icosihemidodecahedron",
+  /* 106 */	{"3/2 3|5",	"Small Icosihemidodecahedron",
 				"Small Icosihemidodecacron",
 				"Icosahedral (I[6b])",
 				"",
 				"",
 				63, 89},
 
-  /* 55 */	{"3/2 3 5|",	"Small Dodecicosahedron",
+  /* 108 */	{"3/2 3 5|",	"Small Dodecicosahedron",
 				"Small Dodecicosacron",
 				"Icosahedral (I[6b])",
 				"",
@@ -624,7 +621,7 @@ static const struct {
 				64, 90},
 							  /* (5/4 5 5) (I6c) */
 
-  /* 56 */	{"5/4 5|5",	"Small Dodecahemidodecahedron",
+  /* 110 */	{"5/4 5|5",	"Small Dodecahemidodecahedron",
 				"Small Dodecahemidodecacron",
 				"Icosahedral (I[6c])",
 				"",
@@ -632,101 +629,101 @@ static const struct {
 				65, 91},
 							   /* (2 5/2 3) (I7) */
 
-  /* 57 */	{"3|2 5/2",	"Great Stellated Dodecahedron",
+  /* 112 */	{"3|2 5/2",	"Great Stellated Dodecahedron",
 				"Great Icosahedron",
 				"Icosahedral (I[7])",
 				"",
 				"",
 				68, 22},
 
-  /* 58 */	{"5/2|2 3",	"Great Icosahedron",
+  /* 114 */	{"5/2|2 3",	"Great Icosahedron",
 				"Great Stellated Dodecahedron",
 				"Icosahedral (I[7])",
 				"",
 				"",
 				69, 41},
 
-  /* 59 */	{"2|5/2 3",	"Great Icosidodecahedron",
+  /* 116 */	{"2|5/2 3",	"Great Icosidodecahedron",
 				"Great Rhombic Triacontahedron",
 				"Icosahedral (I[7])",
-				"Truncated Kepler-Poinsot Solid",
+				"",
 				"",
 				70, 94},
 
-  /* 60 */	{"2 5/2|3",	"Great Truncated Icosahedron",
+  /* 118 */	{"2 5/2|3",	"Great Truncated Icosahedron",
 				"Great Stellapentakisdodecahedron",
 				"Icosahedral (I[7])",
-				"Truncated Kepler-Poinsot Solid",
+				"",
 				"",
 				71, 95},
 
-  /* 61 */	{"2 5/2 3|",	"Rhombicosahedron",
+  /* 120 */	{"2 5/2 3|",	"Rhombicosahedron",
 				"Rhombicosacron",
 				"Icosahedral (I[7])",
 				"",
 				"",
 				72, 96},
 
-  /* 62 */	{"|2 5/2 3",	"Great Snub Icosidodecahedron",
+  /* 122 */	{"|2 5/2 3",	"Great Snub Icosidodecahedron",
 				"Great Pentagonal Hexecontahedron",
 				"Icosahedral (I[7])",
 				"",
-				"",
+				"Kepler-Poinsot Solid",
 				73, 113},
 							   /* (5/3 2 5) (I9) */
 
-  /* 63 */	{"2 5|5/3",	"Small Stellated Truncated Dodecahedron",
-				"Great Pentakisdodekahedron",
+  /* 124 */	{"2 5|5/3",	"Small Stellated Truncated Dodecahedron",
+				"Great Pentakisdodecahedron",
 				"Icosahedral (I[9])",
 				"",
 				"",
 				74, 97},
 
-  /* 64 */	{"5/3 2 5|",	"Truncated Dodecadodecahedron",
+  /* 126 */	{"5/3 2 5|",	"Truncated Dodecadodecahedron",
 				"Medial Disdyakistriacontahedron",
 				"Icosahedral (I[9])",
 				"",
 				"",
 				75, 98},
 
-  /* 65 */	{"|5/3 2 5",	"Inverted Snub Dodecadodecahedron",
+  /* 128 */	{"|5/3 2 5",	"Inverted Snub Dodecadodecahedron",
 				"Medial Inverted Pentagonal Hexecontahedron",
 				"Icosahedral (I[9])",
 				"",
-				"",
+				"Kepler-Poinsot Solid",
 				76, 114},
 						       /* (5/3 5/2 3) (I10a) */
 
-  /* 66 */	{"5/2 3|5/3",	"Great Dodecicosidodecahedron",
+  /* 130 */	{"5/2 3|5/3",	"Great Dodecicosidodecahedron",
 				"Great Dodecacronic Hexecontahedron",
 				"Icosahedral (I[10a])",
 				"",
 				"",
 				77, 99},
 
-  /* 67 */	{"5/3 5/2|3",	"Small Dodecahemicosahedron",
+  /* 132 */	{"5/3 5/2|3",	"Small Dodecahemicosahedron",
 				"Small Dodecahemicosacron",
 				"Icosahedral (I[10a])",
 				"",
 				"",
 				78, 100},
 
-  /* 68 */	{"5/3 5/2 3|",	"Great Dodecicosahedron",
+  /* 134 */	{"5/3 5/2 3|",	"Great Dodecicosahedron",
 				"Great Dodecicosacron",
 				"Icosahedral (I[10a])",
 				"",
 				"",
 				79, 101},
 
-  /* 69 */	{"|5/3 5/2 3",	"Great Snub Dodecicosidodecahedron",
+  /* 136 */	{"|5/3 5/2 3",	"Great Snub Dodecicosidodecahedron",
 				"Great Hexagonal Hexecontahedron",
 				"Icosahedral (I[10a])",
 				"",
-				"",
+				"Kepler-Poinsot Solid",
 				80, 115},
 							 /* (5/4 3 5) (I10b) */
 
-  /* 70 */	{"5/4 5|3",	"Great Dodecahemicosahedron",
+  /* 138 */	{"5/4 5|3",	"Great Dodecahemicosahedron",
 				"Great Dodecahemicosacron",
 				"Icosahedral (I[10b])",
 				"",
@@ -734,28 +731,28 @@ static const struct {
 				81, 102},
 							  /* (5/3 2 3) (I13) */
 
-  /* 71 */	{"2 3|5/3",	"Great Stellated Truncated Dodecahedron",
+  /* 140 */	{"2 3|5/3",	"Great Stellated Truncated Dodecahedron",
 				"Great Triakisicosahedron",
 				"Icosahedral (I[13])",
 				"",
 				"",
 				83, 104},
 
-  /* 72 */	{"5/3 3|2",	"Great Rhombicosidodecahedron",
+  /* 142 */	{"5/3 3|2",	"Great Rhombicosidodecahedron",
 				"Great Deltoidal Hexecontahedron",
 				"Icosahedral (I[13])",
 				"",
 				"",
 				84, 105},
 
-  /* 73 */	{"5/3 2 3|",	"Great Truncated Icosidodecahedron",
+  /* 144 */	{"5/3 2 3|",	"Great Truncated Icosidodecahedron",
 				"Great Disdyakistriacontahedron",
 				"Icosahedral (I[13])",
 				"",
 				"",
 				87, 108},
 
-  /* 74 */	{"|5/3 2 3",	"Great Inverted Snub Icosidodecahedron",
+  /* 146 */	{"|5/3 2 3",	"Great Inverted Snub Icosidodecahedron",
 				"Great Inverted Pentagonal Hexecontahedron",
 				"Icosahedral (I[13])",
 				"",
@@ -763,7 +760,7 @@ static const struct {
 				88, 116},
 						     /* (5/3 5/3 5/2) (I18a) */
 
-  /* 75 */	{"5/3 5/2|5/3",	"Great Dodecahemidodecahedron",
+  /* 148 */	{"5/3 5/2|5/3",	"Great Dodecahemidodecahedron",
 				"Great Dodecahemidodecacron",
 				"Icosahedral (I[18a])",
 				"",
@@ -771,15 +768,15 @@ static const struct {
 				86, 107},
 						       /* (3/2 5/3 3) (I18b) */
 
-  /* 76 */	{"3/2 3|5/3",	"Great Icosihemidodecahedron",
+  /* 150 */	{"3/2 3|5/3",	"Great Icosihemidodecahedron",
 				"Great Icosihemidodecacron",
 				"Icosahedral (I[18b])",
-				"",
+				"Kepler-Poinsot Solid",
 				"",
 				85, 106},
 						      /* (3/2 3/2 5/3) (I22) */
 
-  /* 77 */	{"|3/2 3/2 5/2","Small Retrosnub Icosicosidodecahedron",
+  /* 152 */	{"|3/2 3/2 5/2","Small Retrosnub Icosicosidodecahedron",
 				"Small Hexagrammic Hexecontahedron",
 				"Icosahedral (I[22])",
 				"",
@@ -787,17 +784,17 @@ static const struct {
 				91, 118},
 							/* (3/2 5/3 2) (I23) */
 
-  /* 78 */	{"3/2 5/3 2|",	"Great Rhombidodecahedron",
+  /* 154 */	{"3/2 5/3 2|",	"Great Rhombidodecahedron",
 				"Great Rhombidodecacron",
 				"Icosahedral (I[23])",
 				"",
 				"",
 				89, 109},
 
-  /* 79 */	{"|3/2 5/3 2",	"Great Retrosnub Icosidodecahedron",
+  /* 156 */	{"|3/2 5/3 2",	"Great Retrosnub Icosidodecahedron",
 				"Great Pentagrammic Hexecontahedron",
 				"Icosahedral (I[23])",
-				"",
+				"Kepler-Poinsot Solid",
 				"",
 				90, 117},
 
@@ -805,7 +802,7 @@ static const struct {
    *		Last But Not Least
    ***************************************************************************/
 
-  /* 80 */    {"3/2 5/3 3 5/2",	"Great Dirhombicosidodecahedron",
+  /* 158 */    {"3/2 5/3 3 5/2",	"Great Dirhombicosidodecahedron",
 				"Great Dirhombicosidodecacron",
 				"Non-Wythoffian",
 				"",
@@ -817,7 +814,7 @@ static int last_uniform = sizeof (uniform) / sizeof (uniform[0]);
 
 
 
-static int unpacksym(char *sym, Polyhedron *P);
+static int unpacksym(const char *sym, Polyhedron *P);
 static int moebius(Polyhedron *P);
 static int decompose(Polyhedron *P);
 static int guessname(Polyhedron *P);
@@ -830,7 +827,8 @@ static int faces(Polyhedron *P);
 static int edgelist(Polyhedron *P);
 
 static Polyhedron *
-kaleido(char *sym, int need_coordinates, int need_edgelist, int need_approx,
+kaleido(const char *sym,
+        int need_coordinates, int need_edgelist, int need_approx,
 	int just_list)
 {
   Polyhedron *P;
@@ -1016,7 +1014,7 @@ frac(double x)
  * allow no bars only if it result from the input symbol #80.
  */
 static int
-unpacksym(char *sym, Polyhedron *P)
+unpacksym(const char *sym, Polyhedron *P)
 {
   int i = 0, n, d, bars = 0;
   char c;
@@ -1381,7 +1379,7 @@ decompose(Polyhedron *P)
 }
 
 
-static int dihedral(Polyhedron *P, char *name, char *dual_name);
+static int dihedral(Polyhedron *P, const char *name, const char *dual_name);
 
 
 /*
@@ -1454,7 +1452,7 @@ guessname(Polyhedron *P)
 }
 
 static int
-dihedral(Polyhedron *P, char *name, char *dual_name)
+dihedral(Polyhedron *P, const char *name, const char *dual_name)
 {
   char *s;
   int i;
@@ -2037,7 +2035,8 @@ push_face4 (polyhedron *p, int x, int y, int z, int w)
 
 static polyhedron *
 construct_polyhedron (Polyhedron *P, Vector *v, int V, Vector *f, int F,
-                      char *name, char *dual, char *class, char *star,
+                      const char *name, const char *dual,
+                      const char *class, const char *star,
                       double azimuth, double elevation, double freeze)
 {
   int i, j, k=0, l, ll, ii, *hit=0, facelets;

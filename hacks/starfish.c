@@ -71,7 +71,6 @@ make_starfish (struct state *st, int maxx, int maxy, int size)
 {
   struct starfish *s = (struct starfish *) calloc(1, sizeof(*s));
   int i;
-  int mid;
 
   s->blob_p = st->blob_p;
   s->elasticity = SCALE * get_float_resource (st->dpy, "thickness", "Thickness");
@@ -121,7 +120,6 @@ make_starfish (struct state *st, int maxx, int maxy, int size)
   s->min_r = 0;
 
   if (s->min_r < (5*SCALE)) s->min_r = (5*SCALE);
-  mid = ((s->min_r + s->max_r) / 2);
 
   s->x = maxx/2;
   s->y = maxy/2;
@@ -390,7 +388,7 @@ reset_starfish (struct state *st)
   flags |= GCFillRule;
   gcv.fill_rule = EvenOddRule;
   st->gc = XCreateGC (st->dpy, st->window, flags, &gcv);
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
   if (!st->blob_p)
     jwxyz_XSetAntiAliasing (st->dpy, st->gc, False);
 #endif
@@ -532,7 +530,7 @@ static const char *starfish_defaults [] = {
   "*duration:		30",
   "*delay2:		5",
   "*mode:		random",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
   0

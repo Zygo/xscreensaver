@@ -30,6 +30,7 @@ static const char sccsid[] = "@(#)sierpinski3D.c	00.01 99/11/04 xlockmore";
 # define DEFAULTS					"*delay:		20000   \n"			\
 									"*showFPS:      False   \n"			\
 									"*wireframe:	False	\n"			\
+									"*suppressRotationAnimation: True\n" \
 
 # define refresh_gasket 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
@@ -396,6 +397,14 @@ reshape_gasket(ModeInfo *mi, int width, int height)
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
   
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1/h);
+  }
+# endif
+
   glClear(GL_COLOR_BUFFER_BIT);
 }
 

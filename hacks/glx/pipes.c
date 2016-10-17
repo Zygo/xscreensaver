@@ -65,7 +65,8 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 					"*size:			500     \n"			\
 	               	"*showFPS:      False   \n"		    \
 	               	"*fpsSolid:     True    \n"		    \
-	               	"*wireframe:    False   \n"
+	               	"*wireframe:    False   \n"		    \
+					"*suppressRotationAnimation: True\n" \
 
 # define refresh_pipes 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
@@ -75,7 +76,7 @@ static const char sccsid[] = "@(#)pipes.c	4.07 97/11/24 xlockmore";
 
 #ifdef USE_GL
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 #else
 # include <X11/Xlib.h>

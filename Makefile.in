@@ -6,7 +6,7 @@ srcdir		= @srcdir@
 VPATH		= @srcdir@
 
 SHELL		= /bin/sh
-SUBDIRS 	= utils driver hacks hacks/glx po
+SUBDIRS 	= utils jwxyz hacks hacks/glx driver po
 SUBDIRS2	= $(SUBDIRS) OSX android
 TARFILES	= README README.hacking README.VMS INSTALL \
 		  configure configure.in Makefile.in config.h.in \
@@ -273,6 +273,7 @@ test-tar::
     ../../configure --with-motif=/usr/local/lesstif --without-gnome ;	    \
     echo --------------------------------------------------------------- ;  \
     ( cd utils; gmake all ) ;						    \
+    ( cd jwxyz; gmake all ) ;						    \
     ( cd driver; gmake all ) ;						    \
     echo --------------------------------------------------------------- ); \
 									    \
@@ -280,6 +281,8 @@ test-tar::
 
 dmg::
 	$(MAKE) -C OSX release dmg
+apk::
+	$(MAKE) -C android apk
 
 www::
 	@								    \
@@ -293,6 +296,9 @@ www::
   BNAME2="$$HEAD.dmg" ;							    \
   NAME2="$$ADIR$$BNAME2" ;						    \
   DNAME2="$$DEST/$$HEAD.dmg" ;						    \
+  BNAME3="$$HEAD.apk" ;							    \
+  NAME3="$$ADIR$$BNAME3" ;						    \
+  DNAME3="$$DEST/$$HEAD.apk" ;						    \
 									    \
   if ! git diff --quiet ; then						    \
     echo "uncommitted changes exist!" ;					    \
@@ -307,6 +313,10 @@ www::
   fi ;									    \
   if [ ! -f $$NAME2 ]; then						    \
     echo "$$NAME2 does not exist!  Did you forget to \`make dmg'?" ;	    \
+    exit 1 ; 								    \
+  fi ;									    \
+  if [ ! -f $$NAME3 ]; then						    \
+    echo "$$NAME3 does not exist!  Did you forget to \`make apk'?" ;	    \
     exit 1 ; 								    \
   fi ;									    \
   chmod a-w $$NAME ;							    \
@@ -324,6 +334,13 @@ www::
       exit 1 ; 								    \
     fi ;								    \
   fi ;									    \
+  if [ -f $$DNAME3 ]; then						    \
+    /bin/echo -n "WARNING: $$DNAME3 already exists!  Overwrite? ";	    \
+    read line;								    \
+    if [ "x$$line" != "xyes" -a "x$$line" != "xy" ]; then		    \
+      exit 1 ; 								    \
+    fi ;								    \
+  fi ;									    \
 									    \
   git tag -a "v$$VERS" -m "$$VERS" ;					    \
   git commit -m "$$VERS" . ;						    \
@@ -332,7 +349,8 @@ www::
 									    \
   cp -p $$NAME $$DNAME ;						    \
   cp -p $$NAME2 $$DNAME2 ;						    \
-  chmod u+w $$DNAME $$DNAME2 ;						    \
+  cp -p $$NAME3 $$DNAME3 ;						    \
+  chmod u+w $$DNAME $$DNAME2 $$DNAME3 ;					    \
   cp -p OSX/updates.xml $$DEST ;					    \
   cd $$DEST ;								    \
 									    \
@@ -359,7 +377,7 @@ www::
   cat $$TMP > download.html ;						    \
   rm -f $$TMP ;								    \
 									    \
-  git add $$BNAME $$BNAME2 ;						    \
+  git add $$BNAME $$BNAME2 $$BNAME3 ;					    \
 									    \
   $(MAKE) -C ../ xscreensaver/changelog.html xscreensaver/screenshots/index.html; \
   git diff changelog.html ;						    \

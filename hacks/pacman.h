@@ -31,7 +31,7 @@
 
 #include "xlockmoreI.h"
 
-#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM) || defined(HAVE_COCOA)
+#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM) || defined(HAVE_JWXYZ)
 # define USE_PIXMAP
 #include "xpm-pixmap.h"
 # else

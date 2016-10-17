@@ -1,5 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<wallpaper xmlns:android="http://schemas.android.com/apk/res/android"
-   android:description="@string/superquadrics_description"
-   android:settingsActivity="org.jwz.xscreensaver.gen.SuperquadricsSettings"
-   android:thumbnail="@drawable/superquadrics" />

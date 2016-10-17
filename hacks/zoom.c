@@ -25,8 +25,8 @@
 #define MINX 0.0
 #define MINY 0.0
 /* This should be *way* slower than the spotlight hack was */
-#define X_PERIOD 45000.0
-#define Y_PERIOD 36000.0
+#define X_PERIOD (45000.0 * 3)
+#define Y_PERIOD (36000.0 * 3)
 
 struct state {
   Display *dpy;
@@ -254,13 +254,13 @@ static const char *zoom_defaults[] = {
   "*lenses:      true",
   "*delay:       10000",
   "*duration:    120",
-  "*pixwidth:    10",
-  "*pixheight:   10",
+  "*pixwidth:    40",
+  "*pixheight:   40",
   "*pixspacex:   2",
   "*pixspacey:   2",
   "*lensoffsetx: 5",
   "*lensoffsety: 5",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
   "*rotateImages:   True",
 #endif

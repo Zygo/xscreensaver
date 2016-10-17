@@ -360,7 +360,7 @@ about_menu_cb (Widget button, XtPointer client_data, XtPointer ignored)
            "version is no longer maintained.  Please use the GTK version\n"
            "instead, which has many more features.\n"
            "\n"
-           "For xscreensaver updates, check http://www.jwz.org/xscreensaver/",
+           "For xscreensaver updates, check https://www.jwz.org/xscreensaver/",
            s, s2);
   free (s);
 

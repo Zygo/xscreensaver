@@ -482,12 +482,6 @@ draw_stairs (ModeInfo * mi)
 	glPushMatrix();
 
     glRotatef(rot, 0, 0, 1);
-    if ((rot >  45 && rot <  135) ||
-        (rot < -45 && rot > -135))
-      {
-        GLfloat s = MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi);
-        glScalef (s, 1/s, 1);
-      }
 
 	glTranslatef(0.0, 0.0, -10.0);
 
@@ -496,6 +490,14 @@ draw_stairs (ModeInfo * mi)
 	} else {
 		glScalef(Scale4Iconic * sp->WindH / sp->WindW, Scale4Iconic, Scale4Iconic);
 	}
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+    if (rot != 0 && rot != 180 && rot != -180)
+      glScalef (1/h, 1/h, 1/h);
+  }
+# endif
 
     gltrackball_rotate (sp->trackball);
 

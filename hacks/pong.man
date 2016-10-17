@@ -42,6 +42,10 @@ How noisy the video signal should be (between 0.0 and 4.0 or so).
 .TP 8
 .B \-fps
 Display the current frame rate and CPU load.
+.TP 8
+.B (\-p1 | \-p2) \fImode\fP
+Set a player to either \fIai\fP, \fImouse\fP, \fItablet\fP, \fIkbleft\fP (for W and S), or
+\fIkbright\fP (or just \fIkb\fP, for arrow keys).
 .SH ENVIRONMENT
 .PP
 .TP 8

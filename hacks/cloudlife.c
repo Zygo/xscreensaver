@@ -406,7 +406,7 @@ static const char *cloudlife_defaults[] = {
     "*maxAge:		64",
     "*initialDensity:	30",
     "*cellSize:		3",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
     "*ignoreRotation:   True",
 #endif
     0

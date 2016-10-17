@@ -742,6 +742,15 @@ static void draw_shapes(ModeInfo * mi)
 {
     tangram_configuration *tp = &tps[MI_SCREEN(mi)];
 
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+    {
+      GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+      int o = (int) current_device_rotation();
+      if (o != 0 && o != 180 && o != -180)
+        glScalef (h, 1/h, 1);
+    }
+# endif
+
     draw_tangram_shape(tp->tsm1);
 
     draw_tangram_shape(tp->tsm2);
@@ -768,23 +777,9 @@ static void draw_shapes(ModeInfo * mi)
       }
 }
 
-static void set_perspective(void)
-{
-    glPushMatrix();
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    gluPerspective(60, -1, 0.1, 50);
-    gluLookAt(0, 5, -5, 0, 0, 0, 0, -1, 0);
-    glMatrixMode(GL_MODELVIEW);
-    glPopMatrix();
-
-}
-
 ENTRYPOINT void reshape_tangram(ModeInfo * mi, int w, int h)
 {
     glViewport(0, 0, w, h);
-    set_perspective();
-    glLoadIdentity();
 }
 
 static void set_camera(tangram_configuration *tp)

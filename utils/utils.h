@@ -18,10 +18,10 @@
 #include <string.h>
 #include <math.h>
 
-#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 #else /* real X11 */
 # include <X11/Xlib.h>
 # include <X11/Xutil.h>
 # include <X11/Xos.h>
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */

@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=GZe5rk_7TnA"/>
+  <video href="https://www.youtube.com/watch?v=GZe5rk_7TnA"/>
 
   <number id="start" type="slider" arg="-start %"
           _label="Start sequence time" _low-label="0 sec" _high-label="30 sec"

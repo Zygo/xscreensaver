@@ -611,11 +611,11 @@ FlamePasteData(struct state *st,
 static unsigned char *
 loadBitmap(struct state *st, int *w, int *h)
 {
+# ifdef HAVE_JWXYZ
+  const char *bitmap_name = "(default)"; /* #### always use builtin */
+# else
   char *bitmap_name = get_string_resource (st->dpy, "bitmap", "Bitmap");
-
-#ifdef HAVE_COCOA
-  bitmap_name = "(default)"; /* #### always use builtin */
-#endif /* HAVE_COCOA */
+# endif
   
   if (!bitmap_name ||
       !*bitmap_name ||
@@ -625,13 +625,13 @@ loadBitmap(struct state *st, int *w, int *h)
     {
       XImage *ximage;
       unsigned char *result, *o;
-      char *bits = (char *) malloc (sizeof(bob_bits));
+      unsigned char *bits = (unsigned char *) malloc (sizeof(bob_bits));
       int x, y;
       int scale = ((st->width > bob_width * 10) ? 2 : 1);
  
       memcpy (bits, bob_bits, sizeof(bob_bits));
-      ximage = XCreateImage (st->dpy, st->visual, 1, XYBitmap, 0, bits,
-                             bob_width, bob_height, 8, 0);
+      ximage = XCreateImage (st->dpy, st->visual, 1, XYBitmap, 0, 
+                             (char *) bits, bob_width, bob_height, 8, 0);
       ximage->byte_order = LSBFirst;
       ximage->bitmap_bit_order = LSBFirst;
       *w = ximage->width * scale;
@@ -644,7 +644,7 @@ loadBitmap(struct state *st, int *w, int *h)
       return result;
     }
   else  /* load a bitmap file */
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
     abort(); /* #### fix me */
 #else
    {
@@ -703,7 +703,7 @@ loadBitmap(struct state *st, int *w, int *h)
       *h = st->height;
       return result;
     }
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */
 
   *w = 0;
   *h = 0;

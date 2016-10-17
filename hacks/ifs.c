@@ -1,4 +1,4 @@
-/* Copyright © Chris Le Sueur and Robby Griffin, 2005-2006
+/* Copyright Â© Chris Le Sueur and Robby Griffin, 2005-2006
 
 Permission is hereby granted, free of charge, to any person obtaining
 a copy of this software and associated documentation files (the
@@ -102,12 +102,12 @@ static const char *ifs_defaults [] = {
   "*rotate:		True",
   "*recurse:		False",
   "*multi:              True",
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   "*doubleBuffer:	False",
 #else
   "*doubleBuffer:	True",
 #endif
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
   0
@@ -436,6 +436,7 @@ ifs_init (Display *d_arg, Window w_arg)
   if (st->ncolours < st->lensnum)
     st->ncolours = st->lensnum;
   if (st->colours) free(st->colours);
+  if (st->ncolours < 1) st->ncolours = 1;
   st->colours = (XColor *)calloc(st->ncolours, sizeof(XColor));
   if (!st->colours) exit(1);
   make_smooth_colormap (xgwa.screen, xgwa.visual, xgwa.colormap, 

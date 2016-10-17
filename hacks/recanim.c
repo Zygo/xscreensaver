@@ -15,12 +15,12 @@
 #endif /* HAVE_CONFIG_H */
 
 #ifdef USE_GL
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
 #  include "jwxyz.h"
-# else /* !HAVE_COCOA -- real Xlib */
+# else /* !HAVE_JWXYZ -- real Xlib */
 #  include <GL/glx.h>
 #  include <GL/glu.h>
-# endif /* !HAVE_COCOA */
+# endif /* !HAVE_JWXYZ */
 # ifdef HAVE_JWZGLES
 #  include "jwzgles.h"
 # endif /* HAVE_JWZGLES */
@@ -119,9 +119,9 @@ screenhack_record_anim_init (Screen *screen, Window window, int target_frames)
 # endif /* !USE_GL */
 
 
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   XFetchName (dpy, st->window, &st->title);
-# endif /* !HAVE_COCOA */
+# endif /* !HAVE_JWXYZ */
 
   return st;
 }
@@ -246,7 +246,7 @@ screenhack_record_anim (record_anim_state *st)
 #  error GDK_PIXBUF is required
 # endif /* !HAVE_GDK_PIXBUF */
 
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   {  /* Put percent done in window title */
     int pct = 100 * (st->frame_count + 1) / st->target_frames;
     if (pct != st->pct && st->title)
@@ -260,7 +260,7 @@ screenhack_record_anim (record_anim_state *st)
         st->pct = pct;
       }
   }
-# endif /* !HAVE_COCOA */
+# endif /* !HAVE_JWXYZ */
 
   if (++st->frame_count >= st->target_frames)
     screenhack_record_anim_free (st);

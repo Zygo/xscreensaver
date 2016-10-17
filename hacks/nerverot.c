@@ -1114,7 +1114,7 @@ static void eraseAndDraw (struct state *st)
     for (n = 0; n < st->segCount; n++)
     {
 	LineSegment *seg = &st->segsToErase[n];
-#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
 	XDrawLine (st->dpy, st->drawable, st->gcs[0], 
 		   seg->x1, seg->y1, seg->x2, seg->y2);
 #endif
@@ -1173,7 +1173,7 @@ static void initParams (struct state *st)
     
     st->doubleBuffer = get_boolean_resource (st->dpy, "doubleBuffer", "Boolean");
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
     st->doubleBuffer = False;
 # endif
 
@@ -1325,7 +1325,7 @@ static const char *nerverot_defaults [] = {
     "*maxRadius:        25",
     "*maxNerveRadius:	0.7",
     "*nervousness:	0.3",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
     "*ignoreRotation:   True",
 #endif
     0

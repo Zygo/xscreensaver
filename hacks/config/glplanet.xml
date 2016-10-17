@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=hXZquXPG4pg"/>
+  <video href="https://www.youtube.com/watch?v=hXZquXPG4pg"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
@@ -12,7 +12,6 @@
           convert="invert"/>
 
   <!-- #### -no-texture -->
-  <!-- #### -no-stars -->
 
   <file id="bitmap" _label="Image file" arg="-image %"/>
 

@@ -109,7 +109,9 @@ static const char sccsid[] = "@(#)rubik.c	5.01 2001/03/01 xlockmore";
 					"*count: -30 \n"		\
 					"*showFPS: False \n"	\
 					"*cycles: 20 \n"		\
-					"*size:  -6 \n"
+					"*size:  -6 \n"		\
+					"*suppressRotationAnimation: True\n" \
+
 # define refresh_rubik 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else /* !STANDALONE */
@@ -471,6 +473,7 @@ faceSizes(rubikstruct * rp, int face, int * sizeOfRow, int * sizeOfColumn)
 			*sizeOfRow = MAXSIZEX;
 			*sizeOfColumn = MAXSIZEY;
 			break;
+                default: abort();
 	}
 }
 
@@ -1816,7 +1819,6 @@ reshape_rubik(ModeInfo * mi, int width, int height)
 	glLoadIdentity();
 	glFrustum(-1.0, 1.0, -1.0, 1.0, 5.0, 15.0);
 	glMatrixMode(GL_MODELVIEW);
-
 }
 
 ENTRYPOINT Bool
@@ -2006,6 +2008,18 @@ draw_rubik(ModeInfo * mi)
 	} else {
 		glScalef(Scale4Iconic * rp->WindH / rp->WindW, Scale4Iconic, Scale4Iconic);
 	}
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180) {
+      glScalef (1/h, h, 1); /* #### not quite right */
+      h = 1.8;
+      glScalef (h, h, h);
+    }
+  }
+# endif
 
     gltrackball_rotate (rp->trackball);
 

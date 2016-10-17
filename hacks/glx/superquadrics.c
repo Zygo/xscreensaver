@@ -75,7 +75,8 @@ static const char sccsid[] = "@(#)superquadrics.c	4.07 97/11/24 xlockmore";
 					"*count:		25      \n"			\
 					"*cycles:		40      \n"			\
 					"*showFPS:      False   \n"			\
-					"*wireframe:	False	\n"
+					"*wireframe:	False	\n"			\
+					"*suppressRotationAnimation: True\n" \
 
 # define superquadrics_handle_event 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
@@ -547,8 +548,9 @@ NextSuperquadric(superquadricsstruct * sp)
 }
 
 static int
-DisplaySuperquadrics(superquadricsstruct * sp)
+DisplaySuperquadrics(ModeInfo *mi)
 {
+	superquadricsstruct *sp = &superquadrics[MI_SCREEN(mi)];
     int polys = 0;
 	glDrawBuffer(GL_BACK);
 	if (sp->wireframe)
@@ -569,6 +571,16 @@ DisplaySuperquadrics(superquadricsstruct * sp)
 	SetCull(0, sp);
 
     glScalef(0.7, 0.7, 0.7);  /* jwz: scale it down a bit */
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1/h);
+  }
+# endif
+
 	polys = DoneScale(sp);
 
 	glPopMatrix();
@@ -578,10 +590,11 @@ DisplaySuperquadrics(superquadricsstruct * sp)
 }
 
 static int
-NextSuperquadricDisplay(superquadricsstruct * sp)
+NextSuperquadricDisplay(ModeInfo *mi)
 {
+	superquadricsstruct *sp = &superquadrics[MI_SCREEN(mi)];
 	NextSuperquadric(sp);
-	return DisplaySuperquadrics(sp);
+	return DisplaySuperquadrics(mi);
 }
 
 #define MINSIZE 200
@@ -740,7 +753,7 @@ init_superquadrics(ModeInfo * mi)
 				  MI_COUNT(mi), MI_CYCLES(mi), spinspeed, sp);
 		ReshapeSuperquadrics(MI_WIDTH(mi), MI_HEIGHT(mi));
 
-		DisplaySuperquadrics(sp);
+		DisplaySuperquadrics(mi);
 		glFinish();
 		glXSwapBuffers(display, window);
 	} else {
@@ -760,7 +773,7 @@ draw_superquadrics(ModeInfo * mi)
 
 	glXMakeCurrent(display, window, *(sp->glx_context));
 
-    mi->polygon_count = NextSuperquadricDisplay(sp);
+    mi->polygon_count = NextSuperquadricDisplay(mi);
 
     if (mi->fps_p) do_fps (mi);
 	glFinish();

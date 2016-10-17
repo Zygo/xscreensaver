@@ -228,7 +228,7 @@ fluidballs_init (Display *dpy, Window window)
 
   state->dbuf = get_boolean_resource (dpy, "doubleBuffer", "Boolean");
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   state->dbuf = False;
 # endif
 
@@ -330,7 +330,7 @@ fluidballs_init (Display *dpy, Window window)
                                                "ShakeThreshold");
   state->time_tick = 999999;
 
-# ifdef USE_IPHONE	/* Always obey real-world gravity */
+# ifdef HAVE_MOBILE	/* Always obey real-world gravity */
   state->shake_p = False;
 # endif
 
@@ -449,11 +449,12 @@ check_wall_clock (b_state *state, float max_d)
 
       state->time_since_shake += (now.tv_sec - state->last_time.tv_sec);
 
-# ifdef USE_IPHONE	/* Always obey real-world gravity */
+# ifdef HAVE_MOBILE	/* Always obey real-world gravity */
       {
         float a = fabs (fabs(state->accx) > fabs(state->accy)
                         ? state->accx : state->accy);
-        switch ((int) current_device_rotation ()) {
+        int rot = current_device_rotation();
+        switch (rot) {
         case    0: case  360: state->accx =  0; state->accy =  a; break;
         case  -90:            state->accx = -a; state->accy =  0; break;
         case   90:            state->accx =  a; state->accy =  0; break;
@@ -461,7 +462,7 @@ check_wall_clock (b_state *state, float max_d)
         default: break;
         }
       }
-# endif /* USE_IPHONE */
+# endif /* HAVE_MOBILE */
 
       if (state->fps_p) 
 	{
@@ -488,28 +489,32 @@ static void
 repaint_balls (b_state *state)
 {
   int a;
+# ifndef HAVE_JWXYZ
   int x1a, x2a, y1a, y2a;
+# endif
   int x1b, x2b, y1b, y2b;
   float max_d = 0;
 
-#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   XClearWindow (state->dpy, state->b);
 #endif
 
   for (a=1; a <= state->count; a++)
     {
       GC gc;
+# ifndef HAVE_JWXYZ
       x1a = (state->opx[a] - state->r[a] - state->xmin);
       y1a = (state->opy[a] - state->r[a] - state->ymin);
       x2a = (state->opx[a] + state->r[a] - state->xmin);
       y2a = (state->opy[a] + state->r[a] - state->ymin);
+# endif
 
       x1b = (state->px[a] - state->r[a] - state->xmin);
       y1b = (state->py[a] - state->r[a] - state->ymin);
       x2b = (state->px[a] + state->r[a] - state->xmin);
       y2b = (state->py[a] + state->r[a] - state->ymin);
 
-#ifndef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifndef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
       if (!state->dbeclear_p || !state->backb)
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
@@ -522,7 +527,7 @@ repaint_balls (b_state *state)
 			0, 360*64);
 	    }
 	}
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */
 
       if (state->mouse_ball == a)
         gc = state->draw_gc2;
@@ -795,7 +800,7 @@ fluidballs_free (Display *dpy, Window window, void *closure)
 static const char *fluidballs_defaults [] = {
   ".background:		black",
   ".foreground:		yellow",
-  ".textColor:		white",
+  ".textColor:		yellow",
   "*mouseForeground:	white",
   "*delay:		10000",
   "*count:		300",
@@ -812,7 +817,7 @@ static const char *fluidballs_defaults [] = {
   "*useDBE:		True",
   "*useDBEClear:	True",
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:	True",
 #endif
   0

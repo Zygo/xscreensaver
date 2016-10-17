@@ -14,7 +14,7 @@
 # include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-#ifndef HAVE_COCOA
+#if !defined(HAVE_JWXYZ) && !defined(HAVE_JWZGLES)
 # include <GL/gl.h>
 # include <GL/glu.h>
 #endif

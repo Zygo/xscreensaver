@@ -15,7 +15,7 @@
 #undef DO_VORONOI
 
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # define XK_MISCELLANY
 # include <X11/keysymdef.h>
 #endif
@@ -67,13 +67,11 @@ static void *
 tessellimage_init (Display *dpy, Window window)
 {
   struct state *st = (struct state *) calloc (1, sizeof(*st));
-  Colormap cmap;
 
   st->dpy = dpy;
   st->window = window;
 
   XGetWindowAttributes (st->dpy, st->window, &st->xgwa);
-  cmap = st->xgwa.colormap;
 
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
   if (st->delay < 1) st->delay = 1;
@@ -932,7 +930,7 @@ static const char *tessellimage_defaults [] = {
   "*outline:			True",
   "*fillScreen:			True",
   "*cache:			True",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:             True",
   "*rotateImages:               True",
 #endif

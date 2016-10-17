@@ -222,6 +222,7 @@ draw_thornbird(ModeInfo * mi)
 
 	MI_IS_DRAWN(mi) = True;
 
+    if (MI_COUNT(mi) < 1) MI_COUNT(mi) = 1;
 	if (hp->pointBuffer[erase] == NULL) {
 		if ((hp->pointBuffer[erase] = (XPoint *) malloc(MI_COUNT(mi) *
 				sizeof (XPoint))) == NULL) {

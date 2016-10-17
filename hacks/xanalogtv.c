@@ -34,7 +34,7 @@
 # include <unistd.h>
 #endif
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # include <X11/Intrinsic.h> /* for XtDatabase in hack_resources() */
 #endif
 
@@ -238,8 +238,8 @@ static const char *xanalogtv_defaults [] = {
   ".background:	        black",
   ".foreground:	        white",
   "*delay:	        5",
-  "*grabDesktopImages:  False",   /* HAVE_COCOA */
-  "*chooseRandomImages: True",    /* HAVE_COCOA */
+  "*grabDesktopImages:  False",   /* HAVE_JWXYZ */
+  "*chooseRandomImages: True",    /* HAVE_JWXYZ */
   ANALOGTV_DEFAULTS
   0,
 };
@@ -281,7 +281,7 @@ getticks(struct state *st)
 static void
 hack_resources (Display *dpy)
 {
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
   static int count = -1;
   count++;
 
@@ -301,7 +301,7 @@ hack_resources (Display *dpy)
       value.size = strlen(buf2);
       XrmPutResource (&db, buf1, "String", &value);
     }
-#endif /* HAVE_COCOA */
+#endif /* HAVE_JWXYZ */
 }
 
 
@@ -573,7 +573,7 @@ xanalogtv_draw (Display *dpy, Window window, void *closure)
   }
   analogtv_draw(st->tv, st->cs->noise_level, recs, rec_count);
 
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   return 0;
 #else
   return 5000;

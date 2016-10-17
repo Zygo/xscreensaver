@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2008 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,10 +18,10 @@
    a struct in `MODULENAME_xscreensaver_function_table',
    and a pointer to that in `xscreensaver_function_table'.
 
-   In a Cocoa world, we only define the prefixed symbol;
+   In a Cocoa/Android world, we only define the prefixed symbol;
    the un-prefixed symbol does not exist.
  */
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # define XSCREENSAVER_LINK(NAME)
 #else
 # define XSCREENSAVER_LINK(NAME) \
@@ -29,7 +29,7 @@
 #endif
 
 
-#if defined(HAVE_COCOA) && !defined(__XLOCKMORE_INTERNAL_H__)
+#if defined(HAVE_JWXYZ) && !defined(__XLOCKMORE_INTERNAL_H__)
   /* this is one enormous kludge... */
 # undef ya_rand_init
   static void

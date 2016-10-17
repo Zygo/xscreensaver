@@ -193,7 +193,7 @@ anemone_init (Display *disp, Window window)
 
   st->dbuf = TRUE;
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   st->dbuf = False;
 # endif
 
@@ -426,7 +426,7 @@ static const char *anemone_defaults [] = {
 #ifdef HAVE_DOUBLE_BUFFER_EXTENSION
   "*useDBE:		True",
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

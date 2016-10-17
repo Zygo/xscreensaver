@@ -8,15 +8,24 @@
 #if 0   /* for Mesa */
 # include "glutint.h"
 #else   /* for xscreensaver */
+
 # ifdef HAVE_CONFIG_H
 #  include "config.h"
 # endif
-# ifndef HAVE_COCOA
+
+# ifdef HAVE_COCOA
+#  include "jwxyz.h"
+# elif defined(HAVE_ANDROID)
+#  include "jwxyz.h"
+#  include <GLES/gl.h>
+# else  /* real X11 */
 #  include <GL/gl.h>
 # endif
+
 # ifdef HAVE_JWZGLES
 #  include "jwzgles.h"
 # endif /* HAVE_JWZGLES */
+
 # undef APIENTRY
 # define APIENTRY /**/
 #endif

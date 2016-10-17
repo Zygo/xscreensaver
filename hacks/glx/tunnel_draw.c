@@ -45,11 +45,15 @@ static const char sccsid[] = "@(#)tunnel_draw.c	5.13 2004/05/25 xlockmore";
 #include <math.h>
 
 #ifdef STANDALONE
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
 #  include <GL/gl.h>
 #  include <GL/glu.h>
 # endif
 #endif
+#ifdef HAVE_ANDROID
+#include <GLES/gl.h>
+#endif
+
 
 #include "tunnel_draw.h"
 
@@ -240,7 +244,7 @@ atunnel_DrawTunnel(struct tunnel_state *st,
                 int do_texture, int do_light, GLuint *textures)
 {
 	tnPath *p, *p1, *cmpos;
-	cvPoint op, p4[4], T, ppp, ppp1, op1, op2;
+	cvPoint op, p4[4], T, ppp, op1, op2;
 	float t;
 	int i, j, k, flag;
 	cvPoint points[10];
@@ -386,10 +390,6 @@ atunnel_DrawTunnel(struct tunnel_state *st,
 		}
 			
 		cvCatmullRom(p4, t, &op1);
-
-		ppp1.x = op1.x;
-		ppp1.y = op1.y;
-		ppp1.z = op1.z + 0.25;
 
 		T.x = op1.x - op.x;
 		T.y = op1.y - op.y;

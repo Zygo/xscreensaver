@@ -21,7 +21,8 @@
 
 #define DEFAULTS   "*delay:         20000         \n" \
                    "*showFPS:       False         \n" \
-                   "*wireframe:     False         \n"
+                   "*wireframe:     False         \n" \
+		   "*suppressRotationAnimation: True\n" \
 
 # define refresh_cubicgrid 0
 #include "xlockmore.h"
@@ -103,8 +104,9 @@ cubicgrid_handle_event (ModeInfo *mi, XEvent *event)
 }
 
 
-static Bool draw_main(cubicgrid_conf *cp) 
+static Bool draw_main(ModeInfo *mi)
 {
+  cubicgrid_conf *cp = &cubicgrid[MI_SCREEN(mi)];
   double x, y, z;
 
   glClear(GL_COLOR_BUFFER_BIT);
@@ -116,6 +118,16 @@ static Bool draw_main(cubicgrid_conf *cp)
   glTranslatef(0, 0, zpos);
 
   glScalef(size/ticks, size/ticks, size/ticks);
+
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1);
+  }
+# endif
 
   gltrackball_rotate (cp->trackball);
 
@@ -241,7 +253,7 @@ ENTRYPOINT void draw_cubicgrid(ModeInfo * mi)
   MI_IS_DRAWN(mi) = True;
   if (!cp->glx_context) return;
   glXMakeCurrent(display, window, *(cp->glx_context));
-  if (!draw_main(cp)) {
+  if (!draw_main(mi)) {
     release_cubicgrid(mi);
     return;
   }

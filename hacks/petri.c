@@ -732,7 +732,7 @@ static const char *petri_defaults [] = {
   "*originalcolors:	false",
   "*memThrottle:        22M",	/* don't malloc more than this much.
                                    Scale the pixels up if necessary. */
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
     0

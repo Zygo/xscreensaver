@@ -16,6 +16,7 @@
 			"*count:        0           \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
+			"*suppressRotationAnimation: True\n" \
 
 # define refresh_gears 0
 # define release_gears 0
@@ -97,6 +98,14 @@ reshape_gears (ModeInfo *mi, int width, int height)
   gluLookAt( 0.0, 0.0, 30.0,
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1/h);
+  }
+# endif
 
   glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -759,7 +768,7 @@ init_gears (ModeInfo *mi)
       bp->planetary_p = False;
 
       if (total_gears <= 0)
-        total_gears = 3 + abs (BELLRAND (8) - 4);  /* 3 - 7, mostly 3. */
+        total_gears = 3 + fabs (BELLRAND (8) - 4);  /* 3 - 7, mostly 3. */
       bp->gears = (gear **) calloc (total_gears+2, sizeof(**bp->gears));
       bp->ngears = 0;
 

@@ -4,11 +4,11 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.34
-!                              24-Oct-2015
+!                              version 5.35
+!                              24-May-2016
 !
 ! See "man xscreensaver" for more info.  The latest version is always
-! available at http://www.jwz.org/xscreensaver/
+! available at https://www.jwz.org/xscreensaver/
 
 
 ! These resources, when placed in the system-wide app-defaults directory
@@ -90,7 +90,7 @@ GetViewPortIsFullOfLies: False
 
 ! This is the URL loaded by the "Help" button on the splash screen,
 ! and by the "Documentation" menu item in xscreensaver-demo.
-*helpURL: http://www.jwz.org/xscreensaver/man.html
+*helpURL: https://www.jwz.org/xscreensaver/man.html
 
 ! loadURL       -- how the "Help" buttons load the helpURL (/bin/sh syntax.)
 ! manualCommand -- how the "Documentation" buttons display man pages.
@@ -371,7 +371,11 @@ GetViewPortIsFullOfLies: False
 				tessellimage -root			    \n\
 @GL_KLUDGE@ GL: 				winduprobot -root			    \n\
 @GL_KLUDGE@ GL: 				splitflap -root				    \n\
-				testx11 -root				    \n
+@GL_KLUDGE@ GL: 				dymaxionmap -root			    \n\
+@GL_KLUDGE@ GL: 				energystream -root			    \n\
+@GL_KLUDGE@ GL: 				hydrostat -root				    \n\
+@GL_KLUDGE@ GL: 				raverhoop -root				    \n\
+@GL_KLUDGE@ GL: 				unicrud -root				    \n
 
 
 
@@ -430,7 +434,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *passwd.uname:                  True
 
 *splash.heading.label:		XScreenSaver %s
-*splash.body.label:		Copyright \251 1991-2015 by
+*splash.body.label:		Copyright \251 1991-2016 by
 *splash.body2.label:		Jamie Zawinski <jwz@jwz.org>
 *splash.demo.label:		Settings
 *splash.help.label:		Help
@@ -462,6 +466,8 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.dangerball.name:     DangerBall
 *hacks.decayscreen.name:    DecayScreen
 *hacks.dnalogo.name:        DNA Logo
+*hacks.dymaxionmap.name:    DymaxionMap
+*hacks.energystream.name:   EnergyStream
 *hacks.euler2d.name:        Euler2D
 *hacks.fadeplot.name:       FadePlot
 *hacks.flipflop.name:       FlipFlop
@@ -494,6 +500,7 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.popsquares.name:     PopSquares
 *hacks.projectiveplane.name:ProjectivePlane
 *hacks.quasicrystal.name:   QuasiCrystal
+*hacks.raverhoop.name:      RaverHoop
 *hacks.rd-bomb.name:        RDbomb
 *hacks.rdbomb.name:         RDbomb
 *hacks.romanboy.name:       RomanBoy

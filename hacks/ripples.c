@@ -1114,7 +1114,7 @@ static const char *ripples_defaults[] =
 #else
   "*useSHM: False",
 #endif
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
   "*rotateImages:   True",
 #endif

@@ -897,7 +897,7 @@ saver_exit (saver_info *si, int status, const char *dump_core_reason)
 
       if (bugp)
 	fprintf(real_stderr,
-		"%s: see http://www.jwz.org/xscreensaver/bugs.html\n"
+		"%s: see https://www.jwz.org/xscreensaver/bugs.html\n"
 		"\t\t\tfor bug reporting information.\n\n",
 		blurb());
 

@@ -603,9 +603,9 @@ drawlevelblock (ModeInfo * mi, pacmangamestruct * pp,
     if (pp->ys % 2 == 1)
         dy = -1;
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
     XSetFillStyle (display, pp->stippledGC, FillSolid);
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */
     XSetLineAttributes (display, pp->stippledGC, pp->wallwidth,
                         LineSolid, CapRound, JoinMiter);
 
@@ -955,15 +955,11 @@ draw_pacman_sprite (ModeInfo * mi)
     Display *display = MI_DISPLAY (mi);
     Window window = MI_WINDOW (mi);
     pacmangamestruct *pp = &pacman_games[MI_SCREEN (mi)];
-    unsigned int dir;
 
     pp->pacman.cf = pp->pacman.col * pp->xs + pp->pacman.delta.x *
         pp->pacman.cfactor + pp->xb + pp->spritedx;
     pp->pacman.rf = pp->pacman.row * pp->ys + pp->pacman.delta.y *
         pp->pacman.rfactor + pp->yb + pp->spritedy;
-
-    dir = (ABS (pp->pacman.cfactor) * (2 - pp->pacman.cfactor) +
-           ABS (pp->pacman.rfactor) * (1 + pp->pacman.rfactor)) % 4;
 
     XSetForeground (display, pp->stippledGC, MI_BLACK_PIXEL (mi));
     if (pp->pacman.oldcf != NOWHERE && pp->pacman.oldrf != NOWHERE) {
@@ -1571,7 +1567,7 @@ init_pacman (ModeInfo * mi)
         }
     }
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
     jwxyz_XSetAntiAliasing (display, pp->stippledGC, False);
 #endif
 

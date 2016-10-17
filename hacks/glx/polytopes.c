@@ -90,7 +90,8 @@ static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
 
 #ifdef STANDALONE
 # define DEFAULTS           "*delay:      25000 \n" \
-                            "*showFPS:    False \n"
+                            "*showFPS:    False \n" \
+			    "*suppressRotationAnimation: True\n" \
 
 # define refresh_polytopes 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
@@ -100,7 +101,7 @@ static const char sccsid[] = "@(#)polytopes.c  1.2 05/09/28 xlockmore";
 
 #ifdef USE_GL
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # include <X11/keysym.h>
 #endif
 #include "gltrackball.h"
@@ -2827,6 +2828,7 @@ static void display_polytopes(ModeInfo *mi)
   {
     gluPerspective(60.0,pp->aspect,0.1,100.0);
   }
+
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
 

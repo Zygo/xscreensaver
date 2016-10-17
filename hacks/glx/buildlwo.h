@@ -14,10 +14,15 @@
 #endif /* HAVE_CONFIG_H */
 
 #ifdef STANDALONE
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
 #  include <GL/gl.h>
 # endif
 #endif
+
+#ifdef HAVE_ANDROID
+# include <GLES/gl.h>
+#endif
+
 
 #ifdef HAVE_JWZGLES
 # include "jwzgles.h"

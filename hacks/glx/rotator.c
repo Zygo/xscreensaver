@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2002 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -22,16 +22,21 @@
 
 struct rotator {
 
-  double spin_x_speed, spin_y_speed, spin_z_speed;
+  double spin_x_speed, spin_y_speed, spin_z_speed; /* scaling factors >= 0. */
   double wander_speed;
 
-  double rotx, roty, rotz;	   /* current object rotation */
-  double dx, dy, dz;		   /* current rotational velocity */
-  double ddx, ddy, ddz;		   /* current rotational acceleration */
-  double d_max;			   /* max rotational velocity */
+  double rotx, roty, rotz;	/* current object rotation, -1 to +1.
+                                   Sign indicates direction of motion.
+                                   0.25 means +90 deg, positive velocity.
+                                   -0.25 means +90 deg, negative velocity
+                                   (not +270 deg or -90 deg!)
+                                   Yes, this is stupid.
+                                 */
+  double dx, dy, dz;		/* current rotational velocity, >= 0. */
+  double ddx, ddy, ddz;		/* current rotational acceleration, +/-. */
+  double d_max;			/* max rotational velocity, > 0. */
 
-  int wander_frame;		   /* position in the wander cycle */
-
+  int wander_frame;		/* position in the wander cycle, >= 0. */
 };
 
 
@@ -41,27 +46,44 @@ struct rotator {
 #define BELLRAND(n) ((frand((n)) + frand((n)) + frand((n))) / 3)
 #define RANDSIGN() ((random() & 1) ? 1 : -1)
 
+/* Stay in the range [0-1). 
+    1.01 => 0.01.
+   -0.01 => 0.99
+ */
+#define CLAMP(i) do {   \
+    while ((i) <  0) (i)++; \
+    while ((i) >= 1) (i)--; \
+  } while (0)
+
+#undef EPSILON
+#define EPSILON 0.000001
+
+
 static void
 rotate_1 (double *pos, double *v, double *dv, double speed, double max_v)
 {
+  /* Sign of *pos is direction of motion.
+     Sign of *v is always positive.
+     It would make way more sense for *v to indicate direction of motion.
+     What was I thinking?
+   */
+
   double ppos = *pos;
 
   if (speed == 0) return;
 
   /* tick position */
   if (ppos < 0)
+    /* Ignore but preserve the sign on ppos.  It's kind of like: 
+       ppos = old_sign * (abs(ppos) + (v * old_sign))
+       This is why it would make more sense for that sign bit to be on v.
+     */
     ppos = -(ppos + *v);
   else
     ppos += *v;
 
-  if (ppos > 1.0)
-    ppos -= 1.0;
-  else if (ppos < 0)
-    ppos += 1.0;
-
-  if (ppos < 0) abort();
-  if (ppos > 1.0) abort();
-  *pos = (*pos > 0 ? ppos : -ppos);
+  CLAMP (ppos);
+  *pos = (*pos > 0 ? ppos : -ppos);  /* preserve old sign bit on pos. */
 
   /* accelerate */
   *v += *dv;
@@ -72,24 +94,23 @@ rotate_1 (double *pos, double *v, double *dv, double speed, double max_v)
       *dv = -*dv;
     }
   /* If it stops, start it going in the other direction. */
+  /* Since *v is always positive, <= 0 means stopped. */
   else if (*v < 0)
     {
       if (random() % 4)
 	{
-	  *v = 0;
+	  *v = 0;	     /* don't let velocity be negative */
 
-	  /* keep going in the same direction */
-	  if (random() % 2)
+	  if (random() % 2)  /* stay stopped, and kill acceleration */
 	    *dv = 0;
-	  else if (*dv < 0)
+	  else if (*dv < 0)  /* was decelerating, accelerate instead */
 	    *dv = -*dv;
 	}
       else
 	{
-	  /* reverse gears */
-	  *v = -*v;
-	  *dv = -*dv;
-	  *pos = -*pos;
+	  *v = -*v;      /* switch to tiny positive velocity, or zero */
+	  *dv = -*dv;    /* toggle acceleration */
+	  *pos = -*pos;  /* reverse direction of motion */
 	}
     }
 
@@ -100,8 +121,13 @@ rotate_1 (double *pos, double *v, double *dv, double speed, double max_v)
   /* Change acceleration very occasionally. */
   if (! (random() % 200))
     {
+#if 0 /* this might make more sense: */
+      if (*dv > -EPSILON && *dv < EPSILON)
+	*dv += 10 * (*dv < 0 ? -EPSILON : EPSILON);
+#else
       if (*dv == 0)
 	*dv = 0.00001;
+#endif
       else if (random() & 1)
 	*dv *= 1.2;
       else
@@ -149,6 +175,7 @@ make_rotator (double spin_x_speed,
 
   if (randomize_initial_state_p)
     {
+      /* Sign on position is direction of travel. Stripped before returned. */
       r->rotx = frand(1.0) * RANDSIGN();
       r->roty = frand(1.0) * RANDSIGN();
       r->rotz = frand(1.0) * RANDSIGN();
@@ -213,9 +240,9 @@ get_rotation (rotator *rot, double *x_ret, double *y_ret, double *z_ret,
   x = rot->rotx;
   y = rot->roty;
   z = rot->rotz;
-  if (x < 0) x = 1 - (x + 1);
-  if (y < 0) y = 1 - (y + 1);
-  if (z < 0) z = 1 - (z + 1);
+  if (x < 0) x = -x;
+  if (y < 0) y = -y;
+  if (z < 0) z = -z;
 
   if (x_ret) *x_ret = x;
   if (y_ret) *y_ret = y;

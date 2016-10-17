@@ -19,10 +19,13 @@
 #include "visual.h"
 
 #include <string.h>
+#ifndef HAVE_ANDROID
 #include <X11/Xutil.h>
+#else
+#include "../android/android-visual.h"
+#endif
 
 extern char *progname;
-
 
 #ifndef isupper
 # define isupper(c)  ((c) >= 'A' && (c) <= 'Z')

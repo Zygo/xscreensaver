@@ -543,7 +543,7 @@ draw_bouboule(ModeInfo * mi)
 	Star       *star;
 	XArc       *arc = NULL, *arcleft = NULL;
 
-#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
     XClearWindow(MI_DISPLAY(mi), MI_WINDOW(mi));
 #endif
 

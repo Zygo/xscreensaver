@@ -43,8 +43,8 @@
 #define DEFAULTS                        "*delay:		20000\n" \
 										"*showFPS:      False\n" \
                                         "*mode:         grab\n"  \
-                                        "*useSHM:       True \n" 
-
+                                        "*useSHM:       True \n" \
+										"*suppressRotationAnimation: True\n" \
 
 # define refresh_gflux 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
@@ -283,23 +283,26 @@ ENTRYPOINT void draw_gflux(ModeInfo * mi)
 }
 
 
-/* reset the projection matrix */
-static void resetProjection(void) 
+/* Standard reshape function */
+ENTRYPOINT void
+reshape_gflux(ModeInfo *mi, int width, int height)
 {
+    glViewport( 0, 0, width, height );
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
     glFrustum(-_zoom,_zoom,-0.8*_zoom,0.8*_zoom,2,6);
     glTranslatef(0.0,0.0,-4.0);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-}
 
-/* Standard reshape function */
-ENTRYPOINT void
-reshape_gflux(ModeInfo *mi, int width, int height)
-{
-    glViewport( 0, 0, width, height );
-    resetProjection();
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+    {
+      GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+      int o = (int) current_device_rotation();
+      if (o != 0 && o != 180 && o != -180)
+        glScalef (1/h, 1/h, 1/h);
+    }
+# endif
 }
 
 

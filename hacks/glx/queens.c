@@ -29,7 +29,7 @@
 # include "xlock.h"
 #endif
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 #else
 # include <X11/Xlib.h>
@@ -412,7 +412,7 @@ static int drawBoard(Queenscreen *qs)
   return polys;
 }
 
-static int display(Queenscreen *qs) 
+static int display(ModeInfo *mi, Queenscreen *qs) 
 {
   int max = 1024;
   int polys = 0;
@@ -591,7 +591,7 @@ ENTRYPOINT void draw_queens(ModeInfo *mi)
   else
     glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
-  mi->polygon_count = display(qs);
+  mi->polygon_count = display(mi, qs);
   mi->recursion_depth = qs->BOARDSIZE;
 
   if(mi->fps_p) do_fps(mi);

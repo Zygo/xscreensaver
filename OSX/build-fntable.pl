@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2012-2014 Jamie Zawinski <jwz@jwz.org>
+# Copyright © 2012-2015 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -23,7 +23,7 @@ require 5;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.3 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.5 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 1;
 
@@ -34,6 +34,7 @@ my %disable = (
    'lcdscrub'		=> 1,
    'lockward'		=> 1,
    'webcollage'		=> 1,
+   'testx11'		=> 1,
   );
 
 # Parse the RETIRED_EXES variable from the Makefiles to populate %disable.
@@ -102,8 +103,8 @@ sub build_h($) {
               "\n");
 
   $body .= "extern struct $suf";
-  foreach my $s (@names) {
-    $body .= "\n *${s}_${suf},";
+  foreach my $s (@names, 'testx11') {
+    $body .= "\n ${s}_${suf},";
   }
   $body =~ s/,\s*$/;/s;
 
@@ -120,6 +121,8 @@ sub build_h($) {
             " " . line('apple2', $suf) .
             "#elif defined(PHOSPHOR_ONLY)\n" .
             " " . line('phosphor', $suf) .
+            "#elif defined(TESTX11_ONLY)\n" .
+            " " . line('testx11', $suf) .
             "#else\n");
   foreach my $s (@names) { $body .= line($s, $suf); }
   $body .= ("#endif\n" .

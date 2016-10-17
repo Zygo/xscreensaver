@@ -186,6 +186,7 @@ init_map (struct state *st)
 
   if (!mono_p)
     {
+      if (st->ncolors < 1) st->ncolors = 1;
       st->colors = (XColor *) malloc (st->ncolors * sizeof(*st->colors));
 
       make_smooth_colormap (st->xgwa.screen, st->xgwa.visual, st->cmap,
@@ -401,7 +402,7 @@ static const char *imsmap_defaults [] = {
   "*iterations:	7",
   "*delay:	5",
   "*delay2:	20000",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

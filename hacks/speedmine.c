@@ -47,8 +47,10 @@
  */
 
 /* Define or undefine NDEBUG to turn assert and abort debugging off or on */
-#define NDEBUG
-#include <assert.h>
+/*#define NDEBUG*/
+/*#include <assert.h>*/
+#define assert(X)
+#define DEBUG_FLAG 0
 
 #include <math.h>
 
@@ -67,11 +69,6 @@
 /* No. of shades of each color (ground, walls, bonuses) */
 #define MAX_COLORS 32
 
-#ifdef NDEBUG
-#define DEBUG_FLAG 0
-#else
-#define DEBUG_FLAG 1
-#endif
 
 
 #define FORWARDS 1
@@ -478,7 +475,8 @@ generate_terrain (struct state *st, int start, int end, int final)
 	for (w= diff/2, l=TERRAIN_BREADTH/4;
 	     w >= final || l >= final; w /= 2, l /= 2) {
 
-		if (w<1) w=1; if (l<1) l=1;
+		if (w<1) w=1;
+        if (l<1) l=1;
 
 		for (i=start+w-1; i < end; i += (w*2)) {
 			ip = i-w; MODULO(ip, TERRAIN_LENGTH);
@@ -1442,7 +1440,7 @@ speedmine_init (Display *dpy, Window window)
 
   st->verbose_flag = get_boolean_resource (st->dpy, "verbose", "Boolean");
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   st->dbuf = st->window;
 #else
   st->dbuf = XCreatePixmap (st->dpy, st->window, st->width, st->height, xgwa.depth);

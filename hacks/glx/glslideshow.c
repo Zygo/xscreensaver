@@ -226,7 +226,7 @@ ENTRYPOINT ModeSpecOpt slideshow_opts = {countof(opts), opts, countof(vars), var
 static const char *
 blurb (void)
 {
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
   return "GLSlideshow";
 # else
   static char buf[255];
@@ -867,6 +867,7 @@ draw_sprites (ModeInfo *mi)
 
   glPushMatrix();
 
+/*
   {
     GLfloat rot = current_device_rotation();
     glTranslatef (0.5, 0.5, 0);
@@ -879,6 +880,7 @@ draw_sprites (ModeInfo *mi)
       }
     glTranslatef (-0.5, -0.5, 0);
   }
+*/
 
   for (i = 0; i < ss->nsprites; i++)
     draw_sprite (mi, ss->sprites[i]);
@@ -911,6 +913,7 @@ reshape_slideshow (ModeInfo *mi, int width, int height)
   glViewport (0, 0, width, height);
   glMatrixMode (GL_PROJECTION);
   glLoadIdentity();
+  glRotatef (current_device_rotation(), 0, 0, 1);
   glMatrixMode (GL_MODELVIEW);
   glLoadIdentity();
 
@@ -993,7 +996,7 @@ sanity_check (ModeInfo *mi)
 static void
 check_fps (ModeInfo *mi)
 {
-#ifndef HAVE_COCOA  /* always assume Cocoa is fast enough */
+#ifndef HAVE_JWXYZ  /* always assume Cocoa and mobile are fast enough */
 
   slideshow_state *ss = &sss[MI_SCREEN(mi)];
 
@@ -1045,7 +1048,7 @@ check_fps (ModeInfo *mi)
 
   /* Need this in case zoom changed. */
   reshape_slideshow (mi, mi->xgwa.width, mi->xgwa.height);
-#endif /* HAVE_COCOA */
+#endif /* HAVE_JWXYZ */
 }
 
 

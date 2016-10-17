@@ -100,8 +100,10 @@ model_allocate (int model_w, int model_h)
   mm->height = model_h;
 
   mm->cells = malloc (sizeof (unsigned short) * model_w * model_h);
-  if (!mm->cells)
+  if (!mm->cells) {
+    free (mm);
     return 0;
+  }
 
   return mm;
 }
@@ -290,7 +292,7 @@ critical_init (Display *dpy, Window window)
   model_w = 80;
   st->settings.cell_size = st->wattr.width / model_w;
   model_h = st->settings.cell_size ?
-    st->wattr.height / st->settings.cell_size : 0;
+    st->wattr.height / st->settings.cell_size : 1;
 
   /* Construct the initial model state. */
 
@@ -319,7 +321,7 @@ critical_init (Display *dpy, Window window)
 
   st->fgc = XCreateGC (st->dpy, st->window, 0, &st->gcv);
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (dpy, st->fgc, False);
   jwxyz_XSetAntiAliasing (dpy, st->bgc, False);
 #endif

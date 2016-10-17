@@ -31,8 +31,8 @@
 
 #if ASYNC_NETDB_USE_GAI
 
-# define _get_addr_family(addr) ((addr)->ss_family)
-# define _get_addr_len(addr) ((addr)->ss_len)
+# define _get_addr_family(addr) ((addr)->x_sockaddr_storage.ss_family)
+# define _get_addr_len(addr) ((addr)->x_sockaddr_storage.ss_len)
 
 static int _has_threads;
 
@@ -45,8 +45,8 @@ int _async_netdb_is_done (struct io_thread *io)
 
 #else /* ASYNC_NETDB_USE_GAI */
 
-# define _get_addr_family(addr) ((addr)->sin_family)
-# define _get_addr_len(addr) ((addr)->sin_len)
+# define _get_addr_family(addr) ((addr)->x_sockaddr_in.sin_family)
+# define _get_addr_len(addr) ((addr)->x_sockaddr_in.sin_len)
 
 static const int _has_threads = -1;
 
@@ -236,12 +236,12 @@ async_name_from_addr_finish (async_name_from_addr_t self_raw,
     switch (_get_addr_family (&self->addr))
       {
       case AF_INET:
-        raw_addr = &((const struct sockaddr_in *)&self->addr)->sin_addr;
+        raw_addr = &self->addr.x_sockaddr_in.sin_addr;
         addrlen = 4;
         break;
 #if ASYNC_NETDB_USE_GAI
       case AF_INET6:
-        raw_addr = &((const struct sockaddr_in6 *)&self->addr)->sin6_addr;
+        raw_addr = &self->addr.x_sockaddr_in6.sin6_addr;
         addrlen = 16;
         break;
 #endif /* ASYNC_NETDB_USE_GAI */

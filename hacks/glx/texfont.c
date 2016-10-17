@@ -1,4 +1,4 @@
-/* texfonts, Copyright (c) 2005-2015 Jamie Zawinski <jwz@jwz.org>
+/* texfonts, Copyright (c) 2005-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -193,7 +193,7 @@ bitmap_to_texture (Display *dpy, Pixmap p, Visual *visual, int depth,
 
 # ifdef DUMP_BITMAPS
       if (sx < ow && sy < oh)
-#  ifdef HAVE_COCOA
+#  ifdef HAVE_JWXYZ
         fprintf (stderr, "%c", 
                  r >= 0xFF000000 ? '#' : 
                  r >= 0x88000000 ? '%' : 
@@ -485,6 +485,7 @@ get_cache (texture_font_data *data, const char *string)
    */
   if (count > data->cache_size)
     {
+      if (!prev) abort();
       free (prev->string);
       prev->string     = 0;
       prev->tex_width  = 0;
@@ -805,7 +806,8 @@ print_texture_label (Display *dpy,
       XCharStruct cs;
       int ascent, descent;
       int x, y, w, h, swap;
-      int rot = (int) current_device_rotation();
+      /* int rot = (int) current_device_rotation(); */
+      int rot = 0;  /* Since GL hacks rotate now */
 
       glLoadIdentity();
       glViewport (0, 0, window_width, window_height);
@@ -821,7 +823,9 @@ print_texture_label (Display *dpy,
 # ifdef USE_IPHONE
       {
         /* Size of the font is in points, so scale iOS pixels to points. */
-        GLfloat scale = window_width / 768.0;
+        GLfloat scale = ((window_width > window_height
+                          ? window_width : window_height)
+                         / 768.0);
         if (scale < 1) scale = 1;
 
         /* jwxyz-XLoadFont has already doubled the font size, to compensate
@@ -917,6 +921,17 @@ print_texture_label (Display *dpy,
 
   glMatrixMode(GL_MODELVIEW);
 }
+
+
+#ifdef HAVE_JWXYZ
+char *
+texfont_unicode_character_name (texture_font_data *data, unsigned long uc)
+{
+  Font fid = data->xftfont->xfont->fid;
+  return jwxyz_unicode_character_name (fid, uc);
+}
+#endif /* HAVE_JWXYZ */
+
 
 
 /* Releases the font and texture.

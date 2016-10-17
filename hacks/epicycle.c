@@ -65,7 +65,7 @@ static const char *epicycle_defaults [] = {
   "*divisorPoisson: 0.4",
   "*sizeFactorMin: 1.05",
   "*sizeFactorMax: 2.05",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0
@@ -723,7 +723,7 @@ epicycle_draw (Display *dpy, Window window, void *closure)
 
       st->L = compute_divisor_lcm(st->pb0->epicycles);
       
-      st->colour_cycle_rate = fabs(st->L);
+      st->colour_cycle_rate = labs(st->L);
       
       st->xtime = fabs(st->L * st->circle / st->wdot_max);
 

@@ -54,6 +54,7 @@
 #define DEFAULTS	"*delay:	30000            \n" \
 			"*showFPS:      False            \n" \
 			"*wireframe:    False            \n" \
+			"*suppressRotationAnimation: True\n" \
 
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
@@ -718,9 +719,24 @@ static int render( State *st )
     glEnable( GL_NORMALIZE );
     glPolygonMode( GL_FRONT, GL_FILL );
   } else {
+# ifndef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
     glPolygonMode( GL_FRONT, GL_LINE );
+# endif
   }
   
+# if 0
+  if (st->wire) {
+    glDisable(GL_DEPTH_TEST);
+    glColor3f (1, 1, 1);
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(0, 0, 0); glVertex3f(st->width, 0, 0);
+    glVertex3f(st->width, st->height, 0); glVertex3f(0, st->height, 0);
+    glVertex3f(0, 0, 0); glVertex3f(st->width/4, 0, 0);
+    glVertex3f(st->width/4, st->height/4, 0); glVertex3f(0, st->height/4, 0);
+    glEnd();
+  }
+# endif
+
   /* draw the dead cells if choosen */
   if (st->keep_old_cells) {
     for (b=0; b<st->num_cells; ++b) {
@@ -748,6 +764,15 @@ static int render( State *st )
       num_paint++;
       /*glColor3f( fac, fac, fac );*/
       
+# if 0
+      if (st->wire) {
+        glBegin(GL_LINES);
+        glVertex3f(0, 0, 0);
+        glVertex3f(st->cell[b].x, st->cell[b].y, 0);
+        glEnd();
+      }
+# endif
+
       glPushMatrix();
       glTranslatef( st->cell[b].x, st->cell[b].y, 0.0 );
       glRotatef( st->cell[b].rotation, 0.0, 0.0, 1.0 );
@@ -906,6 +931,27 @@ static int create_list( State *st, double fac )
 
 static void draw_cell( State *st, int shape )
 {
+# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
+  if (st->wire) {
+    glDisable(GL_DEPTH_TEST);
+    glColor3f (1, 1, 1);
+    glPushMatrix();
+    glScalef (0.33, 0.33, 1);
+    glBegin (GL_LINE_LOOP);
+    glVertex3f (-1, -1, 0); glVertex3f (-1,  1, 0);
+    glVertex3f ( 1,  1, 0); glVertex3f ( 1, -1, 0);
+    glEnd();
+    if (shape == 9) {
+      glBegin (GL_LINES);
+      glVertex3f (-1, -1, 0); glVertex3f (1,  1, 0);
+      glVertex3f (-1,  1, 0); glVertex3f (1, -1, 0);
+      glEnd();
+    }
+    glPopMatrix();
+    return;
+  }
+# endif
+
   if (-1 == st->cell_list[shape]) {
     st->cell_list[shape] = create_list( st, (double)shape/10.0 );
   }
@@ -1147,9 +1193,11 @@ static void tick( State *st )
       
       /* have a snack */
       x = ((int)st->cell[b].x)/4;
-      if (x<0) x=0; if (x>=w4) x = w4-1;
+      if (x<0) x=0;
+      if (x>=w4) x = w4-1;
       y = ((int)st->cell[b].y)/4;
-      if (y<0) y=0; if (y>=h4) y = h4-1;
+      if (y<0) y=0;
+      if (y>=h4) y = h4-1;
     
       offset = x+y*w4;
     
@@ -1173,10 +1221,17 @@ ENTRYPOINT void
 reshape_glcells( ModeInfo *mi, int width, int height )
 {
   State *st  = &sstate[MI_SCREEN(mi)];
+# ifdef HAVE_MOBILE
+  int rot = current_device_rotation();
+# endif
   st->height = height;
   st->width  = width;
+# ifdef HAVE_MOBILE
+  st->screen_scale = (double)(width < height ? width : height) / 1600.0;
+# else
   st->screen_scale = (double)width / 1600.0;
-  
+# endif
+
   st->radius = s_radius;
   if (st->radius < 5) st->radius = 5;
   if (st->radius > 200) st->radius = 200;
@@ -1192,12 +1247,23 @@ reshape_glcells( ModeInfo *mi, int width, int height )
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho( 0, width, height, 0, 200, 0 );
+# ifdef HAVE_MOBILE
+  glRotatef (rot, 0, 0, 1);
+# endif
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();
-  
   if (st->food) free( st->food );
   st->food = (int *)malloc( ((width*height)/16)*sizeof(int) );
   /* create_cells( st );*/
+
+# ifdef HAVE_MOBILE
+  glTranslatef (st->width/2, st->height/2, 0);
+  if (rot == 90 || rot == -90 || rot == 270 || rot == -270)
+    st->width = height, st->height = width;
+  glRotatef (rot, 0, 0, 1);
+  if (st->wire) glScalef(0.8, 0.8, 1);
+  glTranslatef (-st->width/2, -st->height/2, 0);
+# endif
 }
 
 ENTRYPOINT void 
@@ -1221,10 +1287,6 @@ init_glcells( ModeInfo *mi )
   st->num_cells = 0;
   st->wire = MI_IS_WIREFRAME(mi);
   
-# ifdef HAVE_JWZGLES /* #### glPolygonMode other than GL_FILL unimplemented */
-  st->wire = 0;
-# endif
-
   /* get settings */
   st->max_cells = s_maxcells;;
   if (st->max_cells < 50) st->max_cells = 50;
@@ -1298,7 +1360,7 @@ draw_glcells( ModeInfo *mi )
                   *(st->glx_context) );
   
   mi->polygon_count = render( st );
-  
+
   if (mi->fps_p) do_fps (mi);
   
   glFinish();

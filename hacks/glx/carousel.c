@@ -46,7 +46,7 @@
 #include "grab-ximage.h"
 #include "texfont.h"
 
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
 #  include <X11/Intrinsic.h>     /* for XrmDatabase in -debug mode */
 # endif
 
@@ -463,7 +463,7 @@ carousel_handle_event (ModeInfo *mi, XEvent *event)
 static void
 hack_resources (Display *dpy)
 {
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   char *res = "desktopGrabber";
   char *val = get_string_resource (dpy, res, "DesktopGrabber");
   char buf1[255];
@@ -475,7 +475,7 @@ hack_resources (Display *dpy)
   value.addr = buf2;
   value.size = strlen(buf2);
   XrmPutResource (&db, buf1, "String", &value);
-# endif /* !HAVE_COCOA */
+# endif /* !HAVE_JWXYZ */
 }
 
 
@@ -513,6 +513,7 @@ loading_msg (ModeInfo *mi, int n)
   glPushMatrix();
   glLoadIdentity();
 
+/*
   {
     double rot = current_device_rotation();
     glRotatef(rot, 0, 0, 1);
@@ -523,13 +524,16 @@ loading_msg (ModeInfo *mi, int n)
         glScalef (s, 1/s, 1);
       }
   }
+*/
 
-  if (MI_WIDTH(mi) < MI_HEIGHT(mi))  /* USE_IPHONE portrait orientation */
+# ifdef HAVE_MOBILE
+  if (MI_WIDTH(mi) < MI_HEIGHT(mi))  /* portrait orientation */
     {
       GLfloat s = (MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi));
       glScalef (s, s, s);
       glTranslatef(-s/2, 0, 0);
     }
+# endif
 
   glOrtho(0, MI_WIDTH(mi), 0, MI_HEIGHT(mi), -1, 1);
   glTranslatef ((MI_WIDTH(mi)  - ss->loading_sw) / 2,

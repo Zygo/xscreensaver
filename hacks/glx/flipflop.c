@@ -169,7 +169,7 @@ static void randsheet_move( randsheet *rs, float rot );
 static int randsheet_draw( randsheet *rs );
 static void setup_lights(void);
 static int drawBoard(Flipflopcreen *);
-static int display(Flipflopcreen *c);
+static int display(ModeInfo *mi);
 static int draw_sheet(float *tex);
 
 
@@ -233,8 +233,9 @@ drawBoard(Flipflopcreen *c)
 
 
 static int
-display(Flipflopcreen *c)
+display(ModeInfo *mi)
 {
+    Flipflopcreen *c = &qs[MI_SCREEN(mi)];
     GLfloat amb[] = { 0.8, 0.8, 0.8, 1.0 };
     int polys = 0;
 
@@ -242,7 +243,6 @@ display(Flipflopcreen *c)
     glClear(clearbits);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
-
     glLightf(GL_LIGHT0, GL_CONSTANT_ATTENUATION, 1.2);
     glLightf(GL_LIGHT0, GL_LINEAR_ATTENUATION, 0.15/board_avg_size );
     glLightf(GL_LIGHT0, GL_QUADRATIC_ATTENUATION, 0.15/board_avg_size );
@@ -261,6 +261,15 @@ display(Flipflopcreen *c)
     /* set texture */
     if(textured)
       glBindTexture(GL_TEXTURE_2D, c->texid);
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+    {
+      GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+      int o = (int) current_device_rotation();
+      if (o != 0 && o != 180 && o != -180)
+        glScalef (1/h, 1/h, 1/h);
+    }
+# endif
 
     polys = drawBoard(c);
 
@@ -443,7 +452,7 @@ draw_flipflop(ModeInfo *mi)
 
     glXMakeCurrent(disp, w, *(c->glx_context));
 
-    mi->polygon_count = display(c);
+    mi->polygon_count = display(mi);
 
     if(mi->fps_p){
         do_fps(mi);

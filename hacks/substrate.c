@@ -287,7 +287,7 @@ static inline void point2rgb(int depth, unsigned long c, int *r, int *g, int *b)
     switch(depth) {
         case 32:
         case 24:
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
             /* This program idiotically does not go through a color map, so
                we have to hardcode in knowledge of how jwxyz.a packs pixels!
                Fix it to go through st->colors[st->ncolors] instead!
@@ -321,7 +321,7 @@ static inline unsigned long rgb2point(int depth, int r, int g, int b)
     switch(depth) {
         case 32:
         case 24:
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
             /* This program idiotically does not go through a color map, so
                we have to hardcode in knowledge of how jwxyz.a packs pixels!
                Fix it to go through st->colors[st->ncolors] instead!
@@ -515,7 +515,7 @@ movedrawcrack(struct state *st, GC fgc, struct field *f, int cracknum)
         cr->y += ((float) cr->xs * sin(cr->t * M_PI/180 - M_PI / 2));
 
         cr->t += cr->t_inc;
-        cr->degrees_drawn += abs(cr->t_inc);
+        cr->degrees_drawn += fabsf(cr->t_inc);
     }
     if (f->seamless) {
         cr->x = fmod(cr->x + f->width, f->width);
@@ -547,10 +547,10 @@ movedrawcrack(struct state *st, GC fgc, struct field *f, int cracknum)
         }
         /* safe to check */
         else if ((f->cgrid[cy * f->width + cx] > 10000) ||
-                 (abs(f->cgrid[cy * f->width + cx] - cr->t) < 5)) {
+                 (fabsf(f->cgrid[cy * f->width + cx] - cr->t) < 5)) {
             /* continue cracking */
             f->cgrid[cy * f->width + cx] = (int) cr->t;
-        } else if (abs(f->cgrid[cy * f->width + cx] - cr->t) > 2) {
+        } else if (fabsf(f->cgrid[cy * f->width + cx] - cr->t) > 2) {
             /* crack encountered (not self), stop cracking */
             start_crack(f, cr); /* restart ourselves */
             make_crack(f); /* generate a new crack */
@@ -750,7 +750,7 @@ static const char *substrate_defaults[] = {
     "*maxCracks: 100",
     "*sandGrains: 64",
     "*circlePercent: 33",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
     0

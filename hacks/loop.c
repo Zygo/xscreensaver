@@ -79,7 +79,7 @@ static const char sccsid[] = "@(#)loop.c	5.01 2000/03/15 xlockmore";
    there is handedness at both the initial condition and the transition rule.
  */
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # define DO_STIPPLE
 #endif
 

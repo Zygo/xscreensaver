@@ -523,7 +523,7 @@ static const char *rocks_defaults [] = {
   "*left3d:	Blue",
   "*right3d:	Red",
   "*delta3d:	1.5",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

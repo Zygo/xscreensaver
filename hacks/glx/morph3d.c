@@ -55,7 +55,9 @@ static const char sccsid[] = "@(#)morph3d.c	5.01 2001/03/01 xlockmore";
 # define MODE_moebius
 # define DEFAULTS		"*delay:		40000	\n"		\
 						"*showFPS:      False   \n"		\
-						"*count: 		0		\n"
+						"*count: 		0		\n"		\
+						"*suppressRotationAnimation: True\n" \
+
 # define refresh_morph3d 0
 # define morph3d_handle_event 0
 # include "xlockmore.h"		/* from the xscreensaver distribution */
@@ -769,6 +771,15 @@ draw_morph3d(ModeInfo * mi)
 	} else {
 		glScalef(Scale4Iconic * mp->WindH / mp->WindW, Scale4Iconic, Scale4Iconic);
 	}
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+    {
+      GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+      int o = (int) current_device_rotation();
+      if (o != 0 && o != 180 && o != -180)
+        glScalef (1/h, h, 1);
+    }
+# endif
 
 	glRotatef(mp->step * 100, 1, 0, 0);
 	glRotatef(mp->step * 95, 0, 1, 0);

@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=zqIlWzUHOz8"/>
+  <video href="https://www.youtube.com/watch?v=zqIlWzUHOz8"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Change image every" _low-label="0 seconds" _high-label="30 seconds"

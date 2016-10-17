@@ -21,7 +21,8 @@
                   "*font:          " DEF_FONT "\n" \
                   "*desktopGrabber:  xscreensaver-getimage -no-desktop %s\n" \
                   "*grabDesktopImages:   False \n" \
-                  "*chooseRandomImages:  True  \n"
+                  "*chooseRandomImages:  True  \n" \
+		  "*suppressRotationAnimation: True\n" \
 
 # define refresh_photopile 0
 # define release_photopile 0
@@ -30,7 +31,7 @@
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # include <X11/Intrinsic.h>     /* for XrmDatabase in -debug mode */
 #endif
 #include <math.h>
@@ -433,6 +434,15 @@ reshape_photopile (ModeInfo *mi, int width, int height)
   glLoadIdentity();
   glOrtho(0, MI_WIDTH(mi), 0, MI_HEIGHT(mi), -1, 1);
 
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, h, 1);
+  }
+# endif
+
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -442,7 +452,7 @@ reshape_photopile (ModeInfo *mi, int width, int height)
 static void
 hack_resources (Display *dpy)
 {
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   char *res = "desktopGrabber";
   char *val = get_string_resource (dpy, res, "DesktopGrabber");
   char buf1[255];
@@ -454,7 +464,7 @@ hack_resources (Display *dpy)
   value.addr = buf2;
   value.size = strlen(buf2);
   XrmPutResource (&db, buf1, "String", &value);
-# endif /* !HAVE_COCOA */
+# endif /* !HAVE_JWXYZ */
 }
 
 

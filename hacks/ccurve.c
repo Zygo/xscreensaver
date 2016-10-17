@@ -849,7 +849,7 @@ static const char *ccurve_defaults [] =
     ".delay:      3",
     ".pause:      0.4",
     ".limit: 200000",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
     "*ignoreRotation: True",
 #endif
     0

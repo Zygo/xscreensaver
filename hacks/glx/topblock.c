@@ -47,7 +47,7 @@ History
 
 #ifdef USE_GL /* whole file */
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # include <GL/glu.h>
 #endif
 
@@ -326,6 +326,15 @@ draw_topBlock (ModeInfo *mi)
 
 	/* rotate the world */
 	glRotatef(tb->rotation, 0.0, 0.0, 1.0);		
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+        {
+          GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+          int o = (int) current_device_rotation();
+          if (o != 0 && o != 180 && o != -180)
+            glScalef (1/h, 1/h, 1/h);
+        }
+# endif
 
 	llCurrent = tb->blockNodeRoot;
 	if (drawCarpet) {

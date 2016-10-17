@@ -706,11 +706,11 @@ PO_IN_DATADIR_TRUE
 INTLLIBS
 INSTOBJEXT
 GMOFILES
+DATADIRNAME
 CATOBJEXT
 CATALOGS
 MSGFMT_OPTS
 GETTEXT_PACKAGE
-DATADIRNAME
 ALL_LINGUAS
 GMSGFMT
 MSGFMT
@@ -2630,7 +2630,7 @@ echo "command line was: $0 $@"
 # check for some random other files that come later in the tar file,
 # to make sure everything is here.
 #
-for d in driver utils hacks hacks/glx ; do
+for d in utils jwxyz hacks hacks/glx driver ; do
   f=$srcdir/$d/Makefile.in
   if test \! -r $f ; then
     echo ""
@@ -7598,44 +7598,6 @@ if test -z "$xgversion" -o -z "$mmversion" -o -z "$mfversion"; then
 fi
 
 # Substitute ALL_LINGUAS so we can use it in po/Makefile
-
-
-# Set DATADIRNAME correctly if it is not set yet
-# (copied from glib-gettext.m4)
-if test -z "$DATADIRNAME"; then
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-int
-main ()
-{
-extern int _nl_msg_cat_cntr;
-                       return _nl_msg_cat_cntr
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  DATADIRNAME=share
-else
-  case $host in
-    *-*-solaris*)
-                        ac_fn_c_check_func "$LINENO" "bind_textdomain_codeset" "ac_cv_func_bind_textdomain_codeset"
-if test "x$ac_cv_func_bind_textdomain_codeset" = xyes; then :
-  DATADIRNAME=share
-else
-  DATADIRNAME=lib
-fi
-
-    ;;
-    *)
-    DATADIRNAME=lib
-    ;;
-    esac
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-fi
 
 
 
@@ -13310,7 +13272,7 @@ if ${ac_cv_mesagl_version_string+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 13317 "configure"
+#line 13279 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION
@@ -13890,7 +13852,7 @@ if test "$with_gles" = yes; then
   have_gles=yes
   $as_echo "#define HAVE_JWZGLES 1" >>confdefs.h
 
-  JWZGLES_OBJS="jwzgles.o"
+  JWZGLES_OBJS='$(JWXYZ_BIN)/jwzgles.o'
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: using OpenGL ES compatiblity shim" >&5
 $as_echo "using OpenGL ES compatiblity shim" >&6; }
 elif test "$with_gles" != no; then
@@ -14863,7 +14825,7 @@ fi
 ###############################################################################
 
 PTY_LIBS=
-for ac_header in pty.h util.h
+for ac_header in pty.h util.h sys/termios.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -16011,7 +15973,7 @@ APPDEFAULTS=$ac_x_app_defaults
 
 
 
-ac_config_files="$ac_config_files Makefile utils/Makefile driver/Makefile driver/xscreensaver.pam driver/xscreensaver-demo.glade2 hacks/Makefile hacks/glx/Makefile po/Makefile.in driver/XScreenSaver.ad"
+ac_config_files="$ac_config_files Makefile utils/Makefile jwxyz/Makefile hacks/Makefile hacks/glx/Makefile po/Makefile.in driver/Makefile driver/xscreensaver.pam driver/xscreensaver-demo.glade2 driver/XScreenSaver.ad"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -16720,12 +16682,13 @@ do
     "default-1") CONFIG_COMMANDS="$CONFIG_COMMANDS default-1" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     "utils/Makefile") CONFIG_FILES="$CONFIG_FILES utils/Makefile" ;;
-    "driver/Makefile") CONFIG_FILES="$CONFIG_FILES driver/Makefile" ;;
-    "driver/xscreensaver.pam") CONFIG_FILES="$CONFIG_FILES driver/xscreensaver.pam" ;;
-    "driver/xscreensaver-demo.glade2") CONFIG_FILES="$CONFIG_FILES driver/xscreensaver-demo.glade2" ;;
+    "jwxyz/Makefile") CONFIG_FILES="$CONFIG_FILES jwxyz/Makefile" ;;
     "hacks/Makefile") CONFIG_FILES="$CONFIG_FILES hacks/Makefile" ;;
     "hacks/glx/Makefile") CONFIG_FILES="$CONFIG_FILES hacks/glx/Makefile" ;;
     "po/Makefile.in") CONFIG_FILES="$CONFIG_FILES po/Makefile.in" ;;
+    "driver/Makefile") CONFIG_FILES="$CONFIG_FILES driver/Makefile" ;;
+    "driver/xscreensaver.pam") CONFIG_FILES="$CONFIG_FILES driver/xscreensaver.pam" ;;
+    "driver/xscreensaver-demo.glade2") CONFIG_FILES="$CONFIG_FILES driver/xscreensaver-demo.glade2" ;;
     "driver/XScreenSaver.ad") CONFIG_FILES="$CONFIG_FILES driver/XScreenSaver.ad" ;;
     "po/stamp-it") CONFIG_COMMANDS="$CONFIG_COMMANDS po/stamp-it" ;;
 

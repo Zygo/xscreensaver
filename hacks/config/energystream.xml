@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+
+<screensaver name="energystream" _label="EnergyStream" gl="yes">
+
+  <command arg="-root"/>
+
+  <video href="http://www.youtube.com/watch?v=TbWZ6v5Zzk8"/>
+
+  <number id="speed" type="slider" arg="-speed %"
+          _label="Speed" _low-label="Slow" _high-label="Fast"
+          low="0.01" high="5.0" default="1.0"/>
+
+  <hgroup>
+   <boolean id="wander" _label="Wander"    arg-unset="-wander" />
+   <boolean id="spin"   _label="Spin"      arg-unset="-spin" />
+   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
+  </hgroup>
+
+  <xscreensaver-updater />
+
+  <_description>
+A flow of particles which form an energy stream.
+
+Written by Eugene Sandulenko and Konrad "Yoghurt" Zagorowicz; 2016.
+  </_description>
+</screensaver>

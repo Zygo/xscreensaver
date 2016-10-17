@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1998-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1998-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -40,6 +40,7 @@
 #include "apple2.h"
 
 #include <ctype.h>
+#include <time.h>
 
 #ifdef HAVE_XSHM_EXTENSION
 #include "xshm.h"
@@ -49,7 +50,7 @@
 # include <sys/utsname.h>
 #endif /* HAVE_UNAME */
 
-#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM) || defined(HAVE_COCOA)
+#if defined(HAVE_GDK_PIXBUF) || defined(HAVE_XPM) || defined(HAVE_JWXYZ)
 # define DO_XPM
 #endif
 
@@ -68,12 +69,17 @@
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
+# undef MIN
+# undef MAX
+# define MIN(A,B) ((A)<(B)?(A):(B))
+# define MAX(A,B) ((A)>(B)?(A):(B))
+
 #undef EOF
 typedef enum { EOF=0, 
                LEFT, CENTER, RIGHT, 
                LEFT_FULL, CENTER_FULL, RIGHT_FULL, 
                COLOR, INVERT, MOVETO, MARGINS,
-               CURSOR_BLOCK, CURSOR_LINE, RECT, COPY, PIXMAP, IMG,
+               CURSOR_BLOCK, CURSOR_LINE, RECT, COPY, PIXMAP, IMG, FONT,
                PAUSE, CHAR_DELAY, LINE_DELAY,
                LOOP, RESET
 } bsod_event_type;
@@ -87,7 +93,7 @@ struct bsod_state {
   Display *dpy;
   Window window;
   XWindowAttributes xgwa;
-  XFontStruct *font;
+  XFontStruct *font, *fontA, *fontB, *fontC;
   unsigned long fg, bg;
   GC gc;
   int left_margin, right_margin;	/* for text wrapping */
@@ -254,6 +260,15 @@ struct bsod_state {
 #define BSOD_IMG(bst) do { \
   ensure_queue (bst); \
   (bst)->queue[(bst)->pos].type = IMG; \
+  (bst)->pos++; \
+  } while (0)
+
+/* Switch between fonts A, B and C.
+ */
+#define BSOD_FONT(bst,n) do { \
+  ensure_queue (bst); \
+  (bst)->queue[(bst)->pos].type = FONT; \
+  (bst)->queue[(bst)->pos].arg1 = (void *) ((long) (n)); \
   (bst)->pos++; \
   } while (0)
 
@@ -542,6 +557,18 @@ bsod_pop (struct bsod_state *bst)
       bst->pos++;
       return 0;
     }
+  case FONT:
+    {
+      switch ((long) bst->queue[bst->pos].arg1) {
+      case 0: bst->font = bst->fontA; break;
+      case 1: bst->font = bst->fontB; break;
+      case 2: bst->font = bst->fontC; break;
+      default: abort(); break;
+      }
+      XSetFont (bst->dpy, bst->gc, bst->font->fid);
+      bst->pos++;
+      return 0;
+    }
   case PAUSE:
     {
       long delay = (long) bst->queue[bst->pos].arg1;
@@ -643,7 +670,9 @@ make_bsod_state (Display *dpy, Window window,
   struct bsod_state *bst;
   char buf1[1024], buf2[1024];
   char buf3[1024], buf4[1024];
-  const char *font1, *font2;
+  char buf5[1024], buf6[1024];
+  char buf7[1024], buf8[1024];
+  const char *font1, *font2, *font3, *font4;
 
   bst = (struct bsod_state *) calloc (1, sizeof (*bst));
   bst->queue_size = 10;
@@ -660,7 +689,7 @@ make_bsod_state (Display *dpy, Window window,
        use ".bigFont" if it is loadable, else use ".bigFont2".
    */
   if (
-# ifdef USE_IPHONE
+# ifdef HAVE_MOBILE
       1
 # else
       bst->xgwa.height < 640
@@ -679,9 +708,31 @@ make_bsod_state (Display *dpy, Window window,
       sprintf (buf3, "%.100s.bigFont2", name);
       sprintf (buf4, "%.100s.bigFont2", class);
     }
+  sprintf (buf5, "%.100s.fontB", name);
+  sprintf (buf6, "%.100s.fontB", class);
+  sprintf (buf7, "%.100s.fontC", name);
+  sprintf (buf8, "%.100s.fontC", class);
 
   font1 = get_string_resource (dpy, buf1, buf2);
   font2 = get_string_resource (dpy, buf3, buf4);
+  font3 = get_string_resource (dpy, buf5, buf6);
+  font4 = get_string_resource (dpy, buf7, buf8);
+
+  /* If there was no ".mode.font2" resource also look for ".font2".
+     Under real X11, the wildcard does this, so this is redundant,
+     but jwxyz needs it because it doesn't implement wildcards.
+   */
+# define RES2(VAR, BUF1, BUF2) do {                          \
+    if (! VAR) {                                             \
+      VAR = get_string_resource (dpy,                        \
+				 strchr (BUF1, '.') + 1,     \
+				 strchr (BUF2, '.') + 1);    \
+    }} while(0)
+  RES2 (font1, buf1, buf2);
+  RES2 (font2, buf3, buf4);
+  RES2 (font3, buf5, buf6);
+  RES2 (font4, buf7, buf8);
+#undef RES2
 
   if (font1)
     bst->font = XLoadQueryFont (dpy, font1);
@@ -697,6 +748,17 @@ make_bsod_state (Display *dpy, Window window,
   if (! bst->font)
     abort();
 
+  if (font3)
+    bst->fontB = XLoadQueryFont (dpy, font3);
+  if (font4)
+    bst->fontC = XLoadQueryFont (dpy, font4);
+
+  if (! bst->fontB) bst->fontB = bst->font;
+  if (! bst->fontC) bst->fontC = bst->font;
+
+  bst->fontA = bst->font;
+
+
   gcv.font = bst->font->fid;
 
   sprintf (buf1, "%.100s.foreground", name);
@@ -709,8 +771,8 @@ make_bsod_state (Display *dpy, Window window,
                                                  buf1, buf2);
   bst->gc = XCreateGC (dpy, window, GCFont|GCForeground|GCBackground, &gcv);
 
-#ifdef HAVE_COCOA
-  jwxyz_XSetAntiAliasing (dpy, bst->gc, False);
+#ifdef HAVE_JWXYZ
+  jwxyz_XSetAntiAliasing (dpy, bst->gc, True);
 #endif
 
   bst->left_margin = bst->right_margin = 10;
@@ -813,7 +875,7 @@ windows_31 (Display *dpy, Window window)
 static struct bsod_state *
 windows_nt (Display *dpy, Window window)
 {
-  struct bsod_state *bst = make_bsod_state (dpy, window, "windows", "Windows");
+  struct bsod_state *bst = make_bsod_state (dpy, window, "nt", "NT");
 
   BSOD_TEXT (bst, LEFT,
    "*** STOP: 0x0000001E (0x80000003,0x80106fc0,0x8025ea21,0xfd6829e8)\n"
@@ -1011,6 +1073,135 @@ windows_lh (Display *dpy, Window window)
 
 
 static struct bsod_state *
+windows_10 (Display *dpy, Window window)
+{
+  struct bsod_state *bst = 
+    make_bsod_state (dpy, window, "win10", "Win10");
+
+  int qr_width  = 41;
+  int qr_height = 41;
+  static const unsigned char qr_bits[] = {
+    0xFF,0xFF,0xFF,0xFF,0xFF,0x01,0xFF,0xFF,0xFF,0xFF,0xFF,0x01,
+    0x03,0x9A,0x70,0xEE,0x80,0x01,0xFB,0x22,0xAA,0xA6,0xBE,0x01,
+    0x8B,0x8E,0x74,0xE7,0xA2,0x01,0x8B,0xEE,0x42,0xC4,0xA2,0x01,
+    0x8B,0x42,0x6E,0xED,0xA2,0x01,0xFB,0xDA,0x63,0xA6,0xBE,0x01,
+    0x03,0xAA,0xAA,0xAA,0x80,0x01,0xFF,0x8B,0xD8,0x9D,0xFF,0x01,
+    0x63,0x62,0xDA,0x1B,0x98,0x01,0x6F,0x67,0x98,0x9F,0xBC,0x01,
+    0x4F,0xCC,0x55,0x81,0x83,0x01,0xB7,0x6D,0xFF,0x68,0xB2,0x01,
+    0xC3,0x10,0x87,0x8B,0x96,0x01,0x6F,0xB1,0x91,0x58,0x94,0x01,
+    0xE3,0x36,0x88,0x84,0xB8,0x01,0x83,0x9B,0xFE,0x59,0xD7,0x01,
+    0x3B,0x74,0x98,0x5C,0xB4,0x01,0x37,0x75,0xDC,0x91,0xA6,0x01,
+    0x77,0xDE,0x01,0x54,0xBA,0x01,0xBB,0x6D,0x8B,0xB9,0xB5,0x01,
+    0x1F,0x06,0xBD,0x9B,0xB4,0x01,0xD3,0xBD,0x91,0x19,0x84,0x01,
+    0x0B,0x20,0xD8,0x91,0xB4,0x01,0x33,0x95,0xBC,0x0A,0xD5,0x01,
+    0xB3,0x60,0xDC,0xD9,0xB6,0x01,0xEF,0x77,0x18,0x09,0xA4,0x01,
+    0xA3,0xC2,0x95,0x51,0xB2,0x01,0xDF,0x63,0xDB,0xBE,0xB3,0x01,
+    0x03,0x08,0xC9,0x09,0xF0,0x01,0xFF,0xA3,0x19,0xBD,0xFB,0x01,
+    0x03,0x2E,0x84,0xA5,0xAA,0x01,0xFB,0x9A,0xFC,0x9B,0xBB,0x01,
+    0x8B,0x7E,0x9C,0x1D,0xB0,0x01,0x8B,0x6E,0x58,0xA1,0xDB,0x01,
+    0x8B,0xDA,0xD5,0x65,0xA2,0x01,0xFB,0x72,0xFB,0xE9,0xF0,0x01,
+    0x03,0x02,0x99,0x3B,0xB3,0x01,0xFF,0xFF,0xFF,0xFF,0xFF,0x01,
+    0xFF,0xFF,0xFF,0xFF,0xFF,0x01};
+  Pixmap pixmap;
+
+  const char *lines[] = {
+    ":(\n",
+    "\n",
+    "Your PC ran into a problem and needs to restart. We're just\n",
+    "collecting some error info, and then we'll restart for you.\n",
+    "\n",
+    "\n",
+    "\n",
+    "For more information about this issue and\n",
+    "possible fixes, visit\n",
+/*  "https://www.jwz.org/xscreensaver\n",*/
+    "http://youtu.be/-RjmN9RZyr4\n", 
+    "\n",
+    "If you call a support person, give them this info:\n",
+    "Stop code CRITICAL_PROCESS_DIED", 
+ };
+  int i, y = 0, y0 = 0;
+  int line_height0 = bst->fontB->ascent;
+  int line_height1 = bst->fontA->ascent + bst->fontA->descent;
+  int line_height2 = bst->fontC->ascent + bst->fontC->descent;
+  int line_height = line_height0;
+  int top, left0, left;
+  int stop = 60 + (random() % 39);
+
+  line_height1 *= 1.3;
+  line_height2 *= 1.5;
+
+  top = ((bst->xgwa.height - (line_height0 * 1 +
+                              line_height1 * 6 +
+                              line_height2 * 6))
+         / 2);
+
+  {
+    int dir, ascent, descent;
+    XCharStruct ov;
+    const char *s = lines[2];
+    XTextExtents (bst->fontA, s, strlen(s),
+                  &dir, &ascent, &descent, &ov);
+    left = left0 = (bst->xgwa.width - ov.width) / 2;
+  }
+
+  pixmap = XCreatePixmapFromBitmapData (dpy, window, (char *) qr_bits,
+                                        qr_width, qr_height,
+                                        bst->fg, bst->bg, bst->xgwa.depth);
+  for (i = 0; i < 2; i++)
+    {
+      pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual, bst->xgwa.depth,
+                              pixmap, qr_width, qr_height);
+      qr_width *= 2;
+      qr_height *= 2;
+    }
+  bst->pixmap = pixmap;
+
+  y = top;
+  line_height = line_height0;
+  BSOD_FONT (bst, 1);
+  for (i = 0; i < countof(lines); i++)
+    {
+      BSOD_MOVETO (bst, left, y);
+      BSOD_TEXT (bst, LEFT, lines[i]);
+      y += line_height;
+      if (i == 0)
+        {
+          BSOD_FONT (bst, 0);
+          line_height = line_height1;
+        }
+      else if (i == 4)
+        {
+          y0 = y;
+          y += line_height / 2;
+          BSOD_PIXMAP (bst, 0, 0, qr_width, qr_height, left, y + line_height1);
+          BSOD_FONT (bst, 2);
+          line_height = line_height2;
+          left += qr_width + line_height2 / 2;
+# ifdef HAVE_MOBILE
+          y -= 14;
+# endif
+        }
+    }
+
+  left = left0;
+  BSOD_FONT (bst, 0);
+  for (i = 0; i <= stop; i++)
+    {
+      char buf[100];
+      sprintf (buf, "%d%% complete", i);
+      BSOD_MOVETO (bst, left, y0);
+      BSOD_TEXT (bst, LEFT, buf);
+      BSOD_PAUSE (bst, 85000);
+    }
+  BSOD_PAUSE (bst, 3000000);
+
+  XClearWindow (dpy, window);
+  return bst;
+}
+
+
+static struct bsod_state *
 windows_other (Display *dpy, Window window)
 {
   /* Lump all of the 2K-ish crashes together and select them randomly...
@@ -1123,7 +1314,8 @@ sco (Display *dpy, Window window)
 static struct bsod_state *
 sparc_linux (Display *dpy, Window window)
 {
-  struct bsod_state *bst = make_bsod_state (dpy, window, "sco", "SCO");
+  struct bsod_state *bst = make_bsod_state (dpy, window, 
+                                            "sparclinux", "SparcLinux");
   bst->scroll_p = True;
   bst->y = bst->xgwa.height - bst->font->ascent - bst->font->descent;
 
@@ -1234,7 +1426,8 @@ amiga (Display *dpy, Window window)
                                &pix_w, &pix_h, 0);
 # endif /* DO_XPM */
 
-  if (pixmap && bst->xgwa.height > 600)	/* scale up the bitmap */
+  if (pixmap &&
+      MIN (bst->xgwa.width, bst->xgwa.height) > 600) /* scale up the bitmap */
     {
       pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual, bst->xgwa.depth,
                               pixmap, pix_w, pix_h);
@@ -1605,7 +1798,7 @@ macx_10_0 (Display *dpy, Window window)
     pixmap = xpm_data_to_pixmap (dpy, window, (char **) happy_mac,
                                  &pix_w, &pix_h, &mask);
 
-# ifdef USE_IPHONE
+# ifdef HAVE_MOBILE
     if (pixmap)
       {
         pixmap = double_pixmap (dpy, bst->gc, bst->xgwa.visual,
@@ -1897,7 +2090,7 @@ macx (Display *dpy, Window window)
 }
 
 
-#ifndef HAVE_COCOA /* #### I have no idea how to implement this without
+#ifndef HAVE_JWXYZ /* #### I have no idea how to implement this without
                            real plane-masks.  I don't think it would look
                            right if done with alpha-transparency... */
 /* blit damage
@@ -1919,15 +2112,12 @@ blitdamage (Display *dpy, Window window)
   int w, h;
   int chunk_h, chunk_w;
   int steps;
-  long gc_mask = 0;
   int src_x, src_y;
   int x, y;
   
   w = bst->xgwa.width;
   h = bst->xgwa.height;
 
-  gc_mask = GCForeground;
-  
   XSetPlaneMask (dpy, bst->gc, random());
 
   steps = 50;
@@ -1960,7 +2150,7 @@ blitdamage (Display *dpy, Window window)
 
   return bst;
 }
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */
 
 
 /*
@@ -2628,7 +2818,7 @@ hppa_linux (Display *dpy, Window window)
      { -1, "Soft power switch enabled, polling @ 0xf0400804.\n" },
      { -1, "pty: 256 Unix98 ptys configured\n" },
      { -1, "Generic RTC Driver v1.07\n" },
-     { -1, "Serial: 8250/16550 driver $Revision: 1.101 $ 13 ports, "
+     { -1, "Serial: 8250/16550 driver $" "Revision: 1.100 $ 13 ports, "
            "IRQ sharing disabled\n" },
      { -1, "ttyS0 at I/O 0x3f8 (irq = 0) is a 16550A\n" },
      { -1, "ttyS1 at I/O 0x2f8 (irq = 0) is a 16550A\n" },
@@ -2987,7 +3177,7 @@ hvx (Display *dpy, Window window)
 static struct bsod_state *
 hpux (Display *dpy, Window window)
 {
-  struct bsod_state *bst = make_bsod_state (dpy, window, "hvx", "HVX");
+  struct bsod_state *bst = make_bsod_state (dpy, window, "hpux", "HPUX");
   const char *sysname;
   char buf[2048];
 
@@ -4071,6 +4261,7 @@ static const struct {
   { "Windows",		windows_31 },
   { "NT",		windows_nt },
   { "Win2K",		windows_other },
+  { "Win10",		windows_10 },
   { "Amiga",		amiga },
   { "Mac",		mac },
   { "MacsBug",		macsbug },
@@ -4082,7 +4273,7 @@ static const struct {
   { "SparcLinux",	sparc_linux },
   { "BSD",		bsd },
   { "Atari",		atari },
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
   { "BlitDamage",	blitdamage },
 #endif
   { "Solaris",		sparc_solaris },
@@ -4103,8 +4294,9 @@ static const struct {
 
 struct driver_state {
   const char *name;
-  int only, which;
-  int delay;
+  int only, which, next_one;
+  int mode_duration;
+  int delay_remaining;
   time_t start;
   Bool debug_p, cycle_p;
   struct bsod_state *bst;
@@ -4114,7 +4306,7 @@ struct driver_state {
 static void
 hack_title (struct driver_state *dst)
 {
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   char *oname = 0;
   XFetchName (dst->bst->dpy, dst->bst->window, &oname);
   if (oname && !strncmp (oname, "BSOD: ", 6)) {
@@ -4127,7 +4319,7 @@ hack_title (struct driver_state *dst)
     XStoreName (dst->bst->dpy, dst->bst->window, nname);
     free (nname);
   }
-# endif /* !HAVE_COCOA */
+# endif /* !HAVE_JWXYZ */
 }
 
 static void *
@@ -4136,12 +4328,13 @@ bsod_init (Display *dpy, Window window)
   struct driver_state *dst = (struct driver_state *) calloc (1, sizeof(*dst));
   char *s;
 
-  dst->delay = get_integer_resource (dpy, "delay", "Integer");
-  if (dst->delay < 3) dst->delay = 3;
+  dst->mode_duration = get_integer_resource (dpy, "delay", "Integer");
+  if (dst->mode_duration < 3) dst->mode_duration = 3;
 
   dst->debug_p = get_boolean_resource (dpy, "debug", "Boolean");
 
   dst->only = -1;
+  dst->next_one = -1;
   s = get_string_resource(dpy, "doOnly", "DoOnly");
   if (s && !strcasecmp (s, "cycle"))
     {
@@ -4177,7 +4370,7 @@ bsod_draw (Display *dpy, Window window, void *closure)
 
  AGAIN:
   now = time ((time_t *) 0);
-  time_left = dst->start + dst->delay - now;
+  time_left = dst->start + dst->mode_duration - now;
 
   if (dst->bst && dst->bst->img_loader)   /* still loading */
     {
@@ -4186,11 +4379,27 @@ bsod_draw (Display *dpy, Window window, void *closure)
       return 100000;
     }
 
+ DELAY_NOW:
+  /* Rather than returning a multi-second delay from the draw() routine,
+     meaning "don't call us again for N seconds", we quantize that down
+     to 1/10th second intervals so that it's more responsive to
+     rotate/reshape events.
+   */
+  if (dst->delay_remaining)
+    {
+      int inc = 10000;
+      int this_delay = MIN (dst->delay_remaining, inc);
+      dst->delay_remaining = MAX (0, dst->delay_remaining - inc);
+      return this_delay;
+    }
+
   if (! dst->bst && time_left > 0)	/* run completed; wait out the delay */
     {
       if (dst->debug_p)
         fprintf (stderr, "%s: %s: %d left\n", progname, dst->name, time_left);
-      return 500000;
+      dst->start = 0;
+      if (time_left > 5) time_left = 5;  /* Boooored now */
+      dst->delay_remaining = 1000000 * time_left;
     }
 
   else if (dst->bst)			/* sub-mode currently running */
@@ -4200,12 +4409,15 @@ bsod_draw (Display *dpy, Window window, void *closure)
       if (time_left > 0)
         this_delay = bsod_pop (dst->bst);
 
-      /* XSync (dpy, False);  slows down char drawing too much on HAVE_COCOA */
+      /* XSync (dpy, False);  slows down char drawing too much on HAVE_JWXYZ */
 
       if (this_delay == 0)
         goto AGAIN;			/* no delay, not expired: stay here */
       else if (this_delay >= 0)
-        return this_delay;		/* return; time to sleep */
+        {
+          dst->delay_remaining = this_delay;	/* return; time to sleep */
+          goto DELAY_NOW;
+        }
       else
         {				/* sub-mode run completed or expired */
           if (dst->debug_p)
@@ -4217,7 +4429,9 @@ bsod_draw (Display *dpy, Window window, void *closure)
     }
   else					/* launch a new sub-mode */
     {
-      if (dst->cycle_p)
+      if (dst->next_one >= 0)
+        dst->which = dst->next_one, dst->next_one = -1;
+      else if (dst->cycle_p)
         dst->which = (dst->which + 1) % countof(all_modes);
       else if (dst->only >= 0)
         dst->which = dst->only;
@@ -4300,11 +4514,13 @@ bsod_reshape (Display *dpy, Window window, void *closure,
   if (dst->debug_p)
     fprintf (stderr, "%s: %s: reshape reset\n", progname, dst->name);
 
-  /* just pick a new mode and restart when the window is resized. */
+  /* just restart this mode and restart when the window is resized. */
   if (dst->bst)
     free_bsod_state (dst->bst);
   dst->bst = 0;
   dst->start = 0;
+  dst->delay_remaining = 0;
+  dst->next_one = dst->which;
   dst->name = "none";
   XClearWindow (dpy, window);
 }
@@ -4329,6 +4545,7 @@ bsod_event (Display *dpy, Window window, void *closure, XEvent *event)
         free_bsod_state (dst->bst);
       dst->bst = 0;
       dst->start = 0;
+      dst->delay_remaining = 0;
       dst->name = "none";
       XClearWindow (dpy, window);
       return True;
@@ -4356,6 +4573,7 @@ static const char *bsod_defaults [] = {
   "*doWindows:		   True",
   "*doNT:		   True",
   "*doWin2K:		   True",
+  "*doWin10:		   True",
   "*doAmiga:		   True",
   "*doMac:		   True",
   "*doMacsBug:		   True",
@@ -4382,20 +4600,21 @@ static const char *bsod_defaults [] = {
   "*doGLaDOS:		   True",
   "*doAndroid:		   True",
 
-  "*font:		   9x15bold",
-  "*font2:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
-  "*bigFont:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
-  "*bigFont2:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
-
   ".foreground:		   White",
   ".background:		   Black",
 
   ".windows.foreground:	   White",
   ".windows.background:	   #0000AA",    /* EGA color 0x01. */
 
+  ".nt.foreground:	   White",
+  ".nt.background:	   #0000AA",    /* EGA color 0x01. */
+
   ".windowslh.foreground:  White",
   ".windowslh.background:  #AA0000",    /* EGA color 0x04. */
   ".windowslh.background2: #AAAAAA",    /* EGA color 0x07. */
+
+  ".win10.foreground:      White",
+  ".win10.background:      #1070AA",
 
   ".glaDOS.foreground:	   White",
   ".glaDOS.background:	   #0000AA",    /* EGA color 0x01. */
@@ -4410,8 +4629,6 @@ static const char *bsod_defaults [] = {
   ".atari.foreground:	   Black",
   ".atari.background:	   White",
 
-  ".macsbug.font:	   -*-courier-medium-r-*-*-*-80-*-*-m-*-*-*",
-  ".macsbug.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".macsbug.foreground:	   Black",
   ".macsbug.background:	   White",
   ".macsbug.borderColor:   #AAAAAA",
@@ -4424,55 +4641,39 @@ static const char *bsod_defaults [] = {
   ".macx.textBackground:   Black",
   ".macx.background:	   #888888",
 
-  ".macdisk.font:	   -*-courier-bold-r-*-*-*-80-*-*-m-*-*-*",
-  ".macdisk.bigFont:	   -*-courier-bold-r-*-*-*-100-*-*-m-*-*-*",
-
-  ".sco.font:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".sco.foreground:	   White",
   ".sco.background:	   Black",
 
-  ".hvx.font:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".hvx.foreground:	   White",
   ".hvx.background:	   Black",
 
   ".linux.foreground:      White",
   ".linux.background:      Black",
 
-  ".hppalinux.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".hppalinux.foreground:  White",
   ".hppalinux.background:  Black",
 
-  ".sparclinux.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".sparclinux.foreground: White",
   ".sparclinux.background: Black",
 
-  ".bsd.font:		   vga",
-  ".bsd.bigFont:	   -sun-console-medium-r-*-*-22-*-*-*-m-*-*-*",
-  ".bsd.bigFont2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".bsd.foreground:	   #c0c0c0",
   ".bsd.background:	   Black",
 
-  ".solaris.font:          -sun-gallant-*-*-*-*-19-*-*-*-*-120-*-*",
   ".solaris.foreground:    Black",
   ".solaris.background:    White",
 
-  ".hpux.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".hpux.foreground:	   White",
   ".hpux.background:	   Black",
 
-  ".os390.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".os390.background:	   Black",
   ".os390.foreground:	   Red",
 
-  ".tru64.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".tru64.foreground:	   White",
   ".tru64.background:	   #0000AA",    /* EGA color 0x01. */
 
-  ".vms.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".vms.foreground:	   White",
   ".vms.background:	   Black",
 
-  ".msdos.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
   ".msdos.foreground:	   White",
   ".msdos.background:	   Black",
 
@@ -4500,16 +4701,116 @@ static const char *bsod_defaults [] = {
   "*useSHM:                True",
 #endif
 
-# ifdef USE_IPHONE
-  "*font:		   Courier-Bold 9",
-  ".amiga.font:	           Courier-Bold 12",
-  ".macsbug.font:	   Courier-Bold 5",
-  ".sco.font:		   Courier-Bold 9",
-  ".hvx.font:		   Courier-Bold 9",
-  ".bsd.font:		   Courier-Bold 9",
-  ".solaris.font:          Courier-Bold 6",
-  ".macdisk.font:          Courier-Bold 6",
-# endif
+  "*fontB:		   ",
+  "*fontC:		   ",
+
+# if defined(USE_IPHONE)
+
+  "*font:		   PxPlus IBM VGA8 16, Courier-Bold 14",
+  "*bigFont:		   ",
+  "*font2:		   ",
+  "*bigFont2:		   ",
+
+  ".mac.font:		   Courier-Bold 18",
+  ".macsbug.font:	   Courier-Bold 8",
+  ".macx.font:		   Courier-Bold 14",
+  ".macdisk.font:	   Courier-Bold 14",
+  ".msdos.font:		   PxPlus IBM VGA8 32, Courier-Bold 28",
+  ".nt.font:		   PxPlus IBM VGA8 12, Courier-Bold 10",
+  ".win10.font:		   Arial 12, Helvetica 12",
+  ".win10.bigFont:	   Arial 12, Helvetica 12",
+  ".win10.fontB:	   Arial 50, Helvetica 50",
+  ".win10.fontC:	   Arial 9, Helvetica 9",
+  ".win10.bigFont2:	   ",
+
+# elif defined(HAVE_ANDROID)
+
+  "*font:		   PxPlus IBM VGA8 16",
+  "*bigFont:		   ",
+  "*font2:		   ",
+  "*bigFont2:		   ",
+
+  ".mac.font:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
+  ".macsbug.font:	   -*-courier-bold-r-*-*-*-80-*-*-m-*-*-*",
+  ".macx.font:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".macdisk.font:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".msdos.font:		   PxPlus IBM VGA8 32",
+  ".nt.font:		   PxPlus IBM VGA8 12",
+
+  ".win10.font:		   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
+  ".win10.bigFont:	   -*-helvetica-medium-r-*-*-*-120-*-*-*-*-*-*",
+  ".win10.fontB:	   -*-helvetica-medium-r-*-*-*-500-*-*-*-*-*-*",
+  ".win10.fontC:	   -*-helvetica-medium-r-*-*-*-90-*-*-*-*-*-*",
+  ".win10.bigFont2:	   ",
+
+# elif defined(HAVE_COCOA)
+
+  "*font:		   PxPlus IBM VGA8 8,  Courier-Bold 9",
+  "*bigFont:		   PxPlus IBM VGA8 32, Courier-Bold 24",
+  "*font2:		   ",
+  "*bigFont2:		   ",
+
+  ".mac.font:		   Monaco 10, Courier-Bold 9",
+  ".mac.bigFont:	   Monaco 18, Courier-Bold 18",
+
+  ".macsbug.font:	   Monaco 10, Courier-Bold 9",
+  ".macsbug.bigFont:	   Monaco 24, Courier-Bold 24",
+
+  ".macx.font:		   Courier-Bold 9",
+  ".macx.bigFont:	   Courier-Bold 14",
+  ".macdisk.font:	   Courier-Bold 9",
+  ".macdisk.bigFont:	   Courier-Bold 18",
+
+  ".hvx.bigFont:	   PxPlus IBM VGA8 16, Courier-Bold 14",
+  ".hppalinux.bigFont:	   PxPlus IBM VGA8 16, Courier-Bold 14",
+  ".solaris.bigFont:	   PxPlus IBM VGA8 16, Courier-Bold 14",
+  ".linux.bigFont:	   PxPlus IBM VGA8 16, Courier-Bold 14",
+  ".hpux.bigFont:	   PxPlus IBM VGA8 16, Courier-Bold 14",
+  ".msdos.font:		   PxPlus IBM VGA8 16, Courier-Bold 14",
+
+  ".win10.font:		   Arial 24, Helvetica 24",
+  ".win10.bigFont:	   Arial 24, Helvetica 24",
+  ".win10.fontB:	   Arial 100, Helvetica 100",
+  ".win10.fontC:	   Arial 16, Helvetica 16",
+  ".win10.bigFont2:	   ",
+
+# else   /* X11 */
+
+  "*font:		   9x15bold",
+  "*font2:		   -*-courier-bold-r-*-*-*-120-*-*-m-*-*-*",
+  "*bigFont:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
+  "*bigFont2:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
+
+  ".macsbug.font:	   -*-courier-medium-r-*-*-*-80-*-*-m-*-*-*",
+  ".macsbug.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+
+  ".macdisk.font:	   -*-courier-bold-r-*-*-*-80-*-*-m-*-*-*",
+  ".macdisk.bigFont:	   -*-courier-bold-r-*-*-*-100-*-*-m-*-*-*",
+
+  ".sco.font:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".hvx.font:		   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".hppalinux.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".sparclinux.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+
+  ".bsd.font:		   vga",
+  ".bsd.bigFont:	   -sun-console-medium-r-*-*-22-*-*-*-m-*-*-*",
+  ".bsd.bigFont2:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+
+  ".solaris.font:          -sun-gallant-*-*-*-*-19-*-*-*-*-120-*-*",
+  ".hpux.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".os390.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".tru64.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".vms.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+  ".msdos.bigFont:	   -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*",
+
+  ".win10.font:		   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
+  ".win10.bigFont:	   -*-helvetica-medium-r-*-*-*-180-*-*-*-*-*-*",
+  ".win10.fontB:	   -*-helvetica-medium-r-*-*-*-240-*-*-*-*-*-*",
+  ".win10.fontC:	   -*-helvetica-medium-r-*-*-*-140-*-*-*-*-*-*",
+  ".win10.font2:	   ",
+  ".win10.bigFont2:	   ",
+
+# endif  /* X11 */
 
   0
 };
@@ -4524,6 +4825,8 @@ static const XrmOptionDescRec bsod_options [] = {
   { "-no-nt",		".doNT",		XrmoptionNoArg,  "False" },
   { "-2k",		".doWin2K",		XrmoptionNoArg,  "True"  },
   { "-no-2k",		".doWin2K",		XrmoptionNoArg,  "False" },
+  { "-win10",		".doWin10",		XrmoptionNoArg,  "True"  },
+  { "-no-win10",	".doWin10",		XrmoptionNoArg,  "False" },
   { "-amiga",		".doAmiga",		XrmoptionNoArg,  "True"  },
   { "-no-amiga",	".doAmiga",		XrmoptionNoArg,  "False" },
   { "-mac",		".doMac",		XrmoptionNoArg,  "True"  },

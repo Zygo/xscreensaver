@@ -1,4 +1,4 @@
-# hacks/Makefile.in --- xscreensaver, Copyright (c) 1997-2014 Jamie Zawinski.
+# hacks/Makefile.in --- xscreensaver, Copyright (c) 1997-2015 Jamie Zawinski.
 # the `../configure' script generates `hacks/Makefile' from this file.
 
 @SET_MAKE@
@@ -84,13 +84,13 @@ UTIL_OBJS	= $(UTILS_BIN)/alpha.o $(UTILS_BIN)/colors.o \
 		  $(UTILS_BIN)/hsv.o $(UTILS_BIN)/resources.o \
 		  $(UTILS_BIN)/spline.o $(UTILS_BIN)/usleep.o \
 		  $(UTILS_BIN)/visual.o $(UTILS_BIN)/logo.o \
-		  $(UTILS_SRC)/minixpm.o \
+		  $(UTILS_BIN)/minixpm.o \
 		  $(UTILS_BIN)/yarandom.o $(UTILS_BIN)/erase.o \
 		  $(UTILS_BIN)/xshm.o $(UTILS_BIN)/xdbe.o \
 		  $(UTILS_BIN)/colorbars.o \
-		  $(UTILS_SRC)/textclient.o $(UTILS_SRC)/aligned_malloc.o \
-		  $(UTILS_SRC)/thread_util.o \
-		  $(UTILS_SRC)/xft.o $(UTILS_SRC)/utf8wc.o
+		  $(UTILS_BIN)/textclient.o $(UTILS_BIN)/aligned_malloc.o \
+		  $(UTILS_BIN)/thread_util.o \
+		  $(UTILS_BIN)/xft.o $(UTILS_BIN)/utf8wc.o
 
 SRCS		= attraction.c blitspin.c bouboule.c braid.c bubbles.c \
 		  bubbles-default.c decayscreen.c deco.c drift.c flag.c \
@@ -190,7 +190,7 @@ JPEG_EXES	= webcollage-helper
 
 RETIRED_EXES	= ant bubbles critical flag forest hyperball hypercube laser \
 		  lightning lisa lissie lmorph rotor sphere spiral t3d vines \
-		  whirlygig worm xsublim juggle
+		  whirlygig worm xsublim juggle testx11
 
 HACK_OBJS_1	= fps.o $(UTILS_BIN)/resources.o $(UTILS_BIN)/visual.o \
 		  $(UTILS_BIN)/usleep.o $(UTILS_BIN)/yarandom.o \
@@ -273,7 +273,7 @@ TARFILES	= $(SRCS) $(HDRS) $(SCRIPTS) $(MEN) $(RETIRED_MEN) \
 
 
 default: all
-all: $(EXES) $(RETIRED_EXES) testx11
+all: $(EXES) $(RETIRED_EXES)
 
 install:   install-program   install-scripts install-xml install-man
 uninstall: uninstall-program uninstall-xml uninstall-man
@@ -389,7 +389,7 @@ uninstall-xml:
 	done
 
 clean:
-	-rm -f *.o a.out core $(EXES) $(RETIRED_EXES) testx11 m6502.h
+	-rm -f *.o a.out core $(EXES) $(RETIRED_EXES) m6502.h
 
 distclean: clean
 	-rm -f Makefile TAGS *~ "#"*
@@ -873,8 +873,10 @@ hexadrop:	hexadrop.o	$(HACK_OBJS) $(COL)
 tessellimage:	tessellimage.o	delaunay.o $(HACK_OBJS) $(GRAB)
 	$(CC_HACK) -o $@ $@.o	delaunay.o $(HACK_OBJS) $(GRAB) $(HACK_LIBS)
 
-testx11:	testx11.o	$(HACK_OBJS)
-	$(CC_HACK) -o $@ $@.o	$(HACK_OBJS) $(COL) $(HACK_LIBS)
+testx11:	testx11.o	glx/rotator.o $(HACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	glx/rotator.o $(HACK_OBJS) $(COL) $(HACK_LIBS)
+glx/rotator.o:	glx/rotator.c
+	$(MAKE) -C glx $(@F) CC="$(CC)" CFLAGS="$(CFLAGS)" LDFLAGS="$(LDFLAGS)"
 
 # The rules for those hacks which follow the `xlockmore' API.
 #
@@ -1042,6 +1044,7 @@ anemone.o: $(UTILS_SRC)/hsv.h
 anemone.o: $(UTILS_SRC)/resources.h
 anemone.o: $(UTILS_SRC)/usleep.h
 anemone.o: $(UTILS_SRC)/visual.h
+anemone.o: $(UTILS_SRC)/xdbe.h
 anemone.o: $(UTILS_SRC)/yarandom.h
 anemotaxis.o: ../config.h
 anemotaxis.o: $(srcdir)/fps.h
@@ -1053,6 +1056,7 @@ anemotaxis.o: $(UTILS_SRC)/hsv.h
 anemotaxis.o: $(UTILS_SRC)/resources.h
 anemotaxis.o: $(UTILS_SRC)/usleep.h
 anemotaxis.o: $(UTILS_SRC)/visual.h
+anemotaxis.o: $(UTILS_SRC)/xdbe.h
 anemotaxis.o: $(UTILS_SRC)/yarandom.h
 ant.o: $(srcdir)/automata.h
 ant.o: ../config.h
@@ -1359,6 +1363,7 @@ compass.o: $(UTILS_SRC)/hsv.h
 compass.o: $(UTILS_SRC)/resources.h
 compass.o: $(UTILS_SRC)/usleep.h
 compass.o: $(UTILS_SRC)/visual.h
+compass.o: $(UTILS_SRC)/xdbe.h
 compass.o: $(UTILS_SRC)/yarandom.h
 coral.o: ../config.h
 coral.o: $(srcdir)/fps.h
@@ -1455,6 +1460,7 @@ deluxe.o: $(UTILS_SRC)/hsv.h
 deluxe.o: $(UTILS_SRC)/resources.h
 deluxe.o: $(UTILS_SRC)/usleep.h
 deluxe.o: $(UTILS_SRC)/visual.h
+deluxe.o: $(UTILS_SRC)/xdbe.h
 deluxe.o: $(UTILS_SRC)/yarandom.h
 demon.o: $(srcdir)/automata.h
 demon.o: ../config.h
@@ -1631,6 +1637,7 @@ fluidballs.o: $(UTILS_SRC)/hsv.h
 fluidballs.o: $(UTILS_SRC)/resources.h
 fluidballs.o: $(UTILS_SRC)/usleep.h
 fluidballs.o: $(UTILS_SRC)/visual.h
+fluidballs.o: $(UTILS_SRC)/xdbe.h
 fluidballs.o: $(UTILS_SRC)/yarandom.h
 fontglide.o: ../config.h
 fontglide.o: $(srcdir)/fps.h
@@ -1644,6 +1651,7 @@ fontglide.o: $(UTILS_SRC)/textclient.h
 fontglide.o: $(UTILS_SRC)/usleep.h
 fontglide.o: $(UTILS_SRC)/utf8wc.h
 fontglide.o: $(UTILS_SRC)/visual.h
+fontglide.o: $(UTILS_SRC)/xdbe.h
 fontglide.o: $(UTILS_SRC)/xft.h
 fontglide.o: $(UTILS_SRC)/yarandom.h
 forest.o: ../config.h
@@ -1857,6 +1865,7 @@ interference.o: $(UTILS_SRC)/resources.h
 interference.o: $(UTILS_SRC)/thread_util.h
 interference.o: $(UTILS_SRC)/usleep.h
 interference.o: $(UTILS_SRC)/visual.h
+interference.o: $(UTILS_SRC)/xdbe.h
 interference.o: $(UTILS_SRC)/xshm.h
 interference.o: $(UTILS_SRC)/yarandom.h
 intermomentary.o: ../config.h
@@ -1918,6 +1927,7 @@ kumppa.o: $(UTILS_SRC)/hsv.h
 kumppa.o: $(UTILS_SRC)/resources.h
 kumppa.o: $(UTILS_SRC)/usleep.h
 kumppa.o: $(UTILS_SRC)/visual.h
+kumppa.o: $(UTILS_SRC)/xdbe.h
 kumppa.o: $(UTILS_SRC)/yarandom.h
 laser.o: ../config.h
 laser.o: $(srcdir)/fps.h
@@ -2068,6 +2078,7 @@ moire2.o: $(UTILS_SRC)/hsv.h
 moire2.o: $(UTILS_SRC)/resources.h
 moire2.o: $(UTILS_SRC)/usleep.h
 moire2.o: $(UTILS_SRC)/visual.h
+moire2.o: $(UTILS_SRC)/xdbe.h
 moire2.o: $(UTILS_SRC)/yarandom.h
 moire.o: ../config.h
 moire.o: $(srcdir)/fps.h
@@ -2291,6 +2302,7 @@ piecewise.o: $(UTILS_SRC)/hsv.h
 piecewise.o: $(UTILS_SRC)/resources.h
 piecewise.o: $(UTILS_SRC)/usleep.h
 piecewise.o: $(UTILS_SRC)/visual.h
+piecewise.o: $(UTILS_SRC)/xdbe.h
 piecewise.o: $(UTILS_SRC)/yarandom.h
 polyominoes.o: ../config.h
 polyominoes.o: $(srcdir)/fps.h
@@ -2331,6 +2343,7 @@ popsquares.o: $(UTILS_SRC)/hsv.h
 popsquares.o: $(UTILS_SRC)/resources.h
 popsquares.o: $(UTILS_SRC)/usleep.h
 popsquares.o: $(UTILS_SRC)/visual.h
+popsquares.o: $(UTILS_SRC)/xdbe.h
 popsquares.o: $(UTILS_SRC)/yarandom.h
 pyro.o: ../config.h
 pyro.o: $(srcdir)/fps.h
@@ -2632,6 +2645,7 @@ tessellimage.o: $(UTILS_SRC)/visual.h
 tessellimage.o: $(UTILS_SRC)/yarandom.h
 testx11.o: ../config.h
 testx11.o: $(srcdir)/fps.h
+testx11.o: $(srcdir)/glx/rotator.h
 testx11.o: $(srcdir)/screenhackI.h
 testx11.o: $(srcdir)/screenhack.h
 testx11.o: $(UTILS_SRC)/colors.h
@@ -2760,6 +2774,7 @@ whirlygig.o: $(UTILS_SRC)/hsv.h
 whirlygig.o: $(UTILS_SRC)/resources.h
 whirlygig.o: $(UTILS_SRC)/usleep.h
 whirlygig.o: $(UTILS_SRC)/visual.h
+whirlygig.o: $(UTILS_SRC)/xdbe.h
 whirlygig.o: $(UTILS_SRC)/yarandom.h
 wormhole.o: ../config.h
 wormhole.o: $(srcdir)/fps.h

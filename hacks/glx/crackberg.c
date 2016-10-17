@@ -1,7 +1,7 @@
 /***************************
  ** crackberg; Matus Telgarsky [ catachresis@cmu.edu ] 2005 
  ** */
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # define XK_MISCELLANY
 # include <X11/keysymdef.h>
 #endif

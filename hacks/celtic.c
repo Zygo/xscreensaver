@@ -14,11 +14,12 @@
  */
 
 #include <math.h>
-#include <assert.h>
 #include "screenhack.h"
 #include "erase.h"
 
 #define SQRT_3 1.73205080756887729352
+#undef assert
+#define assert(EXP) do { if (!((EXP))) abort(); } while(0)
 
 /*-----------------------------------------*/
 
@@ -838,7 +839,7 @@ static const char *celtic_defaults[] = {
     "*delay: 10000",
     "*delay2: 5",
     "*showGraph: False",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
     "*ignoreRotation: True",
 #endif
     0

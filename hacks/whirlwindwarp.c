@@ -490,7 +490,7 @@ static const char *whirlwindwarp_defaults [] = {
   "*points:	400",
   "*tails:	8",
   "*meters:	false",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

@@ -21,6 +21,7 @@
 	"*titleFont:  -*-helvetica-medium-r-normal-*-*-140-*-*-*-*-*-*\n" \
 	"*titleFont2: -*-helvetica-medium-r-normal-*-*-100-*-*-*-*-*-*\n" \
 	"*titleFont3: -*-helvetica-medium-r-normal-*-*-80-*-*-*-*-*-*\n"  \
+	"*suppressRotationAnimation: True\n" \
 
 
 # define refresh_polyhedra 0
@@ -30,7 +31,7 @@
 
 #include "xlockmore.h"
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 #else
 # include <X11/Xlib.h>
@@ -57,7 +58,7 @@
 #include "gltrackball.h"
 #include "teapot.h"
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # define XK_MISCELLANY
 # include <X11/keysymdef.h>
 #endif
@@ -624,6 +625,15 @@ draw_polyhedra (ModeInfo *mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix ();
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1/h);
+  }
+# endif
 
   glScalef(1.1, 1.1, 1.1);
 

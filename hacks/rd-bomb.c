@@ -145,12 +145,6 @@ pixack_frame(struct state *st, char *pix_buf)
 
   if (!(st->frame%st->epoch_time)) {
     int s;
-    if (0 != st->frame) {
-      int tt = st->epoch_time / 500;
-      if (tt > 15)
-	tt = 15;
-      /*sleep(tt);*/
-    }
 	  
     for (i = 0; i < st->npix; i++) {
       /* equilibrium */
@@ -314,7 +308,7 @@ static const char *rd_defaults [] = {
 #else
   "*useSHM:	False",
 #endif
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0
@@ -378,7 +372,6 @@ rd_init (Display *dpy, Window win)
 {
   struct state *st = (struct state *) calloc (1, sizeof(*st));
   XGCValues gcv;
-  int w2;
   int vdepth;
 
   st->dpy = dpy;
@@ -418,7 +411,6 @@ rd_init (Display *dpy, Window win)
 
   }
   st->npix = (st->width + 2) * (st->height + 2);
-  w2 = st->width + 2;
 /*  gcv.function = GXcopy;*/
   st->gc = XCreateGC(st->dpy, win, 0 /*GCFunction*/, &gcv);
   vdepth = visual_depth(DefaultScreenOfDisplay(st->dpy), st->xgwa.visual);

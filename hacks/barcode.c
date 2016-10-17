@@ -14,6 +14,7 @@
  */
 
 #include <math.h>
+#include <time.h>
 #include "screenhack.h"
 
 /* non-user-modifiable immutable definitions */
@@ -824,7 +825,7 @@ static void drawDigitChar (struct state *st, Bitmap *b, int x, int y, char c)
     if ((c < '0') || (c > '9'))
       c = '0';
 
-    bitmapDrawChar5x8 (b, x, y, c);
+  bitmapDrawChar5x8 (b, x, y, c);
 }
 
 /* draw a upc/ean digit at the given coordinates */

@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=KJWe4G4Qa1Q"/>
+  <video href="https://www.youtube.com/watch?v=KJWe4G4Qa1Q"/>
 
   <hgroup>
   <number id="delay" type="slider" arg="-delay %"

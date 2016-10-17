@@ -46,7 +46,7 @@
 "GetViewPortIsFullOfLies: False",
 "*demoCommand: xscreensaver-demo",
 "*prefsCommand: xscreensaver-demo -prefs",
-"*helpURL: http://www.jwz.org/xscreensaver/man.html",
+"*helpURL: https://www.jwz.org/xscreensaver/man.html",
 "*loadURL: firefox '%s' || mozilla '%s' || netscape '%s'",
 "*manualCommand: xterm -sb -fg black -bg gray75 -T '%s manual' \
 		    -e /bin/sh -c 'man \"%s\" ; read foo'",
@@ -266,7 +266,11 @@
 				tessellimage -root			    \\n\
   GL: 				winduprobot -root			    \\n\
   GL: 				splitflap -root				    \\n\
-				testx11 -root				    \\n",
+  GL: 				dymaxionmap -root			    \\n\
+  GL: 				energystream -root			    \\n\
+  GL: 				hydrostat -root				    \\n\
+  GL: 				raverhoop -root				    \\n\
+  GL: 				unicrud -root				    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
 "XScreenSaver.initialDelay:		0:00:00",
@@ -303,7 +307,7 @@
 "*passwd.asterisks:              True",
 "*passwd.uname:                  True",
 "*splash.heading.label:		XScreenSaver %s",
-"*splash.body.label:		Copyright \\251 1991-2015 by",
+"*splash.body.label:		Copyright \\251 1991-2016 by",
 "*splash.body2.label:		Jamie Zawinski <jwz@jwz.org>",
 "*splash.demo.label:		Settings",
 "*splash.help.label:		Help",
@@ -327,6 +331,8 @@
 "*hacks.dangerball.name:     DangerBall",
 "*hacks.decayscreen.name:    DecayScreen",
 "*hacks.dnalogo.name:        DNA Logo",
+"*hacks.dymaxionmap.name:    DymaxionMap",
+"*hacks.energystream.name:   EnergyStream",
 "*hacks.euler2d.name:        Euler2D",
 "*hacks.fadeplot.name:       FadePlot",
 "*hacks.flipflop.name:       FlipFlop",
@@ -359,6 +365,7 @@
 "*hacks.popsquares.name:     PopSquares",
 "*hacks.projectiveplane.name:ProjectivePlane",
 "*hacks.quasicrystal.name:   QuasiCrystal",
+"*hacks.raverhoop.name:      RaverHoop",
 "*hacks.rd-bomb.name:        RDbomb",
 "*hacks.rdbomb.name:         RDbomb",
 "*hacks.romanboy.name:       RomanBoy",

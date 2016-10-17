@@ -40,7 +40,7 @@
   */
 #endif
 
-#ifndef USE_IPHONE
+#ifndef HAVE_MOBILE
 # define READ_FILES
 #endif
 
@@ -53,7 +53,9 @@
 # include <sys/types.h>
 # include <sys/time.h>
 # include <sys/ipc.h>
-# include <sys/shm.h>
+# ifndef HAVE_ANDROID
+#  include <sys/shm.h>
+# endif
 # include <sys/socket.h>
 # include <netinet/in_systm.h>
 # include <netinet/in.h>
@@ -88,7 +90,7 @@
 # undef HAVE_PING
 #endif
 
-#ifndef USE_IPHONE
+#ifndef HAVE_MOBILE
 # define LOAD_FILES
 #endif
 
@@ -448,7 +450,7 @@ read_hosts_file (sonar_sensor_data *ssd, const char *filename)
     {
       char buf[1024];
       sprintf(buf, "%s:  %s", progname, filename);
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
       if (pd->debug_p)  /* on OSX don't syslog this */
 #endif
         perror (buf);
@@ -1410,7 +1412,7 @@ ping_scan (sonar_sensor_data *ssd)
 
           if (sb && !pb->lookup_addr)
             {
-              assert (pb->addrlen);
+              if (!pb->addrlen) abort();
               send_ping (pd, sb);
               pd->last_pinged = sb;
             }

@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=atwc7IJHuLo"/>
+  <video href="https://www.youtube.com/watch?v=atwc7IJHuLo"/>
 
   <select id="mode">
     <option id="random" _label="Random"/>

@@ -46,7 +46,7 @@ static const char sccsid[] = "@(#)demon.c	5.00 2000/11/01 xlockmore";
   Triangle 3, 9, or 12
 */
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # define DO_STIPPLE
 #endif
 
@@ -446,7 +446,7 @@ init_demon (ModeInfo * mi)
 #endif /* DO_STIPPLE */
 	free_struct(dp);
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
     jwxyz_XSetAntiAliasing (MI_DISPLAY(mi), MI_GC(mi), False);
 #endif
 

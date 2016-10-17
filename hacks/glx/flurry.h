@@ -39,7 +39,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # include <GL/gl.h>
 # include <GL/glu.h>
 # include <GL/glx.h>

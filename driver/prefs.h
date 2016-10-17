@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -20,7 +20,7 @@ extern int write_init_file (Display *,
                             saver_preferences *, const char *version_string,
                             Bool verbose_p);
 const char *init_file_name (void);
-extern Bool senescent_p (void);
+extern Bool decrepit_p (void);
 
 extern screenhack *parse_screenhack (const char *line);
 extern void free_screenhack (screenhack *);

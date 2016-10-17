@@ -17,6 +17,7 @@
 			"*showFPS:      False       \n" \
 			"*fpsSolid:     True        \n" \
 			"*doubleBuffer: False       \n" \
+			"*suppressRotationAnimation: True\n" \
 
 # define refresh_noof 0
 # define release_noof 0

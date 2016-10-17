@@ -1,5 +1,5 @@
 /* demo-Gtk.c --- implements the interactive demo-mode and options dialogs.
- * xscreensaver, Copyright (c) 1993-2013 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -801,7 +801,7 @@ about_menu_cb (GtkMenuItem *menuitem, gpointer user_data)
   char *s, *s2;
   char copy[1024];
   char year[5];
-  char *desc = _("For updates, check http://www.jwz.org/xscreensaver/");
+  char *desc = _("For updates, check https://www.jwz.org/xscreensaver/");
 
   s = strchr (vers, ',');
   *s = 0;
@@ -5292,13 +5292,13 @@ main (int argc, char **argv)
     the_network_is_not_the_computer (s);
 
 
-  if (senescent_p())
+  if (decrepit_p())
     warning_dialog (s->toplevel_widget,
       _("Warning:\n\n"
         "This version of xscreensaver is VERY OLD!\n"
         "Please upgrade!\n"
         "\n"
-        "http://www.jwz.org/xscreensaver/\n"
+        "https://www.jwz.org/xscreensaver/\n"
         "\n"
         "(If this is the latest version that your distro ships, then\n"
         "your distro is doing you a disservice. Build from source.)\n"

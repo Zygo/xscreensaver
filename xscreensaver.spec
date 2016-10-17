@@ -1,5 +1,5 @@
 %define	name xscreensaver
-%define	version 5.34
+%define	version 5.35
 
 Summary:	X screen saver and locker
 Name:		%{name}
@@ -8,8 +8,8 @@ Release:	1
 Epoch:		1
 License:	BSD
 Group:		Amusements/Graphics
-URL:		http://www.jwz.org/xscreensaver/
-Source0:	http://www.jwz.org/xscreensaver/xscreensaver-%{version}.tar.gz
+URL:		https://www.jwz.org/xscreensaver/
+Source0:	https://www.jwz.org/xscreensaver/xscreensaver-%{version}.tar.gz
 Vendor:		Jamie Zawinski <jwz@jwz.org>
 Buildroot:	%{_tmppath}/%{name}-root
 

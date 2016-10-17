@@ -28,12 +28,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#if defined (HAVE_COCOA) || defined(HAVE_ANDROID)
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 #else  /* real Xlib */
 # include <X11/Xlib.h>
 # include <X11/Xutil.h>
-#endif /* !HAVE_COCOA && !HAVE_ANDROID */
+#endif /* !HAVE_JWXYZ */
 
 #include "minixpm.h"
 

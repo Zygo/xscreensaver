@@ -313,7 +313,7 @@ init_galaxy(ModeInfo * mi)
  }
  gp = &universes[MI_SCREEN(mi)];
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   dbufp = False;
 # endif
 

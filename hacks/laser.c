@@ -166,7 +166,7 @@ init_laser(ModeInfo * mi)
 			free_laser(display, lp);
 			return;
 		}
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
     jwxyz_XSetAntiAliasing (MI_DISPLAY(mi), lp->stippledGC, False);
 # endif
 	}

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2014-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2014-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -17,11 +17,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
-# elif defined(HAVE_ANDROID)
-# include "jwxyz.h"
-#else /* !HAVE_COCOA */
+#else /* !HAVE_JWXYZ */
 # include <X11/Xlib.h>
 #endif
 
@@ -239,11 +237,11 @@ utf8_to_XChar2b (const char *string, int *length_ret)
   out->byte1 = 0;
   out->byte2 = 0;
 
-  /* shrink */
-  c2b = (XChar2b *) realloc (c2b, (out - c2b + 1) * sizeof(*c2b));
-
   if (length_ret)
     *length_ret = (int) (out - c2b);
+
+  /* shrink */
+  c2b = (XChar2b *) realloc (c2b, (out - c2b + 1) * sizeof(*c2b));
 
   return c2b;
 }
@@ -275,7 +273,12 @@ utf8_split (const char *string, int *length_ret)
       /* If this is a Combining Diacritical, append it to the previous
          character. E.g., "y\314\206\314\206" is one string, not three.
        */
-      if (i > 1 && uc >= 0x300 && uc <= 0x36F)
+      if (i > 1 && 
+          ((uc >=  0x300 && uc <=  0x36F) || /* Combining Diacritical */
+           (uc >= 0x1AB0 && uc <= 0x1AFF) || /* Combining Diacritical Ext. */
+           (uc >= 0x1DC0 && uc <= 0x1DFF) || /* Combining Diacritical Supp. */
+           (uc >= 0x20D0 && uc <= 0x20FF) || /* Combining Diacritical Sym. */
+           (uc >= 0xFE20 && uc <= 0xFE2F)))  /* Combining Half Marks */
         {
           long L1 = strlen(ret[i-2]);
           long L2 = strlen(ret[i-1]);
@@ -290,11 +293,11 @@ utf8_split (const char *string, int *length_ret)
     }
   ret[i] = 0;
 
-  /* shrink */
-  ret = (char **) realloc (ret, (i+1) * sizeof(*ret));
-
   if (length_ret)
     *length_ret = i;
+
+  /* shrink */
+  ret = (char **) realloc (ret, (i+1) * sizeof(*ret));
 
   return ret;
 }
@@ -330,12 +333,13 @@ XChar2b_to_utf8 (const XChar2b *in, int *length_ret)
     }
   *out = 0;
 
-  /* shrink */
   out_len = (int) (out - utf8 + 1);
-  utf8 = (char *) realloc (utf8, out_len);
 
   if (length_ret)
     *length_ret = out_len;
+
+  /* shrink */
+  utf8 = (char *) realloc (utf8, out_len);
 
   return utf8;
 }
@@ -363,7 +367,16 @@ utf8_to_latin1 (const char *string, Bool ascii_p)
       if (uc == '\240')	/* &nbsp; */
         uc = ' ';
       else if (uc >= 0x300 && uc <= 0x36F)
-        uc = 0;		/* Discard "Unicode Combining Diacriticals Block" */
+        uc = 0;		/* Discard "Combining Diacritical Marks" */
+      else if (uc >= 0x1AB0 && uc <= 0x1AFF)
+        uc = 0;		/* Discard "Combining Diacritical Marks Extended" */
+      else if (uc >= 0x1DC0 && uc <= 0x1DFF)
+        uc = 0;		/* Discard "Combining Diacritical Marks Supplement" */
+      else if (uc >= 0x20D0 && uc <= 0x20FF)
+        uc = 0;		/* Discard "Combining Diacritical Marks for Symbols" */
+      else if (uc >= 0xFE20 && uc <= 0xFE2F)
+        uc = 0;		/* Discard "Combining Half Marks" */
+
       else if (uc > 0xFF)
         switch (uc) {
 

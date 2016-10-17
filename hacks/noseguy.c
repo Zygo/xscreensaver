@@ -19,7 +19,7 @@
 #include "textclient.h"
 #include "xft.h"
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # define HAVE_XPM
 #endif
 

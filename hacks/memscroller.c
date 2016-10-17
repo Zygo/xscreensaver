@@ -21,7 +21,7 @@
 #undef countof
 #define countof(x) (sizeof(x)/sizeof(*(x)))
 
-#ifndef USE_IPHONE
+#ifndef HAVE_MOBILE
 # define READ_FILES
 #endif
 
@@ -335,7 +335,7 @@ more_bits (state *st, scroller *sc)
   vv = sc->value;
 
   /* Pack RGB into a pixel according to the XImage component masks;
-     set the remaining bits to 1 for the benefit of HAVE_COCOA alpha.
+     set the remaining bits to 1 for the benefit of HAVE_JWXYZ alpha.
    */
 # undef PACK
 # define PACK() ((((r << 24) | (r << 16) | (r << 8) | r) & rmsk) | \
@@ -368,7 +368,7 @@ more_bits (state *st, scroller *sc)
         }
 
       /* I don't understand what's going on there, but on MacOS X, we're
-         getting insane values for lomem and himem (both Xlib and HAVE_COCOA).
+         getting insane values for lomem and himem (both Xlib and HAVE_JWXYZ).
          Does malloc() draw from more than one heap? */
       if ((unsigned long) himem - (unsigned long) lomem > 0x0FFFFFFF) {
 # if 0
@@ -626,21 +626,21 @@ static const char *memscroller_defaults [] = {
   ".foreground:		   #00FF00",
   "*borderSize:		   2",
 
-#if defined(HAVE_COCOA)
+#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
   ".font1:		   OCR A Std 192, Lucida Console 192, Monaco 192",
   ".font2:		   OCR A Std 144, Lucida Console 144, Monaco 144",
   ".font3:		   OCR A Std 128, Lucida Console 128, Monaco 128",
   ".font4:		   OCR A Std 96,  Lucida Console 96,  Monaco 96",
   ".font5:		   OCR A Std 48,  Lucida Console 48,  Monaco 48",
   ".font6:		   OCR A Std 24,  Lucida Console 24,  Monaco 24",
-#else  /* !HAVE_COCOA */
+#else  /* real X11 */
   ".font1:		   -*-courier-bold-r-*-*-*-1440-*-*-m-*-*-*",
   ".font2:		   -*-courier-bold-r-*-*-*-960-*-*-m-*-*-*",
   ".font3:		   -*-courier-bold-r-*-*-*-480-*-*-m-*-*-*",
   ".font4:		   -*-courier-bold-r-*-*-*-320-*-*-m-*-*-*",
   ".font5:		   -*-courier-bold-r-*-*-*-180-*-*-m-*-*-*",
   ".font6:		   fixed",
-#endif /* !HAVE_COCOA */
+#endif /* real X11 */
 
   "*delay:		   10000",
   "*offset:		   0",

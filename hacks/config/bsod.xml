@@ -4,7 +4,7 @@
 
  <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=YIqbMCfR3r0"/>
+  <video href="https://www.youtube.com/watch?v=YIqbMCfR3r0"/>
 
  <hgroup>
   <number id="delay" type="slider" arg="-delay %"
@@ -18,6 +18,7 @@
    <boolean id="windows"    _label="Windows 3.1"    arg-unset="-no-windows"/>
    <boolean id="nt"         _label="Windows NT"     arg-unset="-no-nt"/>
    <boolean id="2k"         _label="Windows 2000  " arg-unset="-no-2k"/>
+   <boolean id="win10"      _label="Windows 10    " arg-unset="-no-win10"/>
    <boolean id="msdos"      _label="MS-DOS"         arg-unset="-no-msdos"/>
   </vgroup>
   <vgroup>

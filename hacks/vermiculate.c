@@ -1212,7 +1212,7 @@ static const char *vermiculate_defaults[] = {
   "*fpsSolid:	true",
   "*speed: 0",
   "*instring: ",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

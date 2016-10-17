@@ -155,7 +155,7 @@ cynosure_init (Display *d, Window w)
 #else /* !DO_STIPPLE */
   st->shadow_gc = XCreateGC(st->dpy, st->window, GCForeground, &gcv);
 
-#  ifdef HAVE_COCOA /* allow non-opaque alpha components in pixel values */
+#  ifdef HAVE_JWXYZ /* allow non-opaque alpha components in pixel values */
   jwxyz_XSetAlphaAllowed (st->dpy, st->shadow_gc, True);
 #  endif
 
@@ -167,14 +167,14 @@ cynosure_init (Display *d, Window w)
 
       for (i = 0; i < st->ncolors2; i++)
         {
-#  ifdef HAVE_COCOA
+#  ifdef HAVE_JWXYZ
           /* give a non-opaque alpha to the shadow colors */
           unsigned long pixel = st->colors[i].pixel;
           unsigned long amask = BlackPixelOfScreen (st->xgwa.screen);
           unsigned long a = (0x77777777 & amask);
           pixel = (pixel & (~amask)) | a;
           st->colors2[i].pixel = pixel;
-#  else /* !HAVE_COCOA */
+#  else /* !HAVE_JWXYZ */
           int h;
           double s, v;
           rgb_to_hsv (st->colors[i].red,
@@ -188,7 +188,7 @@ cynosure_init (Display *d, Window w)
                       &st->colors2[i].blue);
           st->colors2[i].pixel = st->colors[i].pixel;
           XAllocColor (st->dpy, st->xgwa.colormap, &st->colors2[i]);
-#  endif /* !HAVE_COCOA */
+#  endif /* !HAVE_JWXYZ */
         }
     }
 # endif /* !DO_STIPPLE */
@@ -425,7 +425,7 @@ static const char *cynosure_defaults [] = {
   "*sway:		30",
   "*tweak:		20",
   "*gridSize:		12",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
   0

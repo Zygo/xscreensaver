@@ -16,18 +16,7 @@
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#ifdef HAVE_COCOA
-# ifndef HAVE_JWZGLES
-#  include <OpenGL/glu.h>
-# endif
-#else /* !HAVE_COCOA */
-# include <GL/gl.h>
-# include <GL/glu.h>
-#endif /* !HAVE_COCOA */
-
-#ifdef HAVE_JWZGLES
-# include "jwzgles.h"
-#endif /* HAVE_JWZGLES */
+#include "xlockmoreI.h"
 
 /* Initialize drop shadow texture, return a texture ID.
  */

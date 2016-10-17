@@ -2,7 +2,6 @@ apply plugin: 'android'
 
 dependencies {
     compile fileTree(include: '*.jar', dir: 'libs')
-    compile project(':GLWallpaperService')
 }
 
 android {
@@ -52,33 +51,54 @@ android {
 
     // generate files early in the process
     task perlBuild(type: Exec) {
-        commandLine 'perl', '-x../..', '../../generate_files.pl', 'sproingies', 'superquadrics', 'stonerview', 'unknownpleasures', 'bouncingcow', 'hypertorus', 'glhanoi'
+        commandLine 'sh', '-c',
+          'cd ../..; ../hacks/check-configs.pl --build-android $ANDROID_HACKS'
     }
-
   
-    task perlClean(type: Exec) {
-        commandLine 'rm', '-f', '../../gen/glue.c', './res/values/items.xml', './res/values/strings.xml', './res/values/settings.xml'
+    task perlClean(type: Delete) {
+        delete('../../gen')
+        delete('res/values')
+        delete('res/xml')
+        delete('src/org/jwz/xscreensaver/gen')
+        delete('AndroidManifest.xml')
     }
 
-    task perlCleaner(type: Exec) {
-        commandLine 'rm', '-rf', './res/xml', './src/org/jwz/xscreensaver/gen'
+    task objlibClean(type: Delete) {
+        delete('./build')
+        delete('./libs')
+        delete('./obj')
     }
 
-    task objlibClean(type: Exec) {
-        commandLine 'rm', '-rf', './obj/local', './libs/armeabi', './libs/armeabi-v7a', './libs/mips', './libs/x86'
+    task downloadNeededDrawables(type: Exec) {
+        commandLine 'sh', '-c',
+          'cd ../../ ; \
+           for f in $ANDROID_HACKS; do \
+	     f=`echo "$f" | sed s/rd-bomb/rdbomb/` ; \
+             make -s project/xscreensaver/res/drawable/$f.png ; \
+           done'
     }
+    preBuild.dependsOn downloadNeededDrawables
 
- 
-    // if perlBuild already generated file, do not run perlBuild again
-    if (! file("../../gen/glue.c").exists()) {
-        preBuild.dependsOn perlBuild
+    preBuild.dependsOn perlBuild
+
+    task config_h(type: Exec) {
+        commandLine 'sh', '-c',
+          'if [ ! -s ../../../config.h ]; then \
+             echo "" >&2 ; echo "" >&2 ; \
+             echo "config.h does not exist.  cd .. and run ./configure" >&2 ; \
+             echo "" >&2 ; \
+             exit 1 ; \
+           fi'
     }
+    preBuild.dependsOn config_h
 
     clean.dependsOn perlClean
-    clean.dependsOn perlCleaner
     clean.dependsOn objlibClean
 
-    // 
+    tasks.withType(JavaCompile) {
+        options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+    }
+
     tasks.withType(JavaCompile) {
         compileTask -> compileTask.dependsOn ndkBuild
     }

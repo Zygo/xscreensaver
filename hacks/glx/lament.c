@@ -29,7 +29,9 @@
 
 #define DEFAULTS	"*delay:	20000   \n"	\
 			"*showFPS:      False   \n"     \
-			"*wireframe:	False	\n"
+			"*wireframe:	False	\n"	\
+			"*suppressRotationAnimation: True\n" \
+
 # define refresh_lament 0
 # define release_lament 0
 #include "xlockmore.h"
@@ -325,7 +327,7 @@ scale_for_window (ModeInfo *mi)
 
   /* Constrain it to roughly life-sized on the screen, not huge.
    */
-# ifdef USE_IPHONE
+# ifdef HAVE_MOBILE
   if (size > 768)  /* iPad retina / iPhone 6 */
     target_size *= 1.5;
   else
@@ -453,8 +455,8 @@ leviathan (ModeInfo *mi, GLfloat ratio, GLfloat alpha, Bool top_p)
       int j = (i + 1) % countof(p);
 /*      if (top_p)*/
         do_normal (z, 0, 0,
-                   0, p[i].y, p[i].z,
-                   0, p[j].y, p[j].z);
+                   0, p[i].x, p[i].y,
+                   0, p[j].x, p[j].y);
 /*
       else
         do_normal (z, 0, 0,

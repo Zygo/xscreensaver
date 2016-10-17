@@ -592,6 +592,7 @@ static void setupModel (struct state *st)
     leftX = (st->windowWidth - (st->columns * st->tileSize) + st->tileSize) / 2;
     topY = (st->windowHeight - (st->rows * st->tileSize) + st->tileSize) / 2;
 
+    if (st->tileCount < 1) st->tileCount = 1;
     st->tiles = calloc (st->tileCount, sizeof (Tile));
     st->sortedTiles = calloc (st->tileCount, sizeof (Tile *));
 
@@ -784,7 +785,7 @@ static const char *twang_defaults [] = {
 #else
     "*useSHM: False",
 #endif
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
   "*rotateImages:   True",
 #endif

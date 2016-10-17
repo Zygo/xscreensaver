@@ -721,7 +721,7 @@ draw_lisa (ModeInfo * mi)
 	if (lc->lissajous == NULL)
 		return;
 
-#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
     XClearWindow (MI_DISPLAY(mi), MI_WINDOW(mi));
 #endif
 

@@ -5,7 +5,7 @@
 #ifndef _BUBBLES_H_
 #define _BUBBLES_H_
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 # define HAVE_XPM
 #else

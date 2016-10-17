@@ -13,11 +13,6 @@ software for any purpose.  It is provided "as is" without express or
 implied warranty.
 */
 
-#include "thread_util.h"
-
-#include "aligned_malloc.h"
-#include "resources.h"
-
 #if HAVE_CONFIG_H
 #	include "config.h"
 #endif
@@ -41,6 +36,11 @@ implied warranty.
 #	include <sys/sysctl.h>
 #	include <inttypes.h>
 #endif
+
+#include "thread_util.h"
+
+#include "aligned_malloc.h"
+#include "resources.h"
 
 #define IS_POWER_OF_2(x) ((x) > 0 && !((x) & ((x) - 1)))
 

@@ -13,10 +13,10 @@
                           of the command-line options provided by screenhack.c.
 */
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # define FASTDRAW
 # define FASTCOPY
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */
 
 #include <stdio.h>
 #include <math.h>
@@ -325,7 +325,7 @@ initialize (struct state *st)
 
   st->planes=st->xgwa.depth;
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # define GXandInverted GXcopy  /* #### this can't be right, right? */
 #endif
  st->gc = XCreateGC (st->dpy, st->window, 0,  xgc);
@@ -563,10 +563,15 @@ fill_kugel(struct state *st, int i, Pixmap buf, int setcol)
 	  else if(-ra<40.0) inc=2;
 	  if(setcol)
 	    {
-	      if (m==27) col=33;
+	      if (m==27)
+                col=33;
 	      else
 		col=(int)(m);
-	      if (col>33) col=33;	col/=3;
+
+	      if (col>33)
+                col=33;
+
+              col/=3;
 	      setink(st->colors[col].pixel);
 	    }
 

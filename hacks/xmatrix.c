@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1999-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1999-2015 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -59,13 +59,13 @@
 #include <stdio.h>
 #include <sys/wait.h>
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # define HAVE_XPM
 #else
 # define DO_XBM     /* only do mono bitmaps under real X11 */
 #endif
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # include <X11/Intrinsic.h>
 #endif
 
@@ -461,24 +461,21 @@ static void
 init_trace (m_state *state)
 {
   char *s = get_string_resource (state->dpy, "tracePhone", "TracePhone");
-  char *s2, *s3;
-  int i;
+  const char *s2;
+  signed char *s3;
   if (!s)
     goto FAIL;
 
   state->tracing = (signed char *) malloc (strlen (s) + 1);
-  s3 = (char *) state->tracing;
+  s3 = state->tracing;
 
   for (s2 = s; *s2; s2++)
     if (*s2 >= '0' && *s2 <= '9')
-      *s3++ = *s2;
+      *s3++ = -*s2;
   *s3 = 0;
 
-  if (s3 == (char *) state->tracing)
+  if (s3 == state->tracing)
     goto FAIL;
-
-  for (i = 0; i < strlen((char *) state->tracing); i++)
-    state->tracing[i] = -state->tracing[i];
 
   state->glyph_map = decimal_encoding;
   state->nglyphs = countof(decimal_encoding);

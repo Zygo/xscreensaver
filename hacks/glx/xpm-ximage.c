@@ -19,7 +19,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 #else
 # include <X11/Xlib.h>

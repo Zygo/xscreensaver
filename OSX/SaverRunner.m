@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -77,7 +77,7 @@
   return allowRotation;
 }
 
-- (NSUInteger)supportedInterfaceOrientations	/* Added in iOS 6 */
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations	/* Added in iOS 6 */
 {
   return UIInterfaceOrientationMaskAll;
 }
@@ -90,11 +90,13 @@
 @synthesize saverName;
 
 - (id)initWithSaverRunner:(SaverRunner *)parent
+             showAboutBox:(BOOL)showAboutBox
 {
   self = [super init];
   if (self) {
     _parent = parent;
-    _storedOrientation = UIInterfaceOrientationUnknown;
+    // _storedOrientation = UIInterfaceOrientationUnknown;
+    _showAboutBox = showAboutBox;
 
     self.modalTransitionStyle = UIModalTransitionStyleCrossDissolve;
     self.wantsFullScreenLayout = YES;
@@ -106,7 +108,13 @@
 - (void)dealloc
 {
   [_saverName release];
-  [_saverView dealloc];
+  // iOS: When a UIView deallocs, it doesn't do [UIView removeFromSuperView]
+  // for its subviews, so the subviews end up with a dangling pointer in their
+  // superview properties.
+  [aboutBox removeFromSuperview];
+  [aboutBox release];
+  [_saverView removeFromSuperview];
+  [_saverView release];
   [super dealloc];
 }
 
@@ -121,6 +129,200 @@
   UIView *backgroundView = [[UIView alloc] initWithFrame:CGRectNull];
   backgroundView.backgroundColor = [UIColor blackColor];
   self.view = backgroundView;
+  [backgroundView release];
+}
+
+
+- (void)aboutPanel:(UIView *)saverView
+       orientation:(UIInterfaceOrientation)orient
+{
+  if (!_showAboutBox)
+    return;
+
+  NSString *name = _saverName;
+  NSString *year = [_parent makeDesc:_saverName yearOnly:YES];
+
+
+  CGRect frame = [saverView frame];
+  CGFloat rot;
+  CGFloat pt1 = 24;
+  CGFloat pt2 = 14;
+  UIFont *font1 = [UIFont boldSystemFontOfSize:  pt1];
+  UIFont *font2 = [UIFont italicSystemFontOfSize:pt2];
+
+# ifdef __IPHONE_7_0
+  CGSize s = CGSizeMake(frame.size.width, frame.size.height);
+  CGSize tsize1 = [[[NSAttributedString alloc]
+                     initWithString: name
+                     attributes:@{ NSFontAttributeName: font1 }]
+                    boundingRectWithSize: s
+                    options: NSStringDrawingUsesLineFragmentOrigin
+                    context: nil].size;
+  CGSize tsize2 = [[[NSAttributedString alloc]
+                     initWithString: name
+                     attributes:@{ NSFontAttributeName: font2 }]
+                    boundingRectWithSize: s
+                    options: NSStringDrawingUsesLineFragmentOrigin
+                    context: nil].size;
+# else // iOS 6 or Cocoa
+  CGSize tsize1 = [name sizeWithFont:font1
+                   constrainedToSize:CGSizeMake(frame.size.width,
+                                                frame.size.height)];
+  CGSize tsize2 = [year sizeWithFont:font2
+                   constrainedToSize:CGSizeMake(frame.size.width,
+                                                frame.size.height)];
+# endif
+
+  CGSize tsize = CGSizeMake (tsize1.width > tsize2.width ?
+                             tsize1.width : tsize2.width,
+                             tsize1.height + tsize2.height);
+
+  tsize.width  = ceilf(tsize.width);
+  tsize.height = ceilf(tsize.height);
+
+  // Don't know how to find inner margin of UITextView.
+  CGFloat margin = 10;
+  tsize.width  += margin * 4;
+  tsize.height += margin * 2;
+
+  if ([saverView frame].size.width >= 768)
+    tsize.height += pt1 * 3;  // extra bottom margin on iPad
+
+  frame = CGRectMake (0, 0, tsize.width, tsize.height);
+
+  /* Get the text oriented properly, and move it to the bottom of the
+     screen, since many savers have action in the middle.
+   */
+  switch (orient) {
+  case UIInterfaceOrientationLandscapeLeft:
+    rot = -M_PI/2;
+    frame.origin.x = ([saverView frame].size.width
+                      - (tsize.width - tsize.height) / 2
+                      - tsize.height);
+    frame.origin.y = ([saverView frame].size.height - tsize.height) / 2;
+    break;
+  case UIInterfaceOrientationLandscapeRight:
+    rot = M_PI/2;
+    frame.origin.x = -(tsize.width - tsize.height) / 2;
+    frame.origin.y = ([saverView frame].size.height - tsize.height) / 2;
+    break;
+  case UIInterfaceOrientationPortraitUpsideDown:
+    rot = M_PI;
+    frame.origin.x = ([saverView frame].size.width  - tsize.width) / 2;
+    frame.origin.y = 0;
+    break;
+  default:
+    rot = 0;
+    frame.origin.x = ([saverView frame].size.width  - tsize.width) / 2;
+    frame.origin.y =  [saverView frame].size.height - tsize.height;
+    break;
+  }
+
+  if (aboutBox) {
+    [aboutBox removeFromSuperview];
+    [aboutBox release];
+  }
+
+  aboutBox = [[UIView alloc] initWithFrame:frame];
+
+  aboutBox.transform = CGAffineTransformMakeRotation (rot);
+  aboutBox.backgroundColor = [UIColor clearColor];
+
+  /* There seems to be no easy way to stroke the font, so instead draw
+     it 5 times, 4 in black and 1 in yellow, offset by 1 pixel, and add
+     a black shadow to each.  (You'd think the shadow alone would be
+     enough, but there's no way to make it dark enough to be legible.)
+   */
+  for (int i = 0; i < 5; i++) {
+    UITextView *textview;
+    int off = 1;
+    frame.origin.x = frame.origin.y = 0;
+    switch (i) {
+      case 0: frame.origin.x = -off; break;
+      case 1: frame.origin.x =  off; break;
+      case 2: frame.origin.y = -off; break;
+      case 3: frame.origin.y =  off; break;
+    }
+
+    for (int j = 0; j < 2; j++) {
+
+      frame.origin.y = (j == 0 ? 0 : pt1);
+      textview = [[UITextView alloc] initWithFrame:frame];
+      textview.font = (j == 0 ? font1 : font2);
+      textview.text = (j == 0 ? name  : year);
+      textview.textAlignment = NSTextAlignmentCenter;
+      textview.showsHorizontalScrollIndicator = NO;
+      textview.showsVerticalScrollIndicator   = NO;
+      textview.scrollEnabled = NO;
+      textview.editable = NO;
+      textview.userInteractionEnabled = NO;
+      textview.backgroundColor = [UIColor clearColor];
+      textview.textColor = (i == 4 
+                            ? [UIColor yellowColor]
+                            : [UIColor blackColor]);
+
+      CALayer *textLayer = (CALayer *)
+        [textview.layer.sublayers objectAtIndex:0];
+      textLayer.shadowColor   = [UIColor blackColor].CGColor;
+      textLayer.shadowOffset  = CGSizeMake(0, 0);
+      textLayer.shadowOpacity = 1;
+      textLayer.shadowRadius  = 2;
+
+      [aboutBox addSubview:textview];
+    }
+  }
+
+  CABasicAnimation *anim = 
+    [CABasicAnimation animationWithKeyPath:@"opacity"];
+  anim.duration     = 0.3;
+  anim.repeatCount  = 1;
+  anim.autoreverses = NO;
+  anim.fromValue    = [NSNumber numberWithFloat:0.0];
+  anim.toValue      = [NSNumber numberWithFloat:1.0];
+  [aboutBox.layer addAnimation:anim forKey:@"animateOpacity"];
+
+  [saverView addSubview:aboutBox];
+
+  if (splashTimer)
+    [splashTimer invalidate];
+
+  splashTimer =
+    [NSTimer scheduledTimerWithTimeInterval: anim.duration + 2
+             target:self
+             selector:@selector(aboutOff)
+             userInfo:nil
+             repeats:NO];
+}
+
+
+- (void)aboutOff
+{
+  [self aboutOff:FALSE];
+}
+
+- (void)aboutOff:(BOOL)fast
+{
+  if (aboutBox) {
+    if (splashTimer) {
+      [splashTimer invalidate];
+      splashTimer = 0;
+    }
+    if (fast) {
+      aboutBox.layer.opacity = 0;
+      return;
+    }
+
+    CABasicAnimation *anim = 
+      [CABasicAnimation animationWithKeyPath:@"opacity"];
+    anim.duration     = 0.3;
+    anim.repeatCount  = 1;
+    anim.autoreverses = NO;
+    anim.fromValue    = [NSNumber numberWithFloat: 1];
+    anim.toValue      = [NSNumber numberWithFloat: 0];
+    // anim.delegate     = self;
+    aboutBox.layer.opacity = 0;
+    [aboutBox.layer addAnimation:anim forKey:@"animateOpacity"];
+  }
 }
 
 
@@ -133,14 +335,16 @@
     [_saverView release];
   }
 
+# if 0
   if (_storedOrientation != UIInterfaceOrientationUnknown) {
     [[UIApplication sharedApplication]
      setStatusBarOrientation:_storedOrientation
      animated:NO];
   }
+# endif
 
-  _saverView = [_parent makeSaverView:_saverName
-                             withSize:parentView.bounds.size];
+  _saverView = [_parent newSaverView:_saverName
+                            withSize:parentView.bounds.size];
 
   if (! _saverView) {
     [[[UIAlertView alloc] initWithTitle: _saverName
@@ -153,6 +357,8 @@
   }
 
   _saverView.delegate = _parent;
+  _saverView.autoresizingMask =
+    UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
 
   [self.view addSubview:_saverView];
 
@@ -160,12 +366,14 @@
   // heirarchy.
   [_saverView becomeFirstResponder]; // For shakes on iOS 6.
   [_saverView startAnimation];
-  [_parent aboutPanel:_saverView orientation:_storedOrientation];
+  [self aboutPanel:_saverView
+       orientation:/* _storedOrientation */ UIInterfaceOrientationPortrait];
 }
 
 
 - (void)viewDidAppear:(BOOL)animated
 {
+  [super viewDidAppear:animated];
   [self createSaverView];
 }
 
@@ -178,23 +386,25 @@
 
 - (BOOL)shouldAutorotate			/* Added in iOS 6 */
 {
-  return NO;
+  return YES;
 }
 
 
-- (NSUInteger)supportedInterfaceOrientations	/* Added in iOS 6 */
+- (UIInterfaceOrientationMask)supportedInterfaceOrientations	/* Added in iOS 6 */
 {
   // Lies from the iOS docs:
   // "This method is only called if the view controller's shouldAutorotate
   // method returns YES."
-  return UIInterfaceOrientationMaskPortrait;
+  return UIInterfaceOrientationMaskAll;
 }
 
 
+/*
 - (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
 {
   return UIInterfaceOrientationPortrait;
 }
+*/
 
 
 - (void)setSaverName:(NSString *)name
@@ -202,10 +412,41 @@
   [name retain];
   [_saverName release];
   _saverName = name;
-  _storedOrientation = [UIApplication sharedApplication].statusBarOrientation;
+  // _storedOrientation =
+  //   [UIApplication sharedApplication].statusBarOrientation;
 
   if (_saverView)
     [self createSaverView];
+}
+
+
+- (void)viewWillTransitionToSize: (CGSize)size
+       withTransitionCoordinator: 
+        (id<UIViewControllerTransitionCoordinator>) coordinator
+{
+  [super viewWillTransitionToSize:size withTransitionCoordinator:coordinator];
+ 
+  if (!_saverView)
+    return;
+
+  [CATransaction begin];
+
+  // Completely suppress the rotation animation, since we
+  // will not (visually) be rotating at all.
+  if ([_saverView suppressRotationAnimation])
+    [CATransaction setDisableActions:YES];
+
+  [self aboutOff:TRUE];  // It does goofy things if we rotate while it's up
+
+  [coordinator animateAlongsideTransition:^
+               (id <UIViewControllerTransitionCoordinatorContext> context) {
+    // This executes repeatedly during the rotation.
+  } completion:^(id <UIViewControllerTransitionCoordinatorContext> context) {
+    // This executes once when the rotation has finished.
+    [CATransaction commit];
+    [_saverView orientationChanged];
+  }];
+  // No code goes here, as it would execute before the above completes.
 }
 
 @end
@@ -216,8 +457,8 @@
 @implementation SaverRunner
 
 
-- (XScreenSaverView *) makeSaverView: (NSString *) module
-                            withSize: (NSSize) size
+- (XScreenSaverView *) newSaverView: (NSString *) module
+                           withSize: (NSSize) size
 {
   Class new_class = 0;
 
@@ -293,7 +534,7 @@
    */
 # ifndef USE_IPHONE
   if ([saverNames count] == 1) {
-    putenv (strdup ("XSCREENSAVER_STANDALONE=1"));
+    setenv ("XSCREENSAVER_STANDALONE", "1", 1);
   }
 # endif
 
@@ -516,8 +757,8 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
 - (void) openPreferences: (NSString *) saver
 {
-  XScreenSaverView *saverView = [self makeSaverView:saver
-                                           withSize:CGSizeMake(0, 0)];
+  XScreenSaverView *saverView = [self newSaverView:saver
+                                          withSize:CGSizeMake(0, 0)];
   if (! saverView) return;
 
   NSUserDefaults *prefs = [NSUserDefaults standardUserDefaults];
@@ -526,8 +767,6 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
   [rotating_nav pushViewController: [saverView configureView]
                       animated:YES];
-
-  [saverView release];
 }
 
 
@@ -567,15 +806,15 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     }
 
     NSSize size = [cv frame].size;
-    ScreenSaverView *new_view = [self makeSaverView:name withSize: size];
+    ScreenSaverView *new_view = [self newSaverView:name withSize: size];
     NSAssert (new_view, @"unable to make a saver view");
 
     [new_view setFrame: (old_view ? [old_view frame] : [cv frame])];
     [sup addSubview: new_view];
     [win makeFirstResponder:new_view];
     [new_view setAutoresizingMask:NSViewWidthSizable|NSViewHeightSizable];
-    [new_view retain];
     [new_view startAnimation];
+    [new_view release];
   }
 
   NSUserDefaultsController *ctl =
@@ -584,7 +823,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
 
 # else  // USE_IPHONE
 
-#  if TARGET_IPHONE_SIMULATOR
+#  if !defined __OPTIMIZE__ || TARGET_IPHONE_SIMULATOR
   NSLog (@"selecting saver \"%@\"", name);
 #  endif
 
@@ -608,7 +847,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     return;
   }
 
-# if TARGET_IPHONE_SIMULATOR
+# if !defined __OPTIMIZE__ || TARGET_IPHONE_SIMULATOR
   UIScreen *screen = [UIScreen mainScreen];
 
   /* 'nativeScale' is very confusing.
@@ -685,7 +924,9 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   // presentation full screen.
   rotating_nav.modalPresentationStyle = UIModalPresentationFullScreen;
 
-  nonrotating_controller = [[SaverViewController alloc] initWithSaverRunner:self];
+  nonrotating_controller = [[SaverViewController alloc]
+                            initWithSaverRunner:self
+                            showAboutBox:[saverNames count] != 1];
   nonrotating_controller.saverName = name;
 
   /* LAUNCH: */
@@ -712,197 +953,17 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   [d setValue:[bd objectForKey:@"CFBundleShortVersionString"] 
      forKey:@"ApplicationVersion"];
   [d setValue:[bd objectForKey:@"NSHumanReadableCopyright"] forKey:@"Copy"];
-  [d setValue:[[NSAttributedString alloc]
-                initWithString: (NSString *) 
-                  [bd objectForKey:@"CFBundleGetInfoString"]]
-     forKey:@"Credits"];
-
+  NSAttributedString *s = [[NSAttributedString alloc]
+                           initWithString: (NSString *)
+                           [bd objectForKey:@"CFBundleGetInfoString"]];
+  [d setValue:s forKey:@"Credits"];
+  [s release];
+  
   [[NSApplication sharedApplication]
     orderFrontStandardAboutPanelWithOptions:d];
 }
 
-#else  // USE_IPHONE
-
-- (void)aboutPanel:(UIView *)saverView
-       orientation:(UIInterfaceOrientation)orient
-{
-  if ([saverNames count] == 1)
-    return;
-
-  NSString *name = saverName;
-  NSString *year = [self makeDesc:saverName yearOnly:YES];
-
-
-  CGRect frame = [saverView frame];
-  CGFloat rot;
-  CGFloat pt1 = 24;
-  CGFloat pt2 = 14;
-  UIFont *font1 = [UIFont boldSystemFontOfSize:  pt1];
-  UIFont *font2 = [UIFont italicSystemFontOfSize:pt2];
-
-# ifdef __IPHONE_7_0
-  CGSize s = CGSizeMake(frame.size.width, frame.size.height);
-  CGSize tsize1 = [[[NSAttributedString alloc]
-                     initWithString: name
-                     attributes:@{ NSFontAttributeName: font1 }]
-                    boundingRectWithSize: s
-                    options: NSStringDrawingUsesLineFragmentOrigin
-                    context: nil].size;
-  CGSize tsize2 = [[[NSAttributedString alloc]
-                     initWithString: name
-                     attributes:@{ NSFontAttributeName: font2 }]
-                    boundingRectWithSize: s
-                    options: NSStringDrawingUsesLineFragmentOrigin
-                    context: nil].size;
-# else // iOS 6 or Cocoa
-  CGSize tsize1 = [name sizeWithFont:font1
-                   constrainedToSize:CGSizeMake(frame.size.width,
-                                                frame.size.height)];
-  CGSize tsize2 = [year sizeWithFont:font2
-                   constrainedToSize:CGSizeMake(frame.size.width,
-                                                frame.size.height)];
-# endif
-
-  CGSize tsize = CGSizeMake (tsize1.width > tsize2.width ?
-                             tsize1.width : tsize2.width,
-                             tsize1.height + tsize2.height);
-
-  tsize.width  = ceilf(tsize.width);
-  tsize.height = ceilf(tsize.height);
-
-  // Don't know how to find inner margin of UITextView.
-  CGFloat margin = 10;
-  tsize.width  += margin * 4;
-  tsize.height += margin * 2;
-
-  if ([saverView frame].size.width >= 768)
-    tsize.height += pt1 * 3;  // extra bottom margin on iPad
-
-  frame = CGRectMake (0, 0, tsize.width, tsize.height);
-
-  /* Get the text oriented properly, and move it to the bottom of the
-     screen, since many savers have action in the middle.
-   */
-  switch (orient) {
-  case UIInterfaceOrientationLandscapeLeft:
-    rot = -M_PI/2;
-    frame.origin.x = ([saverView frame].size.width
-                      - (tsize.width - tsize.height) / 2
-                      - tsize.height);
-    frame.origin.y = ([saverView frame].size.height - tsize.height) / 2;
-    break;
-  case UIInterfaceOrientationLandscapeRight:
-    rot = M_PI/2;
-    frame.origin.x = -(tsize.width - tsize.height) / 2;
-    frame.origin.y = ([saverView frame].size.height - tsize.height) / 2;
-    break;
-  case UIInterfaceOrientationPortraitUpsideDown:
-    rot = M_PI;
-    frame.origin.x = ([saverView frame].size.width  - tsize.width) / 2;
-    frame.origin.y = 0;
-    break;
-  default:
-    rot = 0;
-    frame.origin.x = ([saverView frame].size.width  - tsize.width) / 2;
-    frame.origin.y =  [saverView frame].size.height - tsize.height;
-    break;
-  }
-
-  if (aboutBox)
-    [aboutBox removeFromSuperview];
-
-  aboutBox = [[UIView alloc] initWithFrame:frame];
-
-  aboutBox.transform = CGAffineTransformMakeRotation (rot);
-  aboutBox.backgroundColor = [UIColor clearColor];
-
-  /* There seems to be no easy way to stroke the font, so instead draw
-     it 5 times, 4 in black and 1 in yellow, offset by 1 pixel, and add
-     a black shadow to each.  (You'd think the shadow alone would be
-     enough, but there's no way to make it dark enough to be legible.)
-   */
-  for (int i = 0; i < 5; i++) {
-    UITextView *textview;
-    int off = 1;
-    frame.origin.x = frame.origin.y = 0;
-    switch (i) {
-      case 0: frame.origin.x = -off; break;
-      case 1: frame.origin.x =  off; break;
-      case 2: frame.origin.y = -off; break;
-      case 3: frame.origin.y =  off; break;
-    }
-
-    for (int j = 0; j < 2; j++) {
-
-      frame.origin.y = (j == 0 ? 0 : pt1);
-      textview = [[UITextView alloc] initWithFrame:frame];
-      textview.font = (j == 0 ? font1 : font2);
-      textview.text = (j == 0 ? name  : year);
-      textview.textAlignment = NSTextAlignmentCenter;
-      textview.showsHorizontalScrollIndicator = NO;
-      textview.showsVerticalScrollIndicator   = NO;
-      textview.scrollEnabled = NO;
-      textview.editable = NO;
-      textview.userInteractionEnabled = NO;
-      textview.backgroundColor = [UIColor clearColor];
-      textview.textColor = (i == 4 
-                            ? [UIColor yellowColor]
-                            : [UIColor blackColor]);
-
-      CALayer *textLayer = (CALayer *)
-        [textview.layer.sublayers objectAtIndex:0];
-      textLayer.shadowColor   = [UIColor blackColor].CGColor;
-      textLayer.shadowOffset  = CGSizeMake(0, 0);
-      textLayer.shadowOpacity = 1;
-      textLayer.shadowRadius  = 2;
-
-      [aboutBox addSubview:textview];
-    }
-  }
-
-  CABasicAnimation *anim = 
-    [CABasicAnimation animationWithKeyPath:@"opacity"];
-  anim.duration     = 0.3;
-  anim.repeatCount  = 1;
-  anim.autoreverses = NO;
-  anim.fromValue    = [NSNumber numberWithFloat:0.0];
-  anim.toValue      = [NSNumber numberWithFloat:1.0];
-  [aboutBox.layer addAnimation:anim forKey:@"animateOpacity"];
-
-  [saverView addSubview:aboutBox];
-
-  if (splashTimer)
-    [splashTimer invalidate];
-
-  splashTimer =
-    [NSTimer scheduledTimerWithTimeInterval: anim.duration + 2
-             target:self
-             selector:@selector(aboutOff)
-             userInfo:nil
-             repeats:NO];
-}
-
-
-- (void)aboutOff
-{
-  if (aboutBox) {
-    if (splashTimer) {
-      [splashTimer invalidate];
-      splashTimer = 0;
-    }
-    CABasicAnimation *anim = 
-      [CABasicAnimation animationWithKeyPath:@"opacity"];
-    anim.duration     = 0.3;
-    anim.repeatCount  = 1;
-    anim.autoreverses = NO;
-    anim.fromValue    = [NSNumber numberWithFloat: 1];
-    anim.toValue      = [NSNumber numberWithFloat: 0];
-    anim.delegate     = self;
-    aboutBox.layer.opacity = 0;
-    [aboutBox.layer addAnimation:anim forKey:@"animateOpacity"];
-  }
-}
-#endif // USE_IPHONE
+#endif // !USE_IPHONE
 
 
 
@@ -942,12 +1003,6 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
     NSString *name = [[p lastPathComponent] stringByDeletingPathExtension];
 
 # ifdef USE_IPHONE
-
-#  ifdef __OPTIMIZE__
-    // Do not show TestX11 in release builds.
-    if (! [name caseInsensitiveCompare:@"testx11"])
-      continue;
-#  endif
     // Get the saver name's capitalization right by reading the XML file.
 
     p = [dir stringByAppendingPathComponent: p];
@@ -1068,6 +1123,7 @@ relabel_menus (NSObject *v, NSString *old_str, NSString *new_str)
   NSRect r = [popup frame];
   r.size.width = max_width;
   [popup setFrame:r];
+  [popup autorelease];
   return popup;
 }
 
@@ -1185,9 +1241,23 @@ FAIL:
      and/or 8.2), this confuses the UINavigationController, so put the
      orientation back to portrait before dismissing the SaverViewController.
    */
+# if 0
   [[UIApplication sharedApplication]
    setStatusBarOrientation:UIInterfaceOrientationPortrait
    animated:NO];
+# endif
+
+  /* Make sure the most-recently-run saver is visible.  Sometimes it ends
+     up scrolled half a line off the bottom of the screen.
+   */
+  if (saverName) {
+    for (UIViewController *v in [rotating_nav viewControllers]) {
+      if ([v isKindOfClass:[SaverListController class]]) {
+        [(SaverListController *)v scrollTo: saverName];
+        break;
+      }
+    }
+  }
 
   [rotating_nav dismissViewControllerAnimated:YES completion:^() {
     [nonrotating_controller release];
@@ -1301,8 +1371,10 @@ FAIL:
     [pbox setTitlePosition:NSNoTitle];
     [pbox setBorderType:NSNoBorder];
     [pbox addSubview:gbox];
+    [gbox release];
     if (menu) [pbox addSubview:menu];
     if (pb)   [pbox addSubview:pb];
+    [pb release];
     [pbox sizeToFit];
 
     [pb   setAutoresizingMask:NSViewMinXMargin|NSViewMaxXMargin];
@@ -1334,10 +1406,12 @@ FAIL:
                                    screen:screen];
   [win setMinSize:[win frameRectForContentRect:rect].size];
   [[win contentView] addSubview: (pbox ? (NSView *) pbox : (NSView *) sv)];
+  [pbox release];
 
   [win makeKeyAndOrderFront:win];
   
   [sv startAnimation]; // this is the dummy saver
+  [sv autorelease];
 
   count++;
 
@@ -1386,6 +1460,7 @@ FAIL:
     [a addObject: win];
     // This prevents clicks from being seen by savers.
     // [win setMovableByWindowBackground:YES];
+    [win release];
   }
 # else  // USE_IPHONE
 
@@ -1419,6 +1494,7 @@ FAIL:
                                 descriptions:[self makeDescTable]];
   [rotating_nav pushViewController:menu animated:YES];
   [menu becomeFirstResponder];
+  [menu autorelease];
 
   application.applicationSupportsShakeToEdit = YES;
 

@@ -260,7 +260,7 @@ static const char *moire_defaults [] = {
 #else
   "*useSHM:	      False",
 #endif
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

@@ -81,14 +81,15 @@ static const char sccsid[] = "@(#)moebius.c	5.01 2001/03/01 xlockmore";
 # define MODE_moebius
 # define refresh_moebius 0
 # define DEFAULTS			"*delay:		20000   \n"			\
-							"*showFPS:      False   \n"
+							"*showFPS:      False   \n"			\
+							"*suppressRotationAnimation: True\n" \
 
 # include "xlockmore.h"		/* from the xscreensaver distribution */
 #else /* !STANDALONE */
 # include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 #else
 # include <X11/Xlib.h>
@@ -730,6 +731,7 @@ draw_moebius (ModeInfo * mi)
 
 	glPushMatrix();
 
+
 	glTranslatef(0.0, 0.0, -10.0);
 
     gltrackball_rotate (mp->trackball);
@@ -739,6 +741,18 @@ draw_moebius (ModeInfo * mi)
 	} else {
 		glScalef(Scale4Iconic * mp->WindH / mp->WindW, Scale4Iconic, Scale4Iconic);
 	}
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+    {
+      GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+      int o = (int) current_device_rotation();
+      if (o != 0 && o != 180 && o != -180) {
+        glScalef (1/h, h, 1);  /* #### not quite right */
+        h = 1.7;
+        glScalef (h, h, h);
+      }
+    }
+# endif
 
     {
       double x, y, z;

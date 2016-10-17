@@ -85,7 +85,7 @@ static void update_buffer(halftone_screen *halftone, XWindowAttributes * attrs)
 
     halftone->buffer_width = attrs->width;
     halftone->buffer_height = attrs->height;
-#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
     halftone->buffer = halftone->window;
 #else
     halftone->buffer = XCreatePixmap(halftone->dpy, halftone->window, halftone->buffer_width, halftone->buffer_height, attrs->depth);
@@ -373,7 +373,7 @@ static const char *halftone_defaults [] = {
   "*sizeFactor:		1.5",
   "*colors:		200",
   "*cycleSpeed:		10",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
   0

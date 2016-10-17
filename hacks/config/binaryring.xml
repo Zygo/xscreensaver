@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=KPiJb0Qm1SE"/>
+  <video href="https://www.youtube.com/watch?v=KPiJb0Qm1SE"/>
 
   <number id="growth-delay" type="slider" arg="-growth-delay %"
           _label="Growth delay" _low-label="Low" _high-label="High"

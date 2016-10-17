@@ -17,10 +17,14 @@
 
 #include "screenhackI.h"
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # include <GL/glx.h>
 # include <GL/glu.h>
-#endif /* !HAVE_COCOA */
+#endif
+
+#ifdef HAVE_ANDROID
+# include <GLES/gl.h>
+#endif
 
 #ifdef HAVE_JWZGLES
 # include "jwzgles.h"

@@ -1121,7 +1121,7 @@ add_forced_tile(ModeInfo * mi, forced_node_c * node)
 {
 	tiling_c   *tp = &tilings[MI_SCREEN(mi)];
 	unsigned    side;
-	vertex_type_c vtype;
+	vertex_type_c vtype = 0;
 	rule_match_c hits[MAX_TILES_PER_VERTEX * N_VERTEX_RULES];
 	int         n;
 

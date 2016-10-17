@@ -22,18 +22,27 @@ implied warranty.
 # include <unistd.h>
 #endif
 
-#if _POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 600
+#if defined ANDROID
+# include <android/api-level.h>
+#endif
+
+#if (_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 600) && \
+  (!defined ANDROID || __ANDROID_API__ >= 15)
+# define ALIGNED_MALLOC_HAS_MEMALIGN 1
+#endif
+
+#if ALIGNED_MALLOC_HAS_MEMALIGN
 
 # define aligned_malloc posix_memalign
 # define aligned_free   free
 
-#else /* old POSIX */
+#else /* !ALIGNED_MALLOC_HAS_MEMALIGN */
 
  /* This can't simply be named posix_memalign, since the real thing uses
     free(), but this one can't. */
  int aligned_malloc(void **ptr, unsigned alignment, size_t size);
  void aligned_free(void *);
 
-#endif /* old POSIX */
+#endif /* ALIGNED_MALLOC_HAS_MEMALIGN */
 
 #endif /* __ALIGNED_MALLOC_H__ */

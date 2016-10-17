@@ -100,7 +100,7 @@ static const char *kaleidescope_defaults [] = {
   "*greenrange:     20000",
   "*bluemin:        30000",
   "*bluerange:      20000",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0
@@ -431,7 +431,7 @@ init_g (GLOBAL *g)
   gcv.foreground = get_pixel_resource (g->dpy, g->cmap, "background", "Background");
   g->erase_gc     = XCreateGC (g->dpy, g->window, GCForeground|GCLineWidth|GCCapStyle,&gcv);
 
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (g->dpy, g->draw_gc, False);
   jwxyz_XSetAntiAliasing (g->dpy, g->erase_gc, False);
 # endif

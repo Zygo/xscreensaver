@@ -134,7 +134,7 @@ usage: %s -<option>\n\
                 some way.\n\
 \n\
   See the man page for more details.\n\
-  For updates, check http://www.jwz.org/xscreensaver/\n\
+  For updates, check https://www.jwz.org/xscreensaver/\n\
 \n";
 
 /* Note: The "-throttle" command is deprecated -- it predates the XDPMS

@@ -621,13 +621,15 @@ static Bool inittree(ModeInfo * mi)
 		return False;
     }
     /* initialise positions */
-    for(i=0;i<fs->num_trees;i++)
-    	do {
-      	    fs->treepos[i].x =vrnd()*TREEOUTR*2.0-TREEOUTR;
-      	    fs->treepos[i].y =0.0;
-      	    fs->treepos[i].z =vrnd()*TREEOUTR*2.0-TREEOUTR;
-      	    dist=sqrt(fs->treepos[i].x *fs->treepos[i].x +fs->treepos[i].z *fs->treepos[i].z );
-        } while((dist<TREEINR) || (dist>TREEOUTR));
+    for(i=0;i<fs->num_trees;i++) {
+      do {
+        fs->treepos[i].x =vrnd()*TREEOUTR*2.0-TREEOUTR;
+        fs->treepos[i].y =0.0;
+        fs->treepos[i].z =vrnd()*TREEOUTR*2.0-TREEOUTR;
+        dist = sqrt(fs->treepos[i].x * fs->treepos[i].x +
+                    fs->treepos[i].z * fs->treepos[i].z);
+      } while((dist<TREEINR) || (dist>TREEOUTR));
+    }
 	return True;
 }
 

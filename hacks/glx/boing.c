@@ -611,12 +611,14 @@ draw_boing (ModeInfo *mi)
   {
     double rot = current_device_rotation();
     glRotatef(rot, 0, 0, 1);
+/*
     if ((rot >  45 && rot <  135) ||
         (rot < -45 && rot > -135))
       {
         GLfloat s = MI_WIDTH(mi) / (GLfloat) MI_HEIGHT(mi);
         glScalef (1/s, s, 1);
       }
+*/
   }
 
   gltrackball_rotate (bp->trackball);

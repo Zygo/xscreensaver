@@ -18,7 +18,7 @@ implied warranty.
 #include <stddef.h>
 #include <stdlib.h>
 
-#if !(_POSIX_VERSION >= 200112L || _XOPEN_VERSION >= 600)
+#if !ALIGNED_MALLOC_HAS_MEMALIGN
 
 #include <assert.h>
 #include <errno.h>

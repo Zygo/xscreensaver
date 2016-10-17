@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=aWtHHBOkO4w"/>
+  <video href="https://www.youtube.com/watch?v=aWtHHBOkO4w"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
@@ -14,7 +14,7 @@
   <hgroup>
    <vgroup>
     <number id="spread" type="spinbutton" arg="-spread %"
-            _label="Line spread" low="2" high="64" default="8"/>
+            _label="Line spread" low="2" high="8192" default="8"/>
     <number id="cycles" type="spinbutton" arg="-cycles %"
             _label="Cycles" low="1" high="600" default="60"/>
     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>

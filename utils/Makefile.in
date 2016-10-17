@@ -106,12 +106,14 @@ SRCS		= alpha.c colors.c fade.c grabscreen.c grabclient.c hsv.c \
 		  overlay.c resources.c spline.c usleep.c visual.c \
 		  visual-gl.c xmu.c logo.c yarandom.c erase.c \
 		  xshm.c xdbe.c colorbars.c minixpm.c textclient.c \
-		  aligned_malloc.c thread_util.c async_netdb.c xft.c utf8wc.c
+		  textclient-mobile.c aligned_malloc.c thread_util.c \
+		  async_netdb.c xft.c utf8wc.c
 OBJS		= alpha.o colors.o fade.o grabscreen.o grabclient.o hsv.o \
 		  overlay.o resources.o spline.o usleep.o visual.o \
 		  visual-gl.o xmu.o logo.o yarandom.o erase.o \
 		  xshm.o xdbe.o colorbars.o minixpm.o textclient.o \
-		  aligned_malloc.o thread_util.o async_netdb.o xft.o utf8wc.o
+		  textclient-mobile.o aligned_malloc.o thread_util.o \
+		  async_netdb.o xft.o utf8wc.o
 HDRS		= alpha.h colors.h fade.h grabscreen.h hsv.h resources.h \
 		  spline.h usleep.h utils.h version.h visual.h vroot.h xmu.h \
 		  yarandom.h erase.h xshm.h xdbe.h colorbars.h minixpm.h \
@@ -288,6 +290,8 @@ resources.o: $(srcdir)/utils.h
 spline.o: ../config.h
 spline.o: $(srcdir)/spline.h
 spline.o: $(srcdir)/utils.h
+textclient-mobile.o: ../config.h
+textclient-mobile.o: $(srcdir)/utils.h
 textclient.o: ../config.h
 textclient.o: $(srcdir)/resources.h
 textclient.o: $(srcdir)/textclient.h

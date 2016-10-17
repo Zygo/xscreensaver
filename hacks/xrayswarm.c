@@ -49,7 +49,7 @@ from the X Consortium.
 #include <sys/time.h>
 #include "screenhack.h"
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # define HAVE_GETTIMEOFDAY 1
 #endif
 
@@ -63,7 +63,7 @@ static const char *xrayswarm_defaults [] ={
 	".background:		black",
 	"*delay:		20000",
 	"*fpsSolid:		true",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
         "*ignoreRotation:       True",
 #endif
 	0
@@ -302,7 +302,7 @@ static int initGraphics(struct state *st)
   
   xgcv.foreground=get_pixel_resource (st->dpy, cmap, "background", "Background");
   st->fgc[0]=XCreateGC(st->dpy, st->win, GCForeground|GCFunction,&xgcv);
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (st->dpy, st->fgc[0], False);
 #endif
   
@@ -310,7 +310,7 @@ static int initGraphics(struct state *st)
   if (mono_p) {
     xgcv.foreground=get_pixel_resource (st->dpy, cmap, "foreground", "Foreground");
     st->fgc[1]=XCreateGC(st->dpy,st->win,GCForeground|GCFunction,&xgcv);
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
     jwxyz_XSetAntiAliasing (st->dpy, st->fgc[1], False);
 #endif
     for (i=0;i<st->numColors;i+=2) st->fgc[i]=st->fgc[0];
@@ -324,14 +324,14 @@ static int initGraphics(struct state *st)
       XAllocColor(st->dpy,cmap,&color);
       xgcv.foreground=color.pixel;
       st->fgc[i] = XCreateGC(st->dpy, st->win, GCForeground | GCFunction,&xgcv);
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
       jwxyz_XSetAntiAliasing (st->dpy, st->fgc[i], False);
 #endif
     }
   }
   st->cgc = XCreateGC(st->dpy,st->win,GCForeground|GCFunction,&xgcv);
   XSetGraphicsExposures(st->dpy,st->cgc,False);
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (st->dpy, st->cgc, False);
 #endif
 

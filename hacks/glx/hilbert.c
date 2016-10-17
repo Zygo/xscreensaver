@@ -18,7 +18,8 @@
 			"*count:        30          \n" \
 			"*showFPS:      False       \n" \
 			"*wireframe:    False       \n" \
-			"*geometry:	800x800\n"
+			"*geometry:	800x800\n" \
+			"*suppressRotationAnimation: True\n" \
 
 # define refresh_hilbert 0
 # define release_hilbert 0
@@ -768,6 +769,14 @@ reshape_hilbert (ModeInfo *mi, int width, int height)
   gluLookAt( 0.0, 0.0, 30.0,
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1/h);
+  }
+# endif
 
   glClear(GL_COLOR_BUFFER_BIT);
 }

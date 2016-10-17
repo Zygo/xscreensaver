@@ -365,7 +365,7 @@ draw_unk (ModeInfo *mi)
       xinc *= 3;
     }
 
-# ifdef USE_IPHONE
+# ifdef HAVE_MOBILE
   /* Lower it even further for iPhone 3 */
   if (mi->xgwa.width <= 480 || mi->xgwa.height <= 480)
     {
@@ -379,7 +379,7 @@ draw_unk (ModeInfo *mi)
     xinc *= 2;
 */
 
-# endif /* USE_IPHONE */
+# endif /* USE_MOBILE */
 
 
   /* Make the image fill the screen a little more fully */

@@ -69,7 +69,7 @@ popsquares_init (Display *dpy, Window window)
   st->twitch = get_boolean_resource(st->dpy, "twitch", "Boolean");
   st->dbuf = get_boolean_resource(st->dpy, "doubleBuffer", "Boolean");
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   st->dbuf = False;
 # endif
 
@@ -86,6 +86,8 @@ popsquares_init (Display *dpy, Window window)
   st->gw = st->sw ? st->xgwa.width / st->sw : 0;
   st->gh = st->sh ? st->xgwa.height / st->sh : 0;
   st->nsquares = st->gw * st->gh;
+  if (st->nsquares < 1) st->nsquares = 1;
+  if (st->ncolors < 1) st->ncolors = 1;
 
   gcv.foreground = fg.pixel;
   gcv.background = bg.pixel;
@@ -196,6 +198,7 @@ popsquares_reshape (Display *dpy, Window window, void *closure,
   st->gh = st->sh ? st->xgwa.height / st->sh : 0;
   st->nsquares = st->gw * st->gh;
   free (st->squares);
+  if (st->nsquares < 1) st->nsquares = 1;
   st->squares = (square *) calloc (st->nsquares, sizeof(square));
 
   for (y = 0; y < st->gh; y++)
@@ -246,7 +249,7 @@ static const char *popsquares_defaults [] = {
   "*useDBE: True",
   "*useDBEClear: True",
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

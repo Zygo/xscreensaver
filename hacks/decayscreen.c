@@ -36,6 +36,7 @@
  */
 
 #include "screenhack.h"
+#include <time.h>
 
 struct state {
   Display *dpy;
@@ -372,7 +373,7 @@ static const char *decayscreen_defaults [] = {
   "*delay:			10000",
   "*mode:			random",
   "*duration:			120",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:             True",
   "*rotateImages:               True",
 #endif

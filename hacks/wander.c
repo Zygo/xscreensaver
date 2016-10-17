@@ -239,6 +239,9 @@ wander_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 wander_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  XFreeGC (st->dpy, st->context);
+  free (st);
 }
 
 static const char *wander_defaults [] =
@@ -253,7 +256,7 @@ static const char *wander_defaults [] =
     ".reset:      2500000",
     ".circles:    False",
     ".size:       1",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
     0

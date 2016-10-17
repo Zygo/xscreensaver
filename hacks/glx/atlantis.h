@@ -75,13 +75,17 @@
 #ifdef STANDALONE
 # include <math.h>
 # include "screenhackI.h"
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
 #  include <GL/gl.h>
 #  include <GL/glx.h>
 # endif
 #else
 # include "xlock.h"
 #endif
+#ifdef HAVE_ANDROID
+#include <GLES/gl.h>
+#endif
+
 
 #ifdef HAVE_JWZGLES
 # include "jwzgles.h"

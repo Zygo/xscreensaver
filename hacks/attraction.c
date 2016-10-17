@@ -337,7 +337,7 @@ attraction_init (Display *dpy, Window window)
   st->erase_gc = XCreateGC (dpy, window, GCForeground|GCLineWidth|GCCapStyle,&gcv);
 
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (dpy, st->draw_gc,  False);
   jwxyz_XSetAntiAliasing (dpy, st->erase_gc, False);
 #endif
@@ -1067,7 +1067,7 @@ static const char *attraction_defaults [] = {
   "*vx:		0",
   "*vy:		0",
   "*mouseForeground: white",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

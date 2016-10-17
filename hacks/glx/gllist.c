@@ -16,7 +16,8 @@ renderList (const struct gllist *list, int wire_p)
 {
   while (list)
     {
-      if (!wire_p || list->primitive == GL_LINES)
+      if (!wire_p || list->primitive == GL_LINES ||
+          list->primitive == GL_POINTS)
         {
           glInterleavedArrays (list->format, 0, list->data);
           glDrawArrays (list->primitive, 0, list->points);

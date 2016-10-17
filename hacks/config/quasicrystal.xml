@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=JsGf65d5TfM"/>
+  <video href="https://www.youtube.com/watch?v=JsGf65d5TfM"/>
 
   <hgroup>
    <vgroup>
@@ -20,7 +20,8 @@
    <vgroup>
     <number id="count" type="slider" arg="-count %"
             _label="Density" _low-label="Low" _high-label="High"
-            low="7" high="37" default="17"/>
+            low="7" high="37" default="17"
+            convert="invert"/>
 
     <number id="contrast" type="slider" arg="-contrast %"
             _label="Contrast" _low-label="Low" _high-label="High"

@@ -17,7 +17,7 @@
 # include "config.h"
 #endif /* HAVE_CONFIG_H */
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # include <X11/Intrinsic.h>
 #endif
 
@@ -220,7 +220,7 @@ phosphor_init (Display *dpy, Window window)
   state->gcs = (GC *) calloc (sizeof(GC), state->ticks + 1);
 
   {
-    int ncolors = MAX (0, state->ticks - 3);
+    int ncolors = MAX (1, state->ticks - 3);
     XColor *colors = (XColor *) calloc (ncolors, sizeof(XColor));
     int h1, h2;
     double s1, s2, v1, v2;
@@ -426,7 +426,7 @@ capture_font_bits (p_state *state)
                            GCCapStyle | GCLineWidth),
                           &state->gcv);
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (state->dpy, state->gc0, False);
   jwxyz_XSetAntiAliasing (state->dpy, state->gc1, False);
 #endif

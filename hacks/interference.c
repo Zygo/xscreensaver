@@ -130,7 +130,7 @@ static const char *interference_defaults [] = {
 #ifdef HAVE_XSHM_EXTENSION
   "*useSHM:      True", /* use shared memory extension */
 #endif /*  HAVE_XSHM_EXTENSION */
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   THREAD_DEFAULTS
@@ -779,7 +779,7 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
   unsigned long valmask = 0;
 #endif
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   dbuf = False;
 # endif
 
@@ -904,6 +904,7 @@ static void inter_init(Display* dpy, Window win, struct inter_context* c)
   c->radius = radius;
 #endif
 
+  if (c->radius < 1) c->radius = 1;
   c->wave_height = calloc(c->radius, sizeof(unsigned));
   check_no_mem(dpy, c, c->wave_height);
 
@@ -1040,7 +1041,7 @@ interference_reshape (Display *dpy, Window window, void *closure,
 {
   struct inter_context *c = (struct inter_context *) closure;
   XWindowAttributes xgwa;
-  Bool dbuf = (c->pix_buf
+  Bool dbuf = (!!c->pix_buf
 # ifdef HAVE_DOUBLE_BUFFER_EXTENSION
                || c->back_buf
 # endif

@@ -27,12 +27,6 @@
 #include "colors.h"
 #include "hsv.h"
 
-#if HAVE_INTTYPES_H
-# include <inttypes.h>
-#else
-typedef unsigned long uint32_t;
-#endif
-
 #define ANTIALIAS   1
 #define BLACK       0
 #define WHITE       1
@@ -43,7 +37,7 @@ typedef unsigned long uint32_t;
 #define max(a,b) ((a)>(b)?(a):(b))
 
 /* better if signed */
-typedef uint32_t pixel_t;
+typedef unsigned long pixel_t;
 
 
 typedef struct {
@@ -90,7 +84,7 @@ static void point2rgb(int depth, pixel_t c, int *r, int *g, int *b)
     switch(depth) {
     case 32:
     case 24:
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
         /* This program idiotically does not go through a color map, so
                we have to hardcode in knowledge of how jwxyz.a packs pixels!
                Fix it to go through st->colors[st->ncolors] instead!
@@ -124,7 +118,7 @@ static pixel_t rgb2point(int depth, int r, int g, int b)
     switch(depth) {
     case 32:
     case 24:
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
         /* This program idiotically does not go through a color map, so
                we have to hardcode in knowledge of how jwxyz.a packs pixels!
                Fix it to go through st->colors[st->ncolors] instead!
@@ -184,7 +178,7 @@ void draw_point ( struct state* st,
 
 
 void print_color ( struct state* st, pixel_t color ) {
-    int r, g, b;
+    int r=0, g=0, b=0;
     point2rgb(st->depth, color, &r, &g, &b);
     printf( "%d %d %d\n", r, g, b);
 }
@@ -389,7 +383,7 @@ static void clamp ( int* value, int l, int h ) {
 }
 
 static pixel_t next_color ( struct state* st, pixel_t current ) {
-    int r, g, b;
+    int r=0, g=0, b=0;
 
     point2rgb(st->depth, current, &r, &g, &b);
     r += random() % 5 - 2;

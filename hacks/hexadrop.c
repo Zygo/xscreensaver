@@ -56,7 +56,6 @@ make_cells (state *st)
   int size, r, gw, gh, x, y, i;
   double th = 0;
 
-  grid_size = get_integer_resource (st->dpy, "size", "Size");
   if (grid_size < 5) grid_size = 5;
 
   size = ((st->xgwa.width > st->xgwa.height
@@ -386,7 +385,7 @@ static const char *hexadrop_defaults [] = {
   "*ncolors:		128",
   "*uniform:		Maybe",
   "*lockstep:		Maybe",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
   0

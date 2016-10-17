@@ -53,7 +53,7 @@ struct glb_config glb_config =
 
 
 #define DEF_TRANSPARENT "True"
-#define DEF_COLOR "random"
+#define DEF_BUBBLECOLOR "random"
 
 static Bool transparent_p;
 static char *bubble_color_str;
@@ -64,12 +64,12 @@ static char *bubble_color_str;
 static XrmOptionDescRec opts[] = {
   { "-transparent",  ".transparent",   XrmoptionNoArg, "True" },
   { "+transparent",  ".transparent",   XrmoptionNoArg, "False" },
-  { "-color",    ".bubble3d.bubblecolor", XrmoptionSepArg, 0 },
+  { "-color",        ".bubblecolor",   XrmoptionSepArg, 0 },
 };
 
 static argtype vars[] = {
   {&transparent_p,   "transparent", "Transparent", DEF_TRANSPARENT, t_Bool},
-  {&bubble_color_str,        "bubblecolor", "BubbleColor", DEF_COLOR, t_String},
+  {&bubble_color_str,        "bubblecolor", "BubbleColor", DEF_BUBBLECOLOR, t_String},
 };
 
 ENTRYPOINT ModeSpecOpt bubble3d_opts = {countof(opts), opts, countof(vars), vars, NULL};
@@ -198,7 +198,17 @@ draw_bubble3d(ModeInfo * mi)
 
         glb_config.polygon_count = 0;
         glPushMatrix();
-        glRotatef(current_device_rotation(), 0, 0, 1);
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+        {
+          GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+          int o = (int) current_device_rotation();
+          if (o != 0 && o != 180 && o != -180)
+            glScalef (1/h, 1/h, 1/h);
+          glRotatef(o, 0, 0, 1);
+        }
+# endif
+
 	do_display(c);
         glPopMatrix();
         mi->polygon_count = glb_config.polygon_count;

@@ -11,7 +11,7 @@
 
 #define DEFAULTS        "*delay:        20000              \n" \
                         "*showFPS:      False              \n" \
-
+			"*suppressRotationAnimation: True\n" \
 
 # define refresh_voronoi 0
 # define release_voronoi 0
@@ -299,6 +299,25 @@ draw_cells (ModeInfo *mi)
           glPopMatrix();
         }
     }
+
+#if 0
+  glPushMatrix();
+  glColor3f(1,1,1);
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(0,0,0);
+  glVertex3f(1,0,0);
+  glVertex3f(1,1,0);
+  glVertex3f(0,1,0);
+  glEnd();
+  glScalef(0.25, 0.25, 1);
+  glBegin(GL_LINE_LOOP);
+  glVertex3f(0,0,0);
+  glVertex3f(1,0,0);
+  glVertex3f(1,1,0);
+  glVertex3f(0,1,0);
+  glEnd();
+  glPopMatrix();
+#endif
 }
 
 
@@ -314,6 +333,27 @@ reshape_voronoi (ModeInfo *mi, int width, int height)
   glMatrixMode(GL_PROJECTION);
   glLoadIdentity();
   glOrtho (0, 1, 1, 0, -1, 1);
+
+# ifdef HAVE_MOBILE	/* So much WTF */
+  {
+    int rot = current_device_rotation();
+
+    glTranslatef (0.5, 0.5, 0);
+    //  glScalef(0.19, 0.19, 0.19);
+
+    if (rot == 180 || rot == -180) {
+      glTranslatef (1, 1, 0);
+    } else if (rot == 90 || rot == -270) {
+      glRotatef (180, 0, 0, 1);
+      glTranslatef (0, 1, 0);
+    } else if (rot == -90 || rot == 270) {
+      glRotatef (180, 0, 0, 1);
+      glTranslatef (1, 0, 0);
+    }
+
+    glTranslatef(-0.5, -0.5, 0);
+  }
+# endif
 
   glMatrixMode(GL_MODELVIEW);
   glLoadIdentity();

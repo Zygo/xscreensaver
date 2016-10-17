@@ -194,7 +194,7 @@ make_flag_bits(ModeInfo *mi)
   char *bitmap_name = get_string_resource (dpy, "bitmap", "Bitmap");
   char *text = get_string_resource (dpy, "text", "Text");
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
   bitmap_name = 0;  /* #### always use default */
 #endif
 
@@ -460,7 +460,7 @@ init_flag(ModeInfo * mi)
 
 	if (!fp->initialized) {
       fp->dbufp = True;
-# ifdef HAVE_COCOA		/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ		/* Don't second-guess Quartz's double-buffering */
       fp->dbufp = False;
 #endif
 		fp->initialized = True;

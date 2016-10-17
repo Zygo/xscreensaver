@@ -320,7 +320,7 @@ FuzzyFlakesInit(Flake *flake)
    flake->DB.b = flake->DB.ba = flake->DB.bb = 0;
    flake->DB.dbuf = get_boolean_resource(flake->dpy, "doubleBuffer", "Boolean");
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
    flake->DB.dbuf = False;
 # endif
 

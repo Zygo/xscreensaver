@@ -35,7 +35,9 @@
 					"*showFPS:			False   \n" \
 					"*wireframe:		False	\n"	\
 					"*imageForeground:	Green	\n" \
-					"*imageBackground:	Blue	\n"
+					"*imageBackground:	Blue	\n" \
+					"*suppressRotationAnimation: True\n" \
+
 # define refresh_planet 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
 #else  /* !STANDALONE */
@@ -309,6 +311,14 @@ reshape_planet (ModeInfo *mi, int width, int height)
   glLoadIdentity();
   glTranslatef(0.0, 0.0, -40);
 
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (h, h, h);
+  }
+# endif
+
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
@@ -418,7 +428,9 @@ init_planet (ModeInfo * mi)
   gp->latlonglist = glGenLists(1);
   glNewList (gp->latlonglist, GL_COMPILE);
   glPushMatrix ();
-  glRotatef (90, 1, 0, 0);
+  glRotatef (90, 1, 0, 0);  /* unit_sphere is off by 90 */
+  glRotatef (8,  0, 1, 0);  /* line up the time zones */
+  unit_sphere (12, 24, 1);
   unit_sphere (12, 24, 1);
   glBegin(GL_LINES);
   glVertex3f(0, -2, 0);
@@ -488,8 +500,7 @@ draw_planet (ModeInfo * mi)
     {
       glDisable(GL_TEXTURE_2D);
       glPushMatrix();
-      glTranslatef(-x, -y, -z);
-      glScalef (40, 40, 40);
+      glScalef (60, 60, 60);
       glRotatef (90, 1, 0, 0);
       glRotatef (35, 1, 0, 0);
       glCallList (gp->starlist);
@@ -505,7 +516,7 @@ draw_planet (ModeInfo * mi)
 
   glScalef (3, 3, 3);
 
-# ifdef USE_IPHONE
+# ifdef HAVE_MOBILE
   glScalef (2, 2, 2);
 # endif
 

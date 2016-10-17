@@ -173,7 +173,7 @@ make_throbber (struct state *st, Drawable d, int w, int h, unsigned long pixel)
   if (t->speed > 0) t->speed = -t->speed;
 
   flags = GCForeground;
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   if (st->transparent_p)
     {
       gcv.foreground = ~0L;
@@ -181,7 +181,7 @@ make_throbber (struct state *st, Drawable d, int w, int h, unsigned long pixel)
       flags |= GCPlaneMask;
     }
   else
-# endif /* !HAVE_COCOA */
+# endif /* !HAVE_JWXYZ */
     {
       gcv.foreground = pixel;
     }
@@ -193,7 +193,7 @@ make_throbber (struct state *st, Drawable d, int w, int h, unsigned long pixel)
   flags |= (GCLineWidth | GCCapStyle | GCJoinStyle);
   t->gc = XCreateGC (st->dpy, d, flags, &gcv);
 
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
   if (st->transparent_p)
     {
       /* give a non-opaque alpha to the color */
@@ -205,7 +205,7 @@ make_throbber (struct state *st, Drawable d, int w, int h, unsigned long pixel)
       jwxyz_XSetAlphaAllowed (st->dpy, t->gc, True);
       XSetForeground (st->dpy, t->gc, pixel);
     }
-# endif /* HAVE_COCOA */
+# endif /* HAVE_JWXYZ */
 
   switch (random() % 11) {
   case 0: case 1: case 2: case 3: t->draw = draw_star; break;
@@ -275,7 +275,7 @@ deluxe_init (Display *dpy, Window window)
   st->dbeclear_p = get_boolean_resource (st->dpy, "useDBEClear", "Boolean");
 #endif
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   st->dbuf = False;
 # endif
 
@@ -292,7 +292,7 @@ deluxe_init (Display *dpy, Window window)
       st->colors[0].pixel = get_pixel_resource(st->dpy, st->xgwa.colormap,
                                            "foreground", "Foreground");
     }
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
   else if (st->transparent_p)
     {
       st->nplanes = get_integer_resource (st->dpy, "planes", "Planes");
@@ -313,10 +313,10 @@ deluxe_init (Display *dpy, Window window)
 	  goto COLOR;
 	}
     }
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */
   else
     {
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
     COLOR:
 #endif
       make_random_colormap (st->xgwa.screen, st->xgwa.visual, st->xgwa.colormap,
@@ -438,7 +438,7 @@ static const char *deluxe_defaults [] = {
   "*useDBE:		True",
   "*useDBEClear:	True",
 #endif /* HAVE_DOUBLE_BUFFER_EXTENSION */
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
   0

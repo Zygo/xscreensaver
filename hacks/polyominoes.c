@@ -513,7 +513,7 @@ static int
 score_point(polyominoesstruct *sp, int x, int y, int min_score_so_far)
 {
   int poly_no, point_no, transform_index, i, attachable;
-  point_type attach_point, target_point;
+  point_type attach_point = { 0, 0 }, target_point = { 0, 0 };
   int score = 0;
 
   if (x>=1 && x<sp->width-1 && y>=1 && y<sp->height-1 &&
@@ -586,7 +586,7 @@ static
 void detach(polyominoesstruct *sp, int *poly_no, int *point_no, int *transform_index, point_type *attach_point, int rot180)
 {
   int i;
-  point_type target_point;
+  point_type target_point = { 0, 0 };
 
   if (sp->nr_attached == 0) return;
   sp->nr_attached--;
@@ -614,7 +614,7 @@ void detach(polyominoesstruct *sp, int *poly_no, int *point_no, int *transform_i
 static
 int attach(polyominoesstruct *sp, int poly_no, int point_no, int transform_index, point_type attach_point, int rot180,
            int *reason_to_not_attach) {
-  point_type target_point;
+  point_type target_point = { 0, 0 };
   int i;
   int attachable = 1, worst_reason_not_to_attach = 1000000000;
 

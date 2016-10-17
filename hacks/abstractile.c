@@ -916,6 +916,7 @@ _getcolor(struct state *st, int x, int y)
 {
   int n, cv[LAYERS];
 
+  cv[0] = 0;
   for (n=0; n<st->layers; n++) {
     cv[n]=_pattern(st,x,y,n);
                   /* first wave/shape */
@@ -1588,7 +1589,7 @@ static const char *abstractile_defaults [] = {
   "*sleep:             3",
   "*speed:             3",
   "*tile:         random",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

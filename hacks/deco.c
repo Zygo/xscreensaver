@@ -313,7 +313,7 @@ static const char *deco_defaults [] = {
   "*goldenRatio:        False",
   "*smoothColors:       False",
   "*mondrian:           False",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
   0

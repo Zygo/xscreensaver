@@ -31,7 +31,7 @@ static const char sccsid[] = "@(#)antmaze.c	5.01 2001/03/01 xlockmore";
 # include "xlock.h"		/* from the xlockmore distribution */
 #endif /* !STANDALONE */
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 #else
 # include <X11/Xlib.h>
@@ -1422,6 +1422,7 @@ ENTRYPOINT void init_antmaze(ModeInfo * mi)
 static void
 device_rotate(ModeInfo *mi)
 {
+#if 0
   GLfloat rot = current_device_rotation();
   glRotatef(rot, 0, 0, 1);
   if ((rot >  45 && rot <  135) ||
@@ -1430,6 +1431,7 @@ device_rotate(ModeInfo *mi)
       GLfloat s = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
       glScalef (1/s, s, 1);
     }
+#endif
 }
 
 

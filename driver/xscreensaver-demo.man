@@ -380,7 +380,7 @@ stored in the RESOURCE_MANAGER property.
 to get the default HTTP proxy host and port.
 .SH UPGRADES
 The latest version of xscreensaver, an online version of this manual,
-and a FAQ can always be found at http://www.jwz.org/xscreensaver/
+and a FAQ can always be found at https://www.jwz.org/xscreensaver/
 .SH SEE ALSO
 .BR X (1),
 .BR xscreensaver (1),

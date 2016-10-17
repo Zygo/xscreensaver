@@ -21,12 +21,12 @@ use open ":encoding(utf8)";
 use POSIX;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my $version = q{ $Revision: 1.1 $ }; $version =~ s/^[^\d]+([\d.]+).*/$1/;
+my ($version) = ('$Revision: 1.2 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
 
-my $base_url = "http://www.jwz.org/";
+my $base_url = "https://www.jwz.org/";
 my $priv_key_file = "$ENV{HOME}/.ssh/sparkle_dsa_priv.pem";
 my $sign_update = "./sign_update.rb";
 

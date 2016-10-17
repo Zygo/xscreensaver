@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=ONJlg9Y_TLI"/>
+  <video href="https://www.youtube.com/watch?v=ONJlg9Y_TLI"/>
 
   <xscreensaver-text />
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>

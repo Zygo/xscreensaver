@@ -84,13 +84,13 @@ extern void grab_screen_image_internal (Screen *, Window);
 /* For debugging: turn on verbosity. */
 extern void grabscreen_verbose (void);
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 /* Don't use these: internal interface of grabclient.c. */
 extern Bool osx_grab_desktop_image (Screen *, Window, Drawable,
                                     XRectangle *geom_ret);
 extern Bool osx_load_image_file (Screen *, Window, Drawable,
                                  const char *filename, XRectangle *geom_ret);
-#endif /* HAVE_COCOA */
+#endif /* HAVE_JWXYZ */
 
 #ifdef USE_IPHONE
 extern void ios_load_random_image (void (*callback) (void *uiimage,
@@ -99,5 +99,11 @@ extern void ios_load_random_image (void (*callback) (void *uiimage,
                                                      void *closure),
                                    void *closure);
 #endif /* USE_IPHONE */
+
+#ifdef HAVE_ANDROID
+char *jwxyz_load_random_image (Display *dpy,  /* utils/grabclient.c */
+                               int *width_ret, int *height_ret,
+                               char **name_ret);
+#endif
 
 #endif /* __GRABSCREEN_H__ */

@@ -242,7 +242,7 @@ the \fIxscreensaver\fP process, not the \fIxscreensaver-command\fP process.
 .SH UPGRADES
 The latest version of
 .BR xscreensaver (1)
-and related tools can always be found at http://www.jwz.org/xscreensaver/
+and related tools can always be found at https://www.jwz.org/xscreensaver/
 .SH "SEE ALSO"
 .BR X (1),
 .BR xscreensaver (1),

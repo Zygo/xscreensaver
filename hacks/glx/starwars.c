@@ -86,7 +86,7 @@
 #define MAX_THICK_LINES   25
 #define FONT_WEIGHT       14
 
-#ifndef USE_IPHONE
+#ifndef HAVE_MOBILE
 # define KEEP_ASPECT	/* Letterboxing looks dumb on iPhone. */
 #endif
 
@@ -283,7 +283,6 @@ get_more_lines (sws_configuration *sc)
 {
   /* wrap anyway, if it's absurdly long. */
   int wrap_pix = (wrap_p ? sc->line_pixel_width : 10000);
-  int col_pix = 0;
 
   char *s = sc->buf;
 
@@ -410,7 +409,6 @@ get_more_lines (sws_configuration *sc)
 
               sc->buf[sc->buf_tail] = 0;
               s = sc->buf;
-              col_pix = 0;
 
               break;
             }
@@ -620,8 +618,10 @@ reshape_sws (ModeInfo *mi, int width, int height)
     }
 #endif
 
-    glMatrixMode (GL_PROJECTION);
     glViewport (0, yoff, w, h);
+
+    glMatrixMode (GL_PROJECTION);
+    glLoadIdentity();
 
     glMatrixMode (GL_MODELVIEW);
     glLoadIdentity ();
@@ -629,8 +629,6 @@ reshape_sws (ModeInfo *mi, int width, int height)
     gluLookAt (0.0, 0.0, 4600.0,
                0.0, 0.0, 0.0,
                0.0, 1.0, 0.0);
-
-    glRotatef(rot, 0, 0, 1);
 
     /* Horrible kludge to prevent the text from materializing already
        on screen on iPhone in landscape mode.
@@ -877,9 +875,6 @@ draw_stars (ModeInfo *mi)
       glRotatef (sc->star_theta, 0.0, 0.0, 1.0);
       if (textures_p) glDisable (GL_TEXTURE_2D);
 
-      /* Keep the stars pointing in the same direction after rotation */
-      glRotatef(current_device_rotation(), 0, 0, 1);
-
       glCallList (sc->star_list);
       if (textures_p) glEnable (GL_TEXTURE_2D);
     }
@@ -911,7 +906,7 @@ draw_sws (ModeInfo *mi)
   glMatrixMode (GL_MODELVIEW);
   glPushMatrix ();
 
-# ifdef USE_IPHONE
+# ifdef HAVE_MOBILE
   /* Need to do this every time to get device rotation right */
   reshape_sws (mi, MI_WIDTH(mi), MI_HEIGHT(mi));
 # endif

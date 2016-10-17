@@ -28,7 +28,7 @@
 - (void) titleTapped:(id) sender
 {
   [[UIApplication sharedApplication]
-    openURL:[NSURL URLWithString:@"http://www.jwz.org/xscreensaver/"]];
+    openURL:[NSURL URLWithString:@"https://www.jwz.org/xscreensaver/"]];
 }
 
 
@@ -65,8 +65,9 @@
   [button addTarget:self
           action:@selector(titleTapped:)
           forControlEvents:UIControlEventTouchUpInside];
-  self.navigationItem.rightBarButtonItem = 
-    [[UIBarButtonItem alloc] initWithCustomView: button];
+  UIBarButtonItem *bi = [[UIBarButtonItem alloc] initWithCustomView: button];
+  self.navigationItem.rightBarButtonItem = bi;
+  [bi release];
   [button release];
 
   // The title bar

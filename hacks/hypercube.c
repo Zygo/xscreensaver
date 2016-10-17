@@ -244,7 +244,7 @@ hypercube_draw (Display *dpy, Window window, void *closure)
   struct hyper_state *hs = (struct hyper_state *) closure;
   int this_delay = hs->hs_delay;
 
-#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   XClearWindow (dpy, window);
 #endif
 

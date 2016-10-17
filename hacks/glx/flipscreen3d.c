@@ -18,7 +18,8 @@
 #define DEFAULTS "*delay:     20000 \n" \
                  "*showFPS:   False \n" \
                  "*wireframe: False \n" \
-                 "*useSHM:    True  \n"
+                 "*useSHM:    True  \n" \
+		 "*suppressRotationAnimation: True\n" \
 
 # define refresh_screenflip 0
 # include "xlockmore.h"                         /* from the xscreensaver distribution */
@@ -304,13 +305,14 @@ static void drawgrid(void)
 static void display(Screenflip *c, int wire)
 {
   int frozen;
-  GLfloat rot = current_device_rotation();
+/*  GLfloat rot = current_device_rotation();*/
 
   glClear(GL_COLOR_BUFFER_BIT|GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
   gluLookAt(viewer[0], viewer[1], viewer[2], 0.0, 0.0, 0.0, 0.0, 1.0, 0.0);
   glPushMatrix();
 
+/*
   glRotatef(rot, 0, 0, 1);
   if ((rot >  45 && rot <  135) ||
       (rot < -45 && rot > -135))
@@ -318,6 +320,7 @@ static void display(Screenflip *c, int wire)
       GLfloat s = c->winw / (GLfloat) c->winh;
       glScalef (s, 1/s, 1);
     }
+*/
 
   if (inposition(c)) {
     frozen = 0;
@@ -331,9 +334,9 @@ static void display(Screenflip *c, int wire)
       if (random() % 2)
         c->dgamma = 1/60 - (float)(random() % 100)/3000;
     }
-    glRotatef(-rot, 0, 0, 1);
+/*    glRotatef(-rot, 0, 0, 1);*/
     gltrackball_rotate (c->trackball);
-    glRotatef(rot, 0, 0, 1);
+/*    glRotatef(rot, 0, 0, 1);*/
     if (rotate) glRotatef(c->rot, c->rx, c->ry, c->rz);
 /* update variables with each frame */
     if(!c->button_down_p && !c->fadetime) {

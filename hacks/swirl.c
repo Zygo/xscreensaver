@@ -1355,78 +1355,78 @@ draw_swirl(ModeInfo * mi)
 			rotate_colors(mi->xgwa.screen, MI_COLORMAP(mi),
 						  swirl->rgb_values, swirl->colours, 1);
 #else  /* !STANDALONE */
-			/* rotate the colours */
-			install_map(MI_DISPLAY(mi), swirl, swirl->dshift);
+          /* rotate the colours */
+          install_map(MI_DISPLAY(mi), swirl, swirl->dshift);
 #endif /* !STANDALONE */
 
-			/* draw a batch of points */
-			swirl->batch_todo = BATCH_DRAW;
-			while ((swirl->batch_todo > 0) && swirl->drawing) {
-				/* draw a point */
-				draw_point(mi, swirl);
+          /* draw a batch of points */
+          swirl->batch_todo = BATCH_DRAW;
+          while ((swirl->batch_todo > 0) && swirl->drawing) {
+            /* draw a point */
+            draw_point(mi, swirl);
 
-				/* move to the next point */
-				next_point(swirl);
+            /* move to the next point */
+            next_point(swirl);
 
-				/* done a point */
-				swirl->batch_todo--;
-			}
+            /* done a point */
+            swirl->batch_todo--;
+          }
 		} else {
 #ifdef STANDALONE
 		  if (mi->writable_p)
 			rotate_colors(mi->xgwa.screen, MI_COLORMAP(mi),
 						  swirl->rgb_values, swirl->colours, 1);
 #else  /* !STANDALONE */
-			/* rotate the colours */
-			install_map(MI_DISPLAY(mi), swirl, swirl->shift);
+          /* rotate the colours */
+          install_map(MI_DISPLAY(mi), swirl, swirl->shift);
 #endif /* !STANDALONE */
 
-			/* time for a higher resolution? */
-			if (swirl->resolution > swirl->max_resolution) {
-				/* move to higher resolution */
-				swirl->resolution--;
+          /* time for a higher resolution? */
+          if (swirl->resolution > swirl->max_resolution) {
+            /* move to higher resolution */
+            swirl->resolution--;
 
-				/* calculate the pixel step for this resulution */
-				swirl->r = (1 << (swirl->resolution - 1));
+            /* calculate the pixel step for this resulution */
+            swirl->r = (1 << (swirl->resolution - 1));
 
-				/* start drawing again */
-				swirl->drawing = True;
+            /* start drawing again */
+            swirl->drawing = True;
 
-				/* start in the middle of the screen */
-				swirl->x = (swirl->width - swirl->r) / 2;
-				swirl->y = (swirl->height - swirl->r) / 2;
+            /* start in the middle of the screen */
+            swirl->x = (swirl->width - swirl->r) / 2;
+            swirl->y = (swirl->height - swirl->r) / 2;
 
-				/* initialise spiral drawing parameters */
-				swirl->direction = DRAW_RIGHT;
-				swirl->dir_todo = 1;
-				swirl->dir_done = 0;
-			} else {
-				/* all done, decide when to restart */
-				if (swirl->start_again == -1) {
-					/* start the counter */
-					swirl->start_again = RESTART;
-				} else if (swirl->start_again == 0) {
-					/* reset the counter */
-					swirl->start_again = -1;
+            /* initialise spiral drawing parameters */
+            swirl->direction = DRAW_RIGHT;
+            swirl->dir_todo = 1;
+            swirl->dir_done = 0;
+          } else {
+            /* all done, decide when to restart */
+            if (swirl->start_again == -1) {
+              /* start the counter */
+              swirl->start_again = RESTART;
+            } else if (swirl->start_again == 0) {
+              /* reset the counter */
+              swirl->start_again = -1;
 
 #ifdef STANDALONE
-					/* Pick a new colormap! */
-					XClearWindow (MI_DISPLAY(mi), MI_WINDOW(mi));
-					free_colors (mi->xgwa.screen, MI_COLORMAP(mi),
-								 mi->colors, mi->npixels);
-					make_smooth_colormap (mi->xgwa.screen, MI_VISUAL(mi),
-										  MI_COLORMAP(mi),
-										  mi->colors, &mi->npixels, True,
-										  &mi->writable_p, True);
-					swirl->colours = mi->npixels;
+              /* Pick a new colormap! */
+              XClearWindow (MI_DISPLAY(mi), MI_WINDOW(mi));
+              free_colors (mi->xgwa.screen, MI_COLORMAP(mi),
+                           mi->colors, mi->npixels);
+              make_smooth_colormap (mi->xgwa.screen, MI_VISUAL(mi),
+                                    MI_COLORMAP(mi),
+                                    mi->colors, &mi->npixels, True,
+                                    &mi->writable_p, True);
+              swirl->colours = mi->npixels;
 #endif /* STANDALONE */
 
-					/* start again */
-					init_swirl(mi);
-				} else
-					/* decrement the counter */
-					swirl->start_again--;
-			}
+              /* start again */
+              init_swirl(mi);
+            } else
+              /* decrement the counter */
+              swirl->start_again--;
+          }
 		}
 	}
 }

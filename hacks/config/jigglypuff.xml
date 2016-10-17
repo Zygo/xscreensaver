@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=60vfs2WcDtE"/>
+  <video href="https://www.youtube.com/watch?v=60vfs2WcDtE"/>
 
   <hgroup>
    <boolean id="random" _label="Randomize almost everything" arg-unset="-no-random"/>

@@ -8,7 +8,7 @@
                             By Jamie Zawinski
                              and many others
 
-                     http://www.jwz.org/xscreensaver/
+                     https://www.jwz.org/xscreensaver/
 
 ===============================================================================
 
@@ -17,16 +17,20 @@ that you install a binary release rather than trying to compile it yourself.
 Binaries are available for almost all platforms, including MacOS X.  See the
 XScreenSaver web site for details.
 
-To compile on a Unix system with X11:
+To compile for a Unix system with X11:
 
     ./configure
     make
     make install
 
-To compile on MacOS X:
+To compile for MacOS X or iOS:
 
     Use the included XCode project.  Requires XCode 4 and MacOS X 10.5
     or newer.
+
+To compile for Android:
+
+    See android/README.
 
 Interested in writing a new screen saver?
 
@@ -37,6 +41,18 @@ Interested in writing a new screen saver?
 XScreenSaver has an extensive manual -- please read it!
 
 ===============================================================================
+
+5.35	* New hacks, `dymaxionmap', `unicrud', `energystream', `raverhoop'
+          and `hydrostat'.
+	* Added Windows 10 to `bsod'.
+	* X11: ignore WM_USER_TIME property changes with days-old timestamps.
+          Thanks, KDE.
+        * MacOS, iOS: Better fonts in 'BSOD' and 'memscroller'.
+	* MacOS 10.7 or later and iOS 6.0 or later are now required, since
+	  Xcode 6 can no longer build executables that work on older OSes.
+	* Many, many Android improvements.
+	* iOS: Fixed rotation to work with the new iOS 8+ API.
+	* X11: `pong' is now playable.
 
 5.34	* Fixed a crash when hot-swapping monitors while locked.
 	* Fixed some incorrect output from `xscreensaver-command -watch'.

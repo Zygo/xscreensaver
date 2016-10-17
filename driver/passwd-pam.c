@@ -1,7 +1,7 @@
 /* passwd-pam.c --- verifying typed passwords with PAM
  * (Pluggable Authentication Modules.)
  * written by Bill Nottingham <notting@redhat.com> (and jwz) for
- * xscreensaver, Copyright (c) 1993-2012 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1993-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -77,8 +77,11 @@ extern void unblock_sigchld (void);
 /* Some time between Red Hat 4.2 and 7.0, the words were transposed 
    in the various PAM_x_CRED macro names.  Yay!
  */
-#ifndef  PAM_REFRESH_CRED
+#if !defined(PAM_REFRESH_CRED) && defined(PAM_CRED_REFRESH)
 # define PAM_REFRESH_CRED PAM_CRED_REFRESH
+#endif
+#if !defined(PAM_REINITIALIZE_CRED) && defined(PAM_CRED_REINITIALIZE)
+# define PAM_REINITIALIZE_CRED PAM_CRED_REINITIALIZE
 #endif
 
 static int pam_conversation (int nmsgs,
@@ -306,13 +309,17 @@ pam_try_unlock(saver_info *si, Bool verbose_p,
       /* Each time we successfully authenticate, refresh credentials,
          for Kerberos/AFS/DCE/etc.  If this fails, just ignore that
          failure and blunder along; it shouldn't matter.
-
-         Note: this used to be PAM_REFRESH_CRED instead of
-         PAM_REINITIALIZE_CRED, but Jason Heiss <jheiss@ee.washington.edu>
-         says that the Linux PAM library ignores that one, and only refreshes
-         credentials when using PAM_REINITIALIZE_CRED.
        */
+
+#if defined(__linux__)
+      /* Apparently the Linux PAM library ignores PAM_REFRESH_CRED and only
+         refreshes credentials when using PAM_REINITIALIZE_CRED. */
       status2 = pam_setcred (pamh, PAM_REINITIALIZE_CRED);
+#else
+      /* But Solaris requires PAM_REFRESH_CRED or extra prompts appear. */
+      status2 = pam_setcred (pamh, PAM_REFRESH_CRED);
+#endif
+
       if (verbose_p)
         fprintf (stderr, "%s:   pam_setcred (...) ==> %d (%s)\n",
                  blurb(), status2, PAM_STRERROR(pamh, status2));

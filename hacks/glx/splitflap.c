@@ -213,6 +213,14 @@ reshape_splitflap (ModeInfo *mi, int width, int height)
              0, 0, 0,
              0, 1, 0);
 
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (h, h, h);
+  }
+# endif
+
   glClear(GL_COLOR_BUFFER_BIT);
 }
 
@@ -1362,7 +1370,7 @@ draw_splitflap (ModeInfo *mi)
                  ? grid_width * r
                  : grid_height);
     GLfloat s = 8;
-# ifdef USE_IPHONE
+# ifdef HAVE_MOBILE
     s *= 2; /* #### What. Why is this necessary? */
 #endif
     s /= cells;

@@ -36,7 +36,7 @@ static const char sccsid[] = "@(#)sproingies.c	4.04 97/07/28 xlockmore";
 
 #ifdef USE_GL
 
-#if !defined(HAVE_COCOA) && !defined(HAVE_ANDROID)
+#if !defined(HAVE_JWZGLES) && !defined(HAVE_COCOA)
 # include <GL/glu.h>
 #endif
 
@@ -764,6 +764,9 @@ void
 CleanupSproingies(int screen)
 {
 	sp_instance *si = &si_list[screen];
+
+    if (! si) return;
+
 /*
 	int         t;
 	if (si->SproingieBoom) {
@@ -808,15 +811,15 @@ InitSproingies(int wfmode, int grnd, int mspr, int smrtspr,
 	sp_instance *si;
 	int         t;
 
+	active_screens++;
+	CleanupSproingies(screen);
+
 	if (si_list == NULL) {
 		if ((si_list = (sp_instance *) calloc(numscreens,
 					      sizeof (sp_instance))) == NULL)
 			return;
 	}
 	si = &si_list[screen];
-
-	active_screens++;
-	CleanupSproingies(screen);
 
 	if (mspr < 0)
 		mspr = 0;

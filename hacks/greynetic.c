@@ -11,7 +11,7 @@
 
 #include "screenhack.h"
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # define DO_STIPPLE
 #endif
 
@@ -130,9 +130,9 @@ greynetic_init (Display *dpy, Window window)
 
 # ifndef DO_STIPPLE
   st->gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
-#  ifdef HAVE_COCOA /* allow non-opaque alpha components in pixel values */
+#  ifdef HAVE_JWXYZ /* allow non-opaque alpha components in pixel values */
   jwxyz_XSetAlphaAllowed (st->dpy, st->gc, True);
-#  endif /* HAVE_COCOA */
+#  endif /* HAVE_JWXYZ */
 # else /* DO_STIPPLE */
   gcv.fill_style= FillOpaqueStippled;
   st->gc = XCreateGC (st->dpy, st->window, GCForeground|GCBackground|GCFillStyle, &gcv);
@@ -230,7 +230,7 @@ greynetic_draw (Display *dpy, Window window, void *closure)
     DONE:
       ;
 
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
       {
         /* give a non-opaque alpha to the color */
         unsigned long pixel = gcv.foreground;
@@ -239,7 +239,7 @@ greynetic_draw (Display *dpy, Window window, void *closure)
         pixel = (pixel & (~amask)) | a;
         gcv.foreground = pixel;
       }
-# endif /* !HAVE_COCOA */
+# endif /* !HAVE_JWXYZ */
     }
 # ifndef DO_STIPPLE
   XChangeGC (st->dpy, st->gc, GCForeground, &gcv);
@@ -257,7 +257,7 @@ static const char *greynetic_defaults [] = {
   "*fpsSolid:	true",
   "*delay:	10000",
   "*grey:	false",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0
@@ -287,6 +287,9 @@ greynetic_event (Display *dpy, Window window, void *closure, XEvent *event)
 static void
 greynetic_free (Display *dpy, Window window, void *closure)
 {
+  struct state *st = (struct state *) closure;
+  XFreeGC (st->dpy, st->gc);
+  free (st);
 }
 
 XSCREENSAVER_MODULE ("Greynetic", greynetic)

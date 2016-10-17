@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1993-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1993-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -190,7 +190,7 @@ extern int saver_ehandler (Display *dpy, XErrorEvent *error);
 extern int BadWindow_ehandler (Display *dpy, XErrorEvent *error);
 extern Bool window_exists_p (Display *dpy, Window window);
 extern Bool in_signal_handler_p;
-extern char *timestring (void);
+extern char *timestring (time_t);
 extern Bool display_is_on_console_p (saver_info *si);
 extern Visual *get_best_gl_visual (saver_info *si, Screen *screen);
 extern void check_for_leaks (const char *where);

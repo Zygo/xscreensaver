@@ -144,7 +144,7 @@ init_planet(ModeInfo * mi, planetstruct * planet)
 	GC          gc = MI_GC(mi);
 	gravstruct *gp = &gravs[MI_SCREEN(mi)];
 
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
     jwxyz_XSetAntiAliasing (MI_DISPLAY(mi), MI_GC(mi), False);
 # endif
 

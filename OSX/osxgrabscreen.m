@@ -24,7 +24,7 @@
 #else
 # import "SaverRunner.h"
 #endif
-#import "jwxyz.h"
+#import "jwxyz-cocoa.h"
 #import "grabscreen.h"
 #import "colorbars.h"
 #import "resources.h"

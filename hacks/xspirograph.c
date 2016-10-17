@@ -315,7 +315,7 @@ static const char *xspirograph_defaults [] = {
   "*subdelay:   	20000",
   "*layers:     	2",
   "*alwaysfinish:	false",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
   0

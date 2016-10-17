@@ -27,6 +27,7 @@
 #include "screenhack.h"
 #include "xpm-pixmap.h"
 #include <stdio.h>
+#include <time.h>
 
 #include "images/som.xbm"
 
@@ -40,7 +41,7 @@
    So, on OSX, we implement the blitter by hand.  It is correct, but
    orders of magnitude slower.
  */
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # define USE_XCOPYAREA
 #endif
 
@@ -422,7 +423,7 @@ static const char *blitspin_defaults [] = {
   "*duration:	120",
   "*bitmap:	(default)",
   "*geometry:	1080x1080",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

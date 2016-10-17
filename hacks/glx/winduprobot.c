@@ -14,7 +14,7 @@
  * came for us to throw the Cocktail Robotics Grand Challenge at DNA Lounge, I
  * photographed this robot (holding a tiny martini glass) to make a flyer for
  * the event.  You can see that photo here:
- * http://www.dnalounge.com/flyers/2014/09/14.html
+ * https://www.dnalounge.com/flyers/2014/09/14.html
  *
  * Then I decided to try and make award statues for the contest by modeling
  * this robot and 3D-printing it (a robot on a post, with the DNA Lounge
@@ -35,8 +35,8 @@
  *
  * We did eventually end up with robotic award statues, but we constructed
  * them out of mass-produced wind-up robots, rather than 3D printing them:
- * http://www.dnalounge.com/gallery/2014/09-14/045.html
- * http://www.youtube.com/watch?v=EZF4ZAAy49g
+ * https://www.dnalounge.com/gallery/2014/09-14/045.html
+ * https://www.youtube.com/watch?v=EZF4ZAAy49g
  */
 
 #define LABEL_FONT "-*-helvetica-bold-r-normal-*-*-240-*-*-*-*-*-*"
@@ -428,7 +428,7 @@ init_robot (ModeInfo *mi)
       char *key = 0;
       GLfloat spec1[4] = {1.00, 1.00, 1.00, 1.0};
       GLfloat spec2[4] = {0.40, 0.40, 0.70, 1.0};
-      GLfloat *spec = spec1;
+      GLfloat *spec = 0;
       GLfloat shiny = 20;
 
       glNewList (bp->dlists[i], GL_COMPILE);
@@ -2293,7 +2293,22 @@ draw_robot (ModeInfo *mi)
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   glPushMatrix ();
-  glRotatef(current_device_rotation(), 0, 0, 1);
+
+# ifdef HAVE_MOBILE
+  {
+    int rot = current_device_rotation();
+
+    if (rot == 180 || rot == -180)		/* so much WTF */
+      glRotatef (-68, 1, 0, 0);
+    else if (rot == 90 || rot == -270)
+      glRotatef (68, 0, 1, 0);
+    else if (rot == -90 || rot == 270)
+      glRotatef (-68, 0, 1, 0);
+
+    glRotatef (rot, 0, 0, 1);  /* right side up */
+  }
+# endif
+
   gltrackball_rotate (bp->user_trackball);
 
   robot_size = size * 7;

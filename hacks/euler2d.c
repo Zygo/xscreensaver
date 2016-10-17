@@ -527,7 +527,7 @@ init_euler2d (ModeInfo * mi)
 	}
 	sp = &euler2ds[MI_SCREEN(mi)];
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
   jwxyz_XSetAntiAliasing (MI_DISPLAY(mi), MI_GC(mi),  False);
 #endif
 

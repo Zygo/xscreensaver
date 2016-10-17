@@ -87,6 +87,7 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #ifdef STANDALONE
 # define DEFAULTS           "*delay:      25000 \n" \
                             "*showFPS:    False \n" \
+			    "*suppressRotationAnimation: True\n" \
 
 # define refresh_hypertorus 0
 # include "xlockmore.h"         /* from the xscreensaver distribution */
@@ -95,9 +96,6 @@ static const char sccsid[] = "@(#)hypertorus.c  1.2 05/09/28 xlockmore";
 #endif /* !STANDALONE */
 
 #ifdef USE_GL
-#ifndef HAVE_COCOA
-# include <X11/keysym.h>
-#endif
 
 #include "gltrackball.h"
 
@@ -504,6 +502,17 @@ static int hypertorus(ModeInfo *mi, double umin, double umax, double vmin,
       glMaterialfv(GL_BACK,GL_AMBIENT_AND_DIFFUSE,mat_diff_green);
     }
   }
+
+#if 0 /* #### not working */
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1/h);
+  }
+# endif
+#endif
 
   skew = num_spirals;
   ur = umax-umin;

@@ -251,7 +251,7 @@ moverender_rider(struct state *st, Drawable drawable,
     rid->vt += frand(0.002) - 0.001;
 
     /* apply friction brakes */
-    if (abs(rid->vt) > 0.02)
+    if (fabsf(rid->vt) > 0.02)
         rid->vt *= 0.9;
 
     /* draw */
@@ -302,7 +302,7 @@ render_disc(struct state *st, Drawable drawable, GC fgc, struct field *f, int dn
         /* intersection test */
         if (d < (f->discs[n].r + di->r)) {
             /* complete containment test */
-            if (d > abs(f->discs[n].r - di->r)) {
+            if (d > fabsf(f->discs[n].r - di->r)) {
                 /* find solutions */
                 a = (di->r * di->r - f->discs[n].r * f->discs[n].r + d * d) / (2 * d);
                 p2x = di->x + a * (f->discs[n].x - di->x) / d;
@@ -360,7 +360,8 @@ static void build_img(Display *dpy, Window window, struct field *f)
 
     memset(f->off_alpha, 0, sizeof(unsigned char) * f->width * f->height);
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
+                        /* Or Android's */
     f->off_map = window;
 # else
     f->off_map = XCreatePixmap(dpy, window, f->width, f->height, f->visdepth);
@@ -554,9 +555,9 @@ static const char *intermomentary_defaults[] = {
     "*maxRiders: 40",
     "*maxRadius: 100",
     "*colors: 256",
-#ifdef USE_IPHONE
+# ifdef HAVE_MOBILE
     "*ignoreRotation: True",
-#endif
+# endif
     0
 };
 

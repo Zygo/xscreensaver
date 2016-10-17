@@ -515,10 +515,20 @@ static Bool draw_main(ModeInfo *mi, cube21_conf *cp)
     glTranslatef(0, 0, zpos);
   glScalef(size, size, size);
 
-  gltrackball_rotate (cp->trackball);
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1/h);
+  }
+# endif
 
   glRotatef(cp->xrot, 1.0, 0.0, 0.0);
   glRotatef(cp->yrot, 0.0, 1.0, 0.0);
+
+  gltrackball_rotate (cp->trackball);
+
   if(cp->wire) glColor3f(0.7, 0.7, 0.7);
   switch(cp->state) {
     case CUBE21_PAUSE1:
@@ -890,6 +900,10 @@ ENTRYPOINT void init_cube21(ModeInfo *mi)
     init_posc(cp);
     make_texture(cp);
   }
+
+#ifdef HAVE_MOBILE
+  size *= 2;
+#endif
 
   if ((cp->glx_context = init_GL(mi)) != NULL) {
     init_gl(mi);

@@ -18,7 +18,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_ANDROID
+#include <GLES/gl.h>
+#endif
+
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 # ifndef HAVE_JWZGLES
 #  include <OpenGL/glu.h>
@@ -70,7 +74,7 @@ extern char *progname;
 
 #include <sys/time.h>
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 #else
 # include <X11/Xutil.h>

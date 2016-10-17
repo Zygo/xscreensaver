@@ -19,7 +19,8 @@
 
 #define DEFAULTS   "*delay:         20000         \n" \
                    "*showFPS:       False         \n" \
-                   "*wireframe:     False         \n"
+                   "*wireframe:     False         \n" \
+		   "*suppressRotationAnimation: True\n" \
 
 # define refresh_rubikblocks 0
 #include "xlockmore.h"
@@ -259,6 +260,7 @@ draw_main(ModeInfo *mi, rubikblocks_conf *cp)
 
   glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
   glLoadIdentity();
+
   get_position(cp->rot, &x, &y, &z, !cp->button_down);
   glTranslatef((x-0.5)*6, (y-0.5)*6, -20);
 
@@ -269,6 +271,15 @@ draw_main(ModeInfo *mi, rubikblocks_conf *cp)
   glRotatef(y*360, 0, 1, 0);
   glRotatef(z*360, 0, 0, 1);
   glScalef(size, size, size);
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1/h);
+  }
+# endif
 
   if(cp->wire) glColor3f(0.7, 0.7, 0.7);
   if(!cp->pause)

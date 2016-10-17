@@ -85,7 +85,7 @@ static const char *interaggregate_defaults[] =
     "*baseOrbits: 75",
     "*baseOnCenter: False",
     "*drawCenters: False",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
     "*ignoreRotation: True",
 #endif
     0
@@ -259,7 +259,7 @@ static inline void point2rgb(int depth, unsigned long c, int *r, int *g, int *b)
     {
     case 32:
     case 24:
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
         /* This program idiotically does not go through a color map, so
            we have to hardcode in knowledge of how jwxyz.a packs pixels!
            Fix it to go through st->colors[st->ncolors] instead!
@@ -294,7 +294,7 @@ static inline unsigned long rgb2point(int depth, int r, int g, int b)
     {
     case 32:
     case 24:
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
         /* This program idiotically does not go through a color map, so
            we have to hardcode in knowledge of how jwxyz.a packs pixels!
            Fix it to go through st->colors[st->ncolors] instead!
@@ -440,6 +440,7 @@ static void build_colors(struct field *f, Display *dpy, XWindowAttributes *xgwa)
 	;
     }
 
+    if (f->numcolors < 1) f->numcolors = 1;
     f->parsedcolors = (unsigned long *) calloc(f->numcolors,
 					       sizeof(unsigned long));
     if ( f->parsedcolors == NULL )

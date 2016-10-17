@@ -330,7 +330,7 @@ AH_TEMPLATE([HAVE_RECORD_ANIM],
 # check for some random other files that come later in the tar file,
 # to make sure everything is here.
 #
-for d in driver utils hacks hacks/glx ; do
+for d in utils jwxyz hacks hacks/glx driver ; do
   f=$srcdir/$d/Makefile.in
   if test \! -r $f ; then
     echo ""
@@ -3230,7 +3230,7 @@ HANDLE_X_PATH_ARG(with_gles, --with-gles, JWZGLES)
 if test "$with_gles" = yes; then
   have_gles=yes
   AC_DEFINE(HAVE_JWZGLES)
-  JWZGLES_OBJS="jwzgles.o"
+  JWZGLES_OBJS='$(JWXYZ_BIN)/jwzgles.o'
   AC_MSG_RESULT(using OpenGL ES compatiblity shim)
 elif test "$with_gles" != no; then
   echo "error: must be yes or no: --with-gles=$with_xpm"
@@ -3538,7 +3538,7 @@ fi
 ###############################################################################
 
 PTY_LIBS=
-AC_CHECK_HEADERS(pty.h util.h)
+AC_CHECK_HEADERS(pty.h util.h sys/termios.h)
 AC_CHECK_X_LIB(util, forkpty,
                [PTY_LIBS="-lutil"
                 ac_have_forkpty=yes
@@ -4157,12 +4157,13 @@ AC_SUBST(PERL)
 
 AC_OUTPUT(Makefile
           utils/Makefile
-          driver/Makefile
-          driver/xscreensaver.pam
-          driver/xscreensaver-demo.glade2
+          jwxyz/Makefile
           hacks/Makefile
           hacks/glx/Makefile
           po/Makefile.in
+          driver/Makefile
+          driver/xscreensaver.pam
+          driver/xscreensaver-demo.glade2
           driver/XScreenSaver.ad)
 
 ###############################################################################

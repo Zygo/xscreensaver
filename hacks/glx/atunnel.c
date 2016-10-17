@@ -41,6 +41,7 @@ static const char sccsid[] = "@(#)atunnel.c	5.13 2004/05/25 xlockmore";
 #ifdef STANDALONE		/* xscreensaver mode */
 #define	DEFAULTS                "*delay:	10000	\n" \
                                 "*showFPS:  False   \n" \
+								"*suppressRotationAnimation: True\n" \
 
 # define refresh_atunnel 0
 # define atunnel_handle_event 0

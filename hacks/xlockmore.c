@@ -19,9 +19,9 @@
 #include "xlockmoreI.h"
 #include "screenhack.h"
 
-#if !defined(HAVE_COCOA) && !defined(HAVE_ANDROID)
+#ifndef HAVE_JWXYZ
 # include <X11/Intrinsic.h>
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */
 
 #define countof(x) (sizeof((x))/sizeof(*(x)))
 
@@ -157,7 +157,7 @@ xlockmore_setup (struct xscreensaver_function_table *xsft, void *arg)
   /* Put on the PROGCLASS.background/foreground resources. */
   s = (char *) malloc(50);
   *s = 0;
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   strcpy (s, progclass);
 # endif
   strcat (s, ".background: black");
@@ -165,7 +165,7 @@ xlockmore_setup (struct xscreensaver_function_table *xsft, void *arg)
 
   s = (char *) malloc(50);
   *s = 0;
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   strcpy (s, progclass);
 # endif
   strcat (s, ".foreground: white");
@@ -292,7 +292,7 @@ xlockmore_init (Display *dpy, Window window,
   mi->window = window;
   XGetWindowAttributes (dpy, window, &mi->xgwa);
   
-#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
+#ifdef HAVE_JWXYZ
   
 # if 0
   /* In Cocoa and Android-based xscreensaver, all hacks run in the
@@ -337,7 +337,7 @@ xlockmore_init (Display *dpy, Window window,
   /* Everybody gets motion events, just in case. */
   XSelectInput (dpy, window, (mi->xgwa.your_event_mask | PointerMotionMask));
 
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */
   
   color.flags = DoRed|DoGreen|DoBlue;
   color.red = color.green = color.blue = 0;
@@ -351,7 +351,6 @@ xlockmore_init (Display *dpy, Window window,
 
   if (mono_p)
     {
-      static unsigned long pixels[2];
       static XColor colors[2];
     MONO:
       mi->npixels = 2;
@@ -361,8 +360,6 @@ xlockmore_init (Display *dpy, Window window,
       if (!mi->colors)
         mi->colors = (XColor *) 
           calloc (mi->npixels, sizeof (*mi->colors));
-      pixels[0] = mi->black;
-      pixels[1] = mi->white;
       colors[0].flags = DoRed|DoGreen|DoBlue;
       colors[1].flags = DoRed|DoGreen|DoBlue;
       colors[0].red = colors[0].green = colors[0].blue = 0;

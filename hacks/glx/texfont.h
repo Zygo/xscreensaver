@@ -1,4 +1,4 @@
-/* texfonts, Copyright (c) 2005-2015 Jamie Zawinski <jwz@jwz.org>
+/* texfonts, Copyright (c) 2005-2016 Jamie Zawinski <jwz@jwz.org>
  * Loads X11 fonts into textures for use with OpenGL.
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
@@ -61,5 +61,12 @@ void enable_texture_string_parameters (void);
 /* Releases the texture font.
  */
 extern void free_texture_font (texture_font_data *);
+
+
+#ifdef HAVE_JWXYZ
+extern char *texfont_unicode_character_name (texture_font_data *,
+                                             unsigned long uc);
+#endif
+
 
 #endif /* __TEXTURE_FONT_H__ */

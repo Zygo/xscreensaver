@@ -783,7 +783,7 @@ main (int argc, char **argv)
                      !strcmp(argv[1], "--help"));
       fprintf (stderr, "%s\n", version);
       for (s = progclass; *s; s++) fprintf(stderr, " ");
-      fprintf (stderr, "  http://www.jwz.org/xscreensaver/\n\n");
+      fprintf (stderr, "  https://www.jwz.org/xscreensaver/\n\n");
 
       if (!help_p)
 	fprintf(stderr, "Unrecognised option: %s\n", argv[1]);

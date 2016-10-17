@@ -74,7 +74,8 @@
 		"*delay:		20000		\n"	\
 		"*showFPS:		False		\n"	\
 		"*size:			0			\n"	\
-		"*useSHM:		True		\n"
+		"*useSHM:		True		\n" \
+		"*suppressRotationAnimation: True\n" \
 
 # define refresh_gleidescope 0
 # include "xlockmore.h"				/* from the xscreensaver distribution */
@@ -1117,14 +1118,8 @@ draw_hexagons(ModeInfo *mi, int translucency, texture *texture)
 {
     int polys = 0;
 	int		i;
-	GLfloat	col[4];
 	vector2f t[3];
 	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
-
-	col[0] = 1.0;
-	col[1] = 1.0;
-	col[2] = 1.0;
-	col[3] = (float)translucency / MAX_FADE;
 
 	calculate_texture_coords(mi, texture, t);
 
@@ -1246,7 +1241,6 @@ draw(ModeInfo * mi)
 	GLfloat	x_angle, y_angle, z_angle;
 	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
 	vectorf	v1;
-	GLfloat pos[4];
 
     mi->polygon_count = 0;
 
@@ -1328,11 +1322,14 @@ draw(ModeInfo * mi)
 			0.0);
 #endif
 
-	/* light position same as camera */
-	pos[0] = v1.x;
-	pos[1] = v1.y;
-	pos[2] = v1.z;
-	pos[3] = 0;
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+    {
+      GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+      int o = (int) current_device_rotation();
+      if (o != 0 && o != 180 && o != -180)
+        glScalef (1/h, 1/h, 1/h);
+    }
+# endif
 
 	if (gp->fade == 0)
 	{
@@ -1401,7 +1398,6 @@ ENTRYPOINT void reshape_gleidescope(ModeInfo *mi, int width, int height)
 	glLoadIdentity();
 	gluPerspective(50.0, 1/h, 0.1, 2000.0);
 	glMatrixMode (GL_MODELVIEW);
-
 	glLineWidth(1);
 	glPointSize(1);   
 }

@@ -15,25 +15,28 @@ ridiculously long list of steps!
 
   1: Duplicate a target (Dangerball for GL, or Attraction for X11).
   2: Rename it, and drag it to the right spot in the list.
-  3: Delete the dangerball.c and dangerball.xml files from the new target.
+  3: Delete the dangerball.c and dangerball.xml files from Build Phases.
   4: Delete the "DangerBall copy-Info.plist" file that got created.
   5: Delete the "DangerBall copy-Info.plist" from the Build Settings too.
-  6: Change PRODUCT_NAME in Build Settings.
+  6: Change PRODUCT_NAME in Build Settings (maybe this automatic now?)
   7: Manage Schemes, rename "DangerBall Copy".
   8: Move to the right place in the list.
   9: Scheme / Run / Info: Executable: SaverTester.app.
  10: Scheme / Run / Arguments: set SELECTED_SAVER environment variable.
  11: File / Add Files / the new .c and .xml.
-     Add to targets: the new target, and also "XScreenSaver-iOS".
- 12: Re-order them in the file list.
- 13: In target "All Savers (OpenGL)" add the new target as a dependency.
- 14: In target "XScreenSaver-iOS", reorder new files in "Copy" and "Compile".
- 15: In target "XScreenSaver-iOS", add "-DUSE_GL" to the new file's options.
- 16: Put a 200x150 screen shot in ~/www/xscreensaver/screenshots/
- 17: ln -s ../../src/xscreensaver/OSX/build/Debug/NEW.saver \
+ 12: Select each file in the left pane; see Target Membership in the right
+     pane and add them to the new target, and to "XScreenSaver-iOS".
+ 13: Re-order them in the file list.
+ 14: In target "All Savers (OpenGL)" add the new target as Build Phases /
+     Target Dependency.
+ 15: In target "XScreenSaver-iOS", reorder new files in Build Phases /
+     "Copy" and "Compile", since they showed up in a random place.
+ 16: In target "XScreenSaver-iOS", add "-DUSE_GL" to the new file's options.
+ 17: Put a 200x150 screen shot in ~/www/xscreensaver/screenshots/
+ 18: ln -s ../../src/xscreensaver/OSX/build/Debug/NEW.saver \
            ~/Library/Screen\ Savers/
- 18: git add xscreensaver.xcodeproj/xcuserdata/*/xcschemes/*.xcscheme
- 19: Don't forget to create a man page from the XML with xml2man.pl,
+ 19: git add xscreensaver.xcodeproj/xcuserdata/*/xcschemes/*.xcscheme
+ 20: Don't forget to create a man page from the XML with xml2man.pl,
      and update Makefile.in.
- 20: Make a video: -record-animation 3600 -delay 1 -geom 1920x1080+128+64
+ 21: Make a video: -record-animation 3600 -delay 1 -geom 1920x1080+128+64
      ./upload-video.pl NAME

@@ -28,12 +28,15 @@
 #ifdef HAVE_GLUT
 # include <GL/glut.h>
 #else
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
 #  define HAVE_GETTIMEOFDAY
 # else
 #  include <GL/gl.h>
 #  include <GL/glu.h>
 # endif
+#endif
+# ifdef HAVE_ANDROID
+# include <GLES/gl.h>
 #endif
 
 #ifdef HAVE_JWZGLES
@@ -149,6 +152,7 @@ static GLfloat angvel;
 #define DEFAULTS "*delay:          30000                      \n" \
                  "*count:          30                         \n" \
                  "*showFPS:        False                      \n" \
+		"*suppressRotationAnimation: True\n" \
          "*labelfont:   -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
 
 
@@ -2262,6 +2266,15 @@ ENTRYPOINT void glsnake_display(
     /* apply the continuous rotation */
     glRotatef(yspin, 0.0, 1.0, 0.0); 
     glRotatef(zspin, 0.0, 0.0, 1.0); 
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+    {
+      GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+      int o = (int) current_device_rotation();
+      if (o != 0 && o != 180 && o != -180)
+        glScalef (1/h, 1/h, 1/h);
+    }
+# endif
 
     /* now draw each node along the snake -- this is quite ugly :p */
     mi->polygon_count = 0;

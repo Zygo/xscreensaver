@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
 
-<screensaver name="DNAlogo" _label="DNA Logo" gl="yes">
+<screensaver name="dnalogo" _label="DNA Logo" gl="yes">
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=B7I5A7E3SP0"/>
+  <video href="https://www.youtube.com/watch?v=B7I5A7E3SP0"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame Rate" _low-label="Low" _high-label="High"
@@ -41,9 +41,9 @@ Codeword
         San Francisco, CA
         94107
 
-        http://www.dnalounge.com/
+        https://www.dnalounge.com/
         http://www.dnapizza.com/
-        http://www.codeword-sf.com/
+        https://www.codeword-sf.com/
 
 Written by Jamie Zawinski; 2001.
   </_description>

@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=4vcj8sq9FO8"/>
+  <video href="https://www.youtube.com/watch?v=4vcj8sq9FO8"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
@@ -12,7 +12,13 @@
           convert="invert"/>
 
   <boolean id="transp" _label="Transparent bubbles" arg-unset="-no-transparent"/>
-  <string id="color"    _label="Bubble color"      arg="-color %"/>
+   <select id="bubblecolor">
+    <option id="random" _label="Random" />
+    <option id="Red"    _label="Amber" arg-set="-color #FF0000" />
+    <option id="Green"  _label="Green" arg-set="-color #00FF00" />
+    <option id="Blue"   _label="Blue"  arg-set="-color #0000FF" />
+    <option id="white"  _label="White" arg-set="-color #FFFFFF" />
+   </select>
   <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
   <xscreensaver-updater />
 

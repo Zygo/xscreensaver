@@ -274,9 +274,9 @@ make_layer (Display *dpy, Window window, int width, int height, int nblobs)
   layer->pixmap = XCreatePixmap (dpy, window, width, height, 1);
   layer->gc = XCreateGC (dpy, layer->pixmap, 0, &gcv);
 
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
   jwxyz_XSetAlphaAllowed (dpy, layer->gc, True);
-# endif /* HAVE_COCOA */
+# endif /* HAVE_JWXYZ */
 
   return layer;
 }
@@ -294,7 +294,7 @@ free_layer(struct layer *layer, Display *dpy)
 }
 
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 static void
 draw_layer_plane (Display *dpy, struct layer *layer, int width, int height)
 {
@@ -306,7 +306,7 @@ draw_layer_plane (Display *dpy, struct layer *layer, int width, int height)
       draw_blob (dpy, layer->pixmap, layer->gc, layer->blobs[i], True);
     }
 }
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */
 
 
 static void
@@ -335,7 +335,7 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
   int nblobs = get_integer_resource (dpy, "count", "Count");
 
   unsigned long *plane_masks = 0;
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   unsigned long base_pixel = 0;
 # endif
   char *s;
@@ -370,7 +370,7 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
   if (mono_p && goop->mode == transparent)
     goop->mode = opaque;
 
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   /* Try to allocate some color planes before committing to nlayers.
    */
   if (goop->mode == transparent)
@@ -389,7 +389,7 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
 	  goop->mode = opaque;
 	}
     }
-# endif /* !HAVE_COCOA */
+# endif /* !HAVE_JWXYZ */
 
   {
     int lblobs[32];
@@ -404,21 +404,21 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
 				    (nblobs > 0 ? nblobs : lblobs[i]));
   }
 
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   if (goop->mode == transparent && plane_masks)
     {
       for (i = 0; i < goop->nlayers; i++)
 	goop->layers[i]->pixel = base_pixel | plane_masks[i];
       goop->background = base_pixel;
     }
-# endif /* !HAVE_COCOA */
+# endif /* !HAVE_JWXYZ */
 
   if (plane_masks)
     free (plane_masks);
 
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   if (goop->mode != transparent)
-# endif /* !HAVE_COCOA */
+# endif /* !HAVE_JWXYZ */
     {
       XColor color;
       color.flags = DoRed|DoGreen|DoBlue;
@@ -437,7 +437,7 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
 	  else
 	    goop->layers[i]->pixel =
 	      WhitePixelOfScreen(DefaultScreenOfDisplay(dpy));
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
           if (goop->mode == transparent)
             {
               /* give a non-opaque alpha to the color */
@@ -447,7 +447,7 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
               pixel = (pixel & (~amask)) | a;
               goop->layers[i]->pixel = pixel;
             }
-# endif /* HAVE_COCOA */
+# endif /* HAVE_JWXYZ */
 	}
     }
 
@@ -460,9 +460,9 @@ make_goop (Screen *screen, Visual *visual, Window window, Colormap cmap,
   goop->pixmap_gc = XCreateGC (dpy, goop->pixmap, GCLineWidth, &gcv);
   goop->window_gc = XCreateGC (dpy, window, GCForeground|GCBackground, &gcv);
 
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
   jwxyz_XSetAlphaAllowed (dpy, goop->pixmap_gc, True);
-# endif /* HAVE_COCOA */
+# endif /* HAVE_JWXYZ */
   
   return goop;
 }
@@ -499,7 +499,7 @@ goop_draw (Display *dpy, Window window, void *closure)
 
   switch (goop->mode)
     {
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
     case transparent:
 
       for (i = 0; i < goop->nlayers; i++)
@@ -533,7 +533,7 @@ goop_draw (Display *dpy, Window window, void *closure)
       XCopyArea (dpy, goop->pixmap, window, goop->window_gc, 0, 0,
 		 goop->width, goop->height, 0, 0);
       break;
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */
 
     case xor:
       XSetFunction (dpy, goop->pixmap_gc, GXcopy);
@@ -550,7 +550,7 @@ goop_draw (Display *dpy, Window window, void *closure)
 		  goop->width, goop->height, 0, 0, 1L);
       break;
 
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
     case transparent:
 # endif
     case opaque:
@@ -582,10 +582,13 @@ goop_reshape (Display *dpy, Window window, void *closure,
 {
   struct goop *goop = (struct goop *) closure;
 
-  struct goop *goop2 = goop_init (dpy, window);
-  free_goop(goop, dpy);
-  memcpy (goop, goop2, sizeof(*goop));
-  free(goop2);
+  if (w != goop->width || h != goop->height)
+    {
+      struct goop *goop2 = goop_init (dpy, window);
+      free_goop(goop, dpy);
+      memcpy (goop, goop2, sizeof(*goop));
+      free(goop2);
+    }
 }
 
 static Bool
@@ -617,7 +620,7 @@ static const char *goop_defaults [] = {
   "*torque:		0.0075",
   "*elasticity:		0.9",
   "*maxVelocity:	0.5",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
   0

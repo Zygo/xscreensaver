@@ -1,6 +1,6 @@
-# generated automatically by aclocal 1.14.1 -*- Autoconf -*-
+# generated automatically by aclocal 1.15 -*- Autoconf -*-
 
-# Copyright (C) 1996-2013 Free Software Foundation, Inc.
+# Copyright (C) 1996-2014 Free Software Foundation, Inc.
 
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,
@@ -561,31 +561,6 @@ fi
 # Substitute ALL_LINGUAS so we can use it in po/Makefile
 AC_SUBST(ALL_LINGUAS)
 
-# Set DATADIRNAME correctly if it is not set yet
-# (copied from glib-gettext.m4)
-if test -z "$DATADIRNAME"; then
-  AC_LINK_IFELSE(
-    [AC_LANG_PROGRAM([[]],
-                     [[extern int _nl_msg_cat_cntr;
-                       return _nl_msg_cat_cntr]])],
-    [DATADIRNAME=share],
-    [case $host in
-    *-*-solaris*)
-    dnl On Solaris, if bind_textdomain_codeset is in libc,
-    dnl GNU format message catalog is always supported,
-    dnl since both are added to the libc all together.
-    dnl Hence, we'd like to go with DATADIRNAME=share
-    dnl in this case.
-    AC_CHECK_FUNC(bind_textdomain_codeset,
-      [DATADIRNAME=share], [DATADIRNAME=lib])
-    ;;
-    *)
-    [DATADIRNAME=lib]
-    ;;
-    esac])
-fi
-AC_SUBST(DATADIRNAME)
-
 IT_PO_SUBDIR([po])
 
 ])
@@ -649,13 +624,13 @@ dnl This file is free software; the Free Software Foundation
 dnl gives unlimited permission to copy and/or distribute it,
 dnl with or without modifications, as long as this notice is preserved.
 dnl
-dnl This file can can be used in projects which are not available under
+dnl This file can be used in projects which are not available under
 dnl the GNU General Public License or the GNU Library General Public
 dnl License but which still want to provide support for the GNU gettext
 dnl functionality.
 dnl Please note that the actual code of the GNU gettext library is covered
 dnl by the GNU Library General Public License, and the rest of the GNU
-dnl gettext package package is covered by the GNU General Public License.
+dnl gettext package is covered by the GNU General Public License.
 dnl They are *not* in the public domain.
 
 dnl Authors:
@@ -675,7 +650,7 @@ AC_DEFUN([AM_NLS],
   AC_SUBST([USE_NLS])
 ])
 
-# Copyright (C) 2006-2013 Free Software Foundation, Inc.
+# Copyright (C) 2006-2014 Free Software Foundation, Inc.
 #
 # This file is free software; the Free Software Foundation
 # gives unlimited permission to copy and/or distribute it,

@@ -345,7 +345,7 @@ static void moveSetup(glhcfg *glhanoi, Disk * disk)
 	int dst = glhanoi->dst;
 	GLfloat theta;
 	GLfloat sintheta, costheta;
-	double absx, dh;
+	double dh;
 	double dx, dz; /* total x and z distances from src to dst */
 	Pole *poleSrc, *poleDst;
 
@@ -385,7 +385,7 @@ static void moveSetup(glhcfg *glhanoi, Disk * disk)
 	/* horizontal distance to travel? */
 	/* was: absx = sqrt(disk->xmax - disk->xmin); */
 	dh = distance(poleSrc->position, poleDst->position);
-	absx = sqrt(dh);
+	/* absx = sqrt(dh); */
 	ymax = glhanoi->poleHeight + dh;
 	if(glhanoi->state == FINISHED) {
 		ymax += dh * (double)(glhanoi->numberOfDisks - disk->id);
@@ -888,7 +888,6 @@ static int drawTube(GLdouble bottomRadius, GLdouble topRadius,
 	GLint lastSlice = nSlice - 1;
 	GLfloat radius;
 	GLfloat innerRadius;
-	GLfloat maxRadius;
 
 	if(bottomThickness > bottomRadius) {
 		bottomThickness = bottomRadius;
@@ -902,11 +901,11 @@ static int drawTube(GLdouble bottomRadius, GLdouble topRadius,
 	if(topThickness < 0.0) {
 		topThickness = 0.0;
 	}
-	if(topRadius >= bottomRadius) {
+/*	if(topRadius >= bottomRadius) {
 		maxRadius = topRadius;
 	} else {
 		maxRadius = bottomRadius;
-	}
+	} */
 
 	/* bottom */
 	y = 0.0;
@@ -1968,6 +1967,15 @@ ENTRYPOINT void draw_glhanoi(ModeInfo * mi)
 	update_glhanoi(glhanoi);
 	updateView(glhanoi);
 
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+    {
+      GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+      int o = (int) current_device_rotation();
+      if (o != 0 && o != 180 && o != -180)
+        glScalef (1/h, 1/h, 1/h);
+    }
+# endif
+
 	if(!glhanoi->wire && glhanoi->texture) {
 		glEnable(GL_TEXTURE_2D);
 	}
@@ -1993,6 +2001,8 @@ ENTRYPOINT void draw_glhanoi(ModeInfo * mi)
 ENTRYPOINT Bool glhanoi_handle_event(ModeInfo * mi, XEvent * event)
 {
 	glhcfg *glhanoi = &glhanoi_cfg[MI_SCREEN(mi)];
+
+    /* #### this is all wrong on iOS -- should be using gltrackball. */
 
 	if(event->xany.type == ButtonPress && event->xbutton.button == Button1) {
 		glhanoi->button_down_p = True;

@@ -14,7 +14,7 @@
 #include "erase.h"
 #include "yarandom.h"
 
-#define R(x)  (abs(random())%x)
+#define R(x)  (random()%x)
 #define PROB(x) (frand(1.0) < (x))
 
 #define NCOLORSMAX 255
@@ -268,7 +268,7 @@ static const char *squiral_defaults[] = {
   "*disorder:   0.005",
   "*cycle:      False",
   "*handedness: 0.5",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

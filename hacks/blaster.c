@@ -739,7 +739,7 @@ blaster_draw (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
 
-#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   XClearWindow (dpy, window);
 #endif
 
@@ -1041,7 +1041,7 @@ blaster_init (Display *d, Window w)
       make_gc (st->r_color5,"r_color5");
       make_gc (st->l_color0,"l_color0");
       make_gc (st->l_color1,"l_color1");
-#ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+#ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
     st->black = 0;
 #else
 		make_gc (st->black,"background");
@@ -1129,7 +1129,7 @@ static const char *blaster_defaults [] = {
   "*move_stars_x: 2",
   "*move_stars_y: 1",
   "*move_stars_random: 0",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

@@ -354,7 +354,7 @@ clear_tank (atlantisstruct * ap)
         glPushMatrix();
         {
           glLoadIdentity();
-          glRotatef(current_device_rotation(), 0, 0, 1);
+          /* glRotatef(current_device_rotation(), 0, 0, 1); */
 
 # ifndef HAVE_JWZGLES
           glShadeModel (GL_SMOOTH);

@@ -342,7 +342,7 @@ whirlygig_init (Display *dpy, Window window)
 
     st->dbuf = get_boolean_resource (st->dpy, "doubleBuffer", "Boolean");
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
     st->dbuf = False;
 # endif
 
@@ -382,7 +382,7 @@ whirlygig_init (Display *dpy, Window window)
     st->gcv.foreground = get_pixel_resource(st->dpy, st->xgwa.colormap, "background", "Background");
     st->bgc = XCreateGC (st->dpy, st->b, GCForeground, &st->gcv);
 
-#ifdef HAVE_COCOA  /* #### should turn off double-buffering instead */
+#ifdef HAVE_JWXYZ  /* #### should turn off double-buffering instead */
     jwxyz_XSetAntiAliasing (dpy, st->fgc, False);
     jwxyz_XSetAntiAliasing (dpy, st->bgc, False);
 #endif
@@ -503,11 +503,9 @@ whirlygig_draw (Display *dpy, Window window, void *closure)
     st->current_color = 0;
   for (wcount = 0; wcount < st->info->whirlies; wcount++) {
     int lcount; /* lcount is a counter for every line -- take note of the offsets changing */
-    int internal_time = st->current_time;
+    int internal_time = 0;
     int color_offset = (st->current_color + (st->info->color_modifier * wcount)) % NCOLORS;
-    if (st->current_time == 0)
-      internal_time = 0;
-    else
+    if (st->current_time != 0)
       /* I want the distance between whirlies to increase more each whirly */
       internal_time = st->current_time + (10 * wcount) + (wcount * wcount); 
     switch (st->xmode) {

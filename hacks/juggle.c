@@ -2642,7 +2642,7 @@ draw_juggle (ModeInfo * mi)
 
   MI_IS_DRAWN(mi) = True;
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
   /* Don't worry about flicker, trust Quartz's double-buffering.
      This is a fast fix for the pixel-turds I can't track down...
    */

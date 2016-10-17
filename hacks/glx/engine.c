@@ -24,6 +24,7 @@
 #ifdef STANDALONE
 #define DEFAULTS        "*delay:           30000        \n" \
                         "*showFPS:         False        \n" \
+			"*suppressRotationAnimation: True\n" \
 	"*titleFont:  -*-helvetica-medium-r-normal-*-*-180-*-*-*-*-*-*\n" \
 
 # define refresh_engine 0
@@ -326,8 +327,10 @@ static int cylinder (Engine *e, GLfloat x, GLfloat y, GLfloat z,
   for (a = sangle ; a <= angle || b <= angle ; a+= step) {
     y2=outer*(float)e->sin_table[a]+y;
     z2=outer*(float)e->cos_table[a]+z;
-    if (endcaps)
-       y2c[a] = y2; z2c[a] = z2; /* cache for later */
+    if (endcaps) {
+       y2c[a] = y2;
+       z2c[a] = z2; /* cache for later */
+    }
     if (tube) {
       Y2=inner*(float)e->sin_table[a]+y;
       Z2=inner*(float)e->cos_table[a]+z;
@@ -598,8 +601,9 @@ static int boom(Engine *e, GLfloat x, GLfloat y, int s)
   return polys;
 }
 
-static int display(Engine *e)
+static int display(ModeInfo *mi)
 {
+ Engine *e = &engine[MI_SCREEN(mi)];
   int polys = 0;
   GLfloat zb, yb;
   float rightSide;
@@ -614,6 +618,15 @@ static int display(Engine *e)
             e->lookat[0], e->lookat[1], e->lookat[2], 
             0.0, 1.0, 0.0);
   glPushMatrix();
+
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1/h);
+  }
+# endif
 
   glLightfv(GL_LIGHT0, GL_POSITION, lightpos);
   glLightfv(GL_LIGHT0, GL_SPECULAR, light_sp);
@@ -970,7 +983,7 @@ ENTRYPOINT void draw_engine(ModeInfo *mi)
   glXMakeCurrent(disp, w, *(e->glx_context));
 
 
-  mi->polygon_count = display(e);
+  mi->polygon_count = display(mi);
 
   glColor3f (1, 1, 0);
   if (do_titles)

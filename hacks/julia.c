@@ -74,7 +74,7 @@ typedef struct {
 	int         nbuffers;
 	int         redrawing, redrawpos;
 	Pixmap      pixmap;
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 	Cursor      cursor;
 #endif
 	GC          stippledGC;
@@ -176,7 +176,7 @@ init_julia(ModeInfo * mi)
 		jp->depth = 10;
 
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 	if (jp->button_down_p && !jp->cursor && !jp->cursor)
 	  {
 		Pixmap bit;
@@ -190,7 +190,7 @@ init_julia(ModeInfo * mi)
 										  0, 0);
 		XFreePixmap (display, bit);
 	  }
-#endif /* HAVE_COCOA */
+#endif /* HAVE_JWXYZ */
 
 	if (jp->pixmap != None &&
 	    jp->circsize != (MIN(jp->centerx, jp->centery) / 60) * 2 + 1) {
@@ -219,14 +219,14 @@ init_julia(ModeInfo * mi)
 			XFreeGC(display, bg_gc);
 	}
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 	if (MI_WIN_IS_INROOT(mi))
 	  ;
 	else if (jp->circsize > 0)
 	  XDefineCursor (display, window, jp->cursor);
 	else
 	  XUndefineCursor (display, window);
-#endif /* HAVE_COCOA */
+#endif /* HAVE_JWXYZ */
 
 	if (!jp->stippledGC) {
 		gcv.foreground = MI_WIN_BLACK_PIXEL(mi);
@@ -334,11 +334,11 @@ draw_julia (ModeInfo * mi)
 	/* draw a circle at the c-parameter so you can see it's effect on the
 	   structure of the julia set */
 	XSetForeground(display, jp->stippledGC, MI_WIN_WHITE_PIXEL(mi));
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 	XSetTSOrigin(display, jp->stippledGC, new_circle.x, new_circle.y);
 	XSetStipple(display, jp->stippledGC, jp->pixmap);
 	XSetFillStyle(display, jp->stippledGC, FillOpaqueStippled);
-#endif /* HAVE_COCOA */
+#endif /* HAVE_JWXYZ */
 	XDrawArc(display, window, jp->stippledGC, 
              new_circle.x-jp->circsize/2,
              new_circle.y-jp->circsize/2,
@@ -435,7 +435,7 @@ release_julia (ModeInfo * mi)
 				XFreeGC(display, jp->stippledGC);
 			if (jp->pixmap != None)
 				XFreePixmap(display, jp->pixmap);
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 			if (jp->cursor)
 			  XFreeCursor (display, jp->cursor);
 #endif

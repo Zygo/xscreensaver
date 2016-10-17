@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="http://www.youtube.com/watch?v=LuEC3EONzjc"/>
+  <video href="https://www.youtube.com/watch?v=LuEC3EONzjc"/>
 
   <string id="text" _label="Text for flag" arg="-text %"/>
 

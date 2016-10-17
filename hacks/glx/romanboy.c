@@ -213,7 +213,7 @@ static const char sccsid[] = "@(#)romanboy.c  1.1 14/10/03 xlockmore";
 
 #ifdef USE_GL
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
 # include <X11/keysym.h>
 #endif
 
@@ -767,8 +767,6 @@ static int roman_boy(ModeInfo *mi, double umin, double umax,
         continue;
       for (j=0; j<=numu; j++)
       {
-        l = i;
-        m = j;
         o = i*(numu+1)+j;
         u = ur*j/numu+umin;
         v = vr*i/numv+vmin;

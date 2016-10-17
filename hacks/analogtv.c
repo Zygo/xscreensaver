@@ -64,9 +64,9 @@
    - removed unusable hashnoise code
  */
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
-#else /* !HAVE_COCOA */
+#else /* !HAVE_JWXYZ */
 # include <X11/Xlib.h>
 # include <X11/Xutil.h>
 #endif
@@ -344,7 +344,7 @@ analogtv_configure(analogtv *it)
   wlim = it->xgwa.width;
   ratio = wlim / (float) hlim;
 
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   /* Fill the whole iPhone screen, even though that distorts the image. */
   min_ratio = 0;
   max_ratio = 10;
@@ -392,7 +392,7 @@ analogtv_configure(analogtv *it)
 
 
   height_diff = ((hlim + ANALOGTV_VISLINES/2) % ANALOGTV_VISLINES) - ANALOGTV_VISLINES/2;
-  if (height_diff != 0 && fabs(height_diff) < hlim * height_snap)
+  if (height_diff != 0 && abs(height_diff) < hlim * height_snap)
     {
       hlim -= height_diff;
     }

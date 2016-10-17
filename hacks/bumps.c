@@ -30,6 +30,7 @@
 
 
 #include <math.h>
+#include <time.h>
 #include <inttypes.h>
 #include "screenhack.h"
 
@@ -63,7 +64,7 @@ static const char *bumps_defaults [] = {
 #ifdef HAVE_XSHM_EXTENSION
   "*useSHM:		True",
 #endif /* HAVE_XSHM_EXTENSION */
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
   "*rotateImages:   True",
 #endif

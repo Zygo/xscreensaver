@@ -329,7 +329,7 @@ static const char *moire2_defaults [] = {
   "*thickness:		0",
   "*colors:		150",
   "*colorShift:		5",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation:     True",
 #endif
 

@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 #else
 # include <X11/Xlib.h>

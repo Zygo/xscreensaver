@@ -114,6 +114,15 @@ draw_stonerview (ModeInfo *mi)
   glRotatef( current_device_rotation(), 0, 0, 1);
   gltrackball_rotate (bp->trackball);
 
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    GLfloat h = MI_HEIGHT(mi) / (GLfloat) MI_WIDTH(mi);
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (h, h, h);
+  }
+# endif
+
   stonerview_win_draw(bp->st);
   if (! bp->button_down_p)
     stonerview_move_increment(bp->st);

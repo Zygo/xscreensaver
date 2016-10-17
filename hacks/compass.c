@@ -822,7 +822,7 @@ compass_init (Display *dpy, Window window)
   st->delay = get_integer_resource (st->dpy, "delay", "Integer");
   st->dbuf = get_boolean_resource (st->dpy, "doubleBuffer", "Boolean");
 
-# ifdef HAVE_COCOA	/* Don't second-guess Quartz's double-buffering */
+# ifdef HAVE_JWXYZ	/* Don't second-guess Quartz's double-buffering */
   st->dbuf = False;
 # endif
 

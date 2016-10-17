@@ -80,7 +80,7 @@ init_one_qix (struct state *st, int nlines)
     qix->lines[i].p = (struct qpoint *)
       calloc(qix->npoly, sizeof(struct qpoint));
 
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   if (!mono_p && !st->transparent_p)
 # endif
     {
@@ -129,7 +129,7 @@ init_one_qix (struct state *st, int nlines)
       qix->lines[i].color = qix->lines[0].color;
       qix->lines[i].dead = qix->lines[0].dead;
   
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
       if (!mono_p && !st->transparent_p)
 # endif
 	if (!XAllocColor (st->dpy, st->cmap, &qix->lines[i].color))
@@ -212,7 +212,7 @@ qix_init (Display *dpy, Window window)
   st->additive_p = get_boolean_resource (st->dpy, "additive", "Boolean");
   st->cmap_p = has_writable_cells (xgwa.screen, xgwa.visual);
 
-# ifndef HAVE_COCOA
+# ifndef HAVE_JWXYZ
   if (st->transparent_p)
     {
       unsigned long *plane_masks = 0;
@@ -274,7 +274,7 @@ qix_init (Display *dpy, Window window)
 	      st->gcs [1][i] = XCreateGC (st->dpy, st->window, 
                                           GCForeground|GCPlaneMask,
                                           &gcv);
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
            /* jwxyz_XSetAntiAliasing (st->dpy, st->gcs [0][i], False);
               jwxyz_XSetAntiAliasing (st->dpy, st->gcs [1][i], False); */
               if (st->transparent_p)
@@ -282,7 +282,7 @@ qix_init (Display *dpy, Window window)
                   jwxyz_XSetAlphaAllowed (dpy, st->gcs [0][i], True);
                   jwxyz_XSetAlphaAllowed (dpy, st->gcs [1][i], True);
                 }
-# endif /* HAVE_COCOA */
+# endif /* HAVE_JWXYZ */
 	    }
 	}
 
@@ -293,10 +293,10 @@ qix_init (Display *dpy, Window window)
       XClearWindow (st->dpy, st->window);
     }
   else
-#endif /* !HAVE_COCOA */
+#endif /* !HAVE_JWXYZ */
   if (st->xor_p)
     {
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
     NON_TRANSPARENT_XOR:
 #endif
       gcv.function = GXxor;
@@ -307,7 +307,7 @@ qix_init (Display *dpy, Window window)
     }
   else
     {
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
     NON_TRANSPARENT:
 #endif
       st->draw_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
@@ -316,7 +316,7 @@ qix_init (Display *dpy, Window window)
       st->erase_gc = XCreateGC (st->dpy, st->window, GCForeground, &gcv);
     }
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
   if (st->transparent_p)
     jwxyz_XSetAlphaAllowed (dpy, st->draw_gc, True);
 #endif
@@ -329,7 +329,7 @@ qix_init (Display *dpy, Window window)
       st->qixes [st->count]->id = st->count;
     }
 
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
   /* line-mode leaves turds without this. */
   jwxyz_XSetAntiAliasing (st->dpy, st->erase_gc, False);
   jwxyz_XSetAntiAliasing (st->dpy, st->draw_gc,  False);
@@ -437,7 +437,7 @@ add_qline (struct state *st,
 	  - (st->random_p ? random() % st->max_spread : 0);
     }
 
-#ifndef HAVE_COCOA
+#ifndef HAVE_JWXYZ
   if (!mono_p && !st->transparent_p)
 #endif
     {
@@ -470,7 +470,7 @@ add_qline (struct state *st,
 	    abort (); /* same color should work */
 	}
 
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
           if (st->transparent_p)
             {
               /* give a non-opaque alpha to the color */
@@ -480,7 +480,7 @@ add_qline (struct state *st,
               pixel = (pixel & (~amask)) | a;
               qline->color.pixel = pixel;
             }
-# endif /* HAVE_COCOA */
+# endif /* HAVE_JWXYZ */
 
       XSetForeground (st->dpy, st->draw_gc, qline->color.pixel);
     }
@@ -592,7 +592,7 @@ static const char *qix_defaults [] = {
   "*transparent:true",
   "*gravity:	false",
   "*additive:	true",
-#ifdef USE_IPHONE
+#ifdef HAVE_MOBILE
   "*ignoreRotation: True",
 #endif
   0

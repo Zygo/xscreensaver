@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2014-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2014-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -207,7 +207,7 @@ XftColorAllocValue (Display *dpy,
       result->pixel = (((color->red   >> (16 - red_len))   << red_shift)   |
                        ((color->green >> (16 - green_len)) << green_shift) |
                        ((color->blue  >> (16 - blue_len))  << blue_shift));
-# ifdef HAVE_COCOA
+# ifdef HAVE_JWXYZ
       result->pixel |= BlackPixel(dpy, 0);  /* alpha */
 # endif
     }

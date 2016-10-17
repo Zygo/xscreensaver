@@ -1,4 +1,5 @@
-/* xscreensaver, Copyright (c) 1991-2014 Jamie Zawinski <jwz@netscape.com>
+/* xscreensaver, Copyright (c) 1991-2014, 2016
+ * -Jamie Zawinski <jwz@netscape.com>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -167,7 +168,7 @@ make_splash_dialog (saver_info *si)
   Colormap cmap;
   char *f;
 
-  Bool whine = senescent_p ();
+  Bool whine = decrepit_p ();
 
   if (whine)
     {

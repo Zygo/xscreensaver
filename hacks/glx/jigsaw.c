@@ -55,7 +55,8 @@
 		  "*wireframe:		False	\n" \
 		  "*desktopGrabber:   xscreensaver-getimage -no-desktop %s\n" \
 		  "*grabDesktopImages:	False	\n" \
-		  "*chooseRandomImages:	True	\n"
+		  "*chooseRandomImages:	True	\n" \
+		  "*suppressRotationAnimation: True\n" \
 
 
 # define refresh_jigsaw 0
@@ -63,7 +64,7 @@
 #undef countof
 #define countof(x) (sizeof((x))/sizeof((*x)))
 
-#ifdef HAVE_COCOA
+#ifdef HAVE_JWXYZ
 # include "jwxyz.h"
 #else
 # include <X11/Xlib.h>
@@ -1337,6 +1338,14 @@ reshape_jigsaw (ModeInfo *mi, int width, int height)
              0.0, 0.0, 0.0,
              0.0, 1.0, 0.0);
 
+# ifdef HAVE_MOBILE	/* Keep it the same relative size when rotated. */
+  {
+    int o = (int) current_device_rotation();
+    if (o != 0 && o != 180 && o != -180)
+      glScalef (1/h, 1/h, 1/h);
+  }
+# endif
+
   glClear(GL_COLOR_BUFFER_BIT);
 
   jc->line_thickness = (MI_IS_WIREFRAME (mi) ? 1 : MAX (1, height / 300.0));
@@ -1434,7 +1443,7 @@ draw_jigsaw (ModeInfo *mi)
   mi->polygon_count = 0;
 
   glPushMatrix ();
-  glRotatef(current_device_rotation(), 0, 0, 1);
+/*  glRotatef(current_device_rotation(), 0, 0, 1); */
   gltrackball_rotate (jc->trackball);
 
   animate (mi);

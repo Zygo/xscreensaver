@@ -1,5 +1,5 @@
 /* dotfile.c --- management of the ~/.xscreensaver file.
- * xscreensaver, Copyright (c) 1998-2014 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -755,7 +755,7 @@ write_init_file (Display *dpy,
     fprintf (out,
 	     "# %s Preferences File\n"
 	     "# Written by %s %s for %s on %s.\n"
-	     "# http://www.jwz.org/xscreensaver/\n"
+	     "# https://www.jwz.org/xscreensaver/\n"
 	     "\n",
 	     progclass, progname, version_string, whoami, timestr);
   }
@@ -1661,7 +1661,7 @@ stop_the_insanity (saver_preferences *p)
 
 
 Bool
-senescent_p (void)
+decrepit_p (void)
 {
   /* If you are in here because you're planning on disabling this warning
      before redistributing my software, please don't.
@@ -1690,8 +1690,14 @@ senescent_p (void)
      sucks", and they say "but I don't know how to compile from source,
      herp derp I eat paste", and *everybody* goes away unhappy.
 
-     It wastes an enormous amount of my time, and kind of makes me regret
-     ever having released this software in the first place.
+     It wastes an enormous amount of my time, but worse than that, it
+     does a grave disservice to the users, who are stuck experiencing
+     bugs that are already fixed!  These users think they are running the
+     latest release, and they are not.  They would like to be running the
+     actual latest release, but they don't know how, because their distro
+     makes that very difficult for them.  It's terrible for everyone, and
+     kind of makes me regret ever having released this software in the
+     first place.
 
      So seriously. I ask that if you're planning on disabling this
      obsolescence warning, that you instead just remove xscreensaver from
@@ -1704,37 +1710,61 @@ senescent_p (void)
 
      Thank you!
 
-     jwz, 2014
+     jwz, 2014, 2016.
+
+     PS: In particular, since Debian refuses to upgrade software on any
+     kind of rational timeline, I have asked that they stop shipping
+     xscreensaver at all.  They have refused.  Instead of upgrading the
+     software, they simply patched out this warning.
+
+     If you want to witness the sad state of the open source peanut
+     gallery, look no farther than the comments on my blog:
+     http://jwz.org/b/yiYo
+
+     Many of these people fall back on their go-to argument of, "If it is
+     legal, it must be right."  If you believe in that rhetorical device
+     then you are a terrible person, and possibly a sociopath.
+
+     There are also the armchair lawyers who say "Well, instead of
+     *asking* people to do the right thing out of common courtesy, you
+     should just change your license to prohibit them from acting
+     amorally."  Again, this is the answer of a sociopath, but that aside,
+     if you devote even a second's thought to this you will realize that
+     the end result of this would be for distros like Debian to just keep
+     shipping the last version with the old license and then never
+     upgrading it again -- which would be the worst possible outcome for
+     everyone involved, most especially the users.
   */
-  time_t now = time ((time_t *) 0);				/*   N   */
-  struct tm *tm = localtime (&now);				/*   o   */
-  const char *s = screensaver_id;				/*       */
-  char mon[4], year[5];						/*   d   */
-  int m, y, months;						/*   o   */
-  s = strchr (s, ' '); if (!s) abort(); s++;			/*   n   */
-  s = strchr (s, '('); if (!s) abort(); s++;			/*   '   */
-  s = strchr (s, '-'); if (!s) abort(); s++;			/*   t   */
-  strncpy (mon, s, 3);						/*       */
-  mon[3] = 0;							/*   d   */
-  s = strchr (s, '-'); if (!s) abort(); s++;			/*   o   */
-  strncpy (year, s, 4);						/*       */
-  year[4] = 0;							/*   i   */
-  y = atoi (year);						/*   t   */
-  if      (!strcmp(mon, "Jan")) m = 0;				/*   ,   */
-  else if (!strcmp(mon, "Feb")) m = 1;				/*       */
-  else if (!strcmp(mon, "Mar")) m = 2;				/*   s   */
-  else if (!strcmp(mon, "Apr")) m = 3;				/*   t   */
-  else if (!strcmp(mon, "May")) m = 4;				/*   o   */
-  else if (!strcmp(mon, "Jun")) m = 5;				/*   p   */
-  else if (!strcmp(mon, "Jul")) m = 6;				/*   ,   */
-  else if (!strcmp(mon, "Aug")) m = 7;				/*       */
-  else if (!strcmp(mon, "Sep")) m = 8;				/*   s   */
-  else if (!strcmp(mon, "Oct")) m = 9;				/*   t   */
+
+  time_t now = time ((time_t *) 0);				/*       */
+  struct tm *tm = localtime (&now);				/*   d   */
+  const char *s = screensaver_id;				/*   o   */
+  char mon[4], year[5];						/*   n   */
+  int m, y, months;						/*   '   */
+  s = strchr (s, ' '); if (!s) abort(); s++;			/*   t   */
+  s = strchr (s, '('); if (!s) abort(); s++;			/*       */
+  s = strchr (s, '-'); if (!s) abort(); s++;			/*   d   */
+  strncpy (mon, s, 3);						/*   o   */
+  mon[3] = 0;							/*       */
+  s = strchr (s, '-'); if (!s) abort(); s++;			/*   i   */
+  strncpy (year, s, 4);						/*   t   */
+  year[4] = 0;							/*   ,   */
+  y = atoi (year);						/*       */
+  if      (!strcmp(mon, "Jan")) m = 0;				/*   s   */
+  else if (!strcmp(mon, "Feb")) m = 1;				/*   t   */
+  else if (!strcmp(mon, "Mar")) m = 2;				/*   o   */
+  else if (!strcmp(mon, "Apr")) m = 3;				/*   p   */
+  else if (!strcmp(mon, "May")) m = 4;				/*   ,   */
+  else if (!strcmp(mon, "Jun")) m = 5;				/*       */
+  else if (!strcmp(mon, "Jul")) m = 6;				/*   s   */
+  else if (!strcmp(mon, "Aug")) m = 7;				/*   t   */
+  else if (!strcmp(mon, "Sep")) m = 8;				/*   a   */
+  else if (!strcmp(mon, "Oct")) m = 9;				/*   a   */
   else if (!strcmp(mon, "Nov")) m = 10;				/*   a   */
-  else if (!strcmp(mon, "Dec")) m = 11;				/*   a   */
-  else abort();							/*   a   */
+  else if (!strcmp(mon, "Dec")) m = 11;				/*   h   */
+  else abort();							/*   h   */
   months = ((((tm->tm_year + 1900) * 12) + tm->tm_mon) -	/*   h   */
-            (y * 12 + m));					/*   h   */
-							  	/*   h   */
-  return (months > 18);						/*   p   */
+            (y * 12 + m));					/*   p   */
+							  	/*   .   */
+  return (months >= 17);					/*       */
 }
