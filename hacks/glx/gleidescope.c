@@ -875,7 +875,7 @@ setup_random_texture (ModeInfo *mi, texture *texture)
 	texture->start_time = time((time_t *)0);
 }
 
-static void
+static Bool
 setup_file_texture (ModeInfo *mi, char *filename, texture *texture)
 {
 	Display *dpy = mi->dpy;
@@ -884,6 +884,7 @@ setup_file_texture (ModeInfo *mi, char *filename, texture *texture)
 
 	Colormap cmap = mi->xgwa.colormap;
 	XImage *image = xpm_file_to_ximage (dpy, visual, cmap, filename);
+    if (!image) return False;
 
 #ifdef DEBUG
 	printf("FileTexture\n");
@@ -916,6 +917,7 @@ setup_file_texture (ModeInfo *mi, char *filename, texture *texture)
 	texture->min_ty = 0.0;
 	texture->max_ty = 1.0;
 	texture->start_time = time((time_t *)0);
+    return True;
 }
 
 static void
@@ -924,6 +926,7 @@ setup_texture(ModeInfo * mi, texture *texture)
 	gleidestruct *gp = &gleidescope[MI_SCREEN(mi)];
 
 	if (!image || !*image || !strcmp(image, "DEFAULT")) {
+    BUILTIN:
 		/* no image specified - use system settings */
 #ifdef DEBUG
 		printf("SetupTexture: get_snapshot\n");
@@ -940,7 +943,8 @@ setup_texture(ModeInfo * mi, texture *texture)
 #ifdef DEBUG
 			printf("SetupTexture: file_texture\n");
 #endif
-			setup_file_texture(mi, image, texture);
+			if (! setup_file_texture(mi, image, texture))
+              goto BUILTIN;
 		}
 	}
 	/* copy start time from texture */

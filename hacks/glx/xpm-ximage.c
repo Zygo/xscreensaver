@@ -1,5 +1,5 @@
 /* xpm-ximage.c --- converts XPM data to an XImage for use with OpenGL.
- * xscreensaver, Copyright (c) 1998-2013 Jamie Zawinski <jwz@jwz.org>
+ * xscreensaver, Copyright (c) 1998-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -26,6 +26,10 @@
 #endif
 
 #include "xpm-ximage.h"
+
+#ifdef HAVE_COCOA
+# include "grabscreen.h"  /* for osx_load_image_file() */
+#endif
 
 extern char *progname;
 
@@ -361,7 +365,7 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
                  const char *filename, char **xpm_data)
 {
   int iw, ih, w8, x, y;
-  XImage *ximage;
+  XImage *ximage = 0;
   char *data;
   unsigned char *mask = 0;
   int depth = 32;
@@ -375,18 +379,58 @@ xpm_to_ximage_1 (Display *dpy, Visual *visual, Colormap cmap,
   unsigned long rmsk=0, gmsk=0, bmsk=0, amsk=0;
   unsigned long rsiz=0, gsiz=0, bsiz=0, asiz=0;
 
+# ifdef HAVE_COCOA
+  if (filename) {
+    XRectangle geom;
+    Screen *screen = DefaultScreenOfDisplay (dpy);
+    Window window = RootWindowOfScreen (screen);
+    XWindowAttributes xgwa;
+    XGetWindowAttributes (dpy, window, &xgwa);
+    Pixmap pixmap =
+      XCreatePixmap (dpy, window, xgwa.width, xgwa.height, xgwa.depth);
+
+    if (osx_load_image_file (screen, window, pixmap, filename, &geom)) {
+      ximage = XGetImage (dpy, pixmap, geom.x, geom.y, geom.width, geom.height,
+                          ~0L, ZPixmap);
+
+      /* Have to convert BGRA to ARGB */
+      if (ximage) {
+        int x, y;
+        for (y = 0; y < ximage->height; y++)
+          for (x = 0; x < ximage->width; x++) {
+            unsigned long p = XGetPixel (ximage, x, y);
+            unsigned long b = (p >> 24) & 0xFF;
+            unsigned long g = (p >> 16) & 0xFF;
+            unsigned long r = (p >>  8) & 0xFF;
+            unsigned long a = (p >>  0) & 0xFF;
+            p = (a << 24) | (r << 16) | (g << 8) | (b << 0);
+            XPutPixel (ximage, x, y, p);
+          }
+      }
+
+    }
+
+    XFreePixmap (dpy, pixmap);
+
+    if (! ximage)
+      fprintf (stderr, "%s: %s failed\n", progname, filename);
+    return ximage;
+  }
+# endif /* HAVE_COCOA */
+
   if (filename)
     {
       fprintf(stderr, 
-              "%s: no files: not compiled with XPM or Pixbuf support.\n", 
-              progname);
-      exit (1);
+              "%s: can't load %s: not compiled with XPM or Pixbuf support.\n", 
+              progname, filename);
+      return 0;
     }
 
   if (! xpm_data) abort();
   ximage = minixpm_to_ximage (dpy, visual, cmap, depth, background_color,
                               (const char * const *) xpm_data,
                               &iw, &ih, &pixels, &npixels, &mask);
+  if (!ximage) abort();
   if (pixels) free (pixels);
   
   bpl = ximage->bytes_per_line;

@@ -1941,7 +1941,7 @@ XQueryFont (Display *dpy, Font fid)
   Assert (sizeof (f->properties[0].card32) >= sizeof (char *),
           "atoms probably needs a real implementation");
   // If XInternAtom is ever implemented, use it here.
-  f->properties[0].card32 = (char *)fid->xa_font;
+  f->properties[0].card32 = (unsigned long)fid->xa_font;
 
   // copy XCharStruct array
   int size = (f->max_char_or_byte2 - f->min_char_or_byte2) + 1;
@@ -2255,7 +2255,7 @@ try_xlfd_font (Display *dpy, const char *name, float scale,
    // Default mask is for the built-in X11 font aliases.
    mask = NSFixedPitchFontMask | NSBoldFontMask | NSItalicFontMask;
   BOOL rand  = NO;
-  float size = 0;
+  float size = 12; /* In points (1/72 in.) */
   char *ps_name = 0;
 
   const char *s = (name ? name : "");
@@ -2312,24 +2312,45 @@ try_xlfd_font (Display *dpy, const char *name, float scale,
     xlfd_next (&s, &s2); // Set width name (ignore)
     xlfd_next (&s, &s2); // Add style name (ignore)
 
-    xlfd_next (&s, &s2); // Pixel size (ignore)
-
-    xlfd_next (&s, &s2); // Point size
+    L = xlfd_next (&s, &s2); // Pixel size (ignore)
     char *s3;
-    uintmax_t n = strtoumax(s, &s3, 10);
-    if (s2 == s3)
-      size = n / 10.0;
+    uintmax_t pxsize = strtoumax(s, &s3, 10);
+    if (UNSPEC || s2 != s3)
+      pxsize = UINTMAX_MAX; // i.e. it's invalid.
+
+    L = xlfd_next (&s, &s2); // Point size
+    uintmax_t ptsize = strtoumax(s, &s3, 10);
+    if (UNSPEC || s2 != s3)
+      ptsize = UINTMAX_MAX;
 
     xlfd_next (&s, &s2); // Resolution X (ignore)
     xlfd_next (&s, &s2); // Resolution Y (ignore)
 
-    xlfd_next (&s, &s2); // Spacing
+    L = xlfd_next (&s, &s2); // Spacing
     if (CMP ("p"))
       forbid |= NSFixedPitchFontMask;
     else if (CMP ("m") || CMP ("c"))
       require |= NSFixedPitchFontMask;
 
-    // Don't care about average_width or charset registry.
+    xlfd_next (&s, &s2); // Average width (ignore)
+
+    // -*-courier-bold-r-*-*-14-*-*-*-*-*-*-*         14 px
+    // -*-courier-bold-r-*-*-*-140-*-*-m-*-*-*        14 pt
+    // -*-courier-bold-r-*-*-140-*                    14 pt, via wildcard
+    // -*-courier-bold-r-*-140-*                      14 pt, not handled
+    // -*-courier-bold-r-*-*-14-180-*-*-*-*-*-*       error
+
+    L = xlfd_next (&s, &s2); // Charset registry
+    if (ptsize != UINTMAX_MAX) {
+      // It was in the ptsize field, so that's definitely what it is.
+      size = ptsize / 10.0;
+    } else if (pxsize != UINTMAX_MAX) {
+      size = pxsize;
+      // If it's a fully qualified XLFD, then this really is the pxsize.
+      // Otherwise, this is probably point size with a multi-field wildcard.
+      if (L == 0)
+        size /= 10.0;
+    }
 
     mask = require | forbid;
   }
@@ -2523,7 +2544,7 @@ XCreateFontSet (Display *dpy, char *name,
                 char **def_string_return)
 {
   char *name2 = strdup (name);
-  char *s = strchr (name, ",");
+  char *s = strchr (name, ',');
   if (s) *s = 0;
   XFontSet set = 0;
   XFontStruct *f = XLoadQueryFont (dpy, name2);
@@ -2571,7 +2592,7 @@ XFreeStringList (char **list)
 // "daggerdouble".  Used by fontglide debugMetrics.
 //
 char *
-jwxyz_unicode_character_name (Font fid, unsigned long uc)
+jwxyz_unicode_character_name (Display *dpy, Font fid, unsigned long uc)
 {
   char *ret = 0;
   CTFontRef ctfont =

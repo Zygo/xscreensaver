@@ -1658,8 +1658,8 @@ fontglide_draw_metrics (state *s)
 
 # ifdef HAVE_JWXYZ
   {
-    char *name =
-      jwxyz_unicode_character_name (s->metrics_font1->fid, s->debug_metrics_p);
+    char *name = jwxyz_unicode_character_name (
+      s->dpy, s->metrics_font1->fid, s->debug_metrics_p);
     if (!name || !*name) name = strdup("unknown character name");
     XDrawString (s->dpy, dest, gc, 
                  10,

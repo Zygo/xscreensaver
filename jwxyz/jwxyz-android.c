@@ -70,9 +70,10 @@ static double current_rotation = 0;
 extern void check_gl_error (const char *type);
 
 void
-do_logv(int prio, const char *fmt, va_list args)
+jwxyz_logv(Bool error, const char *fmt, va_list args)
 {
-  __android_log_vprint(prio, "xscreensaver", fmt, args);
+  __android_log_vprint(error ? ANDROID_LOG_ERROR : ANDROID_LOG_INFO,
+                       "xscreensaver", fmt, args);
 
   /* The idea here is that if the device/emulator dies shortly after a log
      message, then waiting here for a short while should increase the odds
@@ -88,14 +89,6 @@ do_logv(int prio, const char *fmt, va_list args)
 # endif
 }
 
-void Log(const char *fmt, ...)
-{
-  va_list args;
-  va_start (args, fmt);
-  Logv(fmt, args);
-  va_end (args);
-}
-
 /* Handle an abort on Android
    TODO: Test that Android handles aborts properly
  */
@@ -108,7 +101,7 @@ jwxyz_abort (const char *fmt, ...)
 
   va_list args;
   va_start (args, fmt);
-  do_logv(ANDROID_LOG_ERROR, fmt, args);
+  jwxyz_logv(True, fmt, args);
   va_end (args);
 
   char buf[10240];
@@ -303,15 +296,35 @@ doinit (jobject jwxyz_obj, struct running_hack *rh, JNIEnv *env,
 
 #undef DEBUG_FPS
 
+#ifdef DEBUG_FPS
+
+static double
+double_time (void)
+{
+  struct timeval now;
+# ifdef GETTIMEOFDAY_TWO_ARGS
+  struct timezone tzp;
+  gettimeofday(&now, &tzp);
+# else
+  gettimeofday(&now);
+# endif
+
+  return (now.tv_sec + ((double) now.tv_usec * 0.000001));
+}
+
+#endif
+
 // Animates a single frame of the current hack.
 //
-static void
+static jlong
 drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
 {
-  double now = 0;
 # ifdef DEBUG_FPS
   double fps0=0, fps1=0, fps2=0, fps3=0, fps4=0;
+  fps0 = fps1 = fps2 = fps3 = fps4 = double_time();
 # endif
+
+  unsigned long delay = 0;
 
   if (setjmp (jmp_target)) goto END;  // Jump here from jwxyz_abort and return.
 
@@ -323,25 +336,10 @@ drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
   if (++rh->frame_count < 8)
     goto END;
 
-  /* Some of the screen hacks want to delay for long periods, and letting
-     the framework run the update function at 30 FPS when it really wanted
-     half a minute between frames would be bad.  So instead, we assume that
-     the framework's animation timer might fire whenever, but we only invoke
-     the screen hack's "draw frame" method when enough time has expired.
-  */
-  struct timeval tv;
-  gettimeofday (&tv, 0);
-  now = tv.tv_sec + (tv.tv_usec / 1000000.0);
-# ifdef DEBUG_FPS
-  fps0 = fps1 = fps2 = fps3 = fps4 = now;
-#endif
-  if (now < rh->next_frame_time) goto END;
-
   prepare_context(rh);
 
 # ifdef DEBUG_FPS
-  gettimeofday (&tv, 0);
-  fps1 = tv.tv_sec + (tv.tv_usec / 1000000.0);
+  fps1 = double_time();
 # endif
 
   // The init function might do graphics (e.g. XClearWindow) so it has
@@ -376,8 +374,7 @@ drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
   }
 
 # ifdef DEBUG_FPS
-  gettimeofday (&tv, 0);
-  fps2 = tv.tv_sec + (tv.tv_usec / 1000000.0);
+  fps2 = double_time();
 # endif
 
   // Apparently events don't come in on the drawing thread, and JNI flips
@@ -385,28 +382,16 @@ drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
   send_queued_events (rh);
 
 # ifdef DEBUG_FPS
-  gettimeofday (&tv, 0);
-  fps3 = tv.tv_sec + (tv.tv_usec / 1000000.0);
+  fps3 = double_time();
 # endif
 
-  unsigned long delay = rh->xsft->draw_cb(rh->dpy, rh->window, rh->closure);
-
-# ifdef __arm__
-  /* #### Until we work out why eglMakeCurrent is so slow on ARM. */
-  if (delay <= 40000) delay = 0;
-# endif
-
+  delay = rh->xsft->draw_cb(rh->dpy, rh->window, rh->closure);
 
 # ifdef DEBUG_FPS
-  gettimeofday (&tv, 0);
-  fps4 = tv.tv_sec + (tv.tv_usec / 1000000.0);
+  fps4 = double_time();
 # endif
   if (rh->fpst && rh->xsft->fps_cb)
     rh->xsft->fps_cb (rh->dpy, rh->window, rh->fpst, rh->closure);
-
-  gettimeofday (&tv, 0);
-  now = tv.tv_sec + (tv.tv_usec / 1000000.0);
-  rh->next_frame_time = now + (delay / 1000000.0);
 
  END: ;
 
@@ -416,8 +401,10 @@ drawXScreenSaver (JNIEnv *env, struct running_hack *rh)
       (int) ((fps2-fps1)*1000000),
       (int) ((fps3-fps2)*1000000),
       (int) ((fps4-fps3)*1000000),
-      (int) ( (now-fps4)*1000000));
+      (int) ((double_time()-fps4)*1000000));
 # endif
+
+  return delay;
 }
 
 
@@ -503,7 +490,7 @@ Java_org_jwz_xscreensaver_jwxyz_nativeInit (JNIEnv *env, jobject thiz,
 
   int chosen = 0;
   for (;;) {
-    if (!chosen == countof(function_table)) {
+    if (chosen == countof(function_table)) {
       Log ("Hack not found: %s", hack);
       abort();
     }
@@ -566,13 +553,14 @@ Java_org_jwz_xscreensaver_jwxyz_nativeResize (JNIEnv *env, jobject thiz,
 }
 
 
-JNIEXPORT void JNICALL
+JNIEXPORT jlong JNICALL
 Java_org_jwz_xscreensaver_jwxyz_nativeRender (JNIEnv *env, jobject thiz)
 {
   pthread_mutex_lock(&mutg);
   struct running_hack *rh = getRunningHack(env, thiz);
-  drawXScreenSaver(env, rh);
+  jlong result = drawXScreenSaver(env, rh);
   pthread_mutex_unlock(&mutg);
+  return result;
 }
 
 
@@ -909,6 +897,21 @@ ignore_rotation_p (Display *dpy)
 }
 
 
+static char *
+jstring_dup (JNIEnv *env, jstring str)
+{
+  Assert (str, "expected jstring, not null");
+  const char *cstr = (*env)->GetStringUTFChars (env, str, 0);
+  size_t len = (*env)->GetStringUTFLength (env, str) + 1;
+  char *result = malloc (len);
+  if (result) {
+    memcpy (result, cstr, len);
+  }
+  (*env)->ReleaseStringUTFChars (env, str, cstr);
+  return result;
+}
+
+
 char *
 get_string_resource (Display *dpy, char *name, char *class)
 {
@@ -929,11 +932,8 @@ get_string_resource (Display *dpy, char *name, char *class)
   (*env)->DeleteLocalRef (env, c);
   (*env)->DeleteLocalRef (env, jstr);
   char *ret = 0;
-  if (jvalue) {
-    const char *cvalue = (*env)->GetStringUTFChars (env, jvalue, 0);
-    ret = strdup (cvalue);
-    (*env)->ReleaseStringUTFChars (env, jvalue, cvalue);
-  }
+  if (jvalue)
+    ret = jstring_dup (env, jvalue);
 
   Log("pref %s = %s", name, (ret ? ret : "(null)"));
   return ret;
@@ -1007,13 +1007,9 @@ jwxyz_load_native_font (Display *dpy, const char *name,
     jobject desc = (*env)->GetObjectArrayElement (env, array, 4);
     if ((*env)->ExceptionOccurred(env)) abort();
 
-    const char *cname = (*env)->GetStringUTFChars (env, name, 0);
-    *native_name_ret = strdup (cname);
-    (*env)->ReleaseStringUTFChars (env, name, cname);
+    *native_name_ret = jstring_dup (env, name);
 
-    c = (*env)->GetObjectClass(env, font);
-    m = (*env)->GetMethodID (env, c, "longValue", "()J");
-    long font_id = (*env)->CallLongMethod (env, font, m);
+    jobject paint = (*env)->NewGlobalRef (env, font);
     if ((*env)->ExceptionOccurred(env)) abort();
 
     c = (*env)->GetObjectClass(env, size);
@@ -1024,7 +1020,7 @@ jwxyz_load_native_font (Display *dpy, const char *name,
     *ascent_ret  = (int) (*env)->CallFloatMethod (env, asc,  m);
     *descent_ret = (int) (*env)->CallFloatMethod (env, desc, m);
 
-    return (void *) font_id;
+    return (void *) paint;
   } else {
     return 0;
   }
@@ -1036,11 +1032,8 @@ jwxyz_release_native_font (Display *dpy, void *native_font)
 {
   Window window = RootWindow (dpy, 0);
   JNIEnv *env = window->window.rh->jni_env;
-  jobject obj = window->window.rh->jobject;
   if ((*env)->ExceptionOccurred(env)) abort();
-  jclass    c = (*env)->GetObjectClass (env, obj);
-  jmethodID m = (*env)->GetMethodID (env, c, "releaseFont", "(J)V");
-  (*env)->CallVoidMethod (env, obj, m, (jobject) native_font);
+  (*env)->DeleteGlobalRef (env, (jobject) native_font);
   if ((*env)->ExceptionOccurred(env)) abort();
 }
 
@@ -1096,12 +1089,12 @@ jwxyz_render_text (Display *dpy, void *native_font,
   jstring jstr  = (*env)->NewStringUTF (env, s2);
   jclass      c = (*env)->GetObjectClass (env, obj);
   jmethodID   m = (*env)->GetMethodID (env, c, "renderText",
-                            "(JLjava/lang/String;Z)Ljava/nio/ByteBuffer;");
+    "(Landroid/graphics/Paint;Ljava/lang/String;Z)Ljava/nio/ByteBuffer;");
   if ((*env)->ExceptionOccurred(env)) abort();
   jobject buf =
     (m
      ? (*env)->CallObjectMethod (env, obj, m,
-                                 (jlong) (long) native_font,
+                                 (jobject) native_font,
                                  jstr,
                                  (pixmap_ret ? JNI_TRUE : JNI_FALSE))
      : NULL);
@@ -1136,6 +1129,44 @@ jwxyz_render_text (Display *dpy, void *native_font,
 
   if (buf)
     (*env)->DeleteLocalRef (env, buf);
+}
+
+
+char *
+jwxyz_unicode_character_name (Display *dpy, Font fid, unsigned long uc)
+{
+  JNIEnv *env = XRootWindow (dpy, 0)->window.rh->jni_env;
+  /* FindClass doesn't like to load classes if GetStaticMethodID fails. Huh? */
+  jclass
+    c = (*env)->FindClass (env, "java/lang/Character"),
+    c2 = (*env)->FindClass (env, "java/lang/NoSuchMethodError");
+
+  if ((*env)->ExceptionOccurred(env)) abort();
+  jmethodID m = (*env)->GetStaticMethodID (
+    env, c, "getName", "(I)Ljava/lang/String;");
+  jthrowable exc = (*env)->ExceptionOccurred(env);
+  if (exc) {
+    if ((*env)->IsAssignableFrom(env, (*env)->GetObjectClass(env, exc), c2)) {
+      (*env)->ExceptionClear (env);
+      Assert (!m, "jwxyz_unicode_character_name: m?");
+    } else {
+      abort();
+    }
+  }
+
+  char *ret = NULL;
+
+  if (m) {
+    jstring name = (*env)->CallStaticObjectMethod (env, c, m, (jint)uc);
+    if (name)
+     ret = jstring_dup (env, name);
+  }
+
+  if (!ret) {
+    asprintf(&ret, "U+%.4lX", uc);
+  }
+
+  return ret;
 }
 
 

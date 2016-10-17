@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2006-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2006-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -67,6 +67,8 @@
 @interface SaverRunner : NSObject
 # ifdef USE_IPHONE
   <XScreenSaverViewDelegate>
+# else
+  <NSWindowDelegate>
 # endif
 {
   NSString *saverName;		// the one currently loaded

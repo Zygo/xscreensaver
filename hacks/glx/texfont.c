@@ -928,7 +928,7 @@ char *
 texfont_unicode_character_name (texture_font_data *data, unsigned long uc)
 {
   Font fid = data->xftfont->xfont->fid;
-  return jwxyz_unicode_character_name (fid, uc);
+  return jwxyz_unicode_character_name (data->dpy, fid, uc);
 }
 #endif /* HAVE_JWXYZ */
 

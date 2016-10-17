@@ -21,7 +21,7 @@ use diagnostics;
 use strict;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.21 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.22 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $debug_p = 0;
@@ -203,6 +203,8 @@ sub parse_src($) {
 
   return (\%res_to_val, \%switch_to_res);
 }
+
+my %video_dups;
 
 # Returns a list of:
 #    "resource = default value"
@@ -426,6 +428,13 @@ sub parse_xml($$$) {
 
 #  error ("$file: no video") unless $video;
   print STDERR "\n$file: WARNING: no video\n\n" unless $video;
+
+  if ($video && $video_dups{$video} && 
+      $video_dups{$video} ne $saver_title) {
+    print STDERR "\n$file: WARNING: $saver_title: dup video with " .
+      $video_dups{$video} . "\n";
+  }
+  $video_dups{$video} = $saver_title if ($video);
 
   return ($saver_title, $gl_p, \@result, \@widgets);
 }
@@ -696,6 +705,8 @@ sub build_android(@) {
   my $xml_header = "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n";
 
   my $manifest = '';
+  my $daydream_java = '';
+  my $settings_java = '';
   my $arrays   = '';
   my $strings  = '';
   my %write_files;
@@ -721,12 +732,9 @@ sub build_android(@) {
     my ($saver_title, $gl_p, $xml_opts, $widgets) =
       parse_xml ($saver, $switchmap, $src_opts);
 
-    my $daydream_class = "${saver_title}Daydream";
-    my $settings_class = "${saver_title}Settings";
-    foreach ($settings_class, $daydream_class) {
-      s/\s+//gs;
-      s/^([a-z])/\U$1/gs;  # upcase first letter
-    }
+    my $saver_class = "${saver_title}";
+    $saver_class =~ s/\s+//gs;
+    $saver_class =~ s/^([a-z])/\U$1/gs;  # upcase first letter
 
     $saver_title =~ s/(.[a-z])([A-Z\d])/$1 $2/gs;	# Spaces in InterCaps
     $saver_title =~ s/^(GL|RD)[- ]?(.)/$1 \U$2/gs;	# Space after "GL"
@@ -932,7 +940,7 @@ sub build_android(@) {
                   "  android:summary=\"" .
                        $localize0->("${saver_underscore}_saver_desc",
                                     $daydream_desc) . "\"\n" .
-                  "  android:name=\".gen.$daydream_class\"\n" .
+                  "  android:name=\".gen.Daydream\$$saver_class\"\n" .
                   "  android:permission=\"android.permission" .
                        ".BIND_DREAM_SERVICE\"\n" .
                   "  android:exported=\"true\"\n" .
@@ -947,23 +955,28 @@ sub build_android(@) {
                   "    android:resource=\"\@xml/${saver}_dream\" />\n" .
                   "</service>\n" .
                   "<activity android:name=\"" .
-                    "$package.gen.$settings_class\" />\n"
+                    "$package.gen.Settings\$$saver_class\" />\n"
                  );
 
     my $dream = ("<dream xmlns:android=\"" .
                    "http://schemas.android.com/apk/res/android\"\n" .
                  "  android:settingsActivity=\"" .
-                     "$package.gen.$settings_class\" />\n");
+                     "$package.gen.Settings\$$saver_class\" />\n");
     $write_files{"$xml_dir/${saver_underscore}_dream.xml"} = $dream;
 
-    $write_files{"$java_dir/$daydream_class.java"} =
-      read_template ("XScreenSaverDaydream.java.in",
-                     { CLASS => $daydream_class,
-                       API  => ($gl_p ? 'GL' : 'XLIB') });
+    $daydream_java .=
+      ("  public static class $saver_class extends XScreenSaverDaydream {\n" .
+       "    public $saver_class() {\n" .
+       "      super(jwxyz.API_" . ($gl_p ? 'GL' : 'XLIB') . ");\n" .
+       "    }\n" .
+       "  }\n" .
+       "\n");
 
-    $write_files{"$java_dir/$settings_class.java"} =
-      read_template ("XScreenSaverSettings.java.in",
-                     { CLASS => $settings_class });
+    $settings_java .=
+      ("  public static class $saver_class extends XScreenSaverSettings\n" .
+       "    implements SharedPreferences.OnSharedPreferenceChangeListener {\n" .
+       "  }\n" .
+       "\n");
   }
 
   $arrays =~ s/^/  /gm;
@@ -1032,9 +1045,29 @@ sub build_android(@) {
                "  </application>\n" .
                "</manifest>\n");
 
+  $daydream_java = ("package org.jwz.xscreensaver.gen;\n" .
+                    "\n" .
+                    "import org.jwz.xscreensaver.XScreenSaverDaydream;\n" .
+                    "import org.jwz.xscreensaver.jwxyz;\n" .
+                    "\n" .
+                    "public class Daydream {\n" .
+                    $daydream_java .
+                    "}\n");
+
+  $settings_java = ("package org.jwz.xscreensaver.gen;\n" .
+                    "\n" .
+                    "import android.content.SharedPreferences;\n" .
+                    "import org.jwz.xscreensaver.XScreenSaverSettings;\n" .
+                    "\n" .
+                    "public class Settings {\n" .
+                    $settings_java .
+                    "}\n");
+
   $write_files{"$project_dir/AndroidManifest.xml"}     = $manifest;
   $write_files{"$values_dir/settings.xml"} = $arrays;
   $write_files{"$values_dir/strings.xml"}  = $strings;
+  $write_files{"$java_dir/Daydream.java"}  = $daydream_java;
+  $write_files{"$java_dir/Settings.java"}  = $settings_java;
 
   my @s2 = ();
   foreach my $saver (sort @savers) {
@@ -1080,18 +1113,21 @@ sub build_android(@) {
   # if a hack is removed from $ANDROID_HACKS in android/Makefile but
   # the old XML files remain behind, the build blows up.
   #
-  opendir (my $dirp, $xml_dir) || error ("$xml_dir: $!");
-  my @files = readdir ($dirp);
-  closedir $dirp;
-  foreach my $f (sort @files) {
-    next if ($f eq '.' || $f eq '..');
-    $f = "$xml_dir/$f";
-    next if (defined ($write_files{$f}));
-    if ($f =~ m/_(settings|dream)\.xml$/s) {
-      print STDERR "$progname: rm $f\n";
-      unlink ($f) unless ($debug_p);
-    } else {
-      print STDERR "$progname: warning: unrecognised file: $f\n";
+  foreach my $dd ($xml_dir, $gen_dir, $java_dir) {
+    opendir (my $dirp, $dd) || error ("$dd: $!");
+    my @files = readdir ($dirp);
+    closedir $dirp;
+    foreach my $f (sort @files) {
+      next if ($f eq '.' || $f eq '..');
+      $f = "$dd/$f";
+      next if (defined ($write_files{$f}));
+      if ($f =~ m/_(settings|dream)\.xml$/s ||
+          $f =~ m/(Settings|Daydream)\.java$/s) {
+        print STDERR "$progname: rm $f\n";
+        unlink ($f) unless ($debug_p);
+      } else {
+        print STDERR "$progname: warning: unrecognised file: $f\n";
+      }
     }
   }
 }

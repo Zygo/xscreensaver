@@ -658,7 +658,6 @@ distdepend: check_men update_ad_version XScreenSaver_ad.h XScreenSaver_Xm_ad.h
 	      -e 's@ $$(srcdir)/\(.*config\.h\)@ \1@g' ;		    \
 	  echo ''							    \
 	) > /tmp/distdepend.$$$$ &&					    \
-	mv Makefile.in Makefile.in.bak &&				    \
 	mv /tmp/distdepend.$$$$ Makefile.in
 
 # Updates the version number in the app-defaults file to be in sync with 

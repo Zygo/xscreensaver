@@ -1,4 +1,4 @@
-/* sonar, Copyright (c) 1998-2012 Jamie Zawinski and Stephen Martin
+/* sonar, Copyright (c) 1998-2016 Jamie Zawinski and Stephen Martin
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -1050,7 +1050,7 @@ get_ping (sonar_sensor_data *ssd)
 {
   ping_data *pd = (ping_data *) ssd->closure;
   struct sockaddr from;
-  unsigned int fromlen;  /* Posix says socklen_t, but that's not portable */
+  socklen_t fromlen;
   int result;
   u_char packet[1024];
   struct timeval now;

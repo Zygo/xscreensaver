@@ -339,6 +339,7 @@ load_texture (ModeInfo *mi, const char *filename)
     }
 
   image = xpm_file_to_ximage (dpy, visual, cmap, filename);
+  if (!image) return False;
 
   clear_gl_error();
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,

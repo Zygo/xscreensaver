@@ -1,5 +1,5 @@
 #!/bin/sh
-# XScreenSaver, Copyright © 2013-2014 Jamie Zawinski <jwz@jwz.org>
+# XScreenSaver, Copyright © 2013-2016 Jamie Zawinski <jwz@jwz.org>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -67,9 +67,11 @@ DST1="$DSTVOLUME/Library/Screen Savers"
 DST2="$DSTVOLUME/Applications"
 PU="$DSTVOLUME/$HOME/Library/Screen Savers"
 
-# Because of Sparkle.framework weirdness, ".XScreenSaverUpdater.app"
-# is in the DMG, and we remove the leading dot when installing it.
-# Without this, auto-updates won't work right.
+# Because of Sparkle.framework weirdness, "XScreenSaverUpdater.app" is
+# in the DMG as a compressed tar file instead of an app, and we unpack
+# it when installing.  Without this, auto-updates won't work: If there's
+# an .app there, Sparkle thinks that "XScreenSaverUpdater.app" is the
+# thing it should be updating instead of "Install Everything.pkg".
 #
 UPDATER_SRC="XScreenSaver.updater"
 UPDATER_DST="XScreenSaverUpdater.app"

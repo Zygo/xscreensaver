@@ -83,7 +83,6 @@
 
 #ifdef HAVE_ANDROID
  /* So that hacks' debug output shows up in logcat... */
- extern void Log(const char *fmt, ...);  /* jwxyz-android.c */
 # define fprintf(S, ...) Log(__VA_ARGS__)
 #endif
 

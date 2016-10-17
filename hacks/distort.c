@@ -88,6 +88,7 @@ struct state {
   void (*draw_routine) (struct state *st, XImage *, XImage *, int, int, int *);
 
   async_load_state *img_loader;
+  Pixmap pm;
 };
 
 
@@ -288,8 +289,15 @@ distort_init (Display *dpy, Window window)
 		gcflags |= GCSubwindowMode;
 	st->gc = XCreateGC (st->dpy, st->window, gcflags, &gcv);
 
+    /* On MacOS X11, XGetImage on a Window often gets an inexplicable BadMatch,
+       possibly due to the window manager having occluded something?  It seems
+       nondeterministic. Loading the image into a pixmap instead fixes it. */
+    if (st->pm) XFreePixmap (st->dpy, st->pm);
+    st->pm = XCreatePixmap (st->dpy, st->window,
+                            st->xgwa.width, st->xgwa.height, st->xgwa.depth);
+
     st->img_loader = load_image_async_simple (0, st->xgwa.screen, st->window,
-                                              st->window, 0, 0);
+                                              st->pm, 0, 0);
     st->start_time = time ((time_t *) 0);
     return st;
 }
@@ -302,8 +310,13 @@ distort_finish_loading (struct state *st)
     st->start_time = time ((time_t *) 0);
 
 	st->buffer_map = 0;
-	st->orig_map = XGetImage(st->dpy, st->window, 0, 0, st->xgwa.width, st->xgwa.height,
-						 ~0L, ZPixmap);
+    if (! st->pm) abort();
+    XClearWindow (st->dpy, st->window);
+    XCopyArea (st->dpy, st->pm, st->window, st->gc, 
+               0, 0, st->xgwa.width, st->xgwa.height, 0, 0);
+	st->orig_map = XGetImage(st->dpy, st->pm, 0, 0,
+                             st->xgwa.width, st->xgwa.height,
+                             ~0L, ZPixmap);
 	st->buffer_map_cache = malloc(sizeof(unsigned long)*(2*st->radius+st->speed+2)*(2*st->radius+st->speed+2));
 
 	if (st->buffer_map_cache == NULL) {
@@ -773,8 +786,11 @@ distort_draw (Display *dpy, Window window, void *closure)
 
   if (!st->img_loader &&
       st->start_time + st->duration < time ((time_t *) 0)) {
+    if (st->pm) XFreePixmap (st->dpy, st->pm);
+    st->pm = XCreatePixmap (st->dpy, st->window,
+                            st->xgwa.width, st->xgwa.height, st->xgwa.depth);
     st->img_loader = load_image_async_simple (0, st->xgwa.screen, st->window,
-                                              st->window, 0, 0);
+                                              st->pm, 0, 0);
     return st->delay;
   }
 
@@ -815,6 +831,7 @@ distort_free (Display *dpy, Window window, void *closure)
 {
   struct state *st = (struct state *) closure;
   XFreeGC (st->dpy, st->gc);
+  if (st->pm) XFreePixmap (dpy, st->pm);
   if (st->orig_map) XDestroyImage (st->orig_map);
   if (st->buffer_map) XDestroyImage (st->buffer_map);
   if (st->from) free (st->from);

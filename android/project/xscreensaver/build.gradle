@@ -46,7 +46,8 @@ android {
        Properties properties = new Properties()
          properties.load(project.rootProject.file('local.properties').newDataInputStream())
        def ndkDir = properties.getProperty('ndk.dir')
-       commandLine "$ndkDir/ndk-build", '-C', file('jni').absolutePath
+       commandLine "$ndkDir/ndk-build", '-C', file('jni').absolutePath,
+          '-j' + Runtime.getRuntime().availableProcessors().toString()
     }
 
     // generate files early in the process

@@ -41,7 +41,6 @@ struct running_hack {
 
   unsigned long frame_count;
   Bool initted_p;
-  double next_frame_time;  // time_t in milliseconds of when to tick the frame
   struct event_queue *event_queue;
 };
 
@@ -60,10 +59,6 @@ struct jwxyz_Drawable {
   };
 };
 
-extern void do_logv(int prio, const char *fmt, va_list args);
-
-extern void Log(const char *format, ...); // TODO: GCC can verify printf strings.
-#define Logv(format, args) (do_logv(ANDROID_LOG_INFO, format, args))
 
 extern void prepare_context (struct running_hack *rh);
 
@@ -80,7 +75,7 @@ JNIEXPORT void JNICALL
 Java_org_jwz_xscreensaver_jwxyz_nativeResize (JNIEnv *, jobject thiz,
                                               jint w, jint h, jdouble rot);
 
-JNIEXPORT void JNICALL
+JNIEXPORT jlong JNICALL
 Java_org_jwz_xscreensaver_jwxyz_nativeRender (JNIEnv *, jobject thiz);
 
 JNIEXPORT void JNICALL

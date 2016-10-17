@@ -1874,7 +1874,7 @@ static BOOL translate(m6502_Opcodes *op,Param *param, machine_6502 *machine){
 	if (op->BRA) {
 	  pushByte(machine, op->BRA);
           {
-            int diff = (param->lbladdr - machine->defaultCodePC);
+            int diff = abs((int)param->lbladdr - (int)machine->defaultCodePC);
             int backward = (param->lbladdr < machine->defaultCodePC);
             pushByte(machine, (backward) ? 0xff - diff : diff - 1);
           }

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2012 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -318,10 +318,33 @@ osx_grab_desktop_image (Screen *screen, Window xwindow, Drawable drawable,
      we move ourselves temporarily below the login-window windows
      before capturing the image, we capture the real desktop as
      intended.
+
+     Oct 2016: Surprise, this trick no longer works on MacOS 10.12.  Sigh.
    */
 
   // save our current level so we can restore it later
   int oldLevel = [[nsview window] level]; 
+
+# if 0
+  {
+    FILE *f = fopen("/tmp/log.txt", "w");
+    CFArrayRef L = CGWindowListCopyWindowInfo (kCGWindowListOptionOnScreenOnly,
+                                               kCGNullWindowID);
+
+    fprintf(f, "# %d\n", [[nsview window] windowNumber]);
+
+    int n = CFArrayGetCount(L);
+    for (int i = 0; i < n; i++) {
+      NSDictionary *dict = (NSDictionary *) CFArrayGetValueAtIndex(L, i);
+      fprintf(f,
+              "%d \"%s\"\n",
+              (int) [dict objectForKey:kCGWindowNumber],
+              [(NSString *) [dict objectForKey:kCGWindowOwnerName]
+                cStringUsingEncoding:[NSString defaultCStringEncoding]]);
+    }
+    fclose(f);
+  }
+#endif
 
   [[nsview window] setLevel:CGWindowLevelForKey(kCGPopUpMenuWindowLevelKey)];
 
@@ -440,7 +463,7 @@ osx_load_image_file (Screen *screen, Window xwindow, Drawable drawable,
 
 # else  /* USE_IPHONE */
 
-  /* This is handled differently: see grabclient.c and iosgrabimage.m. */
+  /* This is handled differently: see grabclient.c and grabclient-ios.m. */
   return False;
 
 # endif /* USE_IPHONE */

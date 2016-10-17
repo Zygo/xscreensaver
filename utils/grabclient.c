@@ -44,7 +44,7 @@
 
        load_image_async CB
            load_random_image_cocoa
-               osx_grab_desktop_image (osxgrabscreen.m, MacOS version)
+               osx_grab_desktop_image (grabclient-osx.m, MacOS version)
                    copy_framebuffer_to_ximage
                    XPutImage
                draw_colorbars
@@ -62,7 +62,7 @@
 
        load_image_async CB
            load_random_image_cocoa
-               osx_grab_desktop_image (osxgrabscreen.m, iOS version)
+               osx_grab_desktop_image (grabclient-osx.m, iOS version)
                    CGWindowListCreateImage
                    jwxyz_draw_NSImage_or_CGImage
                draw_colorbars
@@ -702,7 +702,7 @@ xscreensaver_getimage_file_cb (XtPointer closure, int *source, XtInputId *id)
 # else   /* HAVE_COCOA && USE_IPHONE -- iOS */
 
 /* Callback for ios_load_random_image(), called after we have loaded an
-   image from the iOS device's Photo Library.  See iosgrabimage.m.
+   image from the iOS device's Photo Library.  See grabclient-ios.m.
  */
 static void
 ios_load_random_image_cb (void *uiimage, const char *filename, 

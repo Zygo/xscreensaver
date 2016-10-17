@@ -45,7 +45,7 @@
             _low-label="Short" _high-label="Long"
             low="1" high="60" default="5"/>
 
-    <boolean id="titles" _label="Show file names" arg-set="-titles"/>
+    <boolean id="titles" _label="Show file names" arg-unset="-no-titles"/>
 
     <boolean id="showfps" _label="Show frame rate" arg-set="-fps"/>
 

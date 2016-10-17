@@ -41,6 +41,9 @@ To build:
 
       $ANDROID_HOME/sdk/tools/android avd
 
+      E.g.: Nexus 5, Android 5, Intel Atom x86_64, RAM 2048 VM 64,
+        storage 200, use host GPU.
+
     Configuration options are in $HOME/.android/avd/*.avd/config.ini
 
     To launch it:

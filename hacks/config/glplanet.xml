@@ -13,7 +13,8 @@
 
   <!-- #### -no-texture -->
 
-  <file id="bitmap" _label="Image file" arg="-image %"/>
+  <file id="image"  _label="Day image"   arg="-image %"  />
+  <file id="image2" _label="Night image" arg="-image2 %" />
 
   <hgroup>
    <boolean id="wander" _label="Wander"    arg-unset="-no-wander"/>

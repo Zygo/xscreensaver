@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2014 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -73,7 +73,8 @@ ios_random_image_done (ios_loader_data *d, BOOL ok)
                      scale: 1
                      orientation: orient];
       if (img)
-        fn = [[rep filename] cStringUsingEncoding:NSUTF8StringEncoding];
+        fn = [[[rep filename] stringByDeletingPathExtension]
+               cStringUsingEncoding:NSUTF8StringEncoding];
     }
   }
 

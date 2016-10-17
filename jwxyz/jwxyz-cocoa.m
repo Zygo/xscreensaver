@@ -31,6 +31,13 @@
 
 /* OS X/iOS-specific JWXYZ implementation. */
 
+void
+jwxyz_logv (Bool error, const char *fmt, va_list args)
+{
+  vfprintf (stderr, fmt, args);
+  fputc ('\n', stderr);
+}
+
 /* Instead of calling abort(), throw a real exception, so that
    XScreenSaverView can catch it and display a dialog.
  */

@@ -59,7 +59,9 @@ export ANDROID_HACKS=		\
 	compass			\
 	coral			\
 	crystal			\
+	cubestack		\
 	cubestorm		\
+	cubetwist		\
 	cwaves			\
 	cynosure		\
 	dangerball		\
@@ -67,6 +69,7 @@ export ANDROID_HACKS=		\
 	deco			\
 	demon			\
 	discrete		\
+	discoball		\
 	distort			\
 	dnalogo			\
 	drift			\
@@ -98,6 +101,7 @@ export ANDROID_HACKS=		\
 	greynetic		\
 	helix			\
 	hexadrop		\
+	hexstrut		\
 	hilbert			\
 	hopalong		\
 	hypnowheel		\
@@ -147,6 +151,7 @@ export ANDROID_HACKS=		\
 	sierpinski		\
 	sierpinski3d		\
 	slidescreen		\
+	splodesic		\
 	squiral			\
 	stairs			\
 	starfish		\
@@ -269,6 +274,15 @@ CVT  = -thumbnail '150x150^' -gravity center -extent 150x150 \
     -quality 95 \
     +dither -colors 128
 
+# If we are making the m6502 hack, create the header file for Android
+m6502.h::
+	@for h in $(ANDROID_HACKS) ; do \
+		if [ $${h} = "m6502" ] ; then \
+			echo "Making $${h} header ..."; \
+			../hacks/m6502.sh ../hacks/m6502.h ../hacks/images/m6502/*.asm ; \
+			echo "Made $${h} header"; \
+		fi; \
+	done
 
 project/xscreensaver/res/drawable/%.png:
 	@\
@@ -296,7 +310,8 @@ clean_thumbs::
 	for f in $(ANDROID_HACKS) $(ANDROID_TODO) ; do			\
 	  rm -f project/xscreensaver/res/drawable/$$f.png ;		\
 	done
-distclean:: clean_thumbs
+
+distclean:: clean_thumbs clean
 
 
 EXTRA_TARFILES = project/xscreensaver/res/drawable/thumbnail.png \
@@ -326,9 +341,12 @@ echo_tarfiles:
 		| sort` ;			\
 	echo $$FILES
 
-debug::
+run_check::
+	../hacks/check-configs.pl --build-android $(ANDROID_HACKS)
+
+debug:: m6502.h run_check
 	$(GRADLE) assembleDebug
-release::
+release:: m6502.h run_check
 	export APP_ABI=all ; \
 	$(GRADLE) assembleRelease
 
@@ -380,3 +398,8 @@ apk:: release
 #  dnalogo			\
 #  twang			\
 #  memscroller			\
+#  phosphor			\
+#  discoball			\
+#  cubetwist			\
+#  cubestack			\
+#  splodesic			\

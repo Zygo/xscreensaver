@@ -1,4 +1,4 @@
-/* analogtv, Copyright (c) 2003, 2004 Trevor Blackwell <tlb@tlb.org>
+/* analogtv, Copyright (c) 2003-2016 Trevor Blackwell <tlb@tlb.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -304,7 +304,7 @@ int analogtv_handle_events (analogtv *it);
 #else
   /* Need to really crank this up for it to look good on the iPhone screen. */
 # define ANALOGTV_DEF_BRIGHTNESS "3"
-# define ANALOGTV_DEF_CONTRAST "1000"
+# define ANALOGTV_DEF_CONTRAST "400"
 #endif
 
 #define ANALOGTV_DEFAULTS \

@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2012-2015 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2012-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -3339,8 +3339,8 @@ jwzgles_gluBuild2DMipmaps (GLenum target,
               *o++ = (istride == 4 ? *i : 0xFF); /* A */
             }
         }
-      // width  = w2;
-      // height = h2;
+      /* width  = w2; */
+      /* height = h2; */
       internalFormat = GL_RGBA;
       format = GL_RGBA;
     }

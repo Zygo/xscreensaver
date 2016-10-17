@@ -177,7 +177,6 @@ distdepend::
 	      -e 's@ $$(srcdir)/\(.*config.h\)@ \1@g' ;			    \
 	  echo ''							    \
 	) > /tmp/distdepend.$$$$ &&					    \
-	mv Makefile.in Makefile.in.bak &&				    \
 	mv /tmp/distdepend.$$$$ Makefile.in
 
 TAGS: tags

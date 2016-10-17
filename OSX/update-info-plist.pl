@@ -27,7 +27,7 @@ use IO::Compress::Gzip qw(gzip $GzipError);
 
 my ($exec_dir, $progname) = ($0 =~ m@^(.*?)/([^/]+)$@);
 
-my ($version) = ('$Revision: 1.45 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.46 $' =~ m/\s(\d[.\d]+)\s/s);
 
 $ENV{PATH} = "/usr/local/bin:$ENV{PATH}";   # for seticon
 $ENV{PATH} = "/opt/local/bin:$ENV{PATH}";   # for macports wget
@@ -463,7 +463,10 @@ sub update($) {
     }
   }
 
-  set_icon ($app_dir);
+  # MacOS 10.12: codesign says "resource fork, Finder information, or
+  # similar detritus not allowed" if any bundle has an Icon\r file.
+  # set_icon ($app_dir);
+
   set_thumb ($app_dir);
 # enable_gc ($app_dir);
   fix_coretext ($app_dir)

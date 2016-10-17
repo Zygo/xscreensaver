@@ -1,5 +1,5 @@
 #!/usr/bin/perl -w
-# Copyright © 2015 Dave Odell <dmo2118@gmail.com>
+# Copyright © 2015-2016 Dave Odell <dmo2118@gmail.com>
 #
 # Permission to use, copy, modify, distribute, and sell this software and its
 # documentation for any purpose is hereby granted without fee, provided that
@@ -18,7 +18,7 @@ use strict;
 use File::Temp;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.4 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.5 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 
@@ -84,18 +84,20 @@ sub usage() {
 }
 
 sub main() {
-  my ($d, $src, $dst);
+  my ($src, @dst);
   while ($#ARGV >= 0) {
     $_ = shift @ARGV;
     if (m/^--?verbose$/s)      { $verbose++; }
     elsif (m/^-v+$/s)          { $verbose += length($_)-1; }
-    elsif (m/^-d$/s)           { $d = 1; }
-    elsif (!defined($src))     { $src = $_; }
-    elsif (!defined($dst))     { $dst = $_; }
-    else { usage; }
+    elsif (m/^-d$/s)           { $src = shift @ARGV; }
+    elsif (m/^-/s)             { usage(); }
+    else { push @dst, $_; }
   }
-  usage() unless ($d && $src);
-  set_icon ($src, $dst);
+  error ("no source") unless defined($src);
+  error ("no files") unless @dst;
+  foreach my $f (@dst) {
+    set_icon ($src, $f);
+  }
 }
 
 main();

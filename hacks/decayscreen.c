@@ -330,6 +330,7 @@ decayscreen_reshape (Display *dpy, Window window, void *closure,
                  unsigned int w, unsigned int h)
 {
   struct state *st = (struct state *) closure;
+  if (! st->saved) return; /* Image might not be loaded yet */
   XClearWindow (st->dpy, st->window);
   XCopyArea (st->dpy, st->saved, st->window, st->gc,
              0, 0, st->saved_w, st->saved_h,

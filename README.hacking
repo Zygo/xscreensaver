@@ -139,15 +139,18 @@ Programming Tips
   - Don't make assumptions about the depth of the display, or whether it
     is colormapped.  You must allocate all your colors explicitly: do not
     assume you can construct an RGB value and use that as a pixel value
-    directly.  Use the utility routines provided by "utils/colors.h" to
-    simplify color allocation.
+    directly.  In particular, you can't make assumptions about whether
+    pixels are RGB, RGBA, ARGB, ABGR, or even whether they are 32, 24,
+    16 or 8 bits.  Use the utility routines provided by "utils/colors.h"
+    to simplify color allocation.
 
   - It is better to eliminate flicker by double-buffering to a Pixmap
     than by erasing and re-drawing objects.  Do not use drawing tricks
     involving XOR.
 
-  - If you use double-buffering, have a resource to turn it off. (MacOS
-    has double-buffering built in, so you'd be triple-buffering.)
+  - If you use double-buffering, have a resource to turn it off. (MacOS,
+    iOS and Android have double-buffering built in, so you'd end up
+    triple-buffering.)
 
   - Understand the differences between Pixmaps and XImages, and keep in
     mind which operations are happening in client memory and which are in
@@ -160,20 +163,16 @@ Programming Tips
 
 
 ==========================================================================
-The MacOS X Port
+MacOS, iOS and Android
 ==========================================================================
 
   Though XScreenSaver started its life as an X11 program, it also now runs
-  on MacOS X.  If you do your development on an X11 system, and follow the
+  on MacOS, iOS and Android, due to a maniacal collection of compatibility
+  shims.  If you do your development on an X11 system, and follow the
   usual XScreenSaver APIs, you shouldn't need to do anything special for
-  it to also work on MacOS.
+  it to also work on MacOS and on phones.
 
-  The preprocessor macro HAVE_COCOA will be defined when being compiled in
-  a MacOS (Cocoa/Quartz) environment, and will be undefined when compiling
-  against "real" Xlib.
-
-  To compile on MacOS, use the XCode project included in the source
-  distribution.  You shouldn't need to have X11 installed, and shouldn't
-  need to run "configure" first.
+  See the READMEs in the OSX/ and android/ directories for instructions on
+  compiling for those platforms.
 
 ==========================================================================

@@ -304,7 +304,7 @@ decode_entities (const char *html)
    in UTF8 encoding.  HTML tags are stripped, <BR> and <P> are converted
    to newlines, and some basic HTML entities are decoded.
  */
-char *
+static char *
 textclient_strip_html (const char *html)
 {
   int tag = 0;
@@ -549,7 +549,7 @@ strip_wiki (char *text)
    in UTF8 encoding.  Rougly, it uses the contents of the <description> field
    of each <item>, and decodes HTML within it.
  */
-char *
+static char *
 textclient_strip_rss (const char *rss)
 {
   char *ret = malloc (strlen(rss) * 4 + 1);  // room for UTF8

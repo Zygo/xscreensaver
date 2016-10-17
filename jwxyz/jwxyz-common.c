@@ -29,6 +29,17 @@
 #define assert_window(dpy, w) \
   Assert (w == RootWindow (dpy, 0), "not a window")
 
+
+void
+Log (const char *fmt, ...)
+{
+  va_list args;
+  va_start (args, fmt);
+  Logv (fmt, args);
+  va_end (args);
+}
+
+
 int
 XDisplayWidth (Display *dpy, int screen)
 {

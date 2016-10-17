@@ -44,6 +44,7 @@
 #endif /* VMS */
 
 #include <signal.h>		/* for the signal names */
+#include <time.h>
 
 #if !defined(SIGCHLD) && defined(SIGCLD)
 # define SIGCHLD SIGCLD
@@ -1303,6 +1304,7 @@ get_best_gl_visual (saver_info *si, Screen *screen)
       {
         int result = 0;
         int wait_status = 0;
+        pid_t pid = -1;
 
         FILE *f = fdopen (in, "r");
         unsigned long v = 0;
@@ -1321,8 +1323,17 @@ get_best_gl_visual (saver_info *si, Screen *screen)
             close (errin);
           }
 
-        /* Wait for the child to die. */
-        waitpid (-1, &wait_status, 0);
+        /* Wait for the child to die - wait for this pid only, not others. */
+        pid = waitpid (forked, &wait_status, 0);
+        if (si->prefs.debug_p)
+          {
+            write_string (STDERR_FILENO, blurb());
+            write_string (STDERR_FILENO, ": waitpid(");
+            write_long   (STDERR_FILENO, (long) forked);
+            write_string (STDERR_FILENO, ") ==> ");
+            write_long   (STDERR_FILENO, (long) pid);
+            write_string (STDERR_FILENO, "\n");
+          }
 
         unblock_sigchld();   /* child is dead and waited, unblock now. */
 

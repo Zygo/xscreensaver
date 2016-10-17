@@ -41,7 +41,12 @@
 #ifndef  MAC_OS_X_VERSION_10_6
 # define MAC_OS_X_VERSION_10_6 1060  /* undefined in 10.4 SDK, grr */
 #endif
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6  /* 10.6 SDK */
+#ifndef  MAC_OS_X_VERSION_10_12
+# define MAC_OS_X_VERSION_10_12 101200
+#endif
+#if (MAC_OS_X_VERSION_MAX_ALLOWED >= MAC_OS_X_VERSION_10_6 && \
+     MAC_OS_X_VERSION_MAX_ALLOWED <  MAC_OS_X_VERSION_10_12)
+  /* 10.6 SDK or later, and earlier than 10.12 SDK */
 # import <objc/objc-auto.h>
 # define DO_GC_HACKERY
 #endif
@@ -432,6 +437,11 @@ add_default_options (const XrmOptionDescRec *opts,
 
   [self setBackgroundColor:[NSColor blackColor]];
 # endif // USE_IPHONE
+
+# ifdef JWXYZ_QUARTZ
+  // Colorspaces and CGContexts only happen with non-GL hacks.
+  colorspace = CGColorSpaceCreateDeviceRGB ();
+# endif
 
   return self;
 }
@@ -997,7 +1007,7 @@ gl_check_ver (const struct gl_version *caps,
   gl_texture_target = GL_TEXTURE_2D;
 # endif
 
-  glBindTexture (gl_texture_target, &backbuffer_texture);
+  glBindTexture (gl_texture_target, backbuffer_texture);
   glTexParameteri (gl_texture_target, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
   // GL_LINEAR might make sense on Retina iPads.
   glTexParameteri (gl_texture_target, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
@@ -1140,25 +1150,6 @@ to_pow2 (size_t x)
  */
 - (void) createBackbuffer:(CGSize)new_size
 {
-  // Colorspaces and CGContexts only happen with non-GL hacks.
-  if (colorspace)
-    CGColorSpaceRelease (colorspace);
-
-  NSWindow *window = [self window];
-
-  if (window && xdpy) {
-    [self lockFocus];
-
-# ifdef BACKBUFFER_OPENGL
-    // Was apparently faster until 10.9.
-    colorspace = CGColorSpaceCreateDeviceRGB ();
-# endif // BACKBUFFER_OPENGL
-
-    [self unlockFocus];
-  } else {
-    colorspace = CGColorSpaceCreateDeviceRGB();
-  }
-
   CGSize osize = CGSizeZero;
   if (backbuffer) {
     osize.width = CGBitmapContextGetWidth(backbuffer);
@@ -1475,7 +1466,8 @@ to_pow2 (size_t x)
   // landscape shape, swap width and height to keep the backbuffer
   // in portrait.
   //
-  if ([self ignoreRotation] && new_size.width > new_size.height) {
+  double rot = current_device_rotation();
+  if ([self ignoreRotation] && (rot == 90 || rot == -90)) {
     CGFloat swap    = new_size.width;
     new_size.width  = new_size.height;
     new_size.height = swap;
@@ -1486,14 +1478,13 @@ to_pow2 (size_t x)
   new_size.height *= s;
 #  endif // USE_IPHONE
 
+  [self prepareContext];
   [self setViewport];
 
   // On first resize, xwindow->frame is 0x0.
   if (xwindow->frame.width == new_size.width &&
       xwindow->frame.height == new_size.height)
     return;
-
-  [self prepareContext];
 
 #  if defined(BACKBUFFER_OPENGL) && !defined(USE_IPHONE)
   [ogl_ctx update];

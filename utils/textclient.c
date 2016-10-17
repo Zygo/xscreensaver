@@ -104,6 +104,19 @@ subproc_cb (XtPointer closure, int *source, XtInputId *id)
       (c >= '0' && c <= '9') || \
       c == '.' || c == '_' || c == '-' || c == '+' || c == '/'))
 
+#ifdef HAVE_COCOA
+static char *
+escape_str (char *s, const char *src)
+{
+  while (*src) {
+    char c = *src++;
+    if (BACKSLASH(c)) *s++ = '\\';
+    *s++ = c;
+  }
+  return s;
+}
+#endif
+
 static void
 launch_text_generator (text_data *d)
 {
@@ -112,17 +125,17 @@ launch_text_generator (text_data *d)
   const char *oprogram = d->program;
   char *s;
 
+  size_t oprogram_size = strlen(oprogram);
+  size_t len;
+
 # ifdef HAVE_COCOA
   /* /bin/sh on OS X 10.10 wipes out the PATH. */
   const char *path = getenv("PATH");
-  char *cmd = s = malloc ((strlen(oprogram) + strlen(path)) * 2 + 100);
+  size_t cmd_capacity = (oprogram_size + strlen(path)) * 2 + 100;
+  char *cmd = s = malloc (cmd_capacity);
   strcpy (s, "export PATH=");
   s += strlen (s);
-  while (*path) {
-    char c = *path++;
-    if (BACKSLASH(c)) *s++ = '\\';
-    *s++ = c;
-  }
+  s = escape_str (s, path);
   strcpy (s, "; ");
   s += strlen (s);
 # else
@@ -139,20 +152,82 @@ launch_text_generator (text_data *d)
      "xscreensaver-text --cols %d", but that makes things blow up
      if someone ever uses a --program that includes a % anywhere.
    */
-  if (!strcmp (oprogram, "xscreensaver-text"))
+  len = 17; /* strlen("xscreensaver-text") */
+  if (oprogram_size >= len &&
+    !memcmp (oprogram, "xscreensaver-text", len) &&
+    (oprogram[len] == ' ' || !oprogram[len]))
     {
-      if (d->char_w)
+      /* strstr is sloppy here. Technically, we should be parsing the command
+         line to identify flags and their arguments. This will blow up if one
+         of those pesky end users could set .textLiteral to "--cols".
+       */
+      if (d->char_w && !strstr (oprogram, "--cols "))
         sprintf (s, " --cols %d", d->char_w);
-      if (d->max_lines)
+      if (d->max_lines && !strstr (oprogram, "--lines "))
         sprintf (s, " --lines %d", d->max_lines);
       s += strlen(s);
+
+# ifdef HAVE_COCOA
+      /* Also special-case "xscreensaver-text" to specify the text content on
+         the command line. defaults(1) on macOS doesn't know about the default
+         screenhack resources that don't make it into the
+         ~/Library/Preferences/ByHost/org.jwz.xscreensaver.*.plist.
+       */
+
+      char *text_mode_flag = " --date";
+      char *value_res = NULL;
+      char *text_mode = get_string_resource (d->dpy, "textMode", "String");
+
+      if (text_mode)
+        {
+          if (!strcmp (text_mode, "1") || !strcmp (text_mode, "literal"))
+            {
+              text_mode_flag = " --text";
+              value_res = "textLiteral";
+            }
+          else if (!strcmp (text_mode, "2") || !strcmp (text_mode, "file"))
+            {
+              text_mode_flag = " --file";
+              value_res = "textFile";
+            }
+          else if (!strcmp (text_mode, "3") || !strcmp (text_mode, "url"))
+            {
+              text_mode_flag = " --url";
+              value_res = "textURL";
+            }
+          else if (!strcmp (text_mode, "4") || !strcmp (text_mode, "program"))
+            {
+              text_mode_flag = " --program";
+              value_res = "textProgram";
+            }
+
+          free (text_mode);
+        }
+
+      strcpy (s, text_mode_flag);
+      s += strlen (s);
+
+      if (value_res)
+        {
+          size_t old_s = s - cmd;
+          char *value = get_string_resource (d->dpy, value_res, "");
+          if (!value)
+            value = strdup("");
+          cmd = realloc(cmd, cmd_capacity + strlen(value) * 2);
+          s = cmd + old_s;
+          *s = ' ';
+          ++s;
+          s = escape_str(s, value);
+          free(value);
+        }
+# endif /* HAVE_COCOA */
     }
 
   strcpy (s, " ) 2>&1");
 
 # ifdef DEBUG
-  fprintf (stderr, "%s: textclient: launch %s: %s\n", cmd, 
-           (d->pty_p ? "pty" : "pipe"), program);
+  fprintf (stderr, "%s: textclient: launch %s: %s\n", progname, 
+           (d->pty_p ? "pty" : "pipe"), cmd);
 # endif
 
 #ifdef HAVE_FORKPTY
@@ -167,6 +242,15 @@ launch_text_generator (text_data *d)
       ws.ws_ypixel = d->pix_h;
       
       d->pipe = 0;
+
+# ifdef HAVE_COCOA
+      if (getenv ("MallocScribble"))
+        /* This is here to stop me from wasting my time trying to answer
+           this question the next time I forget about it. */
+        fprintf (stderr, "%s: WARNING: forkpty hates 'Enable Guard Malloc'\n",
+                 progname);
+# endif
+
       if ((d->pid = forkpty(&fd, NULL, NULL, &ws)) < 0)
 	{
           /* Unable to fork */
@@ -184,6 +268,15 @@ launch_text_generator (text_data *d)
           av[i++] = "-c";
           av[i++] = cmd;
           av[i] = 0;
+# ifdef DEBUG
+          {
+            int j;
+            fprintf (stderr, "%s: textclient: execvp:", progname);
+            for (j = 0; j < i; j++)
+              fprintf (stderr, " %s", av[j]);
+            fprintf (stderr, "\n");
+          }
+# endif
           execvp (av[0], av);
           sprintf (buf, "%.100s: %.100s", progname, oprogram);
 	  perror (buf);
@@ -327,6 +420,9 @@ textclient_reshape (text_data *d,
       ws.ws_ypixel = pix_h;
       ioctl (fileno (d->pipe), TIOCSWINSZ, &ws);
       kill (d->pid, SIGWINCH);
+#  ifdef DEBUG
+      fprintf (stderr, "%s: textclient: SIGWINCH\n", progname);
+#  endif
     }
 # endif /* HAVE_FORKPTY && TIOCSWINSZ */
 
@@ -337,6 +433,9 @@ textclient_reshape (text_data *d,
    */
   if (!strcmp (d->program, "xscreensaver-text"))
     {
+# ifdef DEBUG
+      fprintf (stderr, "%s: textclient: reshape relaunch\n", progname);
+# endif
       close_pipe (d);
       d->input_available_p = False;
       start_timer (d);
@@ -387,6 +486,10 @@ textclient_open (Display *dpy)
       {
         d->pty_p = 1;
         d->program = strdup (getenv ("SHELL"));
+#  ifdef DEBUG
+        fprintf (stderr, "%s: textclient: standalone: %s\n",
+                 progname, d->program);
+#  endif
       }
   }
 # endif

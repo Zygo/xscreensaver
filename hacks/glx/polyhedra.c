@@ -502,15 +502,15 @@ static const struct {
   /* 76 */	{"5|2 5/2",	"Small Stellated Dodecahedron",
 				"Great Dodecahedron",
 				"Icosahedral (I[3])",
-				"",
-				"",
+				"Kepler-Poinsot Solid",
+				"Kepler-Poinsot Solid",
 				43, 20},
 
   /* 78 */	{"5/2|2 5",	"Great Dodecahedron",
 				"Small Stellated Dodecahedron",
 				"Icosahedral (I[3])",
-				"",
-				"",
+				"Kepler-Poinsot Solid",
+				"Kepler-Poinsot Solid",
 				44, 21},
 
   /* 80 */	{"2|5/2 5",	"Great Dodecadodecahedron",
@@ -588,7 +588,7 @@ static const struct {
 				"Medial Hexagonal Hexecontahedron",
 				"Icosahedral (I[4])",
 				"",
-				"Kepler-Poinsot Solid",
+				"",
 				58, 112},
 							  /* (3/2 3 5) (I6b) */
 
@@ -632,15 +632,15 @@ static const struct {
   /* 112 */	{"3|2 5/2",	"Great Stellated Dodecahedron",
 				"Great Icosahedron",
 				"Icosahedral (I[7])",
-				"",
-				"",
+				"Kepler-Poinsot Solid",
+				"Kepler-Poinsot Solid",
 				68, 22},
 
   /* 114 */	{"5/2|2 3",	"Great Icosahedron",
 				"Great Stellated Dodecahedron",
 				"Icosahedral (I[7])",
-				"",
-				"",
+				"Kepler-Poinsot Solid",
+				"Kepler-Poinsot Solid",
 				69, 41},
 
   /* 116 */	{"2|5/2 3",	"Great Icosidodecahedron",
@@ -668,7 +668,7 @@ static const struct {
 				"Great Pentagonal Hexecontahedron",
 				"Icosahedral (I[7])",
 				"",
-				"Kepler-Poinsot Solid",
+				"",
 				73, 113},
 							   /* (5/3 2 5) (I9) */
 
@@ -690,7 +690,7 @@ static const struct {
 				"Medial Inverted Pentagonal Hexecontahedron",
 				"Icosahedral (I[9])",
 				"",
-				"Kepler-Poinsot Solid",
+				"",
 				76, 114},
 						       /* (5/3 5/2 3) (I10a) */
 
@@ -719,7 +719,7 @@ static const struct {
 				"Great Hexagonal Hexecontahedron",
 				"Icosahedral (I[10a])",
 				"",
-				"Kepler-Poinsot Solid",
+				"",
 				80, 115},
 							 /* (5/4 3 5) (I10b) */
 
@@ -771,7 +771,7 @@ static const struct {
   /* 150 */	{"3/2 3|5/3",	"Great Icosihemidodecahedron",
 				"Great Icosihemidodecacron",
 				"Icosahedral (I[18b])",
-				"Kepler-Poinsot Solid",
+				"",
 				"",
 				85, 106},
 						      /* (3/2 3/2 5/3) (I22) */
@@ -794,7 +794,7 @@ static const struct {
   /* 156 */	{"|3/2 5/3 2",	"Great Retrosnub Icosidodecahedron",
 				"Great Pentagrammic Hexecontahedron",
 				"Icosahedral (I[23])",
-				"Kepler-Poinsot Solid",
+				"",
 				"",
 				90, 117},
 

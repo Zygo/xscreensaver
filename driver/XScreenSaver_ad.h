@@ -266,10 +266,15 @@
 				tessellimage -root			    \\n\
   GL: 				winduprobot -root			    \\n\
   GL: 				splitflap -root				    \\n\
+  GL: 				cubestack -root				    \\n\
+  GL: 				cubetwist -root				    \\n\
+  GL: 				discoball -root				    \\n\
   GL: 				dymaxionmap -root			    \\n\
   GL: 				energystream -root			    \\n\
+  GL: 				hexstrut -root				    \\n\
   GL: 				hydrostat -root				    \\n\
   GL: 				raverhoop -root				    \\n\
+  GL: 				splodesic -root				    \\n\
   GL: 				unicrud -root				    \\n",
 "XScreenSaver.pointerPollTime:		0:00:05",
 "XScreenSaver.pointerHysteresis:		10",
@@ -325,7 +330,9 @@
 "*hacks.ccurve.name:         CCurve",
 "*hacks.cloudlife.name:      CloudLife",
 "*hacks.companioncube.name:  CompanionCube",
+"*hacks.cubestack.name:      CubeStack",
 "*hacks.cubestorm.name:      CubeStorm",
+"*hacks.cubetwist.name:      CubeTwist",
 "*hacks.cubicgrid.name:      CubicGrid",
 "*hacks.cwaves.name:         CWaves",
 "*hacks.dangerball.name:     DangerBall",

@@ -11,7 +11,12 @@
  * implied warranty.
  */
 
-#define DEF_FONT "-*-helvetica-bold-r-normal-*-*-480-*-*-*-*-*-*"
+#if defined(HAVE_COCOA) || defined(HAVE_ANDROID)
+# define DEF_FONT "OCR A Std 48, Lucida Console 48, Monaco 48"
+#else
+# define DEF_FONT "-*-helvetica-bold-r-normal-*-*-480-*-*-*-*-*-*"
+#endif
+
 #define DEFAULTS  "*count:           7         \n" \
                   "*delay:           10000     \n" \
                   "*wireframe:       False     \n" \
@@ -48,7 +53,7 @@
 # define DEF_SPEED          "1.0"
 # define DEF_DURATION       "5"
 # define DEF_MIPMAP         "True"
-# define DEF_TITLES         "False"
+# define DEF_TITLES         "True"
 # define DEF_POLAROID       "True"
 # define DEF_CLIP           "True"
 # define DEF_SHADOWS        "True"
@@ -644,26 +649,44 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
    */
   if (titles_p)
     {
-      int sw, sh, ascent, descent;
+      int sw = 0, sh = 0;
+      int ascent, descent;
+      GLfloat tw = w * 2;
+      GLfloat th = h1 - h;
       GLfloat scale = 1;
       const char *title = frame->title ? frame->title : "(untitled)";
       XCharStruct e;
 
-      /* #### Highly approximate, but doing real clipping is harder... */
-      int max = 35;
-      if (strlen(title) > max)
-        title += strlen(title) - max;
-
       texture_string_metrics (ss->texfont, title, &e, &ascent, &descent);
       sw = e.width;
-      sh = ascent + descent;
+      sh = ascent; /* + descent; */
 
       /* Scale the text to match the pixel size of the photo */
-      scale *= w / 300.0;
+      scale *= w / 150.0;
 
-      /* Move to below photo */
-      glTranslatef (0, -h - sh * (polaroid_p ? 2.2 : 0.5), 0);
-      glTranslatef (-sw*scale/2, sh*scale/2, z);
+# if defined(HAVE_COCOA)
+      scale /= 2;
+# endif
+
+# if defined(HAVE_MOBILE)
+      scale /= 2;
+# endif
+
+      /* Clip characters off the left end of the string until it fits. */
+      if (clip_p || polaroid_p)
+        while (sw * scale > tw && strlen (title) > 10)
+          {
+            title++;
+            texture_string_metrics (ss->texfont, title, &e, &ascent, &descent);
+            sw = e.width;
+          }
+
+      if (th <= 0)  /* Non-polaroid */
+        th = -sh * 1.2;
+
+      glTranslatef (-w, -h1, 0);
+      glTranslatef ((tw - sw*scale) / 2, (th - sh*scale) / 2, 0);
+
       glScalef (scale, scale, 1);
 
       if (wire || !polaroid_p)
@@ -672,14 +695,16 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
         }
       else
         {
-          glColor3f (0, 0, 0);
+          glColor3f (0.5, 0.5, 0.5);
         }
 
       if (!wire)
         {
           glEnable (GL_TEXTURE_2D);
           glEnable (GL_BLEND);
+          glDisable (GL_DEPTH_TEST);
           print_texture_string (ss->texfont, title);
+          glEnable (GL_DEPTH_TEST);
         }
       else
         {
@@ -690,6 +715,7 @@ draw_image (ModeInfo *mi, int i, GLfloat t, GLfloat s, GLfloat z)
           glVertex3f (0,  sh, 0);
           glEnd();
         }
+
     }
 
   glPopMatrix();

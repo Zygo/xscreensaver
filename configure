@@ -2796,6 +2796,7 @@ fi
 
 
 
+
 ###############################################################################
 #
 #       Some utility functions to make checking for X things easier.
@@ -6050,6 +6051,40 @@ $as_echo "$ac_cv_have_getifaddrs" >&6; }
    $as_echo "#define HAVE_GETIFADDRS 1" >>confdefs.h
 
  fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for socklen_t" >&5
+$as_echo_n "checking for socklen_t... " >&6; }
+if ${ac_cv_type_socklen_t+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+   #include <sys/types.h>
+   #include <sys/socket.h>
+int
+main ()
+{
+
+   socklen_t socklen;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_cv_type_socklen_t=yes
+else
+  ac_cv_type_socklen_t=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_type_socklen_t" >&5
+$as_echo "$ac_cv_type_socklen_t" >&6; }
+  if test "$ac_cv_type_socklen_t" != yes; then
+
+$as_echo "#define socklen_t int" >>confdefs.h
+
+  fi
 for ac_header in crypt.h sys/select.h
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
@@ -13272,7 +13307,7 @@ if ${ac_cv_mesagl_version_string+:} false; then :
   $as_echo_n "(cached) " >&6
 else
   cat > conftest.$ac_ext <<EOF
-#line 13279 "configure"
+#line 13314 "configure"
 #include "confdefs.h"
 #include <GL/gl.h>
 #ifndef MESA_MAJOR_VERSION

@@ -7,7 +7,7 @@ SRCS=$*
 TMP1=m6502.h.1.$$
 TMP2=m6502.h.2.$$
 rm -f $TMP1 $TMP2
-trap "rm -f $TMP1 $TMP2" 1 2 3 15 ERR EXIT
+trap "rm -f $TMP1 $TMP2" 1 2 3 15 EXIT
 
 if [ -z "$UTILS_SRC" ]; then UTILS_SRC="../utils"; fi
 

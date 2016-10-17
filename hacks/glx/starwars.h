@@ -309,4 +309,55 @@
 "\\n" \
 "\\n" \
 "\\n" \
+"\\n" \
+"Episode VII\\n" \
+"THE FORCE AWAKENS\\n" \
+"Luke Skywalker has vanished.\\n" \
+"In his absence, the sinister\\n" \
+"FIRST ORDER has risen from\\n" \
+"the ashes of the Empire\\n" \
+"and will not rest until\\n" \
+"Skywalker, the last Jedi,\\n" \
+"has been destroyed.\\n" \
+"\\n" \
+"With the support of the\\n" \
+"REPUBLIC, General Leia Organa\\n" \
+"leads a brave RESISTANCE.\\n" \
+"She is desperate to find her\\n" \
+"brother Luke and gain his\\n" \
+"help in restoring peace and \\n" \
+"justice to the galaxy.\\n" \
+"\\n" \
+"Leia has sent her most daring\\n" \
+"pilot on a secret mission\\n" \
+"to Jakku, where an old ally\\n" \
+"has discovered a clue to\\n" \
+"Luke's whereabouts...\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
+"\\n" \
 "\\n"

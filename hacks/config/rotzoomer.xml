@@ -4,7 +4,7 @@
 
   <command arg="-root"/>
 
-  <video href="https://www.youtube.com/watch?v=JVKDhd8gc7c"/>
+  <video href="https://www.youtube.com/watch?v=ecl8ykLswX8"/>
 
   <number id="delay" type="slider" arg="-delay %"
           _label="Frame rate" _low-label="Low" _high-label="High"
@@ -18,9 +18,11 @@
           _label="Rectangle count" low="1" high="20" default="2"/>
 
   <select id="mode">
-   <option id="stationary" _label="Stationary rectangles"/>
+   <option id="random"     _label="Random"/>
+   <option id="stationary" _label="Stationary rectangles" arg-set="-mode stationary"/>
    <option id="move"       _label="Wandering rectangles" arg-set="-mode move"/>
    <option id="sweep"      _label="Sweeping arcs"        arg-set="-mode sweep"/>
+   <option id="circle"     _label="Rotating discs"       arg-set="-mode circle"/>
   </select>
 
   <boolean id="anim" _label="Animate" arg-unset="-no-anim"/>
@@ -36,6 +38,6 @@
   <_description>
 Distorts an image by rotating and scaling random sections of it.
 
-Written by Claudio Matsuoka; 2001.
+Written by Claudio Matsuoka and Jamie Zawinski; 2001.
   </_description>
 </screensaver>

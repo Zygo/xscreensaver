@@ -106,18 +106,21 @@ public class XScreenSaverDaydream extends DreamService
 
     // Extract the saver name from e.g. "BouncingCowDaydream"
     String name = this.getClass().getSimpleName();
-    String tail = "Daydream";
-    if (name.endsWith(tail))
-      name = name.substring (0, name.length() - tail.length());
+    int index = name.lastIndexOf('$');
+    if (index != -1) {
+      index++;
+      name = name.substring (index, name.length() - index);
+    }
     name = name.toLowerCase();
 
     WindowManager wm = (WindowManager) getSystemService (WINDOW_SERVICE);
+    glview = new GLSurfaceView (this);
     renderer =
       new XScreenSaverRenderer (name, api, getApplicationContext(), wm,
-                                screenshot, this);
-
-    glview = new GLSurfaceView (this);
+                                screenshot, this, glview);
+    glview.setEGLConfigChooser (8, 8, 8, 8, 16, 0);
     glview.setRenderer (renderer);
+    glview.setRenderMode (GLSurfaceView.RENDERMODE_WHEN_DIRTY);
     setContentView (glview);
 
     detector = new GestureDetector (this, this);

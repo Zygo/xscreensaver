@@ -32,8 +32,6 @@ extern Bool textclient_putc (text_data *, XKeyEvent *);
 # if defined(USE_IPHONE) || defined(HAVE_ANDROID)
 extern char *textclient_mobile_date_string (void);
 extern char *textclient_mobile_url_string (Display *, const char *url);
-extern char *textclient_strip_html (const char *);
-extern char *textclient_strip_rss (const char *);
 # endif
 
 #endif /* __TEXTCLIENT_H__ */

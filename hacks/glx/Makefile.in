@@ -127,7 +127,8 @@ SRCS		= xscreensaver-gl-helper.c normals.c fps-gl.c \
 		  projectiveplane.c winduprobot.c robot.c robot-wireframe.c \
 		  cityflow.c romanboy.c splitflap.c splitflap_obj.c \
 		  dymaxionmap.c unicrud.c energystream.c raverhoop.c \
-		  hydrostat.c
+		  hydrostat.c discoball.c cubetwist.c cubestack.c splodesic.c \
+		  hexstrut.c
 
 OBJS		= xscreensaver-gl-helper.o normals.o fps-gl.o \
 		  atlantis.o b_draw.o b_lockglue.o b_sphere.o bubble3d.o \
@@ -171,7 +172,8 @@ OBJS		= xscreensaver-gl-helper.o normals.o fps-gl.o \
 		  projectiveplane.o winduprobot.o robot.o robot-wireframe.o \
 		  cityflow.o romanboy.o splitflap.o splitflap_obj.o \
 		  dymaxionmap.o unicrud.o energystream.o raverhoop.o \
-		  hydrostat.o
+		  hydrostat.o discoball.o cubetwist.o cubestack.o splodesic.o \
+		  hexstrut.o
 
 GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  morph3d rubik atlantis lament bubble3d glplanet pulsar \
@@ -190,7 +192,8 @@ GL_EXES		= cage gears moebius pipes sproingies stairs superquadrics \
 		  kaleidocycle quasicrystal unknownpleasures geodesic \
 		  geodesicgears projectiveplane winduprobot cityflow romanboy \
 		  splitflap dymaxionmap unicrud energystream raverhoop \
-		  hydrostat
+		  hydrostat discoball cubetwist cubestack splodesic \
+		  hexstrut
 GLE_EXES	= extrusion
 SUID_EXES	= sonar
 GL_UTIL_EXES	= xscreensaver-gl-helper
@@ -251,7 +254,9 @@ GL_MEN		= atlantis.man boxed.man bubble3d.man cage.man circuit.man \
 		  quasicrystal.man unknownpleasures.man geodesic.man \
 		  geodesicgears.man projectiveplane.man winduprobot.man \
 		  cityflow.man romanboy.man splitflap.man dymaxionmap.man \
-		  unicrud.man energystream.man raverhoop.man hydrostat.man
+		  unicrud.man energystream.man raverhoop.man hydrostat.man \
+		  discoball.man cubetwist.man cubestack.man splodesic.man \
+		  hexstrut.man
 MEN		= @GL_MEN@
 RETIRED_MEN	= glforestfire.man
 EXTRAS		= README Makefile.in dxf2gl.pl vrml2gl.pl wfront2gl.pl \
@@ -440,7 +445,6 @@ distdepend:: molecules.h
 	      -e 's@ $$(srcdir)/\(.*molecules.h\)@ \1@g' ;		    \
 	  echo ''							    \
 	) > /tmp/distdepend.$$$$ &&					    \
-	mv Makefile.in Makefile.in.bak &&				    \
 	mv /tmp/distdepend.$$$$ Makefile.in
 
 
@@ -938,6 +942,21 @@ HSTAT_OBJS=sphere.o normals.o $(HACK_TRACK_OBJS)
 hydrostat:	hydrostat.o	$(HSTAT_OBJS)
 	$(CC_HACK) -o $@ $@.o	$(HSTAT_OBJS) $(HACK_LIBS)
 
+discoball:	discoball.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+cubetwist:	cubetwist.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+cubestack:	cubestack.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+splodesic:	splodesic.o	$(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	$(HACK_TRACK_OBJS) $(HACK_LIBS)
+
+hexstrut:	hexstrut.o	 normals.o $(HACK_TRACK_OBJS)
+	$(CC_HACK) -o $@ $@.o	 normals.o $(HACK_TRACK_OBJS) $(HACK_LIBS)
+
 ##############################################################################
 #
 # DO NOT DELETE: updated by make distdepend
@@ -1299,6 +1318,21 @@ cubenetic.o: $(UTILS_SRC)/xshm.h
 cubenetic.o: $(UTILS_SRC)/yarandom.h
 cubenetic.o: $(HACK_SRC)/xlockmoreI.h
 cubenetic.o: $(HACK_SRC)/xlockmore.h
+cubestack.o: ../../config.h
+cubestack.o: $(HACK_SRC)/fps.h
+cubestack.o: $(srcdir)/gltrackball.h
+cubestack.o: $(srcdir)/rotator.h
+cubestack.o: $(HACK_SRC)/screenhackI.h
+cubestack.o: $(UTILS_SRC)/colors.h
+cubestack.o: $(UTILS_SRC)/grabscreen.h
+cubestack.o: $(UTILS_SRC)/hsv.h
+cubestack.o: $(UTILS_SRC)/resources.h
+cubestack.o: $(UTILS_SRC)/usleep.h
+cubestack.o: $(UTILS_SRC)/visual.h
+cubestack.o: $(UTILS_SRC)/xshm.h
+cubestack.o: $(UTILS_SRC)/yarandom.h
+cubestack.o: $(HACK_SRC)/xlockmoreI.h
+cubestack.o: $(HACK_SRC)/xlockmore.h
 cubestorm.o: ../../config.h
 cubestorm.o: $(HACK_SRC)/fps.h
 cubestorm.o: $(srcdir)/gltrackball.h
@@ -1314,6 +1348,22 @@ cubestorm.o: $(UTILS_SRC)/xshm.h
 cubestorm.o: $(UTILS_SRC)/yarandom.h
 cubestorm.o: $(HACK_SRC)/xlockmoreI.h
 cubestorm.o: $(HACK_SRC)/xlockmore.h
+cubetwist.o: ../../config.h
+cubetwist.o: $(HACK_SRC)/fps.h
+cubetwist.o: $(srcdir)/gltrackball.h
+cubetwist.o: $(srcdir)/normals.h
+cubetwist.o: $(srcdir)/rotator.h
+cubetwist.o: $(HACK_SRC)/screenhackI.h
+cubetwist.o: $(UTILS_SRC)/colors.h
+cubetwist.o: $(UTILS_SRC)/grabscreen.h
+cubetwist.o: $(UTILS_SRC)/hsv.h
+cubetwist.o: $(UTILS_SRC)/resources.h
+cubetwist.o: $(UTILS_SRC)/usleep.h
+cubetwist.o: $(UTILS_SRC)/visual.h
+cubetwist.o: $(UTILS_SRC)/xshm.h
+cubetwist.o: $(UTILS_SRC)/yarandom.h
+cubetwist.o: $(HACK_SRC)/xlockmoreI.h
+cubetwist.o: $(HACK_SRC)/xlockmore.h
 cubicgrid.o: ../../config.h
 cubicgrid.o: $(HACK_SRC)/fps.h
 cubicgrid.o: $(srcdir)/gltrackball.h
@@ -1346,6 +1396,22 @@ dangerball.o: $(UTILS_SRC)/xshm.h
 dangerball.o: $(UTILS_SRC)/yarandom.h
 dangerball.o: $(HACK_SRC)/xlockmoreI.h
 dangerball.o: $(HACK_SRC)/xlockmore.h
+discoball.o: ../../config.h
+discoball.o: $(HACK_SRC)/fps.h
+discoball.o: $(srcdir)/gltrackball.h
+discoball.o: $(srcdir)/normals.h
+discoball.o: $(srcdir)/rotator.h
+discoball.o: $(HACK_SRC)/screenhackI.h
+discoball.o: $(UTILS_SRC)/colors.h
+discoball.o: $(UTILS_SRC)/grabscreen.h
+discoball.o: $(UTILS_SRC)/hsv.h
+discoball.o: $(UTILS_SRC)/resources.h
+discoball.o: $(UTILS_SRC)/usleep.h
+discoball.o: $(UTILS_SRC)/visual.h
+discoball.o: $(UTILS_SRC)/xshm.h
+discoball.o: $(UTILS_SRC)/yarandom.h
+discoball.o: $(HACK_SRC)/xlockmoreI.h
+discoball.o: $(HACK_SRC)/xlockmore.h
 dnalogo.o: ../../config.h
 dnalogo.o: $(HACK_SRC)/fps.h
 dnalogo.o: $(srcdir)/gltrackball.h
@@ -1884,6 +1950,22 @@ grab-ximage.o: $(UTILS_SRC)/grabscreen.h
 grab-ximage.o: $(UTILS_SRC)/resources.h
 grab-ximage.o: $(UTILS_SRC)/visual.h
 grab-ximage.o: $(UTILS_SRC)/xshm.h
+hexstrut.o: ../../config.h
+hexstrut.o: $(HACK_SRC)/fps.h
+hexstrut.o: $(srcdir)/gltrackball.h
+hexstrut.o: $(srcdir)/normals.h
+hexstrut.o: $(srcdir)/rotator.h
+hexstrut.o: $(HACK_SRC)/screenhackI.h
+hexstrut.o: $(UTILS_SRC)/colors.h
+hexstrut.o: $(UTILS_SRC)/grabscreen.h
+hexstrut.o: $(UTILS_SRC)/hsv.h
+hexstrut.o: $(UTILS_SRC)/resources.h
+hexstrut.o: $(UTILS_SRC)/usleep.h
+hexstrut.o: $(UTILS_SRC)/visual.h
+hexstrut.o: $(UTILS_SRC)/xshm.h
+hexstrut.o: $(UTILS_SRC)/yarandom.h
+hexstrut.o: $(HACK_SRC)/xlockmoreI.h
+hexstrut.o: $(HACK_SRC)/xlockmore.h
 hilbert.o: ../../config.h
 hilbert.o: $(HACK_SRC)/fps.h
 hilbert.o: $(srcdir)/gltrackball.h
@@ -2592,6 +2674,22 @@ splitflap.o: $(HACK_SRC)/xlockmore.h
 splitflap.o: $(srcdir)/xpm-ximage.h
 splitflap_obj.o: ../../config.h
 splitflap_obj.o: $(srcdir)/gllist.h
+splodesic.o: ../../config.h
+splodesic.o: $(HACK_SRC)/fps.h
+splodesic.o: $(srcdir)/gltrackball.h
+splodesic.o: $(srcdir)/normals.h
+splodesic.o: $(srcdir)/rotator.h
+splodesic.o: $(HACK_SRC)/screenhackI.h
+splodesic.o: $(UTILS_SRC)/colors.h
+splodesic.o: $(UTILS_SRC)/grabscreen.h
+splodesic.o: $(UTILS_SRC)/hsv.h
+splodesic.o: $(UTILS_SRC)/resources.h
+splodesic.o: $(UTILS_SRC)/usleep.h
+splodesic.o: $(UTILS_SRC)/visual.h
+splodesic.o: $(UTILS_SRC)/xshm.h
+splodesic.o: $(UTILS_SRC)/yarandom.h
+splodesic.o: $(HACK_SRC)/xlockmoreI.h
+splodesic.o: $(HACK_SRC)/xlockmore.h
 sproingies.o: ../../config.h
 sproingies.o: $(HACK_SRC)/fps.h
 sproingies.o: $(srcdir)/gllist.h

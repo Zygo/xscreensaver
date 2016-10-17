@@ -712,6 +712,11 @@ static void layout_group (NSView *group, BOOL horiz_p);
   // Without the setAppliesImmediately:, when the saver restarts, it's still
   // got the old settings. -[XScreenSaverConfigSheet traverseTree] sets this
   // to NO; default is YES.
+
+  // #### However: I'm told that when these are set to YES, then changes to
+  // 'textLiteral', 'textURL' and 'textProgram' are ignored, but 'textFile'
+  // works.  In StarWars, at least...
+
   [userDefaultsController   setAppliesImmediately:YES];
   [globalDefaultsController setAppliesImmediately:YES];
   [userDefaultsController   commitEditing];

@@ -230,11 +230,16 @@ static void Create_Texture(ModeInfo *mi, const char *filename)
   int format;
 
   if ( !strncmp(filename, "BUILTIN", 7))
-    image = Generate_Image(&width, &height, &format);
+    {
+    BUILTIN:
+      image = Generate_Image(&width, &height, &format);
+    }
   else
     {
       XImage *ximage = xpm_file_to_ximage (MI_DISPLAY (mi), MI_VISUAL (mi),
                                            MI_COLORMAP (mi), filename);
+      if (! ximage)
+        goto BUILTIN;
       image  = (GLubyte *) ximage->data;
       width  = ximage->width;
       height = ximage->height;

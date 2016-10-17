@@ -149,20 +149,6 @@
 # include <CoreGraphics/CGGeometry.h>
 #else
 
-
-#ifdef HAVE_ANDROID
- extern void Log(const char *fmt, ...);
-#else
-static void
-Log (const char *fmt, ...)
-{
-  va_list args;
-  va_start (args, fmt);
-  vfprintf (stderr, fmt, args);
-  va_end (args);
-}
-#endif
-
 struct CGPoint {
     float x;
     float y;
@@ -1778,13 +1764,16 @@ XPutImage (Display *dpy, Drawable d, GC gc, XImage *ximage,
     glVertexPointer (2, GL_FLOAT, 0, vertices);
     glTexCoordPointer (2, GL_FLOAT, 0, tex_coords);
 
-    // Respect the alpha channel in the XImage
-    glEnable (GL_BLEND);
-    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    // Respect the alpha channel in the XImage if we're using alpha.
+    if (gc->gcv.alpha_allowed_p) {
+      glEnable (GL_BLEND);
+      glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    }
 
     glDrawArrays (GL_TRIANGLE_FAN, 0, 4);
 
-    glDisable (GL_BLEND);
+    if (gc->gcv.alpha_allowed_p)
+      glDisable (GL_BLEND);
 
 //  clear_texture();
     glDisable (dpy->gl_texture_target);
@@ -2795,35 +2784,6 @@ XFreeStringList (char **list)
   for (i = 0; list[i]; i++)
     XFree (list[i]);
   XFree (list);
-}
-
-
-// Returns the verbose Unicode name of this character, like "agrave" or
-// "daggerdouble".  Used by fontglide debugMetrics.
-//
-char *
-jwxyz_unicode_character_name (Font fid, unsigned long uc)
-{
-  /* TODO Fonts
-  char *ret = 0;
-  CTFontRef ctfont =
-    CTFontCreateWithName ((CFStringRef) [fid->nsfont fontName],
-                          [fid->nsfont pointSize],
-                          NULL);
-  Assert (ctfont, @"no CTFontRef for UIFont");
-
-  CGGlyph cgglyph;
-  if (CTFontGetGlyphsForCharacters (ctfont, (UniChar *) &uc, &cgglyph, 1)) {
-    NSString *name = (NSString *)
-      CGFontCopyGlyphNameForGlyph (CTFontCopyGraphicsFont (ctfont, 0),
-                                   cgglyph);
-    ret = (name ? strdup ([name UTF8String]) : 0);
-  }
-
-  CFRelease (ctfont);
-  return ret;
-   */
-  return NULL;
 }
 
 

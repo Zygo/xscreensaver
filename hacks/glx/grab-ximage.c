@@ -159,10 +159,10 @@ convert_ximage_to_rgba32 (Screen *screen, XImage *image)
    */
   XImage *from = image;
   XImage *to = XCreateImage (dpy, visual, 32,  /* depth */
-                             ZPixmap, 0, 0, from->width, from->height + 2,
+                             ZPixmap, 0, 0, from->width, from->height,
                              32, /* bitmap pad */
                              0);
-  to->data = (char *) calloc (to->height, to->bytes_per_line);
+  to->data = (char *) calloc (to->height + 2, to->bytes_per_line);
 
   /* Set the bit order in the XImage structure to whatever the
      local host's native bit order is.
@@ -735,7 +735,7 @@ load_texture_async_cb (Screen *screen, Window window, Drawable drawable,
   if (geometry->width <= 0 || geometry->height <= 0)
     {
       /* This can happen if an old version of xscreensaver-getimage
-         is installed. */
+         is installed. Or if we have no image (checkerboard). */
       geometry->x = 0;
       geometry->y = 0;
       geometry->width  = dd.pix_width;

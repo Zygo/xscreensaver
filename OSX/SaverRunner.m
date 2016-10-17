@@ -386,7 +386,10 @@
 
 - (BOOL)shouldAutorotate			/* Added in iOS 6 */
 {
-  return YES;
+  return
+    NSFoundationVersionNumber < NSFoundationVersionNumber_iOS_8_0 ?
+    ![_saverView suppressRotationAnimation] :
+    YES;
 }
 
 
@@ -1453,6 +1456,7 @@ FAIL:
   // or two windows for SaverTester.app.
   for (i = 0; i < window_count; i++) {
     NSWindow *win = [self makeWindow];
+    [win setDelegate:self];
     // Get the last-saved window position out of preferences.
     [win setFrameAutosaveName:
               [NSString stringWithFormat:@"XScreenSaverWindow%d", i]];
@@ -1460,6 +1464,7 @@ FAIL:
     [a addObject: win];
     // This prevents clicks from being seen by savers.
     // [win setMovableByWindowBackground:YES];
+    win.releasedWhenClosed = NO;
     [win release];
   }
 # else  // USE_IPHONE
@@ -1594,6 +1599,18 @@ FAIL:
 - (BOOL) applicationShouldTerminateAfterLastWindowClosed: (NSApplication *) n
 {
   return YES;
+}
+
+/* When the window is about to close, stop its animation.
+   Without this, timers might fire after the window is dead.
+ */
+- (void)windowWillClose:(NSNotification *)notification
+{
+  NSWindow *win = [notification object];
+  NSView *cv = win ? [win contentView] : 0;
+  ScreenSaverView *sv = cv ? find_saverView (cv) : 0;
+  if (sv && [sv isAnimating])
+    [sv stopAnimation];
 }
 
 # else // USE_IPHONE

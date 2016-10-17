@@ -40,6 +40,8 @@ import java.nio.ByteBuffer;
 import java.io.File;
 import java.io.InputStream;
 import java.io.FileOutputStream;
+import java.lang.Runnable;
+import java.lang.Thread;
 import android.database.Cursor;
 import android.provider.MediaStore;
 import android.provider.MediaStore.MediaColumns;
@@ -66,11 +68,6 @@ public class jwxyz {
   SharedPreferences prefs;
   Hashtable<String, String> defaults = new Hashtable<String, String>();
 
-  // Maps numeric IDs to Java objects, so that C code can reference them
-  // even if GC relocates them.
-  private Hashtable<Long, Object> rootset = new Hashtable<Long, Object>();
-  private long rootset_id = 1000;
-
 
   // Maps font names to either: String (system font) or Typeface (bundled).
   private Hashtable<String, Object> all_fonts =
@@ -83,7 +80,7 @@ public class jwxyz {
                                   Hashtable<String,String> defaults,
                                   int w, int h);
   public native void nativeResize (int w, int h, double rot);
-  public native void nativeRender ();
+  public native long nativeRender ();
   public native void nativeDone ();
   public native void sendButtonEvent (int x, int y, boolean down);
   public native void sendMotionEvent (int x, int y);
@@ -354,7 +351,7 @@ public class jwxyz {
   }
 
 
-  // Returns [ Long font_id, String name, Float size, ascent, descent ]
+  // Returns [ Paint paint, String name, Float size, ascent, descent ]
   public Object[] loadFont(String name) {
     Object pair[];
 
@@ -383,34 +380,24 @@ public class jwxyz {
     paint.setTextSize (size);
     paint.setColor (Color.argb (0xFF, 0xFF, 0xFF, 0xFF));
 
-    Long font_key = new Long(rootset_id++);
-    rootset.put (font_key, paint);
-
-    LOG ("load font %s, \"%s\" = \"%s %.1f\"",
-         font_key.toString(), name, name2, size);
+    LOG ("load font \"%s\" = \"%s %.1f\"", name, name2, size);
 
     FontMetrics fm = paint.getFontMetrics();
-    Object ret[] = { font_key, name2, new Float(size),
+    Object ret[] = { paint, name2, new Float(size),
                      new Float(-fm.ascent), new Float(fm.descent) };
     return ret;
   }
 
-
-  public void releaseFont(long font_id) {
-    rootset.remove (new Long(font_id));
-  }
 
   /* Returns a byte[] array containing XCharStruct with an optional
      bitmap appended to it.
      lbearing, rbearing, width, ascent, descent: 2 bytes each.
      Followed by a WxH pixmap, 32 bits per pixel.
    */
-  public ByteBuffer renderText (long font_id, String text, boolean render_p) {
-
-    Paint paint = (Paint) rootset.get(new Long(font_id));
+  public ByteBuffer renderText (Paint paint, String text, boolean render_p) {
 
     if (paint == null) {
-      LOG ("no font %d", font_id);
+      LOG ("no font");
       return null;
     }
 
@@ -483,44 +470,78 @@ public class jwxyz {
   }
 
 
-  // Returns the contents of the URL.  Blocking load.
-  public ByteBuffer loadURL (String url) {
+  /* Returns the contents of the URL.
+     Loads the URL in a background thread: if the URL has not yet loaded,
+     this will return null.  Once the URL has completely loaded, the full
+     contents will be returned.  Calling this again after that starts the
+     URL loading again.
+   */
+  private String loading_url = null;
+  private ByteBuffer loaded_url_body = null;
 
-    int size0 = 10240;
-    int size = size0;
-    int count = 0;
-    ByteBuffer body = ByteBuffer.allocateDirect (size);
+  public synchronized ByteBuffer loadURL (String url) {
 
-    try {
-      LOG ("load URL: %s", url);
-      URL u = new URL(url);
-      InputStream s = u.openStream();
-      byte buf[] = new byte[10240];
-      while (true) {
-        int n = s.read (buf);
-        if (n == -1) break;
-        // LOG ("read %d", n);
-        if (count + n + 1 >= size) {
-          int size2 = (int) (size * 1.2 + size0);
-          // LOG ("expand %d -> %d", size, size2);
-          ByteBuffer body2 = ByteBuffer.allocateDirect (size2);
-          body.rewind();
-          body2.put (body);
-          body2.position (count);
-          body = body2;
-          size = size2;
-        }
-        body.put (buf, 0, n);
-        count += n;
-      }
-    } catch (Exception e) {
-      LOG ("load URL error: %s", e.toString());
-      body.clear();
-      body.put (e.toString().getBytes());
-      body.put ((byte) 0);
+    if (loaded_url_body != null) {			// Thread finished
+
+      // LOG ("textclient finished %s", loading_url);
+
+      ByteBuffer bb = loaded_url_body;
+      loading_url = null;
+      loaded_url_body = null;
+      return bb;
+
+    } else if (loading_url != null) {			// Waiting on thread
+      // LOG ("textclient waiting...");
+      return null;
+
+    } else {						// Launch thread
+
+      loading_url = url;
+      LOG ("textclient launching %s...", url);
+
+      new Thread (new Runnable() {
+          public void run() {
+            int size0 = 10240;
+            int size = size0;
+            int count = 0;
+            ByteBuffer body = ByteBuffer.allocateDirect (size);
+
+            try {
+              URL u = new URL (loading_url);
+              // LOG ("textclient thread loading: %s", u.toString());
+              InputStream s = u.openStream();
+              byte buf[] = new byte[10240];
+              while (true) {
+                int n = s.read (buf);
+                if (n == -1) break;
+                // LOG ("textclient thread read %d", n);
+                if (count + n + 1 >= size) {
+                  int size2 = (int) (size * 1.2 + size0);
+                  // LOG ("textclient thread expand %d -> %d", size, size2);
+                  ByteBuffer body2 = ByteBuffer.allocateDirect (size2);
+                  body.rewind();
+                  body2.put (body);
+                  body2.position (count);
+                  body = body2;
+                  size = size2;
+                }
+                body.put (buf, 0, n);
+                count += n;
+              }
+            } catch (Exception e) {
+              LOG ("load URL error: %s", e.toString());
+              body.clear();
+              body.put (e.toString().getBytes());
+              body.put ((byte) 0);
+            }
+
+            // LOG ("textclient thread finished %s (%d)", loading_url, size);
+            loaded_url_body = body;
+          }
+        }).start();
+
+      return null;
     }
-
-    return body;
   }
 
 

@@ -1,4 +1,4 @@
-# Auto-generated: Tue May 24 11:02:33 PDT 2016
+# Auto-generated: Mon Oct 10 19:58:09 PDT 2016
 driver/demo-Gtk-conf.c
 driver/demo-Gtk.c
 driver/screensaver-properties.desktop.in
@@ -46,7 +46,9 @@ hacks/config/critical.xml
 hacks/config/crystal.xml
 hacks/config/cube21.xml
 hacks/config/cubenetic.xml
+hacks/config/cubestack.xml
 hacks/config/cubestorm.xml
+hacks/config/cubetwist.xml
 hacks/config/cubicgrid.xml
 hacks/config/cwaves.xml
 hacks/config/cynosure.xml
@@ -55,6 +57,7 @@ hacks/config/decayscreen.xml
 hacks/config/deco.xml
 hacks/config/deluxe.xml
 hacks/config/demon.xml
+hacks/config/discoball.xml
 hacks/config/discrete.xml
 hacks/config/distort.xml
 hacks/config/dnalogo.xml
@@ -106,6 +109,7 @@ hacks/config/halftone.xml
 hacks/config/halo.xml
 hacks/config/helix.xml
 hacks/config/hexadrop.xml
+hacks/config/hexstrut.xml
 hacks/config/hilbert.xml
 hacks/config/hopalong.xml
 hacks/config/hydrostat.xml
@@ -201,6 +205,7 @@ hacks/config/sphere.xml
 hacks/config/spheremonics.xml
 hacks/config/spiral.xml
 hacks/config/splitflap.xml
+hacks/config/splodesic.xml
 hacks/config/spotlight.xml
 hacks/config/sproingies.xml
 hacks/config/squiral.xml

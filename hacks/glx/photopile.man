@@ -63,7 +63,7 @@ default; 2.0 means twice as fast.
 Per-frame delay, in microseconds.  Default: 10000 (0.01 seconds.).
 .TP 8
 .B \-titles \fB| \-no\-titles\fP
-Whether to display the file names of the images beneath them.  Default: no.
+Whether to display the file names of the images beneath them.  Default: yes.
 .TP 8
 .B \-polaroid \fB| \-no\-polaroid\fP
 Whether to simulate images taken by an instant camera.  Default: yes.

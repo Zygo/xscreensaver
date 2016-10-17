@@ -6,7 +6,7 @@ SRCS=$*
 
 TMP=molecules.h.$$
 rm -f $TMP
-trap "rm -f $TMP" 1 2 3 15 ERR EXIT
+trap "rm -f $TMP" 1 2 3 15 EXIT
 
 if [ -z "$UTILS_SRC" ]; then UTILS_SRC="../../utils"; fi
 

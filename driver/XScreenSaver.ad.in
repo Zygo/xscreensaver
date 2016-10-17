@@ -4,8 +4,8 @@
 !            a screen saver and locker for the X window system
 !                            by Jamie Zawinski
 !
-!                              version 5.35
-!                              24-May-2016
+!                              version 5.36
+!                              10-Oct-2016
 !
 ! See "man xscreensaver" for more info.  The latest version is always
 ! available at https://www.jwz.org/xscreensaver/
@@ -371,10 +371,15 @@ GetViewPortIsFullOfLies: False
 				tessellimage -root			    \n\
 @GL_KLUDGE@ GL: 				winduprobot -root			    \n\
 @GL_KLUDGE@ GL: 				splitflap -root				    \n\
+@GL_KLUDGE@ GL: 				cubestack -root				    \n\
+@GL_KLUDGE@ GL: 				cubetwist -root				    \n\
+@GL_KLUDGE@ GL: 				discoball -root				    \n\
 @GL_KLUDGE@ GL: 				dymaxionmap -root			    \n\
 @GL_KLUDGE@ GL: 				energystream -root			    \n\
+@GL_KLUDGE@ GL: 				hexstrut -root				    \n\
 @GL_KLUDGE@ GL: 				hydrostat -root				    \n\
 @GL_KLUDGE@ GL: 				raverhoop -root				    \n\
+@GL_KLUDGE@ GL: 				splodesic -root				    \n\
 @GL_KLUDGE@ GL: 				unicrud -root				    \n
 
 
@@ -460,7 +465,9 @@ XScreenSaver.bourneShell:		/bin/sh
 *hacks.ccurve.name:         CCurve
 *hacks.cloudlife.name:      CloudLife
 *hacks.companioncube.name:  CompanionCube
+*hacks.cubestack.name:      CubeStack
 *hacks.cubestorm.name:      CubeStorm
+*hacks.cubetwist.name:      CubeTwist
 *hacks.cubicgrid.name:      CubicGrid
 *hacks.cwaves.name:         CWaves
 *hacks.dangerball.name:     DangerBall

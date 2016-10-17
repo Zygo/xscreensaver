@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 1992-2013 Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 1992-2016 Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -18,16 +18,28 @@
    The hacks themselves use utils/grabclient.c to invoke the
    "xscreensaver-getimage" program as a sub-process.
 
-   This code is linked only into "driver/xscreensaver-getimage".  On normal
-   X11 systems, "xscreensaver-getimage.c" invokes the code in this file.
+   On "real" X11 systems:
 
-   However, under X11 on MacOS, "xscreensaver-getimage" instead runs the
-   script "driver/xscreensaver-getimage-desktop", which invokes the MacOS-
-   specific program "/usr/sbin/screencapture" to get the desktop image.
+       "driver/xscreensaver-getimage" runs the code in this file to grab
+       the X11 root window image as a Pixmap.
 
-   However again, for the MacOS-native (Cocoa) build of the screen savers,
-   "utils/grabclient.c" instead links against "OSX/osxgrabscreen.m", which
-   grabs screen images directly without invoking a sub-process to do it.
+   On MacOS systems running X11, which nobody does any more:
+
+       "driver/xscreensaver-getimage" runs the Perl script
+       "driver/xscreensaver-getimage-desktop", which in turn runs the MacOS
+       program "/usr/sbin/screencapture" to get the Mac desktop image as a
+       PNG file.
+
+   On MacOS systems running the native Cocoa build, or on iOS or Android
+   systems:
+
+       "driver/xscreensaver-getimage" is not used.  Instead, each saver's
+       "utils/grabclient.c" links against "OSX/grabclient-osx.m",
+       "OSX/grabclient-ios.m" or "jwxyz/jwxyz-android.c" to grab
+       screenshots directly without invoking a sub-process to do it.
+
+   See the comment at the top of utils/grabclient.c for a more detailed
+   explanation.
  */
 
 #include "utils.h"

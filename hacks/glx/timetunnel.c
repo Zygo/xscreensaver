@@ -877,8 +877,8 @@ static void LoadTexture(ModeInfo * mi, char **fn, const char *filename, GLuint t
 			by = by * 2;
 	}
 
-#ifndef HAVE_JWZGLES
 	if (rescale) {
+#ifndef HAVE_JWZGLES
 		tmpbuf = calloc(bx * by * 4, sizeof(unsigned char));
 		if (gluScaleImage(GL_RGBA, teximage->width, teximage->height, GL_UNSIGNED_BYTE, teximage->data,
 				bx, by, GL_UNSIGNED_BYTE, tmpbuf))
@@ -888,9 +888,9 @@ static void LoadTexture(ModeInfo * mi, char **fn, const char *filename, GLuint t
 		teximage->data = (char *) tmpbuf;
 		teximage->width = bx;
 		teximage->height= by;
+#endif /* !HAVE_JWZGLES */
 	}
 	/* end rescale code */
-#endif /* !HAVE_JWZGLES */
 		
 	if (anegative ) {
 		for (ix = 0 ; ix < teximage->height * teximage->width; ix++)

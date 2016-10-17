@@ -22,6 +22,8 @@ import android.view.KeyEvent;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.opengl.GLSurfaceView;
+import java.util.Timer;
+import java.util.TimerTask;
 import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 import org.jwz.xscreensaver.jwxyz;
@@ -44,6 +46,16 @@ public class XScreenSaverRenderer implements GLSurfaceView.Renderer {
   WindowManager wm;
   Bitmap screenshot;
 
+  GLSurfaceView glview;
+
+  class RenderTask extends TimerTask {
+    public void run() {
+      glview.requestRender();
+    }
+  };
+
+  Timer timer = new Timer();
+
   private void LOG (String fmt, Object... args) {
     Log.d ("xscreensaver",
            this.getClass().getSimpleName() + ": " +
@@ -59,7 +71,8 @@ public class XScreenSaverRenderer implements GLSurfaceView.Renderer {
   public XScreenSaverRenderer (String hack, int api,
                                Context app, WindowManager wm,
                                Bitmap screenshot,
-                               Handler.Callback abort_callback) {
+                               Handler.Callback abort_callback,
+                               GLSurfaceView glview) {
     super();
     this.hack   = hack;
     this.api    = api;
@@ -68,13 +81,18 @@ public class XScreenSaverRenderer implements GLSurfaceView.Renderer {
     this.prefs  = prefs;
     this.screenshot = screenshot;
     this.abort_callback = abort_callback;
+    this.glview = glview;
     LOG ("init %s %d", hack, api);
   }
 
   public void onDrawFrame (GL10 gl) {
     try {
-      if (jwxyz_obj != null)
-        jwxyz_obj.nativeRender();
+      if (jwxyz_obj != null) {
+        long delay = jwxyz_obj.nativeRender();
+        // java.util.Timer doesn't seem to like to re-use TimerTasks, so
+        // there's a slow object churn here: one TimerTask per frame.
+        timer.schedule(new RenderTask(), delay / 1000);
+      }
     } catch (RuntimeException e) {
       except (e);
     }
@@ -97,6 +115,8 @@ public class XScreenSaverRenderer implements GLSurfaceView.Renderer {
       }
 
       jwxyz_obj.nativeResize (w, h, r);
+
+      glview.requestRender();
 
     } catch (RuntimeException e) {
       except (e);

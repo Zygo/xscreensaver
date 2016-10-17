@@ -1,4 +1,4 @@
-/* xscreensaver, Copyright (c) 2001-2013 by Jamie Zawinski <jwz@jwz.org>
+/* xscreensaver, Copyright (c) 2001-2016 by Jamie Zawinski <jwz@jwz.org>
  *
  * Permission to use, copy, modify, distribute, and sell this software and its
  * documentation for any purpose is hereby granted without fee, provided that
@@ -69,7 +69,7 @@
   /* On MacOS under X11, the usual X11 mechanism of getting a screen shot
      doesn't work, and we need to use an external program.  This is only
      used when running under X11 on MacOS.  If it's a Cocoa build, this
-     path is not taken, and OSX/osxgrabscreen.m is used instead.
+     path is not taken, and OSX/grabclient-osx.m is used instead.
    */
 # define USE_EXTERNAL_SCREEN_GRABBER
 #endif

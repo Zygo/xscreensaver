@@ -20,6 +20,7 @@
 #define __JWXYZ_H__
 
 #include <stdlib.h> /* For abort(). */
+#include <stdarg.h>
 
 #if defined __FreeBSD__ || defined __MACH__ && defined __APPLE__
 # include <sys/cdefs.h>
@@ -460,7 +461,7 @@ extern int XUnloadFont (Display *, Font);
 extern int XTextExtents (XFontStruct *, const char *, int length,
                          int *dir_ret, int *ascent_ret, int *descent_ret,
                          XCharStruct *overall_ret);
-extern char * jwxyz_unicode_character_name (Font, unsigned long uc);
+extern char * jwxyz_unicode_character_name (Display *, Font, unsigned long uc);
 extern int XTextExtents16 (XFontStruct *, const XChar2b *, int length,
                            int *dir_ret, int *ascent_ret, int *descent_ret,
                            XCharStruct *overall_ret);
@@ -486,6 +487,17 @@ extern Pixmap XCreatePixmap (Display *, Drawable,
 extern int XFreePixmap (Display *, Pixmap);
 
 extern char *XGetAtomName (Display *, Atom);
+
+// Log()/Logv(), for debugging JWXYZ. Screenhacks should still use
+// fprintf(stderr, ...).
+extern void Log(const char *format, ...)
+#if defined __GNUC__ || defined __clang__
+  __attribute__((format(printf, 1, 2)))
+#endif
+  ;
+
+extern void jwxyz_logv(Bool error, const char *fmt, va_list args);
+#define Logv(format, args) (jwxyz_logv(False, format, args))
 
 // Xt timers and fds
 extern XtAppContext XtDisplayToApplicationContext (Display *);

@@ -508,10 +508,10 @@ make_squid (ModeInfo *mi, int which)
 static int
 cmp_squid (const void *aa, const void *bb)
 {
-  const squid *a = (squid *) aa;
-  const squid *b = (squid *) bb;
-  return ((int) (b->pos.y * 10000) -
-          (int) (a->pos.y * 10000));
+  squid * const *a = aa;
+  squid * const *b = bb;
+  return ((int) ((*b)->pos.y * 10000) -
+          (int) ((*a)->pos.y * 10000));
 }
 
 

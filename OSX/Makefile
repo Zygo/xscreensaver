@@ -11,8 +11,7 @@ XCODE_APP = /Applications/Xcode.app
 
 TARGETS    = All Savers
 ARCH       = -arch i386 -arch x86_64 ONLY_ACTIVE_ARCH=NO
-CERT       = 'Jamie Zawinski'
-CERT       = 'iPhone Developer: Jamie Zawinski (Y5M82TL69N)'
+CERT	   = 'Developer ID Installer: Jamie Zawinski (4627ATJELP)'
 PKGID	   = org.jwz.xscreensaver
 THUMBDIR   = build/screenshots
 XCODEBUILD = $(XCODE_APP)/Contents/Developer/usr/bin/xcodebuild
@@ -42,7 +41,6 @@ release:: distdepend
 	$(XCODEBUILD) $(ARCH) -target "$(TARGETS)" -configuration Release build
 
 release:: check_versions
-release:: sign
 
 Sparkle.framework:
 	unzip ../archive/Sparkle.framework-2013-12-04.zip
@@ -98,12 +96,6 @@ $(THUMBDIR)/%.png:
 	  rm -f "$$TMP" ;						\
 	fi
 
-
-sign:
-	@for f in build/Release/*.app/Contents/*/*.saver \
-		  build/Release/*.{saver,app} ; do \
-	  codesign --deep -vfs $(CERT) $$f ; \
-	 done
 
 check_versions:
 	@\
@@ -256,8 +248,9 @@ build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.
 									\
   DIST="installer.xml" ;						\
   STAGE="build/Release/pkg_stage" ;					\
-  PKG1="$@" ;								\
-  PKG2="$$STAGE/contents.pkg" ;						\
+  FINAL="$@" ;								\
+  UNSIGNED="$$STAGE/contents.pkg" ;					\
+  PRODUCT="$$STAGE/product_unsigned.pkg" ;				\
   SCRIPTS="$$STAGE/scripts" ;						\
   RES="$$STAGE/resources" ;						\
 									\
@@ -270,14 +263,13 @@ build/Release/installer.pkg: installer.rtf installer.xml installer.sh installer.
   cp -p installer.rtf "$$RES/welcome.rtf" ;				\
 									\
   pkgbuild --identifier "$(PKGID)" --version "$$V"			\
-	   --scripts "$$SCRIPTS" --nopayload "$$PKG2" ;			\
-  codesign -vfs $(CERT) "$$PKG2" ;					\
-  codesign -vd "$$PKG2" ;						\
+	   --scripts "$$SCRIPTS" --nopayload "$$UNSIGNED" ;		\
 									\
   productbuild --distribution "$$DIST" --resources "$$RES"		\
-	       --package-path "$$STAGE" --version "$$V" "$$PKG1" ;	\
-  codesign -vfs $(CERT) "$$PKG1" ;					\
-  codesign -vd "$$PKG1" ;						\
+	       --package-path "$$STAGE" --version "$$V" "$$PRODUCT" ;	\
+									\
+  productsign --sign $(CERT) "$$PRODUCT" "$$FINAL" ;			\
+  spctl --assess --verbose=4 --type install "$$FINAL" ;			\
 									\
   rm -rf "$$STAGE" ;							\
 
@@ -348,12 +340,24 @@ dmg::
   $(SETICON) -d ../../xdaliclock/OSX/daliclockSaver.icns		      \
 		"$$DST/DaliClock.saver" ;				      \
   $(SETICON) -d XScreenSaverFolder.icns "$$DST" ;			      \
+  $(SETICON) -d XScreenSaver.icns "$$DST"/*.saver ;			      \
+  $(SETICON) -d SaverRunner.icns "$$DST"/*.app ;			      \
   $(SETICON) -d XScreenSaverWebloc.icns "$$STAGE"/*.webloc ;		      \
   $(SETICON) -d XScreenSaverPkg.icns "$$STAGE"/*.pkg ;			      \
   mv "$$STAGE/bindist.webloc" "$$STAGE/Get the iPhone:iPad Version.webloc" ;  \
+									      \
+  set +x ;								      \
+  echo "Checking signatures..." ;					      \
+  spctl --assess --type install "$$PKG" ;				      \
+  spctl --assess --type execute "$$SRC/XScreenSaverUpdater.app" ;	      \
+  spctl --assess --type execute "$$DST/"*.app ;				      \
+  spctl --assess --type install "$$DST/"*.saver ;			      \
+  set -x ;								      \
+									      \
   hdiutil makehybrid -quiet -ov -hfs -hfs-volume-name "$$VOLNAME"	      \
     -hfs-openfolder "$$STAGE" "$$STAGE" -o "$$TMPDMG" ;			      \
   rm -rf "$$STAGE" ;							      \
+									      \
   hdiutil convert -quiet -ov -format UDBZ -imagekey zlib-level=9	      \
     "$$TMPDMG" -o "$$DMG" ;						      \
   xattr -w com.apple.quarantine "0000;00000000;;" "$$DMG" ;		      \

@@ -422,7 +422,6 @@ distdepend:: m6502.h
 	      -e 's@ $$(srcdir)/\(m6502.h\)@ \1@g' ;			    \
 	  echo ''							    \
 	) > /tmp/distdepend.$$$$ &&					    \
-	mv Makefile.in Makefile.in.bak &&				    \
 	mv /tmp/distdepend.$$$$ Makefile.in
 
 TAGS: tags

@@ -15,13 +15,13 @@
 	<key>CFBundlePackageType</key>
 	<string>BNDL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>5.35</string>
+	<string>5.36</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
 	<key>CFBundleVersion</key>
-	<string>5.35</string>
+	<string>5.36</string>
 	<key>LSMinimumSystemVersion</key>
-	<string>10.4</string>
+	<string>10.8</string>
 	<key>NSMainNibFile</key>
 	<string>SaverRunner</string>
 	<key>NSPrincipalClass</key>

@@ -134,6 +134,10 @@ setup_xpm_texture (ModeInfo *mi, char **xpm_data)
 				  MI_COLORMAP (mi), xpm_data);
   char buf[1024];
   clear_gl_error();
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+  /* iOS invalid enum:
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, image->width);
+  */
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 	       image->width, image->height, 0,
 	       GL_RGBA,
@@ -142,18 +146,10 @@ setup_xpm_texture (ModeInfo *mi, char **xpm_data)
 	       image->data);
   sprintf (buf, "builtin texture (%dx%d)", image->width, image->height);
   check_gl_error(buf);
-
-  /* setup parameters for texturing */
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 }
 
 
-static void
+static Bool
 setup_file_texture (ModeInfo *mi, char *filename)
 {
   Display *dpy = mi->dpy;
@@ -162,7 +158,11 @@ setup_file_texture (ModeInfo *mi, char *filename)
 
   Colormap cmap = mi->xgwa.colormap;
   XImage *image = xpm_file_to_ximage (dpy, visual, cmap, filename);
+  if (!image) return False;
+
   clear_gl_error();
+  glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
+  glPixelStorei(GL_UNPACK_ROW_LENGTH, image->width);
   glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA,
 	       image->width, image->height, 0,
 	       GL_RGBA,
@@ -172,16 +172,7 @@ setup_file_texture (ModeInfo *mi, char *filename)
   sprintf (buf, "texture: %.100s (%dx%d)",
 	   filename, image->width, image->height);
   check_gl_error(buf);
-
-  /* setup parameters for texturing */
-  glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
-  glPixelStorei(GL_UNPACK_ROW_LENGTH, image->width);
-
-  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+  return True;
 }
 
 
@@ -190,23 +181,39 @@ setup_texture(ModeInfo * mi)
 {
   planetstruct *gp = &planets[MI_SCREEN(mi)];
 
+  glGenTextures (1, &gp->tex1);
+  glBindTexture (GL_TEXTURE_2D, gp->tex1);
+
+  /* Must be after glBindTexture */
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
   if (!which_image ||
       !*which_image ||
       !strcmp(which_image, "BUILTIN"))
     {
-      glGenTextures (1, &gp->tex1);
-      glBindTexture (GL_TEXTURE_2D, gp->tex1);
+    BUILTIN:
       setup_xpm_texture (mi, dymaxionmap_xpm);
     }
   else
     {
-      glGenTextures (1, &gp->tex1);
-      glBindTexture (GL_TEXTURE_2D, gp->tex1);
-      setup_file_texture (mi, which_image);
+      if (! setup_file_texture (mi, which_image))
+        goto BUILTIN;
     }
 
   glGenTextures (1, &gp->tex2);
   glBindTexture (GL_TEXTURE_2D, gp->tex2);
+
+  /* Must be after glBindTexture */
+  glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+  glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+
   setup_xpm_texture (mi, ground);
 
   check_gl_error("texture initialization");

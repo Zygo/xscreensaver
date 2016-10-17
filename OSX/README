@@ -18,7 +18,7 @@ ridiculously long list of steps!
   3: Delete the dangerball.c and dangerball.xml files from Build Phases.
   4: Delete the "DangerBall copy-Info.plist" file that got created.
   5: Delete the "DangerBall copy-Info.plist" from the Build Settings too.
-  6: Change PRODUCT_NAME in Build Settings (maybe this automatic now?)
+  6: -
   7: Manage Schemes, rename "DangerBall Copy".
   8: Move to the right place in the list.
   9: Scheme / Run / Info: Executable: SaverTester.app.

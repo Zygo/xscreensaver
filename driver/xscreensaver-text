@@ -37,7 +37,7 @@ use Text::Wrap qw(wrap);
 use bytes;
 
 my $progname = $0; $progname =~ s@.*/@@g;
-my ($version) = ('$Revision: 1.41 $' =~ m/\s(\d[.\d]+)\s/s);
+my ($version) = ('$Revision: 1.44 $' =~ m/\s(\d[.\d]+)\s/s);
 
 my $verbose = 0;
 my $http_proxy = undef;
@@ -158,6 +158,7 @@ sub get_x11_prefs_1($) {
 
   my $got_any_p = 0;
   $body =~ s@\\\n@@gs;
+  $body =~ s@^[ \t]*#[^\n]*$@@gm;
 
   if ($body =~ m/^[.*]*textMode:[ \t]*([^\s]+)\s*$/im) {
     $text_mode = $1;
@@ -300,8 +301,9 @@ sub output() {
 
     $text_file =~ s@^~/@$ENV{HOME}/@s;     # allow literal "~/"
 
-    if (open (my $in, '<', $text_file)) {
+    if (open (my $in, '<:raw', $text_file)) {
       print STDERR "$progname: reading $text_file\n" if ($verbose);
+      binmode (STDOUT, ':raw');
 
       if (($wrap_columns && $wrap_columns > 0) || $truncate_lines) {
         # read it, then reformat it.
@@ -783,6 +785,8 @@ sub main() {
                               $load_p = 0; }
     elsif (m/^--?text$/)    { $text_mode = 'literal';
                               $text_literal = shift @ARGV || '';
+                              $text_literal =~ s@\\n@\n@gs;
+                              $text_literal =~ s@\\\n@\n@gs;
                               $load_p = 0; }
     elsif (m/^--?file$/)    { $text_mode = 'file';
                               $text_file = shift @ARGV || '';

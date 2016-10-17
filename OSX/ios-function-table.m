@@ -1,5 +1,5 @@
 /* Generated file, do not edit.
-   Created: Thu May  5 22:34:31 2016 by build-fntable.pl 1.5.
+   Created: Sat Sep  3 00:49:37 2016 by build-fntable.pl 1.5.
  */
 
 #import <Foundation/Foundation.h>
@@ -48,7 +48,9 @@ extern struct xscreensaver_function_table
  crystal_xscreensaver_function_table,
  cube21_xscreensaver_function_table,
  cubenetic_xscreensaver_function_table,
+ cubestack_xscreensaver_function_table,
  cubestorm_xscreensaver_function_table,
+ cubetwist_xscreensaver_function_table,
  cubicgrid_xscreensaver_function_table,
  cwaves_xscreensaver_function_table,
  cynosure_xscreensaver_function_table,
@@ -57,6 +59,7 @@ extern struct xscreensaver_function_table
  deco_xscreensaver_function_table,
  deluxe_xscreensaver_function_table,
  demon_xscreensaver_function_table,
+ discoball_xscreensaver_function_table,
  discrete_xscreensaver_function_table,
  distort_xscreensaver_function_table,
  dnalogo_xscreensaver_function_table,
@@ -103,6 +106,7 @@ extern struct xscreensaver_function_table
  halo_xscreensaver_function_table,
  helix_xscreensaver_function_table,
  hexadrop_xscreensaver_function_table,
+ hexstrut_xscreensaver_function_table,
  hilbert_xscreensaver_function_table,
  hopalong_xscreensaver_function_table,
  hydrostat_xscreensaver_function_table,
@@ -183,6 +187,7 @@ extern struct xscreensaver_function_table
  speedmine_xscreensaver_function_table,
  spheremonics_xscreensaver_function_table,
  splitflap_xscreensaver_function_table,
+ splodesic_xscreensaver_function_table,
  spotlight_xscreensaver_function_table,
  sproingies_xscreensaver_function_table,
  squiral_xscreensaver_function_table,
@@ -274,7 +279,9 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&crystal_xscreensaver_function_table], @"crystal",
 	[NSValue valueWithPointer:&cube21_xscreensaver_function_table], @"cube21",
 	[NSValue valueWithPointer:&cubenetic_xscreensaver_function_table], @"cubenetic",
+	[NSValue valueWithPointer:&cubestack_xscreensaver_function_table], @"cubestack",
 	[NSValue valueWithPointer:&cubestorm_xscreensaver_function_table], @"cubestorm",
+	[NSValue valueWithPointer:&cubetwist_xscreensaver_function_table], @"cubetwist",
 	[NSValue valueWithPointer:&cubicgrid_xscreensaver_function_table], @"cubicgrid",
 	[NSValue valueWithPointer:&cwaves_xscreensaver_function_table], @"cwaves",
 	[NSValue valueWithPointer:&cynosure_xscreensaver_function_table], @"cynosure",
@@ -283,6 +290,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&deco_xscreensaver_function_table], @"deco",
 	[NSValue valueWithPointer:&deluxe_xscreensaver_function_table], @"deluxe",
 	[NSValue valueWithPointer:&demon_xscreensaver_function_table], @"demon",
+	[NSValue valueWithPointer:&discoball_xscreensaver_function_table], @"discoball",
 	[NSValue valueWithPointer:&discrete_xscreensaver_function_table], @"discrete",
 	[NSValue valueWithPointer:&distort_xscreensaver_function_table], @"distort",
 	[NSValue valueWithPointer:&dnalogo_xscreensaver_function_table], @"dnalogo",
@@ -329,6 +337,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&halo_xscreensaver_function_table], @"halo",
 	[NSValue valueWithPointer:&helix_xscreensaver_function_table], @"helix",
 	[NSValue valueWithPointer:&hexadrop_xscreensaver_function_table], @"hexadrop",
+	[NSValue valueWithPointer:&hexstrut_xscreensaver_function_table], @"hexstrut",
 	[NSValue valueWithPointer:&hilbert_xscreensaver_function_table], @"hilbert",
 	[NSValue valueWithPointer:&hopalong_xscreensaver_function_table], @"hopalong",
 	[NSValue valueWithPointer:&hydrostat_xscreensaver_function_table], @"hydrostat",
@@ -409,6 +418,7 @@ NSDictionary *make_function_table_dict(void)
 	[NSValue valueWithPointer:&speedmine_xscreensaver_function_table], @"speedmine",
 	[NSValue valueWithPointer:&spheremonics_xscreensaver_function_table], @"spheremonics",
 	[NSValue valueWithPointer:&splitflap_xscreensaver_function_table], @"splitflap",
+	[NSValue valueWithPointer:&splodesic_xscreensaver_function_table], @"splodesic",
 	[NSValue valueWithPointer:&spotlight_xscreensaver_function_table], @"spotlight",
 	[NSValue valueWithPointer:&sproingies_xscreensaver_function_table], @"sproingies",
 	[NSValue valueWithPointer:&squiral_xscreensaver_function_table], @"squiral",
